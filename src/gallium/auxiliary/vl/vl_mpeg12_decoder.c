@@ -498,8 +498,7 @@ static void
 vl_mpeg12_decoder_flush_buffer(struct pipe_video_decode_buffer *buffer,
                                unsigned num_ycbcr_blocks[3],
                                struct pipe_video_buffer *refs[2],
-                               struct pipe_video_buffer *dst,
-                               struct pipe_fence_handle **fence)
+                               struct pipe_video_buffer *dst)
 {
    struct vl_mpeg12_buffer *buf = (struct vl_mpeg12_buffer *)buffer;
    struct vl_mpeg12_decoder *dec;
@@ -567,8 +566,6 @@ vl_mpeg12_decoder_flush_buffer(struct pipe_video_decode_buffer *buffer,
          vl_mc_render_ycbcr(&buf->mc[i], mc_source_sv[component], j, num_ycbcr_blocks[component]);
       }
    }
-
-   dec->pipe->flush(dec->pipe, fence);
 }
 
 static bool

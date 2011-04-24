@@ -159,8 +159,7 @@ struct pipe_video_decoder
    void (*flush_buffer)(struct pipe_video_decode_buffer *decbuf,
                         unsigned num_ycbcr_blocks[3],
                         struct pipe_video_buffer *ref_frames[2],
-                        struct pipe_video_buffer *dst,
-                        struct pipe_fence_handle **fence);
+                        struct pipe_video_buffer *dst);
 };
 
 /**

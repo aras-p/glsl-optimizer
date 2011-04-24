@@ -83,9 +83,7 @@ typedef struct
       struct pipe_motionvector *mv;
    } ref[2];
 
-   struct pipe_fence_handle *flush_fence;
-   struct pipe_fence_handle *render_fence;
-   struct pipe_fence_handle *disp_fence;
+   struct pipe_fence_handle *fence;
 
    /* The subpicture associated with this surface, if any. */
    XvMCSubpicture *subpicture;

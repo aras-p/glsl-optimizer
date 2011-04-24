@@ -275,8 +275,7 @@ unmap_and_flush_surface(XvMCSurfacePrivate *surface)
       context_priv->decoder->flush_buffer(surface->decode_buffer,
                                           num_ycbcr_blocks,
                                           ref_frames,
-                                          surface->video_buffer,
-                                          &surface->flush_fence);
+                                          surface->video_buffer);
       surface->mapped = 0;
    }
 }
@@ -537,7 +536,10 @@ Status XvMCPutSurface(Display *dpy, XvMCSurface *surface, Drawable drawable,
       subpicture_priv->surface = NULL;
    }
 
-   compositor->render_picture(compositor, PictureToPipe(flags), drawable_surface, &dst_rect, &surface_priv->disp_fence);
+   // Workaround for r600g, there seems to be a bug in the fence refcounting code
+   vpipe->screen->fence_reference(vpipe->screen, &surface_priv->fence, NULL);
+
+   compositor->render_picture(compositor, PictureToPipe(flags), drawable_surface, &dst_rect, &surface_priv->fence);
 
    XVMC_MSG(XVMC_TRACE, "[XvMC] Submitted surface %p for display. Pushing to front buffer.\n", surface);
 
@@ -572,6 +574,10 @@ Status XvMCPutSurface(Display *dpy, XvMCSurface *surface, Drawable drawable,
 PUBLIC
 Status XvMCGetSurfaceStatus(Display *dpy, XvMCSurface *surface, int *status)
 {
+   struct pipe_video_context *vpipe;
+   XvMCSurfacePrivate *surface_priv;
+   XvMCContextPrivate *context_priv;
+
    assert(dpy);
 
    if (!surface)
@@ -579,7 +585,15 @@ Status XvMCGetSurfaceStatus(Display *dpy, XvMCSurface *surface, int *status)
 
    assert(status);
 
+   surface_priv = surface->privData;
+   context_priv = surface_priv->context->privData;
+   vpipe = context_priv->vctx->vpipe;
+
    *status = 0;
+
+   if (surface_priv->fence)
+      if (!vpipe->screen->fence_signalled(vpipe->screen, surface_priv->fence))
+         *status |= XVMC_RENDERING;
 
    return Success;
 }
