@@ -199,10 +199,15 @@ vl_context_create_decoder(struct pipe_video_context *context,
 static struct pipe_video_buffer *
 vl_context_create_buffer(struct pipe_video_context *context,
                          enum pipe_format buffer_format,
-                         const enum pipe_format resource_formats[3],
                          enum pipe_video_chroma_format chroma_format,
                          unsigned width, unsigned height)
 {
+   const enum pipe_format resource_formats[3] = {
+      PIPE_FORMAT_R8_UNORM,
+      PIPE_FORMAT_R8_UNORM,
+      PIPE_FORMAT_R8_UNORM
+   };
+
    struct vl_context *ctx = (struct vl_context*)context;
    struct pipe_video_buffer *result;
    unsigned buffer_width, buffer_height;

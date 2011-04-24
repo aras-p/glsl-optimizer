@@ -41,12 +41,6 @@ vlVdpVideoSurfaceCreate(VdpDevice device, VdpChromaType chroma_type,
                         uint32_t width, uint32_t height,
                         VdpVideoSurface *surface)
 {
-   const enum pipe_format resource_formats[3] = {
-      PIPE_FORMAT_R8_UNORM,
-      PIPE_FORMAT_R8_UNORM,
-      PIPE_FORMAT_R8_UNORM
-   };
-
    vlVdpSurface *p_surf;
    VdpStatus ret;
 
@@ -77,7 +71,6 @@ vlVdpVideoSurfaceCreate(VdpDevice device, VdpChromaType chroma_type,
    p_surf->device = dev;
    p_surf->video_buffer = dev->context->vpipe->create_buffer(dev->context->vpipe,
                                                              PIPE_FORMAT_YV12, // most common used
-                                                             resource_formats,
                                                              ChromaToPipe(chroma_type),
                                                              width, height);
 
