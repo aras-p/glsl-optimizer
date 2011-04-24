@@ -375,6 +375,7 @@ static int r600_get_param(struct pipe_screen* pscreen, enum pipe_cap param)
 	case PIPE_CAP_MIXED_COLORBUFFER_FORMATS:
 		return 1;
 	case PIPE_CAP_INDEP_BLEND_ENABLE:
+	case PIPE_CAP_INDEP_BLEND_FUNC:
 		/* R600 doesn't support per-MRT blends */
 		if (family == CHIP_R600)
 			return 0;
@@ -387,12 +388,7 @@ static int r600_get_param(struct pipe_screen* pscreen, enum pipe_cap param)
 	/* Unsupported features (boolean caps). */
 	case PIPE_CAP_STREAM_OUTPUT:
 	case PIPE_CAP_PRIMITIVE_RESTART:
-	case PIPE_CAP_INDEP_BLEND_FUNC: /* FIXME allow this */
 	case PIPE_CAP_FRAGMENT_COLOR_CLAMP_CONTROL:
-		/* R600 doesn't support per-MRT blends */
-		if (family == CHIP_R600)
-			return 0;
-		else
 			return 0;
 
 	case PIPE_CAP_ARRAY_TEXTURES:
