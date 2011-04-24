@@ -86,76 +86,6 @@ calc_addr(struct ureg_program *shader, struct ureg_dst addr[2],
    ureg_MOV(shader, ureg_writemask(addr[1], TGSI_WRITEMASK_Z), tc);
 }
 
-static void *
-create_vert_shader(struct vl_idct *idct, bool matrix_stage)
-{
-   struct ureg_program *shader;
-   struct ureg_src vrect, vpos;
-   struct ureg_src scale;
-   struct ureg_dst t_tex, t_start;
-   struct ureg_dst o_vpos, o_l_addr[2], o_r_addr[2];
-
-   shader = ureg_create(TGSI_PROCESSOR_VERTEX);
-   if (!shader)
-      return NULL;
-
-   t_tex = ureg_DECL_temporary(shader);
-   t_start = ureg_DECL_temporary(shader);
-
-   vrect = ureg_DECL_vs_input(shader, VS_I_RECT);
-   vpos = ureg_DECL_vs_input(shader, VS_I_VPOS);
-
-   o_vpos = ureg_DECL_output(shader, TGSI_SEMANTIC_POSITION, VS_O_VPOS);
-
-   o_l_addr[0] = ureg_DECL_output(shader, TGSI_SEMANTIC_GENERIC, VS_O_L_ADDR0);
-   o_l_addr[1] = ureg_DECL_output(shader, TGSI_SEMANTIC_GENERIC, VS_O_L_ADDR1);
-
-   o_r_addr[0] = ureg_DECL_output(shader, TGSI_SEMANTIC_GENERIC, VS_O_R_ADDR0);
-   o_r_addr[1] = ureg_DECL_output(shader, TGSI_SEMANTIC_GENERIC, VS_O_R_ADDR1);
-
-   /*
-    * scale = (BLOCK_WIDTH, BLOCK_HEIGHT) / (dst.width, dst.height)
-    *
-    * t_vpos = vpos + vrect
-    * o_vpos.xy = t_vpos * scale
-    * o_vpos.zw = vpos
-    *
-    * o_l_addr = calc_addr(...)
-    * o_r_addr = calc_addr(...)
-    *
-    */
-
-   scale = ureg_imm2f(shader,
-      (float)BLOCK_WIDTH / idct->buffer_width,
-      (float)BLOCK_HEIGHT / idct->buffer_height);
-
-   ureg_ADD(shader, ureg_writemask(t_tex, TGSI_WRITEMASK_XY), vpos, vrect);
-   ureg_MUL(shader, ureg_writemask(t_tex, TGSI_WRITEMASK_XY), ureg_src(t_tex), scale);
-   ureg_MUL(shader, ureg_writemask(t_tex, TGSI_WRITEMASK_Z),
-      ureg_scalar(vrect, TGSI_SWIZZLE_X),
-      ureg_imm1f(shader, BLOCK_WIDTH / idct->nr_of_render_targets));
-
-   ureg_MOV(shader, ureg_writemask(o_vpos, TGSI_WRITEMASK_XY), ureg_src(t_tex));
-   ureg_MOV(shader, ureg_writemask(o_vpos, TGSI_WRITEMASK_ZW), ureg_imm1f(shader, 1.0f));
-
-   ureg_MUL(shader, ureg_writemask(t_start, TGSI_WRITEMASK_XY), vpos, scale);
-
-   if(matrix_stage) {
-      calc_addr(shader, o_l_addr, ureg_src(t_tex), ureg_src(t_start), false, false, idct->buffer_width / 4);
-      calc_addr(shader, o_r_addr, vrect, ureg_imm1f(shader, 0.0f), true, true, BLOCK_WIDTH / 4);
-   } else {
-      calc_addr(shader, o_l_addr, vrect, ureg_imm1f(shader, 0.0f), false, false, BLOCK_WIDTH / 4);
-      calc_addr(shader, o_r_addr, ureg_src(t_tex), ureg_src(t_start), true, false, idct->buffer_height / 4);
-   }
-
-   ureg_release_temporary(shader, t_tex);
-   ureg_release_temporary(shader, t_start);
-
-   ureg_END(shader);
-
-   return ureg_create_shader_and_destroy(shader, idct->pipe);
-}
-
 static void
 increment_addr(struct ureg_program *shader, struct ureg_dst daddr[2],
                struct ureg_src saddr[2], bool right_side, bool transposed,
@@ -203,7 +133,72 @@ matrix_mul(struct ureg_program *shader, struct ureg_dst dst, struct ureg_dst l[2
 }
 
 static void *
-create_matrix_frag_shader(struct vl_idct *idct)
+create_stage1_vert_shader(struct vl_idct *idct)
+{
+   struct ureg_program *shader;
+   struct ureg_src vrect, vpos;
+   struct ureg_src scale;
+   struct ureg_dst t_tex, t_start;
+   struct ureg_dst o_vpos, o_l_addr[2], o_r_addr[2];
+
+   shader = ureg_create(TGSI_PROCESSOR_VERTEX);
+   if (!shader)
+      return NULL;
+
+   vrect = ureg_DECL_vs_input(shader, VS_I_RECT);
+   vpos = ureg_DECL_vs_input(shader, VS_I_VPOS);
+
+   t_tex = ureg_DECL_temporary(shader);
+   t_start = ureg_DECL_temporary(shader);
+
+   o_vpos = ureg_DECL_output(shader, TGSI_SEMANTIC_POSITION, VS_O_VPOS);
+
+   o_l_addr[0] = ureg_DECL_output(shader, TGSI_SEMANTIC_GENERIC, VS_O_L_ADDR0);
+   o_l_addr[1] = ureg_DECL_output(shader, TGSI_SEMANTIC_GENERIC, VS_O_L_ADDR1);
+
+   o_r_addr[0] = ureg_DECL_output(shader, TGSI_SEMANTIC_GENERIC, VS_O_R_ADDR0);
+   o_r_addr[1] = ureg_DECL_output(shader, TGSI_SEMANTIC_GENERIC, VS_O_R_ADDR1);
+
+   /*
+    * scale = (BLOCK_WIDTH, BLOCK_HEIGHT) / (dst.width, dst.height)
+    *
+    * t_vpos = vpos + vrect
+    * o_vpos.xy = t_vpos * scale
+    * o_vpos.zw = vpos
+    *
+    * o_l_addr = calc_addr(...)
+    * o_r_addr = calc_addr(...)
+    *
+    */
+
+   scale = ureg_imm2f(shader,
+      (float)BLOCK_WIDTH / idct->buffer_width,
+      (float)BLOCK_HEIGHT / idct->buffer_height);
+
+   ureg_ADD(shader, ureg_writemask(t_tex, TGSI_WRITEMASK_XY), vpos, vrect);
+   ureg_MUL(shader, ureg_writemask(t_tex, TGSI_WRITEMASK_XY), ureg_src(t_tex), scale);
+
+   ureg_MOV(shader, ureg_writemask(o_vpos, TGSI_WRITEMASK_XY), ureg_src(t_tex));
+   ureg_MOV(shader, ureg_writemask(o_vpos, TGSI_WRITEMASK_ZW), ureg_imm1f(shader, 1.0f));
+
+   ureg_MUL(shader, ureg_writemask(t_tex, TGSI_WRITEMASK_Z),
+      ureg_scalar(vrect, TGSI_SWIZZLE_X),
+      ureg_imm1f(shader, BLOCK_WIDTH / idct->nr_of_render_targets));
+   ureg_MUL(shader, ureg_writemask(t_start, TGSI_WRITEMASK_XY), vpos, scale);
+
+   calc_addr(shader, o_l_addr, ureg_src(t_tex), ureg_src(t_start), false, false, idct->buffer_width / 4);
+   calc_addr(shader, o_r_addr, vrect, ureg_imm1f(shader, 0.0f), true, true, BLOCK_WIDTH / 4);
+
+   ureg_release_temporary(shader, t_tex);
+   ureg_release_temporary(shader, t_start);
+
+   ureg_END(shader);
+
+   return ureg_create_shader_and_destroy(shader, idct->pipe);
+}
+
+static void *
+create_stage1_frag_shader(struct vl_idct *idct)
 {
    struct ureg_program *shader;
 
@@ -272,25 +267,56 @@ create_matrix_frag_shader(struct vl_idct *idct)
    return ureg_create_shader_and_destroy(shader, idct->pipe);
 }
 
-static void *
-create_transpose_frag_shader(struct vl_idct *idct)
+void
+vl_idct_stage2_vert_shader(struct vl_idct *idct, struct ureg_program *shader,
+                           unsigned first_output, struct ureg_dst tex)
 {
-   struct ureg_program *shader;
+   struct ureg_src vrect, vpos;
+   struct ureg_src scale;
+   struct ureg_dst t_start;
+   struct ureg_dst o_l_addr[2], o_r_addr[2];
 
+   vrect = ureg_DECL_vs_input(shader, VS_I_RECT);
+   vpos = ureg_DECL_vs_input(shader, VS_I_VPOS);
+
+   t_start = ureg_DECL_temporary(shader);
+
+   --first_output;
+
+   o_l_addr[0] = ureg_DECL_output(shader, TGSI_SEMANTIC_GENERIC, first_output + VS_O_L_ADDR0);
+   o_l_addr[1] = ureg_DECL_output(shader, TGSI_SEMANTIC_GENERIC, first_output + VS_O_L_ADDR1);
+
+   o_r_addr[0] = ureg_DECL_output(shader, TGSI_SEMANTIC_GENERIC, first_output + VS_O_R_ADDR0);
+   o_r_addr[1] = ureg_DECL_output(shader, TGSI_SEMANTIC_GENERIC, first_output + VS_O_R_ADDR1);
+
+   scale = ureg_imm2f(shader,
+      (float)BLOCK_WIDTH / idct->buffer_width,
+      (float)BLOCK_HEIGHT / idct->buffer_height);
+
+   ureg_MUL(shader, ureg_writemask(tex, TGSI_WRITEMASK_Z),
+      ureg_scalar(vrect, TGSI_SWIZZLE_X),
+      ureg_imm1f(shader, BLOCK_WIDTH / idct->nr_of_render_targets));
+   ureg_MUL(shader, ureg_writemask(t_start, TGSI_WRITEMASK_XY), vpos, scale);
+
+   calc_addr(shader, o_l_addr, vrect, ureg_imm1f(shader, 0.0f), false, false, BLOCK_WIDTH / 4);
+   calc_addr(shader, o_r_addr, ureg_src(tex), ureg_src(t_start), true, false, idct->buffer_height / 4);
+}
+
+void
+vl_idct_stage2_frag_shader(struct vl_idct *idct, struct ureg_program *shader,
+                           unsigned first_input, struct ureg_dst fragment)
+{
    struct ureg_src l_addr[2], r_addr[2];
 
    struct ureg_dst l[2], r[2];
-   struct ureg_dst fragment;
 
-   shader = ureg_create(TGSI_PROCESSOR_FRAGMENT);
-   if (!shader)
-      return NULL;
+   --first_input;
 
-   l_addr[0] = ureg_DECL_fs_input(shader, TGSI_SEMANTIC_GENERIC, VS_O_L_ADDR0, TGSI_INTERPOLATE_LINEAR);
-   l_addr[1] = ureg_DECL_fs_input(shader, TGSI_SEMANTIC_GENERIC, VS_O_L_ADDR1, TGSI_INTERPOLATE_LINEAR);
+   l_addr[0] = ureg_DECL_fs_input(shader, TGSI_SEMANTIC_GENERIC, first_input + VS_O_L_ADDR0, TGSI_INTERPOLATE_LINEAR);
+   l_addr[1] = ureg_DECL_fs_input(shader, TGSI_SEMANTIC_GENERIC, first_input + VS_O_L_ADDR1, TGSI_INTERPOLATE_LINEAR);
 
-   r_addr[0] = ureg_DECL_fs_input(shader, TGSI_SEMANTIC_GENERIC, VS_O_R_ADDR0, TGSI_INTERPOLATE_LINEAR);
-   r_addr[1] = ureg_DECL_fs_input(shader, TGSI_SEMANTIC_GENERIC, VS_O_R_ADDR1, TGSI_INTERPOLATE_LINEAR);
+   r_addr[0] = ureg_DECL_fs_input(shader, TGSI_SEMANTIC_GENERIC, first_input + VS_O_R_ADDR0, TGSI_INTERPOLATE_LINEAR);
+   r_addr[1] = ureg_DECL_fs_input(shader, TGSI_SEMANTIC_GENERIC, first_input + VS_O_R_ADDR1, TGSI_INTERPOLATE_LINEAR);
 
    l[0] = ureg_DECL_temporary(shader);
    l[1] = ureg_DECL_temporary(shader);
@@ -300,61 +326,39 @@ create_transpose_frag_shader(struct vl_idct *idct)
    fetch_four(shader, l, l_addr, ureg_DECL_sampler(shader, 0));
    fetch_four(shader, r, r_addr, ureg_DECL_sampler(shader, 1));
 
-   fragment = ureg_DECL_output(shader, TGSI_SEMANTIC_COLOR, 0);
-
-   matrix_mul(shader, ureg_writemask(fragment, TGSI_WRITEMASK_X), l, r);
+   matrix_mul(shader, fragment, l, r);
 
    ureg_release_temporary(shader, l[0]);
    ureg_release_temporary(shader, l[1]);
    ureg_release_temporary(shader, r[0]);
    ureg_release_temporary(shader, r[1]);
-
-   ureg_END(shader);
-
-   return ureg_create_shader_and_destroy(shader, idct->pipe);
 }
 
 static bool
 init_shaders(struct vl_idct *idct)
 {
-   idct->matrix_vs = create_vert_shader(idct, true);
-   if (!idct->matrix_vs)
-      goto error_matrix_vs;
+   idct->vs = create_stage1_vert_shader(idct);
+   if (!idct->vs)
+      goto error_vs;
 
-   idct->matrix_fs = create_matrix_frag_shader(idct);
-   if (!idct->matrix_fs)
-      goto error_matrix_fs;
-
-   idct->transpose_vs = create_vert_shader(idct, false);
-   if (!idct->transpose_vs)
-      goto error_transpose_vs;
-
-   idct->transpose_fs = create_transpose_frag_shader(idct);
-   if (!idct->transpose_fs)
-      goto error_transpose_fs;
+   idct->fs = create_stage1_frag_shader(idct);
+   if (!idct->fs)
+      goto error_fs;
 
    return true;
 
-error_transpose_fs:
-   idct->pipe->delete_vs_state(idct->pipe, idct->transpose_vs);
+error_fs:
+   idct->pipe->delete_vs_state(idct->pipe, idct->vs);
 
-error_transpose_vs:
-   idct->pipe->delete_fs_state(idct->pipe, idct->matrix_fs);
-
-error_matrix_fs:
-   idct->pipe->delete_vs_state(idct->pipe, idct->matrix_vs);
-
-error_matrix_vs:
+error_vs:
    return false;
 }
 
 static void
 cleanup_shaders(struct vl_idct *idct)
 {
-   idct->pipe->delete_vs_state(idct->pipe, idct->matrix_vs);
-   idct->pipe->delete_fs_state(idct->pipe, idct->matrix_fs);
-   idct->pipe->delete_vs_state(idct->pipe, idct->transpose_vs);
-   idct->pipe->delete_fs_state(idct->pipe, idct->transpose_fs);
+   idct->pipe->delete_vs_state(idct->pipe, idct->vs);
+   idct->pipe->delete_fs_state(idct->pipe, idct->fs);
 }
 
 static bool
@@ -447,30 +451,30 @@ init_intermediate(struct vl_idct *idct, struct vl_idct_buffer *buffer)
 
    tex = buffer->sampler_views.individual.intermediate->texture;
 
-   buffer->fb_state[0].width = tex->width0;
-   buffer->fb_state[0].height = tex->height0;
-   buffer->fb_state[0].nr_cbufs = idct->nr_of_render_targets;
+   buffer->fb_state.width = tex->width0;
+   buffer->fb_state.height = tex->height0;
+   buffer->fb_state.nr_cbufs = idct->nr_of_render_targets;
    for(i = 0; i < idct->nr_of_render_targets; ++i) {
       memset(&surf_templ, 0, sizeof(surf_templ));
       surf_templ.format = tex->format;
       surf_templ.u.tex.first_layer = i;
       surf_templ.u.tex.last_layer = i;
       surf_templ.usage = PIPE_BIND_SAMPLER_VIEW | PIPE_BIND_RENDER_TARGET;
-      buffer->fb_state[0].cbufs[i] = idct->pipe->create_surface(
+      buffer->fb_state.cbufs[i] = idct->pipe->create_surface(
          idct->pipe, tex, &surf_templ);
 
-      if (!buffer->fb_state[0].cbufs[i])
+      if (!buffer->fb_state.cbufs[i])
          goto error_surfaces;
    }
 
-   buffer->viewport[0].scale[0] = tex->width0;
-   buffer->viewport[0].scale[1] = tex->height0;
+   buffer->viewport.scale[0] = tex->width0;
+   buffer->viewport.scale[1] = tex->height0;
 
    return true;
 
 error_surfaces:
    for(i = 0; i < idct->nr_of_render_targets; ++i)
-      pipe_surface_reference(&buffer->fb_state[0].cbufs[i], NULL);
+      pipe_surface_reference(&buffer->fb_state.cbufs[i], NULL);
 
    return false;
 }
@@ -483,7 +487,7 @@ cleanup_intermediate(struct vl_idct *idct, struct vl_idct_buffer *buffer)
    assert(idct && buffer);
 
    for(i = 0; i < idct->nr_of_render_targets; ++i)
-      pipe_surface_reference(&buffer->fb_state[0].cbufs[i], NULL);
+      pipe_surface_reference(&buffer->fb_state.cbufs[i], NULL);
 
    pipe_sampler_view_reference(&buffer->sampler_views.individual.intermediate, NULL);
 }
@@ -607,12 +611,12 @@ vl_idct_init_buffer(struct vl_idct *idct, struct vl_idct_buffer *buffer,
                     struct pipe_sampler_view *intermediate,
                     struct pipe_surface *destination)
 {
-   unsigned i;
-
    assert(buffer);
    assert(idct);
    assert(source);
    assert(destination);
+
+   memset(buffer, 0, sizeof(struct vl_idct_buffer));
 
    pipe_sampler_view_reference(&buffer->sampler_views.individual.matrix, idct->matrix);
    pipe_sampler_view_reference(&buffer->sampler_views.individual.source, source);
@@ -622,25 +626,12 @@ vl_idct_init_buffer(struct vl_idct *idct, struct vl_idct_buffer *buffer,
    if (!init_intermediate(idct, buffer))
       return false;
 
-   /* init state */
-   buffer->fb_state[1].width = destination->texture->width0;
-   buffer->fb_state[1].height = destination->texture->height0;
-   buffer->fb_state[1].nr_cbufs = 1;
-   pipe_surface_reference(&buffer->fb_state[1].cbufs[0], destination);
-
-   buffer->viewport[1].scale[0] = destination->texture->width0;
-   buffer->viewport[1].scale[1] = destination->texture->height0;
-
-   for(i = 0; i < 2; ++i) {
-      buffer->viewport[i].scale[2] = 1;
-      buffer->viewport[i].scale[3] = 1;
-      buffer->viewport[i].translate[0] = 0;
-      buffer->viewport[i].translate[1] = 0;
-      buffer->viewport[i].translate[2] = 0;
-      buffer->viewport[i].translate[3] = 0;
-
-      buffer->fb_state[i].zsbuf = NULL;
-   }
+   buffer->viewport.scale[2] = 1;
+   buffer->viewport.scale[3] = 1;
+   buffer->viewport.translate[0] = 0;
+   buffer->viewport.translate[1] = 0;
+   buffer->viewport.translate[2] = 0;
+   buffer->viewport.translate[3] = 0;
 
    return true;
 }
@@ -653,9 +644,7 @@ vl_idct_cleanup_buffer(struct vl_idct *idct, struct vl_idct_buffer *buffer)
    assert(idct && buffer);
 
    for(i = 0; i < idct->nr_of_render_targets; ++i)
-      pipe_surface_reference(&buffer->fb_state[0].cbufs[i], NULL);
-
-   pipe_surface_reference(&buffer->fb_state[1].cbufs[0], NULL);
+      pipe_surface_reference(&buffer->fb_state.cbufs[i], NULL);
 
    cleanup_intermediate(idct, buffer);
 }
@@ -666,25 +655,28 @@ vl_idct_flush(struct vl_idct *idct, struct vl_idct_buffer *buffer, unsigned num_
    assert(idct);
    assert(buffer);
 
-   if(num_instances > 0) {
-      idct->pipe->bind_rasterizer_state(idct->pipe, idct->rs_state);
-      idct->pipe->bind_blend_state(idct->pipe, idct->blend);
-      idct->pipe->bind_fragment_sampler_states(idct->pipe, 2, idct->samplers);
+   idct->pipe->bind_rasterizer_state(idct->pipe, idct->rs_state);
+   idct->pipe->bind_blend_state(idct->pipe, idct->blend);
+   idct->pipe->bind_fragment_sampler_states(idct->pipe, 2, idct->samplers);
 
-      /* first stage */
-      idct->pipe->set_framebuffer_state(idct->pipe, &buffer->fb_state[0]);
-      idct->pipe->set_viewport_state(idct->pipe, &buffer->viewport[0]);
-      idct->pipe->set_fragment_sampler_views(idct->pipe, 2, buffer->sampler_views.stage[0]);
-      idct->pipe->bind_vs_state(idct->pipe, idct->matrix_vs);
-      idct->pipe->bind_fs_state(idct->pipe, idct->matrix_fs);
-      util_draw_arrays_instanced(idct->pipe, PIPE_PRIM_QUADS, 0, 4, 0, num_instances);
-
-      /* second stage */
-      idct->pipe->set_framebuffer_state(idct->pipe, &buffer->fb_state[1]);
-      idct->pipe->set_viewport_state(idct->pipe, &buffer->viewport[1]);
-      idct->pipe->set_fragment_sampler_views(idct->pipe, 2, buffer->sampler_views.stage[1]);
-      idct->pipe->bind_vs_state(idct->pipe, idct->transpose_vs);
-      idct->pipe->bind_fs_state(idct->pipe, idct->transpose_fs);
-      util_draw_arrays_instanced(idct->pipe, PIPE_PRIM_QUADS, 0, 4, 0, num_instances);
-   }
+   /* first stage */
+   idct->pipe->set_framebuffer_state(idct->pipe, &buffer->fb_state);
+   idct->pipe->set_viewport_state(idct->pipe, &buffer->viewport);
+   idct->pipe->set_fragment_sampler_views(idct->pipe, 2, buffer->sampler_views.stage[0]);
+   idct->pipe->bind_vs_state(idct->pipe, idct->vs);
+   idct->pipe->bind_fs_state(idct->pipe, idct->fs);
+   util_draw_arrays_instanced(idct->pipe, PIPE_PRIM_QUADS, 0, 4, 0, num_instances);
 }
+
+void
+vl_idct_prepare_stage2(struct vl_idct *idct, struct vl_idct_buffer *buffer)
+{
+   assert(idct);
+   assert(buffer);
+
+   /* second stage */
+   idct->pipe->bind_rasterizer_state(idct->pipe, idct->rs_state);
+   idct->pipe->bind_fragment_sampler_states(idct->pipe, 2, idct->samplers);
+   idct->pipe->set_fragment_sampler_views(idct->pipe, 2, buffer->sampler_views.stage[1]);
+}
+

@@ -145,7 +145,7 @@ init_idct_buffer(struct vl_mpeg12_buffer *buffer)
 {
    enum pipe_format formats[3];
 
-   struct pipe_sampler_view **idct_source_sv, **idct_intermediate_sv;
+   struct pipe_sampler_view **idct_source_sv, **mc_source_sv;
    struct pipe_surface **idct_surfaces;
 
    struct vl_mpeg12_decoder *dec;
@@ -164,23 +164,23 @@ init_idct_buffer(struct vl_mpeg12_buffer *buffer)
    if (!buffer->idct_source)
       goto error_source;
 
-   formats[0] = formats[1] = formats[2] = dec->idct_intermediate_format;
-   buffer->idct_intermediate = vl_video_buffer_init(dec->base.context, dec->pipe,
-                                                    dec->base.width / dec->nr_of_idct_render_targets,
-                                                    dec->base.height / 4, dec->nr_of_idct_render_targets,
-                                                    dec->base.chroma_format,
-                                                    formats, PIPE_USAGE_STATIC);
+   formats[0] = formats[1] = formats[2] = dec->mc_source_format;
+   buffer->mc_source = vl_video_buffer_init(dec->base.context, dec->pipe,
+                                            dec->base.width / dec->nr_of_idct_render_targets,
+                                            dec->base.height / 4, dec->nr_of_idct_render_targets,
+                                            dec->base.chroma_format,
+                                            formats, PIPE_USAGE_STATIC);
 
-   if (!buffer->idct_intermediate)
-      goto error_intermediate;
+   if (!buffer->mc_source)
+      goto error_mc_source;
 
    idct_source_sv = buffer->idct_source->get_sampler_view_planes(buffer->idct_source);
    if (!idct_source_sv)
       goto error_source_sv;
 
-   idct_intermediate_sv = buffer->idct_intermediate->get_sampler_view_planes(buffer->idct_intermediate);
-   if (!idct_intermediate_sv)
-      goto error_intermediate_sv;
+   mc_source_sv = buffer->mc_source->get_sampler_view_planes(buffer->mc_source);
+   if (!mc_source_sv)
+      goto error_mc_source_sv;
 
    idct_surfaces = buffer->mc_source->get_surfaces(buffer->mc_source);
    if (!idct_surfaces)
@@ -189,7 +189,7 @@ init_idct_buffer(struct vl_mpeg12_buffer *buffer)
    for (i = 0; i < 3; ++i)
       if (!vl_idct_init_buffer(i == 0 ? &dec->idct_y : &dec->idct_c,
                                &buffer->idct[i], idct_source_sv[i],
-                               idct_intermediate_sv[i], idct_surfaces[i]))
+                               mc_source_sv[i], idct_surfaces[i]))
          goto error_plane;
 
    return true;
@@ -199,11 +199,11 @@ error_plane:
       vl_idct_cleanup_buffer(i == 1 ? &dec->idct_c : &dec->idct_y, &buffer->idct[i - 1]);
 
 error_surfaces:
-error_intermediate_sv:
+error_mc_source_sv:
 error_source_sv:
-   buffer->idct_intermediate->destroy(buffer->idct_intermediate);
+   buffer->mc_source->destroy(buffer->mc_source);
 
-error_intermediate:
+error_mc_source:
    buffer->idct_source->destroy(buffer->idct_source);
 
 error_source:
@@ -223,7 +223,6 @@ cleanup_idct_buffer(struct vl_mpeg12_buffer *buf)
    vl_idct_cleanup_buffer(&dec->idct_c, &buf->idct[1]);
    vl_idct_cleanup_buffer(&dec->idct_c, &buf->idct[2]);
    buf->idct_source->destroy(buf->idct_source);
-   buf->idct_intermediate->destroy(buf->idct_intermediate);
 }
 
 static bool
@@ -237,14 +236,16 @@ init_mc_buffer(struct vl_mpeg12_buffer *buf)
    dec = (struct vl_mpeg12_decoder*)buf->base.decoder;
    assert(dec);
 
-   formats[0] = formats[1] = formats[2] =dec->mc_source_format;
-   buf->mc_source = vl_video_buffer_init(dec->base.context, dec->pipe,
-                                            dec->base.width, dec->base.height, 1,
-                                            dec->base.chroma_format,
-                                            formats, PIPE_USAGE_STATIC);
+   if (dec->base.entrypoint > PIPE_VIDEO_ENTRYPOINT_IDCT) {
+      formats[0] = formats[1] = formats[2] =dec->mc_source_format;
+      buf->mc_source = vl_video_buffer_init(dec->base.context, dec->pipe,
+                                               dec->base.width, dec->base.height, 1,
+                                               dec->base.chroma_format,
+                                               formats, PIPE_USAGE_STATIC);
 
-   if (!buf->mc_source)
-      goto error_mc_source;
+      if (!buf->mc_source)
+         goto error_mc_source;
+   }
 
    if(!vl_mc_init_buffer(&dec->mc_y, &buf->mc[0]))
       goto error_mc_y;
@@ -420,6 +421,7 @@ vl_mpeg12_destroy(struct pipe_video_decoder *decoder)
    dec->pipe->bind_fs_state(dec->pipe, NULL);
 
    dec->pipe->delete_depth_stencil_alpha_state(dec->pipe, dec->dsa);
+   dec->pipe->delete_sampler_state(dec->pipe, dec->sampler_ycbcr);
 
    vl_mc_cleanup(&dec->mc_y);
    vl_mc_cleanup(&dec->mc_c);
@@ -563,7 +565,14 @@ vl_mpeg12_decoder_flush_buffer(struct pipe_video_decode_buffer *buffer,
 
          vb[1] = vl_vb_get_ycbcr(&buf->vertex_stream, component);
          dec->pipe->set_vertex_buffers(dec->pipe, 2, vb);
-         vl_mc_render_ycbcr(&buf->mc[i], mc_source_sv[component], j, num_ycbcr_blocks[component]);
+
+         if (dec->base.entrypoint <= PIPE_VIDEO_ENTRYPOINT_IDCT)
+            vl_idct_prepare_stage2(component == 0 ? &dec->idct_y : &dec->idct_c, &buf->idct[component]);
+         else {
+            dec->pipe->set_fragment_sampler_views(dec->pipe, 1, &mc_source_sv[component]);
+            dec->pipe->bind_fragment_sampler_states(dec->pipe, 1, &dec->sampler_ycbcr);
+         }
+         vl_mc_render_ycbcr(&buf->mc[i], j, num_ycbcr_blocks[component]);
       }
    }
 }
@@ -572,6 +581,7 @@ static bool
 init_pipe_state(struct vl_mpeg12_decoder *dec)
 {
    struct pipe_depth_stencil_alpha_state dsa;
+   struct pipe_sampler_state sampler;
    unsigned i;
 
    assert(dec);
@@ -594,6 +604,20 @@ init_pipe_state(struct vl_mpeg12_decoder *dec)
    dsa.alpha.ref_value = 0;
    dec->dsa = dec->pipe->create_depth_stencil_alpha_state(dec->pipe, &dsa);
    dec->pipe->bind_depth_stencil_alpha_state(dec->pipe, dec->dsa);
+
+   memset(&sampler, 0, sizeof(sampler));
+   sampler.wrap_s = PIPE_TEX_WRAP_CLAMP_TO_EDGE;
+   sampler.wrap_t = PIPE_TEX_WRAP_CLAMP_TO_EDGE;
+   sampler.wrap_r = PIPE_TEX_WRAP_CLAMP_TO_BORDER;
+   sampler.min_img_filter = PIPE_TEX_FILTER_NEAREST;
+   sampler.min_mip_filter = PIPE_TEX_MIPFILTER_NONE;
+   sampler.mag_img_filter = PIPE_TEX_FILTER_NEAREST;
+   sampler.compare_mode = PIPE_TEX_COMPARE_NONE;
+   sampler.compare_func = PIPE_FUNC_ALWAYS;
+   sampler.normalized_coords = 1;
+   dec->sampler_ycbcr = dec->pipe->create_sampler_state(dec->pipe, &sampler);
+   if (!dec->sampler_ycbcr)
+      return false;
 
    return true;
 }
@@ -675,10 +699,10 @@ init_idct(struct vl_mpeg12_decoder *dec)
    if (dec->idct_source_format == PIPE_FORMAT_NONE)
       return false;
 
-   dec->idct_intermediate_format = find_first_supported_format(dec, const_idct_intermediate_formats,
-                                                               num_idct_intermediate_formats, PIPE_TEXTURE_3D);
+   dec->mc_source_format = find_first_supported_format(dec, const_idct_intermediate_formats,
+                                                       num_idct_intermediate_formats, PIPE_TEXTURE_3D);
 
-   if (dec->idct_intermediate_format == PIPE_FORMAT_NONE)
+   if (dec->mc_source_format == PIPE_FORMAT_NONE)
       return false;
 
    switch (dec->idct_source_format) {
@@ -695,8 +719,8 @@ init_idct(struct vl_mpeg12_decoder *dec)
       return false;
    }
 
-   if (dec->idct_intermediate_format == PIPE_FORMAT_R16G16B16A16_FLOAT ||
-       dec->idct_intermediate_format == PIPE_FORMAT_R32G32B32A32_FLOAT)
+   if (dec->mc_source_format == PIPE_FORMAT_R16G16B16A16_FLOAT ||
+       dec->mc_source_format == PIPE_FORMAT_R32G32B32A32_FLOAT)
       transpose_scale = 1.0f;
    else
       transpose_scale = matrix_scale = sqrt(matrix_scale);
@@ -736,6 +760,49 @@ error_transpose:
 
 error_matrix:
    return false;
+}
+
+static void
+mc_vert_shader_callback(void *priv, struct vl_mc *mc,
+                        struct ureg_program *shader,
+                        unsigned first_output,
+                        struct ureg_dst tex)
+{
+   struct vl_mpeg12_decoder *dec = priv;
+   struct ureg_dst o_vtex;
+
+   assert(priv && mc);
+   assert(shader);
+
+   if (dec->base.entrypoint <= PIPE_VIDEO_ENTRYPOINT_IDCT) {
+      struct vl_idct *idct = mc == &dec->mc_y ? &dec->idct_y : &dec->idct_c;
+      vl_idct_stage2_vert_shader(idct, shader, first_output, tex);
+   } else {
+      o_vtex = ureg_DECL_output(shader, TGSI_SEMANTIC_GENERIC, first_output);
+      ureg_MOV(shader, ureg_writemask(o_vtex, TGSI_WRITEMASK_XY), ureg_src(tex));
+   }
+}
+
+static void
+mc_frag_shader_callback(void *priv, struct vl_mc *mc,
+                        struct ureg_program *shader,
+                        unsigned first_input,
+                        struct ureg_dst dst)
+{
+   struct vl_mpeg12_decoder *dec = priv;
+   struct ureg_src src, sampler;
+
+   assert(priv && mc);
+   assert(shader);
+
+   if (dec->base.entrypoint <= PIPE_VIDEO_ENTRYPOINT_IDCT) {
+      struct vl_idct *idct = mc == &dec->mc_y ? &dec->idct_y : &dec->idct_c;
+      vl_idct_stage2_frag_shader(idct, shader, first_input, dst);
+   } else {
+      src = ureg_DECL_fs_input(shader, TGSI_SEMANTIC_GENERIC, first_input, TGSI_INTERPOLATE_LINEAR);
+      sampler = ureg_DECL_sampler(shader, 0);
+      ureg_TEX(shader, dst, TGSI_TEXTURE_2D, src, sampler);
+   }
 }
 
 struct pipe_video_decoder *
@@ -785,12 +852,6 @@ vl_create_mpeg12_decoder(struct pipe_video_context *context,
    /* TODO: Implement 422, 444 */
    assert(dec->base.chroma_format == PIPE_VIDEO_CHROMA_FORMAT_420);
 
-   dec->mc_source_format = find_first_supported_format(dec, const_mc_source_formats,
-                                                       num_mc_source_formats, PIPE_TEXTURE_3D);
-
-   if (dec->mc_source_format == PIPE_FORMAT_NONE)
-      return NULL;
-
    if (dec->base.chroma_format == PIPE_VIDEO_CHROMA_FORMAT_420) {
       dec->chroma_width = dec->base.width / 2;
       dec->chroma_height = dec->base.height / 2;
@@ -813,6 +874,12 @@ vl_create_mpeg12_decoder(struct pipe_video_context *context,
       else
          mc_scale = 1.0f;
    } else {
+      dec->mc_source_format = find_first_supported_format(dec, const_mc_source_formats,
+                                                          num_mc_source_formats, PIPE_TEXTURE_3D);
+
+      if (dec->mc_source_format == PIPE_FORMAT_NONE)
+         return NULL;
+
       switch (dec->mc_source_format) {
       case PIPE_FORMAT_R16_SNORM:
          mc_scale = SCALE_FACTOR_SNORM;
@@ -828,11 +895,13 @@ vl_create_mpeg12_decoder(struct pipe_video_context *context,
       }
    }
 
-   if (!vl_mc_init(&dec->mc_y, dec->pipe, dec->base.width, dec->base.height, MACROBLOCK_HEIGHT, mc_scale))
+   if (!vl_mc_init(&dec->mc_y, dec->pipe, dec->base.width, dec->base.height, MACROBLOCK_HEIGHT, mc_scale,
+                   mc_vert_shader_callback, mc_frag_shader_callback, dec))
       goto error_mc_y;
 
    // TODO
-   if (!vl_mc_init(&dec->mc_c, dec->pipe, dec->base.width, dec->base.height, BLOCK_HEIGHT, mc_scale))
+   if (!vl_mc_init(&dec->mc_c, dec->pipe, dec->base.width, dec->base.height, BLOCK_HEIGHT, mc_scale,
+                   mc_vert_shader_callback, mc_frag_shader_callback, dec))
       goto error_mc_c;
 
    if (!init_pipe_state(dec))

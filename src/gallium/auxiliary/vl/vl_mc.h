@@ -31,6 +31,8 @@
 #include <pipe/p_state.h>
 #include <pipe/p_video_state.h>
 
+#include <tgsi/tgsi_ureg.h>
+
 #include "vl_defines.h"
 #include "vl_types.h"
 
@@ -51,7 +53,7 @@ struct vl_mc
    void *blend_add[VL_MC_NUM_BLENDERS];
    void *vs_ref, *vs_ycbcr;
    void *fs_ref, *fs_ycbcr;
-   void *sampler_ref, *sampler_ycbcr;
+   void *sampler_ref;
 };
 
 struct vl_mc_buffer
@@ -64,9 +66,22 @@ struct vl_mc_buffer
    struct pipe_framebuffer_state fb_state;
 };
 
+typedef void (*vl_mc_ycbcr_vert_shader)(void *priv, struct vl_mc *mc,
+                                        struct ureg_program *shader,
+                                        unsigned first_output,
+                                        struct ureg_dst tex);
+
+typedef void (*vl_mc_ycbcr_frag_shader)(void *priv, struct vl_mc *mc,
+                                        struct ureg_program *shader,
+                                        unsigned first_input,
+                                        struct ureg_dst dst);
+
 bool vl_mc_init(struct vl_mc *renderer, struct pipe_context *pipe,
                 unsigned picture_width, unsigned picture_height,
-                unsigned macroblock_size, float scale);
+                unsigned macroblock_size, float scale,
+                vl_mc_ycbcr_vert_shader vs_callback,
+                vl_mc_ycbcr_frag_shader fs_callback,
+                void *callback_priv);
 
 void vl_mc_cleanup(struct vl_mc *renderer);
 
@@ -78,7 +93,6 @@ void vl_mc_set_surface(struct vl_mc_buffer *buffer, struct pipe_surface *surface
 
 void vl_mc_render_ref(struct vl_mc_buffer *buffer, struct pipe_sampler_view *ref);
 
-void vl_mc_render_ycbcr(struct vl_mc_buffer *buffer, struct pipe_sampler_view *source,
-                        unsigned component, unsigned num_instances);
+void vl_mc_render_ycbcr(struct vl_mc_buffer *buffer, unsigned component, unsigned num_instances);
 
 #endif /* vl_mc_h */

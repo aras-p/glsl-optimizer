@@ -30,6 +30,8 @@
 
 #include <pipe/p_state.h>
 
+#include <tgsi/tgsi_ureg.h>
+
 /* shader based inverse distinct cosinus transformation
  * expect usage of vl_vertex_buffers as a todo list
  */
@@ -46,8 +48,7 @@ struct vl_idct
 
    void *samplers[2];
 
-   void *matrix_vs, *transpose_vs;
-   void *matrix_fs, *transpose_fs;
+   void *vs, *fs;
 
    struct pipe_sampler_view *matrix;
    struct pipe_sampler_view *transpose;
@@ -56,8 +57,8 @@ struct vl_idct
 /* a set of buffers to work with */
 struct vl_idct_buffer
 {
-   struct pipe_viewport_state viewport[2];
-   struct pipe_framebuffer_state fb_state[2];
+   struct pipe_viewport_state viewport;
+   struct pipe_framebuffer_state fb_state;
 
    union
    {
@@ -71,28 +72,45 @@ struct vl_idct_buffer
 };
 
 /* upload the idct matrix, which can be shared by all idct instances of a pipe */
-struct pipe_sampler_view *vl_idct_upload_matrix(struct pipe_context *pipe, float scale);
+struct pipe_sampler_view *
+vl_idct_upload_matrix(struct pipe_context *pipe, float scale);
+
+void
+vl_idct_stage2_vert_shader(struct vl_idct *idct, struct ureg_program *shader,
+                           unsigned first_output, struct ureg_dst tex);
+
+void
+vl_idct_stage2_frag_shader(struct vl_idct *idct, struct ureg_program *shader,
+                           unsigned first_input, struct ureg_dst fragment);
 
 /* init an idct instance */
-bool vl_idct_init(struct vl_idct *idct, struct pipe_context *pipe,
-                  unsigned buffer_width, unsigned buffer_height,
-                  unsigned nr_of_render_targets,
-                  struct pipe_sampler_view *matrix,
-                  struct pipe_sampler_view *transpose);
+bool
+vl_idct_init(struct vl_idct *idct, struct pipe_context *pipe,
+             unsigned buffer_width, unsigned buffer_height,
+             unsigned nr_of_render_targets,
+             struct pipe_sampler_view *matrix,
+             struct pipe_sampler_view *transpose);
 
 /* destroy an idct instance */
-void vl_idct_cleanup(struct vl_idct *idct);
+void
+vl_idct_cleanup(struct vl_idct *idct);
 
 /* init a buffer assosiated with agiven idct instance */
-bool vl_idct_init_buffer(struct vl_idct *idct, struct vl_idct_buffer *buffer,
-                         struct pipe_sampler_view *source,
-                         struct pipe_sampler_view *intermediate,
-                         struct pipe_surface *destination);
+bool
+vl_idct_init_buffer(struct vl_idct *idct, struct vl_idct_buffer *buffer,
+                    struct pipe_sampler_view *source,
+                    struct pipe_sampler_view *intermediate,
+                    struct pipe_surface *destination);
 
 /* cleanup a buffer of an idct instance */
-void vl_idct_cleanup_buffer(struct vl_idct *idct, struct vl_idct_buffer *buffer);
+void
+vl_idct_cleanup_buffer(struct vl_idct *idct, struct vl_idct_buffer *buffer);
 
 /* flush the buffer and start rendering, vertex buffers needs to be setup before calling this */
-void vl_idct_flush(struct vl_idct *idct, struct vl_idct_buffer *buffer, unsigned num_verts);
+void
+vl_idct_flush(struct vl_idct *idct, struct vl_idct_buffer *buffer, unsigned num_verts);
+
+void
+vl_idct_prepare_stage2(struct vl_idct *idct, struct vl_idct_buffer *buffer);
 
 #endif

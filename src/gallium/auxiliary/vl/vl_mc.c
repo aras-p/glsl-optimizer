@@ -37,12 +37,16 @@
 #include "vl_defines.h"
 #include "vl_vertex_buffers.h"
 #include "vl_mc.h"
+#include "vl_idct.h"
 
 enum VS_OUTPUT
 {
    VS_O_VPOS,
    VS_O_VTOP,
-   VS_O_VBOTTOM
+   VS_O_VBOTTOM,
+
+   VS_O_FLAGS = VS_O_VTOP,
+   VS_O_VTEX = VS_O_VBOTTOM
 };
 
 static struct ureg_dst
@@ -220,13 +224,13 @@ create_ref_frag_shader(struct vl_mc *r)
 }
 
 static void *
-create_ycbcr_vert_shader(struct vl_mc *r)
+create_ycbcr_vert_shader(struct vl_mc *r, vl_mc_ycbcr_vert_shader vs_callback, void *callback_priv)
 {
    struct ureg_program *shader;
 
    struct ureg_src vrect, vpos;
    struct ureg_dst t_vpos, t_vtex;
-   struct ureg_dst o_vpos, o_vtex;
+   struct ureg_dst o_vpos, o_flags;
 
    struct vertex2f scale = {
       (float)BLOCK_WIDTH / r->buffer_width * MACROBLOCK_WIDTH / r->macroblock_size,
@@ -246,11 +250,11 @@ create_ycbcr_vert_shader(struct vl_mc *r)
    t_vtex = ureg_DECL_temporary(shader);
 
    o_vpos = ureg_DECL_output(shader, TGSI_SEMANTIC_POSITION, VS_O_VPOS);
-   o_vtex = ureg_DECL_output(shader, TGSI_SEMANTIC_GENERIC, VS_O_VTOP);
+   o_flags = ureg_DECL_output(shader, TGSI_SEMANTIC_GENERIC, VS_O_FLAGS);
 
    /*
     * o_vtex.xy = t_vpos
-    * o_vtex.z = intra * 0.5
+    * o_flags.z = intra * 0.5
     *
     * if(interlaced) {
     *    t_vtex.xy = vrect.y ? { 0, scale.y } : { -scale.y : 0 }
@@ -258,14 +262,16 @@ create_ycbcr_vert_shader(struct vl_mc *r)
     *    t_vtex.y = t_vtex.z ? t_vtex.x : t_vtex.y
     *    o_vpos.y = t_vtex.y + t_vpos.y
     *
-    *    o_vtex.w = t_vtex.z ? 0 : 1
+    *    o_flags.w = t_vtex.z ? 0 : 1
     * }
     *
     */
-   ureg_MOV(shader, ureg_writemask(o_vtex, TGSI_WRITEMASK_XY), ureg_src(t_vpos));
-   ureg_MUL(shader, ureg_writemask(o_vtex, TGSI_WRITEMASK_Z),
+
+   vs_callback(callback_priv, r, shader, VS_O_VTEX, t_vpos);
+
+   ureg_MUL(shader, ureg_writemask(o_flags, TGSI_WRITEMASK_Z),
             ureg_scalar(vpos, TGSI_SWIZZLE_Z), ureg_imm1f(shader, 0.5f));
-   ureg_MOV(shader, ureg_writemask(o_vtex, TGSI_WRITEMASK_W), ureg_imm1f(shader, -1.0f));
+   ureg_MOV(shader, ureg_writemask(o_flags, TGSI_WRITEMASK_W), ureg_imm1f(shader, -1.0f));
 
    if (r->macroblock_size == MACROBLOCK_HEIGHT) { //TODO
       ureg_IF(shader, ureg_scalar(vpos, TGSI_SWIZZLE_W), &label);
@@ -286,7 +292,7 @@ create_ycbcr_vert_shader(struct vl_mc *r)
          ureg_ADD(shader, ureg_writemask(o_vpos, TGSI_WRITEMASK_Y),
                   ureg_src(t_vpos), ureg_src(t_vtex));
 
-         ureg_CMP(shader, ureg_writemask(o_vtex, TGSI_WRITEMASK_W),
+         ureg_CMP(shader, ureg_writemask(o_flags, TGSI_WRITEMASK_W),
                   ureg_negate(ureg_scalar(ureg_src(t_vtex), TGSI_SWIZZLE_Z)),
                   ureg_imm1f(shader, 0.0f), ureg_imm1f(shader, 1.0f));
 
@@ -303,10 +309,10 @@ create_ycbcr_vert_shader(struct vl_mc *r)
 }
 
 static void *
-create_ycbcr_frag_shader(struct vl_mc *r, float scale)
+create_ycbcr_frag_shader(struct vl_mc *r, float scale, vl_mc_ycbcr_frag_shader fs_callback, void *callback_priv)
 {
    struct ureg_program *shader;
-   struct ureg_src tc, sampler;
+   struct ureg_src flags;
    struct ureg_dst tmp;
    struct ureg_dst fragment;
    unsigned label;
@@ -315,9 +321,7 @@ create_ycbcr_frag_shader(struct vl_mc *r, float scale)
    if (!shader)
       return NULL;
 
-   tc = ureg_DECL_fs_input(shader, TGSI_SEMANTIC_GENERIC, VS_O_VTOP, TGSI_INTERPOLATE_LINEAR);
-
-   sampler = ureg_DECL_sampler(shader, 0);
+   flags = ureg_DECL_fs_input(shader, TGSI_SEMANTIC_GENERIC, VS_O_FLAGS, TGSI_INTERPOLATE_LINEAR);
 
    fragment = ureg_DECL_output(shader, TGSI_SEMANTIC_COLOR, 0);
 
@@ -333,7 +337,7 @@ create_ycbcr_frag_shader(struct vl_mc *r, float scale)
     */
 
    ureg_SEQ(shader, ureg_writemask(tmp, TGSI_WRITEMASK_Y),
-            ureg_scalar(tc, TGSI_SWIZZLE_W), ureg_src(tmp));
+            ureg_scalar(flags, TGSI_SWIZZLE_W), ureg_src(tmp));
 
    ureg_IF(shader, ureg_scalar(ureg_src(tmp), TGSI_SWIZZLE_Y), &label);
 
@@ -342,15 +346,15 @@ create_ycbcr_frag_shader(struct vl_mc *r, float scale)
    ureg_fixup_label(shader, label, ureg_get_instruction_number(shader));
    ureg_ELSE(shader, &label);
 
-      ureg_TEX(shader, tmp, TGSI_TEXTURE_2D, tc, sampler);
+      fs_callback(callback_priv, r, shader, VS_O_VTEX, tmp);
 
       if (scale != 1.0f)
          ureg_MAD(shader, ureg_writemask(fragment, TGSI_WRITEMASK_XYZ),
                   ureg_src(tmp), ureg_imm1f(shader, scale),
-                  ureg_scalar(tc, TGSI_SWIZZLE_Z));
+                  ureg_scalar(flags, TGSI_SWIZZLE_Z));
       else
          ureg_ADD(shader, ureg_writemask(fragment, TGSI_WRITEMASK_XYZ),
-                  ureg_src(tmp), ureg_scalar(tc, TGSI_SWIZZLE_Z));
+                  ureg_src(tmp), ureg_scalar(flags, TGSI_SWIZZLE_Z));
 
       ureg_MOV(shader, ureg_writemask(fragment, TGSI_WRITEMASK_W), ureg_imm1f(shader, 1.0f));
 
@@ -385,12 +389,6 @@ init_pipe_state(struct vl_mc *r)
    r->sampler_ref = r->pipe->create_sampler_state(r->pipe, &sampler);
    if (!r->sampler_ref)
       goto error_sampler_ref;
-
-   sampler.min_img_filter = PIPE_TEX_FILTER_NEAREST;
-   sampler.mag_img_filter = PIPE_TEX_FILTER_NEAREST;
-   r->sampler_ycbcr = r->pipe->create_sampler_state(r->pipe, &sampler);
-   if (!r->sampler_ycbcr)
-      goto error_sampler_ycbcr;
 
    for (i = 0; i < VL_MC_NUM_BLENDERS; ++i) {
       memset(&blend, 0, sizeof blend);
@@ -442,9 +440,6 @@ error_blend:
    r->pipe->delete_sampler_state(r->pipe, r->sampler_ref);
 
 error_sampler_ref:
-   r->pipe->delete_sampler_state(r->pipe, r->sampler_ycbcr);
-
-error_sampler_ycbcr:
    return false;
 }
 
@@ -456,7 +451,6 @@ cleanup_pipe_state(struct vl_mc *r)
    assert(r);
 
    r->pipe->delete_sampler_state(r->pipe, r->sampler_ref);
-   r->pipe->delete_sampler_state(r->pipe, r->sampler_ycbcr);
    for (i = 0; i < VL_MC_NUM_BLENDERS; ++i) {
       r->pipe->delete_blend_state(r->pipe, r->blend_clear[i]);
       r->pipe->delete_blend_state(r->pipe, r->blend_add[i]);
@@ -467,7 +461,10 @@ cleanup_pipe_state(struct vl_mc *r)
 bool
 vl_mc_init(struct vl_mc *renderer, struct pipe_context *pipe,
            unsigned buffer_width, unsigned buffer_height,
-           unsigned macroblock_size, float scale)
+           unsigned macroblock_size, float scale,
+           vl_mc_ycbcr_vert_shader vs_callback,
+           vl_mc_ycbcr_frag_shader fs_callback,
+           void *callback_priv)
 {
    assert(renderer);
    assert(pipe);
@@ -486,7 +483,7 @@ vl_mc_init(struct vl_mc *renderer, struct pipe_context *pipe,
    if (!renderer->vs_ref)
       goto error_vs_ref;
 
-   renderer->vs_ycbcr = create_ycbcr_vert_shader(renderer);
+   renderer->vs_ycbcr = create_ycbcr_vert_shader(renderer, vs_callback, callback_priv);
    if (!renderer->vs_ycbcr)
       goto error_vs_ycbcr;
 
@@ -494,7 +491,7 @@ vl_mc_init(struct vl_mc *renderer, struct pipe_context *pipe,
    if (!renderer->fs_ref)
       goto error_fs_ref;
 
-   renderer->fs_ycbcr = create_ycbcr_frag_shader(renderer, scale);
+   renderer->fs_ycbcr = create_ycbcr_frag_shader(renderer, scale, fs_callback, callback_priv);
    if (!renderer->fs_ycbcr)
       goto error_fs_ycbcr;
 
@@ -614,8 +611,7 @@ vl_mc_render_ref(struct vl_mc_buffer *buffer, struct pipe_sampler_view *ref)
 }
 
 void
-vl_mc_render_ycbcr(struct vl_mc_buffer *buffer, struct pipe_sampler_view *source,
-                   unsigned component, unsigned num_instances)
+vl_mc_render_ycbcr(struct vl_mc_buffer *buffer, unsigned component, unsigned num_instances)
 {
    struct vl_mc *renderer;
 
@@ -630,9 +626,6 @@ vl_mc_render_ycbcr(struct vl_mc_buffer *buffer, struct pipe_sampler_view *source
 
    renderer->pipe->bind_vs_state(renderer->pipe, renderer->vs_ycbcr);
    renderer->pipe->bind_fs_state(renderer->pipe, renderer->fs_ycbcr);
-
-   renderer->pipe->set_fragment_sampler_views(renderer->pipe, 1, &source);
-   renderer->pipe->bind_fragment_sampler_states(renderer->pipe, 1, &renderer->sampler_ycbcr);
 
    util_draw_arrays_instanced(renderer->pipe, PIPE_PRIM_QUADS, 0, 4, 0, num_instances);
 }
