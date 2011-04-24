@@ -35,6 +35,18 @@
 #include "vl_compositor.h"
 #include "vl_mpeg12_decoder.h"
 
+const enum pipe_format const_resource_formats_YV12[3] = {
+   PIPE_FORMAT_R8_UNORM,
+   PIPE_FORMAT_R8_UNORM,
+   PIPE_FORMAT_R8_UNORM
+};
+
+const enum pipe_format const_resource_formats_NV12[3] = {
+   PIPE_FORMAT_R8_UNORM,
+   PIPE_FORMAT_R8G8_UNORM,
+   PIPE_FORMAT_NONE
+};
+
 static void
 vl_context_destroy(struct pipe_video_context *context)
 {
@@ -202,19 +214,28 @@ vl_context_create_buffer(struct pipe_video_context *context,
                          enum pipe_video_chroma_format chroma_format,
                          unsigned width, unsigned height)
 {
-   const enum pipe_format resource_formats[3] = {
-      PIPE_FORMAT_R8_UNORM,
-      PIPE_FORMAT_R8_UNORM,
-      PIPE_FORMAT_R8_UNORM
-   };
-
    struct vl_context *ctx = (struct vl_context*)context;
    struct pipe_video_buffer *result;
    unsigned buffer_width, buffer_height;
 
+   const enum pipe_format *resource_formats;
+
    assert(context);
    assert(width > 0 && height > 0);
-   assert(buffer_format == PIPE_FORMAT_YV12);
+
+   switch(buffer_format) {
+   case PIPE_FORMAT_YV12:
+      resource_formats = const_resource_formats_YV12;
+      break;
+
+   case PIPE_FORMAT_NV12:
+      resource_formats = const_resource_formats_NV12;
+      break;
+
+   default:
+      assert(0);
+      return NULL;
+   }
 
    buffer_width = ctx->pot_buffers ? util_next_power_of_two(width) : width;
    buffer_height = ctx->pot_buffers ? util_next_power_of_two(height) : height;

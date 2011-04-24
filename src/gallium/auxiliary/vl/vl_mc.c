@@ -368,6 +368,7 @@ init_pipe_state(struct vl_mc *r)
    struct pipe_sampler_state sampler;
    struct pipe_blend_state blend;
    struct pipe_rasterizer_state rs_state;
+   unsigned i;
 
    assert(r);
 
@@ -391,28 +392,30 @@ init_pipe_state(struct vl_mc *r)
    if (!r->sampler_ycbcr)
       goto error_sampler_ycbcr;
 
-   memset(&blend, 0, sizeof blend);
-   blend.independent_blend_enable = 0;
-   blend.rt[0].blend_enable = 1;
-   blend.rt[0].rgb_func = PIPE_BLEND_ADD;
-   blend.rt[0].rgb_src_factor = PIPE_BLENDFACTOR_SRC_ALPHA;
-   blend.rt[0].rgb_dst_factor = PIPE_BLENDFACTOR_ZERO;
-   blend.rt[0].alpha_func = PIPE_BLEND_ADD;
-   blend.rt[0].alpha_src_factor = PIPE_BLENDFACTOR_SRC_ALPHA;
-   blend.rt[0].alpha_dst_factor = PIPE_BLENDFACTOR_ZERO;
-   blend.logicop_enable = 0;
-   blend.logicop_func = PIPE_LOGICOP_CLEAR;
-   blend.rt[0].colormask = PIPE_MASK_RGBA;
-   blend.dither = 0;
-   r->blend_clear = r->pipe->create_blend_state(r->pipe, &blend);
-   if (!r->blend_clear)
-      goto error_blend_clear;
+   for (i = 0; i < VL_MC_NUM_BLENDERS; ++i) {
+      memset(&blend, 0, sizeof blend);
+      blend.independent_blend_enable = 0;
+      blend.rt[0].blend_enable = 1;
+      blend.rt[0].rgb_func = PIPE_BLEND_ADD;
+      blend.rt[0].rgb_src_factor = PIPE_BLENDFACTOR_SRC_ALPHA;
+      blend.rt[0].rgb_dst_factor = PIPE_BLENDFACTOR_ZERO;
+      blend.rt[0].alpha_func = PIPE_BLEND_ADD;
+      blend.rt[0].alpha_src_factor = PIPE_BLENDFACTOR_SRC_ALPHA;
+      blend.rt[0].alpha_dst_factor = PIPE_BLENDFACTOR_ZERO;
+      blend.logicop_enable = 0;
+      blend.logicop_func = PIPE_LOGICOP_CLEAR;
+      blend.rt[0].colormask = i;
+      blend.dither = 0;
+      r->blend_clear[i] = r->pipe->create_blend_state(r->pipe, &blend);
+      if (!r->blend_clear[i])
+         goto error_blend;
 
-   blend.rt[0].rgb_dst_factor = PIPE_BLENDFACTOR_ONE;
-   blend.rt[0].alpha_dst_factor = PIPE_BLENDFACTOR_ONE;
-   r->blend_add = r->pipe->create_blend_state(r->pipe, &blend);
-   if (!r->blend_add)
-      goto error_blend_add;
+      blend.rt[0].rgb_dst_factor = PIPE_BLENDFACTOR_ONE;
+      blend.rt[0].alpha_dst_factor = PIPE_BLENDFACTOR_ONE;
+      r->blend_add[i] = r->pipe->create_blend_state(r->pipe, &blend);
+      if (!r->blend_add[i])
+         goto error_blend;
+   }
 
    memset(&rs_state, 0, sizeof(rs_state));
    /*rs_state.sprite_coord_enable */
@@ -427,12 +430,15 @@ init_pipe_state(struct vl_mc *r)
    return true;
 
 error_rs_state:
-   r->pipe->delete_blend_state(r->pipe, r->blend_add);
+error_blend:
+   for (i = 0; i < VL_MC_NUM_BLENDERS; ++i) {
+      if (r->blend_add[i])
+         r->pipe->delete_blend_state(r->pipe, r->blend_add[i]);
 
-error_blend_add:
-   r->pipe->delete_blend_state(r->pipe, r->blend_clear);
+      if (r->blend_clear[i])
+         r->pipe->delete_blend_state(r->pipe, r->blend_clear[i]);
+   }
 
-error_blend_clear:
    r->pipe->delete_sampler_state(r->pipe, r->sampler_ref);
 
 error_sampler_ref:
@@ -445,12 +451,16 @@ error_sampler_ycbcr:
 static void
 cleanup_pipe_state(struct vl_mc *r)
 {
+   unsigned i;
+
    assert(r);
 
    r->pipe->delete_sampler_state(r->pipe, r->sampler_ref);
    r->pipe->delete_sampler_state(r->pipe, r->sampler_ycbcr);
-   r->pipe->delete_blend_state(r->pipe, r->blend_clear);
-   r->pipe->delete_blend_state(r->pipe, r->blend_add);
+   for (i = 0; i < VL_MC_NUM_BLENDERS; ++i) {
+      r->pipe->delete_blend_state(r->pipe, r->blend_clear[i]);
+      r->pipe->delete_blend_state(r->pipe, r->blend_add[i]);
+   }
    r->pipe->delete_rasterizer_state(r->pipe, r->rs_state);
 }
 
@@ -520,11 +530,9 @@ vl_mc_cleanup(struct vl_mc *renderer)
 }
 
 bool
-vl_mc_init_buffer(struct vl_mc *renderer, struct vl_mc_buffer *buffer,
-                  struct pipe_sampler_view *source)
+vl_mc_init_buffer(struct vl_mc *renderer, struct vl_mc_buffer *buffer)
 {
    assert(renderer && buffer);
-   assert(source);
 
    buffer->renderer = renderer;
 
@@ -538,8 +546,6 @@ vl_mc_init_buffer(struct vl_mc *renderer, struct vl_mc_buffer *buffer,
    buffer->fb_state.nr_cbufs = 1;
    buffer->fb_state.zsbuf = NULL;
 
-   pipe_sampler_view_reference(&buffer->source, source);
-
    return true;
 }
 
@@ -547,8 +553,6 @@ void
 vl_mc_cleanup_buffer(struct vl_mc_buffer *buffer)
 {
    assert(buffer);
-
-   pipe_sampler_view_reference(&buffer->source, NULL);
 }
 
 void
@@ -567,7 +571,7 @@ vl_mc_set_surface(struct vl_mc_buffer *buffer, struct pipe_surface *surface)
 }
 
 static void
-prepare_pipe_4_rendering(struct vl_mc_buffer *buffer)
+prepare_pipe_4_rendering(struct vl_mc_buffer *buffer, unsigned mask)
 {
    struct vl_mc *renderer;
 
@@ -577,11 +581,9 @@ prepare_pipe_4_rendering(struct vl_mc_buffer *buffer)
    renderer->pipe->bind_rasterizer_state(renderer->pipe, renderer->rs_state);
 
    if (buffer->surface_cleared)
-      renderer->pipe->bind_blend_state(renderer->pipe, renderer->blend_add);
-   else {
-      renderer->pipe->bind_blend_state(renderer->pipe, renderer->blend_clear);
-      buffer->surface_cleared = true;
-   }
+      renderer->pipe->bind_blend_state(renderer->pipe, renderer->blend_add[mask]);
+   else
+      renderer->pipe->bind_blend_state(renderer->pipe, renderer->blend_clear[mask]);
 
    renderer->pipe->set_framebuffer_state(renderer->pipe, &buffer->fb_state);
    renderer->pipe->set_viewport_state(renderer->pipe, &buffer->viewport);
@@ -594,7 +596,7 @@ vl_mc_render_ref(struct vl_mc_buffer *buffer, struct pipe_sampler_view *ref)
 
    assert(buffer && ref);
 
-   prepare_pipe_4_rendering(buffer);
+   prepare_pipe_4_rendering(buffer, PIPE_MASK_R | PIPE_MASK_G | PIPE_MASK_B);
 
    renderer = buffer->renderer;
 
@@ -607,10 +609,13 @@ vl_mc_render_ref(struct vl_mc_buffer *buffer, struct pipe_sampler_view *ref)
    util_draw_arrays_instanced(renderer->pipe, PIPE_PRIM_QUADS, 0, 4, 0,
                               renderer->buffer_width / MACROBLOCK_WIDTH *
                               renderer->buffer_height / MACROBLOCK_HEIGHT);
+
+   buffer->surface_cleared = true;
 }
 
 void
-vl_mc_render_ycbcr(struct vl_mc_buffer *buffer, unsigned num_instances)
+vl_mc_render_ycbcr(struct vl_mc_buffer *buffer, struct pipe_sampler_view *source,
+                   unsigned component, unsigned num_instances)
 {
    struct vl_mc *renderer;
 
@@ -619,14 +624,14 @@ vl_mc_render_ycbcr(struct vl_mc_buffer *buffer, unsigned num_instances)
    if (num_instances == 0)
       return;
 
-   prepare_pipe_4_rendering(buffer);
+   prepare_pipe_4_rendering(buffer, 1 << component);
 
    renderer = buffer->renderer;
 
    renderer->pipe->bind_vs_state(renderer->pipe, renderer->vs_ycbcr);
    renderer->pipe->bind_fs_state(renderer->pipe, renderer->fs_ycbcr);
 
-   renderer->pipe->set_fragment_sampler_views(renderer->pipe, 1, &buffer->source);
+   renderer->pipe->set_fragment_sampler_views(renderer->pipe, 1, &source);
    renderer->pipe->bind_fragment_sampler_states(renderer->pipe, 1, &renderer->sampler_ycbcr);
 
    util_draw_arrays_instanced(renderer->pipe, PIPE_PRIM_QUADS, 0, 4, 0, num_instances);

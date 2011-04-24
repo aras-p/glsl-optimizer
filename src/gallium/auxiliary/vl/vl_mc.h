@@ -31,7 +31,10 @@
 #include <pipe/p_state.h>
 #include <pipe/p_video_state.h>
 
+#include "vl_defines.h"
 #include "vl_types.h"
+
+#define VL_MC_NUM_BLENDERS (1 << VL_MAX_PLANES)
 
 struct pipe_context;
 
@@ -44,7 +47,8 @@ struct vl_mc
 
    void *rs_state;
 
-   void *blend_clear, *blend_add;
+   void *blend_clear[VL_MC_NUM_BLENDERS];
+   void *blend_add[VL_MC_NUM_BLENDERS];
    void *vs_ref, *vs_ycbcr;
    void *fs_ref, *fs_ycbcr;
    void *sampler_ref, *sampler_ycbcr;
@@ -58,8 +62,6 @@ struct vl_mc_buffer
 
    struct pipe_viewport_state viewport;
    struct pipe_framebuffer_state fb_state;
-
-   struct pipe_sampler_view *source;
 };
 
 bool vl_mc_init(struct vl_mc *renderer, struct pipe_context *pipe,
@@ -68,8 +70,7 @@ bool vl_mc_init(struct vl_mc *renderer, struct pipe_context *pipe,
 
 void vl_mc_cleanup(struct vl_mc *renderer);
 
-bool vl_mc_init_buffer(struct vl_mc *renderer, struct vl_mc_buffer *buffer,
-                       struct pipe_sampler_view *source);
+bool vl_mc_init_buffer(struct vl_mc *renderer, struct vl_mc_buffer *buffer);
 
 void vl_mc_cleanup_buffer(struct vl_mc_buffer *buffer);
 
@@ -77,6 +78,7 @@ void vl_mc_set_surface(struct vl_mc_buffer *buffer, struct pipe_surface *surface
 
 void vl_mc_render_ref(struct vl_mc_buffer *buffer, struct pipe_sampler_view *ref);
 
-void vl_mc_render_ycbcr(struct vl_mc_buffer *buffer, unsigned num_instances);
+void vl_mc_render_ycbcr(struct vl_mc_buffer *buffer, struct pipe_sampler_view *source,
+                        unsigned component, unsigned num_instances);
 
 #endif /* vl_mc_h */

@@ -235,7 +235,12 @@ struct pipe_video_buffer
    /**
     * get a individual sampler view for each plane
     */
-   struct pipe_sampler_view **(*get_sampler_views)(struct pipe_video_buffer *buffer);
+   struct pipe_sampler_view **(*get_sampler_view_planes)(struct pipe_video_buffer *buffer);
+
+   /**
+    * get a individual sampler view for each component
+    */
+   struct pipe_sampler_view **(*get_sampler_view_components)(struct pipe_video_buffer *buffer);
 
    /**
     * get a individual surfaces for each plane

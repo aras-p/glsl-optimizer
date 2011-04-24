@@ -97,7 +97,7 @@ init_zscan_buffer(struct vl_mpeg12_buffer *buffer)
    if (!buffer->zscan_source)
       goto error_source;
 
-   source = buffer->zscan_source->get_sampler_views(buffer->zscan_source);
+   source = buffer->zscan_source->get_sampler_view_planes(buffer->zscan_source);
    if (!source)
       goto error_sampler;
 
@@ -174,11 +174,11 @@ init_idct_buffer(struct vl_mpeg12_buffer *buffer)
    if (!buffer->idct_intermediate)
       goto error_intermediate;
 
-   idct_source_sv = buffer->idct_source->get_sampler_views(buffer->idct_source);
+   idct_source_sv = buffer->idct_source->get_sampler_view_planes(buffer->idct_source);
    if (!idct_source_sv)
       goto error_source_sv;
 
-   idct_intermediate_sv = buffer->idct_intermediate->get_sampler_views(buffer->idct_intermediate);
+   idct_intermediate_sv = buffer->idct_intermediate->get_sampler_view_planes(buffer->idct_intermediate);
    if (!idct_intermediate_sv)
       goto error_intermediate_sv;
 
@@ -231,7 +231,6 @@ init_mc_buffer(struct vl_mpeg12_buffer *buf)
 {
    struct vl_mpeg12_decoder *dec;
    enum pipe_format formats[3];
-   struct pipe_sampler_view **mc_source_sv;
 
    assert(buf);
 
@@ -247,17 +246,13 @@ init_mc_buffer(struct vl_mpeg12_buffer *buf)
    if (!buf->mc_source)
       goto error_mc_source;
 
-   mc_source_sv = buf->mc_source->get_sampler_views(buf->mc_source);
-   if (!mc_source_sv)
-      goto error_mc_source_sv;
-
-   if(!vl_mc_init_buffer(&dec->mc_y, &buf->mc[0], mc_source_sv[0]))
+   if(!vl_mc_init_buffer(&dec->mc_y, &buf->mc[0]))
       goto error_mc_y;
 
-   if(!vl_mc_init_buffer(&dec->mc_c, &buf->mc[1], mc_source_sv[1]))
+   if(!vl_mc_init_buffer(&dec->mc_c, &buf->mc[1]))
       goto error_mc_cb;
 
-   if(!vl_mc_init_buffer(&dec->mc_c, &buf->mc[2], mc_source_sv[2]))
+   if(!vl_mc_init_buffer(&dec->mc_c, &buf->mc[2]))
       goto error_mc_cr;
 
    return true;
@@ -269,7 +264,6 @@ error_mc_cb:
    vl_mc_cleanup_buffer(&buf->mc[0]);
 
 error_mc_y:
-error_mc_source_sv:
    buf->mc_source->destroy(buf->mc_source);
 
 error_mc_source:
@@ -328,7 +322,7 @@ vl_mpeg12_buffer_map(struct pipe_video_decode_buffer *buffer)
 
    vl_vb_map(&buf->vertex_stream, dec->pipe);
 
-   sampler_views = buf->zscan_source->get_sampler_views(buf->zscan_source);
+   sampler_views = buf->zscan_source->get_sampler_view_planes(buf->zscan_source);
 
    assert(sampler_views);
 
@@ -510,12 +504,13 @@ vl_mpeg12_decoder_flush_buffer(struct pipe_video_decode_buffer *buffer,
    struct vl_mpeg12_buffer *buf = (struct vl_mpeg12_buffer *)buffer;
    struct vl_mpeg12_decoder *dec;
 
-   struct pipe_sampler_view **sv[2];
+   struct pipe_sampler_view **sv[VL_MAX_REF_FRAMES], **mc_source_sv;
    struct pipe_surface **surfaces;
 
    struct pipe_vertex_buffer vb[3];
 
-   unsigned i, j;
+   unsigned i, j, component;
+   unsigned nr_components;
 
    assert(buf);
 
@@ -523,19 +518,21 @@ vl_mpeg12_decoder_flush_buffer(struct pipe_video_decode_buffer *buffer,
    assert(dec);
 
    for (i = 0; i < 2; ++i)
-      sv[i] = refs[i] ? refs[i]->get_sampler_views(refs[i]) : NULL;
-
-   surfaces = dst->get_surfaces(dst);
+      sv[i] = refs[i] ? refs[i]->get_sampler_view_planes(refs[i]) : NULL;
 
    vb[0] = dec->quads;
    vb[1] = dec->pos;
 
+   surfaces = dst->get_surfaces(dst);
+
    dec->pipe->bind_vertex_elements_state(dec->pipe, dec->ves_mv);
    for (i = 0; i < VL_MAX_PLANES; ++i) {
+      if (!surfaces[i]) continue;
+
       vl_mc_set_surface(&buf->mc[i], surfaces[i]);
 
-      for (j = 0; j < 2; ++j) {
-         if (sv[j] == NULL) continue;
+      for (j = 0; j < VL_MAX_REF_FRAMES; ++j) {
+         if (!sv[j]) continue;
 
          vb[2] = vl_vb_get_mv(&buf->vertex_stream, j);;
          dec->pipe->set_vertex_buffers(dec->pipe, 3, vb);
@@ -546,7 +543,7 @@ vl_mpeg12_decoder_flush_buffer(struct pipe_video_decode_buffer *buffer,
 
    dec->pipe->bind_vertex_elements_state(dec->pipe, dec->ves_ycbcr);
    for (i = 0; i < VL_MAX_PLANES; ++i) {
-      if (num_ycbcr_blocks[i] == 0) continue;
+      if (!num_ycbcr_blocks[i]) continue;
 
       vb[1] = vl_vb_get_ycbcr(&buf->vertex_stream, i);
       dec->pipe->set_vertex_buffers(dec->pipe, 2, vb);
@@ -555,8 +552,20 @@ vl_mpeg12_decoder_flush_buffer(struct pipe_video_decode_buffer *buffer,
 
       if (dec->base.entrypoint <= PIPE_VIDEO_ENTRYPOINT_IDCT)
          vl_idct_flush(i == 0 ? &dec->idct_y : &dec->idct_c, &buf->idct[i], num_ycbcr_blocks[i]);
+   }
 
-      vl_mc_render_ycbcr(&buf->mc[i], num_ycbcr_blocks[i]);
+   mc_source_sv = buf->mc_source->get_sampler_view_planes(buf->mc_source);
+   for (i = 0, component = 0; i < VL_MAX_PLANES; ++i) {
+      if (!surfaces[i]) continue;
+
+      nr_components = util_format_get_nr_components(surfaces[i]->texture->format);
+      for (j = 0; j < nr_components; ++j, ++component) {
+         if (!num_ycbcr_blocks[i]) continue;
+
+         vb[1] = vl_vb_get_ycbcr(&buf->vertex_stream, component);
+         dec->pipe->set_vertex_buffers(dec->pipe, 2, vb);
+         vl_mc_render_ycbcr(&buf->mc[i], mc_source_sv[component], j, num_ycbcr_blocks[component]);
+      }
    }
 
    dec->pipe->flush(dec->pipe, fence);

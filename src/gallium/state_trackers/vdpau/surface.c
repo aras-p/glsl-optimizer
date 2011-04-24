@@ -176,7 +176,7 @@ vlVdpVideoSurfacePutBitsYCbCr(VdpVideoSurface surface,
       return VDP_STATUS_NO_IMPLEMENTATION;
    }
 
-   sampler_views = p_surf->video_buffer->get_sampler_views(p_surf->video_buffer);
+   sampler_views = p_surf->video_buffer->get_sampler_view_planes(p_surf->video_buffer);
    if (!sampler_views)
       return VDP_STATUS_RESOURCES;
 

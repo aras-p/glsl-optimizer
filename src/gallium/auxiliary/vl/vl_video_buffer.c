@@ -38,17 +38,6 @@
 
 #include "vl_video_buffer.h"
 
-static inline void
-adjust_swizzle(struct pipe_sampler_view *sv_templ)
-{
-   if (util_format_get_nr_components(sv_templ->format) == 1) {
-      sv_templ->swizzle_r = PIPE_SWIZZLE_RED;
-      sv_templ->swizzle_g = PIPE_SWIZZLE_RED;
-      sv_templ->swizzle_b = PIPE_SWIZZLE_RED;
-      sv_templ->swizzle_a = PIPE_SWIZZLE_RED;
-   }
-}
-
 static void
 vl_video_buffer_destroy(struct pipe_video_buffer *buffer)
 {
@@ -59,13 +48,14 @@ vl_video_buffer_destroy(struct pipe_video_buffer *buffer)
 
    for (i = 0; i < VL_MAX_PLANES; ++i) {
       pipe_surface_reference(&buf->surfaces[i], NULL);
-      pipe_sampler_view_reference(&buf->sampler_views[i], NULL);
+      pipe_sampler_view_reference(&buf->sampler_view_planes[i], NULL);
+      pipe_sampler_view_reference(&buf->sampler_view_components[i], NULL);
       pipe_resource_reference(&buf->resources[i], NULL);
    }
 }
 
 static struct pipe_sampler_view **
-vl_video_buffer_sampler_views(struct pipe_video_buffer *buffer)
+vl_video_buffer_sampler_view_planes(struct pipe_video_buffer *buffer)
 {
    struct vl_video_buffer *buf = (struct vl_video_buffer *)buffer;
    struct pipe_sampler_view sv_templ;
@@ -77,21 +67,63 @@ vl_video_buffer_sampler_views(struct pipe_video_buffer *buffer)
    pipe = buf->pipe;
 
    for (i = 0; i < buf->num_planes; ++i ) {
-      if (!buf->sampler_views[i]) {
+      if (!buf->sampler_view_planes[i]) {
          memset(&sv_templ, 0, sizeof(sv_templ));
          u_sampler_view_default_template(&sv_templ, buf->resources[i], buf->resources[i]->format);
-         adjust_swizzle(&sv_templ);
-         buf->sampler_views[i] = pipe->create_sampler_view(pipe, buf->resources[i], &sv_templ);
-         if (!buf->sampler_views[i])
+
+         if (util_format_get_nr_components(buf->resources[i]->format) == 1)
+            sv_templ.swizzle_r = sv_templ.swizzle_g = sv_templ.swizzle_b = sv_templ.swizzle_a = PIPE_SWIZZLE_RED;
+
+         buf->sampler_view_planes[i] = pipe->create_sampler_view(pipe, buf->resources[i], &sv_templ);
+         if (!buf->sampler_view_planes[i])
             goto error;
       }
    }
 
-   return buf->sampler_views;
+   return buf->sampler_view_planes;
 
 error:
    for (i = 0; i < buf->num_planes; ++i )
-      pipe_sampler_view_reference(&buf->sampler_views[i], NULL);
+      pipe_sampler_view_reference(&buf->sampler_view_planes[i], NULL);
+
+   return NULL;
+}
+
+static struct pipe_sampler_view **
+vl_video_buffer_sampler_view_components(struct pipe_video_buffer *buffer)
+{
+   struct vl_video_buffer *buf = (struct vl_video_buffer *)buffer;
+   struct pipe_sampler_view sv_templ;
+   struct pipe_context *pipe;
+   unsigned i, j, component;
+
+   assert(buf);
+
+   pipe = buf->pipe;
+
+   for (component = 0, i = 0; i < buf->num_planes; ++i ) {
+      unsigned nr_components = util_format_get_nr_components(buf->resources[i]->format);
+
+      for (j = 0; j < nr_components; ++j, ++component) {
+         assert(component < VL_MAX_PLANES);
+
+         if (!buf->sampler_view_components[component]) {
+            memset(&sv_templ, 0, sizeof(sv_templ));
+            u_sampler_view_default_template(&sv_templ, buf->resources[i], buf->resources[i]->format);
+            sv_templ.swizzle_r = sv_templ.swizzle_g = sv_templ.swizzle_b = PIPE_SWIZZLE_RED + j;
+            sv_templ.swizzle_a = PIPE_SWIZZLE_ONE;
+            buf->sampler_view_components[component] = pipe->create_sampler_view(pipe, buf->resources[i], &sv_templ);
+            if (!buf->sampler_view_components[component])
+               goto error;
+         }
+      }
+   }
+
+   return buf->sampler_view_components;
+
+error:
+   for (i = 0; i < VL_MAX_PLANES; ++i )
+      pipe_sampler_view_reference(&buf->sampler_view_components[i], NULL);
 
    return NULL;
 }
@@ -145,7 +177,8 @@ vl_video_buffer_init(struct pipe_video_context *context,
    buffer = CALLOC_STRUCT(vl_video_buffer);
 
    buffer->base.destroy = vl_video_buffer_destroy;
-   buffer->base.get_sampler_views = vl_video_buffer_sampler_views;
+   buffer->base.get_sampler_view_planes = vl_video_buffer_sampler_view_planes;
+   buffer->base.get_sampler_view_components = vl_video_buffer_sampler_view_components;
    buffer->base.get_surfaces = vl_video_buffer_surfaces;
    buffer->pipe = pipe;
    buffer->num_planes = 1;

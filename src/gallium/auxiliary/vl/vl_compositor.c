@@ -506,7 +506,7 @@ vl_compositor_set_buffer_layer(struct pipe_video_compositor *compositor,
    c->used_layers |= 1 << layer;
    c->layers[layer].fs = c->fs_video_buffer;
 
-   sampler_views = buffer->get_sampler_views(buffer);
+   sampler_views = buffer->get_sampler_view_components(buffer);
    for (i = 0; i < 3; ++i)
       pipe_sampler_view_reference(&c->layers[layer].sampler_views[i], sampler_views[i]);
 

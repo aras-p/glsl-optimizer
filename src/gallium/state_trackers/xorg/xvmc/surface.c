@@ -306,7 +306,7 @@ Status XvMCCreateSurface(Display *dpy, XvMCContext *context, XvMCSurface *surfac
 
    surface_priv->decode_buffer = context_priv->decoder->create_buffer(context_priv->decoder);
    surface_priv->mv_stride = surface_priv->decode_buffer->get_mv_stream_stride(surface_priv->decode_buffer);
-   surface_priv->video_buffer = vpipe->create_buffer(vpipe, PIPE_FORMAT_YV12, //TODO
+   surface_priv->video_buffer = vpipe->create_buffer(vpipe, PIPE_FORMAT_NV12,
                                                      context_priv->decoder->chroma_format,
                                                      context_priv->decoder->width,
                                                      context_priv->decoder->height);
