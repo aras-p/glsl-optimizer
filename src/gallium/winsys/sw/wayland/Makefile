@@ -3,7 +3,7 @@ include $(TOP)/configs/current
 
 LIBNAME = ws_wayland
 
-LIBRARY_INCLUDES = $(WALAND_CFLAGS)
+LIBRARY_INCLUDES = $(WAYLAND_CFLAGS)
 
 LIBRARY_DEFINES =
 
