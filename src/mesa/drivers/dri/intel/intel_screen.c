@@ -548,6 +548,18 @@ __DRIconfig **intelInitScreen2(__DRIscreen *psp)
       intelScreen->deviceID = strtod(devid_override, NULL);
    }
 
+   if (IS_GEN6(intelScreen->deviceID)) {
+      intelScreen->gen = 6;
+   } else if (IS_GEN5(intelScreen->deviceID)) {
+      intelScreen->gen = 5;
+   } else if (IS_965(intelScreen->deviceID)) {
+      intelScreen->gen = 4;
+   } else if (IS_9XX(intelScreen->deviceID)) {
+      intelScreen->gen = 3;
+   } else {
+      intelScreen->gen = 2;
+   }
+
    api_mask = (1 << __DRI_API_OPENGL);
 #if FEATURE_ES1
    api_mask |= (1 << __DRI_API_GLES);
