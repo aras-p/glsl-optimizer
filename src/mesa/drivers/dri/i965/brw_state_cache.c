@@ -294,49 +294,6 @@ brw_upload_cache(struct brw_cache *cache,
 					NULL);
 }
 
-/**
- * Wrapper around brw_cache_data_sz using the cache_id's canonical key size.
- *
- * If nr_reloc_bufs is nonzero, brw_search_cache()/brw_upload_cache() would be
- * better to use, as the potentially changing offsets in the data-used-as-key
- * will result in excessive cache misses.
- *
- * If aux data is involved, use search/upload instead.
-
- */
-drm_intel_bo *
-brw_cache_data(struct brw_cache *cache,
-	       enum brw_cache_id cache_id,
-	       const void *data,
-	       GLuint data_size)
-{
-   drm_intel_bo *bo;
-   struct brw_cache_item *item, lookup;
-   GLuint hash;
-
-   lookup.cache_id = cache_id;
-   lookup.key = data;
-   lookup.key_size = data_size;
-   lookup.reloc_bufs = NULL;
-   lookup.nr_reloc_bufs = 0;
-   hash = hash_key(&lookup);
-   lookup.hash = hash;
-
-   item = search_cache(cache, hash, &lookup);
-   if (item) {
-      update_cache_last(cache, cache_id, item->bo);
-      drm_intel_bo_reference(item->bo);
-      return item->bo;
-   }
-
-   bo = brw_upload_cache(cache, cache_id,
-			 data, data_size,
-			 NULL, 0,
-			 data, data_size);
-
-   return bo;
-}
-
 enum pool_type {
    DW_SURFACE_STATE,
    DW_GENERAL_STATE
