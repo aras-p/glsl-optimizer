@@ -397,8 +397,9 @@ void brw_debug_batch(struct intel_context *intel)
    brw_debug_prog("GS prog", brw->gs.prog_bo);
 
    if (intel->gen < 6) {
-       state_struct_out("SF", brw->sf.state_bo, 0, sizeof(struct brw_sf_unit_state));
-       brw_debug_prog("SF prog", brw->sf.prog_bo);
+      state_struct_out("SF", intel->batch.bo, brw->sf.state_offset,
+		       sizeof(struct brw_sf_unit_state));
+      brw_debug_prog("SF prog", brw->sf.prog_bo);
    }
    dump_sf_viewport_state(brw);
 
