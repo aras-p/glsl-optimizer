@@ -104,3 +104,82 @@ vlVdpOutputSurfaceCreate(VdpDevice device,
 
    return VDP_STATUS_OK;
 }
+
+VdpStatus
+vlVdpOutputSurfaceDestroy(VdpOutputSurface surface)
+{
+   return VDP_STATUS_NO_IMPLEMENTATION;
+}
+
+VdpStatus
+vlVdpOutputSurfaceGetParameters(VdpOutputSurface surface,
+                                VdpRGBAFormat *rgba_format,
+                                uint32_t *width, uint32_t *height)
+{
+   return VDP_STATUS_NO_IMPLEMENTATION;
+}
+
+VdpStatus
+vlVdpOutputSurfaceGetBitsNative(VdpOutputSurface surface,
+                                VdpRect const *source_rect,
+                                void *const *destination_data,
+                                uint32_t const *destination_pitches)
+{
+   return VDP_STATUS_NO_IMPLEMENTATION;
+}
+
+VdpStatus
+vlVdpOutputSurfacePutBitsNative(VdpOutputSurface surface,
+                                void const *const *source_data,
+                                uint32_t const *source_pitches,
+                                VdpRect const *destination_rect)
+{
+   return VDP_STATUS_NO_IMPLEMENTATION;
+}
+
+VdpStatus
+vlVdpOutputSurfacePutBitsIndexed(VdpOutputSurface surface,
+                                 VdpIndexedFormat source_indexed_format,
+                                 void const *const *source_data,
+                                 uint32_t const *source_pitch,
+                                 VdpRect const *destination_rect,
+                                 VdpColorTableFormat color_table_format,
+                                 void const *color_table)
+{
+   return VDP_STATUS_NO_IMPLEMENTATION;
+}
+
+VdpStatus
+vlVdpOutputSurfacePutBitsYCbCr(VdpOutputSurface surface,
+                               VdpYCbCrFormat source_ycbcr_format,
+                               void const *const *source_data,
+                               uint32_t const *source_pitches,
+                               VdpRect const *destination_rect,
+                               VdpCSCMatrix const *csc_matrix)
+{
+   return VDP_STATUS_NO_IMPLEMENTATION;
+}
+
+VdpStatus
+vlVdpOutputSurfaceRenderOutputSurface(VdpOutputSurface destination_surface,
+                                      VdpRect const *destination_rect,
+                                      VdpOutputSurface source_surface,
+                                      VdpRect const *source_rect,
+                                      VdpColor const *colors,
+                                      VdpOutputSurfaceRenderBlendState const *blend_state,
+                                      uint32_t flags)
+{
+   return VDP_STATUS_NO_IMPLEMENTATION;
+}
+
+VdpStatus
+vlVdpOutputSurfaceRenderBitmapSurface(VdpOutputSurface destination_surface,
+                                      VdpRect const *destination_rect,
+                                      VdpBitmapSurface source_surface,
+                                      VdpRect const *source_rect,
+                                      VdpColor const *colors,
+                                      VdpOutputSurfaceRenderBlendState const *blend_state,
+                                      uint32_t flags)
+{
+   return VDP_STATUS_NO_IMPLEMENTATION;
+}

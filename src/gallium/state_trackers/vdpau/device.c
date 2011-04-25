@@ -176,6 +176,8 @@ vlVdpGetProcAddress(VdpDevice device, VdpFuncId function_id, void **function_poi
    if (!vlGetFuncFTAB(function_id, function_pointer))
       return VDP_STATUS_INVALID_FUNC_ID;
 
+   debug_printf("[VDPAU] Got proc adress %p for id %d\n", *function_pointer, function_id);
+
    return VDP_STATUS_OK;
 }
 

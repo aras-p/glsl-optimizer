@@ -239,6 +239,15 @@ vlVdpDecoderRenderMpeg2(vlVdpDecoder *vldecoder,
 #endif
 
 VdpStatus
+vlVdpDecoderGetParameters(VdpDecoder decoder,
+                          VdpDecoderProfile *profile,
+                          uint32_t *width,
+                          uint32_t *height)
+{
+   return VDP_STATUS_NO_IMPLEMENTATION;
+}
+
+VdpStatus
 vlVdpDecoderRender(VdpDecoder decoder,
                    VdpVideoSurface target,
                    VdpPictureInfo const *picture_info,

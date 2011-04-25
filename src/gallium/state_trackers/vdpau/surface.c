@@ -56,7 +56,7 @@ vlVdpVideoSurfaceCreate(VdpDevice device, VdpChromaType chroma_type,
       goto no_htab;
    }
 
-   p_surf = CALLOC(1, sizeof(p_surf));
+   p_surf = CALLOC(1, sizeof(vlVdpSurface));
    if (!p_surf) {
       ret = VDP_STATUS_RESOURCES;
       goto no_res;
@@ -69,10 +69,13 @@ vlVdpVideoSurfaceCreate(VdpDevice device, VdpChromaType chroma_type,
    }
 
    p_surf->device = dev;
-   p_surf->video_buffer = dev->context->vpipe->create_buffer(dev->context->vpipe,
-                                                             PIPE_FORMAT_YV12, // most common used
-                                                             ChromaToPipe(chroma_type),
-                                                             width, height);
+   p_surf->video_buffer = dev->context->vpipe->create_buffer
+   (
+      dev->context->vpipe,
+      PIPE_FORMAT_YV12, // most common used
+      ChromaToPipe(chroma_type),
+      width, height
+   );
 
    *surface = vlAddDataHTAB(p_surf);
    if (*surface == 0) {

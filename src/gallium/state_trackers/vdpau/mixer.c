@@ -87,6 +87,12 @@ no_handle:
 }
 
 VdpStatus
+vlVdpVideoMixerDestroy(VdpVideoMixer mixer)
+{
+   return VDP_STATUS_NO_IMPLEMENTATION;
+}
+
+VdpStatus
 vlVdpVideoMixerSetFeatureEnables(VdpVideoMixer mixer,
                                  uint32_t feature_count,
                                  VdpVideoMixerFeature const *features,
@@ -167,4 +173,40 @@ vlVdpVideoMixerSetAttributeValues(VdpVideoMixer mixer,
     * */
 
    return VDP_STATUS_OK;
+}
+
+VdpStatus
+vlVdpVideoMixerGetFeatureSupport(VdpVideoMixer mixer,
+                                 uint32_t feature_count,
+                                 VdpVideoMixerFeature const *features,
+                                 VdpBool *feature_supports)
+{
+   return VDP_STATUS_NO_IMPLEMENTATION;
+}
+
+VdpStatus
+vlVdpVideoMixerGetFeatureEnables(VdpVideoMixer mixer,
+                                 uint32_t feature_count,
+                                 VdpVideoMixerFeature const *features,
+                                 VdpBool *feature_enables)
+{
+   return VDP_STATUS_NO_IMPLEMENTATION;
+}
+
+VdpStatus
+vlVdpVideoMixerGetParameterValues(VdpVideoMixer mixer,
+                                  uint32_t parameter_count,
+                                  VdpVideoMixerParameter const *parameters,
+                                  void *const *parameter_values)
+{
+   return VDP_STATUS_NO_IMPLEMENTATION;
+}
+
+VdpStatus
+vlVdpVideoMixerGetAttributeValues(VdpVideoMixer mixer,
+                                  uint32_t attribute_count,
+                                  VdpVideoMixerAttribute const *attributes,
+                                  void *const *attribute_values)
+{
+   return VDP_STATUS_NO_IMPLEMENTATION;
 }

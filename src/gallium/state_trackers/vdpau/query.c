@@ -207,6 +207,21 @@ vlVdpOutputSurfaceQueryGetPutBitsNativeCapabilities(VdpDevice device, VdpRGBAFor
 }
 
 VdpStatus
+vlVdpOutputSurfaceQueryPutBitsIndexedCapabilities(VdpDevice device,
+                                                  VdpRGBAFormat surface_rgba_format,
+                                                  VdpIndexedFormat bits_indexed_format,
+                                                  VdpColorTableFormat color_table_format,
+                                                  VdpBool *is_supported)
+{
+   debug_printf("[VDPAU] Querying output surfaces get put indexed cap\n");
+
+   if (!is_supported)
+      return VDP_STATUS_INVALID_POINTER;
+
+   return VDP_STATUS_NO_IMPLEMENTATION;
+}
+
+VdpStatus
 vlVdpOutputSurfaceQueryPutBitsYCbCrCapabilities(VdpDevice device, VdpRGBAFormat surface_rgba_format,
                                                 VdpYCbCrFormat bits_ycbcr_format,
                                                 VdpBool *is_supported)
