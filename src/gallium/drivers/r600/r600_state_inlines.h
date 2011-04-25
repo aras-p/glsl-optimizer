@@ -342,7 +342,7 @@ static inline uint32_t r600_translate_colorswap(enum pipe_format format)
 
 	case PIPE_FORMAT_A8B8G8R8_UNORM:
 	case PIPE_FORMAT_X8B8G8R8_UNORM:
-		//        case PIPE_FORMAT_R8SG8SB8UX8U_NORM:
+	/* case PIPE_FORMAT_R8SG8SB8UX8U_NORM: */
 		return V_0280A0_SWAP_STD_REV;
 
 	case PIPE_FORMAT_Z24X8_UNORM:
@@ -496,7 +496,7 @@ static INLINE uint32_t r600_translate_colorformat(enum pipe_format format)
 	case PIPE_FORMAT_UYVY:
 	case PIPE_FORMAT_YUYV:
 	default:
-		//R600_ERR("unsupported color format %d %s\n", format, util_format_name(format));
+		/* R600_ERR("unsupported color format %d %s\n", format, util_format_name(format)); */
 		return ~0; /* Unsupported. */
 	}
 }

@@ -1993,9 +1993,11 @@ static int tgsi_exp(struct r600_shader_ctx *ctx)
 		r600_bc_src(&alu.src[0], &ctx->src[0], 0);
 
 		alu.dst.sel = ctx->temp_reg;
-//		r = tgsi_dst(ctx, &inst->Dst[0], i, &alu.dst);
-//		if (r)
-//			return r;
+#if 0
+		r = tgsi_dst(ctx, &inst->Dst[0], i, &alu.dst);
+		if (r)
+			return r;
+#endif
 		alu.dst.write = 1;
 		alu.dst.chan = 1;
 

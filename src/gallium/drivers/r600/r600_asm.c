@@ -525,19 +525,19 @@ static int assign_alu_units(struct r600_bc *bc, struct r600_bc_alu *alu_first,
 		else if (is_alu_vec_unit_inst(bc, alu))
 			trans = 0;
 		else if (assignment[chan])
-			trans = 1; // assume ALU_INST_PREFER_VECTOR
+			trans = 1; /* Assume ALU_INST_PREFER_VECTOR. */
 		else
 			trans = 0;
 
 		if (trans) {
 			if (assignment[4]) {
-				assert(0); //ALU.Trans has already been allocated
+				assert(0); /* ALU.Trans has already been allocated. */
 				return -1;
 			}
 			assignment[4] = alu;
 		} else {
 			if (assignment[chan]) {
-				assert(0); //ALU.chan has already been allocated
+				assert(0); /* ALU.chan has already been allocated. */
 				return -1;
 			}
 			assignment[chan] = alu;
@@ -589,7 +589,7 @@ static int reserve_gpr(struct alu_bank_swizzle *bs, unsigned sel, unsigned chan,
 	if (bs->hw_gpr[cycle][chan] == -1)
 		bs->hw_gpr[cycle][chan] = sel;
 	else if (bs->hw_gpr[cycle][chan] != (int)sel) {
-		// Another scalar operation has already used GPR read port for channel
+		/* Another scalar operation has already used the GPR read port for the channel. */
 		return -1;
 	}
 	return 0;
@@ -609,9 +609,9 @@ static int reserve_cfile(struct r600_bc *bc, struct alu_bank_swizzle *bs, unsign
 			return 0;
 		} else if (bs->hw_cfile_addr[res] == sel &&
 			bs->hw_cfile_elem[res] == chan)
-			return 0; // Read for this scalar element already reserved, nothing to do here.
+			return 0; /* Read for this scalar element already reserved, nothing to do here. */
 	}
-	// All cfile read ports are used, cannot reference vector element
+	/* All cfile read ports are used, cannot reference vector element. */
 	return -1;
 }
 
@@ -626,8 +626,8 @@ static int is_gpr(unsigned sel)
 static int is_cfile(unsigned sel)
 {
 	return (sel > 255 && sel < 512) ||
-		(sel > 511 && sel < 4607) || // Kcache before translate
-		(sel > 127 && sel < 192); // Kcache after translate
+		(sel > 511 && sel < 4607) || /* Kcache before translation. */
+		(sel > 127 && sel < 192); /* Kcache after translation. */
 }
 
 static int is_const(int sel)
@@ -649,8 +649,8 @@ static int check_vector(struct r600_bc *bc, struct r600_bc_alu *alu,
 		if (is_gpr(sel)) {
 			cycle = cycle_for_bank_swizzle_vec[bank_swizzle][src];
 			if (src == 1 && sel == alu->src[0].sel && elem == alu->src[0].chan)
-				// Nothing to do; special-case optimization,
-				// second source uses first source’s reservation
+				/* Nothing to do; special-case optimization,
+				 * second source uses first source’s reservation. */
 				continue;
 			else {
 				r = reserve_gpr(bs, sel, elem, cycle);
@@ -662,7 +662,7 @@ static int check_vector(struct r600_bc *bc, struct r600_bc_alu *alu,
 			if (r)
 				return r;
 		}
-		// No restrictions on PV, PS, literal or special constants
+		/* No restrictions on PV, PS, literal or special constants. */
 	}
 	return 0;
 }
@@ -676,10 +676,10 @@ static int check_scalar(struct r600_bc *bc, struct r600_bc_alu *alu,
 	for (const_count = 0, src = 0; src < num_src; ++src) {
 		sel = alu->src[src].sel;
 		elem = alu->src[src].chan;
-		if (is_const(sel)) { // Any constant, including literal and inline constants
+		if (is_const(sel)) { /* Any constant, including literal and inline constants. */
 			if (const_count >= 2)
-				// More than two references to a constant in
-				// transcendental operation.
+				/* More than two references to a constant in
+				 * transcendental operation. */
 				return -1;
 			else
 				const_count++;
@@ -696,14 +696,14 @@ static int check_scalar(struct r600_bc *bc, struct r600_bc_alu *alu,
 		if (is_gpr(sel)) {
 			cycle = cycle_for_bank_swizzle_scl[bank_swizzle][src];
 			if (cycle < const_count)
-				// Cycle for GPR load conflicts with
-				// constant load in transcendental operation.
+				/* Cycle for GPR load conflicts with
+				 * constant load in transcendental operation. */
 				return -1;
 			r = reserve_gpr(bs, sel, elem, cycle);
 			if (r)
 				return r;
 		}
-		// PV PS restrictions
+		/* PV PS restrictions */
 		if (const_count && (sel == 254 || sel == 255)) {
 			cycle = cycle_for_bank_swizzle_scl[bank_swizzle][src];
 			if (cycle < const_count)
@@ -731,8 +731,8 @@ static int check_and_set_bank_swizzle(struct r600_bc *bc,
 	if (forced)
 		return 0;
 
-	// just check every possible combination of bank swizzle
-	// not very efficent, but works on the first try in most of the cases
+	/* Just check every possible combination of bank swizzle.
+	 * Not very efficent, but works on the first try in most of the cases. */
 	for (i = 0; i < 4; i++)
 		bank_swizzle[i] = SQ_ALU_VEC_012;
 	bank_swizzle[4] = SQ_ALU_SCL_210;
@@ -773,7 +773,7 @@ static int check_and_set_bank_swizzle(struct r600_bc *bc,
 		}
 	}
 
-	// couldn't find a working swizzle
+	/* Couldn't find a working swizzle. */
 	return -1;
 }
 
@@ -843,17 +843,17 @@ void r600_bc_special_constants(u32 value, unsigned *sel, unsigned *neg)
 	case -1:
 		*sel = V_SQ_ALU_SRC_M_1_INT;
 		break;
-	case 0x3F800000: // 1.0f
+	case 0x3F800000: /* 1.0f */
 		*sel = V_SQ_ALU_SRC_1;
 		break;
-	case 0x3F000000: // 0.5f
+	case 0x3F000000: /* 0.5f */
 		*sel = V_SQ_ALU_SRC_0_5;
 		break;
-	case 0xBF800000: // -1.0f
+	case 0xBF800000: /* -1.0f */
 		*sel = V_SQ_ALU_SRC_1;
 		*neg ^= 1;
 		break;
-	case 0xBF000000: // -0.5f
+	case 0xBF000000: /* -0.5f */
 		*sel = V_SQ_ALU_SRC_0_5;
 		*neg ^= 1;
 		break;
@@ -946,13 +946,13 @@ static int merge_inst_groups(struct r600_bc *bc, struct r600_bc_alu *slots[5],
 		if (slots[i] && r600_bc_alu_nliterals(bc, slots[i], literal, &nliteral))
 			return 0;
 
-		// let's check used slots
+		/* Let's check used slots. */
 		if (prev[i] && !slots[i]) {
 			result[i] = prev[i];
 			continue;
 		} else if (prev[i] && slots[i]) {
 			if (result[4] == NULL && prev[4] == NULL && slots[4] == NULL) {
-				// trans unit is still free try to use it
+				/* Trans unit is still free try to use it. */
 				if (is_alu_any_unit_inst(bc, slots[i])) {
 					result[i] = prev[i];
 					result[4] = slots[i];
@@ -971,14 +971,14 @@ static int merge_inst_groups(struct r600_bc *bc, struct r600_bc_alu *slots[5],
 		alu = slots[i];
 		num_once_inst += is_alu_once_inst(bc, alu);
 
-		// let's check dst gpr
+		/* Let's check dst gpr. */
 		if (alu->dst.rel) {
 			if (have_mova)
 				return 0;
 			have_rel = 1;
 		}
 
-		// let's check source gprs
+		/* Let's check source gprs */
 		num_src = r600_bc_get_num_operands(bc, alu);
 		for (src = 0; src < num_src; ++src) {
 			if (alu->src[src].rel) {
@@ -987,7 +987,7 @@ static int merge_inst_groups(struct r600_bc *bc, struct r600_bc_alu *slots[5],
 				have_rel = 1;
 			}
 
-			// constants doesn't matter
+			/* Constants don't matter. */
 			if (!is_gpr(alu->src[src].sel))
 				continue;
 
@@ -995,7 +995,7 @@ static int merge_inst_groups(struct r600_bc *bc, struct r600_bc_alu *slots[5],
 				if (!prev[j] || !prev[j]->dst.write)
 					continue;
 
-				// if it's relative then we can't determin which gpr is really used
+				/* If it's relative then we can't determin which gpr is really used. */
 				if (prev[j]->dst.chan == alu->src[src].chan &&
 					(prev[j]->dst.sel == alu->src[src].sel ||
 					prev[j]->dst.rel || alu->src[src].rel))
@@ -1935,7 +1935,7 @@ void r600_bc_dump(struct r600_bc *bc)
 			fprintf(stderr, "%04d %08X   ", id, bc->bytecode[id]);
 			fprintf(stderr, "ENDIAN:%d ", vtx->endian);
 			fprintf(stderr, "OFFSET:%d\n", vtx->offset);
-			//TODO
+			/* TODO */
 			id++;
 			fprintf(stderr, "%04d %08X   \n", id, bc->bytecode[id]);
 			id++;
@@ -2091,11 +2091,11 @@ int r600_vertex_elements_build_fetch_shader(struct r600_pipe_context *rctx, stru
 	u32 *bytecode;
 	int i, r;
 
-	/* vertex elements offset need special handling, if offset is bigger
-	+ * than what we can put in fetch instruction then we need to alterate
-	 * the vertex resource offset. In such case in order to simplify code
-	 * we will bound one resource per elements. It's a worst case scenario.
-	 */
+	/* Vertex element offsets need special handling. If the offset is
+	 * bigger than what we can put in the fetch instruction we need to
+	 * alter the vertex resource offset. In order to simplify code we
+	 * will bind one resource per element in such cases. It's a worst
+	 * case scenario. */
 	for (i = 0; i < ve->count; i++) {
 		ve->vbuffer_offset[i] = C_SQ_VTX_WORD2_OFFSET & elements[i].src_offset;
 		if (ve->vbuffer_offset[i]) {

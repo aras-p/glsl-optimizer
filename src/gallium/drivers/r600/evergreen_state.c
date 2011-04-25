@@ -1232,9 +1232,11 @@ void evergreen_init_config(struct r600_pipe_context *rctx)
 	r600_pipe_state_add_reg(rstate, R_009100_SPI_CONFIG_CNTL, 0x0, 0xFFFFFFFF, NULL);
 	r600_pipe_state_add_reg(rstate, R_00913C_SPI_CONFIG_CNTL_1, S_00913C_VTX_DONE_DELAY(4), 0xFFFFFFFF, NULL);
 
-//	r600_pipe_state_add_reg(rstate, R_028350_SX_MISC, 0x0, 0xFFFFFFFF, NULL);
+#if 0
+	r600_pipe_state_add_reg(rstate, R_028350_SX_MISC, 0x0, 0xFFFFFFFF, NULL);
 
-//	r600_pipe_state_add_reg(rstate, R_008D8C_SQ_DYN_GPR_CNTL_PS_FLUSH_REQ, 0x0, 0xFFFFFFFF, NULL);
+	r600_pipe_state_add_reg(rstate, R_008D8C_SQ_DYN_GPR_CNTL_PS_FLUSH_REQ, 0x0, 0xFFFFFFFF, NULL);
+#endif
 	r600_pipe_state_add_reg(rstate, R_028A48_PA_SC_MODE_CNTL_0, 0x0, 0xFFFFFFFF, NULL);
 	r600_pipe_state_add_reg(rstate, R_028A4C_PA_SC_MODE_CNTL_1, 0x0, 0xFFFFFFFF, NULL);
 
