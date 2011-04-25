@@ -655,7 +655,9 @@ struct brw_context
       struct brw_clip_prog_data *prog_data;
 
       drm_intel_bo *prog_bo;
-      drm_intel_bo *state_bo;
+
+      /* Offset in the batch to the CLIP state on pre-gen6. */
+      uint32_t state_offset;
 
       /* As of gen6, this is the offset in the batch to the CLIP VP,
        * instead of vp_bo.
