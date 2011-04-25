@@ -139,13 +139,6 @@ static int update_need_pipeline( struct svga_context *svga,
       need_pipeline = TRUE;
    }
 
-   /* SVGA_NEW_CLIP 
-    */
-   if (svga->curr.clip.nr) {
-      SVGA_DBG(DEBUG_SWTNL, "%s: userclip\n", __FUNCTION__);
-      need_pipeline = TRUE;
-   }
-
    if (need_pipeline != svga->state.sw.need_pipeline) {
       svga->state.sw.need_pipeline = need_pipeline;
       svga->dirty |= SVGA_NEW_NEED_PIPELINE;
@@ -163,7 +156,6 @@ struct svga_tracked_state svga_update_need_pipeline =
 {
    "need pipeline",
    (SVGA_NEW_RAST |
-    SVGA_NEW_CLIP |
     SVGA_NEW_VS |
     SVGA_NEW_REDUCED_PRIMITIVE),
    update_need_pipeline
