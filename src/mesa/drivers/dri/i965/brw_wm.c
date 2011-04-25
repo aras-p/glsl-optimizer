@@ -268,13 +268,11 @@ static void do_wm_prog( struct brw_context *brw,
    program = brw_get_program(&c->func, &program_size);
 
    drm_intel_bo_unreference(brw->wm.prog_bo);
-   brw->wm.prog_bo = brw_upload_cache_with_auxdata(&brw->cache, BRW_WM_PROG,
-						   &c->key, sizeof(c->key),
-						   NULL, 0,
-						   program, program_size,
-						   &c->prog_data,
-						   sizeof(c->prog_data),
-						   &brw->wm.prog_data);
+   brw->wm.prog_bo = brw_upload_cache(&brw->cache, BRW_WM_PROG,
+				      &c->key, sizeof(c->key),
+				      program, program_size,
+				      &c->prog_data, sizeof(c->prog_data),
+				      &brw->wm.prog_data);
 }
 
 
@@ -470,7 +468,6 @@ static void brw_prepare_wm_prog(struct brw_context *brw)
    drm_intel_bo_unreference(brw->wm.prog_bo);
    brw->wm.prog_bo = brw_search_cache(&brw->cache, BRW_WM_PROG,
 				      &key, sizeof(key),
-				      NULL, 0,
 				      &brw->wm.prog_data);
    if (brw->wm.prog_bo == NULL)
       do_wm_prog(brw, fp, &key);

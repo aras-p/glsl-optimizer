@@ -119,13 +119,11 @@ static void compile_sf_prog( struct brw_context *brw,
    /* Upload
     */
    drm_intel_bo_unreference(brw->sf.prog_bo);
-   brw->sf.prog_bo = brw_upload_cache_with_auxdata(&brw->cache, BRW_SF_PROG,
-						   &c.key, sizeof(c.key),
-						   NULL, 0,
-						   program, program_size,
-						   &c.prog_data,
-						   sizeof(c.prog_data),
-						   &brw->sf.prog_data);
+   brw->sf.prog_bo = brw_upload_cache(&brw->cache, BRW_SF_PROG,
+				      &c.key, sizeof(c.key),
+				      program, program_size,
+				      &c.prog_data, sizeof(c.prog_data),
+				      &brw->sf.prog_data);
 }
 
 /* Calculate interpolants for triangle and line rasterization.
@@ -194,7 +192,6 @@ static void upload_sf_prog(struct brw_context *brw)
    drm_intel_bo_unreference(brw->sf.prog_bo);
    brw->sf.prog_bo = brw_search_cache(&brw->cache, BRW_SF_PROG,
 				      &key, sizeof(key),
-				      NULL, 0,
 				      &brw->sf.prog_data);
    if (brw->sf.prog_bo == NULL)
       compile_sf_prog( brw, &key );

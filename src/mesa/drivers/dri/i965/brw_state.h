@@ -129,29 +129,16 @@ drm_intel_bo *brw_upload_cache(struct brw_cache *cache,
 			       enum brw_cache_id cache_id,
 			       const void *key,
 			       GLuint key_sz,
-			       drm_intel_bo **reloc_bufs,
-			       GLuint nr_reloc_bufs,
 			       const void *data,
-			       GLuint data_sz);
-
-drm_intel_bo *brw_upload_cache_with_auxdata(struct brw_cache *cache,
-					    enum brw_cache_id cache_id,
-					    const void *key,
-					    GLuint key_sz,
-					    drm_intel_bo **reloc_bufs,
-					    GLuint nr_reloc_bufs,
-					    const void *data,
-					    GLuint data_sz,
-					    const void *aux,
-					    GLuint aux_sz,
-					    void *aux_return);
+			       GLuint data_sz,
+			       const void *aux,
+			       GLuint aux_sz,
+			       void *aux_return);
 
 drm_intel_bo *brw_search_cache( struct brw_cache *cache,
 			  enum brw_cache_id cache_id,
 			  const void *key,
 			  GLuint key_size,
-			  drm_intel_bo **reloc_bufs,
-			  GLuint nr_reloc_bufs,
 			  void *aux_return);
 void brw_state_cache_check_size( struct brw_context *brw );
 

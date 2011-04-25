@@ -338,8 +338,6 @@ struct brw_cache_item {
    GLuint hash;
    GLuint key_size;		/* for variable-sized keys */
    const void *key;
-   drm_intel_bo **reloc_bufs;
-   GLuint nr_reloc_bufs;
 
    drm_intel_bo *bo;
 
