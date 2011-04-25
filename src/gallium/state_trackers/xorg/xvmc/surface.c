@@ -150,11 +150,14 @@ UploadYcbcrBlocks(XvMCSurfacePrivate *surface,
    enum pipe_mpeg12_dct_intra intra;
    enum pipe_mpeg12_dct_type coding;
 
-   unsigned tb, x, y;
+   unsigned tb, x, y, luma_blocks;
    short *blocks;
 
    assert(surface);
    assert(xvmc_mb);
+
+   if (!xvmc_mb->coded_block_pattern)
+      return;
 
    intra = xvmc_mb->macroblock_type & XVMC_MB_TYPE_INTRA ?
            PIPE_MPEG12_DCT_INTRA : PIPE_MPEG12_DCT_DELTA;
@@ -164,7 +167,7 @@ UploadYcbcrBlocks(XvMCSurfacePrivate *surface,
 
    blocks = xvmc_blocks->blocks + xvmc_mb->index * BLOCK_SIZE_SAMPLES;
 
-   for (y = 0; y < 2; ++y) {
+   for (y = 0, luma_blocks = 0; y < 2; ++y) {
       for (x = 0; x < 2; ++x, ++tb) {
          if (xvmc_mb->coded_block_pattern & const_empty_block_mask_420[0][y][x]) {
 
@@ -174,14 +177,18 @@ UploadYcbcrBlocks(XvMCSurfacePrivate *surface,
             stream->intra = intra;
             stream->coding = coding;
 
-            memcpy(surface->ycbcr[0].buffer, blocks, BLOCK_SIZE_BYTES);
-
             surface->ycbcr[0].num_blocks_added++;
             surface->ycbcr[0].stream++;
-            surface->ycbcr[0].buffer += BLOCK_SIZE_SAMPLES;
-            blocks += BLOCK_SIZE_SAMPLES;
+
+            luma_blocks++;
          }
       }
+   }
+
+   if (luma_blocks > 0) {
+      memcpy(surface->ycbcr[0].buffer, blocks, BLOCK_SIZE_BYTES * luma_blocks);
+      surface->ycbcr[0].buffer += BLOCK_SIZE_SAMPLES * luma_blocks;
+      blocks += BLOCK_SIZE_SAMPLES * luma_blocks;
    }
 
    /* TODO: Implement 422, 444 */
@@ -224,7 +231,8 @@ MacroBlocksToPipe(XvMCSurfacePrivate *surface,
       unsigned mv_pos = xvmc_mb->x + surface->mv_stride * xvmc_mb->y;
       unsigned mv_weights[2];
 
-      UploadYcbcrBlocks(surface, xvmc_mb, xvmc_blocks);
+      if (xvmc_mb->macroblock_type & (XVMC_MB_TYPE_PATTERN | XVMC_MB_TYPE_INTRA))
+         UploadYcbcrBlocks(surface, xvmc_mb, xvmc_blocks);
 
       MacroBlockTypeToPipeWeights(xvmc_mb, mv_weights);
 
