@@ -63,7 +63,6 @@
 #include "pack.h"
 #include "pbo.h"
 #include "imports.h"
-#include "pack.h"
 #include "texcompress.h"
 #include "texcompress_fxt1.h"
 #include "texcompress_rgtc.h"
