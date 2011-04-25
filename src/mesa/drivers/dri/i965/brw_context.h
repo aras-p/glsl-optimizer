@@ -647,8 +647,8 @@ struct brw_context
       struct brw_gs_prog_data *prog_data;
 
       GLboolean prog_active;
+      uint32_t state_offset;
       drm_intel_bo *prog_bo;
-      drm_intel_bo *state_bo;
    } gs;
 
    struct {

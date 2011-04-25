@@ -146,7 +146,8 @@ static void upload_pipelined_state_pointers(struct brw_context *brw )
    OUT_RELOC(intel->batch.bo, I915_GEM_DOMAIN_INSTRUCTION, 0,
 	     brw->vs.state_offset);
    if (brw->gs.prog_active)
-      OUT_RELOC(brw->gs.state_bo, I915_GEM_DOMAIN_INSTRUCTION, 0, 1);
+      OUT_RELOC(brw->intel.batch.bo, I915_GEM_DOMAIN_INSTRUCTION, 0,
+		brw->gs.state_offset | 1);
    else
       OUT_BATCH(0);
    OUT_RELOC(brw->intel.batch.bo, I915_GEM_DOMAIN_INSTRUCTION, 0,
@@ -160,12 +161,6 @@ static void upload_pipelined_state_pointers(struct brw_context *brw )
    ADVANCE_BATCH();
 
    brw->state.dirty.brw |= BRW_NEW_PSP;
-}
-
-
-static void prepare_psp_urb_cbs(struct brw_context *brw)
-{
-   brw_add_validated_bo(brw, brw->gs.state_bo);
 }
 
 static void upload_psp_urb_cbs(struct brw_context *brw )
@@ -187,7 +182,6 @@ const struct brw_tracked_state brw_psp_urb_cbs = {
 		CACHE_NEW_WM_UNIT | 
 		CACHE_NEW_CC_UNIT)
    },
-   .prepare = prepare_psp_urb_cbs,
    .emit = upload_psp_urb_cbs,
 };
 

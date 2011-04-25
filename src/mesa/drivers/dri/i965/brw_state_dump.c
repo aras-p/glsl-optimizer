@@ -393,7 +393,8 @@ void brw_debug_batch(struct intel_context *intel)
    brw_debug_prog("VS prog", brw->vs.prog_bo);
 
    if (intel->gen < 6)
-       state_struct_out("GS", brw->gs.state_bo, 0, sizeof(struct brw_gs_unit_state));
+       state_struct_out("GS", intel->batch.bo, brw->gs.state_offset,
+			sizeof(struct brw_gs_unit_state));
    brw_debug_prog("GS prog", brw->gs.prog_bo);
 
    if (intel->gen < 6) {

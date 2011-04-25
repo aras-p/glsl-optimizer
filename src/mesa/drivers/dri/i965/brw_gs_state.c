@@ -35,112 +35,65 @@
 #include "brw_state.h"
 #include "brw_defines.h"
 
-struct brw_gs_unit_key {
-   unsigned int total_grf;
-   unsigned int urb_entry_read_length;
-
-   unsigned int curbe_offset;
-
-   unsigned int nr_urb_entries, urb_size;
-   GLboolean prog_active;
-};
-
 static void
-gs_unit_populate_key(struct brw_context *brw, struct brw_gs_unit_key *key)
-{
-   memset(key, 0, sizeof(*key));
-
-   /* CACHE_NEW_GS_PROG */
-   key->prog_active = brw->gs.prog_active;
-   if (key->prog_active) {
-      key->total_grf = brw->gs.prog_data->total_grf;
-      key->urb_entry_read_length = brw->gs.prog_data->urb_read_length;
-   } else {
-      key->total_grf = 1;
-      key->urb_entry_read_length = 1;
-   }
-
-   /* BRW_NEW_CURBE_OFFSETS */
-   key->curbe_offset = brw->curbe.clip_start;
-
-   /* BRW_NEW_URB_FENCE */
-   key->nr_urb_entries = brw->urb.nr_gs_entries;
-   key->urb_size = brw->urb.vsize;
-}
-
-static drm_intel_bo *
-gs_unit_create_from_key(struct brw_context *brw, struct brw_gs_unit_key *key)
+brw_prepare_gs_unit(struct brw_context *brw)
 {
    struct intel_context *intel = &brw->intel;
-   struct brw_gs_unit_state gs;
-   drm_intel_bo *bo;
+   struct brw_gs_unit_state *gs;
 
-   memset(&gs, 0, sizeof(gs));
+   gs = brw_state_batch(brw, sizeof(*gs), 32, &brw->gs.state_offset);
 
-   gs.thread0.grf_reg_count = ALIGN(key->total_grf, 16) / 16 - 1;
-   if (key->prog_active) /* reloc */
-      gs.thread0.kernel_start_pointer = brw->gs.prog_bo->offset >> 6;
+   memset(gs, 0, sizeof(*gs));
 
-   gs.thread1.floating_point_mode = BRW_FLOATING_POINT_NON_IEEE_754;
-   gs.thread1.single_program_flow = 1;
+   /* CACHE_NEW_GS_PROG */
+   if (brw->gs.prog_active) {
+      gs->thread0.grf_reg_count = (ALIGN(brw->gs.prog_data->total_grf, 16) /
+				   16 - 1);
+      /* reloc */
+      gs->thread0.kernel_start_pointer = brw->gs.prog_bo->offset >> 6;
 
-   gs.thread3.dispatch_grf_start_reg = 1;
-   gs.thread3.const_urb_entry_read_offset = 0;
-   gs.thread3.const_urb_entry_read_length = 0;
-   gs.thread3.urb_entry_read_offset = 0;
-   gs.thread3.urb_entry_read_length = key->urb_entry_read_length;
+      gs->thread1.floating_point_mode = BRW_FLOATING_POINT_NON_IEEE_754;
+      gs->thread1.single_program_flow = 1;
 
-   gs.thread4.nr_urb_entries = key->nr_urb_entries;
-   gs.thread4.urb_entry_allocation_size = key->urb_size - 1;
+      gs->thread3.dispatch_grf_start_reg = 1;
+      gs->thread3.const_urb_entry_read_offset = 0;
+      gs->thread3.const_urb_entry_read_length = 0;
+      gs->thread3.urb_entry_read_offset = 0;
+      gs->thread3.urb_entry_read_length = brw->gs.prog_data->urb_read_length;
 
-   if (key->nr_urb_entries >= 8)
-      gs.thread4.max_threads = 1;
-   else
-      gs.thread4.max_threads = 0;
+      /* BRW_NEW_URB_FENCE */
+      gs->thread4.nr_urb_entries = brw->urb.nr_gs_entries;
+      gs->thread4.urb_entry_allocation_size = brw->urb.vsize - 1;
 
-   if (intel->gen == 5)
-      gs.thread4.rendering_enable = 1;
+      if (brw->urb.nr_gs_entries >= 8)
+	 gs->thread4.max_threads = 1;
+      else
+	 gs->thread4.max_threads = 0;
 
-   if (unlikely(INTEL_DEBUG & DEBUG_STATS))
-      gs.thread4.stats_enable = 1;
-
-   bo = brw_upload_cache(&brw->cache, BRW_GS_UNIT,
-			 key, sizeof(*key),
-			 &brw->gs.prog_bo, 1,
-			 &gs, sizeof(gs));
-
-   if (key->prog_active) {
       /* Emit GS program relocation */
-      drm_intel_bo_emit_reloc(bo, offsetof(struct brw_gs_unit_state, thread0),
-			      brw->gs.prog_bo, gs.thread0.grf_reg_count << 1,
+      drm_intel_bo_emit_reloc(intel->batch.bo,
+			      (brw->gs.state_offset +
+			       offsetof(struct brw_gs_unit_state, thread0)),
+			      brw->gs.prog_bo, gs->thread0.grf_reg_count << 1,
 			      I915_GEM_DOMAIN_INSTRUCTION, 0);
    }
 
-   return bo;
-}
+   if (intel->gen == 5)
+      gs->thread4.rendering_enable = 1;
 
-static void prepare_gs_unit(struct brw_context *brw)
-{
-   struct brw_gs_unit_key key;
+   if (unlikely(INTEL_DEBUG & DEBUG_STATS))
+      gs->thread4.stats_enable = 1;
 
-   gs_unit_populate_key(brw, &key);
-
-   drm_intel_bo_unreference(brw->gs.state_bo);
-   brw->gs.state_bo = brw_search_cache(&brw->cache, BRW_GS_UNIT,
-				       &key, sizeof(key),
-				       &brw->gs.prog_bo, 1,
-				       NULL);
-   if (brw->gs.state_bo == NULL) {
-      brw->gs.state_bo = gs_unit_create_from_key(brw, &key);
-   }
+   brw->state.dirty.cache |= CACHE_NEW_GS_UNIT;
 }
 
 const struct brw_tracked_state brw_gs_unit = {
    .dirty = {
       .mesa  = 0,
-      .brw   = (BRW_NEW_CURBE_OFFSETS |
+      .brw   = (BRW_NEW_BATCH |
+		BRW_NEW_CURBE_OFFSETS |
 		BRW_NEW_URB_FENCE),
       .cache = CACHE_NEW_GS_PROG
    },
-   .prepare = prepare_gs_unit,
+   .prepare = brw_prepare_gs_unit,
 };
