@@ -1461,9 +1461,7 @@ void r600_pipe_set_buffer_resource(struct r600_pipe_context *rctx,
 	r600_pipe_state_add_reg(rstate, R_038004_RESOURCE0_WORD1,
 				rbuffer->bo_size - offset - 1, 0xFFFFFFFF, NULL);
 	r600_pipe_state_add_reg(rstate, R_038008_RESOURCE0_WORD2,
-#ifdef PIPE_ARCH_BIG_ENDIAN
-				S_038008_ENDIAN_SWAP(ENDIAN_8IN32) |
-#endif
+				S_038008_ENDIAN_SWAP(r600_endian_swap(32)) |
 				S_038008_STRIDE(stride), 0xFFFFFFFF, NULL);
 	r600_pipe_state_add_reg(rstate, R_03800C_RESOURCE0_WORD3,
 				0x00000000, 0xFFFFFFFF, NULL);

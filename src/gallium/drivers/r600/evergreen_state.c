@@ -1574,9 +1574,7 @@ void evergreen_pipe_set_buffer_resource(struct r600_pipe_context *rctx,
 	r600_pipe_state_add_reg(rstate, R_030004_RESOURCE0_WORD1,
 				rbuffer->bo_size - offset - 1, 0xFFFFFFFF, NULL);
 	r600_pipe_state_add_reg(rstate, R_030008_RESOURCE0_WORD2,
-#ifdef PIPE_ARCH_BIG_ENDIAN
-				S_030008_ENDIAN_SWAP(ENDIAN_8IN32) |
-#endif
+				S_030008_ENDIAN_SWAP(r600_endian_swap(32)) |
 				S_030008_STRIDE(stride), 0xFFFFFFFF, NULL);
 	r600_pipe_state_add_reg(rstate, R_03000C_RESOURCE0_WORD3,
 				S_03000C_DST_SEL_X(V_03000C_SQ_SEL_X) |

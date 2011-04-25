@@ -28,6 +28,7 @@
 #include <util/u_format.h>
 #include <pipebuffer/pb_buffer.h>
 #include "pipe/p_shader_tokens.h"
+#include "r600_formats.h"
 #include "r600_pipe.h"
 #include "r600d.h"
 
@@ -517,16 +518,16 @@ void r600_draw_vbo(struct pipe_context *ctx, const struct pipe_draw_info *info)
 	case 2:
 		vgt_draw_initiator = 0;
 		vgt_dma_index_type = 0;
-#ifdef PIPE_ARCH_BIG_ENDIAN
-		vgt_dma_swap_mode = ENDIAN_8IN16;
-#endif
+		if (R600_BIG_ENDIAN) {
+			vgt_dma_swap_mode = ENDIAN_8IN16;
+		}
 		break;
 	case 4:
 		vgt_draw_initiator = 0;
 		vgt_dma_index_type = 1;
-#ifdef PIPE_ARCH_BIG_ENDIAN
-		vgt_dma_swap_mode = ENDIAN_8IN32;
-#endif
+		if (R600_BIG_ENDIAN) {
+			vgt_dma_swap_mode = ENDIAN_8IN32;
+		}
 		break;
 	case 0:
 		vgt_draw_initiator = 2;

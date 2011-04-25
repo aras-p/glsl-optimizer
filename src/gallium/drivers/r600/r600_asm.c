@@ -33,12 +33,6 @@
 #include "r600_formats.h"
 #include "r600d.h"
 
-#ifdef PIPE_ARCH_BIG_ENDIAN
-#define CPU_TO_LE32(x)	bswap_32(x)
-#else
-#define CPU_TO_LE32(x)	(x)
-#endif
-
 #define NUM_OF_CYCLES 3
 #define NUM_OF_COMPONENTS 4
 
@@ -1404,7 +1398,7 @@ static int r600_bc_vtx_build(struct r600_bc *bc, struct r600_bc_vtx *vtx, unsign
 				S_SQ_VTX_WORD1_SRF_MODE_ALL(vtx->srf_mode_all) |
 				S_SQ_VTX_WORD1_GPR_DST_GPR(vtx->dst_gpr);
 	bc->bytecode[id++] = S_SQ_VTX_WORD2_OFFSET(vtx->offset) |
-	   			S_SQ_VTX_WORD2_ENDIAN_SWAP(vtx->endian) |
+				S_SQ_VTX_WORD2_ENDIAN_SWAP(vtx->endian) |
 				S_SQ_VTX_WORD2_MEGA_FETCH(1);
 	bc->bytecode[id++] = 0;
 	return 0;
@@ -1974,6 +1968,8 @@ static void r600_vertex_data_type(enum pipe_format pformat, unsigned *format,
 		}
 	}
 
+	*endian = r600_endian_swap(desc->channel[i].size);
+
 	switch (desc->channel[i].type) {
 	/* Half-floats, floats, ints */
 	case UTIL_FORMAT_TYPE_FLOAT:
@@ -1991,9 +1987,6 @@ static void r600_vertex_data_type(enum pipe_format pformat, unsigned *format,
 				*format = FMT_16_16_16_16_FLOAT;
 				break;
 			}
-#ifdef PIPE_ARCH_BIG_ENDIAN
-			*endian = ENDIAN_8IN16;
-#endif
 			break;
 		case 32:
 			switch (desc->nr_channels) {
@@ -2010,9 +2003,6 @@ static void r600_vertex_data_type(enum pipe_format pformat, unsigned *format,
 				*format = FMT_32_32_32_32_FLOAT;
 				break;
 			}
-#ifdef PIPE_ARCH_BIG_ENDIAN
-			*endian = ENDIAN_8IN32;
-#endif
 			break;
 		default:
 			goto out_unknown;
@@ -2050,9 +2040,6 @@ static void r600_vertex_data_type(enum pipe_format pformat, unsigned *format,
 				*format = FMT_16_16_16_16;
 				break;
 			}
-#ifdef PIPE_ARCH_BIG_ENDIAN
-			*endian = ENDIAN_8IN16;
-#endif
 			break;
 		case 32:
 			switch (desc->nr_channels) {
@@ -2069,9 +2056,6 @@ static void r600_vertex_data_type(enum pipe_format pformat, unsigned *format,
 				*format = FMT_32_32_32_32;
 				break;
 			}
-#ifdef PIPE_ARCH_BIG_ENDIAN
-			*endian = ENDIAN_8IN32;
-#endif
 			break;
 		default:
 			goto out_unknown;
@@ -2216,8 +2200,12 @@ int r600_vertex_elements_build_fetch_shader(struct r600_pipe_context *rctx, stru
 		return -ENOMEM;
 	}
 
-	for(i = 0; i < ve->fs_size / 4; i++) {
-		*(bytecode + i) = CPU_TO_LE32(*(bc.bytecode + i));
+	if (R600_BIG_ENDIAN) {
+		for (i = 0; i < ve->fs_size / 4; ++i) {
+			bytecode[i] = bswap_32(bc.bytecode[i]);
+		}
+	} else {
+		memcpy(bytecode, bc.bytecode, ve->fs_size);
 	}
 
 	r600_bo_unmap(rctx->radeon, ve->fetch_shader);
