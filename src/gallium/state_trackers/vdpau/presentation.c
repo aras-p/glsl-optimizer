@@ -27,16 +27,12 @@
 
 #include <stdio.h>
 
-#include "vdpau_private.h"
 #include <vdpau/vdpau.h>
+
 #include <util/u_debug.h>
 #include <util/u_memory.h>
 
-VdpStatus
-vlVdpPresentationQueueTargetDestroy(VdpPresentationQueueTarget presentation_queue_target)
-{
-   return VDP_STATUS_NO_IMPLEMENTATION;
-}
+#include "vdpau_private.h"
 
 VdpStatus
 vlVdpPresentationQueueCreate(VdpDevice device,

@@ -222,6 +222,8 @@ boolean vlCreateHTAB(void);
 void vlDestroyHTAB(void);
 vlHandle vlAddDataHTAB(void *data);
 void* vlGetDataHTAB(vlHandle handle);
+void vlRemoveDataHTAB(vlHandle handle);
+
 boolean vlGetFuncFTAB(VdpFuncId function_id, void **func);
 
 /* Public functions */

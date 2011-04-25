@@ -92,3 +92,13 @@ void* vlGetDataHTAB(vlHandle handle)
    return (void*)handle;
 #endif
 }
+
+void vlRemoveDataHTAB(vlHandle handle)
+{
+#ifdef VL_HANDLES
+   pipe_mutex_lock(htab_lock);
+   if (htab)
+      handle_table_remove(htab, handle);
+   pipe_mutex_unlock(htab_lock);
+#endif
+}

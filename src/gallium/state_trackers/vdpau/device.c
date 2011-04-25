@@ -27,9 +27,12 @@
 
 #include <pipe/p_compiler.h>
 #include <pipe/p_video_context.h>
-#include <vl_winsys.h>
+
 #include <util/u_memory.h>
 #include <util/u_debug.h>
+
+#include <vl_winsys.h>
+
 #include "vdpau_private.h"
 
 PUBLIC VdpStatus
@@ -94,8 +97,8 @@ PUBLIC VdpStatus
 vlVdpPresentationQueueTargetCreateX11(VdpDevice device, Drawable drawable,
                                       VdpPresentationQueueTarget *target)
 {
-   VdpStatus    ret;
-   vlVdpPresentationQueueTarget *pqt = NULL;
+   vlVdpPresentationQueueTarget *pqt;
+   VdpStatus ret;
 
    debug_printf("[VDPAU] Creating PresentationQueueTarget\n");
 
@@ -122,8 +125,25 @@ vlVdpPresentationQueueTargetCreateX11(VdpDevice device, Drawable drawable,
    return VDP_STATUS_OK;
 
 no_handle:
-   FREE(dev);
+   FREE(pqt);
    return ret;
+}
+
+VdpStatus
+vlVdpPresentationQueueTargetDestroy(VdpPresentationQueueTarget presentation_queue_target)
+{
+   vlVdpPresentationQueueTarget *pqt;
+
+   debug_printf("[VDPAU] Destroying PresentationQueueTarget\n");
+
+   pqt = vlGetDataHTAB(presentation_queue_target);
+   if (!pqt)
+      return VDP_STATUS_INVALID_HANDLE;
+
+   vlRemoveDataHTAB(presentation_queue_target);
+   FREE(pqt);
+
+   return VDP_STATUS_OK;
 }
 
 VdpStatus
@@ -134,6 +154,7 @@ vlVdpDeviceDestroy(VdpDevice device)
    vlVdpDevice *dev = vlGetDataHTAB(device);
    if (!dev)
       return VDP_STATUS_INVALID_HANDLE;
+
    FREE(dev);
    vlDestroyHTAB();
 
