@@ -388,7 +388,8 @@ void brw_debug_batch(struct intel_context *intel)
    dump_wm_sampler_state(brw);
 
    if (intel->gen < 6)
-       state_struct_out("VS", brw->vs.state_bo, 0, sizeof(struct brw_vs_unit_state));
+       state_struct_out("VS", intel->batch.bo, brw->vs.state_offset,
+			sizeof(struct brw_vs_unit_state));
    brw_debug_prog("VS prog", brw->vs.prog_bo);
 
    if (intel->gen < 6)

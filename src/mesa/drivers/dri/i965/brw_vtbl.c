@@ -60,7 +60,6 @@ dri_bo_release(drm_intel_bo **bo)
 static void brw_destroy_context( struct intel_context *intel )
 {
    struct brw_context *brw = brw_context(&intel->ctx);
-   int i;
 
    brw_destroy_state(brw);
    brw_draw_destroy( brw );
@@ -77,7 +76,6 @@ static void brw_destroy_context( struct intel_context *intel )
 
    dri_bo_release(&brw->curbe.curbe_bo);
    dri_bo_release(&brw->vs.prog_bo);
-   dri_bo_release(&brw->vs.state_bo);
    dri_bo_release(&brw->vs.const_bo);
    dri_bo_release(&brw->gs.prog_bo);
    dri_bo_release(&brw->gs.state_bo);
