@@ -672,12 +672,21 @@ intelAllocateBuffer(__DRIscreen *screen,
 {
    struct intel_buffer *intelBuffer;
    struct intel_screen *intelScreen = screen->private;
+   uint32_t tiling;
 
    intelBuffer = CALLOC(sizeof *intelBuffer);
    if (intelBuffer == NULL)
       return NULL;
 
-   intelBuffer->region = intel_region_alloc(intelScreen, I915_TILING_NONE,
+   if ((attachment == __DRI_BUFFER_DEPTH ||
+	attachment == __DRI_BUFFER_STENCIL ||
+	attachment == __DRI_BUFFER_DEPTH_STENCIL) &&
+       intelScreen->gen >= 4)
+      tiling = I915_TILING_Y;
+   else
+      tiling = I915_TILING_X;
+
+   intelBuffer->region = intel_region_alloc(intelScreen, tiling,
 					    format / 8, width, height, GL_TRUE);
    
    if (intelBuffer->region == NULL) {
