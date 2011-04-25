@@ -136,7 +136,7 @@ nouveau_xorg_pci_probe(DriverPtr driver,
 			       NULL, NULL, NULL, NULL, NULL);
     if (scrn != NULL) {
 	scrn->driverVersion = 1;
-	scrn->driverName = "i915";
+	scrn->driverName = "nouveau";
 	scrn->name = "modesetting";
 	scrn->Probe = NULL;
 
