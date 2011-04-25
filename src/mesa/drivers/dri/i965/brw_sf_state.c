@@ -39,7 +39,7 @@
 static void upload_sf_vp(struct brw_context *brw)
 {
    struct intel_context *intel = &brw->intel;
-   struct gl_context *ctx = &brw->intel.ctx;
+   struct gl_context *ctx = &intel->ctx;
    const GLfloat depth_scale = 1.0F / ctx->DrawBuffer->_DepthMaxF;
    struct brw_sf_viewport *sfv;
    GLfloat y_scale, y_bias;

@@ -668,7 +668,6 @@ struct brw_context
       struct brw_sf_prog_data *prog_data;
 
       drm_intel_bo *prog_bo;
-      drm_intel_bo *state_bo;
       uint32_t state_offset;
       uint32_t vp_offset;
    } sf;
