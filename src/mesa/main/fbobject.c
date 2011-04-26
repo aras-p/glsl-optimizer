@@ -1186,6 +1186,8 @@ _mesa_base_fbo_format(struct gl_context *ctx, GLenum internalFormat)
              ctx->Extensions.ARB_framebuffer_object ? GL_INTENSITY : 0;
    case GL_RGB9_E5:
       return ctx->Extensions.EXT_texture_shared_exponent ? GL_RGB : 0;
+   case GL_R11F_G11F_B10F:
+      return ctx->Extensions.EXT_packed_float ? GL_RGB : 0;
    /* XXX add integer formats eventually */
    default:
       return 0;

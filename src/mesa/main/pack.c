@@ -39,6 +39,7 @@
 #include "pixeltransfer.h"
 #include "imports.h"
 #include "../../gallium/auxiliary/util/u_format_rgb9e5.h"
+#include "../../gallium/auxiliary/util/u_format_r11g11b10f.h"
 
 
 /**
@@ -1902,6 +1903,14 @@ _mesa_pack_rgba_span_float(struct gl_context *ctx, GLuint n, GLfloat rgba[][4],
             }
          }
          break;
+      case GL_UNSIGNED_INT_10F_11F_11F_REV:
+         {
+            GLuint *dst = (GLuint *) dstAddr;
+            for (i = 0; i < n; i++) {
+               dst[i] = float3_to_r11g11b10f(rgba[i]);
+            }
+         }
+         break;
       default:
          _mesa_problem(ctx, "bad type in _mesa_pack_rgba_span_float");
          return;
@@ -2341,7 +2350,8 @@ extract_float_rgba(GLuint n, GLfloat rgba[][4],
           srcType == GL_UNSIGNED_INT_8_8_8_8_REV ||
           srcType == GL_UNSIGNED_INT_10_10_10_2 ||
           srcType == GL_UNSIGNED_INT_2_10_10_10_REV ||
-          srcType == GL_UNSIGNED_INT_5_9_9_9_REV);
+          srcType == GL_UNSIGNED_INT_5_9_9_9_REV ||
+          srcType == GL_UNSIGNED_INT_10F_11F_11F_REV);
 
    get_component_mapping(srcFormat,
                          &rSrc, &gSrc, &bSrc, &aSrc,
@@ -2839,6 +2849,34 @@ extract_float_rgba(GLuint n, GLfloat rgba[][4],
             }
          }
          break;
+      case GL_UNSIGNED_INT_10F_11F_11F_REV:
+         if (swapBytes) {
+            const GLuint *uisrc = (const GLuint *) src;
+            GLuint i;
+            GLfloat f[3];
+            for (i = 0; i < n; i ++) {
+               GLuint p = uisrc[i];
+               SWAP4BYTE(p);
+               r11g11b10f_to_float3(p, f);
+               rgba[i][rDst] = f[0];
+               rgba[i][gDst] = f[1];
+               rgba[i][bDst] = f[2];
+               rgba[i][aDst] = 1.0F;
+            }
+         }
+         else {
+            const GLuint *uisrc = (const GLuint *) src;
+            GLuint i;
+            GLfloat f[3];
+            for (i = 0; i < n; i ++) {
+               r11g11b10f_to_float3(uisrc[i], f);
+               rgba[i][rDst] = f[0];
+               rgba[i][gDst] = f[1];
+               rgba[i][bDst] = f[2];
+               rgba[i][aDst] = 1.0F;
+            }
+         }
+         break;
       default:
          _mesa_problem(NULL, "bad srcType in extract float data");
          break;
@@ -2942,7 +2980,8 @@ extract_uint_rgba(GLuint n, GLuint rgba[][4],
           srcType == GL_UNSIGNED_INT_8_8_8_8_REV ||
           srcType == GL_UNSIGNED_INT_10_10_10_2 ||
           srcType == GL_UNSIGNED_INT_2_10_10_10_REV ||
-          srcType == GL_UNSIGNED_INT_5_9_9_9_REV);
+          srcType == GL_UNSIGNED_INT_5_9_9_9_REV ||
+          srcType == GL_UNSIGNED_INT_10F_11F_11F_REV);
 
    get_component_mapping(srcFormat,
                          &rSrc, &gSrc, &bSrc, &aSrc,
@@ -3335,6 +3374,35 @@ extract_uint_rgba(GLuint n, GLuint rgba[][4],
             }
          }
          break;
+      case GL_UNSIGNED_INT_10F_11F_11F_REV:
+         if (swapBytes) {
+            const GLuint *uisrc = (const GLuint *) src;
+            GLuint i;
+            float f[3];
+            for (i = 0; i < n; i ++) {
+               GLuint p = uisrc[i];
+               SWAP4BYTE(p);
+               r11g11b10f_to_float3(p, f);
+               rgba[i][rDst] = clamp_float_to_uint(f[0]);
+               rgba[i][gDst] = clamp_float_to_uint(f[1]);
+               rgba[i][bDst] = clamp_float_to_uint(f[2]);
+               rgba[i][aDst] = 1;
+            }
+         }
+         else {
+            const GLuint *uisrc = (const GLuint *) src;
+            GLuint i;
+            float f[3];
+            for (i = 0; i < n; i ++) {
+               GLuint p = uisrc[i];
+               r11g11b10f_to_float3(p, f);
+               rgba[i][rDst] = clamp_float_to_uint(f[0]);
+               rgba[i][gDst] = clamp_float_to_uint(f[1]);
+               rgba[i][bDst] = clamp_float_to_uint(f[2]);
+               rgba[i][aDst] = 1;
+            }
+         }
+         break;
       default:
          _mesa_problem(NULL, "bad srcType in extract uint data");
          break;
@@ -3415,7 +3483,8 @@ _mesa_unpack_color_span_chan( struct gl_context *ctx,
           srcType == GL_UNSIGNED_INT_8_8_8_8_REV ||
           srcType == GL_UNSIGNED_INT_10_10_10_2 ||
           srcType == GL_UNSIGNED_INT_2_10_10_10_REV ||
-          srcType == GL_UNSIGNED_INT_5_9_9_9_REV);
+          srcType == GL_UNSIGNED_INT_5_9_9_9_REV ||
+          srcType == GL_UNSIGNED_INT_10F_11F_11F_REV);
 
    /* Try simple cases first */
    if (transferOps == 0) {
@@ -3738,7 +3807,8 @@ _mesa_unpack_color_span_float( struct gl_context *ctx,
           srcType == GL_UNSIGNED_INT_8_8_8_8_REV ||
           srcType == GL_UNSIGNED_INT_10_10_10_2 ||
           srcType == GL_UNSIGNED_INT_2_10_10_10_REV ||
-          srcType == GL_UNSIGNED_INT_5_9_9_9_REV);
+          srcType == GL_UNSIGNED_INT_5_9_9_9_REV ||
+          srcType == GL_UNSIGNED_INT_10F_11F_11F_REV);
 
    /* general solution, no special cases, yet */
    {
@@ -3945,7 +4015,8 @@ _mesa_unpack_color_span_uint(struct gl_context *ctx,
           srcType == GL_UNSIGNED_INT_8_8_8_8_REV ||
           srcType == GL_UNSIGNED_INT_10_10_10_2 ||
           srcType == GL_UNSIGNED_INT_2_10_10_10_REV ||
-          srcType == GL_UNSIGNED_INT_5_9_9_9_REV);
+          srcType == GL_UNSIGNED_INT_5_9_9_9_REV ||
+          srcType == GL_UNSIGNED_INT_10F_11F_11F_REV);
 
 
    /* Extract image data as uint[4] pixels */

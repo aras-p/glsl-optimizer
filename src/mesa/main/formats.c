@@ -1082,6 +1082,15 @@ static struct gl_format_info format_info[MESA_FORMAT_COUNT] =
       0, 0, 0, 0, 0,
       1, 1, 4
    },
+   {
+      MESA_FORMAT_R11_G11_B10_FLOAT,
+      "MESA_FORMAT_R11_G11_B10_FLOAT",
+      GL_RGB,
+      GL_FLOAT,
+      11, 11, 10, 0,
+      0, 0, 0, 0, 0,
+      1, 1, 4
+   },
 };
 
 
@@ -1814,6 +1823,11 @@ _mesa_format_to_type_and_comps(gl_format format,
 
    case MESA_FORMAT_RGB9_E5_FLOAT:
       *datatype = GL_UNSIGNED_INT_5_9_9_9_REV;
+      *comps = 3;
+      return;
+
+   case MESA_FORMAT_R11_G11_B10_FLOAT:
+      *datatype = GL_UNSIGNED_INT_10F_11F_11F_REV;
       *comps = 3;
       return;
 

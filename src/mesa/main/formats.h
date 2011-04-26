@@ -207,6 +207,7 @@ typedef enum
    MESA_FORMAT_SIGNED_I16,        /*                     IIII IIII IIII IIII */
 
    MESA_FORMAT_RGB9_E5_FLOAT,
+   MESA_FORMAT_R11_G11_B10_FLOAT,
 
    MESA_FORMAT_COUNT
 } gl_format;
