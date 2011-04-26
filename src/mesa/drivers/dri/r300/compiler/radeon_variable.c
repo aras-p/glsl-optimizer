@@ -44,24 +44,11 @@ void rc_variable_change_dst(
 	unsigned int new_index,
 	unsigned int new_writemask)
 {
-	unsigned int new_idx, old_idx;
-	unsigned int conversion_swizzle = rc_init_swizzle(RC_SWIZZLE_UNUSED, 0);
 	struct rc_variable * var_ptr;
 	struct rc_list * readers;
 	unsigned int old_mask = rc_variable_writemask_sum(var);
-
-	new_idx = 0;
-	for (old_idx = 0; old_idx < 4; old_idx++) {
-		if (!GET_BIT(old_mask, old_idx))
-			continue;
-		for ( ; new_idx < 4; new_idx++) {
-			if (GET_BIT(new_writemask, new_idx)) {
-				SET_SWZ(conversion_swizzle, old_idx, new_idx);
-				new_idx++;
-				break;
-			}
-		}
-	}
+	unsigned int conversion_swizzle =
+			rc_make_conversion_swizzle(old_mask, new_writemask);
 
 	for (var_ptr = var; var_ptr; var_ptr = var_ptr->Friend) {
 		if (var_ptr->Inst->Type == RC_INSTRUCTION_NORMAL) {

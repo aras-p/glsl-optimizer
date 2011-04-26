@@ -141,7 +141,11 @@ static unsigned int srcs_need_rewrite(const struct rc_opcode_info * info)
 	}
 }
 
-static unsigned int adjust_channels(
+/**
+ * @return A swizzle the results from converting old_swizzle using
+ * conversion_swizzle
+ */
+unsigned int rc_adjust_channels(
 	unsigned int old_swizzle,
 	unsigned int conversion_swizzle)
 {
@@ -197,7 +201,8 @@ void rc_pair_rewrite_writemask(
 
 	for (i = 0; i < info->NumSrcRegs; i++) {
 		sub->Arg[i].Swizzle =
-			adjust_channels(sub->Arg[i].Swizzle, conversion_swizzle);
+			rc_adjust_channels(sub->Arg[i].Swizzle,
+						conversion_swizzle);
 	}
 }
 
@@ -207,7 +212,7 @@ static void normal_rewrite_writemask_cb(
 	struct rc_src_register * src)
 {
 	unsigned int * new_mask = (unsigned int *)userdata;
-	src->Swizzle = adjust_channels(src->Swizzle, *new_mask);
+	src->Swizzle = rc_adjust_channels(src->Swizzle, *new_mask);
 }
 
 /**
@@ -604,4 +609,28 @@ struct rc_instruction * rc_match_bgnloop(struct rc_instruction * bgnloop)
 		}
 	}
 	return NULL;
+}
+
+/**
+ * @return A conversion swizzle for converting from old_mask->new_mask
+ */
+unsigned int rc_make_conversion_swizzle(
+	unsigned int old_mask,
+	unsigned int new_mask)
+{
+	unsigned int conversion_swizzle = rc_init_swizzle(RC_SWIZZLE_UNUSED, 0);
+	unsigned int old_idx;
+	unsigned int new_idx = 0;
+	for (old_idx = 0; old_idx < 4; old_idx++) {
+		if (!GET_BIT(old_mask, old_idx))
+			continue;
+		for ( ; new_idx < 4; new_idx++) {
+			if (GET_BIT(new_mask, new_idx)) {
+				SET_SWZ(conversion_swizzle, old_idx, new_idx);
+				new_idx++;
+				break;
+			}
+		}
+	}
+	return conversion_swizzle;
 }

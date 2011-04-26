@@ -34,6 +34,7 @@
 #include "program/register_allocate.h"
 #include "ralloc.h"
 
+#include "r300_fragprog_swizzle.h"
 #include "radeon_compiler.h"
 #include "radeon_compiler_util.h"
 #include "radeon_dataflow.h"
@@ -232,6 +233,26 @@ static unsigned int is_derivative(rc_opcode op)
 	return (op == RC_OPCODE_DDX || op == RC_OPCODE_DDY);
 }
 
+static int find_class(
+	struct rc_class * classes,
+	unsigned int writemask,
+	unsigned int max_writemask_count)
+{
+	unsigned int i;
+	for (i = 0; i < RC_REG_CLASS_COUNT; i++) {
+		unsigned int j;
+		if (classes[i].WritemaskCount > max_writemask_count) {
+			continue;
+		}
+		for (j = 0; j < 3; j++) {
+			if (classes[i].Writemasks[j] == writemask) {
+				return i;
+			}
+		}
+	}
+	return -1;
+}
+
 static enum rc_reg_class variable_get_class(
 	struct rc_variable * variable,
 	struct rc_class * classes)
@@ -240,25 +261,48 @@ static enum rc_reg_class variable_get_class(
 	unsigned int can_change_writemask= 1;
 	unsigned int writemask = rc_variable_writemask_sum(variable);
 	struct rc_list * readers = rc_variable_readers_union(variable);
+	int class_index;
 
 	if (!variable->C->is_r500) {
-		unsigned int mask_count = 0;
+		struct rc_class c;
 		/* The assumption here is that if an instruction has type
 		 * RC_INSTRUCTION_NORMAL then it is a TEX instruction.
 		 * r300 and r400 can't swizzle the result of a TEX lookup. */
 		if (variable->Inst->Type == RC_INSTRUCTION_NORMAL) {
 			writemask = RC_MASK_XYZW;
 		}
-		for (i = 0; i < 4; i++) {
-			if (GET_BIT(writemask, i)) {
-				mask_count++;
-			}
+
+		/* Check if it is possible to do swizzle packing for r300/r400
+		 * without creating non-native swizzles. */
+		class_index = find_class(classes, writemask, 3);
+		if (class_index < 0) {
+			goto error;
 		}
-		/* XXX We should do swizzle packing for r300 and r400 here.
-		 * We need to figure out how not to create non-native
-		 * swizzles. */
-		if (mask_count > 1) {
-			can_change_writemask = 0;
+		c = classes[class_index];
+		for (i = 0; i < c.WritemaskCount; i++) {
+			int j;
+			unsigned int conversion_swizzle =
+						rc_make_conversion_swizzle(
+						writemask, c.Writemasks[i]);
+			for (j = 0; j < variable->ReaderCount; j++) {
+				unsigned int old_swizzle;
+				unsigned int new_swizzle;
+				struct rc_reader r = variable->Readers[j];
+				if (r.Inst->Type == RC_INSTRUCTION_PAIR ) {
+					old_swizzle = r.U.P.Arg->Swizzle;
+				} else {
+					old_swizzle = r.U.I.Src->Swizzle;
+				}
+				new_swizzle = rc_adjust_channels(
+					old_swizzle, conversion_swizzle);
+				if (!r300_swizzle_is_native_basic(new_swizzle)) {
+					can_change_writemask = 0;
+					break;
+				}
+			}
+			if (!can_change_writemask) {
+				break;
+			}
 		}
 	}
 
@@ -285,20 +329,18 @@ static enum rc_reg_class variable_get_class(
 			}
 		}
 	}
-	for (i = 0; i < RC_REG_CLASS_COUNT; i++) {
-		unsigned int j;
-		if (!can_change_writemask && classes[i].WritemaskCount > 1) {
-			continue;
-		}
-		for (j = 0; j < 3; j++) {
-			if (classes[i].Writemasks[j] == writemask) {
-				return classes[i].Class;
-			}
-		}
-	}
-	rc_error(variable->C, "Could not find class for index=%u mask=%u\n",
+
+	class_index = find_class(classes, writemask,
+						can_change_writemask ? 3 : 1);
+	if (class_index > -1) {
+		return classes[class_index].Class;
+	} else {
+error:
+		rc_error(variable->C,
+				"Could not find class for index=%u mask=%u\n",
 				variable->Dst.Index, writemask);
-	return 0;
+		return 0;
+	}
 }
 
 static unsigned int overlap_live_intervals_array(
