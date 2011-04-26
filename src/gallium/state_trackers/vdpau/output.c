@@ -108,7 +108,21 @@ vlVdpOutputSurfaceCreate(VdpDevice device,
 VdpStatus
 vlVdpOutputSurfaceDestroy(VdpOutputSurface surface)
 {
-   return VDP_STATUS_NO_IMPLEMENTATION;
+   vlVdpOutputSurface *vlsurface;
+
+   debug_printf("[VDPAU] Destroying output surface\n");
+
+   vlsurface = vlGetDataHTAB(surface);
+   if (!vlsurface)
+      return VDP_STATUS_INVALID_HANDLE;
+
+   pipe_surface_reference(&vlsurface->surface, NULL);
+   pipe_sampler_view_reference(&vlsurface->sampler_view, NULL);
+
+   vlRemoveDataHTAB(surface);
+   FREE(vlsurface);
+
+   return VDP_STATUS_OK;
 }
 
 VdpStatus
