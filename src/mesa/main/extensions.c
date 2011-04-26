@@ -502,6 +502,7 @@ _mesa_enable_sw_extensions(struct gl_context *ctx)
    ctx->Extensions.EXT_texture_env_dot3 = GL_TRUE;
    ctx->Extensions.EXT_texture_mirror_clamp = GL_TRUE;
    ctx->Extensions.EXT_texture_lod_bias = GL_TRUE;
+   ctx->Extensions.EXT_texture_shared_exponent = GL_TRUE;
 #if FEATURE_EXT_texture_sRGB
    ctx->Extensions.EXT_texture_sRGB = GL_TRUE;
    ctx->Extensions.EXT_texture_sRGB_decode = GL_TRUE;

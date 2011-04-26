@@ -2332,6 +2332,27 @@ static void store_texel_s8_z24(struct gl_texture_image *texImage,
 #endif
 
 
+/* MESA_FORMAT_RGB9_E5 ******************************************************/
+
+static void FETCH(rgb9_e5)( const struct gl_texture_image *texImage,
+                            GLint i, GLint j, GLint k, GLfloat *texel )
+{
+   const GLuint *src = TEXEL_ADDR(GLuint, texImage, i, j, k, 1);
+   rgb9e5_to_float3(*src, texel);
+   texel[ACOMP] = 1.0F;
+}
+
+#if DIM == 3
+static void store_texel_rgb9_e5(struct gl_texture_image *texImage,
+                                GLint i, GLint j, GLint k, const void *texel)
+{
+   const GLfloat *src = (const GLfloat *) texel;
+   GLuint *dst = TEXEL_ADDR(GLuint, texImage, i, j, k, 1);
+   *dst = float3_to_rgb9e5(src);
+}
+#endif
+
+
 #undef TEXEL_ADDR
 #undef DIM
 #undef FETCH

@@ -979,11 +979,9 @@ _mesa_GetTexLevelParameteriv( GLenum target, GLint level,
          }
          break;
       case GL_TEXTURE_SHARED_SIZE:
-         if (ctx->VersionMajor >= 3) {
-            /* XXX return number of exponent bits for shared exponent texture
-             * formats, like GL_RGB9_E5.
-             */
-            *params = 0;
+         if (ctx->VersionMajor >= 3 ||
+             ctx->Extensions.EXT_texture_shared_exponent) {
+            *params = texFormat == MESA_FORMAT_RGB9_E5_FLOAT ? 5 : 0;
          }
          else {
             goto invalid_pname;
