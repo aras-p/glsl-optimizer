@@ -502,6 +502,9 @@ _mesa_create_exec_table(void)
    SET_CompressedTexSubImage2DARB(exec, _mesa_CompressedTexSubImage2DARB);
    SET_CompressedTexSubImage1DARB(exec, _mesa_CompressedTexSubImage1DARB);
    SET_GetCompressedTexImageARB(exec, _mesa_GetCompressedTexImageARB);
+
+   /* ARB 104. GL_ARB_robustness */
+   SET_GetnCompressedTexImageARB(exec, _mesa_GetnCompressedTexImageARB);
 #endif
 
    /* ARB 14. GL_ARB_point_parameters */
@@ -596,6 +599,12 @@ _mesa_create_exec_table(void)
 #if FEATURE_draw_read_buffer
    SET_DrawBuffersARB(exec, _mesa_DrawBuffersARB);
 #endif
+
+   /* ARB 104. GL_ARB_robustness */
+   SET_GetGraphicsResetStatusARB(exec, _mesa_GetGraphicsResetStatusARB);
+   SET_GetnPolygonStippleARB(exec, _mesa_GetnPolygonStippleARB);
+   SET_GetnTexImageARB(exec, _mesa_GetnTexImageARB);
+   SET_ReadnPixelsARB(exec, _mesa_ReadnPixelsARB);
 
    /* GL_ARB_sync */
    _mesa_init_sync_dispatch(exec);

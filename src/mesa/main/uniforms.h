@@ -146,10 +146,25 @@ extern void GLAPIENTRY
 _mesa_GetUniformfvARB(GLhandleARB, GLint, GLfloat *);
 
 extern void GLAPIENTRY
+_mesa_GetnUniformfvARB(GLhandleARB, GLint, GLsizei, GLfloat *);
+
+extern void GLAPIENTRY
 _mesa_GetUniformivARB(GLhandleARB, GLint, GLint *);
 
 extern void GLAPIENTRY
-_mesa_GetUniformuiv(GLhandleARB program, GLint location, GLuint *params);
+_mesa_GetnUniformivARB(GLhandleARB, GLint, GLsizei, GLint *);
+
+extern void GLAPIENTRY
+_mesa_GetUniformuiv(GLhandleARB, GLint, GLuint *);
+
+extern void GLAPIENTRY
+_mesa_GetnUniformuivARB(GLhandleARB, GLint, GLsizei, GLuint *);
+
+extern void GLAPIENTRY
+_mesa_GetUniformdv(GLhandleARB, GLint, GLdouble *);
+
+extern void GLAPIENTRY
+_mesa_GetnUniformdvARB(GLhandleARB, GLint, GLsizei, GLdouble *);
 
 extern GLint GLAPIENTRY
 _mesa_GetUniformLocationARB(GLhandleARB, const GLcharARB *);

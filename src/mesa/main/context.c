@@ -658,6 +658,9 @@ _mesa_init_constants(struct gl_context *ctx)
    /** GL_EXT_gpu_shader4 */
    ctx->Const.MinProgramTexelOffset = -8;
    ctx->Const.MaxProgramTexelOffset = 7;
+
+   /* GL_ARB_robustness */
+   ctx->Const.ResetStrategy = GL_NO_RESET_NOTIFICATION_ARB;
 }
 
 
@@ -793,6 +796,7 @@ init_attrib_groups(struct gl_context *ctx)
    /* Miscellaneous */
    ctx->NewState = _NEW_ALL;
    ctx->ErrorValue = (GLenum) GL_NO_ERROR;
+   ctx->ResetStatus = (GLenum) GL_NO_ERROR;
    ctx->varying_vp_inputs = ~0;
 
    return GL_TRUE;

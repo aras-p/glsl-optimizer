@@ -2746,6 +2746,9 @@ struct gl_constants
 
    /* GL_EXT_framebuffer_sRGB */
    GLboolean sRGBCapable; /* can enable sRGB blend/update on FBOs */
+
+   /* GL_ARB_robustness */
+   GLenum ResetStrategy;
 };
 
 
@@ -3304,6 +3307,9 @@ struct gl_context
    struct gl_renderbuffer *CurrentRenderbuffer;
 
    GLenum ErrorValue;        /**< Last error code */
+
+   /* GL_ARB_robustness */
+   GLenum ResetStatus;
 
    /**
     * Recognize and silence repeated error debug messages in buggy apps.

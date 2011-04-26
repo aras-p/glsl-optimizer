@@ -1281,6 +1281,9 @@ static const struct value_desc values[] = {
    /* GL 3.2 */
    { GL_CONTEXT_PROFILE_MASK, CONTEXT_INT(Const.ProfileMask),
      extra_version_32 },
+
+   /* GL_ARB_robustness */
+   { GL_RESET_NOTIFICATION_STRATEGY_ARB, CONTEXT_ENUM(Const.ResetStrategy), NO_EXTRA },
 #endif /* FEATURE_GL */
 };
 

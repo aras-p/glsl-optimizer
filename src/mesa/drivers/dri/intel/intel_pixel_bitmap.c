@@ -69,7 +69,7 @@ static const GLubyte *map_pbo( struct gl_context *ctx,
 
    if (!_mesa_validate_pbo_access(2, unpack, width, height, 1,
 				  GL_COLOR_INDEX, GL_BITMAP,
-				  (GLvoid *) bitmap)) {
+				  INT_MAX, (const GLvoid *) bitmap)) {
       _mesa_error(ctx, GL_INVALID_OPERATION,"glBitmap(invalid PBO access)");
       return NULL;
    }

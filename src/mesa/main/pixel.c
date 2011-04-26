@@ -145,8 +145,9 @@ store_pixelmap(struct gl_context *ctx, GLenum map, GLsizei mapsize,
  * Convenience wrapper for _mesa_validate_pbo_access() for gl[Get]PixelMap().
  */
 static GLboolean
-validate_pbo_access(struct gl_context *ctx, struct gl_pixelstore_attrib *pack,
-                    GLsizei mapsize, GLenum format, GLenum type,
+validate_pbo_access(struct gl_context *ctx,
+                    struct gl_pixelstore_attrib *pack, GLsizei mapsize,
+                    GLenum format, GLenum type, GLsizei clientMemSize,
                     const GLvoid *ptr)
 {
    GLboolean ok;
@@ -157,7 +158,7 @@ validate_pbo_access(struct gl_context *ctx, struct gl_pixelstore_attrib *pack,
                                  pack->BufferObj);
 
    ok = _mesa_validate_pbo_access(1, &ctx->DefaultPacking, mapsize, 1, 1,
-                                  format, type, ptr);
+                                  format, type, clientMemSize, ptr);
 
    /* restore */
    _mesa_reference_buffer_object(ctx,
@@ -165,8 +166,14 @@ validate_pbo_access(struct gl_context *ctx, struct gl_pixelstore_attrib *pack,
                                  ctx->Shared->NullBufferObj);
 
    if (!ok) {
-      _mesa_error(ctx, GL_INVALID_OPERATION,
-                  "glPixelMap(invalid PBO access)");
+      if (_mesa_is_bufferobj(pack->BufferObj)) {
+         _mesa_error(ctx, GL_INVALID_OPERATION,
+                     "gl[Get]PixelMap*v(out of bounds PBO access)");
+      } else {
+         _mesa_error(ctx, GL_INVALID_OPERATION,
+                     "glGetnPixelMap*vARB(out of bounds access:"
+                     " bufSize (%d) is too small)", clientMemSize);
+      }
    }
    return ok;
 }
@@ -194,8 +201,8 @@ _mesa_PixelMapfv( GLenum map, GLsizei mapsize, const GLfloat *values )
 
    FLUSH_VERTICES(ctx, _NEW_PIXEL);
 
-   if (!validate_pbo_access(ctx, &ctx->Unpack, mapsize,
-                            GL_INTENSITY, GL_FLOAT, values)) {
+   if (!validate_pbo_access(ctx, &ctx->Unpack, mapsize, GL_INTENSITY,
+                            GL_FLOAT, INT_MAX, values)) {
       return;
    }
 
@@ -236,8 +243,8 @@ _mesa_PixelMapuiv(GLenum map, GLsizei mapsize, const GLuint *values )
 
    FLUSH_VERTICES(ctx, _NEW_PIXEL);
 
-   if (!validate_pbo_access(ctx, &ctx->Unpack, mapsize,
-                            GL_INTENSITY, GL_UNSIGNED_INT, values)) {
+   if (!validate_pbo_access(ctx, &ctx->Unpack, mapsize, GL_INTENSITY,
+                            GL_UNSIGNED_INT, INT_MAX, values)) {
       return;
    }
 
@@ -292,8 +299,8 @@ _mesa_PixelMapusv(GLenum map, GLsizei mapsize, const GLushort *values )
 
    FLUSH_VERTICES(ctx, _NEW_PIXEL);
 
-   if (!validate_pbo_access(ctx, &ctx->Unpack, mapsize,
-                            GL_INTENSITY, GL_UNSIGNED_SHORT, values)) {
+   if (!validate_pbo_access(ctx, &ctx->Unpack, mapsize, GL_INTENSITY,
+                            GL_UNSIGNED_SHORT, INT_MAX, values)) {
       return;
    }
 
@@ -327,10 +334,10 @@ _mesa_PixelMapusv(GLenum map, GLsizei mapsize, const GLushort *values )
 
 
 static void GLAPIENTRY
-_mesa_GetPixelMapfv( GLenum map, GLfloat *values )
+_mesa_GetnPixelMapfvARB( GLenum map, GLsizei bufSize, GLfloat *values )
 {
    GET_CURRENT_CONTEXT(ctx);
-   GLuint mapsize, i;
+   GLint mapsize, i;
    const struct gl_pixelmap *pm;
 
    ASSERT_OUTSIDE_BEGIN_END(ctx);
@@ -343,8 +350,8 @@ _mesa_GetPixelMapfv( GLenum map, GLfloat *values )
 
    mapsize = pm->Size;
 
-   if (!validate_pbo_access(ctx, &ctx->Pack, mapsize,
-                            GL_INTENSITY, GL_FLOAT, values)) {
+   if (!validate_pbo_access(ctx, &ctx->Pack, mapsize, GL_INTENSITY,
+                            GL_FLOAT, bufSize, values)) {
       return;
    }
 
@@ -372,7 +379,13 @@ _mesa_GetPixelMapfv( GLenum map, GLfloat *values )
 
 
 static void GLAPIENTRY
-_mesa_GetPixelMapuiv( GLenum map, GLuint *values )
+_mesa_GetPixelMapfv( GLenum map, GLfloat *values )
+{
+   _mesa_GetnPixelMapfvARB(map, INT_MAX, values);
+}
+
+static void GLAPIENTRY
+_mesa_GetnPixelMapuivARB( GLenum map, GLsizei bufSize, GLuint *values )
 {
    GET_CURRENT_CONTEXT(ctx);
    GLint mapsize, i;
@@ -385,10 +398,11 @@ _mesa_GetPixelMapuiv( GLenum map, GLuint *values )
       _mesa_error(ctx, GL_INVALID_ENUM, "glGetPixelMapuiv(map)");
       return;
    }
+
    mapsize = pm->Size;
 
-   if (!validate_pbo_access(ctx, &ctx->Pack, mapsize,
-                            GL_INTENSITY, GL_UNSIGNED_INT, values)) {
+   if (!validate_pbo_access(ctx, &ctx->Pack, mapsize, GL_INTENSITY,
+                            GL_UNSIGNED_INT, bufSize, values)) {
       return;
    }
 
@@ -416,7 +430,13 @@ _mesa_GetPixelMapuiv( GLenum map, GLuint *values )
 
 
 static void GLAPIENTRY
-_mesa_GetPixelMapusv( GLenum map, GLushort *values )
+_mesa_GetPixelMapuiv( GLenum map, GLuint *values )
+{
+   _mesa_GetnPixelMapuivARB(map, INT_MAX, values);
+}
+
+static void GLAPIENTRY
+_mesa_GetnPixelMapusvARB( GLenum map, GLsizei bufSize, GLushort *values )
 {
    GET_CURRENT_CONTEXT(ctx);
    GLint mapsize, i;
@@ -429,10 +449,11 @@ _mesa_GetPixelMapusv( GLenum map, GLushort *values )
       _mesa_error(ctx, GL_INVALID_ENUM, "glGetPixelMapusv(map)");
       return;
    }
+
    mapsize = pm->Size;
 
-   if (!validate_pbo_access(ctx, &ctx->Pack, mapsize,
-                            GL_INTENSITY, GL_UNSIGNED_SHORT, values)) {
+   if (!validate_pbo_access(ctx, &ctx->Pack, mapsize, GL_INTENSITY,
+                            GL_UNSIGNED_SHORT, bufSize, values)) {
       return;
    }
 
@@ -466,6 +487,12 @@ _mesa_GetPixelMapusv( GLenum map, GLushort *values )
    _mesa_unmap_pbo_dest(ctx, &ctx->Pack);
 }
 
+
+static void GLAPIENTRY
+_mesa_GetPixelMapusv( GLenum map, GLushort *values )
+{
+   _mesa_GetnPixelMapusvARB(map, INT_MAX, values);
+}
 
 
 /**********************************************************************/
@@ -634,6 +661,11 @@ _mesa_init_pixel_dispatch(struct _glapi_table *disp)
    SET_PixelTransferf(disp, _mesa_PixelTransferf);
    SET_PixelTransferi(disp, _mesa_PixelTransferi);
    SET_PixelZoom(disp, _mesa_PixelZoom);
+
+   /* GL_ARB_robustness */
+   SET_GetnPixelMapfvARB(disp, _mesa_GetnPixelMapfvARB);
+   SET_GetnPixelMapuivARB(disp, _mesa_GetnPixelMapuivARB);
+   SET_GetnPixelMapusvARB(disp, _mesa_GetnPixelMapusvARB);
 }
 
 

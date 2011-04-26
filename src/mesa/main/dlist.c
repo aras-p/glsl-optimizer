@@ -859,8 +859,8 @@ unpack_image(struct gl_context *ctx, GLuint dimensions,
       }
       return image;
    }
-   else if (_mesa_validate_pbo_access(dimensions, unpack, width, height, depth,
-                                      format, type, pixels)) {
+   else if (_mesa_validate_pbo_access(dimensions, unpack, width, height,
+                                      depth, format, type, INT_MAX, pixels)) {
       const GLubyte *map, *src;
       GLvoid *image;
 
