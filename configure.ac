@@ -189,6 +189,15 @@ if test "x$GXX" = xyes; then
     CXXFLAGS="$CXXFLAGS -fno-strict-aliasing"
 fi
 
+dnl even if the compiler appears to support it, using visibility attributes isn't
+dnl going to do anything useful currently on cygwin apart from emit lots of warnings
+case "$host_os" in
+cygwin*)
+    VISIBILITY_CFLAGS=""
+    VISIBILITY_CXXFLAGS=""
+    ;;
+esac
+
 AC_SUBST([VISIBILITY_CFLAGS])
 AC_SUBST([VISIBILITY_CXXFLAGS])
 
