@@ -89,7 +89,19 @@ no_handle:
 VdpStatus
 vlVdpVideoMixerDestroy(VdpVideoMixer mixer)
 {
-   return VDP_STATUS_NO_IMPLEMENTATION;
+   vlVdpVideoMixer *vmixer;
+
+   debug_printf("[VDPAU] Destroying VideoMixer\n");
+
+   vmixer = vlGetDataHTAB(mixer);
+   if (!vmixer)
+      return VDP_STATUS_INVALID_HANDLE;
+
+   vmixer->compositor->destroy(vmixer->compositor);
+
+   FREE(vmixer);
+
+   return VDP_STATUS_OK;
 }
 
 VdpStatus
