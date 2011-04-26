@@ -177,8 +177,10 @@ if test "x$GXX" = xyes; then
     AC_MSG_CHECKING([whether $CXX supports -fvisibility=hidden])
     VISIBILITY_CXXFLAGS="-fvisibility=hidden"
     CXXFLAGS="$CXXFLAGS $VISIBILITY_CXXFLAGS"
+    AC_LANG_PUSH([C++])
     AC_LINK_IFELSE([AC_LANG_PROGRAM()], AC_MSG_RESULT([yes]),
 		   [VISIBILITY_CXXFLAGS="" ; AC_MSG_RESULT([no])]);
+    AC_LANG_POP([C++])
 
     # Restore CXXFLAGS; VISIBILITY_CXXFLAGS are added to it where needed.
     CXXFLAGS=$save_CXXFLAGS
