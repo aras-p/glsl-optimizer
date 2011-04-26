@@ -576,4 +576,10 @@ void st_init_extensions(struct st_context *st)
    if (st->pipe->texture_barrier) {
       ctx->Extensions.NV_texture_barrier = GL_TRUE;
    }
+
+   if (screen->is_format_supported(screen, PIPE_FORMAT_R9G9B9E5_FLOAT,
+                                   PIPE_TEXTURE_2D, 0,
+                                   PIPE_BIND_SAMPLER_VIEW)) {
+      ctx->Extensions.EXT_texture_shared_exponent = GL_TRUE;
+   }
 }

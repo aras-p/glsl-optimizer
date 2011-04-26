@@ -325,6 +325,9 @@ st_mesa_format_to_pipe_format(gl_format mesaFormat)
    case MESA_FORMAT_SIGNED_I16:
       return PIPE_FORMAT_I16_SNORM;
 
+   case MESA_FORMAT_RGB9_E5_FLOAT:
+      return PIPE_FORMAT_R9G9B9E5_FLOAT;
+
    default:
       assert(0);
       return PIPE_FORMAT_NONE;
@@ -544,6 +547,9 @@ st_pipe_format_to_mesa_format(enum pipe_format format)
       return MESA_FORMAT_SIGNED_AL1616;
    case PIPE_FORMAT_I16_SNORM:
       return MESA_FORMAT_SIGNED_I16;
+
+   case PIPE_FORMAT_R9G9B9E5_FLOAT:
+      return MESA_FORMAT_RGB9_E5_FLOAT;
 
    default:
       assert(0);
@@ -1482,6 +1488,13 @@ st_choose_format(struct pipe_screen *screen, GLenum internalFormat,
          return find_supported_format(screen, formats, Elements(formats),
                target, sample_count, bindings);
       }
+
+   case GL_RGB9_E5:
+      if (screen->is_format_supported(screen, PIPE_FORMAT_R9G9B9E5_FLOAT, target,
+                                      sample_count, bindings)) {
+         return PIPE_FORMAT_R9G9B9E5_FLOAT;
+      }
+      return PIPE_FORMAT_NONE;
 
    default:
       return PIPE_FORMAT_NONE;

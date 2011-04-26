@@ -372,6 +372,10 @@ internal_format(struct gl_context *ctx, GLenum format, GLenum type)
             return
                ctx->Extensions.ARB_texture_float ? GL_RGBA32F :
                ctx->Extensions.EXT_texture_snorm ? GL_RGBA16_SNORM : GL_RGBA16;
+
+         case GL_UNSIGNED_INT_5_9_9_9_REV:
+            assert(ctx->Extensions.EXT_texture_shared_exponent);
+            return GL_RGB9_E5;
          }
       }
    }
