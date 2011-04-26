@@ -1871,7 +1871,8 @@ _mesa_meta_DrawPixels(struct gl_context *ctx,
        * just going for the matching set of channels, in floating
        * point.
        */
-      if (ctx->Color.ClampFragmentColor != GL_TRUE)
+      if (ctx->Color.ClampFragmentColor != GL_TRUE &&
+	  ctx->Extensions.ARB_texture_float)
 	 texIntFormat = GL_RGBA32F;
    }
    else if (_mesa_is_stencil_format(format)) {
