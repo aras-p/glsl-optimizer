@@ -66,8 +66,8 @@ vlVdpPresentationQueueCreate(VdpDevice device,
       return VDP_STATUS_RESOURCES;
 
    pq->device = dev;
-   pq->compositor = context->create_compositor(context);
    pq->drawable = pqt->drawable;
+   pq->compositor = context->create_compositor(context);
    if (!pq->compositor) {
       ret = VDP_STATUS_ERROR;
       goto no_compositor;
@@ -89,7 +89,20 @@ no_compositor:
 VdpStatus
 vlVdpPresentationQueueDestroy(VdpPresentationQueue presentation_queue)
 {
-   return VDP_STATUS_NO_IMPLEMENTATION;
+   vlVdpPresentationQueue *pq;
+
+   _debug_printf("[VDPAU] Destroying PresentationQueue\n");
+
+   pq = vlGetDataHTAB(presentation_queue);
+   if (!pq)
+      return VDP_STATUS_INVALID_HANDLE;
+
+   pq->compositor->destroy(pq->compositor);
+
+   vlRemoveDataHTAB(presentation_queue);
+   FREE(pq);
+
+   return VDP_STATUS_OK;
 }
 
 VdpStatus
