@@ -930,6 +930,11 @@ uint32_t r600_translate_texformat(struct pipe_screen *screen,
 		}
 	}
 
+	if (format == PIPE_FORMAT_R9G9B9E5_FLOAT) {
+		result = FMT_5_9_9_9_SHAREDEXP;
+		goto out_word4;
+	}
+
 
 	for (i = 0; i < desc->nr_channels; i++) {
 		if (desc->channel[i].type == UTIL_FORMAT_TYPE_SIGNED) {
