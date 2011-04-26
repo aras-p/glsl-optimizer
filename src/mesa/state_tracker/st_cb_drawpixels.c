@@ -376,6 +376,10 @@ internal_format(struct gl_context *ctx, GLenum format, GLenum type)
          case GL_UNSIGNED_INT_5_9_9_9_REV:
             assert(ctx->Extensions.EXT_texture_shared_exponent);
             return GL_RGB9_E5;
+
+         case GL_UNSIGNED_INT_10F_11F_11F_REV:
+            assert(ctx->Extensions.EXT_packed_float);
+            return GL_R11F_G11F_B10F;
          }
       }
    }

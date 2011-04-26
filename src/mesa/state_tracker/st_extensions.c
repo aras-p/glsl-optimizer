@@ -582,4 +582,11 @@ void st_init_extensions(struct st_context *st)
                                    PIPE_BIND_SAMPLER_VIEW)) {
       ctx->Extensions.EXT_texture_shared_exponent = GL_TRUE;
    }
+
+   if (screen->is_format_supported(screen, PIPE_FORMAT_R11G11B10_FLOAT,
+                                   PIPE_TEXTURE_2D, 0,
+                                   PIPE_BIND_RENDER_TARGET |
+                                   PIPE_BIND_SAMPLER_VIEW)) {
+      ctx->Extensions.EXT_packed_float = GL_TRUE;
+   }
 }
