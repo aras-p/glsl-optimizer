@@ -105,7 +105,7 @@ GL_ARB_transform_feedback3                           not started
 GL 4.1:
 
 GLSL 4.1                                             not started
-GL_ARB_ES2_compatibility                             mostly done (Intel?)
+GL_ARB_ES2_compatibility                             DONE (i965)
 GL_ARB_get_program_binary                            not started
 GL_ARB_separate_shader_objects                       some infrastructure done
 GL_ARB_shader_precision                              not started
