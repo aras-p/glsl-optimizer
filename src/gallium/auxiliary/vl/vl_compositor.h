@@ -40,8 +40,11 @@ struct pipe_context;
 
 struct vl_compositor_layer
 {
+   bool clearing;
+
    void *fs;
    void *samplers[3];
+
    struct pipe_sampler_view *sampler_views[3];
    struct {
       struct vertex2f tl, br;
@@ -68,6 +71,8 @@ struct vl_compositor
    void *fs_video_buffer;
    void *fs_palette;
    void *fs_rgba;
+
+   struct vertex2f dirty_tl, dirty_br;
 
    unsigned used_layers:VL_COMPOSITOR_MAX_LAYERS;
    struct vl_compositor_layer layers[VL_COMPOSITOR_MAX_LAYERS];

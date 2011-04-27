@@ -31,6 +31,7 @@
 
 #include <util/u_memory.h>
 #include <util/u_draw.h>
+#include <util/u_surface.h>
 
 #include <tgsi/tgsi_ureg.h>
 
@@ -303,6 +304,22 @@ static void cleanup_pipe_state(struct vl_compositor *c)
 }
 
 static bool
+create_vertex_buffer(struct vl_compositor *c)
+{
+   assert(c);
+
+   pipe_resource_reference(&c->vertex_buf.buffer, NULL);
+   c->vertex_buf.buffer = pipe_buffer_create
+   (
+      c->pipe->screen,
+      PIPE_BIND_VERTEX_BUFFER,
+      PIPE_USAGE_STREAM,
+      sizeof(struct vertex4f) * VL_COMPOSITOR_MAX_LAYERS * 4
+   );
+   return c->vertex_buf.buffer != NULL;
+}
+
+static bool
 init_buffers(struct vl_compositor *c)
 {
    struct pipe_vertex_element vertex_elems[2];
@@ -314,13 +331,7 @@ init_buffers(struct vl_compositor *c)
     */
    c->vertex_buf.stride = sizeof(struct vertex4f);
    c->vertex_buf.buffer_offset = 0;
-   c->vertex_buf.buffer = pipe_buffer_create
-   (
-      c->pipe->screen,
-      PIPE_BIND_VERTEX_BUFFER,
-      PIPE_USAGE_STREAM,
-      sizeof(struct vertex4f) * (VL_COMPOSITOR_MAX_LAYERS + 1) * 4
-   );
+   create_vertex_buffer(c);
 
    vertex_elems[0].src_offset = 0;
    vertex_elems[0].instance_divisor = 0;
@@ -431,13 +442,30 @@ gen_vertex_data(struct vl_compositor *c)
                         PIPE_TRANSFER_WRITE | PIPE_TRANSFER_DISCARD | PIPE_TRANSFER_DONTBLOCK,
                         &buf_transfer);
 
-   if (!vb)
-      return;
+   if (!vb) {
+      // If buffer is still locked from last draw create a new one
+      create_vertex_buffer(c);
+      vb = pipe_buffer_map(c->pipe, c->vertex_buf.buffer,
+                           PIPE_TRANSFER_WRITE | PIPE_TRANSFER_DISCARD,
+                           &buf_transfer);
+   }
 
    for (i = 0; i < VL_COMPOSITOR_MAX_LAYERS; i++) {
       if (c->used_layers & (1 << i)) {
-         gen_rect_verts(vb, &c->layers[i]);
+         struct vl_compositor_layer *layer = &c->layers[i];
+         gen_rect_verts(vb, layer);
          vb += 4;
+
+         if (layer->clearing &&
+             c->dirty_tl.x >= layer->dst.tl.x &&
+             c->dirty_tl.y >= layer->dst.tl.y &&
+             c->dirty_br.x <= layer->dst.br.x &&
+             c->dirty_br.y <= layer->dst.br.y) {
+
+            // We clear the dirty area anyway, no need for clear_render_target
+            c->dirty_tl.x = c->dirty_tl.y = 1.0f;
+            c->dirty_br.x = c->dirty_br.y = 0.0f;
+         }
       }
    }
 
@@ -453,16 +481,34 @@ draw_layers(struct vl_compositor *c)
 
    for (i = 0, vb_index = 0; i < VL_COMPOSITOR_MAX_LAYERS; ++i) {
       if (c->used_layers & (1 << i)) {
-         struct pipe_sampler_view **samplers = &c->layers[i].sampler_views[0];
+         struct vl_compositor_layer *layer = &c->layers[i];
+         struct pipe_sampler_view **samplers = &layer->sampler_views[0];
          unsigned num_sampler_views = !samplers[1] ? 1 : !samplers[2] ? 2 : 3;
 
-         c->pipe->bind_fs_state(c->pipe, c->layers[i].fs);
-         c->pipe->bind_fragment_sampler_states(c->pipe, num_sampler_views, c->layers[i].samplers);
+         c->pipe->bind_fs_state(c->pipe, layer->fs);
+         c->pipe->bind_fragment_sampler_states(c->pipe, num_sampler_views, layer->samplers);
          c->pipe->set_fragment_sampler_views(c->pipe, num_sampler_views, samplers);
          util_draw_arrays(c->pipe, PIPE_PRIM_QUADS, vb_index * 4, 4);
          vb_index++;
+
+         // Remember the currently drawn area as dirty for the next draw command
+         c->dirty_tl.x = MIN2(layer->dst.tl.x, c->dirty_tl.x);
+         c->dirty_tl.y = MIN2(layer->dst.tl.y, c->dirty_tl.y);
+         c->dirty_br.x = MAX2(layer->dst.br.x, c->dirty_br.x);
+         c->dirty_br.y = MAX2(layer->dst.br.y, c->dirty_br.y);
       }
    }
+}
+
+static void
+vl_compositor_reset_dirty_area(struct pipe_video_compositor *compositor)
+{
+   struct vl_compositor *c = (struct vl_compositor *)compositor;
+
+   assert(compositor);
+
+   c->dirty_tl.x = c->dirty_tl.y = 0.0f;
+   c->dirty_br.x = c->dirty_br.y = 1.0f;
 }
 
 static void
@@ -532,6 +578,7 @@ vl_compositor_set_buffer_layer(struct pipe_video_compositor *compositor,
    assert(layer < VL_COMPOSITOR_MAX_LAYERS);
 
    c->used_layers |= 1 << layer;
+   c->layers[layer].clearing = true;
    c->layers[layer].fs = c->fs_video_buffer;
 
    sampler_views = buffer->get_sampler_view_components(buffer);
@@ -559,6 +606,7 @@ vl_compositor_set_palette_layer(struct pipe_video_compositor *compositor,
    assert(layer < VL_COMPOSITOR_MAX_LAYERS);
 
    c->used_layers |= 1 << layer;
+   c->layers[layer].clearing = false;
    c->layers[layer].fs = c->fs_palette;
    c->layers[layer].samplers[0] = c->sampler_linear;
    c->layers[layer].samplers[1] = c->sampler_nearest;
@@ -585,6 +633,7 @@ vl_compositor_set_rgba_layer(struct pipe_video_compositor *compositor,
    assert(layer < VL_COMPOSITOR_MAX_LAYERS);
 
    c->used_layers |= 1 << layer;
+   c->layers[layer].clearing = false;
    c->layers[layer].fs = c->fs_rgba;
    c->layers[layer].samplers[0] = c->sampler_linear;
    c->layers[layer].samplers[1] = NULL;
@@ -606,6 +655,7 @@ vl_compositor_render(struct pipe_video_compositor *compositor,
 {
    struct vl_compositor *c = (struct vl_compositor *)compositor;
    struct pipe_scissor_state scissor;
+   float clearcolor[4] = { 0.0f, 0.0f, 0.0f, 0.0f };
 
    assert(compositor);
    assert(dst_surface);
@@ -630,6 +680,12 @@ vl_compositor_render(struct pipe_video_compositor *compositor,
    }
 
    gen_vertex_data(c);
+
+   if (c->dirty_tl.x < c->dirty_br.x || c->dirty_tl.y < c->dirty_br.y) {
+      util_clear_render_target(c->pipe, dst_surface, clearcolor, 0, 0, dst_surface->width, dst_surface->height);
+      c->dirty_tl.x = c->dirty_tl.y = 1.0f;
+      c->dirty_br.x = c->dirty_br.y = 0.0f;
+   }
 
    c->pipe->set_scissor_state(c->pipe, &scissor);
    c->pipe->set_framebuffer_state(c->pipe, &c->fb_state);
@@ -682,6 +738,7 @@ vl_compositor_init(struct pipe_video_context *vpipe, struct pipe_context *pipe)
 
    vl_csc_get_matrix(VL_CSC_COLOR_STANDARD_IDENTITY, NULL, true, csc_matrix);
    vl_compositor_set_csc_matrix(&compositor->base, csc_matrix);
+   vl_compositor_reset_dirty_area(&compositor->base);
 
    return &compositor->base;
 }
