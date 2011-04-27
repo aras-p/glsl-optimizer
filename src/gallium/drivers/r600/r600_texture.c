@@ -933,6 +933,9 @@ uint32_t r600_translate_texformat(struct pipe_screen *screen,
 	if (format == PIPE_FORMAT_R9G9B9E5_FLOAT) {
 		result = FMT_5_9_9_9_SHAREDEXP;
 		goto out_word4;
+	} else if (format == PIPE_FORMAT_R11G11B10_FLOAT) {
+		result = FMT_10_11_11_FLOAT;
+		goto out_word4;
 	}
 
 
