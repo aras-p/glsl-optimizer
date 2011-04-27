@@ -669,6 +669,10 @@ do {                                    \
 /** Maximum of two values: */
 #define MAX2( A, B )   ( (A)>(B) ? (A) : (B) )
 
+/** Minimum and maximum of three values: */
+#define MIN3( A, B, C ) ((A) < (B) ? MIN2(A, C) : MIN2(B, C))
+#define MAX3( A, B, C ) ((A) > (B) ? MAX2(A, C) : MAX2(B, C))
+
 /** Dot product of two 2-element vectors */
 #define DOT2( a, b )  ( (a)[0]*(b)[0] + (a)[1]*(b)[1] )
 
