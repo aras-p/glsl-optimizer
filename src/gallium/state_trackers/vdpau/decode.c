@@ -25,12 +25,13 @@
  *
  **************************************************************************/
 
-#include "vdpau_private.h"
-#include "mpeg2_bitstream_parser.h"
+#include <pipe/p_video_context.h>
+
 #include <util/u_memory.h>
 #include <util/u_math.h>
-#include <pipe/p_video_context.h>
 #include <util/u_debug.h>
+
+#include "vdpau_private.h"
 
 VdpStatus
 vlVdpDecoderCreate(VdpDevice device,
@@ -39,12 +40,11 @@ vlVdpDecoderCreate(VdpDevice device,
                    uint32_t max_references,
                    VdpDecoder *decoder)
 {
-   return VDP_STATUS_NO_IMPLEMENTATION;
-
-#if 0
-   enum pipe_video_profile p_profile = PIPE_VIDEO_PROFILE_UNKNOWN;
-   VdpStatus ret = VDP_STATUS_OK;
-   vlVdpDecoder *vldecoder = NULL;
+   enum pipe_video_profile p_profile;
+   struct pipe_video_context *vpipe;
+   vlVdpDevice *dev;
+   vlVdpDecoder *vldecoder;
+   VdpStatus ret;
 
    debug_printf("[VDPAU] Creating decoder\n");
 
@@ -54,189 +54,80 @@ vlVdpDecoderCreate(VdpDevice device,
    if (!(width && height))
       return VDP_STATUS_INVALID_VALUE;
 
-   vlVdpDevice *dev = vlGetDataHTAB(device);
-   if (!dev) {
-      ret = VDP_STATUS_INVALID_HANDLE;
-      goto inv_device;
-   }
+   p_profile = ProfileToPipe(profile);
+   if (p_profile == PIPE_VIDEO_PROFILE_UNKNOWN)
+      return VDP_STATUS_INVALID_DECODER_PROFILE;
+
+   dev = vlGetDataHTAB(device);
+   if (!dev)
+      return VDP_STATUS_INVALID_HANDLE;
+
+   vpipe = dev->context->vpipe;
 
    vldecoder = CALLOC(1,sizeof(vlVdpDecoder));
-   if (!vldecoder) {
-      ret = VDP_STATUS_RESOURCES;
-      goto no_decoder;
-   }
+   if (!vldecoder)
+      return VDP_STATUS_RESOURCES;
 
-   p_profile = ProfileToPipe(profile);
-   if (p_profile == PIPE_VIDEO_PROFILE_UNKNOWN)	{
-      ret = VDP_STATUS_INVALID_DECODER_PROFILE;
-      goto inv_profile;
-   }
+   vldecoder->device = dev;
 
    // TODO: Define max_references. Used mainly for H264
+   vldecoder->decoder = vpipe->create_decoder
+   (
+      vpipe, p_profile,
+      PIPE_VIDEO_ENTRYPOINT_BITSTREAM,
+      PIPE_VIDEO_CHROMA_FORMAT_420,
+      width, height
+   );
+   if (!vldecoder->decoder) {
+      ret = VDP_STATUS_ERROR;
+      goto error_decoder;
+   }
 
-   vldecoder->profile = p_profile;
-   vldecoder->height = height;
-   vldecoder->width = width;
-   vldecoder->device = dev;
-   vldecoder->vctx = NULL;
+   vldecoder->buffer = vldecoder->decoder->create_buffer(vldecoder->decoder);
+   if (!vldecoder->buffer) {
+      ret = VDP_STATUS_ERROR;
+      goto error_buffer;
+   }
 
    *decoder = vlAddDataHTAB(vldecoder);
    if (*decoder == 0) {
       ret = VDP_STATUS_ERROR;
-      goto no_handle;
+      goto error_handle;
    }
+
    debug_printf("[VDPAU] Decoder created succesfully\n");
 
    return VDP_STATUS_OK;
 
-no_handle:
+error_handle:
+   vldecoder->buffer->destroy(vldecoder->buffer);
+
+error_buffer:
+   vldecoder->decoder->destroy(vldecoder->decoder);
+
+error_decoder:
    FREE(vldecoder);
-   inv_profile:
-no_screen:
-no_decoder:
-inv_device:
-    return ret;
-#endif
+   return ret;
 }
 
 VdpStatus
 vlVdpDecoderDestroy(VdpDecoder decoder)
 {
-   return VDP_STATUS_NO_IMPLEMENTATION;
-
-#if 0
-   debug_printf("[VDPAU] Destroying decoder\n");
    vlVdpDecoder *vldecoder;
 
+   debug_printf("[VDPAU] Destroying decoder\n");
+
    vldecoder = (vlVdpDecoder *)vlGetDataHTAB(decoder);
-   if (!vldecoder) {
+   if (!vldecoder)
       return VDP_STATUS_INVALID_HANDLE;
-   }
 
-   if (vldecoder->vctx) {
-      if (vldecoder->vctx->vscreen)
-         vl_screen_destroy(vldecoder->vctx->vscreen);
-   }
-
-   if (vldecoder->vctx)
-       vl_video_destroy(vldecoder->vctx);
+   vldecoder->buffer->destroy(vldecoder->buffer);
+   vldecoder->decoder->destroy(vldecoder->decoder);
 
    FREE(vldecoder);
 
    return VDP_STATUS_OK;
-#endif
 }
-
-#if 0
-VdpStatus
-vlVdpCreateSurfaceTarget(vlVdpDecoder *vldecoder, vlVdpSurface *vlsurf)
-{
-   struct pipe_surface surf_template;
-   struct pipe_resource tmplt;
-   struct pipe_resource *surf_tex;
-   struct pipe_video_context *vctx;
-
-   debug_printf("[VDPAU] Creating surface\n");
-
-   if(!(vldecoder && vlsurf))
-      return VDP_STATUS_INVALID_POINTER;
-
-   vctx = vldecoder->vctx->vpipe;
-
-   if (!vctx->is_format_supported(vctx, tmplt.format, PIPE_BIND_SAMPLER_VIEW | PIPE_BIND_RENDER_TARGET))
-      return VDP_STATUS_RESOURCES;
-
-   memset(&tmplt, 0, sizeof(struct pipe_resource));
-   tmplt.target = PIPE_TEXTURE_2D;
-   // TODO
-   //tmplt.format = vctx->get_param(vctx,PIPE_CAP_DECODE_TARGET_PREFERRED_FORMAT);
-   tmplt.last_level = 0;
-   tmplt.width0 = vlsurf->width;
-   tmplt.height0 = vlsurf->height;
-   tmplt.depth0 = 1;
-   tmplt.usage = PIPE_USAGE_DEFAULT;
-   tmplt.bind = PIPE_BIND_SAMPLER_VIEW | PIPE_BIND_RENDER_TARGET;
-   tmplt.flags = 0;
-
-   surf_tex = vctx->screen->resource_create(vctx->screen, &tmplt);
-
-   memset(&surf_template, 0, sizeof(surf_template));
-   surf_template.format = surf_tex->format;
-   surf_template.usage = PIPE_BIND_SAMPLER_VIEW | PIPE_BIND_RENDER_TARGET;
-   //vlsurf->psurface = vctx->create_surface(vctx->screen, surf_tex, &surf_template);
-
-   pipe_resource_reference(&surf_tex, NULL);
-
-   //if (!vlsurf->psurface)
-   //   return VDP_STATUS_RESOURCES;
-   debug_printf("[VDPAU] Done creating surface\n");
-
-   return VDP_STATUS_OK;
-}
-
-VdpStatus
-vlVdpDecoderRenderMpeg2(vlVdpDecoder *vldecoder,
-                        vlVdpSurface *vlsurf,
-                        VdpPictureInfoMPEG1Or2 *picture_info,
-                        uint32_t bitstream_buffer_count,
-                        VdpBitstreamBuffer const *bitstream_buffers)
-{
-   struct pipe_video_context *vpipe;
-   vlVdpSurface *t_vdp_surf;
-   vlVdpSurface *p_vdp_surf;
-   vlVdpSurface *f_vdp_surf;
-   struct pipe_surface *t_surf;
-   struct pipe_surface *p_surf;
-   struct pipe_surface *f_surf;
-   uint32_t num_macroblocks;
-   struct pipe_mpeg12_macroblock *pipe_macroblocks;
-   VdpStatus ret;
-
-   debug_printf("[VDPAU] Decoding MPEG2\n");
-
-   t_vdp_surf = vlsurf;
-
-   /* if surfaces equals VDP_STATUS_INVALID_HANDLE, they are not used */
-   if (picture_info->backward_reference ==  VDP_INVALID_HANDLE)
-      p_vdp_surf = NULL;
-   else {
-      p_vdp_surf = (vlVdpSurface *)vlGetDataHTAB(picture_info->backward_reference);
-      if (!p_vdp_surf)
-         return VDP_STATUS_INVALID_HANDLE;
-   }
-
-   if (picture_info->forward_reference ==  VDP_INVALID_HANDLE)
-      f_vdp_surf = NULL;
-   else {
-      f_vdp_surf = (vlVdpSurface *)vlGetDataHTAB(picture_info->forward_reference);
-      if (!f_vdp_surf)
-         return VDP_STATUS_INVALID_HANDLE;
-   }
-
-   if (f_vdp_surf ==  VDP_INVALID_HANDLE) f_vdp_surf = NULL;
-
-   ret = vlVdpCreateSurfaceTarget(vldecoder,t_vdp_surf);
-
-   vpipe = vldecoder->vctx->vpipe;
-
-   if (vlVdpMPEG2BitstreamToMacroblock(vpipe->screen, bitstream_buffers, bitstream_buffer_count,
-                                       &num_macroblocks, &pipe_macroblocks))
-   {
-      debug_printf("[VDPAU] Error in frame-header. Skipping.\n");
-
-      ret = VDP_STATUS_OK;
-      goto skip_frame;
-   }
-
-   // TODO
-   //vpipe->set_decode_target(vpipe,t_surf);
-   //vpipe->decode_macroblocks(vpipe, p_surf, f_surf, num_macroblocks,
-   //                          (struct pipe_macroblock *)pipe_macroblocks, NULL);
-
-   skip_frame:
-   return ret;
-}
-#endif
 
 VdpStatus
 vlVdpDecoderGetParameters(VdpDecoder decoder,
@@ -244,7 +135,53 @@ vlVdpDecoderGetParameters(VdpDecoder decoder,
                           uint32_t *width,
                           uint32_t *height)
 {
-   return VDP_STATUS_NO_IMPLEMENTATION;
+   return VDP_STATUS_OK;
+}
+
+static VdpStatus
+vlVdpDecoderRenderMpeg2(struct pipe_video_decoder *decoder,
+                        struct pipe_video_decode_buffer *buffer,
+                        struct pipe_video_buffer *target,
+                        VdpPictureInfoMPEG1Or2 *picture_info,
+                        uint32_t bitstream_buffer_count,
+                        VdpBitstreamBuffer const *bitstream_buffers)
+{
+   struct pipe_video_buffer *ref_frames[2];
+
+   debug_printf("[VDPAU] Decoding MPEG2\n");
+
+   /* if surfaces equals VDP_STATUS_INVALID_HANDLE, they are not used */
+   if (picture_info->backward_reference ==  VDP_INVALID_HANDLE)
+      ref_frames[0] = NULL;
+   else {
+      ref_frames[0] = ((vlVdpSurface *)vlGetDataHTAB(picture_info->backward_reference))->video_buffer;
+      if (!ref_frames[0])
+         return VDP_STATUS_INVALID_HANDLE;
+   }
+
+   if (picture_info->forward_reference ==  VDP_INVALID_HANDLE)
+      ref_frames[1] = NULL;
+   else {
+      ref_frames[1] = ((vlVdpSurface *)vlGetDataHTAB(picture_info->forward_reference))->video_buffer;
+      if (!ref_frames[1])
+         return VDP_STATUS_INVALID_HANDLE;
+   }
+
+   //if (vlVdpMPEG2BitstreamToMacroblock(vpipe->screen, bitstream_buffers, bitstream_buffer_count,
+   //                                    &num_macroblocks, &pipe_macroblocks))
+   //{
+   //   debug_printf("[VDPAU] Error in frame-header. Skipping.\n");
+   //
+   //   ret = VDP_STATUS_OK;
+   //   goto skip_frame;
+   //}
+
+   // TODO
+   //vpipe->set_decode_target(vpipe,t_surf);
+   //vpipe->decode_macroblocks(vpipe, p_surf, f_surf, num_macroblocks,
+   //                          (struct pipe_macroblock *)pipe_macroblocks, NULL);
+
+   return VDP_STATUS_OK;
 }
 
 VdpStatus
@@ -254,13 +191,8 @@ vlVdpDecoderRender(VdpDecoder decoder,
                    uint32_t bitstream_buffer_count,
                    VdpBitstreamBuffer const *bitstream_buffers)
 {
-   return VDP_STATUS_NO_IMPLEMENTATION;
-
-#if 0
    vlVdpDecoder *vldecoder;
    vlVdpSurface *vlsurf;
-   struct vl_screen *vscreen;
-   VdpStatus ret;
 
    debug_printf("[VDPAU] Decoding\n");
 
@@ -278,42 +210,20 @@ vlVdpDecoderRender(VdpDecoder decoder,
    if (vlsurf->device != vldecoder->device)
       return VDP_STATUS_HANDLE_DEVICE_MISMATCH;
 
-   /* Test doesn't make sence */
-   /*if (vlsurf->chroma_format != vldecoder->chroma_format)
-   return VDP_STATUS_INVALID_CHROMA_TYPE;*/
-
-   vscreen = vl_screen_create(vldecoder->device->display, vldecoder->device->screen);
-   if (!vscreen)
-      return VDP_STATUS_RESOURCES;
-
-   vldecoder->vctx = vl_video_create(vscreen, vldecoder->profile, vlsurf->chroma_format, vldecoder->width, vldecoder->height);
-   if (!vldecoder->vctx)
-      return VDP_STATUS_RESOURCES;
+   if (vlsurf->video_buffer->chroma_format != vldecoder->decoder->chroma_format)
+      // TODO: Recreate decoder with correct chroma
+      return VDP_STATUS_INVALID_CHROMA_TYPE;
 
    // TODO: Right now only mpeg2 is supported.
-   switch (vldecoder->vctx->vpipe->profile)   {
+   switch (vldecoder->decoder->profile)   {
    case PIPE_VIDEO_PROFILE_MPEG2_SIMPLE:
    case PIPE_VIDEO_PROFILE_MPEG2_MAIN:
-      ret = vlVdpDecoderRenderMpeg2(vldecoder,vlsurf,(VdpPictureInfoMPEG1Or2 *)picture_info,
-                                    bitstream_buffer_count,bitstream_buffers);
+      return vlVdpDecoderRenderMpeg2(vldecoder->decoder, vldecoder->buffer,
+                                     vlsurf, (VdpPictureInfoMPEG1Or2 *)picture_info,
+                                     bitstream_buffer_count,bitstream_buffers);
       break;
+
    default:
       return VDP_STATUS_INVALID_DECODER_PROFILE;
    }
-   assert(0);
-
-   return ret;
-#endif
-}
-
-VdpStatus
-vlVdpGenerateCSCMatrix(VdpProcamp *procamp,
-                       VdpColorStandard standard,
-                       VdpCSCMatrix *csc_matrix)
-{
-   debug_printf("[VDPAU] Generating CSCMatrix\n");
-   if (!(csc_matrix && procamp))
-      return VDP_STATUS_INVALID_POINTER;
-
-   return VDP_STATUS_OK;
 }

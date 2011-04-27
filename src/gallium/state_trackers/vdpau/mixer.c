@@ -222,3 +222,15 @@ vlVdpVideoMixerGetAttributeValues(VdpVideoMixer mixer,
 {
    return VDP_STATUS_NO_IMPLEMENTATION;
 }
+
+VdpStatus
+vlVdpGenerateCSCMatrix(VdpProcamp *procamp,
+                       VdpColorStandard standard,
+                       VdpCSCMatrix *csc_matrix)
+{
+   debug_printf("[VDPAU] Generating CSCMatrix\n");
+   if (!(csc_matrix && procamp))
+      return VDP_STATUS_INVALID_POINTER;
+
+   return VDP_STATUS_OK;
+}

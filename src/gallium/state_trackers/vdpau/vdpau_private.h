@@ -160,10 +160,8 @@ ProfileToPipe(VdpDecoderProfile vdpau_profile)
       case VDP_DECODER_PROFILE_H264_HIGH:
 	     return PIPE_VIDEO_PROFILE_MPEG4_AVC_HIGH;
       default:
-         PIPE_VIDEO_PROFILE_UNKNOWN;
+         return PIPE_VIDEO_PROFILE_UNKNOWN;
    }
-
-   return -1;
 }
 
 typedef struct
@@ -209,11 +207,8 @@ typedef struct
 typedef struct
 {
    vlVdpDevice *device;
-   struct vl_context *vctx;
-   enum pipe_video_chroma_format chroma_format;
-   enum pipe_video_profile profile;
-   uint32_t width;
-   uint32_t height;
+   struct pipe_video_decoder *decoder;
+   struct pipe_video_decode_buffer *buffer;
 } vlVdpDecoder;
 
 typedef uint32_t vlHandle;
