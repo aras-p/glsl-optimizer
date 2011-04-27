@@ -571,7 +571,10 @@ public:
 
    bool failed;
 
-   /* Result of last visit() method. */
+   /* On entry to a visit() method, this is the storage for the
+    * result.  On exit, the visit() called may have changed it, in
+    * which case the parent must use the new storage instead.
+    */
    fs_reg result;
 
    fs_reg pixel_x;
