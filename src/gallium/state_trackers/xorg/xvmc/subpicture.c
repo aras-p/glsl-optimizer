@@ -92,14 +92,14 @@ static void XvIDToSwizzle(int xvimage_id, struct pipe_sampler_view *tmpl)
          tmpl->swizzle_a = PIPE_SWIZZLE_ONE;
          break;
 
-      case FOURCC_AI44:
+      case FOURCC_IA44:
          tmpl->swizzle_r = PIPE_SWIZZLE_ALPHA;
          tmpl->swizzle_g = PIPE_SWIZZLE_ZERO;
          tmpl->swizzle_b = PIPE_SWIZZLE_ZERO;
          tmpl->swizzle_a = PIPE_SWIZZLE_RED;
          break;
 
-      case FOURCC_IA44:
+      case FOURCC_AI44:
          tmpl->swizzle_r = PIPE_SWIZZLE_RED;
          tmpl->swizzle_g = PIPE_SWIZZLE_ZERO;
          tmpl->swizzle_b = PIPE_SWIZZLE_ZERO;
@@ -117,10 +117,10 @@ static int PipeToComponentOrder(enum pipe_format format, char *component_order)
          return 0;
 
       case PIPE_FORMAT_L4A4_UNORM:
-         component_order[0] = PIPE_SWIZZLE_RED;
-         component_order[1] = PIPE_SWIZZLE_GREEN;
-         component_order[2] = PIPE_SWIZZLE_BLUE;
-         component_order[3] = PIPE_SWIZZLE_ALPHA;
+         component_order[0] = 'Y';
+         component_order[1] = 'U';
+         component_order[2] = 'V';
+         component_order[3] = 'A';
          return 4;
 
       default:
@@ -271,7 +271,7 @@ Status XvMCCreateSubpicture(Display *dpy, XvMCContext *context, XvMCSubpicture *
 
    if (subpicture->num_palette_entries > 0) {
       tex_templ.target = PIPE_TEXTURE_1D;
-      tex_templ.format = PIPE_FORMAT_B8G8R8A8_UNORM;
+      tex_templ.format = PIPE_FORMAT_R8G8B8A8_UNORM;
       tex_templ.width0 = subpicture->num_palette_entries;
       tex_templ.height0 = 1;
       tex_templ.usage = PIPE_USAGE_STATIC;
@@ -280,6 +280,7 @@ Status XvMCCreateSubpicture(Display *dpy, XvMCContext *context, XvMCSubpicture *
 
       memset(&sampler_templ, 0, sizeof(sampler_templ));
       u_sampler_view_default_template(&sampler_templ, tex, tex->format);
+      sampler_templ.swizzle_a = PIPE_SWIZZLE_ONE;
       subpicture_priv->palette = vpipe->create_sampler_view(vpipe, tex, &sampler_templ);
       pipe_resource_reference(&tex, NULL);
       if (!subpicture_priv->sampler) {
@@ -333,6 +334,7 @@ Status XvMCCompositeSubpicture(Display *dpy, XvMCSubpicture *subpicture, XvImage
    XvMCContextPrivate *context_priv;
    struct pipe_video_context *vpipe;
    struct pipe_box dst_box = {dstx, dsty, 0, width, height, 1};
+   unsigned src_stride;
 
    XVMC_MSG(XVMC_TRACE, "[XvMC] Compositing subpicture %p.\n", subpicture);
 
@@ -354,9 +356,11 @@ Status XvMCCompositeSubpicture(Display *dpy, XvMCSubpicture *subpicture, XvImage
    context_priv = subpicture_priv->context->privData;
    vpipe = context_priv->vctx->vpipe;
 
-   /* TODO: Assert rects are within bounds? Or clip? */
+   /* clipping should be done by upload_sampler and regardles what the documentation
+   says image->pitches[0] doesn't seems to be in bytes, so don't use it */
+   src_stride = image->width * util_format_get_blocksize(subpicture_priv->sampler->texture->format);
    vpipe->upload_sampler(vpipe, subpicture_priv->sampler, &dst_box,
-                         image->data, image->pitches[0], srcx, srcy);
+                         image->data, src_stride, srcx, srcy);
 
    XVMC_MSG(XVMC_TRACE, "[XvMC] Subpicture %p composited.\n", subpicture);
 

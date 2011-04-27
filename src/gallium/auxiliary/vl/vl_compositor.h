@@ -39,6 +39,7 @@ struct pipe_context;
 struct vl_compositor_layer
 {
    void *fs;
+   void *samplers[3];
    struct pipe_sampler_view *sampler_views[3];
    struct pipe_video_rect src_rect;
    struct pipe_video_rect dst_rect;
@@ -54,7 +55,8 @@ struct vl_compositor
    struct pipe_vertex_buffer vertex_buf;
    struct pipe_resource *csc_matrix;
 
-   void *sampler;
+   void *sampler_linear;
+   void *sampler_nearest;
    void *blend;
    void *rast;
    void *vertex_elems_state;

@@ -115,30 +115,40 @@ static void *
 create_frag_shader_palette(struct vl_compositor *c)
 {
    struct ureg_program *shader;
+   struct ureg_src csc[3];
    struct ureg_src tc;
    struct ureg_src sampler;
    struct ureg_src palette;
    struct ureg_dst texel;
    struct ureg_dst fragment;
+   unsigned i;
 
    shader = ureg_create(TGSI_PROCESSOR_FRAGMENT);
    if (!shader)
       return false;
 
+   for (i = 0; i < 3; ++i)
+      csc[i] = ureg_DECL_constant(shader, i);
+
    tc = ureg_DECL_fs_input(shader, TGSI_SEMANTIC_GENERIC, 1, TGSI_INTERPOLATE_LINEAR);
    sampler = ureg_DECL_sampler(shader, 0);
    palette = ureg_DECL_sampler(shader, 1);
-   fragment = ureg_DECL_output(shader, TGSI_SEMANTIC_COLOR, 0);
    texel = ureg_DECL_temporary(shader);
+   fragment = ureg_DECL_output(shader, TGSI_SEMANTIC_COLOR, 0);
 
    /*
     * texel = tex(tc, sampler)
-    * fragment.xyz = tex(texel, palette)
+    * fragment.xyz = tex(texel, palette) * csc
     * fragment.a = texel.a
     */
    ureg_TEX(shader, texel, TGSI_TEXTURE_2D, tc, sampler);
-   ureg_TEX(shader, fragment, TGSI_TEXTURE_1D, ureg_src(texel), palette);
+   ureg_MUL(shader, ureg_writemask(texel, TGSI_WRITEMASK_X), ureg_src(texel), ureg_imm1f(shader, 15.0f / 16.0f));
    ureg_MOV(shader, ureg_writemask(fragment, TGSI_WRITEMASK_W), ureg_src(texel));
+
+   ureg_TEX(shader, texel, TGSI_TEXTURE_1D, ureg_src(texel), palette);
+
+   for (i = 0; i < 3; ++i)
+      ureg_DP4(shader, ureg_writemask(fragment, TGSI_WRITEMASK_X << i), csc[i], ureg_src(texel));
 
    ureg_release_temporary(shader, texel);
    ureg_END(shader);
@@ -242,12 +252,12 @@ init_pipe_state(struct vl_compositor *c)
    sampler.compare_mode = PIPE_TEX_COMPARE_NONE;
    sampler.compare_func = PIPE_FUNC_ALWAYS;
    sampler.normalized_coords = 1;
-   /*sampler.lod_bias = ;*/
-   /*sampler.min_lod = ;*/
-   /*sampler.max_lod = ;*/
-   /*sampler.border_color[i] = ;*/
-   /*sampler.max_anisotropy = ;*/
-   c->sampler = c->pipe->create_sampler_state(c->pipe, &sampler);
+
+   c->sampler_linear = c->pipe->create_sampler_state(c->pipe, &sampler);
+
+   sampler.min_img_filter = PIPE_TEX_FILTER_NEAREST;
+   sampler.mag_img_filter = PIPE_TEX_FILTER_NEAREST;
+   c->sampler_nearest = c->pipe->create_sampler_state(c->pipe, &sampler);
 
    memset(&blend, 0, sizeof blend);
    blend.independent_blend_enable = 0;
@@ -286,7 +296,8 @@ static void cleanup_pipe_state(struct vl_compositor *c)
 {
    assert(c);
 
-   c->pipe->delete_sampler_state(c->pipe, c->sampler);
+   c->pipe->delete_sampler_state(c->pipe, c->sampler_linear);
+   c->pipe->delete_sampler_state(c->pipe, c->sampler_nearest);
    c->pipe->delete_blend_state(c->pipe, c->blend);
    c->pipe->delete_rasterizer_state(c->pipe, c->rast);
 }
@@ -430,6 +441,7 @@ draw_layers(struct vl_compositor *c)
          unsigned num_sampler_views = !samplers[1] ? 1 : !samplers[2] ? 2 : 3;
 
          c->pipe->bind_fs_state(c->pipe, c->layers[i].fs);
+         c->pipe->bind_fragment_sampler_states(c->pipe, num_sampler_views, c->layers[i].samplers);
          c->pipe->set_fragment_sampler_views(c->pipe, num_sampler_views, samplers);
          util_draw_arrays(c->pipe, PIPE_PRIM_QUADS, vb_index * 4, 4);
          vb_index++;
@@ -507,8 +519,10 @@ vl_compositor_set_buffer_layer(struct pipe_video_compositor *compositor,
    c->layers[layer].fs = c->fs_video_buffer;
 
    sampler_views = buffer->get_sampler_view_components(buffer);
-   for (i = 0; i < 3; ++i)
+   for (i = 0; i < 3; ++i) {
+      c->layers[layer].samplers[i] = c->sampler_linear;
       pipe_sampler_view_reference(&c->layers[layer].sampler_views[i], sampler_views[i]);
+   }
 
    c->layers[layer].src_rect = src_rect ? *src_rect : default_rect(&c->layers[layer]);
    c->layers[layer].dst_rect = dst_rect ? *dst_rect : default_rect(&c->layers[layer]);
@@ -529,6 +543,9 @@ vl_compositor_set_palette_layer(struct pipe_video_compositor *compositor,
 
    c->used_layers |= 1 << layer;
    c->layers[layer].fs = c->fs_palette;
+   c->layers[layer].samplers[0] = c->sampler_linear;
+   c->layers[layer].samplers[1] = c->sampler_nearest;
+   c->layers[layer].samplers[2] = NULL;
    pipe_sampler_view_reference(&c->layers[layer].sampler_views[0], indexes);
    pipe_sampler_view_reference(&c->layers[layer].sampler_views[1], palette);
    pipe_sampler_view_reference(&c->layers[layer].sampler_views[2], NULL);
@@ -550,6 +567,9 @@ vl_compositor_set_rgba_layer(struct pipe_video_compositor *compositor,
 
    c->used_layers |= 1 << layer;
    c->layers[layer].fs = c->fs_rgba;
+   c->layers[layer].samplers[0] = c->sampler_linear;
+   c->layers[layer].samplers[1] = NULL;
+   c->layers[layer].samplers[2] = NULL;
    pipe_sampler_view_reference(&c->layers[layer].sampler_views[0], rgba);
    pipe_sampler_view_reference(&c->layers[layer].sampler_views[1], NULL);
    pipe_sampler_view_reference(&c->layers[layer].sampler_views[2], NULL);
@@ -566,7 +586,6 @@ vl_compositor_render(struct pipe_video_compositor *compositor,
 {
    struct vl_compositor *c = (struct vl_compositor *)compositor;
    struct pipe_scissor_state scissor;
-   void *samplers[3];
 
    assert(compositor);
    assert(dst_surface);
@@ -590,14 +609,11 @@ vl_compositor_render(struct pipe_video_compositor *compositor,
       scissor.maxy = dst_surface->height;
    }
 
-   samplers[0] = samplers[1] = samplers[2] = c->sampler;
-
    gen_vertex_data(c);
 
    c->pipe->set_scissor_state(c->pipe, &scissor);
    c->pipe->set_framebuffer_state(c->pipe, &c->fb_state);
    c->pipe->set_viewport_state(c->pipe, &c->viewport);
-   c->pipe->bind_fragment_sampler_states(c->pipe, 3, &samplers[0]);
    c->pipe->bind_vs_state(c->pipe, c->vs);
    c->pipe->set_vertex_buffers(c->pipe, 1, &c->vertex_buf);
    c->pipe->bind_vertex_elements_state(c->pipe, c->vertex_elems_state);
