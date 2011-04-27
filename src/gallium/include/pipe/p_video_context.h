@@ -265,6 +265,11 @@ struct pipe_video_compositor
    void (*set_csc_matrix)(struct pipe_video_compositor *compositor, const float mat[16]);
 
    /**
+    * reset dirty area, so it's cleared with the clear colour
+    */
+   void (*reset_dirty_area)(struct pipe_video_compositor *compositor);
+
+   /**
     * set overlay samplers
     */
    /*@{*/

@@ -500,20 +500,26 @@ Status XvMCPutSurface(Display *dpy, XvMCSurface *surface, Drawable drawable,
    context = surface_priv->context;
    context_priv = context->privData;
 
+   assert(flags == XVMC_TOP_FIELD || flags == XVMC_BOTTOM_FIELD || flags == XVMC_FRAME_PICTURE);
+   assert(srcx + srcw - 1 < surface->width);
+   assert(srcy + srch - 1 < surface->height);
+
+   subpicture_priv = surface_priv->subpicture ? surface_priv->subpicture->privData : NULL;
+   vpipe = context_priv->vctx->vpipe;
+   compositor = context_priv->compositor;
+
    if (!context_priv->drawable_surface ||
        context_priv->dst_rect.x != dst_rect.x || context_priv->dst_rect.y != dst_rect.y ||
        context_priv->dst_rect.w != dst_rect.w || context_priv->dst_rect.h != dst_rect.h) {
 
       context_priv->drawable_surface = vl_drawable_surface_get(context_priv->vctx, drawable);
       context_priv->dst_rect = dst_rect;
+      compositor->reset_dirty_area(compositor);
    }
 
    if (!context_priv->drawable_surface)
       return BadDrawable;
 
-   assert(flags == XVMC_TOP_FIELD || flags == XVMC_BOTTOM_FIELD || flags == XVMC_FRAME_PICTURE);
-   assert(srcx + srcw - 1 < surface->width);
-   assert(srcy + srch - 1 < surface->height);
    /*
     * Some apps (mplayer) hit these asserts because they call
     * this function after the window has been resized by the WM
@@ -525,10 +531,6 @@ Status XvMCPutSurface(Display *dpy, XvMCSurface *surface, Drawable drawable,
    assert(destx + destw - 1 < drawable_surface->width);
    assert(desty + desth - 1 < drawable_surface->height);
     */
-
-   subpicture_priv = surface_priv->subpicture ? surface_priv->subpicture->privData : NULL;
-   vpipe = context_priv->vctx->vpipe;
-   compositor = context_priv->compositor;
 
    unmap_and_flush_surface(surface_priv);
 

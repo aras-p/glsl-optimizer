@@ -713,6 +713,7 @@ vl_compositor_init(struct pipe_video_context *vpipe, struct pipe_context *pipe)
    compositor->base.context = vpipe;
    compositor->base.destroy = vl_compositor_destroy;
    compositor->base.set_csc_matrix = vl_compositor_set_csc_matrix;
+   compositor->base.reset_dirty_area = vl_compositor_reset_dirty_area;
    compositor->base.clear_layers = vl_compositor_clear_layers;
    compositor->base.set_buffer_layer = vl_compositor_set_buffer_layer;
    compositor->base.set_palette_layer = vl_compositor_set_palette_layer;
