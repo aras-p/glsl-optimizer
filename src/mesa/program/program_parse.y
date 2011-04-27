@@ -1258,7 +1258,11 @@ optArraySize:
 	| INTEGER
         {
 	   if (($1 < 1) || ((unsigned) $1 > state->limits->MaxParameters)) {
-	      yyerror(& @1, state, "invalid parameter array size");
+              char msg[100];
+              _mesa_snprintf(msg, sizeof(msg),
+                             "invalid parameter array size (size=%d max=%u)",
+                             $1, state->limits->MaxParameters);
+	      yyerror(& @1, state, msg);
 	      YYERROR;
 	   } else {
 	      $$ = $1;
