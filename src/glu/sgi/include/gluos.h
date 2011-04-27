@@ -60,6 +60,10 @@
 #pragma comment(linker, "/OPT:NOWIN98")
 #endif
 
+#ifndef WINGDIAPI
+#define WINGDIAPI
+#endif
+
 #elif defined(__OS2__)
 
 #include <stdlib.h>

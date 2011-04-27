@@ -6631,7 +6631,7 @@ static TexImage3Dproc pTexImage3D = 0;
 #  include <dlfcn.h>
 #  include <sys/types.h>
 #else
-#  include <windows.h>
+  WINGDIAPI PROC  WINAPI wglGetProcAddress(LPCSTR);
 #endif
 
 static void gluTexImage3D( GLenum target, GLint level,
