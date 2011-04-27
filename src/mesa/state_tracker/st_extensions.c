@@ -187,7 +187,7 @@ void st_init_limits(struct st_context *st)
       options->EmitNoIndirectUniform = !screen->get_shader_param(screen, sh,
                                         PIPE_SHADER_CAP_INDIRECT_CONST_ADDR);
 
-      if(options->EmitNoLoops)
+      if (options->EmitNoLoops)
          options->MaxUnrollIterations = MIN2(screen->get_shader_param(screen, sh, PIPE_SHADER_CAP_MAX_INSTRUCTIONS), 65536);
    }
 
@@ -539,8 +539,8 @@ void st_init_extensions(struct st_context *st)
                                      PIPE_TEXTURE_2D, 0,
                                      PIPE_BIND_RENDER_TARGET) &&
         !screen->is_format_supported(screen, PIPE_FORMAT_R16G16B16A16_SNORM,
-                                             PIPE_TEXTURE_2D, 0,
-                                             PIPE_BIND_RENDER_TARGET) &&
+                                     PIPE_TEXTURE_2D, 0,
+                                     PIPE_BIND_RENDER_TARGET) &&
         !screen->is_format_supported(screen, PIPE_FORMAT_R16G16B16A16_FLOAT,
                                      PIPE_TEXTURE_2D, 0,
                                      PIPE_BIND_RENDER_TARGET) &&
