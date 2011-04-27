@@ -366,36 +366,56 @@ default_rect(struct vl_compositor_layer *layer)
    return rect;
 }
 
-static void
-gen_rect_verts(struct vertex4f *vb,
-               struct pipe_video_rect *src_rect,
-               struct vertex2f *src_inv_size,
-               struct pipe_video_rect *dst_rect,
-               struct vertex2f *dst_inv_size)
+static inline struct vertex2f
+calc_topleft(struct vertex2f inv_size, struct pipe_video_rect rect)
 {
-   assert(vb);
-   assert(src_rect && src_inv_size);
-   assert(dst_rect && dst_inv_size);
+   struct vertex2f res = { rect.x * inv_size.x, rect.y * inv_size.y };
+   return res;
+}
 
-   vb[0].x = dst_rect->x * dst_inv_size->x;
-   vb[0].y = dst_rect->y * dst_inv_size->y;
-   vb[0].z = src_rect->x * src_inv_size->x;
-   vb[0].w = src_rect->y * src_inv_size->y;
+static inline struct vertex2f
+calc_bottomright(struct vertex2f inv_size, struct pipe_video_rect rect)
+{
+   struct vertex2f res = { (rect.x + rect.w) * inv_size.x, (rect.y + rect.h) * inv_size.y };
+   return res;
+}
 
-   vb[1].x = (dst_rect->x + dst_rect->w) * dst_inv_size->x;
-   vb[1].y = dst_rect->y * dst_inv_size->y;
-   vb[1].z = (src_rect->x + src_rect->w) * src_inv_size->x;
-   vb[1].w = src_rect->y * src_inv_size->y;
+static inline void
+calc_src_and_dst(struct vl_compositor_layer *layer, unsigned width, unsigned height,
+                 struct pipe_video_rect src, struct pipe_video_rect dst)
+{
+   struct vertex2f inv_size =  { 1.0f / width, 1.0f / height };
 
-   vb[2].x = (dst_rect->x + dst_rect->w) * dst_inv_size->x;
-   vb[2].y = (dst_rect->y + dst_rect->h) * dst_inv_size->y;
-   vb[2].z = (src_rect->x + src_rect->w) * src_inv_size->x;
-   vb[2].w = (src_rect->y + src_rect->h) * src_inv_size->y;
+   layer->src.tl = calc_topleft(inv_size, src);
+   layer->src.br = calc_bottomright(inv_size, src);
+   layer->dst.tl = calc_topleft(inv_size, dst);
+   layer->dst.br = calc_bottomright(inv_size, dst);
+}
 
-   vb[3].x = dst_rect->x * dst_inv_size->x;
-   vb[3].y = (dst_rect->y + dst_rect->h) * dst_inv_size->y;
-   vb[3].z = src_rect->x * src_inv_size->x;
-   vb[3].w = (src_rect->y + src_rect->h) * src_inv_size->y;
+static void
+gen_rect_verts(struct vertex4f *vb, struct vl_compositor_layer *layer)
+{
+   assert(vb && layer);
+
+   vb[0].x = layer->dst.tl.x;
+   vb[0].y = layer->dst.tl.y;
+   vb[0].z = layer->src.tl.x;
+   vb[0].w = layer->src.tl.y;
+
+   vb[1].x = layer->dst.br.x;
+   vb[1].y = layer->dst.tl.y;
+   vb[1].z = layer->src.br.x;
+   vb[1].w = layer->src.tl.y;
+
+   vb[2].x = layer->dst.br.x;
+   vb[2].y = layer->dst.br.y;
+   vb[2].z = layer->src.br.x;
+   vb[2].w = layer->src.br.y;
+
+   vb[3].x = layer->dst.tl.x;
+   vb[3].y = layer->dst.br.y;
+   vb[3].z = layer->src.tl.x;
+   vb[3].w = layer->src.br.y;
 }
 
 static void
@@ -416,11 +436,7 @@ gen_vertex_data(struct vl_compositor *c)
 
    for (i = 0; i < VL_COMPOSITOR_MAX_LAYERS; i++) {
       if (c->used_layers & (1 << i)) {
-         struct pipe_sampler_view *sv = c->layers[i].sampler_views[0];
-         struct vertex2f src_inv_size = {1.0f / sv->texture->width0, 1.0f / sv->texture->height0};
-
-         gen_rect_verts(vb, &c->layers[i].src_rect, &src_inv_size, &c->layers[i].dst_rect, &src_inv_size);
-
+         gen_rect_verts(vb, &c->layers[i]);
          vb += 4;
       }
    }
@@ -524,8 +540,9 @@ vl_compositor_set_buffer_layer(struct pipe_video_compositor *compositor,
       pipe_sampler_view_reference(&c->layers[layer].sampler_views[i], sampler_views[i]);
    }
 
-   c->layers[layer].src_rect = src_rect ? *src_rect : default_rect(&c->layers[layer]);
-   c->layers[layer].dst_rect = dst_rect ? *dst_rect : default_rect(&c->layers[layer]);
+   calc_src_and_dst(&c->layers[layer], buffer->width, buffer->height,
+                    src_rect ? *src_rect : default_rect(&c->layers[layer]),
+                    dst_rect ? *dst_rect : default_rect(&c->layers[layer]));
 }
 
 static void
@@ -549,8 +566,10 @@ vl_compositor_set_palette_layer(struct pipe_video_compositor *compositor,
    pipe_sampler_view_reference(&c->layers[layer].sampler_views[0], indexes);
    pipe_sampler_view_reference(&c->layers[layer].sampler_views[1], palette);
    pipe_sampler_view_reference(&c->layers[layer].sampler_views[2], NULL);
-   c->layers[layer].src_rect = src_rect ? *src_rect : default_rect(&c->layers[layer]);
-   c->layers[layer].dst_rect = dst_rect ? *dst_rect : default_rect(&c->layers[layer]);
+   calc_src_and_dst(&c->layers[layer], indexes->texture->width0, indexes->texture->height0,
+                    src_rect ? *src_rect : default_rect(&c->layers[layer]),
+                    dst_rect ? *dst_rect : default_rect(&c->layers[layer]));
+
 }
 
 static void
@@ -573,8 +592,9 @@ vl_compositor_set_rgba_layer(struct pipe_video_compositor *compositor,
    pipe_sampler_view_reference(&c->layers[layer].sampler_views[0], rgba);
    pipe_sampler_view_reference(&c->layers[layer].sampler_views[1], NULL);
    pipe_sampler_view_reference(&c->layers[layer].sampler_views[2], NULL);
-   c->layers[layer].src_rect = src_rect ? *src_rect : default_rect(&c->layers[layer]);
-   c->layers[layer].dst_rect = dst_rect ? *dst_rect : default_rect(&c->layers[layer]);
+   calc_src_and_dst(&c->layers[layer], rgba->texture->width0, rgba->texture->height0,
+                    src_rect ? *src_rect : default_rect(&c->layers[layer]),
+                    dst_rect ? *dst_rect : default_rect(&c->layers[layer]));
 }
 
 static void

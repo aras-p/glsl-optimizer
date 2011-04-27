@@ -32,6 +32,8 @@
 #include <pipe/p_video_context.h>
 #include <pipe/p_video_state.h>
 
+#include "vl_types.h"
+
 struct pipe_context;
 
 #define VL_COMPOSITOR_MAX_LAYERS 16
@@ -41,8 +43,9 @@ struct vl_compositor_layer
    void *fs;
    void *samplers[3];
    struct pipe_sampler_view *sampler_views[3];
-   struct pipe_video_rect src_rect;
-   struct pipe_video_rect dst_rect;
+   struct {
+      struct vertex2f tl, br;
+   } src, dst;
 };
 
 struct vl_compositor
