@@ -72,6 +72,7 @@ struct vl_compositor
    void *fs_palette;
    void *fs_rgba;
 
+   float clear_color[4];
    struct vertex2f dirty_tl, dirty_br;
 
    unsigned used_layers:VL_COMPOSITOR_MAX_LAYERS;

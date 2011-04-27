@@ -512,6 +512,18 @@ vl_compositor_reset_dirty_area(struct pipe_video_compositor *compositor)
 }
 
 static void
+vl_compositor_set_clear_color(struct pipe_video_compositor *compositor, float color[4])
+{
+   struct vl_compositor *c = (struct vl_compositor *)compositor;
+   unsigned i;
+
+   assert(compositor);
+
+   for (i = 0; i < 4; ++i)
+      c->clear_color[i] = color[i];
+}
+
+static void
 vl_compositor_clear_layers(struct pipe_video_compositor *compositor)
 {
    struct vl_compositor *c = (struct vl_compositor *)compositor;
@@ -655,7 +667,6 @@ vl_compositor_render(struct pipe_video_compositor *compositor,
 {
    struct vl_compositor *c = (struct vl_compositor *)compositor;
    struct pipe_scissor_state scissor;
-   float clearcolor[4] = { 0.0f, 0.0f, 0.0f, 0.0f };
 
    assert(compositor);
    assert(dst_surface);
@@ -682,7 +693,7 @@ vl_compositor_render(struct pipe_video_compositor *compositor,
    gen_vertex_data(c);
 
    if (c->dirty_tl.x < c->dirty_br.x || c->dirty_tl.y < c->dirty_br.y) {
-      util_clear_render_target(c->pipe, dst_surface, clearcolor, 0, 0, dst_surface->width, dst_surface->height);
+      util_clear_render_target(c->pipe, dst_surface, c->clear_color, 0, 0, dst_surface->width, dst_surface->height);
       c->dirty_tl.x = c->dirty_tl.y = 1.0f;
       c->dirty_br.x = c->dirty_br.y = 0.0f;
    }
@@ -714,6 +725,7 @@ vl_compositor_init(struct pipe_video_context *vpipe, struct pipe_context *pipe)
    compositor->base.destroy = vl_compositor_destroy;
    compositor->base.set_csc_matrix = vl_compositor_set_csc_matrix;
    compositor->base.reset_dirty_area = vl_compositor_reset_dirty_area;
+   compositor->base.set_clear_color = vl_compositor_set_clear_color;
    compositor->base.clear_layers = vl_compositor_clear_layers;
    compositor->base.set_buffer_layer = vl_compositor_set_buffer_layer;
    compositor->base.set_palette_layer = vl_compositor_set_palette_layer;
@@ -739,6 +751,9 @@ vl_compositor_init(struct pipe_video_context *vpipe, struct pipe_context *pipe)
 
    vl_csc_get_matrix(VL_CSC_COLOR_STANDARD_IDENTITY, NULL, true, csc_matrix);
    vl_compositor_set_csc_matrix(&compositor->base, csc_matrix);
+
+   compositor->clear_color[0] = compositor->clear_color[1] = 0.0f;
+   compositor->clear_color[2] = compositor->clear_color[3] = 0.0f;
    vl_compositor_reset_dirty_area(&compositor->base);
 
    return &compositor->base;

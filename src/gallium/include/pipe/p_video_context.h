@@ -270,6 +270,11 @@ struct pipe_video_compositor
    void (*reset_dirty_area)(struct pipe_video_compositor *compositor);
 
    /**
+    * set the clear color
+    */
+   void (*set_clear_color)(struct pipe_video_compositor *compositor, float color[4]);
+
+   /**
     * set overlay samplers
     */
    /*@{*/
