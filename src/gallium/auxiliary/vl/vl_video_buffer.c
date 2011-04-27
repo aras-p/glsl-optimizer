@@ -180,6 +180,9 @@ vl_video_buffer_init(struct pipe_video_context *context,
    buffer->base.get_sampler_view_planes = vl_video_buffer_sampler_view_planes;
    buffer->base.get_sampler_view_components = vl_video_buffer_sampler_view_components;
    buffer->base.get_surfaces = vl_video_buffer_surfaces;
+   buffer->base.chroma_format = chroma_format;
+   buffer->base.width = width;
+   buffer->base.height = height;
    buffer->pipe = pipe;
    buffer->num_planes = 1;
 
