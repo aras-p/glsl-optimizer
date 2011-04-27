@@ -488,7 +488,6 @@ Status XvMCPutSurface(Display *dpy, XvMCSurface *surface, Drawable drawable,
    XvMCContext *context;
    struct pipe_video_rect src_rect = {srcx, srcy, srcw, srch};
    struct pipe_video_rect dst_rect = {destx, desty, destw, desth};
-   struct pipe_surface *drawable_surface;
 
    XVMC_MSG(XVMC_TRACE, "[XvMC] Displaying surface %p.\n", surface);
 
@@ -501,8 +500,15 @@ Status XvMCPutSurface(Display *dpy, XvMCSurface *surface, Drawable drawable,
    context = surface_priv->context;
    context_priv = context->privData;
 
-   drawable_surface = vl_drawable_surface_get(context_priv->vctx, drawable);
-   if (!drawable_surface)
+   if (!context_priv->drawable_surface ||
+       context_priv->dst_rect.x != dst_rect.x || context_priv->dst_rect.y != dst_rect.y ||
+       context_priv->dst_rect.w != dst_rect.w || context_priv->dst_rect.h != dst_rect.h) {
+
+      context_priv->drawable_surface = vl_drawable_surface_get(context_priv->vctx, drawable);
+      context_priv->dst_rect = dst_rect;
+   }
+
+   if (!context_priv->drawable_surface)
       return BadDrawable;
 
    assert(flags == XVMC_TOP_FIELD || flags == XVMC_BOTTOM_FIELD || flags == XVMC_FRAME_PICTURE);
@@ -538,7 +544,8 @@ Status XvMCPutSurface(Display *dpy, XvMCSurface *surface, Drawable drawable,
          compositor->set_palette_layer(compositor, 1, subpicture_priv->sampler, subpicture_priv->palette,
                                        &subpicture_priv->src_rect, &subpicture_priv->dst_rect);
       else
-         compositor->set_rgba_layer(compositor, 1, subpicture_priv->sampler, &src_rect, &dst_rect);
+         compositor->set_rgba_layer(compositor, 1, subpicture_priv->sampler,
+                                    &subpicture_priv->src_rect, &subpicture_priv->dst_rect);
 
       surface_priv->subpicture = NULL;
       subpicture_priv->surface = NULL;
@@ -547,19 +554,17 @@ Status XvMCPutSurface(Display *dpy, XvMCSurface *surface, Drawable drawable,
    // Workaround for r600g, there seems to be a bug in the fence refcounting code
    vpipe->screen->fence_reference(vpipe->screen, &surface_priv->fence, NULL);
 
-   compositor->render_picture(compositor, PictureToPipe(flags), drawable_surface, &dst_rect, &surface_priv->fence);
+   compositor->render_picture(compositor, PictureToPipe(flags), context_priv->drawable_surface, &dst_rect, &surface_priv->fence);
 
    XVMC_MSG(XVMC_TRACE, "[XvMC] Submitted surface %p for display. Pushing to front buffer.\n", surface);
 
    vpipe->screen->flush_frontbuffer
    (
       vpipe->screen,
-      drawable_surface->texture,
+      context_priv->drawable_surface->texture,
       0, 0,
-      vl_contextprivate_get(context_priv->vctx, drawable_surface)
+      vl_contextprivate_get(context_priv->vctx, context_priv->drawable_surface)
    );
-
-   pipe_surface_reference(&drawable_surface, NULL);
 
    if(dump_window == -1) {
       dump_window = debug_get_num_option("XVMC_DUMP", 0);
