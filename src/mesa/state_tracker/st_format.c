@@ -954,14 +954,24 @@ st_choose_format(struct pipe_screen *screen, GLenum internalFormat,
 
    /* prefer formats in order of data size, choosing 16-bit ones if equal sized */
    case GL_RGBA16F_ARB:
-   case GL_RGB16F_ARB:
       {
          static const enum pipe_format formats[] = {
                PIPE_FORMAT_R16G16B16A16_FLOAT,
                PIPE_FORMAT_R32G32B32A32_FLOAT
          };
          return find_supported_format(screen, formats, Elements(formats),
-               target, sample_count, bindings);
+                                      target, sample_count, bindings);
+      }
+   case GL_RGB16F_ARB:
+      {
+         static const enum pipe_format formats[] = {
+               PIPE_FORMAT_R16G16B16_FLOAT,
+               PIPE_FORMAT_R16G16B16A16_FLOAT,
+               PIPE_FORMAT_R32G32B32_FLOAT,
+               PIPE_FORMAT_R32G32B32A32_FLOAT
+         };
+         return find_supported_format(screen, formats, Elements(formats),
+                                      target, sample_count, bindings);
       }
    case GL_LUMINANCE_ALPHA16F_ARB:
       {
@@ -1040,14 +1050,23 @@ st_choose_format(struct pipe_screen *screen, GLenum internalFormat,
 
    /* try a 32-bit format if available, otherwise fallback to a 16-bit one */
    case GL_RGBA32F_ARB:
-   case GL_RGB32F_ARB:
       {
          static const enum pipe_format formats[] = {
                PIPE_FORMAT_R32G32B32A32_FLOAT,
                PIPE_FORMAT_R16G16B16A16_FLOAT
          };
          return find_supported_format(screen, formats, Elements(formats),
-               target, sample_count, bindings);
+                                      target, sample_count, bindings);
+      }
+   case GL_RGB32F_ARB:
+      {
+         static const enum pipe_format formats[] = {
+               PIPE_FORMAT_R32G32B32_FLOAT,
+               PIPE_FORMAT_R32G32B32A32_FLOAT,
+               PIPE_FORMAT_R16G16B16A16_FLOAT
+         };
+         return find_supported_format(screen, formats, Elements(formats),
+                                      target, sample_count, bindings);
       }
    case GL_LUMINANCE_ALPHA32F_ARB:
       {
