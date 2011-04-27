@@ -40,5 +40,5 @@ nvfx_video_create(struct pipe_screen *screen, void *priv)
    if (!pipe)
       return NULL;
 
-   return vl_create_context(pipe, profile, true);
+   return vl_create_context(pipe, true);
 }
