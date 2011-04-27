@@ -143,7 +143,7 @@ mm_slab_new(struct nouveau_mman *cache, int chunk_order)
 
    cache->allocated += size;
 
-   debug_printf("MM: new slab, total memory = %lu KiB\n",
+   debug_printf("MM: new slab, total memory = %llu KiB\n",
                 cache->allocated / 1024);
 
    return PIPE_OK;

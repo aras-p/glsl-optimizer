@@ -469,7 +469,7 @@ nv50_screen_create(struct pipe_winsys *ws, struct nouveau_device *dev)
 
    screen->tls_size = tls_space * max_warps * 32;
 
-   debug_printf("max_warps = %i, tls_size = %lu KiB\n",
+   debug_printf("max_warps = %i, tls_size = %llu KiB\n",
                 max_warps, screen->tls_size >> 10);
 
    ret = nouveau_bo_new(dev, NOUVEAU_BO_VRAM, 1 << 16, screen->tls_size,
