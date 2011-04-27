@@ -34,6 +34,7 @@
 #include "util/u_memory.h"
 #include "util/u_string.h"
 
+#include "svga_format.h"
 #include "svga_screen.h"
 #include "svga_context.h"
 #include "svga_resource_texture.h"
