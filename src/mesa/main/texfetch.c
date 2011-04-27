@@ -41,7 +41,7 @@
 #include "texcompress_rgtc.h"
 #include "texfetch.h"
 #include "teximage.h"
-#include "rgb9e5.h"
+#include "../../gallium/auxiliary/util/u_format_rgb9e5.h"
 
 
 /**

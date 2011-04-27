@@ -28,7 +28,7 @@
 
 #include "u_math.h"
 #include "u_format_other.h"
-#include "../../../mesa/main/rgb9e5.h"
+#include "u_format_rgb9e5.h"
 
 
 void

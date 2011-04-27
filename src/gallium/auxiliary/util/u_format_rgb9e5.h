@@ -87,15 +87,6 @@ static INLINE float rgb9e5_ClampRange(float x)
    }
 }
 
-static INLINE float rgb9e5_MaxOf3(float x, float y, float z)
-{
-   if (x > y) {
-      return MAX2(x, z);
-   } else {
-      return MAX2(y, z);
-   }
-}
-
 /* Ok, FloorLog2 is not correct for the denorm and zero values, but we
    are going to do a max of this value with the minimum rgb9e5 exponent
    that will hide these problem cases. */
@@ -120,7 +111,7 @@ static INLINE unsigned float3_to_rgb9e5(const float rgb[3])
    gc = rgb9e5_ClampRange(rgb[1]);
    bc = rgb9e5_ClampRange(rgb[2]);
 
-   maxrgb = rgb9e5_MaxOf3(rc, gc, bc);
+   maxrgb = MAX3(rc, gc, bc);
    exp_shared = MAX2(-RGB9E5_EXP_BIAS-1, rgb9e5_FloorLog2(maxrgb)) + 1 + RGB9E5_EXP_BIAS;
    assert(exp_shared <= RGB9E5_MAX_VALID_BIASED_EXP);
    assert(exp_shared >= 0);

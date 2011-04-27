@@ -385,8 +385,8 @@ _mesa_choose_tex_format( struct gl_context *ctx, GLint internalFormat,
    if (ctx->Extensions.EXT_texture_shared_exponent) {
       switch (internalFormat) {
          case GL_RGB9_E5:
-            RETURN_IF_SUPPORTED(MESA_FORMAT_RGB9_E5_FLOAT);
-            break;
+            ASSERT(ctx->TextureFormatSupported[MESA_FORMAT_RGB9_E5_FLOAT]);
+            return MESA_FORMAT_RGB9_E5_FLOAT;
          default:
             ; /* fallthrough */
       }

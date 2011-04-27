@@ -70,7 +70,7 @@
 #include "teximage.h"
 #include "texstore.h"
 #include "enums.h"
-#include "rgb9e5.h"
+#include "../../gallium/auxiliary/util/u_format_rgb9e5.h"
 
 
 enum {

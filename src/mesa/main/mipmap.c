@@ -35,7 +35,7 @@
 #include "texstore.h"
 #include "image.h"
 #include "macros.h"
-#include "rgb9e5.h"
+#include "../../gallium/auxiliary/util/u_format_rgb9e5.h"
 
 
 
