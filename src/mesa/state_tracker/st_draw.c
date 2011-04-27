@@ -247,7 +247,7 @@ is_interleaved_arrays(const struct st_vertex_program *vp,
    const struct gl_buffer_object *firstBufObj = NULL;
    GLint firstStride = -1;
    const GLubyte *client_addr = NULL;
-   GLboolean user_memory;
+   GLboolean user_memory = GL_FALSE;
 
    for (attr = 0; attr < vpv->num_inputs; attr++) {
       const GLuint mesaAttr = vp->index_to_input[attr];
