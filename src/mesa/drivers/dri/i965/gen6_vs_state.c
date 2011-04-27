@@ -147,7 +147,7 @@ upload_vs_state(struct brw_context *brw)
 
    BEGIN_BATCH(6);
    OUT_BATCH(_3DSTATE_VS << 16 | (6 - 2));
-   OUT_RELOC(brw->vs.prog_bo, I915_GEM_DOMAIN_INSTRUCTION, 0, 0);
+   OUT_BATCH(brw->vs.prog_offset);
    OUT_BATCH((0 << GEN6_VS_SAMPLER_COUNT_SHIFT) |
 	     GEN6_VS_FLOATING_POINT_MODE_ALT |
 	     (brw->vs.nr_surfaces << GEN6_VS_BINDING_TABLE_ENTRY_COUNT_SHIFT));

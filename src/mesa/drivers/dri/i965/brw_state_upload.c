@@ -47,11 +47,11 @@ static const struct brw_tracked_state *gen4_atoms[] =
    &brw_check_fallback,
 
    &brw_wm_input_sizes,
-   &brw_vs_prog,
-   &brw_gs_prog, 
-   &brw_clip_prog, 
-   &brw_sf_prog,
-   &brw_wm_prog,
+   &brw_vs_prog, /* must do before GS prog, state base address. */
+   &brw_gs_prog, /* must do before state base address */
+   &brw_clip_prog, /* must do before state base address */
+   &brw_sf_prog, /* must do before state base address */
+   &brw_wm_prog, /* must do before state base address */
 
    /* Once all the programs are done, we know how large urb entry
     * sizes need to be and can decide if we need to change the urb
@@ -110,9 +110,9 @@ static const struct brw_tracked_state *gen6_atoms[] =
    &brw_check_fallback,
 
    &brw_wm_input_sizes,
-   &brw_vs_prog,
-   &brw_gs_prog,
-   &brw_wm_prog,
+   &brw_vs_prog, /* must do before state base address */
+   &brw_gs_prog, /* must do before state base address */
+   &brw_wm_prog, /* must do before state base address */
 
    &gen6_clip_vp,
    &gen6_sf_vp,
@@ -365,6 +365,7 @@ static struct dirty_bit_map brw_bits[] = {
    DEFINE_BIT(BRW_NEW_PRIMITIVE),
    DEFINE_BIT(BRW_NEW_CONTEXT),
    DEFINE_BIT(BRW_NEW_WM_INPUT_DIMENSIONS),
+   DEFINE_BIT(BRW_NEW_PROGRAM_CACHE),
    DEFINE_BIT(BRW_NEW_PSP),
    DEFINE_BIT(BRW_NEW_WM_SURFACES),
    DEFINE_BIT(BRW_NEW_INDICES),

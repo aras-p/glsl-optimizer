@@ -69,14 +69,8 @@ static void brw_destroy_context( struct intel_context *intel )
    ralloc_free(brw->wm.compile_data);
 
    dri_bo_release(&brw->curbe.curbe_bo);
-   dri_bo_release(&brw->vs.prog_bo);
    dri_bo_release(&brw->vs.const_bo);
-   dri_bo_release(&brw->gs.prog_bo);
-   dri_bo_release(&brw->clip.prog_bo);
-   dri_bo_release(&brw->sf.prog_bo);
-   dri_bo_release(&brw->wm.prog_bo);
    dri_bo_release(&brw->wm.const_bo);
-   dri_bo_release(&brw->cc.prog_bo);
 
    free(brw->curbe.last_buf);
    free(brw->curbe.next_buf);
@@ -125,6 +119,12 @@ static void brw_new_batch( struct intel_context *intel )
    brw->state.dirty.brw |= BRW_NEW_CONTEXT | BRW_NEW_BATCH;
 
    brw->vb.nr_current_buffers = 0;
+
+   /* Mark that the current program cache BO has been used by the GPU.
+    * It will be reallocated if we need to put new programs in for the
+    * next batch.
+    */
+   brw->cache.bo_used_by_gpu = true;
 }
 
 static void brw_invalidate_state( struct intel_context *intel, GLuint new_state )

@@ -45,7 +45,7 @@ upload_gs_state(struct brw_context *brw)
    ADVANCE_BATCH();
 
    // GS should never be used on Gen6.  Disable it.
-   assert(brw->gs.prog_bo == NULL);
+   assert(!brw->gs.prog_active);
    BEGIN_BATCH(7);
    OUT_BATCH(_3DSTATE_GS << 16 | (7 - 2));
    OUT_BATCH(0); /* prog_bo */

@@ -146,15 +146,12 @@ static void compile_clip_prog( struct brw_context *brw,
       printf("\n");
    }
 
-   /* Upload
-    */
-   drm_intel_bo_unreference(brw->clip.prog_bo);
-   brw->clip.prog_bo = brw_upload_cache(&brw->cache,
-					BRW_CLIP_PROG,
-					&c.key, sizeof(c.key),
-					program, program_size,
-					&c.prog_data, sizeof(c.prog_data),
-					&brw->clip.prog_data);
+   brw_upload_cache(&brw->cache,
+		    BRW_CLIP_PROG,
+		    &c.key, sizeof(c.key),
+		    program, program_size,
+		    &c.prog_data, sizeof(c.prog_data),
+		    &brw->clip.prog_offset, &brw->clip.prog_data);
    ralloc_free(mem_ctx);
 }
 
@@ -271,12 +268,11 @@ static void upload_clip_prog(struct brw_context *brw)
       }
    }
 
-   drm_intel_bo_unreference(brw->clip.prog_bo);
-   brw->clip.prog_bo = brw_search_cache(&brw->cache, BRW_CLIP_PROG,
-					&key, sizeof(key),
-					&brw->clip.prog_data);
-   if (brw->clip.prog_bo == NULL)
+   if (!brw_search_cache(&brw->cache, BRW_CLIP_PROG,
+			 &key, sizeof(key),
+			 &brw->clip.prog_offset, &brw->clip.prog_data)) {
       compile_clip_prog( brw, &key );
+   }
 }
 
 

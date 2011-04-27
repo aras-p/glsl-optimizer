@@ -45,6 +45,7 @@
  */
 
 #include "main/imports.h"
+#include "intel_batchbuffer.h"
 #include "brw_state.h"
 
 #define FILE_DEBUG_FLAG DEBUG_STATE
@@ -65,23 +66,6 @@ hash_key(struct brw_cache_item *item)
    }
 
    return hash;
-}
-
-
-/**
- * Marks a new buffer as being chosen for the given cache id.
- */
-static void
-update_cache_last(struct brw_cache *cache, enum brw_cache_id cache_id,
-		  drm_intel_bo *bo)
-{
-   if (bo == cache->last_bo[cache_id])
-      return; /* no change */
-
-   drm_intel_bo_unreference(cache->last_bo[cache_id]);
-   cache->last_bo[cache_id] = bo;
-   drm_intel_bo_reference(cache->last_bo[cache_id]);
-   cache->brw->state.dirty.cache |= 1 << cache_id;
 }
 
 static int
@@ -145,12 +129,13 @@ rehash(struct brw_cache *cache)
 /**
  * Returns the buffer object matching cache_id and key, or NULL.
  */
-drm_intel_bo *
+bool
 brw_search_cache(struct brw_cache *cache,
                  enum brw_cache_id cache_id,
                  const void *key, GLuint key_size,
-                 void *aux_return)
+                 uint32_t *inout_offset, void *out_aux)
 {
+   struct brw_context *brw = cache->brw;
    struct brw_cache_item *item;
    struct brw_cache_item lookup;
    GLuint hash;
@@ -164,19 +149,45 @@ brw_search_cache(struct brw_cache *cache,
    item = search_cache(cache, hash, &lookup);
 
    if (item == NULL)
-      return NULL;
+      return false;
 
-   if (aux_return)
-      *(void **)aux_return = (void *)((char *)item->key + item->key_size);
+   *(void **)out_aux = ((char *)item->key + item->key_size);
 
-   update_cache_last(cache, cache_id, item->bo);
+   if (item->offset != *inout_offset) {
+      brw->state.dirty.cache |= (1 << cache_id);
+      *inout_offset = item->offset;
+   }
 
-   drm_intel_bo_reference(item->bo);
-   return item->bo;
+   return true;
 }
 
+static void
+brw_cache_new_bo(struct brw_cache *cache, uint32_t new_size)
+{
+   struct brw_context *brw = cache->brw;
+   struct intel_context *intel = &brw->intel;
+   drm_intel_bo *new_bo;
 
-drm_intel_bo *
+   new_bo = drm_intel_bo_alloc(intel->bufmgr, "program cache", new_size, 64);
+
+   /* Copy any existing data that needs to be saved. */
+   if (cache->next_offset != 0) {
+      drm_intel_bo_map(cache->bo, false);
+      drm_intel_bo_subdata(new_bo, 0, cache->next_offset, cache->bo->virtual);
+      drm_intel_bo_unmap(cache->bo);
+   }
+
+   drm_intel_bo_unreference(cache->bo);
+   cache->bo = new_bo;
+   cache->bo_used_by_gpu = false;
+
+   /* Since we have a new BO in place, we need to signal the units
+    * that depend on it (state base address on gen5+, or unit state before).
+    */
+   brw->state.dirty.brw |= BRW_NEW_PROGRAM_CACHE;
+}
+
+void
 brw_upload_cache(struct brw_cache *cache,
 		 enum brw_cache_id cache_id,
 		 const void *key,
@@ -185,12 +196,12 @@ brw_upload_cache(struct brw_cache *cache,
 		 GLuint data_size,
 		 const void *aux,
 		 GLuint aux_size,
-		 void *aux_return)
+		 uint32_t *out_offset,
+		 void *out_aux)
 {
    struct brw_cache_item *item = CALLOC_STRUCT(brw_cache_item);
    GLuint hash;
    void *tmp;
-   drm_intel_bo *bo;
 
    item->cache_id = cache_id;
    item->key = key;
@@ -198,10 +209,28 @@ brw_upload_cache(struct brw_cache *cache,
    hash = hash_key(item);
    item->hash = hash;
 
-   /* Create the buffer object to contain the data */
-   bo = drm_intel_bo_alloc(cache->brw->intel.bufmgr,
-			   cache->name[cache_id], data_size, 1 << 6);
+   /* Allocate space in the cache BO for our new program. */
+   if (cache->next_offset + data_size > cache->bo->size) {
+      uint32_t new_size = cache->bo->size * 2;
 
+      while (cache->next_offset + data_size > new_size)
+	 new_size *= 2;
+
+      brw_cache_new_bo(cache, new_size);
+   }
+
+   /* If we would block on writing to an in-use program BO, just
+    * recreate it.
+    */
+   if (cache->bo_used_by_gpu) {
+      brw_cache_new_bo(cache, cache->bo->size);
+   }
+
+   item->offset = cache->next_offset;
+   item->size = data_size;
+
+   /* Programs are always 64-byte aligned, so set up the next one now */
+   cache->next_offset = ALIGN(item->offset + data_size, 64);
 
    /* Set up the memory containing the key and aux_data */
    tmp = malloc(key_size + aux_size);
@@ -211,9 +240,6 @@ brw_upload_cache(struct brw_cache *cache,
 
    item->key = tmp;
 
-   item->bo = bo;
-   drm_intel_bo_reference(bo);
-
    if (cache->n_items > cache->size * 1.5)
       rehash(cache);
 
@@ -222,34 +248,18 @@ brw_upload_cache(struct brw_cache *cache,
    cache->items[hash] = item;
    cache->n_items++;
 
-   if (aux_return) {
-      *(void **)aux_return = (void *)((char *)item->key + item->key_size);
-   }
-
-   DBG("upload %s: %d bytes to cache id %d\n",
-       cache->name[cache_id],
-       data_size, cache_id);
-
    /* Copy data to the buffer */
-   drm_intel_bo_subdata(bo, 0, data_size, data);
+   drm_intel_bo_subdata(cache->bo, item->offset, data_size, data);
 
-   update_cache_last(cache, cache_id, bo);
-
-   return bo;
+   *out_offset = item->offset;
+   *(void **)out_aux = (void *)((char *)item->key + item->key_size);
+   cache->brw->state.dirty.cache |= 1 << cache_id;
 }
-
-static void
-brw_init_cache_id(struct brw_cache *cache,
-                  const char *name,
-                  enum brw_cache_id id)
-{
-   cache->name[id] = strdup(name);
-}
-
 
 void
 brw_init_caches(struct brw_context *brw)
 {
+   struct intel_context *intel = &brw->intel;
    struct brw_cache *cache = &brw->cache;
 
    cache->brw = brw;
@@ -259,36 +269,15 @@ brw_init_caches(struct brw_context *brw)
    cache->items = (struct brw_cache_item **)
       calloc(1, cache->size * sizeof(struct brw_cache_item));
 
-   brw_init_cache_id(cache, "CC_VP", BRW_CC_VP);
-   brw_init_cache_id(cache, "CC_UNIT", BRW_CC_UNIT);
-   brw_init_cache_id(cache, "WM_PROG", BRW_WM_PROG);
-   brw_init_cache_id(cache, "SAMPLER", BRW_SAMPLER);
-   brw_init_cache_id(cache, "WM_UNIT", BRW_WM_UNIT);
-   brw_init_cache_id(cache, "SF_PROG", BRW_SF_PROG);
-   brw_init_cache_id(cache, "SF_VP", BRW_SF_VP);
-
-   brw_init_cache_id(cache, "SF_UNIT", BRW_SF_UNIT);
-
-   brw_init_cache_id(cache, "VS_UNIT", BRW_VS_UNIT);
-
-   brw_init_cache_id(cache, "VS_PROG", BRW_VS_PROG);
-
-   brw_init_cache_id(cache, "CLIP_UNIT", BRW_CLIP_UNIT);
-
-   brw_init_cache_id(cache, "CLIP_PROG", BRW_CLIP_PROG);
-   brw_init_cache_id(cache, "CLIP_VP", BRW_CLIP_VP);
-
-   brw_init_cache_id(cache, "GS_UNIT", BRW_GS_UNIT);
-
-   brw_init_cache_id(cache, "GS_PROG", BRW_GS_PROG);
-   brw_init_cache_id(cache, "BLEND_STATE", BRW_BLEND_STATE);
-   brw_init_cache_id(cache, "COLOR_CALC_STATE", BRW_COLOR_CALC_STATE);
-   brw_init_cache_id(cache, "DEPTH_STENCIL_STATE", BRW_DEPTH_STENCIL_STATE);
+   cache->bo = drm_intel_bo_alloc(intel->bufmgr,
+				  "program cache",
+				  4096, 64);
 }
 
 static void
 brw_clear_cache(struct brw_context *brw, struct brw_cache *cache)
 {
+   struct intel_context *intel = &brw->intel;
    struct brw_cache_item *c, *next;
    GLuint i;
 
@@ -297,7 +286,6 @@ brw_clear_cache(struct brw_context *brw, struct brw_cache *cache)
    for (i = 0; i < cache->size; i++) {
       for (c = cache->items[i]; c; c = next) {
 	 next = c->next;
-	 drm_intel_bo_unreference(c->bo);
 	 free((void *)c->key);
 	 free(c);
       }
@@ -306,9 +294,18 @@ brw_clear_cache(struct brw_context *brw, struct brw_cache *cache)
 
    cache->n_items = 0;
 
+   /* Start putting programs into the start of the BO again, since
+    * we'll never find the old results.
+    */
+   cache->next_offset = 0;
+
+   /* We need to make sure that the programs get regenerated, since
+    * any offsets leftover in brw_context will no longer be valid.
+    */
    brw->state.dirty.mesa |= ~0;
    brw->state.dirty.brw |= ~0;
    brw->state.dirty.cache |= ~0;
+   intel_batchbuffer_flush(intel);
 }
 
 void
@@ -325,15 +322,10 @@ brw_state_cache_check_size(struct brw_context *brw)
 static void
 brw_destroy_cache(struct brw_context *brw, struct brw_cache *cache)
 {
-   GLuint i;
 
    DBG("%s\n", __FUNCTION__);
 
    brw_clear_cache(brw, cache);
-   for (i = 0; i < BRW_MAX_CACHE; i++) {
-      drm_intel_bo_unreference(cache->last_bo[i]);
-      free(cache->name[i]);
-   }
    free(cache->items);
    cache->items = NULL;
    cache->size = 0;

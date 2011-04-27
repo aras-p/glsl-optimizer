@@ -1697,14 +1697,12 @@ brw_fs_precompile(struct gl_context *ctx, struct gl_shader_program *prog)
 
    key.program_string_id = bfp->id;
 
-   drm_intel_bo *old_prog_bo = brw->wm.prog_bo;
+   uint32_t old_prog_offset = brw->wm.prog_offset;
    struct brw_wm_prog_data *old_prog_data = brw->wm.prog_data;
-   brw->wm.prog_bo = NULL;
 
    bool success = do_wm_prog(brw, prog, bfp, &key);
 
-   drm_intel_bo_unreference(brw->wm.prog_bo);
-   brw->wm.prog_bo = old_prog_bo;
+   brw->wm.prog_offset = old_prog_offset;
    brw->wm.prog_data = old_prog_data;
 
    return success;

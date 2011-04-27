@@ -706,7 +706,9 @@ static void upload_state_base_address( struct brw_context *brw )
 				   I915_GEM_DOMAIN_INSTRUCTION), 0, 1);
 
        OUT_BATCH(1); /* Indirect object base address: MEDIA_OBJECT data */
-       OUT_BATCH(1); /* Instruction base address: shader kernels (incl. SIP) */
+       OUT_RELOC(brw->cache.bo, I915_GEM_DOMAIN_INSTRUCTION, 0,
+		 1); /* Instruction base address: shader kernels (incl. SIP) */
+
        OUT_BATCH(1); /* General state upper bound */
        OUT_BATCH(1); /* Dynamic state upper bound */
        OUT_BATCH(1); /* Indirect object upper bound */
@@ -719,7 +721,8 @@ static void upload_state_base_address( struct brw_context *brw )
        OUT_RELOC(intel->batch.bo, I915_GEM_DOMAIN_SAMPLER, 0,
 		 1); /* Surface state base address */
        OUT_BATCH(1); /* Indirect object base address */
-       OUT_BATCH(1); /* Instruction base address */
+       OUT_RELOC(brw->cache.bo, I915_GEM_DOMAIN_INSTRUCTION, 0,
+		 1); /* Instruction base address */
        OUT_BATCH(1); /* General state upper bound */
        OUT_BATCH(1); /* Indirect object upper bound */
        OUT_BATCH(1); /* Instruction access upper bound */
@@ -740,7 +743,8 @@ static void upload_state_base_address( struct brw_context *brw )
 const struct brw_tracked_state brw_state_base_address = {
    .dirty = {
       .mesa = 0,
-      .brw = BRW_NEW_BATCH,
+      .brw = (BRW_NEW_BATCH |
+	      BRW_NEW_PROGRAM_CACHE),
       .cache = 0,
    },
    .emit = upload_state_base_address

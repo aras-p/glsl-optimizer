@@ -142,7 +142,8 @@ enum brw_state_id {
    BRW_STATE_NR_VS_SURFACES,
    BRW_STATE_INDEX_BUFFER,
    BRW_STATE_VS_CONSTBUF,
-   BRW_STATE_WM_CONSTBUF
+   BRW_STATE_WM_CONSTBUF,
+   BRW_STATE_PROGRAM_CACHE,
 };
 
 #define BRW_NEW_URB_FENCE               (1 << BRW_STATE_URB_FENCE)
@@ -172,6 +173,7 @@ enum brw_state_id {
 #define BRW_NEW_INDEX_BUFFER           (1 << BRW_STATE_INDEX_BUFFER)
 #define BRW_NEW_VS_CONSTBUF            (1 << BRW_STATE_VS_CONSTBUF)
 #define BRW_NEW_WM_CONSTBUF            (1 << BRW_STATE_WM_CONSTBUF)
+#define BRW_NEW_PROGRAM_CACHE		(1 << BRW_STATE_PROGRAM_CACHE)
 
 struct brw_state_flags {
    /** State update flags signalled by mesa internals */
@@ -365,7 +367,8 @@ struct brw_cache_item {
    GLuint key_size;		/* for variable-sized keys */
    const void *key;
 
-   drm_intel_bo *bo;
+   uint32_t offset;
+   uint32_t size;
 
    struct brw_cache_item *next;
 };   
@@ -376,14 +379,11 @@ struct brw_cache {
    struct brw_context *brw;
 
    struct brw_cache_item **items;
+   drm_intel_bo *bo;
    GLuint size, n_items;
 
-   char *name[BRW_MAX_CACHE];
-
-   /* Record of the last BOs chosen for each cache_id.  Used to set
-    * brw->state.dirty.cache when a new cache item is chosen.
-    */
-   drm_intel_bo *last_bo[BRW_MAX_CACHE];
+   uint32_t next_offset;
+   bool bo_used_by_gpu;
 };
 
 
@@ -634,8 +634,9 @@ struct brw_context
       struct brw_vs_prog_data *prog_data;
       int8_t *constant_map; /* variable array following prog_data */
 
-      drm_intel_bo *prog_bo;
       drm_intel_bo *const_bo;
+      /** Offset in the program cache to the VS program */
+      uint32_t prog_offset;
       uint32_t state_offset;
 
       /** Binding table of pointers to surf_bo entries */
@@ -651,14 +652,16 @@ struct brw_context
       struct brw_gs_prog_data *prog_data;
 
       GLboolean prog_active;
+      /** Offset in the program cache to the CLIP program pre-gen6 */
+      uint32_t prog_offset;
       uint32_t state_offset;
-      drm_intel_bo *prog_bo;
    } gs;
 
    struct {
       struct brw_clip_prog_data *prog_data;
 
-      drm_intel_bo *prog_bo;
+      /** Offset in the program cache to the CLIP program pre-gen6 */
+      uint32_t prog_offset;
 
       /* Offset in the batch to the CLIP state on pre-gen6. */
       uint32_t state_offset;
@@ -673,7 +676,8 @@ struct brw_context
    struct {
       struct brw_sf_prog_data *prog_data;
 
-      drm_intel_bo *prog_bo;
+      /** Offset in the program cache to the CLIP program pre-gen6 */
+      uint32_t prog_offset;
       uint32_t state_offset;
       uint32_t vp_offset;
    } sf;
@@ -700,12 +704,14 @@ struct brw_context
       GLuint sampler_count;
       uint32_t sampler_offset;
 
+      /** Offset in the program cache to the WM program */
+      uint32_t prog_offset;
+
       /** Binding table of pointers to surf_bo entries */
       uint32_t bind_bo_offset;
       uint32_t surf_offset[BRW_WM_MAX_SURF];
       uint32_t state_offset; /* offset in batchbuffer to pre-gen6 WM state */
 
-      drm_intel_bo *prog_bo;
       drm_intel_bo *const_bo; /* pull constant buffer. */
       /**
        * This is offset in the batch to the push constants on gen6.
@@ -717,9 +723,6 @@ struct brw_context
 
 
    struct {
-      /* gen4 */
-      drm_intel_bo *prog_bo;
-
       uint32_t state_offset;
       uint32_t blend_state_offset;
       uint32_t depth_stencil_state_offset;
@@ -872,6 +875,26 @@ static inline int
 brw_register_blocks(int reg_count)
 {
    return ALIGN(reg_count, 16) / 16 - 1;
+}
+
+static inline uint32_t
+brw_program_reloc(struct brw_context *brw, uint32_t state_offset,
+		  uint32_t prog_offset)
+{
+   struct intel_context *intel = &brw->intel;
+
+   if (intel->gen >= 5) {
+      /* Using state base address. */
+      return prog_offset;
+   }
+
+   drm_intel_bo_emit_reloc(intel->batch.bo,
+			   state_offset,
+			   brw->cache.bo,
+			   prog_offset,
+			   I915_GEM_DOMAIN_INSTRUCTION, 0);
+
+   return brw->cache.bo->offset + prog_offset;
 }
 
 GLboolean brw_do_cubemap_normalize(struct exec_list *instructions);
