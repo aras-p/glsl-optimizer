@@ -2565,7 +2565,7 @@ lp_build_system_values_array(struct gallivm_state *gallivm,
 
    for (i = 0; i < info->num_system_values; i++) {
       LLVMValueRef index = lp_build_const_int32(gallivm, i * 4);
-      LLVMValueRef ptr, value;
+      LLVMValueRef ptr, value = 0;
 
       switch (info->system_value_semantic_name[i]) {
       case TGSI_SEMANTIC_INSTANCEID:
