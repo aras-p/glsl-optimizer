@@ -1178,6 +1178,8 @@ struct gen7_sf_clip_viewport {
 };
 
 /* Documented in the subsystem/shared-functions/sampler chapter...
+ *
+ * vol5c Shared Functions - 1.13.4.1.1
  */
 struct brw_surface_state
 {
@@ -1247,6 +1249,82 @@ struct brw_surface_state
       GLuint x_offset:7;
    } ss5;   /* New in G4X */
 
+};
+
+/* volume 5c Shared Functions - 1.13.4.1.2 */
+struct gen7_surface_state
+{
+   struct {
+      GLuint cube_pos_z:1;
+      GLuint cube_neg_z:1;
+      GLuint cube_pos_y:1;
+      GLuint cube_neg_y:1;
+      GLuint cube_pos_x:1;
+      GLuint cube_neg_x:1;
+      GLuint pad2:2;
+      GLuint render_cache_read_write:1;
+      GLuint pad1:1;
+      GLuint surface_array_spacing:1;
+      GLuint vert_line_stride_ofs:1;
+      GLuint vert_line_stride:1;
+      GLuint tile_walk:1;
+      GLuint tiled_surface:1;
+      GLuint horizontal_alignment:1;
+      GLuint vertical_alignment:2;
+      GLuint surface_format:9;     /**< BRW_SURFACEFORMAT_x */
+      GLuint pad0:1;
+      GLuint is_array:1;
+      GLuint surface_type:3;       /**< BRW_SURFACE_1D/2D/3D/CUBE */
+   } ss0;
+
+   struct {
+      GLuint base_addr;
+   } ss1;
+
+   struct {
+      GLuint width:14;
+      GLuint pad1:2;
+      GLuint height:14;
+      GLuint pad0:2;
+   } ss2;
+
+   struct {
+      GLuint pitch:18;
+      GLuint pad:3;
+      GLuint depth:11;
+   } ss3;
+
+   struct {
+      GLuint multisample_position_palette_index:3;
+      GLuint num_multisamples:3;
+      GLuint multisampled_surface_storage_format:1;
+      GLuint render_target_view_extent:11;
+      GLuint min_array_elt:11;
+      GLuint rotation:2;
+      GLuint pad0:1;
+   } ss4;
+
+   struct {
+      GLuint mip_count:4;
+      GLuint min_lod:4;
+      GLuint pad1:12;
+      GLuint y_offset:4;
+      GLuint pad0:1;
+      GLuint x_offset:7;
+   } ss5;
+
+   struct {
+      GLuint pad; /* Multisample Control Surface stuff */
+   } ss6;
+
+   struct {
+      GLuint resource_min_lod:12;
+      GLuint pad0:16;
+      GLuint alpha_clear_color:1;
+      GLuint blue_clear_color:1;
+      GLuint green_clear_color:1;
+      GLuint red_clear_color:1;
+   } ss7;
 };
 
 

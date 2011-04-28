@@ -105,7 +105,8 @@ DRIVER_SOURCES = \
 	gen7_urb.c \
 	gen7_viewport_state.c \
 	gen7_vs_state.c \
-	gen7_wm_state.c
+	gen7_wm_state.c \
+	gen7_wm_surface_state.c \
 
 C_SOURCES = \
 	$(COMMON_SOURCES) \

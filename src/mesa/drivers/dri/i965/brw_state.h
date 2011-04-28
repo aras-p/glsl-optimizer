@@ -128,7 +128,9 @@ extern const struct brw_tracked_state gen7_sol_state;
 extern const struct brw_tracked_state gen7_urb;
 extern const struct brw_tracked_state gen7_vs_state;
 extern const struct brw_tracked_state gen7_wm_constants;
+extern const struct brw_tracked_state gen7_wm_constant_surface;
 extern const struct brw_tracked_state gen7_wm_state;
+extern const struct brw_tracked_state gen7_wm_surfaces;
 
 /***********************************************************************
  * brw_state.c
