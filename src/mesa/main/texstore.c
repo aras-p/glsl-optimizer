@@ -4208,11 +4208,9 @@ _mesa_texstore_rgb9_e5(TEXSTORE_PARAMS)
                                                  srcPacking,
                                                  ctx->_ImageTransferState);
       const GLfloat *srcRow = tempImage;
-      GLint bytesPerRow;
       GLint img, row, col;
       if (!tempImage)
          return GL_FALSE;
-      bytesPerRow = srcWidth * 3 * sizeof(GLfloat);
       for (img = 0; img < srcDepth; img++) {
          GLubyte *dstRow = (GLubyte *) dstAddr
             + dstImageOffsets[dstZoffset + img] * 4
@@ -4263,11 +4261,9 @@ _mesa_texstore_r11_g11_b10f(TEXSTORE_PARAMS)
                                                  srcPacking,
                                                  ctx->_ImageTransferState);
       const GLfloat *srcRow = tempImage;
-      GLint bytesPerRow;
       GLint img, row, col;
       if (!tempImage)
          return GL_FALSE;
-      bytesPerRow = srcWidth * 3 * sizeof(GLfloat);
       for (img = 0; img < srcDepth; img++) {
          GLubyte *dstRow = (GLubyte *) dstAddr
             + dstImageOffsets[dstZoffset + img] * 4
