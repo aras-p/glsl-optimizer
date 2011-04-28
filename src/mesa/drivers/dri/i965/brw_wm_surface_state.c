@@ -45,7 +45,8 @@
 #include "brw_defines.h"
 #include "brw_wm.h"
 
-static GLuint translate_tex_target( GLenum target )
+GLuint
+translate_tex_target(GLenum target)
 {
    switch (target) {
    case GL_TEXTURE_1D: 
@@ -148,10 +149,11 @@ brw_render_target_supported(gl_format format)
    return brw_format_for_mesa_format(format) != 0;
 }
 
-static GLuint translate_tex_format( gl_format mesa_format,
-                                    GLenum internal_format,
-				    GLenum depth_mode, 
-				    GLenum srgb_decode )
+GLuint
+translate_tex_format(gl_format mesa_format,
+		     GLenum internal_format,
+		     GLenum depth_mode,
+		     GLenum srgb_decode)
 {
    switch( mesa_format ) {
 

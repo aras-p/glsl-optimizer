@@ -182,6 +182,13 @@ void brw_create_constant_surface(struct brw_context *brw,
 
 uint32_t brw_format_for_mesa_format(gl_format mesa_format);
 
+GLuint translate_tex_target(GLenum target);
+
+GLuint translate_tex_format(gl_format mesa_format,
+			    GLenum internal_format,
+			    GLenum depth_mode,
+			    GLenum srgb_decode);
+
 /* gen6_sf_state.c */
 uint32_t
 get_attr_override(struct brw_context *brw, int fs_attr, int two_side_color);
