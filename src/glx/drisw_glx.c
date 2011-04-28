@@ -128,13 +128,11 @@ swrastGetDrawableInfo(__DRIdrawable * draw,
    Drawable drawable;
 
    Window root;
-   Status stat;
    unsigned uw, uh, bw, depth;
 
    drawable = pdraw->xDrawable;
 
-   stat = XGetGeometry(dpy, drawable, &root,
-                       x, y, &uw, &uh, &bw, &depth);
+   XGetGeometry(dpy, drawable, &root, x, y, &uw, &uh, &bw, &depth);
    *w = uw;
    *h = uh;
 }
