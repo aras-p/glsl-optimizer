@@ -362,10 +362,6 @@ driswCreateDrawable(struct glx_screen *base, XID xDrawable,
 
    const __DRIswrastExtension *swrast = psc->swrast;
 
-   /* Old dri can't handle GLX 1.3+ drawable constructors. */
-   if (xDrawable != drawable)
-      return NULL;
-
    pdp = Xmalloc(sizeof(*pdp));
    if (!pdp)
       return NULL;
