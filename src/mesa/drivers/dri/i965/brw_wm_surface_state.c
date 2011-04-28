@@ -219,6 +219,19 @@ brw_set_surface_tiling(struct brw_surface_state *surf, uint32_t tiling)
    }
 }
 
+static uint32_t
+brw_get_surface_tiling_bits(uint32_t tiling)
+{
+   switch (tiling) {
+   case I915_TILING_X:
+      return BRW_SURFACE_TILED;
+   case I915_TILING_Y:
+      return BRW_SURFACE_TILED | BRW_SURFACE_TILED_Y;
+   default:
+      return 0;
+   }
+}
+
 static void
 brw_update_texture_surface( struct gl_context *ctx, GLuint unit )
 {
@@ -228,46 +241,36 @@ brw_update_texture_surface( struct gl_context *ctx, GLuint unit )
    struct gl_texture_image *firstImage = tObj->Image[0][tObj->BaseLevel];
    struct gl_sampler_object *sampler = _mesa_get_samplerobj(ctx, unit);
    const GLuint surf_index = SURF_INDEX_TEXTURE(unit);
-   struct brw_surface_state *surf;
+   uint32_t *surf;
 
-   surf = brw_state_batch(brw, sizeof(*surf), 32,
-			 &brw->wm.surf_offset[surf_index]);
-   memset(surf, 0, sizeof(*surf));
+   surf = brw_state_batch(brw, 6 * 4, 32, &brw->wm.surf_offset[surf_index]);
 
-   surf->ss0.mipmap_layout_mode = BRW_SURFACE_MIPMAPLAYOUT_BELOW;
-   surf->ss0.surface_type = translate_tex_target(tObj->Target);
-   surf->ss0.surface_format = translate_tex_format(firstImage->TexFormat,
-                                                   firstImage->InternalFormat,
-                                                   sampler->DepthMode,
-                                                   sampler->sRGBDecode);
+   surf[0] = (translate_tex_target(tObj->Target) << BRW_SURFACE_TYPE_SHIFT |
+	      BRW_SURFACE_MIPMAPLAYOUT_BELOW << BRW_SURFACE_MIPLAYOUT_SHIFT |
+	      BRW_SURFACE_CUBEFACE_ENABLES |
+	      (translate_tex_format(firstImage->TexFormat,
+				    firstImage->InternalFormat,
+				    sampler->DepthMode,
+				    sampler->sRGBDecode) <<
+	       BRW_SURFACE_FORMAT_SHIFT));
 
-   /* This is ok for all textures with channel width 8bit or less:
-    */
-/*    surf->ss0.data_return_format = BRW_SURFACERETURNFORMAT_S1; */
-   surf->ss1.base_addr = intelObj->mt->region->buffer->offset; /* reloc */
+   surf[1] = intelObj->mt->region->buffer->offset; /* reloc */
 
-   surf->ss2.mip_count = intelObj->_MaxLevel - tObj->BaseLevel;
-   surf->ss2.width = firstImage->Width - 1;
-   surf->ss2.height = firstImage->Height - 1;
-   brw_set_surface_tiling(surf, intelObj->mt->region->tiling);
-   surf->ss3.pitch = (intelObj->mt->region->pitch * intelObj->mt->cpp) - 1;
-   surf->ss3.depth = firstImage->Depth - 1;
+   surf[2] = ((intelObj->_MaxLevel - tObj->BaseLevel) << BRW_SURFACE_LOD_SHIFT |
+	      (firstImage->Width - 1) << BRW_SURFACE_WIDTH_SHIFT |
+	      (firstImage->Height - 1) << BRW_SURFACE_HEIGHT_SHIFT);
 
-   surf->ss4.min_lod = 0;
- 
-   if (tObj->Target == GL_TEXTURE_CUBE_MAP) {
-      surf->ss0.cube_pos_x = 1;
-      surf->ss0.cube_pos_y = 1;
-      surf->ss0.cube_pos_z = 1;
-      surf->ss0.cube_neg_x = 1;
-      surf->ss0.cube_neg_y = 1;
-      surf->ss0.cube_neg_z = 1;
-   }
+   surf[3] = (brw_get_surface_tiling_bits(intelObj->mt->region->tiling) |
+	      (firstImage->Depth - 1) << BRW_SURFACE_DEPTH_SHIFT |
+	      ((intelObj->mt->region->pitch * intelObj->mt->cpp) - 1) <<
+	      BRW_SURFACE_PITCH_SHIFT);
+
+   surf[4] = 0;
+   surf[5] = 0;
 
    /* Emit relocation to surface contents */
    drm_intel_bo_emit_reloc(brw->intel.batch.bo,
-			   brw->wm.surf_offset[surf_index] +
-			   offsetof(struct brw_surface_state, ss1),
+			   brw->wm.surf_offset[surf_index] + 4,
 			   intelObj->mt->region->buffer, 0,
 			   I915_GEM_DOMAIN_SAMPLER, 0);
 }
