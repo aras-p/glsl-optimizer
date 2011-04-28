@@ -1063,10 +1063,10 @@ lp_setup_begin_query(struct lp_setup_context *setup,
    /* init the query to its beginning state */
    assert(setup->active_query == NULL);
 
-   setup->active_query = pq;
-
    set_scene_state(setup, SETUP_ACTIVE, "begin_query");
    
+   setup->active_query = pq;
+
    if (setup->scene) {
       if (!lp_scene_bin_everywhere(setup->scene,
                                    LP_RAST_OP_BEGIN_QUERY,
