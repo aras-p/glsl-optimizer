@@ -507,7 +507,7 @@ _mesa_BindBufferBase(GLenum target, GLuint index, GLuint buffer)
 
    if (obj->Active) {
       _mesa_error(ctx, GL_INVALID_OPERATION,
-                  "glBindBufferRange(transform feedback active)");
+                  "glBindBufferBase(transform feedback active)");
       return;
    }
 
@@ -555,7 +555,7 @@ _mesa_BindBufferOffsetEXT(GLenum target, GLuint index, GLuint buffer,
 
    if (obj->Active) {
       _mesa_error(ctx, GL_INVALID_OPERATION,
-                  "glBindBufferRange(transform feedback active)");
+                  "glBindBufferOffsetEXT(transform feedback active)");
       return;
    }
 
