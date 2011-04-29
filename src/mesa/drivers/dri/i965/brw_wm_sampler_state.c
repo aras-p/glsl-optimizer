@@ -48,7 +48,8 @@
  * Intel drivers for "other operating systems" implement GL_CLAMP as
  * GL_CLAMP_TO_EDGE, so the same is done here.
  */
-static GLuint translate_wrap_mode( GLenum wrap )
+GLuint
+translate_wrap_mode(GLenum wrap)
 {
    switch( wrap ) {
    case GL_REPEAT: 
@@ -66,7 +67,7 @@ static GLuint translate_wrap_mode( GLenum wrap )
    }
 }
 
-static void
+void
 upload_default_color(struct brw_context *brw, struct gl_sampler_object *sampler,
 		     int unit)
 {

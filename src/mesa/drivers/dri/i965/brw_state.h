@@ -191,6 +191,12 @@ GLuint translate_tex_format(gl_format mesa_format,
 			    GLenum depth_mode,
 			    GLenum srgb_decode);
 
+/* brw_wm_sampler_state.c */
+GLuint translate_wrap_mode(GLenum wrap);
+void upload_default_color(struct brw_context *brw,
+			  struct gl_sampler_object *sampler,
+			  int unit);
+
 /* gen6_sf_state.c */
 uint32_t
 get_attr_override(struct brw_context *brw, int fs_attr, int two_side_color);
