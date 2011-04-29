@@ -205,7 +205,7 @@ wayland_drm_display_init_screen(struct native_display *ndpy)
 
    id = wl_display_get_global(drmdpy->base.dpy, "wl_drm", 1);
    if (id == 0)
-      wl_display_iterate(drmdpy->base.dpy, WL_DISPLAY_READABLE);
+      force_roundtrip(drmdpy->base.dpy);
    id = wl_display_get_global(drmdpy->base.dpy, "wl_drm", 1);
    if (id == 0)
       return FALSE;
