@@ -207,7 +207,7 @@ const struct brw_tracked_state *gen7_atoms[] =
    &gen7_wm_surfaces,		/* must do before samplers and unit */
    &brw_wm_binding_table,
 
-   &brw_wm_samplers,
+   &gen7_samplers,
 
    &gen7_disable_stages,
    &gen7_vs_state,

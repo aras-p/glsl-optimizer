@@ -101,6 +101,7 @@ DRIVER_SOURCES = \
 	gen7_clip_state.c \
 	gen7_disable.c \
 	gen7_misc_state.c \
+	gen7_sampler_state.c \
 	gen7_sf_state.c \
 	gen7_urb.c \
 	gen7_viewport_state.c \
