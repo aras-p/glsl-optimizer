@@ -1744,6 +1744,18 @@ struct brw_instruction
 	 GLuint end_of_thread:1;
       } sampler_gen5;
 
+      struct {
+	 GLuint binding_table_index:8;
+	 GLuint sampler:4;
+	 GLuint msg_type:5;
+	 GLuint simd_mode:2;
+	 GLuint header_present:1;
+	 GLuint response_length:5;
+	 GLuint msg_length:4;
+	 GLuint pad1:2;
+	 GLuint end_of_thread:1;
+      } sampler_gen7;
+
       struct brw_urb_immediate urb;
 
       struct {

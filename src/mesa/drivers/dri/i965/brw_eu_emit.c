@@ -655,7 +655,17 @@ static void brw_set_sampler_message(struct brw_compile *p,
    assert(eot == 0);
    brw_set_src1(p, insn, brw_imm_d(0));
 
-   if (intel->gen >= 5) {
+   if (intel->gen >= 7) {
+      insn->bits3.sampler_gen7.binding_table_index = binding_table_index;
+      insn->bits3.sampler_gen7.sampler = sampler;
+      insn->bits3.sampler_gen7.msg_type = msg_type;
+      insn->bits3.sampler_gen7.simd_mode = simd_mode;
+      insn->bits3.sampler_gen7.header_present = header_present;
+      insn->bits3.sampler_gen7.response_length = response_length;
+      insn->bits3.sampler_gen7.msg_length = msg_length;
+      insn->bits3.sampler_gen7.end_of_thread = eot;
+      insn->header.destreg__conditionalmod = BRW_MESSAGE_TARGET_SAMPLER;
+   } else if (intel->gen >= 5) {
       insn->bits3.sampler_gen5.binding_table_index = binding_table_index;
       insn->bits3.sampler_gen5.sampler = sampler;
       insn->bits3.sampler_gen5.msg_type = msg_type;
