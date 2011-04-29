@@ -21,6 +21,7 @@
  * USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 #include "pipe/p_shader_tokens.h"
+#include "tgsi/tgsi_info.h"
 #include "tgsi/tgsi_parse.h"
 #include "tgsi/tgsi_scan.h"
 #include "tgsi/tgsi_dump.h"
@@ -824,7 +825,8 @@ out_err:
 
 static int tgsi_unsupported(struct r600_shader_ctx *ctx)
 {
-	R600_ERR("%d tgsi opcode unsupported\n", ctx->inst_info->tgsi_opcode);
+	R600_ERR("%s tgsi opcode unsupported\n",
+		 tgsi_get_opcode_name(ctx->inst_info->tgsi_opcode));
 	return -EINVAL;
 }
 
