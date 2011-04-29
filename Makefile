@@ -272,7 +272,6 @@ MAIN_FILES = \
 	$(DIRECTORY)/src/mesa/tnl_dd/*.[ch]				\
 	$(DIRECTORY)/src/mesa/tnl_dd/imm/*.[ch]				\
 	$(DIRECTORY)/src/mesa/tnl_dd/imm/NOTES.imm			\
-	$(DIRECTORY)/src/mesa/vf/*.[ch]					\
 	$(DIRECTORY)/src/mesa/drivers/Makefile				\
 	$(DIRECTORY)/src/mesa/drivers/beos/*.cpp			\
 	$(DIRECTORY)/src/mesa/drivers/beos/Makefile			\
@@ -323,6 +322,7 @@ MAPI_FILES = \
 	$(DIRECTORY)/src/mapi/mapi/sources.mak				\
 	$(DIRECTORY)/src/mapi/mapi/*.[ch]				\
 	$(DIRECTORY)/src/mapi/shared-glapi/SConscript			\
+	$(DIRECTORY)/src/mapi/shared-glapi/Makefile			\
 	$(DIRECTORY)/src/mapi/vgapi/Makefile				\
 	$(DIRECTORY)/src/mapi/vgapi/SConscript				\
 	$(DIRECTORY)/src/mapi/vgapi/vgapi.csv				\
