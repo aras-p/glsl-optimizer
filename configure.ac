@@ -1784,6 +1784,13 @@ AC_ARG_ENABLE([gallium-r300],
         [build gallium r300 @<:@default=build DRI driver only@:>@])],
     [enable_gallium_r300="$enableval"],
     [enable_gallium_r300=auto])
+
+if test "$mesa_driver" != dri ; then
+    if test "x$enable_gallium_r300" = xauto; then
+      enable_gallium_r300=no
+    fi
+fi
+
 if test "x$enable_gallium_r300" != xno; then
     if test "x$MESA_LLVM" = x0; then
         case "$host_cpu" in
