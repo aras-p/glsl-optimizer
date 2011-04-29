@@ -163,4 +163,8 @@ void brw_create_constant_surface(struct brw_context *brw,
 				 int width,
 				 uint32_t *out_offset);
 
+/* gen6_sf_state.c */
+uint32_t
+get_attr_override(struct brw_context *brw, int fs_attr, int two_side_color);
+
 #endif

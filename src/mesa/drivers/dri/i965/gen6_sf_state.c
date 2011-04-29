@@ -32,7 +32,7 @@
 #include "main/macros.h"
 #include "intel_batchbuffer.h"
 
-static uint32_t
+uint32_t
 get_attr_override(struct brw_context *brw, int fs_attr, int two_side_color)
 {
    int attr_index = 0, i, vs_attr;
