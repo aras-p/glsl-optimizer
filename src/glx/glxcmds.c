@@ -200,19 +200,14 @@ glx_context_init(struct glx_context *gc,
 
 
 /**
- * Create a new context.  Exactly one of \c vis and \c fbconfig should be
- * non-NULL.
+ * Create a new context.
  *
- * \param use_glx_1_3  For FBConfigs, should GLX 1.3 protocol or
- *                     SGIX_fbconfig protocol be used?
  * \param renderType   For FBConfigs, what is the rendering type?
  */
 
 static GLXContext
-CreateContext(Display * dpy, int generic_id,
-              struct glx_config *config,
-              GLXContext shareList_user,
-              Bool allowDirect,
+CreateContext(Display *dpy, int generic_id, struct glx_config *config,
+              GLXContext shareList_user, Bool allowDirect,
 	      unsigned code, int renderType, int screen)
 {
    struct glx_context *gc;
