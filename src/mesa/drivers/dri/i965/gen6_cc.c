@@ -47,10 +47,17 @@ prepare_blend_state(struct brw_context *brw)
 
    for (b = 0; b < nr_draw_buffers; b++) {
       /* _NEW_COLOR */
-      if (ctx->Color._LogicOpEnabled && ctx->Color.LogicOp != GL_COPY) {
-	 blend[b].blend1.logic_op_enable = 1;
-	 blend[b].blend1.logic_op_func =
-	    intel_translate_logic_op(ctx->Color.LogicOp);
+      if (ctx->Color._LogicOpEnabled) {
+	 struct gl_renderbuffer *rb = ctx->DrawBuffer->_ColorDrawBuffers[b];
+	 /* _NEW_BUFFERS */
+	 /* Floating point RTs should have no effect from LogicOp,
+	  * except for disabling of blending
+	  */
+	 if (_mesa_get_format_datatype(rb->Format) != GL_FLOAT) {
+	    blend[b].blend1.logic_op_enable = 1;
+	    blend[b].blend1.logic_op_func =
+	       intel_translate_logic_op(ctx->Color.LogicOp);
+	 }
       } else if (ctx->Color.BlendEnabled & (1 << b)) {
 	 GLenum eqRGB = ctx->Color.Blend[0].EquationRGB;
 	 GLenum eqA = ctx->Color.Blend[0].EquationA;
@@ -108,7 +115,8 @@ prepare_blend_state(struct brw_context *brw)
 
 const struct brw_tracked_state gen6_blend_state = {
    .dirty = {
-      .mesa = _NEW_COLOR,
+      .mesa = (_NEW_COLOR |
+	       _NEW_BUFFERS),
       .brw = BRW_NEW_BATCH,
       .cache = 0,
    },
