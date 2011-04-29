@@ -1358,6 +1358,66 @@ fs_visitor::emit_texture_gen5(ir_texture *ir, fs_reg dst, fs_reg coordinate)
    return inst;
 }
 
+fs_inst *
+fs_visitor::emit_texture_gen7(ir_texture *ir, fs_reg dst, fs_reg coordinate)
+{
+   int mlen = 1; /* g0 header always present. */
+   int base_mrf = 1;
+   int reg_width = c->dispatch_width / 8;
+
+   if (ir->shadow_comparitor) {
+      ir->shadow_comparitor->accept(this);
+      emit(BRW_OPCODE_MOV, fs_reg(MRF, base_mrf + mlen), this->result);
+      mlen += reg_width;
+   }
+
+   /* Set up the LOD info */
+   switch (ir->op) {
+   case ir_tex:
+      break;
+   case ir_txb:
+      ir->lod_info.bias->accept(this);
+      emit(BRW_OPCODE_MOV, fs_reg(MRF, base_mrf + mlen), this->result);
+      mlen += reg_width;
+      break;
+   case ir_txl:
+      ir->lod_info.lod->accept(this);
+      emit(BRW_OPCODE_MOV, fs_reg(MRF, base_mrf + mlen), this->result);
+      mlen += reg_width;
+      break;
+   case ir_txd:
+   case ir_txf:
+      assert(!"GLSL 1.30 features unsupported");
+      break;
+   }
+
+   /* Set up the coordinate */
+   for (int i = 0; i < ir->coordinate->type->vector_elements; i++) {
+      emit(BRW_OPCODE_MOV, fs_reg(MRF, base_mrf + mlen),
+	   coordinate);
+      coordinate.reg_offset++;
+      mlen += reg_width;
+   }
+
+   /* Generate the SEND */
+   fs_inst *inst = NULL;
+   switch (ir->op) {
+   case ir_tex: inst = emit(FS_OPCODE_TEX, dst); break;
+   case ir_txb: inst = emit(FS_OPCODE_TXB, dst); break;
+   case ir_txl: inst = emit(FS_OPCODE_TXL, dst); break;
+   case ir_txd: inst = emit(FS_OPCODE_TXD, dst); break;
+   case ir_txf: assert(!"TXF unsupported.");
+   }
+   inst->base_mrf = base_mrf;
+   inst->mlen = mlen;
+
+   if (mlen > 11) {
+      fail("Message length >11 disallowed by hardware\n");
+   }
+
+   return inst;
+}
+
 void
 fs_visitor::visit(ir_texture *ir)
 {
@@ -1458,10 +1518,12 @@ fs_visitor::visit(ir_texture *ir)
     */
    fs_reg dst = fs_reg(this, glsl_type::vec4_type);
 
-   if (intel->gen < 5) {
-      inst = emit_texture_gen4(ir, dst, coordinate);
-   } else {
+   if (intel->gen >= 7) {
+      inst = emit_texture_gen7(ir, dst, coordinate);
+   } else if (intel->gen >= 5) {
       inst = emit_texture_gen5(ir, dst, coordinate);
+   } else {
+      inst = emit_texture_gen4(ir, dst, coordinate);
    }
 
    /* If there's an offset, we already set up m1.  To avoid the implied move,
