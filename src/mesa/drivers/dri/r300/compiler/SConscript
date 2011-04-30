@@ -3,6 +3,7 @@ Import('*')
 env = env.Clone()
 env.Append(CPPPATH = '#/include')
 env.Append(CPPPATH = '#/src/mesa')
+env.Append(CPPPATH = '#/src/glsl')
 
 # temporary fix
 env['CFLAGS'] = str(env['CFLAGS']).replace('-Werror=declaration-after-statement', '')
