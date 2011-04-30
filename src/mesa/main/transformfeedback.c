@@ -884,7 +884,7 @@ _mesa_ResumeTransformFeedback(void)
 
    if (!obj->Active || !obj->Paused) {
       _mesa_error(ctx, GL_INVALID_OPERATION,
-               "glPauseTransformFeedback(feedback not active or not paused)");
+               "glResumeTransformFeedback(feedback not active or not paused)");
       return;
    }
 
@@ -929,17 +929,6 @@ _mesa_DrawTransformFeedback(GLenum mode, GLuint name)
    assert(ctx->Driver.DrawTransformFeedback);
    ctx->Driver.DrawTransformFeedback(ctx, mode, obj);
 }
-
-
-/*
-XXX misc to do:
-
-glGet*() for
-
-GL_TRANSFORM_FEEDBACK_BUFFER_PAUSED
-GL_TRANSFORM_FEEDBACK_BUFFER_ACTIVE
-GL_TRANSFORM_FEEDBACK_BINDING
-*/
 
 
 #endif /* FEATURE_EXT_transform_feedback */
