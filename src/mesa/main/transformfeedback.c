@@ -42,7 +42,6 @@
 #include "main/dispatch.h"
 
 #include "program/prog_parameter.h"
-//#include "program/shader_api.h"
 
 
 #if FEATURE_EXT_transform_feedback
