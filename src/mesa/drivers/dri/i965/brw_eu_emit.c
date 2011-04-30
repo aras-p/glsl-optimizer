@@ -1319,7 +1319,17 @@ struct brw_instruction *brw_WHILE(struct brw_compile *p,
    if (intel->gen >= 5)
       br = 2;
 
-   if (intel->gen >= 6) {
+   if (intel->gen >= 7) {
+      insn = next_insn(p, BRW_OPCODE_WHILE);
+
+      brw_set_dest(p, insn, retype(brw_null_reg(), BRW_REGISTER_TYPE_D));
+      brw_set_src0(p, insn, retype(brw_null_reg(), BRW_REGISTER_TYPE_D));
+      brw_set_src1(p, insn, brw_imm_ud(0));
+      insn->bits3.break_cont.jip = br * (do_insn - insn);
+
+      insn->header.execution_size = do_insn->header.execution_size;
+      assert(insn->header.execution_size == BRW_EXECUTE_8);
+   } else if (intel->gen == 6) {
       insn = next_insn(p, BRW_OPCODE_WHILE);
 
       brw_set_dest(p, insn, brw_imm_w(0));
@@ -2277,6 +2287,7 @@ brw_find_next_block_end(struct brw_compile *p, int start)
 static int
 brw_find_loop_end(struct brw_compile *p, int start)
 {
+   struct intel_context *intel = &p->brw->intel;
    int ip;
    int br = 2;
 
@@ -2284,7 +2295,9 @@ brw_find_loop_end(struct brw_compile *p, int start)
       struct brw_instruction *insn = &p->store[ip];
 
       if (insn->header.opcode == BRW_OPCODE_WHILE) {
-	 if (ip + insn->bits1.branch_gen6.jump_count / br < start)
+	 int jip = intel->gen == 6 ? insn->bits1.branch_gen6.jump_count
+				   : insn->bits3.break_cont.jip;
+	 if (ip + jip / br < start)
 	    return ip;
       }
    }
@@ -2311,7 +2324,9 @@ brw_set_uip_jip(struct brw_compile *p)
       switch (insn->header.opcode) {
       case BRW_OPCODE_BREAK:
 	 insn->bits3.break_cont.jip = br * (brw_find_next_block_end(p, ip) - ip);
-	 insn->bits3.break_cont.uip = br * (brw_find_loop_end(p, ip) - ip + 1);
+	 /* Gen7 UIP points to WHILE; Gen6 points just after it */
+	 insn->bits3.break_cont.uip =
+	    br * (brw_find_loop_end(p, ip) - ip + (intel->gen == 6 ? 1 : 0));
 	 break;
       case BRW_OPCODE_CONTINUE:
 	 /* JIP is set at CONTINUE emit time, since that's when we
