@@ -151,7 +151,7 @@ static void pair_sub_for_all_args(
 			unsigned int presub_src_count;
 			struct rc_pair_instruction_source * src_array;
 			unsigned int j;
-//			fprintf(stderr, "Presubtract reader\n");
+
 			if (src_type & RC_SOURCE_RGB) {
 				presub_type = fullinst->
 					U.P.RGB.Src[RC_PAIR_PRESUB_SRC].Index;
@@ -166,9 +166,7 @@ static void pair_sub_for_all_args(
 			for(j = 0; j < presub_src_count; j++) {
 				cb(userdata, fullinst, &sub->Arg[i],
 								&src_array[j]);
-//				fprintf(stderr, "Callback for presub %u type=%u\n", j, src_type);
 			}
-//			fprintf(stderr, "Done presubtract reader\n");
 		} else {
 			struct rc_pair_instruction_source * src =
 				rc_pair_get_src(&fullinst->U.P, &sub->Arg[i]);
@@ -570,8 +568,6 @@ static void get_readers_pair_read_callback(
 				0 /*Pair Instructions don't use RelAddr*/,
 				src->File, src->Index, arg->Swizzle);
 
-//	fprintf(stderr, "Shared mask = %u for [%u].%u writemask=%u abort=%u exit=%u\n",
-//			shared_mask, src->Index, arg->Swizzle, d->AliveWriteMask,d->ReaderData->Abort, d->ReaderData->ExitOnAbort);
 	if (shared_mask == RC_MASK_NONE)
 		return;
 

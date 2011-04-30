@@ -672,7 +672,7 @@ void rc_pair_regalloc(struct radeon_compiler *cc, void *user)
 	struct r300_fragment_program_compiler *c =
 				(struct r300_fragment_program_compiler*)cc;
 	struct regalloc_state s;
-	int do_full_regalloc = (int)user;
+	int * do_full_regalloc = (int*)user;
 
 	memset(&s, 0, sizeof(s));
 	s.C = cc;
@@ -689,7 +689,7 @@ void rc_pair_regalloc(struct radeon_compiler *cc, void *user)
 	rc_recompute_ips(s.C);
 
 	c->AllocateHwInputs(c, &alloc_input_simple, &s);
-	if (do_full_regalloc) {
+	if (*do_full_regalloc) {
 		do_advanced_regalloc(&s);
 	} else {
 		s.Simple = 1;
