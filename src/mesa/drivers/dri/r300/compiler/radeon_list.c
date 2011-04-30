@@ -38,6 +38,8 @@ struct rc_list * rc_list(struct memory_pool * pool, void * item)
 	new->Item = item;
 	new->Next = NULL;
 	new->Prev = NULL;
+
+	return new;
 }
 
 void rc_list_add(struct rc_list ** list, struct rc_list * new_value)
