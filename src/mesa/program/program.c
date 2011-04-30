@@ -388,8 +388,9 @@ _mesa_delete_program(struct gl_context *ctx, struct gl_program *prog)
    if (prog->String)
       free(prog->String);
 
-   _mesa_free_instructions(prog->Instructions, prog->NumInstructions);
-
+   if (prog->Instructions) {
+      _mesa_free_instructions(prog->Instructions, prog->NumInstructions);
+   }
    if (prog->Parameters) {
       _mesa_free_parameter_list(prog->Parameters);
    }
