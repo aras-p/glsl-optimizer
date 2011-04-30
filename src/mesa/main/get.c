@@ -1163,7 +1163,7 @@ static const struct value_desc values[] = {
 
    /* GL_EXT_provoking_vertex */
    { GL_PROVOKING_VERTEX_EXT,
-     CONTEXT_BOOL(Light.ProvokingVertex), extra_EXT_provoking_vertex },
+     CONTEXT_ENUM(Light.ProvokingVertex), extra_EXT_provoking_vertex },
    { GL_QUADS_FOLLOW_PROVOKING_VERTEX_CONVENTION_EXT,
      CONTEXT_BOOL(Const.QuadsFollowProvokingVertexConvention),
      extra_EXT_provoking_vertex },
