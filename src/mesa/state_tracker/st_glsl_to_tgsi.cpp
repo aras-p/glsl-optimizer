@@ -254,8 +254,9 @@ public:
    struct gl_shader_compiler_options *options;
 
    int next_temp;
-   
+
    int num_address_regs;
+   int samplers_used;
    bool indirect_addr_temps;
    bool indirect_addr_consts;
 
@@ -2310,170 +2311,23 @@ extern "C" void free_glsl_to_tgsi_visitor(glsl_to_tgsi_visitor *v)
    delete v;
 }
 
-static struct prog_src_register
-mesa_st_src_reg_from_ir_st_src_reg(st_src_reg reg)
-{
-   struct prog_src_register mesa_reg;
-
-   mesa_reg.File = reg.file;
-   assert(reg.index < (1 << INST_INDEX_BITS));
-   mesa_reg.Index = reg.index;
-   mesa_reg.Swizzle = reg.swizzle;
-   mesa_reg.RelAddr = reg.reladdr != NULL;
-   mesa_reg.Negate = reg.negate;
-   mesa_reg.Abs = 0;
-   mesa_reg.HasIndex2 = GL_FALSE;
-   mesa_reg.RelAddr2 = 0;
-   mesa_reg.Index2 = 0;
-
-   return mesa_reg;
-}
-
-static void
-set_branchtargets(glsl_to_tgsi_visitor *v,
-        	  struct prog_instruction *mesa_instructions,
-        	  int num_instructions)
-{
-   int if_count = 0, loop_count = 0;
-   int *if_stack, *loop_stack;
-   int if_stack_pos = 0, loop_stack_pos = 0;
-   int i, j;
-
-   for (i = 0; i < num_instructions; i++) {
-      switch (mesa_instructions[i].Opcode) {
-      case OPCODE_IF:
-         if_count++;
-         break;
-      case OPCODE_BGNLOOP:
-         loop_count++;
-         break;
-      case OPCODE_BRK:
-      case OPCODE_CONT:
-         mesa_instructions[i].BranchTarget = -1;
-         break;
-      default:
-         break;
-      }
-   }
-
-   if_stack = rzalloc_array(v->mem_ctx, int, if_count);
-   loop_stack = rzalloc_array(v->mem_ctx, int, loop_count);
-
-   for (i = 0; i < num_instructions; i++) {
-      switch (mesa_instructions[i].Opcode) {
-      case OPCODE_IF:
-         if_stack[if_stack_pos] = i;
-         if_stack_pos++;
-         break;
-      case OPCODE_ELSE:
-         mesa_instructions[if_stack[if_stack_pos - 1]].BranchTarget = i;
-         if_stack[if_stack_pos - 1] = i;
-         break;
-      case OPCODE_ENDIF:
-         mesa_instructions[if_stack[if_stack_pos - 1]].BranchTarget = i;
-         if_stack_pos--;
-         break;
-      case OPCODE_BGNLOOP:
-         loop_stack[loop_stack_pos] = i;
-         loop_stack_pos++;
-         break;
-      case OPCODE_ENDLOOP:
-         loop_stack_pos--;
-         /* Rewrite any breaks/conts at this nesting level (haven't
-          * already had a BranchTarget assigned) to point to the end
-          * of the loop.
-          */
-         for (j = loop_stack[loop_stack_pos]; j < i; j++) {
-            if (mesa_instructions[j].Opcode == OPCODE_BRK ||
-        	mesa_instructions[j].Opcode == OPCODE_CONT) {
-               if (mesa_instructions[j].BranchTarget == -1) {
-        	  mesa_instructions[j].BranchTarget = i;
-               }
-            }
-         }
-         /* The loop ends point at each other. */
-         mesa_instructions[i].BranchTarget = loop_stack[loop_stack_pos];
-         mesa_instructions[loop_stack[loop_stack_pos]].BranchTarget = i;
-         break;
-      case OPCODE_CAL:
-         foreach_iter(exec_list_iterator, iter, v->function_signatures) {
-            function_entry *entry = (function_entry *)iter.get();
-
-            if (entry->sig_id == mesa_instructions[i].BranchTarget) {
-               mesa_instructions[i].BranchTarget = entry->inst;
-               break;
-            }
-         }
-         break;
-      default:
-         break;
-      }
-   }
-}
-
-static void
-print_program(struct prog_instruction *mesa_instructions,
-              ir_instruction **mesa_instruction_annotation,
-              int num_instructions)
-{
-   /*ir_instruction *last_ir = NULL;*/
-   int i;
-   int indent = 0;
-
-   for (i = 0; i < num_instructions; i++) {
-      struct prog_instruction *mesa_inst = mesa_instructions + i;
-
-      fprintf(stdout, "%3d: ", i);
-
-#if 0
-/* Disable this for now, since printing GLSL IR along with its corresponding 
- * Mesa IR makes the Mesa IR unreadable. */
-      ir_instruction *ir = mesa_instruction_annotation[i];
-      if (last_ir != ir && ir) {
-         int j;
-
-         for (j = 0; j < indent; j++) {
-            fprintf(stdout, " ");
-         }
-         ir->print();
-         printf("\n");
-         last_ir = ir;
-
-         fprintf(stdout, "     "); /* line number spacing. */
-      }
-#endif
-
-      indent = _mesa_fprint_instruction_opt(stdout, mesa_inst, indent,
-        				    PROG_PRINT_DEBUG, NULL);
-   }
-}
-
 
 /**
  * Count resources used by the given gpu program (number of texture
  * samplers, etc).
  */
 static void
-count_resources(struct gl_program *prog)
+count_resources(glsl_to_tgsi_visitor *v)
 {
-   unsigned int i;
+   v->samplers_used = 0;
 
-   prog->SamplersUsed = 0;
+   foreach_iter(exec_list_iterator, iter, v->instructions) {
+      glsl_to_tgsi_instruction *inst = (glsl_to_tgsi_instruction *)iter.get();
 
-   for (i = 0; i < prog->NumInstructions; i++) {
-      struct prog_instruction *inst = &prog->Instructions[i];
-
-      if (_mesa_is_tex_instruction(inst->Opcode)) {
-         prog->SamplerTargets[inst->TexSrcUnit] =
-            (gl_texture_index)inst->TexSrcTarget;
-         prog->SamplersUsed |= 1 << inst->TexSrcUnit;
-         if (inst->TexShadow) {
-            prog->ShadowSamplers |= 1 << inst->TexSrcUnit;
-         }
+      if (_mesa_is_tex_instruction(inst->op)) {
+         v->samplers_used |= 1 << inst->sampler;
       }
    }
-
-   _mesa_update_shader_textures_used(prog);
 }
 
 
@@ -2487,34 +2341,35 @@ count_resources(struct gl_program *prog)
 static void
 check_resources(const struct gl_context *ctx,
                 struct gl_shader_program *shader_program,
-                struct gl_program *prog)
+                glsl_to_tgsi_visitor *prog,
+                struct gl_program *proginfo)
 {
-   switch (prog->Target) {
+   switch (proginfo->Target) {
    case GL_VERTEX_PROGRAM_ARB:
-      if (_mesa_bitcount(prog->SamplersUsed) >
+      if (_mesa_bitcount(prog->samplers_used) >
           ctx->Const.MaxVertexTextureImageUnits) {
          fail_link(shader_program, "Too many vertex shader texture samplers");
       }
-      if (prog->Parameters->NumParameters > MAX_UNIFORMS) {
+      if (proginfo->Parameters->NumParameters > MAX_UNIFORMS) {
          fail_link(shader_program, "Too many vertex shader constants");
       }
       break;
    case MESA_GEOMETRY_PROGRAM:
-      if (_mesa_bitcount(prog->SamplersUsed) >
+      if (_mesa_bitcount(prog->samplers_used) >
           ctx->Const.MaxGeometryTextureImageUnits) {
          fail_link(shader_program, "Too many geometry shader texture samplers");
       }
-      if (prog->Parameters->NumParameters >
+      if (proginfo->Parameters->NumParameters >
           MAX_GEOMETRY_UNIFORM_COMPONENTS / 4) {
          fail_link(shader_program, "Too many geometry shader constants");
       }
       break;
    case GL_FRAGMENT_PROGRAM_ARB:
-      if (_mesa_bitcount(prog->SamplersUsed) >
+      if (_mesa_bitcount(prog->samplers_used) >
           ctx->Const.MaxTextureImageUnits) {
          fail_link(shader_program, "Too many fragment shader texture samplers");
       }
-      if (prog->Parameters->NumParameters > MAX_UNIFORMS) {
+      if (proginfo->Parameters->NumParameters > MAX_UNIFORMS) {
          fail_link(shader_program, "Too many fragment shader constants");
       }
       break;
@@ -3767,8 +3622,6 @@ st_translate_program(
    t->pointSizeOutIndex = -1;
    t->prevInstWrotePointSize = GL_FALSE;
 
-   /*_mesa_print_program(program);*/
-
    /*
     * Declare input attributes.
     */
@@ -3952,8 +3805,7 @@ st_translate_program(
 
    /* texture samplers */
    for (i = 0; i < ctx->Const.MaxTextureImageUnits; i++) {
-      // XXX: depends on SamplersUsed property generated by conversion to Mesa IR
-      if (proginfo->SamplersUsed & (1 << i)) {
+      if (program->samplers_used & (1 << i)) {
          t->samplers[i] = ureg_DECL_sampler( ureg, i );
       }
    }
@@ -4006,7 +3858,8 @@ out:
 /* ----------------------------- End TGSI code ------------------------------ */
 
 /**
- * Convert a shader's GLSL IR into both a Mesa gl_program and a TGSI shader.
+ * Convert a shader's GLSL IR into a Mesa gl_program, although without 
+ * generating Mesa IR.
  */
 static struct gl_program *
 get_mesa_program(struct gl_context *ctx,
@@ -4014,9 +3867,6 @@ get_mesa_program(struct gl_context *ctx,
         	 struct gl_shader *shader)
 {
    glsl_to_tgsi_visitor* v = new glsl_to_tgsi_visitor();
-   struct prog_instruction *mesa_instructions, *mesa_inst;
-   ir_instruction **mesa_instruction_annotation;
-   int i;
    struct gl_program *prog;
    GLenum target;
    const char *target_string;
@@ -4110,90 +3960,6 @@ get_mesa_program(struct gl_context *ctx,
    v->merge_registers();
    v->renumber_registers();
 
-   prog->NumTemporaries = v->next_temp;
-
-   int num_instructions = 0;
-   foreach_iter(exec_list_iterator, iter, v->instructions) {
-      num_instructions++;
-   }
-
-   mesa_instructions =
-      (struct prog_instruction *)calloc(num_instructions,
-        				sizeof(*mesa_instructions));
-   mesa_instruction_annotation = ralloc_array(v->mem_ctx, ir_instruction *,
-        				      num_instructions);
-
-   /* Convert glsl_to_tgsi_instructions into Mesa IR prog_instructions.
-    * TODO: remove
-    */
-   mesa_inst = mesa_instructions;
-   i = 0;
-   foreach_iter(exec_list_iterator, iter, v->instructions) {
-      const glsl_to_tgsi_instruction *inst = (glsl_to_tgsi_instruction *)iter.get();
-
-      mesa_inst->Opcode = inst->op;
-      mesa_inst->CondUpdate = inst->cond_update;
-      if (inst->saturate)
-         mesa_inst->SaturateMode = SATURATE_ZERO_ONE;
-      mesa_inst->DstReg.File = inst->dst.file;
-      mesa_inst->DstReg.Index = inst->dst.index;
-      mesa_inst->DstReg.CondMask = inst->dst.cond_mask;
-      mesa_inst->DstReg.WriteMask = inst->dst.writemask;
-      mesa_inst->DstReg.RelAddr = inst->dst.reladdr != NULL;
-      mesa_inst->SrcReg[0] = mesa_st_src_reg_from_ir_st_src_reg(inst->src[0]);
-      mesa_inst->SrcReg[1] = mesa_st_src_reg_from_ir_st_src_reg(inst->src[1]);
-      mesa_inst->SrcReg[2] = mesa_st_src_reg_from_ir_st_src_reg(inst->src[2]);
-      mesa_inst->TexSrcUnit = inst->sampler;
-      mesa_inst->TexSrcTarget = inst->tex_target;
-      mesa_inst->TexShadow = inst->tex_shadow;
-      mesa_instruction_annotation[i] = inst->ir;
-
-      /* Set IndirectRegisterFiles. */
-      if (mesa_inst->DstReg.RelAddr)
-         prog->IndirectRegisterFiles |= 1 << mesa_inst->DstReg.File;
-
-      /* Update program's bitmask of indirectly accessed register files */
-      for (unsigned src = 0; src < 3; src++)
-         if (mesa_inst->SrcReg[src].RelAddr)
-            prog->IndirectRegisterFiles |= 1 << mesa_inst->SrcReg[src].File;
-
-      if (options->EmitNoIfs && mesa_inst->Opcode == OPCODE_IF) {
-         fail_link(shader_program, "Couldn't flatten if statement\n");
-      }
-
-      switch (mesa_inst->Opcode) {
-      case OPCODE_BGNSUB:
-         inst->function->inst = i;
-         mesa_inst->Comment = strdup(inst->function->sig->function_name());
-         break;
-      case OPCODE_ENDSUB:
-         mesa_inst->Comment = strdup(inst->function->sig->function_name());
-         break;
-      case OPCODE_CAL:
-         mesa_inst->BranchTarget = inst->function->sig_id; /* rewritten later */
-         break;
-      case OPCODE_ARL:
-         prog->NumAddressRegs = 1;
-         break;
-      default:
-         break;
-      }
-
-      mesa_inst++;
-      i++;
-
-      if (!shader_program->LinkStatus)
-         break;
-   }
-
-   if (!shader_program->LinkStatus) {
-      free(mesa_instructions);
-      _mesa_reference_program(ctx, &shader->Program, NULL);
-      return NULL;
-   }
-
-   set_branchtargets(v, mesa_instructions, num_instructions);
-
    if (ctx->Shader.Flags & GLSL_DUMP) {
       printf("\n");
       printf("GLSL IR for linked %s program %d:\n", target_string,
@@ -4201,25 +3967,17 @@ get_mesa_program(struct gl_context *ctx,
       _mesa_print_ir(shader->ir, NULL);
       printf("\n");
       printf("\n");
-      printf("Mesa IR for linked %s program %d:\n", target_string,
-             shader_program->Name);
-      print_program(mesa_instructions, mesa_instruction_annotation,
-        	    num_instructions);
    }
 
-   prog->Instructions = mesa_instructions;
-   prog->NumInstructions = num_instructions;
+   prog->Instructions = NULL;
+   prog->NumInstructions = 0;
 
    do_set_program_inouts(shader->ir, prog);
-   count_resources(prog);
+   count_resources(v);
 
-   check_resources(ctx, shader_program, prog);
+   check_resources(ctx, shader_program, v, prog);
 
    _mesa_reference_program(ctx, &shader->Program, prog);
-
-   if ((ctx->Shader.Flags & GLSL_NO_OPT) == 0) {
-      _mesa_optimize_program(ctx, prog);
-   }
    
    struct st_vertex_program *stvp;
    struct st_fragment_program *stfp;

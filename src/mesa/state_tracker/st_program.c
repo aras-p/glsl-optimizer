@@ -186,7 +186,8 @@ st_prepare_vertex_program(struct gl_context *ctx,
    if (stvp->Base.IsPositionInvariant)
       _mesa_insert_mvp_code(ctx, &stvp->Base);
 
-   assert(stvp->Base.Base.NumInstructions > 1);
+   if (!stvp->glsl_to_tgsi)
+      assert(stvp->Base.Base.NumInstructions > 1);
 
    /*
     * Determine number of inputs, the mappings between VERT_ATTRIB_x
@@ -294,8 +295,11 @@ st_translate_vertex_program(struct st_context *st,
 
    st_prepare_vertex_program(st->ctx, stvp);
 
-   _mesa_remove_output_reads(&stvp->Base.Base, PROGRAM_OUTPUT);
-   _mesa_remove_output_reads(&stvp->Base.Base, PROGRAM_VARYING);
+   if (!stvp->glsl_to_tgsi)
+   {
+      _mesa_remove_output_reads(&stvp->Base.Base, PROGRAM_OUTPUT);
+      _mesa_remove_output_reads(&stvp->Base.Base, PROGRAM_VARYING);
+   }
 
    ureg = ureg_create( TGSI_PROCESSOR_VERTEX );
    if (ureg == NULL) {
@@ -613,7 +617,8 @@ st_translate_fragment_program(struct st_context *st,
       struct ureg_program *ureg;
       GLboolean write_all = st_prepare_fragment_program(st->ctx, stfp);
       
-      _mesa_remove_output_reads(&stfp->Base.Base, PROGRAM_OUTPUT);
+      if (!stfp->glsl_to_tgsi)
+         _mesa_remove_output_reads(&stfp->Base.Base, PROGRAM_OUTPUT);
 
       ureg = ureg_create( TGSI_PROCESSOR_FRAGMENT );
       if (ureg == NULL)
