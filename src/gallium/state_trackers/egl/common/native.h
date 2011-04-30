@@ -40,6 +40,7 @@ extern "C" {
 
 #include "native_buffer.h"
 #include "native_modeset.h"
+#include "native_wayland_bufmgr.h"
 
 /**
  * Only color buffers are listed.  The others are allocated privately through,
@@ -198,6 +199,7 @@ struct native_display {
 
    const struct native_display_buffer *buffer;
    const struct native_display_modeset *modeset;
+   const struct native_display_wayland_bufmgr *wayland_bufmgr;
 };
 
 /**

@@ -307,6 +307,23 @@ x11_screen_enable_dri2(struct x11_screen *xscr,
    return xscr->dri_fd;
 }
 
+char *
+x11_screen_get_device_name(struct x11_screen *xscr)
+{
+   return xscr->dri_device;
+}
+
+int
+x11_screen_authenticate(struct x11_screen *xscr, uint32_t id)
+{
+   boolean authenticated;
+
+   authenticated = DRI2Authenticate(xscr->dpy,
+         RootWindow(xscr->dpy, xscr->number), id);
+   
+   return authenticated ? 0 : -1;
+}
+
 /**
  * Create/Destroy the DRI drawable.
  */

@@ -552,6 +552,11 @@ egl_g3d_initialize(_EGLDriver *drv, _EGLDisplay *dpy)
    if (dpy->Platform == _EGL_PLATFORM_WAYLAND && gdpy->native->buffer)
       dpy->Extensions.MESA_drm_image = EGL_TRUE;
 
+#ifdef EGL_WL_bind_wayland_display
+   if (gdpy->native->wayland_bufmgr)
+      dpy->Extensions.WL_bind_wayland_display = EGL_TRUE;
+#endif
+
    if (egl_g3d_add_configs(drv, dpy, 1) == 1) {
       _eglError(EGL_NOT_INITIALIZED, "eglInitialize(unable to add configs)");
       goto fail;

@@ -6,6 +6,7 @@ common_INCLUDES = \
 	-I$(TOP)/src/gallium/include \
 	-I$(TOP)/src/gallium/auxiliary \
 	-I$(TOP)/src/egl/main \
+	-I$(TOP)/src/egl/wayland/wayland-drm/ \
 	-I$(TOP)/include
 
 common_SOURCES = $(wildcard common/*.c)
@@ -56,6 +57,7 @@ endif
 ifneq ($(findstring wayland, $(EGL_PLATFORMS)),)
 EGL_OBJECTS += $(wayland_OBJECTS)
 EGL_CPPFLAGS += -DHAVE_WAYLAND_BACKEND
+DEFINES += -DHAVE_WAYLAND_BACKEND
 endif
 ifneq ($(findstring drm, $(EGL_PLATFORMS)),)
 EGL_OBJECTS += $(drm_OBJECTS)
