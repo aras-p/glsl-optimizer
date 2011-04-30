@@ -3077,11 +3077,11 @@ glsl_to_tgsi_visitor::merge_registers(void)
    
    /* Start looking for registers with non-overlapping usages that can be 
     * merged together. */
-   for (i=0; i < this->next_temp - 1; i++) {
+   for (i=0; i < this->next_temp; i++) {
       /* Don't touch unused registers. */
       if (last_reads[i] < 0 || first_writes[i] < 0) continue;
       
-      for (j=i+1; j < this->next_temp; j++) {
+      for (j=0; j < this->next_temp; j++) {
          /* Don't touch unused registers. */
          if (last_reads[j] < 0 || first_writes[j] < 0) continue;
          
@@ -3089,8 +3089,9 @@ glsl_to_tgsi_visitor::merge_registers(void)
           * in the same instruction as the last read from i.  Note that the 
           * register at index i will always be used earlier or at the same time 
           * as the register at index j. */
-         assert(first_writes[i] <= first_writes[j]);
-         if (last_reads[i] <= first_writes[j]) {
+         if (first_writes[i] <= first_writes[j] && 
+             last_reads[i] <= first_writes[j])
+         {
             rename_temp_register(j, i); /* Replace all references to j with i.*/
             
             /* Update the first_writes and last_reads arrays with the new 
