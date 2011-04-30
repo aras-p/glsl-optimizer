@@ -1244,8 +1244,6 @@ struct brw_instruction *gen6_CONT(struct brw_compile *p,
    brw_set_src0(p, insn, brw_ip_reg());
    brw_set_src1(p, insn, brw_imm_d(0x0));
 
-   insn->bits3.break_cont.uip = br * (do_insn - insn);
-
    insn->header.compression_control = BRW_COMPRESSION_NONE;
    insn->header.execution_size = BRW_EXECUTE_8;
    return insn;
@@ -2329,10 +2327,9 @@ brw_set_uip_jip(struct brw_compile *p)
 	    br * (brw_find_loop_end(p, ip) - ip + (intel->gen == 6 ? 1 : 0));
 	 break;
       case BRW_OPCODE_CONTINUE:
-	 /* JIP is set at CONTINUE emit time, since that's when we
-	  * know where the start of the loop is.
-	  */
 	 insn->bits3.break_cont.jip = br * (brw_find_next_block_end(p, ip) - ip);
+	 insn->bits3.break_cont.uip = br * (brw_find_loop_end(p, ip) - ip);
+
 	 assert(insn->bits3.break_cont.uip != 0);
 	 assert(insn->bits3.break_cont.jip != 0);
 	 break;
