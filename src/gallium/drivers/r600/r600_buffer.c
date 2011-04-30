@@ -87,9 +87,6 @@ static void *r600_buffer_transfer_map(struct pipe_context *pipe,
 	if (rbuffer->r.b.user_ptr)
 		return (uint8_t*)rbuffer->r.b.user_ptr + transfer->box.x;
 
-	if (transfer->usage & PIPE_TRANSFER_DONTBLOCK) {
-		/* FIXME */
-	}
 	if (transfer->usage & PIPE_TRANSFER_WRITE) {
 		write = 1;
 	}
