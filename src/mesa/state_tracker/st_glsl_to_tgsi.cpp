@@ -100,6 +100,15 @@ public:
       this->reladdr = NULL;
    }
 
+   st_src_reg(gl_register_file file, int index)
+   {
+      this->file = file;
+      this->index = index;
+      this->swizzle = SWIZZLE_XYZW;
+      this->negate = 0;
+      this->reladdr = NULL;
+   }
+
    st_src_reg()
    {
       this->file = PROGRAM_UNDEFINED;
@@ -345,6 +354,8 @@ public:
    void emit_swz(ir_expression *ir);
 
    bool process_move_condition(ir_rvalue *ir);
+
+   void remove_output_reads(gl_register_file type);
 
    void rename_temp_register(int index, int new_index);
    int get_first_temp_read(int index);
@@ -2595,6 +2606,81 @@ set_uniform_initializers(struct gl_context *ctx,
    ralloc_free(mem_ctx);
 }
 
+/*
+ * Scan/rewrite program to remove reads of custom (output) registers.
+ * The passed type has to be either PROGRAM_OUTPUT or PROGRAM_VARYING
+ * (for vertex shaders).
+ * In GLSL shaders, varying vars can be read and written.
+ * On some hardware, trying to read an output register causes trouble.
+ * So, rewrite the program to use a temporary register in this case.
+ * 
+ * Based on _mesa_remove_output_reads from programopt.c.
+ */
+void
+glsl_to_tgsi_visitor::remove_output_reads(gl_register_file type)
+{
+   GLuint i;
+   GLint outputMap[VERT_RESULT_MAX];
+   GLuint numVaryingReads = 0;
+   GLboolean usedTemps[MAX_PROGRAM_TEMPS];
+   GLuint firstTemp = 0;
+
+   _mesa_find_used_registers(prog, PROGRAM_TEMPORARY,
+                             usedTemps, MAX_PROGRAM_TEMPS);
+
+   assert(type == PROGRAM_VARYING || type == PROGRAM_OUTPUT);
+   assert(prog->Target == GL_VERTEX_PROGRAM_ARB || type != PROGRAM_VARYING);
+
+   for (i = 0; i < VERT_RESULT_MAX; i++)
+      outputMap[i] = -1;
+
+   /* look for instructions which read from varying vars */
+   foreach_iter(exec_list_iterator, iter, this->instructions) {
+      glsl_to_tgsi_instruction *inst = (glsl_to_tgsi_instruction *)iter.get();
+      const GLuint numSrc = _mesa_num_inst_src_regs(inst->op);
+      GLuint j;
+      for (j = 0; j < numSrc; j++) {
+         if (inst->src[j].file == type) {
+            /* replace the read with a temp reg */
+            const GLuint var = inst->src[j].index;
+            if (outputMap[var] == -1) {
+               numVaryingReads++;
+               outputMap[var] = _mesa_find_free_register(usedTemps,
+                                                         MAX_PROGRAM_TEMPS,
+                                                         firstTemp);
+               firstTemp = outputMap[var] + 1;
+            }
+            inst->src[j].file = PROGRAM_TEMPORARY;
+            inst->src[j].index = outputMap[var];
+         }
+      }
+   }
+
+   if (numVaryingReads == 0)
+      return; /* nothing to be done */
+
+   /* look for instructions which write to the varying vars identified above */
+   foreach_iter(exec_list_iterator, iter, this->instructions) {
+      glsl_to_tgsi_instruction *inst = (glsl_to_tgsi_instruction *)iter.get();
+      if (inst->dst.file == type && outputMap[inst->dst.index] >= 0) {
+         /* change inst to write to the temp reg, instead of the varying */
+         inst->dst.file = PROGRAM_TEMPORARY;
+         inst->dst.index = outputMap[inst->dst.index];
+      }
+   }
+   
+   /* insert new MOV instructions at the end */
+   for (i = 0; i < VERT_RESULT_MAX; i++) {
+      if (outputMap[i] >= 0) {
+         /* MOV VAR[i], TEMP[tmp]; */
+         st_src_reg src = st_src_reg(PROGRAM_TEMPORARY, outputMap[i]);
+         st_dst_reg dst = st_dst_reg(type, WRITEMASK_XYZW);
+         dst.index = i;
+         this->emit(NULL, OPCODE_MOV, dst, src);
+      }
+   }
+}
+
 /* Replaces all references to a temporary register index with another index. */
 void
 glsl_to_tgsi_visitor::rename_temp_register(int index, int new_index)
@@ -3953,6 +4039,11 @@ get_mesa_program(struct gl_context *ctx,
       assert(fw <= fr);
    }
 #endif
+
+   /* Remove reads to output registers, and to varyings in vertex shaders. */
+   v->remove_output_reads(PROGRAM_OUTPUT);
+   if (target == GL_VERTEX_PROGRAM_ARB)
+      v->remove_output_reads(PROGRAM_VARYING);
 
    /* Perform optimizations on the instructions in the glsl_to_tgsi_visitor. */
    v->copy_propagate();
