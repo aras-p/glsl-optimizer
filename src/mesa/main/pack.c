@@ -2932,7 +2932,6 @@ extract_uint_rgba(GLuint n, GLuint rgba[][4],
    GLint rSrc, gSrc, bSrc, aSrc;
    GLint stride;
    GLint rDst, bDst, gDst, aDst;
-   GLboolean intFormat;
 
    ASSERT(srcFormat == GL_RED ||
           srcFormat == GL_GREEN ||
@@ -2988,8 +2987,6 @@ extract_uint_rgba(GLuint n, GLuint rgba[][4],
                          &rDst, &gDst, &bDst, &aDst);
 
    stride = _mesa_components_in_format(srcFormat);
-
-   intFormat = _mesa_is_integer_format(srcFormat);
 
 #define PROCESS(SRC_INDEX, DST_INDEX, DEFAULT, TYPE, CONVERSION)	\
    if ((SRC_INDEX) < 0) {						\
