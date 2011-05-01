@@ -81,15 +81,11 @@ static void *r600_buffer_transfer_map(struct pipe_context *pipe,
 				      struct pipe_transfer *transfer)
 {
 	struct r600_resource_buffer *rbuffer = r600_buffer(transfer->resource);
-	int write = 0;
 	uint8_t *data;
 
 	if (rbuffer->r.b.user_ptr)
 		return (uint8_t*)rbuffer->r.b.user_ptr + transfer->box.x;
 
-	if (transfer->usage & PIPE_TRANSFER_WRITE) {
-		write = 1;
-	}
 	data = r600_bo_map((struct radeon*)pipe->winsys, rbuffer->r.bo, transfer->usage, pipe);
 	if (!data)
 		return NULL;
