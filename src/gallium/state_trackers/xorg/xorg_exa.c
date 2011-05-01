@@ -336,7 +336,7 @@ ExaPrepareSolid(PixmapPtr pPixmap, int alu, Pixel planeMask, Pixel fg)
 	return FALSE;
 
     if (!exa->pipe)
-	XORG_FALLBACK("accle not enabled");
+	XORG_FALLBACK("accel not enabled");
 
     if (!priv || !priv->tex)
 	XORG_FALLBACK("%s", !priv ? "!priv" : "!priv->tex");
