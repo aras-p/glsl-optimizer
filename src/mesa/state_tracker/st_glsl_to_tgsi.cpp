@@ -2328,7 +2328,7 @@ extern "C" void free_glsl_to_tgsi_visitor(glsl_to_tgsi_visitor *v)
  * samplers, etc).
  */
 static void
-count_resources(glsl_to_tgsi_visitor *v)
+count_resources(glsl_to_tgsi_visitor *v, gl_program *prog)
 {
    v->samplers_used = 0;
 
@@ -2337,8 +2337,17 @@ count_resources(glsl_to_tgsi_visitor *v)
 
       if (_mesa_is_tex_instruction(inst->op)) {
          v->samplers_used |= 1 << inst->sampler;
+
+         prog->SamplerTargets[inst->sampler] =
+            (gl_texture_index)inst->tex_target;
+         if (inst->tex_shadow) {
+            prog->ShadowSamplers |= 1 << inst->sampler;
+         }
       }
    }
+   
+   prog->SamplersUsed = v->samplers_used;
+   _mesa_update_shader_textures_used(prog);
 }
 
 
@@ -4065,7 +4074,7 @@ get_mesa_program(struct gl_context *ctx,
    prog->NumInstructions = 0;
 
    do_set_program_inouts(shader->ir, prog);
-   count_resources(v);
+   count_resources(v, prog);
 
    check_resources(ctx, shader_program, v, prog);
 
