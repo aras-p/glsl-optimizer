@@ -1271,6 +1271,7 @@ glsl_to_tgsi_visitor::visit(ir_expression *ir)
       emit(ir, OPCODE_DDX, result_dst, op[0]);
       break;
    case ir_unop_dFdy:
+      op[0].negate = ~op[0].negate;
       emit(ir, OPCODE_DDY, result_dst, op[0]);
       break;
 
@@ -3486,12 +3487,6 @@ compile_tgsi_instruction(struct st_translate *t,
    case OPCODE_NOISE3:
    case OPCODE_NOISE4:
       assert(!"OPCODE_NOISE should have been lowered\n");
-      break;
-		 
-   case OPCODE_DDY:
-      // TODO: copy emit_ddy() function from st_mesa_to_tgsi.c
-      assert(!"OPCODE_DDY");
-      //emit_ddy( t, dst[0], &inst->src[0] );
       break;
 
    default:
