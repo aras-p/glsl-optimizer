@@ -470,9 +470,6 @@ int rbug_send_context_draw_blocked(struct rbug_connection *__con,
 
 struct rbug_proto_context_list * rbug_demarshal_context_list(struct rbug_proto_header *header)
 {
-	uint32_t len = 0;
-	uint32_t pos = 0;
-	uint8_t *data =  NULL;
 	struct rbug_proto_context_list *ret;
 
 	if (!header)
@@ -480,16 +477,12 @@ struct rbug_proto_context_list * rbug_demarshal_context_list(struct rbug_proto_h
 	if (header->opcode != (int32_t)RBUG_OP_CONTEXT_LIST)
 		return NULL;
 
-	pos = 0;
-	len = header->length * 4;
-	data = (uint8_t*)&header[1];
 	ret = MALLOC(sizeof(*ret));
 	if (!ret)
 		return NULL;
 
 	ret->header.__message = header;
 	ret->header.opcode = header->opcode;
-
 
 	return ret;
 }
