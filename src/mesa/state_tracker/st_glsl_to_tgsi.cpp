@@ -1275,12 +1275,13 @@ glsl_to_tgsi_visitor::visit(ir_expression *ir)
       break;
 
    case ir_unop_noise: {
-      const enum prog_opcode opcode =
-         prog_opcode(OPCODE_NOISE1
-        	     + (ir->operands[0]->type->vector_elements) - 1);
-      assert((opcode >= OPCODE_NOISE1) && (opcode <= OPCODE_NOISE4));
-
-      emit(ir, opcode, result_dst, op[0]);
+      /* At some point, a motivated person could add a better
+       * implementation of noise.  Currently not even the nvidia
+       * binary drivers do anything more than this.  In any case, the
+       * place to do this is in the GL state tracker, not the poor
+       * driver.
+       */
+      emit(ir, OPCODE_MOV, result_dst, st_src_reg_for_float(0.5));
       break;
    }
 
@@ -3484,13 +3485,7 @@ compile_tgsi_instruction(struct st_translate *t,
    case OPCODE_NOISE2:
    case OPCODE_NOISE3:
    case OPCODE_NOISE4:
-      /* At some point, a motivated person could add a better
-       * implementation of noise.  Currently not even the nvidia
-       * binary drivers do anything more than this.  In any case, the
-       * place to do this is in the GL state tracker, not the poor
-       * driver.
-       */
-      ureg_MOV( ureg, dst[0], ureg_imm1f(ureg, 0.5) );
+      assert(!"OPCODE_NOISE should have been lowered\n");
       break;
 		 
    case OPCODE_DDY:
