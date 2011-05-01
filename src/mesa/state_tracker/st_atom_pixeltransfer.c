@@ -195,17 +195,7 @@ get_pixel_transfer_program(struct gl_context *ctx, const struct state_key *key)
          { STATE_INTERNAL, STATE_PT_SCALE, 0, 0, 0 };
       static const gl_state_index bias_state[STATE_LENGTH] =
          { STATE_INTERNAL, STATE_PT_BIAS, 0, 0, 0 };
-      GLfloat scale[4], bias[4];
       GLint scale_p, bias_p;
-
-      scale[0] = ctx->Pixel.RedScale;
-      scale[1] = ctx->Pixel.GreenScale;
-      scale[2] = ctx->Pixel.BlueScale;
-      scale[3] = ctx->Pixel.AlphaScale;
-      bias[0] = ctx->Pixel.RedBias;
-      bias[1] = ctx->Pixel.GreenBias;
-      bias[2] = ctx->Pixel.BlueBias;
-      bias[3] = ctx->Pixel.AlphaBias;
 
       scale_p = _mesa_add_state_reference(params, scale_state);
       bias_p = _mesa_add_state_reference(params, bias_state);
