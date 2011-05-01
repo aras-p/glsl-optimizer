@@ -224,6 +224,12 @@ _mesa_GetPointerv( GLenum pname, GLvoid **params )
          *params = (GLvoid *) ctx->Array.ArrayObj->VertexAttrib[VERT_ATTRIB_POINT_SIZE].Ptr;
          break;
 #endif
+      case GL_DEBUG_CALLBACK_FUNCTION_ARB:
+         *params = (GLvoid *) ctx->Debug.Callback;
+         break;
+      case GL_DEBUG_CALLBACK_USER_PARAM_ARB:
+         *params = ctx->Debug.CallbackData;
+         break;
       default:
          _mesa_error( ctx, GL_INVALID_ENUM, "glGetPointerv" );
          return;

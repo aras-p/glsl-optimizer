@@ -36,7 +36,18 @@
 #include "version.h"
 
 
-#define MAXSTRING 4000  /* for _mesa_vsnprintf() */
+#define MAXSTRING MAX_DEBUG_MESSAGE_LENGTH
+
+void
+_mesa_init_errors(struct gl_context *ctx)
+{
+   ctx->Debug.Callback = NULL;
+   ctx->Debug.SyncOutput = GL_FALSE;
+   ctx->Debug.Log[0].length = 0;
+   ctx->Debug.NumMessages = 0;
+   ctx->Debug.NextMsg = 0;
+   ctx->Debug.NextMsgLength = 0;
+}
 
 /**********************************************************************/
 /** \name Diagnostics */

@@ -47,6 +47,9 @@ extern "C" {
 struct gl_context;
 
 extern void
+_mesa_init_errors( struct gl_context *ctx );
+
+extern void
 _mesa_warning( struct gl_context *gc, const char *fmtString, ... ) PRINTFLIKE(2, 3);
 
 extern void

@@ -348,6 +348,9 @@ _mesa_set_enable(struct gl_context *ctx, GLenum cap, GLboolean state)
          FLUSH_VERTICES(ctx, _NEW_DEPTH);
          ctx->Depth.Test = state;
          break;
+      case GL_DEBUG_OUTPUT_SYNCHRONOUS_ARB:
+         ctx->Debug.SyncOutput = state;
+         break;
       case GL_DITHER:
          if (ctx->Color.DitherFlag == state)
             return;
@@ -1114,6 +1117,8 @@ _mesa_IsEnabled( GLenum cap )
 	 return ctx->Light.ColorMaterialEnabled;
       case GL_CULL_FACE:
          return ctx->Polygon.CullFlag;
+      case GL_DEBUG_OUTPUT_SYNCHRONOUS_ARB:
+         return ctx->Debug.SyncOutput;
       case GL_DEPTH_TEST:
          return ctx->Depth.Test;
       case GL_DITHER:
