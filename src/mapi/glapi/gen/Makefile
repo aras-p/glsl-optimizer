@@ -65,6 +65,7 @@ API_XML = \
 	gl_API.xml \
 	ARB_color_buffer_float.xml \
 	ARB_copy_buffer.xml \
+	ARB_debug_output.xml \
 	ARB_depth_clamp.xml \
 	ARB_draw_buffers_blend.xml \
 	ARB_draw_elements_base_vertex.xml \
