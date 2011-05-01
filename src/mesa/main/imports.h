@@ -38,7 +38,7 @@
 
 #include "compiler.h"
 #include "glheader.h"
-
+#include "errors.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -622,19 +622,8 @@ _mesa_str_checksum(const char *str);
 extern int
 _mesa_snprintf( char *str, size_t size, const char *fmt, ... ) PRINTFLIKE(3, 4);
 
-struct gl_context;
-
-extern void
-_mesa_warning( struct gl_context *gc, const char *fmtString, ... ) PRINTFLIKE(2, 3);
-
-extern void
-_mesa_problem( const struct gl_context *ctx, const char *fmtString, ... ) PRINTFLIKE(2, 3);
-
-extern void
-_mesa_error( struct gl_context *ctx, GLenum error, const char *fmtString, ... ) PRINTFLIKE(3, 4);
-
-extern void
-_mesa_debug( const struct gl_context *ctx, const char *fmtString, ... ) PRINTFLIKE(2, 3);
+extern int
+_mesa_vsnprintf(char *str, size_t size, const char *fmt, va_list arg);
 
 
 #if defined(_MSC_VER) && !defined(snprintf)

@@ -42,6 +42,7 @@ SOURCES =accum.c \
 	drawpix.c \
 	enable.c \
 	enums.c \
+	errors.c \
 	eval.c \
 	execmem.c \
 	extensions.c \
@@ -116,6 +117,7 @@ dlist.obj,\
 drawpix.obj,\
 enable.obj,\
 enums.obj,\
+errors.obj,\
 eval.obj,\
 execmem.obj,\
 extensions.obj,\
@@ -200,6 +202,7 @@ dlist.obj : dlist.c
 drawpix.obj : drawpix.c
 enable.obj : enable.c
 enums.obj : enums.c
+errors.obj : errors.c
 eval.obj : eval.c
 execmem.obj : execmem.c
 extensions.obj : extensions.c
