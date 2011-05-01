@@ -152,7 +152,6 @@ static void r300_swizzle_split(
 	split->NumPhases = 0;
 
 	while(mask) {
-		const struct swizzle_data *best_swizzle = 0;
 		unsigned int best_matchcount = 0;
 		unsigned int best_matchmask = 0;
 		int i, comp;
@@ -179,7 +178,6 @@ static void r300_swizzle_split(
 				}
 			}
 			if (matchcount > best_matchcount) {
-				best_swizzle = sd;
 				best_matchcount = matchcount;
 				best_matchmask = matchmask;
 				if (matchmask == (mask & RC_MASK_XYZ))

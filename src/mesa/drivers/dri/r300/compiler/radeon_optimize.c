@@ -621,12 +621,10 @@ static int peephole_add_presub_inv(
 	struct radeon_compiler * c,
 	struct rc_instruction * inst_add)
 {
-	unsigned int i, swz, mask;
+	unsigned int i, swz;
 
 	if (!is_presub_candidate(c, inst_add))
 		return 0;
-
-	mask = inst_add->U.I.DstReg.WriteMask;
 
 	/* Check if src0 is 1. */
 	/* XXX It would be nice to use is_src_uniform_constant here, but that
