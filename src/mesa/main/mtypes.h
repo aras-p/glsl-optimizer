@@ -3221,6 +3221,13 @@ typedef enum {
    OTHER_ERROR_COUNT
 } gl_other_error;
 
+struct gl_client_debug
+{
+   GLboolean Defaults[3][2][6]; /* severity, source, type */
+   /* TODO: Add an object here that can track the state of an arbitrary
+      number of client-provided IDs. */
+};
+
 struct gl_debug_state
 {
    GLDEBUGPROCARB Callback;
@@ -3230,8 +3237,7 @@ struct gl_debug_state
    GLboolean WinsysErrors[WINSYS_ERROR_COUNT];
    GLboolean ShaderErrors[SHADER_ERROR_COUNT];
    GLboolean OtherErrors[OTHER_ERROR_COUNT];
-   /* TODO: Add an object here that tracks the state of client-provided IDs
-      in the APPLICATION and THIRD_PARTY namespaces. */
+   struct gl_client_debug ClientIDs;
    struct gl_debug_msg Log[MAX_DEBUG_LOGGED_MESSAGES];
    GLint NumMessages;
    GLint NextMsg;
