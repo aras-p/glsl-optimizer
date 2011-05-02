@@ -767,6 +767,22 @@ generate_ARB_shader_stencil_export_variables(exec_list *instructions,
 }
 
 static void
+generate_AMD_shader_stencil_export_variables(exec_list *instructions,
+					     struct _mesa_glsl_parse_state *state,
+					     bool warn)
+{
+   /* gl_FragStencilRefAMD is only available in the fragment shader.
+    */
+   ir_variable *const fd =
+      add_variable(instructions, state->symbols,
+		   "gl_FragStencilRefAMD", glsl_type::int_type,
+		   ir_var_out, FRAG_RESULT_STENCIL);
+
+   if (warn)
+      fd->warn_extension = "GL_AMD_shader_stencil_export";
+}
+
+static void
 generate_120_fs_variables(exec_list *instructions,
 			  struct _mesa_glsl_parse_state *state)
 {
@@ -818,6 +834,10 @@ initialize_fs_variables(exec_list *instructions,
    if (state->ARB_shader_stencil_export_enable)
       generate_ARB_shader_stencil_export_variables(instructions, state,
 						   state->ARB_shader_stencil_export_warn);
+
+   if (state->AMD_shader_stencil_export_enable)
+      generate_AMD_shader_stencil_export_variables(instructions, state,
+						   state->AMD_shader_stencil_export_warn);
 }
 
 void
