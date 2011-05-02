@@ -1903,7 +1903,7 @@ brw_vs_rescale_gl_fixed(struct brw_vs_compile *c)
 
 /* Emit the vertex program instructions here.
  */
-void brw_vs_emit(struct brw_vs_compile *c )
+void brw_old_vs_emit(struct brw_vs_compile *c )
 {
 #define MAX_IF_DEPTH 32
 #define MAX_LOOP_DEPTH 32

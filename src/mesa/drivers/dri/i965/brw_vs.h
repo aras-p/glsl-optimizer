@@ -92,6 +92,7 @@ struct brw_vs_compile {
    GLboolean needs_stack;
 };
 
-void brw_vs_emit( struct brw_vs_compile *c );
+bool brw_vs_emit(struct brw_vs_compile *c);
+void brw_old_vs_emit(struct brw_vs_compile *c);
 
 #endif

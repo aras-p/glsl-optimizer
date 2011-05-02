@@ -529,7 +529,7 @@ struct brw_context
        * the CURBE, the depth buffer, and a query BO.
        */
       drm_intel_bo *validated_bos[VERT_ATTRIB_MAX + BRW_WM_MAX_SURF + 16];
-      int validated_bo_count;
+      unsigned int validated_bo_count;
    } state;
 
    struct brw_cache cache;

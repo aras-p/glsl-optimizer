@@ -638,6 +638,8 @@ enum opcode {
    FS_OPCODE_SPILL,
    FS_OPCODE_UNSPILL,
    FS_OPCODE_PULL_CONSTANT_LOAD,
+
+   VS_OPCODE_URB_WRITE,
 };
 
 #define BRW_PREDICATE_NONE             0

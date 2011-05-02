@@ -146,38 +146,7 @@ void
 fs_visitor::generate_math(fs_inst *inst,
 			  struct brw_reg dst, struct brw_reg *src)
 {
-   int op;
-
-   switch (inst->opcode) {
-   case SHADER_OPCODE_RCP:
-      op = BRW_MATH_FUNCTION_INV;
-      break;
-   case SHADER_OPCODE_RSQ:
-      op = BRW_MATH_FUNCTION_RSQ;
-      break;
-   case SHADER_OPCODE_SQRT:
-      op = BRW_MATH_FUNCTION_SQRT;
-      break;
-   case SHADER_OPCODE_EXP2:
-      op = BRW_MATH_FUNCTION_EXP;
-      break;
-   case SHADER_OPCODE_LOG2:
-      op = BRW_MATH_FUNCTION_LOG;
-      break;
-   case SHADER_OPCODE_POW:
-      op = BRW_MATH_FUNCTION_POW;
-      break;
-   case SHADER_OPCODE_SIN:
-      op = BRW_MATH_FUNCTION_SIN;
-      break;
-   case SHADER_OPCODE_COS:
-      op = BRW_MATH_FUNCTION_COS;
-      break;
-   default:
-      assert(!"not reached: unknown math function");
-      op = 0;
-      break;
-   }
+   int op = brw_math_function(inst->opcode);
 
    if (intel->gen >= 6) {
       assert(inst->mlen == 0);

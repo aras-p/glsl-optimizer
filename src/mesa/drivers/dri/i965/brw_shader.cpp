@@ -199,3 +199,29 @@ brw_conditional_for_comparison(unsigned int op)
       return BRW_CONDITIONAL_NZ;
    }
 }
+
+uint32_t
+brw_math_function(enum opcode op)
+{
+   switch (op) {
+   case SHADER_OPCODE_RCP:
+      return BRW_MATH_FUNCTION_INV;
+   case SHADER_OPCODE_RSQ:
+      return BRW_MATH_FUNCTION_RSQ;
+   case SHADER_OPCODE_SQRT:
+      return BRW_MATH_FUNCTION_SQRT;
+   case SHADER_OPCODE_EXP2:
+      return BRW_MATH_FUNCTION_EXP;
+   case SHADER_OPCODE_LOG2:
+      return BRW_MATH_FUNCTION_LOG;
+   case SHADER_OPCODE_POW:
+      return BRW_MATH_FUNCTION_POW;
+   case SHADER_OPCODE_SIN:
+      return BRW_MATH_FUNCTION_SIN;
+   case SHADER_OPCODE_COS:
+      return BRW_MATH_FUNCTION_COS;
+   default:
+      assert(!"not reached: unknown math function");
+      return 0;
+   }
+}
