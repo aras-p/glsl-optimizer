@@ -895,8 +895,8 @@ _mesa_set_enable(struct gl_context *ctx, GLenum cap, GLboolean state)
       case GL_RASTERIZER_DISCARD:
 	 CHECK_EXTENSION(EXT_transform_feedback, cap);
          if (ctx->TransformFeedback.RasterDiscard != state) {
-            ctx->TransformFeedback.RasterDiscard = state;
             FLUSH_VERTICES(ctx, _NEW_TRANSFORM);
+            ctx->TransformFeedback.RasterDiscard = state;
          }
          break;
 #endif
