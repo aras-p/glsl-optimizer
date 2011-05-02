@@ -576,4 +576,22 @@ const struct nvc0_format nvc0_format_table[PIPE_FORMAT_COUNT] =
    [PIPE_FORMAT_A8B8G8R8_UNORM] = { 0,
     B_(C3, C2, C1, C0, UNORM, UNORM, UNORM, UNORM, 8_8_8_8, 0),
     SAMPLER_VIEW },
+
+   /* FIXED FORMATS - hw doesn't support these, convert on vbo push for now */
+
+   [PIPE_FORMAT_R32G32B32A32_FIXED] = { 0,
+    B_(C0, C1, C2, C3, FLOAT, FLOAT, FLOAT, FLOAT, 32_32_32_32, 0),
+    VERTEX_BUFFER },
+
+   [PIPE_FORMAT_R32G32B32_FIXED] = { 0,
+    B_(C0, C1, C2, ONE_FLOAT, FLOAT, FLOAT, FLOAT, FLOAT, 32_32_32, 0),
+    VERTEX_BUFFER },
+
+   [PIPE_FORMAT_R32G32_FIXED] = { 0,
+    B_(C0, C1, ZERO, ONE_FLOAT, FLOAT, FLOAT, FLOAT, FLOAT, 32_32, 0),
+    VERTEX_BUFFER },
+
+   [PIPE_FORMAT_R32_FIXED] = { 0,
+    B_(C0, ZERO, ZERO, ONE_FLOAT, FLOAT, FLOAT, FLOAT, FLOAT, 32, 0),
+    VERTEX_BUFFER },
 };
