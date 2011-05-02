@@ -259,6 +259,7 @@ static const struct extension extension_table[] = {
    /* Vendor extensions */
    { "GL_3DFX_texture_compression_FXT1",           o(TDFX_texture_compression_FXT1),           GL,             1999 },
    { "GL_AMD_conservative_depth",                  o(AMD_conservative_depth),                  GL,             2009 },
+   { "GL_AMD_draw_buffers_blend",                  o(ARB_draw_buffers_blend),                  GL,             2009 },
    { "GL_APPLE_client_storage",                    o(APPLE_client_storage),                    GL,             2002 },
    { "GL_APPLE_object_purgeable",                  o(APPLE_object_purgeable),                  GL,             2006 },
    { "GL_APPLE_packed_pixels",                     o(APPLE_packed_pixels),                     GL,             2002 },
