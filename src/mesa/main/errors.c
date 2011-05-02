@@ -42,6 +42,38 @@
 
 static char out_of_memory[] = "Debugging error: out of memory";
 
+#define enum_is(e, kind1, kind2) \
+   ((e) == GL_DEBUG_##kind1##_##kind2##_ARB || (e) == GL_DONT_CARE)
+#define severity_is(sev, kind) enum_is(sev, SEVERITY, kind)
+#define source_is(s, kind) enum_is(s, SOURCE, kind)
+#define type_is(t, kind) enum_is(t, TYPE, kind)
+
+/**
+ * Whether a debugging message should be logged or not.
+ * For implementation-controlled namespaces, we keep an array
+ * of booleans per namespace, per context, recording whether
+ * each individual message is enabled or not. The message ID
+ * is an index into the namespace's array.
+ */
+static GLboolean
+should_log(struct gl_context *ctx, GLenum source, GLenum type,
+           GLuint id, GLenum severity)
+{
+   if (type_is(type, ERROR)) {
+      if (source_is(source, API))
+         return ctx->Debug.ApiErrors[id];
+      if (source_is(source, WINDOW_SYSTEM))
+         return ctx->Debug.WinsysErrors[id];
+      if (source_is(source, SHADER_COMPILER))
+         return ctx->Debug.ShaderErrors[id];
+      if (source_is(source, OTHER))
+         return ctx->Debug.OtherErrors[id];
+   }
+
+   /* TODO: tracking client messages' state. */
+   return (severity != GL_DEBUG_SEVERITY_LOW_ARB);
+}
+
 /**
  * 'buf' is not necessarily a null-terminated string. When logging, copy
  * 'len' characters from it, store them in a new, null-terminated string,
@@ -56,6 +88,9 @@ _mesa_log_msg(struct gl_context *ctx, GLenum source, GLenum type,
    struct gl_debug_msg *emptySlot;
 
    assert(len >= 0 && len < MAX_DEBUG_MESSAGE_LENGTH);
+
+   if (!should_log(ctx, source, type, id, severity))
+      return;
 
    if (ctx->Debug.Callback) {
       ctx->Debug.Callback(source, type, id, severity,
@@ -296,6 +331,98 @@ _mesa_GetDebugMessageLogARB(GLuint count, GLsizei logSize, GLenum* sources,
    return ret;
 }
 
+/**
+ * 'array' is an array representing a particular debugging-message namespace.
+ * I.e., the set of all API errors, or the set of all Shader Compiler errors.
+ * 'size' is the size of 'array'. 'count' is the size of 'ids', an array
+ * of indices into 'array'. All the elements of 'array' at the indices
+ * listed in 'ids' will be overwritten with the value of 'enabled'.
+ *
+ * If 'count' is zero, all elements in 'array' are overwritten with the
+ * value of 'enabled'.
+ */
+static void
+control_messages(GLboolean *array, GLuint size,
+                 GLsizei count, const GLuint *ids, GLboolean enabled)
+{
+   GLsizei i;
+
+   if (!count) {
+      GLuint id;
+      for (id = 0; id < size; id++) {
+         array[id] = enabled;
+      }
+      return;
+   }
+
+   for (i = 0; i < count; i++) {
+      if (ids[i] >= size) {
+         /* XXX: The spec doesn't say what to do with a non-existent ID. */
+         continue;
+      }
+      array[ids[i]] = enabled;
+   }
+}
+
+/**
+ * Debugging-message namespaces with the source APPLICATION or THIRD_PARTY
+ * require special handling, since the IDs in them are controlled by clients,
+ * not the OpenGL implementation.
+ */
+static void
+control_app_messages(struct gl_context *ctx, GLenum source, GLenum type,
+                     GLenum severity, GLsizei count, const GLuint *ids,
+                     GLboolean enabled)
+{
+   assert(0 && "glDebugMessageControlARB():"
+          " Controlling application debugging messages not implemented");
+}
+
+static void GLAPIENTRY
+_mesa_DebugMessageControlARB(GLenum source, GLenum type, GLenum severity,
+                             GLsizei count, const GLuint *ids,
+                             GLboolean enabled)
+{
+   GET_CURRENT_CONTEXT(ctx);
+
+   if (count < 0) {
+      _mesa_error(ctx, GL_INVALID_VALUE, "glDebugMessageControlARB"
+                 "(count=%d : count must not be negative)", count);
+      return;
+   }
+
+   if (!validate_params(ctx, CONTROL, source, type, severity))
+      return; /* GL_INVALID_ENUM */
+
+   if (count && (severity != GL_DONT_CARE || type == GL_DONT_CARE
+                 || source == GL_DONT_CARE)) {
+      _mesa_error(ctx, GL_INVALID_OPERATION, "glDebugMessageControlARB"
+                 "(When passing an array of ids, severity must be"
+         " GL_DONT_CARE, and source and type must not be GL_DONT_CARE.");
+      return;
+   }
+
+   if (source_is(source, APPLICATION) || source_is(source, THIRD_PARTY))
+      control_app_messages(ctx, source, type, severity, count, ids, enabled);
+
+   if (severity_is(severity, HIGH)) {
+      if (type_is(type, ERROR)) {
+         if (source_is(source, API))
+            control_messages(ctx->Debug.ApiErrors, API_ERROR_COUNT,
+                             count, ids, enabled);
+         if (source_is(source, WINDOW_SYSTEM))
+            control_messages(ctx->Debug.WinsysErrors, WINSYS_ERROR_COUNT,
+                             count, ids, enabled);
+         if (source_is(source, SHADER_COMPILER))
+            control_messages(ctx->Debug.ShaderErrors, SHADER_ERROR_COUNT,
+                             count, ids, enabled);
+         if (source_is(source, OTHER))
+            control_messages(ctx->Debug.OtherErrors, OTHER_ERROR_COUNT,
+                             count, ids, enabled);
+      }
+   }
+}
+
 static void GLAPIENTRY
 _mesa_DebugMessageCallbackARB(GLvoid *callback, GLvoid *userParam)
 {
@@ -308,6 +435,7 @@ void
 _mesa_init_errors_dispatch(struct _glapi_table *disp)
 {
    SET_DebugMessageCallbackARB(disp, _mesa_DebugMessageCallbackARB);
+   SET_DebugMessageControlARB(disp, _mesa_DebugMessageControlARB);
    SET_DebugMessageInsertARB(disp, _mesa_DebugMessageInsertARB);
    SET_GetDebugMessageLogARB(disp, _mesa_GetDebugMessageLogARB);
 }
@@ -321,6 +449,12 @@ _mesa_init_errors(struct gl_context *ctx)
    ctx->Debug.NumMessages = 0;
    ctx->Debug.NextMsg = 0;
    ctx->Debug.NextMsgLength = 0;
+
+   /* Enable all the messages with severity HIGH or MEDIUM by default. */
+   memset(ctx->Debug.ApiErrors, GL_TRUE, sizeof ctx->Debug.ApiErrors);
+   memset(ctx->Debug.WinsysErrors, GL_TRUE, sizeof ctx->Debug.WinsysErrors);
+   memset(ctx->Debug.ShaderErrors, GL_TRUE, sizeof ctx->Debug.ShaderErrors);
+   memset(ctx->Debug.OtherErrors, GL_TRUE, sizeof ctx->Debug.OtherErrors);
 }
 
 /**********************************************************************/
