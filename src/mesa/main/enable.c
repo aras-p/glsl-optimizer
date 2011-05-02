@@ -885,7 +885,10 @@ _mesa_set_enable(struct gl_context *ctx, GLenum cap, GLboolean state)
 
       case GL_TEXTURE_CUBE_MAP_SEAMLESS:
 	 CHECK_EXTENSION(ARB_seamless_cube_map, cap);
-	 ctx->Texture.CubeMapSeamless = state;
+	 if (ctx->Texture.CubeMapSeamless != state) {
+	    FLUSH_VERTICES(ctx, _NEW_TEXTURE);
+	    ctx->Texture.CubeMapSeamless = state;
+	 }
 	 break;
 
 #if FEATURE_EXT_transform_feedback
