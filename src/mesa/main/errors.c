@@ -88,7 +88,7 @@ _mesa_log_msg(struct gl_context *ctx, GLenum source, GLenum type,
       emptySlot->length = strlen(out_of_memory)+1;
       emptySlot->source = GL_DEBUG_SOURCE_OTHER_ARB;
       emptySlot->type = GL_DEBUG_TYPE_ERROR_ARB;
-      emptySlot->id = 1; /* TODO: proper id namespace */
+      emptySlot->id = OTHER_ERROR_OUT_OF_MEMORY;
       emptySlot->severity = GL_DEBUG_SEVERITY_HIGH_ARB;
    }
 

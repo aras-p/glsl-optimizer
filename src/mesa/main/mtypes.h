@@ -3200,12 +3200,38 @@ struct gl_debug_msg
    GLcharARB *message;
 };
 
-/* GL_ARB_debug_output */
+typedef enum {
+   API_ERROR_UNKNOWN,
+   API_ERROR_COUNT
+} gl_api_error;
+
+typedef enum {
+   WINSYS_ERROR_UNKNOWN,
+   WINSYS_ERROR_COUNT
+} gl_winsys_error;
+
+typedef enum {
+   SHADER_ERROR_UNKNOWN,
+   SHADER_ERROR_COUNT
+} gl_shader_error;
+
+typedef enum {
+   OTHER_ERROR_UNKNOWN,
+   OTHER_ERROR_OUT_OF_MEMORY,
+   OTHER_ERROR_COUNT
+} gl_other_error;
+
 struct gl_debug_state
 {
    GLDEBUGPROCARB Callback;
    GLvoid *CallbackData;
    GLboolean SyncOutput;
+   GLboolean ApiErrors[API_ERROR_COUNT];
+   GLboolean WinsysErrors[WINSYS_ERROR_COUNT];
+   GLboolean ShaderErrors[SHADER_ERROR_COUNT];
+   GLboolean OtherErrors[OTHER_ERROR_COUNT];
+   /* TODO: Add an object here that tracks the state of client-provided IDs
+      in the APPLICATION and THIRD_PARTY namespaces. */
    struct gl_debug_msg Log[MAX_DEBUG_LOGGED_MESSAGES];
    GLint NumMessages;
    GLint NextMsg;
