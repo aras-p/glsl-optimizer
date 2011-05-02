@@ -12533,6 +12533,7 @@
 <xi:include href="ARB_instanced_arrays.xml" xmlns:xi="http://www.w3.org/2001/XInclude"/>
 
 <xi:include href="ARB_draw_buffers_blend.xml" xmlns:xi="http://www.w3.org/2001/XInclude"/>
+<xi:include href="AMD_draw_buffers_blend.xml" xmlns:xi="http://www.w3.org/2001/XInclude"/>
 
 <xi:include href="ARB_texture_buffer_object.xml" xmlns:xi="http://www.w3.org/2001/XInclude"/>
 

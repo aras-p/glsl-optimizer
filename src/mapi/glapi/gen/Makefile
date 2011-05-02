@@ -86,6 +86,7 @@ API_XML = \
 	ARB_sync.xml \
 	ARB_texture_buffer_object.xml \
 	ARB_vertex_array_object.xml \
+	AMD_draw_buffers_blend.xml \
 	APPLE_object_purgeable.xml \
 	APPLE_vertex_array_object.xml \
 	EXT_draw_buffers2.xml \
