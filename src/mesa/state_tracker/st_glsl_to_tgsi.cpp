@@ -27,7 +27,7 @@
 /**
  * \file glsl_to_tgsi.cpp
  *
- * Translate GLSL IR to Mesa's gl_program representation and to TGSI.
+ * Translate GLSL IR to TGSI.
  */
 
 #include <stdio.h>
@@ -63,11 +63,12 @@ extern "C" {
 #include "pipe/p_state.h"
 #include "util/u_math.h"
 #include "tgsi/tgsi_ureg.h"
-#include "tgsi/tgsi_dump.h"
+#include "tgsi/tgsi_info.h"
 #include "st_context.h"
 #include "st_program.h"
 #include "st_glsl_to_tgsi.h"
 #include "st_mesa_to_tgsi.h"
+}
 
 #define PROGRAM_ANY_CONST ((1 << PROGRAM_LOCAL_PARAM) |  \
                            (1 << PROGRAM_ENV_PARAM) |    \
@@ -75,7 +76,6 @@ extern "C" {
                            (1 << PROGRAM_NAMED_PARAM) |  \
                            (1 << PROGRAM_CONSTANT) |     \
                            (1 << PROGRAM_UNIFORM))
-}
 
 class st_src_reg;
 class st_dst_reg;
@@ -83,8 +83,7 @@ class st_dst_reg;
 static int swizzle_for_size(int size);
 
 /**
- * This struct is a corresponding struct to Mesa prog_src_register, with
- * wider fields.
+ * This struct is a corresponding struct to TGSI ureg_src.
  */
 class st_src_reg {
 public:
@@ -190,7 +189,7 @@ public:
       return node;
    }
 
-   enum prog_opcode op;
+   unsigned op;
    st_dst_reg dst;
    st_src_reg src[3];
    /** Pointer to the ir source this tree came from for debugging */
@@ -201,7 +200,7 @@ public:
    int tex_target; /**< One of TEXTURE_*_INDEX */
    GLboolean tex_shadow;
 
-   class function_entry *function; /* Set on OPCODE_CAL or OPCODE_BGNSUB */
+   class function_entry *function; /* Set on TGSI_OPCODE_CAL or TGSI_OPCODE_BGNSUB */
 };
 
 class variable_storage : public exec_node {
@@ -317,15 +316,15 @@ public:
    /** List of glsl_to_tgsi_instruction */
    exec_list instructions;
 
-   glsl_to_tgsi_instruction *emit(ir_instruction *ir, enum prog_opcode op);
+   glsl_to_tgsi_instruction *emit(ir_instruction *ir, unsigned op);
 
-   glsl_to_tgsi_instruction *emit(ir_instruction *ir, enum prog_opcode op,
+   glsl_to_tgsi_instruction *emit(ir_instruction *ir, unsigned op,
         		        st_dst_reg dst, st_src_reg src0);
 
-   glsl_to_tgsi_instruction *emit(ir_instruction *ir, enum prog_opcode op,
+   glsl_to_tgsi_instruction *emit(ir_instruction *ir, unsigned op,
         		        st_dst_reg dst, st_src_reg src0, st_src_reg src1);
 
-   glsl_to_tgsi_instruction *emit(ir_instruction *ir, enum prog_opcode op,
+   glsl_to_tgsi_instruction *emit(ir_instruction *ir, unsigned op,
         		        st_dst_reg dst,
         		        st_src_reg src0, st_src_reg src1, st_src_reg src2);
 
@@ -338,13 +337,13 @@ public:
                 st_src_reg src1,
                 unsigned elements);
 
-   void emit_scalar(ir_instruction *ir, enum prog_opcode op,
+   void emit_scalar(ir_instruction *ir, unsigned op,
         	    st_dst_reg dst, st_src_reg src0);
 
-   void emit_scalar(ir_instruction *ir, enum prog_opcode op,
+   void emit_scalar(ir_instruction *ir, unsigned op,
         	    st_dst_reg dst, st_src_reg src0, st_src_reg src1);
 
-   void emit_scs(ir_instruction *ir, enum prog_opcode op,
+   void emit_scs(ir_instruction *ir, unsigned op,
         	 st_dst_reg dst, const st_src_reg &src);
 
    GLboolean try_emit_mad(ir_expression *ir,
@@ -405,8 +404,29 @@ swizzle_for_size(int size)
    return size_swizzles[size - 1];
 }
 
+static bool
+is_tex_instruction(unsigned opcode)
+{
+   const tgsi_opcode_info* info = tgsi_get_opcode_info(opcode);
+   return info->is_tex;
+}
+
+static unsigned
+num_inst_dst_regs(unsigned opcode)
+{
+   const tgsi_opcode_info* info = tgsi_get_opcode_info(opcode);
+   return info->num_dst;
+}
+
+static unsigned
+num_inst_src_regs(unsigned opcode)
+{
+   const tgsi_opcode_info* info = tgsi_get_opcode_info(opcode);
+   return info->is_tex ? info->num_src - 1 : info->num_src;
+}
+
 glsl_to_tgsi_instruction *
-glsl_to_tgsi_visitor::emit(ir_instruction *ir, enum prog_opcode op,
+glsl_to_tgsi_visitor::emit(ir_instruction *ir, unsigned op,
         		 st_dst_reg dst,
         		 st_src_reg src0, st_src_reg src1, st_src_reg src2)
 {
@@ -427,7 +447,7 @@ glsl_to_tgsi_visitor::emit(ir_instruction *ir, enum prog_opcode op,
    reladdr_to_temp(ir, &src0, &num_reladdr);
 
    if (dst.reladdr) {
-      emit(ir, OPCODE_ARL, address_reg, *dst.reladdr);
+      emit(ir, TGSI_OPCODE_ARL, address_reg, *dst.reladdr);
       num_reladdr--;
    }
    assert(num_reladdr == 0);
@@ -441,7 +461,7 @@ glsl_to_tgsi_visitor::emit(ir_instruction *ir, enum prog_opcode op,
 
    inst->function = NULL;
    
-   if (op == OPCODE_ARL)
+   if (op == TGSI_OPCODE_ARL)
       this->num_address_regs = 1;
    
    /* Update indirect addressing status used by TGSI */
@@ -491,14 +511,14 @@ glsl_to_tgsi_visitor::emit(ir_instruction *ir, enum prog_opcode op,
 
 
 glsl_to_tgsi_instruction *
-glsl_to_tgsi_visitor::emit(ir_instruction *ir, enum prog_opcode op,
+glsl_to_tgsi_visitor::emit(ir_instruction *ir, unsigned op,
         		 st_dst_reg dst, st_src_reg src0, st_src_reg src1)
 {
    return emit(ir, op, dst, src0, src1, undef_src);
 }
 
 glsl_to_tgsi_instruction *
-glsl_to_tgsi_visitor::emit(ir_instruction *ir, enum prog_opcode op,
+glsl_to_tgsi_visitor::emit(ir_instruction *ir, unsigned op,
         		 st_dst_reg dst, st_src_reg src0)
 {
    assert(dst.writemask != 0);
@@ -506,7 +526,7 @@ glsl_to_tgsi_visitor::emit(ir_instruction *ir, enum prog_opcode op,
 }
 
 glsl_to_tgsi_instruction *
-glsl_to_tgsi_visitor::emit(ir_instruction *ir, enum prog_opcode op)
+glsl_to_tgsi_visitor::emit(ir_instruction *ir, unsigned op)
 {
    return emit(ir, op, undef_dst, undef_src, undef_src, undef_src);
 }
@@ -516,30 +536,30 @@ glsl_to_tgsi_visitor::emit_dp(ir_instruction *ir,
         		    st_dst_reg dst, st_src_reg src0, st_src_reg src1,
         		    unsigned elements)
 {
-   static const gl_inst_opcode dot_opcodes[] = {
-      OPCODE_DP2, OPCODE_DP3, OPCODE_DP4
+   static const unsigned dot_opcodes[] = {
+      TGSI_OPCODE_DP2, TGSI_OPCODE_DP3, TGSI_OPCODE_DP4
    };
 
    emit(ir, dot_opcodes[elements - 2], dst, src0, src1);
 }
 
 /**
- * Emits Mesa scalar opcodes to produce unique answers across channels.
+ * Emits TGSI scalar opcodes to produce unique answers across channels.
  *
- * Some Mesa opcodes are scalar-only, like ARB_fp/vp.  The src X
+ * Some TGSI opcodes are scalar-only, like ARB_fp/vp.  The src X
  * channel determines the result across all channels.  So to do a vec4
  * of this operation, we want to emit a scalar per source channel used
  * to produce dest channels.
  */
 void
-glsl_to_tgsi_visitor::emit_scalar(ir_instruction *ir, enum prog_opcode op,
+glsl_to_tgsi_visitor::emit_scalar(ir_instruction *ir, unsigned op,
         		        st_dst_reg dst,
         			st_src_reg orig_src0, st_src_reg orig_src1)
 {
    int i, j;
    int done_mask = ~dst.writemask;
 
-   /* Mesa RCP is a scalar operation splatting results to all channels,
+   /* TGSI RCP is a scalar operation splatting results to all channels,
     * like ARB_fp/vp.  So emit as many RCPs as necessary to cover our
     * dst channels.
     */
@@ -577,7 +597,7 @@ glsl_to_tgsi_visitor::emit_scalar(ir_instruction *ir, enum prog_opcode op,
 }
 
 void
-glsl_to_tgsi_visitor::emit_scalar(ir_instruction *ir, enum prog_opcode op,
+glsl_to_tgsi_visitor::emit_scalar(ir_instruction *ir, unsigned op,
         		        st_dst_reg dst, st_src_reg src0)
 {
    st_src_reg undef = undef_src;
@@ -588,21 +608,21 @@ glsl_to_tgsi_visitor::emit_scalar(ir_instruction *ir, enum prog_opcode op,
 }
 
 /**
- * Emit an OPCODE_SCS instruction
+ * Emit an TGSI_OPCODE_SCS instruction
  *
- * The \c SCS opcode functions a bit differently than the other Mesa (or
- * ARB_fragment_program) opcodes.  Instead of splatting its result across all
- * four components of the destination, it writes one value to the \c x
- * component and another value to the \c y component.
+ * The \c SCS opcode functions a bit differently than the other TGSI opcodes.
+ * Instead of splatting its result across all four components of the 
+ * destination, it writes one value to the \c x component and another value to 
+ * the \c y component.
  *
  * \param ir        IR instruction being processed
- * \param op        Either \c OPCODE_SIN or \c OPCODE_COS depending on which
- *                  value is desired.
+ * \param op        Either \c TGSI_OPCODE_SIN or \c TGSI_OPCODE_COS depending 
+ *                  on which value is desired.
  * \param dst       Destination register
  * \param src       Source register
  */
 void
-glsl_to_tgsi_visitor::emit_scs(ir_instruction *ir, enum prog_opcode op,
+glsl_to_tgsi_visitor::emit_scs(ir_instruction *ir, unsigned op,
         		     st_dst_reg dst,
         		     const st_src_reg &src)
 {
@@ -613,12 +633,12 @@ glsl_to_tgsi_visitor::emit_scs(ir_instruction *ir, enum prog_opcode op,
       return;
    }
 
-   const unsigned component = (op == OPCODE_SIN) ? 0 : 1;
+   const unsigned component = (op == TGSI_OPCODE_SIN) ? 0 : 1;
    const unsigned scs_mask = (1U << component);
    int done_mask = ~dst.writemask;
    st_src_reg tmp;
 
-   assert(op == OPCODE_SIN || op == OPCODE_COS);
+   assert(op == TGSI_OPCODE_SIN || op == TGSI_OPCODE_COS);
 
    /* If there are compnents in the destination that differ from the component
     * that will be written by the SCS instrution, we'll need a temporary.
@@ -661,7 +681,7 @@ glsl_to_tgsi_visitor::emit_scs(ir_instruction *ir, enum prog_opcode op,
 
          /* Emit the SCS instruction.
           */
-         inst = emit(ir, OPCODE_SCS, tmp_dst, src0);
+         inst = emit(ir, TGSI_OPCODE_SCS, tmp_dst, src0);
          inst->dst.writemask = scs_mask;
 
          /* Move the result of the SCS instruction to the desired location in
@@ -669,12 +689,12 @@ glsl_to_tgsi_visitor::emit_scs(ir_instruction *ir, enum prog_opcode op,
           */
          tmp.swizzle = MAKE_SWIZZLE4(component, component,
         			     component, component);
-         inst = emit(ir, OPCODE_SCS, dst, tmp);
+         inst = emit(ir, TGSI_OPCODE_SCS, dst, tmp);
          inst->dst.writemask = this_mask;
       } else {
          /* Emit the SCS instruction to write directly to the destination.
           */
-         glsl_to_tgsi_instruction *inst = emit(ir, OPCODE_SCS, dst, src0);
+         glsl_to_tgsi_instruction *inst = emit(ir, TGSI_OPCODE_SCS, dst, src0);
          inst->dst.writemask = scs_mask;
       }
 
@@ -870,7 +890,7 @@ glsl_to_tgsi_visitor::visit(ir_variable *ir)
          } else {
             st_src_reg src(PROGRAM_STATE_VAR, index, NULL);
             src.swizzle = slots[i].swizzle;
-            emit(ir, OPCODE_MOV, dst, src);
+            emit(ir, TGSI_OPCODE_MOV, dst, src);
             /* even a float takes up a whole vec4 reg in a struct/array. */
             dst.index++;
          }
@@ -903,7 +923,7 @@ glsl_to_tgsi_visitor::visit(ir_loop *ir)
       delete a;
    }
 
-   emit(NULL, OPCODE_BGNLOOP);
+   emit(NULL, TGSI_OPCODE_BGNLOOP);
 
    if (ir->to) {
       ir_expression *e =
@@ -936,7 +956,7 @@ glsl_to_tgsi_visitor::visit(ir_loop *ir)
       delete e;
    }
 
-   emit(NULL, OPCODE_ENDLOOP);
+   emit(NULL, TGSI_OPCODE_ENDLOOP);
 }
 
 void
@@ -944,10 +964,10 @@ glsl_to_tgsi_visitor::visit(ir_loop_jump *ir)
 {
    switch (ir->mode) {
    case ir_loop_jump::jump_break:
-      emit(NULL, OPCODE_BRK);
+      emit(NULL, TGSI_OPCODE_BRK);
       break;
    case ir_loop_jump::jump_continue:
-      emit(NULL, OPCODE_CONT);
+      emit(NULL, TGSI_OPCODE_CONT);
       break;
    }
 }
@@ -1000,7 +1020,7 @@ glsl_to_tgsi_visitor::try_emit_mad(ir_expression *ir, int mul_operand)
    c = this->result;
 
    this->result = get_temp(ir->type);
-   emit(ir, OPCODE_MAD, st_dst_reg(this->result), a, b, c);
+   emit(ir, TGSI_OPCODE_MAD, st_dst_reg(this->result), a, b, c);
 
    return true;
 }
@@ -1023,7 +1043,7 @@ glsl_to_tgsi_visitor::try_emit_sat(ir_expression *ir)
 
    this->result = get_temp(ir->type);
    glsl_to_tgsi_instruction *inst;
-   inst = emit(ir, OPCODE_MOV, st_dst_reg(this->result), src);
+   inst = emit(ir, TGSI_OPCODE_MOV, st_dst_reg(this->result), src);
    inst->saturate = true;
 
    return true;
@@ -1036,133 +1056,16 @@ glsl_to_tgsi_visitor::reladdr_to_temp(ir_instruction *ir,
    if (!reg->reladdr)
       return;
 
-   emit(ir, OPCODE_ARL, address_reg, *reg->reladdr);
+   emit(ir, TGSI_OPCODE_ARL, address_reg, *reg->reladdr);
 
    if (*num_reladdr != 1) {
       st_src_reg temp = get_temp(glsl_type::vec4_type);
 
-      emit(ir, OPCODE_MOV, st_dst_reg(temp), *reg);
+      emit(ir, TGSI_OPCODE_MOV, st_dst_reg(temp), *reg);
       *reg = temp;
    }
 
    (*num_reladdr)--;
-}
-
-void
-glsl_to_tgsi_visitor::emit_swz(ir_expression *ir)
-{
-   /* Assume that the vector operator is in a form compatible with OPCODE_SWZ.
-    * This means that each of the operands is either an immediate value of -1,
-    * 0, or 1, or is a component from one source register (possibly with
-    * negation).
-    */
-   uint8_t components[4] = { 0 };
-   bool negate[4] = { false };
-   ir_variable *var = NULL;
-
-   for (unsigned i = 0; i < ir->type->vector_elements; i++) {
-      ir_rvalue *op = ir->operands[i];
-
-      assert(op->type->is_scalar());
-
-      while (op != NULL) {
-         switch (op->ir_type) {
-         case ir_type_constant: {
-
-            assert(op->type->is_scalar());
-
-            const ir_constant *const c = op->as_constant();
-            if (c->is_one()) {
-               components[i] = SWIZZLE_ONE;
-            } else if (c->is_zero()) {
-               components[i] = SWIZZLE_ZERO;
-            } else if (c->is_negative_one()) {
-               components[i] = SWIZZLE_ONE;
-               negate[i] = true;
-            } else {
-               assert(!"SWZ constant must be 0.0 or 1.0.");
-            }
-
-            op = NULL;
-            break;
-         }
-
-         case ir_type_dereference_variable: {
-            ir_dereference_variable *const deref =
-               (ir_dereference_variable *) op;
-
-            assert((var == NULL) || (deref->var == var));
-            components[i] = SWIZZLE_X;
-            var = deref->var;
-            op = NULL;
-            break;
-         }
-
-         case ir_type_expression: {
-            ir_expression *const expr = (ir_expression *) op;
-
-            assert(expr->operation == ir_unop_neg);
-            negate[i] = true;
-
-            op = expr->operands[0];
-            break;
-         }
-
-         case ir_type_swizzle: {
-            ir_swizzle *const swiz = (ir_swizzle *) op;
-
-            components[i] = swiz->mask.x;
-            op = swiz->val;
-            break;
-         }
-
-         default:
-            assert(!"Should not get here.");
-            return;
-         }
-      }
-   }
-
-   assert(var != NULL);
-
-   ir_dereference_variable *const deref =
-      new(mem_ctx) ir_dereference_variable(var);
-
-   this->result.file = PROGRAM_UNDEFINED;
-   deref->accept(this);
-   if (this->result.file == PROGRAM_UNDEFINED) {
-      ir_print_visitor v;
-      printf("Failed to get tree for expression operand:\n");
-      deref->accept(&v);
-      exit(1);
-   }
-
-   st_src_reg src;
-
-   src = this->result;
-   src.swizzle = MAKE_SWIZZLE4(components[0],
-        		       components[1],
-        		       components[2],
-        		       components[3]);
-   src.negate = ((unsigned(negate[0]) << 0)
-        	 | (unsigned(negate[1]) << 1)
-        	 | (unsigned(negate[2]) << 2)
-        	 | (unsigned(negate[3]) << 3));
-
-   /* Storage for our result.  Ideally for an assignment we'd be using the
-    * actual storage for the result here, instead.
-    */
-   const st_src_reg result_src = get_temp(ir->type);
-   st_dst_reg result_dst = st_dst_reg(result_src);
-
-   /* Limit writes to the channels that will be used by result_src later.
-    * This does limit this temp's use as a temporary for multi-instruction
-    * sequences.
-    */
-   result_dst.writemask = (1 << ir->type->vector_elements) - 1;
-
-   emit(ir, OPCODE_SWZ, result_dst, src);
-   this->result = result_src;
 }
 
 void
@@ -1173,7 +1076,7 @@ glsl_to_tgsi_visitor::visit(ir_expression *ir)
    st_src_reg result_src;
    st_dst_reg result_dst;
 
-   /* Quick peephole: Emit OPCODE_MAD(a, b, c) instead of ADD(MUL(a, b), c)
+   /* Quick peephole: Emit MAD(a, b, c) instead of ADD(MUL(a, b), c)
     */
    if (ir->operation == ir_binop_add) {
       if (try_emit_mad(ir, 1))
@@ -1184,10 +1087,8 @@ glsl_to_tgsi_visitor::visit(ir_expression *ir)
    if (try_emit_sat(ir))
       return;
 
-   if (ir->operation == ir_quadop_vector) {
-      this->emit_swz(ir);
-      return;
-   }
+   if (ir->operation == ir_quadop_vector)
+      assert(!"ir_quadop_vector should have been lowered");
 
    for (operand = 0; operand < ir->get_num_operands(); operand++) {
       this->result.file = PROGRAM_UNDEFINED;
@@ -1228,51 +1129,51 @@ glsl_to_tgsi_visitor::visit(ir_expression *ir)
 
    switch (ir->operation) {
    case ir_unop_logic_not:
-      emit(ir, OPCODE_SEQ, result_dst, op[0], st_src_reg_for_float(0.0));
+      emit(ir, TGSI_OPCODE_SEQ, result_dst, op[0], st_src_reg_for_float(0.0));
       break;
    case ir_unop_neg:
       op[0].negate = ~op[0].negate;
       result_src = op[0];
       break;
    case ir_unop_abs:
-      emit(ir, OPCODE_ABS, result_dst, op[0]);
+      emit(ir, TGSI_OPCODE_ABS, result_dst, op[0]);
       break;
    case ir_unop_sign:
-      emit(ir, OPCODE_SSG, result_dst, op[0]);
+      emit(ir, TGSI_OPCODE_SSG, result_dst, op[0]);
       break;
    case ir_unop_rcp:
-      emit_scalar(ir, OPCODE_RCP, result_dst, op[0]);
+      emit_scalar(ir, TGSI_OPCODE_RCP, result_dst, op[0]);
       break;
 
    case ir_unop_exp2:
-      emit_scalar(ir, OPCODE_EX2, result_dst, op[0]);
+      emit_scalar(ir, TGSI_OPCODE_EX2, result_dst, op[0]);
       break;
    case ir_unop_exp:
    case ir_unop_log:
       assert(!"not reached: should be handled by ir_explog_to_explog2");
       break;
    case ir_unop_log2:
-      emit_scalar(ir, OPCODE_LG2, result_dst, op[0]);
+      emit_scalar(ir, TGSI_OPCODE_LG2, result_dst, op[0]);
       break;
    case ir_unop_sin:
-      emit_scalar(ir, OPCODE_SIN, result_dst, op[0]);
+      emit_scalar(ir, TGSI_OPCODE_SIN, result_dst, op[0]);
       break;
    case ir_unop_cos:
-      emit_scalar(ir, OPCODE_COS, result_dst, op[0]);
+      emit_scalar(ir, TGSI_OPCODE_COS, result_dst, op[0]);
       break;
    case ir_unop_sin_reduced:
-      emit_scs(ir, OPCODE_SIN, result_dst, op[0]);
+      emit_scs(ir, TGSI_OPCODE_SIN, result_dst, op[0]);
       break;
    case ir_unop_cos_reduced:
-      emit_scs(ir, OPCODE_COS, result_dst, op[0]);
+      emit_scs(ir, TGSI_OPCODE_COS, result_dst, op[0]);
       break;
 
    case ir_unop_dFdx:
-      emit(ir, OPCODE_DDX, result_dst, op[0]);
+      emit(ir, TGSI_OPCODE_DDX, result_dst, op[0]);
       break;
    case ir_unop_dFdy:
       op[0].negate = ~op[0].negate;
-      emit(ir, OPCODE_DDY, result_dst, op[0]);
+      emit(ir, TGSI_OPCODE_DDY, result_dst, op[0]);
       break;
 
    case ir_unop_noise: {
@@ -1282,19 +1183,19 @@ glsl_to_tgsi_visitor::visit(ir_expression *ir)
        * place to do this is in the GL state tracker, not the poor
        * driver.
        */
-      emit(ir, OPCODE_MOV, result_dst, st_src_reg_for_float(0.5));
+      emit(ir, TGSI_OPCODE_MOV, result_dst, st_src_reg_for_float(0.5));
       break;
    }
 
    case ir_binop_add:
-      emit(ir, OPCODE_ADD, result_dst, op[0], op[1]);
+      emit(ir, TGSI_OPCODE_ADD, result_dst, op[0], op[1]);
       break;
    case ir_binop_sub:
-      emit(ir, OPCODE_SUB, result_dst, op[0], op[1]);
+      emit(ir, TGSI_OPCODE_SUB, result_dst, op[0], op[1]);
       break;
 
    case ir_binop_mul:
-      emit(ir, OPCODE_MUL, result_dst, op[0], op[1]);
+      emit(ir, TGSI_OPCODE_MUL, result_dst, op[0], op[1]);
       break;
    case ir_binop_div:
       assert(!"not reached: should be handled by ir_div_to_mul_rcp");
@@ -1303,33 +1204,33 @@ glsl_to_tgsi_visitor::visit(ir_expression *ir)
       break;
 
    case ir_binop_less:
-      emit(ir, OPCODE_SLT, result_dst, op[0], op[1]);
+      emit(ir, TGSI_OPCODE_SLT, result_dst, op[0], op[1]);
       break;
    case ir_binop_greater:
-      emit(ir, OPCODE_SGT, result_dst, op[0], op[1]);
+      emit(ir, TGSI_OPCODE_SGT, result_dst, op[0], op[1]);
       break;
    case ir_binop_lequal:
-      emit(ir, OPCODE_SLE, result_dst, op[0], op[1]);
+      emit(ir, TGSI_OPCODE_SLE, result_dst, op[0], op[1]);
       break;
    case ir_binop_gequal:
-      emit(ir, OPCODE_SGE, result_dst, op[0], op[1]);
+      emit(ir, TGSI_OPCODE_SGE, result_dst, op[0], op[1]);
       break;
    case ir_binop_equal:
-      emit(ir, OPCODE_SEQ, result_dst, op[0], op[1]);
+      emit(ir, TGSI_OPCODE_SEQ, result_dst, op[0], op[1]);
       break;
    case ir_binop_nequal:
-      emit(ir, OPCODE_SNE, result_dst, op[0], op[1]);
+      emit(ir, TGSI_OPCODE_SNE, result_dst, op[0], op[1]);
       break;
    case ir_binop_all_equal:
       /* "==" operator producing a scalar boolean. */
       if (ir->operands[0]->type->is_vector() ||
           ir->operands[1]->type->is_vector()) {
          st_src_reg temp = get_temp(glsl_type::vec4_type);
-         emit(ir, OPCODE_SNE, st_dst_reg(temp), op[0], op[1]);
+         emit(ir, TGSI_OPCODE_SNE, st_dst_reg(temp), op[0], op[1]);
          emit_dp(ir, result_dst, temp, temp, vector_elements);
-         emit(ir, OPCODE_SEQ, result_dst, result_src, st_src_reg_for_float(0.0));
+         emit(ir, TGSI_OPCODE_SEQ, result_dst, result_src, st_src_reg_for_float(0.0));
       } else {
-         emit(ir, OPCODE_SEQ, result_dst, op[0], op[1]);
+         emit(ir, TGSI_OPCODE_SEQ, result_dst, op[0], op[1]);
       }
       break;
    case ir_binop_any_nequal:
@@ -1337,11 +1238,11 @@ glsl_to_tgsi_visitor::visit(ir_expression *ir)
       if (ir->operands[0]->type->is_vector() ||
           ir->operands[1]->type->is_vector()) {
          st_src_reg temp = get_temp(glsl_type::vec4_type);
-         emit(ir, OPCODE_SNE, st_dst_reg(temp), op[0], op[1]);
+         emit(ir, TGSI_OPCODE_SNE, st_dst_reg(temp), op[0], op[1]);
          emit_dp(ir, result_dst, temp, temp, vector_elements);
-         emit(ir, OPCODE_SNE, result_dst, result_src, st_src_reg_for_float(0.0));
+         emit(ir, TGSI_OPCODE_SNE, result_dst, result_src, st_src_reg_for_float(0.0));
       } else {
-         emit(ir, OPCODE_SNE, result_dst, op[0], op[1]);
+         emit(ir, TGSI_OPCODE_SNE, result_dst, op[0], op[1]);
       }
       break;
 
@@ -1349,22 +1250,22 @@ glsl_to_tgsi_visitor::visit(ir_expression *ir)
       assert(ir->operands[0]->type->is_vector());
       emit_dp(ir, result_dst, op[0], op[0],
               ir->operands[0]->type->vector_elements);
-      emit(ir, OPCODE_SNE, result_dst, result_src, st_src_reg_for_float(0.0));
+      emit(ir, TGSI_OPCODE_SNE, result_dst, result_src, st_src_reg_for_float(0.0));
       break;
 
    case ir_binop_logic_xor:
-      emit(ir, OPCODE_SNE, result_dst, op[0], op[1]);
+      emit(ir, TGSI_OPCODE_SNE, result_dst, op[0], op[1]);
       break;
 
    case ir_binop_logic_or:
       /* This could be a saturated add and skip the SNE. */
-      emit(ir, OPCODE_ADD, result_dst, op[0], op[1]);
-      emit(ir, OPCODE_SNE, result_dst, result_src, st_src_reg_for_float(0.0));
+      emit(ir, TGSI_OPCODE_ADD, result_dst, op[0], op[1]);
+      emit(ir, TGSI_OPCODE_SNE, result_dst, result_src, st_src_reg_for_float(0.0));
       break;
 
    case ir_binop_logic_and:
       /* the bool args are stored as float 0.0 or 1.0, so "mul" gives us "and". */
-      emit(ir, OPCODE_MUL, result_dst, op[0], op[1]);
+      emit(ir, TGSI_OPCODE_MUL, result_dst, op[0], op[1]);
       break;
 
    case ir_binop_dot:
@@ -1376,15 +1277,15 @@ glsl_to_tgsi_visitor::visit(ir_expression *ir)
 
    case ir_unop_sqrt:
       /* sqrt(x) = x * rsq(x). */
-      emit_scalar(ir, OPCODE_RSQ, result_dst, op[0]);
-      emit(ir, OPCODE_MUL, result_dst, result_src, op[0]);
+      emit_scalar(ir, TGSI_OPCODE_RSQ, result_dst, op[0]);
+      emit(ir, TGSI_OPCODE_MUL, result_dst, result_src, op[0]);
       /* For incoming channels <= 0, set the result to 0. */
       op[0].negate = ~op[0].negate;
-      emit(ir, OPCODE_CMP, result_dst,
+      emit(ir, TGSI_OPCODE_CMP, result_dst,
         		  op[0], result_src, st_src_reg_for_float(0.0));
       break;
    case ir_unop_rsq:
-      emit_scalar(ir, OPCODE_RSQ, result_dst, op[0]);
+      emit_scalar(ir, TGSI_OPCODE_RSQ, result_dst, op[0]);
       break;
    case ir_unop_i2f:
    case ir_unop_b2f:
@@ -1393,36 +1294,36 @@ glsl_to_tgsi_visitor::visit(ir_expression *ir)
       result_src = op[0];
       break;
    case ir_unop_f2i:
-      emit(ir, OPCODE_TRUNC, result_dst, op[0]);
+      emit(ir, TGSI_OPCODE_TRUNC, result_dst, op[0]);
       break;
    case ir_unop_f2b:
    case ir_unop_i2b:
-      emit(ir, OPCODE_SNE, result_dst,
+      emit(ir, TGSI_OPCODE_SNE, result_dst,
         		  op[0], st_src_reg_for_float(0.0));
       break;
    case ir_unop_trunc:
-      emit(ir, OPCODE_TRUNC, result_dst, op[0]);
+      emit(ir, TGSI_OPCODE_TRUNC, result_dst, op[0]);
       break;
    case ir_unop_ceil:
       op[0].negate = ~op[0].negate;
-      emit(ir, OPCODE_FLR, result_dst, op[0]);
+      emit(ir, TGSI_OPCODE_FLR, result_dst, op[0]);
       result_src.negate = ~result_src.negate;
       break;
    case ir_unop_floor:
-      emit(ir, OPCODE_FLR, result_dst, op[0]);
+      emit(ir, TGSI_OPCODE_FLR, result_dst, op[0]);
       break;
    case ir_unop_fract:
-      emit(ir, OPCODE_FRC, result_dst, op[0]);
+      emit(ir, TGSI_OPCODE_FRC, result_dst, op[0]);
       break;
 
    case ir_binop_min:
-      emit(ir, OPCODE_MIN, result_dst, op[0], op[1]);
+      emit(ir, TGSI_OPCODE_MIN, result_dst, op[0], op[1]);
       break;
    case ir_binop_max:
-      emit(ir, OPCODE_MAX, result_dst, op[0], op[1]);
+      emit(ir, TGSI_OPCODE_MAX, result_dst, op[0], op[1]);
       break;
    case ir_binop_pow:
-      emit_scalar(ir, OPCODE_POW, result_dst, op[0], op[1]);
+      emit_scalar(ir, TGSI_OPCODE_POW, result_dst, op[0], op[1]);
       break;
 
    case ir_unop_bit_not:
@@ -1586,7 +1487,7 @@ glsl_to_tgsi_visitor::visit(ir_dereference_array *ir)
       } else {
          index_reg = get_temp(glsl_type::float_type);
 
-         emit(ir, OPCODE_MUL, st_dst_reg(index_reg),
+         emit(ir, TGSI_OPCODE_MUL, st_dst_reg(index_reg),
               this->result, st_src_reg_for_float(element_size));
       }
 
@@ -1728,9 +1629,9 @@ glsl_to_tgsi_visitor::process_move_condition(ir_rvalue *ir)
 
    src_ir->accept(this);
 
-   /* We use the OPCODE_CMP (a < 0 ? b : c) for conditional moves, and the
+   /* We use the TGSI_OPCODE_CMP (a < 0 ? b : c) for conditional moves, and the
     * condition we produced is 0.0 or 1.0.  By flipping the sign, we can
-    * choose which value OPCODE_CMP produces without an extra instruction
+    * choose which value TGSI_OPCODE_CMP produces without an extra instruction
     * computing the condition.
     */
    if (negate)
@@ -1803,9 +1704,9 @@ glsl_to_tgsi_visitor::visit(ir_assignment *ir)
 
       for (i = 0; i < type_size(ir->lhs->type); i++) {
          if (switch_order) {
-            emit(ir, OPCODE_CMP, l, condition, st_src_reg(l), r);
+            emit(ir, TGSI_OPCODE_CMP, l, condition, st_src_reg(l), r);
          } else {
-            emit(ir, OPCODE_CMP, l, condition, r, st_src_reg(l));
+            emit(ir, TGSI_OPCODE_CMP, l, condition, r, st_src_reg(l));
          }
 
          l.index++;
@@ -1813,7 +1714,7 @@ glsl_to_tgsi_visitor::visit(ir_assignment *ir)
       }
    } else {
       for (i = 0; i < type_size(ir->lhs->type); i++) {
-         emit(ir, OPCODE_MOV, l, r);
+         emit(ir, TGSI_OPCODE_MOV, l, r);
          l.index++;
          r.index++;
       }
@@ -1849,7 +1750,7 @@ glsl_to_tgsi_visitor::visit(ir_constant *ir)
          src = this->result;
 
          for (i = 0; i < (unsigned int)size; i++) {
-            emit(ir, OPCODE_MOV, temp, src);
+            emit(ir, TGSI_OPCODE_MOV, temp, src);
 
             src.index++;
             temp.index++;
@@ -1870,7 +1771,7 @@ glsl_to_tgsi_visitor::visit(ir_constant *ir)
          ir->array_elements[i]->accept(this);
          src = this->result;
          for (int j = 0; j < size; j++) {
-            emit(ir, OPCODE_MOV, temp, src);
+            emit(ir, TGSI_OPCODE_MOV, temp, src);
 
             src.index++;
             temp.index++;
@@ -1893,7 +1794,7 @@ glsl_to_tgsi_visitor::visit(ir_constant *ir)
         					values,
         					ir->type->vector_elements,
         					&src.swizzle);
-         emit(ir, OPCODE_MOV, mat_column, src);
+         emit(ir, TGSI_OPCODE_MOV, mat_column, src);
 
          mat_column.index++;
       }
@@ -2005,7 +1906,7 @@ glsl_to_tgsi_visitor::visit(ir_call *ir)
          l.cond_mask = COND_TR;
 
          for (i = 0; i < type_size(param->type); i++) {
-            emit(ir, OPCODE_MOV, l, r);
+            emit(ir, TGSI_OPCODE_MOV, l, r);
             l.index++;
             r.index++;
          }
@@ -2016,7 +1917,7 @@ glsl_to_tgsi_visitor::visit(ir_call *ir)
    assert(!sig_iter.has_next());
 
    /* Emit call instruction */
-   call_inst = emit(ir, OPCODE_CAL);
+   call_inst = emit(ir, TGSI_OPCODE_CAL);
    call_inst->function = entry;
 
    /* Process out parameters. */
@@ -2041,7 +1942,7 @@ glsl_to_tgsi_visitor::visit(ir_call *ir)
          st_dst_reg l = st_dst_reg(this->result);
 
          for (i = 0; i < type_size(param->type); i++) {
-            emit(ir, OPCODE_MOV, l, r);
+            emit(ir, TGSI_OPCODE_MOV, l, r);
             l.index++;
             r.index++;
          }
@@ -2061,7 +1962,7 @@ glsl_to_tgsi_visitor::visit(ir_texture *ir)
    st_src_reg result_src, coord, lod_info, projector, dx, dy;
    st_dst_reg result_dst, coord_dst;
    glsl_to_tgsi_instruction *inst = NULL;
-   prog_opcode opcode = OPCODE_NOP;
+   unsigned opcode = TGSI_OPCODE_NOP;
 
    ir->coordinate->accept(this);
 
@@ -2072,7 +1973,7 @@ glsl_to_tgsi_visitor::visit(ir_texture *ir)
     */
    coord = get_temp(glsl_type::vec4_type);
    coord_dst = st_dst_reg(coord);
-   emit(ir, OPCODE_MOV, coord_dst, this->result);
+   emit(ir, TGSI_OPCODE_MOV, coord_dst, this->result);
 
    if (ir->projector) {
       ir->projector->accept(this);
@@ -2087,20 +1988,20 @@ glsl_to_tgsi_visitor::visit(ir_texture *ir)
 
    switch (ir->op) {
    case ir_tex:
-      opcode = OPCODE_TEX;
+      opcode = TGSI_OPCODE_TEX;
       break;
    case ir_txb:
-      opcode = OPCODE_TXB;
+      opcode = TGSI_OPCODE_TXB;
       ir->lod_info.bias->accept(this);
       lod_info = this->result;
       break;
    case ir_txl:
-      opcode = OPCODE_TXL;
+      opcode = TGSI_OPCODE_TXL;
       ir->lod_info.lod->accept(this);
       lod_info = this->result;
       break;
    case ir_txd:
-      opcode = OPCODE_TXD;
+      opcode = TGSI_OPCODE_TXD;
       ir->lod_info.grad.dPdx->accept(this);
       dx = this->result;
       ir->lod_info.grad.dPdy->accept(this);
@@ -2112,25 +2013,25 @@ glsl_to_tgsi_visitor::visit(ir_texture *ir)
    }
 
    if (ir->projector) {
-      if (opcode == OPCODE_TEX) {
+      if (opcode == TGSI_OPCODE_TEX) {
          /* Slot the projector in as the last component of the coord. */
          coord_dst.writemask = WRITEMASK_W;
-         emit(ir, OPCODE_MOV, coord_dst, projector);
+         emit(ir, TGSI_OPCODE_MOV, coord_dst, projector);
          coord_dst.writemask = WRITEMASK_XYZW;
-         opcode = OPCODE_TXP;
+         opcode = TGSI_OPCODE_TXP;
       } else {
          st_src_reg coord_w = coord;
          coord_w.swizzle = SWIZZLE_WWWW;
 
          /* For the other TEX opcodes there's no projective version
-          * since the last slot is taken up by lod info.  Do the
+          * since the last slot is taken up by LOD info.  Do the
           * projective divide now.
           */
          coord_dst.writemask = WRITEMASK_W;
-         emit(ir, OPCODE_RCP, coord_dst, projector);
+         emit(ir, TGSI_OPCODE_RCP, coord_dst, projector);
 
          /* In the case where we have to project the coordinates "by hand,"
-          * the shadow comparitor value must also be projected.
+          * the shadow comparator value must also be projected.
           */
          st_src_reg tmp_src = coord;
          if (ir->shadow_comparitor) {
@@ -2143,42 +2044,42 @@ glsl_to_tgsi_visitor::visit(ir_texture *ir)
             st_dst_reg tmp_dst = st_dst_reg(tmp_src);
 
             tmp_dst.writemask = WRITEMASK_Z;
-            emit(ir, OPCODE_MOV, tmp_dst, this->result);
+            emit(ir, TGSI_OPCODE_MOV, tmp_dst, this->result);
 
             tmp_dst.writemask = WRITEMASK_XY;
-            emit(ir, OPCODE_MOV, tmp_dst, coord);
+            emit(ir, TGSI_OPCODE_MOV, tmp_dst, coord);
          }
 
          coord_dst.writemask = WRITEMASK_XYZ;
-         emit(ir, OPCODE_MUL, coord_dst, tmp_src, coord_w);
+         emit(ir, TGSI_OPCODE_MUL, coord_dst, tmp_src, coord_w);
 
          coord_dst.writemask = WRITEMASK_XYZW;
          coord.swizzle = SWIZZLE_XYZW;
       }
    }
 
-   /* If projection is done and the opcode is not OPCODE_TXP, then the shadow
-    * comparitor was put in the correct place (and projected) by the code,
+   /* If projection is done and the opcode is not TGSI_OPCODE_TXP, then the shadow
+    * comparator was put in the correct place (and projected) by the code,
     * above, that handles by-hand projection.
     */
-   if (ir->shadow_comparitor && (!ir->projector || opcode == OPCODE_TXP)) {
+   if (ir->shadow_comparitor && (!ir->projector || opcode == TGSI_OPCODE_TXP)) {
       /* Slot the shadow value in as the second to last component of the
        * coord.
        */
       ir->shadow_comparitor->accept(this);
       coord_dst.writemask = WRITEMASK_Z;
-      emit(ir, OPCODE_MOV, coord_dst, this->result);
+      emit(ir, TGSI_OPCODE_MOV, coord_dst, this->result);
       coord_dst.writemask = WRITEMASK_XYZW;
    }
 
-   if (opcode == OPCODE_TXL || opcode == OPCODE_TXB) {
-      /* Mesa IR stores lod or lod bias in the last channel of the coords. */
+   if (opcode == TGSI_OPCODE_TXL || opcode == TGSI_OPCODE_TXB) {
+      /* TGSI stores LOD or LOD bias in the last channel of the coords. */
       coord_dst.writemask = WRITEMASK_W;
-      emit(ir, OPCODE_MOV, coord_dst, lod_info);
+      emit(ir, TGSI_OPCODE_MOV, coord_dst, lod_info);
       coord_dst.writemask = WRITEMASK_XYZW;
    }
 
-   if (opcode == OPCODE_TXD)
+   if (opcode == TGSI_OPCODE_TXD)
       inst = emit(ir, opcode, result_dst, coord, dx, dy);
    else
       inst = emit(ir, opcode, result_dst, coord);
@@ -2235,13 +2136,13 @@ glsl_to_tgsi_visitor::visit(ir_return *ir)
       l = st_dst_reg(current_function->return_reg);
 
       for (i = 0; i < type_size(current_function->sig->return_type); i++) {
-         emit(ir, OPCODE_MOV, l, r);
+         emit(ir, TGSI_OPCODE_MOV, l, r);
          l.index++;
          r.index++;
       }
    }
 
-   emit(ir, OPCODE_RET);
+   emit(ir, TGSI_OPCODE_RET);
 }
 
 void
@@ -2252,9 +2153,9 @@ glsl_to_tgsi_visitor::visit(ir_discard *ir)
    if (ir->condition) {
       ir->condition->accept(this);
       this->result.negate = ~this->result.negate;
-      emit(ir, OPCODE_KIL, undef_dst, this->result);
+      emit(ir, TGSI_OPCODE_KIL, undef_dst, this->result);
    } else {
-      emit(ir, OPCODE_KIL_NV);
+      emit(ir, TGSI_OPCODE_KILP);
    }
 
    fp->UsesKill = GL_TRUE;
@@ -2280,14 +2181,14 @@ glsl_to_tgsi_visitor::visit(ir_if *ir)
        */
       if (cond_inst == prev_inst) {
          st_src_reg temp = get_temp(glsl_type::bool_type);
-         cond_inst = emit(ir->condition, OPCODE_MOV, st_dst_reg(temp), result);
+         cond_inst = emit(ir->condition, TGSI_OPCODE_MOV, st_dst_reg(temp), result);
       }
       cond_inst->cond_update = GL_TRUE;
 
-      if_inst = emit(ir->condition, OPCODE_IF);
+      if_inst = emit(ir->condition, TGSI_OPCODE_IF);
       if_inst->dst.cond_mask = COND_NE;
    } else {
-      if_inst = emit(ir->condition, OPCODE_IF, undef_dst, this->result);
+      if_inst = emit(ir->condition, TGSI_OPCODE_IF, undef_dst, this->result);
    }
 
    this->instructions.push_tail(if_inst);
@@ -2295,11 +2196,11 @@ glsl_to_tgsi_visitor::visit(ir_if *ir)
    visit_exec_list(&ir->then_instructions, this);
 
    if (!ir->else_instructions.is_empty()) {
-      else_inst = emit(ir->condition, OPCODE_ELSE);
+      else_inst = emit(ir->condition, TGSI_OPCODE_ELSE);
       visit_exec_list(&ir->else_instructions, this);
    }
 
-   if_inst = emit(ir->condition, OPCODE_ENDIF);
+   if_inst = emit(ir->condition, TGSI_OPCODE_ENDIF);
 }
 
 glsl_to_tgsi_visitor::glsl_to_tgsi_visitor()
@@ -2337,7 +2238,7 @@ count_resources(glsl_to_tgsi_visitor *v, gl_program *prog)
    foreach_iter(exec_list_iterator, iter, v->instructions) {
       glsl_to_tgsi_instruction *inst = (glsl_to_tgsi_instruction *)iter.get();
 
-      if (_mesa_is_tex_instruction(inst->op)) {
+      if (is_tex_instruction(inst->op)) {
          v->samplers_used |= 1 << inst->sampler;
 
          prog->SamplerTargets[inst->sampler] =
@@ -2648,7 +2549,7 @@ glsl_to_tgsi_visitor::remove_output_reads(gl_register_file type)
    /* look for instructions which read from varying vars */
    foreach_iter(exec_list_iterator, iter, this->instructions) {
       glsl_to_tgsi_instruction *inst = (glsl_to_tgsi_instruction *)iter.get();
-      const GLuint numSrc = _mesa_num_inst_src_regs(inst->op);
+      const GLuint numSrc = num_inst_src_regs(inst->op);
       GLuint j;
       for (j = 0; j < numSrc; j++) {
          if (inst->src[j].file == type) {
@@ -2687,7 +2588,7 @@ glsl_to_tgsi_visitor::remove_output_reads(gl_register_file type)
          st_src_reg src = st_src_reg(PROGRAM_TEMPORARY, outputMap[i]);
          st_dst_reg dst = st_dst_reg(type, WRITEMASK_XYZW);
          dst.index = i;
-         this->emit(NULL, OPCODE_MOV, dst, src);
+         this->emit(NULL, TGSI_OPCODE_MOV, dst, src);
       }
    }
 }
@@ -2700,7 +2601,7 @@ glsl_to_tgsi_visitor::rename_temp_register(int index, int new_index)
       glsl_to_tgsi_instruction *inst = (glsl_to_tgsi_instruction *)iter.get();
       unsigned j;
       
-      for (j=0; j < _mesa_num_inst_src_regs(inst->op); j++) {
+      for (j=0; j < num_inst_src_regs(inst->op); j++) {
          if (inst->src[j].file == PROGRAM_TEMPORARY && 
              inst->src[j].index == index) {
             inst->src[j].index = new_index;
@@ -2723,17 +2624,17 @@ glsl_to_tgsi_visitor::get_first_temp_read(int index)
    foreach_iter(exec_list_iterator, iter, this->instructions) {
       glsl_to_tgsi_instruction *inst = (glsl_to_tgsi_instruction *)iter.get();
       
-      for (j=0; j < _mesa_num_inst_src_regs(inst->op); j++) {
+      for (j=0; j < num_inst_src_regs(inst->op); j++) {
          if (inst->src[j].file == PROGRAM_TEMPORARY && 
              inst->src[j].index == index) {
             return (depth == 0) ? i : loop_start;
          }
       }
       
-      if (inst->op == OPCODE_BGNLOOP) {
+      if (inst->op == TGSI_OPCODE_BGNLOOP) {
          if(depth++ == 0)
             loop_start = i;
-      } else if (inst->op == OPCODE_ENDLOOP) {
+      } else if (inst->op == TGSI_OPCODE_ENDLOOP) {
          if (--depth == 0)
             loop_start = -1;
       }
@@ -2759,10 +2660,10 @@ glsl_to_tgsi_visitor::get_first_temp_write(int index)
          return (depth == 0) ? i : loop_start;
       }
       
-      if (inst->op == OPCODE_BGNLOOP) {
+      if (inst->op == TGSI_OPCODE_BGNLOOP) {
          if(depth++ == 0)
             loop_start = i;
-      } else if (inst->op == OPCODE_ENDLOOP) {
+      } else if (inst->op == TGSI_OPCODE_ENDLOOP) {
          if (--depth == 0)
             loop_start = -1;
       }
@@ -2784,16 +2685,16 @@ glsl_to_tgsi_visitor::get_last_temp_read(int index)
    foreach_iter(exec_list_iterator, iter, this->instructions) {
       glsl_to_tgsi_instruction *inst = (glsl_to_tgsi_instruction *)iter.get();
       
-      for (j=0; j < _mesa_num_inst_src_regs(inst->op); j++) {
+      for (j=0; j < num_inst_src_regs(inst->op); j++) {
          if (inst->src[j].file == PROGRAM_TEMPORARY && 
              inst->src[j].index == index) {
             last = (depth == 0) ? i : -2;
          }
       }
       
-      if (inst->op == OPCODE_BGNLOOP)
+      if (inst->op == TGSI_OPCODE_BGNLOOP)
          depth++;
-      else if (inst->op == OPCODE_ENDLOOP)
+      else if (inst->op == TGSI_OPCODE_ENDLOOP)
          if (--depth == 0 && last == -2)
             last = i;
       assert(depth >= 0);
@@ -2818,9 +2719,9 @@ glsl_to_tgsi_visitor::get_last_temp_write(int index)
       if (inst->dst.file == PROGRAM_TEMPORARY && inst->dst.index == index)
          last = (depth == 0) ? i : -2;
       
-      if (inst->op == OPCODE_BGNLOOP)
+      if (inst->op == TGSI_OPCODE_BGNLOOP)
          depth++;
-      else if (inst->op == OPCODE_ENDLOOP)
+      else if (inst->op == TGSI_OPCODE_ENDLOOP)
          if (--depth == 0 && last == -2)
             last = i;
       assert(depth >= 0);
@@ -2922,18 +2823,18 @@ glsl_to_tgsi_visitor::copy_propagate(void)
       }
 
       switch (inst->op) {
-      case OPCODE_BGNLOOP:
-      case OPCODE_ENDLOOP:
+      case TGSI_OPCODE_BGNLOOP:
+      case TGSI_OPCODE_ENDLOOP:
          /* End of a basic block, clear the ACP entirely. */
          memset(acp, 0, sizeof(*acp) * this->next_temp * 4);
          break;
 
-      case OPCODE_IF:
+      case TGSI_OPCODE_IF:
          ++level;
          break;
 
-      case OPCODE_ENDIF:
-      case OPCODE_ELSE:
+      case TGSI_OPCODE_ENDIF:
+      case TGSI_OPCODE_ELSE:
          /* Clear all channels written inside the block from the ACP, but
           * leaving those that were not touched.
           */
@@ -2946,7 +2847,7 @@ glsl_to_tgsi_visitor::copy_propagate(void)
         	  acp[4 * r + c] = NULL;
             }
          }
-         if (inst->op == OPCODE_ENDIF)
+         if (inst->op == TGSI_OPCODE_ENDIF)
             --level;
          break;
 
@@ -3005,7 +2906,7 @@ glsl_to_tgsi_visitor::copy_propagate(void)
       }
 
       /* If this is a copy, add it to the ACP. */
-      if (inst->op == OPCODE_MOV &&
+      if (inst->op == TGSI_OPCODE_MOV &&
           inst->dst.file == PROGRAM_TEMPORARY &&
           !inst->dst.reladdr &&
           !inst->saturate &&
@@ -3337,11 +3238,11 @@ src_register( struct st_translate *t,
 }
 
 /**
- * Create a TGSI ureg_dst register from a Mesa dest register.
+ * Create a TGSI ureg_dst register from an st_dst_reg.
  */
 static struct ureg_dst
 translate_dst( struct st_translate *t,
-               const st_dst_reg *dst_reg, //const struct prog_dst_register *DstReg,
+               const st_dst_reg *dst_reg,
                boolean saturate )
 {
    struct ureg_dst dst = dst_register( t, 
@@ -3361,7 +3262,7 @@ translate_dst( struct st_translate *t,
 }
 
 /**
- * Create a TGSI ureg_src register from a Mesa src register.
+ * Create a TGSI ureg_src register from an st_src_reg.
  */
 static struct ureg_src
 translate_src( struct st_translate *t,
@@ -3377,12 +3278,6 @@ translate_src( struct st_translate *t,
 
    if ((src_reg->negate & 0xf) == NEGATE_XYZW)
       src = ureg_negate(src);
-
-#if 0
-   // src_reg currently does not have an equivalent to SrcReg->Abs in Mesa IR
-   if (src_reg->abs) 
-      src = ureg_abs(src);
-#endif
 
    if (src_reg->reladdr != NULL) {
       /* Normally ureg_src_indirect() would be used here, but a stupid compiler 
@@ -3421,77 +3316,64 @@ compile_tgsi_instruction(struct st_translate *t,
    unsigned num_dst;
    unsigned num_src;
 
-   num_dst = _mesa_num_inst_dst_regs( inst->op );
-   num_src = _mesa_num_inst_src_regs( inst->op );
+   num_dst = num_inst_dst_regs( inst->op );
+   num_src = num_inst_src_regs( inst->op );
 
    if (num_dst) 
       dst[0] = translate_dst( t, 
                               &inst->dst,
-                              inst->saturate); // inst->SaturateMode
+                              inst->saturate);
 
    for (i = 0; i < num_src; i++) 
       src[i] = translate_src( t, &inst->src[i] );
 
    switch( inst->op ) {
-   case OPCODE_SWZ:
-      // TODO: copy emit_swz function from st_mesa_to_tgsi.c
-      //emit_swz( t, dst[0], &inst->src[0] );
-      assert(!"OPCODE_SWZ");
-      return;
-
-   case OPCODE_BGNLOOP:
-   case OPCODE_CAL:
-   case OPCODE_ELSE:
-   case OPCODE_ENDLOOP:
-   case OPCODE_IF:
+   case TGSI_OPCODE_BGNLOOP:
+   case TGSI_OPCODE_CAL:
+   case TGSI_OPCODE_ELSE:
+   case TGSI_OPCODE_ENDLOOP:
+   case TGSI_OPCODE_IF:
       debug_assert(num_dst == 0);
       ureg_label_insn( ureg,
-                       translate_opcode( inst->op ),
+                       inst->op,
                        src, num_src,
                        get_label( t, 
-                                  inst->op == OPCODE_CAL ? inst->function->sig_id : 0 ));
+                                  inst->op == TGSI_OPCODE_CAL ? inst->function->sig_id : 0 ));
       return;
 
-   case OPCODE_TEX:
-   case OPCODE_TXB:
-   case OPCODE_TXD:
-   case OPCODE_TXL:
-   case OPCODE_TXP:
+   case TGSI_OPCODE_TEX:
+   case TGSI_OPCODE_TXB:
+   case TGSI_OPCODE_TXD:
+   case TGSI_OPCODE_TXL:
+   case TGSI_OPCODE_TXP:
       src[num_src++] = t->samplers[inst->sampler];
       ureg_tex_insn( ureg,
-                     translate_opcode( inst->op ),
+                     inst->op,
                      dst, num_dst, 
                      translate_texture_target( inst->tex_target,
                                                inst->tex_shadow ),
                      src, num_src );
       return;
 
-   case OPCODE_SCS:
+   case TGSI_OPCODE_SCS:
       dst[0] = ureg_writemask(dst[0], TGSI_WRITEMASK_XY );
       ureg_insn( ureg, 
-                 translate_opcode( inst->op ), 
+                 inst->op, 
                  dst, num_dst, 
                  src, num_src );
       break;
 
-   case OPCODE_XPD:
+   case TGSI_OPCODE_XPD:
       dst[0] = ureg_writemask(dst[0], TGSI_WRITEMASK_XYZ );
       ureg_insn( ureg, 
-                 translate_opcode( inst->op ), 
+                 inst->op, 
                  dst, num_dst, 
                  src, num_src );
-      break;
-
-   case OPCODE_NOISE1:
-   case OPCODE_NOISE2:
-   case OPCODE_NOISE3:
-   case OPCODE_NOISE4:
-      assert(!"OPCODE_NOISE should have been lowered\n");
       break;
 
    default:
       ureg_insn( ureg, 
-                 translate_opcode( inst->op ), 
+                 inst->op, 
                  dst, num_dst, 
                  src, num_src );
       break;
@@ -3993,9 +3875,8 @@ get_mesa_program(struct gl_context *ctx,
 
    add_uniforms_to_parameters_list(shader_program, shader, prog);
 
-   /* Emit Mesa IR for main(). */
+   /* Emit intermediate IR for main(). */
    visit_exec_list(shader->ir, v);
-   v->emit(NULL, OPCODE_END);
 
    /* Now emit bodies for any functions that were used. */
    do {
@@ -4007,18 +3888,18 @@ get_mesa_program(struct gl_context *ctx,
          if (!entry->bgn_inst) {
             v->current_function = entry;
 
-            entry->bgn_inst = v->emit(NULL, OPCODE_BGNSUB);
+            entry->bgn_inst = v->emit(NULL, TGSI_OPCODE_BGNSUB);
             entry->bgn_inst->function = entry;
 
             visit_exec_list(&entry->sig->body, v);
 
             glsl_to_tgsi_instruction *last;
             last = (glsl_to_tgsi_instruction *)v->instructions.get_tail();
-            if (last->op != OPCODE_RET)
-               v->emit(NULL, OPCODE_RET);
+            if (last->op != TGSI_OPCODE_RET)
+               v->emit(NULL, TGSI_OPCODE_RET);
 
             glsl_to_tgsi_instruction *end;
-            end = v->emit(NULL, OPCODE_ENDSUB);
+            end = v->emit(NULL, TGSI_OPCODE_ENDSUB);
             end->function = entry;
 
             progress = GL_TRUE;
@@ -4050,6 +3931,9 @@ get_mesa_program(struct gl_context *ctx,
    v->eliminate_dead_code();
    v->merge_registers();
    v->renumber_registers();
+   
+   /* Write the END instruction. */
+   v->emit(NULL, TGSI_OPCODE_END);
 
    if (ctx->Shader.Flags & GLSL_DUMP) {
       printf("\n");
@@ -4127,8 +4011,8 @@ st_new_shader_program(struct gl_context *ctx, GLuint name)
 /**
  * Link a shader.
  * Called via ctx->Driver.LinkShader()
- * This actually involves converting GLSL IR into Mesa gl_programs with
- * code lowering and other optimizations.
+ * This actually involves converting GLSL IR into an intermediate TGSI-like IR 
+ * with code lowering and other optimizations.
  */
 GLboolean
 st_link_shader(struct gl_context *ctx, struct gl_shader_program *prog)
