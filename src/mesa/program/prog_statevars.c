@@ -602,11 +602,11 @@ _mesa_fetch_state(struct gl_context *ctx, const gl_state_index state[],
             value[0] = 1.0F;
             value[1] = 0.0F;
             value[2] = -1.0F;
-            value[3] = (GLfloat) (ctx->DrawBuffer->Height - 1);
+            value[3] = (GLfloat) ctx->DrawBuffer->Height;
          } else {
             /* Flipping Y upside down (XY) followed by identity (ZW). */
             value[0] = -1.0F;
-            value[1] = (GLfloat) (ctx->DrawBuffer->Height - 1);
+            value[1] = (GLfloat) ctx->DrawBuffer->Height;
             value[2] = 1.0F;
             value[3] = 0.0F;
          }
