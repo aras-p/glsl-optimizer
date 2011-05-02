@@ -804,9 +804,13 @@ GLAPI void APIENTRY GLAPI_PREFIX(DrawElementsBaseVertex)(GLenum mode, GLsizei co
 GLAPI void APIENTRY GLAPI_PREFIX(DrawRangeElementsBaseVertex)(GLenum mode, GLuint start, GLuint end, GLsizei count, GLenum type, const GLvoid *indices, GLint basevertex);
 GLAPI void APIENTRY GLAPI_PREFIX(MultiDrawElementsBaseVertex)(GLenum mode, const GLsizei *count, GLenum type, const GLvoid **indices, GLsizei primcount, const GLint *basevertex);
 GLAPI void APIENTRY GLAPI_PREFIX(BlendEquationSeparateiARB)(GLuint buf, GLenum modeRGB, GLenum modeA);
+GLAPI void APIENTRY GLAPI_PREFIX(BlendEquationSeparateIndexedAMD)(GLuint buf, GLenum modeRGB, GLenum modeA);
 GLAPI void APIENTRY GLAPI_PREFIX(BlendEquationiARB)(GLuint buf, GLenum mode);
+GLAPI void APIENTRY GLAPI_PREFIX(BlendEquationIndexedAMD)(GLuint buf, GLenum mode);
 GLAPI void APIENTRY GLAPI_PREFIX(BlendFuncSeparateiARB)(GLuint buf, GLenum srcRGB, GLenum dstRGB, GLenum srcA, GLenum dstA);
+GLAPI void APIENTRY GLAPI_PREFIX(BlendFuncSeparateIndexedAMD)(GLuint buf, GLenum srcRGB, GLenum dstRGB, GLenum srcA, GLenum dstA);
 GLAPI void APIENTRY GLAPI_PREFIX(BlendFunciARB)(GLuint buf, GLenum src, GLenum dst);
+GLAPI void APIENTRY GLAPI_PREFIX(BlendFuncIndexedAMD)(GLuint buf, GLenum src, GLenum dst);
 GLAPI void APIENTRY GLAPI_PREFIX(BindSampler)(GLuint unit, GLuint sampler);
 GLAPI void APIENTRY GLAPI_PREFIX(DeleteSamplers)(GLsizei count, const GLuint *samplers);
 GLAPI void APIENTRY GLAPI_PREFIX(GenSamplers)(GLsizei count, GLuint *samplers);
@@ -6761,7 +6765,21 @@ GLAPI void APIENTRY GLAPI_PREFIX(BlendEquationSeparateiARB)(GLuint buf, GLenum m
    ((void (APIENTRY *)(GLuint buf, GLenum modeRGB, GLenum modeA)) _func)(buf, modeRGB, modeA);
 }
 
+GLAPI void APIENTRY GLAPI_PREFIX(BlendEquationSeparateIndexedAMD)(GLuint buf, GLenum modeRGB, GLenum modeA)
+{
+   const struct mapi_table *_tbl = entry_current_get();
+   mapi_func _func = ((const mapi_func *) _tbl)[596];
+   ((void (APIENTRY *)(GLuint buf, GLenum modeRGB, GLenum modeA)) _func)(buf, modeRGB, modeA);
+}
+
 GLAPI void APIENTRY GLAPI_PREFIX(BlendEquationiARB)(GLuint buf, GLenum mode)
+{
+   const struct mapi_table *_tbl = entry_current_get();
+   mapi_func _func = ((const mapi_func *) _tbl)[597];
+   ((void (APIENTRY *)(GLuint buf, GLenum mode)) _func)(buf, mode);
+}
+
+GLAPI void APIENTRY GLAPI_PREFIX(BlendEquationIndexedAMD)(GLuint buf, GLenum mode)
 {
    const struct mapi_table *_tbl = entry_current_get();
    mapi_func _func = ((const mapi_func *) _tbl)[597];
@@ -6775,7 +6793,21 @@ GLAPI void APIENTRY GLAPI_PREFIX(BlendFuncSeparateiARB)(GLuint buf, GLenum srcRG
    ((void (APIENTRY *)(GLuint buf, GLenum srcRGB, GLenum dstRGB, GLenum srcA, GLenum dstA)) _func)(buf, srcRGB, dstRGB, srcA, dstA);
 }
 
+GLAPI void APIENTRY GLAPI_PREFIX(BlendFuncSeparateIndexedAMD)(GLuint buf, GLenum srcRGB, GLenum dstRGB, GLenum srcA, GLenum dstA)
+{
+   const struct mapi_table *_tbl = entry_current_get();
+   mapi_func _func = ((const mapi_func *) _tbl)[598];
+   ((void (APIENTRY *)(GLuint buf, GLenum srcRGB, GLenum dstRGB, GLenum srcA, GLenum dstA)) _func)(buf, srcRGB, dstRGB, srcA, dstA);
+}
+
 GLAPI void APIENTRY GLAPI_PREFIX(BlendFunciARB)(GLuint buf, GLenum src, GLenum dst)
+{
+   const struct mapi_table *_tbl = entry_current_get();
+   mapi_func _func = ((const mapi_func *) _tbl)[599];
+   ((void (APIENTRY *)(GLuint buf, GLenum src, GLenum dst)) _func)(buf, src, dst);
+}
+
+GLAPI void APIENTRY GLAPI_PREFIX(BlendFuncIndexedAMD)(GLuint buf, GLenum src, GLenum dst)
 {
    const struct mapi_table *_tbl = entry_current_get();
    mapi_func _func = ((const mapi_func *) _tbl)[599];
@@ -12184,14 +12216,26 @@ STUB_ASM_ENTRY(GLAPI_PREFIX_STR(MultiDrawElementsBaseVertex))"\n"
 STUB_ASM_ENTRY(GLAPI_PREFIX_STR(BlendEquationSeparateiARB))"\n"
 "\t"STUB_ASM_CODE("596")"\n"
 
+".globl "GLAPI_PREFIX_STR(BlendEquationSeparateIndexedAMD)"\n"
+".set "GLAPI_PREFIX_STR(BlendEquationSeparateIndexedAMD)", "GLAPI_PREFIX_STR(BlendEquationSeparateiARB)"\n"
+
 STUB_ASM_ENTRY(GLAPI_PREFIX_STR(BlendEquationiARB))"\n"
 "\t"STUB_ASM_CODE("597")"\n"
+
+".globl "GLAPI_PREFIX_STR(BlendEquationIndexedAMD)"\n"
+".set "GLAPI_PREFIX_STR(BlendEquationIndexedAMD)", "GLAPI_PREFIX_STR(BlendEquationiARB)"\n"
 
 STUB_ASM_ENTRY(GLAPI_PREFIX_STR(BlendFuncSeparateiARB))"\n"
 "\t"STUB_ASM_CODE("598")"\n"
 
+".globl "GLAPI_PREFIX_STR(BlendFuncSeparateIndexedAMD)"\n"
+".set "GLAPI_PREFIX_STR(BlendFuncSeparateIndexedAMD)", "GLAPI_PREFIX_STR(BlendFuncSeparateiARB)"\n"
+
 STUB_ASM_ENTRY(GLAPI_PREFIX_STR(BlendFunciARB))"\n"
 "\t"STUB_ASM_CODE("599")"\n"
+
+".globl "GLAPI_PREFIX_STR(BlendFuncIndexedAMD)"\n"
+".set "GLAPI_PREFIX_STR(BlendFuncIndexedAMD)", "GLAPI_PREFIX_STR(BlendFunciARB)"\n"
 
 STUB_ASM_ENTRY(GLAPI_PREFIX_STR(BindSampler))"\n"
 "\t"STUB_ASM_CODE("600")"\n"

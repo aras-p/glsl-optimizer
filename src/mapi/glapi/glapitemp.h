@@ -4047,9 +4047,19 @@ KEYWORD1 void KEYWORD2 NAME(BlendEquationSeparateiARB)(GLuint buf, GLenum modeRG
    DISPATCH(BlendEquationSeparateiARB, (buf, modeRGB, modeA), (F, "glBlendEquationSeparateiARB(%d, 0x%x, 0x%x);\n", buf, modeRGB, modeA));
 }
 
+KEYWORD1 void KEYWORD2 NAME(BlendEquationSeparateIndexedAMD)(GLuint buf, GLenum modeRGB, GLenum modeA)
+{
+   DISPATCH(BlendEquationSeparateiARB, (buf, modeRGB, modeA), (F, "glBlendEquationSeparateIndexedAMD(%d, 0x%x, 0x%x);\n", buf, modeRGB, modeA));
+}
+
 KEYWORD1 void KEYWORD2 NAME(BlendEquationiARB)(GLuint buf, GLenum mode)
 {
    DISPATCH(BlendEquationiARB, (buf, mode), (F, "glBlendEquationiARB(%d, 0x%x);\n", buf, mode));
+}
+
+KEYWORD1 void KEYWORD2 NAME(BlendEquationIndexedAMD)(GLuint buf, GLenum mode)
+{
+   DISPATCH(BlendEquationiARB, (buf, mode), (F, "glBlendEquationIndexedAMD(%d, 0x%x);\n", buf, mode));
 }
 
 KEYWORD1 void KEYWORD2 NAME(BlendFuncSeparateiARB)(GLuint buf, GLenum srcRGB, GLenum dstRGB, GLenum srcA, GLenum dstA)
@@ -4057,9 +4067,19 @@ KEYWORD1 void KEYWORD2 NAME(BlendFuncSeparateiARB)(GLuint buf, GLenum srcRGB, GL
    DISPATCH(BlendFuncSeparateiARB, (buf, srcRGB, dstRGB, srcA, dstA), (F, "glBlendFuncSeparateiARB(%d, 0x%x, 0x%x, 0x%x, 0x%x);\n", buf, srcRGB, dstRGB, srcA, dstA));
 }
 
+KEYWORD1 void KEYWORD2 NAME(BlendFuncSeparateIndexedAMD)(GLuint buf, GLenum srcRGB, GLenum dstRGB, GLenum srcA, GLenum dstA)
+{
+   DISPATCH(BlendFuncSeparateiARB, (buf, srcRGB, dstRGB, srcA, dstA), (F, "glBlendFuncSeparateIndexedAMD(%d, 0x%x, 0x%x, 0x%x, 0x%x);\n", buf, srcRGB, dstRGB, srcA, dstA));
+}
+
 KEYWORD1 void KEYWORD2 NAME(BlendFunciARB)(GLuint buf, GLenum src, GLenum dst)
 {
    DISPATCH(BlendFunciARB, (buf, src, dst), (F, "glBlendFunciARB(%d, 0x%x, 0x%x);\n", buf, src, dst));
+}
+
+KEYWORD1 void KEYWORD2 NAME(BlendFuncIndexedAMD)(GLuint buf, GLenum src, GLenum dst)
+{
+   DISPATCH(BlendFunciARB, (buf, src, dst), (F, "glBlendFuncIndexedAMD(%d, 0x%x, 0x%x);\n", buf, src, dst));
 }
 
 KEYWORD1 void KEYWORD2 NAME(BindSampler)(GLuint unit, GLuint sampler)
@@ -7901,6 +7921,10 @@ _glapi_proc UNUSED_TABLE_NAME[] = {
    TABLE_ENTRY(DrawElementsInstancedEXT),
    TABLE_ENTRY(DrawElementsInstanced),
    TABLE_ENTRY(RenderbufferStorageMultisampleEXT),
+   TABLE_ENTRY(BlendEquationSeparateIndexedAMD),
+   TABLE_ENTRY(BlendEquationIndexedAMD),
+   TABLE_ENTRY(BlendFuncSeparateIndexedAMD),
+   TABLE_ENTRY(BlendFuncIndexedAMD),
    TABLE_ENTRY(PointParameterf),
    TABLE_ENTRY(PointParameterfARB),
    TABLE_ENTRY(_dispatch_stub_661),
