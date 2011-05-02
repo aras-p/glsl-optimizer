@@ -638,13 +638,11 @@ handle_fallback_primitive_restart(struct pipe_context *pipe,
    info.primitive_restart = FALSE;
 
    if (!info.indexed) {
-       /* Splitting the draw arrays call is handled by the VBO module */
-       assert(info.restart_index > info.max_index || info.restart_index < info.min_index);
+      /* Splitting the draw arrays call is handled by the VBO module */
+      if (u_trim_pipe_prim(info.mode, &info.count))
+         pipe->draw_vbo(pipe, &info);
 
-       if (u_trim_pipe_prim(info.mode, &info.count))
-          pipe->draw_vbo(pipe, &info);
-
-       return;
+      return;
    }
 
    /* info.indexed == TRUE */
