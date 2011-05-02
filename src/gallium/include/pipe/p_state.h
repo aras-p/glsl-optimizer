@@ -94,24 +94,21 @@ struct pipe_rasterizer_state
    unsigned poly_smooth:1;
    unsigned poly_stipple_enable:1;
    unsigned point_smooth:1;
-   unsigned sprite_coord_enable:PIPE_MAX_SHADER_OUTPUTS;
    unsigned sprite_coord_mode:1;     /**< PIPE_SPRITE_COORD_ */
    unsigned point_quad_rasterization:1; /** points rasterized as quads or points */
    unsigned point_size_per_vertex:1; /**< size computed in vertex shader */
    unsigned multisample:1;         /* XXX maybe more ms state in future */
    unsigned line_smooth:1;
    unsigned line_stipple_enable:1;
-   unsigned line_stipple_factor:8;  /**< [1..256] actually */
-   unsigned line_stipple_pattern:16;
    unsigned line_last_pixel:1;
 
-   /** 
+   /**
     * Use the first vertex of a primitive as the provoking vertex for
     * flat shading.
     */
-   unsigned flatshade_first:1;   
+   unsigned flatshade_first:1;
 
-   /** 
+   /**
     * When true, triangle rasterization uses (0.5, 0.5) pixel centers
     * for determining pixel ownership.
     *
@@ -123,6 +120,11 @@ struct pipe_rasterizer_state
     * center for that test.
     */
    unsigned gl_rasterization_rules:1;
+
+   unsigned line_stipple_factor:8;  /**< [1..256] actually */
+   unsigned line_stipple_pattern:16;
+
+   unsigned sprite_coord_enable:PIPE_MAX_SHADER_OUTPUTS;
 
    float line_width;
    float point_size;           /**< used when no per-vertex size */
