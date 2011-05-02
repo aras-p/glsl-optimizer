@@ -201,6 +201,9 @@ update_samplers(struct st_context *st)
                = st_compare_func_to_pipe(msamp->CompareFunc);
          }
 
+         sampler->seamless_cube_map =
+               st->ctx->Texture.CubeMapSeamless || msamp->CubeMapSeamless;
+
          st->state.num_samplers = su + 1;
 
          /*printf("%s su=%u non-null\n", __FUNCTION__, su);*/

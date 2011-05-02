@@ -595,4 +595,12 @@ void st_init_extensions(struct st_context *st)
                                    PIPE_BIND_SAMPLER_VIEW)) {
       ctx->Extensions.EXT_packed_float = GL_TRUE;
    }
+
+   if (screen->get_param(screen, PIPE_CAP_SEAMLESS_CUBE_MAP_PER_TEXTURE)) {
+      ctx->Extensions.ARB_seamless_cube_map = GL_TRUE;
+      ctx->Extensions.AMD_seamless_cubemap_per_texture = GL_TRUE;
+   }
+   else if (screen->get_param(screen, PIPE_CAP_SEAMLESS_CUBE_MAP)) {
+      ctx->Extensions.ARB_seamless_cube_map = GL_TRUE;
+   }
 }
