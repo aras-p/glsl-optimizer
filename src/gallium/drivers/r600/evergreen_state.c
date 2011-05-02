@@ -402,7 +402,6 @@ static struct pipe_sampler_view *evergreen_create_sampler_view(struct pipe_conte
 	array_mode = tmp->array_mode[0];
 	tile_type = tmp->tile_type;
 
-	/* FIXME properly handle first level != 0 */
 	r600_pipe_state_add_reg(rstate, R_030000_RESOURCE0_WORD0,
 				S_030000_DIM(r600_tex_dim(texture->target)) |
 				S_030000_PITCH((pitch / 8) - 1) |

@@ -464,7 +464,6 @@ static struct pipe_sampler_view *r600_create_sampler_view(struct pipe_context *c
 		depth = texture->array_size;
 	}
 
-	/* FIXME properly handle first level != 0 */
 	r600_pipe_state_add_reg(rstate, R_038000_RESOURCE0_WORD0,
 				S_038000_DIM(r600_tex_dim(texture->target)) |
 				S_038000_TILE_MODE(array_mode) |
