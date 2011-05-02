@@ -65,7 +65,7 @@ BGRA vertex order (GL_ARB_vertex_array_bgra)          DONE
 Base vertex offset(GL_ARB_draw_elements_base_vertex)  DONE
 Frag shader coord (GL_ARB_fragment_coord_conventions) DONE (swrast, gallium)
 Provoking vertex (GL_ARB_provoking_vertex)            DONE
-Seamless cubemaps (GL_ARB_seamless_cube_map)          DONE, mostly?
+Seamless cubemaps (GL_ARB_seamless_cube_map)          DONE
 Multisample textures (GL_ARB_texture_multisample)     not started
 Frag depth clamp (GL_ARB_depth_clamp)                 DONE
 Fence objects (GL_ARB_sync)                           DONE
