@@ -641,8 +641,6 @@ src_reg
 ir_to_mesa_visitor::get_temp(const glsl_type *type)
 {
    src_reg src;
-   int swizzle[4];
-   int i;
 
    src.file = PROGRAM_TEMPORARY;
    src.index = next_temp;
@@ -652,12 +650,7 @@ ir_to_mesa_visitor::get_temp(const glsl_type *type)
    if (type->is_array() || type->is_record()) {
       src.swizzle = SWIZZLE_NOOP;
    } else {
-      for (i = 0; i < type->vector_elements; i++)
-	 swizzle[i] = i;
-      for (; i < 4; i++)
-	 swizzle[i] = type->vector_elements - 1;
-      src.swizzle = MAKE_SWIZZLE4(swizzle[0], swizzle[1],
-				  swizzle[2], swizzle[3]);
+      src.swizzle = swizzle_for_size(type->vector_elements);
    }
    src.negate = 0;
 
