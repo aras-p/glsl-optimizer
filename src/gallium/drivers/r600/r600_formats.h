@@ -54,6 +54,9 @@
 #define     FMT_BC3                         0x00000033
 #define     FMT_BC4                         0x00000034
 #define     FMT_BC5                         0x00000035
+#define     FMT_BC6                         0x00000036
+#define     FMT_BC7                         0x00000037
+#define     FMT_32_AS_32_32_32_32           0x00000038
 
 #define     ENDIAN_NONE                     0
 #define     ENDIAN_8IN16                    1
