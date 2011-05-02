@@ -48,6 +48,73 @@ static char out_of_memory[] = "Debugging error: out of memory";
 #define source_is(s, kind) enum_is(s, SOURCE, kind)
 #define type_is(t, kind) enum_is(t, TYPE, kind)
 
+enum {
+   SOURCE_APPLICATION,
+   SOURCE_THIRD_PARTY,
+
+   SOURCE_COUNT,
+   SOURCE_ANY = -1
+};
+
+enum {
+   TYPE_ERROR,
+   TYPE_DEPRECATED,
+   TYPE_UNDEFINED,
+   TYPE_PORTABILITY,
+   TYPE_PERFORMANCE,
+   TYPE_OTHER,
+
+   TYPE_COUNT,
+   TYPE_ANY = -1
+};
+
+enum {
+   SEVERITY_LOW,
+   SEVERITY_MEDIUM,
+   SEVERITY_HIGH,
+
+   SEVERITY_COUNT,
+   SEVERITY_ANY = -1
+};
+
+static int
+enum_to_index(GLenum e)
+{
+   switch (e) {
+   case GL_DEBUG_SOURCE_APPLICATION_ARB:
+      return (int)SOURCE_APPLICATION;
+   case GL_DEBUG_SOURCE_THIRD_PARTY_ARB:
+      return (int)SOURCE_THIRD_PARTY;
+
+   case GL_DEBUG_TYPE_ERROR_ARB:
+      return (int)TYPE_ERROR;
+   case GL_DEBUG_TYPE_DEPRECATED_BEHAVIOR_ARB:
+      return (int)TYPE_DEPRECATED;
+   case GL_DEBUG_TYPE_UNDEFINED_BEHAVIOR_ARB:
+      return (int)TYPE_UNDEFINED;
+   case GL_DEBUG_TYPE_PERFORMANCE_ARB:
+      return (int)TYPE_PERFORMANCE;
+   case GL_DEBUG_TYPE_PORTABILITY_ARB:
+      return (int)TYPE_PORTABILITY;
+   case GL_DEBUG_TYPE_OTHER_ARB:
+      return (int)TYPE_OTHER;
+
+   case GL_DEBUG_SEVERITY_LOW_ARB:
+      return (int)SEVERITY_LOW;
+   case GL_DEBUG_SEVERITY_MEDIUM_ARB:
+      return (int)SEVERITY_MEDIUM;
+   case GL_DEBUG_SEVERITY_HIGH_ARB:
+      return (int)SEVERITY_HIGH;
+
+   case GL_DONT_CARE:
+      return (int)TYPE_ANY;
+
+   default:
+      assert(0 && "unreachable");
+      return -2;
+   };
+}
+
 /**
  * Whether a debugging message should be logged or not.
  * For implementation-controlled namespaces, we keep an array
@@ -59,6 +126,17 @@ static GLboolean
 should_log(struct gl_context *ctx, GLenum source, GLenum type,
            GLuint id, GLenum severity)
 {
+   if (source == GL_DEBUG_SOURCE_APPLICATION_ARB ||
+       source == GL_DEBUG_SOURCE_THIRD_PARTY_ARB) {
+      int s, t, sev;
+      s = enum_to_index(source);
+      t = enum_to_index(type);
+      sev = enum_to_index(severity);
+
+      return ctx->Debug.ClientIDs.Defaults[sev][s][t];
+      /* TODO: tracking individual client IDs. */
+   }
+
    if (type_is(type, ERROR)) {
       if (source_is(source, API))
          return ctx->Debug.ApiErrors[id];
@@ -70,7 +148,6 @@ should_log(struct gl_context *ctx, GLenum source, GLenum type,
          return ctx->Debug.OtherErrors[id];
    }
 
-   /* TODO: tracking client messages' state. */
    return (severity != GL_DEBUG_SEVERITY_LOW_ARB);
 }
 
@@ -368,14 +445,51 @@ control_messages(GLboolean *array, GLuint size,
  * Debugging-message namespaces with the source APPLICATION or THIRD_PARTY
  * require special handling, since the IDs in them are controlled by clients,
  * not the OpenGL implementation.
+ *
+ * When controlling entire categories of messages without specifying IDs,
+ * the default state for IDs that haven't been seen yet have to be adjusted.
  */
 static void
-control_app_messages(struct gl_context *ctx, GLenum source, GLenum type,
-                     GLenum severity, GLsizei count, const GLuint *ids,
+control_app_messages(struct gl_context *ctx, GLenum esource, GLenum etype,
+                     GLenum eseverity, GLsizei count, const GLuint *ids,
                      GLboolean enabled)
 {
-   assert(0 && "glDebugMessageControlARB():"
-          " Controlling application debugging messages not implemented");
+   int source, type, severity, s, t, sev, smax, tmax, sevmax;
+
+   assert(!count && "glDebugMessageControlARB():"
+           " controlling for client-provided IDs is not implemented");
+   if (count)
+      return;
+
+   source = enum_to_index(esource);
+   type = enum_to_index(etype);
+   severity = enum_to_index(eseverity);
+
+   if (source == SOURCE_ANY) {
+      source = 0;
+      smax = SOURCE_COUNT;
+   } else {
+      smax = source+1;
+   }
+
+   if (type == TYPE_ANY) {
+      type = 0;
+      tmax = TYPE_COUNT;
+   } else {
+      tmax = type+1;
+   }
+
+   if (severity == SEVERITY_ANY) {
+      severity = 0;
+      sevmax = SEVERITY_COUNT;
+   } else {
+      sevmax = severity+1;
+   }
+
+   for (sev = severity; sev < sevmax; sev++)
+      for (s = source; s < smax; s++)
+         for (t = type; t < tmax; t++)
+            ctx->Debug.ClientIDs.Defaults[sev][s][t] = enabled;
 }
 
 static void GLAPIENTRY
@@ -455,6 +569,12 @@ _mesa_init_errors(struct gl_context *ctx)
    memset(ctx->Debug.WinsysErrors, GL_TRUE, sizeof ctx->Debug.WinsysErrors);
    memset(ctx->Debug.ShaderErrors, GL_TRUE, sizeof ctx->Debug.ShaderErrors);
    memset(ctx->Debug.OtherErrors, GL_TRUE, sizeof ctx->Debug.OtherErrors);
+   memset(ctx->Debug.ClientIDs.Defaults[SEVERITY_HIGH], GL_TRUE,
+          sizeof ctx->Debug.ClientIDs.Defaults[SEVERITY_HIGH]);
+   memset(ctx->Debug.ClientIDs.Defaults[SEVERITY_MEDIUM], GL_TRUE,
+          sizeof ctx->Debug.ClientIDs.Defaults[SEVERITY_MEDIUM]);
+   memset(ctx->Debug.ClientIDs.Defaults[SEVERITY_LOW], GL_FALSE,
+          sizeof ctx->Debug.ClientIDs.Defaults[SEVERITY_LOW]);
 }
 
 /**********************************************************************/
