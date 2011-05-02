@@ -44,7 +44,11 @@
 extern "C" {
 #endif
 
+struct _glapi_table;
 struct gl_context;
+
+extern void
+_mesa_init_errors_dispatch(struct _glapi_table *disp);
 
 extern void
 _mesa_init_errors( struct gl_context *ctx );

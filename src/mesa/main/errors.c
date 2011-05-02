@@ -32,11 +32,285 @@
 
 #include "imports.h"
 #include "context.h"
+#include "dispatch.h"
 #include "mtypes.h"
 #include "version.h"
 
 
 #define MAXSTRING MAX_DEBUG_MESSAGE_LENGTH
+
+
+static char out_of_memory[] = "Debugging error: out of memory";
+
+/**
+ * 'buf' is not necessarily a null-terminated string. When logging, copy
+ * 'len' characters from it, store them in a new, null-terminated string,
+ * and remember the number of bytes used by that string, *including*
+ * the null terminator this time.
+ */
+static void
+_mesa_log_msg(struct gl_context *ctx, GLenum source, GLenum type,
+              GLuint id, GLenum severity, GLint len, const char *buf)
+{
+   GLint nextEmpty;
+   struct gl_debug_msg *emptySlot;
+
+   assert(len >= 0 && len < MAX_DEBUG_MESSAGE_LENGTH);
+
+   if (ctx->Debug.Callback) {
+      ctx->Debug.Callback(source, type, id, severity,
+                          len, buf, ctx->Debug.CallbackData);
+      return;
+   }
+
+   if (ctx->Debug.NumMessages == MAX_DEBUG_LOGGED_MESSAGES)
+      return;
+
+   nextEmpty = (ctx->Debug.NextMsg + ctx->Debug.NumMessages)
+                          % MAX_DEBUG_LOGGED_MESSAGES;
+   emptySlot = &ctx->Debug.Log[nextEmpty];
+
+   assert(!emptySlot->message && !emptySlot->length);
+
+   emptySlot->message = MALLOC(len+1);
+   if (emptySlot->message) {
+      (void) strncpy(emptySlot->message, buf, (size_t)len);
+      emptySlot->message[len] = '\0';
+
+      emptySlot->length = len+1;
+      emptySlot->source = source;
+      emptySlot->type = type;
+      emptySlot->id = id;
+      emptySlot->severity = severity;
+   } else {
+      /* malloc failed! */
+      emptySlot->message = out_of_memory;
+      emptySlot->length = strlen(out_of_memory)+1;
+      emptySlot->source = GL_DEBUG_SOURCE_OTHER_ARB;
+      emptySlot->type = GL_DEBUG_TYPE_ERROR_ARB;
+      emptySlot->id = 1; /* TODO: proper id namespace */
+      emptySlot->severity = GL_DEBUG_SEVERITY_HIGH_ARB;
+   }
+
+   if (ctx->Debug.NumMessages == 0)
+      ctx->Debug.NextMsgLength = ctx->Debug.Log[ctx->Debug.NextMsg].length;
+
+   ctx->Debug.NumMessages++;
+}
+
+/**
+ * Pop the oldest debug message out of the log.
+ * Writes the message string, including the null terminator, into 'buf',
+ * using up to 'bufSize' bytes. If 'bufSize' is too small, or
+ * if 'buf' is NULL, nothing is written.
+ *
+ * Returns the number of bytes written on success, or when 'buf' is NULL,
+ * the number that would have been written. A return value of 0
+ * indicates failure.
+ */
+static GLsizei
+_mesa_get_msg(struct gl_context *ctx, GLenum *source, GLenum *type,
+              GLuint *id, GLenum *severity, GLsizei bufSize, char *buf)
+{
+   struct gl_debug_msg *msg;
+   GLsizei length;
+
+   if (ctx->Debug.NumMessages == 0)
+      return 0;
+
+   msg = &ctx->Debug.Log[ctx->Debug.NextMsg];
+   length = msg->length;
+
+   assert(length > 0 && length == ctx->Debug.NextMsgLength);
+
+   if (bufSize < length && buf != NULL)
+      return 0;
+
+   if (severity)
+      *severity = msg->severity;
+   if (source)
+      *source = msg->source;
+   if (type)
+      *type = msg->type;
+   if (id)
+      *id = msg->id;
+
+   if (buf) {
+      assert(msg->message[length-1] == '\0');
+      (void) strncpy(buf, msg->message, (size_t)length);
+   }
+
+   if (msg->message != (char*)out_of_memory)
+      FREE(msg->message);
+   msg->message = NULL;
+   msg->length = 0;
+
+   ctx->Debug.NumMessages--;
+   ctx->Debug.NextMsg++;
+   ctx->Debug.NextMsg %= MAX_DEBUG_LOGGED_MESSAGES;
+   ctx->Debug.NextMsgLength = ctx->Debug.Log[ctx->Debug.NextMsg].length;
+
+   return length;
+}
+
+/**
+ * Verify that source, type, and severity are valid enums.
+ * glDebugMessageInsertARB only accepts two values for 'source',
+ * and glDebugMessageControlARB will additionally accept GL_DONT_CARE
+ * in any parameter, so handle those cases specially.
+ */
+static GLboolean
+validate_params(struct gl_context *ctx, unsigned caller,
+                GLenum source, GLenum type, GLenum severity)
+{
+#define INSERT 1
+#define CONTROL 2
+   switch(source) {
+   case GL_DEBUG_SOURCE_APPLICATION_ARB:
+   case GL_DEBUG_SOURCE_THIRD_PARTY_ARB:
+      break;
+   case GL_DEBUG_SOURCE_API_ARB:
+   case GL_DEBUG_SOURCE_SHADER_COMPILER_ARB:
+   case GL_DEBUG_SOURCE_WINDOW_SYSTEM_ARB:
+   case GL_DEBUG_SOURCE_OTHER_ARB:
+      if (caller != INSERT)
+         break;
+   case GL_DONT_CARE:
+      if (caller == CONTROL)
+         break;
+   default:
+      goto error;
+   }
+
+   switch(type) {
+   case GL_DEBUG_TYPE_ERROR_ARB:
+   case GL_DEBUG_TYPE_DEPRECATED_BEHAVIOR_ARB:
+   case GL_DEBUG_TYPE_UNDEFINED_BEHAVIOR_ARB:
+   case GL_DEBUG_TYPE_PERFORMANCE_ARB:
+   case GL_DEBUG_TYPE_PORTABILITY_ARB:
+   case GL_DEBUG_TYPE_OTHER_ARB:
+      break;
+   case GL_DONT_CARE:
+      if (caller == CONTROL)
+         break;
+   default:
+      goto error;
+   }
+
+   switch(severity) {
+   case GL_DEBUG_SEVERITY_HIGH_ARB:
+   case GL_DEBUG_SEVERITY_MEDIUM_ARB:
+   case GL_DEBUG_SEVERITY_LOW_ARB:
+      break;
+   case GL_DONT_CARE:
+      if (caller == CONTROL)
+         break;
+   default:
+      goto error;
+   }
+   return GL_TRUE;
+
+error:
+   {
+      const char *callerstr;
+      if (caller == INSERT)
+         callerstr = "glDebugMessageInsertARB";
+      else if (caller == CONTROL)
+         callerstr = "glDebugMessageControlARB";
+      else
+         return GL_FALSE;
+
+      _mesa_error( ctx, GL_INVALID_ENUM, "bad values passed to %s"
+                  "(source=0x%x, type=0x%x, severity=0x%x)", callerstr,
+                  source, type, severity);
+   }
+   return GL_FALSE;
+}
+
+static void GLAPIENTRY
+_mesa_DebugMessageInsertARB(GLenum source, GLenum type, GLuint id,
+                            GLenum severity, GLint length,
+                            const GLcharARB* buf)
+{
+   GET_CURRENT_CONTEXT(ctx);
+
+   if (!validate_params(ctx, INSERT, source, type, severity))
+      return; /* GL_INVALID_ENUM */
+
+   if (length < 0)
+      length = strlen(buf);
+
+   if (length >= MAX_DEBUG_MESSAGE_LENGTH) {
+      _mesa_error(ctx, GL_INVALID_VALUE, "glDebugMessageInsertARB"
+                 "(length=%d, which is not less than "
+                 "GL_MAX_DEBUG_MESSAGE_LENGTH_ARB=%d)", length,
+                 MAX_DEBUG_MESSAGE_LENGTH);
+      return;
+   }
+
+   _mesa_log_msg(ctx, source, type, id, severity, length, buf);
+}
+
+static GLuint GLAPIENTRY
+_mesa_GetDebugMessageLogARB(GLuint count, GLsizei logSize, GLenum* sources,
+                            GLenum* types, GLenum* ids, GLenum* severities,
+                            GLsizei* lengths, GLcharARB* messageLog)
+{
+   GET_CURRENT_CONTEXT(ctx);
+   GLuint ret;
+
+   if (!messageLog)
+      logSize = 0;
+
+   if (logSize < 0) {
+      _mesa_error(ctx, GL_INVALID_VALUE, "glGetDebugMessageLogARB"
+                 "(logSize=%d : logSize must not be negative)", logSize);
+      return 0;
+   }
+
+   for (ret = 0; ret < count; ret++) {
+      GLsizei written = _mesa_get_msg(ctx, sources, types, ids, severities,
+                                      logSize, messageLog);
+      if (!written)
+         break;
+
+      if (messageLog) {
+         messageLog += written;
+         logSize -= written;
+      }
+      if (lengths) {
+         *lengths = written;
+         lengths++;
+      }
+
+      if (severities)
+         severities++;
+      if (sources)
+         sources++;
+      if (types)
+         types++;
+      if (ids)
+         ids++;
+   }
+
+   return ret;
+}
+
+static void GLAPIENTRY
+_mesa_DebugMessageCallbackARB(GLvoid *callback, GLvoid *userParam)
+{
+   GET_CURRENT_CONTEXT(ctx);
+   ctx->Debug.Callback = (GLDEBUGPROCARB)callback;
+   ctx->Debug.CallbackData = userParam;
+}
+
+void
+_mesa_init_errors_dispatch(struct _glapi_table *disp)
+{
+   SET_DebugMessageCallbackARB(disp, _mesa_DebugMessageCallbackARB);
+   SET_DebugMessageInsertARB(disp, _mesa_DebugMessageInsertARB);
+   SET_GetDebugMessageLogARB(disp, _mesa_GetDebugMessageLogARB);
+}
 
 void
 _mesa_init_errors(struct gl_context *ctx)

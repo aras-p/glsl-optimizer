@@ -55,6 +55,7 @@
 #include "drawpix.h"
 #include "rastpos.h"
 #include "enable.h"
+#include "errors.h"
 #include "eval.h"
 #include "get.h"
 #include "feedback.h"
@@ -598,14 +599,17 @@ _mesa_create_exec_table(void)
    SET_DrawBuffersARB(exec, _mesa_DrawBuffersARB);
 #endif
 
-   /* ARB 104. GL_ARB_robustness */
+   /* ARB 66. GL_ARB_sync */
+   _mesa_init_sync_dispatch(exec);
+
+   /* ARB 104. GL_ARB_debug_output */
+   _mesa_init_errors_dispatch(exec);
+
+   /* ARB 105. GL_ARB_robustness */
    SET_GetGraphicsResetStatusARB(exec, _mesa_GetGraphicsResetStatusARB);
    SET_GetnPolygonStippleARB(exec, _mesa_GetnPolygonStippleARB);
    SET_GetnTexImageARB(exec, _mesa_GetnTexImageARB);
    SET_ReadnPixelsARB(exec, _mesa_ReadnPixelsARB);
-
-   /* GL_ARB_sync */
-   _mesa_init_sync_dispatch(exec);
 
   /* GL_ATI_fragment_shader */
    _mesa_init_ati_fragment_shader_dispatch(exec);
