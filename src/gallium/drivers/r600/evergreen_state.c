@@ -332,6 +332,7 @@ static void *evergreen_create_sampler_state(struct pipe_context *ctx,
 			0xFFFFFFFF, NULL);
 	r600_pipe_state_add_reg(rstate, R_03C008_SQ_TEX_SAMPLER_WORD2_0,
 				S_03C008_LOD_BIAS(S_FIXED(CLAMP(state->lod_bias, -16, 16), 8)) |
+				(state->seamless_cube_map ? 0 : S_03C008_DISABLE_CUBE_WRAP(1)) |
 				S_03C008_TYPE(1),
 				0xFFFFFFFF, NULL);
 

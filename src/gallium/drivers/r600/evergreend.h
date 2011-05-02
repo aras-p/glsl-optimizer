@@ -1194,6 +1194,15 @@
 #define   S_03C008_FORCE_DEGAMMA(x)                    (((x) & 0x1) << 21)
 #define   G_03C008_FORCE_DEGAMMA(x)                    (((x) >> 21) & 0x1)
 #define   C_03C008_FORCE_DEGAMMA                       0xFFDFFFFF
+#define   S_03C008_ANISO_BIAS(x)                       (((x) & 0x3f) << 22)
+#define   G_03C008_ANISO_BIAS(x)                       (((x) >> 22) & 0x3f)
+#define   C_03C008_ANISO_BIAS                          (~(0x3f << 22))
+#define   S_03C008_TRUNCATE_COORD(x)                   (((x) & 0x1) << 28)
+#define   G_03C008_TRUNCATE_COORD(x)                   (((x) >> 28) & 0x1)
+#define   C_03C008_TRUNCATE_COORD                      (~(1 << 28))
+#define   S_03C008_DISABLE_CUBE_WRAP(x)                (((x) & 0x1) << 29)
+#define   G_03C008_DISABLE_CUBE_WRAP(x)                (((x) >> 29) & 0x1)
+#define   C_03C008_DISABLE_CUBE_WRAP                   (~(1 << 29))
 #define   S_03C008_TYPE(x)                             (((x) & 0x1) << 31)
 #define   G_03C008_TYPE(x)                             (((x) >> 31) & 0x1)
 #define   C_03C008_TYPE                                0x7FFFFFFF

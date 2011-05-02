@@ -383,6 +383,11 @@ static int r600_get_param(struct pipe_screen* pscreen, enum pipe_cap param)
 		/* R600 doesn't support per-MRT blends */
 		return family == CHIP_R600 ? 0 : 1;
 
+	/* Supported on Evergreen. */
+	case PIPE_CAP_SEAMLESS_CUBE_MAP:
+	case PIPE_CAP_SEAMLESS_CUBE_MAP_PER_TEXTURE:
+		return family >= CHIP_CEDAR ? 1 : 0;
+
 	/* Unsupported features. */
 	case PIPE_CAP_STREAM_OUTPUT:
 	case PIPE_CAP_PRIMITIVE_RESTART:
