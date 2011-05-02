@@ -1415,9 +1415,9 @@ ir_to_mesa_visitor::visit(ir_dereference_variable *ir)
       case ir_var_in:
       case ir_var_inout:
 	 /* The linker assigns locations for varyings and attributes,
-	  * including deprecated builtins (like gl_Color), user-assign
-	  * generic attributes (glBindVertexLocation), and
-	  * user-defined varyings.
+	  * including deprecated builtins (like gl_Color),
+	  * user-assigned generic attributes (glBindVertexLocation),
+	  * and user-defined varyings.
 	  *
 	  * FINISHME: We would hit this path for function arguments.  Fix!
 	  */
