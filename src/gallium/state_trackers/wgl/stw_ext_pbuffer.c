@@ -40,6 +40,30 @@
 #include "stw_framebuffer.h"
 
 
+#define LARGE_WINDOW_SIZE 60000
+
+
+static LRESULT CALLBACK
+WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
+{
+    MINMAXINFO *pMMI;
+    switch (uMsg) {
+    case WM_GETMINMAXINFO:
+        // Allow to create a window bigger than the desktop
+        pMMI = (MINMAXINFO *)lParam;
+        pMMI->ptMaxSize.x = LARGE_WINDOW_SIZE;
+        pMMI->ptMaxSize.y = LARGE_WINDOW_SIZE;
+        pMMI->ptMaxTrackSize.x = LARGE_WINDOW_SIZE;
+        pMMI->ptMaxTrackSize.y = LARGE_WINDOW_SIZE;
+        break;
+    default:
+        break;
+    }
+
+    return DefWindowProc(hWnd, uMsg, wParam, lParam);
+}
+
+
 HPBUFFERARB WINAPI
 wglCreatePbufferARB(HDC _hDC,
                     int iPixelFormat,
@@ -109,7 +133,7 @@ wglCreatePbufferARB(HDC _hDC,
       wc.hbrBackground = (HBRUSH) (COLOR_BTNFACE + 1);
       wc.hCursor = LoadCursor(NULL, IDC_ARROW);
       wc.hIcon = LoadIcon(NULL, IDI_APPLICATION);
-      wc.lpfnWndProc = DefWindowProc;
+      wc.lpfnWndProc = WndProc;
       wc.lpszClassName = "wglpbuffer";
       wc.style = CS_OWNDC | CS_HREDRAW | CS_VREDRAW;
       RegisterClass(&wc);
