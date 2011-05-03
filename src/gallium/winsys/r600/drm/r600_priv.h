@@ -64,6 +64,7 @@ struct radeon {
 
 #define REG_FLAG_NEED_BO 1
 #define REG_FLAG_DIRTY_ALWAYS 2
+#define REG_FLAG_RV6XX_SBU 4
 
 struct r600_reg {
 	unsigned			opcode;
