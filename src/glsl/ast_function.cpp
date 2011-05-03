@@ -238,7 +238,7 @@ match_function_by_name(exec_list *instructions, const char *name,
 	    ir_function_signature *sig = (ir_function_signature *) node;
 
 	    str = prototype_string(sig->return_type, f->name, &sig->parameters);
-	    _mesa_glsl_error(loc, state, "%s%s\n", prefix, str);
+	    _mesa_glsl_error(loc, state, "%s%s", prefix, str);
 	    ralloc_free(str);
 
 	    prefix = "                ";
