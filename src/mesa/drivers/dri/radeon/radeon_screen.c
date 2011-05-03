@@ -1132,7 +1132,9 @@ static int radeon_set_screen_flags(radeonScreenPtr screen, int device_id)
     case PCI_CHIP_JUNIPER_68B0:
     case PCI_CHIP_JUNIPER_68B8:
     case PCI_CHIP_JUNIPER_68B9:
+    case PCI_CHIP_JUNIPER_68BA:
     case PCI_CHIP_JUNIPER_68BE:
+    case PCI_CHIP_JUNIPER_68BF:
        screen->chip_family = CHIP_FAMILY_JUNIPER;
        screen->chip_flags = RADEON_CHIPSET_TCL;
        break;
@@ -1143,6 +1145,7 @@ static int radeon_set_screen_flags(radeonScreenPtr screen, int device_id)
     case PCI_CHIP_CYPRESS_688A:
     case PCI_CHIP_CYPRESS_6898:
     case PCI_CHIP_CYPRESS_6899:
+    case PCI_CHIP_CYPRESS_689B:
     case PCI_CHIP_CYPRESS_689E:
        screen->chip_family = CHIP_FAMILY_CYPRESS;
        screen->chip_flags = RADEON_CHIPSET_TCL;
@@ -1176,6 +1179,7 @@ static int radeon_set_screen_flags(radeonScreenPtr screen, int device_id)
    case PCI_CHIP_BARTS_6729:
    case PCI_CHIP_BARTS_6738:
    case PCI_CHIP_BARTS_6739:
+   case PCI_CHIP_BARTS_673E:
        screen->chip_family = CHIP_FAMILY_BARTS;
        screen->chip_flags = RADEON_CHIPSET_TCL;
        break;
