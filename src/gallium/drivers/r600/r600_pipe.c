@@ -404,11 +404,10 @@ static int r600_get_param(struct pipe_screen* pscreen, enum pipe_cap param)
 		else
 			return 14;
 	case PIPE_CAP_MAX_VERTEX_TEXTURE_UNITS:
-		/* FIXME allow this once infrastructure is there */
-		return 16;
 	case PIPE_CAP_MAX_TEXTURE_IMAGE_UNITS:
-	case PIPE_CAP_MAX_COMBINED_SAMPLERS:
 		return 16;
+	case PIPE_CAP_MAX_COMBINED_SAMPLERS:
+		return 32;
 
 	/* Render targets. */
 	case PIPE_CAP_MAX_RENDER_TARGETS:
