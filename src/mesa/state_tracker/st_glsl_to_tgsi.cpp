@@ -485,7 +485,7 @@ glsl_to_tgsi_visitor::emit(ir_instruction *ir, unsigned op,
    else {
       for (i=0; i<3; i++) {
          if(inst->src[i].reladdr) {
-            switch(dst.file) {
+            switch(inst->src[i].file) {
             case PROGRAM_TEMPORARY:
                this->indirect_addr_temps = true;
                break;
@@ -3928,9 +3928,17 @@ get_mesa_program(struct gl_context *ctx,
 
    /* Perform optimizations on the instructions in the glsl_to_tgsi_visitor. */
    v->copy_propagate();
-   v->eliminate_dead_code();
-   v->merge_registers();
-   v->renumber_registers();
+   
+   /* FIXME: These passes to optimize temporary registers don't work when there
+    * is indirect addressing of the temporary register space.  We need proper 
+    * array support so that we don't have to give up these passes in every 
+    * shader that uses arrays.
+    */
+   if (!v->indirect_addr_temps) {
+      v->merge_registers();
+      v->eliminate_dead_code();
+      v->renumber_registers();
+   }
    
    /* Write the END instruction. */
    v->emit(NULL, TGSI_OPCODE_END);
