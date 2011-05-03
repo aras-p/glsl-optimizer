@@ -25,23 +25,6 @@
  *
  */
 
-extern "C" {
-
-#include <sys/types.h>
-
-#include "main/macros.h"
-#include "main/shaderobj.h"
-#include "main/uniforms.h"
-#include "program/prog_parameter.h"
-#include "program/prog_print.h"
-#include "program/prog_optimize.h"
-#include "program/register_allocate.h"
-#include "program/sampler.h"
-#include "program/hash_table.h"
-#include "brw_context.h"
-#include "brw_eu.h"
-#include "brw_wm.h"
-}
 #include "brw_fs.h"
 #include "../glsl/glsl_types.h"
 #include "../glsl/ir_optimization.h"
@@ -358,6 +341,9 @@ fs_visitor::choose_spill_reg(struct ra_graph *g)
       case FS_OPCODE_UNSPILL:
 	 if (inst->dst.file == GRF)
 	    no_spill[inst->dst.reg] = true;
+	 break;
+
+      default:
 	 break;
       }
    }

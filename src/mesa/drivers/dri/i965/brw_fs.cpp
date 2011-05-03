@@ -522,7 +522,7 @@ fs_visitor::emit_frontfacing_interpolation(ir_variable *ir)
 }
 
 fs_inst *
-fs_visitor::emit_math(fs_opcodes opcode, fs_reg dst, fs_reg src)
+fs_visitor::emit_math(enum opcode opcode, fs_reg dst, fs_reg src)
 {
    switch (opcode) {
    case FS_OPCODE_RCP:
@@ -565,7 +565,7 @@ fs_visitor::emit_math(fs_opcodes opcode, fs_reg dst, fs_reg src)
 }
 
 fs_inst *
-fs_visitor::emit_math(fs_opcodes opcode, fs_reg dst, fs_reg src0, fs_reg src1)
+fs_visitor::emit_math(enum opcode opcode, fs_reg dst, fs_reg src0, fs_reg src1)
 {
    int base_mrf = 2;
    fs_inst *inst;
@@ -1149,6 +1149,9 @@ fs_visitor::propagate_constants()
 		  progress = true;
 	       }
 	       break;
+
+	    default:
+	       break;
 	    }
 	 }
 
@@ -1200,6 +1203,8 @@ fs_visitor::opt_algebraic()
 	    break;
 	 }
 
+	 break;
+      default:
 	 break;
       }
    }
@@ -1266,6 +1271,8 @@ fs_visitor::register_coalesce()
 	 break;
       case BRW_OPCODE_ENDIF:
 	 if_depth--;
+	 break;
+      default:
 	 break;
       }
       if (loop_depth || if_depth)
