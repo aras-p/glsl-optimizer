@@ -133,6 +133,7 @@ _mesa_init_sampler_object(struct gl_sampler_object *sampObj, GLuint name)
    sampObj->CompareFunc = GL_LEQUAL;
    sampObj->CompareFailValue = 0.0;
    sampObj->sRGBDecode = GL_FALSE;
+   sampObj->CubeMapSeamless = GL_FALSE;
    sampObj->DepthMode = 0;
 }
 
@@ -1110,6 +1111,11 @@ _mesa_GetSamplerParameteriv(GLuint sampler, GLenum pname, GLint *params)
       params[2] = FLOAT_TO_INT(sampObj->BorderColor.f[2]);
       params[3] = FLOAT_TO_INT(sampObj->BorderColor.f[3]);
       break;
+   case GL_TEXTURE_CUBE_MAP_SEAMLESS:
+      if (!ctx->Extensions.AMD_seamless_cubemap_per_texture)
+         goto invalid_pname;
+      *params = sampObj->CubeMapSeamless;
+      break;
    default:
       goto invalid_pname;
    }
@@ -1177,6 +1183,11 @@ _mesa_GetSamplerParameterfv(GLuint sampler, GLenum pname, GLfloat *params)
       params[1] = sampObj->BorderColor.f[1];
       params[2] = sampObj->BorderColor.f[2];
       params[3] = sampObj->BorderColor.f[3];
+      break;
+   case GL_TEXTURE_CUBE_MAP_SEAMLESS:
+      if (!ctx->Extensions.AMD_seamless_cubemap_per_texture)
+         goto invalid_pname;
+      *params = (GLfloat) sampObj->CubeMapSeamless;
       break;
    default:
       goto invalid_pname;
@@ -1247,6 +1258,11 @@ _mesa_GetSamplerParameterIiv(GLuint sampler, GLenum pname, GLint *params)
       params[2] = sampObj->BorderColor.i[2];
       params[3] = sampObj->BorderColor.i[3];
       break;
+   case GL_TEXTURE_CUBE_MAP_SEAMLESS:
+      if (!ctx->Extensions.AMD_seamless_cubemap_per_texture)
+         goto invalid_pname;
+      *params = sampObj->CubeMapSeamless;
+      break;
    default:
       goto invalid_pname;
    }
@@ -1315,6 +1331,11 @@ _mesa_GetSamplerParameterIuiv(GLuint sampler, GLenum pname, GLuint *params)
       params[1] = sampObj->BorderColor.ui[1];
       params[2] = sampObj->BorderColor.ui[2];
       params[3] = sampObj->BorderColor.ui[3];
+      break;
+   case GL_TEXTURE_CUBE_MAP_SEAMLESS:
+      if (!ctx->Extensions.AMD_seamless_cubemap_per_texture)
+         goto invalid_pname;
+      *params = sampObj->CubeMapSeamless;
       break;
    default:
       goto invalid_pname;

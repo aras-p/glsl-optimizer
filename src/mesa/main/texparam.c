@@ -439,6 +439,20 @@ set_tex_parameteri(struct gl_context *ctx,
       }
       goto invalid_pname;
 
+   case GL_TEXTURE_CUBE_MAP_SEAMLESS:
+      if (ctx->Extensions.AMD_seamless_cubemap_per_texture) {
+         GLenum param = params[0];
+         if (param != GL_TRUE && param != GL_FALSE) {
+            goto invalid_param;
+         }
+         if (param != texObj->Sampler.CubeMapSeamless) {
+            flush(ctx);
+            texObj->Sampler.CubeMapSeamless = param;
+         }
+         return GL_TRUE;
+      }
+      goto invalid_pname;
+
    default:
       goto invalid_pname;
    }
@@ -580,6 +594,7 @@ _mesa_TexParameterf(GLenum target, GLenum pname, GLfloat param)
    case GL_TEXTURE_COMPARE_FUNC_ARB:
    case GL_DEPTH_TEXTURE_MODE_ARB:
    case GL_TEXTURE_SRGB_DECODE_EXT:
+   case GL_TEXTURE_CUBE_MAP_SEAMLESS:
       {
          /* convert float param to int */
          GLint p[4];
@@ -629,6 +644,7 @@ _mesa_TexParameterfv(GLenum target, GLenum pname, const GLfloat *params)
    case GL_TEXTURE_COMPARE_FUNC_ARB:
    case GL_DEPTH_TEXTURE_MODE_ARB:
    case GL_TEXTURE_SRGB_DECODE_EXT:
+   case GL_TEXTURE_CUBE_MAP_SEAMLESS:
       {
          /* convert float param to int */
          GLint p[4];
@@ -1235,6 +1251,14 @@ _mesa_GetTexParameterfv( GLenum target, GLenum pname, GLfloat *params )
          }
          break;
 
+      case GL_TEXTURE_CUBE_MAP_SEAMLESS:
+      if (ctx->Extensions.AMD_seamless_cubemap_per_texture) {
+         *params = (GLfloat) obj->Sampler.CubeMapSeamless;
+      }
+      else {
+         error = GL_TRUE;
+      }
+
       default:
 	 error = GL_TRUE;
 	 break;
@@ -1395,6 +1419,14 @@ _mesa_GetTexParameteriv( GLenum target, GLenum pname, GLint *params )
             error = GL_TRUE;
          }
          break;
+
+      case GL_TEXTURE_CUBE_MAP_SEAMLESS:
+         if (ctx->Extensions.AMD_seamless_cubemap_per_texture) {
+            *params = (GLint) obj->Sampler.CubeMapSeamless;
+         }
+         else {
+            error = GL_TRUE;
+         }
 
       default:
          ; /* silence warnings */
