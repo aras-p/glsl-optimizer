@@ -75,10 +75,15 @@ brw_link_shader(struct gl_context *ctx, struct gl_shader_program *prog)
 {
    struct brw_context *brw = brw_context(ctx);
    struct intel_context *intel = &brw->intel;
+   unsigned int stage;
 
-   struct brw_shader *shader =
-      (struct brw_shader *)prog->_LinkedShaders[MESA_SHADER_FRAGMENT];
-   if (shader != NULL) {
+   for (stage = 0; stage < ARRAY_SIZE(prog->_LinkedShaders); stage++) {
+      struct brw_shader *shader =
+	 (struct brw_shader *)prog->_LinkedShaders[stage];
+
+      if (!shader)
+	 continue;
+
       void *mem_ctx = ralloc_context(NULL);
       bool progress;
 
@@ -116,8 +121,10 @@ brw_link_shader(struct gl_context *ctx, struct gl_shader_program *prog)
       do {
 	 progress = false;
 
-	 brw_do_channel_expressions(shader->ir);
-	 brw_do_vector_splitting(shader->ir);
+	 if (stage == MESA_SHADER_FRAGMENT) {
+	    brw_do_channel_expressions(shader->ir);
+	    brw_do_vector_splitting(shader->ir);
+	 }
 
 	 progress = do_lower_jumps(shader->ir, true, true,
 				   true, /* main return */
