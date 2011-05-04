@@ -3221,11 +3221,17 @@ typedef enum {
    OTHER_ERROR_COUNT
 } gl_other_error;
 
+struct gl_client_namespace
+{
+   struct _mesa_HashTable *IDs;
+   unsigned ZeroID; /* a HashTable won't take zero, so store its state here */
+   struct simple_node Severity[3]; /* lists of IDs in the hash table */
+};
+
 struct gl_client_debug
 {
    GLboolean Defaults[3][2][6]; /* severity, source, type */
-   /* TODO: Add an object here that can track the state of an arbitrary
-      number of client-provided IDs. */
+   struct gl_client_namespace Namespaces[2][6]; /* source, type */
 };
 
 struct gl_debug_state
