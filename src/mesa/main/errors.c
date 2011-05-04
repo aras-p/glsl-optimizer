@@ -33,12 +33,19 @@
 #include "imports.h"
 #include "context.h"
 #include "dispatch.h"
+#include "hash.h"
 #include "mtypes.h"
 #include "version.h"
 
 
 #define MAXSTRING MAX_DEBUG_MESSAGE_LENGTH
 
+
+struct gl_client_severity
+{
+   struct simple_node link;
+   GLuint ID;
+};
 
 static char out_of_memory[] = "Debugging error: out of memory";
 
@@ -115,6 +122,135 @@ enum_to_index(GLenum e)
    };
 }
 
+
+/*
+ * We store a bitfield in the hash table, with five possible values total.
+ *
+ * The ENABLED_BIT's purpose is self-explanatory.
+ *
+ * The FOUND_BIT is needed to differentiate the value of DISABLED from
+ * the value returned by HashTableLookup() when it can't find the given key.
+ *
+ * The KNOWN_SEVERITY bit is a bit complicated:
+ *
+ * A client may call Control() with an array of IDs, then call Control()
+ * on all message IDs of a certain severity, then Insert() one of the
+ * previously specified IDs, giving us a known severity level, then call
+ * Control() on all message IDs of a certain severity level again.
+ *
+ * After the first call, those IDs will have a FOUND_BIT, but will not
+ * exist in any severity-specific list, so the second call will not
+ * impact them. This is undesirable but unavoidable given the API:
+ * The only entrypoint that gives a severity for a client-defined ID
+ * is the Insert() call.
+ *
+ * For the sake of Control(), we want to maintain the invariant
+ * that an ID will either appear in none of the three severity lists,
+ * or appear once, to minimize pointless duplication and potential surprises.
+ *
+ * Because Insert() is the only place that will learn an ID's severity,
+ * it should insert an ID into the appropriate list, but only if the ID
+ * doesn't exist in it or any other list yet. Because searching all three
+ * lists at O(n) is needlessly expensive, we store KNOWN_SEVERITY.
+ */
+enum {
+   FOUND_BIT = 1 << 0,
+   ENABLED_BIT = 1 << 1,
+   KNOWN_SEVERITY = 1 << 2,
+
+   /* HashTable reserves zero as a return value meaning 'not found' */
+   NOT_FOUND = 0,
+   DISABLED = FOUND_BIT,
+   ENABLED = ENABLED_BIT | FOUND_BIT
+};
+
+/**
+ * Returns the state of the given message ID in a client-controlled
+ * namespace.
+ * 'source', 'type', and 'severity' are array indices like TYPE_ERROR,
+ * not GL enums.
+ */
+static GLboolean
+get_message_state(struct gl_context *ctx, int source, int type,
+                  GLuint id, int severity)
+{
+   struct gl_client_namespace *nspace =
+         &ctx->Debug.ClientIDs.Namespaces[source][type];
+   uintptr_t state;
+
+   /* In addition to not being able to store zero as a value, HashTable also
+      can't use zero as a key. */
+   if (id)
+      state = (uintptr_t)_mesa_HashLookup(nspace->IDs, id);
+   else
+      state = nspace->ZeroID;
+
+   /* Only do this once for each ID. This makes sure the ID exists in,
+      at most, one list, and does not pointlessly appear multiple times. */
+   if (!(state & KNOWN_SEVERITY)) {
+      struct gl_client_severity *entry;
+
+      if (state == NOT_FOUND) {
+         if (ctx->Debug.ClientIDs.Defaults[severity][source][type])
+            state = ENABLED;
+         else
+            state = DISABLED;
+      }
+
+      entry = malloc(sizeof *entry);
+      if (!entry)
+         goto out;
+
+      state |= KNOWN_SEVERITY;
+
+      if (id)
+         _mesa_HashInsert(nspace->IDs, id, (void*)state);
+      else
+         nspace->ZeroID = state;
+
+      entry->ID = id;
+      insert_at_tail(&nspace->Severity[severity], &entry->link);
+   }
+
+out:
+   return !!(state & ENABLED_BIT);
+}
+
+/**
+ * Sets the state of the given message ID in a client-controlled
+ * namespace.
+ * 'source' and 'type' are array indices like TYPE_ERROR, not GL enums.
+ */
+static void
+set_message_state(struct gl_context *ctx, int source, int type,
+                  GLuint id, GLboolean enabled)
+{
+   struct gl_client_namespace *nspace =
+         &ctx->Debug.ClientIDs.Namespaces[source][type];
+   uintptr_t state;
+
+   /* In addition to not being able to store zero as a value, HashTable also
+      can't use zero as a key. */
+   if (id)
+      state = (uintptr_t)_mesa_HashLookup(nspace->IDs, id);
+   else
+      state = nspace->ZeroID;
+
+   if (state == NOT_FOUND)
+      state = enabled ? ENABLED : DISABLED;
+   else {
+      if (enabled)
+         state |= ENABLED_BIT;
+      else
+         state &= ~ENABLED_BIT;
+   }
+
+   if (id)
+      _mesa_HashInsert(nspace->IDs, id, (void*)state);
+   else
+      nspace->ZeroID = state;
+}
+
 /**
  * Whether a debugging message should be logged or not.
  * For implementation-controlled namespaces, we keep an array
@@ -133,8 +269,7 @@ should_log(struct gl_context *ctx, GLenum source, GLenum type,
       t = enum_to_index(type);
       sev = enum_to_index(severity);
 
-      return ctx->Debug.ClientIDs.Defaults[sev][s][t];
-      /* TODO: tracking individual client IDs. */
+      return get_message_state(ctx, s, t, sev, id);
    }
 
    if (type_is(type, ERROR)) {
@@ -442,28 +577,22 @@ control_messages(GLboolean *array, GLuint size,
 }
 
 /**
- * Debugging-message namespaces with the source APPLICATION or THIRD_PARTY
- * require special handling, since the IDs in them are controlled by clients,
- * not the OpenGL implementation.
+ * Set the state of all message IDs found in the given intersection
+ * of 'source', 'type', and 'severity'. Note that all three of these
+ * parameters are array indices, not the corresponding GL enums.
  *
- * When controlling entire categories of messages without specifying IDs,
- * the default state for IDs that haven't been seen yet have to be adjusted.
+ * This requires both setting the state of all previously seen message
+ * IDs in the hash table, and setting the default state for all
+ * applicable combinations of source/type/severity, so that all the
+ * yet-unknown message IDs that may be used in the future will be
+ * impacted as if they were already known.
  */
 static void
-control_app_messages(struct gl_context *ctx, GLenum esource, GLenum etype,
-                     GLenum eseverity, GLsizei count, const GLuint *ids,
-                     GLboolean enabled)
+control_app_messages_by_group(struct gl_context *ctx, int source, int type,
+                              int severity, GLboolean enabled)
 {
-   int source, type, severity, s, t, sev, smax, tmax, sevmax;
-
-   assert(!count && "glDebugMessageControlARB():"
-           " controlling for client-provided IDs is not implemented");
-   if (count)
-      return;
-
-   source = enum_to_index(esource);
-   type = enum_to_index(etype);
-   severity = enum_to_index(eseverity);
+   struct gl_client_debug *ClientIDs = &ctx->Debug.ClientIDs;
+   int s, t, sev, smax, tmax, sevmax;
 
    if (source == SOURCE_ANY) {
       source = 0;
@@ -488,8 +617,56 @@ control_app_messages(struct gl_context *ctx, GLenum esource, GLenum etype,
 
    for (sev = severity; sev < sevmax; sev++)
       for (s = source; s < smax; s++)
-         for (t = type; t < tmax; t++)
-            ctx->Debug.ClientIDs.Defaults[sev][s][t] = enabled;
+         for (t = type; t < tmax; t++) {
+            struct simple_node *node;
+            struct gl_client_severity *entry;
+
+            /* change the default for IDs we've never seen before. */
+            ClientIDs->Defaults[sev][s][t] = enabled;
+
+            /* Now change the state of IDs we *have* seen... */
+            foreach(node, &ClientIDs->Namespaces[s][t].Severity[sev]) {
+               entry = (struct gl_client_severity *)node;
+               set_message_state(ctx, s, t, entry->ID, enabled);
+            }
+         }
+}
+
+/**
+ * Debugging-message namespaces with the source APPLICATION or THIRD_PARTY
+ * require special handling, since the IDs in them are controlled by clients,
+ * not the OpenGL implementation.
+ *
+ * 'count' is the length of the array 'ids'. If 'count' is nonzero, all
+ * the given IDs in the namespace defined by 'esource' and 'etype'
+ * will be affected.
+ *
+ * If 'count' is zero, this sets the state of all IDs that match
+ * the combination of 'esource', 'etype', and 'eseverity'.
+ */
+static void
+control_app_messages(struct gl_context *ctx, GLenum esource, GLenum etype,
+                     GLenum eseverity, GLsizei count, const GLuint *ids,
+                     GLboolean enabled)
+{
+   int source, type, severity;
+   GLsizei i;
+
+   source = enum_to_index(esource);
+   type = enum_to_index(etype);
+   severity = enum_to_index(eseverity);
+
+   if (count)
+      assert(severity == SEVERITY_ANY && type != TYPE_ANY
+             && source != SOURCE_ANY);
+
+   for (i = 0; i < count; i++)
+      set_message_state(ctx, source, type, ids[i], enabled);
+
+   if (count)
+      return;
+
+   control_app_messages_by_group(ctx, source, type, severity, enabled);
 }
 
 static void GLAPIENTRY
@@ -557,6 +734,9 @@ _mesa_init_errors_dispatch(struct _glapi_table *disp)
 void
 _mesa_init_errors(struct gl_context *ctx)
 {
+   int s, t, sev;
+   struct gl_client_debug *ClientIDs = &ctx->Debug.ClientIDs;
+
    ctx->Debug.Callback = NULL;
    ctx->Debug.SyncOutput = GL_FALSE;
    ctx->Debug.Log[0].length = 0;
@@ -569,12 +749,44 @@ _mesa_init_errors(struct gl_context *ctx)
    memset(ctx->Debug.WinsysErrors, GL_TRUE, sizeof ctx->Debug.WinsysErrors);
    memset(ctx->Debug.ShaderErrors, GL_TRUE, sizeof ctx->Debug.ShaderErrors);
    memset(ctx->Debug.OtherErrors, GL_TRUE, sizeof ctx->Debug.OtherErrors);
-   memset(ctx->Debug.ClientIDs.Defaults[SEVERITY_HIGH], GL_TRUE,
-          sizeof ctx->Debug.ClientIDs.Defaults[SEVERITY_HIGH]);
-   memset(ctx->Debug.ClientIDs.Defaults[SEVERITY_MEDIUM], GL_TRUE,
-          sizeof ctx->Debug.ClientIDs.Defaults[SEVERITY_MEDIUM]);
-   memset(ctx->Debug.ClientIDs.Defaults[SEVERITY_LOW], GL_FALSE,
-          sizeof ctx->Debug.ClientIDs.Defaults[SEVERITY_LOW]);
+   memset(ClientIDs->Defaults[SEVERITY_HIGH], GL_TRUE,
+          sizeof ClientIDs->Defaults[SEVERITY_HIGH]);
+   memset(ClientIDs->Defaults[SEVERITY_MEDIUM], GL_TRUE,
+          sizeof ClientIDs->Defaults[SEVERITY_MEDIUM]);
+   memset(ClientIDs->Defaults[SEVERITY_LOW], GL_FALSE,
+          sizeof ClientIDs->Defaults[SEVERITY_LOW]);
+
+   /* Initialize state for filtering client-provided debug messages. */
+   for (s = 0; s < SOURCE_COUNT; s++)
+      for (t = 0; t < TYPE_COUNT; t++) {
+         ClientIDs->Namespaces[s][t].IDs = _mesa_NewHashTable();
+         assert(ClientIDs->Namespaces[s][t].IDs);
+
+         for (sev = 0; sev < SEVERITY_COUNT; sev++)
+            make_empty_list(&ClientIDs->Namespaces[s][t].Severity[sev]);
+      }
+}
+
+void
+_mesa_free_errors_data(struct gl_context *ctx)
+{
+   int s, t, sev;
+   struct gl_client_debug *ClientIDs = &ctx->Debug.ClientIDs;
+
+   /* Tear down state for filtering client-provided debug messages. */
+   for (s = 0; s < SOURCE_COUNT; s++)
+      for (t = 0; t < TYPE_COUNT; t++) {
+         _mesa_DeleteHashTable(ClientIDs->Namespaces[s][t].IDs);
+         for (sev = 0; sev < SEVERITY_COUNT; sev++) {
+            struct simple_node *node, *tmp;
+            struct gl_client_severity *entry;
+
+            foreach_s(node, tmp, &ClientIDs->Namespaces[s][t].Severity[sev]) {
+               entry = (struct gl_client_severity *)node;
+               FREE(entry);
+            }
+         }
+      }
 }
 
 /**********************************************************************/
