@@ -157,29 +157,14 @@ fs_visitor::assign_regs()
       classes[i] = ra_alloc_reg_class(regs);
 
       for (int i_r = 0; i_r < class_reg_count[i]; i_r++) {
-	 ra_class_add_reg(regs, classes[i], class_base_reg[i] + i_r);
-      }
+	 int class_reg = class_base_reg[i] + i_r;
 
-      /* Add conflicts between our contiguous registers aliasing
-       * base regs and other register classes' contiguous registers
-       * that alias base regs, or the base regs themselves for classes[0].
-       */
-      for (int c = 0; c <= i; c++) {
-	 for (int i_r = 0; i_r < class_reg_count[i]; i_r++) {
-	    for (int c_r = MAX2(0, i_r - (class_sizes[c] - 1));
-		 c_r < MIN2(class_reg_count[c], i_r + class_sizes[i]);
-		 c_r++) {
+	 ra_class_add_reg(regs, classes[i], class_reg);
 
-	       if (0) {
-		  printf("%d/%d conflicts %d/%d\n",
-			 class_sizes[i], first_assigned_grf + i_r,
-			 class_sizes[c], first_assigned_grf + c_r);
-	       }
-
-	       ra_add_reg_conflict(regs,
-				   class_base_reg[i] + i_r,
-				   class_base_reg[c] + c_r);
-	    }
+	 for (int base_reg = i_r;
+	      base_reg < i_r + class_sizes[i];
+	      base_reg++) {
+	    ra_add_transitive_reg_conflict(regs, base_reg, class_reg);
 	 }
       }
    }
