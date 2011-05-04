@@ -199,14 +199,13 @@ struct pipe_video_decode_buffer
     */
    struct pipe_motionvector *(*get_mv_stream)(struct pipe_video_decode_buffer *decbuf, int ref_frame);
 
-#if 0
    /**
     * decode a bitstream
     */
    void (*decode_bitstream)(struct pipe_video_decode_buffer *decbuf,
-                            unsigned num_bufs,
-                            struct pipe_buffer **bitstream_buf);
-#endif
+                            unsigned num_bytes, const void *data,
+                            struct pipe_mpeg12_picture_desc *picture,
+                            unsigned num_ycbcr_blocks[3]);
 
    /**
     * unmap decoder buffer before flushing

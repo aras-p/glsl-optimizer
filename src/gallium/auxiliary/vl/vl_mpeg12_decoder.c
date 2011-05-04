@@ -346,6 +346,19 @@ vl_mpeg12_buffer_map(struct pipe_video_decode_buffer *buffer)
 
       buf->texels[i] = dec->pipe->transfer_map(dec->pipe, buf->tex_transfer[i]);
    }
+
+   if (dec->base.entrypoint == PIPE_VIDEO_ENTRYPOINT_BITSTREAM) {
+      struct pipe_ycbcr_block *ycbcr_stream[VL_MAX_PLANES];
+      struct pipe_motionvector *mv_stream[VL_MAX_REF_FRAMES];
+
+      for (i = 0; i < VL_MAX_PLANES; ++i)
+         ycbcr_stream[i] = vl_vb_get_ycbcr_stream(&buf->vertex_stream, i);
+
+      for (i = 0; i < VL_MAX_REF_FRAMES; ++i)
+         mv_stream[i] = vl_vb_get_mv_stream(&buf->vertex_stream, i);
+
+      vl_mpg12_bs_set_buffers(&buf->bs, ycbcr_stream, buf->texels, mv_stream);
+   }
 }
 
 static struct pipe_ycbcr_block *
@@ -387,6 +400,17 @@ vl_mpeg12_buffer_get_mv_stream(struct pipe_video_decode_buffer *buffer, int ref_
    assert(buf);
 
    return vl_vb_get_mv_stream(&buf->vertex_stream, ref_frame);
+}
+
+static void
+vl_mpeg12_buffer_decode_bitstream(struct pipe_video_decode_buffer *buffer,
+                                  unsigned num_bytes, const void *data,
+                                  struct pipe_mpeg12_picture_desc *picture,
+                                  unsigned num_ycbcr_blocks[3])
+{
+   struct vl_mpeg12_buffer *buf = (struct vl_mpeg12_buffer*)buffer;
+
+   vl_mpg12_bs_decode(&buf->bs, num_bytes, data, picture, num_ycbcr_blocks);
 }
 
 static void
@@ -462,6 +486,7 @@ vl_mpeg12_create_buffer(struct pipe_video_decoder *decoder)
    buffer->base.get_ycbcr_buffer = vl_mpeg12_buffer_get_ycbcr_buffer;
    buffer->base.get_mv_stream_stride = vl_mpeg12_buffer_get_mv_stream_stride;
    buffer->base.get_mv_stream = vl_mpeg12_buffer_get_mv_stream;
+   buffer->base.decode_bitstream = vl_mpeg12_buffer_decode_bitstream;
    buffer->base.unmap = vl_mpeg12_buffer_unmap;
 
    if (!vl_vb_init(&buffer->vertex_stream, dec->pipe,
@@ -478,6 +503,9 @@ vl_mpeg12_create_buffer(struct pipe_video_decoder *decoder)
 
    if (!init_zscan_buffer(buffer))
       goto error_zscan;
+
+   if (dec->base.entrypoint == PIPE_VIDEO_ENTRYPOINT_BITSTREAM)
+      vl_mpg12_bs_init(&buffer->bs, dec->base.width, dec->base.height);
 
    return &buffer->base;
 

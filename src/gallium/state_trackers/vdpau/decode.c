@@ -146,40 +146,56 @@ vlVdpDecoderRenderMpeg2(struct pipe_video_decoder *decoder,
                         uint32_t bitstream_buffer_count,
                         VdpBitstreamBuffer const *bitstream_buffers)
 {
+   struct pipe_mpeg12_picture_desc picture;
    struct pipe_video_buffer *ref_frames[2];
+   unsigned num_ycbcr_blocks[3] = { 0, 0, 0 };
+   unsigned i;
 
    debug_printf("[VDPAU] Decoding MPEG2\n");
 
    /* if surfaces equals VDP_STATUS_INVALID_HANDLE, they are not used */
-   if (picture_info->backward_reference ==  VDP_INVALID_HANDLE)
+   if (picture_info->forward_reference ==  VDP_INVALID_HANDLE)
       ref_frames[0] = NULL;
    else {
-      ref_frames[0] = ((vlVdpSurface *)vlGetDataHTAB(picture_info->backward_reference))->video_buffer;
+      ref_frames[0] = ((vlVdpSurface *)vlGetDataHTAB(picture_info->forward_reference))->video_buffer;
       if (!ref_frames[0])
          return VDP_STATUS_INVALID_HANDLE;
    }
 
-   if (picture_info->forward_reference ==  VDP_INVALID_HANDLE)
+   if (picture_info->backward_reference ==  VDP_INVALID_HANDLE)
       ref_frames[1] = NULL;
    else {
-      ref_frames[1] = ((vlVdpSurface *)vlGetDataHTAB(picture_info->forward_reference))->video_buffer;
+      ref_frames[1] = ((vlVdpSurface *)vlGetDataHTAB(picture_info->backward_reference))->video_buffer;
       if (!ref_frames[1])
          return VDP_STATUS_INVALID_HANDLE;
    }
 
-   //if (vlVdpMPEG2BitstreamToMacroblock(vpipe->screen, bitstream_buffers, bitstream_buffer_count,
-   //                                    &num_macroblocks, &pipe_macroblocks))
-   //{
-   //   debug_printf("[VDPAU] Error in frame-header. Skipping.\n");
-   //
-   //   ret = VDP_STATUS_OK;
-   //   goto skip_frame;
-   //}
+   memset(&picture, 0, sizeof(picture));
+   picture.picture_coding_type = picture_info->picture_coding_type;
+   picture.picture_structure = picture_info->picture_structure;
+   picture.frame_pred_frame_dct = picture_info->frame_pred_frame_dct;
+   picture.q_scale_type = picture_info->q_scale_type;
+   picture.alternate_scan = picture_info->alternate_scan;
+   picture.intra_dc_precision = picture_info->intra_dc_precision;
+   picture.intra_vlc_format = picture_info->intra_vlc_format;
+   picture.concealment_motion_vectors = picture_info->concealment_motion_vectors;
+   picture.f_code[0][0] = picture_info->f_code[0][0] - 1;
+   picture.f_code[0][1] = picture_info->f_code[0][1] - 1;
+   picture.f_code[1][0] = picture_info->f_code[1][0] - 1;
+   picture.f_code[1][1] = picture_info->f_code[1][1] - 1;
 
-   // TODO
-   //vpipe->set_decode_target(vpipe,t_surf);
-   //vpipe->decode_macroblocks(vpipe, p_surf, f_surf, num_macroblocks,
-   //                          (struct pipe_macroblock *)pipe_macroblocks, NULL);
+   picture.intra_quantizer_matrix = picture_info->intra_quantizer_matrix;
+   picture.non_intra_quantizer_matrix = picture_info->non_intra_quantizer_matrix;
+
+   buffer->map(buffer);
+
+   for (i = 0; i < bitstream_buffer_count; ++i)
+      buffer->decode_bitstream(buffer, bitstream_buffers[i].bitstream_bytes,
+                               bitstream_buffers[i].bitstream, &picture, num_ycbcr_blocks);
+
+   buffer->unmap(buffer);
+
+   decoder->flush_buffer(buffer, num_ycbcr_blocks, ref_frames, target);
 
    return VDP_STATUS_OK;
 }
@@ -218,8 +234,8 @@ vlVdpDecoderRender(VdpDecoder decoder,
    switch (vldecoder->decoder->profile)   {
    case PIPE_VIDEO_PROFILE_MPEG2_SIMPLE:
    case PIPE_VIDEO_PROFILE_MPEG2_MAIN:
-      return vlVdpDecoderRenderMpeg2(vldecoder->decoder, vldecoder->buffer,
-                                     vlsurf, (VdpPictureInfoMPEG1Or2 *)picture_info,
+      return vlVdpDecoderRenderMpeg2(vldecoder->decoder, vldecoder->buffer, vlsurf->video_buffer,
+                                     (VdpPictureInfoMPEG1Or2 *)picture_info,
                                      bitstream_buffer_count,bitstream_buffers);
       break;
 

@@ -30,6 +30,7 @@
 
 #include <pipe/p_video_context.h>
 
+#include "vl_mpeg12_bitstream.h"
 #include "vl_zscan.h"
 #include "vl_idct.h"
 #include "vl_mc.h"
@@ -80,6 +81,7 @@ struct vl_mpeg12_buffer
    struct pipe_video_buffer *idct_source;
    struct pipe_video_buffer *mc_source;
 
+   struct vl_mpg12_bs bs;
    struct vl_zscan_buffer zscan[VL_MAX_PLANES];
    struct vl_idct_buffer idct[VL_MAX_PLANES];
    struct vl_mc_buffer mc[VL_MAX_PLANES];

@@ -99,37 +99,43 @@ struct pipe_ycbcr_block
    enum pipe_mpeg12_dct_type coding:8;
 };
 
-#if 0
 struct pipe_picture_desc
 {
-   enum pipe_video_format format;
+   enum pipe_video_profile profile;
 };
 
 struct pipe_mpeg12_picture_desc
 {
    struct pipe_picture_desc base;
 
-   /* TODO: Use bitfields where possible? */
-   struct pipe_surface *forward_reference;
-   struct pipe_surface *backward_reference;
    unsigned picture_coding_type;
-   unsigned fcode;
-   unsigned intra_dc_precision;
    unsigned picture_structure;
-   unsigned top_field_first;
    unsigned frame_pred_frame_dct;
-   unsigned concealment_motion_vectors;
    unsigned q_scale_type;
-   unsigned intra_vlc_format;
    unsigned alternate_scan;
+   unsigned intra_dc_precision;
+   unsigned intra_vlc_format;
+   unsigned concealment_motion_vectors;
+   unsigned f_code[2][2];
+
+   bool mpeg1;
+   uint8_t *intra_quantizer_matrix;
+   uint8_t *non_intra_quantizer_matrix;
+
+   /* predictor for DC coefficients in intra blocks */
+   int16_t dc_dct_pred[3];
+
+   int quantizer_scale;
+
+#if 0
+   /* TODO: Use bitfields where possible? */
+   unsigned top_field_first;
    unsigned full_pel_forward_vector;
    unsigned full_pel_backward_vector;
-   struct pipe_buffer *intra_quantizer_matrix;
-   struct pipe_buffer *non_intra_quantizer_matrix;
    struct pipe_buffer *chroma_intra_quantizer_matrix;
    struct pipe_buffer *chroma_non_intra_quantizer_matrix;
-};
 #endif
+};
 
 #ifdef __cplusplus
 }
