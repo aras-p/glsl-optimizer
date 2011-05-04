@@ -1313,7 +1313,7 @@ get_mpeg1_non_intra_block(struct vl_mpg12_bs *bs, struct pipe_mpeg12_picture_des
 
 static inline void
 slice_intra_DCT(struct vl_mpg12_bs *bs, struct pipe_mpeg12_picture_desc * picture, int cc,
-                unsigned x, unsigned y, enum pipe_mpeg12_dct_type coding)
+                unsigned x, unsigned y, enum pipe_mpeg12_dct_type coding, int dc_dct_pred[3])
 {
    short *dest = bs->ycbcr_buffer[cc];
 
@@ -1326,12 +1326,12 @@ slice_intra_DCT(struct vl_mpg12_bs *bs, struct pipe_mpeg12_picture_desc * pictur
 
    /* Get the intra DC coefficient and inverse quantize it */
    if (cc == 0)
-      picture->dc_dct_pred[0] += get_luma_dc_dct_diff(bs);
+      dc_dct_pred[0] += get_luma_dc_dct_diff(bs);
    else
-      picture->dc_dct_pred[cc] += get_chroma_dc_dct_diff(bs);
+      dc_dct_pred[cc] += get_chroma_dc_dct_diff(bs);
 
    memset(dest, 0, sizeof(int16_t) * 64);
-   dest[0] = picture->dc_dct_pred[cc] << (3 - picture->intra_dc_precision);
+   dest[0] = dc_dct_pred[cc] << (3 - picture->intra_dc_precision);
    if (picture->mpeg1) {
       if (picture->picture_coding_type != D_TYPE)
           get_mpeg1_intra_block(bs, picture, dest);
@@ -1616,9 +1616,6 @@ slice_init(struct vl_mpg12_bs *bs, struct pipe_mpeg12_picture_desc * picture, in
    *y = (bs->vlc.buf & 0xFF) - 1;
    vl_vlc_restart(&bs->vlc);
 
-   //TODO conversion to signed format signed format
-   picture->dc_dct_pred[0] = picture->dc_dct_pred[1] = picture->dc_dct_pred[2] = 0;
-
    picture->quantizer_scale = get_quantizer_scale(bs, picture);
 
    /* ignore intra_slice and all the extra data */
@@ -1669,6 +1666,10 @@ decode_slice(struct vl_mpg12_bs *bs, struct pipe_mpeg12_picture_desc *picture)
 {
    struct pipe_motionvector mv_fwd, mv_bwd;
    enum pipe_mpeg12_dct_type dct_type;
+
+   /* predictor for DC coefficients in intra blocks */
+   int dc_dct_pred[3] = { 0, 0, 0 };
+
    int x, y;
 
    if (!slice_init(bs, picture, &x, &y))
@@ -1729,12 +1730,12 @@ decode_slice(struct vl_mpg12_bs *bs, struct pipe_mpeg12_picture_desc *picture)
          mv_bwd.top.weight = mv_bwd.bottom.weight = PIPE_VIDEO_MV_WEIGHT_MIN;
 
          // unravaled loop of 6 block(i) calls in macroblock()
-         slice_intra_DCT(bs, picture, 0, x*2+0, y*2+0, dct_type);
-         slice_intra_DCT(bs, picture, 0, x*2+1, y*2+0, dct_type);
-         slice_intra_DCT(bs, picture, 0, x*2+0, y*2+1, dct_type);
-         slice_intra_DCT(bs, picture, 0, x*2+1, y*2+1, dct_type);
-         slice_intra_DCT(bs, picture, 1, x, y, dct_type);
-         slice_intra_DCT(bs, picture, 2, x, y, dct_type);
+         slice_intra_DCT(bs, picture, 0, x*2+0, y*2+0, dct_type, dc_dct_pred);
+         slice_intra_DCT(bs, picture, 0, x*2+1, y*2+0, dct_type, dc_dct_pred);
+         slice_intra_DCT(bs, picture, 0, x*2+0, y*2+1, dct_type, dc_dct_pred);
+         slice_intra_DCT(bs, picture, 0, x*2+1, y*2+1, dct_type, dc_dct_pred);
+         slice_intra_DCT(bs, picture, 1, x, y, dct_type, dc_dct_pred);
+         slice_intra_DCT(bs, picture, 2, x, y, dct_type, dc_dct_pred);
 
          if (picture->picture_coding_type == D_TYPE) {
             vl_vlc_needbits(&bs->vlc);
@@ -1805,7 +1806,7 @@ decode_slice(struct vl_mpg12_bs *bs, struct pipe_mpeg12_picture_desc *picture)
                slice_non_intra_DCT(bs, picture, 2, x, y, dct_type); // cc2 croma
          }
 
-         picture->dc_dct_pred[0] = picture->dc_dct_pred[1] = picture->dc_dct_pred[2] = 0;
+         dc_dct_pred[0] = dc_dct_pred[1] = dc_dct_pred[2] = 0;
       }
 
       NEXT_MACROBLOCK;
@@ -1835,7 +1836,7 @@ decode_slice(struct vl_mpg12_bs *bs, struct pipe_mpeg12_picture_desc *picture)
       mba_inc += mba->mba;
       if (mba_inc) {
          //TODO  conversion to signed format signed format
-         picture->dc_dct_pred[0] = picture->dc_dct_pred[1] = picture->dc_dct_pred[2] = 0;
+         dc_dct_pred[0] = dc_dct_pred[1] = dc_dct_pred[2] = 0;
 
          switch(picture->picture_structure) {
          case FRAME_PICTURE:

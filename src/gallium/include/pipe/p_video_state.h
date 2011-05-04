@@ -122,9 +122,6 @@ struct pipe_mpeg12_picture_desc
    uint8_t *intra_quantizer_matrix;
    uint8_t *non_intra_quantizer_matrix;
 
-   /* predictor for DC coefficients in intra blocks */
-   int16_t dc_dct_pred[3];
-
    int quantizer_scale;
 
 #if 0
