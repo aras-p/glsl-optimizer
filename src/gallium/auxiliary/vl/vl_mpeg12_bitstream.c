@@ -480,21 +480,6 @@ static const uint8_t mpeg2_scan_alt_orig[64] =
    53,61,22,30,7,15,23,31,38,46,54,62,39,47,55,63
 };
 
-static uint8_t mpeg2_scan_alt_ptable[64];
-static uint8_t mpeg2_scan_norm_ptable[64];
-static uint8_t mpeg2_scan_orig_ptable[64];
-
-static inline void
-setup_scan_ptable( void )
-{
-   int i;
-   for (i=0; i<64; ++i) {
-      mpeg2_scan_norm_ptable[mpeg2_scan_norm_orig[i]] = mpeg2_scan_norm_orig[i];
-      mpeg2_scan_alt_ptable[mpeg2_scan_alt_orig[i]] = mpeg2_scan_alt_orig[i];
-      mpeg2_scan_orig_ptable[i] = i;
-   }
-}
-
 static const int non_linear_quantizer_scale[] = {
    0,  1,  2,  3,  4,  5,   6,   7,
    8, 10, 12, 14, 16, 18,  20,  22,
@@ -765,9 +750,8 @@ get_chroma_dc_dct_diff(struct vl_mpg12_bs *bs)
 static inline void
 get_intra_block_B14(struct vl_mpg12_bs *bs, struct pipe_mpeg12_picture_desc * picture, short *dest)
 {
-   int i, j, l, val;
+   int i, j, val;
    const uint8_t *scan;
-   uint8_t *scan_ptable;
    uint8_t *quant_matrix = picture->intra_quantizer_matrix;
    int quantizer_scale = picture->quantizer_scale;
    int mismatch;
@@ -775,10 +759,8 @@ get_intra_block_B14(struct vl_mpg12_bs *bs, struct pipe_mpeg12_picture_desc * pi
 
    if (!picture->alternate_scan) {
       scan =  mpeg2_scan_norm_orig;
-      scan_ptable = mpeg2_scan_norm_ptable;
    } else {
       scan = mpeg2_scan_alt_orig;
-      scan_ptable = mpeg2_scan_alt_ptable;
    }
 
    i = 0;
@@ -796,11 +778,11 @@ get_intra_block_B14(struct vl_mpg12_bs *bs, struct pipe_mpeg12_picture_desc * pi
             break;	/* end of block */
 
       normal_code:
-         l = scan_ptable[j = scan[i]];
+         j = scan[i];
 
          bs->vlc.buf <<= tab->len;
          bs->vlc.bits += tab->len + 1;
-         val = (tab->level * quantizer_scale * quant_matrix[l]) >> 4;
+         val = (tab->level * quantizer_scale * quant_matrix[j]) >> 4;
 
          /* if (bitstream_get (1)) val = -val; */
          val = (val ^ vl_vlc_sbits(&bs->vlc, 1)) - vl_vlc_sbits(&bs->vlc, 1);
@@ -828,11 +810,11 @@ get_intra_block_B14(struct vl_mpg12_bs *bs, struct pipe_mpeg12_picture_desc * pi
          if (i >= 64)
             break;	/* illegal, check needed to avoid buffer overflow */
 
-         l = scan_ptable[j = scan[i]];
+         j = scan[i];
 
          vl_vlc_dumpbits(&bs->vlc, 12);
          vl_vlc_needbits(&bs->vlc);
-         val = (vl_vlc_sbits(&bs->vlc, 12) * quantizer_scale * quant_matrix[l]) / 16;
+         val = (vl_vlc_sbits(&bs->vlc, 12) * quantizer_scale * quant_matrix[j]) / 16;
 
          SATURATE (val);
          dest[j] = val;
@@ -876,9 +858,8 @@ get_intra_block_B14(struct vl_mpg12_bs *bs, struct pipe_mpeg12_picture_desc * pi
 static inline void
 get_intra_block_B15(struct vl_mpg12_bs *bs, struct pipe_mpeg12_picture_desc * picture, short *dest)
 {
-   int i, j, l, val;
+   int i, j, val;
    const uint8_t *scan;
-   uint8_t *scan_ptable;
    uint8_t *quant_matrix = picture->intra_quantizer_matrix;
    int quantizer_scale = picture->quantizer_scale;
    int mismatch;
@@ -886,10 +867,8 @@ get_intra_block_B15(struct vl_mpg12_bs *bs, struct pipe_mpeg12_picture_desc * pi
 
    if (!picture->alternate_scan) {
       scan =  mpeg2_scan_norm_orig;
-      scan_ptable = mpeg2_scan_norm_ptable;
    } else {
       scan = mpeg2_scan_alt_orig;
-      scan_ptable = mpeg2_scan_alt_ptable;
    }
 
    i = 0;
@@ -906,10 +885,10 @@ get_intra_block_B15(struct vl_mpg12_bs *bs, struct pipe_mpeg12_picture_desc * pi
          if (i < 64) {
 
          normal_code:
-            l = scan_ptable[j = scan[i]];
+            j = scan[i];
             bs->vlc.buf <<= tab->len;
             bs->vlc.bits += tab->len + 1;
-            val = (tab->level * quantizer_scale * quant_matrix[l]) >> 4;
+            val = (tab->level * quantizer_scale * quant_matrix[j]) >> 4;
 
             /* if (bitstream_get (1)) val = -val; */
             val = (val ^ vl_vlc_sbits(&bs->vlc, 1)) - vl_vlc_sbits(&bs->vlc, 1);
@@ -936,11 +915,11 @@ get_intra_block_B15(struct vl_mpg12_bs *bs, struct pipe_mpeg12_picture_desc * pi
             if (i >= 64)
                 break;	/* illegal, check against buffer overflow */
 
-            l = scan_ptable[j = scan[i]];
+            j = scan[i];
 
             vl_vlc_dumpbits(&bs->vlc, 12);
             vl_vlc_needbits(&bs->vlc);
-            val = (vl_vlc_sbits(&bs->vlc, 12) * quantizer_scale * quant_matrix[l]) / 16;
+            val = (vl_vlc_sbits(&bs->vlc, 12) * quantizer_scale * quant_matrix[j]) / 16;
 
             SATURATE (val);
             dest[j] = val;
@@ -985,9 +964,8 @@ get_intra_block_B15(struct vl_mpg12_bs *bs, struct pipe_mpeg12_picture_desc * pi
 static inline void
 get_non_intra_block(struct vl_mpg12_bs *bs, struct pipe_mpeg12_picture_desc * picture, short *dest)
 {
-   int i, j, l, val;
+   int i, j, val;
    const uint8_t *scan;
-   uint8_t *scan_ptable;
    uint8_t *quant_matrix = picture->non_intra_quantizer_matrix;
    int quantizer_scale = picture->quantizer_scale;
    int mismatch;
@@ -998,10 +976,8 @@ get_non_intra_block(struct vl_mpg12_bs *bs, struct pipe_mpeg12_picture_desc * pi
 
    if (!picture->alternate_scan) {
       scan =  mpeg2_scan_norm_orig;
-      scan_ptable = mpeg2_scan_norm_ptable;
    } else {
       scan = mpeg2_scan_alt_orig;
-      scan_ptable = mpeg2_scan_alt_ptable;
    }
 
    vl_vlc_needbits(&bs->vlc);
@@ -1022,10 +998,10 @@ get_non_intra_block(struct vl_mpg12_bs *bs, struct pipe_mpeg12_picture_desc * pi
             break;	/* end of block */
 
       normal_code:
-         l = scan_ptable[j = scan[i]];
+         j = scan[i];
          bs->vlc.buf <<= tab->len;
          bs->vlc.bits += tab->len + 1;
-         val = ((2*tab->level+1) * quantizer_scale * quant_matrix[l]) >> 5;
+         val = ((2*tab->level+1) * quantizer_scale * quant_matrix[j]) >> 5;
 
          /* if (bitstream_get (1)) val = -val; */
          val = (val ^ vl_vlc_sbits(&bs->vlc, 1)) - vl_vlc_sbits(&bs->vlc, 1);
@@ -1056,12 +1032,12 @@ get_non_intra_block(struct vl_mpg12_bs *bs, struct pipe_mpeg12_picture_desc * pi
          if (i >= 64)
             break;	/* illegal, check needed to avoid buffer overflow */
 
-         l = scan_ptable[j = scan[i]];
+         j = scan[i];
 
          vl_vlc_dumpbits(&bs->vlc, 12);
          vl_vlc_needbits(&bs->vlc);
          val = 2 * (vl_vlc_sbits(&bs->vlc, 12) + vl_vlc_sbits(&bs->vlc, 1)) + 1;
-         val = (val * quantizer_scale * quant_matrix[l]) / 32;
+         val = (val * quantizer_scale * quant_matrix[j]) / 32;
 
          SATURATE (val);
          dest[j] = val;
@@ -1104,9 +1080,8 @@ get_non_intra_block(struct vl_mpg12_bs *bs, struct pipe_mpeg12_picture_desc * pi
 static inline void
 get_mpeg1_intra_block(struct vl_mpg12_bs *bs, struct pipe_mpeg12_picture_desc * picture, short *dest)
 {
-   int i, j, l, val;
+   int i, j, val;
    const uint8_t *scan;
-   uint8_t *scan_ptable;
    uint8_t *quant_matrix = picture->intra_quantizer_matrix;
    int quantizer_scale = picture->quantizer_scale;
    const DCTtab * tab;
@@ -1115,10 +1090,8 @@ get_mpeg1_intra_block(struct vl_mpg12_bs *bs, struct pipe_mpeg12_picture_desc * 
 
    if (!picture->alternate_scan) {
       scan =  mpeg2_scan_norm_orig;
-      scan_ptable = mpeg2_scan_norm_ptable;
    } else {
       scan = mpeg2_scan_alt_orig;
-      scan_ptable = mpeg2_scan_alt_ptable;
    }
 
    vl_vlc_needbits(&bs->vlc);
@@ -1133,10 +1106,10 @@ get_mpeg1_intra_block(struct vl_mpg12_bs *bs, struct pipe_mpeg12_picture_desc * 
             break;	/* end of block */
 
       normal_code:
-         l = scan_ptable[j = scan[i]];
+         j = scan[i];
          bs->vlc.buf <<= tab->len;
          bs->vlc.bits += tab->len + 1;
-         val = (tab->level * quantizer_scale * quant_matrix[l]) >> 4;
+         val = (tab->level * quantizer_scale * quant_matrix[j]) >> 4;
 
          /* oddification */
          val = (val - 1) | 1;
@@ -1166,7 +1139,7 @@ get_mpeg1_intra_block(struct vl_mpg12_bs *bs, struct pipe_mpeg12_picture_desc * 
          if (i >= 64)
             break;	/* illegal, check needed to avoid buffer overflow */
 
-         l = scan_ptable[j = scan[i]];
+         j = scan[i];
 
          vl_vlc_dumpbits(&bs->vlc, 12);
          vl_vlc_needbits(&bs->vlc);
@@ -1175,7 +1148,7 @@ get_mpeg1_intra_block(struct vl_mpg12_bs *bs, struct pipe_mpeg12_picture_desc * 
             vl_vlc_dumpbits(&bs->vlc, 8);
             val = vl_vlc_ubits(&bs->vlc, 8) + 2 * val;
          }
-         val = (val * quantizer_scale * quant_matrix[l]) / 16;
+         val = (val * quantizer_scale * quant_matrix[j]) / 16;
 
          /* oddification */
          val = (val + ~SBITS (val, 1)) | 1;
@@ -1219,9 +1192,8 @@ get_mpeg1_intra_block(struct vl_mpg12_bs *bs, struct pipe_mpeg12_picture_desc * 
 static inline void
 get_mpeg1_non_intra_block(struct vl_mpg12_bs *bs, struct pipe_mpeg12_picture_desc * picture, short *dest)
 {
-   int i, j, l, val;
+   int i, j, val;
    const uint8_t * scan;
-   uint8_t *scan_ptable;
    uint8_t *quant_matrix = picture->non_intra_quantizer_matrix;
    int quantizer_scale = picture->quantizer_scale;
    const DCTtab * tab;
@@ -1230,10 +1202,8 @@ get_mpeg1_non_intra_block(struct vl_mpg12_bs *bs, struct pipe_mpeg12_picture_des
 
    if (!picture->alternate_scan) {
       scan =  mpeg2_scan_norm_orig;
-      scan_ptable = mpeg2_scan_norm_ptable;
    } else {
       scan = mpeg2_scan_alt_orig;
-      scan_ptable = mpeg2_scan_alt_ptable;
    }
 
    vl_vlc_needbits(&bs->vlc);
@@ -1254,10 +1224,10 @@ get_mpeg1_non_intra_block(struct vl_mpg12_bs *bs, struct pipe_mpeg12_picture_des
             break;	/* end of block */
 
       normal_code:
-         l = scan_ptable[j = scan[i]];
+         j = scan[i];
          bs->vlc.buf <<= tab->len;
          bs->vlc.bits += tab->len + 1;
-         val = ((2*tab->level+1) * quantizer_scale * quant_matrix[l]) >> 5;
+         val = ((2*tab->level+1) * quantizer_scale * quant_matrix[j]) >> 5;
 
          /* oddification */
          val = (val - 1) | 1;
@@ -1290,7 +1260,7 @@ get_mpeg1_non_intra_block(struct vl_mpg12_bs *bs, struct pipe_mpeg12_picture_des
          if (i >= 64)
             break;	/* illegal, check needed to avoid buffer overflow */
 
-         l = scan_ptable[j = scan[i]];
+         j = scan[i];
 
          vl_vlc_dumpbits(&bs->vlc, 12);
          vl_vlc_needbits(&bs->vlc);
@@ -1300,7 +1270,7 @@ get_mpeg1_non_intra_block(struct vl_mpg12_bs *bs, struct pipe_mpeg12_picture_des
             val = vl_vlc_ubits(&bs->vlc, 8) + 2 * val;
          }
          val = 2 * (val + SBITS (val, 1)) + 1;
-         val = (val * quantizer_scale * quant_matrix[l]) / 32;
+         val = (val * quantizer_scale * quant_matrix[j]) / 32;
 
          /* oddification */
          val = (val + ~SBITS (val, 1)) | 1;
@@ -1907,8 +1877,6 @@ vl_mpg12_bs_init(struct vl_mpg12_bs *bs, unsigned width, unsigned height)
 
    bs->width = width;
    bs->height = height;
-
-   setup_scan_ptable();
 }
 
 void
