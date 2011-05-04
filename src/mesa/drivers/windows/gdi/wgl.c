@@ -390,7 +390,7 @@ static FIXED FixedFromDouble(double d)
 static BOOL wglUseFontBitmaps_FX(HDC fontDevice, DWORD firstChar,
                                  DWORD numChars, DWORD listBase)
 {
-#define VERIFY(a) a
+#define VERIFY(a) (void)(a)
     
     TEXTMETRIC metric;
     BITMAPINFO *dibInfo;
