@@ -181,9 +181,6 @@ fs_visitor::virtual_grf_alloc(int size)
 	 virtual_grf_array_size *= 2;
       virtual_grf_sizes = reralloc(mem_ctx, virtual_grf_sizes, int,
 				   virtual_grf_array_size);
-
-      /* This slot is always unused. */
-      virtual_grf_sizes[0] = 0;
    }
    virtual_grf_sizes[virtual_grf_next] = size;
    return virtual_grf_next++;
@@ -985,7 +982,7 @@ fs_visitor::calculate_live_intervals()
 	 }
       } else {
 	 for (unsigned int i = 0; i < 3; i++) {
-	    if (inst->src[i].file == GRF && inst->src[i].reg != 0) {
+	    if (inst->src[i].file == GRF) {
 	       int reg = inst->src[i].reg;
 
 	       if (!loop_depth) {
@@ -1001,7 +998,7 @@ fs_visitor::calculate_live_intervals()
 	       }
 	    }
 	 }
-	 if (inst->dst.file == GRF && inst->dst.reg != 0) {
+	 if (inst->dst.file == GRF) {
 	    int reg = inst->dst.reg;
 
 	    if (!loop_depth) {
@@ -1715,7 +1712,7 @@ fs_visitor::run()
       if (0) {
 	 /* Debug of register spilling: Go spill everything. */
 	 int virtual_grf_count = virtual_grf_next;
-	 for (int i = 1; i < virtual_grf_count; i++) {
+	 for (int i = 0; i < virtual_grf_count; i++) {
 	    spill_reg(i);
 	 }
       }

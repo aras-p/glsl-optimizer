@@ -402,7 +402,7 @@ public:
       this->base_ir = NULL;
 
       this->virtual_grf_sizes = NULL;
-      this->virtual_grf_next = 1;
+      this->virtual_grf_next = 0;
       this->virtual_grf_array_size = 0;
       this->virtual_grf_def = NULL;
       this->virtual_grf_use = NULL;

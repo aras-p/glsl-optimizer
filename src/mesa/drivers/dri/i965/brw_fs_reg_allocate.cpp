@@ -50,7 +50,7 @@ extern "C" {
 static void
 assign_reg(int *reg_hw_locations, fs_reg *reg, int reg_width)
 {
-   if (reg->file == GRF && reg->reg != 0) {
+   if (reg->file == GRF) {
       assert(reg->reg_offset >= 0);
       reg->hw_reg = reg_hw_locations[reg->reg] + reg->reg_offset * reg_width;
       reg->reg = 0;
@@ -60,20 +60,17 @@ assign_reg(int *reg_hw_locations, fs_reg *reg, int reg_width)
 void
 fs_visitor::assign_regs_trivial()
 {
-   int last_grf = 0;
-   int hw_reg_mapping[this->virtual_grf_next];
+   int hw_reg_mapping[this->virtual_grf_next + 1];
    int i;
    int reg_width = c->dispatch_width / 8;
 
-   hw_reg_mapping[0] = 0;
    /* Note that compressed instructions require alignment to 2 registers. */
-   hw_reg_mapping[1] = ALIGN(this->first_non_payload_grf, reg_width);
-   for (i = 2; i < this->virtual_grf_next; i++) {
+   hw_reg_mapping[0] = ALIGN(this->first_non_payload_grf, reg_width);
+   for (i = 1; i <= this->virtual_grf_next; i++) {
       hw_reg_mapping[i] = (hw_reg_mapping[i - 1] +
 			   this->virtual_grf_sizes[i - 1] * reg_width);
    }
-   last_grf = hw_reg_mapping[i - 1] + (this->virtual_grf_sizes[i - 1] *
-				       reg_width);
+   this->grf_used = hw_reg_mapping[this->virtual_grf_next];
 
    foreach_list(node, &this->instructions) {
       fs_inst *inst = (fs_inst *)node;
@@ -83,12 +80,11 @@ fs_visitor::assign_regs_trivial()
       assign_reg(hw_reg_mapping, &inst->src[1], reg_width);
    }
 
-   if (last_grf >= BRW_MAX_GRF) {
+   if (this->grf_used >= BRW_MAX_GRF) {
       fail("Ran out of regs on trivial allocator (%d/%d)\n",
-	   last_grf, BRW_MAX_GRF);
+	   this->grf_used, BRW_MAX_GRF);
    }
 
-   this->grf_used = last_grf + reg_width;
 }
 
 bool
@@ -101,7 +97,7 @@ fs_visitor::assign_regs()
     * for reg_width == 2.
     */
    int reg_width = c->dispatch_width / 8;
-   int hw_reg_mapping[this->virtual_grf_next + 1];
+   int hw_reg_mapping[this->virtual_grf_next];
    int first_assigned_grf = ALIGN(this->first_non_payload_grf, reg_width);
    int base_reg_count = (BRW_MAX_GRF - first_assigned_grf) / reg_width;
    int class_sizes[base_reg_count];
@@ -125,7 +121,7 @@ fs_visitor::assign_regs()
        */
       class_sizes[class_count++] = 2;
    }
-   for (int r = 1; r < this->virtual_grf_next; r++) {
+   for (int r = 0; r < this->virtual_grf_next; r++) {
       int i;
 
       for (i = 0; i < class_count; i++) {
@@ -195,12 +191,8 @@ fs_visitor::assign_regs()
 
    struct ra_graph *g = ra_alloc_interference_graph(regs,
 						    this->virtual_grf_next);
-   /* Node 0 is just a placeholder to keep virtual_grf[] mapping 1:1
-    * with nodes.
-    */
-   ra_set_node_class(g, 0, classes[0]);
 
-   for (int i = 1; i < this->virtual_grf_next; i++) {
+   for (int i = 0; i < this->virtual_grf_next; i++) {
       for (int c = 0; c < class_count; c++) {
 	 if (class_sizes[c] == this->virtual_grf_sizes[i]) {
 	    if (aligned_pair_class >= 0 &&
@@ -213,7 +205,7 @@ fs_visitor::assign_regs()
 	 }
       }
 
-      for (int j = 1; j < i; j++) {
+      for (int j = 0; j < i; j++) {
 	 if (virtual_grf_interferes(i, j)) {
 	    ra_add_node_interference(g, i, j);
 	 }
@@ -248,8 +240,7 @@ fs_visitor::assign_regs()
     * numbers.
     */
    this->grf_used = first_assigned_grf;
-   hw_reg_mapping[0] = 0; /* unused */
-   for (int i = 1; i < this->virtual_grf_next; i++) {
+   for (int i = 0; i < this->virtual_grf_next; i++) {
       int reg = ra_get_node_reg(g, i);
       int hw_reg = -1;
 

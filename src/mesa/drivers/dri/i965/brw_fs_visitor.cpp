@@ -142,9 +142,7 @@ fs_visitor::visit(ir_dereference_array *ir)
    this->result.type = brw_type_for_base_type(ir->type);
 
    if (index) {
-      assert(this->result.file == UNIFORM ||
-	     (this->result.file == GRF &&
-	      this->result.reg != 0));
+      assert(this->result.file == UNIFORM || this->result.file == GRF);
       this->result.reg_offset += index->value.i[0] * element_size;
    } else {
       assert(!"FINISHME: non-constant array element");
