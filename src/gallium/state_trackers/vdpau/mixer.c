@@ -48,7 +48,7 @@ vlVdpVideoMixerCreate(VdpDevice device,
    VdpStatus ret;
    float csc[16];
 
-   debug_printf("[VDPAU] Creating VideoMixer\n");
+   VDPAU_MSG(VDPAU_TRACE, "[VDPAU] Creating VideoMixer\n");
 
    vlVdpDevice *dev = vlGetDataHTAB(device);
    if (!dev)
@@ -91,7 +91,7 @@ vlVdpVideoMixerDestroy(VdpVideoMixer mixer)
 {
    vlVdpVideoMixer *vmixer;
 
-   debug_printf("[VDPAU] Destroying VideoMixer\n");
+   VDPAU_MSG(VDPAU_TRACE, "[VDPAU] Destroying VideoMixer\n");
 
    vmixer = vlGetDataHTAB(mixer);
    if (!vmixer)
@@ -110,7 +110,7 @@ vlVdpVideoMixerSetFeatureEnables(VdpVideoMixer mixer,
                                  VdpVideoMixerFeature const *features,
                                  VdpBool const *feature_enables)
 {
-   debug_printf("[VDPAU] Setting VideoMixer features\n");
+   VDPAU_MSG(VDPAU_TRACE, "[VDPAU] Setting VideoMixer features\n");
 
    if (!(features && feature_enables))
       return VDP_STATUS_INVALID_POINTER;
@@ -228,7 +228,7 @@ vlVdpGenerateCSCMatrix(VdpProcamp *procamp,
                        VdpColorStandard standard,
                        VdpCSCMatrix *csc_matrix)
 {
-   debug_printf("[VDPAU] Generating CSCMatrix\n");
+   VDPAU_MSG(VDPAU_TRACE, "[VDPAU] Generating CSCMatrix\n");
    if (!(csc_matrix && procamp))
       return VDP_STATUS_INVALID_POINTER;
 

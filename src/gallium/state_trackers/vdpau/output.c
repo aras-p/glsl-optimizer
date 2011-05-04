@@ -46,7 +46,7 @@ vlVdpOutputSurfaceCreate(VdpDevice device,
 
    vlVdpOutputSurface *vlsurface = NULL;
 
-   debug_printf("[VDPAU] Creating output surface\n");
+   VDPAU_MSG(VDPAU_TRACE, "[VDPAU] Creating output surface\n");
    if (!(width && height))
       return VDP_STATUS_INVALID_SIZE;
 
@@ -110,7 +110,7 @@ vlVdpOutputSurfaceDestroy(VdpOutputSurface surface)
 {
    vlVdpOutputSurface *vlsurface;
 
-   debug_printf("[VDPAU] Destroying output surface\n");
+   VDPAU_MSG(VDPAU_TRACE, "[VDPAU] Destroying output surface\n");
 
    vlsurface = vlGetDataHTAB(surface);
    if (!vlsurface)

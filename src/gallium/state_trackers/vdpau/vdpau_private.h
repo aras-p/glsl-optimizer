@@ -28,12 +28,17 @@
 #ifndef VDPAU_PRIVATE_H
 #define VDPAU_PRIVATE_H
 
+#include <assert.h>
+
 #include <vdpau/vdpau.h>
 #include <vdpau/vdpau_x11.h>
+
 #include <pipe/p_compiler.h>
 #include <pipe/p_video_context.h>
+
+#include <util/u_debug.h>
+
 #include <vl_winsys.h>
-#include <assert.h>
 
 #define INFORMATION G3DVL VDPAU Driver Shared Library version VER_MAJOR.VER_MINOR
 #define QUOTEME(x) #x
@@ -287,5 +292,26 @@ VdpVideoMixerGetParameterValues vlVdpVideoMixerGetParameterValues;
 VdpVideoMixerGetAttributeValues vlVdpVideoMixerGetAttributeValues;
 VdpVideoMixerDestroy vlVdpVideoMixerDestroy;
 VdpGenerateCSCMatrix vlVdpGenerateCSCMatrix;
+
+#define VDPAU_OUT   0
+#define VDPAU_ERR   1
+#define VDPAU_WARN  2
+#define VDPAU_TRACE 3
+
+static inline void VDPAU_MSG(unsigned int level, const char *fmt, ...)
+{
+   static int debug_level = -1;
+
+   if (debug_level == -1) {
+      debug_level = MAX2(debug_get_num_option("VDPAU_DEBUG", 0), 0);
+   }
+
+   if (level <= debug_level) {
+      va_list ap;
+      va_start(ap, fmt);
+      _debug_vprintf(fmt, ap);
+      va_end(ap);
+   }
+}
 
 #endif // VDPAU_PRIVATE_H

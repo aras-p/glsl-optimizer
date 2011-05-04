@@ -43,7 +43,7 @@ vlVdpPresentationQueueCreate(VdpDevice device,
    struct pipe_video_context *context;
    VdpStatus ret;
 
-   _debug_printf("[VDPAU] Creating PresentationQueue\n");
+   VDPAU_MSG(VDPAU_TRACE, "[VDPAU] Creating PresentationQueue\n");
 
    if (!presentation_queue)
       return VDP_STATUS_INVALID_POINTER;
@@ -91,7 +91,7 @@ vlVdpPresentationQueueDestroy(VdpPresentationQueue presentation_queue)
 {
    vlVdpPresentationQueue *pq;
 
-   _debug_printf("[VDPAU] Destroying PresentationQueue\n");
+   VDPAU_MSG(VDPAU_TRACE, "[VDPAU] Destroying PresentationQueue\n");
 
    pq = vlGetDataHTAB(presentation_queue);
    if (!pq)
@@ -183,7 +183,7 @@ vlVdpPresentationQueueDisplay(VdpPresentationQueue presentation_queue,
 
       sprintf(cmd, "xwd -id %d -out vdpau_frame_%08d.xwd", (int)pq->drawable, ++framenum);
       if (system(cmd) != 0)
-         _debug_printf("[XvMC] Dumping surface %d failed.\n", surface);
+         VDPAU_MSG(VDPAU_TRACE, "[VDPAU] Dumping surface %d failed.\n", surface);
    }
 
    return VDP_STATUS_OK;

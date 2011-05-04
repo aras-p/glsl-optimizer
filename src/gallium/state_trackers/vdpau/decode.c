@@ -46,7 +46,7 @@ vlVdpDecoderCreate(VdpDevice device,
    vlVdpDecoder *vldecoder;
    VdpStatus ret;
 
-   debug_printf("[VDPAU] Creating decoder\n");
+   VDPAU_MSG(VDPAU_TRACE, "[VDPAU] Creating decoder\n");
 
    if (!decoder)
       return VDP_STATUS_INVALID_POINTER;
@@ -95,7 +95,7 @@ vlVdpDecoderCreate(VdpDevice device,
       goto error_handle;
    }
 
-   debug_printf("[VDPAU] Decoder created succesfully\n");
+   VDPAU_MSG(VDPAU_TRACE, "[VDPAU] Decoder created succesfully\n");
 
    return VDP_STATUS_OK;
 
@@ -115,7 +115,7 @@ vlVdpDecoderDestroy(VdpDecoder decoder)
 {
    vlVdpDecoder *vldecoder;
 
-   debug_printf("[VDPAU] Destroying decoder\n");
+   VDPAU_MSG(VDPAU_TRACE, "[VDPAU] Destroying decoder\n");
 
    vldecoder = (vlVdpDecoder *)vlGetDataHTAB(decoder);
    if (!vldecoder)
@@ -151,7 +151,7 @@ vlVdpDecoderRenderMpeg2(struct pipe_video_decoder *decoder,
    unsigned num_ycbcr_blocks[3] = { 0, 0, 0 };
    unsigned i;
 
-   debug_printf("[VDPAU] Decoding MPEG2\n");
+   VDPAU_MSG(VDPAU_TRACE, "[VDPAU] Decoding MPEG2\n");
 
    /* if surfaces equals VDP_STATUS_INVALID_HANDLE, they are not used */
    if (picture_info->forward_reference ==  VDP_INVALID_HANDLE)
@@ -210,7 +210,7 @@ vlVdpDecoderRender(VdpDecoder decoder,
    vlVdpDecoder *vldecoder;
    vlVdpSurface *vlsurf;
 
-   debug_printf("[VDPAU] Decoding\n");
+   VDPAU_MSG(VDPAU_TRACE, "[VDPAU] Decoding\n");
 
    if (!(picture_info && bitstream_buffers))
       return VDP_STATUS_INVALID_POINTER;

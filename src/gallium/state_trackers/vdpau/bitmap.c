@@ -26,8 +26,8 @@
  **************************************************************************/
 
 #include <vdpau/vdpau.h>
+
 #include "vdpau_private.h"
-#include <util/u_debug.h>
 
 VdpStatus
 vlVdpBitmapSurfaceCreate(VdpDevice device,
@@ -36,7 +36,7 @@ vlVdpBitmapSurfaceCreate(VdpDevice device,
                          VdpBool frequently_accessed,
                          VdpBitmapSurface *surface)
 {
-   debug_printf("[VDPAU] Creating a bitmap surface\n");
+   VDPAU_MSG(VDPAU_TRACE, "[VDPAU] Creating a bitmap surface\n");
    if (!surface)
       return VDP_STATUS_INVALID_POINTER;
 
