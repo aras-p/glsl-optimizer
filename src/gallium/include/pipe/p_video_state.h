@@ -122,8 +122,6 @@ struct pipe_mpeg12_picture_desc
    uint8_t *intra_quantizer_matrix;
    uint8_t *non_intra_quantizer_matrix;
 
-   int quantizer_scale;
-
 #if 0
    /* TODO: Use bitfields where possible? */
    unsigned top_field_first;

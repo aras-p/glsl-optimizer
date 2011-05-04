@@ -748,12 +748,12 @@ get_chroma_dc_dct_diff(struct vl_mpg12_bs *bs)
 }
 
 static inline void
-get_intra_block_B14(struct vl_mpg12_bs *bs, struct pipe_mpeg12_picture_desc * picture, short *dest)
+get_intra_block_B14(struct vl_mpg12_bs *bs, struct pipe_mpeg12_picture_desc * picture,
+                    int quantizer_scale, short *dest)
 {
    int i, j, val;
    const uint8_t *scan;
    uint8_t *quant_matrix = picture->intra_quantizer_matrix;
-   int quantizer_scale = picture->quantizer_scale;
    int mismatch;
    const DCTtab *tab;
 
@@ -856,12 +856,12 @@ get_intra_block_B14(struct vl_mpg12_bs *bs, struct pipe_mpeg12_picture_desc * pi
 }
 
 static inline void
-get_intra_block_B15(struct vl_mpg12_bs *bs, struct pipe_mpeg12_picture_desc * picture, short *dest)
+get_intra_block_B15(struct vl_mpg12_bs *bs, struct pipe_mpeg12_picture_desc * picture,
+                    int quantizer_scale, short *dest)
 {
    int i, j, val;
    const uint8_t *scan;
    uint8_t *quant_matrix = picture->intra_quantizer_matrix;
-   int quantizer_scale = picture->quantizer_scale;
    int mismatch;
    const DCTtab * tab;
 
@@ -962,12 +962,12 @@ get_intra_block_B15(struct vl_mpg12_bs *bs, struct pipe_mpeg12_picture_desc * pi
 }
 
 static inline void
-get_non_intra_block(struct vl_mpg12_bs *bs, struct pipe_mpeg12_picture_desc * picture, short *dest)
+get_non_intra_block(struct vl_mpg12_bs *bs, struct pipe_mpeg12_picture_desc * picture,
+                    int quantizer_scale, short *dest)
 {
    int i, j, val;
    const uint8_t *scan;
    uint8_t *quant_matrix = picture->non_intra_quantizer_matrix;
-   int quantizer_scale = picture->quantizer_scale;
    int mismatch;
    const DCTtab *tab;
 
@@ -1078,12 +1078,12 @@ get_non_intra_block(struct vl_mpg12_bs *bs, struct pipe_mpeg12_picture_desc * pi
 }
 
 static inline void
-get_mpeg1_intra_block(struct vl_mpg12_bs *bs, struct pipe_mpeg12_picture_desc * picture, short *dest)
+get_mpeg1_intra_block(struct vl_mpg12_bs *bs, struct pipe_mpeg12_picture_desc * picture,
+                      int quantizer_scale, short *dest)
 {
    int i, j, val;
    const uint8_t *scan;
    uint8_t *quant_matrix = picture->intra_quantizer_matrix;
-   int quantizer_scale = picture->quantizer_scale;
    const DCTtab * tab;
 
    i = 0;
@@ -1190,12 +1190,12 @@ get_mpeg1_intra_block(struct vl_mpg12_bs *bs, struct pipe_mpeg12_picture_desc * 
 }
 
 static inline void
-get_mpeg1_non_intra_block(struct vl_mpg12_bs *bs, struct pipe_mpeg12_picture_desc * picture, short *dest)
+get_mpeg1_non_intra_block(struct vl_mpg12_bs *bs, struct pipe_mpeg12_picture_desc * picture,
+                          int quantizer_scale, short *dest)
 {
    int i, j, val;
    const uint8_t * scan;
    uint8_t *quant_matrix = picture->non_intra_quantizer_matrix;
-   int quantizer_scale = picture->quantizer_scale;
    const DCTtab * tab;
 
    i = -1;
@@ -1312,8 +1312,8 @@ get_mpeg1_non_intra_block(struct vl_mpg12_bs *bs, struct pipe_mpeg12_picture_des
 }
 
 static inline void
-slice_intra_DCT(struct vl_mpg12_bs *bs, struct pipe_mpeg12_picture_desc * picture, int cc,
-                unsigned x, unsigned y, enum pipe_mpeg12_dct_type coding, int dc_dct_pred[3])
+slice_intra_DCT(struct vl_mpg12_bs *bs, struct pipe_mpeg12_picture_desc * picture, int cc, unsigned x, unsigned y,
+                enum pipe_mpeg12_dct_type coding, int quantizer_scale, int dc_dct_pred[3])
 {
    short *dest = bs->ycbcr_buffer[cc];
 
@@ -1334,11 +1334,11 @@ slice_intra_DCT(struct vl_mpg12_bs *bs, struct pipe_mpeg12_picture_desc * pictur
    dest[0] = dc_dct_pred[cc] << (3 - picture->intra_dc_precision);
    if (picture->mpeg1) {
       if (picture->picture_coding_type != D_TYPE)
-          get_mpeg1_intra_block(bs, picture, dest);
+          get_mpeg1_intra_block(bs, picture, quantizer_scale, dest);
    } else if (picture->intra_vlc_format)
-      get_intra_block_B15(bs, picture, dest);
+      get_intra_block_B15(bs, picture, quantizer_scale, dest);
    else
-      get_intra_block_B14(bs, picture, dest);
+      get_intra_block_B14(bs, picture, quantizer_scale, dest);
 
    bs->num_ycbcr_blocks[cc]++;
    bs->ycbcr_stream[cc]++;
@@ -1347,7 +1347,7 @@ slice_intra_DCT(struct vl_mpg12_bs *bs, struct pipe_mpeg12_picture_desc * pictur
 
 static inline void
 slice_non_intra_DCT(struct vl_mpg12_bs *bs, struct pipe_mpeg12_picture_desc * picture, int cc,
-                    unsigned x, unsigned y, enum pipe_mpeg12_dct_type coding)
+                    unsigned x, unsigned y, int quantizer_scale, enum pipe_mpeg12_dct_type coding)
 {
    short *dest = bs->ycbcr_buffer[cc];
 
@@ -1358,9 +1358,9 @@ slice_non_intra_DCT(struct vl_mpg12_bs *bs, struct pipe_mpeg12_picture_desc * pi
 
    memset(dest, 0, sizeof(int16_t) * 64);
    if (picture->mpeg1)
-      get_mpeg1_non_intra_block(bs, picture, dest);
+      get_mpeg1_non_intra_block(bs, picture, quantizer_scale, dest);
    else
-      get_non_intra_block(bs, picture, dest);
+      get_non_intra_block(bs, picture, quantizer_scale, dest);
 
    bs->num_ycbcr_blocks[cc]++;
    bs->ycbcr_stream[cc]++;
@@ -1604,7 +1604,8 @@ do {				                \
 } while (0)
 
 static inline bool
-slice_init(struct vl_mpg12_bs *bs, struct pipe_mpeg12_picture_desc * picture, int *x, int *y)
+slice_init(struct vl_mpg12_bs *bs, struct pipe_mpeg12_picture_desc * picture,
+           int *quantizer_scale, int *x, int *y)
 {
    const MBAtab * mba;
 
@@ -1616,7 +1617,7 @@ slice_init(struct vl_mpg12_bs *bs, struct pipe_mpeg12_picture_desc * picture, in
    *y = (bs->vlc.buf & 0xFF) - 1;
    vl_vlc_restart(&bs->vlc);
 
-   picture->quantizer_scale = get_quantizer_scale(bs, picture);
+   *quantizer_scale = get_quantizer_scale(bs, picture);
 
    /* ignore intra_slice and all the extra data */
    while (bs->vlc.buf & 0x80000000) {
@@ -1669,10 +1670,11 @@ decode_slice(struct vl_mpg12_bs *bs, struct pipe_mpeg12_picture_desc *picture)
 
    /* predictor for DC coefficients in intra blocks */
    int dc_dct_pred[3] = { 0, 0, 0 };
+   int quantizer_scale;
 
    int x, y;
 
-   if (!slice_init(bs, picture, &x, &y))
+   if (!slice_init(bs, picture, &quantizer_scale, &x, &y))
       return false;
 
    mv_fwd.top.x = mv_fwd.top.y = mv_fwd.bottom.x = mv_fwd.bottom.y = 0;
@@ -1712,7 +1714,7 @@ decode_slice(struct vl_mpg12_bs *bs, struct pipe_mpeg12_picture_desc *picture)
 
       /* maybe integrate MACROBLOCK_QUANT test into get_macroblock_modes ? */
       if (macroblock_modes & MACROBLOCK_QUANT)
-         picture->quantizer_scale = get_quantizer_scale(bs, picture);
+         quantizer_scale = get_quantizer_scale(bs, picture);
 
       if (macroblock_modes & MACROBLOCK_INTRA) {
 
@@ -1730,12 +1732,12 @@ decode_slice(struct vl_mpg12_bs *bs, struct pipe_mpeg12_picture_desc *picture)
          mv_bwd.top.weight = mv_bwd.bottom.weight = PIPE_VIDEO_MV_WEIGHT_MIN;
 
          // unravaled loop of 6 block(i) calls in macroblock()
-         slice_intra_DCT(bs, picture, 0, x*2+0, y*2+0, dct_type, dc_dct_pred);
-         slice_intra_DCT(bs, picture, 0, x*2+1, y*2+0, dct_type, dc_dct_pred);
-         slice_intra_DCT(bs, picture, 0, x*2+0, y*2+1, dct_type, dc_dct_pred);
-         slice_intra_DCT(bs, picture, 0, x*2+1, y*2+1, dct_type, dc_dct_pred);
-         slice_intra_DCT(bs, picture, 1, x, y, dct_type, dc_dct_pred);
-         slice_intra_DCT(bs, picture, 2, x, y, dct_type, dc_dct_pred);
+         slice_intra_DCT(bs, picture, 0, x*2+0, y*2+0, dct_type, quantizer_scale, dc_dct_pred);
+         slice_intra_DCT(bs, picture, 0, x*2+1, y*2+0, dct_type, quantizer_scale, dc_dct_pred);
+         slice_intra_DCT(bs, picture, 0, x*2+0, y*2+1, dct_type, quantizer_scale, dc_dct_pred);
+         slice_intra_DCT(bs, picture, 0, x*2+1, y*2+1, dct_type, quantizer_scale, dc_dct_pred);
+         slice_intra_DCT(bs, picture, 1, x, y, dct_type, quantizer_scale, dc_dct_pred);
+         slice_intra_DCT(bs, picture, 2, x, y, dct_type, quantizer_scale, dc_dct_pred);
 
          if (picture->picture_coding_type == D_TYPE) {
             vl_vlc_needbits(&bs->vlc);
@@ -1793,17 +1795,17 @@ decode_slice(struct vl_mpg12_bs *bs, struct pipe_mpeg12_picture_desc *picture)
 
             // TODO  optimize not fully used for idct accel only mc.
             if (coded_block_pattern & 0x20)
-               slice_non_intra_DCT(bs, picture, 0, x*2+0, y*2+0, dct_type); // cc0  luma 0
+               slice_non_intra_DCT(bs, picture, 0, x*2+0, y*2+0, quantizer_scale, dct_type); // cc0  luma 0
             if (coded_block_pattern & 0x10)
-               slice_non_intra_DCT(bs, picture, 0, x*2+1, y*2+0, dct_type); // cc0 luma 1
+               slice_non_intra_DCT(bs, picture, 0, x*2+1, y*2+0, quantizer_scale, dct_type); // cc0 luma 1
             if (coded_block_pattern & 0x08)
-               slice_non_intra_DCT(bs, picture, 0, x*2+0, y*2+1, dct_type); // cc0 luma 2
+               slice_non_intra_DCT(bs, picture, 0, x*2+0, y*2+1, quantizer_scale, dct_type); // cc0 luma 2
             if (coded_block_pattern & 0x04)
-               slice_non_intra_DCT(bs, picture, 0, x*2+1, y*2+1, dct_type); // cc0 luma 3
+               slice_non_intra_DCT(bs, picture, 0, x*2+1, y*2+1, quantizer_scale, dct_type); // cc0 luma 3
             if (coded_block_pattern & 0x2)
-               slice_non_intra_DCT(bs, picture, 1, x, y, dct_type); // cc1 croma
+               slice_non_intra_DCT(bs, picture, 1, x, y, quantizer_scale, dct_type); // cc1 croma
             if (coded_block_pattern & 0x1)
-               slice_non_intra_DCT(bs, picture, 2, x, y, dct_type); // cc2 croma
+               slice_non_intra_DCT(bs, picture, 2, x, y, quantizer_scale, dct_type); // cc2 croma
          }
 
          dc_dct_pred[0] = dc_dct_pred[1] = dc_dct_pred[2] = 0;
