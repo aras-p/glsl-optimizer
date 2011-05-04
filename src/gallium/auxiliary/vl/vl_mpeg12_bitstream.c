@@ -1592,12 +1592,12 @@ do {							\
 
 #define NEXT_MACROBLOCK		                \
 do {				                \
-   bs->mv_stream[0][x+y*bs->width/16] = mv_fwd; \
-   bs->mv_stream[1][x+y*bs->width/16] = mv_bwd; \
+   bs->mv_stream[0][x+y*bs->width] = mv_fwd;    \
+   bs->mv_stream[1][x+y*bs->width] = mv_bwd;    \
    ++x;				                \
-   if (x == bs->width/16) {	                \
+   if (x == bs->width) {	                \
       ++y;                                      \
-      if (y >= bs->height/16)                   \
+      if (y >= bs->height)                      \
          return false;                          \
       x = 0;                                    \
    }                                            \
@@ -1613,7 +1613,7 @@ slice_init(struct vl_mpg12_bs *bs, struct pipe_mpeg12_picture_desc * picture, in
       if(!vl_vlc_getbyte(&bs->vlc))
          return false;
    }
-   *y = ((bs->vlc.buf & 0xFF) - 1) * 16;
+   *y = (bs->vlc.buf & 0xFF) - 1;
    vl_vlc_restart(&bs->vlc);
 
    //TODO conversion to signed format signed format
@@ -1652,11 +1652,11 @@ slice_init(struct vl_mpg12_bs *bs, struct pipe_mpeg12_picture_desc * picture, in
       }
    }
    vl_vlc_dumpbits(&bs->vlc, mba->len + 1);
-   *x = (*x + mba->mba) << 4;
+   *x += mba->mba;
 
    while (*x >= bs->width) {
       *x -= bs->width;
-      *y += 16;
+      (*y)++;
    }
    if (*y > bs->height)
       return false;
@@ -1679,9 +1679,6 @@ decode_slice(struct vl_mpg12_bs *bs, struct pipe_mpeg12_picture_desc *picture)
 
    mv_bwd.top.x = mv_bwd.top.y = mv_bwd.bottom.x = mv_bwd.bottom.y = 0;
    mv_bwd.top.field_select = mv_bwd.bottom.field_select = PIPE_VIDEO_FRAME;
-
-   x /= 16;
-   y /= 16;
 
    while (1) {
       int macroblock_modes;
@@ -1897,7 +1894,7 @@ vl_mpg12_bs_set_buffers(struct vl_mpg12_bs *bs, struct pipe_ycbcr_block *ycbcr_s
       bs->mv_stream[i] = mv_stream[i];
 
    // TODO
-   for (i = 0; i < bs->width/16*bs->height/16; ++i) {
+   for (i = 0; i < bs->width*bs->height; ++i) {
       bs->mv_stream[0][i].top.x = bs->mv_stream[0][i].top.y = 0;
       bs->mv_stream[0][i].top.field_select = PIPE_VIDEO_FRAME;
       bs->mv_stream[0][i].top.weight = PIPE_VIDEO_MV_WEIGHT_MAX;

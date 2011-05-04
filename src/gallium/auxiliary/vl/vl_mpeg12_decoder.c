@@ -505,7 +505,9 @@ vl_mpeg12_create_buffer(struct pipe_video_decoder *decoder)
       goto error_zscan;
 
    if (dec->base.entrypoint == PIPE_VIDEO_ENTRYPOINT_BITSTREAM)
-      vl_mpg12_bs_init(&buffer->bs, dec->base.width, dec->base.height);
+      vl_mpg12_bs_init(&buffer->bs,
+                       dec->base.width / MACROBLOCK_WIDTH,
+                       dec->base.height / MACROBLOCK_HEIGHT);
 
    return &buffer->base;
 
