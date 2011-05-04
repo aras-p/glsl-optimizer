@@ -40,6 +40,8 @@ struct ra_regs *ra_alloc_reg_set(unsigned int count);
 unsigned int ra_alloc_reg_class(struct ra_regs *regs);
 void ra_add_reg_conflict(struct ra_regs *regs,
 			 unsigned int r1, unsigned int r2);
+void ra_add_transitive_reg_conflict(struct ra_regs *regs,
+				    unsigned int base_reg, unsigned int reg);
 void ra_class_add_reg(struct ra_regs *regs, unsigned int c, unsigned int reg);
 void ra_set_finalize(struct ra_regs *regs);
 /** @} */
