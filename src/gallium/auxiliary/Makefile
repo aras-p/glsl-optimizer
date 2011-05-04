@@ -149,10 +149,9 @@ C_SOURCES = \
 	util/u_upload_mgr.c \
 	util/u_vbuf_mgr.c \
 	vl/vl_context.c \
-	vl/vl_bitstream_parser.c \
-	vl/vl_mpeg12_decoder.c \
-	vl/vl_compositor.c \
 	vl/vl_csc.c \
+	vl/vl_compositor.c \
+	vl/vl_mpeg12_decoder.c \
 	vl/vl_mpeg12_bitstream.c \
 	vl/vl_zscan.c \
         vl/vl_idct.c \
