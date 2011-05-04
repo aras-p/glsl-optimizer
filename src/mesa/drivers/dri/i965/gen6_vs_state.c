@@ -81,12 +81,21 @@ gen6_prepare_vs_push_constants(struct brw_context *brw)
 	 params_uploaded++;
       }
 
-      for (i = 0; i < vp->program.Base.Parameters->NumParameters; i++) {
-	 if (brw->vs.constant_map[i] != -1) {
-	    memcpy(param + brw->vs.constant_map[i] * 4,
-		   vp->program.Base.Parameters->ParameterValues[i],
-		   4 * sizeof(float));
-	    params_uploaded++;
+      if (brw->vs.prog_data->uses_new_param_layout) {
+	 for (i = 0; i < brw->vs.prog_data->nr_params; i++) {
+	    *param = convert_param(brw->vs.prog_data->param_convert[i],
+				   brw->vs.prog_data->param[i]);
+	    param++;
+	 }
+	 params_uploaded += brw->vs.prog_data->nr_params / 4;
+      } else {
+	 for (i = 0; i < vp->program.Base.Parameters->NumParameters; i++) {
+	    if (brw->vs.constant_map[i] != -1) {
+	       memcpy(param + brw->vs.constant_map[i] * 4,
+		      vp->program.Base.Parameters->ParameterValues[i],
+		      4 * sizeof(float));
+	       params_uploaded++;
+	    }
 	 }
       }
 

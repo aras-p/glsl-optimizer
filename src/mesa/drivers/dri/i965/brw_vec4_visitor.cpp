@@ -22,7 +22,10 @@
  */
 
 #include "brw_vec4.h"
+extern "C" {
 #include "main/macros.h"
+#include "program/prog_parameter.h"
+}
 
 namespace brw {
 
@@ -306,6 +309,130 @@ dst_reg::dst_reg(class vec4_visitor *v, const struct glsl_type *type)
    this->type = brw_type_for_base_type(type);
 }
 
+/* Our support for uniforms is piggy-backed on the struct
+ * gl_fragment_program, because that's where the values actually
+ * get stored, rather than in some global gl_shader_program uniform
+ * store.
+ */
+int
+vec4_visitor::setup_uniform_values(int loc, const glsl_type *type)
+{
+   unsigned int offset = 0;
+   float *values = &this->vp->Base.Parameters->ParameterValues[loc][0].f;
+
+   if (type->is_matrix()) {
+      const glsl_type *column = glsl_type::get_instance(GLSL_TYPE_FLOAT,
+							type->vector_elements,
+							1);
+
+      for (unsigned int i = 0; i < type->matrix_columns; i++) {
+	 offset += setup_uniform_values(loc + offset, column);
+      }
+
+      return offset;
+   }
+
+   switch (type->base_type) {
+   case GLSL_TYPE_FLOAT:
+   case GLSL_TYPE_UINT:
+   case GLSL_TYPE_INT:
+   case GLSL_TYPE_BOOL:
+      for (unsigned int i = 0; i < type->vector_elements; i++) {
+	 int slot = this->uniforms * 4 + i;
+	 switch (type->base_type) {
+	 case GLSL_TYPE_FLOAT:
+	    c->prog_data.param_convert[slot] = PARAM_NO_CONVERT;
+	    break;
+	 case GLSL_TYPE_UINT:
+	    c->prog_data.param_convert[slot] = PARAM_CONVERT_F2U;
+	    break;
+	 case GLSL_TYPE_INT:
+	    c->prog_data.param_convert[slot] = PARAM_CONVERT_F2I;
+	    break;
+	 case GLSL_TYPE_BOOL:
+	    c->prog_data.param_convert[slot] = PARAM_CONVERT_F2B;
+	    break;
+	 default:
+	    assert(!"not reached");
+	    c->prog_data.param_convert[slot] = PARAM_NO_CONVERT;
+	    break;
+	 }
+	 c->prog_data.param[slot] = &values[i];
+      }
+
+      for (unsigned int i = type->vector_elements; i < 4; i++) {
+	 c->prog_data.param_convert[this->uniforms * 4 + i] =
+	    PARAM_CONVERT_ZERO;
+	 c->prog_data.param[this->uniforms * 4 + i] = NULL;
+      }
+
+      this->uniform_size[this->uniforms] = type->vector_elements;
+      this->uniforms++;
+
+      return 1;
+
+   case GLSL_TYPE_STRUCT:
+      for (unsigned int i = 0; i < type->length; i++) {
+	 offset += setup_uniform_values(loc + offset,
+					type->fields.structure[i].type);
+      }
+      return offset;
+
+   case GLSL_TYPE_ARRAY:
+      for (unsigned int i = 0; i < type->length; i++) {
+	 offset += setup_uniform_values(loc + offset, type->fields.array);
+      }
+      return offset;
+
+   case GLSL_TYPE_SAMPLER:
+      /* The sampler takes up a slot, but we don't use any values from it. */
+      return 1;
+
+   default:
+      assert(!"not reached");
+      return 0;
+   }
+}
+
+/* Our support for builtin uniforms is even scarier than non-builtin.
+ * It sits on top of the PROG_STATE_VAR parameters that are
+ * automatically updated from GL context state.
+ */
+void
+vec4_visitor::setup_builtin_uniform_values(ir_variable *ir)
+{
+   const ir_state_slot *const slots = ir->state_slots;
+   assert(ir->state_slots != NULL);
+
+   for (unsigned int i = 0; i < ir->num_state_slots; i++) {
+      /* This state reference has already been setup by ir_to_mesa,
+       * but we'll get the same index back here.  We can reference
+       * ParameterValues directly, since unlike brw_fs.cpp, we never
+       * add new state references during compile.
+       */
+      int index = _mesa_add_state_reference(this->vp->Base.Parameters,
+					    (gl_state_index *)slots[i].tokens);
+      float *values = &this->vp->Base.Parameters->ParameterValues[index][0].f;
+
+      this->uniform_size[this->uniforms] = 0;
+      /* Add each of the unique swizzled channels of the element.
+       * This will end up matching the size of the glsl_type of this field.
+       */
+      int last_swiz = -1;
+      for (unsigned int j = 0; j < 4; j++) {
+	 int swiz = GET_SWZ(slots[i].swizzle, j);
+	 if (swiz == last_swiz)
+	    break;
+	 last_swiz = swiz;
+
+	 c->prog_data.param[this->uniforms * 4 + j] = &values[swiz];
+	 c->prog_data.param_convert[this->uniforms * 4 + j] = PARAM_NO_CONVERT;
+	 this->uniform_size[this->uniforms]++;
+      }
+      this->uniforms++;
+   }
+}
+
 dst_reg *
 vec4_visitor::variable_storage(ir_variable *var)
 {
@@ -496,13 +623,10 @@ vec4_visitor::visit(ir_variable *ir)
    switch (ir->mode) {
    case ir_var_in:
       reg = new(mem_ctx) dst_reg(ATTR, ir->location);
-      reg->type = brw_type_for_base_type(ir->type);
-      hash_table_insert(this->variable_ht, reg, ir);
       break;
 
    case ir_var_out:
       reg = new(mem_ctx) dst_reg(this, ir->type);
-      hash_table_insert(this->variable_ht, reg, ir);
 
       for (int i = 0; i < type_size(ir->type); i++) {
 	 output_reg[ir->location + i] = *reg;
@@ -512,14 +636,21 @@ vec4_visitor::visit(ir_variable *ir)
 
    case ir_var_temporary:
       reg = new(mem_ctx) dst_reg(this, ir->type);
-      hash_table_insert(this->variable_ht, reg, ir);
-
       break;
 
    case ir_var_uniform:
-      /* FINISHME: uniforms */
+      reg = new(this->mem_ctx) dst_reg(UNIFORM, this->uniforms);
+
+      if (!strncmp(ir->name, "gl_", 3)) {
+	 setup_builtin_uniform_values(ir);
+      } else {
+	 setup_uniform_values(ir->location, ir->type);
+      }
       break;
    }
+
+   reg->type = brw_type_for_base_type(ir->type);
+   hash_table_insert(this->variable_ht, reg, ir);
 }
 
 void
@@ -1606,6 +1737,7 @@ vec4_visitor::vec4_visitor(struct brw_vs_compile *c,
    this->current_annotation = NULL;
 
    this->c = c;
+   this->vp = brw->vertex_program; /* FINISHME: change for precompile */
    this->prog_data = &c->prog_data;
 
    this->variable_ht = hash_table_ctor(0,
@@ -1615,6 +1747,12 @@ vec4_visitor::vec4_visitor(struct brw_vs_compile *c,
    this->virtual_grf_sizes = NULL;
    this->virtual_grf_count = 0;
    this->virtual_grf_array_size = 0;
+
+   this->uniforms = 0;
+
+   this->variable_ht = hash_table_ctor(0,
+				       hash_table_pointer_hash,
+				       hash_table_pointer_compare);
 }
 
 vec4_visitor::~vec4_visitor()

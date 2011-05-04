@@ -356,6 +356,8 @@ public:
     * for the ir->location's used.
     */
    dst_reg output_reg[VERT_RESULT_MAX];
+   int uniform_size[MAX_UNIFORMS];
+   int uniforms;
 
    struct hash_table *variable_ht;
 
@@ -363,7 +365,10 @@ public:
    void fail(const char *msg, ...);
 
    int virtual_grf_alloc(int size);
+   int setup_uniform_values(int loc, const glsl_type *type);
+   void setup_builtin_uniform_values(ir_variable *ir);
    int setup_attributes(int payload_reg);
+   int setup_uniforms(int payload_reg);
    void setup_payload();
    void reg_allocate_trivial();
    void reg_allocate();

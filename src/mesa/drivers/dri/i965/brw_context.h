@@ -248,6 +248,7 @@ enum param_conversion {
    PARAM_CONVERT_F2I,
    PARAM_CONVERT_F2U,
    PARAM_CONVERT_F2B,
+   PARAM_CONVERT_ZERO,
 };
 
 /* Data about a particular attempt to compile a program.  Note that
@@ -317,6 +318,13 @@ struct brw_vs_prog_data {
    /* Used for calculating urb partitions:
     */
    GLuint urb_entry_size;
+
+   const float *param[MAX_UNIFORMS * 4]; /* should be: BRW_MAX_CURBE */
+   enum param_conversion param_convert[MAX_UNIFORMS * 4];
+   const float *pull_param[MAX_UNIFORMS * 4];
+   enum param_conversion pull_param_convert[MAX_UNIFORMS * 4];
+
+   bool uses_new_param_layout;
 };
 
 
@@ -898,7 +906,7 @@ brw_fragment_program_const(const struct gl_fragment_program *p)
 }
 
 static inline
-float convert_param(enum param_conversion conversion, float param)
+float convert_param(enum param_conversion conversion, const float *param)
 {
    union {
       float f;
@@ -908,21 +916,23 @@ float convert_param(enum param_conversion conversion, float param)
 
    switch (conversion) {
    case PARAM_NO_CONVERT:
-      return param;
+      return *param;
    case PARAM_CONVERT_F2I:
-      fi.i = param;
+      fi.i = *param;
       return fi.f;
    case PARAM_CONVERT_F2U:
-      fi.u = param;
+      fi.u = *param;
       return fi.f;
    case PARAM_CONVERT_F2B:
-      if (param != 0.0)
+      if (*param != 0.0)
 	 fi.i = 1;
       else
 	 fi.i = 0;
       return fi.f;
+   case PARAM_CONVERT_ZERO:
+      return 0.0;
    default:
-      return param;
+      return *param;
    }
 }
 

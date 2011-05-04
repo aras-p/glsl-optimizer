@@ -203,7 +203,7 @@ static void prepare_constant_buffer(struct brw_context *brw)
       /* copy float constants */
       for (i = 0; i < brw->wm.prog_data->nr_params; i++) {
 	 buf[offset + i] = convert_param(brw->wm.prog_data->param_convert[i],
-					 *brw->wm.prog_data->param[i]);
+					 brw->wm.prog_data->param[i]);
       }
    }
 
@@ -244,15 +244,22 @@ static void prepare_constant_buffer(struct brw_context *brw)
       GLuint offset = brw->curbe.vs_start * 16;
       GLuint nr = brw->vs.prog_data->nr_params / 4;
 
-      /* Load the subset of push constants that will get used when
-       * we also have a pull constant buffer.
-       */
-      for (i = 0; i < vp->program.Base.Parameters->NumParameters; i++) {
-	 if (brw->vs.constant_map[i] != -1) {
-	    assert(brw->vs.constant_map[i] <= nr);
-	    memcpy(buf + offset + brw->vs.constant_map[i] * 4,
-		   vp->program.Base.Parameters->ParameterValues[i],
-		   4 * sizeof(float));
+      if (brw->vs.prog_data->uses_new_param_layout) {
+	 for (i = 0; i < brw->vs.prog_data->nr_params; i++) {
+	    buf[offset + i] = convert_param(brw->vs.prog_data->param_convert[i],
+					    brw->vs.prog_data->param[i]);
+	 }
+      } else {
+	 /* Load the subset of push constants that will get used when
+	  * we also have a pull constant buffer.
+	  */
+	 for (i = 0; i < vp->program.Base.Parameters->NumParameters; i++) {
+	    if (brw->vs.constant_map[i] != -1) {
+	       assert(brw->vs.constant_map[i] <= nr);
+	       memcpy(buf + offset + brw->vs.constant_map[i] * 4,
+		      vp->program.Base.Parameters->ParameterValues[i],
+		      4 * sizeof(float));
+	    }
 	 }
       }
    }

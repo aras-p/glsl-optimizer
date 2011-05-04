@@ -342,7 +342,7 @@ prepare_wm_pull_constants(struct brw_context *brw)
    constants = brw->wm.const_bo->virtual;
    for (i = 0; i < brw->wm.prog_data->nr_pull_params; i++) {
       constants[i] = convert_param(brw->wm.prog_data->pull_param_convert[i],
-				   *brw->wm.prog_data->pull_param[i]);
+				   brw->wm.prog_data->pull_param[i]);
    }
    drm_intel_gem_bo_unmap_gtt(brw->wm.const_bo);
 

@@ -58,7 +58,7 @@ gen7_prepare_wm_constants(struct brw_context *brw)
 
       for (i = 0; i < brw->wm.prog_data->nr_params; i++) {
 	 constants[i] = convert_param(brw->wm.prog_data->param_convert[i],
-				      *brw->wm.prog_data->param[i]);
+				      brw->wm.prog_data->param[i]);
       }
 
       if (0) {

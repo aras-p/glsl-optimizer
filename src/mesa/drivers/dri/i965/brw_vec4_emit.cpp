@@ -67,20 +67,12 @@ vec4_visitor::setup_attributes(int payload_reg)
 
    prog_data->urb_read_length = (nr_attributes + 1) / 2;
 
-   return nr_attributes;
+   return payload_reg + nr_attributes;
 }
 
-void
-vec4_visitor::setup_payload(void)
+int
+vec4_visitor::setup_uniforms(int reg)
 {
-   int reg = 0;
-
-   /* r0 is always reserved, as it contains the payload with the URB
-    * handles that are passed on to the URB write at the end of the
-    * thread.
-    */
-   reg++;
-
    /* User clip planes from curbe:
     */
    if (c->key.nr_userclip) {
@@ -99,14 +91,49 @@ vec4_visitor::setup_payload(void)
       }
    }
 
-   /* FINISHME: push constants */
-   c->prog_data.curb_read_length = reg - 1;
-   c->prog_data.nr_params = 0;
-   /* XXX 0 causes a bug elsewhere... */
-   if (intel->gen < 6 && c->prog_data.nr_params == 0)
-      c->prog_data.nr_params = 4;
+   /* The pre-gen6 VS requires that some push constants get loaded no
+    * matter what, or the GPU would hang.
+    */
+   if (this->uniforms == 0) {
+      this->uniform_size[this->uniforms] = 1;
 
-   reg += setup_attributes(reg);
+      for (unsigned int i = 0; i < 4; i++) {
+	 unsigned int slot = this->uniforms * 4 + i;
+
+	 c->prog_data.param[slot] = NULL;
+	 c->prog_data.param_convert[slot] = PARAM_CONVERT_ZERO;
+      }
+
+      this->uniforms++;
+   } else {
+      reg += ALIGN(uniforms, 2) / 2;
+   }
+
+   /* for now, we are not doing any elimination of unused slots, nor
+    * are we packing our uniforms.
+    */
+   c->prog_data.nr_params = this->uniforms * 4;
+
+   c->prog_data.curb_read_length = reg - 1;
+   c->prog_data.uses_new_param_layout = true;
+
+   return reg;
+}
+
+void
+vec4_visitor::setup_payload(void)
+{
+   int reg = 0;
+
+   /* The payload always contains important data in g0, which contains
+    * the URB handles that are passed on to the URB write at the end
+    * of the thread.  So, we always start push constants at g1.
+    */
+   reg++;
+
+   reg = setup_uniforms(reg);
+
+   reg = setup_attributes(reg);
 
    this->first_non_payload_grf = reg;
 }
@@ -172,6 +199,18 @@ vec4_instruction::get_src(int i)
 	 brw_reg = brw_null_reg();
 	 break;
       }
+      break;
+
+   case UNIFORM:
+      brw_reg = stride(brw_vec4_grf(1 + (src[i].reg + src[i].reg_offset) / 2,
+				    ((src[i].reg + src[i].reg_offset) % 2) * 4),
+		       0, 4, 1);
+      brw_reg = retype(brw_reg, src[i].type);
+      brw_reg.dw1.bits.swizzle = src[i].swizzle;
+      if (src[i].abs)
+	 brw_reg = brw_abs(brw_reg);
+      if (src[i].negate)
+	 brw_reg = negate(brw_reg);
       break;
 
    case HW_REG:
