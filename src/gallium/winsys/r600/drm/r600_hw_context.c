@@ -812,6 +812,10 @@ void r600_context_bo_flush(struct r600_context *ctx, unsigned flush_flags,
 		use_event_flush = TRUE;
 
 	if (use_event_flush && (ctx->flags & R600_CONTEXT_CHECK_EVENT_FLUSH)) {
+		/* the rv670 seems to fail fbo-generatemipmap unless we flush the CB1 dest base ena */
+		if (ctx->radeon->family == CHIP_RV670)
+			r600_context_flush_all(ctx, S_0085F0_CB1_DEST_BASE_ENA(1));
+
 		ctx->pm4[ctx->pm4_cdwords++] = PKT3(PKT3_EVENT_WRITE, 0, ctx->predicate_drawing);
 		ctx->pm4[ctx->pm4_cdwords++] = EVENT_TYPE(EVENT_TYPE_CACHE_FLUSH_AND_INV_EVENT) | EVENT_INDEX(0);
 		ctx->flags &= ~R600_CONTEXT_CHECK_EVENT_FLUSH;
