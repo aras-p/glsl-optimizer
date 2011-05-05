@@ -143,13 +143,16 @@ static void *evergreen_create_blend_state(struct pipe_context *ctx,
 static void *evergreen_create_dsa_state(struct pipe_context *ctx,
 				   const struct pipe_depth_stencil_alpha_state *state)
 {
-	struct r600_pipe_state *rstate = CALLOC_STRUCT(r600_pipe_state);
+	struct r600_pipe_dsa *dsa = CALLOC_STRUCT(r600_pipe_dsa);
 	unsigned db_depth_control, alpha_test_control, alpha_ref, db_shader_control;
 	unsigned stencil_ref_mask, stencil_ref_mask_bf, db_render_override, db_render_control;
+	struct r600_pipe_state *rstate;
 
-	if (rstate == NULL) {
+	if (dsa == NULL) {
 		return NULL;
 	}
+
+	rstate = &dsa->rstate;
 
 	rstate->id = R600_PIPE_STATE_DSA;
 	/* depth TODO some of those db_shader_control field depend on shader adjust mask & add it to shader */
@@ -190,6 +193,7 @@ static void *evergreen_create_dsa_state(struct pipe_context *ctx,
 		alpha_test_control |= S_028410_ALPHA_TEST_ENABLE(1);
 		alpha_ref = fui(state->alpha.ref_value);
 	}
+	dsa->alpha_ref = alpha_ref;
 
 	/* misc */
 	db_render_control = 0;
@@ -206,7 +210,6 @@ static void *evergreen_create_dsa_state(struct pipe_context *ctx,
 	r600_pipe_state_add_reg(rstate,
 				R_028434_DB_STENCILREFMASK_BF, stencil_ref_mask_bf,
 				0xFFFFFFFF & C_028434_STENCILREF_BF, NULL);
-	r600_pipe_state_add_reg(rstate, R_028438_SX_ALPHA_REF, alpha_ref, 0xFFFFFFFF, NULL);
 	r600_pipe_state_add_reg(rstate, R_0286DC_SPI_FOG_CNTL, 0x00000000, 0xFFFFFFFF, NULL);
 	r600_pipe_state_add_reg(rstate, R_028800_DB_DEPTH_CONTROL, db_depth_control, 0xFFFFFFFF, NULL);
 	/* The DB_SHADER_CONTROL mask is 0xFFFFFFBC since Z_EXPORT_ENABLE,
@@ -709,10 +712,17 @@ static void evergreen_cb(struct r600_pipe_context *rctx, struct r600_pipe_state 
 
 	/* we can only set the export size if any thing is snorm/unorm component is > 11 bits,
 	   if we aren't a float, sint or uint */
+	/* FIXME: This should probably be the same for all CBs if we want
+	 * useful alpha tests. */
 	if (desc->colorspace != UTIL_FORMAT_COLORSPACE_ZS &&
 	    desc->channel[i].size < 12 && desc->channel[i].type != UTIL_FORMAT_TYPE_FLOAT &&
-	    ntype != V_028C70_NUMBER_UINT && ntype != V_028C70_NUMBER_SINT)
+	    ntype != V_028C70_NUMBER_UINT && ntype != V_028C70_NUMBER_SINT) {
 		color_info |= S_028C70_SOURCE_FORMAT(V_028C70_EXPORT_4C_16BPC);
+		rctx->export_16bpc = true;
+	} else {
+		rctx->export_16bpc = false;
+	}
+	rctx->alpha_ref_dirty = true;
 
 	if (rtex->array_mode[level] > V_028C70_ARRAY_LINEAR_ALIGNED) {
 		tile_type = rtex->tile_type;
@@ -914,7 +924,7 @@ void evergreen_init_state_functions(struct r600_pipe_context *rctx)
 	rctx->context.create_vertex_elements_state = r600_create_vertex_elements;
 	rctx->context.create_vs_state = r600_create_shader_state;
 	rctx->context.bind_blend_state = r600_bind_blend_state;
-	rctx->context.bind_depth_stencil_alpha_state = r600_bind_state;
+	rctx->context.bind_depth_stencil_alpha_state = r600_bind_dsa_state;
 	rctx->context.bind_fragment_sampler_states = evergreen_bind_ps_sampler;
 	rctx->context.bind_fs_state = r600_bind_ps_shader;
 	rctx->context.bind_rasterizer_state = r600_bind_rs_state;

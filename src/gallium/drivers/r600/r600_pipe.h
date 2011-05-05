@@ -97,6 +97,11 @@ struct r600_pipe_blend {
 	unsigned			cb_target_mask;
 };
 
+struct r600_pipe_dsa {
+	struct r600_pipe_state		rstate;
+	unsigned			alpha_ref;
+};
+
 struct r600_vertex_element
 {
 	unsigned			count;
@@ -186,6 +191,9 @@ struct r600_pipe_context {
 	/* shader information */
 	unsigned			sprite_coord_enable;
 	bool				flatshade;
+	bool				export_16bpc;
+	unsigned			alpha_ref;
+	bool				alpha_ref_dirty;
 	struct r600_textures_info	ps_samplers;
 
 	struct r600_pipe_fences		fences;
@@ -283,11 +291,11 @@ void *r600_create_vertex_elements(struct pipe_context *ctx,
 				  const struct pipe_vertex_element *elements);
 void r600_delete_vertex_element(struct pipe_context *ctx, void *state);
 void r600_bind_blend_state(struct pipe_context *ctx, void *state);
+void r600_bind_dsa_state(struct pipe_context *ctx, void *state);
 void r600_bind_rs_state(struct pipe_context *ctx, void *state);
 void r600_delete_rs_state(struct pipe_context *ctx, void *state);
 void r600_sampler_view_destroy(struct pipe_context *ctx,
 			       struct pipe_sampler_view *state);
-void r600_bind_state(struct pipe_context *ctx, void *state);
 void r600_delete_state(struct pipe_context *ctx, void *state);
 void r600_bind_vertex_elements(struct pipe_context *ctx, void *state);
 void *r600_create_shader_state(struct pipe_context *ctx,

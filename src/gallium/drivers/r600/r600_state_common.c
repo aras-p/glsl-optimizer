@@ -86,6 +86,21 @@ void r600_bind_blend_state(struct pipe_context *ctx, void *state)
 	r600_context_pipe_state_set(&rctx->ctx, rstate);
 }
 
+void r600_bind_dsa_state(struct pipe_context *ctx, void *state)
+{
+	struct r600_pipe_context *rctx = (struct r600_pipe_context *)ctx;
+	struct r600_pipe_dsa *dsa = state;
+	struct r600_pipe_state *rstate;
+
+	if (state == NULL)
+		return;
+	rstate = &dsa->rstate;
+	rctx->states[rstate->id] = rstate;
+	rctx->alpha_ref = dsa->alpha_ref;
+	rctx->alpha_ref_dirty = true;
+	r600_context_pipe_state_set(&rctx->ctx, rstate);
+}
+
 void r600_bind_rs_state(struct pipe_context *ctx, void *state)
 {
 	struct r600_pipe_rasterizer *rs = (struct r600_pipe_rasterizer *)state;
@@ -129,17 +144,6 @@ void r600_sampler_view_destroy(struct pipe_context *ctx,
 
 	pipe_resource_reference(&state->texture, NULL);
 	FREE(resource);
-}
-
-void r600_bind_state(struct pipe_context *ctx, void *state)
-{
-	struct r600_pipe_context *rctx = (struct r600_pipe_context *)ctx;
-	struct r600_pipe_state *rstate = (struct r600_pipe_state *)state;
-
-	if (state == NULL)
-		return;
-	rctx->states[rstate->id] = rstate;
-	r600_context_pipe_state_set(&rctx->ctx, rstate);
 }
 
 void r600_delete_state(struct pipe_context *ctx, void *state)
@@ -314,6 +318,23 @@ void r600_delete_vs_shader(struct pipe_context *ctx, void *state)
 
 	r600_pipe_shader_destroy(ctx, shader);
 	free(shader);
+}
+
+static void r600_update_alpha_ref(struct r600_pipe_context *rctx)
+{
+	unsigned alpha_ref = rctx->alpha_ref;
+	struct r600_pipe_state rstate;
+
+	if (!rctx->alpha_ref_dirty)
+		return;
+
+	rstate.nregs = 0;
+	if (rctx->export_16bpc)
+		alpha_ref &= ~0x1FFF;
+	r600_pipe_state_add_reg(&rstate, R_028438_SX_ALPHA_REF, alpha_ref, 0xFFFFFFFF, NULL);
+
+	r600_context_pipe_state_set(&rctx->ctx, &rstate);
+	rctx->alpha_ref_dirty = false;
 }
 
 /* FIXME optimize away spi update when it's not needed */
@@ -554,6 +575,7 @@ void r600_draw_vbo(struct pipe_context *ctx, const struct pipe_draw_info *info)
 		return;
 	}
 
+	r600_update_alpha_ref(rctx);
 	r600_spi_update(rctx, draw.info.mode);
 
 	mask = 0;
