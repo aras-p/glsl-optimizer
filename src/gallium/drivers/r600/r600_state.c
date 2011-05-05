@@ -770,11 +770,36 @@ static void r600_cb(struct r600_pipe_context *rctx, struct r600_pipe_state *rsta
 		S_0280A0_NUMBER_TYPE(ntype) |
 		S_0280A0_ENDIAN(endian);
 
-	/* on R600 this can't be set if BLEND_CLAMP isn't set,
-	   if BLEND_FLOAT32 is set of > 11 bits in a UNORM or SNORM */
-	if (desc->colorspace != UTIL_FORMAT_COLORSPACE_ZS &&
-	    desc->channel[i].size < 12)
-		color_info |= S_0280A0_SOURCE_FORMAT(V_0280A0_EXPORT_NORM);
+	/* EXPORT_NORM is an optimzation that can be enabled for better
+	 * performance in certain cases
+	 */
+	if (rctx->family < CHIP_RV770) {
+		/* EXPORT_NORM can be enabled if:
+		 * - 11-bit or smaller UNORM/SNORM/SRGB
+		 * - BLEND_CLAMP is enabled
+		 * - BLEND_FLOAT32 is disabled
+		 */
+		if (desc->colorspace != UTIL_FORMAT_COLORSPACE_ZS &&
+		    (desc->channel[i].size < 12 &&
+		     desc->channel[i].type != UTIL_FORMAT_TYPE_FLOAT &&
+		     ntype != V_0280A0_NUMBER_UINT &&
+		     ntype != V_0280A0_NUMBER_SINT) &&
+		    G_0280A0_BLEND_CLAMP(color_info) &&
+		    !G_0280A0_BLEND_FLOAT32(color_info))
+			color_info |= S_0280A0_SOURCE_FORMAT(V_0280A0_EXPORT_NORM);
+	} else {
+		/* EXPORT_NORM can be enabled if:
+		 * - 11-bit or smaller UNORM/SNORM/SRGB
+		 * - 16-bit or smaller FLOAT
+		 */
+		if (desc->colorspace != UTIL_FORMAT_COLORSPACE_ZS &&
+		    ((desc->channel[i].size < 12 &&
+		      desc->channel[i].type != UTIL_FORMAT_TYPE_FLOAT &&
+		      ntype != V_0280A0_NUMBER_UINT && ntype != V_0280A0_NUMBER_SINT) ||
+		    (desc->channel[i].size < 17 &&
+		     desc->channel[i].type == UTIL_FORMAT_TYPE_FLOAT)))
+			color_info |= S_0280A0_SOURCE_FORMAT(V_0280A0_EXPORT_NORM);
+	}
 
 	r600_pipe_state_add_reg(rstate,
 				R_028040_CB_COLOR0_BASE + cb * 4,

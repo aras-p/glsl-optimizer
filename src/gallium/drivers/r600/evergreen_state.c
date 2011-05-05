@@ -710,14 +710,20 @@ static void evergreen_cb(struct r600_pipe_context *rctx, struct r600_pipe_state 
 		S_028C70_ENDIAN(endian);
 
 
-	/* we can only set the export size if any thing is snorm/unorm component is > 11 bits,
-	   if we aren't a float, sint or uint */
+	/* EXPORT_NORM is an optimzation that can be enabled for better
+	 * performance in certain cases.
+	 * EXPORT_NORM can be enabled if:
+	 * - 11-bit or smaller UNORM/SNORM/SRGB
+	 * - 16-bit or smaller FLOAT
+	 */
 	/* FIXME: This should probably be the same for all CBs if we want
 	 * useful alpha tests. */
 	if (desc->colorspace != UTIL_FORMAT_COLORSPACE_ZS &&
-	    desc->channel[i].size < 12 && desc->channel[i].type != UTIL_FORMAT_TYPE_FLOAT &&
-	    ntype != V_028C70_NUMBER_UINT && ntype != V_028C70_NUMBER_SINT) {
-		color_info |= S_028C70_SOURCE_FORMAT(V_028C70_EXPORT_4C_16BPC);
+	    ((desc->channel[i].size < 12 &&
+	      desc->channel[i].type != UTIL_FORMAT_TYPE_FLOAT &&
+	      ntype != V_028C70_NUMBER_UINT && ntype != V_028C70_NUMBER_SINT) ||
+	     (desc->channel[i].size < 17 &&
+	      desc->channel[i].type == UTIL_FORMAT_TYPE_FLOAT))) {
 		rctx->export_16bpc = true;
 	} else {
 		rctx->export_16bpc = false;
