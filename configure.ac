@@ -97,13 +97,13 @@ AC_COMPILE_IFELSE(
        not clang
 #endif
 ]])],
-[CLANG=yes], [CLANG=no])
+[acv_mesa_CLANG=yes], [acv_mesa_CLANG=no])
 
-AC_MSG_RESULT([$CLANG])
+AC_MSG_RESULT([$acv_mesa_CLANG])
 
 dnl If we're using GCC, make sure that it is at least version 3.3.0.  Older
 dnl versions are explictly not supported.
-if test "x$GCC" = xyes -a "x$CLANG" = xno; then
+if test "x$GCC" = xyes -a "x$acv_mesa_CLANG" = xno; then
     AC_MSG_CHECKING([whether gcc version is sufficient])
     major=0
     minor=0
