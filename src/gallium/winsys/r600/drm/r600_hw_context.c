@@ -797,7 +797,6 @@ void r600_context_bo_flush(struct r600_context *ctx, unsigned flush_flags,
 				unsigned flush_mask, struct r600_bo *rbo)
 {
 	struct radeon_bo *bo;
-	boolean use_event_flush = FALSE;
 
 	bo = rbo->bo;
 	/* if bo has already been flushed */
@@ -808,17 +807,16 @@ void r600_context_bo_flush(struct r600_context *ctx, unsigned flush_flags,
 
 	if ((ctx->radeon->family < CHIP_RV770) &&
 	    (G_0085F0_CB_ACTION_ENA(flush_flags) ||
-	     G_0085F0_DB_ACTION_ENA(flush_flags)))
-		use_event_flush = TRUE;
+	     G_0085F0_DB_ACTION_ENA(flush_flags))) {
+		if (ctx->flags & R600_CONTEXT_CHECK_EVENT_FLUSH) {
+			/* the rv670 seems to fail fbo-generatemipmap unless we flush the CB1 dest base ena */
+			if (ctx->radeon->family == CHIP_RV670)
+				r600_context_flush_all(ctx, S_0085F0_CB1_DEST_BASE_ENA(1));
 
-	if (use_event_flush && (ctx->flags & R600_CONTEXT_CHECK_EVENT_FLUSH)) {
-		/* the rv670 seems to fail fbo-generatemipmap unless we flush the CB1 dest base ena */
-		if (ctx->radeon->family == CHIP_RV670)
-			r600_context_flush_all(ctx, S_0085F0_CB1_DEST_BASE_ENA(1));
-
-		ctx->pm4[ctx->pm4_cdwords++] = PKT3(PKT3_EVENT_WRITE, 0, ctx->predicate_drawing);
-		ctx->pm4[ctx->pm4_cdwords++] = EVENT_TYPE(EVENT_TYPE_CACHE_FLUSH_AND_INV_EVENT) | EVENT_INDEX(0);
-		ctx->flags &= ~R600_CONTEXT_CHECK_EVENT_FLUSH;
+			ctx->pm4[ctx->pm4_cdwords++] = PKT3(PKT3_EVENT_WRITE, 0, ctx->predicate_drawing);
+			ctx->pm4[ctx->pm4_cdwords++] = EVENT_TYPE(EVENT_TYPE_CACHE_FLUSH_AND_INV_EVENT) | EVENT_INDEX(0);
+			ctx->flags &= ~R600_CONTEXT_CHECK_EVENT_FLUSH;
+		}
 	} else {
 		ctx->pm4[ctx->pm4_cdwords++] = PKT3(PKT3_SURFACE_SYNC, 3, ctx->predicate_drawing);
 		ctx->pm4[ctx->pm4_cdwords++] = flush_flags;
