@@ -797,19 +797,33 @@ void r600_context_bo_flush(struct r600_context *ctx, unsigned flush_flags,
 				unsigned flush_mask, struct r600_bo *rbo)
 {
 	struct radeon_bo *bo;
+	boolean use_event_flush = FALSE;
+
 	bo = rbo->bo;
 	/* if bo has already been flushed */
 	if (!(~bo->last_flush & flush_flags)) {
 		bo->last_flush &= flush_mask;
 		return;
 	}
-	ctx->pm4[ctx->pm4_cdwords++] = PKT3(PKT3_SURFACE_SYNC, 3, ctx->predicate_drawing);
-	ctx->pm4[ctx->pm4_cdwords++] = flush_flags;
-	ctx->pm4[ctx->pm4_cdwords++] = (bo->size + 255) >> 8;
-	ctx->pm4[ctx->pm4_cdwords++] = 0x00000000;
-	ctx->pm4[ctx->pm4_cdwords++] = 0x0000000A;
-	ctx->pm4[ctx->pm4_cdwords++] = PKT3(PKT3_NOP, 0, ctx->predicate_drawing);
-	ctx->pm4[ctx->pm4_cdwords++] = bo->reloc_id;
+
+	if ((ctx->radeon->family < CHIP_RV770) &&
+	    (G_0085F0_CB_ACTION_ENA(flush_flags) ||
+	     G_0085F0_DB_ACTION_ENA(flush_flags)))
+		use_event_flush = TRUE;
+
+	if (use_event_flush && (ctx->flags & R600_CONTEXT_CHECK_EVENT_FLUSH)) {
+		ctx->pm4[ctx->pm4_cdwords++] = PKT3(PKT3_EVENT_WRITE, 0, ctx->predicate_drawing);
+		ctx->pm4[ctx->pm4_cdwords++] = EVENT_TYPE(EVENT_TYPE_CACHE_FLUSH_AND_INV_EVENT) | EVENT_INDEX(0);
+		ctx->flags &= ~R600_CONTEXT_CHECK_EVENT_FLUSH;
+	} else {
+		ctx->pm4[ctx->pm4_cdwords++] = PKT3(PKT3_SURFACE_SYNC, 3, ctx->predicate_drawing);
+		ctx->pm4[ctx->pm4_cdwords++] = flush_flags;
+		ctx->pm4[ctx->pm4_cdwords++] = (bo->size + 255) >> 8;
+		ctx->pm4[ctx->pm4_cdwords++] = 0x00000000;
+		ctx->pm4[ctx->pm4_cdwords++] = 0x0000000A;
+		ctx->pm4[ctx->pm4_cdwords++] = PKT3(PKT3_NOP, 0, ctx->predicate_drawing);
+		ctx->pm4[ctx->pm4_cdwords++] = bo->reloc_id;
+	}
 	bo->last_flush = (bo->last_flush | flush_flags) & flush_mask;
 }
 
@@ -1119,6 +1133,7 @@ void r600_context_block_emit_dirty(struct r600_context *ctx, struct r600_block *
 		goto out;
 	}
 
+	ctx->flags |= R600_CONTEXT_CHECK_EVENT_FLUSH;
 	for (int j = 0; j < block->nreg; j++) {
 		if (block->pm4_bo_index[j]) {
 			/* find relocation */
@@ -1132,6 +1147,7 @@ void r600_context_block_emit_dirty(struct r600_context *ctx, struct r600_block *
 					block->reloc[id].bo);
 		}
 	}
+	ctx->flags &= ~R600_CONTEXT_CHECK_EVENT_FLUSH;
 	memcpy(&ctx->pm4[ctx->pm4_cdwords], block->pm4, block->pm4_ndwords * 4);
 	ctx->pm4_cdwords += block->pm4_ndwords;
 
@@ -1155,6 +1171,7 @@ void r600_context_flush_dest_caches(struct r600_context *ctx)
 {
 	struct r600_bo *cb[8];
 	struct r600_bo *db;
+	int i;
 
 	if (!(ctx->flags & R600_CONTEXT_DST_CACHES_DIRTY))
 		return;
@@ -1169,8 +1186,9 @@ void r600_context_flush_dest_caches(struct r600_context *ctx)
 	cb[6] = r600_context_reg_bo(ctx, R_028058_CB_COLOR6_BASE);
 	cb[7] = r600_context_reg_bo(ctx, R_02805C_CB_COLOR7_BASE);
 
+	ctx->flags |= R600_CONTEXT_CHECK_EVENT_FLUSH;
 	/* flush the color buffers */
-	for (int i = 0; i < 8; i++) {
+	for (i = 0; i < 8; i++) {
 		if (!cb[i])
 			continue;
 
@@ -1182,7 +1200,7 @@ void r600_context_flush_dest_caches(struct r600_context *ctx)
 	if (db) {
 		r600_context_bo_flush(ctx, S_0085F0_DB_ACTION_ENA(1), 0, db);
 	}
-
+	ctx->flags &= ~R600_CONTEXT_CHECK_EVENT_FLUSH;
 	ctx->flags &= ~R600_CONTEXT_DST_CACHES_DIRTY;
 }
 
