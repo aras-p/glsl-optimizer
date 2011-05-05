@@ -3,6 +3,10 @@ if [ ! -f src/mesa/main/git_sha1.h ]; then
 	touch src/mesa/main/git_sha1.h
 fi
 
+if [ ! -d .git ]; then
+	exit
+fi
+
 if which git > /dev/null; then
     # Extract the 7-digit "short" SHA1 for the current HEAD, convert
     # it to a string, and wrap it in a #define.  This is used in
