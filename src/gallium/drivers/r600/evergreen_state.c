@@ -724,6 +724,7 @@ static void evergreen_cb(struct r600_pipe_context *rctx, struct r600_pipe_state 
 	      ntype != V_028C70_NUMBER_UINT && ntype != V_028C70_NUMBER_SINT) ||
 	     (desc->channel[i].size < 17 &&
 	      desc->channel[i].type == UTIL_FORMAT_TYPE_FLOAT))) {
+		color_info |= S_028C70_SOURCE_FORMAT(V_028C70_EXPORT_4C_16BPC);
 		rctx->export_16bpc = true;
 	} else {
 		rctx->export_16bpc = false;
