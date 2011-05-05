@@ -54,7 +54,6 @@ struct vl_zscan
 
    void *vs, *fs;
 
-   struct pipe_sampler_view *scan;
    struct pipe_sampler_view *quant;
 };
 
@@ -65,29 +64,22 @@ struct vl_zscan_buffer
    struct pipe_viewport_state viewport;
    struct pipe_framebuffer_state fb_state;
 
-   struct pipe_sampler_view *src, *scan, *quant;
+   struct pipe_sampler_view *src, *layout, *quant;
    struct pipe_surface *dst;
 };
 
-struct pipe_sampler_view *
-vl_zscan_linear(struct pipe_context *pipe, unsigned blocks_per_line);
-
-#if 0
-struct pipe_sampler_view *
-vl_zscan_normal(struct pipe_context *pipe, unsigned blocks_per_line);
+extern const int vl_zscan_linear[];
+extern const int vl_zscan_normal[];
+extern const int vl_zscan_alternate[];
 
 struct pipe_sampler_view *
-vl_zscan_alternate(struct pipe_context *pipe, unsigned blocks_per_line);
-#endif
+vl_zscan_layout(struct pipe_context *pipe, const int layout[64], unsigned blocks_per_line);
 
 bool
 vl_zscan_init(struct vl_zscan *zscan, struct pipe_context *pipe,
               unsigned buffer_width, unsigned buffer_height,
               unsigned blocks_per_line, unsigned blocks_total,
               unsigned num_channels);
-
-void
-vl_zscan_set_layout(struct vl_zscan *zscan, struct pipe_sampler_view *layout);
 
 void
 vl_zscan_cleanup(struct vl_zscan *zscan);
@@ -103,6 +95,9 @@ vl_zscan_init_buffer(struct vl_zscan *zscan, struct vl_zscan_buffer *buffer,
 
 void
 vl_zscan_cleanup_buffer(struct vl_zscan_buffer *buffer);
+
+void
+vl_zscan_set_layout(struct vl_zscan_buffer *buffer, struct pipe_sampler_view *layout);
 
 void
 vl_zscan_render(struct vl_zscan_buffer *buffer, unsigned num_instances);

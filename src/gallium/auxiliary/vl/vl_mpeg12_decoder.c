@@ -358,6 +358,9 @@ vl_mpeg12_buffer_map(struct pipe_video_decode_buffer *buffer)
          mv_stream[i] = vl_vb_get_mv_stream(&buf->vertex_stream, i);
 
       vl_mpg12_bs_set_buffers(&buf->bs, ycbcr_stream, buf->texels, mv_stream);
+   } else {
+      for (i = 0; i < VL_MAX_PLANES; ++i)
+         vl_zscan_set_layout(&buf->zscan[i], dec->zscan_linear);
    }
 }
 
@@ -409,6 +412,16 @@ vl_mpeg12_buffer_decode_bitstream(struct pipe_video_decode_buffer *buffer,
                                   unsigned num_ycbcr_blocks[3])
 {
    struct vl_mpeg12_buffer *buf = (struct vl_mpeg12_buffer*)buffer;
+   struct vl_mpeg12_decoder *dec;
+   unsigned i;
+
+   assert(buf);
+
+   dec = (struct vl_mpeg12_decoder *)buf->base.decoder;
+   assert(dec);
+
+   for (i = 0; i < VL_MAX_PLANES; ++i)
+      vl_zscan_set_layout(&buf->zscan[i], picture->alternate_scan ? dec->zscan_alternate : dec->zscan_normal);
 
    vl_mpg12_bs_decode(&buf->bs, num_bytes, data, picture, num_ycbcr_blocks);
 }
@@ -463,6 +476,10 @@ vl_mpeg12_destroy(struct pipe_video_decoder *decoder)
 
    pipe_resource_reference(&dec->quads.buffer, NULL);
    pipe_resource_reference(&dec->pos.buffer, NULL);
+
+   pipe_sampler_view_reference(&dec->zscan_linear, NULL);
+   pipe_sampler_view_reference(&dec->zscan_normal, NULL);
+   pipe_sampler_view_reference(&dec->zscan_alternate, NULL);
 
    FREE(dec);
 }
@@ -676,8 +693,6 @@ find_first_supported_format(struct vl_mpeg12_decoder *dec,
 static bool
 init_zscan(struct vl_mpeg12_decoder *dec)
 {
-   struct pipe_sampler_view *layout;
-
    unsigned num_channels;
 
    assert(dec);
@@ -693,7 +708,9 @@ init_zscan(struct vl_mpeg12_decoder *dec)
    if (dec->zscan_source_format == PIPE_FORMAT_NONE)
       return false;
 
-   layout = vl_zscan_linear(dec->pipe, dec->blocks_per_line);
+   dec->zscan_linear = vl_zscan_layout(dec->pipe, vl_zscan_linear, dec->blocks_per_line);
+   dec->zscan_normal = vl_zscan_layout(dec->pipe, vl_zscan_normal, dec->blocks_per_line);
+   dec->zscan_alternate = vl_zscan_layout(dec->pipe, vl_zscan_alternate, dec->blocks_per_line);
 
    num_channels = dec->base.entrypoint <= PIPE_VIDEO_ENTRYPOINT_IDCT ? 4 : 1;
 
@@ -701,13 +718,9 @@ init_zscan(struct vl_mpeg12_decoder *dec)
                       dec->blocks_per_line, dec->max_blocks, num_channels))
       return false;
 
-   vl_zscan_set_layout(&dec->zscan_y, layout);
-
    if (!vl_zscan_init(&dec->zscan_c, dec->pipe, dec->chroma_width, dec->chroma_height,
                       dec->blocks_per_line, dec->max_blocks, num_channels))
       return false;
-
-   vl_zscan_set_layout(&dec->zscan_c, layout);
 
    return true;
 }

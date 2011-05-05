@@ -64,6 +64,10 @@ struct vl_mpeg12_decoder
 
    void *sampler_ycbcr;
 
+   struct pipe_sampler_view *zscan_linear;
+   struct pipe_sampler_view *zscan_normal;
+   struct pipe_sampler_view *zscan_alternate;
+
    struct vl_zscan zscan_y, zscan_c;
    struct vl_idct idct_y, idct_c;
    struct vl_mc mc_y, mc_c;

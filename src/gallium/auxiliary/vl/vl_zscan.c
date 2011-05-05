@@ -48,6 +48,45 @@ enum VS_OUTPUT
    VS_O_VTEX
 };
 
+const int vl_zscan_linear[] =
+{
+   /* Linear scan pattern */
+    0, 1, 2, 3, 4, 5, 6, 7,
+    8, 9,10,11,12,13,14,15,
+   16,17,18,19,20,21,22,23,
+   24,25,26,27,28,29,30,31,
+   32,33,34,35,36,37,38,39,
+   40,41,42,43,44,45,46,47,
+   48,49,50,51,52,53,54,55,
+   56,57,58,59,60,61,62,63
+};
+
+const int vl_zscan_normal[] =
+{
+   /* Zig-Zag scan pattern */
+    0, 1, 8,16, 9, 2, 3,10,
+   17,24,32,25,18,11, 4, 5,
+   12,19,26,33,40,48,41,34,
+   27,20,13, 6, 7,14,21,28,
+   35,42,49,56,57,50,43,36,
+   29,22,15,23,30,37,44,51,
+   58,59,52,45,38,31,39,46,
+   53,60,61,54,47,55,62,63
+};
+
+const int vl_zscan_alternate[] =
+{
+   /* Alternate scan pattern */
+    0, 8,16,24, 1, 9, 2,10,
+   17,25,32,40,48,56,57,49,
+   41,33,26,18, 3,11, 4,12,
+   19,27,34,42,50,58,35,43,
+   51,59,20,28, 5,13, 6,14,
+   21,29,36,44,52,60,37,45,
+   53,61,22,30, 7,15,23,31,
+   38,46,54,62,39,47,55,63
+};
+
 static void *
 create_vert_shader(struct vl_zscan *zscan)
 {
@@ -288,9 +327,11 @@ cleanup_state(struct vl_zscan *zscan)
 }
 
 struct pipe_sampler_view *
-vl_zscan_linear(struct pipe_context *pipe, unsigned blocks_per_line)
+vl_zscan_layout(struct pipe_context *pipe, const int layout[64], unsigned blocks_per_line)
 {
    const unsigned total_size = blocks_per_line * BLOCK_WIDTH * BLOCK_HEIGHT;
+
+   int patched_layout[64];
 
    struct pipe_resource res_tmpl, *res;
    struct pipe_sampler_view sv_tmpl, *sv;
@@ -306,7 +347,10 @@ vl_zscan_linear(struct pipe_context *pipe, unsigned blocks_per_line)
       1
    };
 
-   assert(pipe && blocks_per_line);
+   assert(pipe && layout && blocks_per_line);
+
+   for (i = 0; i < 64; ++i)
+      patched_layout[layout[i]] = i;
 
    memset(&res_tmpl, 0, sizeof(res_tmpl));
    res_tmpl.target = PIPE_TEXTURE_2D;
@@ -340,7 +384,7 @@ vl_zscan_linear(struct pipe_context *pipe, unsigned blocks_per_line)
    for (i = 0; i < blocks_per_line; ++i)
       for (y = 0; y < BLOCK_HEIGHT; ++y)
          for (x = 0; x < BLOCK_WIDTH; ++x) {
-            float addr = x + y * BLOCK_WIDTH +
+            float addr = patched_layout[x + y * BLOCK_WIDTH] +
                i * BLOCK_WIDTH * BLOCK_HEIGHT;
 
             addr /= total_size;
@@ -414,15 +458,6 @@ vl_zscan_cleanup(struct vl_zscan *zscan)
    cleanup_state(zscan);
 }
 
-void
-vl_zscan_set_layout(struct vl_zscan *zscan, struct pipe_sampler_view *layout)
-{
-   assert(zscan);
-   assert(layout);
-
-   pipe_sampler_view_reference(&zscan->scan, layout);
-}
-
 #if 0
 // TODO
 void
@@ -440,8 +475,6 @@ vl_zscan_init_buffer(struct vl_zscan *zscan, struct vl_zscan_buffer *buffer,
    buffer->zscan = zscan;
 
    pipe_sampler_view_reference(&buffer->src, src);
-   pipe_sampler_view_reference(&buffer->scan, zscan->scan);
-   pipe_sampler_view_reference(&buffer->quant, zscan->quant);
 
    buffer->viewport.scale[0] = dst->width;
    buffer->viewport.scale[1] = dst->height;
@@ -466,9 +499,18 @@ vl_zscan_cleanup_buffer(struct vl_zscan_buffer *buffer)
    assert(buffer);
 
    pipe_sampler_view_reference(&buffer->src, NULL);
-   pipe_sampler_view_reference(&buffer->scan, NULL);
+   pipe_sampler_view_reference(&buffer->layout, NULL);
    pipe_sampler_view_reference(&buffer->quant, NULL);
    pipe_surface_reference(&buffer->fb_state.cbufs[0], NULL);
+}
+
+void
+vl_zscan_set_layout(struct vl_zscan_buffer *buffer, struct pipe_sampler_view *layout)
+{
+   assert(buffer);
+   assert(layout);
+
+   pipe_sampler_view_reference(&buffer->layout, layout);
 }
 
 void
