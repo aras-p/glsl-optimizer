@@ -133,12 +133,12 @@ __glXWireToEvent(Display *dpy, XEvent *event, xEvent *wire)
    case GLX_BufferSwapComplete:
    {
       GLXBufferSwapComplete *aevent = (GLXBufferSwapComplete *)event;
-      xGLXBufferSwapComplete *awire = (xGLXBufferSwapComplete *)wire;
+      xGLXBufferSwapComplete2 *awire = (xGLXBufferSwapComplete2 *)wire;
       aevent->event_type = awire->event_type;
       aevent->drawable = awire->drawable;
       aevent->ust = ((CARD64)awire->ust_hi << 32) | awire->ust_lo;
       aevent->msc = ((CARD64)awire->msc_hi << 32) | awire->msc_lo;
-      aevent->sbc = ((CARD64)awire->sbc_hi << 32) | awire->sbc_lo;
+      aevent->sbc = awire->sbc;
       return True;
    }
    default:
