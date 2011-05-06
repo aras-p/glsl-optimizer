@@ -142,6 +142,8 @@ int radeonTransformTEX(
 	if (inst->U.I.Opcode != RC_OPCODE_TEX &&
 		inst->U.I.Opcode != RC_OPCODE_TXB &&
 		inst->U.I.Opcode != RC_OPCODE_TXP &&
+		inst->U.I.Opcode != RC_OPCODE_TXD &&
+		inst->U.I.Opcode != RC_OPCODE_TXL &&
 		inst->U.I.Opcode != RC_OPCODE_KIL)
 		return 0;
 

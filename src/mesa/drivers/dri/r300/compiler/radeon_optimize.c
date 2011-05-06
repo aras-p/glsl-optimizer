@@ -91,6 +91,8 @@ static void copy_propagate_scan_read(void * data, struct rc_instruction * inst,
 				(inst->U.I.Opcode == RC_OPCODE_TEX ||
 				inst->U.I.Opcode == RC_OPCODE_TXB ||
 				inst->U.I.Opcode == RC_OPCODE_TXP ||
+				inst->U.I.Opcode == RC_OPCODE_TXD ||
+				inst->U.I.Opcode == RC_OPCODE_TXL ||
 				inst->U.I.Opcode == RC_OPCODE_KIL)){
 		reader_data->Abort = 1;
 		return;

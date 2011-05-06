@@ -481,6 +481,7 @@ void rc_compute_sources_for_writemask(
 			break;
 		case RC_OPCODE_TXB:
 		case RC_OPCODE_TXP:
+		case RC_OPCODE_TXL:
 			srcmasks[0] |= RC_MASK_W;
 			/* Fall through */
 		case RC_OPCODE_TEX:
@@ -497,6 +498,33 @@ void rc_compute_sources_for_writemask(
 				case RC_TEXTURE_CUBE:
 				case RC_TEXTURE_2D_ARRAY:
 					srcmasks[0] |= RC_MASK_XYZ;
+					break;
+			}
+			break;
+		case RC_OPCODE_TXD:
+			switch (inst->U.I.TexSrcTarget) {
+				case RC_TEXTURE_1D_ARRAY:
+					srcmasks[0] |= RC_MASK_Y;
+					/* Fall through. */
+				case RC_TEXTURE_1D:
+					srcmasks[0] |= RC_MASK_X;
+					srcmasks[1] |= RC_MASK_X;
+					srcmasks[2] |= RC_MASK_X;
+					break;
+				case RC_TEXTURE_2D_ARRAY:
+					srcmasks[0] |= RC_MASK_Z;
+					/* Fall through. */
+				case RC_TEXTURE_2D:
+				case RC_TEXTURE_RECT:
+					srcmasks[0] |= RC_MASK_XY;
+					srcmasks[1] |= RC_MASK_XY;
+					srcmasks[2] |= RC_MASK_XY;
+					break;
+				case RC_TEXTURE_3D:
+				case RC_TEXTURE_CUBE:
+					srcmasks[0] |= RC_MASK_XYZ;
+					srcmasks[1] |= RC_MASK_XYZ;
+					srcmasks[2] |= RC_MASK_XYZ;
 					break;
 			}
 			break;

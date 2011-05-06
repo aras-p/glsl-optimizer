@@ -70,6 +70,8 @@ static int r500_swizzle_is_native(rc_opcode opcode, struct rc_src_register reg)
 	if (opcode == RC_OPCODE_TEX ||
 	    opcode == RC_OPCODE_TXB ||
 	    opcode == RC_OPCODE_TXP ||
+	    opcode == RC_OPCODE_TXD ||
+	    opcode == RC_OPCODE_TXL ||
 	    opcode == RC_OPCODE_KIL) {
 		if (reg.Abs)
 			return 0;
