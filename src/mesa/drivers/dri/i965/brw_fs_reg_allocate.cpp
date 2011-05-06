@@ -102,7 +102,7 @@ fs_visitor::assign_regs()
    int base_reg_count = (BRW_MAX_GRF - first_assigned_grf) / reg_width;
    int class_sizes[base_reg_count];
    int class_count = 0;
-   int aligned_pair_class = -1;
+   int aligned_pairs_class = -1;
 
    calculate_live_intervals();
 
@@ -137,52 +137,59 @@ fs_visitor::assign_regs()
       }
    }
 
+   /* Compute the total number of registers across all classes. */
    int ra_reg_count = 0;
-   int class_base_reg[class_count];
-   int class_reg_count[class_count];
-   int classes[class_count + 1];
-
    for (int i = 0; i < class_count; i++) {
-      class_base_reg[i] = ra_reg_count;
-      class_reg_count[i] = base_reg_count - (class_sizes[i] - 1);
-      ra_reg_count += class_reg_count[i];
+      ra_reg_count += base_reg_count - (class_sizes[i] - 1);
    }
 
    struct ra_regs *regs = ra_alloc_reg_set(ra_reg_count);
+   uint8_t ra_reg_to_grf[ra_reg_count];
+   int classes[class_count + 1];
+
+   /* Now, add the registers to their classes, and add the conflicts
+    * between them and the base GRF registers (and also each other).
+    */
+   int reg = 0;
+   int pairs_base_reg = 0;
+   int pairs_reg_count = 0;
    for (int i = 0; i < class_count; i++) {
+      int class_reg_count = base_reg_count - (class_sizes[i] - 1);
       classes[i] = ra_alloc_reg_class(regs);
 
-      for (int i_r = 0; i_r < class_reg_count[i]; i_r++) {
-	 int class_reg = class_base_reg[i] + i_r;
+      /* Save this off for the aligned pair class at the end. */
+      if (class_sizes[i] == 2) {
+	 pairs_base_reg = reg;
+	 pairs_reg_count = class_reg_count;
+      }
 
-	 ra_class_add_reg(regs, classes[i], class_reg);
+      for (int j = 0; j < class_reg_count; j++) {
+	 ra_class_add_reg(regs, classes[i], reg);
 
-	 for (int base_reg = i_r;
-	      base_reg < i_r + class_sizes[i];
+	 ra_reg_to_grf[reg] = j;
+
+	 for (int base_reg = j;
+	      base_reg < j + class_sizes[i];
 	      base_reg++) {
-	    ra_add_transitive_reg_conflict(regs, base_reg, class_reg);
+	    ra_add_transitive_reg_conflict(regs, base_reg, reg);
 	 }
+
+	 reg++;
       }
    }
+   assert(reg == ra_reg_count);
 
    /* Add a special class for aligned pairs, which we'll put delta_x/y
     * in on gen5 so that we can do PLN.
     */
    if (brw->has_pln && reg_width == 1 && intel->gen < 6) {
-      int reg_count = (base_reg_count - 1) / 2;
-      int unaligned_pair_class = 1;
-      assert(class_sizes[unaligned_pair_class] == 2);
+      aligned_pairs_class = ra_alloc_reg_class(regs);
 
-      aligned_pair_class = class_count;
-      classes[aligned_pair_class] = ra_alloc_reg_class(regs);
-      class_sizes[aligned_pair_class] = 2;
-      class_base_reg[aligned_pair_class] = 0;
-      class_reg_count[aligned_pair_class] = 0;
-      int start = (first_assigned_grf & 1) ? 1 : 0;
-
-      for (int i = 0; i < reg_count; i++) {
-	 ra_class_add_reg(regs, classes[aligned_pair_class],
-			  class_base_reg[unaligned_pair_class] + i * 2 + start);
+      for (int i = 0; i < pairs_reg_count; i++) {
+	 if ((ra_reg_to_grf[pairs_base_reg + i] & 1) == 0) {
+	    ra_class_add_reg(regs, aligned_pairs_class,
+			     pairs_base_reg + i);
+	 }
       }
       class_count++;
    }
@@ -195,9 +202,9 @@ fs_visitor::assign_regs()
    for (int i = 0; i < this->virtual_grf_next; i++) {
       for (int c = 0; c < class_count; c++) {
 	 if (class_sizes[c] == this->virtual_grf_sizes[i]) {
-	    if (aligned_pair_class >= 0 &&
+	    if (aligned_pairs_class >= 0 &&
 		this->delta_x.reg == i) {
-	       ra_set_node_class(g, i, classes[aligned_pair_class]);
+	       ra_set_node_class(g, i, aligned_pairs_class);
 	    } else {
 	       ra_set_node_class(g, i, classes[c]);
 	    }
@@ -242,18 +249,8 @@ fs_visitor::assign_regs()
    this->grf_used = first_assigned_grf;
    for (int i = 0; i < this->virtual_grf_next; i++) {
       int reg = ra_get_node_reg(g, i);
-      int hw_reg = -1;
 
-      for (int c = 0; c < class_count; c++) {
-	 if (reg >= class_base_reg[c] &&
-	     reg < class_base_reg[c] + class_reg_count[c]) {
-	    hw_reg = reg - class_base_reg[c];
-	    break;
-	 }
-      }
-
-      assert(hw_reg >= 0);
-      hw_reg_mapping[i] = first_assigned_grf + hw_reg * reg_width;
+      hw_reg_mapping[i] = first_assigned_grf + ra_reg_to_grf[reg] * reg_width;
       this->grf_used = MAX2(this->grf_used,
 			    hw_reg_mapping[i] + this->virtual_grf_sizes[i] *
 			    reg_width);
