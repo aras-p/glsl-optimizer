@@ -110,6 +110,7 @@ struct dri2_egl_context
 enum wayland_buffer_type {
    WL_BUFFER_FRONT,
    WL_BUFFER_BACK,
+   WL_BUFFER_THIRD,
    WL_BUFFER_COUNT
 };
 
@@ -145,9 +146,11 @@ struct dri2_egl_surface
    struct wl_egl_window  *wl_win;
    struct wl_egl_pixmap  *wl_pix;
    struct wl_buffer      *wl_drm_buffer[WL_BUFFER_COUNT];
+   int                    wl_buffer_lock[WL_BUFFER_COUNT];
    int                    dx;
    int                    dy;
    __DRIbuffer           *dri_buffers[__DRI_BUFFER_COUNT];
+   __DRIbuffer           *third_buffer;
    __DRIbuffer           *pending_buffer;
    EGLBoolean             block_swap_buffers;
 #endif

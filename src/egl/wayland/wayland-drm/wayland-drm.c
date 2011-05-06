@@ -88,17 +88,17 @@ drm_create_buffer(struct wl_client *client, struct wl_drm *drm,
 {
 	struct wl_drm_buffer *buffer;
 
-	buffer = malloc(sizeof *buffer);
+	buffer = calloc(1, sizeof *buffer);
 	if (buffer == NULL) {
 		wl_client_post_no_memory(client);
 		return;
 	}
 
 	buffer->drm = drm;
-	buffer->buffer.compositor = NULL;
 	buffer->buffer.width = width;
 	buffer->buffer.height = height;
 	buffer->buffer.visual = visual;
+	buffer->buffer.client = client;
 
 	if (!visual || visual->object.interface != &wl_visual_interface) {
 		wl_client_post_error(client, &drm->object,

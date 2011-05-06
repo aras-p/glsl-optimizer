@@ -59,6 +59,29 @@ force_roundtrip(struct wl_display *display)
       wl_display_iterate(display, WL_DISPLAY_READABLE);
 }
 
+static void
+wl_buffer_release(void *data, struct wl_buffer *buffer)
+{
+   struct dri2_egl_surface *dri2_surf = data;
+   int i;
+
+   for (i = 0; i < WL_BUFFER_COUNT; ++i)
+      if (dri2_surf->wl_drm_buffer[i] == buffer)
+         break;
+
+   assert(i <= WL_BUFFER_COUNT);
+
+   /* not found? */
+   if (i == WL_BUFFER_COUNT)
+      return;
+
+   dri2_surf->wl_buffer_lock[i] = 0;
+
+}
+
+static struct wl_buffer_listener wl_buffer_listener = {
+   wl_buffer_release
+};
 
 /**
  * Called via eglCreateWindowSurface(), drv->API.CreateWindowSurface().
@@ -85,13 +108,16 @@ dri2_create_surface(_EGLDriver *drv, _EGLDisplay *disp, EGLint type,
    if (!_eglInitSurface(&dri2_surf->base, disp, type, conf, attrib_list))
       goto cleanup_surf;
 
-   for (i = 0; i < WL_BUFFER_COUNT; ++i)
+   for (i = 0; i < WL_BUFFER_COUNT; ++i) {
       dri2_surf->wl_drm_buffer[i] = NULL;
+      dri2_surf->wl_buffer_lock[i] = 0;
+   }
 
    for (i = 0; i < __DRI_BUFFER_COUNT; ++i)
       dri2_surf->dri_buffers[i] = NULL;
 
    dri2_surf->pending_buffer = NULL;
+   dri2_surf->third_buffer = NULL;
    dri2_surf->block_swap_buffers = EGL_FALSE;
 
    switch (type) {
@@ -187,6 +213,11 @@ dri2_destroy_surface(_EGLDriver *drv, _EGLDisplay *disp, _EGLSurface *surf)
          dri2_dpy->dri2->releaseBuffer(dri2_dpy->dri_screen,
                                        dri2_surf->dri_buffers[i]);
 
+   if (dri2_surf->third_buffer) {
+      dri2_dpy->dri2->releaseBuffer(dri2_dpy->dri_screen,
+                                    dri2_surf->third_buffer);
+   }
+
    free(surf);
 
    return EGL_TRUE;
@@ -215,10 +246,14 @@ wayland_create_buffer(struct dri2_egl_surface *dri2_surf,
 {
    struct dri2_egl_display *dri2_dpy =
       dri2_egl_display(dri2_surf->base.Resource.Display);
+   struct wl_buffer *buf;
 
-   return wl_drm_create_buffer(dri2_dpy->wl_drm, buffer->name,
-                               dri2_surf->base.Width, dri2_surf->base.Height,
-                               buffer->pitch, visual);
+   buf = wl_drm_create_buffer(dri2_dpy->wl_drm, buffer->name,
+                              dri2_surf->base.Width, dri2_surf->base.Height,
+                              buffer->pitch, visual);
+   wl_buffer_add_listener(buf, &wl_buffer_listener, dri2_surf);
+
+   return buf;
 }
 
 static void
@@ -232,6 +267,8 @@ dri2_process_back_buffer(struct dri2_egl_surface *dri2_surf, unsigned format)
    switch (dri2_surf->type) {
    case DRI2_WINDOW_SURFACE:
       /* allocate a front buffer for our double-buffered window*/
+      if (dri2_surf->dri_buffers[__DRI_BUFFER_FRONT_LEFT] != NULL)
+         break;
       dri2_surf->dri_buffers[__DRI_BUFFER_FRONT_LEFT] = 
          dri2_dpy->dri2->allocateBuffer(dri2_dpy->dri_screen,
                __DRI_BUFFER_FRONT_LEFT, format,
@@ -289,6 +326,12 @@ dri2_release_buffers(struct dri2_egl_surface *dri2_surf)
       dri2_egl_display(dri2_surf->base.Resource.Display);
    int i;
 
+   if (dri2_surf->third_buffer) {
+      dri2_dpy->dri2->releaseBuffer(dri2_dpy->dri_screen,
+                                    dri2_surf->third_buffer);
+      dri2_surf->third_buffer = NULL;
+   }
+
    for (i = 0; i < __DRI_BUFFER_COUNT; ++i) {
       if (dri2_surf->dri_buffers[i]) {
          switch (i) {
@@ -306,6 +349,76 @@ dri2_release_buffers(struct dri2_egl_surface *dri2_surf)
          }
          dri2_surf->dri_buffers[i] = NULL;
       }
+   }
+}
+
+static inline void
+pointer_swap(const void **p1, const void **p2)
+{
+   const void *tmp = *p1;
+   *p1 = *p2;
+   *p2 = tmp;
+}
+
+static void
+destroy_third_buffer(struct dri2_egl_surface *dri2_surf)
+{
+   struct dri2_egl_display *dri2_dpy =
+      dri2_egl_display(dri2_surf->base.Resource.Display);
+
+   if (dri2_surf->third_buffer == NULL)
+      return;
+
+   dri2_dpy->dri2->releaseBuffer(dri2_dpy->dri_screen,
+                                 dri2_surf->third_buffer);
+   dri2_surf->third_buffer = NULL;
+
+   if (dri2_surf->wl_drm_buffer[WL_BUFFER_THIRD])
+      wl_buffer_destroy(dri2_surf->wl_drm_buffer[WL_BUFFER_THIRD]);
+   dri2_surf->wl_drm_buffer[WL_BUFFER_THIRD] = NULL;
+   dri2_surf->wl_buffer_lock[WL_BUFFER_THIRD] = 0;
+}
+
+static void
+swap_wl_buffers(struct dri2_egl_surface *dri2_surf,
+                enum wayland_buffer_type a, enum wayland_buffer_type b)
+{
+   int tmp;
+
+   tmp = dri2_surf->wl_buffer_lock[a];
+   dri2_surf->wl_buffer_lock[a] = dri2_surf->wl_buffer_lock[b];
+   dri2_surf->wl_buffer_lock[b] = tmp;
+      
+   pointer_swap((const void **) &dri2_surf->wl_drm_buffer[a],
+                (const void **) &dri2_surf->wl_drm_buffer[b]);
+}
+
+static void
+swap_back_and_third(struct dri2_egl_surface *dri2_surf)
+{
+   if (dri2_surf->wl_buffer_lock[WL_BUFFER_THIRD])
+      destroy_third_buffer(dri2_surf);
+
+   pointer_swap((const void **) &dri2_surf->dri_buffers[__DRI_BUFFER_BACK_LEFT],
+                (const void **) &dri2_surf->third_buffer);
+
+   swap_wl_buffers(dri2_surf, WL_BUFFER_BACK, WL_BUFFER_THIRD);
+}
+
+static void
+dri2_prior_buffer_creation(struct dri2_egl_surface *dri2_surf,
+                           unsigned int type)
+{
+   switch (type) {
+   case __DRI_BUFFER_BACK_LEFT:
+         if (dri2_surf->wl_buffer_lock[WL_BUFFER_BACK])
+            swap_back_and_third(dri2_surf);
+         else if (dri2_surf->third_buffer)
+            destroy_third_buffer(dri2_surf);
+         break;
+   default:
+         break;
+
    }
 }
 
@@ -335,6 +448,7 @@ dri2_get_buffers_with_format(__DRIdrawable * driDrawable,
          if (dri2_surf->wl_drm_buffer[i])
             wl_buffer_destroy(dri2_surf->wl_drm_buffer[i]);
          dri2_surf->wl_drm_buffer[i]  = NULL;
+         dri2_surf->wl_buffer_lock[i] = 0;
       }
    }
 
@@ -342,6 +456,8 @@ dri2_get_buffers_with_format(__DRIdrawable * driDrawable,
    for (i = 0; i < 2*count; i+=2) {
       assert(attachments[i] < __DRI_BUFFER_COUNT);
       assert(dri2_surf->buffer_count < 5);
+
+      dri2_prior_buffer_creation(dri2_surf, attachments[i]);
 
       if (dri2_surf->dri_buffers[attachments[i]] == NULL) {
 
@@ -443,14 +559,6 @@ wayland_frame_callback(struct wl_surface *surface, void *data, uint32_t time)
    dri2_surf->block_swap_buffers = EGL_FALSE;
 }
 
-static inline void
-pointer_swap(const void **p1, const void **p2)
-{
-   const void *tmp = *p1;
-   *p1 = *p2;
-   *p2 = tmp;
-}
-
 /**
  * Called via eglSwapBuffers(), drv->API.SwapBuffers().
  */
@@ -466,8 +574,8 @@ dri2_swap_buffers(_EGLDriver *drv, _EGLDisplay *disp, _EGLSurface *draw)
 
    dri2_surf->block_swap_buffers = EGL_TRUE;
    wl_display_frame_callback(dri2_dpy->wl_dpy,
-	 		     dri2_surf->wl_win->surface,
-			     wayland_frame_callback, dri2_surf);
+                             dri2_surf->wl_win->surface,
+                             wayland_frame_callback, dri2_surf);
 
    if (dri2_surf->type == DRI2_WINDOW_SURFACE) {
       pointer_swap(
@@ -479,8 +587,7 @@ dri2_swap_buffers(_EGLDriver *drv, _EGLDisplay *disp, _EGLSurface *draw)
       dri2_surf->dri_buffers[__DRI_BUFFER_BACK_LEFT]->attachment = 
 	 __DRI_BUFFER_BACK_LEFT;
 
-      pointer_swap((const void **) &dri2_surf->wl_drm_buffer[WL_BUFFER_FRONT],
-		   (const void **) &dri2_surf->wl_drm_buffer[WL_BUFFER_BACK]);
+      swap_wl_buffers(dri2_surf, WL_BUFFER_FRONT, WL_BUFFER_BACK);
 
       if (!dri2_surf->wl_drm_buffer[WL_BUFFER_FRONT])
 	 dri2_surf->wl_drm_buffer[WL_BUFFER_FRONT] =
@@ -493,6 +600,7 @@ dri2_swap_buffers(_EGLDriver *drv, _EGLDisplay *disp, _EGLSurface *draw)
       wl_surface_attach(dri2_surf->wl_win->surface,
 	    dri2_surf->wl_drm_buffer[WL_BUFFER_FRONT],
 	    dri2_surf->dx, dri2_surf->dy);
+      dri2_surf->wl_buffer_lock[WL_BUFFER_FRONT] = 1;
 
       dri2_surf->wl_win->attached_width  = dri2_surf->base.Width;
       dri2_surf->wl_win->attached_height = dri2_surf->base.Height;
