@@ -366,10 +366,6 @@ static INLINE GLuint CPU_TO_LE32(GLuint x)
 #define M_LOG2E     (1.4426950408889634074)
 #endif
 
-#ifndef ONE_DIV_LN2
-#define ONE_DIV_LN2 (1.442695040888963456)
-#endif
-
 #ifndef ONE_DIV_SQRT_LN2
 #define ONE_DIV_SQRT_LN2 (1.201122408786449815)
 #endif
