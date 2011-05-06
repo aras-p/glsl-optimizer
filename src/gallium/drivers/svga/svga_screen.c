@@ -286,6 +286,8 @@ static int svga_get_shader_param(struct pipe_screen *screen, unsigned shader, en
          return 1;
       case PIPE_SHADER_CAP_SUBROUTINES:
          return 0;
+      case PIPE_SHADER_CAP_INTEGERS:
+         return 0;
       default:
          break;
       }

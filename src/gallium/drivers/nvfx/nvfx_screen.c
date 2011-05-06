@@ -174,6 +174,8 @@ nvfx_screen_get_shader_param(struct pipe_screen *pscreen, unsigned shader, enum 
 			return 1;
 		case PIPE_SHADER_CAP_SUBROUTINES:
 			return 1;
+		case PIPE_SHADER_CAP_INTEGERS:
+			return 0;
 		default:
 			break;
 		}

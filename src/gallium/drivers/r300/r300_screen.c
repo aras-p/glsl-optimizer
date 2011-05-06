@@ -256,6 +256,8 @@ static int r300_get_shader_param(struct pipe_screen *pscreen, unsigned shader, e
             return 1;
         case PIPE_SHADER_CAP_SUBROUTINES:
             return 0;
+        case PIPE_SHADER_CAP_INTEGERS:
+            return 0;
         default:
             break;
         }
