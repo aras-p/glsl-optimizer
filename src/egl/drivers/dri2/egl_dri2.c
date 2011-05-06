@@ -1054,7 +1054,8 @@ dri2_create_drm_image_mesa(_EGLDriver *drv, _EGLDisplay *disp,
 
    valid_mask =
       EGL_DRM_BUFFER_USE_SCANOUT_MESA |
-      EGL_DRM_BUFFER_USE_SHARE_MESA; 
+      EGL_DRM_BUFFER_USE_SHARE_MESA |
+      EGL_DRM_BUFFER_USE_CURSOR_MESA;
    if (attrs.DRMBufferUseMESA & ~valid_mask) {
       _eglLog(_EGL_WARNING, "bad image use bit 0x%04x",
             attrs.DRMBufferUseMESA & ~valid_mask);
@@ -1066,6 +1067,8 @@ dri2_create_drm_image_mesa(_EGLDriver *drv, _EGLDisplay *disp,
       dri_use |= __DRI_IMAGE_USE_SHARE;
    if (attrs.DRMBufferUseMESA & EGL_DRM_BUFFER_USE_SCANOUT_MESA)
       dri_use |= __DRI_IMAGE_USE_SCANOUT;
+   if (attrs.DRMBufferUseMESA & EGL_DRM_BUFFER_USE_CURSOR_MESA)
+      dri_use |= __DRI_IMAGE_USE_CURSOR;
 
    dri2_img->dri_image = 
       dri2_dpy->image->createImage(dri2_dpy->dri_screen,

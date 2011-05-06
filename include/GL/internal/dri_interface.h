@@ -816,6 +816,7 @@ struct __DRIdri2ExtensionRec {
 
 #define __DRI_IMAGE_USE_SHARE		0x0001
 #define __DRI_IMAGE_USE_SCANOUT		0x0002
+#define __DRI_IMAGE_USE_CURSOR		0x0004
 
 /**
  * queryImage attributes
