@@ -568,6 +568,25 @@ set_sampler_max_anisotropy(struct gl_context *ctx,
 }
 
 
+static GLuint
+set_sampler_cube_map_seamless(struct gl_context *ctx,
+                              struct gl_sampler_object *samp, GLboolean param)
+{
+   if (!ctx->Extensions.AMD_seamless_cubemap_per_texture)
+      return INVALID_PNAME;
+
+   if (samp->CubeMapSeamless == param)
+      return GL_FALSE;
+
+   if (param != GL_TRUE && param != GL_FALSE)
+      return INVALID_VALUE;
+
+   flush(ctx);
+   samp->CubeMapSeamless = param;
+   return GL_TRUE;
+}
+
+
 static void GLAPIENTRY
 _mesa_SamplerParameteri(GLuint sampler, GLenum pname, GLint param)
 {
@@ -615,6 +634,9 @@ _mesa_SamplerParameteri(GLuint sampler, GLenum pname, GLint param)
       break;
    case GL_TEXTURE_MAX_ANISOTROPY_EXT:
       res = set_sampler_max_anisotropy(ctx, sampObj, (GLfloat) param);
+      break;
+   case GL_TEXTURE_CUBE_MAP_SEAMLESS:
+      res = set_sampler_cube_map_seamless(ctx, sampObj, param);
       break;
    case GL_TEXTURE_BORDER_COLOR:
       /* fall-through */
@@ -697,6 +719,9 @@ _mesa_SamplerParameterf(GLuint sampler, GLenum pname, GLfloat param)
    case GL_TEXTURE_MAX_ANISOTROPY_EXT:
       res = set_sampler_max_anisotropy(ctx, sampObj, param);
       break;
+   case GL_TEXTURE_CUBE_MAP_SEAMLESS:
+      res = set_sampler_cube_map_seamless(ctx, sampObj, (GLboolean) param);
+      break;
    case GL_TEXTURE_BORDER_COLOR:
       /* fall-through */
    default:
@@ -774,6 +799,9 @@ _mesa_SamplerParameteriv(GLuint sampler, GLenum pname, const GLint *params)
       break;
    case GL_TEXTURE_MAX_ANISOTROPY_EXT:
       res = set_sampler_max_anisotropy(ctx, sampObj, (GLfloat) params[0]);
+      break;
+   case GL_TEXTURE_CUBE_MAP_SEAMLESS:
+      res = set_sampler_cube_map_seamless(ctx, sampObj, params[0]);
       break;
    case GL_TEXTURE_BORDER_COLOR:
       {
@@ -863,6 +891,9 @@ _mesa_SamplerParameterfv(GLuint sampler, GLenum pname, const GLfloat *params)
    case GL_TEXTURE_MAX_ANISOTROPY_EXT:
       res = set_sampler_max_anisotropy(ctx, sampObj, params[0]);
       break;
+   case GL_TEXTURE_CUBE_MAP_SEAMLESS:
+      res = set_sampler_cube_map_seamless(ctx, sampObj, (GLboolean) params[0]);
+      break;
    case GL_TEXTURE_BORDER_COLOR:
       res = set_sampler_border_colorf(ctx, sampObj, params);
       break;
@@ -941,6 +972,9 @@ _mesa_SamplerParameterIiv(GLuint sampler, GLenum pname, const GLint *params)
       break;
    case GL_TEXTURE_MAX_ANISOTROPY_EXT:
       res = set_sampler_max_anisotropy(ctx, sampObj, (GLfloat) params[0]);
+      break;
+   case GL_TEXTURE_CUBE_MAP_SEAMLESS:
+      res = set_sampler_cube_map_seamless(ctx, sampObj, params[0]);
       break;
    case GL_TEXTURE_BORDER_COLOR:
       res = set_sampler_border_colori(ctx, sampObj, params);
@@ -1021,6 +1055,9 @@ _mesa_SamplerParameterIuiv(GLuint sampler, GLenum pname, const GLuint *params)
       break;
    case GL_TEXTURE_MAX_ANISOTROPY_EXT:
       res = set_sampler_max_anisotropy(ctx, sampObj, (GLfloat) params[0]);
+      break;
+   case GL_TEXTURE_CUBE_MAP_SEAMLESS:
+      res = set_sampler_cube_map_seamless(ctx, sampObj, params[0]);
       break;
    case GL_TEXTURE_BORDER_COLOR:
       res = set_sampler_border_colorui(ctx, sampObj, params);
