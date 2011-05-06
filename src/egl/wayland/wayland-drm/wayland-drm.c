@@ -73,7 +73,7 @@ destroy_buffer(struct wl_resource *resource, struct wl_client *client)
 static void
 buffer_destroy(struct wl_client *client, struct wl_buffer *buffer)
 {
-	wl_resource_destroy(&buffer->resource, client);
+	wl_resource_destroy(&buffer->resource, client, 0);
 }
 
 const static struct wl_buffer_interface drm_buffer_interface = {
