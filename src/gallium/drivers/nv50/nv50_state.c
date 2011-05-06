@@ -34,6 +34,36 @@
 
 #include "nouveau/nouveau_gldefs.h"
 
+/* Caveats:
+ *  ! pipe_sampler_state.normalized_coords is ignored - rectangle textures will
+ *     use non-normalized coordinates, everything else won't
+ *    (The relevant bit is in the TIC entry and not the TSC entry.)
+ *
+ *  ! pipe_sampler_state.seamless_cube_map is ignored - seamless filtering is
+ *     always activated on NVA0 +
+ *    (Give me the global bit, otherwise it's not worth the CPU work.)
+ *
+ *  ! pipe_sampler_state.border_color is not swizzled according to the texture
+ *     swizzle in pipe_sampler_view
+ *    (This will be ugly with indirect independent texture/sampler access,
+ *     we'd have to emulate the logic in the shader. GL doesn't have that,
+ *     D3D doesn't have swizzle, if we knew what we were implementing we'd be
+ *     good.)
+ *
+ *  ! pipe_rasterizer_state.line_last_pixel is ignored - it is never drawn
+ *
+ *  ! pipe_rasterizer_state.flatshade_first also applies to QUADS
+ *    (There's a GL query for that, forcing an exception is just ridiculous.)
+ *
+ *  ! pipe_rasterizer_state.gl_rasterization_rules is ignored - pixel centers
+ *     are always at half integer coordinates and the top-left rule applies
+ *    (There does not seem to be a hardware switch for this.)
+ *
+ *  ! pipe_rasterizer_state.sprite_coord_enable is masked with 0xff on NVC0
+ *    (The hardware only has 8 slots meant for TexCoord and we have to assign
+ *     in advance to maintain elegant separate shader objects.)
+ */
+
 static INLINE uint32_t
 nv50_colormask(unsigned mask)
 {
