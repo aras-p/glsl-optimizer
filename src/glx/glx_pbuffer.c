@@ -396,6 +396,7 @@ CreateDrawable(Display *dpy, struct glx_config *config,
                Drawable drawable, const int *attrib_list, CARD8 glxCode)
 {
    xGLXCreateWindowReq *req;
+   struct glx_drawable *glxDraw;
    CARD32 *data;
    unsigned int i;
    CARD8 opcode;
@@ -409,6 +410,10 @@ CreateDrawable(Display *dpy, struct glx_config *config,
 
    opcode = __glXSetupForCommand(dpy);
    if (!opcode)
+      return None;
+
+   glxDraw = Xmalloc(sizeof(*glxDraw));
+   if (!glxDraw)
       return None;
 
    LockDisplay(dpy);
@@ -428,6 +433,11 @@ CreateDrawable(Display *dpy, struct glx_config *config,
 
    UnlockDisplay(dpy);
    SyncHandle();
+
+   if (InitGLXDrawable(dpy, glxDraw, drawable, xid)) {
+      free(glxDraw);
+      return None;
+   }
 
    if (!CreateDRIDrawable(dpy, config, drawable, xid, attrib_list, i)) {
       if (glxCode == X_GLXCreatePixmap)
@@ -454,6 +464,7 @@ DestroyDrawable(Display * dpy, GLXDrawable drawable, CARD32 glxCode)
 
    protocolDestroyDrawable(dpy, drawable, glxCode);
 
+   DestroyGLXDrawable(dpy, drawable);
    DestroyDRIDrawable(dpy, drawable, GL_FALSE);
 
    return;

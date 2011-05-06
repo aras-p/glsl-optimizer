@@ -567,6 +567,8 @@ struct glx_display
      */
    struct glx_screen **screens;
 
+   __glxHashTable *glXDrawHash;
+
 #if defined(GLX_DIRECT_RENDERING) && !defined(GLX_USE_APPLEGL)
    __glxHashTable *drawHash;
 
@@ -577,6 +579,14 @@ struct glx_display
    __GLXDRIdisplay *driDisplay;
    __GLXDRIdisplay *dri2Display;
 #endif
+};
+
+struct glx_drawable {
+   XID xDrawable;
+   XID drawable;
+
+   uint32_t lastEventSbc;
+   int64_t eventSbcWrap;
 };
 
 extern int
@@ -783,6 +793,12 @@ applegl_create_context(struct glx_screen *psc,
 extern int
 applegl_create_display(struct glx_display *display);
 #endif
+
+
+extern struct glx_drawable *GetGLXDrawable(Display *dpy, GLXDrawable drawable);
+extern int InitGLXDrawable(Display *dpy, struct glx_drawable *glxDraw,
+			   XID xDrawable, GLXDrawable drawable);
+extern void DestroyGLXDrawable(Display *dpy, GLXDrawable drawable);
 
 extern struct glx_context dummyContext;
 

@@ -90,6 +90,51 @@ GetGLXDRIDrawable(Display * dpy, GLXDrawable drawable)
 
 #endif
 
+_X_HIDDEN struct glx_drawable *
+GetGLXDrawable(Display *dpy, GLXDrawable drawable)
+{
+   struct glx_display *priv = __glXInitialize(dpy);
+   struct glx_drawable *glxDraw;
+
+   if (priv == NULL)
+      return NULL;
+
+   if (__glxHashLookup(priv->glXDrawHash, drawable, (void *) &glxDraw) == 0)
+      return glxDraw;
+
+   return NULL;
+}
+
+_X_HIDDEN int
+InitGLXDrawable(Display *dpy, struct glx_drawable *glxDraw, XID xDrawable,
+		GLXDrawable drawable)
+{
+   struct glx_display *priv = __glXInitialize(dpy);
+
+   if (!priv)
+      return -1;
+
+   glxDraw->xDrawable = xDrawable;
+   glxDraw->drawable = drawable;
+   glxDraw->lastEventSbc = 0;
+   glxDraw->eventSbcWrap = 0;
+
+   return __glxHashInsert(priv->glXDrawHash, drawable, glxDraw);
+}
+
+_X_HIDDEN void
+DestroyGLXDrawable(Display *dpy, GLXDrawable drawable)
+{
+   struct glx_display *priv = __glXInitialize(dpy);
+   struct glx_drawable *glxDraw;
+
+   if (!priv)
+      return;
+
+   glxDraw = GetGLXDrawable(dpy, drawable);
+   __glxHashDelete(priv->glXDrawHash, drawable);
+   free(glxDraw);
+}
 
 /**
  * Get the GLX per-screen data structure associated with a GLX context.
@@ -608,6 +653,7 @@ glXCreateGLXPixmap(Display * dpy, XVisualInfo * vis, Pixmap pixmap)
    return pixmap;
 #else
    xGLXCreateGLXPixmapReq *req;
+   struct glx_drawable *glxDraw;
    GLXPixmap xid;
    CARD8 opcode;
 
@@ -615,6 +661,10 @@ glXCreateGLXPixmap(Display * dpy, XVisualInfo * vis, Pixmap pixmap)
    if (!opcode) {
       return None;
    }
+
+   glxDraw = Xmalloc(sizeof(*glxDraw));
+   if (!glxDraw)
+      return None;
 
    /* Send the glXCreateGLXPixmap request */
    LockDisplay(dpy);
@@ -627,6 +677,11 @@ glXCreateGLXPixmap(Display * dpy, XVisualInfo * vis, Pixmap pixmap)
    req->glxpixmap = xid = XAllocID(dpy);
    UnlockDisplay(dpy);
    SyncHandle();
+
+   if (InitGLXDrawable(dpy, glxDraw, pixmap, req->glxpixmap)) {
+      free(glxDraw);
+      return None;
+   }
 
 #if defined(GLX_DIRECT_RENDERING) && !defined(GLX_USE_APPLEGL)
    do {
@@ -699,6 +754,8 @@ glXDestroyGLXPixmap(Display * dpy, GLXPixmap glxpixmap)
    req->glxpixmap = glxpixmap;
    UnlockDisplay(dpy);
    SyncHandle();
+
+   DestroyGLXDrawable(dpy, glxpixmap);
 
 #if defined(GLX_DIRECT_RENDERING) && !defined(GLX_USE_APPLEGL)
    {
