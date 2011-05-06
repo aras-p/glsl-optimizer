@@ -36,6 +36,7 @@
 #include "swrast/swrast.h"
 #include "swrast_setup/swrast_setup.h"
 #include "tnl/tnl.h"
+#include "../glsl/ralloc.h"
 
 #include "i915_reg.h"
 #include "i915_program.h"
@@ -97,8 +98,7 @@ i915CreateContext(int api,
                   void *sharedContextPrivate)
 {
    struct dd_function_table functions;
-   struct i915_context *i915 =
-      (struct i915_context *) CALLOC_STRUCT(i915_context);
+   struct i915_context *i915 = rzalloc(NULL, struct i915_context);
    struct intel_context *intel = &i915->intel;
    struct gl_context *ctx = &intel->ctx;
 
