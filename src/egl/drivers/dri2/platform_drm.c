@@ -488,6 +488,7 @@ const int r600_chip_ids[] = {
    0x68E8, /* PCI_CHIP_CEDAR_68E8 */
    0x68E9, /* PCI_CHIP_CEDAR_68E9 */
    0x68F1, /* PCI_CHIP_CEDAR_68F1 */
+   0x68F2, /* PCI_CHIP_CEDAR_68F2 */
    0x68F8, /* PCI_CHIP_CEDAR_68F8 */
    0x68F9, /* PCI_CHIP_CEDAR_68F9 */
    0x68FE, /* PCI_CHIP_CEDAR_68FE */

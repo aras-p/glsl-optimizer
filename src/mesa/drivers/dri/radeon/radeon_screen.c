@@ -1106,6 +1106,7 @@ static int radeon_set_screen_flags(radeonScreenPtr screen, int device_id)
     case PCI_CHIP_CEDAR_68E8:
     case PCI_CHIP_CEDAR_68E9:
     case PCI_CHIP_CEDAR_68F1:
+    case PCI_CHIP_CEDAR_68F2:
     case PCI_CHIP_CEDAR_68F8:
     case PCI_CHIP_CEDAR_68F9:
     case PCI_CHIP_CEDAR_68FE:

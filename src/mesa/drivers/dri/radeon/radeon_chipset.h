@@ -406,6 +406,7 @@
 #define PCI_CHIP_CEDAR_68E8             0x68E8
 #define PCI_CHIP_CEDAR_68E9             0x68E9
 #define PCI_CHIP_CEDAR_68F1             0x68F1
+#define PCI_CHIP_CEDAR_68F2             0x68F2
 #define PCI_CHIP_CEDAR_68F8             0x68F8
 #define PCI_CHIP_CEDAR_68F9             0x68F9
 #define PCI_CHIP_CEDAR_68FE             0x68FE

@@ -206,6 +206,7 @@ static const struct pci_id radeon_pci_id[] = {
 	{0x1002, 0x68e8, CHIP_CEDAR},
 	{0x1002, 0x68e9, CHIP_CEDAR},
 	{0x1002, 0x68f1, CHIP_CEDAR},
+	{0x1002, 0x68f2, CHIP_CEDAR},
 	{0x1002, 0x68f8, CHIP_CEDAR},
 	{0x1002, 0x68f9, CHIP_CEDAR},
 	{0x1002, 0x68fe, CHIP_CEDAR},
