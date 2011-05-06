@@ -158,6 +158,9 @@ nv50_miptree_create(struct pipe_screen *pscreen,
       tile_flags = 0x6000;
       break;
    default:
+      if (pt->bind & PIPE_BIND_CURSOR)
+         tile_flags = 0;
+      else
       if ((pt->bind & PIPE_BIND_SCANOUT) &&
           util_format_get_blocksizebits(pt->format) == 32)
          tile_flags = 0x7a00;
@@ -165,6 +168,8 @@ nv50_miptree_create(struct pipe_screen *pscreen,
          tile_flags = 0x7000;
       break;
    }
+   if (pt->bind & (PIPE_BIND_SCANOUT | PIPE_BIND_CURSOR))
+      tile_flags |= NOUVEAU_BO_TILE_SCANOUT;
 
    /* For 3D textures, a mipmap is spanned by all the layers, for array
     * textures and cube maps, each layer contains its own mipmaps.
@@ -176,7 +181,10 @@ nv50_miptree_create(struct pipe_screen *pscreen,
       unsigned blocksize = util_format_get_blocksize(pt->format);
 
       lvl->offset = mt->total_size;
-      lvl->tile_mode = get_tile_dims(nbx, nby, d);
+
+      if (tile_flags & NOUVEAU_BO_TILE_LAYOUT_MASK)
+         lvl->tile_mode = get_tile_dims(nbx, nby, d);
+
       lvl->pitch = align(nbx * blocksize, NV50_TILE_PITCH(lvl->tile_mode));
 
       mt->total_size += lvl->pitch *

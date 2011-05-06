@@ -300,7 +300,8 @@ enum pipe_transfer_usage {
 #define PIPE_BIND_TRANSFER_WRITE       (1 << 9) /* get_transfer */
 #define PIPE_BIND_TRANSFER_READ        (1 << 10) /* get_transfer */
 #define PIPE_BIND_STREAM_OUTPUT        (1 << 11) /* set_stream_output_buffers */
-#define PIPE_BIND_CUSTOM               (1 << 16) /* state-tracker/winsys usages */
+#define PIPE_BIND_CURSOR               (1 << 16) /* mouse cursor */
+#define PIPE_BIND_CUSTOM               (1 << 17) /* state-tracker/winsys usages */
 
 /* The first two flags above were previously part of the amorphous
  * TEXTURE_USAGE, most of which are now descriptions of the ways a

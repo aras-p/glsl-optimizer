@@ -221,6 +221,7 @@ crtc_load_cursor_argb_ga3d(xf86CrtcPtr crtc, CARD32 * image)
 	memset(&templat, 0, sizeof(templat));
 	templat.bind |= PIPE_BIND_RENDER_TARGET;
 	templat.bind |= PIPE_BIND_SCANOUT;
+	templat.bind |= PIPE_BIND_CURSOR;
 	templat.target = PIPE_TEXTURE_2D;
 	templat.last_level = 0;
 	templat.depth0 = 1;
