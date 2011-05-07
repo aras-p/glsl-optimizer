@@ -377,6 +377,8 @@ void r300_decompress_zmask_locked(struct r300_context *r300)
     r300_decompress_zmask_locked_unsafe(r300);
     r300->context.set_framebuffer_state(&r300->context, &saved_fb);
     util_unreference_framebuffer_state(&saved_fb);
+
+    pipe_surface_reference(&r300->locked_zbuffer, NULL);
 }
 
 /* Copy a block of pixels from one surface to another using HW. */
