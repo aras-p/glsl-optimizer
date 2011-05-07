@@ -645,7 +645,7 @@ vl_compositor_set_rgba_layer(struct pipe_video_compositor *compositor,
    assert(layer < VL_COMPOSITOR_MAX_LAYERS);
 
    c->used_layers |= 1 << layer;
-   c->layers[layer].clearing = false;
+   c->layers[layer].clearing = rgba->swizzle_a == PIPE_SWIZZLE_ONE;
    c->layers[layer].fs = c->fs_rgba;
    c->layers[layer].samplers[0] = c->sampler_linear;
    c->layers[layer].samplers[1] = NULL;
