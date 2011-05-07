@@ -81,6 +81,10 @@ vlVdpOutputSurfaceCreate(VdpDevice device,
 
    memset(&sv_templ, 0, sizeof(sv_templ));
    u_sampler_view_default_template(&sv_templ, res, res->format);
+
+   // as long as we don't have a background picture we don't want an alpha channel
+   sv_templ.swizzle_a = PIPE_SWIZZLE_ONE;
+
    vlsurface->sampler_view = context->create_sampler_view(context, res, &sv_templ);
    if (!vlsurface->sampler_view) {
       FREE(dev);
