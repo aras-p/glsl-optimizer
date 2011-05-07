@@ -156,7 +156,7 @@ static void r300_update_hyperz(struct r300_context* r300)
         return;
 
     /* Zbuffer compression. */
-    if (r300->zmask_in_use && !r300->hyperz_locked) {
+    if (r300->zmask_in_use && !r300->locked_zbuffer) {
         z->zb_bw_cntl |= R300_FAST_FILL_ENABLE |
                          /*R300_FORCE_COMPRESSED_STENCIL_VALUE_ENABLE |*/
                          R300_RD_COMP_ENABLE;
@@ -171,7 +171,7 @@ static void r300_update_hyperz(struct r300_context* r300)
     }
 
     /* HiZ. */
-    if (r300->hiz_in_use && !r300->hyperz_locked) {
+    if (r300->hiz_in_use && !r300->locked_zbuffer) {
         /* Set the HiZ function if needed. */
         if (r300->hiz_func == HIZ_FUNC_NONE) {
             r300->hiz_func = r300_get_hiz_func(r300);

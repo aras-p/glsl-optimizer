@@ -323,7 +323,7 @@ static void r300_clear_depth_stencil(struct pipe_context *pipe,
     struct pipe_framebuffer_state *fb =
         (struct pipe_framebuffer_state*)r300->fb_state.state;
 
-    if (r300->zmask_in_use && !r300->hyperz_locked) {
+    if (r300->zmask_in_use && !r300->locked_zbuffer) {
         if (fb->zsbuf->texture == dst->texture) {
             r300_decompress_zmask(r300);
         }
@@ -341,7 +341,7 @@ void r300_decompress_zmask(struct r300_context *r300)
     struct pipe_framebuffer_state *fb =
         (struct pipe_framebuffer_state*)r300->fb_state.state;
 
-    if (!r300->zmask_in_use || r300->hyperz_locked)
+    if (!r300->zmask_in_use || r300->locked_zbuffer)
         return;
 
     r300->zmask_decompress = TRUE;
@@ -423,7 +423,7 @@ static void r300_resource_copy_region(struct pipe_context *pipe,
         return;
     }
 
-    if (r300->zmask_in_use && !r300->hyperz_locked) {
+    if (r300->zmask_in_use && !r300->locked_zbuffer) {
         if (fb->zsbuf->texture == src ||
             fb->zsbuf->texture == dst) {
             r300_decompress_zmask(r300);

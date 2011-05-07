@@ -597,8 +597,6 @@ struct r300_context {
     /* Whether ZMASK is being decompressed. */
     boolean zmask_decompress;
     /* Whether ZMASK/HIZ is locked, i.e. should be disabled and cannot be taken over. */
-    boolean hyperz_locked;
-    /* The zbuffer the ZMASK of which is locked. */
     struct pipe_surface *locked_zbuffer;
     /* Whether HIZ is enabled. */
     boolean hiz_in_use;

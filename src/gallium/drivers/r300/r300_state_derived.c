@@ -965,7 +965,7 @@ static void r300_decompress_depth_textures(struct r300_context *r300)
                           state->sampler_state_count);
     unsigned i;
 
-    if (!r300->hyperz_locked || !r300->locked_zbuffer) {
+    if (!r300->locked_zbuffer) {
         return;
     }
 

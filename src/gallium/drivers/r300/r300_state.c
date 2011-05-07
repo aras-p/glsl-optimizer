@@ -813,6 +813,7 @@ r300_set_framebuffer_state(struct pipe_context* pipe,
     struct pipe_framebuffer_state *old_state = r300->fb_state.state;
     unsigned max_width, max_height, i;
     uint32_t zbuffer_bpp = 0;
+    boolean unlock_zbuffer = FALSE;
 
     if (r300->screen->caps.is_r500) {
         max_width = max_height = 4096;
@@ -828,7 +829,7 @@ r300_set_framebuffer_state(struct pipe_context* pipe,
         return;
     }
 
-    if (old_state->zsbuf && r300->zmask_in_use && !r300->hyperz_locked) {
+    if (old_state->zsbuf && r300->zmask_in_use && !r300->locked_zbuffer) {
         /* There is a zmask in use, what are we gonna do? */
         if (state->zsbuf) {
             if (!pipe_surface_equal(old_state->zsbuf, state->zsbuf)) {
@@ -838,10 +839,9 @@ r300_set_framebuffer_state(struct pipe_context* pipe,
             }
         } else {
             /* We don't bind another zbuffer, so lock the current one. */
-            r300->hyperz_locked = TRUE;
             pipe_surface_reference(&r300->locked_zbuffer, old_state->zsbuf);
         }
-    } else if (r300->hyperz_locked && r300->locked_zbuffer) {
+    } else if (r300->locked_zbuffer) {
         /* We have a locked zbuffer now, what are we gonna do? */
         if (state->zsbuf) {
             if (!pipe_surface_equal(r300->locked_zbuffer, state->zsbuf)) {
@@ -851,11 +851,11 @@ r300_set_framebuffer_state(struct pipe_context* pipe,
                 r300->hiz_in_use = FALSE;
             } else {
                 /* We are binding the locked zbuffer again, so unlock it. */
-                r300->hyperz_locked = FALSE;
+                unlock_zbuffer = TRUE;
             }
         }
     }
-    assert(state->zsbuf || r300->hyperz_locked || !r300->zmask_in_use);
+    assert(state->zsbuf || (r300->locked_zbuffer && !unlock_zbuffer) || !r300->zmask_in_use);
 
     /* Need to reset clamping or colormask. */
     r300_mark_atom_dirty(r300, &r300->blend_state);
@@ -870,7 +870,7 @@ r300_set_framebuffer_state(struct pipe_context* pipe,
 
     util_copy_framebuffer_state(r300->fb_state.state, state);
 
-    if (!r300->hyperz_locked) {
+    if (unlock_zbuffer) {
         pipe_surface_reference(&r300->locked_zbuffer, NULL);
     }
 
