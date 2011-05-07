@@ -375,7 +375,6 @@ void r300_emit_fb_state(struct r300_context* r300, unsigned size, void* state)
     struct pipe_framebuffer_state* fb = (struct pipe_framebuffer_state*)state;
     struct r300_surface* surf;
     unsigned i;
-    boolean can_hyperz = r300->rws->get_value(r300->rws, RADEON_VID_CAN_HYPERZ);
     uint32_t rb3d_cctl = 0;
 
     CS_LOCALS(r300);
@@ -432,7 +431,7 @@ void r300_emit_fb_state(struct r300_context* r300, unsigned size, void* state)
         OUT_CS_REG(R300_ZB_DEPTHPITCH, surf->pitch);
         OUT_CS_RELOC(surf);
 
-        if (can_hyperz) {
+        if (r300->hyperz_enabled) {
             /* HiZ RAM. */
             OUT_CS_REG(R300_ZB_HIZ_OFFSET, 0);
             OUT_CS_REG(R300_ZB_HIZ_PITCH, surf->pitch_hiz);

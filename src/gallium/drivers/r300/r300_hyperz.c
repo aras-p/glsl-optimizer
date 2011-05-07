@@ -151,8 +151,7 @@ static void r300_update_hyperz(struct r300_context* r300)
         return;
     }
 
-    if (!zstex ||
-        !r300->rws->get_value(r300->rws, RADEON_VID_CAN_HYPERZ))
+    if (!zstex || !r300->hyperz_enabled)
         return;
 
     /* Zbuffer compression. */

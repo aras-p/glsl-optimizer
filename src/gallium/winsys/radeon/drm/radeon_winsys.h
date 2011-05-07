@@ -87,9 +87,11 @@ enum radeon_value_id {
      * - TBD
      */
     RADEON_VID_DRM_2_8_0,
+};
 
-    RADEON_VID_CAN_HYPERZ,     /* ZMask + HiZ */
-    RADEON_VID_CAN_AACOMPRESS, /* CMask */
+enum radeon_feature_id {
+    RADEON_FID_HYPERZ_RAM_ACCESS,     /* ZMask + HiZ */
+    RADEON_FID_CMASK_RAM_ACCESS,
 };
 
 struct radeon_winsys {
@@ -314,6 +316,16 @@ struct radeon_winsys {
      */
     boolean (*cs_is_buffer_referenced)(struct radeon_winsys_cs *cs,
                                        struct radeon_winsys_cs_handle *buf);
+
+    /**
+     * Request access to a feature for a command stream.
+     *
+     * \param cs        A command stream.
+     * \param fid       A winsys buffer.
+     */
+    boolean (*cs_request_feature)(struct radeon_winsys_cs *cs,
+                                  enum radeon_feature_id fid,
+                                  boolean enable);
 };
 
 #endif

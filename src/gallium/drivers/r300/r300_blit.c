@@ -206,23 +206,47 @@ static void r300_clear(struct pipe_context* pipe,
         (struct r300_hyperz_state*)r300->hyperz_state.state;
     uint32_t width = fb->width;
     uint32_t height = fb->height;
-    boolean can_hyperz = r300->rws->get_value(r300->rws, RADEON_VID_CAN_HYPERZ);
     uint32_t hyperz_dcv = hyperz->zb_depthclearvalue;
 
     /* Enable fast Z clear.
      * The zbuffer must be in micro-tiled mode, otherwise it locks up. */
-    if ((buffers & PIPE_CLEAR_DEPTHSTENCIL) && can_hyperz) {
-        if (r300_fast_zclear_allowed(r300)) {
-            hyperz_dcv = hyperz->zb_depthclearvalue =
-                r300_depth_clear_value(fb->zsbuf->format, depth, stencil);
+    if (buffers & PIPE_CLEAR_DEPTHSTENCIL) {
+        boolean zmask_clear, hiz_clear;
 
-            r300_mark_atom_dirty(r300, &r300->zmask_clear);
-            buffers &= ~PIPE_CLEAR_DEPTHSTENCIL;
-        }
+        zmask_clear = r300_fast_zclear_allowed(r300);
+        hiz_clear = r300_hiz_clear_allowed(r300);
 
-        if (r300_hiz_clear_allowed(r300)) {
-            r300->hiz_clear_value = r300_hiz_clear_value(depth);
-            r300_mark_atom_dirty(r300, &r300->hiz_clear);
+        /* If we need Hyper-Z. */
+        if (zmask_clear || hiz_clear) {
+            r300->num_z_clears++;
+
+            /* Try to obtain the access to Hyper-Z buffers if we don't have one. */
+            if (!r300->hyperz_enabled) {
+                r300->hyperz_enabled =
+                    r300->rws->cs_request_feature(r300->cs,
+                                                RADEON_FID_HYPERZ_RAM_ACCESS,
+                                                TRUE);
+                if (r300->hyperz_enabled) {
+                   /* Need to emit HyperZ buffer regs for the first time. */
+                   r300_mark_fb_state_dirty(r300, R300_CHANGED_HYPERZ_FLAG);
+                }
+            }
+
+            /* Setup Hyper-Z clears. */
+            if (r300->hyperz_enabled) {
+                if (zmask_clear) {
+                    hyperz_dcv = hyperz->zb_depthclearvalue =
+                        r300_depth_clear_value(fb->zsbuf->format, depth, stencil);
+
+                    r300_mark_atom_dirty(r300, &r300->zmask_clear);
+                    buffers &= ~PIPE_CLEAR_DEPTHSTENCIL;
+                }
+
+                if (hiz_clear) {
+                    r300->hiz_clear_value = r300_hiz_clear_value(depth);
+                    r300_mark_atom_dirty(r300, &r300->hiz_clear);
+                }
+            }
         }
     }
 

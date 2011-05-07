@@ -768,7 +768,6 @@ void r300_mark_fb_state_dirty(struct r300_context *r300,
                               enum r300_fb_state_change change)
 {
     struct pipe_framebuffer_state *state = r300->fb_state.state;
-    boolean can_hyperz = r300->rws->get_value(r300->rws, RADEON_VID_CAN_HYPERZ);
 
     r300_mark_atom_dirty(r300, &r300->gpu_flush);
     r300_mark_atom_dirty(r300, &r300->fb_state);
@@ -797,7 +796,7 @@ void r300_mark_fb_state_dirty(struct r300_context *r300,
         r300->fb_state.size += 10;
     else if (state->zsbuf) {
         r300->fb_state.size += 10;
-        if (can_hyperz)
+        if (r300->hyperz_enabled)
             r300->fb_state.size += 8;
     }
 

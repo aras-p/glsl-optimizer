@@ -26,6 +26,7 @@
 #include "util/u_sampler.h"
 #include "util/u_simple_list.h"
 #include "util/u_upload_mgr.h"
+#include "os/os_time.h"
 
 #include "r300_cb.h"
 #include "r300_context.h"
@@ -94,6 +95,10 @@ static void r300_release_referenced_objects(struct r300_context *r300)
 static void r300_destroy_context(struct pipe_context* context)
 {
     struct r300_context* r300 = r300_context(context);
+
+    if (r300->cs && r300->hyperz_enabled) {
+        r300->rws->cs_request_feature(r300->cs, RADEON_FID_HYPERZ_RAM_ACCESS, FALSE);
+    }
 
     if (r300->blitter)
         util_blitter_destroy(r300->blitter);
@@ -167,8 +172,6 @@ static boolean r300_setup_atoms(struct r300_context* r300)
     boolean is_r500 = r300->screen->caps.is_r500;
     boolean has_tcl = r300->screen->caps.has_tcl;
     boolean drm_2_6_0 = r300->rws->get_value(r300->rws, RADEON_VID_DRM_2_6_0);
-    boolean can_hyperz = r300->rws->get_value(r300->rws, RADEON_VID_CAN_HYPERZ);
-    boolean has_hiz_ram = r300->screen->caps.hiz_ram > 0;
 
     /* Create the actual atom list.
      *
@@ -219,13 +222,10 @@ static boolean r300_setup_atoms(struct r300_context* r300)
     /* TX. */
     R300_INIT_ATOM(texture_cache_inval, 2);
     R300_INIT_ATOM(textures_state, 0);
-    if (can_hyperz) {
-        /* HiZ Clear */
-        if (has_hiz_ram)
-            R300_INIT_ATOM(hiz_clear, 4);
-        /* zmask clear */
-        R300_INIT_ATOM(zmask_clear, 4);
-    }
+    /* HiZ Clear */
+    R300_INIT_ATOM(hiz_clear, r300->screen->caps.hiz_ram > 0 ? 4 : 0);
+    /* zmask clear */
+    R300_INIT_ATOM(zmask_clear, r300->screen->caps.zmask_ram > 0 ? 4 : 0);
     /* ZB (unpipelined), SU. */
     R300_INIT_ATOM(query_start, 4);
 
@@ -503,6 +503,8 @@ struct pipe_context* r300_create_context(struct pipe_screen* screen,
                                                            &dsa);
     }
 
+    r300->hyperz_time_of_last_flush = os_time_get();
+
     /* Print driver info. */
 #ifdef DEBUG
     {
@@ -512,7 +514,7 @@ struct pipe_context* r300_create_context(struct pipe_screen* screen,
         fprintf(stderr,
                 "r300: DRM version: %d.%d.%d, Name: %s, ID: 0x%04x, GB: %d, Z: %d\n"
                 "r300: GART size: %d MB, VRAM size: %d MB\n"
-                "r300: AA compression: %s, Z compression: %s, HiZ: %s\n",
+                "r300: AA compression RAM: %s, Z compression RAM: %s, HiZ RAM: %s\n",
                 rws->get_value(rws, RADEON_VID_DRM_MAJOR),
                 rws->get_value(rws, RADEON_VID_DRM_MINOR),
                 rws->get_value(rws, RADEON_VID_DRM_PATCHLEVEL),
@@ -522,10 +524,8 @@ struct pipe_context* r300_create_context(struct pipe_screen* screen,
                 rws->get_value(rws, RADEON_VID_R300_Z_PIPES),
                 rws->get_value(rws, RADEON_VID_GART_SIZE) >> 20,
                 rws->get_value(rws, RADEON_VID_VRAM_SIZE) >> 20,
-                rws->get_value(rws, RADEON_VID_CAN_AACOMPRESS) ? "YES" : "NO",
-                rws->get_value(rws, RADEON_VID_CAN_HYPERZ) &&
+                "YES", /* XXX really? */
                 r300->screen->caps.zmask_ram ? "YES" : "NO",
-                rws->get_value(rws, RADEON_VID_CAN_HYPERZ) &&
                 r300->screen->caps.hiz_ram ? "YES" : "NO");
     }
 

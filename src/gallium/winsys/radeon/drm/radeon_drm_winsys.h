@@ -32,6 +32,8 @@
 
 #include "radeon_winsys.h"
 
+#include "os/os_thread.h"
+
 struct radeon_drm_winsys {
     struct radeon_winsys base;
 
@@ -52,10 +54,10 @@ struct radeon_drm_winsys {
     unsigned drm_minor;
     unsigned drm_patchlevel;
 
-    /* Hyper-Z user */
-    boolean hyperz;
-    /* AA compression (CMask) */
-    boolean aacompress;
+    struct radeon_drm_cs *hyperz_owner;
+    pipe_mutex hyperz_owner_mutex;
+    struct radeon_drm_cs *cmask_owner;
+    pipe_mutex cmask_owner_mutex;
 };
 
 static INLINE struct radeon_drm_winsys *
