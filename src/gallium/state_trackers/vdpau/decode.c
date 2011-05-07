@@ -45,6 +45,7 @@ vlVdpDecoderCreate(VdpDevice device,
    vlVdpDevice *dev;
    vlVdpDecoder *vldecoder;
    VdpStatus ret;
+   unsigned i;
 
    VDPAU_MSG(VDPAU_TRACE, "[VDPAU] Creating decoder\n");
 
@@ -83,10 +84,14 @@ vlVdpDecoderCreate(VdpDevice device,
       goto error_decoder;
    }
 
-   vldecoder->buffer = vldecoder->decoder->create_buffer(vldecoder->decoder);
-   if (!vldecoder->buffer) {
-      ret = VDP_STATUS_ERROR;
-      goto error_buffer;
+   vldecoder->cur_buffer = 0;
+
+   for (i = 0; i < VL_NUM_DECODE_BUFFERS; ++i) {
+      vldecoder->buffer[i] = vldecoder->decoder->create_buffer(vldecoder->decoder);
+      if (!vldecoder->buffer[i]) {
+         ret = VDP_STATUS_ERROR;
+         goto error_buffer;
+      }
    }
 
    *decoder = vlAddDataHTAB(vldecoder);
@@ -100,9 +105,12 @@ vlVdpDecoderCreate(VdpDevice device,
    return VDP_STATUS_OK;
 
 error_handle:
-   vldecoder->buffer->destroy(vldecoder->buffer);
-
 error_buffer:
+
+   for (i = 0; i < VL_NUM_DECODE_BUFFERS; ++i)
+      if (vldecoder->buffer[i])
+         vldecoder->buffer[i]->destroy(vldecoder->buffer[i]);
+
    vldecoder->decoder->destroy(vldecoder->decoder);
 
 error_decoder:
@@ -114,6 +122,7 @@ VdpStatus
 vlVdpDecoderDestroy(VdpDecoder decoder)
 {
    vlVdpDecoder *vldecoder;
+   unsigned i;
 
    VDPAU_MSG(VDPAU_TRACE, "[VDPAU] Destroying decoder\n");
 
@@ -121,7 +130,10 @@ vlVdpDecoderDestroy(VdpDecoder decoder)
    if (!vldecoder)
       return VDP_STATUS_INVALID_HANDLE;
 
-   vldecoder->buffer->destroy(vldecoder->buffer);
+   for (i = 0; i < VL_NUM_DECODE_BUFFERS; ++i)
+      if (vldecoder->buffer[i])
+         vldecoder->buffer[i]->destroy(vldecoder->buffer[i]);
+
    vldecoder->decoder->destroy(vldecoder->decoder);
 
    FREE(vldecoder);
@@ -234,7 +246,11 @@ vlVdpDecoderRender(VdpDecoder decoder,
    switch (vldecoder->decoder->profile)   {
    case PIPE_VIDEO_PROFILE_MPEG2_SIMPLE:
    case PIPE_VIDEO_PROFILE_MPEG2_MAIN:
-      return vlVdpDecoderRenderMpeg2(vldecoder->decoder, vldecoder->buffer, vlsurf->video_buffer,
+      ++vldecoder->cur_buffer;
+      vldecoder->cur_buffer %= VL_NUM_DECODE_BUFFERS;
+      return vlVdpDecoderRenderMpeg2(vldecoder->decoder,
+                                     vldecoder->buffer[vldecoder->cur_buffer],
+                                     vlsurf->video_buffer,
                                      (VdpPictureInfoMPEG1Or2 *)picture_info,
                                      bitstream_buffer_count,bitstream_buffers);
       break;

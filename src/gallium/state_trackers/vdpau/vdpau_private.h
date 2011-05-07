@@ -45,6 +45,7 @@
 #define TOSTRING(x) QUOTEME(x)
 #define INFORMATION_STRING TOSTRING(INFORMATION)
 #define VL_HANDLES
+#define VL_NUM_DECODE_BUFFERS 4
 
 static inline enum pipe_video_chroma_format
 ChromaToPipe(VdpChromaType vdpau_type)
@@ -213,7 +214,8 @@ typedef struct
 {
    vlVdpDevice *device;
    struct pipe_video_decoder *decoder;
-   struct pipe_video_decode_buffer *buffer;
+   struct pipe_video_decode_buffer *buffer[VL_NUM_DECODE_BUFFERS];
+   unsigned cur_buffer;
 } vlVdpDecoder;
 
 typedef uint32_t vlHandle;
