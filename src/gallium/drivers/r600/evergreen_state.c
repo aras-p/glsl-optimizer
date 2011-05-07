@@ -143,13 +143,16 @@ static void *evergreen_create_blend_state(struct pipe_context *ctx,
 static void *evergreen_create_dsa_state(struct pipe_context *ctx,
 				   const struct pipe_depth_stencil_alpha_state *state)
 {
-	struct r600_pipe_state *rstate = CALLOC_STRUCT(r600_pipe_state);
+	struct r600_pipe_dsa *dsa = CALLOC_STRUCT(r600_pipe_dsa);
 	unsigned db_depth_control, alpha_test_control, alpha_ref, db_shader_control;
 	unsigned stencil_ref_mask, stencil_ref_mask_bf, db_render_override, db_render_control;
+	struct r600_pipe_state *rstate;
 
-	if (rstate == NULL) {
+	if (dsa == NULL) {
 		return NULL;
 	}
+
+	rstate = &dsa->rstate;
 
 	rstate->id = R600_PIPE_STATE_DSA;
 	/* depth TODO some of those db_shader_control field depend on shader adjust mask & add it to shader */
@@ -190,6 +193,7 @@ static void *evergreen_create_dsa_state(struct pipe_context *ctx,
 		alpha_test_control |= S_028410_ALPHA_TEST_ENABLE(1);
 		alpha_ref = fui(state->alpha.ref_value);
 	}
+	dsa->alpha_ref = alpha_ref;
 
 	/* misc */
 	db_render_control = 0;
@@ -206,7 +210,6 @@ static void *evergreen_create_dsa_state(struct pipe_context *ctx,
 	r600_pipe_state_add_reg(rstate,
 				R_028434_DB_STENCILREFMASK_BF, stencil_ref_mask_bf,
 				0xFFFFFFFF & C_028434_STENCILREF_BF, NULL);
-	r600_pipe_state_add_reg(rstate, R_028438_SX_ALPHA_REF, alpha_ref, 0xFFFFFFFF, NULL);
 	r600_pipe_state_add_reg(rstate, R_0286DC_SPI_FOG_CNTL, 0x00000000, 0xFFFFFFFF, NULL);
 	r600_pipe_state_add_reg(rstate, R_028800_DB_DEPTH_CONTROL, db_depth_control, 0xFFFFFFFF, NULL);
 	/* The DB_SHADER_CONTROL mask is 0xFFFFFFBC since Z_EXPORT_ENABLE,
@@ -307,15 +310,10 @@ static void *evergreen_create_sampler_state(struct pipe_context *ctx,
 {
 	struct r600_pipe_state *rstate = CALLOC_STRUCT(r600_pipe_state);
 	union util_color uc;
-	uint32_t coord_trunc = 0;
 
 	if (rstate == NULL) {
 		return NULL;
 	}
-
-	if ((state->mag_img_filter == PIPE_TEX_FILTER_NEAREST) ||
-	    (state->min_img_filter == PIPE_TEX_FILTER_NEAREST))
-		coord_trunc = 1;
 
 	rstate->id = R600_PIPE_STATE_SAMPLER;
 	util_pack_color(state->border_color, PIPE_FORMAT_B8G8R8A8_UNORM, &uc);
@@ -328,14 +326,13 @@ static void *evergreen_create_sampler_state(struct pipe_context *ctx,
 			S_03C000_MIP_FILTER(r600_tex_mipfilter(state->min_mip_filter)) |
 			S_03C000_DEPTH_COMPARE_FUNCTION(r600_tex_compare(state->compare_func)) |
 			S_03C000_BORDER_COLOR_TYPE(uc.ui ? V_03C000_SQ_TEX_BORDER_COLOR_REGISTER : 0), 0xFFFFFFFF, NULL);
-	/* FIXME LOD it depends on texture base level ... */
 	r600_pipe_state_add_reg(rstate, R_03C004_SQ_TEX_SAMPLER_WORD1_0,
 			S_03C004_MIN_LOD(S_FIXED(CLAMP(state->min_lod, 0, 15), 8)) |
 			S_03C004_MAX_LOD(S_FIXED(CLAMP(state->max_lod, 0, 15), 8)),
 			0xFFFFFFFF, NULL);
 	r600_pipe_state_add_reg(rstate, R_03C008_SQ_TEX_SAMPLER_WORD2_0,
 				S_03C008_LOD_BIAS(S_FIXED(CLAMP(state->lod_bias, -16, 16), 8)) |
-				S_03C008_MC_COORD_TRUNCATE(coord_trunc) |
+				(state->seamless_cube_map ? 0 : S_03C008_DISABLE_CUBE_WRAP(1)) |
 				S_03C008_TYPE(1),
 				0xFFFFFFFF, NULL);
 
@@ -409,7 +406,6 @@ static struct pipe_sampler_view *evergreen_create_sampler_view(struct pipe_conte
 	array_mode = tmp->array_mode[0];
 	tile_type = tmp->tile_type;
 
-	/* FIXME properly handle first level != 0 */
 	r600_pipe_state_add_reg(rstate, R_030000_RESOURCE0_WORD0,
 				S_030000_DIM(r600_tex_dim(texture->target)) |
 				S_030000_PITCH((pitch / 8) - 1) |
@@ -715,12 +711,26 @@ static void evergreen_cb(struct r600_pipe_context *rctx, struct r600_pipe_state 
 		S_028C70_ENDIAN(endian);
 
 
-	/* we can only set the export size if any thing is snorm/unorm component is > 11 bits,
-	   if we aren't a float, sint or uint */
+	/* EXPORT_NORM is an optimzation that can be enabled for better
+	 * performance in certain cases.
+	 * EXPORT_NORM can be enabled if:
+	 * - 11-bit or smaller UNORM/SNORM/SRGB
+	 * - 16-bit or smaller FLOAT
+	 */
+	/* FIXME: This should probably be the same for all CBs if we want
+	 * useful alpha tests. */
 	if (desc->colorspace != UTIL_FORMAT_COLORSPACE_ZS &&
-	    desc->channel[i].size < 12 && desc->channel[i].type != UTIL_FORMAT_TYPE_FLOAT &&
-	    ntype != V_028C70_NUMBER_UINT && ntype != V_028C70_NUMBER_SINT)
+	    ((desc->channel[i].size < 12 &&
+	      desc->channel[i].type != UTIL_FORMAT_TYPE_FLOAT &&
+	      ntype != V_028C70_NUMBER_UINT && ntype != V_028C70_NUMBER_SINT) ||
+	     (desc->channel[i].size < 17 &&
+	      desc->channel[i].type == UTIL_FORMAT_TYPE_FLOAT))) {
 		color_info |= S_028C70_SOURCE_FORMAT(V_028C70_EXPORT_4C_16BPC);
+		rctx->export_16bpc = true;
+	} else {
+		rctx->export_16bpc = false;
+	}
+	rctx->alpha_ref_dirty = true;
 
 	if (rtex->array_mode[level] > V_028C70_ARRAY_LINEAR_ALIGNED) {
 		tile_type = rtex->tile_type;
@@ -922,7 +932,7 @@ void evergreen_init_state_functions(struct r600_pipe_context *rctx)
 	rctx->context.create_vertex_elements_state = r600_create_vertex_elements;
 	rctx->context.create_vs_state = r600_create_shader_state;
 	rctx->context.bind_blend_state = r600_bind_blend_state;
-	rctx->context.bind_depth_stencil_alpha_state = r600_bind_state;
+	rctx->context.bind_depth_stencil_alpha_state = r600_bind_dsa_state;
 	rctx->context.bind_fragment_sampler_states = evergreen_bind_ps_sampler;
 	rctx->context.bind_fs_state = r600_bind_ps_shader;
 	rctx->context.bind_rasterizer_state = r600_bind_rs_state;
@@ -1232,9 +1242,11 @@ void evergreen_init_config(struct r600_pipe_context *rctx)
 	r600_pipe_state_add_reg(rstate, R_009100_SPI_CONFIG_CNTL, 0x0, 0xFFFFFFFF, NULL);
 	r600_pipe_state_add_reg(rstate, R_00913C_SPI_CONFIG_CNTL_1, S_00913C_VTX_DONE_DELAY(4), 0xFFFFFFFF, NULL);
 
-//	r600_pipe_state_add_reg(rstate, R_028350_SX_MISC, 0x0, 0xFFFFFFFF, NULL);
+#if 0
+	r600_pipe_state_add_reg(rstate, R_028350_SX_MISC, 0x0, 0xFFFFFFFF, NULL);
 
-//	r600_pipe_state_add_reg(rstate, R_008D8C_SQ_DYN_GPR_CNTL_PS_FLUSH_REQ, 0x0, 0xFFFFFFFF, NULL);
+	r600_pipe_state_add_reg(rstate, R_008D8C_SQ_DYN_GPR_CNTL_PS_FLUSH_REQ, 0x0, 0xFFFFFFFF, NULL);
+#endif
 	r600_pipe_state_add_reg(rstate, R_028A48_PA_SC_MODE_CNTL_0, 0x0, 0xFFFFFFFF, NULL);
 	r600_pipe_state_add_reg(rstate, R_028A4C_PA_SC_MODE_CNTL_1, 0x0, 0xFFFFFFFF, NULL);
 
@@ -1574,9 +1586,7 @@ void evergreen_pipe_set_buffer_resource(struct r600_pipe_context *rctx,
 	r600_pipe_state_add_reg(rstate, R_030004_RESOURCE0_WORD1,
 				rbuffer->bo_size - offset - 1, 0xFFFFFFFF, NULL);
 	r600_pipe_state_add_reg(rstate, R_030008_RESOURCE0_WORD2,
-#ifdef PIPE_ARCH_BIG_ENDIAN
-				S_030008_ENDIAN_SWAP(ENDIAN_8IN32) |
-#endif
+				S_030008_ENDIAN_SWAP(r600_endian_swap(32)) |
 				S_030008_STRIDE(stride), 0xFFFFFFFF, NULL);
 	r600_pipe_state_add_reg(rstate, R_03000C_RESOURCE0_WORD3,
 				S_03000C_DST_SEL_X(V_03000C_SQ_SEL_X) |

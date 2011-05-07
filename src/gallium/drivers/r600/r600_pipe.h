@@ -40,6 +40,12 @@
 #define R600_MAX_CONST_BUFFERS 1
 #define R600_MAX_CONST_BUFFER_SIZE 4096
 
+#ifdef PIPE_ARCH_BIG_ENDIAN
+#define R600_BIG_ENDIAN 1
+#else
+#define R600_BIG_ENDIAN 0
+#endif
+
 enum r600_pipe_state_id {
 	R600_PIPE_STATE_BLEND = 0,
 	R600_PIPE_STATE_BLEND_COLOR,
@@ -89,6 +95,11 @@ struct r600_pipe_rasterizer {
 struct r600_pipe_blend {
 	struct r600_pipe_state		rstate;
 	unsigned			cb_target_mask;
+};
+
+struct r600_pipe_dsa {
+	struct r600_pipe_state		rstate;
+	unsigned			alpha_ref;
 };
 
 struct r600_vertex_element
@@ -180,6 +191,9 @@ struct r600_pipe_context {
 	/* shader information */
 	unsigned			sprite_coord_enable;
 	bool				flatshade;
+	bool				export_16bpc;
+	unsigned			alpha_ref;
+	bool				alpha_ref_dirty;
 	struct r600_textures_info	ps_samplers;
 
 	struct r600_pipe_fences		fences;
@@ -241,7 +255,6 @@ int r600_find_vs_semantic_index(struct r600_shader *vs,
 
 /* r600_state.c */
 void r600_init_state_functions(struct r600_pipe_context *rctx);
-void r600_spi_update(struct r600_pipe_context *rctx);
 void r600_init_config(struct r600_pipe_context *rctx);
 void r600_pipe_shader_ps(struct pipe_context *ctx, struct r600_pipe_shader *shader);
 void r600_pipe_shader_vs(struct pipe_context *ctx, struct r600_pipe_shader *shader);
@@ -252,9 +265,6 @@ void r600_pipe_set_buffer_resource(struct r600_pipe_context *rctx,
 				   struct r600_pipe_state *rstate,
 				   struct r600_resource *rbuffer,
 				   unsigned offset, unsigned stride);
-
-/* r600_helper.h */
-int r600_conv_pipe_prim(unsigned pprim, unsigned *prim);
 
 /* r600_texture.c */
 void r600_init_screen_texture_functions(struct pipe_screen *screen);
@@ -281,11 +291,11 @@ void *r600_create_vertex_elements(struct pipe_context *ctx,
 				  const struct pipe_vertex_element *elements);
 void r600_delete_vertex_element(struct pipe_context *ctx, void *state);
 void r600_bind_blend_state(struct pipe_context *ctx, void *state);
+void r600_bind_dsa_state(struct pipe_context *ctx, void *state);
 void r600_bind_rs_state(struct pipe_context *ctx, void *state);
 void r600_delete_rs_state(struct pipe_context *ctx, void *state);
 void r600_sampler_view_destroy(struct pipe_context *ctx,
 			       struct pipe_sampler_view *state);
-void r600_bind_state(struct pipe_context *ctx, void *state);
 void r600_delete_state(struct pipe_context *ctx, void *state);
 void r600_bind_vertex_elements(struct pipe_context *ctx, void *state);
 void *r600_create_shader_state(struct pipe_context *ctx,

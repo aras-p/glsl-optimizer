@@ -474,9 +474,26 @@ static int emit_clip_planes( struct svga_context *svga,
    /* TODO: just emit directly from svga_set_clip_state()?
     */
    for (i = 0; i < svga->curr.clip.nr; i++) {
-      ret = SVGA3D_SetClipPlane( svga->swc,
-                                 i,
-                                 svga->curr.clip.ucp[i] );
+      /* need to express the plane in D3D-style coordinate space.
+       * GL coords get converted to D3D coords with the matrix:
+       * [ 1  0  0  0 ]
+       * [ 0 -1  0  0 ]
+       * [ 0  0  2  0 ]
+       * [ 0  0 -1  1 ]
+       * Apply that matrix to our plane equation, and invert Y.
+       */
+      float a = svga->curr.clip.ucp[i][0];
+      float b = svga->curr.clip.ucp[i][1];
+      float c = svga->curr.clip.ucp[i][2];
+      float d = svga->curr.clip.ucp[i][3];
+      float plane[4];
+
+      plane[0] = a;
+      plane[1] = b;
+      plane[2] = 2.0f * c;
+      plane[3] = d - c;
+
+      ret = SVGA3D_SetClipPlane(svga->swc, i, plane);
       if(ret != PIPE_OK)
          return ret;
    }

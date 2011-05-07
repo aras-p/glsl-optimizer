@@ -59,6 +59,7 @@ def quietCommandLines(env):
     env['LEXCOMSTR'] = "  Generating $TARGET ..."
     env['YACCCOMSTR'] = "  Generating $TARGET ..."
     env['CODEGENCOMSTR'] = "  Generating $TARGET ..."
+    env['INSTALLSTR'] = "  Installing $TARGET ..."
 
 
 def createConvenienceLibBuilder(env):

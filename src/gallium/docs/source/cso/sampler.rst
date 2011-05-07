@@ -107,3 +107,7 @@ max_anisotropy
     Set to zero to disable anisotropic filtering.  Any other setting enables
     anisotropic filtering, however it's not unexpected some drivers only will
     change their filtering with a setting of 2 and higher.
+seamless_cube_map
+    If set, the bilinear filter of a cube map may take samples from adjacent
+    cube map faces when sampled near a texture border to produce a seamless
+    look.

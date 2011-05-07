@@ -21,6 +21,7 @@
  * USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 #include "pipe/p_shader_tokens.h"
+#include "tgsi/tgsi_info.h"
 #include "tgsi/tgsi_parse.h"
 #include "tgsi/tgsi_scan.h"
 #include "tgsi/tgsi_dump.h"
@@ -34,12 +35,6 @@
 #include <stdio.h>
 #include <errno.h>
 #include <byteswap.h>
-
-#ifdef PIPE_ARCH_BIG_ENDIAN
-#define CPU_TO_LE32(x)	bswap_32(x)
-#else
-#define CPU_TO_LE32(x)	(x)
-#endif
 
 int r600_find_vs_semantic_index(struct r600_shader *vs,
 				struct r600_shader *ps, int id)
@@ -69,8 +64,12 @@ static int r600_pipe_shader(struct pipe_context *ctx, struct r600_pipe_shader *s
 			return -ENOMEM;
 		}
 		ptr = (uint32_t*)r600_bo_map(rctx->radeon, shader->bo, 0, NULL);
-		for(i = 0; i < rshader->bc.ndw; i++) {
-			*(ptr + i) = CPU_TO_LE32(*(rshader->bc.bytecode + i));
+		if (R600_BIG_ENDIAN) {
+			for (i = 0; i < rshader->bc.ndw; ++i) {
+				ptr[i] = bswap_32(rshader->bc.bytecode[i]);
+			}
+		} else {
+			memcpy(ptr, rshader->bc.bytecode, rshader->bc.ndw * sizeof(*ptr));
 		}
 		r600_bo_unmap(rctx->radeon, shader->bo);
 	}
@@ -477,11 +476,7 @@ static int tgsi_fetch_rel_const(struct r600_shader_ctx *ctx, unsigned int offset
 	vtx.num_format_all = 2;		/* NUM_FORMAT_SCALED */
 	vtx.format_comp_all = 1;	/* FORMAT_COMP_SIGNED */
 	vtx.srf_mode_all = 1;		/* SRF_MODE_NO_ZERO */
-#ifdef PIPE_ARCH_BIG_ENDIAN
-	vtx.endian = ENDIAN_8IN32;
-#else
-	vtx.endian = ENDIAN_NONE;
-#endif
+	vtx.endian = r600_endian_swap(32);
 
 	if ((r = r600_bc_add_vtx(ctx->bc, &vtx)))
 		return r;
@@ -830,7 +825,8 @@ out_err:
 
 static int tgsi_unsupported(struct r600_shader_ctx *ctx)
 {
-	R600_ERR("%d tgsi opcode unsupported\n", ctx->inst_info->tgsi_opcode);
+	R600_ERR("%s tgsi opcode unsupported\n",
+		 tgsi_get_opcode_name(ctx->inst_info->tgsi_opcode));
 	return -EINVAL;
 }
 
@@ -911,6 +907,8 @@ static int tgsi_op2_s(struct r600_shader_ctx *ctx, int swap)
 			break;
 		case TGSI_OPCODE_ABS:
 			alu.src[0].abs = 1;
+			if (alu.src[0].neg)
+			  alu.src[0].neg = 0;
 			break;
 		default:
 			break;
@@ -1997,9 +1995,11 @@ static int tgsi_exp(struct r600_shader_ctx *ctx)
 		r600_bc_src(&alu.src[0], &ctx->src[0], 0);
 
 		alu.dst.sel = ctx->temp_reg;
-//		r = tgsi_dst(ctx, &inst->Dst[0], i, &alu.dst);
-//		if (r)
-//			return r;
+#if 0
+		r = tgsi_dst(ctx, &inst->Dst[0], i, &alu.dst);
+		if (r)
+			return r;
+#endif
 		alu.dst.write = 1;
 		alu.dst.chan = 1;
 

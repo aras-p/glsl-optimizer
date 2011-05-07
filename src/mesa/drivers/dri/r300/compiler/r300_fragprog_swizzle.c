@@ -87,6 +87,18 @@ static const struct swizzle_data* lookup_native_swizzle(unsigned int swizzle)
 	return 0;
 }
 
+/**
+ * Determines if the given swizzle is valid for r300/r400.  In most situations
+ * it is better to use r300_swizzle_is_native() which can be accesed via
+ * struct radeon_compiler *c; c->SwizzleCaps->IsNative().
+ */
+int r300_swizzle_is_native_basic(unsigned int swizzle)
+{
+	if(lookup_native_swizzle(swizzle))
+		return 1;
+	else
+		return 0;
+}
 
 /**
  * Check whether the given instruction supports the swizzle and negate
@@ -140,7 +152,6 @@ static void r300_swizzle_split(
 	split->NumPhases = 0;
 
 	while(mask) {
-		const struct swizzle_data *best_swizzle = 0;
 		unsigned int best_matchcount = 0;
 		unsigned int best_matchmask = 0;
 		int i, comp;
@@ -167,7 +178,6 @@ static void r300_swizzle_split(
 				}
 			}
 			if (matchcount > best_matchcount) {
-				best_swizzle = sd;
 				best_matchcount = matchcount;
 				best_matchmask = matchmask;
 				if (matchmask == (mask & RC_MASK_XYZ))

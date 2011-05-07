@@ -147,7 +147,7 @@ PIPE_FORMAT_G8R8_G8B8_UNORM      , subsampled, 2, 1, x32 ,     ,     ,     , xyz
 
 # some special formats not fitting anywhere else
 PIPE_FORMAT_R10G10B10A2_USCALED   , plain,      1,  1, u10 , u10 , u10 , u2  , xyzw, rgb
-PIPE_FORMAT_R11G11B10_FLOAT       , plain,      1,  1, f11 , f11 , f10 ,     , xyz1, rgb
+PIPE_FORMAT_R11G11B10_FLOAT       , other,      1,  1, x32 ,     ,     ,     , xyz1, rgb
 PIPE_FORMAT_R9G9B9E5_FLOAT        , other,      1,  1, x32 ,     ,     ,     , xyz1, rgb
 PIPE_FORMAT_R1_UNORM              , other,      8,  1, x8  ,     ,     ,     , x001, rgb
 # A.k.a. D3DFMT_CxV8U8

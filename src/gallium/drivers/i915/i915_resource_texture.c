@@ -181,8 +181,7 @@ i915_texture_tiling(struct i915_screen *is, struct i915_texture *tex)
       return I915_TILE_NONE;
 
    if (util_format_is_s3tc(tex->b.b.format))
-      /* XXX X-tiling might make sense */
-      return I915_TILE_NONE;
+      return I915_TILE_X;
 
    if (is->debug.use_blitter)
       return I915_TILE_X;

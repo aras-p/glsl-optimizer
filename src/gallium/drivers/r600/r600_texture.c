@@ -892,13 +892,17 @@ uint32_t r600_translate_texformat(struct pipe_screen *screen,
 
 		switch (format) {
 		case PIPE_FORMAT_RGTC1_SNORM:
+		case PIPE_FORMAT_LATC1_SNORM:
 			word4 |= sign_bit[0];
 		case PIPE_FORMAT_RGTC1_UNORM:
+		case PIPE_FORMAT_LATC1_UNORM:
 			result = FMT_BC4;
 			goto out_word4;
 		case PIPE_FORMAT_RGTC2_SNORM:
+		case PIPE_FORMAT_LATC2_SNORM:
 			word4 |= sign_bit[0] | sign_bit[1];
 		case PIPE_FORMAT_RGTC2_UNORM:
+		case PIPE_FORMAT_LATC2_UNORM:
 			result = FMT_BC5;
 			goto out_word4;
 		default:
@@ -933,6 +937,14 @@ uint32_t r600_translate_texformat(struct pipe_screen *screen,
 		default:
 			goto out_unknown;
 		}
+	}
+
+	if (format == PIPE_FORMAT_R9G9B9E5_FLOAT) {
+		result = FMT_5_9_9_9_SHAREDEXP;
+		goto out_word4;
+	} else if (format == PIPE_FORMAT_R11G11B10_FLOAT) {
+		result = FMT_10_11_11_FLOAT;
+		goto out_word4;
 	}
 
 
@@ -1088,6 +1100,6 @@ out_word4:
 		*yuv_format_p = yuv_format;
 	return result;
 out_unknown:
-//	R600_ERR("Unable to handle texformat %d %s\n", format, util_format_name(format));
+	/* R600_ERR("Unable to handle texformat %d %s\n", format, util_format_name(format)); */
 	return ~0;
 }

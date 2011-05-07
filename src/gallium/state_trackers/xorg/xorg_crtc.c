@@ -210,6 +210,9 @@ crtc_load_cursor_argb_ga3d(xf86CrtcPtr crtc, CARD32 * image)
     modesettingPtr ms = modesettingPTR(crtc->scrn);
     struct crtc_private *crtcp = crtc->driver_private;
     struct pipe_transfer *transfer;
+    struct pipe_fence_handle *fence = NULL;
+    struct pipe_context *ctx = ms->ctx;
+    struct pipe_screen *screen = ms->screen;
 
     if (!crtcp->cursor_tex) {
 	struct pipe_resource templat;
@@ -218,6 +221,7 @@ crtc_load_cursor_argb_ga3d(xf86CrtcPtr crtc, CARD32 * image)
 	memset(&templat, 0, sizeof(templat));
 	templat.bind |= PIPE_BIND_RENDER_TARGET;
 	templat.bind |= PIPE_BIND_SCANOUT;
+	templat.bind |= PIPE_BIND_CURSOR;
 	templat.target = PIPE_TEXTURE_2D;
 	templat.last_level = 0;
 	templat.depth0 = 1;
@@ -229,23 +233,28 @@ crtc_load_cursor_argb_ga3d(xf86CrtcPtr crtc, CARD32 * image)
 	memset(&whandle, 0, sizeof(whandle));
 	whandle.type = DRM_API_HANDLE_TYPE_KMS;
 
-	crtcp->cursor_tex = ms->screen->resource_create(ms->screen,
-						       &templat);
-	ms->screen->resource_get_handle(ms->screen, crtcp->cursor_tex, &whandle);
+	crtcp->cursor_tex = screen->resource_create(screen, &templat);
+	screen->resource_get_handle(screen, crtcp->cursor_tex, &whandle);
 
 	crtcp->cursor_handle = whandle.handle;
     }
 
-    transfer = pipe_get_transfer(ms->ctx, crtcp->cursor_tex,
+    transfer = pipe_get_transfer(ctx, crtcp->cursor_tex,
                                  0, 0,
                                  PIPE_TRANSFER_WRITE,
                                  0, 0, 64, 64);
-    ptr = ms->ctx->transfer_map(ms->ctx, transfer);
+    ptr = ctx->transfer_map(ctx, transfer);
     util_copy_rect(ptr, crtcp->cursor_tex->format,
 		   transfer->stride, 0, 0,
 		   64, 64, (void*)image, 64 * 4, 0, 0);
-    ms->ctx->transfer_unmap(ms->ctx, transfer);
-    ms->ctx->transfer_destroy(ms->ctx, transfer);
+    ctx->transfer_unmap(ctx, transfer);
+    ctx->transfer_destroy(ctx, transfer);
+    ctx->flush(ctx, &fence);
+
+    if (fence) {
+	screen->fence_finish(screen, fence, PIPE_TIMEOUT_INFINITE);
+	screen->fence_reference(screen, &fence, NULL);
+    }
 
     if (crtc->cursor_shown)
 	drmModeSetCursor(ms->fd, crtcp->drm_crtc->crtc_id,

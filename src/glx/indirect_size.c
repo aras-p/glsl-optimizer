@@ -29,35 +29,35 @@
 #include <GL/gl.h>
 #include "indirect_size.h"
 
-#  if defined(__GNUC__) || (defined(__SUNPRO_C) && (__SUNPRO_C >= 0x590))
-#    define PURE __attribute__((pure))
-#  else
-#    define PURE
-#  endif
+#if defined(__GNUC__) || (defined(__SUNPRO_C) && (__SUNPRO_C >= 0x590))
+#define PURE __attribute__((pure))
+#else
+#define PURE
+#endif
 
-#  if defined(__i386__) && defined(__GNUC__) && !defined(__CYGWIN__) && !defined(__MINGW32__)
-#    define FASTCALL __attribute__((fastcall))
-#  else
-#    define FASTCALL
-#  endif
+#if defined(__i386__) && defined(__GNUC__) && !defined(__CYGWIN__) && !defined(__MINGW32__)
+#define FASTCALL __attribute__((fastcall))
+#else
+#define FASTCALL
+#endif
 
-#  if defined(__GNUC__) || (defined(__SUNPRO_C) && (__SUNPRO_C >= 0x590)) && defined(__ELF__)
-#    define INTERNAL  __attribute__((visibility("internal")))
-#  else
-#    define INTERNAL
-#  endif
+#if (defined(__GNUC__) && !defined(__CYGWIN__) && !defined(__MINGW32__)) || (defined(__SUNPRO_C) && (__SUNPRO_C >= 0x590) && defined(__ELF__))
+#define INTERNAL  __attribute__((visibility("internal")))
+#else
+#define INTERNAL
+#endif
 
 
 #if defined(__CYGWIN__) || defined(__MINGW32__) || defined(GLX_USE_APPLEGL)
-#  undef HAVE_ALIAS
+#undef HAVE_ALIAS
 #endif
 #ifdef HAVE_ALIAS
-#  define ALIAS2(from,to) \
+#define ALIAS2(from,to) \
     INTERNAL PURE FASTCALL GLint __gl ## from ## _size( GLenum e ) \
         __attribute__ ((alias( # to )));
-#  define ALIAS(from,to) ALIAS2( from, __gl ## to ## _size )
+#define ALIAS(from,to) ALIAS2( from, __gl ## to ## _size )
 #else
-#  define ALIAS(from,to) \
+#define ALIAS(from,to) \
     INTERNAL PURE FASTCALL GLint __gl ## from ## _size( GLenum e ) \
     { return __gl ## to ## _size( e ); }
 #endif
@@ -383,6 +383,6 @@ ALIAS(Fogiv, Fogfv)
     ALIAS(ColorTableParameteriv, ColorTableParameterfv)
     ALIAS(ConvolutionParameteriv, ConvolutionParameterfv)
     ALIAS(PointParameterivNV, PointParameterfvEXT)
-#  undef PURE
-#  undef FASTCALL
-#  undef INTERNAL
+#undef PURE
+#undef FASTCALL
+#undef INTERNAL

@@ -28,6 +28,7 @@
 
 #include "draw/draw_context.h"
 #include "util/u_format.h"
+#include "util/u_format_s3tc.h"
 #include "util/u_inlines.h"
 #include "util/u_memory.h"
 #include "util/u_string.h"
@@ -267,6 +268,10 @@ i915_is_format_supported(struct pipe_screen *screen,
       PIPE_FORMAT_YUYV,
       /* XXX why not?
       PIPE_FORMAT_Z16_UNORM, */
+      PIPE_FORMAT_DXT1_RGB,
+      PIPE_FORMAT_DXT1_RGBA,
+      PIPE_FORMAT_DXT3_RGBA,
+      PIPE_FORMAT_DXT5_RGBA,
       PIPE_FORMAT_Z24X8_UNORM,
       PIPE_FORMAT_Z24_UNORM_S8_USCALED,
       PIPE_FORMAT_NONE  /* list terminator */
@@ -431,6 +436,8 @@ i915_screen_create(struct i915_winsys *iws)
    i915_init_screen_resource_functions(is);
 
    i915_debug_init(is);
+
+   util_format_s3tc_init();
 
    return &is->base;
 }

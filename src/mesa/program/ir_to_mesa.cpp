@@ -1481,7 +1481,6 @@ ir_to_mesa_visitor::visit(ir_dereference_array *ir)
    if (index) {
       src.index += index->value.i[0] * element_size;
    } else {
-      src_reg array_base = this->result;
       /* Variable index array dereference.  It eats the "vec4" of the
        * base of the array and an index that offsets the Mesa register
        * index.
@@ -2163,7 +2162,7 @@ ir_to_mesa_visitor::visit(ir_discard *ir)
 void
 ir_to_mesa_visitor::visit(ir_if *ir)
 {
-   ir_to_mesa_instruction *cond_inst, *if_inst, *else_inst = NULL;
+   ir_to_mesa_instruction *cond_inst, *if_inst;
    ir_to_mesa_instruction *prev_inst;
 
    prev_inst = (ir_to_mesa_instruction *)this->instructions.get_tail();
@@ -2195,7 +2194,7 @@ ir_to_mesa_visitor::visit(ir_if *ir)
    visit_exec_list(&ir->then_instructions, this);
 
    if (!ir->else_instructions.is_empty()) {
-      else_inst = emit(ir->condition, OPCODE_ELSE);
+      emit(ir->condition, OPCODE_ELSE);
       visit_exec_list(&ir->else_instructions, this);
    }
 

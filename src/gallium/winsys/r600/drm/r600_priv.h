@@ -64,6 +64,7 @@ struct radeon {
 
 #define REG_FLAG_NEED_BO 1
 #define REG_FLAG_DIRTY_ALWAYS 2
+#define REG_FLAG_RV6XX_SBU 4
 
 struct r600_reg {
 	unsigned			opcode;
@@ -199,24 +200,6 @@ static inline void radeon_bo_unmap(struct radeon *radeon, struct radeon_bo *bo)
 {
 	bo->map_count--;
 	assert(bo->map_count >= 0);
-}
-
-/*
- * r600_bo
- */
-static inline struct radeon_bo *r600_bo_get_bo(struct r600_bo *bo)
-{
-	return bo->bo;
-}
-
-static unsigned inline r600_bo_get_handle(struct r600_bo *bo)
-{
-	return bo->bo->handle;
-}
-
-static unsigned inline r600_bo_get_size(struct r600_bo *bo)
-{
-	return bo->size;
 }
 
 /*

@@ -325,6 +325,11 @@ st_mesa_format_to_pipe_format(gl_format mesaFormat)
    case MESA_FORMAT_SIGNED_I16:
       return PIPE_FORMAT_I16_SNORM;
 
+   case MESA_FORMAT_RGB9_E5_FLOAT:
+      return PIPE_FORMAT_R9G9B9E5_FLOAT;
+   case MESA_FORMAT_R11_G11_B10_FLOAT:
+      return PIPE_FORMAT_R11G11B10_FLOAT;
+
    default:
       assert(0);
       return PIPE_FORMAT_NONE;
@@ -544,6 +549,11 @@ st_pipe_format_to_mesa_format(enum pipe_format format)
       return MESA_FORMAT_SIGNED_AL1616;
    case PIPE_FORMAT_I16_SNORM:
       return MESA_FORMAT_SIGNED_I16;
+
+   case PIPE_FORMAT_R9G9B9E5_FLOAT:
+      return MESA_FORMAT_RGB9_E5_FLOAT;
+   case PIPE_FORMAT_R11G11B10_FLOAT:
+      return MESA_FORMAT_R11_G11_B10_FLOAT;
 
    default:
       assert(0);
@@ -954,14 +964,24 @@ st_choose_format(struct pipe_screen *screen, GLenum internalFormat,
 
    /* prefer formats in order of data size, choosing 16-bit ones if equal sized */
    case GL_RGBA16F_ARB:
-   case GL_RGB16F_ARB:
       {
          static const enum pipe_format formats[] = {
                PIPE_FORMAT_R16G16B16A16_FLOAT,
                PIPE_FORMAT_R32G32B32A32_FLOAT
          };
          return find_supported_format(screen, formats, Elements(formats),
-               target, sample_count, bindings);
+                                      target, sample_count, bindings);
+      }
+   case GL_RGB16F_ARB:
+      {
+         static const enum pipe_format formats[] = {
+               PIPE_FORMAT_R16G16B16_FLOAT,
+               PIPE_FORMAT_R16G16B16A16_FLOAT,
+               PIPE_FORMAT_R32G32B32_FLOAT,
+               PIPE_FORMAT_R32G32B32A32_FLOAT
+         };
+         return find_supported_format(screen, formats, Elements(formats),
+                                      target, sample_count, bindings);
       }
    case GL_LUMINANCE_ALPHA16F_ARB:
       {
@@ -1040,14 +1060,23 @@ st_choose_format(struct pipe_screen *screen, GLenum internalFormat,
 
    /* try a 32-bit format if available, otherwise fallback to a 16-bit one */
    case GL_RGBA32F_ARB:
-   case GL_RGB32F_ARB:
       {
          static const enum pipe_format formats[] = {
                PIPE_FORMAT_R32G32B32A32_FLOAT,
                PIPE_FORMAT_R16G16B16A16_FLOAT
          };
          return find_supported_format(screen, formats, Elements(formats),
-               target, sample_count, bindings);
+                                      target, sample_count, bindings);
+      }
+   case GL_RGB32F_ARB:
+      {
+         static const enum pipe_format formats[] = {
+               PIPE_FORMAT_R32G32B32_FLOAT,
+               PIPE_FORMAT_R32G32B32A32_FLOAT,
+               PIPE_FORMAT_R16G16B16A16_FLOAT
+         };
+         return find_supported_format(screen, formats, Elements(formats),
+                                      target, sample_count, bindings);
       }
    case GL_LUMINANCE_ALPHA32F_ARB:
       {
@@ -1463,6 +1492,20 @@ st_choose_format(struct pipe_screen *screen, GLenum internalFormat,
          return find_supported_format(screen, formats, Elements(formats),
                target, sample_count, bindings);
       }
+
+   case GL_RGB9_E5:
+      if (screen->is_format_supported(screen, PIPE_FORMAT_R9G9B9E5_FLOAT, target,
+                                      sample_count, bindings)) {
+         return PIPE_FORMAT_R9G9B9E5_FLOAT;
+      }
+      return PIPE_FORMAT_NONE;
+
+   case GL_R11F_G11F_B10F:
+      if (screen->is_format_supported(screen, PIPE_FORMAT_R11G11B10_FLOAT, target,
+                                      sample_count, bindings)) {
+         return PIPE_FORMAT_R11G11B10_FLOAT;
+      }
+      return PIPE_FORMAT_NONE;
 
    default:
       return PIPE_FORMAT_NONE;

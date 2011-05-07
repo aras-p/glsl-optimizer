@@ -32,82 +32,39 @@
 #include "intel_batchbuffer.h"
 #include "main/macros.h"
 
-struct gen6_blend_state_key {
-   GLboolean color_blend, alpha_enabled;
-   GLboolean dither;
-   GLboolean color_mask[BRW_MAX_DRAW_BUFFERS][4];
-
-   GLenum logic_op;
-
-   GLenum blend_eq_rgb, blend_eq_a;
-   GLenum blend_src_rgb, blend_src_a;
-   GLenum blend_dst_rgb, blend_dst_a;
-
-   GLenum alpha_func;
-};
-
 static void
-blend_state_populate_key(struct brw_context *brw,
-			 struct gen6_blend_state_key *key)
+prepare_blend_state(struct brw_context *brw)
 {
    struct gl_context *ctx = &brw->intel.ctx;
-
-   memset(key, 0, sizeof(*key));
-
-   /* _NEW_COLOR */
-   memcpy(key->color_mask, ctx->Color.ColorMask, sizeof(key->color_mask));
-
-   /* _NEW_COLOR */
-   if (ctx->Color._LogicOpEnabled)
-      key->logic_op = ctx->Color.LogicOp;
-   else
-      key->logic_op = GL_COPY;
-
-   /* _NEW_COLOR */
-   key->color_blend = ctx->Color.BlendEnabled;
-   if (key->color_blend) {
-      key->blend_eq_rgb = ctx->Color.Blend[0].EquationRGB;
-      key->blend_eq_a = ctx->Color.Blend[0].EquationA;
-      key->blend_src_rgb = ctx->Color.Blend[0].SrcRGB;
-      key->blend_dst_rgb = ctx->Color.Blend[0].DstRGB;
-      key->blend_src_a = ctx->Color.Blend[0].SrcA;
-      key->blend_dst_a = ctx->Color.Blend[0].DstA;
-   }
-
-   /* _NEW_COLOR */
-   key->alpha_enabled = ctx->Color.AlphaEnabled;
-   if (key->alpha_enabled) {
-      key->alpha_func = ctx->Color.AlphaFunc;
-   }
-
-   /* _NEW_COLOR */
-   key->dither = ctx->Color.DitherFlag;
-}
-
-/**
- * Creates the state cache entry for the given CC unit key.
- */
-static drm_intel_bo *
-blend_state_create_from_key(struct brw_context *brw,
-			    struct gen6_blend_state_key *key)
-{
-   struct gen6_blend_state blend[BRW_MAX_DRAW_BUFFERS];
-   drm_intel_bo *bo;
+   struct gen6_blend_state *blend;
    int b;
+   int nr_draw_buffers = ctx->DrawBuffer->_NumColorDrawBuffers;
+   int size = sizeof(*blend) * nr_draw_buffers;
 
-   memset(&blend, 0, sizeof(blend));
+   blend = brw_state_batch(brw, size, 64, &brw->cc.blend_state_offset);
 
-   for (b = 0; b < BRW_MAX_DRAW_BUFFERS; b++) {
-      if (key->logic_op != GL_COPY) {
-	 blend[b].blend1.logic_op_enable = 1;
-	 blend[b].blend1.logic_op_func = intel_translate_logic_op(key->logic_op);
-      } else if (key->color_blend & (1 << b)) {
-	 GLenum eqRGB = key->blend_eq_rgb;
-	 GLenum eqA = key->blend_eq_a;
-	 GLenum srcRGB = key->blend_src_rgb;
-	 GLenum dstRGB = key->blend_dst_rgb;
-	 GLenum srcA = key->blend_src_a;
-	 GLenum dstA = key->blend_dst_a;
+   memset(blend, 0, size);
+
+   for (b = 0; b < nr_draw_buffers; b++) {
+      /* _NEW_COLOR */
+      if (ctx->Color._LogicOpEnabled) {
+	 struct gl_renderbuffer *rb = ctx->DrawBuffer->_ColorDrawBuffers[b];
+	 /* _NEW_BUFFERS */
+	 /* Floating point RTs should have no effect from LogicOp,
+	  * except for disabling of blending
+	  */
+	 if (_mesa_get_format_datatype(rb->Format) != GL_FLOAT) {
+	    blend[b].blend1.logic_op_enable = 1;
+	    blend[b].blend1.logic_op_func =
+	       intel_translate_logic_op(ctx->Color.LogicOp);
+	 }
+      } else if (ctx->Color.BlendEnabled & (1 << b)) {
+	 GLenum eqRGB = ctx->Color.Blend[0].EquationRGB;
+	 GLenum eqA = ctx->Color.Blend[0].EquationA;
+	 GLenum srcRGB = ctx->Color.Blend[0].SrcRGB;
+	 GLenum dstRGB = ctx->Color.Blend[0].DstRGB;
+	 GLenum srcA = ctx->Color.Blend[0].SrcA;
+	 GLenum dstA = ctx->Color.Blend[0].DstA;
 
 	 if (eqRGB == GL_MIN || eqRGB == GL_MAX) {
 	    srcRGB = dstRGB = GL_ONE;
@@ -131,146 +88,74 @@ blend_state_create_from_key(struct brw_context *brw,
 					 eqA != eqRGB);
       }
 
-      if (key->alpha_enabled) {
+
+      /* _NEW_COLOR */
+      if (ctx->Color.AlphaEnabled) {
 	 blend[b].blend1.alpha_test_enable = 1;
-	 blend[b].blend1.alpha_test_func = intel_translate_compare_func(key->alpha_func);
+	 blend[b].blend1.alpha_test_func =
+	    intel_translate_compare_func(ctx->Color.AlphaFunc);
 
       }
 
-      if (key->dither) {
+      /* _NEW_COLOR */
+      if (ctx->Color.DitherFlag) {
 	 blend[b].blend1.dither_enable = 1;
 	 blend[b].blend1.y_dither_offset = 0;
 	 blend[b].blend1.x_dither_offset = 0;
       }
 
-      blend[b].blend1.write_disable_r = !key->color_mask[b][0];
-      blend[b].blend1.write_disable_g = !key->color_mask[b][1];
-      blend[b].blend1.write_disable_b = !key->color_mask[b][2];
-      blend[b].blend1.write_disable_a = !key->color_mask[b][3];
+      blend[b].blend1.write_disable_r = !ctx->Color.ColorMask[b][0];
+      blend[b].blend1.write_disable_g = !ctx->Color.ColorMask[b][1];
+      blend[b].blend1.write_disable_b = !ctx->Color.ColorMask[b][2];
+      blend[b].blend1.write_disable_a = !ctx->Color.ColorMask[b][3];
    }
 
-   bo = brw_upload_cache(&brw->cache, BRW_BLEND_STATE,
-			 key, sizeof(*key),
-			 NULL, 0,
-			 &blend, sizeof(blend));
-
-   return bo;
-}
-
-static void
-prepare_blend_state(struct brw_context *brw)
-{
-   struct gen6_blend_state_key key;
-
-   blend_state_populate_key(brw, &key);
-
-   drm_intel_bo_unreference(brw->cc.blend_state_bo);
-   brw->cc.blend_state_bo = brw_search_cache(&brw->cache, BRW_BLEND_STATE,
-					     &key, sizeof(key),
-					     NULL, 0,
-					     NULL);
-
-   if (brw->cc.blend_state_bo == NULL)
-      brw->cc.blend_state_bo = blend_state_create_from_key(brw, &key);
+   brw->state.dirty.cache |= CACHE_NEW_BLEND_STATE;
 }
 
 const struct brw_tracked_state gen6_blend_state = {
    .dirty = {
-      .mesa = _NEW_COLOR,
-      .brw = 0,
+      .mesa = (_NEW_COLOR |
+	       _NEW_BUFFERS),
+      .brw = BRW_NEW_BATCH,
       .cache = 0,
    },
    .prepare = prepare_blend_state,
 };
 
-struct gen6_color_calc_state_key {
-   float blend_constant_color[4];
-   GLclampf alpha_ref;
-   GLubyte stencil_ref[2];
-};
-
 static void
-color_calc_state_populate_key(struct brw_context *brw,
-			      struct gen6_color_calc_state_key *key)
+gen6_prepare_color_calc_state(struct brw_context *brw)
 {
    struct gl_context *ctx = &brw->intel.ctx;
+   struct gen6_color_calc_state *cc;
 
-   memset(key, 0, sizeof(*key));
-
-   /* _NEW_STENCIL */
-   if (ctx->Stencil._Enabled) {
-      const unsigned back = ctx->Stencil._BackFace;
-
-      key->stencil_ref[0] = ctx->Stencil.Ref[0];
-      if (ctx->Stencil._TestTwoSide)
-	 key->stencil_ref[1] = ctx->Stencil.Ref[back];
-   }
+   cc = brw_state_batch(brw, sizeof(*cc), 64, &brw->cc.state_offset);
+   memset(cc, 0, sizeof(*cc));
 
    /* _NEW_COLOR */
-   if (ctx->Color.AlphaEnabled)
-      key->alpha_ref = ctx->Color.AlphaRef;
+   cc->cc0.alpha_test_format = BRW_ALPHATEST_FORMAT_UNORM8;
+   UNCLAMPED_FLOAT_TO_UBYTE(cc->cc1.alpha_ref_fi.ui, ctx->Color.AlphaRef);
 
-   key->blend_constant_color[0] = ctx->Color.BlendColorUnclamped[0];
-   key->blend_constant_color[1] = ctx->Color.BlendColorUnclamped[1];
-   key->blend_constant_color[2] = ctx->Color.BlendColorUnclamped[2];
-   key->blend_constant_color[3] = ctx->Color.BlendColorUnclamped[3];
-}
+   /* _NEW_STENCIL */
+   cc->cc0.stencil_ref = ctx->Stencil.Ref[0];
+   cc->cc0.bf_stencil_ref = ctx->Stencil.Ref[ctx->Stencil._BackFace];
 
-/**
- * Creates the state cache entry for the given CC state key.
- */
-static drm_intel_bo *
-color_calc_state_create_from_key(struct brw_context *brw,
-				 struct gen6_color_calc_state_key *key)
-{
-   struct gen6_color_calc_state cc;
-   drm_intel_bo *bo;
+   /* _NEW_COLOR */
+   cc->constant_r = ctx->Color.BlendColorUnclamped[0];
+   cc->constant_g = ctx->Color.BlendColorUnclamped[1];
+   cc->constant_b = ctx->Color.BlendColorUnclamped[2];
+   cc->constant_a = ctx->Color.BlendColorUnclamped[3];
 
-   memset(&cc, 0, sizeof(cc));
-
-   cc.cc0.alpha_test_format = BRW_ALPHATEST_FORMAT_UNORM8;
-   UNCLAMPED_FLOAT_TO_UBYTE(cc.cc1.alpha_ref_fi.ui, key->alpha_ref);
-
-   cc.cc0.stencil_ref = key->stencil_ref[0];
-   cc.cc0.bf_stencil_ref = key->stencil_ref[1];
-
-   cc.constant_r = key->blend_constant_color[0];
-   cc.constant_g = key->blend_constant_color[1];
-   cc.constant_b = key->blend_constant_color[2];
-   cc.constant_a = key->blend_constant_color[3];
-
-   bo = brw_upload_cache(&brw->cache, BRW_COLOR_CALC_STATE,
-			 key, sizeof(*key),
-			 NULL, 0,
-			 &cc, sizeof(cc));
-
-   return bo;
-}
-
-static void
-prepare_color_calc_state(struct brw_context *brw)
-{
-   struct gen6_color_calc_state_key key;
-
-   color_calc_state_populate_key(brw, &key);
-
-   drm_intel_bo_unreference(brw->cc.color_calc_state_bo);
-   brw->cc.color_calc_state_bo = brw_search_cache(&brw->cache, BRW_COLOR_CALC_STATE,
-				       &key, sizeof(key),
-				       NULL, 0,
-				       NULL);
-
-   if (brw->cc.color_calc_state_bo == NULL)
-      brw->cc.color_calc_state_bo = color_calc_state_create_from_key(brw, &key);
+   brw->state.dirty.cache |= CACHE_NEW_COLOR_CALC_STATE;
 }
 
 const struct brw_tracked_state gen6_color_calc_state = {
    .dirty = {
       .mesa = _NEW_COLOR | _NEW_STENCIL,
-      .brw = 0,
+      .brw = BRW_NEW_BATCH,
       .cache = 0,
    },
-   .prepare = prepare_color_calc_state,
+   .prepare = gen6_prepare_color_calc_state,
 };
 
 static void upload_cc_state_pointers(struct brw_context *brw)
@@ -279,18 +164,10 @@ static void upload_cc_state_pointers(struct brw_context *brw)
 
    BEGIN_BATCH(4);
    OUT_BATCH(_3DSTATE_CC_STATE_POINTERS << 16 | (4 - 2));
-   OUT_RELOC(brw->cc.blend_state_bo, I915_GEM_DOMAIN_INSTRUCTION, 0, 1);
-   OUT_RELOC(brw->cc.depth_stencil_state_bo, I915_GEM_DOMAIN_INSTRUCTION, 0, 1);
-   OUT_RELOC(brw->cc.color_calc_state_bo, I915_GEM_DOMAIN_INSTRUCTION, 0, 1);
+   OUT_BATCH(brw->cc.blend_state_offset | 1);
+   OUT_BATCH(brw->cc.depth_stencil_state_offset | 1);
+   OUT_BATCH(brw->cc.state_offset | 1);
    ADVANCE_BATCH();
-}
-
-
-static void prepare_cc_state_pointers(struct brw_context *brw)
-{
-   brw_add_validated_bo(brw, brw->cc.color_calc_state_bo);
-   brw_add_validated_bo(brw, brw->cc.blend_state_bo);
-   brw_add_validated_bo(brw, brw->cc.depth_stencil_state_bo);
 }
 
 const struct brw_tracked_state gen6_cc_state_pointers = {
@@ -301,6 +178,5 @@ const struct brw_tracked_state gen6_cc_state_pointers = {
 		CACHE_NEW_COLOR_CALC_STATE |
 		CACHE_NEW_DEPTH_STENCIL_STATE)
    },
-   .prepare = prepare_cc_state_pointers,
    .emit = upload_cc_state_pointers,
 };

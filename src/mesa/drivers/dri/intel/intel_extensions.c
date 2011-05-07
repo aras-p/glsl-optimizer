@@ -91,6 +91,7 @@ static const struct dri_extension card_extensions[] = {
    { "GL_ARB_pixel_buffer_object",      NULL },
    { "GL_ARB_point_parameters",           GL_ARB_point_parameters_functions },
    { "GL_ARB_point_sprite",               NULL },
+   { "GL_ARB_sampler_objects",            NULL },
    { "GL_ARB_shader_objects",             GL_ARB_shader_objects_functions },
    { "GL_ARB_shading_language_100",       GL_VERSION_2_0_functions },
    { "GL_ARB_sync",                       GL_ARB_sync_functions },
@@ -176,6 +177,7 @@ static const struct dri_extension brw_extensions[] = {
    { "GL_ARB_texture_float",              NULL },
 #endif
    { "GL_MESA_texture_signed_rgba",       NULL },
+   { "GL_ARB_texture_compression_rgtc",   NULL },
    { "GL_ARB_texture_non_power_of_two",   NULL },
    { "GL_ARB_texture_rg",                 NULL },
    { "GL_EXT_draw_buffers2",              GL_EXT_draw_buffers2_functions },
@@ -189,6 +191,7 @@ static const struct dri_extension brw_extensions[] = {
    { "GL_ATI_envmap_bumpmap",             GL_ATI_envmap_bumpmap_functions },
    { "GL_ATI_separate_stencil",           GL_ATI_separate_stencil_functions },
    { "GL_ATI_texture_env_combine3",       NULL },
+   { "GL_NV_conditional_render",          NULL },
    { "GL_NV_texture_env_combine4",        NULL },
    { NULL,                                NULL }
 };

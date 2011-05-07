@@ -127,9 +127,19 @@ int r600_context_add_block(struct r600_context *ctx, const struct r600_reg *reg,
 				block->pm4_bo_index[j] = block->nbo;
 				block->pm4[block->pm4_ndwords++] = PKT3(PKT3_NOP, 0, 0);
 				block->pm4[block->pm4_ndwords++] = 0x00000000;
-				block->reloc[block->nbo].flush_flags = reg[i+j].flush_flags;
-				block->reloc[block->nbo].flush_mask = reg[i+j].flush_mask;
+				if (reg[i+j].flags & REG_FLAG_RV6XX_SBU) {
+					block->reloc[block->nbo].flush_flags = 0;
+					block->reloc[block->nbo].flush_mask = 0;
+				} else {
+					block->reloc[block->nbo].flush_flags = reg[i+j].flush_flags;
+					block->reloc[block->nbo].flush_mask = reg[i+j].flush_mask;
+				}
 				block->reloc[block->nbo].bo_pm4_index = block->pm4_ndwords - 1;
+			}
+			if ((ctx->radeon->family > CHIP_R600) &&
+			    (ctx->radeon->family < CHIP_RV770) && reg[i+j].flags & REG_FLAG_RV6XX_SBU) {
+				block->pm4[block->pm4_ndwords++] = PKT3(PKT3_SURFACE_BASE_UPDATE, 0, 0);
+				block->pm4[block->pm4_ndwords++] = reg[i+j].flush_flags;
 			}
 		}
 		for (j = 0; j < n; j++) {
@@ -197,7 +207,7 @@ static const struct r600_reg r600_context_reg_list[] = {
 	{PKT3_SET_CONTEXT_REG, R600_CONTEXT_REG_OFFSET, R_028028_DB_STENCIL_CLEAR, 0, 0, 0},
 	{PKT3_SET_CONTEXT_REG, R600_CONTEXT_REG_OFFSET, R_02802C_DB_DEPTH_CLEAR, 0, 0, 0},
 	{0, 0, GROUP_FORCE_NEW_BLOCK, 0, 0, 0},
-	{PKT3_SET_CONTEXT_REG, R600_CONTEXT_REG_OFFSET, R_028040_CB_COLOR0_BASE, REG_FLAG_NEED_BO, 0, 0},
+	{PKT3_SET_CONTEXT_REG, R600_CONTEXT_REG_OFFSET, R_028040_CB_COLOR0_BASE, REG_FLAG_NEED_BO|REG_FLAG_RV6XX_SBU, SURFACE_BASE_UPDATE_COLOR(0), 0},
 	{0, 0, GROUP_FORCE_NEW_BLOCK, 0, 0, 0},
 	{PKT3_SET_CONTEXT_REG, R600_CONTEXT_REG_OFFSET, R_0280A0_CB_COLOR0_INFO, REG_FLAG_NEED_BO, 0, 0xFFFFFFFF},
 	{PKT3_SET_CONTEXT_REG, R600_CONTEXT_REG_OFFSET, R_028060_CB_COLOR0_SIZE, 0, 0, 0},
@@ -208,7 +218,7 @@ static const struct r600_reg r600_context_reg_list[] = {
 	{PKT3_SET_CONTEXT_REG, R600_CONTEXT_REG_OFFSET, R_0280C0_CB_COLOR0_TILE, REG_FLAG_NEED_BO, 0, 0},
 	{PKT3_SET_CONTEXT_REG, R600_CONTEXT_REG_OFFSET, R_028100_CB_COLOR0_MASK, 0, 0, 0},
 	{0, 0, GROUP_FORCE_NEW_BLOCK, 0, 0, 0},
-	{PKT3_SET_CONTEXT_REG, R600_CONTEXT_REG_OFFSET, R_028044_CB_COLOR1_BASE, REG_FLAG_NEED_BO, 0, 0},
+	{PKT3_SET_CONTEXT_REG, R600_CONTEXT_REG_OFFSET, R_028044_CB_COLOR1_BASE, REG_FLAG_NEED_BO|REG_FLAG_RV6XX_SBU, SURFACE_BASE_UPDATE_COLOR(1), 0},
 	{0, 0, GROUP_FORCE_NEW_BLOCK, 0, 0, 0},
 	{PKT3_SET_CONTEXT_REG, R600_CONTEXT_REG_OFFSET, R_0280A4_CB_COLOR1_INFO, REG_FLAG_NEED_BO, 0, 0xFFFFFFFF},
 	{PKT3_SET_CONTEXT_REG, R600_CONTEXT_REG_OFFSET, R_028064_CB_COLOR1_SIZE, 0, 0, 0},
@@ -219,7 +229,7 @@ static const struct r600_reg r600_context_reg_list[] = {
 	{PKT3_SET_CONTEXT_REG, R600_CONTEXT_REG_OFFSET, R_0280C4_CB_COLOR1_TILE, REG_FLAG_NEED_BO, 0, 0},
 	{PKT3_SET_CONTEXT_REG, R600_CONTEXT_REG_OFFSET, R_028104_CB_COLOR1_MASK, 0, 0, 0},
 	{0, 0, GROUP_FORCE_NEW_BLOCK, 0, 0, 0},
-	{PKT3_SET_CONTEXT_REG, R600_CONTEXT_REG_OFFSET, R_028048_CB_COLOR2_BASE, REG_FLAG_NEED_BO, 0, 0},
+	{PKT3_SET_CONTEXT_REG, R600_CONTEXT_REG_OFFSET, R_028048_CB_COLOR2_BASE, REG_FLAG_NEED_BO|REG_FLAG_RV6XX_SBU, SURFACE_BASE_UPDATE_COLOR(2), 0},
 	{0, 0, GROUP_FORCE_NEW_BLOCK, 0, 0, 0},
 	{PKT3_SET_CONTEXT_REG, R600_CONTEXT_REG_OFFSET, R_0280A8_CB_COLOR2_INFO, REG_FLAG_NEED_BO, 0, 0xFFFFFFFF},
 	{PKT3_SET_CONTEXT_REG, R600_CONTEXT_REG_OFFSET, R_028068_CB_COLOR2_SIZE, 0, 0, 0},
@@ -230,7 +240,7 @@ static const struct r600_reg r600_context_reg_list[] = {
 	{PKT3_SET_CONTEXT_REG, R600_CONTEXT_REG_OFFSET, R_0280C8_CB_COLOR2_TILE, REG_FLAG_NEED_BO, 0, 0},
 	{PKT3_SET_CONTEXT_REG, R600_CONTEXT_REG_OFFSET, R_028108_CB_COLOR2_MASK, 0, 0, 0},
 	{0, 0, GROUP_FORCE_NEW_BLOCK, 0, 0, 0},
-	{PKT3_SET_CONTEXT_REG, R600_CONTEXT_REG_OFFSET, R_02804C_CB_COLOR3_BASE, REG_FLAG_NEED_BO, 0, 0},
+	{PKT3_SET_CONTEXT_REG, R600_CONTEXT_REG_OFFSET, R_02804C_CB_COLOR3_BASE, REG_FLAG_NEED_BO|REG_FLAG_RV6XX_SBU, SURFACE_BASE_UPDATE_COLOR(3), 0},
 	{0, 0, GROUP_FORCE_NEW_BLOCK, 0, 0, 0},
 	{PKT3_SET_CONTEXT_REG, R600_CONTEXT_REG_OFFSET, R_0280AC_CB_COLOR3_INFO, REG_FLAG_NEED_BO, 0, 0xFFFFFFFF},
 	{PKT3_SET_CONTEXT_REG, R600_CONTEXT_REG_OFFSET, R_02806C_CB_COLOR3_SIZE, 0, 0, 0},
@@ -241,7 +251,7 @@ static const struct r600_reg r600_context_reg_list[] = {
 	{PKT3_SET_CONTEXT_REG, R600_CONTEXT_REG_OFFSET, R_0280CC_CB_COLOR3_TILE, REG_FLAG_NEED_BO, 0, 0},
 	{PKT3_SET_CONTEXT_REG, R600_CONTEXT_REG_OFFSET, R_02810C_CB_COLOR3_MASK, 0, 0, 0},
 	{0, 0, GROUP_FORCE_NEW_BLOCK, 0, 0, 0},
-	{PKT3_SET_CONTEXT_REG, R600_CONTEXT_REG_OFFSET, R_028050_CB_COLOR4_BASE, REG_FLAG_NEED_BO, 0, 0},
+	{PKT3_SET_CONTEXT_REG, R600_CONTEXT_REG_OFFSET, R_028050_CB_COLOR4_BASE, REG_FLAG_NEED_BO|REG_FLAG_RV6XX_SBU, SURFACE_BASE_UPDATE_COLOR(4), 0},
 	{0, 0, GROUP_FORCE_NEW_BLOCK, 0, 0, 0},
 	{PKT3_SET_CONTEXT_REG, R600_CONTEXT_REG_OFFSET, R_0280B0_CB_COLOR4_INFO, REG_FLAG_NEED_BO, 0, 0xFFFFFFFF},
 	{PKT3_SET_CONTEXT_REG, R600_CONTEXT_REG_OFFSET, R_028070_CB_COLOR4_SIZE, 0, 0, 0},
@@ -252,7 +262,7 @@ static const struct r600_reg r600_context_reg_list[] = {
 	{PKT3_SET_CONTEXT_REG, R600_CONTEXT_REG_OFFSET, R_0280D0_CB_COLOR4_TILE, REG_FLAG_NEED_BO, 0, 0},
 	{PKT3_SET_CONTEXT_REG, R600_CONTEXT_REG_OFFSET, R_028110_CB_COLOR4_MASK, 0, 0, 0},
 	{0, 0, GROUP_FORCE_NEW_BLOCK, 0, 0, 0},
-	{PKT3_SET_CONTEXT_REG, R600_CONTEXT_REG_OFFSET, R_028054_CB_COLOR5_BASE, REG_FLAG_NEED_BO, 0, 0},
+	{PKT3_SET_CONTEXT_REG, R600_CONTEXT_REG_OFFSET, R_028054_CB_COLOR5_BASE, REG_FLAG_NEED_BO|REG_FLAG_RV6XX_SBU, SURFACE_BASE_UPDATE_COLOR(5), 0},
 	{0, 0, GROUP_FORCE_NEW_BLOCK, 0, 0, 0},
 	{PKT3_SET_CONTEXT_REG, R600_CONTEXT_REG_OFFSET, R_0280B4_CB_COLOR5_INFO, REG_FLAG_NEED_BO, 0, 0xFFFFFFFF},
 	{PKT3_SET_CONTEXT_REG, R600_CONTEXT_REG_OFFSET, R_028074_CB_COLOR5_SIZE, 0, 0, 0},
@@ -262,7 +272,7 @@ static const struct r600_reg r600_context_reg_list[] = {
 	{0, 0, GROUP_FORCE_NEW_BLOCK, 0, 0, 0},
 	{PKT3_SET_CONTEXT_REG, R600_CONTEXT_REG_OFFSET, R_0280D4_CB_COLOR5_TILE, REG_FLAG_NEED_BO, 0, 0},
 	{PKT3_SET_CONTEXT_REG, R600_CONTEXT_REG_OFFSET, R_028114_CB_COLOR5_MASK, 0, 0, 0},
-	{PKT3_SET_CONTEXT_REG, R600_CONTEXT_REG_OFFSET, R_028058_CB_COLOR6_BASE, REG_FLAG_NEED_BO, 0, 0},
+	{PKT3_SET_CONTEXT_REG, R600_CONTEXT_REG_OFFSET, R_028058_CB_COLOR6_BASE, REG_FLAG_NEED_BO|REG_FLAG_RV6XX_SBU, SURFACE_BASE_UPDATE_COLOR(6), 0},
 	{PKT3_SET_CONTEXT_REG, R600_CONTEXT_REG_OFFSET, R_0280B8_CB_COLOR6_INFO, REG_FLAG_NEED_BO, 0, 0xFFFFFFFF},
 	{PKT3_SET_CONTEXT_REG, R600_CONTEXT_REG_OFFSET, R_028078_CB_COLOR6_SIZE, 0, 0, 0},
 	{PKT3_SET_CONTEXT_REG, R600_CONTEXT_REG_OFFSET, R_028098_CB_COLOR6_VIEW, 0, 0, 0},
@@ -272,7 +282,7 @@ static const struct r600_reg r600_context_reg_list[] = {
 	{PKT3_SET_CONTEXT_REG, R600_CONTEXT_REG_OFFSET, R_0280D8_CB_COLOR6_TILE, REG_FLAG_NEED_BO, 0, 0},
 	{PKT3_SET_CONTEXT_REG, R600_CONTEXT_REG_OFFSET, R_028118_CB_COLOR6_MASK, 0, 0, 0},
 	{0, 0, GROUP_FORCE_NEW_BLOCK, 0, 0, 0},
-	{PKT3_SET_CONTEXT_REG, R600_CONTEXT_REG_OFFSET, R_02805C_CB_COLOR7_BASE, REG_FLAG_NEED_BO, 0, 0},
+	{PKT3_SET_CONTEXT_REG, R600_CONTEXT_REG_OFFSET, R_02805C_CB_COLOR7_BASE, REG_FLAG_NEED_BO|REG_FLAG_RV6XX_SBU, SURFACE_BASE_UPDATE_COLOR(7), 0},
 	{0, 0, GROUP_FORCE_NEW_BLOCK, 0, 0, 0},
 	{PKT3_SET_CONTEXT_REG, R600_CONTEXT_REG_OFFSET, R_0280BC_CB_COLOR7_INFO, REG_FLAG_NEED_BO, 0, 0xFFFFFFFF},
 	{PKT3_SET_CONTEXT_REG, R600_CONTEXT_REG_OFFSET, R_02807C_CB_COLOR7_SIZE, 0, 0, 0},
@@ -327,7 +337,7 @@ static const struct r600_reg r600_context_reg_list[] = {
 	{PKT3_SET_CONTEXT_REG, R600_CONTEXT_REG_OFFSET, R_028C48_PA_SC_AA_MASK, 0, 0, 0},
 	{PKT3_SET_CONTEXT_REG, R600_CONTEXT_REG_OFFSET, R_028D2C_DB_SRESULTS_COMPARE_STATE1, 0, 0, 0},
 	{PKT3_SET_CONTEXT_REG, R600_CONTEXT_REG_OFFSET, R_028D44_DB_ALPHA_TO_MASK, 0, 0, 0},
-	{PKT3_SET_CONTEXT_REG, R600_CONTEXT_REG_OFFSET, R_02800C_DB_DEPTH_BASE, REG_FLAG_NEED_BO, 0, 0},
+	{PKT3_SET_CONTEXT_REG, R600_CONTEXT_REG_OFFSET, R_02800C_DB_DEPTH_BASE, REG_FLAG_NEED_BO|REG_FLAG_RV6XX_SBU, SURFACE_BASE_UPDATE_DEPTH, 0},
 	{PKT3_SET_CONTEXT_REG, R600_CONTEXT_REG_OFFSET, R_028000_DB_DEPTH_SIZE, 0, 0, 0},
 	{PKT3_SET_CONTEXT_REG, R600_CONTEXT_REG_OFFSET, R_028004_DB_DEPTH_VIEW, 0, 0, 0},
 	{0, 0, GROUP_FORCE_NEW_BLOCK, 0, 0, 0},
@@ -766,17 +776,6 @@ out_err:
 	return r;
 }
 
-static void rv6xx_context_surface_base_update(struct r600_context *ctx,
-					      unsigned base_update_flags)
-{
-	/* need to emit surface base update on rv6xx */
-	if ((ctx->radeon->family > CHIP_R600) &&
-	    (ctx->radeon->family < CHIP_RV770)) {
-		ctx->pm4[ctx->pm4_cdwords++] = PKT3(PKT3_SURFACE_BASE_UPDATE, 0, 0);
-		ctx->pm4[ctx->pm4_cdwords++] = base_update_flags;
-	}
-}
-
 /* Flushes all surfaces */
 void r600_context_flush_all(struct r600_context *ctx, unsigned flush_flags)
 {
@@ -798,19 +797,40 @@ void r600_context_bo_flush(struct r600_context *ctx, unsigned flush_flags,
 				unsigned flush_mask, struct r600_bo *rbo)
 {
 	struct radeon_bo *bo;
-	bo = r600_bo_get_bo(rbo);
+
+	bo = rbo->bo;
 	/* if bo has already been flushed */
 	if (!(~bo->last_flush & flush_flags)) {
 		bo->last_flush &= flush_mask;
 		return;
 	}
-	ctx->pm4[ctx->pm4_cdwords++] = PKT3(PKT3_SURFACE_SYNC, 3, ctx->predicate_drawing);
-	ctx->pm4[ctx->pm4_cdwords++] = flush_flags;
-	ctx->pm4[ctx->pm4_cdwords++] = (bo->size + 255) >> 8;
-	ctx->pm4[ctx->pm4_cdwords++] = 0x00000000;
-	ctx->pm4[ctx->pm4_cdwords++] = 0x0000000A;
-	ctx->pm4[ctx->pm4_cdwords++] = PKT3(PKT3_NOP, 0, ctx->predicate_drawing);
-	ctx->pm4[ctx->pm4_cdwords++] = bo->reloc_id;
+
+	if ((ctx->radeon->family < CHIP_RV770) &&
+	    (G_0085F0_CB_ACTION_ENA(flush_flags) ||
+	     G_0085F0_DB_ACTION_ENA(flush_flags))) {
+		if (ctx->flags & R600_CONTEXT_CHECK_EVENT_FLUSH) {
+			/* the rv670 seems to fail fbo-generatemipmap unless we flush the CB1 dest base ena */
+			if (ctx->radeon->family == CHIP_RV670) {
+				ctx->pm4[ctx->pm4_cdwords++] = PKT3(PKT3_SURFACE_SYNC, 3, ctx->predicate_drawing);
+				ctx->pm4[ctx->pm4_cdwords++] = S_0085F0_CB1_DEST_BASE_ENA(1);     /* CP_COHER_CNTL */
+				ctx->pm4[ctx->pm4_cdwords++] = 0xffffffff;      /* CP_COHER_SIZE */
+				ctx->pm4[ctx->pm4_cdwords++] = 0;               /* CP_COHER_BASE */
+				ctx->pm4[ctx->pm4_cdwords++] = 0x0000000A;      /* POLL_INTERVAL */
+			}
+
+			ctx->pm4[ctx->pm4_cdwords++] = PKT3(PKT3_EVENT_WRITE, 0, ctx->predicate_drawing);
+			ctx->pm4[ctx->pm4_cdwords++] = EVENT_TYPE(EVENT_TYPE_CACHE_FLUSH_AND_INV_EVENT) | EVENT_INDEX(0);
+			ctx->flags &= ~R600_CONTEXT_CHECK_EVENT_FLUSH;
+		}
+	} else {
+		ctx->pm4[ctx->pm4_cdwords++] = PKT3(PKT3_SURFACE_SYNC, 3, ctx->predicate_drawing);
+		ctx->pm4[ctx->pm4_cdwords++] = flush_flags;
+		ctx->pm4[ctx->pm4_cdwords++] = (bo->size + 255) >> 8;
+		ctx->pm4[ctx->pm4_cdwords++] = 0x00000000;
+		ctx->pm4[ctx->pm4_cdwords++] = 0x0000000A;
+		ctx->pm4[ctx->pm4_cdwords++] = PKT3(PKT3_NOP, 0, ctx->predicate_drawing);
+		ctx->pm4[ctx->pm4_cdwords++] = bo->reloc_id;
+	}
 	bo->last_flush = (bo->last_flush | flush_flags) & flush_mask;
 }
 
@@ -818,7 +838,7 @@ void r600_context_bo_reloc(struct r600_context *ctx, u32 *pm4, struct r600_bo *r
 {
 	struct radeon_bo *bo;
 
-	bo = r600_bo_get_bo(rbo);
+	bo = rbo->bo;
 	assert(bo != NULL);
 	if (bo->reloc) {
 		*pm4 = bo->reloc_id;
@@ -1120,6 +1140,7 @@ void r600_context_block_emit_dirty(struct r600_context *ctx, struct r600_block *
 		goto out;
 	}
 
+	ctx->flags |= R600_CONTEXT_CHECK_EVENT_FLUSH;
 	for (int j = 0; j < block->nreg; j++) {
 		if (block->pm4_bo_index[j]) {
 			/* find relocation */
@@ -1135,6 +1156,7 @@ void r600_context_block_emit_dirty(struct r600_context *ctx, struct r600_block *
 			}
 		}
 	}
+	ctx->flags &= ~R600_CONTEXT_CHECK_EVENT_FLUSH;
 	memcpy(&ctx->pm4[ctx->pm4_cdwords], block->pm4, block->pm4_ndwords * 4);
 	ctx->pm4_cdwords += block->pm4_ndwords;
 
@@ -1158,6 +1180,7 @@ void r600_context_flush_dest_caches(struct r600_context *ctx)
 {
 	struct r600_bo *cb[8];
 	struct r600_bo *db;
+	int i;
 
 	if (!(ctx->flags & R600_CONTEXT_DST_CACHES_DIRTY))
 		return;
@@ -1172,8 +1195,9 @@ void r600_context_flush_dest_caches(struct r600_context *ctx)
 	cb[6] = r600_context_reg_bo(ctx, R_028058_CB_COLOR6_BASE);
 	cb[7] = r600_context_reg_bo(ctx, R_02805C_CB_COLOR7_BASE);
 
+	ctx->flags |= R600_CONTEXT_CHECK_EVENT_FLUSH;
 	/* flush the color buffers */
-	for (int i = 0; i < 8; i++) {
+	for (i = 0; i < 8; i++) {
 		if (!cb[i])
 			continue;
 
@@ -1185,7 +1209,7 @@ void r600_context_flush_dest_caches(struct r600_context *ctx)
 	if (db) {
 		r600_context_bo_flush(ctx, S_0085F0_DB_ACTION_ENA(1), 0, db);
 	}
-
+	ctx->flags &= ~R600_CONTEXT_CHECK_EVENT_FLUSH;
 	ctx->flags &= ~R600_CONTEXT_DST_CACHES_DIRTY;
 }
 
@@ -1194,7 +1218,6 @@ void r600_context_draw(struct r600_context *ctx, const struct r600_draw *draw)
 	unsigned ndwords = 7;
 	struct r600_block *dirty_block = NULL;
 	struct r600_block *next_block;
-	unsigned rv6xx_surface_base_update = 0;
 
 	if (draw->indices) {
 		ndwords = 11;
@@ -1203,33 +1226,6 @@ void r600_context_draw(struct r600_context *ctx, const struct r600_draw *draw)
 			r600_context_flush(ctx);
 		}
 	}
-
-	/* rv6xx surface base update */
-	if ((ctx->radeon->family > CHIP_R600) &&
-	    (ctx->radeon->family < CHIP_RV770)) {
-		struct r600_bo *cb[8];
-		struct r600_bo *db;
-
-		db = r600_context_reg_bo(ctx, R_02800C_DB_DEPTH_BASE);
-		cb[0] = r600_context_reg_bo(ctx, R_028040_CB_COLOR0_BASE);
-		cb[1] = r600_context_reg_bo(ctx, R_028044_CB_COLOR1_BASE);
-		cb[2] = r600_context_reg_bo(ctx, R_028048_CB_COLOR2_BASE);
-		cb[3] = r600_context_reg_bo(ctx, R_02804C_CB_COLOR3_BASE);
-		cb[4] = r600_context_reg_bo(ctx, R_028050_CB_COLOR4_BASE);
-		cb[5] = r600_context_reg_bo(ctx, R_028054_CB_COLOR5_BASE);
-		cb[6] = r600_context_reg_bo(ctx, R_028058_CB_COLOR6_BASE);
-		cb[7] = r600_context_reg_bo(ctx, R_02805C_CB_COLOR7_BASE);
-		for (int i = 0; i < 8; i++) {
-			if (cb[i]) {
-				rv6xx_surface_base_update |= SURFACE_BASE_UPDATE_COLOR(i);
-			}
-		}
-		if (db) {
-			rv6xx_surface_base_update |= SURFACE_BASE_UPDATE_DEPTH;
-		}
-	}
-
-	/* XXX also need to update SURFACE_BASE_UPDATE_STRMOUT when we support it */
 
 	/* queries need some special values */
 	if (ctx->num_query_running) {
@@ -1262,10 +1258,6 @@ void r600_context_draw(struct r600_context *ctx, const struct r600_draw *draw)
 	LIST_FOR_EACH_ENTRY_SAFE(dirty_block, next_block, &ctx->dirty, list) {
 		r600_context_block_emit_dirty(ctx, dirty_block);
 	}
-
-	/* rv6xx surface base udpate */
-	if (rv6xx_surface_base_update)
-		rv6xx_context_surface_base_update(ctx, rv6xx_surface_base_update);
 
 	/* draw packet */
 	ctx->pm4[ctx->pm4_cdwords++] = PKT3(PKT3_INDEX_TYPE, 0, ctx->predicate_drawing);

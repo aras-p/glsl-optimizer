@@ -207,7 +207,7 @@ static unsigned int use_source(struct r500_fragment_program_code* code, struct r
 
 	if (src.File == RC_FILE_CONSTANT) {
 		return src.Index | R500_RGB_ADDR0_CONST;
-	} else if (src.File == RC_FILE_TEMPORARY) {
+	} else if (src.File == RC_FILE_TEMPORARY || src.File == RC_FILE_INPUT) {
 		use_temporary(code, src.Index);
 		return src.Index;
 	}
@@ -396,6 +396,12 @@ static int emit_tex(struct r300_fragment_program_compiler *c, struct rc_sub_inst
 	case RC_OPCODE_TXP:
 		code->inst[ip].inst1 |= R500_TEX_INST_PROJ;
 		break;
+	case RC_OPCODE_TXD:
+		code->inst[ip].inst1 |= R500_TEX_INST_DXDY;
+		break;
+	case RC_OPCODE_TXL:
+		code->inst[ip].inst1 |= R500_TEX_INST_LOD;
+		break;
 	default:
 		error("emit_tex can't handle opcode %s\n", rc_get_opcode_info(inst->Opcode)->Name);
 	}
@@ -407,8 +413,23 @@ static int emit_tex(struct r300_fragment_program_compiler *c, struct rc_sub_inst
 	code->inst[ip].inst2 = R500_TEX_SRC_ADDR(inst->SrcReg[0].Index)
 		| (translate_strq_swizzle(inst->SrcReg[0].Swizzle) << 8)
 		| R500_TEX_DST_ADDR(inst->DstReg.Index)
-		| R500_TEX_DST_R_SWIZ_R | R500_TEX_DST_G_SWIZ_G
-		| R500_TEX_DST_B_SWIZ_B | R500_TEX_DST_A_SWIZ_A;
+		| (GET_SWZ(inst->TexSwizzle, 0) << 24)
+		| (GET_SWZ(inst->TexSwizzle, 1) << 26)
+		| (GET_SWZ(inst->TexSwizzle, 2) << 28)
+		| (GET_SWZ(inst->TexSwizzle, 3) << 30)
+		;
+
+	if (inst->Opcode == RC_OPCODE_TXD) {
+		use_temporary(code, inst->SrcReg[1].Index);
+		use_temporary(code, inst->SrcReg[2].Index);
+
+		/* DX and DY parameters are specified in a separate register. */
+		code->inst[ip].inst3 =
+			R500_DX_ADDR(inst->SrcReg[1].Index) |
+			(translate_strq_swizzle(inst->SrcReg[1].Swizzle) << 8) |
+			R500_DY_ADDR(inst->SrcReg[2].Index) |
+			(translate_strq_swizzle(inst->SrcReg[2].Swizzle) << 24);
+	}
 
 	return 1;
 }

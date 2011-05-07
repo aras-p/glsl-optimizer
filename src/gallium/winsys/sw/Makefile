@@ -14,6 +14,10 @@ ifneq ($(findstring fbdev, $(EGL_PLATFORMS)),)
 SUBDIRS += fbdev
 endif
 
+ifneq ($(findstring wayland, $(EGL_PLATFORMS)),)
+SUBDIRS += wayland
+endif
+
 default install clean:
 	@for dir in $(SUBDIRS) ; do \
 		if [ -d $$dir ] ; then \

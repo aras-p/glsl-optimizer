@@ -831,9 +831,9 @@ drv_screen_init(int scrnIndex, ScreenPtr pScreen, int argc, char **argv)
 #endif
     }
 
-    xf86DrvMsg(pScrn->scrnIndex, X_INFO, "##################################\n");
-    xf86DrvMsg(pScrn->scrnIndex, X_INFO, "# Usefull debugging info follows #\n");
-    xf86DrvMsg(pScrn->scrnIndex, X_INFO, "##################################\n");
+    xf86DrvMsg(pScrn->scrnIndex, X_INFO, "#################################\n");
+    xf86DrvMsg(pScrn->scrnIndex, X_INFO, "# Useful debugging info follows #\n");
+    xf86DrvMsg(pScrn->scrnIndex, X_INFO, "#################################\n");
     xf86DrvMsg(pScrn->scrnIndex, X_INFO, "Using %s backend\n",
 	       ms->screen ? "Gallium3D" : "libkms");
     xf86DrvMsg(pScrn->scrnIndex, X_INFO, "2D Acceleration is %s\n",

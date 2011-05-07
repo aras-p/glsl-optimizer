@@ -1871,7 +1871,6 @@ void brw_dp_READ_4_vs_relative(struct brw_compile *p,
 
 void brw_fb_WRITE(struct brw_compile *p,
 		  int dispatch_width,
-                  struct brw_reg dest,
                   GLuint msg_reg_nr,
                   struct brw_reg src0,
                   GLuint binding_table_index,
@@ -1883,6 +1882,12 @@ void brw_fb_WRITE(struct brw_compile *p,
    struct intel_context *intel = &p->brw->intel;
    struct brw_instruction *insn;
    GLuint msg_control, msg_type;
+   struct brw_reg dest;
+
+   if (dispatch_width == 16)
+      dest = retype(vec16(brw_null_reg()), BRW_REGISTER_TYPE_UW);
+   else
+      dest = retype(vec8(brw_null_reg()), BRW_REGISTER_TYPE_UW);
 
    if (intel->gen >= 6 && binding_table_index == 0) {
       insn = next_insn(p, BRW_OPCODE_SENDC);

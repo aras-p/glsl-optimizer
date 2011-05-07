@@ -1163,7 +1163,7 @@ static const struct value_desc values[] = {
 
    /* GL_EXT_provoking_vertex */
    { GL_PROVOKING_VERTEX_EXT,
-     CONTEXT_BOOL(Light.ProvokingVertex), extra_EXT_provoking_vertex },
+     CONTEXT_ENUM(Light.ProvokingVertex), extra_EXT_provoking_vertex },
    { GL_QUADS_FOLLOW_PROVOKING_VERTEX_CONVENTION_EXT,
      CONTEXT_BOOL(Const.QuadsFollowProvokingVertexConvention),
      extra_EXT_provoking_vertex },
@@ -1281,6 +1281,9 @@ static const struct value_desc values[] = {
    /* GL 3.2 */
    { GL_CONTEXT_PROFILE_MASK, CONTEXT_INT(Const.ProfileMask),
      extra_version_32 },
+
+   /* GL_ARB_robustness */
+   { GL_RESET_NOTIFICATION_STRATEGY_ARB, CONTEXT_ENUM(Const.ResetStrategy), NO_EXTRA },
 #endif /* FEATURE_GL */
 };
 

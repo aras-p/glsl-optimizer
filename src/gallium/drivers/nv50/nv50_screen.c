@@ -89,7 +89,10 @@ nv50_screen_get_param(struct pipe_screen *pscreen, enum pipe_cap param)
    case PIPE_CAP_TEXTURE_SHADOW_MAP:
    case PIPE_CAP_NPOT_TEXTURES:
    case PIPE_CAP_ANISOTROPIC_FILTER:
-      return 1;
+   case PIPE_CAP_SEAMLESS_CUBE_MAP:
+      return nv50_screen(pscreen)->tesla->grclass >= NVA0_3D;
+   case PIPE_CAP_SEAMLESS_CUBE_MAP_PER_TEXTURE:
+      return 0;
    case PIPE_CAP_TWO_SIDED_STENCIL:
    case PIPE_CAP_DEPTH_CLAMP:
    case PIPE_CAP_DEPTHSTENCIL_CLEAR_SEPARATE:
@@ -417,6 +420,11 @@ nv50_screen_create(struct pipe_winsys *ws, struct nouveau_device *dev)
    BEGIN_RING(chan, RING_3D(BLEND_SEPARATE_ALPHA), 1);
    OUT_RING  (chan, 1);
 
+   if (tesla_class >= NVA0_3D) {
+      BEGIN_RING(chan, RING_3D_(NVA0_3D_TEX_MISC), 1);
+      OUT_RING  (chan, NVA0_3D_TEX_MISC_SEAMLESS_CUBE_MAP);
+   }
+
    BEGIN_RING(chan, RING_3D(SCREEN_Y_CONTROL), 1);
    OUT_RING  (chan, 0);
    BEGIN_RING(chan, RING_3D(WINDOW_OFFSET_X), 2);
@@ -469,7 +477,7 @@ nv50_screen_create(struct pipe_winsys *ws, struct nouveau_device *dev)
 
    screen->tls_size = tls_space * max_warps * 32;
 
-   debug_printf("max_warps = %i, tls_size = %lu KiB\n",
+   debug_printf("max_warps = %i, tls_size = %llu KiB\n",
                 max_warps, screen->tls_size >> 10);
 
    ret = nouveau_bo_new(dev, NOUVEAU_BO_VRAM, 1 << 16, screen->tls_size,

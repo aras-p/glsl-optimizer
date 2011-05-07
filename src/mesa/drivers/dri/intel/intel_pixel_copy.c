@@ -29,6 +29,7 @@
 #include "main/image.h"
 #include "main/state.h"
 #include "main/mtypes.h"
+#include "main/condrender.h"
 #include "drivers/common/meta.h"
 
 #include "intel_context.h"
@@ -203,6 +204,9 @@ intelCopyPixels(struct gl_context * ctx,
                 GLint destx, GLint desty, GLenum type)
 {
    DBG("%s\n", __FUNCTION__);
+
+   if (!_mesa_check_conditional_render(ctx))
+      return;
 
    if (do_blit_copypixels(ctx, srcx, srcy, width, height, destx, desty, type))
       return;

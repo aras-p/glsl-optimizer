@@ -37,6 +37,7 @@
 struct intel_screen
 {
    int deviceID;
+   int gen;
 
    int logTextureGranularity;
 

@@ -1,5 +1,8 @@
 /*
- * Copyright © 2010 Intel Corporation
+ * Mesa 3-D graphics library
+ * Version:  7.11
+ *
+ * Copyright (C) 2011 Benjamin Franzke <benjaminfranzke@googlemail.com>
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -8,42 +11,31 @@
  * and/or sell copies of the Software, and to permit persons to whom the
  * Software is furnished to do so, subject to the following conditions:
  *
- * The above copyright notice and this permission notice (including the next
- * paragraph) shall be included in all copies or substantial portions of the
- * Software.
+ * The above copyright notice and this permission notice shall be included
+ * in all copies or substantial portions of the Software.
  *
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
  * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
  * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.  IN NO EVENT SHALL
  * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
  * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
- * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
- * IN THE SOFTWARE.
- *
- * Authors:
- *    Eric Anholt <eric@anholt.net>
- *
+ * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
+ * DEALINGS IN THE SOFTWARE.
  */
 
-#include "brw_context.h"
+#ifndef WAYLAND_SW_WINSYS
+#define WAYLAND_SW_WINSYS
 
-void
-brw_enable(struct gl_context *ctx, GLenum cap, GLboolean state)
-{
-   struct brw_context *brw = brw_context(ctx);
+struct sw_winsys;
 
-   switch (cap) {
-   case GL_DEPTH_CLAMP:
-      brw_update_cc_vp(brw);
-      break;
-   }
-}
+struct winsys_handle {
+   int fd;
+   unsigned stride;
+};
 
-void
-brw_depth_range(struct gl_context *ctx, GLclampd nearval, GLclampd farval)
-{
-   struct brw_context *brw = brw_context(ctx);
+struct sw_winsys *
+wayland_create_sw_winsys(struct wl_display *display);
 
-   if (ctx->Transform.DepthClamp)
-      brw_update_cc_vp(brw);
-}
+#endif /* WAYLAND_SW_WINSYS */
+
+/* vim: set sw=3 ts=8 sts=3 expandtab: */

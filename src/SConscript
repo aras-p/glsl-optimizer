@@ -23,6 +23,7 @@ SConscript('mapi/vgapi/SConscript')
 
 if env['platform'] != 'embedded':
     SConscript('egl/main/SConscript')
+    SConscript('glu/sgi/SConscript')
     SConscript('glut/glx/SConscript')
 
     if env['gles']:

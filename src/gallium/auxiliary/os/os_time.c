@@ -37,7 +37,7 @@
 
 #if !defined(PIPE_OS_EMBEDDED)
 
-#if defined(PIPE_OS_LINUX) || defined(PIPE_OS_BSD) || defined(PIPE_OS_SOLARIS) || defined(PIPE_OS_APPLE) || defined(PIPE_OS_HAIKU) || defined(PIPE_OS_CYGWIN)
+#if defined(PIPE_OS_UNIX)
 #  include <sys/time.h> /* timeval */
 #elif defined(PIPE_SUBSYSTEM_WINDOWS_DISPLAY)
 #  include <windows.h>

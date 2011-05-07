@@ -113,14 +113,21 @@ static int r300_get_param(struct pipe_screen* pscreen, enum pipe_cap param)
         case PIPE_CAP_TEXTURE_MIRROR_REPEAT:
         case PIPE_CAP_BLEND_EQUATION_SEPARATE:
         case PIPE_CAP_VERTEX_ELEMENT_INSTANCE_DIVISOR:
-        case PIPE_CAP_FRAGMENT_COLOR_CLAMP_CONTROL:
-            return is_r500 ? 1 : 0;
+        case PIPE_CAP_TGSI_FS_COORD_ORIGIN_UPPER_LEFT:
+        case PIPE_CAP_TGSI_FS_COORD_PIXEL_CENTER_HALF_INTEGER:
+            return 1;
+
+        /* r300 cannot do swizzling of compressed textures. Supported otherwise. */
         case PIPE_CAP_TEXTURE_SWIZZLE:
             return util_format_s3tc_enabled ? r300screen->caps.dxtc_swizzle : 1;
+
+        /* Supported on r500 only. */
+        case PIPE_CAP_FRAGMENT_COLOR_CLAMP_CONTROL:
         case PIPE_CAP_MIXED_COLORBUFFER_FORMATS:
+        case PIPE_CAP_SM3:
             return is_r500 ? 1 : 0;
 
-        /* Unsupported features (boolean caps). */
+        /* Unsupported features. */
         case PIPE_CAP_TIMER_QUERY:
         case PIPE_CAP_DUAL_SOURCE_BLEND:
         case PIPE_CAP_INDEP_BLEND_ENABLE:
@@ -130,6 +137,11 @@ static int r300_get_param(struct pipe_screen* pscreen, enum pipe_cap param)
         case PIPE_CAP_SHADER_STENCIL_EXPORT:
         case PIPE_CAP_ARRAY_TEXTURES:
         case PIPE_CAP_TGSI_INSTANCEID:
+        case PIPE_CAP_TGSI_FS_COORD_ORIGIN_LOWER_LEFT:
+        case PIPE_CAP_TGSI_FS_COORD_PIXEL_CENTER_INTEGER:
+        case PIPE_CAP_MAX_VERTEX_TEXTURE_UNITS:
+        case PIPE_CAP_SEAMLESS_CUBE_MAP:
+        case PIPE_CAP_SEAMLESS_CUBE_MAP_PER_TEXTURE:
             return 0;
 
         /* SWTCL-only features. */
@@ -141,8 +153,6 @@ static int r300_get_param(struct pipe_screen* pscreen, enum pipe_cap param)
         case PIPE_CAP_MAX_TEXTURE_IMAGE_UNITS:
         case PIPE_CAP_MAX_COMBINED_SAMPLERS:
             return r300screen->caps.num_tex_units;
-        case PIPE_CAP_MAX_VERTEX_TEXTURE_UNITS:
-            return 0;
         case PIPE_CAP_MAX_TEXTURE_2D_LEVELS:
         case PIPE_CAP_MAX_TEXTURE_3D_LEVELS:
         case PIPE_CAP_MAX_TEXTURE_CUBE_LEVELS:
@@ -153,16 +163,6 @@ static int r300_get_param(struct pipe_screen* pscreen, enum pipe_cap param)
         case PIPE_CAP_MAX_RENDER_TARGETS:
             return 4;
 
-        /* General shader limits and features. */
-        case PIPE_CAP_SM3:
-            return is_r500 ? 1 : 0;
-        /* Fragment coordinate conventions. */
-        case PIPE_CAP_TGSI_FS_COORD_ORIGIN_UPPER_LEFT:
-        case PIPE_CAP_TGSI_FS_COORD_PIXEL_CENTER_HALF_INTEGER:
-	    return 1;
-        case PIPE_CAP_TGSI_FS_COORD_ORIGIN_LOWER_LEFT:
-        case PIPE_CAP_TGSI_FS_COORD_PIXEL_CENTER_INTEGER:
-            return 0;
         default:
             debug_printf("r300: Warning: Unknown CAP %d in get_param.\n",
                          param);

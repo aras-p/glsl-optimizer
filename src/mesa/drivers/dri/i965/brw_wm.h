@@ -201,11 +201,11 @@ struct brw_wm_compile {
       PASS2_DONE
    } state;
 
-   GLuint source_depth_reg:3;
-   GLuint source_w_reg:3;
-   GLuint aa_dest_stencil_reg:3;
-   GLuint dest_depth_reg:3;
-   GLuint nr_payload_regs:4;
+   uint8_t source_depth_reg;
+   uint8_t source_w_reg;
+   uint8_t aa_dest_stencil_reg;
+   uint8_t dest_depth_reg;
+   uint8_t nr_payload_regs;
    GLuint computes_depth:1;	/* could be derived from program string */
    GLuint source_depth_to_render_target:1;
    GLuint runtime_check_aads_emit:1;
@@ -218,7 +218,6 @@ struct brw_wm_compile {
    GLuint nr_fp_insns;
    GLuint fp_temp;
    GLuint fp_interp_emitted;
-   GLuint fp_fragcolor_emitted;
 
    struct prog_src_register pixel_xy;
    struct prog_src_register delta_xy;
@@ -315,7 +314,7 @@ void brw_wm_print_program( struct brw_wm_compile *c,
 void brw_wm_lookup_iz(struct intel_context *intel,
 		      struct brw_wm_compile *c);
 
-GLboolean brw_wm_fs_emit(struct brw_context *brw, struct brw_wm_compile *c);
+bool brw_wm_fs_emit(struct brw_context *brw, struct brw_wm_compile *c);
 
 /* brw_wm_emit.c */
 void emit_alu1(struct brw_compile *p,
@@ -475,5 +474,7 @@ struct gl_shader_program *brw_new_shader_program(struct gl_context *ctx, GLuint 
 
 bool brw_color_buffer_write_enabled(struct brw_context *brw);
 bool brw_render_target_supported(gl_format format);
+void brw_wm_payload_setup(struct brw_context *brw,
+			  struct brw_wm_compile *c);
 
 #endif

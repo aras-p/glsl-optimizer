@@ -158,7 +158,7 @@ _swrast_fog_rgba_span( const struct gl_context *ctx, SWspan *span )
       /* The span's fog values are fog coordinates, now compute blend factors
        * and blend the fragment colors with the fog color.
        */
-      switch (swrast->_FogMode) {
+      switch (ctx->Fog.Mode) {
       case GL_LINEAR:
          {
             const GLfloat fogEnd = ctx->Fog.End;

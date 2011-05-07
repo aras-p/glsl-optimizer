@@ -243,7 +243,7 @@ boolean draw_need_pipeline(const struct draw_context *draw,
                            unsigned prim );
 
 static INLINE int
-draw_get_shader_param(unsigned shader, enum pipe_cap param)
+draw_get_shader_param(unsigned shader, enum pipe_shader_cap param)
 {
    switch(shader) {
    case PIPE_SHADER_VERTEX:

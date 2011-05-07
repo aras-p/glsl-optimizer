@@ -40,6 +40,7 @@
 #include "main/bufferobj.h"
 #include "main/buffers.h"
 #include "main/colortab.h"
+#include "main/condrender.h"
 #include "main/depth.h"
 #include "main/enable.h"
 #include "main/fbobject.h"
@@ -94,6 +95,7 @@
 #define META_VIEWPORT       0x4000
 #define META_CLAMP_FRAGMENT_COLOR 0x8000
 #define META_CLAMP_VERTEX_COLOR 0x10000
+#define META_CONDITIONAL_RENDER 0x20000
 /*@}*/
 
 
@@ -187,6 +189,10 @@ struct save_state
 
    /** META_CLAMP_VERTEX_COLOR */
    GLenum ClampVertexColor;
+
+   /** META_CONDITIONAL_RENDER */
+   struct gl_query_object *CondRenderQuery;
+   GLenum CondRenderMode;
 
    /** Miscellaneous (always disabled) */
    GLboolean Lighting;
@@ -597,6 +603,14 @@ _mesa_meta_begin(struct gl_context *ctx, GLbitfield state)
       _mesa_ClampColorARB(GL_CLAMP_VERTEX_COLOR, GL_FALSE);
    }
 
+   if (state & META_CONDITIONAL_RENDER) {
+      save->CondRenderQuery = ctx->Query.CondRenderQuery;
+      save->CondRenderMode = ctx->Query.CondRenderMode;
+
+      if (ctx->Query.CondRenderQuery)
+	 _mesa_EndConditionalRender();
+   }
+
    /* misc */
    {
       save->Lighting = ctx->Light.Enabled;
@@ -867,6 +881,12 @@ _mesa_meta_end(struct gl_context *ctx)
 
    if (state & META_CLAMP_VERTEX_COLOR) {
       _mesa_ClampColorARB(GL_CLAMP_VERTEX_COLOR, save->ClampVertexColor);
+   }
+
+   if (state & META_CONDITIONAL_RENDER) {
+      if (save->CondRenderQuery)
+	 _mesa_BeginConditionalRender(save->CondRenderQuery->Id,
+				      save->CondRenderMode);
    }
 
    /* misc */
@@ -1442,7 +1462,10 @@ _mesa_meta_Clear(struct gl_context *ctx, GLbitfield buffers)
    };
    struct vertex verts[4];
    /* save all state but scissor, pixel pack/unpack */
-   GLbitfield metaSave = META_ALL - META_SCISSOR - META_PIXEL_STORE;
+   GLbitfield metaSave = (META_ALL -
+			  META_SCISSOR -
+			  META_PIXEL_STORE -
+			  META_CONDITIONAL_RENDER);
    const GLuint stencilMax = (1 << ctx->DrawBuffer->Visual.stencilBits) - 1;
 
    if (buffers & BUFFER_BITS_COLOR) {
@@ -1848,7 +1871,8 @@ _mesa_meta_DrawPixels(struct gl_context *ctx,
        * just going for the matching set of channels, in floating
        * point.
        */
-      if (ctx->Color.ClampFragmentColor != GL_TRUE)
+      if (ctx->Color.ClampFragmentColor != GL_TRUE &&
+	  ctx->Extensions.ARB_texture_float)
 	 texIntFormat = GL_RGBA32F;
    }
    else if (_mesa_is_stencil_format(format)) {

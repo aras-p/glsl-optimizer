@@ -31,6 +31,7 @@
                    
 
 #include "main/mtypes.h"
+#include "main/samplerobj.h"
 #include "main/texstore.h"
 #include "program/prog_parameter.h"
 
@@ -112,6 +113,10 @@ static uint32_t brw_format_for_mesa_format[MESA_FORMAT_COUNT] =
    [MESA_FORMAT_LUMINANCE_FLOAT32] = BRW_SURFACEFORMAT_L32_FLOAT,
    [MESA_FORMAT_ALPHA_FLOAT32] = BRW_SURFACEFORMAT_A32_FLOAT,
    [MESA_FORMAT_LUMINANCE_ALPHA_FLOAT32] = BRW_SURFACEFORMAT_L32A32_FLOAT,
+   [MESA_FORMAT_RED_RGTC1] = BRW_SURFACEFORMAT_BC4_UNORM,
+   [MESA_FORMAT_SIGNED_RED_RGTC1] = BRW_SURFACEFORMAT_BC4_SNORM,
+   [MESA_FORMAT_RG_RGTC2] = BRW_SURFACEFORMAT_BC5_UNORM,
+   [MESA_FORMAT_SIGNED_RG_RGTC2] = BRW_SURFACEFORMAT_BC5_SNORM,
 };
 
 bool
@@ -213,6 +218,7 @@ brw_update_texture_surface( struct gl_context *ctx, GLuint unit )
    struct gl_texture_object *tObj = ctx->Texture.Unit[unit]._Current;
    struct intel_texture_object *intelObj = intel_texture_object(tObj);
    struct gl_texture_image *firstImage = tObj->Image[0][tObj->BaseLevel];
+   struct gl_sampler_object *sampler = _mesa_get_samplerobj(ctx, unit);
    const GLuint surf_index = SURF_INDEX_TEXTURE(unit);
    struct brw_surface_state *surf;
 
@@ -224,8 +230,8 @@ brw_update_texture_surface( struct gl_context *ctx, GLuint unit )
    surf->ss0.surface_type = translate_tex_target(tObj->Target);
    surf->ss0.surface_format = translate_tex_format(firstImage->TexFormat,
                                                    firstImage->InternalFormat,
-                                                   tObj->Sampler.DepthMode,
-                                                   tObj->Sampler.sRGBDecode);
+                                                   sampler->DepthMode,
+                                                   sampler->sRGBDecode);
 
    /* This is ok for all textures with channel width 8bit or less:
     */
@@ -309,7 +315,7 @@ brw_create_constant_surface(struct brw_context *brw,
  * state atom.
  */
 static void
-prepare_wm_constants(struct brw_context *brw)
+prepare_wm_pull_constants(struct brw_context *brw)
 {
    struct gl_context *ctx = &brw->intel.ctx;
    struct intel_context *intel = &brw->intel;
@@ -353,7 +359,7 @@ const struct brw_tracked_state brw_wm_constants = {
       .brw = (BRW_NEW_FRAGMENT_PROGRAM),
       .cache = 0
    },
-   .prepare = prepare_wm_constants,
+   .prepare = prepare_wm_pull_constants,
 };
 
 /**

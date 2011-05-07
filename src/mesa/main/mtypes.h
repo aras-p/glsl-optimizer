@@ -376,7 +376,15 @@ typedef enum
 {
    FRAG_RESULT_DEPTH = 0,
    FRAG_RESULT_STENCIL = 1,
+   /* If a single color should be written to all render targets, this
+    * register is written.  No FRAG_RESULT_DATAn will be written.
+    */
    FRAG_RESULT_COLOR = 2,
+
+   /* FRAG_RESULT_DATAn are the per-render-target (GLSL gl_FragData[n]
+    * or ARB_fragment_program fragment.color[n]) color results.  If
+    * any are written, FRAG_RESULT_COLOR will not be written.
+    */
    FRAG_RESULT_DATA0 = 3,
    FRAG_RESULT_MAX = (FRAG_RESULT_DATA0 + MAX_DRAW_BUFFERS)
 } gl_frag_result;
@@ -1331,6 +1339,7 @@ struct gl_sampler_object
    GLenum CompareFunc;		/**< GL_ARB_shadow */
    GLfloat CompareFailValue;    /**< GL_ARB_shadow_ambient */
    GLenum sRGBDecode;           /**< GL_DECODE_EXT or GL_SKIP_DECODE_EXT */
+   GLboolean CubeMapSeamless;   /**< GL_AMD_seamless_cubemap_per_texture */
 
    /* deprecated sampler state */
    GLenum DepthMode;		/**< GL_ARB_depth_texture */
@@ -2738,6 +2747,9 @@ struct gl_constants
 
    /* GL_EXT_framebuffer_sRGB */
    GLboolean sRGBCapable; /* can enable sRGB blend/update on FBOs */
+
+   /* GL_ARB_robustness */
+   GLenum ResetStrategy;
 };
 
 
@@ -2874,6 +2886,7 @@ struct gl_extensions
    GLboolean OES_standard_derivatives;
    /* vendor extensions */
    GLboolean AMD_conservative_depth;
+   GLboolean AMD_seamless_cubemap_per_texture;
    GLboolean APPLE_client_storage;
    GLboolean APPLE_packed_pixels;
    GLboolean APPLE_vertex_array_object;
@@ -3296,6 +3309,9 @@ struct gl_context
    struct gl_renderbuffer *CurrentRenderbuffer;
 
    GLenum ErrorValue;        /**< Last error code */
+
+   /* GL_ARB_robustness */
+   GLenum ResetStatus;
 
    /**
     * Recognize and silence repeated error debug messages in buggy apps.

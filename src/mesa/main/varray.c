@@ -57,8 +57,8 @@
 #define HALF_BIT             0x80
 #define FLOAT_BIT            0x100
 #define DOUBLE_BIT           0x200
-#define FIXED_BIT            0x400
-
+#define FIXED_ES_BIT         0x400
+#define FIXED_GL_BIT         0x800
 
 
 /** Convert GL datatype enum into a <type>_BIT value seen above */
@@ -90,7 +90,7 @@ type_to_bit(const struct gl_context *ctx, GLenum type)
    case GL_DOUBLE:
       return DOUBLE_BIT;
    case GL_FIXED:
-      return FIXED_BIT;
+      return ctx->API == API_OPENGL ? FIXED_GL_BIT : FIXED_ES_BIT;
    default:
       return 0;
    }
@@ -130,7 +130,10 @@ update_array(struct gl_context *ctx,
 
    if (ctx->API != API_OPENGLES && ctx->API != API_OPENGLES2) {
       /* fixed point arrays / data is only allowed with OpenGL ES 1.x/2.0 */
-      legalTypesMask &= ~FIXED_BIT;
+      legalTypesMask &= ~FIXED_ES_BIT;
+   }
+   if (!ctx->Extensions.ARB_ES2_compatibility) {
+      legalTypesMask &= ~FIXED_GL_BIT;
    }
 
    typeBit = type_to_bit(ctx, type);
@@ -198,7 +201,7 @@ void GLAPIENTRY
 _mesa_VertexPointer(GLint size, GLenum type, GLsizei stride, const GLvoid *ptr)
 {
    GLbitfield legalTypes = (SHORT_BIT | INT_BIT | FLOAT_BIT |
-                            DOUBLE_BIT | HALF_BIT | FIXED_BIT);
+                            DOUBLE_BIT | HALF_BIT | FIXED_ES_BIT);
    GET_CURRENT_CONTEXT(ctx);
    ASSERT_OUTSIDE_BEGIN_END_AND_FLUSH(ctx);
 
@@ -217,7 +220,7 @@ _mesa_NormalPointer(GLenum type, GLsizei stride, const GLvoid *ptr )
 {
    const GLbitfield legalTypes = (BYTE_BIT | SHORT_BIT | INT_BIT |
                                   HALF_BIT | FLOAT_BIT | DOUBLE_BIT |
-                                  FIXED_BIT);
+                                  FIXED_ES_BIT);
    GET_CURRENT_CONTEXT(ctx);
    ASSERT_OUTSIDE_BEGIN_END_AND_FLUSH(ctx);
 
@@ -235,7 +238,7 @@ _mesa_ColorPointer(GLint size, GLenum type, GLsizei stride, const GLvoid *ptr)
                                   SHORT_BIT | UNSIGNED_SHORT_BIT |
                                   INT_BIT | UNSIGNED_INT_BIT |
                                   HALF_BIT | FLOAT_BIT | DOUBLE_BIT |
-                                  FIXED_BIT);
+                                  FIXED_ES_BIT);
    GET_CURRENT_CONTEXT(ctx);
    ASSERT_OUTSIDE_BEGIN_END_AND_FLUSH(ctx);
 
@@ -299,7 +302,7 @@ _mesa_TexCoordPointer(GLint size, GLenum type, GLsizei stride,
 {
    GLbitfield legalTypes = (SHORT_BIT | INT_BIT |
                             HALF_BIT | FLOAT_BIT | DOUBLE_BIT |
-                            FIXED_BIT);
+                            FIXED_ES_BIT);
    GET_CURRENT_CONTEXT(ctx);
    const GLuint unit = ctx->Array.ActiveTexture;
    ASSERT_OUTSIDE_BEGIN_END_AND_FLUSH(ctx);
@@ -337,7 +340,7 @@ _mesa_EdgeFlagPointer(GLsizei stride, const GLvoid *ptr)
 void GLAPIENTRY
 _mesa_PointSizePointer(GLenum type, GLsizei stride, const GLvoid *ptr)
 {
-   const GLbitfield legalTypes = (FLOAT_BIT | FIXED_BIT);
+   const GLbitfield legalTypes = (FLOAT_BIT | FIXED_ES_BIT);
    GET_CURRENT_CONTEXT(ctx);
    ASSERT_OUTSIDE_BEGIN_END_AND_FLUSH(ctx);
 
@@ -405,7 +408,7 @@ _mesa_VertexAttribPointerARB(GLuint index, GLint size, GLenum type,
                                   SHORT_BIT | UNSIGNED_SHORT_BIT |
                                   INT_BIT | UNSIGNED_INT_BIT |
                                   HALF_BIT | FLOAT_BIT | DOUBLE_BIT |
-                                  FIXED_BIT);
+                                  FIXED_ES_BIT | FIXED_GL_BIT);
    GET_CURRENT_CONTEXT(ctx);
    ASSERT_OUTSIDE_BEGIN_END(ctx);
 

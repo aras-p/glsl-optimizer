@@ -199,13 +199,16 @@ static void *r600_create_blend_state(struct pipe_context *ctx,
 static void *r600_create_dsa_state(struct pipe_context *ctx,
 				   const struct pipe_depth_stencil_alpha_state *state)
 {
-	struct r600_pipe_state *rstate = CALLOC_STRUCT(r600_pipe_state);
+	struct r600_pipe_dsa *dsa = CALLOC_STRUCT(r600_pipe_dsa);
 	unsigned db_depth_control, alpha_test_control, alpha_ref, db_shader_control;
 	unsigned stencil_ref_mask, stencil_ref_mask_bf, db_render_override, db_render_control;
+	struct r600_pipe_state *rstate;
 
-	if (rstate == NULL) {
+	if (dsa == NULL) {
 		return NULL;
 	}
+
+	rstate = &dsa->rstate;
 
 	rstate->id = R600_PIPE_STATE_DSA;
 	/* depth TODO some of those db_shader_control field depend on shader adjust mask & add it to shader */
@@ -246,6 +249,7 @@ static void *r600_create_dsa_state(struct pipe_context *ctx,
 		alpha_test_control |= S_028410_ALPHA_TEST_ENABLE(1);
 		alpha_ref = fui(state->alpha.ref_value);
 	}
+	dsa->alpha_ref = alpha_ref;
 
 	/* misc */
 	db_render_control = 0;
@@ -262,7 +266,6 @@ static void *r600_create_dsa_state(struct pipe_context *ctx,
 	r600_pipe_state_add_reg(rstate,
 				R_028434_DB_STENCILREFMASK_BF, stencil_ref_mask_bf,
 				0xFFFFFFFF & C_028434_STENCILREF_BF, NULL);
-	r600_pipe_state_add_reg(rstate, R_028438_SX_ALPHA_REF, alpha_ref, 0xFFFFFFFF, NULL);
 	r600_pipe_state_add_reg(rstate, R_0286E0_SPI_FOG_FUNC_SCALE, 0x00000000, 0xFFFFFFFF, NULL);
 	r600_pipe_state_add_reg(rstate, R_0286E4_SPI_FOG_FUNC_BIAS, 0x00000000, 0xFFFFFFFF, NULL);
 	r600_pipe_state_add_reg(rstate, R_0286DC_SPI_FOG_CNTL, 0x00000000, 0xFFFFFFFF, NULL);
@@ -371,15 +374,10 @@ static void *r600_create_sampler_state(struct pipe_context *ctx,
 {
 	struct r600_pipe_state *rstate = CALLOC_STRUCT(r600_pipe_state);
 	union util_color uc;
-	uint32_t coord_trunc = 0;
 
 	if (rstate == NULL) {
 		return NULL;
 	}
-
-	if ((state->mag_img_filter == PIPE_TEX_FILTER_NEAREST) ||
-	    (state->min_img_filter == PIPE_TEX_FILTER_NEAREST))
-		coord_trunc = 1;
 
 	rstate->id = R600_PIPE_STATE_SAMPLER;
 	util_pack_color(state->border_color, PIPE_FORMAT_B8G8R8A8_UNORM, &uc);
@@ -392,14 +390,11 @@ static void *r600_create_sampler_state(struct pipe_context *ctx,
 			S_03C000_MIP_FILTER(r600_tex_mipfilter(state->min_mip_filter)) |
 			S_03C000_DEPTH_COMPARE_FUNCTION(r600_tex_compare(state->compare_func)) |
 			S_03C000_BORDER_COLOR_TYPE(uc.ui ? V_03C000_SQ_TEX_BORDER_COLOR_REGISTER : 0), 0xFFFFFFFF, NULL);
-	/* FIXME LOD it depends on texture base level ... */
 	r600_pipe_state_add_reg(rstate, R_03C004_SQ_TEX_SAMPLER_WORD1_0,
 			S_03C004_MIN_LOD(S_FIXED(CLAMP(state->min_lod, 0, 15), 6)) |
 			S_03C004_MAX_LOD(S_FIXED(CLAMP(state->max_lod, 0, 15), 6)) |
 			S_03C004_LOD_BIAS(S_FIXED(CLAMP(state->lod_bias, -16, 16), 6)), 0xFFFFFFFF, NULL);
-	r600_pipe_state_add_reg(rstate, R_03C008_SQ_TEX_SAMPLER_WORD2_0,
-				S_03C008_MC_COORD_TRUNCATE(coord_trunc) |
-				S_03C008_TYPE(1), 0xFFFFFFFF, NULL);
+	r600_pipe_state_add_reg(rstate, R_03C008_SQ_TEX_SAMPLER_WORD2_0, S_03C008_TYPE(1), 0xFFFFFFFF, NULL);
 	if (uc.ui) {
 		r600_pipe_state_add_reg(rstate, R_00A400_TD_PS_SAMPLER0_BORDER_RED, fui(state->border_color[0]), 0xFFFFFFFF, NULL);
 		r600_pipe_state_add_reg(rstate, R_00A404_TD_PS_SAMPLER0_BORDER_GREEN, fui(state->border_color[1]), 0xFFFFFFFF, NULL);
@@ -477,7 +472,6 @@ static struct pipe_sampler_view *r600_create_sampler_view(struct pipe_context *c
 		depth = texture->array_size;
 	}
 
-	/* FIXME properly handle first level != 0 */
 	r600_pipe_state_add_reg(rstate, R_038000_RESOURCE0_WORD0,
 				S_038000_DIM(r600_tex_dim(texture->target)) |
 				S_038000_TILE_MODE(array_mode) |
@@ -724,7 +718,7 @@ static void r600_cb(struct r600_pipe_context *rctx, struct r600_pipe_state *rsta
 	struct r600_surface *surf;
 	unsigned level = state->cbufs[cb]->u.tex.level;
 	unsigned pitch, slice;
-	unsigned color_info, color_info_mask;
+	unsigned color_info;
 	unsigned format, swap, ntype, endian;
 	unsigned offset;
 	const struct util_format_description *desc;
@@ -780,17 +774,36 @@ static void r600_cb(struct r600_pipe_context *rctx, struct r600_pipe_state *rsta
 		S_0280A0_NUMBER_TYPE(ntype) |
 		S_0280A0_ENDIAN(endian);
 
-	color_info_mask = 0xFFFFFFFF & ~S_0280A0_BLEND_CLAMP(1);
-
-	/* on R600 this can't be set if BLEND_CLAMP isn't set,
-	   if BLEND_FLOAT32 is set of > 11 bits in a UNORM or SNORM */
-	if (desc->colorspace != UTIL_FORMAT_COLORSPACE_ZS && desc->channel[i].size < 12) {
-		//TODO: Seems to work on RV710, but i have no idea what to do between R600-RV710
-		if (rctx->family < CHIP_RV710) {
-			color_info |= S_0280A0_BLEND_CLAMP(1);
-			color_info_mask |= S_0280A0_BLEND_CLAMP(1);
-		}
-		color_info |= S_0280A0_SOURCE_FORMAT(V_0280A0_EXPORT_NORM);
+	/* EXPORT_NORM is an optimzation that can be enabled for better
+	 * performance in certain cases
+	 */
+	if (rctx->family < CHIP_RV770) {
+		/* EXPORT_NORM can be enabled if:
+		 * - 11-bit or smaller UNORM/SNORM/SRGB
+		 * - BLEND_CLAMP is enabled
+		 * - BLEND_FLOAT32 is disabled
+		 */
+		// TODO get BLEND_CLAMP state from rasterizer state
+		if (desc->colorspace != UTIL_FORMAT_COLORSPACE_ZS &&
+		    (desc->channel[i].size < 12 &&
+		     desc->channel[i].type != UTIL_FORMAT_TYPE_FLOAT &&
+		     ntype != V_0280A0_NUMBER_UINT &&
+		     ntype != V_0280A0_NUMBER_SINT) &&
+		    G_0280A0_BLEND_CLAMP(color_info) &&
+		    !G_0280A0_BLEND_FLOAT32(color_info))
+			color_info |= S_0280A0_SOURCE_FORMAT(V_0280A0_EXPORT_NORM);
+	} else {
+		/* EXPORT_NORM can be enabled if:
+		 * - 11-bit or smaller UNORM/SNORM/SRGB
+		 * - 16-bit or smaller FLOAT
+		 */
+		if (desc->colorspace != UTIL_FORMAT_COLORSPACE_ZS &&
+		    ((desc->channel[i].size < 12 &&
+		      desc->channel[i].type != UTIL_FORMAT_TYPE_FLOAT &&
+		      ntype != V_0280A0_NUMBER_UINT && ntype != V_0280A0_NUMBER_SINT) ||
+		    (desc->channel[i].size < 17 &&
+		     desc->channel[i].type == UTIL_FORMAT_TYPE_FLOAT)))
+			color_info |= S_0280A0_SOURCE_FORMAT(V_0280A0_EXPORT_NORM);
 	}
 
 	r600_pipe_state_add_reg(rstate,
@@ -798,7 +811,7 @@ static void r600_cb(struct r600_pipe_context *rctx, struct r600_pipe_state *rsta
 				(offset + r600_bo_offset(bo[0])) >> 8, 0xFFFFFFFF, bo[0]);
 	r600_pipe_state_add_reg(rstate,
 				R_0280A0_CB_COLOR0_INFO + cb * 4,
-				color_info, color_info_mask, NULL);
+				color_info, ~S_0280A0_BLEND_CLAMP(1), NULL);
 	r600_pipe_state_add_reg(rstate,
 				R_028060_CB_COLOR0_SIZE + cb * 4,
 				S_028060_PITCH_TILE_MAX(pitch) |
@@ -984,7 +997,7 @@ void r600_init_state_functions(struct r600_pipe_context *rctx)
 	rctx->context.create_vertex_elements_state = r600_create_vertex_elements;
 	rctx->context.create_vs_state = r600_create_shader_state;
 	rctx->context.bind_blend_state = r600_bind_blend_state;
-	rctx->context.bind_depth_stencil_alpha_state = r600_bind_state;
+	rctx->context.bind_depth_stencil_alpha_state = r600_bind_dsa_state;
 	rctx->context.bind_fragment_sampler_states = r600_bind_ps_sampler;
 	rctx->context.bind_fs_state = r600_bind_ps_shader;
 	rctx->context.bind_rasterizer_state = r600_bind_rs_state;
@@ -1472,9 +1485,7 @@ void r600_pipe_set_buffer_resource(struct r600_pipe_context *rctx,
 	r600_pipe_state_add_reg(rstate, R_038004_RESOURCE0_WORD1,
 				rbuffer->bo_size - offset - 1, 0xFFFFFFFF, NULL);
 	r600_pipe_state_add_reg(rstate, R_038008_RESOURCE0_WORD2,
-#ifdef PIPE_ARCH_BIG_ENDIAN
-				S_038008_ENDIAN_SWAP(ENDIAN_8IN32) |
-#endif
+				S_038008_ENDIAN_SWAP(r600_endian_swap(32)) |
 				S_038008_STRIDE(stride), 0xFFFFFFFF, NULL);
 	r600_pipe_state_add_reg(rstate, R_03800C_RESOURCE0_WORD3,
 				0x00000000, 0xFFFFFFFF, NULL);

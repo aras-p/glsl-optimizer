@@ -128,6 +128,11 @@ _intel_batchbuffer_flush(struct intel_context *intel,
    if (intel->batch.used == 0)
       return;
 
+   if (intel->first_post_swapbuffers_batch == NULL) {
+      intel->first_post_swapbuffers_batch = intel->batch.bo;
+      drm_intel_bo_reference(intel->first_post_swapbuffers_batch);
+   }
+
    if (unlikely(INTEL_DEBUG & DEBUG_BATCH))
       fprintf(stderr, "%s:%d: Batchbuffer flush with %db used\n", file, line,
 	      4*intel->batch.used);

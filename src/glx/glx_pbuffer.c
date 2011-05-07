@@ -137,6 +137,9 @@ ChangeDrawableAttribute(Display * dpy, GLXDrawable drawable,
 #ifdef GLX_DIRECT_RENDERING
    pdraw = GetGLXDRIDrawable(dpy, drawable);
 
+   if (!pdraw)
+      return;
+
    for (i = 0; i < num_attribs; i++) {
       switch(attribs[i * 2]) {
       case GLX_EVENT_MASK:

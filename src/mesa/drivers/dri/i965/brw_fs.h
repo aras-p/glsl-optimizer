@@ -67,6 +67,8 @@ enum fs_opcodes {
    FS_OPCODE_COS,
    FS_OPCODE_DDX,
    FS_OPCODE_DDY,
+   FS_OPCODE_PIXEL_X,
+   FS_OPCODE_PIXEL_Y,
    FS_OPCODE_CINTERP,
    FS_OPCODE_LINTERP,
    FS_OPCODE_TEX,
@@ -176,6 +178,7 @@ public:
    int type;
    bool negate;
    bool abs;
+   bool sechalf;
    struct brw_reg fixed_hw_reg;
    int smear; /* -1, or a channel of the reg to smear to all channels. */
 
@@ -341,6 +344,8 @@ public:
    bool eot;
    bool header_present;
    bool shadow_compare;
+   bool force_uncompressed;
+   bool force_sechalf;
    uint32_t offset; /* spill/unspill offset */
 
    /** @{
@@ -403,6 +408,8 @@ public:
       this->live_intervals_valid = false;
 
       this->kill_emitted = false;
+      this->force_uncompressed_stack = 0;
+      this->force_sechalf_stack = 0;
    }
 
    ~fs_visitor()
@@ -413,6 +420,7 @@ public:
 
    fs_reg *variable_storage(ir_variable *var);
    int virtual_grf_alloc(int size);
+   void import_uniforms(struct hash_table *src_variable_ht);
 
    void visit(ir_variable *ir);
    void visit(ir_assignment *ir);
@@ -459,6 +467,7 @@ public:
       return emit(fs_inst(opcode, dst, src0, src1, src2));
    }
 
+   bool run();
    void setup_paramvalues_refs();
    void assign_curb_setup();
    void calculate_urb_setup();
@@ -479,8 +488,14 @@ public:
    void schedule_instructions();
    void fail(const char *msg, ...);
 
+   void push_force_uncompressed();
+   void pop_force_uncompressed();
+   void push_force_sechalf();
+   void pop_force_sechalf();
+
    void generate_code();
    void generate_fb_write(fs_inst *inst);
+   void generate_pixel_xy(struct brw_reg dst, bool is_x);
    void generate_linterp(fs_inst *inst, struct brw_reg dst,
 			 struct brw_reg *src);
    void generate_tex(fs_inst *inst, struct brw_reg dst, struct brw_reg src);
@@ -508,6 +523,7 @@ public:
    void emit_if_gen6(ir_if *ir);
    void emit_unspill(fs_inst *inst, fs_reg reg, uint32_t spill_offset);
 
+   void emit_color_write(int index, int first_color_mrf, fs_reg color);
    void emit_fb_writes();
    void emit_assignment_writes(fs_reg &l, fs_reg &r,
 			       const glsl_type *type, bool predicated);
@@ -565,6 +581,9 @@ public:
    fs_reg reg_null_cmp;
 
    int grf_used;
+
+   int force_uncompressed_stack;
+   int force_sechalf_stack;
 };
 
 GLboolean brw_do_channel_expressions(struct exec_list *instructions);

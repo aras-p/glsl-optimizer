@@ -412,11 +412,10 @@ split_location_offset(GLint *location, GLint *offset)
  */
 static void
 _mesa_get_uniformfv(struct gl_context *ctx, GLuint program, GLint location,
-                    GLfloat *params)
+                    GLsizei bufSize, GLfloat *params)
 {
    struct gl_program *prog;
-   GLint paramPos;
-   GLint offset;
+   GLint paramPos, offset;
 
    split_location_offset(&location, &offset);
 
@@ -426,8 +425,17 @@ _mesa_get_uniformfv(struct gl_context *ctx, GLuint program, GLint location,
       const struct gl_program_parameter *p =
          &prog->Parameters->Parameters[paramPos];
       GLint rows, cols, i, j, k;
+      GLsizei numBytes;
 
       get_uniform_rows_cols(p, &rows, &cols);
+
+      numBytes = rows * cols * sizeof *params;
+      if (bufSize < numBytes) {
+         _mesa_error( ctx, GL_INVALID_OPERATION,
+                     "glGetnUniformfvARB(out of bounds: bufSize is %d,"
+                     " but %d bytes are required)", bufSize, numBytes );
+         return;
+      }
 
       k = 0;
       for (i = 0; i < rows; i++) {
@@ -447,11 +455,10 @@ _mesa_get_uniformfv(struct gl_context *ctx, GLuint program, GLint location,
  */
 static void
 _mesa_get_uniformiv(struct gl_context *ctx, GLuint program, GLint location,
-                    GLint *params)
+                    GLsizei bufSize, GLint *params)
 {
    struct gl_program *prog;
-   GLint paramPos;
-   GLint offset;
+   GLint paramPos, offset;
 
    split_location_offset(&location, &offset);
 
@@ -461,8 +468,17 @@ _mesa_get_uniformiv(struct gl_context *ctx, GLuint program, GLint location,
       const struct gl_program_parameter *p =
          &prog->Parameters->Parameters[paramPos];
       GLint rows, cols, i, j, k;
+      GLsizei numBytes;
 
       get_uniform_rows_cols(p, &rows, &cols);
+
+      numBytes = rows * cols * sizeof *params;
+      if (bufSize < numBytes) {
+         _mesa_error( ctx, GL_INVALID_OPERATION,
+                     "glGetnUniformivARB(out of bounds: bufSize is %d,"
+                     " but %d bytes are required)", bufSize, numBytes );
+         return;
+      }
 
       k = 0;
       for (i = 0; i < rows; i++) {
@@ -483,11 +499,10 @@ _mesa_get_uniformiv(struct gl_context *ctx, GLuint program, GLint location,
  */
 static void
 _mesa_get_uniformuiv(struct gl_context *ctx, GLuint program, GLint location,
-                     GLuint *params)
+                     GLsizei bufSize, GLuint *params)
 {
    struct gl_program *prog;
-   GLint paramPos;
-   GLint offset;
+   GLint paramPos, offset;
 
    split_location_offset(&location, &offset);
 
@@ -497,8 +512,17 @@ _mesa_get_uniformuiv(struct gl_context *ctx, GLuint program, GLint location,
       const struct gl_program_parameter *p =
          &prog->Parameters->Parameters[paramPos];
       GLint rows, cols, i, j, k;
+      GLsizei numBytes;
 
       get_uniform_rows_cols(p, &rows, &cols);
+
+      numBytes = rows * cols * sizeof *params;
+      if (bufSize < numBytes) {
+         _mesa_error( ctx, GL_INVALID_OPERATION,
+                     "glGetnUniformuivARB(out of bounds: bufSize is %d,"
+                     " but %d bytes are required)", bufSize, numBytes );
+         return;
+      }
 
       k = 0;
       for (i = 0; i < rows; i++) {
@@ -509,6 +533,19 @@ _mesa_get_uniformuiv(struct gl_context *ctx, GLuint program, GLint location,
          }
       }
    }
+}
+
+
+/**
+ * Called via glGetUniformdv().
+ * New in GL_ARB_gpu_shader_fp64, OpenGL 4.0
+ */
+static void
+_mesa_get_uniformdv(struct gl_context *ctx, GLuint program, GLint location,
+                    GLsizei bufSize, GLdouble *params)
+{
+   _mesa_error(ctx, GL_INVALID_OPERATION, "glGetUniformdvARB"
+               "(GL_ARB_gpu_shader_fp64 not implemented)");
 }
 
 
@@ -1350,29 +1387,65 @@ _mesa_UniformMatrix4x3fv(GLint location, GLsizei count, GLboolean transpose,
 
 
 void GLAPIENTRY
-_mesa_GetUniformfvARB(GLhandleARB program, GLint location, GLfloat *params)
+_mesa_GetnUniformfvARB(GLhandleARB program, GLint location,
+                       GLsizei bufSize, GLfloat *params)
 {
    GET_CURRENT_CONTEXT(ctx);
-   _mesa_get_uniformfv(ctx, program, location, params);
+   _mesa_get_uniformfv(ctx, program, location, bufSize, params);
+}
+
+void GLAPIENTRY
+_mesa_GetUniformfvARB(GLhandleARB program, GLint location, GLfloat *params)
+{
+   _mesa_GetnUniformfvARB(program, location, INT_MAX, params);
 }
 
 
 void GLAPIENTRY
-_mesa_GetUniformivARB(GLhandleARB program, GLint location, GLint *params)
+_mesa_GetnUniformivARB(GLhandleARB program, GLint location,
+                       GLsizei bufSize, GLint *params)
 {
    GET_CURRENT_CONTEXT(ctx);
-   _mesa_get_uniformiv(ctx, program, location, params);
+   _mesa_get_uniformiv(ctx, program, location, bufSize, params);
+}
+
+void GLAPIENTRY
+_mesa_GetUniformivARB(GLhandleARB program, GLint location, GLint *params)
+{
+   _mesa_GetnUniformivARB(program, location, INT_MAX, params);
 }
 
 
 /* GL3 */
 void GLAPIENTRY
-_mesa_GetUniformuiv(GLhandleARB program, GLint location, GLuint *params)
+_mesa_GetnUniformuivARB(GLhandleARB program, GLint location,
+                        GLsizei bufSize, GLuint *params)
 {
    GET_CURRENT_CONTEXT(ctx);
-   _mesa_get_uniformuiv(ctx, program, location, params);
+   _mesa_get_uniformuiv(ctx, program, location, bufSize, params);
 }
 
+void GLAPIENTRY
+_mesa_GetUniformuiv(GLhandleARB program, GLint location, GLuint *params)
+{
+   _mesa_GetnUniformuivARB(program, location, INT_MAX, params);
+}
+
+
+/* GL4 */
+void GLAPIENTRY
+_mesa_GetnUniformdvARB(GLhandleARB program, GLint location,
+                        GLsizei bufSize, GLdouble *params)
+{
+   GET_CURRENT_CONTEXT(ctx);
+   _mesa_get_uniformdv(ctx, program, location, bufSize, params);
+}
+
+void GLAPIENTRY
+_mesa_GetUniformdv(GLhandleARB program, GLint location, GLdouble *params)
+{
+   _mesa_GetnUniformdvARB(program, location, INT_MAX, params);
+}
 
 
 GLint GLAPIENTRY
@@ -1454,6 +1527,11 @@ _mesa_init_shader_uniform_dispatch(struct _glapi_table *exec)
    SET_Uniform4uivEXT(exec, _mesa_Uniform4uiv);
    SET_GetUniformuivEXT(exec, _mesa_GetUniformuiv);
 
+   /* GL_ARB_robustness */
+   SET_GetnUniformfvARB(exec, _mesa_GetnUniformfvARB);
+   SET_GetnUniformivARB(exec, _mesa_GetnUniformivARB);
+   SET_GetnUniformuivARB(exec, _mesa_GetnUniformuivARB);
+   SET_GetnUniformdvARB(exec, _mesa_GetnUniformdvARB); /* GL 4.0 */
 
 #endif /* FEATURE_GL */
 }

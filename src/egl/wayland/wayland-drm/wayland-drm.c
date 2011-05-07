@@ -1,5 +1,6 @@
 /*
  * Copyright © 2011 Kristian Høgsberg
+ * Copyright © 2011 Benjamin Franzke
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -35,19 +36,21 @@
 #include "wayland-drm.h"
 #include "wayland-drm-server-protocol.h"
 
-#include "egldisplay.h"
-#include "egldriver.h"
-#include "eglimage.h"
-#include "egltypedefs.h"
-
 struct wl_drm {
 	struct wl_object object;
 	struct wl_display *display;
 
-	_EGLDisplay *edisp;
-
+	void *user_data;
 	char *device_name;
-	authenticate_t authenticate;
+
+	struct wayland_drm_callbacks *callbacks;
+};
+
+struct wl_drm_buffer {
+	struct wl_buffer buffer;
+	struct wl_drm *drm;
+	
+	void *driver_buffer;
 };
 
 static void
@@ -60,19 +63,20 @@ static void
 destroy_buffer(struct wl_resource *resource, struct wl_client *client)
 {
 	struct wl_drm_buffer *buffer = (struct wl_drm_buffer *) resource;
-	_EGLDriver *drv = buffer->drm->edisp->Driver;
+	struct wl_drm *drm = buffer->drm;
 
-	drv->API.DestroyImageKHR(drv, buffer->drm->edisp, buffer->image);
+	drm->callbacks->release_buffer(drm->user_data,
+				       buffer->driver_buffer);
 	free(buffer);
 }
 
 static void
 buffer_destroy(struct wl_client *client, struct wl_buffer *buffer)
 {
-	wl_resource_destroy(&buffer->resource, client);
+	wl_resource_destroy(&buffer->resource, client, 0);
 }
 
-const static struct wl_buffer_interface buffer_interface = {
+const static struct wl_buffer_interface drm_buffer_interface = {
 	buffer_damage,
 	buffer_destroy
 };
@@ -83,14 +87,6 @@ drm_create_buffer(struct wl_client *client, struct wl_drm *drm,
 		  uint32_t stride, struct wl_visual *visual)
 {
 	struct wl_drm_buffer *buffer;
-	EGLint attribs[] = {
-		EGL_WIDTH,		0,
-		EGL_HEIGHT,		0,
-		EGL_DRM_BUFFER_STRIDE_MESA,	0,
-		EGL_DRM_BUFFER_FORMAT_MESA,	EGL_DRM_BUFFER_FORMAT_ARGB32_MESA,
-		EGL_NONE
-	};
-	_EGLDriver *drv = drm->edisp->Driver;
 
 	buffer = malloc(sizeof *buffer);
 	if (buffer == NULL) {
@@ -114,16 +110,12 @@ drm_create_buffer(struct wl_client *client, struct wl_drm *drm,
 		return;
 	}
 
-	attribs[1] = width;
-	attribs[3] = height;
-	attribs[5] = stride / 4;
-	buffer->image = drv->API.CreateImageKHR(drv, drm->edisp,
-						EGL_NO_CONTEXT,
-						EGL_DRM_BUFFER_MESA,
-						(EGLClientBuffer) (intptr_t) name,
-						attribs);
+	buffer->driver_buffer =
+		drm->callbacks->reference_buffer(drm->user_data, name,
+						 width, height,
+						 stride, visual);
 
-	if (buffer->image == NULL) {
+	if (buffer->driver_buffer == NULL) {
 		/* FIXME: Define a real exception event instead of
 		 * abusing this one */
 		wl_client_post_event(client,
@@ -136,7 +128,7 @@ drm_create_buffer(struct wl_client *client, struct wl_drm *drm,
 	buffer->buffer.resource.object.id = id;
 	buffer->buffer.resource.object.interface = &wl_buffer_interface;
 	buffer->buffer.resource.object.implementation = (void (**)(void))
-		&buffer_interface;
+		&drm_buffer_interface;
 
 	buffer->buffer.resource.destroy = destroy_buffer;
 
@@ -147,7 +139,7 @@ static void
 drm_authenticate(struct wl_client *client,
 		 struct wl_drm *drm, uint32_t id)
 {
-	if (drm->authenticate(drm->edisp, id) < 0)
+	if (drm->callbacks->authenticate(drm->user_data, id) < 0)
 		wl_client_post_event(client,
 				     (struct wl_object *) drm->display,
 				     WL_DISPLAY_INVALID_OBJECT, 0);
@@ -162,9 +154,7 @@ const static struct wl_drm_interface drm_interface = {
 };
 
 static void
-post_drm_device(struct wl_client *client,
-		struct wl_object *global,
-		uint32_t version)
+post_drm_device(struct wl_client *client, struct wl_object *global)
 {
 	struct wl_drm *drm = (struct wl_drm *) global;
 
@@ -172,17 +162,17 @@ post_drm_device(struct wl_client *client,
 }
 
 struct wl_drm *
-wayland_drm_init(struct wl_display *display, _EGLDisplay *disp,
-		 authenticate_t authenticate, char *device_name)
+wayland_drm_init(struct wl_display *display, char *device_name,
+                 struct wayland_drm_callbacks *callbacks, void *user_data)
 {
 	struct wl_drm *drm;
 
 	drm = malloc(sizeof *drm);
 
 	drm->display = display;
-	drm->edisp = disp;
-	drm->authenticate = authenticate;
 	drm->device_name = strdup(device_name);
+	drm->callbacks = callbacks;
+	drm->user_data = user_data;
 
 	drm->object.interface = &wl_drm_interface;
 	drm->object.implementation = (void (**)(void)) &drm_interface;
@@ -193,11 +183,26 @@ wayland_drm_init(struct wl_display *display, _EGLDisplay *disp,
 }
 
 void
-wayland_drm_destroy(struct wl_drm *drm)
+wayland_drm_uninit(struct wl_drm *drm)
 {
 	free(drm->device_name);
 
 	/* FIXME: need wl_display_del_{object,global} */
 
 	free(drm);
+}
+
+int
+wayland_buffer_is_drm(struct wl_buffer *buffer)
+{
+	return buffer->resource.object.implementation == 
+		(void (**)(void)) &drm_buffer_interface;
+}
+
+void *
+wayland_drm_buffer_get_buffer(struct wl_buffer *buffer_base)
+{
+	struct wl_drm_buffer *buffer = (struct wl_drm_buffer *) buffer_base;
+
+	return buffer->driver_buffer;
 }

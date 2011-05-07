@@ -41,6 +41,8 @@
 #include "texcompress_rgtc.h"
 #include "texfetch.h"
 #include "teximage.h"
+#include "../../gallium/auxiliary/util/u_format_rgb9e5.h"
+#include "../../gallium/auxiliary/util/u_format_r11g11b10f.h"
 
 
 /**
@@ -898,6 +900,20 @@ texfetch_funcs[MESA_FORMAT_COUNT] =
       fetch_texel_3d_signed_i16,
       store_texel_signed_i16
    },
+   {
+      MESA_FORMAT_RGB9_E5_FLOAT,
+      fetch_texel_1d_rgb9_e5,
+      fetch_texel_2d_rgb9_e5,
+      fetch_texel_3d_rgb9_e5,
+      store_texel_rgb9_e5
+   },
+   {
+      MESA_FORMAT_R11_G11_B10_FLOAT,
+      fetch_texel_1d_r11_g11_b10f,
+      fetch_texel_2d_r11_g11_b10f,
+      fetch_texel_3d_r11_g11_b10f,
+      store_texel_r11_g11_b10f
+   }
 };
 
 

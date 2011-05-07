@@ -60,6 +60,7 @@ static const struct brw_tracked_state *gen4_atoms[] =
    &brw_curbe_offsets,
    &brw_recalculate_urb_fence,
 
+   &brw_cc_vp,
    &brw_cc_unit,
 
    &brw_vs_constants, /* Before vs_surfaces and constant_buffer */
@@ -119,6 +120,10 @@ static const struct brw_tracked_state *gen6_atoms[] =
    /* Command packets: */
    &brw_invarient_state,
 
+   /* must do before binding table pointers, cc state ptrs */
+   &brw_state_base_address,
+
+   &brw_cc_vp,
    &gen6_viewport_state,	/* must do after *_vp stages */
 
    &gen6_urb,
@@ -129,6 +134,7 @@ static const struct brw_tracked_state *gen6_atoms[] =
 
    &brw_vs_constants, /* Before vs_surfaces and constant_buffer */
    &brw_wm_constants, /* Before wm_surfaces and constant_buffer */
+   &gen6_vs_constants, /* Before vs_state */
    &gen6_wm_constants, /* Before wm_state */
 
    &brw_vs_surfaces,		/* must do before unit */
@@ -146,9 +152,6 @@ static const struct brw_tracked_state *gen6_atoms[] =
    &gen6_wm_state,
 
    &gen6_scissor_state,
-   &gen6_scissor_state_pointers,
-
-   &brw_state_base_address,
 
    &gen6_binding_table_pointers,
 
@@ -314,7 +317,6 @@ static struct dirty_bit_map cache_bits[] = {
    DEFINE_BIT(CACHE_NEW_CC_VP),
    DEFINE_BIT(CACHE_NEW_CC_UNIT),
    DEFINE_BIT(CACHE_NEW_WM_PROG),
-   DEFINE_BIT(CACHE_NEW_SAMPLER_DEFAULT_COLOR),
    DEFINE_BIT(CACHE_NEW_SAMPLER),
    DEFINE_BIT(CACHE_NEW_WM_UNIT),
    DEFINE_BIT(CACHE_NEW_SF_PROG),

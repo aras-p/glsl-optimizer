@@ -37,27 +37,35 @@
 #include "main/macros.h"
 #include "intel_batchbuffer.h"
 
-void
-brw_update_cc_vp(struct brw_context *brw)
+static void
+prepare_cc_vp(struct brw_context *brw)
 {
    struct gl_context *ctx = &brw->intel.ctx;
-   struct brw_cc_viewport ccv;
+   struct brw_cc_viewport *ccv;
 
-   memset(&ccv, 0, sizeof(ccv));
+   ccv = brw_state_batch(brw, sizeof(*ccv), 32, &brw->cc.vp_offset);
 
    /* _NEW_TRANSOFORM */
    if (ctx->Transform.DepthClamp) {
       /* _NEW_VIEWPORT */
-      ccv.min_depth = MIN2(ctx->Viewport.Near, ctx->Viewport.Far);
-      ccv.max_depth = MAX2(ctx->Viewport.Near, ctx->Viewport.Far);
+      ccv->min_depth = MIN2(ctx->Viewport.Near, ctx->Viewport.Far);
+      ccv->max_depth = MAX2(ctx->Viewport.Near, ctx->Viewport.Far);
    } else {
-      ccv.min_depth = 0.0;
-      ccv.max_depth = 1.0;
+      ccv->min_depth = 0.0;
+      ccv->max_depth = 1.0;
    }
 
-   drm_intel_bo_unreference(brw->cc.vp_bo);
-   brw->cc.vp_bo = brw_cache_data(&brw->cache, BRW_CC_VP, &ccv, sizeof(ccv));
+   brw->state.dirty.cache |= CACHE_NEW_CC_VP;
 }
+
+const struct brw_tracked_state brw_cc_vp = {
+   .dirty = {
+      .mesa = _NEW_VIEWPORT | _NEW_TRANSFORM,
+      .brw = BRW_NEW_BATCH,
+      .cache = 0
+   },
+   .prepare = prepare_cc_vp
+};
 
 /**
  * Modify blend function to force destination alpha to 1.0
@@ -79,11 +87,6 @@ fix_xRGB_alpha(GLenum function)
    }
 
    return function;
-}
-
-static void prepare_cc_unit(struct brw_context *brw)
-{
-   brw_add_validated_bo(brw, brw->cc.vp_bo);
 }
 
 /**
@@ -209,7 +212,8 @@ static void upload_cc_unit(struct brw_context *brw)
       cc->cc5.statistics_enable = 1;
 
    /* CACHE_NEW_CC_VP */
-   cc->cc4.cc_viewport_state_offset = brw->cc.vp_bo->offset >> 5; /* reloc */
+   cc->cc4.cc_viewport_state_offset = (intel->batch.bo->offset +
+				       brw->cc.vp_offset) >> 5; /* reloc */
 
    brw->state.dirty.cache |= CACHE_NEW_CC_UNIT;
 
@@ -217,7 +221,7 @@ static void upload_cc_unit(struct brw_context *brw)
    drm_intel_bo_emit_reloc(brw->intel.batch.bo,
 			   (brw->cc.state_offset +
 			    offsetof(struct brw_cc_unit_state, cc4)),
-			   brw->cc.vp_bo, 0,
+			   intel->batch.bo, brw->cc.vp_offset,
 			   I915_GEM_DOMAIN_INSTRUCTION, 0);
 }
 
@@ -227,7 +231,6 @@ const struct brw_tracked_state brw_cc_unit = {
       .brw = BRW_NEW_BATCH,
       .cache = CACHE_NEW_CC_VP
    },
-   .prepare = prepare_cc_unit,
    .emit = upload_cc_unit,
 };
 

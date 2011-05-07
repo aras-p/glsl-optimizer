@@ -1,113 +1,32 @@
 File: docs/README.WIN32
 
-Last updated: Apr 25, 2007
-
-NOTE: This information only applies to Mesa 7.8 and older.  Nowadays
-it's probably better to use Scons to build for Windows.
+Last updated: 23 April 2011
 
 
 Quick Start
 ----- -----
 
-Unzip the MesaLib, MesaGLUT, and MesaDemos ZIP files into the same
-directory.  The libs and demos build separately, so if you do not care
-about the demos or GLUT, you only need to unzip MesaLib.  If you unzip
-more than one ZIP file, they all need to be unzipped into the same
-directory.  Don't worry, you will not overwrite anything.
+Windows drivers are build with SCons.  Makefiles or Visual Studio projects are
+no longer shipped or supported.
 
-The Windows build system uses Microsoft Visual Studio.  Project files
-for a specific version of Visual Studio are in their own directory in
-the top-level "windows" directory.  For example, Visual Studio 8 files
-are in windows/VC8.
+Run
 
-Support has been dropped for versions of Visual Studio prior to 8. The
-main reason is because Microsoft now provides a free compiler and
-developer environment.  Visual Studio Express can be found at
+  scons osmesa mesagdi
 
-http://msdn.microsoft.com/vstudio/express/visualc/default.aspx
+to build classic mesa Windows GDI drivers; or
 
-You'll also need the Platform SDK.  Instructions for obtaining and
-using the SDK with Visual Studio Express can be found at
+  scons libgl-gdi
 
-http://msdn.microsoft.com/vstudio/express/visualc/usingpsdk/
-
-The project files to build the core Mesa library, Windows Mesa
-drivers, OSMesa, and GLU are in the mesa directory.  The project files
-to build GLUT and some demo programs are in the progs directory.
-
-Makefiles are no longer shipped or supported, but can be generated
-from the projects using Visual Studio.
+to build gallium based GDI driver.
 
 
 Windows Drivers
 ------- -------
 
-At this time, only the GDI driver is known to work.  Most of the demos
-in progs/demos should work with this driver.
+At this time, only the gallium GDI driver is known to work.
 
 Source code also exists in the tree for other drivers in
 src/mesa/drivers/windows, but the status of this code is unknown.
-
-The GDI driver operates basically by writing pixel spans into a DIB
-section and then blitting the DIB to the window.  The driver was
-recently cleaned up and rewitten and so may have bugs or may be
-missing some functionality.  The older versions of the CVS source may
-be useful in figuring out any problems, or report them to me.
-
-To build Mesa with the GDI driver, build the mesa, gdi, and glu
-projects in the Visual Studio workspace found at
-
-	windows/VC8/mesa/mesa.sln
-
-The osmesa DLL can also be built with the osmesa project.
-
-The build system creates a lib top-level directory and copies
-resulting LIB and DLL files to this lib directory.  The files are:
-
-	OPENGL32.LIB, GLU32.LIB, OSMESA32.LIB
-	OPENGL32.DLL, GLU32.DLL, OSMESA32.DLL
-
-If the MesaDemos ZIP file was extracted, the DLL files are also copied
-to the demos directory.  This facilitates running the demos as described
-below.
-
-
-GLUT and Demos
----- --- -----
-
-A Visual Studio workspace can be found at 
-
-	windows/VC8/progs/progs.sln
-
-It can be used to build GLUT and a few demos.  The GLUT lib and DLL
-are copied to the top-level lib directory, along with the Mesa libs.
-
-The demo build system expects to find the LIB files in the top level
-lib directory, so you must build the Mesa libs first.  The demo
-executables are placed in the demos directory, because some of them
-rely on data files found there.  Also, the Mesa lib DLL's were copied
-there by the Mesa lib build process.  Therefore, you should be able to
-simply run the demo executables from the demo directory.
-
-If you want to run the demos from the Visual Studio, you may have to
-change the startup directory and explicitly state where the executables are.
-
-You may also build all the demo programs by using a makefile.  Go to
-the progs/demos directory and make sure you have executed VCVARS32.BAT
-or whatever setup script is appropriate for your compiler.  Then,
-
-	nmake -f Makefile.win
-
-should build all the demos.
-
-
-Build System Notes
------ ------ -----
-
-VC8
----
-
-No notes.
 
 
 General
@@ -127,12 +46,6 @@ the linker import files associated with the DLL files.
 
 The si-glu sources are used to build the GLU libs.  This was done
 mainly to get the better tessellator code.
-
-To build "mangled" Mesa, add the preprocessor define USE_MGL_NAMESPACE
-to the project settings.  You will also need to edit src/mesa.def to
-change all the gl* symbols to mgl*.  Because this is easy to do with a
-global replace operation in a text editor, no additional mangled
-version of mesa.def is maintained or shipped.
 
 If you have a Windows-related build problem or question, please post
 to the mesa-dev or mesa-users list.

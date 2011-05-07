@@ -167,8 +167,9 @@ _mesa_error_check_format_type(struct gl_context *ctx, GLenum format,
 
 
 void GLAPIENTRY
-_mesa_ReadPixels( GLint x, GLint y, GLsizei width, GLsizei height,
-		  GLenum format, GLenum type, GLvoid *pixels )
+_mesa_ReadnPixelsARB( GLint x, GLint y, GLsizei width, GLsizei height,
+		      GLenum format, GLenum type, GLsizei bufSize,
+                      GLvoid *pixels )
 {
    GET_CURRENT_CONTEXT(ctx);
    ASSERT_OUTSIDE_BEGIN_END_AND_FLUSH(ctx);
@@ -224,21 +225,33 @@ _mesa_ReadPixels( GLint x, GLint y, GLsizei width, GLsizei height,
    if (width == 0 || height == 0)
       return; /* nothing to do */
 
-   if (_mesa_is_bufferobj(ctx->Pack.BufferObj)) {
-      if (!_mesa_validate_pbo_access(2, &ctx->Pack, width, height, 1,
-                                     format, type, pixels)) {
+   if (!_mesa_validate_pbo_access(2, &ctx->Pack, width, height, 1,
+                                  format, type, bufSize, pixels)) {
+      if (_mesa_is_bufferobj(ctx->Pack.BufferObj)) {
          _mesa_error(ctx, GL_INVALID_OPERATION,
-                     "glReadPixels(invalid PBO access)");
-         return;
+                     "glReadPixels(out of bounds PBO access)");
+      } else {
+         _mesa_error(ctx, GL_INVALID_OPERATION,
+                     "glReadnPixelsARB(out of bounds access:"
+                     " bufSize (%d) is too small)", bufSize);
       }
+      return;
+   }
 
-      if (_mesa_bufferobj_mapped(ctx->Pack.BufferObj)) {
-         /* buffer is mapped - that's an error */
-         _mesa_error(ctx, GL_INVALID_OPERATION, "glReadPixels(PBO is mapped)");
-         return;
-      }
+   if (_mesa_is_bufferobj(ctx->Pack.BufferObj) &&
+       _mesa_bufferobj_mapped(ctx->Pack.BufferObj)) {
+      /* buffer is mapped - that's an error */
+      _mesa_error(ctx, GL_INVALID_OPERATION, "glReadPixels(PBO is mapped)");
+      return;
    }
 
    ctx->Driver.ReadPixels(ctx, x, y, width, height,
 			  format, type, &ctx->Pack, pixels);
+}
+
+void GLAPIENTRY
+_mesa_ReadPixels( GLint x, GLint y, GLsizei width, GLsizei height,
+		  GLenum format, GLenum type, GLvoid *pixels )
+{
+   _mesa_ReadnPixelsARB(x, y, width, height, format, type, INT_MAX, pixels);
 }

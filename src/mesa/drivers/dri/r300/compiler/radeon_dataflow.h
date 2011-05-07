@@ -37,6 +37,7 @@ struct rc_swizzle_caps;
 struct rc_src_register;
 struct rc_pair_instruction_arg;
 struct rc_pair_instruction_source;
+struct rc_pair_sub_instruction;
 struct rc_compiler;
 
 
@@ -74,14 +75,21 @@ struct rc_reader {
 	struct rc_instruction * Inst;
 	unsigned int WriteMask;
 	union {
-		struct rc_src_register * Src;
-		struct rc_pair_instruction_arg * Arg;
+		struct {
+			struct rc_src_register * Src;
+		} I;
+		struct {
+			struct rc_pair_instruction_arg * Arg;
+			struct rc_pair_instruction_source * Src;
+		} P;
 	} U;
 };
 
 struct rc_reader_data {
 	unsigned int Abort;
 	unsigned int AbortOnRead;
+	unsigned int AbortOnWrite;
+	unsigned int LoopDepth;
 	unsigned int InElse;
 	struct rc_instruction * Writer;
 
@@ -89,12 +97,24 @@ struct rc_reader_data {
 	unsigned int ReadersReserved;
 	struct rc_reader * Readers;
 
+	/* If this flag is enabled, rc_get_readers will exit as soon possbile
+	 * after the Abort flag is set.*/
+	unsigned int ExitOnAbort;
 	void * CbData;
 };
 
 void rc_get_readers(
 	struct radeon_compiler * c,
 	struct rc_instruction * writer,
+	struct rc_reader_data * data,
+	rc_read_src_fn read_normal_cb,
+	rc_pair_read_arg_fn read_pair_cb,
+	rc_read_write_mask_fn write_cb);
+
+void rc_get_readers_sub(
+	struct radeon_compiler * c,
+	struct rc_instruction * writer,
+	struct rc_pair_sub_instruction * sub_writer,
 	struct rc_reader_data * data,
 	rc_read_src_fn read_normal_cb,
 	rc_pair_read_arg_fn read_pair_cb,

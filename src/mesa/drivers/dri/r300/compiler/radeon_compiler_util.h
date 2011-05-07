@@ -3,7 +3,12 @@
 #ifndef RADEON_PROGRAM_UTIL_H
 #define RADEON_PROGRAM_UTIL_H
 
+#include "radeon_opcodes.h"
+
+struct radeon_compiler;
 struct rc_instruction;
+struct rc_pair_instruction;
+struct rc_pair_sub_instruction;
 struct rc_src_register;
 
 unsigned int rc_swizzle_to_writemask(unsigned int swz);
@@ -21,6 +26,22 @@ unsigned int combine_swizzles(unsigned int src, unsigned int swz);
 rc_swizzle rc_mask_to_swizzle(unsigned int mask);
 
 unsigned swizzle_mask(unsigned swizzle, unsigned mask);
+
+unsigned int rc_adjust_channels(
+	unsigned int old_swizzle,
+	unsigned int conversion_swizzle);
+
+void rc_pair_rewrite_writemask(
+	struct rc_pair_sub_instruction * sub,
+	unsigned int conversion_swizzle);
+
+void rc_normal_rewrite_writemask(
+	struct rc_instruction * inst,
+	unsigned int conversion_swizzle);
+
+unsigned int rc_rewrite_swizzle(
+	unsigned int swizzle,
+	unsigned int new_mask);
 
 struct rc_src_register lmul_swizzle(unsigned int swizzle, struct rc_src_register srcreg);
 
@@ -45,5 +66,24 @@ unsigned int rc_inst_can_use_presub(
 	struct rc_src_register replace_reg,
 	struct rc_src_register presub_src0,
 	struct rc_src_register presub_src1);
+
+int rc_get_max_index(
+	struct radeon_compiler * c,
+	rc_register_file file);
+
+unsigned int rc_pair_remove_src(
+	struct rc_instruction * inst,
+	unsigned int src_type,
+	unsigned int source,
+	unsigned int new_readmask);
+
+rc_opcode rc_get_flow_control_inst(struct rc_instruction * inst);
+
+struct rc_instruction * rc_match_endloop(struct rc_instruction * endloop);
+struct rc_instruction * rc_match_bgnloop(struct rc_instruction * bgnloop);
+
+unsigned int rc_make_conversion_swizzle(
+	unsigned int old_mask,
+	unsigned int new_mask);
 
 #endif /* RADEON_PROGRAM_UTIL_H */

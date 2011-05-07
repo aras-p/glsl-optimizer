@@ -466,9 +466,11 @@ intel_prepare_render(struct intel_context *intel)
     * the swap, and getting our hands on that doesn't seem worth it,
     * so we just us the first batch we emitted after the last swap.
     */
-   if (intel->need_throttle) {
-       drmCommandNone(intel->driFd, DRM_I915_GEM_THROTTLE);
-       intel->need_throttle = GL_FALSE;
+   if (intel->need_throttle && intel->first_post_swapbuffers_batch) {
+      drm_intel_bo_wait_rendering(intel->first_post_swapbuffers_batch);
+      drm_intel_bo_unreference(intel->first_post_swapbuffers_batch);
+      intel->first_post_swapbuffers_batch = NULL;
+      intel->need_throttle = GL_FALSE;
    }
 }
 
@@ -650,27 +652,23 @@ intelInitContext(struct intel_context *intel,
    intel->driFd = sPriv->fd;
 
    intel->has_xrgb_textures = GL_TRUE;
+   intel->gen = intelScreen->gen;
    if (IS_GEN6(intel->intelScreen->deviceID)) {
-      intel->gen = 6;
       intel->needs_ff_sync = GL_TRUE;
       intel->has_luminance_srgb = GL_TRUE;
    } else if (IS_GEN5(intel->intelScreen->deviceID)) {
-      intel->gen = 5;
       intel->needs_ff_sync = GL_TRUE;
       intel->has_luminance_srgb = GL_TRUE;
    } else if (IS_965(intel->intelScreen->deviceID)) {
-      intel->gen = 4;
       if (IS_G4X(intel->intelScreen->deviceID)) {
 	  intel->has_luminance_srgb = GL_TRUE;
 	  intel->is_g4x = GL_TRUE;
       }
    } else if (IS_9XX(intel->intelScreen->deviceID)) {
-      intel->gen = 3;
       if (IS_945(intel->intelScreen->deviceID)) {
 	 intel->is_945 = GL_TRUE;
       }
    } else {
-      intel->gen = 2;
       if (intel->intelScreen->deviceID == PCI_CHIP_I830_M ||
 	  intel->intelScreen->deviceID == PCI_CHIP_845_G) {
 	 intel->has_xrgb_textures = GL_FALSE;
@@ -718,6 +716,12 @@ intelInitContext(struct intel_context *intel,
    ctx->TextureFormatSupported[MESA_FORMAT_RGBA_DXT5] = GL_TRUE;
 
 #ifndef I915
+   /* GL_ARB_texture_compression_rgtc */
+   ctx->TextureFormatSupported[MESA_FORMAT_RED_RGTC1] = GL_TRUE;
+   ctx->TextureFormatSupported[MESA_FORMAT_SIGNED_RED_RGTC1] = GL_TRUE;
+   ctx->TextureFormatSupported[MESA_FORMAT_RG_RGTC2] = GL_TRUE;
+   ctx->TextureFormatSupported[MESA_FORMAT_SIGNED_RG_RGTC2] = GL_TRUE;
+
    /* GL_ARB_texture_rg */
    ctx->TextureFormatSupported[MESA_FORMAT_R8] = GL_TRUE;
    ctx->TextureFormatSupported[MESA_FORMAT_R16] = GL_TRUE;
@@ -936,6 +940,8 @@ intelDestroyContext(__DRIcontext * driContextPriv)
       intel->prim.vb = NULL;
       drm_intel_bo_unreference(intel->prim.vb_bo);
       intel->prim.vb_bo = NULL;
+      drm_intel_bo_unreference(intel->first_post_swapbuffers_batch);
+      intel->first_post_swapbuffers_batch = NULL;
 
       driDestroyOptionCache(&intel->optionCache);
 

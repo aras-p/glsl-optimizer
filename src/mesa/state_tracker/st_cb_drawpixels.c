@@ -372,6 +372,14 @@ internal_format(struct gl_context *ctx, GLenum format, GLenum type)
             return
                ctx->Extensions.ARB_texture_float ? GL_RGBA32F :
                ctx->Extensions.EXT_texture_snorm ? GL_RGBA16_SNORM : GL_RGBA16;
+
+         case GL_UNSIGNED_INT_5_9_9_9_REV:
+            assert(ctx->Extensions.EXT_texture_shared_exponent);
+            return GL_RGB9_E5;
+
+         case GL_UNSIGNED_INT_10F_11F_11F_REV:
+            assert(ctx->Extensions.EXT_packed_float);
+            return GL_R11F_G11F_B10F;
          }
       }
    }
@@ -411,7 +419,6 @@ make_texture(struct st_context *st,
    gl_format mformat;
    struct pipe_resource *pt;
    enum pipe_format pipeFormat;
-   GLuint cpp;
    GLenum baseFormat, intFormat;
 
    baseFormat = base_format(format);
@@ -423,7 +430,6 @@ make_texture(struct st_context *st,
 
    pipeFormat = st_mesa_format_to_pipe_format(mformat);
    assert(pipeFormat);
-   cpp = util_format_get_blocksize(pipeFormat);
 
    pixels = _mesa_map_pbo_source(ctx, unpack, pixels);
    if (!pixels)

@@ -1,6 +1,8 @@
 #ifndef R600_FORMATS_H
 #define R600_FORMATS_H
 
+#include "r600_pipe.h"
+
 /* list of formats from R700 ISA document - apply across GPUs in different registers */
 #define     FMT_INVALID                     0x00000000
 #define     FMT_8                           0x00000001
@@ -52,5 +54,31 @@
 #define     FMT_BC3                         0x00000033
 #define     FMT_BC4                         0x00000034
 #define     FMT_BC5                         0x00000035
+#define     FMT_BC6                         0x00000036
+#define     FMT_BC7                         0x00000037
+#define     FMT_32_AS_32_32_32_32           0x00000038
+
+#define     ENDIAN_NONE                     0
+#define     ENDIAN_8IN16                    1
+#define     ENDIAN_8IN32                    2
+#define     ENDIAN_8IN64                    3
+
+static INLINE unsigned r600_endian_swap(unsigned size)
+{
+	if (R600_BIG_ENDIAN) {
+		switch (size) {
+		case 64:
+			return ENDIAN_8IN64;
+		case 32:
+			return ENDIAN_8IN32;
+		case 16:
+			return ENDIAN_8IN16;
+		default:
+			return ENDIAN_NONE;
+		}
+	} else {
+		return ENDIAN_NONE;
+	}
+}
 
 #endif

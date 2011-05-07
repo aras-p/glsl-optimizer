@@ -34,6 +34,9 @@
 #include "teximage.h"
 #include "texstore.h"
 #include "image.h"
+#include "macros.h"
+#include "../../gallium/auxiliary/util/u_format_rgb9e5.h"
+#include "../../gallium/auxiliary/util/u_format_r11g11b10f.h"
 
 
 
@@ -634,6 +637,75 @@ do_row(GLenum datatype, GLuint comps, GLint srcWidth,
       }
    }
 
+   else if (datatype == GL_UNSIGNED_INT_2_10_10_10_REV && comps == 4) {
+      GLuint i, j, k;
+      const GLuint *rowA = (const GLuint *) srcRowA;
+      const GLuint *rowB = (const GLuint *) srcRowB;
+      GLuint *dst = (GLuint *) dstRow;
+      for (i = j = 0, k = k0; i < (GLuint) dstWidth;
+           i++, j += colStride, k += colStride) {
+         const GLint rowAr0 = rowA[j] & 0x3ff;
+         const GLint rowAr1 = rowA[k] & 0x3ff;
+         const GLint rowBr0 = rowB[j] & 0x3ff;
+         const GLint rowBr1 = rowB[k] & 0x3ff;
+         const GLint rowAg0 = (rowA[j] >> 10) & 0x3ff;
+         const GLint rowAg1 = (rowA[k] >> 10) & 0x3ff;
+         const GLint rowBg0 = (rowB[j] >> 10) & 0x3ff;
+         const GLint rowBg1 = (rowB[k] >> 10) & 0x3ff;
+         const GLint rowAb0 = (rowA[j] >> 20) & 0x3ff;
+         const GLint rowAb1 = (rowA[k] >> 20) & 0x3ff;
+         const GLint rowBb0 = (rowB[j] >> 20) & 0x3ff;
+         const GLint rowBb1 = (rowB[k] >> 20) & 0x3ff;
+         const GLint rowAa0 = (rowA[j] >> 30) & 0x3;
+         const GLint rowAa1 = (rowA[k] >> 30) & 0x3;
+         const GLint rowBa0 = (rowB[j] >> 30) & 0x3;
+         const GLint rowBa1 = (rowB[k] >> 30) & 0x3;
+         const GLint red = (rowAr0 + rowAr1 + rowBr0 + rowBr1) >> 2;
+         const GLint green = (rowAg0 + rowAg1 + rowBg0 + rowBg1) >> 2;
+         const GLint blue = (rowAb0 + rowAb1 + rowBb0 + rowBb1) >> 2;
+         const GLint alpha = (rowAa0 + rowAa1 + rowBa0 + rowBa1) >> 2;
+         dst[i] = (alpha << 30) | (blue << 20) | (green << 10) | red;
+      }
+   }
+
+   else if (datatype == GL_UNSIGNED_INT_5_9_9_9_REV && comps == 3) {
+      GLuint i, j, k;
+      const GLuint *rowA = (const GLuint*) srcRowA;
+      const GLuint *rowB = (const GLuint*) srcRowB;
+      GLuint *dst = (GLuint*)dstRow;
+      GLfloat res[3], rowAj[3], rowBj[3], rowAk[3], rowBk[3];
+      for (i = j = 0, k = k0; i < (GLuint) dstWidth;
+           i++, j += colStride, k += colStride) {
+         rgb9e5_to_float3(rowA[j], rowAj);
+         rgb9e5_to_float3(rowB[j], rowBj);
+         rgb9e5_to_float3(rowA[k], rowAk);
+         rgb9e5_to_float3(rowB[k], rowBk);
+         res[0] = (rowAj[0] + rowAk[0] + rowBj[0] + rowBk[0]) * 0.25F;
+         res[1] = (rowAj[1] + rowAk[1] + rowBj[1] + rowBk[1]) * 0.25F;
+         res[2] = (rowAj[2] + rowAk[2] + rowBj[2] + rowBk[2]) * 0.25F;
+         dst[i] = float3_to_rgb9e5(res);
+      }
+   }
+
+   else if (datatype == GL_UNSIGNED_INT_10F_11F_11F_REV && comps == 3) {
+      GLuint i, j, k;
+      const GLuint *rowA = (const GLuint*) srcRowA;
+      const GLuint *rowB = (const GLuint*) srcRowB;
+      GLuint *dst = (GLuint*)dstRow;
+      GLfloat res[3], rowAj[3], rowBj[3], rowAk[3], rowBk[3];
+      for (i = j = 0, k = k0; i < (GLuint) dstWidth;
+           i++, j += colStride, k += colStride) {
+         r11g11b10f_to_float3(rowA[j], rowAj);
+         r11g11b10f_to_float3(rowB[j], rowBj);
+         r11g11b10f_to_float3(rowA[k], rowAk);
+         r11g11b10f_to_float3(rowB[k], rowBk);
+         res[0] = (rowAj[0] + rowAk[0] + rowBj[0] + rowBk[0]) * 0.25F;
+         res[1] = (rowAj[1] + rowAk[1] + rowBj[1] + rowBk[1]) * 0.25F;
+         res[2] = (rowAj[2] + rowAk[2] + rowBj[2] + rowBk[2]) * 0.25F;
+         dst[i] = float3_to_r11g11b10f(res);
+      }
+   }
+
    else {
       _mesa_problem(NULL, "bad format in do_row()");
    }
@@ -1165,6 +1237,110 @@ do_row_3D(GLenum datatype, GLuint comps, GLint srcWidth,
          dst[i] = (g << 4) | r;
       }
    }
+   else if ((datatype == GL_UNSIGNED_INT_2_10_10_10_REV) && (comps == 4)) {
+      DECLARE_ROW_POINTERS0(GLuint);
+
+      for (i = j = 0, k = k0; i < (GLuint) dstWidth;
+           i++, j += colStride, k += colStride) {
+         const GLint rowAr0 = rowA[j] & 0x3ff;
+         const GLint rowAr1 = rowA[k] & 0x3ff;
+         const GLint rowBr0 = rowB[j] & 0x3ff;
+         const GLint rowBr1 = rowB[k] & 0x3ff;
+         const GLint rowCr0 = rowC[j] & 0x3ff;
+         const GLint rowCr1 = rowC[k] & 0x3ff;
+         const GLint rowDr0 = rowD[j] & 0x3ff;
+         const GLint rowDr1 = rowD[k] & 0x3ff;
+         const GLint rowAg0 = (rowA[j] >> 10) & 0x3ff;
+         const GLint rowAg1 = (rowA[k] >> 10) & 0x3ff;
+         const GLint rowBg0 = (rowB[j] >> 10) & 0x3ff;
+         const GLint rowBg1 = (rowB[k] >> 10) & 0x3ff;
+         const GLint rowCg0 = (rowC[j] >> 10) & 0x3ff;
+         const GLint rowCg1 = (rowC[k] >> 10) & 0x3ff;
+         const GLint rowDg0 = (rowD[j] >> 10) & 0x3ff;
+         const GLint rowDg1 = (rowD[k] >> 10) & 0x3ff;
+         const GLint rowAb0 = (rowA[j] >> 20) & 0x3ff;
+         const GLint rowAb1 = (rowA[k] >> 20) & 0x3ff;
+         const GLint rowBb0 = (rowB[j] >> 20) & 0x3ff;
+         const GLint rowBb1 = (rowB[k] >> 20) & 0x3ff;
+         const GLint rowCb0 = (rowC[j] >> 20) & 0x3ff;
+         const GLint rowCb1 = (rowC[k] >> 20) & 0x3ff;
+         const GLint rowDb0 = (rowD[j] >> 20) & 0x3ff;
+         const GLint rowDb1 = (rowD[k] >> 20) & 0x3ff;
+         const GLint rowAa0 = (rowA[j] >> 30) & 0x3;
+         const GLint rowAa1 = (rowA[k] >> 30) & 0x3;
+         const GLint rowBa0 = (rowB[j] >> 30) & 0x3;
+         const GLint rowBa1 = (rowB[k] >> 30) & 0x3;
+         const GLint rowCa0 = (rowC[j] >> 30) & 0x3;
+         const GLint rowCa1 = (rowC[k] >> 30) & 0x3;
+         const GLint rowDa0 = (rowD[j] >> 30) & 0x3;
+         const GLint rowDa1 = (rowD[k] >> 30) & 0x3;
+         const GLint r = FILTER_SUM_3D(rowAr0, rowAr1, rowBr0, rowBr1,
+                                       rowCr0, rowCr1, rowDr0, rowDr1);
+         const GLint g = FILTER_SUM_3D(rowAg0, rowAg1, rowBg0, rowBg1,
+                                       rowCg0, rowCg1, rowDg0, rowDg1);
+         const GLint b = FILTER_SUM_3D(rowAb0, rowAb1, rowBb0, rowBb1,
+                                       rowCb0, rowCb1, rowDb0, rowDb1);
+         const GLint a = FILTER_SUM_3D(rowAa0, rowAa1, rowBa0, rowBa1,
+                                       rowCa0, rowCa1, rowDa0, rowDa1);
+
+         dst[i] = (a << 30) | (b << 20) | (g << 10) | r;
+      }
+   }
+
+   else if (datatype == GL_UNSIGNED_INT_5_9_9_9_REV && comps == 3) {
+      DECLARE_ROW_POINTERS0(GLuint);
+
+      GLfloat res[3];
+      GLfloat rowAj[3], rowBj[3], rowCj[3], rowDj[3];
+      GLfloat rowAk[3], rowBk[3], rowCk[3], rowDk[3];
+
+      for (i = j = 0, k = k0; i < (GLuint) dstWidth;
+           i++, j += colStride, k += colStride) {
+         rgb9e5_to_float3(rowA[j], rowAj);
+         rgb9e5_to_float3(rowB[j], rowBj);
+         rgb9e5_to_float3(rowC[j], rowCj);
+         rgb9e5_to_float3(rowD[j], rowDj);
+         rgb9e5_to_float3(rowA[k], rowAk);
+         rgb9e5_to_float3(rowB[k], rowBk);
+         rgb9e5_to_float3(rowC[k], rowCk);
+         rgb9e5_to_float3(rowD[k], rowDk);
+         res[0] = (rowAj[0] + rowAk[0] + rowBj[0] + rowBk[0] +
+                   rowCj[0] + rowCk[0] + rowDj[0] + rowDk[0]) * 0.125F;
+         res[1] = (rowAj[1] + rowAk[1] + rowBj[1] + rowBk[1] +
+                   rowCj[1] + rowCk[1] + rowDj[1] + rowDk[1]) * 0.125F;
+         res[2] = (rowAj[2] + rowAk[2] + rowBj[2] + rowBk[2] +
+                   rowCj[2] + rowCk[2] + rowDj[2] + rowDk[2]) * 0.125F;
+         dst[i] = float3_to_rgb9e5(res);
+      }
+   }
+
+   else if (datatype == GL_UNSIGNED_INT_10F_11F_11F_REV && comps == 3) {
+      DECLARE_ROW_POINTERS0(GLuint);
+
+      GLfloat res[3];
+      GLfloat rowAj[3], rowBj[3], rowCj[3], rowDj[3];
+      GLfloat rowAk[3], rowBk[3], rowCk[3], rowDk[3];
+
+      for (i = j = 0, k = k0; i < (GLuint) dstWidth;
+           i++, j += colStride, k += colStride) {
+         r11g11b10f_to_float3(rowA[j], rowAj);
+         r11g11b10f_to_float3(rowB[j], rowBj);
+         r11g11b10f_to_float3(rowC[j], rowCj);
+         r11g11b10f_to_float3(rowD[j], rowDj);
+         r11g11b10f_to_float3(rowA[k], rowAk);
+         r11g11b10f_to_float3(rowB[k], rowBk);
+         r11g11b10f_to_float3(rowC[k], rowCk);
+         r11g11b10f_to_float3(rowD[k], rowDk);
+         res[0] = (rowAj[0] + rowAk[0] + rowBj[0] + rowBk[0] +
+                   rowCj[0] + rowCk[0] + rowDj[0] + rowDk[0]) * 0.125F;
+         res[1] = (rowAj[1] + rowAk[1] + rowBj[1] + rowBk[1] +
+                   rowCj[1] + rowCk[1] + rowDj[1] + rowDk[1]) * 0.125F;
+         res[2] = (rowAj[2] + rowAk[2] + rowBj[2] + rowBk[2] +
+                   rowCj[2] + rowCk[2] + rowDj[2] + rowDk[2]) * 0.125F;
+         dst[i] = float3_to_r11g11b10f(res);
+      }
+   }
+
    else {
       _mesa_problem(NULL, "bad format in do_row()");
    }
@@ -1896,7 +2072,6 @@ _mesa_generate_mipmap(struct gl_context *ctx, GLenum target,
          const GLenum srcFormat = _mesa_get_format_base_format(convertFormat);
          GLint dstRowStride
             = _mesa_format_row_stride(dstImage->TexFormat, dstWidth);
-         ASSERT(srcFormat == GL_RGB || srcFormat == GL_RGBA);
 
          _mesa_texstore(ctx, 2, dstImage->_BaseFormat,
                         dstImage->TexFormat,

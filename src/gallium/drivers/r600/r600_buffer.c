@@ -81,18 +81,11 @@ static void *r600_buffer_transfer_map(struct pipe_context *pipe,
 				      struct pipe_transfer *transfer)
 {
 	struct r600_resource_buffer *rbuffer = r600_buffer(transfer->resource);
-	int write = 0;
 	uint8_t *data;
 
 	if (rbuffer->r.b.user_ptr)
 		return (uint8_t*)rbuffer->r.b.user_ptr + transfer->box.x;
 
-	if (transfer->usage & PIPE_TRANSFER_DONTBLOCK) {
-		/* FIXME */
-	}
-	if (transfer->usage & PIPE_TRANSFER_WRITE) {
-		write = 1;
-	}
 	data = r600_bo_map((struct radeon*)pipe->winsys, rbuffer->r.bo, transfer->usage, pipe);
 	if (!data)
 		return NULL;
@@ -268,31 +261,30 @@ void r600_upload_const_buffer(struct r600_pipe_context *rctx, struct r600_resour
 		uint8_t *ptr = (*rbuffer)->r.b.user_ptr;
 		unsigned size = (*rbuffer)->r.b.b.b.width0;
 		boolean flushed;
-#ifdef PIPE_ARCH_BIG_ENDIAN
-		int i;
-		uint32_t *tmpPtr;
 
 		*rbuffer = NULL;
 
-		tmpPtr = (uint32_t *)malloc(size);
-		/* big endian swap */
-		if(tmpPtr == NULL) {
-			return;
+		if (R600_BIG_ENDIAN) {
+			uint32_t *tmpPtr;
+			unsigned i;
+
+			if (!(tmpPtr = malloc(size))) {
+				R600_ERR("Failed to allocate BE swap buffer.\n");
+				return;
+			}
+
+			for (i = 0; i < size / 4; ++i) {
+				tmpPtr[i] = bswap_32(((uint32_t *)ptr)[i]);
+			}
+
+			u_upload_data(rctx->vbuf_mgr->uploader, 0, size, tmpPtr, const_offset,
+				      (struct pipe_resource**)rbuffer, &flushed);
+
+			free(tmpPtr);
+		} else {
+			u_upload_data(rctx->vbuf_mgr->uploader, 0, size, ptr, const_offset,
+				      (struct pipe_resource**)rbuffer, &flushed);
 		}
-		for(i = 0; i < size / 4; i++) {
-			tmpPtr[i] = bswap_32(*((uint32_t *)ptr + i));
-		}
-
-		u_upload_data(rctx->vbuf_mgr->uploader, 0, size, tmpPtr, const_offset,
-			      (struct pipe_resource**)rbuffer, &flushed);
-
-		free(tmpPtr);
-#else
-		*rbuffer = NULL;
-
-		u_upload_data(rctx->vbuf_mgr->uploader, 0, size, ptr, const_offset,
-			      (struct pipe_resource**)rbuffer, &flushed);
-#endif
 	} else {
 		*const_offset = 0;
 	}

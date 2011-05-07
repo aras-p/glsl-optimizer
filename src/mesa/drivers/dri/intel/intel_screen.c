@@ -216,7 +216,15 @@ intel_create_image(__DRIscreen *screen,
 {
    __DRIimage *image;
    struct intel_screen *intelScreen = screen->private;
+   uint32_t tiling;
    int cpp;
+
+   tiling = I915_TILING_X;
+   if (use & __DRI_IMAGE_USE_CURSOR) {
+      if (width != 64 || height != 64)
+	 return NULL;
+      tiling = I915_TILING_NONE;
+   }
 
    image = CALLOC(sizeof *image);
    if (image == NULL)
@@ -247,7 +255,7 @@ intel_create_image(__DRIscreen *screen,
    cpp = _mesa_get_format_bytes(image->format);
 
    image->region =
-      intel_region_alloc(intelScreen, I915_TILING_NONE,
+      intel_region_alloc(intelScreen, tiling,
 			 cpp, width, height, GL_TRUE);
    if (image->region == NULL) {
       FREE(image);
@@ -548,6 +556,18 @@ __DRIconfig **intelInitScreen2(__DRIscreen *psp)
       intelScreen->deviceID = strtod(devid_override, NULL);
    }
 
+   if (IS_GEN6(intelScreen->deviceID)) {
+      intelScreen->gen = 6;
+   } else if (IS_GEN5(intelScreen->deviceID)) {
+      intelScreen->gen = 5;
+   } else if (IS_965(intelScreen->deviceID)) {
+      intelScreen->gen = 4;
+   } else if (IS_9XX(intelScreen->deviceID)) {
+      intelScreen->gen = 3;
+   } else {
+      intelScreen->gen = 2;
+   }
+
    api_mask = (1 << __DRI_API_OPENGL);
 #if FEATURE_ES1
    api_mask |= (1 << __DRI_API_GLES);
@@ -660,12 +680,21 @@ intelAllocateBuffer(__DRIscreen *screen,
 {
    struct intel_buffer *intelBuffer;
    struct intel_screen *intelScreen = screen->private;
+   uint32_t tiling;
 
    intelBuffer = CALLOC(sizeof *intelBuffer);
    if (intelBuffer == NULL)
       return NULL;
 
-   intelBuffer->region = intel_region_alloc(intelScreen, I915_TILING_NONE,
+   if ((attachment == __DRI_BUFFER_DEPTH ||
+	attachment == __DRI_BUFFER_STENCIL ||
+	attachment == __DRI_BUFFER_DEPTH_STENCIL) &&
+       intelScreen->gen >= 4)
+      tiling = I915_TILING_Y;
+   else
+      tiling = I915_TILING_X;
+
+   intelBuffer->region = intel_region_alloc(intelScreen, tiling,
 					    format / 8, width, height, GL_TRUE);
    
    if (intelBuffer->region == NULL) {

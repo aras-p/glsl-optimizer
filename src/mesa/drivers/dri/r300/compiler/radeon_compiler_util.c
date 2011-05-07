@@ -124,6 +124,165 @@ unsigned swizzle_mask(unsigned swizzle, unsigned mask)
 	return ret;
 }
 
+static unsigned int srcs_need_rewrite(const struct rc_opcode_info * info)
+{
+	if (info->HasTexture) {
+		return 0;
+	}
+	switch (info->Opcode) {
+		case RC_OPCODE_DP2:
+		case RC_OPCODE_DP3:
+		case RC_OPCODE_DP4:
+		case RC_OPCODE_DDX:
+		case RC_OPCODE_DDY:
+			return 0;
+		default:
+			return 1;
+	}
+}
+
+/**
+ * @return A swizzle the results from converting old_swizzle using
+ * conversion_swizzle
+ */
+unsigned int rc_adjust_channels(
+	unsigned int old_swizzle,
+	unsigned int conversion_swizzle)
+{
+	unsigned int i;
+	unsigned int new_swizzle = rc_init_swizzle(RC_SWIZZLE_UNUSED, 0);
+	for (i = 0; i < 4; i++) {
+		unsigned int new_chan = get_swz(conversion_swizzle, i);
+		if (new_chan == RC_SWIZZLE_UNUSED) {
+			continue;
+		}
+		SET_SWZ(new_swizzle, new_chan, GET_SWZ(old_swizzle, i));
+	}
+	return new_swizzle;
+}
+
+static unsigned int rewrite_writemask(
+	unsigned int old_mask,
+	unsigned int conversion_swizzle)
+{
+	unsigned int new_mask = 0;
+	unsigned int i;
+
+	for (i = 0; i < 4; i++) {
+		if (!GET_BIT(old_mask, i)
+		   || GET_SWZ(conversion_swizzle, i) == RC_SWIZZLE_UNUSED) {
+			continue;
+		}
+		new_mask |= (1 << GET_SWZ(conversion_swizzle, i));
+	}
+
+	return new_mask;
+}
+
+/**
+ * This function rewrites the writemask of sub and adjusts the swizzles
+ * of all its source registers based on the conversion_swizzle.
+ * conversion_swizzle represents a mapping of the old writemask to the
+ * new writemask.  For a detailed description of how conversion swizzles
+ * work see rc_rewrite_swizzle().
+ */
+void rc_pair_rewrite_writemask(
+	struct rc_pair_sub_instruction * sub,
+	unsigned int conversion_swizzle)
+{
+	const struct rc_opcode_info * info = rc_get_opcode_info(sub->Opcode);
+	unsigned int i;
+
+	sub->WriteMask = rewrite_writemask(sub->WriteMask, conversion_swizzle);
+
+	if (!srcs_need_rewrite(info)) {
+		return ;
+	}
+
+	for (i = 0; i < info->NumSrcRegs; i++) {
+		sub->Arg[i].Swizzle =
+			rc_adjust_channels(sub->Arg[i].Swizzle,
+						conversion_swizzle);
+	}
+}
+
+static void normal_rewrite_writemask_cb(
+	void * userdata,
+	struct rc_instruction * inst,
+	struct rc_src_register * src)
+{
+	unsigned int * new_mask = (unsigned int *)userdata;
+	src->Swizzle = rc_adjust_channels(src->Swizzle, *new_mask);
+}
+
+/**
+ * This function is the same as rc_pair_rewrite_writemask() except it
+ * operates on normal instructions.
+ */
+void rc_normal_rewrite_writemask(
+	struct rc_instruction * inst,
+	unsigned int conversion_swizzle)
+{
+	unsigned int new_mask;
+	struct rc_sub_instruction * sub = &inst->U.I;
+	const struct rc_opcode_info * info = rc_get_opcode_info(sub->Opcode);
+	sub->DstReg.WriteMask =
+		rewrite_writemask(sub->DstReg.WriteMask, conversion_swizzle);
+
+	if (info->HasTexture) {
+		unsigned int i;
+		assert(sub->TexSwizzle == RC_SWIZZLE_XYZW);
+		for (i = 0; i < 4; i++) {
+			unsigned int swz = GET_SWZ(conversion_swizzle, i);
+			if (swz > 3)
+				continue;
+			SET_SWZ(sub->TexSwizzle, swz, i);
+		}
+	}
+
+	if (!srcs_need_rewrite(info)) {
+		return;
+	}
+
+	new_mask = sub->DstReg.WriteMask;
+	rc_for_all_reads_src(inst, normal_rewrite_writemask_cb, &new_mask);
+}
+
+/**
+ * This function replaces each value 'swz' in swizzle with the value of
+ * GET_SWZ(conversion_swizzle, swz).  So, if you want to change all the X's
+ * in swizzle to Y, then conversion_swizzle should be Y___ (0xff9).  If you want
+ * to change all the Y's in swizzle to X, then conversion_swizzle should be
+ * _X__ (0xfc7).  If you want to change the Y's to X and the X's to Y, then
+ * conversion swizzle should be YX__ (0xfc1).
+ * @param swizzle The swizzle to change
+ * @param conversion_swizzle Describes the conversion to perform on the swizzle
+ * @return A converted swizzle
+ */
+unsigned int rc_rewrite_swizzle(
+	unsigned int swizzle,
+	unsigned int conversion_swizzle)
+{
+	unsigned int chan;
+	unsigned int out_swizzle = swizzle;
+
+	for (chan = 0; chan < 4; chan++) {
+		unsigned int swz = GET_SWZ(swizzle, chan);
+		unsigned int new_swz;
+		if (swz > 3) {
+			SET_SWZ(out_swizzle, chan, swz);
+		} else {
+			new_swz = GET_SWZ(conversion_swizzle, swz);
+			if (new_swz != RC_SWIZZLE_UNUSED) {
+				SET_SWZ(out_swizzle, chan, new_swz);
+			} else {
+				SET_SWZ(out_swizzle, chan, swz);
+			}
+		}
+	}
+	return out_swizzle;
+}
+
 /**
  * Left multiplication of a register with a swizzle
  */
@@ -281,3 +440,197 @@ unsigned int rc_inst_can_use_presub(
 	return 1;
 }
 
+struct max_data {
+	unsigned int Max;
+	unsigned int HasFileType;
+	rc_register_file File;
+};
+
+static void max_callback(
+	void * userdata,
+	struct rc_instruction * inst,
+	rc_register_file file,
+	unsigned int index,
+	unsigned int mask)
+{
+	struct max_data * d = (struct max_data*)userdata;
+	if (file == d->File && (!d->HasFileType || index > d->Max)) {
+		d->Max = index;
+		d->HasFileType = 1;
+	}
+}
+
+/**
+ * @return The maximum index of the specified register file used by the
+ * program.
+ */
+int rc_get_max_index(
+	struct radeon_compiler * c,
+	rc_register_file file)
+{
+	struct max_data data;
+	data.Max = 0;
+	data.HasFileType = 0;
+	data.File = file;
+	struct rc_instruction * inst;
+	for (inst = c->Program.Instructions.Next;
+					inst != &c->Program.Instructions;
+					inst = inst->Next) {
+		rc_for_all_reads_mask(inst, max_callback, &data);
+		rc_for_all_writes_mask(inst, max_callback, &data);
+	}
+	if (!data.HasFileType) {
+		return -1;
+	} else {
+		return data.Max;
+	}
+}
+
+static unsigned int get_source_readmask(
+	struct rc_pair_sub_instruction * sub,
+	unsigned int source,
+	unsigned int src_type)
+{
+	unsigned int i;
+	unsigned int readmask = 0;
+	const struct rc_opcode_info * info = rc_get_opcode_info(sub->Opcode);
+
+	for (i = 0; i < info->NumSrcRegs; i++) {
+		if (sub->Arg[i].Source != source
+		    || src_type != rc_source_type_swz(sub->Arg[i].Swizzle)) {
+			continue;
+		}
+		readmask |= rc_swizzle_to_writemask(sub->Arg[i].Swizzle);
+	}
+	return readmask;
+}
+
+/**
+ * This function attempts to remove a source from a pair instructions.
+ * @param inst
+ * @param src_type RC_SOURCE_RGB, RC_SOURCE_ALPHA, or both bitwise or'd
+ * @param source The index of the source to remove
+ * @param new_readmask A mask representing the components that are read by
+ * the source that is intended to replace the one you are removing.  If you
+ * want to remove a source only and not replace it, this parameter should be
+ * zero.
+ * @return 1 if the source was successfully removed, 0 if it was not
+ */
+unsigned int rc_pair_remove_src(
+	struct rc_instruction * inst,
+	unsigned int src_type,
+	unsigned int source,
+	unsigned int new_readmask)
+{
+	unsigned int readmask = 0;
+
+	readmask |= get_source_readmask(&inst->U.P.RGB, source, src_type);
+	readmask |= get_source_readmask(&inst->U.P.Alpha, source, src_type);
+
+	if ((new_readmask & readmask) != readmask)
+		return 0;
+
+	if (src_type & RC_SOURCE_RGB) {
+		memset(&inst->U.P.RGB.Src[source], 0,
+			sizeof(struct rc_pair_instruction_source));
+	}
+
+	if (src_type & RC_SOURCE_ALPHA) {
+		memset(&inst->U.P.Alpha.Src[source], 0,
+			sizeof(struct rc_pair_instruction_source));
+	}
+
+	return 1;
+}
+
+/**
+ * @return RC_OPCODE_NOOP if inst is not a flow control instruction.
+ * @return The opcode of inst if it is a flow control instruction.
+ */
+rc_opcode rc_get_flow_control_inst(struct rc_instruction * inst)
+{
+	const struct rc_opcode_info * info;
+	if (inst->Type == RC_INSTRUCTION_NORMAL) {
+		info = rc_get_opcode_info(inst->U.I.Opcode);
+	} else {
+		info = rc_get_opcode_info(inst->U.P.RGB.Opcode);
+		/*A flow control instruction shouldn't have an alpha
+		 * instruction.*/
+		assert(!info->IsFlowControl ||
+				inst->U.P.Alpha.Opcode == RC_OPCODE_NOP);
+	}
+
+	if (info->IsFlowControl)
+		return info->Opcode;
+	else
+		return RC_OPCODE_NOP;
+
+}
+
+/**
+ * @return The BGNLOOP instruction that starts the loop ended by endloop.
+ */
+struct rc_instruction * rc_match_endloop(struct rc_instruction * endloop)
+{
+	unsigned int endloop_count = 0;
+	struct rc_instruction * inst;
+	for (inst = endloop->Prev; inst != endloop; inst = inst->Prev) {
+		rc_opcode op = rc_get_flow_control_inst(inst);
+		if (op == RC_OPCODE_ENDLOOP) {
+			endloop_count++;
+		} else if (op == RC_OPCODE_BGNLOOP) {
+			if (endloop_count == 0) {
+				return inst;
+			} else {
+				endloop_count--;
+			}
+		}
+	}
+	return NULL;
+}
+
+/**
+ * @return The ENDLOOP instruction that ends the loop started by bgnloop.
+ */
+struct rc_instruction * rc_match_bgnloop(struct rc_instruction * bgnloop)
+{
+	unsigned int bgnloop_count = 0;
+	struct rc_instruction * inst;
+	for (inst = bgnloop->Next; inst!=bgnloop; inst = inst->Next) {
+		rc_opcode op = rc_get_flow_control_inst(inst);
+		if (op == RC_OPCODE_BGNLOOP) {
+			bgnloop_count++;
+		} else if (op == RC_OPCODE_ENDLOOP) {
+			if (bgnloop_count == 0) {
+				return inst;
+			} else {
+				bgnloop_count--;
+			}
+		}
+	}
+	return NULL;
+}
+
+/**
+ * @return A conversion swizzle for converting from old_mask->new_mask
+ */
+unsigned int rc_make_conversion_swizzle(
+	unsigned int old_mask,
+	unsigned int new_mask)
+{
+	unsigned int conversion_swizzle = rc_init_swizzle(RC_SWIZZLE_UNUSED, 0);
+	unsigned int old_idx;
+	unsigned int new_idx = 0;
+	for (old_idx = 0; old_idx < 4; old_idx++) {
+		if (!GET_BIT(old_mask, old_idx))
+			continue;
+		for ( ; new_idx < 4; new_idx++) {
+			if (GET_BIT(new_mask, new_idx)) {
+				SET_SWZ(conversion_swizzle, old_idx, new_idx);
+				new_idx++;
+				break;
+			}
+		}
+	}
+	return conversion_swizzle;
+}

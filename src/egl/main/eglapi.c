@@ -914,7 +914,7 @@ eglGetProcAddress(const char *procname)
       { "eglCreateDRMImageMESA", (_EGLProc) eglCreateDRMImageMESA },
       { "eglExportDRMImageMESA", (_EGLProc) eglExportDRMImageMESA },
 #endif
-#ifdef EGL_WL_bind_display
+#ifdef EGL_WL_bind_wayland_display
       { "eglBindWaylandDisplayWL", (_EGLProc) eglBindWaylandDisplayWL },
       { "eglUnbindWaylandDisplayWL", (_EGLProc) eglUnbindWaylandDisplayWL },
 #endif

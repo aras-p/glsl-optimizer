@@ -167,6 +167,8 @@ void st_init_limits(struct st_context *st)
       pc->MaxNativeAddressRegs     = screen->get_shader_param(screen, sh, PIPE_SHADER_CAP_MAX_ADDRS);
       pc->MaxNativeParameters      = screen->get_shader_param(screen, sh, PIPE_SHADER_CAP_MAX_CONSTS);
       pc->MaxUniformComponents     = 4 * MIN2(pc->MaxNativeParameters, MAX_UNIFORMS);
+      /* raise MaxParameters if native support is higher */
+      pc->MaxParameters            = MAX2(pc->MaxParameters, pc->MaxNativeParameters);
 
       options->EmitNoNoise = TRUE;
 
@@ -187,7 +189,7 @@ void st_init_limits(struct st_context *st)
       options->EmitNoIndirectUniform = !screen->get_shader_param(screen, sh,
                                         PIPE_SHADER_CAP_INDIRECT_CONST_ADDR);
 
-      if(options->EmitNoLoops)
+      if (options->EmitNoLoops)
          options->MaxUnrollIterations = MIN2(screen->get_shader_param(screen, sh, PIPE_SHADER_CAP_MAX_INSTRUCTIONS), 65536);
    }
 
@@ -513,6 +515,12 @@ void st_init_extensions(struct st_context *st)
       ctx->Extensions.ARB_half_float_vertex = GL_TRUE;
    }
 
+   if (screen->is_format_supported(screen, PIPE_FORMAT_R32G32B32A32_FIXED,
+                                   PIPE_BUFFER, 0,
+                                   PIPE_BIND_VERTEX_BUFFER)) {
+      ctx->Extensions.ARB_ES2_compatibility = GL_TRUE;
+   }
+
    if (screen->get_shader_param(screen, PIPE_SHADER_GEOMETRY, PIPE_SHADER_CAP_MAX_INSTRUCTIONS) > 0) {
 #if 0 /* XXX re-enable when GLSL compiler again supports geometry shaders */
       ctx->Extensions.ARB_geometry_shader4 = GL_TRUE;
@@ -539,8 +547,8 @@ void st_init_extensions(struct st_context *st)
                                      PIPE_TEXTURE_2D, 0,
                                      PIPE_BIND_RENDER_TARGET) &&
         !screen->is_format_supported(screen, PIPE_FORMAT_R16G16B16A16_SNORM,
-                                             PIPE_TEXTURE_2D, 0,
-                                             PIPE_BIND_RENDER_TARGET) &&
+                                     PIPE_TEXTURE_2D, 0,
+                                     PIPE_BIND_RENDER_TARGET) &&
         !screen->is_format_supported(screen, PIPE_FORMAT_R16G16B16A16_FLOAT,
                                      PIPE_TEXTURE_2D, 0,
                                      PIPE_BIND_RENDER_TARGET) &&
@@ -573,5 +581,26 @@ void st_init_extensions(struct st_context *st)
 
    if (st->pipe->texture_barrier) {
       ctx->Extensions.NV_texture_barrier = GL_TRUE;
+   }
+
+   if (screen->is_format_supported(screen, PIPE_FORMAT_R9G9B9E5_FLOAT,
+                                   PIPE_TEXTURE_2D, 0,
+                                   PIPE_BIND_SAMPLER_VIEW)) {
+      ctx->Extensions.EXT_texture_shared_exponent = GL_TRUE;
+   }
+
+   if (screen->is_format_supported(screen, PIPE_FORMAT_R11G11B10_FLOAT,
+                                   PIPE_TEXTURE_2D, 0,
+                                   PIPE_BIND_RENDER_TARGET |
+                                   PIPE_BIND_SAMPLER_VIEW)) {
+      ctx->Extensions.EXT_packed_float = GL_TRUE;
+   }
+
+   if (screen->get_param(screen, PIPE_CAP_SEAMLESS_CUBE_MAP_PER_TEXTURE)) {
+      ctx->Extensions.ARB_seamless_cube_map = GL_TRUE;
+      ctx->Extensions.AMD_seamless_cubemap_per_texture = GL_TRUE;
+   }
+   else if (screen->get_param(screen, PIPE_CAP_SEAMLESS_CUBE_MAP)) {
+      ctx->Extensions.ARB_seamless_cube_map = GL_TRUE;
    }
 }

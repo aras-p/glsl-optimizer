@@ -680,7 +680,7 @@ dri2_initialize_wayland(_EGLDriver *drv, _EGLDisplay *disp)
 
    id = wl_display_get_global(dri2_dpy->wl_dpy, "wl_drm", 1);
    if (id == 0)
-      wl_display_iterate(dri2_dpy->wl_dpy, WL_DISPLAY_READABLE);
+      force_roundtrip(dri2_dpy->wl_dpy);
    id = wl_display_get_global(dri2_dpy->wl_dpy, "wl_drm", 1);
    if (id == 0)
       goto cleanup_dpy;

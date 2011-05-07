@@ -117,13 +117,26 @@ stw_framebuffer_get_size( struct stw_framebuffer *fb )
    RECT window_rect;
    POINT client_pos;
 
+   /*
+    * Sanity checking.
+    */
+
    assert(fb->hWnd);
-   
-   /* Get the client area size. */
-   GetClientRect( fb->hWnd, &client_rect );
+   assert(fb->width && fb->height);
+   assert(fb->client_rect.right  == fb->client_rect.left + fb->width);
+   assert(fb->client_rect.bottom == fb->client_rect.top  + fb->height);
+
+   /*
+    * Get the client area size.
+    */
+
+   if (!GetClientRect(fb->hWnd, &client_rect)) {
+      return;
+   }
+
    assert(client_rect.left == 0);
    assert(client_rect.top == 0);
-   width = client_rect.right - client_rect.left;
+   width  = client_rect.right  - client_rect.left;
    height = client_rect.bottom - client_rect.top;
 
    if (width <= 0 || height <= 0) {
@@ -138,7 +151,7 @@ stw_framebuffer_get_size( struct stw_framebuffer *fb )
       return;
    }
 
-   if(width != fb->width || height != fb->height) {
+   if (width != fb->width || height != fb->height) {
       fb->must_resize = TRUE;
       fb->width = width; 
       fb->height = height; 
@@ -146,14 +159,14 @@ stw_framebuffer_get_size( struct stw_framebuffer *fb )
 
    client_pos.x = 0;
    client_pos.y = 0;
-   ClientToScreen(fb->hWnd, &client_pos);
+   if (ClientToScreen(fb->hWnd, &client_pos) &&
+       GetWindowRect(fb->hWnd, &window_rect)) {
+      fb->client_rect.left = client_pos.x - window_rect.left;
+      fb->client_rect.top  = client_pos.y - window_rect.top;
+   }
 
-   GetWindowRect(fb->hWnd, &window_rect);
-
-   fb->client_rect.left = client_pos.x - window_rect.left;
-   fb->client_rect.top =  client_pos.y - window_rect.top;
-   fb->client_rect.right = fb->client_rect.left + fb->width;
-   fb->client_rect.bottom = fb->client_rect.top + fb->height;
+   fb->client_rect.right  = fb->client_rect.left + fb->width;
+   fb->client_rect.bottom = fb->client_rect.top  + fb->height;
 
 #if 0
    debug_printf("\n");
@@ -252,6 +265,19 @@ stw_framebuffer_create(
    }
 
    fb->refcnt = 1;
+
+   /*
+    * Windows can be sometimes have zero width and or height, but we ensure
+    * a non-zero framebuffer size at all times.
+    */
+
+   fb->must_resize = TRUE;
+   fb->width  = 1;
+   fb->height = 1;
+   fb->client_rect.left   = 0;
+   fb->client_rect.top    = 0;
+   fb->client_rect.right  = fb->client_rect.left + fb->width;
+   fb->client_rect.bottom = fb->client_rect.top  + fb->height;
 
    stw_framebuffer_get_size(fb);
 

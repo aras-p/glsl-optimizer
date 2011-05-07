@@ -29,6 +29,7 @@
 #include "main/enums.h"
 #include "main/image.h"
 #include "main/colormac.h"
+#include "main/condrender.h"
 #include "main/mtypes.h"
 #include "main/macros.h"
 #include "main/pbo.h"
@@ -68,7 +69,7 @@ static const GLubyte *map_pbo( struct gl_context *ctx,
 
    if (!_mesa_validate_pbo_access(2, unpack, width, height, 1,
 				  GL_COLOR_INDEX, GL_BITMAP,
-				  (GLvoid *) bitmap)) {
+				  INT_MAX, (const GLvoid *) bitmap)) {
       _mesa_error(ctx, GL_INVALID_OPERATION,"glBitmap(invalid PBO access)");
       return NULL;
    }
@@ -328,6 +329,9 @@ intelBitmap(struct gl_context * ctx,
 	    const GLubyte * pixels)
 {
    struct intel_context *intel = intel_context(ctx);
+
+   if (!_mesa_check_conditional_render(ctx))
+      return;
 
    if (do_blit_bitmap(ctx, x, y, width, height,
                           unpack, pixels))

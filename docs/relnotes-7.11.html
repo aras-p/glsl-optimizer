@@ -36,21 +36,31 @@ tbd
 
 <h2>New features</h2>
 <ul>
+<li>GL_ARB_ES2_compatibility (gallium drivers)
 <li>GL_ARB_color_buffer_float (gallium drivers, i965)
 <li>GL_ARB_draw_buffers_blend (gallium)
 <li>GL_ARB_draw_instanced extension (gallium drivers, swrast)
 <li>GL_ARB_instanced_arrays extension (gallium drivers)
 <li>GL_ARB_occlusion_query2 (gallium drivers, swrast)
+<li>GL_ARB_robustness (all drivers)
 <li>GL_ARB_sampler_objects (gallium drivers)
-<li>GL_ARB_texture_compression_rgtc (gallium drivers, swrast)
+<li>GL_ARB_seamless_cube_map (gallium r600)
+<li>GL_ARB_sync (gallium drivers only, intel support was in 7.6)
+<li>GL_ARB_texture_compression_rgtc (gallium drivers, swrast, i965)
 <li>GL_ARB_texture_float (gallium, i965)
+<li>GL_EXT_packed_float (gallium r600)
 <li>GL_EXT_texture_compression_latc (gallium drivers, swrast)
-<li>GL_EXT_texture_compression_rgtc (gallium drivers, swrast)
+<li>GL_EXT_texture_compression_rgtc (gallium drivers, swrast, i965)
+<li>GL_EXT_texture_shared_exponent (gallium drivers, swrast)
 <li>GL_EXT_texture_sRGB_decode (gallium drivers, swrast, i965)
 <li>GL_EXT_texture_snorm (gallium drivers)
+<li>GL_AMD_draw_buffers_blend (alias of the ARB variant)
+<li>GL_AMD_seamless_cubemap_per_texture (gallium r600)
+<li>GL_AMD_shader_stencil_export (alias of the ARB variant)
 <li>GL_ATI_draw_buffers (all drivers)
 <li>GL_ATI_texture_compression_3dc (gallium drivers, swrast)
 <li>GL_ATI_texture_float (gallium, i965)
+<li>GL_NV_conditional_render (i965)
 <li>GL_NV_texture_barrier (gallium drivers)
 </ul>
 
@@ -62,8 +72,9 @@ tbd
 
 <h2>Changes</h2>
 <ul>
-<li>The Windows MSVC project files have been removed.  They haven't been maintained
-in quite a while.  Building with SCons is an alterantive.
+<li>The Windows MSVC project files have been removed.
+They haven't been maintained in quite a while.
+Building with SCons is an alternative.
 <li>Removed GL_SGI_texture_color_table support from swrast driver - the only
 driver that implemented it.
 </ul>

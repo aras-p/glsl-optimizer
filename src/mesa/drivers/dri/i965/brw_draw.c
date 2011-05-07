@@ -28,6 +28,8 @@
 
 #include "main/glheader.h"
 #include "main/context.h"
+#include "main/condrender.h"
+#include "main/samplerobj.h"
 #include "main/state.h"
 #include "main/enums.h"
 #include "tnl/tnl.h"
@@ -278,22 +280,25 @@ static GLboolean check_fallbacks( struct brw_context *brw,
       int u;
       for (u = 0; u < ctx->Const.MaxTextureCoordUnits; u++) {
          struct gl_texture_unit *texUnit = &ctx->Texture.Unit[u];
+
          if (texUnit->Enabled) {
+	    struct gl_sampler_object *sampler = _mesa_get_samplerobj(ctx, u);
+
             if (texUnit->Enabled & TEXTURE_1D_BIT) {
-               if (texUnit->CurrentTex[TEXTURE_1D_INDEX]->Sampler.WrapS == GL_CLAMP) {
+               if (sampler->WrapS == GL_CLAMP) {
                    return GL_TRUE;
                }
             }
             if (texUnit->Enabled & TEXTURE_2D_BIT) {
-               if (texUnit->CurrentTex[TEXTURE_2D_INDEX]->Sampler.WrapS == GL_CLAMP ||
-                   texUnit->CurrentTex[TEXTURE_2D_INDEX]->Sampler.WrapT == GL_CLAMP) {
+               if (sampler->WrapS == GL_CLAMP ||
+                   sampler->WrapT == GL_CLAMP) {
                    return GL_TRUE;
                }
             }
             if (texUnit->Enabled & TEXTURE_3D_BIT) {
-               if (texUnit->CurrentTex[TEXTURE_3D_INDEX]->Sampler.WrapS == GL_CLAMP ||
-                   texUnit->CurrentTex[TEXTURE_3D_INDEX]->Sampler.WrapT == GL_CLAMP ||
-                   texUnit->CurrentTex[TEXTURE_3D_INDEX]->Sampler.WrapR == GL_CLAMP) {
+               if (sampler->WrapS == GL_CLAMP ||
+                   sampler->WrapT == GL_CLAMP ||
+                   sampler->WrapR == GL_CLAMP) {
                    return GL_TRUE;
                }
             }
@@ -359,15 +364,21 @@ static GLboolean brw_try_draw_prims( struct gl_context *ctx,
 
    for (i = 0; i < nr_prims; i++) {
       uint32_t hw_prim;
+      int estimated_max_prim_size;
+
+      estimated_max_prim_size = 512; /* batchbuffer commands */
+      estimated_max_prim_size += (BRW_MAX_TEX_UNIT *
+				  (sizeof(struct brw_sampler_state) +
+				   sizeof(struct gen5_sampler_default_color)));
+      estimated_max_prim_size += 1024; /* gen6 VS push constants */
+      estimated_max_prim_size += 1024; /* gen6 WM push constants */
+      estimated_max_prim_size += 512; /* misc. pad */
 
       /* Flush the batch if it's approaching full, so that we don't wrap while
        * we've got validated state that needs to be in the same batch as the
-       * primitives.  This fraction is just a guess (minimal full state plus
-       * a primitive is around 512 bytes), and would be better if we had
-       * an upper bound of how much we might emit in a single
-       * brw_try_draw_prims().
+       * primitives.
        */
-      intel_batchbuffer_require_space(intel, 1024, false);
+      intel_batchbuffer_require_space(intel, estimated_max_prim_size, false);
 
       hw_prim = brw_set_prim(brw, &prim[i]);
       if (brw->state.dirty.brw) {
@@ -437,6 +448,9 @@ void brw_draw_prims( struct gl_context *ctx,
 		     GLuint max_index )
 {
    GLboolean retval;
+
+   if (!_mesa_check_conditional_render(ctx))
+      return;
 
    if (!vbo_all_varyings_in_vbos(arrays)) {
       if (!index_bounds_valid)

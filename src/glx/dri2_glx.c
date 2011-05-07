@@ -679,7 +679,7 @@ dri2InvalidateBuffers(Display *dpy, XID drawable)
    struct dri2_drawable *pdp = (struct dri2_drawable *) pdraw;
 
 #if __DRI2_FLUSH_VERSION >= 3
-   if (pdraw && psc->f)
+   if (pdraw && psc->f && psc->f->base.version >= 3 && psc->f->invalidate)
        psc->f->invalidate(pdp->driDrawable);
 #endif
 }
@@ -702,7 +702,8 @@ dri2_bind_tex_image(Display * dpy,
       psc = (struct dri2_screen *) base->psc;
 
 #if __DRI2_FLUSH_VERSION >= 3
-      if (!pdp->invalidateAvailable && psc->f)
+      if (!pdp->invalidateAvailable && psc->f &&
+           psc->f->base.version >= 3 && psc->f->invalidate)
 	 psc->f->invalidate(pdraw->driDrawable);
 #endif
 

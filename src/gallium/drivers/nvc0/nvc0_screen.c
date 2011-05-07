@@ -74,7 +74,10 @@ nvc0_screen_get_param(struct pipe_screen *pscreen, enum pipe_cap param)
    case PIPE_CAP_TEXTURE_SHADOW_MAP:
    case PIPE_CAP_NPOT_TEXTURES:
    case PIPE_CAP_ANISOTROPIC_FILTER:
+   case PIPE_CAP_SEAMLESS_CUBE_MAP:
       return 1;
+   case PIPE_CAP_SEAMLESS_CUBE_MAP_PER_TEXTURE:
+      return 0;
    case PIPE_CAP_TWO_SIDED_STENCIL:
    case PIPE_CAP_DEPTH_CLAMP:
    case PIPE_CAP_DEPTHSTENCIL_CLEAR_SEPARATE:
@@ -441,6 +444,8 @@ nvc0_screen_create(struct pipe_winsys *ws, struct nouveau_device *dev)
    OUT_RING  (chan, 1);
    BEGIN_RING(chan, RING_3D(BLEND_ENABLE_COMMON), 1);
    OUT_RING  (chan, 0);
+   BEGIN_RING(chan, RING_3D(TEX_MISC), 1);
+   OUT_RING  (chan, NVC0_3D_TEX_MISC_SEAMLESS_CUBE_MAP);
 
    nvc0_magic_3d_init(chan);
 

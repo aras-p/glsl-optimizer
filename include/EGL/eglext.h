@@ -131,6 +131,7 @@ typedef EGLBoolean (EGLAPIENTRYP PFNEGLDESTROYIMAGEKHRPROC) (EGLDisplay dpy, EGL
 /* EGL_DRM_BUFFER_USE_MESA bits */
 #define EGL_DRM_BUFFER_USE_SCANOUT_MESA		0x0001
 #define EGL_DRM_BUFFER_USE_SHARE_MESA		0x0002
+#define EGL_DRM_BUFFER_USE_CURSOR_MESA		0x0004
 
 #define EGL_DRM_BUFFER_MESA			0x31D3  /* eglCreateImageKHR target */
 #define EGL_DRM_BUFFER_STRIDE_MESA		0x31D4	/* eglCreateImageKHR attribute */
@@ -151,10 +152,9 @@ struct wl_display;
 #ifdef EGL_EGLEXT_PROTOTYPES
 EGLAPI EGLBoolean EGLAPIENTRY eglBindWaylandDisplayWL(EGLDisplay dpy, struct wl_display *display);
 EGLAPI EGLBoolean EGLAPIENTRY eglUnbindWaylandDisplayWL(EGLDisplay dpy, struct wl_display *display);
-#else
-typedef EGLBoolean (EGLAPIENTRY PFNEGLBINDWAYLANDDISPLAYWL) (EGLDisplay dpy, struct wl_display *display);
-typedef EGLBoolean (EGLAPIENTRY PFNEGLUNBINDWAYLANDDISPLAYWL) (EGLDisplay dpy, struct wl_display *display);
 #endif
+typedef EGLBoolean (EGLAPIENTRYP PFNEGLBINDWAYLANDDISPLAYWL) (EGLDisplay dpy, struct wl_display *display);
+typedef EGLBoolean (EGLAPIENTRYP PFNEGLUNBINDWAYLANDDISPLAYWL) (EGLDisplay dpy, struct wl_display *display);
 #endif
 
 #if KHRONOS_SUPPORT_INT64   /* EGLTimeKHR requires 64-bit uint support */

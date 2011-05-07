@@ -33,6 +33,8 @@
  
 
 #include "main/macros.h"
+#include "main/mtypes.h"
+#include "main/samplerobj.h"
 #include "program/prog_instruction.h"
 
 #include "st_context.h"
@@ -209,7 +211,7 @@ update_textures(struct st_context *st)
          else
             texUnit = vprog->Base.SamplerUnits[su];
 
-         samp = st_get_mesa_sampler(st->ctx, texUnit);
+         samp = _mesa_get_samplerobj(st->ctx, texUnit);
 
          texObj = st->ctx->Texture.Unit[texUnit]._Current;
 

@@ -26,7 +26,7 @@
  */
 
 #if !defined( _INDIRECT_SIZE_H_ )
-#  define _INDIRECT_SIZE_H_
+#define _INDIRECT_SIZE_H_
 
 /**
  * \file
@@ -36,23 +36,23 @@
  * \author Ian Romanick <idr@us.ibm.com>
  */
 
-#  if defined(__GNUC__) || (defined(__SUNPRO_C) && (__SUNPRO_C >= 0x590))
-#    define PURE __attribute__((pure))
-#  else
-#    define PURE
-#  endif
+#if defined(__GNUC__) || (defined(__SUNPRO_C) && (__SUNPRO_C >= 0x590))
+#define PURE __attribute__((pure))
+#else
+#define PURE
+#endif
 
-#  if defined(__i386__) && defined(__GNUC__) && !defined(__CYGWIN__) && !defined(__MINGW32__)
-#    define FASTCALL __attribute__((fastcall))
-#  else
-#    define FASTCALL
-#  endif
+#if defined(__i386__) && defined(__GNUC__) && !defined(__CYGWIN__) && !defined(__MINGW32__)
+#define FASTCALL __attribute__((fastcall))
+#else
+#define FASTCALL
+#endif
 
-#  if defined(__GNUC__) || (defined(__SUNPRO_C) && (__SUNPRO_C >= 0x590)) && defined(__ELF__)
-#    define INTERNAL  __attribute__((visibility("internal")))
-#  else
-#    define INTERNAL
-#  endif
+#if (defined(__GNUC__) && !defined(__CYGWIN__) && !defined(__MINGW32__)) || (defined(__SUNPRO_C) && (__SUNPRO_C >= 0x590) && defined(__ELF__))
+#define INTERNAL  __attribute__((visibility("internal")))
+#else
+#define INTERNAL
+#endif
 
 extern INTERNAL PURE FASTCALL GLint __glCallLists_size(GLenum);
 extern INTERNAL PURE FASTCALL GLint __glFogfv_size(GLenum);
@@ -81,8 +81,8 @@ extern INTERNAL PURE FASTCALL GLint __glConvolutionParameteriv_size(GLenum);
 extern INTERNAL PURE FASTCALL GLint __glPointParameterfvEXT_size(GLenum);
 extern INTERNAL PURE FASTCALL GLint __glPointParameterivNV_size(GLenum);
 
-#  undef PURE
-#  undef FASTCALL
-#  undef INTERNAL
+#undef PURE
+#undef FASTCALL
+#undef INTERNAL
 
 #endif /* !defined( _INDIRECT_SIZE_H_ ) */

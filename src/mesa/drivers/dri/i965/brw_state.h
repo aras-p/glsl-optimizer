@@ -47,6 +47,7 @@ brw_add_validated_bo(struct brw_context *brw, drm_intel_bo *bo)
 };
 
 extern const struct brw_tracked_state brw_blend_constant_color;
+extern const struct brw_tracked_state brw_cc_vp;
 extern const struct brw_tracked_state brw_cc_unit;
 extern const struct brw_tracked_state brw_check_fallback;
 extern const struct brw_tracked_state brw_clip_prog;
@@ -102,11 +103,11 @@ extern const struct brw_tracked_state gen6_depth_stencil_state;
 extern const struct brw_tracked_state gen6_gs_state;
 extern const struct brw_tracked_state gen6_sampler_state;
 extern const struct brw_tracked_state gen6_scissor_state;
-extern const struct brw_tracked_state gen6_scissor_state_pointers;
 extern const struct brw_tracked_state gen6_sf_state;
 extern const struct brw_tracked_state gen6_sf_vp;
 extern const struct brw_tracked_state gen6_urb;
 extern const struct brw_tracked_state gen6_viewport_state;
+extern const struct brw_tracked_state gen6_vs_constants;
 extern const struct brw_tracked_state gen6_vs_state;
 extern const struct brw_tracked_state gen6_wm_constants;
 extern const struct brw_tracked_state gen6_wm_state;
@@ -123,38 +124,21 @@ void brw_clear_validated_bos(struct brw_context *brw);
 /***********************************************************************
  * brw_state_cache.c
  */
-drm_intel_bo *brw_cache_data(struct brw_cache *cache,
-		       enum brw_cache_id cache_id,
-		       const void *data,
-		       GLuint size);
 
 drm_intel_bo *brw_upload_cache(struct brw_cache *cache,
 			       enum brw_cache_id cache_id,
 			       const void *key,
 			       GLuint key_sz,
-			       drm_intel_bo **reloc_bufs,
-			       GLuint nr_reloc_bufs,
 			       const void *data,
-			       GLuint data_sz);
-
-drm_intel_bo *brw_upload_cache_with_auxdata(struct brw_cache *cache,
-					    enum brw_cache_id cache_id,
-					    const void *key,
-					    GLuint key_sz,
-					    drm_intel_bo **reloc_bufs,
-					    GLuint nr_reloc_bufs,
-					    const void *data,
-					    GLuint data_sz,
-					    const void *aux,
-					    GLuint aux_sz,
-					    void *aux_return);
+			       GLuint data_sz,
+			       const void *aux,
+			       GLuint aux_sz,
+			       void *aux_return);
 
 drm_intel_bo *brw_search_cache( struct brw_cache *cache,
 			  enum brw_cache_id cache_id,
 			  const void *key,
 			  GLuint key_size,
-			  drm_intel_bo **reloc_bufs,
-			  GLuint nr_reloc_bufs,
 			  void *aux_return);
 void brw_state_cache_check_size( struct brw_context *brw );
 

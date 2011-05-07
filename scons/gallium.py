@@ -74,7 +74,7 @@ def install_shared_library(env, sources, version = ()):
             while len(version):
                 version = version[:-1]
                 target_name = '.'.join((str(source),) + version)
-                action = SCons.Action.Action(symlink, "$TARGET -> $SOURCE")
+                action = SCons.Action.Action(symlink, "  Symlinking $TARGET ...")
                 last = env.Command(os.path.join(target_dir, target_name), last, action) 
                 targets += last
     return targets

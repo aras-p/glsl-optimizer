@@ -71,6 +71,7 @@ void rc_rename_regs(struct radeon_compiler *c, void *user)
 		if (inst->U.I.DstReg.File != RC_FILE_TEMPORARY)
 			continue;
 
+		reader_data.ExitOnAbort = 1;
 		rc_get_readers(c, inst, &reader_data, NULL, NULL, NULL);
 
 		if (reader_data.Abort || reader_data.ReaderCount == 0)
@@ -85,7 +86,7 @@ void rc_rename_regs(struct radeon_compiler *c, void *user)
 
 		reader_data.Writer->U.I.DstReg.Index = new_index;
 		for(i = 0; i < reader_data.ReaderCount; i++) {
-			reader_data.Readers[i].U.Src->Index = new_index;
+			reader_data.Readers[i].U.I.Src->Index = new_index;
 		}
 	}
 }

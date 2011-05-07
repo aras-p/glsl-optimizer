@@ -82,6 +82,8 @@ _mesa_type_is_packed(GLenum type)
    case GL_UNSIGNED_SHORT_8_8_MESA:
    case GL_UNSIGNED_SHORT_8_8_REV_MESA:
    case GL_UNSIGNED_INT_24_8_EXT:
+   case GL_UNSIGNED_INT_5_9_9_9_REV:
+   case GL_UNSIGNED_INT_10F_11F_11F_REV:
       return GL_TRUE;
    }
 
@@ -221,6 +223,10 @@ _mesa_sizeof_packed_type( GLenum type )
       case GL_UNSIGNED_SHORT_8_8_REV_MESA:
          return sizeof(GLushort);      
       case GL_UNSIGNED_INT_24_8_EXT:
+         return sizeof(GLuint);
+      case GL_UNSIGNED_INT_5_9_9_9_REV:
+         return sizeof(GLuint);
+      case GL_UNSIGNED_INT_10F_11F_11F_REV:
          return sizeof(GLuint);
       default:
          return -1;
@@ -363,6 +369,16 @@ _mesa_bytes_per_pixel( GLenum format, GLenum type )
             return sizeof(GLuint);
          else
             return -1;
+      case GL_UNSIGNED_INT_5_9_9_9_REV:
+         if (format == GL_RGB)
+            return sizeof(GLuint);
+         else
+            return -1;
+      case GL_UNSIGNED_INT_10F_11F_11F_REV:
+         if (format == GL_RGB)
+            return sizeof(GLuint);
+         else
+            return -1;
       default:
          return -1;
    }
@@ -458,6 +474,10 @@ _mesa_is_legal_format_and_type(const struct gl_context *ctx,
                return GL_TRUE;
             case GL_HALF_FLOAT_ARB:
                return ctx->Extensions.ARB_half_float_pixel;
+            case GL_UNSIGNED_INT_5_9_9_9_REV:
+               return ctx->Extensions.EXT_texture_shared_exponent;
+            case GL_UNSIGNED_INT_10F_11F_11F_REV:
+               return ctx->Extensions.EXT_packed_float;
             default:
                return GL_FALSE;
          }
@@ -821,6 +841,8 @@ _mesa_is_color_format(GLenum format)
       case GL_INTENSITY_SNORM:
       case GL_INTENSITY8_SNORM:
       case GL_INTENSITY16_SNORM:
+      case GL_RGB9_E5:
+      case GL_R11F_G11F_B10F:
          return GL_TRUE;
       case GL_YCBCR_MESA:  /* not considered to be RGB */
          /* fall-through */

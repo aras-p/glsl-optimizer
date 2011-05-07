@@ -35,15 +35,12 @@
 #include "intel_batchbuffer.h"
 
 static void
-prepare_wm_constants(struct brw_context *brw)
+gen6_prepare_wm_push_constants(struct brw_context *brw)
 {
    struct intel_context *intel = &brw->intel;
    struct gl_context *ctx = &intel->ctx;
    const struct brw_fragment_program *fp =
       brw_fragment_program_const(brw->fragment_program);
-
-   drm_intel_bo_unreference(brw->wm.push_const_bo);
-   brw->wm.push_const_bo = NULL;
 
    /* Updates the ParamaterValues[i] pointers for all parameters of the
     * basic type of PROGRAM_STATE_VAR.
@@ -55,13 +52,11 @@ prepare_wm_constants(struct brw_context *brw)
       float *constants;
       unsigned int i;
 
-      brw->wm.push_const_bo = drm_intel_bo_alloc(intel->bufmgr,
-						 "WM constant_bo",
-						 brw->wm.prog_data->nr_params *
-						 sizeof(float),
-						 4096);
-      drm_intel_gem_bo_map_gtt(brw->wm.push_const_bo);
-      constants = brw->wm.push_const_bo->virtual;
+      constants = brw_state_batch(brw,
+				  brw->wm.prog_data->nr_params *
+				  sizeof(float),
+				  32, &brw->wm.push_const_offset);
+
       for (i = 0; i < brw->wm.prog_data->nr_params; i++) {
 	 constants[i] = convert_param(brw->wm.prog_data->param_convert[i],
 				      *brw->wm.prog_data->param[i]);
@@ -80,18 +75,17 @@ prepare_wm_constants(struct brw_context *brw)
 	    printf("\n");
 	 printf("\n");
       }
-
-      drm_intel_gem_bo_unmap_gtt(brw->wm.push_const_bo);
    }
 }
 
 const struct brw_tracked_state gen6_wm_constants = {
    .dirty = {
       .mesa  = _NEW_PROGRAM_CONSTANTS,
-      .brw   = BRW_NEW_FRAGMENT_PROGRAM,
+      .brw   = (BRW_NEW_BATCH |
+		BRW_NEW_FRAGMENT_PROGRAM),
       .cache = 0,
    },
-   .prepare = prepare_wm_constants,
+   .prepare = gen6_prepare_wm_push_constants,
 };
 
 static void
@@ -118,8 +112,10 @@ upload_wm_state(struct brw_context *brw)
       OUT_BATCH(_3DSTATE_CONSTANT_PS << 16 |
 		GEN6_CONSTANT_BUFFER_0_ENABLE |
 		(5 - 2));
-      OUT_RELOC(brw->wm.push_const_bo,
-		I915_GEM_DOMAIN_RENDER, 0, /* XXX: bad domain */
+      /* Pointer to the WM constant buffer.  Covered by the set of
+       * state flags from gen6_prepare_wm_constants
+       */
+      OUT_BATCH(brw->wm.push_const_offset +
 		ALIGN(brw->wm.prog_data->nr_params,
 		      brw->wm.prog_data->dispatch_width) / 8 - 1);
       OUT_BATCH(0);
@@ -143,14 +139,19 @@ upload_wm_state(struct brw_context *brw)
    dw2 |= (ALIGN(brw->wm.sampler_count, 4) / 4) << GEN6_WM_SAMPLER_COUNT_SHIFT;
    dw4 |= (brw->wm.prog_data->first_curbe_grf <<
 	   GEN6_WM_DISPATCH_START_GRF_SHIFT_0);
+   dw4 |= (brw->wm.prog_data->first_curbe_grf_16 <<
+	   GEN6_WM_DISPATCH_START_GRF_SHIFT_2);
 
    dw5 |= (brw->wm_max_threads - 1) << GEN6_WM_MAX_THREADS_SHIFT;
 
    /* CACHE_NEW_WM_PROG */
-   if (brw->wm.prog_data->dispatch_width == 8)
+   if (brw->wm.prog_data->dispatch_width == 8) {
       dw5 |= GEN6_WM_8_DISPATCH_ENABLE;
-   else
+      if (brw->wm.prog_data->prog_offset_16)
+	 dw5 |= GEN6_WM_16_DISPATCH_ENABLE;
+   } else {
       dw5 |= GEN6_WM_16_DISPATCH_ENABLE;
+   }
 
    /* _NEW_LINE */
    if (ctx->Line.StippleFlag)
@@ -194,7 +195,12 @@ upload_wm_state(struct brw_context *brw)
    OUT_BATCH(dw5);
    OUT_BATCH(dw6);
    OUT_BATCH(0); /* kernel 1 pointer */
-   OUT_BATCH(0); /* kernel 2 pointer */
+   if (brw->wm.prog_data->prog_offset_16) {
+      OUT_RELOC(brw->wm.prog_bo, I915_GEM_DOMAIN_INSTRUCTION, 0,
+		brw->wm.prog_data->prog_offset_16);
+   } else {
+      OUT_BATCH(0); /* kernel 2 pointer */
+   }
    ADVANCE_BATCH();
 }
 

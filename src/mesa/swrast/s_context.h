@@ -135,7 +135,6 @@ typedef struct
    GLboolean _TextureCombinePrimary;
    GLboolean _FogEnabled;
    GLboolean _DeferredTexture;
-   GLenum _FogMode;  /* either GL_FOG_MODE or fragment program's fog mode */
 
    /** List/array of the fragment attributes to interpolate */
    GLuint _ActiveAttribs[FRAG_ATTRIB_MAX];

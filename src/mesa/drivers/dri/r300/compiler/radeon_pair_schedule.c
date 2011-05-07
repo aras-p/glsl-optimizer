@@ -709,7 +709,7 @@ static int convert_rgb_to_alpha(
 
 	pair_inst->Alpha.Opcode = pair_inst->RGB.Opcode;
 	pair_inst->Alpha.DestIndex = new_index;
-	pair_inst->Alpha.WriteMask = 1;
+	pair_inst->Alpha.WriteMask = RC_MASK_W;
 	pair_inst->Alpha.Target = pair_inst->RGB.Target;
 	pair_inst->Alpha.OutputWriteMask = pair_inst->RGB.OutputWriteMask;
 	pair_inst->Alpha.DepthWriteMask = pair_inst->RGB.DepthWriteMask;
@@ -739,7 +739,7 @@ static int convert_rgb_to_alpha(
 
 	for(i = 0; i < sched_inst->GlobalReaders.ReaderCount; i++) {
 		struct rc_reader reader = sched_inst->GlobalReaders.Readers[i];
-		rgb_to_alpha_remap(reader.Inst, reader.U.Arg,
+		rgb_to_alpha_remap(reader.Inst, reader.U.P.Arg,
 					RC_FILE_TEMPORARY, old_swz, new_index);
 	}
 	return 1;
@@ -952,6 +952,7 @@ static void schedule_block(struct r300_fragment_program_compiler * c,
 			instruction_ready(&s, s.Current);
 
 		/* Get global readers for possible RGB->Alpha conversion. */
+		s.Current->GlobalReaders.ExitOnAbort = 1;
 		rc_get_readers(s.C, inst, &s.Current->GlobalReaders,
 				is_rgb_to_alpha_possible_normal,
 				is_rgb_to_alpha_possible, NULL);

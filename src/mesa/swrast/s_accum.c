@@ -24,6 +24,7 @@
 
 
 #include "main/glheader.h"
+#include "main/condrender.h"
 #include "main/context.h"
 #include "main/macros.h"
 #include "main/imports.h"
@@ -552,6 +553,9 @@ _swrast_Accum(struct gl_context *ctx, GLenum op, GLfloat value)
       _mesa_warning(ctx, "Calling glAccum() without an accumulation buffer");
       return;
    }
+
+   if (!_mesa_check_conditional_render(ctx))
+      return;
 
    swrast_render_start(ctx);
 

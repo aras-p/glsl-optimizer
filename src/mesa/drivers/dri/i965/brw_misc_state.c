@@ -143,30 +143,24 @@ static void upload_pipelined_state_pointers(struct brw_context *brw )
 
    BEGIN_BATCH(7);
    OUT_BATCH(_3DSTATE_PIPELINED_POINTERS << 16 | (7 - 2));
-   OUT_RELOC(brw->vs.state_bo, I915_GEM_DOMAIN_INSTRUCTION, 0, 0);
+   OUT_RELOC(intel->batch.bo, I915_GEM_DOMAIN_INSTRUCTION, 0,
+	     brw->vs.state_offset);
    if (brw->gs.prog_active)
-      OUT_RELOC(brw->gs.state_bo, I915_GEM_DOMAIN_INSTRUCTION, 0, 1);
+      OUT_RELOC(brw->intel.batch.bo, I915_GEM_DOMAIN_INSTRUCTION, 0,
+		brw->gs.state_offset | 1);
    else
       OUT_BATCH(0);
-   OUT_RELOC(brw->clip.state_bo, I915_GEM_DOMAIN_INSTRUCTION, 0, 1);
+   OUT_RELOC(brw->intel.batch.bo, I915_GEM_DOMAIN_INSTRUCTION, 0,
+	     brw->clip.state_offset | 1);
    OUT_RELOC(brw->intel.batch.bo, I915_GEM_DOMAIN_INSTRUCTION, 0,
 	     brw->sf.state_offset);
-   OUT_RELOC(brw->wm.state_bo, I915_GEM_DOMAIN_INSTRUCTION, 0, 0);
+   OUT_RELOC(brw->intel.batch.bo, I915_GEM_DOMAIN_INSTRUCTION, 0,
+	     brw->wm.state_offset);
    OUT_RELOC(brw->intel.batch.bo, I915_GEM_DOMAIN_INSTRUCTION, 0,
 	     brw->cc.state_offset);
    ADVANCE_BATCH();
 
    brw->state.dirty.brw |= BRW_NEW_PSP;
-}
-
-
-static void prepare_psp_urb_cbs(struct brw_context *brw)
-{
-   brw_add_validated_bo(brw, brw->vs.state_bo);
-   brw_add_validated_bo(brw, brw->gs.state_bo);
-   brw_add_validated_bo(brw, brw->clip.state_bo);
-   brw_add_validated_bo(brw, brw->sf.state_bo);
-   brw_add_validated_bo(brw, brw->wm.state_bo);
 }
 
 static void upload_psp_urb_cbs(struct brw_context *brw )
@@ -188,7 +182,6 @@ const struct brw_tracked_state brw_psp_urb_cbs = {
 		CACHE_NEW_WM_UNIT | 
 		CACHE_NEW_CC_UNIT)
    },
-   .prepare = prepare_psp_urb_cbs,
    .emit = upload_psp_urb_cbs,
 };
 
@@ -551,12 +544,28 @@ static void upload_state_base_address( struct brw_context *brw )
    if (intel->gen >= 6) {
        BEGIN_BATCH(10);
        OUT_BATCH(CMD_STATE_BASE_ADDRESS << 16 | (10 - 2));
-       OUT_BATCH(1); /* General state base address */
-       OUT_RELOC(intel->batch.bo, I915_GEM_DOMAIN_SAMPLER, 0,
-		 1); /* Surface state base address */
-       OUT_BATCH(1); /* Dynamic state base address */
-       OUT_BATCH(1); /* Indirect object base address */
-       OUT_BATCH(1); /* Instruction base address */
+       /* General state base address: stateless DP read/write requests */
+       OUT_BATCH(1);
+       /* Surface state base address:
+	* BINDING_TABLE_STATE
+	* SURFACE_STATE
+	*/
+       OUT_RELOC(intel->batch.bo, I915_GEM_DOMAIN_SAMPLER, 0, 1);
+        /* Dynamic state base address:
+	 * SAMPLER_STATE
+	 * SAMPLER_BORDER_COLOR_STATE
+	 * CLIP, SF, WM/CC viewport state
+	 * COLOR_CALC_STATE
+	 * DEPTH_STENCIL_STATE
+	 * BLEND_STATE
+	 * Push constants (when INSTPM: CONSTANT_BUFFER Address Offset
+	 * Disable is clear, which we rely on)
+	 */
+       OUT_RELOC(intel->batch.bo, (I915_GEM_DOMAIN_RENDER |
+				   I915_GEM_DOMAIN_INSTRUCTION), 0, 1);
+
+       OUT_BATCH(1); /* Indirect object base address: MEDIA_OBJECT data */
+       OUT_BATCH(1); /* Instruction base address: shader kernels (incl. SIP) */
        OUT_BATCH(1); /* General state upper bound */
        OUT_BATCH(1); /* Dynamic state upper bound */
        OUT_BATCH(1); /* Indirect object upper bound */

@@ -374,27 +374,29 @@ static int r600_get_param(struct pipe_screen* pscreen, enum pipe_cap param)
 	case PIPE_CAP_SHADER_STENCIL_EXPORT:
 	case PIPE_CAP_VERTEX_ELEMENT_INSTANCE_DIVISOR:
 	case PIPE_CAP_MIXED_COLORBUFFER_FORMATS:
+	case PIPE_CAP_TGSI_FS_COORD_ORIGIN_UPPER_LEFT:
+	case PIPE_CAP_TGSI_FS_COORD_PIXEL_CENTER_HALF_INTEGER:
 		return 1;
+
+	/* Supported except the original R600. */
 	case PIPE_CAP_INDEP_BLEND_ENABLE:
+	case PIPE_CAP_INDEP_BLEND_FUNC:
 		/* R600 doesn't support per-MRT blends */
-		if (family == CHIP_R600)
-			return 0;
-		else
-			return 1;
+		return family == CHIP_R600 ? 0 : 1;
 
-	case PIPE_CAP_TGSI_INSTANCEID:
-		return 0;
+	/* Supported on Evergreen. */
+	case PIPE_CAP_SEAMLESS_CUBE_MAP:
+	case PIPE_CAP_SEAMLESS_CUBE_MAP_PER_TEXTURE:
+		return family >= CHIP_CEDAR ? 1 : 0;
 
-	/* Unsupported features (boolean caps). */
+	/* Unsupported features. */
 	case PIPE_CAP_STREAM_OUTPUT:
 	case PIPE_CAP_PRIMITIVE_RESTART:
-	case PIPE_CAP_INDEP_BLEND_FUNC: /* FIXME allow this */
 	case PIPE_CAP_FRAGMENT_COLOR_CLAMP_CONTROL:
-		/* R600 doesn't support per-MRT blends */
-		if (family == CHIP_R600)
-			return 0;
-		else
-			return 0;
+	case PIPE_CAP_TGSI_INSTANCEID:
+	case PIPE_CAP_TGSI_FS_COORD_ORIGIN_LOWER_LEFT:
+	case PIPE_CAP_TGSI_FS_COORD_PIXEL_CENTER_INTEGER:
+		return 0;
 
 	case PIPE_CAP_ARRAY_TEXTURES:
 		/* fix once the CS checker upstream is fixed */
@@ -409,24 +411,15 @@ static int r600_get_param(struct pipe_screen* pscreen, enum pipe_cap param)
 		else
 			return 14;
 	case PIPE_CAP_MAX_VERTEX_TEXTURE_UNITS:
-		/* FIXME allow this once infrastructure is there */
-		return 16;
 	case PIPE_CAP_MAX_TEXTURE_IMAGE_UNITS:
-	case PIPE_CAP_MAX_COMBINED_SAMPLERS:
 		return 16;
+	case PIPE_CAP_MAX_COMBINED_SAMPLERS:
+		return 32;
 
 	/* Render targets. */
 	case PIPE_CAP_MAX_RENDER_TARGETS:
 		/* FIXME some r6xx are buggy and can only do 4 */
 		return 8;
-
-	/* Fragment coordinate conventions. */
-	case PIPE_CAP_TGSI_FS_COORD_ORIGIN_UPPER_LEFT:
-	case PIPE_CAP_TGSI_FS_COORD_PIXEL_CENTER_HALF_INTEGER:
-		return 1;
-	case PIPE_CAP_TGSI_FS_COORD_ORIGIN_LOWER_LEFT:
-	case PIPE_CAP_TGSI_FS_COORD_PIXEL_CENTER_INTEGER:
-		return 0;
 
 	/* Timer queries, present when the clock frequency is non zero. */
 	case PIPE_CAP_TIMER_QUERY:
@@ -492,9 +485,10 @@ static int r600_get_shader_param(struct pipe_screen* pscreen, unsigned shader, e
 		else
 			return 16;
 	case PIPE_SHADER_CAP_MAX_TEMPS:
-		return 256; //max native temporaries
+		return 256; /* Max native temporaries. */
 	case PIPE_SHADER_CAP_MAX_ADDRS:
-		return 1; //max native address registers/* FIXME Isn't this equal to TEMPS? */
+		/* FIXME Isn't this equal to TEMPS? */
+		return 1; /* Max native address registers */
 	case PIPE_SHADER_CAP_MAX_CONSTS:
 		return R600_MAX_CONST_BUFFER_SIZE;
 	case PIPE_SHADER_CAP_MAX_CONST_BUFFERS:

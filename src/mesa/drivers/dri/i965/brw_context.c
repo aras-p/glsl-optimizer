@@ -51,9 +51,6 @@ static void brwInitDriverFunctions( struct dd_function_table *functions )
 
    brwInitFragProgFuncs( functions );
    brw_init_queryobj_functions(functions);
-
-   functions->Enable = brw_enable;
-   functions->DepthRange = brw_depth_range;
 }
 
 GLboolean brwCreateContext( int api,
@@ -231,11 +228,6 @@ GLboolean brwCreateContext( int api,
    ctx->FragmentProgram._MaintainTexEnvProgram = GL_TRUE;
 
    brw_draw_init( brw );
-
-   /* Now that most driver functions are hooked up, initialize some of the
-    * immediate state.
-    */
-   brw_update_cc_vp(brw);
 
    return GL_TRUE;
 }

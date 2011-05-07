@@ -114,6 +114,10 @@ void rc_pair_foreach_source_that_rgb_reads(
 struct rc_pair_instruction_source * rc_pair_get_src(
 	struct rc_pair_instruction * pair_inst,
 	struct rc_pair_instruction_arg * arg);
+
+int rc_pair_get_src_index(
+	struct rc_pair_instruction * pair_inst,
+	struct rc_pair_instruction_source * src);
 /*@}*/
 
 
@@ -127,6 +131,7 @@ void rc_pair_translate(struct radeon_compiler *cc, void *user);
 void rc_pair_schedule(struct radeon_compiler *cc, void *user);
 void rc_pair_regalloc(struct radeon_compiler *cc, void *user);
 void rc_pair_regalloc_inputs_only(struct radeon_compiler *cc, void *user);
+void rc_pair_remove_dead_sources(struct radeon_compiler *c, void *user);
 /*@}*/
 
 #endif /* __RADEON_PROGRAM_PAIR_H_ */

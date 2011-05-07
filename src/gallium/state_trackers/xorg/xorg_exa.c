@@ -336,7 +336,7 @@ ExaPrepareSolid(PixmapPtr pPixmap, int alu, Pixel planeMask, Pixel fg)
 	return FALSE;
 
     if (!exa->pipe)
-	XORG_FALLBACK("accle not enabled");
+	XORG_FALLBACK("accel not enabled");
 
     if (!priv || !priv->tex)
 	XORG_FALLBACK("%s", !priv ? "!priv" : "!priv->tex");
@@ -414,7 +414,7 @@ ExaPrepareCopy(PixmapPtr pSrcPixmap, PixmapPtr pDstPixmap, int xdir,
 	return FALSE;
 
     if (!exa->pipe)
-	XORG_FALLBACK("accle not enabled");
+	XORG_FALLBACK("accel not enabled");
 
     if (!priv || !priv->tex)
 	XORG_FALLBACK("pDst %s", !priv ? "!priv" : "!priv->tex");
@@ -622,7 +622,7 @@ ExaPrepareComposite(int op, PicturePtr pSrcPicture,
                 pDstPicture ? render_format_name(pDstPicture->format) : "none");
 #endif
    if (!exa->pipe)
-      XORG_FALLBACK("accle not enabled");
+      XORG_FALLBACK("accel not enabled");
 
    priv = exaGetPixmapDriverPrivate(pDst);
    if (!priv || !priv->tex)

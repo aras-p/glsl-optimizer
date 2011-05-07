@@ -1,5 +1,6 @@
 #include "main/mtypes.h"
 #include "main/macros.h"
+#include "main/samplerobj.h"
 
 #include "intel_context.h"
 #include "intel_mipmap_tree.h"
@@ -14,11 +15,13 @@
  */
 static void
 intel_update_max_level(struct intel_context *intel,
-		       struct intel_texture_object *intelObj)
+		       struct intel_texture_object *intelObj,
+		       struct gl_sampler_object *sampler)
 {
    struct gl_texture_object *tObj = &intelObj->base;
 
-   if (tObj->Sampler.MinFilter == GL_NEAREST || tObj->Sampler.MinFilter == GL_LINEAR) {
+   if (sampler->MinFilter == GL_NEAREST ||
+       sampler->MinFilter == GL_LINEAR) {
       intelObj->_MaxLevel = tObj->BaseLevel;
    } else {
       intelObj->_MaxLevel = tObj->_MaxLevel;
@@ -70,8 +73,10 @@ copy_image_data_to_tree(struct intel_context *intel,
 GLuint
 intel_finalize_mipmap_tree(struct intel_context *intel, GLuint unit)
 {
+   struct gl_context *ctx = &intel->ctx;
    struct gl_texture_object *tObj = intel->ctx.Texture.Unit[unit]._Current;
    struct intel_texture_object *intelObj = intel_texture_object(tObj);
+   struct gl_sampler_object *sampler = _mesa_get_samplerobj(ctx, unit);
    int comp_byte = 0;
    int cpp;
    GLuint face, i;
@@ -84,7 +89,7 @@ intel_finalize_mipmap_tree(struct intel_context *intel, GLuint unit)
 
    /* What levels must the tree include at a minimum?
     */
-   intel_update_max_level(intel, intelObj);
+   intel_update_max_level(intel, intelObj, sampler);
    firstImage = intel_texture_image(tObj->Image[0][tObj->BaseLevel]);
 
    /* Fallback case:
