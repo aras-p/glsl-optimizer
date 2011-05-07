@@ -1258,7 +1258,7 @@ static inline void
 slice_intra_DCT(struct vl_mpg12_bs *bs, struct pipe_mpeg12_picture_desc * picture, const int scan[64], int cc,
                  unsigned x, unsigned y, enum pipe_mpeg12_dct_type coding, int quantizer_scale, int dc_dct_pred[3])
 {
-   short *dest = bs->ycbcr_buffer[cc];
+   short dest[64];
 
    bs->ycbcr_stream[cc]->x = x;
    bs->ycbcr_stream[cc]->y = y;
@@ -1283,6 +1283,8 @@ slice_intra_DCT(struct vl_mpg12_bs *bs, struct pipe_mpeg12_picture_desc * pictur
    else
       get_intra_block_B14(bs, picture, scan, quantizer_scale, dest);
 
+   memcpy(bs->ycbcr_buffer[cc], dest, sizeof(int16_t) * 64);
+
    bs->num_ycbcr_blocks[cc]++;
    bs->ycbcr_stream[cc]++;
    bs->ycbcr_buffer[cc] += 64;
@@ -1292,7 +1294,7 @@ static inline void
 slice_non_intra_DCT(struct vl_mpg12_bs *bs, struct pipe_mpeg12_picture_desc * picture, const int scan[64], int cc,
                     unsigned x, unsigned y, int quantizer_scale, enum pipe_mpeg12_dct_type coding)
 {
-   short *dest = bs->ycbcr_buffer[cc];
+   short dest[64];
 
    bs->ycbcr_stream[cc]->x = x;
    bs->ycbcr_stream[cc]->y = y;
@@ -1304,6 +1306,8 @@ slice_non_intra_DCT(struct vl_mpg12_bs *bs, struct pipe_mpeg12_picture_desc * pi
       get_mpeg1_non_intra_block(bs, picture, scan, quantizer_scale, dest);
    else
       get_non_intra_block(bs, picture, scan, quantizer_scale, dest);
+
+   memcpy(bs->ycbcr_buffer[cc], dest, sizeof(int16_t) * 64);
 
    bs->num_ycbcr_blocks[cc]++;
    bs->ycbcr_stream[cc]++;
