@@ -47,8 +47,6 @@ nouveau_screen(struct pipe_screen *pscreen)
 struct nouveau_bo *
 nouveau_screen_bo_new(struct pipe_screen *pscreen, unsigned alignment,
 		      unsigned usage, unsigned bind, unsigned size);
-struct nouveau_bo *
-nouveau_screen_bo_user(struct pipe_screen *pscreen, void *ptr, unsigned bytes);
 void *
 nouveau_screen_bo_map(struct pipe_screen *pscreen,
 		      struct nouveau_bo *pb,

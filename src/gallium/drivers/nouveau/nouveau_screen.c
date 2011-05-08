@@ -81,20 +81,6 @@ nouveau_screen_bo_new(struct pipe_screen *pscreen, unsigned alignment,
 	return bo;
 }
 
-struct nouveau_bo *
-nouveau_screen_bo_user(struct pipe_screen *pscreen, void *ptr, unsigned bytes)
-{
-	struct nouveau_device *dev = nouveau_screen(pscreen)->device;
-	struct nouveau_bo *bo = NULL;
-	int ret;
-
-	ret = nouveau_bo_user(dev, ptr, bytes, &bo);
-	if (ret)
-		return NULL;
-
-	return bo;
-}
-
 void *
 nouveau_screen_bo_map(struct pipe_screen *pscreen,
 		      struct nouveau_bo *bo,
