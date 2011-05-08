@@ -76,7 +76,6 @@ do {					\
 #define MACROBLOCK_MOTION_BACKWARD 4
 #define MACROBLOCK_MOTION_FORWARD 8
 #define MACROBLOCK_QUANT 16
-#define DCT_TYPE_INTERLACED 32
 
 /* motion_type */
 #define MOTION_TYPE_MASK (3*64)
@@ -478,11 +477,6 @@ get_macroblock_modes(struct vl_mpg12_bs *bs, struct pipe_mpeg12_picture_desc * p
       vl_vlc_dumpbits(&bs->vlc, tab->len);
       macroblock_modes = tab->modes;
 
-      if ((!(picture->frame_pred_frame_dct)) && (picture->picture_structure == FRAME_PICTURE)) {
-         macroblock_modes |= vl_vlc_ubits(&bs->vlc, 1) * DCT_TYPE_INTERLACED;
-         vl_vlc_dumpbits(&bs->vlc, 1);
-      }
-
       return macroblock_modes;
 
    case P_TYPE:
@@ -506,10 +500,6 @@ get_macroblock_modes(struct vl_mpg12_bs *bs, struct pipe_mpeg12_picture_desc * p
             macroblock_modes |= vl_vlc_ubits(&bs->vlc, 2) * MOTION_TYPE_BASE;
             vl_vlc_dumpbits(&bs->vlc, 2);
           }
-          if (macroblock_modes & (MACROBLOCK_INTRA | MACROBLOCK_PATTERN)) {
-            macroblock_modes |= vl_vlc_ubits(&bs->vlc, 1) * DCT_TYPE_INTERLACED;
-            vl_vlc_dumpbits(&bs->vlc, 1);
-          }
           return macroblock_modes;
       }
 
@@ -524,23 +514,13 @@ get_macroblock_modes(struct vl_mpg12_bs *bs, struct pipe_mpeg12_picture_desc * p
             macroblock_modes |= vl_vlc_ubits(&bs->vlc, 2) * MOTION_TYPE_BASE;
             vl_vlc_dumpbits(&bs->vlc, 2);
           }
-          return macroblock_modes;
       } else if (picture->frame_pred_frame_dct) {
-          /* if (! (macroblock_modes & MACROBLOCK_INTRA)) */
           macroblock_modes |= MC_FRAME;
-          return macroblock_modes;
-      } else {
-          if (macroblock_modes & MACROBLOCK_INTRA)
-            goto intra;
+      } else if (!(macroblock_modes & MACROBLOCK_INTRA)) {
           macroblock_modes |= vl_vlc_ubits(&bs->vlc, 2) * MOTION_TYPE_BASE;
           vl_vlc_dumpbits(&bs->vlc, 2);
-          if (macroblock_modes & (MACROBLOCK_INTRA | MACROBLOCK_PATTERN)) {
-          intra:
-            macroblock_modes |= vl_vlc_ubits(&bs->vlc, 1) * DCT_TYPE_INTERLACED;
-            vl_vlc_dumpbits(&bs->vlc, 1);
-          }
-          return macroblock_modes;
       }
+      return macroblock_modes;
 
    case D_TYPE:
 
@@ -550,6 +530,21 @@ get_macroblock_modes(struct vl_mpg12_bs *bs, struct pipe_mpeg12_picture_desc * p
    default:
       return 0;
    }
+}
+
+static inline enum pipe_mpeg12_dct_type
+get_dct_type(struct vl_mpg12_bs *bs, struct pipe_mpeg12_picture_desc * picture, int macroblock_modes)
+{
+   enum pipe_mpeg12_dct_type dct_type = PIPE_MPEG12_DCT_TYPE_FRAME;
+
+   if ((picture->picture_structure == FRAME_PICTURE) &&
+       (!picture->frame_pred_frame_dct) &&
+       (macroblock_modes & (MACROBLOCK_INTRA | MACROBLOCK_PATTERN))) {
+
+      dct_type = vl_vlc_ubits(&bs->vlc, 1) ? PIPE_MPEG12_DCT_TYPE_FIELD : PIPE_MPEG12_DCT_TYPE_FRAME;
+      vl_vlc_dumpbits(&bs->vlc, 1);
+   }
+   return dct_type;
 }
 
 static inline int
@@ -1652,9 +1647,8 @@ decode_slice(struct vl_mpg12_bs *bs, struct pipe_mpeg12_picture_desc *picture, c
 
       vl_vlc_needbits(&bs->vlc);
 
-      macroblock_modes = get_macroblock_modes(bs, picture); //macroblock_modes()
-      dct_type = macroblock_modes & DCT_TYPE_INTERLACED ?
-         PIPE_MPEG12_DCT_TYPE_FIELD : PIPE_MPEG12_DCT_TYPE_FRAME;
+      macroblock_modes = get_macroblock_modes(bs, picture);
+      dct_type = get_dct_type(bs, picture, macroblock_modes);
 
       switch(macroblock_modes & (MACROBLOCK_MOTION_FORWARD|MACROBLOCK_MOTION_BACKWARD)) {
       case (MACROBLOCK_MOTION_FORWARD|MACROBLOCK_MOTION_BACKWARD):
@@ -1702,8 +1696,8 @@ decode_slice(struct vl_mpg12_bs *bs, struct pipe_mpeg12_picture_desc *picture, c
          slice_intra_DCT(bs, picture, scan, 0, x*2+1, y*2+0, dct_type, quantizer_scale, dc_dct_pred);
          slice_intra_DCT(bs, picture, scan, 0, x*2+0, y*2+1, dct_type, quantizer_scale, dc_dct_pred);
          slice_intra_DCT(bs, picture, scan, 0, x*2+1, y*2+1, dct_type, quantizer_scale, dc_dct_pred);
-         slice_intra_DCT(bs, picture, scan, 1, x, y, dct_type, quantizer_scale, dc_dct_pred);
-         slice_intra_DCT(bs, picture, scan, 2, x, y, dct_type, quantizer_scale, dc_dct_pred);
+         slice_intra_DCT(bs, picture, scan, 1, x, y, PIPE_MPEG12_DCT_TYPE_FRAME, quantizer_scale, dc_dct_pred);
+         slice_intra_DCT(bs, picture, scan, 2, x, y, PIPE_MPEG12_DCT_TYPE_FRAME, quantizer_scale, dc_dct_pred);
 
          if (picture->picture_coding_type == D_TYPE) {
             vl_vlc_needbits(&bs->vlc);
@@ -1769,9 +1763,9 @@ decode_slice(struct vl_mpg12_bs *bs, struct pipe_mpeg12_picture_desc *picture, c
             if (coded_block_pattern & 0x04)
                slice_non_intra_DCT(bs, picture, scan, 0, x*2+1, y*2+1, quantizer_scale, dct_type); // cc0 luma 3
             if (coded_block_pattern & 0x2)
-               slice_non_intra_DCT(bs, picture, scan, 1, x, y, quantizer_scale, dct_type); // cc1 croma
+               slice_non_intra_DCT(bs, picture, scan, 1, x, y, quantizer_scale, PIPE_MPEG12_DCT_TYPE_FRAME); // cc1 croma
             if (coded_block_pattern & 0x1)
-               slice_non_intra_DCT(bs, picture, scan, 2, x, y, quantizer_scale, dct_type); // cc2 croma
+               slice_non_intra_DCT(bs, picture, scan, 2, x, y, quantizer_scale, PIPE_MPEG12_DCT_TYPE_FRAME); // cc2 croma
          }
 
          dc_dct_pred[0] = dc_dct_pred[1] = dc_dct_pred[2] = 0;
