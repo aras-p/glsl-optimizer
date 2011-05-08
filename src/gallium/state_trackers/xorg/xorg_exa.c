@@ -272,6 +272,8 @@ ExaPrepareAccess(PixmapPtr pPix, int index)
     if (!priv->tex)
 	return FALSE;
 
+    exa_debug_printf("ExaPrepareAccess %d\n", index);
+
     if (priv->map_count == 0)
     {
         assert(pPix->drawable.width <= priv->tex->width0);
@@ -300,6 +302,8 @@ ExaPrepareAccess(PixmapPtr pPix, int index)
 
     priv->map_count++;
 
+    exa_debug_printf("ExaPrepareAccess %d prepared\n", index);
+
     return TRUE;
 }
 
@@ -319,6 +323,8 @@ ExaFinishAccess(PixmapPtr pPix, int index)
     if (!priv->map_transfer)
 	return;
 
+    exa_debug_printf("ExaFinishAccess %d\n", index);
+
     if (--priv->map_count == 0) {
 	assert(priv->map_transfer);
 	exa->pipe->transfer_unmap(exa->pipe, priv->map_transfer);
@@ -326,6 +332,8 @@ ExaFinishAccess(PixmapPtr pPix, int index)
 	priv->map_transfer = NULL;
 	pPix->devPrivate.ptr = NULL;
     }
+
+    exa_debug_printf("ExaFinishAccess %d finished\n", index);
 }
 
 /***********************************************************************
@@ -396,8 +404,10 @@ ExaDoneSolid(PixmapPtr pPixmap)
 
     if (!priv)
 	return;
-   
+
+    exa_debug_printf("ExaDoneSolid\n");
     xorg_composite_done(exa);
+    exa_debug_printf("ExaDoneSolid done\n");
 }
 
 /***********************************************************************
@@ -531,12 +541,16 @@ ExaDoneCopy(PixmapPtr pPixmap)
     if (!priv)
 	return;
 
+   exa_debug_printf("ExaDoneCopy\n");
+
    renderer_draw_flush(exa->renderer);
 
    exa->copy.src = NULL;
    exa->copy.dst = NULL;
    pipe_surface_reference(&exa->copy.dst_surface, NULL);
    pipe_resource_reference(&exa->copy.src_texture, NULL);
+
+   exa_debug_printf("ExaDoneCopy done\n");
 }
 
 
