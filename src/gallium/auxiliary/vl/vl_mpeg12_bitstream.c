@@ -1612,6 +1612,7 @@ slice_init(struct vl_mpg12_bs *bs, struct pipe_mpeg12_picture_desc * picture,
 static inline bool
 decode_slice(struct vl_mpg12_bs *bs, struct pipe_mpeg12_picture_desc *picture, const int scan[64])
 {
+   enum pipe_video_field_select default_field_select;
    struct pipe_motionvector mv_fwd, mv_bwd;
    enum pipe_mpeg12_dct_type dct_type;
 
@@ -1621,14 +1622,28 @@ decode_slice(struct vl_mpg12_bs *bs, struct pipe_mpeg12_picture_desc *picture, c
 
    int x, y;
 
+   switch(picture->picture_structure) {
+   case TOP_FIELD:
+      default_field_select = PIPE_VIDEO_TOP_FIELD;
+      break;
+
+   case BOTTOM_FIELD:
+      default_field_select = PIPE_VIDEO_BOTTOM_FIELD;
+      break;
+
+   default:
+      default_field_select = PIPE_VIDEO_FRAME;
+      break;
+   }
+
    if (!slice_init(bs, picture, &quantizer_scale, &x, &y))
       return false;
 
    mv_fwd.top.x = mv_fwd.top.y = mv_fwd.bottom.x = mv_fwd.bottom.y = 0;
-   mv_fwd.top.field_select = mv_fwd.bottom.field_select = PIPE_VIDEO_FRAME;
+   mv_fwd.top.field_select = mv_fwd.bottom.field_select = default_field_select;
 
    mv_bwd.top.x = mv_bwd.top.y = mv_bwd.bottom.x = mv_bwd.bottom.y = 0;
-   mv_bwd.top.field_select = mv_bwd.bottom.field_select = PIPE_VIDEO_FRAME;
+   mv_bwd.top.field_select = mv_bwd.bottom.field_select = default_field_select;
 
    while (1) {
       int macroblock_modes;
@@ -1648,6 +1663,10 @@ decode_slice(struct vl_mpg12_bs *bs, struct pipe_mpeg12_picture_desc *picture, c
          break;
 
       default:
+         mv_fwd.top.field_select = mv_fwd.bottom.field_select = default_field_select;
+         mv_bwd.top.field_select = mv_bwd.bottom.field_select = default_field_select;
+
+         /* fall through */
       case MACROBLOCK_MOTION_FORWARD:
          mv_fwd.top.weight = mv_fwd.bottom.weight = PIPE_VIDEO_MV_WEIGHT_MAX;
          mv_bwd.top.weight = mv_bwd.bottom.weight = PIPE_VIDEO_MV_WEIGHT_MIN;
@@ -1787,22 +1806,8 @@ decode_slice(struct vl_mpg12_bs *bs, struct pipe_mpeg12_picture_desc *picture, c
          //TODO  conversion to signed format signed format
          dc_dct_pred[0] = dc_dct_pred[1] = dc_dct_pred[2] = 0;
 
-         switch(picture->picture_structure) {
-         case FRAME_PICTURE:
-            mv_fwd.top.field_select = mv_fwd.bottom.field_select = PIPE_VIDEO_FRAME;
-            mv_bwd.top.field_select = mv_bwd.bottom.field_select = PIPE_VIDEO_FRAME;
-            break;
-
-         case TOP_FIELD:
-            mv_fwd.top.field_select = mv_fwd.bottom.field_select = PIPE_VIDEO_TOP_FIELD;
-            mv_bwd.top.field_select = mv_bwd.bottom.field_select = PIPE_VIDEO_TOP_FIELD;
-            break;
-
-         case BOTTOM_FIELD:
-            mv_fwd.top.field_select = mv_fwd.bottom.field_select = PIPE_VIDEO_BOTTOM_FIELD;
-            mv_bwd.top.field_select = mv_bwd.bottom.field_select = PIPE_VIDEO_BOTTOM_FIELD;
-            break;
-         }
+         mv_fwd.top.field_select = mv_fwd.bottom.field_select = default_field_select;
+         mv_bwd.top.field_select = mv_bwd.bottom.field_select = default_field_select;
 
          if (picture->picture_coding_type == P_TYPE) {
             mv_fwd.top.x = mv_fwd.top.y = mv_fwd.bottom.x = mv_fwd.bottom.y = 0;
