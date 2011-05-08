@@ -584,19 +584,17 @@ ExaCheckComposite(int op,
    ScrnInfoPtr pScrn = xf86Screens[pDstPicture->pDrawable->pScreen->myNum];
    modesettingPtr ms = modesettingPTR(pScrn);
    struct exa_context *exa = ms->exa;
+   Bool accelerated = exa->accel && xorg_composite_accelerated(op,
+				     pSrcPicture,
+				     pMaskPicture,
+				     pDstPicture);
 
 #if DEBUG_PRINT
    debug_printf("ExaCheckComposite(%d, %p, %p, %p) = %d\n",
                 op, pSrcPicture, pMaskPicture, pDstPicture, accelerated);
 #endif
 
-   if (!exa->accel)
-       return FALSE;
-
-   return xorg_composite_accelerated(op,
-				     pSrcPicture,
-				     pMaskPicture,
-				     pDstPicture);
+   return accelerated;
 }
 
 
