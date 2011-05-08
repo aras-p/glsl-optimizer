@@ -49,8 +49,23 @@
 #include "util/u_box.h"
 #include "util/u_surface.h"
 
-#define DEBUG_PRINT 0
 #define ROUND_UP_TEXTURES 1
+
+static INLINE void
+exa_debug_printf(const char *format, ...) _util_printf_format(1,2);
+
+static INLINE void
+exa_debug_printf(const char *format, ...)
+{
+#if 0
+   va_list ap;
+   va_start(ap, format);
+   _debug_vprintf(format, ap);
+   va_end(ap);
+#else
+   (void) format; /* silence warning */
+#endif
+}
 
 /*
  * Helper functions
@@ -195,10 +210,8 @@ ExaDownloadFromScreen(PixmapPtr pPix, int x,  int y, int w,  int h, char *dst,
     if (!transfer)
 	return FALSE;
 
-#if DEBUG_PRINT
-    debug_printf("------ ExaDownloadFromScreen(%d, %d, %d, %d, %d)\n",
+    exa_debug_printf("------ ExaDownloadFromScreen(%d, %d, %d, %d, %d)\n",
                  x, y, w, h, dst_pitch);
-#endif
 
     util_copy_rect((unsigned char*)dst, priv->tex->format, dst_pitch, 0, 0,
 		   w, h, exa->pipe->transfer_map(exa->pipe, transfer),
@@ -229,10 +242,8 @@ ExaUploadToScreen(PixmapPtr pPix, int x, int y, int w, int h, char *src,
     if (!transfer)
 	return FALSE;
 
-#if DEBUG_PRINT
-    debug_printf("++++++ ExaUploadToScreen(%d, %d, %d, %d, %d)\n",
+    exa_debug_printf("++++++ ExaUploadToScreen(%d, %d, %d, %d, %d)\n",
                  x, y, w, h, src_pitch);
-#endif
 
     util_copy_rect(exa->pipe->transfer_map(exa->pipe, transfer),
 		   priv->tex->format, transfer->stride, 0, 0, w, h,
@@ -329,9 +340,8 @@ ExaPrepareSolid(PixmapPtr pPixmap, int alu, Pixel planeMask, Pixel fg)
     struct exa_pixmap_priv *priv = exaGetPixmapDriverPrivate(pPixmap);
     struct exa_context *exa = ms->exa;
 
-#if DEBUG_PRINT
-    debug_printf("ExaPrepareSolid(0x%x)\n", fg);
-#endif
+    exa_debug_printf("ExaPrepareSolid(0x%x)\n", fg);
+
     if (!exa->accel)
 	return FALSE;
 
@@ -364,9 +374,7 @@ ExaSolid(PixmapPtr pPixmap, int x0, int y0, int x1, int y1)
     struct exa_context *exa = ms->exa;
     struct exa_pixmap_priv *priv = exaGetPixmapDriverPrivate(pPixmap);
 
-#if DEBUG_PRINT
-    debug_printf("\tExaSolid(%d, %d, %d, %d)\n", x0, y0, x1, y1);
-#endif
+    exa_debug_printf("\tExaSolid(%d, %d, %d, %d)\n", x0, y0, x1, y1);
 
     if (x0 == 0 && y0 == 0 &&
         x1 == pPixmap->drawable.width && y1 == pPixmap->drawable.height) {
@@ -406,9 +414,7 @@ ExaPrepareCopy(PixmapPtr pSrcPixmap, PixmapPtr pDstPixmap, int xdir,
     struct exa_pixmap_priv *priv = exaGetPixmapDriverPrivate(pDstPixmap);
     struct exa_pixmap_priv *src_priv = exaGetPixmapDriverPrivate(pSrcPixmap);
 
-#if DEBUG_PRINT
-    debug_printf("ExaPrepareCopy\n");
-#endif
+    exa_debug_printf("ExaPrepareCopy\n");
 
     if (!exa->accel)
 	return FALSE;
@@ -488,10 +494,8 @@ ExaCopy(PixmapPtr pDstPixmap, int srcX, int srcY, int dstX, int dstY,
    struct exa_context *exa = ms->exa;
    struct exa_pixmap_priv *priv = exaGetPixmapDriverPrivate(pDstPixmap);
 
-#if DEBUG_PRINT
-   debug_printf("\tExaCopy(srcx=%d, srcy=%d, dstX=%d, dstY=%d, w=%d, h=%d)\n",
+   exa_debug_printf("\tExaCopy(srcx=%d, srcy=%d, dstX=%d, dstY=%d, w=%d, h=%d)\n",
                 srcX, srcY, dstX, dstY, width, height);
-#endif
 
    debug_assert(priv == exa->copy.dst);
    (void) priv;
@@ -589,10 +593,8 @@ ExaCheckComposite(int op,
 				     pMaskPicture,
 				     pDstPicture);
 
-#if DEBUG_PRINT
-   debug_printf("ExaCheckComposite(%d, %p, %p, %p) = %d\n",
+   exa_debug_printf("ExaCheckComposite(%d, %p, %p, %p) = %d\n",
                 op, pSrcPicture, pMaskPicture, pDstPicture, accelerated);
-#endif
 
    return accelerated;
 }
@@ -611,14 +613,13 @@ ExaPrepareComposite(int op, PicturePtr pSrcPicture,
    if (!exa->accel)
        return FALSE;
 
-#if DEBUG_PRINT
-   debug_printf("ExaPrepareComposite(%d, src=0x%p, mask=0x%p, dst=0x%p)\n",
+   exa_debug_printf("ExaPrepareComposite(%d, src=0x%p, mask=0x%p, dst=0x%p)\n",
                 op, pSrcPicture, pMaskPicture, pDstPicture);
-   debug_printf("\tFormats: src(%s), mask(%s), dst(%s)\n",
+   exa_debug_printf("\tFormats: src(%s), mask(%s), dst(%s)\n",
                 pSrcPicture ? render_format_name(pSrcPicture->format) : "none",
                 pMaskPicture ? render_format_name(pMaskPicture->format) : "none",
                 pDstPicture ? render_format_name(pDstPicture->format) : "none");
-#endif
+
    if (!exa->pipe)
       XORG_FALLBACK("accel not enabled");
 
@@ -685,12 +686,10 @@ ExaComposite(PixmapPtr pDst, int srcX, int srcY, int maskX, int maskY,
    struct exa_context *exa = ms->exa;
    struct exa_pixmap_priv *priv = exaGetPixmapDriverPrivate(pDst);
 
-#if DEBUG_PRINT
-   debug_printf("\tExaComposite(src[%d,%d], mask=[%d, %d], dst=[%d, %d], dim=[%d, %d])\n",
+   exa_debug_printf("\tExaComposite(src[%d,%d], mask=[%d, %d], dst=[%d, %d], dim=[%d, %d])\n",
                 srcX, srcY, maskX, maskY, dstX, dstY, width, height);
-   debug_printf("\t   Num bound samplers = %d\n",
+   exa_debug_printf("\t   Num bound samplers = %d\n",
                 exa->num_bound_samplers);
-#endif
 
    xorg_composite(exa, priv, srcX, srcY, maskX, maskY,
                   dstX, dstY, width, height);
