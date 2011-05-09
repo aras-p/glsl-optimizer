@@ -87,6 +87,80 @@ fs_visitor::assign_regs_trivial()
 
 }
 
+static void
+brw_alloc_reg_set_for_classes(struct brw_context *brw,
+			      int *class_sizes,
+			      int class_count,
+			      int reg_width,
+			      int base_reg_count)
+{
+   struct intel_context *intel = &brw->intel;
+
+   /* Compute the total number of registers across all classes. */
+   int ra_reg_count = 0;
+   for (int i = 0; i < class_count; i++) {
+      ra_reg_count += base_reg_count - (class_sizes[i] - 1);
+   }
+
+   ralloc_free(brw->wm.ra_reg_to_grf);
+   brw->wm.ra_reg_to_grf = ralloc_array(brw, uint8_t, ra_reg_count);
+   ralloc_free(brw->wm.regs);
+   brw->wm.regs = ra_alloc_reg_set(ra_reg_count);
+   ralloc_free(brw->wm.classes);
+   brw->wm.classes = ralloc_array(brw, int, class_count + 1);
+
+   brw->wm.aligned_pairs_class = -1;
+
+   /* Now, add the registers to their classes, and add the conflicts
+    * between them and the base GRF registers (and also each other).
+    */
+   int reg = 0;
+   int pairs_base_reg = 0;
+   int pairs_reg_count = 0;
+   for (int i = 0; i < class_count; i++) {
+      int class_reg_count = base_reg_count - (class_sizes[i] - 1);
+      brw->wm.classes[i] = ra_alloc_reg_class(brw->wm.regs);
+
+      /* Save this off for the aligned pair class at the end. */
+      if (class_sizes[i] == 2) {
+	 pairs_base_reg = reg;
+	 pairs_reg_count = class_reg_count;
+      }
+
+      for (int j = 0; j < class_reg_count; j++) {
+	 ra_class_add_reg(brw->wm.regs, brw->wm.classes[i], reg);
+
+	 brw->wm.ra_reg_to_grf[reg] = j;
+
+	 for (int base_reg = j;
+	      base_reg < j + class_sizes[i];
+	      base_reg++) {
+	    ra_add_transitive_reg_conflict(brw->wm.regs, base_reg, reg);
+	 }
+
+	 reg++;
+      }
+   }
+   assert(reg == ra_reg_count);
+
+   /* Add a special class for aligned pairs, which we'll put delta_x/y
+    * in on gen5 so that we can do PLN.
+    */
+   if (brw->has_pln && reg_width == 1 && intel->gen < 6) {
+      brw->wm.aligned_pairs_class = ra_alloc_reg_class(brw->wm.regs);
+
+      for (int i = 0; i < pairs_reg_count; i++) {
+	 if ((brw->wm.ra_reg_to_grf[pairs_base_reg + i] & 1) == 0) {
+	    ra_class_add_reg(brw->wm.regs, brw->wm.aligned_pairs_class,
+			     pairs_base_reg + i);
+	 }
+      }
+      class_count++;
+   }
+
+   ra_set_finalize(brw->wm.regs);
+}
+
 bool
 fs_visitor::assign_regs()
 {
@@ -102,7 +176,6 @@ fs_visitor::assign_regs()
    int base_reg_count = (BRW_MAX_GRF - first_assigned_grf) / reg_width;
    int class_sizes[base_reg_count];
    int class_count = 0;
-   int aligned_pairs_class = -1;
 
    calculate_live_intervals();
 
@@ -137,76 +210,20 @@ fs_visitor::assign_regs()
       }
    }
 
-   /* Compute the total number of registers across all classes. */
-   int ra_reg_count = 0;
-   for (int i = 0; i < class_count; i++) {
-      ra_reg_count += base_reg_count - (class_sizes[i] - 1);
-   }
+   brw_alloc_reg_set_for_classes(brw, class_sizes, class_count,
+				 reg_width, base_reg_count);
 
-   struct ra_regs *regs = ra_alloc_reg_set(ra_reg_count);
-   uint8_t ra_reg_to_grf[ra_reg_count];
-   int classes[class_count + 1];
-
-   /* Now, add the registers to their classes, and add the conflicts
-    * between them and the base GRF registers (and also each other).
-    */
-   int reg = 0;
-   int pairs_base_reg = 0;
-   int pairs_reg_count = 0;
-   for (int i = 0; i < class_count; i++) {
-      int class_reg_count = base_reg_count - (class_sizes[i] - 1);
-      classes[i] = ra_alloc_reg_class(regs);
-
-      /* Save this off for the aligned pair class at the end. */
-      if (class_sizes[i] == 2) {
-	 pairs_base_reg = reg;
-	 pairs_reg_count = class_reg_count;
-      }
-
-      for (int j = 0; j < class_reg_count; j++) {
-	 ra_class_add_reg(regs, classes[i], reg);
-
-	 ra_reg_to_grf[reg] = j;
-
-	 for (int base_reg = j;
-	      base_reg < j + class_sizes[i];
-	      base_reg++) {
-	    ra_add_transitive_reg_conflict(regs, base_reg, reg);
-	 }
-
-	 reg++;
-      }
-   }
-   assert(reg == ra_reg_count);
-
-   /* Add a special class for aligned pairs, which we'll put delta_x/y
-    * in on gen5 so that we can do PLN.
-    */
-   if (brw->has_pln && reg_width == 1 && intel->gen < 6) {
-      aligned_pairs_class = ra_alloc_reg_class(regs);
-
-      for (int i = 0; i < pairs_reg_count; i++) {
-	 if ((ra_reg_to_grf[pairs_base_reg + i] & 1) == 0) {
-	    ra_class_add_reg(regs, aligned_pairs_class,
-			     pairs_base_reg + i);
-	 }
-      }
-      class_count++;
-   }
-
-   ra_set_finalize(regs);
-
-   struct ra_graph *g = ra_alloc_interference_graph(regs,
+   struct ra_graph *g = ra_alloc_interference_graph(brw->wm.regs,
 						    this->virtual_grf_next);
 
    for (int i = 0; i < this->virtual_grf_next; i++) {
       for (int c = 0; c < class_count; c++) {
 	 if (class_sizes[c] == this->virtual_grf_sizes[i]) {
-	    if (aligned_pairs_class >= 0 &&
+	    if (brw->wm.aligned_pairs_class >= 0 &&
 		this->delta_x.reg == i) {
-	       ra_set_node_class(g, i, aligned_pairs_class);
+	       ra_set_node_class(g, i, brw->wm.aligned_pairs_class);
 	    } else {
-	       ra_set_node_class(g, i, classes[c]);
+	       ra_set_node_class(g, i, brw->wm.classes[c]);
 	    }
 	    break;
 	 }
@@ -237,7 +254,6 @@ fs_visitor::assign_regs()
 
 
       ralloc_free(g);
-      ralloc_free(regs);
 
       return false;
    }
@@ -250,7 +266,8 @@ fs_visitor::assign_regs()
    for (int i = 0; i < this->virtual_grf_next; i++) {
       int reg = ra_get_node_reg(g, i);
 
-      hw_reg_mapping[i] = first_assigned_grf + ra_reg_to_grf[reg] * reg_width;
+      hw_reg_mapping[i] = (first_assigned_grf +
+			   brw->wm.ra_reg_to_grf[reg] * reg_width);
       this->grf_used = MAX2(this->grf_used,
 			    hw_reg_mapping[i] + this->virtual_grf_sizes[i] *
 			    reg_width);
@@ -265,7 +282,6 @@ fs_visitor::assign_regs()
    }
 
    ralloc_free(g);
-   ralloc_free(regs);
 
    return true;
 }

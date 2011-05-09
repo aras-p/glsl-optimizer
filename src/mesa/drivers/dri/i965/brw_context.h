@@ -748,6 +748,29 @@ struct brw_context
        * Pre-gen6, push constants live in the CURBE.
        */
       uint32_t push_const_offset;
+
+      /** @{ register allocator */
+
+      struct ra_regs *regs;
+
+      /** Array of the ra classes for the unaligned contiguous
+       * register block sizes used.
+       */
+      int *classes;
+
+      /**
+       * Mapping for register-allocated objects in *regs to the first
+       * GRF for that object.
+      */
+      uint8_t *ra_reg_to_grf;
+
+      /**
+       * ra class for the aligned pairs we use for PLN, which doesn't
+       * appear in *classes.
+       */
+      int aligned_pairs_class;
+
+      /** @} */
    } wm;
 
 
