@@ -485,8 +485,6 @@ fs_visitor::emit_fragcoord_interpolation(ir_variable *ir)
 {
    fs_reg *reg = new(this->mem_ctx) fs_reg(this, ir->type);
    fs_reg wpos = *reg;
-   fs_reg neg_y = this->pixel_y;
-   neg_y.negate = true;
    bool flip = !ir->origin_upper_left ^ c->key.render_to_fbo;
 
    /* gl_FragCoord.x */
@@ -3070,7 +3068,6 @@ fs_visitor::calculate_live_intervals()
    int *use = ralloc_array(mem_ctx, int, num_vars);
    int loop_depth = 0;
    int loop_start = 0;
-   int bb_header_ip = 0;
 
    if (this->live_intervals_valid)
       return;
@@ -3130,22 +3127,6 @@ fs_visitor::calculate_live_intervals()
       }
 
       ip++;
-
-      /* Set the basic block header IP.  This is used for determining
-       * if a complete def of single-register virtual GRF in a loop
-       * dominates a use in the same basic block.  It's a quick way to
-       * reduce the live interval range of most register used in a
-       * loop.
-       */
-      if (inst->opcode == BRW_OPCODE_IF ||
-	  inst->opcode == BRW_OPCODE_ELSE ||
-	  inst->opcode == BRW_OPCODE_ENDIF ||
-	  inst->opcode == BRW_OPCODE_DO ||
-	  inst->opcode == BRW_OPCODE_WHILE ||
-	  inst->opcode == BRW_OPCODE_BREAK ||
-	  inst->opcode == BRW_OPCODE_CONTINUE) {
-	 bb_header_ip = ip;
-      }
    }
 
    ralloc_free(this->virtual_grf_def);
