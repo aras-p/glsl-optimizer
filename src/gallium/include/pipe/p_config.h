@@ -126,10 +126,12 @@
 #define PIPE_ARCH_LITTLE_ENDIAN
 #elif defined(PIPE_ARCH_PPC) || defined(PIPE_ARCH_PPC_64)
 #define PIPE_ARCH_BIG_ENDIAN
-#else
-#error Unknown Endianness
 #endif
 
+#endif
+
+#if !defined(PIPE_ARCH_LITTLE_ENDIAN) && !defined(PIPE_ARCH_BIG_ENDIAN)
+#error Unknown Endianness
 #endif
 
 #if !defined(PIPE_OS_EMBEDDED)
