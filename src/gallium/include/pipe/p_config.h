@@ -127,7 +127,7 @@
 #elif defined(PIPE_ARCH_PPC) || defined(PIPE_ARCH_PPC_64)
 #define PIPE_ARCH_BIG_ENDIAN
 #else
-#define PIPE_ARCH_UNKNOWN_ENDIAN
+#error Unknown Endianness
 #endif
 
 #endif
