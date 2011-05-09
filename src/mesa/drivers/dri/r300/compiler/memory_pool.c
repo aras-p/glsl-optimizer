@@ -28,7 +28,7 @@
 
 
 #define POOL_LARGE_ALLOC 4096
-#define POOL_ALIGN 4
+#define POOL_ALIGN 8
 
 
 struct memory_block {
