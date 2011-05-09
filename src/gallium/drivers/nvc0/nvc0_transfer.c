@@ -246,6 +246,9 @@ nvc0_miptree_transfer_new(struct pipe_context *pctx,
    uint32_t w, h, d, z, layer;
    int ret;
 
+   if (usage & PIPE_TRANSFER_MAP_DIRECTLY)
+      return NULL;
+
    tx = CALLOC_STRUCT(nvc0_transfer);
    if (!tx)
       return NULL;
