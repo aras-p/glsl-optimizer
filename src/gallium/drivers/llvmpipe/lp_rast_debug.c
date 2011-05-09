@@ -398,7 +398,7 @@ lp_debug_draw_bins_by_cmd_length( struct lp_scene *scene )
       for (x = 0; x < scene->tiles_x; x++) {
          const char *bits = " ...,-~:;=o+xaw*#XAWWWWWWWWWWWWWWWW";
          int sz = lp_scene_bin_size(scene, x, y);
-         int sz2 = util_unsigned_logbase2(sz);
+         int sz2 = util_logbase2(sz);
          debug_printf("%c", bits[MIN2(sz2,32)]);
       }
       debug_printf("\n");

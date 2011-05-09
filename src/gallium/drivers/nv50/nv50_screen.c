@@ -489,7 +489,7 @@ nv50_screen_create(struct pipe_winsys *ws, struct nouveau_device *dev)
    BEGIN_RING(chan, RING_3D(LOCAL_ADDRESS_HIGH), 3);
    OUT_RELOCh(chan, screen->tls_bo, 0, NOUVEAU_BO_VRAM | NOUVEAU_BO_RDWR);
    OUT_RELOCl(chan, screen->tls_bo, 0, NOUVEAU_BO_VRAM | NOUVEAU_BO_RDWR);
-   OUT_RING  (chan, util_unsigned_logbase2(tls_space / 8));
+   OUT_RING  (chan, util_logbase2(tls_space / 8));
 
    ret = nouveau_bo_new(dev, NOUVEAU_BO_VRAM, 1 << 16, 4 << 16,
                         &screen->uniforms);

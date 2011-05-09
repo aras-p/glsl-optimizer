@@ -414,18 +414,6 @@ unsigned ffs( unsigned u )
 #endif
 
 
-/* Could also binary search for the highest bit.
- */
-static INLINE unsigned
-util_unsigned_logbase2(unsigned n)
-{
-   unsigned log2 = 0;
-   while (n >>= 1)
-      ++log2;
-   return log2;
-}
-
-
 /**
  * Return float bits.
  */
