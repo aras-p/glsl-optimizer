@@ -170,6 +170,7 @@ static void translate_instruction(struct radeon_compiler * c,
 		dest->U.I.TexSrcUnit = src->TexSrcUnit;
 		dest->U.I.TexSrcTarget = translate_tex_target(src->TexSrcTarget);
 		dest->U.I.TexShadow = src->TexShadow;
+		dest->U.I.TexSwizzle = RC_SWIZZLE_XYZW;
 	}
 }
 
