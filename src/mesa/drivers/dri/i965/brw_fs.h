@@ -75,8 +75,7 @@ enum fs_opcodes {
    FS_OPCODE_TXB,
    FS_OPCODE_TXD,
    FS_OPCODE_TXL,
-   FS_OPCODE_DISCARD_NOT,
-   FS_OPCODE_DISCARD_AND,
+   FS_OPCODE_DISCARD,
    FS_OPCODE_SPILL,
    FS_OPCODE_UNSPILL,
    FS_OPCODE_PULL_CONSTANT_LOAD,
@@ -500,8 +499,7 @@ public:
 			 struct brw_reg *src);
    void generate_tex(fs_inst *inst, struct brw_reg dst, struct brw_reg src);
    void generate_math(fs_inst *inst, struct brw_reg dst, struct brw_reg *src);
-   void generate_discard_not(fs_inst *inst, struct brw_reg temp);
-   void generate_discard_and(fs_inst *inst, struct brw_reg temp);
+   void generate_discard(fs_inst *inst);
    void generate_ddx(fs_inst *inst, struct brw_reg dst, struct brw_reg src);
    void generate_ddy(fs_inst *inst, struct brw_reg dst, struct brw_reg src);
    void generate_spill(fs_inst *inst, struct brw_reg src);

@@ -1606,12 +1606,9 @@ fs_visitor::visit(ir_swizzle *ir)
 void
 fs_visitor::visit(ir_discard *ir)
 {
-   fs_reg temp = fs_reg(this, glsl_type::uint_type);
-
    assert(ir->condition == NULL); /* FINISHME */
 
-   emit(FS_OPCODE_DISCARD_NOT, temp, reg_null_d);
-   emit(FS_OPCODE_DISCARD_AND, reg_null_d, temp);
+   emit(FS_OPCODE_DISCARD);
    kill_emitted = true;
 }
 
@@ -2671,56 +2668,54 @@ fs_visitor::generate_ddy(fs_inst *inst, struct brw_reg dst, struct brw_reg src)
 }
 
 void
-fs_visitor::generate_discard_not(fs_inst *inst, struct brw_reg mask)
+fs_visitor::generate_discard(fs_inst *inst)
 {
-   if (intel->gen >= 6) {
-      /* Gen6 no longer has the mask reg for us to just read the
-       * active channels from.  However, cmp updates just the channels
-       * of the flag reg that are enabled, so we can get at the
-       * channel enables that way.  In this step, make a reg of ones
-       * we'll compare to.
-       */
-      brw_MOV(p, mask, brw_imm_ud(1));
-   } else {
-      brw_push_insn_state(p);
-      brw_set_mask_control(p, BRW_MASK_DISABLE);
-      brw_set_compression_control(p, BRW_COMPRESSION_NONE);
-      brw_NOT(p, mask, brw_mask_reg(1)); /* IMASK */
-      brw_pop_insn_state(p);
-   }
-}
+   struct brw_reg f0 = brw_flag_reg();
 
-void
-fs_visitor::generate_discard_and(fs_inst *inst, struct brw_reg mask)
-{
    if (intel->gen >= 6) {
-      struct brw_reg f0 = brw_flag_reg();
       struct brw_reg g1 = retype(brw_vec1_grf(1, 7), BRW_REGISTER_TYPE_UW);
+      struct brw_reg some_register;
 
+      /* As of gen6, we no longer have the mask register to look at,
+       * so life gets a bit more complicated.
+       */
+
+      /* Load the flag register with all ones. */
       brw_push_insn_state(p);
       brw_set_mask_control(p, BRW_MASK_DISABLE);
-      brw_MOV(p, f0, brw_imm_uw(0xffff)); /* inactive channels undiscarded */
+      brw_MOV(p, f0, brw_imm_uw(0xffff));
       brw_pop_insn_state(p);
 
+      /* Do a comparison that should always fail, to produce 0s in the flag
+       * reg where we have active channels.
+       */
+      some_register = retype(brw_vec8_grf(0, 0), BRW_REGISTER_TYPE_UW);
       brw_CMP(p, retype(brw_null_reg(), BRW_REGISTER_TYPE_UD),
-	      BRW_CONDITIONAL_Z, mask, brw_imm_ud(0)); /* active channels fail test */
+	      BRW_CONDITIONAL_NZ, some_register, some_register);
+
       /* Undo CMP's whacking of predication*/
       brw_set_predicate_control(p, BRW_PREDICATE_NONE);
 
       brw_push_insn_state(p);
       brw_set_mask_control(p, BRW_MASK_DISABLE);
-      brw_set_compression_control(p, BRW_COMPRESSION_NONE);
       brw_AND(p, g1, f0, g1);
       brw_pop_insn_state(p);
    } else {
       struct brw_reg g0 = retype(brw_vec1_grf(0, 0), BRW_REGISTER_TYPE_UW);
-
-      mask = brw_uw1_reg(mask.file, mask.nr, 0);
+      struct brw_reg mask = brw_uw1_reg(mask.file, mask.nr, 0);
 
       brw_push_insn_state(p);
       brw_set_mask_control(p, BRW_MASK_DISABLE);
       brw_set_compression_control(p, BRW_COMPRESSION_NONE);
-      brw_AND(p, g0, mask, g0);
+
+      /* Unlike the 965, we have the mask reg, so we just need
+       * somewhere to invert that (containing channels to be disabled)
+       * so it can be ANDed with the mask of pixels still to be
+       * written. Use the flag reg for consistency with gen6+.
+       */
+      brw_NOT(p, f0, brw_mask_reg(1)); /* IMASK */
+      brw_AND(p, g0, f0, g0);
+
       brw_pop_insn_state(p);
    }
 }
@@ -3968,11 +3963,8 @@ fs_visitor::generate_code()
       case FS_OPCODE_TXL:
 	 generate_tex(inst, dst, src[0]);
 	 break;
-      case FS_OPCODE_DISCARD_NOT:
-	 generate_discard_not(inst, dst);
-	 break;
-      case FS_OPCODE_DISCARD_AND:
-	 generate_discard_and(inst, src[0]);
+      case FS_OPCODE_DISCARD:
+	 generate_discard(inst);
 	 break;
       case FS_OPCODE_DDX:
 	 generate_ddx(inst, dst, src[0]);
