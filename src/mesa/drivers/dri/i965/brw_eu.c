@@ -295,7 +295,7 @@ brw_resolve_cals(struct brw_compile *c)
 	GLint offset = brw_sub_inst - brw_call_inst;
 
 	/* patch brw_inst1 to point to brw_inst2 */
-	brw_set_src1(brw_call_inst, brw_imm_d(offset * 16));
+	brw_set_src1(c, brw_call_inst, brw_imm_d(offset * 16));
     }
 
     /* free linked list of calls */
