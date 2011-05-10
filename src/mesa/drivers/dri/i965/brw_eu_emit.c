@@ -1003,7 +1003,11 @@ gen6_IF(struct brw_compile *p, uint32_t conditional,
    insn = next_insn(p, BRW_OPCODE_IF);
 
    brw_set_dest(p, insn, brw_imm_w(0));
-   insn->header.execution_size = BRW_EXECUTE_8;
+   if (p->compressed) {
+      insn->header.execution_size = BRW_EXECUTE_16;
+   } else {
+      insn->header.execution_size = BRW_EXECUTE_8;
+   }
    insn->bits1.branch_gen6.jump_count = 0;
    brw_set_src0(p, insn, src0);
    brw_set_src1(p, insn, src1);

@@ -1859,7 +1859,7 @@ fs_visitor::visit(ir_if *ir)
 {
    fs_inst *inst;
 
-   if (c->dispatch_width == 16) {
+   if (intel->gen != 6 && c->dispatch_width == 16) {
       fail("Can't support (non-uniform) control flow on 16-wide\n");
    }
 
@@ -3872,7 +3872,7 @@ fs_visitor::generate_code()
 	    assert(intel->gen == 6);
 	    gen6_IF(p, inst->conditional_mod, src[0], src[1]);
 	 } else {
-	    brw_IF(p, BRW_EXECUTE_8);
+	    brw_IF(p, c->dispatch_width == 16 ? BRW_EXECUTE_16 : BRW_EXECUTE_8);
 	 }
 	 if_depth_in_loop[loop_stack_depth]++;
 	 break;
