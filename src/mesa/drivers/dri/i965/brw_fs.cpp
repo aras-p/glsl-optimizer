@@ -2330,12 +2330,6 @@ fs_visitor::generate_fb_write(fs_inst *inst)
 		    brw_imm_ud(inst->target));
 	 }
 
-	 /* Clear viewport index, render target array index. */
-	 brw_AND(p, retype(brw_vec1_reg(BRW_MESSAGE_REGISTER_FILE, 0, 0),
-			   BRW_REGISTER_TYPE_UD),
-		 retype(brw_vec1_grf(0, 0), BRW_REGISTER_TYPE_UD),
-		 brw_imm_ud(0xf7ff));
-
 	 implied_header = brw_null_reg();
       } else {
 	 implied_header = retype(brw_vec8_grf(0, 0), BRW_REGISTER_TYPE_UW);
