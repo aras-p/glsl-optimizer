@@ -784,6 +784,8 @@ struct brw_instruction *brw_##OP(struct brw_compile *p,	\
  * stores a rounded value (possibly the wrong way) in the dest register, but
  * also sets a per-channel "increment bit" in the flag register.  A predicated
  * add of 1.0 fixes dest to contain the desired result.
+ *
+ * Sandybridge and later appear to round correctly without an ADD.
  */
 #define ROUND(OP)							      \
 void brw_##OP(struct brw_compile *p,					      \
@@ -794,10 +796,13 @@ void brw_##OP(struct brw_compile *p,					      \
    rnd = next_insn(p, BRW_OPCODE_##OP);					      \
    brw_set_dest(p, rnd, dest);						      \
    brw_set_src0(p, rnd, src);						      \
-   rnd->header.destreg__conditionalmod = 0x7; /* turn on round-increments */  \
 									      \
-   add = brw_ADD(p, dest, dest, brw_imm_f(1.0f));			      \
-   add->header.predicate_control = BRW_PREDICATE_NORMAL;		      \
+   if (p->brw->intel.gen < 6) {						      \
+      /* turn on round-increments */					      \
+      rnd->header.destreg__conditionalmod = BRW_CONDITIONAL_R;		      \
+      add = brw_ADD(p, dest, dest, brw_imm_f(1.0f));			      \
+      add->header.predicate_control = BRW_PREDICATE_NORMAL;		      \
+   }									      \
 }
 
 
