@@ -145,6 +145,7 @@ int radeon_bo_get_tiling_flags(struct radeon *radeon,
 int radeon_bo_get_name(struct radeon *radeon,
 		       struct radeon_bo *bo,
 		       uint32_t *name);
+int radeon_bo_fixed_map(struct radeon *radeon, struct radeon_bo *bo);
 
 /*
  * r600_hw_context.c
@@ -192,6 +193,8 @@ struct r600_bo *r600_bomgr_bo_create(struct r600_bomgr *mgr,
  */
 static inline int radeon_bo_map(struct radeon *radeon, struct radeon_bo *bo)
 {
+	if (bo->map_count == 0 && !bo->data)
+		return radeon_bo_fixed_map(radeon, bo);
 	bo->map_count++;
 	return 0;
 }
