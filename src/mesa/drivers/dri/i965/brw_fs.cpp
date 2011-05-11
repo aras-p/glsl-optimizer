@@ -2317,9 +2317,11 @@ fs_visitor::generate_fb_write(fs_inst *inst)
 
    if (inst->header_present) {
       if (intel->gen >= 6) {
+	 brw_set_compression_control(p, BRW_COMPRESSION_COMPRESSED);
 	 brw_MOV(p,
-		 brw_message_reg(inst->base_mrf),
-		 brw_vec8_grf(0, 0));
+		 retype(brw_message_reg(inst->base_mrf), BRW_REGISTER_TYPE_UD),
+		 retype(brw_vec8_grf(0, 0), BRW_REGISTER_TYPE_UD));
+	 brw_set_compression_control(p, BRW_COMPRESSION_NONE);
 
 	 if (inst->target > 0) {
 	    /* Set the render target index for choosing BLEND_STATE. */
@@ -2337,11 +2339,11 @@ fs_visitor::generate_fb_write(fs_inst *inst)
 	 implied_header = brw_null_reg();
       } else {
 	 implied_header = retype(brw_vec8_grf(0, 0), BRW_REGISTER_TYPE_UW);
-      }
 
-      brw_MOV(p,
-	      brw_message_reg(inst->base_mrf + 1),
-	      brw_vec8_grf(1, 0));
+	 brw_MOV(p,
+		 brw_message_reg(inst->base_mrf + 1),
+		 brw_vec8_grf(1, 0));
+      }
    } else {
       implied_header = brw_null_reg();
    }
