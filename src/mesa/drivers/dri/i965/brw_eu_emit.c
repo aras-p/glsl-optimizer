@@ -586,7 +586,17 @@ brw_set_dp_read_message(struct brw_compile *p,
    struct intel_context *intel = &brw->intel;
    brw_set_src1(p, insn, brw_imm_d(0));
 
-   if (intel->gen >= 6) {
+   if (intel->gen >= 7) {
+       insn->bits3.gen7_dp.binding_table_index = binding_table_index;
+       insn->bits3.gen7_dp.msg_control = msg_control;
+       insn->bits3.gen7_dp.pixel_scoreboard_clear = 0;
+       insn->bits3.gen7_dp.msg_type = msg_type;
+       insn->bits3.gen7_dp.header_present = 1;
+       insn->bits3.gen7_dp.response_length = response_length;
+       insn->bits3.gen7_dp.msg_length = msg_length;
+       insn->bits3.gen7_dp.end_of_thread = 0;
+       insn->header.destreg__conditionalmod = GEN6_MESSAGE_TARGET_DP_CONST_CACHE;
+   } else if (intel->gen == 6) {
        uint32_t target_function;
 
        if (target_cache == BRW_DATAPORT_READ_TARGET_DATA_CACHE)
@@ -1997,7 +2007,7 @@ void brw_dp_READ_4_vs_relative(struct brw_compile *p,
    brw_set_dest(p, insn, dest);
    brw_set_src0(p, insn, src);
 
-   if (intel->gen == 6)
+   if (intel->gen >= 6)
       msg_type = GEN6_DATAPORT_READ_MESSAGE_OWORD_DUAL_BLOCK_READ;
    else if (intel->gen == 5 || intel->is_g4x)
       msg_type = G45_DATAPORT_READ_MESSAGE_OWORD_DUAL_BLOCK_READ;
