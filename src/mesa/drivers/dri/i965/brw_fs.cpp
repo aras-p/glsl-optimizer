@@ -3386,7 +3386,7 @@ fs_visitor::register_coalesce()
 	 /* The gen6 MATH instruction can't handle source modifiers, so avoid
 	  * coalescing those for now.  We should do something more specific.
 	  */
-	 if (intel->gen == 6 && scan_inst->is_math() && has_source_modifiers) {
+	 if (intel->gen >= 6 && scan_inst->is_math() && has_source_modifiers) {
 	    interfered = true;
 	    break;
 	 }
