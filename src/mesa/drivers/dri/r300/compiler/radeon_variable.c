@@ -388,17 +388,21 @@ struct rc_list * rc_get_variables(struct radeon_compiler * c)
 	 */
 	while (aborted_list) {
 		struct rc_list * search_ptr_next;
+		struct rc_variable * var;
 		var_ptr = aborted_list;
+		for (var = var_ptr->Item; var; var = var->Friend) {
 
-		search_ptr = var_ptr->Next;
-		while(search_ptr) {
-			search_ptr_next = search_ptr->Next;
-			if (readers_intersect(var_ptr->Item, search_ptr->Item)){
-				rc_list_remove(&aborted_list, search_ptr);
-				rc_variable_add_friend(var_ptr->Item,
+			search_ptr = var_ptr->Next;
+			while(search_ptr) {
+				search_ptr_next = search_ptr->Next;
+				if (readers_intersect(var, search_ptr->Item)){
+					rc_list_remove(&aborted_list,
+							search_ptr);
+					rc_variable_add_friend(var,
 							search_ptr->Item);
+				}
+				search_ptr = search_ptr_next;
 			}
-			search_ptr = search_ptr_next;
 		}
 		rc_list_remove(&aborted_list, var_ptr);
 		rc_list_add(&variable_list, rc_list(
