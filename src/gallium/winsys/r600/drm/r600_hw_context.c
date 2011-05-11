@@ -810,7 +810,9 @@ void r600_context_bo_flush(struct r600_context *ctx, unsigned flush_flags,
 	     G_0085F0_DB_ACTION_ENA(flush_flags))) {
 		if (ctx->flags & R600_CONTEXT_CHECK_EVENT_FLUSH) {
 			/* the rv670 seems to fail fbo-generatemipmap unless we flush the CB1 dest base ena */
-			if (ctx->radeon->family == CHIP_RV670) {
+			if ((ctx->radeon->family == CHIP_RV670) ||
+			    (ctx->radeon->family == CHIP_RS780) ||
+			    (ctx->radeon->family == CHIP_RS880)) {
 				ctx->pm4[ctx->pm4_cdwords++] = PKT3(PKT3_SURFACE_SYNC, 3, ctx->predicate_drawing);
 				ctx->pm4[ctx->pm4_cdwords++] = S_0085F0_CB1_DEST_BASE_ENA(1);     /* CP_COHER_CNTL */
 				ctx->pm4[ctx->pm4_cdwords++] = 0xffffffff;      /* CP_COHER_SIZE */
