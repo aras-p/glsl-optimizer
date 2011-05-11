@@ -267,6 +267,11 @@ _mesa_append_fog_code(struct gl_context *ctx,
       return;
    }
 
+   if (!(fprog->Base.OutputsWritten & (1 << FRAG_RESULT_COLOR))) {
+      /* program doesn't output color, so nothing to do */
+      return;
+   }
+
    /* Alloc storage for new instructions */
    newInst = _mesa_alloc_instructions(newLen);
    if (!newInst) {
@@ -407,6 +412,7 @@ _mesa_append_fog_code(struct gl_context *ctx,
    fprog->Base.Instructions = newInst;
    fprog->Base.NumInstructions = inst - newInst;
    fprog->Base.InputsRead |= FRAG_BIT_FOGC;
+   assert(fprog->Base.OutputsWritten & (1 << FRAG_RESULT_COLOR));
 }
 
 
