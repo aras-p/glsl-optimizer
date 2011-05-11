@@ -28,10 +28,12 @@
 #ifndef EGL_DRI2_INCLUDED
 #define EGL_DRI2_INCLUDED
 
+#ifdef HAVE_X11_PLATFORM
 #include <xcb/xcb.h>
 #include <xcb/dri2.h>
 #include <xcb/xfixes.h>
 #include <X11/Xlib-xcb.h>
+#endif
 
 #ifdef HAVE_WAYLAND_PLATFORM
 #include <wayland-client.h>
@@ -64,7 +66,6 @@ struct dri2_egl_driver
 
 struct dri2_egl_display
 {
-   xcb_connection_t         *conn;
    int                       dri2_major;
    int                       dri2_minor;
    __DRIscreen              *dri_screen;
@@ -84,6 +85,11 @@ struct dri2_egl_display
    __DRIdri2LoaderExtension    dri2_loader_extension;
    __DRIswrastLoaderExtension  swrast_loader_extension;
    const __DRIextension     *extensions[3];
+
+#ifdef HAVE_X11_PLATFORM
+   xcb_connection_t         *conn;
+#endif
+
 #ifdef HAVE_WAYLAND_PLATFORM
    struct wl_display        *wl_dpy;
    struct wl_drm            *wl_server_drm;
@@ -120,17 +126,19 @@ struct dri2_egl_surface
 {
    _EGLSurface          base;
    __DRIdrawable       *dri_drawable;
-   xcb_drawable_t       drawable;
    __DRIbuffer          buffers[5];
    int                  buffer_count;
-   xcb_xfixes_region_t  region;
    int                  have_fake_front;
    int                  swap_interval;
 
+#ifdef HAVE_X11_PLATFORM
+   xcb_drawable_t       drawable;
+   xcb_xfixes_region_t  region;
    int                  depth;
    int                  bytes_per_pixel;
    xcb_gcontext_t       gc;
    xcb_gcontext_t       swapgc;
+#endif
 
    enum dri2_surface_type type;
 #ifdef HAVE_WAYLAND_PLATFORM

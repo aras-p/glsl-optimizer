@@ -490,10 +490,12 @@ dri2_initialize(_EGLDriver *drv, _EGLDisplay *disp)
       return EGL_FALSE;
 
    switch (disp->Platform) {
+#ifdef HAVE_X11_PLATFORM
    case _EGL_PLATFORM_X11:
       if (disp->Options.TestOnly)
          return EGL_TRUE;
       return dri2_initialize_x11(drv, disp);
+#endif
 
 #ifdef HAVE_LIBUDEV
    case _EGL_PLATFORM_DRM:
@@ -528,8 +530,10 @@ dri2_terminate(_EGLDriver *drv, _EGLDisplay *disp)
    if (dri2_dpy->fd)
       close(dri2_dpy->fd);
    dlclose(dri2_dpy->driver);
+#ifdef HAVE_X11_PLATFORM
    if (disp->PlatformDisplay == NULL)
       xcb_disconnect(dri2_dpy->conn);
+#endif
    free(dri2_dpy);
    disp->DriverData = NULL;
 
