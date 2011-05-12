@@ -922,16 +922,17 @@ void r600_context_pipe_state_set(struct r600_context *ctx, struct r600_pipe_stat
 	int dirty;
 	for (int i = 0; i < state->nregs; i++) {
 		unsigned id, reloc_id;
+		struct r600_pipe_reg *reg = &state->regs[i];
 
-		range = &ctx->range[CTX_RANGE_ID(ctx, state->regs[i].offset)];
-		block = range->blocks[CTX_BLOCK_ID(ctx, state->regs[i].offset)];
-		id = (state->regs[i].offset - block->start_offset) >> 2;
+		range = &ctx->range[CTX_RANGE_ID(ctx, reg->offset)];
+		block = range->blocks[CTX_BLOCK_ID(ctx, reg->offset)];
+		id = (reg->offset - block->start_offset) >> 2;
 
 		dirty = block->status & R600_BLOCK_STATUS_DIRTY;
 
 		new_val = block->reg[id];
-		new_val &= ~state->regs[i].mask;
-		new_val |= state->regs[i].value;
+		new_val &= ~reg->mask;
+		new_val |= reg->value;
 		if (new_val != block->reg[id]) {
 			block->reg[id] = new_val;
 			dirty |= R600_BLOCK_STATUS_DIRTY;
@@ -941,8 +942,8 @@ void r600_context_pipe_state_set(struct r600_context *ctx, struct r600_pipe_stat
 		if (block->pm4_bo_index[id]) {
 			/* find relocation */
 			reloc_id = block->pm4_bo_index[id];
-			r600_bo_reference(ctx->radeon, &block->reloc[reloc_id].bo, state->regs[i].bo);
-			state->regs[i].bo->fence = ctx->radeon->fence;
+			r600_bo_reference(ctx->radeon, &block->reloc[reloc_id].bo, reg->bo);
+			reg->bo->fence = ctx->radeon->fence;
 			/* always force dirty for relocs for now */
 			dirty |= R600_BLOCK_STATUS_DIRTY;
 		}
