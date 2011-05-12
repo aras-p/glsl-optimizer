@@ -925,6 +925,7 @@ dri2_create_image_mesa_drm_buffer(_EGLDisplay *disp, _EGLContext *ctx,
    return &dri2_img->base;
 }
 
+#ifdef HAVE_WAYLAND_PLATFORM
 static _EGLImage *
 dri2_reference_drm_image(_EGLDisplay *disp, _EGLContext *ctx,
 			 __DRIimage *dri_image, EGLint width, EGLint height)
@@ -951,7 +952,6 @@ dri2_reference_drm_image(_EGLDisplay *disp, _EGLContext *ctx,
 					    attr_list);
 }
 
-#ifdef HAVE_WAYLAND_PLATFORM
 static _EGLImage *
 dri2_create_image_wayland_wl_buffer(_EGLDisplay *disp, _EGLContext *ctx,
 				    EGLClientBuffer _buffer,
