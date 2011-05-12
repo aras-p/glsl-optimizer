@@ -518,15 +518,6 @@ int evergreen_context_init(struct r600_context *ctx, struct radeon *radeon)
 		goto out_err;
 	}
 
-	/* initialize hash */
-	for (int i = 0; i < NUM_RANGES; i++) {
-		ctx->range[i].blocks = calloc(1 << HASH_SHIFT, sizeof(void*));
-		if (ctx->range[i].blocks == NULL) {
-			r = -ENOMEM;
-			goto out_err;
-		}
-	}
-
 	/* add blocks */
 	r = r600_context_add_block(ctx, evergreen_config_reg_list,
 				   Elements(evergreen_config_reg_list), PKT3_SET_CONFIG_REG, EVERGREEN_CONFIG_REG_OFFSET);
@@ -590,17 +581,9 @@ int evergreen_context_init(struct r600_context *ctx, struct radeon *radeon)
 	/* VS loop const */
 	evergreen_loop_const_init(ctx, 32);
 
-	/* setup block table */
-	ctx->blocks = calloc(ctx->nblocks, sizeof(void*));
-	for (int i = 0, c = 0; i < NUM_RANGES; i++) {
-		for (int j = 0; j < (1 << HASH_SHIFT); j++) {
-			if (ctx->range[i].blocks[j]) {
-				assert(c < ctx->nblocks);
-				ctx->blocks[c++] = ctx->range[i].blocks[j];
-				j += (ctx->range[i].blocks[j]->nreg) - 1;
-			}
-		}
-	}
+	r = r600_setup_block_table(ctx);
+	if (r)
+		goto out_err;
 
 	/* allocate cs variables */
 	ctx->nreloc = RADEON_CTX_MAX_PM4;

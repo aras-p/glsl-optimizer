@@ -159,7 +159,7 @@ void r600_context_pipe_state_set_resource(struct r600_context *ctx, struct r600_
 void r600_context_block_emit_dirty(struct r600_context *ctx, struct r600_block *block);
 void r600_context_dirty_block(struct r600_context *ctx, struct r600_block *block,
 			      int dirty, int index);
-
+int r600_setup_block_table(struct r600_context *ctx);
 void r600_context_reg(struct r600_context *ctx,
 		      unsigned offset, unsigned value,
 		      unsigned mask);

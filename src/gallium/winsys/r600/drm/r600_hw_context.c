@@ -103,6 +103,12 @@ int r600_context_add_block(struct r600_context *ctx, const struct r600_reg *reg,
 		ctx->nblocks++;
 		for (int j = 0; j < n; j++) {
 			range = &ctx->range[CTX_RANGE_ID(ctx, reg[i + j].offset)];
+			/* create block table if it doesn't exist */
+			if (!range->blocks)
+				range->blocks = calloc(1 << HASH_SHIFT, sizeof(void *));
+			if (!range->blocks)
+				return -1;
+
 			range->blocks[CTX_BLOCK_ID(ctx, reg[i + j].offset)] = block;
 		}
 
@@ -612,6 +618,8 @@ void r600_context_fini(struct r600_context *ctx)
 	struct r600_range *range;
 
 	for (int i = 0; i < NUM_RANGES; i++) {
+		if (!ctx->range[i].blocks)
+			continue;
 		for (int j = 0; j < (1 << HASH_SHIFT); j++) {
 			block = ctx->range[i].blocks[j];
 			if (block) {
@@ -637,6 +645,36 @@ void r600_context_fini(struct r600_context *ctx)
 	memset(ctx, 0, sizeof(struct r600_context));
 }
 
+int r600_setup_block_table(struct r600_context *ctx)
+{
+	/* setup block table */
+	ctx->blocks = calloc(ctx->nblocks, sizeof(void*));
+	if (!ctx->blocks)
+		return -ENOMEM;
+	for (int i = 0, c = 0; i < NUM_RANGES; i++) {
+		if (!ctx->range[i].blocks)
+			continue;
+		for (int j = 0, add; j < (1 << HASH_SHIFT); j++) {
+			if (!ctx->range[i].blocks[j])
+				continue;
+
+			add = 1;
+			for (int k = 0; k < c; k++) {
+				if (ctx->blocks[k] == ctx->range[i].blocks[j]) {
+					add = 0;
+					break;
+				}
+			}
+			if (add) {
+				assert(c < ctx->nblocks);
+				ctx->blocks[c++] = ctx->range[i].blocks[j];
+				j += (ctx->range[i].blocks[j]->nreg) - 1;
+			}
+		}
+	}
+	return 0;
+}
+
 int r600_context_init(struct r600_context *ctx, struct radeon *radeon)
 {
 	int r;
@@ -649,15 +687,6 @@ int r600_context_init(struct r600_context *ctx, struct radeon *radeon)
 	if (!ctx->range) {
 		r = -ENOMEM;
 		goto out_err;
-	}
-
-	/* initialize hash */
-	for (int i = 0; i < NUM_RANGES; i++) {
-		ctx->range[i].blocks = calloc(1 << HASH_SHIFT, sizeof(void*));
-		if (ctx->range[i].blocks == NULL) {
-			r = -ENOMEM;
-			goto out_err;
-		}
 	}
 
 	/* add blocks */
@@ -723,26 +752,9 @@ int r600_context_init(struct r600_context *ctx, struct radeon *radeon)
 	/* VS loop const */
 	r600_loop_const_init(ctx, 32);
 
-	/* setup block table */
-	ctx->blocks = calloc(ctx->nblocks, sizeof(void*));
-	for (int i = 0, c = 0; i < NUM_RANGES; i++) {
-		for (int j = 0, add; j < (1 << HASH_SHIFT); j++) {
-			if (ctx->range[i].blocks[j]) {
-				add = 1;
-				for (int k = 0; k < c; k++) {
-					if (ctx->blocks[k] == ctx->range[i].blocks[j]) {
-						add = 0;
-						break;
-					}
-				}
-				if (add) {
-					assert(c < ctx->nblocks);
-					ctx->blocks[c++] = ctx->range[i].blocks[j];
-					j += (ctx->range[i].blocks[j]->nreg) - 1;
-				}
-			}
-		}
-	}
+	r = r600_setup_block_table(ctx);
+	if (r)
+		goto out_err;
 
 	/* allocate cs variables */
 	ctx->nreloc = RADEON_CTX_MAX_PM4;
