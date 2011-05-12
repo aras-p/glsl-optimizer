@@ -386,24 +386,34 @@ fs_visitor::visit(ir_expression *ir)
       break;
 
    case ir_binop_min:
-      /* Unalias the destination */
-      this->result = fs_reg(this, ir->type);
+      if (intel->gen >= 6) {
+	 inst = emit(BRW_OPCODE_SEL, this->result, op[0], op[1]);
+	 inst->conditional_mod = BRW_CONDITIONAL_L;
+      } else {
+	 /* Unalias the destination */
+	 this->result = fs_reg(this, ir->type);
 
-      inst = emit(BRW_OPCODE_CMP, this->result, op[0], op[1]);
-      inst->conditional_mod = BRW_CONDITIONAL_L;
+	 inst = emit(BRW_OPCODE_CMP, this->result, op[0], op[1]);
+	 inst->conditional_mod = BRW_CONDITIONAL_L;
 
-      inst = emit(BRW_OPCODE_SEL, this->result, op[0], op[1]);
-      inst->predicated = true;
+	 inst = emit(BRW_OPCODE_SEL, this->result, op[0], op[1]);
+	 inst->predicated = true;
+      }
       break;
    case ir_binop_max:
-      /* Unalias the destination */
-      this->result = fs_reg(this, ir->type);
+      if (intel->gen >= 6) {
+	 inst = emit(BRW_OPCODE_SEL, this->result, op[0], op[1]);
+	 inst->conditional_mod = BRW_CONDITIONAL_GE;
+      } else {
+	 /* Unalias the destination */
+	 this->result = fs_reg(this, ir->type);
 
-      inst = emit(BRW_OPCODE_CMP, this->result, op[0], op[1]);
-      inst->conditional_mod = BRW_CONDITIONAL_G;
+	 inst = emit(BRW_OPCODE_CMP, this->result, op[0], op[1]);
+	 inst->conditional_mod = BRW_CONDITIONAL_G;
 
-      inst = emit(BRW_OPCODE_SEL, this->result, op[0], op[1]);
-      inst->predicated = true;
+	 inst = emit(BRW_OPCODE_SEL, this->result, op[0], op[1]);
+	 inst->predicated = true;
+      }
       break;
 
    case ir_binop_pow:

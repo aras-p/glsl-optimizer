@@ -1033,12 +1033,16 @@ fs_visitor::propagate_constants()
 		  scan_inst->src[i] = inst->src[0];
 		  progress = true;
 	       } else if (i == 0 && scan_inst->src[1].file != IMM) {
-		  /* Fit this constant in by swapping the operands and
-		   * flipping the predicate
-		   */
 		  scan_inst->src[0] = scan_inst->src[1];
 		  scan_inst->src[1] = inst->src[0];
-		  scan_inst->predicate_inverse = !scan_inst->predicate_inverse;
+
+		  /* If this was predicated, flipping operands means
+		   * we also need to flip the predicate.
+		   */
+		  if (scan_inst->conditional_mod == BRW_CONDITIONAL_NONE) {
+		     scan_inst->predicate_inverse =
+			!scan_inst->predicate_inverse;
+		  }
 		  progress = true;
 	       }
 	       break;
