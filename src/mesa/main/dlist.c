@@ -9784,9 +9784,9 @@ _mesa_create_save_table(void)
    SET_DeleteProgramsNV(table, _mesa_DeletePrograms);
    SET_GenProgramsNV(table, _mesa_GenPrograms);
    SET_IsProgramNV(table, _mesa_IsProgramARB);
-   SET_GetVertexAttribdvNV(table, _mesa_GetVertexAttribdvNV);
-   SET_GetVertexAttribfvNV(table, _mesa_GetVertexAttribfvNV);
-   SET_GetVertexAttribivNV(table, _mesa_GetVertexAttribivNV);
+   SET_GetVertexAttribdvARB(table, _mesa_GetVertexAttribdvARB);
+   SET_GetVertexAttribfvARB(table, _mesa_GetVertexAttribfvARB);
+   SET_GetVertexAttribivARB(table, _mesa_GetVertexAttribivARB);
    SET_GetVertexAttribPointervNV(table, _mesa_GetVertexAttribPointervNV);
    SET_ProgramEnvParameter4dARB(table, save_ProgramEnvParameter4dARB);
    SET_ProgramEnvParameter4dvARB(table, save_ProgramEnvParameter4dvARB);
