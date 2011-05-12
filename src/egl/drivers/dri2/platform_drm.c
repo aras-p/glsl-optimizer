@@ -581,7 +581,8 @@ dri2_get_device_name(int fd)
    struct udev *udev;
    struct udev_device *device;
    struct stat buf;
-   char *device_name;
+   const char *const_device_name;
+   char *device_name = NULL;
 
    udev = udev_new();
    if (fstat(fd, &buf) < 0) {
@@ -596,10 +597,11 @@ dri2_get_device_name(int fd)
       goto out;
    }
 
-   device_name = udev_device_get_devnode(device);
-   if (!device_name)
-	   goto out;
-   device_name = strdup(device_name);
+   const_device_name = udev_device_get_devnode(device);
+   if (!const_device_name) {
+      goto out;
+   }
+   device_name = strdup(const_device_name);
 
  out:
    udev_device_unref(device);
