@@ -612,8 +612,8 @@ void r600_context_fini(struct r600_context *ctx)
 	struct r600_block *block;
 	struct r600_range *range;
 
-	for (int i = 0; i < 256; i++) {
-		for (int j = 0; j < (1 << ctx->hash_shift); j++) {
+	for (int i = 0; i < NUM_RANGES; i++) {
+		for (int j = 0; j < (1 << HASH_SHIFT); j++) {
 			block = ctx->range[i].blocks[j];
 			if (block) {
 				for (int k = 0, offset = block->start_offset; k < block->nreg; k++, offset += 4) {
@@ -628,6 +628,7 @@ void r600_context_fini(struct r600_context *ctx)
 		}
 		free(ctx->range[i].blocks);
 	}
+	free(ctx->range);
 	free(ctx->blocks);
 	free(ctx->reloc);
 	free(ctx->bo);
@@ -645,13 +646,15 @@ int r600_context_init(struct r600_context *ctx, struct radeon *radeon)
 	ctx->radeon = radeon;
 	LIST_INITHEAD(&ctx->query_list);
 
+	ctx->range = calloc(NUM_RANGES, sizeof(struct r600_range));
+	if (!ctx->range) {
+		r = -ENOMEM;
+		goto out_err;
+	}
+
 	/* initialize hash */
-	ctx->hash_size = 19;
-	ctx->hash_shift = 11;
-	for (int i = 0; i < 256; i++) {
-		ctx->range[i].start_offset = i << ctx->hash_shift;
-		ctx->range[i].end_offset = ((i + 1) << ctx->hash_shift) - 1;
-		ctx->range[i].blocks = calloc(1 << ctx->hash_shift, sizeof(void*));
+	for (int i = 0; i < NUM_RANGES; i++) {
+		ctx->range[i].blocks = calloc(1 << HASH_SHIFT, sizeof(void*));
 		if (ctx->range[i].blocks == NULL) {
 			r = -ENOMEM;
 			goto out_err;
@@ -723,8 +726,8 @@ int r600_context_init(struct r600_context *ctx, struct radeon *radeon)
 
 	/* setup block table */
 	ctx->blocks = calloc(ctx->nblocks, sizeof(void*));
-	for (int i = 0, c = 0; i < 256; i++) {
-		for (int j = 0, add; j < (1 << ctx->hash_shift); j++) {
+	for (int i = 0, c = 0; i < NUM_RANGES; i++) {
+		for (int j = 0, add; j < (1 << HASH_SHIFT); j++) {
 			if (ctx->range[i].blocks[j]) {
 				add = 1;
 				for (int k = 0; k < c; k++) {
@@ -736,7 +739,7 @@ int r600_context_init(struct r600_context *ctx, struct radeon *radeon)
 				if (add) {
 					assert(c < ctx->nblocks);
 					ctx->blocks[c++] = ctx->range[i].blocks[j];
-					j += (ctx->range[i].blocks[j]->nreg << 2) - 1;
+					j += (ctx->range[i].blocks[j]->nreg) - 1;
 				}
 			}
 		}
