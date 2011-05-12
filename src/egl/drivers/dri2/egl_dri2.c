@@ -200,10 +200,8 @@ dri2_add_config(_EGLDisplay *disp, const __DRIconfig *dri_config, int id,
       else if (!double_buffer && !conf->dri_single_config)
          conf->dri_single_config = dri_config;
       else
-         /* a similar config type is already added
-          * => attach it as new config
-          */
-         num_configs = 0;
+         /* a similar config type is already added (unlikely) => discard */
+         return NULL;
    }
    else if (num_configs == 0) {
       conf = malloc(sizeof *conf);
