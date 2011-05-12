@@ -835,7 +835,7 @@ dri2_create_image_khr_renderbuffer(_EGLDisplay *disp, _EGLContext *ctx,
    struct dri2_egl_display *dri2_dpy = dri2_egl_display(disp);
    struct dri2_egl_context *dri2_ctx = dri2_egl_context(ctx);
    struct dri2_egl_image *dri2_img;
-   GLuint renderbuffer = (GLuint) buffer;
+   GLuint renderbuffer = (GLuint) (uintptr_t) buffer;
 
    if (renderbuffer == 0) {
       _eglError(EGL_BAD_PARAMETER, "dri2_create_image_khr");
@@ -870,7 +870,7 @@ dri2_create_image_mesa_drm_buffer(_EGLDisplay *disp, _EGLContext *ctx,
 
    (void) ctx;
 
-   name = (EGLint) buffer;
+   name = (EGLint) (uintptr_t) buffer;
 
    err = _eglParseImageAttribList(&attrs, disp, attr_list);
    if (err != EGL_SUCCESS)

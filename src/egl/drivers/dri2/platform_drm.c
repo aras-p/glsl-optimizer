@@ -690,7 +690,7 @@ dri2_initialize_drm(_EGLDriver *drv, _EGLDisplay *disp)
    memset(dri2_dpy, 0, sizeof *dri2_dpy);
 
    disp->DriverData = (void *) dri2_dpy;
-   dri2_dpy->fd = (int) disp->PlatformDisplay;
+   dri2_dpy->fd = (int) (intptr_t) disp->PlatformDisplay;
 
    dri2_dpy->driver_name = dri2_get_driver_for_fd(dri2_dpy->fd);
    if (dri2_dpy->driver_name == NULL)
