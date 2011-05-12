@@ -5,7 +5,7 @@
 
 static glslopt_ctx* gContext = 0;
 
-int printhelp(const char* format, ...)
+static int printhelp(const char* format, ...)
 {
 	char buffer[4096];
 
@@ -20,7 +20,7 @@ int printhelp(const char* format, ...)
 	return 1;
 }
 
-bool init()
+static bool init()
 {
 	gContext = glslopt_initialize();
 	if( !gContext )
@@ -28,12 +28,12 @@ bool init()
 	return true;
 }
 
-void term()
+static void term()
 {
 	glslopt_cleanup(gContext);
 }
 
-char* loadFile(const char* filename)
+static char* loadFile(const char* filename)
 {
 	FILE* file = fopen(filename, "rt");
 	if( !file )
@@ -54,7 +54,7 @@ char* loadFile(const char* filename)
 	return result;
 }
 
-bool saveFile(const char* filename, const char* data)
+static bool saveFile(const char* filename, const char* data)
 {
 	int size = (int)strlen(data)+1;
 	FILE* file = fopen(filename, "wt");
@@ -75,7 +75,7 @@ bool saveFile(const char* filename, const char* data)
 	return true;
 }
 
-bool compileShader(const char* dstfilename, const char* srcfilename, bool vertexShader)
+static bool compileShader(const char* dstfilename, const char* srcfilename, bool vertexShader)
 {
 	const char* originalShader = loadFile(srcfilename);
 	if( !originalShader )
