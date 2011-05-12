@@ -60,6 +60,11 @@ struct schedule_instruction {
 	 * "all readers"), even those outside the basic block this instruction
 	 * lives in. */
 	struct rc_reader_data GlobalReaders;
+
+	/** If the scheduler has paired an RGB and an Alpha instruction together,
+	 * PairedInst references the alpha insturction's dependency information.
+	 */
+	struct schedule_instruction * PairedInst;
 };
 
 
@@ -142,6 +147,25 @@ static struct reg_value ** get_reg_valuep(struct schedule_state * s,
 	return &s->Temporary[index].Values[chan];
 }
 
+static void remove_inst_from_list(struct schedule_instruction ** list,
+					struct schedule_instruction * inst)
+{
+	struct schedule_instruction * prev = NULL;
+	struct schedule_instruction * list_ptr;
+	for (list_ptr = *list; list_ptr; prev = list_ptr,
+					list_ptr = list_ptr->NextReady) {
+		if (list_ptr == inst) {
+			if (prev) {
+				prev->NextReady = inst->NextReady;
+			} else {
+				*list = inst->NextReady;
+			}
+			inst->NextReady = NULL;
+			break;
+		}
+	}
+}
+
 static void add_inst_to_list(struct schedule_instruction ** list, struct schedule_instruction * inst)
 {
 	inst->NextReady = *list;
@@ -202,6 +226,9 @@ static void commit_update_reads(struct schedule_state * s,
 				decrease_dependencies(s, v->Next->Writer);
 		}
 	}
+	if (sinst->PairedInst) {
+		commit_update_reads(s, sinst->PairedInst);
+	}
 }
 
 static void commit_update_writes(struct schedule_state * s,
@@ -223,6 +250,9 @@ static void commit_update_writes(struct schedule_state * s,
 			if (v->Next)
 				decrease_dependencies(s, v->Next->Writer);
 		}
+	}
+	if (sinst->PairedInst) {
+		commit_update_writes(s, sinst->PairedInst);
 	}
 }
 
@@ -480,6 +510,7 @@ static int merge_instructions(struct rc_pair_instruction * rgb, struct rc_pair_i
 		|| (rgb->RGB.OutputWriteMask && alpha->WriteALUResult)) {
 		return 0;
 	}
+
 	memcpy(&backup, rgb, sizeof(struct rc_pair_instruction));
 
 	if (destructive_merge_instructions(rgb, alpha))
@@ -748,6 +779,71 @@ static int convert_rgb_to_alpha(
 }
 
 /**
+ * This function attempts to merge RGB and Alpha instructions together.
+ */
+static void pair_instructions(struct schedule_state * s)
+{
+	struct schedule_instruction *rgb_ptr;
+	struct schedule_instruction *alpha_ptr;
+
+	/* Some pairings might fail because they require too
+	 * many source slots; try all possible pairings if necessary */
+	rgb_ptr = s->ReadyRGB;
+	while(rgb_ptr) {
+		struct schedule_instruction * rgb_next = rgb_ptr->NextReady;
+		alpha_ptr = s->ReadyAlpha;
+		while(alpha_ptr) {
+			struct schedule_instruction * alpha_next = alpha_ptr->NextReady;
+			if (merge_instructions(&rgb_ptr->Instruction->U.P, &alpha_ptr->Instruction->U.P)) {
+				/* Remove RGB and Alpha from their ready lists.
+				 */
+				remove_inst_from_list(&s->ReadyRGB, rgb_ptr);
+				remove_inst_from_list(&s->ReadyAlpha, alpha_ptr);
+				rgb_ptr->PairedInst = alpha_ptr;
+				add_inst_to_list(&s->ReadyFullALU, rgb_ptr);
+				break;
+			}
+			alpha_ptr = alpha_next;
+		}
+		rgb_ptr = rgb_next;
+	}
+
+	/* Try to convert some of the RGB instructions to Alpha and
+	 * try to pair it with another RGB. */
+	rgb_ptr = s->ReadyRGB;
+	while (rgb_ptr && s->ReadyRGB && s->ReadyRGB->NextReady) {
+		int paired = 0;
+		if (rgb_ptr->NumWriteValues == 1
+					&& convert_rgb_to_alpha(s, rgb_ptr)) {
+
+			struct schedule_instruction * pair_ptr;
+			for (pair_ptr = s->ReadyRGB; pair_ptr;
+					pair_ptr = pair_ptr->NextReady) {
+				if (pair_ptr == rgb_ptr) {
+					continue;
+				}
+				if (merge_instructions(&pair_ptr->Instruction->U.P,
+						&rgb_ptr->Instruction->U.P)) {
+					remove_inst_from_list(&s->ReadyRGB, rgb_ptr);
+					remove_inst_from_list(&s->ReadyRGB, pair_ptr);
+					pair_ptr->PairedInst = rgb_ptr;
+
+					add_inst_to_list(&s->ReadyFullALU, pair_ptr);
+					rgb_ptr = s->ReadyRGB;
+					paired = 1;
+					break;
+				}
+
+			}
+		}
+		if (!paired) {
+			rgb_ptr = rgb_ptr->NextReady;
+		}
+	}
+}
+
+
+/**
  * Find a good ALU instruction or pair of ALU instruction and emit it.
  *
  * Prefer emitting full ALU instructions, so that when we reach a point
@@ -758,61 +854,15 @@ static void emit_one_alu(struct schedule_state *s, struct rc_instruction * befor
 {
 	struct schedule_instruction * sinst;
 
+	/* Try to merge RGB and Alpha instructions together. */
+	pair_instructions(s);
+
 	if (s->ReadyFullALU) {
 		sinst = s->ReadyFullALU;
 		s->ReadyFullALU = s->ReadyFullALU->NextReady;
 		rc_insert_instruction(before->Prev, sinst->Instruction);
 		commit_alu_instruction(s, sinst);
 	} else {
-		struct schedule_instruction **prgb;
-		struct schedule_instruction **palpha;
-		struct schedule_instruction *prev;
-pair:
-		/* Some pairings might fail because they require too
-		 * many source slots; try all possible pairings if necessary */
-		for(prgb = &s->ReadyRGB; *prgb; prgb = &(*prgb)->NextReady) {
-			for(palpha = &s->ReadyAlpha; *palpha; palpha = &(*palpha)->NextReady) {
-				struct schedule_instruction * psirgb = *prgb;
-				struct schedule_instruction * psialpha = *palpha;
-
-				if (!merge_instructions(&psirgb->Instruction->U.P, &psialpha->Instruction->U.P))
-					continue;
-
-				*prgb = (*prgb)->NextReady;
-				*palpha = (*palpha)->NextReady;
-				rc_insert_instruction(before->Prev, psirgb->Instruction);
-				commit_alu_instruction(s, psirgb);
-				commit_alu_instruction(s, psialpha);
-				goto success;
-			}
-		}
-		prev = NULL;
-		/* No success in pairing, now try to convert one of the RGB
-		 * instructions to an Alpha so we can pair it with another RGB.
-		 */
-		if (s->ReadyRGB && s->ReadyRGB->NextReady) {
-		for(prgb = &s->ReadyRGB; *prgb; prgb = &(*prgb)->NextReady) {
-			if ((*prgb)->NumWriteValues == 1) {
-				struct schedule_instruction * prgb_next;
-				if (!convert_rgb_to_alpha(s, *prgb))
-					goto cont_loop;
-				prgb_next = (*prgb)->NextReady;
-				/* Add instruction to the Alpha ready list. */
-				(*prgb)->NextReady = s->ReadyAlpha;
-				s->ReadyAlpha = *prgb;
-				/* Remove instruction from the RGB ready list.*/
-				if (prev)
-					prev->NextReady = prgb_next;
-				else
-					s->ReadyRGB = prgb_next;
-				goto pair;
-			}
-cont_loop:
-			prev = *prgb;
-		}
-		}
-		/* Still no success in pairing, just take the first RGB
-		 * or alpha instruction. */
 		if (s->ReadyRGB) {
 			sinst = s->ReadyRGB;
 			s->ReadyRGB = s->ReadyRGB->NextReady;
@@ -826,7 +876,6 @@ cont_loop:
 
 		rc_insert_instruction(before->Prev, sinst->Instruction);
 		commit_alu_instruction(s, sinst);
-	success: ;
 	}
 	/* If the instruction we just emitted uses a presubtract value, and
 	 * the presubtract sources were written by the previous intstruction,
