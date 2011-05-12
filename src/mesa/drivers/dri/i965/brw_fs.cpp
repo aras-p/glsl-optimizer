@@ -1289,6 +1289,7 @@ fs_visitor::emit_texture_gen4(ir_texture *ir, fs_reg dst, fs_reg coordinate,
    }
    inst->base_mrf = base_mrf;
    inst->mlen = mlen;
+   inst->header_present = true;
 
    if (simd16) {
       for (int i = 0; i < 4; i++) {
@@ -1313,9 +1314,19 @@ fs_inst *
 fs_visitor::emit_texture_gen5(ir_texture *ir, fs_reg dst, fs_reg coordinate,
 			      int sampler)
 {
-   int mlen = 1; /* g0 header always present. */
-   int base_mrf = 1;
+   int mlen = 0;
+   int base_mrf = 2;
    int reg_width = c->dispatch_width / 8;
+   bool header_present = false;
+
+   if (ir->offset) {
+      /* The TXD offsets set up by the ir_texture visitor are in the
+       * m1 header, so we can't go headerless.
+       */
+      header_present = true;
+      mlen++;
+      base_mrf--;
+   }
 
    for (int i = 0; i < ir->coordinate->type->vector_elements; i++) {
       fs_inst *inst = emit(BRW_OPCODE_MOV,
@@ -1328,7 +1339,7 @@ fs_visitor::emit_texture_gen5(ir_texture *ir, fs_reg dst, fs_reg coordinate,
    mlen += ir->coordinate->type->vector_elements * reg_width;
 
    if (ir->shadow_comparitor) {
-      mlen = MAX2(mlen, 1 + 4 * reg_width);
+      mlen = MAX2(mlen, header_present + 4 * reg_width);
 
       ir->shadow_comparitor->accept(this);
       emit(BRW_OPCODE_MOV, fs_reg(MRF, base_mrf + mlen), this->result);
@@ -1342,7 +1353,7 @@ fs_visitor::emit_texture_gen5(ir_texture *ir, fs_reg dst, fs_reg coordinate,
       break;
    case ir_txb:
       ir->lod_info.bias->accept(this);
-      mlen = MAX2(mlen, 1 + 4 * reg_width);
+      mlen = MAX2(mlen, header_present + 4 * reg_width);
       emit(BRW_OPCODE_MOV, fs_reg(MRF, base_mrf + mlen), this->result);
       mlen += reg_width;
 
@@ -1351,7 +1362,7 @@ fs_visitor::emit_texture_gen5(ir_texture *ir, fs_reg dst, fs_reg coordinate,
       break;
    case ir_txl:
       ir->lod_info.lod->accept(this);
-      mlen = MAX2(mlen, 1 + 4 * reg_width);
+      mlen = MAX2(mlen, header_present + 4 * reg_width);
       emit(BRW_OPCODE_MOV, fs_reg(MRF, base_mrf + mlen), this->result);
       mlen += reg_width;
 
@@ -1364,6 +1375,7 @@ fs_visitor::emit_texture_gen5(ir_texture *ir, fs_reg dst, fs_reg coordinate,
    }
    inst->base_mrf = base_mrf;
    inst->mlen = mlen;
+   inst->header_present = header_present;
 
    if (mlen > 11) {
       fail("Message length >11 disallowed by hardware\n");
@@ -1546,7 +1558,7 @@ fs_visitor::visit(ir_texture *ir)
    /* If there's an offset, we already set up m1.  To avoid the implied move,
     * use the null register.  Otherwise, we want an implied move from g0.
     */
-   if (ir->offset != NULL)
+   if (ir->offset != NULL || !inst->header_present)
       inst->src[0] = fs_reg(brw_null_reg());
    else
       inst->src[0] = fs_reg(retype(brw_vec8_grf(0, 0), BRW_REGISTER_TYPE_UW));
@@ -2618,7 +2630,7 @@ fs_visitor::generate_tex(fs_inst *inst, struct brw_reg dst, struct brw_reg src)
 	      rlen,
 	      inst->mlen,
 	      0,
-	      1,
+	      inst->header_present,
 	      simd_mode);
 }
 
