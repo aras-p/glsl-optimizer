@@ -205,8 +205,7 @@ dri2_add_config(_EGLDisplay *disp, const __DRIconfig *dri_config, int id,
           */
          num_configs = 0;
    }
-
-   if (num_configs == 0) {
+   else if (num_configs == 0) {
       conf = malloc(sizeof *conf);
       if (conf == NULL)
          return NULL;
@@ -223,6 +222,10 @@ dri2_add_config(_EGLDisplay *disp, const __DRIconfig *dri_config, int id,
       conf->base.ConfigID = config_id;
 
       _eglLinkConfig(&conf->base);
+   }
+   else {
+      assert(0);
+      return NULL;
    }
 
    conf->base.SurfaceType |= surface_type & (!double_buffer ? EGL_PIXMAP_BIT:
