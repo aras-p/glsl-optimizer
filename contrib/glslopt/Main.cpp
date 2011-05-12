@@ -1,28 +1,23 @@
 #include <stdio.h>
-#include <stdarg.h>
 #include <string.h>
+#include <stdlib.h>
 #include "glsl_optimizer.h"
 
 static glslopt_ctx* gContext = 0;
 
-static int printhelp(const char* format, ...)
+static int printhelp(const char* msg)
 {
-	char buffer[4096];
-
-	va_list args;
-	va_start(args, format);
-	vsnprintf(buffer, sizeof(buffer), format, args);
-
-	printf("%s\n", buffer);
-	printf("\n\nUsage: glslopt <-f|-v> <input shader> <output shader>\n");
+	if (msg) printf("%s\n\n\n", msg);
+	printf("Usage: glslopt <-f|-v> <input shader> [<output shader>]\n");
 	printf("\t-f : fragment shader\n");
 	printf("\t-v : vertex shader\n");
+	printf("\n\tIf no output specified, output is to [input].out.\n");
 	return 1;
 }
 
 static bool init()
 {
-	gContext = glslopt_initialize();
+	gContext = glslopt_initialize(false);
 	if( !gContext )
 		return false;
 	return true;
@@ -57,6 +52,7 @@ static char* loadFile(const char* filename)
 static bool saveFile(const char* filename, const char* data)
 {
 	int size = (int)strlen(data)+1;
+
 	FILE* file = fopen(filename, "wt");
 	if( !file )
 	{
@@ -83,7 +79,7 @@ static bool compileShader(const char* dstfilename, const char* srcfilename, bool
 
 	const glslopt_shader_type type = vertexShader ? kGlslOptShaderVertex : kGlslOptShaderFragment;
 
-	glslopt_shader* shader = glslopt_optimize(gContext, type, originalShader);
+	glslopt_shader* shader = glslopt_optimize(gContext, type, originalShader, 0);
 	if( !glslopt_get_status(shader) )
 	{
 		printf( "Failed to compile %s:\n\n%s\n", srcfilename, glslopt_get_log(shader));
@@ -101,20 +97,20 @@ static bool compileShader(const char* dstfilename, const char* srcfilename, bool
 
 int main(int argc, char* argv[])
 {
-	if( argc < 4 )
-		return printhelp("");
+	if( argc < 3 )
+		return printhelp(NULL);
 
-	bool vertexShader = false;
+	bool vertexShader = false, freename = false;
 	const char* source = 0;
-	const char* dest = 0;
+	char* dest = 0;
 
 	for( int i=1; i < argc; i++ )
 	{
 		if( argv[i][0] == '-' )
 		{
-			if( 0 == stricmp("-v", argv[i]) )
+			if( 0 == strcmp("-v", argv[i]) )
 				vertexShader = true;
-			if( 0 == stricmp("-f", argv[i]) )
+			if( 0 == strcmp("-f", argv[i]) )
 				vertexShader = false;
 		}
 		else
@@ -126,8 +122,8 @@ int main(int argc, char* argv[])
 		}
 	}
 
-	if( !dest || !source )
-		return printhelp("Must give both source and dest");
+	if( !source )
+		return printhelp("Must give a source");
 
 	if( !init() )
 	{
@@ -135,9 +131,17 @@ int main(int argc, char* argv[])
 		return 1;
 	}
 
+	if ( !dest ) {
+		dest = (char *) calloc(strlen(source)+5, sizeof(char));
+		snprintf(dest, strlen(source)+5, "%s.out", source);
+		freename = true;
+	}
+
 	int result = 0;
 	if( !compileShader(dest, source, vertexShader) )
 		result = 1;
+
+	if( freename ) free(dest);
 
 	term();
 	return result;
