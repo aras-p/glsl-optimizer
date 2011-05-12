@@ -67,8 +67,6 @@ struct radeon {
 #define REG_FLAG_RV6XX_SBU 4
 
 struct r600_reg {
-	unsigned			opcode;
-	unsigned			offset_base;
 	unsigned			offset;
 	unsigned			flags;
 	unsigned			flush_flags;
@@ -155,7 +153,8 @@ void r600_context_bo_reloc(struct r600_context *ctx, u32 *pm4, struct r600_bo *r
 void r600_context_bo_flush(struct r600_context *ctx, unsigned flush_flags,
 				unsigned flush_mask, struct r600_bo *rbo);
 struct r600_bo *r600_context_reg_bo(struct r600_context *ctx, unsigned offset);
-int r600_context_add_block(struct r600_context *ctx, const struct r600_reg *reg, unsigned nreg);
+int r600_context_add_block(struct r600_context *ctx, const struct r600_reg *reg, unsigned nreg,
+			   unsigned opcode, unsigned offset_base);
 void r600_context_pipe_state_set_resource(struct r600_context *ctx, struct r600_pipe_state *state, unsigned offset);
 void r600_context_block_emit_dirty(struct r600_context *ctx, struct r600_block *block);
 void r600_context_dirty_block(struct r600_context *ctx, struct r600_block *block,
