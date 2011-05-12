@@ -1094,9 +1094,16 @@ void emit_tex(struct brw_wm_compile *c,
    if (intel->gen < 5 && c->dispatch_width == 8)
       nr_texcoords = 3;
 
-   /* For shadow comparisons, we have to supply u,v,r. */
-   if (shadow)
-      nr_texcoords = 3;
+   if (shadow) {
+      if (intel->gen < 7) {
+	 /* For shadow comparisons, we have to supply u,v,r. */
+	 nr_texcoords = 3;
+      } else {
+	 /* On Ivybridge, the shadow comparitor comes first. Just load it. */
+	 brw_MOV(p, brw_message_reg(cur_mrf), arg[2]);
+	 cur_mrf += mrf_per_channel;
+      }
+   }
 
    /* Emit the texcoords. */
    for (i = 0; i < nr_texcoords; i++) {
@@ -1113,7 +1120,7 @@ void emit_tex(struct brw_wm_compile *c,
    }
 
    /* Fill in the shadow comparison reference value. */
-   if (shadow) {
+   if (shadow && intel->gen < 7) {
       if (intel->gen >= 5) {
 	 /* Fill in the cube map array index value. */
 	 brw_MOV(p, brw_message_reg(cur_mrf), brw_imm_f(0));
