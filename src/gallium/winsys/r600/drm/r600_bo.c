@@ -38,7 +38,8 @@ struct r600_bo *r600_bo(struct radeon *radeon,
 {
 	struct r600_bo *bo;
 	struct radeon_bo *rbo;
-
+	uint32_t initial_domain;
+	  
 	if (binding & (PIPE_BIND_CONSTANT_BUFFER | PIPE_BIND_VERTEX_BUFFER | PIPE_BIND_INDEX_BUFFER)) {
 		bo = r600_bomgr_bo_create(radeon->bomgr, size, alignment, *radeon->cfence);
 		if (bo) {
@@ -46,7 +47,24 @@ struct r600_bo *r600_bo(struct radeon *radeon,
 		}
 	}
 
-	rbo = radeon_bo(radeon, 0, size, alignment);
+	if (binding & (PIPE_BIND_CONSTANT_BUFFER | PIPE_BIND_VERTEX_BUFFER | PIPE_BIND_INDEX_BUFFER)) {
+		initial_domain = RADEON_GEM_DOMAIN_GTT;
+	} else {
+		switch(usage) {
+		case PIPE_USAGE_DYNAMIC:
+		case PIPE_USAGE_STREAM:
+		case PIPE_USAGE_STAGING:
+			initial_domain = RADEON_GEM_DOMAIN_GTT;
+			break;
+		case PIPE_USAGE_DEFAULT:
+		case PIPE_USAGE_STATIC:
+		case PIPE_USAGE_IMMUTABLE:
+		default:
+			initial_domain = RADEON_GEM_DOMAIN_VRAM;
+			break;
+		}
+	}
+	rbo = radeon_bo(radeon, 0, size, alignment, initial_domain);
 	if (rbo == NULL) {
 		return NULL;
 	}
@@ -80,7 +98,7 @@ struct r600_bo *r600_bo_handle(struct radeon *radeon,
 	struct r600_bo *bo = calloc(1, sizeof(struct r600_bo));
 	struct radeon_bo *rbo;
 
-	rbo = bo->bo = radeon_bo(radeon, handle, 0, 0);
+	rbo = bo->bo = radeon_bo(radeon, handle, 0, 0, 0);
 	if (rbo == NULL) {
 		free(bo);
 		return NULL;

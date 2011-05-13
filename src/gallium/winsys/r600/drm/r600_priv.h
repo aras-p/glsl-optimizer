@@ -132,7 +132,7 @@ unsigned radeon_family_from_device(unsigned device);
  * radeon_bo.c
  */
 struct radeon_bo *radeon_bo(struct radeon *radeon, unsigned handle,
-			    unsigned size, unsigned alignment);
+			    unsigned size, unsigned alignment, unsigned initial_domain);
 void radeon_bo_reference(struct radeon *radeon, struct radeon_bo **dst,
 			 struct radeon_bo *src);
 int radeon_bo_wait(struct radeon *radeon, struct radeon_bo *bo);
