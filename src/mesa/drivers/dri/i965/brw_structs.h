@@ -1704,7 +1704,7 @@ struct brw_instruction
 	 GLuint msg_length:4;
 	 GLuint pad1:2;
 	 GLuint end_of_thread:1;
-      } dp_render_cache;
+      } gen6_dp;
 
       struct {
 	 GLuint function_control:16;
