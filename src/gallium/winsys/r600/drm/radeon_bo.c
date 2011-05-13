@@ -64,8 +64,10 @@ int radeon_bo_fixed_map(struct radeon *radeon, struct radeon_bo *bo)
 
 static void radeon_bo_fixed_unmap(struct radeon *radeon, struct radeon_bo *bo)
 {
-	munmap(bo->data, bo->size);
-	bo->data = NULL;
+	if (bo->data) {
+		munmap(bo->data, bo->size);
+		bo->data = NULL;
+	}
 }
 
 struct radeon_bo *radeon_bo(struct radeon *radeon, unsigned handle,
