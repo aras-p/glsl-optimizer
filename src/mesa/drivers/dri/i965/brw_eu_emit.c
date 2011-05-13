@@ -1711,7 +1711,7 @@ void brw_oword_block_read(struct brw_compile *p,
 			   bind_table_index,
 			   BRW_DATAPORT_OWORD_BLOCK_1_OWORDLOW,
 			   BRW_DATAPORT_READ_MESSAGE_OWORD_BLOCK_READ,
-			   0, /* source cache = data cache */
+			   BRW_DATAPORT_READ_TARGET_DATA_CACHE,
 			   1, /* msg_length */
 			   1); /* response_length (1 reg, 2 owords!) */
 
@@ -1752,7 +1752,7 @@ void brw_dword_scattered_read(struct brw_compile *p,
 			   bind_table_index,
 			   BRW_DATAPORT_DWORD_SCATTERED_BLOCK_8DWORDS,
 			   BRW_DATAPORT_READ_MESSAGE_DWORD_SCATTERED_READ,
-			   0, /* source cache = data cache */
+			   BRW_DATAPORT_READ_TARGET_DATA_CACHE,
 			   2, /* msg_length */
 			   1); /* response_length */
 }
@@ -1806,7 +1806,7 @@ void brw_dp_READ_4_vs(struct brw_compile *p,
 			   bind_table_index,
 			   0,
 			   BRW_DATAPORT_READ_MESSAGE_OWORD_BLOCK_READ, /* msg_type */
-			   0, /* source cache = data cache */
+			   BRW_DATAPORT_READ_TARGET_DATA_CACHE,
 			   1, /* msg_length */
 			   1); /* response_length (1 Oword) */
 }
