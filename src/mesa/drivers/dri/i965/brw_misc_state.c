@@ -32,6 +32,7 @@
 
 
 #include "intel_batchbuffer.h"
+#include "intel_fbo.h"
 #include "intel_regions.h"
 
 #include "brw_context.h"
@@ -193,17 +194,32 @@ const struct brw_tracked_state brw_psp_urb_cbs = {
 
 static void prepare_depthbuffer(struct brw_context *brw)
 {
-   struct intel_region *region = brw->state.depth_region;
+   struct intel_context *intel = &brw->intel;
+   struct gl_context *ctx = &intel->ctx;
+   struct gl_framebuffer *fb = ctx->DrawBuffer;
+   struct intel_renderbuffer *drb = intel_get_renderbuffer(fb, BUFFER_DEPTH);
+   struct intel_renderbuffer *srb = intel_get_renderbuffer(fb, BUFFER_STENCIL);
 
-   if (region != NULL)
-      brw_add_validated_bo(brw, region->buffer);
+   if (drb)
+      brw_add_validated_bo(brw, drb->region->buffer);
+   if (srb)
+      brw_add_validated_bo(brw, srb->region->buffer);
 }
 
 static void emit_depthbuffer(struct brw_context *brw)
 {
    struct intel_context *intel = &brw->intel;
-   struct intel_region *region = brw->state.depth_region;
+   struct gl_context *ctx = &intel->ctx;
+   struct gl_framebuffer *fb = ctx->DrawBuffer;
+   /* _NEW_BUFFERS */
+   struct intel_renderbuffer *irb = intel_get_renderbuffer(fb, BUFFER_DEPTH);
    unsigned int len;
+
+   /* If we're combined depth stencil but no depth is attached, look
+    * up stencil.
+    */
+   if (!irb)
+      irb = intel_get_renderbuffer(fb, BUFFER_STENCIL);
 
    if (intel->gen >= 6)
       len = 7;
@@ -212,7 +228,7 @@ static void emit_depthbuffer(struct brw_context *brw)
    else
       len = 5;
 
-   if (region == NULL) {
+   if (!irb) {
       BEGIN_BATCH(len);
       OUT_BATCH(_3DSTATE_DEPTH_BUFFER << 16 | (len - 2));
       OUT_BATCH((BRW_DEPTHFORMAT_D32_FLOAT << 18) |
@@ -229,6 +245,7 @@ static void emit_depthbuffer(struct brw_context *brw)
 
       ADVANCE_BATCH();
    } else {
+      struct intel_region *region = irb->region;
       unsigned int format;
 
       switch (region->cpp) {
@@ -282,13 +299,10 @@ static void emit_depthbuffer(struct brw_context *brw)
    }
 }
 
-/**
- * \see brw_context.state.depth_region
- */
 const struct brw_tracked_state brw_depthbuffer = {
    .dirty = {
-      .mesa = 0,
-      .brw = BRW_NEW_DEPTH_BUFFER | BRW_NEW_BATCH,
+      .mesa = _NEW_BUFFERS,
+      .brw = BRW_NEW_BATCH,
       .cache = 0,
    },
    .prepare = prepare_depthbuffer,

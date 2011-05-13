@@ -138,7 +138,6 @@ enum brw_state_id {
    BRW_STATE_INDICES,
    BRW_STATE_VERTICES,
    BRW_STATE_BATCH,
-   BRW_STATE_DEPTH_BUFFER,
    BRW_STATE_NR_WM_SURFACES,
    BRW_STATE_NR_VS_SURFACES,
    BRW_STATE_INDEX_BUFFER,
@@ -168,7 +167,6 @@ enum brw_state_id {
  */
 #define BRW_NEW_BATCH                  (1 << BRW_STATE_BATCH)
 /** \see brw.state.depth_region */
-#define BRW_NEW_DEPTH_BUFFER           (1 << BRW_STATE_DEPTH_BUFFER)
 #define BRW_NEW_NR_WM_SURFACES         (1 << BRW_STATE_NR_WM_SURFACES)
 #define BRW_NEW_NR_VS_SURFACES         (1 << BRW_STATE_NR_VS_SURFACES)
 #define BRW_NEW_INDEX_BUFFER           (1 << BRW_STATE_INDEX_BUFFER)
@@ -490,28 +488,6 @@ struct brw_context
 
    struct {
       struct brw_state_flags dirty;
-
-      /**
-       * \name Cached region pointers
-       *
-       * When the draw buffer is updated, often the depth buffer is not
-       * changed. Caching the pointer to the buffer's region allows us to
-       * detect when the buffer has in fact changed, and allows us to avoid
-       * updating the buffer's GPU state when it has not.
-       *
-       * The original of each cached pointer is an instance of
-       * \c intel_renderbuffer.region.
-       *
-       * \see brw_set_draw_region()
-       *
-       * \{
-       */
-
-      /** \see struct brw_tracked_state brw_depthbuffer */
-      struct intel_region *depth_region;
-
-      /** \} */
-
       /**
        * List of buffers accumulated in brw_validate_state to receive
        * drm_intel_bo_check_aperture treatment before exec, so we can

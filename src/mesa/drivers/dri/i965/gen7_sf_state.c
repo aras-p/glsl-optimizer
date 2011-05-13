@@ -128,6 +128,7 @@ upload_sf_state(struct brw_context *brw)
 
    dw1 = GEN6_SF_STATISTICS_ENABLE | GEN6_SF_VIEWPORT_TRANSFORM_ENABLE;
 
+   /* _NEW_BUFFERS */
    dw1 |= (gen7_depth_format(brw) << GEN7_SF_DEPTH_BUFFER_SURFACE_FORMAT_SHIFT);
 
    /* _NEW_POLYGON */
@@ -258,8 +259,7 @@ const struct brw_tracked_state gen7_sf_state = {
 		_NEW_SCISSOR |
 		_NEW_BUFFERS |
 		_NEW_POINT),
-      .brw   = (BRW_NEW_CONTEXT |
-		BRW_NEW_DEPTH_BUFFER),
+      .brw   = (BRW_NEW_CONTEXT),
       .cache = CACHE_NEW_VS_PROG
    },
    .emit = upload_sf_state,

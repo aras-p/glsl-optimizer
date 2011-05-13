@@ -23,6 +23,7 @@
 
 #include "intel_batchbuffer.h"
 #include "intel_regions.h"
+#include "intel_fbo.h"
 #include "brw_context.h"
 #include "brw_state.h"
 #include "brw_defines.h"
@@ -30,10 +31,18 @@
 unsigned int
 gen7_depth_format(struct brw_context *brw)
 {
-   struct intel_region *region = brw->state.depth_region;
    struct intel_context *intel = &brw->intel;
+   struct gl_context *ctx = &intel->ctx;
+   struct gl_framebuffer *fb = ctx->DrawBuffer;
+   struct intel_renderbuffer *drb = intel_get_renderbuffer(fb, BUFFER_DEPTH);
+   struct intel_renderbuffer *srb = intel_get_renderbuffer(fb, BUFFER_STENCIL);
+   struct intel_region *region = NULL;
 
-   if (region == NULL)
+   if (drb)
+      region = drb->region;
+   else if (srb)
+      region = srb->region;
+   else
       return BRW_DEPTHFORMAT_D32_FLOAT;
 
    switch (region->cpp) {
@@ -52,9 +61,18 @@ gen7_depth_format(struct brw_context *brw)
 
 static void emit_depthbuffer(struct brw_context *brw)
 {
-   struct intel_region *region = brw->state.depth_region;
    struct intel_context *intel = &brw->intel;
    struct gl_context *ctx = &intel->ctx;
+   struct gl_framebuffer *fb = ctx->DrawBuffer;
+   struct intel_renderbuffer *drb = intel_get_renderbuffer(fb, BUFFER_DEPTH);
+   struct intel_renderbuffer *srb = intel_get_renderbuffer(fb, BUFFER_STENCIL);
+   struct intel_region *region = NULL;
+
+   /* _NEW_BUFFERS */
+   if (drb)
+      region = drb->region;
+   else if (srb)
+      region = srb->region;
 
    if (region == NULL) {
       BEGIN_BATCH(7);
@@ -114,8 +132,8 @@ static void emit_depthbuffer(struct brw_context *brw)
  */
 const struct brw_tracked_state gen7_depthbuffer = {
    .dirty = {
-      .mesa = 0,
-      .brw = BRW_NEW_DEPTH_BUFFER | BRW_NEW_BATCH,
+      .mesa = _NEW_BUFFERS,
+      .brw = BRW_NEW_BATCH,
       .cache = 0,
    },
    .emit = emit_depthbuffer,
