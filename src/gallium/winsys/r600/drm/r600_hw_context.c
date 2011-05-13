@@ -824,14 +824,17 @@ void r600_context_bo_flush(struct r600_context *ctx, unsigned flush_flags,
 	     G_0085F0_DB_ACTION_ENA(flush_flags))) {
 		if (ctx->flags & R600_CONTEXT_CHECK_EVENT_FLUSH) {
 			/* the rv670 seems to fail fbo-generatemipmap unless we flush the CB1 dest base ena */
-			if ((ctx->radeon->family == CHIP_RV670) ||
-			    (ctx->radeon->family == CHIP_RS780) ||
-			    (ctx->radeon->family == CHIP_RS880)) {
-				ctx->pm4[ctx->pm4_cdwords++] = PKT3(PKT3_SURFACE_SYNC, 3, ctx->predicate_drawing);
-				ctx->pm4[ctx->pm4_cdwords++] = S_0085F0_CB1_DEST_BASE_ENA(1);     /* CP_COHER_CNTL */
-				ctx->pm4[ctx->pm4_cdwords++] = 0xffffffff;      /* CP_COHER_SIZE */
-				ctx->pm4[ctx->pm4_cdwords++] = 0;               /* CP_COHER_BASE */
-				ctx->pm4[ctx->pm4_cdwords++] = 0x0000000A;      /* POLL_INTERVAL */
+			if ((bo->binding & BO_BOUND_TEXTURE) &&
+			    (flush_flags & S_0085F0_CB_ACTION_ENA(1))) {
+				if ((ctx->radeon->family == CHIP_RV670) ||
+				    (ctx->radeon->family == CHIP_RS780) ||
+				    (ctx->radeon->family == CHIP_RS880)) {
+					ctx->pm4[ctx->pm4_cdwords++] = PKT3(PKT3_SURFACE_SYNC, 3, ctx->predicate_drawing);
+					ctx->pm4[ctx->pm4_cdwords++] = S_0085F0_CB1_DEST_BASE_ENA(1);     /* CP_COHER_CNTL */
+					ctx->pm4[ctx->pm4_cdwords++] = 0xffffffff;      /* CP_COHER_SIZE */
+					ctx->pm4[ctx->pm4_cdwords++] = 0;               /* CP_COHER_BASE */
+					ctx->pm4[ctx->pm4_cdwords++] = 0x0000000A;      /* POLL_INTERVAL */
+				}
 			}
 
 			ctx->pm4[ctx->pm4_cdwords++] = PKT3(PKT3_EVENT_WRITE, 0, ctx->predicate_drawing);
@@ -964,6 +967,9 @@ void r600_context_pipe_state_set_resource(struct r600_context *ctx, struct r600_
 	block = range->blocks[CTX_BLOCK_ID(ctx, offset)];
 	if (state == NULL) {
 		block->status &= ~(R600_BLOCK_STATUS_ENABLED | R600_BLOCK_STATUS_DIRTY);
+		if (block->reloc[1].bo)
+			block->reloc[1].bo->bo->binding &= ~BO_BOUND_TEXTURE;
+
 		r600_bo_reference(ctx->radeon, &block->reloc[1].bo, NULL);
 		r600_bo_reference(ctx->radeon , &block->reloc[2].bo, NULL);
 		LIST_DELINIT(&block->list);
@@ -1017,6 +1023,7 @@ void r600_context_pipe_state_set_resource(struct r600_context *ctx, struct r600_
 			r600_bo_reference(ctx->radeon, &block->reloc[2].bo, state->regs[3].bo);
 			state->regs[2].bo->fence = ctx->radeon->fence;
 			state->regs[3].bo->fence = ctx->radeon->fence;
+			state->regs[2].bo->bo->binding |= BO_BOUND_TEXTURE;
 		}
 	}
 	r600_context_dirty_block(ctx, block, dirty, num_regs - 1);

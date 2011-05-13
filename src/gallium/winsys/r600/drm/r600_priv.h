@@ -73,6 +73,7 @@ struct r600_reg {
 	unsigned			flush_mask;
 };
 
+#define BO_BOUND_TEXTURE 1
 struct radeon_bo {
 	struct pipe_reference		reference;
 	unsigned			handle;
@@ -88,6 +89,7 @@ struct radeon_bo {
 	unsigned			reloc_id;
 	unsigned			last_flush;
 	unsigned                        name;
+	unsigned                        binding;
 };
 
 struct r600_bo {
