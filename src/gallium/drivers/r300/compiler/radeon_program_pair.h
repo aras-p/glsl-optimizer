@@ -89,6 +89,7 @@ struct rc_pair_instruction {
 	unsigned int WriteALUResult:2;
 	unsigned int ALUResultCompare:3;
 	unsigned int Nop:1;
+	unsigned int SemWait:1;
 };
 
 typedef void (*rc_pair_foreach_src_fn)

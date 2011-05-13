@@ -109,6 +109,10 @@ struct rc_sub_instruction {
 	/** True if tex instruction should do shadow comparison */
 	unsigned int TexShadow:1;
 
+	/**/
+	unsigned int TexSemWait:1;
+	unsigned int TexSemAcquire:1;
+
 	/**R500 Only.  How to swizzle the result of a TEX lookup*/
 	unsigned int TexSwizzle:12;
 	/*@}*/

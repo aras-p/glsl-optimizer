@@ -262,7 +262,7 @@ static void emit_paired(struct r300_fragment_program_compiler *c, struct rc_pair
 	} else {
 		code->inst[ip].inst0 = R500_INST_TYPE_ALU;
 	}
-	code->inst[ip].inst0 |= R500_INST_TEX_SEM_WAIT;
+	code->inst[ip].inst0 |= (inst->SemWait << R500_INST_TEX_SEM_WAIT_SHIFT);
 
 	code->inst[ip].inst0 |= (inst->RGB.WriteMask << 11);
 	code->inst[ip].inst0 |= inst->Alpha.WriteMask ? 1 << 14 : 0;
@@ -380,9 +380,9 @@ static int emit_tex(struct r300_fragment_program_compiler *c, struct rc_sub_inst
 
 	code->inst[ip].inst0 = R500_INST_TYPE_TEX
 		| (inst->DstReg.WriteMask << 11)
-		| R500_INST_TEX_SEM_WAIT;
+		| (inst->TexSemWait << R500_INST_TEX_SEM_WAIT_SHIFT);
 	code->inst[ip].inst1 = R500_TEX_ID(inst->TexSrcUnit)
-		| R500_TEX_SEM_ACQUIRE;
+		| (inst->TexSemAcquire << R500_TEX_SEM_ACQUIRE_SHIFT);
 
 	if (inst->TexSrcTarget == RC_TEXTURE_RECT)
 		code->inst[ip].inst1 |= R500_TEX_UNSCALED;
@@ -649,6 +649,9 @@ void r500BuildFragmentProgramHwCode(struct radeon_compiler *c, void *user)
 			emit_paired(compiler, &inst->U.P);
 		}
 	}
+
+	/* Make sure TEX_SEM_WAIT is set on the last instruction */
+	code->inst[code->inst_end].inst0 |= R500_INST_TEX_SEM_WAIT;
 
 	if (code->max_temp_idx >= compiler->Base.max_temp_regs)
 		rc_error(&compiler->Base, "Too many hardware temporaries used");

@@ -3244,7 +3244,8 @@ enum {
 #   define R500_INST_TYPE_OUT				(1 << 0)
 #   define R500_INST_TYPE_FC				(2 << 0)
 #   define R500_INST_TYPE_TEX				(3 << 0)
-#   define R500_INST_TEX_SEM_WAIT			(1 << 2)
+#   define R500_INST_TEX_SEM_WAIT_SHIFT			2
+#   define R500_INST_TEX_SEM_WAIT			(1 << R500_INST_TEX_SEM_WAIT_SHIFT)
 #   define R500_INST_RGB_PRED_SEL_NONE			(0 << 3)
 #   define R500_INST_RGB_PRED_SEL_RGBA			(1 << 3)
 #   define R500_INST_RGB_PRED_SEL_RRRR			(2 << 3)
@@ -3426,7 +3427,8 @@ enum {
 #   define R500_TEX_INST_LODBIAS			(4 << 22)
 #   define R500_TEX_INST_LOD				(5 << 22)
 #   define R500_TEX_INST_DXDY				(6 << 22)
-#   define R500_TEX_SEM_ACQUIRE				(1 << 25)
+#   define R500_TEX_SEM_ACQUIRE_SHIFT			25
+#   define R500_TEX_SEM_ACQUIRE				(1 << R500_TEX_SEM_ACQUIRE_SHIFT)
 #   define R500_TEX_IGNORE_UNCOVERED			(1 << 26)
 #   define R500_TEX_UNSCALED				(1 << 27)
 #define R300_US_W_FMT					0x46b4

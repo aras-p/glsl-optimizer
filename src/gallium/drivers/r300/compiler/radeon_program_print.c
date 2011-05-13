@@ -293,10 +293,12 @@ static void rc_print_normal_instruction(FILE * f, struct rc_instruction * inst, 
 	}
 
 	if (opcode->HasTexture) {
-		fprintf(f, ", %s%s[%u]",
+		fprintf(f, ", %s%s[%u]%s%s",
 			textarget_to_string(inst->U.I.TexSrcTarget),
 			inst->U.I.TexShadow ? "SHADOW" : "",
-			inst->U.I.TexSrcUnit);
+			inst->U.I.TexSrcUnit,
+			inst->U.I.TexSemWait ? " SEM_WAIT" : "",
+			inst->U.I.TexSemAcquire ? " SEM_ACQUIRE" : "");
 	}
 
 	fprintf(f, ";");
@@ -347,6 +349,9 @@ static void rc_print_pair_instruction(FILE * f, struct rc_instruction * fullinst
 		fprintf(f, ", srcp.w = %s",
 			presubtract_op_to_string(
 					inst->Alpha.Src[RC_PAIR_PRESUB_SRC].Index));
+	}
+	if (inst->SemWait) {
+		fprintf(f, " SEM_WAIT");
 	}
 	fprintf(f, "\n");
 
