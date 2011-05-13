@@ -498,7 +498,7 @@ static void brw_set_dp_write_message( struct brw_context *brw,
        insn->bits3.dp_render_cache.end_of_thread = end_of_thread;
 
        /* We always use the render cache for write messages */
-       insn->header.destreg__conditionalmod = BRW_MESSAGE_TARGET_DATAPORT_WRITE;
+       insn->header.destreg__conditionalmod = GEN6_MESSAGE_TARGET_DP_RENDER_CACHE;
    } else if (intel->gen == 5) {
        insn->bits3.dp_write_gen5.binding_table_index = binding_table_index;
        insn->bits3.dp_write_gen5.msg_control = msg_control;
@@ -541,9 +541,9 @@ brw_set_dp_read_message(struct brw_context *brw,
        uint32_t target_function;
 
        if (target_cache == BRW_DATAPORT_READ_TARGET_DATA_CACHE)
-	  target_function = BRW_MESSAGE_TARGET_DATAPORT_READ; /* data cache */
+	  target_function = GEN6_MESSAGE_TARGET_DP_SAMPLER_CACHE;
        else
-	  target_function = BRW_MESSAGE_TARGET_DATAPORT_WRITE; /* render cache */
+	  target_function = GEN6_MESSAGE_TARGET_DP_RENDER_CACHE;
 
        insn->bits3.dp_render_cache.binding_table_index = binding_table_index;
        insn->bits3.dp_render_cache.msg_control = msg_control;
