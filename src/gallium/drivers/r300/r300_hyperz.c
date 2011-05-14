@@ -138,6 +138,7 @@ static void r300_update_hyperz(struct r300_context* r300)
         (struct r300_hyperz_state*)r300->hyperz_state.state;
     struct pipe_framebuffer_state *fb =
         (struct pipe_framebuffer_state*)r300->fb_state.state;
+    struct r300_dsa_state *dsa = r300->dsa_state.state;
     struct r300_resource *zstex =
             fb->zsbuf ? r300_resource(fb->zsbuf->texture) : NULL;
 
@@ -154,19 +155,37 @@ static void r300_update_hyperz(struct r300_context* r300)
     if (!zstex || !r300->hyperz_enabled)
         return;
 
+    /* Set the size of ZMASK tiles. */
+    if (zstex->tex.zcomp8x8[fb->zsbuf->u.tex.level]) {
+        z->gb_z_peq_config |= R300_GB_Z_PEQ_CONFIG_Z_PEQ_SIZE_8_8;
+    }
+
+    /* R500-specific features and optimizations. */
+    if (r300->screen->caps.is_r500) {
+        z->zb_bw_cntl |= R500_PEQ_PACKING_ENABLE |
+                         R500_COVERED_PTR_MASKING_ENABLE;
+    }
+
+    /* Setup decompression if needed. No other HyperZ setting is required. */
+    if (r300->zmask_decompress) {
+        z->zb_bw_cntl |= R300_FAST_FILL_ENABLE |
+                         R300_RD_COMP_ENABLE;
+        return;
+    }
+
+    /* Do not set anything if depth and stencil tests are off. */
+    if (!dsa->dsa.depth.enabled &&
+        !dsa->dsa.stencil[0].enabled &&
+        !dsa->dsa.stencil[1].enabled) {
+        assert(!dsa->dsa.depth.writemask);
+        return;
+    }
+
     /* Zbuffer compression. */
     if (r300->zmask_in_use && !r300->locked_zbuffer) {
         z->zb_bw_cntl |= R300_FAST_FILL_ENABLE |
-                         /*R300_FORCE_COMPRESSED_STENCIL_VALUE_ENABLE |*/
-                         R300_RD_COMP_ENABLE;
-
-        if (!r300->zmask_decompress) {
-            z->zb_bw_cntl |= R300_WR_COMP_ENABLE;
-        }
-    }
-
-    if (zstex->tex.zcomp8x8[fb->zsbuf->u.tex.level]) {
-        z->gb_z_peq_config |= R300_GB_Z_PEQ_CONFIG_Z_PEQ_SIZE_8_8;
+                         R300_RD_COMP_ENABLE |
+                         R300_WR_COMP_ENABLE;
     }
 
     /* HiZ. */
@@ -192,12 +211,6 @@ static void r300_update_hyperz(struct r300_context* r300)
                 z->zb_bw_cntl |= R500_HIZ_EQUAL_REJECT_ENABLE;
             }
         }
-    }
-
-    /* R500-specific features and optimizations. */
-    if (r300->screen->caps.is_r500) {
-        z->zb_bw_cntl |= R500_PEQ_PACKING_ENABLE |
-                         R500_COVERED_PTR_MASKING_ENABLE;
     }
 }
 
