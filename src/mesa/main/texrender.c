@@ -530,7 +530,6 @@ update_wrapper(struct gl_context *ctx, struct gl_renderbuffer_attachment *att)
 {
    struct texture_renderbuffer *trb
       = (struct texture_renderbuffer *) att->Renderbuffer;
-   GLuint unused;
 
    (void) ctx;
    ASSERT(trb);
@@ -603,10 +602,8 @@ update_wrapper(struct gl_context *ctx, struct gl_renderbuffer_attachment *att)
       trb->Base._BaseFormat = GL_RGBA;
       break;
    default:
-      _mesa_format_to_type_and_comps(trb->TexImage->TexFormat,
-                                     &trb->Base.DataType, &unused);
-      trb->Base._BaseFormat =
-         _mesa_base_fbo_format(ctx, trb->TexImage->InternalFormat);
+      trb->Base.DataType = CHAN_TYPE;
+      trb->Base._BaseFormat = GL_RGBA;
    }
    trb->Base.Data = trb->TexImage->Data;
 }
