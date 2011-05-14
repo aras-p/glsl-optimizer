@@ -1534,8 +1534,6 @@ do {							\
 
 #define NEXT_MACROBLOCK		                \
 do {				                \
-   bs->mv_stream[0][x+y*bs->width] = mv_fwd;    \
-   bs->mv_stream[1][x+y*bs->width] = mv_bwd;    \
    ++x;				                \
    if (x == bs->width) {	                \
       ++y;                                      \
@@ -1544,6 +1542,22 @@ do {				                \
       x = 0;                                    \
    }                                            \
 } while (0)
+
+static inline void
+store_motionvectors(struct vl_mpg12_bs *bs, int x, int y,
+                    struct pipe_motionvector *mv_fwd,
+                    struct pipe_motionvector *mv_bwd)
+{
+   bs->mv_stream[0][x+y*bs->width].top = mv_fwd->top;
+   bs->mv_stream[0][x+y*bs->width].bottom =
+      mv_fwd->top.field_select == PIPE_VIDEO_FRAME ?
+      mv_fwd->top : mv_fwd->bottom;
+
+   bs->mv_stream[1][x+y*bs->width].top = mv_bwd->top;
+   bs->mv_stream[1][x+y*bs->width].bottom =
+      mv_bwd->top.field_select == PIPE_VIDEO_FRAME ?
+      mv_bwd->top : mv_bwd->bottom;
+}
 
 static inline bool
 slice_init(struct vl_mpg12_bs *bs, struct pipe_mpeg12_picture_desc * picture,
@@ -1771,6 +1785,7 @@ decode_slice(struct vl_mpg12_bs *bs, struct pipe_mpeg12_picture_desc *picture, c
          dc_dct_pred[0] = dc_dct_pred[1] = dc_dct_pred[2] = 0;
       }
 
+      store_motionvectors(bs, x, y, &mv_fwd, &mv_bwd);
       NEXT_MACROBLOCK;
 
       vl_vlc_needbits(&bs->vlc);
@@ -1807,7 +1822,9 @@ decode_slice(struct vl_mpg12_bs *bs, struct pipe_mpeg12_picture_desc *picture, c
             mv_fwd.top.x = mv_fwd.top.y = mv_fwd.bottom.x = mv_fwd.bottom.y = 0;
             mv_fwd.top.weight = mv_fwd.bottom.weight = PIPE_VIDEO_MV_WEIGHT_MAX;
          }
+
          do {
+            store_motionvectors(bs, x, y, &mv_fwd, &mv_bwd);
             NEXT_MACROBLOCK;
          } while (--mba_inc);
       }
