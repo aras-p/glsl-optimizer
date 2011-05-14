@@ -43,16 +43,13 @@ static enum r300_hiz_func r300_get_hiz_func(struct r300_context *r300)
 {
     struct r300_dsa_state *dsa = r300->dsa_state.state;
 
-    if (!dsa->dsa.depth.enabled || !dsa->dsa.depth.writemask)
-        return HIZ_FUNC_NONE;
-
     switch (dsa->dsa.depth.func) {
     case PIPE_FUNC_NEVER:
     case PIPE_FUNC_EQUAL:
     case PIPE_FUNC_NOTEQUAL:
     case PIPE_FUNC_ALWAYS:
-        return HIZ_FUNC_NONE;
-
+    default:
+        /* Guess MAX for uncertain cases. */
     case PIPE_FUNC_LESS:
     case PIPE_FUNC_LEQUAL:
         return HIZ_FUNC_MAX;
@@ -60,10 +57,6 @@ static enum r300_hiz_func r300_get_hiz_func(struct r300_context *r300)
     case PIPE_FUNC_GREATER:
     case PIPE_FUNC_GEQUAL:
         return HIZ_FUNC_MIN;
-
-    default:
-        assert(0);
-        return HIZ_FUNC_NONE;
     }
 }
 
@@ -103,16 +96,19 @@ static boolean r300_dsa_stencil_op_not_keep(struct pipe_stencil_state *s)
                           s->zfail_op != PIPE_STENCIL_OP_KEEP);
 }
 
-static boolean r300_can_hiz(struct r300_context *r300)
+static boolean r300_hiz_allowed(struct r300_context *r300)
 {
     struct r300_dsa_state *dsa = r300->dsa_state.state;
     struct r300_screen *r300screen = r300->screen;
 
-    /* shader writes depth - no HiZ */
-    if (r300_fragment_shader_writes_depth(r300_fs(r300))) /* (5) */
+    if (r300_fragment_shader_writes_depth(r300_fs(r300)))
         return FALSE;
 
     if (r300->query_current)
+        return FALSE;
+
+    /* If the depth function is inverted, HiZ must be disabled. */
+    if (!r300_is_hiz_func_valid(r300))
         return FALSE;
 
     /* if stencil fail/zfail op is not KEEP */
@@ -190,26 +186,30 @@ static void r300_update_hyperz(struct r300_context* r300)
 
     /* HiZ. */
     if (r300->hiz_in_use && !r300->locked_zbuffer) {
+        /* HiZ cannot be used under some circumstances. */
+        if (!r300_hiz_allowed(r300)) {
+            /* If writemask is disabled, the HiZ memory will not be changed,
+             * so we can keep its content for later. */
+            if (dsa->dsa.depth.writemask) {
+                r300->hiz_in_use = FALSE;
+            }
+            return;
+        }
+
         /* Set the HiZ function if needed. */
         if (r300->hiz_func == HIZ_FUNC_NONE) {
             r300->hiz_func = r300_get_hiz_func(r300);
         }
 
-        /* If the depth function is inverted, HiZ must be disabled. */
-        if (!r300_is_hiz_func_valid(r300)) {
-            r300->hiz_in_use = FALSE;
-        } else if (r300_can_hiz(r300)) {
-            /* Setup the HiZ bits. */
-            z->zb_bw_cntl |=
-                R300_HIZ_ENABLE |
+        /* Setup the HiZ bits. */
+        z->zb_bw_cntl |= R300_HIZ_ENABLE |
                 (r300->hiz_func == HIZ_FUNC_MIN ? R300_HIZ_MIN : R300_HIZ_MAX);
 
-            z->sc_hyperz |= R300_SC_HYPERZ_ENABLE |
-                            r300_get_sc_hz_max(r300);
+        z->sc_hyperz |= R300_SC_HYPERZ_ENABLE |
+                        r300_get_sc_hz_max(r300);
 
-            if (r300->screen->caps.is_r500) {
-                z->zb_bw_cntl |= R500_HIZ_EQUAL_REJECT_ENABLE;
-            }
+        if (r300->screen->caps.is_r500) {
+            z->zb_bw_cntl |= R500_HIZ_EQUAL_REJECT_ENABLE;
         }
     }
 }
