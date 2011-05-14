@@ -253,6 +253,25 @@ static int find_class(
 	return -1;
 }
 
+struct variable_get_class_cb_data {
+	unsigned int * can_change_writemask;
+	unsigned int conversion_swizzle;
+};
+
+static void variable_get_class_read_cb(
+	void * userdata,
+	struct rc_instruction * inst,
+	struct rc_pair_instruction_arg * arg,
+	struct rc_pair_instruction_source * src)
+{
+	struct variable_get_class_cb_data * d = userdata;
+	unsigned int new_swizzle = rc_adjust_channels(arg->Swizzle,
+							d->conversion_swizzle);
+	if (!r300_swizzle_is_native_basic(new_swizzle)) {
+		*d->can_change_writemask = 0;
+	}
+}
+
 static enum rc_reg_class variable_get_class(
 	struct rc_variable * variable,
 	struct rc_class * classes)
@@ -265,11 +284,14 @@ static enum rc_reg_class variable_get_class(
 
 	if (!variable->C->is_r500) {
 		struct rc_class c;
+		struct rc_variable * var_ptr;
 		/* The assumption here is that if an instruction has type
 		 * RC_INSTRUCTION_NORMAL then it is a TEX instruction.
 		 * r300 and r400 can't swizzle the result of a TEX lookup. */
-		if (variable->Inst->Type == RC_INSTRUCTION_NORMAL) {
-			writemask = RC_MASK_XYZW;
+		for (var_ptr = variable; var_ptr; var_ptr = var_ptr->Friend) {
+			if (var_ptr->Inst->Type == RC_INSTRUCTION_NORMAL) {
+				writemask = RC_MASK_XYZW;
+			}
 		}
 
 		/* Check if it is possible to do swizzle packing for r300/r400
@@ -279,24 +301,48 @@ static enum rc_reg_class variable_get_class(
 			goto error;
 		}
 		c = classes[class_index];
+		if (c.WritemaskCount == 1) {
+			goto done;
+		}
 		for (i = 0; i < c.WritemaskCount; i++) {
-			int j;
-			unsigned int conversion_swizzle =
+			struct rc_variable * var_ptr;
+			for (var_ptr = variable; var_ptr;
+						var_ptr = var_ptr->Friend) {
+				int j;
+				unsigned int conversion_swizzle =
 						rc_make_conversion_swizzle(
 						writemask, c.Writemasks[i]);
-			for (j = 0; j < variable->ReaderCount; j++) {
-				unsigned int old_swizzle;
-				unsigned int new_swizzle;
-				struct rc_reader r = variable->Readers[j];
-				if (r.Inst->Type == RC_INSTRUCTION_PAIR ) {
-					old_swizzle = r.U.P.Arg->Swizzle;
-				} else {
-					old_swizzle = r.U.I.Src->Swizzle;
+				struct variable_get_class_cb_data d;
+				d.can_change_writemask = &can_change_writemask;
+				d.conversion_swizzle = conversion_swizzle;
+				/* If we get this far var_ptr->Inst has to
+				 * be a pair instruction.  If variable or any
+				 * of its friends are normal instructions,
+				 * then the writemask will be set to RC_MASK_XYZW
+				 * and the function will return before it gets
+				 * here. */
+				rc_pair_for_all_reads_arg(var_ptr->Inst,
+					variable_get_class_read_cb, &d);
+
+				for (j = 0; j < var_ptr->ReaderCount; j++) {
+					unsigned int old_swizzle;
+					unsigned int new_swizzle;
+					struct rc_reader r = var_ptr->Readers[j];
+					if (r.Inst->Type ==
+							RC_INSTRUCTION_PAIR ) {
+						old_swizzle = r.U.P.Arg->Swizzle;
+					} else {
+						old_swizzle = r.U.I.Src->Swizzle;
+					}
+					new_swizzle = rc_adjust_channels(
+						old_swizzle, conversion_swizzle);
+					if (!r300_swizzle_is_native_basic(
+								new_swizzle)) {
+						can_change_writemask = 0;
+						break;
+					}
 				}
-				new_swizzle = rc_adjust_channels(
-					old_swizzle, conversion_swizzle);
-				if (!r300_swizzle_is_native_basic(new_swizzle)) {
-					can_change_writemask = 0;
+				if (!can_change_writemask) {
 					break;
 				}
 			}
@@ -332,6 +378,7 @@ static enum rc_reg_class variable_get_class(
 
 	class_index = find_class(classes, writemask,
 						can_change_writemask ? 3 : 1);
+done:
 	if (class_index > -1) {
 		return classes[class_index].Class;
 	} else {
