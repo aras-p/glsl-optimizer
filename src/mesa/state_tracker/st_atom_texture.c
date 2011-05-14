@@ -182,15 +182,114 @@ st_get_texture_sampler_view_from_stobj(struct st_texture_object *stObj,
    return stObj->sampler_view;
 }
 
-
-static void 
-update_textures(struct st_context *st)
+static GLboolean
+update_single_texture(struct st_context *st, struct pipe_sampler_view **sampler_view,
+		      GLuint texUnit)
 {
    struct pipe_context *pipe = st->pipe;
+   const struct gl_sampler_object *samp;
+   struct gl_texture_object *texObj;
+   struct st_texture_object *stObj;
+   enum pipe_format st_view_format;
+   GLboolean retval;
+
+   samp = _mesa_get_samplerobj(st->ctx, texUnit);
+
+   texObj = st->ctx->Texture.Unit[texUnit]._Current;
+
+   if (!texObj) {
+      texObj = st_get_default_texture(st);
+      samp = &texObj->Sampler;
+   }
+   stObj = st_texture_object(texObj);
+
+   retval = st_finalize_texture(st->ctx, st->pipe, texObj);
+   if (!retval) {
+      /* out of mem */
+      return GL_FALSE;
+   }
+
+   /* Determine the format of the texture sampler view */
+   st_view_format = stObj->pt->format;
+   {
+      const struct st_texture_image *firstImage =
+	 st_texture_image(stObj->base.Image[0][stObj->base.BaseLevel]);
+      const gl_format texFormat = firstImage->base.TexFormat;
+      enum pipe_format firstImageFormat =
+	 st_mesa_format_to_pipe_format(texFormat);
+
+      if ((samp->sRGBDecode == GL_SKIP_DECODE_EXT) &&
+	  (_mesa_get_format_color_encoding(texFormat) == GL_SRGB)) {
+	 /* don't do sRGB->RGB conversion.  Interpret the texture
+	  * texture data as linear values.
+	  */
+	 const gl_format linearFormat =
+	    _mesa_get_srgb_format_linear(texFormat);
+	 firstImageFormat = st_mesa_format_to_pipe_format(linearFormat);
+      }
+
+      if (firstImageFormat != stObj->pt->format)
+	 st_view_format = firstImageFormat;
+   }
+
+
+   /* if sampler view has changed dereference it */
+   if (stObj->sampler_view) {
+      if (check_sampler_swizzle(stObj->sampler_view,
+				stObj->base._Swizzle,
+				samp->DepthMode) ||
+	  (st_view_format != stObj->sampler_view->format) ||
+	  stObj->base.BaseLevel != stObj->sampler_view->u.tex.first_level) {
+	 pipe_sampler_view_reference(&stObj->sampler_view, NULL);
+      }
+   }
+
+   *sampler_view = st_get_texture_sampler_view_from_stobj(stObj, pipe,
+							  samp,
+							  st_view_format);
+   return GL_TRUE;
+}
+
+static void 
+update_vertex_textures(struct st_context *st)
+{
    struct gl_vertex_program *vprog = st->ctx->VertexProgram._Current;
+   GLuint su;
+
+   st->state.num_vertex_textures = 0;
+
+   /* loop over sampler units (aka tex image units) */
+   for (su = 0; su < st->ctx->Const.MaxTextureImageUnits; su++) {
+      struct pipe_sampler_view *sampler_view = NULL;
+      if (vprog->Base.SamplersUsed & (1 << su)) {
+         GLboolean retval;
+         GLuint texUnit;
+
+	 texUnit = vprog->Base.SamplerUnits[su];
+
+	 retval = update_single_texture(st, &sampler_view, texUnit);
+	 if (retval == GL_FALSE)
+	    continue;
+
+	 st->state.num_vertex_textures = su + 1;
+
+      }
+      pipe_sampler_view_reference(&st->state.sampler_vertex_views[su], sampler_view);
+   }
+
+   if (st->ctx->Const.MaxVertexTextureImageUnits > 0) {
+      GLuint numUnits = MIN2(st->state.num_vertex_textures,
+                             st->ctx->Const.MaxVertexTextureImageUnits);
+      cso_set_vertex_sampler_views(st->cso_context,
+                                   numUnits,
+                                   st->state.sampler_vertex_views);
+   }
+}
+
+static void 
+update_fragment_textures(struct st_context *st)
+{
    struct gl_fragment_program *fprog = st->ctx->FragmentProgram._Current;
-   const GLbitfield samplersUsed = (vprog->Base.SamplersUsed |
-                                    fprog->Base.SamplersUsed);
    GLuint su;
 
    st->state.num_textures = 0;
@@ -198,74 +297,17 @@ update_textures(struct st_context *st)
    /* loop over sampler units (aka tex image units) */
    for (su = 0; su < st->ctx->Const.MaxTextureImageUnits; su++) {
       struct pipe_sampler_view *sampler_view = NULL;
-      enum pipe_format st_view_format;
-      if (samplersUsed & (1 << su)) {
-         struct gl_texture_object *texObj;
-         struct st_texture_object *stObj;
+      if (fprog->Base.SamplersUsed & (1 << su)) {
          GLboolean retval;
          GLuint texUnit;
-         const struct gl_sampler_object *samp;
 
-         if (fprog->Base.SamplersUsed & (1 << su))
-            texUnit = fprog->Base.SamplerUnits[su];
-         else
-            texUnit = vprog->Base.SamplerUnits[su];
+	 texUnit = fprog->Base.SamplerUnits[su];
 
-         samp = _mesa_get_samplerobj(st->ctx, texUnit);
-
-         texObj = st->ctx->Texture.Unit[texUnit]._Current;
-
-         if (!texObj) {
-            texObj = st_get_default_texture(st);
-            samp = &texObj->Sampler;
-         }
-         stObj = st_texture_object(texObj);
-
-         retval = st_finalize_texture(st->ctx, st->pipe, texObj);
-         if (!retval) {
-            /* out of mem */
-            continue;
-         }
-
-         /* Determine the format of the texture sampler view */
-	 st_view_format = stObj->pt->format;
-	 {
-	    const struct st_texture_image *firstImage =
-               st_texture_image(stObj->base.Image[0][stObj->base.BaseLevel]);
-            const gl_format texFormat = firstImage->base.TexFormat;
-	    enum pipe_format firstImageFormat =
-               st_mesa_format_to_pipe_format(texFormat);
-
-	    if ((samp->sRGBDecode == GL_SKIP_DECODE_EXT) &&
-                (_mesa_get_format_color_encoding(texFormat) == GL_SRGB)) {
-               /* don't do sRGB->RGB conversion.  Interpret the texture
-                * texture data as linear values.
-                */
-               const gl_format linearFormat =
-                  _mesa_get_srgb_format_linear(texFormat);
-	       firstImageFormat = st_mesa_format_to_pipe_format(linearFormat);
-	    }
-
-	    if (firstImageFormat != stObj->pt->format)
-	       st_view_format = firstImageFormat;
-	 }
+	 retval = update_single_texture(st, &sampler_view, texUnit);
+	 if (retval == GL_FALSE)
+	    continue;
 
          st->state.num_textures = su + 1;
-
-	 /* if sampler view has changed dereference it */
-	 if (stObj->sampler_view) {
-            if (check_sampler_swizzle(stObj->sampler_view,
-                                      stObj->base._Swizzle,
-                                      samp->DepthMode) ||
-                (st_view_format != stObj->sampler_view->format) ||
-                stObj->base.BaseLevel != stObj->sampler_view->u.tex.first_level) {
-	       pipe_sampler_view_reference(&stObj->sampler_view, NULL);
-            }
-         }
-
-         sampler_view = st_get_texture_sampler_view_from_stobj(stObj, pipe,
-                                                               samp,
-                                                               st_view_format);
       }
       pipe_sampler_view_reference(&st->state.sampler_views[su], sampler_view);
    }
@@ -273,16 +315,14 @@ update_textures(struct st_context *st)
    cso_set_fragment_sampler_views(st->cso_context,
                                   st->state.num_textures,
                                   st->state.sampler_views);
-
-   if (st->ctx->Const.MaxVertexTextureImageUnits > 0) {
-      GLuint numUnits = MIN2(st->state.num_textures,
-                             st->ctx->Const.MaxVertexTextureImageUnits);
-      cso_set_vertex_sampler_views(st->cso_context,
-                                   numUnits,
-                                   st->state.sampler_views);
-   }
 }
 
+static void 
+update_textures(struct st_context *st)
+{
+  update_fragment_textures(st);
+  update_vertex_textures(st);
+}
 
 const struct st_tracked_state st_update_texture = {
    "st_update_texture",					/* name */
@@ -292,9 +332,6 @@ const struct st_tracked_state st_update_texture = {
    },
    update_textures					/* update */
 };
-
-
-
 
 static void 
 finalize_textures(struct st_context *st)
