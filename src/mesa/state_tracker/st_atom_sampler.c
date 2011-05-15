@@ -133,6 +133,8 @@ static void convert_sampler(struct st_context *st,
     }
 
     msamp = _mesa_get_samplerobj(st->ctx, texUnit);
+
+    memset(sampler, 0, sizeof(*sampler));
     sampler->wrap_s = gl_wrap_xlate(msamp->WrapS);
     sampler->wrap_t = gl_wrap_xlate(msamp->WrapT);
     sampler->wrap_r = gl_wrap_xlate(msamp->WrapR);
@@ -201,8 +203,6 @@ update_vertex_samplers(struct st_context *st)
    for (su = 0; su < st->ctx->Const.MaxVertexTextureImageUnits; su++) {
       struct pipe_sampler_state *sampler = st->state.vertex_samplers + su;
 
-      memset(sampler, 0, sizeof(*sampler));
-
       if (vprog->Base.SamplersUsed & (1 << su)) {
 	 GLuint texUnit;
 
@@ -232,7 +232,6 @@ update_fragment_samplers(struct st_context *st)
    for (su = 0; su < st->ctx->Const.MaxTextureImageUnits; su++) {
       struct pipe_sampler_state *sampler = st->state.samplers + su;
 
-      memset(sampler, 0, sizeof(*sampler));
 
       if (fprog->Base.SamplersUsed & (1 << su)) {
          GLuint texUnit;
