@@ -56,7 +56,14 @@ typedef pthread_t pipe_thread;
 static INLINE pipe_thread pipe_thread_create( void *(* routine)( void *), void *param )
 {
    pipe_thread thread;
-   if (pthread_create( &thread, NULL, routine, param ))
+   sigset_t saved_set, new_set;
+   int ret;
+
+   sigfillset(&new_set);
+   pthread_sigmask(SIG_SETMASK, &new_set, &saved_set);
+   ret = pthread_create( &thread, NULL, routine, param );
+   pthread_sigmask(SIG_SETMASK, &saved_set, NULL);
+   if (ret)
       return 0;
    return thread;
 }
