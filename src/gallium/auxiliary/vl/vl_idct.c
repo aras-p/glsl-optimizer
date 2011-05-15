@@ -207,7 +207,7 @@ create_stage1_frag_shader(struct vl_idct *idct)
    struct ureg_dst l[4][2], r[2];
    struct ureg_dst fragment[idct->nr_of_render_targets];
 
-   unsigned i, j;
+   int i, j;
 
    shader = ureg_create(TGSI_PROCESSOR_FRAGMENT);
    if (!shader)
@@ -230,24 +230,19 @@ create_stage1_frag_shader(struct vl_idct *idct)
    r[0] = ureg_DECL_temporary(shader);
    r[1] = ureg_DECL_temporary(shader);
 
-   for (i = 1; i < 4; ++i) {
-      increment_addr(shader, l[i], l_addr, false, false, i, idct->buffer_height);
+   for (i = 0; i < 4; ++i) {
+      increment_addr(shader, l[i], l_addr, false, false, i - 2, idct->buffer_height);
    }
 
    for (i = 0; i < 4; ++i) {
-      struct ureg_src s_addr[2];
-      s_addr[0] = i == 0 ? l_addr[0] : ureg_src(l[i][0]);
-      s_addr[1] = i == 0 ? l_addr[1] : ureg_src(l[i][1]);
+      struct ureg_src s_addr[2] = { ureg_src(l[i][0]), ureg_src(l[i][1]) };
       fetch_four(shader, l[i], s_addr, ureg_DECL_sampler(shader, 1));
    }
 
    for (i = 0; i < idct->nr_of_render_targets; ++i) {
-      if(i > 0)
-         increment_addr(shader, r, r_addr, true, true, i, BLOCK_HEIGHT);
+      increment_addr(shader, r, r_addr, true, true, i - (signed)idct->nr_of_render_targets / 2, BLOCK_HEIGHT);
 
       struct ureg_src s_addr[2] = { ureg_src(r[0]), ureg_src(r[1]) };
-      s_addr[0] = i == 0 ? r_addr[0] : ureg_src(r[0]);
-      s_addr[1] = i == 0 ? r_addr[1] : ureg_src(r[1]);
       fetch_four(shader, r, s_addr, ureg_DECL_sampler(shader, 0));
 
       for (j = 0; j < 4; ++j) {
@@ -372,7 +367,7 @@ init_state(struct vl_idct *idct)
    assert(idct);
 
    memset(&rs_state, 0, sizeof(rs_state));
-   rs_state.gl_rasterization_rules = false;
+   rs_state.gl_rasterization_rules = true;
    idct->rs_state = idct->pipe->create_rasterizer_state(idct->pipe, &rs_state);
    if (!idct->rs_state)
       goto error_rs_state;
