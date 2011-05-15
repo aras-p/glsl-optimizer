@@ -877,9 +877,6 @@ vl_create_mpeg12_decoder(struct pipe_video_context *context,
    dec->base.create_buffer = vl_mpeg12_create_buffer;
    dec->base.flush_buffer = vl_mpeg12_decoder_flush_buffer;
 
-   dec->base.width = align(width, MACROBLOCK_WIDTH);
-   dec->base.height = align(height, MACROBLOCK_HEIGHT);
-
    dec->pipe = pipe;
 
    dec->quads = vl_vb_upload_quads(dec->pipe);

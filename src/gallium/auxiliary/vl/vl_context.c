@@ -195,8 +195,8 @@ vl_context_create_decoder(struct pipe_video_context *context,
    assert(context);
    assert(width > 0 && height > 0);
 
-   buffer_width = ctx->pot_buffers ? util_next_power_of_two(width) : width;
-   buffer_height = ctx->pot_buffers ? util_next_power_of_two(height) : height;
+   buffer_width = ctx->pot_buffers ? util_next_power_of_two(width) : align(width, MACROBLOCK_WIDTH);
+   buffer_height = ctx->pot_buffers ? util_next_power_of_two(height) : align(height, MACROBLOCK_HEIGHT);
 
    switch (u_reduce_video_profile(profile)) {
       case PIPE_VIDEO_CODEC_MPEG12:
@@ -237,8 +237,8 @@ vl_context_create_buffer(struct pipe_video_context *context,
       return NULL;
    }
 
-   buffer_width = ctx->pot_buffers ? util_next_power_of_two(width) : width;
-   buffer_height = ctx->pot_buffers ? util_next_power_of_two(height) : height;
+   buffer_width = ctx->pot_buffers ? util_next_power_of_two(width) : align(width, MACROBLOCK_WIDTH);
+   buffer_height = ctx->pot_buffers ? util_next_power_of_two(height) : align(height, MACROBLOCK_HEIGHT);
 
    result = vl_video_buffer_init(context, ctx->pipe,
                                  buffer_width, buffer_height, 1,
