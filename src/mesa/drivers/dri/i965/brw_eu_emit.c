@@ -487,18 +487,18 @@ static void brw_set_dp_write_message( struct brw_context *brw,
    brw_set_src1(insn, brw_imm_ud(0));
 
    if (intel->gen >= 6) {
-       insn->bits3.dp_render_cache.binding_table_index = binding_table_index;
-       insn->bits3.dp_render_cache.msg_control = msg_control;
-       insn->bits3.dp_render_cache.pixel_scoreboard_clear = pixel_scoreboard_clear;
-       insn->bits3.dp_render_cache.msg_type = msg_type;
-       insn->bits3.dp_render_cache.send_commit_msg = send_commit_msg;
-       insn->bits3.dp_render_cache.header_present = header_present;
-       insn->bits3.dp_render_cache.response_length = response_length;
-       insn->bits3.dp_render_cache.msg_length = msg_length;
-       insn->bits3.dp_render_cache.end_of_thread = end_of_thread;
+       insn->bits3.gen6_dp.binding_table_index = binding_table_index;
+       insn->bits3.gen6_dp.msg_control = msg_control;
+       insn->bits3.gen6_dp.pixel_scoreboard_clear = pixel_scoreboard_clear;
+       insn->bits3.gen6_dp.msg_type = msg_type;
+       insn->bits3.gen6_dp.send_commit_msg = send_commit_msg;
+       insn->bits3.gen6_dp.header_present = header_present;
+       insn->bits3.gen6_dp.response_length = response_length;
+       insn->bits3.gen6_dp.msg_length = msg_length;
+       insn->bits3.gen6_dp.end_of_thread = end_of_thread;
 
        /* We always use the render cache for write messages */
-       insn->header.destreg__conditionalmod = BRW_MESSAGE_TARGET_DATAPORT_WRITE;
+       insn->header.destreg__conditionalmod = GEN6_MESSAGE_TARGET_DP_RENDER_CACHE;
    } else if (intel->gen == 5) {
        insn->bits3.dp_write_gen5.binding_table_index = binding_table_index;
        insn->bits3.dp_write_gen5.msg_control = msg_control;
@@ -541,19 +541,19 @@ brw_set_dp_read_message(struct brw_context *brw,
        uint32_t target_function;
 
        if (target_cache == BRW_DATAPORT_READ_TARGET_DATA_CACHE)
-	  target_function = BRW_MESSAGE_TARGET_DATAPORT_READ; /* data cache */
+	  target_function = GEN6_MESSAGE_TARGET_DP_SAMPLER_CACHE;
        else
-	  target_function = BRW_MESSAGE_TARGET_DATAPORT_WRITE; /* render cache */
+	  target_function = GEN6_MESSAGE_TARGET_DP_RENDER_CACHE;
 
-       insn->bits3.dp_render_cache.binding_table_index = binding_table_index;
-       insn->bits3.dp_render_cache.msg_control = msg_control;
-       insn->bits3.dp_render_cache.pixel_scoreboard_clear = 0;
-       insn->bits3.dp_render_cache.msg_type = msg_type;
-       insn->bits3.dp_render_cache.send_commit_msg = 0;
-       insn->bits3.dp_render_cache.header_present = 1;
-       insn->bits3.dp_render_cache.response_length = response_length;
-       insn->bits3.dp_render_cache.msg_length = msg_length;
-       insn->bits3.dp_render_cache.end_of_thread = 0;
+       insn->bits3.gen6_dp.binding_table_index = binding_table_index;
+       insn->bits3.gen6_dp.msg_control = msg_control;
+       insn->bits3.gen6_dp.pixel_scoreboard_clear = 0;
+       insn->bits3.gen6_dp.msg_type = msg_type;
+       insn->bits3.gen6_dp.send_commit_msg = 0;
+       insn->bits3.gen6_dp.header_present = 1;
+       insn->bits3.gen6_dp.response_length = response_length;
+       insn->bits3.gen6_dp.msg_length = msg_length;
+       insn->bits3.gen6_dp.end_of_thread = 0;
        insn->header.destreg__conditionalmod = target_function;
    } else if (intel->gen == 5) {
        insn->bits3.dp_read_gen5.binding_table_index = binding_table_index;
@@ -1711,7 +1711,7 @@ void brw_oword_block_read(struct brw_compile *p,
 			   bind_table_index,
 			   BRW_DATAPORT_OWORD_BLOCK_1_OWORDLOW,
 			   BRW_DATAPORT_READ_MESSAGE_OWORD_BLOCK_READ,
-			   0, /* source cache = data cache */
+			   BRW_DATAPORT_READ_TARGET_DATA_CACHE,
 			   1, /* msg_length */
 			   1); /* response_length (1 reg, 2 owords!) */
 
@@ -1752,7 +1752,7 @@ void brw_dword_scattered_read(struct brw_compile *p,
 			   bind_table_index,
 			   BRW_DATAPORT_DWORD_SCATTERED_BLOCK_8DWORDS,
 			   BRW_DATAPORT_READ_MESSAGE_DWORD_SCATTERED_READ,
-			   0, /* source cache = data cache */
+			   BRW_DATAPORT_READ_TARGET_DATA_CACHE,
 			   2, /* msg_length */
 			   1); /* response_length */
 }
@@ -1806,7 +1806,7 @@ void brw_dp_READ_4_vs(struct brw_compile *p,
 			   bind_table_index,
 			   0,
 			   BRW_DATAPORT_READ_MESSAGE_OWORD_BLOCK_READ, /* msg_type */
-			   0, /* source cache = data cache */
+			   BRW_DATAPORT_READ_TARGET_DATA_CACHE,
 			   1, /* msg_length */
 			   1); /* response_length (1 Oword) */
 }

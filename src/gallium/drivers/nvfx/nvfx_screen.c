@@ -81,6 +81,12 @@ nvfx_screen_get_param(struct pipe_screen *pscreen, enum pipe_cap param)
 		return 0; // TODO: implement depth clamp
 	case PIPE_CAP_PRIMITIVE_RESTART:
 		return 0; // TODO: implement primitive restart
+	case PIPE_CAP_ARRAY_TEXTURES:
+	case PIPE_CAP_TGSI_INSTANCEID:
+	case PIPE_CAP_VERTEX_ELEMENT_INSTANCE_DIVISOR:
+	case PIPE_CAP_FRAGMENT_COLOR_CLAMP_CONTROL:
+	case PIPE_CAP_SEAMLESS_CUBE_MAP:
+	case PIPE_CAP_SEAMLESS_CUBE_MAP_PER_TEXTURE:
 	case PIPE_CAP_SHADER_STENCIL_EXPORT:
 		return 0;
 	case PIPE_CAP_MIXED_COLORBUFFER_FORMATS:

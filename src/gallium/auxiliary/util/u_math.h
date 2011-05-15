@@ -413,22 +413,6 @@ unsigned ffs( unsigned u )
 #define ffs __builtin_ffs
 #endif
 
-#ifdef __MINGW32__
-#define ffs __builtin_ffs
-#endif
-
-
-/* Could also binary search for the highest bit.
- */
-static INLINE unsigned
-util_unsigned_logbase2(unsigned n)
-{
-   unsigned log2 = 0;
-   while (n >>= 1)
-      ++log2;
-   return log2;
-}
-
 
 /**
  * Return float bits.

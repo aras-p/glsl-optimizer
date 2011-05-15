@@ -1012,6 +1012,9 @@
 #define   S_038018_MPEG_CLAMP(x)                       (((x) & 0x3) << 0)
 #define   G_038018_MPEG_CLAMP(x)                       (((x) >> 0) & 0x3)
 #define   C_038018_MPEG_CLAMP                          0xFFFFFFFC
+#define   S_038018_MAX_ANISO(x)                        (((x) & 0x7) << 2)
+#define   G_038018_MAX_ANISO(x)                        (((x) >> 2) & 0x7)
+#define   C_038018_MAX_ANISO                           0xFFFFFFE3
 #define   S_038018_PERF_MODULATION(x)                  (((x) & 0x7) << 5)
 #define   G_038018_PERF_MODULATION(x)                  (((x) >> 5) & 0x7)
 #define   C_038018_PERF_MODULATION                     0xFFFFFF1F
@@ -1090,6 +1093,9 @@
 #define   S_03C000_MIP_FILTER(x)                       (((x) & 0x3) << 17)
 #define   G_03C000_MIP_FILTER(x)                       (((x) >> 17) & 0x3)
 #define   C_03C000_MIP_FILTER                          0xFFF9FFFF
+#define   S_03C000_MAX_ANISO(x)                        (((x) & 0x7) << 19)
+#define   G_03C000_MAX_ANISO(x)                        (((x) >> 19) & 0x7)
+#define   C_03C000_MAX_ANISO                           0xFFB7FFFF
 #define   S_03C000_BORDER_COLOR_TYPE(x)                (((x) & 0x3) << 22)
 #define   G_03C000_BORDER_COLOR_TYPE(x)                (((x) >> 22) & 0x3)
 #define   C_03C000_BORDER_COLOR_TYPE                   0xFF3FFFFF
@@ -1152,6 +1158,9 @@
 #define   S_03C008_PERF_Z(x)                           (((x) & 0x3) << 18)
 #define   G_03C008_PERF_Z(x)                           (((x) >> 18) & 0x3)
 #define   C_03C008_PERF_Z                              0xFFF3FFFF
+#define   S_03C008_ANISO_BIAS(x)                       (((x) & 0x3f) << 22)
+#define   G_03C008_ANISO_BIAS(x)                       (((x) >> 22) & 0x3f)
+#define   C_03C008_ANISO_BIAS                          (~(0x3f << 22))
 #define   S_03C008_FETCH_4(x)                          (((x) & 0x1) << 26)
 #define   G_03C008_FETCH_4(x)                          (((x) >> 26) & 0x1)
 #define   C_03C008_FETCH_4                             0xFBFFFFFF

@@ -868,6 +868,34 @@ egl_g3d_show_screen_surface(_EGLDriver *drv, _EGLDisplay *dpy,
 
 #endif /* EGL_MESA_screen_surface */
 
+#ifdef EGL_WL_bind_wayland_display
+
+static EGLBoolean
+egl_g3d_bind_wayland_display_wl(_EGLDriver *drv, _EGLDisplay *dpy,
+                                struct wl_display *wl_dpy)
+{
+   struct egl_g3d_display *gdpy = egl_g3d_display(dpy);
+
+   if (!gdpy->native->wayland_bufmgr)
+      return EGL_FALSE;
+
+   return gdpy->native->wayland_bufmgr->bind_display(gdpy->native, wl_dpy);
+}
+
+static EGLBoolean
+egl_g3d_unbind_wayland_display_wl(_EGLDriver *drv, _EGLDisplay *dpy,
+                                  struct wl_display *wl_dpy)
+{
+   struct egl_g3d_display *gdpy = egl_g3d_display(dpy);
+
+   if (!gdpy->native->wayland_bufmgr)
+      return EGL_FALSE;
+
+   return gdpy->native->wayland_bufmgr->unbind_display(gdpy->native, wl_dpy);
+}
+
+#endif /* EGL_WL_bind_wayland_display */
+
 void
 egl_g3d_init_driver_api(_EGLDriver *drv)
 {
@@ -896,6 +924,11 @@ egl_g3d_init_driver_api(_EGLDriver *drv)
 #ifdef EGL_MESA_drm_image
    drv->API.CreateDRMImageMESA = egl_g3d_create_drm_image;
    drv->API.ExportDRMImageMESA = egl_g3d_export_drm_image;
+#endif
+#ifdef EGL_WL_bind_wayland_display
+   drv->API.BindWaylandDisplayWL = egl_g3d_bind_wayland_display_wl;
+   drv->API.UnbindWaylandDisplayWL = egl_g3d_unbind_wayland_display_wl;
+
 #endif
 
 #ifdef EGL_KHR_reusable_sync

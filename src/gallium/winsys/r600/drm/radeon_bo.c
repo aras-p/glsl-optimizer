@@ -33,7 +33,7 @@
 #include "xf86drm.h"
 #include "radeon_drm.h"
 
-static int radeon_bo_fixed_map(struct radeon *radeon, struct radeon_bo *bo)
+int radeon_bo_fixed_map(struct radeon *radeon, struct radeon_bo *bo)
 {
 	struct drm_radeon_gem_mmap args;
 	void *ptr;
@@ -64,8 +64,10 @@ static int radeon_bo_fixed_map(struct radeon *radeon, struct radeon_bo *bo)
 
 static void radeon_bo_fixed_unmap(struct radeon *radeon, struct radeon_bo *bo)
 {
-	munmap(bo->data, bo->size);
-	bo->data = NULL;
+	if (bo->data) {
+		munmap(bo->data, bo->size);
+		bo->data = NULL;
+	}
 }
 
 struct radeon_bo *radeon_bo(struct radeon *radeon, unsigned handle,
@@ -126,11 +128,6 @@ struct radeon_bo *radeon_bo(struct radeon *radeon, unsigned handle,
 			free(bo);
 			return NULL;
 		}
-	}
-	if (radeon_bo_fixed_map(radeon, bo)) {
-		R600_ERR("failed to map bo\n");
-		radeon_bo_reference(radeon, &bo, NULL);
-		return bo;
 	}
 
 	if (handle)

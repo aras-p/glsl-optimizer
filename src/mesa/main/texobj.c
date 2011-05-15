@@ -254,6 +254,7 @@ _mesa_copy_texture_object( struct gl_texture_object *dest,
    dest->Sampler.CompareFailValue = src->Sampler.CompareFailValue;
    dest->Sampler.CubeMapSeamless = src->Sampler.CubeMapSeamless;
    dest->Sampler.DepthMode = src->Sampler.DepthMode;
+   dest->Sampler.sRGBDecode = src->Sampler.sRGBDecode;
    dest->_MaxLevel = src->_MaxLevel;
    dest->_MaxLambda = src->_MaxLambda;
    dest->GenerateMipmap = src->GenerateMipmap;

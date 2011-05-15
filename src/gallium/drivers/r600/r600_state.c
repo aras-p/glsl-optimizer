@@ -374,6 +374,7 @@ static void *r600_create_sampler_state(struct pipe_context *ctx,
 {
 	struct r600_pipe_state *rstate = CALLOC_STRUCT(r600_pipe_state);
 	union util_color uc;
+	unsigned aniso_flag_offset = state->max_anisotropy > 1 ? 4 : 0;
 
 	if (rstate == NULL) {
 		return NULL;
@@ -385,9 +386,10 @@ static void *r600_create_sampler_state(struct pipe_context *ctx,
 			S_03C000_CLAMP_X(r600_tex_wrap(state->wrap_s)) |
 			S_03C000_CLAMP_Y(r600_tex_wrap(state->wrap_t)) |
 			S_03C000_CLAMP_Z(r600_tex_wrap(state->wrap_r)) |
-			S_03C000_XY_MAG_FILTER(r600_tex_filter(state->mag_img_filter)) |
-			S_03C000_XY_MIN_FILTER(r600_tex_filter(state->min_img_filter)) |
+			S_03C000_XY_MAG_FILTER(r600_tex_filter(state->mag_img_filter) | aniso_flag_offset) |
+			S_03C000_XY_MIN_FILTER(r600_tex_filter(state->min_img_filter) | aniso_flag_offset) |
 			S_03C000_MIP_FILTER(r600_tex_mipfilter(state->min_mip_filter)) |
+			S_03C000_MAX_ANISO(r600_tex_aniso_filter(state->max_anisotropy)) |
 			S_03C000_DEPTH_COMPARE_FUNCTION(r600_tex_compare(state->compare_func)) |
 			S_03C000_BORDER_COLOR_TYPE(uc.ui ? V_03C000_SQ_TEX_BORDER_COLOR_REGISTER : 0), 0xFFFFFFFF, NULL);
 	r600_pipe_state_add_reg(rstate, R_03C004_SQ_TEX_SAMPLER_WORD1_0,
@@ -497,7 +499,8 @@ static struct pipe_sampler_view *r600_create_sampler_view(struct pipe_context *c
 				S_038014_BASE_ARRAY(state->u.tex.first_layer) |
 				S_038014_LAST_ARRAY(state->u.tex.last_layer), 0xFFFFFFFF, NULL);
 	r600_pipe_state_add_reg(rstate, R_038018_RESOURCE0_WORD6,
-				S_038018_TYPE(V_038010_SQ_TEX_VTX_VALID_TEXTURE), 0xFFFFFFFF, NULL);
+				S_038018_TYPE(V_038010_SQ_TEX_VTX_VALID_TEXTURE) |
+				S_038018_MAX_ANISO(4 /* max 16 samples */), 0xFFFFFFFF, NULL);
 
 	return &resource->base;
 }

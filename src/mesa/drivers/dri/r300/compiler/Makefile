@@ -74,6 +74,9 @@ tags:
 clean:
 	rm -f $(OBJECTS) lib$(LIBNAME).a depend depend.bak
 
+test: default
+	@$(MAKE) -s -C tests/
+
 # Dummy target
 install:
 	@echo -n ""

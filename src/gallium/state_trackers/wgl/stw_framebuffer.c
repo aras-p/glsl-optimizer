@@ -146,8 +146,6 @@ stw_framebuffer_get_size( struct stw_framebuffer *fb )
        * maximized again.
        */
 
-      assert(width == 0 && height == 0);
-
       return;
    }
 

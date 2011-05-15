@@ -39,6 +39,7 @@
 #include "main/pack.h"
 #include "main/pbo.h"
 #include "main/texformat.h"
+#include "main/teximage.h"
 #include "main/texstore.h"
 #include "program/program.h"
 #include "program/prog_print.h"
@@ -419,10 +420,10 @@ make_texture(struct st_context *st,
    gl_format mformat;
    struct pipe_resource *pt;
    enum pipe_format pipeFormat;
-   GLenum baseFormat, intFormat;
+   GLenum baseInternalFormat, intFormat;
 
-   baseFormat = base_format(format);
    intFormat = internal_format(ctx, format, type);
+   baseInternalFormat = _mesa_base_tex_format(ctx, intFormat);
 
    mformat = st_ChooseTextureFormat_renderable(ctx, intFormat,
                                                format, type, GL_FALSE);
@@ -465,7 +466,7 @@ make_texture(struct st_context *st,
        * the texture.  We deal with that with texcoords.
        */
       success = _mesa_texstore(ctx, 2,           /* dims */
-                               baseFormat,       /* baseInternalFormat */
+                               baseInternalFormat, /* baseInternalFormat */
                                mformat,          /* gl_format */
                                dest,             /* dest */
                                0, 0, 0,          /* dstX/Y/Zoffset */

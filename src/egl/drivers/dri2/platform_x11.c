@@ -784,7 +784,7 @@ dri2_create_image_khr_pixmap(_EGLDisplay *disp, _EGLContext *ctx,
 
    (void) ctx;
 
-   drawable = (xcb_drawable_t) buffer;
+   drawable = (xcb_drawable_t) (uintptr_t) buffer;
    xcb_dri2_create_drawable (dri2_dpy->conn, drawable);
    attachments[0] = XCB_DRI2_ATTACHMENT_BUFFER_FRONT_LEFT;
    buffers_cookie =

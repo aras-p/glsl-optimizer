@@ -49,6 +49,7 @@ endif
 ifneq ($(findstring wayland, $(EGL_PLATFORMS)),)
 egl_SYS += $(WAYLAND_LIBS) $(LIBDRM_LIB)
 egl_LIBS += $(TOP)/src/gallium/winsys/sw/wayland/libws_wayland.a
+egl_LIBS += $(TOP)/src/egl/wayland/wayland-drm/libwayland-drm.a
 endif
 ifneq ($(findstring drm, $(EGL_PLATFORMS)),)
 egl_SYS += $(LIBDRM_LIB)

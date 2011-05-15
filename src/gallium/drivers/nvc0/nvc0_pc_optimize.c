@@ -1293,31 +1293,45 @@ nv_pass_cse(struct nv_pass *ctx, struct nv_basic_block *b)
  * neighbouring registers. CSE might have messed this up.
  * Just generate a MOV for each source to avoid conflicts if they're used in
  * multiple NV_OP_BIND at different positions.
+ *
+ * Add a dummy use of the pointer source of >= 8 byte loads after the load
+ * to prevent it from being assigned a register which overlaps the load's
+ * destination, which would produce random corruptions.
  */
 static int
-nv_pass_fix_bind(struct nv_pass *ctx, struct nv_basic_block *b)
+nv_pass_fixups(struct nv_pass *ctx, struct nv_basic_block *b)
 {
    struct nv_value *val;
-   struct nv_instruction *bnd, *nvi, *next;
+   struct nv_instruction *fix, *nvi, *next;
    int s;
 
-   for (bnd = b->entry; bnd; bnd = next) {
-      next = bnd->next;
-      if (bnd->opcode != NV_OP_BIND)
+   for (fix = b->entry; fix; fix = next) {
+      next = fix->next;
+
+      if (fix->opcode == NV_OP_LD) {
+         if (fix->indirect >= 0 && fix->src[0]->value->reg.size >= 8) {
+            nvi = nv_alloc_instruction(ctx->pc, NV_OP_UNDEF);
+            nv_reference(ctx->pc, nvi, 0, fix->src[fix->indirect]->value);
+
+            nvc0_insn_insert_after(fix, nvi);
+         }
          continue;
-      for (s = 0; s < 4 && bnd->src[s]; ++s) {
-         val = bnd->src[s]->value;
+      } else
+      if (fix->opcode == NV_OP_BIND) {
+         for (s = 0; s < 4 && fix->src[s]; ++s) {
+            val = fix->src[s]->value;
 
-         nvi = nv_alloc_instruction(ctx->pc, NV_OP_MOV);
-         nvi->def[0] = new_value_like(ctx->pc, val);
-         nvi->def[0]->insn = nvi;
-         nv_reference(ctx->pc, nvi, 0, val);
-         nv_reference(ctx->pc, bnd, s, nvi->def[0]);
+            nvi = nv_alloc_instruction(ctx->pc, NV_OP_MOV);
+            nvi->def[0] = new_value_like(ctx->pc, val);
+            nvi->def[0]->insn = nvi;
+            nv_reference(ctx->pc, nvi, 0, val);
+            nv_reference(ctx->pc, fix, s, nvi->def[0]);
 
-         nvc0_insn_insert_before(bnd, nvi);
+            nvc0_insn_insert_before(fix, nvi);
+         }
       }
    }
-   DESCEND_ARBITRARY(s, nv_pass_fix_bind);
+   DESCEND_ARBITRARY(s, nv_pass_fixups);
 
    return 0;
 }
@@ -1403,7 +1417,7 @@ nv_pc_pass0(struct nv_pc *pc, struct nv_basic_block *root)
       return ret;
 
    pc->pass_seq++;
-   ret = nv_pass_fix_bind(&pass, root);
+   ret = nv_pass_fixups(&pass, root);
 
    return ret;
 }

@@ -97,6 +97,12 @@ x11_screen_enable_dri2(struct x11_screen *xscr,
                        x11_drawable_invalidate_buffers invalidate_buffers,
                        void *user_data);
 
+char *
+x11_screen_get_device_name(struct x11_screen *xscr);
+
+int
+x11_screen_authenticate(struct x11_screen *xscr, uint32_t id);
+
 void
 x11_drawable_enable_dri2(struct x11_screen *xscr,
                          Drawable drawable, boolean on);

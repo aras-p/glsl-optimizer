@@ -193,8 +193,6 @@ struct r600_block {
 };
 
 struct r600_range {
-	unsigned		start_offset;
-	unsigned		end_offset;
 	struct r600_block	**blocks;
 };
 
@@ -239,9 +237,7 @@ struct r600_query {
 
 struct r600_context {
 	struct radeon		*radeon;
-	unsigned		hash_size;
-	unsigned		hash_shift;
-	struct r600_range	range[256];
+	struct r600_range	*range;
 	unsigned		nblocks;
 	struct r600_block	**blocks;
 	struct list_head	dirty;

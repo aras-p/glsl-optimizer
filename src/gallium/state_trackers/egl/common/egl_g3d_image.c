@@ -179,6 +179,27 @@ egl_g3d_reference_drm_buffer(_EGLDisplay *dpy, EGLint name,
 
 #endif /* EGL_MESA_drm_image */
 
+#ifdef EGL_WL_bind_wayland_display
+
+static struct pipe_resource *
+egl_g3d_reference_wl_buffer(_EGLDisplay *dpy, struct wl_buffer *buffer,
+                            _EGLImage *img, const EGLint *attribs)
+{
+   struct egl_g3d_display *gdpy = egl_g3d_display(dpy);
+   struct pipe_resource *resource = NULL, *tmp = NULL;
+
+   if (!gdpy->native->wayland_bufmgr)
+      return NULL;
+
+   tmp = gdpy->native->wayland_bufmgr->buffer_get_resource(gdpy->native, buffer);
+
+   pipe_resource_reference(&resource, tmp);
+
+   return resource;
+}
+
+#endif /* EGL_WL_bind_wayland_display */
+
 _EGLImage *
 egl_g3d_create_image(_EGLDriver *drv, _EGLDisplay *dpy, _EGLContext *ctx,
                      EGLenum target, EGLClientBuffer buffer,
@@ -208,6 +229,12 @@ egl_g3d_create_image(_EGLDriver *drv, _EGLDisplay *dpy, _EGLContext *ctx,
    case EGL_DRM_BUFFER_MESA:
       ptex = egl_g3d_reference_drm_buffer(dpy,
             (EGLint) buffer, &gimg->base, attribs);
+      break;
+#endif
+#ifdef EGL_WL_bind_wayland_display
+   case EGL_WAYLAND_BUFFER_WL:
+      ptex = egl_g3d_reference_wl_buffer(dpy,
+            (struct wl_buffer *) buffer, &gimg->base, attribs);
       break;
 #endif
    default:

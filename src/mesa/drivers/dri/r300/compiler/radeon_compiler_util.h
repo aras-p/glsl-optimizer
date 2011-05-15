@@ -63,9 +63,9 @@ unsigned int rc_inst_can_use_presub(
 	struct rc_instruction * inst,
 	rc_presubtract_op presub_op,
 	unsigned int presub_writemask,
-	struct rc_src_register replace_reg,
-	struct rc_src_register presub_src0,
-	struct rc_src_register presub_src1);
+	const struct rc_src_register * replace_reg,
+	const struct rc_src_register * presub_src0,
+	const struct rc_src_register * presub_src1);
 
 int rc_get_max_index(
 	struct radeon_compiler * c,

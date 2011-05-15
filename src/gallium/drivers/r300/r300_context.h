@@ -592,20 +592,6 @@ struct r300_context {
     boolean frag_clamp;
     /* Whether fast color clear is enabled. */
     boolean cbzb_clear;
-    /* Whether ZMASK is enabled. */
-    boolean zmask_in_use;
-    /* Whether ZMASK is being decompressed. */
-    boolean zmask_decompress;
-    /* Whether ZMASK/HIZ is locked, i.e. should be disabled and cannot be taken over. */
-    boolean hyperz_locked;
-    /* The zbuffer the ZMASK of which is locked. */
-    struct pipe_surface *locked_zbuffer;
-    /* Whether HIZ is enabled. */
-    boolean hiz_in_use;
-    /* HiZ function. Can be either MIN or MAX. */
-    enum r300_hiz_func hiz_func;
-    /* HiZ clear value. */
-    uint32_t hiz_clear_value;
     /* Whether fragment shader needs to be validated. */
     enum r300_fs_validity_status fs_status;
     /* Framebuffer multi-write. */
@@ -629,6 +615,21 @@ struct r300_context {
     int vertex_arrays_offset;
     int vertex_arrays_instance_id;
     boolean instancing_enabled;
+
+    /* Hyper-Z stats. */
+    boolean hyperz_enabled;     /* Whether it owns Hyper-Z access. */
+    int64_t hyperz_time_of_last_flush; /* Time of the last flush with Z clear. */
+    unsigned num_z_clears;      /* Since the last flush. */
+
+    /* ZMask state. */
+    boolean zmask_in_use;       /* Whether ZMASK is enabled. */
+    boolean zmask_decompress;   /* Whether ZMASK is being decompressed. */
+    struct pipe_surface *locked_zbuffer; /* Unbound zbuffer which still has data in ZMASK. */
+
+    /* HiZ state. */
+    boolean hiz_in_use;         /* Whether HIZ is enabled. */
+    enum r300_hiz_func hiz_func; /* HiZ function. Can be either MIN or MAX. */
+    uint32_t hiz_clear_value;   /* HiZ clear value. */
 };
 
 #define foreach_atom(r300, atom) \

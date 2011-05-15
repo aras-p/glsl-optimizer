@@ -188,7 +188,7 @@ run_vertex_program(struct spu_vs_context *draw,
 
 
 PIPE_ALIGN_VAR(16) unsigned char
-immediates[(sizeof(float) * 4 * TGSI_EXEC_NUM_IMMEDIATES) + 32]);
+immediates[(sizeof(float) * 4 * TGSI_EXEC_NUM_IMMEDIATES) + 32];
 
 
 void

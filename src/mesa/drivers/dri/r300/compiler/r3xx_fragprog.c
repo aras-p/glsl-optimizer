@@ -109,8 +109,12 @@ void r3xx_compile_fragment_program(struct r300_fragment_program_compiler* c)
 		{ 0, 0 }
 	};
 
-	struct radeon_program_transformation native_rewrite_r500[] = {
+	struct radeon_program_transformation rewrite_if[] = {
 		{ &r500_transform_IF, 0 },
+		{0, 0}
+	};
+
+	struct radeon_program_transformation native_rewrite_r500[] = {
 		{ &radeonTransformALU, 0 },
 		{ &radeonTransformDeriv, 0 },
 		{ &radeonTransformTrigScale, 0 },
@@ -135,6 +139,7 @@ void r3xx_compile_fragment_program(struct r300_fragment_program_compiler* c)
 		{"emulate branches",		1, !is_r500,	rc_emulate_branches,		NULL},
 		{"saturate output writes",	1, sat_out,	rc_local_transform,		saturate_output},
 		{"transform TEX",		1, 1,		rc_local_transform,		rewrite_tex},
+		{"transform IF",		1, is_r500,	rc_local_transform,		rewrite_if},
 		{"native rewrite",		1, is_r500,	rc_local_transform,		native_rewrite_r500},
 		{"native rewrite",		1, !is_r500,	rc_local_transform,		native_rewrite_r300},
 		{"deadcode",			1, opt,		rc_dataflow_deadcode,		dataflow_outputs_mark_use},

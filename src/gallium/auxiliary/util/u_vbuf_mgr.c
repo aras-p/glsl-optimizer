@@ -53,9 +53,11 @@ struct u_vbuf_mgr_elements {
    unsigned count;
    struct pipe_vertex_element ve[PIPE_MAX_ATTRIBS];
 
-   /* If (velem[i].src_format != real_format[i]), the vertex buffer
+   unsigned src_format_size[PIPE_MAX_ATTRIBS];
+
+   /* If (velem[i].src_format != native_format[i]), the vertex buffer
     * referenced by the vertex element cannot be used for rendering and
-    * its vertex data must be translated to real_format[i]. */
+    * its vertex data must be translated to native_format[i]. */
    enum pipe_format native_format[PIPE_MAX_ATTRIBS];
    unsigned native_format_size[PIPE_MAX_ATTRIBS];
 
@@ -353,6 +355,8 @@ u_vbuf_mgr_create_vertex_elements(struct u_vbuf_mgr *mgrb,
    for (i = 0; i < count; i++) {
       enum pipe_format format = ve->ve[i].src_format;
 
+      ve->src_format_size[i] = util_format_get_blocksize(format);
+
       /* Choose a native format.
        * For now we don't care about the alignment, that's going to
        * be sorted out later. */
@@ -460,7 +464,6 @@ void u_vbuf_mgr_set_vertex_buffers(struct u_vbuf_mgr *mgrb,
    struct u_vbuf_mgr_priv *mgr = (struct u_vbuf_mgr_priv*)mgrb;
    unsigned i;
 
-   mgr->b.max_index = ~0;
    mgr->any_user_vbs = FALSE;
    mgr->incompatible_vb_layout = FALSE;
 
@@ -483,23 +486,16 @@ void u_vbuf_mgr_set_vertex_buffers(struct u_vbuf_mgr *mgrb,
       pipe_resource_reference(&mgr->b.vertex_buffer[i].buffer, vb->buffer);
       pipe_resource_reference(&mgr->b.real_vertex_buffer[i], NULL);
 
+      if (!vb->buffer) {
+         continue;
+      }
+
       if (u_vbuf_resource(vb->buffer)->user_ptr) {
          mgr->any_user_vbs = TRUE;
          continue;
       }
 
       pipe_resource_reference(&mgr->b.real_vertex_buffer[i], vb->buffer);
-
-      /* The stride of zero means we will be fetching only the first
-       * vertex, so don't care about max_index. */
-      if (!vb->stride) {
-         continue;
-      }
-
-      /* Update the maximum index. */
-      mgr->b.max_index =
-            MIN2(mgr->b.max_index,
-                 (vb->buffer->width0 - vb->buffer_offset) / vb->stride - 1);
    }
 
    for (; i < mgr->b.nr_real_vertex_buffers; i++) {
@@ -519,7 +515,7 @@ static void u_vbuf_upload_buffers(struct u_vbuf_mgr_priv *mgr,
                                   unsigned instance_count,
                                   boolean *upload_flushed)
 {
-   int i, nr = mgr->ve->count;
+   unsigned i, nr = mgr->ve->count;
    unsigned count = max_index + 1 - min_index;
    boolean uploaded[PIPE_MAX_ATTRIBS] = {0};
 
@@ -562,6 +558,40 @@ static void u_vbuf_upload_buffers(struct u_vbuf_mgr_priv *mgr,
    }
 }
 
+static void u_vbuf_mgr_compute_max_index(struct u_vbuf_mgr_priv *mgr)
+{
+   unsigned i, nr = mgr->ve->count;
+
+   mgr->b.max_index = ~0;
+
+   for (i = 0; i < nr; i++) {
+      struct pipe_vertex_buffer *vb =
+            &mgr->b.vertex_buffer[mgr->ve->ve[i].vertex_buffer_index];
+      int unused;
+      unsigned max_index;
+
+      if (!vb->buffer ||
+          !vb->stride ||
+          u_vbuf_resource(vb->buffer)->user_ptr) {
+         continue;
+      }
+
+      /* How many bytes is unused after the last vertex.
+       * width0 may be "count*stride - unused" and we have to compensate
+       * for that when dividing by stride. */
+      unused = vb->stride -
+               (mgr->ve->ve[i].src_offset + mgr->ve->src_format_size[i]);
+      assert(unused >= 0);
+
+      /* Compute the maximum index for this vertex element. */
+      max_index =
+         (vb->buffer->width0 - vb->buffer_offset + (unsigned)unused) /
+         vb->stride - 1;
+
+      mgr->b.max_index = MIN2(mgr->b.max_index, max_index);
+   }
+}
+
 void u_vbuf_mgr_draw_begin(struct u_vbuf_mgr *mgrb,
                            const struct pipe_draw_info *info,
                            boolean *buffers_updated,
@@ -570,6 +600,8 @@ void u_vbuf_mgr_draw_begin(struct u_vbuf_mgr *mgrb,
    struct u_vbuf_mgr_priv *mgr = (struct u_vbuf_mgr_priv*)mgrb;
    boolean bufs_updated = FALSE, upload_flushed = FALSE;
    int min_index, max_index;
+
+   u_vbuf_mgr_compute_max_index(mgr);
 
    min_index = info->min_index - info->index_bias;
    if (info->max_index == ~0) {

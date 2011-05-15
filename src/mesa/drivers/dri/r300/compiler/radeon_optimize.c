@@ -70,9 +70,9 @@ static void copy_propagate_scan_read(void * data, struct rc_instruction * inst,
 	if(!rc_inst_can_use_presub(inst,
 				reader_data->Writer->U.I.PreSub.Opcode,
 				rc_swizzle_to_writemask(src->Swizzle),
-				*src,
-				reader_data->Writer->U.I.PreSub.SrcReg[0],
-				reader_data->Writer->U.I.PreSub.SrcReg[1])) {
+				src,
+				&reader_data->Writer->U.I.PreSub.SrcReg[0],
+				&reader_data->Writer->U.I.PreSub.SrcReg[1])) {
 		reader_data->Abort = 1;
 		return;
 	}
@@ -437,9 +437,9 @@ static void presub_scan_read(
 
 	if (!rc_inst_can_use_presub(inst, *presub_opcode,
 			reader_data->Writer->U.I.DstReg.WriteMask,
-			*src,
-			reader_data->Writer->U.I.SrcReg[0],
-			reader_data->Writer->U.I.SrcReg[1])) {
+			src,
+			&reader_data->Writer->U.I.SrcReg[0],
+			&reader_data->Writer->U.I.SrcReg[1])) {
 		reader_data->Abort = 1;
 		return;
 	}
@@ -517,8 +517,11 @@ static int is_presub_candidate(
 
 	assert(inst->U.I.Opcode == RC_OPCODE_ADD);
 
-	if (inst->U.I.PreSub.Opcode != RC_PRESUB_NONE || inst->U.I.SaturateMode)
+	if (inst->U.I.PreSub.Opcode != RC_PRESUB_NONE
+			|| inst->U.I.SaturateMode
+			|| inst->U.I.WriteALUResult) {
 		return 0;
+	}
 
 	/* If both sources use a constant swizzle, then we can't convert it to
 	 * a presubtract operation.  In fact for the ADD and SUB presubtract

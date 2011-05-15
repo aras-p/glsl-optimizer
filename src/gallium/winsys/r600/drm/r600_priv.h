@@ -67,14 +67,13 @@ struct radeon {
 #define REG_FLAG_RV6XX_SBU 4
 
 struct r600_reg {
-	unsigned			opcode;
-	unsigned			offset_base;
 	unsigned			offset;
 	unsigned			flags;
 	unsigned			flush_flags;
 	unsigned			flush_mask;
 };
 
+#define BO_BOUND_TEXTURE 1
 struct radeon_bo {
 	struct pipe_reference		reference;
 	unsigned			handle;
@@ -90,6 +89,7 @@ struct radeon_bo {
 	unsigned			reloc_id;
 	unsigned			last_flush;
 	unsigned                        name;
+	unsigned                        binding;
 };
 
 struct r600_bo {
@@ -145,6 +145,7 @@ int radeon_bo_get_tiling_flags(struct radeon *radeon,
 int radeon_bo_get_name(struct radeon *radeon,
 		       struct radeon_bo *bo,
 		       uint32_t *name);
+int radeon_bo_fixed_map(struct radeon *radeon, struct radeon_bo *bo);
 
 /*
  * r600_hw_context.c
@@ -154,12 +155,13 @@ void r600_context_bo_reloc(struct r600_context *ctx, u32 *pm4, struct r600_bo *r
 void r600_context_bo_flush(struct r600_context *ctx, unsigned flush_flags,
 				unsigned flush_mask, struct r600_bo *rbo);
 struct r600_bo *r600_context_reg_bo(struct r600_context *ctx, unsigned offset);
-int r600_context_add_block(struct r600_context *ctx, const struct r600_reg *reg, unsigned nreg);
+int r600_context_add_block(struct r600_context *ctx, const struct r600_reg *reg, unsigned nreg,
+			   unsigned opcode, unsigned offset_base);
 void r600_context_pipe_state_set_resource(struct r600_context *ctx, struct r600_pipe_state *state, unsigned offset);
 void r600_context_block_emit_dirty(struct r600_context *ctx, struct r600_block *block);
 void r600_context_dirty_block(struct r600_context *ctx, struct r600_block *block,
 			      int dirty, int index);
-
+int r600_setup_block_table(struct r600_context *ctx);
 void r600_context_reg(struct r600_context *ctx,
 		      unsigned offset, unsigned value,
 		      unsigned mask);
@@ -184,14 +186,25 @@ struct r600_bo *r600_bomgr_bo_create(struct r600_bomgr *mgr,
 /*
  * helpers
  */
-#define CTX_RANGE_ID(ctx, offset) (((offset) >> (ctx)->hash_shift) & 255)
-#define CTX_BLOCK_ID(ctx, offset) ((offset) & ((1 << (ctx)->hash_shift) - 1))
+
+/* each range covers 9 bits of dword space = 512 dwords = 2k bytes */
+/* there is a block entry for each register so 512 blocks */
+/* we have no registers to read/write below 0x8000 (0x2000 in dw space) */
+/* we use some fake offsets at 0x40000 to do evergreen sampler borders so take 0x42000 as a max bound*/
+#define RANGE_OFFSET_START 0x8000
+#define HASH_SHIFT 9
+#define NUM_RANGES (0x42000 - RANGE_OFFSET_START) / (4 << HASH_SHIFT) /* 128 << 9 = 64k */
+
+#define CTX_RANGE_ID(ctx, offset) ((((offset - RANGE_OFFSET_START) >> 2) >> HASH_SHIFT) & 255)
+#define CTX_BLOCK_ID(ctx, offset) (((offset - RANGE_OFFSET_START) >> 2) & ((1 << HASH_SHIFT) - 1))
 
 /*
  * radeon_bo.c
  */
 static inline int radeon_bo_map(struct radeon *radeon, struct radeon_bo *bo)
 {
+	if (bo->map_count == 0 && !bo->data)
+		return radeon_bo_fixed_map(radeon, bo);
 	bo->map_count++;
 	return 0;
 }

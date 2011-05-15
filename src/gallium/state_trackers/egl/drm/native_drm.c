@@ -23,6 +23,7 @@
  * DEALINGS IN THE SOFTWARE.
  */
 
+#include <string.h>
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <fcntl.h>
@@ -35,6 +36,10 @@
 /* see get_drm_screen_name */
 #include <radeon_drm.h>
 #include "radeon/drm/radeon_drm_public.h"
+
+#ifdef HAVE_LIBUDEV
+#include <libudev.h>
+#endif
 
 static boolean
 drm_display_is_format_supported(struct native_display *ndpy,
@@ -126,6 +131,9 @@ drm_display_destroy(struct native_display *ndpy)
 
    ndpy_uninit(ndpy);
 
+   if (drmdpy->device_name)
+      FREE(drmdpy->device_name);
+
    if (drmdpy->fd >= 0)
       close(drmdpy->fd);
 
@@ -207,6 +215,101 @@ static struct native_display_buffer drm_display_buffer = {
    drm_display_export_buffer
 };
 
+static int
+drm_display_authenticate(void *user_data, uint32_t magic)
+{
+   struct native_display *ndpy = user_data;
+   struct drm_display *drmdpy = drm_display(ndpy);
+
+   return drmAuthMagic(drmdpy->fd, magic);
+}
+
+static char *
+drm_get_device_name(int fd)
+{
+   char *device_name = NULL;
+#ifdef HAVE_LIBUDEV
+   struct udev *udev;
+   struct udev_device *device;
+   struct stat buf;
+   const char *tmp;
+
+   udev = udev_new();
+   if (fstat(fd, &buf) < 0) {
+      _eglLog(_EGL_WARNING, "failed to stat fd %d", fd);
+      goto out;
+   }
+
+   device = udev_device_new_from_devnum(udev, 'c', buf.st_rdev);
+   if (device == NULL) {
+      _eglLog(_EGL_WARNING,
+              "could not create udev device for fd %d", fd);
+      goto out;
+   }
+
+   tmp = udev_device_get_devnode(device);
+   if (!tmp)
+      goto out;
+   device_name = strdup(tmp);
+
+out:
+   udev_device_unref(device);
+   udev_unref(udev);
+
+#endif
+   return device_name;
+}
+
+#ifdef HAVE_WAYLAND_BACKEND
+
+static struct wayland_drm_callbacks wl_drm_callbacks = {
+   drm_display_authenticate,
+   egl_g3d_wl_drm_helper_reference_buffer,
+   egl_g3d_wl_drm_helper_unreference_buffer
+};
+
+static boolean
+drm_display_bind_wayland_display(struct native_display *ndpy,
+                                  struct wl_display *wl_dpy)
+{
+   struct drm_display *drmdpy = drm_display(ndpy);
+
+   if (drmdpy->wl_server_drm)
+      return FALSE;
+
+   drmdpy->wl_server_drm = wayland_drm_init(wl_dpy,
+         drmdpy->device_name,
+         &wl_drm_callbacks, ndpy);
+
+   if (!drmdpy->wl_server_drm)
+      return FALSE;
+   
+   return TRUE;
+}
+
+static boolean
+drm_display_unbind_wayland_display(struct native_display *ndpy,
+                                    struct wl_display *wl_dpy)
+{
+   struct drm_display *drmdpy = drm_display(ndpy);
+
+   if (!drmdpy->wl_server_drm)
+      return FALSE;
+
+   wayland_drm_uninit(drmdpy->wl_server_drm);
+   drmdpy->wl_server_drm = NULL;
+
+   return TRUE;
+}
+
+static struct native_display_wayland_bufmgr drm_display_wayland_bufmgr = {
+   drm_display_bind_wayland_display,
+   drm_display_unbind_wayland_display,
+   egl_g3d_wl_drm_common_wl_buffer_get_resource
+};
+
+#endif /* HAVE_WAYLAND_BACKEND */
+
 static struct native_display *
 drm_create_display(int fd, struct native_event_handler *event_handler,
                    void *user_data)
@@ -218,6 +321,7 @@ drm_create_display(int fd, struct native_event_handler *event_handler,
       return NULL;
 
    drmdpy->fd = fd;
+   drmdpy->device_name = drm_get_device_name(fd);
    drmdpy->event_handler = event_handler;
    drmdpy->base.user_data = user_data;
 
@@ -231,6 +335,10 @@ drm_create_display(int fd, struct native_event_handler *event_handler,
    drmdpy->base.get_configs = drm_display_get_configs;
 
    drmdpy->base.buffer = &drm_display_buffer;
+#ifdef HAVE_WAYLAND_BACKEND
+   if (drmdpy->device_name)
+      drmdpy->base.wayland_bufmgr = &drm_display_wayland_bufmgr;
+#endif
    drm_display_init_modeset(&drmdpy->base);
 
    return &drmdpy->base;

@@ -38,6 +38,10 @@
 #include "native_x11.h"
 #include "x11_screen.h"
 
+#ifdef HAVE_WAYLAND_BACKEND
+#include "common/native_wayland_drm_bufmgr_helper.h"
+#endif
+
 #ifdef GLX_DIRECT_RENDERING
 
 struct dri2_display {
@@ -56,6 +60,9 @@ struct dri2_display {
    int num_configs;
 
    struct util_hash_table *surfaces;
+#ifdef HAVE_WAYLAND_BACKEND
+   struct wl_drm *wl_server_drm; /* for EGL_WL_bind_wayland_display */
+#endif
 };
 
 struct dri2_surface {
@@ -802,6 +809,65 @@ dri2_display_hash_table_compare(void *key1, void *key2)
    return ((char *) key1 - (char *) key2);
 }
 
+static int
+dri2_display_authenticate(void *user_data, uint32_t magic)
+{
+   struct native_display *ndpy = user_data;
+   struct dri2_display *dri2dpy = dri2_display(ndpy);
+
+   return x11_screen_authenticate(dri2dpy->xscr, magic);
+}
+
+#ifdef HAVE_WAYLAND_BACKEND
+
+static struct wayland_drm_callbacks wl_drm_callbacks = {
+   dri2_display_authenticate,
+   egl_g3d_wl_drm_helper_reference_buffer,
+   egl_g3d_wl_drm_helper_unreference_buffer
+};
+
+static boolean
+dri2_display_bind_wayland_display(struct native_display *ndpy,
+                                  struct wl_display *wl_dpy)
+{
+   struct dri2_display *dri2dpy = dri2_display(ndpy);
+
+   if (dri2dpy->wl_server_drm)
+      return FALSE;
+
+   dri2dpy->wl_server_drm = wayland_drm_init(wl_dpy,
+         x11_screen_get_device_name(dri2dpy->xscr),
+         &wl_drm_callbacks, ndpy);
+
+   if (!dri2dpy->wl_server_drm)
+      return FALSE;
+   
+   return TRUE;
+}
+
+static boolean
+dri2_display_unbind_wayland_display(struct native_display *ndpy,
+                                    struct wl_display *wl_dpy)
+{
+   struct dri2_display *dri2dpy = dri2_display(ndpy);
+
+   if (!dri2dpy->wl_server_drm)
+      return FALSE;
+
+   wayland_drm_uninit(dri2dpy->wl_server_drm);
+   dri2dpy->wl_server_drm = NULL;
+
+   return TRUE;
+}
+
+static struct native_display_wayland_bufmgr dri2_display_wayland_bufmgr = {
+   dri2_display_bind_wayland_display,
+   dri2_display_unbind_wayland_display,
+   egl_g3d_wl_drm_common_wl_buffer_get_resource
+};
+
+#endif /* HAVE_WAYLAND_BACKEND */
+
 struct native_display *
 x11_create_dri2_display(Display *dpy,
                         struct native_event_handler *event_handler,
@@ -851,6 +917,9 @@ x11_create_dri2_display(Display *dpy,
    dri2dpy->base.is_pixmap_supported = dri2_display_is_pixmap_supported;
    dri2dpy->base.create_window_surface = dri2_display_create_window_surface;
    dri2dpy->base.create_pixmap_surface = dri2_display_create_pixmap_surface;
+#ifdef HAVE_WAYLAND_BACKEND
+   dri2dpy->base.wayland_bufmgr = &dri2_display_wayland_bufmgr;
+#endif
 
    return &dri2dpy->base;
 }

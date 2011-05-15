@@ -168,6 +168,8 @@ struct _mesa_glsl_parse_state {
    unsigned ARB_texture_rectangle_warn:1;
    unsigned EXT_texture_array_enable:1;
    unsigned EXT_texture_array_warn:1;
+   unsigned ARB_shader_texture_lod_enable:1;
+   unsigned ARB_shader_texture_lod_warn:1;
    unsigned ARB_shader_stencil_export_enable:1;
    unsigned ARB_shader_stencil_export_warn:1;
    unsigned AMD_conservative_depth_enable:1;

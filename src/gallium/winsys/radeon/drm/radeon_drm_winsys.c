@@ -48,22 +48,59 @@
 #define RADEON_INFO_WANT_CMASK 8
 #endif
 
-/* Enable/disable feature access. Return TRUE on success. */
-static boolean radeon_set_fd_access(int fd, unsigned request, boolean enable)
+/* Enable/disable feature access for one command stream.
+ * If enable == TRUE, return TRUE on success.
+ * Otherwise, return FALSE.
+ *
+ * We basically do the same thing kernel does, because we have to deal
+ * with multiple contexts (here command streams) backed by one winsys. */
+static boolean radeon_set_fd_access(struct radeon_drm_cs *applier,
+                                    struct radeon_drm_cs **owner,
+                                    pipe_mutex *mutex,
+                                    unsigned request, boolean enable)
 {
     struct drm_radeon_info info = {0};
     unsigned value = enable ? 1 : 0;
 
+    pipe_mutex_lock(*mutex);
+
+    /* Early exit if we are sure the request will fail. */
+    if (enable) {
+        if (*owner) {
+            pipe_mutex_unlock(*mutex);
+            return FALSE;
+        }
+    } else {
+        if (*owner != applier) {
+            pipe_mutex_unlock(*mutex);
+            return FALSE;
+        }
+    }
+
+    /* Pass through the request to the kernel. */
     info.value = (unsigned long)&value;
     info.request = request;
-
-    if (drmCommandWriteRead(fd, DRM_RADEON_INFO, &info, sizeof(info)) != 0)
+    if (drmCommandWriteRead(applier->ws->fd, DRM_RADEON_INFO,
+                            &info, sizeof(info)) != 0) {
+        pipe_mutex_unlock(*mutex);
         return FALSE;
+    }
 
-    if (enable && !value)
-        return FALSE;
+    /* Update the rights in the winsys. */
+    if (enable) {
+        if (value) {
+            *owner = applier;
+            fprintf(stderr, "radeon: Acquired Hyper-Z.\n");
+            pipe_mutex_unlock(*mutex);
+            return TRUE;
+        }
+    } else {
+        *owner = NULL;
+        fprintf(stderr, "radeon: Released Hyper-Z.\n");
+    }
 
-    return TRUE;
+    pipe_mutex_unlock(*mutex);
+    return FALSE;
 }
 
 /* Helper function to do the ioctls needed for setup and init. */
@@ -138,16 +175,6 @@ static void do_ioctls(struct radeon_drm_winsys *winsys)
     }
     winsys->z_pipes = target;
 
-    if (debug_get_bool_option("RADEON_HYPERZ", FALSE)) {
-        winsys->hyperz = radeon_set_fd_access(winsys->fd,
-                                              RADEON_INFO_WANT_HYPERZ, TRUE);
-    }
-
-    if (debug_get_bool_option("RADEON_CMASK", FALSE)) {
-        winsys->aacompress = radeon_set_fd_access(winsys->fd,
-                                                  RADEON_INFO_WANT_CMASK, TRUE);
-    }
-
     retval = drmCommandWriteRead(winsys->fd, DRM_RADEON_GEM_INFO,
             &gem_info, sizeof(gem_info));
     if (retval) {
@@ -166,6 +193,9 @@ static void do_ioctls(struct radeon_drm_winsys *winsys)
 static void radeon_winsys_destroy(struct radeon_winsys *rws)
 {
     struct radeon_drm_winsys *ws = (struct radeon_drm_winsys*)rws;
+
+    pipe_mutex_destroy(ws->hyperz_owner_mutex);
+    pipe_mutex_destroy(ws->cmask_owner_mutex);
 
     ws->cman->destroy(ws->cman);
     ws->kman->destroy(ws->kman);
@@ -198,12 +228,36 @@ static uint32_t radeon_get_value(struct radeon_winsys *rws,
         return ws->drm_major*100 + ws->drm_minor >= 206;
     case RADEON_VID_DRM_2_8_0:
         return ws->drm_major*100 + ws->drm_minor >= 208;
-    case RADEON_VID_CAN_HYPERZ:
-        return ws->hyperz;
-    case RADEON_VID_CAN_AACOMPRESS:
-        return ws->aacompress;
     }
     return 0;
+}
+
+static boolean radeon_cs_request_feature(struct radeon_winsys_cs *rcs,
+                                         enum radeon_feature_id fid,
+                                         boolean enable)
+{
+    struct radeon_drm_cs *cs = radeon_drm_cs(rcs);
+
+    switch (fid) {
+    case RADEON_FID_HYPERZ_RAM_ACCESS:
+        if (debug_get_bool_option("RADEON_HYPERZ", FALSE)) {
+            return radeon_set_fd_access(cs, &cs->ws->hyperz_owner,
+                                        &cs->ws->hyperz_owner_mutex,
+                                        RADEON_INFO_WANT_HYPERZ, enable);
+        } else {
+            return FALSE;
+        }
+
+    case RADEON_FID_CMASK_RAM_ACCESS:
+        if (debug_get_bool_option("RADEON_CMASK", FALSE)) {
+            return radeon_set_fd_access(cs, &cs->ws->cmask_owner,
+                                        &cs->ws->cmask_owner_mutex,
+                                        RADEON_INFO_WANT_CMASK, enable);
+        } else {
+            return FALSE;
+        }
+    }
+    return FALSE;
 }
 
 struct radeon_winsys *radeon_drm_winsys_create(int fd)
@@ -231,9 +285,13 @@ struct radeon_winsys *radeon_drm_winsys_create(int fd)
     /* Set functions. */
     ws->base.destroy = radeon_winsys_destroy;
     ws->base.get_value = radeon_get_value;
+    ws->base.cs_request_feature = radeon_cs_request_feature;
 
     radeon_bomgr_init_functions(ws);
     radeon_drm_cs_init_functions(ws);
+
+    pipe_mutex_init(ws->hyperz_owner_mutex);
+    pipe_mutex_init(ws->cmask_owner_mutex);
 
     return &ws->base;
 

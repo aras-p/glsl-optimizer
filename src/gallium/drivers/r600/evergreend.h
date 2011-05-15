@@ -1027,6 +1027,9 @@
 #define   G_030014_LAST_ARRAY(x)                       (((x) >> 17) & 0x1FFF)
 #define   C_030014_LAST_ARRAY                          0xC001FFFF
 #define R_030018_SQ_TEX_RESOURCE_WORD6_0             0x030018
+#define   S_030018_MAX_ANISO(x)                        (((x) & 0x7) << 0)
+#define   G_030018_MAX_ANISO(x)                        (((x) >> 0) & 0x7)
+#define   C_030018_MAX_ANISO                           0xFFFFFFF8
 #define   S_030018_PERF_MODULATION(x)                  (((x) & 0x7) << 3)
 #define   G_030018_PERF_MODULATION(x)                  (((x) >> 3) & 0x7)
 #define   C_030018_PERF_MODULATION                     0xFFFFFFC7
@@ -1141,6 +1144,9 @@
 #define   S_03C000_MIP_FILTER(x)                       (((x) & 0x3) << 15)
 #define   G_03C000_MIP_FILTER(x)                       (((x) >> 15) & 0x3)
 #define   C_03C000_MIP_FILTER                          0xFFFE7FFF
+#define   S_03C000_MAX_ANISO(x)                        (((x) & 0x7) << 17)
+#define   G_03C000_MAX_ANISO(x)                        (((x) >> 17) & 0x7)
+#define   C_03C000_MAX_ANISO                           0xFFF1FFFF
 #define   S_03C000_BORDER_COLOR_TYPE(x)                (((x) & 0x3) << 20)
 #define   G_03C000_BORDER_COLOR_TYPE(x)                (((x) >> 20) & 0x3)
 #define   C_03C000_BORDER_COLOR_TYPE                   0xFFCFFFFF

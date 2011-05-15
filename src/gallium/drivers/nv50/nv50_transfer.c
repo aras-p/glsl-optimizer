@@ -209,6 +209,9 @@ nv50_miptree_transfer_new(struct pipe_context *pctx,
    uint32_t w, h, d, z, layer;
    int ret;
 
+   if (usage & PIPE_TRANSFER_MAP_DIRECTLY)
+      return NULL;
+
    if (mt->layout_3d) {
       z = box->z;
       d = u_minify(res->depth0, level);

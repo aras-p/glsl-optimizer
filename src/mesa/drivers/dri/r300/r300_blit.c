@@ -118,6 +118,7 @@ static void create_fragment_program(struct r300_context *r300)
     inst->U.I.SrcReg[0].Negate = 0;
     inst->U.I.SrcReg[0].RelAddr = 0;
     inst->U.I.SrcReg[0].Swizzle = RC_SWIZZLE_XYZW;
+    inst->U.I.TexSwizzle = RC_SWIZZLE_XYZW;
 
     compiler.Base.Program.InputsRead = (1 << FRAG_ATTRIB_TEX0);
     compiler.OutputColor[0] = FRAG_RESULT_COLOR;

@@ -112,6 +112,7 @@ static const struct extension extension_table[] = {
    { "GL_ARB_seamless_cube_map",                   o(ARB_seamless_cube_map),                   GL,             2009 },
    { "GL_ARB_shader_objects",                      o(ARB_shader_objects),                      GL,             2002 },
    { "GL_ARB_shader_stencil_export",               o(ARB_shader_stencil_export),               GL,             2009 },
+   { "GL_ARB_shader_texture_lod",                  o(ARB_shader_texture_lod),                  GL,             2009 },
    { "GL_ARB_shading_language_100",                o(ARB_shading_language_100),                GL,             2003 },
    { "GL_ARB_shadow_ambient",                      o(ARB_shadow_ambient),                      GL,             2001 },
    { "GL_ARB_shadow",                              o(ARB_shadow),                              GL,             2001 },
@@ -143,7 +144,6 @@ static const struct extension extension_table[] = {
    { "GL_ARB_vertex_shader",                       o(ARB_vertex_shader),                       GL,             2002 },
    { "GL_ARB_vertex_type_2_10_10_10_rev",          o(ARB_vertex_type_2_10_10_10_rev),          GL,             2009 },
    { "GL_ARB_window_pos",                          o(ARB_window_pos),                          GL,             2001 },
-
    /* EXT extensions */
    { "GL_EXT_abgr",                                o(EXT_abgr),                                GL,             1995 },
    { "GL_EXT_bgra",                                o(EXT_bgra),                                GL,             1995 },

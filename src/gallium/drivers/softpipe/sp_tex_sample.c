@@ -2243,8 +2243,8 @@ sp_sampler_variant_bind_view( struct sp_sampler_variant *samp,
 
    samp->view = view;
    samp->cache = tex_cache;
-   samp->xpot = util_unsigned_logbase2( texture->width0 );
-   samp->ypot = util_unsigned_logbase2( texture->height0 );
+   samp->xpot = util_logbase2( texture->width0 );
+   samp->ypot = util_logbase2( texture->height0 );
    samp->level = view->u.tex.first_level;
 }
 

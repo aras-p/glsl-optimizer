@@ -1966,7 +1966,7 @@ ir_to_mesa_visitor::visit(ir_call *ir)
 void
 ir_to_mesa_visitor::visit(ir_texture *ir)
 {
-   src_reg result_src, coord, lod_info, projector;
+   src_reg result_src, coord, lod_info, projector, dx, dy;
    dst_reg result_dst, coord_dst;
    ir_to_mesa_instruction *inst = NULL;
    prog_opcode opcode = OPCODE_NOP;
@@ -2008,6 +2008,12 @@ ir_to_mesa_visitor::visit(ir_texture *ir)
       lod_info = this->result;
       break;
    case ir_txd:
+      opcode = OPCODE_TXD;
+      ir->lod_info.grad.dPdx->accept(this);
+      dx = this->result;
+      ir->lod_info.grad.dPdy->accept(this);
+      dy = this->result;
+      break;
    case ir_txf:
       assert(!"GLSL 1.30 features unsupported");
       break;
@@ -2080,7 +2086,10 @@ ir_to_mesa_visitor::visit(ir_texture *ir)
       coord_dst.writemask = WRITEMASK_XYZW;
    }
 
-   inst = emit(ir, opcode, result_dst, coord);
+   if (opcode == OPCODE_TXD)
+      inst = emit(ir, opcode, result_dst, coord, dx, dy);
+   else
+      inst = emit(ir, opcode, result_dst, coord);
 
    if (ir->shadow_comparitor)
       inst->tex_shadow = GL_TRUE;

@@ -201,6 +201,19 @@ vmw_svga_winsys_destroy(struct svga_winsys_screen *sws)
 }
 
 
+static SVGA3dHardwareVersion
+vmw_svga_winsys_get_hw_version(struct svga_winsys_screen *sws)
+{
+   struct vmw_winsys_screen *vws = vmw_winsys_screen(sws);
+
+   if (!vws->ioctl.fifo_map) {
+      return 0;
+   }
+
+   return vws->ioctl.fifo_map[SVGA_FIFO_3D_HWVERSION];
+}
+
+
 static boolean
 vmw_svga_winsys_get_cap(struct svga_winsys_screen *sws,
                         SVGA3dDevCapIndex index,
@@ -276,6 +289,7 @@ boolean
 vmw_winsys_screen_init_svga(struct vmw_winsys_screen *vws)
 {
    vws->base.destroy = vmw_svga_winsys_destroy;
+   vws->base.get_hw_version = vmw_svga_winsys_get_hw_version;
    vws->base.get_cap = vmw_svga_winsys_get_cap;
    vws->base.context_create = vmw_svga_winsys_context_create;
    vws->base.surface_create = vmw_svga_winsys_surface_create;

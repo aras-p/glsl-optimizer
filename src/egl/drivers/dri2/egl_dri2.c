@@ -200,13 +200,10 @@ dri2_add_config(_EGLDisplay *disp, const __DRIconfig *dri_config, int id,
       else if (!double_buffer && !conf->dri_single_config)
          conf->dri_single_config = dri_config;
       else
-         /* a similar config type is already added
-          * => attach it as new config
-          */
-         num_configs = 0;
+         /* a similar config type is already added (unlikely) => discard */
+         return NULL;
    }
-
-   if (num_configs == 0) {
+   else if (num_configs == 0) {
       conf = malloc(sizeof *conf);
       if (conf == NULL)
          return NULL;
@@ -223,6 +220,10 @@ dri2_add_config(_EGLDisplay *disp, const __DRIconfig *dri_config, int id,
       conf->base.ConfigID = config_id;
 
       _eglLinkConfig(&conf->base);
+   }
+   else {
+      assert(0);
+      return NULL;
    }
 
    conf->base.SurfaceType |= surface_type & (!double_buffer ? EGL_PIXMAP_BIT:
@@ -487,10 +488,12 @@ dri2_initialize(_EGLDriver *drv, _EGLDisplay *disp)
       return EGL_FALSE;
 
    switch (disp->Platform) {
+#ifdef HAVE_X11_PLATFORM
    case _EGL_PLATFORM_X11:
       if (disp->Options.TestOnly)
          return EGL_TRUE;
       return dri2_initialize_x11(drv, disp);
+#endif
 
 #ifdef HAVE_LIBUDEV
    case _EGL_PLATFORM_DRM:
@@ -525,8 +528,10 @@ dri2_terminate(_EGLDriver *drv, _EGLDisplay *disp)
    if (dri2_dpy->fd)
       close(dri2_dpy->fd);
    dlclose(dri2_dpy->driver);
+#ifdef HAVE_X11_PLATFORM
    if (disp->PlatformDisplay == NULL)
       xcb_disconnect(dri2_dpy->conn);
+#endif
    free(dri2_dpy);
    disp->DriverData = NULL;
 
@@ -835,7 +840,7 @@ dri2_create_image_khr_renderbuffer(_EGLDisplay *disp, _EGLContext *ctx,
    struct dri2_egl_display *dri2_dpy = dri2_egl_display(disp);
    struct dri2_egl_context *dri2_ctx = dri2_egl_context(ctx);
    struct dri2_egl_image *dri2_img;
-   GLuint renderbuffer = (GLuint) buffer;
+   GLuint renderbuffer = (GLuint) (uintptr_t) buffer;
 
    if (renderbuffer == 0) {
       _eglError(EGL_BAD_PARAMETER, "dri2_create_image_khr");
@@ -870,7 +875,7 @@ dri2_create_image_mesa_drm_buffer(_EGLDisplay *disp, _EGLContext *ctx,
 
    (void) ctx;
 
-   name = (EGLint) buffer;
+   name = (EGLint) (uintptr_t) buffer;
 
    err = _eglParseImageAttribList(&attrs, disp, attr_list);
    if (err != EGL_SUCCESS)
@@ -922,6 +927,7 @@ dri2_create_image_mesa_drm_buffer(_EGLDisplay *disp, _EGLContext *ctx,
    return &dri2_img->base;
 }
 
+#ifdef HAVE_WAYLAND_PLATFORM
 static _EGLImage *
 dri2_reference_drm_image(_EGLDisplay *disp, _EGLContext *ctx,
 			 __DRIimage *dri_image, EGLint width, EGLint height)
@@ -948,7 +954,6 @@ dri2_reference_drm_image(_EGLDisplay *disp, _EGLContext *ctx,
 					    attr_list);
 }
 
-#ifdef HAVE_WAYLAND_PLATFORM
 static _EGLImage *
 dri2_create_image_wayland_wl_buffer(_EGLDisplay *disp, _EGLContext *ctx,
 				    EGLClientBuffer _buffer,

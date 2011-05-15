@@ -58,11 +58,15 @@ LOCAL_LIBS =
 ifeq ($(filter dri2, $(EGL_DRIVERS_DIRS)),dri2)
 LOCAL_CFLAGS += -D_EGL_BUILT_IN_DRIVER_DRI2
 LOCAL_LIBS += $(TOP)/src/egl/drivers/dri2/libegl_dri2.a
+ifneq ($(findstring x11, $(EGL_PLATFORMS)),)
+EGL_LIB_DEPS += $(XCB_DRI2_LIBS)
+endif
 ifneq ($(findstring wayland, $(EGL_PLATFORMS)),)
 LOCAL_LIBS += $(TOP)/src/egl/wayland/wayland-drm/libwayland-drm.a
 endif
-EGL_LIB_DEPS += $(XCB_DRI2_LIBS) $(LIBUDEV_LIBS) $(DLOPEN_LIBS) $(LIBDRM_LIB) $(WAYLAND_LIBS)
+EGL_LIB_DEPS += $(LIBUDEV_LIBS) $(DLOPEN_LIBS) $(LIBDRM_LIB) $(WAYLAND_LIBS)
 endif
+
 ifeq ($(filter glx, $(EGL_DRIVERS_DIRS)),glx)
 LOCAL_CFLAGS += -D_EGL_BUILT_IN_DRIVER_GLX
 LOCAL_LIBS += $(TOP)/src/egl/drivers/glx/libegl_glx.a
