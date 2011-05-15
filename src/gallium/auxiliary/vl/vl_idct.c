@@ -49,15 +49,22 @@ enum VS_OUTPUT
    VS_O_R_ADDR1
 };
 
-static const float const_matrix[8][8] = {
-   {  0.3535530f,  0.3535530f,  0.3535530f,  0.3535530f,  0.3535530f,  0.3535530f,  0.353553f,  0.3535530f },
-   {  0.4903930f,  0.4157350f,  0.2777850f,  0.0975451f, -0.0975452f, -0.2777850f, -0.415735f, -0.4903930f },
-   {  0.4619400f,  0.1913420f, -0.1913420f, -0.4619400f, -0.4619400f, -0.1913420f,  0.191342f,  0.4619400f },
-   {  0.4157350f, -0.0975452f, -0.4903930f, -0.2777850f,  0.2777850f,  0.4903930f,  0.097545f, -0.4157350f },
-   {  0.3535530f, -0.3535530f, -0.3535530f,  0.3535540f,  0.3535530f, -0.3535540f, -0.353553f,  0.3535530f },
-   {  0.2777850f, -0.4903930f,  0.0975452f,  0.4157350f, -0.4157350f, -0.0975451f,  0.490393f, -0.2777850f },
-   {  0.1913420f, -0.4619400f,  0.4619400f, -0.1913420f, -0.1913410f,  0.4619400f, -0.461940f,  0.1913420f },
-   {  0.0975451f, -0.2777850f,  0.4157350f, -0.4903930f,  0.4903930f, -0.4157350f,  0.277786f, -0.0975458f }
+/**
+ * The DCT matrix stored as hex representation of floats. Equal to the following equation:
+ * for (i = 0; i < 8; ++i)
+ *    for (j = 0; j < 8; ++j)
+ *       if (i == 0) const_matrix[i][j] = 1.0f / sqrtf(8.0f);
+ *       else const_matrix[i][j] = sqrtf(2.0f / 8.0f) * cosf((2 * j + 1) * i * M_PI / (2.0f * 8.0f));
+ */
+static const uint32_t const_matrix[8][8] = {
+   { 0x3eb504f3, 0x3eb504f3, 0x3eb504f3, 0x3eb504f3, 0x3eb504f3, 0x3eb504f3, 0x3eb504f3, 0x3eb504f3 },
+   { 0x3efb14be, 0x3ed4db31, 0x3e8e39da, 0x3dc7c5c4, 0xbdc7c5c2, 0xbe8e39d9, 0xbed4db32, 0xbefb14bf },
+   { 0x3eec835f, 0x3e43ef15, 0xbe43ef14, 0xbeec835e, 0xbeec835f, 0xbe43ef1a, 0x3e43ef1b, 0x3eec835f },
+   { 0x3ed4db31, 0xbdc7c5c2, 0xbefb14bf, 0xbe8e39dd, 0x3e8e39d7, 0x3efb14bf, 0x3dc7c5d0, 0xbed4db34 },
+   { 0x3eb504f3, 0xbeb504f3, 0xbeb504f4, 0x3eb504f1, 0x3eb504f3, 0xbeb504f0, 0xbeb504ef, 0x3eb504f4 },
+   { 0x3e8e39da, 0xbefb14bf, 0x3dc7c5c8, 0x3ed4db32, 0xbed4db34, 0xbdc7c5bb, 0x3efb14bf, 0xbe8e39d7 },
+   { 0x3e43ef15, 0xbeec835f, 0x3eec835f, 0xbe43ef07, 0xbe43ef23, 0x3eec8361, 0xbeec835c, 0x3e43ef25 },
+   { 0x3dc7c5c4, 0xbe8e39dd, 0x3ed4db32, 0xbefb14c0, 0x3efb14be, 0xbed4db31, 0x3e8e39ce, 0xbdc7c596 },
 };
 
 static void
@@ -540,7 +547,7 @@ vl_idct_upload_matrix(struct pipe_context *pipe, float scale)
    for(i = 0; i < BLOCK_HEIGHT; ++i)
       for(j = 0; j < BLOCK_WIDTH; ++j)
          // transpose and scale
-         f[i * pitch + j] = const_matrix[j][i] * scale;
+         f[i * pitch + j] = ((const float (*)[8])const_matrix)[j][i] * scale;
 
    pipe->transfer_unmap(pipe, buf_transfer);
    pipe->transfer_destroy(pipe, buf_transfer);
