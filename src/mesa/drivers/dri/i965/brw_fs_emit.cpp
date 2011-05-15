@@ -538,11 +538,9 @@ brw_reg_from_fs_reg(fs_reg *reg)
    case ARF:
    case MRF:
       if (reg->smear == -1) {
-	 brw_reg = brw_vec8_reg(reg->file,
-				reg->hw_reg, 0);
+	 brw_reg = brw_vec8_reg(reg->file, reg->reg, 0);
       } else {
-	 brw_reg = brw_vec1_reg(reg->file,
-				reg->hw_reg, reg->smear);
+	 brw_reg = brw_vec1_reg(reg->file, reg->reg, reg->smear);
       }
       brw_reg = retype(brw_reg, reg->type);
       if (reg->sechalf)

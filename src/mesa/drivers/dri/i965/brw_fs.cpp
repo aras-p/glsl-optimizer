@@ -187,20 +187,20 @@ fs_visitor::virtual_grf_alloc(int size)
 }
 
 /** Fixed HW reg constructor. */
-fs_reg::fs_reg(enum register_file file, int hw_reg)
+fs_reg::fs_reg(enum register_file file, int reg)
 {
    init();
    this->file = file;
-   this->hw_reg = hw_reg;
+   this->reg = reg;
    this->type = BRW_REGISTER_TYPE_F;
 }
 
 /** Fixed HW reg constructor. */
-fs_reg::fs_reg(enum register_file file, int hw_reg, uint32_t type)
+fs_reg::fs_reg(enum register_file file, int reg, uint32_t type)
 {
    init();
    this->file = file;
-   this->hw_reg = hw_reg;
+   this->reg = reg;
    this->type = type;
 }
 
@@ -636,7 +636,7 @@ fs_visitor::assign_curb_setup()
 
       for (unsigned int i = 0; i < 3; i++) {
 	 if (inst->src[i].file == UNIFORM) {
-	    int constant_nr = inst->src[i].hw_reg + inst->src[i].reg_offset;
+	    int constant_nr = inst->src[i].reg + inst->src[i].reg_offset;
 	    struct brw_reg brw_reg = brw_vec1_grf(c->nr_payload_regs +
 						  constant_nr / 8,
 						  constant_nr % 8);
@@ -810,7 +810,7 @@ fs_visitor::remove_dead_constants()
 	 fs_inst *inst = (fs_inst *)node;
 
 	 for (int i = 0; i < 3; i++) {
-	    int constant_nr = inst->src[i].hw_reg + inst->src[i].reg_offset;
+	    int constant_nr = inst->src[i].reg + inst->src[i].reg_offset;
 
 	    if (inst->src[i].file != UNIFORM)
 	       continue;
@@ -862,13 +862,13 @@ fs_visitor::remove_dead_constants()
       fs_inst *inst = (fs_inst *)node;
 
       for (int i = 0; i < 3; i++) {
-	 int constant_nr = inst->src[i].hw_reg + inst->src[i].reg_offset;
+	 int constant_nr = inst->src[i].reg + inst->src[i].reg_offset;
 
 	 if (inst->src[i].file != UNIFORM)
 	    continue;
 
 	 assert(this->params_remap[constant_nr] != -1);
-	 inst->src[i].hw_reg = this->params_remap[constant_nr];
+	 inst->src[i].reg = this->params_remap[constant_nr];
 	 inst->src[i].reg_offset = 0;
       }
    }
@@ -912,7 +912,7 @@ fs_visitor::setup_pull_constants()
 	 if (inst->src[i].file != UNIFORM)
 	    continue;
 
-	 int uniform_nr = inst->src[i].hw_reg + inst->src[i].reg_offset;
+	 int uniform_nr = inst->src[i].reg + inst->src[i].reg_offset;
 	 if (uniform_nr < pull_uniform_base)
 	    continue;
 
@@ -1374,9 +1374,9 @@ fs_visitor::compute_to_mrf()
       /* Work out which hardware MRF registers are written by this
        * instruction.
        */
-      int mrf_low = inst->dst.hw_reg & ~BRW_MRF_COMPR4;
+      int mrf_low = inst->dst.reg & ~BRW_MRF_COMPR4;
       int mrf_high;
-      if (inst->dst.hw_reg & BRW_MRF_COMPR4) {
+      if (inst->dst.reg & BRW_MRF_COMPR4) {
 	 mrf_high = mrf_low + 4;
       } else if (c->dispatch_width == 16 &&
 		 (!inst->force_uncompressed && !inst->force_sechalf)) {
@@ -1443,7 +1443,7 @@ fs_visitor::compute_to_mrf()
 	    if (scan_inst->dst.reg_offset == inst->src[0].reg_offset) {
 	       /* Found the creator of our MRF's source value. */
 	       scan_inst->dst.file = MRF;
-	       scan_inst->dst.hw_reg = inst->dst.hw_reg;
+	       scan_inst->dst.reg = inst->dst.reg;
 	       scan_inst->saturate |= inst->saturate;
 	       inst->remove();
 	       progress = true;
@@ -1480,10 +1480,10 @@ fs_visitor::compute_to_mrf()
 	    /* If somebody else writes our MRF here, we can't
 	     * compute-to-MRF before that.
 	     */
-	    int scan_mrf_low = scan_inst->dst.hw_reg & ~BRW_MRF_COMPR4;
+	    int scan_mrf_low = scan_inst->dst.reg & ~BRW_MRF_COMPR4;
 	    int scan_mrf_high;
 
-	    if (scan_inst->dst.hw_reg & BRW_MRF_COMPR4) {
+	    if (scan_inst->dst.reg & BRW_MRF_COMPR4) {
 	       scan_mrf_high = scan_mrf_low + 4;
 	    } else if (c->dispatch_width == 16 &&
 		       (!scan_inst->force_uncompressed &&
@@ -1555,7 +1555,7 @@ fs_visitor::remove_duplicate_mrf_writes()
 
       if (inst->opcode == BRW_OPCODE_MOV &&
 	  inst->dst.file == MRF) {
-	 fs_inst *prev_inst = last_mrf_move[inst->dst.hw_reg];
+	 fs_inst *prev_inst = last_mrf_move[inst->dst.reg];
 	 if (prev_inst && inst->equals(prev_inst)) {
 	    inst->remove();
 	    progress = true;
@@ -1565,7 +1565,7 @@ fs_visitor::remove_duplicate_mrf_writes()
 
       /* Clear out the last-write records for MRFs that were overwritten. */
       if (inst->dst.file == MRF) {
-	 last_mrf_move[inst->dst.hw_reg] = NULL;
+	 last_mrf_move[inst->dst.reg] = NULL;
       }
 
       if (inst->mlen > 0) {
@@ -1591,7 +1591,7 @@ fs_visitor::remove_duplicate_mrf_writes()
 	  inst->dst.file == MRF &&
 	  inst->src[0].file == GRF &&
 	  !inst->predicated) {
-	 last_mrf_move[inst->dst.hw_reg] = inst;
+	 last_mrf_move[inst->dst.reg] = inst;
       }
    }
 

@@ -321,12 +321,12 @@ instruction_scheduler::calculate_deps()
 	 add_dep(last_grf_write[inst->dst.reg], n);
 	 last_grf_write[inst->dst.reg] = n;
       } else if (inst->dst.file == MRF) {
-	 int reg = inst->dst.hw_reg & ~BRW_MRF_COMPR4;
+	 int reg = inst->dst.reg & ~BRW_MRF_COMPR4;
 
 	 add_dep(last_mrf_write[reg], n);
 	 last_mrf_write[reg] = n;
 	 if (is_compressed(inst)) {
-	    if (inst->dst.hw_reg & BRW_MRF_COMPR4)
+	    if (inst->dst.reg & BRW_MRF_COMPR4)
 	       reg += 4;
 	    else
 	       reg++;
@@ -401,12 +401,12 @@ instruction_scheduler::calculate_deps()
       if (inst->dst.file == GRF) {
 	 last_grf_write[inst->dst.reg] = n;
       } else if (inst->dst.file == MRF) {
-	 int reg = inst->dst.hw_reg & ~BRW_MRF_COMPR4;
+	 int reg = inst->dst.reg & ~BRW_MRF_COMPR4;
 
 	 last_mrf_write[reg] = n;
 
 	 if (is_compressed(inst)) {
-	    if (inst->dst.hw_reg & BRW_MRF_COMPR4)
+	    if (inst->dst.reg & BRW_MRF_COMPR4)
 	       reg += 4;
 	    else
 	       reg++;

@@ -52,8 +52,8 @@ assign_reg(int *reg_hw_locations, fs_reg *reg, int reg_width)
 {
    if (reg->file == GRF) {
       assert(reg->reg_offset >= 0);
-      reg->hw_reg = reg_hw_locations[reg->reg] + reg->reg_offset * reg_width;
-      reg->reg = 0;
+      reg->reg = reg_hw_locations[reg->reg] + reg->reg_offset * reg_width;
+      reg->reg_offset = 0;
    }
 }
 

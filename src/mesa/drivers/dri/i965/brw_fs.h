@@ -51,7 +51,7 @@ enum register_file {
    MRF = BRW_MESSAGE_REGISTER_FILE,
    IMM = BRW_IMMEDIATE_VALUE,
    FIXED_HW_REG, /* a struct brw_reg */
-   UNIFORM, /* prog_data->params[hw_reg] */
+   UNIFORM, /* prog_data->params[reg] */
    BAD_FILE
 };
 
@@ -99,7 +99,6 @@ public:
    void init()
    {
       memset(this, 0, sizeof(*this));
-      this->hw_reg = -1;
       this->smear = -1;
    }
 
@@ -146,8 +145,8 @@ public:
       this->type = fixed_hw_reg.type;
    }
 
-   fs_reg(enum register_file file, int hw_reg);
-   fs_reg(enum register_file file, int hw_reg, uint32_t type);
+   fs_reg(enum register_file file, int reg);
+   fs_reg(enum register_file file, int reg, uint32_t type);
    fs_reg(class fs_visitor *v, const struct glsl_type *type);
 
    bool equals(fs_reg *r)
@@ -155,7 +154,6 @@ public:
       return (file == r->file &&
 	      reg == r->reg &&
 	      reg_offset == r->reg_offset &&
-	      hw_reg == r->hw_reg &&
 	      type == r->type &&
 	      negate == r->negate &&
 	      abs == r->abs &&
@@ -167,12 +165,17 @@ public:
 
    /** Register file: ARF, GRF, MRF, IMM. */
    enum register_file file;
-   /** virtual register number.  0 = fixed hw reg */
+   /**
+    * Register number.  For ARF/MRF, it's the hardware register.  For
+    * GRF, it's a virtual register number until register allocation
+    */
    int reg;
-   /** Offset within the virtual register. */
+   /**
+    * For virtual registers, this is a hardware register offset from
+    * the start of the register block (for example, a constant index
+    * in an array access).
+    */
    int reg_offset;
-   /** HW register number.  Generally unset until register allocation. */
-   int hw_reg;
    /** Register type.  BRW_REGISTER_TYPE_* */
    int type;
    bool negate;
