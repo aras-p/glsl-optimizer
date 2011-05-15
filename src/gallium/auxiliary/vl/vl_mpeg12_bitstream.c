@@ -1506,36 +1506,27 @@ do {							\
       routine(bs, picture->f_code[1], &mv_bwd);         \
 } while (0)
 
-#define NEXT_MACROBLOCK		                \
-do {				                \
-   ++x;				                \
-   if (x == bs->width) {	                \
-      ++y;                                      \
-      if (y >= bs->height)                      \
-         return false;                          \
-      x = 0;                                    \
-   }                                            \
-} while (0)
-
 static inline void
-store_motionvectors(struct vl_mpg12_bs *bs, int x, int y,
+store_motionvectors(struct vl_mpg12_bs *bs, unsigned *mv_pos,
                     struct pipe_motionvector *mv_fwd,
                     struct pipe_motionvector *mv_bwd)
 {
-   bs->mv_stream[0][x+y*bs->width].top = mv_fwd->top;
-   bs->mv_stream[0][x+y*bs->width].bottom =
+   bs->mv_stream[0][*mv_pos].top = mv_fwd->top;
+   bs->mv_stream[0][*mv_pos].bottom =
       mv_fwd->top.field_select == PIPE_VIDEO_FRAME ?
       mv_fwd->top : mv_fwd->bottom;
 
-   bs->mv_stream[1][x+y*bs->width].top = mv_bwd->top;
-   bs->mv_stream[1][x+y*bs->width].bottom =
+   bs->mv_stream[1][*mv_pos].top = mv_bwd->top;
+   bs->mv_stream[1][*mv_pos].bottom =
       mv_bwd->top.field_select == PIPE_VIDEO_FRAME ?
       mv_bwd->top : mv_bwd->bottom;
+
+   (*mv_pos)++;
 }
 
 static inline bool
 slice_init(struct vl_mpg12_bs *bs, struct pipe_mpeg12_picture_desc * picture,
-           int *quantizer_scale, int *x, int *y)
+           int *quantizer_scale, unsigned *x, unsigned *y, unsigned *mv_pos)
 {
    const MBAtab * mba;
 
@@ -1589,6 +1580,8 @@ slice_init(struct vl_mpg12_bs *bs, struct pipe_mpeg12_picture_desc * picture,
    if (*y > bs->height)
       return false;
 
+   *mv_pos = *x + *y * bs->width;
+
    return true;
 }
 
@@ -1604,7 +1597,7 @@ decode_slice(struct vl_mpg12_bs *bs, struct pipe_mpeg12_picture_desc *picture,
    int dc_dct_pred[3] = { 0, 0, 0 };
    int quantizer_scale;
 
-   int x, y;
+   unsigned x, y, mv_pos;
 
    switch(picture->picture_structure) {
    case TOP_FIELD:
@@ -1620,7 +1613,7 @@ decode_slice(struct vl_mpg12_bs *bs, struct pipe_mpeg12_picture_desc *picture,
       break;
    }
 
-   if (!slice_init(bs, picture, &quantizer_scale, &x, &y))
+   if (!slice_init(bs, picture, &quantizer_scale, &x, &y, &mv_pos))
       return false;
 
    mv_fwd.top.x = mv_fwd.top.y = mv_fwd.bottom.x = mv_fwd.bottom.y = 0;
@@ -1760,8 +1753,13 @@ decode_slice(struct vl_mpg12_bs *bs, struct pipe_mpeg12_picture_desc *picture,
          dc_dct_pred[0] = dc_dct_pred[1] = dc_dct_pred[2] = 0;
       }
 
-      store_motionvectors(bs, x, y, &mv_fwd, &mv_bwd);
-      NEXT_MACROBLOCK;
+      store_motionvectors(bs, &mv_pos, &mv_fwd, &mv_bwd);
+      if (++x >= bs->width) {
+         ++y;
+         if (y >= bs->height)
+            return false;
+         x -= bs->width;
+      }
 
       vl_vlc_needbits(&bs->vlc);
       mba_inc = 0;
@@ -1798,10 +1796,16 @@ decode_slice(struct vl_mpg12_bs *bs, struct pipe_mpeg12_picture_desc *picture,
             mv_fwd.top.weight = mv_fwd.bottom.weight = PIPE_VIDEO_MV_WEIGHT_MAX;
          }
 
+         x += mba_inc;
          do {
-            store_motionvectors(bs, x, y, &mv_fwd, &mv_bwd);
-            NEXT_MACROBLOCK;
+            store_motionvectors(bs, &mv_pos, &mv_fwd, &mv_bwd);
          } while (--mba_inc);
+      }
+      while (x >= bs->width) {
+         ++y;
+         if (y >= bs->height)
+            return false;
+         x -= bs->width;
       }
    }
 }
