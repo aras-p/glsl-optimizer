@@ -98,7 +98,7 @@ create_vert_shader(struct vl_zscan *zscan)
    struct ureg_dst tmp;
    struct ureg_dst o_vpos, o_vtex[zscan->num_channels];
 
-   unsigned i;
+   signed i;
 
    shader = ureg_create(TGSI_PROCESSOR_VERTEX);
    if (!shader)
@@ -139,13 +139,12 @@ create_vert_shader(struct vl_zscan *zscan)
    ureg_MUL(shader, ureg_writemask(tmp, TGSI_WRITEMASK_XZ), instance,
             ureg_imm1f(shader, 1.0f / zscan->blocks_per_line));
 
-   ureg_FRC(shader, ureg_writemask(tmp, TGSI_WRITEMASK_X), ureg_src(tmp));
+   ureg_FRC(shader, ureg_writemask(tmp, TGSI_WRITEMASK_Y), ureg_scalar(ureg_src(tmp), TGSI_SWIZZLE_X));
    ureg_FLR(shader, ureg_writemask(tmp, TGSI_WRITEMASK_Z), ureg_src(tmp));
 
    for (i = 0; i < zscan->num_channels; ++i) {
-      if (i > 0)
-         ureg_ADD(shader, ureg_writemask(tmp, TGSI_WRITEMASK_X), ureg_src(tmp),
-                  ureg_imm1f(shader, 1.0f / (zscan->blocks_per_line * BLOCK_WIDTH)));
+      ureg_ADD(shader, ureg_writemask(tmp, TGSI_WRITEMASK_X), ureg_scalar(ureg_src(tmp), TGSI_SWIZZLE_Y),
+               ureg_imm1f(shader, 1.0f / (zscan->blocks_per_line * BLOCK_WIDTH) * (i - (signed)zscan->num_channels / 2)));
 
       ureg_MAD(shader, ureg_writemask(o_vtex[i], TGSI_WRITEMASK_X), vrect,
                ureg_imm1f(shader, 1.0f / zscan->blocks_per_line), ureg_src(tmp));
@@ -256,7 +255,7 @@ init_state(struct vl_zscan *zscan)
    assert(zscan);
 
    memset(&rs_state, 0, sizeof(rs_state));
-   rs_state.gl_rasterization_rules = false;
+   rs_state.gl_rasterization_rules = true;
    zscan->rs_state = zscan->pipe->create_rasterizer_state(zscan->pipe, &rs_state);
    if (!zscan->rs_state)
       goto error_rs_state;
