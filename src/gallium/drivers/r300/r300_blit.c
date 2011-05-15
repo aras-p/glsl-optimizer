@@ -234,6 +234,9 @@ static void r300_clear(struct pipe_context* pipe,
 
             /* Setup Hyper-Z clears. */
             if (r300->hyperz_enabled) {
+                DBG(r300, DBG_HYPERZ, "r300: Clear memory: %s%s\n",
+                    zmask_clear ? "ZMASK " : "", hiz_clear ? "HIZ" : "");
+
                 if (zmask_clear) {
                     hyperz_dcv = hyperz->zb_depthclearvalue =
                         r300_depth_clear_value(fb->zsbuf->format, depth, stencil);
