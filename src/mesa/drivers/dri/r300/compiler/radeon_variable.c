@@ -469,6 +469,67 @@ struct rc_list * rc_variable_readers_union(struct rc_variable * var)
 	return list;
 }
 
+static unsigned int reader_equals_src(
+	struct rc_reader reader,
+	unsigned int src_type,
+	void * src)
+{
+	if (reader.Inst->Type != src_type) {
+		return 0;
+	}
+	if (src_type == RC_INSTRUCTION_NORMAL) {
+		return reader.U.I.Src == src;
+	} else {
+		return reader.U.P.Src == src;
+	}
+}
+
+static unsigned int variable_writes_src(
+	struct rc_variable * var,
+	unsigned int src_type,
+	void * src)
+{
+	unsigned int i;
+	for (i = 0; i < var->ReaderCount; i++) {
+		if (reader_equals_src(var->Readers[i], src_type, src)) {
+			return 1;
+		}
+	}
+	return 0;
+}
+
+
+struct rc_list * rc_variable_list_get_writers(
+	struct rc_list * var_list,
+	unsigned int src_type,
+	void * src)
+{
+	struct rc_list * list_ptr;
+	struct rc_list * writer_list = NULL;
+	for (list_ptr = var_list; list_ptr; list_ptr = list_ptr->Next) {
+		struct rc_variable * var = list_ptr->Item;
+		if (variable_writes_src(var, src_type, src)) {
+			struct rc_variable * friend;
+			rc_list_add(&writer_list, rc_list(&var->C->Pool, var));
+			for (friend = var->Friend; friend;
+						friend = friend->Friend) {
+				if (variable_writes_src(friend, src_type, src)) {
+					rc_list_add(&writer_list,
+						rc_list(&var->C->Pool, friend));
+				}
+			}
+			/* Once we have indentifed the variable and its
+			 * friends that write this source, we can stop
+			 * stop searching, because we know know of the
+			 * other variables in the list will write this source.
+			 * If they did they would be friends of var.
+			 */
+			break;
+		}
+	}
+	return writer_list;
+}
+
 void rc_variable_print(struct rc_variable * var)
 {
 	unsigned int i;

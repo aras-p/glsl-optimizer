@@ -30,6 +30,8 @@
 #include <stdio.h>
 
 #include "radeon_compiler_util.h"
+#include "radeon_list.h"
+#include "radeon_variable.h"
 #include "../r300_reg.h"
 
 /**
@@ -37,27 +39,143 @@
  */
 int r500_transform_IF(
 	struct radeon_compiler * c,
-	struct rc_instruction * inst,
-	void* data)
+	struct rc_instruction * inst_if,
+	void *data)
 {
-	struct rc_instruction * inst_mov;
+	struct rc_variable * writer;
+	struct rc_list * writer_list, * list_ptr;
+	struct rc_list * var_list = rc_get_variables(c);
+	unsigned int generic_if = 0;
+	unsigned int alu_chan;
 
-	if (inst->U.I.Opcode != RC_OPCODE_IF)
+	if (inst_if->U.I.Opcode != RC_OPCODE_IF) {
 		return 0;
+	}
 
-	inst_mov = rc_insert_new_instruction(c, inst->Prev);
-	inst_mov->U.I.Opcode = RC_OPCODE_MOV;
-	inst_mov->U.I.DstReg.WriteMask = 0;
-	inst_mov->U.I.WriteALUResult = RC_ALURESULT_W;
-	inst_mov->U.I.ALUResultCompare = RC_COMPARE_FUNC_NOTEQUAL;
-	inst_mov->U.I.SrcReg[0] = inst->U.I.SrcReg[0];
-	inst_mov->U.I.SrcReg[0].Swizzle = combine_swizzles4(inst_mov->U.I.SrcReg[0].Swizzle,
-			RC_SWIZZLE_UNUSED, RC_SWIZZLE_UNUSED, RC_SWIZZLE_UNUSED, RC_SWIZZLE_X);
+	writer_list = rc_variable_list_get_writers(
+			var_list, inst_if->Type, &inst_if->U.I.SrcReg[0]);
+	if (!writer_list) {
+		generic_if = 1;
+	} else {
 
-	inst->U.I.SrcReg[0].File = RC_FILE_SPECIAL;
-	inst->U.I.SrcReg[0].Index = RC_SPECIAL_ALU_RESULT;
-	inst->U.I.SrcReg[0].Swizzle = RC_SWIZZLE_XYZW;
-	inst->U.I.SrcReg[0].Negate = 0;
+		/* Make sure it is safe for the writers to write to
+		 * ALU Result */
+		for (list_ptr = writer_list; list_ptr;
+						list_ptr = list_ptr->Next) {
+			struct rc_instruction * inst;
+			writer = list_ptr->Item;
+			/* We are going to modify the destination register
+			 * of writer, so if it has a reader other than
+			 * inst_if (aka ReaderCount > 1) we must fall back to
+			 * our generic IF.
+			 * If the writer has a lower IP than inst_if, this
+			 * means that inst_if is above the writer in a loop.
+			 * I'm not sure why this would ever happen, but
+			 * if it does we want to make sure we fall back
+			 * to our generic IF. */
+			if (writer->ReaderCount > 1 || writer->Inst->IP < inst_if->IP) {
+				generic_if = 1;
+				break;
+			}
+
+			/* The ALU Result is not preserved across IF
+			 * instructions, so if there is another IF
+			 * instruction between writer and inst_if, then
+			 * we need to fall back to generic IF. */
+			for (inst = writer->Inst; inst != inst_if; inst = inst->Next) {
+				const struct rc_opcode_info * info =
+					rc_get_opcode_info(inst->U.I.Opcode);
+				if (info->IsFlowControl) {
+					generic_if = 1;
+					break;
+				}
+			}
+			if (generic_if) {
+				break;
+			}
+		}
+	}
+
+	if (GET_SWZ(inst_if->U.I.SrcReg[0].Swizzle, 0) == RC_SWIZZLE_X) {
+		alu_chan = RC_ALURESULT_X;
+	} else {
+		alu_chan = RC_ALURESULT_W;
+	}
+	if (generic_if) {
+		struct rc_instruction * inst_mov =
+				rc_insert_new_instruction(c, inst_if->Prev);
+
+		inst_mov->U.I.Opcode = RC_OPCODE_MOV;
+		inst_mov->U.I.DstReg.WriteMask = 0;
+		inst_mov->U.I.DstReg.File = RC_FILE_NONE;
+		inst_mov->U.I.ALUResultCompare = RC_COMPARE_FUNC_NOTEQUAL;
+		inst_mov->U.I.WriteALUResult = alu_chan;
+		inst_mov->U.I.SrcReg[0] = inst_if->U.I.SrcReg[0];
+		if (alu_chan == RC_ALURESULT_X) {
+			inst_mov->U.I.SrcReg[0].Swizzle = combine_swizzles4(
+					inst_mov->U.I.SrcReg[0].Swizzle,
+					RC_SWIZZLE_X, RC_SWIZZLE_UNUSED,
+					RC_SWIZZLE_UNUSED, RC_SWIZZLE_UNUSED);
+		} else {
+			inst_mov->U.I.SrcReg[0].Swizzle = combine_swizzles4(
+					inst_mov->U.I.SrcReg[0].Swizzle,
+					RC_SWIZZLE_UNUSED, RC_SWIZZLE_UNUSED,
+					RC_SWIZZLE_UNUSED, RC_SWIZZLE_Z);
+		}
+	} else {
+		rc_compare_func compare_func = RC_COMPARE_FUNC_NEVER;
+		unsigned int reverse_srcs = 0;
+		unsigned int preserve_opcode = 0;
+		for (list_ptr = writer_list; list_ptr;
+						list_ptr = list_ptr->Next) {
+			writer = list_ptr->Item;
+			switch(writer->Inst->U.I.Opcode) {
+			case RC_OPCODE_SEQ:
+				compare_func = RC_COMPARE_FUNC_EQUAL;
+				break;
+			case RC_OPCODE_SNE:
+				compare_func = RC_COMPARE_FUNC_NOTEQUAL;
+				break;
+			case RC_OPCODE_SLE:
+				reverse_srcs = 1;
+				/* Fall through */
+			case RC_OPCODE_SGE:
+				compare_func = RC_COMPARE_FUNC_GEQUAL;
+				break;
+			case RC_OPCODE_SGT:
+				reverse_srcs = 1;
+				/* Fall through */
+			case RC_OPCODE_SLT:
+				compare_func = RC_COMPARE_FUNC_LESS;
+				break;
+			default:
+				compare_func = RC_COMPARE_FUNC_NOTEQUAL;
+				preserve_opcode = 1;
+				break;
+			}
+			if (!preserve_opcode) {
+				writer->Inst->U.I.Opcode = RC_OPCODE_SUB;
+			}
+			writer->Inst->U.I.DstReg.WriteMask = 0;
+			writer->Inst->U.I.DstReg.File = RC_FILE_NONE;
+			writer->Inst->U.I.WriteALUResult = alu_chan;
+			writer->Inst->U.I.ALUResultCompare = compare_func;
+			if (reverse_srcs) {
+				struct rc_src_register temp_src;
+				temp_src = writer->Inst->U.I.SrcReg[0];
+				writer->Inst->U.I.SrcReg[0] =
+					writer->Inst->U.I.SrcReg[1];
+				writer->Inst->U.I.SrcReg[1] = temp_src;
+			}
+		}
+	}
+
+	inst_if->U.I.SrcReg[0].File = RC_FILE_SPECIAL;
+	inst_if->U.I.SrcReg[0].Index = RC_SPECIAL_ALU_RESULT;
+	inst_if->U.I.SrcReg[0].Swizzle = RC_MAKE_SWIZZLE(
+				RC_SWIZZLE_X, RC_SWIZZLE_UNUSED,
+				RC_SWIZZLE_UNUSED, RC_SWIZZLE_UNUSED);
+	inst_if->U.I.SrcReg[0].Negate = 0;
 
 	return 1;
 }

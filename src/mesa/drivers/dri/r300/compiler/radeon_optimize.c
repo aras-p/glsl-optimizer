@@ -517,8 +517,11 @@ static int is_presub_candidate(
 
 	assert(inst->U.I.Opcode == RC_OPCODE_ADD);
 
-	if (inst->U.I.PreSub.Opcode != RC_PRESUB_NONE || inst->U.I.SaturateMode)
+	if (inst->U.I.PreSub.Opcode != RC_PRESUB_NONE
+			|| inst->U.I.SaturateMode
+			|| inst->U.I.WriteALUResult) {
 		return 0;
+	}
 
 	/* If both sources use a constant swizzle, then we can't convert it to
 	 * a presubtract operation.  In fact for the ADD and SUB presubtract
