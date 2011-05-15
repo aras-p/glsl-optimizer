@@ -102,9 +102,9 @@ init_zscan_buffer(struct vl_mpeg12_buffer *buffer)
       goto error_sampler;
 
    if (dec->base.entrypoint <= PIPE_VIDEO_ENTRYPOINT_IDCT)
-      destination = buffer->idct_source->get_surfaces(buffer->idct_source);
+      destination = dec->idct_source->get_surfaces(dec->idct_source);
    else
-      destination = buffer->mc_source->get_surfaces(buffer->mc_source);
+      destination = dec->mc_source->get_surfaces(dec->mc_source);
 
    if (!destination)
       goto error_surface;
@@ -143,8 +143,6 @@ cleanup_zscan_buffer(struct vl_mpeg12_buffer *buffer)
 static bool
 init_idct_buffer(struct vl_mpeg12_buffer *buffer)
 {
-   enum pipe_format formats[3];
-
    struct pipe_sampler_view **idct_source_sv, **mc_source_sv;
    struct pipe_surface **idct_surfaces;
 
@@ -156,33 +154,15 @@ init_idct_buffer(struct vl_mpeg12_buffer *buffer)
 
    dec = (struct vl_mpeg12_decoder*)buffer->base.decoder;
 
-   formats[0] = formats[1] = formats[2] = dec->idct_source_format;
-   buffer->idct_source = vl_video_buffer_init(dec->base.context, dec->pipe,
-                                              dec->base.width / 4, dec->base.height, 1,
-                                              dec->base.chroma_format,
-                                              formats, PIPE_USAGE_STATIC);
-   if (!buffer->idct_source)
-      goto error_source;
-
-   formats[0] = formats[1] = formats[2] = dec->mc_source_format;
-   buffer->mc_source = vl_video_buffer_init(dec->base.context, dec->pipe,
-                                            dec->base.width / dec->nr_of_idct_render_targets,
-                                            dec->base.height / 4, dec->nr_of_idct_render_targets,
-                                            dec->base.chroma_format,
-                                            formats, PIPE_USAGE_STATIC);
-
-   if (!buffer->mc_source)
-      goto error_mc_source;
-
-   idct_source_sv = buffer->idct_source->get_sampler_view_planes(buffer->idct_source);
+   idct_source_sv = dec->idct_source->get_sampler_view_planes(dec->idct_source);
    if (!idct_source_sv)
       goto error_source_sv;
 
-   mc_source_sv = buffer->mc_source->get_sampler_view_planes(buffer->mc_source);
+   mc_source_sv = dec->mc_source->get_sampler_view_planes(dec->mc_source);
    if (!mc_source_sv)
       goto error_mc_source_sv;
 
-   idct_surfaces = buffer->mc_source->get_surfaces(buffer->mc_source);
+   idct_surfaces = dec->mc_source->get_surfaces(dec->mc_source);
    if (!idct_surfaces)
       goto error_surfaces;
 
@@ -201,12 +181,6 @@ error_plane:
 error_surfaces:
 error_mc_source_sv:
 error_source_sv:
-   buffer->mc_source->destroy(buffer->mc_source);
-
-error_mc_source:
-   buffer->idct_source->destroy(buffer->idct_source);
-
-error_source:
    return false;
 }
 
@@ -222,30 +196,17 @@ cleanup_idct_buffer(struct vl_mpeg12_buffer *buf)
    vl_idct_cleanup_buffer(&dec->idct_y, &buf->idct[0]);
    vl_idct_cleanup_buffer(&dec->idct_c, &buf->idct[1]);
    vl_idct_cleanup_buffer(&dec->idct_c, &buf->idct[2]);
-   buf->idct_source->destroy(buf->idct_source);
 }
 
 static bool
 init_mc_buffer(struct vl_mpeg12_buffer *buf)
 {
    struct vl_mpeg12_decoder *dec;
-   enum pipe_format formats[3];
 
    assert(buf);
 
    dec = (struct vl_mpeg12_decoder*)buf->base.decoder;
    assert(dec);
-
-   if (dec->base.entrypoint > PIPE_VIDEO_ENTRYPOINT_IDCT) {
-      formats[0] = formats[1] = formats[2] =dec->mc_source_format;
-      buf->mc_source = vl_video_buffer_init(dec->base.context, dec->pipe,
-                                               dec->base.width, dec->base.height, 1,
-                                               dec->base.chroma_format,
-                                               formats, PIPE_USAGE_STATIC);
-
-      if (!buf->mc_source)
-         goto error_mc_source;
-   }
 
    if(!vl_mc_init_buffer(&dec->mc_y, &buf->mc[0]))
       goto error_mc_y;
@@ -265,9 +226,6 @@ error_mc_cb:
    vl_mc_cleanup_buffer(&buf->mc[0]);
 
 error_mc_y:
-   buf->mc_source->destroy(buf->mc_source);
-
-error_mc_source:
    return false;
 }
 
@@ -280,8 +238,6 @@ cleanup_mc_buffer(struct vl_mpeg12_buffer *buf)
 
    for (i = 0; i < VL_MAX_PLANES; ++i)
       vl_mc_cleanup_buffer(&buf->mc[i]);
-
-   buf->mc_source->destroy(buf->mc_source);
 }
 
 static void
@@ -462,10 +418,12 @@ vl_mpeg12_destroy(struct pipe_video_decoder *decoder)
 
    vl_mc_cleanup(&dec->mc_y);
    vl_mc_cleanup(&dec->mc_c);
+   dec->mc_source->destroy(dec->mc_source);
 
    if (dec->base.entrypoint <= PIPE_VIDEO_ENTRYPOINT_IDCT) {
       vl_idct_cleanup(&dec->idct_y);
       vl_idct_cleanup(&dec->idct_c);
+      dec->idct_source->destroy(dec->idct_source);
    }
 
    vl_zscan_cleanup(&dec->zscan_y);
@@ -602,7 +560,7 @@ vl_mpeg12_decoder_flush_buffer(struct pipe_video_decode_buffer *buffer,
          vl_idct_flush(i == 0 ? &dec->idct_y : &dec->idct_c, &buf->idct[i], num_ycbcr_blocks[i]);
    }
 
-   mc_source_sv = buf->mc_source->get_sampler_view_planes(buf->mc_source);
+   mc_source_sv = dec->mc_source->get_sampler_view_planes(dec->mc_source);
    for (i = 0, component = 0; i < VL_MAX_PLANES; ++i) {
       if (!surfaces[i]) continue;
 
@@ -726,29 +684,26 @@ init_zscan(struct vl_mpeg12_decoder *dec)
 }
 
 static bool
-init_idct(struct vl_mpeg12_decoder *dec)
+init_idct(struct vl_mpeg12_decoder *dec, float *mc_scale)
 {
+   unsigned nr_of_idct_render_targets;
+   enum pipe_format formats[3];
+
    struct pipe_sampler_view *matrix, *transpose = NULL;
    float matrix_scale, transpose_scale;
 
-   dec->nr_of_idct_render_targets = dec->pipe->screen->get_param(dec->pipe->screen, PIPE_CAP_MAX_RENDER_TARGETS);
+   nr_of_idct_render_targets = dec->pipe->screen->get_param(dec->pipe->screen, PIPE_CAP_MAX_RENDER_TARGETS);
 
    // more than 4 render targets usually doesn't makes any seens
-   dec->nr_of_idct_render_targets = MIN2(dec->nr_of_idct_render_targets, 4);
+   nr_of_idct_render_targets = MIN2(nr_of_idct_render_targets, 4);
 
-   dec->idct_source_format = find_first_supported_format(dec, const_idct_source_formats,
-                                                         num_idct_source_formats, PIPE_TEXTURE_2D);
+   formats[0] = formats[1] = formats[2] = find_first_supported_format(dec, const_idct_source_formats,
+                                                                      num_idct_source_formats, PIPE_TEXTURE_2D);
 
-   if (dec->idct_source_format == PIPE_FORMAT_NONE)
-      return false;
+   switch (formats[0]) {
+   case PIPE_FORMAT_NONE:
+      goto error_idct_format;
 
-   dec->mc_source_format = find_first_supported_format(dec, const_idct_intermediate_formats,
-                                                       num_idct_intermediate_formats, PIPE_TEXTURE_3D);
-
-   if (dec->mc_source_format == PIPE_FORMAT_NONE)
-      return false;
-
-   switch (dec->idct_source_format) {
    case PIPE_FORMAT_R16G16B16A16_SSCALED:
       matrix_scale = SCALE_FACTOR_SSCALED;
       break;
@@ -762,14 +717,46 @@ init_idct(struct vl_mpeg12_decoder *dec)
       return false;
    }
 
-   if (dec->mc_source_format == PIPE_FORMAT_R16G16B16A16_FLOAT ||
-       dec->mc_source_format == PIPE_FORMAT_R32G32B32A32_FLOAT)
-      transpose_scale = 1.0f;
-   else
-      transpose_scale = matrix_scale = sqrt(matrix_scale);
+   dec->idct_source = vl_video_buffer_init(dec->base.context, dec->pipe,
+                                           dec->base.width / 4, dec->base.height, 1,
+                                           dec->base.chroma_format,
+                                           formats, PIPE_USAGE_STATIC);
+   if (!dec->idct_source)
+      goto error_idct_source;
 
-   if (dec->mc_source_format == PIPE_FORMAT_R16_SSCALED)
+   formats[0] = formats[1] = formats[2] = find_first_supported_format(dec, const_idct_intermediate_formats,
+                                                                      num_idct_intermediate_formats, PIPE_TEXTURE_3D);
+
+   switch (formats[0]) {
+   case PIPE_FORMAT_NONE:
+      goto error_mc_format;
+
+   case PIPE_FORMAT_R16G16B16A16_FLOAT:
+   case PIPE_FORMAT_R32G32B32A32_FLOAT:
+      transpose_scale = 1.0f;
+      *mc_scale = 1.0f;
+      break;
+
+   case PIPE_FORMAT_R16_SSCALED:
+      transpose_scale = matrix_scale = sqrt(matrix_scale);
       transpose_scale /= SCALE_FACTOR_SSCALED;
+      *mc_scale = SCALE_FACTOR_SSCALED;
+      break;
+
+   default:
+      transpose_scale = matrix_scale = sqrt(matrix_scale);
+      *mc_scale = 1.0f;
+      break;
+   }
+
+   dec->mc_source = vl_video_buffer_init(dec->base.context, dec->pipe,
+                                         dec->base.width / nr_of_idct_render_targets,
+                                         dec->base.height / 4, nr_of_idct_render_targets,
+                                         dec->base.chroma_format,
+                                         formats, PIPE_USAGE_STATIC);
+
+   if (!dec->mc_source)
+      goto error_mc_source;
 
    if (!(matrix = vl_idct_upload_matrix(dec->pipe, matrix_scale)))
       goto error_matrix;
@@ -781,15 +768,16 @@ init_idct(struct vl_mpeg12_decoder *dec)
       pipe_sampler_view_reference(&transpose, matrix);
 
    if (!vl_idct_init(&dec->idct_y, dec->pipe, dec->base.width, dec->base.height,
-                     dec->nr_of_idct_render_targets, matrix, transpose))
+                     nr_of_idct_render_targets, matrix, transpose))
       goto error_y;
 
    if(!vl_idct_init(&dec->idct_c, dec->pipe, dec->chroma_width, dec->chroma_height,
-                    dec->nr_of_idct_render_targets, matrix, transpose))
+                    nr_of_idct_render_targets, matrix, transpose))
       goto error_c;
 
    pipe_sampler_view_reference(&matrix, NULL);
    pipe_sampler_view_reference(&transpose, NULL);
+
    return true;
 
 error_c:
@@ -802,7 +790,48 @@ error_transpose:
    pipe_sampler_view_reference(&matrix, NULL);
 
 error_matrix:
+   dec->mc_source->destroy(dec->mc_source);
+
+error_mc_source:
+error_mc_format:
+   dec->idct_source->destroy(dec->idct_source);
+
+error_idct_source:
+error_idct_format:
    return false;
+}
+
+static bool
+init_mc_source_widthout_idct(struct vl_mpeg12_decoder *dec, float *mc_scale)
+{
+   enum pipe_format formats[3];
+
+   formats[0] = formats[1] = formats[2] = find_first_supported_format(dec, const_mc_source_formats,
+                                                                      num_mc_source_formats, PIPE_TEXTURE_2D);
+
+   switch (formats[0]) {
+   case PIPE_FORMAT_NONE:
+      return false;
+
+   case PIPE_FORMAT_R16_SNORM:
+      *mc_scale = SCALE_FACTOR_SNORM;
+      break;
+
+   case PIPE_FORMAT_R16_SSCALED:
+      *mc_scale = SCALE_FACTOR_SSCALED;
+      break;
+
+   default:
+      assert(0);
+      return false;
+   }
+
+   dec->mc_source = vl_video_buffer_init(dec->base.context, dec->pipe,
+                                         dec->base.width, dec->base.height, 1,
+                                         dec->base.chroma_format,
+                                         formats, PIPE_USAGE_STATIC);
+
+   return dec->mc_source;
 }
 
 static void
@@ -907,32 +936,11 @@ vl_create_mpeg12_decoder(struct pipe_video_context *context,
       goto error_zscan;
 
    if (entrypoint <= PIPE_VIDEO_ENTRYPOINT_IDCT) {
-      if (!init_idct(dec))
-         goto error_idct;
-      if (dec->mc_source_format == PIPE_FORMAT_R16_SSCALED)
-         mc_scale = SCALE_FACTOR_SSCALED;
-      else
-         mc_scale = 1.0f;
+      if (!init_idct(dec, &mc_scale))
+         goto error_sources;
    } else {
-      dec->mc_source_format = find_first_supported_format(dec, const_mc_source_formats,
-                                                          num_mc_source_formats, PIPE_TEXTURE_3D);
-
-      if (dec->mc_source_format == PIPE_FORMAT_NONE)
-         return NULL;
-
-      switch (dec->mc_source_format) {
-      case PIPE_FORMAT_R16_SNORM:
-         mc_scale = SCALE_FACTOR_SNORM;
-         break;
-
-      case PIPE_FORMAT_R16_SSCALED:
-         mc_scale = SCALE_FACTOR_SSCALED;
-         break;
-
-      default:
-         assert(0);
-         return NULL;
-      }
+      if (!init_mc_source_widthout_idct(dec, &mc_scale))
+         goto error_sources;
    }
 
    if (!vl_mc_init(&dec->mc_y, dec->pipe, dec->base.width, dec->base.height, MACROBLOCK_HEIGHT, mc_scale,
@@ -959,9 +967,11 @@ error_mc_y:
    if (entrypoint <= PIPE_VIDEO_ENTRYPOINT_IDCT) {
       vl_idct_cleanup(&dec->idct_y);
       vl_idct_cleanup(&dec->idct_c);
+      dec->idct_source->destroy(dec->idct_source);
    }
+   dec->mc_source->destroy(dec->mc_source);
 
-error_idct:
+error_sources:
    vl_zscan_cleanup(&dec->zscan_y);
    vl_zscan_cleanup(&dec->zscan_c);
 
