@@ -34,8 +34,7 @@
 #include "brw_defines.h"
 #include "brw_eu.h"
 
-
-
+#include "../glsl/ralloc.h"
 
 /***********************************************************************
  * Internal helper for constructing instructions
@@ -858,6 +857,19 @@ struct brw_instruction *brw_JMPI(struct brw_compile *p,
    return insn;
 }
 
+static void
+push_if_stack(struct brw_compile *p, struct brw_instruction *inst)
+{
+   p->if_stack[p->if_stack_depth] = inst;
+
+   p->if_stack_depth++;
+   if (p->if_stack_array_size <= p->if_stack_depth) {
+      p->if_stack_array_size *= 2;
+      p->if_stack = reralloc(p->mem_ctx, p->if_stack, struct brw_instruction *,
+			     p->if_stack_array_size);
+   }
+}
+
 /* EU takes the value from the flag register and pushes it onto some
  * sort of a stack (presumably merging with any flag value already on
  * the stack).  Within an if block, the flags at the top of the stack
@@ -870,8 +882,6 @@ struct brw_instruction *brw_JMPI(struct brw_compile *p,
  *
  * When the matching 'endif' instruction is reached, the flags are
  * popped off.  If the stack is now empty, normal execution resumes.
- *
- * No attempt is made to deal with stack overflow (14 elements?).
  */
 struct brw_instruction *brw_IF(struct brw_compile *p, GLuint execute_size)
 {
@@ -909,6 +919,7 @@ struct brw_instruction *brw_IF(struct brw_compile *p, GLuint execute_size)
 
    p->current->header.predicate_control = BRW_PREDICATE_NONE;
 
+   push_if_stack(p, insn);
    return insn;
 }
 
@@ -933,13 +944,15 @@ gen6_IF(struct brw_compile *p, uint32_t conditional,
    if (!p->single_program_flow)
        insn->header.thread_control = BRW_THREAD_SWITCH;
 
+   push_if_stack(p, insn);
    return insn;
 }
 
-struct brw_instruction *brw_ELSE(struct brw_compile *p, 
-				 struct brw_instruction *if_insn)
+void
+brw_ELSE(struct brw_compile *p)
 {
    struct intel_context *intel = &p->brw->intel;
+   struct brw_instruction *if_insn;
    struct brw_instruction *insn;
    GLuint br = 1;
 
@@ -965,6 +978,7 @@ struct brw_instruction *brw_ELSE(struct brw_compile *p,
       brw_set_src1(p, insn, retype(brw_null_reg(), BRW_REGISTER_TYPE_D));
    }
 
+   if_insn = p->if_stack[p->if_stack_depth - 1];
    insn->header.compression_control = BRW_COMPRESSION_NONE;
    insn->header.execution_size = if_insn->header.execution_size;
    insn->header.mask_control = BRW_MASK_ENABLE;
@@ -989,15 +1003,19 @@ struct brw_instruction *brw_ELSE(struct brw_compile *p,
       }
    }
 
-   return insn;
+   /* Replace the IF instruction on the stack with the ELSE instruction */
+   p->if_stack[p->if_stack_depth - 1] = insn;
 }
 
-void brw_ENDIF(struct brw_compile *p, 
-	       struct brw_instruction *patch_insn)
+void
+brw_ENDIF(struct brw_compile *p)
 {
    struct intel_context *intel = &p->brw->intel;
+   struct brw_instruction *patch_insn;
    GLuint br = 1;
 
+   p->if_stack_depth--;
+   patch_insn = p->if_stack[p->if_stack_depth];
    if (intel->gen >= 5)
       br = 2; 
  

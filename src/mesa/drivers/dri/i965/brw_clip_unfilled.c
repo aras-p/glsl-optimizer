@@ -96,7 +96,6 @@ static void compute_tri_direction( struct brw_clip_compile *c )
 static void cull_direction( struct brw_clip_compile *c )
 {
    struct brw_compile *p = &c->func;
-   struct brw_instruction *ccw;
    GLuint conditional;
 
    assert (!(c->key.fill_ccw == CLIP_CULL &&
@@ -113,11 +112,11 @@ static void cull_direction( struct brw_clip_compile *c )
 	   get_element(c->reg.dir, 2),
 	   brw_imm_f(0));
    
-   ccw = brw_IF(p, BRW_EXECUTE_1);
+   brw_IF(p, BRW_EXECUTE_1);
    {
       brw_clip_kill_thread(c);
    }
-   brw_ENDIF(p, ccw);
+   brw_ENDIF(p);
 }
 
 
@@ -125,7 +124,6 @@ static void cull_direction( struct brw_clip_compile *c )
 static void copy_bfc( struct brw_clip_compile *c )
 {
    struct brw_compile *p = &c->func;
-   struct brw_instruction *ccw;
    GLuint conditional;
 
    /* Do we have any colors to copy? 
@@ -149,7 +147,7 @@ static void copy_bfc( struct brw_clip_compile *c )
 	   get_element(c->reg.dir, 2),
 	   brw_imm_f(0));
    
-   ccw = brw_IF(p, BRW_EXECUTE_1);
+   brw_IF(p, BRW_EXECUTE_1);
    {
       GLuint i;
 
@@ -165,7 +163,7 @@ static void copy_bfc( struct brw_clip_compile *c )
 		    byte_offset(c->reg.vertex[i], c->offset[VERT_RESULT_BFC1]));
       }
    }
-   brw_ENDIF(p, ccw);
+   brw_ENDIF(p);
 }
 
 
@@ -205,7 +203,6 @@ static void compute_offset( struct brw_clip_compile *c )
 static void merge_edgeflags( struct brw_clip_compile *c )
 {
    struct brw_compile *p = &c->func;
-   struct brw_instruction *is_poly;
    struct brw_reg tmp0 = get_element_ud(c->reg.tmp0, 0);
 
    brw_AND(p, tmp0, get_element_ud(c->reg.R0, 2), brw_imm_ud(PRIM_MASK)); 
@@ -218,7 +215,7 @@ static void merge_edgeflags( struct brw_clip_compile *c )
    /* Get away with using reg.vertex because we know that this is not
     * a _3DPRIM_TRISTRIP_REVERSE:
     */
-   is_poly = brw_IF(p, BRW_EXECUTE_1);
+   brw_IF(p, BRW_EXECUTE_1);
    {   
       brw_set_conditionalmod(p, BRW_CONDITIONAL_EQ);
       brw_AND(p, vec1(brw_null_reg()), get_element_ud(c->reg.R0, 2), brw_imm_ud(1<<8));
@@ -230,7 +227,7 @@ static void merge_edgeflags( struct brw_clip_compile *c )
       brw_MOV(p, byte_offset(c->reg.vertex[2], c->offset[VERT_RESULT_EDGE]), brw_imm_f(0));
       brw_set_predicate_control(p, BRW_PREDICATE_NONE);
    }
-   brw_ENDIF(p, is_poly);
+   brw_ENDIF(p);
 }
 
 
@@ -255,7 +252,6 @@ static void emit_lines(struct brw_clip_compile *c,
 {
    struct brw_compile *p = &c->func;
    struct brw_instruction *loop;
-   struct brw_instruction *draw_edge;
    struct brw_indirect v0 = brw_indirect(0, 0);
    struct brw_indirect v1 = brw_indirect(1, 0);
    struct brw_indirect v0ptr = brw_indirect(2, 0);
@@ -300,12 +296,12 @@ static void emit_lines(struct brw_clip_compile *c,
 	      vec1(brw_null_reg()), BRW_CONDITIONAL_NZ, 
 	      deref_1f(v0, c->offset[VERT_RESULT_EDGE]),
 	      brw_imm_f(0));
-      draw_edge = brw_IF(p, BRW_EXECUTE_1);
+      brw_IF(p, BRW_EXECUTE_1);
       {
 	 brw_clip_emit_vue(c, v0, 1, 0, (_3DPRIM_LINESTRIP << 2) | R02_PRIM_START);
 	 brw_clip_emit_vue(c, v1, 1, 0, (_3DPRIM_LINESTRIP << 2) | R02_PRIM_END);
       }
-      brw_ENDIF(p, draw_edge);
+      brw_ENDIF(p);
 
       brw_set_conditionalmod(p, BRW_CONDITIONAL_NZ);
       brw_ADD(p, c->reg.loopcount, c->reg.loopcount, brw_imm_d(-1));
@@ -320,7 +316,6 @@ static void emit_points(struct brw_clip_compile *c,
 {
    struct brw_compile *p = &c->func;
    struct brw_instruction *loop;
-   struct brw_instruction *draw_point;
 
    struct brw_indirect v0 = brw_indirect(0, 0);
    struct brw_indirect v0ptr = brw_indirect(2, 0);
@@ -339,14 +334,14 @@ static void emit_points(struct brw_clip_compile *c,
 	      vec1(brw_null_reg()), BRW_CONDITIONAL_NZ, 
 	      deref_1f(v0, c->offset[VERT_RESULT_EDGE]),
 	      brw_imm_f(0));
-      draw_point = brw_IF(p, BRW_EXECUTE_1);
+      brw_IF(p, BRW_EXECUTE_1);
       {
 	 if (do_offset)
 	    apply_one_offset(c, v0);
 
 	 brw_clip_emit_vue(c, v0, 1, 0, (_3DPRIM_POINTLIST << 2) | R02_PRIM_START | R02_PRIM_END);
       }
-      brw_ENDIF(p, draw_point);
+      brw_ENDIF(p);
 
       brw_set_conditionalmod(p, BRW_CONDITIONAL_NZ);
       brw_ADD(p, c->reg.loopcount, c->reg.loopcount, brw_imm_d(-1));
@@ -388,7 +383,6 @@ static void emit_primitives( struct brw_clip_compile *c,
 static void emit_unfilled_primitives( struct brw_clip_compile *c )
 {
    struct brw_compile *p = &c->func;
-   struct brw_instruction *ccw;
 
    /* Direction culling has already been done.
     */
@@ -402,15 +396,15 @@ static void emit_unfilled_primitives( struct brw_clip_compile *c )
 	      get_element(c->reg.dir, 2),
 	      brw_imm_f(0));
    
-      ccw = brw_IF(p, BRW_EXECUTE_1);
+      brw_IF(p, BRW_EXECUTE_1);
       {
 	 emit_primitives(c, c->key.fill_ccw, c->key.offset_ccw);
       }
-      ccw = brw_ELSE(p, ccw);
+      brw_ELSE(p);
       {
 	 emit_primitives(c, c->key.fill_cw, c->key.offset_cw);
       }
-      brw_ENDIF(p, ccw);
+      brw_ENDIF(p);
    }
    else if (c->key.fill_cw != CLIP_CULL) {
       emit_primitives(c, c->key.fill_cw, c->key.offset_cw);
@@ -426,22 +420,19 @@ static void emit_unfilled_primitives( struct brw_clip_compile *c )
 static void check_nr_verts( struct brw_clip_compile *c )
 {
    struct brw_compile *p = &c->func;
-   struct brw_instruction *if_insn;
 
    brw_CMP(p, vec1(brw_null_reg()), BRW_CONDITIONAL_L, c->reg.nr_verts, brw_imm_d(3));      
-   if_insn = brw_IF(p, BRW_EXECUTE_1);
+   brw_IF(p, BRW_EXECUTE_1);
    {
       brw_clip_kill_thread(c);
    }
-   brw_ENDIF(p, if_insn);
+   brw_ENDIF(p);
 }
 
 
 void brw_emit_unfilled_clip( struct brw_clip_compile *c )
 {
    struct brw_compile *p = &c->func;
-   struct brw_instruction *do_clip;
-   
 
    c->need_direction = ((c->key.offset_ccw || c->key.offset_cw) ||
 			(c->key.fill_ccw != c->key.fill_cw) ||
@@ -488,14 +479,14 @@ void brw_emit_unfilled_clip( struct brw_clip_compile *c )
    
    brw_clip_init_clipmask(c);
    brw_CMP(p, vec1(brw_null_reg()), BRW_CONDITIONAL_NZ, c->reg.planemask, brw_imm_ud(0));
-   do_clip = brw_IF(p, BRW_EXECUTE_1);
+   brw_IF(p, BRW_EXECUTE_1);
    {
       brw_clip_init_planes(c);
       brw_clip_tri(c);
       check_nr_verts(c);
    }
-   brw_ENDIF(p, do_clip);
-   
+   brw_ENDIF(p);
+
    emit_unfilled_primitives(c);
    brw_clip_kill_thread(c);
 }

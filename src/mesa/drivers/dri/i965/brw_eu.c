@@ -34,6 +34,8 @@
 #include "brw_defines.h"
 #include "brw_eu.h"
 
+#include "../glsl/ralloc.h"
+
 /* Returns the corresponding conditional mod for swapping src0 and
  * src1 in e.g. CMP.
  */
@@ -183,6 +185,12 @@ brw_init_compile(struct brw_context *brw, struct brw_compile *p, void *mem_ctx)
    brw_set_saturate(p, 0);
    brw_set_compression_control(p, BRW_COMPRESSION_NONE);
    brw_set_predicate_control_flag_value(p, 0xff); 
+
+   /* Set up control flow stack */
+   p->if_stack_depth = 0;
+   p->if_stack_array_size = 16;
+   p->if_stack =
+      rzalloc_array(mem_ctx, struct brw_instruction *, p->if_stack_array_size);
 }
 
 

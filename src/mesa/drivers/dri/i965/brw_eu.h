@@ -117,6 +117,14 @@ struct brw_compile {
    bool compressed;
    struct brw_context *brw;
 
+   /* Control flow stacks:
+    * - if_stack contains IF and ELSE instructions which must be patched
+    *   (and popped) once the matching ENDIF instruction is encountered.
+    */
+   struct brw_instruction **if_stack;
+   int if_stack_depth;
+   int if_stack_array_size;
+
    struct brw_glsl_label *first_label;  /**< linked list of labels */
    struct brw_glsl_call *first_call;    /**< linked list of CALs */
 };
@@ -953,12 +961,8 @@ struct brw_instruction *brw_IF(struct brw_compile *p,
 struct brw_instruction *gen6_IF(struct brw_compile *p, uint32_t conditional,
 				struct brw_reg src0, struct brw_reg src1);
 
-struct brw_instruction *brw_ELSE(struct brw_compile *p, 
-				 struct brw_instruction *if_insn);
-
-void brw_ENDIF(struct brw_compile *p, 
-	       struct brw_instruction *if_or_else_insn);
-
+void brw_ELSE(struct brw_compile *p);
+void brw_ENDIF(struct brw_compile *p);
 
 /* DO/WHILE loops:
  */

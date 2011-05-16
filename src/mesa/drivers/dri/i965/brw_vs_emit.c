@@ -1039,7 +1039,6 @@ static void emit_lit_noalias( struct brw_vs_compile *c,
 			      struct brw_reg arg0 )
 {
    struct brw_compile *p = &c->func;
-   struct brw_instruction *if_insn;
    struct brw_reg tmp = dst;
    GLboolean need_tmp = (dst.file != BRW_GENERAL_REGISTER_FILE);
 
@@ -1055,7 +1054,7 @@ static void emit_lit_noalias( struct brw_vs_compile *c,
     * BRW_EXECUTE_1 for all comparisions.
     */
    brw_CMP(p, brw_null_reg(), BRW_CONDITIONAL_G, brw_swizzle1(arg0,0), brw_imm_f(0));
-   if_insn = brw_IF(p, BRW_EXECUTE_8);
+   brw_IF(p, BRW_EXECUTE_8);
    {
       brw_MOV(p, brw_writemask(dst, WRITEMASK_Y), brw_swizzle1(arg0,0));
 
@@ -1070,8 +1069,7 @@ static void emit_lit_noalias( struct brw_vs_compile *c,
 		 brw_swizzle1(arg0, 3),
 		 BRW_MATH_PRECISION_PARTIAL);      
    }
-
-   brw_ENDIF(p, if_insn);
+   brw_ENDIF(p);
 
    release_tmp(c, tmp);
 }
@@ -1881,8 +1879,8 @@ void brw_vs_emit(struct brw_vs_compile *c )
    struct brw_context *brw = p->brw;
    struct intel_context *intel = &brw->intel;
    const GLuint nr_insns = c->vp->program.Base.NumInstructions;
-   GLuint insn, if_depth = 0, loop_depth = 0;
-   struct brw_instruction *if_inst[MAX_IF_DEPTH], *loop_inst[MAX_LOOP_DEPTH] = { 0 };
+   GLuint insn, loop_depth = 0;
+   struct brw_instruction *loop_inst[MAX_LOOP_DEPTH] = { 0 };
    int if_depth_in_loop[MAX_LOOP_DEPTH];
    const struct brw_indirect stack_index = brw_indirect(0, 0);   
    GLuint index;
@@ -2102,23 +2100,20 @@ void brw_vs_emit(struct brw_vs_compile *c )
       case OPCODE_XPD:
 	 emit_xpd(p, dst, args[0], args[1]);
 	 break;
-      case OPCODE_IF:
-	 assert(if_depth < MAX_IF_DEPTH);
-	 if_inst[if_depth] = brw_IF(p, BRW_EXECUTE_8);
+      case OPCODE_IF: {
+	 struct brw_instruction *if_inst = brw_IF(p, BRW_EXECUTE_8);
 	 /* Note that brw_IF smashes the predicate_control field. */
-	 if_inst[if_depth]->header.predicate_control = get_predicate(inst);
+	 if_inst->header.predicate_control = get_predicate(inst);
 	 if_depth_in_loop[loop_depth]++;
-	 if_depth++;
 	 break;
+      }
       case OPCODE_ELSE:
 	 clear_current_const(c);
-	 assert(if_depth > 0);
-	 if_inst[if_depth-1] = brw_ELSE(p, if_inst[if_depth-1]);
+	 brw_ELSE(p);
 	 break;
       case OPCODE_ENDIF:
 	 clear_current_const(c);
-         assert(if_depth > 0);
-	 brw_ENDIF(p, if_inst[--if_depth]);
+	 brw_ENDIF(p);
 	 if_depth_in_loop[loop_depth]--;
 	 break;			
       case OPCODE_BGNLOOP:

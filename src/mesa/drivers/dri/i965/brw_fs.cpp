@@ -3722,11 +3722,8 @@ fs_visitor::generate_code()
    const char *last_annotation_string = NULL;
    ir_instruction *last_annotation_ir = NULL;
 
-   int if_stack_array_size = 16;
    int loop_stack_array_size = 16;
-   int if_stack_depth = 0, loop_stack_depth = 0;
-   brw_instruction **if_stack =
-      rzalloc_array(this->mem_ctx, brw_instruction *, if_stack_array_size);
+   int loop_stack_depth = 0;
    brw_instruction **loop_stack =
       rzalloc_array(this->mem_ctx, brw_instruction *, loop_stack_array_size);
    int *if_depth_in_loop =
@@ -3832,26 +3829,18 @@ fs_visitor::generate_code()
       case BRW_OPCODE_IF:
 	 if (inst->src[0].file != BAD_FILE) {
 	    assert(intel->gen >= 6);
-	    if_stack[if_stack_depth] = gen6_IF(p, inst->conditional_mod, src[0], src[1]);
+	    gen6_IF(p, inst->conditional_mod, src[0], src[1]);
 	 } else {
-	    if_stack[if_stack_depth] = brw_IF(p, BRW_EXECUTE_8);
+	    brw_IF(p, BRW_EXECUTE_8);
 	 }
 	 if_depth_in_loop[loop_stack_depth]++;
-	 if_stack_depth++;
-	 if (if_stack_array_size <= if_stack_depth) {
-	    if_stack_array_size *= 2;
-	    if_stack = reralloc(this->mem_ctx, if_stack, brw_instruction *,
-			        if_stack_array_size);
-	 }
 	 break;
 
       case BRW_OPCODE_ELSE:
-	 if_stack[if_stack_depth - 1] =
-	    brw_ELSE(p, if_stack[if_stack_depth - 1]);
+	 brw_ELSE(p);
 	 break;
       case BRW_OPCODE_ENDIF:
-	 if_stack_depth--;
-	 brw_ENDIF(p , if_stack[if_stack_depth]);
+	 brw_ENDIF(p);
 	 if_depth_in_loop[loop_stack_depth]--;
 	 break;
 
@@ -3993,7 +3982,6 @@ fs_visitor::generate_code()
       printf("\n");
    }
 
-   ralloc_free(if_stack);
    ralloc_free(loop_stack);
    ralloc_free(if_depth_in_loop);
 
