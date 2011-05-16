@@ -355,7 +355,7 @@ bind_samplers(struct exa_context *exa, int op,
               struct exa_pixmap_priv *pMask,
               struct exa_pixmap_priv *pDst)
 {
-   struct pipe_sampler_state *samplers[PIPE_MAX_SAMPLERS];
+   struct pipe_sampler_state *samplers[PIPE_MAX_SAMPLERS] = {0};
    struct pipe_sampler_state src_sampler, mask_sampler;
    struct pipe_sampler_view view_templ;
    struct pipe_sampler_view *src_view;
