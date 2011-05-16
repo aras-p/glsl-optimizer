@@ -54,7 +54,7 @@ static PciChipsets nouveau_xorg_pci_devices[] = {
 };
 
 static XF86ModuleVersionInfo nouveau_xorg_version = {
-    "modesetting",
+    "nouveau2",
     MODULEVENDORSTRING,
     MODINFOSTRING1,
     MODINFOSTRING2,
@@ -70,9 +70,9 @@ static XF86ModuleVersionInfo nouveau_xorg_version = {
  * Xorg driver exported structures
  */
 
-_X_EXPORT DriverRec modesetting = {
+_X_EXPORT DriverRec nouveau2 = {
     1,
-    "modesetting",
+    "nouveau2",
     nouveau_xorg_identify,
     NULL,
     xorg_tracker_available_options,
@@ -85,7 +85,7 @@ _X_EXPORT DriverRec modesetting = {
 
 static MODULESETUPPROTO(nouveau_xorg_setup);
 
-_X_EXPORT XF86ModuleData modesettingModuleData = {
+_X_EXPORT XF86ModuleData nouveau2ModuleData = {
     &nouveau_xorg_version,
     nouveau_xorg_setup,
     NULL
@@ -104,7 +104,7 @@ nouveau_xorg_setup(pointer module, pointer opts, int *errmaj, int *errmin)
      */
     if (!setupDone) {
 	setupDone = 1;
-	xf86AddDriver(&modesetting, module, HaveDriverFuncs);
+	xf86AddDriver(&nouveau2, module, HaveDriverFuncs);
 
 	/*
 	 * The return value must be non-NULL on success even though there
@@ -121,7 +121,7 @@ nouveau_xorg_setup(pointer module, pointer opts, int *errmaj, int *errmin)
 static void
 nouveau_xorg_identify(int flags)
 {
-    xf86PrintChipsets("modesetting", "Driver for Modesetting Kernel Drivers",
+    xf86PrintChipsets("nouveau2", "Driver for Modesetting Kernel Drivers",
 		      nouveau_xorg_chipsets);
 }
 
@@ -137,7 +137,7 @@ nouveau_xorg_pci_probe(DriverPtr driver,
     if (scrn != NULL) {
 	scrn->driverVersion = 1;
 	scrn->driverName = "nouveau";
-	scrn->name = "modesetting";
+	scrn->name = "nouveau2";
 	scrn->Probe = NULL;
 
 	entity = xf86GetEntityInfo(entity_num);

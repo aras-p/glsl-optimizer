@@ -1,7 +1,7 @@
 TOP = ../../../..
 include $(TOP)/configs/current
 
-LIBNAME = modesetting_drv.so
+LIBNAME = nouveau2_drv.so
 
 C_SOURCES = \
 	nouveau_target.c \
