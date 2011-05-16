@@ -14,7 +14,7 @@ PIPE_DRIVERS = \
 C_SOURCES = \
 	$(TOP)/src/gallium/winsys/g3dvl/xlib/xsp_winsys.c
 
-DRIVER_LIBS =
+DRIVER_LIBS = $(LLVM_LIBS)
 
 include ../Makefile.xvmc
 
