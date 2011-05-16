@@ -165,7 +165,7 @@ void ir_print_glsl_visitor::print_var_name (ir_variable* v)
 {
 	if (v->mode == ir_var_temporary)
 	{
-		int tempID = (int)hash_table_find (temp_var_hash, v);
+		long tempID = (long)hash_table_find (temp_var_hash, v);
 		if (tempID == 0)
 		{
 			tempID = ++temp_var_counter;
