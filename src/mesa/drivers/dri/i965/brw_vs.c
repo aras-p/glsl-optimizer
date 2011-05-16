@@ -37,7 +37,7 @@
 #include "program/prog_print.h"
 #include "program/prog_parameter.h"
 
-
+#include "../glsl/ralloc.h"
 
 static void do_vs_prog( struct brw_context *brw, 
 			struct brw_vertex_program *vp,
@@ -47,13 +47,16 @@ static void do_vs_prog( struct brw_context *brw,
    GLuint program_size;
    const GLuint *program;
    struct brw_vs_compile c;
+   void *mem_ctx;
    int aux_size;
    int i;
 
    memset(&c, 0, sizeof(c));
    memcpy(&c.key, key, sizeof(*key));
 
-   brw_init_compile(brw, &c.func);
+   mem_ctx = ralloc_context(NULL);
+
+   brw_init_compile(brw, &c.func, mem_ctx);
    c.vp = vp;
 
    c.prog_data.outputs_written = vp->program.Base.OutputsWritten;
@@ -108,6 +111,7 @@ static void do_vs_prog( struct brw_context *brw,
 				      program, program_size,
 				      &c.prog_data, aux_size,
 				      &brw->vs.prog_data);
+   ralloc_free(mem_ctx);
 }
 
 

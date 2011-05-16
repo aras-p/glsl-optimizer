@@ -166,13 +166,16 @@ void brw_pop_insn_state( struct brw_compile *p )
 
 /***********************************************************************
  */
-void brw_init_compile( struct brw_context *brw, struct brw_compile *p )
+void
+brw_init_compile(struct brw_context *brw, struct brw_compile *p, void *mem_ctx)
 {
    p->brw = brw;
    p->nr_insn = 0;
    p->current = p->stack;
    p->compressed = false;
    memset(p->current, 0, sizeof(p->current[0]));
+
+   p->mem_ctx = mem_ctx;
 
    /* Some defaults?
     */

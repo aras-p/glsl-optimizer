@@ -104,6 +104,8 @@ struct brw_compile {
    struct brw_instruction store[BRW_EU_MAX_INSN];
    GLuint nr_insn;
 
+   void *mem_ctx;
+
    /* Allow clients to push/pop instruction state:
     */
    struct brw_instruction stack[BRW_EU_MAX_INSN_STACK];
@@ -784,7 +786,8 @@ void brw_set_predicate_inverse(struct brw_compile *p, bool predicate_inverse);
 void brw_set_conditionalmod( struct brw_compile *p, GLuint conditional );
 void brw_set_acc_write_control(struct brw_compile *p, GLuint value);
 
-void brw_init_compile( struct brw_context *, struct brw_compile *p );
+void brw_init_compile(struct brw_context *, struct brw_compile *p,
+		      void *mem_ctx);
 const GLuint *brw_get_program( struct brw_compile *p, GLuint *sz );
 
 

@@ -46,6 +46,8 @@
 #include "brw_vs.h"
 #include "brw_wm.h"
 
+#include "../glsl/ralloc.h"
+
 static void
 dri_bo_release(drm_intel_bo **bo)
 {
@@ -64,13 +66,7 @@ static void brw_destroy_context( struct intel_context *intel )
    brw_destroy_state(brw);
    brw_draw_destroy( brw );
    brw_clear_validated_bos(brw);
-   if (brw->wm.compile_data) {
-      free(brw->wm.compile_data->instruction);
-      free(brw->wm.compile_data->vreg);
-      free(brw->wm.compile_data->refs);
-      free(brw->wm.compile_data->prog_instructions);
-      free(brw->wm.compile_data);
-   }
+   ralloc_free(brw->wm.compile_data);
 
    intel_region_release(&brw->state.depth_region);
 
