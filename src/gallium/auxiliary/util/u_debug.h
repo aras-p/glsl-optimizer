@@ -192,7 +192,7 @@ void _debug_assert_fail(const char *expr,
  */
 #ifdef DEBUG
 #define debug_checkpoint_full() \
-   _debug_printf("%s:%u:%s", __FILE__, __LINE__, __FUNCTION__) 
+   _debug_printf("%s:%u:%s\n", __FILE__, __LINE__, __FUNCTION__)
 #else
 #define debug_checkpoint_full() \
    ((void)0) 
