@@ -556,7 +556,9 @@ __DRIconfig **intelInitScreen2(__DRIscreen *psp)
       intelScreen->deviceID = strtod(devid_override, NULL);
    }
 
-   if (IS_GEN6(intelScreen->deviceID)) {
+   if (IS_GEN7(intelScreen->deviceID)) {
+      intelScreen->gen = 7;
+   } else if (IS_GEN6(intelScreen->deviceID)) {
       intelScreen->gen = 6;
    } else if (IS_GEN5(intelScreen->deviceID)) {
       intelScreen->gen = 5;
