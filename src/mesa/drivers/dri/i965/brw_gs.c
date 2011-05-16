@@ -52,6 +52,12 @@ static void compile_gs_prog( struct brw_context *brw,
    const GLuint *program;
    GLuint program_size;
 
+   /* Gen6: VF has already converted into polygon, and LINELOOP is
+    * converted to LINESTRIP at the beginning of the 3D pipeline.
+    */
+   if (intel->gen == 6)
+      return;
+
    memset(&c, 0, sizeof(c));
    
    c.key = *key;
@@ -83,12 +89,6 @@ static void compile_gs_prog( struct brw_context *brw,
    /* Note that primitives which don't require a GS program have
     * already been weeded out by this stage:
     */
-
-   /* Gen6: VF has already converted into polygon, and LINELOOP is
-    * converted to LINESTRIP at the beginning of the 3D pipeline.
-    */
-   if (intel->gen == 6)
-      return;
 
    switch (key->primitive) {
    case GL_QUADS:
