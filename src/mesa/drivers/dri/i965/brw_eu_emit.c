@@ -883,19 +883,13 @@ push_if_stack(struct brw_compile *p, struct brw_instruction *inst)
  * When the matching 'endif' instruction is reached, the flags are
  * popped off.  If the stack is now empty, normal execution resumes.
  */
-struct brw_instruction *brw_IF(struct brw_compile *p, GLuint execute_size)
+struct brw_instruction *
+brw_IF(struct brw_compile *p, GLuint execute_size)
 {
    struct intel_context *intel = &p->brw->intel;
    struct brw_instruction *insn;
 
-   if (p->single_program_flow) {
-      assert(execute_size == BRW_EXECUTE_1);
-
-      insn = next_insn(p, BRW_OPCODE_ADD);
-      insn->header.predicate_inverse = 1;
-   } else {
-      insn = next_insn(p, BRW_OPCODE_IF);
-   }
+   insn = next_insn(p, BRW_OPCODE_IF);
 
    /* Override the defaults for this instruction:
     */
@@ -948,24 +942,120 @@ gen6_IF(struct brw_compile *p, uint32_t conditional,
    return insn;
 }
 
+/**
+ * In single-program-flow (SPF) mode, convert IF and ELSE into ADDs.
+ */
+static void
+convert_IF_ELSE_to_ADD(struct brw_compile *p,
+		       struct brw_instruction *if_inst,
+		       struct brw_instruction *else_inst)
+{
+   /* The next instruction (where the ENDIF would be, if it existed) */
+   struct brw_instruction *next_inst = &p->store[p->nr_insn];
+
+   assert(p->single_program_flow);
+   assert(if_inst != NULL && if_inst->header.opcode == BRW_OPCODE_IF);
+   assert(else_inst == NULL || else_inst->header.opcode == BRW_OPCODE_ELSE);
+   assert(if_inst->header.execution_size == BRW_EXECUTE_1);
+
+   /* Convert IF to an ADD instruction that moves the instruction pointer
+    * to the first instruction of the ELSE block.  If there is no ELSE
+    * block, point to where ENDIF would be.  Reverse the predicate.
+    *
+    * There's no need to execute an ENDIF since we don't need to do any
+    * stack operations, and if we're currently executing, we just want to
+    * continue normally.
+    */
+   if_inst->header.opcode = BRW_OPCODE_ADD;
+   if_inst->header.predicate_inverse = 1;
+
+   if (else_inst != NULL) {
+      /* Convert ELSE to an ADD instruction that points where the ENDIF
+       * would be.
+       */
+      else_inst->header.opcode = BRW_OPCODE_ADD;
+
+      if_inst->bits3.ud = (else_inst - if_inst + 1) * 16;
+      else_inst->bits3.ud = (next_inst - else_inst) * 16;
+   } else {
+      if_inst->bits3.ud = (next_inst - if_inst) * 16;
+   }
+}
+
+/**
+ * Patch IF and ELSE instructions with appropriate jump targets.
+ */
+static void
+patch_IF_ELSE(struct brw_compile *p,
+	      struct brw_instruction *if_inst,
+	      struct brw_instruction *else_inst,
+	      struct brw_instruction *endif_inst)
+{
+   struct intel_context *intel = &p->brw->intel;
+
+   assert(!p->single_program_flow);
+   assert(if_inst != NULL && if_inst->header.opcode == BRW_OPCODE_IF);
+   assert(endif_inst != NULL);
+   assert(else_inst == NULL || else_inst->header.opcode == BRW_OPCODE_ELSE);
+
+   unsigned br = 1;
+   /* Jump count is for 64bit data chunk each, so one 128bit instruction
+    * requires 2 chunks.
+    */
+   if (intel->gen >= 5)
+      br = 2;
+
+   assert(endif_inst->header.opcode == BRW_OPCODE_ENDIF);
+   endif_inst->header.execution_size = if_inst->header.execution_size;
+
+   if (else_inst == NULL) {
+      /* Patch IF -> ENDIF */
+      if (intel->gen < 6) {
+	 /* Turn it into an IFF, which means no mask stack operations for
+	  * all-false and jumping past the ENDIF.
+	  */
+	 if_inst->header.opcode = BRW_OPCODE_IFF;
+	 if_inst->bits3.if_else.jump_count = br * (endif_inst - if_inst + 1);
+	 if_inst->bits3.if_else.pop_count = 0;
+	 if_inst->bits3.if_else.pad0 = 0;
+      } else {
+	 /* As of gen6, there is no IFF and IF must point to the ENDIF. */
+	 if_inst->bits1.branch_gen6.jump_count = br * (endif_inst - if_inst);
+      }
+   } else {
+      else_inst->header.execution_size = if_inst->header.execution_size;
+
+      /* Patch IF -> ELSE */
+      if (intel->gen < 6) {
+	 if_inst->bits3.if_else.jump_count = br * (else_inst - if_inst);
+	 if_inst->bits3.if_else.pop_count = 0;
+	 if_inst->bits3.if_else.pad0 = 0;
+      } else if (intel->gen == 6) {
+	 if_inst->bits1.branch_gen6.jump_count = br * (else_inst - if_inst + 1);
+      }
+
+      /* Patch ELSE -> ENDIF */
+      if (intel->gen < 6) {
+	 /* BRW_OPCODE_ELSE pre-gen6 should point just past the
+	  * matching ENDIF.
+	  */
+	 else_inst->bits3.if_else.jump_count = br*(endif_inst - else_inst + 1);
+	 else_inst->bits3.if_else.pop_count = 1;
+	 else_inst->bits3.if_else.pad0 = 0;
+      } else {
+	 /* BRW_OPCODE_ELSE on gen6 should point to the matching ENDIF. */
+	 else_inst->bits1.branch_gen6.jump_count = br*(endif_inst - else_inst);
+      }
+   }
+}
+
 void
 brw_ELSE(struct brw_compile *p)
 {
    struct intel_context *intel = &p->brw->intel;
-   struct brw_instruction *if_insn;
    struct brw_instruction *insn;
-   GLuint br = 1;
 
-   /* jump count is for 64bit data chunk each, so one 128bit
-      instruction requires 2 chunks. */
-   if (intel->gen >= 5)
-      br = 2;
-
-   if (p->single_program_flow) {
-      insn = next_insn(p, BRW_OPCODE_ADD);
-   } else {
-      insn = next_insn(p, BRW_OPCODE_ELSE);
-   }
+   insn = next_insn(p, BRW_OPCODE_ELSE);
 
    if (intel->gen < 6) {
       brw_set_dest(p, insn, brw_ip_reg());
@@ -978,121 +1068,61 @@ brw_ELSE(struct brw_compile *p)
       brw_set_src1(p, insn, retype(brw_null_reg(), BRW_REGISTER_TYPE_D));
    }
 
-   if_insn = p->if_stack[p->if_stack_depth - 1];
    insn->header.compression_control = BRW_COMPRESSION_NONE;
-   insn->header.execution_size = if_insn->header.execution_size;
    insn->header.mask_control = BRW_MASK_ENABLE;
    if (!p->single_program_flow)
        insn->header.thread_control = BRW_THREAD_SWITCH;
 
-   /* Patch the if instruction to point at this instruction.
-    */
-   if (p->single_program_flow) {
-      assert(if_insn->header.opcode == BRW_OPCODE_ADD);
-
-      if_insn->bits3.ud = (insn - if_insn + 1) * 16;
-   } else {
-      assert(if_insn->header.opcode == BRW_OPCODE_IF);
-
-      if (intel->gen < 6) {
-	 if_insn->bits3.if_else.jump_count = br * (insn - if_insn);
-	 if_insn->bits3.if_else.pop_count = 0;
-	 if_insn->bits3.if_else.pad0 = 0;
-      } else {
-	 if_insn->bits1.branch_gen6.jump_count = br * (insn - if_insn + 1);
-      }
-   }
-
-   /* Replace the IF instruction on the stack with the ELSE instruction */
-   p->if_stack[p->if_stack_depth - 1] = insn;
+   push_if_stack(p, insn);
 }
 
 void
 brw_ENDIF(struct brw_compile *p)
 {
    struct intel_context *intel = &p->brw->intel;
-   struct brw_instruction *patch_insn;
-   GLuint br = 1;
+   struct brw_instruction *insn;
+   struct brw_instruction *else_inst = NULL;
+   struct brw_instruction *if_inst = NULL;
 
+   /* Pop the IF and (optional) ELSE instructions from the stack */
    p->if_stack_depth--;
-   patch_insn = p->if_stack[p->if_stack_depth];
-   if (intel->gen >= 5)
-      br = 2; 
- 
-   if (p->single_program_flow) {
-      /* In single program flow mode, there's no need to execute an ENDIF,
-       * since we don't need to do any stack operations, and if we're executing
-       * currently, we want to just continue executing.
-       */
-      struct brw_instruction *next = &p->store[p->nr_insn];
-
-      assert(patch_insn->header.opcode == BRW_OPCODE_ADD);
-
-      patch_insn->bits3.ud = (next - patch_insn) * 16;
-   } else {
-      struct brw_instruction *insn = next_insn(p, BRW_OPCODE_ENDIF);
-
-      if (intel->gen < 6) {
-	 brw_set_dest(p, insn, retype(brw_vec4_grf(0,0), BRW_REGISTER_TYPE_UD));
-	 brw_set_src0(p, insn, retype(brw_vec4_grf(0,0), BRW_REGISTER_TYPE_UD));
-	 brw_set_src1(p, insn, brw_imm_d(0x0));
-      } else {
-	 brw_set_dest(p, insn, brw_imm_w(0));
-	 brw_set_src0(p, insn, retype(brw_null_reg(), BRW_REGISTER_TYPE_D));
-	 brw_set_src1(p, insn, retype(brw_null_reg(), BRW_REGISTER_TYPE_D));
-      }
-
-      insn->header.compression_control = BRW_COMPRESSION_NONE;
-      insn->header.execution_size = patch_insn->header.execution_size;
-      insn->header.mask_control = BRW_MASK_ENABLE;
-      insn->header.thread_control = BRW_THREAD_SWITCH;
-
-      if (intel->gen < 6)
-	 assert(patch_insn->bits3.if_else.jump_count == 0);
-      else
-	 assert(patch_insn->bits1.branch_gen6.jump_count == 0);
-
-      /* Patch the if or else instructions to point at this or the next
-       * instruction respectively.
-       */
-      if (patch_insn->header.opcode == BRW_OPCODE_IF) {
-	 if (intel->gen < 6) {
-	    /* Turn it into an IFF, which means no mask stack operations for
-	     * all-false and jumping past the ENDIF.
-	     */
-	    patch_insn->header.opcode = BRW_OPCODE_IFF;
-	    patch_insn->bits3.if_else.jump_count = br * (insn - patch_insn + 1);
-	    patch_insn->bits3.if_else.pop_count = 0;
-	    patch_insn->bits3.if_else.pad0 = 0;
-	 } else {
-	    /* As of gen6, there is no IFF and IF must point to the ENDIF. */
-	    patch_insn->bits1.branch_gen6.jump_count = br * (insn - patch_insn);
-	 }
-      } else {
-	 assert(patch_insn->header.opcode == BRW_OPCODE_ELSE);
-	 if (intel->gen < 6) {
-	    /* BRW_OPCODE_ELSE pre-gen6 should point just past the
-	     * matching ENDIF.
-	     */
-	    patch_insn->bits3.if_else.jump_count = br * (insn - patch_insn + 1);
-	    patch_insn->bits3.if_else.pop_count = 1;
-	    patch_insn->bits3.if_else.pad0 = 0;
-	 } else {
-	    /* BRW_OPCODE_ELSE on gen6 should point to the matching ENDIF. */
-	    patch_insn->bits1.branch_gen6.jump_count = br * (insn - patch_insn);
-	 }
-      }
-
-      /* Also pop item off the stack in the endif instruction:
-       */
-      if (intel->gen < 6) {
-	 insn->bits3.if_else.jump_count = 0;
-	 insn->bits3.if_else.pop_count = 1;
-	 insn->bits3.if_else.pad0 = 0;
-      } else {
-	 insn->bits1.branch_gen6.jump_count = 2;
-      }
+   if (p->if_stack[p->if_stack_depth]->header.opcode == BRW_OPCODE_ELSE) {
+      else_inst = p->if_stack[p->if_stack_depth];
+      p->if_stack_depth--;
    }
+   if_inst = p->if_stack[p->if_stack_depth];
+
+   if (p->single_program_flow) {
+      /* ENDIF is useless; don't bother emitting it. */
+      convert_IF_ELSE_to_ADD(p, if_inst, else_inst);
+      return;
+   }
+
+   insn = next_insn(p, BRW_OPCODE_ENDIF);
+
+   if (intel->gen < 6) {
+      brw_set_dest(p, insn, retype(brw_vec4_grf(0,0), BRW_REGISTER_TYPE_UD));
+      brw_set_src0(p, insn, retype(brw_vec4_grf(0,0), BRW_REGISTER_TYPE_UD));
+      brw_set_src1(p, insn, brw_imm_d(0x0));
+   } else {
+      brw_set_dest(p, insn, brw_imm_w(0));
+      brw_set_src0(p, insn, retype(brw_null_reg(), BRW_REGISTER_TYPE_D));
+      brw_set_src1(p, insn, retype(brw_null_reg(), BRW_REGISTER_TYPE_D));
+   }
+
+   insn->header.compression_control = BRW_COMPRESSION_NONE;
+   insn->header.mask_control = BRW_MASK_ENABLE;
+   insn->header.thread_control = BRW_THREAD_SWITCH;
+
+   /* Also pop item off the stack in the endif instruction: */
+   if (intel->gen < 6) {
+      insn->bits3.if_else.jump_count = 0;
+      insn->bits3.if_else.pop_count = 1;
+      insn->bits3.if_else.pad0 = 0;
+   } else {
+      insn->bits1.branch_gen6.jump_count = 2;
+   }
+   patch_IF_ELSE(p, if_inst, else_inst, insn);
 }
 
 struct brw_instruction *brw_BREAK(struct brw_compile *p, int pop_count)
