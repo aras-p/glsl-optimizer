@@ -363,6 +363,8 @@ create_ycbcr_frag_shader(struct vl_mc *r, float scale, vl_mc_ycbcr_frag_shader f
 
    ureg_release_temporary(shader, tmp);
 
+   ureg_END(shader);
+
    return ureg_create_shader_and_destroy(shader, r->pipe);
 }
 
