@@ -56,6 +56,20 @@ brw_new_shader_program(struct gl_context *ctx, GLuint name)
    return &prog->base;
 }
 
+/**
+ * Performs a compile of the shader stages even when we don't know
+ * what non-orthogonal state will be set, in the hope that it reflects
+ * the eventual NOS used, and thus allows us to produce link failures.
+ */
+bool
+brw_shader_precompile(struct gl_context *ctx, struct gl_shader_program *prog)
+{
+   if (!brw_fs_precompile(ctx, prog))
+      return false;
+
+   return true;
+}
+
 GLboolean
 brw_link_shader(struct gl_context *ctx, struct gl_shader_program *prog)
 {
@@ -121,6 +135,9 @@ brw_link_shader(struct gl_context *ctx, struct gl_shader_program *prog)
    }
 
    if (!_mesa_ir_link_shader(ctx, prog))
+      return GL_FALSE;
+
+   if (!brw_shader_precompile(ctx, prog))
       return GL_FALSE;
 
    return GL_TRUE;

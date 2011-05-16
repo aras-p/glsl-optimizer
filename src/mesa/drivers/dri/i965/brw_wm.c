@@ -34,6 +34,7 @@
 #include "brw_state.h"
 #include "main/formats.h"
 #include "main/samplerobj.h"
+#include "program/prog_parameter.h"
 
 #include "../glsl/ralloc.h"
 
@@ -184,9 +185,10 @@ brw_wm_payload_setup(struct brw_context *brw,
  * Depending on the instructions used (i.e. flow control instructions)
  * we'll use one of two code generators.
  */
-static void do_wm_prog( struct brw_context *brw,
-			struct brw_fragment_program *fp, 
-			struct brw_wm_prog_key *key)
+bool do_wm_prog(struct brw_context *brw,
+		struct gl_shader_program *prog,
+		struct brw_fragment_program *fp,
+		struct brw_wm_prog_key *key)
 {
    struct intel_context *intel = &brw->intel;
    struct brw_wm_compile *c;
@@ -202,7 +204,7 @@ static void do_wm_prog( struct brw_context *brw,
           * without triggering a segfault, no way to signal,
           * so just return.
           */
-         return;
+         return false;
       }
       c->instruction = rzalloc_array(c, struct brw_wm_instruction, BRW_WM_MAX_INSN);
       c->prog_instructions = rzalloc_array(c, struct prog_instruction, BRW_WM_MAX_INSN);
@@ -226,7 +228,10 @@ static void do_wm_prog( struct brw_context *brw,
 
    brw_init_compile(brw, &c->func, c);
 
-   if (!brw_wm_fs_emit(brw, c)) {
+   if (prog && prog->FragmentProgram) {
+      if (!brw_wm_fs_emit(brw, c, prog))
+	 return false;
+   } else {
       /* Fallback for fixed function and ARB_fp shaders. */
       c->dispatch_width = 16;
       brw_wm_payload_setup(brw, c);
@@ -274,6 +279,8 @@ static void do_wm_prog( struct brw_context *brw,
 				      program, program_size,
 				      &c->prog_data, sizeof(c->prog_data),
 				      &brw->wm.prog_data);
+
+   return true;
 }
 
 
@@ -462,6 +469,8 @@ static void brw_wm_populate_key( struct brw_context *brw,
 
 static void brw_prepare_wm_prog(struct brw_context *brw)
 {
+   struct intel_context *intel = &brw->intel;
+   struct gl_context *ctx = &intel->ctx;
    struct brw_wm_prog_key key;
    struct brw_fragment_program *fp = (struct brw_fragment_program *)
       brw->fragment_program;
@@ -474,8 +483,11 @@ static void brw_prepare_wm_prog(struct brw_context *brw)
    brw->wm.prog_bo = brw_search_cache(&brw->cache, BRW_WM_PROG,
 				      &key, sizeof(key),
 				      &brw->wm.prog_data);
-   if (brw->wm.prog_bo == NULL)
-      do_wm_prog(brw, fp, &key);
+   if (brw->wm.prog_bo == NULL) {
+      bool success = do_wm_prog(brw, ctx->Shader.CurrentFragmentProgram, fp,
+				&key);
+      assert(success);
+   }
 }
 
 

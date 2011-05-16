@@ -312,7 +312,8 @@ void brw_wm_print_program( struct brw_wm_compile *c,
 void brw_wm_lookup_iz(struct intel_context *intel,
 		      struct brw_wm_compile *c);
 
-bool brw_wm_fs_emit(struct brw_context *brw, struct brw_wm_compile *c);
+bool brw_wm_fs_emit(struct brw_context *brw, struct brw_wm_compile *c,
+		    struct gl_shader_program *prog);
 
 /* brw_wm_emit.c */
 void emit_alu1(struct brw_compile *p,
@@ -474,5 +475,9 @@ bool brw_color_buffer_write_enabled(struct brw_context *brw);
 bool brw_render_target_supported(gl_format format);
 void brw_wm_payload_setup(struct brw_context *brw,
 			  struct brw_wm_compile *c);
+bool do_wm_prog(struct brw_context *brw,
+		struct gl_shader_program *prog,
+		struct brw_fragment_program *fp,
+		struct brw_wm_prog_key *key);
 
 #endif
