@@ -115,7 +115,7 @@ brw_wm_non_glsl_emit(struct brw_context *brw, struct brw_wm_compile *c)
    brw_wm_pass2(c);
 
    /* how many general-purpose registers are used */
-   c->prog_data.total_grf = c->max_wm_grf;
+   c->prog_data.reg_blocks = brw_register_blocks(c->max_wm_grf);
 
    /* Emit GEN4 code.
     */

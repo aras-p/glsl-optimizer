@@ -91,8 +91,8 @@ brw_prepare_wm_unit(struct brw_context *brw)
    }
 
    /* CACHE_NEW_WM_PROG */
-   wm->thread0.grf_reg_count = ALIGN(brw->wm.prog_data->total_grf, 16) / 16 - 1;
-   wm->wm9.grf_reg_count_2 = ALIGN(brw->wm.prog_data->total_grf_16, 16) / 16 - 1;
+   wm->thread0.grf_reg_count = brw->wm.prog_data->reg_blocks;
+   wm->wm9.grf_reg_count_2 = brw->wm.prog_data->reg_blocks_16;
    wm->thread0.kernel_start_pointer = brw->wm.prog_bo->offset >> 6; /* reloc */
    /* reloc */
    wm->wm9.kernel_start_pointer_2 = (brw->wm.prog_bo->offset +

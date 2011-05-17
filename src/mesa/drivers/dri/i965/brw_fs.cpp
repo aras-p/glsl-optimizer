@@ -4170,9 +4170,9 @@ fs_visitor::run()
    generate_code();
 
    if (c->dispatch_width == 8) {
-      c->prog_data.total_grf = grf_used;
+      c->prog_data.reg_blocks = brw_register_blocks(grf_used);
    } else {
-      c->prog_data.total_grf_16 = grf_used;
+      c->prog_data.reg_blocks_16 = brw_register_blocks(grf_used);
       c->prog_data.prog_offset_16 = prog_offset_16;
 
       /* Make sure we didn't try to sneak in an extra uniform */
