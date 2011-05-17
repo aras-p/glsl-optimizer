@@ -452,12 +452,11 @@ brw_update_renderbuffer_surface(struct brw_context *brw,
    struct gl_context *ctx = &intel->ctx;
    struct intel_renderbuffer *irb = intel_renderbuffer(rb);
    struct intel_region *region = irb->region;
-   struct brw_surface_state *surf;
+   uint32_t *surf;
    uint32_t tile_x, tile_y;
+   uint32_t format = 0;
 
-   surf = brw_state_batch(brw, sizeof(*surf), 32,
-			  &brw->wm.surf_offset[unit]);
-   memset(surf, 0, sizeof(*surf));
+   surf = brw_state_batch(brw, 6 * 4, 32, &brw->wm.surf_offset[unit]);
 
    switch (irb->Base.Format) {
    case MESA_FORMAT_XRGB8888:
@@ -468,7 +467,7 @@ brw_update_renderbuffer_surface(struct brw_context *brw,
        * cases where GL_DST_ALPHA (or GL_ONE_MINUS_DST_ALPHA) is
        * used.
        */
-      surf->ss0.surface_format = BRW_SURFACEFORMAT_B8G8R8A8_UNORM;
+      format = BRW_SURFACEFORMAT_B8G8R8A8_UNORM;
       break;
    case MESA_FORMAT_INTENSITY_FLOAT32:
    case MESA_FORMAT_LUMINANCE_FLOAT32:
@@ -476,25 +475,35 @@ brw_update_renderbuffer_surface(struct brw_context *brw,
        * channel into R, which is to say that we just treat them as
        * GL_RED.
        */
-      surf->ss0.surface_format = BRW_SURFACEFORMAT_R32_FLOAT;
+      format = BRW_SURFACEFORMAT_R32_FLOAT;
       break;
    case MESA_FORMAT_SARGB8:
       /* without GL_EXT_framebuffer_sRGB we shouldn't bind sRGB
 	 surfaces to the blend/update as sRGB */
       if (ctx->Color.sRGBEnabled)
-	 surf->ss0.surface_format = brw_format_for_mesa_format(irb->Base.Format);
+	 format = brw_format_for_mesa_format(irb->Base.Format);
       else
-	 surf->ss0.surface_format = BRW_SURFACEFORMAT_B8G8R8A8_UNORM;
+	 format = BRW_SURFACEFORMAT_B8G8R8A8_UNORM;
       break;
    default:
       assert(brw_render_target_supported(irb->Base.Format));
-      surf->ss0.surface_format = brw_format_for_mesa_format(irb->Base.Format);
+      format = brw_format_for_mesa_format(irb->Base.Format);
    }
 
-   surf->ss0.surface_type = BRW_SURFACE_2D;
+   surf[0] = (BRW_SURFACE_2D << BRW_SURFACE_TYPE_SHIFT |
+	      format << BRW_SURFACE_FORMAT_SHIFT);
+
    /* reloc */
-   surf->ss1.base_addr = intel_region_tile_offsets(region, &tile_x, &tile_y);
-   surf->ss1.base_addr += region->buffer->offset; /* reloc */
+   surf[1] = (intel_region_tile_offsets(region, &tile_x, &tile_y) +
+	      region->buffer->offset);
+
+   surf[2] = ((rb->Width - 1) << BRW_SURFACE_WIDTH_SHIFT |
+	      (rb->Height - 1) << BRW_SURFACE_HEIGHT_SHIFT);
+
+   surf[3] = (brw_get_surface_tiling_bits(region->tiling) |
+	      ((region->pitch * region->cpp) - 1) << BRW_SURFACE_PITCH_SHIFT);
+
+   surf[4] = 0;
 
    assert(brw->has_surface_tile_offset || (tile_x == 0 && tile_y == 0));
    /* Note that the low bits of these fields are missing, so
@@ -502,35 +511,35 @@ brw_update_renderbuffer_surface(struct brw_context *brw,
     */
    assert(tile_x % 4 == 0);
    assert(tile_y % 2 == 0);
-   surf->ss5.x_offset = tile_x / 4;
-   surf->ss5.y_offset = tile_y / 2;
-
-   surf->ss2.width = rb->Width - 1;
-   surf->ss2.height = rb->Height - 1;
-   brw_set_surface_tiling(surf, region->tiling);
-   surf->ss3.pitch = (region->pitch * region->cpp) - 1;
+   surf[5] = ((tile_x / 4) << BRW_SURFACE_X_OFFSET_SHIFT |
+	      (tile_y / 2) << BRW_SURFACE_Y_OFFSET_SHIFT);
 
    if (intel->gen < 6) {
       /* _NEW_COLOR */
-      surf->ss0.color_blend = (!ctx->Color._LogicOpEnabled &&
-			      (ctx->Color.BlendEnabled & (1 << unit)));
-      surf->ss0.writedisable_red =   !ctx->Color.ColorMask[unit][0];
-      surf->ss0.writedisable_green = !ctx->Color.ColorMask[unit][1];
-      surf->ss0.writedisable_blue =  !ctx->Color.ColorMask[unit][2];
+      if (!ctx->Color._LogicOpEnabled &&
+	  (ctx->Color.BlendEnabled & (1 << unit)))
+	 surf[0] |= BRW_SURFACE_BLEND_ENABLED;
+
+      if (!ctx->Color.ColorMask[unit][0])
+	 surf[0] |= 1 << BRW_SURFACE_WRITEDISABLE_R_SHIFT;
+      if (!ctx->Color.ColorMask[unit][1])
+	 surf[0] |= 1 << BRW_SURFACE_WRITEDISABLE_G_SHIFT;
+      if (!ctx->Color.ColorMask[unit][2])
+	 surf[0] |= 1 << BRW_SURFACE_WRITEDISABLE_B_SHIFT;
+
       /* As mentioned above, disable writes to the alpha component when the
        * renderbuffer is XRGB.
        */
-      if (ctx->DrawBuffer->Visual.alphaBits == 0)
-	 surf->ss0.writedisable_alpha = 1;
-      else
-	 surf->ss0.writedisable_alpha = !ctx->Color.ColorMask[unit][3];
+      if (ctx->DrawBuffer->Visual.alphaBits == 0 ||
+	  !ctx->Color.ColorMask[unit][3]) {
+	 surf[0] |= 1 << BRW_SURFACE_WRITEDISABLE_A_SHIFT;
+      }
    }
 
    drm_intel_bo_emit_reloc(brw->intel.batch.bo,
-			   brw->wm.surf_offset[unit] +
-			   offsetof(struct brw_surface_state, ss1),
+			   brw->wm.surf_offset[unit] + 4,
 			   region->buffer,
-			   surf->ss1.base_addr - region->buffer->offset,
+			   surf[1] - region->buffer->offset,
 			   I915_GEM_DOMAIN_RENDER,
 			   I915_GEM_DOMAIN_RENDER);
 }
