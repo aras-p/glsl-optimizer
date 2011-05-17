@@ -136,7 +136,7 @@ create_vert_shader(struct vl_zscan *zscan)
    ureg_MUL(shader, ureg_writemask(o_vpos, TGSI_WRITEMASK_XY), ureg_src(tmp), scale);
    ureg_MOV(shader, ureg_writemask(o_vpos, TGSI_WRITEMASK_ZW), ureg_imm1f(shader, 1.0f));
 
-   ureg_MUL(shader, ureg_writemask(tmp, TGSI_WRITEMASK_XZ), instance,
+   ureg_MUL(shader, ureg_writemask(tmp, TGSI_WRITEMASK_XZ), ureg_scalar(instance, TGSI_SWIZZLE_X),
             ureg_imm1f(shader, 1.0f / zscan->blocks_per_line));
 
    ureg_FRC(shader, ureg_writemask(tmp, TGSI_WRITEMASK_Y), ureg_scalar(ureg_src(tmp), TGSI_SWIZZLE_X));
