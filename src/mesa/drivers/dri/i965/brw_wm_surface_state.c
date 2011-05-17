@@ -558,10 +558,11 @@ prepare_wm_surfaces(struct brw_context *brw)
 
    for (i = 0; i < BRW_MAX_TEX_UNIT; i++) {
       const struct gl_texture_unit *texUnit = &ctx->Texture.Unit[i];
-      struct gl_texture_object *tObj = texUnit->_Current;
-      struct intel_texture_object *intelObj = intel_texture_object(tObj);
 
       if (texUnit->_ReallyEnabled) {
+	 struct gl_texture_object *tObj = texUnit->_Current;
+	 struct intel_texture_object *intelObj = intel_texture_object(tObj);
+
 	 brw_add_validated_bo(brw, intelObj->mt->region->buffer);
 	 nr_surfaces = SURF_INDEX_TEXTURE(i) + 1;
       }
