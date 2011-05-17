@@ -134,7 +134,7 @@ gen7_update_sampler_state(struct brw_context *brw, int unit,
 
    /* Set LOD bias: */
    sampler->ss0.lod_bias = S_FIXED(CLAMP(texUnit->LodBias +
-					 gl_sampler->LodBias, -16, 15), 6);
+					 gl_sampler->LodBias, -16, 15), 8);
 
    sampler->ss0.lod_preclamp = 1; /* OpenGL mode */
    sampler->ss0.default_color_mode = 0; /* OpenGL/DX10 mode */
@@ -148,8 +148,8 @@ gen7_update_sampler_state(struct brw_context *brw, int unit,
     */
    sampler->ss0.base_level = U_FIXED(0, 1);
 
-   sampler->ss1.max_lod = U_FIXED(CLAMP(gl_sampler->MaxLod, 0, 13), 6);
-   sampler->ss1.min_lod = U_FIXED(CLAMP(gl_sampler->MinLod, 0, 13), 6);
+   sampler->ss1.max_lod = U_FIXED(CLAMP(gl_sampler->MaxLod, 0, 13), 8);
+   sampler->ss1.min_lod = U_FIXED(CLAMP(gl_sampler->MinLod, 0, 13), 8);
 
    upload_default_color(brw, gl_sampler, unit);
 
