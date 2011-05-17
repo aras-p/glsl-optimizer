@@ -400,23 +400,23 @@ static void
 brw_update_null_renderbuffer_surface(struct brw_context *brw, unsigned int unit)
 {
    struct intel_context *intel = &brw->intel;
-   struct brw_surface_state *surf;
+   uint32_t *surf;
 
-   surf = brw_state_batch(brw, sizeof(*surf), 32,
-			 &brw->wm.surf_offset[unit]);
-   memset(surf, 0, sizeof(*surf));
+   surf = brw_state_batch(brw, 6 * 4, 32, &brw->wm.surf_offset[unit]);
 
-   surf->ss0.surface_type = BRW_SURFACE_NULL;
-   surf->ss0.surface_format = BRW_SURFACEFORMAT_B8G8R8A8_UNORM;
-
+   surf[0] = (BRW_SURFACE_NULL << BRW_SURFACE_TYPE_SHIFT |
+	      BRW_SURFACEFORMAT_B8G8R8A8_UNORM << BRW_SURFACE_FORMAT_SHIFT);
    if (intel->gen < 6) {
-      /* _NEW_COLOR */
-      surf->ss0.color_blend = 0;
-      surf->ss0.writedisable_red =   1;
-      surf->ss0.writedisable_green = 1;
-      surf->ss0.writedisable_blue =  1;
-      surf->ss0.writedisable_alpha = 1;
+      surf[0] |= (1 << BRW_SURFACE_WRITEDISABLE_R_SHIFT |
+		  1 << BRW_SURFACE_WRITEDISABLE_G_SHIFT |
+		  1 << BRW_SURFACE_WRITEDISABLE_B_SHIFT |
+		  1 << BRW_SURFACE_WRITEDISABLE_A_SHIFT);
    }
+   surf[1] = 0;
+   surf[2] = 0;
+   surf[3] = 0;
+   surf[4] = 0;
+   surf[5] = 0;
 }
 
 /**
