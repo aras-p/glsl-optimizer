@@ -1030,7 +1030,8 @@ _mesa_postprocess_program(struct gl_context *ctx, struct gl_program *prog)
    GLuint i;
    GLuint whiteSwizzle;
    GLint whiteIndex = _mesa_add_unnamed_constant(prog->Parameters,
-                                                 white, 4, &whiteSwizzle);
+                                                 (gl_constant_value *) white,
+                                                 4, &whiteSwizzle);
 
    (void) whiteIndex;
 

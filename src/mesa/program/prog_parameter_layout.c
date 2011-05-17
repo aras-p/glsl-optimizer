@@ -182,7 +182,7 @@ _mesa_layout_parameters(struct asm_parser_state *state)
 
 	 switch (p->Type) {
 	 case PROGRAM_CONSTANT: {
-	    const float *const v =
+	    const gl_constant_value *const v =
 	       state->prog->Parameters->ParameterValues[idx];
 
 	    inst->Base.SrcReg[i].Index =

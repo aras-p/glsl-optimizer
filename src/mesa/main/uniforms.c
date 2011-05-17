@@ -429,7 +429,7 @@ get_uniform(struct gl_context *ctx, GLuint program, GLint location,
             for (i = 0; i < rows; i++) {
                const int base = paramPos + offset + i;
                for (j = 0; j < cols; j++ ) {
-                  params[k++] = prog->Parameters->ParameterValues[base][j];
+                  params[k++] = prog->Parameters->ParameterValues[base][j].f;
                }
             }
          }
@@ -442,7 +442,7 @@ get_uniform(struct gl_context *ctx, GLuint program, GLint location,
                const int base = paramPos + offset + i;
                for (j = 0; j < cols; j++ ) {
                   params[k++] = (GLdouble)
-                     prog->Parameters->ParameterValues[base][j];
+                     prog->Parameters->ParameterValues[base][j].f;
                }
             }
          }
@@ -455,7 +455,7 @@ get_uniform(struct gl_context *ctx, GLuint program, GLint location,
                const int base = paramPos + offset + i;
                for (j = 0; j < cols; j++ ) {
                   params[k++] = (GLint)
-                     prog->Parameters->ParameterValues[base][j];
+                     prog->Parameters->ParameterValues[base][j].f;
                }
             }
          }
@@ -468,7 +468,7 @@ get_uniform(struct gl_context *ctx, GLuint program, GLint location,
                const int base = paramPos + offset + i;
                for (j = 0; j < cols; j++ ) {
                   params[k++] = (GLuint)
-                     prog->Parameters->ParameterValues[base][j];
+                     prog->Parameters->ParameterValues[base][j].f;
                }
             }
          }
@@ -670,7 +670,7 @@ set_program_uniform(struct gl_context *ctx, struct gl_program *program,
       /* loop over number of samplers to change */
       for (i = 0; i < count; i++) {
          GLuint sampler = (GLuint)
-            program->Parameters->ParameterValues[index + offset + i][0];
+            program->Parameters->ParameterValues[index+offset + i][0].f;
          GLuint texUnit = ((GLuint *) values)[i];
 
          /* check that the sampler (tex unit index) is legal */
@@ -936,7 +936,7 @@ set_program_uniform_matrix(struct gl_context *ctx, struct gl_program *program,
             /* Ignore writes beyond the end of (the used part of) an array */
             return;
          }
-         v = program->Parameters->ParameterValues[index + offset];
+         v = (GLfloat *) program->Parameters->ParameterValues[index + offset];
          for (row = 0; row < rows; row++) {
             if (transpose) {
                v[row] = values[src + row * cols + col];
