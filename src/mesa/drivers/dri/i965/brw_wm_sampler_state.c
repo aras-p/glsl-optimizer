@@ -67,6 +67,9 @@ translate_wrap_mode(GLenum wrap)
    }
 }
 
+/**
+ * Upload SAMPLER_BORDER_COLOR_STATE.
+ */
 void
 upload_default_color(struct brw_context *brw, struct gl_sampler_object *sampler,
 		     int unit)
@@ -94,7 +97,7 @@ upload_default_color(struct brw_context *brw, struct gl_sampler_object *sampler,
       color[3] = sampler->BorderColor.f[3];
    }
 
-   if (intel->gen >= 5) {
+   if (intel->gen == 5 || intel->gen == 6) {
       struct gen5_sampler_default_color *sdc;
 
       sdc = brw_state_batch(brw, sizeof(*sdc), 32, &brw->wm.sdc_offset[unit]);
