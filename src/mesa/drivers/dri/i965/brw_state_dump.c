@@ -210,6 +210,8 @@ static void dump_sf_viewport_state(struct brw_context *brw)
    struct brw_sf_viewport *vp;
    uint32_t vp_off;
 
+   assert(intel->gen < 7);
+
    drm_intel_bo_map(intel->batch.bo, GL_FALSE);
 
    vp = intel->batch.bo->virtual + brw->sf.vp_offset;
@@ -237,6 +239,8 @@ static void dump_clip_viewport_state(struct brw_context *brw)
    struct brw_clipper_viewport *vp;
    uint32_t vp_off;
 
+   assert(intel->gen < 7);
+
    drm_intel_bo_map(intel->batch.bo, GL_FALSE);
 
    vp = intel->batch.bo->virtual + brw->clip.vp_offset;
@@ -248,6 +252,34 @@ static void dump_clip_viewport_state(struct brw_context *brw)
    state_out(name, vp, vp_off, 3, "ymax = %f\n", vp->ymax);
    drm_intel_bo_unmap(intel->batch.bo);
 }
+
+static void dump_sf_clip_viewport_state(struct brw_context *brw)
+{
+   struct intel_context *intel = &brw->intel;
+   const char *name = "SF_CLIP VP";
+   struct gen7_sf_clip_viewport *vp;
+   uint32_t vp_off;
+
+   assert(intel->gen >= 7);
+
+   drm_intel_bo_map(intel->batch.bo, GL_FALSE);
+
+   vp = intel->batch.bo->virtual + brw->sf.vp_offset;
+   vp_off = intel->batch.bo->offset + brw->sf.vp_offset;
+
+   state_out(name, vp, vp_off, 0, "m00 = %f\n", vp->viewport.m00);
+   state_out(name, vp, vp_off, 1, "m11 = %f\n", vp->viewport.m11);
+   state_out(name, vp, vp_off, 2, "m22 = %f\n", vp->viewport.m22);
+   state_out(name, vp, vp_off, 3, "m30 = %f\n", vp->viewport.m30);
+   state_out(name, vp, vp_off, 4, "m31 = %f\n", vp->viewport.m31);
+   state_out(name, vp, vp_off, 5, "m32 = %f\n", vp->viewport.m32);
+   state_out(name, vp, vp_off, 6, "guardband xmin = %f\n", vp->guardband.xmin);
+   state_out(name, vp, vp_off, 7, "guardband xmax = %f\n", vp->guardband.xmax);
+   state_out(name, vp, vp_off, 8, "guardband ymin = %f\n", vp->guardband.ymin);
+   state_out(name, vp, vp_off, 9, "guardband ymax = %f\n", vp->guardband.ymax);
+   drm_intel_bo_unmap(intel->batch.bo);
+}
+
 
 static void dump_cc_viewport_state(struct brw_context *brw)
 {
@@ -406,7 +438,12 @@ void brw_debug_batch(struct intel_context *intel)
 		       sizeof(struct brw_sf_unit_state));
       brw_debug_prog("SF prog", brw->sf.prog_bo);
    }
-   dump_sf_viewport_state(brw);
+   if (intel->gen >= 7)
+      dump_sf_clip_viewport_state(brw);
+   else
+      dump_sf_viewport_state(brw);
+   if (intel->gen == 6)
+      dump_clip_viewport_state(brw);
 
    if (intel->gen < 6)
        state_struct_out("WM", intel->batch.bo, brw->wm.state_offset,
@@ -415,7 +452,6 @@ void brw_debug_batch(struct intel_context *intel)
 
    if (intel->gen >= 6) {
 	dump_cc_viewport_state(brw);
-	dump_clip_viewport_state(brw);
 	dump_depth_stencil_state(brw);
 	dump_cc_state(brw);
 	dump_blend_state(brw);
