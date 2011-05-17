@@ -539,16 +539,14 @@ prepare_wm_surfaces(struct brw_context *brw)
    int i;
    int nr_surfaces = 0;
 
-   if (ctx->DrawBuffer->_NumColorDrawBuffers >= 1) {
-      for (i = 0; i < ctx->DrawBuffer->_NumColorDrawBuffers; i++) {
-	 struct gl_renderbuffer *rb = ctx->DrawBuffer->_ColorDrawBuffers[i];
-	 struct intel_renderbuffer *irb = intel_renderbuffer(rb);
-	 struct intel_region *region = irb ? irb->region : NULL;
+   for (i = 0; i < ctx->DrawBuffer->_NumColorDrawBuffers; i++) {
+      struct gl_renderbuffer *rb = ctx->DrawBuffer->_ColorDrawBuffers[i];
+      struct intel_renderbuffer *irb = intel_renderbuffer(rb);
+      struct intel_region *region = irb ? irb->region : NULL;
 
-	 if (region)
-	    brw_add_validated_bo(brw, region->buffer);
-	 nr_surfaces = SURF_INDEX_DRAW(i) + 1;
-      }
+      if (region)
+	 brw_add_validated_bo(brw, region->buffer);
+      nr_surfaces = SURF_INDEX_DRAW(i) + 1;
    }
 
    if (brw->wm.const_bo) {
