@@ -42,6 +42,7 @@ upload_clip_state(struct brw_context *brw)
    if (!ctx->Transform.DepthClamp)
       depth_clamp = GEN6_CLIP_Z_TEST;
 
+   /* _NEW_LIGHT */
    if (ctx->Light.ProvokingVertex == GL_FIRST_VERTEX_CONVENTION) {
       provoking =
 	 (0 << GEN6_CLIP_TRI_PROVOKE_SHIFT) |
@@ -75,7 +76,7 @@ upload_clip_state(struct brw_context *brw)
 
 const struct brw_tracked_state gen6_clip_state = {
    .dirty = {
-      .mesa  = _NEW_TRANSFORM,
+      .mesa  = _NEW_TRANSFORM | _NEW_LIGHT,
       .brw   = BRW_NEW_CONTEXT,
       .cache = 0
    },
