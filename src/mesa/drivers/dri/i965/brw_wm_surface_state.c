@@ -200,25 +200,6 @@ translate_tex_format(gl_format mesa_format,
    }
 }
 
-static void
-brw_set_surface_tiling(struct brw_surface_state *surf, uint32_t tiling)
-{
-   switch (tiling) {
-   case I915_TILING_NONE:
-      surf->ss3.tiled_surface = 0;
-      surf->ss3.tile_walk = 0;
-      break;
-   case I915_TILING_X:
-      surf->ss3.tiled_surface = 1;
-      surf->ss3.tile_walk = BRW_TILEWALK_XMAJOR;
-      break;
-   case I915_TILING_Y:
-      surf->ss3.tiled_surface = 1;
-      surf->ss3.tile_walk = BRW_TILEWALK_YMAJOR;
-      break;
-   }
-}
-
 static uint32_t
 brw_get_surface_tiling_bits(uint32_t tiling)
 {
@@ -287,34 +268,34 @@ brw_create_constant_surface(struct brw_context *brw,
 {
    struct intel_context *intel = &brw->intel;
    const GLint w = width - 1;
-   struct brw_surface_state *surf;
+   uint32_t *surf;
 
-   surf = brw_state_batch(brw, sizeof(*surf), 32, out_offset);
-   memset(surf, 0, sizeof(*surf));
+   surf = brw_state_batch(brw, 6 * 4, 32, out_offset);
 
-   surf->ss0.mipmap_layout_mode = BRW_SURFACE_MIPMAPLAYOUT_BELOW;
-   surf->ss0.surface_type = BRW_SURFACE_BUFFER;
-   surf->ss0.surface_format = BRW_SURFACEFORMAT_R32G32B32A32_FLOAT;
+   surf[0] = (BRW_SURFACE_BUFFER << BRW_SURFACE_TYPE_SHIFT |
+	      BRW_SURFACE_MIPMAPLAYOUT_BELOW << BRW_SURFACE_MIPLAYOUT_SHIFT |
+	      BRW_SURFACEFORMAT_R32G32B32A32_FLOAT << BRW_SURFACE_FORMAT_SHIFT);
 
    if (intel->gen >= 6)
-      surf->ss0.render_cache_read_write = 1;
+      surf[0] |= BRW_SURFACE_RC_READ_WRITE;
 
-   assert(bo);
-   surf->ss1.base_addr = bo->offset; /* reloc */
+   surf[1] = bo->offset; /* reloc */
 
-   surf->ss2.width = w & 0x7f;            /* bits 6:0 of size or width */
-   surf->ss2.height = (w >> 7) & 0x1fff;  /* bits 19:7 of size or width */
-   surf->ss3.depth = (w >> 20) & 0x7f;    /* bits 26:20 of size or width */
-   surf->ss3.pitch = (width * 16) - 1; /* ignored?? */
-   brw_set_surface_tiling(surf, I915_TILING_NONE); /* tiling now allowed */
+   surf[2] = (((w & 0x7f) - 1) << BRW_SURFACE_WIDTH_SHIFT |
+	      (((w >> 7) & 0x1fff) - 1) << BRW_SURFACE_HEIGHT_SHIFT);
+
+   surf[3] = ((((w >> 20) & 0x7f) - 1) << BRW_SURFACE_DEPTH_SHIFT |
+	      (width * 16 - 1) << BRW_SURFACE_PITCH_SHIFT);
+
+   surf[4] = 0;
+   surf[5] = 0;
 
    /* Emit relocation to surface contents.  Section 5.1.1 of the gen4
     * bspec ("Data Cache") says that the data cache does not exist as
     * a separate cache and is just the sampler cache.
     */
    drm_intel_bo_emit_reloc(brw->intel.batch.bo,
-			   (*out_offset +
-			    offsetof(struct brw_surface_state, ss1)),
+			   *out_offset + 4,
 			   bo, 0,
 			   I915_GEM_DOMAIN_SAMPLER, 0);
 }
