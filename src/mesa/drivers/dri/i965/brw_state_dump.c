@@ -141,6 +141,44 @@ static void dump_wm_surface_state(struct brw_context *brw)
    drm_intel_bo_unmap(bo);
 }
 
+static void dump_gen7_surface_state(struct brw_context *brw)
+{
+   dri_bo *bo;
+   GLubyte *base;
+   int i;
+
+   bo = brw->intel.batch.bo;
+   drm_intel_bo_map(bo, GL_FALSE);
+   base = bo->virtual;
+
+   for (i = 0; i < brw->wm.nr_surfaces; i++) {
+      unsigned int surfoff;
+      struct gen7_surface_state *surf;
+      char name[20];
+
+      if (brw->wm.surf_offset[i] == 0) {
+	 fprintf(stderr, "WM SURF%d: NULL\n", i);
+	 continue;
+      }
+      surfoff = bo->offset + brw->wm.surf_offset[i];
+      surf = (struct gen7_surface_state *) (base + brw->wm.surf_offset[i]);
+
+      sprintf(name, "WM SURF%d", i);
+      state_out(name, surf, surfoff, 0, "%s %s\n",
+		get_965_surfacetype(surf->ss0.surface_type),
+		get_965_surface_format(surf->ss0.surface_format));
+      state_out(name, surf, surfoff, 1, "offset\n");
+      state_out(name, surf, surfoff, 2, "%dx%d size, %d mips\n",
+		surf->ss2.width + 1, surf->ss2.height + 1, surf->ss5.mip_count);
+      state_out(name, surf, surfoff, 3, "pitch %d, %stiled\n",
+		surf->ss3.pitch + 1, surf->ss0.tiled_surface ? "" : "not ");
+      state_out(name, surf, surfoff, 4, "mip base %d\n",
+		surf->ss5.min_lod);
+      state_out(name, surf, surfoff, 5, "x,y offset: %d,%d\n",
+		surf->ss5.x_offset, surf->ss5.y_offset);
+   }
+   drm_intel_bo_unmap(bo);
+}
 
 static void dump_wm_sampler_state(struct brw_context *brw)
 {
@@ -469,11 +507,13 @@ void brw_debug_batch(struct intel_context *intel)
 		    brw->intel.batch.bo,
 		    brw->wm.bind_bo_offset,
 		    4 * brw->wm.nr_surfaces);
-   dump_wm_surface_state(brw);
-   if (intel->gen < 7)
+   if (intel->gen < 7) {
+      dump_wm_surface_state(brw);
       dump_wm_sampler_state(brw);
-   else
+   } else {
+      dump_gen7_surface_state(brw);
       dump_gen7_sampler_state(brw);
+   }
 
    if (intel->gen < 6)
        state_struct_out("VS", intel->batch.bo, brw->vs.state_offset,
