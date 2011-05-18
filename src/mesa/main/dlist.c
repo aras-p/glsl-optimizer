@@ -5351,7 +5351,7 @@ save_SetFragmentShaderConstantATI(GLuint dst, const GLfloat *value)
 }
 #endif
 
-static void
+static void GLAPIENTRY
 save_Attr1fNV(GLenum attr, GLfloat x)
 {
    GET_CURRENT_CONTEXT(ctx);
@@ -5372,7 +5372,7 @@ save_Attr1fNV(GLenum attr, GLfloat x)
    }
 }
 
-static void
+static void GLAPIENTRY
 save_Attr2fNV(GLenum attr, GLfloat x, GLfloat y)
 {
    GET_CURRENT_CONTEXT(ctx);
@@ -5394,7 +5394,7 @@ save_Attr2fNV(GLenum attr, GLfloat x, GLfloat y)
    }
 }
 
-static void
+static void GLAPIENTRY
 save_Attr3fNV(GLenum attr, GLfloat x, GLfloat y, GLfloat z)
 {
    GET_CURRENT_CONTEXT(ctx);
@@ -5417,7 +5417,7 @@ save_Attr3fNV(GLenum attr, GLfloat x, GLfloat y, GLfloat z)
    }
 }
 
-static void
+static void GLAPIENTRY
 save_Attr4fNV(GLenum attr, GLfloat x, GLfloat y, GLfloat z, GLfloat w)
 {
    GET_CURRENT_CONTEXT(ctx);
@@ -5442,7 +5442,7 @@ save_Attr4fNV(GLenum attr, GLfloat x, GLfloat y, GLfloat z, GLfloat w)
 }
 
 
-static void
+static void GLAPIENTRY
 save_Attr1fARB(GLenum attr, GLfloat x)
 {
    GET_CURRENT_CONTEXT(ctx);
@@ -5463,7 +5463,7 @@ save_Attr1fARB(GLenum attr, GLfloat x)
    }
 }
 
-static void
+static void GLAPIENTRY
 save_Attr2fARB(GLenum attr, GLfloat x, GLfloat y)
 {
    GET_CURRENT_CONTEXT(ctx);
@@ -5485,7 +5485,7 @@ save_Attr2fARB(GLenum attr, GLfloat x, GLfloat y)
    }
 }
 
-static void
+static void GLAPIENTRY
 save_Attr3fARB(GLenum attr, GLfloat x, GLfloat y, GLfloat z)
 {
    GET_CURRENT_CONTEXT(ctx);
@@ -5508,7 +5508,7 @@ save_Attr3fARB(GLenum attr, GLfloat x, GLfloat y, GLfloat z)
    }
 }
 
-static void
+static void GLAPIENTRY
 save_Attr4fARB(GLenum attr, GLfloat x, GLfloat y, GLfloat z, GLfloat w)
 {
    GET_CURRENT_CONTEXT(ctx);
@@ -7040,7 +7040,7 @@ exec_GetTexParameterIuiv(GLenum target, GLenum pname, GLuint *params)
 
 
 /* GL_ARB_instanced_arrays */
-static void
+static void GLAPIENTRY
 save_VertexAttribDivisor(GLuint index, GLuint divisor)
 {
    GET_CURRENT_CONTEXT(ctx);
@@ -7058,7 +7058,7 @@ save_VertexAttribDivisor(GLuint index, GLuint divisor)
 
 
 /* GL_NV_texture_barrier */
-static void
+static void GLAPIENTRY
 save_TextureBarrierNV(void)
 {
    GET_CURRENT_CONTEXT(ctx);
@@ -7071,7 +7071,7 @@ save_TextureBarrierNV(void)
 
 
 /* GL_ARB_sampler_objects */
-static void
+static void GLAPIENTRY
 save_BindSampler(GLuint unit, GLuint sampler)
 {
    Node *n;
