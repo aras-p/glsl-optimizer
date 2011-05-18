@@ -317,20 +317,22 @@ update_fragment_textures(struct st_context *st)
                                   st->state.sampler_views);
 }
 
-static void 
-update_textures(struct st_context *st)
-{
-  update_fragment_textures(st);
-  update_vertex_textures(st);
-}
-
 const struct st_tracked_state st_update_texture = {
    "st_update_texture",					/* name */
    {							/* dirty */
       _NEW_TEXTURE,					/* mesa */
       ST_NEW_FRAGMENT_PROGRAM,				/* st */
    },
-   update_textures					/* update */
+   update_fragment_textures				/* update */
+};
+
+const struct st_tracked_state st_update_vertex_texture = {
+   "st_update_vertex_texture",					/* name */
+   {							/* dirty */
+      _NEW_TEXTURE,					/* mesa */
+      ST_NEW_VERTEX_PROGRAM,				/* st */
+   },
+   update_vertex_textures				/* update */
 };
 
 static void 
