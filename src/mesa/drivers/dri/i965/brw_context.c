@@ -195,7 +195,7 @@ GLboolean brwCreateContext( int api,
 	 assert(!"Unknown gen7 device.");
       }
    } else if (intel->gen == 6) {
-      if (IS_GT2(intel->intelScreen->deviceID)) {
+      if (IS_SNB_GT2(intel->intelScreen->deviceID)) {
 	 /* This could possibly be 80, but is supposed to require
 	  * disabling of WIZ hashing (bit 6 of GT_MODE, 0x20d0) and a
 	  * GPU reset to change.

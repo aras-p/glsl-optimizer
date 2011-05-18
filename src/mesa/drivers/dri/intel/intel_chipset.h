@@ -131,16 +131,16 @@
 /* Compat macro for intel_decode.c */
 #define IS_IRONLAKE(devid)	IS_GEN5(devid)
 
-#define IS_GT1(devid)		(devid == PCI_CHIP_SANDYBRIDGE_GT1 || \
+#define IS_SNB_GT1(devid)	(devid == PCI_CHIP_SANDYBRIDGE_GT1 || \
 				 devid == PCI_CHIP_SANDYBRIDGE_M_GT1 || \
 				 devid == PCI_CHIP_SANDYBRIDGE_S)
 
-#define IS_GT2(devid)		(devid == PCI_CHIP_SANDYBRIDGE_GT2 || \
+#define IS_SNB_GT2(devid)	(devid == PCI_CHIP_SANDYBRIDGE_GT2 || \
 				 devid == PCI_CHIP_SANDYBRIDGE_GT2_PLUS	|| \
 				 devid == PCI_CHIP_SANDYBRIDGE_M_GT2 || \
 				 devid == PCI_CHIP_SANDYBRIDGE_M_GT2_PLUS)
 
-#define IS_GEN6(devid)		(IS_GT1(devid) || IS_GT2(devid))
+#define IS_GEN6(devid)		(IS_SNB_GT1(devid) || IS_SNB_GT2(devid))
 
 #define IS_IVB_GT1(devid)       (devid == PCI_CHIP_IVYBRIDGE_GT1 || \
 				 devid == PCI_CHIP_IVYBRIDGE_M_GT1 || \
