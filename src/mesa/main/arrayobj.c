@@ -289,9 +289,10 @@ remove_array_object( struct gl_context *ctx, struct gl_array_object *obj )
 static GLuint
 update_min(GLuint min, struct gl_client_array *array)
 {
-   _mesa_update_array_max_element(array);
-   if (array->Enabled)
+   if (array->Enabled) {
+      _mesa_update_array_max_element(array);
       return MIN2(min, array->_MaxElement);
+   }
    else
       return min;
 }
