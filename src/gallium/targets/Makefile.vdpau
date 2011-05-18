@@ -1,6 +1,5 @@
 # This makefile template is used to build libvdpau_g3dvl.so
 
-LIBBASENAME = vdpau_g3dvl
 LIBNAME = lib$(LIBBASENAME).so
 VDPAU_LIB_GLOB=lib$(LIBBASENAME).*so*
 VDPAU_MAJOR = 1

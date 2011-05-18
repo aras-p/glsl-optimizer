@@ -1,6 +1,8 @@
 TOP = ../../../..
 include $(TOP)/configs/current
 
+LIBBASENAME = vdpau_softpipe
+
 DRIVER_DEFINES = -DGALLIUM_SOFTPIPE
 DRIVER_INCLUDES =
 

@@ -1,6 +1,8 @@
 TOP = ../../../..
 include $(TOP)/configs/current
 
+LIBBASENAME = vdpau_r600
+
 PIPE_DRIVERS = \
         $(TOP)/src/gallium/drivers/r600/libr600.a \
 	$(TOP)/src/gallium/winsys/g3dvl/dri/libvldri.a \
