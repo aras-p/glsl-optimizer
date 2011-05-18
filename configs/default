@@ -38,6 +38,8 @@ MKLIB_OPTIONS =
 MKDEP = makedepend
 MKDEP_OPTIONS = -fdepend
 MAKE = make
+FLEX = flex
+BISON = bison
 
 # Use MINSTALL for installing libraries, INSTALL for everything else
 MINSTALL = $(SHELL) $(TOP)/bin/minstall

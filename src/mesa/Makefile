@@ -75,10 +75,10 @@ main/api_exec_es2.c: main/APIspec.xml main/es_generator.py main/APIspecutil.py m
 	$(PYTHON2) $(PYTHON_FLAGS) main/es_generator.py -S main/APIspec.xml -V GLES2.0 > $@
 
 program/program_parse.tab.c program/program_parse.tab.h: program/program_parse.y
-	bison -v -d --output=program/program_parse.tab.c $<
+	$(BISON) -v -d --output=program/program_parse.tab.c $<
 
 program/lex.yy.c: program/program_lexer.l
-	flex --never-interactive --outfile=$@ $<
+	$(FLEX) --never-interactive --outfile=$@ $<
 
 ######################################################################
 # Helper libraries used by many drivers:

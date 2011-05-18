@@ -192,16 +192,16 @@ $(DRICORE_OBJ_DIR)/%.o : %.c
 	$(CC) -c $(INCLUDES) $(DRI_CFLAGS) $(DEFINES) $< -o $@
 
 glsl_lexer.cpp: glsl_lexer.ll
-	flex --nounistd -o$@  $<
+	$(FLEX) --nounistd -o$@  $<
 
 glsl_parser.cpp: glsl_parser.yy
-	bison -v -o "$@" -p "_mesa_glsl_" --defines=glsl_parser.h $<
+	$(BISON) -v -o "$@" -p "_mesa_glsl_" --defines=glsl_parser.h $<
 
 glcpp/glcpp-lex.c: glcpp/glcpp-lex.l
-	flex --nounistd -o$@  $<
+	$(FLEX) --nounistd -o$@  $<
 
 glcpp/glcpp-parse.c: glcpp/glcpp-parse.y
-	bison -v -o "$@" --defines=glcpp/glcpp-parse.h $<
+	$(BISON) -v -o "$@" --defines=glcpp/glcpp-parse.h $<
 
 builtin_compiler: $(GLSL2_OBJECTS) $(OBJECTS) builtin_stubs.o
 	$(APP_CXX) $(INCLUDES) $(CXXFLAGS) $(LDFLAGS) $(OBJECTS) $(GLSL2_OBJECTS) builtin_stubs.o -o $@
