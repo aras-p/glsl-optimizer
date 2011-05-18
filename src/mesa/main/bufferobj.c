@@ -1416,14 +1416,13 @@ _mesa_MapBufferRange(GLenum target, GLintptr offset, GLsizeiptr length,
       return NULL;
    }
 
-   if (access & GL_MAP_READ_BIT) {
-      if ((access & GL_MAP_INVALIDATE_RANGE_BIT) ||
-          (access & GL_MAP_INVALIDATE_BUFFER_BIT) ||
-          (access & GL_MAP_UNSYNCHRONIZED_BIT)) {
-         _mesa_error(ctx, GL_INVALID_OPERATION,
-                     "glMapBufferRange(invalid access flags)");
-         return NULL;
-      }
+   if ((access & GL_MAP_READ_BIT) &&
+       (access & (GL_MAP_INVALIDATE_RANGE_BIT |
+                  GL_MAP_INVALIDATE_BUFFER_BIT |
+                  GL_MAP_UNSYNCHRONIZED_BIT))) {
+      _mesa_error(ctx, GL_INVALID_OPERATION,
+                  "glMapBufferRange(invalid access flags)");
+      return NULL;
    }
 
    if ((access & GL_MAP_FLUSH_EXPLICIT_BIT) &&
