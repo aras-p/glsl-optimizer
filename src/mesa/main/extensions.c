@@ -503,6 +503,7 @@ _mesa_enable_sw_extensions(struct gl_context *ctx)
    ctx->Extensions.EXT_texture_env_add = GL_TRUE;
    ctx->Extensions.EXT_texture_env_combine = GL_TRUE;
    ctx->Extensions.EXT_texture_env_dot3 = GL_TRUE;
+   ctx->Extensions.EXT_texture_filter_anisotropic = GL_TRUE;
    ctx->Extensions.EXT_texture_mirror_clamp = GL_TRUE;
    ctx->Extensions.EXT_texture_lod_bias = GL_TRUE;
    ctx->Extensions.EXT_texture_shared_exponent = GL_TRUE;
