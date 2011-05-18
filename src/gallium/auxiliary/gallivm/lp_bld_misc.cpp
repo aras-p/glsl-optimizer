@@ -73,6 +73,19 @@ lp_set_target_options(void)
 #endif
 #endif
 
+   /*
+    * LLVM revision 123367 switched the default stack alignment to 16 bytes on
+    * Linux (and several other Unices in later revisions), to match recent gcc
+    * versions.
+    *
+    * However our drivers can be loaded by old binary applications, still
+    * maintaining a 4 bytes stack alignment.  Therefore we must tell LLVM here
+    * to only assume a 4 bytes alignment for backwards compatibility.
+    */
+#if defined(PIPE_ARCH_X86)
+   llvm::StackAlignment = 4;
+#endif
+
 #if defined(DEBUG) || defined(PROFILE)
    llvm::NoFramePointerElim = true;
 #endif
