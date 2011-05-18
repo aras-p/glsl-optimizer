@@ -86,6 +86,10 @@ static void emit_depthbuffer(struct brw_context *brw)
       OUT_BATCH(0);
       ADVANCE_BATCH();
    } else {
+      uint32_t tile_x, tile_y, offset;
+
+      offset = intel_region_tile_offsets(region, &tile_x, &tile_y);
+
       assert(region->tiling == I915_TILING_Y);
 
       BEGIN_BATCH(7);
@@ -98,10 +102,10 @@ static void emit_depthbuffer(struct brw_context *brw)
 		(BRW_SURFACE_2D << 29));
       OUT_RELOC(region->buffer,
 	        I915_GEM_DOMAIN_RENDER, I915_GEM_DOMAIN_RENDER,
-		0);
+		offset);
       OUT_BATCH(((region->width - 1) << 4) | ((region->height - 1) << 18));
       OUT_BATCH(0);
-      OUT_BATCH(0);
+      OUT_BATCH(tile_x | (tile_y << 16));
       OUT_BATCH(0);
       ADVANCE_BATCH();
    }

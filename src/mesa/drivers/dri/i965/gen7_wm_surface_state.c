@@ -233,6 +233,7 @@ gen7_update_renderbuffer_surface(struct brw_context *brw,
    struct intel_renderbuffer *irb = intel_renderbuffer(rb);
    struct intel_region *region = irb->region;
    struct gen7_surface_state *surf;
+   uint32_t tile_x, tile_y;
 
    surf = brw_state_batch(brw, sizeof(*surf), 32,
 			  &brw->wm.surf_offset[unit]);
@@ -271,36 +272,18 @@ gen7_update_renderbuffer_surface(struct brw_context *brw,
    }
 
    surf->ss0.surface_type = BRW_SURFACE_2D;
-   if (region->tiling == I915_TILING_NONE) {
-      surf->ss1.base_addr = (region->draw_x +
-			    region->draw_y * region->pitch) * region->cpp;
-   } else {
-      uint32_t tile_base, tile_x, tile_y;
-      uint32_t pitch = region->pitch * region->cpp;
-
-      if (region->tiling == I915_TILING_X) {
-	 tile_x = region->draw_x % (512 / region->cpp);
-	 tile_y = region->draw_y % 8;
-	 tile_base = ((region->draw_y / 8) * (8 * pitch));
-	 tile_base += (region->draw_x - tile_x) / (512 / region->cpp) * 4096;
-      } else {
-	 /* Y */
-	 tile_x = region->draw_x % (128 / region->cpp);
-	 tile_y = region->draw_y % 32;
-	 tile_base = ((region->draw_y / 32) * (32 * pitch));
-	 tile_base += (region->draw_x - tile_x) / (128 / region->cpp) * 4096;
-      }
-      assert(brw->has_surface_tile_offset || (tile_x == 0 && tile_y == 0));
-      assert(tile_x % 4 == 0);
-      assert(tile_y % 2 == 0);
-      /* Note that the low bits of these fields are missing, so
-       * there's the possibility of getting in trouble.
-       */
-      surf->ss1.base_addr = tile_base;
-      surf->ss5.x_offset = tile_x / 4;
-      surf->ss5.y_offset = tile_y / 2;
-   }
+   /* reloc */
+   surf->ss1.base_addr = intel_region_tile_offsets(region, &tile_x, &tile_y);
    surf->ss1.base_addr += region->buffer->offset; /* reloc */
+
+   assert(brw->has_surface_tile_offset);
+   /* Note that the low bits of these fields are missing, so
+    * there's the possibility of getting in trouble.
+    */
+   assert(tile_x % 4 == 0);
+   assert(tile_y % 2 == 0);
+   surf->ss5.x_offset = tile_x / 4;
+   surf->ss5.y_offset = tile_y / 2;
 
    surf->ss2.width = rb->Width - 1;
    surf->ss2.height = rb->Height - 1;
