@@ -59,12 +59,14 @@
 #define AA_ALWAYS    2
 
 struct brw_wm_prog_key {
+   uint8_t iz_lookup;
    GLuint stats_wm:1;
    GLuint flat_shade:1;
    GLuint nr_color_regions:5;
    GLuint render_to_fbo:1;
    GLuint alpha_test:1;
    GLuint clamp_fragment_color:1;
+   GLuint line_aa:2;
 
    GLbitfield proj_attrib_mask; /**< one bit per fragment program attribute */
    GLuint yuvtex_mask:16;
@@ -74,8 +76,6 @@ struct brw_wm_prog_key {
    GLushort tex_swizzles[BRW_MAX_TEX_UNIT];
    GLushort drawable_height;
    GLbitfield64 vp_outputs_written;
-   GLuint iz_lookup;
-   GLuint line_aa;
    GLuint program_string_id:32;
 };
 
