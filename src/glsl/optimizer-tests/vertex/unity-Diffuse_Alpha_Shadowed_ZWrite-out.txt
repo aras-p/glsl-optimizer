@@ -28,7 +28,7 @@ void main ()
   x1.y = dot (unity_SHAg, tmpvar_4);
   x1.z = dot (unity_SHAb, tmpvar_4);
   vec4 tmpvar_5;
-  tmpvar_5 = (tmpvar_4.xyzz * tmpvar_4.yzzx);
+  tmpvar_5 = (tmpvar_3.xyzz * tmpvar_3.yzzx);
   x2.x = dot (unity_SHBr, tmpvar_5);
   x2.y = dot (unity_SHBg, tmpvar_5);
   x2.z = dot (unity_SHBb, tmpvar_5);
@@ -47,7 +47,7 @@ void main ()
   gl_TexCoord[1] = tmpvar_8;
   vec4 tmpvar_9;
   tmpvar_9.w = 0.0;
-  tmpvar_9.xyz = ((x1 + x2) + (unity_SHC.xyz * ((tmpvar_4.x * tmpvar_4.x) - (tmpvar_4.y * tmpvar_4.y))));
+  tmpvar_9.xyz = ((x1 + x2) + (unity_SHC.xyz * ((tmpvar_3.x * tmpvar_3.x) - (tmpvar_3.y * tmpvar_3.y))));
   gl_TexCoord[2] = tmpvar_9;
 }
 

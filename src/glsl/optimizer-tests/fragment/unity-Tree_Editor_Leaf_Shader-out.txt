@@ -25,8 +25,8 @@ void main ()
   tmpvar_6 = (tmpvar_5.xyz * gl_Color.xyz);
   vec3 tmpvar_7;
   tmpvar_7 = (texture2D (_TranslucencyMap, tmpvar_4).xyz * _TranslucencyColor.xyz);
-  float tmpvar_8;
-  tmpvar_8 = texture2D (_GlossMap, tmpvar_4).w;
+  vec4 tmpvar_8;
+  tmpvar_8 = texture2D (_GlossMap, tmpvar_4);
   float tmpvar_9;
   tmpvar_9 = (tmpvar_5.w * gl_Color.w);
   vec4 normal;
@@ -46,7 +46,7 @@ void main ()
   tmpvar_12 = dot (tmpvar_10, tmpvar_11);
   float tmpvar_13;
   tmpvar_13 = max (0.0, -(tmpvar_12));
-  c_i0_i1.xyz = ((((tmpvar_6 * (max (0.0, ((tmpvar_12 * 0.5) + 0.5)) + ((tmpvar_7 * tmpvar_13) * 2.0))) + ((pow (max (0.0, dot (tmpvar_10, normalize ((tmpvar_11 + normalize (tmpvar_2))))), (_Shininess * 128.0)) * tmpvar_8) * (1.0 - clamp (ceil (tmpvar_13), 0.0, 1.0)))) * _LightColor0.xyz) * ((texture2D (_LightTextureB0, vec2(dot (tmpvar_3, tmpvar_3))).w * textureCube (_LightTexture0, tmpvar_3).w) * 2.0));
+  c_i0_i1.xyz = ((((tmpvar_6 * (max (0.0, ((tmpvar_12 * 0.5) + 0.5)) + ((tmpvar_7 * tmpvar_13) * 2.0))) + ((pow (max (0.0, dot (tmpvar_10, normalize ((tmpvar_11 + normalize (tmpvar_2))))), (_Shininess * 128.0)) * tmpvar_8.w) * (1.0 - clamp (ceil (tmpvar_13), 0.0, 1.0)))) * _LightColor0.xyz) * ((texture2D (_LightTextureB0, vec2(dot (tmpvar_3, tmpvar_3))).w * textureCube (_LightTexture0, tmpvar_3).w) * 2.0));
   c = c_i0_i1;
   c.w = tmpvar_9;
   gl_FragData[0] = c;

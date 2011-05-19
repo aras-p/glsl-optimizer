@@ -21,13 +21,13 @@ void main ()
   normal.z = sqrt (((1.0 - (normal.x * normal.x)) - (normal.y * normal.y)));
   vec3 tmpvar_5;
   tmpvar_5 = normal.xyz;
-  float tmpvar_6;
-  tmpvar_6 = texture2DProj (_ShadowMapTexture, gl_TexCoord[4]).x;
+  vec4 tmpvar_6;
+  tmpvar_6 = texture2DProj (_ShadowMapTexture, gl_TexCoord[4]);
   vec4 c_i0;
   float tmpvar_7;
   tmpvar_7 = (pow (max (0.0, dot (tmpvar_5, normalize ((tmpvar_2 + normalize (gl_TexCoord[1].xyz))))), (_Shininess * 128.0)) * tmpvar_3.w);
-  c_i0.xyz = ((((tmpvar_4 * _LightColor0.xyz) * max (0.0, dot (tmpvar_5, tmpvar_2))) + ((_LightColor0.xyz * _SpecColor.xyz) * tmpvar_7)) * (tmpvar_6 * 2.0));
-  c_i0.w = ((tmpvar_3.w * _Color.w) + (((_LightColor0.w * _SpecColor.w) * tmpvar_7) * tmpvar_6));
+  c_i0.xyz = ((((tmpvar_4 * _LightColor0.xyz) * max (0.0, dot (tmpvar_5, tmpvar_2))) + ((_LightColor0.xyz * _SpecColor.xyz) * tmpvar_7)) * (tmpvar_6.x * 2.0));
+  c_i0.w = ((tmpvar_3.w * _Color.w) + (((_LightColor0.w * _SpecColor.w) * tmpvar_7) * tmpvar_6.x));
   c = c_i0;
   c.xyz = (c_i0.xyz + (tmpvar_4 * gl_TexCoord[3].xyz));
   gl_FragData[0] = c;

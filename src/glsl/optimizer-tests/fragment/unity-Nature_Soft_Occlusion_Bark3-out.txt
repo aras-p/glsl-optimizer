@@ -27,7 +27,7 @@ void main ()
   res.y = 1.0;
   vec2 enc;
   vec2 tmpvar_7;
-  tmpvar_7 = fract ((vec2(1.0, 255.0) * (1.0 - (tmpvar_2 * _ProjectionParams.w)).x));
+  tmpvar_7 = fract ((vec2(1.0, 255.0) * (1.0 - (tmpvar_1.xxxx * _ProjectionParams.w)).x));
   enc = tmpvar_7;
   enc.x = (tmpvar_7.x - (tmpvar_7.y * 0.00392157));
   res.zw = enc;

@@ -9,12 +9,12 @@ void main ()
   vec4 res;
   vec4 tmpvar_2;
   tmpvar_2 = texture2D (_MainTex, tmpvar_1[0]);
-  vec2 tmpvar_3;
-  tmpvar_3 = texture2D (_MainTex, tmpvar_1[1]).xy;
-  vec2 tmpvar_4;
-  tmpvar_4 = texture2D (_MainTex, tmpvar_1[2]).xy;
-  vec2 tmpvar_5;
-  tmpvar_5 = texture2D (_MainTex, tmpvar_1[3]).xy;
+  vec4 tmpvar_3;
+  tmpvar_3 = texture2D (_MainTex, tmpvar_1[1]);
+  vec4 tmpvar_4;
+  tmpvar_4 = texture2D (_MainTex, tmpvar_1[2]);
+  vec4 tmpvar_5;
+  tmpvar_5 = texture2D (_MainTex, tmpvar_1[3]);
   res.x = max (max (tmpvar_2.x, tmpvar_3.x), max (tmpvar_4.x, tmpvar_5.x));
   res.y = min (min (tmpvar_2.y, tmpvar_3.y), min (tmpvar_4.y, tmpvar_5.y));
   res.zw = tmpvar_2.zw;

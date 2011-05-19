@@ -22,14 +22,12 @@ void main ()
   vec3 tmpvar_3;
   tmpvar_3.xz = vec2(0.0, 0.0);
   tmpvar_3.y = _SquashPlaneNormal.w;
-  vec3 tmpvar_4;
-  tmpvar_4 = _SquashPlaneNormal.xyz;
+  vec4 tmpvar_4;
+  tmpvar_4.w = 1.0;
+  tmpvar_4.xyz = mix ((pos.xyz + (dot (_SquashPlaneNormal.xyz, (tmpvar_3 - pos.xyz)) * _SquashPlaneNormal.xyz)), pos.xyz, vec3(_SquashAmount));
+  pos = tmpvar_4;
   vec4 tmpvar_5;
-  tmpvar_5.w = 1.0;
-  tmpvar_5.xyz = mix ((pos.xyz + (dot (tmpvar_4, (tmpvar_3 - pos.xyz)) * tmpvar_4)), pos.xyz, vec3(_SquashAmount));
-  pos = tmpvar_5;
-  vec4 tmpvar_6;
-  tmpvar_6 = (gl_ModelViewProjectionMatrix * tmpvar_5);
+  tmpvar_5 = (gl_ModelViewProjectionMatrix * tmpvar_4);
   lightDir.w = _AO;
   lightColor = gl_LightModel.ambient;
   lightDir.xyz = _TerrainTreeLightDirections[0];
@@ -43,11 +41,11 @@ void main ()
   lightColor.w = 1.0;
   tmpvar_1 = (lightColor * _Color);
   tmpvar_1.w = 1.0;
-  gl_Position = tmpvar_6;
-  vec4 tmpvar_7;
-  tmpvar_7.yzw = vec3(0.0, 0.0, 0.0);
-  tmpvar_7.x = tmpvar_6.z;
-  xlv_FOG = tmpvar_7;
+  gl_Position = tmpvar_5;
+  vec4 tmpvar_6;
+  tmpvar_6.yzw = vec3(0.0, 0.0, 0.0);
+  tmpvar_6.x = tmpvar_5.z;
+  xlv_FOG = tmpvar_6;
   gl_TexCoord[0] = gl_MultiTexCoord0;
   gl_FrontColor = tmpvar_1;
 }

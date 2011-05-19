@@ -65,7 +65,7 @@ void main ()
   x1.y = dot (unity_SHAg, tmpvar_12);
   x1.z = dot (unity_SHAb, tmpvar_12);
   vec4 tmpvar_13;
-  tmpvar_13 = (tmpvar_12.xyzz * tmpvar_12.yzzx);
+  tmpvar_13 = (tmpvar_11.xyzz * tmpvar_11.yzzx);
   x2.x = dot (unity_SHBr, tmpvar_13);
   x2.y = dot (unity_SHBg, tmpvar_13);
   x2.z = dot (unity_SHBb, tmpvar_13);
@@ -106,7 +106,7 @@ void main ()
   gl_TexCoord[1] = tmpvar_24;
   vec4 tmpvar_25;
   tmpvar_25.w = 0.0;
-  tmpvar_25.xyz = (((x1 + x2) + (unity_SHC.xyz * ((tmpvar_12.x * tmpvar_12.x) - (tmpvar_12.y * tmpvar_12.y)))) + ((((unity_LightColor0 * tmpvar_19.x) + (unity_LightColor1 * tmpvar_19.y)) + (unity_LightColor2 * tmpvar_19.z)) + (unity_LightColor3 * tmpvar_19.w)));
+  tmpvar_25.xyz = (((x1 + x2) + (unity_SHC.xyz * ((tmpvar_11.x * tmpvar_11.x) - (tmpvar_11.y * tmpvar_11.y)))) + ((((unity_LightColor0 * tmpvar_19.x) + (unity_LightColor1 * tmpvar_19.y)) + (unity_LightColor2 * tmpvar_19.z)) + (unity_LightColor3 * tmpvar_19.w)));
   gl_TexCoord[2] = tmpvar_25;
   gl_TexCoord[3] = o_i0;
 }
