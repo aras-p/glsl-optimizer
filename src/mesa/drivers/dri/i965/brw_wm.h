@@ -61,7 +61,6 @@
 struct brw_wm_prog_key {
    GLuint stats_wm:1;
    GLuint flat_shade:1;
-   GLuint linear_color:1;  /**< linear interpolation vs perspective interp */
    GLuint nr_color_regions:5;
    GLuint render_to_fbo:1;
    GLuint alpha_test:1;

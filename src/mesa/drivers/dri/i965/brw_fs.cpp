@@ -584,7 +584,7 @@ fs_visitor::emit_general_interpolation(ir_variable *ir)
 	       attr.reg_offset++;
 	    }
 
-	    if (intel->gen < 6 && !(is_gl_Color && c->key.linear_color)) {
+	    if (intel->gen < 6) {
 	       attr.reg_offset -= type->vector_elements;
 	       for (unsigned int k = 0; k < type->vector_elements; k++) {
 		  emit(BRW_OPCODE_MUL, attr, attr, this->pixel_w);
