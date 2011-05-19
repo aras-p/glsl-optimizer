@@ -9,11 +9,9 @@ uniform vec4 _Color;
 uniform float _AO;
 void main ()
 {
-  int i;
   vec4 lightColor;
   vec4 lightDir;
   vec4 tmpvar_1;
-  i = 0;
   vec4 pos;
   pos = gl_Vertex;
   pos.xyz = (gl_Vertex.xyz * _Scale.xyz);
@@ -34,18 +32,14 @@ void main ()
   tmpvar_6 = (gl_ModelViewProjectionMatrix * tmpvar_5);
   lightDir.w = _AO;
   lightColor = gl_LightModel.ambient;
-  lightDir.xyz = _TerrainTreeLightDirections[i];
-  lightColor = (lightColor + (_TerrainTreeLightColors[i] * max (0.0, dot (lightDir.xyz, gl_Normal))));
-  i = (i + 1);
-  lightDir.xyz = _TerrainTreeLightDirections[i];
-  lightColor = (lightColor + (_TerrainTreeLightColors[i] * max (0.0, dot (lightDir.xyz, gl_Normal))));
-  i = (i + 1);
-  lightDir.xyz = _TerrainTreeLightDirections[i];
-  lightColor = (lightColor + (_TerrainTreeLightColors[i] * max (0.0, dot (lightDir.xyz, gl_Normal))));
-  i = (i + 1);
-  lightDir.xyz = _TerrainTreeLightDirections[i];
-  lightColor = (lightColor + (_TerrainTreeLightColors[i] * max (0.0, dot (lightDir.xyz, gl_Normal))));
-  i = (i + 1);
+  lightDir.xyz = _TerrainTreeLightDirections[0];
+  lightColor = (lightColor + (_TerrainTreeLightColors[0] * max (0.0, dot (lightDir.xyz, gl_Normal))));
+  lightDir.xyz = _TerrainTreeLightDirections[1];
+  lightColor = (lightColor + (_TerrainTreeLightColors[1] * max (0.0, dot (lightDir.xyz, gl_Normal))));
+  lightDir.xyz = _TerrainTreeLightDirections[2];
+  lightColor = (lightColor + (_TerrainTreeLightColors[2] * max (0.0, dot (lightDir.xyz, gl_Normal))));
+  lightDir.xyz = _TerrainTreeLightDirections[3];
+  lightColor = (lightColor + (_TerrainTreeLightColors[3] * max (0.0, dot (lightDir.xyz, gl_Normal))));
   lightColor.w = 1.0;
   tmpvar_1 = (lightColor * _Color);
   tmpvar_1.w = 1.0;

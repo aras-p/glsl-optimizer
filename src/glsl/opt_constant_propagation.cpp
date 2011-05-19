@@ -263,10 +263,13 @@ ir_constant_propagation_visitor::visit_enter(ir_call *ir)
    }
 
    /* Since we're unlinked, we don't (necssarily) know the side effects of
-    * this call.  So kill all copies.
+    * this call.  So kill all copies. Except if it's a built-in; we know
+	* they are side effect free.
     */
-   acp->make_empty();
-   this->killed_all = true;
+   if (!ir->get_callee()->is_builtin) {
+      acp->make_empty();
+      this->killed_all = true;
+   }
 
    return visit_continue_with_parent;
 }
