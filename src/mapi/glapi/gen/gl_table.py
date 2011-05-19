@@ -171,7 +171,10 @@ class PrintRemapTable(gl_XML.gl_print_base):
 
 			print '#define CALL_%s(disp, parameters) CALL_by_offset(disp, (%s), _gloffset_%s, parameters)' % (f.name, cast, f.name)
 			print '#define GET_%s(disp) GET_by_offset(disp, _gloffset_%s)' % (f.name, f.name)
-			print '#define SET_%s(disp, fn) SET_by_offset(disp, _gloffset_%s, fn)' % (f.name, f.name)
+			print 'static void INLINE SET_%s(struct _glapi_table *disp, %s (GLAPIENTRYP fn)(%s)) {' % (f.name, f.return_type, arg_string)
+			print '   SET_by_offset(disp, _gloffset_%s, fn);' % (f.name)
+			print '}'
+			print
 
 		if alias_functions:
 			print ''

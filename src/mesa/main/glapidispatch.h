@@ -2044,2787 +2044,5571 @@ extern int driDispatchRemapTable[ driDispatchRemapTable_size ];
 
 #define CALL_NewList(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLuint, GLenum)), _gloffset_NewList, parameters)
 #define GET_NewList(disp) GET_by_offset(disp, _gloffset_NewList)
-#define SET_NewList(disp, fn) SET_by_offset(disp, _gloffset_NewList, fn)
+static void INLINE SET_NewList(struct _glapi_table *disp, void (GLAPIENTRYP fn)(GLuint, GLenum)) {
+   SET_by_offset(disp, _gloffset_NewList, fn);
+}
+
 #define CALL_EndList(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(void)), _gloffset_EndList, parameters)
 #define GET_EndList(disp) GET_by_offset(disp, _gloffset_EndList)
-#define SET_EndList(disp, fn) SET_by_offset(disp, _gloffset_EndList, fn)
+static void INLINE SET_EndList(struct _glapi_table *disp, void (GLAPIENTRYP fn)(void)) {
+   SET_by_offset(disp, _gloffset_EndList, fn);
+}
+
 #define CALL_CallList(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLuint)), _gloffset_CallList, parameters)
 #define GET_CallList(disp) GET_by_offset(disp, _gloffset_CallList)
-#define SET_CallList(disp, fn) SET_by_offset(disp, _gloffset_CallList, fn)
+static void INLINE SET_CallList(struct _glapi_table *disp, void (GLAPIENTRYP fn)(GLuint)) {
+   SET_by_offset(disp, _gloffset_CallList, fn);
+}
+
 #define CALL_CallLists(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLsizei, GLenum, const GLvoid *)), _gloffset_CallLists, parameters)
 #define GET_CallLists(disp) GET_by_offset(disp, _gloffset_CallLists)
-#define SET_CallLists(disp, fn) SET_by_offset(disp, _gloffset_CallLists, fn)
+static void INLINE SET_CallLists(struct _glapi_table *disp, void (GLAPIENTRYP fn)(GLsizei, GLenum, const GLvoid *)) {
+   SET_by_offset(disp, _gloffset_CallLists, fn);
+}
+
 #define CALL_DeleteLists(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLuint, GLsizei)), _gloffset_DeleteLists, parameters)
 #define GET_DeleteLists(disp) GET_by_offset(disp, _gloffset_DeleteLists)
-#define SET_DeleteLists(disp, fn) SET_by_offset(disp, _gloffset_DeleteLists, fn)
+static void INLINE SET_DeleteLists(struct _glapi_table *disp, void (GLAPIENTRYP fn)(GLuint, GLsizei)) {
+   SET_by_offset(disp, _gloffset_DeleteLists, fn);
+}
+
 #define CALL_GenLists(disp, parameters) CALL_by_offset(disp, (GLuint (GLAPIENTRYP)(GLsizei)), _gloffset_GenLists, parameters)
 #define GET_GenLists(disp) GET_by_offset(disp, _gloffset_GenLists)
-#define SET_GenLists(disp, fn) SET_by_offset(disp, _gloffset_GenLists, fn)
+static void INLINE SET_GenLists(struct _glapi_table *disp, GLuint (GLAPIENTRYP fn)(GLsizei)) {
+   SET_by_offset(disp, _gloffset_GenLists, fn);
+}
+
 #define CALL_ListBase(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLuint)), _gloffset_ListBase, parameters)
 #define GET_ListBase(disp) GET_by_offset(disp, _gloffset_ListBase)
-#define SET_ListBase(disp, fn) SET_by_offset(disp, _gloffset_ListBase, fn)
+static void INLINE SET_ListBase(struct _glapi_table *disp, void (GLAPIENTRYP fn)(GLuint)) {
+   SET_by_offset(disp, _gloffset_ListBase, fn);
+}
+
 #define CALL_Begin(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLenum)), _gloffset_Begin, parameters)
 #define GET_Begin(disp) GET_by_offset(disp, _gloffset_Begin)
-#define SET_Begin(disp, fn) SET_by_offset(disp, _gloffset_Begin, fn)
+static void INLINE SET_Begin(struct _glapi_table *disp, void (GLAPIENTRYP fn)(GLenum)) {
+   SET_by_offset(disp, _gloffset_Begin, fn);
+}
+
 #define CALL_Bitmap(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLsizei, GLsizei, GLfloat, GLfloat, GLfloat, GLfloat, const GLubyte *)), _gloffset_Bitmap, parameters)
 #define GET_Bitmap(disp) GET_by_offset(disp, _gloffset_Bitmap)
-#define SET_Bitmap(disp, fn) SET_by_offset(disp, _gloffset_Bitmap, fn)
+static void INLINE SET_Bitmap(struct _glapi_table *disp, void (GLAPIENTRYP fn)(GLsizei, GLsizei, GLfloat, GLfloat, GLfloat, GLfloat, const GLubyte *)) {
+   SET_by_offset(disp, _gloffset_Bitmap, fn);
+}
+
 #define CALL_Color3b(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLbyte, GLbyte, GLbyte)), _gloffset_Color3b, parameters)
 #define GET_Color3b(disp) GET_by_offset(disp, _gloffset_Color3b)
-#define SET_Color3b(disp, fn) SET_by_offset(disp, _gloffset_Color3b, fn)
+static void INLINE SET_Color3b(struct _glapi_table *disp, void (GLAPIENTRYP fn)(GLbyte, GLbyte, GLbyte)) {
+   SET_by_offset(disp, _gloffset_Color3b, fn);
+}
+
 #define CALL_Color3bv(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(const GLbyte *)), _gloffset_Color3bv, parameters)
 #define GET_Color3bv(disp) GET_by_offset(disp, _gloffset_Color3bv)
-#define SET_Color3bv(disp, fn) SET_by_offset(disp, _gloffset_Color3bv, fn)
+static void INLINE SET_Color3bv(struct _glapi_table *disp, void (GLAPIENTRYP fn)(const GLbyte *)) {
+   SET_by_offset(disp, _gloffset_Color3bv, fn);
+}
+
 #define CALL_Color3d(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLdouble, GLdouble, GLdouble)), _gloffset_Color3d, parameters)
 #define GET_Color3d(disp) GET_by_offset(disp, _gloffset_Color3d)
-#define SET_Color3d(disp, fn) SET_by_offset(disp, _gloffset_Color3d, fn)
+static void INLINE SET_Color3d(struct _glapi_table *disp, void (GLAPIENTRYP fn)(GLdouble, GLdouble, GLdouble)) {
+   SET_by_offset(disp, _gloffset_Color3d, fn);
+}
+
 #define CALL_Color3dv(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(const GLdouble *)), _gloffset_Color3dv, parameters)
 #define GET_Color3dv(disp) GET_by_offset(disp, _gloffset_Color3dv)
-#define SET_Color3dv(disp, fn) SET_by_offset(disp, _gloffset_Color3dv, fn)
+static void INLINE SET_Color3dv(struct _glapi_table *disp, void (GLAPIENTRYP fn)(const GLdouble *)) {
+   SET_by_offset(disp, _gloffset_Color3dv, fn);
+}
+
 #define CALL_Color3f(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLfloat, GLfloat, GLfloat)), _gloffset_Color3f, parameters)
 #define GET_Color3f(disp) GET_by_offset(disp, _gloffset_Color3f)
-#define SET_Color3f(disp, fn) SET_by_offset(disp, _gloffset_Color3f, fn)
+static void INLINE SET_Color3f(struct _glapi_table *disp, void (GLAPIENTRYP fn)(GLfloat, GLfloat, GLfloat)) {
+   SET_by_offset(disp, _gloffset_Color3f, fn);
+}
+
 #define CALL_Color3fv(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(const GLfloat *)), _gloffset_Color3fv, parameters)
 #define GET_Color3fv(disp) GET_by_offset(disp, _gloffset_Color3fv)
-#define SET_Color3fv(disp, fn) SET_by_offset(disp, _gloffset_Color3fv, fn)
+static void INLINE SET_Color3fv(struct _glapi_table *disp, void (GLAPIENTRYP fn)(const GLfloat *)) {
+   SET_by_offset(disp, _gloffset_Color3fv, fn);
+}
+
 #define CALL_Color3i(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLint, GLint, GLint)), _gloffset_Color3i, parameters)
 #define GET_Color3i(disp) GET_by_offset(disp, _gloffset_Color3i)
-#define SET_Color3i(disp, fn) SET_by_offset(disp, _gloffset_Color3i, fn)
+static void INLINE SET_Color3i(struct _glapi_table *disp, void (GLAPIENTRYP fn)(GLint, GLint, GLint)) {
+   SET_by_offset(disp, _gloffset_Color3i, fn);
+}
+
 #define CALL_Color3iv(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(const GLint *)), _gloffset_Color3iv, parameters)
 #define GET_Color3iv(disp) GET_by_offset(disp, _gloffset_Color3iv)
-#define SET_Color3iv(disp, fn) SET_by_offset(disp, _gloffset_Color3iv, fn)
+static void INLINE SET_Color3iv(struct _glapi_table *disp, void (GLAPIENTRYP fn)(const GLint *)) {
+   SET_by_offset(disp, _gloffset_Color3iv, fn);
+}
+
 #define CALL_Color3s(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLshort, GLshort, GLshort)), _gloffset_Color3s, parameters)
 #define GET_Color3s(disp) GET_by_offset(disp, _gloffset_Color3s)
-#define SET_Color3s(disp, fn) SET_by_offset(disp, _gloffset_Color3s, fn)
+static void INLINE SET_Color3s(struct _glapi_table *disp, void (GLAPIENTRYP fn)(GLshort, GLshort, GLshort)) {
+   SET_by_offset(disp, _gloffset_Color3s, fn);
+}
+
 #define CALL_Color3sv(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(const GLshort *)), _gloffset_Color3sv, parameters)
 #define GET_Color3sv(disp) GET_by_offset(disp, _gloffset_Color3sv)
-#define SET_Color3sv(disp, fn) SET_by_offset(disp, _gloffset_Color3sv, fn)
+static void INLINE SET_Color3sv(struct _glapi_table *disp, void (GLAPIENTRYP fn)(const GLshort *)) {
+   SET_by_offset(disp, _gloffset_Color3sv, fn);
+}
+
 #define CALL_Color3ub(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLubyte, GLubyte, GLubyte)), _gloffset_Color3ub, parameters)
 #define GET_Color3ub(disp) GET_by_offset(disp, _gloffset_Color3ub)
-#define SET_Color3ub(disp, fn) SET_by_offset(disp, _gloffset_Color3ub, fn)
+static void INLINE SET_Color3ub(struct _glapi_table *disp, void (GLAPIENTRYP fn)(GLubyte, GLubyte, GLubyte)) {
+   SET_by_offset(disp, _gloffset_Color3ub, fn);
+}
+
 #define CALL_Color3ubv(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(const GLubyte *)), _gloffset_Color3ubv, parameters)
 #define GET_Color3ubv(disp) GET_by_offset(disp, _gloffset_Color3ubv)
-#define SET_Color3ubv(disp, fn) SET_by_offset(disp, _gloffset_Color3ubv, fn)
+static void INLINE SET_Color3ubv(struct _glapi_table *disp, void (GLAPIENTRYP fn)(const GLubyte *)) {
+   SET_by_offset(disp, _gloffset_Color3ubv, fn);
+}
+
 #define CALL_Color3ui(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLuint, GLuint, GLuint)), _gloffset_Color3ui, parameters)
 #define GET_Color3ui(disp) GET_by_offset(disp, _gloffset_Color3ui)
-#define SET_Color3ui(disp, fn) SET_by_offset(disp, _gloffset_Color3ui, fn)
+static void INLINE SET_Color3ui(struct _glapi_table *disp, void (GLAPIENTRYP fn)(GLuint, GLuint, GLuint)) {
+   SET_by_offset(disp, _gloffset_Color3ui, fn);
+}
+
 #define CALL_Color3uiv(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(const GLuint *)), _gloffset_Color3uiv, parameters)
 #define GET_Color3uiv(disp) GET_by_offset(disp, _gloffset_Color3uiv)
-#define SET_Color3uiv(disp, fn) SET_by_offset(disp, _gloffset_Color3uiv, fn)
+static void INLINE SET_Color3uiv(struct _glapi_table *disp, void (GLAPIENTRYP fn)(const GLuint *)) {
+   SET_by_offset(disp, _gloffset_Color3uiv, fn);
+}
+
 #define CALL_Color3us(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLushort, GLushort, GLushort)), _gloffset_Color3us, parameters)
 #define GET_Color3us(disp) GET_by_offset(disp, _gloffset_Color3us)
-#define SET_Color3us(disp, fn) SET_by_offset(disp, _gloffset_Color3us, fn)
+static void INLINE SET_Color3us(struct _glapi_table *disp, void (GLAPIENTRYP fn)(GLushort, GLushort, GLushort)) {
+   SET_by_offset(disp, _gloffset_Color3us, fn);
+}
+
 #define CALL_Color3usv(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(const GLushort *)), _gloffset_Color3usv, parameters)
 #define GET_Color3usv(disp) GET_by_offset(disp, _gloffset_Color3usv)
-#define SET_Color3usv(disp, fn) SET_by_offset(disp, _gloffset_Color3usv, fn)
+static void INLINE SET_Color3usv(struct _glapi_table *disp, void (GLAPIENTRYP fn)(const GLushort *)) {
+   SET_by_offset(disp, _gloffset_Color3usv, fn);
+}
+
 #define CALL_Color4b(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLbyte, GLbyte, GLbyte, GLbyte)), _gloffset_Color4b, parameters)
 #define GET_Color4b(disp) GET_by_offset(disp, _gloffset_Color4b)
-#define SET_Color4b(disp, fn) SET_by_offset(disp, _gloffset_Color4b, fn)
+static void INLINE SET_Color4b(struct _glapi_table *disp, void (GLAPIENTRYP fn)(GLbyte, GLbyte, GLbyte, GLbyte)) {
+   SET_by_offset(disp, _gloffset_Color4b, fn);
+}
+
 #define CALL_Color4bv(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(const GLbyte *)), _gloffset_Color4bv, parameters)
 #define GET_Color4bv(disp) GET_by_offset(disp, _gloffset_Color4bv)
-#define SET_Color4bv(disp, fn) SET_by_offset(disp, _gloffset_Color4bv, fn)
+static void INLINE SET_Color4bv(struct _glapi_table *disp, void (GLAPIENTRYP fn)(const GLbyte *)) {
+   SET_by_offset(disp, _gloffset_Color4bv, fn);
+}
+
 #define CALL_Color4d(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLdouble, GLdouble, GLdouble, GLdouble)), _gloffset_Color4d, parameters)
 #define GET_Color4d(disp) GET_by_offset(disp, _gloffset_Color4d)
-#define SET_Color4d(disp, fn) SET_by_offset(disp, _gloffset_Color4d, fn)
+static void INLINE SET_Color4d(struct _glapi_table *disp, void (GLAPIENTRYP fn)(GLdouble, GLdouble, GLdouble, GLdouble)) {
+   SET_by_offset(disp, _gloffset_Color4d, fn);
+}
+
 #define CALL_Color4dv(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(const GLdouble *)), _gloffset_Color4dv, parameters)
 #define GET_Color4dv(disp) GET_by_offset(disp, _gloffset_Color4dv)
-#define SET_Color4dv(disp, fn) SET_by_offset(disp, _gloffset_Color4dv, fn)
+static void INLINE SET_Color4dv(struct _glapi_table *disp, void (GLAPIENTRYP fn)(const GLdouble *)) {
+   SET_by_offset(disp, _gloffset_Color4dv, fn);
+}
+
 #define CALL_Color4f(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLfloat, GLfloat, GLfloat, GLfloat)), _gloffset_Color4f, parameters)
 #define GET_Color4f(disp) GET_by_offset(disp, _gloffset_Color4f)
-#define SET_Color4f(disp, fn) SET_by_offset(disp, _gloffset_Color4f, fn)
+static void INLINE SET_Color4f(struct _glapi_table *disp, void (GLAPIENTRYP fn)(GLfloat, GLfloat, GLfloat, GLfloat)) {
+   SET_by_offset(disp, _gloffset_Color4f, fn);
+}
+
 #define CALL_Color4fv(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(const GLfloat *)), _gloffset_Color4fv, parameters)
 #define GET_Color4fv(disp) GET_by_offset(disp, _gloffset_Color4fv)
-#define SET_Color4fv(disp, fn) SET_by_offset(disp, _gloffset_Color4fv, fn)
+static void INLINE SET_Color4fv(struct _glapi_table *disp, void (GLAPIENTRYP fn)(const GLfloat *)) {
+   SET_by_offset(disp, _gloffset_Color4fv, fn);
+}
+
 #define CALL_Color4i(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLint, GLint, GLint, GLint)), _gloffset_Color4i, parameters)
 #define GET_Color4i(disp) GET_by_offset(disp, _gloffset_Color4i)
-#define SET_Color4i(disp, fn) SET_by_offset(disp, _gloffset_Color4i, fn)
+static void INLINE SET_Color4i(struct _glapi_table *disp, void (GLAPIENTRYP fn)(GLint, GLint, GLint, GLint)) {
+   SET_by_offset(disp, _gloffset_Color4i, fn);
+}
+
 #define CALL_Color4iv(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(const GLint *)), _gloffset_Color4iv, parameters)
 #define GET_Color4iv(disp) GET_by_offset(disp, _gloffset_Color4iv)
-#define SET_Color4iv(disp, fn) SET_by_offset(disp, _gloffset_Color4iv, fn)
+static void INLINE SET_Color4iv(struct _glapi_table *disp, void (GLAPIENTRYP fn)(const GLint *)) {
+   SET_by_offset(disp, _gloffset_Color4iv, fn);
+}
+
 #define CALL_Color4s(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLshort, GLshort, GLshort, GLshort)), _gloffset_Color4s, parameters)
 #define GET_Color4s(disp) GET_by_offset(disp, _gloffset_Color4s)
-#define SET_Color4s(disp, fn) SET_by_offset(disp, _gloffset_Color4s, fn)
+static void INLINE SET_Color4s(struct _glapi_table *disp, void (GLAPIENTRYP fn)(GLshort, GLshort, GLshort, GLshort)) {
+   SET_by_offset(disp, _gloffset_Color4s, fn);
+}
+
 #define CALL_Color4sv(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(const GLshort *)), _gloffset_Color4sv, parameters)
 #define GET_Color4sv(disp) GET_by_offset(disp, _gloffset_Color4sv)
-#define SET_Color4sv(disp, fn) SET_by_offset(disp, _gloffset_Color4sv, fn)
+static void INLINE SET_Color4sv(struct _glapi_table *disp, void (GLAPIENTRYP fn)(const GLshort *)) {
+   SET_by_offset(disp, _gloffset_Color4sv, fn);
+}
+
 #define CALL_Color4ub(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLubyte, GLubyte, GLubyte, GLubyte)), _gloffset_Color4ub, parameters)
 #define GET_Color4ub(disp) GET_by_offset(disp, _gloffset_Color4ub)
-#define SET_Color4ub(disp, fn) SET_by_offset(disp, _gloffset_Color4ub, fn)
+static void INLINE SET_Color4ub(struct _glapi_table *disp, void (GLAPIENTRYP fn)(GLubyte, GLubyte, GLubyte, GLubyte)) {
+   SET_by_offset(disp, _gloffset_Color4ub, fn);
+}
+
 #define CALL_Color4ubv(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(const GLubyte *)), _gloffset_Color4ubv, parameters)
 #define GET_Color4ubv(disp) GET_by_offset(disp, _gloffset_Color4ubv)
-#define SET_Color4ubv(disp, fn) SET_by_offset(disp, _gloffset_Color4ubv, fn)
+static void INLINE SET_Color4ubv(struct _glapi_table *disp, void (GLAPIENTRYP fn)(const GLubyte *)) {
+   SET_by_offset(disp, _gloffset_Color4ubv, fn);
+}
+
 #define CALL_Color4ui(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLuint, GLuint, GLuint, GLuint)), _gloffset_Color4ui, parameters)
 #define GET_Color4ui(disp) GET_by_offset(disp, _gloffset_Color4ui)
-#define SET_Color4ui(disp, fn) SET_by_offset(disp, _gloffset_Color4ui, fn)
+static void INLINE SET_Color4ui(struct _glapi_table *disp, void (GLAPIENTRYP fn)(GLuint, GLuint, GLuint, GLuint)) {
+   SET_by_offset(disp, _gloffset_Color4ui, fn);
+}
+
 #define CALL_Color4uiv(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(const GLuint *)), _gloffset_Color4uiv, parameters)
 #define GET_Color4uiv(disp) GET_by_offset(disp, _gloffset_Color4uiv)
-#define SET_Color4uiv(disp, fn) SET_by_offset(disp, _gloffset_Color4uiv, fn)
+static void INLINE SET_Color4uiv(struct _glapi_table *disp, void (GLAPIENTRYP fn)(const GLuint *)) {
+   SET_by_offset(disp, _gloffset_Color4uiv, fn);
+}
+
 #define CALL_Color4us(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLushort, GLushort, GLushort, GLushort)), _gloffset_Color4us, parameters)
 #define GET_Color4us(disp) GET_by_offset(disp, _gloffset_Color4us)
-#define SET_Color4us(disp, fn) SET_by_offset(disp, _gloffset_Color4us, fn)
+static void INLINE SET_Color4us(struct _glapi_table *disp, void (GLAPIENTRYP fn)(GLushort, GLushort, GLushort, GLushort)) {
+   SET_by_offset(disp, _gloffset_Color4us, fn);
+}
+
 #define CALL_Color4usv(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(const GLushort *)), _gloffset_Color4usv, parameters)
 #define GET_Color4usv(disp) GET_by_offset(disp, _gloffset_Color4usv)
-#define SET_Color4usv(disp, fn) SET_by_offset(disp, _gloffset_Color4usv, fn)
+static void INLINE SET_Color4usv(struct _glapi_table *disp, void (GLAPIENTRYP fn)(const GLushort *)) {
+   SET_by_offset(disp, _gloffset_Color4usv, fn);
+}
+
 #define CALL_EdgeFlag(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLboolean)), _gloffset_EdgeFlag, parameters)
 #define GET_EdgeFlag(disp) GET_by_offset(disp, _gloffset_EdgeFlag)
-#define SET_EdgeFlag(disp, fn) SET_by_offset(disp, _gloffset_EdgeFlag, fn)
+static void INLINE SET_EdgeFlag(struct _glapi_table *disp, void (GLAPIENTRYP fn)(GLboolean)) {
+   SET_by_offset(disp, _gloffset_EdgeFlag, fn);
+}
+
 #define CALL_EdgeFlagv(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(const GLboolean *)), _gloffset_EdgeFlagv, parameters)
 #define GET_EdgeFlagv(disp) GET_by_offset(disp, _gloffset_EdgeFlagv)
-#define SET_EdgeFlagv(disp, fn) SET_by_offset(disp, _gloffset_EdgeFlagv, fn)
+static void INLINE SET_EdgeFlagv(struct _glapi_table *disp, void (GLAPIENTRYP fn)(const GLboolean *)) {
+   SET_by_offset(disp, _gloffset_EdgeFlagv, fn);
+}
+
 #define CALL_End(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(void)), _gloffset_End, parameters)
 #define GET_End(disp) GET_by_offset(disp, _gloffset_End)
-#define SET_End(disp, fn) SET_by_offset(disp, _gloffset_End, fn)
+static void INLINE SET_End(struct _glapi_table *disp, void (GLAPIENTRYP fn)(void)) {
+   SET_by_offset(disp, _gloffset_End, fn);
+}
+
 #define CALL_Indexd(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLdouble)), _gloffset_Indexd, parameters)
 #define GET_Indexd(disp) GET_by_offset(disp, _gloffset_Indexd)
-#define SET_Indexd(disp, fn) SET_by_offset(disp, _gloffset_Indexd, fn)
+static void INLINE SET_Indexd(struct _glapi_table *disp, void (GLAPIENTRYP fn)(GLdouble)) {
+   SET_by_offset(disp, _gloffset_Indexd, fn);
+}
+
 #define CALL_Indexdv(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(const GLdouble *)), _gloffset_Indexdv, parameters)
 #define GET_Indexdv(disp) GET_by_offset(disp, _gloffset_Indexdv)
-#define SET_Indexdv(disp, fn) SET_by_offset(disp, _gloffset_Indexdv, fn)
+static void INLINE SET_Indexdv(struct _glapi_table *disp, void (GLAPIENTRYP fn)(const GLdouble *)) {
+   SET_by_offset(disp, _gloffset_Indexdv, fn);
+}
+
 #define CALL_Indexf(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLfloat)), _gloffset_Indexf, parameters)
 #define GET_Indexf(disp) GET_by_offset(disp, _gloffset_Indexf)
-#define SET_Indexf(disp, fn) SET_by_offset(disp, _gloffset_Indexf, fn)
+static void INLINE SET_Indexf(struct _glapi_table *disp, void (GLAPIENTRYP fn)(GLfloat)) {
+   SET_by_offset(disp, _gloffset_Indexf, fn);
+}
+
 #define CALL_Indexfv(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(const GLfloat *)), _gloffset_Indexfv, parameters)
 #define GET_Indexfv(disp) GET_by_offset(disp, _gloffset_Indexfv)
-#define SET_Indexfv(disp, fn) SET_by_offset(disp, _gloffset_Indexfv, fn)
+static void INLINE SET_Indexfv(struct _glapi_table *disp, void (GLAPIENTRYP fn)(const GLfloat *)) {
+   SET_by_offset(disp, _gloffset_Indexfv, fn);
+}
+
 #define CALL_Indexi(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLint)), _gloffset_Indexi, parameters)
 #define GET_Indexi(disp) GET_by_offset(disp, _gloffset_Indexi)
-#define SET_Indexi(disp, fn) SET_by_offset(disp, _gloffset_Indexi, fn)
+static void INLINE SET_Indexi(struct _glapi_table *disp, void (GLAPIENTRYP fn)(GLint)) {
+   SET_by_offset(disp, _gloffset_Indexi, fn);
+}
+
 #define CALL_Indexiv(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(const GLint *)), _gloffset_Indexiv, parameters)
 #define GET_Indexiv(disp) GET_by_offset(disp, _gloffset_Indexiv)
-#define SET_Indexiv(disp, fn) SET_by_offset(disp, _gloffset_Indexiv, fn)
+static void INLINE SET_Indexiv(struct _glapi_table *disp, void (GLAPIENTRYP fn)(const GLint *)) {
+   SET_by_offset(disp, _gloffset_Indexiv, fn);
+}
+
 #define CALL_Indexs(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLshort)), _gloffset_Indexs, parameters)
 #define GET_Indexs(disp) GET_by_offset(disp, _gloffset_Indexs)
-#define SET_Indexs(disp, fn) SET_by_offset(disp, _gloffset_Indexs, fn)
+static void INLINE SET_Indexs(struct _glapi_table *disp, void (GLAPIENTRYP fn)(GLshort)) {
+   SET_by_offset(disp, _gloffset_Indexs, fn);
+}
+
 #define CALL_Indexsv(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(const GLshort *)), _gloffset_Indexsv, parameters)
 #define GET_Indexsv(disp) GET_by_offset(disp, _gloffset_Indexsv)
-#define SET_Indexsv(disp, fn) SET_by_offset(disp, _gloffset_Indexsv, fn)
+static void INLINE SET_Indexsv(struct _glapi_table *disp, void (GLAPIENTRYP fn)(const GLshort *)) {
+   SET_by_offset(disp, _gloffset_Indexsv, fn);
+}
+
 #define CALL_Normal3b(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLbyte, GLbyte, GLbyte)), _gloffset_Normal3b, parameters)
 #define GET_Normal3b(disp) GET_by_offset(disp, _gloffset_Normal3b)
-#define SET_Normal3b(disp, fn) SET_by_offset(disp, _gloffset_Normal3b, fn)
+static void INLINE SET_Normal3b(struct _glapi_table *disp, void (GLAPIENTRYP fn)(GLbyte, GLbyte, GLbyte)) {
+   SET_by_offset(disp, _gloffset_Normal3b, fn);
+}
+
 #define CALL_Normal3bv(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(const GLbyte *)), _gloffset_Normal3bv, parameters)
 #define GET_Normal3bv(disp) GET_by_offset(disp, _gloffset_Normal3bv)
-#define SET_Normal3bv(disp, fn) SET_by_offset(disp, _gloffset_Normal3bv, fn)
+static void INLINE SET_Normal3bv(struct _glapi_table *disp, void (GLAPIENTRYP fn)(const GLbyte *)) {
+   SET_by_offset(disp, _gloffset_Normal3bv, fn);
+}
+
 #define CALL_Normal3d(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLdouble, GLdouble, GLdouble)), _gloffset_Normal3d, parameters)
 #define GET_Normal3d(disp) GET_by_offset(disp, _gloffset_Normal3d)
-#define SET_Normal3d(disp, fn) SET_by_offset(disp, _gloffset_Normal3d, fn)
+static void INLINE SET_Normal3d(struct _glapi_table *disp, void (GLAPIENTRYP fn)(GLdouble, GLdouble, GLdouble)) {
+   SET_by_offset(disp, _gloffset_Normal3d, fn);
+}
+
 #define CALL_Normal3dv(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(const GLdouble *)), _gloffset_Normal3dv, parameters)
 #define GET_Normal3dv(disp) GET_by_offset(disp, _gloffset_Normal3dv)
-#define SET_Normal3dv(disp, fn) SET_by_offset(disp, _gloffset_Normal3dv, fn)
+static void INLINE SET_Normal3dv(struct _glapi_table *disp, void (GLAPIENTRYP fn)(const GLdouble *)) {
+   SET_by_offset(disp, _gloffset_Normal3dv, fn);
+}
+
 #define CALL_Normal3f(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLfloat, GLfloat, GLfloat)), _gloffset_Normal3f, parameters)
 #define GET_Normal3f(disp) GET_by_offset(disp, _gloffset_Normal3f)
-#define SET_Normal3f(disp, fn) SET_by_offset(disp, _gloffset_Normal3f, fn)
+static void INLINE SET_Normal3f(struct _glapi_table *disp, void (GLAPIENTRYP fn)(GLfloat, GLfloat, GLfloat)) {
+   SET_by_offset(disp, _gloffset_Normal3f, fn);
+}
+
 #define CALL_Normal3fv(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(const GLfloat *)), _gloffset_Normal3fv, parameters)
 #define GET_Normal3fv(disp) GET_by_offset(disp, _gloffset_Normal3fv)
-#define SET_Normal3fv(disp, fn) SET_by_offset(disp, _gloffset_Normal3fv, fn)
+static void INLINE SET_Normal3fv(struct _glapi_table *disp, void (GLAPIENTRYP fn)(const GLfloat *)) {
+   SET_by_offset(disp, _gloffset_Normal3fv, fn);
+}
+
 #define CALL_Normal3i(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLint, GLint, GLint)), _gloffset_Normal3i, parameters)
 #define GET_Normal3i(disp) GET_by_offset(disp, _gloffset_Normal3i)
-#define SET_Normal3i(disp, fn) SET_by_offset(disp, _gloffset_Normal3i, fn)
+static void INLINE SET_Normal3i(struct _glapi_table *disp, void (GLAPIENTRYP fn)(GLint, GLint, GLint)) {
+   SET_by_offset(disp, _gloffset_Normal3i, fn);
+}
+
 #define CALL_Normal3iv(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(const GLint *)), _gloffset_Normal3iv, parameters)
 #define GET_Normal3iv(disp) GET_by_offset(disp, _gloffset_Normal3iv)
-#define SET_Normal3iv(disp, fn) SET_by_offset(disp, _gloffset_Normal3iv, fn)
+static void INLINE SET_Normal3iv(struct _glapi_table *disp, void (GLAPIENTRYP fn)(const GLint *)) {
+   SET_by_offset(disp, _gloffset_Normal3iv, fn);
+}
+
 #define CALL_Normal3s(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLshort, GLshort, GLshort)), _gloffset_Normal3s, parameters)
 #define GET_Normal3s(disp) GET_by_offset(disp, _gloffset_Normal3s)
-#define SET_Normal3s(disp, fn) SET_by_offset(disp, _gloffset_Normal3s, fn)
+static void INLINE SET_Normal3s(struct _glapi_table *disp, void (GLAPIENTRYP fn)(GLshort, GLshort, GLshort)) {
+   SET_by_offset(disp, _gloffset_Normal3s, fn);
+}
+
 #define CALL_Normal3sv(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(const GLshort *)), _gloffset_Normal3sv, parameters)
 #define GET_Normal3sv(disp) GET_by_offset(disp, _gloffset_Normal3sv)
-#define SET_Normal3sv(disp, fn) SET_by_offset(disp, _gloffset_Normal3sv, fn)
+static void INLINE SET_Normal3sv(struct _glapi_table *disp, void (GLAPIENTRYP fn)(const GLshort *)) {
+   SET_by_offset(disp, _gloffset_Normal3sv, fn);
+}
+
 #define CALL_RasterPos2d(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLdouble, GLdouble)), _gloffset_RasterPos2d, parameters)
 #define GET_RasterPos2d(disp) GET_by_offset(disp, _gloffset_RasterPos2d)
-#define SET_RasterPos2d(disp, fn) SET_by_offset(disp, _gloffset_RasterPos2d, fn)
+static void INLINE SET_RasterPos2d(struct _glapi_table *disp, void (GLAPIENTRYP fn)(GLdouble, GLdouble)) {
+   SET_by_offset(disp, _gloffset_RasterPos2d, fn);
+}
+
 #define CALL_RasterPos2dv(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(const GLdouble *)), _gloffset_RasterPos2dv, parameters)
 #define GET_RasterPos2dv(disp) GET_by_offset(disp, _gloffset_RasterPos2dv)
-#define SET_RasterPos2dv(disp, fn) SET_by_offset(disp, _gloffset_RasterPos2dv, fn)
+static void INLINE SET_RasterPos2dv(struct _glapi_table *disp, void (GLAPIENTRYP fn)(const GLdouble *)) {
+   SET_by_offset(disp, _gloffset_RasterPos2dv, fn);
+}
+
 #define CALL_RasterPos2f(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLfloat, GLfloat)), _gloffset_RasterPos2f, parameters)
 #define GET_RasterPos2f(disp) GET_by_offset(disp, _gloffset_RasterPos2f)
-#define SET_RasterPos2f(disp, fn) SET_by_offset(disp, _gloffset_RasterPos2f, fn)
+static void INLINE SET_RasterPos2f(struct _glapi_table *disp, void (GLAPIENTRYP fn)(GLfloat, GLfloat)) {
+   SET_by_offset(disp, _gloffset_RasterPos2f, fn);
+}
+
 #define CALL_RasterPos2fv(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(const GLfloat *)), _gloffset_RasterPos2fv, parameters)
 #define GET_RasterPos2fv(disp) GET_by_offset(disp, _gloffset_RasterPos2fv)
-#define SET_RasterPos2fv(disp, fn) SET_by_offset(disp, _gloffset_RasterPos2fv, fn)
+static void INLINE SET_RasterPos2fv(struct _glapi_table *disp, void (GLAPIENTRYP fn)(const GLfloat *)) {
+   SET_by_offset(disp, _gloffset_RasterPos2fv, fn);
+}
+
 #define CALL_RasterPos2i(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLint, GLint)), _gloffset_RasterPos2i, parameters)
 #define GET_RasterPos2i(disp) GET_by_offset(disp, _gloffset_RasterPos2i)
-#define SET_RasterPos2i(disp, fn) SET_by_offset(disp, _gloffset_RasterPos2i, fn)
+static void INLINE SET_RasterPos2i(struct _glapi_table *disp, void (GLAPIENTRYP fn)(GLint, GLint)) {
+   SET_by_offset(disp, _gloffset_RasterPos2i, fn);
+}
+
 #define CALL_RasterPos2iv(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(const GLint *)), _gloffset_RasterPos2iv, parameters)
 #define GET_RasterPos2iv(disp) GET_by_offset(disp, _gloffset_RasterPos2iv)
-#define SET_RasterPos2iv(disp, fn) SET_by_offset(disp, _gloffset_RasterPos2iv, fn)
+static void INLINE SET_RasterPos2iv(struct _glapi_table *disp, void (GLAPIENTRYP fn)(const GLint *)) {
+   SET_by_offset(disp, _gloffset_RasterPos2iv, fn);
+}
+
 #define CALL_RasterPos2s(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLshort, GLshort)), _gloffset_RasterPos2s, parameters)
 #define GET_RasterPos2s(disp) GET_by_offset(disp, _gloffset_RasterPos2s)
-#define SET_RasterPos2s(disp, fn) SET_by_offset(disp, _gloffset_RasterPos2s, fn)
+static void INLINE SET_RasterPos2s(struct _glapi_table *disp, void (GLAPIENTRYP fn)(GLshort, GLshort)) {
+   SET_by_offset(disp, _gloffset_RasterPos2s, fn);
+}
+
 #define CALL_RasterPos2sv(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(const GLshort *)), _gloffset_RasterPos2sv, parameters)
 #define GET_RasterPos2sv(disp) GET_by_offset(disp, _gloffset_RasterPos2sv)
-#define SET_RasterPos2sv(disp, fn) SET_by_offset(disp, _gloffset_RasterPos2sv, fn)
+static void INLINE SET_RasterPos2sv(struct _glapi_table *disp, void (GLAPIENTRYP fn)(const GLshort *)) {
+   SET_by_offset(disp, _gloffset_RasterPos2sv, fn);
+}
+
 #define CALL_RasterPos3d(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLdouble, GLdouble, GLdouble)), _gloffset_RasterPos3d, parameters)
 #define GET_RasterPos3d(disp) GET_by_offset(disp, _gloffset_RasterPos3d)
-#define SET_RasterPos3d(disp, fn) SET_by_offset(disp, _gloffset_RasterPos3d, fn)
+static void INLINE SET_RasterPos3d(struct _glapi_table *disp, void (GLAPIENTRYP fn)(GLdouble, GLdouble, GLdouble)) {
+   SET_by_offset(disp, _gloffset_RasterPos3d, fn);
+}
+
 #define CALL_RasterPos3dv(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(const GLdouble *)), _gloffset_RasterPos3dv, parameters)
 #define GET_RasterPos3dv(disp) GET_by_offset(disp, _gloffset_RasterPos3dv)
-#define SET_RasterPos3dv(disp, fn) SET_by_offset(disp, _gloffset_RasterPos3dv, fn)
+static void INLINE SET_RasterPos3dv(struct _glapi_table *disp, void (GLAPIENTRYP fn)(const GLdouble *)) {
+   SET_by_offset(disp, _gloffset_RasterPos3dv, fn);
+}
+
 #define CALL_RasterPos3f(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLfloat, GLfloat, GLfloat)), _gloffset_RasterPos3f, parameters)
 #define GET_RasterPos3f(disp) GET_by_offset(disp, _gloffset_RasterPos3f)
-#define SET_RasterPos3f(disp, fn) SET_by_offset(disp, _gloffset_RasterPos3f, fn)
+static void INLINE SET_RasterPos3f(struct _glapi_table *disp, void (GLAPIENTRYP fn)(GLfloat, GLfloat, GLfloat)) {
+   SET_by_offset(disp, _gloffset_RasterPos3f, fn);
+}
+
 #define CALL_RasterPos3fv(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(const GLfloat *)), _gloffset_RasterPos3fv, parameters)
 #define GET_RasterPos3fv(disp) GET_by_offset(disp, _gloffset_RasterPos3fv)
-#define SET_RasterPos3fv(disp, fn) SET_by_offset(disp, _gloffset_RasterPos3fv, fn)
+static void INLINE SET_RasterPos3fv(struct _glapi_table *disp, void (GLAPIENTRYP fn)(const GLfloat *)) {
+   SET_by_offset(disp, _gloffset_RasterPos3fv, fn);
+}
+
 #define CALL_RasterPos3i(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLint, GLint, GLint)), _gloffset_RasterPos3i, parameters)
 #define GET_RasterPos3i(disp) GET_by_offset(disp, _gloffset_RasterPos3i)
-#define SET_RasterPos3i(disp, fn) SET_by_offset(disp, _gloffset_RasterPos3i, fn)
+static void INLINE SET_RasterPos3i(struct _glapi_table *disp, void (GLAPIENTRYP fn)(GLint, GLint, GLint)) {
+   SET_by_offset(disp, _gloffset_RasterPos3i, fn);
+}
+
 #define CALL_RasterPos3iv(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(const GLint *)), _gloffset_RasterPos3iv, parameters)
 #define GET_RasterPos3iv(disp) GET_by_offset(disp, _gloffset_RasterPos3iv)
-#define SET_RasterPos3iv(disp, fn) SET_by_offset(disp, _gloffset_RasterPos3iv, fn)
+static void INLINE SET_RasterPos3iv(struct _glapi_table *disp, void (GLAPIENTRYP fn)(const GLint *)) {
+   SET_by_offset(disp, _gloffset_RasterPos3iv, fn);
+}
+
 #define CALL_RasterPos3s(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLshort, GLshort, GLshort)), _gloffset_RasterPos3s, parameters)
 #define GET_RasterPos3s(disp) GET_by_offset(disp, _gloffset_RasterPos3s)
-#define SET_RasterPos3s(disp, fn) SET_by_offset(disp, _gloffset_RasterPos3s, fn)
+static void INLINE SET_RasterPos3s(struct _glapi_table *disp, void (GLAPIENTRYP fn)(GLshort, GLshort, GLshort)) {
+   SET_by_offset(disp, _gloffset_RasterPos3s, fn);
+}
+
 #define CALL_RasterPos3sv(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(const GLshort *)), _gloffset_RasterPos3sv, parameters)
 #define GET_RasterPos3sv(disp) GET_by_offset(disp, _gloffset_RasterPos3sv)
-#define SET_RasterPos3sv(disp, fn) SET_by_offset(disp, _gloffset_RasterPos3sv, fn)
+static void INLINE SET_RasterPos3sv(struct _glapi_table *disp, void (GLAPIENTRYP fn)(const GLshort *)) {
+   SET_by_offset(disp, _gloffset_RasterPos3sv, fn);
+}
+
 #define CALL_RasterPos4d(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLdouble, GLdouble, GLdouble, GLdouble)), _gloffset_RasterPos4d, parameters)
 #define GET_RasterPos4d(disp) GET_by_offset(disp, _gloffset_RasterPos4d)
-#define SET_RasterPos4d(disp, fn) SET_by_offset(disp, _gloffset_RasterPos4d, fn)
+static void INLINE SET_RasterPos4d(struct _glapi_table *disp, void (GLAPIENTRYP fn)(GLdouble, GLdouble, GLdouble, GLdouble)) {
+   SET_by_offset(disp, _gloffset_RasterPos4d, fn);
+}
+
 #define CALL_RasterPos4dv(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(const GLdouble *)), _gloffset_RasterPos4dv, parameters)
 #define GET_RasterPos4dv(disp) GET_by_offset(disp, _gloffset_RasterPos4dv)
-#define SET_RasterPos4dv(disp, fn) SET_by_offset(disp, _gloffset_RasterPos4dv, fn)
+static void INLINE SET_RasterPos4dv(struct _glapi_table *disp, void (GLAPIENTRYP fn)(const GLdouble *)) {
+   SET_by_offset(disp, _gloffset_RasterPos4dv, fn);
+}
+
 #define CALL_RasterPos4f(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLfloat, GLfloat, GLfloat, GLfloat)), _gloffset_RasterPos4f, parameters)
 #define GET_RasterPos4f(disp) GET_by_offset(disp, _gloffset_RasterPos4f)
-#define SET_RasterPos4f(disp, fn) SET_by_offset(disp, _gloffset_RasterPos4f, fn)
+static void INLINE SET_RasterPos4f(struct _glapi_table *disp, void (GLAPIENTRYP fn)(GLfloat, GLfloat, GLfloat, GLfloat)) {
+   SET_by_offset(disp, _gloffset_RasterPos4f, fn);
+}
+
 #define CALL_RasterPos4fv(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(const GLfloat *)), _gloffset_RasterPos4fv, parameters)
 #define GET_RasterPos4fv(disp) GET_by_offset(disp, _gloffset_RasterPos4fv)
-#define SET_RasterPos4fv(disp, fn) SET_by_offset(disp, _gloffset_RasterPos4fv, fn)
+static void INLINE SET_RasterPos4fv(struct _glapi_table *disp, void (GLAPIENTRYP fn)(const GLfloat *)) {
+   SET_by_offset(disp, _gloffset_RasterPos4fv, fn);
+}
+
 #define CALL_RasterPos4i(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLint, GLint, GLint, GLint)), _gloffset_RasterPos4i, parameters)
 #define GET_RasterPos4i(disp) GET_by_offset(disp, _gloffset_RasterPos4i)
-#define SET_RasterPos4i(disp, fn) SET_by_offset(disp, _gloffset_RasterPos4i, fn)
+static void INLINE SET_RasterPos4i(struct _glapi_table *disp, void (GLAPIENTRYP fn)(GLint, GLint, GLint, GLint)) {
+   SET_by_offset(disp, _gloffset_RasterPos4i, fn);
+}
+
 #define CALL_RasterPos4iv(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(const GLint *)), _gloffset_RasterPos4iv, parameters)
 #define GET_RasterPos4iv(disp) GET_by_offset(disp, _gloffset_RasterPos4iv)
-#define SET_RasterPos4iv(disp, fn) SET_by_offset(disp, _gloffset_RasterPos4iv, fn)
+static void INLINE SET_RasterPos4iv(struct _glapi_table *disp, void (GLAPIENTRYP fn)(const GLint *)) {
+   SET_by_offset(disp, _gloffset_RasterPos4iv, fn);
+}
+
 #define CALL_RasterPos4s(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLshort, GLshort, GLshort, GLshort)), _gloffset_RasterPos4s, parameters)
 #define GET_RasterPos4s(disp) GET_by_offset(disp, _gloffset_RasterPos4s)
-#define SET_RasterPos4s(disp, fn) SET_by_offset(disp, _gloffset_RasterPos4s, fn)
+static void INLINE SET_RasterPos4s(struct _glapi_table *disp, void (GLAPIENTRYP fn)(GLshort, GLshort, GLshort, GLshort)) {
+   SET_by_offset(disp, _gloffset_RasterPos4s, fn);
+}
+
 #define CALL_RasterPos4sv(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(const GLshort *)), _gloffset_RasterPos4sv, parameters)
 #define GET_RasterPos4sv(disp) GET_by_offset(disp, _gloffset_RasterPos4sv)
-#define SET_RasterPos4sv(disp, fn) SET_by_offset(disp, _gloffset_RasterPos4sv, fn)
+static void INLINE SET_RasterPos4sv(struct _glapi_table *disp, void (GLAPIENTRYP fn)(const GLshort *)) {
+   SET_by_offset(disp, _gloffset_RasterPos4sv, fn);
+}
+
 #define CALL_Rectd(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLdouble, GLdouble, GLdouble, GLdouble)), _gloffset_Rectd, parameters)
 #define GET_Rectd(disp) GET_by_offset(disp, _gloffset_Rectd)
-#define SET_Rectd(disp, fn) SET_by_offset(disp, _gloffset_Rectd, fn)
+static void INLINE SET_Rectd(struct _glapi_table *disp, void (GLAPIENTRYP fn)(GLdouble, GLdouble, GLdouble, GLdouble)) {
+   SET_by_offset(disp, _gloffset_Rectd, fn);
+}
+
 #define CALL_Rectdv(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(const GLdouble *, const GLdouble *)), _gloffset_Rectdv, parameters)
 #define GET_Rectdv(disp) GET_by_offset(disp, _gloffset_Rectdv)
-#define SET_Rectdv(disp, fn) SET_by_offset(disp, _gloffset_Rectdv, fn)
+static void INLINE SET_Rectdv(struct _glapi_table *disp, void (GLAPIENTRYP fn)(const GLdouble *, const GLdouble *)) {
+   SET_by_offset(disp, _gloffset_Rectdv, fn);
+}
+
 #define CALL_Rectf(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLfloat, GLfloat, GLfloat, GLfloat)), _gloffset_Rectf, parameters)
 #define GET_Rectf(disp) GET_by_offset(disp, _gloffset_Rectf)
-#define SET_Rectf(disp, fn) SET_by_offset(disp, _gloffset_Rectf, fn)
+static void INLINE SET_Rectf(struct _glapi_table *disp, void (GLAPIENTRYP fn)(GLfloat, GLfloat, GLfloat, GLfloat)) {
+   SET_by_offset(disp, _gloffset_Rectf, fn);
+}
+
 #define CALL_Rectfv(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(const GLfloat *, const GLfloat *)), _gloffset_Rectfv, parameters)
 #define GET_Rectfv(disp) GET_by_offset(disp, _gloffset_Rectfv)
-#define SET_Rectfv(disp, fn) SET_by_offset(disp, _gloffset_Rectfv, fn)
+static void INLINE SET_Rectfv(struct _glapi_table *disp, void (GLAPIENTRYP fn)(const GLfloat *, const GLfloat *)) {
+   SET_by_offset(disp, _gloffset_Rectfv, fn);
+}
+
 #define CALL_Recti(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLint, GLint, GLint, GLint)), _gloffset_Recti, parameters)
 #define GET_Recti(disp) GET_by_offset(disp, _gloffset_Recti)
-#define SET_Recti(disp, fn) SET_by_offset(disp, _gloffset_Recti, fn)
+static void INLINE SET_Recti(struct _glapi_table *disp, void (GLAPIENTRYP fn)(GLint, GLint, GLint, GLint)) {
+   SET_by_offset(disp, _gloffset_Recti, fn);
+}
+
 #define CALL_Rectiv(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(const GLint *, const GLint *)), _gloffset_Rectiv, parameters)
 #define GET_Rectiv(disp) GET_by_offset(disp, _gloffset_Rectiv)
-#define SET_Rectiv(disp, fn) SET_by_offset(disp, _gloffset_Rectiv, fn)
+static void INLINE SET_Rectiv(struct _glapi_table *disp, void (GLAPIENTRYP fn)(const GLint *, const GLint *)) {
+   SET_by_offset(disp, _gloffset_Rectiv, fn);
+}
+
 #define CALL_Rects(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLshort, GLshort, GLshort, GLshort)), _gloffset_Rects, parameters)
 #define GET_Rects(disp) GET_by_offset(disp, _gloffset_Rects)
-#define SET_Rects(disp, fn) SET_by_offset(disp, _gloffset_Rects, fn)
+static void INLINE SET_Rects(struct _glapi_table *disp, void (GLAPIENTRYP fn)(GLshort, GLshort, GLshort, GLshort)) {
+   SET_by_offset(disp, _gloffset_Rects, fn);
+}
+
 #define CALL_Rectsv(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(const GLshort *, const GLshort *)), _gloffset_Rectsv, parameters)
 #define GET_Rectsv(disp) GET_by_offset(disp, _gloffset_Rectsv)
-#define SET_Rectsv(disp, fn) SET_by_offset(disp, _gloffset_Rectsv, fn)
+static void INLINE SET_Rectsv(struct _glapi_table *disp, void (GLAPIENTRYP fn)(const GLshort *, const GLshort *)) {
+   SET_by_offset(disp, _gloffset_Rectsv, fn);
+}
+
 #define CALL_TexCoord1d(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLdouble)), _gloffset_TexCoord1d, parameters)
 #define GET_TexCoord1d(disp) GET_by_offset(disp, _gloffset_TexCoord1d)
-#define SET_TexCoord1d(disp, fn) SET_by_offset(disp, _gloffset_TexCoord1d, fn)
+static void INLINE SET_TexCoord1d(struct _glapi_table *disp, void (GLAPIENTRYP fn)(GLdouble)) {
+   SET_by_offset(disp, _gloffset_TexCoord1d, fn);
+}
+
 #define CALL_TexCoord1dv(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(const GLdouble *)), _gloffset_TexCoord1dv, parameters)
 #define GET_TexCoord1dv(disp) GET_by_offset(disp, _gloffset_TexCoord1dv)
-#define SET_TexCoord1dv(disp, fn) SET_by_offset(disp, _gloffset_TexCoord1dv, fn)
+static void INLINE SET_TexCoord1dv(struct _glapi_table *disp, void (GLAPIENTRYP fn)(const GLdouble *)) {
+   SET_by_offset(disp, _gloffset_TexCoord1dv, fn);
+}
+
 #define CALL_TexCoord1f(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLfloat)), _gloffset_TexCoord1f, parameters)
 #define GET_TexCoord1f(disp) GET_by_offset(disp, _gloffset_TexCoord1f)
-#define SET_TexCoord1f(disp, fn) SET_by_offset(disp, _gloffset_TexCoord1f, fn)
+static void INLINE SET_TexCoord1f(struct _glapi_table *disp, void (GLAPIENTRYP fn)(GLfloat)) {
+   SET_by_offset(disp, _gloffset_TexCoord1f, fn);
+}
+
 #define CALL_TexCoord1fv(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(const GLfloat *)), _gloffset_TexCoord1fv, parameters)
 #define GET_TexCoord1fv(disp) GET_by_offset(disp, _gloffset_TexCoord1fv)
-#define SET_TexCoord1fv(disp, fn) SET_by_offset(disp, _gloffset_TexCoord1fv, fn)
+static void INLINE SET_TexCoord1fv(struct _glapi_table *disp, void (GLAPIENTRYP fn)(const GLfloat *)) {
+   SET_by_offset(disp, _gloffset_TexCoord1fv, fn);
+}
+
 #define CALL_TexCoord1i(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLint)), _gloffset_TexCoord1i, parameters)
 #define GET_TexCoord1i(disp) GET_by_offset(disp, _gloffset_TexCoord1i)
-#define SET_TexCoord1i(disp, fn) SET_by_offset(disp, _gloffset_TexCoord1i, fn)
+static void INLINE SET_TexCoord1i(struct _glapi_table *disp, void (GLAPIENTRYP fn)(GLint)) {
+   SET_by_offset(disp, _gloffset_TexCoord1i, fn);
+}
+
 #define CALL_TexCoord1iv(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(const GLint *)), _gloffset_TexCoord1iv, parameters)
 #define GET_TexCoord1iv(disp) GET_by_offset(disp, _gloffset_TexCoord1iv)
-#define SET_TexCoord1iv(disp, fn) SET_by_offset(disp, _gloffset_TexCoord1iv, fn)
+static void INLINE SET_TexCoord1iv(struct _glapi_table *disp, void (GLAPIENTRYP fn)(const GLint *)) {
+   SET_by_offset(disp, _gloffset_TexCoord1iv, fn);
+}
+
 #define CALL_TexCoord1s(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLshort)), _gloffset_TexCoord1s, parameters)
 #define GET_TexCoord1s(disp) GET_by_offset(disp, _gloffset_TexCoord1s)
-#define SET_TexCoord1s(disp, fn) SET_by_offset(disp, _gloffset_TexCoord1s, fn)
+static void INLINE SET_TexCoord1s(struct _glapi_table *disp, void (GLAPIENTRYP fn)(GLshort)) {
+   SET_by_offset(disp, _gloffset_TexCoord1s, fn);
+}
+
 #define CALL_TexCoord1sv(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(const GLshort *)), _gloffset_TexCoord1sv, parameters)
 #define GET_TexCoord1sv(disp) GET_by_offset(disp, _gloffset_TexCoord1sv)
-#define SET_TexCoord1sv(disp, fn) SET_by_offset(disp, _gloffset_TexCoord1sv, fn)
+static void INLINE SET_TexCoord1sv(struct _glapi_table *disp, void (GLAPIENTRYP fn)(const GLshort *)) {
+   SET_by_offset(disp, _gloffset_TexCoord1sv, fn);
+}
+
 #define CALL_TexCoord2d(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLdouble, GLdouble)), _gloffset_TexCoord2d, parameters)
 #define GET_TexCoord2d(disp) GET_by_offset(disp, _gloffset_TexCoord2d)
-#define SET_TexCoord2d(disp, fn) SET_by_offset(disp, _gloffset_TexCoord2d, fn)
+static void INLINE SET_TexCoord2d(struct _glapi_table *disp, void (GLAPIENTRYP fn)(GLdouble, GLdouble)) {
+   SET_by_offset(disp, _gloffset_TexCoord2d, fn);
+}
+
 #define CALL_TexCoord2dv(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(const GLdouble *)), _gloffset_TexCoord2dv, parameters)
 #define GET_TexCoord2dv(disp) GET_by_offset(disp, _gloffset_TexCoord2dv)
-#define SET_TexCoord2dv(disp, fn) SET_by_offset(disp, _gloffset_TexCoord2dv, fn)
+static void INLINE SET_TexCoord2dv(struct _glapi_table *disp, void (GLAPIENTRYP fn)(const GLdouble *)) {
+   SET_by_offset(disp, _gloffset_TexCoord2dv, fn);
+}
+
 #define CALL_TexCoord2f(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLfloat, GLfloat)), _gloffset_TexCoord2f, parameters)
 #define GET_TexCoord2f(disp) GET_by_offset(disp, _gloffset_TexCoord2f)
-#define SET_TexCoord2f(disp, fn) SET_by_offset(disp, _gloffset_TexCoord2f, fn)
+static void INLINE SET_TexCoord2f(struct _glapi_table *disp, void (GLAPIENTRYP fn)(GLfloat, GLfloat)) {
+   SET_by_offset(disp, _gloffset_TexCoord2f, fn);
+}
+
 #define CALL_TexCoord2fv(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(const GLfloat *)), _gloffset_TexCoord2fv, parameters)
 #define GET_TexCoord2fv(disp) GET_by_offset(disp, _gloffset_TexCoord2fv)
-#define SET_TexCoord2fv(disp, fn) SET_by_offset(disp, _gloffset_TexCoord2fv, fn)
+static void INLINE SET_TexCoord2fv(struct _glapi_table *disp, void (GLAPIENTRYP fn)(const GLfloat *)) {
+   SET_by_offset(disp, _gloffset_TexCoord2fv, fn);
+}
+
 #define CALL_TexCoord2i(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLint, GLint)), _gloffset_TexCoord2i, parameters)
 #define GET_TexCoord2i(disp) GET_by_offset(disp, _gloffset_TexCoord2i)
-#define SET_TexCoord2i(disp, fn) SET_by_offset(disp, _gloffset_TexCoord2i, fn)
+static void INLINE SET_TexCoord2i(struct _glapi_table *disp, void (GLAPIENTRYP fn)(GLint, GLint)) {
+   SET_by_offset(disp, _gloffset_TexCoord2i, fn);
+}
+
 #define CALL_TexCoord2iv(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(const GLint *)), _gloffset_TexCoord2iv, parameters)
 #define GET_TexCoord2iv(disp) GET_by_offset(disp, _gloffset_TexCoord2iv)
-#define SET_TexCoord2iv(disp, fn) SET_by_offset(disp, _gloffset_TexCoord2iv, fn)
+static void INLINE SET_TexCoord2iv(struct _glapi_table *disp, void (GLAPIENTRYP fn)(const GLint *)) {
+   SET_by_offset(disp, _gloffset_TexCoord2iv, fn);
+}
+
 #define CALL_TexCoord2s(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLshort, GLshort)), _gloffset_TexCoord2s, parameters)
 #define GET_TexCoord2s(disp) GET_by_offset(disp, _gloffset_TexCoord2s)
-#define SET_TexCoord2s(disp, fn) SET_by_offset(disp, _gloffset_TexCoord2s, fn)
+static void INLINE SET_TexCoord2s(struct _glapi_table *disp, void (GLAPIENTRYP fn)(GLshort, GLshort)) {
+   SET_by_offset(disp, _gloffset_TexCoord2s, fn);
+}
+
 #define CALL_TexCoord2sv(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(const GLshort *)), _gloffset_TexCoord2sv, parameters)
 #define GET_TexCoord2sv(disp) GET_by_offset(disp, _gloffset_TexCoord2sv)
-#define SET_TexCoord2sv(disp, fn) SET_by_offset(disp, _gloffset_TexCoord2sv, fn)
+static void INLINE SET_TexCoord2sv(struct _glapi_table *disp, void (GLAPIENTRYP fn)(const GLshort *)) {
+   SET_by_offset(disp, _gloffset_TexCoord2sv, fn);
+}
+
 #define CALL_TexCoord3d(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLdouble, GLdouble, GLdouble)), _gloffset_TexCoord3d, parameters)
 #define GET_TexCoord3d(disp) GET_by_offset(disp, _gloffset_TexCoord3d)
-#define SET_TexCoord3d(disp, fn) SET_by_offset(disp, _gloffset_TexCoord3d, fn)
+static void INLINE SET_TexCoord3d(struct _glapi_table *disp, void (GLAPIENTRYP fn)(GLdouble, GLdouble, GLdouble)) {
+   SET_by_offset(disp, _gloffset_TexCoord3d, fn);
+}
+
 #define CALL_TexCoord3dv(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(const GLdouble *)), _gloffset_TexCoord3dv, parameters)
 #define GET_TexCoord3dv(disp) GET_by_offset(disp, _gloffset_TexCoord3dv)
-#define SET_TexCoord3dv(disp, fn) SET_by_offset(disp, _gloffset_TexCoord3dv, fn)
+static void INLINE SET_TexCoord3dv(struct _glapi_table *disp, void (GLAPIENTRYP fn)(const GLdouble *)) {
+   SET_by_offset(disp, _gloffset_TexCoord3dv, fn);
+}
+
 #define CALL_TexCoord3f(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLfloat, GLfloat, GLfloat)), _gloffset_TexCoord3f, parameters)
 #define GET_TexCoord3f(disp) GET_by_offset(disp, _gloffset_TexCoord3f)
-#define SET_TexCoord3f(disp, fn) SET_by_offset(disp, _gloffset_TexCoord3f, fn)
+static void INLINE SET_TexCoord3f(struct _glapi_table *disp, void (GLAPIENTRYP fn)(GLfloat, GLfloat, GLfloat)) {
+   SET_by_offset(disp, _gloffset_TexCoord3f, fn);
+}
+
 #define CALL_TexCoord3fv(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(const GLfloat *)), _gloffset_TexCoord3fv, parameters)
 #define GET_TexCoord3fv(disp) GET_by_offset(disp, _gloffset_TexCoord3fv)
-#define SET_TexCoord3fv(disp, fn) SET_by_offset(disp, _gloffset_TexCoord3fv, fn)
+static void INLINE SET_TexCoord3fv(struct _glapi_table *disp, void (GLAPIENTRYP fn)(const GLfloat *)) {
+   SET_by_offset(disp, _gloffset_TexCoord3fv, fn);
+}
+
 #define CALL_TexCoord3i(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLint, GLint, GLint)), _gloffset_TexCoord3i, parameters)
 #define GET_TexCoord3i(disp) GET_by_offset(disp, _gloffset_TexCoord3i)
-#define SET_TexCoord3i(disp, fn) SET_by_offset(disp, _gloffset_TexCoord3i, fn)
+static void INLINE SET_TexCoord3i(struct _glapi_table *disp, void (GLAPIENTRYP fn)(GLint, GLint, GLint)) {
+   SET_by_offset(disp, _gloffset_TexCoord3i, fn);
+}
+
 #define CALL_TexCoord3iv(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(const GLint *)), _gloffset_TexCoord3iv, parameters)
 #define GET_TexCoord3iv(disp) GET_by_offset(disp, _gloffset_TexCoord3iv)
-#define SET_TexCoord3iv(disp, fn) SET_by_offset(disp, _gloffset_TexCoord3iv, fn)
+static void INLINE SET_TexCoord3iv(struct _glapi_table *disp, void (GLAPIENTRYP fn)(const GLint *)) {
+   SET_by_offset(disp, _gloffset_TexCoord3iv, fn);
+}
+
 #define CALL_TexCoord3s(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLshort, GLshort, GLshort)), _gloffset_TexCoord3s, parameters)
 #define GET_TexCoord3s(disp) GET_by_offset(disp, _gloffset_TexCoord3s)
-#define SET_TexCoord3s(disp, fn) SET_by_offset(disp, _gloffset_TexCoord3s, fn)
+static void INLINE SET_TexCoord3s(struct _glapi_table *disp, void (GLAPIENTRYP fn)(GLshort, GLshort, GLshort)) {
+   SET_by_offset(disp, _gloffset_TexCoord3s, fn);
+}
+
 #define CALL_TexCoord3sv(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(const GLshort *)), _gloffset_TexCoord3sv, parameters)
 #define GET_TexCoord3sv(disp) GET_by_offset(disp, _gloffset_TexCoord3sv)
-#define SET_TexCoord3sv(disp, fn) SET_by_offset(disp, _gloffset_TexCoord3sv, fn)
+static void INLINE SET_TexCoord3sv(struct _glapi_table *disp, void (GLAPIENTRYP fn)(const GLshort *)) {
+   SET_by_offset(disp, _gloffset_TexCoord3sv, fn);
+}
+
 #define CALL_TexCoord4d(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLdouble, GLdouble, GLdouble, GLdouble)), _gloffset_TexCoord4d, parameters)
 #define GET_TexCoord4d(disp) GET_by_offset(disp, _gloffset_TexCoord4d)
-#define SET_TexCoord4d(disp, fn) SET_by_offset(disp, _gloffset_TexCoord4d, fn)
+static void INLINE SET_TexCoord4d(struct _glapi_table *disp, void (GLAPIENTRYP fn)(GLdouble, GLdouble, GLdouble, GLdouble)) {
+   SET_by_offset(disp, _gloffset_TexCoord4d, fn);
+}
+
 #define CALL_TexCoord4dv(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(const GLdouble *)), _gloffset_TexCoord4dv, parameters)
 #define GET_TexCoord4dv(disp) GET_by_offset(disp, _gloffset_TexCoord4dv)
-#define SET_TexCoord4dv(disp, fn) SET_by_offset(disp, _gloffset_TexCoord4dv, fn)
+static void INLINE SET_TexCoord4dv(struct _glapi_table *disp, void (GLAPIENTRYP fn)(const GLdouble *)) {
+   SET_by_offset(disp, _gloffset_TexCoord4dv, fn);
+}
+
 #define CALL_TexCoord4f(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLfloat, GLfloat, GLfloat, GLfloat)), _gloffset_TexCoord4f, parameters)
 #define GET_TexCoord4f(disp) GET_by_offset(disp, _gloffset_TexCoord4f)
-#define SET_TexCoord4f(disp, fn) SET_by_offset(disp, _gloffset_TexCoord4f, fn)
+static void INLINE SET_TexCoord4f(struct _glapi_table *disp, void (GLAPIENTRYP fn)(GLfloat, GLfloat, GLfloat, GLfloat)) {
+   SET_by_offset(disp, _gloffset_TexCoord4f, fn);
+}
+
 #define CALL_TexCoord4fv(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(const GLfloat *)), _gloffset_TexCoord4fv, parameters)
 #define GET_TexCoord4fv(disp) GET_by_offset(disp, _gloffset_TexCoord4fv)
-#define SET_TexCoord4fv(disp, fn) SET_by_offset(disp, _gloffset_TexCoord4fv, fn)
+static void INLINE SET_TexCoord4fv(struct _glapi_table *disp, void (GLAPIENTRYP fn)(const GLfloat *)) {
+   SET_by_offset(disp, _gloffset_TexCoord4fv, fn);
+}
+
 #define CALL_TexCoord4i(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLint, GLint, GLint, GLint)), _gloffset_TexCoord4i, parameters)
 #define GET_TexCoord4i(disp) GET_by_offset(disp, _gloffset_TexCoord4i)
-#define SET_TexCoord4i(disp, fn) SET_by_offset(disp, _gloffset_TexCoord4i, fn)
+static void INLINE SET_TexCoord4i(struct _glapi_table *disp, void (GLAPIENTRYP fn)(GLint, GLint, GLint, GLint)) {
+   SET_by_offset(disp, _gloffset_TexCoord4i, fn);
+}
+
 #define CALL_TexCoord4iv(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(const GLint *)), _gloffset_TexCoord4iv, parameters)
 #define GET_TexCoord4iv(disp) GET_by_offset(disp, _gloffset_TexCoord4iv)
-#define SET_TexCoord4iv(disp, fn) SET_by_offset(disp, _gloffset_TexCoord4iv, fn)
+static void INLINE SET_TexCoord4iv(struct _glapi_table *disp, void (GLAPIENTRYP fn)(const GLint *)) {
+   SET_by_offset(disp, _gloffset_TexCoord4iv, fn);
+}
+
 #define CALL_TexCoord4s(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLshort, GLshort, GLshort, GLshort)), _gloffset_TexCoord4s, parameters)
 #define GET_TexCoord4s(disp) GET_by_offset(disp, _gloffset_TexCoord4s)
-#define SET_TexCoord4s(disp, fn) SET_by_offset(disp, _gloffset_TexCoord4s, fn)
+static void INLINE SET_TexCoord4s(struct _glapi_table *disp, void (GLAPIENTRYP fn)(GLshort, GLshort, GLshort, GLshort)) {
+   SET_by_offset(disp, _gloffset_TexCoord4s, fn);
+}
+
 #define CALL_TexCoord4sv(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(const GLshort *)), _gloffset_TexCoord4sv, parameters)
 #define GET_TexCoord4sv(disp) GET_by_offset(disp, _gloffset_TexCoord4sv)
-#define SET_TexCoord4sv(disp, fn) SET_by_offset(disp, _gloffset_TexCoord4sv, fn)
+static void INLINE SET_TexCoord4sv(struct _glapi_table *disp, void (GLAPIENTRYP fn)(const GLshort *)) {
+   SET_by_offset(disp, _gloffset_TexCoord4sv, fn);
+}
+
 #define CALL_Vertex2d(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLdouble, GLdouble)), _gloffset_Vertex2d, parameters)
 #define GET_Vertex2d(disp) GET_by_offset(disp, _gloffset_Vertex2d)
-#define SET_Vertex2d(disp, fn) SET_by_offset(disp, _gloffset_Vertex2d, fn)
+static void INLINE SET_Vertex2d(struct _glapi_table *disp, void (GLAPIENTRYP fn)(GLdouble, GLdouble)) {
+   SET_by_offset(disp, _gloffset_Vertex2d, fn);
+}
+
 #define CALL_Vertex2dv(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(const GLdouble *)), _gloffset_Vertex2dv, parameters)
 #define GET_Vertex2dv(disp) GET_by_offset(disp, _gloffset_Vertex2dv)
-#define SET_Vertex2dv(disp, fn) SET_by_offset(disp, _gloffset_Vertex2dv, fn)
+static void INLINE SET_Vertex2dv(struct _glapi_table *disp, void (GLAPIENTRYP fn)(const GLdouble *)) {
+   SET_by_offset(disp, _gloffset_Vertex2dv, fn);
+}
+
 #define CALL_Vertex2f(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLfloat, GLfloat)), _gloffset_Vertex2f, parameters)
 #define GET_Vertex2f(disp) GET_by_offset(disp, _gloffset_Vertex2f)
-#define SET_Vertex2f(disp, fn) SET_by_offset(disp, _gloffset_Vertex2f, fn)
+static void INLINE SET_Vertex2f(struct _glapi_table *disp, void (GLAPIENTRYP fn)(GLfloat, GLfloat)) {
+   SET_by_offset(disp, _gloffset_Vertex2f, fn);
+}
+
 #define CALL_Vertex2fv(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(const GLfloat *)), _gloffset_Vertex2fv, parameters)
 #define GET_Vertex2fv(disp) GET_by_offset(disp, _gloffset_Vertex2fv)
-#define SET_Vertex2fv(disp, fn) SET_by_offset(disp, _gloffset_Vertex2fv, fn)
+static void INLINE SET_Vertex2fv(struct _glapi_table *disp, void (GLAPIENTRYP fn)(const GLfloat *)) {
+   SET_by_offset(disp, _gloffset_Vertex2fv, fn);
+}
+
 #define CALL_Vertex2i(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLint, GLint)), _gloffset_Vertex2i, parameters)
 #define GET_Vertex2i(disp) GET_by_offset(disp, _gloffset_Vertex2i)
-#define SET_Vertex2i(disp, fn) SET_by_offset(disp, _gloffset_Vertex2i, fn)
+static void INLINE SET_Vertex2i(struct _glapi_table *disp, void (GLAPIENTRYP fn)(GLint, GLint)) {
+   SET_by_offset(disp, _gloffset_Vertex2i, fn);
+}
+
 #define CALL_Vertex2iv(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(const GLint *)), _gloffset_Vertex2iv, parameters)
 #define GET_Vertex2iv(disp) GET_by_offset(disp, _gloffset_Vertex2iv)
-#define SET_Vertex2iv(disp, fn) SET_by_offset(disp, _gloffset_Vertex2iv, fn)
+static void INLINE SET_Vertex2iv(struct _glapi_table *disp, void (GLAPIENTRYP fn)(const GLint *)) {
+   SET_by_offset(disp, _gloffset_Vertex2iv, fn);
+}
+
 #define CALL_Vertex2s(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLshort, GLshort)), _gloffset_Vertex2s, parameters)
 #define GET_Vertex2s(disp) GET_by_offset(disp, _gloffset_Vertex2s)
-#define SET_Vertex2s(disp, fn) SET_by_offset(disp, _gloffset_Vertex2s, fn)
+static void INLINE SET_Vertex2s(struct _glapi_table *disp, void (GLAPIENTRYP fn)(GLshort, GLshort)) {
+   SET_by_offset(disp, _gloffset_Vertex2s, fn);
+}
+
 #define CALL_Vertex2sv(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(const GLshort *)), _gloffset_Vertex2sv, parameters)
 #define GET_Vertex2sv(disp) GET_by_offset(disp, _gloffset_Vertex2sv)
-#define SET_Vertex2sv(disp, fn) SET_by_offset(disp, _gloffset_Vertex2sv, fn)
+static void INLINE SET_Vertex2sv(struct _glapi_table *disp, void (GLAPIENTRYP fn)(const GLshort *)) {
+   SET_by_offset(disp, _gloffset_Vertex2sv, fn);
+}
+
 #define CALL_Vertex3d(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLdouble, GLdouble, GLdouble)), _gloffset_Vertex3d, parameters)
 #define GET_Vertex3d(disp) GET_by_offset(disp, _gloffset_Vertex3d)
-#define SET_Vertex3d(disp, fn) SET_by_offset(disp, _gloffset_Vertex3d, fn)
+static void INLINE SET_Vertex3d(struct _glapi_table *disp, void (GLAPIENTRYP fn)(GLdouble, GLdouble, GLdouble)) {
+   SET_by_offset(disp, _gloffset_Vertex3d, fn);
+}
+
 #define CALL_Vertex3dv(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(const GLdouble *)), _gloffset_Vertex3dv, parameters)
 #define GET_Vertex3dv(disp) GET_by_offset(disp, _gloffset_Vertex3dv)
-#define SET_Vertex3dv(disp, fn) SET_by_offset(disp, _gloffset_Vertex3dv, fn)
+static void INLINE SET_Vertex3dv(struct _glapi_table *disp, void (GLAPIENTRYP fn)(const GLdouble *)) {
+   SET_by_offset(disp, _gloffset_Vertex3dv, fn);
+}
+
 #define CALL_Vertex3f(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLfloat, GLfloat, GLfloat)), _gloffset_Vertex3f, parameters)
 #define GET_Vertex3f(disp) GET_by_offset(disp, _gloffset_Vertex3f)
-#define SET_Vertex3f(disp, fn) SET_by_offset(disp, _gloffset_Vertex3f, fn)
+static void INLINE SET_Vertex3f(struct _glapi_table *disp, void (GLAPIENTRYP fn)(GLfloat, GLfloat, GLfloat)) {
+   SET_by_offset(disp, _gloffset_Vertex3f, fn);
+}
+
 #define CALL_Vertex3fv(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(const GLfloat *)), _gloffset_Vertex3fv, parameters)
 #define GET_Vertex3fv(disp) GET_by_offset(disp, _gloffset_Vertex3fv)
-#define SET_Vertex3fv(disp, fn) SET_by_offset(disp, _gloffset_Vertex3fv, fn)
+static void INLINE SET_Vertex3fv(struct _glapi_table *disp, void (GLAPIENTRYP fn)(const GLfloat *)) {
+   SET_by_offset(disp, _gloffset_Vertex3fv, fn);
+}
+
 #define CALL_Vertex3i(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLint, GLint, GLint)), _gloffset_Vertex3i, parameters)
 #define GET_Vertex3i(disp) GET_by_offset(disp, _gloffset_Vertex3i)
-#define SET_Vertex3i(disp, fn) SET_by_offset(disp, _gloffset_Vertex3i, fn)
+static void INLINE SET_Vertex3i(struct _glapi_table *disp, void (GLAPIENTRYP fn)(GLint, GLint, GLint)) {
+   SET_by_offset(disp, _gloffset_Vertex3i, fn);
+}
+
 #define CALL_Vertex3iv(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(const GLint *)), _gloffset_Vertex3iv, parameters)
 #define GET_Vertex3iv(disp) GET_by_offset(disp, _gloffset_Vertex3iv)
-#define SET_Vertex3iv(disp, fn) SET_by_offset(disp, _gloffset_Vertex3iv, fn)
+static void INLINE SET_Vertex3iv(struct _glapi_table *disp, void (GLAPIENTRYP fn)(const GLint *)) {
+   SET_by_offset(disp, _gloffset_Vertex3iv, fn);
+}
+
 #define CALL_Vertex3s(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLshort, GLshort, GLshort)), _gloffset_Vertex3s, parameters)
 #define GET_Vertex3s(disp) GET_by_offset(disp, _gloffset_Vertex3s)
-#define SET_Vertex3s(disp, fn) SET_by_offset(disp, _gloffset_Vertex3s, fn)
+static void INLINE SET_Vertex3s(struct _glapi_table *disp, void (GLAPIENTRYP fn)(GLshort, GLshort, GLshort)) {
+   SET_by_offset(disp, _gloffset_Vertex3s, fn);
+}
+
 #define CALL_Vertex3sv(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(const GLshort *)), _gloffset_Vertex3sv, parameters)
 #define GET_Vertex3sv(disp) GET_by_offset(disp, _gloffset_Vertex3sv)
-#define SET_Vertex3sv(disp, fn) SET_by_offset(disp, _gloffset_Vertex3sv, fn)
+static void INLINE SET_Vertex3sv(struct _glapi_table *disp, void (GLAPIENTRYP fn)(const GLshort *)) {
+   SET_by_offset(disp, _gloffset_Vertex3sv, fn);
+}
+
 #define CALL_Vertex4d(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLdouble, GLdouble, GLdouble, GLdouble)), _gloffset_Vertex4d, parameters)
 #define GET_Vertex4d(disp) GET_by_offset(disp, _gloffset_Vertex4d)
-#define SET_Vertex4d(disp, fn) SET_by_offset(disp, _gloffset_Vertex4d, fn)
+static void INLINE SET_Vertex4d(struct _glapi_table *disp, void (GLAPIENTRYP fn)(GLdouble, GLdouble, GLdouble, GLdouble)) {
+   SET_by_offset(disp, _gloffset_Vertex4d, fn);
+}
+
 #define CALL_Vertex4dv(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(const GLdouble *)), _gloffset_Vertex4dv, parameters)
 #define GET_Vertex4dv(disp) GET_by_offset(disp, _gloffset_Vertex4dv)
-#define SET_Vertex4dv(disp, fn) SET_by_offset(disp, _gloffset_Vertex4dv, fn)
+static void INLINE SET_Vertex4dv(struct _glapi_table *disp, void (GLAPIENTRYP fn)(const GLdouble *)) {
+   SET_by_offset(disp, _gloffset_Vertex4dv, fn);
+}
+
 #define CALL_Vertex4f(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLfloat, GLfloat, GLfloat, GLfloat)), _gloffset_Vertex4f, parameters)
 #define GET_Vertex4f(disp) GET_by_offset(disp, _gloffset_Vertex4f)
-#define SET_Vertex4f(disp, fn) SET_by_offset(disp, _gloffset_Vertex4f, fn)
+static void INLINE SET_Vertex4f(struct _glapi_table *disp, void (GLAPIENTRYP fn)(GLfloat, GLfloat, GLfloat, GLfloat)) {
+   SET_by_offset(disp, _gloffset_Vertex4f, fn);
+}
+
 #define CALL_Vertex4fv(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(const GLfloat *)), _gloffset_Vertex4fv, parameters)
 #define GET_Vertex4fv(disp) GET_by_offset(disp, _gloffset_Vertex4fv)
-#define SET_Vertex4fv(disp, fn) SET_by_offset(disp, _gloffset_Vertex4fv, fn)
+static void INLINE SET_Vertex4fv(struct _glapi_table *disp, void (GLAPIENTRYP fn)(const GLfloat *)) {
+   SET_by_offset(disp, _gloffset_Vertex4fv, fn);
+}
+
 #define CALL_Vertex4i(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLint, GLint, GLint, GLint)), _gloffset_Vertex4i, parameters)
 #define GET_Vertex4i(disp) GET_by_offset(disp, _gloffset_Vertex4i)
-#define SET_Vertex4i(disp, fn) SET_by_offset(disp, _gloffset_Vertex4i, fn)
+static void INLINE SET_Vertex4i(struct _glapi_table *disp, void (GLAPIENTRYP fn)(GLint, GLint, GLint, GLint)) {
+   SET_by_offset(disp, _gloffset_Vertex4i, fn);
+}
+
 #define CALL_Vertex4iv(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(const GLint *)), _gloffset_Vertex4iv, parameters)
 #define GET_Vertex4iv(disp) GET_by_offset(disp, _gloffset_Vertex4iv)
-#define SET_Vertex4iv(disp, fn) SET_by_offset(disp, _gloffset_Vertex4iv, fn)
+static void INLINE SET_Vertex4iv(struct _glapi_table *disp, void (GLAPIENTRYP fn)(const GLint *)) {
+   SET_by_offset(disp, _gloffset_Vertex4iv, fn);
+}
+
 #define CALL_Vertex4s(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLshort, GLshort, GLshort, GLshort)), _gloffset_Vertex4s, parameters)
 #define GET_Vertex4s(disp) GET_by_offset(disp, _gloffset_Vertex4s)
-#define SET_Vertex4s(disp, fn) SET_by_offset(disp, _gloffset_Vertex4s, fn)
+static void INLINE SET_Vertex4s(struct _glapi_table *disp, void (GLAPIENTRYP fn)(GLshort, GLshort, GLshort, GLshort)) {
+   SET_by_offset(disp, _gloffset_Vertex4s, fn);
+}
+
 #define CALL_Vertex4sv(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(const GLshort *)), _gloffset_Vertex4sv, parameters)
 #define GET_Vertex4sv(disp) GET_by_offset(disp, _gloffset_Vertex4sv)
-#define SET_Vertex4sv(disp, fn) SET_by_offset(disp, _gloffset_Vertex4sv, fn)
+static void INLINE SET_Vertex4sv(struct _glapi_table *disp, void (GLAPIENTRYP fn)(const GLshort *)) {
+   SET_by_offset(disp, _gloffset_Vertex4sv, fn);
+}
+
 #define CALL_ClipPlane(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLenum, const GLdouble *)), _gloffset_ClipPlane, parameters)
 #define GET_ClipPlane(disp) GET_by_offset(disp, _gloffset_ClipPlane)
-#define SET_ClipPlane(disp, fn) SET_by_offset(disp, _gloffset_ClipPlane, fn)
+static void INLINE SET_ClipPlane(struct _glapi_table *disp, void (GLAPIENTRYP fn)(GLenum, const GLdouble *)) {
+   SET_by_offset(disp, _gloffset_ClipPlane, fn);
+}
+
 #define CALL_ColorMaterial(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLenum, GLenum)), _gloffset_ColorMaterial, parameters)
 #define GET_ColorMaterial(disp) GET_by_offset(disp, _gloffset_ColorMaterial)
-#define SET_ColorMaterial(disp, fn) SET_by_offset(disp, _gloffset_ColorMaterial, fn)
+static void INLINE SET_ColorMaterial(struct _glapi_table *disp, void (GLAPIENTRYP fn)(GLenum, GLenum)) {
+   SET_by_offset(disp, _gloffset_ColorMaterial, fn);
+}
+
 #define CALL_CullFace(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLenum)), _gloffset_CullFace, parameters)
 #define GET_CullFace(disp) GET_by_offset(disp, _gloffset_CullFace)
-#define SET_CullFace(disp, fn) SET_by_offset(disp, _gloffset_CullFace, fn)
+static void INLINE SET_CullFace(struct _glapi_table *disp, void (GLAPIENTRYP fn)(GLenum)) {
+   SET_by_offset(disp, _gloffset_CullFace, fn);
+}
+
 #define CALL_Fogf(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLenum, GLfloat)), _gloffset_Fogf, parameters)
 #define GET_Fogf(disp) GET_by_offset(disp, _gloffset_Fogf)
-#define SET_Fogf(disp, fn) SET_by_offset(disp, _gloffset_Fogf, fn)
+static void INLINE SET_Fogf(struct _glapi_table *disp, void (GLAPIENTRYP fn)(GLenum, GLfloat)) {
+   SET_by_offset(disp, _gloffset_Fogf, fn);
+}
+
 #define CALL_Fogfv(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLenum, const GLfloat *)), _gloffset_Fogfv, parameters)
 #define GET_Fogfv(disp) GET_by_offset(disp, _gloffset_Fogfv)
-#define SET_Fogfv(disp, fn) SET_by_offset(disp, _gloffset_Fogfv, fn)
+static void INLINE SET_Fogfv(struct _glapi_table *disp, void (GLAPIENTRYP fn)(GLenum, const GLfloat *)) {
+   SET_by_offset(disp, _gloffset_Fogfv, fn);
+}
+
 #define CALL_Fogi(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLenum, GLint)), _gloffset_Fogi, parameters)
 #define GET_Fogi(disp) GET_by_offset(disp, _gloffset_Fogi)
-#define SET_Fogi(disp, fn) SET_by_offset(disp, _gloffset_Fogi, fn)
+static void INLINE SET_Fogi(struct _glapi_table *disp, void (GLAPIENTRYP fn)(GLenum, GLint)) {
+   SET_by_offset(disp, _gloffset_Fogi, fn);
+}
+
 #define CALL_Fogiv(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLenum, const GLint *)), _gloffset_Fogiv, parameters)
 #define GET_Fogiv(disp) GET_by_offset(disp, _gloffset_Fogiv)
-#define SET_Fogiv(disp, fn) SET_by_offset(disp, _gloffset_Fogiv, fn)
+static void INLINE SET_Fogiv(struct _glapi_table *disp, void (GLAPIENTRYP fn)(GLenum, const GLint *)) {
+   SET_by_offset(disp, _gloffset_Fogiv, fn);
+}
+
 #define CALL_FrontFace(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLenum)), _gloffset_FrontFace, parameters)
 #define GET_FrontFace(disp) GET_by_offset(disp, _gloffset_FrontFace)
-#define SET_FrontFace(disp, fn) SET_by_offset(disp, _gloffset_FrontFace, fn)
+static void INLINE SET_FrontFace(struct _glapi_table *disp, void (GLAPIENTRYP fn)(GLenum)) {
+   SET_by_offset(disp, _gloffset_FrontFace, fn);
+}
+
 #define CALL_Hint(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLenum, GLenum)), _gloffset_Hint, parameters)
 #define GET_Hint(disp) GET_by_offset(disp, _gloffset_Hint)
-#define SET_Hint(disp, fn) SET_by_offset(disp, _gloffset_Hint, fn)
+static void INLINE SET_Hint(struct _glapi_table *disp, void (GLAPIENTRYP fn)(GLenum, GLenum)) {
+   SET_by_offset(disp, _gloffset_Hint, fn);
+}
+
 #define CALL_Lightf(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLenum, GLenum, GLfloat)), _gloffset_Lightf, parameters)
 #define GET_Lightf(disp) GET_by_offset(disp, _gloffset_Lightf)
-#define SET_Lightf(disp, fn) SET_by_offset(disp, _gloffset_Lightf, fn)
+static void INLINE SET_Lightf(struct _glapi_table *disp, void (GLAPIENTRYP fn)(GLenum, GLenum, GLfloat)) {
+   SET_by_offset(disp, _gloffset_Lightf, fn);
+}
+
 #define CALL_Lightfv(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLenum, GLenum, const GLfloat *)), _gloffset_Lightfv, parameters)
 #define GET_Lightfv(disp) GET_by_offset(disp, _gloffset_Lightfv)
-#define SET_Lightfv(disp, fn) SET_by_offset(disp, _gloffset_Lightfv, fn)
+static void INLINE SET_Lightfv(struct _glapi_table *disp, void (GLAPIENTRYP fn)(GLenum, GLenum, const GLfloat *)) {
+   SET_by_offset(disp, _gloffset_Lightfv, fn);
+}
+
 #define CALL_Lighti(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLenum, GLenum, GLint)), _gloffset_Lighti, parameters)
 #define GET_Lighti(disp) GET_by_offset(disp, _gloffset_Lighti)
-#define SET_Lighti(disp, fn) SET_by_offset(disp, _gloffset_Lighti, fn)
+static void INLINE SET_Lighti(struct _glapi_table *disp, void (GLAPIENTRYP fn)(GLenum, GLenum, GLint)) {
+   SET_by_offset(disp, _gloffset_Lighti, fn);
+}
+
 #define CALL_Lightiv(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLenum, GLenum, const GLint *)), _gloffset_Lightiv, parameters)
 #define GET_Lightiv(disp) GET_by_offset(disp, _gloffset_Lightiv)
-#define SET_Lightiv(disp, fn) SET_by_offset(disp, _gloffset_Lightiv, fn)
+static void INLINE SET_Lightiv(struct _glapi_table *disp, void (GLAPIENTRYP fn)(GLenum, GLenum, const GLint *)) {
+   SET_by_offset(disp, _gloffset_Lightiv, fn);
+}
+
 #define CALL_LightModelf(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLenum, GLfloat)), _gloffset_LightModelf, parameters)
 #define GET_LightModelf(disp) GET_by_offset(disp, _gloffset_LightModelf)
-#define SET_LightModelf(disp, fn) SET_by_offset(disp, _gloffset_LightModelf, fn)
+static void INLINE SET_LightModelf(struct _glapi_table *disp, void (GLAPIENTRYP fn)(GLenum, GLfloat)) {
+   SET_by_offset(disp, _gloffset_LightModelf, fn);
+}
+
 #define CALL_LightModelfv(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLenum, const GLfloat *)), _gloffset_LightModelfv, parameters)
 #define GET_LightModelfv(disp) GET_by_offset(disp, _gloffset_LightModelfv)
-#define SET_LightModelfv(disp, fn) SET_by_offset(disp, _gloffset_LightModelfv, fn)
+static void INLINE SET_LightModelfv(struct _glapi_table *disp, void (GLAPIENTRYP fn)(GLenum, const GLfloat *)) {
+   SET_by_offset(disp, _gloffset_LightModelfv, fn);
+}
+
 #define CALL_LightModeli(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLenum, GLint)), _gloffset_LightModeli, parameters)
 #define GET_LightModeli(disp) GET_by_offset(disp, _gloffset_LightModeli)
-#define SET_LightModeli(disp, fn) SET_by_offset(disp, _gloffset_LightModeli, fn)
+static void INLINE SET_LightModeli(struct _glapi_table *disp, void (GLAPIENTRYP fn)(GLenum, GLint)) {
+   SET_by_offset(disp, _gloffset_LightModeli, fn);
+}
+
 #define CALL_LightModeliv(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLenum, const GLint *)), _gloffset_LightModeliv, parameters)
 #define GET_LightModeliv(disp) GET_by_offset(disp, _gloffset_LightModeliv)
-#define SET_LightModeliv(disp, fn) SET_by_offset(disp, _gloffset_LightModeliv, fn)
+static void INLINE SET_LightModeliv(struct _glapi_table *disp, void (GLAPIENTRYP fn)(GLenum, const GLint *)) {
+   SET_by_offset(disp, _gloffset_LightModeliv, fn);
+}
+
 #define CALL_LineStipple(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLint, GLushort)), _gloffset_LineStipple, parameters)
 #define GET_LineStipple(disp) GET_by_offset(disp, _gloffset_LineStipple)
-#define SET_LineStipple(disp, fn) SET_by_offset(disp, _gloffset_LineStipple, fn)
+static void INLINE SET_LineStipple(struct _glapi_table *disp, void (GLAPIENTRYP fn)(GLint, GLushort)) {
+   SET_by_offset(disp, _gloffset_LineStipple, fn);
+}
+
 #define CALL_LineWidth(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLfloat)), _gloffset_LineWidth, parameters)
 #define GET_LineWidth(disp) GET_by_offset(disp, _gloffset_LineWidth)
-#define SET_LineWidth(disp, fn) SET_by_offset(disp, _gloffset_LineWidth, fn)
+static void INLINE SET_LineWidth(struct _glapi_table *disp, void (GLAPIENTRYP fn)(GLfloat)) {
+   SET_by_offset(disp, _gloffset_LineWidth, fn);
+}
+
 #define CALL_Materialf(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLenum, GLenum, GLfloat)), _gloffset_Materialf, parameters)
 #define GET_Materialf(disp) GET_by_offset(disp, _gloffset_Materialf)
-#define SET_Materialf(disp, fn) SET_by_offset(disp, _gloffset_Materialf, fn)
+static void INLINE SET_Materialf(struct _glapi_table *disp, void (GLAPIENTRYP fn)(GLenum, GLenum, GLfloat)) {
+   SET_by_offset(disp, _gloffset_Materialf, fn);
+}
+
 #define CALL_Materialfv(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLenum, GLenum, const GLfloat *)), _gloffset_Materialfv, parameters)
 #define GET_Materialfv(disp) GET_by_offset(disp, _gloffset_Materialfv)
-#define SET_Materialfv(disp, fn) SET_by_offset(disp, _gloffset_Materialfv, fn)
+static void INLINE SET_Materialfv(struct _glapi_table *disp, void (GLAPIENTRYP fn)(GLenum, GLenum, const GLfloat *)) {
+   SET_by_offset(disp, _gloffset_Materialfv, fn);
+}
+
 #define CALL_Materiali(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLenum, GLenum, GLint)), _gloffset_Materiali, parameters)
 #define GET_Materiali(disp) GET_by_offset(disp, _gloffset_Materiali)
-#define SET_Materiali(disp, fn) SET_by_offset(disp, _gloffset_Materiali, fn)
+static void INLINE SET_Materiali(struct _glapi_table *disp, void (GLAPIENTRYP fn)(GLenum, GLenum, GLint)) {
+   SET_by_offset(disp, _gloffset_Materiali, fn);
+}
+
 #define CALL_Materialiv(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLenum, GLenum, const GLint *)), _gloffset_Materialiv, parameters)
 #define GET_Materialiv(disp) GET_by_offset(disp, _gloffset_Materialiv)
-#define SET_Materialiv(disp, fn) SET_by_offset(disp, _gloffset_Materialiv, fn)
+static void INLINE SET_Materialiv(struct _glapi_table *disp, void (GLAPIENTRYP fn)(GLenum, GLenum, const GLint *)) {
+   SET_by_offset(disp, _gloffset_Materialiv, fn);
+}
+
 #define CALL_PointSize(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLfloat)), _gloffset_PointSize, parameters)
 #define GET_PointSize(disp) GET_by_offset(disp, _gloffset_PointSize)
-#define SET_PointSize(disp, fn) SET_by_offset(disp, _gloffset_PointSize, fn)
+static void INLINE SET_PointSize(struct _glapi_table *disp, void (GLAPIENTRYP fn)(GLfloat)) {
+   SET_by_offset(disp, _gloffset_PointSize, fn);
+}
+
 #define CALL_PolygonMode(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLenum, GLenum)), _gloffset_PolygonMode, parameters)
 #define GET_PolygonMode(disp) GET_by_offset(disp, _gloffset_PolygonMode)
-#define SET_PolygonMode(disp, fn) SET_by_offset(disp, _gloffset_PolygonMode, fn)
+static void INLINE SET_PolygonMode(struct _glapi_table *disp, void (GLAPIENTRYP fn)(GLenum, GLenum)) {
+   SET_by_offset(disp, _gloffset_PolygonMode, fn);
+}
+
 #define CALL_PolygonStipple(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(const GLubyte *)), _gloffset_PolygonStipple, parameters)
 #define GET_PolygonStipple(disp) GET_by_offset(disp, _gloffset_PolygonStipple)
-#define SET_PolygonStipple(disp, fn) SET_by_offset(disp, _gloffset_PolygonStipple, fn)
+static void INLINE SET_PolygonStipple(struct _glapi_table *disp, void (GLAPIENTRYP fn)(const GLubyte *)) {
+   SET_by_offset(disp, _gloffset_PolygonStipple, fn);
+}
+
 #define CALL_Scissor(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLint, GLint, GLsizei, GLsizei)), _gloffset_Scissor, parameters)
 #define GET_Scissor(disp) GET_by_offset(disp, _gloffset_Scissor)
-#define SET_Scissor(disp, fn) SET_by_offset(disp, _gloffset_Scissor, fn)
+static void INLINE SET_Scissor(struct _glapi_table *disp, void (GLAPIENTRYP fn)(GLint, GLint, GLsizei, GLsizei)) {
+   SET_by_offset(disp, _gloffset_Scissor, fn);
+}
+
 #define CALL_ShadeModel(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLenum)), _gloffset_ShadeModel, parameters)
 #define GET_ShadeModel(disp) GET_by_offset(disp, _gloffset_ShadeModel)
-#define SET_ShadeModel(disp, fn) SET_by_offset(disp, _gloffset_ShadeModel, fn)
+static void INLINE SET_ShadeModel(struct _glapi_table *disp, void (GLAPIENTRYP fn)(GLenum)) {
+   SET_by_offset(disp, _gloffset_ShadeModel, fn);
+}
+
 #define CALL_TexParameterf(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLenum, GLenum, GLfloat)), _gloffset_TexParameterf, parameters)
 #define GET_TexParameterf(disp) GET_by_offset(disp, _gloffset_TexParameterf)
-#define SET_TexParameterf(disp, fn) SET_by_offset(disp, _gloffset_TexParameterf, fn)
+static void INLINE SET_TexParameterf(struct _glapi_table *disp, void (GLAPIENTRYP fn)(GLenum, GLenum, GLfloat)) {
+   SET_by_offset(disp, _gloffset_TexParameterf, fn);
+}
+
 #define CALL_TexParameterfv(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLenum, GLenum, const GLfloat *)), _gloffset_TexParameterfv, parameters)
 #define GET_TexParameterfv(disp) GET_by_offset(disp, _gloffset_TexParameterfv)
-#define SET_TexParameterfv(disp, fn) SET_by_offset(disp, _gloffset_TexParameterfv, fn)
+static void INLINE SET_TexParameterfv(struct _glapi_table *disp, void (GLAPIENTRYP fn)(GLenum, GLenum, const GLfloat *)) {
+   SET_by_offset(disp, _gloffset_TexParameterfv, fn);
+}
+
 #define CALL_TexParameteri(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLenum, GLenum, GLint)), _gloffset_TexParameteri, parameters)
 #define GET_TexParameteri(disp) GET_by_offset(disp, _gloffset_TexParameteri)
-#define SET_TexParameteri(disp, fn) SET_by_offset(disp, _gloffset_TexParameteri, fn)
+static void INLINE SET_TexParameteri(struct _glapi_table *disp, void (GLAPIENTRYP fn)(GLenum, GLenum, GLint)) {
+   SET_by_offset(disp, _gloffset_TexParameteri, fn);
+}
+
 #define CALL_TexParameteriv(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLenum, GLenum, const GLint *)), _gloffset_TexParameteriv, parameters)
 #define GET_TexParameteriv(disp) GET_by_offset(disp, _gloffset_TexParameteriv)
-#define SET_TexParameteriv(disp, fn) SET_by_offset(disp, _gloffset_TexParameteriv, fn)
+static void INLINE SET_TexParameteriv(struct _glapi_table *disp, void (GLAPIENTRYP fn)(GLenum, GLenum, const GLint *)) {
+   SET_by_offset(disp, _gloffset_TexParameteriv, fn);
+}
+
 #define CALL_TexImage1D(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLenum, GLint, GLint, GLsizei, GLint, GLenum, GLenum, const GLvoid *)), _gloffset_TexImage1D, parameters)
 #define GET_TexImage1D(disp) GET_by_offset(disp, _gloffset_TexImage1D)
-#define SET_TexImage1D(disp, fn) SET_by_offset(disp, _gloffset_TexImage1D, fn)
+static void INLINE SET_TexImage1D(struct _glapi_table *disp, void (GLAPIENTRYP fn)(GLenum, GLint, GLint, GLsizei, GLint, GLenum, GLenum, const GLvoid *)) {
+   SET_by_offset(disp, _gloffset_TexImage1D, fn);
+}
+
 #define CALL_TexImage2D(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLenum, GLint, GLint, GLsizei, GLsizei, GLint, GLenum, GLenum, const GLvoid *)), _gloffset_TexImage2D, parameters)
 #define GET_TexImage2D(disp) GET_by_offset(disp, _gloffset_TexImage2D)
-#define SET_TexImage2D(disp, fn) SET_by_offset(disp, _gloffset_TexImage2D, fn)
+static void INLINE SET_TexImage2D(struct _glapi_table *disp, void (GLAPIENTRYP fn)(GLenum, GLint, GLint, GLsizei, GLsizei, GLint, GLenum, GLenum, const GLvoid *)) {
+   SET_by_offset(disp, _gloffset_TexImage2D, fn);
+}
+
 #define CALL_TexEnvf(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLenum, GLenum, GLfloat)), _gloffset_TexEnvf, parameters)
 #define GET_TexEnvf(disp) GET_by_offset(disp, _gloffset_TexEnvf)
-#define SET_TexEnvf(disp, fn) SET_by_offset(disp, _gloffset_TexEnvf, fn)
+static void INLINE SET_TexEnvf(struct _glapi_table *disp, void (GLAPIENTRYP fn)(GLenum, GLenum, GLfloat)) {
+   SET_by_offset(disp, _gloffset_TexEnvf, fn);
+}
+
 #define CALL_TexEnvfv(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLenum, GLenum, const GLfloat *)), _gloffset_TexEnvfv, parameters)
 #define GET_TexEnvfv(disp) GET_by_offset(disp, _gloffset_TexEnvfv)
-#define SET_TexEnvfv(disp, fn) SET_by_offset(disp, _gloffset_TexEnvfv, fn)
+static void INLINE SET_TexEnvfv(struct _glapi_table *disp, void (GLAPIENTRYP fn)(GLenum, GLenum, const GLfloat *)) {
+   SET_by_offset(disp, _gloffset_TexEnvfv, fn);
+}
+
 #define CALL_TexEnvi(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLenum, GLenum, GLint)), _gloffset_TexEnvi, parameters)
 #define GET_TexEnvi(disp) GET_by_offset(disp, _gloffset_TexEnvi)
-#define SET_TexEnvi(disp, fn) SET_by_offset(disp, _gloffset_TexEnvi, fn)
+static void INLINE SET_TexEnvi(struct _glapi_table *disp, void (GLAPIENTRYP fn)(GLenum, GLenum, GLint)) {
+   SET_by_offset(disp, _gloffset_TexEnvi, fn);
+}
+
 #define CALL_TexEnviv(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLenum, GLenum, const GLint *)), _gloffset_TexEnviv, parameters)
 #define GET_TexEnviv(disp) GET_by_offset(disp, _gloffset_TexEnviv)
-#define SET_TexEnviv(disp, fn) SET_by_offset(disp, _gloffset_TexEnviv, fn)
+static void INLINE SET_TexEnviv(struct _glapi_table *disp, void (GLAPIENTRYP fn)(GLenum, GLenum, const GLint *)) {
+   SET_by_offset(disp, _gloffset_TexEnviv, fn);
+}
+
 #define CALL_TexGend(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLenum, GLenum, GLdouble)), _gloffset_TexGend, parameters)
 #define GET_TexGend(disp) GET_by_offset(disp, _gloffset_TexGend)
-#define SET_TexGend(disp, fn) SET_by_offset(disp, _gloffset_TexGend, fn)
+static void INLINE SET_TexGend(struct _glapi_table *disp, void (GLAPIENTRYP fn)(GLenum, GLenum, GLdouble)) {
+   SET_by_offset(disp, _gloffset_TexGend, fn);
+}
+
 #define CALL_TexGendv(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLenum, GLenum, const GLdouble *)), _gloffset_TexGendv, parameters)
 #define GET_TexGendv(disp) GET_by_offset(disp, _gloffset_TexGendv)
-#define SET_TexGendv(disp, fn) SET_by_offset(disp, _gloffset_TexGendv, fn)
+static void INLINE SET_TexGendv(struct _glapi_table *disp, void (GLAPIENTRYP fn)(GLenum, GLenum, const GLdouble *)) {
+   SET_by_offset(disp, _gloffset_TexGendv, fn);
+}
+
 #define CALL_TexGenf(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLenum, GLenum, GLfloat)), _gloffset_TexGenf, parameters)
 #define GET_TexGenf(disp) GET_by_offset(disp, _gloffset_TexGenf)
-#define SET_TexGenf(disp, fn) SET_by_offset(disp, _gloffset_TexGenf, fn)
+static void INLINE SET_TexGenf(struct _glapi_table *disp, void (GLAPIENTRYP fn)(GLenum, GLenum, GLfloat)) {
+   SET_by_offset(disp, _gloffset_TexGenf, fn);
+}
+
 #define CALL_TexGenfv(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLenum, GLenum, const GLfloat *)), _gloffset_TexGenfv, parameters)
 #define GET_TexGenfv(disp) GET_by_offset(disp, _gloffset_TexGenfv)
-#define SET_TexGenfv(disp, fn) SET_by_offset(disp, _gloffset_TexGenfv, fn)
+static void INLINE SET_TexGenfv(struct _glapi_table *disp, void (GLAPIENTRYP fn)(GLenum, GLenum, const GLfloat *)) {
+   SET_by_offset(disp, _gloffset_TexGenfv, fn);
+}
+
 #define CALL_TexGeni(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLenum, GLenum, GLint)), _gloffset_TexGeni, parameters)
 #define GET_TexGeni(disp) GET_by_offset(disp, _gloffset_TexGeni)
-#define SET_TexGeni(disp, fn) SET_by_offset(disp, _gloffset_TexGeni, fn)
+static void INLINE SET_TexGeni(struct _glapi_table *disp, void (GLAPIENTRYP fn)(GLenum, GLenum, GLint)) {
+   SET_by_offset(disp, _gloffset_TexGeni, fn);
+}
+
 #define CALL_TexGeniv(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLenum, GLenum, const GLint *)), _gloffset_TexGeniv, parameters)
 #define GET_TexGeniv(disp) GET_by_offset(disp, _gloffset_TexGeniv)
-#define SET_TexGeniv(disp, fn) SET_by_offset(disp, _gloffset_TexGeniv, fn)
+static void INLINE SET_TexGeniv(struct _glapi_table *disp, void (GLAPIENTRYP fn)(GLenum, GLenum, const GLint *)) {
+   SET_by_offset(disp, _gloffset_TexGeniv, fn);
+}
+
 #define CALL_FeedbackBuffer(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLsizei, GLenum, GLfloat *)), _gloffset_FeedbackBuffer, parameters)
 #define GET_FeedbackBuffer(disp) GET_by_offset(disp, _gloffset_FeedbackBuffer)
-#define SET_FeedbackBuffer(disp, fn) SET_by_offset(disp, _gloffset_FeedbackBuffer, fn)
+static void INLINE SET_FeedbackBuffer(struct _glapi_table *disp, void (GLAPIENTRYP fn)(GLsizei, GLenum, GLfloat *)) {
+   SET_by_offset(disp, _gloffset_FeedbackBuffer, fn);
+}
+
 #define CALL_SelectBuffer(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLsizei, GLuint *)), _gloffset_SelectBuffer, parameters)
 #define GET_SelectBuffer(disp) GET_by_offset(disp, _gloffset_SelectBuffer)
-#define SET_SelectBuffer(disp, fn) SET_by_offset(disp, _gloffset_SelectBuffer, fn)
+static void INLINE SET_SelectBuffer(struct _glapi_table *disp, void (GLAPIENTRYP fn)(GLsizei, GLuint *)) {
+   SET_by_offset(disp, _gloffset_SelectBuffer, fn);
+}
+
 #define CALL_RenderMode(disp, parameters) CALL_by_offset(disp, (GLint (GLAPIENTRYP)(GLenum)), _gloffset_RenderMode, parameters)
 #define GET_RenderMode(disp) GET_by_offset(disp, _gloffset_RenderMode)
-#define SET_RenderMode(disp, fn) SET_by_offset(disp, _gloffset_RenderMode, fn)
+static void INLINE SET_RenderMode(struct _glapi_table *disp, GLint (GLAPIENTRYP fn)(GLenum)) {
+   SET_by_offset(disp, _gloffset_RenderMode, fn);
+}
+
 #define CALL_InitNames(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(void)), _gloffset_InitNames, parameters)
 #define GET_InitNames(disp) GET_by_offset(disp, _gloffset_InitNames)
-#define SET_InitNames(disp, fn) SET_by_offset(disp, _gloffset_InitNames, fn)
+static void INLINE SET_InitNames(struct _glapi_table *disp, void (GLAPIENTRYP fn)(void)) {
+   SET_by_offset(disp, _gloffset_InitNames, fn);
+}
+
 #define CALL_LoadName(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLuint)), _gloffset_LoadName, parameters)
 #define GET_LoadName(disp) GET_by_offset(disp, _gloffset_LoadName)
-#define SET_LoadName(disp, fn) SET_by_offset(disp, _gloffset_LoadName, fn)
+static void INLINE SET_LoadName(struct _glapi_table *disp, void (GLAPIENTRYP fn)(GLuint)) {
+   SET_by_offset(disp, _gloffset_LoadName, fn);
+}
+
 #define CALL_PassThrough(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLfloat)), _gloffset_PassThrough, parameters)
 #define GET_PassThrough(disp) GET_by_offset(disp, _gloffset_PassThrough)
-#define SET_PassThrough(disp, fn) SET_by_offset(disp, _gloffset_PassThrough, fn)
+static void INLINE SET_PassThrough(struct _glapi_table *disp, void (GLAPIENTRYP fn)(GLfloat)) {
+   SET_by_offset(disp, _gloffset_PassThrough, fn);
+}
+
 #define CALL_PopName(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(void)), _gloffset_PopName, parameters)
 #define GET_PopName(disp) GET_by_offset(disp, _gloffset_PopName)
-#define SET_PopName(disp, fn) SET_by_offset(disp, _gloffset_PopName, fn)
+static void INLINE SET_PopName(struct _glapi_table *disp, void (GLAPIENTRYP fn)(void)) {
+   SET_by_offset(disp, _gloffset_PopName, fn);
+}
+
 #define CALL_PushName(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLuint)), _gloffset_PushName, parameters)
 #define GET_PushName(disp) GET_by_offset(disp, _gloffset_PushName)
-#define SET_PushName(disp, fn) SET_by_offset(disp, _gloffset_PushName, fn)
+static void INLINE SET_PushName(struct _glapi_table *disp, void (GLAPIENTRYP fn)(GLuint)) {
+   SET_by_offset(disp, _gloffset_PushName, fn);
+}
+
 #define CALL_DrawBuffer(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLenum)), _gloffset_DrawBuffer, parameters)
 #define GET_DrawBuffer(disp) GET_by_offset(disp, _gloffset_DrawBuffer)
-#define SET_DrawBuffer(disp, fn) SET_by_offset(disp, _gloffset_DrawBuffer, fn)
+static void INLINE SET_DrawBuffer(struct _glapi_table *disp, void (GLAPIENTRYP fn)(GLenum)) {
+   SET_by_offset(disp, _gloffset_DrawBuffer, fn);
+}
+
 #define CALL_Clear(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLbitfield)), _gloffset_Clear, parameters)
 #define GET_Clear(disp) GET_by_offset(disp, _gloffset_Clear)
-#define SET_Clear(disp, fn) SET_by_offset(disp, _gloffset_Clear, fn)
+static void INLINE SET_Clear(struct _glapi_table *disp, void (GLAPIENTRYP fn)(GLbitfield)) {
+   SET_by_offset(disp, _gloffset_Clear, fn);
+}
+
 #define CALL_ClearAccum(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLfloat, GLfloat, GLfloat, GLfloat)), _gloffset_ClearAccum, parameters)
 #define GET_ClearAccum(disp) GET_by_offset(disp, _gloffset_ClearAccum)
-#define SET_ClearAccum(disp, fn) SET_by_offset(disp, _gloffset_ClearAccum, fn)
+static void INLINE SET_ClearAccum(struct _glapi_table *disp, void (GLAPIENTRYP fn)(GLfloat, GLfloat, GLfloat, GLfloat)) {
+   SET_by_offset(disp, _gloffset_ClearAccum, fn);
+}
+
 #define CALL_ClearIndex(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLfloat)), _gloffset_ClearIndex, parameters)
 #define GET_ClearIndex(disp) GET_by_offset(disp, _gloffset_ClearIndex)
-#define SET_ClearIndex(disp, fn) SET_by_offset(disp, _gloffset_ClearIndex, fn)
+static void INLINE SET_ClearIndex(struct _glapi_table *disp, void (GLAPIENTRYP fn)(GLfloat)) {
+   SET_by_offset(disp, _gloffset_ClearIndex, fn);
+}
+
 #define CALL_ClearColor(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLclampf, GLclampf, GLclampf, GLclampf)), _gloffset_ClearColor, parameters)
 #define GET_ClearColor(disp) GET_by_offset(disp, _gloffset_ClearColor)
-#define SET_ClearColor(disp, fn) SET_by_offset(disp, _gloffset_ClearColor, fn)
+static void INLINE SET_ClearColor(struct _glapi_table *disp, void (GLAPIENTRYP fn)(GLclampf, GLclampf, GLclampf, GLclampf)) {
+   SET_by_offset(disp, _gloffset_ClearColor, fn);
+}
+
 #define CALL_ClearStencil(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLint)), _gloffset_ClearStencil, parameters)
 #define GET_ClearStencil(disp) GET_by_offset(disp, _gloffset_ClearStencil)
-#define SET_ClearStencil(disp, fn) SET_by_offset(disp, _gloffset_ClearStencil, fn)
+static void INLINE SET_ClearStencil(struct _glapi_table *disp, void (GLAPIENTRYP fn)(GLint)) {
+   SET_by_offset(disp, _gloffset_ClearStencil, fn);
+}
+
 #define CALL_ClearDepth(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLclampd)), _gloffset_ClearDepth, parameters)
 #define GET_ClearDepth(disp) GET_by_offset(disp, _gloffset_ClearDepth)
-#define SET_ClearDepth(disp, fn) SET_by_offset(disp, _gloffset_ClearDepth, fn)
+static void INLINE SET_ClearDepth(struct _glapi_table *disp, void (GLAPIENTRYP fn)(GLclampd)) {
+   SET_by_offset(disp, _gloffset_ClearDepth, fn);
+}
+
 #define CALL_StencilMask(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLuint)), _gloffset_StencilMask, parameters)
 #define GET_StencilMask(disp) GET_by_offset(disp, _gloffset_StencilMask)
-#define SET_StencilMask(disp, fn) SET_by_offset(disp, _gloffset_StencilMask, fn)
+static void INLINE SET_StencilMask(struct _glapi_table *disp, void (GLAPIENTRYP fn)(GLuint)) {
+   SET_by_offset(disp, _gloffset_StencilMask, fn);
+}
+
 #define CALL_ColorMask(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLboolean, GLboolean, GLboolean, GLboolean)), _gloffset_ColorMask, parameters)
 #define GET_ColorMask(disp) GET_by_offset(disp, _gloffset_ColorMask)
-#define SET_ColorMask(disp, fn) SET_by_offset(disp, _gloffset_ColorMask, fn)
+static void INLINE SET_ColorMask(struct _glapi_table *disp, void (GLAPIENTRYP fn)(GLboolean, GLboolean, GLboolean, GLboolean)) {
+   SET_by_offset(disp, _gloffset_ColorMask, fn);
+}
+
 #define CALL_DepthMask(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLboolean)), _gloffset_DepthMask, parameters)
 #define GET_DepthMask(disp) GET_by_offset(disp, _gloffset_DepthMask)
-#define SET_DepthMask(disp, fn) SET_by_offset(disp, _gloffset_DepthMask, fn)
+static void INLINE SET_DepthMask(struct _glapi_table *disp, void (GLAPIENTRYP fn)(GLboolean)) {
+   SET_by_offset(disp, _gloffset_DepthMask, fn);
+}
+
 #define CALL_IndexMask(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLuint)), _gloffset_IndexMask, parameters)
 #define GET_IndexMask(disp) GET_by_offset(disp, _gloffset_IndexMask)
-#define SET_IndexMask(disp, fn) SET_by_offset(disp, _gloffset_IndexMask, fn)
+static void INLINE SET_IndexMask(struct _glapi_table *disp, void (GLAPIENTRYP fn)(GLuint)) {
+   SET_by_offset(disp, _gloffset_IndexMask, fn);
+}
+
 #define CALL_Accum(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLenum, GLfloat)), _gloffset_Accum, parameters)
 #define GET_Accum(disp) GET_by_offset(disp, _gloffset_Accum)
-#define SET_Accum(disp, fn) SET_by_offset(disp, _gloffset_Accum, fn)
+static void INLINE SET_Accum(struct _glapi_table *disp, void (GLAPIENTRYP fn)(GLenum, GLfloat)) {
+   SET_by_offset(disp, _gloffset_Accum, fn);
+}
+
 #define CALL_Disable(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLenum)), _gloffset_Disable, parameters)
 #define GET_Disable(disp) GET_by_offset(disp, _gloffset_Disable)
-#define SET_Disable(disp, fn) SET_by_offset(disp, _gloffset_Disable, fn)
+static void INLINE SET_Disable(struct _glapi_table *disp, void (GLAPIENTRYP fn)(GLenum)) {
+   SET_by_offset(disp, _gloffset_Disable, fn);
+}
+
 #define CALL_Enable(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLenum)), _gloffset_Enable, parameters)
 #define GET_Enable(disp) GET_by_offset(disp, _gloffset_Enable)
-#define SET_Enable(disp, fn) SET_by_offset(disp, _gloffset_Enable, fn)
+static void INLINE SET_Enable(struct _glapi_table *disp, void (GLAPIENTRYP fn)(GLenum)) {
+   SET_by_offset(disp, _gloffset_Enable, fn);
+}
+
 #define CALL_Finish(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(void)), _gloffset_Finish, parameters)
 #define GET_Finish(disp) GET_by_offset(disp, _gloffset_Finish)
-#define SET_Finish(disp, fn) SET_by_offset(disp, _gloffset_Finish, fn)
+static void INLINE SET_Finish(struct _glapi_table *disp, void (GLAPIENTRYP fn)(void)) {
+   SET_by_offset(disp, _gloffset_Finish, fn);
+}
+
 #define CALL_Flush(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(void)), _gloffset_Flush, parameters)
 #define GET_Flush(disp) GET_by_offset(disp, _gloffset_Flush)
-#define SET_Flush(disp, fn) SET_by_offset(disp, _gloffset_Flush, fn)
+static void INLINE SET_Flush(struct _glapi_table *disp, void (GLAPIENTRYP fn)(void)) {
+   SET_by_offset(disp, _gloffset_Flush, fn);
+}
+
 #define CALL_PopAttrib(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(void)), _gloffset_PopAttrib, parameters)
 #define GET_PopAttrib(disp) GET_by_offset(disp, _gloffset_PopAttrib)
-#define SET_PopAttrib(disp, fn) SET_by_offset(disp, _gloffset_PopAttrib, fn)
+static void INLINE SET_PopAttrib(struct _glapi_table *disp, void (GLAPIENTRYP fn)(void)) {
+   SET_by_offset(disp, _gloffset_PopAttrib, fn);
+}
+
 #define CALL_PushAttrib(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLbitfield)), _gloffset_PushAttrib, parameters)
 #define GET_PushAttrib(disp) GET_by_offset(disp, _gloffset_PushAttrib)
-#define SET_PushAttrib(disp, fn) SET_by_offset(disp, _gloffset_PushAttrib, fn)
+static void INLINE SET_PushAttrib(struct _glapi_table *disp, void (GLAPIENTRYP fn)(GLbitfield)) {
+   SET_by_offset(disp, _gloffset_PushAttrib, fn);
+}
+
 #define CALL_Map1d(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLenum, GLdouble, GLdouble, GLint, GLint, const GLdouble *)), _gloffset_Map1d, parameters)
 #define GET_Map1d(disp) GET_by_offset(disp, _gloffset_Map1d)
-#define SET_Map1d(disp, fn) SET_by_offset(disp, _gloffset_Map1d, fn)
+static void INLINE SET_Map1d(struct _glapi_table *disp, void (GLAPIENTRYP fn)(GLenum, GLdouble, GLdouble, GLint, GLint, const GLdouble *)) {
+   SET_by_offset(disp, _gloffset_Map1d, fn);
+}
+
 #define CALL_Map1f(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLenum, GLfloat, GLfloat, GLint, GLint, const GLfloat *)), _gloffset_Map1f, parameters)
 #define GET_Map1f(disp) GET_by_offset(disp, _gloffset_Map1f)
-#define SET_Map1f(disp, fn) SET_by_offset(disp, _gloffset_Map1f, fn)
+static void INLINE SET_Map1f(struct _glapi_table *disp, void (GLAPIENTRYP fn)(GLenum, GLfloat, GLfloat, GLint, GLint, const GLfloat *)) {
+   SET_by_offset(disp, _gloffset_Map1f, fn);
+}
+
 #define CALL_Map2d(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLenum, GLdouble, GLdouble, GLint, GLint, GLdouble, GLdouble, GLint, GLint, const GLdouble *)), _gloffset_Map2d, parameters)
 #define GET_Map2d(disp) GET_by_offset(disp, _gloffset_Map2d)
-#define SET_Map2d(disp, fn) SET_by_offset(disp, _gloffset_Map2d, fn)
+static void INLINE SET_Map2d(struct _glapi_table *disp, void (GLAPIENTRYP fn)(GLenum, GLdouble, GLdouble, GLint, GLint, GLdouble, GLdouble, GLint, GLint, const GLdouble *)) {
+   SET_by_offset(disp, _gloffset_Map2d, fn);
+}
+
 #define CALL_Map2f(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLenum, GLfloat, GLfloat, GLint, GLint, GLfloat, GLfloat, GLint, GLint, const GLfloat *)), _gloffset_Map2f, parameters)
 #define GET_Map2f(disp) GET_by_offset(disp, _gloffset_Map2f)
-#define SET_Map2f(disp, fn) SET_by_offset(disp, _gloffset_Map2f, fn)
+static void INLINE SET_Map2f(struct _glapi_table *disp, void (GLAPIENTRYP fn)(GLenum, GLfloat, GLfloat, GLint, GLint, GLfloat, GLfloat, GLint, GLint, const GLfloat *)) {
+   SET_by_offset(disp, _gloffset_Map2f, fn);
+}
+
 #define CALL_MapGrid1d(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLint, GLdouble, GLdouble)), _gloffset_MapGrid1d, parameters)
 #define GET_MapGrid1d(disp) GET_by_offset(disp, _gloffset_MapGrid1d)
-#define SET_MapGrid1d(disp, fn) SET_by_offset(disp, _gloffset_MapGrid1d, fn)
+static void INLINE SET_MapGrid1d(struct _glapi_table *disp, void (GLAPIENTRYP fn)(GLint, GLdouble, GLdouble)) {
+   SET_by_offset(disp, _gloffset_MapGrid1d, fn);
+}
+
 #define CALL_MapGrid1f(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLint, GLfloat, GLfloat)), _gloffset_MapGrid1f, parameters)
 #define GET_MapGrid1f(disp) GET_by_offset(disp, _gloffset_MapGrid1f)
-#define SET_MapGrid1f(disp, fn) SET_by_offset(disp, _gloffset_MapGrid1f, fn)
+static void INLINE SET_MapGrid1f(struct _glapi_table *disp, void (GLAPIENTRYP fn)(GLint, GLfloat, GLfloat)) {
+   SET_by_offset(disp, _gloffset_MapGrid1f, fn);
+}
+
 #define CALL_MapGrid2d(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLint, GLdouble, GLdouble, GLint, GLdouble, GLdouble)), _gloffset_MapGrid2d, parameters)
 #define GET_MapGrid2d(disp) GET_by_offset(disp, _gloffset_MapGrid2d)
-#define SET_MapGrid2d(disp, fn) SET_by_offset(disp, _gloffset_MapGrid2d, fn)
+static void INLINE SET_MapGrid2d(struct _glapi_table *disp, void (GLAPIENTRYP fn)(GLint, GLdouble, GLdouble, GLint, GLdouble, GLdouble)) {
+   SET_by_offset(disp, _gloffset_MapGrid2d, fn);
+}
+
 #define CALL_MapGrid2f(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLint, GLfloat, GLfloat, GLint, GLfloat, GLfloat)), _gloffset_MapGrid2f, parameters)
 #define GET_MapGrid2f(disp) GET_by_offset(disp, _gloffset_MapGrid2f)
-#define SET_MapGrid2f(disp, fn) SET_by_offset(disp, _gloffset_MapGrid2f, fn)
+static void INLINE SET_MapGrid2f(struct _glapi_table *disp, void (GLAPIENTRYP fn)(GLint, GLfloat, GLfloat, GLint, GLfloat, GLfloat)) {
+   SET_by_offset(disp, _gloffset_MapGrid2f, fn);
+}
+
 #define CALL_EvalCoord1d(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLdouble)), _gloffset_EvalCoord1d, parameters)
 #define GET_EvalCoord1d(disp) GET_by_offset(disp, _gloffset_EvalCoord1d)
-#define SET_EvalCoord1d(disp, fn) SET_by_offset(disp, _gloffset_EvalCoord1d, fn)
+static void INLINE SET_EvalCoord1d(struct _glapi_table *disp, void (GLAPIENTRYP fn)(GLdouble)) {
+   SET_by_offset(disp, _gloffset_EvalCoord1d, fn);
+}
+
 #define CALL_EvalCoord1dv(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(const GLdouble *)), _gloffset_EvalCoord1dv, parameters)
 #define GET_EvalCoord1dv(disp) GET_by_offset(disp, _gloffset_EvalCoord1dv)
-#define SET_EvalCoord1dv(disp, fn) SET_by_offset(disp, _gloffset_EvalCoord1dv, fn)
+static void INLINE SET_EvalCoord1dv(struct _glapi_table *disp, void (GLAPIENTRYP fn)(const GLdouble *)) {
+   SET_by_offset(disp, _gloffset_EvalCoord1dv, fn);
+}
+
 #define CALL_EvalCoord1f(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLfloat)), _gloffset_EvalCoord1f, parameters)
 #define GET_EvalCoord1f(disp) GET_by_offset(disp, _gloffset_EvalCoord1f)
-#define SET_EvalCoord1f(disp, fn) SET_by_offset(disp, _gloffset_EvalCoord1f, fn)
+static void INLINE SET_EvalCoord1f(struct _glapi_table *disp, void (GLAPIENTRYP fn)(GLfloat)) {
+   SET_by_offset(disp, _gloffset_EvalCoord1f, fn);
+}
+
 #define CALL_EvalCoord1fv(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(const GLfloat *)), _gloffset_EvalCoord1fv, parameters)
 #define GET_EvalCoord1fv(disp) GET_by_offset(disp, _gloffset_EvalCoord1fv)
-#define SET_EvalCoord1fv(disp, fn) SET_by_offset(disp, _gloffset_EvalCoord1fv, fn)
+static void INLINE SET_EvalCoord1fv(struct _glapi_table *disp, void (GLAPIENTRYP fn)(const GLfloat *)) {
+   SET_by_offset(disp, _gloffset_EvalCoord1fv, fn);
+}
+
 #define CALL_EvalCoord2d(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLdouble, GLdouble)), _gloffset_EvalCoord2d, parameters)
 #define GET_EvalCoord2d(disp) GET_by_offset(disp, _gloffset_EvalCoord2d)
-#define SET_EvalCoord2d(disp, fn) SET_by_offset(disp, _gloffset_EvalCoord2d, fn)
+static void INLINE SET_EvalCoord2d(struct _glapi_table *disp, void (GLAPIENTRYP fn)(GLdouble, GLdouble)) {
+   SET_by_offset(disp, _gloffset_EvalCoord2d, fn);
+}
+
 #define CALL_EvalCoord2dv(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(const GLdouble *)), _gloffset_EvalCoord2dv, parameters)
 #define GET_EvalCoord2dv(disp) GET_by_offset(disp, _gloffset_EvalCoord2dv)
-#define SET_EvalCoord2dv(disp, fn) SET_by_offset(disp, _gloffset_EvalCoord2dv, fn)
+static void INLINE SET_EvalCoord2dv(struct _glapi_table *disp, void (GLAPIENTRYP fn)(const GLdouble *)) {
+   SET_by_offset(disp, _gloffset_EvalCoord2dv, fn);
+}
+
 #define CALL_EvalCoord2f(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLfloat, GLfloat)), _gloffset_EvalCoord2f, parameters)
 #define GET_EvalCoord2f(disp) GET_by_offset(disp, _gloffset_EvalCoord2f)
-#define SET_EvalCoord2f(disp, fn) SET_by_offset(disp, _gloffset_EvalCoord2f, fn)
+static void INLINE SET_EvalCoord2f(struct _glapi_table *disp, void (GLAPIENTRYP fn)(GLfloat, GLfloat)) {
+   SET_by_offset(disp, _gloffset_EvalCoord2f, fn);
+}
+
 #define CALL_EvalCoord2fv(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(const GLfloat *)), _gloffset_EvalCoord2fv, parameters)
 #define GET_EvalCoord2fv(disp) GET_by_offset(disp, _gloffset_EvalCoord2fv)
-#define SET_EvalCoord2fv(disp, fn) SET_by_offset(disp, _gloffset_EvalCoord2fv, fn)
+static void INLINE SET_EvalCoord2fv(struct _glapi_table *disp, void (GLAPIENTRYP fn)(const GLfloat *)) {
+   SET_by_offset(disp, _gloffset_EvalCoord2fv, fn);
+}
+
 #define CALL_EvalMesh1(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLenum, GLint, GLint)), _gloffset_EvalMesh1, parameters)
 #define GET_EvalMesh1(disp) GET_by_offset(disp, _gloffset_EvalMesh1)
-#define SET_EvalMesh1(disp, fn) SET_by_offset(disp, _gloffset_EvalMesh1, fn)
+static void INLINE SET_EvalMesh1(struct _glapi_table *disp, void (GLAPIENTRYP fn)(GLenum, GLint, GLint)) {
+   SET_by_offset(disp, _gloffset_EvalMesh1, fn);
+}
+
 #define CALL_EvalPoint1(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLint)), _gloffset_EvalPoint1, parameters)
 #define GET_EvalPoint1(disp) GET_by_offset(disp, _gloffset_EvalPoint1)
-#define SET_EvalPoint1(disp, fn) SET_by_offset(disp, _gloffset_EvalPoint1, fn)
+static void INLINE SET_EvalPoint1(struct _glapi_table *disp, void (GLAPIENTRYP fn)(GLint)) {
+   SET_by_offset(disp, _gloffset_EvalPoint1, fn);
+}
+
 #define CALL_EvalMesh2(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLenum, GLint, GLint, GLint, GLint)), _gloffset_EvalMesh2, parameters)
 #define GET_EvalMesh2(disp) GET_by_offset(disp, _gloffset_EvalMesh2)
-#define SET_EvalMesh2(disp, fn) SET_by_offset(disp, _gloffset_EvalMesh2, fn)
+static void INLINE SET_EvalMesh2(struct _glapi_table *disp, void (GLAPIENTRYP fn)(GLenum, GLint, GLint, GLint, GLint)) {
+   SET_by_offset(disp, _gloffset_EvalMesh2, fn);
+}
+
 #define CALL_EvalPoint2(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLint, GLint)), _gloffset_EvalPoint2, parameters)
 #define GET_EvalPoint2(disp) GET_by_offset(disp, _gloffset_EvalPoint2)
-#define SET_EvalPoint2(disp, fn) SET_by_offset(disp, _gloffset_EvalPoint2, fn)
+static void INLINE SET_EvalPoint2(struct _glapi_table *disp, void (GLAPIENTRYP fn)(GLint, GLint)) {
+   SET_by_offset(disp, _gloffset_EvalPoint2, fn);
+}
+
 #define CALL_AlphaFunc(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLenum, GLclampf)), _gloffset_AlphaFunc, parameters)
 #define GET_AlphaFunc(disp) GET_by_offset(disp, _gloffset_AlphaFunc)
-#define SET_AlphaFunc(disp, fn) SET_by_offset(disp, _gloffset_AlphaFunc, fn)
+static void INLINE SET_AlphaFunc(struct _glapi_table *disp, void (GLAPIENTRYP fn)(GLenum, GLclampf)) {
+   SET_by_offset(disp, _gloffset_AlphaFunc, fn);
+}
+
 #define CALL_BlendFunc(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLenum, GLenum)), _gloffset_BlendFunc, parameters)
 #define GET_BlendFunc(disp) GET_by_offset(disp, _gloffset_BlendFunc)
-#define SET_BlendFunc(disp, fn) SET_by_offset(disp, _gloffset_BlendFunc, fn)
+static void INLINE SET_BlendFunc(struct _glapi_table *disp, void (GLAPIENTRYP fn)(GLenum, GLenum)) {
+   SET_by_offset(disp, _gloffset_BlendFunc, fn);
+}
+
 #define CALL_LogicOp(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLenum)), _gloffset_LogicOp, parameters)
 #define GET_LogicOp(disp) GET_by_offset(disp, _gloffset_LogicOp)
-#define SET_LogicOp(disp, fn) SET_by_offset(disp, _gloffset_LogicOp, fn)
+static void INLINE SET_LogicOp(struct _glapi_table *disp, void (GLAPIENTRYP fn)(GLenum)) {
+   SET_by_offset(disp, _gloffset_LogicOp, fn);
+}
+
 #define CALL_StencilFunc(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLenum, GLint, GLuint)), _gloffset_StencilFunc, parameters)
 #define GET_StencilFunc(disp) GET_by_offset(disp, _gloffset_StencilFunc)
-#define SET_StencilFunc(disp, fn) SET_by_offset(disp, _gloffset_StencilFunc, fn)
+static void INLINE SET_StencilFunc(struct _glapi_table *disp, void (GLAPIENTRYP fn)(GLenum, GLint, GLuint)) {
+   SET_by_offset(disp, _gloffset_StencilFunc, fn);
+}
+
 #define CALL_StencilOp(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLenum, GLenum, GLenum)), _gloffset_StencilOp, parameters)
 #define GET_StencilOp(disp) GET_by_offset(disp, _gloffset_StencilOp)
-#define SET_StencilOp(disp, fn) SET_by_offset(disp, _gloffset_StencilOp, fn)
+static void INLINE SET_StencilOp(struct _glapi_table *disp, void (GLAPIENTRYP fn)(GLenum, GLenum, GLenum)) {
+   SET_by_offset(disp, _gloffset_StencilOp, fn);
+}
+
 #define CALL_DepthFunc(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLenum)), _gloffset_DepthFunc, parameters)
 #define GET_DepthFunc(disp) GET_by_offset(disp, _gloffset_DepthFunc)
-#define SET_DepthFunc(disp, fn) SET_by_offset(disp, _gloffset_DepthFunc, fn)
+static void INLINE SET_DepthFunc(struct _glapi_table *disp, void (GLAPIENTRYP fn)(GLenum)) {
+   SET_by_offset(disp, _gloffset_DepthFunc, fn);
+}
+
 #define CALL_PixelZoom(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLfloat, GLfloat)), _gloffset_PixelZoom, parameters)
 #define GET_PixelZoom(disp) GET_by_offset(disp, _gloffset_PixelZoom)
-#define SET_PixelZoom(disp, fn) SET_by_offset(disp, _gloffset_PixelZoom, fn)
+static void INLINE SET_PixelZoom(struct _glapi_table *disp, void (GLAPIENTRYP fn)(GLfloat, GLfloat)) {
+   SET_by_offset(disp, _gloffset_PixelZoom, fn);
+}
+
 #define CALL_PixelTransferf(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLenum, GLfloat)), _gloffset_PixelTransferf, parameters)
 #define GET_PixelTransferf(disp) GET_by_offset(disp, _gloffset_PixelTransferf)
-#define SET_PixelTransferf(disp, fn) SET_by_offset(disp, _gloffset_PixelTransferf, fn)
+static void INLINE SET_PixelTransferf(struct _glapi_table *disp, void (GLAPIENTRYP fn)(GLenum, GLfloat)) {
+   SET_by_offset(disp, _gloffset_PixelTransferf, fn);
+}
+
 #define CALL_PixelTransferi(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLenum, GLint)), _gloffset_PixelTransferi, parameters)
 #define GET_PixelTransferi(disp) GET_by_offset(disp, _gloffset_PixelTransferi)
-#define SET_PixelTransferi(disp, fn) SET_by_offset(disp, _gloffset_PixelTransferi, fn)
+static void INLINE SET_PixelTransferi(struct _glapi_table *disp, void (GLAPIENTRYP fn)(GLenum, GLint)) {
+   SET_by_offset(disp, _gloffset_PixelTransferi, fn);
+}
+
 #define CALL_PixelStoref(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLenum, GLfloat)), _gloffset_PixelStoref, parameters)
 #define GET_PixelStoref(disp) GET_by_offset(disp, _gloffset_PixelStoref)
-#define SET_PixelStoref(disp, fn) SET_by_offset(disp, _gloffset_PixelStoref, fn)
+static void INLINE SET_PixelStoref(struct _glapi_table *disp, void (GLAPIENTRYP fn)(GLenum, GLfloat)) {
+   SET_by_offset(disp, _gloffset_PixelStoref, fn);
+}
+
 #define CALL_PixelStorei(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLenum, GLint)), _gloffset_PixelStorei, parameters)
 #define GET_PixelStorei(disp) GET_by_offset(disp, _gloffset_PixelStorei)
-#define SET_PixelStorei(disp, fn) SET_by_offset(disp, _gloffset_PixelStorei, fn)
+static void INLINE SET_PixelStorei(struct _glapi_table *disp, void (GLAPIENTRYP fn)(GLenum, GLint)) {
+   SET_by_offset(disp, _gloffset_PixelStorei, fn);
+}
+
 #define CALL_PixelMapfv(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLenum, GLsizei, const GLfloat *)), _gloffset_PixelMapfv, parameters)
 #define GET_PixelMapfv(disp) GET_by_offset(disp, _gloffset_PixelMapfv)
-#define SET_PixelMapfv(disp, fn) SET_by_offset(disp, _gloffset_PixelMapfv, fn)
+static void INLINE SET_PixelMapfv(struct _glapi_table *disp, void (GLAPIENTRYP fn)(GLenum, GLsizei, const GLfloat *)) {
+   SET_by_offset(disp, _gloffset_PixelMapfv, fn);
+}
+
 #define CALL_PixelMapuiv(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLenum, GLsizei, const GLuint *)), _gloffset_PixelMapuiv, parameters)
 #define GET_PixelMapuiv(disp) GET_by_offset(disp, _gloffset_PixelMapuiv)
-#define SET_PixelMapuiv(disp, fn) SET_by_offset(disp, _gloffset_PixelMapuiv, fn)
+static void INLINE SET_PixelMapuiv(struct _glapi_table *disp, void (GLAPIENTRYP fn)(GLenum, GLsizei, const GLuint *)) {
+   SET_by_offset(disp, _gloffset_PixelMapuiv, fn);
+}
+
 #define CALL_PixelMapusv(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLenum, GLsizei, const GLushort *)), _gloffset_PixelMapusv, parameters)
 #define GET_PixelMapusv(disp) GET_by_offset(disp, _gloffset_PixelMapusv)
-#define SET_PixelMapusv(disp, fn) SET_by_offset(disp, _gloffset_PixelMapusv, fn)
+static void INLINE SET_PixelMapusv(struct _glapi_table *disp, void (GLAPIENTRYP fn)(GLenum, GLsizei, const GLushort *)) {
+   SET_by_offset(disp, _gloffset_PixelMapusv, fn);
+}
+
 #define CALL_ReadBuffer(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLenum)), _gloffset_ReadBuffer, parameters)
 #define GET_ReadBuffer(disp) GET_by_offset(disp, _gloffset_ReadBuffer)
-#define SET_ReadBuffer(disp, fn) SET_by_offset(disp, _gloffset_ReadBuffer, fn)
+static void INLINE SET_ReadBuffer(struct _glapi_table *disp, void (GLAPIENTRYP fn)(GLenum)) {
+   SET_by_offset(disp, _gloffset_ReadBuffer, fn);
+}
+
 #define CALL_CopyPixels(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLint, GLint, GLsizei, GLsizei, GLenum)), _gloffset_CopyPixels, parameters)
 #define GET_CopyPixels(disp) GET_by_offset(disp, _gloffset_CopyPixels)
-#define SET_CopyPixels(disp, fn) SET_by_offset(disp, _gloffset_CopyPixels, fn)
+static void INLINE SET_CopyPixels(struct _glapi_table *disp, void (GLAPIENTRYP fn)(GLint, GLint, GLsizei, GLsizei, GLenum)) {
+   SET_by_offset(disp, _gloffset_CopyPixels, fn);
+}
+
 #define CALL_ReadPixels(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLint, GLint, GLsizei, GLsizei, GLenum, GLenum, GLvoid *)), _gloffset_ReadPixels, parameters)
 #define GET_ReadPixels(disp) GET_by_offset(disp, _gloffset_ReadPixels)
-#define SET_ReadPixels(disp, fn) SET_by_offset(disp, _gloffset_ReadPixels, fn)
+static void INLINE SET_ReadPixels(struct _glapi_table *disp, void (GLAPIENTRYP fn)(GLint, GLint, GLsizei, GLsizei, GLenum, GLenum, GLvoid *)) {
+   SET_by_offset(disp, _gloffset_ReadPixels, fn);
+}
+
 #define CALL_DrawPixels(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLsizei, GLsizei, GLenum, GLenum, const GLvoid *)), _gloffset_DrawPixels, parameters)
 #define GET_DrawPixels(disp) GET_by_offset(disp, _gloffset_DrawPixels)
-#define SET_DrawPixels(disp, fn) SET_by_offset(disp, _gloffset_DrawPixels, fn)
+static void INLINE SET_DrawPixels(struct _glapi_table *disp, void (GLAPIENTRYP fn)(GLsizei, GLsizei, GLenum, GLenum, const GLvoid *)) {
+   SET_by_offset(disp, _gloffset_DrawPixels, fn);
+}
+
 #define CALL_GetBooleanv(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLenum, GLboolean *)), _gloffset_GetBooleanv, parameters)
 #define GET_GetBooleanv(disp) GET_by_offset(disp, _gloffset_GetBooleanv)
-#define SET_GetBooleanv(disp, fn) SET_by_offset(disp, _gloffset_GetBooleanv, fn)
+static void INLINE SET_GetBooleanv(struct _glapi_table *disp, void (GLAPIENTRYP fn)(GLenum, GLboolean *)) {
+   SET_by_offset(disp, _gloffset_GetBooleanv, fn);
+}
+
 #define CALL_GetClipPlane(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLenum, GLdouble *)), _gloffset_GetClipPlane, parameters)
 #define GET_GetClipPlane(disp) GET_by_offset(disp, _gloffset_GetClipPlane)
-#define SET_GetClipPlane(disp, fn) SET_by_offset(disp, _gloffset_GetClipPlane, fn)
+static void INLINE SET_GetClipPlane(struct _glapi_table *disp, void (GLAPIENTRYP fn)(GLenum, GLdouble *)) {
+   SET_by_offset(disp, _gloffset_GetClipPlane, fn);
+}
+
 #define CALL_GetDoublev(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLenum, GLdouble *)), _gloffset_GetDoublev, parameters)
 #define GET_GetDoublev(disp) GET_by_offset(disp, _gloffset_GetDoublev)
-#define SET_GetDoublev(disp, fn) SET_by_offset(disp, _gloffset_GetDoublev, fn)
+static void INLINE SET_GetDoublev(struct _glapi_table *disp, void (GLAPIENTRYP fn)(GLenum, GLdouble *)) {
+   SET_by_offset(disp, _gloffset_GetDoublev, fn);
+}
+
 #define CALL_GetError(disp, parameters) CALL_by_offset(disp, (GLenum (GLAPIENTRYP)(void)), _gloffset_GetError, parameters)
 #define GET_GetError(disp) GET_by_offset(disp, _gloffset_GetError)
-#define SET_GetError(disp, fn) SET_by_offset(disp, _gloffset_GetError, fn)
+static void INLINE SET_GetError(struct _glapi_table *disp, GLenum (GLAPIENTRYP fn)(void)) {
+   SET_by_offset(disp, _gloffset_GetError, fn);
+}
+
 #define CALL_GetFloatv(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLenum, GLfloat *)), _gloffset_GetFloatv, parameters)
 #define GET_GetFloatv(disp) GET_by_offset(disp, _gloffset_GetFloatv)
-#define SET_GetFloatv(disp, fn) SET_by_offset(disp, _gloffset_GetFloatv, fn)
+static void INLINE SET_GetFloatv(struct _glapi_table *disp, void (GLAPIENTRYP fn)(GLenum, GLfloat *)) {
+   SET_by_offset(disp, _gloffset_GetFloatv, fn);
+}
+
 #define CALL_GetIntegerv(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLenum, GLint *)), _gloffset_GetIntegerv, parameters)
 #define GET_GetIntegerv(disp) GET_by_offset(disp, _gloffset_GetIntegerv)
-#define SET_GetIntegerv(disp, fn) SET_by_offset(disp, _gloffset_GetIntegerv, fn)
+static void INLINE SET_GetIntegerv(struct _glapi_table *disp, void (GLAPIENTRYP fn)(GLenum, GLint *)) {
+   SET_by_offset(disp, _gloffset_GetIntegerv, fn);
+}
+
 #define CALL_GetLightfv(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLenum, GLenum, GLfloat *)), _gloffset_GetLightfv, parameters)
 #define GET_GetLightfv(disp) GET_by_offset(disp, _gloffset_GetLightfv)
-#define SET_GetLightfv(disp, fn) SET_by_offset(disp, _gloffset_GetLightfv, fn)
+static void INLINE SET_GetLightfv(struct _glapi_table *disp, void (GLAPIENTRYP fn)(GLenum, GLenum, GLfloat *)) {
+   SET_by_offset(disp, _gloffset_GetLightfv, fn);
+}
+
 #define CALL_GetLightiv(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLenum, GLenum, GLint *)), _gloffset_GetLightiv, parameters)
 #define GET_GetLightiv(disp) GET_by_offset(disp, _gloffset_GetLightiv)
-#define SET_GetLightiv(disp, fn) SET_by_offset(disp, _gloffset_GetLightiv, fn)
+static void INLINE SET_GetLightiv(struct _glapi_table *disp, void (GLAPIENTRYP fn)(GLenum, GLenum, GLint *)) {
+   SET_by_offset(disp, _gloffset_GetLightiv, fn);
+}
+
 #define CALL_GetMapdv(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLenum, GLenum, GLdouble *)), _gloffset_GetMapdv, parameters)
 #define GET_GetMapdv(disp) GET_by_offset(disp, _gloffset_GetMapdv)
-#define SET_GetMapdv(disp, fn) SET_by_offset(disp, _gloffset_GetMapdv, fn)
+static void INLINE SET_GetMapdv(struct _glapi_table *disp, void (GLAPIENTRYP fn)(GLenum, GLenum, GLdouble *)) {
+   SET_by_offset(disp, _gloffset_GetMapdv, fn);
+}
+
 #define CALL_GetMapfv(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLenum, GLenum, GLfloat *)), _gloffset_GetMapfv, parameters)
 #define GET_GetMapfv(disp) GET_by_offset(disp, _gloffset_GetMapfv)
-#define SET_GetMapfv(disp, fn) SET_by_offset(disp, _gloffset_GetMapfv, fn)
+static void INLINE SET_GetMapfv(struct _glapi_table *disp, void (GLAPIENTRYP fn)(GLenum, GLenum, GLfloat *)) {
+   SET_by_offset(disp, _gloffset_GetMapfv, fn);
+}
+
 #define CALL_GetMapiv(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLenum, GLenum, GLint *)), _gloffset_GetMapiv, parameters)
 #define GET_GetMapiv(disp) GET_by_offset(disp, _gloffset_GetMapiv)
-#define SET_GetMapiv(disp, fn) SET_by_offset(disp, _gloffset_GetMapiv, fn)
+static void INLINE SET_GetMapiv(struct _glapi_table *disp, void (GLAPIENTRYP fn)(GLenum, GLenum, GLint *)) {
+   SET_by_offset(disp, _gloffset_GetMapiv, fn);
+}
+
 #define CALL_GetMaterialfv(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLenum, GLenum, GLfloat *)), _gloffset_GetMaterialfv, parameters)
 #define GET_GetMaterialfv(disp) GET_by_offset(disp, _gloffset_GetMaterialfv)
-#define SET_GetMaterialfv(disp, fn) SET_by_offset(disp, _gloffset_GetMaterialfv, fn)
+static void INLINE SET_GetMaterialfv(struct _glapi_table *disp, void (GLAPIENTRYP fn)(GLenum, GLenum, GLfloat *)) {
+   SET_by_offset(disp, _gloffset_GetMaterialfv, fn);
+}
+
 #define CALL_GetMaterialiv(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLenum, GLenum, GLint *)), _gloffset_GetMaterialiv, parameters)
 #define GET_GetMaterialiv(disp) GET_by_offset(disp, _gloffset_GetMaterialiv)
-#define SET_GetMaterialiv(disp, fn) SET_by_offset(disp, _gloffset_GetMaterialiv, fn)
+static void INLINE SET_GetMaterialiv(struct _glapi_table *disp, void (GLAPIENTRYP fn)(GLenum, GLenum, GLint *)) {
+   SET_by_offset(disp, _gloffset_GetMaterialiv, fn);
+}
+
 #define CALL_GetPixelMapfv(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLenum, GLfloat *)), _gloffset_GetPixelMapfv, parameters)
 #define GET_GetPixelMapfv(disp) GET_by_offset(disp, _gloffset_GetPixelMapfv)
-#define SET_GetPixelMapfv(disp, fn) SET_by_offset(disp, _gloffset_GetPixelMapfv, fn)
+static void INLINE SET_GetPixelMapfv(struct _glapi_table *disp, void (GLAPIENTRYP fn)(GLenum, GLfloat *)) {
+   SET_by_offset(disp, _gloffset_GetPixelMapfv, fn);
+}
+
 #define CALL_GetPixelMapuiv(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLenum, GLuint *)), _gloffset_GetPixelMapuiv, parameters)
 #define GET_GetPixelMapuiv(disp) GET_by_offset(disp, _gloffset_GetPixelMapuiv)
-#define SET_GetPixelMapuiv(disp, fn) SET_by_offset(disp, _gloffset_GetPixelMapuiv, fn)
+static void INLINE SET_GetPixelMapuiv(struct _glapi_table *disp, void (GLAPIENTRYP fn)(GLenum, GLuint *)) {
+   SET_by_offset(disp, _gloffset_GetPixelMapuiv, fn);
+}
+
 #define CALL_GetPixelMapusv(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLenum, GLushort *)), _gloffset_GetPixelMapusv, parameters)
 #define GET_GetPixelMapusv(disp) GET_by_offset(disp, _gloffset_GetPixelMapusv)
-#define SET_GetPixelMapusv(disp, fn) SET_by_offset(disp, _gloffset_GetPixelMapusv, fn)
+static void INLINE SET_GetPixelMapusv(struct _glapi_table *disp, void (GLAPIENTRYP fn)(GLenum, GLushort *)) {
+   SET_by_offset(disp, _gloffset_GetPixelMapusv, fn);
+}
+
 #define CALL_GetPolygonStipple(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLubyte *)), _gloffset_GetPolygonStipple, parameters)
 #define GET_GetPolygonStipple(disp) GET_by_offset(disp, _gloffset_GetPolygonStipple)
-#define SET_GetPolygonStipple(disp, fn) SET_by_offset(disp, _gloffset_GetPolygonStipple, fn)
+static void INLINE SET_GetPolygonStipple(struct _glapi_table *disp, void (GLAPIENTRYP fn)(GLubyte *)) {
+   SET_by_offset(disp, _gloffset_GetPolygonStipple, fn);
+}
+
 #define CALL_GetString(disp, parameters) CALL_by_offset(disp, (const GLubyte * (GLAPIENTRYP)(GLenum)), _gloffset_GetString, parameters)
 #define GET_GetString(disp) GET_by_offset(disp, _gloffset_GetString)
-#define SET_GetString(disp, fn) SET_by_offset(disp, _gloffset_GetString, fn)
+static void INLINE SET_GetString(struct _glapi_table *disp, const GLubyte * (GLAPIENTRYP fn)(GLenum)) {
+   SET_by_offset(disp, _gloffset_GetString, fn);
+}
+
 #define CALL_GetTexEnvfv(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLenum, GLenum, GLfloat *)), _gloffset_GetTexEnvfv, parameters)
 #define GET_GetTexEnvfv(disp) GET_by_offset(disp, _gloffset_GetTexEnvfv)
-#define SET_GetTexEnvfv(disp, fn) SET_by_offset(disp, _gloffset_GetTexEnvfv, fn)
+static void INLINE SET_GetTexEnvfv(struct _glapi_table *disp, void (GLAPIENTRYP fn)(GLenum, GLenum, GLfloat *)) {
+   SET_by_offset(disp, _gloffset_GetTexEnvfv, fn);
+}
+
 #define CALL_GetTexEnviv(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLenum, GLenum, GLint *)), _gloffset_GetTexEnviv, parameters)
 #define GET_GetTexEnviv(disp) GET_by_offset(disp, _gloffset_GetTexEnviv)
-#define SET_GetTexEnviv(disp, fn) SET_by_offset(disp, _gloffset_GetTexEnviv, fn)
+static void INLINE SET_GetTexEnviv(struct _glapi_table *disp, void (GLAPIENTRYP fn)(GLenum, GLenum, GLint *)) {
+   SET_by_offset(disp, _gloffset_GetTexEnviv, fn);
+}
+
 #define CALL_GetTexGendv(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLenum, GLenum, GLdouble *)), _gloffset_GetTexGendv, parameters)
 #define GET_GetTexGendv(disp) GET_by_offset(disp, _gloffset_GetTexGendv)
-#define SET_GetTexGendv(disp, fn) SET_by_offset(disp, _gloffset_GetTexGendv, fn)
+static void INLINE SET_GetTexGendv(struct _glapi_table *disp, void (GLAPIENTRYP fn)(GLenum, GLenum, GLdouble *)) {
+   SET_by_offset(disp, _gloffset_GetTexGendv, fn);
+}
+
 #define CALL_GetTexGenfv(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLenum, GLenum, GLfloat *)), _gloffset_GetTexGenfv, parameters)
 #define GET_GetTexGenfv(disp) GET_by_offset(disp, _gloffset_GetTexGenfv)
-#define SET_GetTexGenfv(disp, fn) SET_by_offset(disp, _gloffset_GetTexGenfv, fn)
+static void INLINE SET_GetTexGenfv(struct _glapi_table *disp, void (GLAPIENTRYP fn)(GLenum, GLenum, GLfloat *)) {
+   SET_by_offset(disp, _gloffset_GetTexGenfv, fn);
+}
+
 #define CALL_GetTexGeniv(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLenum, GLenum, GLint *)), _gloffset_GetTexGeniv, parameters)
 #define GET_GetTexGeniv(disp) GET_by_offset(disp, _gloffset_GetTexGeniv)
-#define SET_GetTexGeniv(disp, fn) SET_by_offset(disp, _gloffset_GetTexGeniv, fn)
+static void INLINE SET_GetTexGeniv(struct _glapi_table *disp, void (GLAPIENTRYP fn)(GLenum, GLenum, GLint *)) {
+   SET_by_offset(disp, _gloffset_GetTexGeniv, fn);
+}
+
 #define CALL_GetTexImage(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLenum, GLint, GLenum, GLenum, GLvoid *)), _gloffset_GetTexImage, parameters)
 #define GET_GetTexImage(disp) GET_by_offset(disp, _gloffset_GetTexImage)
-#define SET_GetTexImage(disp, fn) SET_by_offset(disp, _gloffset_GetTexImage, fn)
+static void INLINE SET_GetTexImage(struct _glapi_table *disp, void (GLAPIENTRYP fn)(GLenum, GLint, GLenum, GLenum, GLvoid *)) {
+   SET_by_offset(disp, _gloffset_GetTexImage, fn);
+}
+
 #define CALL_GetTexParameterfv(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLenum, GLenum, GLfloat *)), _gloffset_GetTexParameterfv, parameters)
 #define GET_GetTexParameterfv(disp) GET_by_offset(disp, _gloffset_GetTexParameterfv)
-#define SET_GetTexParameterfv(disp, fn) SET_by_offset(disp, _gloffset_GetTexParameterfv, fn)
+static void INLINE SET_GetTexParameterfv(struct _glapi_table *disp, void (GLAPIENTRYP fn)(GLenum, GLenum, GLfloat *)) {
+   SET_by_offset(disp, _gloffset_GetTexParameterfv, fn);
+}
+
 #define CALL_GetTexParameteriv(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLenum, GLenum, GLint *)), _gloffset_GetTexParameteriv, parameters)
 #define GET_GetTexParameteriv(disp) GET_by_offset(disp, _gloffset_GetTexParameteriv)
-#define SET_GetTexParameteriv(disp, fn) SET_by_offset(disp, _gloffset_GetTexParameteriv, fn)
+static void INLINE SET_GetTexParameteriv(struct _glapi_table *disp, void (GLAPIENTRYP fn)(GLenum, GLenum, GLint *)) {
+   SET_by_offset(disp, _gloffset_GetTexParameteriv, fn);
+}
+
 #define CALL_GetTexLevelParameterfv(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLenum, GLint, GLenum, GLfloat *)), _gloffset_GetTexLevelParameterfv, parameters)
 #define GET_GetTexLevelParameterfv(disp) GET_by_offset(disp, _gloffset_GetTexLevelParameterfv)
-#define SET_GetTexLevelParameterfv(disp, fn) SET_by_offset(disp, _gloffset_GetTexLevelParameterfv, fn)
+static void INLINE SET_GetTexLevelParameterfv(struct _glapi_table *disp, void (GLAPIENTRYP fn)(GLenum, GLint, GLenum, GLfloat *)) {
+   SET_by_offset(disp, _gloffset_GetTexLevelParameterfv, fn);
+}
+
 #define CALL_GetTexLevelParameteriv(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLenum, GLint, GLenum, GLint *)), _gloffset_GetTexLevelParameteriv, parameters)
 #define GET_GetTexLevelParameteriv(disp) GET_by_offset(disp, _gloffset_GetTexLevelParameteriv)
-#define SET_GetTexLevelParameteriv(disp, fn) SET_by_offset(disp, _gloffset_GetTexLevelParameteriv, fn)
+static void INLINE SET_GetTexLevelParameteriv(struct _glapi_table *disp, void (GLAPIENTRYP fn)(GLenum, GLint, GLenum, GLint *)) {
+   SET_by_offset(disp, _gloffset_GetTexLevelParameteriv, fn);
+}
+
 #define CALL_IsEnabled(disp, parameters) CALL_by_offset(disp, (GLboolean (GLAPIENTRYP)(GLenum)), _gloffset_IsEnabled, parameters)
 #define GET_IsEnabled(disp) GET_by_offset(disp, _gloffset_IsEnabled)
-#define SET_IsEnabled(disp, fn) SET_by_offset(disp, _gloffset_IsEnabled, fn)
+static void INLINE SET_IsEnabled(struct _glapi_table *disp, GLboolean (GLAPIENTRYP fn)(GLenum)) {
+   SET_by_offset(disp, _gloffset_IsEnabled, fn);
+}
+
 #define CALL_IsList(disp, parameters) CALL_by_offset(disp, (GLboolean (GLAPIENTRYP)(GLuint)), _gloffset_IsList, parameters)
 #define GET_IsList(disp) GET_by_offset(disp, _gloffset_IsList)
-#define SET_IsList(disp, fn) SET_by_offset(disp, _gloffset_IsList, fn)
+static void INLINE SET_IsList(struct _glapi_table *disp, GLboolean (GLAPIENTRYP fn)(GLuint)) {
+   SET_by_offset(disp, _gloffset_IsList, fn);
+}
+
 #define CALL_DepthRange(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLclampd, GLclampd)), _gloffset_DepthRange, parameters)
 #define GET_DepthRange(disp) GET_by_offset(disp, _gloffset_DepthRange)
-#define SET_DepthRange(disp, fn) SET_by_offset(disp, _gloffset_DepthRange, fn)
+static void INLINE SET_DepthRange(struct _glapi_table *disp, void (GLAPIENTRYP fn)(GLclampd, GLclampd)) {
+   SET_by_offset(disp, _gloffset_DepthRange, fn);
+}
+
 #define CALL_Frustum(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLdouble, GLdouble, GLdouble, GLdouble, GLdouble, GLdouble)), _gloffset_Frustum, parameters)
 #define GET_Frustum(disp) GET_by_offset(disp, _gloffset_Frustum)
-#define SET_Frustum(disp, fn) SET_by_offset(disp, _gloffset_Frustum, fn)
+static void INLINE SET_Frustum(struct _glapi_table *disp, void (GLAPIENTRYP fn)(GLdouble, GLdouble, GLdouble, GLdouble, GLdouble, GLdouble)) {
+   SET_by_offset(disp, _gloffset_Frustum, fn);
+}
+
 #define CALL_LoadIdentity(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(void)), _gloffset_LoadIdentity, parameters)
 #define GET_LoadIdentity(disp) GET_by_offset(disp, _gloffset_LoadIdentity)
-#define SET_LoadIdentity(disp, fn) SET_by_offset(disp, _gloffset_LoadIdentity, fn)
+static void INLINE SET_LoadIdentity(struct _glapi_table *disp, void (GLAPIENTRYP fn)(void)) {
+   SET_by_offset(disp, _gloffset_LoadIdentity, fn);
+}
+
 #define CALL_LoadMatrixf(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(const GLfloat *)), _gloffset_LoadMatrixf, parameters)
 #define GET_LoadMatrixf(disp) GET_by_offset(disp, _gloffset_LoadMatrixf)
-#define SET_LoadMatrixf(disp, fn) SET_by_offset(disp, _gloffset_LoadMatrixf, fn)
+static void INLINE SET_LoadMatrixf(struct _glapi_table *disp, void (GLAPIENTRYP fn)(const GLfloat *)) {
+   SET_by_offset(disp, _gloffset_LoadMatrixf, fn);
+}
+
 #define CALL_LoadMatrixd(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(const GLdouble *)), _gloffset_LoadMatrixd, parameters)
 #define GET_LoadMatrixd(disp) GET_by_offset(disp, _gloffset_LoadMatrixd)
-#define SET_LoadMatrixd(disp, fn) SET_by_offset(disp, _gloffset_LoadMatrixd, fn)
+static void INLINE SET_LoadMatrixd(struct _glapi_table *disp, void (GLAPIENTRYP fn)(const GLdouble *)) {
+   SET_by_offset(disp, _gloffset_LoadMatrixd, fn);
+}
+
 #define CALL_MatrixMode(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLenum)), _gloffset_MatrixMode, parameters)
 #define GET_MatrixMode(disp) GET_by_offset(disp, _gloffset_MatrixMode)
-#define SET_MatrixMode(disp, fn) SET_by_offset(disp, _gloffset_MatrixMode, fn)
+static void INLINE SET_MatrixMode(struct _glapi_table *disp, void (GLAPIENTRYP fn)(GLenum)) {
+   SET_by_offset(disp, _gloffset_MatrixMode, fn);
+}
+
 #define CALL_MultMatrixf(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(const GLfloat *)), _gloffset_MultMatrixf, parameters)
 #define GET_MultMatrixf(disp) GET_by_offset(disp, _gloffset_MultMatrixf)
-#define SET_MultMatrixf(disp, fn) SET_by_offset(disp, _gloffset_MultMatrixf, fn)
+static void INLINE SET_MultMatrixf(struct _glapi_table *disp, void (GLAPIENTRYP fn)(const GLfloat *)) {
+   SET_by_offset(disp, _gloffset_MultMatrixf, fn);
+}
+
 #define CALL_MultMatrixd(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(const GLdouble *)), _gloffset_MultMatrixd, parameters)
 #define GET_MultMatrixd(disp) GET_by_offset(disp, _gloffset_MultMatrixd)
-#define SET_MultMatrixd(disp, fn) SET_by_offset(disp, _gloffset_MultMatrixd, fn)
+static void INLINE SET_MultMatrixd(struct _glapi_table *disp, void (GLAPIENTRYP fn)(const GLdouble *)) {
+   SET_by_offset(disp, _gloffset_MultMatrixd, fn);
+}
+
 #define CALL_Ortho(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLdouble, GLdouble, GLdouble, GLdouble, GLdouble, GLdouble)), _gloffset_Ortho, parameters)
 #define GET_Ortho(disp) GET_by_offset(disp, _gloffset_Ortho)
-#define SET_Ortho(disp, fn) SET_by_offset(disp, _gloffset_Ortho, fn)
+static void INLINE SET_Ortho(struct _glapi_table *disp, void (GLAPIENTRYP fn)(GLdouble, GLdouble, GLdouble, GLdouble, GLdouble, GLdouble)) {
+   SET_by_offset(disp, _gloffset_Ortho, fn);
+}
+
 #define CALL_PopMatrix(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(void)), _gloffset_PopMatrix, parameters)
 #define GET_PopMatrix(disp) GET_by_offset(disp, _gloffset_PopMatrix)
-#define SET_PopMatrix(disp, fn) SET_by_offset(disp, _gloffset_PopMatrix, fn)
+static void INLINE SET_PopMatrix(struct _glapi_table *disp, void (GLAPIENTRYP fn)(void)) {
+   SET_by_offset(disp, _gloffset_PopMatrix, fn);
+}
+
 #define CALL_PushMatrix(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(void)), _gloffset_PushMatrix, parameters)
 #define GET_PushMatrix(disp) GET_by_offset(disp, _gloffset_PushMatrix)
-#define SET_PushMatrix(disp, fn) SET_by_offset(disp, _gloffset_PushMatrix, fn)
+static void INLINE SET_PushMatrix(struct _glapi_table *disp, void (GLAPIENTRYP fn)(void)) {
+   SET_by_offset(disp, _gloffset_PushMatrix, fn);
+}
+
 #define CALL_Rotated(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLdouble, GLdouble, GLdouble, GLdouble)), _gloffset_Rotated, parameters)
 #define GET_Rotated(disp) GET_by_offset(disp, _gloffset_Rotated)
-#define SET_Rotated(disp, fn) SET_by_offset(disp, _gloffset_Rotated, fn)
+static void INLINE SET_Rotated(struct _glapi_table *disp, void (GLAPIENTRYP fn)(GLdouble, GLdouble, GLdouble, GLdouble)) {
+   SET_by_offset(disp, _gloffset_Rotated, fn);
+}
+
 #define CALL_Rotatef(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLfloat, GLfloat, GLfloat, GLfloat)), _gloffset_Rotatef, parameters)
 #define GET_Rotatef(disp) GET_by_offset(disp, _gloffset_Rotatef)
-#define SET_Rotatef(disp, fn) SET_by_offset(disp, _gloffset_Rotatef, fn)
+static void INLINE SET_Rotatef(struct _glapi_table *disp, void (GLAPIENTRYP fn)(GLfloat, GLfloat, GLfloat, GLfloat)) {
+   SET_by_offset(disp, _gloffset_Rotatef, fn);
+}
+
 #define CALL_Scaled(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLdouble, GLdouble, GLdouble)), _gloffset_Scaled, parameters)
 #define GET_Scaled(disp) GET_by_offset(disp, _gloffset_Scaled)
-#define SET_Scaled(disp, fn) SET_by_offset(disp, _gloffset_Scaled, fn)
+static void INLINE SET_Scaled(struct _glapi_table *disp, void (GLAPIENTRYP fn)(GLdouble, GLdouble, GLdouble)) {
+   SET_by_offset(disp, _gloffset_Scaled, fn);
+}
+
 #define CALL_Scalef(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLfloat, GLfloat, GLfloat)), _gloffset_Scalef, parameters)
 #define GET_Scalef(disp) GET_by_offset(disp, _gloffset_Scalef)
-#define SET_Scalef(disp, fn) SET_by_offset(disp, _gloffset_Scalef, fn)
+static void INLINE SET_Scalef(struct _glapi_table *disp, void (GLAPIENTRYP fn)(GLfloat, GLfloat, GLfloat)) {
+   SET_by_offset(disp, _gloffset_Scalef, fn);
+}
+
 #define CALL_Translated(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLdouble, GLdouble, GLdouble)), _gloffset_Translated, parameters)
 #define GET_Translated(disp) GET_by_offset(disp, _gloffset_Translated)
-#define SET_Translated(disp, fn) SET_by_offset(disp, _gloffset_Translated, fn)
+static void INLINE SET_Translated(struct _glapi_table *disp, void (GLAPIENTRYP fn)(GLdouble, GLdouble, GLdouble)) {
+   SET_by_offset(disp, _gloffset_Translated, fn);
+}
+
 #define CALL_Translatef(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLfloat, GLfloat, GLfloat)), _gloffset_Translatef, parameters)
 #define GET_Translatef(disp) GET_by_offset(disp, _gloffset_Translatef)
-#define SET_Translatef(disp, fn) SET_by_offset(disp, _gloffset_Translatef, fn)
+static void INLINE SET_Translatef(struct _glapi_table *disp, void (GLAPIENTRYP fn)(GLfloat, GLfloat, GLfloat)) {
+   SET_by_offset(disp, _gloffset_Translatef, fn);
+}
+
 #define CALL_Viewport(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLint, GLint, GLsizei, GLsizei)), _gloffset_Viewport, parameters)
 #define GET_Viewport(disp) GET_by_offset(disp, _gloffset_Viewport)
-#define SET_Viewport(disp, fn) SET_by_offset(disp, _gloffset_Viewport, fn)
+static void INLINE SET_Viewport(struct _glapi_table *disp, void (GLAPIENTRYP fn)(GLint, GLint, GLsizei, GLsizei)) {
+   SET_by_offset(disp, _gloffset_Viewport, fn);
+}
+
 #define CALL_ArrayElement(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLint)), _gloffset_ArrayElement, parameters)
 #define GET_ArrayElement(disp) GET_by_offset(disp, _gloffset_ArrayElement)
-#define SET_ArrayElement(disp, fn) SET_by_offset(disp, _gloffset_ArrayElement, fn)
+static void INLINE SET_ArrayElement(struct _glapi_table *disp, void (GLAPIENTRYP fn)(GLint)) {
+   SET_by_offset(disp, _gloffset_ArrayElement, fn);
+}
+
 #define CALL_BindTexture(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLenum, GLuint)), _gloffset_BindTexture, parameters)
 #define GET_BindTexture(disp) GET_by_offset(disp, _gloffset_BindTexture)
-#define SET_BindTexture(disp, fn) SET_by_offset(disp, _gloffset_BindTexture, fn)
+static void INLINE SET_BindTexture(struct _glapi_table *disp, void (GLAPIENTRYP fn)(GLenum, GLuint)) {
+   SET_by_offset(disp, _gloffset_BindTexture, fn);
+}
+
 #define CALL_ColorPointer(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLint, GLenum, GLsizei, const GLvoid *)), _gloffset_ColorPointer, parameters)
 #define GET_ColorPointer(disp) GET_by_offset(disp, _gloffset_ColorPointer)
-#define SET_ColorPointer(disp, fn) SET_by_offset(disp, _gloffset_ColorPointer, fn)
+static void INLINE SET_ColorPointer(struct _glapi_table *disp, void (GLAPIENTRYP fn)(GLint, GLenum, GLsizei, const GLvoid *)) {
+   SET_by_offset(disp, _gloffset_ColorPointer, fn);
+}
+
 #define CALL_DisableClientState(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLenum)), _gloffset_DisableClientState, parameters)
 #define GET_DisableClientState(disp) GET_by_offset(disp, _gloffset_DisableClientState)
-#define SET_DisableClientState(disp, fn) SET_by_offset(disp, _gloffset_DisableClientState, fn)
+static void INLINE SET_DisableClientState(struct _glapi_table *disp, void (GLAPIENTRYP fn)(GLenum)) {
+   SET_by_offset(disp, _gloffset_DisableClientState, fn);
+}
+
 #define CALL_DrawArrays(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLenum, GLint, GLsizei)), _gloffset_DrawArrays, parameters)
 #define GET_DrawArrays(disp) GET_by_offset(disp, _gloffset_DrawArrays)
-#define SET_DrawArrays(disp, fn) SET_by_offset(disp, _gloffset_DrawArrays, fn)
+static void INLINE SET_DrawArrays(struct _glapi_table *disp, void (GLAPIENTRYP fn)(GLenum, GLint, GLsizei)) {
+   SET_by_offset(disp, _gloffset_DrawArrays, fn);
+}
+
 #define CALL_DrawElements(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLenum, GLsizei, GLenum, const GLvoid *)), _gloffset_DrawElements, parameters)
 #define GET_DrawElements(disp) GET_by_offset(disp, _gloffset_DrawElements)
-#define SET_DrawElements(disp, fn) SET_by_offset(disp, _gloffset_DrawElements, fn)
+static void INLINE SET_DrawElements(struct _glapi_table *disp, void (GLAPIENTRYP fn)(GLenum, GLsizei, GLenum, const GLvoid *)) {
+   SET_by_offset(disp, _gloffset_DrawElements, fn);
+}
+
 #define CALL_EdgeFlagPointer(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLsizei, const GLvoid *)), _gloffset_EdgeFlagPointer, parameters)
 #define GET_EdgeFlagPointer(disp) GET_by_offset(disp, _gloffset_EdgeFlagPointer)
-#define SET_EdgeFlagPointer(disp, fn) SET_by_offset(disp, _gloffset_EdgeFlagPointer, fn)
+static void INLINE SET_EdgeFlagPointer(struct _glapi_table *disp, void (GLAPIENTRYP fn)(GLsizei, const GLvoid *)) {
+   SET_by_offset(disp, _gloffset_EdgeFlagPointer, fn);
+}
+
 #define CALL_EnableClientState(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLenum)), _gloffset_EnableClientState, parameters)
 #define GET_EnableClientState(disp) GET_by_offset(disp, _gloffset_EnableClientState)
-#define SET_EnableClientState(disp, fn) SET_by_offset(disp, _gloffset_EnableClientState, fn)
+static void INLINE SET_EnableClientState(struct _glapi_table *disp, void (GLAPIENTRYP fn)(GLenum)) {
+   SET_by_offset(disp, _gloffset_EnableClientState, fn);
+}
+
 #define CALL_IndexPointer(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLenum, GLsizei, const GLvoid *)), _gloffset_IndexPointer, parameters)
 #define GET_IndexPointer(disp) GET_by_offset(disp, _gloffset_IndexPointer)
-#define SET_IndexPointer(disp, fn) SET_by_offset(disp, _gloffset_IndexPointer, fn)
+static void INLINE SET_IndexPointer(struct _glapi_table *disp, void (GLAPIENTRYP fn)(GLenum, GLsizei, const GLvoid *)) {
+   SET_by_offset(disp, _gloffset_IndexPointer, fn);
+}
+
 #define CALL_Indexub(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLubyte)), _gloffset_Indexub, parameters)
 #define GET_Indexub(disp) GET_by_offset(disp, _gloffset_Indexub)
-#define SET_Indexub(disp, fn) SET_by_offset(disp, _gloffset_Indexub, fn)
+static void INLINE SET_Indexub(struct _glapi_table *disp, void (GLAPIENTRYP fn)(GLubyte)) {
+   SET_by_offset(disp, _gloffset_Indexub, fn);
+}
+
 #define CALL_Indexubv(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(const GLubyte *)), _gloffset_Indexubv, parameters)
 #define GET_Indexubv(disp) GET_by_offset(disp, _gloffset_Indexubv)
-#define SET_Indexubv(disp, fn) SET_by_offset(disp, _gloffset_Indexubv, fn)
+static void INLINE SET_Indexubv(struct _glapi_table *disp, void (GLAPIENTRYP fn)(const GLubyte *)) {
+   SET_by_offset(disp, _gloffset_Indexubv, fn);
+}
+
 #define CALL_InterleavedArrays(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLenum, GLsizei, const GLvoid *)), _gloffset_InterleavedArrays, parameters)
 #define GET_InterleavedArrays(disp) GET_by_offset(disp, _gloffset_InterleavedArrays)
-#define SET_InterleavedArrays(disp, fn) SET_by_offset(disp, _gloffset_InterleavedArrays, fn)
+static void INLINE SET_InterleavedArrays(struct _glapi_table *disp, void (GLAPIENTRYP fn)(GLenum, GLsizei, const GLvoid *)) {
+   SET_by_offset(disp, _gloffset_InterleavedArrays, fn);
+}
+
 #define CALL_NormalPointer(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLenum, GLsizei, const GLvoid *)), _gloffset_NormalPointer, parameters)
 #define GET_NormalPointer(disp) GET_by_offset(disp, _gloffset_NormalPointer)
-#define SET_NormalPointer(disp, fn) SET_by_offset(disp, _gloffset_NormalPointer, fn)
+static void INLINE SET_NormalPointer(struct _glapi_table *disp, void (GLAPIENTRYP fn)(GLenum, GLsizei, const GLvoid *)) {
+   SET_by_offset(disp, _gloffset_NormalPointer, fn);
+}
+
 #define CALL_PolygonOffset(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLfloat, GLfloat)), _gloffset_PolygonOffset, parameters)
 #define GET_PolygonOffset(disp) GET_by_offset(disp, _gloffset_PolygonOffset)
-#define SET_PolygonOffset(disp, fn) SET_by_offset(disp, _gloffset_PolygonOffset, fn)
+static void INLINE SET_PolygonOffset(struct _glapi_table *disp, void (GLAPIENTRYP fn)(GLfloat, GLfloat)) {
+   SET_by_offset(disp, _gloffset_PolygonOffset, fn);
+}
+
 #define CALL_TexCoordPointer(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLint, GLenum, GLsizei, const GLvoid *)), _gloffset_TexCoordPointer, parameters)
 #define GET_TexCoordPointer(disp) GET_by_offset(disp, _gloffset_TexCoordPointer)
-#define SET_TexCoordPointer(disp, fn) SET_by_offset(disp, _gloffset_TexCoordPointer, fn)
+static void INLINE SET_TexCoordPointer(struct _glapi_table *disp, void (GLAPIENTRYP fn)(GLint, GLenum, GLsizei, const GLvoid *)) {
+   SET_by_offset(disp, _gloffset_TexCoordPointer, fn);
+}
+
 #define CALL_VertexPointer(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLint, GLenum, GLsizei, const GLvoid *)), _gloffset_VertexPointer, parameters)
 #define GET_VertexPointer(disp) GET_by_offset(disp, _gloffset_VertexPointer)
-#define SET_VertexPointer(disp, fn) SET_by_offset(disp, _gloffset_VertexPointer, fn)
+static void INLINE SET_VertexPointer(struct _glapi_table *disp, void (GLAPIENTRYP fn)(GLint, GLenum, GLsizei, const GLvoid *)) {
+   SET_by_offset(disp, _gloffset_VertexPointer, fn);
+}
+
 #define CALL_AreTexturesResident(disp, parameters) CALL_by_offset(disp, (GLboolean (GLAPIENTRYP)(GLsizei, const GLuint *, GLboolean *)), _gloffset_AreTexturesResident, parameters)
 #define GET_AreTexturesResident(disp) GET_by_offset(disp, _gloffset_AreTexturesResident)
-#define SET_AreTexturesResident(disp, fn) SET_by_offset(disp, _gloffset_AreTexturesResident, fn)
+static void INLINE SET_AreTexturesResident(struct _glapi_table *disp, GLboolean (GLAPIENTRYP fn)(GLsizei, const GLuint *, GLboolean *)) {
+   SET_by_offset(disp, _gloffset_AreTexturesResident, fn);
+}
+
 #define CALL_CopyTexImage1D(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLenum, GLint, GLenum, GLint, GLint, GLsizei, GLint)), _gloffset_CopyTexImage1D, parameters)
 #define GET_CopyTexImage1D(disp) GET_by_offset(disp, _gloffset_CopyTexImage1D)
-#define SET_CopyTexImage1D(disp, fn) SET_by_offset(disp, _gloffset_CopyTexImage1D, fn)
+static void INLINE SET_CopyTexImage1D(struct _glapi_table *disp, void (GLAPIENTRYP fn)(GLenum, GLint, GLenum, GLint, GLint, GLsizei, GLint)) {
+   SET_by_offset(disp, _gloffset_CopyTexImage1D, fn);
+}
+
 #define CALL_CopyTexImage2D(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLenum, GLint, GLenum, GLint, GLint, GLsizei, GLsizei, GLint)), _gloffset_CopyTexImage2D, parameters)
 #define GET_CopyTexImage2D(disp) GET_by_offset(disp, _gloffset_CopyTexImage2D)
-#define SET_CopyTexImage2D(disp, fn) SET_by_offset(disp, _gloffset_CopyTexImage2D, fn)
+static void INLINE SET_CopyTexImage2D(struct _glapi_table *disp, void (GLAPIENTRYP fn)(GLenum, GLint, GLenum, GLint, GLint, GLsizei, GLsizei, GLint)) {
+   SET_by_offset(disp, _gloffset_CopyTexImage2D, fn);
+}
+
 #define CALL_CopyTexSubImage1D(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLenum, GLint, GLint, GLint, GLint, GLsizei)), _gloffset_CopyTexSubImage1D, parameters)
 #define GET_CopyTexSubImage1D(disp) GET_by_offset(disp, _gloffset_CopyTexSubImage1D)
-#define SET_CopyTexSubImage1D(disp, fn) SET_by_offset(disp, _gloffset_CopyTexSubImage1D, fn)
+static void INLINE SET_CopyTexSubImage1D(struct _glapi_table *disp, void (GLAPIENTRYP fn)(GLenum, GLint, GLint, GLint, GLint, GLsizei)) {
+   SET_by_offset(disp, _gloffset_CopyTexSubImage1D, fn);
+}
+
 #define CALL_CopyTexSubImage2D(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLenum, GLint, GLint, GLint, GLint, GLint, GLsizei, GLsizei)), _gloffset_CopyTexSubImage2D, parameters)
 #define GET_CopyTexSubImage2D(disp) GET_by_offset(disp, _gloffset_CopyTexSubImage2D)
-#define SET_CopyTexSubImage2D(disp, fn) SET_by_offset(disp, _gloffset_CopyTexSubImage2D, fn)
+static void INLINE SET_CopyTexSubImage2D(struct _glapi_table *disp, void (GLAPIENTRYP fn)(GLenum, GLint, GLint, GLint, GLint, GLint, GLsizei, GLsizei)) {
+   SET_by_offset(disp, _gloffset_CopyTexSubImage2D, fn);
+}
+
 #define CALL_DeleteTextures(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLsizei, const GLuint *)), _gloffset_DeleteTextures, parameters)
 #define GET_DeleteTextures(disp) GET_by_offset(disp, _gloffset_DeleteTextures)
-#define SET_DeleteTextures(disp, fn) SET_by_offset(disp, _gloffset_DeleteTextures, fn)
+static void INLINE SET_DeleteTextures(struct _glapi_table *disp, void (GLAPIENTRYP fn)(GLsizei, const GLuint *)) {
+   SET_by_offset(disp, _gloffset_DeleteTextures, fn);
+}
+
 #define CALL_GenTextures(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLsizei, GLuint *)), _gloffset_GenTextures, parameters)
 #define GET_GenTextures(disp) GET_by_offset(disp, _gloffset_GenTextures)
-#define SET_GenTextures(disp, fn) SET_by_offset(disp, _gloffset_GenTextures, fn)
+static void INLINE SET_GenTextures(struct _glapi_table *disp, void (GLAPIENTRYP fn)(GLsizei, GLuint *)) {
+   SET_by_offset(disp, _gloffset_GenTextures, fn);
+}
+
 #define CALL_GetPointerv(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLenum, GLvoid **)), _gloffset_GetPointerv, parameters)
 #define GET_GetPointerv(disp) GET_by_offset(disp, _gloffset_GetPointerv)
-#define SET_GetPointerv(disp, fn) SET_by_offset(disp, _gloffset_GetPointerv, fn)
+static void INLINE SET_GetPointerv(struct _glapi_table *disp, void (GLAPIENTRYP fn)(GLenum, GLvoid **)) {
+   SET_by_offset(disp, _gloffset_GetPointerv, fn);
+}
+
 #define CALL_IsTexture(disp, parameters) CALL_by_offset(disp, (GLboolean (GLAPIENTRYP)(GLuint)), _gloffset_IsTexture, parameters)
 #define GET_IsTexture(disp) GET_by_offset(disp, _gloffset_IsTexture)
-#define SET_IsTexture(disp, fn) SET_by_offset(disp, _gloffset_IsTexture, fn)
+static void INLINE SET_IsTexture(struct _glapi_table *disp, GLboolean (GLAPIENTRYP fn)(GLuint)) {
+   SET_by_offset(disp, _gloffset_IsTexture, fn);
+}
+
 #define CALL_PrioritizeTextures(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLsizei, const GLuint *, const GLclampf *)), _gloffset_PrioritizeTextures, parameters)
 #define GET_PrioritizeTextures(disp) GET_by_offset(disp, _gloffset_PrioritizeTextures)
-#define SET_PrioritizeTextures(disp, fn) SET_by_offset(disp, _gloffset_PrioritizeTextures, fn)
+static void INLINE SET_PrioritizeTextures(struct _glapi_table *disp, void (GLAPIENTRYP fn)(GLsizei, const GLuint *, const GLclampf *)) {
+   SET_by_offset(disp, _gloffset_PrioritizeTextures, fn);
+}
+
 #define CALL_TexSubImage1D(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLenum, GLint, GLint, GLsizei, GLenum, GLenum, const GLvoid *)), _gloffset_TexSubImage1D, parameters)
 #define GET_TexSubImage1D(disp) GET_by_offset(disp, _gloffset_TexSubImage1D)
-#define SET_TexSubImage1D(disp, fn) SET_by_offset(disp, _gloffset_TexSubImage1D, fn)
+static void INLINE SET_TexSubImage1D(struct _glapi_table *disp, void (GLAPIENTRYP fn)(GLenum, GLint, GLint, GLsizei, GLenum, GLenum, const GLvoid *)) {
+   SET_by_offset(disp, _gloffset_TexSubImage1D, fn);
+}
+
 #define CALL_TexSubImage2D(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLenum, GLint, GLint, GLint, GLsizei, GLsizei, GLenum, GLenum, const GLvoid *)), _gloffset_TexSubImage2D, parameters)
 #define GET_TexSubImage2D(disp) GET_by_offset(disp, _gloffset_TexSubImage2D)
-#define SET_TexSubImage2D(disp, fn) SET_by_offset(disp, _gloffset_TexSubImage2D, fn)
+static void INLINE SET_TexSubImage2D(struct _glapi_table *disp, void (GLAPIENTRYP fn)(GLenum, GLint, GLint, GLint, GLsizei, GLsizei, GLenum, GLenum, const GLvoid *)) {
+   SET_by_offset(disp, _gloffset_TexSubImage2D, fn);
+}
+
 #define CALL_PopClientAttrib(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(void)), _gloffset_PopClientAttrib, parameters)
 #define GET_PopClientAttrib(disp) GET_by_offset(disp, _gloffset_PopClientAttrib)
-#define SET_PopClientAttrib(disp, fn) SET_by_offset(disp, _gloffset_PopClientAttrib, fn)
+static void INLINE SET_PopClientAttrib(struct _glapi_table *disp, void (GLAPIENTRYP fn)(void)) {
+   SET_by_offset(disp, _gloffset_PopClientAttrib, fn);
+}
+
 #define CALL_PushClientAttrib(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLbitfield)), _gloffset_PushClientAttrib, parameters)
 #define GET_PushClientAttrib(disp) GET_by_offset(disp, _gloffset_PushClientAttrib)
-#define SET_PushClientAttrib(disp, fn) SET_by_offset(disp, _gloffset_PushClientAttrib, fn)
+static void INLINE SET_PushClientAttrib(struct _glapi_table *disp, void (GLAPIENTRYP fn)(GLbitfield)) {
+   SET_by_offset(disp, _gloffset_PushClientAttrib, fn);
+}
+
 #define CALL_BlendColor(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLclampf, GLclampf, GLclampf, GLclampf)), _gloffset_BlendColor, parameters)
 #define GET_BlendColor(disp) GET_by_offset(disp, _gloffset_BlendColor)
-#define SET_BlendColor(disp, fn) SET_by_offset(disp, _gloffset_BlendColor, fn)
+static void INLINE SET_BlendColor(struct _glapi_table *disp, void (GLAPIENTRYP fn)(GLclampf, GLclampf, GLclampf, GLclampf)) {
+   SET_by_offset(disp, _gloffset_BlendColor, fn);
+}
+
 #define CALL_BlendEquation(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLenum)), _gloffset_BlendEquation, parameters)
 #define GET_BlendEquation(disp) GET_by_offset(disp, _gloffset_BlendEquation)
-#define SET_BlendEquation(disp, fn) SET_by_offset(disp, _gloffset_BlendEquation, fn)
+static void INLINE SET_BlendEquation(struct _glapi_table *disp, void (GLAPIENTRYP fn)(GLenum)) {
+   SET_by_offset(disp, _gloffset_BlendEquation, fn);
+}
+
 #define CALL_DrawRangeElements(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLenum, GLuint, GLuint, GLsizei, GLenum, const GLvoid *)), _gloffset_DrawRangeElements, parameters)
 #define GET_DrawRangeElements(disp) GET_by_offset(disp, _gloffset_DrawRangeElements)
-#define SET_DrawRangeElements(disp, fn) SET_by_offset(disp, _gloffset_DrawRangeElements, fn)
+static void INLINE SET_DrawRangeElements(struct _glapi_table *disp, void (GLAPIENTRYP fn)(GLenum, GLuint, GLuint, GLsizei, GLenum, const GLvoid *)) {
+   SET_by_offset(disp, _gloffset_DrawRangeElements, fn);
+}
+
 #define CALL_ColorTable(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLenum, GLenum, GLsizei, GLenum, GLenum, const GLvoid *)), _gloffset_ColorTable, parameters)
 #define GET_ColorTable(disp) GET_by_offset(disp, _gloffset_ColorTable)
-#define SET_ColorTable(disp, fn) SET_by_offset(disp, _gloffset_ColorTable, fn)
+static void INLINE SET_ColorTable(struct _glapi_table *disp, void (GLAPIENTRYP fn)(GLenum, GLenum, GLsizei, GLenum, GLenum, const GLvoid *)) {
+   SET_by_offset(disp, _gloffset_ColorTable, fn);
+}
+
 #define CALL_ColorTableParameterfv(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLenum, GLenum, const GLfloat *)), _gloffset_ColorTableParameterfv, parameters)
 #define GET_ColorTableParameterfv(disp) GET_by_offset(disp, _gloffset_ColorTableParameterfv)
-#define SET_ColorTableParameterfv(disp, fn) SET_by_offset(disp, _gloffset_ColorTableParameterfv, fn)
+static void INLINE SET_ColorTableParameterfv(struct _glapi_table *disp, void (GLAPIENTRYP fn)(GLenum, GLenum, const GLfloat *)) {
+   SET_by_offset(disp, _gloffset_ColorTableParameterfv, fn);
+}
+
 #define CALL_ColorTableParameteriv(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLenum, GLenum, const GLint *)), _gloffset_ColorTableParameteriv, parameters)
 #define GET_ColorTableParameteriv(disp) GET_by_offset(disp, _gloffset_ColorTableParameteriv)
-#define SET_ColorTableParameteriv(disp, fn) SET_by_offset(disp, _gloffset_ColorTableParameteriv, fn)
+static void INLINE SET_ColorTableParameteriv(struct _glapi_table *disp, void (GLAPIENTRYP fn)(GLenum, GLenum, const GLint *)) {
+   SET_by_offset(disp, _gloffset_ColorTableParameteriv, fn);
+}
+
 #define CALL_CopyColorTable(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLenum, GLenum, GLint, GLint, GLsizei)), _gloffset_CopyColorTable, parameters)
 #define GET_CopyColorTable(disp) GET_by_offset(disp, _gloffset_CopyColorTable)
-#define SET_CopyColorTable(disp, fn) SET_by_offset(disp, _gloffset_CopyColorTable, fn)
+static void INLINE SET_CopyColorTable(struct _glapi_table *disp, void (GLAPIENTRYP fn)(GLenum, GLenum, GLint, GLint, GLsizei)) {
+   SET_by_offset(disp, _gloffset_CopyColorTable, fn);
+}
+
 #define CALL_GetColorTable(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLenum, GLenum, GLenum, GLvoid *)), _gloffset_GetColorTable, parameters)
 #define GET_GetColorTable(disp) GET_by_offset(disp, _gloffset_GetColorTable)
-#define SET_GetColorTable(disp, fn) SET_by_offset(disp, _gloffset_GetColorTable, fn)
+static void INLINE SET_GetColorTable(struct _glapi_table *disp, void (GLAPIENTRYP fn)(GLenum, GLenum, GLenum, GLvoid *)) {
+   SET_by_offset(disp, _gloffset_GetColorTable, fn);
+}
+
 #define CALL_GetColorTableParameterfv(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLenum, GLenum, GLfloat *)), _gloffset_GetColorTableParameterfv, parameters)
 #define GET_GetColorTableParameterfv(disp) GET_by_offset(disp, _gloffset_GetColorTableParameterfv)
-#define SET_GetColorTableParameterfv(disp, fn) SET_by_offset(disp, _gloffset_GetColorTableParameterfv, fn)
+static void INLINE SET_GetColorTableParameterfv(struct _glapi_table *disp, void (GLAPIENTRYP fn)(GLenum, GLenum, GLfloat *)) {
+   SET_by_offset(disp, _gloffset_GetColorTableParameterfv, fn);
+}
+
 #define CALL_GetColorTableParameteriv(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLenum, GLenum, GLint *)), _gloffset_GetColorTableParameteriv, parameters)
 #define GET_GetColorTableParameteriv(disp) GET_by_offset(disp, _gloffset_GetColorTableParameteriv)
-#define SET_GetColorTableParameteriv(disp, fn) SET_by_offset(disp, _gloffset_GetColorTableParameteriv, fn)
+static void INLINE SET_GetColorTableParameteriv(struct _glapi_table *disp, void (GLAPIENTRYP fn)(GLenum, GLenum, GLint *)) {
+   SET_by_offset(disp, _gloffset_GetColorTableParameteriv, fn);
+}
+
 #define CALL_ColorSubTable(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLenum, GLsizei, GLsizei, GLenum, GLenum, const GLvoid *)), _gloffset_ColorSubTable, parameters)
 #define GET_ColorSubTable(disp) GET_by_offset(disp, _gloffset_ColorSubTable)
-#define SET_ColorSubTable(disp, fn) SET_by_offset(disp, _gloffset_ColorSubTable, fn)
+static void INLINE SET_ColorSubTable(struct _glapi_table *disp, void (GLAPIENTRYP fn)(GLenum, GLsizei, GLsizei, GLenum, GLenum, const GLvoid *)) {
+   SET_by_offset(disp, _gloffset_ColorSubTable, fn);
+}
+
 #define CALL_CopyColorSubTable(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLenum, GLsizei, GLint, GLint, GLsizei)), _gloffset_CopyColorSubTable, parameters)
 #define GET_CopyColorSubTable(disp) GET_by_offset(disp, _gloffset_CopyColorSubTable)
-#define SET_CopyColorSubTable(disp, fn) SET_by_offset(disp, _gloffset_CopyColorSubTable, fn)
+static void INLINE SET_CopyColorSubTable(struct _glapi_table *disp, void (GLAPIENTRYP fn)(GLenum, GLsizei, GLint, GLint, GLsizei)) {
+   SET_by_offset(disp, _gloffset_CopyColorSubTable, fn);
+}
+
 #define CALL_ConvolutionFilter1D(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLenum, GLenum, GLsizei, GLenum, GLenum, const GLvoid *)), _gloffset_ConvolutionFilter1D, parameters)
 #define GET_ConvolutionFilter1D(disp) GET_by_offset(disp, _gloffset_ConvolutionFilter1D)
-#define SET_ConvolutionFilter1D(disp, fn) SET_by_offset(disp, _gloffset_ConvolutionFilter1D, fn)
+static void INLINE SET_ConvolutionFilter1D(struct _glapi_table *disp, void (GLAPIENTRYP fn)(GLenum, GLenum, GLsizei, GLenum, GLenum, const GLvoid *)) {
+   SET_by_offset(disp, _gloffset_ConvolutionFilter1D, fn);
+}
+
 #define CALL_ConvolutionFilter2D(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLenum, GLenum, GLsizei, GLsizei, GLenum, GLenum, const GLvoid *)), _gloffset_ConvolutionFilter2D, parameters)
 #define GET_ConvolutionFilter2D(disp) GET_by_offset(disp, _gloffset_ConvolutionFilter2D)
-#define SET_ConvolutionFilter2D(disp, fn) SET_by_offset(disp, _gloffset_ConvolutionFilter2D, fn)
+static void INLINE SET_ConvolutionFilter2D(struct _glapi_table *disp, void (GLAPIENTRYP fn)(GLenum, GLenum, GLsizei, GLsizei, GLenum, GLenum, const GLvoid *)) {
+   SET_by_offset(disp, _gloffset_ConvolutionFilter2D, fn);
+}
+
 #define CALL_ConvolutionParameterf(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLenum, GLenum, GLfloat)), _gloffset_ConvolutionParameterf, parameters)
 #define GET_ConvolutionParameterf(disp) GET_by_offset(disp, _gloffset_ConvolutionParameterf)
-#define SET_ConvolutionParameterf(disp, fn) SET_by_offset(disp, _gloffset_ConvolutionParameterf, fn)
+static void INLINE SET_ConvolutionParameterf(struct _glapi_table *disp, void (GLAPIENTRYP fn)(GLenum, GLenum, GLfloat)) {
+   SET_by_offset(disp, _gloffset_ConvolutionParameterf, fn);
+}
+
 #define CALL_ConvolutionParameterfv(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLenum, GLenum, const GLfloat *)), _gloffset_ConvolutionParameterfv, parameters)
 #define GET_ConvolutionParameterfv(disp) GET_by_offset(disp, _gloffset_ConvolutionParameterfv)
-#define SET_ConvolutionParameterfv(disp, fn) SET_by_offset(disp, _gloffset_ConvolutionParameterfv, fn)
+static void INLINE SET_ConvolutionParameterfv(struct _glapi_table *disp, void (GLAPIENTRYP fn)(GLenum, GLenum, const GLfloat *)) {
+   SET_by_offset(disp, _gloffset_ConvolutionParameterfv, fn);
+}
+
 #define CALL_ConvolutionParameteri(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLenum, GLenum, GLint)), _gloffset_ConvolutionParameteri, parameters)
 #define GET_ConvolutionParameteri(disp) GET_by_offset(disp, _gloffset_ConvolutionParameteri)
-#define SET_ConvolutionParameteri(disp, fn) SET_by_offset(disp, _gloffset_ConvolutionParameteri, fn)
+static void INLINE SET_ConvolutionParameteri(struct _glapi_table *disp, void (GLAPIENTRYP fn)(GLenum, GLenum, GLint)) {
+   SET_by_offset(disp, _gloffset_ConvolutionParameteri, fn);
+}
+
 #define CALL_ConvolutionParameteriv(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLenum, GLenum, const GLint *)), _gloffset_ConvolutionParameteriv, parameters)
 #define GET_ConvolutionParameteriv(disp) GET_by_offset(disp, _gloffset_ConvolutionParameteriv)
-#define SET_ConvolutionParameteriv(disp, fn) SET_by_offset(disp, _gloffset_ConvolutionParameteriv, fn)
+static void INLINE SET_ConvolutionParameteriv(struct _glapi_table *disp, void (GLAPIENTRYP fn)(GLenum, GLenum, const GLint *)) {
+   SET_by_offset(disp, _gloffset_ConvolutionParameteriv, fn);
+}
+
 #define CALL_CopyConvolutionFilter1D(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLenum, GLenum, GLint, GLint, GLsizei)), _gloffset_CopyConvolutionFilter1D, parameters)
 #define GET_CopyConvolutionFilter1D(disp) GET_by_offset(disp, _gloffset_CopyConvolutionFilter1D)
-#define SET_CopyConvolutionFilter1D(disp, fn) SET_by_offset(disp, _gloffset_CopyConvolutionFilter1D, fn)
+static void INLINE SET_CopyConvolutionFilter1D(struct _glapi_table *disp, void (GLAPIENTRYP fn)(GLenum, GLenum, GLint, GLint, GLsizei)) {
+   SET_by_offset(disp, _gloffset_CopyConvolutionFilter1D, fn);
+}
+
 #define CALL_CopyConvolutionFilter2D(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLenum, GLenum, GLint, GLint, GLsizei, GLsizei)), _gloffset_CopyConvolutionFilter2D, parameters)
 #define GET_CopyConvolutionFilter2D(disp) GET_by_offset(disp, _gloffset_CopyConvolutionFilter2D)
-#define SET_CopyConvolutionFilter2D(disp, fn) SET_by_offset(disp, _gloffset_CopyConvolutionFilter2D, fn)
+static void INLINE SET_CopyConvolutionFilter2D(struct _glapi_table *disp, void (GLAPIENTRYP fn)(GLenum, GLenum, GLint, GLint, GLsizei, GLsizei)) {
+   SET_by_offset(disp, _gloffset_CopyConvolutionFilter2D, fn);
+}
+
 #define CALL_GetConvolutionFilter(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLenum, GLenum, GLenum, GLvoid *)), _gloffset_GetConvolutionFilter, parameters)
 #define GET_GetConvolutionFilter(disp) GET_by_offset(disp, _gloffset_GetConvolutionFilter)
-#define SET_GetConvolutionFilter(disp, fn) SET_by_offset(disp, _gloffset_GetConvolutionFilter, fn)
+static void INLINE SET_GetConvolutionFilter(struct _glapi_table *disp, void (GLAPIENTRYP fn)(GLenum, GLenum, GLenum, GLvoid *)) {
+   SET_by_offset(disp, _gloffset_GetConvolutionFilter, fn);
+}
+
 #define CALL_GetConvolutionParameterfv(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLenum, GLenum, GLfloat *)), _gloffset_GetConvolutionParameterfv, parameters)
 #define GET_GetConvolutionParameterfv(disp) GET_by_offset(disp, _gloffset_GetConvolutionParameterfv)
-#define SET_GetConvolutionParameterfv(disp, fn) SET_by_offset(disp, _gloffset_GetConvolutionParameterfv, fn)
+static void INLINE SET_GetConvolutionParameterfv(struct _glapi_table *disp, void (GLAPIENTRYP fn)(GLenum, GLenum, GLfloat *)) {
+   SET_by_offset(disp, _gloffset_GetConvolutionParameterfv, fn);
+}
+
 #define CALL_GetConvolutionParameteriv(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLenum, GLenum, GLint *)), _gloffset_GetConvolutionParameteriv, parameters)
 #define GET_GetConvolutionParameteriv(disp) GET_by_offset(disp, _gloffset_GetConvolutionParameteriv)
-#define SET_GetConvolutionParameteriv(disp, fn) SET_by_offset(disp, _gloffset_GetConvolutionParameteriv, fn)
+static void INLINE SET_GetConvolutionParameteriv(struct _glapi_table *disp, void (GLAPIENTRYP fn)(GLenum, GLenum, GLint *)) {
+   SET_by_offset(disp, _gloffset_GetConvolutionParameteriv, fn);
+}
+
 #define CALL_GetSeparableFilter(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLenum, GLenum, GLenum, GLvoid *, GLvoid *, GLvoid *)), _gloffset_GetSeparableFilter, parameters)
 #define GET_GetSeparableFilter(disp) GET_by_offset(disp, _gloffset_GetSeparableFilter)
-#define SET_GetSeparableFilter(disp, fn) SET_by_offset(disp, _gloffset_GetSeparableFilter, fn)
+static void INLINE SET_GetSeparableFilter(struct _glapi_table *disp, void (GLAPIENTRYP fn)(GLenum, GLenum, GLenum, GLvoid *, GLvoid *, GLvoid *)) {
+   SET_by_offset(disp, _gloffset_GetSeparableFilter, fn);
+}
+
 #define CALL_SeparableFilter2D(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLenum, GLenum, GLsizei, GLsizei, GLenum, GLenum, const GLvoid *, const GLvoid *)), _gloffset_SeparableFilter2D, parameters)
 #define GET_SeparableFilter2D(disp) GET_by_offset(disp, _gloffset_SeparableFilter2D)
-#define SET_SeparableFilter2D(disp, fn) SET_by_offset(disp, _gloffset_SeparableFilter2D, fn)
+static void INLINE SET_SeparableFilter2D(struct _glapi_table *disp, void (GLAPIENTRYP fn)(GLenum, GLenum, GLsizei, GLsizei, GLenum, GLenum, const GLvoid *, const GLvoid *)) {
+   SET_by_offset(disp, _gloffset_SeparableFilter2D, fn);
+}
+
 #define CALL_GetHistogram(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLenum, GLboolean, GLenum, GLenum, GLvoid *)), _gloffset_GetHistogram, parameters)
 #define GET_GetHistogram(disp) GET_by_offset(disp, _gloffset_GetHistogram)
-#define SET_GetHistogram(disp, fn) SET_by_offset(disp, _gloffset_GetHistogram, fn)
+static void INLINE SET_GetHistogram(struct _glapi_table *disp, void (GLAPIENTRYP fn)(GLenum, GLboolean, GLenum, GLenum, GLvoid *)) {
+   SET_by_offset(disp, _gloffset_GetHistogram, fn);
+}
+
 #define CALL_GetHistogramParameterfv(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLenum, GLenum, GLfloat *)), _gloffset_GetHistogramParameterfv, parameters)
 #define GET_GetHistogramParameterfv(disp) GET_by_offset(disp, _gloffset_GetHistogramParameterfv)
-#define SET_GetHistogramParameterfv(disp, fn) SET_by_offset(disp, _gloffset_GetHistogramParameterfv, fn)
+static void INLINE SET_GetHistogramParameterfv(struct _glapi_table *disp, void (GLAPIENTRYP fn)(GLenum, GLenum, GLfloat *)) {
+   SET_by_offset(disp, _gloffset_GetHistogramParameterfv, fn);
+}
+
 #define CALL_GetHistogramParameteriv(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLenum, GLenum, GLint *)), _gloffset_GetHistogramParameteriv, parameters)
 #define GET_GetHistogramParameteriv(disp) GET_by_offset(disp, _gloffset_GetHistogramParameteriv)
-#define SET_GetHistogramParameteriv(disp, fn) SET_by_offset(disp, _gloffset_GetHistogramParameteriv, fn)
+static void INLINE SET_GetHistogramParameteriv(struct _glapi_table *disp, void (GLAPIENTRYP fn)(GLenum, GLenum, GLint *)) {
+   SET_by_offset(disp, _gloffset_GetHistogramParameteriv, fn);
+}
+
 #define CALL_GetMinmax(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLenum, GLboolean, GLenum, GLenum, GLvoid *)), _gloffset_GetMinmax, parameters)
 #define GET_GetMinmax(disp) GET_by_offset(disp, _gloffset_GetMinmax)
-#define SET_GetMinmax(disp, fn) SET_by_offset(disp, _gloffset_GetMinmax, fn)
+static void INLINE SET_GetMinmax(struct _glapi_table *disp, void (GLAPIENTRYP fn)(GLenum, GLboolean, GLenum, GLenum, GLvoid *)) {
+   SET_by_offset(disp, _gloffset_GetMinmax, fn);
+}
+
 #define CALL_GetMinmaxParameterfv(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLenum, GLenum, GLfloat *)), _gloffset_GetMinmaxParameterfv, parameters)
 #define GET_GetMinmaxParameterfv(disp) GET_by_offset(disp, _gloffset_GetMinmaxParameterfv)
-#define SET_GetMinmaxParameterfv(disp, fn) SET_by_offset(disp, _gloffset_GetMinmaxParameterfv, fn)
+static void INLINE SET_GetMinmaxParameterfv(struct _glapi_table *disp, void (GLAPIENTRYP fn)(GLenum, GLenum, GLfloat *)) {
+   SET_by_offset(disp, _gloffset_GetMinmaxParameterfv, fn);
+}
+
 #define CALL_GetMinmaxParameteriv(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLenum, GLenum, GLint *)), _gloffset_GetMinmaxParameteriv, parameters)
 #define GET_GetMinmaxParameteriv(disp) GET_by_offset(disp, _gloffset_GetMinmaxParameteriv)
-#define SET_GetMinmaxParameteriv(disp, fn) SET_by_offset(disp, _gloffset_GetMinmaxParameteriv, fn)
+static void INLINE SET_GetMinmaxParameteriv(struct _glapi_table *disp, void (GLAPIENTRYP fn)(GLenum, GLenum, GLint *)) {
+   SET_by_offset(disp, _gloffset_GetMinmaxParameteriv, fn);
+}
+
 #define CALL_Histogram(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLenum, GLsizei, GLenum, GLboolean)), _gloffset_Histogram, parameters)
 #define GET_Histogram(disp) GET_by_offset(disp, _gloffset_Histogram)
-#define SET_Histogram(disp, fn) SET_by_offset(disp, _gloffset_Histogram, fn)
+static void INLINE SET_Histogram(struct _glapi_table *disp, void (GLAPIENTRYP fn)(GLenum, GLsizei, GLenum, GLboolean)) {
+   SET_by_offset(disp, _gloffset_Histogram, fn);
+}
+
 #define CALL_Minmax(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLenum, GLenum, GLboolean)), _gloffset_Minmax, parameters)
 #define GET_Minmax(disp) GET_by_offset(disp, _gloffset_Minmax)
-#define SET_Minmax(disp, fn) SET_by_offset(disp, _gloffset_Minmax, fn)
+static void INLINE SET_Minmax(struct _glapi_table *disp, void (GLAPIENTRYP fn)(GLenum, GLenum, GLboolean)) {
+   SET_by_offset(disp, _gloffset_Minmax, fn);
+}
+
 #define CALL_ResetHistogram(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLenum)), _gloffset_ResetHistogram, parameters)
 #define GET_ResetHistogram(disp) GET_by_offset(disp, _gloffset_ResetHistogram)
-#define SET_ResetHistogram(disp, fn) SET_by_offset(disp, _gloffset_ResetHistogram, fn)
+static void INLINE SET_ResetHistogram(struct _glapi_table *disp, void (GLAPIENTRYP fn)(GLenum)) {
+   SET_by_offset(disp, _gloffset_ResetHistogram, fn);
+}
+
 #define CALL_ResetMinmax(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLenum)), _gloffset_ResetMinmax, parameters)
 #define GET_ResetMinmax(disp) GET_by_offset(disp, _gloffset_ResetMinmax)
-#define SET_ResetMinmax(disp, fn) SET_by_offset(disp, _gloffset_ResetMinmax, fn)
+static void INLINE SET_ResetMinmax(struct _glapi_table *disp, void (GLAPIENTRYP fn)(GLenum)) {
+   SET_by_offset(disp, _gloffset_ResetMinmax, fn);
+}
+
 #define CALL_TexImage3D(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLenum, GLint, GLint, GLsizei, GLsizei, GLsizei, GLint, GLenum, GLenum, const GLvoid *)), _gloffset_TexImage3D, parameters)
 #define GET_TexImage3D(disp) GET_by_offset(disp, _gloffset_TexImage3D)
-#define SET_TexImage3D(disp, fn) SET_by_offset(disp, _gloffset_TexImage3D, fn)
+static void INLINE SET_TexImage3D(struct _glapi_table *disp, void (GLAPIENTRYP fn)(GLenum, GLint, GLint, GLsizei, GLsizei, GLsizei, GLint, GLenum, GLenum, const GLvoid *)) {
+   SET_by_offset(disp, _gloffset_TexImage3D, fn);
+}
+
 #define CALL_TexSubImage3D(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLenum, GLint, GLint, GLint, GLint, GLsizei, GLsizei, GLsizei, GLenum, GLenum, const GLvoid *)), _gloffset_TexSubImage3D, parameters)
 #define GET_TexSubImage3D(disp) GET_by_offset(disp, _gloffset_TexSubImage3D)
-#define SET_TexSubImage3D(disp, fn) SET_by_offset(disp, _gloffset_TexSubImage3D, fn)
+static void INLINE SET_TexSubImage3D(struct _glapi_table *disp, void (GLAPIENTRYP fn)(GLenum, GLint, GLint, GLint, GLint, GLsizei, GLsizei, GLsizei, GLenum, GLenum, const GLvoid *)) {
+   SET_by_offset(disp, _gloffset_TexSubImage3D, fn);
+}
+
 #define CALL_CopyTexSubImage3D(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLenum, GLint, GLint, GLint, GLint, GLint, GLint, GLsizei, GLsizei)), _gloffset_CopyTexSubImage3D, parameters)
 #define GET_CopyTexSubImage3D(disp) GET_by_offset(disp, _gloffset_CopyTexSubImage3D)
-#define SET_CopyTexSubImage3D(disp, fn) SET_by_offset(disp, _gloffset_CopyTexSubImage3D, fn)
+static void INLINE SET_CopyTexSubImage3D(struct _glapi_table *disp, void (GLAPIENTRYP fn)(GLenum, GLint, GLint, GLint, GLint, GLint, GLint, GLsizei, GLsizei)) {
+   SET_by_offset(disp, _gloffset_CopyTexSubImage3D, fn);
+}
+
 #define CALL_ActiveTextureARB(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLenum)), _gloffset_ActiveTextureARB, parameters)
 #define GET_ActiveTextureARB(disp) GET_by_offset(disp, _gloffset_ActiveTextureARB)
-#define SET_ActiveTextureARB(disp, fn) SET_by_offset(disp, _gloffset_ActiveTextureARB, fn)
+static void INLINE SET_ActiveTextureARB(struct _glapi_table *disp, void (GLAPIENTRYP fn)(GLenum)) {
+   SET_by_offset(disp, _gloffset_ActiveTextureARB, fn);
+}
+
 #define CALL_ClientActiveTextureARB(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLenum)), _gloffset_ClientActiveTextureARB, parameters)
 #define GET_ClientActiveTextureARB(disp) GET_by_offset(disp, _gloffset_ClientActiveTextureARB)
-#define SET_ClientActiveTextureARB(disp, fn) SET_by_offset(disp, _gloffset_ClientActiveTextureARB, fn)
+static void INLINE SET_ClientActiveTextureARB(struct _glapi_table *disp, void (GLAPIENTRYP fn)(GLenum)) {
+   SET_by_offset(disp, _gloffset_ClientActiveTextureARB, fn);
+}
+
 #define CALL_MultiTexCoord1dARB(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLenum, GLdouble)), _gloffset_MultiTexCoord1dARB, parameters)
 #define GET_MultiTexCoord1dARB(disp) GET_by_offset(disp, _gloffset_MultiTexCoord1dARB)
-#define SET_MultiTexCoord1dARB(disp, fn) SET_by_offset(disp, _gloffset_MultiTexCoord1dARB, fn)
+static void INLINE SET_MultiTexCoord1dARB(struct _glapi_table *disp, void (GLAPIENTRYP fn)(GLenum, GLdouble)) {
+   SET_by_offset(disp, _gloffset_MultiTexCoord1dARB, fn);
+}
+
 #define CALL_MultiTexCoord1dvARB(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLenum, const GLdouble *)), _gloffset_MultiTexCoord1dvARB, parameters)
 #define GET_MultiTexCoord1dvARB(disp) GET_by_offset(disp, _gloffset_MultiTexCoord1dvARB)
-#define SET_MultiTexCoord1dvARB(disp, fn) SET_by_offset(disp, _gloffset_MultiTexCoord1dvARB, fn)
+static void INLINE SET_MultiTexCoord1dvARB(struct _glapi_table *disp, void (GLAPIENTRYP fn)(GLenum, const GLdouble *)) {
+   SET_by_offset(disp, _gloffset_MultiTexCoord1dvARB, fn);
+}
+
 #define CALL_MultiTexCoord1fARB(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLenum, GLfloat)), _gloffset_MultiTexCoord1fARB, parameters)
 #define GET_MultiTexCoord1fARB(disp) GET_by_offset(disp, _gloffset_MultiTexCoord1fARB)
-#define SET_MultiTexCoord1fARB(disp, fn) SET_by_offset(disp, _gloffset_MultiTexCoord1fARB, fn)
+static void INLINE SET_MultiTexCoord1fARB(struct _glapi_table *disp, void (GLAPIENTRYP fn)(GLenum, GLfloat)) {
+   SET_by_offset(disp, _gloffset_MultiTexCoord1fARB, fn);
+}
+
 #define CALL_MultiTexCoord1fvARB(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLenum, const GLfloat *)), _gloffset_MultiTexCoord1fvARB, parameters)
 #define GET_MultiTexCoord1fvARB(disp) GET_by_offset(disp, _gloffset_MultiTexCoord1fvARB)
-#define SET_MultiTexCoord1fvARB(disp, fn) SET_by_offset(disp, _gloffset_MultiTexCoord1fvARB, fn)
+static void INLINE SET_MultiTexCoord1fvARB(struct _glapi_table *disp, void (GLAPIENTRYP fn)(GLenum, const GLfloat *)) {
+   SET_by_offset(disp, _gloffset_MultiTexCoord1fvARB, fn);
+}
+
 #define CALL_MultiTexCoord1iARB(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLenum, GLint)), _gloffset_MultiTexCoord1iARB, parameters)
 #define GET_MultiTexCoord1iARB(disp) GET_by_offset(disp, _gloffset_MultiTexCoord1iARB)
-#define SET_MultiTexCoord1iARB(disp, fn) SET_by_offset(disp, _gloffset_MultiTexCoord1iARB, fn)
+static void INLINE SET_MultiTexCoord1iARB(struct _glapi_table *disp, void (GLAPIENTRYP fn)(GLenum, GLint)) {
+   SET_by_offset(disp, _gloffset_MultiTexCoord1iARB, fn);
+}
+
 #define CALL_MultiTexCoord1ivARB(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLenum, const GLint *)), _gloffset_MultiTexCoord1ivARB, parameters)
 #define GET_MultiTexCoord1ivARB(disp) GET_by_offset(disp, _gloffset_MultiTexCoord1ivARB)
-#define SET_MultiTexCoord1ivARB(disp, fn) SET_by_offset(disp, _gloffset_MultiTexCoord1ivARB, fn)
+static void INLINE SET_MultiTexCoord1ivARB(struct _glapi_table *disp, void (GLAPIENTRYP fn)(GLenum, const GLint *)) {
+   SET_by_offset(disp, _gloffset_MultiTexCoord1ivARB, fn);
+}
+
 #define CALL_MultiTexCoord1sARB(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLenum, GLshort)), _gloffset_MultiTexCoord1sARB, parameters)
 #define GET_MultiTexCoord1sARB(disp) GET_by_offset(disp, _gloffset_MultiTexCoord1sARB)
-#define SET_MultiTexCoord1sARB(disp, fn) SET_by_offset(disp, _gloffset_MultiTexCoord1sARB, fn)
+static void INLINE SET_MultiTexCoord1sARB(struct _glapi_table *disp, void (GLAPIENTRYP fn)(GLenum, GLshort)) {
+   SET_by_offset(disp, _gloffset_MultiTexCoord1sARB, fn);
+}
+
 #define CALL_MultiTexCoord1svARB(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLenum, const GLshort *)), _gloffset_MultiTexCoord1svARB, parameters)
 #define GET_MultiTexCoord1svARB(disp) GET_by_offset(disp, _gloffset_MultiTexCoord1svARB)
-#define SET_MultiTexCoord1svARB(disp, fn) SET_by_offset(disp, _gloffset_MultiTexCoord1svARB, fn)
+static void INLINE SET_MultiTexCoord1svARB(struct _glapi_table *disp, void (GLAPIENTRYP fn)(GLenum, const GLshort *)) {
+   SET_by_offset(disp, _gloffset_MultiTexCoord1svARB, fn);
+}
+
 #define CALL_MultiTexCoord2dARB(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLenum, GLdouble, GLdouble)), _gloffset_MultiTexCoord2dARB, parameters)
 #define GET_MultiTexCoord2dARB(disp) GET_by_offset(disp, _gloffset_MultiTexCoord2dARB)
-#define SET_MultiTexCoord2dARB(disp, fn) SET_by_offset(disp, _gloffset_MultiTexCoord2dARB, fn)
+static void INLINE SET_MultiTexCoord2dARB(struct _glapi_table *disp, void (GLAPIENTRYP fn)(GLenum, GLdouble, GLdouble)) {
+   SET_by_offset(disp, _gloffset_MultiTexCoord2dARB, fn);
+}
+
 #define CALL_MultiTexCoord2dvARB(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLenum, const GLdouble *)), _gloffset_MultiTexCoord2dvARB, parameters)
 #define GET_MultiTexCoord2dvARB(disp) GET_by_offset(disp, _gloffset_MultiTexCoord2dvARB)
-#define SET_MultiTexCoord2dvARB(disp, fn) SET_by_offset(disp, _gloffset_MultiTexCoord2dvARB, fn)
+static void INLINE SET_MultiTexCoord2dvARB(struct _glapi_table *disp, void (GLAPIENTRYP fn)(GLenum, const GLdouble *)) {
+   SET_by_offset(disp, _gloffset_MultiTexCoord2dvARB, fn);
+}
+
 #define CALL_MultiTexCoord2fARB(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLenum, GLfloat, GLfloat)), _gloffset_MultiTexCoord2fARB, parameters)
 #define GET_MultiTexCoord2fARB(disp) GET_by_offset(disp, _gloffset_MultiTexCoord2fARB)
-#define SET_MultiTexCoord2fARB(disp, fn) SET_by_offset(disp, _gloffset_MultiTexCoord2fARB, fn)
+static void INLINE SET_MultiTexCoord2fARB(struct _glapi_table *disp, void (GLAPIENTRYP fn)(GLenum, GLfloat, GLfloat)) {
+   SET_by_offset(disp, _gloffset_MultiTexCoord2fARB, fn);
+}
+
 #define CALL_MultiTexCoord2fvARB(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLenum, const GLfloat *)), _gloffset_MultiTexCoord2fvARB, parameters)
 #define GET_MultiTexCoord2fvARB(disp) GET_by_offset(disp, _gloffset_MultiTexCoord2fvARB)
-#define SET_MultiTexCoord2fvARB(disp, fn) SET_by_offset(disp, _gloffset_MultiTexCoord2fvARB, fn)
+static void INLINE SET_MultiTexCoord2fvARB(struct _glapi_table *disp, void (GLAPIENTRYP fn)(GLenum, const GLfloat *)) {
+   SET_by_offset(disp, _gloffset_MultiTexCoord2fvARB, fn);
+}
+
 #define CALL_MultiTexCoord2iARB(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLenum, GLint, GLint)), _gloffset_MultiTexCoord2iARB, parameters)
 #define GET_MultiTexCoord2iARB(disp) GET_by_offset(disp, _gloffset_MultiTexCoord2iARB)
-#define SET_MultiTexCoord2iARB(disp, fn) SET_by_offset(disp, _gloffset_MultiTexCoord2iARB, fn)
+static void INLINE SET_MultiTexCoord2iARB(struct _glapi_table *disp, void (GLAPIENTRYP fn)(GLenum, GLint, GLint)) {
+   SET_by_offset(disp, _gloffset_MultiTexCoord2iARB, fn);
+}
+
 #define CALL_MultiTexCoord2ivARB(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLenum, const GLint *)), _gloffset_MultiTexCoord2ivARB, parameters)
 #define GET_MultiTexCoord2ivARB(disp) GET_by_offset(disp, _gloffset_MultiTexCoord2ivARB)
-#define SET_MultiTexCoord2ivARB(disp, fn) SET_by_offset(disp, _gloffset_MultiTexCoord2ivARB, fn)
+static void INLINE SET_MultiTexCoord2ivARB(struct _glapi_table *disp, void (GLAPIENTRYP fn)(GLenum, const GLint *)) {
+   SET_by_offset(disp, _gloffset_MultiTexCoord2ivARB, fn);
+}
+
 #define CALL_MultiTexCoord2sARB(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLenum, GLshort, GLshort)), _gloffset_MultiTexCoord2sARB, parameters)
 #define GET_MultiTexCoord2sARB(disp) GET_by_offset(disp, _gloffset_MultiTexCoord2sARB)
-#define SET_MultiTexCoord2sARB(disp, fn) SET_by_offset(disp, _gloffset_MultiTexCoord2sARB, fn)
+static void INLINE SET_MultiTexCoord2sARB(struct _glapi_table *disp, void (GLAPIENTRYP fn)(GLenum, GLshort, GLshort)) {
+   SET_by_offset(disp, _gloffset_MultiTexCoord2sARB, fn);
+}
+
 #define CALL_MultiTexCoord2svARB(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLenum, const GLshort *)), _gloffset_MultiTexCoord2svARB, parameters)
 #define GET_MultiTexCoord2svARB(disp) GET_by_offset(disp, _gloffset_MultiTexCoord2svARB)
-#define SET_MultiTexCoord2svARB(disp, fn) SET_by_offset(disp, _gloffset_MultiTexCoord2svARB, fn)
+static void INLINE SET_MultiTexCoord2svARB(struct _glapi_table *disp, void (GLAPIENTRYP fn)(GLenum, const GLshort *)) {
+   SET_by_offset(disp, _gloffset_MultiTexCoord2svARB, fn);
+}
+
 #define CALL_MultiTexCoord3dARB(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLenum, GLdouble, GLdouble, GLdouble)), _gloffset_MultiTexCoord3dARB, parameters)
 #define GET_MultiTexCoord3dARB(disp) GET_by_offset(disp, _gloffset_MultiTexCoord3dARB)
-#define SET_MultiTexCoord3dARB(disp, fn) SET_by_offset(disp, _gloffset_MultiTexCoord3dARB, fn)
+static void INLINE SET_MultiTexCoord3dARB(struct _glapi_table *disp, void (GLAPIENTRYP fn)(GLenum, GLdouble, GLdouble, GLdouble)) {
+   SET_by_offset(disp, _gloffset_MultiTexCoord3dARB, fn);
+}
+
 #define CALL_MultiTexCoord3dvARB(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLenum, const GLdouble *)), _gloffset_MultiTexCoord3dvARB, parameters)
 #define GET_MultiTexCoord3dvARB(disp) GET_by_offset(disp, _gloffset_MultiTexCoord3dvARB)
-#define SET_MultiTexCoord3dvARB(disp, fn) SET_by_offset(disp, _gloffset_MultiTexCoord3dvARB, fn)
+static void INLINE SET_MultiTexCoord3dvARB(struct _glapi_table *disp, void (GLAPIENTRYP fn)(GLenum, const GLdouble *)) {
+   SET_by_offset(disp, _gloffset_MultiTexCoord3dvARB, fn);
+}
+
 #define CALL_MultiTexCoord3fARB(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLenum, GLfloat, GLfloat, GLfloat)), _gloffset_MultiTexCoord3fARB, parameters)
 #define GET_MultiTexCoord3fARB(disp) GET_by_offset(disp, _gloffset_MultiTexCoord3fARB)
-#define SET_MultiTexCoord3fARB(disp, fn) SET_by_offset(disp, _gloffset_MultiTexCoord3fARB, fn)
+static void INLINE SET_MultiTexCoord3fARB(struct _glapi_table *disp, void (GLAPIENTRYP fn)(GLenum, GLfloat, GLfloat, GLfloat)) {
+   SET_by_offset(disp, _gloffset_MultiTexCoord3fARB, fn);
+}
+
 #define CALL_MultiTexCoord3fvARB(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLenum, const GLfloat *)), _gloffset_MultiTexCoord3fvARB, parameters)
 #define GET_MultiTexCoord3fvARB(disp) GET_by_offset(disp, _gloffset_MultiTexCoord3fvARB)
-#define SET_MultiTexCoord3fvARB(disp, fn) SET_by_offset(disp, _gloffset_MultiTexCoord3fvARB, fn)
+static void INLINE SET_MultiTexCoord3fvARB(struct _glapi_table *disp, void (GLAPIENTRYP fn)(GLenum, const GLfloat *)) {
+   SET_by_offset(disp, _gloffset_MultiTexCoord3fvARB, fn);
+}
+
 #define CALL_MultiTexCoord3iARB(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLenum, GLint, GLint, GLint)), _gloffset_MultiTexCoord3iARB, parameters)
 #define GET_MultiTexCoord3iARB(disp) GET_by_offset(disp, _gloffset_MultiTexCoord3iARB)
-#define SET_MultiTexCoord3iARB(disp, fn) SET_by_offset(disp, _gloffset_MultiTexCoord3iARB, fn)
+static void INLINE SET_MultiTexCoord3iARB(struct _glapi_table *disp, void (GLAPIENTRYP fn)(GLenum, GLint, GLint, GLint)) {
+   SET_by_offset(disp, _gloffset_MultiTexCoord3iARB, fn);
+}
+
 #define CALL_MultiTexCoord3ivARB(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLenum, const GLint *)), _gloffset_MultiTexCoord3ivARB, parameters)
 #define GET_MultiTexCoord3ivARB(disp) GET_by_offset(disp, _gloffset_MultiTexCoord3ivARB)
-#define SET_MultiTexCoord3ivARB(disp, fn) SET_by_offset(disp, _gloffset_MultiTexCoord3ivARB, fn)
+static void INLINE SET_MultiTexCoord3ivARB(struct _glapi_table *disp, void (GLAPIENTRYP fn)(GLenum, const GLint *)) {
+   SET_by_offset(disp, _gloffset_MultiTexCoord3ivARB, fn);
+}
+
 #define CALL_MultiTexCoord3sARB(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLenum, GLshort, GLshort, GLshort)), _gloffset_MultiTexCoord3sARB, parameters)
 #define GET_MultiTexCoord3sARB(disp) GET_by_offset(disp, _gloffset_MultiTexCoord3sARB)
-#define SET_MultiTexCoord3sARB(disp, fn) SET_by_offset(disp, _gloffset_MultiTexCoord3sARB, fn)
+static void INLINE SET_MultiTexCoord3sARB(struct _glapi_table *disp, void (GLAPIENTRYP fn)(GLenum, GLshort, GLshort, GLshort)) {
+   SET_by_offset(disp, _gloffset_MultiTexCoord3sARB, fn);
+}
+
 #define CALL_MultiTexCoord3svARB(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLenum, const GLshort *)), _gloffset_MultiTexCoord3svARB, parameters)
 #define GET_MultiTexCoord3svARB(disp) GET_by_offset(disp, _gloffset_MultiTexCoord3svARB)
-#define SET_MultiTexCoord3svARB(disp, fn) SET_by_offset(disp, _gloffset_MultiTexCoord3svARB, fn)
+static void INLINE SET_MultiTexCoord3svARB(struct _glapi_table *disp, void (GLAPIENTRYP fn)(GLenum, const GLshort *)) {
+   SET_by_offset(disp, _gloffset_MultiTexCoord3svARB, fn);
+}
+
 #define CALL_MultiTexCoord4dARB(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLenum, GLdouble, GLdouble, GLdouble, GLdouble)), _gloffset_MultiTexCoord4dARB, parameters)
 #define GET_MultiTexCoord4dARB(disp) GET_by_offset(disp, _gloffset_MultiTexCoord4dARB)
-#define SET_MultiTexCoord4dARB(disp, fn) SET_by_offset(disp, _gloffset_MultiTexCoord4dARB, fn)
+static void INLINE SET_MultiTexCoord4dARB(struct _glapi_table *disp, void (GLAPIENTRYP fn)(GLenum, GLdouble, GLdouble, GLdouble, GLdouble)) {
+   SET_by_offset(disp, _gloffset_MultiTexCoord4dARB, fn);
+}
+
 #define CALL_MultiTexCoord4dvARB(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLenum, const GLdouble *)), _gloffset_MultiTexCoord4dvARB, parameters)
 #define GET_MultiTexCoord4dvARB(disp) GET_by_offset(disp, _gloffset_MultiTexCoord4dvARB)
-#define SET_MultiTexCoord4dvARB(disp, fn) SET_by_offset(disp, _gloffset_MultiTexCoord4dvARB, fn)
+static void INLINE SET_MultiTexCoord4dvARB(struct _glapi_table *disp, void (GLAPIENTRYP fn)(GLenum, const GLdouble *)) {
+   SET_by_offset(disp, _gloffset_MultiTexCoord4dvARB, fn);
+}
+
 #define CALL_MultiTexCoord4fARB(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLenum, GLfloat, GLfloat, GLfloat, GLfloat)), _gloffset_MultiTexCoord4fARB, parameters)
 #define GET_MultiTexCoord4fARB(disp) GET_by_offset(disp, _gloffset_MultiTexCoord4fARB)
-#define SET_MultiTexCoord4fARB(disp, fn) SET_by_offset(disp, _gloffset_MultiTexCoord4fARB, fn)
+static void INLINE SET_MultiTexCoord4fARB(struct _glapi_table *disp, void (GLAPIENTRYP fn)(GLenum, GLfloat, GLfloat, GLfloat, GLfloat)) {
+   SET_by_offset(disp, _gloffset_MultiTexCoord4fARB, fn);
+}
+
 #define CALL_MultiTexCoord4fvARB(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLenum, const GLfloat *)), _gloffset_MultiTexCoord4fvARB, parameters)
 #define GET_MultiTexCoord4fvARB(disp) GET_by_offset(disp, _gloffset_MultiTexCoord4fvARB)
-#define SET_MultiTexCoord4fvARB(disp, fn) SET_by_offset(disp, _gloffset_MultiTexCoord4fvARB, fn)
+static void INLINE SET_MultiTexCoord4fvARB(struct _glapi_table *disp, void (GLAPIENTRYP fn)(GLenum, const GLfloat *)) {
+   SET_by_offset(disp, _gloffset_MultiTexCoord4fvARB, fn);
+}
+
 #define CALL_MultiTexCoord4iARB(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLenum, GLint, GLint, GLint, GLint)), _gloffset_MultiTexCoord4iARB, parameters)
 #define GET_MultiTexCoord4iARB(disp) GET_by_offset(disp, _gloffset_MultiTexCoord4iARB)
-#define SET_MultiTexCoord4iARB(disp, fn) SET_by_offset(disp, _gloffset_MultiTexCoord4iARB, fn)
+static void INLINE SET_MultiTexCoord4iARB(struct _glapi_table *disp, void (GLAPIENTRYP fn)(GLenum, GLint, GLint, GLint, GLint)) {
+   SET_by_offset(disp, _gloffset_MultiTexCoord4iARB, fn);
+}
+
 #define CALL_MultiTexCoord4ivARB(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLenum, const GLint *)), _gloffset_MultiTexCoord4ivARB, parameters)
 #define GET_MultiTexCoord4ivARB(disp) GET_by_offset(disp, _gloffset_MultiTexCoord4ivARB)
-#define SET_MultiTexCoord4ivARB(disp, fn) SET_by_offset(disp, _gloffset_MultiTexCoord4ivARB, fn)
+static void INLINE SET_MultiTexCoord4ivARB(struct _glapi_table *disp, void (GLAPIENTRYP fn)(GLenum, const GLint *)) {
+   SET_by_offset(disp, _gloffset_MultiTexCoord4ivARB, fn);
+}
+
 #define CALL_MultiTexCoord4sARB(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLenum, GLshort, GLshort, GLshort, GLshort)), _gloffset_MultiTexCoord4sARB, parameters)
 #define GET_MultiTexCoord4sARB(disp) GET_by_offset(disp, _gloffset_MultiTexCoord4sARB)
-#define SET_MultiTexCoord4sARB(disp, fn) SET_by_offset(disp, _gloffset_MultiTexCoord4sARB, fn)
+static void INLINE SET_MultiTexCoord4sARB(struct _glapi_table *disp, void (GLAPIENTRYP fn)(GLenum, GLshort, GLshort, GLshort, GLshort)) {
+   SET_by_offset(disp, _gloffset_MultiTexCoord4sARB, fn);
+}
+
 #define CALL_MultiTexCoord4svARB(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLenum, const GLshort *)), _gloffset_MultiTexCoord4svARB, parameters)
 #define GET_MultiTexCoord4svARB(disp) GET_by_offset(disp, _gloffset_MultiTexCoord4svARB)
-#define SET_MultiTexCoord4svARB(disp, fn) SET_by_offset(disp, _gloffset_MultiTexCoord4svARB, fn)
+static void INLINE SET_MultiTexCoord4svARB(struct _glapi_table *disp, void (GLAPIENTRYP fn)(GLenum, const GLshort *)) {
+   SET_by_offset(disp, _gloffset_MultiTexCoord4svARB, fn);
+}
+
 #define CALL_AttachShader(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLuint, GLuint)), _gloffset_AttachShader, parameters)
 #define GET_AttachShader(disp) GET_by_offset(disp, _gloffset_AttachShader)
-#define SET_AttachShader(disp, fn) SET_by_offset(disp, _gloffset_AttachShader, fn)
+static void INLINE SET_AttachShader(struct _glapi_table *disp, void (GLAPIENTRYP fn)(GLuint, GLuint)) {
+   SET_by_offset(disp, _gloffset_AttachShader, fn);
+}
+
 #define CALL_CreateProgram(disp, parameters) CALL_by_offset(disp, (GLuint (GLAPIENTRYP)(void)), _gloffset_CreateProgram, parameters)
 #define GET_CreateProgram(disp) GET_by_offset(disp, _gloffset_CreateProgram)
-#define SET_CreateProgram(disp, fn) SET_by_offset(disp, _gloffset_CreateProgram, fn)
+static void INLINE SET_CreateProgram(struct _glapi_table *disp, GLuint (GLAPIENTRYP fn)(void)) {
+   SET_by_offset(disp, _gloffset_CreateProgram, fn);
+}
+
 #define CALL_CreateShader(disp, parameters) CALL_by_offset(disp, (GLuint (GLAPIENTRYP)(GLenum)), _gloffset_CreateShader, parameters)
 #define GET_CreateShader(disp) GET_by_offset(disp, _gloffset_CreateShader)
-#define SET_CreateShader(disp, fn) SET_by_offset(disp, _gloffset_CreateShader, fn)
+static void INLINE SET_CreateShader(struct _glapi_table *disp, GLuint (GLAPIENTRYP fn)(GLenum)) {
+   SET_by_offset(disp, _gloffset_CreateShader, fn);
+}
+
 #define CALL_DeleteProgram(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLuint)), _gloffset_DeleteProgram, parameters)
 #define GET_DeleteProgram(disp) GET_by_offset(disp, _gloffset_DeleteProgram)
-#define SET_DeleteProgram(disp, fn) SET_by_offset(disp, _gloffset_DeleteProgram, fn)
+static void INLINE SET_DeleteProgram(struct _glapi_table *disp, void (GLAPIENTRYP fn)(GLuint)) {
+   SET_by_offset(disp, _gloffset_DeleteProgram, fn);
+}
+
 #define CALL_DeleteShader(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLuint)), _gloffset_DeleteShader, parameters)
 #define GET_DeleteShader(disp) GET_by_offset(disp, _gloffset_DeleteShader)
-#define SET_DeleteShader(disp, fn) SET_by_offset(disp, _gloffset_DeleteShader, fn)
+static void INLINE SET_DeleteShader(struct _glapi_table *disp, void (GLAPIENTRYP fn)(GLuint)) {
+   SET_by_offset(disp, _gloffset_DeleteShader, fn);
+}
+
 #define CALL_DetachShader(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLuint, GLuint)), _gloffset_DetachShader, parameters)
 #define GET_DetachShader(disp) GET_by_offset(disp, _gloffset_DetachShader)
-#define SET_DetachShader(disp, fn) SET_by_offset(disp, _gloffset_DetachShader, fn)
+static void INLINE SET_DetachShader(struct _glapi_table *disp, void (GLAPIENTRYP fn)(GLuint, GLuint)) {
+   SET_by_offset(disp, _gloffset_DetachShader, fn);
+}
+
 #define CALL_GetAttachedShaders(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLuint, GLsizei, GLsizei *, GLuint *)), _gloffset_GetAttachedShaders, parameters)
 #define GET_GetAttachedShaders(disp) GET_by_offset(disp, _gloffset_GetAttachedShaders)
-#define SET_GetAttachedShaders(disp, fn) SET_by_offset(disp, _gloffset_GetAttachedShaders, fn)
+static void INLINE SET_GetAttachedShaders(struct _glapi_table *disp, void (GLAPIENTRYP fn)(GLuint, GLsizei, GLsizei *, GLuint *)) {
+   SET_by_offset(disp, _gloffset_GetAttachedShaders, fn);
+}
+
 #define CALL_GetProgramInfoLog(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLuint, GLsizei, GLsizei *, GLchar *)), _gloffset_GetProgramInfoLog, parameters)
 #define GET_GetProgramInfoLog(disp) GET_by_offset(disp, _gloffset_GetProgramInfoLog)
-#define SET_GetProgramInfoLog(disp, fn) SET_by_offset(disp, _gloffset_GetProgramInfoLog, fn)
+static void INLINE SET_GetProgramInfoLog(struct _glapi_table *disp, void (GLAPIENTRYP fn)(GLuint, GLsizei, GLsizei *, GLchar *)) {
+   SET_by_offset(disp, _gloffset_GetProgramInfoLog, fn);
+}
+
 #define CALL_GetProgramiv(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLuint, GLenum, GLint *)), _gloffset_GetProgramiv, parameters)
 #define GET_GetProgramiv(disp) GET_by_offset(disp, _gloffset_GetProgramiv)
-#define SET_GetProgramiv(disp, fn) SET_by_offset(disp, _gloffset_GetProgramiv, fn)
+static void INLINE SET_GetProgramiv(struct _glapi_table *disp, void (GLAPIENTRYP fn)(GLuint, GLenum, GLint *)) {
+   SET_by_offset(disp, _gloffset_GetProgramiv, fn);
+}
+
 #define CALL_GetShaderInfoLog(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLuint, GLsizei, GLsizei *, GLchar *)), _gloffset_GetShaderInfoLog, parameters)
 #define GET_GetShaderInfoLog(disp) GET_by_offset(disp, _gloffset_GetShaderInfoLog)
-#define SET_GetShaderInfoLog(disp, fn) SET_by_offset(disp, _gloffset_GetShaderInfoLog, fn)
+static void INLINE SET_GetShaderInfoLog(struct _glapi_table *disp, void (GLAPIENTRYP fn)(GLuint, GLsizei, GLsizei *, GLchar *)) {
+   SET_by_offset(disp, _gloffset_GetShaderInfoLog, fn);
+}
+
 #define CALL_GetShaderiv(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLuint, GLenum, GLint *)), _gloffset_GetShaderiv, parameters)
 #define GET_GetShaderiv(disp) GET_by_offset(disp, _gloffset_GetShaderiv)
-#define SET_GetShaderiv(disp, fn) SET_by_offset(disp, _gloffset_GetShaderiv, fn)
+static void INLINE SET_GetShaderiv(struct _glapi_table *disp, void (GLAPIENTRYP fn)(GLuint, GLenum, GLint *)) {
+   SET_by_offset(disp, _gloffset_GetShaderiv, fn);
+}
+
 #define CALL_IsProgram(disp, parameters) CALL_by_offset(disp, (GLboolean (GLAPIENTRYP)(GLuint)), _gloffset_IsProgram, parameters)
 #define GET_IsProgram(disp) GET_by_offset(disp, _gloffset_IsProgram)
-#define SET_IsProgram(disp, fn) SET_by_offset(disp, _gloffset_IsProgram, fn)
+static void INLINE SET_IsProgram(struct _glapi_table *disp, GLboolean (GLAPIENTRYP fn)(GLuint)) {
+   SET_by_offset(disp, _gloffset_IsProgram, fn);
+}
+
 #define CALL_IsShader(disp, parameters) CALL_by_offset(disp, (GLboolean (GLAPIENTRYP)(GLuint)), _gloffset_IsShader, parameters)
 #define GET_IsShader(disp) GET_by_offset(disp, _gloffset_IsShader)
-#define SET_IsShader(disp, fn) SET_by_offset(disp, _gloffset_IsShader, fn)
+static void INLINE SET_IsShader(struct _glapi_table *disp, GLboolean (GLAPIENTRYP fn)(GLuint)) {
+   SET_by_offset(disp, _gloffset_IsShader, fn);
+}
+
 #define CALL_StencilFuncSeparate(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLenum, GLenum, GLint, GLuint)), _gloffset_StencilFuncSeparate, parameters)
 #define GET_StencilFuncSeparate(disp) GET_by_offset(disp, _gloffset_StencilFuncSeparate)
-#define SET_StencilFuncSeparate(disp, fn) SET_by_offset(disp, _gloffset_StencilFuncSeparate, fn)
+static void INLINE SET_StencilFuncSeparate(struct _glapi_table *disp, void (GLAPIENTRYP fn)(GLenum, GLenum, GLint, GLuint)) {
+   SET_by_offset(disp, _gloffset_StencilFuncSeparate, fn);
+}
+
 #define CALL_StencilMaskSeparate(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLenum, GLuint)), _gloffset_StencilMaskSeparate, parameters)
 #define GET_StencilMaskSeparate(disp) GET_by_offset(disp, _gloffset_StencilMaskSeparate)
-#define SET_StencilMaskSeparate(disp, fn) SET_by_offset(disp, _gloffset_StencilMaskSeparate, fn)
+static void INLINE SET_StencilMaskSeparate(struct _glapi_table *disp, void (GLAPIENTRYP fn)(GLenum, GLuint)) {
+   SET_by_offset(disp, _gloffset_StencilMaskSeparate, fn);
+}
+
 #define CALL_StencilOpSeparate(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLenum, GLenum, GLenum, GLenum)), _gloffset_StencilOpSeparate, parameters)
 #define GET_StencilOpSeparate(disp) GET_by_offset(disp, _gloffset_StencilOpSeparate)
-#define SET_StencilOpSeparate(disp, fn) SET_by_offset(disp, _gloffset_StencilOpSeparate, fn)
+static void INLINE SET_StencilOpSeparate(struct _glapi_table *disp, void (GLAPIENTRYP fn)(GLenum, GLenum, GLenum, GLenum)) {
+   SET_by_offset(disp, _gloffset_StencilOpSeparate, fn);
+}
+
 #define CALL_UniformMatrix2x3fv(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLint, GLsizei, GLboolean, const GLfloat *)), _gloffset_UniformMatrix2x3fv, parameters)
 #define GET_UniformMatrix2x3fv(disp) GET_by_offset(disp, _gloffset_UniformMatrix2x3fv)
-#define SET_UniformMatrix2x3fv(disp, fn) SET_by_offset(disp, _gloffset_UniformMatrix2x3fv, fn)
+static void INLINE SET_UniformMatrix2x3fv(struct _glapi_table *disp, void (GLAPIENTRYP fn)(GLint, GLsizei, GLboolean, const GLfloat *)) {
+   SET_by_offset(disp, _gloffset_UniformMatrix2x3fv, fn);
+}
+
 #define CALL_UniformMatrix2x4fv(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLint, GLsizei, GLboolean, const GLfloat *)), _gloffset_UniformMatrix2x4fv, parameters)
 #define GET_UniformMatrix2x4fv(disp) GET_by_offset(disp, _gloffset_UniformMatrix2x4fv)
-#define SET_UniformMatrix2x4fv(disp, fn) SET_by_offset(disp, _gloffset_UniformMatrix2x4fv, fn)
+static void INLINE SET_UniformMatrix2x4fv(struct _glapi_table *disp, void (GLAPIENTRYP fn)(GLint, GLsizei, GLboolean, const GLfloat *)) {
+   SET_by_offset(disp, _gloffset_UniformMatrix2x4fv, fn);
+}
+
 #define CALL_UniformMatrix3x2fv(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLint, GLsizei, GLboolean, const GLfloat *)), _gloffset_UniformMatrix3x2fv, parameters)
 #define GET_UniformMatrix3x2fv(disp) GET_by_offset(disp, _gloffset_UniformMatrix3x2fv)
-#define SET_UniformMatrix3x2fv(disp, fn) SET_by_offset(disp, _gloffset_UniformMatrix3x2fv, fn)
+static void INLINE SET_UniformMatrix3x2fv(struct _glapi_table *disp, void (GLAPIENTRYP fn)(GLint, GLsizei, GLboolean, const GLfloat *)) {
+   SET_by_offset(disp, _gloffset_UniformMatrix3x2fv, fn);
+}
+
 #define CALL_UniformMatrix3x4fv(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLint, GLsizei, GLboolean, const GLfloat *)), _gloffset_UniformMatrix3x4fv, parameters)
 #define GET_UniformMatrix3x4fv(disp) GET_by_offset(disp, _gloffset_UniformMatrix3x4fv)
-#define SET_UniformMatrix3x4fv(disp, fn) SET_by_offset(disp, _gloffset_UniformMatrix3x4fv, fn)
+static void INLINE SET_UniformMatrix3x4fv(struct _glapi_table *disp, void (GLAPIENTRYP fn)(GLint, GLsizei, GLboolean, const GLfloat *)) {
+   SET_by_offset(disp, _gloffset_UniformMatrix3x4fv, fn);
+}
+
 #define CALL_UniformMatrix4x2fv(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLint, GLsizei, GLboolean, const GLfloat *)), _gloffset_UniformMatrix4x2fv, parameters)
 #define GET_UniformMatrix4x2fv(disp) GET_by_offset(disp, _gloffset_UniformMatrix4x2fv)
-#define SET_UniformMatrix4x2fv(disp, fn) SET_by_offset(disp, _gloffset_UniformMatrix4x2fv, fn)
+static void INLINE SET_UniformMatrix4x2fv(struct _glapi_table *disp, void (GLAPIENTRYP fn)(GLint, GLsizei, GLboolean, const GLfloat *)) {
+   SET_by_offset(disp, _gloffset_UniformMatrix4x2fv, fn);
+}
+
 #define CALL_UniformMatrix4x3fv(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLint, GLsizei, GLboolean, const GLfloat *)), _gloffset_UniformMatrix4x3fv, parameters)
 #define GET_UniformMatrix4x3fv(disp) GET_by_offset(disp, _gloffset_UniformMatrix4x3fv)
-#define SET_UniformMatrix4x3fv(disp, fn) SET_by_offset(disp, _gloffset_UniformMatrix4x3fv, fn)
+static void INLINE SET_UniformMatrix4x3fv(struct _glapi_table *disp, void (GLAPIENTRYP fn)(GLint, GLsizei, GLboolean, const GLfloat *)) {
+   SET_by_offset(disp, _gloffset_UniformMatrix4x3fv, fn);
+}
+
 #define CALL_ClampColor(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLenum, GLenum)), _gloffset_ClampColor, parameters)
 #define GET_ClampColor(disp) GET_by_offset(disp, _gloffset_ClampColor)
-#define SET_ClampColor(disp, fn) SET_by_offset(disp, _gloffset_ClampColor, fn)
+static void INLINE SET_ClampColor(struct _glapi_table *disp, void (GLAPIENTRYP fn)(GLenum, GLenum)) {
+   SET_by_offset(disp, _gloffset_ClampColor, fn);
+}
+
 #define CALL_ClearBufferfi(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLenum, GLint, GLfloat, GLint)), _gloffset_ClearBufferfi, parameters)
 #define GET_ClearBufferfi(disp) GET_by_offset(disp, _gloffset_ClearBufferfi)
-#define SET_ClearBufferfi(disp, fn) SET_by_offset(disp, _gloffset_ClearBufferfi, fn)
+static void INLINE SET_ClearBufferfi(struct _glapi_table *disp, void (GLAPIENTRYP fn)(GLenum, GLint, GLfloat, GLint)) {
+   SET_by_offset(disp, _gloffset_ClearBufferfi, fn);
+}
+
 #define CALL_ClearBufferfv(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLenum, GLint, const GLfloat *)), _gloffset_ClearBufferfv, parameters)
 #define GET_ClearBufferfv(disp) GET_by_offset(disp, _gloffset_ClearBufferfv)
-#define SET_ClearBufferfv(disp, fn) SET_by_offset(disp, _gloffset_ClearBufferfv, fn)
+static void INLINE SET_ClearBufferfv(struct _glapi_table *disp, void (GLAPIENTRYP fn)(GLenum, GLint, const GLfloat *)) {
+   SET_by_offset(disp, _gloffset_ClearBufferfv, fn);
+}
+
 #define CALL_ClearBufferiv(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLenum, GLint, const GLint *)), _gloffset_ClearBufferiv, parameters)
 #define GET_ClearBufferiv(disp) GET_by_offset(disp, _gloffset_ClearBufferiv)
-#define SET_ClearBufferiv(disp, fn) SET_by_offset(disp, _gloffset_ClearBufferiv, fn)
+static void INLINE SET_ClearBufferiv(struct _glapi_table *disp, void (GLAPIENTRYP fn)(GLenum, GLint, const GLint *)) {
+   SET_by_offset(disp, _gloffset_ClearBufferiv, fn);
+}
+
 #define CALL_ClearBufferuiv(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLenum, GLint, const GLuint *)), _gloffset_ClearBufferuiv, parameters)
 #define GET_ClearBufferuiv(disp) GET_by_offset(disp, _gloffset_ClearBufferuiv)
-#define SET_ClearBufferuiv(disp, fn) SET_by_offset(disp, _gloffset_ClearBufferuiv, fn)
+static void INLINE SET_ClearBufferuiv(struct _glapi_table *disp, void (GLAPIENTRYP fn)(GLenum, GLint, const GLuint *)) {
+   SET_by_offset(disp, _gloffset_ClearBufferuiv, fn);
+}
+
 #define CALL_GetStringi(disp, parameters) CALL_by_offset(disp, (const GLubyte * (GLAPIENTRYP)(GLenum, GLuint)), _gloffset_GetStringi, parameters)
 #define GET_GetStringi(disp) GET_by_offset(disp, _gloffset_GetStringi)
-#define SET_GetStringi(disp, fn) SET_by_offset(disp, _gloffset_GetStringi, fn)
+static void INLINE SET_GetStringi(struct _glapi_table *disp, const GLubyte * (GLAPIENTRYP fn)(GLenum, GLuint)) {
+   SET_by_offset(disp, _gloffset_GetStringi, fn);
+}
+
 #define CALL_TexBuffer(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLenum, GLenum, GLuint)), _gloffset_TexBuffer, parameters)
 #define GET_TexBuffer(disp) GET_by_offset(disp, _gloffset_TexBuffer)
-#define SET_TexBuffer(disp, fn) SET_by_offset(disp, _gloffset_TexBuffer, fn)
+static void INLINE SET_TexBuffer(struct _glapi_table *disp, void (GLAPIENTRYP fn)(GLenum, GLenum, GLuint)) {
+   SET_by_offset(disp, _gloffset_TexBuffer, fn);
+}
+
 #define CALL_FramebufferTexture(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLenum, GLenum, GLuint, GLint)), _gloffset_FramebufferTexture, parameters)
 #define GET_FramebufferTexture(disp) GET_by_offset(disp, _gloffset_FramebufferTexture)
-#define SET_FramebufferTexture(disp, fn) SET_by_offset(disp, _gloffset_FramebufferTexture, fn)
+static void INLINE SET_FramebufferTexture(struct _glapi_table *disp, void (GLAPIENTRYP fn)(GLenum, GLenum, GLuint, GLint)) {
+   SET_by_offset(disp, _gloffset_FramebufferTexture, fn);
+}
+
 #define CALL_GetBufferParameteri64v(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLenum, GLenum, GLint64 *)), _gloffset_GetBufferParameteri64v, parameters)
 #define GET_GetBufferParameteri64v(disp) GET_by_offset(disp, _gloffset_GetBufferParameteri64v)
-#define SET_GetBufferParameteri64v(disp, fn) SET_by_offset(disp, _gloffset_GetBufferParameteri64v, fn)
+static void INLINE SET_GetBufferParameteri64v(struct _glapi_table *disp, void (GLAPIENTRYP fn)(GLenum, GLenum, GLint64 *)) {
+   SET_by_offset(disp, _gloffset_GetBufferParameteri64v, fn);
+}
+
 #define CALL_GetInteger64i_v(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLenum, GLuint, GLint64 *)), _gloffset_GetInteger64i_v, parameters)
 #define GET_GetInteger64i_v(disp) GET_by_offset(disp, _gloffset_GetInteger64i_v)
-#define SET_GetInteger64i_v(disp, fn) SET_by_offset(disp, _gloffset_GetInteger64i_v, fn)
+static void INLINE SET_GetInteger64i_v(struct _glapi_table *disp, void (GLAPIENTRYP fn)(GLenum, GLuint, GLint64 *)) {
+   SET_by_offset(disp, _gloffset_GetInteger64i_v, fn);
+}
+
 #define CALL_VertexAttribDivisor(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLuint, GLuint)), _gloffset_VertexAttribDivisor, parameters)
 #define GET_VertexAttribDivisor(disp) GET_by_offset(disp, _gloffset_VertexAttribDivisor)
-#define SET_VertexAttribDivisor(disp, fn) SET_by_offset(disp, _gloffset_VertexAttribDivisor, fn)
+static void INLINE SET_VertexAttribDivisor(struct _glapi_table *disp, void (GLAPIENTRYP fn)(GLuint, GLuint)) {
+   SET_by_offset(disp, _gloffset_VertexAttribDivisor, fn);
+}
+
 #define CALL_LoadTransposeMatrixdARB(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(const GLdouble *)), _gloffset_LoadTransposeMatrixdARB, parameters)
 #define GET_LoadTransposeMatrixdARB(disp) GET_by_offset(disp, _gloffset_LoadTransposeMatrixdARB)
-#define SET_LoadTransposeMatrixdARB(disp, fn) SET_by_offset(disp, _gloffset_LoadTransposeMatrixdARB, fn)
+static void INLINE SET_LoadTransposeMatrixdARB(struct _glapi_table *disp, void (GLAPIENTRYP fn)(const GLdouble *)) {
+   SET_by_offset(disp, _gloffset_LoadTransposeMatrixdARB, fn);
+}
+
 #define CALL_LoadTransposeMatrixfARB(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(const GLfloat *)), _gloffset_LoadTransposeMatrixfARB, parameters)
 #define GET_LoadTransposeMatrixfARB(disp) GET_by_offset(disp, _gloffset_LoadTransposeMatrixfARB)
-#define SET_LoadTransposeMatrixfARB(disp, fn) SET_by_offset(disp, _gloffset_LoadTransposeMatrixfARB, fn)
+static void INLINE SET_LoadTransposeMatrixfARB(struct _glapi_table *disp, void (GLAPIENTRYP fn)(const GLfloat *)) {
+   SET_by_offset(disp, _gloffset_LoadTransposeMatrixfARB, fn);
+}
+
 #define CALL_MultTransposeMatrixdARB(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(const GLdouble *)), _gloffset_MultTransposeMatrixdARB, parameters)
 #define GET_MultTransposeMatrixdARB(disp) GET_by_offset(disp, _gloffset_MultTransposeMatrixdARB)
-#define SET_MultTransposeMatrixdARB(disp, fn) SET_by_offset(disp, _gloffset_MultTransposeMatrixdARB, fn)
+static void INLINE SET_MultTransposeMatrixdARB(struct _glapi_table *disp, void (GLAPIENTRYP fn)(const GLdouble *)) {
+   SET_by_offset(disp, _gloffset_MultTransposeMatrixdARB, fn);
+}
+
 #define CALL_MultTransposeMatrixfARB(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(const GLfloat *)), _gloffset_MultTransposeMatrixfARB, parameters)
 #define GET_MultTransposeMatrixfARB(disp) GET_by_offset(disp, _gloffset_MultTransposeMatrixfARB)
-#define SET_MultTransposeMatrixfARB(disp, fn) SET_by_offset(disp, _gloffset_MultTransposeMatrixfARB, fn)
+static void INLINE SET_MultTransposeMatrixfARB(struct _glapi_table *disp, void (GLAPIENTRYP fn)(const GLfloat *)) {
+   SET_by_offset(disp, _gloffset_MultTransposeMatrixfARB, fn);
+}
+
 #define CALL_SampleCoverageARB(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLclampf, GLboolean)), _gloffset_SampleCoverageARB, parameters)
 #define GET_SampleCoverageARB(disp) GET_by_offset(disp, _gloffset_SampleCoverageARB)
-#define SET_SampleCoverageARB(disp, fn) SET_by_offset(disp, _gloffset_SampleCoverageARB, fn)
+static void INLINE SET_SampleCoverageARB(struct _glapi_table *disp, void (GLAPIENTRYP fn)(GLclampf, GLboolean)) {
+   SET_by_offset(disp, _gloffset_SampleCoverageARB, fn);
+}
+
 #define CALL_CompressedTexImage1DARB(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLenum, GLint, GLenum, GLsizei, GLint, GLsizei, const GLvoid *)), _gloffset_CompressedTexImage1DARB, parameters)
 #define GET_CompressedTexImage1DARB(disp) GET_by_offset(disp, _gloffset_CompressedTexImage1DARB)
-#define SET_CompressedTexImage1DARB(disp, fn) SET_by_offset(disp, _gloffset_CompressedTexImage1DARB, fn)
+static void INLINE SET_CompressedTexImage1DARB(struct _glapi_table *disp, void (GLAPIENTRYP fn)(GLenum, GLint, GLenum, GLsizei, GLint, GLsizei, const GLvoid *)) {
+   SET_by_offset(disp, _gloffset_CompressedTexImage1DARB, fn);
+}
+
 #define CALL_CompressedTexImage2DARB(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLenum, GLint, GLenum, GLsizei, GLsizei, GLint, GLsizei, const GLvoid *)), _gloffset_CompressedTexImage2DARB, parameters)
 #define GET_CompressedTexImage2DARB(disp) GET_by_offset(disp, _gloffset_CompressedTexImage2DARB)
-#define SET_CompressedTexImage2DARB(disp, fn) SET_by_offset(disp, _gloffset_CompressedTexImage2DARB, fn)
+static void INLINE SET_CompressedTexImage2DARB(struct _glapi_table *disp, void (GLAPIENTRYP fn)(GLenum, GLint, GLenum, GLsizei, GLsizei, GLint, GLsizei, const GLvoid *)) {
+   SET_by_offset(disp, _gloffset_CompressedTexImage2DARB, fn);
+}
+
 #define CALL_CompressedTexImage3DARB(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLenum, GLint, GLenum, GLsizei, GLsizei, GLsizei, GLint, GLsizei, const GLvoid *)), _gloffset_CompressedTexImage3DARB, parameters)
 #define GET_CompressedTexImage3DARB(disp) GET_by_offset(disp, _gloffset_CompressedTexImage3DARB)
-#define SET_CompressedTexImage3DARB(disp, fn) SET_by_offset(disp, _gloffset_CompressedTexImage3DARB, fn)
+static void INLINE SET_CompressedTexImage3DARB(struct _glapi_table *disp, void (GLAPIENTRYP fn)(GLenum, GLint, GLenum, GLsizei, GLsizei, GLsizei, GLint, GLsizei, const GLvoid *)) {
+   SET_by_offset(disp, _gloffset_CompressedTexImage3DARB, fn);
+}
+
 #define CALL_CompressedTexSubImage1DARB(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLenum, GLint, GLint, GLsizei, GLenum, GLsizei, const GLvoid *)), _gloffset_CompressedTexSubImage1DARB, parameters)
 #define GET_CompressedTexSubImage1DARB(disp) GET_by_offset(disp, _gloffset_CompressedTexSubImage1DARB)
-#define SET_CompressedTexSubImage1DARB(disp, fn) SET_by_offset(disp, _gloffset_CompressedTexSubImage1DARB, fn)
+static void INLINE SET_CompressedTexSubImage1DARB(struct _glapi_table *disp, void (GLAPIENTRYP fn)(GLenum, GLint, GLint, GLsizei, GLenum, GLsizei, const GLvoid *)) {
+   SET_by_offset(disp, _gloffset_CompressedTexSubImage1DARB, fn);
+}
+
 #define CALL_CompressedTexSubImage2DARB(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLenum, GLint, GLint, GLint, GLsizei, GLsizei, GLenum, GLsizei, const GLvoid *)), _gloffset_CompressedTexSubImage2DARB, parameters)
 #define GET_CompressedTexSubImage2DARB(disp) GET_by_offset(disp, _gloffset_CompressedTexSubImage2DARB)
-#define SET_CompressedTexSubImage2DARB(disp, fn) SET_by_offset(disp, _gloffset_CompressedTexSubImage2DARB, fn)
+static void INLINE SET_CompressedTexSubImage2DARB(struct _glapi_table *disp, void (GLAPIENTRYP fn)(GLenum, GLint, GLint, GLint, GLsizei, GLsizei, GLenum, GLsizei, const GLvoid *)) {
+   SET_by_offset(disp, _gloffset_CompressedTexSubImage2DARB, fn);
+}
+
 #define CALL_CompressedTexSubImage3DARB(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLenum, GLint, GLint, GLint, GLint, GLsizei, GLsizei, GLsizei, GLenum, GLsizei, const GLvoid *)), _gloffset_CompressedTexSubImage3DARB, parameters)
 #define GET_CompressedTexSubImage3DARB(disp) GET_by_offset(disp, _gloffset_CompressedTexSubImage3DARB)
-#define SET_CompressedTexSubImage3DARB(disp, fn) SET_by_offset(disp, _gloffset_CompressedTexSubImage3DARB, fn)
+static void INLINE SET_CompressedTexSubImage3DARB(struct _glapi_table *disp, void (GLAPIENTRYP fn)(GLenum, GLint, GLint, GLint, GLint, GLsizei, GLsizei, GLsizei, GLenum, GLsizei, const GLvoid *)) {
+   SET_by_offset(disp, _gloffset_CompressedTexSubImage3DARB, fn);
+}
+
 #define CALL_GetCompressedTexImageARB(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLenum, GLint, GLvoid *)), _gloffset_GetCompressedTexImageARB, parameters)
 #define GET_GetCompressedTexImageARB(disp) GET_by_offset(disp, _gloffset_GetCompressedTexImageARB)
-#define SET_GetCompressedTexImageARB(disp, fn) SET_by_offset(disp, _gloffset_GetCompressedTexImageARB, fn)
+static void INLINE SET_GetCompressedTexImageARB(struct _glapi_table *disp, void (GLAPIENTRYP fn)(GLenum, GLint, GLvoid *)) {
+   SET_by_offset(disp, _gloffset_GetCompressedTexImageARB, fn);
+}
+
 #define CALL_DisableVertexAttribArrayARB(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLuint)), _gloffset_DisableVertexAttribArrayARB, parameters)
 #define GET_DisableVertexAttribArrayARB(disp) GET_by_offset(disp, _gloffset_DisableVertexAttribArrayARB)
-#define SET_DisableVertexAttribArrayARB(disp, fn) SET_by_offset(disp, _gloffset_DisableVertexAttribArrayARB, fn)
+static void INLINE SET_DisableVertexAttribArrayARB(struct _glapi_table *disp, void (GLAPIENTRYP fn)(GLuint)) {
+   SET_by_offset(disp, _gloffset_DisableVertexAttribArrayARB, fn);
+}
+
 #define CALL_EnableVertexAttribArrayARB(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLuint)), _gloffset_EnableVertexAttribArrayARB, parameters)
 #define GET_EnableVertexAttribArrayARB(disp) GET_by_offset(disp, _gloffset_EnableVertexAttribArrayARB)
-#define SET_EnableVertexAttribArrayARB(disp, fn) SET_by_offset(disp, _gloffset_EnableVertexAttribArrayARB, fn)
+static void INLINE SET_EnableVertexAttribArrayARB(struct _glapi_table *disp, void (GLAPIENTRYP fn)(GLuint)) {
+   SET_by_offset(disp, _gloffset_EnableVertexAttribArrayARB, fn);
+}
+
 #define CALL_GetProgramEnvParameterdvARB(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLenum, GLuint, GLdouble *)), _gloffset_GetProgramEnvParameterdvARB, parameters)
 #define GET_GetProgramEnvParameterdvARB(disp) GET_by_offset(disp, _gloffset_GetProgramEnvParameterdvARB)
-#define SET_GetProgramEnvParameterdvARB(disp, fn) SET_by_offset(disp, _gloffset_GetProgramEnvParameterdvARB, fn)
+static void INLINE SET_GetProgramEnvParameterdvARB(struct _glapi_table *disp, void (GLAPIENTRYP fn)(GLenum, GLuint, GLdouble *)) {
+   SET_by_offset(disp, _gloffset_GetProgramEnvParameterdvARB, fn);
+}
+
 #define CALL_GetProgramEnvParameterfvARB(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLenum, GLuint, GLfloat *)), _gloffset_GetProgramEnvParameterfvARB, parameters)
 #define GET_GetProgramEnvParameterfvARB(disp) GET_by_offset(disp, _gloffset_GetProgramEnvParameterfvARB)
-#define SET_GetProgramEnvParameterfvARB(disp, fn) SET_by_offset(disp, _gloffset_GetProgramEnvParameterfvARB, fn)
+static void INLINE SET_GetProgramEnvParameterfvARB(struct _glapi_table *disp, void (GLAPIENTRYP fn)(GLenum, GLuint, GLfloat *)) {
+   SET_by_offset(disp, _gloffset_GetProgramEnvParameterfvARB, fn);
+}
+
 #define CALL_GetProgramLocalParameterdvARB(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLenum, GLuint, GLdouble *)), _gloffset_GetProgramLocalParameterdvARB, parameters)
 #define GET_GetProgramLocalParameterdvARB(disp) GET_by_offset(disp, _gloffset_GetProgramLocalParameterdvARB)
-#define SET_GetProgramLocalParameterdvARB(disp, fn) SET_by_offset(disp, _gloffset_GetProgramLocalParameterdvARB, fn)
+static void INLINE SET_GetProgramLocalParameterdvARB(struct _glapi_table *disp, void (GLAPIENTRYP fn)(GLenum, GLuint, GLdouble *)) {
+   SET_by_offset(disp, _gloffset_GetProgramLocalParameterdvARB, fn);
+}
+
 #define CALL_GetProgramLocalParameterfvARB(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLenum, GLuint, GLfloat *)), _gloffset_GetProgramLocalParameterfvARB, parameters)
 #define GET_GetProgramLocalParameterfvARB(disp) GET_by_offset(disp, _gloffset_GetProgramLocalParameterfvARB)
-#define SET_GetProgramLocalParameterfvARB(disp, fn) SET_by_offset(disp, _gloffset_GetProgramLocalParameterfvARB, fn)
+static void INLINE SET_GetProgramLocalParameterfvARB(struct _glapi_table *disp, void (GLAPIENTRYP fn)(GLenum, GLuint, GLfloat *)) {
+   SET_by_offset(disp, _gloffset_GetProgramLocalParameterfvARB, fn);
+}
+
 #define CALL_GetProgramStringARB(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLenum, GLenum, GLvoid *)), _gloffset_GetProgramStringARB, parameters)
 #define GET_GetProgramStringARB(disp) GET_by_offset(disp, _gloffset_GetProgramStringARB)
-#define SET_GetProgramStringARB(disp, fn) SET_by_offset(disp, _gloffset_GetProgramStringARB, fn)
+static void INLINE SET_GetProgramStringARB(struct _glapi_table *disp, void (GLAPIENTRYP fn)(GLenum, GLenum, GLvoid *)) {
+   SET_by_offset(disp, _gloffset_GetProgramStringARB, fn);
+}
+
 #define CALL_GetProgramivARB(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLenum, GLenum, GLint *)), _gloffset_GetProgramivARB, parameters)
 #define GET_GetProgramivARB(disp) GET_by_offset(disp, _gloffset_GetProgramivARB)
-#define SET_GetProgramivARB(disp, fn) SET_by_offset(disp, _gloffset_GetProgramivARB, fn)
+static void INLINE SET_GetProgramivARB(struct _glapi_table *disp, void (GLAPIENTRYP fn)(GLenum, GLenum, GLint *)) {
+   SET_by_offset(disp, _gloffset_GetProgramivARB, fn);
+}
+
 #define CALL_GetVertexAttribdvARB(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLuint, GLenum, GLdouble *)), _gloffset_GetVertexAttribdvARB, parameters)
 #define GET_GetVertexAttribdvARB(disp) GET_by_offset(disp, _gloffset_GetVertexAttribdvARB)
-#define SET_GetVertexAttribdvARB(disp, fn) SET_by_offset(disp, _gloffset_GetVertexAttribdvARB, fn)
+static void INLINE SET_GetVertexAttribdvARB(struct _glapi_table *disp, void (GLAPIENTRYP fn)(GLuint, GLenum, GLdouble *)) {
+   SET_by_offset(disp, _gloffset_GetVertexAttribdvARB, fn);
+}
+
 #define CALL_GetVertexAttribfvARB(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLuint, GLenum, GLfloat *)), _gloffset_GetVertexAttribfvARB, parameters)
 #define GET_GetVertexAttribfvARB(disp) GET_by_offset(disp, _gloffset_GetVertexAttribfvARB)
-#define SET_GetVertexAttribfvARB(disp, fn) SET_by_offset(disp, _gloffset_GetVertexAttribfvARB, fn)
+static void INLINE SET_GetVertexAttribfvARB(struct _glapi_table *disp, void (GLAPIENTRYP fn)(GLuint, GLenum, GLfloat *)) {
+   SET_by_offset(disp, _gloffset_GetVertexAttribfvARB, fn);
+}
+
 #define CALL_GetVertexAttribivARB(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLuint, GLenum, GLint *)), _gloffset_GetVertexAttribivARB, parameters)
 #define GET_GetVertexAttribivARB(disp) GET_by_offset(disp, _gloffset_GetVertexAttribivARB)
-#define SET_GetVertexAttribivARB(disp, fn) SET_by_offset(disp, _gloffset_GetVertexAttribivARB, fn)
+static void INLINE SET_GetVertexAttribivARB(struct _glapi_table *disp, void (GLAPIENTRYP fn)(GLuint, GLenum, GLint *)) {
+   SET_by_offset(disp, _gloffset_GetVertexAttribivARB, fn);
+}
+
 #define CALL_ProgramEnvParameter4dARB(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLenum, GLuint, GLdouble, GLdouble, GLdouble, GLdouble)), _gloffset_ProgramEnvParameter4dARB, parameters)
 #define GET_ProgramEnvParameter4dARB(disp) GET_by_offset(disp, _gloffset_ProgramEnvParameter4dARB)
-#define SET_ProgramEnvParameter4dARB(disp, fn) SET_by_offset(disp, _gloffset_ProgramEnvParameter4dARB, fn)
+static void INLINE SET_ProgramEnvParameter4dARB(struct _glapi_table *disp, void (GLAPIENTRYP fn)(GLenum, GLuint, GLdouble, GLdouble, GLdouble, GLdouble)) {
+   SET_by_offset(disp, _gloffset_ProgramEnvParameter4dARB, fn);
+}
+
 #define CALL_ProgramEnvParameter4dvARB(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLenum, GLuint, const GLdouble *)), _gloffset_ProgramEnvParameter4dvARB, parameters)
 #define GET_ProgramEnvParameter4dvARB(disp) GET_by_offset(disp, _gloffset_ProgramEnvParameter4dvARB)
-#define SET_ProgramEnvParameter4dvARB(disp, fn) SET_by_offset(disp, _gloffset_ProgramEnvParameter4dvARB, fn)
+static void INLINE SET_ProgramEnvParameter4dvARB(struct _glapi_table *disp, void (GLAPIENTRYP fn)(GLenum, GLuint, const GLdouble *)) {
+   SET_by_offset(disp, _gloffset_ProgramEnvParameter4dvARB, fn);
+}
+
 #define CALL_ProgramEnvParameter4fARB(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLenum, GLuint, GLfloat, GLfloat, GLfloat, GLfloat)), _gloffset_ProgramEnvParameter4fARB, parameters)
 #define GET_ProgramEnvParameter4fARB(disp) GET_by_offset(disp, _gloffset_ProgramEnvParameter4fARB)
-#define SET_ProgramEnvParameter4fARB(disp, fn) SET_by_offset(disp, _gloffset_ProgramEnvParameter4fARB, fn)
+static void INLINE SET_ProgramEnvParameter4fARB(struct _glapi_table *disp, void (GLAPIENTRYP fn)(GLenum, GLuint, GLfloat, GLfloat, GLfloat, GLfloat)) {
+   SET_by_offset(disp, _gloffset_ProgramEnvParameter4fARB, fn);
+}
+
 #define CALL_ProgramEnvParameter4fvARB(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLenum, GLuint, const GLfloat *)), _gloffset_ProgramEnvParameter4fvARB, parameters)
 #define GET_ProgramEnvParameter4fvARB(disp) GET_by_offset(disp, _gloffset_ProgramEnvParameter4fvARB)
-#define SET_ProgramEnvParameter4fvARB(disp, fn) SET_by_offset(disp, _gloffset_ProgramEnvParameter4fvARB, fn)
+static void INLINE SET_ProgramEnvParameter4fvARB(struct _glapi_table *disp, void (GLAPIENTRYP fn)(GLenum, GLuint, const GLfloat *)) {
+   SET_by_offset(disp, _gloffset_ProgramEnvParameter4fvARB, fn);
+}
+
 #define CALL_ProgramLocalParameter4dARB(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLenum, GLuint, GLdouble, GLdouble, GLdouble, GLdouble)), _gloffset_ProgramLocalParameter4dARB, parameters)
 #define GET_ProgramLocalParameter4dARB(disp) GET_by_offset(disp, _gloffset_ProgramLocalParameter4dARB)
-#define SET_ProgramLocalParameter4dARB(disp, fn) SET_by_offset(disp, _gloffset_ProgramLocalParameter4dARB, fn)
+static void INLINE SET_ProgramLocalParameter4dARB(struct _glapi_table *disp, void (GLAPIENTRYP fn)(GLenum, GLuint, GLdouble, GLdouble, GLdouble, GLdouble)) {
+   SET_by_offset(disp, _gloffset_ProgramLocalParameter4dARB, fn);
+}
+
 #define CALL_ProgramLocalParameter4dvARB(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLenum, GLuint, const GLdouble *)), _gloffset_ProgramLocalParameter4dvARB, parameters)
 #define GET_ProgramLocalParameter4dvARB(disp) GET_by_offset(disp, _gloffset_ProgramLocalParameter4dvARB)
-#define SET_ProgramLocalParameter4dvARB(disp, fn) SET_by_offset(disp, _gloffset_ProgramLocalParameter4dvARB, fn)
+static void INLINE SET_ProgramLocalParameter4dvARB(struct _glapi_table *disp, void (GLAPIENTRYP fn)(GLenum, GLuint, const GLdouble *)) {
+   SET_by_offset(disp, _gloffset_ProgramLocalParameter4dvARB, fn);
+}
+
 #define CALL_ProgramLocalParameter4fARB(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLenum, GLuint, GLfloat, GLfloat, GLfloat, GLfloat)), _gloffset_ProgramLocalParameter4fARB, parameters)
 #define GET_ProgramLocalParameter4fARB(disp) GET_by_offset(disp, _gloffset_ProgramLocalParameter4fARB)
-#define SET_ProgramLocalParameter4fARB(disp, fn) SET_by_offset(disp, _gloffset_ProgramLocalParameter4fARB, fn)
+static void INLINE SET_ProgramLocalParameter4fARB(struct _glapi_table *disp, void (GLAPIENTRYP fn)(GLenum, GLuint, GLfloat, GLfloat, GLfloat, GLfloat)) {
+   SET_by_offset(disp, _gloffset_ProgramLocalParameter4fARB, fn);
+}
+
 #define CALL_ProgramLocalParameter4fvARB(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLenum, GLuint, const GLfloat *)), _gloffset_ProgramLocalParameter4fvARB, parameters)
 #define GET_ProgramLocalParameter4fvARB(disp) GET_by_offset(disp, _gloffset_ProgramLocalParameter4fvARB)
-#define SET_ProgramLocalParameter4fvARB(disp, fn) SET_by_offset(disp, _gloffset_ProgramLocalParameter4fvARB, fn)
+static void INLINE SET_ProgramLocalParameter4fvARB(struct _glapi_table *disp, void (GLAPIENTRYP fn)(GLenum, GLuint, const GLfloat *)) {
+   SET_by_offset(disp, _gloffset_ProgramLocalParameter4fvARB, fn);
+}
+
 #define CALL_ProgramStringARB(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLenum, GLenum, GLsizei, const GLvoid *)), _gloffset_ProgramStringARB, parameters)
 #define GET_ProgramStringARB(disp) GET_by_offset(disp, _gloffset_ProgramStringARB)
-#define SET_ProgramStringARB(disp, fn) SET_by_offset(disp, _gloffset_ProgramStringARB, fn)
+static void INLINE SET_ProgramStringARB(struct _glapi_table *disp, void (GLAPIENTRYP fn)(GLenum, GLenum, GLsizei, const GLvoid *)) {
+   SET_by_offset(disp, _gloffset_ProgramStringARB, fn);
+}
+
 #define CALL_VertexAttrib1dARB(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLuint, GLdouble)), _gloffset_VertexAttrib1dARB, parameters)
 #define GET_VertexAttrib1dARB(disp) GET_by_offset(disp, _gloffset_VertexAttrib1dARB)
-#define SET_VertexAttrib1dARB(disp, fn) SET_by_offset(disp, _gloffset_VertexAttrib1dARB, fn)
+static void INLINE SET_VertexAttrib1dARB(struct _glapi_table *disp, void (GLAPIENTRYP fn)(GLuint, GLdouble)) {
+   SET_by_offset(disp, _gloffset_VertexAttrib1dARB, fn);
+}
+
 #define CALL_VertexAttrib1dvARB(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLuint, const GLdouble *)), _gloffset_VertexAttrib1dvARB, parameters)
 #define GET_VertexAttrib1dvARB(disp) GET_by_offset(disp, _gloffset_VertexAttrib1dvARB)
-#define SET_VertexAttrib1dvARB(disp, fn) SET_by_offset(disp, _gloffset_VertexAttrib1dvARB, fn)
+static void INLINE SET_VertexAttrib1dvARB(struct _glapi_table *disp, void (GLAPIENTRYP fn)(GLuint, const GLdouble *)) {
+   SET_by_offset(disp, _gloffset_VertexAttrib1dvARB, fn);
+}
+
 #define CALL_VertexAttrib1fARB(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLuint, GLfloat)), _gloffset_VertexAttrib1fARB, parameters)
 #define GET_VertexAttrib1fARB(disp) GET_by_offset(disp, _gloffset_VertexAttrib1fARB)
-#define SET_VertexAttrib1fARB(disp, fn) SET_by_offset(disp, _gloffset_VertexAttrib1fARB, fn)
+static void INLINE SET_VertexAttrib1fARB(struct _glapi_table *disp, void (GLAPIENTRYP fn)(GLuint, GLfloat)) {
+   SET_by_offset(disp, _gloffset_VertexAttrib1fARB, fn);
+}
+
 #define CALL_VertexAttrib1fvARB(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLuint, const GLfloat *)), _gloffset_VertexAttrib1fvARB, parameters)
 #define GET_VertexAttrib1fvARB(disp) GET_by_offset(disp, _gloffset_VertexAttrib1fvARB)
-#define SET_VertexAttrib1fvARB(disp, fn) SET_by_offset(disp, _gloffset_VertexAttrib1fvARB, fn)
+static void INLINE SET_VertexAttrib1fvARB(struct _glapi_table *disp, void (GLAPIENTRYP fn)(GLuint, const GLfloat *)) {
+   SET_by_offset(disp, _gloffset_VertexAttrib1fvARB, fn);
+}
+
 #define CALL_VertexAttrib1sARB(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLuint, GLshort)), _gloffset_VertexAttrib1sARB, parameters)
 #define GET_VertexAttrib1sARB(disp) GET_by_offset(disp, _gloffset_VertexAttrib1sARB)
-#define SET_VertexAttrib1sARB(disp, fn) SET_by_offset(disp, _gloffset_VertexAttrib1sARB, fn)
+static void INLINE SET_VertexAttrib1sARB(struct _glapi_table *disp, void (GLAPIENTRYP fn)(GLuint, GLshort)) {
+   SET_by_offset(disp, _gloffset_VertexAttrib1sARB, fn);
+}
+
 #define CALL_VertexAttrib1svARB(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLuint, const GLshort *)), _gloffset_VertexAttrib1svARB, parameters)
 #define GET_VertexAttrib1svARB(disp) GET_by_offset(disp, _gloffset_VertexAttrib1svARB)
-#define SET_VertexAttrib1svARB(disp, fn) SET_by_offset(disp, _gloffset_VertexAttrib1svARB, fn)
+static void INLINE SET_VertexAttrib1svARB(struct _glapi_table *disp, void (GLAPIENTRYP fn)(GLuint, const GLshort *)) {
+   SET_by_offset(disp, _gloffset_VertexAttrib1svARB, fn);
+}
+
 #define CALL_VertexAttrib2dARB(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLuint, GLdouble, GLdouble)), _gloffset_VertexAttrib2dARB, parameters)
 #define GET_VertexAttrib2dARB(disp) GET_by_offset(disp, _gloffset_VertexAttrib2dARB)
-#define SET_VertexAttrib2dARB(disp, fn) SET_by_offset(disp, _gloffset_VertexAttrib2dARB, fn)
+static void INLINE SET_VertexAttrib2dARB(struct _glapi_table *disp, void (GLAPIENTRYP fn)(GLuint, GLdouble, GLdouble)) {
+   SET_by_offset(disp, _gloffset_VertexAttrib2dARB, fn);
+}
+
 #define CALL_VertexAttrib2dvARB(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLuint, const GLdouble *)), _gloffset_VertexAttrib2dvARB, parameters)
 #define GET_VertexAttrib2dvARB(disp) GET_by_offset(disp, _gloffset_VertexAttrib2dvARB)
-#define SET_VertexAttrib2dvARB(disp, fn) SET_by_offset(disp, _gloffset_VertexAttrib2dvARB, fn)
+static void INLINE SET_VertexAttrib2dvARB(struct _glapi_table *disp, void (GLAPIENTRYP fn)(GLuint, const GLdouble *)) {
+   SET_by_offset(disp, _gloffset_VertexAttrib2dvARB, fn);
+}
+
 #define CALL_VertexAttrib2fARB(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLuint, GLfloat, GLfloat)), _gloffset_VertexAttrib2fARB, parameters)
 #define GET_VertexAttrib2fARB(disp) GET_by_offset(disp, _gloffset_VertexAttrib2fARB)
-#define SET_VertexAttrib2fARB(disp, fn) SET_by_offset(disp, _gloffset_VertexAttrib2fARB, fn)
+static void INLINE SET_VertexAttrib2fARB(struct _glapi_table *disp, void (GLAPIENTRYP fn)(GLuint, GLfloat, GLfloat)) {
+   SET_by_offset(disp, _gloffset_VertexAttrib2fARB, fn);
+}
+
 #define CALL_VertexAttrib2fvARB(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLuint, const GLfloat *)), _gloffset_VertexAttrib2fvARB, parameters)
 #define GET_VertexAttrib2fvARB(disp) GET_by_offset(disp, _gloffset_VertexAttrib2fvARB)
-#define SET_VertexAttrib2fvARB(disp, fn) SET_by_offset(disp, _gloffset_VertexAttrib2fvARB, fn)
+static void INLINE SET_VertexAttrib2fvARB(struct _glapi_table *disp, void (GLAPIENTRYP fn)(GLuint, const GLfloat *)) {
+   SET_by_offset(disp, _gloffset_VertexAttrib2fvARB, fn);
+}
+
 #define CALL_VertexAttrib2sARB(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLuint, GLshort, GLshort)), _gloffset_VertexAttrib2sARB, parameters)
 #define GET_VertexAttrib2sARB(disp) GET_by_offset(disp, _gloffset_VertexAttrib2sARB)
-#define SET_VertexAttrib2sARB(disp, fn) SET_by_offset(disp, _gloffset_VertexAttrib2sARB, fn)
+static void INLINE SET_VertexAttrib2sARB(struct _glapi_table *disp, void (GLAPIENTRYP fn)(GLuint, GLshort, GLshort)) {
+   SET_by_offset(disp, _gloffset_VertexAttrib2sARB, fn);
+}
+
 #define CALL_VertexAttrib2svARB(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLuint, const GLshort *)), _gloffset_VertexAttrib2svARB, parameters)
 #define GET_VertexAttrib2svARB(disp) GET_by_offset(disp, _gloffset_VertexAttrib2svARB)
-#define SET_VertexAttrib2svARB(disp, fn) SET_by_offset(disp, _gloffset_VertexAttrib2svARB, fn)
+static void INLINE SET_VertexAttrib2svARB(struct _glapi_table *disp, void (GLAPIENTRYP fn)(GLuint, const GLshort *)) {
+   SET_by_offset(disp, _gloffset_VertexAttrib2svARB, fn);
+}
+
 #define CALL_VertexAttrib3dARB(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLuint, GLdouble, GLdouble, GLdouble)), _gloffset_VertexAttrib3dARB, parameters)
 #define GET_VertexAttrib3dARB(disp) GET_by_offset(disp, _gloffset_VertexAttrib3dARB)
-#define SET_VertexAttrib3dARB(disp, fn) SET_by_offset(disp, _gloffset_VertexAttrib3dARB, fn)
+static void INLINE SET_VertexAttrib3dARB(struct _glapi_table *disp, void (GLAPIENTRYP fn)(GLuint, GLdouble, GLdouble, GLdouble)) {
+   SET_by_offset(disp, _gloffset_VertexAttrib3dARB, fn);
+}
+
 #define CALL_VertexAttrib3dvARB(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLuint, const GLdouble *)), _gloffset_VertexAttrib3dvARB, parameters)
 #define GET_VertexAttrib3dvARB(disp) GET_by_offset(disp, _gloffset_VertexAttrib3dvARB)
-#define SET_VertexAttrib3dvARB(disp, fn) SET_by_offset(disp, _gloffset_VertexAttrib3dvARB, fn)
+static void INLINE SET_VertexAttrib3dvARB(struct _glapi_table *disp, void (GLAPIENTRYP fn)(GLuint, const GLdouble *)) {
+   SET_by_offset(disp, _gloffset_VertexAttrib3dvARB, fn);
+}
+
 #define CALL_VertexAttrib3fARB(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLuint, GLfloat, GLfloat, GLfloat)), _gloffset_VertexAttrib3fARB, parameters)
 #define GET_VertexAttrib3fARB(disp) GET_by_offset(disp, _gloffset_VertexAttrib3fARB)
-#define SET_VertexAttrib3fARB(disp, fn) SET_by_offset(disp, _gloffset_VertexAttrib3fARB, fn)
+static void INLINE SET_VertexAttrib3fARB(struct _glapi_table *disp, void (GLAPIENTRYP fn)(GLuint, GLfloat, GLfloat, GLfloat)) {
+   SET_by_offset(disp, _gloffset_VertexAttrib3fARB, fn);
+}
+
 #define CALL_VertexAttrib3fvARB(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLuint, const GLfloat *)), _gloffset_VertexAttrib3fvARB, parameters)
 #define GET_VertexAttrib3fvARB(disp) GET_by_offset(disp, _gloffset_VertexAttrib3fvARB)
-#define SET_VertexAttrib3fvARB(disp, fn) SET_by_offset(disp, _gloffset_VertexAttrib3fvARB, fn)
+static void INLINE SET_VertexAttrib3fvARB(struct _glapi_table *disp, void (GLAPIENTRYP fn)(GLuint, const GLfloat *)) {
+   SET_by_offset(disp, _gloffset_VertexAttrib3fvARB, fn);
+}
+
 #define CALL_VertexAttrib3sARB(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLuint, GLshort, GLshort, GLshort)), _gloffset_VertexAttrib3sARB, parameters)
 #define GET_VertexAttrib3sARB(disp) GET_by_offset(disp, _gloffset_VertexAttrib3sARB)
-#define SET_VertexAttrib3sARB(disp, fn) SET_by_offset(disp, _gloffset_VertexAttrib3sARB, fn)
+static void INLINE SET_VertexAttrib3sARB(struct _glapi_table *disp, void (GLAPIENTRYP fn)(GLuint, GLshort, GLshort, GLshort)) {
+   SET_by_offset(disp, _gloffset_VertexAttrib3sARB, fn);
+}
+
 #define CALL_VertexAttrib3svARB(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLuint, const GLshort *)), _gloffset_VertexAttrib3svARB, parameters)
 #define GET_VertexAttrib3svARB(disp) GET_by_offset(disp, _gloffset_VertexAttrib3svARB)
-#define SET_VertexAttrib3svARB(disp, fn) SET_by_offset(disp, _gloffset_VertexAttrib3svARB, fn)
+static void INLINE SET_VertexAttrib3svARB(struct _glapi_table *disp, void (GLAPIENTRYP fn)(GLuint, const GLshort *)) {
+   SET_by_offset(disp, _gloffset_VertexAttrib3svARB, fn);
+}
+
 #define CALL_VertexAttrib4NbvARB(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLuint, const GLbyte *)), _gloffset_VertexAttrib4NbvARB, parameters)
 #define GET_VertexAttrib4NbvARB(disp) GET_by_offset(disp, _gloffset_VertexAttrib4NbvARB)
-#define SET_VertexAttrib4NbvARB(disp, fn) SET_by_offset(disp, _gloffset_VertexAttrib4NbvARB, fn)
+static void INLINE SET_VertexAttrib4NbvARB(struct _glapi_table *disp, void (GLAPIENTRYP fn)(GLuint, const GLbyte *)) {
+   SET_by_offset(disp, _gloffset_VertexAttrib4NbvARB, fn);
+}
+
 #define CALL_VertexAttrib4NivARB(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLuint, const GLint *)), _gloffset_VertexAttrib4NivARB, parameters)
 #define GET_VertexAttrib4NivARB(disp) GET_by_offset(disp, _gloffset_VertexAttrib4NivARB)
-#define SET_VertexAttrib4NivARB(disp, fn) SET_by_offset(disp, _gloffset_VertexAttrib4NivARB, fn)
+static void INLINE SET_VertexAttrib4NivARB(struct _glapi_table *disp, void (GLAPIENTRYP fn)(GLuint, const GLint *)) {
+   SET_by_offset(disp, _gloffset_VertexAttrib4NivARB, fn);
+}
+
 #define CALL_VertexAttrib4NsvARB(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLuint, const GLshort *)), _gloffset_VertexAttrib4NsvARB, parameters)
 #define GET_VertexAttrib4NsvARB(disp) GET_by_offset(disp, _gloffset_VertexAttrib4NsvARB)
-#define SET_VertexAttrib4NsvARB(disp, fn) SET_by_offset(disp, _gloffset_VertexAttrib4NsvARB, fn)
+static void INLINE SET_VertexAttrib4NsvARB(struct _glapi_table *disp, void (GLAPIENTRYP fn)(GLuint, const GLshort *)) {
+   SET_by_offset(disp, _gloffset_VertexAttrib4NsvARB, fn);
+}
+
 #define CALL_VertexAttrib4NubARB(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLuint, GLubyte, GLubyte, GLubyte, GLubyte)), _gloffset_VertexAttrib4NubARB, parameters)
 #define GET_VertexAttrib4NubARB(disp) GET_by_offset(disp, _gloffset_VertexAttrib4NubARB)
-#define SET_VertexAttrib4NubARB(disp, fn) SET_by_offset(disp, _gloffset_VertexAttrib4NubARB, fn)
+static void INLINE SET_VertexAttrib4NubARB(struct _glapi_table *disp, void (GLAPIENTRYP fn)(GLuint, GLubyte, GLubyte, GLubyte, GLubyte)) {
+   SET_by_offset(disp, _gloffset_VertexAttrib4NubARB, fn);
+}
+
 #define CALL_VertexAttrib4NubvARB(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLuint, const GLubyte *)), _gloffset_VertexAttrib4NubvARB, parameters)
 #define GET_VertexAttrib4NubvARB(disp) GET_by_offset(disp, _gloffset_VertexAttrib4NubvARB)
-#define SET_VertexAttrib4NubvARB(disp, fn) SET_by_offset(disp, _gloffset_VertexAttrib4NubvARB, fn)
+static void INLINE SET_VertexAttrib4NubvARB(struct _glapi_table *disp, void (GLAPIENTRYP fn)(GLuint, const GLubyte *)) {
+   SET_by_offset(disp, _gloffset_VertexAttrib4NubvARB, fn);
+}
+
 #define CALL_VertexAttrib4NuivARB(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLuint, const GLuint *)), _gloffset_VertexAttrib4NuivARB, parameters)
 #define GET_VertexAttrib4NuivARB(disp) GET_by_offset(disp, _gloffset_VertexAttrib4NuivARB)
-#define SET_VertexAttrib4NuivARB(disp, fn) SET_by_offset(disp, _gloffset_VertexAttrib4NuivARB, fn)
+static void INLINE SET_VertexAttrib4NuivARB(struct _glapi_table *disp, void (GLAPIENTRYP fn)(GLuint, const GLuint *)) {
+   SET_by_offset(disp, _gloffset_VertexAttrib4NuivARB, fn);
+}
+
 #define CALL_VertexAttrib4NusvARB(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLuint, const GLushort *)), _gloffset_VertexAttrib4NusvARB, parameters)
 #define GET_VertexAttrib4NusvARB(disp) GET_by_offset(disp, _gloffset_VertexAttrib4NusvARB)
-#define SET_VertexAttrib4NusvARB(disp, fn) SET_by_offset(disp, _gloffset_VertexAttrib4NusvARB, fn)
+static void INLINE SET_VertexAttrib4NusvARB(struct _glapi_table *disp, void (GLAPIENTRYP fn)(GLuint, const GLushort *)) {
+   SET_by_offset(disp, _gloffset_VertexAttrib4NusvARB, fn);
+}
+
 #define CALL_VertexAttrib4bvARB(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLuint, const GLbyte *)), _gloffset_VertexAttrib4bvARB, parameters)
 #define GET_VertexAttrib4bvARB(disp) GET_by_offset(disp, _gloffset_VertexAttrib4bvARB)
-#define SET_VertexAttrib4bvARB(disp, fn) SET_by_offset(disp, _gloffset_VertexAttrib4bvARB, fn)
+static void INLINE SET_VertexAttrib4bvARB(struct _glapi_table *disp, void (GLAPIENTRYP fn)(GLuint, const GLbyte *)) {
+   SET_by_offset(disp, _gloffset_VertexAttrib4bvARB, fn);
+}
+
 #define CALL_VertexAttrib4dARB(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLuint, GLdouble, GLdouble, GLdouble, GLdouble)), _gloffset_VertexAttrib4dARB, parameters)
 #define GET_VertexAttrib4dARB(disp) GET_by_offset(disp, _gloffset_VertexAttrib4dARB)
-#define SET_VertexAttrib4dARB(disp, fn) SET_by_offset(disp, _gloffset_VertexAttrib4dARB, fn)
+static void INLINE SET_VertexAttrib4dARB(struct _glapi_table *disp, void (GLAPIENTRYP fn)(GLuint, GLdouble, GLdouble, GLdouble, GLdouble)) {
+   SET_by_offset(disp, _gloffset_VertexAttrib4dARB, fn);
+}
+
 #define CALL_VertexAttrib4dvARB(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLuint, const GLdouble *)), _gloffset_VertexAttrib4dvARB, parameters)
 #define GET_VertexAttrib4dvARB(disp) GET_by_offset(disp, _gloffset_VertexAttrib4dvARB)
-#define SET_VertexAttrib4dvARB(disp, fn) SET_by_offset(disp, _gloffset_VertexAttrib4dvARB, fn)
+static void INLINE SET_VertexAttrib4dvARB(struct _glapi_table *disp, void (GLAPIENTRYP fn)(GLuint, const GLdouble *)) {
+   SET_by_offset(disp, _gloffset_VertexAttrib4dvARB, fn);
+}
+
 #define CALL_VertexAttrib4fARB(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLuint, GLfloat, GLfloat, GLfloat, GLfloat)), _gloffset_VertexAttrib4fARB, parameters)
 #define GET_VertexAttrib4fARB(disp) GET_by_offset(disp, _gloffset_VertexAttrib4fARB)
-#define SET_VertexAttrib4fARB(disp, fn) SET_by_offset(disp, _gloffset_VertexAttrib4fARB, fn)
+static void INLINE SET_VertexAttrib4fARB(struct _glapi_table *disp, void (GLAPIENTRYP fn)(GLuint, GLfloat, GLfloat, GLfloat, GLfloat)) {
+   SET_by_offset(disp, _gloffset_VertexAttrib4fARB, fn);
+}
+
 #define CALL_VertexAttrib4fvARB(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLuint, const GLfloat *)), _gloffset_VertexAttrib4fvARB, parameters)
 #define GET_VertexAttrib4fvARB(disp) GET_by_offset(disp, _gloffset_VertexAttrib4fvARB)
-#define SET_VertexAttrib4fvARB(disp, fn) SET_by_offset(disp, _gloffset_VertexAttrib4fvARB, fn)
+static void INLINE SET_VertexAttrib4fvARB(struct _glapi_table *disp, void (GLAPIENTRYP fn)(GLuint, const GLfloat *)) {
+   SET_by_offset(disp, _gloffset_VertexAttrib4fvARB, fn);
+}
+
 #define CALL_VertexAttrib4ivARB(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLuint, const GLint *)), _gloffset_VertexAttrib4ivARB, parameters)
 #define GET_VertexAttrib4ivARB(disp) GET_by_offset(disp, _gloffset_VertexAttrib4ivARB)
-#define SET_VertexAttrib4ivARB(disp, fn) SET_by_offset(disp, _gloffset_VertexAttrib4ivARB, fn)
+static void INLINE SET_VertexAttrib4ivARB(struct _glapi_table *disp, void (GLAPIENTRYP fn)(GLuint, const GLint *)) {
+   SET_by_offset(disp, _gloffset_VertexAttrib4ivARB, fn);
+}
+
 #define CALL_VertexAttrib4sARB(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLuint, GLshort, GLshort, GLshort, GLshort)), _gloffset_VertexAttrib4sARB, parameters)
 #define GET_VertexAttrib4sARB(disp) GET_by_offset(disp, _gloffset_VertexAttrib4sARB)
-#define SET_VertexAttrib4sARB(disp, fn) SET_by_offset(disp, _gloffset_VertexAttrib4sARB, fn)
+static void INLINE SET_VertexAttrib4sARB(struct _glapi_table *disp, void (GLAPIENTRYP fn)(GLuint, GLshort, GLshort, GLshort, GLshort)) {
+   SET_by_offset(disp, _gloffset_VertexAttrib4sARB, fn);
+}
+
 #define CALL_VertexAttrib4svARB(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLuint, const GLshort *)), _gloffset_VertexAttrib4svARB, parameters)
 #define GET_VertexAttrib4svARB(disp) GET_by_offset(disp, _gloffset_VertexAttrib4svARB)
-#define SET_VertexAttrib4svARB(disp, fn) SET_by_offset(disp, _gloffset_VertexAttrib4svARB, fn)
+static void INLINE SET_VertexAttrib4svARB(struct _glapi_table *disp, void (GLAPIENTRYP fn)(GLuint, const GLshort *)) {
+   SET_by_offset(disp, _gloffset_VertexAttrib4svARB, fn);
+}
+
 #define CALL_VertexAttrib4ubvARB(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLuint, const GLubyte *)), _gloffset_VertexAttrib4ubvARB, parameters)
 #define GET_VertexAttrib4ubvARB(disp) GET_by_offset(disp, _gloffset_VertexAttrib4ubvARB)
-#define SET_VertexAttrib4ubvARB(disp, fn) SET_by_offset(disp, _gloffset_VertexAttrib4ubvARB, fn)
+static void INLINE SET_VertexAttrib4ubvARB(struct _glapi_table *disp, void (GLAPIENTRYP fn)(GLuint, const GLubyte *)) {
+   SET_by_offset(disp, _gloffset_VertexAttrib4ubvARB, fn);
+}
+
 #define CALL_VertexAttrib4uivARB(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLuint, const GLuint *)), _gloffset_VertexAttrib4uivARB, parameters)
 #define GET_VertexAttrib4uivARB(disp) GET_by_offset(disp, _gloffset_VertexAttrib4uivARB)
-#define SET_VertexAttrib4uivARB(disp, fn) SET_by_offset(disp, _gloffset_VertexAttrib4uivARB, fn)
+static void INLINE SET_VertexAttrib4uivARB(struct _glapi_table *disp, void (GLAPIENTRYP fn)(GLuint, const GLuint *)) {
+   SET_by_offset(disp, _gloffset_VertexAttrib4uivARB, fn);
+}
+
 #define CALL_VertexAttrib4usvARB(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLuint, const GLushort *)), _gloffset_VertexAttrib4usvARB, parameters)
 #define GET_VertexAttrib4usvARB(disp) GET_by_offset(disp, _gloffset_VertexAttrib4usvARB)
-#define SET_VertexAttrib4usvARB(disp, fn) SET_by_offset(disp, _gloffset_VertexAttrib4usvARB, fn)
+static void INLINE SET_VertexAttrib4usvARB(struct _glapi_table *disp, void (GLAPIENTRYP fn)(GLuint, const GLushort *)) {
+   SET_by_offset(disp, _gloffset_VertexAttrib4usvARB, fn);
+}
+
 #define CALL_VertexAttribPointerARB(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLuint, GLint, GLenum, GLboolean, GLsizei, const GLvoid *)), _gloffset_VertexAttribPointerARB, parameters)
 #define GET_VertexAttribPointerARB(disp) GET_by_offset(disp, _gloffset_VertexAttribPointerARB)
-#define SET_VertexAttribPointerARB(disp, fn) SET_by_offset(disp, _gloffset_VertexAttribPointerARB, fn)
+static void INLINE SET_VertexAttribPointerARB(struct _glapi_table *disp, void (GLAPIENTRYP fn)(GLuint, GLint, GLenum, GLboolean, GLsizei, const GLvoid *)) {
+   SET_by_offset(disp, _gloffset_VertexAttribPointerARB, fn);
+}
+
 #define CALL_BindBufferARB(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLenum, GLuint)), _gloffset_BindBufferARB, parameters)
 #define GET_BindBufferARB(disp) GET_by_offset(disp, _gloffset_BindBufferARB)
-#define SET_BindBufferARB(disp, fn) SET_by_offset(disp, _gloffset_BindBufferARB, fn)
+static void INLINE SET_BindBufferARB(struct _glapi_table *disp, void (GLAPIENTRYP fn)(GLenum, GLuint)) {
+   SET_by_offset(disp, _gloffset_BindBufferARB, fn);
+}
+
 #define CALL_BufferDataARB(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLenum, GLsizeiptrARB, const GLvoid *, GLenum)), _gloffset_BufferDataARB, parameters)
 #define GET_BufferDataARB(disp) GET_by_offset(disp, _gloffset_BufferDataARB)
-#define SET_BufferDataARB(disp, fn) SET_by_offset(disp, _gloffset_BufferDataARB, fn)
+static void INLINE SET_BufferDataARB(struct _glapi_table *disp, void (GLAPIENTRYP fn)(GLenum, GLsizeiptrARB, const GLvoid *, GLenum)) {
+   SET_by_offset(disp, _gloffset_BufferDataARB, fn);
+}
+
 #define CALL_BufferSubDataARB(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLenum, GLintptrARB, GLsizeiptrARB, const GLvoid *)), _gloffset_BufferSubDataARB, parameters)
 #define GET_BufferSubDataARB(disp) GET_by_offset(disp, _gloffset_BufferSubDataARB)
-#define SET_BufferSubDataARB(disp, fn) SET_by_offset(disp, _gloffset_BufferSubDataARB, fn)
+static void INLINE SET_BufferSubDataARB(struct _glapi_table *disp, void (GLAPIENTRYP fn)(GLenum, GLintptrARB, GLsizeiptrARB, const GLvoid *)) {
+   SET_by_offset(disp, _gloffset_BufferSubDataARB, fn);
+}
+
 #define CALL_DeleteBuffersARB(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLsizei, const GLuint *)), _gloffset_DeleteBuffersARB, parameters)
 #define GET_DeleteBuffersARB(disp) GET_by_offset(disp, _gloffset_DeleteBuffersARB)
-#define SET_DeleteBuffersARB(disp, fn) SET_by_offset(disp, _gloffset_DeleteBuffersARB, fn)
+static void INLINE SET_DeleteBuffersARB(struct _glapi_table *disp, void (GLAPIENTRYP fn)(GLsizei, const GLuint *)) {
+   SET_by_offset(disp, _gloffset_DeleteBuffersARB, fn);
+}
+
 #define CALL_GenBuffersARB(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLsizei, GLuint *)), _gloffset_GenBuffersARB, parameters)
 #define GET_GenBuffersARB(disp) GET_by_offset(disp, _gloffset_GenBuffersARB)
-#define SET_GenBuffersARB(disp, fn) SET_by_offset(disp, _gloffset_GenBuffersARB, fn)
+static void INLINE SET_GenBuffersARB(struct _glapi_table *disp, void (GLAPIENTRYP fn)(GLsizei, GLuint *)) {
+   SET_by_offset(disp, _gloffset_GenBuffersARB, fn);
+}
+
 #define CALL_GetBufferParameterivARB(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLenum, GLenum, GLint *)), _gloffset_GetBufferParameterivARB, parameters)
 #define GET_GetBufferParameterivARB(disp) GET_by_offset(disp, _gloffset_GetBufferParameterivARB)
-#define SET_GetBufferParameterivARB(disp, fn) SET_by_offset(disp, _gloffset_GetBufferParameterivARB, fn)
+static void INLINE SET_GetBufferParameterivARB(struct _glapi_table *disp, void (GLAPIENTRYP fn)(GLenum, GLenum, GLint *)) {
+   SET_by_offset(disp, _gloffset_GetBufferParameterivARB, fn);
+}
+
 #define CALL_GetBufferPointervARB(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLenum, GLenum, GLvoid **)), _gloffset_GetBufferPointervARB, parameters)
 #define GET_GetBufferPointervARB(disp) GET_by_offset(disp, _gloffset_GetBufferPointervARB)
-#define SET_GetBufferPointervARB(disp, fn) SET_by_offset(disp, _gloffset_GetBufferPointervARB, fn)
+static void INLINE SET_GetBufferPointervARB(struct _glapi_table *disp, void (GLAPIENTRYP fn)(GLenum, GLenum, GLvoid **)) {
+   SET_by_offset(disp, _gloffset_GetBufferPointervARB, fn);
+}
+
 #define CALL_GetBufferSubDataARB(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLenum, GLintptrARB, GLsizeiptrARB, GLvoid *)), _gloffset_GetBufferSubDataARB, parameters)
 #define GET_GetBufferSubDataARB(disp) GET_by_offset(disp, _gloffset_GetBufferSubDataARB)
-#define SET_GetBufferSubDataARB(disp, fn) SET_by_offset(disp, _gloffset_GetBufferSubDataARB, fn)
+static void INLINE SET_GetBufferSubDataARB(struct _glapi_table *disp, void (GLAPIENTRYP fn)(GLenum, GLintptrARB, GLsizeiptrARB, GLvoid *)) {
+   SET_by_offset(disp, _gloffset_GetBufferSubDataARB, fn);
+}
+
 #define CALL_IsBufferARB(disp, parameters) CALL_by_offset(disp, (GLboolean (GLAPIENTRYP)(GLuint)), _gloffset_IsBufferARB, parameters)
 #define GET_IsBufferARB(disp) GET_by_offset(disp, _gloffset_IsBufferARB)
-#define SET_IsBufferARB(disp, fn) SET_by_offset(disp, _gloffset_IsBufferARB, fn)
+static void INLINE SET_IsBufferARB(struct _glapi_table *disp, GLboolean (GLAPIENTRYP fn)(GLuint)) {
+   SET_by_offset(disp, _gloffset_IsBufferARB, fn);
+}
+
 #define CALL_MapBufferARB(disp, parameters) CALL_by_offset(disp, (GLvoid * (GLAPIENTRYP)(GLenum, GLenum)), _gloffset_MapBufferARB, parameters)
 #define GET_MapBufferARB(disp) GET_by_offset(disp, _gloffset_MapBufferARB)
-#define SET_MapBufferARB(disp, fn) SET_by_offset(disp, _gloffset_MapBufferARB, fn)
+static void INLINE SET_MapBufferARB(struct _glapi_table *disp, GLvoid * (GLAPIENTRYP fn)(GLenum, GLenum)) {
+   SET_by_offset(disp, _gloffset_MapBufferARB, fn);
+}
+
 #define CALL_UnmapBufferARB(disp, parameters) CALL_by_offset(disp, (GLboolean (GLAPIENTRYP)(GLenum)), _gloffset_UnmapBufferARB, parameters)
 #define GET_UnmapBufferARB(disp) GET_by_offset(disp, _gloffset_UnmapBufferARB)
-#define SET_UnmapBufferARB(disp, fn) SET_by_offset(disp, _gloffset_UnmapBufferARB, fn)
+static void INLINE SET_UnmapBufferARB(struct _glapi_table *disp, GLboolean (GLAPIENTRYP fn)(GLenum)) {
+   SET_by_offset(disp, _gloffset_UnmapBufferARB, fn);
+}
+
 #define CALL_BeginQueryARB(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLenum, GLuint)), _gloffset_BeginQueryARB, parameters)
 #define GET_BeginQueryARB(disp) GET_by_offset(disp, _gloffset_BeginQueryARB)
-#define SET_BeginQueryARB(disp, fn) SET_by_offset(disp, _gloffset_BeginQueryARB, fn)
+static void INLINE SET_BeginQueryARB(struct _glapi_table *disp, void (GLAPIENTRYP fn)(GLenum, GLuint)) {
+   SET_by_offset(disp, _gloffset_BeginQueryARB, fn);
+}
+
 #define CALL_DeleteQueriesARB(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLsizei, const GLuint *)), _gloffset_DeleteQueriesARB, parameters)
 #define GET_DeleteQueriesARB(disp) GET_by_offset(disp, _gloffset_DeleteQueriesARB)
-#define SET_DeleteQueriesARB(disp, fn) SET_by_offset(disp, _gloffset_DeleteQueriesARB, fn)
+static void INLINE SET_DeleteQueriesARB(struct _glapi_table *disp, void (GLAPIENTRYP fn)(GLsizei, const GLuint *)) {
+   SET_by_offset(disp, _gloffset_DeleteQueriesARB, fn);
+}
+
 #define CALL_EndQueryARB(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLenum)), _gloffset_EndQueryARB, parameters)
 #define GET_EndQueryARB(disp) GET_by_offset(disp, _gloffset_EndQueryARB)
-#define SET_EndQueryARB(disp, fn) SET_by_offset(disp, _gloffset_EndQueryARB, fn)
+static void INLINE SET_EndQueryARB(struct _glapi_table *disp, void (GLAPIENTRYP fn)(GLenum)) {
+   SET_by_offset(disp, _gloffset_EndQueryARB, fn);
+}
+
 #define CALL_GenQueriesARB(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLsizei, GLuint *)), _gloffset_GenQueriesARB, parameters)
 #define GET_GenQueriesARB(disp) GET_by_offset(disp, _gloffset_GenQueriesARB)
-#define SET_GenQueriesARB(disp, fn) SET_by_offset(disp, _gloffset_GenQueriesARB, fn)
+static void INLINE SET_GenQueriesARB(struct _glapi_table *disp, void (GLAPIENTRYP fn)(GLsizei, GLuint *)) {
+   SET_by_offset(disp, _gloffset_GenQueriesARB, fn);
+}
+
 #define CALL_GetQueryObjectivARB(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLuint, GLenum, GLint *)), _gloffset_GetQueryObjectivARB, parameters)
 #define GET_GetQueryObjectivARB(disp) GET_by_offset(disp, _gloffset_GetQueryObjectivARB)
-#define SET_GetQueryObjectivARB(disp, fn) SET_by_offset(disp, _gloffset_GetQueryObjectivARB, fn)
+static void INLINE SET_GetQueryObjectivARB(struct _glapi_table *disp, void (GLAPIENTRYP fn)(GLuint, GLenum, GLint *)) {
+   SET_by_offset(disp, _gloffset_GetQueryObjectivARB, fn);
+}
+
 #define CALL_GetQueryObjectuivARB(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLuint, GLenum, GLuint *)), _gloffset_GetQueryObjectuivARB, parameters)
 #define GET_GetQueryObjectuivARB(disp) GET_by_offset(disp, _gloffset_GetQueryObjectuivARB)
-#define SET_GetQueryObjectuivARB(disp, fn) SET_by_offset(disp, _gloffset_GetQueryObjectuivARB, fn)
+static void INLINE SET_GetQueryObjectuivARB(struct _glapi_table *disp, void (GLAPIENTRYP fn)(GLuint, GLenum, GLuint *)) {
+   SET_by_offset(disp, _gloffset_GetQueryObjectuivARB, fn);
+}
+
 #define CALL_GetQueryivARB(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLenum, GLenum, GLint *)), _gloffset_GetQueryivARB, parameters)
 #define GET_GetQueryivARB(disp) GET_by_offset(disp, _gloffset_GetQueryivARB)
-#define SET_GetQueryivARB(disp, fn) SET_by_offset(disp, _gloffset_GetQueryivARB, fn)
+static void INLINE SET_GetQueryivARB(struct _glapi_table *disp, void (GLAPIENTRYP fn)(GLenum, GLenum, GLint *)) {
+   SET_by_offset(disp, _gloffset_GetQueryivARB, fn);
+}
+
 #define CALL_IsQueryARB(disp, parameters) CALL_by_offset(disp, (GLboolean (GLAPIENTRYP)(GLuint)), _gloffset_IsQueryARB, parameters)
 #define GET_IsQueryARB(disp) GET_by_offset(disp, _gloffset_IsQueryARB)
-#define SET_IsQueryARB(disp, fn) SET_by_offset(disp, _gloffset_IsQueryARB, fn)
+static void INLINE SET_IsQueryARB(struct _glapi_table *disp, GLboolean (GLAPIENTRYP fn)(GLuint)) {
+   SET_by_offset(disp, _gloffset_IsQueryARB, fn);
+}
+
 #define CALL_AttachObjectARB(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLhandleARB, GLhandleARB)), _gloffset_AttachObjectARB, parameters)
 #define GET_AttachObjectARB(disp) GET_by_offset(disp, _gloffset_AttachObjectARB)
-#define SET_AttachObjectARB(disp, fn) SET_by_offset(disp, _gloffset_AttachObjectARB, fn)
+static void INLINE SET_AttachObjectARB(struct _glapi_table *disp, void (GLAPIENTRYP fn)(GLhandleARB, GLhandleARB)) {
+   SET_by_offset(disp, _gloffset_AttachObjectARB, fn);
+}
+
 #define CALL_CompileShaderARB(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLhandleARB)), _gloffset_CompileShaderARB, parameters)
 #define GET_CompileShaderARB(disp) GET_by_offset(disp, _gloffset_CompileShaderARB)
-#define SET_CompileShaderARB(disp, fn) SET_by_offset(disp, _gloffset_CompileShaderARB, fn)
+static void INLINE SET_CompileShaderARB(struct _glapi_table *disp, void (GLAPIENTRYP fn)(GLhandleARB)) {
+   SET_by_offset(disp, _gloffset_CompileShaderARB, fn);
+}
+
 #define CALL_CreateProgramObjectARB(disp, parameters) CALL_by_offset(disp, (GLhandleARB (GLAPIENTRYP)(void)), _gloffset_CreateProgramObjectARB, parameters)
 #define GET_CreateProgramObjectARB(disp) GET_by_offset(disp, _gloffset_CreateProgramObjectARB)
-#define SET_CreateProgramObjectARB(disp, fn) SET_by_offset(disp, _gloffset_CreateProgramObjectARB, fn)
+static void INLINE SET_CreateProgramObjectARB(struct _glapi_table *disp, GLhandleARB (GLAPIENTRYP fn)(void)) {
+   SET_by_offset(disp, _gloffset_CreateProgramObjectARB, fn);
+}
+
 #define CALL_CreateShaderObjectARB(disp, parameters) CALL_by_offset(disp, (GLhandleARB (GLAPIENTRYP)(GLenum)), _gloffset_CreateShaderObjectARB, parameters)
 #define GET_CreateShaderObjectARB(disp) GET_by_offset(disp, _gloffset_CreateShaderObjectARB)
-#define SET_CreateShaderObjectARB(disp, fn) SET_by_offset(disp, _gloffset_CreateShaderObjectARB, fn)
+static void INLINE SET_CreateShaderObjectARB(struct _glapi_table *disp, GLhandleARB (GLAPIENTRYP fn)(GLenum)) {
+   SET_by_offset(disp, _gloffset_CreateShaderObjectARB, fn);
+}
+
 #define CALL_DeleteObjectARB(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLhandleARB)), _gloffset_DeleteObjectARB, parameters)
 #define GET_DeleteObjectARB(disp) GET_by_offset(disp, _gloffset_DeleteObjectARB)
-#define SET_DeleteObjectARB(disp, fn) SET_by_offset(disp, _gloffset_DeleteObjectARB, fn)
+static void INLINE SET_DeleteObjectARB(struct _glapi_table *disp, void (GLAPIENTRYP fn)(GLhandleARB)) {
+   SET_by_offset(disp, _gloffset_DeleteObjectARB, fn);
+}
+
 #define CALL_DetachObjectARB(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLhandleARB, GLhandleARB)), _gloffset_DetachObjectARB, parameters)
 #define GET_DetachObjectARB(disp) GET_by_offset(disp, _gloffset_DetachObjectARB)
-#define SET_DetachObjectARB(disp, fn) SET_by_offset(disp, _gloffset_DetachObjectARB, fn)
+static void INLINE SET_DetachObjectARB(struct _glapi_table *disp, void (GLAPIENTRYP fn)(GLhandleARB, GLhandleARB)) {
+   SET_by_offset(disp, _gloffset_DetachObjectARB, fn);
+}
+
 #define CALL_GetActiveUniformARB(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLhandleARB, GLuint, GLsizei, GLsizei *, GLint *, GLenum *, GLcharARB *)), _gloffset_GetActiveUniformARB, parameters)
 #define GET_GetActiveUniformARB(disp) GET_by_offset(disp, _gloffset_GetActiveUniformARB)
-#define SET_GetActiveUniformARB(disp, fn) SET_by_offset(disp, _gloffset_GetActiveUniformARB, fn)
+static void INLINE SET_GetActiveUniformARB(struct _glapi_table *disp, void (GLAPIENTRYP fn)(GLhandleARB, GLuint, GLsizei, GLsizei *, GLint *, GLenum *, GLcharARB *)) {
+   SET_by_offset(disp, _gloffset_GetActiveUniformARB, fn);
+}
+
 #define CALL_GetAttachedObjectsARB(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLhandleARB, GLsizei, GLsizei *, GLhandleARB *)), _gloffset_GetAttachedObjectsARB, parameters)
 #define GET_GetAttachedObjectsARB(disp) GET_by_offset(disp, _gloffset_GetAttachedObjectsARB)
-#define SET_GetAttachedObjectsARB(disp, fn) SET_by_offset(disp, _gloffset_GetAttachedObjectsARB, fn)
+static void INLINE SET_GetAttachedObjectsARB(struct _glapi_table *disp, void (GLAPIENTRYP fn)(GLhandleARB, GLsizei, GLsizei *, GLhandleARB *)) {
+   SET_by_offset(disp, _gloffset_GetAttachedObjectsARB, fn);
+}
+
 #define CALL_GetHandleARB(disp, parameters) CALL_by_offset(disp, (GLhandleARB (GLAPIENTRYP)(GLenum)), _gloffset_GetHandleARB, parameters)
 #define GET_GetHandleARB(disp) GET_by_offset(disp, _gloffset_GetHandleARB)
-#define SET_GetHandleARB(disp, fn) SET_by_offset(disp, _gloffset_GetHandleARB, fn)
+static void INLINE SET_GetHandleARB(struct _glapi_table *disp, GLhandleARB (GLAPIENTRYP fn)(GLenum)) {
+   SET_by_offset(disp, _gloffset_GetHandleARB, fn);
+}
+
 #define CALL_GetInfoLogARB(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLhandleARB, GLsizei, GLsizei *, GLcharARB *)), _gloffset_GetInfoLogARB, parameters)
 #define GET_GetInfoLogARB(disp) GET_by_offset(disp, _gloffset_GetInfoLogARB)
-#define SET_GetInfoLogARB(disp, fn) SET_by_offset(disp, _gloffset_GetInfoLogARB, fn)
+static void INLINE SET_GetInfoLogARB(struct _glapi_table *disp, void (GLAPIENTRYP fn)(GLhandleARB, GLsizei, GLsizei *, GLcharARB *)) {
+   SET_by_offset(disp, _gloffset_GetInfoLogARB, fn);
+}
+
 #define CALL_GetObjectParameterfvARB(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLhandleARB, GLenum, GLfloat *)), _gloffset_GetObjectParameterfvARB, parameters)
 #define GET_GetObjectParameterfvARB(disp) GET_by_offset(disp, _gloffset_GetObjectParameterfvARB)
-#define SET_GetObjectParameterfvARB(disp, fn) SET_by_offset(disp, _gloffset_GetObjectParameterfvARB, fn)
+static void INLINE SET_GetObjectParameterfvARB(struct _glapi_table *disp, void (GLAPIENTRYP fn)(GLhandleARB, GLenum, GLfloat *)) {
+   SET_by_offset(disp, _gloffset_GetObjectParameterfvARB, fn);
+}
+
 #define CALL_GetObjectParameterivARB(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLhandleARB, GLenum, GLint *)), _gloffset_GetObjectParameterivARB, parameters)
 #define GET_GetObjectParameterivARB(disp) GET_by_offset(disp, _gloffset_GetObjectParameterivARB)
-#define SET_GetObjectParameterivARB(disp, fn) SET_by_offset(disp, _gloffset_GetObjectParameterivARB, fn)
+static void INLINE SET_GetObjectParameterivARB(struct _glapi_table *disp, void (GLAPIENTRYP fn)(GLhandleARB, GLenum, GLint *)) {
+   SET_by_offset(disp, _gloffset_GetObjectParameterivARB, fn);
+}
+
 #define CALL_GetShaderSourceARB(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLhandleARB, GLsizei, GLsizei *, GLcharARB *)), _gloffset_GetShaderSourceARB, parameters)
 #define GET_GetShaderSourceARB(disp) GET_by_offset(disp, _gloffset_GetShaderSourceARB)
-#define SET_GetShaderSourceARB(disp, fn) SET_by_offset(disp, _gloffset_GetShaderSourceARB, fn)
+static void INLINE SET_GetShaderSourceARB(struct _glapi_table *disp, void (GLAPIENTRYP fn)(GLhandleARB, GLsizei, GLsizei *, GLcharARB *)) {
+   SET_by_offset(disp, _gloffset_GetShaderSourceARB, fn);
+}
+
 #define CALL_GetUniformLocationARB(disp, parameters) CALL_by_offset(disp, (GLint (GLAPIENTRYP)(GLhandleARB, const GLcharARB *)), _gloffset_GetUniformLocationARB, parameters)
 #define GET_GetUniformLocationARB(disp) GET_by_offset(disp, _gloffset_GetUniformLocationARB)
-#define SET_GetUniformLocationARB(disp, fn) SET_by_offset(disp, _gloffset_GetUniformLocationARB, fn)
+static void INLINE SET_GetUniformLocationARB(struct _glapi_table *disp, GLint (GLAPIENTRYP fn)(GLhandleARB, const GLcharARB *)) {
+   SET_by_offset(disp, _gloffset_GetUniformLocationARB, fn);
+}
+
 #define CALL_GetUniformfvARB(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLhandleARB, GLint, GLfloat *)), _gloffset_GetUniformfvARB, parameters)
 #define GET_GetUniformfvARB(disp) GET_by_offset(disp, _gloffset_GetUniformfvARB)
-#define SET_GetUniformfvARB(disp, fn) SET_by_offset(disp, _gloffset_GetUniformfvARB, fn)
+static void INLINE SET_GetUniformfvARB(struct _glapi_table *disp, void (GLAPIENTRYP fn)(GLhandleARB, GLint, GLfloat *)) {
+   SET_by_offset(disp, _gloffset_GetUniformfvARB, fn);
+}
+
 #define CALL_GetUniformivARB(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLhandleARB, GLint, GLint *)), _gloffset_GetUniformivARB, parameters)
 #define GET_GetUniformivARB(disp) GET_by_offset(disp, _gloffset_GetUniformivARB)
-#define SET_GetUniformivARB(disp, fn) SET_by_offset(disp, _gloffset_GetUniformivARB, fn)
+static void INLINE SET_GetUniformivARB(struct _glapi_table *disp, void (GLAPIENTRYP fn)(GLhandleARB, GLint, GLint *)) {
+   SET_by_offset(disp, _gloffset_GetUniformivARB, fn);
+}
+
 #define CALL_LinkProgramARB(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLhandleARB)), _gloffset_LinkProgramARB, parameters)
 #define GET_LinkProgramARB(disp) GET_by_offset(disp, _gloffset_LinkProgramARB)
-#define SET_LinkProgramARB(disp, fn) SET_by_offset(disp, _gloffset_LinkProgramARB, fn)
+static void INLINE SET_LinkProgramARB(struct _glapi_table *disp, void (GLAPIENTRYP fn)(GLhandleARB)) {
+   SET_by_offset(disp, _gloffset_LinkProgramARB, fn);
+}
+
 #define CALL_ShaderSourceARB(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLhandleARB, GLsizei, const GLcharARB **, const GLint *)), _gloffset_ShaderSourceARB, parameters)
 #define GET_ShaderSourceARB(disp) GET_by_offset(disp, _gloffset_ShaderSourceARB)
-#define SET_ShaderSourceARB(disp, fn) SET_by_offset(disp, _gloffset_ShaderSourceARB, fn)
+static void INLINE SET_ShaderSourceARB(struct _glapi_table *disp, void (GLAPIENTRYP fn)(GLhandleARB, GLsizei, const GLcharARB **, const GLint *)) {
+   SET_by_offset(disp, _gloffset_ShaderSourceARB, fn);
+}
+
 #define CALL_Uniform1fARB(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLint, GLfloat)), _gloffset_Uniform1fARB, parameters)
 #define GET_Uniform1fARB(disp) GET_by_offset(disp, _gloffset_Uniform1fARB)
-#define SET_Uniform1fARB(disp, fn) SET_by_offset(disp, _gloffset_Uniform1fARB, fn)
+static void INLINE SET_Uniform1fARB(struct _glapi_table *disp, void (GLAPIENTRYP fn)(GLint, GLfloat)) {
+   SET_by_offset(disp, _gloffset_Uniform1fARB, fn);
+}
+
 #define CALL_Uniform1fvARB(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLint, GLsizei, const GLfloat *)), _gloffset_Uniform1fvARB, parameters)
 #define GET_Uniform1fvARB(disp) GET_by_offset(disp, _gloffset_Uniform1fvARB)
-#define SET_Uniform1fvARB(disp, fn) SET_by_offset(disp, _gloffset_Uniform1fvARB, fn)
+static void INLINE SET_Uniform1fvARB(struct _glapi_table *disp, void (GLAPIENTRYP fn)(GLint, GLsizei, const GLfloat *)) {
+   SET_by_offset(disp, _gloffset_Uniform1fvARB, fn);
+}
+
 #define CALL_Uniform1iARB(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLint, GLint)), _gloffset_Uniform1iARB, parameters)
 #define GET_Uniform1iARB(disp) GET_by_offset(disp, _gloffset_Uniform1iARB)
-#define SET_Uniform1iARB(disp, fn) SET_by_offset(disp, _gloffset_Uniform1iARB, fn)
+static void INLINE SET_Uniform1iARB(struct _glapi_table *disp, void (GLAPIENTRYP fn)(GLint, GLint)) {
+   SET_by_offset(disp, _gloffset_Uniform1iARB, fn);
+}
+
 #define CALL_Uniform1ivARB(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLint, GLsizei, const GLint *)), _gloffset_Uniform1ivARB, parameters)
 #define GET_Uniform1ivARB(disp) GET_by_offset(disp, _gloffset_Uniform1ivARB)
-#define SET_Uniform1ivARB(disp, fn) SET_by_offset(disp, _gloffset_Uniform1ivARB, fn)
+static void INLINE SET_Uniform1ivARB(struct _glapi_table *disp, void (GLAPIENTRYP fn)(GLint, GLsizei, const GLint *)) {
+   SET_by_offset(disp, _gloffset_Uniform1ivARB, fn);
+}
+
 #define CALL_Uniform2fARB(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLint, GLfloat, GLfloat)), _gloffset_Uniform2fARB, parameters)
 #define GET_Uniform2fARB(disp) GET_by_offset(disp, _gloffset_Uniform2fARB)
-#define SET_Uniform2fARB(disp, fn) SET_by_offset(disp, _gloffset_Uniform2fARB, fn)
+static void INLINE SET_Uniform2fARB(struct _glapi_table *disp, void (GLAPIENTRYP fn)(GLint, GLfloat, GLfloat)) {
+   SET_by_offset(disp, _gloffset_Uniform2fARB, fn);
+}
+
 #define CALL_Uniform2fvARB(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLint, GLsizei, const GLfloat *)), _gloffset_Uniform2fvARB, parameters)
 #define GET_Uniform2fvARB(disp) GET_by_offset(disp, _gloffset_Uniform2fvARB)
-#define SET_Uniform2fvARB(disp, fn) SET_by_offset(disp, _gloffset_Uniform2fvARB, fn)
+static void INLINE SET_Uniform2fvARB(struct _glapi_table *disp, void (GLAPIENTRYP fn)(GLint, GLsizei, const GLfloat *)) {
+   SET_by_offset(disp, _gloffset_Uniform2fvARB, fn);
+}
+
 #define CALL_Uniform2iARB(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLint, GLint, GLint)), _gloffset_Uniform2iARB, parameters)
 #define GET_Uniform2iARB(disp) GET_by_offset(disp, _gloffset_Uniform2iARB)
-#define SET_Uniform2iARB(disp, fn) SET_by_offset(disp, _gloffset_Uniform2iARB, fn)
+static void INLINE SET_Uniform2iARB(struct _glapi_table *disp, void (GLAPIENTRYP fn)(GLint, GLint, GLint)) {
+   SET_by_offset(disp, _gloffset_Uniform2iARB, fn);
+}
+
 #define CALL_Uniform2ivARB(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLint, GLsizei, const GLint *)), _gloffset_Uniform2ivARB, parameters)
 #define GET_Uniform2ivARB(disp) GET_by_offset(disp, _gloffset_Uniform2ivARB)
-#define SET_Uniform2ivARB(disp, fn) SET_by_offset(disp, _gloffset_Uniform2ivARB, fn)
+static void INLINE SET_Uniform2ivARB(struct _glapi_table *disp, void (GLAPIENTRYP fn)(GLint, GLsizei, const GLint *)) {
+   SET_by_offset(disp, _gloffset_Uniform2ivARB, fn);
+}
+
 #define CALL_Uniform3fARB(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLint, GLfloat, GLfloat, GLfloat)), _gloffset_Uniform3fARB, parameters)
 #define GET_Uniform3fARB(disp) GET_by_offset(disp, _gloffset_Uniform3fARB)
-#define SET_Uniform3fARB(disp, fn) SET_by_offset(disp, _gloffset_Uniform3fARB, fn)
+static void INLINE SET_Uniform3fARB(struct _glapi_table *disp, void (GLAPIENTRYP fn)(GLint, GLfloat, GLfloat, GLfloat)) {
+   SET_by_offset(disp, _gloffset_Uniform3fARB, fn);
+}
+
 #define CALL_Uniform3fvARB(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLint, GLsizei, const GLfloat *)), _gloffset_Uniform3fvARB, parameters)
 #define GET_Uniform3fvARB(disp) GET_by_offset(disp, _gloffset_Uniform3fvARB)
-#define SET_Uniform3fvARB(disp, fn) SET_by_offset(disp, _gloffset_Uniform3fvARB, fn)
+static void INLINE SET_Uniform3fvARB(struct _glapi_table *disp, void (GLAPIENTRYP fn)(GLint, GLsizei, const GLfloat *)) {
+   SET_by_offset(disp, _gloffset_Uniform3fvARB, fn);
+}
+
 #define CALL_Uniform3iARB(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLint, GLint, GLint, GLint)), _gloffset_Uniform3iARB, parameters)
 #define GET_Uniform3iARB(disp) GET_by_offset(disp, _gloffset_Uniform3iARB)
-#define SET_Uniform3iARB(disp, fn) SET_by_offset(disp, _gloffset_Uniform3iARB, fn)
+static void INLINE SET_Uniform3iARB(struct _glapi_table *disp, void (GLAPIENTRYP fn)(GLint, GLint, GLint, GLint)) {
+   SET_by_offset(disp, _gloffset_Uniform3iARB, fn);
+}
+
 #define CALL_Uniform3ivARB(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLint, GLsizei, const GLint *)), _gloffset_Uniform3ivARB, parameters)
 #define GET_Uniform3ivARB(disp) GET_by_offset(disp, _gloffset_Uniform3ivARB)
-#define SET_Uniform3ivARB(disp, fn) SET_by_offset(disp, _gloffset_Uniform3ivARB, fn)
+static void INLINE SET_Uniform3ivARB(struct _glapi_table *disp, void (GLAPIENTRYP fn)(GLint, GLsizei, const GLint *)) {
+   SET_by_offset(disp, _gloffset_Uniform3ivARB, fn);
+}
+
 #define CALL_Uniform4fARB(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLint, GLfloat, GLfloat, GLfloat, GLfloat)), _gloffset_Uniform4fARB, parameters)
 #define GET_Uniform4fARB(disp) GET_by_offset(disp, _gloffset_Uniform4fARB)
-#define SET_Uniform4fARB(disp, fn) SET_by_offset(disp, _gloffset_Uniform4fARB, fn)
+static void INLINE SET_Uniform4fARB(struct _glapi_table *disp, void (GLAPIENTRYP fn)(GLint, GLfloat, GLfloat, GLfloat, GLfloat)) {
+   SET_by_offset(disp, _gloffset_Uniform4fARB, fn);
+}
+
 #define CALL_Uniform4fvARB(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLint, GLsizei, const GLfloat *)), _gloffset_Uniform4fvARB, parameters)
 #define GET_Uniform4fvARB(disp) GET_by_offset(disp, _gloffset_Uniform4fvARB)
-#define SET_Uniform4fvARB(disp, fn) SET_by_offset(disp, _gloffset_Uniform4fvARB, fn)
+static void INLINE SET_Uniform4fvARB(struct _glapi_table *disp, void (GLAPIENTRYP fn)(GLint, GLsizei, const GLfloat *)) {
+   SET_by_offset(disp, _gloffset_Uniform4fvARB, fn);
+}
+
 #define CALL_Uniform4iARB(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLint, GLint, GLint, GLint, GLint)), _gloffset_Uniform4iARB, parameters)
 #define GET_Uniform4iARB(disp) GET_by_offset(disp, _gloffset_Uniform4iARB)
-#define SET_Uniform4iARB(disp, fn) SET_by_offset(disp, _gloffset_Uniform4iARB, fn)
+static void INLINE SET_Uniform4iARB(struct _glapi_table *disp, void (GLAPIENTRYP fn)(GLint, GLint, GLint, GLint, GLint)) {
+   SET_by_offset(disp, _gloffset_Uniform4iARB, fn);
+}
+
 #define CALL_Uniform4ivARB(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLint, GLsizei, const GLint *)), _gloffset_Uniform4ivARB, parameters)
 #define GET_Uniform4ivARB(disp) GET_by_offset(disp, _gloffset_Uniform4ivARB)
-#define SET_Uniform4ivARB(disp, fn) SET_by_offset(disp, _gloffset_Uniform4ivARB, fn)
+static void INLINE SET_Uniform4ivARB(struct _glapi_table *disp, void (GLAPIENTRYP fn)(GLint, GLsizei, const GLint *)) {
+   SET_by_offset(disp, _gloffset_Uniform4ivARB, fn);
+}
+
 #define CALL_UniformMatrix2fvARB(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLint, GLsizei, GLboolean, const GLfloat *)), _gloffset_UniformMatrix2fvARB, parameters)
 #define GET_UniformMatrix2fvARB(disp) GET_by_offset(disp, _gloffset_UniformMatrix2fvARB)
-#define SET_UniformMatrix2fvARB(disp, fn) SET_by_offset(disp, _gloffset_UniformMatrix2fvARB, fn)
+static void INLINE SET_UniformMatrix2fvARB(struct _glapi_table *disp, void (GLAPIENTRYP fn)(GLint, GLsizei, GLboolean, const GLfloat *)) {
+   SET_by_offset(disp, _gloffset_UniformMatrix2fvARB, fn);
+}
+
 #define CALL_UniformMatrix3fvARB(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLint, GLsizei, GLboolean, const GLfloat *)), _gloffset_UniformMatrix3fvARB, parameters)
 #define GET_UniformMatrix3fvARB(disp) GET_by_offset(disp, _gloffset_UniformMatrix3fvARB)
-#define SET_UniformMatrix3fvARB(disp, fn) SET_by_offset(disp, _gloffset_UniformMatrix3fvARB, fn)
+static void INLINE SET_UniformMatrix3fvARB(struct _glapi_table *disp, void (GLAPIENTRYP fn)(GLint, GLsizei, GLboolean, const GLfloat *)) {
+   SET_by_offset(disp, _gloffset_UniformMatrix3fvARB, fn);
+}
+
 #define CALL_UniformMatrix4fvARB(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLint, GLsizei, GLboolean, const GLfloat *)), _gloffset_UniformMatrix4fvARB, parameters)
 #define GET_UniformMatrix4fvARB(disp) GET_by_offset(disp, _gloffset_UniformMatrix4fvARB)
-#define SET_UniformMatrix4fvARB(disp, fn) SET_by_offset(disp, _gloffset_UniformMatrix4fvARB, fn)
+static void INLINE SET_UniformMatrix4fvARB(struct _glapi_table *disp, void (GLAPIENTRYP fn)(GLint, GLsizei, GLboolean, const GLfloat *)) {
+   SET_by_offset(disp, _gloffset_UniformMatrix4fvARB, fn);
+}
+
 #define CALL_UseProgramObjectARB(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLhandleARB)), _gloffset_UseProgramObjectARB, parameters)
 #define GET_UseProgramObjectARB(disp) GET_by_offset(disp, _gloffset_UseProgramObjectARB)
-#define SET_UseProgramObjectARB(disp, fn) SET_by_offset(disp, _gloffset_UseProgramObjectARB, fn)
+static void INLINE SET_UseProgramObjectARB(struct _glapi_table *disp, void (GLAPIENTRYP fn)(GLhandleARB)) {
+   SET_by_offset(disp, _gloffset_UseProgramObjectARB, fn);
+}
+
 #define CALL_ValidateProgramARB(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLhandleARB)), _gloffset_ValidateProgramARB, parameters)
 #define GET_ValidateProgramARB(disp) GET_by_offset(disp, _gloffset_ValidateProgramARB)
-#define SET_ValidateProgramARB(disp, fn) SET_by_offset(disp, _gloffset_ValidateProgramARB, fn)
+static void INLINE SET_ValidateProgramARB(struct _glapi_table *disp, void (GLAPIENTRYP fn)(GLhandleARB)) {
+   SET_by_offset(disp, _gloffset_ValidateProgramARB, fn);
+}
+
 #define CALL_BindAttribLocationARB(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLhandleARB, GLuint, const GLcharARB *)), _gloffset_BindAttribLocationARB, parameters)
 #define GET_BindAttribLocationARB(disp) GET_by_offset(disp, _gloffset_BindAttribLocationARB)
-#define SET_BindAttribLocationARB(disp, fn) SET_by_offset(disp, _gloffset_BindAttribLocationARB, fn)
+static void INLINE SET_BindAttribLocationARB(struct _glapi_table *disp, void (GLAPIENTRYP fn)(GLhandleARB, GLuint, const GLcharARB *)) {
+   SET_by_offset(disp, _gloffset_BindAttribLocationARB, fn);
+}
+
 #define CALL_GetActiveAttribARB(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLhandleARB, GLuint, GLsizei, GLsizei *, GLint *, GLenum *, GLcharARB *)), _gloffset_GetActiveAttribARB, parameters)
 #define GET_GetActiveAttribARB(disp) GET_by_offset(disp, _gloffset_GetActiveAttribARB)
-#define SET_GetActiveAttribARB(disp, fn) SET_by_offset(disp, _gloffset_GetActiveAttribARB, fn)
+static void INLINE SET_GetActiveAttribARB(struct _glapi_table *disp, void (GLAPIENTRYP fn)(GLhandleARB, GLuint, GLsizei, GLsizei *, GLint *, GLenum *, GLcharARB *)) {
+   SET_by_offset(disp, _gloffset_GetActiveAttribARB, fn);
+}
+
 #define CALL_GetAttribLocationARB(disp, parameters) CALL_by_offset(disp, (GLint (GLAPIENTRYP)(GLhandleARB, const GLcharARB *)), _gloffset_GetAttribLocationARB, parameters)
 #define GET_GetAttribLocationARB(disp) GET_by_offset(disp, _gloffset_GetAttribLocationARB)
-#define SET_GetAttribLocationARB(disp, fn) SET_by_offset(disp, _gloffset_GetAttribLocationARB, fn)
+static void INLINE SET_GetAttribLocationARB(struct _glapi_table *disp, GLint (GLAPIENTRYP fn)(GLhandleARB, const GLcharARB *)) {
+   SET_by_offset(disp, _gloffset_GetAttribLocationARB, fn);
+}
+
 #define CALL_DrawBuffersARB(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLsizei, const GLenum *)), _gloffset_DrawBuffersARB, parameters)
 #define GET_DrawBuffersARB(disp) GET_by_offset(disp, _gloffset_DrawBuffersARB)
-#define SET_DrawBuffersARB(disp, fn) SET_by_offset(disp, _gloffset_DrawBuffersARB, fn)
+static void INLINE SET_DrawBuffersARB(struct _glapi_table *disp, void (GLAPIENTRYP fn)(GLsizei, const GLenum *)) {
+   SET_by_offset(disp, _gloffset_DrawBuffersARB, fn);
+}
+
 #define CALL_ClampColorARB(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLenum, GLenum)), _gloffset_ClampColorARB, parameters)
 #define GET_ClampColorARB(disp) GET_by_offset(disp, _gloffset_ClampColorARB)
-#define SET_ClampColorARB(disp, fn) SET_by_offset(disp, _gloffset_ClampColorARB, fn)
+static void INLINE SET_ClampColorARB(struct _glapi_table *disp, void (GLAPIENTRYP fn)(GLenum, GLenum)) {
+   SET_by_offset(disp, _gloffset_ClampColorARB, fn);
+}
+
 #define CALL_DrawArraysInstancedARB(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLenum, GLint, GLsizei, GLsizei)), _gloffset_DrawArraysInstancedARB, parameters)
 #define GET_DrawArraysInstancedARB(disp) GET_by_offset(disp, _gloffset_DrawArraysInstancedARB)
-#define SET_DrawArraysInstancedARB(disp, fn) SET_by_offset(disp, _gloffset_DrawArraysInstancedARB, fn)
+static void INLINE SET_DrawArraysInstancedARB(struct _glapi_table *disp, void (GLAPIENTRYP fn)(GLenum, GLint, GLsizei, GLsizei)) {
+   SET_by_offset(disp, _gloffset_DrawArraysInstancedARB, fn);
+}
+
 #define CALL_DrawElementsInstancedARB(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLenum, GLsizei, GLenum, const GLvoid *, GLsizei)), _gloffset_DrawElementsInstancedARB, parameters)
 #define GET_DrawElementsInstancedARB(disp) GET_by_offset(disp, _gloffset_DrawElementsInstancedARB)
-#define SET_DrawElementsInstancedARB(disp, fn) SET_by_offset(disp, _gloffset_DrawElementsInstancedARB, fn)
+static void INLINE SET_DrawElementsInstancedARB(struct _glapi_table *disp, void (GLAPIENTRYP fn)(GLenum, GLsizei, GLenum, const GLvoid *, GLsizei)) {
+   SET_by_offset(disp, _gloffset_DrawElementsInstancedARB, fn);
+}
+
 #define CALL_RenderbufferStorageMultisample(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLenum, GLsizei, GLenum, GLsizei, GLsizei)), _gloffset_RenderbufferStorageMultisample, parameters)
 #define GET_RenderbufferStorageMultisample(disp) GET_by_offset(disp, _gloffset_RenderbufferStorageMultisample)
-#define SET_RenderbufferStorageMultisample(disp, fn) SET_by_offset(disp, _gloffset_RenderbufferStorageMultisample, fn)
+static void INLINE SET_RenderbufferStorageMultisample(struct _glapi_table *disp, void (GLAPIENTRYP fn)(GLenum, GLsizei, GLenum, GLsizei, GLsizei)) {
+   SET_by_offset(disp, _gloffset_RenderbufferStorageMultisample, fn);
+}
+
 #define CALL_FramebufferTextureARB(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLenum, GLenum, GLuint, GLint)), _gloffset_FramebufferTextureARB, parameters)
 #define GET_FramebufferTextureARB(disp) GET_by_offset(disp, _gloffset_FramebufferTextureARB)
-#define SET_FramebufferTextureARB(disp, fn) SET_by_offset(disp, _gloffset_FramebufferTextureARB, fn)
+static void INLINE SET_FramebufferTextureARB(struct _glapi_table *disp, void (GLAPIENTRYP fn)(GLenum, GLenum, GLuint, GLint)) {
+   SET_by_offset(disp, _gloffset_FramebufferTextureARB, fn);
+}
+
 #define CALL_FramebufferTextureFaceARB(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLenum, GLenum, GLuint, GLint, GLenum)), _gloffset_FramebufferTextureFaceARB, parameters)
 #define GET_FramebufferTextureFaceARB(disp) GET_by_offset(disp, _gloffset_FramebufferTextureFaceARB)
-#define SET_FramebufferTextureFaceARB(disp, fn) SET_by_offset(disp, _gloffset_FramebufferTextureFaceARB, fn)
+static void INLINE SET_FramebufferTextureFaceARB(struct _glapi_table *disp, void (GLAPIENTRYP fn)(GLenum, GLenum, GLuint, GLint, GLenum)) {
+   SET_by_offset(disp, _gloffset_FramebufferTextureFaceARB, fn);
+}
+
 #define CALL_ProgramParameteriARB(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLuint, GLenum, GLint)), _gloffset_ProgramParameteriARB, parameters)
 #define GET_ProgramParameteriARB(disp) GET_by_offset(disp, _gloffset_ProgramParameteriARB)
-#define SET_ProgramParameteriARB(disp, fn) SET_by_offset(disp, _gloffset_ProgramParameteriARB, fn)
+static void INLINE SET_ProgramParameteriARB(struct _glapi_table *disp, void (GLAPIENTRYP fn)(GLuint, GLenum, GLint)) {
+   SET_by_offset(disp, _gloffset_ProgramParameteriARB, fn);
+}
+
 #define CALL_VertexAttribDivisorARB(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLuint, GLuint)), _gloffset_VertexAttribDivisorARB, parameters)
 #define GET_VertexAttribDivisorARB(disp) GET_by_offset(disp, _gloffset_VertexAttribDivisorARB)
-#define SET_VertexAttribDivisorARB(disp, fn) SET_by_offset(disp, _gloffset_VertexAttribDivisorARB, fn)
+static void INLINE SET_VertexAttribDivisorARB(struct _glapi_table *disp, void (GLAPIENTRYP fn)(GLuint, GLuint)) {
+   SET_by_offset(disp, _gloffset_VertexAttribDivisorARB, fn);
+}
+
 #define CALL_FlushMappedBufferRange(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLenum, GLintptr, GLsizeiptr)), _gloffset_FlushMappedBufferRange, parameters)
 #define GET_FlushMappedBufferRange(disp) GET_by_offset(disp, _gloffset_FlushMappedBufferRange)
-#define SET_FlushMappedBufferRange(disp, fn) SET_by_offset(disp, _gloffset_FlushMappedBufferRange, fn)
+static void INLINE SET_FlushMappedBufferRange(struct _glapi_table *disp, void (GLAPIENTRYP fn)(GLenum, GLintptr, GLsizeiptr)) {
+   SET_by_offset(disp, _gloffset_FlushMappedBufferRange, fn);
+}
+
 #define CALL_MapBufferRange(disp, parameters) CALL_by_offset(disp, (GLvoid * (GLAPIENTRYP)(GLenum, GLintptr, GLsizeiptr, GLbitfield)), _gloffset_MapBufferRange, parameters)
 #define GET_MapBufferRange(disp) GET_by_offset(disp, _gloffset_MapBufferRange)
-#define SET_MapBufferRange(disp, fn) SET_by_offset(disp, _gloffset_MapBufferRange, fn)
+static void INLINE SET_MapBufferRange(struct _glapi_table *disp, GLvoid * (GLAPIENTRYP fn)(GLenum, GLintptr, GLsizeiptr, GLbitfield)) {
+   SET_by_offset(disp, _gloffset_MapBufferRange, fn);
+}
+
 #define CALL_TexBufferARB(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLenum, GLenum, GLuint)), _gloffset_TexBufferARB, parameters)
 #define GET_TexBufferARB(disp) GET_by_offset(disp, _gloffset_TexBufferARB)
-#define SET_TexBufferARB(disp, fn) SET_by_offset(disp, _gloffset_TexBufferARB, fn)
+static void INLINE SET_TexBufferARB(struct _glapi_table *disp, void (GLAPIENTRYP fn)(GLenum, GLenum, GLuint)) {
+   SET_by_offset(disp, _gloffset_TexBufferARB, fn);
+}
+
 #define CALL_BindVertexArray(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLuint)), _gloffset_BindVertexArray, parameters)
 #define GET_BindVertexArray(disp) GET_by_offset(disp, _gloffset_BindVertexArray)
-#define SET_BindVertexArray(disp, fn) SET_by_offset(disp, _gloffset_BindVertexArray, fn)
+static void INLINE SET_BindVertexArray(struct _glapi_table *disp, void (GLAPIENTRYP fn)(GLuint)) {
+   SET_by_offset(disp, _gloffset_BindVertexArray, fn);
+}
+
 #define CALL_GenVertexArrays(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLsizei, GLuint *)), _gloffset_GenVertexArrays, parameters)
 #define GET_GenVertexArrays(disp) GET_by_offset(disp, _gloffset_GenVertexArrays)
-#define SET_GenVertexArrays(disp, fn) SET_by_offset(disp, _gloffset_GenVertexArrays, fn)
+static void INLINE SET_GenVertexArrays(struct _glapi_table *disp, void (GLAPIENTRYP fn)(GLsizei, GLuint *)) {
+   SET_by_offset(disp, _gloffset_GenVertexArrays, fn);
+}
+
 #define CALL_CopyBufferSubData(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLenum, GLenum, GLintptr, GLintptr, GLsizeiptr)), _gloffset_CopyBufferSubData, parameters)
 #define GET_CopyBufferSubData(disp) GET_by_offset(disp, _gloffset_CopyBufferSubData)
-#define SET_CopyBufferSubData(disp, fn) SET_by_offset(disp, _gloffset_CopyBufferSubData, fn)
+static void INLINE SET_CopyBufferSubData(struct _glapi_table *disp, void (GLAPIENTRYP fn)(GLenum, GLenum, GLintptr, GLintptr, GLsizeiptr)) {
+   SET_by_offset(disp, _gloffset_CopyBufferSubData, fn);
+}
+
 #define CALL_ClientWaitSync(disp, parameters) CALL_by_offset(disp, (GLenum (GLAPIENTRYP)(GLsync, GLbitfield, GLuint64)), _gloffset_ClientWaitSync, parameters)
 #define GET_ClientWaitSync(disp) GET_by_offset(disp, _gloffset_ClientWaitSync)
-#define SET_ClientWaitSync(disp, fn) SET_by_offset(disp, _gloffset_ClientWaitSync, fn)
+static void INLINE SET_ClientWaitSync(struct _glapi_table *disp, GLenum (GLAPIENTRYP fn)(GLsync, GLbitfield, GLuint64)) {
+   SET_by_offset(disp, _gloffset_ClientWaitSync, fn);
+}
+
 #define CALL_DeleteSync(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLsync)), _gloffset_DeleteSync, parameters)
 #define GET_DeleteSync(disp) GET_by_offset(disp, _gloffset_DeleteSync)
-#define SET_DeleteSync(disp, fn) SET_by_offset(disp, _gloffset_DeleteSync, fn)
+static void INLINE SET_DeleteSync(struct _glapi_table *disp, void (GLAPIENTRYP fn)(GLsync)) {
+   SET_by_offset(disp, _gloffset_DeleteSync, fn);
+}
+
 #define CALL_FenceSync(disp, parameters) CALL_by_offset(disp, (GLsync (GLAPIENTRYP)(GLenum, GLbitfield)), _gloffset_FenceSync, parameters)
 #define GET_FenceSync(disp) GET_by_offset(disp, _gloffset_FenceSync)
-#define SET_FenceSync(disp, fn) SET_by_offset(disp, _gloffset_FenceSync, fn)
+static void INLINE SET_FenceSync(struct _glapi_table *disp, GLsync (GLAPIENTRYP fn)(GLenum, GLbitfield)) {
+   SET_by_offset(disp, _gloffset_FenceSync, fn);
+}
+
 #define CALL_GetInteger64v(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLenum, GLint64 *)), _gloffset_GetInteger64v, parameters)
 #define GET_GetInteger64v(disp) GET_by_offset(disp, _gloffset_GetInteger64v)
-#define SET_GetInteger64v(disp, fn) SET_by_offset(disp, _gloffset_GetInteger64v, fn)
+static void INLINE SET_GetInteger64v(struct _glapi_table *disp, void (GLAPIENTRYP fn)(GLenum, GLint64 *)) {
+   SET_by_offset(disp, _gloffset_GetInteger64v, fn);
+}
+
 #define CALL_GetSynciv(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLsync, GLenum, GLsizei, GLsizei *, GLint *)), _gloffset_GetSynciv, parameters)
 #define GET_GetSynciv(disp) GET_by_offset(disp, _gloffset_GetSynciv)
-#define SET_GetSynciv(disp, fn) SET_by_offset(disp, _gloffset_GetSynciv, fn)
+static void INLINE SET_GetSynciv(struct _glapi_table *disp, void (GLAPIENTRYP fn)(GLsync, GLenum, GLsizei, GLsizei *, GLint *)) {
+   SET_by_offset(disp, _gloffset_GetSynciv, fn);
+}
+
 #define CALL_IsSync(disp, parameters) CALL_by_offset(disp, (GLboolean (GLAPIENTRYP)(GLsync)), _gloffset_IsSync, parameters)
 #define GET_IsSync(disp) GET_by_offset(disp, _gloffset_IsSync)
-#define SET_IsSync(disp, fn) SET_by_offset(disp, _gloffset_IsSync, fn)
+static void INLINE SET_IsSync(struct _glapi_table *disp, GLboolean (GLAPIENTRYP fn)(GLsync)) {
+   SET_by_offset(disp, _gloffset_IsSync, fn);
+}
+
 #define CALL_WaitSync(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLsync, GLbitfield, GLuint64)), _gloffset_WaitSync, parameters)
 #define GET_WaitSync(disp) GET_by_offset(disp, _gloffset_WaitSync)
-#define SET_WaitSync(disp, fn) SET_by_offset(disp, _gloffset_WaitSync, fn)
+static void INLINE SET_WaitSync(struct _glapi_table *disp, void (GLAPIENTRYP fn)(GLsync, GLbitfield, GLuint64)) {
+   SET_by_offset(disp, _gloffset_WaitSync, fn);
+}
+
 #define CALL_DrawElementsBaseVertex(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLenum, GLsizei, GLenum, const GLvoid *, GLint)), _gloffset_DrawElementsBaseVertex, parameters)
 #define GET_DrawElementsBaseVertex(disp) GET_by_offset(disp, _gloffset_DrawElementsBaseVertex)
-#define SET_DrawElementsBaseVertex(disp, fn) SET_by_offset(disp, _gloffset_DrawElementsBaseVertex, fn)
+static void INLINE SET_DrawElementsBaseVertex(struct _glapi_table *disp, void (GLAPIENTRYP fn)(GLenum, GLsizei, GLenum, const GLvoid *, GLint)) {
+   SET_by_offset(disp, _gloffset_DrawElementsBaseVertex, fn);
+}
+
 #define CALL_DrawRangeElementsBaseVertex(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLenum, GLuint, GLuint, GLsizei, GLenum, const GLvoid *, GLint)), _gloffset_DrawRangeElementsBaseVertex, parameters)
 #define GET_DrawRangeElementsBaseVertex(disp) GET_by_offset(disp, _gloffset_DrawRangeElementsBaseVertex)
-#define SET_DrawRangeElementsBaseVertex(disp, fn) SET_by_offset(disp, _gloffset_DrawRangeElementsBaseVertex, fn)
+static void INLINE SET_DrawRangeElementsBaseVertex(struct _glapi_table *disp, void (GLAPIENTRYP fn)(GLenum, GLuint, GLuint, GLsizei, GLenum, const GLvoid *, GLint)) {
+   SET_by_offset(disp, _gloffset_DrawRangeElementsBaseVertex, fn);
+}
+
 #define CALL_MultiDrawElementsBaseVertex(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLenum, const GLsizei *, GLenum, const GLvoid **, GLsizei, const GLint *)), _gloffset_MultiDrawElementsBaseVertex, parameters)
 #define GET_MultiDrawElementsBaseVertex(disp) GET_by_offset(disp, _gloffset_MultiDrawElementsBaseVertex)
-#define SET_MultiDrawElementsBaseVertex(disp, fn) SET_by_offset(disp, _gloffset_MultiDrawElementsBaseVertex, fn)
+static void INLINE SET_MultiDrawElementsBaseVertex(struct _glapi_table *disp, void (GLAPIENTRYP fn)(GLenum, const GLsizei *, GLenum, const GLvoid **, GLsizei, const GLint *)) {
+   SET_by_offset(disp, _gloffset_MultiDrawElementsBaseVertex, fn);
+}
+
 #define CALL_BlendEquationSeparateiARB(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLuint, GLenum, GLenum)), _gloffset_BlendEquationSeparateiARB, parameters)
 #define GET_BlendEquationSeparateiARB(disp) GET_by_offset(disp, _gloffset_BlendEquationSeparateiARB)
-#define SET_BlendEquationSeparateiARB(disp, fn) SET_by_offset(disp, _gloffset_BlendEquationSeparateiARB, fn)
+static void INLINE SET_BlendEquationSeparateiARB(struct _glapi_table *disp, void (GLAPIENTRYP fn)(GLuint, GLenum, GLenum)) {
+   SET_by_offset(disp, _gloffset_BlendEquationSeparateiARB, fn);
+}
+
 #define CALL_BlendEquationiARB(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLuint, GLenum)), _gloffset_BlendEquationiARB, parameters)
 #define GET_BlendEquationiARB(disp) GET_by_offset(disp, _gloffset_BlendEquationiARB)
-#define SET_BlendEquationiARB(disp, fn) SET_by_offset(disp, _gloffset_BlendEquationiARB, fn)
+static void INLINE SET_BlendEquationiARB(struct _glapi_table *disp, void (GLAPIENTRYP fn)(GLuint, GLenum)) {
+   SET_by_offset(disp, _gloffset_BlendEquationiARB, fn);
+}
+
 #define CALL_BlendFuncSeparateiARB(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLuint, GLenum, GLenum, GLenum, GLenum)), _gloffset_BlendFuncSeparateiARB, parameters)
 #define GET_BlendFuncSeparateiARB(disp) GET_by_offset(disp, _gloffset_BlendFuncSeparateiARB)
-#define SET_BlendFuncSeparateiARB(disp, fn) SET_by_offset(disp, _gloffset_BlendFuncSeparateiARB, fn)
+static void INLINE SET_BlendFuncSeparateiARB(struct _glapi_table *disp, void (GLAPIENTRYP fn)(GLuint, GLenum, GLenum, GLenum, GLenum)) {
+   SET_by_offset(disp, _gloffset_BlendFuncSeparateiARB, fn);
+}
+
 #define CALL_BlendFunciARB(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLuint, GLenum, GLenum)), _gloffset_BlendFunciARB, parameters)
 #define GET_BlendFunciARB(disp) GET_by_offset(disp, _gloffset_BlendFunciARB)
-#define SET_BlendFunciARB(disp, fn) SET_by_offset(disp, _gloffset_BlendFunciARB, fn)
+static void INLINE SET_BlendFunciARB(struct _glapi_table *disp, void (GLAPIENTRYP fn)(GLuint, GLenum, GLenum)) {
+   SET_by_offset(disp, _gloffset_BlendFunciARB, fn);
+}
+
 #define CALL_BindSampler(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLuint, GLuint)), _gloffset_BindSampler, parameters)
 #define GET_BindSampler(disp) GET_by_offset(disp, _gloffset_BindSampler)
-#define SET_BindSampler(disp, fn) SET_by_offset(disp, _gloffset_BindSampler, fn)
+static void INLINE SET_BindSampler(struct _glapi_table *disp, void (GLAPIENTRYP fn)(GLuint, GLuint)) {
+   SET_by_offset(disp, _gloffset_BindSampler, fn);
+}
+
 #define CALL_DeleteSamplers(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLsizei, const GLuint *)), _gloffset_DeleteSamplers, parameters)
 #define GET_DeleteSamplers(disp) GET_by_offset(disp, _gloffset_DeleteSamplers)
-#define SET_DeleteSamplers(disp, fn) SET_by_offset(disp, _gloffset_DeleteSamplers, fn)
+static void INLINE SET_DeleteSamplers(struct _glapi_table *disp, void (GLAPIENTRYP fn)(GLsizei, const GLuint *)) {
+   SET_by_offset(disp, _gloffset_DeleteSamplers, fn);
+}
+
 #define CALL_GenSamplers(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLsizei, GLuint *)), _gloffset_GenSamplers, parameters)
 #define GET_GenSamplers(disp) GET_by_offset(disp, _gloffset_GenSamplers)
-#define SET_GenSamplers(disp, fn) SET_by_offset(disp, _gloffset_GenSamplers, fn)
+static void INLINE SET_GenSamplers(struct _glapi_table *disp, void (GLAPIENTRYP fn)(GLsizei, GLuint *)) {
+   SET_by_offset(disp, _gloffset_GenSamplers, fn);
+}
+
 #define CALL_GetSamplerParameterIiv(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLuint, GLenum, GLint *)), _gloffset_GetSamplerParameterIiv, parameters)
 #define GET_GetSamplerParameterIiv(disp) GET_by_offset(disp, _gloffset_GetSamplerParameterIiv)
-#define SET_GetSamplerParameterIiv(disp, fn) SET_by_offset(disp, _gloffset_GetSamplerParameterIiv, fn)
+static void INLINE SET_GetSamplerParameterIiv(struct _glapi_table *disp, void (GLAPIENTRYP fn)(GLuint, GLenum, GLint *)) {
+   SET_by_offset(disp, _gloffset_GetSamplerParameterIiv, fn);
+}
+
 #define CALL_GetSamplerParameterIuiv(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLuint, GLenum, GLuint *)), _gloffset_GetSamplerParameterIuiv, parameters)
 #define GET_GetSamplerParameterIuiv(disp) GET_by_offset(disp, _gloffset_GetSamplerParameterIuiv)
-#define SET_GetSamplerParameterIuiv(disp, fn) SET_by_offset(disp, _gloffset_GetSamplerParameterIuiv, fn)
+static void INLINE SET_GetSamplerParameterIuiv(struct _glapi_table *disp, void (GLAPIENTRYP fn)(GLuint, GLenum, GLuint *)) {
+   SET_by_offset(disp, _gloffset_GetSamplerParameterIuiv, fn);
+}
+
 #define CALL_GetSamplerParameterfv(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLuint, GLenum, GLfloat *)), _gloffset_GetSamplerParameterfv, parameters)
 #define GET_GetSamplerParameterfv(disp) GET_by_offset(disp, _gloffset_GetSamplerParameterfv)
-#define SET_GetSamplerParameterfv(disp, fn) SET_by_offset(disp, _gloffset_GetSamplerParameterfv, fn)
+static void INLINE SET_GetSamplerParameterfv(struct _glapi_table *disp, void (GLAPIENTRYP fn)(GLuint, GLenum, GLfloat *)) {
+   SET_by_offset(disp, _gloffset_GetSamplerParameterfv, fn);
+}
+
 #define CALL_GetSamplerParameteriv(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLuint, GLenum, GLint *)), _gloffset_GetSamplerParameteriv, parameters)
 #define GET_GetSamplerParameteriv(disp) GET_by_offset(disp, _gloffset_GetSamplerParameteriv)
-#define SET_GetSamplerParameteriv(disp, fn) SET_by_offset(disp, _gloffset_GetSamplerParameteriv, fn)
+static void INLINE SET_GetSamplerParameteriv(struct _glapi_table *disp, void (GLAPIENTRYP fn)(GLuint, GLenum, GLint *)) {
+   SET_by_offset(disp, _gloffset_GetSamplerParameteriv, fn);
+}
+
 #define CALL_IsSampler(disp, parameters) CALL_by_offset(disp, (GLboolean (GLAPIENTRYP)(GLuint)), _gloffset_IsSampler, parameters)
 #define GET_IsSampler(disp) GET_by_offset(disp, _gloffset_IsSampler)
-#define SET_IsSampler(disp, fn) SET_by_offset(disp, _gloffset_IsSampler, fn)
+static void INLINE SET_IsSampler(struct _glapi_table *disp, GLboolean (GLAPIENTRYP fn)(GLuint)) {
+   SET_by_offset(disp, _gloffset_IsSampler, fn);
+}
+
 #define CALL_SamplerParameterIiv(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLuint, GLenum, const GLint *)), _gloffset_SamplerParameterIiv, parameters)
 #define GET_SamplerParameterIiv(disp) GET_by_offset(disp, _gloffset_SamplerParameterIiv)
-#define SET_SamplerParameterIiv(disp, fn) SET_by_offset(disp, _gloffset_SamplerParameterIiv, fn)
+static void INLINE SET_SamplerParameterIiv(struct _glapi_table *disp, void (GLAPIENTRYP fn)(GLuint, GLenum, const GLint *)) {
+   SET_by_offset(disp, _gloffset_SamplerParameterIiv, fn);
+}
+
 #define CALL_SamplerParameterIuiv(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLuint, GLenum, const GLuint *)), _gloffset_SamplerParameterIuiv, parameters)
 #define GET_SamplerParameterIuiv(disp) GET_by_offset(disp, _gloffset_SamplerParameterIuiv)
-#define SET_SamplerParameterIuiv(disp, fn) SET_by_offset(disp, _gloffset_SamplerParameterIuiv, fn)
+static void INLINE SET_SamplerParameterIuiv(struct _glapi_table *disp, void (GLAPIENTRYP fn)(GLuint, GLenum, const GLuint *)) {
+   SET_by_offset(disp, _gloffset_SamplerParameterIuiv, fn);
+}
+
 #define CALL_SamplerParameterf(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLuint, GLenum, GLfloat)), _gloffset_SamplerParameterf, parameters)
 #define GET_SamplerParameterf(disp) GET_by_offset(disp, _gloffset_SamplerParameterf)
-#define SET_SamplerParameterf(disp, fn) SET_by_offset(disp, _gloffset_SamplerParameterf, fn)
+static void INLINE SET_SamplerParameterf(struct _glapi_table *disp, void (GLAPIENTRYP fn)(GLuint, GLenum, GLfloat)) {
+   SET_by_offset(disp, _gloffset_SamplerParameterf, fn);
+}
+
 #define CALL_SamplerParameterfv(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLuint, GLenum, const GLfloat *)), _gloffset_SamplerParameterfv, parameters)
 #define GET_SamplerParameterfv(disp) GET_by_offset(disp, _gloffset_SamplerParameterfv)
-#define SET_SamplerParameterfv(disp, fn) SET_by_offset(disp, _gloffset_SamplerParameterfv, fn)
+static void INLINE SET_SamplerParameterfv(struct _glapi_table *disp, void (GLAPIENTRYP fn)(GLuint, GLenum, const GLfloat *)) {
+   SET_by_offset(disp, _gloffset_SamplerParameterfv, fn);
+}
+
 #define CALL_SamplerParameteri(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLuint, GLenum, GLint)), _gloffset_SamplerParameteri, parameters)
 #define GET_SamplerParameteri(disp) GET_by_offset(disp, _gloffset_SamplerParameteri)
-#define SET_SamplerParameteri(disp, fn) SET_by_offset(disp, _gloffset_SamplerParameteri, fn)
+static void INLINE SET_SamplerParameteri(struct _glapi_table *disp, void (GLAPIENTRYP fn)(GLuint, GLenum, GLint)) {
+   SET_by_offset(disp, _gloffset_SamplerParameteri, fn);
+}
+
 #define CALL_SamplerParameteriv(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLuint, GLenum, const GLint *)), _gloffset_SamplerParameteriv, parameters)
 #define GET_SamplerParameteriv(disp) GET_by_offset(disp, _gloffset_SamplerParameteriv)
-#define SET_SamplerParameteriv(disp, fn) SET_by_offset(disp, _gloffset_SamplerParameteriv, fn)
+static void INLINE SET_SamplerParameteriv(struct _glapi_table *disp, void (GLAPIENTRYP fn)(GLuint, GLenum, const GLint *)) {
+   SET_by_offset(disp, _gloffset_SamplerParameteriv, fn);
+}
+
 #define CALL_BindTransformFeedback(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLenum, GLuint)), _gloffset_BindTransformFeedback, parameters)
 #define GET_BindTransformFeedback(disp) GET_by_offset(disp, _gloffset_BindTransformFeedback)
-#define SET_BindTransformFeedback(disp, fn) SET_by_offset(disp, _gloffset_BindTransformFeedback, fn)
+static void INLINE SET_BindTransformFeedback(struct _glapi_table *disp, void (GLAPIENTRYP fn)(GLenum, GLuint)) {
+   SET_by_offset(disp, _gloffset_BindTransformFeedback, fn);
+}
+
 #define CALL_DeleteTransformFeedbacks(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLsizei, const GLuint *)), _gloffset_DeleteTransformFeedbacks, parameters)
 #define GET_DeleteTransformFeedbacks(disp) GET_by_offset(disp, _gloffset_DeleteTransformFeedbacks)
-#define SET_DeleteTransformFeedbacks(disp, fn) SET_by_offset(disp, _gloffset_DeleteTransformFeedbacks, fn)
+static void INLINE SET_DeleteTransformFeedbacks(struct _glapi_table *disp, void (GLAPIENTRYP fn)(GLsizei, const GLuint *)) {
+   SET_by_offset(disp, _gloffset_DeleteTransformFeedbacks, fn);
+}
+
 #define CALL_DrawTransformFeedback(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLenum, GLuint)), _gloffset_DrawTransformFeedback, parameters)
 #define GET_DrawTransformFeedback(disp) GET_by_offset(disp, _gloffset_DrawTransformFeedback)
-#define SET_DrawTransformFeedback(disp, fn) SET_by_offset(disp, _gloffset_DrawTransformFeedback, fn)
+static void INLINE SET_DrawTransformFeedback(struct _glapi_table *disp, void (GLAPIENTRYP fn)(GLenum, GLuint)) {
+   SET_by_offset(disp, _gloffset_DrawTransformFeedback, fn);
+}
+
 #define CALL_GenTransformFeedbacks(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLsizei, GLuint *)), _gloffset_GenTransformFeedbacks, parameters)
 #define GET_GenTransformFeedbacks(disp) GET_by_offset(disp, _gloffset_GenTransformFeedbacks)
-#define SET_GenTransformFeedbacks(disp, fn) SET_by_offset(disp, _gloffset_GenTransformFeedbacks, fn)
+static void INLINE SET_GenTransformFeedbacks(struct _glapi_table *disp, void (GLAPIENTRYP fn)(GLsizei, GLuint *)) {
+   SET_by_offset(disp, _gloffset_GenTransformFeedbacks, fn);
+}
+
 #define CALL_IsTransformFeedback(disp, parameters) CALL_by_offset(disp, (GLboolean (GLAPIENTRYP)(GLuint)), _gloffset_IsTransformFeedback, parameters)
 #define GET_IsTransformFeedback(disp) GET_by_offset(disp, _gloffset_IsTransformFeedback)
-#define SET_IsTransformFeedback(disp, fn) SET_by_offset(disp, _gloffset_IsTransformFeedback, fn)
+static void INLINE SET_IsTransformFeedback(struct _glapi_table *disp, GLboolean (GLAPIENTRYP fn)(GLuint)) {
+   SET_by_offset(disp, _gloffset_IsTransformFeedback, fn);
+}
+
 #define CALL_PauseTransformFeedback(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(void)), _gloffset_PauseTransformFeedback, parameters)
 #define GET_PauseTransformFeedback(disp) GET_by_offset(disp, _gloffset_PauseTransformFeedback)
-#define SET_PauseTransformFeedback(disp, fn) SET_by_offset(disp, _gloffset_PauseTransformFeedback, fn)
+static void INLINE SET_PauseTransformFeedback(struct _glapi_table *disp, void (GLAPIENTRYP fn)(void)) {
+   SET_by_offset(disp, _gloffset_PauseTransformFeedback, fn);
+}
+
 #define CALL_ResumeTransformFeedback(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(void)), _gloffset_ResumeTransformFeedback, parameters)
 #define GET_ResumeTransformFeedback(disp) GET_by_offset(disp, _gloffset_ResumeTransformFeedback)
-#define SET_ResumeTransformFeedback(disp, fn) SET_by_offset(disp, _gloffset_ResumeTransformFeedback, fn)
+static void INLINE SET_ResumeTransformFeedback(struct _glapi_table *disp, void (GLAPIENTRYP fn)(void)) {
+   SET_by_offset(disp, _gloffset_ResumeTransformFeedback, fn);
+}
+
 #define CALL_ClearDepthf(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLclampf)), _gloffset_ClearDepthf, parameters)
 #define GET_ClearDepthf(disp) GET_by_offset(disp, _gloffset_ClearDepthf)
-#define SET_ClearDepthf(disp, fn) SET_by_offset(disp, _gloffset_ClearDepthf, fn)
+static void INLINE SET_ClearDepthf(struct _glapi_table *disp, void (GLAPIENTRYP fn)(GLclampf)) {
+   SET_by_offset(disp, _gloffset_ClearDepthf, fn);
+}
+
 #define CALL_DepthRangef(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLclampf, GLclampf)), _gloffset_DepthRangef, parameters)
 #define GET_DepthRangef(disp) GET_by_offset(disp, _gloffset_DepthRangef)
-#define SET_DepthRangef(disp, fn) SET_by_offset(disp, _gloffset_DepthRangef, fn)
+static void INLINE SET_DepthRangef(struct _glapi_table *disp, void (GLAPIENTRYP fn)(GLclampf, GLclampf)) {
+   SET_by_offset(disp, _gloffset_DepthRangef, fn);
+}
+
 #define CALL_GetShaderPrecisionFormat(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLenum, GLenum, GLint *, GLint *)), _gloffset_GetShaderPrecisionFormat, parameters)
 #define GET_GetShaderPrecisionFormat(disp) GET_by_offset(disp, _gloffset_GetShaderPrecisionFormat)
-#define SET_GetShaderPrecisionFormat(disp, fn) SET_by_offset(disp, _gloffset_GetShaderPrecisionFormat, fn)
+static void INLINE SET_GetShaderPrecisionFormat(struct _glapi_table *disp, void (GLAPIENTRYP fn)(GLenum, GLenum, GLint *, GLint *)) {
+   SET_by_offset(disp, _gloffset_GetShaderPrecisionFormat, fn);
+}
+
 #define CALL_ReleaseShaderCompiler(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(void)), _gloffset_ReleaseShaderCompiler, parameters)
 #define GET_ReleaseShaderCompiler(disp) GET_by_offset(disp, _gloffset_ReleaseShaderCompiler)
-#define SET_ReleaseShaderCompiler(disp, fn) SET_by_offset(disp, _gloffset_ReleaseShaderCompiler, fn)
+static void INLINE SET_ReleaseShaderCompiler(struct _glapi_table *disp, void (GLAPIENTRYP fn)(void)) {
+   SET_by_offset(disp, _gloffset_ReleaseShaderCompiler, fn);
+}
+
 #define CALL_ShaderBinary(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLsizei, const GLuint *, GLenum, const GLvoid *, GLsizei)), _gloffset_ShaderBinary, parameters)
 #define GET_ShaderBinary(disp) GET_by_offset(disp, _gloffset_ShaderBinary)
-#define SET_ShaderBinary(disp, fn) SET_by_offset(disp, _gloffset_ShaderBinary, fn)
+static void INLINE SET_ShaderBinary(struct _glapi_table *disp, void (GLAPIENTRYP fn)(GLsizei, const GLuint *, GLenum, const GLvoid *, GLsizei)) {
+   SET_by_offset(disp, _gloffset_ShaderBinary, fn);
+}
+
 #define CALL_GetGraphicsResetStatusARB(disp, parameters) CALL_by_offset(disp, (GLenum (GLAPIENTRYP)(void)), _gloffset_GetGraphicsResetStatusARB, parameters)
 #define GET_GetGraphicsResetStatusARB(disp) GET_by_offset(disp, _gloffset_GetGraphicsResetStatusARB)
-#define SET_GetGraphicsResetStatusARB(disp, fn) SET_by_offset(disp, _gloffset_GetGraphicsResetStatusARB, fn)
+static void INLINE SET_GetGraphicsResetStatusARB(struct _glapi_table *disp, GLenum (GLAPIENTRYP fn)(void)) {
+   SET_by_offset(disp, _gloffset_GetGraphicsResetStatusARB, fn);
+}
+
 #define CALL_GetnColorTableARB(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLenum, GLenum, GLenum, GLsizei, GLvoid *)), _gloffset_GetnColorTableARB, parameters)
 #define GET_GetnColorTableARB(disp) GET_by_offset(disp, _gloffset_GetnColorTableARB)
-#define SET_GetnColorTableARB(disp, fn) SET_by_offset(disp, _gloffset_GetnColorTableARB, fn)
+static void INLINE SET_GetnColorTableARB(struct _glapi_table *disp, void (GLAPIENTRYP fn)(GLenum, GLenum, GLenum, GLsizei, GLvoid *)) {
+   SET_by_offset(disp, _gloffset_GetnColorTableARB, fn);
+}
+
 #define CALL_GetnCompressedTexImageARB(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLenum, GLint, GLsizei, GLvoid *)), _gloffset_GetnCompressedTexImageARB, parameters)
 #define GET_GetnCompressedTexImageARB(disp) GET_by_offset(disp, _gloffset_GetnCompressedTexImageARB)
-#define SET_GetnCompressedTexImageARB(disp, fn) SET_by_offset(disp, _gloffset_GetnCompressedTexImageARB, fn)
+static void INLINE SET_GetnCompressedTexImageARB(struct _glapi_table *disp, void (GLAPIENTRYP fn)(GLenum, GLint, GLsizei, GLvoid *)) {
+   SET_by_offset(disp, _gloffset_GetnCompressedTexImageARB, fn);
+}
+
 #define CALL_GetnConvolutionFilterARB(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLenum, GLenum, GLenum, GLsizei, GLvoid *)), _gloffset_GetnConvolutionFilterARB, parameters)
 #define GET_GetnConvolutionFilterARB(disp) GET_by_offset(disp, _gloffset_GetnConvolutionFilterARB)
-#define SET_GetnConvolutionFilterARB(disp, fn) SET_by_offset(disp, _gloffset_GetnConvolutionFilterARB, fn)
+static void INLINE SET_GetnConvolutionFilterARB(struct _glapi_table *disp, void (GLAPIENTRYP fn)(GLenum, GLenum, GLenum, GLsizei, GLvoid *)) {
+   SET_by_offset(disp, _gloffset_GetnConvolutionFilterARB, fn);
+}
+
 #define CALL_GetnHistogramARB(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLenum, GLboolean, GLenum, GLenum, GLsizei, GLvoid *)), _gloffset_GetnHistogramARB, parameters)
 #define GET_GetnHistogramARB(disp) GET_by_offset(disp, _gloffset_GetnHistogramARB)
-#define SET_GetnHistogramARB(disp, fn) SET_by_offset(disp, _gloffset_GetnHistogramARB, fn)
+static void INLINE SET_GetnHistogramARB(struct _glapi_table *disp, void (GLAPIENTRYP fn)(GLenum, GLboolean, GLenum, GLenum, GLsizei, GLvoid *)) {
+   SET_by_offset(disp, _gloffset_GetnHistogramARB, fn);
+}
+
 #define CALL_GetnMapdvARB(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLenum, GLenum, GLsizei, GLdouble *)), _gloffset_GetnMapdvARB, parameters)
 #define GET_GetnMapdvARB(disp) GET_by_offset(disp, _gloffset_GetnMapdvARB)
-#define SET_GetnMapdvARB(disp, fn) SET_by_offset(disp, _gloffset_GetnMapdvARB, fn)
+static void INLINE SET_GetnMapdvARB(struct _glapi_table *disp, void (GLAPIENTRYP fn)(GLenum, GLenum, GLsizei, GLdouble *)) {
+   SET_by_offset(disp, _gloffset_GetnMapdvARB, fn);
+}
+
 #define CALL_GetnMapfvARB(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLenum, GLenum, GLsizei, GLfloat *)), _gloffset_GetnMapfvARB, parameters)
 #define GET_GetnMapfvARB(disp) GET_by_offset(disp, _gloffset_GetnMapfvARB)
-#define SET_GetnMapfvARB(disp, fn) SET_by_offset(disp, _gloffset_GetnMapfvARB, fn)
+static void INLINE SET_GetnMapfvARB(struct _glapi_table *disp, void (GLAPIENTRYP fn)(GLenum, GLenum, GLsizei, GLfloat *)) {
+   SET_by_offset(disp, _gloffset_GetnMapfvARB, fn);
+}
+
 #define CALL_GetnMapivARB(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLenum, GLenum, GLsizei, GLint *)), _gloffset_GetnMapivARB, parameters)
 #define GET_GetnMapivARB(disp) GET_by_offset(disp, _gloffset_GetnMapivARB)
-#define SET_GetnMapivARB(disp, fn) SET_by_offset(disp, _gloffset_GetnMapivARB, fn)
+static void INLINE SET_GetnMapivARB(struct _glapi_table *disp, void (GLAPIENTRYP fn)(GLenum, GLenum, GLsizei, GLint *)) {
+   SET_by_offset(disp, _gloffset_GetnMapivARB, fn);
+}
+
 #define CALL_GetnMinmaxARB(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLenum, GLboolean, GLenum, GLenum, GLsizei, GLvoid *)), _gloffset_GetnMinmaxARB, parameters)
 #define GET_GetnMinmaxARB(disp) GET_by_offset(disp, _gloffset_GetnMinmaxARB)
-#define SET_GetnMinmaxARB(disp, fn) SET_by_offset(disp, _gloffset_GetnMinmaxARB, fn)
+static void INLINE SET_GetnMinmaxARB(struct _glapi_table *disp, void (GLAPIENTRYP fn)(GLenum, GLboolean, GLenum, GLenum, GLsizei, GLvoid *)) {
+   SET_by_offset(disp, _gloffset_GetnMinmaxARB, fn);
+}
+
 #define CALL_GetnPixelMapfvARB(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLenum, GLsizei, GLfloat *)), _gloffset_GetnPixelMapfvARB, parameters)
 #define GET_GetnPixelMapfvARB(disp) GET_by_offset(disp, _gloffset_GetnPixelMapfvARB)
-#define SET_GetnPixelMapfvARB(disp, fn) SET_by_offset(disp, _gloffset_GetnPixelMapfvARB, fn)
+static void INLINE SET_GetnPixelMapfvARB(struct _glapi_table *disp, void (GLAPIENTRYP fn)(GLenum, GLsizei, GLfloat *)) {
+   SET_by_offset(disp, _gloffset_GetnPixelMapfvARB, fn);
+}
+
 #define CALL_GetnPixelMapuivARB(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLenum, GLsizei, GLuint *)), _gloffset_GetnPixelMapuivARB, parameters)
 #define GET_GetnPixelMapuivARB(disp) GET_by_offset(disp, _gloffset_GetnPixelMapuivARB)
-#define SET_GetnPixelMapuivARB(disp, fn) SET_by_offset(disp, _gloffset_GetnPixelMapuivARB, fn)
+static void INLINE SET_GetnPixelMapuivARB(struct _glapi_table *disp, void (GLAPIENTRYP fn)(GLenum, GLsizei, GLuint *)) {
+   SET_by_offset(disp, _gloffset_GetnPixelMapuivARB, fn);
+}
+
 #define CALL_GetnPixelMapusvARB(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLenum, GLsizei, GLushort *)), _gloffset_GetnPixelMapusvARB, parameters)
 #define GET_GetnPixelMapusvARB(disp) GET_by_offset(disp, _gloffset_GetnPixelMapusvARB)
-#define SET_GetnPixelMapusvARB(disp, fn) SET_by_offset(disp, _gloffset_GetnPixelMapusvARB, fn)
+static void INLINE SET_GetnPixelMapusvARB(struct _glapi_table *disp, void (GLAPIENTRYP fn)(GLenum, GLsizei, GLushort *)) {
+   SET_by_offset(disp, _gloffset_GetnPixelMapusvARB, fn);
+}
+
 #define CALL_GetnPolygonStippleARB(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLsizei, GLubyte *)), _gloffset_GetnPolygonStippleARB, parameters)
 #define GET_GetnPolygonStippleARB(disp) GET_by_offset(disp, _gloffset_GetnPolygonStippleARB)
-#define SET_GetnPolygonStippleARB(disp, fn) SET_by_offset(disp, _gloffset_GetnPolygonStippleARB, fn)
+static void INLINE SET_GetnPolygonStippleARB(struct _glapi_table *disp, void (GLAPIENTRYP fn)(GLsizei, GLubyte *)) {
+   SET_by_offset(disp, _gloffset_GetnPolygonStippleARB, fn);
+}
+
 #define CALL_GetnSeparableFilterARB(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLenum, GLenum, GLenum, GLsizei, GLvoid *, GLsizei, GLvoid *, GLvoid *)), _gloffset_GetnSeparableFilterARB, parameters)
 #define GET_GetnSeparableFilterARB(disp) GET_by_offset(disp, _gloffset_GetnSeparableFilterARB)
-#define SET_GetnSeparableFilterARB(disp, fn) SET_by_offset(disp, _gloffset_GetnSeparableFilterARB, fn)
+static void INLINE SET_GetnSeparableFilterARB(struct _glapi_table *disp, void (GLAPIENTRYP fn)(GLenum, GLenum, GLenum, GLsizei, GLvoid *, GLsizei, GLvoid *, GLvoid *)) {
+   SET_by_offset(disp, _gloffset_GetnSeparableFilterARB, fn);
+}
+
 #define CALL_GetnTexImageARB(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLenum, GLint, GLenum, GLenum, GLsizei, GLvoid *)), _gloffset_GetnTexImageARB, parameters)
 #define GET_GetnTexImageARB(disp) GET_by_offset(disp, _gloffset_GetnTexImageARB)
-#define SET_GetnTexImageARB(disp, fn) SET_by_offset(disp, _gloffset_GetnTexImageARB, fn)
+static void INLINE SET_GetnTexImageARB(struct _glapi_table *disp, void (GLAPIENTRYP fn)(GLenum, GLint, GLenum, GLenum, GLsizei, GLvoid *)) {
+   SET_by_offset(disp, _gloffset_GetnTexImageARB, fn);
+}
+
 #define CALL_GetnUniformdvARB(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLhandleARB, GLint, GLsizei, GLdouble *)), _gloffset_GetnUniformdvARB, parameters)
 #define GET_GetnUniformdvARB(disp) GET_by_offset(disp, _gloffset_GetnUniformdvARB)
-#define SET_GetnUniformdvARB(disp, fn) SET_by_offset(disp, _gloffset_GetnUniformdvARB, fn)
+static void INLINE SET_GetnUniformdvARB(struct _glapi_table *disp, void (GLAPIENTRYP fn)(GLhandleARB, GLint, GLsizei, GLdouble *)) {
+   SET_by_offset(disp, _gloffset_GetnUniformdvARB, fn);
+}
+
 #define CALL_GetnUniformfvARB(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLhandleARB, GLint, GLsizei, GLfloat *)), _gloffset_GetnUniformfvARB, parameters)
 #define GET_GetnUniformfvARB(disp) GET_by_offset(disp, _gloffset_GetnUniformfvARB)
-#define SET_GetnUniformfvARB(disp, fn) SET_by_offset(disp, _gloffset_GetnUniformfvARB, fn)
+static void INLINE SET_GetnUniformfvARB(struct _glapi_table *disp, void (GLAPIENTRYP fn)(GLhandleARB, GLint, GLsizei, GLfloat *)) {
+   SET_by_offset(disp, _gloffset_GetnUniformfvARB, fn);
+}
+
 #define CALL_GetnUniformivARB(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLhandleARB, GLint, GLsizei, GLint *)), _gloffset_GetnUniformivARB, parameters)
 #define GET_GetnUniformivARB(disp) GET_by_offset(disp, _gloffset_GetnUniformivARB)
-#define SET_GetnUniformivARB(disp, fn) SET_by_offset(disp, _gloffset_GetnUniformivARB, fn)
+static void INLINE SET_GetnUniformivARB(struct _glapi_table *disp, void (GLAPIENTRYP fn)(GLhandleARB, GLint, GLsizei, GLint *)) {
+   SET_by_offset(disp, _gloffset_GetnUniformivARB, fn);
+}
+
 #define CALL_GetnUniformuivARB(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLhandleARB, GLint, GLsizei, GLuint *)), _gloffset_GetnUniformuivARB, parameters)
 #define GET_GetnUniformuivARB(disp) GET_by_offset(disp, _gloffset_GetnUniformuivARB)
-#define SET_GetnUniformuivARB(disp, fn) SET_by_offset(disp, _gloffset_GetnUniformuivARB, fn)
+static void INLINE SET_GetnUniformuivARB(struct _glapi_table *disp, void (GLAPIENTRYP fn)(GLhandleARB, GLint, GLsizei, GLuint *)) {
+   SET_by_offset(disp, _gloffset_GetnUniformuivARB, fn);
+}
+
 #define CALL_ReadnPixelsARB(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLint, GLint, GLsizei, GLsizei, GLenum, GLenum, GLsizei, GLvoid *)), _gloffset_ReadnPixelsARB, parameters)
 #define GET_ReadnPixelsARB(disp) GET_by_offset(disp, _gloffset_ReadnPixelsARB)
-#define SET_ReadnPixelsARB(disp, fn) SET_by_offset(disp, _gloffset_ReadnPixelsARB, fn)
+static void INLINE SET_ReadnPixelsARB(struct _glapi_table *disp, void (GLAPIENTRYP fn)(GLint, GLint, GLsizei, GLsizei, GLenum, GLenum, GLsizei, GLvoid *)) {
+   SET_by_offset(disp, _gloffset_ReadnPixelsARB, fn);
+}
+
 #define CALL_PolygonOffsetEXT(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLfloat, GLfloat)), _gloffset_PolygonOffsetEXT, parameters)
 #define GET_PolygonOffsetEXT(disp) GET_by_offset(disp, _gloffset_PolygonOffsetEXT)
-#define SET_PolygonOffsetEXT(disp, fn) SET_by_offset(disp, _gloffset_PolygonOffsetEXT, fn)
+static void INLINE SET_PolygonOffsetEXT(struct _glapi_table *disp, void (GLAPIENTRYP fn)(GLfloat, GLfloat)) {
+   SET_by_offset(disp, _gloffset_PolygonOffsetEXT, fn);
+}
+
 #define CALL_GetPixelTexGenParameterfvSGIS(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLenum, GLfloat *)), _gloffset_GetPixelTexGenParameterfvSGIS, parameters)
 #define GET_GetPixelTexGenParameterfvSGIS(disp) GET_by_offset(disp, _gloffset_GetPixelTexGenParameterfvSGIS)
-#define SET_GetPixelTexGenParameterfvSGIS(disp, fn) SET_by_offset(disp, _gloffset_GetPixelTexGenParameterfvSGIS, fn)
+static void INLINE SET_GetPixelTexGenParameterfvSGIS(struct _glapi_table *disp, void (GLAPIENTRYP fn)(GLenum, GLfloat *)) {
+   SET_by_offset(disp, _gloffset_GetPixelTexGenParameterfvSGIS, fn);
+}
+
 #define CALL_GetPixelTexGenParameterivSGIS(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLenum, GLint *)), _gloffset_GetPixelTexGenParameterivSGIS, parameters)
 #define GET_GetPixelTexGenParameterivSGIS(disp) GET_by_offset(disp, _gloffset_GetPixelTexGenParameterivSGIS)
-#define SET_GetPixelTexGenParameterivSGIS(disp, fn) SET_by_offset(disp, _gloffset_GetPixelTexGenParameterivSGIS, fn)
+static void INLINE SET_GetPixelTexGenParameterivSGIS(struct _glapi_table *disp, void (GLAPIENTRYP fn)(GLenum, GLint *)) {
+   SET_by_offset(disp, _gloffset_GetPixelTexGenParameterivSGIS, fn);
+}
+
 #define CALL_PixelTexGenParameterfSGIS(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLenum, GLfloat)), _gloffset_PixelTexGenParameterfSGIS, parameters)
 #define GET_PixelTexGenParameterfSGIS(disp) GET_by_offset(disp, _gloffset_PixelTexGenParameterfSGIS)
-#define SET_PixelTexGenParameterfSGIS(disp, fn) SET_by_offset(disp, _gloffset_PixelTexGenParameterfSGIS, fn)
+static void INLINE SET_PixelTexGenParameterfSGIS(struct _glapi_table *disp, void (GLAPIENTRYP fn)(GLenum, GLfloat)) {
+   SET_by_offset(disp, _gloffset_PixelTexGenParameterfSGIS, fn);
+}
+
 #define CALL_PixelTexGenParameterfvSGIS(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLenum, const GLfloat *)), _gloffset_PixelTexGenParameterfvSGIS, parameters)
 #define GET_PixelTexGenParameterfvSGIS(disp) GET_by_offset(disp, _gloffset_PixelTexGenParameterfvSGIS)
-#define SET_PixelTexGenParameterfvSGIS(disp, fn) SET_by_offset(disp, _gloffset_PixelTexGenParameterfvSGIS, fn)
+static void INLINE SET_PixelTexGenParameterfvSGIS(struct _glapi_table *disp, void (GLAPIENTRYP fn)(GLenum, const GLfloat *)) {
+   SET_by_offset(disp, _gloffset_PixelTexGenParameterfvSGIS, fn);
+}
+
 #define CALL_PixelTexGenParameteriSGIS(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLenum, GLint)), _gloffset_PixelTexGenParameteriSGIS, parameters)
 #define GET_PixelTexGenParameteriSGIS(disp) GET_by_offset(disp, _gloffset_PixelTexGenParameteriSGIS)
-#define SET_PixelTexGenParameteriSGIS(disp, fn) SET_by_offset(disp, _gloffset_PixelTexGenParameteriSGIS, fn)
+static void INLINE SET_PixelTexGenParameteriSGIS(struct _glapi_table *disp, void (GLAPIENTRYP fn)(GLenum, GLint)) {
+   SET_by_offset(disp, _gloffset_PixelTexGenParameteriSGIS, fn);
+}
+
 #define CALL_PixelTexGenParameterivSGIS(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLenum, const GLint *)), _gloffset_PixelTexGenParameterivSGIS, parameters)
 #define GET_PixelTexGenParameterivSGIS(disp) GET_by_offset(disp, _gloffset_PixelTexGenParameterivSGIS)
-#define SET_PixelTexGenParameterivSGIS(disp, fn) SET_by_offset(disp, _gloffset_PixelTexGenParameterivSGIS, fn)
+static void INLINE SET_PixelTexGenParameterivSGIS(struct _glapi_table *disp, void (GLAPIENTRYP fn)(GLenum, const GLint *)) {
+   SET_by_offset(disp, _gloffset_PixelTexGenParameterivSGIS, fn);
+}
+
 #define CALL_SampleMaskSGIS(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLclampf, GLboolean)), _gloffset_SampleMaskSGIS, parameters)
 #define GET_SampleMaskSGIS(disp) GET_by_offset(disp, _gloffset_SampleMaskSGIS)
-#define SET_SampleMaskSGIS(disp, fn) SET_by_offset(disp, _gloffset_SampleMaskSGIS, fn)
+static void INLINE SET_SampleMaskSGIS(struct _glapi_table *disp, void (GLAPIENTRYP fn)(GLclampf, GLboolean)) {
+   SET_by_offset(disp, _gloffset_SampleMaskSGIS, fn);
+}
+
 #define CALL_SamplePatternSGIS(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLenum)), _gloffset_SamplePatternSGIS, parameters)
 #define GET_SamplePatternSGIS(disp) GET_by_offset(disp, _gloffset_SamplePatternSGIS)
-#define SET_SamplePatternSGIS(disp, fn) SET_by_offset(disp, _gloffset_SamplePatternSGIS, fn)
+static void INLINE SET_SamplePatternSGIS(struct _glapi_table *disp, void (GLAPIENTRYP fn)(GLenum)) {
+   SET_by_offset(disp, _gloffset_SamplePatternSGIS, fn);
+}
+
 #define CALL_ColorPointerEXT(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLint, GLenum, GLsizei, GLsizei, const GLvoid *)), _gloffset_ColorPointerEXT, parameters)
 #define GET_ColorPointerEXT(disp) GET_by_offset(disp, _gloffset_ColorPointerEXT)
-#define SET_ColorPointerEXT(disp, fn) SET_by_offset(disp, _gloffset_ColorPointerEXT, fn)
+static void INLINE SET_ColorPointerEXT(struct _glapi_table *disp, void (GLAPIENTRYP fn)(GLint, GLenum, GLsizei, GLsizei, const GLvoid *)) {
+   SET_by_offset(disp, _gloffset_ColorPointerEXT, fn);
+}
+
 #define CALL_EdgeFlagPointerEXT(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLsizei, GLsizei, const GLboolean *)), _gloffset_EdgeFlagPointerEXT, parameters)
 #define GET_EdgeFlagPointerEXT(disp) GET_by_offset(disp, _gloffset_EdgeFlagPointerEXT)
-#define SET_EdgeFlagPointerEXT(disp, fn) SET_by_offset(disp, _gloffset_EdgeFlagPointerEXT, fn)
+static void INLINE SET_EdgeFlagPointerEXT(struct _glapi_table *disp, void (GLAPIENTRYP fn)(GLsizei, GLsizei, const GLboolean *)) {
+   SET_by_offset(disp, _gloffset_EdgeFlagPointerEXT, fn);
+}
+
 #define CALL_IndexPointerEXT(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLenum, GLsizei, GLsizei, const GLvoid *)), _gloffset_IndexPointerEXT, parameters)
 #define GET_IndexPointerEXT(disp) GET_by_offset(disp, _gloffset_IndexPointerEXT)
-#define SET_IndexPointerEXT(disp, fn) SET_by_offset(disp, _gloffset_IndexPointerEXT, fn)
+static void INLINE SET_IndexPointerEXT(struct _glapi_table *disp, void (GLAPIENTRYP fn)(GLenum, GLsizei, GLsizei, const GLvoid *)) {
+   SET_by_offset(disp, _gloffset_IndexPointerEXT, fn);
+}
+
 #define CALL_NormalPointerEXT(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLenum, GLsizei, GLsizei, const GLvoid *)), _gloffset_NormalPointerEXT, parameters)
 #define GET_NormalPointerEXT(disp) GET_by_offset(disp, _gloffset_NormalPointerEXT)
-#define SET_NormalPointerEXT(disp, fn) SET_by_offset(disp, _gloffset_NormalPointerEXT, fn)
+static void INLINE SET_NormalPointerEXT(struct _glapi_table *disp, void (GLAPIENTRYP fn)(GLenum, GLsizei, GLsizei, const GLvoid *)) {
+   SET_by_offset(disp, _gloffset_NormalPointerEXT, fn);
+}
+
 #define CALL_TexCoordPointerEXT(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLint, GLenum, GLsizei, GLsizei, const GLvoid *)), _gloffset_TexCoordPointerEXT, parameters)
 #define GET_TexCoordPointerEXT(disp) GET_by_offset(disp, _gloffset_TexCoordPointerEXT)
-#define SET_TexCoordPointerEXT(disp, fn) SET_by_offset(disp, _gloffset_TexCoordPointerEXT, fn)
+static void INLINE SET_TexCoordPointerEXT(struct _glapi_table *disp, void (GLAPIENTRYP fn)(GLint, GLenum, GLsizei, GLsizei, const GLvoid *)) {
+   SET_by_offset(disp, _gloffset_TexCoordPointerEXT, fn);
+}
+
 #define CALL_VertexPointerEXT(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLint, GLenum, GLsizei, GLsizei, const GLvoid *)), _gloffset_VertexPointerEXT, parameters)
 #define GET_VertexPointerEXT(disp) GET_by_offset(disp, _gloffset_VertexPointerEXT)
-#define SET_VertexPointerEXT(disp, fn) SET_by_offset(disp, _gloffset_VertexPointerEXT, fn)
+static void INLINE SET_VertexPointerEXT(struct _glapi_table *disp, void (GLAPIENTRYP fn)(GLint, GLenum, GLsizei, GLsizei, const GLvoid *)) {
+   SET_by_offset(disp, _gloffset_VertexPointerEXT, fn);
+}
+
 #define CALL_PointParameterfEXT(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLenum, GLfloat)), _gloffset_PointParameterfEXT, parameters)
 #define GET_PointParameterfEXT(disp) GET_by_offset(disp, _gloffset_PointParameterfEXT)
-#define SET_PointParameterfEXT(disp, fn) SET_by_offset(disp, _gloffset_PointParameterfEXT, fn)
+static void INLINE SET_PointParameterfEXT(struct _glapi_table *disp, void (GLAPIENTRYP fn)(GLenum, GLfloat)) {
+   SET_by_offset(disp, _gloffset_PointParameterfEXT, fn);
+}
+
 #define CALL_PointParameterfvEXT(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLenum, const GLfloat *)), _gloffset_PointParameterfvEXT, parameters)
 #define GET_PointParameterfvEXT(disp) GET_by_offset(disp, _gloffset_PointParameterfvEXT)
-#define SET_PointParameterfvEXT(disp, fn) SET_by_offset(disp, _gloffset_PointParameterfvEXT, fn)
+static void INLINE SET_PointParameterfvEXT(struct _glapi_table *disp, void (GLAPIENTRYP fn)(GLenum, const GLfloat *)) {
+   SET_by_offset(disp, _gloffset_PointParameterfvEXT, fn);
+}
+
 #define CALL_LockArraysEXT(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLint, GLsizei)), _gloffset_LockArraysEXT, parameters)
 #define GET_LockArraysEXT(disp) GET_by_offset(disp, _gloffset_LockArraysEXT)
-#define SET_LockArraysEXT(disp, fn) SET_by_offset(disp, _gloffset_LockArraysEXT, fn)
+static void INLINE SET_LockArraysEXT(struct _glapi_table *disp, void (GLAPIENTRYP fn)(GLint, GLsizei)) {
+   SET_by_offset(disp, _gloffset_LockArraysEXT, fn);
+}
+
 #define CALL_UnlockArraysEXT(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(void)), _gloffset_UnlockArraysEXT, parameters)
 #define GET_UnlockArraysEXT(disp) GET_by_offset(disp, _gloffset_UnlockArraysEXT)
-#define SET_UnlockArraysEXT(disp, fn) SET_by_offset(disp, _gloffset_UnlockArraysEXT, fn)
+static void INLINE SET_UnlockArraysEXT(struct _glapi_table *disp, void (GLAPIENTRYP fn)(void)) {
+   SET_by_offset(disp, _gloffset_UnlockArraysEXT, fn);
+}
+
 #define CALL_SecondaryColor3bEXT(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLbyte, GLbyte, GLbyte)), _gloffset_SecondaryColor3bEXT, parameters)
 #define GET_SecondaryColor3bEXT(disp) GET_by_offset(disp, _gloffset_SecondaryColor3bEXT)
-#define SET_SecondaryColor3bEXT(disp, fn) SET_by_offset(disp, _gloffset_SecondaryColor3bEXT, fn)
+static void INLINE SET_SecondaryColor3bEXT(struct _glapi_table *disp, void (GLAPIENTRYP fn)(GLbyte, GLbyte, GLbyte)) {
+   SET_by_offset(disp, _gloffset_SecondaryColor3bEXT, fn);
+}
+
 #define CALL_SecondaryColor3bvEXT(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(const GLbyte *)), _gloffset_SecondaryColor3bvEXT, parameters)
 #define GET_SecondaryColor3bvEXT(disp) GET_by_offset(disp, _gloffset_SecondaryColor3bvEXT)
-#define SET_SecondaryColor3bvEXT(disp, fn) SET_by_offset(disp, _gloffset_SecondaryColor3bvEXT, fn)
+static void INLINE SET_SecondaryColor3bvEXT(struct _glapi_table *disp, void (GLAPIENTRYP fn)(const GLbyte *)) {
+   SET_by_offset(disp, _gloffset_SecondaryColor3bvEXT, fn);
+}
+
 #define CALL_SecondaryColor3dEXT(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLdouble, GLdouble, GLdouble)), _gloffset_SecondaryColor3dEXT, parameters)
 #define GET_SecondaryColor3dEXT(disp) GET_by_offset(disp, _gloffset_SecondaryColor3dEXT)
-#define SET_SecondaryColor3dEXT(disp, fn) SET_by_offset(disp, _gloffset_SecondaryColor3dEXT, fn)
+static void INLINE SET_SecondaryColor3dEXT(struct _glapi_table *disp, void (GLAPIENTRYP fn)(GLdouble, GLdouble, GLdouble)) {
+   SET_by_offset(disp, _gloffset_SecondaryColor3dEXT, fn);
+}
+
 #define CALL_SecondaryColor3dvEXT(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(const GLdouble *)), _gloffset_SecondaryColor3dvEXT, parameters)
 #define GET_SecondaryColor3dvEXT(disp) GET_by_offset(disp, _gloffset_SecondaryColor3dvEXT)
-#define SET_SecondaryColor3dvEXT(disp, fn) SET_by_offset(disp, _gloffset_SecondaryColor3dvEXT, fn)
+static void INLINE SET_SecondaryColor3dvEXT(struct _glapi_table *disp, void (GLAPIENTRYP fn)(const GLdouble *)) {
+   SET_by_offset(disp, _gloffset_SecondaryColor3dvEXT, fn);
+}
+
 #define CALL_SecondaryColor3fEXT(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLfloat, GLfloat, GLfloat)), _gloffset_SecondaryColor3fEXT, parameters)
 #define GET_SecondaryColor3fEXT(disp) GET_by_offset(disp, _gloffset_SecondaryColor3fEXT)
-#define SET_SecondaryColor3fEXT(disp, fn) SET_by_offset(disp, _gloffset_SecondaryColor3fEXT, fn)
+static void INLINE SET_SecondaryColor3fEXT(struct _glapi_table *disp, void (GLAPIENTRYP fn)(GLfloat, GLfloat, GLfloat)) {
+   SET_by_offset(disp, _gloffset_SecondaryColor3fEXT, fn);
+}
+
 #define CALL_SecondaryColor3fvEXT(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(const GLfloat *)), _gloffset_SecondaryColor3fvEXT, parameters)
 #define GET_SecondaryColor3fvEXT(disp) GET_by_offset(disp, _gloffset_SecondaryColor3fvEXT)
-#define SET_SecondaryColor3fvEXT(disp, fn) SET_by_offset(disp, _gloffset_SecondaryColor3fvEXT, fn)
+static void INLINE SET_SecondaryColor3fvEXT(struct _glapi_table *disp, void (GLAPIENTRYP fn)(const GLfloat *)) {
+   SET_by_offset(disp, _gloffset_SecondaryColor3fvEXT, fn);
+}
+
 #define CALL_SecondaryColor3iEXT(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLint, GLint, GLint)), _gloffset_SecondaryColor3iEXT, parameters)
 #define GET_SecondaryColor3iEXT(disp) GET_by_offset(disp, _gloffset_SecondaryColor3iEXT)
-#define SET_SecondaryColor3iEXT(disp, fn) SET_by_offset(disp, _gloffset_SecondaryColor3iEXT, fn)
+static void INLINE SET_SecondaryColor3iEXT(struct _glapi_table *disp, void (GLAPIENTRYP fn)(GLint, GLint, GLint)) {
+   SET_by_offset(disp, _gloffset_SecondaryColor3iEXT, fn);
+}
+
 #define CALL_SecondaryColor3ivEXT(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(const GLint *)), _gloffset_SecondaryColor3ivEXT, parameters)
 #define GET_SecondaryColor3ivEXT(disp) GET_by_offset(disp, _gloffset_SecondaryColor3ivEXT)
-#define SET_SecondaryColor3ivEXT(disp, fn) SET_by_offset(disp, _gloffset_SecondaryColor3ivEXT, fn)
+static void INLINE SET_SecondaryColor3ivEXT(struct _glapi_table *disp, void (GLAPIENTRYP fn)(const GLint *)) {
+   SET_by_offset(disp, _gloffset_SecondaryColor3ivEXT, fn);
+}
+
 #define CALL_SecondaryColor3sEXT(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLshort, GLshort, GLshort)), _gloffset_SecondaryColor3sEXT, parameters)
 #define GET_SecondaryColor3sEXT(disp) GET_by_offset(disp, _gloffset_SecondaryColor3sEXT)
-#define SET_SecondaryColor3sEXT(disp, fn) SET_by_offset(disp, _gloffset_SecondaryColor3sEXT, fn)
+static void INLINE SET_SecondaryColor3sEXT(struct _glapi_table *disp, void (GLAPIENTRYP fn)(GLshort, GLshort, GLshort)) {
+   SET_by_offset(disp, _gloffset_SecondaryColor3sEXT, fn);
+}
+
 #define CALL_SecondaryColor3svEXT(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(const GLshort *)), _gloffset_SecondaryColor3svEXT, parameters)
 #define GET_SecondaryColor3svEXT(disp) GET_by_offset(disp, _gloffset_SecondaryColor3svEXT)
-#define SET_SecondaryColor3svEXT(disp, fn) SET_by_offset(disp, _gloffset_SecondaryColor3svEXT, fn)
+static void INLINE SET_SecondaryColor3svEXT(struct _glapi_table *disp, void (GLAPIENTRYP fn)(const GLshort *)) {
+   SET_by_offset(disp, _gloffset_SecondaryColor3svEXT, fn);
+}
+
 #define CALL_SecondaryColor3ubEXT(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLubyte, GLubyte, GLubyte)), _gloffset_SecondaryColor3ubEXT, parameters)
 #define GET_SecondaryColor3ubEXT(disp) GET_by_offset(disp, _gloffset_SecondaryColor3ubEXT)
-#define SET_SecondaryColor3ubEXT(disp, fn) SET_by_offset(disp, _gloffset_SecondaryColor3ubEXT, fn)
+static void INLINE SET_SecondaryColor3ubEXT(struct _glapi_table *disp, void (GLAPIENTRYP fn)(GLubyte, GLubyte, GLubyte)) {
+   SET_by_offset(disp, _gloffset_SecondaryColor3ubEXT, fn);
+}
+
 #define CALL_SecondaryColor3ubvEXT(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(const GLubyte *)), _gloffset_SecondaryColor3ubvEXT, parameters)
 #define GET_SecondaryColor3ubvEXT(disp) GET_by_offset(disp, _gloffset_SecondaryColor3ubvEXT)
-#define SET_SecondaryColor3ubvEXT(disp, fn) SET_by_offset(disp, _gloffset_SecondaryColor3ubvEXT, fn)
+static void INLINE SET_SecondaryColor3ubvEXT(struct _glapi_table *disp, void (GLAPIENTRYP fn)(const GLubyte *)) {
+   SET_by_offset(disp, _gloffset_SecondaryColor3ubvEXT, fn);
+}
+
 #define CALL_SecondaryColor3uiEXT(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLuint, GLuint, GLuint)), _gloffset_SecondaryColor3uiEXT, parameters)
 #define GET_SecondaryColor3uiEXT(disp) GET_by_offset(disp, _gloffset_SecondaryColor3uiEXT)
-#define SET_SecondaryColor3uiEXT(disp, fn) SET_by_offset(disp, _gloffset_SecondaryColor3uiEXT, fn)
+static void INLINE SET_SecondaryColor3uiEXT(struct _glapi_table *disp, void (GLAPIENTRYP fn)(GLuint, GLuint, GLuint)) {
+   SET_by_offset(disp, _gloffset_SecondaryColor3uiEXT, fn);
+}
+
 #define CALL_SecondaryColor3uivEXT(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(const GLuint *)), _gloffset_SecondaryColor3uivEXT, parameters)
 #define GET_SecondaryColor3uivEXT(disp) GET_by_offset(disp, _gloffset_SecondaryColor3uivEXT)
-#define SET_SecondaryColor3uivEXT(disp, fn) SET_by_offset(disp, _gloffset_SecondaryColor3uivEXT, fn)
+static void INLINE SET_SecondaryColor3uivEXT(struct _glapi_table *disp, void (GLAPIENTRYP fn)(const GLuint *)) {
+   SET_by_offset(disp, _gloffset_SecondaryColor3uivEXT, fn);
+}
+
 #define CALL_SecondaryColor3usEXT(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLushort, GLushort, GLushort)), _gloffset_SecondaryColor3usEXT, parameters)
 #define GET_SecondaryColor3usEXT(disp) GET_by_offset(disp, _gloffset_SecondaryColor3usEXT)
-#define SET_SecondaryColor3usEXT(disp, fn) SET_by_offset(disp, _gloffset_SecondaryColor3usEXT, fn)
+static void INLINE SET_SecondaryColor3usEXT(struct _glapi_table *disp, void (GLAPIENTRYP fn)(GLushort, GLushort, GLushort)) {
+   SET_by_offset(disp, _gloffset_SecondaryColor3usEXT, fn);
+}
+
 #define CALL_SecondaryColor3usvEXT(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(const GLushort *)), _gloffset_SecondaryColor3usvEXT, parameters)
 #define GET_SecondaryColor3usvEXT(disp) GET_by_offset(disp, _gloffset_SecondaryColor3usvEXT)
-#define SET_SecondaryColor3usvEXT(disp, fn) SET_by_offset(disp, _gloffset_SecondaryColor3usvEXT, fn)
+static void INLINE SET_SecondaryColor3usvEXT(struct _glapi_table *disp, void (GLAPIENTRYP fn)(const GLushort *)) {
+   SET_by_offset(disp, _gloffset_SecondaryColor3usvEXT, fn);
+}
+
 #define CALL_SecondaryColorPointerEXT(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLint, GLenum, GLsizei, const GLvoid *)), _gloffset_SecondaryColorPointerEXT, parameters)
 #define GET_SecondaryColorPointerEXT(disp) GET_by_offset(disp, _gloffset_SecondaryColorPointerEXT)
-#define SET_SecondaryColorPointerEXT(disp, fn) SET_by_offset(disp, _gloffset_SecondaryColorPointerEXT, fn)
+static void INLINE SET_SecondaryColorPointerEXT(struct _glapi_table *disp, void (GLAPIENTRYP fn)(GLint, GLenum, GLsizei, const GLvoid *)) {
+   SET_by_offset(disp, _gloffset_SecondaryColorPointerEXT, fn);
+}
+
 #define CALL_MultiDrawArraysEXT(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLenum, const GLint *, const GLsizei *, GLsizei)), _gloffset_MultiDrawArraysEXT, parameters)
 #define GET_MultiDrawArraysEXT(disp) GET_by_offset(disp, _gloffset_MultiDrawArraysEXT)
-#define SET_MultiDrawArraysEXT(disp, fn) SET_by_offset(disp, _gloffset_MultiDrawArraysEXT, fn)
+static void INLINE SET_MultiDrawArraysEXT(struct _glapi_table *disp, void (GLAPIENTRYP fn)(GLenum, const GLint *, const GLsizei *, GLsizei)) {
+   SET_by_offset(disp, _gloffset_MultiDrawArraysEXT, fn);
+}
+
 #define CALL_MultiDrawElementsEXT(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLenum, const GLsizei *, GLenum, const GLvoid **, GLsizei)), _gloffset_MultiDrawElementsEXT, parameters)
 #define GET_MultiDrawElementsEXT(disp) GET_by_offset(disp, _gloffset_MultiDrawElementsEXT)
-#define SET_MultiDrawElementsEXT(disp, fn) SET_by_offset(disp, _gloffset_MultiDrawElementsEXT, fn)
+static void INLINE SET_MultiDrawElementsEXT(struct _glapi_table *disp, void (GLAPIENTRYP fn)(GLenum, const GLsizei *, GLenum, const GLvoid **, GLsizei)) {
+   SET_by_offset(disp, _gloffset_MultiDrawElementsEXT, fn);
+}
+
 #define CALL_FogCoordPointerEXT(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLenum, GLsizei, const GLvoid *)), _gloffset_FogCoordPointerEXT, parameters)
 #define GET_FogCoordPointerEXT(disp) GET_by_offset(disp, _gloffset_FogCoordPointerEXT)
-#define SET_FogCoordPointerEXT(disp, fn) SET_by_offset(disp, _gloffset_FogCoordPointerEXT, fn)
+static void INLINE SET_FogCoordPointerEXT(struct _glapi_table *disp, void (GLAPIENTRYP fn)(GLenum, GLsizei, const GLvoid *)) {
+   SET_by_offset(disp, _gloffset_FogCoordPointerEXT, fn);
+}
+
 #define CALL_FogCoorddEXT(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLdouble)), _gloffset_FogCoorddEXT, parameters)
 #define GET_FogCoorddEXT(disp) GET_by_offset(disp, _gloffset_FogCoorddEXT)
-#define SET_FogCoorddEXT(disp, fn) SET_by_offset(disp, _gloffset_FogCoorddEXT, fn)
+static void INLINE SET_FogCoorddEXT(struct _glapi_table *disp, void (GLAPIENTRYP fn)(GLdouble)) {
+   SET_by_offset(disp, _gloffset_FogCoorddEXT, fn);
+}
+
 #define CALL_FogCoorddvEXT(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(const GLdouble *)), _gloffset_FogCoorddvEXT, parameters)
 #define GET_FogCoorddvEXT(disp) GET_by_offset(disp, _gloffset_FogCoorddvEXT)
-#define SET_FogCoorddvEXT(disp, fn) SET_by_offset(disp, _gloffset_FogCoorddvEXT, fn)
+static void INLINE SET_FogCoorddvEXT(struct _glapi_table *disp, void (GLAPIENTRYP fn)(const GLdouble *)) {
+   SET_by_offset(disp, _gloffset_FogCoorddvEXT, fn);
+}
+
 #define CALL_FogCoordfEXT(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLfloat)), _gloffset_FogCoordfEXT, parameters)
 #define GET_FogCoordfEXT(disp) GET_by_offset(disp, _gloffset_FogCoordfEXT)
-#define SET_FogCoordfEXT(disp, fn) SET_by_offset(disp, _gloffset_FogCoordfEXT, fn)
+static void INLINE SET_FogCoordfEXT(struct _glapi_table *disp, void (GLAPIENTRYP fn)(GLfloat)) {
+   SET_by_offset(disp, _gloffset_FogCoordfEXT, fn);
+}
+
 #define CALL_FogCoordfvEXT(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(const GLfloat *)), _gloffset_FogCoordfvEXT, parameters)
 #define GET_FogCoordfvEXT(disp) GET_by_offset(disp, _gloffset_FogCoordfvEXT)
-#define SET_FogCoordfvEXT(disp, fn) SET_by_offset(disp, _gloffset_FogCoordfvEXT, fn)
+static void INLINE SET_FogCoordfvEXT(struct _glapi_table *disp, void (GLAPIENTRYP fn)(const GLfloat *)) {
+   SET_by_offset(disp, _gloffset_FogCoordfvEXT, fn);
+}
+
 #define CALL_PixelTexGenSGIX(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLenum)), _gloffset_PixelTexGenSGIX, parameters)
 #define GET_PixelTexGenSGIX(disp) GET_by_offset(disp, _gloffset_PixelTexGenSGIX)
-#define SET_PixelTexGenSGIX(disp, fn) SET_by_offset(disp, _gloffset_PixelTexGenSGIX, fn)
+static void INLINE SET_PixelTexGenSGIX(struct _glapi_table *disp, void (GLAPIENTRYP fn)(GLenum)) {
+   SET_by_offset(disp, _gloffset_PixelTexGenSGIX, fn);
+}
+
 #define CALL_BlendFuncSeparateEXT(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLenum, GLenum, GLenum, GLenum)), _gloffset_BlendFuncSeparateEXT, parameters)
 #define GET_BlendFuncSeparateEXT(disp) GET_by_offset(disp, _gloffset_BlendFuncSeparateEXT)
-#define SET_BlendFuncSeparateEXT(disp, fn) SET_by_offset(disp, _gloffset_BlendFuncSeparateEXT, fn)
+static void INLINE SET_BlendFuncSeparateEXT(struct _glapi_table *disp, void (GLAPIENTRYP fn)(GLenum, GLenum, GLenum, GLenum)) {
+   SET_by_offset(disp, _gloffset_BlendFuncSeparateEXT, fn);
+}
+
 #define CALL_FlushVertexArrayRangeNV(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(void)), _gloffset_FlushVertexArrayRangeNV, parameters)
 #define GET_FlushVertexArrayRangeNV(disp) GET_by_offset(disp, _gloffset_FlushVertexArrayRangeNV)
-#define SET_FlushVertexArrayRangeNV(disp, fn) SET_by_offset(disp, _gloffset_FlushVertexArrayRangeNV, fn)
+static void INLINE SET_FlushVertexArrayRangeNV(struct _glapi_table *disp, void (GLAPIENTRYP fn)(void)) {
+   SET_by_offset(disp, _gloffset_FlushVertexArrayRangeNV, fn);
+}
+
 #define CALL_VertexArrayRangeNV(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLsizei, const GLvoid *)), _gloffset_VertexArrayRangeNV, parameters)
 #define GET_VertexArrayRangeNV(disp) GET_by_offset(disp, _gloffset_VertexArrayRangeNV)
-#define SET_VertexArrayRangeNV(disp, fn) SET_by_offset(disp, _gloffset_VertexArrayRangeNV, fn)
+static void INLINE SET_VertexArrayRangeNV(struct _glapi_table *disp, void (GLAPIENTRYP fn)(GLsizei, const GLvoid *)) {
+   SET_by_offset(disp, _gloffset_VertexArrayRangeNV, fn);
+}
+
 #define CALL_CombinerInputNV(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLenum, GLenum, GLenum, GLenum, GLenum, GLenum)), _gloffset_CombinerInputNV, parameters)
 #define GET_CombinerInputNV(disp) GET_by_offset(disp, _gloffset_CombinerInputNV)
-#define SET_CombinerInputNV(disp, fn) SET_by_offset(disp, _gloffset_CombinerInputNV, fn)
+static void INLINE SET_CombinerInputNV(struct _glapi_table *disp, void (GLAPIENTRYP fn)(GLenum, GLenum, GLenum, GLenum, GLenum, GLenum)) {
+   SET_by_offset(disp, _gloffset_CombinerInputNV, fn);
+}
+
 #define CALL_CombinerOutputNV(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLenum, GLenum, GLenum, GLenum, GLenum, GLenum, GLenum, GLboolean, GLboolean, GLboolean)), _gloffset_CombinerOutputNV, parameters)
 #define GET_CombinerOutputNV(disp) GET_by_offset(disp, _gloffset_CombinerOutputNV)
-#define SET_CombinerOutputNV(disp, fn) SET_by_offset(disp, _gloffset_CombinerOutputNV, fn)
+static void INLINE SET_CombinerOutputNV(struct _glapi_table *disp, void (GLAPIENTRYP fn)(GLenum, GLenum, GLenum, GLenum, GLenum, GLenum, GLenum, GLboolean, GLboolean, GLboolean)) {
+   SET_by_offset(disp, _gloffset_CombinerOutputNV, fn);
+}
+
 #define CALL_CombinerParameterfNV(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLenum, GLfloat)), _gloffset_CombinerParameterfNV, parameters)
 #define GET_CombinerParameterfNV(disp) GET_by_offset(disp, _gloffset_CombinerParameterfNV)
-#define SET_CombinerParameterfNV(disp, fn) SET_by_offset(disp, _gloffset_CombinerParameterfNV, fn)
+static void INLINE SET_CombinerParameterfNV(struct _glapi_table *disp, void (GLAPIENTRYP fn)(GLenum, GLfloat)) {
+   SET_by_offset(disp, _gloffset_CombinerParameterfNV, fn);
+}
+
 #define CALL_CombinerParameterfvNV(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLenum, const GLfloat *)), _gloffset_CombinerParameterfvNV, parameters)
 #define GET_CombinerParameterfvNV(disp) GET_by_offset(disp, _gloffset_CombinerParameterfvNV)
-#define SET_CombinerParameterfvNV(disp, fn) SET_by_offset(disp, _gloffset_CombinerParameterfvNV, fn)
+static void INLINE SET_CombinerParameterfvNV(struct _glapi_table *disp, void (GLAPIENTRYP fn)(GLenum, const GLfloat *)) {
+   SET_by_offset(disp, _gloffset_CombinerParameterfvNV, fn);
+}
+
 #define CALL_CombinerParameteriNV(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLenum, GLint)), _gloffset_CombinerParameteriNV, parameters)
 #define GET_CombinerParameteriNV(disp) GET_by_offset(disp, _gloffset_CombinerParameteriNV)
-#define SET_CombinerParameteriNV(disp, fn) SET_by_offset(disp, _gloffset_CombinerParameteriNV, fn)
+static void INLINE SET_CombinerParameteriNV(struct _glapi_table *disp, void (GLAPIENTRYP fn)(GLenum, GLint)) {
+   SET_by_offset(disp, _gloffset_CombinerParameteriNV, fn);
+}
+
 #define CALL_CombinerParameterivNV(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLenum, const GLint *)), _gloffset_CombinerParameterivNV, parameters)
 #define GET_CombinerParameterivNV(disp) GET_by_offset(disp, _gloffset_CombinerParameterivNV)
-#define SET_CombinerParameterivNV(disp, fn) SET_by_offset(disp, _gloffset_CombinerParameterivNV, fn)
+static void INLINE SET_CombinerParameterivNV(struct _glapi_table *disp, void (GLAPIENTRYP fn)(GLenum, const GLint *)) {
+   SET_by_offset(disp, _gloffset_CombinerParameterivNV, fn);
+}
+
 #define CALL_FinalCombinerInputNV(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLenum, GLenum, GLenum, GLenum)), _gloffset_FinalCombinerInputNV, parameters)
 #define GET_FinalCombinerInputNV(disp) GET_by_offset(disp, _gloffset_FinalCombinerInputNV)
-#define SET_FinalCombinerInputNV(disp, fn) SET_by_offset(disp, _gloffset_FinalCombinerInputNV, fn)
+static void INLINE SET_FinalCombinerInputNV(struct _glapi_table *disp, void (GLAPIENTRYP fn)(GLenum, GLenum, GLenum, GLenum)) {
+   SET_by_offset(disp, _gloffset_FinalCombinerInputNV, fn);
+}
+
 #define CALL_GetCombinerInputParameterfvNV(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLenum, GLenum, GLenum, GLenum, GLfloat *)), _gloffset_GetCombinerInputParameterfvNV, parameters)
 #define GET_GetCombinerInputParameterfvNV(disp) GET_by_offset(disp, _gloffset_GetCombinerInputParameterfvNV)
-#define SET_GetCombinerInputParameterfvNV(disp, fn) SET_by_offset(disp, _gloffset_GetCombinerInputParameterfvNV, fn)
+static void INLINE SET_GetCombinerInputParameterfvNV(struct _glapi_table *disp, void (GLAPIENTRYP fn)(GLenum, GLenum, GLenum, GLenum, GLfloat *)) {
+   SET_by_offset(disp, _gloffset_GetCombinerInputParameterfvNV, fn);
+}
+
 #define CALL_GetCombinerInputParameterivNV(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLenum, GLenum, GLenum, GLenum, GLint *)), _gloffset_GetCombinerInputParameterivNV, parameters)
 #define GET_GetCombinerInputParameterivNV(disp) GET_by_offset(disp, _gloffset_GetCombinerInputParameterivNV)
-#define SET_GetCombinerInputParameterivNV(disp, fn) SET_by_offset(disp, _gloffset_GetCombinerInputParameterivNV, fn)
+static void INLINE SET_GetCombinerInputParameterivNV(struct _glapi_table *disp, void (GLAPIENTRYP fn)(GLenum, GLenum, GLenum, GLenum, GLint *)) {
+   SET_by_offset(disp, _gloffset_GetCombinerInputParameterivNV, fn);
+}
+
 #define CALL_GetCombinerOutputParameterfvNV(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLenum, GLenum, GLenum, GLfloat *)), _gloffset_GetCombinerOutputParameterfvNV, parameters)
 #define GET_GetCombinerOutputParameterfvNV(disp) GET_by_offset(disp, _gloffset_GetCombinerOutputParameterfvNV)
-#define SET_GetCombinerOutputParameterfvNV(disp, fn) SET_by_offset(disp, _gloffset_GetCombinerOutputParameterfvNV, fn)
+static void INLINE SET_GetCombinerOutputParameterfvNV(struct _glapi_table *disp, void (GLAPIENTRYP fn)(GLenum, GLenum, GLenum, GLfloat *)) {
+   SET_by_offset(disp, _gloffset_GetCombinerOutputParameterfvNV, fn);
+}
+
 #define CALL_GetCombinerOutputParameterivNV(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLenum, GLenum, GLenum, GLint *)), _gloffset_GetCombinerOutputParameterivNV, parameters)
 #define GET_GetCombinerOutputParameterivNV(disp) GET_by_offset(disp, _gloffset_GetCombinerOutputParameterivNV)
-#define SET_GetCombinerOutputParameterivNV(disp, fn) SET_by_offset(disp, _gloffset_GetCombinerOutputParameterivNV, fn)
+static void INLINE SET_GetCombinerOutputParameterivNV(struct _glapi_table *disp, void (GLAPIENTRYP fn)(GLenum, GLenum, GLenum, GLint *)) {
+   SET_by_offset(disp, _gloffset_GetCombinerOutputParameterivNV, fn);
+}
+
 #define CALL_GetFinalCombinerInputParameterfvNV(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLenum, GLenum, GLfloat *)), _gloffset_GetFinalCombinerInputParameterfvNV, parameters)
 #define GET_GetFinalCombinerInputParameterfvNV(disp) GET_by_offset(disp, _gloffset_GetFinalCombinerInputParameterfvNV)
-#define SET_GetFinalCombinerInputParameterfvNV(disp, fn) SET_by_offset(disp, _gloffset_GetFinalCombinerInputParameterfvNV, fn)
+static void INLINE SET_GetFinalCombinerInputParameterfvNV(struct _glapi_table *disp, void (GLAPIENTRYP fn)(GLenum, GLenum, GLfloat *)) {
+   SET_by_offset(disp, _gloffset_GetFinalCombinerInputParameterfvNV, fn);
+}
+
 #define CALL_GetFinalCombinerInputParameterivNV(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLenum, GLenum, GLint *)), _gloffset_GetFinalCombinerInputParameterivNV, parameters)
 #define GET_GetFinalCombinerInputParameterivNV(disp) GET_by_offset(disp, _gloffset_GetFinalCombinerInputParameterivNV)
-#define SET_GetFinalCombinerInputParameterivNV(disp, fn) SET_by_offset(disp, _gloffset_GetFinalCombinerInputParameterivNV, fn)
+static void INLINE SET_GetFinalCombinerInputParameterivNV(struct _glapi_table *disp, void (GLAPIENTRYP fn)(GLenum, GLenum, GLint *)) {
+   SET_by_offset(disp, _gloffset_GetFinalCombinerInputParameterivNV, fn);
+}
+
 #define CALL_ResizeBuffersMESA(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(void)), _gloffset_ResizeBuffersMESA, parameters)
 #define GET_ResizeBuffersMESA(disp) GET_by_offset(disp, _gloffset_ResizeBuffersMESA)
-#define SET_ResizeBuffersMESA(disp, fn) SET_by_offset(disp, _gloffset_ResizeBuffersMESA, fn)
+static void INLINE SET_ResizeBuffersMESA(struct _glapi_table *disp, void (GLAPIENTRYP fn)(void)) {
+   SET_by_offset(disp, _gloffset_ResizeBuffersMESA, fn);
+}
+
 #define CALL_WindowPos2dMESA(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLdouble, GLdouble)), _gloffset_WindowPos2dMESA, parameters)
 #define GET_WindowPos2dMESA(disp) GET_by_offset(disp, _gloffset_WindowPos2dMESA)
-#define SET_WindowPos2dMESA(disp, fn) SET_by_offset(disp, _gloffset_WindowPos2dMESA, fn)
+static void INLINE SET_WindowPos2dMESA(struct _glapi_table *disp, void (GLAPIENTRYP fn)(GLdouble, GLdouble)) {
+   SET_by_offset(disp, _gloffset_WindowPos2dMESA, fn);
+}
+
 #define CALL_WindowPos2dvMESA(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(const GLdouble *)), _gloffset_WindowPos2dvMESA, parameters)
 #define GET_WindowPos2dvMESA(disp) GET_by_offset(disp, _gloffset_WindowPos2dvMESA)
-#define SET_WindowPos2dvMESA(disp, fn) SET_by_offset(disp, _gloffset_WindowPos2dvMESA, fn)
+static void INLINE SET_WindowPos2dvMESA(struct _glapi_table *disp, void (GLAPIENTRYP fn)(const GLdouble *)) {
+   SET_by_offset(disp, _gloffset_WindowPos2dvMESA, fn);
+}
+
 #define CALL_WindowPos2fMESA(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLfloat, GLfloat)), _gloffset_WindowPos2fMESA, parameters)
 #define GET_WindowPos2fMESA(disp) GET_by_offset(disp, _gloffset_WindowPos2fMESA)
-#define SET_WindowPos2fMESA(disp, fn) SET_by_offset(disp, _gloffset_WindowPos2fMESA, fn)
+static void INLINE SET_WindowPos2fMESA(struct _glapi_table *disp, void (GLAPIENTRYP fn)(GLfloat, GLfloat)) {
+   SET_by_offset(disp, _gloffset_WindowPos2fMESA, fn);
+}
+
 #define CALL_WindowPos2fvMESA(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(const GLfloat *)), _gloffset_WindowPos2fvMESA, parameters)
 #define GET_WindowPos2fvMESA(disp) GET_by_offset(disp, _gloffset_WindowPos2fvMESA)
-#define SET_WindowPos2fvMESA(disp, fn) SET_by_offset(disp, _gloffset_WindowPos2fvMESA, fn)
+static void INLINE SET_WindowPos2fvMESA(struct _glapi_table *disp, void (GLAPIENTRYP fn)(const GLfloat *)) {
+   SET_by_offset(disp, _gloffset_WindowPos2fvMESA, fn);
+}
+
 #define CALL_WindowPos2iMESA(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLint, GLint)), _gloffset_WindowPos2iMESA, parameters)
 #define GET_WindowPos2iMESA(disp) GET_by_offset(disp, _gloffset_WindowPos2iMESA)
-#define SET_WindowPos2iMESA(disp, fn) SET_by_offset(disp, _gloffset_WindowPos2iMESA, fn)
+static void INLINE SET_WindowPos2iMESA(struct _glapi_table *disp, void (GLAPIENTRYP fn)(GLint, GLint)) {
+   SET_by_offset(disp, _gloffset_WindowPos2iMESA, fn);
+}
+
 #define CALL_WindowPos2ivMESA(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(const GLint *)), _gloffset_WindowPos2ivMESA, parameters)
 #define GET_WindowPos2ivMESA(disp) GET_by_offset(disp, _gloffset_WindowPos2ivMESA)
-#define SET_WindowPos2ivMESA(disp, fn) SET_by_offset(disp, _gloffset_WindowPos2ivMESA, fn)
+static void INLINE SET_WindowPos2ivMESA(struct _glapi_table *disp, void (GLAPIENTRYP fn)(const GLint *)) {
+   SET_by_offset(disp, _gloffset_WindowPos2ivMESA, fn);
+}
+
 #define CALL_WindowPos2sMESA(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLshort, GLshort)), _gloffset_WindowPos2sMESA, parameters)
 #define GET_WindowPos2sMESA(disp) GET_by_offset(disp, _gloffset_WindowPos2sMESA)
-#define SET_WindowPos2sMESA(disp, fn) SET_by_offset(disp, _gloffset_WindowPos2sMESA, fn)
+static void INLINE SET_WindowPos2sMESA(struct _glapi_table *disp, void (GLAPIENTRYP fn)(GLshort, GLshort)) {
+   SET_by_offset(disp, _gloffset_WindowPos2sMESA, fn);
+}
+
 #define CALL_WindowPos2svMESA(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(const GLshort *)), _gloffset_WindowPos2svMESA, parameters)
 #define GET_WindowPos2svMESA(disp) GET_by_offset(disp, _gloffset_WindowPos2svMESA)
-#define SET_WindowPos2svMESA(disp, fn) SET_by_offset(disp, _gloffset_WindowPos2svMESA, fn)
+static void INLINE SET_WindowPos2svMESA(struct _glapi_table *disp, void (GLAPIENTRYP fn)(const GLshort *)) {
+   SET_by_offset(disp, _gloffset_WindowPos2svMESA, fn);
+}
+
 #define CALL_WindowPos3dMESA(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLdouble, GLdouble, GLdouble)), _gloffset_WindowPos3dMESA, parameters)
 #define GET_WindowPos3dMESA(disp) GET_by_offset(disp, _gloffset_WindowPos3dMESA)
-#define SET_WindowPos3dMESA(disp, fn) SET_by_offset(disp, _gloffset_WindowPos3dMESA, fn)
+static void INLINE SET_WindowPos3dMESA(struct _glapi_table *disp, void (GLAPIENTRYP fn)(GLdouble, GLdouble, GLdouble)) {
+   SET_by_offset(disp, _gloffset_WindowPos3dMESA, fn);
+}
+
 #define CALL_WindowPos3dvMESA(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(const GLdouble *)), _gloffset_WindowPos3dvMESA, parameters)
 #define GET_WindowPos3dvMESA(disp) GET_by_offset(disp, _gloffset_WindowPos3dvMESA)
-#define SET_WindowPos3dvMESA(disp, fn) SET_by_offset(disp, _gloffset_WindowPos3dvMESA, fn)
+static void INLINE SET_WindowPos3dvMESA(struct _glapi_table *disp, void (GLAPIENTRYP fn)(const GLdouble *)) {
+   SET_by_offset(disp, _gloffset_WindowPos3dvMESA, fn);
+}
+
 #define CALL_WindowPos3fMESA(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLfloat, GLfloat, GLfloat)), _gloffset_WindowPos3fMESA, parameters)
 #define GET_WindowPos3fMESA(disp) GET_by_offset(disp, _gloffset_WindowPos3fMESA)
-#define SET_WindowPos3fMESA(disp, fn) SET_by_offset(disp, _gloffset_WindowPos3fMESA, fn)
+static void INLINE SET_WindowPos3fMESA(struct _glapi_table *disp, void (GLAPIENTRYP fn)(GLfloat, GLfloat, GLfloat)) {
+   SET_by_offset(disp, _gloffset_WindowPos3fMESA, fn);
+}
+
 #define CALL_WindowPos3fvMESA(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(const GLfloat *)), _gloffset_WindowPos3fvMESA, parameters)
 #define GET_WindowPos3fvMESA(disp) GET_by_offset(disp, _gloffset_WindowPos3fvMESA)
-#define SET_WindowPos3fvMESA(disp, fn) SET_by_offset(disp, _gloffset_WindowPos3fvMESA, fn)
+static void INLINE SET_WindowPos3fvMESA(struct _glapi_table *disp, void (GLAPIENTRYP fn)(const GLfloat *)) {
+   SET_by_offset(disp, _gloffset_WindowPos3fvMESA, fn);
+}
+
 #define CALL_WindowPos3iMESA(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLint, GLint, GLint)), _gloffset_WindowPos3iMESA, parameters)
 #define GET_WindowPos3iMESA(disp) GET_by_offset(disp, _gloffset_WindowPos3iMESA)
-#define SET_WindowPos3iMESA(disp, fn) SET_by_offset(disp, _gloffset_WindowPos3iMESA, fn)
+static void INLINE SET_WindowPos3iMESA(struct _glapi_table *disp, void (GLAPIENTRYP fn)(GLint, GLint, GLint)) {
+   SET_by_offset(disp, _gloffset_WindowPos3iMESA, fn);
+}
+
 #define CALL_WindowPos3ivMESA(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(const GLint *)), _gloffset_WindowPos3ivMESA, parameters)
 #define GET_WindowPos3ivMESA(disp) GET_by_offset(disp, _gloffset_WindowPos3ivMESA)
-#define SET_WindowPos3ivMESA(disp, fn) SET_by_offset(disp, _gloffset_WindowPos3ivMESA, fn)
+static void INLINE SET_WindowPos3ivMESA(struct _glapi_table *disp, void (GLAPIENTRYP fn)(const GLint *)) {
+   SET_by_offset(disp, _gloffset_WindowPos3ivMESA, fn);
+}
+
 #define CALL_WindowPos3sMESA(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLshort, GLshort, GLshort)), _gloffset_WindowPos3sMESA, parameters)
 #define GET_WindowPos3sMESA(disp) GET_by_offset(disp, _gloffset_WindowPos3sMESA)
-#define SET_WindowPos3sMESA(disp, fn) SET_by_offset(disp, _gloffset_WindowPos3sMESA, fn)
+static void INLINE SET_WindowPos3sMESA(struct _glapi_table *disp, void (GLAPIENTRYP fn)(GLshort, GLshort, GLshort)) {
+   SET_by_offset(disp, _gloffset_WindowPos3sMESA, fn);
+}
+
 #define CALL_WindowPos3svMESA(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(const GLshort *)), _gloffset_WindowPos3svMESA, parameters)
 #define GET_WindowPos3svMESA(disp) GET_by_offset(disp, _gloffset_WindowPos3svMESA)
-#define SET_WindowPos3svMESA(disp, fn) SET_by_offset(disp, _gloffset_WindowPos3svMESA, fn)
+static void INLINE SET_WindowPos3svMESA(struct _glapi_table *disp, void (GLAPIENTRYP fn)(const GLshort *)) {
+   SET_by_offset(disp, _gloffset_WindowPos3svMESA, fn);
+}
+
 #define CALL_WindowPos4dMESA(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLdouble, GLdouble, GLdouble, GLdouble)), _gloffset_WindowPos4dMESA, parameters)
 #define GET_WindowPos4dMESA(disp) GET_by_offset(disp, _gloffset_WindowPos4dMESA)
-#define SET_WindowPos4dMESA(disp, fn) SET_by_offset(disp, _gloffset_WindowPos4dMESA, fn)
+static void INLINE SET_WindowPos4dMESA(struct _glapi_table *disp, void (GLAPIENTRYP fn)(GLdouble, GLdouble, GLdouble, GLdouble)) {
+   SET_by_offset(disp, _gloffset_WindowPos4dMESA, fn);
+}
+
 #define CALL_WindowPos4dvMESA(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(const GLdouble *)), _gloffset_WindowPos4dvMESA, parameters)
 #define GET_WindowPos4dvMESA(disp) GET_by_offset(disp, _gloffset_WindowPos4dvMESA)
-#define SET_WindowPos4dvMESA(disp, fn) SET_by_offset(disp, _gloffset_WindowPos4dvMESA, fn)
+static void INLINE SET_WindowPos4dvMESA(struct _glapi_table *disp, void (GLAPIENTRYP fn)(const GLdouble *)) {
+   SET_by_offset(disp, _gloffset_WindowPos4dvMESA, fn);
+}
+
 #define CALL_WindowPos4fMESA(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLfloat, GLfloat, GLfloat, GLfloat)), _gloffset_WindowPos4fMESA, parameters)
 #define GET_WindowPos4fMESA(disp) GET_by_offset(disp, _gloffset_WindowPos4fMESA)
-#define SET_WindowPos4fMESA(disp, fn) SET_by_offset(disp, _gloffset_WindowPos4fMESA, fn)
+static void INLINE SET_WindowPos4fMESA(struct _glapi_table *disp, void (GLAPIENTRYP fn)(GLfloat, GLfloat, GLfloat, GLfloat)) {
+   SET_by_offset(disp, _gloffset_WindowPos4fMESA, fn);
+}
+
 #define CALL_WindowPos4fvMESA(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(const GLfloat *)), _gloffset_WindowPos4fvMESA, parameters)
 #define GET_WindowPos4fvMESA(disp) GET_by_offset(disp, _gloffset_WindowPos4fvMESA)
-#define SET_WindowPos4fvMESA(disp, fn) SET_by_offset(disp, _gloffset_WindowPos4fvMESA, fn)
+static void INLINE SET_WindowPos4fvMESA(struct _glapi_table *disp, void (GLAPIENTRYP fn)(const GLfloat *)) {
+   SET_by_offset(disp, _gloffset_WindowPos4fvMESA, fn);
+}
+
 #define CALL_WindowPos4iMESA(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLint, GLint, GLint, GLint)), _gloffset_WindowPos4iMESA, parameters)
 #define GET_WindowPos4iMESA(disp) GET_by_offset(disp, _gloffset_WindowPos4iMESA)
-#define SET_WindowPos4iMESA(disp, fn) SET_by_offset(disp, _gloffset_WindowPos4iMESA, fn)
+static void INLINE SET_WindowPos4iMESA(struct _glapi_table *disp, void (GLAPIENTRYP fn)(GLint, GLint, GLint, GLint)) {
+   SET_by_offset(disp, _gloffset_WindowPos4iMESA, fn);
+}
+
 #define CALL_WindowPos4ivMESA(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(const GLint *)), _gloffset_WindowPos4ivMESA, parameters)
 #define GET_WindowPos4ivMESA(disp) GET_by_offset(disp, _gloffset_WindowPos4ivMESA)
-#define SET_WindowPos4ivMESA(disp, fn) SET_by_offset(disp, _gloffset_WindowPos4ivMESA, fn)
+static void INLINE SET_WindowPos4ivMESA(struct _glapi_table *disp, void (GLAPIENTRYP fn)(const GLint *)) {
+   SET_by_offset(disp, _gloffset_WindowPos4ivMESA, fn);
+}
+
 #define CALL_WindowPos4sMESA(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLshort, GLshort, GLshort, GLshort)), _gloffset_WindowPos4sMESA, parameters)
 #define GET_WindowPos4sMESA(disp) GET_by_offset(disp, _gloffset_WindowPos4sMESA)
-#define SET_WindowPos4sMESA(disp, fn) SET_by_offset(disp, _gloffset_WindowPos4sMESA, fn)
+static void INLINE SET_WindowPos4sMESA(struct _glapi_table *disp, void (GLAPIENTRYP fn)(GLshort, GLshort, GLshort, GLshort)) {
+   SET_by_offset(disp, _gloffset_WindowPos4sMESA, fn);
+}
+
 #define CALL_WindowPos4svMESA(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(const GLshort *)), _gloffset_WindowPos4svMESA, parameters)
 #define GET_WindowPos4svMESA(disp) GET_by_offset(disp, _gloffset_WindowPos4svMESA)
-#define SET_WindowPos4svMESA(disp, fn) SET_by_offset(disp, _gloffset_WindowPos4svMESA, fn)
+static void INLINE SET_WindowPos4svMESA(struct _glapi_table *disp, void (GLAPIENTRYP fn)(const GLshort *)) {
+   SET_by_offset(disp, _gloffset_WindowPos4svMESA, fn);
+}
+
 #define CALL_MultiModeDrawArraysIBM(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(const GLenum *, const GLint *, const GLsizei *, GLsizei, GLint)), _gloffset_MultiModeDrawArraysIBM, parameters)
 #define GET_MultiModeDrawArraysIBM(disp) GET_by_offset(disp, _gloffset_MultiModeDrawArraysIBM)
-#define SET_MultiModeDrawArraysIBM(disp, fn) SET_by_offset(disp, _gloffset_MultiModeDrawArraysIBM, fn)
+static void INLINE SET_MultiModeDrawArraysIBM(struct _glapi_table *disp, void (GLAPIENTRYP fn)(const GLenum *, const GLint *, const GLsizei *, GLsizei, GLint)) {
+   SET_by_offset(disp, _gloffset_MultiModeDrawArraysIBM, fn);
+}
+
 #define CALL_MultiModeDrawElementsIBM(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(const GLenum *, const GLsizei *, GLenum, const GLvoid * const *, GLsizei, GLint)), _gloffset_MultiModeDrawElementsIBM, parameters)
 #define GET_MultiModeDrawElementsIBM(disp) GET_by_offset(disp, _gloffset_MultiModeDrawElementsIBM)
-#define SET_MultiModeDrawElementsIBM(disp, fn) SET_by_offset(disp, _gloffset_MultiModeDrawElementsIBM, fn)
+static void INLINE SET_MultiModeDrawElementsIBM(struct _glapi_table *disp, void (GLAPIENTRYP fn)(const GLenum *, const GLsizei *, GLenum, const GLvoid * const *, GLsizei, GLint)) {
+   SET_by_offset(disp, _gloffset_MultiModeDrawElementsIBM, fn);
+}
+
 #define CALL_DeleteFencesNV(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLsizei, const GLuint *)), _gloffset_DeleteFencesNV, parameters)
 #define GET_DeleteFencesNV(disp) GET_by_offset(disp, _gloffset_DeleteFencesNV)
-#define SET_DeleteFencesNV(disp, fn) SET_by_offset(disp, _gloffset_DeleteFencesNV, fn)
+static void INLINE SET_DeleteFencesNV(struct _glapi_table *disp, void (GLAPIENTRYP fn)(GLsizei, const GLuint *)) {
+   SET_by_offset(disp, _gloffset_DeleteFencesNV, fn);
+}
+
 #define CALL_FinishFenceNV(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLuint)), _gloffset_FinishFenceNV, parameters)
 #define GET_FinishFenceNV(disp) GET_by_offset(disp, _gloffset_FinishFenceNV)
-#define SET_FinishFenceNV(disp, fn) SET_by_offset(disp, _gloffset_FinishFenceNV, fn)
+static void INLINE SET_FinishFenceNV(struct _glapi_table *disp, void (GLAPIENTRYP fn)(GLuint)) {
+   SET_by_offset(disp, _gloffset_FinishFenceNV, fn);
+}
+
 #define CALL_GenFencesNV(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLsizei, GLuint *)), _gloffset_GenFencesNV, parameters)
 #define GET_GenFencesNV(disp) GET_by_offset(disp, _gloffset_GenFencesNV)
-#define SET_GenFencesNV(disp, fn) SET_by_offset(disp, _gloffset_GenFencesNV, fn)
+static void INLINE SET_GenFencesNV(struct _glapi_table *disp, void (GLAPIENTRYP fn)(GLsizei, GLuint *)) {
+   SET_by_offset(disp, _gloffset_GenFencesNV, fn);
+}
+
 #define CALL_GetFenceivNV(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLuint, GLenum, GLint *)), _gloffset_GetFenceivNV, parameters)
 #define GET_GetFenceivNV(disp) GET_by_offset(disp, _gloffset_GetFenceivNV)
-#define SET_GetFenceivNV(disp, fn) SET_by_offset(disp, _gloffset_GetFenceivNV, fn)
+static void INLINE SET_GetFenceivNV(struct _glapi_table *disp, void (GLAPIENTRYP fn)(GLuint, GLenum, GLint *)) {
+   SET_by_offset(disp, _gloffset_GetFenceivNV, fn);
+}
+
 #define CALL_IsFenceNV(disp, parameters) CALL_by_offset(disp, (GLboolean (GLAPIENTRYP)(GLuint)), _gloffset_IsFenceNV, parameters)
 #define GET_IsFenceNV(disp) GET_by_offset(disp, _gloffset_IsFenceNV)
-#define SET_IsFenceNV(disp, fn) SET_by_offset(disp, _gloffset_IsFenceNV, fn)
+static void INLINE SET_IsFenceNV(struct _glapi_table *disp, GLboolean (GLAPIENTRYP fn)(GLuint)) {
+   SET_by_offset(disp, _gloffset_IsFenceNV, fn);
+}
+
 #define CALL_SetFenceNV(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLuint, GLenum)), _gloffset_SetFenceNV, parameters)
 #define GET_SetFenceNV(disp) GET_by_offset(disp, _gloffset_SetFenceNV)
-#define SET_SetFenceNV(disp, fn) SET_by_offset(disp, _gloffset_SetFenceNV, fn)
+static void INLINE SET_SetFenceNV(struct _glapi_table *disp, void (GLAPIENTRYP fn)(GLuint, GLenum)) {
+   SET_by_offset(disp, _gloffset_SetFenceNV, fn);
+}
+
 #define CALL_TestFenceNV(disp, parameters) CALL_by_offset(disp, (GLboolean (GLAPIENTRYP)(GLuint)), _gloffset_TestFenceNV, parameters)
 #define GET_TestFenceNV(disp) GET_by_offset(disp, _gloffset_TestFenceNV)
-#define SET_TestFenceNV(disp, fn) SET_by_offset(disp, _gloffset_TestFenceNV, fn)
+static void INLINE SET_TestFenceNV(struct _glapi_table *disp, GLboolean (GLAPIENTRYP fn)(GLuint)) {
+   SET_by_offset(disp, _gloffset_TestFenceNV, fn);
+}
+
 #define CALL_AreProgramsResidentNV(disp, parameters) CALL_by_offset(disp, (GLboolean (GLAPIENTRYP)(GLsizei, const GLuint *, GLboolean *)), _gloffset_AreProgramsResidentNV, parameters)
 #define GET_AreProgramsResidentNV(disp) GET_by_offset(disp, _gloffset_AreProgramsResidentNV)
-#define SET_AreProgramsResidentNV(disp, fn) SET_by_offset(disp, _gloffset_AreProgramsResidentNV, fn)
+static void INLINE SET_AreProgramsResidentNV(struct _glapi_table *disp, GLboolean (GLAPIENTRYP fn)(GLsizei, const GLuint *, GLboolean *)) {
+   SET_by_offset(disp, _gloffset_AreProgramsResidentNV, fn);
+}
+
 #define CALL_BindProgramNV(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLenum, GLuint)), _gloffset_BindProgramNV, parameters)
 #define GET_BindProgramNV(disp) GET_by_offset(disp, _gloffset_BindProgramNV)
-#define SET_BindProgramNV(disp, fn) SET_by_offset(disp, _gloffset_BindProgramNV, fn)
+static void INLINE SET_BindProgramNV(struct _glapi_table *disp, void (GLAPIENTRYP fn)(GLenum, GLuint)) {
+   SET_by_offset(disp, _gloffset_BindProgramNV, fn);
+}
+
 #define CALL_DeleteProgramsNV(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLsizei, const GLuint *)), _gloffset_DeleteProgramsNV, parameters)
 #define GET_DeleteProgramsNV(disp) GET_by_offset(disp, _gloffset_DeleteProgramsNV)
-#define SET_DeleteProgramsNV(disp, fn) SET_by_offset(disp, _gloffset_DeleteProgramsNV, fn)
+static void INLINE SET_DeleteProgramsNV(struct _glapi_table *disp, void (GLAPIENTRYP fn)(GLsizei, const GLuint *)) {
+   SET_by_offset(disp, _gloffset_DeleteProgramsNV, fn);
+}
+
 #define CALL_ExecuteProgramNV(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLenum, GLuint, const GLfloat *)), _gloffset_ExecuteProgramNV, parameters)
 #define GET_ExecuteProgramNV(disp) GET_by_offset(disp, _gloffset_ExecuteProgramNV)
-#define SET_ExecuteProgramNV(disp, fn) SET_by_offset(disp, _gloffset_ExecuteProgramNV, fn)
+static void INLINE SET_ExecuteProgramNV(struct _glapi_table *disp, void (GLAPIENTRYP fn)(GLenum, GLuint, const GLfloat *)) {
+   SET_by_offset(disp, _gloffset_ExecuteProgramNV, fn);
+}
+
 #define CALL_GenProgramsNV(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLsizei, GLuint *)), _gloffset_GenProgramsNV, parameters)
 #define GET_GenProgramsNV(disp) GET_by_offset(disp, _gloffset_GenProgramsNV)
-#define SET_GenProgramsNV(disp, fn) SET_by_offset(disp, _gloffset_GenProgramsNV, fn)
+static void INLINE SET_GenProgramsNV(struct _glapi_table *disp, void (GLAPIENTRYP fn)(GLsizei, GLuint *)) {
+   SET_by_offset(disp, _gloffset_GenProgramsNV, fn);
+}
+
 #define CALL_GetProgramParameterdvNV(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLenum, GLuint, GLenum, GLdouble *)), _gloffset_GetProgramParameterdvNV, parameters)
 #define GET_GetProgramParameterdvNV(disp) GET_by_offset(disp, _gloffset_GetProgramParameterdvNV)
-#define SET_GetProgramParameterdvNV(disp, fn) SET_by_offset(disp, _gloffset_GetProgramParameterdvNV, fn)
+static void INLINE SET_GetProgramParameterdvNV(struct _glapi_table *disp, void (GLAPIENTRYP fn)(GLenum, GLuint, GLenum, GLdouble *)) {
+   SET_by_offset(disp, _gloffset_GetProgramParameterdvNV, fn);
+}
+
 #define CALL_GetProgramParameterfvNV(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLenum, GLuint, GLenum, GLfloat *)), _gloffset_GetProgramParameterfvNV, parameters)
 #define GET_GetProgramParameterfvNV(disp) GET_by_offset(disp, _gloffset_GetProgramParameterfvNV)
-#define SET_GetProgramParameterfvNV(disp, fn) SET_by_offset(disp, _gloffset_GetProgramParameterfvNV, fn)
+static void INLINE SET_GetProgramParameterfvNV(struct _glapi_table *disp, void (GLAPIENTRYP fn)(GLenum, GLuint, GLenum, GLfloat *)) {
+   SET_by_offset(disp, _gloffset_GetProgramParameterfvNV, fn);
+}
+
 #define CALL_GetProgramStringNV(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLuint, GLenum, GLubyte *)), _gloffset_GetProgramStringNV, parameters)
 #define GET_GetProgramStringNV(disp) GET_by_offset(disp, _gloffset_GetProgramStringNV)
-#define SET_GetProgramStringNV(disp, fn) SET_by_offset(disp, _gloffset_GetProgramStringNV, fn)
+static void INLINE SET_GetProgramStringNV(struct _glapi_table *disp, void (GLAPIENTRYP fn)(GLuint, GLenum, GLubyte *)) {
+   SET_by_offset(disp, _gloffset_GetProgramStringNV, fn);
+}
+
 #define CALL_GetProgramivNV(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLuint, GLenum, GLint *)), _gloffset_GetProgramivNV, parameters)
 #define GET_GetProgramivNV(disp) GET_by_offset(disp, _gloffset_GetProgramivNV)
-#define SET_GetProgramivNV(disp, fn) SET_by_offset(disp, _gloffset_GetProgramivNV, fn)
+static void INLINE SET_GetProgramivNV(struct _glapi_table *disp, void (GLAPIENTRYP fn)(GLuint, GLenum, GLint *)) {
+   SET_by_offset(disp, _gloffset_GetProgramivNV, fn);
+}
+
 #define CALL_GetTrackMatrixivNV(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLenum, GLuint, GLenum, GLint *)), _gloffset_GetTrackMatrixivNV, parameters)
 #define GET_GetTrackMatrixivNV(disp) GET_by_offset(disp, _gloffset_GetTrackMatrixivNV)
-#define SET_GetTrackMatrixivNV(disp, fn) SET_by_offset(disp, _gloffset_GetTrackMatrixivNV, fn)
+static void INLINE SET_GetTrackMatrixivNV(struct _glapi_table *disp, void (GLAPIENTRYP fn)(GLenum, GLuint, GLenum, GLint *)) {
+   SET_by_offset(disp, _gloffset_GetTrackMatrixivNV, fn);
+}
+
 #define CALL_GetVertexAttribPointervNV(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLuint, GLenum, GLvoid **)), _gloffset_GetVertexAttribPointervNV, parameters)
 #define GET_GetVertexAttribPointervNV(disp) GET_by_offset(disp, _gloffset_GetVertexAttribPointervNV)
-#define SET_GetVertexAttribPointervNV(disp, fn) SET_by_offset(disp, _gloffset_GetVertexAttribPointervNV, fn)
+static void INLINE SET_GetVertexAttribPointervNV(struct _glapi_table *disp, void (GLAPIENTRYP fn)(GLuint, GLenum, GLvoid **)) {
+   SET_by_offset(disp, _gloffset_GetVertexAttribPointervNV, fn);
+}
+
 #define CALL_GetVertexAttribdvNV(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLuint, GLenum, GLdouble *)), _gloffset_GetVertexAttribdvNV, parameters)
 #define GET_GetVertexAttribdvNV(disp) GET_by_offset(disp, _gloffset_GetVertexAttribdvNV)
-#define SET_GetVertexAttribdvNV(disp, fn) SET_by_offset(disp, _gloffset_GetVertexAttribdvNV, fn)
+static void INLINE SET_GetVertexAttribdvNV(struct _glapi_table *disp, void (GLAPIENTRYP fn)(GLuint, GLenum, GLdouble *)) {
+   SET_by_offset(disp, _gloffset_GetVertexAttribdvNV, fn);
+}
+
 #define CALL_GetVertexAttribfvNV(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLuint, GLenum, GLfloat *)), _gloffset_GetVertexAttribfvNV, parameters)
 #define GET_GetVertexAttribfvNV(disp) GET_by_offset(disp, _gloffset_GetVertexAttribfvNV)
-#define SET_GetVertexAttribfvNV(disp, fn) SET_by_offset(disp, _gloffset_GetVertexAttribfvNV, fn)
+static void INLINE SET_GetVertexAttribfvNV(struct _glapi_table *disp, void (GLAPIENTRYP fn)(GLuint, GLenum, GLfloat *)) {
+   SET_by_offset(disp, _gloffset_GetVertexAttribfvNV, fn);
+}
+
 #define CALL_GetVertexAttribivNV(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLuint, GLenum, GLint *)), _gloffset_GetVertexAttribivNV, parameters)
 #define GET_GetVertexAttribivNV(disp) GET_by_offset(disp, _gloffset_GetVertexAttribivNV)
-#define SET_GetVertexAttribivNV(disp, fn) SET_by_offset(disp, _gloffset_GetVertexAttribivNV, fn)
+static void INLINE SET_GetVertexAttribivNV(struct _glapi_table *disp, void (GLAPIENTRYP fn)(GLuint, GLenum, GLint *)) {
+   SET_by_offset(disp, _gloffset_GetVertexAttribivNV, fn);
+}
+
 #define CALL_IsProgramNV(disp, parameters) CALL_by_offset(disp, (GLboolean (GLAPIENTRYP)(GLuint)), _gloffset_IsProgramNV, parameters)
 #define GET_IsProgramNV(disp) GET_by_offset(disp, _gloffset_IsProgramNV)
-#define SET_IsProgramNV(disp, fn) SET_by_offset(disp, _gloffset_IsProgramNV, fn)
+static void INLINE SET_IsProgramNV(struct _glapi_table *disp, GLboolean (GLAPIENTRYP fn)(GLuint)) {
+   SET_by_offset(disp, _gloffset_IsProgramNV, fn);
+}
+
 #define CALL_LoadProgramNV(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLenum, GLuint, GLsizei, const GLubyte *)), _gloffset_LoadProgramNV, parameters)
 #define GET_LoadProgramNV(disp) GET_by_offset(disp, _gloffset_LoadProgramNV)
-#define SET_LoadProgramNV(disp, fn) SET_by_offset(disp, _gloffset_LoadProgramNV, fn)
+static void INLINE SET_LoadProgramNV(struct _glapi_table *disp, void (GLAPIENTRYP fn)(GLenum, GLuint, GLsizei, const GLubyte *)) {
+   SET_by_offset(disp, _gloffset_LoadProgramNV, fn);
+}
+
 #define CALL_ProgramParameters4dvNV(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLenum, GLuint, GLsizei, const GLdouble *)), _gloffset_ProgramParameters4dvNV, parameters)
 #define GET_ProgramParameters4dvNV(disp) GET_by_offset(disp, _gloffset_ProgramParameters4dvNV)
-#define SET_ProgramParameters4dvNV(disp, fn) SET_by_offset(disp, _gloffset_ProgramParameters4dvNV, fn)
+static void INLINE SET_ProgramParameters4dvNV(struct _glapi_table *disp, void (GLAPIENTRYP fn)(GLenum, GLuint, GLsizei, const GLdouble *)) {
+   SET_by_offset(disp, _gloffset_ProgramParameters4dvNV, fn);
+}
+
 #define CALL_ProgramParameters4fvNV(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLenum, GLuint, GLsizei, const GLfloat *)), _gloffset_ProgramParameters4fvNV, parameters)
 #define GET_ProgramParameters4fvNV(disp) GET_by_offset(disp, _gloffset_ProgramParameters4fvNV)
-#define SET_ProgramParameters4fvNV(disp, fn) SET_by_offset(disp, _gloffset_ProgramParameters4fvNV, fn)
+static void INLINE SET_ProgramParameters4fvNV(struct _glapi_table *disp, void (GLAPIENTRYP fn)(GLenum, GLuint, GLsizei, const GLfloat *)) {
+   SET_by_offset(disp, _gloffset_ProgramParameters4fvNV, fn);
+}
+
 #define CALL_RequestResidentProgramsNV(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLsizei, const GLuint *)), _gloffset_RequestResidentProgramsNV, parameters)
 #define GET_RequestResidentProgramsNV(disp) GET_by_offset(disp, _gloffset_RequestResidentProgramsNV)
-#define SET_RequestResidentProgramsNV(disp, fn) SET_by_offset(disp, _gloffset_RequestResidentProgramsNV, fn)
+static void INLINE SET_RequestResidentProgramsNV(struct _glapi_table *disp, void (GLAPIENTRYP fn)(GLsizei, const GLuint *)) {
+   SET_by_offset(disp, _gloffset_RequestResidentProgramsNV, fn);
+}
+
 #define CALL_TrackMatrixNV(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLenum, GLuint, GLenum, GLenum)), _gloffset_TrackMatrixNV, parameters)
 #define GET_TrackMatrixNV(disp) GET_by_offset(disp, _gloffset_TrackMatrixNV)
-#define SET_TrackMatrixNV(disp, fn) SET_by_offset(disp, _gloffset_TrackMatrixNV, fn)
+static void INLINE SET_TrackMatrixNV(struct _glapi_table *disp, void (GLAPIENTRYP fn)(GLenum, GLuint, GLenum, GLenum)) {
+   SET_by_offset(disp, _gloffset_TrackMatrixNV, fn);
+}
+
 #define CALL_VertexAttrib1dNV(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLuint, GLdouble)), _gloffset_VertexAttrib1dNV, parameters)
 #define GET_VertexAttrib1dNV(disp) GET_by_offset(disp, _gloffset_VertexAttrib1dNV)
-#define SET_VertexAttrib1dNV(disp, fn) SET_by_offset(disp, _gloffset_VertexAttrib1dNV, fn)
+static void INLINE SET_VertexAttrib1dNV(struct _glapi_table *disp, void (GLAPIENTRYP fn)(GLuint, GLdouble)) {
+   SET_by_offset(disp, _gloffset_VertexAttrib1dNV, fn);
+}
+
 #define CALL_VertexAttrib1dvNV(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLuint, const GLdouble *)), _gloffset_VertexAttrib1dvNV, parameters)
 #define GET_VertexAttrib1dvNV(disp) GET_by_offset(disp, _gloffset_VertexAttrib1dvNV)
-#define SET_VertexAttrib1dvNV(disp, fn) SET_by_offset(disp, _gloffset_VertexAttrib1dvNV, fn)
+static void INLINE SET_VertexAttrib1dvNV(struct _glapi_table *disp, void (GLAPIENTRYP fn)(GLuint, const GLdouble *)) {
+   SET_by_offset(disp, _gloffset_VertexAttrib1dvNV, fn);
+}
+
 #define CALL_VertexAttrib1fNV(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLuint, GLfloat)), _gloffset_VertexAttrib1fNV, parameters)
 #define GET_VertexAttrib1fNV(disp) GET_by_offset(disp, _gloffset_VertexAttrib1fNV)
-#define SET_VertexAttrib1fNV(disp, fn) SET_by_offset(disp, _gloffset_VertexAttrib1fNV, fn)
+static void INLINE SET_VertexAttrib1fNV(struct _glapi_table *disp, void (GLAPIENTRYP fn)(GLuint, GLfloat)) {
+   SET_by_offset(disp, _gloffset_VertexAttrib1fNV, fn);
+}
+
 #define CALL_VertexAttrib1fvNV(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLuint, const GLfloat *)), _gloffset_VertexAttrib1fvNV, parameters)
 #define GET_VertexAttrib1fvNV(disp) GET_by_offset(disp, _gloffset_VertexAttrib1fvNV)
-#define SET_VertexAttrib1fvNV(disp, fn) SET_by_offset(disp, _gloffset_VertexAttrib1fvNV, fn)
+static void INLINE SET_VertexAttrib1fvNV(struct _glapi_table *disp, void (GLAPIENTRYP fn)(GLuint, const GLfloat *)) {
+   SET_by_offset(disp, _gloffset_VertexAttrib1fvNV, fn);
+}
+
 #define CALL_VertexAttrib1sNV(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLuint, GLshort)), _gloffset_VertexAttrib1sNV, parameters)
 #define GET_VertexAttrib1sNV(disp) GET_by_offset(disp, _gloffset_VertexAttrib1sNV)
-#define SET_VertexAttrib1sNV(disp, fn) SET_by_offset(disp, _gloffset_VertexAttrib1sNV, fn)
+static void INLINE SET_VertexAttrib1sNV(struct _glapi_table *disp, void (GLAPIENTRYP fn)(GLuint, GLshort)) {
+   SET_by_offset(disp, _gloffset_VertexAttrib1sNV, fn);
+}
+
 #define CALL_VertexAttrib1svNV(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLuint, const GLshort *)), _gloffset_VertexAttrib1svNV, parameters)
 #define GET_VertexAttrib1svNV(disp) GET_by_offset(disp, _gloffset_VertexAttrib1svNV)
-#define SET_VertexAttrib1svNV(disp, fn) SET_by_offset(disp, _gloffset_VertexAttrib1svNV, fn)
+static void INLINE SET_VertexAttrib1svNV(struct _glapi_table *disp, void (GLAPIENTRYP fn)(GLuint, const GLshort *)) {
+   SET_by_offset(disp, _gloffset_VertexAttrib1svNV, fn);
+}
+
 #define CALL_VertexAttrib2dNV(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLuint, GLdouble, GLdouble)), _gloffset_VertexAttrib2dNV, parameters)
 #define GET_VertexAttrib2dNV(disp) GET_by_offset(disp, _gloffset_VertexAttrib2dNV)
-#define SET_VertexAttrib2dNV(disp, fn) SET_by_offset(disp, _gloffset_VertexAttrib2dNV, fn)
+static void INLINE SET_VertexAttrib2dNV(struct _glapi_table *disp, void (GLAPIENTRYP fn)(GLuint, GLdouble, GLdouble)) {
+   SET_by_offset(disp, _gloffset_VertexAttrib2dNV, fn);
+}
+
 #define CALL_VertexAttrib2dvNV(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLuint, const GLdouble *)), _gloffset_VertexAttrib2dvNV, parameters)
 #define GET_VertexAttrib2dvNV(disp) GET_by_offset(disp, _gloffset_VertexAttrib2dvNV)
-#define SET_VertexAttrib2dvNV(disp, fn) SET_by_offset(disp, _gloffset_VertexAttrib2dvNV, fn)
+static void INLINE SET_VertexAttrib2dvNV(struct _glapi_table *disp, void (GLAPIENTRYP fn)(GLuint, const GLdouble *)) {
+   SET_by_offset(disp, _gloffset_VertexAttrib2dvNV, fn);
+}
+
 #define CALL_VertexAttrib2fNV(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLuint, GLfloat, GLfloat)), _gloffset_VertexAttrib2fNV, parameters)
 #define GET_VertexAttrib2fNV(disp) GET_by_offset(disp, _gloffset_VertexAttrib2fNV)
-#define SET_VertexAttrib2fNV(disp, fn) SET_by_offset(disp, _gloffset_VertexAttrib2fNV, fn)
+static void INLINE SET_VertexAttrib2fNV(struct _glapi_table *disp, void (GLAPIENTRYP fn)(GLuint, GLfloat, GLfloat)) {
+   SET_by_offset(disp, _gloffset_VertexAttrib2fNV, fn);
+}
+
 #define CALL_VertexAttrib2fvNV(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLuint, const GLfloat *)), _gloffset_VertexAttrib2fvNV, parameters)
 #define GET_VertexAttrib2fvNV(disp) GET_by_offset(disp, _gloffset_VertexAttrib2fvNV)
-#define SET_VertexAttrib2fvNV(disp, fn) SET_by_offset(disp, _gloffset_VertexAttrib2fvNV, fn)
+static void INLINE SET_VertexAttrib2fvNV(struct _glapi_table *disp, void (GLAPIENTRYP fn)(GLuint, const GLfloat *)) {
+   SET_by_offset(disp, _gloffset_VertexAttrib2fvNV, fn);
+}
+
 #define CALL_VertexAttrib2sNV(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLuint, GLshort, GLshort)), _gloffset_VertexAttrib2sNV, parameters)
 #define GET_VertexAttrib2sNV(disp) GET_by_offset(disp, _gloffset_VertexAttrib2sNV)
-#define SET_VertexAttrib2sNV(disp, fn) SET_by_offset(disp, _gloffset_VertexAttrib2sNV, fn)
+static void INLINE SET_VertexAttrib2sNV(struct _glapi_table *disp, void (GLAPIENTRYP fn)(GLuint, GLshort, GLshort)) {
+   SET_by_offset(disp, _gloffset_VertexAttrib2sNV, fn);
+}
+
 #define CALL_VertexAttrib2svNV(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLuint, const GLshort *)), _gloffset_VertexAttrib2svNV, parameters)
 #define GET_VertexAttrib2svNV(disp) GET_by_offset(disp, _gloffset_VertexAttrib2svNV)
-#define SET_VertexAttrib2svNV(disp, fn) SET_by_offset(disp, _gloffset_VertexAttrib2svNV, fn)
+static void INLINE SET_VertexAttrib2svNV(struct _glapi_table *disp, void (GLAPIENTRYP fn)(GLuint, const GLshort *)) {
+   SET_by_offset(disp, _gloffset_VertexAttrib2svNV, fn);
+}
+
 #define CALL_VertexAttrib3dNV(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLuint, GLdouble, GLdouble, GLdouble)), _gloffset_VertexAttrib3dNV, parameters)
 #define GET_VertexAttrib3dNV(disp) GET_by_offset(disp, _gloffset_VertexAttrib3dNV)
-#define SET_VertexAttrib3dNV(disp, fn) SET_by_offset(disp, _gloffset_VertexAttrib3dNV, fn)
+static void INLINE SET_VertexAttrib3dNV(struct _glapi_table *disp, void (GLAPIENTRYP fn)(GLuint, GLdouble, GLdouble, GLdouble)) {
+   SET_by_offset(disp, _gloffset_VertexAttrib3dNV, fn);
+}
+
 #define CALL_VertexAttrib3dvNV(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLuint, const GLdouble *)), _gloffset_VertexAttrib3dvNV, parameters)
 #define GET_VertexAttrib3dvNV(disp) GET_by_offset(disp, _gloffset_VertexAttrib3dvNV)
-#define SET_VertexAttrib3dvNV(disp, fn) SET_by_offset(disp, _gloffset_VertexAttrib3dvNV, fn)
+static void INLINE SET_VertexAttrib3dvNV(struct _glapi_table *disp, void (GLAPIENTRYP fn)(GLuint, const GLdouble *)) {
+   SET_by_offset(disp, _gloffset_VertexAttrib3dvNV, fn);
+}
+
 #define CALL_VertexAttrib3fNV(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLuint, GLfloat, GLfloat, GLfloat)), _gloffset_VertexAttrib3fNV, parameters)
 #define GET_VertexAttrib3fNV(disp) GET_by_offset(disp, _gloffset_VertexAttrib3fNV)
-#define SET_VertexAttrib3fNV(disp, fn) SET_by_offset(disp, _gloffset_VertexAttrib3fNV, fn)
+static void INLINE SET_VertexAttrib3fNV(struct _glapi_table *disp, void (GLAPIENTRYP fn)(GLuint, GLfloat, GLfloat, GLfloat)) {
+   SET_by_offset(disp, _gloffset_VertexAttrib3fNV, fn);
+}
+
 #define CALL_VertexAttrib3fvNV(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLuint, const GLfloat *)), _gloffset_VertexAttrib3fvNV, parameters)
 #define GET_VertexAttrib3fvNV(disp) GET_by_offset(disp, _gloffset_VertexAttrib3fvNV)
-#define SET_VertexAttrib3fvNV(disp, fn) SET_by_offset(disp, _gloffset_VertexAttrib3fvNV, fn)
+static void INLINE SET_VertexAttrib3fvNV(struct _glapi_table *disp, void (GLAPIENTRYP fn)(GLuint, const GLfloat *)) {
+   SET_by_offset(disp, _gloffset_VertexAttrib3fvNV, fn);
+}
+
 #define CALL_VertexAttrib3sNV(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLuint, GLshort, GLshort, GLshort)), _gloffset_VertexAttrib3sNV, parameters)
 #define GET_VertexAttrib3sNV(disp) GET_by_offset(disp, _gloffset_VertexAttrib3sNV)
-#define SET_VertexAttrib3sNV(disp, fn) SET_by_offset(disp, _gloffset_VertexAttrib3sNV, fn)
+static void INLINE SET_VertexAttrib3sNV(struct _glapi_table *disp, void (GLAPIENTRYP fn)(GLuint, GLshort, GLshort, GLshort)) {
+   SET_by_offset(disp, _gloffset_VertexAttrib3sNV, fn);
+}
+
 #define CALL_VertexAttrib3svNV(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLuint, const GLshort *)), _gloffset_VertexAttrib3svNV, parameters)
 #define GET_VertexAttrib3svNV(disp) GET_by_offset(disp, _gloffset_VertexAttrib3svNV)
-#define SET_VertexAttrib3svNV(disp, fn) SET_by_offset(disp, _gloffset_VertexAttrib3svNV, fn)
+static void INLINE SET_VertexAttrib3svNV(struct _glapi_table *disp, void (GLAPIENTRYP fn)(GLuint, const GLshort *)) {
+   SET_by_offset(disp, _gloffset_VertexAttrib3svNV, fn);
+}
+
 #define CALL_VertexAttrib4dNV(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLuint, GLdouble, GLdouble, GLdouble, GLdouble)), _gloffset_VertexAttrib4dNV, parameters)
 #define GET_VertexAttrib4dNV(disp) GET_by_offset(disp, _gloffset_VertexAttrib4dNV)
-#define SET_VertexAttrib4dNV(disp, fn) SET_by_offset(disp, _gloffset_VertexAttrib4dNV, fn)
+static void INLINE SET_VertexAttrib4dNV(struct _glapi_table *disp, void (GLAPIENTRYP fn)(GLuint, GLdouble, GLdouble, GLdouble, GLdouble)) {
+   SET_by_offset(disp, _gloffset_VertexAttrib4dNV, fn);
+}
+
 #define CALL_VertexAttrib4dvNV(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLuint, const GLdouble *)), _gloffset_VertexAttrib4dvNV, parameters)
 #define GET_VertexAttrib4dvNV(disp) GET_by_offset(disp, _gloffset_VertexAttrib4dvNV)
-#define SET_VertexAttrib4dvNV(disp, fn) SET_by_offset(disp, _gloffset_VertexAttrib4dvNV, fn)
+static void INLINE SET_VertexAttrib4dvNV(struct _glapi_table *disp, void (GLAPIENTRYP fn)(GLuint, const GLdouble *)) {
+   SET_by_offset(disp, _gloffset_VertexAttrib4dvNV, fn);
+}
+
 #define CALL_VertexAttrib4fNV(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLuint, GLfloat, GLfloat, GLfloat, GLfloat)), _gloffset_VertexAttrib4fNV, parameters)
 #define GET_VertexAttrib4fNV(disp) GET_by_offset(disp, _gloffset_VertexAttrib4fNV)
-#define SET_VertexAttrib4fNV(disp, fn) SET_by_offset(disp, _gloffset_VertexAttrib4fNV, fn)
+static void INLINE SET_VertexAttrib4fNV(struct _glapi_table *disp, void (GLAPIENTRYP fn)(GLuint, GLfloat, GLfloat, GLfloat, GLfloat)) {
+   SET_by_offset(disp, _gloffset_VertexAttrib4fNV, fn);
+}
+
 #define CALL_VertexAttrib4fvNV(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLuint, const GLfloat *)), _gloffset_VertexAttrib4fvNV, parameters)
 #define GET_VertexAttrib4fvNV(disp) GET_by_offset(disp, _gloffset_VertexAttrib4fvNV)
-#define SET_VertexAttrib4fvNV(disp, fn) SET_by_offset(disp, _gloffset_VertexAttrib4fvNV, fn)
+static void INLINE SET_VertexAttrib4fvNV(struct _glapi_table *disp, void (GLAPIENTRYP fn)(GLuint, const GLfloat *)) {
+   SET_by_offset(disp, _gloffset_VertexAttrib4fvNV, fn);
+}
+
 #define CALL_VertexAttrib4sNV(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLuint, GLshort, GLshort, GLshort, GLshort)), _gloffset_VertexAttrib4sNV, parameters)
 #define GET_VertexAttrib4sNV(disp) GET_by_offset(disp, _gloffset_VertexAttrib4sNV)
-#define SET_VertexAttrib4sNV(disp, fn) SET_by_offset(disp, _gloffset_VertexAttrib4sNV, fn)
+static void INLINE SET_VertexAttrib4sNV(struct _glapi_table *disp, void (GLAPIENTRYP fn)(GLuint, GLshort, GLshort, GLshort, GLshort)) {
+   SET_by_offset(disp, _gloffset_VertexAttrib4sNV, fn);
+}
+
 #define CALL_VertexAttrib4svNV(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLuint, const GLshort *)), _gloffset_VertexAttrib4svNV, parameters)
 #define GET_VertexAttrib4svNV(disp) GET_by_offset(disp, _gloffset_VertexAttrib4svNV)
-#define SET_VertexAttrib4svNV(disp, fn) SET_by_offset(disp, _gloffset_VertexAttrib4svNV, fn)
+static void INLINE SET_VertexAttrib4svNV(struct _glapi_table *disp, void (GLAPIENTRYP fn)(GLuint, const GLshort *)) {
+   SET_by_offset(disp, _gloffset_VertexAttrib4svNV, fn);
+}
+
 #define CALL_VertexAttrib4ubNV(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLuint, GLubyte, GLubyte, GLubyte, GLubyte)), _gloffset_VertexAttrib4ubNV, parameters)
 #define GET_VertexAttrib4ubNV(disp) GET_by_offset(disp, _gloffset_VertexAttrib4ubNV)
-#define SET_VertexAttrib4ubNV(disp, fn) SET_by_offset(disp, _gloffset_VertexAttrib4ubNV, fn)
+static void INLINE SET_VertexAttrib4ubNV(struct _glapi_table *disp, void (GLAPIENTRYP fn)(GLuint, GLubyte, GLubyte, GLubyte, GLubyte)) {
+   SET_by_offset(disp, _gloffset_VertexAttrib4ubNV, fn);
+}
+
 #define CALL_VertexAttrib4ubvNV(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLuint, const GLubyte *)), _gloffset_VertexAttrib4ubvNV, parameters)
 #define GET_VertexAttrib4ubvNV(disp) GET_by_offset(disp, _gloffset_VertexAttrib4ubvNV)
-#define SET_VertexAttrib4ubvNV(disp, fn) SET_by_offset(disp, _gloffset_VertexAttrib4ubvNV, fn)
+static void INLINE SET_VertexAttrib4ubvNV(struct _glapi_table *disp, void (GLAPIENTRYP fn)(GLuint, const GLubyte *)) {
+   SET_by_offset(disp, _gloffset_VertexAttrib4ubvNV, fn);
+}
+
 #define CALL_VertexAttribPointerNV(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLuint, GLint, GLenum, GLsizei, const GLvoid *)), _gloffset_VertexAttribPointerNV, parameters)
 #define GET_VertexAttribPointerNV(disp) GET_by_offset(disp, _gloffset_VertexAttribPointerNV)
-#define SET_VertexAttribPointerNV(disp, fn) SET_by_offset(disp, _gloffset_VertexAttribPointerNV, fn)
+static void INLINE SET_VertexAttribPointerNV(struct _glapi_table *disp, void (GLAPIENTRYP fn)(GLuint, GLint, GLenum, GLsizei, const GLvoid *)) {
+   SET_by_offset(disp, _gloffset_VertexAttribPointerNV, fn);
+}
+
 #define CALL_VertexAttribs1dvNV(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLuint, GLsizei, const GLdouble *)), _gloffset_VertexAttribs1dvNV, parameters)
 #define GET_VertexAttribs1dvNV(disp) GET_by_offset(disp, _gloffset_VertexAttribs1dvNV)
-#define SET_VertexAttribs1dvNV(disp, fn) SET_by_offset(disp, _gloffset_VertexAttribs1dvNV, fn)
+static void INLINE SET_VertexAttribs1dvNV(struct _glapi_table *disp, void (GLAPIENTRYP fn)(GLuint, GLsizei, const GLdouble *)) {
+   SET_by_offset(disp, _gloffset_VertexAttribs1dvNV, fn);
+}
+
 #define CALL_VertexAttribs1fvNV(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLuint, GLsizei, const GLfloat *)), _gloffset_VertexAttribs1fvNV, parameters)
 #define GET_VertexAttribs1fvNV(disp) GET_by_offset(disp, _gloffset_VertexAttribs1fvNV)
-#define SET_VertexAttribs1fvNV(disp, fn) SET_by_offset(disp, _gloffset_VertexAttribs1fvNV, fn)
+static void INLINE SET_VertexAttribs1fvNV(struct _glapi_table *disp, void (GLAPIENTRYP fn)(GLuint, GLsizei, const GLfloat *)) {
+   SET_by_offset(disp, _gloffset_VertexAttribs1fvNV, fn);
+}
+
 #define CALL_VertexAttribs1svNV(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLuint, GLsizei, const GLshort *)), _gloffset_VertexAttribs1svNV, parameters)
 #define GET_VertexAttribs1svNV(disp) GET_by_offset(disp, _gloffset_VertexAttribs1svNV)
-#define SET_VertexAttribs1svNV(disp, fn) SET_by_offset(disp, _gloffset_VertexAttribs1svNV, fn)
+static void INLINE SET_VertexAttribs1svNV(struct _glapi_table *disp, void (GLAPIENTRYP fn)(GLuint, GLsizei, const GLshort *)) {
+   SET_by_offset(disp, _gloffset_VertexAttribs1svNV, fn);
+}
+
 #define CALL_VertexAttribs2dvNV(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLuint, GLsizei, const GLdouble *)), _gloffset_VertexAttribs2dvNV, parameters)
 #define GET_VertexAttribs2dvNV(disp) GET_by_offset(disp, _gloffset_VertexAttribs2dvNV)
-#define SET_VertexAttribs2dvNV(disp, fn) SET_by_offset(disp, _gloffset_VertexAttribs2dvNV, fn)
+static void INLINE SET_VertexAttribs2dvNV(struct _glapi_table *disp, void (GLAPIENTRYP fn)(GLuint, GLsizei, const GLdouble *)) {
+   SET_by_offset(disp, _gloffset_VertexAttribs2dvNV, fn);
+}
+
 #define CALL_VertexAttribs2fvNV(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLuint, GLsizei, const GLfloat *)), _gloffset_VertexAttribs2fvNV, parameters)
 #define GET_VertexAttribs2fvNV(disp) GET_by_offset(disp, _gloffset_VertexAttribs2fvNV)
-#define SET_VertexAttribs2fvNV(disp, fn) SET_by_offset(disp, _gloffset_VertexAttribs2fvNV, fn)
+static void INLINE SET_VertexAttribs2fvNV(struct _glapi_table *disp, void (GLAPIENTRYP fn)(GLuint, GLsizei, const GLfloat *)) {
+   SET_by_offset(disp, _gloffset_VertexAttribs2fvNV, fn);
+}
+
 #define CALL_VertexAttribs2svNV(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLuint, GLsizei, const GLshort *)), _gloffset_VertexAttribs2svNV, parameters)
 #define GET_VertexAttribs2svNV(disp) GET_by_offset(disp, _gloffset_VertexAttribs2svNV)
-#define SET_VertexAttribs2svNV(disp, fn) SET_by_offset(disp, _gloffset_VertexAttribs2svNV, fn)
+static void INLINE SET_VertexAttribs2svNV(struct _glapi_table *disp, void (GLAPIENTRYP fn)(GLuint, GLsizei, const GLshort *)) {
+   SET_by_offset(disp, _gloffset_VertexAttribs2svNV, fn);
+}
+
 #define CALL_VertexAttribs3dvNV(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLuint, GLsizei, const GLdouble *)), _gloffset_VertexAttribs3dvNV, parameters)
 #define GET_VertexAttribs3dvNV(disp) GET_by_offset(disp, _gloffset_VertexAttribs3dvNV)
-#define SET_VertexAttribs3dvNV(disp, fn) SET_by_offset(disp, _gloffset_VertexAttribs3dvNV, fn)
+static void INLINE SET_VertexAttribs3dvNV(struct _glapi_table *disp, void (GLAPIENTRYP fn)(GLuint, GLsizei, const GLdouble *)) {
+   SET_by_offset(disp, _gloffset_VertexAttribs3dvNV, fn);
+}
+
 #define CALL_VertexAttribs3fvNV(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLuint, GLsizei, const GLfloat *)), _gloffset_VertexAttribs3fvNV, parameters)
 #define GET_VertexAttribs3fvNV(disp) GET_by_offset(disp, _gloffset_VertexAttribs3fvNV)
-#define SET_VertexAttribs3fvNV(disp, fn) SET_by_offset(disp, _gloffset_VertexAttribs3fvNV, fn)
+static void INLINE SET_VertexAttribs3fvNV(struct _glapi_table *disp, void (GLAPIENTRYP fn)(GLuint, GLsizei, const GLfloat *)) {
+   SET_by_offset(disp, _gloffset_VertexAttribs3fvNV, fn);
+}
+
 #define CALL_VertexAttribs3svNV(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLuint, GLsizei, const GLshort *)), _gloffset_VertexAttribs3svNV, parameters)
 #define GET_VertexAttribs3svNV(disp) GET_by_offset(disp, _gloffset_VertexAttribs3svNV)
-#define SET_VertexAttribs3svNV(disp, fn) SET_by_offset(disp, _gloffset_VertexAttribs3svNV, fn)
+static void INLINE SET_VertexAttribs3svNV(struct _glapi_table *disp, void (GLAPIENTRYP fn)(GLuint, GLsizei, const GLshort *)) {
+   SET_by_offset(disp, _gloffset_VertexAttribs3svNV, fn);
+}
+
 #define CALL_VertexAttribs4dvNV(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLuint, GLsizei, const GLdouble *)), _gloffset_VertexAttribs4dvNV, parameters)
 #define GET_VertexAttribs4dvNV(disp) GET_by_offset(disp, _gloffset_VertexAttribs4dvNV)
-#define SET_VertexAttribs4dvNV(disp, fn) SET_by_offset(disp, _gloffset_VertexAttribs4dvNV, fn)
+static void INLINE SET_VertexAttribs4dvNV(struct _glapi_table *disp, void (GLAPIENTRYP fn)(GLuint, GLsizei, const GLdouble *)) {
+   SET_by_offset(disp, _gloffset_VertexAttribs4dvNV, fn);
+}
+
 #define CALL_VertexAttribs4fvNV(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLuint, GLsizei, const GLfloat *)), _gloffset_VertexAttribs4fvNV, parameters)
 #define GET_VertexAttribs4fvNV(disp) GET_by_offset(disp, _gloffset_VertexAttribs4fvNV)
-#define SET_VertexAttribs4fvNV(disp, fn) SET_by_offset(disp, _gloffset_VertexAttribs4fvNV, fn)
+static void INLINE SET_VertexAttribs4fvNV(struct _glapi_table *disp, void (GLAPIENTRYP fn)(GLuint, GLsizei, const GLfloat *)) {
+   SET_by_offset(disp, _gloffset_VertexAttribs4fvNV, fn);
+}
+
 #define CALL_VertexAttribs4svNV(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLuint, GLsizei, const GLshort *)), _gloffset_VertexAttribs4svNV, parameters)
 #define GET_VertexAttribs4svNV(disp) GET_by_offset(disp, _gloffset_VertexAttribs4svNV)
-#define SET_VertexAttribs4svNV(disp, fn) SET_by_offset(disp, _gloffset_VertexAttribs4svNV, fn)
+static void INLINE SET_VertexAttribs4svNV(struct _glapi_table *disp, void (GLAPIENTRYP fn)(GLuint, GLsizei, const GLshort *)) {
+   SET_by_offset(disp, _gloffset_VertexAttribs4svNV, fn);
+}
+
 #define CALL_VertexAttribs4ubvNV(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLuint, GLsizei, const GLubyte *)), _gloffset_VertexAttribs4ubvNV, parameters)
 #define GET_VertexAttribs4ubvNV(disp) GET_by_offset(disp, _gloffset_VertexAttribs4ubvNV)
-#define SET_VertexAttribs4ubvNV(disp, fn) SET_by_offset(disp, _gloffset_VertexAttribs4ubvNV, fn)
+static void INLINE SET_VertexAttribs4ubvNV(struct _glapi_table *disp, void (GLAPIENTRYP fn)(GLuint, GLsizei, const GLubyte *)) {
+   SET_by_offset(disp, _gloffset_VertexAttribs4ubvNV, fn);
+}
+
 #define CALL_GetTexBumpParameterfvATI(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLenum, GLfloat *)), _gloffset_GetTexBumpParameterfvATI, parameters)
 #define GET_GetTexBumpParameterfvATI(disp) GET_by_offset(disp, _gloffset_GetTexBumpParameterfvATI)
-#define SET_GetTexBumpParameterfvATI(disp, fn) SET_by_offset(disp, _gloffset_GetTexBumpParameterfvATI, fn)
+static void INLINE SET_GetTexBumpParameterfvATI(struct _glapi_table *disp, void (GLAPIENTRYP fn)(GLenum, GLfloat *)) {
+   SET_by_offset(disp, _gloffset_GetTexBumpParameterfvATI, fn);
+}
+
 #define CALL_GetTexBumpParameterivATI(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLenum, GLint *)), _gloffset_GetTexBumpParameterivATI, parameters)
 #define GET_GetTexBumpParameterivATI(disp) GET_by_offset(disp, _gloffset_GetTexBumpParameterivATI)
-#define SET_GetTexBumpParameterivATI(disp, fn) SET_by_offset(disp, _gloffset_GetTexBumpParameterivATI, fn)
+static void INLINE SET_GetTexBumpParameterivATI(struct _glapi_table *disp, void (GLAPIENTRYP fn)(GLenum, GLint *)) {
+   SET_by_offset(disp, _gloffset_GetTexBumpParameterivATI, fn);
+}
+
 #define CALL_TexBumpParameterfvATI(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLenum, const GLfloat *)), _gloffset_TexBumpParameterfvATI, parameters)
 #define GET_TexBumpParameterfvATI(disp) GET_by_offset(disp, _gloffset_TexBumpParameterfvATI)
-#define SET_TexBumpParameterfvATI(disp, fn) SET_by_offset(disp, _gloffset_TexBumpParameterfvATI, fn)
+static void INLINE SET_TexBumpParameterfvATI(struct _glapi_table *disp, void (GLAPIENTRYP fn)(GLenum, const GLfloat *)) {
+   SET_by_offset(disp, _gloffset_TexBumpParameterfvATI, fn);
+}
+
 #define CALL_TexBumpParameterivATI(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLenum, const GLint *)), _gloffset_TexBumpParameterivATI, parameters)
 #define GET_TexBumpParameterivATI(disp) GET_by_offset(disp, _gloffset_TexBumpParameterivATI)
-#define SET_TexBumpParameterivATI(disp, fn) SET_by_offset(disp, _gloffset_TexBumpParameterivATI, fn)
+static void INLINE SET_TexBumpParameterivATI(struct _glapi_table *disp, void (GLAPIENTRYP fn)(GLenum, const GLint *)) {
+   SET_by_offset(disp, _gloffset_TexBumpParameterivATI, fn);
+}
+
 #define CALL_AlphaFragmentOp1ATI(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLenum, GLuint, GLuint, GLuint, GLuint, GLuint)), _gloffset_AlphaFragmentOp1ATI, parameters)
 #define GET_AlphaFragmentOp1ATI(disp) GET_by_offset(disp, _gloffset_AlphaFragmentOp1ATI)
-#define SET_AlphaFragmentOp1ATI(disp, fn) SET_by_offset(disp, _gloffset_AlphaFragmentOp1ATI, fn)
+static void INLINE SET_AlphaFragmentOp1ATI(struct _glapi_table *disp, void (GLAPIENTRYP fn)(GLenum, GLuint, GLuint, GLuint, GLuint, GLuint)) {
+   SET_by_offset(disp, _gloffset_AlphaFragmentOp1ATI, fn);
+}
+
 #define CALL_AlphaFragmentOp2ATI(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLenum, GLuint, GLuint, GLuint, GLuint, GLuint, GLuint, GLuint, GLuint)), _gloffset_AlphaFragmentOp2ATI, parameters)
 #define GET_AlphaFragmentOp2ATI(disp) GET_by_offset(disp, _gloffset_AlphaFragmentOp2ATI)
-#define SET_AlphaFragmentOp2ATI(disp, fn) SET_by_offset(disp, _gloffset_AlphaFragmentOp2ATI, fn)
+static void INLINE SET_AlphaFragmentOp2ATI(struct _glapi_table *disp, void (GLAPIENTRYP fn)(GLenum, GLuint, GLuint, GLuint, GLuint, GLuint, GLuint, GLuint, GLuint)) {
+   SET_by_offset(disp, _gloffset_AlphaFragmentOp2ATI, fn);
+}
+
 #define CALL_AlphaFragmentOp3ATI(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLenum, GLuint, GLuint, GLuint, GLuint, GLuint, GLuint, GLuint, GLuint, GLuint, GLuint, GLuint)), _gloffset_AlphaFragmentOp3ATI, parameters)
 #define GET_AlphaFragmentOp3ATI(disp) GET_by_offset(disp, _gloffset_AlphaFragmentOp3ATI)
-#define SET_AlphaFragmentOp3ATI(disp, fn) SET_by_offset(disp, _gloffset_AlphaFragmentOp3ATI, fn)
+static void INLINE SET_AlphaFragmentOp3ATI(struct _glapi_table *disp, void (GLAPIENTRYP fn)(GLenum, GLuint, GLuint, GLuint, GLuint, GLuint, GLuint, GLuint, GLuint, GLuint, GLuint, GLuint)) {
+   SET_by_offset(disp, _gloffset_AlphaFragmentOp3ATI, fn);
+}
+
 #define CALL_BeginFragmentShaderATI(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(void)), _gloffset_BeginFragmentShaderATI, parameters)
 #define GET_BeginFragmentShaderATI(disp) GET_by_offset(disp, _gloffset_BeginFragmentShaderATI)
-#define SET_BeginFragmentShaderATI(disp, fn) SET_by_offset(disp, _gloffset_BeginFragmentShaderATI, fn)
+static void INLINE SET_BeginFragmentShaderATI(struct _glapi_table *disp, void (GLAPIENTRYP fn)(void)) {
+   SET_by_offset(disp, _gloffset_BeginFragmentShaderATI, fn);
+}
+
 #define CALL_BindFragmentShaderATI(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLuint)), _gloffset_BindFragmentShaderATI, parameters)
 #define GET_BindFragmentShaderATI(disp) GET_by_offset(disp, _gloffset_BindFragmentShaderATI)
-#define SET_BindFragmentShaderATI(disp, fn) SET_by_offset(disp, _gloffset_BindFragmentShaderATI, fn)
+static void INLINE SET_BindFragmentShaderATI(struct _glapi_table *disp, void (GLAPIENTRYP fn)(GLuint)) {
+   SET_by_offset(disp, _gloffset_BindFragmentShaderATI, fn);
+}
+
 #define CALL_ColorFragmentOp1ATI(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLenum, GLuint, GLuint, GLuint, GLuint, GLuint, GLuint)), _gloffset_ColorFragmentOp1ATI, parameters)
 #define GET_ColorFragmentOp1ATI(disp) GET_by_offset(disp, _gloffset_ColorFragmentOp1ATI)
-#define SET_ColorFragmentOp1ATI(disp, fn) SET_by_offset(disp, _gloffset_ColorFragmentOp1ATI, fn)
+static void INLINE SET_ColorFragmentOp1ATI(struct _glapi_table *disp, void (GLAPIENTRYP fn)(GLenum, GLuint, GLuint, GLuint, GLuint, GLuint, GLuint)) {
+   SET_by_offset(disp, _gloffset_ColorFragmentOp1ATI, fn);
+}
+
 #define CALL_ColorFragmentOp2ATI(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLenum, GLuint, GLuint, GLuint, GLuint, GLuint, GLuint, GLuint, GLuint, GLuint)), _gloffset_ColorFragmentOp2ATI, parameters)
 #define GET_ColorFragmentOp2ATI(disp) GET_by_offset(disp, _gloffset_ColorFragmentOp2ATI)
-#define SET_ColorFragmentOp2ATI(disp, fn) SET_by_offset(disp, _gloffset_ColorFragmentOp2ATI, fn)
+static void INLINE SET_ColorFragmentOp2ATI(struct _glapi_table *disp, void (GLAPIENTRYP fn)(GLenum, GLuint, GLuint, GLuint, GLuint, GLuint, GLuint, GLuint, GLuint, GLuint)) {
+   SET_by_offset(disp, _gloffset_ColorFragmentOp2ATI, fn);
+}
+
 #define CALL_ColorFragmentOp3ATI(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLenum, GLuint, GLuint, GLuint, GLuint, GLuint, GLuint, GLuint, GLuint, GLuint, GLuint, GLuint, GLuint)), _gloffset_ColorFragmentOp3ATI, parameters)
 #define GET_ColorFragmentOp3ATI(disp) GET_by_offset(disp, _gloffset_ColorFragmentOp3ATI)
-#define SET_ColorFragmentOp3ATI(disp, fn) SET_by_offset(disp, _gloffset_ColorFragmentOp3ATI, fn)
+static void INLINE SET_ColorFragmentOp3ATI(struct _glapi_table *disp, void (GLAPIENTRYP fn)(GLenum, GLuint, GLuint, GLuint, GLuint, GLuint, GLuint, GLuint, GLuint, GLuint, GLuint, GLuint, GLuint)) {
+   SET_by_offset(disp, _gloffset_ColorFragmentOp3ATI, fn);
+}
+
 #define CALL_DeleteFragmentShaderATI(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLuint)), _gloffset_DeleteFragmentShaderATI, parameters)
 #define GET_DeleteFragmentShaderATI(disp) GET_by_offset(disp, _gloffset_DeleteFragmentShaderATI)
-#define SET_DeleteFragmentShaderATI(disp, fn) SET_by_offset(disp, _gloffset_DeleteFragmentShaderATI, fn)
+static void INLINE SET_DeleteFragmentShaderATI(struct _glapi_table *disp, void (GLAPIENTRYP fn)(GLuint)) {
+   SET_by_offset(disp, _gloffset_DeleteFragmentShaderATI, fn);
+}
+
 #define CALL_EndFragmentShaderATI(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(void)), _gloffset_EndFragmentShaderATI, parameters)
 #define GET_EndFragmentShaderATI(disp) GET_by_offset(disp, _gloffset_EndFragmentShaderATI)
-#define SET_EndFragmentShaderATI(disp, fn) SET_by_offset(disp, _gloffset_EndFragmentShaderATI, fn)
+static void INLINE SET_EndFragmentShaderATI(struct _glapi_table *disp, void (GLAPIENTRYP fn)(void)) {
+   SET_by_offset(disp, _gloffset_EndFragmentShaderATI, fn);
+}
+
 #define CALL_GenFragmentShadersATI(disp, parameters) CALL_by_offset(disp, (GLuint (GLAPIENTRYP)(GLuint)), _gloffset_GenFragmentShadersATI, parameters)
 #define GET_GenFragmentShadersATI(disp) GET_by_offset(disp, _gloffset_GenFragmentShadersATI)
-#define SET_GenFragmentShadersATI(disp, fn) SET_by_offset(disp, _gloffset_GenFragmentShadersATI, fn)
+static void INLINE SET_GenFragmentShadersATI(struct _glapi_table *disp, GLuint (GLAPIENTRYP fn)(GLuint)) {
+   SET_by_offset(disp, _gloffset_GenFragmentShadersATI, fn);
+}
+
 #define CALL_PassTexCoordATI(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLuint, GLuint, GLenum)), _gloffset_PassTexCoordATI, parameters)
 #define GET_PassTexCoordATI(disp) GET_by_offset(disp, _gloffset_PassTexCoordATI)
-#define SET_PassTexCoordATI(disp, fn) SET_by_offset(disp, _gloffset_PassTexCoordATI, fn)
+static void INLINE SET_PassTexCoordATI(struct _glapi_table *disp, void (GLAPIENTRYP fn)(GLuint, GLuint, GLenum)) {
+   SET_by_offset(disp, _gloffset_PassTexCoordATI, fn);
+}
+
 #define CALL_SampleMapATI(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLuint, GLuint, GLenum)), _gloffset_SampleMapATI, parameters)
 #define GET_SampleMapATI(disp) GET_by_offset(disp, _gloffset_SampleMapATI)
-#define SET_SampleMapATI(disp, fn) SET_by_offset(disp, _gloffset_SampleMapATI, fn)
+static void INLINE SET_SampleMapATI(struct _glapi_table *disp, void (GLAPIENTRYP fn)(GLuint, GLuint, GLenum)) {
+   SET_by_offset(disp, _gloffset_SampleMapATI, fn);
+}
+
 #define CALL_SetFragmentShaderConstantATI(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLuint, const GLfloat *)), _gloffset_SetFragmentShaderConstantATI, parameters)
 #define GET_SetFragmentShaderConstantATI(disp) GET_by_offset(disp, _gloffset_SetFragmentShaderConstantATI)
-#define SET_SetFragmentShaderConstantATI(disp, fn) SET_by_offset(disp, _gloffset_SetFragmentShaderConstantATI, fn)
+static void INLINE SET_SetFragmentShaderConstantATI(struct _glapi_table *disp, void (GLAPIENTRYP fn)(GLuint, const GLfloat *)) {
+   SET_by_offset(disp, _gloffset_SetFragmentShaderConstantATI, fn);
+}
+
 #define CALL_PointParameteriNV(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLenum, GLint)), _gloffset_PointParameteriNV, parameters)
 #define GET_PointParameteriNV(disp) GET_by_offset(disp, _gloffset_PointParameteriNV)
-#define SET_PointParameteriNV(disp, fn) SET_by_offset(disp, _gloffset_PointParameteriNV, fn)
+static void INLINE SET_PointParameteriNV(struct _glapi_table *disp, void (GLAPIENTRYP fn)(GLenum, GLint)) {
+   SET_by_offset(disp, _gloffset_PointParameteriNV, fn);
+}
+
 #define CALL_PointParameterivNV(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLenum, const GLint *)), _gloffset_PointParameterivNV, parameters)
 #define GET_PointParameterivNV(disp) GET_by_offset(disp, _gloffset_PointParameterivNV)
-#define SET_PointParameterivNV(disp, fn) SET_by_offset(disp, _gloffset_PointParameterivNV, fn)
+static void INLINE SET_PointParameterivNV(struct _glapi_table *disp, void (GLAPIENTRYP fn)(GLenum, const GLint *)) {
+   SET_by_offset(disp, _gloffset_PointParameterivNV, fn);
+}
+
 #define CALL_ActiveStencilFaceEXT(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLenum)), _gloffset_ActiveStencilFaceEXT, parameters)
 #define GET_ActiveStencilFaceEXT(disp) GET_by_offset(disp, _gloffset_ActiveStencilFaceEXT)
-#define SET_ActiveStencilFaceEXT(disp, fn) SET_by_offset(disp, _gloffset_ActiveStencilFaceEXT, fn)
+static void INLINE SET_ActiveStencilFaceEXT(struct _glapi_table *disp, void (GLAPIENTRYP fn)(GLenum)) {
+   SET_by_offset(disp, _gloffset_ActiveStencilFaceEXT, fn);
+}
+
 #define CALL_BindVertexArrayAPPLE(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLuint)), _gloffset_BindVertexArrayAPPLE, parameters)
 #define GET_BindVertexArrayAPPLE(disp) GET_by_offset(disp, _gloffset_BindVertexArrayAPPLE)
-#define SET_BindVertexArrayAPPLE(disp, fn) SET_by_offset(disp, _gloffset_BindVertexArrayAPPLE, fn)
+static void INLINE SET_BindVertexArrayAPPLE(struct _glapi_table *disp, void (GLAPIENTRYP fn)(GLuint)) {
+   SET_by_offset(disp, _gloffset_BindVertexArrayAPPLE, fn);
+}
+
 #define CALL_DeleteVertexArraysAPPLE(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLsizei, const GLuint *)), _gloffset_DeleteVertexArraysAPPLE, parameters)
 #define GET_DeleteVertexArraysAPPLE(disp) GET_by_offset(disp, _gloffset_DeleteVertexArraysAPPLE)
-#define SET_DeleteVertexArraysAPPLE(disp, fn) SET_by_offset(disp, _gloffset_DeleteVertexArraysAPPLE, fn)
+static void INLINE SET_DeleteVertexArraysAPPLE(struct _glapi_table *disp, void (GLAPIENTRYP fn)(GLsizei, const GLuint *)) {
+   SET_by_offset(disp, _gloffset_DeleteVertexArraysAPPLE, fn);
+}
+
 #define CALL_GenVertexArraysAPPLE(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLsizei, GLuint *)), _gloffset_GenVertexArraysAPPLE, parameters)
 #define GET_GenVertexArraysAPPLE(disp) GET_by_offset(disp, _gloffset_GenVertexArraysAPPLE)
-#define SET_GenVertexArraysAPPLE(disp, fn) SET_by_offset(disp, _gloffset_GenVertexArraysAPPLE, fn)
+static void INLINE SET_GenVertexArraysAPPLE(struct _glapi_table *disp, void (GLAPIENTRYP fn)(GLsizei, GLuint *)) {
+   SET_by_offset(disp, _gloffset_GenVertexArraysAPPLE, fn);
+}
+
 #define CALL_IsVertexArrayAPPLE(disp, parameters) CALL_by_offset(disp, (GLboolean (GLAPIENTRYP)(GLuint)), _gloffset_IsVertexArrayAPPLE, parameters)
 #define GET_IsVertexArrayAPPLE(disp) GET_by_offset(disp, _gloffset_IsVertexArrayAPPLE)
-#define SET_IsVertexArrayAPPLE(disp, fn) SET_by_offset(disp, _gloffset_IsVertexArrayAPPLE, fn)
+static void INLINE SET_IsVertexArrayAPPLE(struct _glapi_table *disp, GLboolean (GLAPIENTRYP fn)(GLuint)) {
+   SET_by_offset(disp, _gloffset_IsVertexArrayAPPLE, fn);
+}
+
 #define CALL_GetProgramNamedParameterdvNV(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLuint, GLsizei, const GLubyte *, GLdouble *)), _gloffset_GetProgramNamedParameterdvNV, parameters)
 #define GET_GetProgramNamedParameterdvNV(disp) GET_by_offset(disp, _gloffset_GetProgramNamedParameterdvNV)
-#define SET_GetProgramNamedParameterdvNV(disp, fn) SET_by_offset(disp, _gloffset_GetProgramNamedParameterdvNV, fn)
+static void INLINE SET_GetProgramNamedParameterdvNV(struct _glapi_table *disp, void (GLAPIENTRYP fn)(GLuint, GLsizei, const GLubyte *, GLdouble *)) {
+   SET_by_offset(disp, _gloffset_GetProgramNamedParameterdvNV, fn);
+}
+
 #define CALL_GetProgramNamedParameterfvNV(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLuint, GLsizei, const GLubyte *, GLfloat *)), _gloffset_GetProgramNamedParameterfvNV, parameters)
 #define GET_GetProgramNamedParameterfvNV(disp) GET_by_offset(disp, _gloffset_GetProgramNamedParameterfvNV)
-#define SET_GetProgramNamedParameterfvNV(disp, fn) SET_by_offset(disp, _gloffset_GetProgramNamedParameterfvNV, fn)
+static void INLINE SET_GetProgramNamedParameterfvNV(struct _glapi_table *disp, void (GLAPIENTRYP fn)(GLuint, GLsizei, const GLubyte *, GLfloat *)) {
+   SET_by_offset(disp, _gloffset_GetProgramNamedParameterfvNV, fn);
+}
+
 #define CALL_ProgramNamedParameter4dNV(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLuint, GLsizei, const GLubyte *, GLdouble, GLdouble, GLdouble, GLdouble)), _gloffset_ProgramNamedParameter4dNV, parameters)
 #define GET_ProgramNamedParameter4dNV(disp) GET_by_offset(disp, _gloffset_ProgramNamedParameter4dNV)
-#define SET_ProgramNamedParameter4dNV(disp, fn) SET_by_offset(disp, _gloffset_ProgramNamedParameter4dNV, fn)
+static void INLINE SET_ProgramNamedParameter4dNV(struct _glapi_table *disp, void (GLAPIENTRYP fn)(GLuint, GLsizei, const GLubyte *, GLdouble, GLdouble, GLdouble, GLdouble)) {
+   SET_by_offset(disp, _gloffset_ProgramNamedParameter4dNV, fn);
+}
+
 #define CALL_ProgramNamedParameter4dvNV(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLuint, GLsizei, const GLubyte *, const GLdouble *)), _gloffset_ProgramNamedParameter4dvNV, parameters)
 #define GET_ProgramNamedParameter4dvNV(disp) GET_by_offset(disp, _gloffset_ProgramNamedParameter4dvNV)
-#define SET_ProgramNamedParameter4dvNV(disp, fn) SET_by_offset(disp, _gloffset_ProgramNamedParameter4dvNV, fn)
+static void INLINE SET_ProgramNamedParameter4dvNV(struct _glapi_table *disp, void (GLAPIENTRYP fn)(GLuint, GLsizei, const GLubyte *, const GLdouble *)) {
+   SET_by_offset(disp, _gloffset_ProgramNamedParameter4dvNV, fn);
+}
+
 #define CALL_ProgramNamedParameter4fNV(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLuint, GLsizei, const GLubyte *, GLfloat, GLfloat, GLfloat, GLfloat)), _gloffset_ProgramNamedParameter4fNV, parameters)
 #define GET_ProgramNamedParameter4fNV(disp) GET_by_offset(disp, _gloffset_ProgramNamedParameter4fNV)
-#define SET_ProgramNamedParameter4fNV(disp, fn) SET_by_offset(disp, _gloffset_ProgramNamedParameter4fNV, fn)
+static void INLINE SET_ProgramNamedParameter4fNV(struct _glapi_table *disp, void (GLAPIENTRYP fn)(GLuint, GLsizei, const GLubyte *, GLfloat, GLfloat, GLfloat, GLfloat)) {
+   SET_by_offset(disp, _gloffset_ProgramNamedParameter4fNV, fn);
+}
+
 #define CALL_ProgramNamedParameter4fvNV(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLuint, GLsizei, const GLubyte *, const GLfloat *)), _gloffset_ProgramNamedParameter4fvNV, parameters)
 #define GET_ProgramNamedParameter4fvNV(disp) GET_by_offset(disp, _gloffset_ProgramNamedParameter4fvNV)
-#define SET_ProgramNamedParameter4fvNV(disp, fn) SET_by_offset(disp, _gloffset_ProgramNamedParameter4fvNV, fn)
+static void INLINE SET_ProgramNamedParameter4fvNV(struct _glapi_table *disp, void (GLAPIENTRYP fn)(GLuint, GLsizei, const GLubyte *, const GLfloat *)) {
+   SET_by_offset(disp, _gloffset_ProgramNamedParameter4fvNV, fn);
+}
+
 #define CALL_PrimitiveRestartIndexNV(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLuint)), _gloffset_PrimitiveRestartIndexNV, parameters)
 #define GET_PrimitiveRestartIndexNV(disp) GET_by_offset(disp, _gloffset_PrimitiveRestartIndexNV)
-#define SET_PrimitiveRestartIndexNV(disp, fn) SET_by_offset(disp, _gloffset_PrimitiveRestartIndexNV, fn)
+static void INLINE SET_PrimitiveRestartIndexNV(struct _glapi_table *disp, void (GLAPIENTRYP fn)(GLuint)) {
+   SET_by_offset(disp, _gloffset_PrimitiveRestartIndexNV, fn);
+}
+
 #define CALL_PrimitiveRestartNV(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(void)), _gloffset_PrimitiveRestartNV, parameters)
 #define GET_PrimitiveRestartNV(disp) GET_by_offset(disp, _gloffset_PrimitiveRestartNV)
-#define SET_PrimitiveRestartNV(disp, fn) SET_by_offset(disp, _gloffset_PrimitiveRestartNV, fn)
+static void INLINE SET_PrimitiveRestartNV(struct _glapi_table *disp, void (GLAPIENTRYP fn)(void)) {
+   SET_by_offset(disp, _gloffset_PrimitiveRestartNV, fn);
+}
+
 #define CALL_DepthBoundsEXT(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLclampd, GLclampd)), _gloffset_DepthBoundsEXT, parameters)
 #define GET_DepthBoundsEXT(disp) GET_by_offset(disp, _gloffset_DepthBoundsEXT)
-#define SET_DepthBoundsEXT(disp, fn) SET_by_offset(disp, _gloffset_DepthBoundsEXT, fn)
+static void INLINE SET_DepthBoundsEXT(struct _glapi_table *disp, void (GLAPIENTRYP fn)(GLclampd, GLclampd)) {
+   SET_by_offset(disp, _gloffset_DepthBoundsEXT, fn);
+}
+
 #define CALL_BlendEquationSeparateEXT(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLenum, GLenum)), _gloffset_BlendEquationSeparateEXT, parameters)
 #define GET_BlendEquationSeparateEXT(disp) GET_by_offset(disp, _gloffset_BlendEquationSeparateEXT)
-#define SET_BlendEquationSeparateEXT(disp, fn) SET_by_offset(disp, _gloffset_BlendEquationSeparateEXT, fn)
+static void INLINE SET_BlendEquationSeparateEXT(struct _glapi_table *disp, void (GLAPIENTRYP fn)(GLenum, GLenum)) {
+   SET_by_offset(disp, _gloffset_BlendEquationSeparateEXT, fn);
+}
+
 #define CALL_BindFramebufferEXT(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLenum, GLuint)), _gloffset_BindFramebufferEXT, parameters)
 #define GET_BindFramebufferEXT(disp) GET_by_offset(disp, _gloffset_BindFramebufferEXT)
-#define SET_BindFramebufferEXT(disp, fn) SET_by_offset(disp, _gloffset_BindFramebufferEXT, fn)
+static void INLINE SET_BindFramebufferEXT(struct _glapi_table *disp, void (GLAPIENTRYP fn)(GLenum, GLuint)) {
+   SET_by_offset(disp, _gloffset_BindFramebufferEXT, fn);
+}
+
 #define CALL_BindRenderbufferEXT(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLenum, GLuint)), _gloffset_BindRenderbufferEXT, parameters)
 #define GET_BindRenderbufferEXT(disp) GET_by_offset(disp, _gloffset_BindRenderbufferEXT)
-#define SET_BindRenderbufferEXT(disp, fn) SET_by_offset(disp, _gloffset_BindRenderbufferEXT, fn)
+static void INLINE SET_BindRenderbufferEXT(struct _glapi_table *disp, void (GLAPIENTRYP fn)(GLenum, GLuint)) {
+   SET_by_offset(disp, _gloffset_BindRenderbufferEXT, fn);
+}
+
 #define CALL_CheckFramebufferStatusEXT(disp, parameters) CALL_by_offset(disp, (GLenum (GLAPIENTRYP)(GLenum)), _gloffset_CheckFramebufferStatusEXT, parameters)
 #define GET_CheckFramebufferStatusEXT(disp) GET_by_offset(disp, _gloffset_CheckFramebufferStatusEXT)
-#define SET_CheckFramebufferStatusEXT(disp, fn) SET_by_offset(disp, _gloffset_CheckFramebufferStatusEXT, fn)
+static void INLINE SET_CheckFramebufferStatusEXT(struct _glapi_table *disp, GLenum (GLAPIENTRYP fn)(GLenum)) {
+   SET_by_offset(disp, _gloffset_CheckFramebufferStatusEXT, fn);
+}
+
 #define CALL_DeleteFramebuffersEXT(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLsizei, const GLuint *)), _gloffset_DeleteFramebuffersEXT, parameters)
 #define GET_DeleteFramebuffersEXT(disp) GET_by_offset(disp, _gloffset_DeleteFramebuffersEXT)
-#define SET_DeleteFramebuffersEXT(disp, fn) SET_by_offset(disp, _gloffset_DeleteFramebuffersEXT, fn)
+static void INLINE SET_DeleteFramebuffersEXT(struct _glapi_table *disp, void (GLAPIENTRYP fn)(GLsizei, const GLuint *)) {
+   SET_by_offset(disp, _gloffset_DeleteFramebuffersEXT, fn);
+}
+
 #define CALL_DeleteRenderbuffersEXT(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLsizei, const GLuint *)), _gloffset_DeleteRenderbuffersEXT, parameters)
 #define GET_DeleteRenderbuffersEXT(disp) GET_by_offset(disp, _gloffset_DeleteRenderbuffersEXT)
-#define SET_DeleteRenderbuffersEXT(disp, fn) SET_by_offset(disp, _gloffset_DeleteRenderbuffersEXT, fn)
+static void INLINE SET_DeleteRenderbuffersEXT(struct _glapi_table *disp, void (GLAPIENTRYP fn)(GLsizei, const GLuint *)) {
+   SET_by_offset(disp, _gloffset_DeleteRenderbuffersEXT, fn);
+}
+
 #define CALL_FramebufferRenderbufferEXT(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLenum, GLenum, GLenum, GLuint)), _gloffset_FramebufferRenderbufferEXT, parameters)
 #define GET_FramebufferRenderbufferEXT(disp) GET_by_offset(disp, _gloffset_FramebufferRenderbufferEXT)
-#define SET_FramebufferRenderbufferEXT(disp, fn) SET_by_offset(disp, _gloffset_FramebufferRenderbufferEXT, fn)
+static void INLINE SET_FramebufferRenderbufferEXT(struct _glapi_table *disp, void (GLAPIENTRYP fn)(GLenum, GLenum, GLenum, GLuint)) {
+   SET_by_offset(disp, _gloffset_FramebufferRenderbufferEXT, fn);
+}
+
 #define CALL_FramebufferTexture1DEXT(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLenum, GLenum, GLenum, GLuint, GLint)), _gloffset_FramebufferTexture1DEXT, parameters)
 #define GET_FramebufferTexture1DEXT(disp) GET_by_offset(disp, _gloffset_FramebufferTexture1DEXT)
-#define SET_FramebufferTexture1DEXT(disp, fn) SET_by_offset(disp, _gloffset_FramebufferTexture1DEXT, fn)
+static void INLINE SET_FramebufferTexture1DEXT(struct _glapi_table *disp, void (GLAPIENTRYP fn)(GLenum, GLenum, GLenum, GLuint, GLint)) {
+   SET_by_offset(disp, _gloffset_FramebufferTexture1DEXT, fn);
+}
+
 #define CALL_FramebufferTexture2DEXT(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLenum, GLenum, GLenum, GLuint, GLint)), _gloffset_FramebufferTexture2DEXT, parameters)
 #define GET_FramebufferTexture2DEXT(disp) GET_by_offset(disp, _gloffset_FramebufferTexture2DEXT)
-#define SET_FramebufferTexture2DEXT(disp, fn) SET_by_offset(disp, _gloffset_FramebufferTexture2DEXT, fn)
+static void INLINE SET_FramebufferTexture2DEXT(struct _glapi_table *disp, void (GLAPIENTRYP fn)(GLenum, GLenum, GLenum, GLuint, GLint)) {
+   SET_by_offset(disp, _gloffset_FramebufferTexture2DEXT, fn);
+}
+
 #define CALL_FramebufferTexture3DEXT(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLenum, GLenum, GLenum, GLuint, GLint, GLint)), _gloffset_FramebufferTexture3DEXT, parameters)
 #define GET_FramebufferTexture3DEXT(disp) GET_by_offset(disp, _gloffset_FramebufferTexture3DEXT)
-#define SET_FramebufferTexture3DEXT(disp, fn) SET_by_offset(disp, _gloffset_FramebufferTexture3DEXT, fn)
+static void INLINE SET_FramebufferTexture3DEXT(struct _glapi_table *disp, void (GLAPIENTRYP fn)(GLenum, GLenum, GLenum, GLuint, GLint, GLint)) {
+   SET_by_offset(disp, _gloffset_FramebufferTexture3DEXT, fn);
+}
+
 #define CALL_GenFramebuffersEXT(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLsizei, GLuint *)), _gloffset_GenFramebuffersEXT, parameters)
 #define GET_GenFramebuffersEXT(disp) GET_by_offset(disp, _gloffset_GenFramebuffersEXT)
-#define SET_GenFramebuffersEXT(disp, fn) SET_by_offset(disp, _gloffset_GenFramebuffersEXT, fn)
+static void INLINE SET_GenFramebuffersEXT(struct _glapi_table *disp, void (GLAPIENTRYP fn)(GLsizei, GLuint *)) {
+   SET_by_offset(disp, _gloffset_GenFramebuffersEXT, fn);
+}
+
 #define CALL_GenRenderbuffersEXT(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLsizei, GLuint *)), _gloffset_GenRenderbuffersEXT, parameters)
 #define GET_GenRenderbuffersEXT(disp) GET_by_offset(disp, _gloffset_GenRenderbuffersEXT)
-#define SET_GenRenderbuffersEXT(disp, fn) SET_by_offset(disp, _gloffset_GenRenderbuffersEXT, fn)
+static void INLINE SET_GenRenderbuffersEXT(struct _glapi_table *disp, void (GLAPIENTRYP fn)(GLsizei, GLuint *)) {
+   SET_by_offset(disp, _gloffset_GenRenderbuffersEXT, fn);
+}
+
 #define CALL_GenerateMipmapEXT(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLenum)), _gloffset_GenerateMipmapEXT, parameters)
 #define GET_GenerateMipmapEXT(disp) GET_by_offset(disp, _gloffset_GenerateMipmapEXT)
-#define SET_GenerateMipmapEXT(disp, fn) SET_by_offset(disp, _gloffset_GenerateMipmapEXT, fn)
+static void INLINE SET_GenerateMipmapEXT(struct _glapi_table *disp, void (GLAPIENTRYP fn)(GLenum)) {
+   SET_by_offset(disp, _gloffset_GenerateMipmapEXT, fn);
+}
+
 #define CALL_GetFramebufferAttachmentParameterivEXT(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLenum, GLenum, GLenum, GLint *)), _gloffset_GetFramebufferAttachmentParameterivEXT, parameters)
 #define GET_GetFramebufferAttachmentParameterivEXT(disp) GET_by_offset(disp, _gloffset_GetFramebufferAttachmentParameterivEXT)
-#define SET_GetFramebufferAttachmentParameterivEXT(disp, fn) SET_by_offset(disp, _gloffset_GetFramebufferAttachmentParameterivEXT, fn)
+static void INLINE SET_GetFramebufferAttachmentParameterivEXT(struct _glapi_table *disp, void (GLAPIENTRYP fn)(GLenum, GLenum, GLenum, GLint *)) {
+   SET_by_offset(disp, _gloffset_GetFramebufferAttachmentParameterivEXT, fn);
+}
+
 #define CALL_GetRenderbufferParameterivEXT(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLenum, GLenum, GLint *)), _gloffset_GetRenderbufferParameterivEXT, parameters)
 #define GET_GetRenderbufferParameterivEXT(disp) GET_by_offset(disp, _gloffset_GetRenderbufferParameterivEXT)
-#define SET_GetRenderbufferParameterivEXT(disp, fn) SET_by_offset(disp, _gloffset_GetRenderbufferParameterivEXT, fn)
+static void INLINE SET_GetRenderbufferParameterivEXT(struct _glapi_table *disp, void (GLAPIENTRYP fn)(GLenum, GLenum, GLint *)) {
+   SET_by_offset(disp, _gloffset_GetRenderbufferParameterivEXT, fn);
+}
+
 #define CALL_IsFramebufferEXT(disp, parameters) CALL_by_offset(disp, (GLboolean (GLAPIENTRYP)(GLuint)), _gloffset_IsFramebufferEXT, parameters)
 #define GET_IsFramebufferEXT(disp) GET_by_offset(disp, _gloffset_IsFramebufferEXT)
-#define SET_IsFramebufferEXT(disp, fn) SET_by_offset(disp, _gloffset_IsFramebufferEXT, fn)
+static void INLINE SET_IsFramebufferEXT(struct _glapi_table *disp, GLboolean (GLAPIENTRYP fn)(GLuint)) {
+   SET_by_offset(disp, _gloffset_IsFramebufferEXT, fn);
+}
+
 #define CALL_IsRenderbufferEXT(disp, parameters) CALL_by_offset(disp, (GLboolean (GLAPIENTRYP)(GLuint)), _gloffset_IsRenderbufferEXT, parameters)
 #define GET_IsRenderbufferEXT(disp) GET_by_offset(disp, _gloffset_IsRenderbufferEXT)
-#define SET_IsRenderbufferEXT(disp, fn) SET_by_offset(disp, _gloffset_IsRenderbufferEXT, fn)
+static void INLINE SET_IsRenderbufferEXT(struct _glapi_table *disp, GLboolean (GLAPIENTRYP fn)(GLuint)) {
+   SET_by_offset(disp, _gloffset_IsRenderbufferEXT, fn);
+}
+
 #define CALL_RenderbufferStorageEXT(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLenum, GLenum, GLsizei, GLsizei)), _gloffset_RenderbufferStorageEXT, parameters)
 #define GET_RenderbufferStorageEXT(disp) GET_by_offset(disp, _gloffset_RenderbufferStorageEXT)
-#define SET_RenderbufferStorageEXT(disp, fn) SET_by_offset(disp, _gloffset_RenderbufferStorageEXT, fn)
+static void INLINE SET_RenderbufferStorageEXT(struct _glapi_table *disp, void (GLAPIENTRYP fn)(GLenum, GLenum, GLsizei, GLsizei)) {
+   SET_by_offset(disp, _gloffset_RenderbufferStorageEXT, fn);
+}
+
 #define CALL_BlitFramebufferEXT(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLint, GLint, GLint, GLint, GLint, GLint, GLint, GLint, GLbitfield, GLenum)), _gloffset_BlitFramebufferEXT, parameters)
 #define GET_BlitFramebufferEXT(disp) GET_by_offset(disp, _gloffset_BlitFramebufferEXT)
-#define SET_BlitFramebufferEXT(disp, fn) SET_by_offset(disp, _gloffset_BlitFramebufferEXT, fn)
+static void INLINE SET_BlitFramebufferEXT(struct _glapi_table *disp, void (GLAPIENTRYP fn)(GLint, GLint, GLint, GLint, GLint, GLint, GLint, GLint, GLbitfield, GLenum)) {
+   SET_by_offset(disp, _gloffset_BlitFramebufferEXT, fn);
+}
+
 #define CALL_BufferParameteriAPPLE(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLenum, GLenum, GLint)), _gloffset_BufferParameteriAPPLE, parameters)
 #define GET_BufferParameteriAPPLE(disp) GET_by_offset(disp, _gloffset_BufferParameteriAPPLE)
-#define SET_BufferParameteriAPPLE(disp, fn) SET_by_offset(disp, _gloffset_BufferParameteriAPPLE, fn)
+static void INLINE SET_BufferParameteriAPPLE(struct _glapi_table *disp, void (GLAPIENTRYP fn)(GLenum, GLenum, GLint)) {
+   SET_by_offset(disp, _gloffset_BufferParameteriAPPLE, fn);
+}
+
 #define CALL_FlushMappedBufferRangeAPPLE(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLenum, GLintptr, GLsizeiptr)), _gloffset_FlushMappedBufferRangeAPPLE, parameters)
 #define GET_FlushMappedBufferRangeAPPLE(disp) GET_by_offset(disp, _gloffset_FlushMappedBufferRangeAPPLE)
-#define SET_FlushMappedBufferRangeAPPLE(disp, fn) SET_by_offset(disp, _gloffset_FlushMappedBufferRangeAPPLE, fn)
+static void INLINE SET_FlushMappedBufferRangeAPPLE(struct _glapi_table *disp, void (GLAPIENTRYP fn)(GLenum, GLintptr, GLsizeiptr)) {
+   SET_by_offset(disp, _gloffset_FlushMappedBufferRangeAPPLE, fn);
+}
+
 #define CALL_BindFragDataLocationEXT(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLuint, GLuint, const GLchar *)), _gloffset_BindFragDataLocationEXT, parameters)
 #define GET_BindFragDataLocationEXT(disp) GET_by_offset(disp, _gloffset_BindFragDataLocationEXT)
-#define SET_BindFragDataLocationEXT(disp, fn) SET_by_offset(disp, _gloffset_BindFragDataLocationEXT, fn)
+static void INLINE SET_BindFragDataLocationEXT(struct _glapi_table *disp, void (GLAPIENTRYP fn)(GLuint, GLuint, const GLchar *)) {
+   SET_by_offset(disp, _gloffset_BindFragDataLocationEXT, fn);
+}
+
 #define CALL_GetFragDataLocationEXT(disp, parameters) CALL_by_offset(disp, (GLint (GLAPIENTRYP)(GLuint, const GLchar *)), _gloffset_GetFragDataLocationEXT, parameters)
 #define GET_GetFragDataLocationEXT(disp) GET_by_offset(disp, _gloffset_GetFragDataLocationEXT)
-#define SET_GetFragDataLocationEXT(disp, fn) SET_by_offset(disp, _gloffset_GetFragDataLocationEXT, fn)
+static void INLINE SET_GetFragDataLocationEXT(struct _glapi_table *disp, GLint (GLAPIENTRYP fn)(GLuint, const GLchar *)) {
+   SET_by_offset(disp, _gloffset_GetFragDataLocationEXT, fn);
+}
+
 #define CALL_GetUniformuivEXT(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLuint, GLint, GLuint *)), _gloffset_GetUniformuivEXT, parameters)
 #define GET_GetUniformuivEXT(disp) GET_by_offset(disp, _gloffset_GetUniformuivEXT)
-#define SET_GetUniformuivEXT(disp, fn) SET_by_offset(disp, _gloffset_GetUniformuivEXT, fn)
+static void INLINE SET_GetUniformuivEXT(struct _glapi_table *disp, void (GLAPIENTRYP fn)(GLuint, GLint, GLuint *)) {
+   SET_by_offset(disp, _gloffset_GetUniformuivEXT, fn);
+}
+
 #define CALL_GetVertexAttribIivEXT(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLuint, GLenum, GLint *)), _gloffset_GetVertexAttribIivEXT, parameters)
 #define GET_GetVertexAttribIivEXT(disp) GET_by_offset(disp, _gloffset_GetVertexAttribIivEXT)
-#define SET_GetVertexAttribIivEXT(disp, fn) SET_by_offset(disp, _gloffset_GetVertexAttribIivEXT, fn)
+static void INLINE SET_GetVertexAttribIivEXT(struct _glapi_table *disp, void (GLAPIENTRYP fn)(GLuint, GLenum, GLint *)) {
+   SET_by_offset(disp, _gloffset_GetVertexAttribIivEXT, fn);
+}
+
 #define CALL_GetVertexAttribIuivEXT(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLuint, GLenum, GLuint *)), _gloffset_GetVertexAttribIuivEXT, parameters)
 #define GET_GetVertexAttribIuivEXT(disp) GET_by_offset(disp, _gloffset_GetVertexAttribIuivEXT)
-#define SET_GetVertexAttribIuivEXT(disp, fn) SET_by_offset(disp, _gloffset_GetVertexAttribIuivEXT, fn)
+static void INLINE SET_GetVertexAttribIuivEXT(struct _glapi_table *disp, void (GLAPIENTRYP fn)(GLuint, GLenum, GLuint *)) {
+   SET_by_offset(disp, _gloffset_GetVertexAttribIuivEXT, fn);
+}
+
 #define CALL_Uniform1uiEXT(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLint, GLuint)), _gloffset_Uniform1uiEXT, parameters)
 #define GET_Uniform1uiEXT(disp) GET_by_offset(disp, _gloffset_Uniform1uiEXT)
-#define SET_Uniform1uiEXT(disp, fn) SET_by_offset(disp, _gloffset_Uniform1uiEXT, fn)
+static void INLINE SET_Uniform1uiEXT(struct _glapi_table *disp, void (GLAPIENTRYP fn)(GLint, GLuint)) {
+   SET_by_offset(disp, _gloffset_Uniform1uiEXT, fn);
+}
+
 #define CALL_Uniform1uivEXT(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLint, GLsizei, const GLuint *)), _gloffset_Uniform1uivEXT, parameters)
 #define GET_Uniform1uivEXT(disp) GET_by_offset(disp, _gloffset_Uniform1uivEXT)
-#define SET_Uniform1uivEXT(disp, fn) SET_by_offset(disp, _gloffset_Uniform1uivEXT, fn)
+static void INLINE SET_Uniform1uivEXT(struct _glapi_table *disp, void (GLAPIENTRYP fn)(GLint, GLsizei, const GLuint *)) {
+   SET_by_offset(disp, _gloffset_Uniform1uivEXT, fn);
+}
+
 #define CALL_Uniform2uiEXT(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLint, GLuint, GLuint)), _gloffset_Uniform2uiEXT, parameters)
 #define GET_Uniform2uiEXT(disp) GET_by_offset(disp, _gloffset_Uniform2uiEXT)
-#define SET_Uniform2uiEXT(disp, fn) SET_by_offset(disp, _gloffset_Uniform2uiEXT, fn)
+static void INLINE SET_Uniform2uiEXT(struct _glapi_table *disp, void (GLAPIENTRYP fn)(GLint, GLuint, GLuint)) {
+   SET_by_offset(disp, _gloffset_Uniform2uiEXT, fn);
+}
+
 #define CALL_Uniform2uivEXT(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLint, GLsizei, const GLuint *)), _gloffset_Uniform2uivEXT, parameters)
 #define GET_Uniform2uivEXT(disp) GET_by_offset(disp, _gloffset_Uniform2uivEXT)
-#define SET_Uniform2uivEXT(disp, fn) SET_by_offset(disp, _gloffset_Uniform2uivEXT, fn)
+static void INLINE SET_Uniform2uivEXT(struct _glapi_table *disp, void (GLAPIENTRYP fn)(GLint, GLsizei, const GLuint *)) {
+   SET_by_offset(disp, _gloffset_Uniform2uivEXT, fn);
+}
+
 #define CALL_Uniform3uiEXT(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLint, GLuint, GLuint, GLuint)), _gloffset_Uniform3uiEXT, parameters)
 #define GET_Uniform3uiEXT(disp) GET_by_offset(disp, _gloffset_Uniform3uiEXT)
-#define SET_Uniform3uiEXT(disp, fn) SET_by_offset(disp, _gloffset_Uniform3uiEXT, fn)
+static void INLINE SET_Uniform3uiEXT(struct _glapi_table *disp, void (GLAPIENTRYP fn)(GLint, GLuint, GLuint, GLuint)) {
+   SET_by_offset(disp, _gloffset_Uniform3uiEXT, fn);
+}
+
 #define CALL_Uniform3uivEXT(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLint, GLsizei, const GLuint *)), _gloffset_Uniform3uivEXT, parameters)
 #define GET_Uniform3uivEXT(disp) GET_by_offset(disp, _gloffset_Uniform3uivEXT)
-#define SET_Uniform3uivEXT(disp, fn) SET_by_offset(disp, _gloffset_Uniform3uivEXT, fn)
+static void INLINE SET_Uniform3uivEXT(struct _glapi_table *disp, void (GLAPIENTRYP fn)(GLint, GLsizei, const GLuint *)) {
+   SET_by_offset(disp, _gloffset_Uniform3uivEXT, fn);
+}
+
 #define CALL_Uniform4uiEXT(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLint, GLuint, GLuint, GLuint, GLuint)), _gloffset_Uniform4uiEXT, parameters)
 #define GET_Uniform4uiEXT(disp) GET_by_offset(disp, _gloffset_Uniform4uiEXT)
-#define SET_Uniform4uiEXT(disp, fn) SET_by_offset(disp, _gloffset_Uniform4uiEXT, fn)
+static void INLINE SET_Uniform4uiEXT(struct _glapi_table *disp, void (GLAPIENTRYP fn)(GLint, GLuint, GLuint, GLuint, GLuint)) {
+   SET_by_offset(disp, _gloffset_Uniform4uiEXT, fn);
+}
+
 #define CALL_Uniform4uivEXT(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLint, GLsizei, const GLuint *)), _gloffset_Uniform4uivEXT, parameters)
 #define GET_Uniform4uivEXT(disp) GET_by_offset(disp, _gloffset_Uniform4uivEXT)
-#define SET_Uniform4uivEXT(disp, fn) SET_by_offset(disp, _gloffset_Uniform4uivEXT, fn)
+static void INLINE SET_Uniform4uivEXT(struct _glapi_table *disp, void (GLAPIENTRYP fn)(GLint, GLsizei, const GLuint *)) {
+   SET_by_offset(disp, _gloffset_Uniform4uivEXT, fn);
+}
+
 #define CALL_VertexAttribI1iEXT(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLuint, GLint)), _gloffset_VertexAttribI1iEXT, parameters)
 #define GET_VertexAttribI1iEXT(disp) GET_by_offset(disp, _gloffset_VertexAttribI1iEXT)
-#define SET_VertexAttribI1iEXT(disp, fn) SET_by_offset(disp, _gloffset_VertexAttribI1iEXT, fn)
+static void INLINE SET_VertexAttribI1iEXT(struct _glapi_table *disp, void (GLAPIENTRYP fn)(GLuint, GLint)) {
+   SET_by_offset(disp, _gloffset_VertexAttribI1iEXT, fn);
+}
+
 #define CALL_VertexAttribI1ivEXT(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLuint, const GLint *)), _gloffset_VertexAttribI1ivEXT, parameters)
 #define GET_VertexAttribI1ivEXT(disp) GET_by_offset(disp, _gloffset_VertexAttribI1ivEXT)
-#define SET_VertexAttribI1ivEXT(disp, fn) SET_by_offset(disp, _gloffset_VertexAttribI1ivEXT, fn)
+static void INLINE SET_VertexAttribI1ivEXT(struct _glapi_table *disp, void (GLAPIENTRYP fn)(GLuint, const GLint *)) {
+   SET_by_offset(disp, _gloffset_VertexAttribI1ivEXT, fn);
+}
+
 #define CALL_VertexAttribI1uiEXT(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLuint, GLuint)), _gloffset_VertexAttribI1uiEXT, parameters)
 #define GET_VertexAttribI1uiEXT(disp) GET_by_offset(disp, _gloffset_VertexAttribI1uiEXT)
-#define SET_VertexAttribI1uiEXT(disp, fn) SET_by_offset(disp, _gloffset_VertexAttribI1uiEXT, fn)
+static void INLINE SET_VertexAttribI1uiEXT(struct _glapi_table *disp, void (GLAPIENTRYP fn)(GLuint, GLuint)) {
+   SET_by_offset(disp, _gloffset_VertexAttribI1uiEXT, fn);
+}
+
 #define CALL_VertexAttribI1uivEXT(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLuint, const GLuint *)), _gloffset_VertexAttribI1uivEXT, parameters)
 #define GET_VertexAttribI1uivEXT(disp) GET_by_offset(disp, _gloffset_VertexAttribI1uivEXT)
-#define SET_VertexAttribI1uivEXT(disp, fn) SET_by_offset(disp, _gloffset_VertexAttribI1uivEXT, fn)
+static void INLINE SET_VertexAttribI1uivEXT(struct _glapi_table *disp, void (GLAPIENTRYP fn)(GLuint, const GLuint *)) {
+   SET_by_offset(disp, _gloffset_VertexAttribI1uivEXT, fn);
+}
+
 #define CALL_VertexAttribI2iEXT(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLuint, GLint, GLint)), _gloffset_VertexAttribI2iEXT, parameters)
 #define GET_VertexAttribI2iEXT(disp) GET_by_offset(disp, _gloffset_VertexAttribI2iEXT)
-#define SET_VertexAttribI2iEXT(disp, fn) SET_by_offset(disp, _gloffset_VertexAttribI2iEXT, fn)
+static void INLINE SET_VertexAttribI2iEXT(struct _glapi_table *disp, void (GLAPIENTRYP fn)(GLuint, GLint, GLint)) {
+   SET_by_offset(disp, _gloffset_VertexAttribI2iEXT, fn);
+}
+
 #define CALL_VertexAttribI2ivEXT(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLuint, const GLint *)), _gloffset_VertexAttribI2ivEXT, parameters)
 #define GET_VertexAttribI2ivEXT(disp) GET_by_offset(disp, _gloffset_VertexAttribI2ivEXT)
-#define SET_VertexAttribI2ivEXT(disp, fn) SET_by_offset(disp, _gloffset_VertexAttribI2ivEXT, fn)
+static void INLINE SET_VertexAttribI2ivEXT(struct _glapi_table *disp, void (GLAPIENTRYP fn)(GLuint, const GLint *)) {
+   SET_by_offset(disp, _gloffset_VertexAttribI2ivEXT, fn);
+}
+
 #define CALL_VertexAttribI2uiEXT(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLuint, GLuint, GLuint)), _gloffset_VertexAttribI2uiEXT, parameters)
 #define GET_VertexAttribI2uiEXT(disp) GET_by_offset(disp, _gloffset_VertexAttribI2uiEXT)
-#define SET_VertexAttribI2uiEXT(disp, fn) SET_by_offset(disp, _gloffset_VertexAttribI2uiEXT, fn)
+static void INLINE SET_VertexAttribI2uiEXT(struct _glapi_table *disp, void (GLAPIENTRYP fn)(GLuint, GLuint, GLuint)) {
+   SET_by_offset(disp, _gloffset_VertexAttribI2uiEXT, fn);
+}
+
 #define CALL_VertexAttribI2uivEXT(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLuint, const GLuint *)), _gloffset_VertexAttribI2uivEXT, parameters)
 #define GET_VertexAttribI2uivEXT(disp) GET_by_offset(disp, _gloffset_VertexAttribI2uivEXT)
-#define SET_VertexAttribI2uivEXT(disp, fn) SET_by_offset(disp, _gloffset_VertexAttribI2uivEXT, fn)
+static void INLINE SET_VertexAttribI2uivEXT(struct _glapi_table *disp, void (GLAPIENTRYP fn)(GLuint, const GLuint *)) {
+   SET_by_offset(disp, _gloffset_VertexAttribI2uivEXT, fn);
+}
+
 #define CALL_VertexAttribI3iEXT(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLuint, GLint, GLint, GLint)), _gloffset_VertexAttribI3iEXT, parameters)
 #define GET_VertexAttribI3iEXT(disp) GET_by_offset(disp, _gloffset_VertexAttribI3iEXT)
-#define SET_VertexAttribI3iEXT(disp, fn) SET_by_offset(disp, _gloffset_VertexAttribI3iEXT, fn)
+static void INLINE SET_VertexAttribI3iEXT(struct _glapi_table *disp, void (GLAPIENTRYP fn)(GLuint, GLint, GLint, GLint)) {
+   SET_by_offset(disp, _gloffset_VertexAttribI3iEXT, fn);
+}
+
 #define CALL_VertexAttribI3ivEXT(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLuint, const GLint *)), _gloffset_VertexAttribI3ivEXT, parameters)
 #define GET_VertexAttribI3ivEXT(disp) GET_by_offset(disp, _gloffset_VertexAttribI3ivEXT)
-#define SET_VertexAttribI3ivEXT(disp, fn) SET_by_offset(disp, _gloffset_VertexAttribI3ivEXT, fn)
+static void INLINE SET_VertexAttribI3ivEXT(struct _glapi_table *disp, void (GLAPIENTRYP fn)(GLuint, const GLint *)) {
+   SET_by_offset(disp, _gloffset_VertexAttribI3ivEXT, fn);
+}
+
 #define CALL_VertexAttribI3uiEXT(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLuint, GLuint, GLuint, GLuint)), _gloffset_VertexAttribI3uiEXT, parameters)
 #define GET_VertexAttribI3uiEXT(disp) GET_by_offset(disp, _gloffset_VertexAttribI3uiEXT)
-#define SET_VertexAttribI3uiEXT(disp, fn) SET_by_offset(disp, _gloffset_VertexAttribI3uiEXT, fn)
+static void INLINE SET_VertexAttribI3uiEXT(struct _glapi_table *disp, void (GLAPIENTRYP fn)(GLuint, GLuint, GLuint, GLuint)) {
+   SET_by_offset(disp, _gloffset_VertexAttribI3uiEXT, fn);
+}
+
 #define CALL_VertexAttribI3uivEXT(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLuint, const GLuint *)), _gloffset_VertexAttribI3uivEXT, parameters)
 #define GET_VertexAttribI3uivEXT(disp) GET_by_offset(disp, _gloffset_VertexAttribI3uivEXT)
-#define SET_VertexAttribI3uivEXT(disp, fn) SET_by_offset(disp, _gloffset_VertexAttribI3uivEXT, fn)
+static void INLINE SET_VertexAttribI3uivEXT(struct _glapi_table *disp, void (GLAPIENTRYP fn)(GLuint, const GLuint *)) {
+   SET_by_offset(disp, _gloffset_VertexAttribI3uivEXT, fn);
+}
+
 #define CALL_VertexAttribI4bvEXT(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLuint, const GLbyte *)), _gloffset_VertexAttribI4bvEXT, parameters)
 #define GET_VertexAttribI4bvEXT(disp) GET_by_offset(disp, _gloffset_VertexAttribI4bvEXT)
-#define SET_VertexAttribI4bvEXT(disp, fn) SET_by_offset(disp, _gloffset_VertexAttribI4bvEXT, fn)
+static void INLINE SET_VertexAttribI4bvEXT(struct _glapi_table *disp, void (GLAPIENTRYP fn)(GLuint, const GLbyte *)) {
+   SET_by_offset(disp, _gloffset_VertexAttribI4bvEXT, fn);
+}
+
 #define CALL_VertexAttribI4iEXT(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLuint, GLint, GLint, GLint, GLint)), _gloffset_VertexAttribI4iEXT, parameters)
 #define GET_VertexAttribI4iEXT(disp) GET_by_offset(disp, _gloffset_VertexAttribI4iEXT)
-#define SET_VertexAttribI4iEXT(disp, fn) SET_by_offset(disp, _gloffset_VertexAttribI4iEXT, fn)
+static void INLINE SET_VertexAttribI4iEXT(struct _glapi_table *disp, void (GLAPIENTRYP fn)(GLuint, GLint, GLint, GLint, GLint)) {
+   SET_by_offset(disp, _gloffset_VertexAttribI4iEXT, fn);
+}
+
 #define CALL_VertexAttribI4ivEXT(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLuint, const GLint *)), _gloffset_VertexAttribI4ivEXT, parameters)
 #define GET_VertexAttribI4ivEXT(disp) GET_by_offset(disp, _gloffset_VertexAttribI4ivEXT)
-#define SET_VertexAttribI4ivEXT(disp, fn) SET_by_offset(disp, _gloffset_VertexAttribI4ivEXT, fn)
+static void INLINE SET_VertexAttribI4ivEXT(struct _glapi_table *disp, void (GLAPIENTRYP fn)(GLuint, const GLint *)) {
+   SET_by_offset(disp, _gloffset_VertexAttribI4ivEXT, fn);
+}
+
 #define CALL_VertexAttribI4svEXT(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLuint, const GLshort *)), _gloffset_VertexAttribI4svEXT, parameters)
 #define GET_VertexAttribI4svEXT(disp) GET_by_offset(disp, _gloffset_VertexAttribI4svEXT)
-#define SET_VertexAttribI4svEXT(disp, fn) SET_by_offset(disp, _gloffset_VertexAttribI4svEXT, fn)
+static void INLINE SET_VertexAttribI4svEXT(struct _glapi_table *disp, void (GLAPIENTRYP fn)(GLuint, const GLshort *)) {
+   SET_by_offset(disp, _gloffset_VertexAttribI4svEXT, fn);
+}
+
 #define CALL_VertexAttribI4ubvEXT(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLuint, const GLubyte *)), _gloffset_VertexAttribI4ubvEXT, parameters)
 #define GET_VertexAttribI4ubvEXT(disp) GET_by_offset(disp, _gloffset_VertexAttribI4ubvEXT)
-#define SET_VertexAttribI4ubvEXT(disp, fn) SET_by_offset(disp, _gloffset_VertexAttribI4ubvEXT, fn)
+static void INLINE SET_VertexAttribI4ubvEXT(struct _glapi_table *disp, void (GLAPIENTRYP fn)(GLuint, const GLubyte *)) {
+   SET_by_offset(disp, _gloffset_VertexAttribI4ubvEXT, fn);
+}
+
 #define CALL_VertexAttribI4uiEXT(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLuint, GLuint, GLuint, GLuint, GLuint)), _gloffset_VertexAttribI4uiEXT, parameters)
 #define GET_VertexAttribI4uiEXT(disp) GET_by_offset(disp, _gloffset_VertexAttribI4uiEXT)
-#define SET_VertexAttribI4uiEXT(disp, fn) SET_by_offset(disp, _gloffset_VertexAttribI4uiEXT, fn)
+static void INLINE SET_VertexAttribI4uiEXT(struct _glapi_table *disp, void (GLAPIENTRYP fn)(GLuint, GLuint, GLuint, GLuint, GLuint)) {
+   SET_by_offset(disp, _gloffset_VertexAttribI4uiEXT, fn);
+}
+
 #define CALL_VertexAttribI4uivEXT(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLuint, const GLuint *)), _gloffset_VertexAttribI4uivEXT, parameters)
 #define GET_VertexAttribI4uivEXT(disp) GET_by_offset(disp, _gloffset_VertexAttribI4uivEXT)
-#define SET_VertexAttribI4uivEXT(disp, fn) SET_by_offset(disp, _gloffset_VertexAttribI4uivEXT, fn)
+static void INLINE SET_VertexAttribI4uivEXT(struct _glapi_table *disp, void (GLAPIENTRYP fn)(GLuint, const GLuint *)) {
+   SET_by_offset(disp, _gloffset_VertexAttribI4uivEXT, fn);
+}
+
 #define CALL_VertexAttribI4usvEXT(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLuint, const GLushort *)), _gloffset_VertexAttribI4usvEXT, parameters)
 #define GET_VertexAttribI4usvEXT(disp) GET_by_offset(disp, _gloffset_VertexAttribI4usvEXT)
-#define SET_VertexAttribI4usvEXT(disp, fn) SET_by_offset(disp, _gloffset_VertexAttribI4usvEXT, fn)
+static void INLINE SET_VertexAttribI4usvEXT(struct _glapi_table *disp, void (GLAPIENTRYP fn)(GLuint, const GLushort *)) {
+   SET_by_offset(disp, _gloffset_VertexAttribI4usvEXT, fn);
+}
+
 #define CALL_VertexAttribIPointerEXT(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLuint, GLint, GLenum, GLsizei, const GLvoid *)), _gloffset_VertexAttribIPointerEXT, parameters)
 #define GET_VertexAttribIPointerEXT(disp) GET_by_offset(disp, _gloffset_VertexAttribIPointerEXT)
-#define SET_VertexAttribIPointerEXT(disp, fn) SET_by_offset(disp, _gloffset_VertexAttribIPointerEXT, fn)
+static void INLINE SET_VertexAttribIPointerEXT(struct _glapi_table *disp, void (GLAPIENTRYP fn)(GLuint, GLint, GLenum, GLsizei, const GLvoid *)) {
+   SET_by_offset(disp, _gloffset_VertexAttribIPointerEXT, fn);
+}
+
 #define CALL_FramebufferTextureLayerEXT(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLenum, GLenum, GLuint, GLint, GLint)), _gloffset_FramebufferTextureLayerEXT, parameters)
 #define GET_FramebufferTextureLayerEXT(disp) GET_by_offset(disp, _gloffset_FramebufferTextureLayerEXT)
-#define SET_FramebufferTextureLayerEXT(disp, fn) SET_by_offset(disp, _gloffset_FramebufferTextureLayerEXT, fn)
+static void INLINE SET_FramebufferTextureLayerEXT(struct _glapi_table *disp, void (GLAPIENTRYP fn)(GLenum, GLenum, GLuint, GLint, GLint)) {
+   SET_by_offset(disp, _gloffset_FramebufferTextureLayerEXT, fn);
+}
+
 #define CALL_ColorMaskIndexedEXT(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLuint, GLboolean, GLboolean, GLboolean, GLboolean)), _gloffset_ColorMaskIndexedEXT, parameters)
 #define GET_ColorMaskIndexedEXT(disp) GET_by_offset(disp, _gloffset_ColorMaskIndexedEXT)
-#define SET_ColorMaskIndexedEXT(disp, fn) SET_by_offset(disp, _gloffset_ColorMaskIndexedEXT, fn)
+static void INLINE SET_ColorMaskIndexedEXT(struct _glapi_table *disp, void (GLAPIENTRYP fn)(GLuint, GLboolean, GLboolean, GLboolean, GLboolean)) {
+   SET_by_offset(disp, _gloffset_ColorMaskIndexedEXT, fn);
+}
+
 #define CALL_DisableIndexedEXT(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLenum, GLuint)), _gloffset_DisableIndexedEXT, parameters)
 #define GET_DisableIndexedEXT(disp) GET_by_offset(disp, _gloffset_DisableIndexedEXT)
-#define SET_DisableIndexedEXT(disp, fn) SET_by_offset(disp, _gloffset_DisableIndexedEXT, fn)
+static void INLINE SET_DisableIndexedEXT(struct _glapi_table *disp, void (GLAPIENTRYP fn)(GLenum, GLuint)) {
+   SET_by_offset(disp, _gloffset_DisableIndexedEXT, fn);
+}
+
 #define CALL_EnableIndexedEXT(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLenum, GLuint)), _gloffset_EnableIndexedEXT, parameters)
 #define GET_EnableIndexedEXT(disp) GET_by_offset(disp, _gloffset_EnableIndexedEXT)
-#define SET_EnableIndexedEXT(disp, fn) SET_by_offset(disp, _gloffset_EnableIndexedEXT, fn)
+static void INLINE SET_EnableIndexedEXT(struct _glapi_table *disp, void (GLAPIENTRYP fn)(GLenum, GLuint)) {
+   SET_by_offset(disp, _gloffset_EnableIndexedEXT, fn);
+}
+
 #define CALL_GetBooleanIndexedvEXT(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLenum, GLuint, GLboolean *)), _gloffset_GetBooleanIndexedvEXT, parameters)
 #define GET_GetBooleanIndexedvEXT(disp) GET_by_offset(disp, _gloffset_GetBooleanIndexedvEXT)
-#define SET_GetBooleanIndexedvEXT(disp, fn) SET_by_offset(disp, _gloffset_GetBooleanIndexedvEXT, fn)
+static void INLINE SET_GetBooleanIndexedvEXT(struct _glapi_table *disp, void (GLAPIENTRYP fn)(GLenum, GLuint, GLboolean *)) {
+   SET_by_offset(disp, _gloffset_GetBooleanIndexedvEXT, fn);
+}
+
 #define CALL_GetIntegerIndexedvEXT(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLenum, GLuint, GLint *)), _gloffset_GetIntegerIndexedvEXT, parameters)
 #define GET_GetIntegerIndexedvEXT(disp) GET_by_offset(disp, _gloffset_GetIntegerIndexedvEXT)
-#define SET_GetIntegerIndexedvEXT(disp, fn) SET_by_offset(disp, _gloffset_GetIntegerIndexedvEXT, fn)
+static void INLINE SET_GetIntegerIndexedvEXT(struct _glapi_table *disp, void (GLAPIENTRYP fn)(GLenum, GLuint, GLint *)) {
+   SET_by_offset(disp, _gloffset_GetIntegerIndexedvEXT, fn);
+}
+
 #define CALL_IsEnabledIndexedEXT(disp, parameters) CALL_by_offset(disp, (GLboolean (GLAPIENTRYP)(GLenum, GLuint)), _gloffset_IsEnabledIndexedEXT, parameters)
 #define GET_IsEnabledIndexedEXT(disp) GET_by_offset(disp, _gloffset_IsEnabledIndexedEXT)
-#define SET_IsEnabledIndexedEXT(disp, fn) SET_by_offset(disp, _gloffset_IsEnabledIndexedEXT, fn)
+static void INLINE SET_IsEnabledIndexedEXT(struct _glapi_table *disp, GLboolean (GLAPIENTRYP fn)(GLenum, GLuint)) {
+   SET_by_offset(disp, _gloffset_IsEnabledIndexedEXT, fn);
+}
+
 #define CALL_ClearColorIiEXT(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLint, GLint, GLint, GLint)), _gloffset_ClearColorIiEXT, parameters)
 #define GET_ClearColorIiEXT(disp) GET_by_offset(disp, _gloffset_ClearColorIiEXT)
-#define SET_ClearColorIiEXT(disp, fn) SET_by_offset(disp, _gloffset_ClearColorIiEXT, fn)
+static void INLINE SET_ClearColorIiEXT(struct _glapi_table *disp, void (GLAPIENTRYP fn)(GLint, GLint, GLint, GLint)) {
+   SET_by_offset(disp, _gloffset_ClearColorIiEXT, fn);
+}
+
 #define CALL_ClearColorIuiEXT(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLuint, GLuint, GLuint, GLuint)), _gloffset_ClearColorIuiEXT, parameters)
 #define GET_ClearColorIuiEXT(disp) GET_by_offset(disp, _gloffset_ClearColorIuiEXT)
-#define SET_ClearColorIuiEXT(disp, fn) SET_by_offset(disp, _gloffset_ClearColorIuiEXT, fn)
+static void INLINE SET_ClearColorIuiEXT(struct _glapi_table *disp, void (GLAPIENTRYP fn)(GLuint, GLuint, GLuint, GLuint)) {
+   SET_by_offset(disp, _gloffset_ClearColorIuiEXT, fn);
+}
+
 #define CALL_GetTexParameterIivEXT(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLenum, GLenum, GLint *)), _gloffset_GetTexParameterIivEXT, parameters)
 #define GET_GetTexParameterIivEXT(disp) GET_by_offset(disp, _gloffset_GetTexParameterIivEXT)
-#define SET_GetTexParameterIivEXT(disp, fn) SET_by_offset(disp, _gloffset_GetTexParameterIivEXT, fn)
+static void INLINE SET_GetTexParameterIivEXT(struct _glapi_table *disp, void (GLAPIENTRYP fn)(GLenum, GLenum, GLint *)) {
+   SET_by_offset(disp, _gloffset_GetTexParameterIivEXT, fn);
+}
+
 #define CALL_GetTexParameterIuivEXT(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLenum, GLenum, GLuint *)), _gloffset_GetTexParameterIuivEXT, parameters)
 #define GET_GetTexParameterIuivEXT(disp) GET_by_offset(disp, _gloffset_GetTexParameterIuivEXT)
-#define SET_GetTexParameterIuivEXT(disp, fn) SET_by_offset(disp, _gloffset_GetTexParameterIuivEXT, fn)
+static void INLINE SET_GetTexParameterIuivEXT(struct _glapi_table *disp, void (GLAPIENTRYP fn)(GLenum, GLenum, GLuint *)) {
+   SET_by_offset(disp, _gloffset_GetTexParameterIuivEXT, fn);
+}
+
 #define CALL_TexParameterIivEXT(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLenum, GLenum, const GLint *)), _gloffset_TexParameterIivEXT, parameters)
 #define GET_TexParameterIivEXT(disp) GET_by_offset(disp, _gloffset_TexParameterIivEXT)
-#define SET_TexParameterIivEXT(disp, fn) SET_by_offset(disp, _gloffset_TexParameterIivEXT, fn)
+static void INLINE SET_TexParameterIivEXT(struct _glapi_table *disp, void (GLAPIENTRYP fn)(GLenum, GLenum, const GLint *)) {
+   SET_by_offset(disp, _gloffset_TexParameterIivEXT, fn);
+}
+
 #define CALL_TexParameterIuivEXT(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLenum, GLenum, const GLuint *)), _gloffset_TexParameterIuivEXT, parameters)
 #define GET_TexParameterIuivEXT(disp) GET_by_offset(disp, _gloffset_TexParameterIuivEXT)
-#define SET_TexParameterIuivEXT(disp, fn) SET_by_offset(disp, _gloffset_TexParameterIuivEXT, fn)
+static void INLINE SET_TexParameterIuivEXT(struct _glapi_table *disp, void (GLAPIENTRYP fn)(GLenum, GLenum, const GLuint *)) {
+   SET_by_offset(disp, _gloffset_TexParameterIuivEXT, fn);
+}
+
 #define CALL_BeginConditionalRenderNV(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLuint, GLenum)), _gloffset_BeginConditionalRenderNV, parameters)
 #define GET_BeginConditionalRenderNV(disp) GET_by_offset(disp, _gloffset_BeginConditionalRenderNV)
-#define SET_BeginConditionalRenderNV(disp, fn) SET_by_offset(disp, _gloffset_BeginConditionalRenderNV, fn)
+static void INLINE SET_BeginConditionalRenderNV(struct _glapi_table *disp, void (GLAPIENTRYP fn)(GLuint, GLenum)) {
+   SET_by_offset(disp, _gloffset_BeginConditionalRenderNV, fn);
+}
+
 #define CALL_EndConditionalRenderNV(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(void)), _gloffset_EndConditionalRenderNV, parameters)
 #define GET_EndConditionalRenderNV(disp) GET_by_offset(disp, _gloffset_EndConditionalRenderNV)
-#define SET_EndConditionalRenderNV(disp, fn) SET_by_offset(disp, _gloffset_EndConditionalRenderNV, fn)
+static void INLINE SET_EndConditionalRenderNV(struct _glapi_table *disp, void (GLAPIENTRYP fn)(void)) {
+   SET_by_offset(disp, _gloffset_EndConditionalRenderNV, fn);
+}
+
 #define CALL_BeginTransformFeedbackEXT(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLenum)), _gloffset_BeginTransformFeedbackEXT, parameters)
 #define GET_BeginTransformFeedbackEXT(disp) GET_by_offset(disp, _gloffset_BeginTransformFeedbackEXT)
-#define SET_BeginTransformFeedbackEXT(disp, fn) SET_by_offset(disp, _gloffset_BeginTransformFeedbackEXT, fn)
+static void INLINE SET_BeginTransformFeedbackEXT(struct _glapi_table *disp, void (GLAPIENTRYP fn)(GLenum)) {
+   SET_by_offset(disp, _gloffset_BeginTransformFeedbackEXT, fn);
+}
+
 #define CALL_BindBufferBaseEXT(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLenum, GLuint, GLuint)), _gloffset_BindBufferBaseEXT, parameters)
 #define GET_BindBufferBaseEXT(disp) GET_by_offset(disp, _gloffset_BindBufferBaseEXT)
-#define SET_BindBufferBaseEXT(disp, fn) SET_by_offset(disp, _gloffset_BindBufferBaseEXT, fn)
+static void INLINE SET_BindBufferBaseEXT(struct _glapi_table *disp, void (GLAPIENTRYP fn)(GLenum, GLuint, GLuint)) {
+   SET_by_offset(disp, _gloffset_BindBufferBaseEXT, fn);
+}
+
 #define CALL_BindBufferOffsetEXT(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLenum, GLuint, GLuint, GLintptr)), _gloffset_BindBufferOffsetEXT, parameters)
 #define GET_BindBufferOffsetEXT(disp) GET_by_offset(disp, _gloffset_BindBufferOffsetEXT)
-#define SET_BindBufferOffsetEXT(disp, fn) SET_by_offset(disp, _gloffset_BindBufferOffsetEXT, fn)
+static void INLINE SET_BindBufferOffsetEXT(struct _glapi_table *disp, void (GLAPIENTRYP fn)(GLenum, GLuint, GLuint, GLintptr)) {
+   SET_by_offset(disp, _gloffset_BindBufferOffsetEXT, fn);
+}
+
 #define CALL_BindBufferRangeEXT(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLenum, GLuint, GLuint, GLintptr, GLsizeiptr)), _gloffset_BindBufferRangeEXT, parameters)
 #define GET_BindBufferRangeEXT(disp) GET_by_offset(disp, _gloffset_BindBufferRangeEXT)
-#define SET_BindBufferRangeEXT(disp, fn) SET_by_offset(disp, _gloffset_BindBufferRangeEXT, fn)
+static void INLINE SET_BindBufferRangeEXT(struct _glapi_table *disp, void (GLAPIENTRYP fn)(GLenum, GLuint, GLuint, GLintptr, GLsizeiptr)) {
+   SET_by_offset(disp, _gloffset_BindBufferRangeEXT, fn);
+}
+
 #define CALL_EndTransformFeedbackEXT(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(void)), _gloffset_EndTransformFeedbackEXT, parameters)
 #define GET_EndTransformFeedbackEXT(disp) GET_by_offset(disp, _gloffset_EndTransformFeedbackEXT)
-#define SET_EndTransformFeedbackEXT(disp, fn) SET_by_offset(disp, _gloffset_EndTransformFeedbackEXT, fn)
+static void INLINE SET_EndTransformFeedbackEXT(struct _glapi_table *disp, void (GLAPIENTRYP fn)(void)) {
+   SET_by_offset(disp, _gloffset_EndTransformFeedbackEXT, fn);
+}
+
 #define CALL_GetTransformFeedbackVaryingEXT(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLuint, GLuint, GLsizei, GLsizei *, GLsizei *, GLenum *, GLchar *)), _gloffset_GetTransformFeedbackVaryingEXT, parameters)
 #define GET_GetTransformFeedbackVaryingEXT(disp) GET_by_offset(disp, _gloffset_GetTransformFeedbackVaryingEXT)
-#define SET_GetTransformFeedbackVaryingEXT(disp, fn) SET_by_offset(disp, _gloffset_GetTransformFeedbackVaryingEXT, fn)
+static void INLINE SET_GetTransformFeedbackVaryingEXT(struct _glapi_table *disp, void (GLAPIENTRYP fn)(GLuint, GLuint, GLsizei, GLsizei *, GLsizei *, GLenum *, GLchar *)) {
+   SET_by_offset(disp, _gloffset_GetTransformFeedbackVaryingEXT, fn);
+}
+
 #define CALL_TransformFeedbackVaryingsEXT(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLuint, GLsizei, const char **, GLenum)), _gloffset_TransformFeedbackVaryingsEXT, parameters)
 #define GET_TransformFeedbackVaryingsEXT(disp) GET_by_offset(disp, _gloffset_TransformFeedbackVaryingsEXT)
-#define SET_TransformFeedbackVaryingsEXT(disp, fn) SET_by_offset(disp, _gloffset_TransformFeedbackVaryingsEXT, fn)
+static void INLINE SET_TransformFeedbackVaryingsEXT(struct _glapi_table *disp, void (GLAPIENTRYP fn)(GLuint, GLsizei, const char **, GLenum)) {
+   SET_by_offset(disp, _gloffset_TransformFeedbackVaryingsEXT, fn);
+}
+
 #define CALL_ProvokingVertexEXT(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLenum)), _gloffset_ProvokingVertexEXT, parameters)
 #define GET_ProvokingVertexEXT(disp) GET_by_offset(disp, _gloffset_ProvokingVertexEXT)
-#define SET_ProvokingVertexEXT(disp, fn) SET_by_offset(disp, _gloffset_ProvokingVertexEXT, fn)
+static void INLINE SET_ProvokingVertexEXT(struct _glapi_table *disp, void (GLAPIENTRYP fn)(GLenum)) {
+   SET_by_offset(disp, _gloffset_ProvokingVertexEXT, fn);
+}
+
 #define CALL_GetTexParameterPointervAPPLE(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLenum, GLenum, GLvoid **)), _gloffset_GetTexParameterPointervAPPLE, parameters)
 #define GET_GetTexParameterPointervAPPLE(disp) GET_by_offset(disp, _gloffset_GetTexParameterPointervAPPLE)
-#define SET_GetTexParameterPointervAPPLE(disp, fn) SET_by_offset(disp, _gloffset_GetTexParameterPointervAPPLE, fn)
+static void INLINE SET_GetTexParameterPointervAPPLE(struct _glapi_table *disp, void (GLAPIENTRYP fn)(GLenum, GLenum, GLvoid **)) {
+   SET_by_offset(disp, _gloffset_GetTexParameterPointervAPPLE, fn);
+}
+
 #define CALL_TextureRangeAPPLE(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLenum, GLsizei, GLvoid *)), _gloffset_TextureRangeAPPLE, parameters)
 #define GET_TextureRangeAPPLE(disp) GET_by_offset(disp, _gloffset_TextureRangeAPPLE)
-#define SET_TextureRangeAPPLE(disp, fn) SET_by_offset(disp, _gloffset_TextureRangeAPPLE, fn)
+static void INLINE SET_TextureRangeAPPLE(struct _glapi_table *disp, void (GLAPIENTRYP fn)(GLenum, GLsizei, GLvoid *)) {
+   SET_by_offset(disp, _gloffset_TextureRangeAPPLE, fn);
+}
+
 #define CALL_GetObjectParameterivAPPLE(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLenum, GLuint, GLenum, GLint *)), _gloffset_GetObjectParameterivAPPLE, parameters)
 #define GET_GetObjectParameterivAPPLE(disp) GET_by_offset(disp, _gloffset_GetObjectParameterivAPPLE)
-#define SET_GetObjectParameterivAPPLE(disp, fn) SET_by_offset(disp, _gloffset_GetObjectParameterivAPPLE, fn)
+static void INLINE SET_GetObjectParameterivAPPLE(struct _glapi_table *disp, void (GLAPIENTRYP fn)(GLenum, GLuint, GLenum, GLint *)) {
+   SET_by_offset(disp, _gloffset_GetObjectParameterivAPPLE, fn);
+}
+
 #define CALL_ObjectPurgeableAPPLE(disp, parameters) CALL_by_offset(disp, (GLenum (GLAPIENTRYP)(GLenum, GLuint, GLenum)), _gloffset_ObjectPurgeableAPPLE, parameters)
 #define GET_ObjectPurgeableAPPLE(disp) GET_by_offset(disp, _gloffset_ObjectPurgeableAPPLE)
-#define SET_ObjectPurgeableAPPLE(disp, fn) SET_by_offset(disp, _gloffset_ObjectPurgeableAPPLE, fn)
+static void INLINE SET_ObjectPurgeableAPPLE(struct _glapi_table *disp, GLenum (GLAPIENTRYP fn)(GLenum, GLuint, GLenum)) {
+   SET_by_offset(disp, _gloffset_ObjectPurgeableAPPLE, fn);
+}
+
 #define CALL_ObjectUnpurgeableAPPLE(disp, parameters) CALL_by_offset(disp, (GLenum (GLAPIENTRYP)(GLenum, GLuint, GLenum)), _gloffset_ObjectUnpurgeableAPPLE, parameters)
 #define GET_ObjectUnpurgeableAPPLE(disp) GET_by_offset(disp, _gloffset_ObjectUnpurgeableAPPLE)
-#define SET_ObjectUnpurgeableAPPLE(disp, fn) SET_by_offset(disp, _gloffset_ObjectUnpurgeableAPPLE, fn)
+static void INLINE SET_ObjectUnpurgeableAPPLE(struct _glapi_table *disp, GLenum (GLAPIENTRYP fn)(GLenum, GLuint, GLenum)) {
+   SET_by_offset(disp, _gloffset_ObjectUnpurgeableAPPLE, fn);
+}
+
 #define CALL_ActiveProgramEXT(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLuint)), _gloffset_ActiveProgramEXT, parameters)
 #define GET_ActiveProgramEXT(disp) GET_by_offset(disp, _gloffset_ActiveProgramEXT)
-#define SET_ActiveProgramEXT(disp, fn) SET_by_offset(disp, _gloffset_ActiveProgramEXT, fn)
+static void INLINE SET_ActiveProgramEXT(struct _glapi_table *disp, void (GLAPIENTRYP fn)(GLuint)) {
+   SET_by_offset(disp, _gloffset_ActiveProgramEXT, fn);
+}
+
 #define CALL_CreateShaderProgramEXT(disp, parameters) CALL_by_offset(disp, (GLuint (GLAPIENTRYP)(GLenum, const GLchar *)), _gloffset_CreateShaderProgramEXT, parameters)
 #define GET_CreateShaderProgramEXT(disp) GET_by_offset(disp, _gloffset_CreateShaderProgramEXT)
-#define SET_CreateShaderProgramEXT(disp, fn) SET_by_offset(disp, _gloffset_CreateShaderProgramEXT, fn)
+static void INLINE SET_CreateShaderProgramEXT(struct _glapi_table *disp, GLuint (GLAPIENTRYP fn)(GLenum, const GLchar *)) {
+   SET_by_offset(disp, _gloffset_CreateShaderProgramEXT, fn);
+}
+
 #define CALL_UseShaderProgramEXT(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLenum, GLuint)), _gloffset_UseShaderProgramEXT, parameters)
 #define GET_UseShaderProgramEXT(disp) GET_by_offset(disp, _gloffset_UseShaderProgramEXT)
-#define SET_UseShaderProgramEXT(disp, fn) SET_by_offset(disp, _gloffset_UseShaderProgramEXT, fn)
+static void INLINE SET_UseShaderProgramEXT(struct _glapi_table *disp, void (GLAPIENTRYP fn)(GLenum, GLuint)) {
+   SET_by_offset(disp, _gloffset_UseShaderProgramEXT, fn);
+}
+
 #define CALL_TextureBarrierNV(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(void)), _gloffset_TextureBarrierNV, parameters)
 #define GET_TextureBarrierNV(disp) GET_by_offset(disp, _gloffset_TextureBarrierNV)
-#define SET_TextureBarrierNV(disp, fn) SET_by_offset(disp, _gloffset_TextureBarrierNV, fn)
+static void INLINE SET_TextureBarrierNV(struct _glapi_table *disp, void (GLAPIENTRYP fn)(void)) {
+   SET_by_offset(disp, _gloffset_TextureBarrierNV, fn);
+}
+
 #define CALL_StencilFuncSeparateATI(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLenum, GLenum, GLint, GLuint)), _gloffset_StencilFuncSeparateATI, parameters)
 #define GET_StencilFuncSeparateATI(disp) GET_by_offset(disp, _gloffset_StencilFuncSeparateATI)
-#define SET_StencilFuncSeparateATI(disp, fn) SET_by_offset(disp, _gloffset_StencilFuncSeparateATI, fn)
+static void INLINE SET_StencilFuncSeparateATI(struct _glapi_table *disp, void (GLAPIENTRYP fn)(GLenum, GLenum, GLint, GLuint)) {
+   SET_by_offset(disp, _gloffset_StencilFuncSeparateATI, fn);
+}
+
 #define CALL_ProgramEnvParameters4fvEXT(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLenum, GLuint, GLsizei, const GLfloat *)), _gloffset_ProgramEnvParameters4fvEXT, parameters)
 #define GET_ProgramEnvParameters4fvEXT(disp) GET_by_offset(disp, _gloffset_ProgramEnvParameters4fvEXT)
-#define SET_ProgramEnvParameters4fvEXT(disp, fn) SET_by_offset(disp, _gloffset_ProgramEnvParameters4fvEXT, fn)
+static void INLINE SET_ProgramEnvParameters4fvEXT(struct _glapi_table *disp, void (GLAPIENTRYP fn)(GLenum, GLuint, GLsizei, const GLfloat *)) {
+   SET_by_offset(disp, _gloffset_ProgramEnvParameters4fvEXT, fn);
+}
+
 #define CALL_ProgramLocalParameters4fvEXT(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLenum, GLuint, GLsizei, const GLfloat *)), _gloffset_ProgramLocalParameters4fvEXT, parameters)
 #define GET_ProgramLocalParameters4fvEXT(disp) GET_by_offset(disp, _gloffset_ProgramLocalParameters4fvEXT)
-#define SET_ProgramLocalParameters4fvEXT(disp, fn) SET_by_offset(disp, _gloffset_ProgramLocalParameters4fvEXT, fn)
+static void INLINE SET_ProgramLocalParameters4fvEXT(struct _glapi_table *disp, void (GLAPIENTRYP fn)(GLenum, GLuint, GLsizei, const GLfloat *)) {
+   SET_by_offset(disp, _gloffset_ProgramLocalParameters4fvEXT, fn);
+}
+
 #define CALL_GetQueryObjecti64vEXT(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLuint, GLenum, GLint64EXT *)), _gloffset_GetQueryObjecti64vEXT, parameters)
 #define GET_GetQueryObjecti64vEXT(disp) GET_by_offset(disp, _gloffset_GetQueryObjecti64vEXT)
-#define SET_GetQueryObjecti64vEXT(disp, fn) SET_by_offset(disp, _gloffset_GetQueryObjecti64vEXT, fn)
+static void INLINE SET_GetQueryObjecti64vEXT(struct _glapi_table *disp, void (GLAPIENTRYP fn)(GLuint, GLenum, GLint64EXT *)) {
+   SET_by_offset(disp, _gloffset_GetQueryObjecti64vEXT, fn);
+}
+
 #define CALL_GetQueryObjectui64vEXT(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLuint, GLenum, GLuint64EXT *)), _gloffset_GetQueryObjectui64vEXT, parameters)
 #define GET_GetQueryObjectui64vEXT(disp) GET_by_offset(disp, _gloffset_GetQueryObjectui64vEXT)
-#define SET_GetQueryObjectui64vEXT(disp, fn) SET_by_offset(disp, _gloffset_GetQueryObjectui64vEXT, fn)
+static void INLINE SET_GetQueryObjectui64vEXT(struct _glapi_table *disp, void (GLAPIENTRYP fn)(GLuint, GLenum, GLuint64EXT *)) {
+   SET_by_offset(disp, _gloffset_GetQueryObjectui64vEXT, fn);
+}
+
 #define CALL_EGLImageTargetRenderbufferStorageOES(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLenum, GLvoid *)), _gloffset_EGLImageTargetRenderbufferStorageOES, parameters)
 #define GET_EGLImageTargetRenderbufferStorageOES(disp) GET_by_offset(disp, _gloffset_EGLImageTargetRenderbufferStorageOES)
-#define SET_EGLImageTargetRenderbufferStorageOES(disp, fn) SET_by_offset(disp, _gloffset_EGLImageTargetRenderbufferStorageOES, fn)
+static void INLINE SET_EGLImageTargetRenderbufferStorageOES(struct _glapi_table *disp, void (GLAPIENTRYP fn)(GLenum, GLvoid *)) {
+   SET_by_offset(disp, _gloffset_EGLImageTargetRenderbufferStorageOES, fn);
+}
+
 #define CALL_EGLImageTargetTexture2DOES(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLenum, GLvoid *)), _gloffset_EGLImageTargetTexture2DOES, parameters)
 #define GET_EGLImageTargetTexture2DOES(disp) GET_by_offset(disp, _gloffset_EGLImageTargetTexture2DOES)
-#define SET_EGLImageTargetTexture2DOES(disp, fn) SET_by_offset(disp, _gloffset_EGLImageTargetTexture2DOES, fn)
+static void INLINE SET_EGLImageTargetTexture2DOES(struct _glapi_table *disp, void (GLAPIENTRYP fn)(GLenum, GLvoid *)) {
+   SET_by_offset(disp, _gloffset_EGLImageTargetTexture2DOES, fn);
+}
+
 
 #endif /* !defined( _GLAPI_DISPATCH_H_ ) */
