@@ -167,11 +167,15 @@ class PrintRemapTable(gl_XML.gl_print_base):
 
 		for f, index in abi_functions + functions:
 			arg_string = gl_XML.create_parameter_string( f.parameters, 0 )
-			cast = '%s (GLAPIENTRYP)(%s)' % (f.return_type, arg_string)
 
-			print '#define CALL_%s(disp, parameters) CALL_by_offset(disp, (%s), _gloffset_%s, parameters)' % (f.name, cast, f.name)
-			print '#define GET_%s(disp) GET_by_offset(disp, _gloffset_%s)' % (f.name, f.name)
-			print 'static void INLINE SET_%s(struct _glapi_table *disp, %s (GLAPIENTRYP fn)(%s)) {' % (f.name, f.return_type, arg_string)
+			print 'typedef %s (GLAPIENTRYP _glptr_%s)(%s);' % (f.return_type, f.name, arg_string)
+			print '#define CALL_%s(disp, parameters) \\' % (f.name)
+			print '    (* GET_%s(disp)) parameters' % (f.name)
+			print 'static INLINE _glptr_%s GET_%s(struct _glapi_table *disp) {' % (f.name, f.name)
+			print '   return (_glptr_%s) (GET_by_offset(disp, _gloffset_%s));' % (f.name, f.name)
+			print '}'
+			print
+			print 'static INLINE void SET_%s(struct _glapi_table *disp, %s (GLAPIENTRYP fn)(%s)) {' % (f.name, f.return_type, arg_string)
 			print '   SET_by_offset(disp, _gloffset_%s, fn);' % (f.name)
 			print '}'
 			print
