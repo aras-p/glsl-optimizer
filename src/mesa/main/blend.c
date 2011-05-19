@@ -447,7 +447,7 @@ _mesa_BlendEquationSeparateEXT( GLenum modeRGB, GLenum modeA )
 /**
  * Set separate blend equations for one color buffer/target.
  */
-void
+void GLAPIENTRY
 _mesa_BlendEquationSeparatei(GLuint buf, GLenum modeRGB, GLenum modeA)
 {
    GET_CURRENT_CONTEXT(ctx);

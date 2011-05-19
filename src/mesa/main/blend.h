@@ -68,7 +68,7 @@ extern void GLAPIENTRY
 _mesa_BlendEquationSeparateEXT( GLenum modeRGB, GLenum modeA );
 
 
-extern void
+extern void GLAPIENTRY
 _mesa_BlendEquationSeparatei(GLuint buf, GLenum modeRGB, GLenum modeA);
 
 
