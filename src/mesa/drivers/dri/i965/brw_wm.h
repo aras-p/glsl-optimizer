@@ -67,7 +67,6 @@ struct brw_wm_prog_key {
    GLuint clamp_fragment_color:1;
 
    GLbitfield proj_attrib_mask; /**< one bit per fragment program attribute */
-   GLuint shadowtex_mask:16;
    GLuint yuvtex_mask:16;
    GLuint yuvtex_swap_mask:16;	/* UV swaped */
    uint16_t gl_clamp_mask[3];

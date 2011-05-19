@@ -423,9 +423,6 @@ static void brw_wm_populate_key( struct brw_context *brw,
       }
    }
 
-   /* Shadow */
-   key->shadowtex_mask = fp->program.Base.ShadowSamplers;
-
    /* _NEW_BUFFERS */
    /*
     * Include the draw buffer origin and height so that we can calculate
