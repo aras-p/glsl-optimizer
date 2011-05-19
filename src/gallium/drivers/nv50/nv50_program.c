@@ -395,6 +395,9 @@ nv50_vertprog_prepare(struct nv50_translation_info *ti)
       }
    }
 
+   p->vp.clpd = p->max_out;
+   p->max_out += p->vp.clpd_nr;
+
    for (i = 0; i < TGSI_SEMANTIC_COUNT; ++i) {
       switch (ti->sysval_map[i]) {
       case 2:

@@ -1552,6 +1552,8 @@ static void
 bld_instruction(struct bld_context *bld,
                 const struct tgsi_full_instruction *insn)
 {
+   struct nv50_program *prog = bld->ti->p;
+   const struct tgsi_full_dst_register *dreg = &insn->Dst[0];
    struct nv_value *src0;
    struct nv_value *src1;
    struct nv_value *src2;
@@ -1990,6 +1992,31 @@ bld_instruction(struct bld_context *bld,
 
    FOR_EACH_DST0_ENABLED_CHANNEL(c, insn)
       emit_store(bld, insn, c, dst0[c]);
+
+   if (prog->type == PIPE_SHADER_VERTEX && prog->vp.clpd_nr &&
+       dreg->Register.File == TGSI_FILE_OUTPUT && !dreg->Register.Indirect &&
+       prog->out[dreg->Register.Index].sn == TGSI_SEMANTIC_POSITION) {
+
+      int p;
+      for (p = 0; p < prog->vp.clpd_nr; p++) {
+         struct nv_value *clipd = NULL;
+
+         for (c = 0; c < 4; c++) {
+            temp = new_value(bld->pc, NV_FILE_MEM_C(15), NV_TYPE_F32);
+            temp->reg.id = p * 4 + c;
+            temp = bld_insn_1(bld, NV_OP_LDA, temp);
+
+            clipd = clipd ?
+                        bld_insn_3(bld, NV_OP_MAD, dst0[c], temp, clipd) :
+                        bld_insn_2(bld, NV_OP_MUL, dst0[c], temp);
+         }
+
+         temp = bld_insn_1(bld, NV_OP_MOV, clipd);
+         temp->reg.file = NV_FILE_OUT;
+         temp->reg.id = bld->ti->p->vp.clpd + p;
+         temp->insn->fixed = 1;
+      }
+   }
 }
 
 static INLINE void

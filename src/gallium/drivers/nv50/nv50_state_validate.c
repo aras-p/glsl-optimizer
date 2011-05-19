@@ -225,6 +225,9 @@ nv50_validate_clip(struct nv50_context *nv50)
 
    BEGIN_RING(chan, RING_3D(VP_CLIP_DISTANCE_ENABLE), 1);
    OUT_RING  (chan, (1 << nv50->clip.nr) - 1);
+
+   if (nv50->vertprog && nv50->clip.nr > nv50->vertprog->vp.clpd_nr)
+      nv50->dirty |= NV50_NEW_VERTPROG;
 }
 
 static void
