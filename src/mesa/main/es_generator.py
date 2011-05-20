@@ -195,6 +195,10 @@ print """
 #include "main/api_exec.h"
 
 #if FEATURE_%s
+
+#ifndef GLAPIENTRYP
+#define GLAPIENTRYP GL_APIENTRYP
+#endif
 """ % (versionHeader, versionExtHeader, shortname.upper())
 
 # Everyone needs these types.
