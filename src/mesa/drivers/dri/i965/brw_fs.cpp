@@ -1320,7 +1320,7 @@ fs_visitor::emit_texture_gen5(ir_texture *ir, fs_reg dst, fs_reg coordinate,
    bool header_present = false;
 
    if (ir->offset) {
-      /* The TXD offsets set up by the ir_texture visitor are in the
+      /* The offsets set up by the ir_texture visitor are in the
        * m1 header, so we can't go headerless.
        */
       header_present = true;
