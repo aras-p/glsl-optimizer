@@ -140,6 +140,7 @@ public:
    }
    void add_barrier_deps(schedule_node *n);
    void add_dep(schedule_node *before, schedule_node *after, int latency);
+   void add_dep(schedule_node *before, schedule_node *after);
 
    void add_inst(fs_inst *inst);
    void calculate_deps();
@@ -210,6 +211,15 @@ instruction_scheduler::add_dep(schedule_node *before, schedule_node *after,
    after->parent_count++;
 }
 
+void
+instruction_scheduler::add_dep(schedule_node *before, schedule_node *after)
+{
+   if (!before)
+      return;
+
+   add_dep(before, after, before->latency);
+}
+
 /**
  * Sometimes we really want this node to execute after everything that
  * was before it and before everything that followed it.  This adds
@@ -274,10 +284,7 @@ instruction_scheduler::calculate_deps()
       /* read-after-write deps. */
       for (int i = 0; i < 3; i++) {
 	 if (inst->src[i].file == GRF) {
-	    if (last_grf_write[inst->src[i].reg]) {
-	       add_dep(last_grf_write[inst->src[i].reg], n,
-		       last_grf_write[inst->src[i].reg]->latency);
-	    }
+	    add_dep(last_grf_write[inst->src[i].reg], n);
 	 } else if (inst->src[i].file != BAD_FILE &&
 		    inst->src[i].file != IMM &&
 		    inst->src[i].file != UNIFORM) {
@@ -291,41 +298,29 @@ instruction_scheduler::calculate_deps()
 	  * instruction once it's sent, not when the result comes
 	  * back.
 	  */
-	 if (last_mrf_write[inst->base_mrf + i]) {
-	    add_dep(last_mrf_write[inst->base_mrf + i], n,
-		    last_mrf_write[inst->base_mrf + i]->latency);
-	 }
+	 add_dep(last_mrf_write[inst->base_mrf + i], n);
       }
 
       if (inst->predicated) {
 	 assert(last_conditional_mod);
-	 add_dep(last_conditional_mod, n, last_conditional_mod->latency);
+	 add_dep(last_conditional_mod, n);
       }
 
       /* write-after-write deps. */
       if (inst->dst.file == GRF) {
-	 if (last_grf_write[inst->dst.reg]) {
-	    add_dep(last_grf_write[inst->dst.reg], n,
-		    last_grf_write[inst->dst.reg]->latency);
-	 }
+	 add_dep(last_grf_write[inst->dst.reg], n);
 	 last_grf_write[inst->dst.reg] = n;
       } else if (inst->dst.file == MRF) {
 	 int reg = inst->dst.hw_reg & ~BRW_MRF_COMPR4;
 
-	 if (last_mrf_write[reg]) {
-	    add_dep(last_mrf_write[reg], n,
-		    last_mrf_write[reg]->latency);
-	 }
+	 add_dep(last_mrf_write[reg], n);
 	 last_mrf_write[reg] = n;
 	 if (is_compressed(inst)) {
 	    if (inst->dst.hw_reg & BRW_MRF_COMPR4)
 	       reg += 4;
 	    else
 	       reg++;
-	    if (last_mrf_write[reg]) {
-	       add_dep(last_mrf_write[reg], n,
-		       last_mrf_write[reg]->latency);
-	    }
+	    add_dep(last_mrf_write[reg], n);
 	    last_mrf_write[reg] = n;
 	 }
       } else if (inst->dst.file != BAD_FILE) {
@@ -334,10 +329,7 @@ instruction_scheduler::calculate_deps()
 
       if (inst->mlen > 0) {
 	 for (int i = 0; i < v->implied_mrf_writes(inst); i++) {
-	    if (last_mrf_write[inst->base_mrf + i]) {
-	       add_dep(last_mrf_write[inst->base_mrf + i], n,
-		       last_mrf_write[inst->base_mrf + i]->latency);
-	    }
+	    add_dep(last_mrf_write[inst->base_mrf + i], n);
 	    last_mrf_write[inst->base_mrf + i] = n;
 	 }
       }
@@ -364,9 +356,7 @@ instruction_scheduler::calculate_deps()
       /* write-after-read deps. */
       for (int i = 0; i < 3; i++) {
 	 if (inst->src[i].file == GRF) {
-	    if (last_grf_write[inst->src[i].reg]) {
-	       add_dep(n, last_grf_write[inst->src[i].reg], n->latency);
-	    }
+	    add_dep(n, last_grf_write[inst->src[i].reg]);
 	 } else if (inst->src[i].file != BAD_FILE &&
 		    inst->src[i].file != IMM &&
 		    inst->src[i].file != UNIFORM) {
@@ -384,9 +374,7 @@ instruction_scheduler::calculate_deps()
       }
 
       if (inst->predicated) {
-	 if (last_conditional_mod) {
-	    add_dep(n, last_conditional_mod, n->latency);
-	 }
+	 add_dep(n, last_conditional_mod);
       }
 
       /* Update the things this instruction wrote, so earlier reads
