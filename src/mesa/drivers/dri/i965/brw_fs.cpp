@@ -1388,9 +1388,19 @@ fs_inst *
 fs_visitor::emit_texture_gen7(ir_texture *ir, fs_reg dst, fs_reg coordinate,
 			      int sampler)
 {
-   int mlen = 1; /* g0 header always present. */
-   int base_mrf = 1;
+   int mlen = 0;
+   int base_mrf = 2;
    int reg_width = c->dispatch_width / 8;
+   bool header_present = false;
+
+   if (ir->offset) {
+      /* The offsets set up by the ir_texture visitor are in the
+       * m1 header, so we can't go headerless.
+       */
+      header_present = true;
+      mlen++;
+      base_mrf--;
+   }
 
    if (ir->shadow_comparitor) {
       ir->shadow_comparitor->accept(this);
@@ -1439,6 +1449,7 @@ fs_visitor::emit_texture_gen7(ir_texture *ir, fs_reg dst, fs_reg coordinate,
    }
    inst->base_mrf = base_mrf;
    inst->mlen = mlen;
+   inst->header_present = header_present;
 
    if (mlen > 11) {
       fail("Message length >11 disallowed by hardware\n");
