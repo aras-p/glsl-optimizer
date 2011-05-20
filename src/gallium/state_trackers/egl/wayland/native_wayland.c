@@ -61,31 +61,35 @@ wayland_display_get_configs (struct native_display *ndpy, int *num_configs)
 {
    struct wayland_display *display = wayland_display(ndpy);
    const struct native_config **configs;
+   int i;
 
    if (!display->config) {
       struct native_config *nconf;
-      enum pipe_format format;
-      display->config = CALLOC(1, sizeof(*display->config));
+      display->config = CALLOC(2, sizeof(*display->config));
       if (!display->config)
          return NULL;
-      nconf = &display->config->base;
 
-      nconf->buffer_mask =
-         (1 << NATIVE_ATTACHMENT_FRONT_LEFT) |
-         (1 << NATIVE_ATTACHMENT_BACK_LEFT);
+      for (i = 0; i < 2; ++i) {
+         nconf = &display->config[i].base;
+         
+         nconf->buffer_mask =
+            (1 << NATIVE_ATTACHMENT_FRONT_LEFT) |
+            (1 << NATIVE_ATTACHMENT_BACK_LEFT);
+         
+         nconf->window_bit = TRUE;
+         nconf->pixmap_bit = TRUE;
+      }
 
-      format = PIPE_FORMAT_B8G8R8A8_UNORM;
-
-      nconf->color_format = format;
-      nconf->window_bit = TRUE;
-      nconf->pixmap_bit = TRUE;
+      display->config[0].base.color_format = PIPE_FORMAT_B8G8R8A8_UNORM;
+      display->config[1].base.color_format = PIPE_FORMAT_B8G8R8X8_UNORM;
    }
 
-   configs = MALLOC(sizeof(*configs));
+   configs = MALLOC(2 * sizeof(*configs));
    if (configs) {
-      configs[0] = &display->config->base;
+      configs[0] = &display->config[0].base;
+      configs[1] = &display->config[1].base;
       if (num_configs)
-         *num_configs = 1;
+         *num_configs = 2;
    }
 
    return configs;
@@ -368,9 +372,9 @@ wayland_create_pixmap_surface(struct native_display *ndpy,
    surface->type = WL_PIXMAP_SURFACE;
    surface->pix = egl_pixmap;
 
-   if (surface->pix->visual == wl_display_get_rgb_visual(display->dpy))
-      surface->color_format = PIPE_FORMAT_B8G8R8X8_UNORM;
-   else
+   if (nconf)
+      surface->color_format = nconf->color_format;
+   else /* FIXME: derive format from wl_visual */
       surface->color_format = PIPE_FORMAT_B8G8R8A8_UNORM;
 
    surface->attachment_mask = (1 << NATIVE_ATTACHMENT_FRONT_LEFT);
