@@ -140,7 +140,10 @@ extern void XMesaDestroyVisual( XMesaVisual v );
  * Return:  an XMesaContext or NULL if error.
  */
 extern XMesaContext XMesaCreateContext( XMesaVisual v,
-					XMesaContext share_list );
+					XMesaContext share_list,
+                                        GLuint major, GLuint minor,
+                                        GLuint profileMask,
+                                        GLuint contextFlags);
 
 
 /*

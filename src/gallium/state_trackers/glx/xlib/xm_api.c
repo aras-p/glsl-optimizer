@@ -853,7 +853,9 @@ xmesa_init( Display *display )
  * \return an XMesaContext or NULL if error.
  */
 PUBLIC
-XMesaContext XMesaCreateContext( XMesaVisual v, XMesaContext share_list )
+XMesaContext XMesaCreateContext( XMesaVisual v, XMesaContext share_list,
+                                 GLuint major, GLuint minor,
+                                 GLuint profileMask, GLuint contextFlags)
 {
    XMesaDisplay xmdpy = xmesa_init_display(v->display);
    struct st_context_attribs attribs;

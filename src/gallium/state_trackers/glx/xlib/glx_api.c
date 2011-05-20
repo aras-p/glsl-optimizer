@@ -1041,7 +1041,8 @@ create_context(Display *dpy, XMesaVisual xmvis,
    XMesaGarbageCollect();
 #endif
 
-   glxCtx->xmesaContext = XMesaCreateContext(xmvis, shareCtx);
+   glxCtx->xmesaContext = XMesaCreateContext(xmvis, shareCtx, major, minor,
+                                             profileMask, contextFlags);
    if (!glxCtx->xmesaContext) {
       free(glxCtx);
       return NULL;
