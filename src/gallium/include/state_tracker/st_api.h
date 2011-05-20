@@ -70,6 +70,15 @@ enum st_profile_type
 #define ST_PROFILE_OPENGL_ES2_MASK   (1 << ST_PROFILE_OPENGL_ES2)
 
 /**
+ * New context flags for GL 3.0 and beyond.
+ */
+#define ST_CONTEXT_FLAG_CORE_PROFILE        (1 << 0)
+#define ST_CONTEXT_FLAG_COMPATIBLE_PROFILE  (1 << 1)
+#define ST_CONTEXT_FLAG_FORWARD_COMPATIBLE  (1 << 2)
+#define ST_CONTEXT_FLAG_DEBUG               (1 << 3)
+#define ST_CONTEXT_FLAG_ROBUST_ACCESS       (1 << 4)
+
+/**
  * Used in st_context_iface->teximage.
  */
 enum st_texture_type {
@@ -207,21 +216,14 @@ struct st_context_attribs
     * The profile and minimal version to support.
     *
     * The valid profiles and versions are rendering API dependent.  The latest
-    * version satisfying the request should be returned, unless
-    * forward_compatiible is true.
+    * version satisfying the request should be returned, unless the
+    * ST_CONTEXT_FLAG_FORWARD_COMPATIBLE bit is set.
     */
    enum st_profile_type profile;
    int major, minor;
 
-   /**
-    * Enable debugging.
-    */
-   boolean debug;
-
-   /**
-    * Return the exact version and disallow the use of deprecated features.
-    */
-   boolean forward_compatible;
+   /** Mask of ST_CONTEXT_FLAG_x bits */
+   unsigned flags;
 
    /**
     * The visual of the framebuffers the context will be bound to.

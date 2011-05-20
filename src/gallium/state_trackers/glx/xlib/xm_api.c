@@ -876,6 +876,18 @@ XMesaContext XMesaCreateContext( XMesaVisual v, XMesaContext share_list,
    memset(&attribs, 0, sizeof(attribs));
    attribs.profile = ST_PROFILE_DEFAULT;
    attribs.visual = v->stvis;
+   attribs.major = major;
+   attribs.minor = minor;
+   if (contextFlags & GLX_CONTEXT_FORWARD_COMPATIBLE_BIT_ARB)
+      attribs.flags |= ST_CONTEXT_FLAG_FORWARD_COMPATIBLE;
+   if (contextFlags & GLX_CONTEXT_DEBUG_BIT_ARB)
+      attribs.flags |= ST_CONTEXT_FLAG_DEBUG;
+   if (contextFlags & GLX_CONTEXT_ROBUST_ACCESS_BIT_ARB)
+      attribs.flags |= ST_CONTEXT_FLAG_ROBUST_ACCESS;
+   if (profileMask & GLX_CONTEXT_CORE_PROFILE_BIT_ARB)
+      attribs.flags |= ST_CONTEXT_FLAG_CORE_PROFILE;
+   if (profileMask & GLX_CONTEXT_COMPATIBILITY_PROFILE_BIT_ARB)
+      attribs.flags |= ST_CONTEXT_FLAG_COMPATIBLE_PROFILE;
 
    c->st = stapi->create_context(stapi, xmdpy->smapi,
          &attribs, (share_list) ? share_list->st : NULL);
