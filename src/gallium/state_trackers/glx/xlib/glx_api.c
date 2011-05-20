@@ -1018,15 +1018,16 @@ glXChooseVisual( Display *dpy, int screen, int *list )
 }
 
 
-PUBLIC GLXContext
-glXCreateContext( Display *dpy, XVisualInfo *visinfo,
-                  GLXContext share_list, Bool direct )
+/**
+ * Helper function used by other glXCreateContext functions.
+ */
+static GLXContext
+create_context(Display *dpy, XMesaVisual xmvis,
+               XMesaContext shareCtx, Bool direct)
 {
-   XMesaVisual xmvis;
    GLXContext glxCtx;
-   GLXContext shareCtx = share_list;
 
-   if (!dpy || !visinfo)
+   if (!dpy || !xmvis)
       return 0;
 
    glxCtx = CALLOC_STRUCT(__GLXcontextRec);
@@ -1038,19 +1039,7 @@ glXCreateContext( Display *dpy, XVisualInfo *visinfo,
    XMesaGarbageCollect();
 #endif
 
-   xmvis = find_glx_visual( dpy, visinfo );
-   if (!xmvis) {
-      /* This visual wasn't found with glXChooseVisual() */
-      xmvis = create_glx_visual( dpy, visinfo );
-      if (!xmvis) {
-         /* unusable visual */
-         free(glxCtx);
-         return NULL;
-      }
-   }
-
-   glxCtx->xmesaContext = XMesaCreateContext(xmvis,
-                                   shareCtx ? shareCtx->xmesaContext : NULL);
+   glxCtx->xmesaContext = XMesaCreateContext(xmvis, shareCtx);
    if (!glxCtx->xmesaContext) {
       free(glxCtx);
       return NULL;
@@ -1061,6 +1050,28 @@ glXCreateContext( Display *dpy, XVisualInfo *visinfo,
    glxCtx->xid = (XID) glxCtx;  /* self pointer */
 
    return glxCtx;
+}
+
+
+PUBLIC GLXContext
+glXCreateContext( Display *dpy, XVisualInfo *visinfo,
+                  GLXContext shareCtx, Bool direct )
+{
+   XMesaVisual xmvis;
+
+   xmvis = find_glx_visual( dpy, visinfo );
+   if (!xmvis) {
+      /* This visual wasn't found with glXChooseVisual() */
+      xmvis = create_glx_visual( dpy, visinfo );
+      if (!xmvis) {
+         /* unusable visual */
+         return NULL;
+      }
+   }
+
+   return create_context(dpy, xmvis,
+                         shareCtx ? shareCtx->xmesaContext : NULL,
+                         direct);
 }
 
 
@@ -2084,35 +2095,17 @@ glXQueryDrawable(Display *dpy, GLXDrawable draw, int attribute,
 
 PUBLIC GLXContext
 glXCreateNewContext( Display *dpy, GLXFBConfig config,
-                     int renderType, GLXContext shareList, Bool direct )
+                     int renderType, GLXContext shareCtx, Bool direct )
 {
-   GLXContext glxCtx;
-   GLXContext shareCtx = shareList;
    XMesaVisual xmvis = (XMesaVisual) config;
 
    if (!dpy || !config ||
        (renderType != GLX_RGBA_TYPE && renderType != GLX_COLOR_INDEX_TYPE))
       return 0;
 
-   glxCtx = CALLOC_STRUCT(__GLXcontextRec);
-   if (!glxCtx)
-      return 0;
-
-   /* deallocate unused windows/buffers */
-   XMesaGarbageCollect();
-
-   glxCtx->xmesaContext = XMesaCreateContext(xmvis,
-                                   shareCtx ? shareCtx->xmesaContext : NULL);
-   if (!glxCtx->xmesaContext) {
-      free(glxCtx);
-      return NULL;
-   }
-
-   glxCtx->isDirect = DEFAULT_DIRECT;
-   glxCtx->currentDpy = dpy;
-   glxCtx->xid = (XID) glxCtx;  /* self pointer */
-
-   return glxCtx;
+   return create_context(dpy, xmvis,
+                         shareCtx ? shareCtx->xmesaContext : NULL,
+                         direct);
 }
 
 
@@ -2315,32 +2308,18 @@ glXCreateGLXPixmapWithConfigSGIX(Display *dpy, GLXFBConfigSGIX config,
 
 PUBLIC GLXContext
 glXCreateContextWithConfigSGIX(Display *dpy, GLXFBConfigSGIX config,
-                               int render_type, GLXContext share_list,
+                               int renderType, GLXContext shareCtx,
                                Bool direct)
 {
    XMesaVisual xmvis = (XMesaVisual) config;
-   GLXContext glxCtx;
-   GLXContext shareCtx = share_list;
 
-   glxCtx = CALLOC_STRUCT(__GLXcontextRec);
-   if (!glxCtx)
+   if (!dpy || !config ||
+       (renderType != GLX_RGBA_TYPE && renderType != GLX_COLOR_INDEX_TYPE))
       return 0;
 
-   /* deallocate unused windows/buffers */
-   XMesaGarbageCollect();
-
-   glxCtx->xmesaContext = XMesaCreateContext(xmvis,
-                                   shareCtx ? shareCtx->xmesaContext : NULL);
-   if (!glxCtx->xmesaContext) {
-      free(glxCtx);
-      return NULL;
-   }
-
-   glxCtx->isDirect = DEFAULT_DIRECT;
-   glxCtx->currentDpy = dpy;
-   glxCtx->xid = (XID) glxCtx;  /* self pointer */
-
-   return glxCtx;
+   return create_context(dpy, xmvis,
+                         shareCtx ? shareCtx->xmesaContext : NULL,
+                         direct);
 }
 
 
