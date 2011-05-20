@@ -216,7 +216,7 @@ typedef enum
 extern const char *
 _mesa_get_format_name(gl_format format);
 
-extern GLuint
+extern GLint
 _mesa_get_format_bytes(gl_format format);
 
 extern GLint
