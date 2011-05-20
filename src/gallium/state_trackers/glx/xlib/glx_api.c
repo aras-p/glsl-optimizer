@@ -1023,7 +1023,9 @@ glXChooseVisual( Display *dpy, int screen, int *list )
  */
 static GLXContext
 create_context(Display *dpy, XMesaVisual xmvis,
-               XMesaContext shareCtx, Bool direct)
+               XMesaContext shareCtx, Bool direct,
+               unsigned major, unsigned minor,
+               unsigned profileMask, unsigned contextFlags)
 {
    GLXContext glxCtx;
 
@@ -1071,7 +1073,8 @@ glXCreateContext( Display *dpy, XVisualInfo *visinfo,
 
    return create_context(dpy, xmvis,
                          shareCtx ? shareCtx->xmesaContext : NULL,
-                         direct);
+                         direct,
+                         1, 0, GLX_CONTEXT_COMPATIBILITY_PROFILE_BIT_ARB, 0x0);
 }
 
 
@@ -2105,7 +2108,8 @@ glXCreateNewContext( Display *dpy, GLXFBConfig config,
 
    return create_context(dpy, xmvis,
                          shareCtx ? shareCtx->xmesaContext : NULL,
-                         direct);
+                         direct,
+                         1, 0, GLX_CONTEXT_COMPATIBILITY_PROFILE_BIT_ARB, 0x0);
 }
 
 
@@ -2319,7 +2323,8 @@ glXCreateContextWithConfigSGIX(Display *dpy, GLXFBConfigSGIX config,
 
    return create_context(dpy, xmvis,
                          shareCtx ? shareCtx->xmesaContext : NULL,
-                         direct);
+                         direct,
+                         1, 0, GLX_CONTEXT_COMPATIBILITY_PROFILE_BIT_ARB, 0x0);
 }
 
 
