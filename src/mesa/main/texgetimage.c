@@ -40,6 +40,7 @@
 #include "pack.h"
 #include "pbo.h"
 #include "texgetimage.h"
+#include "texfetch.h"
 #include "teximage.h"
 
 
@@ -220,110 +221,14 @@ get_tex_ycbcr(struct gl_context *ctx, GLuint dimensions,
 }
 
 
-#if FEATURE_EXT_texture_sRGB
-
-
 /**
- * Convert a float value from linear space to a
- * non-linear sRGB value in [0, 255].
- * Not terribly efficient.
- */
-static INLINE GLfloat
-linear_to_nonlinear(GLfloat cl)
-{
-   /* can't have values outside [0, 1] */
-   GLfloat cs;
-   if (cl < 0.0031308f) {
-      cs = 12.92f * cl;
-   }
-   else {
-      cs = (GLfloat)(1.055 * pow(cl, 0.41666) - 0.055);
-   }
-   return cs;
-}
-
-
-/**
- * glGetTexImagefor sRGB pixels;
- */
-static void
-get_tex_srgb(struct gl_context *ctx, GLuint dimensions,
-             GLenum format, GLenum type, GLvoid *pixels,
-             const struct gl_texture_image *texImage)
-{
-   const GLint width = texImage->Width;
-   const GLint height = texImage->Height;
-   const GLint depth = texImage->Depth;
-   const GLbitfield transferOps = 0x0;
-   GLint img, row;
-   GLfloat (*rgba)[4] = (GLfloat (*)[4]) malloc(4 * width * sizeof(GLfloat));
-
-   if (!rgba) {
-      _mesa_error(ctx, GL_OUT_OF_MEMORY, "glGetTexImage");
-      return;
-   }
-
-   for (img = 0; img < depth; img++) {
-      for (row = 0; row < height; row++) {
-         void *dest = _mesa_image_address(dimensions, &ctx->Pack, pixels,
-                                          width, height, format, type,
-                                          img, row, 0);
-
-         GLint col;
-
-         /* convert row to RGBA format */
-         for (col = 0; col < width; col++) {
-            texImage->FetchTexelf(texImage, col, row, img, rgba[col]);
-            if (texImage->_BaseFormat == GL_LUMINANCE) {
-               rgba[col][RCOMP] = linear_to_nonlinear(rgba[col][RCOMP]);
-               rgba[col][GCOMP] = 0.0;
-               rgba[col][BCOMP] = 0.0;
-            }
-            else if (texImage->_BaseFormat == GL_LUMINANCE_ALPHA) {
-               rgba[col][RCOMP] = linear_to_nonlinear(rgba[col][RCOMP]);
-               rgba[col][GCOMP] = 0.0;
-               rgba[col][BCOMP] = 0.0;
-            }
-            else if (texImage->_BaseFormat == GL_RGB ||
-                     texImage->_BaseFormat == GL_RGBA) {
-               rgba[col][RCOMP] = linear_to_nonlinear(rgba[col][RCOMP]);
-               rgba[col][GCOMP] = linear_to_nonlinear(rgba[col][GCOMP]);
-               rgba[col][BCOMP] = linear_to_nonlinear(rgba[col][BCOMP]);
-            }
-         }
-         _mesa_pack_rgba_span_float(ctx, width, (GLfloat (*)[4]) rgba,
-                                    format, type, dest,
-                                    &ctx->Pack, transferOps);
-      }
-   }
-
-   free(rgba);
-}
-
-
-#else /* FEATURE_EXT_texture_sRGB */
-
-
-static INLINE void
-get_tex_srgb(struct gl_context *ctx, GLuint dimensions,
-             GLenum format, GLenum type, GLvoid *pixels,
-             const struct gl_texture_image *texImage)
-{
-   ASSERT_NO_FEATURE();
-}
-
-
-#endif /* FEATURE_EXT_texture_sRGB */
-
-
-/**
- * glGetTexImagefor RGBA, Luminance, etc. pixels.
+ * glGetTexImage for (s)RGBA, Luminance, etc. pixels.
  * This is the slow way since we use texture sampling.
  */
 static void
 get_tex_rgba(struct gl_context *ctx, GLuint dimensions,
              GLenum format, GLenum type, GLvoid *pixels,
-             const struct gl_texture_image *texImage)
+             struct gl_texture_image *texImage)
 {
    const GLint width = texImage->Width;
    const GLint height = texImage->Height;
@@ -334,10 +239,21 @@ get_tex_rgba(struct gl_context *ctx, GLuint dimensions,
    GLbitfield transferOps = 0x0;
    GLint img, row;
    GLfloat (*rgba)[4] = (GLfloat (*)[4]) malloc(4 * width * sizeof(GLfloat));
+   const GLboolean is_sampler_srgb_decode =
+       _mesa_get_format_color_encoding(texImage->TexFormat) == GL_SRGB &&
+       texImage->TexObject->Sampler.sRGBDecode == GL_DECODE_EXT;
 
    if (!rgba) {
       _mesa_error(ctx, GL_OUT_OF_MEMORY, "glGetTexImage");
       return;
+   }
+
+   /* glGetTexImage always returns sRGB data for sRGB textures. Make sure the
+    * fetch functions return sRGB data without linearizing it.
+    */
+   if (is_sampler_srgb_decode) {
+      texImage->TexObject->Sampler.sRGBDecode = GL_SKIP_DECODE_EXT;
+      _mesa_set_fetch_functions(texImage, dimensions);
    }
 
    for (img = 0; img < depth; img++) {
@@ -387,6 +303,11 @@ get_tex_rgba(struct gl_context *ctx, GLuint dimensions,
                                     format, type, dest,
                                     &ctx->Pack, transferOps);
       }
+   }
+
+   if (is_sampler_srgb_decode) {
+      texImage->TexObject->Sampler.sRGBDecode = GL_DECODE_EXT;
+      _mesa_set_fetch_functions(texImage, dimensions);
    }
 
    free(rgba);
@@ -547,9 +468,6 @@ _mesa_get_teximage(struct gl_context *ctx, GLenum target, GLint level,
    }
    else if (format == GL_YCBCR_MESA) {
       get_tex_ycbcr(ctx, dimensions, format, type, pixels, texImage);
-   }
-   else if (_mesa_get_format_color_encoding(texImage->TexFormat) == GL_SRGB) {
-      get_tex_srgb(ctx, dimensions, format, type, pixels, texImage);
    }
    else {
       get_tex_rgba(ctx, dimensions, format, type, pixels, texImage);
