@@ -75,8 +75,7 @@ enum fs_opcodes {
    FS_OPCODE_TXB,
    FS_OPCODE_TXD,
    FS_OPCODE_TXL,
-   FS_OPCODE_DISCARD_NOT,
-   FS_OPCODE_DISCARD_AND,
+   FS_OPCODE_DISCARD,
    FS_OPCODE_SPILL,
    FS_OPCODE_UNSPILL,
    FS_OPCODE_PULL_CONSTANT_LOAD,
@@ -500,8 +499,7 @@ public:
 			 struct brw_reg *src);
    void generate_tex(fs_inst *inst, struct brw_reg dst, struct brw_reg src);
    void generate_math(fs_inst *inst, struct brw_reg dst, struct brw_reg *src);
-   void generate_discard_not(fs_inst *inst, struct brw_reg temp);
-   void generate_discard_and(fs_inst *inst, struct brw_reg temp);
+   void generate_discard(fs_inst *inst);
    void generate_ddx(fs_inst *inst, struct brw_reg dst, struct brw_reg src);
    void generate_ddy(fs_inst *inst, struct brw_reg dst, struct brw_reg src);
    void generate_spill(fs_inst *inst, struct brw_reg src);
@@ -514,8 +512,12 @@ public:
    fs_reg *emit_general_interpolation(ir_variable *ir);
    void emit_interpolation_setup_gen4();
    void emit_interpolation_setup_gen6();
-   fs_inst *emit_texture_gen4(ir_texture *ir, fs_reg dst, fs_reg coordinate);
-   fs_inst *emit_texture_gen5(ir_texture *ir, fs_reg dst, fs_reg coordinate);
+   fs_inst *emit_texture_gen4(ir_texture *ir, fs_reg dst, fs_reg coordinate,
+			      int sampler);
+   fs_inst *emit_texture_gen5(ir_texture *ir, fs_reg dst, fs_reg coordinate,
+			      int sampler);
+   fs_inst *emit_texture_gen7(ir_texture *ir, fs_reg dst, fs_reg coordinate,
+			      int sampler);
    fs_inst *emit_math(fs_opcodes op, fs_reg dst, fs_reg src0);
    fs_inst *emit_math(fs_opcodes op, fs_reg dst, fs_reg src0, fs_reg src1);
    bool try_emit_saturate(ir_expression *ir);

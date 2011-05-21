@@ -481,6 +481,15 @@ dri2_create_image(__DRIscreen *_screen,
    enum pipe_format pf;
 
    tex_usage = PIPE_BIND_RENDER_TARGET | PIPE_BIND_SAMPLER_VIEW;
+   if (use & __DRI_IMAGE_USE_SCANOUT)
+      tex_usage |= PIPE_BIND_SCANOUT;
+   if (use & __DRI_IMAGE_USE_SHARE)
+      tex_usage |= PIPE_BIND_SHARED;
+   if (use & __DRI_IMAGE_USE_CURSOR) {
+      if (width != 64 || height != 64)
+         return NULL;
+      tex_usage |= PIPE_BIND_CURSOR;
+   }
 
    switch (format) {
    case __DRI_IMAGE_FORMAT_RGB565:

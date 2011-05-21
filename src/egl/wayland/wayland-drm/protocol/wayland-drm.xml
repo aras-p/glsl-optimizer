@@ -3,6 +3,12 @@
   <!-- drm support. This object is created by the server and published
        using the display's global event. -->
   <interface name="wl_drm" version="1">
+    <enum name="error">
+      <entry name="authenticate_fail" value="0"/>
+      <entry name="invalid_visual" value="1"/>
+      <entry name="invalid_name" value="2"/>
+    </enum>
+
     <!-- Call this request with the magic received from drmGetMagic().
          It will be passed on to the drmAuthMagic() or
          DRIAuthConnection() call.  This authentication must be

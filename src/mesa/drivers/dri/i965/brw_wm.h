@@ -71,9 +71,9 @@ struct brw_wm_prog_key {
    GLuint shadowtex_mask:16;
    GLuint yuvtex_mask:16;
    GLuint yuvtex_swap_mask:16;	/* UV swaped */
+   uint16_t gl_clamp_mask[3];
 
    GLushort tex_swizzles[BRW_MAX_TEX_UNIT];
-
    GLushort drawable_height;
    GLbitfield64 vp_outputs_written;
    GLuint iz_lookup;

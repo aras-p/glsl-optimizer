@@ -81,7 +81,6 @@ static void copy_bfc( struct brw_sf_compile *c,
 static void do_twoside_color( struct brw_sf_compile *c )
 {
    struct brw_compile *p = &c->func;
-   struct brw_instruction *if_insn;
    GLuint backface_conditional = c->key.frontface_ccw ? BRW_CONDITIONAL_G : BRW_CONDITIONAL_L;
 
    /* Already done in clip program:
@@ -104,7 +103,7 @@ static void do_twoside_color( struct brw_sf_compile *c )
     */
    brw_push_insn_state(p);
    brw_CMP(p, vec4(brw_null_reg()), backface_conditional, c->det, brw_imm_f(0));
-   if_insn = brw_IF(p, BRW_EXECUTE_4); 
+   brw_IF(p, BRW_EXECUTE_4);
    {
       switch (c->nr_verts) {
       case 3: copy_bfc(c, c->vert[2]);
@@ -112,7 +111,7 @@ static void do_twoside_color( struct brw_sf_compile *c )
       case 1: copy_bfc(c, c->vert[0]);
       }
    }
-   brw_ENDIF(p, if_insn);
+   brw_ENDIF(p);
    brw_pop_insn_state(p);
 }
 

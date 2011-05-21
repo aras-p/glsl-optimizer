@@ -581,7 +581,12 @@ static void u_vbuf_mgr_compute_max_index(struct u_vbuf_mgr_priv *mgr)
        * for that when dividing by stride. */
       unused = vb->stride -
                (mgr->ve->ve[i].src_offset + mgr->ve->src_format_size[i]);
-      assert(unused >= 0);
+
+      /* If src_offset is greater than stride (which means it's a buffer
+       * offset rather than a vertex offset)... */
+      if (unused < 0) {
+         unused = 0;
+      }
 
       /* Compute the maximum index for this vertex element. */
       max_index =

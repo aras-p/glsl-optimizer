@@ -485,8 +485,6 @@ fs_visitor::emit_fragcoord_interpolation(ir_variable *ir)
 {
    fs_reg *reg = new(this->mem_ctx) fs_reg(this, ir->type);
    fs_reg wpos = *reg;
-   fs_reg neg_y = this->pixel_y;
-   neg_y.negate = true;
    bool flip = !ir->origin_upper_left ^ c->key.render_to_fbo;
 
    /* gl_FragCoord.x */
@@ -1174,7 +1172,8 @@ fs_visitor::visit(ir_assignment *ir)
 }
 
 fs_inst *
-fs_visitor::emit_texture_gen4(ir_texture *ir, fs_reg dst, fs_reg coordinate)
+fs_visitor::emit_texture_gen4(ir_texture *ir, fs_reg dst, fs_reg coordinate,
+			      int sampler)
 {
    int mlen;
    int base_mrf = 1;
@@ -1186,7 +1185,11 @@ fs_visitor::emit_texture_gen4(ir_texture *ir, fs_reg dst, fs_reg coordinate)
 
    if (ir->shadow_comparitor) {
       for (int i = 0; i < ir->coordinate->type->vector_elements; i++) {
-	 emit(BRW_OPCODE_MOV, fs_reg(MRF, base_mrf + mlen + i), coordinate);
+	 fs_inst *inst = emit(BRW_OPCODE_MOV,
+			      fs_reg(MRF, base_mrf + mlen + i), coordinate);
+	 if (i < 3 && c->key.gl_clamp_mask[i] & (1 << sampler))
+	    inst->saturate = true;
+
 	 coordinate.reg_offset++;
       }
       /* gen4's SIMD8 sampler always has the slots for u,v,r present. */
@@ -1214,7 +1217,10 @@ fs_visitor::emit_texture_gen4(ir_texture *ir, fs_reg dst, fs_reg coordinate)
       mlen++;
    } else if (ir->op == ir_tex) {
       for (int i = 0; i < ir->coordinate->type->vector_elements; i++) {
-	 emit(BRW_OPCODE_MOV, fs_reg(MRF, base_mrf + mlen + i), coordinate);
+	 fs_inst *inst = emit(BRW_OPCODE_MOV, fs_reg(MRF, base_mrf + mlen + i),
+			      coordinate);
+	 if (i < 3 && c->key.gl_clamp_mask[i] & (1 << sampler))
+	    inst->saturate = true;
 	 coordinate.reg_offset++;
       }
       /* gen4's SIMD8 sampler always has the slots for u,v,r present. */
@@ -1228,7 +1234,11 @@ fs_visitor::emit_texture_gen4(ir_texture *ir, fs_reg dst, fs_reg coordinate)
       assert(ir->op == ir_txb || ir->op == ir_txl);
 
       for (int i = 0; i < ir->coordinate->type->vector_elements; i++) {
-	 emit(BRW_OPCODE_MOV, fs_reg(MRF, base_mrf + mlen + i * 2), coordinate);
+	 fs_inst *inst = emit(BRW_OPCODE_MOV, fs_reg(MRF,
+						     base_mrf + mlen + i * 2),
+			      coordinate);
+	 if (i < 3 && c->key.gl_clamp_mask[i] & (1 << sampler))
+	    inst->saturate = true;
 	 coordinate.reg_offset++;
       }
 
@@ -1279,6 +1289,7 @@ fs_visitor::emit_texture_gen4(ir_texture *ir, fs_reg dst, fs_reg coordinate)
    }
    inst->base_mrf = base_mrf;
    inst->mlen = mlen;
+   inst->header_present = true;
 
    if (simd16) {
       for (int i = 0; i < 4; i++) {
@@ -1300,21 +1311,35 @@ fs_visitor::emit_texture_gen4(ir_texture *ir, fs_reg dst, fs_reg coordinate)
  * surprising in the disassembly.
  */
 fs_inst *
-fs_visitor::emit_texture_gen5(ir_texture *ir, fs_reg dst, fs_reg coordinate)
+fs_visitor::emit_texture_gen5(ir_texture *ir, fs_reg dst, fs_reg coordinate,
+			      int sampler)
 {
-   int mlen = 1; /* g0 header always present. */
-   int base_mrf = 1;
+   int mlen = 0;
+   int base_mrf = 2;
    int reg_width = c->dispatch_width / 8;
+   bool header_present = false;
+
+   if (ir->offset) {
+      /* The offsets set up by the ir_texture visitor are in the
+       * m1 header, so we can't go headerless.
+       */
+      header_present = true;
+      mlen++;
+      base_mrf--;
+   }
 
    for (int i = 0; i < ir->coordinate->type->vector_elements; i++) {
-      emit(BRW_OPCODE_MOV, fs_reg(MRF, base_mrf + mlen + i * reg_width),
-	   coordinate);
+      fs_inst *inst = emit(BRW_OPCODE_MOV,
+			   fs_reg(MRF, base_mrf + mlen + i * reg_width),
+			   coordinate);
+      if (i < 3 && c->key.gl_clamp_mask[i] & (1 << sampler))
+	 inst->saturate = true;
       coordinate.reg_offset++;
    }
    mlen += ir->coordinate->type->vector_elements * reg_width;
 
    if (ir->shadow_comparitor) {
-      mlen = MAX2(mlen, 1 + 4 * reg_width);
+      mlen = MAX2(mlen, header_present + 4 * reg_width);
 
       ir->shadow_comparitor->accept(this);
       emit(BRW_OPCODE_MOV, fs_reg(MRF, base_mrf + mlen), this->result);
@@ -1328,7 +1353,7 @@ fs_visitor::emit_texture_gen5(ir_texture *ir, fs_reg dst, fs_reg coordinate)
       break;
    case ir_txb:
       ir->lod_info.bias->accept(this);
-      mlen = MAX2(mlen, 1 + 4 * reg_width);
+      mlen = MAX2(mlen, header_present + 4 * reg_width);
       emit(BRW_OPCODE_MOV, fs_reg(MRF, base_mrf + mlen), this->result);
       mlen += reg_width;
 
@@ -1337,7 +1362,7 @@ fs_visitor::emit_texture_gen5(ir_texture *ir, fs_reg dst, fs_reg coordinate)
       break;
    case ir_txl:
       ir->lod_info.lod->accept(this);
-      mlen = MAX2(mlen, 1 + 4 * reg_width);
+      mlen = MAX2(mlen, header_present + 4 * reg_width);
       emit(BRW_OPCODE_MOV, fs_reg(MRF, base_mrf + mlen), this->result);
       mlen += reg_width;
 
@@ -1350,6 +1375,81 @@ fs_visitor::emit_texture_gen5(ir_texture *ir, fs_reg dst, fs_reg coordinate)
    }
    inst->base_mrf = base_mrf;
    inst->mlen = mlen;
+   inst->header_present = header_present;
+
+   if (mlen > 11) {
+      fail("Message length >11 disallowed by hardware\n");
+   }
+
+   return inst;
+}
+
+fs_inst *
+fs_visitor::emit_texture_gen7(ir_texture *ir, fs_reg dst, fs_reg coordinate,
+			      int sampler)
+{
+   int mlen = 0;
+   int base_mrf = 2;
+   int reg_width = c->dispatch_width / 8;
+   bool header_present = false;
+
+   if (ir->offset) {
+      /* The offsets set up by the ir_texture visitor are in the
+       * m1 header, so we can't go headerless.
+       */
+      header_present = true;
+      mlen++;
+      base_mrf--;
+   }
+
+   if (ir->shadow_comparitor) {
+      ir->shadow_comparitor->accept(this);
+      emit(BRW_OPCODE_MOV, fs_reg(MRF, base_mrf + mlen), this->result);
+      mlen += reg_width;
+   }
+
+   /* Set up the LOD info */
+   switch (ir->op) {
+   case ir_tex:
+      break;
+   case ir_txb:
+      ir->lod_info.bias->accept(this);
+      emit(BRW_OPCODE_MOV, fs_reg(MRF, base_mrf + mlen), this->result);
+      mlen += reg_width;
+      break;
+   case ir_txl:
+      ir->lod_info.lod->accept(this);
+      emit(BRW_OPCODE_MOV, fs_reg(MRF, base_mrf + mlen), this->result);
+      mlen += reg_width;
+      break;
+   case ir_txd:
+   case ir_txf:
+      assert(!"GLSL 1.30 features unsupported");
+      break;
+   }
+
+   /* Set up the coordinate */
+   for (int i = 0; i < ir->coordinate->type->vector_elements; i++) {
+      fs_inst *inst = emit(BRW_OPCODE_MOV, fs_reg(MRF, base_mrf + mlen),
+			   coordinate);
+      if (i < 3 && c->key.gl_clamp_mask[i] & (1 << sampler))
+	 inst->saturate = true;
+      coordinate.reg_offset++;
+      mlen += reg_width;
+   }
+
+   /* Generate the SEND */
+   fs_inst *inst = NULL;
+   switch (ir->op) {
+   case ir_tex: inst = emit(FS_OPCODE_TEX, dst); break;
+   case ir_txb: inst = emit(FS_OPCODE_TXB, dst); break;
+   case ir_txl: inst = emit(FS_OPCODE_TXL, dst); break;
+   case ir_txd: inst = emit(FS_OPCODE_TXD, dst); break;
+   case ir_txf: assert(!"TXF unsupported.");
+   }
+   inst->base_mrf = base_mrf;
+   inst->mlen = mlen;
+   inst->header_present = header_present;
 
    if (mlen > 11) {
       fail("Message length >11 disallowed by hardware\n");
@@ -1458,16 +1558,18 @@ fs_visitor::visit(ir_texture *ir)
     */
    fs_reg dst = fs_reg(this, glsl_type::vec4_type);
 
-   if (intel->gen < 5) {
-      inst = emit_texture_gen4(ir, dst, coordinate);
+   if (intel->gen >= 7) {
+      inst = emit_texture_gen7(ir, dst, coordinate, sampler);
+   } else if (intel->gen >= 5) {
+      inst = emit_texture_gen5(ir, dst, coordinate, sampler);
    } else {
-      inst = emit_texture_gen5(ir, dst, coordinate);
+      inst = emit_texture_gen4(ir, dst, coordinate, sampler);
    }
 
    /* If there's an offset, we already set up m1.  To avoid the implied move,
     * use the null register.  Otherwise, we want an implied move from g0.
     */
-   if (ir->offset != NULL)
+   if (ir->offset != NULL || !inst->header_present)
       inst->src[0] = fs_reg(brw_null_reg());
    else
       inst->src[0] = fs_reg(retype(brw_vec8_grf(0, 0), BRW_REGISTER_TYPE_UW));
@@ -1546,12 +1648,9 @@ fs_visitor::visit(ir_swizzle *ir)
 void
 fs_visitor::visit(ir_discard *ir)
 {
-   fs_reg temp = fs_reg(this, glsl_type::uint_type);
-
    assert(ir->condition == NULL); /* FINISHME */
 
-   emit(FS_OPCODE_DISCARD_NOT, temp, reg_null_d);
-   emit(FS_OPCODE_DISCARD_AND, reg_null_d, temp);
+   emit(FS_OPCODE_DISCARD);
    kill_emitted = true;
 }
 
@@ -1802,7 +1901,7 @@ fs_visitor::visit(ir_if *ir)
 {
    fs_inst *inst;
 
-   if (c->dispatch_width == 16) {
+   if (intel->gen != 6 && c->dispatch_width == 16) {
       fail("Can't support (non-uniform) control flow on 16-wide\n");
    }
 
@@ -1811,7 +1910,7 @@ fs_visitor::visit(ir_if *ir)
     */
    this->base_ir = ir->condition;
 
-   if (intel->gen >= 6) {
+   if (intel->gen == 6) {
       emit_if_gen6(ir);
    } else {
       emit_bool_to_cond_code(ir->condition);
@@ -2260,9 +2359,11 @@ fs_visitor::generate_fb_write(fs_inst *inst)
 
    if (inst->header_present) {
       if (intel->gen >= 6) {
+	 brw_set_compression_control(p, BRW_COMPRESSION_COMPRESSED);
 	 brw_MOV(p,
-		 brw_message_reg(inst->base_mrf),
-		 brw_vec8_grf(0, 0));
+		 retype(brw_message_reg(inst->base_mrf), BRW_REGISTER_TYPE_UD),
+		 retype(brw_vec8_grf(0, 0), BRW_REGISTER_TYPE_UD));
+	 brw_set_compression_control(p, BRW_COMPRESSION_NONE);
 
 	 if (inst->target > 0) {
 	    /* Set the render target index for choosing BLEND_STATE. */
@@ -2271,20 +2372,14 @@ fs_visitor::generate_fb_write(fs_inst *inst)
 		    brw_imm_ud(inst->target));
 	 }
 
-	 /* Clear viewport index, render target array index. */
-	 brw_AND(p, retype(brw_vec1_reg(BRW_MESSAGE_REGISTER_FILE, 0, 0),
-			   BRW_REGISTER_TYPE_UD),
-		 retype(brw_vec1_grf(0, 0), BRW_REGISTER_TYPE_UD),
-		 brw_imm_ud(0xf7ff));
-
 	 implied_header = brw_null_reg();
       } else {
 	 implied_header = retype(brw_vec8_grf(0, 0), BRW_REGISTER_TYPE_UW);
-      }
 
-      brw_MOV(p,
-	      brw_message_reg(inst->base_mrf + 1),
-	      brw_vec8_grf(1, 0));
+	 brw_MOV(p,
+		 brw_message_reg(inst->base_mrf + 1),
+		 brw_vec8_grf(1, 0));
+      }
    } else {
       implied_header = brw_null_reg();
    }
@@ -2459,11 +2554,8 @@ fs_visitor::generate_tex(fs_inst *inst, struct brw_reg dst, struct brw_reg src)
    int rlen = 4;
    uint32_t simd_mode = BRW_SAMPLER_SIMD_MODE_SIMD8;
 
-   if (c->dispatch_width == 16) {
-      rlen = 8;
-      dst = vec16(dst);
+   if (c->dispatch_width == 16)
       simd_mode = BRW_SAMPLER_SIMD_MODE_SIMD16;
-   }
 
    if (intel->gen >= 5) {
       switch (inst->opcode) {
@@ -2498,6 +2590,7 @@ fs_visitor::generate_tex(fs_inst *inst, struct brw_reg dst, struct brw_reg src)
 	 /* Note that G45 and older determines shadow compare and dispatch width
 	  * from message length for most messages.
 	  */
+	 assert(c->dispatch_width == 8);
 	 msg_type = BRW_SAMPLER_MESSAGE_SIMD8_SAMPLE;
 	 if (inst->shadow_compare) {
 	    assert(inst->mlen == 6);
@@ -2532,6 +2625,11 @@ fs_visitor::generate_tex(fs_inst *inst, struct brw_reg dst, struct brw_reg src)
    }
    assert(msg_type != -1);
 
+   if (simd_mode == BRW_SAMPLER_SIMD_MODE_SIMD16) {
+      rlen = 8;
+      dst = vec16(dst);
+   }
+
    brw_SAMPLE(p,
 	      retype(dst, BRW_REGISTER_TYPE_UW),
 	      inst->base_mrf,
@@ -2543,7 +2641,7 @@ fs_visitor::generate_tex(fs_inst *inst, struct brw_reg dst, struct brw_reg src)
 	      rlen,
 	      inst->mlen,
 	      0,
-	      1,
+	      inst->header_present,
 	      simd_mode);
 }
 
@@ -2611,56 +2709,54 @@ fs_visitor::generate_ddy(fs_inst *inst, struct brw_reg dst, struct brw_reg src)
 }
 
 void
-fs_visitor::generate_discard_not(fs_inst *inst, struct brw_reg mask)
+fs_visitor::generate_discard(fs_inst *inst)
 {
-   if (intel->gen >= 6) {
-      /* Gen6 no longer has the mask reg for us to just read the
-       * active channels from.  However, cmp updates just the channels
-       * of the flag reg that are enabled, so we can get at the
-       * channel enables that way.  In this step, make a reg of ones
-       * we'll compare to.
-       */
-      brw_MOV(p, mask, brw_imm_ud(1));
-   } else {
-      brw_push_insn_state(p);
-      brw_set_mask_control(p, BRW_MASK_DISABLE);
-      brw_set_compression_control(p, BRW_COMPRESSION_NONE);
-      brw_NOT(p, mask, brw_mask_reg(1)); /* IMASK */
-      brw_pop_insn_state(p);
-   }
-}
+   struct brw_reg f0 = brw_flag_reg();
 
-void
-fs_visitor::generate_discard_and(fs_inst *inst, struct brw_reg mask)
-{
    if (intel->gen >= 6) {
-      struct brw_reg f0 = brw_flag_reg();
       struct brw_reg g1 = retype(brw_vec1_grf(1, 7), BRW_REGISTER_TYPE_UW);
+      struct brw_reg some_register;
 
+      /* As of gen6, we no longer have the mask register to look at,
+       * so life gets a bit more complicated.
+       */
+
+      /* Load the flag register with all ones. */
       brw_push_insn_state(p);
       brw_set_mask_control(p, BRW_MASK_DISABLE);
-      brw_MOV(p, f0, brw_imm_uw(0xffff)); /* inactive channels undiscarded */
+      brw_MOV(p, f0, brw_imm_uw(0xffff));
       brw_pop_insn_state(p);
 
+      /* Do a comparison that should always fail, to produce 0s in the flag
+       * reg where we have active channels.
+       */
+      some_register = retype(brw_vec8_grf(0, 0), BRW_REGISTER_TYPE_UW);
       brw_CMP(p, retype(brw_null_reg(), BRW_REGISTER_TYPE_UD),
-	      BRW_CONDITIONAL_Z, mask, brw_imm_ud(0)); /* active channels fail test */
+	      BRW_CONDITIONAL_NZ, some_register, some_register);
+
       /* Undo CMP's whacking of predication*/
       brw_set_predicate_control(p, BRW_PREDICATE_NONE);
 
       brw_push_insn_state(p);
       brw_set_mask_control(p, BRW_MASK_DISABLE);
-      brw_set_compression_control(p, BRW_COMPRESSION_NONE);
       brw_AND(p, g1, f0, g1);
       brw_pop_insn_state(p);
    } else {
       struct brw_reg g0 = retype(brw_vec1_grf(0, 0), BRW_REGISTER_TYPE_UW);
-
-      mask = brw_uw1_reg(mask.file, mask.nr, 0);
+      struct brw_reg mask = brw_uw1_reg(mask.file, mask.nr, 0);
 
       brw_push_insn_state(p);
       brw_set_mask_control(p, BRW_MASK_DISABLE);
       brw_set_compression_control(p, BRW_COMPRESSION_NONE);
-      brw_AND(p, g0, mask, g0);
+
+      /* Unlike the 965, we have the mask reg, so we just need
+       * somewhere to invert that (containing channels to be disabled)
+       * so it can be ANDed with the mask of pixels still to be
+       * written. Use the flag reg for consistency with gen6+.
+       */
+      brw_NOT(p, f0, brw_mask_reg(1)); /* IMASK */
+      brw_AND(p, g0, f0, g0);
+
       brw_pop_insn_state(p);
    }
 }
@@ -3008,7 +3104,6 @@ fs_visitor::calculate_live_intervals()
    int *use = ralloc_array(mem_ctx, int, num_vars);
    int loop_depth = 0;
    int loop_start = 0;
-   int bb_header_ip = 0;
 
    if (this->live_intervals_valid)
       return;
@@ -3068,22 +3163,6 @@ fs_visitor::calculate_live_intervals()
       }
 
       ip++;
-
-      /* Set the basic block header IP.  This is used for determining
-       * if a complete def of single-register virtual GRF in a loop
-       * dominates a use in the same basic block.  It's a quick way to
-       * reduce the live interval range of most register used in a
-       * loop.
-       */
-      if (inst->opcode == BRW_OPCODE_IF ||
-	  inst->opcode == BRW_OPCODE_ELSE ||
-	  inst->opcode == BRW_OPCODE_ENDIF ||
-	  inst->opcode == BRW_OPCODE_DO ||
-	  inst->opcode == BRW_OPCODE_WHILE ||
-	  inst->opcode == BRW_OPCODE_BREAK ||
-	  inst->opcode == BRW_OPCODE_CONTINUE) {
-	 bb_header_ip = ip;
-      }
    }
 
    ralloc_free(this->virtual_grf_def);
@@ -3324,7 +3403,7 @@ fs_visitor::register_coalesce()
 	 /* The gen6 MATH instruction can't handle source modifiers, so avoid
 	  * coalescing those for now.  We should do something more specific.
 	  */
-	 if (intel->gen == 6 && scan_inst->is_math() && has_source_modifiers) {
+	 if (intel->gen >= 6 && scan_inst->is_math() && has_source_modifiers) {
 	    interfered = true;
 	    break;
 	 }
@@ -3722,11 +3801,8 @@ fs_visitor::generate_code()
    const char *last_annotation_string = NULL;
    ir_instruction *last_annotation_ir = NULL;
 
-   int if_stack_array_size = 16;
    int loop_stack_array_size = 16;
-   int if_stack_depth = 0, loop_stack_depth = 0;
-   brw_instruction **if_stack =
-      rzalloc_array(this->mem_ctx, brw_instruction *, if_stack_array_size);
+   int loop_stack_depth = 0;
    brw_instruction **loop_stack =
       rzalloc_array(this->mem_ctx, brw_instruction *, loop_stack_array_size);
    int *if_depth_in_loop =
@@ -3831,27 +3907,20 @@ fs_visitor::generate_code()
 
       case BRW_OPCODE_IF:
 	 if (inst->src[0].file != BAD_FILE) {
-	    assert(intel->gen >= 6);
-	    if_stack[if_stack_depth] = gen6_IF(p, inst->conditional_mod, src[0], src[1]);
+	    /* The instruction has an embedded compare (only allowed on gen6) */
+	    assert(intel->gen == 6);
+	    gen6_IF(p, inst->conditional_mod, src[0], src[1]);
 	 } else {
-	    if_stack[if_stack_depth] = brw_IF(p, BRW_EXECUTE_8);
+	    brw_IF(p, c->dispatch_width == 16 ? BRW_EXECUTE_16 : BRW_EXECUTE_8);
 	 }
 	 if_depth_in_loop[loop_stack_depth]++;
-	 if_stack_depth++;
-	 if (if_stack_array_size <= if_stack_depth) {
-	    if_stack_array_size *= 2;
-	    if_stack = reralloc(this->mem_ctx, if_stack, brw_instruction *,
-			        if_stack_array_size);
-	 }
 	 break;
 
       case BRW_OPCODE_ELSE:
-	 if_stack[if_stack_depth - 1] =
-	    brw_ELSE(p, if_stack[if_stack_depth - 1]);
+	 brw_ELSE(p);
 	 break;
       case BRW_OPCODE_ENDIF:
-	 if_stack_depth--;
-	 brw_ENDIF(p , if_stack[if_stack_depth]);
+	 brw_ENDIF(p);
 	 if_depth_in_loop[loop_stack_depth]--;
 	 break;
 
@@ -3935,11 +4004,8 @@ fs_visitor::generate_code()
       case FS_OPCODE_TXL:
 	 generate_tex(inst, dst, src[0]);
 	 break;
-      case FS_OPCODE_DISCARD_NOT:
-	 generate_discard_not(inst, dst);
-	 break;
-      case FS_OPCODE_DISCARD_AND:
-	 generate_discard_and(inst, src[0]);
+      case FS_OPCODE_DISCARD:
+	 generate_discard(inst);
 	 break;
       case FS_OPCODE_DDX:
 	 generate_ddx(inst, dst, src[0]);
@@ -3993,7 +4059,6 @@ fs_visitor::generate_code()
       printf("\n");
    }
 
-   ralloc_free(if_stack);
    ralloc_free(loop_stack);
    ralloc_free(if_depth_in_loop);
 

@@ -35,6 +35,8 @@
 #include "main/formats.h"
 #include "main/samplerobj.h"
 
+#include "../glsl/ralloc.h"
+
 /** Return number of src args for given instruction */
 GLuint brw_wm_nr_args( GLuint opcode )
 {
@@ -193,7 +195,7 @@ static void do_wm_prog( struct brw_context *brw,
 
    c = brw->wm.compile_data;
    if (c == NULL) {
-      brw->wm.compile_data = calloc(1, sizeof(*brw->wm.compile_data));
+      brw->wm.compile_data = rzalloc(NULL, struct brw_wm_compile);
       c = brw->wm.compile_data;
       if (c == NULL) {
          /* Ouch - big out of memory problem.  Can't continue
@@ -202,11 +204,10 @@ static void do_wm_prog( struct brw_context *brw,
           */
          return;
       }
-      c->instruction = calloc(1, BRW_WM_MAX_INSN * sizeof(*c->instruction));
-      c->prog_instructions = calloc(1, BRW_WM_MAX_INSN *
-					  sizeof(*c->prog_instructions));
-      c->vreg = calloc(1, BRW_WM_MAX_VREG * sizeof(*c->vreg));
-      c->refs = calloc(1, BRW_WM_MAX_REF * sizeof(*c->refs));
+      c->instruction = rzalloc_array(c, struct brw_wm_instruction, BRW_WM_MAX_INSN);
+      c->prog_instructions = rzalloc_array(c, struct prog_instruction, BRW_WM_MAX_INSN);
+      c->vreg = rzalloc_array(c, struct brw_wm_value, BRW_WM_MAX_VREG);
+      c->refs = rzalloc_array(c, struct brw_wm_ref, BRW_WM_MAX_REF);
    } else {
       void *instruction = c->instruction;
       void *prog_instructions = c->prog_instructions;
@@ -223,7 +224,7 @@ static void do_wm_prog( struct brw_context *brw,
    c->fp = fp;
    c->env_param = brw->intel.ctx.FragmentProgram.Parameters;
 
-   brw_init_compile(brw, &c->func);
+   brw_init_compile(brw, &c->func, c);
 
    if (!brw_wm_fs_emit(brw, c)) {
       /* Fallback for fixed function and ARB_fp shaders. */
@@ -409,6 +410,16 @@ static void brw_wm_populate_key( struct brw_context *brw,
 			  swizzles[GET_SWZ(t->_Swizzle, 1)],
 			  swizzles[GET_SWZ(t->_Swizzle, 2)],
 			  swizzles[GET_SWZ(t->_Swizzle, 3)]);
+
+	 if (sampler->MinFilter != GL_NEAREST &&
+	     sampler->MagFilter != GL_NEAREST) {
+	    if (sampler->WrapS == GL_CLAMP)
+	       key->gl_clamp_mask[0] |= 1 << i;
+	    if (sampler->WrapT == GL_CLAMP)
+	       key->gl_clamp_mask[1] |= 1 << i;
+	    if (sampler->WrapR == GL_CLAMP)
+	       key->gl_clamp_mask[2] |= 1 << i;
+	 }
       }
       else {
          key->tex_swizzles[i] = SWIZZLE_NOOP;

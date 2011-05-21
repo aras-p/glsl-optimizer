@@ -170,6 +170,12 @@ nv50_vertprog_validate(struct nv50_context *nv50)
    struct nouveau_channel *chan = nv50->screen->base.channel;
    struct nv50_program *vp = nv50->vertprog;
 
+   if (nv50->clip.nr > vp->vp.clpd_nr) {
+      if (vp->translated)
+         nv50_program_destroy(nv50, vp);
+      vp->vp.clpd_nr = nv50->clip.nr;
+   }
+
    if (!nv50_program_validate(nv50, vp))
          return;
 
@@ -369,7 +375,7 @@ nv50_fp_linkage_validate(struct nv50_context *nv50)
    m = nv50_vec4_map(map, 0, lin, &dummy, &vp->out[0]);
 
    for (c = 0; c < vp->vp.clpd_nr; ++c)
-      map[m++] |= vp->vp.clpd + c;
+      map[m++] = vp->vp.clpd + c;
 
    colors |= m << 8; /* adjust BFC0 id */
 

@@ -116,14 +116,36 @@ check_valid_to_render(struct gl_context *ctx, const char *function)
       break;
 #endif
 
-#if FEATURE_ES1 || FEATURE_GL
+#if FEATURE_ES1
    case API_OPENGLES:
-   case API_OPENGL:
-      /* For regular OpenGL, only draw if we have vertex positions
-       * (regardless of whether or not we have a vertex program/shader). */
-      if (!ctx->Array.ArrayObj->Vertex.Enabled &&
-	  !ctx->Array.ArrayObj->VertexAttrib[0].Enabled)
+      /* For OpenGL ES, only draw if we have vertex positions
+       */
+      if (!ctx->Array.ArrayObj->Vertex.Enabled)
 	 return GL_FALSE;
+      break;
+#endif
+
+#if FEATURE_GL
+   case API_OPENGL:
+      {
+         const struct gl_shader_program *vsProg =
+            ctx->Shader.CurrentVertexProgram;
+         GLboolean haveVertexShader = (vsProg && vsProg->LinkStatus);
+         GLboolean haveVertexProgram = ctx->VertexProgram._Enabled;
+         if (haveVertexShader || haveVertexProgram) {
+            /* Draw regardless of whether or not we have any vertex arrays.
+             * (Ex: could draw a point using a constant vertex pos)
+             */
+            return GL_TRUE;
+         }
+         else {
+            /* Draw if we have vertex positions (GL_VERTEX_ARRAY or generic
+             * array [0]).
+             */
+            return (ctx->Array.ArrayObj->Vertex.Enabled ||
+                    ctx->Array.ArrayObj->VertexAttrib[0].Enabled);
+         }
+      }
       break;
 #endif
 

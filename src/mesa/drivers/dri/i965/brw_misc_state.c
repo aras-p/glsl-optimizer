@@ -32,6 +32,7 @@
 
 
 #include "intel_batchbuffer.h"
+#include "intel_fbo.h"
 #include "intel_regions.h"
 
 #include "brw_context.h"
@@ -86,7 +87,10 @@ static void upload_binding_table_pointers(struct brw_context *brw)
 const struct brw_tracked_state brw_binding_table_pointers = {
    .dirty = {
       .mesa = 0,
-      .brw = BRW_NEW_BATCH | BRW_NEW_BINDING_TABLE,
+      .brw = BRW_NEW_BATCH
+	   | BRW_NEW_VS_BINDING_TABLE
+	   | BRW_NEW_GS_BINDING_TABLE
+	   | BRW_NEW_PS_BINDING_TABLE,
       .cache = 0,
    },
    .emit = upload_binding_table_pointers,
@@ -118,7 +122,10 @@ static void upload_gen6_binding_table_pointers(struct brw_context *brw)
 const struct brw_tracked_state gen6_binding_table_pointers = {
    .dirty = {
       .mesa = 0,
-      .brw = BRW_NEW_BATCH | BRW_NEW_BINDING_TABLE,
+      .brw = BRW_NEW_BATCH
+	   | BRW_NEW_VS_BINDING_TABLE
+	   | BRW_NEW_GS_BINDING_TABLE
+	   | BRW_NEW_PS_BINDING_TABLE,
       .cache = 0,
    },
    .emit = upload_gen6_binding_table_pointers,
@@ -187,17 +194,32 @@ const struct brw_tracked_state brw_psp_urb_cbs = {
 
 static void prepare_depthbuffer(struct brw_context *brw)
 {
-   struct intel_region *region = brw->state.depth_region;
+   struct intel_context *intel = &brw->intel;
+   struct gl_context *ctx = &intel->ctx;
+   struct gl_framebuffer *fb = ctx->DrawBuffer;
+   struct intel_renderbuffer *drb = intel_get_renderbuffer(fb, BUFFER_DEPTH);
+   struct intel_renderbuffer *srb = intel_get_renderbuffer(fb, BUFFER_STENCIL);
 
-   if (region != NULL)
-      brw_add_validated_bo(brw, region->buffer);
+   if (drb)
+      brw_add_validated_bo(brw, drb->region->buffer);
+   if (srb)
+      brw_add_validated_bo(brw, srb->region->buffer);
 }
 
 static void emit_depthbuffer(struct brw_context *brw)
 {
    struct intel_context *intel = &brw->intel;
-   struct intel_region *region = brw->state.depth_region;
+   struct gl_context *ctx = &intel->ctx;
+   struct gl_framebuffer *fb = ctx->DrawBuffer;
+   /* _NEW_BUFFERS */
+   struct intel_renderbuffer *irb = intel_get_renderbuffer(fb, BUFFER_DEPTH);
    unsigned int len;
+
+   /* If we're combined depth stencil but no depth is attached, look
+    * up stencil.
+    */
+   if (!irb)
+      irb = intel_get_renderbuffer(fb, BUFFER_STENCIL);
 
    if (intel->gen >= 6)
       len = 7;
@@ -206,7 +228,7 @@ static void emit_depthbuffer(struct brw_context *brw)
    else
       len = 5;
 
-   if (region == NULL) {
+   if (!irb) {
       BEGIN_BATCH(len);
       OUT_BATCH(_3DSTATE_DEPTH_BUFFER << 16 | (len - 2));
       OUT_BATCH((BRW_DEPTHFORMAT_D32_FLOAT << 18) |
@@ -223,7 +245,9 @@ static void emit_depthbuffer(struct brw_context *brw)
 
       ADVANCE_BATCH();
    } else {
+      struct intel_region *region = irb->region;
       unsigned int format;
+      uint32_t tile_x, tile_y, offset;
 
       switch (region->cpp) {
       case 2:
@@ -240,7 +264,8 @@ static void emit_depthbuffer(struct brw_context *brw)
 	 return;
       }
 
-      assert(region->tiling != I915_TILING_X);
+      offset = intel_region_tile_offsets(region, &tile_x, &tile_y);
+
       assert(intel->gen < 6 || region->tiling == I915_TILING_Y);
 
       BEGIN_BATCH(len);
@@ -252,14 +277,16 @@ static void emit_depthbuffer(struct brw_context *brw)
 		(BRW_SURFACE_2D << 29));
       OUT_RELOC(region->buffer,
 		I915_GEM_DOMAIN_RENDER, I915_GEM_DOMAIN_RENDER,
-		0);
+		offset);
       OUT_BATCH((BRW_SURFACE_MIPMAPLAYOUT_BELOW << 1) |
 		((region->width - 1) << 6) |
 		((region->height - 1) << 19));
       OUT_BATCH(0);
 
       if (intel->is_g4x || intel->gen >= 5)
-         OUT_BATCH(0);
+         OUT_BATCH(tile_x | (tile_y << 16));
+      else
+	 assert(tile_x == 0 && tile_y == 0);
 
       if (intel->gen >= 6)
 	 OUT_BATCH(0);
@@ -276,13 +303,10 @@ static void emit_depthbuffer(struct brw_context *brw)
    }
 }
 
-/**
- * \see brw_context.state.depth_region
- */
 const struct brw_tracked_state brw_depthbuffer = {
    .dirty = {
-      .mesa = 0,
-      .brw = BRW_NEW_DEPTH_BUFFER | BRW_NEW_BATCH,
+      .mesa = _NEW_BUFFERS,
+      .brw = BRW_NEW_BATCH,
       .cache = 0,
    },
    .prepare = prepare_depthbuffer,
@@ -470,12 +494,15 @@ static void upload_invarient_state( struct brw_context *brw )
 
    if (intel->gen >= 6) {
       int i;
+      int len = intel->gen >= 7 ? 4 : 3;
 
-      BEGIN_BATCH(3);
-      OUT_BATCH(_3DSTATE_MULTISAMPLE << 16 | (3 - 2));
+      BEGIN_BATCH(len);
+      OUT_BATCH(_3DSTATE_MULTISAMPLE << 16 | (len - 2));
       OUT_BATCH(MS_PIXEL_LOCATION_CENTER |
 		MS_NUMSAMPLES_1);
       OUT_BATCH(0); /* positions for 4/8-sample */
+      if (intel->gen >= 7)
+	 OUT_BATCH(0);
       ADVANCE_BATCH();
 
       BEGIN_BATCH(2);

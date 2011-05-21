@@ -165,7 +165,7 @@ static void upload_vs_surfaces(struct brw_context *brw)
    /* BRW_NEW_NR_VS_SURFACES */
    if (brw->vs.nr_surfaces == 0) {
       if (brw->vs.bind_bo_offset) {
-	 brw->state.dirty.brw |= BRW_NEW_BINDING_TABLE;
+	 brw->state.dirty.brw |= BRW_NEW_VS_BINDING_TABLE;
       }
       brw->vs.bind_bo_offset = 0;
       return;
@@ -184,7 +184,7 @@ static void upload_vs_surfaces(struct brw_context *brw)
       bind[i] = brw->vs.surf_offset[i];
    }
 
-   brw->state.dirty.brw |= BRW_NEW_BINDING_TABLE;
+   brw->state.dirty.brw |= BRW_NEW_VS_BINDING_TABLE;
 }
 
 const struct brw_tracked_state brw_vs_surfaces = {

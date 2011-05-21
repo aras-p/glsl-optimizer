@@ -101,12 +101,9 @@ drm_create_buffer(struct wl_client *client, struct wl_drm *drm,
 	buffer->buffer.visual = visual;
 
 	if (visual->object.interface != &wl_visual_interface) {
-		/* FIXME: Define a real exception event instead of
-		 * abusing this one */
-		wl_client_post_event(client,
-				     (struct wl_object *) drm->display,
-				     WL_DISPLAY_INVALID_OBJECT, 0);
-		fprintf(stderr, "invalid visual in create_buffer\n");
+		wl_client_post_error(client, &drm->object,
+				     WL_DRM_ERROR_INVALID_VISUAL,
+				     "invalid visual");
 		return;
 	}
 
@@ -116,12 +113,9 @@ drm_create_buffer(struct wl_client *client, struct wl_drm *drm,
 						 stride, visual);
 
 	if (buffer->driver_buffer == NULL) {
-		/* FIXME: Define a real exception event instead of
-		 * abusing this one */
-		wl_client_post_event(client,
-				     (struct wl_object *) drm->display,
-				     WL_DISPLAY_INVALID_OBJECT, 0);
-		fprintf(stderr, "failed to create image for name %d\n", name);
+		wl_client_post_error(client, &drm->object,
+				     WL_DRM_ERROR_INVALID_NAME,
+				     "invalid name");
 		return;
 	}
 
@@ -140,9 +134,9 @@ drm_authenticate(struct wl_client *client,
 		 struct wl_drm *drm, uint32_t id)
 {
 	if (drm->callbacks->authenticate(drm->user_data, id) < 0)
-		wl_client_post_event(client,
-				     (struct wl_object *) drm->display,
-				     WL_DISPLAY_INVALID_OBJECT, 0);
+		wl_client_post_error(client, &drm->object,
+				     WL_DRM_ERROR_AUTHENTICATE_FAIL,
+				     "authenicate failed");
 	else
 		wl_client_post_event(client, &drm->object,
 				     WL_DRM_AUTHENTICATED);
@@ -154,7 +148,8 @@ const static struct wl_drm_interface drm_interface = {
 };
 
 static void
-post_drm_device(struct wl_client *client, struct wl_object *global)
+post_drm_device(struct wl_client *client, 
+		struct wl_object *global, uint32_t version)
 {
 	struct wl_drm *drm = (struct wl_drm *) global;
 

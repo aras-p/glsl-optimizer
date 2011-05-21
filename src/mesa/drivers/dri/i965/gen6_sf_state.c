@@ -32,7 +32,7 @@
 #include "main/macros.h"
 #include "intel_batchbuffer.h"
 
-static uint32_t
+uint32_t
 get_attr_override(struct brw_context *brw, int fs_attr, int two_side_color)
 {
    int attr_index = 0, i, vs_attr;
@@ -103,6 +103,7 @@ upload_sf_state(struct brw_context *brw)
    int attr = 0;
    int urb_start;
    int two_side_color = (ctx->Light.Enabled && ctx->Light.Model.TwoSide);
+   float point_size;
 
    /* _NEW_TRANSFORM */
    if (ctx->Transform.ClipPlanesEnabled)
@@ -209,8 +210,12 @@ upload_sf_state(struct brw_context *brw)
 	 ctx->Point._Attenuated))
       dw4 |= GEN6_SF_USE_STATE_POINT_WIDTH;
 
-   dw4 |= U_FIXED(CLAMP(ctx->Point.Size, 0.125, 255.875), 3) <<
-      GEN6_SF_POINT_WIDTH_SHIFT;
+   /* Clamp to ARB_point_parameters user limits */
+   point_size = CLAMP(ctx->Point.Size, ctx->Point.MinSize, ctx->Point.MaxSize);
+
+   /* Clamp to the hardware limits and convert to fixed point */
+   dw4 |= U_FIXED(CLAMP(point_size, 0.125, 255.875), 3);
+
    if (ctx->Point.SpriteOrigin == GL_LOWER_LEFT)
       dw1 |= GEN6_SF_POINT_SPRITE_LOWERLEFT;
 

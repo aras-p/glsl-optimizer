@@ -34,6 +34,8 @@
 #include "brw_defines.h"
 #include "brw_eu.h"
 
+#include "../glsl/ralloc.h"
+
 /* Returns the corresponding conditional mod for swapping src0 and
  * src1 in e.g. CMP.
  */
@@ -166,7 +168,8 @@ void brw_pop_insn_state( struct brw_compile *p )
 
 /***********************************************************************
  */
-void brw_init_compile( struct brw_context *brw, struct brw_compile *p )
+void
+brw_init_compile(struct brw_context *brw, struct brw_compile *p, void *mem_ctx)
 {
    p->brw = brw;
    p->nr_insn = 0;
@@ -174,12 +177,20 @@ void brw_init_compile( struct brw_context *brw, struct brw_compile *p )
    p->compressed = false;
    memset(p->current, 0, sizeof(p->current[0]));
 
+   p->mem_ctx = mem_ctx;
+
    /* Some defaults?
     */
    brw_set_mask_control(p, BRW_MASK_ENABLE); /* what does this do? */
    brw_set_saturate(p, 0);
    brw_set_compression_control(p, BRW_COMPRESSION_NONE);
    brw_set_predicate_control_flag_value(p, 0xff); 
+
+   /* Set up control flow stack */
+   p->if_stack_depth = 0;
+   p->if_stack_array_size = 16;
+   p->if_stack =
+      rzalloc_array(mem_ctx, struct brw_instruction *, p->if_stack_array_size);
 }
 
 
@@ -295,7 +306,7 @@ brw_resolve_cals(struct brw_compile *c)
 	GLint offset = brw_sub_inst - brw_call_inst;
 
 	/* patch brw_inst1 to point to brw_inst2 */
-	brw_set_src1(brw_call_inst, brw_imm_d(offset * 16));
+	brw_set_src1(c, brw_call_inst, brw_imm_d(offset * 16));
     }
 
     /* free linked list of calls */

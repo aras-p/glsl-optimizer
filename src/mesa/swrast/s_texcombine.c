@@ -710,6 +710,18 @@ _swrast_texture_span( struct gl_context *ctx, SWspan *span )
                }
             }
          }
+         else if (curObj->Sampler.MaxAnisotropy > 1.0 &&
+                  curObj->Sampler.MinFilter == GL_LINEAR_MIPMAP_LINEAR) {
+            /* sample_lambda_2d_aniso is beeing used as texture_sample_func,
+             * it requires the current SWspan *span as an additional parameter.
+             * In order to keep the same function signature, the unused lambda
+             * parameter will be modified to actually contain the SWspan pointer.
+             * This is a Hack. To make it right, the texture_sample_func
+             * signature and all implementing functions need to be modified.
+             */
+            /* "hide" SWspan struct; cast to (GLfloat *) to suppress warning */
+            lambda = (GLfloat *)span;
+         }
 
          /* Sample the texture (span->end = number of fragments) */
          swrast->TextureSample[unit]( ctx, texUnit->_Current, span->end,

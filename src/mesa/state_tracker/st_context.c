@@ -133,9 +133,6 @@ st_create_context_priv( struct gl_context *ctx, struct pipe_context *pipe )
    else
       st->internal_target = PIPE_TEXTURE_RECT;
 
-   for (i = 0; i < PIPE_MAX_SAMPLERS; i++)
-      st->state.sampler_list[i] = &st->state.samplers[i];
-
    for (i = 0; i < 3; i++) {
       memset(&st->velems_util_draw[i], 0, sizeof(struct pipe_vertex_element));
       st->velems_util_draw[i].src_offset = i * 4 * sizeof(float);

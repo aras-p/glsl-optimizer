@@ -43,20 +43,24 @@
 #include "brw_sf.h"
 #include "brw_state.h"
 
+#include "../glsl/ralloc.h"
+
 static void compile_sf_prog( struct brw_context *brw,
 			     struct brw_sf_prog_key *key )
 {
    struct intel_context *intel = &brw->intel;
    struct brw_sf_compile c;
    const GLuint *program;
+   void *mem_ctx;
    GLuint program_size;
    GLuint i, idx;
 
    memset(&c, 0, sizeof(c));
 
+   mem_ctx = ralloc_context(NULL);
    /* Begin the compilation:
     */
-   brw_init_compile(brw, &c.func);
+   brw_init_compile(brw, &c.func, mem_ctx);
 
    c.key = *key;
    c.nr_attrs = brw_count_bits(c.key.attrs);
@@ -124,6 +128,7 @@ static void compile_sf_prog( struct brw_context *brw,
 				      program, program_size,
 				      &c.prog_data, sizeof(c.prog_data),
 				      &brw->sf.prog_data);
+   ralloc_free(mem_ctx);
 }
 
 /* Calculate interpolants for triangle and line rasterization.

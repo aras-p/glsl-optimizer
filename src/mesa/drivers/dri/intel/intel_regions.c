@@ -524,3 +524,38 @@ intel_region_buffer(struct intel_context *intel,
 
    return region->buffer;
 }
+
+/**
+ * Rendering to tiled buffers requires that the base address of the
+ * buffer be aligned to a page boundary.  We generally render to
+ * textures by pointing the surface at the mipmap image level, which
+ * may not be aligned to a tile boundary.
+ *
+ * This function returns an appropriately-aligned base offset
+ * according to the tiling restrictions, plus any required x/y offset
+ * from there.
+ */
+uint32_t
+intel_region_tile_offsets(struct intel_region *region,
+			  uint32_t *tile_x,
+			  uint32_t *tile_y)
+{
+   uint32_t pitch = region->pitch * region->cpp;
+
+   if (region->tiling == I915_TILING_NONE) {
+      *tile_x = 0;
+      *tile_y = 0;
+      return region->draw_x * region->cpp + region->draw_y * pitch;
+   } else if (region->tiling == I915_TILING_X) {
+      *tile_x = region->draw_x % (512 / region->cpp);
+      *tile_y = region->draw_y % 8;
+      return ((region->draw_y / 8) * (8 * pitch) +
+	      (region->draw_x - *tile_x) / (512 / region->cpp) * 4096);
+   } else {
+      assert(region->tiling == I915_TILING_Y);
+      *tile_x = region->draw_x % (128 / region->cpp);
+      *tile_y = region->draw_y % 32;
+      return ((region->draw_y / 32) * (32 * pitch) +
+	      (region->draw_x - *tile_x) / (128 / region->cpp) * 4096);
+   }
+}

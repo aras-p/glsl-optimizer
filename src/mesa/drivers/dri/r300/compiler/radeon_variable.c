@@ -292,20 +292,20 @@ struct rc_variable * rc_variable(
 }
 
 static void get_variable_helper(
-	struct rc_list ** aborted_list,
 	struct rc_list ** variable_list,
-	unsigned int aborted,
 	struct rc_variable * variable)
 {
-	if (aborted) {
-		rc_list_add(aborted_list, rc_list(&variable->C->Pool, variable));
-	} else {
-		rc_list_add(variable_list, rc_list(&variable->C->Pool, variable));
+	struct rc_list * list_ptr;
+	for (list_ptr = *variable_list; list_ptr; list_ptr = list_ptr->Next) {
+		if (readers_intersect(variable, list_ptr->Item)) {
+			rc_variable_add_friend(list_ptr->Item, variable);
+			return;
+		}
 	}
+	rc_list_add(variable_list, rc_list(&variable->C->Pool, variable));
 }
 
 static void get_variable_pair_helper(
-	struct rc_list ** aborted_list,
 	struct rc_list ** variable_list,
 	struct radeon_compiler * c,
 	struct rc_instruction * inst,
@@ -338,8 +338,7 @@ static void get_variable_pair_helper(
 	}
 	new_var = rc_variable(c, file, sub_inst->DestIndex, writemask,
 								&reader_data);
-	get_variable_helper(aborted_list, variable_list, reader_data.Abort,
-								new_var);
+	get_variable_helper(variable_list, new_var);
 }
 
 /**
@@ -352,10 +351,7 @@ static void get_variable_pair_helper(
 struct rc_list * rc_get_variables(struct radeon_compiler * c)
 {
 	struct rc_instruction * inst;
-	struct rc_list * aborted_list = NULL;
 	struct rc_list * variable_list = NULL;
-	struct rc_list * var_ptr;
-	struct rc_list * search_ptr;
 
 	for (inst = c->Program.Instructions.Next;
 					inst != &c->Program.Instructions;
@@ -372,43 +368,15 @@ struct rc_list * rc_get_variables(struct radeon_compiler * c)
 			new_var = rc_variable(c, inst->U.I.DstReg.File,
 				inst->U.I.DstReg.Index,
 				inst->U.I.DstReg.WriteMask, &reader_data);
-			get_variable_helper(&aborted_list, &variable_list,
-						reader_data.Abort, new_var);
+			get_variable_helper(&variable_list, new_var);
 		} else {
-			get_variable_pair_helper(&aborted_list, &variable_list,
-					c, inst, &inst->U.P.RGB);
-			get_variable_pair_helper(&aborted_list, &variable_list,
-					c, inst, &inst->U.P.Alpha);
+			get_variable_pair_helper(&variable_list, c, inst,
+							&inst->U.P.RGB);
+			get_variable_pair_helper(&variable_list, c, inst,
+							&inst->U.P.Alpha);
 		}
 	}
 
-	/* The aborted_list contains a list of variables that might share a
-	 * reader with another variable.  We need to search through this list
-	 * and pair together variables that do share the same reader.
-	 */
-	while (aborted_list) {
-		struct rc_list * search_ptr_next;
-		struct rc_variable * var;
-		var_ptr = aborted_list;
-		for (var = var_ptr->Item; var; var = var->Friend) {
-
-			search_ptr = var_ptr->Next;
-			while(search_ptr) {
-				search_ptr_next = search_ptr->Next;
-				if (readers_intersect(var, search_ptr->Item)){
-					rc_list_remove(&aborted_list,
-							search_ptr);
-					rc_variable_add_friend(var,
-							search_ptr->Item);
-				}
-				search_ptr = search_ptr_next;
-			}
-		}
-		rc_list_remove(&aborted_list, var_ptr);
-		rc_list_add(&variable_list, rc_list(
-			&((struct rc_variable*)(var_ptr->Item))->C->Pool,
-			var_ptr->Item));
-	}
 	return variable_list;
 }
 

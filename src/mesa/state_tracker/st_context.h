@@ -90,7 +90,7 @@ struct st_context
       struct pipe_depth_stencil_alpha_state depth_stencil;
       struct pipe_rasterizer_state          rasterizer;
       struct pipe_sampler_state             samplers[PIPE_MAX_SAMPLERS];
-      struct pipe_sampler_state             *sampler_list[PIPE_MAX_SAMPLERS];
+      struct pipe_sampler_state             vertex_samplers[PIPE_MAX_VERTEX_SAMPLERS];
       struct pipe_clip_state clip;
       struct {
          void *ptr;
@@ -98,12 +98,15 @@ struct st_context
       } constants[PIPE_SHADER_TYPES];
       struct pipe_framebuffer_state framebuffer;
       struct pipe_sampler_view *sampler_views[PIPE_MAX_SAMPLERS];
+      struct pipe_sampler_view *sampler_vertex_views[PIPE_MAX_VERTEX_SAMPLERS];
       struct pipe_scissor_state scissor;
       struct pipe_viewport_state viewport;
       unsigned sample_mask;
 
       GLuint num_samplers;
+      GLuint num_vertex_samplers;
       GLuint num_textures;
+      GLuint num_vertex_textures;
 
       GLuint poly_stipple[32];  /**< In OpenGL's bottom-to-top order */
    } state;

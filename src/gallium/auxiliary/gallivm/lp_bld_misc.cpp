@@ -73,6 +73,19 @@ lp_set_target_options(void)
 #endif
 #endif
 
+   /*
+    * LLVM revision 123367 switched the default stack alignment to 16 bytes on
+    * Linux (and several other Unices in later revisions), to match recent gcc
+    * versions.
+    *
+    * However our drivers can be loaded by old binary applications, still
+    * maintaining a 4 bytes stack alignment.  Therefore we must tell LLVM here
+    * to only assume a 4 bytes alignment for backwards compatibility.
+    */
+#if defined(PIPE_ARCH_X86)
+   llvm::StackAlignment = 4;
+#endif
+
 #if defined(DEBUG) || defined(PROFILE)
    llvm::NoFramePointerElim = true;
 #endif
@@ -93,13 +106,23 @@ lp_set_target_options(void)
     * See also:
     * - http://llvm.org/bugs/show_bug.cgi?id=3287
     * - http://l4.me.uk/post/2009/06/07/llvm-wrinkle-3-configuration-what-configuration/
+    *
+    * The -disable-mmx global option can be specified only once  since we
+    * dynamically link against LLVM it will reside in a separate shared object,
+    * which may or not be delete when this shared object is, so we use the
+    * llvm::DisablePrettyStackTrace variable (which we set below and should
+    * reside in the same shared library) to determine whether the -disable-mmx
+    * option has been set or not.
+    *
+    * Thankfully this ugly hack is not necessary on LLVM 2.9 onwards.
     */
-   static boolean first = TRUE;
-   if (first) {
+   if (!llvm::DisablePrettyStackTrace) {
+      static boolean first = TRUE;
       static const char* options[] = {
          "prog",
          "-disable-mmx"
       };
+      assert(first);
       llvm::cl::ParseCommandLineOptions(2, const_cast<char**>(options));
       first = FALSE;
    }

@@ -56,6 +56,7 @@ static const struct st_tracked_state *atoms[] =
    &st_update_scissor,
    &st_update_blend,
    &st_update_sampler,
+   &st_update_vertex_texture,
    &st_update_texture,
    &st_update_framebuffer,
    &st_update_msaa,

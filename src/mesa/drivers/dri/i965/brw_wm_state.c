@@ -31,6 +31,7 @@
                    
 
 
+#include "intel_fbo.h"
 #include "brw_context.h"
 #include "brw_state.h"
 #include "brw_defines.h"
@@ -144,11 +145,11 @@ brw_prepare_wm_unit(struct brw_context *brw)
 				 (1 << FRAG_ATTRIB_WPOS)) != 0;
    wm->wm5.program_computes_depth = (fp->Base.OutputsWritten &
 				     BITFIELD64_BIT(FRAG_RESULT_DEPTH)) != 0;
-   /* BRW_NEW_DEPTH_BUFFER
+   /* _NEW_BUFFERS
     * Override for NULL depthbuffer case, required by the Pixel Shader Computed
     * Depth field.
     */
-   if (brw->state.depth_region == NULL)
+   if (!intel_get_renderbuffer(ctx->DrawBuffer, BUFFER_DEPTH))
       wm->wm5.program_computes_depth = 0;
 
    /* _NEW_COLOR */
@@ -266,7 +267,6 @@ const struct brw_tracked_state brw_wm_unit = {
       .brw = (BRW_NEW_BATCH |
 	      BRW_NEW_FRAGMENT_PROGRAM |
 	      BRW_NEW_CURBE_OFFSETS |
-	      BRW_NEW_DEPTH_BUFFER |
 	      BRW_NEW_NR_WM_SURFACES),
 
       .cache = (CACHE_NEW_WM_PROG |

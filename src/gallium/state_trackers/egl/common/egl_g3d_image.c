@@ -97,7 +97,8 @@ egl_g3d_create_drm_buffer(_EGLDisplay *dpy, _EGLImage *img,
    }
 
    valid_use = EGL_DRM_BUFFER_USE_SCANOUT_MESA |
-               EGL_DRM_BUFFER_USE_SHARE_MESA;
+               EGL_DRM_BUFFER_USE_SHARE_MESA |
+               EGL_DRM_BUFFER_USE_CURSOR_MESA;
    if (attrs.DRMBufferUseMESA & ~valid_use) {
       _eglLog(_EGL_DEBUG, "bad image use bit 0x%04x",
             attrs.DRMBufferUseMESA);
@@ -122,6 +123,11 @@ egl_g3d_create_drm_buffer(_EGLDisplay *dpy, _EGLImage *img,
       templ.bind |= PIPE_BIND_SCANOUT;
    if (attrs.DRMBufferUseMESA & EGL_DRM_BUFFER_USE_SHARE_MESA)
       templ.bind |= PIPE_BIND_SHARED;
+   if (attrs.DRMBufferUseMESA & EGL_DRM_BUFFER_USE_CURSOR_MESA) {
+      if (attrs.Width != 64 || attrs.Height != 64)
+         return NULL;
+      templ.bind |= PIPE_BIND_CURSOR;
+   }
 
    return screen->resource_create(screen, &templ);
 }

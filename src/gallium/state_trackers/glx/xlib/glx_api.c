@@ -1018,15 +1018,18 @@ glXChooseVisual( Display *dpy, int screen, int *list )
 }
 
 
-PUBLIC GLXContext
-glXCreateContext( Display *dpy, XVisualInfo *visinfo,
-                  GLXContext share_list, Bool direct )
+/**
+ * Helper function used by other glXCreateContext functions.
+ */
+static GLXContext
+create_context(Display *dpy, XMesaVisual xmvis,
+               XMesaContext shareCtx, Bool direct,
+               unsigned major, unsigned minor,
+               unsigned profileMask, unsigned contextFlags)
 {
-   XMesaVisual xmvis;
    GLXContext glxCtx;
-   GLXContext shareCtx = share_list;
 
-   if (!dpy || !visinfo)
+   if (!dpy || !xmvis)
       return 0;
 
    glxCtx = CALLOC_STRUCT(__GLXcontextRec);
@@ -1038,19 +1041,8 @@ glXCreateContext( Display *dpy, XVisualInfo *visinfo,
    XMesaGarbageCollect();
 #endif
 
-   xmvis = find_glx_visual( dpy, visinfo );
-   if (!xmvis) {
-      /* This visual wasn't found with glXChooseVisual() */
-      xmvis = create_glx_visual( dpy, visinfo );
-      if (!xmvis) {
-         /* unusable visual */
-         free(glxCtx);
-         return NULL;
-      }
-   }
-
-   glxCtx->xmesaContext = XMesaCreateContext(xmvis,
-                                   shareCtx ? shareCtx->xmesaContext : NULL);
+   glxCtx->xmesaContext = XMesaCreateContext(xmvis, shareCtx, major, minor,
+                                             profileMask, contextFlags);
    if (!glxCtx->xmesaContext) {
       free(glxCtx);
       return NULL;
@@ -1061,6 +1053,29 @@ glXCreateContext( Display *dpy, XVisualInfo *visinfo,
    glxCtx->xid = (XID) glxCtx;  /* self pointer */
 
    return glxCtx;
+}
+
+
+PUBLIC GLXContext
+glXCreateContext( Display *dpy, XVisualInfo *visinfo,
+                  GLXContext shareCtx, Bool direct )
+{
+   XMesaVisual xmvis;
+
+   xmvis = find_glx_visual( dpy, visinfo );
+   if (!xmvis) {
+      /* This visual wasn't found with glXChooseVisual() */
+      xmvis = create_glx_visual( dpy, visinfo );
+      if (!xmvis) {
+         /* unusable visual */
+         return NULL;
+      }
+   }
+
+   return create_context(dpy, xmvis,
+                         shareCtx ? shareCtx->xmesaContext : NULL,
+                         direct,
+                         1, 0, GLX_CONTEXT_COMPATIBILITY_PROFILE_BIT_ARB, 0x0);
 }
 
 
@@ -2084,35 +2099,18 @@ glXQueryDrawable(Display *dpy, GLXDrawable draw, int attribute,
 
 PUBLIC GLXContext
 glXCreateNewContext( Display *dpy, GLXFBConfig config,
-                     int renderType, GLXContext shareList, Bool direct )
+                     int renderType, GLXContext shareCtx, Bool direct )
 {
-   GLXContext glxCtx;
-   GLXContext shareCtx = shareList;
    XMesaVisual xmvis = (XMesaVisual) config;
 
    if (!dpy || !config ||
        (renderType != GLX_RGBA_TYPE && renderType != GLX_COLOR_INDEX_TYPE))
       return 0;
 
-   glxCtx = CALLOC_STRUCT(__GLXcontextRec);
-   if (!glxCtx)
-      return 0;
-
-   /* deallocate unused windows/buffers */
-   XMesaGarbageCollect();
-
-   glxCtx->xmesaContext = XMesaCreateContext(xmvis,
-                                   shareCtx ? shareCtx->xmesaContext : NULL);
-   if (!glxCtx->xmesaContext) {
-      free(glxCtx);
-      return NULL;
-   }
-
-   glxCtx->isDirect = DEFAULT_DIRECT;
-   glxCtx->currentDpy = dpy;
-   glxCtx->xid = (XID) glxCtx;  /* self pointer */
-
-   return glxCtx;
+   return create_context(dpy, xmvis,
+                         shareCtx ? shareCtx->xmesaContext : NULL,
+                         direct,
+                         1, 0, GLX_CONTEXT_COMPATIBILITY_PROFILE_BIT_ARB, 0x0);
 }
 
 
@@ -2315,32 +2313,19 @@ glXCreateGLXPixmapWithConfigSGIX(Display *dpy, GLXFBConfigSGIX config,
 
 PUBLIC GLXContext
 glXCreateContextWithConfigSGIX(Display *dpy, GLXFBConfigSGIX config,
-                               int render_type, GLXContext share_list,
+                               int renderType, GLXContext shareCtx,
                                Bool direct)
 {
    XMesaVisual xmvis = (XMesaVisual) config;
-   GLXContext glxCtx;
-   GLXContext shareCtx = share_list;
 
-   glxCtx = CALLOC_STRUCT(__GLXcontextRec);
-   if (!glxCtx)
+   if (!dpy || !config ||
+       (renderType != GLX_RGBA_TYPE && renderType != GLX_COLOR_INDEX_TYPE))
       return 0;
 
-   /* deallocate unused windows/buffers */
-   XMesaGarbageCollect();
-
-   glxCtx->xmesaContext = XMesaCreateContext(xmvis,
-                                   shareCtx ? shareCtx->xmesaContext : NULL);
-   if (!glxCtx->xmesaContext) {
-      free(glxCtx);
-      return NULL;
-   }
-
-   glxCtx->isDirect = DEFAULT_DIRECT;
-   glxCtx->currentDpy = dpy;
-   glxCtx->xid = (XID) glxCtx;  /* self pointer */
-
-   return glxCtx;
+   return create_context(dpy, xmvis,
+                         shareCtx ? shareCtx->xmesaContext : NULL,
+                         direct,
+                         1, 0, GLX_CONTEXT_COMPATIBILITY_PROFILE_BIT_ARB, 0x0);
 }
 
 
@@ -2653,4 +2638,99 @@ glXReleaseTexImageEXT(Display *dpy, GLXDrawable drawable, int buffer)
    XMesaBuffer b = XMesaFindBuffer(dpy, drawable);
    if (b)
       XMesaReleaseTexImage(dpy, b, buffer);
+}
+
+
+
+/*** GLX_ARB_create_context ***/
+
+GLXContext
+glXCreateContextAttribsARB(Display *dpy, GLXFBConfig config,
+                           GLXContext shareCtx, Bool direct,
+                           const int *attrib_list)
+{
+   XMesaVisual xmvis = (XMesaVisual) config;
+   int majorVersion = 1, minorVersion = 0;
+   int contextFlags = 0x0;
+   int profileMask = GLX_CONTEXT_CORE_PROFILE_BIT_ARB;
+   int renderType = GLX_RGBA_TYPE;
+   unsigned i;
+   Bool done = False;
+   const int contextFlagsAll = (GLX_CONTEXT_DEBUG_BIT_ARB |
+                                GLX_CONTEXT_FORWARD_COMPATIBLE_BIT_ARB);
+
+   /* parse attrib_list */
+   for (i = 0; !done && attrib_list[i]; i++) {
+      switch (attrib_list[i]) {
+      case GLX_CONTEXT_MAJOR_VERSION_ARB:
+         majorVersion = attrib_list[++i];
+         break;
+      case GLX_CONTEXT_MINOR_VERSION_ARB:
+         minorVersion = attrib_list[++i];
+         break;
+      case GLX_CONTEXT_FLAGS_ARB:
+         contextFlags = attrib_list[++i];
+         break;
+      case GLX_CONTEXT_PROFILE_MASK_ARB:
+         profileMask = attrib_list[++i];
+         break;
+      case GLX_RENDER_TYPE:
+         renderType = attrib_list[++i];
+         break;
+      case 0:
+         /* end of list */
+         done = True;
+         break;
+      default:
+         /* bad attribute */
+         /* XXX generate BadValue X Error */
+         return NULL;
+      }
+   }
+
+   /* check contextFlags */
+   if (contextFlags & ~contextFlagsAll) {
+      return NULL; /* generate BadValue X Error */
+   }
+
+   /* check profileMask */
+   if (profileMask != GLX_CONTEXT_CORE_PROFILE_BIT_ARB &&
+       profileMask != GLX_CONTEXT_COMPATIBILITY_PROFILE_BIT_ARB) {
+      return NULL; /* generate BadValue X Error */
+   }
+
+   /* check version (generate BadMatch if bad) */
+   switch (majorVersion) {
+   case 1:
+      if (minorVersion < 0 || minorVersion > 5)
+         return NULL;
+      break;
+   case 2:
+      if (minorVersion < 0 || minorVersion > 1)
+         return NULL;
+      break;
+   case 3:
+      if (minorVersion < 0 || minorVersion > 2)
+         return NULL;
+      break;
+   case 4:
+      if (minorVersion < 0 || minorVersion > 0)
+         return NULL;
+      break;
+   default:
+      return NULL;
+   }
+
+   if ((contextFlags & GLX_CONTEXT_FORWARD_COMPATIBLE_BIT_ARB) &&
+       majorVersion < 3)
+      return NULL; /* generate GLXBadProfileARB */
+
+   if (renderType == GLX_COLOR_INDEX_TYPE && majorVersion >= 3)
+      return NULL; /* generate BadMatch */
+
+   return create_context(dpy, xmvis,
+                         shareCtx ? shareCtx->xmesaContext : NULL,
+                         direct,
+                         majorVersion, minorVersion,
+                         profileMask, contextFlags);
 }

@@ -142,6 +142,10 @@ drm_intel_bo *intel_region_buffer(struct intel_context *intel,
 				  struct intel_region *region,
 				  GLuint flag);
 
+uint32_t intel_region_tile_offsets(struct intel_region *region,
+				   uint32_t *tile_x,
+				   uint32_t *tile_y);
+
 void _mesa_copy_rect(GLubyte * dst,
                 GLuint cpp,
                 GLuint dst_pitch,

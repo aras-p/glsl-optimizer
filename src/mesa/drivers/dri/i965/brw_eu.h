@@ -104,6 +104,8 @@ struct brw_compile {
    struct brw_instruction store[BRW_EU_MAX_INSN];
    GLuint nr_insn;
 
+   void *mem_ctx;
+
    /* Allow clients to push/pop instruction state:
     */
    struct brw_instruction stack[BRW_EU_MAX_INSN_STACK];
@@ -114,6 +116,14 @@ struct brw_compile {
    GLboolean single_program_flow;
    bool compressed;
    struct brw_context *brw;
+
+   /* Control flow stacks:
+    * - if_stack contains IF and ELSE instructions which must be patched
+    *   (and popped) once the matching ENDIF instruction is encountered.
+    */
+   struct brw_instruction **if_stack;
+   int if_stack_depth;
+   int if_stack_array_size;
 
    struct brw_glsl_label *first_label;  /**< linked list of labels */
    struct brw_glsl_call *first_call;    /**< linked list of CALs */
@@ -784,7 +794,8 @@ void brw_set_predicate_inverse(struct brw_compile *p, bool predicate_inverse);
 void brw_set_conditionalmod( struct brw_compile *p, GLuint conditional );
 void brw_set_acc_write_control(struct brw_compile *p, GLuint value);
 
-void brw_init_compile( struct brw_context *, struct brw_compile *p );
+void brw_init_compile(struct brw_context *, struct brw_compile *p,
+		      void *mem_ctx);
 const GLuint *brw_get_program( struct brw_compile *p, GLuint *sz );
 
 
@@ -950,12 +961,8 @@ struct brw_instruction *brw_IF(struct brw_compile *p,
 struct brw_instruction *gen6_IF(struct brw_compile *p, uint32_t conditional,
 				struct brw_reg src0, struct brw_reg src1);
 
-struct brw_instruction *brw_ELSE(struct brw_compile *p, 
-				 struct brw_instruction *if_insn);
-
-void brw_ENDIF(struct brw_compile *p, 
-	       struct brw_instruction *if_or_else_insn);
-
+void brw_ELSE(struct brw_compile *p);
+void brw_ENDIF(struct brw_compile *p);
 
 /* DO/WHILE loops:
  */
@@ -1020,8 +1027,9 @@ void brw_math_invert( struct brw_compile *p,
 		      struct brw_reg dst,
 		      struct brw_reg src);
 
-void brw_set_src1( struct brw_instruction *insn,
-                          struct brw_reg reg );
+void brw_set_src1(struct brw_compile *p,
+		  struct brw_instruction *insn,
+		  struct brw_reg reg);
 
 void brw_set_uip_jip(struct brw_compile *p);
 

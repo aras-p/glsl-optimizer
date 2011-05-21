@@ -492,6 +492,13 @@ interpolate_texcoords(struct gl_context *ctx, SWspan *span)
             const struct gl_texture_image *img = obj->Image[0][obj->BaseLevel];
             needLambda = (obj->Sampler.MinFilter != obj->Sampler.MagFilter)
                || ctx->FragmentProgram._Current;
+            /* LOD is calculated directly in the ansiotropic filter, we can
+             * skip the normal lambda function as the result is ignored.
+             */
+            if (obj->Sampler.MaxAnisotropy > 1.0 &&
+                obj->Sampler.MinFilter == GL_LINEAR_MIPMAP_LINEAR) {
+               needLambda = GL_FALSE;
+            }
             texW = img->WidthScale;
             texH = img->HeightScale;
          }

@@ -120,32 +120,58 @@
 
 struct brw_context;
 
-#define BRW_NEW_URB_FENCE               0x1
-#define BRW_NEW_FRAGMENT_PROGRAM        0x2
-#define BRW_NEW_VERTEX_PROGRAM          0x4
-#define BRW_NEW_INPUT_DIMENSIONS        0x8
-#define BRW_NEW_CURBE_OFFSETS           0x10
-#define BRW_NEW_REDUCED_PRIMITIVE       0x20
-#define BRW_NEW_PRIMITIVE               0x40
-#define BRW_NEW_CONTEXT                 0x80
-#define BRW_NEW_WM_INPUT_DIMENSIONS     0x100
-#define BRW_NEW_PSP                     0x800
-#define BRW_NEW_WM_SURFACES		0x1000
-#define BRW_NEW_BINDING_TABLE		0x2000
-#define BRW_NEW_INDICES			0x4000
-#define BRW_NEW_VERTICES		0x8000
+enum brw_state_id {
+   BRW_STATE_URB_FENCE,
+   BRW_STATE_FRAGMENT_PROGRAM,
+   BRW_STATE_VERTEX_PROGRAM,
+   BRW_STATE_INPUT_DIMENSIONS,
+   BRW_STATE_CURBE_OFFSETS,
+   BRW_STATE_REDUCED_PRIMITIVE,
+   BRW_STATE_PRIMITIVE,
+   BRW_STATE_CONTEXT,
+   BRW_STATE_WM_INPUT_DIMENSIONS,
+   BRW_STATE_PSP,
+   BRW_STATE_WM_SURFACES,
+   BRW_STATE_VS_BINDING_TABLE,
+   BRW_STATE_GS_BINDING_TABLE,
+   BRW_STATE_PS_BINDING_TABLE,
+   BRW_STATE_INDICES,
+   BRW_STATE_VERTICES,
+   BRW_STATE_BATCH,
+   BRW_STATE_NR_WM_SURFACES,
+   BRW_STATE_NR_VS_SURFACES,
+   BRW_STATE_INDEX_BUFFER,
+   BRW_STATE_VS_CONSTBUF,
+   BRW_STATE_WM_CONSTBUF
+};
+
+#define BRW_NEW_URB_FENCE               (1 << BRW_STATE_URB_FENCE)
+#define BRW_NEW_FRAGMENT_PROGRAM        (1 << BRW_STATE_FRAGMENT_PROGRAM)
+#define BRW_NEW_VERTEX_PROGRAM          (1 << BRW_STATE_VERTEX_PROGRAM)
+#define BRW_NEW_INPUT_DIMENSIONS        (1 << BRW_STATE_INPUT_DIMENSIONS)
+#define BRW_NEW_CURBE_OFFSETS           (1 << BRW_STATE_CURBE_OFFSETS)
+#define BRW_NEW_REDUCED_PRIMITIVE       (1 << BRW_STATE_REDUCED_PRIMITIVE)
+#define BRW_NEW_PRIMITIVE               (1 << BRW_STATE_PRIMITIVE)
+#define BRW_NEW_CONTEXT                 (1 << BRW_STATE_CONTEXT)
+#define BRW_NEW_WM_INPUT_DIMENSIONS     (1 << BRW_STATE_WM_INPUT_DIMENSIONS)
+#define BRW_NEW_PSP                     (1 << BRW_STATE_PSP)
+#define BRW_NEW_WM_SURFACES		(1 << BRW_STATE_WM_SURFACES)
+#define BRW_NEW_VS_BINDING_TABLE	(1 << BRW_STATE_VS_BINDING_TABLE)
+#define BRW_NEW_GS_BINDING_TABLE	(1 << BRW_STATE_GS_BINDING_TABLE)
+#define BRW_NEW_PS_BINDING_TABLE	(1 << BRW_STATE_PS_BINDING_TABLE)
+#define BRW_NEW_INDICES			(1 << BRW_STATE_INDICES)
+#define BRW_NEW_VERTICES		(1 << BRW_STATE_VERTICES)
 /**
  * Used for any batch entry with a relocated pointer that will be used
  * by any 3D rendering.
  */
-#define BRW_NEW_BATCH			0x10000
+#define BRW_NEW_BATCH                  (1 << BRW_STATE_BATCH)
 /** \see brw.state.depth_region */
-#define BRW_NEW_DEPTH_BUFFER		0x20000
-#define BRW_NEW_NR_WM_SURFACES		0x40000
-#define BRW_NEW_NR_VS_SURFACES		0x80000
-#define BRW_NEW_INDEX_BUFFER		0x100000
-#define BRW_NEW_VS_CONSTBUF		0x200000
-#define BRW_NEW_WM_CONSTBUF		0x400000
+#define BRW_NEW_NR_WM_SURFACES         (1 << BRW_STATE_NR_WM_SURFACES)
+#define BRW_NEW_NR_VS_SURFACES         (1 << BRW_STATE_NR_VS_SURFACES)
+#define BRW_NEW_INDEX_BUFFER           (1 << BRW_STATE_INDEX_BUFFER)
+#define BRW_NEW_VS_CONSTBUF            (1 << BRW_STATE_VS_CONSTBUF)
+#define BRW_NEW_WM_CONSTBUF            (1 << BRW_STATE_WM_CONSTBUF)
 
 struct brw_state_flags {
    /** State update flags signalled by mesa internals */
@@ -462,28 +488,6 @@ struct brw_context
 
    struct {
       struct brw_state_flags dirty;
-
-      /**
-       * \name Cached region pointers
-       *
-       * When the draw buffer is updated, often the depth buffer is not
-       * changed. Caching the pointer to the buffer's region allows us to
-       * detect when the buffer has in fact changed, and allows us to avoid
-       * updating the buffer's GPU state when it has not.
-       *
-       * The original of each cached pointer is an instance of
-       * \c intel_renderbuffer.region.
-       *
-       * \see brw_set_draw_region()
-       *
-       * \{
-       */
-
-      /** \see struct brw_tracked_state brw_depthbuffer */
-      struct intel_region *depth_region;
-
-      /** \} */
-
       /**
        * List of buffers accumulated in brw_validate_state to receive
        * drm_intel_bo_check_aperture treatment before exec, so we can
@@ -567,8 +571,8 @@ struct brw_context
 
       GLboolean constrained;
 
-      GLuint max_vs_handles;	/* Maximum number of VS handles */
-      GLuint max_gs_handles;	/* Maximum number of GS handles */
+      GLuint max_vs_entries;	/* Maximum number of VS entries */
+      GLuint max_gs_entries;	/* Maximum number of GS entries */
 
       GLuint nr_vs_entries;
       GLuint nr_gs_entries;
@@ -579,6 +583,8 @@ struct brw_context
       /* gen6:
        * The length of each URB entry owned by the VS (or GS), as
        * a number of 1024-bit (128-byte) rows.  Should be >= 1.
+       *
+       * gen7: Same meaning, but in 512-bit (64-byte) rows.
        */
       GLuint vs_size;
       GLuint gs_size;

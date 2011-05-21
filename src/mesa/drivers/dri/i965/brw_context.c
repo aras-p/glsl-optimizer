@@ -161,7 +161,7 @@ GLboolean brwCreateContext( int api,
       but we're not sure how it's actually done for vertex order,
       that affect provoking vertex decision. Always use last vertex
       convention for quad primitive which works as expected for now. */
-   if (intel->gen == 6)
+   if (intel->gen >= 6)
        ctx->Const.QuadsFollowProvokingVertexConvention = GL_FALSE;
 
    if (intel->is_g4x || intel->gen >= 5) {
@@ -178,8 +178,24 @@ GLboolean brwCreateContext( int api,
    }
 
    /* WM maximum threads is number of EUs times number of threads per EU. */
-   if (intel->gen >= 6) {
-      if (IS_GT2(intel->intelScreen->deviceID)) {
+   if (intel->gen >= 7) {
+      if (IS_IVB_GT1(intel->intelScreen->deviceID)) {
+	 brw->wm_max_threads = 86;
+	 brw->vs_max_threads = 36;
+	 brw->urb.size = 128;
+	 brw->urb.max_vs_entries = 512;
+	 brw->urb.max_gs_entries = 192;
+      } else if (IS_IVB_GT2(intel->intelScreen->deviceID)) {
+	 brw->wm_max_threads = 86;
+	 brw->vs_max_threads = 128;
+	 brw->urb.size = 256;
+	 brw->urb.max_vs_entries = 704;
+	 brw->urb.max_gs_entries = 320;
+      } else {
+	 assert(!"Unknown gen7 device.");
+      }
+   } else if (intel->gen == 6) {
+      if (IS_SNB_GT2(intel->intelScreen->deviceID)) {
 	 /* This could possibly be 80, but is supposed to require
 	  * disabling of WIZ hashing (bit 6 of GT_MODE, 0x20d0) and a
 	  * GPU reset to change.
@@ -187,12 +203,12 @@ GLboolean brwCreateContext( int api,
 	 brw->wm_max_threads = 40;
 	 brw->vs_max_threads = 60;
 	 brw->urb.size = 64;            /* volume 5c.5 section 5.1 */
-	 brw->urb.max_vs_handles = 128; /* volume 2a (see 3DSTATE_URB) */
+	 brw->urb.max_vs_entries = 128; /* volume 2a (see 3DSTATE_URB) */
       } else {
 	 brw->wm_max_threads = 40;
 	 brw->vs_max_threads = 24;
 	 brw->urb.size = 32;            /* volume 5c.5 section 5.1 */
-	 brw->urb.max_vs_handles = 256; /* volume 2a (see 3DSTATE_URB) */
+	 brw->urb.max_vs_entries = 256; /* volume 2a (see 3DSTATE_URB) */
       }
    } else if (intel->gen == 5) {
       brw->urb.size = 1024;

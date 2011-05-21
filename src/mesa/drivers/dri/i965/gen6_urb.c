@@ -42,8 +42,8 @@ prepare_urb( struct brw_context *brw )
    /* Calculate how many VS URB entries fit in the total URB size */
    nr_vs_entries = (brw->urb.size * 1024) / (brw->urb.vs_size * 128);
 
-   if (nr_vs_entries > brw->urb.max_vs_handles)
-      nr_vs_entries = brw->urb.max_vs_handles;
+   if (nr_vs_entries > brw->urb.max_vs_entries)
+      nr_vs_entries = brw->urb.max_vs_entries;
 
    /* According to volume 2a, nr_vs_entries must be a multiple of 4. */
    brw->urb.nr_vs_entries = ROUND_DOWN_TO(nr_vs_entries, 4);

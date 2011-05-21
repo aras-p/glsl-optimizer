@@ -39,6 +39,12 @@ if test "x$MKDEP" = "x"; then
     AC_MSG_ERROR([makedepend is required to build Mesa])
 fi
 
+AC_PATH_PROG([FLEX], [flex])
+test "x$FLEX" = "x" && AC_MSG_ERROR([flex is needed to build Mesa])
+
+AC_PATH_PROG([BISON], [bison])
+test "x$BISON" = "x" && AC_MSG_ERROR([bison is needed to build Mesa])
+
 dnl Our fallback install-sh is a symlink to minstall. Use the existing
 dnl configuration in that case.
 AC_PROG_INSTALL
@@ -1186,7 +1192,7 @@ if test "x$enable_egl" = xno; then
 fi
 if test "x$enable_egl" = xyes; then
     SRC_DIRS="$SRC_DIRS egl"
-    EGL_LIB_DEPS="$DLOPEN_LIBS -lpthread"
+    EGL_LIB_DEPS="$DLOPEN_LIBS $SELINUX_LIBS -lpthread"
     EGL_DRIVERS_DIRS=""
     if test "$enable_static" != yes; then
         # build egl_glx when libGL is built
@@ -1602,7 +1608,7 @@ x*yes*)
 esac
 if test "x$enable_openvg" = xyes; then
     EGL_CLIENT_APIS="$EGL_CLIENT_APIS "'$(VG_LIB)'
-    VG_LIB_DEPS="$VG_LIB_DEPS -lpthread"
+    VG_LIB_DEPS="$VG_LIB_DEPS $SELINUX_LIBS -lpthread"
 fi
 
 AC_SUBST([VG_LIB_DEPS])

@@ -418,18 +418,16 @@ _mesa_validate_framebuffer(struct gl_context *ctx, struct gl_framebuffer *fb)
          case GL_RG:
             fb->_Status = GL_FRAMEBUFFER_UNSUPPORTED;
             return;
-         case GL_RGB:
+
+         default:
             switch (rb->Format) {
+            /* XXX This list is likely incomplete. */
             case MESA_FORMAT_RGB9_E5_FLOAT:
                fb->_Status = GL_FRAMEBUFFER_UNSUPPORTED;
                return;
             default:;
+               /* render buffer format is supported by software rendering */
             }
-            break;
-
-         default:
-            /* render buffer format is supported by software rendering */
-            ;
          }
       }
    }

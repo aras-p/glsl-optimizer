@@ -120,14 +120,110 @@ gl_filter_to_img_filter(GLenum filter)
    }
 }
 
+static void convert_sampler(struct st_context *st,
+			    struct pipe_sampler_state *sampler,
+			    GLuint texUnit)
+{
+    struct gl_texture_object *texobj;
+    struct gl_sampler_object *msamp;
 
-static void 
-update_samplers(struct st_context *st)
+    texobj = st->ctx->Texture.Unit[texUnit]._Current;
+    if (!texobj) {
+	texobj = st_get_default_texture(st);
+    }
+
+    msamp = _mesa_get_samplerobj(st->ctx, texUnit);
+
+    memset(sampler, 0, sizeof(*sampler));
+    sampler->wrap_s = gl_wrap_xlate(msamp->WrapS);
+    sampler->wrap_t = gl_wrap_xlate(msamp->WrapT);
+    sampler->wrap_r = gl_wrap_xlate(msamp->WrapR);
+
+    sampler->min_img_filter = gl_filter_to_img_filter(msamp->MinFilter);
+    sampler->min_mip_filter = gl_filter_to_mip_filter(msamp->MinFilter);
+    sampler->mag_img_filter = gl_filter_to_img_filter(msamp->MagFilter);
+
+    if (texobj->Target != GL_TEXTURE_RECTANGLE_ARB)
+       sampler->normalized_coords = 1;
+
+    sampler->lod_bias = st->ctx->Texture.Unit[texUnit].LodBias +
+       msamp->LodBias;
+
+    sampler->min_lod = CLAMP(msamp->MinLod,
+			     0.0f,
+			     (GLfloat) texobj->MaxLevel - texobj->BaseLevel);
+    sampler->max_lod = MIN2((GLfloat) texobj->MaxLevel - texobj->BaseLevel,
+			    msamp->MaxLod);
+    if (sampler->max_lod < sampler->min_lod) {
+       /* The GL spec doesn't seem to specify what to do in this case.
+	* Swap the values.
+	*/
+       float tmp = sampler->max_lod;
+       sampler->max_lod = sampler->min_lod;
+       sampler->min_lod = tmp;
+       assert(sampler->min_lod <= sampler->max_lod);
+    }
+
+    if (msamp->BorderColor.ui[0] ||
+	msamp->BorderColor.ui[1] ||
+	msamp->BorderColor.ui[2] ||
+	msamp->BorderColor.ui[3]) {
+       struct gl_texture_image *teximg;
+
+       teximg = texobj->Image[0][texobj->BaseLevel];
+
+       st_translate_color(msamp->BorderColor.f,
+			  teximg ? teximg->_BaseFormat : GL_RGBA,
+			  sampler->border_color);
+    }
+
+    sampler->max_anisotropy = (msamp->MaxAnisotropy == 1.0 ?
+			       0 : (GLuint) msamp->MaxAnisotropy);
+
+    /* only care about ARB_shadow, not SGI shadow */
+    if (msamp->CompareMode == GL_COMPARE_R_TO_TEXTURE) {
+       sampler->compare_mode = PIPE_TEX_COMPARE_R_TO_TEXTURE;
+       sampler->compare_func
+	  = st_compare_func_to_pipe(msamp->CompareFunc);
+    }
+
+    sampler->seamless_cube_map =
+       st->ctx->Texture.CubeMapSeamless || msamp->CubeMapSeamless;
+}
+
+static void
+update_vertex_samplers(struct st_context *st)
 {
    struct gl_vertex_program *vprog = st->ctx->VertexProgram._Current;
+   GLuint su;
+
+   st->state.num_vertex_samplers = 0;
+
+   /* loop over sampler units (aka tex image units) */
+   for (su = 0; su < st->ctx->Const.MaxVertexTextureImageUnits; su++) {
+      struct pipe_sampler_state *sampler = st->state.vertex_samplers + su;
+
+      if (vprog->Base.SamplersUsed & (1 << su)) {
+	 GLuint texUnit;
+
+	 texUnit = vprog->Base.SamplerUnits[su];
+
+	 convert_sampler(st, sampler, texUnit);
+
+	 st->state.num_vertex_samplers = su + 1;
+
+	 cso_single_vertex_sampler(st->cso_context, su, sampler);
+      } else {
+	 cso_single_vertex_sampler(st->cso_context, su, NULL);
+      }
+   }
+   cso_single_vertex_sampler_done(st->cso_context);
+}
+
+static void
+update_fragment_samplers(struct st_context *st)
+{
    struct gl_fragment_program *fprog = st->ctx->FragmentProgram._Current;
-   const GLbitfield samplersUsed = (vprog->Base.SamplersUsed |
-                                    fprog->Base.SamplersUsed);
    GLuint su;
 
    st->state.num_samplers = 0;
@@ -136,97 +232,34 @@ update_samplers(struct st_context *st)
    for (su = 0; su < st->ctx->Const.MaxTextureImageUnits; su++) {
       struct pipe_sampler_state *sampler = st->state.samplers + su;
 
-      memset(sampler, 0, sizeof(*sampler));
 
-      if (samplersUsed & (1 << su)) {
-         struct gl_texture_object *texobj;
-         struct gl_texture_image *teximg;
-         struct gl_sampler_object *msamp;
+      if (fprog->Base.SamplersUsed & (1 << su)) {
          GLuint texUnit;
 
-         if (fprog->Base.SamplersUsed & (1 << su))
-            texUnit = fprog->Base.SamplerUnits[su];
-         else
-            texUnit = vprog->Base.SamplerUnits[su];
+	 texUnit = fprog->Base.SamplerUnits[su];
 
-         texobj = st->ctx->Texture.Unit[texUnit]._Current;
-         if (!texobj) {
-            texobj = st_get_default_texture(st);
-         }
-
-         teximg = texobj->Image[0][texobj->BaseLevel];
-
-         msamp = _mesa_get_samplerobj(st->ctx, texUnit);
-
-         sampler->wrap_s = gl_wrap_xlate(msamp->WrapS);
-         sampler->wrap_t = gl_wrap_xlate(msamp->WrapT);
-         sampler->wrap_r = gl_wrap_xlate(msamp->WrapR);
-
-         sampler->min_img_filter = gl_filter_to_img_filter(msamp->MinFilter);
-         sampler->min_mip_filter = gl_filter_to_mip_filter(msamp->MinFilter);
-         sampler->mag_img_filter = gl_filter_to_img_filter(msamp->MagFilter);
-
-         if (texobj->Target != GL_TEXTURE_RECTANGLE_ARB)
-            sampler->normalized_coords = 1;
-
-         sampler->lod_bias = st->ctx->Texture.Unit[texUnit].LodBias +
-            msamp->LodBias;
-
-         sampler->min_lod = CLAMP(msamp->MinLod,
-                                  0.0f,
-                                  (GLfloat) texobj->MaxLevel - texobj->BaseLevel);
-         sampler->max_lod = MIN2((GLfloat) texobj->MaxLevel - texobj->BaseLevel,
-                                 msamp->MaxLod);
-         if (sampler->max_lod < sampler->min_lod) {
-            /* The GL spec doesn't seem to specify what to do in this case.
-             * Swap the values.
-             */
-            float tmp = sampler->max_lod;
-            sampler->max_lod = sampler->min_lod;
-            sampler->min_lod = tmp;
-            assert(sampler->min_lod <= sampler->max_lod);
-         }
-
-         st_translate_color(msamp->BorderColor.f,
-                            teximg ? teximg->_BaseFormat : GL_RGBA,
-                            sampler->border_color);
-
-	 sampler->max_anisotropy = (msamp->MaxAnisotropy == 1.0 ?
-                                    0 : (GLuint) msamp->MaxAnisotropy);
-
-         /* only care about ARB_shadow, not SGI shadow */
-         if (msamp->CompareMode == GL_COMPARE_R_TO_TEXTURE) {
-            sampler->compare_mode = PIPE_TEX_COMPARE_R_TO_TEXTURE;
-            sampler->compare_func
-               = st_compare_func_to_pipe(msamp->CompareFunc);
-         }
-
-         sampler->seamless_cube_map =
-               st->ctx->Texture.CubeMapSeamless || msamp->CubeMapSeamless;
+	 convert_sampler(st, sampler, texUnit);
 
          st->state.num_samplers = su + 1;
 
          /*printf("%s su=%u non-null\n", __FUNCTION__, su);*/
          cso_single_sampler(st->cso_context, su, sampler);
-         if (su < st->ctx->Const.MaxVertexTextureImageUnits) {
-            cso_single_vertex_sampler(st->cso_context, su, sampler);
-         }
       }
       else {
          /*printf("%s su=%u null\n", __FUNCTION__, su);*/
          cso_single_sampler(st->cso_context, su, NULL);
-         if (su < st->ctx->Const.MaxVertexTextureImageUnits) {
-            cso_single_vertex_sampler(st->cso_context, su, NULL);
-         }
       }
    }
 
    cso_single_sampler_done(st->cso_context);
-   if (st->ctx->Const.MaxVertexTextureImageUnits > 0) {
-      cso_single_vertex_sampler_done(st->cso_context);
-   }
 }
 
+static void
+update_samplers(struct st_context *st)
+{
+    update_fragment_samplers(st);
+    update_vertex_samplers(st);
+}
 
 const struct st_tracked_state st_update_sampler = {
    "st_update_sampler",					/* name */

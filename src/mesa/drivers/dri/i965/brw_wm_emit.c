@@ -1100,11 +1100,16 @@ void emit_tex(struct brw_wm_compile *c,
 
    /* Emit the texcoords. */
    for (i = 0; i < nr_texcoords; i++) {
+      if (c->key.gl_clamp_mask[i] & (1 << sampler))
+	 brw_set_saturate(p, true);
+
       if (emit & (1<<i))
 	 brw_MOV(p, brw_message_reg(cur_mrf), arg[i]);
       else
 	 brw_MOV(p, brw_message_reg(cur_mrf), brw_imm_f(0));
       cur_mrf += mrf_per_channel;
+
+      brw_set_saturate(p, false);
    }
 
    /* Fill in the shadow comparison reference value. */

@@ -42,7 +42,7 @@ gen6_prepare_wm_push_constants(struct brw_context *brw)
    const struct brw_fragment_program *fp =
       brw_fragment_program_const(brw->fragment_program);
 
-   /* Updates the ParamaterValues[i] pointers for all parameters of the
+   /* Updates the ParameterValues[i] pointers for all parameters of the
     * basic type of PROGRAM_STATE_VAR.
     */
    /* XXX: Should this happen somewhere before to get our state flag set? */

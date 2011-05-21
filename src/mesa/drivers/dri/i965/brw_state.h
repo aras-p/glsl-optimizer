@@ -111,6 +111,26 @@ extern const struct brw_tracked_state gen6_vs_constants;
 extern const struct brw_tracked_state gen6_vs_state;
 extern const struct brw_tracked_state gen6_wm_constants;
 extern const struct brw_tracked_state gen6_wm_state;
+extern const struct brw_tracked_state gen7_depthbuffer;
+extern const struct brw_tracked_state gen7_blend_state_pointer;
+extern const struct brw_tracked_state gen7_cc_state_pointer;
+extern const struct brw_tracked_state gen7_cc_viewport_state_pointer;
+extern const struct brw_tracked_state gen7_clip_state;
+extern const struct brw_tracked_state gen7_depth_stencil_state_pointer;
+extern const struct brw_tracked_state gen7_disable_stages;
+extern const struct brw_tracked_state gen7_ps_state;
+extern const struct brw_tracked_state gen7_samplers;
+extern const struct brw_tracked_state gen7_sbe_state;
+extern const struct brw_tracked_state gen7_sf_clip_viewport;
+extern const struct brw_tracked_state gen7_sf_clip_viewport_state_pointer;
+extern const struct brw_tracked_state gen7_sf_state;
+extern const struct brw_tracked_state gen7_sol_state;
+extern const struct brw_tracked_state gen7_urb;
+extern const struct brw_tracked_state gen7_vs_state;
+extern const struct brw_tracked_state gen7_wm_constants;
+extern const struct brw_tracked_state gen7_wm_constant_surface;
+extern const struct brw_tracked_state gen7_wm_state;
+extern const struct brw_tracked_state gen7_wm_surfaces;
 
 /***********************************************************************
  * brw_state.c
@@ -161,5 +181,28 @@ void brw_create_constant_surface(struct brw_context *brw,
 				 drm_intel_bo *bo,
 				 int width,
 				 uint32_t *out_offset);
+
+uint32_t brw_format_for_mesa_format(gl_format mesa_format);
+
+GLuint translate_tex_target(GLenum target);
+
+GLuint translate_tex_format(gl_format mesa_format,
+			    GLenum internal_format,
+			    GLenum depth_mode,
+			    GLenum srgb_decode);
+
+/* brw_wm_sampler_state.c */
+uint32_t translate_wrap_mode(GLenum wrap, bool using_nearest);
+void upload_default_color(struct brw_context *brw,
+			  struct gl_sampler_object *sampler,
+			  int unit);
+
+/* gen6_sf_state.c */
+uint32_t
+get_attr_override(struct brw_context *brw, int fs_attr, int two_side_color);
+
+/* gen7_misc_state.c */
+unsigned int
+gen7_depth_format(struct brw_context *brw);
 
 #endif

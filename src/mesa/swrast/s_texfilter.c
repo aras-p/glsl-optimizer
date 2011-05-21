@@ -1531,6 +1531,396 @@ sample_lambda_2d(struct gl_context *ctx,
 }
 
 
+/* For anisotropic filtering */
+#define WEIGHT_LUT_SIZE 1024
+
+static GLfloat *weightLut = NULL;
+
+/**
+ * Creates the look-up table used to speed-up EWA sampling
+ */
+static void
+create_filter_table(void)
+{
+   GLuint i;
+   if (!weightLut) {
+      weightLut = (GLfloat *) malloc(WEIGHT_LUT_SIZE * sizeof(GLfloat));
+
+      for (i = 0; i < WEIGHT_LUT_SIZE; ++i) {
+         GLfloat alpha = 2;
+         GLfloat r2 = (GLfloat) i / (GLfloat) (WEIGHT_LUT_SIZE - 1);
+         GLfloat weight = (GLfloat) exp(-alpha * r2);
+         weightLut[i] = weight;
+      }
+   }
+}
+
+
+/**
+ * Elliptical weighted average (EWA) filter for producing high quality
+ * anisotropic filtered results.
+ * Based on the Higher Quality Elliptical Weighted Avarage Filter
+ * published by Paul S. Heckbert in his Master's Thesis
+ * "Fundamentals of Texture Mapping and Image Warping" (1989)
+ */
+static void
+sample_2d_ewa(struct gl_context *ctx,
+              const struct gl_texture_object *tObj,
+              const GLfloat texcoord[4],
+              const GLfloat dudx, const GLfloat dvdx,
+              const GLfloat dudy, const GLfloat dvdy, const GLint lod,
+              GLfloat rgba[])
+{
+   GLint level = lod > 0 ? lod : 0;
+   GLfloat scaling = 1.0 / (1 << level);
+   const struct gl_texture_image *img =	tObj->Image[0][level];
+   const struct gl_texture_image *mostDetailedImage =
+      tObj->Image[0][tObj->BaseLevel];
+   GLfloat tex_u=-0.5 + texcoord[0] * mostDetailedImage->WidthScale * scaling;
+   GLfloat tex_v=-0.5 + texcoord[1] * mostDetailedImage->HeightScale * scaling;
+
+   GLfloat ux = dudx * scaling;
+   GLfloat vx = dvdx * scaling;
+   GLfloat uy = dudy * scaling;
+   GLfloat vy = dvdy * scaling;
+
+   /* compute ellipse coefficients to bound the region: 
+    * A*x*x + B*x*y + C*y*y = F.
+    */
+   GLfloat A = vx*vx+vy*vy+1;
+   GLfloat B = -2*(ux*vx+uy*vy);
+   GLfloat C = ux*ux+uy*uy+1;
+   GLfloat F = A*C-B*B/4.0;
+
+   /* check if it is an ellipse */
+   /* ASSERT(F > 0.0); */
+
+   /* Compute the ellipse's (u,v) bounding box in texture space */
+   GLfloat d = -B*B+4.0*C*A;
+   GLfloat box_u = 2.0 / d * sqrt(d*C*F); /* box_u -> half of bbox with   */
+   GLfloat box_v = 2.0 / d * sqrt(A*d*F); /* box_v -> half of bbox height */
+
+   GLint u0 = floor(tex_u - box_u);
+   GLint u1 = ceil (tex_u + box_u);
+   GLint v0 = floor(tex_v - box_v);
+   GLint v1 = ceil (tex_v + box_v);
+
+   GLfloat num[4] = {0.0F, 0.0F, 0.0F, 0.0F};
+   GLfloat newCoord[2];
+   GLfloat den = 0.0F;
+   GLfloat ddq;
+   GLfloat U = u0 - tex_u;
+   GLint v;
+
+   /* Scale ellipse formula to directly index the Filter Lookup Table.
+    * i.e. scale so that F = WEIGHT_LUT_SIZE-1
+    */
+   double formScale = (double) (WEIGHT_LUT_SIZE - 1) / F;
+   A *= formScale;
+   B *= formScale;
+   C *= formScale;
+   /* F *= formScale; */ /* no need to scale F as we don't use it below here */
+
+   /* Heckbert MS thesis, p. 59; scan over the bounding box of the ellipse
+    * and incrementally update the value of Ax^2+Bxy*Cy^2; when this
+    * value, q, is less than F, we're inside the ellipse
+    */
+   ddq = 2 * A;
+   for (v = v0; v <= v1; ++v) {
+      GLfloat V = v - tex_v;
+      GLfloat dq = A * (2 * U + 1) + B * V;
+      GLfloat q = (C * V + B * U) * V + A * U * U;
+
+      GLint u;
+      for (u = u0; u <= u1; ++u) {
+         /* Note that the ellipse has been pre-scaled so F = WEIGHT_LUT_SIZE - 1 */
+         if (q < WEIGHT_LUT_SIZE) {
+            /* as a LUT is used, q must never be negative;
+             * should not happen, though
+             */
+            const GLint qClamped = q >= 0.0F ? q : 0;
+            GLfloat weight = weightLut[qClamped];
+
+            newCoord[0] = u / ((GLfloat) img->Width2);
+            newCoord[1] = v / ((GLfloat) img->Height2);
+
+            sample_2d_nearest(ctx, tObj, img, newCoord, rgba);
+            num[0] += weight * rgba[0];
+            num[1] += weight * rgba[1];
+            num[2] += weight * rgba[2];
+            num[3] += weight * rgba[3];
+
+            den += weight;
+         }
+         q += dq;
+         dq += ddq;
+      }
+   }
+
+   if (den <= 0.0F) {
+      /* Reaching this place would mean
+       * that no pixels intersected the ellipse.
+       * This should never happen because
+       * the filter we use always
+       * intersects at least one pixel.
+       */
+
+      /*rgba[0]=0;
+      rgba[1]=0;
+      rgba[2]=0;
+      rgba[3]=0;*/
+      /* not enough pixels in resampling, resort to direct interpolation */
+      sample_2d_linear(ctx, tObj, img, texcoord, rgba);
+      return;
+   }
+
+   rgba[0] = num[0] / den;
+   rgba[1] = num[1] / den;
+   rgba[2] = num[2] / den;
+   rgba[3] = num[3] / den;
+}
+
+
+/**
+ * Anisotropic filtering using footprint assembly as outlined in the
+ * EXT_texture_filter_anisotropic spec:
+ * http://www.opengl.org/registry/specs/EXT/texture_filter_anisotropic.txt
+ * Faster than EWA but has less quality (more aliasing effects)
+ */
+static void
+sample_2d_footprint(struct gl_context *ctx,
+                 const struct gl_texture_object *tObj,
+                 const GLfloat texcoord[4],
+                 const GLfloat dudx, const GLfloat dvdx,
+                 const GLfloat dudy, const GLfloat dvdy, const GLint lod,
+                 GLfloat rgba[])
+{
+   GLint level = lod > 0 ? lod : 0;
+   GLfloat scaling = 1.0F / (1 << level);
+   const struct gl_texture_image *img = tObj->Image[0][level];
+
+   GLfloat ux = dudx * scaling;
+   GLfloat vx = dvdx * scaling;
+   GLfloat uy = dudy * scaling;
+   GLfloat vy = dvdy * scaling;
+
+   GLfloat Px2 = ux * ux + vx * vx; /* squared length of dx */
+   GLfloat Py2 = uy * uy + vy * vy; /* squared length of dy */
+
+   GLint numSamples;
+   GLfloat ds;
+   GLfloat dt;
+
+   GLfloat num[4] = {0.0F, 0.0F, 0.0F, 0.0F};
+   GLfloat newCoord[2];
+   GLint s;
+
+   /*  Calculate the per anisotropic sample offsets in s,t space. */
+   if (Px2 > Py2) {
+      numSamples = ceil(SQRTF(Px2));
+      ds = ux / ((GLfloat) img->Width2);
+      dt = vx / ((GLfloat) img->Height2);
+   }
+   else {
+      numSamples = ceil(SQRTF(Py2));
+      ds = uy / ((GLfloat) img->Width2);
+      dt = vy / ((GLfloat) img->Height2);
+   }
+
+   for (s = 0; s<numSamples; s++) {
+      newCoord[0] = texcoord[0] + ds * ((GLfloat)(s+1) / (numSamples+1) -0.5);
+      newCoord[1] = texcoord[1] + dt * ((GLfloat)(s+1) / (numSamples+1) -0.5);
+
+      sample_2d_linear(ctx, tObj, img, newCoord, rgba);
+      num[0] += rgba[0];
+      num[1] += rgba[1];
+      num[2] += rgba[2];
+      num[3] += rgba[3];
+   }
+
+   rgba[0] = num[0] / numSamples;
+   rgba[1] = num[1] / numSamples;
+   rgba[2] = num[2] / numSamples;
+   rgba[3] = num[3] / numSamples;
+}
+
+
+/**
+ * Returns the index of the specified texture object in the
+ * gl_context texture unit array.
+ */
+static INLINE GLuint
+texture_unit_index(const struct gl_context *ctx,
+                   const struct gl_texture_object *tObj)
+{
+   const GLuint maxUnit
+      = (ctx->Texture._EnabledCoordUnits > 1) ? ctx->Const.MaxTextureUnits : 1;
+   GLuint u;
+
+   /* XXX CoordUnits vs. ImageUnits */
+   for (u = 0; u < maxUnit; u++) {
+      if (ctx->Texture.Unit[u]._Current == tObj)
+         break; /* found */
+   }
+   if (u >= maxUnit)
+      u = 0; /* not found, use 1st one; should never happen */
+   
+   return u;
+}
+
+
+/**
+ * Sample 2D texture using an anisotropic filter.
+ * NOTE: the const GLfloat lambda_iso[] parameter does *NOT* contain
+ * the lambda float array but a "hidden" SWspan struct which is required
+ * by this function but is not available in the texture_sample_func signature.
+ * See _swrast_texture_span( struct gl_context *ctx, SWspan *span ) on how
+ * this function is called.
+ */
+static void
+sample_lambda_2d_aniso(struct gl_context *ctx,
+                       const struct gl_texture_object *tObj,
+                       GLuint n, const GLfloat texcoords[][4],
+                       const GLfloat lambda_iso[], GLfloat rgba[][4])
+{
+   const struct gl_texture_image *tImg = tObj->Image[0][tObj->BaseLevel];
+   const GLfloat maxEccentricity =
+      tObj->Sampler.MaxAnisotropy * tObj->Sampler.MaxAnisotropy;
+   
+   /* re-calculate the lambda values so that they are usable with anisotropic
+    * filtering
+    */
+   SWspan *span = (SWspan *)lambda_iso; /* access the "hidden" SWspan struct */
+
+   /* based on interpolate_texcoords(struct gl_context *ctx, SWspan *span)
+    * in swrast/s_span.c
+    */
+   
+   /* find the texture unit index by looking up the current texture object
+    * from the context list of available texture objects.
+    */
+   const GLuint u = texture_unit_index(ctx, tObj);
+   const GLuint attr = FRAG_ATTRIB_TEX0 + u;
+   GLfloat texW, texH;
+
+   const GLfloat dsdx = span->attrStepX[attr][0];
+   const GLfloat dsdy = span->attrStepY[attr][0];
+   const GLfloat dtdx = span->attrStepX[attr][1];
+   const GLfloat dtdy = span->attrStepY[attr][1];
+   const GLfloat dqdx = span->attrStepX[attr][3];
+   const GLfloat dqdy = span->attrStepY[attr][3];
+   GLfloat s = span->attrStart[attr][0] + span->leftClip * dsdx;
+   GLfloat t = span->attrStart[attr][1] + span->leftClip * dtdx;
+   GLfloat q = span->attrStart[attr][3] + span->leftClip * dqdx;
+
+   /* from swrast/s_texcombine.c _swrast_texture_span */
+   const struct gl_texture_unit *texUnit = &ctx->Texture.Unit[u];
+   const GLboolean adjustLOD =
+      (texUnit->LodBias + tObj->Sampler.LodBias != 0.0F)
+      || (tObj->Sampler.MinLod != -1000.0 || tObj->Sampler.MaxLod != 1000.0);
+
+   GLuint i;
+   
+   /* on first access create the lookup table containing the filter weights. */
+   if (!weightLut) {
+      create_filter_table();
+   }
+
+   texW = tImg->WidthScale;
+   texH = tImg->HeightScale;
+
+   for (i = 0; i < n; i++) {
+      const GLfloat invQ = (q == 0.0F) ? 1.0F : (1.0F / q);
+      
+      GLfloat dudx = texW * ((s + dsdx) / (q + dqdx) - s * invQ);
+      GLfloat dvdx = texH * ((t + dtdx) / (q + dqdx) - t * invQ);
+      GLfloat dudy = texW * ((s + dsdy) / (q + dqdy) - s * invQ);
+      GLfloat dvdy = texH * ((t + dtdy) / (q + dqdy) - t * invQ);
+      
+      /* note: instead of working with Px and Py, we will use the 
+       * squared length instead, to avoid sqrt.
+       */
+      GLfloat Px2 = dudx * dudx + dvdx * dvdx;
+      GLfloat Py2 = dudy * dudy + dvdy * dvdy;
+
+      GLfloat Pmax2;
+      GLfloat Pmin2;
+      GLfloat e;
+      GLfloat lod;
+
+      s += dsdx;
+      t += dtdx;
+      q += dqdx;
+      
+      if (Px2 < Py2) {
+         Pmax2 = Py2;
+         Pmin2 = Px2;
+      }
+      else {
+         Pmax2 = Px2;
+         Pmin2 = Py2;
+      }
+      
+      /* if the eccentricity of the ellipse is too big, scale up the shorter
+       * of the two vectors to limit the maximum amount of work per pixel
+       */
+      e = Pmax2 / Pmin2;
+      if (e > maxEccentricity) {
+         /* GLfloat s=e / maxEccentricity;
+            minor[0] *= s;
+            minor[1] *= s;
+            Pmin2 *= s; */
+         Pmin2 = Pmax2 / maxEccentricity;
+      }
+      
+      /* note: we need to have Pmin=sqrt(Pmin2) here, but we can avoid
+       * this since 0.5*log(x) = log(sqrt(x))
+       */
+      lod = 0.5 * LOG2(Pmin2);
+      
+      if (adjustLOD) {
+         /* from swrast/s_texcombine.c _swrast_texture_span */
+         if (texUnit->LodBias + tObj->Sampler.LodBias != 0.0F) {
+            /* apply LOD bias, but don't clamp yet */
+            const GLfloat bias =
+               CLAMP(texUnit->LodBias + tObj->Sampler.LodBias,
+                     -ctx->Const.MaxTextureLodBias,
+                     ctx->Const.MaxTextureLodBias);
+            lod += bias;
+
+            if (tObj->Sampler.MinLod != -1000.0 ||
+                tObj->Sampler.MaxLod != 1000.0) {
+               /* apply LOD clamping to lambda */
+               lod = CLAMP(lod, tObj->Sampler.MinLod, tObj->Sampler.MaxLod);
+            }
+         }
+      }
+      
+      /* If the ellipse covers the whole image, we can
+       * simply return the average of the whole image.
+       */
+      if (lod >= tObj->_MaxLevel) {
+         sample_2d_linear(ctx, tObj, tObj->Image[0][tObj->_MaxLevel],
+                          texcoords[i], rgba[i]);
+      }
+      else {
+         /* don't bother interpolating between multiple LODs; it doesn't
+          * seem to be worth the extra running time.
+          */
+         sample_2d_ewa(ctx, tObj, texcoords[i],
+                       dudx, dvdx, dudy, dvdy, floor(lod), rgba[i]);
+
+         /* unused: */
+         (void) sample_2d_footprint;
+         /*
+         sample_2d_footprint(ctx, tObj, texcoords[i],
+                             dudx, dvdx, dudy, dvdy, floor(lod), rgba[i]);
+         */
+      }
+   }
+}
+
+
 
 /**********************************************************************/
 /*                    3-D Texture Sampling Functions                  */
@@ -3221,6 +3611,11 @@ _swrast_choose_texture_sample_func( struct gl_context *ctx,
             return &sample_depth_texture;
          }
          else if (needLambda) {
+            /* Anisotropic filtering extension. Activated only if mipmaps are used */
+            if (t->Sampler.MaxAnisotropy > 1.0 &&
+                t->Sampler.MinFilter == GL_LINEAR_MIPMAP_LINEAR) {
+               return &sample_lambda_2d_aniso;
+            }
             return &sample_lambda_2d;
          }
          else if (t->Sampler.MinFilter == GL_LINEAR) {

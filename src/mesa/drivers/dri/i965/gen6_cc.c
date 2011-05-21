@@ -39,8 +39,18 @@ prepare_blend_state(struct brw_context *brw)
    struct gen6_blend_state *blend;
    int b;
    int nr_draw_buffers = ctx->DrawBuffer->_NumColorDrawBuffers;
-   int size = sizeof(*blend) * nr_draw_buffers;
+   int size;
 
+   /* We need at least one BLEND_STATE written, because we might do
+    * thread dispatch even if _NumColorDrawBuffers is 0 (for example
+    * for computed depth or alpha test), which will do an FB write
+    * with render target 0, which will reference BLEND_STATE[0] for
+    * alpha test enable.
+    */
+   if (nr_draw_buffers == 0 && ctx->Color.AlphaEnabled)
+      nr_draw_buffers = 1;
+
+   size = sizeof(*blend) * nr_draw_buffers;
    blend = brw_state_batch(brw, size, 64, &brw->cc.blend_state_offset);
 
    memset(blend, 0, size);

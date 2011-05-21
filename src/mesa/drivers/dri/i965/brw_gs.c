@@ -42,7 +42,7 @@
 #include "brw_state.h"
 #include "brw_gs.h"
 
-
+#include "../glsl/ralloc.h"
 
 static void compile_gs_prog( struct brw_context *brw,
 			     struct brw_gs_prog_key *key )
@@ -50,7 +50,14 @@ static void compile_gs_prog( struct brw_context *brw,
    struct intel_context *intel = &brw->intel;
    struct brw_gs_compile c;
    const GLuint *program;
+   void *mem_ctx;
    GLuint program_size;
+
+   /* Gen6: VF has already converted into polygon, and LINELOOP is
+    * converted to LINESTRIP at the beginning of the 3D pipeline.
+    */
+   if (intel->gen >= 6)
+      return;
 
    memset(&c, 0, sizeof(c));
    
@@ -67,10 +74,11 @@ static void compile_gs_prog( struct brw_context *brw,
 
    c.nr_bytes = c.nr_regs * REG_SIZE;
 
+   mem_ctx = NULL;
    
    /* Begin the compilation:
     */
-   brw_init_compile(brw, &c.func);
+   brw_init_compile(brw, &c.func, mem_ctx);
 
    c.func.single_program_flow = 1;
 
@@ -84,12 +92,6 @@ static void compile_gs_prog( struct brw_context *brw,
     * already been weeded out by this stage:
     */
 
-   /* Gen6: VF has already converted into polygon, and LINELOOP is
-    * converted to LINESTRIP at the beginning of the 3D pipeline.
-    */
-   if (intel->gen == 6)
-      return;
-
    switch (key->primitive) {
    case GL_QUADS:
       brw_gs_quads( &c, key );
@@ -101,6 +103,7 @@ static void compile_gs_prog( struct brw_context *brw,
       brw_gs_lines( &c );
       break;
    default:
+      ralloc_free(mem_ctx);
       return;
    }
 
@@ -126,6 +129,7 @@ static void compile_gs_prog( struct brw_context *brw,
 				      program, program_size,
 				      &c.prog_data, sizeof(c.prog_data),
 				      &brw->gs.prog_data);
+   ralloc_free(mem_ctx);
 }
 
 static const GLenum gs_prim[GL_POLYGON+1] = {  
@@ -164,7 +168,7 @@ static void populate_key( struct brw_context *brw,
       key->pv_first = GL_TRUE;
    }
 
-   key->need_gs_prog = (intel->gen == 6)
+   key->need_gs_prog = (intel->gen >= 6)
       ? 0
       : (brw->primitive == GL_QUADS ||
 	 brw->primitive == GL_QUAD_STRIP ||

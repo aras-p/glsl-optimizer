@@ -534,10 +534,10 @@ int rc_get_max_index(
 	rc_register_file file)
 {
 	struct max_data data;
+	struct rc_instruction * inst;
 	data.Max = 0;
 	data.HasFileType = 0;
 	data.File = file;
-	struct rc_instruction * inst;
 	for (inst = c->Program.Instructions.Next;
 					inst != &c->Program.Instructions;
 					inst = inst->Next) {
