@@ -61,7 +61,7 @@ GLboolean brw_miptree_layout(struct intel_context *intel,
 	   */
 	  h0 = ALIGN(mt->height0, align_h);
 	  h1 = ALIGN(minify(h0), align_h);
-	  qpitch = (h0 + h1 + 11 * align_h);
+	  qpitch = (h0 + h1 + (intel->gen >= 7 ? 12 : 11) * align_h);
           if (mt->compressed)
 	     qpitch /= 4;
 
