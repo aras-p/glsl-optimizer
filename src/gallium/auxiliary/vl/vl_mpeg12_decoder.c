@@ -38,39 +38,42 @@
 #define SCALE_FACTOR_SNORM (32768.0f / 256.0f)
 #define SCALE_FACTOR_SSCALED (1.0f / 256.0f)
 
-static const enum pipe_format const_zscan_source_formats[] = {
-   PIPE_FORMAT_R16_SNORM,
-   PIPE_FORMAT_R16_SSCALED
+struct format_config {
+   enum pipe_format zscan_source_format;
+   enum pipe_format idct_source_format;
+   enum pipe_format mc_source_format;
+
+   float idct_scale;
+   float mc_scale;
 };
 
-static const unsigned num_zscan_source_formats =
-   sizeof(const_zscan_source_formats) / sizeof(enum pipe_format);
-
-static const enum pipe_format const_idct_source_formats[] = {
-   PIPE_FORMAT_R16G16B16A16_SNORM,
-   PIPE_FORMAT_R16G16B16A16_SSCALED
+static const struct format_config bitstream_format_config[] = {
+   { PIPE_FORMAT_R16_SSCALED, PIPE_FORMAT_R16G16B16A16_SSCALED, PIPE_FORMAT_R16G16B16A16_FLOAT, 1.0f, SCALE_FACTOR_SSCALED },
+   { PIPE_FORMAT_R16_SSCALED, PIPE_FORMAT_R16G16B16A16_SSCALED, PIPE_FORMAT_R16G16B16A16_SSCALED, 1.0f, SCALE_FACTOR_SSCALED },
+   { PIPE_FORMAT_R16_SNORM, PIPE_FORMAT_R16G16B16A16_SNORM, PIPE_FORMAT_R16G16B16A16_FLOAT, 1.0f, SCALE_FACTOR_SNORM },
+   { PIPE_FORMAT_R16_SNORM, PIPE_FORMAT_R16G16B16A16_SNORM, PIPE_FORMAT_R16G16B16A16_SNORM, 1.0f, SCALE_FACTOR_SNORM }
 };
 
-static const unsigned num_idct_source_formats =
-   sizeof(const_idct_source_formats) / sizeof(enum pipe_format);
+static const unsigned num_bitstream_format_configs =
+   sizeof(bitstream_format_config) / sizeof(struct format_config);
 
-static const enum pipe_format const_idct_intermediate_formats[] = {
-   PIPE_FORMAT_R16G16B16A16_FLOAT,
-   PIPE_FORMAT_R16G16B16A16_SNORM,
-   PIPE_FORMAT_R16G16B16A16_SSCALED,
-   PIPE_FORMAT_R32G32B32A32_FLOAT
+static const struct format_config idct_format_config[] = {
+   { PIPE_FORMAT_R16_SSCALED, PIPE_FORMAT_R16G16B16A16_SSCALED, PIPE_FORMAT_R16G16B16A16_FLOAT, 1.0f, SCALE_FACTOR_SSCALED },
+   { PIPE_FORMAT_R16_SSCALED, PIPE_FORMAT_R16G16B16A16_SSCALED, PIPE_FORMAT_R16G16B16A16_SSCALED, 1.0f, SCALE_FACTOR_SSCALED },
+   { PIPE_FORMAT_R16_SNORM, PIPE_FORMAT_R16G16B16A16_SNORM, PIPE_FORMAT_R16G16B16A16_FLOAT, 1.0f, SCALE_FACTOR_SNORM },
+   { PIPE_FORMAT_R16_SNORM, PIPE_FORMAT_R16G16B16A16_SNORM, PIPE_FORMAT_R16G16B16A16_SNORM, 1.0f, SCALE_FACTOR_SNORM }
 };
 
-static const unsigned num_idct_intermediate_formats =
-   sizeof(const_idct_intermediate_formats) / sizeof(enum pipe_format);
+static const unsigned num_idct_format_configs =
+   sizeof(idct_format_config) / sizeof(struct format_config);
 
-static const enum pipe_format const_mc_source_formats[] = {
-   PIPE_FORMAT_R16_SNORM,
-   PIPE_FORMAT_R16_SSCALED
+static const struct format_config mc_format_config[] = {
+   //{ PIPE_FORMAT_R16_SSCALED, PIPE_FORMAT_NONE, PIPE_FORMAT_R16_SSCALED, 0.0f, SCALE_FACTOR_SSCALED },
+   { PIPE_FORMAT_R16_SNORM, PIPE_FORMAT_NONE, PIPE_FORMAT_R16_SNORM, 0.0f, SCALE_FACTOR_SNORM }
 };
 
-static const unsigned num_mc_source_formats =
-   sizeof(const_mc_source_formats) / sizeof(enum pipe_format);
+static const unsigned num_mc_format_configs =
+   sizeof(mc_format_config) / sizeof(struct format_config);
 
 static bool
 init_zscan_buffer(struct vl_mpeg12_buffer *buffer)
@@ -627,11 +630,8 @@ init_pipe_state(struct vl_mpeg12_decoder *dec)
    return true;
 }
 
-static enum pipe_format
-find_first_supported_format(struct vl_mpeg12_decoder *dec,
-                            const enum pipe_format formats[],
-                            unsigned num_formats,
-                            enum pipe_texture_target target)
+static const struct format_config*
+find_format_config(struct vl_mpeg12_decoder *dec, const struct format_config configs[], unsigned num_configs)
 {
    struct pipe_screen *screen;
    unsigned i;
@@ -640,16 +640,32 @@ find_first_supported_format(struct vl_mpeg12_decoder *dec,
 
    screen = dec->pipe->screen;
 
-   for (i = 0; i < num_formats; ++i)
-      if (screen->is_format_supported(dec->pipe->screen, formats[i], target, 1,
-                                      PIPE_BIND_SAMPLER_VIEW | PIPE_BIND_RENDER_TARGET))
-         return formats[i];
+   for (i = 0; i < num_configs; ++i) {
+      if (!screen->is_format_supported(screen, configs[i].zscan_source_format, PIPE_TEXTURE_2D,
+                                       1, PIPE_BIND_SAMPLER_VIEW))
+         continue;
 
-   return PIPE_FORMAT_NONE;
+      if (configs[i].idct_source_format != PIPE_FORMAT_NONE) {
+         if (!screen->is_format_supported(screen, configs[i].idct_source_format, PIPE_TEXTURE_2D,
+                                          1, PIPE_BIND_SAMPLER_VIEW | PIPE_BIND_RENDER_TARGET))
+            continue;
+
+         if (!screen->is_format_supported(screen, configs[i].mc_source_format, PIPE_TEXTURE_3D,
+                                          1, PIPE_BIND_SAMPLER_VIEW | PIPE_BIND_RENDER_TARGET))
+            continue;
+      } else {
+         if (!screen->is_format_supported(screen, configs[i].mc_source_format, PIPE_TEXTURE_2D,
+                                          1, PIPE_BIND_SAMPLER_VIEW | PIPE_BIND_RENDER_TARGET))
+            continue;
+      }
+      return &configs[i];
+   }
+
+   return NULL;
 }
 
 static bool
-init_zscan(struct vl_mpeg12_decoder *dec)
+init_zscan(struct vl_mpeg12_decoder *dec, const struct format_config* format_config)
 {
    unsigned num_channels;
 
@@ -660,12 +676,7 @@ init_zscan(struct vl_mpeg12_decoder *dec)
       (dec->base.width * dec->base.height) /
       (BLOCK_WIDTH * BLOCK_HEIGHT);
 
-   dec->zscan_source_format = find_first_supported_format(dec, const_zscan_source_formats,
-                                                          num_zscan_source_formats, PIPE_TEXTURE_2D);
-
-   if (dec->zscan_source_format == PIPE_FORMAT_NONE)
-      return false;
-
+   dec->zscan_source_format = format_config->zscan_source_format;
    dec->zscan_linear = vl_zscan_layout(dec->pipe, vl_zscan_linear, dec->blocks_per_line);
    dec->zscan_normal = vl_zscan_layout(dec->pipe, vl_zscan_normal, dec->blocks_per_line);
    dec->zscan_alternate = vl_zscan_layout(dec->pipe, vl_zscan_alternate, dec->blocks_per_line);
@@ -684,39 +695,19 @@ init_zscan(struct vl_mpeg12_decoder *dec)
 }
 
 static bool
-init_idct(struct vl_mpeg12_decoder *dec, float *mc_scale)
+init_idct(struct vl_mpeg12_decoder *dec, const struct format_config* format_config)
 {
    unsigned nr_of_idct_render_targets;
    enum pipe_format formats[3];
 
-   struct pipe_sampler_view *matrix, *transpose = NULL;
-   float matrix_scale, transpose_scale;
+   struct pipe_sampler_view *matrix = NULL;
 
    nr_of_idct_render_targets = dec->pipe->screen->get_param(dec->pipe->screen, PIPE_CAP_MAX_RENDER_TARGETS);
 
    // more than 4 render targets usually doesn't makes any seens
    nr_of_idct_render_targets = MIN2(nr_of_idct_render_targets, 4);
 
-   formats[0] = formats[1] = formats[2] = find_first_supported_format(dec, const_idct_source_formats,
-                                                                      num_idct_source_formats, PIPE_TEXTURE_2D);
-
-   switch (formats[0]) {
-   case PIPE_FORMAT_NONE:
-      goto error_idct_format;
-
-   case PIPE_FORMAT_R16G16B16A16_SSCALED:
-      matrix_scale = SCALE_FACTOR_SSCALED;
-      break;
-
-   case PIPE_FORMAT_R16G16B16A16_SNORM:
-      matrix_scale = SCALE_FACTOR_SNORM;
-      break;
-
-   default:
-      assert(0);
-      return false;
-   }
-
+   formats[0] = formats[1] = formats[2] = format_config->idct_source_format;
    dec->idct_source = vl_video_buffer_init(dec->base.context, dec->pipe,
                                            dec->base.width / 4, dec->base.height, 1,
                                            dec->base.chroma_format,
@@ -724,31 +715,7 @@ init_idct(struct vl_mpeg12_decoder *dec, float *mc_scale)
    if (!dec->idct_source)
       goto error_idct_source;
 
-   formats[0] = formats[1] = formats[2] = find_first_supported_format(dec, const_idct_intermediate_formats,
-                                                                      num_idct_intermediate_formats, PIPE_TEXTURE_3D);
-
-   switch (formats[0]) {
-   case PIPE_FORMAT_NONE:
-      goto error_mc_format;
-
-   case PIPE_FORMAT_R16G16B16A16_FLOAT:
-   case PIPE_FORMAT_R32G32B32A32_FLOAT:
-      transpose_scale = 1.0f;
-      *mc_scale = 1.0f;
-      break;
-
-   case PIPE_FORMAT_R16_SSCALED:
-      transpose_scale = matrix_scale = sqrt(matrix_scale);
-      transpose_scale /= SCALE_FACTOR_SSCALED;
-      *mc_scale = SCALE_FACTOR_SSCALED;
-      break;
-
-   default:
-      transpose_scale = matrix_scale = sqrt(matrix_scale);
-      *mc_scale = 1.0f;
-      break;
-   }
-
+   formats[0] = formats[1] = formats[2] = format_config->mc_source_format;
    dec->mc_source = vl_video_buffer_init(dec->base.context, dec->pipe,
                                          dec->base.width / nr_of_idct_render_targets,
                                          dec->base.height / 4, nr_of_idct_render_targets,
@@ -758,25 +725,18 @@ init_idct(struct vl_mpeg12_decoder *dec, float *mc_scale)
    if (!dec->mc_source)
       goto error_mc_source;
 
-   if (!(matrix = vl_idct_upload_matrix(dec->pipe, matrix_scale)))
+   if (!(matrix = vl_idct_upload_matrix(dec->pipe, format_config->idct_scale)))
       goto error_matrix;
 
-   if (matrix_scale != transpose_scale) {
-      if (!(transpose = vl_idct_upload_matrix(dec->pipe, transpose_scale)))
-         goto error_transpose;
-   } else
-      pipe_sampler_view_reference(&transpose, matrix);
-
    if (!vl_idct_init(&dec->idct_y, dec->pipe, dec->base.width, dec->base.height,
-                     nr_of_idct_render_targets, matrix, transpose))
+                     nr_of_idct_render_targets, matrix, matrix))
       goto error_y;
 
    if(!vl_idct_init(&dec->idct_c, dec->pipe, dec->chroma_width, dec->chroma_height,
-                    nr_of_idct_render_targets, matrix, transpose))
+                    nr_of_idct_render_targets, matrix, matrix))
       goto error_c;
 
    pipe_sampler_view_reference(&matrix, NULL);
-   pipe_sampler_view_reference(&transpose, NULL);
 
    return true;
 
@@ -784,54 +744,30 @@ error_c:
    vl_idct_cleanup(&dec->idct_y);
 
 error_y:
-   pipe_sampler_view_reference(&transpose, NULL);
-
-error_transpose:
    pipe_sampler_view_reference(&matrix, NULL);
 
 error_matrix:
    dec->mc_source->destroy(dec->mc_source);
 
 error_mc_source:
-error_mc_format:
    dec->idct_source->destroy(dec->idct_source);
 
 error_idct_source:
-error_idct_format:
    return false;
 }
 
 static bool
-init_mc_source_widthout_idct(struct vl_mpeg12_decoder *dec, float *mc_scale)
+init_mc_source_widthout_idct(struct vl_mpeg12_decoder *dec, const struct format_config* format_config)
 {
    enum pipe_format formats[3];
 
-   formats[0] = formats[1] = formats[2] = find_first_supported_format(dec, const_mc_source_formats,
-                                                                      num_mc_source_formats, PIPE_TEXTURE_2D);
-
-   switch (formats[0]) {
-   case PIPE_FORMAT_NONE:
-      return false;
-
-   case PIPE_FORMAT_R16_SNORM:
-      *mc_scale = SCALE_FACTOR_SNORM;
-      break;
-
-   case PIPE_FORMAT_R16_SSCALED:
-      *mc_scale = SCALE_FACTOR_SSCALED;
-      break;
-
-   default:
-      assert(0);
-      return false;
-   }
-
+   formats[0] = formats[1] = formats[2] = format_config->mc_source_format;
    dec->mc_source = vl_video_buffer_init(dec->base.context, dec->pipe,
                                          dec->base.width, dec->base.height, 1,
                                          dec->base.chroma_format,
                                          formats, PIPE_USAGE_STATIC);
 
-   return dec->mc_source;
+   return dec->mc_source != NULL;
 }
 
 static void
@@ -885,8 +821,8 @@ vl_create_mpeg12_decoder(struct pipe_video_context *context,
                          enum pipe_video_chroma_format chroma_format,
                          unsigned width, unsigned height)
 {
+   const struct format_config *format_config;
    struct vl_mpeg12_decoder *dec;
-   float mc_scale;
 
    assert(u_reduce_video_profile(profile) == PIPE_VIDEO_CODEC_MPEG12);
 
@@ -932,23 +868,44 @@ vl_create_mpeg12_decoder(struct pipe_video_context *context,
       dec->chroma_height = dec->base.height;
    }
 
-   if (!init_zscan(dec))
+   switch (entrypoint) {
+   case PIPE_VIDEO_ENTRYPOINT_BITSTREAM:
+      format_config = find_format_config(dec, bitstream_format_config, num_bitstream_format_configs);
+      break;
+
+   case PIPE_VIDEO_ENTRYPOINT_IDCT:
+      format_config = find_format_config(dec, idct_format_config, num_idct_format_configs);
+      break;
+
+   case PIPE_VIDEO_ENTRYPOINT_MC:
+      format_config = find_format_config(dec, mc_format_config, num_mc_format_configs);
+      break;
+
+   default:
+      assert(0);
+      return NULL;
+   }
+
+   if (!format_config)
+      return NULL;
+
+   if (!init_zscan(dec, format_config))
       goto error_zscan;
 
    if (entrypoint <= PIPE_VIDEO_ENTRYPOINT_IDCT) {
-      if (!init_idct(dec, &mc_scale))
+      if (!init_idct(dec, format_config))
          goto error_sources;
    } else {
-      if (!init_mc_source_widthout_idct(dec, &mc_scale))
+      if (!init_mc_source_widthout_idct(dec, format_config))
          goto error_sources;
    }
 
-   if (!vl_mc_init(&dec->mc_y, dec->pipe, dec->base.width, dec->base.height, MACROBLOCK_HEIGHT, mc_scale,
+   if (!vl_mc_init(&dec->mc_y, dec->pipe, dec->base.width, dec->base.height, MACROBLOCK_HEIGHT, format_config->mc_scale,
                    mc_vert_shader_callback, mc_frag_shader_callback, dec))
       goto error_mc_y;
 
    // TODO
-   if (!vl_mc_init(&dec->mc_c, dec->pipe, dec->base.width, dec->base.height, BLOCK_HEIGHT, mc_scale,
+   if (!vl_mc_init(&dec->mc_c, dec->pipe, dec->base.width, dec->base.height, BLOCK_HEIGHT, format_config->mc_scale,
                    mc_vert_shader_callback, mc_frag_shader_callback, dec))
       goto error_mc_c;
 
