@@ -420,6 +420,8 @@ static GLboolean
 intel_update_wrapper(struct gl_context *ctx, struct intel_renderbuffer *irb, 
 		     struct gl_texture_image *texImage)
 {
+   struct intel_texture_image *intel_image = intel_texture_image(texImage);
+
    if (!intel_span_supports_format(texImage->TexFormat)) {
       DBG("Render to texture BAD FORMAT %s\n",
 	  _mesa_get_format_name(texImage->TexFormat));
@@ -437,6 +439,12 @@ intel_update_wrapper(struct gl_context *ctx, struct intel_renderbuffer *irb,
 
    irb->Base.Delete = intel_delete_renderbuffer;
    irb->Base.AllocStorage = intel_nop_alloc_storage;
+
+   /* Point the renderbuffer's region to the texture's region. */
+   if (irb->region != intel_image->mt->region) {
+      intel_region_release(&irb->region);
+      intel_region_reference(&irb->region, intel_image->mt->region);
+   }
 
    return GL_TRUE;
 }
@@ -542,13 +550,6 @@ intel_render_texture(struct gl_context * ctx,
        _glthread_GetID(),
        att->Texture->Name, newImage->Width, newImage->Height,
        irb->Base.RefCount);
-
-   /* point the renderbufer's region to the texture image region */
-   if (irb->region != intel_image->mt->region) {
-      if (irb->region)
-	 intel_region_release(&irb->region);
-      intel_region_reference(&irb->region, intel_image->mt->region);
-   }
 
    intel_set_draw_offset_for_image(intel_image, att->Zoffset);
    intel_image->used_as_render_target = GL_TRUE;
