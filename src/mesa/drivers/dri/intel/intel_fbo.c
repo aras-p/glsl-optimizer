@@ -129,7 +129,12 @@ intel_alloc_renderbuffer_storage(struct gl_context * ctx, struct gl_renderbuffer
    case GL_STENCIL_INDEX8_EXT:
    case GL_STENCIL_INDEX16_EXT:
       /* These aren't actual texture formats, so force them here. */
-      rb->Format = MESA_FORMAT_S8_Z24;
+      if (intel->has_separate_stencil) {
+	 rb->Format = MESA_FORMAT_S8;
+      } else {
+	 assert(!intel->must_use_separate_stencil);
+	 rb->Format = MESA_FORMAT_S8_Z24;
+      }
       break;
    }
 
@@ -154,14 +159,36 @@ intel_alloc_renderbuffer_storage(struct gl_context * ctx, struct gl_renderbuffer
       GLenum base_format = _mesa_get_format_base_format(rb->Format);
 
       if (intel->gen >= 4 && (base_format == GL_DEPTH_COMPONENT ||
+			      base_format == GL_STENCIL_INDEX ||
 			      base_format == GL_DEPTH_STENCIL))
 	 tiling = I915_TILING_Y;
       else
 	 tiling = I915_TILING_X;
    }
 
-   irb->region = intel_region_alloc(intel->intelScreen, tiling, cpp,
-				    width, height, GL_TRUE);
+   if (irb->Base.Format == MESA_FORMAT_S8) {
+      /*
+       * The stencil buffer has quirky pitch requirements.  From Vol 2a,
+       * 11.5.6.2.1 3DSTATE_STENCIL_BUFFER, field "Surface Pitch":
+       *    The pitch must be set to 2x the value computed based on width, as
+       *    the stencil buffer is stored with two rows interleaved.
+       * To accomplish this, we resort to the nasty hack of doubling the drm
+       * region's cpp and halving its height.
+       *
+       * If we neglect to double the pitch, then drm_intel_gem_bo_map_gtt()
+       * maps the memory incorrectly.
+       */
+      irb->region = intel_region_alloc(intel->intelScreen,
+				       I915_TILING_Y,
+				       cpp * 2,
+				       width,
+				       height / 2,
+				       GL_TRUE);
+   } else {
+      irb->region = intel_region_alloc(intel->intelScreen, tiling, cpp,
+				       width, height, GL_TRUE);
+   }
+
    if (!irb->region)
       return GL_FALSE;       /* out of memory? */
 
