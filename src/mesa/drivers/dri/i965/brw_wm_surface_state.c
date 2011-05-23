@@ -134,6 +134,7 @@ brw_render_target_supported(gl_format format)
     */
    if (format == MESA_FORMAT_S8_Z24 ||
        format == MESA_FORMAT_X8_Z24 ||
+       format == MESA_FORMAT_S8 ||
        format == MESA_FORMAT_Z16) {
       return true;
    }
@@ -168,6 +169,7 @@ translate_tex_format(gl_format mesa_format,
 	  return BRW_SURFACEFORMAT_L16_UNORM;
 
    case MESA_FORMAT_S8_Z24:
+   case MESA_FORMAT_X8_Z24:
       /* XXX: these different surface formats don't seem to
        * make any difference for shadow sampler/compares.
        */
