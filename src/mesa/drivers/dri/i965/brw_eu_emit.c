@@ -93,8 +93,6 @@ static void brw_set_dest(struct brw_compile *p,
 			 struct brw_instruction *insn,
 			 struct brw_reg dest)
 {
-   struct intel_context *intel = &p->brw->intel;
-
    if (dest.file != BRW_ARCHITECTURE_REGISTER_FILE &&
        dest.file != BRW_MESSAGE_REGISTER_FILE)
       assert(dest.nr < 128);
@@ -1254,7 +1252,6 @@ struct brw_instruction *gen6_CONT(struct brw_compile *p,
 				  struct brw_instruction *do_insn)
 {
    struct brw_instruction *insn;
-   int br = 2;
 
    insn = next_insn(p, BRW_OPCODE_CONTINUE);
    brw_set_dest(p, insn, retype(brw_null_reg(), BRW_REGISTER_TYPE_D));
