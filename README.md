@@ -22,7 +22,7 @@ Usage
 
 Visual Studio 2008 (Windows, x86) and Xcode 3.2 (Mac, i386) project files for a static
 library are provided in `src/glsl/msvc/mesaglsl2.vcproj` and `src/glsl/xcode/mesaglsl2`
-respectively.
+respectively. A Linux Makefile (x86/x86_64) is at `src/glsl`.
 
 Interface for the library is `src/glsl/glsl_optimizer.h`. General usage is:
  
@@ -43,4 +43,3 @@ Notes
 
 * I haven't checked if/how it works with higher GLSL versions than the
   default (1.10?).
-  

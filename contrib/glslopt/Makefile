@@ -2,7 +2,7 @@
 
 OBJS = Main.o
 
-.PHONY: clean
+.PHONY: clean all
 
 LDFLAGS += -Wl,-O1 -Wl,-gc-sections
 CPPFLAGS += -I ../../src/glsl -L ../../src/glsl

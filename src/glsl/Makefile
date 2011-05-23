@@ -87,7 +87,7 @@ OBJS = $(OBJS1:.c=.o)
 
 LIBNAME = libglslopt.a
 
-.PHONY = clean
+.PHONY: clean all
 
 all: $(OBJS)
 	ar cr $(LIBNAME) $(OBJS)
