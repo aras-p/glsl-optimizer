@@ -1570,7 +1570,7 @@ fs_visitor::visit(ir_texture *ir)
     * use the null register.  Otherwise, we want an implied move from g0.
     */
    if (ir->offset != NULL || !inst->header_present)
-      inst->src[0] = fs_reg(brw_null_reg());
+      inst->src[0] = reg_undef;
    else
       inst->src[0] = fs_reg(retype(brw_vec8_grf(0, 0), BRW_REGISTER_TYPE_UW));
 

@@ -263,6 +263,12 @@ instruction_scheduler::calculate_deps()
    schedule_node *last_grf_write[virtual_grf_count];
    schedule_node *last_mrf_write[BRW_MAX_MRF];
    schedule_node *last_conditional_mod = NULL;
+   /* Fixed HW registers are assumed to be separate from the virtual
+    * GRFs, so they can be tracked separately.  We don't really write
+    * to fixed GRFs much, so don't bother tracking them on a more
+    * granular level.
+    */
+   schedule_node *last_fixed_grf_write = NULL;
 
    /* The last instruction always needs to still be the last
     * instruction.  Either it's flow control (IF, ELSE, ENDIF, DO,
@@ -285,6 +291,10 @@ instruction_scheduler::calculate_deps()
       for (int i = 0; i < 3; i++) {
 	 if (inst->src[i].file == GRF) {
 	    add_dep(last_grf_write[inst->src[i].reg], n);
+	 } else if (inst->src[i].file == FIXED_HW_REG &&
+		    (inst->src[i].fixed_hw_reg.file ==
+		     BRW_GENERAL_REGISTER_FILE)) {
+	    add_dep(last_fixed_grf_write, n);
 	 } else if (inst->src[i].file != BAD_FILE &&
 		    inst->src[i].file != IMM &&
 		    inst->src[i].file != UNIFORM) {
@@ -323,6 +333,9 @@ instruction_scheduler::calculate_deps()
 	    add_dep(last_mrf_write[reg], n);
 	    last_mrf_write[reg] = n;
 	 }
+      } else if (inst->dst.file == FIXED_HW_REG &&
+		 inst->dst.fixed_hw_reg.file == BRW_GENERAL_REGISTER_FILE) {
+	 last_fixed_grf_write = n;
       } else if (inst->dst.file != BAD_FILE) {
 	 add_barrier_deps(n);
       }
@@ -344,6 +357,7 @@ instruction_scheduler::calculate_deps()
    memset(last_grf_write, 0, sizeof(last_grf_write));
    memset(last_mrf_write, 0, sizeof(last_mrf_write));
    last_conditional_mod = NULL;
+   last_fixed_grf_write = NULL;
 
    exec_node *node;
    exec_node *prev;
@@ -357,6 +371,10 @@ instruction_scheduler::calculate_deps()
       for (int i = 0; i < 3; i++) {
 	 if (inst->src[i].file == GRF) {
 	    add_dep(n, last_grf_write[inst->src[i].reg]);
+	 } else if (inst->src[i].file == FIXED_HW_REG &&
+		    (inst->src[i].fixed_hw_reg.file ==
+		     BRW_GENERAL_REGISTER_FILE)) {
+	    add_dep(n, last_fixed_grf_write);
 	 } else if (inst->src[i].file != BAD_FILE &&
 		    inst->src[i].file != IMM &&
 		    inst->src[i].file != UNIFORM) {
@@ -395,6 +413,9 @@ instruction_scheduler::calculate_deps()
 
 	    last_mrf_write[reg] = n;
 	 }
+      } else if (inst->dst.file == FIXED_HW_REG &&
+		 inst->dst.fixed_hw_reg.file == BRW_GENERAL_REGISTER_FILE) {
+	 last_fixed_grf_write = n;
       } else if (inst->dst.file != BAD_FILE) {
 	 add_barrier_deps(n);
       }
