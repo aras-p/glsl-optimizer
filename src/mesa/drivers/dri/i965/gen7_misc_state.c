@@ -35,13 +35,10 @@ gen7_depth_format(struct brw_context *brw)
    struct gl_context *ctx = &intel->ctx;
    struct gl_framebuffer *fb = ctx->DrawBuffer;
    struct intel_renderbuffer *drb = intel_get_renderbuffer(fb, BUFFER_DEPTH);
-   struct intel_renderbuffer *srb = intel_get_renderbuffer(fb, BUFFER_STENCIL);
    struct intel_region *region = NULL;
 
    if (drb)
       region = drb->region;
-   else if (srb)
-      region = srb->region;
    else
       return BRW_DEPTHFORMAT_D32_FLOAT;
 
