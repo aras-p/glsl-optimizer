@@ -92,6 +92,8 @@ stw_framebuffer_destroy_locked(
 
    stw_st_destroy_framebuffer_locked(fb->stfb);
    
+   ReleaseDC(fb->hWnd, fb->hDC);
+
    pipe_mutex_unlock( fb->mutex );
 
    pipe_mutex_destroy( fb->mutex );
@@ -168,6 +170,7 @@ stw_framebuffer_get_size( struct stw_framebuffer *fb )
 
 #if 0
    debug_printf("\n");
+   debug_printf("%s: hwnd = %p\n", __FUNCTION__, fb->hWnd);
    debug_printf("%s: client_position = (%li, %li)\n",
                 __FUNCTION__, client_pos.x, client_pos.y);
    debug_printf("%s: window_rect = (%li, %li) - (%li, %li)\n",
@@ -251,7 +254,11 @@ stw_framebuffer_create(
    if (fb == NULL)
       return NULL;
 
-   fb->hDC = hdc;
+   /* Applications use, create, destroy device contexts, so the hdc passed is.  We create our own DC
+    * because we need one for single buffered visuals.
+    */
+   fb->hDC = GetDC(hWnd);
+
    fb->hWnd = hWnd;
    fb->iPixelFormat = iPixelFormat;
 
@@ -378,24 +385,13 @@ stw_framebuffer_from_hdc_locked(
    HDC hdc )
 {
    HWND hwnd;
-   struct stw_framebuffer *fb;
 
-   /* 
-    * Some applications create and use several HDCs for the same window, so 
-    * looking up the framebuffer by the HDC is not reliable. Use HWND whenever
-    * possible.
-    */ 
    hwnd = WindowFromDC(hdc);
-   if(hwnd)
-      return stw_framebuffer_from_hwnd_locked(hwnd);
-   
-   for (fb = stw_dev->fb_head; fb != NULL; fb = fb->next)
-      if (fb->hDC == hdc) {
-         pipe_mutex_lock(fb->mutex);
-         break;
-      }
+   if (!hwnd) {
+      return NULL;
+   }
 
-   return fb;
+   return stw_framebuffer_from_hwnd_locked(hwnd);
 }
 
 
@@ -607,7 +603,7 @@ DrvSwapBuffers(
 
    stw_flush_current_locked(fb);
 
-   return stw_st_swap_framebuffer_locked(fb->stfb);
+   return stw_st_swap_framebuffer_locked(hdc, fb->stfb);
 }
 
 

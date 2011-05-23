@@ -28,6 +28,8 @@
 #ifndef STW_ST_H
 #define STW_ST_H
 
+#include <windows.h>
+
 #include "state_tracker/st_api.h"
 
 struct stw_framebuffer;
@@ -42,6 +44,6 @@ void
 stw_st_destroy_framebuffer_locked(struct st_framebuffer_iface *stfb);
 
 boolean
-stw_st_swap_framebuffer_locked(struct st_framebuffer_iface *stfb);
+stw_st_swap_framebuffer_locked(HDC hdc, struct st_framebuffer_iface *stfb);
 
 #endif /* STW_ST_H */
