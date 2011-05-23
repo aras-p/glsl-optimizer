@@ -166,6 +166,9 @@ struct intel_context
    GLboolean is_945;
    GLboolean has_luminance_srgb;
    GLboolean has_xrgb_textures;
+   GLboolean has_separate_stencil;
+   GLboolean must_use_separate_stencil;
+   GLboolean has_hiz;
 
    int urb_size;
 
