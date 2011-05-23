@@ -665,21 +665,33 @@ intel_validate_framebuffer(struct gl_context *ctx, struct gl_framebuffer *fb)
       intel_get_renderbuffer(fb, BUFFER_STENCIL);
    int i;
 
-   if (depthRb && stencilRb && stencilRb != depthRb) {
-      if (fb->Attachment[BUFFER_DEPTH].Type == GL_TEXTURE &&
-	  fb->Attachment[BUFFER_STENCIL].Type == GL_TEXTURE &&
-	  (fb->Attachment[BUFFER_DEPTH].Texture->Name ==
-	   fb->Attachment[BUFFER_STENCIL].Texture->Name)) {
-	 /* OK */
-      } else {
-	 /* we only support combined depth/stencil buffers, not separate
-	  * stencil buffers.
-	  */
-	 DBG("Only supports combined depth/stencil (found %s, %s)\n",
-	     depthRb ? _mesa_get_format_name(depthRb->Base.Format): "NULL",
-	     stencilRb ? _mesa_get_format_name(stencilRb->Base.Format): "NULL");
-	 fb->_Status = GL_FRAMEBUFFER_UNSUPPORTED_EXT;
-      }
+   /*
+    * The depth and stencil renderbuffers are the same renderbuffer or wrap
+    * the same texture.
+    */
+   bool depth_stencil_are_same;
+   if (depthRb && stencilRb && depthRb == stencilRb)
+      depth_stencil_are_same = true;
+   else if (depthRb && stencilRb && depthRb != stencilRb
+	    && (fb->Attachment[BUFFER_DEPTH].Type == GL_TEXTURE)
+	    && (fb->Attachment[BUFFER_STENCIL].Type == GL_TEXTURE)
+	    && (fb->Attachment[BUFFER_DEPTH].Texture->Name
+		== fb->Attachment[BUFFER_STENCIL].Texture->Name))
+      depth_stencil_are_same = true;
+   else
+      depth_stencil_are_same = false;
+
+   bool fb_has_combined_depth_stencil_format =
+     (depthRb && depthRb->Base.Format == MESA_FORMAT_S8_Z24) ||
+     (stencilRb && stencilRb->Base.Format == MESA_FORMAT_S8_Z24);
+
+   bool fb_has_hiz = intel_framebuffer_has_hiz(fb);
+
+   if ((intel->must_use_separate_stencil || fb_has_hiz)
+	 && (depth_stencil_are_same || fb_has_combined_depth_stencil_format)) {
+      fb->_Status = GL_FRAMEBUFFER_UNSUPPORTED_EXT;
+   } else if (!intel->has_separate_stencil && depthRb && stencilRb && !depth_stencil_are_same) {
+      fb->_Status = GL_FRAMEBUFFER_UNSUPPORTED_EXT;
    }
 
    for (i = 0; i < Elements(fb->Attachment); i++) {
