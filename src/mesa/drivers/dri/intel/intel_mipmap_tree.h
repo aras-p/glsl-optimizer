@@ -113,6 +113,20 @@ struct intel_mipmap_tree
     */
    struct intel_region *region;
 
+   /**
+    * This points to an auxillary hiz region if all of the following hold:
+    *     1. The texture has been attached to an FBO as a depthbuffer.
+    *     2. The texture format is hiz compatible.
+    *     3. The intel context supports hiz.
+    *
+    * When a texture is attached to multiple FBO's, a separate renderbuffer
+    * wrapper is created for each attachment. This necessitates storing the
+    * hiz region in the texture itself instead of the renderbuffer wrapper.
+    *
+    * \see intel_fbo.c:intel_wrap_texture()
+    */
+   struct intel_region *hiz_region;
+
    /* These are also refcounted:
     */
    GLuint refcount;

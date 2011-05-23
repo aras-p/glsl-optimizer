@@ -420,6 +420,7 @@ static GLboolean
 intel_update_wrapper(struct gl_context *ctx, struct intel_renderbuffer *irb, 
 		     struct gl_texture_image *texImage)
 {
+   struct intel_context *intel = intel_context(ctx);
    struct intel_texture_image *intel_image = intel_texture_image(texImage);
 
    if (!intel_span_supports_format(texImage->TexFormat)) {
@@ -444,6 +445,26 @@ intel_update_wrapper(struct gl_context *ctx, struct intel_renderbuffer *irb,
    if (irb->region != intel_image->mt->region) {
       intel_region_release(&irb->region);
       intel_region_reference(&irb->region, intel_image->mt->region);
+   }
+
+   /* Allocate the texture's hiz region if necessary. */
+   if (intel->vtbl.is_hiz_depth_format(intel, texImage->TexFormat)
+       && !intel_image->mt->hiz_region) {
+      intel_image->mt->hiz_region =
+         intel_region_alloc(intel->intelScreen,
+                            I915_TILING_Y,
+                            _mesa_get_format_bytes(texImage->TexFormat),
+                            texImage->Width,
+                            texImage->Height,
+                            GL_TRUE);
+      if (!intel_image->mt->hiz_region)
+         return GL_FALSE;
+   }
+
+   /* Point the renderbuffer's hiz region to the texture's hiz region. */
+   if (irb->hiz_region != intel_image->mt->hiz_region) {
+      intel_region_release(&irb->hiz_region);
+      intel_region_reference(&irb->hiz_region, intel_image->mt->hiz_region);
    }
 
    return GL_TRUE;

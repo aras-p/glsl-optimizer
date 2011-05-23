@@ -200,6 +200,7 @@ intel_miptree_release(struct intel_context *intel,
       DBG("%s deleting %p\n", __FUNCTION__, *mt);
 
       intel_region_release(&((*mt)->region));
+      intel_region_release(&((*mt)->hiz_region));
 
       for (i = 0; i < MAX_TEXTURE_LEVELS; i++) {
 	 free((*mt)->level[i].x_offset);
