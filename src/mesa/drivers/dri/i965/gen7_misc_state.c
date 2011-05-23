@@ -56,6 +56,20 @@ gen7_depth_format(struct brw_context *brw)
    return 0;
 }
 
+static void prepare_depthbuffer(struct brw_context *brw)
+{
+   struct intel_context *intel = &brw->intel;
+   struct gl_context *ctx = &intel->ctx;
+   struct gl_framebuffer *fb = ctx->DrawBuffer;
+   struct intel_renderbuffer *drb = intel_get_renderbuffer(fb, BUFFER_DEPTH);
+   struct intel_renderbuffer *srb = intel_get_renderbuffer(fb, BUFFER_STENCIL);
+
+   if (drb)
+      brw_add_validated_bo(brw, drb->region->buffer);
+   if (srb)
+      brw_add_validated_bo(brw, srb->region->buffer);
+}
+
 static void emit_depthbuffer(struct brw_context *brw)
 {
    struct intel_context *intel = &brw->intel;
@@ -138,5 +152,6 @@ const struct brw_tracked_state gen7_depthbuffer = {
       .brw = BRW_NEW_BATCH,
       .cache = 0,
    },
+   .prepare = prepare_depthbuffer,
    .emit = emit_depthbuffer,
 };
