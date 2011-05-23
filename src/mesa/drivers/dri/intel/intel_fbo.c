@@ -79,6 +79,9 @@ intel_delete_renderbuffer(struct gl_renderbuffer *rb)
    if (intel && irb->region) {
       intel_region_release(&irb->region);
    }
+   if (intel && irb->hiz_region) {
+      intel_region_release(&irb->hiz_region);
+   }
 
    free(irb);
 }
@@ -148,6 +151,9 @@ intel_alloc_renderbuffer_storage(struct gl_context * ctx, struct gl_renderbuffer
    if (irb->region) {
       intel_region_release(&irb->region);
    }
+   if (irb->hiz_region) {
+      intel_region_release(&irb->hiz_region);
+   }
 
    /* allocate new memory region/renderbuffer */
 
@@ -193,6 +199,19 @@ intel_alloc_renderbuffer_storage(struct gl_context * ctx, struct gl_renderbuffer
       return GL_FALSE;       /* out of memory? */
 
    ASSERT(irb->region->buffer);
+
+   if (intel->vtbl.is_hiz_depth_format(intel, rb->Format)) {
+      irb->hiz_region = intel_region_alloc(intel->intelScreen,
+                                           I915_TILING_Y,
+                                           irb->region->cpp,
+                                           irb->region->width,
+                                           irb->region->height,
+                                           GL_TRUE);
+      if (!irb->hiz_region) {
+         intel_region_release(&irb->region);
+         return GL_FALSE;
+      }
+   }
 
    rb->Width = width;
    rb->Height = height;

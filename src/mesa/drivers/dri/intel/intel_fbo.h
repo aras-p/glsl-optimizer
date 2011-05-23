@@ -28,6 +28,7 @@
 #ifndef INTEL_FBO_H
 #define INTEL_FBO_H
 
+#include <stdbool.h>
 #include "main/formats.h"
 #include "intel_screen.h"
 
@@ -40,6 +41,9 @@ struct intel_renderbuffer
 {
    struct gl_renderbuffer Base;
    struct intel_region *region;
+
+   /** Only used by depth renderbuffers for which HiZ is enabled. */
+   struct intel_region *hiz_region;
 };
 
 
@@ -78,6 +82,29 @@ intel_get_renderbuffer(struct gl_framebuffer *fb, int attIndex)
       return intel_renderbuffer(fb->Attachment[attIndex].Renderbuffer);
    else
       return NULL;
+}
+
+/**
+ * If the framebuffer has a depth buffer attached, then return its HiZ region.
+ * The HiZ region may be null.
+ */
+static INLINE struct intel_region*
+intel_framebuffer_get_hiz_region(struct gl_framebuffer *fb)
+{
+   struct intel_renderbuffer *rb = NULL;
+   if (fb)
+      rb = intel_get_renderbuffer(fb, BUFFER_DEPTH);
+
+   if (rb)
+      return rb->hiz_region;
+   else
+      return NULL;
+}
+
+static INLINE bool
+intel_framebuffer_has_hiz(struct gl_framebuffer *fb)
+{
+   return intel_framebuffer_get_hiz_region(fb) != NULL;
 }
 
 
