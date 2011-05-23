@@ -89,6 +89,7 @@ static void emit_depthbuffer(struct brw_context *brw)
 
       assert(region->tiling == I915_TILING_Y);
 
+      /* _NEW_DEPTH */
       BEGIN_BATCH(7);
       OUT_BATCH(GEN7_3DSTATE_DEPTH_BUFFER << 16 | (7 - 2));
       OUT_BATCH(((region->pitch * region->cpp) - 1) |
@@ -133,7 +134,7 @@ static void emit_depthbuffer(struct brw_context *brw)
  */
 const struct brw_tracked_state gen7_depthbuffer = {
    .dirty = {
-      .mesa = _NEW_BUFFERS,
+      .mesa = (_NEW_BUFFERS | _NEW_DEPTH),
       .brw = BRW_NEW_BATCH,
       .cache = 0,
    },
