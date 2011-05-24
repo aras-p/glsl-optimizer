@@ -110,7 +110,7 @@ static void dump_wm_surface_state(struct brw_context *brw)
 
    for (i = 0; i < brw->wm.nr_surfaces; i++) {
       unsigned int surfoff;
-      struct brw_surface_state *surf;
+      uint32_t *surf;
       char name[20];
 
       if (brw->wm.surf_offset[i] == 0) {
@@ -118,21 +118,25 @@ static void dump_wm_surface_state(struct brw_context *brw)
 	 continue;
       }
       surfoff = bo->offset + brw->wm.surf_offset[i];
-      surf = (struct brw_surface_state *)(base + brw->wm.surf_offset[i]);
+      surf = (uint32_t *)(base + brw->wm.surf_offset[i]);
 
       sprintf(name, "WM SURF%d", i);
       state_out(name, surf, surfoff, 0, "%s %s\n",
-		get_965_surfacetype(surf->ss0.surface_type),
-		get_965_surface_format(surf->ss0.surface_format));
+		get_965_surfacetype(GET_FIELD(surf[0], BRW_SURFACE_TYPE)),
+		get_965_surface_format(GET_FIELD(surf[0], BRW_SURFACE_FORMAT)));
       state_out(name, surf, surfoff, 1, "offset\n");
       state_out(name, surf, surfoff, 2, "%dx%d size, %d mips\n",
-		surf->ss2.width + 1, surf->ss2.height + 1, surf->ss2.mip_count);
-      state_out(name, surf, surfoff, 3, "pitch %d, %stiled\n",
-		surf->ss3.pitch + 1, surf->ss3.tiled_surface ? "" : "not ");
+		GET_FIELD(surf[2], BRW_SURFACE_WIDTH) + 1,
+		GET_FIELD(surf[2], BRW_SURFACE_HEIGHT) + 1);
+      state_out(name, surf, surfoff, 3, "pitch %d, %s tiled\n",
+		GET_FIELD(surf[3], BRW_SURFACE_PITCH) + 1,
+		(surf[3] & BRW_SURFACE_TILED) ?
+		((surf[3] & BRW_SURFACE_TILED_Y) ? "Y" : "X") : "not");
       state_out(name, surf, surfoff, 4, "mip base %d\n",
-		surf->ss4.min_lod);
+		GET_FIELD(surf[4], BRW_SURFACE_MIN_LOD));
       state_out(name, surf, surfoff, 5, "x,y offset: %d,%d\n",
-		surf->ss5.x_offset, surf->ss5.y_offset);
+		GET_FIELD(surf[5], BRW_SURFACE_X_OFFSET),
+		GET_FIELD(surf[5], BRW_SURFACE_Y_OFFSET));
    }
    drm_intel_bo_unmap(bo);
 }

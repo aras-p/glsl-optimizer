@@ -446,6 +446,10 @@
 #define BRW_SURFACE_TILED		(1 << 1)
 #define BRW_SURFACE_TILED_Y		(1 << 0)
 
+/* Surface state DW4 */
+#define BRW_SURFACE_MIN_LOD_SHIFT	28
+#define BRW_SURFACE_MIN_LOD_MASK	INTEL_MASK(31, 28)
+
 /* Surface state DW5 */
 #define BRW_SURFACE_X_OFFSET_SHIFT	25
 #define BRW_SURFACE_X_OFFSET_MASK	INTEL_MASK(31, 25)
