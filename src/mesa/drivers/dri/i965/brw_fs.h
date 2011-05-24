@@ -466,6 +466,8 @@ public:
       return emit(fs_inst(opcode, dst, src0, src1, src2));
    }
 
+   int type_size(const struct glsl_type *type);
+
    bool run();
    void setup_paramvalues_refs();
    void assign_curb_setup();
