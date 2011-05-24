@@ -2743,7 +2743,6 @@ fs_visitor::generate_discard(fs_inst *inst)
       brw_pop_insn_state(p);
    } else {
       struct brw_reg g0 = retype(brw_vec1_grf(0, 0), BRW_REGISTER_TYPE_UW);
-      struct brw_reg mask = brw_uw1_reg(mask.file, mask.nr, 0);
 
       brw_push_insn_state(p);
       brw_set_mask_control(p, BRW_MASK_DISABLE);
