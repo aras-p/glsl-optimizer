@@ -861,6 +861,7 @@ static void evergreen_set_framebuffer_state(struct pipe_context *ctx,
 	struct r600_pipe_state *rstate = CALLOC_STRUCT(r600_pipe_state);
 	u32 shader_mask, tl, br, target_mask;
 	enum radeon_family family;
+	int scissor_width, scissor_height;
 
 	if (rstate == NULL)
 		return;
@@ -891,8 +892,20 @@ static void evergreen_set_framebuffer_state(struct pipe_context *ctx,
 		target_mask ^= 0xf << (i * 4);
 		shader_mask |= 0xf << (i * 4);
 	}
+	scissor_width = state->width;
+	scissor_height = state->height;
+	/* EG hw workaround */
+	if (scissor_width == 0)
+		scissor_width = 1;
+	if (scissor_height == 0)
+		scissor_height = 1;
+	/* cayman hw workaround */
+	if (family == CHIP_CAYMAN) {
+		if (scissor_width == 1 && scissor_height == 1)
+			scissor_width = 2;
+	}
 	tl = S_028240_TL_X(0) | S_028240_TL_Y(0);
-	br = S_028244_BR_X(state->width) | S_028244_BR_Y(state->height);
+	br = S_028244_BR_X(scissor_width) | S_028244_BR_Y(scissor_height);
 
 	r600_pipe_state_add_reg(rstate,
 				R_028240_PA_SC_GENERIC_SCISSOR_TL, tl,
