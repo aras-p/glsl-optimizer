@@ -1229,7 +1229,7 @@ void r600_context_flush_dest_caches(struct r600_context *ctx)
 					0, cb[i]);
 	}
 	if (db) {
-		r600_context_bo_flush(ctx, S_0085F0_DB_ACTION_ENA(1), 0, db);
+		r600_context_bo_flush(ctx, S_0085F0_DB_ACTION_ENA(1) | S_0085F0_DB_DEST_BASE_ENA(1), 0, db);
 	}
 	ctx->flags &= ~R600_CONTEXT_CHECK_EVENT_FLUSH;
 	ctx->flags &= ~R600_CONTEXT_DST_CACHES_DIRTY;
