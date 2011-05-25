@@ -38,7 +38,9 @@ C_SOURCES = \
 		r3xx_vertprog.c \
 		r3xx_vertprog_dump.c \
 		\
-		memory_pool.c
+		memory_pool.c \
+		$(TOP)/src/glsl/ralloc.c \
+		$(TOP)/src/mesa/program/register_allocate.c
 
 
 ### Basic defines ###
@@ -52,6 +54,7 @@ INCLUDES = \
 	-I$(TOP)/include \
 	-I$(TOP)/src/mesa \
 	-I$(TOP)/src/glsl \
+	-I$(TOP)/src/mapi
 
 
 ##### TARGETS #####
