@@ -375,6 +375,7 @@ CreateDrawable(Display *dpy, struct glx_config *config,
    CARD32 *data;
    unsigned int i;
    CARD8 opcode;
+   GLXDrawable xid;
 
    i = 0;
    if (attrib_list) {
@@ -395,7 +396,7 @@ CreateDrawable(Display *dpy, struct glx_config *config,
    req->screen = config->screen;
    req->fbconfig = config->fbconfigID;
    req->window = drawable;
-   req->glxwindow = XAllocID(dpy);
+   req->glxwindow = xid = XAllocID(dpy);
    req->numAttribs = i;
 
    if (attrib_list)
@@ -404,9 +405,9 @@ CreateDrawable(Display *dpy, struct glx_config *config,
    UnlockDisplay(dpy);
    SyncHandle();
 
-   CreateDRIDrawable(dpy, config, drawable, req->glxwindow, attrib_list, i);
+   CreateDRIDrawable(dpy, config, drawable, xid, attrib_list, i);
 
-   return req->glxwindow;
+   return xid;
 }
 
 
