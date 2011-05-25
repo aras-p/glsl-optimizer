@@ -340,6 +340,26 @@ _mesa_DrawBuffersARB(GLsizei n, const GLenum *buffers)
       ctx->Driver.DrawBuffer(ctx, n > 0 ? buffers[0] : GL_NONE);
 }
 
+/**
+ * Performs necessary state updates when _mesa_drawbuffers makes an
+ * actual change.
+ */
+static void
+updated_drawbuffers(struct gl_context *ctx)
+{
+   FLUSH_VERTICES(ctx, _NEW_BUFFERS);
+
+#if FEATURE_GL
+   if (ctx->API == API_OPENGL) {
+      struct gl_framebuffer *fb = ctx->DrawBuffer;
+
+      /* Flag the FBO as requiring validation. */
+      if (fb->Name != 0) {
+	 fb->_Status = 0;
+      }
+   }
+#endif
+}
 
 /**
  * Helper function to set the GL_DRAW_BUFFER state in the context and
@@ -361,7 +381,6 @@ _mesa_drawbuffers(struct gl_context *ctx, GLuint n, const GLenum *buffers,
 {
    struct gl_framebuffer *fb = ctx->DrawBuffer;
    GLbitfield mask[MAX_DRAW_BUFFERS];
-   GLboolean newState = GL_FALSE;
 
    if (!destMask) {
       /* compute destMask values now */
@@ -385,7 +404,7 @@ _mesa_drawbuffers(struct gl_context *ctx, GLuint n, const GLenum *buffers,
          GLint bufIndex = _mesa_ffs(destMask0) - 1;
          if (fb->_ColorDrawBufferIndexes[count] != bufIndex) {
             fb->_ColorDrawBufferIndexes[count] = bufIndex;
-            newState = GL_TRUE;
+            updated_drawbuffers(ctx);
          }
          count++;
          destMask0 &= ~(1 << bufIndex);
@@ -393,7 +412,7 @@ _mesa_drawbuffers(struct gl_context *ctx, GLuint n, const GLenum *buffers,
       fb->ColorDrawBuffer[0] = buffers[0];
       if (fb->_NumColorDrawBuffers != count) {
          fb->_NumColorDrawBuffers = count;
-         newState = GL_TRUE;
+	 updated_drawbuffers(ctx);
       }
    }
    else {
@@ -405,14 +424,14 @@ _mesa_drawbuffers(struct gl_context *ctx, GLuint n, const GLenum *buffers,
             ASSERT(_mesa_bitcount(destMask[buf]) == 1);
             if (fb->_ColorDrawBufferIndexes[buf] != bufIndex) {
                fb->_ColorDrawBufferIndexes[buf] = bufIndex;
-               newState = GL_TRUE;
+	       updated_drawbuffers(ctx);
             }
             count = buf + 1;
          }
          else {
             if (fb->_ColorDrawBufferIndexes[buf] != -1) {
                fb->_ColorDrawBufferIndexes[buf] = -1;
-               newState = GL_TRUE;
+	       updated_drawbuffers(ctx);
             }
          }
          fb->ColorDrawBuffer[buf] = buffers[buf];
@@ -421,7 +440,7 @@ _mesa_drawbuffers(struct gl_context *ctx, GLuint n, const GLenum *buffers,
       while (buf < ctx->Const.MaxDrawBuffers) {
          if (fb->_ColorDrawBufferIndexes[buf] != -1) {
             fb->_ColorDrawBufferIndexes[buf] = -1;
-            newState = GL_TRUE;
+	    updated_drawbuffers(ctx);
          }
          fb->ColorDrawBuffer[buf] = GL_NONE;
          buf++;
@@ -435,13 +454,10 @@ _mesa_drawbuffers(struct gl_context *ctx, GLuint n, const GLenum *buffers,
       for (buf = 0; buf < ctx->Const.MaxDrawBuffers; buf++) {
          if (ctx->Color.DrawBuffer[buf] != fb->ColorDrawBuffer[buf]) {
             ctx->Color.DrawBuffer[buf] = fb->ColorDrawBuffer[buf];
-            newState = GL_TRUE;
+	    updated_drawbuffers(ctx);
          }
       }
    }
-
-   if (newState)
-      FLUSH_VERTICES(ctx, _NEW_BUFFERS);
 }
 
 
