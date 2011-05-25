@@ -207,7 +207,6 @@
 #define     EG_V_SQ_CF_WORD1_SQ_CF_INST_JUMPTABLE                       0x0000001d
 #define     EG_V_SQ_CF_WORD1_SQ_CF_INST_GLOBAL_WAVE_SYNC                0x0000001e
 #define     EG_V_SQ_CF_WORD1_SQ_CF_INST_HALT                            0x0000001f
-#define     EG_V_SQ_CF_WORD1_SQ_CF_INST_HALT                            0x0000001f
 
 /* cayman extras */
 #define     CM_V_SQ_CF_WORD1_SQ_CF_INST_END                             0x00000020
