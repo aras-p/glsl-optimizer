@@ -283,15 +283,6 @@ static GLboolean check_fallbacks( struct brw_context *brw,
    if (brw->intel.conformance_mode == 0)
       return GL_FALSE;
 
-   /* BRW hardware will do AA lines, but they are non-conformant it
-    * seems.  TBD whether we keep this fallback:
-    */
-   if (ctx->Line.SmoothFlag) {
-      for (i = 0; i < nr_prims; i++)
-	 if (reduced_prim[prim[i].mode] == GL_LINES) 
-	    return GL_TRUE;
-   }
-
    /* Stipple -- these fallbacks could be resolved with a little
     * bit of work?
     */
