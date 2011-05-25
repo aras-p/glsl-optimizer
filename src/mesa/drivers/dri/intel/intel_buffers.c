@@ -308,18 +308,6 @@ intelReadBuffer(struct gl_context * ctx, GLenum mode)
       if (!was_front_buffer_reading && intel->is_front_buffer_reading)
 	 dri2InvalidateDrawable(intel->driContext->driReadablePriv);
    }
-
-   if (ctx->ReadBuffer == ctx->DrawBuffer) {
-      /* This will update FBO completeness status.
-       * A framebuffer will be incomplete if the GL_READ_BUFFER setting
-       * refers to a missing renderbuffer.  Calling glReadBuffer can set
-       * that straight and can make the drawing buffer complete.
-       */
-      intel_draw_buffer(ctx, ctx->DrawBuffer);
-   }
-   /* Generally, functions which read pixels (glReadPixels, glCopyPixels, etc)
-    * reference ctx->ReadBuffer and do appropriate state checks.
-    */
 }
 
 
