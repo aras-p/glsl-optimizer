@@ -283,24 +283,6 @@ static GLboolean check_fallbacks( struct brw_context *brw,
    if (brw->intel.conformance_mode == 0)
       return GL_FALSE;
 
-   /* Stipple -- these fallbacks could be resolved with a little
-    * bit of work?
-    */
-   if (ctx->Line.StippleFlag) {
-      for (i = 0; i < nr_prims; i++) {
-	 /* GS doesn't get enough information to know when to reset
-	  * the stipple counter?!?
-	  */
-	 if (prim[i].mode == GL_LINE_LOOP || prim[i].mode == GL_LINE_STRIP) 
-	    return GL_TRUE;
-	    
-	 if (prim[i].mode == GL_POLYGON &&
-	     (ctx->Polygon.FrontMode == GL_LINE ||
-	      ctx->Polygon.BackMode == GL_LINE))
-	    return GL_TRUE;
-      }
-   }
-
    if (ctx->Point.SmoothFlag) {
       for (i = 0; i < nr_prims; i++)
 	 if (prim[i].mode == GL_POINTS) 
