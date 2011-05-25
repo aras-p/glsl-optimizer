@@ -48,6 +48,7 @@ struct vl_idct
 
    void *samplers[2];
 
+   void *vs_mismatch, *fs_mismatch;
    void *vs, *fs;
 
    struct pipe_sampler_view *matrix;
@@ -57,7 +58,10 @@ struct vl_idct
 /* a set of buffers to work with */
 struct vl_idct_buffer
 {
+   struct pipe_viewport_state viewport_mismatch;
    struct pipe_viewport_state viewport;
+
+   struct pipe_framebuffer_state fb_state_mismatch;
    struct pipe_framebuffer_state fb_state;
 
    union
@@ -65,8 +69,8 @@ struct vl_idct_buffer
       struct pipe_sampler_view *all[4];
       struct pipe_sampler_view *stage[2][2];
       struct {
-         struct pipe_sampler_view *matrix, *source;
-         struct pipe_sampler_view *transpose, *intermediate;
+         struct pipe_sampler_view *source, *matrix;
+         struct pipe_sampler_view *intermediate, *transpose;
       } individual;
    } sampler_views;
 };
@@ -99,8 +103,7 @@ vl_idct_cleanup(struct vl_idct *idct);
 bool
 vl_idct_init_buffer(struct vl_idct *idct, struct vl_idct_buffer *buffer,
                     struct pipe_sampler_view *source,
-                    struct pipe_sampler_view *intermediate,
-                    struct pipe_surface *destination);
+                    struct pipe_sampler_view *intermediate);
 
 /* cleanup a buffer of an idct instance */
 void

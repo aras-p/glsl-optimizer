@@ -724,11 +724,9 @@ static inline void
 get_intra_block_B14(struct vl_mpg12_bs *bs, const int quant_matrix[64], int quantizer_scale, short *dest)
 {
    int i, val;
-   int mismatch;
    const DCTtab *tab;
 
    i = 0;
-   mismatch = ~dest[0];
 
    vl_vlc_needbits(&bs->vlc);
 
@@ -751,7 +749,6 @@ get_intra_block_B14(struct vl_mpg12_bs *bs, const int quant_matrix[64], int quan
 
          SATURATE (val);
          dest[i] = val;
-         mismatch ^= val;
 
          bs->vlc.buf <<= 1;
          vl_vlc_needbits(&bs->vlc);
@@ -778,7 +775,6 @@ get_intra_block_B14(struct vl_mpg12_bs *bs, const int quant_matrix[64], int quan
 
          SATURATE (val);
          dest[i] = val;
-         mismatch ^= val;
 
          vl_vlc_dumpbits(&bs->vlc, 12);
          vl_vlc_needbits(&bs->vlc);
@@ -811,7 +807,6 @@ get_intra_block_B14(struct vl_mpg12_bs *bs, const int quant_matrix[64], int quan
       break;	/* illegal, check needed to avoid buffer overflow */
    }
 
-   dest[63] ^= mismatch & 1;
    vl_vlc_dumpbits(&bs->vlc, 2);	/* dump end of block code */
 }
 
@@ -819,11 +814,9 @@ static inline void
 get_intra_block_B15(struct vl_mpg12_bs *bs, const int quant_matrix[64], int quantizer_scale, short *dest)
 {
    int i, val;
-   int mismatch;
    const DCTtab * tab;
 
    i = 0;
-   mismatch = ~dest[0];
 
    vl_vlc_needbits(&bs->vlc);
 
@@ -845,7 +838,6 @@ get_intra_block_B15(struct vl_mpg12_bs *bs, const int quant_matrix[64], int quan
 
             SATURATE (val);
             dest[i] = val;
-            mismatch ^= val;
 
             bs->vlc.buf <<= 1;
             vl_vlc_needbits(&bs->vlc);
@@ -871,7 +863,6 @@ get_intra_block_B15(struct vl_mpg12_bs *bs, const int quant_matrix[64], int quan
 
             SATURATE (val);
             dest[i] = val;
-            mismatch ^= val;
 
             vl_vlc_dumpbits(&bs->vlc, 12);
             vl_vlc_needbits(&bs->vlc);
@@ -905,7 +896,6 @@ get_intra_block_B15(struct vl_mpg12_bs *bs, const int quant_matrix[64], int quan
       break;	/* illegal, check needed to avoid buffer overflow */
    }
 
-   dest[63] ^= mismatch & 1;
    vl_vlc_dumpbits(&bs->vlc, 4);	/* dump end of block code */
 }
 
@@ -913,11 +903,9 @@ static inline void
 get_non_intra_block(struct vl_mpg12_bs *bs, const int quant_matrix[64], int quantizer_scale, short *dest)
 {
    int i, val;
-   int mismatch;
    const DCTtab *tab;
 
    i = -1;
-   mismatch = 1;
 
    vl_vlc_needbits(&bs->vlc);
    if (bs->vlc.buf >= 0x28000000) {
@@ -946,7 +934,6 @@ get_non_intra_block(struct vl_mpg12_bs *bs, const int quant_matrix[64], int quan
 
          SATURATE (val);
          dest[i] = val;
-         mismatch ^= val;
 
          bs->vlc.buf <<= 1;
          vl_vlc_needbits(&bs->vlc);
@@ -977,7 +964,6 @@ get_non_intra_block(struct vl_mpg12_bs *bs, const int quant_matrix[64], int quan
 
          SATURATE (val);
          dest[i] = val;
-         mismatch ^= val;
 
          vl_vlc_dumpbits(&bs->vlc, 12);
          vl_vlc_needbits(&bs->vlc);
@@ -1009,7 +995,6 @@ get_non_intra_block(struct vl_mpg12_bs *bs, const int quant_matrix[64], int quan
       }
       break;	/* illegal, check needed to avoid buffer overflow */
    }
-   dest[63] ^= mismatch & 1;
    vl_vlc_dumpbits(&bs->vlc, 2);	/* dump end of block code */
 }
 

@@ -147,7 +147,6 @@ static bool
 init_idct_buffer(struct vl_mpeg12_buffer *buffer)
 {
    struct pipe_sampler_view **idct_source_sv, **mc_source_sv;
-   struct pipe_surface **idct_surfaces;
 
    struct vl_mpeg12_decoder *dec;
 
@@ -165,14 +164,10 @@ init_idct_buffer(struct vl_mpeg12_buffer *buffer)
    if (!mc_source_sv)
       goto error_mc_source_sv;
 
-   idct_surfaces = dec->mc_source->get_surfaces(dec->mc_source);
-   if (!idct_surfaces)
-      goto error_surfaces;
-
    for (i = 0; i < 3; ++i)
       if (!vl_idct_init_buffer(i == 0 ? &dec->idct_y : &dec->idct_c,
                                &buffer->idct[i], idct_source_sv[i],
-                               mc_source_sv[i], idct_surfaces[i]))
+                               mc_source_sv[i]))
          goto error_plane;
 
    return true;
@@ -181,7 +176,6 @@ error_plane:
    for (; i > 0; --i)
       vl_idct_cleanup_buffer(i == 1 ? &dec->idct_c : &dec->idct_y, &buffer->idct[i - 1]);
 
-error_surfaces:
 error_mc_source_sv:
 error_source_sv:
    return false;
