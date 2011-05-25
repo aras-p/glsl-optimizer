@@ -266,33 +266,6 @@ static void brw_merge_inputs( struct brw_context *brw,
       brw->state.dirty.brw |= BRW_NEW_INPUT_DIMENSIONS;
 }
 
-/* XXX: could split the primitive list to fallback only on the
- * non-conformant primitives.
- */
-static GLboolean check_fallbacks( struct brw_context *brw,
-				  const struct _mesa_prim *prim,
-				  GLuint nr_prims )
-{
-   struct gl_context *ctx = &brw->intel.ctx;
-   GLuint i;
-
-   /* If we don't require strict OpenGL conformance, never 
-    * use fallbacks.  If we're forcing fallbacks, always
-    * use fallfacks.
-    */
-   if (brw->intel.conformance_mode == 0)
-      return GL_FALSE;
-
-   if (ctx->Point.SmoothFlag) {
-      for (i = 0; i < nr_prims; i++)
-	 if (prim[i].mode == GL_POINTS) 
-	    return GL_TRUE;
-   }
-
-   /* Nothing stopping us from the fast path now */
-   return GL_FALSE;
-}
-
 /* May fail if out of video memory for texture or vbo upload, or on
  * fallback conditions.
  */
@@ -321,9 +294,6 @@ static GLboolean brw_try_draw_prims( struct gl_context *ctx,
     * texture level other than level 0.
     */
    brw_validate_textures( brw );
-
-   if (check_fallbacks(brw, prim, nr_prims))
-      return GL_FALSE;
 
    /* Bind all inputs, derive varying and size information:
     */
