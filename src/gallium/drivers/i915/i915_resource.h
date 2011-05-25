@@ -45,8 +45,8 @@ struct i915_buffer {
    boolean free_on_destroy;
 };
 
-#define I915_MAX_TEXTURE_2D_LEVELS 11  /* max 1024x1024 */
-#define I915_MAX_TEXTURE_3D_LEVELS  8  /* max 128x128x128 */
+#define I915_MAX_TEXTURE_2D_LEVELS 12  /* max 2048x2048 */
+#define I915_MAX_TEXTURE_3D_LEVELS  9  /* max 256x256x256 */
 
 
 struct offset_pair {
