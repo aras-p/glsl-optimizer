@@ -283,9 +283,6 @@ static GLboolean check_fallbacks( struct brw_context *brw,
    if (brw->intel.conformance_mode == 0)
       return GL_FALSE;
 
-   if (brw->intel.conformance_mode == 2)
-      return GL_TRUE;
-
    if (ctx->Polygon.SmoothFlag) {
       for (i = 0; i < nr_prims; i++)
 	 if (reduced_prim[prim[i].mode] == GL_TRIANGLES) 
