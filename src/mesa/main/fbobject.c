@@ -795,7 +795,7 @@ _mesa_test_framebuffer_completeness(struct gl_context *ctx,
    }
 
 #if FEATURE_GL
-   if (ctx->API == API_OPENGL) {
+   if (ctx->API == API_OPENGL && !ctx->Extensions.ARB_ES2_compatibility) {
       /* Check that all DrawBuffers are present */
       for (j = 0; j < ctx->Const.MaxDrawBuffers; j++) {
 	 if (fb->ColorDrawBuffer[j] != GL_NONE) {
