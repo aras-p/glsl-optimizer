@@ -59,6 +59,7 @@
 #include "queryobj.h"
 #include "samplerobj.h"
 #include "shaderapi.h"
+#include "syncobj.h"
 #include "teximage.h"
 #include "mtypes.h"
 #include "varray.h"
@@ -450,6 +451,9 @@ typedef enum
    /* GL_ARB_geometry_shader4 */
    OPCODE_PROGRAM_PARAMETERI,
 
+   /* GL_ARB_sync */
+   OPCODE_WAIT_SYNC,
+
    /* The following three are meta instructions */
    OPCODE_ERROR,                /* raise compiled-in error */
    OPCODE_CONTINUE,
@@ -488,6 +492,17 @@ union gl_dlist_node
 
 
 typedef union gl_dlist_node Node;
+
+
+/**
+ * Used to store a 64-bit uint in a pair of "Nodes" for the sake of 32-bit
+ * environment.  In 64-bit env, sizeof(Node)==8 anyway.
+ */
+union uint64_pair
+{
+   GLuint64 uint64;
+   GLuint uint32[2];
+};
 
 
 /**
@@ -7227,6 +7242,27 @@ save_ProgramParameteri(GLuint program, GLenum pname, GLint value)
 }
 
 
+static void GLAPIENTRY
+save_WaitSync(GLsync sync, GLbitfield flags, GLuint64 timeout)
+{
+   Node *n;
+   GET_CURRENT_CONTEXT(ctx);
+   ASSERT_OUTSIDE_SAVE_BEGIN_END_AND_FLUSH(ctx);
+   n = alloc_instruction(ctx, OPCODE_WAIT_SYNC, 4);
+   if (n) {
+      union uint64_pair p;
+      p.uint64 = timeout;
+      n[1].data = sync;
+      n[2].e = flags;
+      n[3].ui = p.uint32[0];
+      n[4].ui = p.uint32[1];
+   }
+   if (ctx->ExecuteFlag) {
+      CALL_WaitSync(ctx->Exec, (sync, flags, timeout));
+   }
+}
+
+
 /**
  * Save an error-generating command into display list.
  *
@@ -8457,6 +8493,16 @@ execute_list(struct gl_context *ctx, GLuint list)
          /* GL_ARB_geometry_shader4 */
          case OPCODE_PROGRAM_PARAMETERI:
             CALL_ProgramParameteriARB(ctx->Exec, (n[1].ui, n[2].e, n[3].i));
+            break;
+
+         /* GL_ARB_sync */
+         case OPCODE_WAIT_SYNC:
+            {
+               union uint64_pair p;
+               p.uint32[0] = n[3].ui;
+               p.uint32[1] = n[4].ui;
+               CALL_WaitSync(ctx->Exec, (n[1].data, n[2].bf, p.uint64));
+            }
             break;
 
          case OPCODE_CONTINUE:
@@ -10155,6 +10201,10 @@ _mesa_create_save_table(void)
 
    /* GL_ARB_geometry_shader4 */
    SET_ProgramParameteriARB(table, save_ProgramParameteri);
+
+   /* GL_ARB_sync */
+   _mesa_init_sync_dispatch(table);
+   SET_WaitSync(table, save_WaitSync);
 
    return table;
 }
