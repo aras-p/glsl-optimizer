@@ -58,6 +58,7 @@
 #include "pbo.h"
 #include "queryobj.h"
 #include "samplerobj.h"
+#include "shaderapi.h"
 #include "teximage.h"
 #include "mtypes.h"
 #include "varray.h"
@@ -9995,6 +9996,7 @@ _mesa_create_save_table(void)
 #endif
 
    /* GL_ARB_shader_objects */
+   _mesa_init_shader_dispatch(table); /* Plug in glCreate/Delete/Get, etc */
    SET_UseProgramObjectARB(table, save_UseProgramObjectARB);
    SET_Uniform1fARB(table, save_Uniform1fARB);
    SET_Uniform2fARB(table, save_Uniform2fARB);
