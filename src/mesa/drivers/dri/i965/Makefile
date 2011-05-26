@@ -119,7 +119,8 @@ CXX_SOURCES = \
 	brw_fs_channel_expressions.cpp \
 	brw_fs_reg_allocate.cpp \
 	brw_fs_schedule_instructions.cpp \
-	brw_fs_vector_splitting.cpp
+	brw_fs_vector_splitting.cpp \
+	brw_shader.cpp
 
 ASM_SOURCES = 
 

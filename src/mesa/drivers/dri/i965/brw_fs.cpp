@@ -34,7 +34,6 @@ extern "C" {
 #include "main/uniforms.h"
 #include "program/prog_parameter.h"
 #include "program/prog_print.h"
-#include "program/prog_optimize.h"
 #include "program/register_allocate.h"
 #include "program/sampler.h"
 #include "program/hash_table.h"
@@ -44,108 +43,10 @@ extern "C" {
 }
 #include "brw_fs.h"
 #include "../glsl/glsl_types.h"
-#include "../glsl/ir_optimization.h"
 #include "../glsl/ir_print_visitor.h"
 
 #define MAX_INSTRUCTION (1 << 30)
 static struct brw_reg brw_reg_from_fs_reg(class fs_reg *reg);
-
-struct gl_shader *
-brw_new_shader(struct gl_context *ctx, GLuint name, GLuint type)
-{
-   struct brw_shader *shader;
-
-   shader = rzalloc(NULL, struct brw_shader);
-   if (shader) {
-      shader->base.Type = type;
-      shader->base.Name = name;
-      _mesa_init_shader(ctx, &shader->base);
-   }
-
-   return &shader->base;
-}
-
-struct gl_shader_program *
-brw_new_shader_program(struct gl_context *ctx, GLuint name)
-{
-   struct brw_shader_program *prog;
-   prog = rzalloc(NULL, struct brw_shader_program);
-   if (prog) {
-      prog->base.Name = name;
-      _mesa_init_shader_program(ctx, &prog->base);
-   }
-   return &prog->base;
-}
-
-GLboolean
-brw_link_shader(struct gl_context *ctx, struct gl_shader_program *prog)
-{
-   struct brw_context *brw = brw_context(ctx);
-   struct intel_context *intel = &brw->intel;
-
-   struct brw_shader *shader =
-      (struct brw_shader *)prog->_LinkedShaders[MESA_SHADER_FRAGMENT];
-   if (shader != NULL) {
-      void *mem_ctx = ralloc_context(NULL);
-      bool progress;
-
-      if (shader->ir)
-	 ralloc_free(shader->ir);
-      shader->ir = new(shader) exec_list;
-      clone_ir_list(mem_ctx, shader->ir, shader->base.ir);
-
-      do_mat_op_to_vec(shader->ir);
-      lower_instructions(shader->ir,
-			 MOD_TO_FRACT |
-			 DIV_TO_MUL_RCP |
-			 SUB_TO_ADD_NEG |
-			 EXP_TO_EXP2 |
-			 LOG_TO_LOG2);
-
-      /* Pre-gen6 HW can only nest if-statements 16 deep.  Beyond this,
-       * if-statements need to be flattened.
-       */
-      if (intel->gen < 6)
-	 lower_if_to_cond_assign(shader->ir, 16);
-
-      do_lower_texture_projection(shader->ir);
-      do_vec_index_to_cond_assign(shader->ir);
-      brw_do_cubemap_normalize(shader->ir);
-      lower_noise(shader->ir);
-      lower_quadop_vector(shader->ir, false);
-      lower_variable_index_to_cond_assign(shader->ir,
-					  GL_TRUE, /* input */
-					  GL_TRUE, /* output */
-					  GL_TRUE, /* temp */
-					  GL_TRUE /* uniform */
-					  );
-
-      do {
-	 progress = false;
-
-	 brw_do_channel_expressions(shader->ir);
-	 brw_do_vector_splitting(shader->ir);
-
-	 progress = do_lower_jumps(shader->ir, true, true,
-				   true, /* main return */
-				   false, /* continue */
-				   false /* loops */
-				   ) || progress;
-
-	 progress = do_common_optimization(shader->ir, true, 32) || progress;
-      } while (progress);
-
-      validate_ir_tree(shader->ir);
-
-      reparent_ir(shader->ir, shader->ir);
-      ralloc_free(mem_ctx);
-   }
-
-   if (!_mesa_ir_link_shader(ctx, prog))
-      return GL_FALSE;
-
-   return GL_TRUE;
-}
 
 static int
 type_size(const struct glsl_type *type)
