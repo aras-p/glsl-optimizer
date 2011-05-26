@@ -704,14 +704,9 @@ intelInitContext(struct intel_context *intel,
    if (IS_GEN7(intel->intelScreen->deviceID)) {
       intel->needs_ff_sync = GL_TRUE;
       intel->has_luminance_srgb = GL_TRUE;
-      /* FINISHME: Enable intel->has_separate_stencil on Gen7. */
-      /* FINISHME: Enable intel->must_use_separate_stencil on Gen7. */
-      /* FINISHME: Enable intel->has_hiz on Gen7. */
    } else if (IS_GEN6(intel->intelScreen->deviceID)) {
       intel->needs_ff_sync = GL_TRUE;
       intel->has_luminance_srgb = GL_TRUE;
-      /* FINISHME: Enable intel->has_separate_stencil on Gen6. */
-      /* FINISHME: Enable intel->has_hiz on Gen6. */
    } else if (IS_GEN5(intel->intelScreen->deviceID)) {
       intel->needs_ff_sync = GL_TRUE;
       intel->has_luminance_srgb = GL_TRUE;
@@ -731,8 +726,9 @@ intelInitContext(struct intel_context *intel,
       }
    }
 
-   intel_override_hiz(intel);
-   intel_override_separate_stencil(intel);
+   intel->has_separate_stencil = intel->intelScreen->hw_has_separate_stencil;
+   intel->must_use_separate_stencil = intel->intelScreen->hw_must_use_separate_stencil;
+   intel->has_hiz = intel->intelScreen->hw_has_hiz;
 
    memset(&ctx->TextureFormatSupported, 0,
 	  sizeof(ctx->TextureFormatSupported));

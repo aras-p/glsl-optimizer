@@ -507,6 +507,54 @@ intel_init_bufmgr(struct intel_screen *intelScreen)
 }
 
 /**
+ * Override intel_screen.hw_has_hiz with environment variable INTEL_HIZ.
+ *
+ * Valid values for INTEL_HIZ are "0" and "1". If an invalid valid value is
+ * encountered, a warning is emitted and INTEL_HIZ is ignored.
+ */
+static void
+intel_override_hiz(struct intel_screen *intel)
+{
+   const char *s = getenv("INTEL_HIZ");
+   if (!s) {
+      return;
+   } else if (!strncmp("0", s, 2)) {
+      intel->hw_has_hiz = false;
+   } else if (!strncmp("1", s, 2)) {
+      intel->hw_has_hiz = true;
+   } else {
+      fprintf(stderr,
+	      "warning: env variable INTEL_HIZ=\"%s\" has invalid value "
+	      "and is ignored", s);
+   }
+}
+
+/**
+ * Override intel_screen.hw_has_separate_stencil with environment variable
+ * INTEL_SEPARATE_STENCIL.
+ *
+ * Valid values for INTEL_SEPARATE_STENCIL are "0" and "1". If an invalid
+ * valid value is encountered, a warning is emitted and INTEL_SEPARATE_STENCIL
+ * is ignored.
+ */
+static void
+intel_override_separate_stencil(struct intel_screen *screen)
+{
+   const char *s = getenv("INTEL_SEPARATE_STENCIL");
+   if (!s) {
+      return;
+   } else if (!strncmp("0", s, 2)) {
+      screen->hw_has_separate_stencil = false;
+   } else if (!strncmp("1", s, 2)) {
+      screen->hw_has_separate_stencil = true;
+   } else {
+      fprintf(stderr,
+	      "warning: env variable INTEL_SEPARATE_STENCIL=\"%s\" has "
+	      "invalid value and is ignored", s);
+   }
+}
+
+/**
  * This is the driver specific part of the createNewScreen entry point.
  * Called when using DRI2.
  *
@@ -569,6 +617,18 @@ __DRIconfig **intelInitScreen2(__DRIscreen *psp)
    } else {
       intelScreen->gen = 2;
    }
+
+   /*
+    * FIXME: The hiz and separate stencil fields need updating once the
+    * FIXME: features are completely implemented for a given chipset.
+    */
+   intelScreen->hw_has_separate_stencil = intelScreen->gen >= 7;
+   intelScreen->hw_must_use_separate_stencil = intelScreen->gen >= 7;
+   intelScreen->hw_has_hiz = false;
+   intelScreen->dri2_has_hiz = INTEL_DRI2_HAS_HIZ_UNKNOWN;
+
+   intel_override_hiz(intelScreen);
+   intel_override_separate_stencil(intelScreen);
 
    api_mask = (1 << __DRI_API_OPENGL);
 #if FEATURE_ES1

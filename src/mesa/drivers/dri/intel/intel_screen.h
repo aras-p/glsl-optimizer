@@ -102,6 +102,16 @@ struct intel_screen
    GLboolean no_hw;
    GLuint relaxed_relocations;
 
+   /*
+    * The hardware hiz and separate stencil fields are needed in intel_screen,
+    * rather than solely in intel_context, because glXCreatePbuffer and
+    * glXCreatePixmap are not passed a GLXContext.
+    */
+   GLboolean hw_has_separate_stencil;
+   GLboolean hw_must_use_separate_stencil;
+   GLboolean hw_has_hiz;
+   enum intel_dri2_has_hiz dri2_has_hiz;
+
    GLboolean no_vbo;
    dri_bufmgr *bufmgr;
    struct _mesa_HashTable *named_regions;
