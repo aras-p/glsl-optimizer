@@ -1519,7 +1519,8 @@ _mesa_ShaderSourceARB(GLhandleARB shaderObj, GLsizei count,
    for (i = 0; i < count; i++) {
       if (string[i] == NULL) {
          free((GLvoid *) offsets);
-         _mesa_error(ctx, GL_INVALID_OPERATION, "glShaderSourceARB(null string)");
+         _mesa_error(ctx, GL_INVALID_OPERATION,
+                     "glShaderSourceARB(null string)");
          return;
       }
       if (length == NULL || length[i] < 0)
@@ -1570,7 +1571,7 @@ _mesa_ShaderSourceARB(GLhandleARB shaderObj, GLsizei count,
          free(source);
          source = newSource;
       }
-   }      
+   }
 
    shader_source(ctx, shaderObj, source);
 
@@ -1709,8 +1710,7 @@ _mesa_ShaderBinary(GLint n, const GLuint* shaders, GLenum binaryformat,
 #if FEATURE_ARB_geometry_shader4
 
 void GLAPIENTRY
-_mesa_ProgramParameteriARB(GLuint program, GLenum pname,
-                           GLint value)
+_mesa_ProgramParameteriARB(GLuint program, GLenum pname, GLint value)
 {
    struct gl_shader_program *shProg;
    GET_CURRENT_CONTEXT(ctx);
