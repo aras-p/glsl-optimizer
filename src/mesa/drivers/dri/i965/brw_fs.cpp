@@ -41,6 +41,7 @@ extern "C" {
 #include "brw_eu.h"
 #include "brw_wm.h"
 }
+#include "brw_shader.h"
 #include "brw_fs.h"
 #include "../glsl/glsl_types.h"
 #include "../glsl/ir_print_visitor.h"
@@ -196,31 +197,6 @@ fs_reg::fs_reg(enum register_file file, int hw_reg, uint32_t type)
    this->file = file;
    this->hw_reg = hw_reg;
    this->type = type;
-}
-
-int
-brw_type_for_base_type(const struct glsl_type *type)
-{
-   switch (type->base_type) {
-   case GLSL_TYPE_FLOAT:
-      return BRW_REGISTER_TYPE_F;
-   case GLSL_TYPE_INT:
-   case GLSL_TYPE_BOOL:
-      return BRW_REGISTER_TYPE_D;
-   case GLSL_TYPE_UINT:
-      return BRW_REGISTER_TYPE_UD;
-   case GLSL_TYPE_ARRAY:
-   case GLSL_TYPE_STRUCT:
-   case GLSL_TYPE_SAMPLER:
-      /* These should be overridden with the type of the member when
-       * dereferenced into.  BRW_REGISTER_TYPE_UD seems like a likely
-       * way to trip up if we don't.
-       */
-      return BRW_REGISTER_TYPE_UD;
-   default:
-      assert(!"not reached");
-      return BRW_REGISTER_TYPE_F;
-   }
 }
 
 /** Automatic reg constructor. */
@@ -728,30 +704,6 @@ fs_visitor::try_emit_saturate(ir_expression *ir)
    inst->saturate = true;
 
    return true;
-}
-
-static uint32_t
-brw_conditional_for_comparison(unsigned int op)
-{
-   switch (op) {
-   case ir_binop_less:
-      return BRW_CONDITIONAL_L;
-   case ir_binop_greater:
-      return BRW_CONDITIONAL_G;
-   case ir_binop_lequal:
-      return BRW_CONDITIONAL_LE;
-   case ir_binop_gequal:
-      return BRW_CONDITIONAL_GE;
-   case ir_binop_equal:
-   case ir_binop_all_equal: /* same as equal for scalars */
-      return BRW_CONDITIONAL_Z;
-   case ir_binop_nequal:
-   case ir_binop_any_nequal: /* same as nequal for scalars */
-      return BRW_CONDITIONAL_NZ;
-   default:
-      assert(!"not reached: bad operation for comparison");
-      return BRW_CONDITIONAL_NZ;
-   }
 }
 
 void
