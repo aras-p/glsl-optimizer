@@ -447,6 +447,9 @@ typedef enum
    OPCODE_SAMPLER_PARAMETERIIV,
    OPCODE_SAMPLER_PARAMETERUIV,
 
+   /* GL_ARB_geometry_shader4 */
+   OPCODE_PROGRAM_PARAMETERI,
+
    /* The following three are meta instructions */
    OPCODE_ERROR,                /* raise compiled-in error */
    OPCODE_CONTINUE,
@@ -7205,6 +7208,25 @@ save_SamplerParameterIuiv(GLuint sampler, GLenum pname, const GLuint *params)
    }
 }
 
+/* GL_ARB_geometry_shader4 */
+static void GLAPIENTRY
+save_ProgramParameteri(GLuint program, GLenum pname, GLint value)
+{
+   Node *n;
+   GET_CURRENT_CONTEXT(ctx);
+   ASSERT_OUTSIDE_SAVE_BEGIN_END_AND_FLUSH(ctx);
+   n = alloc_instruction(ctx, OPCODE_PROGRAM_PARAMETERI, 3);
+   if (n) {
+      n[1].ui = program;
+      n[2].e = pname;
+      n[3].i = value;
+   }
+   if (ctx->ExecuteFlag) {
+      CALL_ProgramParameteriARB(ctx->Exec, (program, pname, value));
+   }
+}
+
+
 /**
  * Save an error-generating command into display list.
  *
@@ -8430,6 +8452,11 @@ execute_list(struct gl_context *ctx, GLuint list)
                params[3] = n[6].ui;
                CALL_SamplerParameterIuiv(ctx->Exec, (n[1].ui, n[2].e, params));
             }
+            break;
+
+         /* GL_ARB_geometry_shader4 */
+         case OPCODE_PROGRAM_PARAMETERI:
+            CALL_ProgramParameteriARB(ctx->Exec, (n[1].ui, n[2].e, n[3].i));
             break;
 
          case OPCODE_CONTINUE:
@@ -10125,6 +10152,9 @@ _mesa_create_save_table(void)
    SET_BlendFuncSeparateiARB(table, save_BlendFuncSeparatei);
    SET_BlendEquationiARB(table, save_BlendEquationi);
    SET_BlendEquationSeparateiARB(table, save_BlendEquationSeparatei);
+
+   /* GL_ARB_geometry_shader4 */
+   SET_ProgramParameteriARB(table, save_ProgramParameteri);
 
    return table;
 }
