@@ -1271,6 +1271,13 @@ if test "x$enable_gbm" = xyes; then
     PKG_CHECK_MODULES([LIBUDEV], [libudev], [],
                       AC_MSG_ERROR([gbm needs udev]))
     GBM_LIB_DEPS="$DLOPEN_LIBS $LIBUDEV_LIBS"
+
+    if test "$mesa_driver" = dri; then
+        GBM_BACKEND_DIRS="$GBM_BACKEND_DIRS dri"
+        if test "$SHARED_GLAPI" -eq 0; then
+            AC_MSG_ERROR([gbm_dri requires --enable-shared-glapi])
+        fi
+    fi
 fi
 AC_SUBST([GBM_LIB_DEPS])
 AC_SUBST([GBM_BACKEND_DIRS])

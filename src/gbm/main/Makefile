@@ -23,6 +23,11 @@ LOCAL_CFLAGS = $(LIBUDEV_CFLAGS) $(DLOPEN_CFLAGS) \
 	       -D_OS_UNIX=1 -DMODULEDIR='"$(GBM_BACKEND_INSTALL_DIR)"'
 LOCAL_LIBS =
 
+# Builtin backends
+ifeq ($(filter dri, $(GBM_BACKEND_DIRS)),dri)
+LOCAL_LIBS += $(TOP)/src/gbm/backends/dri/libgbm_dri.a
+endif
+
 .c.o:
 	$(CC) -c $(INCLUDE_DIRS) $(CFLAGS) $(LOCAL_CFLAGS) $< -o $@
 
