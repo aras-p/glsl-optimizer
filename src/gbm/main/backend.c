@@ -45,6 +45,7 @@ struct backend_desc {
 
 static const struct backend_desc backends[] = {
    { "gbm_dri.so", &gbm_dri_backend },
+   { "gbm_gallium_drm.so", NULL },
 };
 
 static const void *
