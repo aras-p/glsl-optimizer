@@ -222,8 +222,7 @@ st_bufferobj_data(struct gl_context *ctx,
       }
 
       if (data)
-         pipe_buffer_write(st_context(ctx)->pipe, st_obj->buffer, 0,
-				       size, data);
+         pipe_buffer_write(pipe, st_obj->buffer, 0, size, data);
       return GL_TRUE;
    }
 

@@ -793,7 +793,7 @@ draw_stencil_pixels(struct gl_context *ctx, GLint x, GLint y,
    else
       usage = PIPE_TRANSFER_WRITE;
 
-   pt = pipe_get_transfer(st_context(ctx)->pipe, strb->texture,
+   pt = pipe_get_transfer(pipe, strb->texture,
                           strb->rtt_level, strb->rtt_face + strb->rtt_slice,
                           usage, x, y,
                           width, height);
@@ -1131,7 +1131,7 @@ copy_stencil_pixels(struct gl_context *ctx, GLint srcx, GLint srcy,
       dsty = rbDraw->Base.Height - dsty - height;
    }
 
-   ptDraw = pipe_get_transfer(st_context(ctx)->pipe,
+   ptDraw = pipe_get_transfer(pipe,
                               rbDraw->texture,
                               rbDraw->rtt_level,
                               rbDraw->rtt_face + rbDraw->rtt_slice,

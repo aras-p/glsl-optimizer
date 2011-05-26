@@ -807,7 +807,7 @@ decompress_with_blit(struct gl_context * ctx, GLenum target, GLint level,
                         PIPE_TEX_MIPFILTER_NEAREST);
 
    /* map the dst_surface so we can read from it */
-   tex_xfer = pipe_get_transfer(st_context(ctx)->pipe,
+   tex_xfer = pipe_get_transfer(pipe,
                                 dst_texture, 0, 0,
                                 PIPE_TRANSFER_READ,
                                 0, 0, width, height);
@@ -1228,7 +1228,7 @@ fallback_copy_texsubimage(struct gl_context *ctx, GLenum target, GLint level,
       srcY = strb->Base.Height - srcY - height;
    }
 
-   src_trans = pipe_get_transfer(st_context(ctx)->pipe,
+   src_trans = pipe_get_transfer(pipe,
                                  strb->texture,
                                  0, 0,
                                  PIPE_TRANSFER_READ,

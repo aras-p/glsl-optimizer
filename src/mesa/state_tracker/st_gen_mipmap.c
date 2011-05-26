@@ -229,12 +229,12 @@ fallback_generate_mipmap(struct gl_context *ctx, GLenum target,
       ubyte *dstData;
       int srcStride, dstStride;
 
-      srcTrans = pipe_get_transfer(st_context(ctx)->pipe, pt, srcLevel,
+      srcTrans = pipe_get_transfer(pipe, pt, srcLevel,
                                    face,
                                    PIPE_TRANSFER_READ, 0, 0,
                                    srcWidth, srcHeight);
 
-      dstTrans = pipe_get_transfer(st_context(ctx)->pipe, pt, dstLevel,
+      dstTrans = pipe_get_transfer(pipe, pt, dstLevel,
                                    face,
                                    PIPE_TRANSFER_WRITE, 0, 0,
                                    dstWidth, dstHeight);
