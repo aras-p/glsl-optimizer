@@ -345,6 +345,16 @@ EGL_FILES = \
 	$(DIRECTORY)/src/egl/main/*.pc.in				\
 	$(DIRECTORY)/src/egl/main/*.def
 
+GBM_FILES = \
+	$(DIRECTORY)/src/gbm/Makefile					\
+	$(DIRECTORY)/src/gbm/main/*.pc.in				\
+	$(DIRECTORY)/src/gbm/main/*.[ch]				\
+	$(DIRECTORY)/src/gbm/main/Makefile				\
+	$(DIRECTORY)/src/gbm/backends/Makefile				\
+	$(DIRECTORY)/src/gbm/backends/Makefile.template			\
+	$(DIRECTORY)/src/gbm/backends/*/*.[ch]				\
+	$(DIRECTORY)/src/gbm/backends/*/Makefile			\
+
 GALLIUM_FILES = \
 	$(DIRECTORY)/src/mesa/state_tracker/*[ch]			\
 	$(DIRECTORY)/src/gallium/Makefile				\
@@ -442,6 +452,7 @@ LIB_FILES = \
 	$(MAPI_FILES)		\
 	$(ES_FILES)		\
 	$(EGL_FILES)		\
+	$(GBM_FILES)		\
 	$(GALLIUM_FILES)	\
 	$(DRI_FILES)		\
 	$(SGI_GLU_FILES)	\
