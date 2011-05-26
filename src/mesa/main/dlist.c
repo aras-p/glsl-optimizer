@@ -10078,11 +10078,11 @@ _mesa_create_save_table(void)
    SET_ClampColor(table, save_ClampColorARB);
 
    /* GL 3.0 */
-#if 0
    SET_ClearBufferiv(table, save_ClearBufferiv);
    SET_ClearBufferuiv(table, save_ClearBufferuiv);
    SET_ClearBufferfv(table, save_ClearBufferfv);
    SET_ClearBufferfi(table, save_ClearBufferfi);
+#if 0
    SET_Uniform1ui(table, save_Uniform1ui);
    SET_Uniform2ui(table, save_Uniform2ui);
    SET_Uniform3ui(table, save_Uniform3ui);
@@ -10092,10 +10092,6 @@ _mesa_create_save_table(void)
    SET_Uniform3uiv(table, save_Uniform3uiv);
    SET_Uniform4uiv(table, save_Uniform4uiv);
 #else
-   (void) save_ClearBufferiv;
-   (void) save_ClearBufferuiv;
-   (void) save_ClearBufferfv;
-   (void) save_ClearBufferfi;
    (void) save_Uniform1ui;
    (void) save_Uniform2ui;
    (void) save_Uniform3ui;
