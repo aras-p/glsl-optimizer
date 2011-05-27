@@ -10053,15 +10053,11 @@ _mesa_create_save_table(void)
 #endif
 
 #if FEATURE_queryobj
+   _mesa_init_queryobj_dispatch(table); /* glGetQuery, etc */
    SET_BeginQueryARB(table, save_BeginQueryARB);
    SET_EndQueryARB(table, save_EndQueryARB);
-   SET_GenQueriesARB(table, _mesa_GenQueriesARB);
-   SET_DeleteQueriesARB(table, _mesa_DeleteQueriesARB);
-   SET_IsQueryARB(table, _mesa_IsQueryARB);
-   SET_GetQueryivARB(table, _mesa_GetQueryivARB);
-   SET_GetQueryObjectivARB(table, _mesa_GetQueryObjectivARB);
-   SET_GetQueryObjectuivARB(table, _mesa_GetQueryObjectuivARB);
 #endif
+
    SET_DrawBuffersARB(table, save_DrawBuffersARB);
 
 #if FEATURE_EXT_framebuffer_blit
