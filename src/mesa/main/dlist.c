@@ -10261,6 +10261,7 @@ _mesa_create_save_table(void)
 #if FEATURE_APPLE_object_purgeable
    SET_ObjectPurgeableAPPLE(table, _mesa_ObjectPurgeableAPPLE);
    SET_ObjectUnpurgeableAPPLE(table, _mesa_ObjectUnpurgeableAPPLE);
+   SET_GetObjectParameterivAPPLE(table, _mesa_GetObjectParameterivAPPLE);
 #endif
 
    /* GL_EXT_texture_integer */
