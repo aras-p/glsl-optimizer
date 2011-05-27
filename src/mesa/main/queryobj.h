@@ -42,24 +42,6 @@ _mesa_lookup_query_object(struct gl_context *ctx, GLuint id)
 }
 
 
-extern void GLAPIENTRY
-_mesa_GenQueriesARB(GLsizei n, GLuint *ids);
-
-extern void GLAPIENTRY
-_mesa_DeleteQueriesARB(GLsizei n, const GLuint *ids);
-
-extern GLboolean GLAPIENTRY
-_mesa_IsQueryARB(GLuint id);
-
-extern void GLAPIENTRY
-_mesa_GetQueryivARB(GLenum target, GLenum pname, GLint *params);
-
-extern void GLAPIENTRY
-_mesa_GetQueryObjectivARB(GLuint id, GLenum pname, GLint *params);
-
-extern void GLAPIENTRY
-_mesa_GetQueryObjectuivARB(GLuint id, GLenum pname, GLuint *params);
-
 extern void
 _mesa_init_query_object_functions(struct dd_function_table *driver);
 
