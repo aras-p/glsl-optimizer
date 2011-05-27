@@ -10104,6 +10104,10 @@ _mesa_create_save_table(void)
    SET_GenVertexArraysAPPLE(table, _mesa_GenVertexArraysAPPLE);
    SET_IsVertexArrayAPPLE(table, _mesa_IsVertexArrayAPPLE);
 
+   /* GL_ARB_vertex_array_object */
+   SET_BindVertexArray(table, _mesa_BindVertexArray);
+   SET_GenVertexArrays(table, _mesa_GenVertexArrays);
+
    /* ???. GL_EXT_depth_bounds_test */
    SET_DepthBoundsEXT(table, save_DepthBoundsEXT);
 
