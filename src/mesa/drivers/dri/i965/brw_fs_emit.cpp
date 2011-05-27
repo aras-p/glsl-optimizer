@@ -602,7 +602,7 @@ fs_visitor::generate_code()
 
    if (unlikely(INTEL_DEBUG & DEBUG_WM)) {
       printf("Native code for fragment shader %d (%d-wide dispatch):\n",
-	     ctx->Shader.CurrentFragmentProgram->Name, c->dispatch_width);
+	     prog->Name, c->dispatch_width);
    }
 
    foreach_iter(exec_list_iterator, iter, this->instructions) {

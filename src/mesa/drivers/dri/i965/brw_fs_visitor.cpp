@@ -867,9 +867,9 @@ fs_visitor::visit(ir_texture *ir)
    assert(!ir->projector);
 
    sampler = _mesa_get_sampler_uniform_value(ir->sampler,
-					     ctx->Shader.CurrentFragmentProgram,
-					     &brw->fragment_program->Base);
-   sampler = c->fp->program.Base.SamplerUnits[sampler];
+					     prog,
+					     &fp->Base);
+   sampler = fp->Base.SamplerUnits[sampler];
 
    /* The 965 requires the EU to do the normalization of GL rectangle
     * texture coordinates.  We use the program parameter state
