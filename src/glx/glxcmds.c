@@ -1890,7 +1890,7 @@ glXGetFBConfigFromVisualSGIX(Display * dpy, XVisualInfo * vis)
    struct glx_display *priv;
    struct glx_screen *psc = NULL;
 
-   if ((GetGLXPrivScreenConfig(dpy, vis->screen, &priv, &psc) != Success)
+   if ((GetGLXPrivScreenConfig(dpy, vis->screen, &priv, &psc) == Success)
        && __glXExtensionBitIsEnabled(psc, SGIX_fbconfig_bit)
        && (psc->configs->fbconfigID != (int) GLX_DONT_CARE)) {
       return (GLXFBConfigSGIX) glx_config_find_visual(psc->configs,
