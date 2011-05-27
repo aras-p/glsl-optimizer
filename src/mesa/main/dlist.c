@@ -454,6 +454,8 @@ typedef enum
 
    /* GL_ARB_geometry_shader4 */
    OPCODE_PROGRAM_PARAMETERI,
+   OPCODE_FRAMEBUFFER_TEXTURE,
+   OPCODE_FRAMEBUFFER_TEXTURE_FACE,
 
    /* GL_ARB_sync */
    OPCODE_WAIT_SYNC,
@@ -7308,6 +7310,47 @@ save_ProgramParameteri(GLuint program, GLenum pname, GLint value)
    }
 }
 
+static void GLAPIENTRY
+save_FramebufferTexture(GLenum target, GLenum attachment,
+                        GLuint texture, GLint level)
+{
+   Node *n;
+   GET_CURRENT_CONTEXT(ctx);
+   ASSERT_OUTSIDE_SAVE_BEGIN_END_AND_FLUSH(ctx);
+   n = alloc_instruction(ctx, OPCODE_FRAMEBUFFER_TEXTURE, 4);
+   if (n) {
+      n[1].e = target;
+      n[2].e = attachment;
+      n[3].ui = texture;
+      n[4].i = level;
+   }
+   if (ctx->ExecuteFlag) {
+      CALL_FramebufferTextureARB(ctx->Exec, (target, attachment, texture, level));
+   }
+}
+
+static void GLAPIENTRY
+save_FramebufferTextureFace(GLenum target, GLenum attachment,
+                            GLuint texture, GLint level, GLenum face)
+{
+   Node *n;
+   GET_CURRENT_CONTEXT(ctx);
+   ASSERT_OUTSIDE_SAVE_BEGIN_END_AND_FLUSH(ctx);
+   n = alloc_instruction(ctx, OPCODE_FRAMEBUFFER_TEXTURE_FACE, 5);
+   if (n) {
+      n[1].e = target;
+      n[2].e = attachment;
+      n[3].ui = texture;
+      n[4].i = level;
+      n[5].e = face;
+   }
+   if (ctx->ExecuteFlag) {
+      CALL_FramebufferTextureFaceARB(ctx->Exec, (target, attachment, texture,
+                                                 level, face));
+   }
+}
+
+
 
 static void GLAPIENTRY
 save_WaitSync(GLsync sync, GLbitfield flags, GLuint64 timeout)
@@ -8575,6 +8618,14 @@ execute_list(struct gl_context *ctx, GLuint list)
          /* GL_ARB_geometry_shader4 */
          case OPCODE_PROGRAM_PARAMETERI:
             CALL_ProgramParameteriARB(ctx->Exec, (n[1].ui, n[2].e, n[3].i));
+            break;
+         case OPCODE_FRAMEBUFFER_TEXTURE:
+            CALL_FramebufferTextureARB(ctx->Exec, (n[1].e, n[2].e,
+                                                   n[3].ui, n[4].i));
+            break;
+         case OPCODE_FRAMEBUFFER_TEXTURE_FACE:
+            CALL_FramebufferTextureFaceARB(ctx->Exec, (n[1].e, n[2].e,
+                                                       n[3].ui, n[4].i, n[5].e));
             break;
 
          /* GL_ARB_sync */
@@ -10283,6 +10334,8 @@ _mesa_create_save_table(void)
 
    /* GL_ARB_geometry_shader4 */
    SET_ProgramParameteriARB(table, save_ProgramParameteri);
+   SET_FramebufferTextureARB(table, save_FramebufferTexture);
+   SET_FramebufferTextureFaceARB(table, save_FramebufferTextureFace);
 
    /* GL_ARB_sync */
    _mesa_init_sync_dispatch(table);
