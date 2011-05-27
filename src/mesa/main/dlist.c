@@ -424,6 +424,10 @@ typedef enum
    /* GL_EXT_transform_feedback */
    OPCODE_BEGIN_TRANSFORM_FEEDBACK,
    OPCODE_END_TRANSFORM_FEEDBACK,
+   OPCODE_BIND_TRANSFORM_FEEDBACK,
+   OPCODE_PAUSE_TRANSFORM_FEEDBACK,
+   OPCODE_RESUME_TRANSFORM_FEEDBACK,
+   OPCODE_DRAW_TRANSFORM_FEEDBACK,
 
    /* GL_EXT_texture_integer */
    OPCODE_CLEARCOLOR_I,
@@ -6287,6 +6291,69 @@ save_EndTransformFeedback(void)
    }
 }
 
+static void GLAPIENTRY
+save_TransformFeedbackVaryings(GLuint program, GLsizei count,
+                               const GLchar **varyings, GLenum bufferMode)
+{
+   GET_CURRENT_CONTEXT(ctx);
+   _mesa_problem(ctx,
+                 "glTransformFeedbackVarying() display list support not done");
+}
+
+static void GLAPIENTRY
+save_BindTransformFeedback(GLenum target, GLuint name)
+{
+   GET_CURRENT_CONTEXT(ctx);
+   Node *n;
+   ASSERT_OUTSIDE_SAVE_BEGIN_END_AND_FLUSH(ctx);
+   n = alloc_instruction(ctx, OPCODE_BIND_TRANSFORM_FEEDBACK, 2);
+   if (n) {
+      n[1].e = target;
+      n[2].ui = name;
+   }
+   if (ctx->ExecuteFlag) {
+      CALL_BindTransformFeedback(ctx->Exec, (target, name));
+   }
+}
+
+static void GLAPIENTRY
+save_PauseTransformFeedback(void)
+{
+   GET_CURRENT_CONTEXT(ctx);
+   ASSERT_OUTSIDE_SAVE_BEGIN_END_AND_FLUSH(ctx);
+   (void) alloc_instruction(ctx, OPCODE_PAUSE_TRANSFORM_FEEDBACK, 0);
+   if (ctx->ExecuteFlag) {
+      CALL_PauseTransformFeedback(ctx->Exec, ());
+   }
+}
+
+static void GLAPIENTRY
+save_ResumeTransformFeedback(void)
+{
+   GET_CURRENT_CONTEXT(ctx);
+   ASSERT_OUTSIDE_SAVE_BEGIN_END_AND_FLUSH(ctx);
+   (void) alloc_instruction(ctx, OPCODE_RESUME_TRANSFORM_FEEDBACK, 0);
+   if (ctx->ExecuteFlag) {
+      CALL_ResumeTransformFeedback(ctx->Exec, ());
+   }
+}
+
+static void GLAPIENTRY
+save_DrawTransformFeedback(GLenum mode, GLuint name)
+{
+   GET_CURRENT_CONTEXT(ctx);
+   Node *n;
+   ASSERT_OUTSIDE_SAVE_BEGIN_END_AND_FLUSH(ctx);
+   n = alloc_instruction(ctx, OPCODE_DRAW_TRANSFORM_FEEDBACK, 2);
+   if (n) {
+      n[1].e = mode;
+      n[2].ui = name;
+   }
+   if (ctx->ExecuteFlag) {
+      CALL_DrawTransformFeedback(ctx->Exec, (mode, name));
+   }
+}
+
 
 /* aka UseProgram() */
 static void GLAPIENTRY
@@ -7890,12 +7957,6 @@ execute_list(struct gl_context *ctx, GLuint list)
          case OPCODE_PROVOKING_VERTEX:
             CALL_ProvokingVertexEXT(ctx->Exec, (n[1].e));
             break;
-         case OPCODE_BEGIN_TRANSFORM_FEEDBACK:
-            CALL_BeginTransformFeedbackEXT(ctx->Exec, (n[1].e));
-            break;
-         case OPCODE_END_TRANSFORM_FEEDBACK:
-            CALL_EndTransformFeedbackEXT(ctx->Exec, ());
-            break;
          case OPCODE_STENCIL_FUNC:
             CALL_StencilFunc(ctx->Exec, (n[1].e, n[2].i, n[3].ui));
             break;
@@ -8445,6 +8506,27 @@ execute_list(struct gl_context *ctx, GLuint list)
          case OPCODE_TEXTURE_BARRIER_NV:
             CALL_TextureBarrierNV(ctx->Exec, ());
             break;
+
+         /* GL_EXT/ARB_transform_feedback */
+         case OPCODE_BEGIN_TRANSFORM_FEEDBACK:
+            CALL_BeginTransformFeedbackEXT(ctx->Exec, (n[1].e));
+            break;
+         case OPCODE_END_TRANSFORM_FEEDBACK:
+            CALL_EndTransformFeedbackEXT(ctx->Exec, ());
+            break;
+         case OPCODE_BIND_TRANSFORM_FEEDBACK:
+            CALL_BindTransformFeedback(ctx->Exec, (n[1].e, n[2].ui));
+            break;
+         case OPCODE_PAUSE_TRANSFORM_FEEDBACK:
+            CALL_PauseTransformFeedback(ctx->Exec, ());
+            break;
+         case OPCODE_RESUME_TRANSFORM_FEEDBACK:
+            CALL_ResumeTransformFeedback(ctx->Exec, ());
+            break;
+         case OPCODE_DRAW_TRANSFORM_FEEDBACK:
+            CALL_DrawTransformFeedback(ctx->Exec, (n[1].e, n[2].ui));
+            break;
+
 
          case OPCODE_BIND_SAMPLER:
             CALL_BindSampler(ctx->Exec, (n[1].ui, n[2].ui));
@@ -10117,12 +10199,6 @@ _mesa_create_save_table(void)
    /* ARB 59. GL_ARB_copy_buffer */
    SET_CopyBufferSubData(table, _mesa_CopyBufferSubData); /* no dlist save */
 
-   /* 352. GL_EXT_transform_feedback */
-#if FEATURE_EXT_transform_feedback
-   SET_BeginTransformFeedbackEXT(table, save_BeginTransformFeedback);
-   SET_EndTransformFeedbackEXT(table, save_EndTransformFeedback);
-#endif
-
    /* 364. GL_EXT_provoking_vertex */
    SET_ProvokingVertexEXT(table, save_ProvokingVertexEXT);
 
@@ -10171,6 +10247,16 @@ _mesa_create_save_table(void)
    (void) save_Uniform2uiv;
    (void) save_Uniform3uiv;
    (void) save_Uniform4uiv;
+#endif
+
+#if FEATURE_EXT_transform_feedback
+   SET_BeginTransformFeedbackEXT(table, save_BeginTransformFeedback);
+   SET_EndTransformFeedbackEXT(table, save_EndTransformFeedback);
+   SET_TransformFeedbackVaryingsEXT(table, save_TransformFeedbackVaryings);
+   SET_BindTransformFeedback(table, save_BindTransformFeedback);
+   SET_PauseTransformFeedback(table, save_PauseTransformFeedback);
+   SET_ResumeTransformFeedback(table, save_ResumeTransformFeedback);
+   SET_DrawTransformFeedback(table, save_DrawTransformFeedback);
 #endif
 
    /* GL_ARB_instanced_arrays */
