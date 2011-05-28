@@ -612,7 +612,7 @@ static struct format_mapping format_map[] = {
    /* Basic RGB, RGBA formats */
    {
       { GL_RGB10, GL_RGB10_A2, 0 },
-      { PIPE_FORMAT_B10G10R10A2_UNORM, 0 }
+      { PIPE_FORMAT_B10G10R10A2_UNORM, DEFAULT_RGBA_FORMATS }
    },
    {
       { 4, GL_RGBA, GL_RGBA8, 0 },
@@ -620,7 +620,7 @@ static struct format_mapping format_map[] = {
    },
    {
       { GL_BGRA, 0 },
-      { PIPE_FORMAT_B8G8R8A8_UNORM, DEFAULT_RGB_FORMATS, 0 }
+      { PIPE_FORMAT_B8G8R8A8_UNORM, DEFAULT_RGBA_FORMATS }
    },
    {
       { 3, GL_RGB, GL_RGB8, 0 },
@@ -628,7 +628,7 @@ static struct format_mapping format_map[] = {
    },
    {
       { GL_RGB12, GL_RGB16, GL_RGBA12, GL_RGBA16, 0 },
-      { PIPE_FORMAT_R16G16B16A16_UNORM, DEFAULT_RGB_FORMATS, 0 }
+      { PIPE_FORMAT_R16G16B16A16_UNORM, DEFAULT_RGBA_FORMATS }
    },
    {
       { GL_RGBA4, GL_RGBA2, 0 },
@@ -636,7 +636,7 @@ static struct format_mapping format_map[] = {
    },
    {
       { GL_RGB5_A1, 0 },
-      { PIPE_FORMAT_B5G5R5A1_UNORM, DEFAULT_RGBA_FORMATS, 0 }
+      { PIPE_FORMAT_B5G5R5A1_UNORM, DEFAULT_RGBA_FORMATS }
    },
    {
       { GL_R3_G3_B2, 0 },
@@ -663,11 +663,11 @@ static struct format_mapping format_map[] = {
    /* basic Luminance formats */
    {
       { GL_LUMINANCE12, GL_LUMINANCE16, 0 },
-      { PIPE_FORMAT_L16_UNORM, PIPE_FORMAT_L8_UNORM, DEFAULT_RGBA_FORMATS, 0 }
+      { PIPE_FORMAT_L16_UNORM, PIPE_FORMAT_L8_UNORM, DEFAULT_RGB_FORMATS }
    },
    {
       { 1, GL_LUMINANCE, GL_LUMINANCE4, GL_LUMINANCE8, 0 },
-      { PIPE_FORMAT_L8_UNORM, DEFAULT_RGBA_FORMATS }
+      { PIPE_FORMAT_L8_UNORM, DEFAULT_RGB_FORMATS }
    },
 
    /* basic Luminance/Alpha formats */
@@ -675,7 +675,7 @@ static struct format_mapping format_map[] = {
       { GL_LUMINANCE12_ALPHA4, GL_LUMINANCE12_ALPHA12,
         GL_LUMINANCE16_ALPHA16, 0},
       { PIPE_FORMAT_L16A16_UNORM, PIPE_FORMAT_L8A8_UNORM,
-        PIPE_FORMAT_L8A8_UNORM, DEFAULT_RGBA_FORMATS }
+        DEFAULT_RGBA_FORMATS }
    },
    {
       { 2, GL_LUMINANCE_ALPHA, GL_LUMINANCE6_ALPHA2, GL_LUMINANCE8_ALPHA8, 0 },
@@ -683,7 +683,7 @@ static struct format_mapping format_map[] = {
    },
    {
       { GL_LUMINANCE4_ALPHA4, 0 },
-      { PIPE_FORMAT_L4A4_UNORM, PIPE_FORMAT_L4A4_UNORM,
+      { PIPE_FORMAT_L4A4_UNORM, PIPE_FORMAT_L8A8_UNORM,
         DEFAULT_RGBA_FORMATS }
    },
 
@@ -707,11 +707,11 @@ static struct format_mapping format_map[] = {
    /* compressed formats */ /* XXX PIPE_BIND_SAMPLER_VIEW only */
    {
       { GL_COMPRESSED_RGB, 0 },
-      { PIPE_FORMAT_DXT1_RGB, 0 }
+      { PIPE_FORMAT_DXT1_RGB, DEFAULT_RGB_FORMATS }
    },
    {
       { GL_COMPRESSED_RGBA, 0 },
-      { PIPE_FORMAT_DXT5_RGBA, 0 }
+      { PIPE_FORMAT_DXT5_RGBA, DEFAULT_RGBA_FORMATS }
    },
    {
       { GL_RGB_S3TC, GL_RGB4_S3TC, GL_COMPRESSED_RGB_S3TC_DXT1_EXT, 0 },
@@ -737,7 +737,7 @@ static struct format_mapping format_map[] = {
    },
    {
       { GL_COMPRESSED_RGBA_FXT1_3DFX, 0 },
-      { PIPE_FORMAT_RGB_FXT1, 0 }
+      { PIPE_FORMAT_RGBA_FXT1, 0 }
    },
 #endif
 
