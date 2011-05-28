@@ -391,11 +391,12 @@ struct GalliumD3D10Device : public GalliumD3D10ScreenImpl<threadsafe>
 			{
 				samplers[s][start + i] = samps[i];
 				sampler_csos[s].v[start + i] = samps[i] ? samps[i]->object : default_sampler;
+				last_different = i;
 			}
 			if(last_different >= 0)
 			{
 				num_samplers[s] = std::max(num_samplers[s], start + last_different + 1);
-				update_flags |= (UPDATE_SAMPLERS_SHIFT + s);
+				update_flags |= 1 << (UPDATE_SAMPLERS_SHIFT + s);
 			}
 		}
 	}
