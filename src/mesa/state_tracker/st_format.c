@@ -747,7 +747,10 @@ static struct format_mapping format_map[] = {
    },
    {
       { GL_DEPTH_COMPONENT32, 0 },
-      { PIPE_FORMAT_Z32_UNORM, 0 }
+      { PIPE_FORMAT_Z32_UNORM,
+        PIPE_FORMAT_Z24X8_UNORM, PIPE_FORMAT_X8Z24_UNORM,
+        PIPE_FORMAT_Z16_UNORM,
+        PIPE_FORMAT_Z24_UNORM_S8_USCALED, PIPE_FORMAT_S8_USCALED_Z24_UNORM, 0 }
    },
    {
       { GL_DEPTH_COMPONENT, 0 },
