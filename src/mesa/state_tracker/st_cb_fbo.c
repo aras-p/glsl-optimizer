@@ -74,11 +74,8 @@ st_renderbuffer_alloc_storage(struct gl_context * ctx,
    enum pipe_format format;
    struct pipe_surface surf_tmpl;
 
-   if (strb->format != PIPE_FORMAT_NONE)
-      format = strb->format;
-   else
-      format = st_choose_renderbuffer_format(screen, internalFormat,
-                                             rb->NumSamples);
+   format = st_choose_renderbuffer_format(screen, internalFormat,
+                                          rb->NumSamples);
 
    if (format == PIPE_FORMAT_NONE) {
       return FALSE;
