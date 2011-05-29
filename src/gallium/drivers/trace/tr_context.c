@@ -1422,6 +1422,25 @@ static void trace_redefine_user_buffer(struct pipe_context *_context,
 }
 
 
+static void trace_render_condition(struct pipe_context *_context,
+                                   struct pipe_query *query,
+                                   uint mode)
+{
+   struct trace_context *tr_context = trace_context(_context);
+   struct pipe_context *context = tr_context->pipe;
+
+   trace_dump_call_begin("pipe_context", "render_condition");
+
+   trace_dump_arg(ptr, context);
+   trace_dump_arg(ptr, query);
+   trace_dump_arg(uint, mode);
+
+   trace_dump_call_end();
+
+   context->render_condition(context, query, mode);
+}
+
+
 static const struct debug_named_value rbug_blocker_flags[] = {
    {"before", 1, NULL},
    {"after", 2, NULL},
@@ -1499,6 +1518,7 @@ trace_context_create(struct trace_screen *tr_scr,
    tr_ctx->base.clear_render_target = trace_context_clear_render_target;
    tr_ctx->base.clear_depth_stencil = trace_context_clear_depth_stencil;
    tr_ctx->base.flush = trace_context_flush;
+   tr_ctx->base.render_condition = pipe->render_condition ? trace_render_condition : NULL;
 
    tr_ctx->base.get_transfer = trace_context_get_transfer;
    tr_ctx->base.transfer_destroy = trace_context_transfer_destroy;
