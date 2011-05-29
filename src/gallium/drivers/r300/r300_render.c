@@ -1200,6 +1200,9 @@ static void r300_blitter_draw_rectangle(struct blitter_context *blitter,
     const float zeros[4] = {0, 0, 0, 0};
     CS_LOCALS(r300);
 
+    if (r300->skip_rendering)
+        return;
+
     r300->context.set_vertex_buffers(&r300->context, 0, NULL);
 
     if (type == UTIL_BLITTER_ATTRIB_TEXCOORD)
