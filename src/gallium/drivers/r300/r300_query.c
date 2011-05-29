@@ -156,17 +156,15 @@ static void r300_render_condition(struct pipe_context *pipe,
     uint64_t result = 0;
     boolean wait;
 
+    r300->skip_rendering = FALSE;
+
     if (query) {
         wait = mode == PIPE_RENDER_COND_WAIT ||
                mode == PIPE_RENDER_COND_BY_REGION_WAIT;
 
-        if (!r300_get_query_result(pipe, query, wait, &result)) {
-            r300->skip_rendering = FALSE;
-        } else {
+        if (r300_get_query_result(pipe, query, wait, &result)) {
             r300->skip_rendering = result == 0;
         }
-    } else {
-        r300->skip_rendering = FALSE;
     }
 }
 
