@@ -91,8 +91,17 @@ st_render_mipmap(struct st_context *st,
       return FALSE;
    }
 
+   /* Disable conditional rendering. */
+   if (st->render_condition) {
+      pipe->render_condition(pipe, NULL, 0);
+   }
+
    util_gen_mipmap(st->gen_mipmap, psv, face, baseLevel, lastLevel,
                    PIPE_TEX_FILTER_LINEAR);
+
+   if (st->render_condition) {
+      pipe->render_condition(pipe, st->render_condition, st->condition_mode);
+   }
 
    return TRUE;
 }

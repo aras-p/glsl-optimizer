@@ -51,7 +51,8 @@ st_BeginConditionalRender(struct gl_context *ctx, struct gl_query_object *q,
                           GLenum mode)
 {
    struct st_query_object *stq = st_query_object(q);
-   struct pipe_context *pipe = st_context(ctx)->pipe;
+   struct st_context *st = st_context(ctx);
+   struct pipe_context *pipe = st->pipe;
    uint m;
 
    switch (mode) {
@@ -72,6 +73,9 @@ st_BeginConditionalRender(struct gl_context *ctx, struct gl_query_object *q,
       m = PIPE_RENDER_COND_WAIT;
    }
 
+   st->render_condition = stq->pq;
+   st->condition_mode = m;
+
    pipe->render_condition(pipe, stq->pq, m);
 }
 
@@ -82,9 +86,12 @@ st_BeginConditionalRender(struct gl_context *ctx, struct gl_query_object *q,
 static void
 st_EndConditionalRender(struct gl_context *ctx, struct gl_query_object *q)
 {
-   struct pipe_context *pipe = st_context(ctx)->pipe;
+   struct st_context *st = st_context(ctx);
+   struct pipe_context *pipe = st->pipe;
    (void) q;
+
    pipe->render_condition(pipe, NULL, 0);
+   st->render_condition = NULL;
 }
 
 
