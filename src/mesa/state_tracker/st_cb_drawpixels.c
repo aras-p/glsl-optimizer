@@ -1247,7 +1247,8 @@ blit_copy_pixels(struct gl_context *ctx, GLint srcx, GLint srcy,
        !ctx->VertexProgram.Enabled &&
        !ctx->Shader.CurrentFragmentProgram &&
        st_fb_orientation(ctx->ReadBuffer) == st_fb_orientation(ctx->DrawBuffer) &&
-       ctx->DrawBuffer->_NumColorDrawBuffers == 1) {
+       ctx->DrawBuffer->_NumColorDrawBuffers == 1 &&
+       !ctx->Query.CondRenderQuery) {
       struct st_renderbuffer *rbRead, *rbDraw;
       GLint drawX, drawY;
 
