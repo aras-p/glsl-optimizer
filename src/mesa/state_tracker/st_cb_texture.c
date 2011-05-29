@@ -1556,6 +1556,11 @@ st_copy_texsubimage(struct gl_context *ctx,
             srcY1 = srcY0 + height;
          }
 
+         /* Disable conditional rendering. */
+         if (st->render_condition) {
+            pipe->render_condition(pipe, NULL, 0);
+         }
+
          util_blit_pixels_writemask(st->blit,
                                     strb->texture,
                                     strb->surface->u.tex.level,
@@ -1567,6 +1572,13 @@ st_copy_texsubimage(struct gl_context *ctx,
                                     destX + width, destY + height,
                                     0.0, PIPE_TEX_MIPFILTER_NEAREST,
                                     format_writemask);
+
+         /* Restore conditional rendering state. */
+         if (st->render_condition) {
+            pipe->render_condition(pipe, st->render_condition,
+                                   st->condition_mode);
+         }
+
          use_fallback = GL_FALSE;
       }
 
