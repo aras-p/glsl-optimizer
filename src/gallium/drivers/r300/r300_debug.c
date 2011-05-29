@@ -43,7 +43,6 @@ static const struct debug_named_value debug_options[] = {
     { "hyperz", DBG_HYPERZ, "Log HyperZ info" },
     { "upload", DBG_UPLOAD, "Log user buffer upload info" },
     { "scissor", DBG_SCISSOR, "Log scissor info" },
-    { "fakeocc", DBG_FAKE_OCC, "Use fake occlusion queries" },
     { "anisohq", DBG_ANISOHQ, "Use high quality anisotropic filtering" },
     { "notiling", DBG_NO_TILING, "Disable tiling" },
     { "noimmd", DBG_NO_IMMD, "Disable immediate mode" },

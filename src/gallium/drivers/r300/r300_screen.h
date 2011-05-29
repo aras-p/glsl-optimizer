@@ -100,7 +100,7 @@ radeon_winsys(struct pipe_screen *screen) {
 #define DBG_ANISOHQ     (1 << 16)
 #define DBG_NO_TILING   (1 << 17)
 #define DBG_NO_IMMD     (1 << 18)
-#define DBG_FAKE_OCC    (1 << 19)
+/* gap - fill it */
 #define DBG_NO_OPT      (1 << 20)
 #define DBG_NO_CBZB     (1 << 21)
 #define DBG_NO_ZMASK    (1 << 22)
