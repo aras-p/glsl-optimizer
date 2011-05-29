@@ -1593,6 +1593,8 @@ _mesa_UseProgramObjectARB(GLhandleARB program)
    struct gl_transform_feedback_object *obj =
       ctx->TransformFeedback.CurrentObject;
 
+   ASSERT_OUTSIDE_BEGIN_END(ctx);
+
    if (obj->Active) {
       _mesa_error(ctx, GL_INVALID_OPERATION,
                   "glUseProgram(transform feedback active)");
