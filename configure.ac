@@ -1839,7 +1839,7 @@ if test "x$enable_gallium_r300" = xauto; then
     gallium_check_st "radeon/drm" "dri-r300"
 elif test "x$enable_gallium_r300" = xyes; then
     GALLIUM_DRIVERS_DIRS="$GALLIUM_DRIVERS_DIRS r300"
-    gallium_check_st "radeon/drm" "dri-r300" "xorg-radeon"
+    gallium_check_st "radeon/drm" "dri-r300" "xorg-radeon" "xvmc-r300" "vdpau-r300" "va-r300"
 fi
 
 dnl

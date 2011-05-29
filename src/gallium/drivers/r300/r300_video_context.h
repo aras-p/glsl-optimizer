@@ -19,22 +19,12 @@
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-/*
- * Authors:
- *   CooperYuan <cooper.yuan@amd.com>, <cooperyuan@gmail.com>
- */
-
 #ifndef __R300_VIDEO_CONTEXT_H__
 #define __R300_VIDEO_CONTEXT_H__
 
 #include <pipe/p_video_context.h>
 
-struct pipe_context;
-
-struct pipe_video_context*
-r300_video_create(struct pipe_context *pipe, enum pipe_video_profile profile,
-                  enum pipe_video_chroma_format chroma_format,
-                  unsigned width, unsigned height,
-                  unsigned pvctx_id);
+struct pipe_video_context *
+r300_video_create(struct pipe_screen *screen, void *priv);
 
 #endif
