@@ -37,7 +37,6 @@ static const struct debug_named_value debug_options[] = {
     { "psc", DBG_PSC, "Log vertex stream registers" },
     { "tex", DBG_TEX, "Log basic info about textures" },
     { "texalloc", DBG_TEXALLOC, "Log texture mipmap tree info" },
-    { "fall", DBG_FALL, "Log fallbacks" },
     { "rs", DBG_RS, "Log rasterizer" },
     { "fb", DBG_FB, "Log framebuffer" },
     { "cbzb", DBG_CBZB, "Log fast color clear info" },
