@@ -136,11 +136,11 @@ create_vert_shader(struct vl_zscan *zscan)
    ureg_MUL(shader, ureg_writemask(o_vpos, TGSI_WRITEMASK_XY), ureg_src(tmp), scale);
    ureg_MOV(shader, ureg_writemask(o_vpos, TGSI_WRITEMASK_ZW), ureg_imm1f(shader, 1.0f));
 
-   ureg_MUL(shader, ureg_writemask(tmp, TGSI_WRITEMASK_XZ), ureg_scalar(instance, TGSI_SWIZZLE_X),
+   ureg_MUL(shader, ureg_writemask(tmp, TGSI_WRITEMASK_XW), ureg_scalar(instance, TGSI_SWIZZLE_X),
             ureg_imm1f(shader, 1.0f / zscan->blocks_per_line));
 
    ureg_FRC(shader, ureg_writemask(tmp, TGSI_WRITEMASK_Y), ureg_scalar(ureg_src(tmp), TGSI_SWIZZLE_X));
-   ureg_FLR(shader, ureg_writemask(tmp, TGSI_WRITEMASK_Z), ureg_src(tmp));
+   ureg_FLR(shader, ureg_writemask(tmp, TGSI_WRITEMASK_W), ureg_src(tmp));
 
    for (i = 0; i < zscan->num_channels; ++i) {
       ureg_ADD(shader, ureg_writemask(tmp, TGSI_WRITEMASK_X), ureg_scalar(ureg_src(tmp), TGSI_SWIZZLE_Y),
@@ -149,7 +149,8 @@ create_vert_shader(struct vl_zscan *zscan)
       ureg_MAD(shader, ureg_writemask(o_vtex[i], TGSI_WRITEMASK_X), vrect,
                ureg_imm1f(shader, 1.0f / zscan->blocks_per_line), ureg_src(tmp));
       ureg_MOV(shader, ureg_writemask(o_vtex[i], TGSI_WRITEMASK_Y), vrect);
-      ureg_MUL(shader, ureg_writemask(o_vtex[i], TGSI_WRITEMASK_Z), ureg_src(tmp),
+      ureg_MOV(shader, ureg_writemask(o_vtex[i], TGSI_WRITEMASK_Z), vpos);
+      ureg_MUL(shader, ureg_writemask(o_vtex[i], TGSI_WRITEMASK_W), ureg_src(tmp),
                ureg_imm1f(shader, (float)zscan->blocks_per_line / zscan->blocks_total));
    }
 
@@ -165,10 +166,10 @@ create_frag_shader(struct vl_zscan *zscan)
    struct ureg_program *shader;
    struct ureg_src vtex[zscan->num_channels];
 
-   struct ureg_src src, scan, quant;
+   struct ureg_src samp_src, samp_scan, samp_quant;
 
    struct ureg_dst tmp[zscan->num_channels];
-   struct ureg_dst fragment;
+   struct ureg_dst quant, fragment;
 
    unsigned i;
 
@@ -179,12 +180,13 @@ create_frag_shader(struct vl_zscan *zscan)
    for (i = 0; i < zscan->num_channels; ++i)
       vtex[i] = ureg_DECL_fs_input(shader, TGSI_SEMANTIC_GENERIC, VS_O_VTEX + i, TGSI_INTERPOLATE_LINEAR);
 
-   src = ureg_DECL_sampler(shader, 0);
-   scan = ureg_DECL_sampler(shader, 1);
-   quant = ureg_DECL_sampler(shader, 2);
+   samp_src = ureg_DECL_sampler(shader, 0);
+   samp_scan = ureg_DECL_sampler(shader, 1);
+   samp_quant = ureg_DECL_sampler(shader, 2);
 
    for (i = 0; i < zscan->num_channels; ++i)
       tmp[i] = ureg_DECL_temporary(shader);
+   quant = ureg_DECL_temporary(shader);
 
    fragment = ureg_DECL_output(shader, TGSI_SEMANTIC_COLOR, 0);
 
@@ -194,17 +196,18 @@ create_frag_shader(struct vl_zscan *zscan)
     * fragment = tex(tmp, 0) * quant
     */
    for (i = 0; i < zscan->num_channels; ++i)
-      ureg_TEX(shader, ureg_writemask(tmp[i], TGSI_WRITEMASK_X), TGSI_TEXTURE_2D, vtex[i], scan);
+      ureg_TEX(shader, ureg_writemask(tmp[i], TGSI_WRITEMASK_X), TGSI_TEXTURE_2D, vtex[i], samp_scan);
 
    for (i = 0; i < zscan->num_channels; ++i)
-      ureg_MOV(shader, ureg_writemask(tmp[i], TGSI_WRITEMASK_Y), ureg_scalar(vtex[i], TGSI_SWIZZLE_Z));
+      ureg_MOV(shader, ureg_writemask(tmp[i], TGSI_WRITEMASK_Y), ureg_scalar(vtex[i], TGSI_SWIZZLE_W));
 
-   for (i = 0; i < zscan->num_channels; ++i)
-      ureg_TEX(shader, tmp[i], TGSI_TEXTURE_2D, ureg_src(tmp[i]), src);
+   for (i = 0; i < zscan->num_channels; ++i) {
+      ureg_TEX(shader, ureg_writemask(tmp[0], TGSI_WRITEMASK_X << i), TGSI_TEXTURE_2D, ureg_src(tmp[i]), samp_src);
+      ureg_TEX(shader, ureg_writemask(quant, TGSI_WRITEMASK_X << i), TGSI_TEXTURE_3D, vtex[i], samp_quant);
+   }
 
-   // TODO: Fetch quant and use it
-   for (i = 0; i < zscan->num_channels; ++i)
-      ureg_MUL(shader, ureg_writemask(fragment, TGSI_WRITEMASK_X << i), ureg_src(tmp[i]), ureg_imm1f(shader, 1.0f));
+   ureg_MUL(shader, quant, ureg_src(quant), ureg_imm1f(shader, 16.0f));
+   ureg_MUL(shader, fragment, ureg_src(tmp[0]), ureg_src(quant));
 
    for (i = 0; i < zscan->num_channels; ++i)
       ureg_release_temporary(shader, tmp[i]);
@@ -283,7 +286,7 @@ init_state(struct vl_zscan *zscan)
       memset(&sampler, 0, sizeof(sampler));
       sampler.wrap_s = PIPE_TEX_WRAP_REPEAT;
       sampler.wrap_t = PIPE_TEX_WRAP_REPEAT;
-      sampler.wrap_r = PIPE_TEX_WRAP_REPEAT;
+      sampler.wrap_r = PIPE_TEX_WRAP_CLAMP_TO_EDGE;
       sampler.min_img_filter = PIPE_TEX_FILTER_NEAREST;
       sampler.min_mip_filter = PIPE_TEX_MIPFILTER_NONE;
       sampler.mag_img_filter = PIPE_TEX_FILTER_NEAREST;
@@ -413,15 +416,6 @@ error_resource:
    return NULL;
 }
 
-#if 0
-// TODO
-struct pipe_sampler_view *
-vl_zscan_normal(struct pipe_context *pipe, unsigned blocks_per_line);
-
-struct pipe_sampler_view *
-vl_zscan_alternate(struct pipe_context *pipe, unsigned blocks_per_line);
-#endif
-
 bool
 vl_zscan_init(struct vl_zscan *zscan, struct pipe_context *pipe,
               unsigned buffer_width, unsigned buffer_height,
@@ -457,16 +451,13 @@ vl_zscan_cleanup(struct vl_zscan *zscan)
    cleanup_state(zscan);
 }
 
-#if 0
-// TODO
-void
-vl_zscan_upload_quant(struct vl_zscan *zscan, ...);
-#endif
-
 bool
 vl_zscan_init_buffer(struct vl_zscan *zscan, struct vl_zscan_buffer *buffer,
                      struct pipe_sampler_view *src, struct pipe_surface *dst)
 {
+   struct pipe_resource res_tmpl, *res;
+   struct pipe_sampler_view sv_tmpl;
+
    assert(zscan && buffer);
 
    memset(buffer, 0, sizeof(struct vl_zscan_buffer));
@@ -488,6 +479,28 @@ vl_zscan_init_buffer(struct vl_zscan *zscan, struct vl_zscan_buffer *buffer,
    buffer->fb_state.height = dst->height;
    buffer->fb_state.nr_cbufs = 1;
    pipe_surface_reference(&buffer->fb_state.cbufs[0], dst);
+
+   memset(&res_tmpl, 0, sizeof(res_tmpl));
+   res_tmpl.target = PIPE_TEXTURE_3D;
+   res_tmpl.format = PIPE_FORMAT_R8_UNORM;
+   res_tmpl.width0 = BLOCK_WIDTH * zscan->blocks_per_line;
+   res_tmpl.height0 = BLOCK_HEIGHT;
+   res_tmpl.depth0 = 2;
+   res_tmpl.array_size = 1;
+   res_tmpl.usage = PIPE_USAGE_IMMUTABLE;
+   res_tmpl.bind = PIPE_BIND_SAMPLER_VIEW;
+
+   res = zscan->pipe->screen->resource_create(zscan->pipe->screen, &res_tmpl);
+   if (!res)
+      return false;
+
+   memset(&sv_tmpl, 0, sizeof(sv_tmpl));
+   u_sampler_view_default_template(&sv_tmpl, res, res->format);
+   sv_tmpl.swizzle_r = sv_tmpl.swizzle_g = sv_tmpl.swizzle_b = sv_tmpl.swizzle_a = TGSI_SWIZZLE_X;
+   buffer->quant = zscan->pipe->create_sampler_view(zscan->pipe, res, &sv_tmpl);
+   pipe_resource_reference(&res, NULL);
+   if (!buffer->quant)
+      return false;
 
    return true;
 }
@@ -513,6 +526,65 @@ vl_zscan_set_layout(struct vl_zscan_buffer *buffer, struct pipe_sampler_view *la
 }
 
 void
+vl_zscan_upload_quant(struct vl_zscan_buffer *buffer,
+                      const uint8_t intra_matrix[64],
+                      const uint8_t non_intra_matrix[64])
+{
+   struct pipe_context *pipe;
+   struct pipe_transfer *buf_transfer;
+   unsigned x, y, i, pitch;
+   uint8_t *intra, *non_intra;
+
+   struct pipe_box rect =
+   {
+      0, 0, 0,
+      BLOCK_WIDTH,
+      BLOCK_HEIGHT,
+      2
+   };
+
+   assert(buffer);
+   assert(intra_matrix);
+   assert(non_intra_matrix);
+
+   pipe = buffer->zscan->pipe;
+
+   rect.width *= buffer->zscan->blocks_per_line;
+
+   buf_transfer = pipe->get_transfer
+   (
+      pipe, buffer->quant->texture,
+      0, PIPE_TRANSFER_WRITE | PIPE_TRANSFER_DISCARD,
+      &rect
+   );
+   if (!buf_transfer)
+      goto error_transfer;
+
+   pitch = buf_transfer->stride;
+
+   non_intra = pipe->transfer_map(pipe, buf_transfer);
+   if (!non_intra)
+      goto error_map;
+
+   intra = non_intra + BLOCK_HEIGHT * pitch;
+
+   for (i = 0; i < buffer->zscan->blocks_per_line; ++i)
+      for (y = 0; y < BLOCK_HEIGHT; ++y)
+         for (x = 0; x < BLOCK_WIDTH; ++x) {
+            intra[i * BLOCK_WIDTH + y * pitch + x] = intra_matrix[x + y * BLOCK_WIDTH];
+            non_intra[i * BLOCK_WIDTH + y * pitch + x] = non_intra_matrix[x + y * BLOCK_WIDTH];
+         }
+
+   pipe->transfer_unmap(pipe, buf_transfer);
+
+error_map:
+   pipe->transfer_destroy(pipe, buf_transfer);
+
+error_transfer:
+   return;
+}
+
+void
 vl_zscan_render(struct vl_zscan_buffer *buffer, unsigned num_instances)
 {
    struct vl_zscan *zscan;
@@ -523,10 +595,10 @@ vl_zscan_render(struct vl_zscan_buffer *buffer, unsigned num_instances)
 
    zscan->pipe->bind_rasterizer_state(zscan->pipe, zscan->rs_state);
    zscan->pipe->bind_blend_state(zscan->pipe, zscan->blend);
-   zscan->pipe->bind_fragment_sampler_states(zscan->pipe, 2, zscan->samplers);
+   zscan->pipe->bind_fragment_sampler_states(zscan->pipe, 3, zscan->samplers);
    zscan->pipe->set_framebuffer_state(zscan->pipe, &buffer->fb_state);
    zscan->pipe->set_viewport_state(zscan->pipe, &buffer->viewport);
-   zscan->pipe->set_fragment_sampler_views(zscan->pipe, 2, &buffer->src);
+   zscan->pipe->set_fragment_sampler_views(zscan->pipe, 3, &buffer->src);
    zscan->pipe->bind_vs_state(zscan->pipe, zscan->vs);
    zscan->pipe->bind_fs_state(zscan->pipe, zscan->fs);
    util_draw_arrays_instanced(zscan->pipe, PIPE_PRIM_QUADS, 0, 4, 0, num_instances);

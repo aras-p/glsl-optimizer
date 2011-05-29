@@ -312,8 +312,21 @@ vl_mpeg12_buffer_map(struct pipe_video_decode_buffer *buffer)
 
       vl_mpg12_bs_set_buffers(&buf->bs, ycbcr_stream, buf->texels, mv_stream);
    } else {
-      for (i = 0; i < VL_MAX_PLANES; ++i)
+      static const uint8_t dummy_quant[64] = {
+         0x10, 0x10, 0x10, 0x10, 0x10, 0x10, 0x10, 0x10,
+         0x10, 0x10, 0x10, 0x10, 0x10, 0x10, 0x10, 0x10,
+         0x10, 0x10, 0x10, 0x10, 0x10, 0x10, 0x10, 0x10,
+         0x10, 0x10, 0x10, 0x10, 0x10, 0x10, 0x10, 0x10,
+         0x10, 0x10, 0x10, 0x10, 0x10, 0x10, 0x10, 0x10,
+         0x10, 0x10, 0x10, 0x10, 0x10, 0x10, 0x10, 0x10,
+         0x10, 0x10, 0x10, 0x10, 0x10, 0x10, 0x10, 0x10,
+         0x10, 0x10, 0x10, 0x10, 0x10, 0x10, 0x10, 0x10
+      };
+
+      for (i = 0; i < VL_MAX_PLANES; ++i) {
          vl_zscan_set_layout(&buf->zscan[i], dec->zscan_linear);
+         vl_zscan_upload_quant(&buf->zscan[i], dummy_quant, dummy_quant);
+      }
    }
 }
 
@@ -365,6 +378,7 @@ vl_mpeg12_buffer_decode_bitstream(struct pipe_video_decode_buffer *buffer,
                                   unsigned num_ycbcr_blocks[3])
 {
    struct vl_mpeg12_buffer *buf = (struct vl_mpeg12_buffer*)buffer;
+   uint8_t intra_quantizer_matrix[64];
    struct vl_mpeg12_decoder *dec;
    unsigned i;
 
@@ -373,8 +387,13 @@ vl_mpeg12_buffer_decode_bitstream(struct pipe_video_decode_buffer *buffer,
    dec = (struct vl_mpeg12_decoder *)buf->base.decoder;
    assert(dec);
 
-   for (i = 0; i < VL_MAX_PLANES; ++i)
+   memcpy(intra_quantizer_matrix, picture->intra_quantizer_matrix, sizeof(intra_quantizer_matrix));
+   intra_quantizer_matrix[0] = 1 << (7 - picture->intra_dc_precision);
+
+   for (i = 0; i < VL_MAX_PLANES; ++i) {
       vl_zscan_set_layout(&buf->zscan[i], picture->alternate_scan ? dec->zscan_alternate : dec->zscan_normal);
+      vl_zscan_upload_quant(&buf->zscan[i], intra_quantizer_matrix, picture->non_intra_quantizer_matrix);
+   }
 
    vl_mpg12_bs_decode(&buf->bs, num_bytes, data, picture, num_ycbcr_blocks);
 }

@@ -53,8 +53,6 @@ struct vl_zscan
    void *samplers[3];
 
    void *vs, *fs;
-
-   struct pipe_sampler_view *quant;
 };
 
 struct vl_zscan_buffer
@@ -84,11 +82,6 @@ vl_zscan_init(struct vl_zscan *zscan, struct pipe_context *pipe,
 void
 vl_zscan_cleanup(struct vl_zscan *zscan);
 
-#if 0
-void
-vl_zscan_upload_quant(struct vl_zscan *zscan, ...);
-#endif
-
 bool
 vl_zscan_init_buffer(struct vl_zscan *zscan, struct vl_zscan_buffer *buffer,
                      struct pipe_sampler_view *src, struct pipe_surface *dst);
@@ -98,6 +91,11 @@ vl_zscan_cleanup_buffer(struct vl_zscan_buffer *buffer);
 
 void
 vl_zscan_set_layout(struct vl_zscan_buffer *buffer, struct pipe_sampler_view *layout);
+
+void
+vl_zscan_upload_quant(struct vl_zscan_buffer *buffer,
+                      const uint8_t intra_matrix[64],
+                      const uint8_t non_intra_matrix[64]);
 
 void
 vl_zscan_render(struct vl_zscan_buffer *buffer, unsigned num_instances);
