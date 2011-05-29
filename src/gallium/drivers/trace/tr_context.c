@@ -1441,6 +1441,21 @@ static void trace_render_condition(struct pipe_context *_context,
 }
 
 
+static void trace_texture_barrier(struct pipe_context *_context)
+{
+   struct trace_context *tr_context = trace_context(_context);
+   struct pipe_context *context = tr_context->pipe;
+
+   trace_dump_call_begin("pipe_context", "texture_barrier");
+
+   trace_dump_arg(ptr, context);
+
+   trace_dump_call_end();
+
+   context->texture_barrier(context);
+}
+
+
 static const struct debug_named_value rbug_blocker_flags[] = {
    {"before", 1, NULL},
    {"after", 2, NULL},
@@ -1519,6 +1534,7 @@ trace_context_create(struct trace_screen *tr_scr,
    tr_ctx->base.clear_depth_stencil = trace_context_clear_depth_stencil;
    tr_ctx->base.flush = trace_context_flush;
    tr_ctx->base.render_condition = pipe->render_condition ? trace_render_condition : NULL;
+   tr_ctx->base.texture_barrier = pipe->texture_barrier ? trace_texture_barrier : NULL;
 
    tr_ctx->base.get_transfer = trace_context_get_transfer;
    tr_ctx->base.transfer_destroy = trace_context_transfer_destroy;
