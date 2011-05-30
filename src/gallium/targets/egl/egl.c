@@ -37,6 +37,12 @@
 #include "state_tracker/drm_driver.h"
 #include "common/egl_g3d_loader.h"
 
+#ifdef HAVE_LIBUDEV
+#include <libudev.h>
+#define DRIVER_MAP_GALLIUM_ONLY
+#include "pci_ids/pci_id_driver_map.h"
+#endif
+
 #include "egl.h"
 
 struct egl_g3d_loader egl_g3d_loader;
@@ -306,10 +312,83 @@ get_pipe_module(const char *name)
    return pmod;
 }
 
+static char *
+drm_fd_get_screen_name(int fd)
+{
+   char *driver = NULL;
+#ifdef HAVE_LIBUDEV
+   struct udev *udev;
+   struct udev_device *device, *parent;
+   struct stat buf;
+   const char *pci_id;
+   int vendor_id, chip_id, i, j;
+
+   udev = udev_new();
+   if (fstat(fd, &buf) < 0) {
+      _eglLog(_EGL_WARNING, "failed to stat fd %d", fd);
+      return NULL;
+   }
+
+   device = udev_device_new_from_devnum(udev, 'c', buf.st_rdev);
+   if (device == NULL) {
+      _eglLog(_EGL_WARNING,
+              "could not create udev device for fd %d", fd);
+      return NULL;
+   }
+
+   parent = udev_device_get_parent(device);
+   if (parent == NULL) {
+      _eglLog(_EGL_WARNING, "could not get parent device");
+      goto out;
+   }
+
+   pci_id = udev_device_get_property_value(parent, "PCI_ID");
+   if (pci_id == NULL ||
+       sscanf(pci_id, "%x:%x", &vendor_id, &chip_id) != 2) {
+      _eglLog(_EGL_WARNING, "malformed or no PCI ID");
+      goto out;
+   }
+
+   for (i = 0; driver_map[i].driver; i++) {
+      if (vendor_id != driver_map[i].vendor_id)
+         continue;
+      if (driver_map[i].num_chips_ids == -1) {
+         driver = strdup(driver_map[i].driver);
+         _eglLog(_EGL_WARNING,
+                 "pci id for %d: %04x:%04x, driver %s",
+                 fd, vendor_id, chip_id, driver);
+         goto out;
+      }
+
+      for (j = 0; j < driver_map[i].num_chips_ids; j++)
+         if (driver_map[i].chip_ids[j] == chip_id) {
+            driver = strdup(driver_map[i].driver);
+            _eglLog(_EGL_WARNING,
+                    "pci id for %d: %04x:%04x, driver %s",
+                    fd, vendor_id, chip_id, driver);
+            goto out;
+         }
+   }
+
+out:
+   udev_device_unref(device);
+   udev_unref(udev);
+
+#endif
+   return driver;
+}
+
 static struct pipe_screen *
 create_drm_screen(const char *name, int fd)
 {
-   struct pipe_module *pmod = get_pipe_module(name);
+   struct pipe_module *pmod;
+   const char *screen_name = name;
+   
+   if (screen_name == NULL)
+      if ((screen_name = drm_fd_get_screen_name(fd)) == NULL)
+         return NULL;
+   pmod = get_pipe_module(screen_name);
+
    return (pmod && pmod->drmdd && pmod->drmdd->create_screen) ?
       pmod->drmdd->create_screen(fd) : NULL;
 }
