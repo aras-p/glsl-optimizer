@@ -44,6 +44,8 @@
 #include <GL/gl.h>
 #include <GL/internal/dri_interface.h>
 
+#include <gbm_driint.h>
+
 #include "eglconfig.h"
 #include "eglcontext.h"
 #include "egldisplay.h"
@@ -78,6 +80,8 @@ struct dri2_egl_display
    __DRItexBufferExtension  *tex_buffer;
    __DRIimageExtension      *image;
    int                       fd;
+
+   struct gbm_dri_device    *gbm_dri;
 
    char                     *device_name;
    char                     *driver_name;
@@ -185,11 +189,18 @@ extern const __DRIuseInvalidateExtension use_invalidate;
 EGLBoolean
 dri2_load_driver(_EGLDisplay *disp);
 
+/* Helper for platforms not using dri2_create_screen */
+void
+dri2_setup_screen(_EGLDisplay *disp);
+
 EGLBoolean
 dri2_load_driver_swrast(_EGLDisplay *disp);
 
 EGLBoolean
 dri2_create_screen(_EGLDisplay *disp);
+
+__DRIimage *
+dri2_lookup_egl_image(__DRIscreen *screen, void *image, void *data);
 
 struct dri2_egl_config *
 dri2_add_config(_EGLDisplay *disp, const __DRIconfig *dri_config, int id,

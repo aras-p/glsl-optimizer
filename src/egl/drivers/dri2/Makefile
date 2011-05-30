@@ -10,6 +10,8 @@ EGL_INCLUDES = \
 	-I$(TOP)/include \
 	-I$(TOP)/src/egl/main \
 	-I$(TOP)/src/mapi \
+	-I$(TOP)/src/gbm/main \
+	-I$(TOP)/src/gbm/backends/dri \
 	-DDEFAULT_DRIVER_DIR=\"$(DRI_DRIVER_SEARCH_DIR)\" \
 	$(LIBUDEV_CFLAGS) \
 	$(LIBDRM_CFLAGS)

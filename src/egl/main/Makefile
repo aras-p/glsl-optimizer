@@ -61,8 +61,12 @@ LOCAL_LIBS += $(TOP)/src/egl/drivers/dri2/libegl_dri2.a
 ifneq ($(findstring x11, $(EGL_PLATFORMS)),)
 EGL_LIB_DEPS += $(XCB_DRI2_LIBS)
 endif
+ifneq ($(findstring drm, $(EGL_PLATFORMS)),)
+EGL_LIB_DEPS += -lgbm
+endif
 EGL_LIB_DEPS += $(LIBUDEV_LIBS) $(DLOPEN_LIBS) $(LIBDRM_LIB) $(WAYLAND_LIBS)
 endif
+
 
 ifneq ($(findstring wayland, $(EGL_PLATFORMS)),)
 LOCAL_LIBS += $(TOP)/src/egl/wayland/wayland-drm/libwayland-drm.a
