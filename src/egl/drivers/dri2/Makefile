@@ -4,7 +4,7 @@ TOP = ../../../..
 include $(TOP)/configs/current
 
 EGL_DRIVER = egl_dri2
-EGL_SOURCES = egl_dri2.c platform_drm.c
+EGL_SOURCES = egl_dri2.c platform_drm.c common.c
 
 EGL_INCLUDES = \
 	-I$(TOP)/include \
