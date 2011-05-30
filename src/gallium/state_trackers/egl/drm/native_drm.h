@@ -154,4 +154,8 @@ drm_display_init_modeset(struct native_display *ndpy);
 void
 drm_display_fini_modeset(struct native_display *ndpy);
 
+struct native_surface *
+drm_display_create_surface_from_resource(struct native_display *ndpy,
+                                         struct pipe_resource *resource);
+
 #endif /* _NATIVE_DRM_H_ */

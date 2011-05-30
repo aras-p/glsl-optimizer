@@ -72,10 +72,26 @@ egl_g3d_new_sw_screen(struct native_display *ndpy, struct sw_winsys *ws)
    return gdpy->loader->create_sw_screen(ws);
 }
 
+static struct pipe_resource *
+egl_g3d_lookup_egl_image(struct native_display *ndpy, void *egl_image)
+{
+   _EGLDisplay *dpy = (_EGLDisplay *) ndpy->user_data;
+   struct egl_g3d_display *gdpy = egl_g3d_display(dpy);
+   struct st_egl_image img;
+   struct pipe_resource *resource = NULL;
+
+   memset(&img, 0, sizeof(img));
+   if (gdpy->smapi->get_egl_image(gdpy->smapi, egl_image, &img))
+      resource = img.texture;
+
+   return resource;
+}
+
 static struct native_event_handler egl_g3d_native_event_handler = {
    egl_g3d_invalid_surface,
    egl_g3d_new_drm_screen,
-   egl_g3d_new_sw_screen
+   egl_g3d_new_sw_screen,
+   egl_g3d_lookup_egl_image
 };
 
 /**

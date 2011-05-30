@@ -290,6 +290,42 @@ drm_display_create_surface(struct native_display *ndpy,
    return drmsurf;
 }
 
+struct native_surface *
+drm_display_create_surface_from_resource(struct native_display *ndpy,
+                                         struct pipe_resource *resource)
+{
+   struct drm_display *drmdpy = drm_display(ndpy);
+   struct drm_surface *drmsurf;
+   enum native_attachment natt = NATIVE_ATTACHMENT_FRONT_LEFT;
+
+   drmsurf = CALLOC_STRUCT(drm_surface);
+   if (!drmsurf)
+      return NULL;
+
+   drmsurf->drmdpy = drmdpy;
+   drmsurf->color_format = resource->format;
+   drmsurf->width = resource->width0;
+   drmsurf->height = resource->height0;
+   drmsurf->have_pageflip = FALSE;
+
+   drmsurf->rsurf = resource_surface_create(drmdpy->base.screen,
+         drmsurf->color_format,
+         PIPE_BIND_RENDER_TARGET |
+         PIPE_BIND_SAMPLER_VIEW |
+         PIPE_BIND_DISPLAY_TARGET |
+         PIPE_BIND_SCANOUT);
+   
+   resource_surface_import_resource(drmsurf->rsurf, natt, resource);
+
+   drmsurf->base.destroy = drm_surface_destroy;
+   drmsurf->base.present = drm_surface_present;
+   drmsurf->base.validate = drm_surface_validate;
+   drmsurf->base.wait = drm_surface_wait;
+
+   return &drmsurf->base;
+}
+        
+
 /**
  * Choose a CRTC that supports all given connectors.
  */

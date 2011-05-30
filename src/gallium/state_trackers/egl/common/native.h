@@ -219,6 +219,9 @@ struct native_event_handler {
                                          const char *name, int fd);
    struct pipe_screen *(*new_sw_screen)(struct native_display *ndpy,
                                         struct sw_winsys *ws);
+
+   struct pipe_resource *(*lookup_egl_image)(struct native_display *ndpy,
+                                             void *egl_image);
 };
 
 /**
