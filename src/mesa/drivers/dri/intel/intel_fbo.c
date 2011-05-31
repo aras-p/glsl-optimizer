@@ -579,16 +579,12 @@ intel_render_texture(struct gl_context * ctx,
                      struct gl_framebuffer *fb,
                      struct gl_renderbuffer_attachment *att)
 {
-   struct gl_texture_image *newImage
-      = att->Texture->Image[att->CubeMapFace][att->TextureLevel];
+   struct gl_texture_image *image = _mesa_get_attachment_teximage(att);
    struct intel_renderbuffer *irb = intel_renderbuffer(att->Renderbuffer);
-   struct intel_texture_image *intel_image;
+   struct intel_texture_image *intel_image = intel_texture_image(image);
 
    (void) fb;
 
-   ASSERT(newImage);
-
-   intel_image = intel_texture_image(newImage);
    if (!intel_image->mt) {
       /* Fallback on drawing to a texture that doesn't have a miptree
        * (has a border, width/height 0, etc.)
@@ -598,7 +594,7 @@ intel_render_texture(struct gl_context * ctx,
       return;
    }
    else if (!irb) {
-      irb = intel_wrap_texture(ctx, newImage);
+      irb = intel_wrap_texture(ctx, image);
       if (irb) {
          /* bind the wrapper to the attachment point */
          _mesa_reference_renderbuffer(&att->Renderbuffer, &irb->Base);
@@ -610,7 +606,7 @@ intel_render_texture(struct gl_context * ctx,
       }
    }
 
-   if (!intel_update_wrapper(ctx, irb, newImage)) {
+   if (!intel_update_wrapper(ctx, irb, image)) {
        _mesa_reference_renderbuffer(&att->Renderbuffer, NULL);
        _swrast_render_texture(ctx, fb, att);
        return;
@@ -618,7 +614,7 @@ intel_render_texture(struct gl_context * ctx,
 
    DBG("Begin render texture tid %lx tex=%u w=%d h=%d refcount=%d\n",
        _glthread_GetID(),
-       att->Texture->Name, newImage->Width, newImage->Height,
+       att->Texture->Name, image->Width, image->Height,
        irb->Base.RefCount);
 
    intel_renderbuffer_set_draw_offset(irb, intel_image, att->Zoffset);
@@ -644,7 +640,7 @@ intel_render_texture(struct gl_context * ctx,
 
       texel_bytes = _mesa_get_format_bytes(intel_image->base.TexFormat);
 
-      new_mt = intel_miptree_create(intel, newImage->TexObject->Target,
+      new_mt = intel_miptree_create(intel, image->TexObject->Target,
 				    intel_image->base._BaseFormat,
 				    intel_image->base.InternalFormat,
 				    intel_image->level,
