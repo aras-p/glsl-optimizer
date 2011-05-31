@@ -82,6 +82,12 @@ int r600_context_add_block(struct r600_context *ctx, const struct r600_reg *reg,
 			continue;
 		}
 
+		/* ignore regs not on R600 on R600 */
+		if ((reg[i].flags & REG_FLAG_NOT_R600) && ctx->radeon->family == CHIP_R600) {
+			n = 1;
+			continue;
+		}
+
 		/* register that need relocation are in their own group */
 		/* find number of consecutive registers */
 		n = 0;
@@ -321,14 +327,14 @@ static const struct r600_reg r600_context_reg_list[] = {
 	{R_0286DC_SPI_FOG_CNTL, 0, 0, 0},
 	{R_0286E0_SPI_FOG_FUNC_SCALE, 0, 0, 0},
 	{R_0286E4_SPI_FOG_FUNC_BIAS, 0, 0, 0},
-	{R_028780_CB_BLEND0_CONTROL, 0, 0, 0},
-	{R_028784_CB_BLEND1_CONTROL, 0, 0, 0},
-	{R_028788_CB_BLEND2_CONTROL, 0, 0, 0},
-	{R_02878C_CB_BLEND3_CONTROL, 0, 0, 0},
-	{R_028790_CB_BLEND4_CONTROL, 0, 0, 0},
-	{R_028794_CB_BLEND5_CONTROL, 0, 0, 0},
-	{R_028798_CB_BLEND6_CONTROL, 0, 0, 0},
-	{R_02879C_CB_BLEND7_CONTROL, 0, 0, 0},
+	{R_028780_CB_BLEND0_CONTROL, REG_FLAG_NOT_R600, 0, 0},
+	{R_028784_CB_BLEND1_CONTROL, REG_FLAG_NOT_R600, 0, 0},
+	{R_028788_CB_BLEND2_CONTROL, REG_FLAG_NOT_R600, 0, 0},
+	{R_02878C_CB_BLEND3_CONTROL, REG_FLAG_NOT_R600, 0, 0},
+	{R_028790_CB_BLEND4_CONTROL, REG_FLAG_NOT_R600, 0, 0},
+	{R_028794_CB_BLEND5_CONTROL, REG_FLAG_NOT_R600, 0, 0},
+	{R_028798_CB_BLEND6_CONTROL, REG_FLAG_NOT_R600, 0, 0},
+	{R_02879C_CB_BLEND7_CONTROL, REG_FLAG_NOT_R600, 0, 0},
 	{R_0287A0_CB_SHADER_CONTROL, 0, 0, 0},
 	{R_028800_DB_DEPTH_CONTROL, 0, 0, 0},
 	{R_028804_CB_BLEND_CONTROL, 0, 0, 0},
