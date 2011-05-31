@@ -100,7 +100,7 @@ drm_create_buffer(struct wl_client *client, struct wl_drm *drm,
 	buffer->buffer.height = height;
 	buffer->buffer.visual = visual;
 
-	if (visual->object.interface != &wl_visual_interface) {
+	if (!visual || visual->object.interface != &wl_visual_interface) {
 		wl_client_post_error(client, &drm->object,
 				     WL_DRM_ERROR_INVALID_VISUAL,
 				     "invalid visual");
