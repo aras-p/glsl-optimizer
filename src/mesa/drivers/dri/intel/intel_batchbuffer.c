@@ -55,10 +55,12 @@ static void clear_cache( struct intel_context *intel )
 void
 intel_batchbuffer_reset(struct intel_context *intel)
 {
-   if (intel->batch.bo != NULL) {
-      drm_intel_bo_unreference(intel->batch.bo);
-      intel->batch.bo = NULL;
+   if (intel->batch.last_bo != NULL) {
+      drm_intel_bo_unreference(intel->batch.last_bo);
+      intel->batch.last_bo = NULL;
    }
+   intel->batch.last_bo = intel->batch.bo;
+
    clear_cache(intel);
 
    intel->batch.bo = drm_intel_bo_alloc(intel->bufmgr, "batchbuffer",
@@ -72,6 +74,7 @@ intel_batchbuffer_reset(struct intel_context *intel)
 void
 intel_batchbuffer_free(struct intel_context *intel)
 {
+   drm_intel_bo_unreference(intel->batch.last_bo);
    drm_intel_bo_unreference(intel->batch.bo);
    clear_cache(intel);
 }

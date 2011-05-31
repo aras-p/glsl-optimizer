@@ -177,7 +177,11 @@ struct intel_context
    int urb_size;
 
    struct intel_batchbuffer {
+      /** Current batchbuffer being queued up. */
       drm_intel_bo *bo;
+      /** Last BO submitted to the hardware.  Used for glFinish(). */
+      drm_intel_bo *last_bo;
+
       struct cached_batch_item *cached_items;
 
       uint16_t emit, total;

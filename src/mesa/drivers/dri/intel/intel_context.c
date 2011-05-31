@@ -579,23 +579,13 @@ intel_glFlush(struct gl_context *ctx)
 void
 intelFinish(struct gl_context * ctx)
 {
-   struct gl_framebuffer *fb = ctx->DrawBuffer;
-   int i;
+   struct intel_context *intel = intel_context(ctx);
 
    intel_flush(ctx);
    intel_flush_front(ctx);
 
-   for (i = 0; i < fb->_NumColorDrawBuffers; i++) {
-       struct intel_renderbuffer *irb;
-
-       irb = intel_renderbuffer(fb->_ColorDrawBuffers[i]);
-
-       if (irb && irb->region && irb->region->buffer)
-	  drm_intel_bo_wait_rendering(irb->region->buffer);
-   }
-   if (fb->_DepthBuffer) {
-      /* XXX: Wait on buffer idle */
-   }
+   if (intel->batch.last_bo)
+      drm_intel_bo_wait_rendering(intel->batch.last_bo);
 }
 
 void
