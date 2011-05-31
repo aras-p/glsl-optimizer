@@ -450,7 +450,7 @@ void r300_emit_fb_state(struct r300_context* r300, unsigned size, void* state)
         OUT_CS_REG(R300_ZB_DEPTHOFFSET, 0);
         OUT_CS_RELOC(surf);
 
-        OUT_CS_REG(R300_ZB_DEPTHPITCH, 4 | R300_DEPTHMICROTILE_TILED);
+        OUT_CS_REG(R300_ZB_DEPTHPITCH, 4 | R300_DEPTHMICROTILE_TILED_SQUARE);
         OUT_CS_RELOC(surf);
     }
 
