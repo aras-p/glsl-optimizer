@@ -62,9 +62,6 @@ struct intel_region
    GLubyte *map;    /**< only non-NULL when region is actually mapped */
    GLuint map_refcount;  /**< Reference count for mapping */
 
-   GLuint draw_offset; /**< Offset of drawing address within the region */
-   GLuint draw_x, draw_y; /**< Offset of drawing within the region */
-
    uint32_t tiling; /**< Which tiling mode the region is in */
    struct intel_buffer_object *pbo;     /* zero-copy uploads */
 
@@ -141,10 +138,6 @@ void intel_region_cow(struct intel_context *intel,
 drm_intel_bo *intel_region_buffer(struct intel_context *intel,
 				  struct intel_region *region,
 				  GLuint flag);
-
-uint32_t intel_region_tile_offsets(struct intel_region *region,
-				   uint32_t *tile_x,
-				   uint32_t *tile_y);
 
 void _mesa_copy_rect(GLubyte * dst,
                 GLuint cpp,

@@ -477,7 +477,7 @@ brw_update_renderbuffer_surface(struct brw_context *brw,
 	      format << BRW_SURFACE_FORMAT_SHIFT);
 
    /* reloc */
-   surf[1] = (intel_region_tile_offsets(region, &tile_x, &tile_y) +
+   surf[1] = (intel_renderbuffer_tile_offsets(irb, &tile_x, &tile_y) +
 	      region->buffer->offset);
 
    surf[2] = ((rb->Width - 1) << BRW_SURFACE_WIDTH_SHIFT |

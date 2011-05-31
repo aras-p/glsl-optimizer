@@ -44,6 +44,9 @@ struct intel_renderbuffer
 
    /** Only used by depth renderbuffers for which HiZ is enabled. */
    struct intel_region *hiz_region;
+
+   GLuint draw_offset; /**< Offset of drawing address within the region */
+   GLuint draw_x, draw_y; /**< Offset of drawing within the region */
 };
 
 
@@ -130,6 +133,10 @@ intel_fbo_init(struct intel_context *intel);
 extern void
 intel_flip_renderbuffers(struct gl_framebuffer *fb);
 
+uint32_t
+intel_renderbuffer_tile_offsets(struct intel_renderbuffer *irb,
+				uint32_t *tile_x,
+				uint32_t *tile_y);
 
 static INLINE struct intel_region *
 intel_get_rb_region(struct gl_framebuffer *fb, GLuint attIndex)
@@ -140,6 +147,5 @@ intel_get_rb_region(struct gl_framebuffer *fb, GLuint attIndex)
    else
       return NULL;
 }
-
 
 #endif /* INTEL_FBO_H */

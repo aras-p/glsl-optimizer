@@ -273,7 +273,7 @@ gen7_update_renderbuffer_surface(struct brw_context *brw,
 
    surf->ss0.surface_type = BRW_SURFACE_2D;
    /* reloc */
-   surf->ss1.base_addr = intel_region_tile_offsets(region, &tile_x, &tile_y);
+   surf->ss1.base_addr = intel_renderbuffer_tile_offsets(irb, &tile_x, &tile_y);
    surf->ss1.base_addr += region->buffer->offset; /* reloc */
 
    assert(brw->has_surface_tile_offset);

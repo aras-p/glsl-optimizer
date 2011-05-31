@@ -322,7 +322,7 @@ static void emit_depthbuffer(struct brw_context *brw)
 	 return;
       }
 
-      offset = intel_region_tile_offsets(region, &tile_x, &tile_y);
+      offset = intel_renderbuffer_tile_offsets(depth_irb, &tile_x, &tile_y);
 
       assert(intel->gen < 6 || region->tiling == I915_TILING_Y);
       assert(!hiz_region || region->tiling == I915_TILING_Y);

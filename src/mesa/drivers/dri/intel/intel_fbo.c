@@ -513,8 +513,9 @@ intel_wrap_texture(struct gl_context * ctx, struct gl_texture_image *texImage)
 }
 
 static void
-intel_set_draw_offset_for_image(struct intel_texture_image *intel_image,
-				int zoffset)
+intel_renderbuffer_set_draw_offset(struct intel_renderbuffer *irb,
+				   struct intel_texture_image *intel_image,
+				   int zoffset)
 {
    struct intel_mipmap_tree *mt = intel_image->mt;
    unsigned int dst_x, dst_y;
@@ -526,9 +527,45 @@ intel_set_draw_offset_for_image(struct intel_texture_image *intel_image,
 				  zoffset,
 				  &dst_x, &dst_y);
 
-   mt->region->draw_offset = (dst_y * mt->region->pitch + dst_x) * mt->cpp;
-   mt->region->draw_x = dst_x;
-   mt->region->draw_y = dst_y;
+   irb->draw_offset = (dst_y * mt->region->pitch + dst_x) * mt->cpp;
+   irb->draw_x = dst_x;
+   irb->draw_y = dst_y;
+}
+
+/**
+ * Rendering to tiled buffers requires that the base address of the
+ * buffer be aligned to a page boundary.  We generally render to
+ * textures by pointing the surface at the mipmap image level, which
+ * may not be aligned to a tile boundary.
+ *
+ * This function returns an appropriately-aligned base offset
+ * according to the tiling restrictions, plus any required x/y offset
+ * from there.
+ */
+uint32_t
+intel_renderbuffer_tile_offsets(struct intel_renderbuffer *irb,
+				uint32_t *tile_x,
+				uint32_t *tile_y)
+{
+   int cpp = irb->region->cpp;
+   uint32_t pitch = irb->region->pitch * cpp;
+
+   if (irb->region->tiling == I915_TILING_NONE) {
+      *tile_x = 0;
+      *tile_y = 0;
+      return irb->draw_x * cpp + irb->draw_y * pitch;
+   } else if (irb->region->tiling == I915_TILING_X) {
+      *tile_x = irb->draw_x % (512 / cpp);
+      *tile_y = irb->draw_y % 8;
+      return ((irb->draw_y / 8) * (8 * pitch) +
+	      (irb->draw_x - *tile_x) / (512 / cpp) * 4096);
+   } else {
+      assert(irb->region->tiling == I915_TILING_Y);
+      *tile_x = irb->draw_x % (128 / cpp);
+      *tile_y = irb->draw_y % 32;
+      return ((irb->draw_y / 32) * (32 * pitch) +
+	      (irb->draw_x - *tile_x) / (128 / cpp) * 4096);
+   }
 }
 
 /**
@@ -584,12 +621,12 @@ intel_render_texture(struct gl_context * ctx,
        att->Texture->Name, newImage->Width, newImage->Height,
        irb->Base.RefCount);
 
-   intel_set_draw_offset_for_image(intel_image, att->Zoffset);
+   intel_renderbuffer_set_draw_offset(irb, intel_image, att->Zoffset);
    intel_image->used_as_render_target = GL_TRUE;
 
 #ifndef I915
    if (!brw_context(ctx)->has_surface_tile_offset &&
-       (intel_image->mt->region->draw_offset & 4095) != 0) {
+       (irb->draw_offset & 4095) != 0) {
       /* Original gen4 hardware couldn't draw to a non-tile-aligned
        * destination in a miptree unless you actually setup your
        * renderbuffer as a miptree and used the fragile
@@ -625,7 +662,7 @@ intel_render_texture(struct gl_context * ctx,
 
       intel_miptree_release(intel, &intel_image->mt);
       intel_image->mt = new_mt;
-      intel_set_draw_offset_for_image(intel_image, att->Zoffset);
+      intel_renderbuffer_set_draw_offset(irb, intel_image, att->Zoffset);
 
       intel_region_release(&irb->region);
       intel_region_reference(&irb->region, intel_image->mt->region);
