@@ -1003,6 +1003,8 @@ int evergreen_context_init(struct r600_context *ctx, struct radeon *radeon)
 		r = -ENOMEM;
 		goto out_err;
 	}
+
+	r600_init_cs(ctx);
 	/* save 16dwords space for fence mecanism */
 	ctx->pm4_ndwords -= 16;
 

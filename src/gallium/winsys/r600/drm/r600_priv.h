@@ -166,6 +166,7 @@ int r600_setup_block_table(struct r600_context *ctx);
 void r600_context_reg(struct r600_context *ctx,
 		      unsigned offset, unsigned value,
 		      unsigned mask);
+void r600_init_cs(struct r600_context *ctx);
 /*
  * r600_bo.c
  */

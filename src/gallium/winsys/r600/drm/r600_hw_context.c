@@ -40,8 +40,14 @@
 
 #define GROUP_FORCE_NEW_BLOCK	0
 
-static void r600_init_cs(struct r600_context *ctx)
+void r600_init_cs(struct r600_context *ctx)
 {
+	/* R6xx requires this packet at the start of each command buffer */
+	if (ctx->radeon->family < CHIP_RV770) {
+		ctx->pm4[ctx->pm4_cdwords++] = PKT3(PKT3_START_3D_CMDBUF, 0, 0);
+		ctx->pm4[ctx->pm4_cdwords++] = 0x00000000;
+	}
+	/* All asics require this one */
 	ctx->pm4[ctx->pm4_cdwords++] = PKT3(PKT3_CONTEXT_CONTROL, 1, 0);
 	ctx->pm4[ctx->pm4_cdwords++] = 0x80000000;
 	ctx->pm4[ctx->pm4_cdwords++] = 0x80000000;
@@ -788,8 +794,7 @@ int r600_context_init(struct r600_context *ctx, struct radeon *radeon)
 		goto out_err;
 	}
 
-	if (ctx->radeon->family == CHIP_R600)
-		r600_init_cs(ctx);
+	r600_init_cs(ctx);
 	/* save 16dwords space for fence mecanism */
 	ctx->pm4_ndwords -= 16;
 
@@ -1395,8 +1400,7 @@ void r600_context_flush(struct r600_context *ctx)
 	ctx->pm4_cdwords = 0;
 	ctx->flags = 0;
 
-	if (ctx->radeon->family == CHIP_R600)
-		r600_init_cs(ctx);
+	r600_init_cs(ctx);
 
 	/* resume queries */
 	r600_context_queries_resume(ctx);
