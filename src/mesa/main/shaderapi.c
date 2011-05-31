@@ -1790,6 +1790,8 @@ _mesa_UseShaderProgramEXT(GLenum type, GLuint program)
    GET_CURRENT_CONTEXT(ctx);
    struct gl_shader_program *shProg = NULL;
 
+   ASSERT_OUTSIDE_BEGIN_END(ctx);
+
    if (!validate_shader_target(ctx, type)) {
       _mesa_error(ctx, GL_INVALID_ENUM, "glUseShaderProgramEXT(type)");
       return;

@@ -855,6 +855,8 @@ _mesa_uniform(struct gl_context *ctx, struct gl_shader_program *shProg,
    struct gl_uniform *uniform;
    GLint elems, offset;
 
+   ASSERT_OUTSIDE_BEGIN_END(ctx);
+
    if (!shProg || !shProg->LinkStatus) {
       _mesa_error(ctx, GL_INVALID_OPERATION, "glUniform(program not linked)");
       return;
@@ -1027,6 +1029,8 @@ _mesa_uniform_matrix(struct gl_context *ctx, struct gl_shader_program *shProg,
 {
    struct gl_uniform *uniform;
    GLint offset;
+
+   ASSERT_OUTSIDE_BEGIN_END(ctx);
 
    if (!shProg || !shProg->LinkStatus) {
       _mesa_error(ctx, GL_INVALID_OPERATION,
