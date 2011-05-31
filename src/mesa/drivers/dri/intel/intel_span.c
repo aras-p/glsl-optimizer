@@ -55,21 +55,18 @@ intel_set_span_functions(struct intel_context *intel,
 
 #define LOCAL_VARS							\
    struct intel_renderbuffer *irb = intel_renderbuffer(rb);		\
-   const GLint yScale = rb->Name ? 1 : -1;				\
-   const GLint yBias = rb->Name ? 0 : rb->Height - 1;			\
    int minx = 0, miny = 0;						\
    int maxx = rb->Width;						\
    int maxy = rb->Height;						\
-   int pitch = irb->region->pitch * irb->region->cpp;			\
-   void *buf = irb->region->buffer->virtual;				\
+   int pitch = rb->RowStride * irb->region->cpp;			\
+   void *buf = rb->Data;						\
    GLuint p;								\
-   (void) p;								\
-   (void)buf; (void)pitch; /* unused for non-gttmap. */			\
+   (void) p;
 
 #define HW_CLIPLOOP()
 #define HW_ENDCLIPLOOP()
 
-#define Y_FLIP(_y) ((_y) * yScale + yBias)
+#define Y_FLIP(_y) (_y)
 
 #define HW_LOCK()
 
