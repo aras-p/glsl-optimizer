@@ -2161,6 +2161,10 @@ _mesa_GetFramebufferAttachmentParameterivEXT(GLenum target, GLenum attachment,
       if (att->Type == GL_TEXTURE) {
 	 *params = att->TextureLevel;
       }
+      else if (att->Type == GL_NONE) {
+         _mesa_error(ctx, GL_INVALID_OPERATION,
+                     "glGetFramebufferAttachmentParameterivEXT(pname)");
+      }
       else {
 	 _mesa_error(ctx, GL_INVALID_ENUM,
 		     "glGetFramebufferAttachmentParameterivEXT(pname)");
@@ -2174,6 +2178,10 @@ _mesa_GetFramebufferAttachmentParameterivEXT(GLenum target, GLenum attachment,
          else {
             *params = 0;
          }
+      }
+      else if (att->Type == GL_NONE) {
+         _mesa_error(ctx, GL_INVALID_OPERATION,
+                     "glGetFramebufferAttachmentParameterivEXT(pname)");
       }
       else {
 	 _mesa_error(ctx, GL_INVALID_ENUM,
@@ -2189,6 +2197,10 @@ _mesa_GetFramebufferAttachmentParameterivEXT(GLenum target, GLenum attachment,
             *params = 0;
          }
       }
+      else if (att->Type == GL_NONE) {
+         _mesa_error(ctx, GL_INVALID_OPERATION,
+                     "glGetFramebufferAttachmentParameterivEXT(pname)");
+      }
       else {
 	 _mesa_error(ctx, GL_INVALID_ENUM,
 		     "glGetFramebufferAttachmentParameterivEXT(pname)");
@@ -2197,6 +2209,10 @@ _mesa_GetFramebufferAttachmentParameterivEXT(GLenum target, GLenum attachment,
    case GL_FRAMEBUFFER_ATTACHMENT_COLOR_ENCODING:
       if (!ctx->Extensions.ARB_framebuffer_object) {
          _mesa_error(ctx, GL_INVALID_ENUM,
+                     "glGetFramebufferAttachmentParameterivEXT(pname)");
+      }
+      else if (att->Type == GL_NONE) {
+         _mesa_error(ctx, GL_INVALID_OPERATION,
                      "glGetFramebufferAttachmentParameterivEXT(pname)");
       }
       else {
@@ -2215,6 +2231,10 @@ _mesa_GetFramebufferAttachmentParameterivEXT(GLenum target, GLenum attachment,
          _mesa_error(ctx, GL_INVALID_ENUM,
                      "glGetFramebufferAttachmentParameterivEXT(pname)");
          return;
+      }
+      else if (att->Type == GL_NONE) {
+         _mesa_error(ctx, GL_INVALID_OPERATION,
+                     "glGetFramebufferAttachmentParameterivEXT(pname)");
       }
       else {
          gl_format format = att->Renderbuffer->Format;
@@ -2237,6 +2257,10 @@ _mesa_GetFramebufferAttachmentParameterivEXT(GLenum target, GLenum attachment,
          _mesa_error(ctx, GL_INVALID_ENUM,
                      "glGetFramebufferAttachmentParameterivEXT(pname)");
       }
+      else if (att->Type == GL_NONE) {
+         _mesa_error(ctx, GL_INVALID_OPERATION,
+                     "glGetFramebufferAttachmentParameterivEXT(pname)");
+      }
       else if (att->Texture) {
          const struct gl_texture_image *texImage =
             _mesa_select_tex_image(ctx, att->Texture, att->Texture->Target,
@@ -2254,7 +2278,8 @@ _mesa_GetFramebufferAttachmentParameterivEXT(GLenum target, GLenum attachment,
                                       att->Renderbuffer->Format);
       }
       else {
-         *params = 0;
+         _mesa_problem(ctx, "glGetFramebufferAttachmentParameterivEXT:"
+                       " invalid FBO attachment structure");
       }
       return;
    default:
