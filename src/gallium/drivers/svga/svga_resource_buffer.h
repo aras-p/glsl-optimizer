@@ -200,7 +200,11 @@ svga_buffer(struct pipe_resource *buffer)
 static INLINE boolean 
 svga_buffer_is_user_buffer( struct pipe_resource *buffer )
 {
-   return svga_buffer(buffer)->user;
+   if (buffer) {
+      return svga_buffer(buffer)->user;
+   } else {
+      return FALSE;
+   }
 }
 
 
