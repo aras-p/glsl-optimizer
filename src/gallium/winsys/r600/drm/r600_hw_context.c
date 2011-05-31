@@ -40,6 +40,13 @@
 
 #define GROUP_FORCE_NEW_BLOCK	0
 
+static void r600_init_cs(struct r600_context *ctx)
+{
+	ctx->pm4[ctx->pm4_cdwords++] = PKT3(PKT3_CONTEXT_CONTROL, 1, 0);
+	ctx->pm4[ctx->pm4_cdwords++] = 0x80000000;
+	ctx->pm4[ctx->pm4_cdwords++] = 0x80000000;
+}
+
 static void INLINE r600_context_update_fenced_list(struct r600_context *ctx)
 {
 	for (int i = 0; i < ctx->creloc; i++) {
@@ -780,6 +787,9 @@ int r600_context_init(struct r600_context *ctx, struct radeon *radeon)
 		r = -ENOMEM;
 		goto out_err;
 	}
+
+	if (ctx->radeon->family == CHIP_R600)
+		r600_init_cs(ctx);
 	/* save 16dwords space for fence mecanism */
 	ctx->pm4_ndwords -= 16;
 
@@ -1384,6 +1394,9 @@ void r600_context_flush(struct r600_context *ctx)
 	ctx->pm4_dirty_cdwords = 0;
 	ctx->pm4_cdwords = 0;
 	ctx->flags = 0;
+
+	if (ctx->radeon->family == CHIP_R600)
+		r600_init_cs(ctx);
 
 	/* resume queries */
 	r600_context_queries_resume(ctx);
