@@ -27,7 +27,7 @@
 #include <stdio.h>
 
 static const struct debug_named_value debug_options[] = {
-    { "info", DBG_INFO, "Print hardware info"},
+    { "info", DBG_INFO, "Print hardware info (printed by default on debug builds"},
     { "fp", DBG_FP, "Log fragment program compilation" },
     { "vp", DBG_VP, "Log vertex program compilation" },
     { "pstat", DBG_P_STAT, "Log vertex/fragment program stats" },
@@ -41,7 +41,6 @@ static const struct debug_named_value debug_options[] = {
     { "fb", DBG_FB, "Log framebuffer" },
     { "cbzb", DBG_CBZB, "Log fast color clear info" },
     { "hyperz", DBG_HYPERZ, "Log HyperZ info" },
-    { "upload", DBG_UPLOAD, "Log user buffer upload info" },
     { "scissor", DBG_SCISSOR, "Log scissor info" },
     { "anisohq", DBG_ANISOHQ, "Use high quality anisotropic filtering" },
     { "notiling", DBG_NO_TILING, "Disable tiling" },
