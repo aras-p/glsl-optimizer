@@ -62,7 +62,8 @@ _mesa_validate_DrawArraysInstanced(struct gl_context *ctx, GLenum mode, GLint fi
 extern GLboolean
 _mesa_validate_DrawElementsInstanced(struct gl_context *ctx,
                                      GLenum mode, GLsizei count, GLenum type,
-                                     const GLvoid *indices, GLsizei primcount);
+                                     const GLvoid *indices, GLsizei primcount,
+                                     GLint basevertex);
 
 
 #endif
