@@ -1,21 +1,8 @@
-#include <stdio.h>
 #include <stdlib.h>
-#include <string.h>
-#include <stdbool.h>
-#include <errno.h>
-
-#include <sys/types.h>
-#include <sys/stat.h>
-#include <fcntl.h>
-#include <unistd.h>
-
-#include <dlfcn.h>
 
 #include <wayland-client.h>
 #include "wayland-egl.h"
 #include "wayland-egl-priv.h"
-#include "wayland-drm-client-protocol.h"
-#include <xf86drm.h>
 
 WL_EGL_EXPORT void
 wl_egl_window_resize(struct wl_egl_window *egl_window,

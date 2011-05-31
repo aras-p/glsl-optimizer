@@ -12,19 +12,7 @@ extern "C" {
 #define WL_EGL_EXPORT
 #endif
 
-#include <stdbool.h>
 #include <wayland-client.h>
-
-struct wl_egl_display {
-	struct wl_display *display;
-
-	struct wl_drm *drm;
-	int fd;
-	char *device_name;
-	bool authenticated;
-
-	void (*glFlush)(void);
-};
 
 struct wl_egl_window {
 	struct wl_surface *surface;
@@ -40,8 +28,7 @@ struct wl_egl_window {
 };
 
 struct wl_egl_pixmap {
-	struct wl_egl_display *display;
-	struct wl_visual      *visual;
+	struct wl_visual *visual;
 	struct wl_buffer *buffer;
 
 	int width;
