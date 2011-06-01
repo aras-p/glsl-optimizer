@@ -644,13 +644,13 @@ glXCreateGLXPixmap(Display * dpy, XVisualInfo * vis, Pixmap pixmap)
       if (psc->driScreen == NULL)
          break;
       config = glx_config_find_visual(psc->visuals, vis->visualid);
-      pdraw = psc->driScreen->createDrawable(psc, pixmap, req->glxpixmap, config);
+      pdraw = psc->driScreen->createDrawable(psc, pixmap, xid, config);
       if (pdraw == NULL) {
          fprintf(stderr, "failed to create pixmap\n");
          break;
       }
 
-      if (__glxHashInsert(priv->drawHash, req->glxpixmap, pdraw)) {
+      if (__glxHashInsert(priv->drawHash, xid, pdraw)) {
          (*pdraw->destroyDrawable) (pdraw);
          return None;           /* FIXME: Check what we're supposed to do here... */
       }
