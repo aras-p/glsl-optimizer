@@ -709,15 +709,20 @@ init_zscan(struct vl_mpeg12_decoder *dec, const struct format_config* format_con
 static bool
 init_idct(struct vl_mpeg12_decoder *dec, const struct format_config* format_config)
 {
-   unsigned nr_of_idct_render_targets;
+   unsigned nr_of_idct_render_targets, max_inst;
    enum pipe_format formats[3];
 
    struct pipe_sampler_view *matrix = NULL;
 
    nr_of_idct_render_targets = dec->pipe->screen->get_param(dec->pipe->screen, PIPE_CAP_MAX_RENDER_TARGETS);
+   max_inst = dec->pipe->screen->get_shader_param(dec->pipe->screen, PIPE_SHADER_FRAGMENT, PIPE_SHADER_CAP_MAX_INSTRUCTIONS);
 
-   // more than 4 render targets usually doesn't makes any seens
-   nr_of_idct_render_targets = MIN2(nr_of_idct_render_targets, 4);
+   // Just assume we need 32 inst per render target, not 100% true, but should work in most cases
+   if (nr_of_idct_render_targets >= 4 && max_inst >= 32*4)
+      // more than 4 render targets usually doesn't makes any seens
+      nr_of_idct_render_targets = 4;
+   else
+      nr_of_idct_render_targets = 1;
 
    formats[0] = formats[1] = formats[2] = format_config->idct_source_format;
    dec->idct_source = vl_video_buffer_init(dec->base.context, dec->pipe,
