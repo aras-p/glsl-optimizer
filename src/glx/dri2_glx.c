@@ -675,8 +675,13 @@ dri2InvalidateBuffers(Display *dpy, XID drawable)
 {
    __GLXDRIdrawable *pdraw =
       dri2GetGlxDrawableFromXDrawableId(dpy, drawable);
-   struct dri2_screen *psc = (struct dri2_screen *) pdraw->psc;
+   struct dri2_screen *psc;
    struct dri2_drawable *pdp = (struct dri2_drawable *) pdraw;
+
+   if (!pdraw)
+      return;
+
+   psc = (struct dri2_screen *) pdraw->psc;
 
 #if __DRI2_FLUSH_VERSION >= 3
    if (pdraw && psc->f && psc->f->base.version >= 3 && psc->f->invalidate)
