@@ -96,9 +96,9 @@ softpipe_flush( struct pipe_context *pipe,
       ++frame_no;
    }
 #endif
-   
+
    if (fence)
-      *fence = NULL;
+      *fence = (void*)(intptr_t)1;
 }
 
 void

@@ -36,8 +36,7 @@ softpipe_fence_reference(struct pipe_screen *screen,
                          struct pipe_fence_handle **ptr,
                          struct pipe_fence_handle *fence)
 {
-   assert(!*ptr);
-   assert(!fence);
+   *ptr = fence;
 }
 
 
@@ -45,7 +44,7 @@ static boolean
 softpipe_fence_signalled(struct pipe_screen *screen,
                          struct pipe_fence_handle *fence)
 {
-   assert(!fence);
+   assert(fence);
    return TRUE;
 }
 
@@ -55,7 +54,7 @@ softpipe_fence_finish(struct pipe_screen *screen,
                       struct pipe_fence_handle *fence,
                       uint64_t timeout)
 {
-   assert(!fence);
+   assert(fence);
    return TRUE;
 }
 
