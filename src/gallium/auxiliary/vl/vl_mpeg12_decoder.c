@@ -94,7 +94,7 @@ init_zscan_buffer(struct vl_mpeg12_buffer *buffer)
    formats[0] = formats[1] = formats[2] = dec->zscan_source_format;
    buffer->zscan_source = vl_video_buffer_init(dec->base.context, dec->pipe,
                                                dec->blocks_per_line * BLOCK_WIDTH * BLOCK_HEIGHT,
-                                               dec->max_blocks / dec->blocks_per_line,
+                                               align(dec->max_blocks, dec->blocks_per_line) / dec->blocks_per_line,
                                                1, PIPE_VIDEO_CHROMA_FORMAT_444,
                                                formats, PIPE_USAGE_STATIC);
    if (!buffer->zscan_source)
@@ -680,14 +680,13 @@ find_format_config(struct vl_mpeg12_decoder *dec, const struct format_config con
 static bool
 init_zscan(struct vl_mpeg12_decoder *dec, const struct format_config* format_config)
 {
+   const unsigned block_size_pixels = BLOCK_WIDTH * BLOCK_HEIGHT;
    unsigned num_channels;
 
    assert(dec);
 
-   dec->blocks_per_line = 4;
-   dec->max_blocks =
-      (dec->base.width * dec->base.height) /
-      (BLOCK_WIDTH * BLOCK_HEIGHT);
+   dec->blocks_per_line = MAX2(util_next_power_of_two(dec->base.width) / block_size_pixels, 4);
+   dec->max_blocks = (dec->base.width * dec->base.height) / block_size_pixels;
 
    dec->zscan_source_format = format_config->zscan_source_format;
    dec->zscan_linear = vl_zscan_layout(dec->pipe, vl_zscan_linear, dec->blocks_per_line);
