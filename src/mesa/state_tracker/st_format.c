@@ -1092,6 +1092,10 @@ static struct format_mapping format_map[] = {
       { GL_INTENSITY16_SNORM, 0 },
       { PIPE_FORMAT_I16_SNORM, PIPE_FORMAT_R16G16B16A16_SNORM,
         PIPE_FORMAT_I8_SNORM, PIPE_FORMAT_R8G8B8A8_SNORM, 0 }
+   },
+   {
+      { GL_RGB9_E5, 0 },
+      { PIPE_FORMAT_R9G9B9E5_FLOAT, 0 }
    }
 };
 
