@@ -66,6 +66,9 @@ get_datatype_bytes(struct gl_renderbuffer *rb)
    int component_size;
 
    switch (rb->DataType) {
+   case GL_FLOAT_32_UNSIGNED_INT_24_8_REV:
+      component_size = 8;
+      break;
    case GL_FLOAT:
    case GL_UNSIGNED_INT:
    case GL_UNSIGNED_INT_24_8_EXT:

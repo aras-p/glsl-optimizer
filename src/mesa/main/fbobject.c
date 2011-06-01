@@ -1131,6 +1131,16 @@ _mesa_base_fbo_format(struct gl_context *ctx, GLenum internalFormat)
          return GL_DEPTH_STENCIL_EXT;
       else
          return 0;
+   case GL_DEPTH_COMPONENT32F:
+      if (ctx->Extensions.ARB_depth_buffer_float)
+         return GL_DEPTH_COMPONENT;
+      else
+         return 0;
+   case GL_DEPTH32F_STENCIL8:
+      if (ctx->Extensions.ARB_depth_buffer_float)
+         return GL_DEPTH_STENCIL;
+      else
+         return 0;
    case GL_RED:
    case GL_R8:
    case GL_R16:
@@ -2265,6 +2275,15 @@ _mesa_GetFramebufferAttachmentParameterivEXT(GLenum target, GLenum attachment,
          if (format == MESA_FORMAT_CI8 || format == MESA_FORMAT_S8) {
             /* special cases */
             *params = GL_INDEX;
+         }
+         else if (format == MESA_FORMAT_Z32_FLOAT_X24S8) {
+            /* depends on the attachment parameter */
+            if (attachment == GL_STENCIL_ATTACHMENT) {
+               *params = GL_INDEX;
+            }
+            else {
+               *params = GL_FLOAT;
+            }
          }
          else {
             *params = _mesa_get_format_datatype(format);

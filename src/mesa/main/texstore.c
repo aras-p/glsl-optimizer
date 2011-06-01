@@ -4419,6 +4419,9 @@ texstore_funcs[MESA_FORMAT_COUNT] =
 
    { MESA_FORMAT_RGB9_E5_FLOAT, _mesa_texstore_rgb9_e5 },
    { MESA_FORMAT_R11_G11_B10_FLOAT, _mesa_texstore_r11_g11_b10f },
+
+   { MESA_FORMAT_Z32_FLOAT, NULL /* XXX */ },
+   { MESA_FORMAT_Z32_FLOAT_X24S8, /* XXX */ },
 };
 
 
