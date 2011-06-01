@@ -76,10 +76,6 @@
  * Modify this function so that \c NULL images are sent using
  * \c __glXSendLargeChunk instead of __glXSendLargeCommand.  Doing this
  * will eliminate the need to allocate a buffer for that case.
- *
- * \bugs
- * The \c fastImageUnpack path, which is thankfully never used, is completely
- * broken.
  */
 void
 __glXSendLargeImage(struct glx_context * gc, GLint compsize, GLint dim,
@@ -87,48 +83,38 @@ __glXSendLargeImage(struct glx_context * gc, GLint compsize, GLint dim,
                     GLenum format, GLenum type, const GLvoid * src,
                     GLubyte * pc, GLubyte * modes)
 {
-   if (!gc->fastImageUnpack || (src == NULL)) {
-      /* Allocate a temporary holding buffer */
-      GLubyte *buf = (GLubyte *) Xmalloc(compsize);
-      if (!buf) {
-         __glXSetError(gc, GL_OUT_OF_MEMORY);
-         return;
-      }
+    /* Allocate a temporary holding buffer */
+    GLubyte *buf = (GLubyte *) Xmalloc(compsize);
+    if (!buf) {
+	__glXSetError(gc, GL_OUT_OF_MEMORY);
+	return;
+    }
 
-      /* Apply pixel store unpack modes to copy data into buf */
-      if (src != NULL) {
-         (*gc->fillImage) (gc, dim, width, height, depth, format, type,
-                           src, buf, modes);
-      }
-      else {
-         if (dim < 3) {
-            (void) memcpy(modes, __glXDefaultPixelStore + 4, 20);
-         }
-         else {
-            (void) memcpy(modes, __glXDefaultPixelStore + 0, 36);
-         }
-      }
+    /* Apply pixel store unpack modes to copy data into buf */
+    if (src != NULL) {
+	(*gc->fillImage) (gc, dim, width, height, depth, format, type,
+			  src, buf, modes);
+    }
+    else {
+	if (dim < 3) {
+	    (void) memcpy(modes, __glXDefaultPixelStore + 4, 20);
+	}
+	else {
+	    (void) memcpy(modes, __glXDefaultPixelStore + 0, 36);
+	}
+    }
 
-      /* Send large command */
-      __glXSendLargeCommand(gc, gc->pc, pc - gc->pc, buf, compsize);
+    /* Send large command */
+    __glXSendLargeCommand(gc, gc->pc, pc - gc->pc, buf, compsize);
 
-      /* Free buffer */
-      Xfree((char *) buf);
-   }
-   else {
-      /* Just send the data straight as is */
-      __glXSendLargeCommand(gc, gc->pc, pc - gc->pc, pc, compsize);
-   }
+    /* Free buffer */
+    Xfree((char *) buf);
 }
 
 /************************************************************************/
 
 /**
  * Implement GLX protocol for \c glSeparableFilter2D.
- *
- * \bugs
- * The \c fastImageUnpack path, which is thankfully never used, is completely
- * broken.
  */
 void
 __indirect_glSeparableFilter2D(GLenum target, GLenum internalformat,
@@ -177,6 +163,7 @@ __indirect_glSeparableFilter2D(GLenum target, GLenum internalformat,
       __GLX_END(0);
    }
    else {
+      GLubyte *buf;
       const GLint bufsize = image1len + image2len;
 
       /* Use GLXRenderLarge protocol to send command */
@@ -190,29 +177,22 @@ __indirect_glSeparableFilter2D(GLenum target, GLenum internalformat,
       __GLX_PUT_LONG(20, type);
       pc += hdrlen;
 
-      if (!gc->fastImageUnpack) {
-         /* Allocate a temporary holding buffer */
-         GLubyte *buf = (GLubyte *) Xmalloc(bufsize);
-         if (!buf) {
-            __glXSetError(gc, GL_OUT_OF_MEMORY);
-            return;
-         }
-         (*gc->fillImage) (gc, 1, width, 1, 1, format, type, row, buf,
-                           pixelHeaderPC);
-
-         (*gc->fillImage) (gc, 1, height, 1, 1, format, type, column,
-                           buf + image1len, pixelHeaderPC);
-
-         /* Send large command */
-         __glXSendLargeCommand(gc, gc->pc, (GLint) (pc - gc->pc), buf,
-                               bufsize);
-         /* Free buffer */
-         Xfree((char *) buf);
+      /* Allocate a temporary holding buffer */
+      buf = (GLubyte *) Xmalloc(bufsize);
+      if (!buf) {
+         __glXSetError(gc, GL_OUT_OF_MEMORY);
+         return;
       }
-      else {
-         /* Just send the data straight as is */
-         __glXSendLargeCommand(gc, gc->pc, (GLint) (pc - gc->pc), pc,
-                               bufsize);
-      }
+      (*gc->fillImage) (gc, 1, width, 1, 1, format, type, row, buf,
+                        pixelHeaderPC);
+
+      (*gc->fillImage) (gc, 1, height, 1, 1, format, type, column,
+                        buf + image1len, pixelHeaderPC);
+
+      /* Send large command */
+      __glXSendLargeCommand(gc, gc->pc, (GLint) (pc - gc->pc), buf,
+                            bufsize);
+      /* Free buffer */
+      Xfree((char *) buf);
    }
 }
