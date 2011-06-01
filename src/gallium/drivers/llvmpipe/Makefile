@@ -71,7 +71,7 @@ lp_tile_soa.c: lp_tile_soa.py ../../auxiliary/util/u_format_parse.py ../../auxil
 
 LDFLAGS += $(LLVM_LDFLAGS)
 LIBS += -L../../auxiliary/ -lgallium libllvmpipe.a $(LLVM_LIBS) $(GL_LIB_DEPS)
-LD=g++
+LD=$(CXX)
 
 $(PROGS): lp_test_main.o libllvmpipe.a
 
