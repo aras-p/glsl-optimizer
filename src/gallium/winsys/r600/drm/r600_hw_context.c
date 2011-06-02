@@ -1180,10 +1180,15 @@ struct r600_bo *r600_context_reg_bo(struct r600_context *ctx, unsigned offset)
 void r600_context_block_emit_dirty(struct r600_context *ctx, struct r600_block *block)
 {
 	int id;
+	int optional = block->nbo == 0 && !(block->flags & REG_FLAG_DIRTY_ALWAYS);
+	int cp_dwords = block->pm4_ndwords, start_dword;
+	int new_dwords;
 
-	if (block->nreg_dirty == 0 && block->nbo == 0 && !(block->flags & REG_FLAG_DIRTY_ALWAYS)) {
+	if (block->nreg_dirty == 0 && optional) {
 		goto out;
 	}
+
+	optional &= (block->nreg_dirty != block->nreg);
 
 	ctx->flags |= R600_CONTEXT_CHECK_EVENT_FLUSH;
 	for (int j = 0; j < block->nreg; j++) {
@@ -1200,18 +1205,22 @@ void r600_context_block_emit_dirty(struct r600_context *ctx, struct r600_block *
 		}
 	}
 	ctx->flags &= ~R600_CONTEXT_CHECK_EVENT_FLUSH;
-	memcpy(&ctx->pm4[ctx->pm4_cdwords], block->pm4, block->pm4_ndwords * 4);
-	ctx->pm4_cdwords += block->pm4_ndwords;
 
-	if (block->nreg_dirty != block->nreg && block->nbo == 0 && !(block->flags & REG_FLAG_DIRTY_ALWAYS)) {
-		int new_dwords = block->nreg_dirty;
-		uint32_t oldword, newword;
-		ctx->pm4_cdwords -= block->pm4_ndwords;
-		newword = oldword = ctx->pm4[ctx->pm4_cdwords];
+	if (optional) {
+		new_dwords = block->nreg_dirty;
+		start_dword = ctx->pm4_cdwords;
+		cp_dwords = new_dwords + 2;
+	}
+	memcpy(&ctx->pm4[ctx->pm4_cdwords], block->pm4, cp_dwords * 4);
+	ctx->pm4_cdwords += cp_dwords;
+
+	if (optional) {
+		uint32_t newword;
+
+		newword = ctx->pm4[start_dword];
 		newword &= PKT_COUNT_C;
 		newword |= PKT_COUNT_S(new_dwords);
-		ctx->pm4[ctx->pm4_cdwords] = newword;
-		ctx->pm4_cdwords += new_dwords + 2;
+		ctx->pm4[start_dword] = newword;
 	}
 out:
 	block->status ^= R600_BLOCK_STATUS_DIRTY;
