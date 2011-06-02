@@ -1769,11 +1769,13 @@ void *evergreen_create_db_flush_dsa(struct r600_pipe_context *rctx)
 	return rstate;
 }
 
-void evergreen_pipe_set_buffer_resource(struct r600_pipe_context *rctx,
-					struct r600_pipe_state *rstate,
-					struct r600_resource *rbuffer,
-					unsigned offset, unsigned stride)
+void evergreen_pipe_init_buffer_resource(struct r600_pipe_context *rctx,
+					 struct r600_pipe_state *rstate,
+					 struct r600_resource *rbuffer,
+					 unsigned offset, unsigned stride)
 {
+	rstate->id = R600_PIPE_STATE_RESOURCE;
+	rstate->nregs = 0;
 	r600_pipe_state_add_reg(rstate, R_030000_RESOURCE0_WORD0,
 				offset, 0xFFFFFFFF, rbuffer->bo);
 	r600_pipe_state_add_reg(rstate, R_030004_RESOURCE0_WORD1,
@@ -1795,4 +1797,18 @@ void evergreen_pipe_set_buffer_resource(struct r600_pipe_context *rctx,
 				0x00000000, 0xFFFFFFFF, NULL);
 	r600_pipe_state_add_reg(rstate, R_03001C_RESOURCE0_WORD7,
 				0xC0000000, 0xFFFFFFFF, NULL);
+}
+
+
+void evergreen_pipe_mod_buffer_resource(struct r600_pipe_state *rstate,
+					struct r600_resource *rbuffer,
+					unsigned offset, unsigned stride)
+{
+	rstate->nregs = 0;
+	r600_pipe_state_mod_reg_bo(rstate, offset, rbuffer->bo);
+	r600_pipe_state_mod_reg(rstate, rbuffer->bo_size - offset - 1);
+	r600_pipe_state_mod_reg(rstate, S_030008_ENDIAN_SWAP(r600_endian_swap(32)) |
+				S_030008_STRIDE(stride));
+	rstate->nregs = 8;
+
 }

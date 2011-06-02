@@ -410,13 +410,19 @@ void r600_set_constant_buffer(struct pipe_context *ctx, uint shader, uint index,
 		r600_context_pipe_state_set(&rctx->ctx, &rctx->vs_const_buffer);
 
 		rstate = &rctx->vs_const_buffer_resource[index];
-		rstate->id = R600_PIPE_STATE_RESOURCE;
-		rstate->nregs = 0;
+		if (!rstate->id) {
+			if (rctx->family >= CHIP_CEDAR) {
+				evergreen_pipe_init_buffer_resource(rctx, rstate, &rbuffer->r, offset, 16);
+			} else {
+				r600_pipe_init_buffer_resource(rctx, rstate, &rbuffer->r, offset, 16);
+			}
+		}
+
 		if (rctx->family >= CHIP_CEDAR) {
-			evergreen_pipe_set_buffer_resource(rctx, rstate, &rbuffer->r, offset, 16);
+			evergreen_pipe_mod_buffer_resource(rstate, &rbuffer->r, offset, 16);
 			evergreen_context_pipe_state_set_vs_resource(&rctx->ctx, rstate, index);
 		} else {
-			r600_pipe_set_buffer_resource(rctx, rstate, &rbuffer->r, offset, 16);
+			r600_pipe_mod_buffer_resource(rstate, &rbuffer->r, offset, 16);
 			r600_context_pipe_state_set_vs_resource(&rctx->ctx, rstate, index);
 		}
 		break;
@@ -432,13 +438,18 @@ void r600_set_constant_buffer(struct pipe_context *ctx, uint shader, uint index,
 		r600_context_pipe_state_set(&rctx->ctx, &rctx->ps_const_buffer);
 
 		rstate = &rctx->ps_const_buffer_resource[index];
-		rstate->id = R600_PIPE_STATE_RESOURCE;
-		rstate->nregs = 0;
+		if (!rstate->id) {
+			if (rctx->family >= CHIP_CEDAR) {
+				evergreen_pipe_init_buffer_resource(rctx, rstate, &rbuffer->r, offset, 16);
+			} else {
+				r600_pipe_init_buffer_resource(rctx, rstate, &rbuffer->r, offset, 16);
+			}
+		}
 		if (rctx->family >= CHIP_CEDAR) {
-			evergreen_pipe_set_buffer_resource(rctx, rstate, &rbuffer->r, offset, 16);
+			evergreen_pipe_mod_buffer_resource(rstate, &rbuffer->r, offset, 16);
 			evergreen_context_pipe_state_set_ps_resource(&rctx->ctx, rstate, index);
 		} else {
-			r600_pipe_set_buffer_resource(rctx, rstate, &rbuffer->r, offset, 16);
+			r600_pipe_mod_buffer_resource(rstate, &rbuffer->r, offset, 16);
 			r600_context_pipe_state_set_ps_resource(&rctx->ctx, rstate, index);
 		}
 		break;
@@ -468,8 +479,6 @@ static void r600_vertex_buffer_update(struct r600_pipe_context *rctx)
 
 	for (i = 0 ; i < count; i++) {
 		rstate = &rctx->fs_resource[i];
-		rstate->id = R600_PIPE_STATE_RESOURCE;
-		rstate->nregs = 0;
 
 		if (rctx->vertex_elements->vbuffer_need_offset) {
 			/* one resource per vertex elements */
@@ -488,11 +497,19 @@ static void r600_vertex_buffer_update(struct r600_pipe_context *rctx)
 			continue;
 		offset += vertex_buffer->buffer_offset + r600_bo_offset(rbuffer->bo);
 
+		if (!rstate->id) {
+			if (rctx->family >= CHIP_CEDAR) {
+				evergreen_pipe_init_buffer_resource(rctx, rstate, rbuffer, offset, vertex_buffer->stride);
+			} else {
+				r600_pipe_init_buffer_resource(rctx, rstate, rbuffer, offset, vertex_buffer->stride);
+			}
+		}
+
 		if (rctx->family >= CHIP_CEDAR) {
-			evergreen_pipe_set_buffer_resource(rctx, rstate, rbuffer, offset, vertex_buffer->stride);
+			evergreen_pipe_mod_buffer_resource(rstate, rbuffer, offset, vertex_buffer->stride);
 			evergreen_context_pipe_state_set_fs_resource(&rctx->ctx, rstate, i);
 		} else {
-			r600_pipe_set_buffer_resource(rctx, rstate, rbuffer, offset, vertex_buffer->stride);
+			r600_pipe_mod_buffer_resource(rstate, rbuffer, offset, vertex_buffer->stride);
 			r600_context_pipe_state_set_fs_resource(&rctx->ctx, rstate, i);
 		}
 	}
