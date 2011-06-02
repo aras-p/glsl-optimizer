@@ -878,8 +878,8 @@ static int evergreen_state_sampler_border_init(struct r600_context *ctx, u32 off
 		return r;
 	}
 	/* set proper offset */
-	range = &ctx->range[CTX_RANGE_ID(ctx, r600_shader_sampler_border[0].offset)];
-	block = range->blocks[CTX_BLOCK_ID(ctx, r600_shader_sampler_border[0].offset)];
+	range = &ctx->range[CTX_RANGE_ID(r600_shader_sampler_border[0].offset)];
+	block = range->blocks[CTX_BLOCK_ID(r600_shader_sampler_border[0].offset)];
 	block->pm4[1] = (offset - EVERGREEN_CONFIG_REG_OFFSET) >> 2;
 	return 0;
 }
@@ -1051,8 +1051,8 @@ static inline void evergreen_context_pipe_state_set_sampler(struct r600_context 
 	int i;
 	int dirty;
 
-	range = &ctx->range[CTX_RANGE_ID(ctx, offset)];
-	block = range->blocks[CTX_BLOCK_ID(ctx, offset)];
+	range = &ctx->range[CTX_RANGE_ID(offset)];
+	block = range->blocks[CTX_BLOCK_ID(offset)];
 	if (state == NULL) {
 		block->status &= ~(R600_BLOCK_STATUS_ENABLED | R600_BLOCK_STATUS_DIRTY);
 		LIST_DELINIT(&block->list);
@@ -1089,8 +1089,8 @@ static inline void evergreen_context_pipe_state_set_sampler_border(struct r600_c
 	int i;
 	int dirty;
 
-	range = &ctx->range[CTX_RANGE_ID(ctx, fake_offset)];
-	block = range->blocks[CTX_BLOCK_ID(ctx, fake_offset)];
+	range = &ctx->range[CTX_RANGE_ID(fake_offset)];
+	block = range->blocks[CTX_BLOCK_ID(fake_offset)];
 	if (state == NULL) {
 		block->status &= ~(R600_BLOCK_STATUS_ENABLED | R600_BLOCK_STATUS_DIRTY);
 		LIST_DELINIT(&block->list);

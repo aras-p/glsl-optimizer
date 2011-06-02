@@ -197,8 +197,8 @@ struct r600_bo *r600_bomgr_bo_create(struct r600_bomgr *mgr,
 #define HASH_SHIFT 9
 #define NUM_RANGES (0x42000 - RANGE_OFFSET_START) / (4 << HASH_SHIFT) /* 128 << 9 = 64k */
 
-#define CTX_RANGE_ID(ctx, offset) ((((offset - RANGE_OFFSET_START) >> 2) >> HASH_SHIFT) & 255)
-#define CTX_BLOCK_ID(ctx, offset) (((offset - RANGE_OFFSET_START) >> 2) & ((1 << HASH_SHIFT) - 1))
+#define CTX_RANGE_ID(offset) ((((offset - RANGE_OFFSET_START) >> 2) >> HASH_SHIFT) & 255)
+#define CTX_BLOCK_ID(offset) (((offset - RANGE_OFFSET_START) >> 2) & ((1 << HASH_SHIFT) - 1))
 
 /*
  * radeon_bo.c

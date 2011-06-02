@@ -121,14 +121,14 @@ int r600_context_add_block(struct r600_context *ctx, const struct r600_reg *reg,
 		}
 		ctx->nblocks++;
 		for (int j = 0; j < n; j++) {
-			range = &ctx->range[CTX_RANGE_ID(ctx, reg[i + j].offset)];
+			range = &ctx->range[CTX_RANGE_ID(reg[i + j].offset)];
 			/* create block table if it doesn't exist */
 			if (!range->blocks)
 				range->blocks = calloc(1 << HASH_SHIFT, sizeof(void *));
 			if (!range->blocks)
 				return -1;
 
-			range->blocks[CTX_BLOCK_ID(ctx, reg[i + j].offset)] = block;
+			range->blocks[CTX_BLOCK_ID(reg[i + j].offset)] = block;
 		}
 
 		/* initialize block */
@@ -643,8 +643,8 @@ void r600_context_fini(struct r600_context *ctx)
 			block = ctx->range[i].blocks[j];
 			if (block) {
 				for (int k = 0, offset = block->start_offset; k < block->nreg; k++, offset += 4) {
-					range = &ctx->range[CTX_RANGE_ID(ctx, offset)];
-					range->blocks[CTX_BLOCK_ID(ctx, offset)] = NULL;
+					range = &ctx->range[CTX_RANGE_ID(offset)];
+					range->blocks[CTX_BLOCK_ID(offset)] = NULL;
 				}
 				for (int k = 1; k <= block->nbo; k++) {
 					r600_bo_reference(ctx->radeon, &block->reloc[k].bo, NULL);
@@ -907,8 +907,8 @@ void r600_context_reg(struct r600_context *ctx,
 	unsigned new_val;
 	int dirty;
 
-	range = &ctx->range[CTX_RANGE_ID(ctx, offset)];
-	block = range->blocks[CTX_BLOCK_ID(ctx, offset)];
+	range = &ctx->range[CTX_RANGE_ID(offset)];
+	block = range->blocks[CTX_BLOCK_ID(offset)];
 	id = (offset - block->start_offset) >> 2;
 
 	dirty = block->status & R600_BLOCK_STATUS_DIRTY;
@@ -948,8 +948,8 @@ void r600_context_pipe_state_set(struct r600_context *ctx, struct r600_pipe_stat
 		unsigned id, reloc_id;
 		struct r600_pipe_reg *reg = &state->regs[i];
 
-		range = &ctx->range[CTX_RANGE_ID(ctx, reg->offset)];
-		block = range->blocks[CTX_BLOCK_ID(ctx, reg->offset)];
+		range = &ctx->range[CTX_RANGE_ID(reg->offset)];
+		block = range->blocks[CTX_BLOCK_ID(reg->offset)];
 		id = (reg->offset - block->start_offset) >> 2;
 
 		dirty = block->status & R600_BLOCK_STATUS_DIRTY;
@@ -984,8 +984,8 @@ void r600_context_pipe_state_set_resource(struct r600_context *ctx, struct r600_
 	int dirty;
 	int num_regs = ctx->radeon->chip_class >= EVERGREEN ? 8 : 7;
 
-	range = &ctx->range[CTX_RANGE_ID(ctx, offset)];
-	block = range->blocks[CTX_BLOCK_ID(ctx, offset)];
+	range = &ctx->range[CTX_RANGE_ID(offset)];
+	block = range->blocks[CTX_BLOCK_ID(offset)];
 	if (state == NULL) {
 		block->status &= ~(R600_BLOCK_STATUS_ENABLED | R600_BLOCK_STATUS_DIRTY);
 		if (block->reloc[1].bo)
@@ -1078,8 +1078,8 @@ static inline void r600_context_pipe_state_set_sampler(struct r600_context *ctx,
 	int i;
 	int dirty;
 
-	range = &ctx->range[CTX_RANGE_ID(ctx, offset)];
-	block = range->blocks[CTX_BLOCK_ID(ctx, offset)];
+	range = &ctx->range[CTX_RANGE_ID(offset)];
+	block = range->blocks[CTX_BLOCK_ID(offset)];
 	if (state == NULL) {
 		block->status &= ~(R600_BLOCK_STATUS_ENABLED | R600_BLOCK_STATUS_DIRTY);
 		LIST_DELINIT(&block->list);
@@ -1114,8 +1114,8 @@ static inline void r600_context_pipe_state_set_sampler_border(struct r600_contex
 	int i;
 	int dirty;
 
-	range = &ctx->range[CTX_RANGE_ID(ctx, offset)];
-	block = range->blocks[CTX_BLOCK_ID(ctx, offset)];
+	range = &ctx->range[CTX_RANGE_ID(offset)];
+	block = range->blocks[CTX_BLOCK_ID(offset)];
 	if (state == NULL) {
 		block->status &= ~(R600_BLOCK_STATUS_ENABLED | R600_BLOCK_STATUS_DIRTY);
 		LIST_DELINIT(&block->list);
@@ -1167,8 +1167,8 @@ struct r600_bo *r600_context_reg_bo(struct r600_context *ctx, unsigned offset)
 	struct r600_block *block;
 	unsigned id;
 
-	range = &ctx->range[CTX_RANGE_ID(ctx, offset)];
-	block = range->blocks[CTX_BLOCK_ID(ctx, offset)];
+	range = &ctx->range[CTX_RANGE_ID(offset)];
+	block = range->blocks[CTX_BLOCK_ID(offset)];
 	offset -= block->start_offset;
 	id = block->pm4_bo_index[offset >> 2];
 	if (block->reloc[id].bo) {
