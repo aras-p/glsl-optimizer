@@ -145,6 +145,17 @@ static INLINE unsigned r600_bo_offset(struct r600_bo *bo)
 #define R600_BLOCK_MAX_BO		32
 #define R600_BLOCK_MAX_REG		128
 
+/* each range covers 9 bits of dword space = 512 dwords = 2k bytes */
+/* there is a block entry for each register so 512 blocks */
+/* we have no registers to read/write below 0x8000 (0x2000 in dw space) */
+/* we use some fake offsets at 0x40000 to do evergreen sampler borders so take 0x42000 as a max bound*/
+#define RANGE_OFFSET_START 0x8000
+#define HASH_SHIFT 9
+#define NUM_RANGES (0x42000 - RANGE_OFFSET_START) / (4 << HASH_SHIFT) /* 128 << 9 = 64k */
+
+#define CTX_RANGE_ID(offset) ((((offset - RANGE_OFFSET_START) >> 2) >> HASH_SHIFT) & 255)
+#define CTX_BLOCK_ID(offset) (((offset - RANGE_OFFSET_START) >> 2) & ((1 << HASH_SHIFT) - 1))
+
 struct r600_pipe_reg {
 	u32				offset;
 	u32				mask;
