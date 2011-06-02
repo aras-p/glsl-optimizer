@@ -66,6 +66,7 @@ struct radeon {
 #define REG_FLAG_DIRTY_ALWAYS 2
 #define REG_FLAG_RV6XX_SBU 4
 #define REG_FLAG_NOT_R600 8
+#define REG_FLAG_ENABLE_ALWAYS 16
 
 struct r600_reg {
 	unsigned			offset;

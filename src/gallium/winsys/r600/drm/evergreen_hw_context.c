@@ -43,31 +43,31 @@
 static const struct r600_reg evergreen_config_reg_list[] = {
 	{R_008958_VGT_PRIMITIVE_TYPE, 0, 0, 0},
 	{R_008A14_PA_CL_ENHANCE, 0, 0, 0},
-	{R_008C00_SQ_CONFIG, 0, 0, 0},
-	{R_008C04_SQ_GPR_RESOURCE_MGMT_1, 0, 0, 0},
-	{R_008C08_SQ_GPR_RESOURCE_MGMT_2, 0, 0, 0},
-	{R_008C0C_SQ_THREAD_RESOURCE_MGMT, 0, 0, 0},
-	{R_008C18_SQ_THREAD_RESOURCE_MGMT_1, 0, 0, 0},
-	{R_008C1C_SQ_THREAD_RESOURCE_MGMT_2, 0, 0, 0},
-	{R_008C20_SQ_STACK_RESOURCE_MGMT_1, 0, 0, 0},
-	{R_008C24_SQ_STACK_RESOURCE_MGMT_2, 0, 0, 0},
-	{R_008C28_SQ_STACK_RESOURCE_MGMT_3, 0, 0, 0},
-	{R_008D8C_SQ_DYN_GPR_CNTL_PS_FLUSH_REQ, 0, 0, 0},
-	{R_009100_SPI_CONFIG_CNTL, 0, 0, 0},
-	{R_00913C_SPI_CONFIG_CNTL_1, 0, 0, 0},
+	{R_008C00_SQ_CONFIG, REG_FLAG_ENABLE_ALWAYS, 0, 0},
+	{R_008C04_SQ_GPR_RESOURCE_MGMT_1, REG_FLAG_ENABLE_ALWAYS, 0, 0},
+	{R_008C08_SQ_GPR_RESOURCE_MGMT_2, REG_FLAG_ENABLE_ALWAYS, 0, 0},
+	{R_008C0C_SQ_THREAD_RESOURCE_MGMT, REG_FLAG_ENABLE_ALWAYS, 0, 0},
+	{R_008C18_SQ_THREAD_RESOURCE_MGMT_1, REG_FLAG_ENABLE_ALWAYS, 0, 0},
+	{R_008C1C_SQ_THREAD_RESOURCE_MGMT_2, REG_FLAG_ENABLE_ALWAYS, 0, 0},
+	{R_008C20_SQ_STACK_RESOURCE_MGMT_1, REG_FLAG_ENABLE_ALWAYS, 0, 0},
+	{R_008C24_SQ_STACK_RESOURCE_MGMT_2, REG_FLAG_ENABLE_ALWAYS, 0, 0},
+	{R_008C28_SQ_STACK_RESOURCE_MGMT_3, REG_FLAG_ENABLE_ALWAYS, 0, 0},
+	{R_008D8C_SQ_DYN_GPR_CNTL_PS_FLUSH_REQ, REG_FLAG_ENABLE_ALWAYS, 0, 0},
+	{R_009100_SPI_CONFIG_CNTL, REG_FLAG_ENABLE_ALWAYS, 0, 0},
+	{R_00913C_SPI_CONFIG_CNTL_1, REG_FLAG_ENABLE_ALWAYS, 0, 0},
 };
 
 
 static const struct r600_reg cayman_config_reg_list[] = {
 	{R_008958_VGT_PRIMITIVE_TYPE, 0, 0, 0},
 	{R_008A14_PA_CL_ENHANCE, 0, 0, 0},
-	{R_008C00_SQ_CONFIG, 0, 0, 0},
-	{R_008C04_SQ_GPR_RESOURCE_MGMT_1, 0, 0, 0},
-	{CM_R_008C10_SQ_GLOBAL_GPR_RESOURCE_MGMT_1, 0, 0, 0},
-	{CM_R_008C14_SQ_GLOBAL_GPR_RESOURCE_MGMT_2, 0, 0, 0},
-	{R_008D8C_SQ_DYN_GPR_CNTL_PS_FLUSH_REQ, 0, 0, 0},
-	{R_009100_SPI_CONFIG_CNTL, 0, 0, 0},
-	{R_00913C_SPI_CONFIG_CNTL_1, 0, 0, 0},
+	{R_008C00_SQ_CONFIG, REG_FLAG_ENABLE_ALWAYS, 0, 0},
+	{R_008C04_SQ_GPR_RESOURCE_MGMT_1, REG_FLAG_ENABLE_ALWAYS, 0, 0},
+	{CM_R_008C10_SQ_GLOBAL_GPR_RESOURCE_MGMT_1, REG_FLAG_ENABLE_ALWAYS, 0, 0},
+	{CM_R_008C14_SQ_GLOBAL_GPR_RESOURCE_MGMT_2, REG_FLAG_ENABLE_ALWAYS, 0, 0},
+	{R_008D8C_SQ_DYN_GPR_CNTL_PS_FLUSH_REQ, REG_FLAG_ENABLE_ALWAYS, 0, 0},
+	{R_009100_SPI_CONFIG_CNTL, REG_FLAG_ENABLE_ALWAYS, 0, 0},
+	{R_00913C_SPI_CONFIG_CNTL_1, REG_FLAG_ENABLE_ALWAYS, 0, 0},
 };
 
 static const struct r600_reg evergreen_ctl_const_list[] = {
@@ -904,6 +904,10 @@ int evergreen_context_init(struct r600_context *ctx, struct radeon *radeon)
 	ctx->radeon = radeon;
 	LIST_INITHEAD(&ctx->query_list);
 
+	/* init dirty list */
+	LIST_INITHEAD(&ctx->dirty);
+	LIST_INITHEAD(&ctx->enable_list);
+
 	ctx->range = calloc(NUM_RANGES, sizeof(struct r600_range));
 	if (!ctx->range) {
 		r = -ENOMEM;
@@ -1007,8 +1011,6 @@ int evergreen_context_init(struct r600_context *ctx, struct radeon *radeon)
 
 	LIST_INITHEAD(&ctx->fenced_bo);
 
-	/* init dirty list */
-	LIST_INITHEAD(&ctx->dirty);
 	return 0;
 out_err:
 	r600_context_fini(ctx);
@@ -1048,6 +1050,7 @@ static inline void evergreen_context_pipe_state_set_sampler(struct r600_context 
 	if (state == NULL) {
 		block->status &= ~(R600_BLOCK_STATUS_ENABLED | R600_BLOCK_STATUS_DIRTY);
 		LIST_DELINIT(&block->list);
+		LIST_DELINIT(&block->enable_list);
 		return;
 	}
 	dirty = block->status & R600_BLOCK_STATUS_DIRTY;
@@ -1086,6 +1089,7 @@ static inline void evergreen_context_pipe_state_set_sampler_border(struct r600_c
 	if (state == NULL) {
 		block->status &= ~(R600_BLOCK_STATUS_ENABLED | R600_BLOCK_STATUS_DIRTY);
 		LIST_DELINIT(&block->list);
+		LIST_DELINIT(&block->enable_list);
 		return;
 	}
 	if (state->nregs <= 3) {

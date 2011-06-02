@@ -98,11 +98,17 @@ static void r600_init_block(struct r600_context *ctx,
 	block->nreg_dirty = n;
 	block->flags = 0;
 	LIST_INITHEAD(&block->list);
+	LIST_INITHEAD(&block->enable_list);
 
 	for (j = 0; j < n; j++) {
 		if (reg[i+j].flags & REG_FLAG_DIRTY_ALWAYS) {
 			block->flags |= REG_FLAG_DIRTY_ALWAYS;
 		}
+		if (reg[i+j].flags & REG_FLAG_ENABLE_ALWAYS) {
+			block->status |= R600_BLOCK_STATUS_ENABLED;
+			LIST_ADDTAIL(&block->enable_list, &ctx->enable_list);
+		}
+
 		if (reg[i+j].flags & REG_FLAG_NEED_BO) {
 			block->nbo++;
 			assert(block->nbo < R600_BLOCK_MAX_BO);
@@ -184,6 +190,7 @@ int r600_context_add_block(struct r600_context *ctx, const struct r600_reg *reg,
 		}
 
 		r600_init_block(ctx, block, reg, i, n, opcode, offset_base);
+
 	}
 	return 0;
 }
@@ -768,6 +775,10 @@ int r600_context_init(struct r600_context *ctx, struct radeon *radeon)
 	ctx->radeon = radeon;
 	LIST_INITHEAD(&ctx->query_list);
 
+	/* init dirty list */
+	LIST_INITHEAD(&ctx->dirty);
+	LIST_INITHEAD(&ctx->enable_list);
+
 	ctx->range = calloc(NUM_RANGES, sizeof(struct r600_range));
 	if (!ctx->range) {
 		r = -ENOMEM;
@@ -860,9 +871,6 @@ int r600_context_init(struct r600_context *ctx, struct radeon *radeon)
 	ctx->pm4_ndwords -= 16;
 
 	LIST_INITHEAD(&ctx->fenced_bo);
-
-	/* init dirty list */
-	LIST_INITHEAD(&ctx->dirty);
 
 	ctx->max_db = 4;
 
@@ -985,17 +993,20 @@ void r600_context_reg(struct r600_context *ctx,
 		r600_context_dirty_block(ctx, block, dirty, id);
 }
 
-void r600_context_dirty_block(struct r600_context *ctx, struct r600_block *block,
+void r600_context_dirty_block(struct r600_context *ctx,
+			      struct r600_block *block,
 			      int dirty, int index)
 {
 	if ((index + 1) > block->nreg_dirty)
 		block->nreg_dirty = index + 1;
 
 	if ((dirty != (block->status & R600_BLOCK_STATUS_DIRTY)) || !(block->status & R600_BLOCK_STATUS_ENABLED)) {
-
-		block->status |= R600_BLOCK_STATUS_ENABLED;
 		block->status |= R600_BLOCK_STATUS_DIRTY;
 		ctx->pm4_dirty_cdwords += block->pm4_ndwords + block->pm4_flush_ndwords;
+		if (!(block->status & R600_BLOCK_STATUS_ENABLED)) {
+			block->status |= R600_BLOCK_STATUS_ENABLED;
+			LIST_ADDTAIL(&block->enable_list, &ctx->enable_list);
+		}
 		LIST_ADDTAIL(&block->list,&ctx->dirty);
 	}
 }
@@ -1052,6 +1063,7 @@ void r600_context_pipe_state_set_resource(struct r600_context *ctx, struct r600_
 		r600_bo_reference(ctx->radeon, &block->reloc[1].bo, NULL);
 		r600_bo_reference(ctx->radeon , &block->reloc[2].bo, NULL);
 		LIST_DELINIT(&block->list);
+		LIST_DELINIT(&block->enable_list);
 		return;
 	}
 
@@ -1143,6 +1155,7 @@ static inline void r600_context_pipe_state_set_sampler(struct r600_context *ctx,
 	if (state == NULL) {
 		block->status &= ~(R600_BLOCK_STATUS_ENABLED | R600_BLOCK_STATUS_DIRTY);
 		LIST_DELINIT(&block->list);
+		LIST_DELINIT(&block->enable_list);
 		return;
 	}
 	dirty = block->status & R600_BLOCK_STATUS_DIRTY;
@@ -1180,6 +1193,7 @@ static inline void r600_context_pipe_state_set_sampler_border(struct r600_contex
 	if (state == NULL) {
 		block->status &= ~(R600_BLOCK_STATUS_ENABLED | R600_BLOCK_STATUS_DIRTY);
 		LIST_DELINIT(&block->list);
+		LIST_DELINIT(&block->enable_list);
 		return;
 	}
 	if (state->nregs <= 3) {
@@ -1407,6 +1421,7 @@ void r600_context_flush(struct r600_context *ctx)
 	uint64_t chunk_array[2];
 	unsigned fence;
 	int r;
+	struct r600_block *enable_block = NULL, *next_block;
 
 	if (!ctx->pm4_cdwords)
 		return;
@@ -1480,15 +1495,14 @@ void r600_context_flush(struct r600_context *ctx)
 	/* set all valid group as dirty so they get reemited on
 	 * next draw command
 	 */
-	for (int i = 0; i < ctx->nblocks; i++) {
-		if (ctx->blocks[i]->status & R600_BLOCK_STATUS_ENABLED) {
-			if(!(ctx->blocks[i]->status & R600_BLOCK_STATUS_DIRTY)) {
-				LIST_ADDTAIL(&ctx->blocks[i]->list,&ctx->dirty);
-			}
-			ctx->pm4_dirty_cdwords += ctx->blocks[i]->pm4_ndwords + ctx->blocks[i]->pm4_flush_ndwords;
-			ctx->blocks[i]->status |= R600_BLOCK_STATUS_DIRTY;
-			ctx->blocks[i]->nreg_dirty = ctx->blocks[i]->nreg;
+	LIST_FOR_EACH_ENTRY(enable_block, &ctx->enable_list, enable_list) {
+		if(!(enable_block->status & R600_BLOCK_STATUS_DIRTY)) {
+			LIST_ADDTAIL(&enable_block->list,&ctx->dirty);
 		}
+		ctx->pm4_dirty_cdwords += enable_block->pm4_ndwords + 
+			enable_block->pm4_flush_ndwords;
+		enable_block->status |= R600_BLOCK_STATUS_DIRTY;
+		enable_block->nreg_dirty = enable_block->nreg;
 	}
 }
 

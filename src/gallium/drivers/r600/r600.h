@@ -188,6 +188,7 @@ struct r600_block_reloc {
 
 struct r600_block {
 	struct list_head	list;
+	struct list_head	enable_list;
 	unsigned		status;
 	unsigned                flags;
 	unsigned		start_offset;
@@ -251,6 +252,7 @@ struct r600_context {
 	unsigned		nblocks;
 	struct r600_block	**blocks;
 	struct list_head	dirty;
+	struct list_head	enable_list;
 	unsigned		pm4_ndwords;
 	unsigned		pm4_cdwords;
 	unsigned		pm4_dirty_cdwords;
