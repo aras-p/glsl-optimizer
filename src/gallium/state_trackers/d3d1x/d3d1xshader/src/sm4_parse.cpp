@@ -144,7 +144,7 @@ struct sm4_parser
 				repr = optok.index2_repr;
 			else
 				fail("Unhandled operand index representation");
-			op.indices[0].disp = 0;
+			op.indices[i].disp = 0;
 			// TODO: is disp supposed to be signed here??
 			switch(repr)
 			{
