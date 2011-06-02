@@ -91,6 +91,7 @@ struct sm4_parser
 			break;
 		case SM4_OPERAND_COMPNUM_1:
 			op.comps = 1;
+			op.swizzle[1] = op.swizzle[2] = op.swizzle[3] = 0;
 			break;
 		case SM4_OPERAND_COMPNUM_4:
 			op.comps = 4;
