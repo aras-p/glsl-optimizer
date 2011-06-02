@@ -5,6 +5,8 @@ include $(TOP)/configs/current
 
 LIBNAME = mach64_dri.so
 
+include ../Makefile.defines
+
 DRIVER_SOURCES = \
 	mach64_context.c \
 	mach64_ioctl.c \
@@ -25,5 +27,5 @@ C_SOURCES = \
 
 ASM_SOURCES = 
 
-include ../Makefile.template
+include ../Makefile.targets
 

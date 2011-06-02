@@ -5,6 +5,8 @@ include $(TOP)/configs/current
 
 LIBNAME = savage_dri.so
 
+include ../Makefile.defines
+
 DRIVER_SOURCES = \
 	savage_xmesa.c \
 	savagedd.c \
@@ -22,5 +24,5 @@ C_SOURCES = \
 ASM_SOURCES = 
 
 
-include ../Makefile.template
+include ../Makefile.targets
 

@@ -5,6 +5,8 @@ include $(TOP)/configs/current
 
 LIBNAME = unichrome_dri.so
 
+include ../Makefile.defines
+
 DRIVER_SOURCES = \
 	via_context.c \
 	via_fb.c \
@@ -25,5 +27,5 @@ C_SOURCES = \
 ASM_SOURCES = 
 
 
-include ../Makefile.template
+include ../Makefile.targets
 

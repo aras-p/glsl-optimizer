@@ -3,9 +3,9 @@
 TOP = ../../../../..
 include $(TOP)/configs/current
 
-CFLAGS += $(RADEON_CFLAGS)
-
 LIBNAME = r200_dri.so
+
+include ../Makefile.defines
 
 ifeq ($(RADEON_LDFLAGS),)
 CS_SOURCES = radeon_cs_space_drm.c radeon_bo.c radeon_cs.c
@@ -55,12 +55,13 @@ X86_SOURCES =
 
 DRIVER_DEFINES = -DRADEON_R200
 
+INCLUDES += $(RADEON_CFLAGS)
 DRI_LIB_DEPS += $(RADEON_LDFLAGS)
 
 ##### TARGETS #####
 
 
-include ../Makefile.template
+include ../Makefile.targets
 
 #INCLUDES += -I../radeon/server
 

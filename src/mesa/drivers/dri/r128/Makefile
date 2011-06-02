@@ -5,6 +5,8 @@ include $(TOP)/configs/current
 
 LIBNAME = r128_dri.so
 
+include ../Makefile.defines
+
 DRIVER_SOURCES = \
 	r128_context.c \
 	r128_lock.c \
@@ -25,5 +27,5 @@ C_SOURCES = \
 ASM_SOURCES = 
 
 
-include ../Makefile.template
+include ../Makefile.targets
 

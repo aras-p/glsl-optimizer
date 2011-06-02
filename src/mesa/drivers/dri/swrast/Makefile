@@ -5,6 +5,8 @@ include $(TOP)/configs/current
 
 LIBNAME = swrast_dri.so
 
+include ../Makefile.defines
+
 DRIVER_DEFINES = -D__NOT_HAVE_DRM_H
 
 DRIVER_SOURCES = \
@@ -22,5 +24,5 @@ SWRAST_COMMON_SOURCES = \
 	../common/utils.c \
 	../common/drisw_util.c
 
-include ../Makefile.template
+include ../Makefile.targets
 

@@ -21,6 +21,7 @@ dnl Versions for external dependencies
 LIBDRM_REQUIRED=2.4.24
 LIBDRM_RADEON_REQUIRED=2.4.24
 LIBDRM_INTEL_REQUIRED=2.4.24
+LIBDRM_NOUVEAU_REQUIRED=0.6
 DRI2PROTO_REQUIRED=2.1
 GLPROTO_REQUIRED=1.4.11
 LIBDRM_XORG_REQUIRED=2.4.24
@@ -1004,8 +1005,8 @@ if test "$mesa_driver" = dri -o "$mesa_driver" = no; then
             # the new interface.  i810 are missing because there is no
             # x86-64 system where they could *ever* be used.
             if test "x$DRI_DIRS" = "xyes"; then
-                DRI_DIRS="i915 i965 mach64 mga r128 r200 r300 r600 radeon \
-                    savage tdfx unichrome swrast"
+                DRI_DIRS="i915 i965 mach64 mga nouveau r128 r200 r300 r600 \
+                    radeon savage tdfx unichrome swrast"
             fi
             ;;
         powerpc*)
@@ -1032,8 +1033,8 @@ if test "$mesa_driver" = dri -o "$mesa_driver" = no; then
         fi
 
         if test "x$DRI_DIRS" = "xyes"; then
-            DRI_DIRS="i810 i915 i965 mach64 mga r128 r200 r300 r600 radeon tdfx \
-                unichrome savage sis swrast"
+            DRI_DIRS="i810 i915 i965 mach64 mga nouveau r128 r200 r300 r600 \
+                radeon tdfx unichrome savage sis swrast"
         fi
         ;;
     gnu*)
@@ -1061,7 +1062,7 @@ if test "$mesa_driver" = dri -o "$mesa_driver" = no; then
 
     # default drivers
     if test "x$DRI_DIRS" = "xyes"; then
-        DRI_DIRS="i810 i915 i965 mach64 mga r128 r200 r300 r600 radeon \
+        DRI_DIRS="i810 i915 i965 mach64 mga nouveau r128 r200 r300 r600 radeon \
             savage sis tdfx unichrome swrast"
     fi
 
@@ -1094,6 +1095,12 @@ AC_SUBST([DRI_LIB_DEPS])
 case $DRI_DIRS in
 *i915*|*i965*)
     PKG_CHECK_MODULES([INTEL], [libdrm_intel >= $LIBDRM_INTEL_REQUIRED])
+    ;;
+esac
+
+case $DRI_DIRS in
+*nouveau*)
+    PKG_CHECK_MODULES([NOUVEAU], [libdrm_nouveau >= $LIBDRM_NOUVEAU_REQUIRED])
     ;;
 esac
 

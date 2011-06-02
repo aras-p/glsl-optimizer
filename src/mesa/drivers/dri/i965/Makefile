@@ -4,6 +4,8 @@ include $(TOP)/configs/current
 
 LIBNAME = i965_dri.so
 
+include ../Makefile.defines
+
 DRIVER_SOURCES = \
 	intel_batchbuffer.c \
 	intel_blit.c \
@@ -131,7 +133,7 @@ DRIVER_DEFINES = -I../intel
 INCLUDES += $(INTEL_CFLAGS)
 DRI_LIB_DEPS += $(INTEL_LIBS)
 
-include ../Makefile.template
+include ../Makefile.targets
 
 intel_decode.o: ../intel/intel_decode.c
 intel_tex_layout.o: ../intel/intel_tex_layout.c

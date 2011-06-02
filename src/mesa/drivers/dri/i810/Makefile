@@ -5,6 +5,8 @@ include $(TOP)/configs/current
 
 LIBNAME = i810_dri.so
 
+include ../Makefile.defines
+
 DRIVER_SOURCES = \
 	i810context.c \
 	i810ioctl.c \
@@ -24,5 +26,5 @@ C_SOURCES = \
 
 ASM_SOURCES = 
 
-include ../Makefile.template
+include ../Makefile.targets
 

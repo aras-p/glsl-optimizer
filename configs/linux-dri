@@ -63,11 +63,16 @@ GALLIUM_WINSYS_DIRS = sw sw/xlib drm/vmware drm/intel drm/i965
 GALLIUM_TARGET_DIRS = 
 GALLIUM_STATE_TRACKERS_DIRS = egl
 
-DRI_DIRS = i810 i915 i965 mach64 mga r128 r200 r300 r600 radeon \
+DRI_DIRS = i810 i915 i965 mach64 mga nouveau r128 r200 r300 r600 radeon \
 	savage sis tdfx unichrome swrast
 
-INTEL_LIBS = `pkg-config --libs libdrm_intel`
-INTEL_CFLAGS = `pkg-config --cflags libdrm_intel`
+INTEL_LIBS = $(shell pkg-config --libs libdrm_intel)
+INTEL_CFLAGS = $(shell pkg-config --cflags libdrm_intel)
 
-RADEON_LIBS = `pkg-config --libs libdrm_radeon`
-RADEON_CFLAGS = `pkg-config --cflags libdrm_radeon`
+NOUVEAU_LIBS = $(shell pkg-config --libs libdrm_nouveau)
+NOUVEAU_CFLAGS = $(shell pkg-config --cflags libdrm_nouveau)
+
+LIBDRM_RADEON_LIBS = $(shell pkg-config --libs libdrm_radeon)
+LIBDRM_RADEON_CFLAGS = $(shell pkg-config --cflags libdrm_radeon)
+RADEON_CFLAGS = "-DHAVE_LIBDRM_RADEON=1 $(LIBDRM_RADEON_CFLAGS)"
+RADEON_LDFLAGS = $(LIBDRM_RADEON_LIBS)
