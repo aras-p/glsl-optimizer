@@ -94,9 +94,9 @@ GLboolean brwCreateContext( int api,
       ctx->Const.MaxVertexTextureImageUnits +
       ctx->Const.MaxTextureImageUnits;
 
-   /* Mesa limits textures to 4kx4k; it would be nice to fix that someday
-    */
-   ctx->Const.MaxTextureLevels = 13;
+   ctx->Const.MaxTextureLevels = 14; /* 8192 */
+   if (ctx->Const.MaxTextureLevels > MAX_TEXTURE_LEVELS)
+	   ctx->Const.MaxTextureLevels = MAX_TEXTURE_LEVELS;
    ctx->Const.Max3DTextureLevels = 9;
    ctx->Const.MaxCubeTextureLevels = 12;
    ctx->Const.MaxTextureRectSize = (1<<12);
