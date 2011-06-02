@@ -940,7 +940,6 @@ void r600_context_dirty_block(struct r600_context *ctx, struct r600_block *block
 
 void r600_context_pipe_state_set(struct r600_context *ctx, struct r600_pipe_state *state)
 {
-	struct r600_range *range;
 	struct r600_block *block;
 	unsigned new_val;
 	int dirty;
@@ -948,9 +947,8 @@ void r600_context_pipe_state_set(struct r600_context *ctx, struct r600_pipe_stat
 		unsigned id, reloc_id;
 		struct r600_pipe_reg *reg = &state->regs[i];
 
-		range = &ctx->range[CTX_RANGE_ID(reg->offset)];
-		block = range->blocks[CTX_BLOCK_ID(reg->offset)];
-		id = (reg->offset - block->start_offset) >> 2;
+		block = reg->block;
+		id = reg->id;
 
 		dirty = block->status & R600_BLOCK_STATUS_DIRTY;
 

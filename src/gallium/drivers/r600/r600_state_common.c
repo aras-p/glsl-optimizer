@@ -634,12 +634,20 @@ void r600_draw_vbo(struct pipe_context *ctx, const struct pipe_draw_info *info)
 void _r600_pipe_state_add_reg(struct r600_context *ctx,
 			      struct r600_pipe_state *state,
 			      u32 offset, u32 value, u32 mask,
+			      u32 range_id, u32 block_id,
 			      struct r600_bo *bo)
 {
-	state->regs[state->nregs].offset = offset;
+	struct r600_range *range;
+	struct r600_block *block;
+
+	range = &ctx->range[range_id];
+	block = range->blocks[block_id];
+
 	state->regs[state->nregs].value = value;
 	state->regs[state->nregs].mask = mask;
 	state->regs[state->nregs].bo = bo;
+	state->regs[state->nregs].block = block;
+	state->regs[state->nregs].id = (offset - block->start_offset) >> 2;
 	state->nregs++;
 	assert(state->nregs < R600_BLOCK_MAX_REG);
 }

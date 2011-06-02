@@ -157,10 +157,11 @@ static INLINE unsigned r600_bo_offset(struct r600_bo *bo)
 #define CTX_BLOCK_ID(offset) (((offset - RANGE_OFFSET_START) >> 2) & ((1 << HASH_SHIFT) - 1))
 
 struct r600_pipe_reg {
-	u32				offset;
-	u32				mask;
 	u32				value;
-	struct r600_bo		*bo;
+	u32				mask;
+	struct r600_block 		*block;
+	struct r600_bo			*bo;
+	u32				id;
 };
 
 struct r600_pipe_state {
@@ -313,9 +314,9 @@ struct radeon *radeon_decref(struct radeon *radeon);
 void _r600_pipe_state_add_reg(struct r600_context *ctx,
 			      struct r600_pipe_state *state,
 			      u32 offset, u32 value, u32 mask,
+			      u32 range_id, u32 block_id,
 			      struct r600_bo *bo);
 
-#define r600_pipe_state_add_reg(state, offset, value, mask, bo) _r600_pipe_state_add_reg(&rctx->ctx, state, offset, value, mask, bo)
-
+#define r600_pipe_state_add_reg(state, offset, value, mask, bo) _r600_pipe_state_add_reg(&rctx->ctx, state, offset, value, mask, CTX_RANGE_ID(offset), CTX_BLOCK_ID(offset), bo)
 
 #endif
