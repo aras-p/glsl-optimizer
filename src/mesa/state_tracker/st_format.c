@@ -1096,6 +1096,10 @@ static struct format_mapping format_map[] = {
    {
       { GL_RGB9_E5, 0 },
       { PIPE_FORMAT_R9G9B9E5_FLOAT, 0 }
+   },
+   {
+      { GL_R11F_G11F_B10F, 0 },
+      { PIPE_FORMAT_R11G11B10_FLOAT, 0 }
    }
 };
 
