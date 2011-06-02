@@ -1619,7 +1619,6 @@ static void r500SetupRSUnit(struct gl_context * ctx)
 		WARN_ONCE("Don't know how to satisfy InputsRead=0x%08x\n", InputsRead);
 }
 
-#define MIN3(a, b, c)	((a) < (b) ? MIN2(a, c) : MIN2(b, c))
 
 void r300VapCntl(r300ContextPtr rmesa, GLuint input_count,
 			GLuint output_count, GLuint temp_count)
