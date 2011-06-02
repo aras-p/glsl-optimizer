@@ -65,6 +65,7 @@ enum r600_pipe_state_id {
 	R600_PIPE_STATE_RESOURCE,
 	R600_PIPE_STATE_POLYGON_OFFSET,
 	R600_PIPE_STATE_FETCH_SHADER,
+	R600_PIPE_STATE_SPI,
 	R600_PIPE_NSTATES
 };
 
@@ -189,6 +190,7 @@ struct r600_pipe_context {
 	struct r600_pipe_state		ps_const_buffer_resource[R600_MAX_CONST_BUFFERS];
 	struct r600_pipe_rasterizer	*rasterizer;
 	struct r600_pipe_state          vgt;
+	struct r600_pipe_state          spi;
 	/* shader information */
 	unsigned			sprite_coord_enable;
 	bool				flatshade;

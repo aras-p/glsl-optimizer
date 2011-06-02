@@ -338,14 +338,27 @@ static void r600_update_alpha_ref(struct r600_pipe_context *rctx)
 }
 
 /* FIXME optimize away spi update when it's not needed */
+static void r600_spi_block_init(struct r600_pipe_context *rctx, struct r600_pipe_state *rstate)
+{
+	int i;
+	rstate->nregs = 0;
+	rstate->id = R600_PIPE_STATE_SPI;
+	for (i = 0; i < 32; i++) {
+		r600_pipe_state_add_reg(rstate, R_028644_SPI_PS_INPUT_CNTL_0 + i * 4, 0, 0xFFFFFFFF, NULL);
+	}
+}
+
 static void r600_spi_update(struct r600_pipe_context *rctx, unsigned prim)
 {
 	struct r600_pipe_shader *shader = rctx->ps_shader;
-	struct r600_pipe_state rstate;
+	struct r600_pipe_state *rstate = &rctx->spi;
 	struct r600_shader *rshader = &shader->shader;
 	unsigned i, tmp;
 
-	rstate.nregs = 0;
+	if (rctx->spi.id == 0)
+		r600_spi_block_init(rctx, &rctx->spi);
+
+	rstate->nregs = 0;
 	for (i = 0; i < rshader->ninput; i++) {
 		tmp = S_028644_SEMANTIC(r600_find_vs_semantic_index(&rctx->vs_shader->shader, rshader, i));
 
@@ -368,15 +381,10 @@ static void r600_spi_update(struct r600_pipe_context *rctx, unsigned prim)
 				tmp |= S_028644_SEL_LINEAR(1);
 		}
 
-		r600_pipe_state_add_reg(&rstate, R_028644_SPI_PS_INPUT_CNTL_0 + i * 4, tmp, 0xFFFFFFFF, NULL);
+		r600_pipe_state_mod_reg(rstate, tmp);
 	}
 
-	if (prim == PIPE_PRIM_QUADS || prim == PIPE_PRIM_QUAD_STRIP || prim == PIPE_PRIM_POLYGON) {
-		r600_pipe_state_add_reg(&rstate, R_028814_PA_SU_SC_MODE_CNTL,
-					S_028814_PROVOKING_VTX_LAST(1),
-					S_028814_PROVOKING_VTX_LAST(1), NULL);
-	}
-	r600_context_pipe_state_set(&rctx->ctx, &rstate);
+	r600_context_pipe_state_set(&rctx->ctx, rstate);
 }
 
 void r600_set_constant_buffer(struct pipe_context *ctx, uint shader, uint index,
@@ -609,13 +617,22 @@ void r600_draw_vbo(struct pipe_context *ctx, const struct pipe_draw_info *info)
 		r600_pipe_state_add_reg(&rctx->vgt, R_028408_VGT_INDX_OFFSET, draw.info.index_bias, 0xFFFFFFFF, NULL);
 		r600_pipe_state_add_reg(&rctx->vgt, R_03CFF0_SQ_VTX_BASE_VTX_LOC, 0, 0xFFFFFFFF, NULL);
 		r600_pipe_state_add_reg(&rctx->vgt, R_03CFF4_SQ_VTX_START_INST_LOC, draw.info.start_instance, 0xFFFFFFFF, NULL);
-	} else {
-		rctx->vgt.regs[0].value = prim;
-		rctx->vgt.regs[1].value = rctx->cb_target_mask & mask;
-		rctx->vgt.regs[2].value = draw.info.max_index;
-		rctx->vgt.regs[3].value = draw.info.min_index;
-		rctx->vgt.regs[4].value = draw.info.index_bias;
-		rctx->vgt.regs[6].value = draw.info.start_instance;
+		r600_pipe_state_add_reg(&rctx->vgt, R_028814_PA_SU_SC_MODE_CNTL,
+					0,
+					S_028814_PROVOKING_VTX_LAST(1), NULL);
+
+	}
+
+	rctx->vgt.nregs = 0;
+	r600_pipe_state_mod_reg(&rctx->vgt, prim);
+	r600_pipe_state_mod_reg(&rctx->vgt, rctx->cb_target_mask & mask);
+	r600_pipe_state_mod_reg(&rctx->vgt, draw.info.max_index);
+	r600_pipe_state_mod_reg(&rctx->vgt, draw.info.min_index);
+	r600_pipe_state_mod_reg(&rctx->vgt, draw.info.index_bias);
+	r600_pipe_state_mod_reg(&rctx->vgt, 0);
+	r600_pipe_state_mod_reg(&rctx->vgt, draw.info.start_instance);
+	if (draw.info.mode == PIPE_PRIM_QUADS || draw.info.mode == PIPE_PRIM_QUAD_STRIP || draw.info.mode == PIPE_PRIM_POLYGON) {
+		r600_pipe_state_mod_reg(&rctx->vgt, S_028814_PROVOKING_VTX_LAST(1));
 	}
 
 	r600_context_pipe_state_set(&rctx->ctx, &rctx->vgt);
