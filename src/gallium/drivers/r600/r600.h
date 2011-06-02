@@ -169,18 +169,6 @@ struct r600_pipe_state {
 	struct r600_pipe_reg		regs[R600_BLOCK_MAX_REG];
 };
 
-static inline void r600_pipe_state_add_reg(struct r600_pipe_state *state,
-					u32 offset, u32 value, u32 mask,
-					struct r600_bo *bo)
-{
-	state->regs[state->nregs].offset = offset;
-	state->regs[state->nregs].value = value;
-	state->regs[state->nregs].mask = mask;
-	state->regs[state->nregs].bo = bo;
-	state->nregs++;
-	assert(state->nregs < R600_BLOCK_MAX_REG);
-}
-
 #define R600_BLOCK_STATUS_ENABLED	(1 << 0)
 #define R600_BLOCK_STATUS_DIRTY		(1 << 1)
 
@@ -321,5 +309,21 @@ void evergreen_context_pipe_state_set_ps_sampler(struct r600_context *ctx, struc
 void evergreen_context_pipe_state_set_vs_sampler(struct r600_context *ctx, struct r600_pipe_state *state, unsigned id);
 
 struct radeon *radeon_decref(struct radeon *radeon);
+
+static inline void _r600_pipe_state_add_reg(struct r600_context *ctx,
+					    struct r600_pipe_state *state,
+					    u32 offset, u32 value, u32 mask,
+					    struct r600_bo *bo)
+{
+	state->regs[state->nregs].offset = offset;
+	state->regs[state->nregs].value = value;
+	state->regs[state->nregs].mask = mask;
+	state->regs[state->nregs].bo = bo;
+	state->nregs++;
+	assert(state->nregs < R600_BLOCK_MAX_REG);
+}
+
+#define r600_pipe_state_add_reg(state, offset, value, mask, bo) _r600_pipe_state_add_reg(&rctx->ctx, state, offset, value, mask, bo)
+
 
 #endif

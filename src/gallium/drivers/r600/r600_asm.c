@@ -2283,9 +2283,9 @@ int r600_vertex_elements_build_fetch_shader(struct r600_pipe_context *rctx, stru
 	r600_bc_clear(&bc);
 
 	if (rctx->family >= CHIP_CEDAR)
-		evergreen_fetch_shader(ve);
+		evergreen_fetch_shader(&rctx->context, ve);
 	else
-		r600_fetch_shader(ve);
+		r600_fetch_shader(&rctx->context, ve);
 
 	return 0;
 }
