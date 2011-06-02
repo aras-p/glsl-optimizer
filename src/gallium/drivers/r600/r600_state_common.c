@@ -676,12 +676,27 @@ void _r600_pipe_state_add_reg(struct r600_context *ctx,
 
 	range = &ctx->range[range_id];
 	block = range->blocks[block_id];
+	state->regs[state->nregs].block = block;
+	state->regs[state->nregs].id = (offset - block->start_offset) >> 2;
 
 	state->regs[state->nregs].value = value;
 	state->regs[state->nregs].mask = mask;
 	state->regs[state->nregs].bo = bo;
-	state->regs[state->nregs].block = block;
-	state->regs[state->nregs].id = (offset - block->start_offset) >> 2;
+
+	state->nregs++;
+	assert(state->nregs < R600_BLOCK_MAX_REG);
+}
+
+void r600_pipe_state_add_reg_noblock(struct r600_pipe_state *state,
+				     u32 offset, u32 value, u32 mask,
+				     struct r600_bo *bo)
+{
+	state->regs[state->nregs].id = offset;
+	state->regs[state->nregs].block = NULL;
+	state->regs[state->nregs].value = value;
+	state->regs[state->nregs].mask = mask;
+	state->regs[state->nregs].bo = bo;
+
 	state->nregs++;
 	assert(state->nregs < R600_BLOCK_MAX_REG);
 }
