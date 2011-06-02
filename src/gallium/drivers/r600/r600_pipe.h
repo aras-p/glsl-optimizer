@@ -188,6 +188,7 @@ struct r600_pipe_context {
 	struct r600_pipe_state		ps_const_buffer;
 	struct r600_pipe_state		ps_const_buffer_resource[R600_MAX_CONST_BUFFERS];
 	struct r600_pipe_rasterizer	*rasterizer;
+	struct r600_pipe_state          vgt;
 	/* shader information */
 	unsigned			sprite_coord_enable;
 	bool				flatshade;
