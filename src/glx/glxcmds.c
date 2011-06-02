@@ -354,8 +354,9 @@ glx_send_destroy_context(Display *dpy, XID xid)
 /*
 ** Destroy the named context
 */
-static void
-DestroyContext(Display * dpy, GLXContext ctx)
+
+_X_EXPORT void
+glXDestroyContext(Display * dpy, GLXContext ctx)
 {
    struct glx_context *gc = (struct glx_context *) ctx;
 
@@ -378,12 +379,6 @@ DestroyContext(Display * dpy, GLXContext ctx)
    __glXUnlock();
 
    gc->vtable->destroy(gc);
-}
-
-_X_EXPORT void
-glXDestroyContext(Display * dpy, GLXContext gc)
-{
-   DestroyContext(dpy, gc);
 }
 
 /*
@@ -1479,12 +1474,9 @@ _X_EXPORT GLXContextID glXGetContextIDEXT(const GLXContext ctx_user)
    return ctx->xid;
 }
 
-_X_EXPORT void
-glXFreeContextEXT(Display * dpy, GLXContext ctx)
-{
-   DestroyContext(dpy, ctx);
-}
-
+_X_EXPORT
+GLX_ALIAS_VOID(glXFreeContextEXT, (Display *dpy, GLXContext ctx), (dpy, ctx),
+	       glXDestroyContext);
 
 _X_EXPORT GLXFBConfig *
 glXChooseFBConfig(Display * dpy, int screen,
