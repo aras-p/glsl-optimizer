@@ -81,6 +81,7 @@ static void r300_release_referenced_objects(struct r300_context *r300)
     /* Manually-created vertex buffers. */
     pipe_resource_reference(&r300->dummy_vb, NULL);
     pipe_resource_reference(&r300->vbo, NULL);
+    pipe_resource_reference((struct pipe_resource**)&r300->vb_instanceid, NULL);
 
     /* If there are any queries pending or not destroyed, remove them now. */
     foreach_s(query, temp, &r300->query_list) {
@@ -491,6 +492,31 @@ struct pipe_context* r300_create_context(struct pipe_screen* screen,
         vb.depth0 = 1;
 
         r300->dummy_vb = screen->resource_create(screen, &vb);
+    }
+
+    {
+        int i, num = 128000;
+        struct pipe_resource vb, *r;
+        struct pipe_transfer *transfer;
+        float *buf;
+
+        memset(&vb, 0, sizeof(vb));
+        vb.target = PIPE_BUFFER;
+        vb.format = PIPE_FORMAT_R8_UNORM;
+        vb.bind = PIPE_BIND_VERTEX_BUFFER;
+        vb.usage = PIPE_USAGE_IMMUTABLE;
+        vb.width0 = 4 * num;
+        vb.height0 = 1;
+        vb.depth0 = 1;
+
+        r = screen->resource_create(screen, &vb);
+
+        buf = pipe_buffer_map(&r300->context, r, PIPE_TRANSFER_WRITE, &transfer);
+        for (i = 0; i < num; i++)
+            buf[i] = i;
+        pipe_buffer_unmap(&r300->context, transfer);
+
+        r300->vb_instanceid = r300_resource(r);
     }
 
     {

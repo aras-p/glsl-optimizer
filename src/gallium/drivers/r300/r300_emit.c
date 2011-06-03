@@ -815,15 +815,17 @@ void r300_emit_vertex_arrays(struct r300_context* r300, int offset,
     struct r300_resource *buf;
     int i;
     unsigned vertex_array_count = r300->velems->count;
-    unsigned packet_size = (vertex_array_count * 3 + 1) / 2;
+    unsigned real_vertex_array_count = vertex_array_count +
+                (vertex_array_count == 16 || instance_id == -1 ? 0 : 1);
+    unsigned packet_size = (real_vertex_array_count * 3 + 1) / 2;
     struct pipe_vertex_buffer *vb1, *vb2;
     unsigned *hw_format_size = r300->velems->format_size;
     unsigned size1, size2, offset1, offset2, stride1, stride2;
     CS_LOCALS(r300);
 
-    BEGIN_CS(2 + packet_size + vertex_array_count * 2);
+    BEGIN_CS(2 + packet_size + real_vertex_array_count * 2);
     OUT_CS_PKT3(R300_PACKET3_3D_LOAD_VBPNTR, packet_size);
-    OUT_CS(vertex_array_count | (!indexed ? R300_VC_FORCE_PREFETCH : 0));
+    OUT_CS(real_vertex_array_count | (!indexed ? R300_VC_FORCE_PREFETCH : 0));
 
     if (instance_id == -1) {
         /* Non-instanced arrays. This ignores instance_divisor and instance_id. */
@@ -895,14 +897,28 @@ void r300_emit_vertex_arrays(struct r300_context* r300, int offset,
                 offset1 = vb1->buffer_offset + velem[i].src_offset + offset * vb1->stride;
             }
 
-            OUT_CS(R300_VBPNTR_SIZE0(size1) | R300_VBPNTR_STRIDE0(stride1));
-            OUT_CS(offset1);
+            /* Insert vertex buffer containing InstanceID. */
+            if (vertex_array_count < 16) {
+                OUT_CS(R300_VBPNTR_SIZE0(size1) | R300_VBPNTR_STRIDE0(stride1) |
+                       R300_VBPNTR_SIZE1(4));
+                OUT_CS(offset1);
+                OUT_CS(4 * instance_id);
+            } else {
+                OUT_CS(R300_VBPNTR_SIZE0(size1) | R300_VBPNTR_STRIDE0(stride1));
+                OUT_CS(offset1);
+            }
+        } else if (vertex_array_count < 16) {
+            /* Insert vertex buffer containing InstanceID. */
+            OUT_CS(R300_VBPNTR_SIZE0(4));
+            OUT_CS(4 * instance_id);
         }
 
         for (i = 0; i < vertex_array_count; i++) {
             buf = r300_resource(valid_vbuf[velem[i].vertex_buffer_index]);
             OUT_CS_RELOC(buf);
         }
+        if (vertex_array_count < 16)
+            OUT_CS_RELOC(r300->vb_instanceid);
     }
     END_CS;
 }
@@ -935,10 +951,17 @@ void r300_emit_vertex_arrays_swtcl(struct r300_context *r300, boolean indexed)
 void r300_emit_vertex_stream_state(struct r300_context* r300,
                                    unsigned size, void* state)
 {
-    struct r300_vertex_stream_state *streams =
-        (struct r300_vertex_stream_state*)state;
+    struct r300_vertex_element_state *velems =
+        (struct r300_vertex_element_state*)state;
+    struct r300_vertex_stream_state *streams;
     unsigned i;
     CS_LOCALS(r300);
+
+    if (r300->screen->caps.has_tcl && r300->instancing_enabled) {
+        streams = &velems->vertex_stream_instanced;
+    } else {
+        streams = &velems->vertex_stream;
+    }
 
     if (DBG_ON(r300, DBG_PSC)) {
         fprintf(stderr, "r300: PSC emit:\n");
@@ -954,7 +977,7 @@ void r300_emit_vertex_stream_state(struct r300_context* r300,
         }
     }
 
-    BEGIN_CS(size);
+    BEGIN_CS((1 + streams->count) * 2);
     OUT_CS_REG_SEQ(R300_VAP_PROG_STREAM_CNTL_0, streams->count);
     OUT_CS_TABLE(streams->vap_prog_stream_cntl, streams->count);
     OUT_CS_REG_SEQ(R300_VAP_PROG_STREAM_CNTL_EXT_0, streams->count);
@@ -1217,6 +1240,10 @@ validate:
 
             r300->rws->cs_add_reloc(r300->cs, r300_resource(*buf)->cs_buf,
                                     r300_resource(*buf)->domain, 0);
+        }
+        if (r300->instancing_enabled) {
+            r300->rws->cs_add_reloc(r300->cs, r300->vb_instanceid->cs_buf,
+                                    r300->vb_instanceid->domain, 0);
         }
     }
     /* ...and index buffer for HWTCL path. */

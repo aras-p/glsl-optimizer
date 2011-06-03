@@ -1604,9 +1604,10 @@ static void r300_set_index_buffer(struct pipe_context* pipe,
 }
 
 /* Initialize the PSC tables. */
-static void r300_vertex_psc(struct r300_vertex_element_state *velems)
+static void r300_vertex_psc(struct r300_vertex_element_state *velems,
+                            struct r300_vertex_stream_state *vstream,
+                            boolean insert_instance_id_attrib)
 {
-    struct r300_vertex_stream_state *vstream = &velems->vertex_stream;
     uint16_t type, swizzle;
     enum pipe_format format;
     unsigned i;
@@ -1635,6 +1636,27 @@ static void r300_vertex_psc(struct r300_vertex_element_state *velems)
             vstream->vap_prog_stream_cntl[i >> 1] |= type;
             vstream->vap_prog_stream_cntl_ext[i >> 1] |= swizzle;
         }
+    }
+
+    /* Insert attrib emulating InstanceID. */
+    if (i < 15 && insert_instance_id_attrib) {
+        format = PIPE_FORMAT_R32_FLOAT;
+
+        type = r300_translate_vertex_data_type(format);
+        assert(type != R300_INVALID_FORMAT);
+
+        type |= i << R300_DST_VEC_LOC_SHIFT;
+        swizzle = r300_translate_vertex_data_swizzle(format);
+
+        if (i & 1) {
+            vstream->vap_prog_stream_cntl[i >> 1] |= type << 16;
+            vstream->vap_prog_stream_cntl_ext[i >> 1] |= swizzle << 16;
+        } else {
+            vstream->vap_prog_stream_cntl[i >> 1] |= type;
+            vstream->vap_prog_stream_cntl_ext[i >> 1] |= swizzle;
+        }
+
+        i++;
     }
 
     /* Set the last vector in the PSC. */
@@ -1679,7 +1701,8 @@ static void* r300_create_vertex_elements_state(struct pipe_context* pipe,
     if (r300_screen(pipe->screen)->caps.has_tcl) {
         /* Setup PSC.
          * The unused components will be replaced by (..., 0, 1). */
-        r300_vertex_psc(velems);
+        r300_vertex_psc(velems, &velems->vertex_stream, FALSE);
+        r300_vertex_psc(velems, &velems->vertex_stream_instanced, TRUE);
 
         for (i = 0; i < count; i++) {
             velems->format_size[i] =
@@ -1710,8 +1733,8 @@ static void r300_bind_vertex_elements_state(struct pipe_context *pipe,
         return;
     }
 
-    UPDATE_STATE(&velems->vertex_stream, r300->vertex_stream_state);
-    r300->vertex_stream_state.size = (1 + velems->vertex_stream.count) * 2;
+    UPDATE_STATE(velems, r300->vertex_stream_state);
+    r300->vertex_stream_state.size = (1 + velems->vertex_stream_instanced.count) * 2;
     r300->vertex_arrays_dirty = TRUE;
 }
 
