@@ -121,32 +121,72 @@ is_sampler_type(GLenum type)
 }
 
 
-static struct gl_program_parameter *
-get_uniform_parameter(const struct gl_shader_program *shProg, GLuint index)
+/**
+ * Given a uniform index, return the vertex/geometry/fragment program
+ * that has that parameter, plus the position of the parameter in the
+ * parameter/constant buffer.
+ * \param shProg  the shader program
+ * \param index  the uniform index in [0, NumUniforms-1]
+ * \param progOut  returns containing program
+ * \param posOut  returns position of the uniform in the param/const buffer
+ * \return GL_TRUE for success, GL_FALSE for invalid index
+ */
+static GLboolean
+find_uniform_parameter_pos(struct gl_shader_program *shProg, GLint index,
+                           struct gl_program **progOut, GLint *posOut)
 {
-   const struct gl_program *prog = NULL;
-   GLint progPos;
+   struct gl_program *prog = NULL;
+   GLint pos;
 
-   progPos = shProg->Uniforms->Uniforms[index].VertPos;
-   if (progPos >= 0) {
+   if (!shProg->Uniforms ||
+       index < 0 ||
+       index >= (GLint) shProg->Uniforms->NumUniforms) {
+      return GL_FALSE;
+   }
+
+   pos = shProg->Uniforms->Uniforms[index].VertPos;
+   if (pos >= 0) {
       prog = &shProg->VertexProgram->Base;
    }
    else {
-      progPos = shProg->Uniforms->Uniforms[index].FragPos;
-      if (progPos >= 0) {
+      pos = shProg->Uniforms->Uniforms[index].FragPos;
+      if (pos >= 0) {
          prog = &shProg->FragmentProgram->Base;
-      } else {
-         progPos = shProg->Uniforms->Uniforms[index].GeomPos;
-         if (progPos >= 0) {
+      }
+      else {
+         pos = shProg->Uniforms->Uniforms[index].GeomPos;
+         if (pos >= 0) {
             prog = &shProg->GeometryProgram->Base;
          }
       }
    }
 
-   if (!prog || progPos < 0)
-      return NULL; /* should never happen */
+   if (!prog || pos < 0)
+      return GL_FALSE; /* should really never happen */
 
-   return &prog->Parameters->Parameters[progPos];
+   *progOut = prog;
+   *posOut = pos;
+
+   return GL_TRUE;
+}
+
+
+/**
+ * Return pointer to a gl_program_parameter which corresponds to a uniform.
+ * \param shProg  the shader program
+ * \param index  the uniform index in [0, NumUniforms-1]
+ * \return gl_program_parameter point or NULL if index is invalid
+ */
+static const struct gl_program_parameter *
+get_uniform_parameter(struct gl_shader_program *shProg, GLint index)
+{
+   struct gl_program *prog;
+   GLint progPos;
+
+   if (find_uniform_parameter_pos(shProg, index, &prog, &progPos))
+      return &prog->Parameters->Parameters[progPos];
+   else
+      return NULL;
 }
 
 
@@ -158,10 +198,8 @@ _mesa_get_active_uniform(struct gl_context *ctx, GLuint program, GLuint index,
                          GLsizei maxLength, GLsizei *length, GLint *size,
                          GLenum *type, GLchar *nameOut)
 {
-   const struct gl_shader_program *shProg;
-   const struct gl_program *prog = NULL;
+   struct gl_shader_program *shProg;
    const struct gl_program_parameter *param;
-   GLint progPos;
 
    shProg = _mesa_lookup_shader_program_err(ctx, program, "glGetActiveUniform");
    if (!shProg)
@@ -172,27 +210,9 @@ _mesa_get_active_uniform(struct gl_context *ctx, GLuint program, GLuint index,
       return;
    }
 
-   progPos = shProg->Uniforms->Uniforms[index].VertPos;
-   if (progPos >= 0) {
-      prog = &shProg->VertexProgram->Base;
-   }
-   else {
-      progPos = shProg->Uniforms->Uniforms[index].FragPos;
-      if (progPos >= 0) {
-         prog = &shProg->FragmentProgram->Base;
-      } else {
-         progPos = shProg->Uniforms->Uniforms[index].GeomPos;
-         if (progPos >= 0) {
-            prog = &shProg->GeometryProgram->Base;
-         }
-      }
-   }
-
-   if (!prog || progPos < 0)
-      return; /* should never happen */
-
-   ASSERT(progPos < prog->Parameters->NumParameters);
-   param = &prog->Parameters->Parameters[progPos];
+   param = get_uniform_parameter(shProg, index);
+   if (!param)
+      return;
 
    if (nameOut) {
       _mesa_copy_string(nameOut, maxLength, length, param->Name);
@@ -313,53 +333,6 @@ get_uniform_rows_cols(const struct gl_program_parameter *p,
 
 
 /**
- * Helper for get_uniform[fi]v() functions.
- * Given a shader program name and uniform location, return a pointer
- * to the shader program and return the program parameter position.
- */
-static void
-lookup_uniform_parameter(struct gl_context *ctx, GLuint program, GLint location,
-                         struct gl_program **progOut, GLint *paramPosOut)
-{
-   struct gl_shader_program *shProg
-      = _mesa_lookup_shader_program_err(ctx, program, "glGetUniform[if]v");
-   struct gl_program *prog = NULL;
-   GLint progPos = -1;
-
-   /* if shProg is NULL, we'll have already recorded an error */
-
-   if (shProg) {
-      if (!shProg->Uniforms ||
-          location < 0 ||
-          location >= (GLint) shProg->Uniforms->NumUniforms) {
-         _mesa_error(ctx, GL_INVALID_OPERATION,  "glGetUniformfv(location)");
-      }
-      else {
-         /* OK, find the gl_program and program parameter location */
-         progPos = shProg->Uniforms->Uniforms[location].VertPos;
-         if (progPos >= 0) {
-            prog = &shProg->VertexProgram->Base;
-         }
-         else {
-            progPos = shProg->Uniforms->Uniforms[location].FragPos;
-            if (progPos >= 0) {
-               prog = &shProg->FragmentProgram->Base;
-            } else {
-               progPos = shProg->Uniforms->Uniforms[location].GeomPos;
-               if (progPos >= 0) {
-                  prog = &shProg->GeometryProgram->Base;
-               }
-            }
-         }
-      }
-   }
-
-   *progOut = prog;
-   *paramPosOut = progPos;
-}
-
-
-/**
  * GLGL uniform arrays and structs require special handling.
  *
  * The GL_ARB_shader_objects spec says that if you use
@@ -414,14 +387,20 @@ static void
 _mesa_get_uniformfv(struct gl_context *ctx, GLuint program, GLint location,
                     GLsizei bufSize, GLfloat *params)
 {
+   struct gl_shader_program *shProg =
+      _mesa_lookup_shader_program_err(ctx, program, "glGetUniformfv");
    struct gl_program *prog;
    GLint paramPos, offset;
 
+   if (!shProg)
+      return;
+
    split_location_offset(&location, &offset);
 
-   lookup_uniform_parameter(ctx, program, location, &prog, &paramPos);
-
-   if (prog) {
+   if (!find_uniform_parameter_pos(shProg, location, &prog, &paramPos)) {
+      _mesa_error(ctx, GL_INVALID_OPERATION,  "glGetUniformfv(location)");
+   }
+   else {
       const struct gl_program_parameter *p =
          &prog->Parameters->Parameters[paramPos];
       GLint rows, cols, i, j, k;
@@ -457,14 +436,20 @@ static void
 _mesa_get_uniformiv(struct gl_context *ctx, GLuint program, GLint location,
                     GLsizei bufSize, GLint *params)
 {
+   struct gl_shader_program *shProg
+      = _mesa_lookup_shader_program_err(ctx, program, "glGetUniformiv");
    struct gl_program *prog;
    GLint paramPos, offset;
 
+   if (!shProg)
+      return;
+
    split_location_offset(&location, &offset);
 
-   lookup_uniform_parameter(ctx, program, location, &prog, &paramPos);
-
-   if (prog) {
+   if (!find_uniform_parameter(shProg, location, &prog, &paramPos)) {
+      _mesa_error(ctx, GL_INVALID_OPERATION,  "glGetUniformiv(location)");
+   }
+   else {
       const struct gl_program_parameter *p =
          &prog->Parameters->Parameters[paramPos];
       GLint rows, cols, i, j, k;
@@ -501,14 +486,20 @@ static void
 _mesa_get_uniformuiv(struct gl_context *ctx, GLuint program, GLint location,
                      GLsizei bufSize, GLuint *params)
 {
+   struct gl_shader_program *shProg
+      = _mesa_lookup_shader_program_err(ctx, program, "glGetUniformuiv");
    struct gl_program *prog;
    GLint paramPos, offset;
 
+   if (!shProg)
+      return;
+
    split_location_offset(&location, &offset);
 
-   lookup_uniform_parameter(ctx, program, location, &prog, &paramPos);
-
-   if (prog) {
+   if (!find_uniform_parameter(shProg, location, &prog, &paramPos)) {
+      _mesa_error(ctx, GL_INVALID_OPERATION,  "glGetUniformuiv(location)");
+   }
+   else {
       const struct gl_program_parameter *p =
          &prog->Parameters->Parameters[paramPos];
       GLint rows, cols, i, j, k;
@@ -593,8 +584,8 @@ _mesa_get_uniform_location(struct gl_context *ctx, struct gl_shader_program *shP
             const GLint element = atoi(c + 1);
             if (element > 0) {
                /* get type of the uniform array element */
-               struct gl_program_parameter *p;
-               p = get_uniform_parameter(shProg, location);
+               const struct gl_program_parameter *p =
+                  get_uniform_parameter(shProg, location);
                if (p) {
                   GLint rows, cols;
                   get_matrix_dims(p->DataType, &rows, &cols);
