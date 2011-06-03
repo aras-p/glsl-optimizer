@@ -1,0 +1,34 @@
+# -*-makefile-*-
+
+COMMON_GALLIUM_SOURCES = \
+        ../common/utils.c \
+        ../common/vblank.c \
+        ../common/dri_util.c \
+        ../common/xmlconfig.c
+
+COMMON_SOURCES = $(COMMON_GALLIUM_SOURCES) \
+        ../../common/driverfuncs.c \
+        ../common/texmem.c \
+        ../common/drirenderbuffer.c
+
+INCLUDES = $(SHARED_INCLUDES) $(EXPAT_INCLUDES)
+
+OBJECTS = $(C_SOURCES:.c=.o) \
+	  $(CXX_SOURCES:.cpp=.o) \
+	  $(ASM_SOURCES:.S=.o) 
+
+
+### Include directories
+SHARED_INCLUDES = \
+	-I. \
+	-I$(TOP)/src/mesa/drivers/dri/common \
+	-Iserver \
+	-I$(TOP)/include \
+	-I$(TOP)/src/mapi \
+	-I$(TOP)/src/mesa \
+	-I$(TOP)/src/egl/main \
+	-I$(TOP)/src/egl/drivers/dri \
+	$(LIBDRM_CFLAGS)
+
+INCLUDES += $(API_DEFINES)
+CXXFLAGS += $(API_DEFINES)

@@ -1,0 +1,78 @@
+# -*-makefile-*-
+
+##### RULES #####
+
+.c.o:
+	$(CC) -c $(INCLUDES) $(DRI_CFLAGS) $(DRIVER_DEFINES) $< -o $@
+
+.cpp.o:
+	$(CC) -c $(INCLUDES) $(DRI_CXXFLAGS) $(DRIVER_DEFINES) $< -o $@
+
+.S.o:
+	$(CC) -c $(INCLUDES) $(DRI_CFLAGS) $(DRIVER_DEFINES) $< -o $@
+
+
+#### TARGETS #####
+
+default: subdirs lib
+
+
+.PHONY: lib
+lib: symlinks subdirs depend
+	@$(MAKE) $(LIBNAME) $(TOP)/$(LIB_DIR)/$(LIBNAME)
+
+$(LIBNAME): $(OBJECTS) $(EXTRA_MODULES) $(MESA_MODULES) Makefile \
+		$(TOP)/src/mesa/drivers/dri/Makefile.targets $(TOP)/src/mesa/drivers/dri/common/dri_test.o
+	$(MKLIB) -o $@.tmp -noprefix -linker '$(CXX)' -ldflags '$(LDFLAGS)' \
+		$(OBJECTS) $(EXTRA_MODULES) $(DRI_LIB_DEPS)
+	$(CXX) $(CFLAGS) -o $@.test $(TOP)/src/mesa/drivers/dri/common/dri_test.o $@.tmp $(DRI_LIB_DEPS)
+	@rm -f $@.test
+	mv -f $@.tmp $@
+
+
+$(TOP)/$(LIB_DIR)/$(LIBNAME): $(LIBNAME)
+	$(INSTALL) $(LIBNAME) $(TOP)/$(LIB_DIR) 
+
+
+# If the Makefile defined SUBDIRS, run make in each
+.PHONY: subdirs
+subdirs:
+	@if test -n "$(SUBDIRS)" ; then \
+		for dir in $(SUBDIRS) ; do \
+			if [ -d $$dir ] ; then \
+				(cd $$dir && $(MAKE)) || exit 1; \
+			fi \
+		done \
+	fi
+
+
+.PHONY: symlinks
+symlinks:
+
+
+depend: $(C_SOURCES) $(CXX_SOURCES) $(ASM_SOURCES) $(SYMLINKS)
+	@ echo "running $(MKDEP)"
+	@ rm -f depend
+	@ touch depend
+	@ $(MKDEP) $(MKDEP_OPTIONS) $(DRIVER_DEFINES) $(INCLUDES) \
+		$(C_SOURCES) $(CXX_SOURCES) \
+		$(ASM_SOURCES) > /dev/null 2>/dev/null
+
+
+# Emacs tags
+tags:
+	etags `find . -name \*.[ch]` `find ../include`
+
+
+# Remove .o and backup files
+clean:
+	-rm -f *.o */*.o *~ *.so *~ server/*.o $(SYMLINKS)
+	-rm -f depend depend.bak
+
+
+install: $(LIBNAME)
+	$(INSTALL) -d $(DESTDIR)$(DRI_DRIVER_INSTALL_DIR)
+	$(MINSTALL) -m 755 $(LIBNAME) $(DESTDIR)$(DRI_DRIVER_INSTALL_DIR)
+
+
+-include depend
