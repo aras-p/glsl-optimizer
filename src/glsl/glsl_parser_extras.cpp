@@ -436,7 +436,7 @@ ast_expression::print(void) const
       printf("? ");
       subexpressions[1]->print();
       printf(": ");
-      subexpressions[1]->print();
+      subexpressions[2]->print();
       break;
 
    case ast_array_index:
