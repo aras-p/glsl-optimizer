@@ -2258,7 +2258,7 @@ int r600_vertex_elements_build_fetch_shader(struct r600_pipe_context *rctx, stru
 	ve->fs_size = bc.ndw*4;
 
 	/* use PIPE_BIND_VERTEX_BUFFER so we use the cache buffer manager */
-	ve->fetch_shader = r600_bo(rctx->radeon, ve->fs_size, 256, PIPE_BIND_VERTEX_BUFFER, 0);
+	ve->fetch_shader = r600_bo(rctx->radeon, ve->fs_size, 256, PIPE_BIND_VERTEX_BUFFER, PIPE_USAGE_IMMUTABLE);
 	if (ve->fetch_shader == NULL) {
 		r600_bc_clear(&bc);
 		return -ENOMEM;
