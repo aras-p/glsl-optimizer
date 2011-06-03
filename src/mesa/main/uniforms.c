@@ -334,7 +334,7 @@ get_uniform_rows_cols(const struct gl_program_parameter *p,
 
 
 /**
- * GLGL uniform arrays and structs require special handling.
+ * GLSL uniform arrays and structs require special handling.
  *
  * The GL_ARB_shader_objects spec says that if you use
  * glGetUniformLocation to get the location of an array, you CANNOT
