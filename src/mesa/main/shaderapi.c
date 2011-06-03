@@ -925,6 +925,8 @@ print_shader_info(const struct gl_shader_program *shProg)
       printf("  vert prog %u\n", shProg->VertexProgram->Base.Id);
    if (shProg->FragmentProgram)
       printf("  frag prog %u\n", shProg->FragmentProgram->Base.Id);
+   if (shProg->GeometryProgram)
+      printf("  geom prog %u\n", shProg->GeometryProgram->Base.Id);
 }
 
 
@@ -1075,6 +1077,7 @@ validate_shader_program(const struct gl_shader_program *shProg,
                         char *errMsg)
 {
    const struct gl_vertex_program *vp = shProg->VertexProgram;
+   const struct gl_geometry_program *gp = shProg->GeometryProgram;
    const struct gl_fragment_program *fp = shProg->FragmentProgram;
 
    if (!shProg->LinkStatus) {
@@ -1102,6 +1105,9 @@ validate_shader_program(const struct gl_shader_program *shProg,
     * different types, but refer to the same texture image unit,
     */
    if (vp && !validate_samplers(&vp->Base, errMsg)) {
+      return GL_FALSE;
+   }
+   if (gp && !validate_samplers(&gp->Base, errMsg)) {
       return GL_FALSE;
    }
    if (fp && !validate_samplers(&fp->Base, errMsg)) {
