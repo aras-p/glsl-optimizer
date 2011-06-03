@@ -370,7 +370,7 @@ void ir_print_visitor::visit(ir_constant *ir)
    } else if (ir->type->is_record()) {
       ir_constant *value = (ir_constant *) ir->components.get_head();
       for (unsigned i = 0; i < ir->type->length; i++) {
-	 printf("(%s ", ir->type->fields.structure->name);
+	 printf("(%s ", ir->type->fields.structure[i].name);
 	 value->accept(this);
 	 printf(")");
 
