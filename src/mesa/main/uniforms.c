@@ -39,6 +39,7 @@
 #include "main/glheader.h"
 #include "main/context.h"
 #include "main/dispatch.h"
+#include "main/image.h"
 #include "main/mfeatures.h"
 #include "main/mtypes.h"
 #include "main/shaderapi.h"
@@ -381,11 +382,11 @@ split_location_offset(GLint *location, GLint *offset)
 
 
 /**
- * Called via glGetUniformfv().
+ * Called via glGetUniform[fiui]v() to get the current value of a uniform.
  */
 static void
-_mesa_get_uniformfv(struct gl_context *ctx, GLuint program, GLint location,
-                    GLsizei bufSize, GLfloat *params)
+get_uniform(struct gl_context *ctx, GLuint program, GLint location,
+            GLsizei bufSize, GLenum returnType, GLvoid *paramsOut)
 {
    struct gl_shader_program *shProg =
       _mesa_lookup_shader_program_err(ctx, program, "glGetUniformfv");
@@ -408,7 +409,7 @@ _mesa_get_uniformfv(struct gl_context *ctx, GLuint program, GLint location,
 
       get_uniform_rows_cols(p, &rows, &cols);
 
-      numBytes = rows * cols * sizeof *params;
+      numBytes = rows * cols * _mesa_sizeof_type(returnType);
       if (bufSize < numBytes) {
          _mesa_error( ctx, GL_INVALID_OPERATION,
                      "glGetnUniformfvARB(out of bounds: bufSize is %d,"
@@ -416,127 +417,62 @@ _mesa_get_uniformfv(struct gl_context *ctx, GLuint program, GLint location,
          return;
       }
 
-      k = 0;
-      for (i = 0; i < rows; i++) {
-	 const int base = paramPos + offset + i;
-
-         for (j = 0; j < cols; j++ ) {
-            params[k++] = prog->Parameters->ParameterValues[base][j];
+      switch (returnType) {
+      case GL_FLOAT:
+         {
+            GLfloat *params = (GLfloat *) paramsOut;
+            k = 0;
+            for (i = 0; i < rows; i++) {
+               const int base = paramPos + offset + i;
+               for (j = 0; j < cols; j++ ) {
+                  params[k++] = prog->Parameters->ParameterValues[base][j];
+               }
+            }
          }
-      }
-   }
-}
-
-
-/**
- * Called via glGetUniformiv().
- * \sa _mesa_get_uniformfv, only difference is a cast.
- */
-static void
-_mesa_get_uniformiv(struct gl_context *ctx, GLuint program, GLint location,
-                    GLsizei bufSize, GLint *params)
-{
-   struct gl_shader_program *shProg
-      = _mesa_lookup_shader_program_err(ctx, program, "glGetUniformiv");
-   struct gl_program *prog;
-   GLint paramPos, offset;
-
-   if (!shProg)
-      return;
-
-   split_location_offset(&location, &offset);
-
-   if (!find_uniform_parameter(shProg, location, &prog, &paramPos)) {
-      _mesa_error(ctx, GL_INVALID_OPERATION,  "glGetUniformiv(location)");
-   }
-   else {
-      const struct gl_program_parameter *p =
-         &prog->Parameters->Parameters[paramPos];
-      GLint rows, cols, i, j, k;
-      GLsizei numBytes;
-
-      get_uniform_rows_cols(p, &rows, &cols);
-
-      numBytes = rows * cols * sizeof *params;
-      if (bufSize < numBytes) {
-         _mesa_error( ctx, GL_INVALID_OPERATION,
-                     "glGetnUniformivARB(out of bounds: bufSize is %d,"
-                     " but %d bytes are required)", bufSize, numBytes );
-         return;
-      }
-
-      k = 0;
-      for (i = 0; i < rows; i++) {
-	 const int base = paramPos + offset + i;
-
-         for (j = 0; j < cols; j++ ) {
-            params[k++] = (GLint) prog->Parameters->ParameterValues[base][j];
+         break;
+      case GL_DOUBLE:
+         {
+            GLfloat *params = (GLfloat *) paramsOut;
+            k = 0;
+            for (i = 0; i < rows; i++) {
+               const int base = paramPos + offset + i;
+               for (j = 0; j < cols; j++ ) {
+                  params[k++] = (GLdouble)
+                     prog->Parameters->ParameterValues[base][j];
+               }
+            }
          }
-      }
-   }
-}
-
-
-/**
- * Called via glGetUniformuiv().
- * New in GL_EXT_gpu_shader4, OpenGL 3.0
- * \sa _mesa_get_uniformfv, only difference is a cast.
- */
-static void
-_mesa_get_uniformuiv(struct gl_context *ctx, GLuint program, GLint location,
-                     GLsizei bufSize, GLuint *params)
-{
-   struct gl_shader_program *shProg
-      = _mesa_lookup_shader_program_err(ctx, program, "glGetUniformuiv");
-   struct gl_program *prog;
-   GLint paramPos, offset;
-
-   if (!shProg)
-      return;
-
-   split_location_offset(&location, &offset);
-
-   if (!find_uniform_parameter(shProg, location, &prog, &paramPos)) {
-      _mesa_error(ctx, GL_INVALID_OPERATION,  "glGetUniformuiv(location)");
-   }
-   else {
-      const struct gl_program_parameter *p =
-         &prog->Parameters->Parameters[paramPos];
-      GLint rows, cols, i, j, k;
-      GLsizei numBytes;
-
-      get_uniform_rows_cols(p, &rows, &cols);
-
-      numBytes = rows * cols * sizeof *params;
-      if (bufSize < numBytes) {
-         _mesa_error( ctx, GL_INVALID_OPERATION,
-                     "glGetnUniformuivARB(out of bounds: bufSize is %d,"
-                     " but %d bytes are required)", bufSize, numBytes );
-         return;
-      }
-
-      k = 0;
-      for (i = 0; i < rows; i++) {
-	 const int base = paramPos + offset + i;
-
-         for (j = 0; j < cols; j++ ) {
-            params[k++] = (GLuint) prog->Parameters->ParameterValues[base][j];
+         break;
+      case GL_INT:
+         {
+            GLint *params = (GLint *) paramsOut;
+            k = 0;
+            for (i = 0; i < rows; i++) {
+               const int base = paramPos + offset + i;
+               for (j = 0; j < cols; j++ ) {
+                  params[k++] = (GLint)
+                     prog->Parameters->ParameterValues[base][j];
+               }
+            }
          }
+         break;
+      case GL_UNSIGNED_INT:
+         {
+            GLuint *params = (GLuint *) paramsOut;
+            k = 0;
+            for (i = 0; i < rows; i++) {
+               const int base = paramPos + offset + i;
+               for (j = 0; j < cols; j++ ) {
+                  params[k++] = (GLuint)
+                     prog->Parameters->ParameterValues[base][j];
+               }
+            }
+         }
+         break;
+      default:
+         _mesa_problem(ctx, "bad returnType in get_uniform()");
       }
    }
-}
-
-
-/**
- * Called via glGetUniformdv().
- * New in GL_ARB_gpu_shader_fp64, OpenGL 4.0
- */
-static void
-_mesa_get_uniformdv(struct gl_context *ctx, GLuint program, GLint location,
-                    GLsizei bufSize, GLdouble *params)
-{
-   _mesa_error(ctx, GL_INVALID_OPERATION, "glGetUniformdvARB"
-               "(GL_ARB_gpu_shader_fp64 not implemented)");
 }
 
 
@@ -1386,7 +1322,7 @@ _mesa_GetnUniformfvARB(GLhandleARB program, GLint location,
                        GLsizei bufSize, GLfloat *params)
 {
    GET_CURRENT_CONTEXT(ctx);
-   _mesa_get_uniformfv(ctx, program, location, bufSize, params);
+   get_uniform(ctx, program, location, bufSize, GL_FLOAT, params);
 }
 
 void GLAPIENTRY
@@ -1401,7 +1337,7 @@ _mesa_GetnUniformivARB(GLhandleARB program, GLint location,
                        GLsizei bufSize, GLint *params)
 {
    GET_CURRENT_CONTEXT(ctx);
-   _mesa_get_uniformiv(ctx, program, location, bufSize, params);
+   get_uniform(ctx, program, location, bufSize, GL_INT, params);
 }
 
 void GLAPIENTRY
@@ -1417,7 +1353,7 @@ _mesa_GetnUniformuivARB(GLhandleARB program, GLint location,
                         GLsizei bufSize, GLuint *params)
 {
    GET_CURRENT_CONTEXT(ctx);
-   _mesa_get_uniformuiv(ctx, program, location, bufSize, params);
+   get_uniform(ctx, program, location, bufSize, GL_UNSIGNED_INT, params);
 }
 
 void GLAPIENTRY
@@ -1433,7 +1369,11 @@ _mesa_GetnUniformdvARB(GLhandleARB program, GLint location,
                         GLsizei bufSize, GLdouble *params)
 {
    GET_CURRENT_CONTEXT(ctx);
-   _mesa_get_uniformdv(ctx, program, location, bufSize, params);
+   /*
+   get_uniform(ctx, program, location, bufSize, GL_DOUBLE, params);
+   */
+   _mesa_error(ctx, GL_INVALID_OPERATION, "glGetUniformdvARB"
+               "(GL_ARB_gpu_shader_fp64 not implemented)");
 }
 
 void GLAPIENTRY
