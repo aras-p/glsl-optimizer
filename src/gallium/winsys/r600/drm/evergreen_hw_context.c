@@ -1023,21 +1023,21 @@ out_err:
 	return r;
 }
 
-void evergreen_context_pipe_state_set_ps_resource(struct r600_context *ctx, struct r600_pipe_state *state, unsigned rid)
+void evergreen_context_pipe_state_set_ps_resource(struct r600_context *ctx, struct r600_pipe_resource_state *state, unsigned rid)
 {
 	unsigned offset = R_030000_SQ_TEX_RESOURCE_WORD0_0 + 0x20 * rid;
 
 	r600_context_pipe_state_set_resource(ctx, state, offset);
 }
 
-void evergreen_context_pipe_state_set_vs_resource(struct r600_context *ctx, struct r600_pipe_state *state, unsigned rid)
+void evergreen_context_pipe_state_set_vs_resource(struct r600_context *ctx, struct r600_pipe_resource_state *state, unsigned rid)
 {
 	unsigned offset = R_030000_SQ_TEX_RESOURCE_WORD0_0 + 0x1600 + 0x20 * rid;
 
 	r600_context_pipe_state_set_resource(ctx, state, offset);
 }
 
-void evergreen_context_pipe_state_set_fs_resource(struct r600_context *ctx, struct r600_pipe_state *state, unsigned rid)
+void evergreen_context_pipe_state_set_fs_resource(struct r600_context *ctx, struct r600_pipe_resource_state *state, unsigned rid)
 {
 	unsigned offset = R_030000_SQ_TEX_RESOURCE_WORD0_0 + 0x7C00 + 0x20 * rid;
 

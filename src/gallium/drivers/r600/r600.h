@@ -170,6 +170,12 @@ struct r600_pipe_state {
 	struct r600_pipe_reg		regs[R600_BLOCK_MAX_REG];
 };
 
+struct r600_pipe_resource_state {
+	unsigned			id;
+	u32                             val[8];
+	struct r600_bo *bo[2];
+};
+
 #define R600_BLOCK_STATUS_ENABLED	(1 << 0)
 #define R600_BLOCK_STATUS_DIRTY		(1 << 1)
 
@@ -275,9 +281,9 @@ struct r600_draw {
 int r600_context_init(struct r600_context *ctx, struct radeon *radeon);
 void r600_context_fini(struct r600_context *ctx);
 void r600_context_pipe_state_set(struct r600_context *ctx, struct r600_pipe_state *state);
-void r600_context_pipe_state_set_ps_resource(struct r600_context *ctx, struct r600_pipe_state *state, unsigned rid);
-void r600_context_pipe_state_set_vs_resource(struct r600_context *ctx, struct r600_pipe_state *state, unsigned rid);
-void r600_context_pipe_state_set_fs_resource(struct r600_context *ctx, struct r600_pipe_state *state, unsigned rid);
+void r600_context_pipe_state_set_ps_resource(struct r600_context *ctx, struct r600_pipe_resource_state *state, unsigned rid);
+void r600_context_pipe_state_set_vs_resource(struct r600_context *ctx, struct r600_pipe_resource_state *state, unsigned rid);
+void r600_context_pipe_state_set_fs_resource(struct r600_context *ctx, struct r600_pipe_resource_state *state, unsigned rid);
 void r600_context_pipe_state_set_ps_sampler(struct r600_context *ctx, struct r600_pipe_state *state, unsigned id);
 void r600_context_pipe_state_set_vs_sampler(struct r600_context *ctx, struct r600_pipe_state *state, unsigned id);
 void r600_context_flush(struct r600_context *ctx);
@@ -303,9 +309,9 @@ void r600_context_flush_dest_caches(struct r600_context *ctx);
 int evergreen_context_init(struct r600_context *ctx, struct radeon *radeon);
 void evergreen_context_draw(struct r600_context *ctx, const struct r600_draw *draw);
 void evergreen_context_flush_dest_caches(struct r600_context *ctx);
-void evergreen_context_pipe_state_set_ps_resource(struct r600_context *ctx, struct r600_pipe_state *state, unsigned rid);
-void evergreen_context_pipe_state_set_vs_resource(struct r600_context *ctx, struct r600_pipe_state *state, unsigned rid);
-void evergreen_context_pipe_state_set_fs_resource(struct r600_context *ctx, struct r600_pipe_state *state, unsigned rid);
+void evergreen_context_pipe_state_set_ps_resource(struct r600_context *ctx, struct r600_pipe_resource_state *state, unsigned rid);
+void evergreen_context_pipe_state_set_vs_resource(struct r600_context *ctx, struct r600_pipe_resource_state *state, unsigned rid);
+void evergreen_context_pipe_state_set_fs_resource(struct r600_context *ctx, struct r600_pipe_resource_state *state, unsigned rid);
 void evergreen_context_pipe_state_set_ps_sampler(struct r600_context *ctx, struct r600_pipe_state *state, unsigned id);
 void evergreen_context_pipe_state_set_vs_sampler(struct r600_context *ctx, struct r600_pipe_state *state, unsigned id);
 

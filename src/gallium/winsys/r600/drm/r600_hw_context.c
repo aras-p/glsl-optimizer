@@ -976,13 +976,14 @@ void r600_context_pipe_state_set(struct r600_context *ctx, struct r600_pipe_stat
 	}
 }
 
-void r600_context_pipe_state_set_resource(struct r600_context *ctx, struct r600_pipe_state *state, unsigned offset)
+void r600_context_pipe_state_set_resource(struct r600_context *ctx, struct r600_pipe_resource_state *state, unsigned offset)
 {
 	struct r600_range *range;
 	struct r600_block *block;
 	int i;
 	int dirty;
 	int num_regs = ctx->radeon->chip_class >= EVERGREEN ? 8 : 7;
+	boolean is_vertex;
 
 	range = &ctx->range[CTX_RANGE_ID(offset)];
 	block = range->blocks[CTX_BLOCK_ID(offset)];
@@ -997,12 +998,13 @@ void r600_context_pipe_state_set_resource(struct r600_context *ctx, struct r600_
 		return;
 	}
 
+	is_vertex = ((state->val[num_regs-1] & 0xc0000000) == 0xc0000000);
 	dirty = block->status & R600_BLOCK_STATUS_DIRTY;
 
 	for (i = 0; i < num_regs; i++) {
-		if (dirty || (block->reg[i] != state->regs[i].value)) {
+		if (dirty || (block->reg[i] != state->val[i])) {
 			dirty |= R600_BLOCK_STATUS_DIRTY;
-			block->reg[i] = state->regs[i].value;
+			block->reg[i] = state->val[i];
 		}
 	}
 
@@ -1011,61 +1013,61 @@ void r600_context_pipe_state_set_resource(struct r600_context *ctx, struct r600_
 		dirty |= R600_BLOCK_STATUS_DIRTY;
 
 	if (!dirty) {
-		if (state->regs[0].bo) {
-			if ((block->reloc[1].bo->bo->handle != state->regs[0].bo->bo->handle) ||
-			    (block->reloc[2].bo->bo->handle != state->regs[0].bo->bo->handle))
+		if (is_vertex) {
+			if ((block->reloc[1].bo->bo->handle != state->bo[0]->bo->handle) ||
+			    (block->reloc[2].bo->bo->handle != state->bo[0]->bo->handle))
 				dirty |= R600_BLOCK_STATUS_DIRTY;
 		} else {
-			if ((block->reloc[1].bo->bo->handle != state->regs[2].bo->bo->handle) ||
-			    (block->reloc[2].bo->bo->handle != state->regs[3].bo->bo->handle))
+			if ((block->reloc[1].bo->bo->handle != state->bo[0]->bo->handle) ||
+			    (block->reloc[2].bo->bo->handle != state->bo[1]->bo->handle))
 				dirty |= R600_BLOCK_STATUS_DIRTY;
 		}
 	}
 	if (!dirty) {
-		if (state->regs[0].bo)
-			state->regs[0].bo->fence = ctx->radeon->fence;
+		if (is_vertex)
+			state->bo[0]->fence = ctx->radeon->fence;
 		else {
-			state->regs[2].bo->fence = ctx->radeon->fence;
-			state->regs[3].bo->fence = ctx->radeon->fence;
+			state->bo[0]->fence = ctx->radeon->fence;
+			state->bo[1]->fence = ctx->radeon->fence;
 		}
 	} else {
 		r600_bo_reference(ctx->radeon, &block->reloc[1].bo, NULL);
 		r600_bo_reference(ctx->radeon, &block->reloc[2].bo, NULL);
-		if (state->regs[0].bo) {
+		if (is_vertex) {
 			/* VERTEX RESOURCE, we preted there is 2 bo to relocate so
 			 * we have single case btw VERTEX & TEXTURE resource
 			 */
-			r600_bo_reference(ctx->radeon, &block->reloc[1].bo, state->regs[0].bo);
-			r600_bo_reference(ctx->radeon, &block->reloc[2].bo, state->regs[0].bo);
-			state->regs[0].bo->fence = ctx->radeon->fence;
+			r600_bo_reference(ctx->radeon, &block->reloc[1].bo, state->bo[0]);
+			r600_bo_reference(ctx->radeon, &block->reloc[2].bo, state->bo[0]);
+			state->bo[0]->fence = ctx->radeon->fence;
 		} else {
 			/* TEXTURE RESOURCE */
-			r600_bo_reference(ctx->radeon, &block->reloc[1].bo, state->regs[2].bo);
-			r600_bo_reference(ctx->radeon, &block->reloc[2].bo, state->regs[3].bo);
-			state->regs[2].bo->fence = ctx->radeon->fence;
-			state->regs[3].bo->fence = ctx->radeon->fence;
-			state->regs[2].bo->bo->binding |= BO_BOUND_TEXTURE;
+			r600_bo_reference(ctx->radeon, &block->reloc[1].bo, state->bo[0]);
+			r600_bo_reference(ctx->radeon, &block->reloc[2].bo, state->bo[1]);
+			state->bo[0]->fence = ctx->radeon->fence;
+			state->bo[1]->fence = ctx->radeon->fence;
+			state->bo[0]->bo->binding |= BO_BOUND_TEXTURE;
 		}
 	}
 	if (dirty)
 		r600_context_dirty_block(ctx, block, dirty, num_regs - 1);
 }
 
-void r600_context_pipe_state_set_ps_resource(struct r600_context *ctx, struct r600_pipe_state *state, unsigned rid)
+void r600_context_pipe_state_set_ps_resource(struct r600_context *ctx, struct r600_pipe_resource_state *state, unsigned rid)
 {
 	unsigned offset = R_038000_SQ_TEX_RESOURCE_WORD0_0 + 0x1C * rid;
 
 	r600_context_pipe_state_set_resource(ctx, state, offset);
 }
 
-void r600_context_pipe_state_set_vs_resource(struct r600_context *ctx, struct r600_pipe_state *state, unsigned rid)
+void r600_context_pipe_state_set_vs_resource(struct r600_context *ctx, struct r600_pipe_resource_state *state, unsigned rid)
 {
 	unsigned offset = R_038000_SQ_TEX_RESOURCE_WORD0_0 + 0x1180 + 0x1C * rid;
 
 	r600_context_pipe_state_set_resource(ctx, state, offset);
 }
 
-void r600_context_pipe_state_set_fs_resource(struct r600_context *ctx, struct r600_pipe_state *state, unsigned rid)
+void r600_context_pipe_state_set_fs_resource(struct r600_context *ctx, struct r600_pipe_resource_state *state, unsigned rid)
 {
 	unsigned offset = R_038000_SQ_TEX_RESOURCE_WORD0_0 + 0x2300 + 0x1C * rid;
 
