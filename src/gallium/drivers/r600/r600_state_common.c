@@ -34,41 +34,29 @@
 
 static int r600_conv_pipe_prim(unsigned pprim, unsigned *prim)
 {
-	switch (pprim) {
-	case PIPE_PRIM_POINTS:
-		*prim = V_008958_DI_PT_POINTLIST;
-		return 0;
-	case PIPE_PRIM_LINES:
-		*prim = V_008958_DI_PT_LINELIST;
-		return 0;
-	case PIPE_PRIM_LINE_STRIP:
-		*prim = V_008958_DI_PT_LINESTRIP;
-		return 0;
-	case PIPE_PRIM_LINE_LOOP:
-		*prim = V_008958_DI_PT_LINELOOP;
-		return 0;
-	case PIPE_PRIM_TRIANGLES:
-		*prim = V_008958_DI_PT_TRILIST;
-		return 0;
-	case PIPE_PRIM_TRIANGLE_STRIP:
-		*prim = V_008958_DI_PT_TRISTRIP;
-		return 0;
-	case PIPE_PRIM_TRIANGLE_FAN:
-		*prim = V_008958_DI_PT_TRIFAN;
-		return 0;
-	case PIPE_PRIM_POLYGON:
-		*prim = V_008958_DI_PT_POLYGON;
-		return 0;
-	case PIPE_PRIM_QUADS:
-		*prim = V_008958_DI_PT_QUADLIST;
-		return 0;
-	case PIPE_PRIM_QUAD_STRIP:
-		*prim = V_008958_DI_PT_QUADSTRIP;
-		return 0;
-	default:
+	static const int prim_conv[] = {
+		V_008958_DI_PT_POINTLIST,
+		V_008958_DI_PT_LINELIST,
+		V_008958_DI_PT_LINELOOP,
+		V_008958_DI_PT_LINESTRIP,
+		V_008958_DI_PT_TRILIST,
+		V_008958_DI_PT_TRISTRIP,
+		V_008958_DI_PT_TRIFAN,
+		V_008958_DI_PT_QUADLIST,
+		V_008958_DI_PT_QUADSTRIP,
+		V_008958_DI_PT_POLYGON,
+		-1,
+		-1,
+		-1,
+		-1
+	};
+
+	*prim = prim_conv[pprim];
+	if (*prim == -1) {
 		fprintf(stderr, "%s:%d unsupported %d\n", __func__, __LINE__, pprim);
 		return -1;
 	}
+	return 0;
 }
 
 /* common state between evergreen and r600 */
