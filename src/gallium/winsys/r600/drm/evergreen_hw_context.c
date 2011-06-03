@@ -1066,8 +1066,8 @@ static inline void evergreen_context_pipe_state_set_sampler(struct r600_context 
 			block->reg[i] = state->regs[i].value;
 		}
 	}
-
-	r600_context_dirty_block(ctx, block, dirty, 2);
+	if (dirty)
+		r600_context_dirty_block(ctx, block, dirty, 2);
 }
 
 static inline void evergreen_context_ps_partial_flush(struct r600_context *ctx)
@@ -1119,7 +1119,8 @@ static inline void evergreen_context_pipe_state_set_sampler_border(struct r600_c
 	if (dirty & R600_BLOCK_STATUS_DIRTY)
 		evergreen_context_ps_partial_flush(ctx);
 
-	r600_context_dirty_block(ctx, block, dirty, 4);
+	if (dirty)
+		r600_context_dirty_block(ctx, block, dirty, 4);
 }
 
 void evergreen_context_pipe_state_set_ps_sampler(struct r600_context *ctx, struct r600_pipe_state *state, unsigned id)

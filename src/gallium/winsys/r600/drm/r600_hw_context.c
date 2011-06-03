@@ -920,13 +920,14 @@ void r600_context_reg(struct r600_context *ctx,
 		dirty |= R600_BLOCK_STATUS_DIRTY;
 		block->reg[id] = new_val;
 	}
-	r600_context_dirty_block(ctx, block, dirty, id);
+	if (dirty)
+		r600_context_dirty_block(ctx, block, dirty, id);
 }
 
 void r600_context_dirty_block(struct r600_context *ctx, struct r600_block *block,
 			      int dirty, int index)
 {
-	if (dirty && (index + 1) > block->nreg_dirty)
+	if ((index + 1) > block->nreg_dirty)
 		block->nreg_dirty = index + 1;
 
 	if ((dirty != (block->status & R600_BLOCK_STATUS_DIRTY)) || !(block->status & R600_BLOCK_STATUS_ENABLED)) {
@@ -970,7 +971,8 @@ void r600_context_pipe_state_set(struct r600_context *ctx, struct r600_pipe_stat
 			dirty |= R600_BLOCK_STATUS_DIRTY;
 		}
 
-		r600_context_dirty_block(ctx, block, dirty, id);
+		if (dirty)
+			r600_context_dirty_block(ctx, block, dirty, id);
 	}
 }
 
@@ -998,7 +1000,7 @@ void r600_context_pipe_state_set_resource(struct r600_context *ctx, struct r600_
 	dirty = block->status & R600_BLOCK_STATUS_DIRTY;
 
 	for (i = 0; i < num_regs; i++) {
-		if (block->reg[i] != state->regs[i].value) {
+		if (dirty || (block->reg[i] != state->regs[i].value)) {
 			dirty |= R600_BLOCK_STATUS_DIRTY;
 			block->reg[i] = state->regs[i].value;
 		}
@@ -1045,7 +1047,8 @@ void r600_context_pipe_state_set_resource(struct r600_context *ctx, struct r600_
 			state->regs[2].bo->bo->binding |= BO_BOUND_TEXTURE;
 		}
 	}
-	r600_context_dirty_block(ctx, block, dirty, num_regs - 1);
+	if (dirty)
+		r600_context_dirty_block(ctx, block, dirty, num_regs - 1);
 }
 
 void r600_context_pipe_state_set_ps_resource(struct r600_context *ctx, struct r600_pipe_state *state, unsigned rid)
@@ -1091,7 +1094,8 @@ static inline void r600_context_pipe_state_set_sampler(struct r600_context *ctx,
 		}
 	}
 
-	r600_context_dirty_block(ctx, block, dirty, 2);
+	if (dirty)
+		r600_context_dirty_block(ctx, block, dirty, 2);
 }
 
 static inline void r600_context_ps_partial_flush(struct r600_context *ctx)
@@ -1135,8 +1139,8 @@ static inline void r600_context_pipe_state_set_sampler_border(struct r600_contex
 	 * will end up using the new border color. */
 	if (dirty & R600_BLOCK_STATUS_DIRTY)
 		r600_context_ps_partial_flush(ctx);
-
-	r600_context_dirty_block(ctx, block, dirty, 3);
+	if (dirty)
+		r600_context_dirty_block(ctx, block, dirty, 3);
 }
 
 void r600_context_pipe_state_set_ps_sampler(struct r600_context *ctx, struct r600_pipe_state *state, unsigned id)
