@@ -57,8 +57,6 @@
  *
  * How the handshake works
  * -----------------------
- * (TODO: To be implemented on a future commit).
- *
  * Initially, intel_screen.dri2_has_hiz is set to unknown. The first time the
  * user requests a depth and stencil buffer, intelCreateBuffers() creates a
  * framebuffer with separate depth and stencil attachments (with formats

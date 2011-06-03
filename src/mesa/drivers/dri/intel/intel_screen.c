@@ -359,6 +359,7 @@ intelCreateBuffer(__DRIscreen * driScrnPriv,
                   const struct gl_config * mesaVis, GLboolean isPixmap)
 {
    struct intel_renderbuffer *rb;
+   struct intel_screen *screen = (struct intel_screen*) driScrnPriv->private;
 
    if (isPixmap) {
       return GL_FALSE;          /* not implemented */
@@ -396,12 +397,27 @@ intelCreateBuffer(__DRIscreen * driScrnPriv,
        */
       if (mesaVis->depthBits == 24) {
 	 assert(mesaVis->stencilBits == 8);
-	 /* combined depth/stencil buffer */
-	 struct intel_renderbuffer *depthStencilRb
-	    = intel_create_renderbuffer(MESA_FORMAT_S8_Z24);
-	 /* note: bind RB to two attachment points */
-	 _mesa_add_renderbuffer(fb, BUFFER_DEPTH, &depthStencilRb->Base);
-	 _mesa_add_renderbuffer(fb, BUFFER_STENCIL, &depthStencilRb->Base);
+
+	 if (screen->hw_has_separate_stencil
+	     && screen->dri2_has_hiz != INTEL_DRI2_HAS_HIZ_FALSE) {
+	    /*
+	     * Request a separate stencil buffer even if we do not yet know if
+	     * the screen supports it. (See comments for
+	     * enum intel_dri2_has_hiz).
+	     */
+	    rb = intel_create_renderbuffer(MESA_FORMAT_X8_Z24);
+	    _mesa_add_renderbuffer(fb, BUFFER_DEPTH, &rb->Base);
+	    rb = intel_create_renderbuffer(MESA_FORMAT_S8);
+	    _mesa_add_renderbuffer(fb, BUFFER_STENCIL, &rb->Base);
+	 } else {
+	    /*
+	     * Use combined depth/stencil. Note that the renderbuffer is
+	     * attached to two attachment points.
+	     */
+	    rb = intel_create_renderbuffer(MESA_FORMAT_S8_Z24);
+	    _mesa_add_renderbuffer(fb, BUFFER_DEPTH, &rb->Base);
+	    _mesa_add_renderbuffer(fb, BUFFER_STENCIL, &rb->Base);
+	 }
       }
       else if (mesaVis->depthBits == 16) {
 	 assert(mesaVis->stencilBits == 0);

@@ -33,6 +33,7 @@
 #include "main/framebuffer.h"
 #include "main/imports.h"
 #include "main/points.h"
+#include "main/renderbuffer.h"
 
 #include "swrast/swrast.h"
 #include "swrast_setup/swrast_setup.h"
@@ -240,6 +241,26 @@ intel_process_dri2_buffer_no_separate_stencil(struct intel_context *intel,
 					      struct intel_renderbuffer *rb,
 					      const char *buffer_name);
 
+static void
+intel_query_dri2_buffers_with_separate_stencil(struct intel_context *intel,
+					       __DRIdrawable *drawable,
+					       __DRIbuffer **buffers,
+					       unsigned **attachments,
+					       int *count);
+
+static void
+intel_process_dri2_buffer_with_separate_stencil(struct intel_context *intel,
+						__DRIdrawable *drawable,
+						__DRIbuffer *buffer,
+						struct intel_renderbuffer *rb,
+						const char *buffer_name);
+static void
+intel_verify_dri2_has_hiz(struct intel_context *intel,
+			  __DRIdrawable *drawable,
+			  __DRIbuffer **buffers,
+			  unsigned **attachments,
+			  int *count);
+
 void
 intel_update_renderbuffers(__DRIcontext *context, __DRIdrawable *drawable)
 {
@@ -247,8 +268,18 @@ intel_update_renderbuffers(__DRIcontext *context, __DRIdrawable *drawable)
    struct intel_renderbuffer *rb;
    struct intel_context *intel = context->driverPrivate;
    __DRIbuffer *buffers = NULL;
+   unsigned *attachments = NULL;
    int i, count;
    const char *region_name;
+
+   bool try_separate_stencil =
+      intel->has_separate_stencil &&
+      intel->intelScreen->dri2_has_hiz != INTEL_DRI2_HAS_HIZ_FALSE &&
+      intel->intelScreen->driScrnPriv->dri2.loader != NULL &&
+      intel->intelScreen->driScrnPriv->dri2.loader->base.version > 2 &&
+      intel->intelScreen->driScrnPriv->dri2.loader->getBuffersWithFormat != NULL;
+
+   assert(!intel->must_use_separate_stencil || try_separate_stencil);
 
    /* If we're rendering to the fake front buffer, make sure all the
     * pending drawing has landed on the real front buffer.  Otherwise
@@ -269,11 +300,16 @@ intel_update_renderbuffers(__DRIcontext *context, __DRIdrawable *drawable)
    if (unlikely(INTEL_DEBUG & DEBUG_DRI))
       fprintf(stderr, "enter %s, drawable %p\n", __func__, drawable);
 
+   if (try_separate_stencil) {
+      intel_query_dri2_buffers_with_separate_stencil(intel, drawable, &buffers,
+						     &attachments, &count);
+   } else {
+      intel_query_dri2_buffers_no_separate_stencil(intel, drawable, &buffers,
+						   &count);
+   }
+
    if (buffers == NULL)
       return;
-
-   intel_query_dri2_buffers_no_separate_stencil(intel, drawable, &buffers,
-					        &count);
 
    drawable->x = 0;
    drawable->y = 0;
@@ -312,6 +348,12 @@ intel_update_renderbuffers(__DRIcontext *context, __DRIdrawable *drawable)
 	   region_name = "dri2 depth buffer";
 	   break;
 
+       case __DRI_BUFFER_HIZ:
+	   /* The hiz region resides in the depth renderbuffer. */
+	   rb = intel_get_renderbuffer(fb, BUFFER_DEPTH);
+	   region_name = "dri2 hiz buffer";
+	   break;
+
        case __DRI_BUFFER_DEPTH_STENCIL:
 	   rb = intel_get_renderbuffer(fb, BUFFER_DEPTH);
 	   region_name = "dri2 depth / stencil buffer";
@@ -330,10 +372,25 @@ intel_update_renderbuffers(__DRIcontext *context, __DRIdrawable *drawable)
 	   return;
        }
 
-      intel_process_dri2_buffer_no_separate_stencil(intel, drawable,
-						    &buffers[i], rb,
-						    region_name);
+       if (try_separate_stencil) {
+	 intel_process_dri2_buffer_with_separate_stencil(intel, drawable,
+						         &buffers[i], rb,
+						         region_name);
+       } else {
+	 intel_process_dri2_buffer_no_separate_stencil(intel, drawable,
+						       &buffers[i], rb,
+						       region_name);
+       }
    }
+
+   if (try_separate_stencil
+       && intel->intelScreen->dri2_has_hiz == INTEL_DRI2_HAS_HIZ_UNKNOWN) {
+      intel_verify_dri2_has_hiz(intel, drawable, &buffers, &attachments,
+				&count);
+   }
+
+   if (attachments)
+      free(attachments);
 
    driUpdateFramebufferSize(&intel->ctx, drawable);
 }
@@ -1122,5 +1179,364 @@ intel_process_dri2_buffer_no_separate_stencil(struct intel_context *intel,
 	 return;
 
       intel_renderbuffer_set_region(intel, stencil_rb, region);
+   }
+}
+
+/**
+ * \brief Query DRI2 to obtain a DRIdrawable's buffers.
+ *
+ * To determine which DRI buffers to request, examine the renderbuffers
+ * attached to the drawable's framebuffer. Then request the buffers with
+ * DRI2GetBuffersWithFormat().
+ *
+ * This is called from intel_update_renderbuffers(). It is used when 1) the
+ * hardware supports separate stencil and 2) the X driver's separate stencil
+ * support has been verified to work or is still unknown.
+ *
+ * \param drawable      Drawable whose buffers are queried.
+ * \param buffers       [out] List of buffers returned by DRI2 query.
+ * \param buffer_count  [out] Number of buffers returned.
+ * \param attachments   [out] List of pairs (attachment_point, bits_per_pixel)
+ *                      that were submitted in the DRI2 query. Number of pairs
+ *                      is same as buffer_count.
+ *
+ * \see intel_update_renderbuffers()
+ * \see DRI2GetBuffersWithFormat()
+ * \see enum intel_dri2_has_hiz
+ */
+static void
+intel_query_dri2_buffers_with_separate_stencil(struct intel_context *intel,
+					       __DRIdrawable *drawable,
+					       __DRIbuffer **buffers,
+					       unsigned **attachments,
+					       int *count)
+{
+   assert(intel->has_separate_stencil);
+
+   __DRIscreen *screen = intel->intelScreen->driScrnPriv;
+   struct gl_framebuffer *fb = drawable->driverPrivate;
+
+   const int max_attachments = 5;
+   int i = 0;
+
+   *attachments = calloc(2 * max_attachments, sizeof(unsigned));
+   if (!*attachments) {
+      *buffers = NULL;
+      *count = 0;
+      return;
+   }
+
+   struct intel_renderbuffer *front_rb;
+   struct intel_renderbuffer *back_rb;
+   struct intel_renderbuffer *depth_rb;
+   struct intel_renderbuffer *stencil_rb;
+
+   front_rb = intel_get_renderbuffer(fb, BUFFER_FRONT_LEFT);
+   back_rb = intel_get_renderbuffer(fb, BUFFER_BACK_LEFT);
+   depth_rb = intel_get_renderbuffer(fb, BUFFER_DEPTH);
+   stencil_rb = intel_get_renderbuffer(fb, BUFFER_STENCIL);
+
+   if ((intel->is_front_buffer_rendering ||
+	intel->is_front_buffer_reading ||
+	!back_rb) && front_rb) {
+      (*attachments)[i++] = __DRI_BUFFER_FRONT_LEFT;
+      (*attachments)[i++] = intel_bits_per_pixel(front_rb);
+   }
+
+   if (back_rb) {
+      (*attachments)[i++] = __DRI_BUFFER_BACK_LEFT;
+      (*attachments)[i++] = intel_bits_per_pixel(back_rb);
+   }
+
+   /*
+    * We request a separate stencil buffer, and perhaps a hiz buffer too, even
+    * if we do not yet know if the X driver supports it. See the comments for
+    * 'enum intel_dri2_has_hiz'.
+    */
+
+   if (depth_rb) {
+      (*attachments)[i++] = __DRI_BUFFER_DEPTH;
+      (*attachments)[i++] = intel_bits_per_pixel(depth_rb);
+
+      if (intel->vtbl.is_hiz_depth_format(intel, depth_rb->Base.Format)) {
+	 /* Depth and hiz buffer have same bpp. */
+	 (*attachments)[i++] = __DRI_BUFFER_HIZ;
+	 (*attachments)[i++] = intel_bits_per_pixel(depth_rb);
+      }
+   }
+
+   if (stencil_rb) {
+      assert(stencil_rb->Base.Format == MESA_FORMAT_S8);
+      (*attachments)[i++] = __DRI_BUFFER_STENCIL;
+      (*attachments)[i++] = intel_bits_per_pixel(stencil_rb);
+   }
+
+   assert(i <= 2 * max_attachments);
+
+   *buffers = screen->dri2.loader->getBuffersWithFormat(drawable,
+							&drawable->w,
+							&drawable->h,
+							*attachments, i / 2,
+							count,
+							drawable->loaderPrivate);
+
+   if (!*buffers) {
+      free(*attachments);
+      *attachments = NULL;
+      *count = 0;
+   }
+}
+
+/**
+ * \brief Assign a DRI buffer's DRM region to a renderbuffer.
+ *
+ * This is called from intel_update_renderbuffers().  It is used when 1) the
+ * hardware supports separate stencil and 2) the X driver's separate stencil
+ * support has been verified to work or is still unknown.
+ *
+ * \par Note:
+ *    DRI buffers whose attachment point is DRI2BufferStencil or DRI2BufferHiz
+ *    are handled as special cases.
+ *
+ * \param buffer_name is a human readable name, such as "dri2 front buffer",
+ *        that is passed to intel_region_alloc_for_handle().
+ *
+ * \see intel_update_renderbuffers()
+ * \see intel_region_alloc_for_handle()
+ * \see intel_renderbuffer_set_region()
+ * \see enum intel_dri2_has_hiz
+ */
+static void
+intel_process_dri2_buffer_with_separate_stencil(struct intel_context *intel,
+						__DRIdrawable *drawable,
+						__DRIbuffer *buffer,
+						struct intel_renderbuffer *rb,
+						const char *buffer_name)
+{
+   assert(intel->has_separate_stencil);
+   assert(buffer->attachment != __DRI_BUFFER_DEPTH_STENCIL);
+
+   if (!rb)
+      return;
+
+   /* If the renderbuffer's and DRIbuffer's regions match, then continue. */
+   if ((buffer->attachment != __DRI_BUFFER_HIZ &&
+	rb->region &&
+	rb->region->name == buffer->name) ||
+       (buffer->attachment == __DRI_BUFFER_HIZ &&
+	rb->hiz_region &&
+	rb->hiz_region->name == buffer->name)) {
+      return;
+   }
+
+   if (unlikely(INTEL_DEBUG & DEBUG_DRI)) {
+      fprintf(stderr,
+	      "attaching buffer %d, at %d, cpp %d, pitch %d\n",
+	      buffer->name, buffer->attachment,
+	      buffer->cpp, buffer->pitch);
+   }
+
+   /*
+    * The stencil buffer has quirky pitch requirements.  From Section
+    * 2.11.5.6.2.1 3DSTATE_STENCIL_BUFFER, field "Surface Pitch":
+    *    The pitch must be set to 2x the value computed based on width, as
+    *    the stencil buffer is stored with two rows interleaved.
+    * If we neglect to double the pitch, then drm_intel_gem_bo_map_gtt()
+    * maps the memory incorrectly.
+    *
+    * To satisfy the pitch requirement, the X driver hackishly allocated
+    * the gem buffer with bpp doubled and height halved. So buffer->cpp is
+    * correct, but drawable->height is not.
+    */
+   int buffer_height = drawable->h;
+   if (buffer->attachment == __DRI_BUFFER_STENCIL) {
+      buffer_height /= 2;
+   }
+
+   struct intel_region *region =
+      intel_region_alloc_for_handle(intel->intelScreen,
+				    buffer->cpp,
+				    drawable->w,
+				    buffer_height,
+				    buffer->pitch / buffer->cpp,
+				    buffer->name,
+				    buffer_name);
+
+   if (buffer->attachment == __DRI_BUFFER_HIZ) {
+      intel_renderbuffer_set_hiz_region(intel, rb, region);
+   } else {
+      intel_renderbuffer_set_region(intel, rb, region);
+   }
+
+   intel_region_release(&region);
+}
+
+/**
+ * \brief Verify that the X driver supports hiz and separate stencil.
+ *
+ * This implements the cleanup stage of the handshake described in the
+ * comments for 'enum intel_dri2_has_hiz'.
+ *
+ * This should be called from intel_update_renderbuffers() after 1) the
+ * DRIdrawable has been queried for its buffers via DRI2GetBuffersWithFormat()
+ * and 2) the DRM region of each returned DRIbuffer has been assigned to the
+ * appropriate intel_renderbuffer. Furthermore, this should be called *only*
+ * when 1) intel_update_renderbuffers() tried to used the X driver's separate
+ * stencil functionality and 2) it has not yet been determined if the X driver
+ * supports separate stencil.
+ *
+ * If we determine that the X driver does have support, then we set
+ * intel_screen.dri2_has_hiz to true and return.
+ *
+ * If we determine that the X driver lacks support, and we requested
+ * a DRI2BufferDepth and DRI2BufferStencil, then we must remedy the mistake by
+ * taking the following actions:
+ *    1. Discard the framebuffer's stencil and depth renderbuffers.
+ *    2. Create a combined depth/stencil renderbuffer and attach
+ *       it to the framebuffer's depth and stencil attachment points.
+ *    3. Query the drawable for a new set of buffers, which consists of the
+ *       originally requested set plus DRI2BufferDepthStencil.
+ *    4. Assign the DRI2BufferDepthStencil's DRM region to the new
+ *       depth/stencil renderbuffer.
+ *
+ * \pre intel->intelScreen->dri2_has_hiz == INTEL_DRI2_HAS_HIZ_UNKNOWN
+ *
+ * \param drawable      Drawable whose buffers were queried.
+ *
+ * \param buffers       [in/out] As input, the buffer list returned by the
+ *                      original DRI2 query. As output, the current buffer
+ *                      list, which may have been altered by a new DRI2 query.
+ *
+ * \param attachments   [in/out] As input, the attachment list submitted
+ *                      in the original DRI2 query. As output, the attachment
+ *                      list that was submitted in the DRI2 query that
+ *                      obtained the current buffer list, as returned in the
+ *                      output parameter \c buffers.  (Note: If no new query
+ *                      was made, then the list remains unaltered).
+ *
+ * \param count         [out] Number of buffers in the current buffer list, as
+ *                      returned in the output parameter \c buffers.
+ *
+ * \see enum intel_dri2_has_hiz
+ * \see struct intel_screen::dri2_has_hiz
+ * \see intel_update_renderbuffers
+ */
+static void
+intel_verify_dri2_has_hiz(struct intel_context *intel,
+			  __DRIdrawable *drawable,
+			  __DRIbuffer **buffers,
+			  unsigned **attachments,
+			  int *count)
+{
+   assert(intel->intelScreen->dri2_has_hiz == INTEL_DRI2_HAS_HIZ_UNKNOWN);
+
+   struct gl_framebuffer *fb = drawable->driverPrivate;
+   struct intel_renderbuffer *stencil_rb =
+      intel_get_renderbuffer(fb, BUFFER_STENCIL);
+
+   if (stencil_rb) {
+      /*
+       * We requested a DRI2BufferStencil without knowing if the X driver
+       * supports it. Now, check if X handled the request correctly and clean
+       * up if it did not. (See comments for 'enum intel_dri2_has_hiz').
+       */
+      struct intel_renderbuffer *depth_rb =
+	 intel_get_renderbuffer(fb, BUFFER_DEPTH);
+      assert(stencil_rb->Base.Format == MESA_FORMAT_S8);
+      assert(depth_rb && depth_rb->Base.Format == MESA_FORMAT_X8_Z24);
+
+      if (stencil_rb->region->tiling == I915_TILING_Y) {
+	 intel->intelScreen->dri2_has_hiz = INTEL_DRI2_HAS_HIZ_TRUE;
+	 return;
+      } else {
+	 /*
+	  * Oops... the screen doesn't support separate stencil. Discard the
+	  * separate depth and stencil buffers and replace them with
+	  * a combined depth/stencil buffer. Discard the hiz buffer too.
+	  */
+	 intel->intelScreen->dri2_has_hiz = INTEL_DRI2_HAS_HIZ_FALSE;
+
+	 /* 1. Discard depth and stencil renderbuffers. */
+	 _mesa_remove_renderbuffer(fb, BUFFER_DEPTH);
+	 depth_rb = NULL;
+	 _mesa_remove_renderbuffer(fb, BUFFER_STENCIL);
+	 stencil_rb = NULL;
+
+	 /* 2. Create new depth/stencil renderbuffer. */
+	 struct intel_renderbuffer *depth_stencil_rb =
+	    intel_create_renderbuffer(MESA_FORMAT_S8_Z24);
+	 _mesa_add_renderbuffer(fb, BUFFER_DEPTH, &depth_stencil_rb->Base);
+	 _mesa_add_renderbuffer(fb, BUFFER_STENCIL, &depth_stencil_rb->Base);
+
+	 /* 3. Append DRI2BufferDepthStencil to attachment list. */
+	 int old_count = *count;
+	 unsigned int *old_attachments = *attachments;
+	 *count = old_count + 1;
+	 *attachments = malloc(2 * (*count) * sizeof(unsigned));
+	 memcpy(*attachments, old_attachments, 2 * old_count * sizeof(unsigned));
+	 free(old_attachments);
+	 (*attachments)[2 * old_count + 0] = __DRI_BUFFER_DEPTH_STENCIL;
+	 (*attachments)[2 * old_count + 1] = intel_bits_per_pixel(depth_stencil_rb);
+
+	 /* 4. Request new set of DRI2 attachments. */
+	 __DRIscreen *screen = intel->intelScreen->driScrnPriv;
+	 *buffers = screen->dri2.loader->getBuffersWithFormat(drawable,
+							      &drawable->w,
+							      &drawable->h,
+							      *attachments,
+							      *count,
+							      count,
+							      drawable->loaderPrivate);
+	 if (!*buffers)
+	    return;
+
+	 /*
+	  * I don't know how to recover from the failure assertion below.
+	  * Rather than fail gradually and unexpectedly, we should just die
+	  * now.
+	  */
+	 assert(*count == old_count + 1);
+
+	 /* 5. Assign the DRI buffer's DRM region to the its renderbuffers. */
+	 __DRIbuffer *depth_stencil_buffer = NULL;
+	 for (int i = 0; i < *count; ++i) {
+	    if ((*buffers)[i].attachment == __DRI_BUFFER_DEPTH_STENCIL) {
+	       depth_stencil_buffer = &(*buffers)[i];
+	       break;
+	    }
+	 }
+	 struct intel_region *region =
+	    intel_region_alloc_for_handle(intel->intelScreen,
+					  depth_stencil_buffer->cpp,
+					  drawable->w,
+					  drawable->h,
+					  depth_stencil_buffer->pitch
+					     / depth_stencil_buffer->cpp,
+					  depth_stencil_buffer->name,
+					  "dri2 depth / stencil buffer");
+	 intel_renderbuffer_set_region(intel,
+				       intel_get_renderbuffer(fb, BUFFER_DEPTH),
+				       region);
+	 intel_renderbuffer_set_region(intel,
+				       intel_get_renderbuffer(fb, BUFFER_STENCIL),
+				       region);
+	 intel_region_release(&region);
+      }
+   }
+
+   if (intel_framebuffer_has_hiz(fb)) {
+      /*
+       * In the future, the driver may advertise a GL config with hiz
+       * compatible depth bits and 0 stencil bits (for example, when the
+       * driver gains support for float32 depth buffers). When that day comes,
+       * here we need to verify that the X driver does in fact support hiz and
+       * clean up if it doesn't.
+       *
+       * Presently, however, no verification or clean up is necessary, and
+       * execution should not reach here. If the framebuffer still has a hiz
+       * region, then we have already set dri2_has_hiz to true after
+       * confirming above that the stencil buffer is Y tiled.
+       */
+      assert(0);
    }
 }
