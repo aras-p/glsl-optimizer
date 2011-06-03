@@ -32,6 +32,8 @@
 #include "r600_pipe.h"
 #include "r600d.h"
 
+static void r600_spi_update(struct r600_pipe_context *rctx);
+
 static int r600_conv_pipe_prim(unsigned pprim, unsigned *prim)
 {
 	static const int prim_conv[] = {
@@ -109,6 +111,8 @@ void r600_bind_rs_state(struct pipe_context *ctx, void *state)
 	} else {
 		r600_polygon_offset_update(rctx);
 	}
+	if (rctx->ps_shader && rctx->vs_shader)
+		r600_spi_update(rctx);
 }
 
 void r600_delete_rs_state(struct pipe_context *ctx, void *state)
@@ -269,6 +273,8 @@ void r600_bind_ps_shader(struct pipe_context *ctx, void *state)
 	if (state) {
 		r600_context_pipe_state_set(&rctx->ctx, &rctx->ps_shader->rstate);
 	}
+	if (rctx->ps_shader && rctx->vs_shader)
+		r600_spi_update(rctx);
 }
 
 void r600_bind_vs_shader(struct pipe_context *ctx, void *state)
@@ -280,6 +286,8 @@ void r600_bind_vs_shader(struct pipe_context *ctx, void *state)
 	if (state) {
 		r600_context_pipe_state_set(&rctx->ctx, &rctx->vs_shader->rstate);
 	}
+	if (rctx->ps_shader && rctx->vs_shader)
+		r600_spi_update(rctx);
 }
 
 void r600_delete_ps_shader(struct pipe_context *ctx, void *state)
@@ -336,7 +344,7 @@ static void r600_spi_block_init(struct r600_pipe_context *rctx, struct r600_pipe
 	}
 }
 
-static void r600_spi_update(struct r600_pipe_context *rctx, unsigned prim)
+static void r600_spi_update(struct r600_pipe_context *rctx)
 {
 	struct r600_pipe_shader *shader = rctx->ps_shader;
 	struct r600_pipe_state *rstate = &rctx->spi;
@@ -588,7 +596,6 @@ void r600_draw_vbo(struct pipe_context *ctx, const struct pipe_draw_info *info)
 	}
 
 	r600_update_alpha_ref(rctx);
-	r600_spi_update(rctx, draw.info.mode);
 
 	mask = 0;
 	for (int i = 0; i < rctx->framebuffer.nr_cbufs; i++) {
