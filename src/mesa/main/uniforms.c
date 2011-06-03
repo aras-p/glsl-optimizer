@@ -199,10 +199,10 @@ _mesa_get_active_uniform(struct gl_context *ctx, GLuint program, GLuint index,
                          GLsizei maxLength, GLsizei *length, GLint *size,
                          GLenum *type, GLchar *nameOut)
 {
-   struct gl_shader_program *shProg;
+   struct gl_shader_program *shProg =
+      _mesa_lookup_shader_program_err(ctx, program, "glGetActiveUniform");
    const struct gl_program_parameter *param;
 
-   shProg = _mesa_lookup_shader_program_err(ctx, program, "glGetActiveUniform");
    if (!shProg)
       return;
 
@@ -483,7 +483,8 @@ get_uniform(struct gl_context *ctx, GLuint program, GLint location,
  * offset (used for arrays, structs).
  */
 GLint
-_mesa_get_uniform_location(struct gl_context *ctx, struct gl_shader_program *shProg,
+_mesa_get_uniform_location(struct gl_context *ctx,
+                           struct gl_shader_program *shProg,
 			   const GLchar *name)
 {
    GLint offset = 0, location = -1;
@@ -664,8 +665,8 @@ set_program_uniform(struct gl_context *ctx, struct gl_program *program,
 
       /* loop over number of samplers to change */
       for (i = 0; i < count; i++) {
-         GLuint sampler =
-            (GLuint) program->Parameters->ParameterValues[index + offset + i][0];
+         GLuint sampler = (GLuint)
+            program->Parameters->ParameterValues[index + offset + i][0];
          GLuint texUnit = ((GLuint *) values)[i];
 
          /* check that the sampler (tex unit index) is legal */
@@ -717,7 +718,9 @@ set_program_uniform(struct gl_context *ctx, struct gl_program *program,
          /* we'll ignore extra data below */
       }
       else {
-         /* non-array: count must be at most one; count == 0 is handled by the loop below */
+         /* non-array: count must be at most one; count == 0 is handled
+          * by the loop below
+          */
          if (count > 1) {
             _mesa_error(ctx, GL_INVALID_OPERATION,
                         "glUniform(uniform '%s' is not an array)",
@@ -888,7 +891,8 @@ set_program_uniform_matrix(struct gl_context *ctx, struct gl_program *program,
 {
    GLuint mat, row, col;
    GLuint src = 0;
-   const struct gl_program_parameter * param = &program->Parameters->Parameters[index];
+   const struct gl_program_parameter *param =
+      &program->Parameters->Parameters[index];
    const GLuint slots = (param->Size + 3) / 4;
    const GLint typeSize = _mesa_sizeof_glsl_type(param->DataType);
    GLint nr, nc;
@@ -902,7 +906,9 @@ set_program_uniform_matrix(struct gl_context *ctx, struct gl_program *program,
    }
 
    if ((GLint) param->Size <= typeSize) {
-      /* non-array: count must be at most one; count == 0 is handled by the loop below */
+      /* non-array: count must be at most one; count == 0 is handled
+       * by the loop below
+       */
       if (count > 1) {
          _mesa_error(ctx, GL_INVALID_OPERATION,
                      "glUniformMatrix(uniform is not an array)");
