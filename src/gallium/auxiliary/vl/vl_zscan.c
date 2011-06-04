@@ -92,8 +92,8 @@ create_vert_shader(struct vl_zscan *zscan)
 {
    struct ureg_program *shader;
 
-   struct ureg_src scale, instance;
-   struct ureg_src vrect, vpos;
+   struct ureg_src scale;
+   struct ureg_src vrect, vpos, block_num;
 
    struct ureg_dst tmp;
    struct ureg_dst o_vpos, o_vtex[zscan->num_channels];
@@ -108,10 +108,10 @@ create_vert_shader(struct vl_zscan *zscan)
       (float)BLOCK_WIDTH / zscan->buffer_width,
       (float)BLOCK_HEIGHT / zscan->buffer_height);
 
-   instance = ureg_DECL_system_value(shader, 0, TGSI_SEMANTIC_INSTANCEID, 0);
-
    vrect = ureg_DECL_vs_input(shader, VS_I_RECT);
    vpos = ureg_DECL_vs_input(shader, VS_I_VPOS);
+
+   block_num = ureg_DECL_system_value(shader, 0, TGSI_SEMANTIC_INSTANCEID, 0);
 
    tmp = ureg_DECL_temporary(shader);
 
@@ -136,7 +136,7 @@ create_vert_shader(struct vl_zscan *zscan)
    ureg_MUL(shader, ureg_writemask(o_vpos, TGSI_WRITEMASK_XY), ureg_src(tmp), scale);
    ureg_MOV(shader, ureg_writemask(o_vpos, TGSI_WRITEMASK_ZW), ureg_imm1f(shader, 1.0f));
 
-   ureg_MUL(shader, ureg_writemask(tmp, TGSI_WRITEMASK_XW), ureg_scalar(instance, TGSI_SWIZZLE_X),
+   ureg_MUL(shader, ureg_writemask(tmp, TGSI_WRITEMASK_XW), ureg_scalar(block_num, TGSI_SWIZZLE_X),
             ureg_imm1f(shader, 1.0f / zscan->blocks_per_line));
 
    ureg_FRC(shader, ureg_writemask(tmp, TGSI_WRITEMASK_Y), ureg_scalar(ureg_src(tmp), TGSI_SWIZZLE_X));

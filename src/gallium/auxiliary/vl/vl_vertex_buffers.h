@@ -41,13 +41,15 @@
 /* inputs to the vertex shaders */
 enum VS_INPUT
 {
-   VS_I_RECT,
-   VS_I_VPOS,
+   VS_I_RECT = 0,
+   VS_I_VPOS = 1,
 
-   VS_I_MV_TOP,
-   VS_I_MV_BOTTOM,
+   VS_I_BLOCK_NUM = 2,
 
-   NUM_VS_INPUTS
+   VS_I_MV_TOP = 2,
+   VS_I_MV_BOTTOM = 3,
+
+   NUM_VS_INPUTS = 4
 };
 
 struct vl_vertex_buffer
@@ -71,6 +73,8 @@ struct pipe_vertex_buffer vl_vb_upload_quads(struct pipe_context *pipe);
 
 struct pipe_vertex_buffer vl_vb_upload_pos(struct pipe_context *pipe, unsigned width, unsigned height);
 
+struct pipe_vertex_buffer vl_vb_upload_block_num(struct pipe_context *pipe, unsigned num_blocks);
+
 void *vl_vb_get_ves_ycbcr(struct pipe_context *pipe);
 
 void *vl_vb_get_ves_mv(struct pipe_context *pipe);
@@ -78,6 +82,8 @@ void *vl_vb_get_ves_mv(struct pipe_context *pipe);
 bool vl_vb_init(struct vl_vertex_buffer *buffer,
                 struct pipe_context *pipe,
                 unsigned width, unsigned height);
+
+unsigned vl_vb_attributes_per_plock(struct vl_vertex_buffer *buffer);
 
 void vl_vb_map(struct vl_vertex_buffer *buffer, struct pipe_context *pipe);
 

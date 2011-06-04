@@ -49,12 +49,13 @@ struct vl_mpeg12_decoder
    unsigned chroma_width, chroma_height;
 
    unsigned blocks_per_line;
-   unsigned max_blocks;
+   unsigned num_blocks;
 
    enum pipe_format zscan_source_format;
 
    struct pipe_vertex_buffer quads;
    struct pipe_vertex_buffer pos;
+   struct pipe_vertex_buffer block_num;
 
    void *ves_ycbcr;
    void *ves_mv;

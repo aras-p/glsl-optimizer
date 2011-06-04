@@ -125,6 +125,49 @@ vl_vb_upload_pos(struct pipe_context *pipe, unsigned width, unsigned height)
    return pos;
 }
 
+struct pipe_vertex_buffer
+vl_vb_upload_block_num(struct pipe_context *pipe, unsigned num_blocks)
+{
+   struct pipe_vertex_buffer buf;
+   struct pipe_transfer *buf_transfer;
+   struct vertex2s *v;
+   unsigned i;
+
+   assert(pipe);
+
+   /* create buffer */
+   buf.stride = sizeof(struct vertex2s);
+   buf.buffer_offset = 0;
+   buf.buffer = pipe_buffer_create
+   (
+      pipe->screen,
+      PIPE_BIND_VERTEX_BUFFER,
+      PIPE_USAGE_STATIC,
+      sizeof(struct vertex2s) * num_blocks
+   );
+
+   if(!buf.buffer)
+      return buf;
+
+   /* and fill it */
+   v = pipe_buffer_map
+   (
+      pipe,
+      buf.buffer,
+      PIPE_TRANSFER_WRITE | PIPE_TRANSFER_DISCARD,
+      &buf_transfer
+   );
+
+   for ( i = 0; i < num_blocks; ++i, ++v) {
+      v->x = i;
+      v->y = i;
+   }
+
+   pipe_buffer_unmap(pipe, buf_transfer);
+
+   return buf;
+}
+
 static struct pipe_vertex_element
 vl_vb_get_quad_vertex_element(void)
 {
@@ -170,7 +213,12 @@ vl_vb_get_ves_ycbcr(struct pipe_context *pipe)
 
    vl_vb_element_helper(&vertex_elems[VS_I_VPOS], 1, 1);
 
-   return pipe->create_vertex_elements_state(pipe, 2, vertex_elems);
+   /* block num element */
+   vertex_elems[VS_I_BLOCK_NUM].src_format = PIPE_FORMAT_R16G16_SSCALED;
+
+   vl_vb_element_helper(&vertex_elems[VS_I_BLOCK_NUM], 1, 2);
+
+   return pipe->create_vertex_elements_state(pipe, 3, vertex_elems);
 }
 
 void *
@@ -247,6 +295,12 @@ error_ycbcr:
    for (i = 0; i < VL_MAX_PLANES; ++i)
       pipe_resource_reference(&buffer->ycbcr[i].resource, NULL);
    return false;
+}
+
+unsigned
+vl_vb_attributes_per_plock(struct vl_vertex_buffer *buffer)
+{
+   return 1;
 }
 
 struct pipe_vertex_buffer

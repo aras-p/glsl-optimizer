@@ -94,7 +94,7 @@ init_zscan_buffer(struct vl_mpeg12_buffer *buffer)
    formats[0] = formats[1] = formats[2] = dec->zscan_source_format;
    buffer->zscan_source = vl_video_buffer_init(dec->base.context, dec->pipe,
                                                dec->blocks_per_line * BLOCK_WIDTH * BLOCK_HEIGHT,
-                                               align(dec->max_blocks, dec->blocks_per_line) / dec->blocks_per_line,
+                                               align(dec->num_blocks, dec->blocks_per_line) / dec->blocks_per_line,
                                                1, PIPE_VIDEO_CHROMA_FORMAT_444,
                                                formats, PIPE_USAGE_STATIC);
    if (!buffer->zscan_source)
@@ -563,12 +563,14 @@ vl_mpeg12_decoder_flush_buffer(struct pipe_video_decode_buffer *buffer,
       }
    }
 
+   vb[2] = dec->block_num;
+
    dec->pipe->bind_vertex_elements_state(dec->pipe, dec->ves_ycbcr);
    for (i = 0; i < VL_MAX_PLANES; ++i) {
       if (!num_ycbcr_blocks[i]) continue;
 
       vb[1] = vl_vb_get_ycbcr(&buf->vertex_stream, i);
-      dec->pipe->set_vertex_buffers(dec->pipe, 2, vb);
+      dec->pipe->set_vertex_buffers(dec->pipe, 3, vb);
 
       vl_zscan_render(&buf->zscan[i] , num_ycbcr_blocks[i]);
 
@@ -585,7 +587,7 @@ vl_mpeg12_decoder_flush_buffer(struct pipe_video_decode_buffer *buffer,
          if (!num_ycbcr_blocks[i]) continue;
 
          vb[1] = vl_vb_get_ycbcr(&buf->vertex_stream, component);
-         dec->pipe->set_vertex_buffers(dec->pipe, 2, vb);
+         dec->pipe->set_vertex_buffers(dec->pipe, 3, vb);
 
          if (dec->base.entrypoint <= PIPE_VIDEO_ENTRYPOINT_IDCT)
             vl_idct_prepare_stage2(component == 0 ? &dec->idct_y : &dec->idct_c, &buf->idct[component]);
@@ -680,13 +682,9 @@ find_format_config(struct vl_mpeg12_decoder *dec, const struct format_config con
 static bool
 init_zscan(struct vl_mpeg12_decoder *dec, const struct format_config* format_config)
 {
-   const unsigned block_size_pixels = BLOCK_WIDTH * BLOCK_HEIGHT;
    unsigned num_channels;
 
    assert(dec);
-
-   dec->blocks_per_line = MAX2(util_next_power_of_two(dec->base.width) / block_size_pixels, 4);
-   dec->max_blocks = (dec->base.width * dec->base.height) / block_size_pixels;
 
    dec->zscan_source_format = format_config->zscan_source_format;
    dec->zscan_linear = vl_zscan_layout(dec->pipe, vl_zscan_linear, dec->blocks_per_line);
@@ -696,11 +694,11 @@ init_zscan(struct vl_mpeg12_decoder *dec, const struct format_config* format_con
    num_channels = dec->base.entrypoint <= PIPE_VIDEO_ENTRYPOINT_IDCT ? 4 : 1;
 
    if (!vl_zscan_init(&dec->zscan_y, dec->pipe, dec->base.width, dec->base.height,
-                      dec->blocks_per_line, dec->max_blocks, num_channels))
+                      dec->blocks_per_line, dec->num_blocks, num_channels))
       return false;
 
    if (!vl_zscan_init(&dec->zscan_c, dec->pipe, dec->chroma_width, dec->chroma_height,
-                      dec->blocks_per_line, dec->max_blocks, num_channels))
+                      dec->blocks_per_line, dec->num_blocks, num_channels))
       return false;
 
    return true;
@@ -838,6 +836,7 @@ vl_create_mpeg12_decoder(struct pipe_video_context *context,
                          enum pipe_video_chroma_format chroma_format,
                          unsigned width, unsigned height)
 {
+   const unsigned block_size_pixels = BLOCK_WIDTH * BLOCK_HEIGHT;
    const struct format_config *format_config;
    struct vl_mpeg12_decoder *dec;
 
@@ -861,12 +860,16 @@ vl_create_mpeg12_decoder(struct pipe_video_context *context,
 
    dec->pipe = pipe;
 
+   dec->blocks_per_line = MAX2(util_next_power_of_two(dec->base.width) / block_size_pixels, 4);
+   dec->num_blocks = (dec->base.width * dec->base.height) / block_size_pixels;
+
    dec->quads = vl_vb_upload_quads(dec->pipe);
    dec->pos = vl_vb_upload_pos(
       dec->pipe,
       dec->base.width / MACROBLOCK_WIDTH,
       dec->base.height / MACROBLOCK_HEIGHT
    );
+   dec->block_num = vl_vb_upload_block_num(dec->pipe, dec->num_blocks);
 
    dec->ves_ycbcr = vl_vb_get_ves_ycbcr(dec->pipe);
    dec->ves_mv = vl_vb_get_ves_mv(dec->pipe);
