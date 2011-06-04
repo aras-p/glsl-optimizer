@@ -4,6 +4,8 @@ include $(TOP)/configs/current
 
 LIBNAME = i965_dri.so
 
+include ../Makefile.defines
+
 DRIVER_SOURCES = \
 	intel_batchbuffer.c \
 	intel_blit.c \
@@ -116,10 +118,13 @@ C_SOURCES = \
 CXX_SOURCES = \
 	brw_cubemap_normalize.cpp \
 	brw_fs.cpp \
+	brw_fs_emit.cpp \
+	brw_fs_visitor.cpp \
 	brw_fs_channel_expressions.cpp \
 	brw_fs_reg_allocate.cpp \
 	brw_fs_schedule_instructions.cpp \
-	brw_fs_vector_splitting.cpp
+	brw_fs_vector_splitting.cpp \
+	brw_shader.cpp
 
 ASM_SOURCES = 
 
@@ -128,7 +133,7 @@ DRIVER_DEFINES = -I../intel
 INCLUDES += $(INTEL_CFLAGS)
 DRI_LIB_DEPS += $(INTEL_LIBS)
 
-include ../Makefile.template
+include ../Makefile.targets
 
 intel_decode.o: ../intel/intel_decode.c
 intel_tex_layout.o: ../intel/intel_tex_layout.c

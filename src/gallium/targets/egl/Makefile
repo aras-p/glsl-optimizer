@@ -52,7 +52,7 @@ egl_LIBS += $(TOP)/src/gallium/winsys/sw/wayland/libws_wayland.a
 egl_LIBS += $(TOP)/src/egl/wayland/wayland-drm/libwayland-drm.a
 endif
 ifneq ($(findstring drm, $(EGL_PLATFORMS)),)
-egl_SYS += $(LIBDRM_LIB)
+egl_SYS += $(LIBUDEV_LIBS) $(LIBDRM_LIB)
 endif
 ifneq ($(findstring fbdev, $(EGL_PLATFORMS)),)
 egl_LIBS += $(TOP)/src/gallium/winsys/sw/fbdev/libfbdev.a

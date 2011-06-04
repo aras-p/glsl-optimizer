@@ -1118,8 +1118,10 @@ _mesa_get_format_name(gl_format format)
  * Return bytes needed to store a block of pixels in the given format.
  * Normally, a block is 1x1 (a single pixel).  But for compressed formats
  * a block may be 4x4 or 8x4, etc.
+ *
+ * Note: not GLuint, so as not to coerce math to unsigned. cf. fdo #37351
  */
-GLuint
+GLint
 _mesa_get_format_bytes(gl_format format)
 {
    const struct gl_format_info *info = _mesa_get_format_info(format);

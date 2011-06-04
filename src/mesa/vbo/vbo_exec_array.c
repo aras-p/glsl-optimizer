@@ -1045,11 +1045,35 @@ vbo_exec_DrawElementsInstanced(GLenum mode, GLsizei count, GLenum type,
                   _mesa_lookup_enum_by_nr(type), indices, numInstances);
 
    if (!_mesa_validate_DrawElementsInstanced(ctx, mode, count, type, indices,
-                                             numInstances))
+                                             numInstances, 0))
       return;
 
    vbo_validated_drawrangeelements(ctx, mode, GL_FALSE, ~0, ~0,
 				   count, type, indices, 0, numInstances);
+}
+
+/**
+ * Called by glDrawElementsInstancedBaseVertex() in immediate mode.
+ */
+static void GLAPIENTRY
+vbo_exec_DrawElementsInstancedBaseVertex(GLenum mode, GLsizei count, GLenum type,
+                               const GLvoid *indices, GLsizei numInstances,
+                               GLint basevertex)
+{
+   GET_CURRENT_CONTEXT(ctx);
+
+   if (MESA_VERBOSE & VERBOSE_DRAW)
+      _mesa_debug(ctx, "glDrawElementsInstancedBaseVertex(%s, %d, %s, %p, %d; %d)\n",
+                  _mesa_lookup_enum_by_nr(mode), count,
+                  _mesa_lookup_enum_by_nr(type), indices,
+                  numInstances, basevertex);
+
+   if (!_mesa_validate_DrawElementsInstanced(ctx, mode, count, type, indices,
+                                             numInstances, basevertex))
+      return;
+
+   vbo_validated_drawrangeelements(ctx, mode, GL_FALSE, ~0, ~0,
+				   count, type, indices, basevertex, numInstances);
 }
 
 
@@ -1260,6 +1284,7 @@ vbo_exec_array_init( struct vbo_exec_context *exec )
    exec->vtxfmt.MultiDrawElementsBaseVertex = vbo_exec_MultiDrawElementsBaseVertex;
    exec->vtxfmt.DrawArraysInstanced = vbo_exec_DrawArraysInstanced;
    exec->vtxfmt.DrawElementsInstanced = vbo_exec_DrawElementsInstanced;
+   exec->vtxfmt.DrawElementsInstancedBaseVertex = vbo_exec_DrawElementsInstancedBaseVertex;
 }
 
 

@@ -925,6 +925,8 @@ print_shader_info(const struct gl_shader_program *shProg)
       printf("  vert prog %u\n", shProg->VertexProgram->Base.Id);
    if (shProg->FragmentProgram)
       printf("  frag prog %u\n", shProg->FragmentProgram->Base.Id);
+   if (shProg->GeometryProgram)
+      printf("  geom prog %u\n", shProg->GeometryProgram->Base.Id);
 }
 
 
@@ -1075,6 +1077,7 @@ validate_shader_program(const struct gl_shader_program *shProg,
                         char *errMsg)
 {
    const struct gl_vertex_program *vp = shProg->VertexProgram;
+   const struct gl_geometry_program *gp = shProg->GeometryProgram;
    const struct gl_fragment_program *fp = shProg->FragmentProgram;
 
    if (!shProg->LinkStatus) {
@@ -1102,6 +1105,9 @@ validate_shader_program(const struct gl_shader_program *shProg,
     * different types, but refer to the same texture image unit,
     */
    if (vp && !validate_samplers(&vp->Base, errMsg)) {
+      return GL_FALSE;
+   }
+   if (gp && !validate_samplers(&gp->Base, errMsg)) {
       return GL_FALSE;
    }
    if (fp && !validate_samplers(&fp->Base, errMsg)) {
@@ -1519,7 +1525,8 @@ _mesa_ShaderSourceARB(GLhandleARB shaderObj, GLsizei count,
    for (i = 0; i < count; i++) {
       if (string[i] == NULL) {
          free((GLvoid *) offsets);
-         _mesa_error(ctx, GL_INVALID_OPERATION, "glShaderSourceARB(null string)");
+         _mesa_error(ctx, GL_INVALID_OPERATION,
+                     "glShaderSourceARB(null string)");
          return;
       }
       if (length == NULL || length[i] < 0)
@@ -1570,7 +1577,7 @@ _mesa_ShaderSourceARB(GLhandleARB shaderObj, GLsizei count,
          free(source);
          source = newSource;
       }
-   }      
+   }
 
    shader_source(ctx, shaderObj, source);
 
@@ -1591,6 +1598,8 @@ _mesa_UseProgramObjectARB(GLhandleARB program)
    struct gl_shader_program *shProg;
    struct gl_transform_feedback_object *obj =
       ctx->TransformFeedback.CurrentObject;
+
+   ASSERT_OUTSIDE_BEGIN_END(ctx);
 
    if (obj->Active) {
       _mesa_error(ctx, GL_INVALID_OPERATION,
@@ -1709,8 +1718,7 @@ _mesa_ShaderBinary(GLint n, const GLuint* shaders, GLenum binaryformat,
 #if FEATURE_ARB_geometry_shader4
 
 void GLAPIENTRY
-_mesa_ProgramParameteriARB(GLuint program, GLenum pname,
-                           GLint value)
+_mesa_ProgramParameteriARB(GLuint program, GLenum pname, GLint value)
 {
    struct gl_shader_program *shProg;
    GET_CURRENT_CONTEXT(ctx);
@@ -1787,6 +1795,8 @@ _mesa_UseShaderProgramEXT(GLenum type, GLuint program)
 {
    GET_CURRENT_CONTEXT(ctx);
    struct gl_shader_program *shProg = NULL;
+
+   ASSERT_OUTSIDE_BEGIN_END(ctx);
 
    if (!validate_shader_target(ctx, type)) {
       _mesa_error(ctx, GL_INVALID_ENUM, "glUseShaderProgramEXT(type)");

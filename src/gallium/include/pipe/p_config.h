@@ -46,7 +46,7 @@
 #ifndef P_CONFIG_H_
 #define P_CONFIG_H_
 
-
+#include <limits.h>
 /*
  * Compiler
  */

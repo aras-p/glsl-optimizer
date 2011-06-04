@@ -93,6 +93,7 @@ intel_draw_buffer(struct gl_context * ctx, struct gl_framebuffer *fb)
    struct intel_context *intel = intel_context(ctx);
    struct intel_region *colorRegions[MAX_DRAW_BUFFERS], *depthRegion = NULL;
    struct intel_renderbuffer *irbDepth = NULL, *irbStencil = NULL;
+   bool fb_has_hiz = intel_framebuffer_has_hiz(fb);
 
    if (!fb) {
       /* this can happen during the initial context initialization */
@@ -166,11 +167,11 @@ intel_draw_buffer(struct gl_context * ctx, struct gl_framebuffer *fb)
 
    /***
     *** Get depth buffer region and check if we need a software fallback.
-    *** Note that the depth buffer is usually a DEPTH_STENCIL buffer.
     ***/
    if (fb->_DepthBuffer && fb->_DepthBuffer->Wrapped) {
       irbDepth = intel_renderbuffer(fb->_DepthBuffer->Wrapped);
       if (irbDepth && irbDepth->region) {
+	 assert(!fb_has_hiz || irbDepth->Base.Format != MESA_FORMAT_S8_Z24);
          FALLBACK(intel, INTEL_FALLBACK_DEPTH_BUFFER, GL_FALSE);
          depthRegion = irbDepth->region;
       }
@@ -187,13 +188,16 @@ intel_draw_buffer(struct gl_context * ctx, struct gl_framebuffer *fb)
 
    /***
     *** Stencil buffer
-    *** This can only be hardware accelerated if we're using a
-    *** combined DEPTH_STENCIL buffer.
     ***/
    if (fb->_StencilBuffer && fb->_StencilBuffer->Wrapped) {
       irbStencil = intel_renderbuffer(fb->_StencilBuffer->Wrapped);
       if (irbStencil && irbStencil->region) {
-         ASSERT(irbStencil->Base.Format == MESA_FORMAT_S8_Z24);
+	 if (!intel->has_separate_stencil)
+	    assert(irbStencil->Base.Format == MESA_FORMAT_S8_Z24);
+	 if (fb_has_hiz || intel->must_use_separate_stencil)
+	    assert(irbStencil->Base.Format == MESA_FORMAT_S8);
+	 if (irbStencil->Base.Format == MESA_FORMAT_S8)
+	    assert(intel->has_separate_stencil);
          FALLBACK(intel, INTEL_FALLBACK_STENCIL_BUFFER, GL_FALSE);
       }
       else {
@@ -208,8 +212,10 @@ intel_draw_buffer(struct gl_context * ctx, struct gl_framebuffer *fb)
    /* If we have a (packed) stencil buffer attached but no depth buffer,
     * we still need to set up the shared depth/stencil state so we can use it.
     */
-   if (depthRegion == NULL && irbStencil && irbStencil->region)
+   if (depthRegion == NULL && irbStencil && irbStencil->region
+       && irbStencil->Base.Format == MESA_FORMAT_S8_Z24) {
       depthRegion = irbStencil->region;
+   }
 
    /*
     * Update depth and stencil test state
@@ -302,18 +308,6 @@ intelReadBuffer(struct gl_context * ctx, GLenum mode)
       if (!was_front_buffer_reading && intel->is_front_buffer_reading)
 	 dri2InvalidateDrawable(intel->driContext->driReadablePriv);
    }
-
-   if (ctx->ReadBuffer == ctx->DrawBuffer) {
-      /* This will update FBO completeness status.
-       * A framebuffer will be incomplete if the GL_READ_BUFFER setting
-       * refers to a missing renderbuffer.  Calling glReadBuffer can set
-       * that straight and can make the drawing buffer complete.
-       */
-      intel_draw_buffer(ctx, ctx->DrawBuffer);
-   }
-   /* Generally, functions which read pixels (glReadPixels, glCopyPixels, etc)
-    * reference ctx->ReadBuffer and do appropriate state checks.
-    */
 }
 
 

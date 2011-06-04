@@ -75,7 +75,7 @@ LIBNAME_STAGING = $(TOP)/$(LIB_DIR)/gallium/$(LIBNAME)
 default: depend symlinks $(TOP)/$(LIB_DIR)/gallium $(LIBNAME) $(LIBNAME_STAGING)
 
 $(LIBNAME): $(OBJECTS) $(MESA_MODULES) $(PIPE_DRIVERS) Makefile \
-		$(TOP)/src/mesa/drivers/dri/Makefile.template $(TOP)/src/mesa/drivers/dri/common/dri_test.o
+		$(TOP)/src/mesa/drivers/dri/Makefile.targets $(TOP)/src/mesa/drivers/dri/common/dri_test.o
 	$(MKLIB) -o $@.tmp -noprefix -linker '$(CXX)' -ldflags '$(LDFLAGS)' \
 		$(OBJECTS) $(PIPE_DRIVERS) \
                 -Wl,--start-group $(MESA_MODULES) -Wl,--end-group \

@@ -195,6 +195,7 @@ static void r300_update_hyperz(struct r300_context* r300)
             }
             return;
         }
+        DBG(r300, DBG_HYPERZ, "r300: Z-func: %i\n", dsa->dsa.depth.func);
 
         /* Set the HiZ function if needed. */
         if (r300->hiz_func == HIZ_FUNC_NONE) {

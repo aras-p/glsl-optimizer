@@ -200,6 +200,10 @@ struct st_context
       GLsizei stride;
    } user_attrib[PIPE_MAX_ATTRIBS];
    unsigned num_user_attribs;
+
+   /* Active render condition. */
+   struct pipe_query *render_condition;
+   unsigned condition_mode;
 };
 
 

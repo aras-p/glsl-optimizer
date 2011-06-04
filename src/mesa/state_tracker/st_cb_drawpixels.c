@@ -793,9 +793,10 @@ draw_stencil_pixels(struct gl_context *ctx, GLint x, GLint y,
    else
       usage = PIPE_TRANSFER_WRITE;
 
-   pt = pipe_get_transfer(st_context(ctx)->pipe, strb->texture, 0, 0,
-                                     usage, x, y,
-                                     width, height);
+   pt = pipe_get_transfer(pipe, strb->texture,
+                          strb->rtt_level, strb->rtt_face + strb->rtt_slice,
+                          usage, x, y,
+                          width, height);
 
    stmap = pipe_transfer_map(pipe, pt);
 
@@ -1130,8 +1131,10 @@ copy_stencil_pixels(struct gl_context *ctx, GLint srcx, GLint srcy,
       dsty = rbDraw->Base.Height - dsty - height;
    }
 
-   ptDraw = pipe_get_transfer(st_context(ctx)->pipe,
-                              rbDraw->texture, 0, 0,
+   ptDraw = pipe_get_transfer(pipe,
+                              rbDraw->texture,
+                              rbDraw->rtt_level,
+                              rbDraw->rtt_face + rbDraw->rtt_slice,
                               usage, dstx, dsty,
                               width, height);
 
@@ -1244,7 +1247,8 @@ blit_copy_pixels(struct gl_context *ctx, GLint srcx, GLint srcy,
        !ctx->VertexProgram.Enabled &&
        !ctx->Shader.CurrentFragmentProgram &&
        st_fb_orientation(ctx->ReadBuffer) == st_fb_orientation(ctx->DrawBuffer) &&
-       ctx->DrawBuffer->_NumColorDrawBuffers == 1) {
+       ctx->DrawBuffer->_NumColorDrawBuffers == 1 &&
+       !ctx->Query.CondRenderQuery) {
       struct st_renderbuffer *rbRead, *rbDraw;
       GLint drawX, drawY;
 
@@ -1291,8 +1295,10 @@ blit_copy_pixels(struct gl_context *ctx, GLint srcx, GLint srcy,
          u_box_2d(readX, readY, readW, readH, &srcBox);
 
          pipe->resource_copy_region(pipe,
-                                    rbDraw->texture, 0, drawX, drawY, 0,
-                                    rbRead->texture, 0, &srcBox);
+                                    rbDraw->texture,
+                                    rbDraw->rtt_level, drawX, drawY, 0,
+                                    rbRead->texture,
+                                    rbRead->rtt_level, &srcBox);
          return GL_TRUE;
       }
    }
@@ -1444,10 +1450,10 @@ st_CopyPixels(struct gl_context *ctx, GLint srcx, GLint srcy,
       /* copy source framebuffer surface into mipmap/texture */
       pipe->resource_copy_region(pipe,
                                  pt,                                /* dest tex */
-                                 0,
+                                 0,                                 /* dest lvl */
                                  pack.SkipPixels, pack.SkipRows, 0, /* dest pos */
                                  rbRead->texture,                   /* src tex */
-                                 0,
+                                 rbRead->rtt_level,                 /* src lvl */
                                  &src_box);
 
    }
@@ -1455,7 +1461,8 @@ st_CopyPixels(struct gl_context *ctx, GLint srcx, GLint srcy,
       /* CPU-based fallback/conversion */
       struct pipe_transfer *ptRead =
          pipe_get_transfer(st->pipe, rbRead->texture,
-                           0, 0, /* level, layer */
+                           rbRead->rtt_level,
+                           rbRead->rtt_face + rbRead->rtt_slice,
                            PIPE_TRANSFER_READ,
                            readX, readY, readW, readH);
       struct pipe_transfer *ptTex;

@@ -260,9 +260,12 @@ static struct pipe_context *r600_create_context(struct pipe_screen *screen, void
 	case CHIP_CYPRESS:
 	case CHIP_HEMLOCK:
 	case CHIP_PALM:
+	case CHIP_SUMO:
+	case CHIP_SUMO2:
 	case CHIP_BARTS:
 	case CHIP_TURKS:
 	case CHIP_CAICOS:
+	case CHIP_CAYMAN:
 		evergreen_init_state_functions(rctx);
 		if (evergreen_context_init(&rctx->ctx, rctx->radeon)) {
 			r600_destroy_context(&rctx->context);
@@ -334,9 +337,12 @@ static const char *r600_get_family_name(enum radeon_family family)
 	case CHIP_CYPRESS: return "AMD CYPRESS";
 	case CHIP_HEMLOCK: return "AMD HEMLOCK";
 	case CHIP_PALM: return "AMD PALM";
+	case CHIP_SUMO: return "AMD SUMO";
+	case CHIP_SUMO2: return "AMD SUMO2";
 	case CHIP_BARTS: return "AMD BARTS";
 	case CHIP_TURKS: return "AMD TURKS";
 	case CHIP_CAICOS: return "AMD CAICOS";
+	case CHIP_CAYMAN: return "AMD CAYMAN";
 	default: return "AMD unknown";
 	}
 }

@@ -3172,7 +3172,8 @@ _mesa_glsl_compile_shader(struct gl_context *ctx, struct gl_shader *shader)
 			     &ctx->Extensions, ctx->API);
 
    if (ctx->Shader.Flags & GLSL_DUMP) {
-      printf("GLSL source for shader %d:\n", shader->Name);
+      printf("GLSL source for %s shader %d:\n",
+	     _mesa_glsl_shader_target_name(state->target), shader->Name);
       printf("%s\n", shader->Source);
    }
 

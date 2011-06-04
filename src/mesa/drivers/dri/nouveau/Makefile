@@ -3,10 +3,9 @@
 TOP = ../../../../..
 include $(TOP)/configs/current
 
-CFLAGS += $(shell pkg-config libdrm libdrm_nouveau --cflags)
-DRI_LIB_DEPS += $(shell pkg-config libdrm_nouveau --libs)
-
 LIBNAME = nouveau_vieux_dri.so
+
+include ../Makefile.defines
 
 DRIVER_SOURCES = \
 	nouveau_screen.c \
@@ -51,7 +50,9 @@ C_SOURCES = \
 
 ASM_SOURCES =
 
+INCLUDES += $(NOUVEAU_CFLAGS)
+DRI_LIB_DEPS += $(NOUVEAU_LIBS)
 
-include ../Makefile.template
+include ../Makefile.targets
 
 symlinks:

@@ -439,6 +439,19 @@ void r300_emit_fb_state(struct r300_context* r300, unsigned size, void* state)
             OUT_CS_REG(R300_ZB_ZMASK_OFFSET, 0);
             OUT_CS_REG(R300_ZB_ZMASK_PITCH, surf->pitch_zmask);
         }
+    /* Set up a dummy zbuffer. Otherwise occlusion queries won't work.
+     * Use the first colorbuffer, we will disable writes in the DSA state
+     * so as not to corrupt it. */
+    } else if (fb->nr_cbufs) {
+        surf = r300_surface(fb->cbufs[0]);
+
+        OUT_CS_REG(R300_ZB_FORMAT, R300_DEPTHFORMAT_16BIT_INT_Z);
+
+        OUT_CS_REG(R300_ZB_DEPTHOFFSET, 0);
+        OUT_CS_RELOC(surf);
+
+        OUT_CS_REG(R300_ZB_DEPTHPITCH, 4 | R300_DEPTHMICROTILE_TILED_SQUARE);
+        OUT_CS_RELOC(surf);
     }
 
     END_CS;

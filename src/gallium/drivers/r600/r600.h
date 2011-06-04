@@ -92,9 +92,12 @@ enum radeon_family {
 	CHIP_CYPRESS,
 	CHIP_HEMLOCK,
 	CHIP_PALM,
+	CHIP_SUMO,
+	CHIP_SUMO2,
 	CHIP_BARTS,
 	CHIP_TURKS,
 	CHIP_CAICOS,
+	CHIP_CAYMAN,
 	CHIP_LAST,
 };
 
@@ -102,6 +105,7 @@ enum chip_class {
 	R600,
 	R700,
 	EVERGREEN,
+	CAYMAN,
 };
 
 struct r600_tiling_info {
@@ -141,11 +145,23 @@ static INLINE unsigned r600_bo_offset(struct r600_bo *bo)
 #define R600_BLOCK_MAX_BO		32
 #define R600_BLOCK_MAX_REG		128
 
+/* each range covers 9 bits of dword space = 512 dwords = 2k bytes */
+/* there is a block entry for each register so 512 blocks */
+/* we have no registers to read/write below 0x8000 (0x2000 in dw space) */
+/* we use some fake offsets at 0x40000 to do evergreen sampler borders so take 0x42000 as a max bound*/
+#define RANGE_OFFSET_START 0x8000
+#define HASH_SHIFT 9
+#define NUM_RANGES (0x42000 - RANGE_OFFSET_START) / (4 << HASH_SHIFT) /* 128 << 9 = 64k */
+
+#define CTX_RANGE_ID(offset) ((((offset - RANGE_OFFSET_START) >> 2) >> HASH_SHIFT) & 255)
+#define CTX_BLOCK_ID(offset) (((offset - RANGE_OFFSET_START) >> 2) & ((1 << HASH_SHIFT) - 1))
+
 struct r600_pipe_reg {
-	u32				offset;
-	u32				mask;
 	u32				value;
-	struct r600_bo		*bo;
+	u32				mask;
+	struct r600_block 		*block;
+	struct r600_bo			*bo;
+	u32				id;
 };
 
 struct r600_pipe_state {
@@ -153,18 +169,6 @@ struct r600_pipe_state {
 	unsigned			nregs;
 	struct r600_pipe_reg		regs[R600_BLOCK_MAX_REG];
 };
-
-static inline void r600_pipe_state_add_reg(struct r600_pipe_state *state,
-					u32 offset, u32 value, u32 mask,
-					struct r600_bo *bo)
-{
-	state->regs[state->nregs].offset = offset;
-	state->regs[state->nregs].value = value;
-	state->regs[state->nregs].mask = mask;
-	state->regs[state->nregs].bo = bo;
-	state->nregs++;
-	assert(state->nregs < R600_BLOCK_MAX_REG);
-}
 
 #define R600_BLOCK_STATUS_ENABLED	(1 << 0)
 #define R600_BLOCK_STATUS_DIRTY		(1 << 1)
@@ -306,5 +310,31 @@ void evergreen_context_pipe_state_set_ps_sampler(struct r600_context *ctx, struc
 void evergreen_context_pipe_state_set_vs_sampler(struct r600_context *ctx, struct r600_pipe_state *state, unsigned id);
 
 struct radeon *radeon_decref(struct radeon *radeon);
+
+void _r600_pipe_state_add_reg(struct r600_context *ctx,
+			      struct r600_pipe_state *state,
+			      u32 offset, u32 value, u32 mask,
+			      u32 range_id, u32 block_id,
+			      struct r600_bo *bo);
+
+void r600_pipe_state_add_reg_noblock(struct r600_pipe_state *state,
+				     u32 offset, u32 value, u32 mask,
+				     struct r600_bo *bo);
+#define r600_pipe_state_add_reg(state, offset, value, mask, bo) _r600_pipe_state_add_reg(&rctx->ctx, state, offset, value, mask, CTX_RANGE_ID(offset), CTX_BLOCK_ID(offset), bo)
+
+static inline void r600_pipe_state_mod_reg(struct r600_pipe_state *state,
+					   u32 value)
+{
+	state->regs[state->nregs].value = value;
+	state->nregs++;
+}
+
+static inline void r600_pipe_state_mod_reg_bo(struct r600_pipe_state *state,
+					   u32 value, struct r600_bo *bo)
+{
+	state->regs[state->nregs].value = value;
+	state->regs[state->nregs].bo = bo;
+	state->nregs++;
+}
 
 #endif

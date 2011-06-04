@@ -310,14 +310,6 @@ struct glx_context
    /*@} */
 
     /**
-     * This is \c GL_TRUE if the pixel unpack modes are such that an image
-     * can be unpacked from the clients memory by just copying.  It may
-     * still be true that the server will have to do some work.  This
-     * just promises that a straight copy will fetch the correct bytes.
-     */
-   GLboolean fastImageUnpack;
-
-    /**
      * Fill newImage with the unpacked form of \c oldImage getting it
      * ready for transport to the server.
      */

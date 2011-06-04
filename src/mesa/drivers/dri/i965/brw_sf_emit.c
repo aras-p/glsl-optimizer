@@ -316,7 +316,7 @@ static GLboolean calculate_masks( struct brw_sf_compile *c,
    GLbitfield64 persp_mask;
    GLbitfield64 linear_mask;
 
-   if (c->key.do_flat_shading || c->key.linear_color)
+   if (c->key.do_flat_shading)
       persp_mask = c->key.attrs & ~(FRAG_BIT_WPOS |
                                     FRAG_BIT_COL0 |
                                     FRAG_BIT_COL1);

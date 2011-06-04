@@ -71,15 +71,19 @@ static void evergreen_set_blend_color(struct pipe_context *ctx,
 static void *evergreen_create_blend_state(struct pipe_context *ctx,
 					const struct pipe_blend_state *state)
 {
+	struct r600_pipe_context *rctx = (struct r600_pipe_context *)ctx;
 	struct r600_pipe_blend *blend = CALLOC_STRUCT(r600_pipe_blend);
 	struct r600_pipe_state *rstate;
 	u32 color_control, target_mask;
 	/* FIXME there is more then 8 framebuffer */
 	unsigned blend_cntl[8];
+	enum radeon_family family;
 
 	if (blend == NULL) {
 		return NULL;
 	}
+
+	family = r600_get_family(rctx->radeon);
 	rstate = &blend->rstate;
 
 	rstate->id = R600_PIPE_STATE_BLEND;
@@ -102,9 +106,16 @@ static void *evergreen_create_blend_state(struct pipe_context *ctx,
 		}
 	}
 	blend->cb_target_mask = target_mask;
+	
 	r600_pipe_state_add_reg(rstate, R_028808_CB_COLOR_CONTROL,
 				color_control, 0xFFFFFFFD, NULL);
-	r600_pipe_state_add_reg(rstate, R_028C3C_PA_SC_AA_MASK, 0xFFFFFFFF, 0xFFFFFFFF, NULL);
+
+	if (family != CHIP_CAYMAN)
+		r600_pipe_state_add_reg(rstate, R_028C3C_PA_SC_AA_MASK, 0xFFFFFFFF, 0xFFFFFFFF, NULL);
+	else {
+		r600_pipe_state_add_reg(rstate, CM_R_028C38_PA_SC_AA_MASK_X0Y0_X1Y0, 0xFFFFFFFF, 0xFFFFFFFF, NULL);
+		r600_pipe_state_add_reg(rstate, CM_R_028C3C_PA_SC_AA_MASK_X0Y1_X1Y1, 0xFFFFFFFF, 0xFFFFFFFF, NULL);
+	}
 
 	for (int i = 0; i < 8; i++) {
 		/* state->rt entries > 0 only written if independent blending */
@@ -143,6 +154,7 @@ static void *evergreen_create_blend_state(struct pipe_context *ctx,
 static void *evergreen_create_dsa_state(struct pipe_context *ctx,
 				   const struct pipe_depth_stencil_alpha_state *state)
 {
+	struct r600_pipe_context *rctx = (struct r600_pipe_context *)ctx;
 	struct r600_pipe_dsa *dsa = CALLOC_STRUCT(r600_pipe_dsa);
 	unsigned db_depth_control, alpha_test_control, alpha_ref, db_shader_control;
 	unsigned stencil_ref_mask, stencil_ref_mask_bf, db_render_override, db_render_control;
@@ -229,11 +241,15 @@ static void *evergreen_create_dsa_state(struct pipe_context *ctx,
 static void *evergreen_create_rs_state(struct pipe_context *ctx,
 					const struct pipe_rasterizer_state *state)
 {
+	struct r600_pipe_context *rctx = (struct r600_pipe_context *)ctx;
 	struct r600_pipe_rasterizer *rs = CALLOC_STRUCT(r600_pipe_rasterizer);
 	struct r600_pipe_state *rstate;
 	unsigned tmp;
 	unsigned prov_vtx = 1, polygon_dual_mode;
 	unsigned clip_rule;
+	enum radeon_family family;
+
+	family = r600_get_family(rctx->radeon);
 
 	if (rs == NULL) {
 		return NULL;
@@ -290,17 +306,30 @@ static void *evergreen_create_rs_state(struct pipe_context *ctx,
 	tmp = (unsigned)state->line_width * 8;
 	r600_pipe_state_add_reg(rstate, R_028A08_PA_SU_LINE_CNTL, S_028A08_WIDTH(tmp), 0xFFFFFFFF, NULL);
 
-	r600_pipe_state_add_reg(rstate, R_028C00_PA_SC_LINE_CNTL, 0x00000400, 0xFFFFFFFF, NULL);
-	r600_pipe_state_add_reg(rstate, R_028C0C_PA_CL_GB_VERT_CLIP_ADJ, 0x3F800000, 0xFFFFFFFF, NULL);
-	r600_pipe_state_add_reg(rstate, R_028C10_PA_CL_GB_VERT_DISC_ADJ, 0x3F800000, 0xFFFFFFFF, NULL);
-	r600_pipe_state_add_reg(rstate, R_028C14_PA_CL_GB_HORZ_CLIP_ADJ, 0x3F800000, 0xFFFFFFFF, NULL);
-	r600_pipe_state_add_reg(rstate, R_028C18_PA_CL_GB_HORZ_DISC_ADJ, 0x3F800000, 0xFFFFFFFF, NULL);
+	if (family == CHIP_CAYMAN) {
+		r600_pipe_state_add_reg(rstate, CM_R_028BDC_PA_SC_LINE_CNTL, 0x00000400, 0xFFFFFFFF, NULL);
+		r600_pipe_state_add_reg(rstate, CM_R_028BE4_PA_SU_VTX_CNTL,
+					S_028C08_PIX_CENTER_HALF(state->gl_rasterization_rules),
+					0xFFFFFFFF, NULL);
+		r600_pipe_state_add_reg(rstate, CM_R_028BE8_PA_CL_GB_VERT_CLIP_ADJ, 0x3F800000, 0xFFFFFFFF, NULL);
+		r600_pipe_state_add_reg(rstate, CM_R_028BEC_PA_CL_GB_VERT_DISC_ADJ, 0x3F800000, 0xFFFFFFFF, NULL);
+		r600_pipe_state_add_reg(rstate, CM_R_028BF0_PA_CL_GB_HORZ_CLIP_ADJ, 0x3F800000, 0xFFFFFFFF, NULL);
+		r600_pipe_state_add_reg(rstate, CM_R_028BF4_PA_CL_GB_HORZ_DISC_ADJ, 0x3F800000, 0xFFFFFFFF, NULL);
+
+
+	} else {
+		r600_pipe_state_add_reg(rstate, R_028C00_PA_SC_LINE_CNTL, 0x00000400, 0xFFFFFFFF, NULL);
+
+		r600_pipe_state_add_reg(rstate, R_028C0C_PA_CL_GB_VERT_CLIP_ADJ, 0x3F800000, 0xFFFFFFFF, NULL);
+		r600_pipe_state_add_reg(rstate, R_028C10_PA_CL_GB_VERT_DISC_ADJ, 0x3F800000, 0xFFFFFFFF, NULL);
+		r600_pipe_state_add_reg(rstate, R_028C14_PA_CL_GB_HORZ_CLIP_ADJ, 0x3F800000, 0xFFFFFFFF, NULL);
+		r600_pipe_state_add_reg(rstate, R_028C18_PA_CL_GB_HORZ_DISC_ADJ, 0x3F800000, 0xFFFFFFFF, NULL);
+
+		r600_pipe_state_add_reg(rstate, R_028C08_PA_SU_VTX_CNTL,
+					S_028C08_PIX_CENTER_HALF(state->gl_rasterization_rules),
+					0xFFFFFFFF, NULL);
+	}
 	r600_pipe_state_add_reg(rstate, R_028B7C_PA_SU_POLY_OFFSET_CLAMP, 0x0, 0xFFFFFFFF, NULL);
-
-	r600_pipe_state_add_reg(rstate, R_028C08_PA_SU_VTX_CNTL,
-				S_028C08_PIX_CENTER_HALF(state->gl_rasterization_rules),
-				0xFFFFFFFF, NULL);
-
 	r600_pipe_state_add_reg(rstate, R_02820C_PA_SC_CLIPRECT_RULE, clip_rule, 0xFFFFFFFF, NULL);
 	return rstate;
 }
@@ -318,7 +347,7 @@ static void *evergreen_create_sampler_state(struct pipe_context *ctx,
 
 	rstate->id = R600_PIPE_STATE_SAMPLER;
 	util_pack_color(state->border_color, PIPE_FORMAT_B8G8R8A8_UNORM, &uc);
-	r600_pipe_state_add_reg(rstate, R_03C000_SQ_TEX_SAMPLER_WORD0_0,
+	r600_pipe_state_add_reg_noblock(rstate, R_03C000_SQ_TEX_SAMPLER_WORD0_0,
 			S_03C000_CLAMP_X(r600_tex_wrap(state->wrap_s)) |
 			S_03C000_CLAMP_Y(r600_tex_wrap(state->wrap_t)) |
 			S_03C000_CLAMP_Z(r600_tex_wrap(state->wrap_r)) |
@@ -328,21 +357,21 @@ static void *evergreen_create_sampler_state(struct pipe_context *ctx,
 			S_03C000_MAX_ANISO(r600_tex_aniso_filter(state->max_anisotropy)) |
 			S_03C000_DEPTH_COMPARE_FUNCTION(r600_tex_compare(state->compare_func)) |
 			S_03C000_BORDER_COLOR_TYPE(uc.ui ? V_03C000_SQ_TEX_BORDER_COLOR_REGISTER : 0), 0xFFFFFFFF, NULL);
-	r600_pipe_state_add_reg(rstate, R_03C004_SQ_TEX_SAMPLER_WORD1_0,
+	r600_pipe_state_add_reg_noblock(rstate, R_03C004_SQ_TEX_SAMPLER_WORD1_0,
 			S_03C004_MIN_LOD(S_FIXED(CLAMP(state->min_lod, 0, 15), 8)) |
 			S_03C004_MAX_LOD(S_FIXED(CLAMP(state->max_lod, 0, 15), 8)),
 			0xFFFFFFFF, NULL);
-	r600_pipe_state_add_reg(rstate, R_03C008_SQ_TEX_SAMPLER_WORD2_0,
-				S_03C008_LOD_BIAS(S_FIXED(CLAMP(state->lod_bias, -16, 16), 8)) |
-				(state->seamless_cube_map ? 0 : S_03C008_DISABLE_CUBE_WRAP(1)) |
-				S_03C008_TYPE(1),
-				0xFFFFFFFF, NULL);
+	r600_pipe_state_add_reg_noblock(rstate, R_03C008_SQ_TEX_SAMPLER_WORD2_0,
+					S_03C008_LOD_BIAS(S_FIXED(CLAMP(state->lod_bias, -16, 16), 8)) |
+					(state->seamless_cube_map ? 0 : S_03C008_DISABLE_CUBE_WRAP(1)) |
+					S_03C008_TYPE(1),
+					0xFFFFFFFF, NULL);
 
 	if (uc.ui) {
-		r600_pipe_state_add_reg(rstate, R_00A404_TD_PS_SAMPLER0_BORDER_RED, fui(state->border_color[0]), 0xFFFFFFFF, NULL);
-		r600_pipe_state_add_reg(rstate, R_00A408_TD_PS_SAMPLER0_BORDER_GREEN, fui(state->border_color[1]), 0xFFFFFFFF, NULL);
-		r600_pipe_state_add_reg(rstate, R_00A40C_TD_PS_SAMPLER0_BORDER_BLUE, fui(state->border_color[2]), 0xFFFFFFFF, NULL);
-		r600_pipe_state_add_reg(rstate, R_00A410_TD_PS_SAMPLER0_BORDER_ALPHA, fui(state->border_color[3]), 0xFFFFFFFF, NULL);
+		r600_pipe_state_add_reg_noblock(rstate, R_00A404_TD_PS_SAMPLER0_BORDER_RED, fui(state->border_color[0]), 0xFFFFFFFF, NULL);
+		r600_pipe_state_add_reg_noblock(rstate, R_00A408_TD_PS_SAMPLER0_BORDER_GREEN, fui(state->border_color[1]), 0xFFFFFFFF, NULL);
+		r600_pipe_state_add_reg_noblock(rstate, R_00A40C_TD_PS_SAMPLER0_BORDER_BLUE, fui(state->border_color[2]), 0xFFFFFFFF, NULL);
+		r600_pipe_state_add_reg_noblock(rstate, R_00A410_TD_PS_SAMPLER0_BORDER_ALPHA, fui(state->border_color[3]), 0xFFFFFFFF, NULL);
 	}
 	return rstate;
 }
@@ -351,6 +380,7 @@ static struct pipe_sampler_view *evergreen_create_sampler_view(struct pipe_conte
 							struct pipe_resource *texture,
 							const struct pipe_sampler_view *state)
 {
+	struct r600_pipe_context *rctx = (struct r600_pipe_context *)ctx;
 	struct r600_pipe_sampler_view *resource = CALLOC_STRUCT(r600_pipe_sampler_view);
 	struct r600_pipe_state *rstate;
 	const struct util_format_description *desc;
@@ -832,9 +862,13 @@ static void evergreen_set_framebuffer_state(struct pipe_context *ctx,
 	struct r600_pipe_context *rctx = (struct r600_pipe_context *)ctx;
 	struct r600_pipe_state *rstate = CALLOC_STRUCT(r600_pipe_state);
 	u32 shader_mask, tl, br, target_mask;
+	enum radeon_family family;
+	int tl_x, tl_y, br_x, br_y;
 
 	if (rstate == NULL)
 		return;
+
+	family = r600_get_family(rctx->radeon);
 
 	evergreen_context_flush_dest_caches(&rctx->ctx);
 	rctx->ctx.num_dest_buffers = state->nr_cbufs;
@@ -860,8 +894,22 @@ static void evergreen_set_framebuffer_state(struct pipe_context *ctx,
 		target_mask ^= 0xf << (i * 4);
 		shader_mask |= 0xf << (i * 4);
 	}
-	tl = S_028240_TL_X(0) | S_028240_TL_Y(0);
-	br = S_028244_BR_X(state->width) | S_028244_BR_Y(state->height);
+	tl_x = 0;
+	tl_y = 0;
+	br_x = state->width;
+	br_y = state->height;
+	/* EG hw workaround */
+	if (br_x == 0)
+		tl_x = 1;
+	if (br_y == 0)
+		tl_y = 1;
+	/* cayman hw workaround */
+	if (family == CHIP_CAYMAN) {
+		if (br_x == 1 && br_y == 1)
+			br_x = 2;
+	}
+	tl = S_028240_TL_X(tl_x) | S_028240_TL_Y(tl_y);
+	br = S_028244_BR_X(br_x) | S_028244_BR_Y(br_y);
 
 	r600_pipe_state_add_reg(rstate,
 				R_028240_PA_SC_GENERIC_SCISSOR_TL, tl,
@@ -898,10 +946,17 @@ static void evergreen_set_framebuffer_state(struct pipe_context *ctx,
 				0x00000000, target_mask, NULL);
 	r600_pipe_state_add_reg(rstate, R_02823C_CB_SHADER_MASK,
 				shader_mask, 0xFFFFFFFF, NULL);
-	r600_pipe_state_add_reg(rstate, R_028C04_PA_SC_AA_CONFIG,
-				0x00000000, 0xFFFFFFFF, NULL);
-	r600_pipe_state_add_reg(rstate, R_028C1C_PA_SC_AA_SAMPLE_LOCS_MCTX,
-				0x00000000, 0xFFFFFFFF, NULL);
+
+
+	if (family == CHIP_CAYMAN) {
+		r600_pipe_state_add_reg(rstate, CM_R_028BE0_PA_SC_AA_CONFIG,
+					0x00000000, 0xFFFFFFFF, NULL);
+	} else {
+		r600_pipe_state_add_reg(rstate, R_028C04_PA_SC_AA_CONFIG,
+					0x00000000, 0xFFFFFFFF, NULL);
+		r600_pipe_state_add_reg(rstate, R_028C1C_PA_SC_AA_SAMPLE_LOCS_MCTX,
+					0x00000000, 0xFFFFFFFF, NULL);
+	}
 
 	free(rctx->states[R600_PIPE_STATE_FRAMEBUFFER]);
 	rctx->states[R600_PIPE_STATE_FRAMEBUFFER] = rstate;
@@ -968,6 +1023,85 @@ void evergreen_init_state_functions(struct r600_pipe_context *rctx)
 	rctx->context.texture_barrier = evergreen_texture_barrier;
 }
 
+static void cayman_init_config(struct r600_pipe_context *rctx)
+{
+  	struct r600_pipe_state *rstate = &rctx->config;
+	unsigned tmp;
+
+	tmp = 0x00000000;
+	tmp |= S_008C00_EXPORT_SRC_C(1);
+	r600_pipe_state_add_reg(rstate, R_008C00_SQ_CONFIG, tmp, 0xFFFFFFFF, NULL);
+
+	r600_pipe_state_add_reg(rstate, CM_R_008C10_SQ_GLOBAL_GPR_RESOURCE_MGMT_1, (4 << 28), 0xFFFFFFFF, NULL);
+	r600_pipe_state_add_reg(rstate, R_008D8C_SQ_DYN_GPR_CNTL_PS_FLUSH_REQ, (1 << 8), 0xFFFFFFFF, NULL);
+
+	r600_pipe_state_add_reg(rstate, R_028A48_PA_SC_MODE_CNTL_0, 0x0, 0xFFFFFFFF, NULL);
+	r600_pipe_state_add_reg(rstate, R_028A4C_PA_SC_MODE_CNTL_1, 0x0, 0xFFFFFFFF, NULL);
+
+	r600_pipe_state_add_reg(rstate, R_028A10_VGT_OUTPUT_PATH_CNTL, 0x0, 0xFFFFFFFF, NULL);
+	r600_pipe_state_add_reg(rstate, R_028A14_VGT_HOS_CNTL, 0x0, 0xFFFFFFFF, NULL);
+	r600_pipe_state_add_reg(rstate, R_028A18_VGT_HOS_MAX_TESS_LEVEL, 0x0, 0xFFFFFFFF, NULL);
+	r600_pipe_state_add_reg(rstate, R_028A1C_VGT_HOS_MIN_TESS_LEVEL, 0x0, 0xFFFFFFFF, NULL);
+	r600_pipe_state_add_reg(rstate, R_028A20_VGT_HOS_REUSE_DEPTH, 0x0, 0xFFFFFFFF, NULL);
+	r600_pipe_state_add_reg(rstate, R_028A24_VGT_GROUP_PRIM_TYPE, 0x0, 0xFFFFFFFF, NULL);
+	r600_pipe_state_add_reg(rstate, R_028A28_VGT_GROUP_FIRST_DECR, 0x0, 0xFFFFFFFF, NULL);
+	r600_pipe_state_add_reg(rstate, R_028A2C_VGT_GROUP_DECR, 0x0, 0xFFFFFFFF, NULL);
+	r600_pipe_state_add_reg(rstate, R_028A30_VGT_GROUP_VECT_0_CNTL, 0x0, 0xFFFFFFFF, NULL);
+	r600_pipe_state_add_reg(rstate, R_028A34_VGT_GROUP_VECT_1_CNTL, 0x0, 0xFFFFFFFF, NULL);
+	r600_pipe_state_add_reg(rstate, R_028A38_VGT_GROUP_VECT_0_FMT_CNTL, 0x0, 0xFFFFFFFF, NULL);
+	r600_pipe_state_add_reg(rstate, R_028A3C_VGT_GROUP_VECT_1_FMT_CNTL, 0x0, 0xFFFFFFFF, NULL);
+	r600_pipe_state_add_reg(rstate, R_028A40_VGT_GS_MODE, 0x0, 0xFFFFFFFF, NULL);
+	r600_pipe_state_add_reg(rstate, R_028B94_VGT_STRMOUT_CONFIG, 0x0, 0xFFFFFFFF, NULL);
+	r600_pipe_state_add_reg(rstate, R_028B98_VGT_STRMOUT_BUFFER_CONFIG, 0x0, 0xFFFFFFFF, NULL);
+	r600_pipe_state_add_reg(rstate, R_028AB4_VGT_REUSE_OFF, 0x00000000, 0xFFFFFFFF, NULL);
+	r600_pipe_state_add_reg(rstate, R_028AB8_VGT_VTX_CNT_EN, 0x0, 0xFFFFFFFF, NULL);
+	r600_pipe_state_add_reg(rstate, R_008A14_PA_CL_ENHANCE, (3 << 1) | 1, 0xFFFFFFFF, NULL);
+
+	r600_pipe_state_add_reg(rstate, R_028380_SQ_VTX_SEMANTIC_0, 0x0, 0xFFFFFFFF, NULL);
+	r600_pipe_state_add_reg(rstate, R_028384_SQ_VTX_SEMANTIC_1, 0x0, 0xFFFFFFFF, NULL);
+	r600_pipe_state_add_reg(rstate, R_028388_SQ_VTX_SEMANTIC_2, 0x0, 0xFFFFFFFF, NULL);
+	r600_pipe_state_add_reg(rstate, R_02838C_SQ_VTX_SEMANTIC_3, 0x0, 0xFFFFFFFF, NULL);
+	r600_pipe_state_add_reg(rstate, R_028390_SQ_VTX_SEMANTIC_4, 0x0, 0xFFFFFFFF, NULL);
+	r600_pipe_state_add_reg(rstate, R_028394_SQ_VTX_SEMANTIC_5, 0x0, 0xFFFFFFFF, NULL);
+	r600_pipe_state_add_reg(rstate, R_028398_SQ_VTX_SEMANTIC_6, 0x0, 0xFFFFFFFF, NULL);
+	r600_pipe_state_add_reg(rstate, R_02839C_SQ_VTX_SEMANTIC_7, 0x0, 0xFFFFFFFF, NULL);
+	r600_pipe_state_add_reg(rstate, R_0283A0_SQ_VTX_SEMANTIC_8, 0x0, 0xFFFFFFFF, NULL);
+	r600_pipe_state_add_reg(rstate, R_0283A4_SQ_VTX_SEMANTIC_9, 0x0, 0xFFFFFFFF, NULL);
+	r600_pipe_state_add_reg(rstate, R_0283A8_SQ_VTX_SEMANTIC_10, 0x0, 0xFFFFFFFF, NULL);
+	r600_pipe_state_add_reg(rstate, R_0283AC_SQ_VTX_SEMANTIC_11, 0x0, 0xFFFFFFFF, NULL);
+	r600_pipe_state_add_reg(rstate, R_0283B0_SQ_VTX_SEMANTIC_12, 0x0, 0xFFFFFFFF, NULL);
+	r600_pipe_state_add_reg(rstate, R_0283B4_SQ_VTX_SEMANTIC_13, 0x0, 0xFFFFFFFF, NULL);
+	r600_pipe_state_add_reg(rstate, R_0283B8_SQ_VTX_SEMANTIC_14, 0x0, 0xFFFFFFFF, NULL);
+	r600_pipe_state_add_reg(rstate, R_0283BC_SQ_VTX_SEMANTIC_15, 0x0, 0xFFFFFFFF, NULL);
+	r600_pipe_state_add_reg(rstate, R_0283C0_SQ_VTX_SEMANTIC_16, 0x0, 0xFFFFFFFF, NULL);
+	r600_pipe_state_add_reg(rstate, R_0283C4_SQ_VTX_SEMANTIC_17, 0x0, 0xFFFFFFFF, NULL);
+	r600_pipe_state_add_reg(rstate, R_0283C8_SQ_VTX_SEMANTIC_18, 0x0, 0xFFFFFFFF, NULL);
+	r600_pipe_state_add_reg(rstate, R_0283CC_SQ_VTX_SEMANTIC_19, 0x0, 0xFFFFFFFF, NULL);
+	r600_pipe_state_add_reg(rstate, R_0283D0_SQ_VTX_SEMANTIC_20, 0x0, 0xFFFFFFFF, NULL);
+	r600_pipe_state_add_reg(rstate, R_0283D4_SQ_VTX_SEMANTIC_21, 0x0, 0xFFFFFFFF, NULL);
+	r600_pipe_state_add_reg(rstate, R_0283D8_SQ_VTX_SEMANTIC_22, 0x0, 0xFFFFFFFF, NULL);
+	r600_pipe_state_add_reg(rstate, R_0283DC_SQ_VTX_SEMANTIC_23, 0x0, 0xFFFFFFFF, NULL);
+	r600_pipe_state_add_reg(rstate, R_0283E0_SQ_VTX_SEMANTIC_24, 0x0, 0xFFFFFFFF, NULL);
+	r600_pipe_state_add_reg(rstate, R_0283E4_SQ_VTX_SEMANTIC_25, 0x0, 0xFFFFFFFF, NULL);
+	r600_pipe_state_add_reg(rstate, R_0283E8_SQ_VTX_SEMANTIC_26, 0x0, 0xFFFFFFFF, NULL);
+	r600_pipe_state_add_reg(rstate, R_0283EC_SQ_VTX_SEMANTIC_27, 0x0, 0xFFFFFFFF, NULL);
+	r600_pipe_state_add_reg(rstate, R_0283F0_SQ_VTX_SEMANTIC_28, 0x0, 0xFFFFFFFF, NULL);
+	r600_pipe_state_add_reg(rstate, R_0283F4_SQ_VTX_SEMANTIC_29, 0x0, 0xFFFFFFFF, NULL);
+	r600_pipe_state_add_reg(rstate, R_0283F8_SQ_VTX_SEMANTIC_30, 0x0, 0xFFFFFFFF, NULL);
+	r600_pipe_state_add_reg(rstate, R_0283FC_SQ_VTX_SEMANTIC_31, 0x0, 0xFFFFFFFF, NULL);
+
+	r600_pipe_state_add_reg(rstate, R_028810_PA_CL_CLIP_CNTL, 0x0, 0xFFFFFFFF, NULL);
+
+	r600_pipe_state_add_reg(rstate, CM_R_028BD4_PA_SC_CENTROID_PRIORITY_0, 0x76543210, 0xffffffff, 0);
+	r600_pipe_state_add_reg(rstate, CM_R_028BD8_PA_SC_CENTROID_PRIORITY_1, 0xfedcba98, 0xffffffff, 0);
+
+	r600_pipe_state_add_reg(rstate, CM_R_0288E8_SQ_LDS_ALLOC, 0, 0xffffffff, NULL);
+	r600_pipe_state_add_reg(rstate, R_0288EC_SQ_LDS_ALLOC_PS, 0, 0xffffffff, NULL);
+
+	r600_pipe_state_add_reg(rstate, CM_R_028804_DB_EQAA, 0x110000, 0xffffffff, NULL);
+	r600_context_pipe_state_set(&rctx->ctx, rstate);
+}
+
 void evergreen_init_config(struct r600_pipe_context *rctx)
 {
 	struct r600_pipe_state *rstate = &rctx->config;
@@ -999,6 +1133,12 @@ void evergreen_init_config(struct r600_pipe_context *rctx)
 	unsigned tmp;
 
 	family = r600_get_family(rctx->radeon);
+
+	if (family == CHIP_CAYMAN) {
+		cayman_init_config(rctx);
+		return;
+	}
+		
 	ps_prio = 0;
 	vs_prio = 1;
 	gs_prio = 2;
@@ -1115,6 +1255,48 @@ void evergreen_init_config(struct r600_pipe_context *rctx)
 		num_hs_stack_entries = 42;
 		num_ls_stack_entries = 42;
 		break;
+	case CHIP_SUMO:
+		num_ps_gprs = 93;
+		num_vs_gprs = 46;
+		num_temp_gprs = 4;
+		num_gs_gprs = 31;
+		num_es_gprs = 31;
+		num_hs_gprs = 23;
+		num_ls_gprs = 23;
+		num_ps_threads = 96;
+		num_vs_threads = 25;
+		num_gs_threads = 25;
+		num_es_threads = 25;
+		num_hs_threads = 25;
+		num_ls_threads = 25;
+		num_ps_stack_entries = 42;
+		num_vs_stack_entries = 42;
+		num_gs_stack_entries = 42;
+		num_es_stack_entries = 42;
+		num_hs_stack_entries = 42;
+		num_ls_stack_entries = 42;
+		break;
+	case CHIP_SUMO2:
+		num_ps_gprs = 93;
+		num_vs_gprs = 46;
+		num_temp_gprs = 4;
+		num_gs_gprs = 31;
+		num_es_gprs = 31;
+		num_hs_gprs = 23;
+		num_ls_gprs = 23;
+		num_ps_threads = 96;
+		num_vs_threads = 25;
+		num_gs_threads = 25;
+		num_es_threads = 25;
+		num_hs_threads = 25;
+		num_ls_threads = 25;
+		num_ps_stack_entries = 85;
+		num_vs_stack_entries = 85;
+		num_gs_stack_entries = 85;
+		num_es_stack_entries = 85;
+		num_hs_stack_entries = 85;
+		num_ls_stack_entries = 85;
+		break;
 	case CHIP_BARTS:
 		num_ps_gprs = 93;
 		num_vs_gprs = 46;
@@ -1184,6 +1366,8 @@ void evergreen_init_config(struct r600_pipe_context *rctx)
 	switch (family) {
 	case CHIP_CEDAR:
 	case CHIP_PALM:
+	case CHIP_SUMO:
+	case CHIP_SUMO2:
 	case CHIP_CAICOS:
 		break;
 	default:
@@ -1374,6 +1558,7 @@ void evergreen_polygon_offset_update(struct r600_pipe_context *rctx)
 
 void evergreen_pipe_shader_ps(struct pipe_context *ctx, struct r600_pipe_shader *shader)
 {
+	struct r600_pipe_context *rctx = (struct r600_pipe_context *)ctx;
 	struct r600_pipe_state *rstate = &shader->rstate;
 	struct r600_shader *rshader = &shader->shader;
 	unsigned i, exports_ps, num_cout, spi_ps_in_control_0, spi_input_z, spi_ps_in_control_1, db_shader_control;
@@ -1502,6 +1687,7 @@ void evergreen_pipe_shader_ps(struct pipe_context *ctx, struct r600_pipe_shader 
 
 void evergreen_pipe_shader_vs(struct pipe_context *ctx, struct r600_pipe_shader *shader)
 {
+	struct r600_pipe_context *rctx = (struct r600_pipe_context *)ctx;
 	struct r600_pipe_state *rstate = &shader->rstate;
 	struct r600_shader *rshader = &shader->shader;
 	unsigned spi_vs_out_id[10];
@@ -1545,8 +1731,10 @@ void evergreen_pipe_shader_vs(struct pipe_context *ctx, struct r600_pipe_shader 
 				0xFFFFFFFF, NULL);
 }
 
-void evergreen_fetch_shader(struct r600_vertex_element *ve)
+void evergreen_fetch_shader(struct pipe_context *ctx,
+			    struct r600_vertex_element *ve)
 {
+	struct r600_pipe_context *rctx = (struct r600_pipe_context *)ctx;
 	struct r600_pipe_state *rstate = &ve->rstate;
 	rstate->id = R600_PIPE_STATE_FETCH_SHADER;
 	rstate->nregs = 0;
@@ -1580,11 +1768,13 @@ void *evergreen_create_db_flush_dsa(struct r600_pipe_context *rctx)
 	return rstate;
 }
 
-void evergreen_pipe_set_buffer_resource(struct r600_pipe_context *rctx,
-					struct r600_pipe_state *rstate,
-					struct r600_resource *rbuffer,
-					unsigned offset, unsigned stride)
+void evergreen_pipe_init_buffer_resource(struct r600_pipe_context *rctx,
+					 struct r600_pipe_state *rstate,
+					 struct r600_resource *rbuffer,
+					 unsigned offset, unsigned stride)
 {
+	rstate->id = R600_PIPE_STATE_RESOURCE;
+	rstate->nregs = 0;
 	r600_pipe_state_add_reg(rstate, R_030000_RESOURCE0_WORD0,
 				offset, 0xFFFFFFFF, rbuffer->bo);
 	r600_pipe_state_add_reg(rstate, R_030004_RESOURCE0_WORD1,
@@ -1606,4 +1796,18 @@ void evergreen_pipe_set_buffer_resource(struct r600_pipe_context *rctx,
 				0x00000000, 0xFFFFFFFF, NULL);
 	r600_pipe_state_add_reg(rstate, R_03001C_RESOURCE0_WORD7,
 				0xC0000000, 0xFFFFFFFF, NULL);
+}
+
+
+void evergreen_pipe_mod_buffer_resource(struct r600_pipe_state *rstate,
+					struct r600_resource *rbuffer,
+					unsigned offset, unsigned stride)
+{
+	rstate->nregs = 0;
+	r600_pipe_state_mod_reg_bo(rstate, offset, rbuffer->bo);
+	r600_pipe_state_mod_reg(rstate, rbuffer->bo_size - offset - 1);
+	r600_pipe_state_mod_reg(rstate, S_030008_ENDIAN_SWAP(r600_endian_swap(32)) |
+				S_030008_STRIDE(stride));
+	rstate->nregs = 8;
+
 }

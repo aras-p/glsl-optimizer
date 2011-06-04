@@ -140,6 +140,7 @@ public:
    }
    void add_barrier_deps(schedule_node *n);
    void add_dep(schedule_node *before, schedule_node *after, int latency);
+   void add_dep(schedule_node *before, schedule_node *after);
 
    void add_inst(fs_inst *inst);
    void calculate_deps();
@@ -210,6 +211,15 @@ instruction_scheduler::add_dep(schedule_node *before, schedule_node *after,
    after->parent_count++;
 }
 
+void
+instruction_scheduler::add_dep(schedule_node *before, schedule_node *after)
+{
+   if (!before)
+      return;
+
+   add_dep(before, after, before->latency);
+}
+
 /**
  * Sometimes we really want this node to execute after everything that
  * was before it and before everything that followed it.  This adds
@@ -253,6 +263,12 @@ instruction_scheduler::calculate_deps()
    schedule_node *last_grf_write[virtual_grf_count];
    schedule_node *last_mrf_write[BRW_MAX_MRF];
    schedule_node *last_conditional_mod = NULL;
+   /* Fixed HW registers are assumed to be separate from the virtual
+    * GRFs, so they can be tracked separately.  We don't really write
+    * to fixed GRFs much, so don't bother tracking them on a more
+    * granular level.
+    */
+   schedule_node *last_fixed_grf_write = NULL;
 
    /* The last instruction always needs to still be the last
     * instruction.  Either it's flow control (IF, ELSE, ENDIF, DO,
@@ -274,10 +290,11 @@ instruction_scheduler::calculate_deps()
       /* read-after-write deps. */
       for (int i = 0; i < 3; i++) {
 	 if (inst->src[i].file == GRF) {
-	    if (last_grf_write[inst->src[i].reg]) {
-	       add_dep(last_grf_write[inst->src[i].reg], n,
-		       last_grf_write[inst->src[i].reg]->latency);
-	    }
+	    add_dep(last_grf_write[inst->src[i].reg], n);
+	 } else if (inst->src[i].file == FIXED_HW_REG &&
+		    (inst->src[i].fixed_hw_reg.file ==
+		     BRW_GENERAL_REGISTER_FILE)) {
+	    add_dep(last_fixed_grf_write, n);
 	 } else if (inst->src[i].file != BAD_FILE &&
 		    inst->src[i].file != IMM &&
 		    inst->src[i].file != UNIFORM) {
@@ -291,53 +308,41 @@ instruction_scheduler::calculate_deps()
 	  * instruction once it's sent, not when the result comes
 	  * back.
 	  */
-	 if (last_mrf_write[inst->base_mrf + i]) {
-	    add_dep(last_mrf_write[inst->base_mrf + i], n,
-		    last_mrf_write[inst->base_mrf + i]->latency);
-	 }
+	 add_dep(last_mrf_write[inst->base_mrf + i], n);
       }
 
       if (inst->predicated) {
 	 assert(last_conditional_mod);
-	 add_dep(last_conditional_mod, n, last_conditional_mod->latency);
+	 add_dep(last_conditional_mod, n);
       }
 
       /* write-after-write deps. */
       if (inst->dst.file == GRF) {
-	 if (last_grf_write[inst->dst.reg]) {
-	    add_dep(last_grf_write[inst->dst.reg], n,
-		    last_grf_write[inst->dst.reg]->latency);
-	 }
+	 add_dep(last_grf_write[inst->dst.reg], n);
 	 last_grf_write[inst->dst.reg] = n;
       } else if (inst->dst.file == MRF) {
 	 int reg = inst->dst.hw_reg & ~BRW_MRF_COMPR4;
 
-	 if (last_mrf_write[reg]) {
-	    add_dep(last_mrf_write[reg], n,
-		    last_mrf_write[reg]->latency);
-	 }
+	 add_dep(last_mrf_write[reg], n);
 	 last_mrf_write[reg] = n;
 	 if (is_compressed(inst)) {
 	    if (inst->dst.hw_reg & BRW_MRF_COMPR4)
 	       reg += 4;
 	    else
 	       reg++;
-	    if (last_mrf_write[reg]) {
-	       add_dep(last_mrf_write[reg], n,
-		       last_mrf_write[reg]->latency);
-	    }
+	    add_dep(last_mrf_write[reg], n);
 	    last_mrf_write[reg] = n;
 	 }
+      } else if (inst->dst.file == FIXED_HW_REG &&
+		 inst->dst.fixed_hw_reg.file == BRW_GENERAL_REGISTER_FILE) {
+	 last_fixed_grf_write = n;
       } else if (inst->dst.file != BAD_FILE) {
 	 add_barrier_deps(n);
       }
 
       if (inst->mlen > 0) {
 	 for (int i = 0; i < v->implied_mrf_writes(inst); i++) {
-	    if (last_mrf_write[inst->base_mrf + i]) {
-	       add_dep(last_mrf_write[inst->base_mrf + i], n,
-		       last_mrf_write[inst->base_mrf + i]->latency);
-	    }
+	    add_dep(last_mrf_write[inst->base_mrf + i], n);
 	    last_mrf_write[inst->base_mrf + i] = n;
 	 }
       }
@@ -352,6 +357,7 @@ instruction_scheduler::calculate_deps()
    memset(last_grf_write, 0, sizeof(last_grf_write));
    memset(last_mrf_write, 0, sizeof(last_mrf_write));
    last_conditional_mod = NULL;
+   last_fixed_grf_write = NULL;
 
    exec_node *node;
    exec_node *prev;
@@ -364,9 +370,11 @@ instruction_scheduler::calculate_deps()
       /* write-after-read deps. */
       for (int i = 0; i < 3; i++) {
 	 if (inst->src[i].file == GRF) {
-	    if (last_grf_write[inst->src[i].reg]) {
-	       add_dep(n, last_grf_write[inst->src[i].reg], n->latency);
-	    }
+	    add_dep(n, last_grf_write[inst->src[i].reg]);
+	 } else if (inst->src[i].file == FIXED_HW_REG &&
+		    (inst->src[i].fixed_hw_reg.file ==
+		     BRW_GENERAL_REGISTER_FILE)) {
+	    add_dep(n, last_fixed_grf_write);
 	 } else if (inst->src[i].file != BAD_FILE &&
 		    inst->src[i].file != IMM &&
 		    inst->src[i].file != UNIFORM) {
@@ -384,9 +392,7 @@ instruction_scheduler::calculate_deps()
       }
 
       if (inst->predicated) {
-	 if (last_conditional_mod) {
-	    add_dep(n, last_conditional_mod, n->latency);
-	 }
+	 add_dep(n, last_conditional_mod);
       }
 
       /* Update the things this instruction wrote, so earlier reads
@@ -407,6 +413,9 @@ instruction_scheduler::calculate_deps()
 
 	    last_mrf_write[reg] = n;
 	 }
+      } else if (inst->dst.file == FIXED_HW_REG &&
+		 inst->dst.fixed_hw_reg.file == BRW_GENERAL_REGISTER_FILE) {
+	 last_fixed_grf_write = n;
       } else if (inst->dst.file != BAD_FILE) {
 	 add_barrier_deps(n);
       }

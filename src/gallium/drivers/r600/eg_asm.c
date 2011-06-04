@@ -62,14 +62,17 @@ int eg_bc_cf_build(struct r600_bc *bc, struct r600_bc_cf *cf)
 			S_SQ_CF_ALLOC_EXPORT_WORD0_ELEM_SIZE(cf->output.elem_size) |
 			S_SQ_CF_ALLOC_EXPORT_WORD0_ARRAY_BASE(cf->output.array_base) |
 			S_SQ_CF_ALLOC_EXPORT_WORD0_TYPE(cf->output.type);
-		bc->bytecode[id++] = S_SQ_CF_ALLOC_EXPORT_WORD1_BURST_COUNT(cf->output.burst_count - 1) |
+		bc->bytecode[id] = S_SQ_CF_ALLOC_EXPORT_WORD1_BURST_COUNT(cf->output.burst_count - 1) |
 			S_SQ_CF_ALLOC_EXPORT_WORD1_SWIZ_SEL_X(cf->output.swizzle_x) |
 			S_SQ_CF_ALLOC_EXPORT_WORD1_SWIZ_SEL_Y(cf->output.swizzle_y) |
 			S_SQ_CF_ALLOC_EXPORT_WORD1_SWIZ_SEL_Z(cf->output.swizzle_z) |
 			S_SQ_CF_ALLOC_EXPORT_WORD1_SWIZ_SEL_W(cf->output.swizzle_w) |
 			S_SQ_CF_ALLOC_EXPORT_WORD1_BARRIER(cf->output.barrier) |
-			S_SQ_CF_ALLOC_EXPORT_WORD1_CF_INST(cf->output.inst) |
-			S_SQ_CF_ALLOC_EXPORT_WORD1_END_OF_PROGRAM(cf->output.end_of_program);
+			S_SQ_CF_ALLOC_EXPORT_WORD1_CF_INST(cf->output.inst);
+		if (bc->chiprev == CHIPREV_EVERGREEN) /* no EOP on cayman */
+			bc->bytecode[id] |= S_SQ_CF_ALLOC_EXPORT_WORD1_END_OF_PROGRAM(cf->output.end_of_program);
+		id++;
+
 		break;
 	case EG_V_SQ_CF_WORD1_SQ_CF_INST_JUMP:
 	case EG_V_SQ_CF_WORD1_SQ_CF_INST_ELSE:
@@ -80,6 +83,7 @@ int eg_bc_cf_build(struct r600_bc *bc, struct r600_bc_cf *cf)
 	case EG_V_SQ_CF_WORD1_SQ_CF_INST_LOOP_BREAK:
 	case EG_V_SQ_CF_WORD1_SQ_CF_INST_CALL_FS:
 	case EG_V_SQ_CF_WORD1_SQ_CF_INST_RETURN:
+	case CM_V_SQ_CF_WORD1_SQ_CF_INST_END:
 		bc->bytecode[id++] = S_SQ_CF_WORD0_ADDR(cf->cf_addr >> 1);
 		bc->bytecode[id++] = S_SQ_CF_WORD1_CF_INST(cf->inst) |
 					S_SQ_CF_WORD1_BARRIER(1) |

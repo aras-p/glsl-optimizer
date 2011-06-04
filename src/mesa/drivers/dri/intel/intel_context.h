@@ -149,6 +149,10 @@ struct intel_context
 
       void (*debug_batch)(struct intel_context *intel);
       bool (*render_target_supported)(gl_format format);
+
+      /** Can HiZ be enabled on a depthbuffer of the given format? */
+      bool (*is_hiz_depth_format)(struct intel_context *intel,
+	                          gl_format format);
    } vtbl;
 
    GLbitfield Fallback;  /**< mask of INTEL_FALLBACK_x bits */
@@ -166,6 +170,9 @@ struct intel_context
    GLboolean is_945;
    GLboolean has_luminance_srgb;
    GLboolean has_xrgb_textures;
+   GLboolean has_separate_stencil;
+   GLboolean must_use_separate_stencil;
+   GLboolean has_hiz;
 
    int urb_size;
 

@@ -22,6 +22,7 @@ intel_mesa_format_to_rb_datatype(gl_format format)
    case MESA_FORMAT_RGB565:
    case MESA_FORMAT_ARGB1555:
    case MESA_FORMAT_ARGB4444:
+   case MESA_FORMAT_S8:
       return GL_UNSIGNED_BYTE;
    case MESA_FORMAT_R16:
    case MESA_FORMAT_RG1616:

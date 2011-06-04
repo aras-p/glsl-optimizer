@@ -4,6 +4,8 @@ include $(TOP)/configs/current
 
 LIBNAME = i915_dri.so
 
+include ../Makefile.defines
+
 DRIVER_SOURCES = \
 	i830_context.c \
 	i830_state.c \
@@ -63,7 +65,7 @@ DRIVER_DEFINES = -I../intel -DI915 \
 INCLUDES += $(INTEL_CFLAGS)
 DRI_LIB_DEPS += $(INTEL_LIBS)
 
-include ../Makefile.template
+include ../Makefile.targets
 
 intel_decode.o: ../intel/intel_decode.c
 

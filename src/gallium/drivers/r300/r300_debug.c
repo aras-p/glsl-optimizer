@@ -27,7 +27,7 @@
 #include <stdio.h>
 
 static const struct debug_named_value debug_options[] = {
-    { "info", DBG_INFO, "Print hardware info"},
+    { "info", DBG_INFO, "Print hardware info (printed by default on debug builds"},
     { "fp", DBG_FP, "Log fragment program compilation" },
     { "vp", DBG_VP, "Log vertex program compilation" },
     { "pstat", DBG_P_STAT, "Log vertex/fragment program stats" },
@@ -37,14 +37,11 @@ static const struct debug_named_value debug_options[] = {
     { "psc", DBG_PSC, "Log vertex stream registers" },
     { "tex", DBG_TEX, "Log basic info about textures" },
     { "texalloc", DBG_TEXALLOC, "Log texture mipmap tree info" },
-    { "fall", DBG_FALL, "Log fallbacks" },
     { "rs", DBG_RS, "Log rasterizer" },
     { "fb", DBG_FB, "Log framebuffer" },
     { "cbzb", DBG_CBZB, "Log fast color clear info" },
     { "hyperz", DBG_HYPERZ, "Log HyperZ info" },
-    { "upload", DBG_UPLOAD, "Log user buffer upload info" },
     { "scissor", DBG_SCISSOR, "Log scissor info" },
-    { "fakeocc", DBG_FAKE_OCC, "Use fake occlusion queries" },
     { "anisohq", DBG_ANISOHQ, "Use high quality anisotropic filtering" },
     { "notiling", DBG_NO_TILING, "Disable tiling" },
     { "noimmd", DBG_NO_IMMD, "Disable immediate mode" },

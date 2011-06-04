@@ -40,6 +40,19 @@
 
 #define GROUP_FORCE_NEW_BLOCK	0
 
+void r600_init_cs(struct r600_context *ctx)
+{
+	/* R6xx requires this packet at the start of each command buffer */
+	if (ctx->radeon->family < CHIP_RV770) {
+		ctx->pm4[ctx->pm4_cdwords++] = PKT3(PKT3_START_3D_CMDBUF, 0, 0);
+		ctx->pm4[ctx->pm4_cdwords++] = 0x00000000;
+	}
+	/* All asics require this one */
+	ctx->pm4[ctx->pm4_cdwords++] = PKT3(PKT3_CONTEXT_CONTROL, 1, 0);
+	ctx->pm4[ctx->pm4_cdwords++] = 0x80000000;
+	ctx->pm4[ctx->pm4_cdwords++] = 0x80000000;
+}
+
 static void INLINE r600_context_update_fenced_list(struct r600_context *ctx)
 {
 	for (int i = 0; i < ctx->creloc; i++) {
@@ -82,6 +95,12 @@ int r600_context_add_block(struct r600_context *ctx, const struct r600_reg *reg,
 			continue;
 		}
 
+		/* ignore regs not on R600 on R600 */
+		if ((reg[i].flags & REG_FLAG_NOT_R600) && ctx->radeon->family == CHIP_R600) {
+			n = 1;
+			continue;
+		}
+
 		/* register that need relocation are in their own group */
 		/* find number of consecutive registers */
 		n = 0;
@@ -102,14 +121,14 @@ int r600_context_add_block(struct r600_context *ctx, const struct r600_reg *reg,
 		}
 		ctx->nblocks++;
 		for (int j = 0; j < n; j++) {
-			range = &ctx->range[CTX_RANGE_ID(ctx, reg[i + j].offset)];
+			range = &ctx->range[CTX_RANGE_ID(reg[i + j].offset)];
 			/* create block table if it doesn't exist */
 			if (!range->blocks)
 				range->blocks = calloc(1 << HASH_SHIFT, sizeof(void *));
 			if (!range->blocks)
 				return -1;
 
-			range->blocks[CTX_BLOCK_ID(ctx, reg[i + j].offset)] = block;
+			range->blocks[CTX_BLOCK_ID(reg[i + j].offset)] = block;
 		}
 
 		/* initialize block */
@@ -321,14 +340,14 @@ static const struct r600_reg r600_context_reg_list[] = {
 	{R_0286DC_SPI_FOG_CNTL, 0, 0, 0},
 	{R_0286E0_SPI_FOG_FUNC_SCALE, 0, 0, 0},
 	{R_0286E4_SPI_FOG_FUNC_BIAS, 0, 0, 0},
-	{R_028780_CB_BLEND0_CONTROL, 0, 0, 0},
-	{R_028784_CB_BLEND1_CONTROL, 0, 0, 0},
-	{R_028788_CB_BLEND2_CONTROL, 0, 0, 0},
-	{R_02878C_CB_BLEND3_CONTROL, 0, 0, 0},
-	{R_028790_CB_BLEND4_CONTROL, 0, 0, 0},
-	{R_028794_CB_BLEND5_CONTROL, 0, 0, 0},
-	{R_028798_CB_BLEND6_CONTROL, 0, 0, 0},
-	{R_02879C_CB_BLEND7_CONTROL, 0, 0, 0},
+	{R_028780_CB_BLEND0_CONTROL, REG_FLAG_NOT_R600, 0, 0},
+	{R_028784_CB_BLEND1_CONTROL, REG_FLAG_NOT_R600, 0, 0},
+	{R_028788_CB_BLEND2_CONTROL, REG_FLAG_NOT_R600, 0, 0},
+	{R_02878C_CB_BLEND3_CONTROL, REG_FLAG_NOT_R600, 0, 0},
+	{R_028790_CB_BLEND4_CONTROL, REG_FLAG_NOT_R600, 0, 0},
+	{R_028794_CB_BLEND5_CONTROL, REG_FLAG_NOT_R600, 0, 0},
+	{R_028798_CB_BLEND6_CONTROL, REG_FLAG_NOT_R600, 0, 0},
+	{R_02879C_CB_BLEND7_CONTROL, REG_FLAG_NOT_R600, 0, 0},
 	{R_0287A0_CB_SHADER_CONTROL, 0, 0, 0},
 	{R_028800_DB_DEPTH_CONTROL, 0, 0, 0},
 	{R_028804_CB_BLEND_CONTROL, 0, 0, 0},
@@ -624,8 +643,8 @@ void r600_context_fini(struct r600_context *ctx)
 			block = ctx->range[i].blocks[j];
 			if (block) {
 				for (int k = 0, offset = block->start_offset; k < block->nreg; k++, offset += 4) {
-					range = &ctx->range[CTX_RANGE_ID(ctx, offset)];
-					range->blocks[CTX_BLOCK_ID(ctx, offset)] = NULL;
+					range = &ctx->range[CTX_RANGE_ID(offset)];
+					range->blocks[CTX_BLOCK_ID(offset)] = NULL;
 				}
 				for (int k = 1; k <= block->nbo; k++) {
 					r600_bo_reference(ctx->radeon, &block->reloc[k].bo, NULL);
@@ -774,6 +793,8 @@ int r600_context_init(struct r600_context *ctx, struct radeon *radeon)
 		r = -ENOMEM;
 		goto out_err;
 	}
+
+	r600_init_cs(ctx);
 	/* save 16dwords space for fence mecanism */
 	ctx->pm4_ndwords -= 16;
 
@@ -886,8 +907,8 @@ void r600_context_reg(struct r600_context *ctx,
 	unsigned new_val;
 	int dirty;
 
-	range = &ctx->range[CTX_RANGE_ID(ctx, offset)];
-	block = range->blocks[CTX_BLOCK_ID(ctx, offset)];
+	range = &ctx->range[CTX_RANGE_ID(offset)];
+	block = range->blocks[CTX_BLOCK_ID(offset)];
 	id = (offset - block->start_offset) >> 2;
 
 	dirty = block->status & R600_BLOCK_STATUS_DIRTY;
@@ -919,7 +940,6 @@ void r600_context_dirty_block(struct r600_context *ctx, struct r600_block *block
 
 void r600_context_pipe_state_set(struct r600_context *ctx, struct r600_pipe_state *state)
 {
-	struct r600_range *range;
 	struct r600_block *block;
 	unsigned new_val;
 	int dirty;
@@ -927,9 +947,8 @@ void r600_context_pipe_state_set(struct r600_context *ctx, struct r600_pipe_stat
 		unsigned id, reloc_id;
 		struct r600_pipe_reg *reg = &state->regs[i];
 
-		range = &ctx->range[CTX_RANGE_ID(ctx, reg->offset)];
-		block = range->blocks[CTX_BLOCK_ID(ctx, reg->offset)];
-		id = (reg->offset - block->start_offset) >> 2;
+		block = reg->block;
+		id = reg->id;
 
 		dirty = block->status & R600_BLOCK_STATUS_DIRTY;
 
@@ -963,8 +982,8 @@ void r600_context_pipe_state_set_resource(struct r600_context *ctx, struct r600_
 	int dirty;
 	int num_regs = ctx->radeon->chip_class >= EVERGREEN ? 8 : 7;
 
-	range = &ctx->range[CTX_RANGE_ID(ctx, offset)];
-	block = range->blocks[CTX_BLOCK_ID(ctx, offset)];
+	range = &ctx->range[CTX_RANGE_ID(offset)];
+	block = range->blocks[CTX_BLOCK_ID(offset)];
 	if (state == NULL) {
 		block->status &= ~(R600_BLOCK_STATUS_ENABLED | R600_BLOCK_STATUS_DIRTY);
 		if (block->reloc[1].bo)
@@ -1057,8 +1076,8 @@ static inline void r600_context_pipe_state_set_sampler(struct r600_context *ctx,
 	int i;
 	int dirty;
 
-	range = &ctx->range[CTX_RANGE_ID(ctx, offset)];
-	block = range->blocks[CTX_BLOCK_ID(ctx, offset)];
+	range = &ctx->range[CTX_RANGE_ID(offset)];
+	block = range->blocks[CTX_BLOCK_ID(offset)];
 	if (state == NULL) {
 		block->status &= ~(R600_BLOCK_STATUS_ENABLED | R600_BLOCK_STATUS_DIRTY);
 		LIST_DELINIT(&block->list);
@@ -1093,8 +1112,8 @@ static inline void r600_context_pipe_state_set_sampler_border(struct r600_contex
 	int i;
 	int dirty;
 
-	range = &ctx->range[CTX_RANGE_ID(ctx, offset)];
-	block = range->blocks[CTX_BLOCK_ID(ctx, offset)];
+	range = &ctx->range[CTX_RANGE_ID(offset)];
+	block = range->blocks[CTX_BLOCK_ID(offset)];
 	if (state == NULL) {
 		block->status &= ~(R600_BLOCK_STATUS_ENABLED | R600_BLOCK_STATUS_DIRTY);
 		LIST_DELINIT(&block->list);
@@ -1146,8 +1165,8 @@ struct r600_bo *r600_context_reg_bo(struct r600_context *ctx, unsigned offset)
 	struct r600_block *block;
 	unsigned id;
 
-	range = &ctx->range[CTX_RANGE_ID(ctx, offset)];
-	block = range->blocks[CTX_BLOCK_ID(ctx, offset)];
+	range = &ctx->range[CTX_RANGE_ID(offset)];
+	block = range->blocks[CTX_BLOCK_ID(offset)];
 	offset -= block->start_offset;
 	id = block->pm4_bo_index[offset >> 2];
 	if (block->reloc[id].bo) {
@@ -1159,10 +1178,15 @@ struct r600_bo *r600_context_reg_bo(struct r600_context *ctx, unsigned offset)
 void r600_context_block_emit_dirty(struct r600_context *ctx, struct r600_block *block)
 {
 	int id;
+	int optional = block->nbo == 0 && !(block->flags & REG_FLAG_DIRTY_ALWAYS);
+	int cp_dwords = block->pm4_ndwords, start_dword;
+	int new_dwords;
 
-	if (block->nreg_dirty == 0 && block->nbo == 0 && !(block->flags & REG_FLAG_DIRTY_ALWAYS)) {
+	if (block->nreg_dirty == 0 && optional) {
 		goto out;
 	}
+
+	optional &= (block->nreg_dirty != block->nreg);
 
 	ctx->flags |= R600_CONTEXT_CHECK_EVENT_FLUSH;
 	for (int j = 0; j < block->nreg; j++) {
@@ -1181,18 +1205,22 @@ void r600_context_block_emit_dirty(struct r600_context *ctx, struct r600_block *
 		}
 	}
 	ctx->flags &= ~R600_CONTEXT_CHECK_EVENT_FLUSH;
-	memcpy(&ctx->pm4[ctx->pm4_cdwords], block->pm4, block->pm4_ndwords * 4);
-	ctx->pm4_cdwords += block->pm4_ndwords;
 
-	if (block->nreg_dirty != block->nreg && block->nbo == 0 && !(block->flags & REG_FLAG_DIRTY_ALWAYS)) {
-		int new_dwords = block->nreg_dirty;
-		uint32_t oldword, newword;
-		ctx->pm4_cdwords -= block->pm4_ndwords;
-		newword = oldword = ctx->pm4[ctx->pm4_cdwords];
+	if (optional) {
+		new_dwords = block->nreg_dirty;
+		start_dword = ctx->pm4_cdwords;
+		cp_dwords = new_dwords + 2;
+	}
+	memcpy(&ctx->pm4[ctx->pm4_cdwords], block->pm4, cp_dwords * 4);
+	ctx->pm4_cdwords += cp_dwords;
+
+	if (optional) {
+		uint32_t newword;
+
+		newword = ctx->pm4[start_dword];
 		newword &= PKT_COUNT_C;
 		newword |= PKT_COUNT_S(new_dwords);
-		ctx->pm4[ctx->pm4_cdwords] = newword;
-		ctx->pm4_cdwords += new_dwords + 2;
+		ctx->pm4[start_dword] = newword;
 	}
 out:
 	block->status ^= R600_BLOCK_STATUS_DIRTY;
@@ -1231,7 +1259,7 @@ void r600_context_flush_dest_caches(struct r600_context *ctx)
 					0, cb[i]);
 	}
 	if (db) {
-		r600_context_bo_flush(ctx, S_0085F0_DB_ACTION_ENA(1), 0, db);
+		r600_context_bo_flush(ctx, S_0085F0_DB_ACTION_ENA(1) | S_0085F0_DB_DEST_BASE_ENA(1), 0, db);
 	}
 	ctx->flags &= ~R600_CONTEXT_CHECK_EVENT_FLUSH;
 	ctx->flags &= ~R600_CONTEXT_DST_CACHES_DIRTY;
@@ -1380,6 +1408,8 @@ void r600_context_flush(struct r600_context *ctx)
 	ctx->pm4_dirty_cdwords = 0;
 	ctx->pm4_cdwords = 0;
 	ctx->flags = 0;
+
+	r600_init_cs(ctx);
 
 	/* resume queries */
 	r600_context_queries_resume(ctx);

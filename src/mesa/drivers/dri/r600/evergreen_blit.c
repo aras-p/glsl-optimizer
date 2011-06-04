@@ -1525,6 +1525,48 @@ eg_set_default_state(context_t *context)
 	    num_hs_stack_entries = 42;
 	    num_ls_stack_entries = 42;
 	    break;
+    case CHIP_FAMILY_SUMO:
+	    num_ps_gprs = 93;
+	    num_vs_gprs = 46;
+	    num_temp_gprs = 4;
+	    num_gs_gprs = 31;
+	    num_es_gprs = 31;
+	    num_hs_gprs = 23;
+	    num_ls_gprs = 23;
+	    num_ps_threads = 96;
+	    num_vs_threads = 25;
+	    num_gs_threads = 25;
+	    num_es_threads = 25;
+	    num_hs_threads = 25;
+	    num_ls_threads = 25;
+	    num_ps_stack_entries = 42;
+	    num_vs_stack_entries = 42;
+	    num_gs_stack_entries = 42;
+	    num_es_stack_entries = 42;
+	    num_hs_stack_entries = 42;
+	    num_ls_stack_entries = 42;
+	    break;
+    case CHIP_FAMILY_SUMO2:
+	    num_ps_gprs = 93;
+	    num_vs_gprs = 46;
+	    num_temp_gprs = 4;
+	    num_gs_gprs = 31;
+	    num_es_gprs = 31;
+	    num_hs_gprs = 23;
+	    num_ls_gprs = 23;
+	    num_ps_threads = 96;
+	    num_vs_threads = 25;
+	    num_gs_threads = 25;
+	    num_es_threads = 25;
+	    num_hs_threads = 25;
+	    num_ls_threads = 25;
+	    num_ps_stack_entries = 85;
+	    num_vs_stack_entries = 85;
+	    num_gs_stack_entries = 85;
+	    num_es_stack_entries = 85;
+	    num_hs_stack_entries = 85;
+	    num_ls_stack_entries = 85;
+	    break;
     case CHIP_FAMILY_BARTS:
 	    num_ps_gprs = 93;
 	    num_vs_gprs = 46;
@@ -1592,6 +1634,8 @@ eg_set_default_state(context_t *context)
 
     if ((context->radeon.radeonScreen->chip_family == CHIP_FAMILY_CEDAR) ||
 	(context->radeon.radeonScreen->chip_family == CHIP_FAMILY_PALM) ||
+	(context->radeon.radeonScreen->chip_family == CHIP_FAMILY_SUMO) ||
+	(context->radeon.radeonScreen->chip_family == CHIP_FAMILY_SUMO2) ||
 	(context->radeon.radeonScreen->chip_family == CHIP_FAMILY_CAICOS))
 	    CLEARbit(sq_config, EG_SQ_CONFIG__VC_ENABLE_bit);
     else

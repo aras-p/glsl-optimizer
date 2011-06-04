@@ -81,31 +81,18 @@ _mesa_free_texmemory(void *m)
 
 
 /*
- * Compute floor(log_base_2(n)).
- * If n < 0 return -1.
+ * Returns the floor form of binary logarithm for a 32-bit integer.
  */
-static int
-logbase2( int n )
+static GLuint
+logbase2(GLuint n)
 {
-   GLint i = 1;
-   GLint log2 = 0;
-
-   if (n < 0)
-      return -1;
-
-   if (n == 0)
-      return 0;
-
-   while ( n > i ) {
-      i *= 2;
-      log2++;
-   }
-   if (i != n) {
-      return log2 - 1;
-   }
-   else {
-      return log2;
-   }
+   GLuint pos = 0;
+   if (n >= 1<<16) { n >>= 16; pos += 16; }
+   if (n >= 1<< 8) { n >>=  8; pos +=  8; }
+   if (n >= 1<< 4) { n >>=  4; pos +=  4; }
+   if (n >= 1<< 2) { n >>=  2; pos +=  2; }
+   if (n >= 1<< 1) {           pos +=  1; }
+   return pos;
 }
 
 
@@ -2693,7 +2680,7 @@ texsubimage(struct gl_context *ctx, GLuint dims, GLenum target, GLint level,
                                   format, type, texImage)) {
          /* error was recorded */
       }
-      else if (width > 0 && height > 0 && height > 0) {
+      else if (width > 0 && height > 0 && depth > 0) {
          /* If we have a border, offset=-1 is legal.  Bias by border width. */
          switch (dims) {
          case 3:

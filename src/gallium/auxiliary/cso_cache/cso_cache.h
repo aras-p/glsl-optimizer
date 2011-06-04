@@ -86,13 +86,14 @@ extern "C" {
 #endif
 
 enum cso_cache_type {
-   CSO_BLEND,
-   CSO_SAMPLER,
-   CSO_DEPTH_STENCIL_ALPHA,
    CSO_RASTERIZER,
+   CSO_BLEND,
+   CSO_DEPTH_STENCIL_ALPHA,
    CSO_FRAGMENT_SHADER,
    CSO_VERTEX_SHADER,
-   CSO_VELEMENTS
+   CSO_SAMPLER,
+   CSO_VELEMENTS,
+   CSO_CACHE_MAX,
 };
 
 typedef void (*cso_state_callback)(void *ctx, void *obj);

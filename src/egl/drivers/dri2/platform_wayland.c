@@ -586,7 +586,7 @@ dri2_wayland_authenticate(_EGLDisplay *disp, uint32_t id)
    struct dri2_egl_display *dri2_dpy = dri2_egl_display(disp);
    int ret = 0;
 
-   dri2_dpy->authenticated = false;
+   dri2_dpy->authenticated = 0;
 
    wl_drm_authenticate(dri2_dpy->wl_drm, id);
    force_roundtrip(dri2_dpy->wl_dpy);
@@ -595,7 +595,7 @@ dri2_wayland_authenticate(_EGLDisplay *disp, uint32_t id)
       ret = -1;
 
    /* reset authenticated */
-   dri2_dpy->authenticated = true;
+   dri2_dpy->authenticated = 1;
 
    return ret;
 }
@@ -647,7 +647,7 @@ drm_handle_authenticated(void *data, struct wl_drm *drm)
 {
    struct dri2_egl_display *dri2_dpy = data;
 
-   dri2_dpy->authenticated = true;
+   dri2_dpy->authenticated = 1;
 }
 
 static const struct wl_drm_listener drm_listener = {

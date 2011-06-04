@@ -404,10 +404,7 @@ indirect_create_context(struct glx_screen *psc,
 
    /*
     ** PERFORMANCE NOTE: A mode dependent fill image can speed things up.
-    ** Other code uses the fastImageUnpack bit, but it is never set
-    ** to GL_TRUE.
     */
-   gc->fastImageUnpack = GL_FALSE;
    gc->fillImage = __glFillImage;
    gc->pc = gc->buf;
    gc->bufEnd = gc->buf + bufSize;

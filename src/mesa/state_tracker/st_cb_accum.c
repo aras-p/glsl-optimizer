@@ -248,7 +248,7 @@ accum_return(struct gl_context *ctx, GLfloat value,
    else
       usage = PIPE_TRANSFER_WRITE;
 
-   color_trans = pipe_get_transfer(st_context(ctx)->pipe,
+   color_trans = pipe_get_transfer(pipe,
                                    color_strb->texture, 0, 0,
                                    usage,
                                    xpos, ypos,

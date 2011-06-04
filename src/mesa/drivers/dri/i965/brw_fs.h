@@ -359,12 +359,14 @@ class fs_visitor : public ir_visitor
 {
 public:
 
-   fs_visitor(struct brw_wm_compile *c, struct brw_shader *shader)
+   fs_visitor(struct brw_wm_compile *c, struct gl_shader_program *prog,
+	      struct brw_shader *shader)
    {
       this->c = c;
       this->p = &c->func;
       this->brw = p->brw;
-      this->fp = brw->fragment_program;
+      this->fp = prog->FragmentProgram;
+      this->prog = prog;
       this->intel = &brw->intel;
       this->ctx = &intel->ctx;
       this->mem_ctx = ralloc_context(NULL);
@@ -466,6 +468,8 @@ public:
       return emit(fs_inst(opcode, dst, src0, src1, src2));
    }
 
+   int type_size(const struct glsl_type *type);
+
    bool run();
    void setup_paramvalues_refs();
    void assign_curb_setup();
@@ -542,6 +546,7 @@ public:
    struct brw_wm_compile *c;
    struct brw_compile *p;
    struct brw_shader *shader;
+   struct gl_shader_program *prog;
    void *mem_ctx;
    exec_list instructions;
 
@@ -570,8 +575,12 @@ public:
    /** @} */
 
    bool failed;
+   char *fail_msg;
 
-   /* Result of last visit() method. */
+   /* On entry to a visit() method, this is the storage for the
+    * result.  On exit, the visit() called may have changed it, in
+    * which case the parent must use the new storage instead.
+    */
    fs_reg result;
 
    fs_reg pixel_x;
@@ -590,3 +599,4 @@ public:
 
 GLboolean brw_do_channel_expressions(struct exec_list *instructions);
 GLboolean brw_do_vector_splitting(struct exec_list *instructions);
+bool brw_fs_precompile(struct gl_context *ctx, struct gl_shader_program *prog);

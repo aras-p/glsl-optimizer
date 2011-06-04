@@ -231,8 +231,8 @@ struct brw_wm_prog_data {
 
    GLuint first_curbe_grf;
    GLuint first_curbe_grf_16;
-   GLuint total_grf;
-   GLuint total_grf_16;
+   GLuint reg_blocks;
+   GLuint reg_blocks_16;
    GLuint total_scratch;
 
    GLuint nr_params;       /**< number of float params/constants */
@@ -861,6 +861,17 @@ float convert_param(enum param_conversion conversion, float param)
    default:
       return param;
    }
+}
+
+/**
+ * Pre-gen6, the register file of the EUs was shared between threads,
+ * and each thread used some subset allocated on a 16-register block
+ * granularity.  The unit states wanted these block counts.
+ */
+static inline int
+brw_register_blocks(int reg_count)
+{
+   return ALIGN(reg_count, 16) / 16 - 1;
 }
 
 GLboolean brw_do_cubemap_normalize(struct exec_list *instructions);

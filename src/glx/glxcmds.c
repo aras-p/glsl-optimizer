@@ -200,19 +200,14 @@ glx_context_init(struct glx_context *gc,
 
 
 /**
- * Create a new context.  Exactly one of \c vis and \c fbconfig should be
- * non-NULL.
+ * Create a new context.
  *
- * \param use_glx_1_3  For FBConfigs, should GLX 1.3 protocol or
- *                     SGIX_fbconfig protocol be used?
  * \param renderType   For FBConfigs, what is the rendering type?
  */
 
 static GLXContext
-CreateContext(Display * dpy, int generic_id,
-              struct glx_config *config,
-              GLXContext shareList_user,
-              Bool allowDirect,
+CreateContext(Display *dpy, int generic_id, struct glx_config *config,
+              GLXContext shareList_user, Bool allowDirect,
 	      unsigned code, int renderType, int screen)
 {
    struct glx_context *gc;
@@ -649,13 +644,13 @@ glXCreateGLXPixmap(Display * dpy, XVisualInfo * vis, Pixmap pixmap)
       if (psc->driScreen == NULL)
          break;
       config = glx_config_find_visual(psc->visuals, vis->visualid);
-      pdraw = psc->driScreen->createDrawable(psc, pixmap, req->glxpixmap, config);
+      pdraw = psc->driScreen->createDrawable(psc, pixmap, xid, config);
       if (pdraw == NULL) {
          fprintf(stderr, "failed to create pixmap\n");
          break;
       }
 
-      if (__glxHashInsert(priv->drawHash, req->glxpixmap, pdraw)) {
+      if (__glxHashInsert(priv->drawHash, xid, pdraw)) {
          (*pdraw->destroyDrawable) (pdraw);
          return None;           /* FIXME: Check what we're supposed to do here... */
       }
@@ -1895,7 +1890,7 @@ glXGetFBConfigFromVisualSGIX(Display * dpy, XVisualInfo * vis)
    struct glx_display *priv;
    struct glx_screen *psc = NULL;
 
-   if ((GetGLXPrivScreenConfig(dpy, vis->screen, &priv, &psc) != Success)
+   if ((GetGLXPrivScreenConfig(dpy, vis->screen, &priv, &psc) == Success)
        && __glXExtensionBitIsEnabled(psc, SGIX_fbconfig_bit)
        && (psc->configs->fbconfigID != (int) GLX_DONT_CARE)) {
       return (GLXFBConfigSGIX) glx_config_find_visual(psc->configs,

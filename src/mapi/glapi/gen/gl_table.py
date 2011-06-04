@@ -152,6 +152,11 @@ class PrintRemapTable(gl_XML.gl_print_base):
 		print '#define driDispatchRemapTable_size %u' % (count)
 		print 'extern int driDispatchRemapTable[ driDispatchRemapTable_size ];'
 		print ''
+		print '#if FEATURE_remap_table'
+		print '#define driDispatchRemapTable remap_table'
+		print 'static int remap_table[driDispatchRemapTable_size];'
+		print '#endif'
+		print ''
 
 		for f, index in functions:
 			print '#define %s_remap_index %u' % (f.name, index)

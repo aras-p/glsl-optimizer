@@ -74,11 +74,8 @@ st_renderbuffer_alloc_storage(struct gl_context * ctx,
    enum pipe_format format;
    struct pipe_surface surf_tmpl;
 
-   if (strb->format != PIPE_FORMAT_NONE)
-      format = strb->format;
-   else
-      format = st_choose_renderbuffer_format(screen, internalFormat,
-                                             rb->NumSamples);
+   format = st_choose_renderbuffer_format(screen, internalFormat,
+                                          rb->NumSamples);
 
    if (format == PIPE_FORMAT_NONE) {
       return FALSE;
@@ -90,6 +87,7 @@ st_renderbuffer_alloc_storage(struct gl_context * ctx,
    strb->Base.Format = st_pipe_format_to_mesa_format(format);
    strb->Base._BaseFormat = _mesa_base_fbo_format(ctx, internalFormat);
    strb->Base.DataType = st_format_datatype(format);
+   strb->format = format;
 
    strb->defined = GL_FALSE;  /* undefined contents now */
 

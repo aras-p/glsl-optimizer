@@ -795,6 +795,11 @@ decompress_with_blit(struct gl_context * ctx, GLenum target, GLint level,
       return;
    }
 
+   /* Disable conditional rendering. */
+   if (st->render_condition) {
+      pipe->render_condition(pipe, NULL, 0);
+   }
+
    /* blit/render/decompress */
    util_blit_pixels_tex(st->blit,
                         src_view,      /* pipe_resource (src) */
@@ -806,8 +811,14 @@ decompress_with_blit(struct gl_context * ctx, GLenum target, GLint level,
                         0.0,              /* z */
                         PIPE_TEX_MIPFILTER_NEAREST);
 
+   /* Restore conditional rendering state. */
+   if (st->render_condition) {
+      pipe->render_condition(pipe, st->render_condition,
+                             st->condition_mode);
+   }
+
    /* map the dst_surface so we can read from it */
-   tex_xfer = pipe_get_transfer(st_context(ctx)->pipe,
+   tex_xfer = pipe_get_transfer(pipe,
                                 dst_texture, 0, 0,
                                 PIPE_TRANSFER_READ,
                                 0, 0, width, height);
@@ -1228,7 +1239,7 @@ fallback_copy_texsubimage(struct gl_context *ctx, GLenum target, GLint level,
       srcY = strb->Base.Height - srcY - height;
    }
 
-   src_trans = pipe_get_transfer(st_context(ctx)->pipe,
+   src_trans = pipe_get_transfer(pipe,
                                  strb->texture,
                                  0, 0,
                                  PIPE_TRANSFER_READ,
@@ -1556,6 +1567,11 @@ st_copy_texsubimage(struct gl_context *ctx,
             srcY1 = srcY0 + height;
          }
 
+         /* Disable conditional rendering. */
+         if (st->render_condition) {
+            pipe->render_condition(pipe, NULL, 0);
+         }
+
          util_blit_pixels_writemask(st->blit,
                                     strb->texture,
                                     strb->surface->u.tex.level,
@@ -1567,6 +1583,13 @@ st_copy_texsubimage(struct gl_context *ctx,
                                     destX + width, destY + height,
                                     0.0, PIPE_TEX_MIPFILTER_NEAREST,
                                     format_writemask);
+
+         /* Restore conditional rendering state. */
+         if (st->render_condition) {
+            pipe->render_condition(pipe, st->render_condition,
+                                   st->condition_mode);
+         }
+
          use_fallback = GL_FALSE;
       }
 

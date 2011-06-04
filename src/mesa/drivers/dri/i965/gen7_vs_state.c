@@ -33,7 +33,6 @@ static void
 upload_vs_state(struct brw_context *brw)
 {
    struct intel_context *intel = &brw->intel;
-   struct gl_context *ctx = &intel->ctx;
 
    BEGIN_BATCH(2);
    OUT_BATCH(_3DSTATE_BINDING_TABLE_POINTERS_VS << 16 | (2 - 2));

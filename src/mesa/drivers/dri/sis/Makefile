@@ -5,6 +5,8 @@ include $(TOP)/configs/current
 
 LIBNAME = sis_dri.so
 
+include ../Makefile.defines
+
 DRIVER_SOURCES = \
 	sis6326_state.c \
 	sis6326_clear.c \
@@ -28,5 +30,5 @@ C_SOURCES = \
 
 ASM_SOURCES = 
 
-include ../Makefile.template
+include ../Makefile.targets
 

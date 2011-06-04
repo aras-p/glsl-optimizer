@@ -194,10 +194,18 @@ static void calc_wm_input_sizes( struct brw_context *brw )
    /* BRW_NEW_VERTEX_PROGRAM */
    const struct brw_vertex_program *vp =
       brw_vertex_program_const(brw->vertex_program);
+   /* BRW_NEW_FRAGMENT_PROGRAM */
+   struct gl_shader_program *prog = ctx->Shader.CurrentFragmentProgram;
    /* BRW_NEW_INPUT_DIMENSIONS */
    struct tracker t;
    GLuint insn;
    GLuint i;
+
+   /* If we're going to go through brw_fs.cpp, we don't end up using
+    * brw->wm.input_size_masks.
+    */
+   if (prog && prog->_LinkedShaders[MESA_SHADER_FRAGMENT])
+      return;
 
    memset(&t, 0, sizeof(t));
 
@@ -238,7 +246,9 @@ static void calc_wm_input_sizes( struct brw_context *brw )
 const struct brw_tracked_state brw_wm_input_sizes = {
    .dirty = {
       .mesa  = _NEW_LIGHT,
-      .brw   = BRW_NEW_VERTEX_PROGRAM | BRW_NEW_INPUT_DIMENSIONS,
+      .brw   = (BRW_NEW_FRAGMENT_PROGRAM |
+		BRW_NEW_VERTEX_PROGRAM |
+		BRW_NEW_INPUT_DIMENSIONS),
       .cache = 0
    },
    .prepare = calc_wm_input_sizes

@@ -337,6 +337,8 @@ EGL_FILES = \
 	$(DIRECTORY)/src/egl/*/*.[ch]					\
 	$(DIRECTORY)/src/egl/*/*/Makefile				\
 	$(DIRECTORY)/src/egl/*/*/*.[ch]					\
+	$(DIRECTORY)/src/egl/wayland/wayland-drm/protocol/*.xml		\
+	$(DIRECTORY)/src/egl/wayland/wayland-egl/*.pc.in		\
 	$(DIRECTORY)/src/egl/main/SConscript				\
 	$(DIRECTORY)/src/egl/main/*.pc.in				\
 	$(DIRECTORY)/src/egl/main/*.def

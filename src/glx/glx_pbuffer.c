@@ -77,9 +77,6 @@ warn_GLX_1_3(Display * dpy, const char *function_name)
  * \note
  * This function dynamically determines whether to use the SGIX_pbuffer
  * version of the protocol or the GLX 1.3 version of the protocol.
- *
- * \todo
- * This function needs to be modified to work with direct-rendering drivers.
  */
 static void
 ChangeDrawableAttribute(Display * dpy, GLXDrawable drawable,
@@ -265,9 +262,6 @@ DestroyDRIDrawable(Display *dpy, GLXDrawable drawable, int destroy_xdrawable)
  * The number of attributes returned is likely to be small, probably less than
  * 10.  Given that, this routine should try to use an array on the stack to
  * capture the reply rather than always calling Xmalloc.
- *
- * \todo
- * This function needs to be modified to work with direct-rendering drivers.
  */
 static int
 GetDrawableAttribute(Display * dpy, GLXDrawable drawable,
@@ -372,9 +366,6 @@ GetDrawableAttribute(Display * dpy, GLXDrawable drawable,
 
 /**
  * Create a non-pbuffer GLX drawable.
- *
- * \todo
- * This function needs to be modified to work with direct-rendering drivers.
  */
 static GLXDrawable
 CreateDrawable(Display *dpy, struct glx_config *config,
@@ -384,6 +375,7 @@ CreateDrawable(Display *dpy, struct glx_config *config,
    CARD32 *data;
    unsigned int i;
    CARD8 opcode;
+   GLXDrawable xid;
 
    i = 0;
    if (attrib_list) {
@@ -404,7 +396,7 @@ CreateDrawable(Display *dpy, struct glx_config *config,
    req->screen = config->screen;
    req->fbconfig = config->fbconfigID;
    req->window = drawable;
-   req->glxwindow = XAllocID(dpy);
+   req->glxwindow = xid = XAllocID(dpy);
    req->numAttribs = i;
 
    if (attrib_list)
@@ -413,9 +405,9 @@ CreateDrawable(Display *dpy, struct glx_config *config,
    UnlockDisplay(dpy);
    SyncHandle();
 
-   CreateDRIDrawable(dpy, config, drawable, req->glxwindow, attrib_list, i);
+   CreateDRIDrawable(dpy, config, drawable, xid, attrib_list, i);
 
-   return req->glxwindow;
+   return xid;
 }
 
 
@@ -462,9 +454,6 @@ DestroyDrawable(Display * dpy, GLXDrawable drawable, CARD32 glxCode)
  * \note
  * This function dynamically determines whether to use the SGIX_pbuffer
  * version of the protocol or the GLX 1.3 version of the protocol.
- *
- * \todo
- * This function needs to be modified to work with direct-rendering drivers.
  */
 static GLXDrawable
 CreatePbuffer(Display * dpy, struct glx_config *config,

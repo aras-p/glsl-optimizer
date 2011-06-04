@@ -744,8 +744,8 @@ emit_add_a16(struct nv_pc *pc, struct nv_instruction *i)
 
    set_pred(pc, i);
 
-   if (i->src[1])
-      set_a16_bits(pc, SREG(i->src[1])->id + 1);
+   if (s && i->src[0])
+      set_a16_bits(pc, SREG(i->src[0])->id);
 }
 
 static void

@@ -4,6 +4,7 @@ env = env.Clone()
 env.Append(CPPPATH = '#/include')
 env.Append(CPPPATH = '#/src/mesa')
 env.Append(CPPPATH = '#/src/glsl')
+env.Append(CPPPATH = '#/src/mapi')
 
 # temporary fix
 env['CFLAGS'] = str(env['CFLAGS']).replace('-Werror=declaration-after-statement', '')
@@ -43,6 +44,8 @@ r300compiler = env.ConvenienceLibrary(
         'r3xx_vertprog.c',
         'r3xx_vertprog_dump.c',
         'memory_pool.c',
+	'#/src/glsl/ralloc.c',
+	'#/src/mesa/program/register_allocate.c'
     ])
 
 Return('r300compiler')

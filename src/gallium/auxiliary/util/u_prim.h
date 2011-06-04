@@ -78,54 +78,31 @@ static INLINE boolean u_validate_pipe_prim( unsigned pipe_prim, unsigned nr )
 static INLINE boolean u_trim_pipe_prim( unsigned pipe_prim, unsigned *nr )
 {
    boolean ok = TRUE;
+   const static int values[][2] = {
+      { 1, 0 }, /* PIPE_PRIM_POINTS */
+      { 2, 2 }, /* PIPE_PRIM_LINES */
+      { 2, 0 }, /* PIPE_PRIM_LINE_LOOP */
+      { 2, 0 }, /* PIPE_PRIM_LINE_STRIP */
+      { 3, 3 }, /* PIPE_PRIM_TRIANGLES */
+      { 3, 0 }, /* PIPE_PRIM_TRIANGLE_STRIP */
+      { 3, 0 }, /* PIPE_PRIM_TRIANGLE_FAN */
+      { 4, 4 }, /* PIPE_PRIM_TRIANGLE_QUADS */
+      { 4, 2 }, /* PIPE_PRIM_TRIANGLE_QUAD_STRIP */
+      { 3, 0 }, /* PIPE_PRIM_TRIANGLE_POLYGON */
+      { 4, 4 }, /* PIPE_PRIM_LINES_ADJACENCY */
+      { 4, 0 }, /* PIPE_PRIM_LINE_STRIP_ADJACENCY */
+      { 6, 5 }, /* PIPE_PRIM_TRIANGLES_ADJACENCY */
+      { 4, 0 }, /* PIPE_PRIM_TRIANGLE_STRIP_ADJACENCY */
+   };
 
-   switch (pipe_prim) {
-   case PIPE_PRIM_POINTS:
-      ok = (*nr >= 1);
-      break;
-   case PIPE_PRIM_LINES:
-      ok = (*nr >= 2);
-      *nr -= (*nr % 2);
-      break;
-   case PIPE_PRIM_LINE_STRIP:
-   case PIPE_PRIM_LINE_LOOP:
-      ok = (*nr >= 2);
-      break;
-   case PIPE_PRIM_TRIANGLES:
-      ok = (*nr >= 3);
-      *nr -= (*nr % 3);
-      break;
-   case PIPE_PRIM_TRIANGLE_STRIP:
-   case PIPE_PRIM_TRIANGLE_FAN:
-   case PIPE_PRIM_POLYGON:
-      ok = (*nr >= 3);
-      break;
-   case PIPE_PRIM_QUADS:
-      ok = (*nr >= 4);
-      *nr -= (*nr % 4);
-      break;
-   case PIPE_PRIM_QUAD_STRIP:
-      ok = (*nr >= 4);
-      *nr -= (*nr % 2);
-      break;
-   case PIPE_PRIM_LINES_ADJACENCY:
-      ok = (*nr >= 4);
-      *nr -= (*nr % 4);
-      break;
-   case PIPE_PRIM_LINE_STRIP_ADJACENCY:
-      ok = (*nr >= 4);
-      break;
-   case PIPE_PRIM_TRIANGLES_ADJACENCY:
-      ok = (*nr >= 6);
-      *nr -= (*nr % 5);
-      break;
-   case PIPE_PRIM_TRIANGLE_STRIP_ADJACENCY:
-      ok = (*nr >= 4);
-      break;
-   default:
-      ok = 0;
-      break;
+   if (unlikely(pipe_prim >= PIPE_PRIM_MAX)) {
+       *nr = 0;
+       return FALSE;
    }
+
+   ok = (*nr >= values[pipe_prim][0]);
+   if (values[pipe_prim][1])
+       *nr -= (*nr % values[pipe_prim][1]);
 
    if (!ok)
       *nr = 0;

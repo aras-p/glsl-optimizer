@@ -59,16 +59,16 @@
 #define AA_ALWAYS    2
 
 struct brw_wm_prog_key {
+   uint8_t iz_lookup;
    GLuint stats_wm:1;
    GLuint flat_shade:1;
-   GLuint linear_color:1;  /**< linear interpolation vs perspective interp */
    GLuint nr_color_regions:5;
    GLuint render_to_fbo:1;
    GLuint alpha_test:1;
    GLuint clamp_fragment_color:1;
+   GLuint line_aa:2;
 
    GLbitfield proj_attrib_mask; /**< one bit per fragment program attribute */
-   GLuint shadowtex_mask:16;
    GLuint yuvtex_mask:16;
    GLuint yuvtex_swap_mask:16;	/* UV swaped */
    uint16_t gl_clamp_mask[3];
@@ -76,8 +76,6 @@ struct brw_wm_prog_key {
    GLushort tex_swizzles[BRW_MAX_TEX_UNIT];
    GLushort drawable_height;
    GLbitfield64 vp_outputs_written;
-   GLuint iz_lookup;
-   GLuint line_aa;
    GLuint program_string_id:32;
 };
 
@@ -314,7 +312,8 @@ void brw_wm_print_program( struct brw_wm_compile *c,
 void brw_wm_lookup_iz(struct intel_context *intel,
 		      struct brw_wm_compile *c);
 
-bool brw_wm_fs_emit(struct brw_context *brw, struct brw_wm_compile *c);
+bool brw_wm_fs_emit(struct brw_context *brw, struct brw_wm_compile *c,
+		    struct gl_shader_program *prog);
 
 /* brw_wm_emit.c */
 void emit_alu1(struct brw_compile *p,
@@ -476,5 +475,9 @@ bool brw_color_buffer_write_enabled(struct brw_context *brw);
 bool brw_render_target_supported(gl_format format);
 void brw_wm_payload_setup(struct brw_context *brw,
 			  struct brw_wm_compile *c);
+bool do_wm_prog(struct brw_context *brw,
+		struct gl_shader_program *prog,
+		struct brw_fragment_program *fp,
+		struct brw_wm_prog_key *key);
 
 #endif

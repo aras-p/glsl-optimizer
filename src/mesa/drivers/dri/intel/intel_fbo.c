@@ -79,6 +79,9 @@ intel_delete_renderbuffer(struct gl_renderbuffer *rb)
    if (intel && irb->region) {
       intel_region_release(&irb->region);
    }
+   if (intel && irb->hiz_region) {
+      intel_region_release(&irb->hiz_region);
+   }
 
    free(irb);
 }
@@ -129,7 +132,12 @@ intel_alloc_renderbuffer_storage(struct gl_context * ctx, struct gl_renderbuffer
    case GL_STENCIL_INDEX8_EXT:
    case GL_STENCIL_INDEX16_EXT:
       /* These aren't actual texture formats, so force them here. */
-      rb->Format = MESA_FORMAT_S8_Z24;
+      if (intel->has_separate_stencil) {
+	 rb->Format = MESA_FORMAT_S8;
+      } else {
+	 assert(!intel->must_use_separate_stencil);
+	 rb->Format = MESA_FORMAT_S8_Z24;
+      }
       break;
    }
 
@@ -143,6 +151,9 @@ intel_alloc_renderbuffer_storage(struct gl_context * ctx, struct gl_renderbuffer
    if (irb->region) {
       intel_region_release(&irb->region);
    }
+   if (irb->hiz_region) {
+      intel_region_release(&irb->hiz_region);
+   }
 
    /* allocate new memory region/renderbuffer */
 
@@ -154,18 +165,53 @@ intel_alloc_renderbuffer_storage(struct gl_context * ctx, struct gl_renderbuffer
       GLenum base_format = _mesa_get_format_base_format(rb->Format);
 
       if (intel->gen >= 4 && (base_format == GL_DEPTH_COMPONENT ||
+			      base_format == GL_STENCIL_INDEX ||
 			      base_format == GL_DEPTH_STENCIL))
 	 tiling = I915_TILING_Y;
       else
 	 tiling = I915_TILING_X;
    }
 
-   irb->region = intel_region_alloc(intel->intelScreen, tiling, cpp,
-				    width, height, GL_TRUE);
+   if (irb->Base.Format == MESA_FORMAT_S8) {
+      /*
+       * The stencil buffer has quirky pitch requirements.  From Vol 2a,
+       * 11.5.6.2.1 3DSTATE_STENCIL_BUFFER, field "Surface Pitch":
+       *    The pitch must be set to 2x the value computed based on width, as
+       *    the stencil buffer is stored with two rows interleaved.
+       * To accomplish this, we resort to the nasty hack of doubling the drm
+       * region's cpp and halving its height.
+       *
+       * If we neglect to double the pitch, then drm_intel_gem_bo_map_gtt()
+       * maps the memory incorrectly.
+       */
+      irb->region = intel_region_alloc(intel->intelScreen,
+				       I915_TILING_Y,
+				       cpp * 2,
+				       width,
+				       height / 2,
+				       GL_TRUE);
+   } else {
+      irb->region = intel_region_alloc(intel->intelScreen, tiling, cpp,
+				       width, height, GL_TRUE);
+   }
+
    if (!irb->region)
       return GL_FALSE;       /* out of memory? */
 
    ASSERT(irb->region->buffer);
+
+   if (intel->vtbl.is_hiz_depth_format(intel, rb->Format)) {
+      irb->hiz_region = intel_region_alloc(intel->intelScreen,
+                                           I915_TILING_Y,
+                                           irb->region->cpp,
+                                           irb->region->width,
+                                           irb->region->height,
+                                           GL_TRUE);
+      if (!irb->hiz_region) {
+         intel_region_release(&irb->region);
+         return GL_FALSE;
+      }
+   }
 
    rb->Width = width;
    rb->Height = height;
@@ -374,6 +420,9 @@ static GLboolean
 intel_update_wrapper(struct gl_context *ctx, struct intel_renderbuffer *irb, 
 		     struct gl_texture_image *texImage)
 {
+   struct intel_context *intel = intel_context(ctx);
+   struct intel_texture_image *intel_image = intel_texture_image(texImage);
+
    if (!intel_span_supports_format(texImage->TexFormat)) {
       DBG("Render to texture BAD FORMAT %s\n",
 	  _mesa_get_format_name(texImage->TexFormat));
@@ -391,6 +440,32 @@ intel_update_wrapper(struct gl_context *ctx, struct intel_renderbuffer *irb,
 
    irb->Base.Delete = intel_delete_renderbuffer;
    irb->Base.AllocStorage = intel_nop_alloc_storage;
+
+   /* Point the renderbuffer's region to the texture's region. */
+   if (irb->region != intel_image->mt->region) {
+      intel_region_release(&irb->region);
+      intel_region_reference(&irb->region, intel_image->mt->region);
+   }
+
+   /* Allocate the texture's hiz region if necessary. */
+   if (intel->vtbl.is_hiz_depth_format(intel, texImage->TexFormat)
+       && !intel_image->mt->hiz_region) {
+      intel_image->mt->hiz_region =
+         intel_region_alloc(intel->intelScreen,
+                            I915_TILING_Y,
+                            _mesa_get_format_bytes(texImage->TexFormat),
+                            texImage->Width,
+                            texImage->Height,
+                            GL_TRUE);
+      if (!intel_image->mt->hiz_region)
+         return GL_FALSE;
+   }
+
+   /* Point the renderbuffer's hiz region to the texture's hiz region. */
+   if (irb->hiz_region != intel_image->mt->hiz_region) {
+      intel_region_release(&irb->hiz_region);
+      intel_region_reference(&irb->hiz_region, intel_image->mt->hiz_region);
+   }
 
    return GL_TRUE;
 }
@@ -497,13 +572,6 @@ intel_render_texture(struct gl_context * ctx,
        att->Texture->Name, newImage->Width, newImage->Height,
        irb->Base.RefCount);
 
-   /* point the renderbufer's region to the texture image region */
-   if (irb->region != intel_image->mt->region) {
-      if (irb->region)
-	 intel_region_release(&irb->region);
-      intel_region_reference(&irb->region, intel_image->mt->region);
-   }
-
    intel_set_draw_offset_for_image(intel_image, att->Zoffset);
    intel_image->used_as_render_target = GL_TRUE;
 
@@ -597,21 +665,33 @@ intel_validate_framebuffer(struct gl_context *ctx, struct gl_framebuffer *fb)
       intel_get_renderbuffer(fb, BUFFER_STENCIL);
    int i;
 
-   if (depthRb && stencilRb && stencilRb != depthRb) {
-      if (fb->Attachment[BUFFER_DEPTH].Type == GL_TEXTURE &&
-	  fb->Attachment[BUFFER_STENCIL].Type == GL_TEXTURE &&
-	  (fb->Attachment[BUFFER_DEPTH].Texture->Name ==
-	   fb->Attachment[BUFFER_STENCIL].Texture->Name)) {
-	 /* OK */
-      } else {
-	 /* we only support combined depth/stencil buffers, not separate
-	  * stencil buffers.
-	  */
-	 DBG("Only supports combined depth/stencil (found %s, %s)\n",
-	     depthRb ? _mesa_get_format_name(depthRb->Base.Format): "NULL",
-	     stencilRb ? _mesa_get_format_name(stencilRb->Base.Format): "NULL");
-	 fb->_Status = GL_FRAMEBUFFER_UNSUPPORTED_EXT;
-      }
+   /*
+    * The depth and stencil renderbuffers are the same renderbuffer or wrap
+    * the same texture.
+    */
+   bool depth_stencil_are_same;
+   if (depthRb && stencilRb && depthRb == stencilRb)
+      depth_stencil_are_same = true;
+   else if (depthRb && stencilRb && depthRb != stencilRb
+	    && (fb->Attachment[BUFFER_DEPTH].Type == GL_TEXTURE)
+	    && (fb->Attachment[BUFFER_STENCIL].Type == GL_TEXTURE)
+	    && (fb->Attachment[BUFFER_DEPTH].Texture->Name
+		== fb->Attachment[BUFFER_STENCIL].Texture->Name))
+      depth_stencil_are_same = true;
+   else
+      depth_stencil_are_same = false;
+
+   bool fb_has_combined_depth_stencil_format =
+     (depthRb && depthRb->Base.Format == MESA_FORMAT_S8_Z24) ||
+     (stencilRb && stencilRb->Base.Format == MESA_FORMAT_S8_Z24);
+
+   bool fb_has_hiz = intel_framebuffer_has_hiz(fb);
+
+   if ((intel->must_use_separate_stencil || fb_has_hiz)
+	 && (depth_stencil_are_same || fb_has_combined_depth_stencil_format)) {
+      fb->_Status = GL_FRAMEBUFFER_UNSUPPORTED_EXT;
+   } else if (!intel->has_separate_stencil && depthRb && stencilRb && !depth_stencil_are_same) {
+      fb->_Status = GL_FRAMEBUFFER_UNSUPPORTED_EXT;
    }
 
    for (i = 0; i < Elements(fb->Attachment); i++) {

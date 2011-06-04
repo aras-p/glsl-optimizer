@@ -65,6 +65,7 @@ enum r600_pipe_state_id {
 	R600_PIPE_STATE_RESOURCE,
 	R600_PIPE_STATE_POLYGON_OFFSET,
 	R600_PIPE_STATE_FETCH_SHADER,
+	R600_PIPE_STATE_SPI,
 	R600_PIPE_NSTATES
 };
 
@@ -188,6 +189,8 @@ struct r600_pipe_context {
 	struct r600_pipe_state		ps_const_buffer;
 	struct r600_pipe_state		ps_const_buffer_resource[R600_MAX_CONST_BUFFERS];
 	struct r600_pipe_rasterizer	*rasterizer;
+	struct r600_pipe_state          vgt;
+	struct r600_pipe_state          spi;
 	/* shader information */
 	unsigned			sprite_coord_enable;
 	bool				flatshade;
@@ -217,11 +220,14 @@ void evergreen_init_state_functions(struct r600_pipe_context *rctx);
 void evergreen_init_config(struct r600_pipe_context *rctx);
 void evergreen_pipe_shader_ps(struct pipe_context *ctx, struct r600_pipe_shader *shader);
 void evergreen_pipe_shader_vs(struct pipe_context *ctx, struct r600_pipe_shader *shader);
-void evergreen_fetch_shader(struct r600_vertex_element *ve);
+void evergreen_fetch_shader(struct pipe_context *ctx, struct r600_vertex_element *ve);
 void *evergreen_create_db_flush_dsa(struct r600_pipe_context *rctx);
 void evergreen_polygon_offset_update(struct r600_pipe_context *rctx);
-void evergreen_pipe_set_buffer_resource(struct r600_pipe_context *rctx,
-					struct r600_pipe_state *rstate,
+void evergreen_pipe_init_buffer_resource(struct r600_pipe_context *rctx,
+				    struct r600_pipe_state *rstate,
+				    struct r600_resource *rbuffer,
+				    unsigned offset, unsigned stride);
+void evergreen_pipe_mod_buffer_resource(struct r600_pipe_state *rstate,
 					struct r600_resource *rbuffer,
 					unsigned offset, unsigned stride);
 
@@ -258,11 +264,14 @@ void r600_init_state_functions(struct r600_pipe_context *rctx);
 void r600_init_config(struct r600_pipe_context *rctx);
 void r600_pipe_shader_ps(struct pipe_context *ctx, struct r600_pipe_shader *shader);
 void r600_pipe_shader_vs(struct pipe_context *ctx, struct r600_pipe_shader *shader);
-void r600_fetch_shader(struct r600_vertex_element *ve);
+void r600_fetch_shader(struct pipe_context *ctx, struct r600_vertex_element *ve);
 void *r600_create_db_flush_dsa(struct r600_pipe_context *rctx);
 void r600_polygon_offset_update(struct r600_pipe_context *rctx);
-void r600_pipe_set_buffer_resource(struct r600_pipe_context *rctx,
-				   struct r600_pipe_state *rstate,
+void r600_pipe_init_buffer_resource(struct r600_pipe_context *rctx,
+				    struct r600_pipe_state *rstate,
+				    struct r600_resource *rbuffer,
+				    unsigned offset, unsigned stride);
+void r600_pipe_mod_buffer_resource(struct r600_pipe_state *rstate,
 				   struct r600_resource *rbuffer,
 				   unsigned offset, unsigned stride);
 

@@ -568,9 +568,6 @@ _swrast_BlitFramebuffer(struct gl_context *ctx,
    };
    GLint i;
 
-   if (!_mesa_check_conditional_render(ctx))
-      return; /* don't clear */
-
    if (!ctx->DrawBuffer->_NumColorDrawBuffers)
       return;
 

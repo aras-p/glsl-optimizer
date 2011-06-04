@@ -3,9 +3,9 @@
 TOP = ../../../../..
 include $(TOP)/configs/current
 
-CFLAGS += $(RADEON_CFLAGS)
-
 LIBNAME = r300_dri.so
+
+include ../Makefile.defines
 
 ifeq ($(RADEON_LDFLAGS),)
 CS_SOURCES = radeon_cs_space_drm.c radeon_bo.c radeon_cs.c
@@ -13,7 +13,7 @@ endif
 
 COMMON_SOURCES = \
 	../../common/driverfuncs.c \
-	../common/mm.c \
+	../common/drirenderbuffer.c \
 	../common/utils.c \
 	../common/texmem.c \
 	../common/vblank.c \
@@ -64,6 +64,7 @@ C_SOURCES = $(COMMON_SOURCES) $(DRIVER_SOURCES)
 DRIVER_DEFINES = -DRADEON_R300
 #	-DRADEON_BO_TRACK \
 
+INCLUDES += $(RADEON_CFLAGS)
 DRI_LIB_DEPS += $(RADEON_LDFLAGS)
 
 SUBDIRS = compiler
@@ -73,5 +74,5 @@ EXTRA_MODULES = compiler/libr300compiler.a
 
 ##### TARGETS #####
 
-include ../Makefile.template
+include ../Makefile.targets
 

@@ -91,6 +91,7 @@ struct sm4_parser
 			break;
 		case SM4_OPERAND_COMPNUM_1:
 			op.comps = 1;
+			op.swizzle[1] = op.swizzle[2] = op.swizzle[3] = 0;
 			break;
 		case SM4_OPERAND_COMPNUM_4:
 			op.comps = 4;
@@ -143,7 +144,7 @@ struct sm4_parser
 				repr = optok.index2_repr;
 			else
 				fail("Unhandled operand index representation");
-			op.indices[0].disp = 0;
+			op.indices[i].disp = 0;
 			// TODO: is disp supposed to be signed here??
 			switch(repr)
 			{

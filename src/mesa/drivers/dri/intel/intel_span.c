@@ -70,9 +70,6 @@ intel_set_span_functions(struct intel_context *intel,
 
 #define HW_UNLOCK()
 
-/* Convenience macros to avoid typing the address argument over and over */
-#define NO_TILE(_X, _Y) (((_Y) * irb->region->pitch + (_X)) * irb->region->cpp)
-
 /* r5g6b5 color span and pixel functions */
 #define SPANTMP_PIXEL_FMT GL_RGB
 #define SPANTMP_PIXEL_TYPE GL_UNSIGNED_SHORT_5_6_5

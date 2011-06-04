@@ -450,6 +450,18 @@
 #define PCI_CHIP_PALM_9806              0x9806
 #define PCI_CHIP_PALM_9807              0x9807
 
+#define PCI_CHIP_SUMO_9640              0x9640
+#define PCI_CHIP_SUMO_9641              0x9641
+#define PCI_CHIP_SUMO2_9642             0x9642
+#define PCI_CHIP_SUMO2_9643             0x9643
+#define PCI_CHIP_SUMO2_9644             0x9644
+#define PCI_CHIP_SUMO2_9645             0x9645
+#define PCI_CHIP_SUMO_9647              0x9647
+#define PCI_CHIP_SUMO_9648              0x9648
+#define PCI_CHIP_SUMO_964A              0x964a
+#define PCI_CHIP_SUMO_964E              0x964e
+#define PCI_CHIP_SUMO_964F              0x964f
+
 #define PCI_CHIP_BARTS_6720             0x6720
 #define PCI_CHIP_BARTS_6721             0x6721
 #define PCI_CHIP_BARTS_6722             0x6722
@@ -534,6 +546,8 @@ enum {
    CHIP_FAMILY_CYPRESS,
    CHIP_FAMILY_HEMLOCK,
    CHIP_FAMILY_PALM,
+   CHIP_FAMILY_SUMO,
+   CHIP_FAMILY_SUMO2,
    CHIP_FAMILY_BARTS,
    CHIP_FAMILY_TURKS,
    CHIP_FAMILY_CAICOS,

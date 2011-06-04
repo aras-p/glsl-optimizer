@@ -207,6 +207,7 @@ _mesa_layout_parameters(struct asm_parser_state *state)
       }
    }
 
+   layout->StateFlags = state->prog->Parameters->StateFlags;
    _mesa_free_parameter_list(state->prog->Parameters);
    state->prog->Parameters = layout;
 

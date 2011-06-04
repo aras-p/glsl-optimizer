@@ -181,9 +181,6 @@ static void upload_sf_prog(struct brw_context *brw)
    key.do_flat_shading = (ctx->Light.ShadeModel == GL_FLAT);
    key.do_twoside_color = (ctx->Light.Enabled && ctx->Light.Model.TwoSide);
 
-   /* _NEW_HINT */
-   key.linear_color = (ctx->Hint.PerspectiveCorrection == GL_FASTEST);
-
    /* _NEW_POLYGON */
    if (key.do_twoside_color) {
       /* If we're rendering to a FBO, we have to invert the polygon

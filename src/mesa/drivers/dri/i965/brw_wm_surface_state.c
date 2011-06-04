@@ -200,22 +200,16 @@ translate_tex_format(gl_format mesa_format,
    }
 }
 
-static void
-brw_set_surface_tiling(struct brw_surface_state *surf, uint32_t tiling)
+static uint32_t
+brw_get_surface_tiling_bits(uint32_t tiling)
 {
    switch (tiling) {
-   case I915_TILING_NONE:
-      surf->ss3.tiled_surface = 0;
-      surf->ss3.tile_walk = 0;
-      break;
    case I915_TILING_X:
-      surf->ss3.tiled_surface = 1;
-      surf->ss3.tile_walk = BRW_TILEWALK_XMAJOR;
-      break;
+      return BRW_SURFACE_TILED;
    case I915_TILING_Y:
-      surf->ss3.tiled_surface = 1;
-      surf->ss3.tile_walk = BRW_TILEWALK_YMAJOR;
-      break;
+      return BRW_SURFACE_TILED | BRW_SURFACE_TILED_Y;
+   default:
+      return 0;
    }
 }
 
@@ -228,46 +222,36 @@ brw_update_texture_surface( struct gl_context *ctx, GLuint unit )
    struct gl_texture_image *firstImage = tObj->Image[0][tObj->BaseLevel];
    struct gl_sampler_object *sampler = _mesa_get_samplerobj(ctx, unit);
    const GLuint surf_index = SURF_INDEX_TEXTURE(unit);
-   struct brw_surface_state *surf;
+   uint32_t *surf;
 
-   surf = brw_state_batch(brw, sizeof(*surf), 32,
-			 &brw->wm.surf_offset[surf_index]);
-   memset(surf, 0, sizeof(*surf));
+   surf = brw_state_batch(brw, 6 * 4, 32, &brw->wm.surf_offset[surf_index]);
 
-   surf->ss0.mipmap_layout_mode = BRW_SURFACE_MIPMAPLAYOUT_BELOW;
-   surf->ss0.surface_type = translate_tex_target(tObj->Target);
-   surf->ss0.surface_format = translate_tex_format(firstImage->TexFormat,
-                                                   firstImage->InternalFormat,
-                                                   sampler->DepthMode,
-                                                   sampler->sRGBDecode);
+   surf[0] = (translate_tex_target(tObj->Target) << BRW_SURFACE_TYPE_SHIFT |
+	      BRW_SURFACE_MIPMAPLAYOUT_BELOW << BRW_SURFACE_MIPLAYOUT_SHIFT |
+	      BRW_SURFACE_CUBEFACE_ENABLES |
+	      (translate_tex_format(firstImage->TexFormat,
+				    firstImage->InternalFormat,
+				    sampler->DepthMode,
+				    sampler->sRGBDecode) <<
+	       BRW_SURFACE_FORMAT_SHIFT));
 
-   /* This is ok for all textures with channel width 8bit or less:
-    */
-/*    surf->ss0.data_return_format = BRW_SURFACERETURNFORMAT_S1; */
-   surf->ss1.base_addr = intelObj->mt->region->buffer->offset; /* reloc */
+   surf[1] = intelObj->mt->region->buffer->offset; /* reloc */
 
-   surf->ss2.mip_count = intelObj->_MaxLevel - tObj->BaseLevel;
-   surf->ss2.width = firstImage->Width - 1;
-   surf->ss2.height = firstImage->Height - 1;
-   brw_set_surface_tiling(surf, intelObj->mt->region->tiling);
-   surf->ss3.pitch = (intelObj->mt->region->pitch * intelObj->mt->cpp) - 1;
-   surf->ss3.depth = firstImage->Depth - 1;
+   surf[2] = ((intelObj->_MaxLevel - tObj->BaseLevel) << BRW_SURFACE_LOD_SHIFT |
+	      (firstImage->Width - 1) << BRW_SURFACE_WIDTH_SHIFT |
+	      (firstImage->Height - 1) << BRW_SURFACE_HEIGHT_SHIFT);
 
-   surf->ss4.min_lod = 0;
- 
-   if (tObj->Target == GL_TEXTURE_CUBE_MAP) {
-      surf->ss0.cube_pos_x = 1;
-      surf->ss0.cube_pos_y = 1;
-      surf->ss0.cube_pos_z = 1;
-      surf->ss0.cube_neg_x = 1;
-      surf->ss0.cube_neg_y = 1;
-      surf->ss0.cube_neg_z = 1;
-   }
+   surf[3] = (brw_get_surface_tiling_bits(intelObj->mt->region->tiling) |
+	      (firstImage->Depth - 1) << BRW_SURFACE_DEPTH_SHIFT |
+	      ((intelObj->mt->region->pitch * intelObj->mt->cpp) - 1) <<
+	      BRW_SURFACE_PITCH_SHIFT);
+
+   surf[4] = 0;
+   surf[5] = 0;
 
    /* Emit relocation to surface contents */
    drm_intel_bo_emit_reloc(brw->intel.batch.bo,
-			   brw->wm.surf_offset[surf_index] +
-			   offsetof(struct brw_surface_state, ss1),
+			   brw->wm.surf_offset[surf_index] + 4,
 			   intelObj->mt->region->buffer, 0,
 			   I915_GEM_DOMAIN_SAMPLER, 0);
 }
@@ -284,34 +268,34 @@ brw_create_constant_surface(struct brw_context *brw,
 {
    struct intel_context *intel = &brw->intel;
    const GLint w = width - 1;
-   struct brw_surface_state *surf;
+   uint32_t *surf;
 
-   surf = brw_state_batch(brw, sizeof(*surf), 32, out_offset);
-   memset(surf, 0, sizeof(*surf));
+   surf = brw_state_batch(brw, 6 * 4, 32, out_offset);
 
-   surf->ss0.mipmap_layout_mode = BRW_SURFACE_MIPMAPLAYOUT_BELOW;
-   surf->ss0.surface_type = BRW_SURFACE_BUFFER;
-   surf->ss0.surface_format = BRW_SURFACEFORMAT_R32G32B32A32_FLOAT;
+   surf[0] = (BRW_SURFACE_BUFFER << BRW_SURFACE_TYPE_SHIFT |
+	      BRW_SURFACE_MIPMAPLAYOUT_BELOW << BRW_SURFACE_MIPLAYOUT_SHIFT |
+	      BRW_SURFACEFORMAT_R32G32B32A32_FLOAT << BRW_SURFACE_FORMAT_SHIFT);
 
    if (intel->gen >= 6)
-      surf->ss0.render_cache_read_write = 1;
+      surf[0] |= BRW_SURFACE_RC_READ_WRITE;
 
-   assert(bo);
-   surf->ss1.base_addr = bo->offset; /* reloc */
+   surf[1] = bo->offset; /* reloc */
 
-   surf->ss2.width = w & 0x7f;            /* bits 6:0 of size or width */
-   surf->ss2.height = (w >> 7) & 0x1fff;  /* bits 19:7 of size or width */
-   surf->ss3.depth = (w >> 20) & 0x7f;    /* bits 26:20 of size or width */
-   surf->ss3.pitch = (width * 16) - 1; /* ignored?? */
-   brw_set_surface_tiling(surf, I915_TILING_NONE); /* tiling now allowed */
+   surf[2] = (((w & 0x7f) - 1) << BRW_SURFACE_WIDTH_SHIFT |
+	      (((w >> 7) & 0x1fff) - 1) << BRW_SURFACE_HEIGHT_SHIFT);
+
+   surf[3] = ((((w >> 20) & 0x7f) - 1) << BRW_SURFACE_DEPTH_SHIFT |
+	      (width * 16 - 1) << BRW_SURFACE_PITCH_SHIFT);
+
+   surf[4] = 0;
+   surf[5] = 0;
 
    /* Emit relocation to surface contents.  Section 5.1.1 of the gen4
     * bspec ("Data Cache") says that the data cache does not exist as
     * a separate cache and is just the sampler cache.
     */
    drm_intel_bo_emit_reloc(brw->intel.batch.bo,
-			   (*out_offset +
-			    offsetof(struct brw_surface_state, ss1)),
+			   *out_offset + 4,
 			   bo, 0,
 			   I915_GEM_DOMAIN_SAMPLER, 0);
 }
@@ -416,23 +400,23 @@ static void
 brw_update_null_renderbuffer_surface(struct brw_context *brw, unsigned int unit)
 {
    struct intel_context *intel = &brw->intel;
-   struct brw_surface_state *surf;
+   uint32_t *surf;
 
-   surf = brw_state_batch(brw, sizeof(*surf), 32,
-			 &brw->wm.surf_offset[unit]);
-   memset(surf, 0, sizeof(*surf));
+   surf = brw_state_batch(brw, 6 * 4, 32, &brw->wm.surf_offset[unit]);
 
-   surf->ss0.surface_type = BRW_SURFACE_NULL;
-   surf->ss0.surface_format = BRW_SURFACEFORMAT_B8G8R8A8_UNORM;
-
+   surf[0] = (BRW_SURFACE_NULL << BRW_SURFACE_TYPE_SHIFT |
+	      BRW_SURFACEFORMAT_B8G8R8A8_UNORM << BRW_SURFACE_FORMAT_SHIFT);
    if (intel->gen < 6) {
-      /* _NEW_COLOR */
-      surf->ss0.color_blend = 0;
-      surf->ss0.writedisable_red =   1;
-      surf->ss0.writedisable_green = 1;
-      surf->ss0.writedisable_blue =  1;
-      surf->ss0.writedisable_alpha = 1;
+      surf[0] |= (1 << BRW_SURFACE_WRITEDISABLE_R_SHIFT |
+		  1 << BRW_SURFACE_WRITEDISABLE_G_SHIFT |
+		  1 << BRW_SURFACE_WRITEDISABLE_B_SHIFT |
+		  1 << BRW_SURFACE_WRITEDISABLE_A_SHIFT);
    }
+   surf[1] = 0;
+   surf[2] = 0;
+   surf[3] = 0;
+   surf[4] = 0;
+   surf[5] = 0;
 }
 
 /**
@@ -449,12 +433,11 @@ brw_update_renderbuffer_surface(struct brw_context *brw,
    struct gl_context *ctx = &intel->ctx;
    struct intel_renderbuffer *irb = intel_renderbuffer(rb);
    struct intel_region *region = irb->region;
-   struct brw_surface_state *surf;
+   uint32_t *surf;
    uint32_t tile_x, tile_y;
+   uint32_t format = 0;
 
-   surf = brw_state_batch(brw, sizeof(*surf), 32,
-			  &brw->wm.surf_offset[unit]);
-   memset(surf, 0, sizeof(*surf));
+   surf = brw_state_batch(brw, 6 * 4, 32, &brw->wm.surf_offset[unit]);
 
    switch (irb->Base.Format) {
    case MESA_FORMAT_XRGB8888:
@@ -465,7 +448,7 @@ brw_update_renderbuffer_surface(struct brw_context *brw,
        * cases where GL_DST_ALPHA (or GL_ONE_MINUS_DST_ALPHA) is
        * used.
        */
-      surf->ss0.surface_format = BRW_SURFACEFORMAT_B8G8R8A8_UNORM;
+      format = BRW_SURFACEFORMAT_B8G8R8A8_UNORM;
       break;
    case MESA_FORMAT_INTENSITY_FLOAT32:
    case MESA_FORMAT_LUMINANCE_FLOAT32:
@@ -473,25 +456,35 @@ brw_update_renderbuffer_surface(struct brw_context *brw,
        * channel into R, which is to say that we just treat them as
        * GL_RED.
        */
-      surf->ss0.surface_format = BRW_SURFACEFORMAT_R32_FLOAT;
+      format = BRW_SURFACEFORMAT_R32_FLOAT;
       break;
    case MESA_FORMAT_SARGB8:
       /* without GL_EXT_framebuffer_sRGB we shouldn't bind sRGB
 	 surfaces to the blend/update as sRGB */
       if (ctx->Color.sRGBEnabled)
-	 surf->ss0.surface_format = brw_format_for_mesa_format(irb->Base.Format);
+	 format = brw_format_for_mesa_format(irb->Base.Format);
       else
-	 surf->ss0.surface_format = BRW_SURFACEFORMAT_B8G8R8A8_UNORM;
+	 format = BRW_SURFACEFORMAT_B8G8R8A8_UNORM;
       break;
    default:
       assert(brw_render_target_supported(irb->Base.Format));
-      surf->ss0.surface_format = brw_format_for_mesa_format(irb->Base.Format);
+      format = brw_format_for_mesa_format(irb->Base.Format);
    }
 
-   surf->ss0.surface_type = BRW_SURFACE_2D;
+   surf[0] = (BRW_SURFACE_2D << BRW_SURFACE_TYPE_SHIFT |
+	      format << BRW_SURFACE_FORMAT_SHIFT);
+
    /* reloc */
-   surf->ss1.base_addr = intel_region_tile_offsets(region, &tile_x, &tile_y);
-   surf->ss1.base_addr += region->buffer->offset; /* reloc */
+   surf[1] = (intel_region_tile_offsets(region, &tile_x, &tile_y) +
+	      region->buffer->offset);
+
+   surf[2] = ((rb->Width - 1) << BRW_SURFACE_WIDTH_SHIFT |
+	      (rb->Height - 1) << BRW_SURFACE_HEIGHT_SHIFT);
+
+   surf[3] = (brw_get_surface_tiling_bits(region->tiling) |
+	      ((region->pitch * region->cpp) - 1) << BRW_SURFACE_PITCH_SHIFT);
+
+   surf[4] = 0;
 
    assert(brw->has_surface_tile_offset || (tile_x == 0 && tile_y == 0));
    /* Note that the low bits of these fields are missing, so
@@ -499,35 +492,35 @@ brw_update_renderbuffer_surface(struct brw_context *brw,
     */
    assert(tile_x % 4 == 0);
    assert(tile_y % 2 == 0);
-   surf->ss5.x_offset = tile_x / 4;
-   surf->ss5.y_offset = tile_y / 2;
-
-   surf->ss2.width = rb->Width - 1;
-   surf->ss2.height = rb->Height - 1;
-   brw_set_surface_tiling(surf, region->tiling);
-   surf->ss3.pitch = (region->pitch * region->cpp) - 1;
+   surf[5] = ((tile_x / 4) << BRW_SURFACE_X_OFFSET_SHIFT |
+	      (tile_y / 2) << BRW_SURFACE_Y_OFFSET_SHIFT);
 
    if (intel->gen < 6) {
       /* _NEW_COLOR */
-      surf->ss0.color_blend = (!ctx->Color._LogicOpEnabled &&
-			      (ctx->Color.BlendEnabled & (1 << unit)));
-      surf->ss0.writedisable_red =   !ctx->Color.ColorMask[unit][0];
-      surf->ss0.writedisable_green = !ctx->Color.ColorMask[unit][1];
-      surf->ss0.writedisable_blue =  !ctx->Color.ColorMask[unit][2];
+      if (!ctx->Color._LogicOpEnabled &&
+	  (ctx->Color.BlendEnabled & (1 << unit)))
+	 surf[0] |= BRW_SURFACE_BLEND_ENABLED;
+
+      if (!ctx->Color.ColorMask[unit][0])
+	 surf[0] |= 1 << BRW_SURFACE_WRITEDISABLE_R_SHIFT;
+      if (!ctx->Color.ColorMask[unit][1])
+	 surf[0] |= 1 << BRW_SURFACE_WRITEDISABLE_G_SHIFT;
+      if (!ctx->Color.ColorMask[unit][2])
+	 surf[0] |= 1 << BRW_SURFACE_WRITEDISABLE_B_SHIFT;
+
       /* As mentioned above, disable writes to the alpha component when the
        * renderbuffer is XRGB.
        */
-      if (ctx->DrawBuffer->Visual.alphaBits == 0)
-	 surf->ss0.writedisable_alpha = 1;
-      else
-	 surf->ss0.writedisable_alpha = !ctx->Color.ColorMask[unit][3];
+      if (ctx->DrawBuffer->Visual.alphaBits == 0 ||
+	  !ctx->Color.ColorMask[unit][3]) {
+	 surf[0] |= 1 << BRW_SURFACE_WRITEDISABLE_A_SHIFT;
+      }
    }
 
    drm_intel_bo_emit_reloc(brw->intel.batch.bo,
-			   brw->wm.surf_offset[unit] +
-			   offsetof(struct brw_surface_state, ss1),
+			   brw->wm.surf_offset[unit] + 4,
 			   region->buffer,
-			   surf->ss1.base_addr - region->buffer->offset,
+			   surf[1] - region->buffer->offset,
 			   I915_GEM_DOMAIN_RENDER,
 			   I915_GEM_DOMAIN_RENDER);
 }
@@ -539,16 +532,14 @@ prepare_wm_surfaces(struct brw_context *brw)
    int i;
    int nr_surfaces = 0;
 
-   if (ctx->DrawBuffer->_NumColorDrawBuffers >= 1) {
-      for (i = 0; i < ctx->DrawBuffer->_NumColorDrawBuffers; i++) {
-	 struct gl_renderbuffer *rb = ctx->DrawBuffer->_ColorDrawBuffers[i];
-	 struct intel_renderbuffer *irb = intel_renderbuffer(rb);
-	 struct intel_region *region = irb ? irb->region : NULL;
+   for (i = 0; i < ctx->DrawBuffer->_NumColorDrawBuffers; i++) {
+      struct gl_renderbuffer *rb = ctx->DrawBuffer->_ColorDrawBuffers[i];
+      struct intel_renderbuffer *irb = intel_renderbuffer(rb);
+      struct intel_region *region = irb ? irb->region : NULL;
 
-	 if (region)
-	    brw_add_validated_bo(brw, region->buffer);
-	 nr_surfaces = SURF_INDEX_DRAW(i) + 1;
-      }
+      if (region)
+	 brw_add_validated_bo(brw, region->buffer);
+      nr_surfaces = SURF_INDEX_DRAW(i) + 1;
    }
 
    if (brw->wm.const_bo) {
@@ -558,10 +549,11 @@ prepare_wm_surfaces(struct brw_context *brw)
 
    for (i = 0; i < BRW_MAX_TEX_UNIT; i++) {
       const struct gl_texture_unit *texUnit = &ctx->Texture.Unit[i];
-      struct gl_texture_object *tObj = texUnit->_Current;
-      struct intel_texture_object *intelObj = intel_texture_object(tObj);
 
       if (texUnit->_ReallyEnabled) {
+	 struct gl_texture_object *tObj = texUnit->_Current;
+	 struct intel_texture_object *intelObj = intel_texture_object(tObj);
+
 	 brw_add_validated_bo(brw, intelObj->mt->region->buffer);
 	 nr_surfaces = SURF_INDEX_TEXTURE(i) + 1;
       }

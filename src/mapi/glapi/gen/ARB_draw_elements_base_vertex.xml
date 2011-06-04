@@ -35,6 +35,15 @@
         <param name="basevertex" type="const GLint *"/>
     </function>
 
+    <function name="DrawElementsInstancedBaseVertex" offset="assign">
+        <param name="mode" type="GLenum"/>
+        <param name="count" type="GLsizei"/>
+        <param name="type" type="GLenum"/>
+        <param name="indices" type="const GLvoid *"/>
+        <param name="primcount" type="GLsizei"/>
+        <param name="basevertex" type="GLint"/>
+    </function>
+
 </category>
 
 </OpenGLAPI>

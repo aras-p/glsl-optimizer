@@ -109,6 +109,11 @@ st_BlitFramebuffer(struct gl_context *ctx,
       dstY1 = tmp;
    }
 
+   /* Disable conditional rendering. */
+   if (st->render_condition) {
+      st->pipe->render_condition(st->pipe, NULL, 0);
+   }
+
    if (mask & GL_COLOR_BUFFER_BIT) {
       struct gl_renderbuffer_attachment *srcAtt =
          &readFB->Attachment[readFB->_ColorReadBufferIndex];
@@ -121,7 +126,7 @@ st_BlitFramebuffer(struct gl_context *ctx,
          struct pipe_surface *dstSurf = dstRb->surface;
 
          if (!srcObj->pt)
-            return;
+            goto done;
 
          util_blit_pixels(st->blit, srcObj->pt, srcAtt->TextureLevel,
                           srcX0, srcY0, srcX1, srcY1,
@@ -198,6 +203,13 @@ st_BlitFramebuffer(struct gl_context *ctx,
             _mesa_problem(ctx, "st_BlitFramebuffer(STENCIL) not completed");
          }
       }
+   }
+
+done:
+   /* Restore conditional rendering state. */
+   if (st->render_condition) {
+      st->pipe->render_condition(st->pipe, st->render_condition,
+                                 st->condition_mode);
    }
 }
 

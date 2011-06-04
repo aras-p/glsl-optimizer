@@ -91,8 +91,17 @@ st_render_mipmap(struct st_context *st,
       return FALSE;
    }
 
+   /* Disable conditional rendering. */
+   if (st->render_condition) {
+      pipe->render_condition(pipe, NULL, 0);
+   }
+
    util_gen_mipmap(st->gen_mipmap, psv, face, baseLevel, lastLevel,
                    PIPE_TEX_FILTER_LINEAR);
+
+   if (st->render_condition) {
+      pipe->render_condition(pipe, st->render_condition, st->condition_mode);
+   }
 
    return TRUE;
 }
@@ -229,12 +238,12 @@ fallback_generate_mipmap(struct gl_context *ctx, GLenum target,
       ubyte *dstData;
       int srcStride, dstStride;
 
-      srcTrans = pipe_get_transfer(st_context(ctx)->pipe, pt, srcLevel,
+      srcTrans = pipe_get_transfer(pipe, pt, srcLevel,
                                    face,
                                    PIPE_TRANSFER_READ, 0, 0,
                                    srcWidth, srcHeight);
 
-      dstTrans = pipe_get_transfer(st_context(ctx)->pipe, pt, dstLevel,
+      dstTrans = pipe_get_transfer(pipe, pt, dstLevel,
                                    face,
                                    PIPE_TRANSFER_WRITE, 0, 0,
                                    dstWidth, dstHeight);

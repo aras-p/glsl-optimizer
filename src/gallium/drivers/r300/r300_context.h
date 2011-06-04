@@ -584,6 +584,8 @@ struct r300_context {
     uint32_t zbuffer_bpp;
     /* Whether rendering is conditional and should be skipped. */
     boolean skip_rendering;
+    /* The flag above saved by blitter. */
+    unsigned char blitter_saved_skip_rendering;
     /* Point sprites texcoord index,  1 bit per texcoord */
     int sprite_coord_enable;
     /* Whether two-sided color selection is enabled (AKA light_twoside). */

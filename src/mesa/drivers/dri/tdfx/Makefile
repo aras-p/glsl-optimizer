@@ -5,6 +5,8 @@ include $(TOP)/configs/current
 
 LIBNAME = tdfx_dri.so
 
+include ../Makefile.defines
+
 DRIVER_SOURCES = \
 	tdfx_context.c \
 	tdfx_dd.c \
@@ -27,6 +29,6 @@ C_SOURCES = \
 
 ASM_SOURCES = 
 
-include ../Makefile.template
+include ../Makefile.targets
 
 
