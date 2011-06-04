@@ -457,6 +457,12 @@ static void
 dri2FlushFrontBuffer(__DRIdrawable *driDrawable, void *loaderPrivate)
 {
    struct dri2_drawable *pdraw = loaderPrivate;
+   if (!pdraw)
+      return;
+
+   if (!pdraw->base.psc)
+      return;
+
    struct glx_display *priv = __glXInitialize(pdraw->base.psc->dpy);
    struct dri2_display *pdp = (struct dri2_display *)priv->dri2Display;
    struct glx_context *gc = __glXGetCurrentContext();
