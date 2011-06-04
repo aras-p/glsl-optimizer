@@ -852,6 +852,34 @@ i915_translate_instruction(struct i915_fp_compile *p,
       emit_simple_arith_swap2(p, inst, A0_SLT, 2);
       break;
 
+   case TGSI_OPCODE_SEQ:
+      /* if we're both >= and <= then we're == */
+      src0 = src_vector(p, &inst->Src[0]);
+      src1 = src_vector(p, &inst->Src[1]);
+      tmp = i915_get_utemp(p);
+
+      i915_emit_arith(p,
+                      A0_SGE,
+                      tmp, A0_DEST_CHANNEL_ALL, 0,
+                      src0,
+                      src1, 0);
+
+      i915_emit_arith(p,
+                      A0_SGE,
+                      get_result_vector(p, &inst->Dst[0]),
+                      A0_DEST_CHANNEL_ALL, 0,
+                      src1,
+                      src0, 0);
+
+      i915_emit_arith(p,
+                      A0_MUL,
+                      get_result_vector(p, &inst->Dst[0]),
+                      A0_DEST_CHANNEL_ALL, 0,
+                      get_result_vector(p, &inst->Dst[0]),
+                      tmp, 0);
+
+      break;
+
    case TGSI_OPCODE_SUB:
       src0 = src_vector(p, &inst->Src[0]);
       src1 = src_vector(p, &inst->Src[1]);
