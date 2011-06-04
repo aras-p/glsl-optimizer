@@ -377,7 +377,6 @@ static inline uint32_t r600_translate_colorswap(enum pipe_format format)
 	case PIPE_FORMAT_R32G32_FLOAT:
 	case PIPE_FORMAT_R16G16B16A16_UNORM:
 	case PIPE_FORMAT_R16G16B16A16_SNORM:
-	case PIPE_FORMAT_R16G16B16A16_SSCALED:
 	case PIPE_FORMAT_R16G16B16A16_FLOAT:
 
 		/* 128-bit buffers. */
