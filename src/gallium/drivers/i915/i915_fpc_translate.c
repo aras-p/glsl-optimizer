@@ -192,8 +192,14 @@ src_vector(struct i915_fp_compile *p,
          src = swizzle(src, W, W, W, W);
          break;
       case TGSI_SEMANTIC_GENERIC:
-         /* usually a texcoord */
-         src = i915_emit_decl(p, REG_TYPE_T, T_TEX0 + sem_ind, D0_CHANNEL_ALL);
+         if (sem_ind < 8)
+            /* a texcoord */
+            src = i915_emit_decl(p, REG_TYPE_T, T_TEX0 + sem_ind, D0_CHANNEL_ALL);
+         else if ( (sem_ind >= 10) && (sem_ind < 18) )
+            /* a varying */
+            src = i915_emit_decl(p, REG_TYPE_T, T_TEX0 + sem_ind - 10, D0_CHANNEL_ALL);
+         else
+            debug_printf("%s: unhandled generic %d\n", __func__, sem_ind);
          break;
       default:
          i915_program_error(p, "Bad source->Index");

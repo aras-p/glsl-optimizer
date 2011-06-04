@@ -46,12 +46,12 @@ static void calculate_vertex_layout(struct i915_context *i915)
    const struct i915_fragment_shader *fs = i915->fs;
    const enum interp_mode colorInterp = i915->rasterizer->color_interp;
    struct vertex_info vinfo;
-   boolean texCoords[8], colors[2], fog, needW;
+   boolean texCoords[8], colors[2], fog, needW, have_varyings;
    uint i;
    int src;
 
    memset(texCoords, 0, sizeof(texCoords));
-   colors[0] = colors[1] = fog = needW = FALSE;
+   colors[0] = colors[1] = fog = needW = have_varyings = FALSE;
    memset(&vinfo, 0, sizeof(vinfo));
 
    /* Determine which fragment program inputs are needed.  Setup HW vertex
@@ -66,10 +66,19 @@ static void calculate_vertex_layout(struct i915_context *i915)
          colors[fs->info.input_semantic_index[i]] = TRUE;
          break;
       case TGSI_SEMANTIC_GENERIC:
-         /* usually a texcoord */
          {
-            const uint unit = fs->info.input_semantic_index[i];
+            /* texcoords/varyings */
+            /* XXX handle back/front face and point size */
+            uint unit = fs->info.input_semantic_index[i];
+
+            /* Route varyings as tex coords */
+            if ( (unit >= 10) && (unit < 18) ) {
+               have_varyings = TRUE;
+               unit -= 10;
+            }
+
             assert(unit < 8);
+
             texCoords[unit] = TRUE;
             needW = TRUE;
          }
@@ -82,7 +91,7 @@ static void calculate_vertex_layout(struct i915_context *i915)
       }
    }
 
-   
+
    /* pos */
    src = draw_find_shader_output(i915->draw, TGSI_SEMANTIC_POSITION, 0);
    if (needW) {
@@ -120,12 +129,15 @@ static void calculate_vertex_layout(struct i915_context *i915)
       vinfo.hwfmt[0] |= S4_VFMT_FOG_PARAM;
    }
 
-   /* texcoords */
+   /* texcoords/varyings */
    for (i = 0; i < 8; i++) {
       uint hwtc;
       if (texCoords[i]) {
          hwtc = TEXCOORDFMT_4D;
-         src = draw_find_shader_output(i915->draw, TGSI_SEMANTIC_GENERIC, i);
+         if (!have_varyings)
+            src = draw_find_shader_output(i915->draw, TGSI_SEMANTIC_GENERIC, i);
+         else
+            src = draw_find_shader_output(i915->draw, TGSI_SEMANTIC_GENERIC, i + 10);
          draw_emit_vertex_attr(&vinfo, EMIT_4F, INTERP_PERSPECTIVE, src);
       }
       else {
