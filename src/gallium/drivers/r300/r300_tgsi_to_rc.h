@@ -44,9 +44,6 @@ struct tgsi_to_rc {
     struct swizzled_imms * imms_to_swizzle;
     unsigned imms_to_swizzle_count;
 
-    int num_inputs;
-    int instance_id;
-
     /* Vertex shaders have no half swizzles, and no way to handle them, so
      * until rc grows proper support, indicate if they're safe to use. */
     boolean use_half_swizzles;

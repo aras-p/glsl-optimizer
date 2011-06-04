@@ -25,7 +25,6 @@
 #include "radeon_compiler.h"
 #include "radeon_program.h"
 
-#include "util/u_math.h"
 #include "tgsi/tgsi_info.h"
 #include "tgsi/tgsi_parse.h"
 #include "tgsi/tgsi_scan.h"
@@ -169,7 +168,6 @@ static unsigned translate_register_file(unsigned file)
             /* fall-through */
         case TGSI_FILE_TEMPORARY: return RC_FILE_TEMPORARY;
         case TGSI_FILE_ADDRESS: return RC_FILE_ADDRESS;
-        case TGSI_FILE_SYSTEM_VALUE: return RC_FILE_INPUT;
     }
 }
 
@@ -180,17 +178,6 @@ static int translate_register_index(
 {
     if (file == TGSI_FILE_IMMEDIATE)
         return ttr->immediate_offset + index;
-
-    if (file == TGSI_FILE_SYSTEM_VALUE) {
-        if (index == ttr->instance_id) {
-            return ttr->num_inputs;
-        } else {
-            fprintf(stderr, "Unknown system value semantic index: %i\n",
-                    index);
-            ttr->error = TRUE;
-            return 0;
-        }
-    }
 
     return index;
 }
@@ -282,8 +269,7 @@ static void transform_texture(struct rc_instruction * dst, struct tgsi_instructi
     dst->U.I.TexSwizzle = RC_SWIZZLE_XYZW;
 }
 
-static void transform_instruction(struct tgsi_to_rc * ttr,
-                                  struct tgsi_full_instruction * src)
+static void transform_instruction(struct tgsi_to_rc * ttr, struct tgsi_full_instruction * src)
 {
     struct rc_instruction * dst;
     int i;
@@ -343,27 +329,6 @@ static void handle_immediate(struct tgsi_to_rc * ttr,
     }
 }
 
-static void handle_declaration(struct tgsi_to_rc *ttr,
-                               struct tgsi_full_declaration *decl)
-{
-    switch (decl->Declaration.File) {
-    case TGSI_FILE_INPUT:
-        ttr->num_inputs = MAX2(ttr->num_inputs, decl->Range.First + 1);
-        break;
-
-    case TGSI_FILE_SYSTEM_VALUE:
-        if (decl->Semantic.Name == TGSI_SEMANTIC_INSTANCEID) {
-            printf("Got instance id\n");
-            ttr->instance_id = decl->Range.First;
-        } else {
-            fprintf(stderr, "Unknown system value semantic: %i.\n",
-                    decl->Semantic.Name);
-            ttr->error = TRUE;
-        }
-        break;
-    }
-}
-
 void r300_tgsi_to_rc(struct tgsi_to_rc * ttr,
                      const struct tgsi_token * tokens)
 {
@@ -372,8 +337,6 @@ void r300_tgsi_to_rc(struct tgsi_to_rc * ttr,
     unsigned imm_index = 0;
     int i;
 
-    ttr->num_inputs = 0;
-    ttr->instance_id = -1;
     ttr->error = FALSE;
 
     /* Allocate constants placeholders.
@@ -400,29 +363,21 @@ void r300_tgsi_to_rc(struct tgsi_to_rc * ttr,
 
         switch (parser.FullToken.Token.Type) {
             case TGSI_TOKEN_TYPE_DECLARATION:
-                handle_declaration(ttr, &parser.FullToken.FullDeclaration);
-                if (ttr->error)
-                    goto end_while;
                 break;
-
             case TGSI_TOKEN_TYPE_IMMEDIATE:
                 handle_immediate(ttr, &parser.FullToken.FullImmediate, imm_index);
                 imm_index++;
                 break;
-
             case TGSI_TOKEN_TYPE_INSTRUCTION:
                 inst = &parser.FullToken.FullInstruction;
                 if (inst->Instruction.Opcode == TGSI_OPCODE_END) {
-                    goto end_while;
+                    break;
                 }
 
                 transform_instruction(ttr, inst);
-                if (ttr->error)
-                    goto end_while;
                 break;
         }
     }
-end_while:
 
     tgsi_parse_free(&parser);
 

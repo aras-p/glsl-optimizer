@@ -103,7 +103,7 @@ static void set_vertex_inputs_outputs(struct r300_vertex_program_compiler * c)
                               outputs->bcolor[1] != ATTR_UNUSED;
 
     /* Fill in the input mapping */
-    for (i = 0; i < info->num_inputs+1; i++)
+    for (i = 0; i < info->num_inputs; i++)
         c->code->inputs[i] = i;
 
     /* Position. */

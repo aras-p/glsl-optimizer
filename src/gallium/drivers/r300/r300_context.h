@@ -431,7 +431,6 @@ struct r300_vertex_element_state {
     unsigned vertex_size_dwords;
 
     struct r300_vertex_stream_state vertex_stream;
-    struct r300_vertex_stream_state vertex_stream_instanced;
 };
 
 enum r300_hiz_func {
@@ -491,8 +490,6 @@ struct r300_context {
     /* When no vertex buffer is set, this one is used instead to prevent
      * hardlocks. */
     struct pipe_resource *dummy_vb;
-    /* Vertex buffer for InstanceID. */
-    struct r300_resource *vb_instanceid;
 
     /* The currently active query. */
     struct r300_query *query_current;
