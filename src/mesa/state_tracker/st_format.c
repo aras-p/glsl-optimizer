@@ -514,8 +514,8 @@ st_pipe_format_to_mesa_format(enum pipe_format format)
       return MESA_FORMAT_SIGNED_L_LATC1;
    case PIPE_FORMAT_LATC2_UNORM:
       return MESA_FORMAT_LA_LATC2;
-   //case PIPE_FORMAT_LATC2_SNORM:
-   //   return MESA_FORMAT_SIGNED_LA_LATC2;
+   case PIPE_FORMAT_LATC2_SNORM:
+      return MESA_FORMAT_SIGNED_LA_LATC2;
 
    /* signed normalized formats */
    case PIPE_FORMAT_R8_SNORM:
