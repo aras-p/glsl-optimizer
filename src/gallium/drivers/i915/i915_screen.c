@@ -134,6 +134,11 @@ i915_get_param(struct pipe_screen *screen, enum pipe_cap cap)
    case PIPE_CAP_TEXTURE_MIRROR_CLAMP:
    case PIPE_CAP_TEXTURE_SWIZZLE:
    case PIPE_CAP_TIMER_QUERY:
+   case PIPE_CAP_SM3:
+   case PIPE_CAP_SEAMLESS_CUBE_MAP:
+   case PIPE_CAP_SEAMLESS_CUBE_MAP_PER_TEXTURE:
+   case PIPE_CAP_FRAGMENT_COLOR_CLAMP_CONTROL:
+   case PIPE_CAP_MIXED_COLORBUFFER_FORMATS:
       return 0;
 
    /* Features we can lie about (boolean caps). */
