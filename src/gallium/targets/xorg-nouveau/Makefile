@@ -23,4 +23,7 @@ DRIVER_PIPES = \
 DRIVER_LINKS = \
 	$(shell pkg-config --libs libdrm libdrm_nouveau)
 
+DRIVER_INCLUDES = \
+	$(shell pkg-config --cflags-only-I libdrm libdrm_nouveau xf86driproto)
+
 include ../Makefile.xorg

@@ -29,6 +29,9 @@
  */
 
 #include "../../state_trackers/xorg/xorg_winsys.h"
+#include <nouveau_drmif.h>
+#include <xorg/dri.h>
+#include <xf86drmMode.h>
 
 static void nouveau_xorg_identify(int flags);
 static Bool nouveau_xorg_pci_probe(DriverPtr driver, int entity_num,
@@ -38,14 +41,7 @@ static Bool nouveau_xorg_pci_probe(DriverPtr driver, int entity_num,
 static const struct pci_id_match nouveau_xorg_device_match[] = {
     { 0x10de, PCI_MATCH_ANY, PCI_MATCH_ANY, PCI_MATCH_ANY,
       0x00030000, 0x00ffffff, 0 },
-    { 0x12d2, PCI_MATCH_ANY, PCI_MATCH_ANY, PCI_MATCH_ANY,
-      0x00030000, 0x00ffffff, 0 },
     {0, 0, 0},
-};
-
-static SymTabRec nouveau_xorg_chipsets[] = {
-    {PCI_MATCH_ANY, "NVIDIA Graphics Device"},
-    {-1, NULL}
 };
 
 static PciChipsets nouveau_xorg_pci_devices[] = {
@@ -121,8 +117,7 @@ nouveau_xorg_setup(pointer module, pointer opts, int *errmaj, int *errmin)
 static void
 nouveau_xorg_identify(int flags)
 {
-    xf86PrintChipsets("nouveau2", "Driver for Modesetting Kernel Drivers",
-		      nouveau_xorg_chipsets);
+    xf86DrvMsg(0, X_INFO, "nouveau2: Gallium3D based 2D driver for NV30+ NVIDIA chipsets\n");
 }
 
 static Bool
@@ -131,6 +126,56 @@ nouveau_xorg_pci_probe(DriverPtr driver,
 {
     ScrnInfoPtr scrn = NULL;
     EntityInfoPtr entity;
+    struct nouveau_device *dev = NULL;
+    char *busid;
+    int chipset, ret;
+
+    if (device->vendor_id != 0x10DE)
+	return FALSE;
+
+    if (!xf86LoaderCheckSymbol("DRICreatePCIBusID")) {
+	xf86DrvMsg(-1, X_ERROR, "[drm] No DRICreatePCIBusID symbol\n");
+	return FALSE;
+    }
+    busid = DRICreatePCIBusID(device);
+
+    ret = nouveau_device_open(&dev, busid);
+    if (ret) {
+	xf86DrvMsg(-1, X_ERROR, "[drm] failed to open device\n");
+	free(busid);
+	return FALSE;
+    }
+
+    chipset = dev->chipset;
+    nouveau_device_close(&dev);
+
+    ret = drmCheckModesettingSupported(busid);
+    free(busid);
+    if (ret) {
+	xf86DrvMsg(-1, X_ERROR, "[drm] KMS not enabled\n");
+	return FALSE;
+    }
+
+    switch (chipset & 0xf0) {
+    case 0x00:
+    case 0x10:
+    case 0x20:
+	xf86DrvMsg(-1, X_NOTICE, "Too old chipset: NV%02x\n", chipset);
+	return FALSE;
+    case 0x30:
+    case 0x40:
+    case 0x60:
+    case 0x50:
+    case 0x80:
+    case 0x90:
+    case 0xa0:
+    case 0xc0:
+	xf86DrvMsg(-1, X_INFO, "Detected chipset: NV%02x\n", chipset);
+	break;
+    default:
+	xf86DrvMsg(-1, X_ERROR, "Unknown chipset: NV%02x\n", chipset);
+	return FALSE;
+    }
 
     scrn = xf86ConfigPciEntity(scrn, 0, entity_num, nouveau_xorg_pci_devices,
 			       NULL, NULL, NULL, NULL, NULL);
