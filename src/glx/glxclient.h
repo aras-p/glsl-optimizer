@@ -333,6 +333,11 @@ struct glx_context
      */
    Bool isDirect;
 
+#if defined(GLX_DIRECT_RENDERING) && defined(GLX_USE_APPLEGL)
+   void *driContext;
+   Bool do_destroy;
+#endif
+
     /**
      * \c dpy of current display for this context.  Will be \c NULL if not
      * current to any display, or if this is the "dummy context".
