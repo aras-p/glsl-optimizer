@@ -160,11 +160,9 @@ _X_HIDDEN void
 __glXSetCurrentContextNull(void)
 {
    __glXSetCurrentContext(&dummyContext);
-#ifndef GLX_USE_APPLEGL
 #if defined(GLX_DIRECT_RENDERING) && !defined(GLX_USE_APPLEGL)
    _glapi_set_dispatch(NULL);   /* no-op functions */
    _glapi_set_context(NULL);
-#endif
 #endif
 }
 
