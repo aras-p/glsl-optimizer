@@ -3,7 +3,7 @@
 # It is an extremely important file. Do not mess with it unless
 # you know what you're doing and have permission to do so.
 #
-# $Revision: 10971 $ on $Date: 2010-04-09 02:45:33 -0700 (Fri, 09 Apr 2010) $
+# $Revision: 14384 $ on $Date: 2011-04-05 23:05:03 -0700 (Tue, 05 Apr 2011) $
 
 ###############################################################################
 #
@@ -257,8 +257,29 @@ ARB_map_buffer_range enum:
 
 ###############################################################################
 
+# CONTEXT_FLAGS_ARB bits (should be shared with WGL and GLX)
+
 VERSION_3_0 enum:
-	CONTEXT_FLAG_FORWARD_COMPATIBLE_BIT		= 0x0001    # VERSION_3_0
+	CONTEXT_FLAG_FORWARD_COMPATIBLE_BIT		= 0x00000001 # VERSION_3_0
+
+# 0x00000001 used in WGL/GLX for CONTEXT_DEBUG_BIT_ARB, while
+# 0x00000002 used in WGL/GLX for CONTEXT_FORWARD_COMPATIBLE_BIT_ARB. Oops.
+# We do not currently expose CONTEXT_FLAG_DEBUG_BIT in GL, at least.
+
+ARB_robustness enum:
+	CONTEXT_FLAG_ROBUST_ACCESS_BIT_ARB		= 0x00000004 # ARB_robustness
+
+###############################################################################
+
+# UseProgramStages stage bits
+
+ARB_separate_shader_objects enum: (additional; see below)
+	VERTEX_SHADER_BIT				= 0x00000001
+	FRAGMENT_SHADER_BIT				= 0x00000002
+	GEOMETRY_SHADER_BIT				= 0x00000004
+	TESS_CONTROL_SHADER_BIT				= 0x00000008
+	TESS_EVALUATION_SHADER_BIT			= 0x00000010
+	ALL_SHADER_BITS					= 0xFFFFFFFF
 
 ###############################################################################
 
@@ -298,7 +319,13 @@ NV_geometry_program4 enum: (additional; see below)
 	TRIANGLES_ADJACENCY_EXT				= 0x000C
 	TRIANGLE_STRIP_ADJACENCY_EXT			= 0x000D
 
-# BeginMode_future_use: 0x000E
+ARB_tessellation_shader enum:
+	PATCHES						= 0x000E
+
+NV_gpu_shader5 enum:
+	use ARB_tessellation_shader	    PATCHES
+
+# BeginMode_future_use: 0x000F
 
 ###############################################################################
 
@@ -1399,6 +1426,9 @@ OES_element_index_uint enum: (OpenGL ES only)
 OES_texture_float enum: (OpenGL ES only; additional; see below)
 #	use DataType FLOAT
 
+EXT_vertex_attrib_64bit enum:
+	use VERSION_1_1			    DOUBLE
+
 VERSION_3_0 enum:
 #	use ARB_half_float_vertex	    HALF_FLOAT
 
@@ -1414,15 +1444,22 @@ NV_half_float enum:
 APPLE_float_pixels enum: (additional; see below)
 	HALF_APPLE					= 0x140B
 
+ARB_ES2_compatibility enum: (additional; see below)
+	FIXED						= 0x140C
+
 OES_fixed_point enum: (OpenGL ES only)
 	FIXED_OES					= 0x140C
 
 # Leave a gap to preserve even/odd int/uint token values
 # ARB_future_use: 0x140D
 
-# Future NV extension (Khronos bug 5172)
+NV_gpu_shader5 enum:
 	INT64_NV					= 0x140E
 	UNSIGNED_INT64_NV				= 0x140F
+
+NV_vertex_attrib_integer_64bit enum:
+	use NV_gpu_shader5		    INT64_NV
+	use NV_gpu_shader5		    UNSIGNED_INT64_NV
 
 ###############################################################################
 
@@ -2513,6 +2550,10 @@ EXT_multisample enum:
 	SAMPLE_PATTERN_EXT				= 0x80AC # 1 I
 	MULTISAMPLE_BIT_EXT				= 0x20000000
 
+# Reuses SAMPLES enum as COVERAGE_SAMPLES
+NV_multisample_coverage enum: (additional; see below)
+	COVERAGE_SAMPLES_NV				= 0x80A9
+
 ###############################################################################
 
 SGIS_sharpen_texture enum:
@@ -3168,7 +3209,7 @@ EXT_shared_texture_palette enum:
 
 ###############################################################################
 
-# ATI: 0x8200-0x820F (released by Microsoft 2002/9/16)
+# ATI: 0x8200-0x820F (range released by Microsoft 2002/9/16)
 ATI_text_fragment_shader enum:
 	TEXT_FRAGMENT_SHADER_ATI			= 0x8200
 
@@ -3274,7 +3315,57 @@ ARB_texture_rg enum: (note: no ARB suffixes)
 
 ###############################################################################
 
-# @@@ Any_vendor_future_use: 0x8240-0x82AF (released by Microsoft 2002/9/16)
+# ARB: 0x8240-0x82AF (range released by Microsoft on 2002/9/16)
+
+ARB_cl_event enum:
+	SYNC_CL_EVENT_ARB				= 0x8240
+	SYNC_CL_EVENT_COMPLETE_ARB			= 0x8241
+
+ARB_debug_output enum:
+	DEBUG_OUTPUT_SYNCHRONOUS_ARB			= 0x8242
+	DEBUG_NEXT_LOGGED_MESSAGE_LENGTH_ARB		= 0x8243
+	DEBUG_CALLBACK_FUNCTION_ARB			= 0x8244
+	DEBUG_CALLBACK_USER_PARAM_ARB			= 0x8245
+	DEBUG_SOURCE_API_ARB				= 0x8246
+	DEBUG_SOURCE_WINDOW_SYSTEM_ARB			= 0x8247
+	DEBUG_SOURCE_SHADER_COMPILER_ARB		= 0x8248
+	DEBUG_SOURCE_THIRD_PARTY_ARB			= 0x8249
+	DEBUG_SOURCE_APPLICATION_ARB			= 0x824A
+	DEBUG_SOURCE_OTHER_ARB				= 0x824B
+	DEBUG_TYPE_ERROR_ARB				= 0x824C
+	DEBUG_TYPE_DEPRECATED_BEHAVIOR_ARB		= 0x824D
+	DEBUG_TYPE_UNDEFINED_BEHAVIOR_ARB		= 0x824E
+	DEBUG_TYPE_PORTABILITY_ARB			= 0x824F
+	DEBUG_TYPE_PERFORMANCE_ARB			= 0x8250
+	DEBUG_TYPE_OTHER_ARB				= 0x8251
+
+ARB_robustness enum:
+	LOSE_CONTEXT_ON_RESET_ARB			= 0x8252
+	GUILTY_CONTEXT_RESET_ARB			= 0x8253
+	INNOCENT_CONTEXT_RESET_ARB			= 0x8254
+	UNKNOWN_CONTEXT_RESET_ARB			= 0x8255
+	RESET_NOTIFICATION_STRATEGY_ARB			= 0x8256
+
+ARB_get_program_binary enum: (additional; see below)
+	PROGRAM_BINARY_RETRIEVABLE_HINT			= 0x8257
+
+ARB_separate_shader_objects enum:
+	PROGRAM_SEPARABLE				= 0x8258
+	ACTIVE_PROGRAM					= 0x8259
+	PROGRAM_PIPELINE_BINDING			= 0x825A
+
+ARB_viewport_array enum:
+	MAX_VIEWPORTS					= 0x825B
+	VIEWPORT_SUBPIXEL_BITS				= 0x825C
+	VIEWPORT_BOUNDS_RANGE				= 0x825D
+	LAYER_PROVOKING_VERTEX				= 0x825E
+	VIEWPORT_INDEX_PROVOKING_VERTEX			= 0x825F
+	UNDEFINED_VERTEX				= 0x8260
+
+ARB_robustness enum: (additional; see above)
+	NO_RESET_NOTIFICATION_ARB			= 0x8261
+
+# ARB_future_use: 0x8262-0x82AF
 
 ###############################################################################
 
@@ -3520,8 +3611,10 @@ S3_s3tc enum:
 
 ###############################################################################
 
+# SGI: 0x83C0-0x83EF (most of this could be reclaimed)
+
 # Obsolete extension, never to be put in enumext.spec
-# SGIS_multitexture: 0x83C0-0x83E5
+# SGIS_multitexture: 0x83C0-0x83CA
 #	SELECTED_TEXTURE_SGIS				= 0x83C0 # 1 I
 #	SELECTED_TEXTURE_COORD_SET_SGIS			= 0x83C1 # 1 I
 #	SELECTED_TEXTURE_TRANSFORM_SGIS			= 0x83C2 # 1 I
@@ -3946,7 +4039,9 @@ ARB_texture_compression enum:
 
 # NVIDIA: 0x84F0-0x855F
 
-# NV_future_use: 0x84F0-0x84F1
+ARB_tessellation_shader enum:
+	UNIFORM_BLOCK_REFERENCED_BY_TESS_CONTROL_SHADER = 0x84F0
+	UNIFORM_BLOCK_REFERENCED_BY_TESS_EVALUATION_SHADER = 0x84F1
 
 NV_fence enum:
 	ALL_COMPLETED_NV				= 0x84F2
@@ -4114,14 +4209,11 @@ NV_vertex_array_range enum:
 	MAX_VERTEX_ARRAY_RANGE_ELEMENT_NV		= 0x8520
 	VERTEX_ARRAY_RANGE_POINTER_NV			= 0x8521
 
-# @@@ How does this interact with NV_vertex_array_range?
 APPLE_vertex_array_range enum:
 	VERTEX_ARRAY_RANGE_APPLE			= 0x851D
 	VERTEX_ARRAY_RANGE_LENGTH_APPLE			= 0x851E
 	VERTEX_ARRAY_STORAGE_HINT_APPLE			= 0x851F
 	VERTEX_ARRAY_RANGE_POINTER_APPLE		= 0x8521
-	STORAGE_CACHED_APPLE				= 0x85BE
-	STORAGE_SHARED_APPLE				= 0x85BF
 
 NV_register_combiners enum:
 	REGISTER_COMBINERS_NV				= 0x8522
@@ -4338,10 +4430,8 @@ APPLE_client_storage enum:
 APPLE_object_purgeable enum: (additional; see below)
 	BUFFER_OBJECT_APPLE				= 0x85B3
 
-# APPLE_future_use: 0x85B4
-
-## From Jeremy 2006/10/18 (Khronos bug 632) - unknown extension name
-#	STORAGE_CLIENT_APPLE				= 0x85B4
+APPLE_vertex_array_range enum: (additional; see above):
+	STORAGE_CLIENT_APPLE				= 0x85B4
 
 VERSION_3_0 enum:
 	use ARB_vertex_array_object	    VERTEX_ARRAY_BINDING
@@ -4735,7 +4825,8 @@ NV_evaluators enum:
 	MAX_MAP_TESSELLATION_NV				= 0x86D6
 	MAX_RATIONAL_EVAL_ORDER_NV			= 0x86D7
 
-# NV_future_use: 0x86D8
+NV_tessellation_program5 enum:
+	MAX_PROGRAM_PATCH_ATTRIBS_NV			= 0x86D8
 
 NV_texture_shader enum:
 	OFFSET_TEXTURE_RECTANGLE_NV			= 0x864C
@@ -4812,12 +4903,17 @@ NV_texture_shader enum:
 	TEXTURE_DT_SIZE_NV				= 0x871E
 	TEXTURE_MAG_SIZE_NV				= 0x871F
 
-NV_texture_shader2 enum:
+NV_vdpau_interop enum:
+	SURFACE_STATE_NV				= 0x86EB
+
+NV_texture_shader2 enum: (additional)
 	DOT_PRODUCT_TEXTURE_3D_NV			= 0x86EF
 
-# NV_future_use: 0x86EB
-# NV_future_use: 0x86FD
-# NV_future_use: 0x8700
+NV_vdpau_interop enum: (additional; see above)
+	SURFACE_REGISTERED_NV				= 0x86FD
+
+NV_vdpau_interop enum: (additional; see above)
+	SURFACE_MAPPED_NV				= 0x8700
 
 ###############################################################################
 
@@ -4840,6 +4936,9 @@ AMD_program_binary_Z400 enum: (OpenGL ES only)
 # There's a collision between OES_get_program_binary and EXT_texture_env_dot3!
 OES_get_program_binary enum: (OpenGL ES only; additional; see below)
 	PROGRAM_BINARY_LENGTH_OES			= 0x8741
+
+ARB_get_program_binary enum: (additional; see below)
+	PROGRAM_BINARY_LENGTH				= 0x8741
 
 ATI_texture_mirror_once enum:
 	MIRROR_CLAMP_ATI				= 0x8742
@@ -4925,12 +5024,6 @@ ATI_element_array enum:
 	ELEMENT_ARRAY_ATI				= 0x8768
 	ELEMENT_ARRAY_TYPE_ATI				= 0x8769
 	ELEMENT_ARRAY_POINTER_ATI			= 0x876A
-
-# @@@ (extends ATI_element_array, I think???)
-APPLE_element_array enum:
-	ELEMENT_ARRAY_APPLE				= 0x8768
-	ELEMENT_ARRAY_TYPE_APPLE			= 0x8769
-	ELEMENT_ARRAY_POINTER_APPLE			= 0x876A
 
 ATI_vertex_streams enum:
 	MAX_VERTEX_STREAMS_ATI				= 0x876B
@@ -5095,6 +5188,10 @@ OES_get_program_binary enum: (OpenGL ES only;
 	NUM_PROGRAM_BINARY_FORMATS_OES			= 0x87FE
 	PROGRAM_BINARY_FORMATS_OES			= 0x87FF
 
+ARB_get_program_binary enum:
+	NUM_PROGRAM_BINARY_FORMATS			= 0x87FE
+	PROGRAM_BINARY_FORMATS				= 0x87FF
+
 VERSION_2_0 enum: (Promoted for OpenGL 2.0)
 	STENCIL_BACK_FUNC				= 0x8800    # VERSION_2_0
 	STENCIL_BACK_FAIL				= 0x8801    # VERSION_2_0
@@ -5243,7 +5340,7 @@ ATI_draw_buffers enum:
 ATI_pixel_format_float enum: (really WGL_ATI_pixel_format_float) (additional; see above)
 	COLOR_CLEAR_UNCLAMPED_VALUE_ATI			= 0x8835
 
-# ATI_future_use: 0x8836-0x883F
+# ATI_future_use: 0x8836-0x883C
 
 VERSION_2_0 enum: (Promoted for OpenGL 2.0)
 	BLEND_EQUATION_ALPHA				= 0x883D    # VERSION_2_0
@@ -5254,6 +5351,11 @@ EXT_blend_equation_separate enum:
 # Aliases EXT_blend_equation_separate enum above
 OES_blend_equation_separate enum: (OpenGL ES only)
 	BLEND_EQUATION_ALPHA_OES			= 0x883D
+
+# ATI_future_use: 0x883E
+
+AMD_sample_positions enum:
+	SUBSAMPLE_DISTANCE_AMD				= 0x883F
 
 ###############################################################################
 
@@ -5384,7 +5486,11 @@ ARB_vertex_program enum: (additional; see above)
 	MAX_VERTEX_ATTRIBS_ARB				= 0x8869
 	VERTEX_ATTRIB_ARRAY_NORMALIZED_ARB		= 0x886A
 
-# NV_future_use: 0x886B-0x886D
+# NV_future_use: 0x886B
+
+ARB_tessellation_shader enum:
+	MAX_TESS_CONTROL_INPUT_COMPONENTS		= 0x886C
+	MAX_TESS_EVALUATION_INPUT_COMPONENTS		= 0x886D
 
 NV_copy_depth_to_color enum:
 	DEPTH_STENCIL_TO_RGBA_NV			= 0x886E
@@ -5419,7 +5525,10 @@ NV_pixel_data_range enum:
 	WRITE_PIXEL_DATA_RANGE_POINTER_NV		= 0x887C
 	READ_PIXEL_DATA_RANGE_POINTER_NV		= 0x887D
 
-# NV_future_use: 0x887E-0x887F
+# NV_future_use: 0x887E
+
+ARB_gpu_shader5 enum: (additional; see below)
+	GEOMETRY_SHADER_INVOCATIONS			= 0x887F
 
 NV_float_buffer enum:
 	FLOAT_R_NV					= 0x8880
@@ -5532,7 +5641,15 @@ OES_mapbuffer enum: (OpenGL ES only)
 	BUFFER_MAPPED_OES				= 0x88BC
 	BUFFER_MAP_POINTER_OES				= 0x88BD
 
-# NV_future_use: 0x88BE
+NV_shader_buffer_store enum:
+	use VERSION_1_5			    READ_WRITE
+	use VERSION_1_5			    WRITE_ONLY
+
+NV_vdpau_interop enum: (additional; see above)
+	WRITE_DISCARD_NV				= 0x88BE
+
+ARB_timer_query enum: (additional; see below)
+	TIME_ELAPSED					= 0x88BF
 
 EXT_timer_query enum:
 	TIME_ELAPSED_EXT				= 0x88BF
@@ -5646,13 +5763,20 @@ NV_fragment_program2 enum:
 	MAX_PROGRAM_LOOP_DEPTH_NV			= 0x88F7
 	MAX_PROGRAM_LOOP_COUNT_NV			= 0x88F8
 
-# NV_future_use: 0x88F9-0x88FC
+ARB_blend_func_extended enum:
+	SRC1_COLOR					= 0x88F9
+	ONE_MINUS_SRC1_COLOR				= 0x88FA
+	ONE_MINUS_SRC1_ALPHA				= 0x88FB
+	MAX_DUAL_SOURCE_DRAW_BUFFERS			= 0x88FC
 
 VERSION_3_0 enum:
 	VERTEX_ATTRIB_ARRAY_INTEGER			= 0x88FD    # VERSION_3_0
 
 NV_vertex_program4 enum:
 	VERTEX_ATTRIB_ARRAY_INTEGER_NV			= 0x88FD
+
+VERSION_3_3 enum:
+	VERTEX_ATTRIB_ARRAY_DIVISOR			= 0x88FE    # VERSION_3_3
 
 ARB_instanced_arrays enum:
 	VERTEX_ATTRIB_ARRAY_DIVISOR_ARB			= 0x88FE
@@ -5697,7 +5821,8 @@ VERSION_3_2 enum:
 	GEOMETRY_INPUT_TYPE				= 0x8917
 	GEOMETRY_OUTPUT_TYPE				= 0x8918
 
-# NV_future_use: 0x8919
+ARB_sampler_objects enum:
+	SAMPLER_BINDING					= 0x8919
 
 VERSION_3_0 enum:
 	CLAMP_VERTEX_COLOR				= 0x891A    # VERSION_3_0
@@ -5711,7 +5836,9 @@ ARB_color_buffer_float enum: (additional; see above)
 	CLAMP_READ_COLOR_ARB				= 0x891C
 	FIXED_ONLY_ARB					= 0x891D
 
-# NV_future_use: 0x891E-0x891F
+NV_tessellation_program5 enum:
+	TESS_CONTROL_PROGRAM_NV				= 0x891E
+	TESS_EVALUATION_PROGRAM_NV			= 0x891F
 
 ###############################################################################
 
@@ -5885,7 +6012,8 @@ APPLE_fence enum:
 	DRAW_PIXELS_APPLE				= 0x8A0A
 	FENCE_APPLE					= 0x8A0B
 
-## From Jeremy 2006/10/18 (Khronos bug 632) - unknown extension name
+# Enum values updated (Khronos bugs 5311, 632)
+APPLE_element_array enum:
 	ELEMENT_ARRAY_APPLE				= 0x8A0C
 	ELEMENT_ARRAY_TYPE_APPLE			= 0x8A0D
 	ELEMENT_ARRAY_POINTER_APPLE			= 0x8A0E
@@ -5896,9 +6024,6 @@ APPLE_float_pixels enum:
 # APPLE_future_use: 0x8A10
 ## From Jeremy 2006/10/18 (Khronos bug 632) - unknown extension name
 #	MIN_PBUFFER_VIEWPORT_DIMS_APPLE			= 0x8A10
-#	ELEMENT_BUFFER_BINDING_APPLE			= 0x8A11
-# Apple says the extension that defined ELEMENT_BUFFER_BINDING_APPLE
-# never shipped and there's no actual collision with UNIFORM_BUFFER
 
 VERSION_3_1 enum:
 	use ARB_uniform_buffer_object	    UNIFORM_BUFFER
@@ -6003,7 +6128,14 @@ ARB_uniform_buffer_object enum:
 	UNIFORM_BLOCK_REFERENCED_BY_FRAGMENT_SHADER	= 0x8A46
 	INVALID_INDEX					= 0xFFFFFFFFu
 
-# APPLE_future_use: 0x8A47-0x8A7F
+# APPLE_future_use: 0x8A47
+
+EXT_texture_sRGB_decode enum:
+	TEXTURE_SRGB_DECODE_EXT				= 0x8A48
+	DECODE_EXT					= 0x8A49
+	SKIP_DECODE_EXT					= 0x8A4A
+
+# APPLE_future_use: 0x8A4B-0x8A7F
 
 ###############################################################################
 
@@ -6171,6 +6303,11 @@ OES_read_format enum: (OpenGL ES, also implemented in Mesa)
 	IMPLEMENTATION_COLOR_READ_TYPE_OES		= 0x8B9A
 	IMPLEMENTATION_COLOR_READ_FORMAT_OES		= 0x8B9B
 
+# Also OpenGL ES
+ARB_ES2_compatibility enum: (additional; see below)
+	IMPLEMENTATION_COLOR_READ_TYPE			= 0x8B9A
+	IMPLEMENTATION_COLOR_READ_FORMAT		= 0x8B9B
+
 OES_point_size_array enum: (OpenGL ES only; additional; see above)
 	POINT_SIZE_ARRAY_OES				= 0x8B9C
 
@@ -6250,7 +6387,7 @@ IMG_texture_env_enhanced_fixed_function enum: (OpenGL ES only)
 	FRAGMENT_ALPHA_MODULATE_IMG			= 0x8C08
 	ADD_BLEND_IMG					= 0x8C09
 
-IMG_shader_binary: (OpenGL ES only)
+IMG_shader_binary enum: (OpenGL ES only)
 	SGX_BINARY_IMG					= 0x8C0A
 
 # IMG_future_use: 0x8C0B-0x8C0F
@@ -6340,7 +6477,10 @@ EXT_texture_buffer_object enum:
 	TEXTURE_BUFFER_DATA_STORE_BINDING_EXT		= 0x8C2D
 	TEXTURE_BUFFER_FORMAT_EXT			= 0x8C2E
 
-# NV_future_use: 0x8C2F-0x8C35
+ARB_occlusion_query2 enum:
+	ANY_SAMPLES_PASSED				= 0x8C2F
+
+# NV_future_use: 0x8C30-0x8C35
 
 ARB_sample_shading enum:
 	SAMPLE_SHADING_ARB				= 0x8C36
@@ -6407,7 +6547,9 @@ EXT_texture_compression_latc enum:
 	COMPRESSED_LUMINANCE_ALPHA_LATC2_EXT		= 0x8C72
 	COMPRESSED_SIGNED_LUMINANCE_ALPHA_LATC2_EXT	= 0x8C73
 
-# NV_future_use: 0x8C74-0x8C75
+NV_tessellation_program5 enum:
+	TESS_CONTROL_PROGRAM_PARAMETER_BUFFER_NV	= 0x8C74
+	TESS_EVALUATION_PROGRAM_PARAMETER_BUFFER_NV	= 0x8C75
 
 #@@ separate extensions
 VERSION_3_0 enum:
@@ -6517,6 +6659,11 @@ OES_framebuffer_object enum: (OpenGL ES only; additional; see below)
 	FRAMEBUFFER_BINDING_OES				= 0x8CA6
 	RENDERBUFFER_BINDING_OES			= 0x8CA7
 
+# Aliases EXT_framebuffer_object enums above
+ANGLE_framebuffer_blit enum: (OpenGL ES only; additional; see below)
+	FRAMEBUFFER_BINDING_ANGLE			= 0x8CA6
+	RENDERBUFFER_BINDING_ANGLE			= 0x8CA7
+
 VERSION_3_0 enum:
 	use ARB_framebuffer_object	    READ_FRAMEBUFFER
 	use ARB_framebuffer_object	    DRAW_FRAMEBUFFER
@@ -6526,6 +6673,11 @@ ARB_framebuffer_object enum: (note: no ARB suffixes)
 	READ_FRAMEBUFFER				= 0x8CA8    # VERSION_3_0 / ARB_fbo
 	DRAW_FRAMEBUFFER				= 0x8CA9    # VERSION_3_0 / ARB_fbo
 	READ_FRAMEBUFFER_BINDING			= 0x8CAA    # VERSION_3_0 / ARB_fbo
+
+# Aliases ARB_framebuffer_object enums above
+ANGLE_framebuffer_blit enum: (OpenGL ES only; additional; see above)
+	READ_FRAMEBUFFER_ANGLE				= 0x8CA8
+	DRAW_FRAMEBUFFER_ANGLE				= 0x8CA9
 
 EXT_framebuffer_blit enum:
 	READ_FRAMEBUFFER_EXT				= 0x8CA8
@@ -6538,6 +6690,10 @@ VERSION_3_0 enum:
 
 ARB_framebuffer_object enum: (note: no ARB suffixes)
 	RENDERBUFFER_SAMPLES				= 0x8CAB    # VERSION_3_0 / ARB_fbo
+
+# Aliases ARB_framebuffer_object enums above
+ANGLE_framebuffer_multisample enum: (OpenGL ES only)
+	RENDERBUFFER_SAMPLES_ANGLE			= 0x8CAB
 
 EXT_framebuffer_multisample enum:
 	RENDERBUFFER_SAMPLES_EXT			= 0x8CAB
@@ -6723,6 +6879,11 @@ ARB_framebuffer_object enum: (note: no ARB suffixes)
 	FRAMEBUFFER_INCOMPLETE_MULTISAMPLE		= 0x8D56    # VERSION_3_0 / ARB_fbo
 	MAX_SAMPLES					= 0x8D57    # VERSION_3_0 / ARB_fbo
 
+# Aliases ARB_framebuffer_object enums above
+ANGLE_framebuffer_multisample enum: (OpenGL ES only; additional; see above)
+	FRAMEBUFFER_INCOMPLETE_MULTISAMPLE_ANGLE	= 0x8D56
+	MAX_SAMPLES_ANGLE				= 0x8D57
+
 EXT_framebuffer_multisample enum: (additional; see above)
 	FRAMEBUFFER_INCOMPLETE_MULTISAMPLE_EXT		= 0x8D56
 	MAX_SAMPLES_EXT					= 0x8D57
@@ -6837,7 +6998,8 @@ EXT_texture_integer enum:
 	LUMINANCE_ALPHA_INTEGER_EXT			= 0x8D9D
 	RGBA_INTEGER_MODE_EXT				= 0x8D9E
 
-# NV_future_use: 0x8D9F
+ARB_vertex_type_2_10_10_10_rev enum:
+	INT_2_10_10_10_REV				= 0x8D9F
 
 NV_parameter_buffer_object enum:
 	MAX_PROGRAM_PARAMETER_BUFFER_BINDINGS_NV	= 0x8DA0
@@ -6864,7 +7026,16 @@ NV_geometry_program4 enum: (additional; see above)
 	FRAMEBUFFER_INCOMPLETE_LAYER_TARGETS_EXT	= 0x8DA8
 	FRAMEBUFFER_INCOMPLETE_LAYER_COUNT_EXT		= 0x8DA9
 
-# NV_future_use: 0x8DAA
+# The NEXT_BUFFER / SKIP_* tokens aren't in numerical order but
+# since NVIDIA is allocating them, it doesn't have to be dealt
+# with here.
+NV_transform_feedback enum: (additional; see above)
+	LAYER_NV					= 0x8DAA
+	NEXT_BUFFER_NV					= -2	    # Requires ARB_transform_feedback3
+	SKIP_COMPONENTS4_NV				= -3	    # Requires ARB_transform_feedback3
+	SKIP_COMPONENTS3_NV				= -4	    # Requires ARB_transform_feedback3
+	SKIP_COMPONENTS2_NV				= -5	    # Requires ARB_transform_feedback3
+	SKIP_COMPONENTS1_NV				= -6	    # Requires ARB_transform_feedback3
 
 VERSION_3_0 enum:
 ARB_depth_buffer_float enum: (additional; see above; some values different from NV; note: no ARB suffixes)
@@ -6876,7 +7047,9 @@ NV_depth_buffer_float enum:
 	FLOAT_32_UNSIGNED_INT_24_8_REV_NV		= 0x8DAD
 	DEPTH_BUFFER_FLOAT_MODE_NV			= 0x8DAF
 
-# NV_future_use: 0x8DAE
+ARB_shading_language_include enum: (additional;see below)
+	SHADER_INCLUDE_ARB				= 0x8DAE
+
 # NV_future_use: 0x8DB0-0x8DB8
 
 VERSION_3_0 enum:
@@ -7001,7 +7174,17 @@ EXT_bindable_uniform enum:
 	MAX_FRAGMENT_BINDABLE_UNIFORMS_EXT		= 0x8DE3
 	MAX_GEOMETRY_BINDABLE_UNIFORMS_EXT		= 0x8DE4
 
-# NV_future_use: 0x8DE5-0x8DEC
+ARB_shader_subroutine enum:
+	ACTIVE_SUBROUTINES				= 0x8DE5
+	ACTIVE_SUBROUTINE_UNIFORMS			= 0x8DE6
+	MAX_SUBROUTINES					= 0x8DE7
+	MAX_SUBROUTINE_UNIFORM_LOCATIONS		= 0x8DE8
+
+ARB_shading_language_include enum:
+	NAMED_STRING_LENGTH_ARB				= 0x8DE9
+	NAMED_STRING_TYPE_ARB				= 0x8DEA
+
+# NV_future_use: 0x8DEB-0x8DEC
 
 EXT_bindable_uniform enum: (additional; see above)
 	MAX_BINDABLE_UNIFORM_SIZE_EXT			= 0x8DED
@@ -7012,13 +7195,29 @@ EXT_bindable_uniform enum: (additional; see above)
 
 # Khronos OpenGL ES WG: 0x8DF0-0x8E0F
 
-# Khronos_future_use: 0x8DF0-0x8DF5
+# Also OpenGL ES
+ARB_ES2_compatibility enum: (additional; see below)
+	LOW_FLOAT					= 0x8DF0
+	MEDIUM_FLOAT					= 0x8DF1
+	HIGH_FLOAT					= 0x8DF2
+	LOW_INT						= 0x8DF3
+	MEDIUM_INT					= 0x8DF4
+	HIGH_INT					= 0x8DF5
 
 OES_vertex_type_10_10_10_2 enum: (OpenGL ES only)
 	UNSIGNED_INT_10_10_10_2_OES			= 0x8DF6
 	INT_10_10_10_2_OES				= 0x8DF7
 
-# Khronos_future_use: 0x8DF8-0x8E0F
+# Also OpenGL ES
+ARB_ES2_compatibility enum:
+	SHADER_BINARY_FORMATS				= 0x8DF8
+	NUM_SHADER_BINARY_FORMATS			= 0x8DF9
+	SHADER_COMPILER					= 0x8DFA
+	MAX_VERTEX_UNIFORM_VECTORS			= 0x8DFB
+	MAX_VARYING_VECTORS				= 0x8DFC
+	MAX_FRAGMENT_UNIFORM_VECTORS			= 0x8DFD
+
+# Khronos_future_use: 0x8DFE-0x8E0F
 
 ###############################################################################
 
@@ -7036,19 +7235,34 @@ VERSION_3_0 enum:
 	QUERY_BY_REGION_WAIT				= 0x8E15    # VERSION_3_0
 	QUERY_BY_REGION_NO_WAIT				= 0x8E16    # VERSION_3_0
 
-GL_NV_conditional_render enum:
+NV_conditional_render enum:
 	QUERY_WAIT_NV					= 0x8E13
 	QUERY_NO_WAIT_NV				= 0x8E14
 	QUERY_BY_REGION_WAIT_NV				= 0x8E15
 	QUERY_BY_REGION_NO_WAIT_NV			= 0x8E16
 
-# NV_future_use: 0x8E17-0x8E21
+# NV_future_use: 0x8E17-0x8E1D
+
+ARB_tessellation_shader enum:
+	MAX_COMBINED_TESS_CONTROL_UNIFORM_COMPONENTS	= 0x8E1E
+	MAX_COMBINED_TESS_EVALUATION_UNIFORM_COMPONENTS = 0x8E1F
+
+NV_multisample_coverage enum:
+	COLOR_SAMPLES_NV				= 0x8E20
+
+# NV_future_use: 0x8E21
+
+ARB_transform_feedback2 enum:
+	TRANSFORM_FEEDBACK				= 0x8E22
+	TRANSFORM_FEEDBACK_BUFFER_PAUSED		= 0x8E23
+	TRANSFORM_FEEDBACK_BUFFER_ACTIVE		= 0x8E24
+	TRANSFORM_FEEDBACK_BINDING			= 0x8E25
 
 NV_transform_feedback2 enum:
-      TRANSFORM_FEEDBACK_NV				= 0x8E22
-      TRANSFORM_FEEDBACK_BUFFER_PAUSED_NV		= 0x8E23
-      TRANSFORM_FEEDBACK_BUFFER_ACTIVE_NV		= 0x8E24
-      TRANSFORM_FEEDBACK_BINDING_NV			= 0x8E25
+	TRANSFORM_FEEDBACK_NV				= 0x8E22
+	TRANSFORM_FEEDBACK_BUFFER_PAUSED_NV		= 0x8E23
+	TRANSFORM_FEEDBACK_BUFFER_ACTIVE_NV		= 0x8E24
+	TRANSFORM_FEEDBACK_BINDING_NV			= 0x8E25
 
 NV_present_video enum:
 	FRAME_NV					= 0x8E26
@@ -7057,6 +7271,9 @@ NV_present_video enum:
 	NUM_FILL_STREAMS_NV				= 0x8E29
 	PRESENT_TIME_NV					= 0x8E2A
 	PRESENT_DURATION_NV				= 0x8E2B
+
+ARB_timer_query enum:
+	TIMESTAMP					= 0x8E28
 
 NV_depth_nonlinear enum: (OpenGL ES only)
 	DEPTH_COMPONENT16_NONLINEAR_NV			= 0x8E2C
@@ -7068,6 +7285,13 @@ EXT_direct_state_access enum:
 
 # NV_future_use: 0x8E30-0x8E41
 
+ARB_texture_swizzle enum:
+	TEXTURE_SWIZZLE_R				= 0x8E42
+	TEXTURE_SWIZZLE_G				= 0x8E43
+	TEXTURE_SWIZZLE_B				= 0x8E44
+	TEXTURE_SWIZZLE_A				= 0x8E45
+	TEXTURE_SWIZZLE_RGBA				= 0x8E46
+
 EXT_texture_swizzle enum:
 	TEXTURE_SWIZZLE_R_EXT				= 0x8E42
 	TEXTURE_SWIZZLE_G_EXT				= 0x8E43
@@ -7075,10 +7299,20 @@ EXT_texture_swizzle enum:
 	TEXTURE_SWIZZLE_A_EXT				= 0x8E45
 	TEXTURE_SWIZZLE_RGBA_EXT			= 0x8E46
 
-# NV_future_use: 0x8E47-0x8E4B
+ARB_shader_subroutine enum:
+	ACTIVE_SUBROUTINE_UNIFORM_LOCATIONS		= 0x8E47
+	ACTIVE_SUBROUTINE_MAX_LENGTH			= 0x8E48
+	ACTIVE_SUBROUTINE_UNIFORM_MAX_LENGTH		= 0x8E49
+	NUM_COMPATIBLE_SUBROUTINES			= 0x8E4A
+	COMPATIBLE_SUBROUTINES				= 0x8E4B
 
 VERSION_3_2 enum:
 	use ARB_provoking_vertex	    QUADS_FOLLOW_PROVOKING_VERTEX_CONVENTION
+	use ARB_provoking_vertex	    FIRST_VERTEX_CONVENTION
+	use ARB_provoking_vertex	    LAST_VERTEX_CONVENTION
+	use ARB_provoking_vertex	    PROVOKING_VERTEX
+
+ARB_viewport_array enum: (additional; see above)
 	use ARB_provoking_vertex	    FIRST_VERTEX_CONVENTION
 	use ARB_provoking_vertex	    LAST_VERTEX_CONVENTION
 	use ARB_provoking_vertex	    PROVOKING_VERTEX
@@ -7119,18 +7353,74 @@ NV_explicit_multisample enum:
 	UNSIGNED_INT_SAMPLER_RENDERBUFFER_NV		= 0x8E58
 	MAX_SAMPLE_MASK_WORDS_NV			= 0x8E59
 
-# NV_future_use: 0x8E5A-0x8E5D
+ARB_gpu_shader5 enum:
+	MAX_GEOMETRY_SHADER_INVOCATIONS			= 0x8E5A
+	MIN_FRAGMENT_INTERPOLATION_OFFSET		= 0x8E5B
+	MAX_FRAGMENT_INTERPOLATION_OFFSET		= 0x8E5C
+	FRAGMENT_INTERPOLATION_OFFSET_BITS		= 0x8E5D
+
+NV_gpu_program5 enum:
+	MAX_GEOMETRY_PROGRAM_INVOCATIONS_NV		= 0x8E5A
+	MIN_FRAGMENT_INTERPOLATION_OFFSET_NV		= 0x8E5B
+	MAX_FRAGMENT_INTERPOLATION_OFFSET_NV		= 0x8E5C
+	FRAGMENT_PROGRAM_INTERPOLATION_OFFSET_BITS_NV	= 0x8E5D
 
 ARB_texture_gather enum:
 	MIN_PROGRAM_TEXTURE_GATHER_OFFSET		= 0x8E5E
 	MAX_PROGRAM_TEXTURE_GATHER_OFFSET		= 0x8E5F
 
-# NV_future_use: 0x8E60-0x8E8F
+NV_gpu_program5 enum:
+	MIN_PROGRAM_TEXTURE_GATHER_OFFSET_NV		= 0x8E5E
+	MAX_PROGRAM_TEXTURE_GATHER_OFFSET_NV		= 0x8E5F
+
+# NV_future_use: 0x8E60-0x8E6F
+
+ARB_transform_feedback3 enum:
+	MAX_TRANSFORM_FEEDBACK_BUFFERS			= 0x8E70
+	MAX_VERTEX_STREAMS				= 0x8E71
+
+ARB_gpu_shader5 enum: (additional; see above)
+	use ARB_texture_multisample	    MAX_VERTEX_STREAMS
+
+ARB_tessellation_shader enum:
+	PATCH_VERTICES					= 0x8E72
+	PATCH_DEFAULT_INNER_LEVEL			= 0x8E73
+	PATCH_DEFAULT_OUTER_LEVEL			= 0x8E74
+	TESS_CONTROL_OUTPUT_VERTICES			= 0x8E75
+	TESS_GEN_MODE					= 0x8E76
+	TESS_GEN_SPACING				= 0x8E77
+	TESS_GEN_VERTEX_ORDER				= 0x8E78
+	TESS_GEN_POINT_MODE				= 0x8E79
+	ISOLINES					= 0x8E7A
+	FRACTIONAL_ODD					= 0x8E7B
+	FRACTIONAL_EVEN					= 0x8E7C
+	MAX_PATCH_VERTICES				= 0x8E7D
+	MAX_TESS_GEN_LEVEL				= 0x8E7E
+	MAX_TESS_CONTROL_UNIFORM_COMPONENTS		= 0x8E7F
+	MAX_TESS_EVALUATION_UNIFORM_COMPONENTS		= 0x8E80
+	MAX_TESS_CONTROL_TEXTURE_IMAGE_UNITS		= 0x8E81
+	MAX_TESS_EVALUATION_TEXTURE_IMAGE_UNITS		= 0x8E82
+	MAX_TESS_CONTROL_OUTPUT_COMPONENTS		= 0x8E83
+	MAX_TESS_PATCH_COMPONENTS			= 0x8E84
+	MAX_TESS_CONTROL_TOTAL_OUTPUT_COMPONENTS	= 0x8E85
+	MAX_TESS_EVALUATION_OUTPUT_COMPONENTS		= 0x8E86
+	TESS_EVALUATION_SHADER				= 0x8E87
+	TESS_CONTROL_SHADER				= 0x8E88
+	MAX_TESS_CONTROL_UNIFORM_BLOCKS			= 0x8E89
+	MAX_TESS_EVALUATION_UNIFORM_BLOCKS		= 0x8E8A
+
+# NV_future_use: 0x8E8B
+
+ARB_texture_compression_bptc enum:
+	COMPRESSED_RGBA_BPTC_UNORM_ARB			= 0x8E8C
+	COMPRESSED_SRGB_ALPHA_BPTC_UNORM_ARB		= 0x8E8D
+	COMPRESSED_RGB_BPTC_SIGNED_FLOAT_ARB		= 0x8E8E
+	COMPRESSED_RGB_BPTC_UNSIGNED_FLOAT_ARB		= 0x8E8F
 
 ###############################################################################
 
 # QNX: 0x8E90-0x8E9F
-# For GL_QNX_texture_tiling, GL_QNX_complex_polygon, GL_QNX_stippled_lines
+# For QNX_texture_tiling, QNX_complex_polygon, QNX_stippled_lines
 # (Khronos bug 696)
 
 # QNX_future_use: 0x8E90-0x8E9F
@@ -7205,7 +7495,55 @@ VERSION_3_1 enum:
 	use ARB_copy_buffer		    COPY_READ_BUFFER
 	use ARB_copy_buffer		    COPY_WRITE_BUFFER
 
-# NVIDIA_future_use: 0x8F38-0x8F4F
+EXT_shader_image_load_store enum: (additional; see below)
+	MAX_IMAGE_UNITS_EXT				= 0x8F38
+	MAX_COMBINED_IMAGE_UNITS_AND_FRAGMENT_OUTPUTS_EXT = 0x8F39
+	IMAGE_BINDING_NAME_EXT				= 0x8F3A
+	IMAGE_BINDING_LEVEL_EXT				= 0x8F3B
+	IMAGE_BINDING_LAYERED_EXT			= 0x8F3C
+	IMAGE_BINDING_LAYER_EXT				= 0x8F3D
+	IMAGE_BINDING_ACCESS_EXT			= 0x8F3E
+
+ARB_draw_indirect enum:
+	DRAW_INDIRECT_BUFFER				= 0x8F3F
+
+# Requires ARB_draw_indirect
+NV_vertex_buffer_unified_memory enum: (additional; see above)
+	DRAW_INDIRECT_UNIFIED_NV			= 0x8F40
+	DRAW_INDIRECT_ADDRESS_NV			= 0x8F41
+	DRAW_INDIRECT_LENGTH_NV				= 0x8F42
+
+ARB_draw_indirect enum: (additional; see below)
+	DRAW_INDIRECT_BUFFER_BINDING			= 0x8F43
+
+# Requires ARB_shader_subroutine
+NV_gpu_program5 enum: (additional; see above)
+	MAX_PROGRAM_SUBROUTINE_PARAMETERS_NV		= 0x8F44
+	MAX_PROGRAM_SUBROUTINE_NUM_NV			= 0x8F45
+
+ARB_gpu_shader_fp64 enum:
+	DOUBLE_MAT2					= 0x8F46
+	DOUBLE_MAT3					= 0x8F47
+	DOUBLE_MAT4					= 0x8F48
+	DOUBLE_MAT2x3					= 0x8F49
+	DOUBLE_MAT2x4					= 0x8F4A
+	DOUBLE_MAT3x2					= 0x8F4B
+	DOUBLE_MAT3x4					= 0x8F4C
+	DOUBLE_MAT4x2					= 0x8F4D
+	DOUBLE_MAT4x3					= 0x8F4E
+
+EXT_vertex_attrib_64bit enum:
+	DOUBLE_MAT2_EXT					= 0x8F46
+	DOUBLE_MAT3_EXT					= 0x8F47
+	DOUBLE_MAT4_EXT					= 0x8F48
+	DOUBLE_MAT2x3_EXT				= 0x8F49
+	DOUBLE_MAT2x4_EXT				= 0x8F4A
+	DOUBLE_MAT3x2_EXT				= 0x8F4B
+	DOUBLE_MAT3x4_EXT				= 0x8F4C
+	DOUBLE_MAT4x2_EXT				= 0x8F4D
+	DOUBLE_MAT4x3_EXT				= 0x8F4E
+
+# NVIDIA_future_use: 0x8F4F
 
 ###############################################################################
 
@@ -7216,6 +7554,11 @@ VERSION_3_1 enum:
 
 # ARM: 0x8F60-0x8F6F
 # Assigned for Remi Pedersen (Khronos bug 3745)
+
+ARM_mali_shader_binary enum: (OpenGL ES only)
+	MALI_SHADER_BINARY_ARM				= 0x8F60
+
+# ARM_future_use: 0x8F61-0x8F6F
 
 ###############################################################################
 
@@ -7266,12 +7609,53 @@ QCOM_driver_control enum: (OpenGL ES only)
 # Vivante: 0x8FC0-0x8FDF
 # Assigned for Frido Garritsen	(Khronos bug 4526)
 
+VIV_shader_binary enum: (OpenGL ES only)
+	SHADER_BINARY_VIV				= 0x8FC4
+
 ###############################################################################
 
 # NVIDIA: 0x8FE0-0x8FFF
 # Assigned for Pat Brown (Khronos bug 4935)
 
-# NV_future_use: 0x8FE0-0x8FFF
+NV_gpu_shader5 enum:
+	INT8_NV						= 0x8FE0
+	INT8_VEC2_NV					= 0x8FE1
+	INT8_VEC3_NV					= 0x8FE2
+	INT8_VEC4_NV					= 0x8FE3
+	INT16_NV					= 0x8FE4
+	INT16_VEC2_NV					= 0x8FE5
+	INT16_VEC3_NV					= 0x8FE6
+	INT16_VEC4_NV					= 0x8FE7
+	INT64_VEC2_NV					= 0x8FE9
+	INT64_VEC3_NV					= 0x8FEA
+	INT64_VEC4_NV					= 0x8FEB
+	UNSIGNED_INT8_NV				= 0x8FEC
+	UNSIGNED_INT8_VEC2_NV				= 0x8FED
+	UNSIGNED_INT8_VEC3_NV				= 0x8FEE
+	UNSIGNED_INT8_VEC4_NV				= 0x8FEF
+	UNSIGNED_INT16_NV				= 0x8FF0
+	UNSIGNED_INT16_VEC2_NV				= 0x8FF1
+	UNSIGNED_INT16_VEC3_NV				= 0x8FF2
+	UNSIGNED_INT16_VEC4_NV				= 0x8FF3
+	UNSIGNED_INT64_VEC2_NV				= 0x8FF5
+	UNSIGNED_INT64_VEC3_NV				= 0x8FF6
+	UNSIGNED_INT64_VEC4_NV				= 0x8FF7
+	FLOAT16_NV					= 0x8FF8
+	FLOAT16_VEC2_NV					= 0x8FF9
+	FLOAT16_VEC3_NV					= 0x8FFA
+	FLOAT16_VEC4_NV					= 0x8FFB
+
+ARB_gpu_shader_fp64 enum: (additional; see above)
+	DOUBLE_VEC2					= 0x8FFC
+	DOUBLE_VEC3					= 0x8FFD
+	DOUBLE_VEC4					= 0x8FFE
+
+EXT_vertex_attrib_64bit enum:
+	DOUBLE_VEC2_EXT					= 0x8FFC
+	DOUBLE_VEC3_EXT					= 0x8FFD
+	DOUBLE_VEC4_EXT					= 0x8FFE
+
+# NV_future_use: 0x8FFF
 
 ###############################################################################
 
@@ -7312,7 +7696,13 @@ EXT_texture_snorm enum:
 	LUMINANCE16_ALPHA16_SNORM			= 0x901A
 	INTENSITY16_SNORM				= 0x901B
 
-# AMD_future_use: 0x901C-0x901F
+AMD_blend_minmax_factor enum:
+	FACTOR_MIN_AMD					= 0x901C
+	FACTOR_MAX_AMD					= 0x901D
+
+AMD_depth_clamp_separate enum:
+	DEPTH_CLAMP_NEAR_AMD				= 0x901E
+	DEPTH_CLAMP_FAR_AMD				= 0x901F
 
 ###############################################################################
 
@@ -7320,37 +7710,103 @@ EXT_texture_snorm enum:
 # Assigned for Pat Brown (Khronos bug 4935)
 
 NV_video_capture enum:
-	  VIDEO_BUFFER_NV				  = 0x9020
-	  VIDEO_BUFFER_BINDING_NV			  = 0x9021
-	  FIELD_UPPER_NV				  = 0x9022
-	  FIELD_LOWER_NV				  = 0x9023
-	  NUM_VIDEO_CAPTURE_STREAMS_NV			  = 0x9024
-	  NEXT_VIDEO_CAPTURE_BUFFER_STATUS_NV		  = 0x9025
-	  VIDEO_CAPTURE_TO_422_SUPPORTED_NV		  = 0x9026
-	  LAST_VIDEO_CAPTURE_STATUS_NV			  = 0x9027
-	  VIDEO_BUFFER_PITCH_NV				  = 0x9028
-	  VIDEO_COLOR_CONVERSION_MATRIX_NV		  = 0x9029
-	  VIDEO_COLOR_CONVERSION_MAX_NV			  = 0x902A
-	  VIDEO_COLOR_CONVERSION_MIN_NV			  = 0x902B
-	  VIDEO_COLOR_CONVERSION_OFFSET_NV		  = 0x902C
-	  VIDEO_BUFFER_INTERNAL_FORMAT_NV		  = 0x902D
-	  PARTIAL_SUCCESS_NV				  = 0x902E
-	  SUCCESS_NV					  = 0x902F
-	  FAILURE_NV					  = 0x9030
-	  YCBYCR8_422_NV				  = 0x9031
-	  YCBAYCR8A_4224_NV				  = 0x9032
-	  Z6Y10Z6CB10Z6Y10Z6CR10_422_NV			  = 0x9033
-	  Z6Y10Z6CB10Z6A10Z6Y10Z6CR10Z6A10_4224_NV	  = 0x9034
-	  Z4Y12Z4CB12Z4Y12Z4CR12_422_NV			  = 0x9035
-	  Z4Y12Z4CB12Z4A12Z4Y12Z4CR12Z4A12_4224_NV	  = 0x9036
-	  Z4Y12Z4CB12Z4CR12_444_NV			  = 0x9037
-	  VIDEO_CAPTURE_FRAME_WIDTH_NV			  = 0x9038
-	  VIDEO_CAPTURE_FRAME_HEIGHT_NV			  = 0x9039
-	  VIDEO_CAPTURE_FIELD_UPPER_HEIGHT_NV		  = 0x903A
-	  VIDEO_CAPTURE_FIELD_LOWER_HEIGHT_NV		  = 0x903B
-	  VIDEO_CAPTURE_SURFACE_ORIGIN_NV		  = 0x903C
+	VIDEO_BUFFER_NV				      = 0x9020
+	VIDEO_BUFFER_BINDING_NV			      = 0x9021
+	FIELD_UPPER_NV				      = 0x9022
+	FIELD_LOWER_NV				      = 0x9023
+	NUM_VIDEO_CAPTURE_STREAMS_NV		      = 0x9024
+	NEXT_VIDEO_CAPTURE_BUFFER_STATUS_NV	      = 0x9025
+	VIDEO_CAPTURE_TO_422_SUPPORTED_NV	      = 0x9026
+	LAST_VIDEO_CAPTURE_STATUS_NV		      = 0x9027
+	VIDEO_BUFFER_PITCH_NV			      = 0x9028
+	VIDEO_COLOR_CONVERSION_MATRIX_NV	      = 0x9029
+	VIDEO_COLOR_CONVERSION_MAX_NV		      = 0x902A
+	VIDEO_COLOR_CONVERSION_MIN_NV		      = 0x902B
+	VIDEO_COLOR_CONVERSION_OFFSET_NV	      = 0x902C
+	VIDEO_BUFFER_INTERNAL_FORMAT_NV		      = 0x902D
+	PARTIAL_SUCCESS_NV			      = 0x902E
+	SUCCESS_NV				      = 0x902F
+	FAILURE_NV				      = 0x9030
+	YCBYCR8_422_NV				      = 0x9031
+	YCBAYCR8A_4224_NV			      = 0x9032
+	Z6Y10Z6CB10Z6Y10Z6CR10_422_NV		      = 0x9033
+	Z6Y10Z6CB10Z6A10Z6Y10Z6CR10Z6A10_4224_NV      = 0x9034
+	Z4Y12Z4CB12Z4Y12Z4CR12_422_NV		      = 0x9035
+	Z4Y12Z4CB12Z4A12Z4Y12Z4CR12Z4A12_4224_NV      = 0x9036
+	Z4Y12Z4CB12Z4CR12_444_NV		      = 0x9037
+	VIDEO_CAPTURE_FRAME_WIDTH_NV		      = 0x9038
+	VIDEO_CAPTURE_FRAME_HEIGHT_NV		      = 0x9039
+	VIDEO_CAPTURE_FIELD_UPPER_HEIGHT_NV	      = 0x903A
+	VIDEO_CAPTURE_FIELD_LOWER_HEIGHT_NV	      = 0x903B
+	VIDEO_CAPTURE_SURFACE_ORIGIN_NV		      = 0x903C
 
-# NV_future_use: 0x903D-0x90FF
+# NV_future_use: 0x903D-0x9044
+
+NV_texture_multisample enum:
+	TEXTURE_COVERAGE_SAMPLES_NV			= 0x9045
+	TEXTURE_COLOR_SAMPLES_NV			= 0x9046
+
+# NV_future_use: 0x9047-0x904B
+
+EXT_shader_image_load_store enum:
+	IMAGE_1D_EXT					= 0x904C
+	IMAGE_2D_EXT					= 0x904D
+	IMAGE_3D_EXT					= 0x904E
+	IMAGE_2D_RECT_EXT				= 0x904F
+	IMAGE_CUBE_EXT					= 0x9050
+	IMAGE_BUFFER_EXT				= 0x9051
+	IMAGE_1D_ARRAY_EXT				= 0x9052
+	IMAGE_2D_ARRAY_EXT				= 0x9053
+	IMAGE_CUBE_MAP_ARRAY_EXT			= 0x9054
+	IMAGE_2D_MULTISAMPLE_EXT			= 0x9055
+	IMAGE_2D_MULTISAMPLE_ARRAY_EXT			= 0x9056
+	INT_IMAGE_1D_EXT				= 0x9057
+	INT_IMAGE_2D_EXT				= 0x9058
+	INT_IMAGE_3D_EXT				= 0x9059
+	INT_IMAGE_2D_RECT_EXT				= 0x905A
+	INT_IMAGE_CUBE_EXT				= 0x905B
+	INT_IMAGE_BUFFER_EXT				= 0x905C
+	INT_IMAGE_1D_ARRAY_EXT				= 0x905D
+	INT_IMAGE_2D_ARRAY_EXT				= 0x905E
+	INT_IMAGE_CUBE_MAP_ARRAY_EXT			= 0x905F
+	INT_IMAGE_2D_MULTISAMPLE_EXT			= 0x9060
+	INT_IMAGE_2D_MULTISAMPLE_ARRAY_EXT		= 0x9061
+	UNSIGNED_INT_IMAGE_1D_EXT			= 0x9062
+	UNSIGNED_INT_IMAGE_2D_EXT			= 0x9063
+	UNSIGNED_INT_IMAGE_3D_EXT			= 0x9064
+	UNSIGNED_INT_IMAGE_2D_RECT_EXT			= 0x9065
+	UNSIGNED_INT_IMAGE_CUBE_EXT			= 0x9066
+	UNSIGNED_INT_IMAGE_BUFFER_EXT			= 0x9067
+	UNSIGNED_INT_IMAGE_1D_ARRAY_EXT			= 0x9068
+	UNSIGNED_INT_IMAGE_2D_ARRAY_EXT			= 0x9069
+	UNSIGNED_INT_IMAGE_CUBE_MAP_ARRAY_EXT		= 0x906A
+	UNSIGNED_INT_IMAGE_2D_MULTISAMPLE_EXT		= 0x906B
+	UNSIGNED_INT_IMAGE_2D_MULTISAMPLE_ARRAY_EXT	= 0x906C
+	MAX_IMAGE_SAMPLES_EXT				= 0x906D
+	IMAGE_BINDING_FORMAT_EXT			= 0x906E
+# ??? Not clear where to put new types of mask bits yet
+	VERTEX_ATTRIB_ARRAY_BARRIER_BIT_EXT		= 0x00000001
+	ELEMENT_ARRAY_BARRIER_BIT_EXT			= 0x00000002
+	UNIFORM_BARRIER_BIT_EXT				= 0x00000004
+	TEXTURE_FETCH_BARRIER_BIT_EXT			= 0x00000008
+	SHADER_IMAGE_ACCESS_BARRIER_BIT_EXT		= 0x00000020
+	COMMAND_BARRIER_BIT_EXT				= 0x00000040
+	PIXEL_BUFFER_BARRIER_BIT_EXT			= 0x00000080
+	TEXTURE_UPDATE_BARRIER_BIT_EXT			= 0x00000100
+	BUFFER_UPDATE_BARRIER_BIT_EXT			= 0x00000200
+	FRAMEBUFFER_BARRIER_BIT_EXT			= 0x00000400
+	TRANSFORM_FEEDBACK_BARRIER_BIT_EXT		= 0x00000800
+	ATOMIC_COUNTER_BARRIER_BIT_EXT			= 0x00001000
+	ALL_BARRIER_BITS_EXT				= 0xFFFFFFFF
+
+# Adds to mask bits for EXT_shader_image_load_store above
+NV_shader_buffer_store enum:
+	SHADER_GLOBAL_ACCESS_BARRIER_BIT_NV		= 0x00000010
+
+ARB_texture_rgb10_a2ui enum:
+	RGB10_A2UI					= 0x906F
+
+# NV_future_use: 0x9070-0x90FF
 
 ###############################################################################
 
@@ -7466,10 +7922,73 @@ IMG_multisampled_render_to_texture enum: (OpenGL ES only)
 
 ###############################################################################
 
-# AMD: 0x9140-0x91BF (Khronos bugs 5899, 6004)
+# AMD: 0x9140-0x923F (Khronos bugs 5899, 6004)
 
-# AMD_future_use: 0x9140-0x91BF
-# AMD_future_use: 0x91C0-0x923F
+# AMD_future_use: 0x9140-0x9142
+
+ARB_debug_output enum: (additional; see above)
+	MAX_DEBUG_MESSAGE_LENGTH_ARB			= 0x9143
+	MAX_DEBUG_LOGGED_MESSAGES_ARB			= 0x9144
+	DEBUG_LOGGED_MESSAGES_ARB			= 0x9145
+	DEBUG_SEVERITY_HIGH_ARB				= 0x9146
+	DEBUG_SEVERITY_MEDIUM_ARB			= 0x9147
+	DEBUG_SEVERITY_LOW_ARB				= 0x9148
+
+AMD_debug_output enum:
+	MAX_DEBUG_LOGGED_MESSAGES_AMD			= 0x9144
+	DEBUG_LOGGED_MESSAGES_AMD			= 0x9145
+	DEBUG_SEVERITY_HIGH_AMD				= 0x9146
+	DEBUG_SEVERITY_MEDIUM_AMD			= 0x9147
+	DEBUG_SEVERITY_LOW_AMD				= 0x9148
+	DEBUG_CATEGORY_API_ERROR_AMD			= 0x9149
+	DEBUG_CATEGORY_WINDOW_SYSTEM_AMD		= 0x914A
+	DEBUG_CATEGORY_DEPRECATION_AMD			= 0x914B
+	DEBUG_CATEGORY_UNDEFINED_BEHAVIOR_AMD		= 0x914C
+	DEBUG_CATEGORY_PERFORMANCE_AMD			= 0x914D
+	DEBUG_CATEGORY_SHADER_COMPILER_AMD		= 0x914E
+	DEBUG_CATEGORY_APPLICATION_AMD			= 0x914F
+	DEBUG_CATEGORY_OTHER_AMD			= 0x9150
+
+AMD_name_gen_delete enum:
+	DATA_BUFFER_AMD					= 0x9151
+	PERFORMANCE_MONITOR_AMD				= 0x9152
+	QUERY_OBJECT_AMD				= 0x9153
+	VERTEX_ARRAY_OBJECT_AMD				= 0x9154
+	SAMPLER_OBJECT_AMD				= 0x9155
+
+# AMD_future_use: 0x9156-0x923F
+
+###############################################################################
+
+# WebGL Working Group: 0x9240-0x924F (Khronos bug 6473)
+
+#	UNPACK_FLIP_Y_WEBGL				= 0x9240
+#	UNPACK_PREMULTIPLY_ALPHA_WEBGL			= 0x9241
+#	CONTEXT_LOST_WEBGL				= 0x9242
+
+# Khronos bug 6884
+
+#	UNPACK_COLORSPACE_CONVERSION_WEBGL		= 0x9243
+#	BROWSER_DEFAULT_WEBGL				= 0x9244
+
+# WebGL_future_use: 0x9245-0x924F
+
+###############################################################################
+
+# DMP: 0x9250-0x925F (email from Eisaku Ohbuchi)
+
+DMP_shader_binary enum: (OpenGL ES only)
+	SHADER_BINARY_DMP				= 0x9250
+
+# DMP_future_use: 0x9251-0x925F
+
+###############################################################################
+
+# Fujitsu: 0x9260-0x926F (Khronos bug 7486)
+
+# FJ_shader_binary enum: (OpenGL ES only)
+
+# FJ_future_use: 0x9260-0x926F
 
 ###############################################################################
 ### Please remember that new enumerant allocations must be obtained by request
@@ -7477,13 +7996,11 @@ IMG_multisampled_render_to_texture enum: (OpenGL ES only)
 ### File requests in the Khronos Bugzilla, OpenGL project, Registry component.
 ###############################################################################
 
-# Any_vendor_future_use: 0x9140-0xFFFF
+# Any_vendor_future_use: 0x9260-0xFFFF
 #
 #   This range must be the last range in the file.  To generate a new
 #   range, allocate multiples of 16 from the beginning of the
 #   Any_vendor_future_use range and update enum.spec
-
-# (NOTE: first fill the gap from 0x8FE0-0x8FFF before proceeding here)
 
 ###############################################################################
 

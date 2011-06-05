@@ -4,7 +4,7 @@
 # This document is licensed under the SGI Free Software B License Version
 # 2.0. For details, see http://oss.sgi.com/projects/FreeB/ .
 #
-# $Revision: 10796 $ on $Date: 2010-03-19 17:31:10 -0700 (Fri, 19 Mar 2010) $
+# $Revision: 12183 $ on $Date: 2010-08-06 02:53:05 -0700 (Fri, 06 Aug 2010) $
 
 # List of GLX enumerants for glxext.h header
 #
@@ -25,9 +25,9 @@
 
 passthru:
 passthru: /* Header file version number, required by OpenGL ABI for Linux */
-passthru: /* glxext.h last updated 2010/02/10 */
+passthru: /* glxext.h last updated 2010/08/06 */
 passthru: /* Current version at http://www.opengl.org/registry/ */
-passthru: #define GLX_GLXEXT_VERSION 27
+passthru: #define GLX_GLXEXT_VERSION 32
 
 ###############################################################################
 #
@@ -124,10 +124,22 @@ ARB_multisample enum:
 
 ###############################################################################
 
+# ARB Extension #28
+ARB_vertex_buffer_object enum:
+	CONTEXT_ALLOW_BUFFER_BYTE_ORDER_MISMATCH_ARB	= 0x2095
+
+###############################################################################
+
 # ARB Extension #39
 ARB_fbconfig_float enum:
 	RGBA_FLOAT_TYPE_ARB				= 0x20B9
 	RGBA_FLOAT_BIT_ARB				= 0x00000004
+
+###############################################################################
+
+# ARB Extension #46
+ARB_framebuffer_sRGB enum:
+	FRAMEBUFFER_SRGB_CAPABLE_ARB			= 0x20B2
 
 ###############################################################################
 
@@ -147,6 +159,15 @@ ARB_create_context_profile enum:
 	CONTEXT_COMPATIBILITY_PROFILE_BIT_ARB		= 0x00000002
 	CONTEXT_PROFILE_MASK_ARB			= 0x9126
 
+###############################################################################
+
+# ARB Extension #101
+# All values are shared with GLX and GL
+ARB_create_context_robustness enum:
+	CONTEXT_ROBUST_ACCESS_BIT_ARB			= 0x00000004
+	LOSE_CONTEXT_ON_RESET_ARB			= 0x8252
+	CONTEXT_RESET_NOTIFICATION_STRATEGY_ARB		= 0x8256
+	NO_RESET_NOTIFICATION_ARB			= 0x8261
 
 ###############################################################################
 #
@@ -513,3 +534,32 @@ INTEL_swap_event enum:
 	EXCHANGE_COMPLETE_INTEL				= 0x8180
 	COPY_COMPLETE_INTEL				= 0x8181
 	FLIP_COMPLETE_INTEL				= 0x8182
+
+###############################################################################
+
+# Extension #393
+NV_multisample_coverage enum:
+	COVERAGE_SAMPLES_NV				= 100001
+	COLOR_SAMPLES_NV				= 0x20B3
+
+###############################################################################
+
+# Extension #398
+AMD_gpu_association enum:
+	GPU_VENDOR_AMD					= 0x1F00
+	GPU_RENDERER_STRING_AMD				= 0x1F01
+	GPU_OPENGL_VERSION_STRING_AMD			= 0x1F02
+	GPU_FASTEST_TARGET_GPUS_AMD			= 0x21A2
+	GPU_RAM_AMD					= 0x21A3
+	GPU_CLOCK_AMD					= 0x21A4
+	GPU_NUM_PIPES_AMD				= 0x21A5
+	GPU_NUM_SIMD_AMD				= 0x21A6
+	GPU_NUM_RB_AMD					= 0x21A7
+	GPU_NUM_SPI_AMD					= 0x21A8
+
+###############################################################################
+
+# Extension #399
+# All values are shared with WGL and GL
+EXT_create_context_es2_profile enum:
+	CONTEXT_ES2_PROFILE_BIT_EXT			= 0x00000004

@@ -7,14 +7,14 @@
 # This document is licensed under the SGI Free Software B License Version
 # 2.0. For details, see http://oss.sgi.com/projects/FreeB/ .
 #
-# $Revision: 10796 $ on $Date: 2010-03-19 17:31:10 -0700 (Fri, 19 Mar 2010) $
+# $Revision: 12183 $ on $Date: 2010-08-06 02:53:05 -0700 (Fri, 06 Aug 2010) $
 
 required-props:
 param:		retval retained
 glxflags:	client-handcode client-intercept server-handcode
 glxvendorglx:	*
 vectorequiv:	*
-category:	VERSION_1_3 VERSION_1_4 ARB_get_proc_address ARB_multisample ARB_fbconfig_float EXT_import_context SGIX_dmbuffer SGIX_fbconfig SGIX_pbuffer SGIX_swap_barrier SGIX_swap_group SGIX_video_resize SGIX_video_source SGI_cushion SGI_make_current_read SGI_swap_control SGI_video_sync SUN_get_transparent_index MESA_agp_offset MESA_copy_sub_buffer MESA_pixmap_colormap MESA_release_buffers MESA_set_3dfx_mode SGIX_visual_select_group OML_sync_control SGIX_hyperpipe EXT_texture_from_pixmap NV_swap_group NV_video_output NV_present_video ARB_create_context NV_video_capture NV_copy_image EXT_swap_control
+category:	VERSION_1_3 VERSION_1_4 ARB_get_proc_address ARB_multisample ARB_fbconfig_float EXT_import_context SGIX_dmbuffer SGIX_fbconfig SGIX_pbuffer SGIX_swap_barrier SGIX_swap_group SGIX_video_resize SGIX_video_source SGI_cushion SGI_make_current_read SGI_swap_control SGI_video_sync SUN_get_transparent_index MESA_agp_offset MESA_copy_sub_buffer MESA_pixmap_colormap MESA_release_buffers MESA_set_3dfx_mode SGIX_visual_select_group OML_sync_control SGIX_hyperpipe EXT_texture_from_pixmap NV_swap_group NV_video_output NV_present_video ARB_create_context NV_video_capture NV_copy_image EXT_swap_control ARB_framebuffer_sRGB
 glxopcode:	*
 
 #
@@ -314,6 +314,16 @@ newcategory: ARB_fbconfig_float
 
 ###############################################################################
 #
+# ARB Extension #46
+# ARB_framebuffer_sRGB commands
+#
+###############################################################################
+
+# (none)
+newcategory: ARB_framebuffer_sRGB
+
+###############################################################################
+#
 # ARB Extension #56
 # ARB_create_context commands
 #
@@ -339,6 +349,16 @@ CreateContextAttribsARB(dpy, config, share_context, direct, attrib_list)
 
 # (none)
 newcategory: ARB_create_context_profile
+
+###############################################################################
+#
+# ARB Extension #101
+# ARB_create_context_robustness commands
+#
+###############################################################################
+
+# (none)
+newcategory: ARB_create_context_robustness
 
 
 ###############################################################################
@@ -1328,3 +1348,145 @@ CopyImageSubDataNV(dpy, srcCtx, srcName, srcTarget, srcLevel, srcX, srcY, srcZ, 
 
 # (none)
 newcategory: INTEL_swap_event
+
+###############################################################################
+#
+# Extension #393
+# NV_multisample_coverage commands
+#
+###############################################################################
+
+# (none)
+newcategory: NV_multisample_coverage
+
+###############################################################################
+#
+# Extension #399
+# AMD_gpu_association commands
+#
+###############################################################################
+
+# These are a weird mishmash of X and Windows types - are they correct?
+# Leave out of glxext.h for the time being.
+
+#@    UINT  glXGetGPUIDsAMD(UINT maxCount, UINT *ids);
+#@    INT   glXGetGPUInfoAMD(UINT id, INT property, GLenum dataType,
+#@			     UINT size, void *data)
+#@    UINT  glXGetContextGPUIDAMD(GLXContext ctx);
+#@    HGLRC glXCreateAssociatedContextAMD(UINT id, GLXContext share_list);
+#@    HGLRC glXCreateAssociatedContextAttribsAMD(UINT id, GLXContext share_context,
+#@						 const int *attribList);
+#@    BOOL  glXDeleteAssociatedContextAMD(GLXContext ctx);
+#@    BOOL  glXMakeAssociatedContextCurrentAMD(GLXContext ctx);
+#@    HGLRC glXGetCurrentAssociatedContextAMD(void);
+#@    VOID  glXBlitContextFramebufferAMD(GLXContext dstCtx, GLint srcX0, GLint srcY0,
+#@					 GLint srcX1, GLint srcY1, GLint dstX0,
+#@					 GLint dstY0, GLint dstX1, GLint dstY1,
+#@					 GLbitfield mask, GLenum filter);
+
+#@ glXGetGPUIDsAMD(maxCount, ids)
+#@	   return	   UINT
+#@	   param	   maxCount	   UINT in value
+#@	   param	   ids		   UINT in array [???]
+#@	   category	   AMD_gpu_association
+#@	   version	   4.1
+#@	   extension
+#@	   glxropcode	   ?
+#@	   glxflags	   ignore
+#@	   offset	   ?
+#@
+#@ glXGetGPUInfoAMD(id, property, dataType, size, data)
+#@	   return	   INT
+#@	   param	   id		   UINT in value
+#@	   param	   property	   INT in value
+#@	   param	   dataType	   GLenum in value
+#@	   param	   size		   UINT in value
+#@	   param	   data		   void in array [???]
+#@	   category	   AMD_gpu_association
+#@	   version	   4.1
+#@	   extension
+#@	   glxropcode	   ?
+#@	   glxflags	   ignore
+#@	   offset	   ?
+#@
+#@ glXGetContextGPUIDAMD(ctx)
+#@	   return	   UINT
+#@	   param	   ctx		   GLXContext in value
+#@	   category	   AMD_gpu_association
+#@	   version	   4.1
+#@	   extension
+#@	   glxropcode	   ?
+#@	   glxflags	   ignore
+#@	   offset	   ?
+#@
+#@ glXCreateAssociatedContextAMD(id, share_list)
+#@	   return	   HGLRC
+#@	   param	   id		   UINT in value
+#@	   param	   share_list	   GLXContext in value
+#@	   category	   AMD_gpu_association
+#@	   version	   4.1
+#@	   extension
+#@	   glxropcode	   ?
+#@	   glxflags	   ignore
+#@	   offset	   ?
+#@
+#@ glXCreateAssociatedContextAttribsAMD(id, share_context, attribList)
+#@	   return	   HGLRC
+#@	   param	   id		   UINT in value
+#@	   param	   share_context   GLXContext in value
+#@	   param	   attribList	   Int32 in array [???]
+#@	   category	   AMD_gpu_association
+#@	   version	   4.1
+#@	   extension
+#@	   glxropcode	   ?
+#@	   glxflags	   ignore
+#@	   offset	   ?
+#@
+#@ glXDeleteAssociatedContextAMD(ctx)
+#@	   return	   BOOL
+#@	   param	   ctx		   GLXContext in value
+#@	   category	   AMD_gpu_association
+#@	   version	   4.1
+#@	   extension
+#@	   glxropcode	   ?
+#@	   glxflags	   ignore
+#@	   offset	   ?
+#@
+#@ glXMakeAssociatedContextCurrentAMD(ctx)
+#@	   return	   BOOL
+#@	   param	   ctx		   GLXContext in value
+#@	   category	   AMD_gpu_association
+#@	   version	   4.1
+#@	   extension
+#@	   glxropcode	   ?
+#@	   glxflags	   ignore
+#@	   offset	   ?
+#@
+#@ glXGetCurrentAssociatedContextAMD()
+#@	   return	   HGLRC
+#@	   category	   AMD_gpu_association
+#@	   version	   4.1
+#@	   extension
+#@	   glxropcode	   ?
+#@	   glxflags	   ignore
+#@	   offset	   ?
+#@
+#@ glXBlitContextFramebufferAMD(dstCtx, srcX0, srcY0, srcX1, srcY1, dstX0, dstY0, dstX1, dstY1, mask, filter)
+#@	   return	   VOID
+#@	   param	   dstCtx	   GLXContext in value
+#@	   param	   srcX0	   GLint in value
+#@	   param	   srcY0	   GLint in value
+#@	   param	   srcX1	   GLint in value
+#@	   param	   srcY1	   GLint in value
+#@	   param	   dstX0	   GLint in value
+#@	   param	   dstY0	   GLint in value
+#@	   param	   dstX1	   GLint in value
+#@	   param	   dstY1	   GLint in value
+#@	   param	   mask		   GLbitfield in value
+#@	   param	   filter	   GLenum in value
+#@	   category	   AMD_gpu_association
+#@	   version	   4.1
+#@	   extension
+#@	   glxropcode	   ?
+#@	   glxflags	   ignore
+#@	   offset	   ?

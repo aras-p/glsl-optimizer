@@ -4,7 +4,7 @@
 # This document is licensed under the SGI Free Software B License Version
 # 2.0. For details, see http://oss.sgi.com/projects/FreeB/ .
 #
-# $Revision: 10796 $ on $Date: 2010-03-19 17:31:10 -0700 (Fri, 19 Mar 2010) $
+# $Revision: 12183 $ on $Date: 2010-08-06 02:53:05 -0700 (Fri, 06 Aug 2010) $
 
 # This is the GLX enumerant registry.
 #
@@ -126,15 +126,17 @@ GLXBindToTextureTargetMask enum:
 	TEXTURE_2D_BIT_EXT				= 0x00000002
 	TEXTURE_RECTANGLE_BIT_EXT			= 0x00000004
 
-# CONTEXT_FLAGS_ARB bits
+# CONTEXT_FLAGS_ARB bits (shared with WGL and GL)
 GLXContextFlags enum:
 	CONTEXT_DEBUG_BIT_ARB				= 0x00000001	# ARB_create_context
 	CONTEXT_FORWARD_COMPATIBLE_BIT_ARB		= 0x00000002	# ARB_create_context
+	CONTEXT_ROBUST_ACCESS_BIT_ARB			= 0x00000004	# ARB_create_context_robustness
 
 # CONTEXT_PROFILE_MASK_ARB bits
 GLXContextProfileMask enum:
 	CONTEXT_CORE_PROFILE_BIT_ARB			= 0x00000001	# ARB_create_context_profile
 	CONTEXT_COMPATIBILITY_PROFILE_BIT_ARB		= 0x00000002	# ARB_create_context_profile
+	CONTEXT_ES2_PROFILE_BIT_EXT			= 0x00000004	# EXT_create_context_es2_profile
 
 GLXAttribute enum:
 	USE_GL						= 1		# Visual attributes
@@ -250,16 +252,29 @@ GLXAttribute enum:
 	SAMPLES_ARB					= 100001	#   "
 	SAMPLE_BUFFERS					= 100000	# Visual attribute (GLX 1.4 core - alias of SGIS_multisample)
 	SAMPLES						= 100001	#   "
+	COVERAGE_SAMPLES_NV				= 100001	# Visual attribute (NV_multisample_coverage - reuse SAMPLES_ARB)
 
 ###############################################################################
 
-# ARB: 0x2070-0x209F (shared with WGL)
+# AMD: 0x1F00-0x1F02 (additional; see below; equivalent to corresponding WGL/GL tokens)
+
+###############################################################################
+
+# ARB: 0x2070-0x209F
+
+# Shared with WGL, synchronize create_context_* enums with wglenum.spec!
 
 # Also includes a bitmask - see ContextFlags above
 # ARB_create_context enum:
 	CONTEXT_MAJOR_VERSION_ARB			= 0x2091
 	CONTEXT_MINOR_VERSION_ARB			= 0x2092
+# 0x2093 used for WGL_CONTEXT_LAYER_PLANE_ARB
 	CONTEXT_FLAGS_ARB				= 0x2094
+# 0x2095 collides with WGL_ERROR_INVALID_VERSION_ARB!
+	CONTEXT_ALLOW_BUFFER_BYTE_ORDER_MISMATCH_ARB	= 0x2095
+# 0x2096 used for WGL_ERROR_INVALID_PROFILE_ARB
+
+# ARB_future_use: 0x2097-0x209F
 
 ###############################################################################
 
@@ -269,10 +284,14 @@ GLXAttribute enum:
 	FLOAT_COMPONENTS_NV				= 0x20B0
 # EXT_fbconfig_packed_float enum:
 	RGBA_UNSIGNED_FLOAT_TYPE_EXT			= 0x20B1
+# ARB_framebuffer_sRGB enum:
+	FRAMEBUFFER_SRGB_CAPABLE_ARB			= 0x20B2
 # EXT_framebuffer_sRGB enum:
 	FRAMEBUFFER_SRGB_CAPABLE_EXT			= 0x20B2
+# NV_multisample_coverage enum:
+	COLOR_SAMPLES_NV				= 0x20B3
 
-# NV_future_use: 0x20B3-0x20B8
+# NV_future_use: 0x20B4-0x20B8
 
 # ARB_fbconfig_float enum:
 	RGBA_FLOAT_TYPE_ARB				= 0x20B9
@@ -341,6 +360,28 @@ EXT_swap_control enum:
 
 ###############################################################################
 
+# AMD: 0x21A0-0x21AF
+
+# Shared with WGL, synchronize with wglenum.spec!
+
+# WGL extensions: 0x21A0-0x21A1
+
+GLX_AMD_gpu_association enum:
+	GPU_VENDOR_AMD					= 0x1F00
+	GPU_RENDERER_STRING_AMD				= 0x1F01
+	GPU_OPENGL_VERSION_STRING_AMD			= 0x1F02
+	GPU_FASTEST_TARGET_GPUS_AMD			= 0x21A2
+	GPU_RAM_AMD					= 0x21A3
+	GPU_CLOCK_AMD					= 0x21A4
+	GPU_NUM_PIPES_AMD				= 0x21A5
+	GPU_NUM_SIMD_AMD				= 0x21A6
+	GPU_NUM_RB_AMD					= 0x21A7
+	GPU_NUM_SPI_AMD					= 0x21A8
+
+# AMD_future_use: 0x21A9-0x21AF
+
+###############################################################################
+
 # MESA (not in a reserved block)
 
 # MESA_set_3dfx_mode enum:
@@ -404,17 +445,35 @@ INTEL_future_use: 0x8183-0x818F
 ### Please remember that new GLX enum allocations must be obtained by request
 ### to the Khronos API Registrar (see comments at the top of this file)
 ### File requests in the Khronos Bugzilla, OpenGL project, Registry component.
+### Also note that some GLX enum values are shared with GL and WGL, and
+### new ranges should be allocated with such overlaps in mind.
 ###############################################################################
 
-# Any_vendor_future_use: 0x8180-0x9125
+# Any_vendor_future_use: 0x8190-0x824F
+
+###############################################################################
+
+# ARB: 0x8250-0x826F
+# No additional values should be used from this range, which includes
+# the range used by GL_ARB_robustness rounded up to multiples of 16.
+
+# Also includes a bitmask - see ContextFlags above
+# All values are shared with GLX and GL
+GLX_ARB_create_context_robustness enum:
+	LOSE_CONTEXT_ON_RESET_ARB			= 0x8252    # shared with GL_ARB_robustness
+	CONTEXT_RESET_NOTIFICATION_STRATEGY_ARB		= 0x8256    # shared with GL_ARB_robustness
+	NO_RESET_NOTIFICATION_ARB			= 0x8261    # shared with GL_ARB_robustness
+
+# Any_vendor_future_use: 0x8270-0x9125
 
 # Also includes a bitmask - see ContextProfileMask above
-# ARB_create_context_profile enum: (equivalent to corresponding GL token)
+# All values are shared with GLX and GL
+ARB_create_context_profile enum:
 	CONTEXT_PROFILE_MASK_ARB			= 0x9126
 
 # Any_vendor_future_use: 0x9127-0xFFFF
 #
 #   This range must be the last range in the file.  To generate a new
-#   range, allocate multiples of 16 from the beginning of the
+#   range, allocate multiples of 16 from the beginning of the first
 #   Any_vendor_future_use range and update glxenum.spec, glxenumext.spec,
 #   and extensions.reserved.
