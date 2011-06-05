@@ -36,7 +36,7 @@ extern struct apple_xgl_api __gl_api;
 void
 glViewport(GLint x, GLint y, GLsizei width, GLsizei height)
 {
-   GLXContext gc = __glXGetCurrentContext();
+   struct glx_context *gc = __glXGetCurrentContext();
    Display *dpy = glXGetCurrentDisplay();
 
    if (gc && gc->driContext)

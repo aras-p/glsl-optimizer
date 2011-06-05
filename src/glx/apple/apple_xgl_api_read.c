@@ -48,7 +48,7 @@ struct apple_xgl_saved_state
 static void
 SetRead(struct apple_xgl_saved_state *saved)
 {
-   GLXContext gc = __glXGetCurrentContext();
+   struct glx_context *gc = __glXGetCurrentContext();
 
    /*
     * By default indicate that the state was not swapped, so that UnsetRead
@@ -81,7 +81,7 @@ static void
 UnsetRead(struct apple_xgl_saved_state *saved)
 {
    if (saved->swapped) {
-      GLXContext gc = __glXGetCurrentContext();
+      struct glx_context *gc = __glXGetCurrentContext();
       Display *dpy = glXGetCurrentDisplay();
 
       if (apple_glx_make_current_context(dpy, gc->driContext, gc->driContext,

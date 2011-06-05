@@ -49,7 +49,7 @@ extern struct apple_xgl_api __gl_api;
 void
 glDrawBuffer(GLenum mode)
 {
-   GLXContext gc = glXGetCurrentContext();
+   struct glx_context * gc = __glXGetCurrentContext();
 
    if (gc && apple_glx_context_uses_stereo(gc->driContext)) {
       GLenum buf[2];
@@ -84,7 +84,7 @@ glDrawBuffer(GLenum mode)
 void
 glDrawBuffers(GLsizei n, const GLenum * bufs)
 {
-   GLXContext gc = glXGetCurrentContext();
+   struct glx_context * gc = __glXGetCurrentContext();
 
    if (gc && apple_glx_context_uses_stereo(gc->driContext)) {
       GLenum newbuf[n + 2];

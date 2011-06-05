@@ -40,7 +40,7 @@ __glXSendError(Display * dpy, int errorCode, unsigned long resourceID,
                unsigned long minorCode, bool coreX11error)
 {
    XExtDisplayInfo *info = __glXFindDisplay(dpy);
-   GLXContext gc = __glXGetCurrentContext();
+   struct glx_context *gc = __glXGetCurrentContext();
    xError error;
 
    LockDisplay(dpy);
