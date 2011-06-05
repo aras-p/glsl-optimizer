@@ -706,7 +706,7 @@ _X_EXPORT void
 glXSwapBuffers(Display * dpy, GLXDrawable drawable)
 {
 #ifdef GLX_USE_APPLEGL
-   GLXContext gc = glXGetCurrentContext();
+   struct glx_context * gc = __glXGetCurrentContext();
    if(gc && apple_glx_is_current_drawable(dpy, gc->driContext, drawable)) {
       apple_glx_swap_buffers(gc->driContext);
    } else {
