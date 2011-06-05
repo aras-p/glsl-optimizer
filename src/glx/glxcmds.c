@@ -224,10 +224,14 @@ CreateContext(Display *dpy, int generic_id, struct glx_config *config,
       return NULL;
 
    gc = NULL;
+#ifdef GLX_USE_APPLEGL
+   gc = applegl_create_context(psc, config, shareList, renderType);
+#else
    if (allowDirect && psc->vtable->create_context)
       gc = psc->vtable->create_context(psc, config, shareList, renderType);
    if (!gc)
       gc = indirect_create_context(psc, config, shareList, renderType);
+#endif
    if (!gc)
       return NULL;
 

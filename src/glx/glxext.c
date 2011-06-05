@@ -779,11 +779,12 @@ AllocAndFetchScreenConfigs(Display * dpy, struct glx_display * priv)
 	 psc = (*priv->driswDisplay->createScreen) (i, priv);
 #endif
 #if defined(GLX_USE_APPLEGL)
-      if (psc == NULL && priv->appleglDisplay)
-	 psc = (*priv->appleglDisplay->createScreen) (i, priv);
-#endif
+      if (psc == NULL)
+         psc = applegl_create_screen(i, priv);
+#else
       if (psc == NULL)
 	 psc = indirect_create_screen(i, priv);
+#endif
       priv->screens[i] = psc;
    }
    SyncHandle();

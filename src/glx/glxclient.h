@@ -769,7 +769,19 @@ GarbageCollectDRIDrawables(struct glx_screen *psc);
 
 extern __GLXDRIdrawable *
 GetGLXDRIDrawable(Display *dpy, GLXDrawable drawable);
+#endif
 
+#ifdef GLX_USE_APPLEGL
+extern struct glx_screen *
+applegl_create_screen(int screen, struct glx_display * priv);
+
+extern struct glx_context *
+applegl_create_context(struct glx_screen *psc,
+			struct glx_config *mode,
+			struct glx_context *shareList, int renderType);
+
+extern int
+applegl_create_display(struct glx_display *display);
 #endif
 
 extern struct glx_context dummyContext;
