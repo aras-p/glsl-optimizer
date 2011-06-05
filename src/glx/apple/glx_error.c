@@ -27,21 +27,23 @@
  prior written authorization.
 */
 #include <stdbool.h>
+#include <assert.h>
 #include <X11/Xlibint.h>
 #include <X11/extensions/extutil.h>
 #include <X11/extensions/Xext.h>
 #include "glxclient.h"
 #include "glx_error.h"
 
-extern XExtDisplayInfo *__glXFindDisplay(Display * dpy);
-
 void
 __glXSendError(Display * dpy, int errorCode, unsigned long resourceID,
                unsigned long minorCode, bool coreX11error)
 {
-   XExtDisplayInfo *info = __glXFindDisplay(dpy);
+   struct glx_display *glx_dpy = __glXInitialize(dpy);
    struct glx_context *gc = __glXGetCurrentContext();
    xError error;
+
+   assert(glx_dpy);
+   assert(gc);
 
    LockDisplay(dpy);
 
@@ -51,7 +53,7 @@ __glXSendError(Display * dpy, int errorCode, unsigned long resourceID,
       error.errorCode = errorCode;
    }
    else {
-      error.errorCode = info->codes->first_error + errorCode;
+      error.errorCode = glx_dpy->codes->first_error + errorCode;
    }
 
    error.sequenceNumber = dpy->request;
