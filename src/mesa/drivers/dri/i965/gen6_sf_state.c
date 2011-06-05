@@ -100,10 +100,11 @@ upload_sf_state(struct brw_context *brw)
    int i;
    /* _NEW_BUFFER */
    GLboolean render_to_fbo = brw->intel.ctx.DrawBuffer->Name != 0;
-   int attr = 0;
+   int attr = 0, input_index = 0;
    int urb_start;
    int two_side_color = (ctx->Light.Enabled && ctx->Light.Model.TwoSide);
    float point_size;
+   uint16_t attr_overrides[FRAG_ATTRIB_MAX];
 
    /* _NEW_TRANSFORM */
    if (ctx->Transform.ClipPlanesEnabled)
@@ -243,6 +244,27 @@ upload_sf_state(struct brw_context *brw)
                 ((brw->fragment_program->Base.InputsRead & FRAG_BIT_WPOS) ? 0 : 1));
    }
 
+   /* Create the mapping from the FS inputs we produce to the VS outputs
+    * they source from.
+    */
+   for (; attr < FRAG_ATTRIB_MAX; attr++) {
+      if (!(brw->fragment_program->Base.InputsRead & BITFIELD64_BIT(attr)))
+	 continue;
+
+      /* The hardware can only do the overrides on 16 overrides at a
+       * time, and the other up to 16 have to be lined up so that the
+       * input index = the output index.  We'll need to do some
+       * tweaking to make sure that's the case.
+       */
+      assert(input_index < 16 || attr == input_index);
+
+      attr_overrides[input_index++] = get_attr_override(brw, attr,
+							two_side_color);
+   }
+
+   for (; input_index < FRAG_ATTRIB_MAX; input_index++)
+      attr_overrides[input_index] = 0;
+
    BEGIN_BATCH(20);
    OUT_BATCH(_3DSTATE_SF << 16 | (20 - 2));
    OUT_BATCH(dw1);
@@ -253,24 +275,7 @@ upload_sf_state(struct brw_context *brw)
    OUT_BATCH_F(ctx->Polygon.OffsetFactor); /* scale */
    OUT_BATCH_F(0.0); /* XXX: global depth offset clamp */
    for (i = 0; i < 8; i++) {
-      uint32_t attr_overrides = 0;
-
-      for (; attr < 64; attr++) {
-	 if (brw->fragment_program->Base.InputsRead & BITFIELD64_BIT(attr)) {
-	    attr_overrides |= get_attr_override(brw, attr, two_side_color);
-	    attr++;
-	    break;
-	 }
-      }
-
-      for (; attr < 64; attr++) {
-	 if (brw->fragment_program->Base.InputsRead & BITFIELD64_BIT(attr)) {
-	    attr_overrides |= get_attr_override(brw, attr, two_side_color) << 16;
-	    attr++;
-	    break;
-	 }
-      }
-      OUT_BATCH(attr_overrides);
+      OUT_BATCH(attr_overrides[i * 2] | attr_overrides[i * 2 + 1] << 16);
    }
    OUT_BATCH(dw16); /* point sprite texcoord bitmask */
    OUT_BATCH(dw17); /* constant interp bitmask */
