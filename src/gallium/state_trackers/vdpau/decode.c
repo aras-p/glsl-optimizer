@@ -160,6 +160,7 @@ vlVdpDecoderRenderMpeg2(struct pipe_video_decoder *decoder,
 {
    struct pipe_mpeg12_picture_desc picture;
    struct pipe_video_buffer *ref_frames[2];
+   uint8_t intra_quantizer_matrix[64];
    unsigned num_ycbcr_blocks[3] = { 0, 0, 0 };
    unsigned i;
 
@@ -189,7 +190,6 @@ vlVdpDecoderRenderMpeg2(struct pipe_video_decoder *decoder,
    picture.frame_pred_frame_dct = picture_info->frame_pred_frame_dct;
    picture.q_scale_type = picture_info->q_scale_type;
    picture.alternate_scan = picture_info->alternate_scan;
-   picture.intra_dc_precision = picture_info->intra_dc_precision;
    picture.intra_vlc_format = picture_info->intra_vlc_format;
    picture.concealment_motion_vectors = picture_info->concealment_motion_vectors;
    picture.f_code[0][0] = picture_info->f_code[0][0] - 1;
@@ -197,10 +197,11 @@ vlVdpDecoderRenderMpeg2(struct pipe_video_decoder *decoder,
    picture.f_code[1][0] = picture_info->f_code[1][0] - 1;
    picture.f_code[1][1] = picture_info->f_code[1][1] - 1;
 
-   picture.intra_quantizer_matrix = picture_info->intra_quantizer_matrix;
-   picture.non_intra_quantizer_matrix = picture_info->non_intra_quantizer_matrix;
-
    buffer->begin_frame(buffer);
+
+   memcpy(intra_quantizer_matrix, picture_info->intra_quantizer_matrix, sizeof(intra_quantizer_matrix));
+   intra_quantizer_matrix[0] = 1 << (7 - picture_info->intra_dc_precision);
+   buffer->set_quant_matrix(buffer, intra_quantizer_matrix, picture_info->non_intra_quantizer_matrix);
 
    for (i = 0; i < bitstream_buffer_count; ++i)
       buffer->decode_bitstream(buffer, bitstream_buffers[i].bitstream_bytes,

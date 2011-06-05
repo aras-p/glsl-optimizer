@@ -330,6 +330,18 @@ vl_mpeg12_buffer_begin_frame(struct pipe_video_decode_buffer *buffer)
    }
 }
 
+static void
+vl_mpeg12_buffer_set_quant_matrix(struct pipe_video_decode_buffer *buffer,
+                                  uint8_t intra_matrix[64],
+                                  uint8_t non_intra_matrix[64])
+{
+   struct vl_mpeg12_buffer *buf = (struct vl_mpeg12_buffer*)buffer;
+   unsigned i;
+
+   for (i = 0; i < VL_MAX_PLANES; ++i)
+      vl_zscan_upload_quant(&buf->zscan[i], intra_matrix, non_intra_matrix);
+}
+
 static struct pipe_ycbcr_block *
 vl_mpeg12_buffer_get_ycbcr_stream(struct pipe_video_decode_buffer *buffer, int component)
 {
@@ -378,7 +390,6 @@ vl_mpeg12_buffer_decode_bitstream(struct pipe_video_decode_buffer *buffer,
                                   unsigned num_ycbcr_blocks[3])
 {
    struct vl_mpeg12_buffer *buf = (struct vl_mpeg12_buffer*)buffer;
-   uint8_t intra_quantizer_matrix[64];
    struct vl_mpeg12_decoder *dec;
    unsigned i;
 
@@ -387,13 +398,8 @@ vl_mpeg12_buffer_decode_bitstream(struct pipe_video_decode_buffer *buffer,
    dec = (struct vl_mpeg12_decoder *)buf->base.decoder;
    assert(dec);
 
-   memcpy(intra_quantizer_matrix, picture->intra_quantizer_matrix, sizeof(intra_quantizer_matrix));
-   intra_quantizer_matrix[0] = 1 << (7 - picture->intra_dc_precision);
-
-   for (i = 0; i < VL_MAX_PLANES; ++i) {
+   for (i = 0; i < VL_MAX_PLANES; ++i)
       vl_zscan_set_layout(&buf->zscan[i], picture->alternate_scan ? dec->zscan_alternate : dec->zscan_normal);
-      vl_zscan_upload_quant(&buf->zscan[i], intra_quantizer_matrix, picture->non_intra_quantizer_matrix);
-   }
 
    vl_mpg12_bs_decode(&buf->bs, num_bytes, data, picture, num_ycbcr_blocks);
 }
@@ -473,6 +479,7 @@ vl_mpeg12_create_buffer(struct pipe_video_decoder *decoder)
    buffer->base.decoder = decoder;
    buffer->base.destroy = vl_mpeg12_buffer_destroy;
    buffer->base.begin_frame = vl_mpeg12_buffer_begin_frame;
+   buffer->base.set_quant_matrix = vl_mpeg12_buffer_set_quant_matrix;
    buffer->base.get_ycbcr_stream = vl_mpeg12_buffer_get_ycbcr_stream;
    buffer->base.get_ycbcr_buffer = vl_mpeg12_buffer_get_ycbcr_buffer;
    buffer->base.get_mv_stream_stride = vl_mpeg12_buffer_get_mv_stream_stride;

@@ -113,13 +113,9 @@ struct pipe_mpeg12_picture_desc
    unsigned frame_pred_frame_dct;
    unsigned q_scale_type;
    unsigned alternate_scan;
-   unsigned intra_dc_precision;
    unsigned intra_vlc_format;
    unsigned concealment_motion_vectors;
    unsigned f_code[2][2];
-
-   uint8_t *intra_quantizer_matrix;
-   uint8_t *non_intra_quantizer_matrix;
 };
 
 #ifdef __cplusplus
