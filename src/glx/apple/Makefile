@@ -38,7 +38,7 @@ SOURCES = \
 	appledri.c \
 	../clientattrib.c \
 	../compsize.c \
-	../glcontextmodes.c \
+	../glxconfig.c \
 	glx_empty.c \
 	glx_error.c \
 	../glx_pbuffer.c \

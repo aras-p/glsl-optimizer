@@ -44,7 +44,7 @@
 #include <pthread.h>
 #include <assert.h>
 #include "apple_glx.h"
-#include "glcontextmodes.h"
+#include "glxconfig.h"
 #include "apple_cgl.h"
 
 /* mesa defines in glew.h, Apple in glext.h.
