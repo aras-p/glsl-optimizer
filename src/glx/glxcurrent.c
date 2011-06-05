@@ -216,6 +216,7 @@ MakeContextCurrent(Display * dpy, GLXDrawable draw,
    struct glx_context *oldGC = __glXGetCurrentContext();
    int ret = Success;
 
+#ifndef GLX_USE_APPLEGL
    /* XXX: If this is left out, then libGL ends up not having this
     * symbol, and drivers using it fail to load.  Compare the
     * implementation of this symbol to _glapi_noop_enable_warnings(),
@@ -225,6 +226,7 @@ MakeContextCurrent(Display * dpy, GLXDrawable draw,
     * library, though.
     */
    (void)_glthread_GetID();
+#endif
 
    /* Make sure that the new context has a nonzero ID.  In the request,
     * a zero context ID is used only to mean that we bind to no current
@@ -244,7 +246,9 @@ MakeContextCurrent(Display * dpy, GLXDrawable draw,
       return False;
    }
 
+#ifndef GLX_USE_APPLEGL
    _glapi_check_multithread();
+#endif
 
    __glXLock();
    if (oldGC == gc &&
