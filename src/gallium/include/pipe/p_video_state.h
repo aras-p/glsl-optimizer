@@ -118,18 +118,8 @@ struct pipe_mpeg12_picture_desc
    unsigned concealment_motion_vectors;
    unsigned f_code[2][2];
 
-   bool mpeg1;
    uint8_t *intra_quantizer_matrix;
    uint8_t *non_intra_quantizer_matrix;
-
-#if 0
-   /* TODO: Use bitfields where possible? */
-   unsigned top_field_first;
-   unsigned full_pel_forward_vector;
-   unsigned full_pel_backward_vector;
-   struct pipe_buffer *chroma_intra_quantizer_matrix;
-   struct pipe_buffer *chroma_non_intra_quantizer_matrix;
-#endif
 };
 
 #ifdef __cplusplus

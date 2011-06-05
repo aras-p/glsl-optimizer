@@ -1209,7 +1209,7 @@ slice_intra_DCT(struct vl_mpg12_bs *bs, struct pipe_mpeg12_picture_desc * pictur
 
    memset(dest, 0, sizeof(int16_t) * 64);
    dest[0] = dc_dct_pred[cc];
-   if (picture->mpeg1) {
+   if (picture->base.profile == PIPE_VIDEO_PROFILE_MPEG1) {
       if (picture->picture_coding_type != D_TYPE)
           get_mpeg1_intra_block(bs, quantizer_scale, dest);
    } else if (picture->intra_vlc_format)
@@ -1236,7 +1236,7 @@ slice_non_intra_DCT(struct vl_mpg12_bs *bs, struct pipe_mpeg12_picture_desc * pi
    bs->ycbcr_stream[cc]->coding = coding;
 
    memset(dest, 0, sizeof(int16_t) * 64);
-   if (picture->mpeg1)
+   if (picture->base.profile == PIPE_VIDEO_PROFILE_MPEG1)
       get_mpeg1_non_intra_block(bs, quantizer_scale, dest);
    else
       get_non_intra_block(bs, quantizer_scale, dest);
@@ -1654,7 +1654,7 @@ decode_slice(struct vl_mpg12_bs *bs, struct pipe_mpeg12_picture_desc *picture)
          if (picture->picture_structure == FRAME_PICTURE)
             switch (macroblock_modes & MOTION_TYPE_MASK) {
             case MC_FRAME:
-               if (picture->mpeg1) {
+               if (picture->base.profile == PIPE_VIDEO_PROFILE_MPEG1) {
                   MOTION_CALL(motion_mp1, macroblock_modes);
                } else {
                   MOTION_CALL(motion_fr_frame, macroblock_modes);

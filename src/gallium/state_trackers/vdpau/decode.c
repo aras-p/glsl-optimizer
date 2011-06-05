@@ -183,6 +183,7 @@ vlVdpDecoderRenderMpeg2(struct pipe_video_decoder *decoder,
    }
 
    memset(&picture, 0, sizeof(picture));
+   picture.base.profile = decoder->profile;
    picture.picture_coding_type = picture_info->picture_coding_type;
    picture.picture_structure = picture_info->picture_structure;
    picture.frame_pred_frame_dct = picture_info->frame_pred_frame_dct;
