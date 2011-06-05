@@ -110,8 +110,7 @@ create_vert_shader(struct vl_zscan *zscan)
 
    vrect = ureg_DECL_vs_input(shader, VS_I_RECT);
    vpos = ureg_DECL_vs_input(shader, VS_I_VPOS);
-
-   block_num = ureg_DECL_system_value(shader, 0, TGSI_SEMANTIC_INSTANCEID, 0);
+   block_num = ureg_DECL_vs_input(shader, VS_I_BLOCK_NUM);
 
    tmp = ureg_DECL_temporary(shader);
 
