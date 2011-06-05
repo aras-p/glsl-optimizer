@@ -231,13 +231,6 @@ upload_sf_state(struct brw_context *brw)
 	 (1 << GEN6_SF_TRIFAN_PROVOKE_SHIFT);
    }
 
-   if (ctx->Point.PointSprite) {
-       for (i = 0; i < 8; i++) { 
-	   if (ctx->Point.CoordReplace[i])
-	       dw16 |= (1 << i);
-       }
-   }
-
    /* flat shading */
    if (ctx->Light.ShadeModel == GL_FLAT) {
        dw17 |= ((brw->fragment_program->Base.InputsRead & (FRAG_BIT_COL0 | FRAG_BIT_COL1)) >>
@@ -250,6 +243,13 @@ upload_sf_state(struct brw_context *brw)
    for (; attr < FRAG_ATTRIB_MAX; attr++) {
       if (!(brw->fragment_program->Base.InputsRead & BITFIELD64_BIT(attr)))
 	 continue;
+
+      /* _NEW_POINT */
+      if (ctx->Point.PointSprite &&
+	  (attr >= FRAG_ATTRIB_TEX0 && attr <= FRAG_ATTRIB_TEX7) &&
+	  ctx->Point.CoordReplace[attr - FRAG_ATTRIB_TEX0]) {
+	 dw16 |= (1 << input_index);
+      }
 
       /* The hardware can only do the overrides on 16 overrides at a
        * time, and the other up to 16 have to be lined up so that the
