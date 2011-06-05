@@ -277,7 +277,7 @@ unmap_and_flush_surface(XvMCSurfacePrivate *surface)
    }
 
    if (surface->mapped) {
-      surface->decode_buffer->unmap(surface->decode_buffer);
+      surface->decode_buffer->end_frame(surface->decode_buffer);
       for (i = 0; i < 3; ++i)
          num_ycbcr_blocks[i] = surface->ycbcr[i].num_blocks_added;
       context_priv->decoder->flush_buffer(surface->decode_buffer,
@@ -415,7 +415,7 @@ Status XvMCRenderSurface(Display *dpy, XvMCContext *context, unsigned int pictur
    }
 
    if (!target_surface_priv->mapped) {
-      t_buffer->map(t_buffer);
+      t_buffer->begin_frame(t_buffer);
 
       for (i = 0; i < 3; ++i) {
          target_surface_priv->ycbcr[i].num_blocks_added = 0;

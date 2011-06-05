@@ -261,7 +261,7 @@ vl_mpeg12_buffer_destroy(struct pipe_video_decode_buffer *buffer)
 }
 
 static void
-vl_mpeg12_buffer_map(struct pipe_video_decode_buffer *buffer)
+vl_mpeg12_buffer_begin_frame(struct pipe_video_decode_buffer *buffer)
 {
    struct vl_mpeg12_buffer *buf = (struct vl_mpeg12_buffer*)buffer;
    struct vl_mpeg12_decoder *dec;
@@ -399,7 +399,7 @@ vl_mpeg12_buffer_decode_bitstream(struct pipe_video_decode_buffer *buffer,
 }
 
 static void
-vl_mpeg12_buffer_unmap(struct pipe_video_decode_buffer *buffer)
+vl_mpeg12_buffer_end_frame(struct pipe_video_decode_buffer *buffer)
 {
    struct vl_mpeg12_buffer *buf = (struct vl_mpeg12_buffer*)buffer;
    struct vl_mpeg12_decoder *dec;
@@ -472,13 +472,13 @@ vl_mpeg12_create_buffer(struct pipe_video_decoder *decoder)
 
    buffer->base.decoder = decoder;
    buffer->base.destroy = vl_mpeg12_buffer_destroy;
-   buffer->base.map = vl_mpeg12_buffer_map;
+   buffer->base.begin_frame = vl_mpeg12_buffer_begin_frame;
    buffer->base.get_ycbcr_stream = vl_mpeg12_buffer_get_ycbcr_stream;
    buffer->base.get_ycbcr_buffer = vl_mpeg12_buffer_get_ycbcr_buffer;
    buffer->base.get_mv_stream_stride = vl_mpeg12_buffer_get_mv_stream_stride;
    buffer->base.get_mv_stream = vl_mpeg12_buffer_get_mv_stream;
    buffer->base.decode_bitstream = vl_mpeg12_buffer_decode_bitstream;
-   buffer->base.unmap = vl_mpeg12_buffer_unmap;
+   buffer->base.end_frame = vl_mpeg12_buffer_end_frame;
 
    if (!vl_vb_init(&buffer->vertex_stream, dec->pipe,
                    dec->base.width / MACROBLOCK_WIDTH,

@@ -200,13 +200,13 @@ vlVdpDecoderRenderMpeg2(struct pipe_video_decoder *decoder,
    picture.intra_quantizer_matrix = picture_info->intra_quantizer_matrix;
    picture.non_intra_quantizer_matrix = picture_info->non_intra_quantizer_matrix;
 
-   buffer->map(buffer);
+   buffer->begin_frame(buffer);
 
    for (i = 0; i < bitstream_buffer_count; ++i)
       buffer->decode_bitstream(buffer, bitstream_buffers[i].bitstream_bytes,
                                bitstream_buffers[i].bitstream, &picture, num_ycbcr_blocks);
 
-   buffer->unmap(buffer);
+   buffer->end_frame(buffer);
 
    decoder->flush_buffer(buffer, num_ycbcr_blocks, ref_frames, target);
 

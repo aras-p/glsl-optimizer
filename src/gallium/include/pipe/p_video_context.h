@@ -177,7 +177,7 @@ struct pipe_video_decode_buffer
    /**
     * map the input buffer into memory before starting decoding
     */
-   void (*map)(struct pipe_video_decode_buffer *decbuf);
+   void (*begin_frame)(struct pipe_video_decode_buffer *decbuf);
 
    /**
     * get the pointer where to put the ycbcr blocks of a component
@@ -210,7 +210,7 @@ struct pipe_video_decode_buffer
    /**
     * unmap decoder buffer before flushing
     */
-   void (*unmap)(struct pipe_video_decode_buffer *decbuf);
+   void (*end_frame)(struct pipe_video_decode_buffer *decbuf);
 };
 
 /**
