@@ -606,13 +606,15 @@ static void upload_invarient_state( struct brw_context *brw )
       OUT_BATCH(1);
       ADVANCE_BATCH();
 
-      for (i = 0; i < 4; i++) {
-	 BEGIN_BATCH(4);
-	 OUT_BATCH(_3DSTATE_GS_SVB_INDEX << 16 | (4 - 2));
-	 OUT_BATCH(i << SVB_INDEX_SHIFT);
-	 OUT_BATCH(0);
-	 OUT_BATCH(0xffffffff);
-	 ADVANCE_BATCH();
+      if (intel->gen < 7) {
+	 for (i = 0; i < 4; i++) {
+	    BEGIN_BATCH(4);
+	    OUT_BATCH(_3DSTATE_GS_SVB_INDEX << 16 | (4 - 2));
+	    OUT_BATCH(i << SVB_INDEX_SHIFT);
+	    OUT_BATCH(0);
+	    OUT_BATCH(0xffffffff);
+	    ADVANCE_BATCH();
+	 }
       }
    }
 
