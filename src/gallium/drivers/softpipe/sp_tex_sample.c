@@ -1709,6 +1709,317 @@ mip_filter_none(struct tgsi_sampler *tgsi_sampler,
 }
 
 
+/* For anisotropic filtering */
+#define WEIGHT_LUT_SIZE 1024
+
+static float *weightLut = NULL;
+
+/**
+ * Creates the look-up table used to speed-up EWA sampling
+ */
+static void
+create_filter_table(void)
+{
+   unsigned i;
+   if (!weightLut) {
+      weightLut = (float *) malloc(WEIGHT_LUT_SIZE * sizeof(float));
+
+      for (i = 0; i < WEIGHT_LUT_SIZE; ++i) {
+         float alpha = 2;
+         float r2 = (float) i / (float) (WEIGHT_LUT_SIZE - 1);
+         float weight = (float) exp(-alpha * r2);
+         weightLut[i] = weight;
+      }
+   }
+}
+
+
+/**
+ * Elliptical weighted average (EWA) filter for producing high quality
+ * anisotropic filtered results.
+ * Based on the Higher Quality Elliptical Weighted Avarage Filter
+ * published by Paul S. Heckbert in his Master's Thesis
+ * "Fundamentals of Texture Mapping and Image Warping" (1989)
+ */
+static void
+img_filter_2d_ewa(struct tgsi_sampler *tgsi_sampler,
+                  const float s[QUAD_SIZE],
+                  const float t[QUAD_SIZE],
+                  const float p[QUAD_SIZE],
+                  const float c0[QUAD_SIZE],
+                  enum tgsi_sampler_control control,
+                  const float dudx, const float dvdx,
+                  const float dudy, const float dvdy,
+                  float rgba[NUM_CHANNELS][QUAD_SIZE])
+{
+   const struct sp_sampler_variant *samp = sp_sampler_variant(tgsi_sampler);
+   const struct pipe_resource *texture = samp->view->texture;
+
+   unsigned level0 = samp->level > 0 ? samp->level : 0;
+   float scaling = 1.0 / (1 << level0);
+   int width = u_minify(texture->width0, level0);
+   int height = u_minify(texture->height0, level0);
+
+   float ux = dudx * scaling;
+   float vx = dvdx * scaling;
+   float uy = dudy * scaling;
+   float vy = dvdy * scaling;
+
+   /* compute ellipse coefficients to bound the region: 
+    * A*x*x + B*x*y + C*y*y = F.
+    */
+   float A = vx*vx+vy*vy+1;
+   float B = -2*(ux*vx+uy*vy);
+   float C = ux*ux+uy*uy+1;
+   float F = A*C-B*B/4.0;
+
+   /* check if it is an ellipse */
+   /* ASSERT(F > 0.0); */
+
+   /* Compute the ellipse's (u,v) bounding box in texture space */
+   float d = -B*B+4.0*C*A;
+   float box_u = 2.0 / d * sqrt(d*C*F); /* box_u -> half of bbox with   */
+   float box_v = 2.0 / d * sqrt(A*d*F); /* box_v -> half of bbox height */
+
+   float rgba_temp[NUM_CHANNELS][QUAD_SIZE];
+   float s_buffer[QUAD_SIZE];
+   float t_buffer[QUAD_SIZE];
+   float weight_buffer[QUAD_SIZE];
+   unsigned buffer_next;
+   int j;
+   float den;// = 0.0F;
+   float ddq;
+   float U;// = u0 - tex_u;
+   int v;
+
+   /* Scale ellipse formula to directly index the Filter Lookup Table.
+    * i.e. scale so that F = WEIGHT_LUT_SIZE-1
+    */
+   double formScale = (double) (WEIGHT_LUT_SIZE - 1) / F;
+   A *= formScale;
+   B *= formScale;
+   C *= formScale;
+   /* F *= formScale; */ /* no need to scale F as we don't use it below here */
+
+   /* For each quad, the du and dx values are the same and so the ellipse is
+    * also the same. Note that texel/image access can only be performed using
+    * a quad, i.e. it is not possible to get the pixel value for a single
+    * tex coord. In order to have a better performance, the access is buffered
+    * using the s_buffer/t_buffer and weight_buffer. Only when the buffer is full,
+    * then the pixel values are read from the image.
+    */
+   ddq = 2 * A;
+   
+   for (j = 0; j < QUAD_SIZE; j++) {
+      /* Heckbert MS thesis, p. 59; scan over the bounding box of the ellipse
+       * and incrementally update the value of Ax^2+Bxy*Cy^2; when this
+       * value, q, is less than F, we're inside the ellipse
+       */
+      float tex_u=-0.5 + s[j] * texture->width0 * scaling;
+      float tex_v=-0.5 + t[j] * texture->height0 * scaling;
+
+      int u0 = floor(tex_u - box_u);
+      int u1 = ceil (tex_u + box_u);
+      int v0 = floor(tex_v - box_v);
+      int v1 = ceil (tex_v + box_v);
+
+      float num[4] = {0.0F, 0.0F, 0.0F, 0.0F};
+      buffer_next = 0;
+      den = 0;
+      U = u0 - tex_u;
+      for (v = v0; v <= v1; ++v) {
+         float V = v - tex_v;
+         float dq = A * (2 * U + 1) + B * V;
+         float q = (C * V + B * U) * V + A * U * U;
+
+         int u;
+         for (u = u0; u <= u1; ++u) {
+            /* Note that the ellipse has been pre-scaled so F = WEIGHT_LUT_SIZE - 1 */
+            if (q < WEIGHT_LUT_SIZE) {
+               /* as a LUT is used, q must never be negative;
+                * should not happen, though
+                */
+               const int qClamped = q >= 0.0F ? q : 0;
+               float weight = weightLut[qClamped];
+
+               weight_buffer[buffer_next] = weight;
+               s_buffer[buffer_next] = u / ((float) width);
+               t_buffer[buffer_next] = v / ((float) height);
+            
+               buffer_next++;
+               if (buffer_next == QUAD_SIZE) {
+                  /* 4 texel coords are in the buffer -> read it now */
+                  int jj;
+                  /* it is assumed that samp->min_img_filter is set to
+                   * img_filter_2d_nearest or one of the
+                   * accelerated img_filter_2d_nearest_XXX functions.
+                   */
+                  samp->min_img_filter(tgsi_sampler, s_buffer, t_buffer, p, NULL,
+                                        tgsi_sampler_lod_bias, rgba_temp);
+                  for (jj = 0; jj < buffer_next; jj++) {
+                     num[0] += weight_buffer[jj] * rgba_temp[0][jj];
+                     num[1] += weight_buffer[jj] * rgba_temp[1][jj];
+                     num[2] += weight_buffer[jj] * rgba_temp[2][jj];
+                     num[3] += weight_buffer[jj] * rgba_temp[3][jj];
+                  }
+
+                  buffer_next = 0;
+               }
+
+               den += weight;
+            }
+            q += dq;
+            dq += ddq;
+         }
+      }
+
+      /* if the tex coord buffer contains unread values, we will read them now.
+       * Note that in most cases we have to read more pixel values than required,
+       * however, as the img_filter_2d_nearest function(s) does not have a count
+       * parameter, we need to read the whole quad and ignore the unused values
+       */
+      if (buffer_next > 0) {
+         int jj;
+         /* it is assumed that samp->min_img_filter is set to
+          * img_filter_2d_nearest or one of the
+          * accelerated img_filter_2d_nearest_XXX functions.
+          */
+         samp->min_img_filter(tgsi_sampler, s_buffer, t_buffer, p, NULL,
+                               tgsi_sampler_lod_bias, rgba_temp);
+         for (jj = 0; jj < buffer_next; jj++) {
+            num[0] += weight_buffer[jj] * rgba_temp[0][jj];
+            num[1] += weight_buffer[jj] * rgba_temp[1][jj];
+            num[2] += weight_buffer[jj] * rgba_temp[2][jj];
+            num[3] += weight_buffer[jj] * rgba_temp[3][jj];
+         }
+      }
+
+      if (den <= 0.0F) {
+         /* Reaching this place would mean
+          * that no pixels intersected the ellipse.
+          * This should never happen because
+          * the filter we use always
+          * intersects at least one pixel.
+          */
+
+         /*rgba[0]=0;
+         rgba[1]=0;
+         rgba[2]=0;
+         rgba[3]=0;*/
+         /* not enough pixels in resampling, resort to direct interpolation */
+         samp->min_img_filter(tgsi_sampler, s, t, p, NULL, tgsi_sampler_lod_bias, rgba_temp);
+         den = 1;
+         num[0] = rgba_temp[0][j];
+         num[1] = rgba_temp[1][j];
+         num[2] = rgba_temp[2][j];
+         num[3] = rgba_temp[3][j];
+      }
+
+      rgba[0][j] = num[0] / den;
+      rgba[1][j] = num[1] / den;
+      rgba[2][j] = num[2] / den;
+      rgba[3][j] = num[3] / den;
+   }
+}
+
+
+/**
+ * Sample 2D texture using an anisotropic filter.
+ */
+static void
+mip_filter_linear_aniso(struct tgsi_sampler *tgsi_sampler,
+                        const float s[QUAD_SIZE],
+                        const float t[QUAD_SIZE],
+                        const float p[QUAD_SIZE],
+                        const float c0[QUAD_SIZE],
+                        enum tgsi_sampler_control control,
+                        float rgba[NUM_CHANNELS][QUAD_SIZE])
+{
+   struct sp_sampler_variant *samp = sp_sampler_variant(tgsi_sampler);
+   const struct pipe_resource *texture = samp->view->texture;
+   int level0;
+   float lambda;
+   float lod[QUAD_SIZE];
+
+   float s_to_u = u_minify(texture->width0, samp->view->u.tex.first_level);
+   float t_to_v = u_minify(texture->height0, samp->view->u.tex.first_level);
+   float dudx = (s[QUAD_BOTTOM_RIGHT] - s[QUAD_BOTTOM_LEFT]) * s_to_u;
+   float dudy = (s[QUAD_TOP_LEFT]     - s[QUAD_BOTTOM_LEFT]) * s_to_u;
+   float dvdx = (t[QUAD_BOTTOM_RIGHT] - t[QUAD_BOTTOM_LEFT]) * t_to_v;
+   float dvdy = (t[QUAD_TOP_LEFT]     - t[QUAD_BOTTOM_LEFT]) * t_to_v;
+   
+   if (control == tgsi_sampler_lod_bias) {
+      /* note: instead of working with Px and Py, we will use the 
+       * squared length instead, to avoid sqrt.
+       */
+      float Px2 = dudx * dudx + dvdx * dvdx;
+      float Py2 = dudy * dudy + dvdy * dvdy;
+
+      float Pmax2;
+      float Pmin2;
+      float e;
+      const float maxEccentricity = samp->sampler->max_anisotropy * samp->sampler->max_anisotropy;
+      
+      if (Px2 < Py2) {
+         Pmax2 = Py2;
+         Pmin2 = Px2;
+      }
+      else {
+         Pmax2 = Px2;
+         Pmin2 = Py2;
+      }
+      
+      /* if the eccentricity of the ellipse is too big, scale up the shorter
+       * of the two vectors to limit the maximum amount of work per pixel
+       */
+      e = Pmax2 / Pmin2;
+      if (e > maxEccentricity) {
+         /* float s=e / maxEccentricity;
+            minor[0] *= s;
+            minor[1] *= s;
+            Pmin2 *= s; */
+         Pmin2 = Pmax2 / maxEccentricity;
+      }
+      
+      /* note: we need to have Pmin=sqrt(Pmin2) here, but we can avoid
+       * this since 0.5*log(x) = log(sqrt(x))
+       */
+      lambda = 0.5 * util_fast_log2(Pmin2)  + samp->sampler->lod_bias;
+      compute_lod(samp->sampler, lambda, c0, lod);
+   }
+   else {
+      assert(control == tgsi_sampler_lod_explicit);
+
+      memcpy(lod, c0, sizeof(lod));
+   }
+   
+   /* XXX: Take into account all lod values.
+    */
+   lambda = lod[0];
+   level0 = samp->view->u.tex.first_level + (int)lambda;
+
+   /* If the ellipse covers the whole image, we can
+    * simply return the average of the whole image.
+    */
+   if (level0 >= texture->last_level) {
+      samp->level = texture->last_level;
+      samp->min_img_filter(tgsi_sampler, s, t, p, NULL, tgsi_sampler_lod_bias, rgba);
+   }
+   else {
+      /* don't bother interpolating between multiple LODs; it doesn't
+       * seem to be worth the extra running time.
+       */
+      samp->level = level0;
+      img_filter_2d_ewa(tgsi_sampler, s, t, p, NULL, tgsi_sampler_lod_bias,
+                        dudx, dvdx, dudy, dvdy, rgba);
+   }
+
+   if (DEBUG_TEX) {
+      print_sample(__FUNCTION__, rgba);
+   }
+}
+
+
 
 /**
  * Specialized version of mip_filter_linear with hard-wired calls to
@@ -2316,14 +2627,33 @@ sp_create_sampler_variant( const struct pipe_sampler_state *sampler,
           sampler->normalized_coords &&
           sampler->wrap_s == PIPE_TEX_WRAP_REPEAT &&
           sampler->wrap_t == PIPE_TEX_WRAP_REPEAT &&
-          sampler->min_img_filter == PIPE_TEX_FILTER_LINEAR)
-      {
+          sampler->min_img_filter == PIPE_TEX_FILTER_LINEAR) {
          samp->mip_filter = mip_filter_linear_2d_linear_repeat_POT;
       }
-      else 
-      {
+      else {
          samp->mip_filter = mip_filter_linear;
       }
+      
+      /* Anisotropic filtering extension. */
+      if (sampler->max_anisotropy > 1) {
+      	samp->mip_filter = mip_filter_linear_aniso;
+      	
+      	/* Override min_img_filter: 
+      	 * min_img_filter needs to be set to NEAREST since we need to access
+      	 * each texture pixel as it is and weight it later; using linear
+      	 * filters will have incorrect results.
+      	 * By setting the filter to NEAREST here, we can avoid calling the
+      	 * generic img_filter_2d_nearest in the anisotropic filter function,
+      	 * making it possible to use one of the accelerated implementations 
+      	 */
+      	samp->min_img_filter = get_img_filter(key, PIPE_TEX_FILTER_NEAREST, sampler);
+      	
+      	/* on first access create the lookup table containing the filter weights. */
+        if (!weightLut) {
+           create_filter_table();
+        }
+      }
+      
       break;
    }
 

@@ -81,7 +81,7 @@ softpipe_get_param(struct pipe_screen *screen, enum pipe_cap param)
    case PIPE_CAP_SM3:
       return 1;
    case PIPE_CAP_ANISOTROPIC_FILTER:
-      return 0;
+      return 1;
    case PIPE_CAP_POINT_SPRITE:
       return 1;
    case PIPE_CAP_MAX_RENDER_TARGETS:
@@ -161,7 +161,7 @@ softpipe_get_paramf(struct pipe_screen *screen, enum pipe_cap param)
    case PIPE_CAP_MAX_POINT_WIDTH_AA:
       return 255.0; /* arbitrary */
    case PIPE_CAP_MAX_TEXTURE_ANISOTROPY:
-      return 16.0; /* not actually signficant at this time */
+      return 16.0;
    case PIPE_CAP_MAX_TEXTURE_LOD_BIAS:
       return 16.0; /* arbitrary */
    default:
