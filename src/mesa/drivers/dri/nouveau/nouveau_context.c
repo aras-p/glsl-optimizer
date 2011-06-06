@@ -261,7 +261,7 @@ nouveau_update_renderbuffers(__DRIcontext *dri_ctx, __DRIdrawable *draw)
 		assert(!ret);
 	}
 
-	_mesa_resize_framebuffer(NULL, fb, draw->w, draw->h);
+	_mesa_resize_framebuffer(ctx, fb, draw->w, draw->h);
 }
 
 static void
