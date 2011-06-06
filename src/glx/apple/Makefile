@@ -49,7 +49,8 @@ SOURCES = \
 	../glxextensions.c \
 	glxreply.c \
 	../pixel.c \
-	../xfont.c
+	../xfont.c \
+	../applegl_glx.c
 
 include $(TOP)/src/mesa/sources.mak
 

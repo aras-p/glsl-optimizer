@@ -1,5 +1,6 @@
 /*
  * Copyright © 2010 Intel Corporation
+ * Copyright © 2011 Apple Inc.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Soft-
@@ -32,6 +33,13 @@
 
 #if defined(GLX_USE_APPLEGL)
 
+#include <stdbool.h>
+
+#include "glxclient.h"
+#include "apple_glx_context.h"
+#include "apple_glx.h"
+#include "glx_error.h"
+
 static void
 applegl_destroy_context(struct glx_context *gc)
 {
@@ -42,13 +50,14 @@ static int
 applegl_bind_context(struct glx_context *gc, struct glx_context *old,
 		     GLXDrawable draw, GLXDrawable read)
 {
+   Display *dpy = gc->psc->dpy;
    bool error = apple_glx_make_current_context(dpy,
-					       (oldGC && oldGC != &dummyContext) ? oldGC->driContext : NUL~
+					       (oldGC && oldGC != &dummyContext) ? oldGC->driContext : NULL
 					       gc ? gc->driContext : NULL, draw);
 
    apple_glx_diagnostic("%s: error %s\n", __func__, error ? "YES" : "NO");
    if (error)
-      return GLXBadContext;
+      return 1; /* GLXBadContext is the same as Success (0) */
 
    return Success;
 }
@@ -67,7 +76,8 @@ applegl_wait_gl(struct glx_context *gc)
 static void
 applegl_wait_x(struct glx_context *gc)
 {
-   apple_glx_waitx(gc->dpy, gc->driContext);
+   Display *dpy = gc->psc->dpy;
+   apple_glx_waitx(dpy, gc->driContext);
 }
 
 static const struct glx_context_vtable applegl_context_vtable = {
@@ -81,7 +91,7 @@ static const struct glx_context_vtable applegl_context_vtable = {
    NULL, /* release_tex_image, */
 };
 
-static struct glx_context *
+struct glx_context *
 applegl_create_context(struct glx_screen *psc,
 		       struct glx_config *mode,
 		       struct glx_context *shareList, int renderType)
@@ -89,19 +99,21 @@ applegl_create_context(struct glx_screen *psc,
    struct glx_context *gc;
    int errorcode;
    bool x11error;
+   Display *dpy;
 
    /* TODO: Integrate this with apple_glx_create_context and make
     * struct apple_glx_context inherit from struct glx_context. */
 
-   gc = Xmalloc(sizeof *gc);
-   if (pcp == NULL)
+   gc = Xcalloc(1, sizeof (*gc));
+   if (gc == NULL)
       return NULL;
 
-   memset(gc, 0, sizeof *gc);
-   if (!glx_context_init(&gc->base, &psc->base, mode)) {
+   if (!glx_context_init(gc, psc, mode)) {
       Xfree(gc);
       return NULL;
    }
+
+   dpy = gc->psc->dpy;
 
    gc->vtable = &applegl_context_vtable;
    gc->driContext = NULL;
@@ -118,14 +130,14 @@ applegl_create_context(struct glx_screen *psc,
 
    gc->currentContextTag = -1;
    gc->mode = fbconfig;
-   gc->isDirect = allowDirect;
+   gc->isDirect = 1;
    gc->xid = 1; /* Just something not None, so we know when to destroy
 		 * it in MakeContextCurrent. */
 
    return gc;
 }
 
-struct glx_screen_vtable appegl_screen_vtable = {
+struct glx_screen_vtable applegl_screen_vtable = {
    applegl_create_context
 };
 
@@ -146,10 +158,12 @@ applegl_create_screen(int screen, struct glx_display * priv)
 }
 
 _X_HIDDEN int
-applegl_create_display(struct glx_display *display)
+applegl_create_display(struct glx_display *glx_dpy)
 {
-   /* create applegl display and stuff in display->appleglDisplay */
-   apple_init_glx(display);
+   if(!apple_init_glx(glx_dpy->dpy))
+      return 1;
+
+   return GLXBadContext;
 }
 
 #endif
