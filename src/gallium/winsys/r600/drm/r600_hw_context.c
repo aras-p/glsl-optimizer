@@ -79,6 +79,60 @@ static void INLINE r600_context_fence_wraparound(struct r600_context *ctx, unsig
 	}
 }
 
+static void r600_init_block(struct r600_context *ctx,
+			    struct r600_block *block,
+			    const struct r600_reg *reg, int index, int nreg,
+			    unsigned opcode, unsigned offset_base)
+{
+	int i = index;
+	int j, n = nreg;
+
+	/* initialize block */
+	block->status |= R600_BLOCK_STATUS_DIRTY; /* dirty all blocks at start */
+	block->start_offset = reg[i].offset;
+	block->pm4[block->pm4_ndwords++] = PKT3(opcode, n, 0);
+	block->pm4[block->pm4_ndwords++] = (block->start_offset - offset_base) >> 2;
+	block->reg = &block->pm4[block->pm4_ndwords];
+	block->pm4_ndwords += n;
+	block->nreg = n;
+	block->nreg_dirty = n;
+	block->flags = 0;
+	LIST_INITHEAD(&block->list);
+
+	for (j = 0; j < n; j++) {
+		if (reg[i+j].flags & REG_FLAG_DIRTY_ALWAYS) {
+			block->flags |= REG_FLAG_DIRTY_ALWAYS;
+		}
+		if (reg[i+j].flags & REG_FLAG_NEED_BO) {
+			block->nbo++;
+			assert(block->nbo < R600_BLOCK_MAX_BO);
+			block->pm4_bo_index[j] = block->nbo;
+			block->pm4[block->pm4_ndwords++] = PKT3(PKT3_NOP, 0, 0);
+			block->pm4[block->pm4_ndwords++] = 0x00000000;
+			if (reg[i+j].flags & REG_FLAG_RV6XX_SBU) {
+				block->reloc[block->nbo].flush_flags = 0;
+				block->reloc[block->nbo].flush_mask = 0;
+			} else {
+				block->reloc[block->nbo].flush_flags = reg[i+j].flush_flags;
+				block->reloc[block->nbo].flush_mask = reg[i+j].flush_mask;
+			}
+			block->reloc[block->nbo].bo_pm4_index = block->pm4_ndwords - 1;
+		}
+		if ((ctx->radeon->family > CHIP_R600) &&
+		    (ctx->radeon->family < CHIP_RV770) && reg[i+j].flags & REG_FLAG_RV6XX_SBU) {
+			block->pm4[block->pm4_ndwords++] = PKT3(PKT3_SURFACE_BASE_UPDATE, 0, 0);
+			block->pm4[block->pm4_ndwords++] = reg[i+j].flush_flags;
+		}
+	}
+	for (j = 0; j < n; j++) {
+		if (reg[i+j].flush_flags) {
+			block->pm4_flush_ndwords += 7;
+		}
+	}
+	/* check that we stay in limit */
+	assert(block->pm4_ndwords < R600_BLOCK_MAX_REG);
+}
+
 int r600_context_add_block(struct r600_context *ctx, const struct r600_reg *reg, unsigned nreg,
 			   unsigned opcode, unsigned offset_base)
 {
@@ -87,8 +141,6 @@ int r600_context_add_block(struct r600_context *ctx, const struct r600_reg *reg,
 	int offset;
 
 	for (unsigned i = 0, n = 0; i < nreg; i += n) {
-		u32 j;
-
 		/* ignore new block balise */
 		if (reg[i].offset == GROUP_FORCE_NEW_BLOCK) {
 			n = 1;
@@ -131,50 +183,7 @@ int r600_context_add_block(struct r600_context *ctx, const struct r600_reg *reg,
 			range->blocks[CTX_BLOCK_ID(reg[i + j].offset)] = block;
 		}
 
-		/* initialize block */
-		block->status |= R600_BLOCK_STATUS_DIRTY; /* dirty all blocks at start */
-		block->start_offset = reg[i].offset;
-		block->pm4[block->pm4_ndwords++] = PKT3(opcode, n, 0);
-		block->pm4[block->pm4_ndwords++] = (block->start_offset - offset_base) >> 2;
-		block->reg = &block->pm4[block->pm4_ndwords];
-		block->pm4_ndwords += n;
-		block->nreg = n;
-		block->nreg_dirty = n;
-		block->flags = 0;
-		LIST_INITHEAD(&block->list);
-
-		for (j = 0; j < n; j++) {
-			if (reg[i+j].flags & REG_FLAG_DIRTY_ALWAYS) {
-				block->flags |= REG_FLAG_DIRTY_ALWAYS;
-			}
-			if (reg[i+j].flags & REG_FLAG_NEED_BO) {
-				block->nbo++;
-				assert(block->nbo < R600_BLOCK_MAX_BO);
-				block->pm4_bo_index[j] = block->nbo;
-				block->pm4[block->pm4_ndwords++] = PKT3(PKT3_NOP, 0, 0);
-				block->pm4[block->pm4_ndwords++] = 0x00000000;
-				if (reg[i+j].flags & REG_FLAG_RV6XX_SBU) {
-					block->reloc[block->nbo].flush_flags = 0;
-					block->reloc[block->nbo].flush_mask = 0;
-				} else {
-					block->reloc[block->nbo].flush_flags = reg[i+j].flush_flags;
-					block->reloc[block->nbo].flush_mask = reg[i+j].flush_mask;
-				}
-				block->reloc[block->nbo].bo_pm4_index = block->pm4_ndwords - 1;
-			}
-			if ((ctx->radeon->family > CHIP_R600) &&
-			    (ctx->radeon->family < CHIP_RV770) && reg[i+j].flags & REG_FLAG_RV6XX_SBU) {
-				block->pm4[block->pm4_ndwords++] = PKT3(PKT3_SURFACE_BASE_UPDATE, 0, 0);
-				block->pm4[block->pm4_ndwords++] = reg[i+j].flush_flags;
-			}
-		}
-		for (j = 0; j < n; j++) {
-			if (reg[i+j].flush_flags) {
-				block->pm4_flush_ndwords += 7;
-			}
-		}
-		/* check that we stay in limit */
-		assert(block->pm4_ndwords < R600_BLOCK_MAX_REG);
+		r600_init_block(ctx, block, reg, i, n, opcode, offset_base);
 	}
 	return 0;
 }
