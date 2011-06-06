@@ -99,7 +99,8 @@ applegl_create_context(struct glx_screen *psc,
    struct glx_context *gc;
    int errorcode;
    bool x11error;
-   Display *dpy;
+   Display *dpy = psc->dpy;
+   int screen = psc->scr;
 
    /* TODO: Integrate this with apple_glx_create_context and make
     * struct apple_glx_context inherit from struct glx_context. */
@@ -112,8 +113,6 @@ applegl_create_context(struct glx_screen *psc,
       Xfree(gc);
       return NULL;
    }
-
-   dpy = gc->psc->dpy;
 
    gc->vtable = &applegl_context_vtable;
    gc->driContext = NULL;
