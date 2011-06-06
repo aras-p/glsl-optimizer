@@ -128,8 +128,8 @@ boolean draw_init(struct draw_context *draw)
    ASSIGN_4V( draw->plane[4],  0,  0,  1, 1 ); /* yes these are correct */
    ASSIGN_4V( draw->plane[5],  0,  0, -1, 1 ); /* mesa's a bit wonky */
    draw->nr_planes = 6;
-   draw->clip_xy = 1;
-   draw->clip_z = 1;
+   draw->clip_xy = TRUE;
+   draw->clip_z = TRUE;
 
 
    draw->reduced_prim = ~0; /* != any of PIPE_PRIM_x */
