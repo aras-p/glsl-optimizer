@@ -364,12 +364,24 @@ GALLIUM_FILES = \
 	$(DIRECTORY)/src/gallium/*/*/*/*.[ch]				\
 	$(DIRECTORY)/src/gallium/*/*/*/*.py
 
+APPLE_DRI_FILES = \
+	$(DIRECTORY)/src/glx/apple/Makefile 				\
+	$(DIRECTORY)/src/glx/apple/*.[ch]				\
+	$(DIRECTORY)/src/glx/apple/*.tcl				\
+	$(DIRECTORY)/src/glx/apple/apple_exports.list			\
+	$(DIRECTORY)/src/glx/apple/GL_aliases				\
+	$(DIRECTORY)/src/glx/apple/GL_extensions			\
+	$(DIRECTORY)/src/glx/apple/GL_noop				\
+	$(DIRECTORY)/src/glx/apple/GL_promoted				\
+	$(DIRECTORY)/src/glx/apple/specs/*.spec				\
+	$(DIRECTORY)/src/glx/apple/specs/*.tm
 
 DRI_FILES = \
 	$(DIRECTORY)/include/GL/internal/dri_interface.h		\
 	$(DIRECTORY)/include/GL/internal/sarea.h			\
 	$(DIRECTORY)/src/glx/Makefile					\
 	$(DIRECTORY)/src/glx/*.[ch]					\
+	$(APPLE_DRI_FILES)						\
 	$(DIRECTORY)/src/mesa/drivers/dri/Makefile			\
 	$(DIRECTORY)/src/mesa/drivers/dri/Makefile.template		\
 	$(DIRECTORY)/src/mesa/drivers/dri/dri.pc.in			\
