@@ -1143,6 +1143,7 @@ void evergreen_context_draw(struct r600_context *ctx, const struct r600_draw *dr
 	unsigned ndwords = 7;
 	struct r600_block *dirty_block = NULL;
 	struct r600_block *next_block;
+	uint32_t *pm4;
 
 	if (draw->indices) {
 		ndwords = 11;
@@ -1184,24 +1185,26 @@ void evergreen_context_draw(struct r600_context *ctx, const struct r600_draw *dr
 	}
 
 	/* draw packet */
-	ctx->pm4[ctx->pm4_cdwords++] = PKT3(PKT3_INDEX_TYPE, 0, ctx->predicate_drawing);
-	ctx->pm4[ctx->pm4_cdwords++] = draw->vgt_index_type;
-	ctx->pm4[ctx->pm4_cdwords++] = PKT3(PKT3_NUM_INSTANCES, 0, ctx->predicate_drawing);
-	ctx->pm4[ctx->pm4_cdwords++] = draw->vgt_num_instances;
+	pm4 = &ctx->pm4[ctx->pm4_cdwords];
+	pm4[0] = PKT3(PKT3_INDEX_TYPE, 0, ctx->predicate_drawing);
+	pm4[1] = draw->vgt_index_type;
+	pm4[2] = PKT3(PKT3_NUM_INSTANCES, 0, ctx->predicate_drawing);
+	pm4[3] = draw->vgt_num_instances;
 	if (draw->indices) {
-	        ctx->pm4[ctx->pm4_cdwords++] = PKT3(PKT3_DRAW_INDEX, 3, ctx->predicate_drawing);
-		ctx->pm4[ctx->pm4_cdwords++] = draw->indices_bo_offset + r600_bo_offset(draw->indices);
-		ctx->pm4[ctx->pm4_cdwords++] = 0;
-		ctx->pm4[ctx->pm4_cdwords++] = draw->vgt_num_indices;
-		ctx->pm4[ctx->pm4_cdwords++] = draw->vgt_draw_initiator;
-		ctx->pm4[ctx->pm4_cdwords++] = PKT3(PKT3_NOP, 0, ctx->predicate_drawing);
-		ctx->pm4[ctx->pm4_cdwords++] = 0;
-		r600_context_bo_reloc(ctx, &ctx->pm4[ctx->pm4_cdwords - 1], draw->indices);
+	        pm4[4] = PKT3(PKT3_DRAW_INDEX, 3, ctx->predicate_drawing);
+		pm4[5] = draw->indices_bo_offset + r600_bo_offset(draw->indices);
+		pm4[6] = 0;
+		pm4[7] = draw->vgt_num_indices;
+		pm4[8] = draw->vgt_draw_initiator;
+		pm4[9] = PKT3(PKT3_NOP, 0, ctx->predicate_drawing);
+		pm4[10] = 0;
+		r600_context_bo_reloc(ctx, &pm4[10], draw->indices);
 	} else {
-		ctx->pm4[ctx->pm4_cdwords++] = PKT3(PKT3_DRAW_INDEX_AUTO, 1, ctx->predicate_drawing);
-		ctx->pm4[ctx->pm4_cdwords++] = draw->vgt_num_indices;
-		ctx->pm4[ctx->pm4_cdwords++] = draw->vgt_draw_initiator;
+		pm4[4] = PKT3(PKT3_DRAW_INDEX_AUTO, 1, ctx->predicate_drawing);
+		pm4[5] = draw->vgt_num_indices;
+		pm4[6] = draw->vgt_draw_initiator;
 	}
+	ctx->pm4_cdwords += ndwords;
 
 	ctx->flags |= (R600_CONTEXT_DRAW_PENDING | R600_CONTEXT_DST_CACHES_DIRTY);
 
