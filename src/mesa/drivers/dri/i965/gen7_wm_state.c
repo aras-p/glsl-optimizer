@@ -232,9 +232,13 @@ upload_ps_state(struct brw_context *brw)
    OUT_BATCH(0); /* scratch space base offset */
    OUT_BATCH(dw4);
    OUT_BATCH(dw5);
-   /* FINISHME: need to upload the SIMD16 program */
    OUT_BATCH(0); /* kernel 1 pointer */
-   OUT_BATCH(0); /* kernel 2 pointer */
+   if (brw->wm.prog_data->prog_offset_16) {
+      OUT_RELOC(brw->wm.prog_bo, I915_GEM_DOMAIN_INSTRUCTION, 0,
+	        brw->wm.prog_data->prog_offset_16);
+   } else {
+      OUT_BATCH(0); /* kernel 2 pointer */
+   }
    ADVANCE_BATCH();
 }
 
