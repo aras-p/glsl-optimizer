@@ -501,6 +501,17 @@ i915_translate_instruction(struct i915_fp_compile *p,
                       i915_emit_const4fv(p, cos_constants), 0);
       break;
 
+  case TGSI_OPCODE_DP2:
+      src0 = src_vector(p, &inst->Src[0]);
+      src1 = src_vector(p, &inst->Src[1]);
+
+      i915_emit_arith(p,
+                      A0_DP3,
+                      get_result_vector(p, &inst->Dst[0]),
+                      get_result_flags(inst), 0,
+                      swizzle(src0, X, Y, ZERO, ZERO), src1, 0);
+      break;
+
    case TGSI_OPCODE_DP3:
       emit_simple_arith(p, inst, A0_DP3, 2);
       break;
@@ -706,7 +717,7 @@ i915_translate_instruction(struct i915_fp_compile *p,
       i915_emit_arith(p,
                       A0_RCP,
                       get_result_vector(p, &inst->Dst[0]),
-                         get_result_flags(inst), 0,
+                      get_result_flags(inst), 0,
                       swizzle(src0, X, X, X, X), 0, 0);
       break;
 
@@ -784,13 +795,36 @@ i915_translate_instruction(struct i915_fp_compile *p,
       }
       break;
 
-   case TGSI_OPCODE_SGE:
-      emit_simple_arith(p, inst, A0_SGE, 2);
+   case TGSI_OPCODE_SEQ:
+      /* if we're both >= and <= then we're == */
+      src0 = src_vector(p, &inst->Src[0]);
+      src1 = src_vector(p, &inst->Src[1]);
+      tmp = i915_get_utemp(p);
+
+      i915_emit_arith(p,
+                      A0_SGE,
+                      tmp, A0_DEST_CHANNEL_ALL, 0,
+                      src0,
+                      src1, 0);
+
+      i915_emit_arith(p,
+                      A0_SGE,
+                      get_result_vector(p, &inst->Dst[0]),
+                      A0_DEST_CHANNEL_ALL, 0,
+                      src1,
+                      src0, 0);
+
+      i915_emit_arith(p,
+                      A0_MUL,
+                      get_result_vector(p, &inst->Dst[0]),
+                      A0_DEST_CHANNEL_ALL, 0,
+                      get_result_vector(p, &inst->Dst[0]),
+                      tmp, 0);
+
       break;
 
-   case TGSI_OPCODE_SLE:
-      /* like SGE, but swap reg0, reg1 */
-      emit_simple_arith_swap2(p, inst, A0_SGE, 2);
+   case TGSI_OPCODE_SGE:
+      emit_simple_arith(p, inst, A0_SGE, 2);
       break;
 
    case TGSI_OPCODE_SIN:
@@ -843,6 +877,11 @@ i915_translate_instruction(struct i915_fp_compile *p,
                       i915_emit_const4fv(p, sin_constants), 0);
       break;
 
+   case TGSI_OPCODE_SLE:
+      /* like SGE, but swap reg0, reg1 */
+      emit_simple_arith_swap2(p, inst, A0_SGE, 2);
+      break;
+
    case TGSI_OPCODE_SLT:
       emit_simple_arith(p, inst, A0_SLT, 2);
       break;
@@ -852,32 +891,59 @@ i915_translate_instruction(struct i915_fp_compile *p,
       emit_simple_arith_swap2(p, inst, A0_SLT, 2);
       break;
 
-   case TGSI_OPCODE_SEQ:
-      /* if we're both >= and <= then we're == */
+   case TGSI_OPCODE_SNE:
+      /* if we're neither < nor > then we're != */
       src0 = src_vector(p, &inst->Src[0]);
       src1 = src_vector(p, &inst->Src[1]);
       tmp = i915_get_utemp(p);
 
       i915_emit_arith(p,
-                      A0_SGE,
-                      tmp, A0_DEST_CHANNEL_ALL, 0,
+                      A0_SLT,
+                      tmp,
+                      A0_DEST_CHANNEL_ALL, 0,
                       src0,
                       src1, 0);
 
       i915_emit_arith(p,
-                      A0_SGE,
+                      A0_SLT,
                       get_result_vector(p, &inst->Dst[0]),
                       A0_DEST_CHANNEL_ALL, 0,
                       src1,
                       src0, 0);
 
       i915_emit_arith(p,
-                      A0_MUL,
+                      A0_ADD,
                       get_result_vector(p, &inst->Dst[0]),
                       A0_DEST_CHANNEL_ALL, 0,
                       get_result_vector(p, &inst->Dst[0]),
                       tmp, 0);
+      break;
 
+   case TGSI_OPCODE_SSG:
+      /* compute (src>0) - (src<0) */
+      src0 = src_vector(p, &inst->Src[0]);
+      tmp = i915_get_utemp(p);
+
+      i915_emit_arith(p,
+                      A0_SLT,
+                      tmp,
+                      A0_DEST_CHANNEL_ALL, 0,
+                      src0,
+                      swizzle(src0, ZERO, ZERO, ZERO, ZERO), 0);
+
+      i915_emit_arith(p,
+                      A0_SLT,
+                      get_result_vector(p, &inst->Dst[0]),
+                      A0_DEST_CHANNEL_ALL, 0,
+                      swizzle(src0, ZERO, ZERO, ZERO, ZERO),
+                      src0, 0);
+
+      i915_emit_arith(p,
+                      A0_ADD,
+                      get_result_vector(p, &inst->Dst[0]),
+                      A0_DEST_CHANNEL_ALL, 0,
+                      get_result_vector(p, &inst->Dst[0]),
+                      negate(tmp, 1, 1, 1, 1), 0);
       break;
 
    case TGSI_OPCODE_SUB:
@@ -893,6 +959,10 @@ i915_translate_instruction(struct i915_fp_compile *p,
 
    case TGSI_OPCODE_TEX:
       emit_tex(p, inst, T0_TEXLD);
+      break;
+
+   case TGSI_OPCODE_TRUNC:
+      emit_simple_arith(p, inst, A0_TRC, 1);
       break;
 
    case TGSI_OPCODE_TXB:
