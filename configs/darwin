@@ -57,3 +57,5 @@ GLU_DIRS = sgi
 DRIVER_DIRS = osmesa
 #DRIVER_DIRS = dri
 DRI_DIRS = swrast
+GALLIUM_DRIVERS_DIRS = softpipe trace rbug noop identity galahad failover
+#GALLIUM_DRIVERS_DIRS += llvmpipe
