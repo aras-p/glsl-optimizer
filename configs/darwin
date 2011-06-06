@@ -31,18 +31,20 @@ CXXFLAGS =  -ggdb3 -Os -Wall -fno-strict-aliasing \
 	-I$(INSTALL_DIR)/include -I$(X11_DIR)/include $(OPT_FLAGS) $(PIC_FLAGS) $(ARCH_FLAGS) $(ASM_FLAGS) $(DEFINES)
 
 # Library names (actual file names)
-GL_LIB_NAME = libGL.dylib
-GLU_LIB_NAME = libGLU.dylib
-GLUT_LIB_NAME = libglut.dylib
-GLW_LIB_NAME = libGLw.dylib
-OSMESA_LIB_NAME = libOSMesa.dylib
+GL_LIB_NAME = lib$(GL_LIB).dylib
+GLU_LIB_NAME = lib$(GLU_LIB).dylib
+GLUT_LIB_NAME = lib$(GLUT_LIB).dylib
+GLW_LIB_NAME = lib$(GLW_LIB).dylib
+OSMESA_LIB_NAME = lib$(OSMESA_LIB).dylib
+VG_LIB_NAME = lib$(VG_LIB).dylib
 
 # globs used to install the lib and all symlinks
-GL_LIB_GLOB = libGL.*dylib
-GLU_LIB_GLOB = libGLU.*dylib
-GLUT_LIB_GLOB = libglut.*dylib
-GLW_LIB_GLOB = libGLw.*dylib
-OSMESA_LIB_GLOB = libOSMesa.*dylib
+GL_LIB_GLOB = lib$(GL_LIB).*dylib
+GLU_LIB_GLOB = lib$(GLU_LIB).*dylib
+GLUT_LIB_GLOB = lib$(GLUT_LIB).*dylib
+GLW_LIB_GLOB = lib$(GLW_LIB).*dylib
+OSMESA_LIB_GLOB = lib$(OSMESA_LIB).*dylib
+VG_LIB_GLOB = lib$(VG_LIB).*.dylib
 
 GL_LIB_DEPS = -L$(INSTALL_DIR)/$(LIB_DIR) -L$(X11_DIR)/$(LIB_DIR) -lX11 -lXext -lm -lpthread
 OSMESA_LIB_DEPS = -L$(TOP)/$(LIB_DIR) -l$(GL_LIB)
