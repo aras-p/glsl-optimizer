@@ -1183,31 +1183,33 @@ void r600_context_block_emit_dirty(struct r600_context *ctx, struct r600_block *
 {
 	int id;
 	int optional = block->nbo == 0 && !(block->flags & REG_FLAG_DIRTY_ALWAYS);
-	int cp_dwords = block->pm4_ndwords, start_dword;
-	int new_dwords;
+	int cp_dwords = block->pm4_ndwords, start_dword = 0;
+	int new_dwords = 0;
 
 	if (block->nreg_dirty == 0 && optional) {
 		goto out;
 	}
 
-	optional &= (block->nreg_dirty != block->nreg);
+	if (block->nbo) {
+		ctx->flags |= R600_CONTEXT_CHECK_EVENT_FLUSH;
 
-	ctx->flags |= R600_CONTEXT_CHECK_EVENT_FLUSH;
-	for (int j = 0; j < block->nreg; j++) {
-		if (block->pm4_bo_index[j]) {
-			/* find relocation */
-			id = block->pm4_bo_index[j];
-			r600_context_bo_reloc(ctx,
-					&block->pm4[block->reloc[id].bo_pm4_index],
-					block->reloc[id].bo);
-			r600_context_bo_flush(ctx,
-					block->reloc[id].flush_flags,
-					block->reloc[id].flush_mask,
-					block->reloc[id].bo);
+		for (int j = 0; j < block->nreg; j++) {
+			if (block->pm4_bo_index[j]) {
+				/* find relocation */
+				id = block->pm4_bo_index[j];
+				r600_context_bo_reloc(ctx,
+						      &block->pm4[block->reloc[id].bo_pm4_index],
+						      block->reloc[id].bo);
+				r600_context_bo_flush(ctx,
+						      block->reloc[id].flush_flags,
+						      block->reloc[id].flush_mask,
+						      block->reloc[id].bo);
+			}
 		}
+		ctx->flags &= ~R600_CONTEXT_CHECK_EVENT_FLUSH;
 	}
-	ctx->flags &= ~R600_CONTEXT_CHECK_EVENT_FLUSH;
 
+	optional &= (block->nreg_dirty != block->nreg);
 	if (optional) {
 		new_dwords = block->nreg_dirty;
 		start_dword = ctx->pm4_cdwords;
