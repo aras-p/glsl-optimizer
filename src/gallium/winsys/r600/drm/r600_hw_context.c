@@ -561,7 +561,31 @@ static const struct r600_reg r600_context_reg_list[] = {
 };
 
 /* SHADER RESOURCE R600/R700 */
-static int r600_state_resource_init(struct r600_context *ctx, u32 offset)
+int r600_resource_init(struct r600_context *ctx, struct r600_range *range, unsigned offset, unsigned nblocks, unsigned stride, struct r600_reg *reg, int nreg, unsigned offset_base)
+{
+	int i;
+	struct r600_block *block;
+	range->blocks = calloc(nblocks, sizeof(struct r600_block *));
+	if (range->blocks == NULL)
+		return -ENOMEM;
+
+	reg[0].offset += offset;
+	for (i = 0; i < nblocks; i++) {
+		block = calloc(1, sizeof(struct r600_block));
+		if (block == NULL) {
+			return -ENOMEM;
+		}
+		ctx->nblocks++;
+		range->blocks[i] = block;
+		r600_init_block(ctx, block, reg, 0, nreg, PKT3_SET_RESOURCE, offset_base);
+
+		reg[0].offset += stride;
+	}
+	return 0;
+}
+
+      
+static int r600_resource_range_init(struct r600_context *ctx, struct r600_range *range, unsigned offset, unsigned nblocks, unsigned stride)
 {
 	struct r600_reg r600_shader_resource[] = {
 		{R_038000_RESOURCE0_WORD0, 0, 0, 0},
@@ -574,10 +598,7 @@ static int r600_state_resource_init(struct r600_context *ctx, u32 offset)
 	};
 	unsigned nreg = Elements(r600_shader_resource);
 
-	for (int i = 0; i < nreg; i++) {
-		r600_shader_resource[i].offset += offset;
-	}
-	return r600_context_add_block(ctx, r600_shader_resource, nreg, PKT3_SET_RESOURCE, R600_RESOURCE_OFFSET);
+	return r600_resource_init(ctx, range, offset, nblocks, stride, r600_shader_resource, nreg, R600_RESOURCE_OFFSET);
 }
 
 /* SHADER SAMPLER R600/R700 */
@@ -639,6 +660,22 @@ static void r600_context_clear_fenced_bo(struct r600_context *ctx)
 	}
 }
 
+static void r600_free_resource_range(struct r600_context *ctx, struct r600_range *range, int nblocks)
+{
+	struct r600_block *block;
+	int i;
+	for (i = 0; i < nblocks; i++) {
+		block = range->blocks[i];
+		if (block) {
+			for (int k = 1; k <= block->nbo; k++)
+				r600_bo_reference(ctx->radeon, &block->reloc[k].bo, NULL);
+			free(block);
+		}
+	}
+	free(range->blocks);
+
+}
+
 /* initialize */
 void r600_context_fini(struct r600_context *ctx)
 {
@@ -663,6 +700,9 @@ void r600_context_fini(struct r600_context *ctx)
 		}
 		free(ctx->range[i].blocks);
 	}
+	r600_free_resource_range(ctx, &ctx->ps_resources, ctx->num_ps_resources);
+	r600_free_resource_range(ctx, &ctx->vs_resources, ctx->num_vs_resources);
+	r600_free_resource_range(ctx, &ctx->fs_resources, ctx->num_fs_resources);
 	free(ctx->range);
 	free(ctx->blocks);
 	free(ctx->reloc);
@@ -673,13 +713,26 @@ void r600_context_fini(struct r600_context *ctx)
 	memset(ctx, 0, sizeof(struct r600_context));
 }
 
+static void r600_add_resource_block(struct r600_context *ctx, struct r600_range *range, int num_blocks, int *index)
+{
+	int c = *index;
+	for (int j = 0; j < num_blocks; j++) {
+		if (!range->blocks[j])
+			continue;
+
+		ctx->blocks[c++] = range->blocks[j];
+	}
+	*index = c;
+}
+
 int r600_setup_block_table(struct r600_context *ctx)
 {
 	/* setup block table */
+	int c = 0;
 	ctx->blocks = calloc(ctx->nblocks, sizeof(void*));
 	if (!ctx->blocks)
 		return -ENOMEM;
-	for (int i = 0, c = 0; i < NUM_RANGES; i++) {
+	for (int i = 0; i < NUM_RANGES; i++) {
 		if (!ctx->range[i].blocks)
 			continue;
 		for (int j = 0, add; j < (1 << HASH_SHIFT); j++) {
@@ -700,6 +753,10 @@ int r600_setup_block_table(struct r600_context *ctx)
 			}
 		}
 	}
+
+	r600_add_resource_block(ctx, &ctx->ps_resources, ctx->num_ps_resources, &c);
+	r600_add_resource_block(ctx, &ctx->vs_resources, ctx->num_vs_resources, &c);
+	r600_add_resource_block(ctx, &ctx->fs_resources, ctx->num_fs_resources, &c);
 	return 0;
 }
 
@@ -756,24 +813,19 @@ int r600_context_init(struct r600_context *ctx, struct radeon *radeon)
 		if (r)
 			goto out_err;
 	}
-	/* PS RESOURCE */
-	for (int j = 0, offset = 0; j < 160; j++, offset += 0x1C) {
-		r = r600_state_resource_init(ctx, offset);
-		if (r)
-			goto out_err;
-	}
-	/* VS RESOURCE */
-	for (int j = 0, offset = 0x1180; j < 160; j++, offset += 0x1C) {
-		r = r600_state_resource_init(ctx, offset);
-		if (r)
-			goto out_err;
-	}
-	/* FS RESOURCE */
-	for (int j = 0, offset = 0x2300; j < 16; j++, offset += 0x1C) {
-		r = r600_state_resource_init(ctx, offset);
-		if (r)
-			goto out_err;
-	}
+
+	ctx->num_ps_resources = 160;
+	ctx->num_vs_resources = 160;
+	ctx->num_fs_resources = 16;
+	r = r600_resource_range_init(ctx, &ctx->ps_resources, 0, 160, 0x1c);
+	if (r)
+		goto out_err;
+	r = r600_resource_range_init(ctx, &ctx->vs_resources, 0x1180, 160, 0x1c);
+	if (r)
+		goto out_err;
+	r = r600_resource_range_init(ctx, &ctx->fs_resources, 0x2300, 16, 0x1c);
+	if (r)
+		goto out_err;
 
 	/* PS loop const */
 	r600_loop_const_init(ctx, 0);
@@ -985,17 +1037,13 @@ void r600_context_pipe_state_set(struct r600_context *ctx, struct r600_pipe_stat
 	}
 }
 
-void r600_context_pipe_state_set_resource(struct r600_context *ctx, struct r600_pipe_resource_state *state, unsigned offset)
+void r600_context_pipe_state_set_resource(struct r600_context *ctx, struct r600_pipe_resource_state *state, struct r600_block *block)
 {
-	struct r600_range *range;
-	struct r600_block *block;
 	int i;
 	int dirty;
 	int num_regs = ctx->radeon->chip_class >= EVERGREEN ? 8 : 7;
 	boolean is_vertex;
 
-	range = &ctx->range[CTX_RANGE_ID(offset)];
-	block = range->blocks[CTX_BLOCK_ID(offset)];
 	if (state == NULL) {
 		block->status &= ~(R600_BLOCK_STATUS_ENABLED | R600_BLOCK_STATUS_DIRTY);
 		if (block->reloc[1].bo)
@@ -1064,23 +1112,23 @@ void r600_context_pipe_state_set_resource(struct r600_context *ctx, struct r600_
 
 void r600_context_pipe_state_set_ps_resource(struct r600_context *ctx, struct r600_pipe_resource_state *state, unsigned rid)
 {
-	unsigned offset = R_038000_SQ_TEX_RESOURCE_WORD0_0 + 0x1C * rid;
+	struct r600_block *block = ctx->ps_resources.blocks[rid];
 
-	r600_context_pipe_state_set_resource(ctx, state, offset);
+	r600_context_pipe_state_set_resource(ctx, state, block);
 }
 
 void r600_context_pipe_state_set_vs_resource(struct r600_context *ctx, struct r600_pipe_resource_state *state, unsigned rid)
 {
-	unsigned offset = R_038000_SQ_TEX_RESOURCE_WORD0_0 + 0x1180 + 0x1C * rid;
+	struct r600_block *block = ctx->vs_resources.blocks[rid];
 
-	r600_context_pipe_state_set_resource(ctx, state, offset);
+	r600_context_pipe_state_set_resource(ctx, state, block);
 }
 
 void r600_context_pipe_state_set_fs_resource(struct r600_context *ctx, struct r600_pipe_resource_state *state, unsigned rid)
 {
-	unsigned offset = R_038000_SQ_TEX_RESOURCE_WORD0_0 + 0x2300 + 0x1C * rid;
+	struct r600_block *block = ctx->fs_resources.blocks[rid];
 
-	r600_context_pipe_state_set_resource(ctx, state, offset);
+	r600_context_pipe_state_set_resource(ctx, state, block);
 }
 
 static inline void r600_context_pipe_state_set_sampler(struct r600_context *ctx, struct r600_pipe_state *state, unsigned offset)

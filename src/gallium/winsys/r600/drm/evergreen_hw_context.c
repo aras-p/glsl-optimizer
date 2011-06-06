@@ -817,7 +817,7 @@ static const struct r600_reg cayman_context_reg_list[] = {
 };
 
 /* SHADER RESOURCE R600/R700 */
-static int evergreen_state_resource_init(struct r600_context *ctx, u32 offset)
+static int r600_resource_range_init(struct r600_context *ctx, struct r600_range *range, unsigned offset, unsigned nblocks, unsigned stride)
 {
 	struct r600_reg r600_shader_resource[] = {
 		{R_030000_RESOURCE0_WORD0, 0, 0, 0},
@@ -831,10 +831,7 @@ static int evergreen_state_resource_init(struct r600_context *ctx, u32 offset)
 	};
 	unsigned nreg = Elements(r600_shader_resource);
 
-	for (int i = 0; i < nreg; i++) {
-		r600_shader_resource[i].offset += offset;
-	}
-	return r600_context_add_block(ctx, r600_shader_resource, nreg, PKT3_SET_RESOURCE, EVERGREEN_RESOURCE_OFFSET);
+	return r600_resource_init(ctx, range, offset, nblocks, stride, r600_shader_resource, nreg, EVERGREEN_RESOURCE_OFFSET);
 }
 
 /* SHADER SAMPLER R600/R700 */
@@ -960,24 +957,19 @@ int evergreen_context_init(struct r600_context *ctx, struct radeon *radeon)
 		if (r)
 			goto out_err;
 	}
-	/* PS RESOURCE */
-	for (int j = 0, offset = 0; j < 176; j++, offset += 0x20) {
-		r = evergreen_state_resource_init(ctx, offset);
-		if (r)
-			goto out_err;
-	}
-	/* VS RESOURCE */
-	for (int j = 0, offset = 0x1600; j < 160; j++, offset += 0x20) {
-		r = evergreen_state_resource_init(ctx, offset);
-		if (r)
-			goto out_err;
-	}
-	/* FS RESOURCE */
-	for (int j = 0, offset = 0x7C00; j < 16; j++, offset += 0x20) {
-		r = evergreen_state_resource_init(ctx, offset);
-		if (r)
-			goto out_err;
-	}
+
+	ctx->num_ps_resources = 176;
+	ctx->num_vs_resources = 160;
+	ctx->num_fs_resources = 16;
+	r = r600_resource_range_init(ctx, &ctx->ps_resources, 0, 176, 0x20);
+	if (r)
+		goto out_err;
+	r = r600_resource_range_init(ctx, &ctx->vs_resources, 0x1600, 160, 0x20);
+	if (r)
+		goto out_err;
+	r = r600_resource_range_init(ctx, &ctx->fs_resources, 0x7C00, 16, 0x20);
+	if (r)
+		goto out_err;
 
 	/* PS loop const */
 	evergreen_loop_const_init(ctx, 0);
@@ -1025,23 +1017,23 @@ out_err:
 
 void evergreen_context_pipe_state_set_ps_resource(struct r600_context *ctx, struct r600_pipe_resource_state *state, unsigned rid)
 {
-	unsigned offset = R_030000_SQ_TEX_RESOURCE_WORD0_0 + 0x20 * rid;
+	struct r600_block *block = ctx->ps_resources.blocks[rid];
 
-	r600_context_pipe_state_set_resource(ctx, state, offset);
+	r600_context_pipe_state_set_resource(ctx, state, block);
 }
 
 void evergreen_context_pipe_state_set_vs_resource(struct r600_context *ctx, struct r600_pipe_resource_state *state, unsigned rid)
 {
-	unsigned offset = R_030000_SQ_TEX_RESOURCE_WORD0_0 + 0x1600 + 0x20 * rid;
+	struct r600_block *block = ctx->vs_resources.blocks[rid];
 
-	r600_context_pipe_state_set_resource(ctx, state, offset);
+	r600_context_pipe_state_set_resource(ctx, state, block);
 }
 
 void evergreen_context_pipe_state_set_fs_resource(struct r600_context *ctx, struct r600_pipe_resource_state *state, unsigned rid)
 {
-	unsigned offset = R_030000_SQ_TEX_RESOURCE_WORD0_0 + 0x7C00 + 0x20 * rid;
+	struct r600_block *block = ctx->fs_resources.blocks[rid];
 
-	r600_context_pipe_state_set_resource(ctx, state, offset);
+	r600_context_pipe_state_set_resource(ctx, state, block);
 }
 
 static inline void evergreen_context_pipe_state_set_sampler(struct r600_context *ctx, struct r600_pipe_state *state, unsigned offset)

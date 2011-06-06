@@ -267,6 +267,10 @@ struct r600_context {
 	unsigned                num_dest_buffers;
 	unsigned		flags;
 	boolean                 predicate_drawing;
+	struct r600_range ps_resources;
+	struct r600_range vs_resources;
+	struct r600_range fs_resources;
+	int num_ps_resources, num_vs_resources, num_fs_resources;
 };
 
 struct r600_draw {

@@ -158,7 +158,7 @@ void r600_context_bo_flush(struct r600_context *ctx, unsigned flush_flags,
 struct r600_bo *r600_context_reg_bo(struct r600_context *ctx, unsigned offset);
 int r600_context_add_block(struct r600_context *ctx, const struct r600_reg *reg, unsigned nreg,
 			   unsigned opcode, unsigned offset_base);
-void r600_context_pipe_state_set_resource(struct r600_context *ctx, struct r600_pipe_resource_state *state, unsigned offset);
+void r600_context_pipe_state_set_resource(struct r600_context *ctx, struct r600_pipe_resource_state *state, struct r600_block *block);
 void r600_context_block_emit_dirty(struct r600_context *ctx, struct r600_block *block);
 void r600_context_dirty_block(struct r600_context *ctx, struct r600_block *block,
 			      int dirty, int index);
@@ -167,6 +167,7 @@ void r600_context_reg(struct r600_context *ctx,
 		      unsigned offset, unsigned value,
 		      unsigned mask);
 void r600_init_cs(struct r600_context *ctx);
+int r600_resource_init(struct r600_context *ctx, struct r600_range *range, unsigned offset, unsigned nblocks, unsigned stride, struct r600_reg *reg, int nreg, unsigned offset_base);
 /*
  * r600_bo.c
  */
