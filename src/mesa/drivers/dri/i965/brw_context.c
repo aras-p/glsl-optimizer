@@ -203,12 +203,12 @@ GLboolean brwCreateContext( int api,
 	 brw->wm_max_threads = 40;
 	 brw->vs_max_threads = 60;
 	 brw->urb.size = 64;            /* volume 5c.5 section 5.1 */
-	 brw->urb.max_vs_entries = 128; /* volume 2a (see 3DSTATE_URB) */
+	 brw->urb.max_vs_entries = 256; /* volume 2a (see 3DSTATE_URB) */
       } else {
 	 brw->wm_max_threads = 40;
 	 brw->vs_max_threads = 24;
 	 brw->urb.size = 32;            /* volume 5c.5 section 5.1 */
-	 brw->urb.max_vs_entries = 256; /* volume 2a (see 3DSTATE_URB) */
+	 brw->urb.max_vs_entries = 128; /* volume 2a (see 3DSTATE_URB) */
       }
    } else if (intel->gen == 5) {
       brw->urb.size = 1024;
