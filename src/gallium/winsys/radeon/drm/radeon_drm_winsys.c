@@ -270,8 +270,13 @@ struct radeon_winsys *radeon_drm_winsys_create(int fd)
     ws->fd = fd;
     do_ioctls(ws);
 
-    if (!is_r3xx(ws->pci_id)) {
-        goto fail;
+    switch (ws->pci_id) {
+#define CHIPSET(pci_id, name, family) case pci_id:
+#include "pci_ids/r300_pci_ids.h"
+#undef CHIPSET
+       break;
+    default:
+       goto fail;
     }
 
     /* Create managers. */
