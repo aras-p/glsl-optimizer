@@ -121,8 +121,6 @@ void r600_flush_depth_textures(struct r600_pipe_context *rctx)
 {
 	unsigned int i;
 
-	if (rctx->blit) return;
-
 	/* FIXME: This handles fragment shader textures only. */
 
 	for (i = 0; i < rctx->ps_samplers.n_views; ++i) {

@@ -482,19 +482,27 @@ static void evergreen_set_ps_sampler_view(struct pipe_context *ctx, unsigned cou
 	struct r600_pipe_context *rctx = (struct r600_pipe_context *)ctx;
 	struct r600_pipe_sampler_view **resource = (struct r600_pipe_sampler_view **)views;
 	int i;
+	int has_depth = 0;
 
 	for (i = 0; i < count; i++) {
 		if (&rctx->ps_samplers.views[i]->base != views[i]) {
-			if (resource[i])
+			if (resource[i]) {
+				if (((struct r600_resource_texture *)resource[i]->base.texture)->depth)
+					has_depth = 1;
 				evergreen_context_pipe_state_set_ps_resource(&rctx->ctx, &resource[i]->state,
 									     i + R600_MAX_CONST_BUFFERS);
-			else
+			} else
 				evergreen_context_pipe_state_set_ps_resource(&rctx->ctx, NULL,
 									     i + R600_MAX_CONST_BUFFERS);
 
 			pipe_sampler_view_reference(
 				(struct pipe_sampler_view **)&rctx->ps_samplers.views[i],
 				views[i]);
+		} else {
+			if (resource[i]) {
+				if (((struct r600_resource_texture *)resource[i]->base.texture)->depth)
+					has_depth = 1;
+			}
 		}
 	}
 	for (i = count; i < NUM_TEX_UNITS; i++) {
@@ -504,6 +512,7 @@ static void evergreen_set_ps_sampler_view(struct pipe_context *ctx, unsigned cou
 			pipe_sampler_view_reference((struct pipe_sampler_view **)&rctx->ps_samplers.views[i], NULL);
 		}
 	}
+	rctx->have_depth_texture = has_depth;
 	rctx->ps_samplers.n_views = count;
 }
 
@@ -689,6 +698,9 @@ static void evergreen_cb(struct r600_pipe_context *rctx, struct r600_pipe_state 
 	surf = (struct r600_surface *)state->cbufs[cb];
 	rtex = (struct r600_resource_texture*)state->cbufs[cb]->texture;
 
+	if (rtex->depth)
+		rctx->have_depth_fb = TRUE;
+
 	if (rtex->depth && !rtex->is_flushing_texture) {
 	        r600_texture_depth_flush(&rctx->context, state->cbufs[cb]->texture, TRUE);
 		rtex = rtex->flushed_depth_texture;
@@ -870,6 +882,7 @@ static void evergreen_set_framebuffer_state(struct pipe_context *ctx,
 	util_copy_framebuffer_state(&rctx->framebuffer, state);
 
 	/* build states */
+	rctx->have_depth_fb = 0;
 	for (int i = 0; i < state->nr_cbufs; i++) {
 		evergreen_cb(rctx, rstate, state, i);
 	}
