@@ -1629,7 +1629,8 @@ static boolean r600_query_result(struct r600_context *ctx, struct r600_query *qu
 	if (!results)
 		return FALSE;
 
-	size = query->num_results * (query->type == PIPE_QUERY_OCCLUSION_COUNTER ? ctx->max_db : 1);
+	/* query->num_results contains how many dwords were used for the query */
+	size = query->num_results;
 	for (i = 0; i < size; i += 4) {
 		start = (u64)results[i] | (u64)results[i + 1] << 32;
 		end = (u64)results[i + 2] | (u64)results[i + 3] << 32;
