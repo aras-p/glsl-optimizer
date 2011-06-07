@@ -156,7 +156,7 @@ int radeon_bo_fixed_map(struct radeon *radeon, struct radeon_bo *bo);
  * r600_hw_context.c
  */
 int r600_context_init_fence(struct r600_context *ctx);
-void r600_context_bo_reloc(struct r600_context *ctx, u32 *pm4, struct r600_bo *rbo);
+void r600_context_get_reloc(struct r600_context *ctx, struct r600_bo *rbo);
 void r600_context_bo_flush(struct r600_context *ctx, unsigned flush_flags,
 				unsigned flush_mask, struct r600_bo *rbo);
 struct r600_bo *r600_context_reg_bo(struct r600_context *ctx, unsigned offset);
@@ -173,6 +173,20 @@ void r600_context_reg(struct r600_context *ctx,
 		      unsigned mask);
 void r600_init_cs(struct r600_context *ctx);
 int r600_resource_init(struct r600_context *ctx, struct r600_range *range, unsigned offset, unsigned nblocks, unsigned stride, struct r600_reg *reg, int nreg, unsigned offset_base);
+
+static INLINE void r600_context_bo_reloc(struct r600_context *ctx, u32 *pm4, struct r600_bo *rbo)
+{
+	struct radeon_bo *bo = rbo->bo;
+
+	assert(bo != NULL);
+
+	if (!bo->reloc)
+		r600_context_get_reloc(ctx, rbo);
+
+	/* set PKT3 to point to proper reloc */
+	*pm4 = bo->reloc_id;
+}
+
 /*
  * r600_bo.c
  */

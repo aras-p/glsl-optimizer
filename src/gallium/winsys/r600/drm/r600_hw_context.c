@@ -949,16 +949,9 @@ void r600_context_bo_flush(struct r600_context *ctx, unsigned flush_flags,
 	bo->last_flush = (bo->last_flush | flush_flags) & flush_mask;
 }
 
-void r600_context_bo_reloc(struct r600_context *ctx, u32 *pm4, struct r600_bo *rbo)
+void r600_context_get_reloc(struct r600_context *ctx, struct r600_bo *rbo)
 {
-	struct radeon_bo *bo;
-
-	bo = rbo->bo;
-	assert(bo != NULL);
-	if (bo->reloc) {
-		*pm4 = bo->reloc_id;
-		return;
-	}
+	struct radeon_bo *bo = rbo->bo;
 	bo->reloc = &ctx->reloc[ctx->creloc];
 	bo->reloc_id = ctx->creloc * sizeof(struct r600_reloc) / 4;
 	ctx->reloc[ctx->creloc].handle = bo->handle;
@@ -968,8 +961,6 @@ void r600_context_bo_reloc(struct r600_context *ctx, u32 *pm4, struct r600_bo *r
 	radeon_bo_reference(ctx->radeon, &ctx->bo[ctx->creloc], bo);
 	rbo->fence = ctx->radeon->fence;
 	ctx->creloc++;
-	/* set PKT3 to point to proper reloc */
-	*pm4 = bo->reloc_id;
 }
 
 void r600_context_reg(struct r600_context *ctx,
