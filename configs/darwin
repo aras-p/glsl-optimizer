@@ -47,7 +47,7 @@ OSMESA_LIB_GLOB = lib$(OSMESA_LIB).*dylib
 VG_LIB_GLOB = lib$(VG_LIB).*.dylib
 
 GL_LIB_DEPS = -L$(INSTALL_DIR)/$(LIB_DIR) -L$(X11_DIR)/$(LIB_DIR) -lX11 -lXext -lm -lpthread
-OSMESA_LIB_DEPS = -L$(TOP)/$(LIB_DIR) -l$(GL_LIB)
+OSMESA_LIB_DEPS =
 GLU_LIB_DEPS = -L$(TOP)/$(LIB_DIR) -l$(GL_LIB)
 GLUT_LIB_DEPS = -L$(TOP)/$(LIB_DIR) -l$(GLU_LIB) -l$(GL_LIB)  -L$(INSTALL_DIR)/$(LIB_DIR) -L$(X11_DIR)/$(LIB_DIR) -lX11 -lXmu -lXi -lXext
 GLW_LIB_DEPS = -L$(TOP)/$(LIB_DIR) -l$(GL_LIB) -L$(INSTALL_DIR)/$(LIB_DIR) -L$(X11_DIR)/$(LIB_DIR) -lX11 -lXt
