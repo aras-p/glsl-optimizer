@@ -29,7 +29,8 @@ C_SOURCES = \
 	r300_transfer.c
 
 LIBRARY_INCLUDES = \
-	-I$(TOP)/src/mesa/drivers/dri/r300/compiler
+	-I$(TOP)/src/mesa/drivers/dri/r300/compiler \
+	-I$(TOP)/include
 
 COMPILER_ARCHIVE = $(TOP)/src/mesa/drivers/dri/r300/compiler/libr300compiler.a
 
