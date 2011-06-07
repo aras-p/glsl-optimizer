@@ -318,12 +318,10 @@ void r600_delete_vs_shader(struct pipe_context *ctx, void *state)
 
 static void r600_update_alpha_ref(struct r600_pipe_context *rctx)
 {
-	unsigned alpha_ref = rctx->alpha_ref;
+	unsigned alpha_ref;
 	struct r600_pipe_state rstate;
 
-	if (!rctx->alpha_ref_dirty)
-		return;
-
+	alpha_ref = rctx->alpha_ref;
 	rstate.nregs = 0;
 	if (rctx->export_16bpc)
 		alpha_ref &= ~0x1FFF;
@@ -595,7 +593,8 @@ void r600_draw_vbo(struct pipe_context *ctx, const struct pipe_draw_info *info)
 		return;
 	}
 
-	r600_update_alpha_ref(rctx);
+	if (rctx->alpha_ref_dirty)
+		r600_update_alpha_ref(rctx);
 
 	mask = 0;
 	for (int i = 0; i < rctx->framebuffer.nr_cbufs; i++) {
