@@ -595,10 +595,10 @@ int r600_resource_init(struct r600_context *ctx, struct r600_range *range, unsig
 static int r600_resource_range_init(struct r600_context *ctx, struct r600_range *range, unsigned offset, unsigned nblocks, unsigned stride)
 {
 	struct r600_reg r600_shader_resource[] = {
-		{R_038000_RESOURCE0_WORD0, 0, 0, 0},
-		{R_038004_RESOURCE0_WORD1, 0, 0, 0},
-		{R_038008_RESOURCE0_WORD2, REG_FLAG_NEED_BO, S_0085F0_TC_ACTION_ENA(1) | S_0085F0_VC_ACTION_ENA(1), 0xFFFFFFFF},
-		{R_03800C_RESOURCE0_WORD3, REG_FLAG_NEED_BO, S_0085F0_TC_ACTION_ENA(1) | S_0085F0_VC_ACTION_ENA(1), 0xFFFFFFFF},
+		{R_038000_RESOURCE0_WORD0, REG_FLAG_NEED_BO, S_0085F0_TC_ACTION_ENA(1) | S_0085F0_VC_ACTION_ENA(1), 0xFFFFFFFF},
+		{R_038004_RESOURCE0_WORD1, REG_FLAG_NEED_BO, S_0085F0_TC_ACTION_ENA(1) | S_0085F0_VC_ACTION_ENA(1), 0xFFFFFFFF},
+		{R_038008_RESOURCE0_WORD2, 0, 0, 0},
+		{R_03800C_RESOURCE0_WORD3, 0, 0, 0},
 		{R_038010_RESOURCE0_WORD4, 0, 0, 0},
 		{R_038014_RESOURCE0_WORD5, 0, 0, 0},
 		{R_038018_RESOURCE0_WORD6, 0, 0, 0},
@@ -1254,12 +1254,13 @@ void r600_context_block_emit_dirty(struct r600_context *ctx, struct r600_block *
 	int optional = block->nbo == 0 && !(block->flags & REG_FLAG_DIRTY_ALWAYS);
 	int cp_dwords = block->pm4_ndwords, start_dword = 0;
 	int new_dwords = 0;
+	int nbo = block->nbo;
 
 	if (block->nreg_dirty == 0 && optional) {
 		goto out;
 	}
 
-	if (block->nbo) {
+	if (nbo) {
 		ctx->flags |= R600_CONTEXT_CHECK_EVENT_FLUSH;
 
 		for (int j = 0; j < block->nreg; j++) {
@@ -1273,6 +1274,9 @@ void r600_context_block_emit_dirty(struct r600_context *ctx, struct r600_block *
 						      block->reloc[id].flush_flags,
 						      block->reloc[id].flush_mask,
 						      block->reloc[id].bo);
+				nbo--;
+				if (nbo == 0)
+					break;
 			}
 		}
 		ctx->flags &= ~R600_CONTEXT_CHECK_EVENT_FLUSH;
