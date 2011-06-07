@@ -53,7 +53,7 @@ static Status Validate(Display *dpy, XvPortID port, int surface_type_id,
    XvAdaptorInfo *adaptor_info;
    unsigned int num_adaptors;
    int num_types;
-   unsigned int max_width, max_height;
+   unsigned int max_width = 0, max_height = 0;
    Status ret;
 
    assert(dpy);
