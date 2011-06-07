@@ -30,6 +30,7 @@
 #include <stdint.h>
 #include <stdio.h>
 #include <util/u_double_list.h>
+#include <util/u_inlines.h>
 #include <pipe/p_compiler.h>
 
 #define RADEON_CTX_MAX_PM4	(64 * 1024 / 4)
@@ -103,13 +104,23 @@ struct r600_bo *r600_bo_handle(struct radeon *radeon,
 				unsigned handle, unsigned *array_mode);
 void *r600_bo_map(struct radeon *radeon, struct r600_bo *bo, unsigned usage, void *ctx);
 void r600_bo_unmap(struct radeon *radeon, struct r600_bo *bo);
-void r600_bo_reference(struct radeon *radeon, struct r600_bo **dst,
-			    struct r600_bo *src);
 boolean r600_bo_get_winsys_handle(struct radeon *radeon, struct r600_bo *pb_bo,
 				unsigned stride, struct winsys_handle *whandle);
 static INLINE unsigned r600_bo_offset(struct r600_bo *bo)
 {
 	return 0;
+}
+void r600_bo_destroy(struct radeon *radeon, struct r600_bo *bo);
+
+/* this relies on the pipe_reference being the first member of r600_bo */
+static INLINE void r600_bo_reference(struct radeon *radeon, struct r600_bo **dst, struct r600_bo *src)
+{
+	struct r600_bo *old = *dst;
+
+	if (pipe_reference((struct pipe_reference *)(*dst), (struct pipe_reference *)src)) {
+		r600_bo_destroy(radeon, old);
+	}
+	*dst = src;
 }
 
 

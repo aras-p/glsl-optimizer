@@ -180,16 +180,6 @@ void r600_bo_destroy(struct radeon *radeon, struct r600_bo *bo)
 	free(bo);
 }
 
-void r600_bo_reference(struct radeon *radeon, struct r600_bo **dst, struct r600_bo *src)
-{
-	struct r600_bo *old = *dst;
-
-	if (pipe_reference(&(*dst)->reference, &src->reference)) {
-		r600_bo_destroy(radeon, old);
-	}
-	*dst = src;
-}
-
 boolean r600_bo_get_winsys_handle(struct radeon *radeon, struct r600_bo *bo,
 				unsigned stride, struct winsys_handle *whandle)
 {
