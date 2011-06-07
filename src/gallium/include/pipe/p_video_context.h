@@ -183,8 +183,8 @@ struct pipe_video_decode_buffer
     * set the quantification matrixes
     */
    void (*set_quant_matrix)(struct pipe_video_decode_buffer *decbuf,
-                            uint8_t intra_matrix[64],
-                            uint8_t non_intra_matrix[64]);
+                            const uint8_t intra_matrix[64],
+                            const uint8_t non_intra_matrix[64]);
 
    /**
     * get the pointer where to put the ycbcr blocks of a component

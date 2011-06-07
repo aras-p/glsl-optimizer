@@ -291,6 +291,17 @@ unmap_and_flush_surface(XvMCSurfacePrivate *surface)
 PUBLIC
 Status XvMCCreateSurface(Display *dpy, XvMCContext *context, XvMCSurface *surface)
 {
+   static const uint8_t dummy_quant[64] = {
+      0x10, 0x10, 0x10, 0x10, 0x10, 0x10, 0x10, 0x10,
+      0x10, 0x10, 0x10, 0x10, 0x10, 0x10, 0x10, 0x10,
+      0x10, 0x10, 0x10, 0x10, 0x10, 0x10, 0x10, 0x10,
+      0x10, 0x10, 0x10, 0x10, 0x10, 0x10, 0x10, 0x10,
+      0x10, 0x10, 0x10, 0x10, 0x10, 0x10, 0x10, 0x10,
+      0x10, 0x10, 0x10, 0x10, 0x10, 0x10, 0x10, 0x10,
+      0x10, 0x10, 0x10, 0x10, 0x10, 0x10, 0x10, 0x10,
+      0x10, 0x10, 0x10, 0x10, 0x10, 0x10, 0x10, 0x10
+   };
+
    XvMCContextPrivate *context_priv;
    struct pipe_video_context *vpipe;
    XvMCSurfacePrivate *surface_priv;
@@ -312,6 +323,8 @@ Status XvMCCreateSurface(Display *dpy, XvMCContext *context, XvMCSurface *surfac
       return BadAlloc;
 
    surface_priv->decode_buffer = context_priv->decoder->create_buffer(context_priv->decoder);
+   surface_priv->decode_buffer->set_quant_matrix(surface_priv->decode_buffer, dummy_quant, dummy_quant);
+
    surface_priv->mv_stride = surface_priv->decode_buffer->get_mv_stream_stride(surface_priv->decode_buffer);
    surface_priv->video_buffer = vpipe->create_buffer(vpipe, PIPE_FORMAT_NV12,
                                                      context_priv->decoder->chroma_format,
