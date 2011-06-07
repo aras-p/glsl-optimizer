@@ -44,7 +44,7 @@ C_SOURCES = \
 	draw/draw_vs_exec.c \
 	draw/draw_vs_ppc.c \
 	draw/draw_vs_sse.c \
-	draw/draw_vs_varient.c \
+	draw/draw_vs_variant.c \
 	indices/u_indices_gen.c \
 	indices/u_unfilled_gen.c \
 	os/os_misc.c \
