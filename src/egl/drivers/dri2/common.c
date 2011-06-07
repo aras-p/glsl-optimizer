@@ -1,15 +1,18 @@
 #include <stdio.h>
 #include <string.h>
 
-#include <libudev.h>
-
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <unistd.h>
 
 #include "egl_dri2.h"
+
+#ifdef HAVE_LIBUDEV
+
 #define DRIVER_MAP_DRI2_ONLY
 #include "pci_ids/pci_id_driver_map.h"
+
+#include <libudev.h>
 
 static struct udev_device *
 dri2_udev_device_new_from_fd(struct udev *udev, int fd)
@@ -109,3 +112,5 @@ out:
 
    return driver;
 }
+
+#endif /* HAVE_LIBUDEV */
