@@ -44,7 +44,7 @@ GLU_LIB_GLOB = lib$(GLU_LIB).*dylib
 GLUT_LIB_GLOB = lib$(GLUT_LIB).*dylib
 GLW_LIB_GLOB = lib$(GLW_LIB).*dylib
 OSMESA_LIB_GLOB = lib$(OSMESA_LIB).*dylib
-VG_LIB_GLOB = lib$(VG_LIB).*.dylib
+VG_LIB_GLOB = lib$(VG_LIB).*dylib
 
 GL_LIB_DEPS = -L$(INSTALL_DIR)/$(LIB_DIR) -L$(X11_DIR)/$(LIB_DIR) -lX11 -lXext -lm -lpthread
 OSMESA_LIB_DEPS =
