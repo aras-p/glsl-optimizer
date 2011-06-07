@@ -1667,7 +1667,7 @@ void r600_query_begin(struct r600_context *ctx, struct r600_query *query)
 	}
 
 	if (query->type == PIPE_QUERY_OCCLUSION_COUNTER &&
-	    num_backends > 0 && num_backends < ctx->max_db) {
+	    num_backends > 0) {
 		/* as per info on ZPASS the driver must set the unusued DB top bits */
 		u32 *results;
 		int i;
@@ -1675,7 +1675,7 @@ void r600_query_begin(struct r600_context *ctx, struct r600_query *query)
 		results = r600_bo_map(ctx->radeon, query->buffer, PB_USAGE_DONTBLOCK | PB_USAGE_CPU_WRITE, NULL);
 		if (results) {
 			memset(results + (query->num_results * 4), 0, ctx->max_db * 4 * 4);
-			
+
 			for (i = num_backends; i < ctx->max_db; i++) {
 				results[(i * 4)+1] = 0x80000000;
 				results[(i * 4)+3] = 0x80000000;
@@ -1683,7 +1683,7 @@ void r600_query_begin(struct r600_context *ctx, struct r600_query *query)
 			r600_bo_unmap(ctx->radeon, query->buffer);
 		}
 	}
-	
+
 	/* emit begin query */
 	if (query->type == PIPE_QUERY_TIME_ELAPSED) {
 		ctx->pm4[ctx->pm4_cdwords++] = PKT3(PKT3_EVENT_WRITE_EOP, 4, 0);
