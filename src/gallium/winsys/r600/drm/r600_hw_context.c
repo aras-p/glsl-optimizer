@@ -1098,8 +1098,6 @@ void r600_context_pipe_state_set_resource(struct r600_context *ctx, struct r600_
 			state->bo[1]->fence = ctx->radeon->fence;
 		}
 	} else {
-		r600_bo_reference(ctx->radeon, &block->reloc[1].bo, NULL);
-		r600_bo_reference(ctx->radeon, &block->reloc[2].bo, NULL);
 		if (is_vertex) {
 			/* VERTEX RESOURCE, we preted there is 2 bo to relocate so
 			 * we have single case btw VERTEX & TEXTURE resource
