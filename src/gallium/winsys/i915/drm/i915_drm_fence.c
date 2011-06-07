@@ -52,9 +52,13 @@ static int
 i915_drm_fence_signalled(struct i915_winsys *iws,
                           struct pipe_fence_handle *fence)
 {
-   assert(0);
+   struct i915_drm_fence *f = (struct i915_drm_fence *)fence;
 
-   return 0;
+   /* fence already expired */
+   if (!f->bo)
+	   return 1;
+
+   return !drm_intel_bo_busy(f->bo);
 }
 
 static int
