@@ -910,6 +910,7 @@ int evergreen_context_init(struct r600_context *ctx, struct radeon *radeon)
 
 	/* init dirty list */
 	LIST_INITHEAD(&ctx->dirty);
+	LIST_INITHEAD(&ctx->resource_dirty);
 	LIST_INITHEAD(&ctx->enable_list);
 
 	ctx->range = calloc(NUM_RANGES, sizeof(struct r600_range));
@@ -1186,6 +1187,10 @@ void evergreen_context_draw(struct r600_context *ctx, const struct r600_draw *dr
 	/* enough room to copy packet */
 	LIST_FOR_EACH_ENTRY_SAFE(dirty_block, next_block, &ctx->dirty,list) {
 		r600_context_block_emit_dirty(ctx, dirty_block);
+	}
+
+	LIST_FOR_EACH_ENTRY_SAFE(dirty_block, next_block, &ctx->resource_dirty,list) {
+		r600_context_block_resource_emit_dirty(ctx, dirty_block);
 	}
 
 	/* draw packet */

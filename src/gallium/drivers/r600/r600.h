@@ -162,6 +162,9 @@ struct r600_pipe_resource_state {
 
 #define R600_BLOCK_STATUS_ENABLED	(1 << 0)
 #define R600_BLOCK_STATUS_DIRTY		(1 << 1)
+#define R600_BLOCK_STATUS_RESOURCE_DIRTY	(1 << 2)
+
+#define R600_BLOCK_STATUS_RESOURCE_VERTEX	(1 << 3)
 
 struct r600_block_reloc {
 	struct r600_bo		*bo;
@@ -236,6 +239,7 @@ struct r600_context {
 	unsigned		nblocks;
 	struct r600_block	**blocks;
 	struct list_head	dirty;
+	struct list_head	resource_dirty;
 	struct list_head	enable_list;
 	unsigned		pm4_ndwords;
 	unsigned		pm4_cdwords;

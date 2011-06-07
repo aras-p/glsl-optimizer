@@ -88,7 +88,13 @@ static void r600_init_block(struct r600_context *ctx,
 	int j, n = nreg;
 
 	/* initialize block */
-	block->status |= R600_BLOCK_STATUS_DIRTY; /* dirty all blocks at start */
+	if (opcode == PKT3_SET_RESOURCE) {
+		block->flags = BLOCK_FLAG_RESOURCE;
+		block->status |= R600_BLOCK_STATUS_RESOURCE_DIRTY; /* dirty all blocks at start */
+	} else {
+		block->flags = 0;
+		block->status |= R600_BLOCK_STATUS_DIRTY; /* dirty all blocks at start */
+	}
 	block->start_offset = reg[i].offset;
 	block->pm4[block->pm4_ndwords++] = PKT3(opcode, n, 0);
 	block->pm4[block->pm4_ndwords++] = (block->start_offset - offset_base) >> 2;
@@ -96,7 +102,6 @@ static void r600_init_block(struct r600_context *ctx,
 	block->pm4_ndwords += n;
 	block->nreg = n;
 	block->nreg_dirty = n;
-	block->flags = 0;
 	LIST_INITHEAD(&block->list);
 	LIST_INITHEAD(&block->enable_list);
 
@@ -777,6 +782,7 @@ int r600_context_init(struct r600_context *ctx, struct radeon *radeon)
 
 	/* init dirty list */
 	LIST_INITHEAD(&ctx->dirty);
+	LIST_INITHEAD(&ctx->resource_dirty);
 	LIST_INITHEAD(&ctx->enable_list);
 
 	ctx->range = calloc(NUM_RANGES, sizeof(struct r600_range));
@@ -1048,6 +1054,23 @@ void r600_context_pipe_state_set(struct r600_context *ctx, struct r600_pipe_stat
 	}
 }
 
+static void r600_context_dirty_resource_block(struct r600_context *ctx,
+					      struct r600_block *block,
+					      int dirty, int index)
+{
+	block->nreg_dirty = index + 1;
+
+	if ((dirty != (block->status & R600_BLOCK_STATUS_RESOURCE_DIRTY)) || !(block->status & R600_BLOCK_STATUS_ENABLED)) {
+		block->status |= R600_BLOCK_STATUS_RESOURCE_DIRTY;
+		ctx->pm4_dirty_cdwords += block->pm4_ndwords + block->pm4_flush_ndwords;
+		if (!(block->status & R600_BLOCK_STATUS_ENABLED)) {
+			block->status |= R600_BLOCK_STATUS_ENABLED;
+			LIST_ADDTAIL(&block->enable_list, &ctx->enable_list);
+		}
+		LIST_ADDTAIL(&block->list,&ctx->resource_dirty);
+	}
+}
+
 void r600_context_pipe_state_set_resource(struct r600_context *ctx, struct r600_pipe_resource_state *state, struct r600_block *block)
 {
 	int i;
@@ -1056,38 +1079,37 @@ void r600_context_pipe_state_set_resource(struct r600_context *ctx, struct r600_
 	boolean is_vertex;
 
 	if (state == NULL) {
-		block->status &= ~(R600_BLOCK_STATUS_ENABLED | R600_BLOCK_STATUS_DIRTY);
+		block->status &= ~(R600_BLOCK_STATUS_ENABLED | R600_BLOCK_STATUS_RESOURCE_DIRTY);
 		if (block->reloc[1].bo)
 			block->reloc[1].bo->bo->binding &= ~BO_BOUND_TEXTURE;
 
 		r600_bo_reference(ctx->radeon, &block->reloc[1].bo, NULL);
-		r600_bo_reference(ctx->radeon , &block->reloc[2].bo, NULL);
+		r600_bo_reference(ctx->radeon, &block->reloc[2].bo, NULL);
 		LIST_DELINIT(&block->list);
 		LIST_DELINIT(&block->enable_list);
 		return;
 	}
 
 	is_vertex = ((state->val[num_regs-1] & 0xc0000000) == 0xc0000000);
-	dirty = block->status & R600_BLOCK_STATUS_DIRTY;
+	dirty = block->status & R600_BLOCK_STATUS_RESOURCE_DIRTY;
 
 	if (memcmp(block->reg, state->val, num_regs*4)) {
 		memcpy(block->reg, state->val, num_regs * 4);
-		dirty |= R600_BLOCK_STATUS_DIRTY;
+		dirty |= R600_BLOCK_STATUS_RESOURCE_DIRTY;
 	}
 
 	/* if no BOs on block, force dirty */
 	if (!block->reloc[1].bo || !block->reloc[2].bo)
-		dirty |= R600_BLOCK_STATUS_DIRTY;
+		dirty |= R600_BLOCK_STATUS_RESOURCE_DIRTY;
 
 	if (!dirty) {
 		if (is_vertex) {
-			if ((block->reloc[1].bo->bo->handle != state->bo[0]->bo->handle) ||
-			    (block->reloc[2].bo->bo->handle != state->bo[0]->bo->handle))
-				dirty |= R600_BLOCK_STATUS_DIRTY;
+			if (block->reloc[1].bo->bo->handle != state->bo[0]->bo->handle)
+				dirty |= R600_BLOCK_STATUS_RESOURCE_DIRTY;
 		} else {
 			if ((block->reloc[1].bo->bo->handle != state->bo[0]->bo->handle) ||
 			    (block->reloc[2].bo->bo->handle != state->bo[1]->bo->handle))
-				dirty |= R600_BLOCK_STATUS_DIRTY;
+				dirty |= R600_BLOCK_STATUS_RESOURCE_DIRTY;
 		}
 	}
 	if (!dirty) {
@@ -1103,7 +1125,7 @@ void r600_context_pipe_state_set_resource(struct r600_context *ctx, struct r600_
 			 * we have single case btw VERTEX & TEXTURE resource
 			 */
 			r600_bo_reference(ctx->radeon, &block->reloc[1].bo, state->bo[0]);
-			r600_bo_reference(ctx->radeon, &block->reloc[2].bo, state->bo[0]);
+			r600_bo_reference(ctx->radeon, &block->reloc[2].bo, NULL);
 			state->bo[0]->fence = ctx->radeon->fence;
 		} else {
 			/* TEXTURE RESOURCE */
@@ -1114,8 +1136,14 @@ void r600_context_pipe_state_set_resource(struct r600_context *ctx, struct r600_
 			state->bo[0]->bo->binding |= BO_BOUND_TEXTURE;
 		}
 	}
-	if (dirty)
-		r600_context_dirty_block(ctx, block, dirty, num_regs - 1);
+	if (dirty) {
+		if (is_vertex)
+			block->status |= R600_BLOCK_STATUS_RESOURCE_VERTEX;
+		else
+			block->status &= ~R600_BLOCK_STATUS_RESOURCE_VERTEX;
+	
+		r600_context_dirty_resource_block(ctx, block, dirty, num_regs - 1);
+	}
 }
 
 void r600_context_pipe_state_set_ps_resource(struct r600_context *ctx, struct r600_pipe_resource_state *state, unsigned rid)
@@ -1305,6 +1333,44 @@ out:
 	LIST_DELINIT(&block->list);
 }
 
+void r600_context_block_resource_emit_dirty(struct r600_context *ctx, struct r600_block *block)
+{
+	int id;
+	int cp_dwords = block->pm4_ndwords, start_dword = 0;
+	int new_dwords = 0;
+	int nbo = block->nbo;
+
+	ctx->flags |= R600_CONTEXT_CHECK_EVENT_FLUSH;
+
+	if (block->status & R600_BLOCK_STATUS_RESOURCE_VERTEX) {
+		nbo = 1;
+		cp_dwords -= 2; /* don't copy the second NOP */
+	}
+
+	for (int j = 0; j < nbo; j++) {
+		if (block->pm4_bo_index[j]) {
+			/* find relocation */
+			id = block->pm4_bo_index[j];
+			r600_context_bo_reloc(ctx,
+					      &block->pm4[block->reloc[id].bo_pm4_index],
+					      block->reloc[id].bo);
+			r600_context_bo_flush(ctx,
+					      block->reloc[id].flush_flags,
+					      block->reloc[id].flush_mask,
+					      block->reloc[id].bo);
+		}
+	}
+	ctx->flags &= ~R600_CONTEXT_CHECK_EVENT_FLUSH;
+
+	memcpy(&ctx->pm4[ctx->pm4_cdwords], block->pm4, cp_dwords * 4);
+	ctx->pm4_cdwords += cp_dwords;
+
+out:
+	block->status ^= R600_BLOCK_STATUS_RESOURCE_DIRTY;
+	block->nreg_dirty = 0;
+	LIST_DELINIT(&block->list);
+}
+
 void r600_context_flush_dest_caches(struct r600_context *ctx)
 {
 	struct r600_bo *cb[8];
@@ -1387,6 +1453,10 @@ void r600_context_draw(struct r600_context *ctx, const struct r600_draw *draw)
 	/* enough room to copy packet */
 	LIST_FOR_EACH_ENTRY_SAFE(dirty_block, next_block, &ctx->dirty, list) {
 		r600_context_block_emit_dirty(ctx, dirty_block);
+	}
+
+	LIST_FOR_EACH_ENTRY_SAFE(dirty_block, next_block, &ctx->resource_dirty, list) {
+		r600_context_block_resource_emit_dirty(ctx, dirty_block);
 	}
 
 	/* draw packet */
@@ -1500,12 +1570,19 @@ void r600_context_flush(struct r600_context *ctx)
 	 * next draw command
 	 */
 	LIST_FOR_EACH_ENTRY(enable_block, &ctx->enable_list, enable_list) {
-		if(!(enable_block->status & R600_BLOCK_STATUS_DIRTY)) {
-			LIST_ADDTAIL(&enable_block->list,&ctx->dirty);
+		if (!(enable_block->flags & BLOCK_FLAG_RESOURCE)) {
+			if(!(enable_block->status & R600_BLOCK_STATUS_DIRTY)) {
+				LIST_ADDTAIL(&enable_block->list,&ctx->dirty);
+				enable_block->status |= R600_BLOCK_STATUS_DIRTY;
+			}
+		} else {
+			if(!(enable_block->status & R600_BLOCK_STATUS_RESOURCE_DIRTY)) {
+				LIST_ADDTAIL(&enable_block->list,&ctx->resource_dirty);
+				enable_block->status |= R600_BLOCK_STATUS_RESOURCE_DIRTY;
+			}
 		}
 		ctx->pm4_dirty_cdwords += enable_block->pm4_ndwords + 
 			enable_block->pm4_flush_ndwords;
-		enable_block->status |= R600_BLOCK_STATUS_DIRTY;
 		enable_block->nreg_dirty = enable_block->nreg;
 	}
 }
