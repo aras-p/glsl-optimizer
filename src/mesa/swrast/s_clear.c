@@ -165,6 +165,14 @@ clear_color_buffers(struct gl_context *ctx)
 
    for (buf = 0; buf < ctx->DrawBuffer->_NumColorDrawBuffers; buf++) {
       struct gl_renderbuffer *rb = ctx->DrawBuffer->_ColorDrawBuffers[buf];
+
+      /* If this is an ES2 context or GL_ARB_ES2_compatibility is supported,
+       * the framebuffer can be complete with some attachments be missing.  In
+       * this case the _ColorDrawBuffers pointer will be NULL.
+       */
+      if (rb == NULL)
+	 continue;
+
       if (ctx->Color.ColorMask[buf][0] == 0 ||
           ctx->Color.ColorMask[buf][1] == 0 ||
           ctx->Color.ColorMask[buf][2] == 0 ||
