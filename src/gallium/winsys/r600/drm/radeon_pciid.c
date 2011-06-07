@@ -34,9 +34,6 @@ struct pci_id {
 
 static const struct pci_id radeon_pci_id[] = {
 #define CHIPSET(chip, name, family) { 0x1002, chip, CHIP_##family },
-#include "pci_ids/radeon_pci_ids.h"
-#include "pci_ids/r200_pci_ids.h"
-#include "pci_ids/r300_pci_ids.h"
 #include "pci_ids/r600_pci_ids.h"
 	{0, 0},
 };
