@@ -2429,6 +2429,17 @@ _mesa_BlitFramebufferEXT(GLint srcX0, GLint srcY0, GLint srcX1, GLint srcY1,
    if (mask & GL_COLOR_BUFFER_BIT) {
       colorReadRb = readFb->_ColorReadBuffer;
       colorDrawRb = drawFb->_ColorDrawBuffers[0];
+
+      /* From the EXT_framebuffer_object spec:
+       *
+       *     "If a buffer is specified in <mask> and does not exist in both
+       *     the read and draw framebuffers, the corresponding bit is silently
+       *     ignored."
+       */
+      if ((colorReadRb == NULL) || (colorDrawRb == NULL)) {
+	 colorReadRb = colorDrawRb = NULL;
+	 mask &= ~GL_COLOR_BUFFER_BIT;
+      }
    }
    else {
       colorReadRb = colorDrawRb = NULL;
@@ -2437,10 +2448,19 @@ _mesa_BlitFramebufferEXT(GLint srcX0, GLint srcY0, GLint srcX1, GLint srcY1,
    if (mask & GL_STENCIL_BUFFER_BIT) {
       struct gl_renderbuffer *readRb = readFb->_StencilBuffer;
       struct gl_renderbuffer *drawRb = drawFb->_StencilBuffer;
-      if (!readRb ||
-          !drawRb ||
-          _mesa_get_format_bits(readRb->Format, GL_STENCIL_BITS) != 
-          _mesa_get_format_bits(drawRb->Format, GL_STENCIL_BITS)) {
+
+      /* From the EXT_framebuffer_object spec:
+       *
+       *     "If a buffer is specified in <mask> and does not exist in both
+       *     the read and draw framebuffers, the corresponding bit is silently
+       *     ignored."
+       */
+      if ((readRb == NULL) || (drawRb == NULL)) {
+	 readRb = drawRb = NULL;
+	 mask &= ~GL_STENCIL_BUFFER_BIT;
+      }
+      else if (_mesa_get_format_bits(readRb->Format, GL_STENCIL_BITS) !=
+	       _mesa_get_format_bits(drawRb->Format, GL_STENCIL_BITS)) {
          _mesa_error(ctx, GL_INVALID_OPERATION,
                      "glBlitFramebufferEXT(stencil buffer size mismatch)");
          return;
@@ -2450,10 +2470,19 @@ _mesa_BlitFramebufferEXT(GLint srcX0, GLint srcY0, GLint srcX1, GLint srcY1,
    if (mask & GL_DEPTH_BUFFER_BIT) {
       struct gl_renderbuffer *readRb = readFb->_DepthBuffer;
       struct gl_renderbuffer *drawRb = drawFb->_DepthBuffer;
-      if (!readRb ||
-          !drawRb ||
-          _mesa_get_format_bits(readRb->Format, GL_DEPTH_BITS) != 
-          _mesa_get_format_bits(drawRb->Format, GL_DEPTH_BITS)) {
+
+      /* From the EXT_framebuffer_object spec:
+       *
+       *     "If a buffer is specified in <mask> and does not exist in both
+       *     the read and draw framebuffers, the corresponding bit is silently
+       *     ignored."
+       */
+      if ((readRb == NULL) || (drawRb == NULL)) {
+	 readRb = drawRb = NULL;
+	 mask &= ~GL_DEPTH_BUFFER_BIT;
+      }
+      else if (_mesa_get_format_bits(readRb->Format, GL_DEPTH_BITS) !=
+	       _mesa_get_format_bits(drawRb->Format, GL_DEPTH_BITS)) {
          _mesa_error(ctx, GL_INVALID_OPERATION,
                      "glBlitFramebufferEXT(depth buffer size mismatch)");
          return;
