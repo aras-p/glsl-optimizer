@@ -29,6 +29,7 @@
 #include <stdio.h>
 #include <string.h>
 #include <xf86drm.h>
+#include <dlfcn.h>
 
 #include "egl_dri2.h"
 
