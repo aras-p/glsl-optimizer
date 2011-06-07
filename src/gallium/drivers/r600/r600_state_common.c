@@ -388,7 +388,7 @@ void r600_set_constant_buffer(struct pipe_context *ctx, uint shader, uint index,
 {
 	struct r600_pipe_context *rctx = (struct r600_pipe_context *)ctx;
 	struct r600_resource_buffer *rbuffer = r600_buffer(buffer);
-	struct r600_pipe_state *rstate;
+	struct r600_pipe_resource_state *rstate;
 	uint32_t offset;
 
 	/* Note that the state tracker can unbind constant buffers by
@@ -416,9 +416,9 @@ void r600_set_constant_buffer(struct pipe_context *ctx, uint shader, uint index,
 		rstate = &rctx->vs_const_buffer_resource[index];
 		if (!rstate->id) {
 			if (rctx->family >= CHIP_CEDAR) {
-				evergreen_pipe_init_buffer_resource(rctx, rstate, &rbuffer->r, offset, 16);
+				evergreen_pipe_init_buffer_resource(rctx, rstate);
 			} else {
-				r600_pipe_init_buffer_resource(rctx, rstate, &rbuffer->r, offset, 16);
+				r600_pipe_init_buffer_resource(rctx, rstate);
 			}
 		}
 
@@ -444,9 +444,9 @@ void r600_set_constant_buffer(struct pipe_context *ctx, uint shader, uint index,
 		rstate = &rctx->ps_const_buffer_resource[index];
 		if (!rstate->id) {
 			if (rctx->family >= CHIP_CEDAR) {
-				evergreen_pipe_init_buffer_resource(rctx, rstate, &rbuffer->r, offset, 16);
+				evergreen_pipe_init_buffer_resource(rctx, rstate);
 			} else {
-				r600_pipe_init_buffer_resource(rctx, rstate, &rbuffer->r, offset, 16);
+				r600_pipe_init_buffer_resource(rctx, rstate);
 			}
 		}
 		if (rctx->family >= CHIP_CEDAR) {
@@ -468,7 +468,7 @@ void r600_set_constant_buffer(struct pipe_context *ctx, uint shader, uint index,
 
 static void r600_vertex_buffer_update(struct r600_pipe_context *rctx)
 {
-	struct r600_pipe_state *rstate;
+	struct r600_pipe_resource_state *rstate;
 	struct r600_resource *rbuffer;
 	struct pipe_vertex_buffer *vertex_buffer;
 	unsigned i, count, offset;
@@ -503,9 +503,9 @@ static void r600_vertex_buffer_update(struct r600_pipe_context *rctx)
 
 		if (!rstate->id) {
 			if (rctx->family >= CHIP_CEDAR) {
-				evergreen_pipe_init_buffer_resource(rctx, rstate, rbuffer, offset, vertex_buffer->stride);
+				evergreen_pipe_init_buffer_resource(rctx, rstate);
 			} else {
-				r600_pipe_init_buffer_resource(rctx, rstate, rbuffer, offset, vertex_buffer->stride);
+				r600_pipe_init_buffer_resource(rctx, rstate);
 			}
 		}
 

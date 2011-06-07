@@ -380,9 +380,8 @@ static struct pipe_sampler_view *evergreen_create_sampler_view(struct pipe_conte
 							struct pipe_resource *texture,
 							const struct pipe_sampler_view *state)
 {
-	struct r600_pipe_context *rctx = (struct r600_pipe_context *)ctx;
 	struct r600_pipe_sampler_view *resource = CALLOC_STRUCT(r600_pipe_sampler_view);
-	struct r600_pipe_state *rstate;
+	struct r600_pipe_resource_state *rstate;
 	const struct util_format_description *desc;
 	struct r600_resource_texture *tmp;
 	struct r600_resource *rbuffer;
@@ -438,35 +437,27 @@ static struct pipe_sampler_view *evergreen_create_sampler_view(struct pipe_conte
 	array_mode = tmp->array_mode[0];
 	tile_type = tmp->tile_type;
 
-	r600_pipe_state_add_reg(rstate, R_030000_RESOURCE0_WORD0,
-				S_030000_DIM(r600_tex_dim(texture->target)) |
-				S_030000_PITCH((pitch / 8) - 1) |
-				S_030000_NON_DISP_TILING_ORDER(tile_type) |
-				S_030000_TEX_WIDTH(texture->width0 - 1), 0xFFFFFFFF, NULL);
-	r600_pipe_state_add_reg(rstate, R_030004_RESOURCE0_WORD1,
-				S_030004_TEX_HEIGHT(texture->height0 - 1) |
-				S_030004_TEX_DEPTH(texture->depth0 - 1) |
-				S_030004_ARRAY_MODE(array_mode),
-				0xFFFFFFFF, NULL);
-	r600_pipe_state_add_reg(rstate, R_030008_RESOURCE0_WORD2,
-				(tmp->offset[0] + r600_bo_offset(bo[0])) >> 8, 0xFFFFFFFF, bo[0]);
-	r600_pipe_state_add_reg(rstate, R_03000C_RESOURCE0_WORD3,
-				(tmp->offset[1] + r600_bo_offset(bo[1])) >> 8, 0xFFFFFFFF, bo[1]);
-	r600_pipe_state_add_reg(rstate, R_030010_RESOURCE0_WORD4,
-				word4 |
-				S_030010_SRF_MODE_ALL(V_030010_SRF_MODE_ZERO_CLAMP_MINUS_ONE) |
-				S_030010_ENDIAN_SWAP(endian) |
-				S_030010_BASE_LEVEL(state->u.tex.first_level), 0xFFFFFFFF, NULL);
-	r600_pipe_state_add_reg(rstate, R_030014_RESOURCE0_WORD5,
-				S_030014_LAST_LEVEL(state->u.tex.last_level) |
-				S_030014_BASE_ARRAY(0) |
-				S_030014_LAST_ARRAY(0), 0xffffffff, NULL);
-	r600_pipe_state_add_reg(rstate, R_030018_RESOURCE0_WORD6,
-				S_030018_MAX_ANISO(4 /* max 16 samples */),
-				0xFFFFFFFF, NULL);
-	r600_pipe_state_add_reg(rstate, R_03001C_RESOURCE0_WORD7,
-				S_03001C_DATA_FORMAT(format) |
-				S_03001C_TYPE(V_03001C_SQ_TEX_VTX_VALID_TEXTURE), 0xFFFFFFFF, NULL);
+	rstate->bo[0] = bo[0];
+	rstate->bo[1] = bo[1];
+	rstate->val[0] = (S_030000_DIM(r600_tex_dim(texture->target)) |
+			  S_030000_PITCH((pitch / 8) - 1) |
+			  S_030000_NON_DISP_TILING_ORDER(tile_type) |
+			  S_030000_TEX_WIDTH(texture->width0 - 1));
+	rstate->val[1] = (S_030004_TEX_HEIGHT(texture->height0 - 1) |
+			  S_030004_TEX_DEPTH(texture->depth0 - 1) |
+			  S_030004_ARRAY_MODE(array_mode));
+	rstate->val[2] = (tmp->offset[0] + r600_bo_offset(bo[0])) >> 8;
+	rstate->val[3] = (tmp->offset[1] + r600_bo_offset(bo[1])) >> 8;
+	rstate->val[4] = (word4 |
+			  S_030010_SRF_MODE_ALL(V_030010_SRF_MODE_ZERO_CLAMP_MINUS_ONE) |
+			  S_030010_ENDIAN_SWAP(endian) |
+			  S_030010_BASE_LEVEL(state->u.tex.first_level));
+	rstate->val[5] = (S_030014_LAST_LEVEL(state->u.tex.last_level) |
+			  S_030014_BASE_ARRAY(0) |
+			  S_030014_LAST_ARRAY(0));
+	rstate->val[6] = (S_030018_MAX_ANISO(4 /* max 16 samples */));
+	rstate->val[7] = (S_03001C_DATA_FORMAT(format) |
+			  S_03001C_TYPE(V_03001C_SQ_TEX_VTX_VALID_TEXTURE));
 
 	return &resource->base;
 }
@@ -1769,45 +1760,32 @@ void *evergreen_create_db_flush_dsa(struct r600_pipe_context *rctx)
 }
 
 void evergreen_pipe_init_buffer_resource(struct r600_pipe_context *rctx,
-					 struct r600_pipe_state *rstate,
-					 struct r600_resource *rbuffer,
-					 unsigned offset, unsigned stride)
+					 struct r600_pipe_resource_state *rstate)
 {
 	rstate->id = R600_PIPE_STATE_RESOURCE;
-	rstate->nregs = 0;
-	r600_pipe_state_add_reg(rstate, R_030000_RESOURCE0_WORD0,
-				offset, 0xFFFFFFFF, rbuffer->bo);
-	r600_pipe_state_add_reg(rstate, R_030004_RESOURCE0_WORD1,
-				rbuffer->bo_size - offset - 1, 0xFFFFFFFF, NULL);
-	r600_pipe_state_add_reg(rstate, R_030008_RESOURCE0_WORD2,
-				S_030008_ENDIAN_SWAP(r600_endian_swap(32)) |
-				S_030008_STRIDE(stride), 0xFFFFFFFF, NULL);
-	r600_pipe_state_add_reg(rstate, R_03000C_RESOURCE0_WORD3,
-				S_03000C_DST_SEL_X(V_03000C_SQ_SEL_X) |
-				S_03000C_DST_SEL_Y(V_03000C_SQ_SEL_Y) |
-				S_03000C_DST_SEL_Z(V_03000C_SQ_SEL_Z) |
-				S_03000C_DST_SEL_W(V_03000C_SQ_SEL_W),
-				0xFFFFFFFF, NULL);
-	r600_pipe_state_add_reg(rstate, R_030010_RESOURCE0_WORD4,
-				0x00000000, 0xFFFFFFFF, NULL);
-	r600_pipe_state_add_reg(rstate, R_030014_RESOURCE0_WORD5,
-				0x00000000, 0xFFFFFFFF, NULL);
-	r600_pipe_state_add_reg(rstate, R_030018_RESOURCE0_WORD6,
-				0x00000000, 0xFFFFFFFF, NULL);
-	r600_pipe_state_add_reg(rstate, R_03001C_RESOURCE0_WORD7,
-				0xC0000000, 0xFFFFFFFF, NULL);
+
+	rstate->val[0] = 0;
+	rstate->bo[0] = NULL;
+	rstate->val[1] = 0;
+	rstate->val[2] = S_030008_ENDIAN_SWAP(r600_endian_swap(32));
+	rstate->val[3] = S_03000C_DST_SEL_X(V_03000C_SQ_SEL_X) |
+	  S_03000C_DST_SEL_Y(V_03000C_SQ_SEL_Y) |
+	  S_03000C_DST_SEL_Z(V_03000C_SQ_SEL_Z) |
+	  S_03000C_DST_SEL_W(V_03000C_SQ_SEL_W);
+	rstate->val[4] = 0;
+	rstate->val[5] = 0;
+	rstate->val[6] = 0;
+	rstate->val[7] = 0xc0000000;
 }
 
 
-void evergreen_pipe_mod_buffer_resource(struct r600_pipe_state *rstate,
+void evergreen_pipe_mod_buffer_resource(struct r600_pipe_resource_state *rstate,
 					struct r600_resource *rbuffer,
 					unsigned offset, unsigned stride)
 {
-	rstate->nregs = 0;
-	r600_pipe_state_mod_reg_bo(rstate, offset, rbuffer->bo);
-	r600_pipe_state_mod_reg(rstate, rbuffer->bo_size - offset - 1);
-	r600_pipe_state_mod_reg(rstate, S_030008_ENDIAN_SWAP(r600_endian_swap(32)) |
-				S_030008_STRIDE(stride));
-	rstate->nregs = 8;
-
+	rstate->bo[0] = rbuffer->bo;
+	rstate->val[0] = offset;
+	rstate->val[1] = rbuffer->bo_size - offset - 1;
+	rstate->val[2] = S_030008_ENDIAN_SWAP(r600_endian_swap(32)) |
+	                 S_030008_STRIDE(stride);
 }
