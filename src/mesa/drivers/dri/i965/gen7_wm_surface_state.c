@@ -126,7 +126,7 @@ gen7_update_texture_surface(struct gl_context *ctx, GLuint unit)
  * Create the constant buffer surface.  Vertex/fragment shader constants will
  * be read from this buffer with Data Port Read instructions/messages.
  */
-static void
+void
 gen7_create_constant_surface(struct brw_context *brw,
 			     drm_intel_bo *bo,
 			     int width,
