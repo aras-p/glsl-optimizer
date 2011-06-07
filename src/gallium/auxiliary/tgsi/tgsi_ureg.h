@@ -65,7 +65,7 @@ struct ureg_src
 
 /* Very similar to a tgsi_dst_register, removing unsupported fields
  * and adding a Saturate flag.  It's easier to push saturate into the
- * destination register than to try and create a _SAT varient of each
+ * destination register than to try and create a _SAT variant of each
  * instruction function.
  */
 struct ureg_dst
@@ -434,7 +434,7 @@ ureg_fixup_label(struct ureg_program *ureg,
 
 
 /* Generic instruction emitter.  Use if you need to pass the opcode as
- * a parameter, rather than using the emit_OP() varients below.
+ * a parameter, rather than using the emit_OP() variants below.
  */
 void
 ureg_insn(struct ureg_program *ureg,
