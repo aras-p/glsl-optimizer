@@ -1070,11 +1070,9 @@ void r600_context_pipe_state_set_resource(struct r600_context *ctx, struct r600_
 	is_vertex = ((state->val[num_regs-1] & 0xc0000000) == 0xc0000000);
 	dirty = block->status & R600_BLOCK_STATUS_DIRTY;
 
-	for (i = 0; i < num_regs; i++) {
-		if (dirty || (block->reg[i] != state->val[i])) {
-			dirty |= R600_BLOCK_STATUS_DIRTY;
-			block->reg[i] = state->val[i];
-		}
+	if (memcmp(block->reg, state->val, num_regs*4)) {
+		memcpy(block->reg, state->val, num_regs * 4);
+		dirty |= R600_BLOCK_STATUS_DIRTY;
 	}
 
 	/* if no BOs on block, force dirty */
