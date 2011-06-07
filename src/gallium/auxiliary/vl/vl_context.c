@@ -35,18 +35,6 @@
 #include "vl_compositor.h"
 #include "vl_mpeg12_decoder.h"
 
-const enum pipe_format const_resource_formats_YV12[3] = {
-   PIPE_FORMAT_R8_UNORM,
-   PIPE_FORMAT_R8_UNORM,
-   PIPE_FORMAT_R8_UNORM
-};
-
-const enum pipe_format const_resource_formats_NV12[3] = {
-   PIPE_FORMAT_R8_UNORM,
-   PIPE_FORMAT_R8G8_UNORM,
-   PIPE_FORMAT_NONE
-};
-
 static void
 vl_context_destroy(struct pipe_video_context *context)
 {
@@ -76,15 +64,28 @@ vl_context_get_param(struct pipe_video_context *context, int param)
 static boolean
 vl_context_is_format_supported(struct pipe_video_context *context,
                                enum pipe_format format,
-                               unsigned usage)
+                               enum pipe_video_profile profile)
 {
    struct vl_context *ctx = (struct vl_context*)context;
+   const enum pipe_format *resource_formats;
+   unsigned i;
 
    assert(context);
 
-   return ctx->pipe->screen->is_format_supported(ctx->pipe->screen, format,
-                                                 PIPE_TEXTURE_2D,
-                                                 0, usage);
+   resource_formats = vl_video_buffer_formats(ctx->pipe, format);
+   if (!resource_formats)
+      return false;
+
+   for(i = 0; i < VL_MAX_PLANES; ++i) {
+      if (!resource_formats[i])
+         continue;
+
+      if (!ctx->pipe->screen->is_format_supported(ctx->pipe->screen, resource_formats[i],
+                                                  PIPE_TEXTURE_2D, 0, PIPE_USAGE_STATIC))
+         return false;
+   }
+
+   return true;
 }
 
 static struct pipe_surface *
@@ -215,27 +216,16 @@ vl_context_create_buffer(struct pipe_video_context *context,
                          unsigned width, unsigned height)
 {
    struct vl_context *ctx = (struct vl_context*)context;
+   const enum pipe_format *resource_formats;
    struct pipe_video_buffer *result;
    unsigned buffer_width, buffer_height;
-
-   const enum pipe_format *resource_formats;
 
    assert(context);
    assert(width > 0 && height > 0);
 
-   switch(buffer_format) {
-   case PIPE_FORMAT_YV12:
-      resource_formats = const_resource_formats_YV12;
-      break;
-
-   case PIPE_FORMAT_NV12:
-      resource_formats = const_resource_formats_NV12;
-      break;
-
-   default:
-      assert(0);
+   resource_formats = vl_video_buffer_formats(ctx->pipe, buffer_format);
+   if (!resource_formats)
       return NULL;
-   }
 
    buffer_width = ctx->pot_buffers ? util_next_power_of_two(width) : align(width, MACROBLOCK_WIDTH);
    buffer_height = ctx->pot_buffers ? util_next_power_of_two(height) : align(height, MACROBLOCK_HEIGHT);

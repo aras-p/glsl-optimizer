@@ -50,6 +50,12 @@ struct vl_video_buffer
 };
 
 /**
+ * get subformats for each plane
+ */
+const enum pipe_format *
+vl_video_buffer_formats(struct pipe_context *pipe, enum pipe_format format);
+
+/**
  * initialize a buffer, creating its resources
  */
 struct pipe_video_buffer *

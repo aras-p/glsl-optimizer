@@ -38,6 +38,33 @@
 
 #include "vl_video_buffer.h"
 
+const enum pipe_format const_resource_formats_YV12[3] = {
+   PIPE_FORMAT_R8_UNORM,
+   PIPE_FORMAT_R8_UNORM,
+   PIPE_FORMAT_R8_UNORM
+};
+
+const enum pipe_format const_resource_formats_NV12[3] = {
+   PIPE_FORMAT_R8_UNORM,
+   PIPE_FORMAT_R8G8_UNORM,
+   PIPE_FORMAT_NONE
+};
+
+const enum pipe_format *
+vl_video_buffer_formats(struct pipe_context *pipe, enum pipe_format format)
+{
+   switch(format) {
+   case PIPE_FORMAT_YV12:
+      return const_resource_formats_YV12;
+
+   case PIPE_FORMAT_NV12:
+      return const_resource_formats_NV12;
+
+   default:
+      return NULL;
+   }
+}
+
 static void
 vl_video_buffer_destroy(struct pipe_video_buffer *buffer)
 {

@@ -62,12 +62,11 @@ struct pipe_video_context
    int (*get_param)(struct pipe_video_context *context, int param);
 
    /**
-    * Check if the given pipe_format is supported as a texture or
-    * drawing surface.
+    * Check if the given pipe_format is supported as a video buffer
     */
    boolean (*is_format_supported)(struct pipe_video_context *context,
                                   enum pipe_format format,
-                                  unsigned usage);
+                                  enum pipe_video_profile profile);
 
    /**
     * create a surface of a texture
