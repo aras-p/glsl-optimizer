@@ -124,6 +124,12 @@ struct i915_fragment_shader
     * Else, the bitmask indicates which components are occupied by immediates.
     */
    ubyte constant_flags[I915_MAX_CONSTANT];
+
+   /**
+    * The mapping between generics and hw texture coords.
+    * We need to share this between the vertex and fragment stages.
+    **/
+   int generic_mapping[I915_TEX_UNITS];
 };
 
 

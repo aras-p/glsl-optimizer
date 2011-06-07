@@ -35,6 +35,18 @@
 #include "i915_debug.h"
 #include "i915_reg.h"
 
+static uint find_mapping(struct i915_fragment_shader* fs, int unit)
+{
+   int i;
+   for (i = 0; i < I915_TEX_UNITS ; i++)
+   {
+      if (fs->generic_mapping[i] == unit)
+         return i;
+   }
+   debug_printf("Mapping not found\n");
+   return 0;
+}
+
 
 
 /***********************************************************************
@@ -46,12 +58,12 @@ static void calculate_vertex_layout(struct i915_context *i915)
    const struct i915_fragment_shader *fs = i915->fs;
    const enum interp_mode colorInterp = i915->rasterizer->color_interp;
    struct vertex_info vinfo;
-   boolean texCoords[8], colors[2], fog, needW, have_varyings;
+   boolean texCoords[I915_TEX_UNITS], colors[2], fog, needW;
    uint i;
    int src;
 
    memset(texCoords, 0, sizeof(texCoords));
-   colors[0] = colors[1] = fog = needW = have_varyings = FALSE;
+   colors[0] = colors[1] = fog = needW = FALSE;
    memset(&vinfo, 0, sizeof(vinfo));
 
    /* Determine which fragment program inputs are needed.  Setup HW vertex
@@ -67,19 +79,11 @@ static void calculate_vertex_layout(struct i915_context *i915)
          break;
       case TGSI_SEMANTIC_GENERIC:
          {
-            /* texcoords/varyings */
+            /* texcoords/varyings/other generic */
             /* XXX handle back/front face and point size */
             uint unit = fs->info.input_semantic_index[i];
 
-            /* Route varyings as tex coords */
-            if ( (unit >= 10) && (unit < 18) ) {
-               have_varyings = TRUE;
-               unit -= 10;
-            }
-
-            assert(unit < 8);
-
-            texCoords[unit] = TRUE;
+            texCoords[find_mapping(fs, unit)] = TRUE;
             needW = TRUE;
          }
          break;
@@ -130,14 +134,11 @@ static void calculate_vertex_layout(struct i915_context *i915)
    }
 
    /* texcoords/varyings */
-   for (i = 0; i < 8; i++) {
+   for (i = 0; i < I915_TEX_UNITS; i++) {
       uint hwtc;
       if (texCoords[i]) {
          hwtc = TEXCOORDFMT_4D;
-         if (!have_varyings)
-            src = draw_find_shader_output(i915->draw, TGSI_SEMANTIC_GENERIC, i);
-         else
-            src = draw_find_shader_output(i915->draw, TGSI_SEMANTIC_GENERIC, i + 10);
+         src = draw_find_shader_output(i915->draw, TGSI_SEMANTIC_GENERIC, fs->generic_mapping[i]);
          draw_emit_vertex_attr(&vinfo, EMIT_4F, INTERP_PERSPECTIVE, src);
       }
       else {
