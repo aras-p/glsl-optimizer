@@ -105,7 +105,7 @@ analyse_tex(struct analysis_context *ctx,
 
    if (info->num_texs < Elements(info->tex)) {
       struct lp_tgsi_texture_info *tex_info = &info->tex[info->num_texs];
-      bool indirect = FALSE;
+      boolean indirect = FALSE;
       unsigned readmask = 0;
 
       tex_info->target = inst->Texture.Texture;

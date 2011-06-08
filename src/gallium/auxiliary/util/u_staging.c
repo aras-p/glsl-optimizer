@@ -55,7 +55,7 @@ util_staging_transfer_init(struct pipe_context *pipe,
            unsigned level,
            unsigned usage,
            const struct pipe_box *box,
-           bool direct, struct util_staging_transfer *tx)
+           boolean direct, struct util_staging_transfer *tx)
 {
    struct pipe_screen *pscreen = pipe->screen;
 

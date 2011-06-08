@@ -638,7 +638,7 @@ test_one_func(const struct util_format_description *format_desc,
               const char *suffix)
 {
    unsigned i;
-   bool success = TRUE;
+   boolean success = TRUE;
 
    printf("Testing util_format_%s_%s ...\n",
           format_desc->short_name, suffix);
@@ -662,7 +662,7 @@ static boolean
 test_all(void)
 {
    enum pipe_format format;
-   bool success = TRUE;
+   boolean success = TRUE;
 
    for (format = 1; format < PIPE_FORMAT_COUNT; ++format) {
       const struct util_format_description *format_desc;

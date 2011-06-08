@@ -56,7 +56,7 @@ nvfx_transfer_new(struct pipe_context *pipe,
 	else
 	{
 	        struct nvfx_staging_transfer* tx;
-	        bool direct = !nvfx_resource_on_gpu(pt) && pt->flags & NVFX_RESOURCE_FLAG_LINEAR;
+	        boolean direct = !nvfx_resource_on_gpu(pt) && pt->flags & NVFX_RESOURCE_FLAG_LINEAR;
 
 	        tx = CALLOC_STRUCT(nvfx_staging_transfer);
 	        if(!tx)

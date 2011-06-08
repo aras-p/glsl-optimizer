@@ -116,7 +116,7 @@ void r600_bomgr_bo_init(struct r600_bomgr *mgr, struct r600_bo *bo)
 	bo->manager_id = 1;
 }
 
-bool r600_bomgr_bo_destroy(struct r600_bomgr *mgr, struct r600_bo *bo)
+boolean r600_bomgr_bo_destroy(struct r600_bomgr *mgr, struct r600_bo *bo)
 {
 	bo->start = os_time_get();
 	bo->end = bo->start + mgr->usecs;

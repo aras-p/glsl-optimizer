@@ -84,7 +84,7 @@ nvfx_region_set_format(struct nv04_region* rgn, enum pipe_format format)
 }
 
 static INLINE void
-nvfx_region_init_for_surface(struct nv04_region* rgn, struct nvfx_surface* surf, unsigned x, unsigned y, bool for_write)
+nvfx_region_init_for_surface(struct nv04_region* rgn, struct nvfx_surface* surf, unsigned x, unsigned y, boolean for_write)
 {
 	rgn->x = x;
 	rgn->y = y;
@@ -120,7 +120,7 @@ nvfx_region_init_for_surface(struct nv04_region* rgn, struct nvfx_surface* surf,
 }
 
 static INLINE void
-nvfx_region_init_for_subresource(struct nv04_region* rgn, struct pipe_resource* pt, unsigned level, unsigned x, unsigned y, unsigned z, bool for_write)
+nvfx_region_init_for_subresource(struct nv04_region* rgn, struct pipe_resource* pt, unsigned level, unsigned x, unsigned y, unsigned z, boolean for_write)
 {
 	if(pt->target != PIPE_BUFFER)
 	{

@@ -87,7 +87,7 @@ struct r600_pipe_sampler_view {
 
 struct r600_pipe_rasterizer {
 	struct r600_pipe_state		rstate;
-	bool				flatshade;
+	boolean				flatshade;
 	unsigned			sprite_coord_enable;
 	float				offset_units;
 	float				offset_scale;
@@ -193,17 +193,17 @@ struct r600_pipe_context {
 	struct r600_pipe_state          spi;
 	/* shader information */
 	unsigned			sprite_coord_enable;
-	bool				flatshade;
-	bool				export_16bpc;
+	boolean				flatshade;
+	boolean				export_16bpc;
 	unsigned			alpha_ref;
-	bool				alpha_ref_dirty;
+	boolean				alpha_ref_dirty;
 	struct r600_textures_info	ps_samplers;
 
 	struct r600_pipe_fences		fences;
 
 	struct u_vbuf_mgr		*vbuf_mgr;
 	struct util_slab_mempool	pool_transfers;
-	bool				blit;
+	boolean				blit;
 
 };
 

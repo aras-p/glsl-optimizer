@@ -35,7 +35,7 @@ struct util_semantic_set
    unsigned long masks[256 / 8 / sizeof(unsigned long)];
 };
 
-static INLINE bool
+static INLINE boolean
 util_semantic_set_contains(struct util_semantic_set *set, unsigned char value)
 {
    return !!(set->masks[value / (sizeof(long) * 8)] & (1 << (value / (sizeof(long) * 8))));

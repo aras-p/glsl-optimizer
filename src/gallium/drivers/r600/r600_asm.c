@@ -1088,7 +1088,7 @@ static int r600_bc_alloc_kcache_lines(struct r600_bc *bc, struct r600_bc_alu *al
 
 	/* Collect required cache lines. */
 	for (i = 0; i < 3; ++i) {
-		bool found = false;
+		boolean found = false;
 		unsigned int line;
 
 		if (alu->src[i].sel < 512)
@@ -1140,7 +1140,7 @@ static int r600_bc_alloc_kcache_lines(struct r600_bc *bc, struct r600_bc_alu *al
 
 	/* Setup the kcache lines. */
 	for (i = 0; i < count; ++i) {
-		bool found = false;
+		boolean found = false;
 
 		for (j = 0; j < 2; ++j) {
 			if (kcache[j].mode == V_SQ_CF_KCACHE_LOCK_2 &&

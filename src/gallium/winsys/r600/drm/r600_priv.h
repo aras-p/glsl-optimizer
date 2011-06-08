@@ -197,7 +197,7 @@ void r600_bo_destroy(struct radeon *radeon, struct r600_bo *bo);
  */
 struct r600_bomgr *r600_bomgr_create(struct radeon *radeon, unsigned usecs);
 void r600_bomgr_destroy(struct r600_bomgr *mgr);
-bool r600_bomgr_bo_destroy(struct r600_bomgr *mgr, struct r600_bo *bo);
+boolean r600_bomgr_bo_destroy(struct r600_bomgr *mgr, struct r600_bo *bo);
 void r600_bomgr_bo_init(struct r600_bomgr *mgr, struct r600_bo *bo);
 struct r600_bo *r600_bomgr_bo_create(struct r600_bomgr *mgr,
 					unsigned size,
@@ -230,7 +230,7 @@ static inline void radeon_bo_unmap(struct radeon *radeon, struct radeon_bo *bo)
 /*
  * fence
  */
-static inline bool fence_is_after(unsigned fence, unsigned ofence)
+static inline boolean fence_is_after(unsigned fence, unsigned ofence)
 {
 	/* handle wrap around */
 	if (fence < 0x80000000 && ofence > 0x80000000)
