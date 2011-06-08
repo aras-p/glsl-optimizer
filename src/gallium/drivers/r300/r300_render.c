@@ -673,10 +673,11 @@ static void r300_draw_elements(struct r300_context *r300,
                                 indices3);
     } else {
         do {
-            if (indexSize == 2 && (start & 1))
-                short_count = MIN2(count, 65535);
-            else
-                short_count = MIN2(count, 65534);
+            /* The maximum must be divisible by 4 and 3,
+             * so that quad and triangle lists are split correctly.
+             *
+             * Strips, loops, and fans won't work. */
+            short_count = MIN2(count, 65532);
 
             r300_emit_draw_elements(r300, indexBuffer, indexSize,
                                      info->min_index, info->max_index,
@@ -722,7 +723,11 @@ static void r300_draw_arrays(struct r300_context *r300,
         r300_emit_draw_arrays(r300, info->mode, count);
     } else {
         do {
-            short_count = MIN2(count, 65535);
+            /* The maximum must be divisible by 4 and 3,
+             * so that quad and triangle lists are split correctly.
+             *
+             * Strips, loops, and fans won't work. */
+            short_count = MIN2(count, 65532);
             r300_emit_draw_arrays(r300, info->mode, short_count);
 
             start += short_count;
