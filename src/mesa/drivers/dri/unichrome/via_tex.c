@@ -196,18 +196,6 @@ viaChooseTexFormat( struct gl_context *ctx, GLint internalFormat,
    return MESA_FORMAT_NONE; /* never get here */
 }
 
-static int logbase2(int n)
-{
-   GLint i = 1;
-   GLint log2 = 0;
-
-   while (n > i) {
-      i *= 2;
-      log2++;
-   }
-
-   return log2;
-}
 
 static const char *get_memtype_name( GLint memType )
 {
@@ -690,7 +678,7 @@ static void viaTexImage(struct gl_context *ctx,
    }
 
    assert(texImage->RowStride == postConvWidth);
-   viaImage->pitchLog2 = logbase2(postConvWidth * texelBytes);
+   viaImage->pitchLog2 = _mesa_logbase2(postConvWidth * texelBytes);
 
    /* allocate memory */
    if (_mesa_is_format_compressed(texImage->TexFormat))

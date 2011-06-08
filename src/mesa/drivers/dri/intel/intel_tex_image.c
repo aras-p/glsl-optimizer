@@ -32,20 +32,6 @@
  */
 
 
-static int
-logbase2(int n)
-{
-   GLint i = 1;
-   GLint log2 = 0;
-
-   while (n > i) {
-      i *= 2;
-      log2++;
-   }
-
-   return log2;
-}
-
 
 /* Otherwise, store it in memory if (Border != 0) or (any dimension ==
  * 1).
@@ -118,7 +104,7 @@ intel_miptree_create_for_teximage(struct intel_context *intel,
 	  (intel->gen < 4 || firstLevel == 0)) {
 	 lastLevel = firstLevel;
       } else {
-	 lastLevel = firstLevel + logbase2(MAX2(MAX2(width, height), depth));
+	 lastLevel = firstLevel + _mesa_logbase2(MAX2(MAX2(width, height), depth));
       }
    }
 
