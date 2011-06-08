@@ -389,26 +389,33 @@ intel_miptree_image_data(struct intel_context *intel,
    GLuint i;
 
    for (i = 0; i < depth; i++) {
-      GLuint dst_x, dst_y, height;
+      GLuint dst_x, dst_y, height, width;
 
       intel_miptree_get_image_offset(dst, level, face, i, &dst_x, &dst_y);
 
       height = dst->level[level].height;
-      if(dst->compressed)
-	 height = (height + 3) / 4;
+      width = dst->level[level].width;
+      if (dst->compressed) {
+	 unsigned int align_w, align_h;
+
+	 intel_get_texture_alignment_unit(dst->internal_format,
+					  &align_w, &align_h);
+	 height = (height + align_h - 1) / align_h;
+	 width = ALIGN(width, align_w);
+      }
 
       DBG("%s: %d/%d %p/%d -> (%d, %d)/%d (%d, %d)\n",
 	  __FUNCTION__, face, level,
 	  src, src_row_pitch * dst->cpp,
 	  dst_x, dst_y, dst->region->pitch * dst->cpp,
-	  dst->level[level].width, height);
+	  width, height);
 
       intel_region_data(intel,
 			dst->region, 0, dst_x, dst_y,
 			src,
 			src_row_pitch,
 			0, 0,                             /* source x, y */
-			dst->level[level].width, height); /* width, height */
+			width, height);
 
       src = (char *)src + src_image_pitch * dst->cpp;
    }
