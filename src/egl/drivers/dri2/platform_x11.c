@@ -906,9 +906,7 @@ dri2_initialize_x11_swrast(_EGLDriver *drv, _EGLDisplay *disp)
       goto cleanup_dpy;
    }
 
-   dri2_dpy->driver_name = dri2_strndup("swrast", strlen("swrast"));
-
-   if (!dri2_load_driver(disp))
+   if (!dri2_load_driver_swrast(disp))
       goto cleanup_conn;
 
    dri2_dpy->swrast_loader_extension.base.name = __DRI_SWRAST_LOADER;

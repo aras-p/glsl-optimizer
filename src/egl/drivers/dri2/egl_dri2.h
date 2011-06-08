@@ -183,6 +183,9 @@ EGLBoolean
 dri2_load_driver(_EGLDisplay *disp);
 
 EGLBoolean
+dri2_load_driver_swrast(_EGLDisplay *disp);
+
+EGLBoolean
 dri2_create_screen(_EGLDisplay *disp);
 
 struct dri2_egl_config *

@@ -334,8 +334,8 @@ dri2_bind_extensions(struct dri2_egl_display *dri2_dpy,
    return ret;
 }
 
-EGLBoolean
-dri2_load_driver(_EGLDisplay *disp)
+static const __DRIextension **
+dri2_open_driver(_EGLDisplay *disp)
 {
    struct dri2_egl_display *dri2_dpy = disp->DriverData;
    const __DRIextension **extensions;
@@ -374,9 +374,9 @@ dri2_load_driver(_EGLDisplay *disp)
 
    if (dri2_dpy->driver == NULL) {
       _eglLog(_EGL_WARNING,
-	      "DRI2: failed to open any driver (search paths %s)",
-	      search_paths);
-      return EGL_FALSE;
+	      "DRI2: failed to open %s (search paths %s)",
+	      dri2_dpy->driver_name, search_paths);
+      return NULL;
    }
 
    _eglLog(_EGL_DEBUG, "DRI2: dlopen(%s)", path);
@@ -385,20 +385,44 @@ dri2_load_driver(_EGLDisplay *disp)
       _eglLog(_EGL_WARNING,
 	      "DRI2: driver exports no extensions (%s)", dlerror());
       dlclose(dri2_dpy->driver);
+   }
+
+   return extensions;
+}
+
+EGLBoolean
+dri2_load_driver(_EGLDisplay *disp)
+{
+   struct dri2_egl_display *dri2_dpy = disp->DriverData;
+   const __DRIextension **extensions;
+
+   extensions = dri2_open_driver(disp);
+   if (!extensions)
+      return EGL_FALSE;
+
+   if (!dri2_bind_extensions(dri2_dpy, dri2_driver_extensions, extensions)) {
+      dlclose(dri2_dpy->driver);
       return EGL_FALSE;
    }
 
-   if (strcmp(dri2_dpy->driver_name, "swrast") == 0) {
-      if (!dri2_bind_extensions(dri2_dpy, swrast_driver_extensions, extensions)) {
-         dlclose(dri2_dpy->driver);
-         return EGL_FALSE;
-      }
-   } else {
-      if (!dri2_bind_extensions(dri2_dpy, dri2_driver_extensions, extensions)) {
-         dlclose(dri2_dpy->driver);
-         return EGL_FALSE;
-      }
-   } 
+   return EGL_TRUE;
+}
+
+EGLBoolean
+dri2_load_driver_swrast(_EGLDisplay *disp)
+{
+   struct dri2_egl_display *dri2_dpy = disp->DriverData;
+   const __DRIextension **extensions;
+
+   dri2_dpy->driver_name = "swrast";
+   extensions = dri2_open_driver(disp);
+   if (!extensions)
+      return EGL_FALSE;
+
+   if (!dri2_bind_extensions(dri2_dpy, swrast_driver_extensions, extensions)) {
+      dlclose(dri2_dpy->driver);
+      return EGL_FALSE;
+   }
 
    return EGL_TRUE;
 }
