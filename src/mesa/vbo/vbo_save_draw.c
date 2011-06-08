@@ -249,7 +249,7 @@ vbo_save_playback_vertex_list(struct gl_context *ctx, void *data)
 
    FLUSH_CURRENT(ctx, 0);
 
-   if (node->prim_count > 0 && node->count > 0) {
+   if (node->prim_count > 0) {
 
       if (ctx->Driver.CurrentExecPrimitive != PRIM_OUTSIDE_BEGIN_END &&
 	  node->prim[0].begin) {
@@ -289,14 +289,16 @@ vbo_save_playback_vertex_list(struct gl_context *ctx, void *data)
       if (ctx->NewState)
 	 _mesa_update_state( ctx );
 
-      vbo_context(ctx)->draw_prims(ctx, 
-                                   save->inputs, 
-                                   node->prim, 
-                                   node->prim_count,
-                                   NULL,
-                                   GL_TRUE,
-                                   0,	/* Node is a VBO, so this is ok */
-                                   node->count - 1);
+      if (node->count > 0) {
+         vbo_context(ctx)->draw_prims(ctx, 
+                                      save->inputs, 
+                                      node->prim, 
+                                      node->prim_count,
+                                      NULL,
+                                      GL_TRUE,
+                                      0,    /* Node is a VBO, so this is ok */
+                                      node->count - 1);
+      }
    }
 
    /* Copy to current?
