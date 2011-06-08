@@ -1,5 +1,5 @@
 /*
- Copyright (c) 2008, 2009 Apple Inc.
+ Copyright (c) 2008-2011 Apple Inc.
  
  Permission is hereby granted, free of charge, to any person
  obtaining a copy of this software and associated documentation files
@@ -37,8 +37,9 @@
 #include "glxclient.h"
 #include "apple_glx_context.h"
 #include "apple_xgl_api.h"
+#include "glapitable.h"
 
-extern struct apple_xgl_api __ogl_framework_api;
+extern struct _glapi_table * __ogl_framework_api;
 
 struct apple_xgl_saved_state
 {
@@ -95,39 +96,39 @@ UnsetRead(struct apple_xgl_saved_state *saved)
 }
 
 void
-glReadPixels(GLint x, GLint y, GLsizei width, GLsizei height,
+__applegl_glReadPixels(GLint x, GLint y, GLsizei width, GLsizei height,
              GLenum format, GLenum type, void *pixels)
 {
    struct apple_xgl_saved_state saved;
 
    SetRead(&saved);
 
-   __ogl_framework_api.ReadPixels(x, y, width, height, format, type, pixels);
+   __ogl_framework_api->ReadPixels(x, y, width, height, format, type, pixels);
 
    UnsetRead(&saved);
 }
 
 void
-glCopyPixels(GLint x, GLint y, GLsizei width, GLsizei height, GLenum type)
+__applegl_glCopyPixels(GLint x, GLint y, GLsizei width, GLsizei height, GLenum type)
 {
    struct apple_xgl_saved_state saved;
 
    SetRead(&saved);
 
-   __ogl_framework_api.CopyPixels(x, y, width, height, type);
+   __ogl_framework_api->CopyPixels(x, y, width, height, type);
 
    UnsetRead(&saved);
 }
 
 void
-glCopyColorTable(GLenum target, GLenum internalformat, GLint x, GLint y,
+__applegl_glCopyColorTable(GLenum target, GLenum internalformat, GLint x, GLint y,
                  GLsizei width)
 {
    struct apple_xgl_saved_state saved;
 
    SetRead(&saved);
 
-   __ogl_framework_api.CopyColorTable(target, internalformat, x, y, width);
+   __ogl_framework_api->CopyColorTable(target, internalformat, x, y, width);
 
    UnsetRead(&saved);
 }

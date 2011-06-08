@@ -1,5 +1,5 @@
 /*
- Copyright (c) 2008, 2009 Apple Inc.
+ Copyright (c) 2011 Apple Inc.
  
  Permission is hereby granted, free of charge, to any person
  obtaining a copy of this software and associated documentation files
@@ -27,11 +27,26 @@
  prior written authorization.
 */
 
-#define GL_GLEXT_PROTOTYPES
-#include <GL/gl.h>
+#ifndef APPLE_XGL_API_H
 
-GLAPI void APIENTRY glTexImage3DEXT(GLenum target, GLint level, GLenum internalformat, GLsizei width, GLsizei height, GLsizei
- depth, GLint border, GLenum format, GLenum type, const void * pixels) {
-         glTexImage3D(target, level, (GLint)internalformat, width, height, depth, border, format, type, pixels);
-}
+__private_extern__ void 
+__applegl_glReadPixels(GLint x, GLint y, GLsizei width, GLsizei height,
+                            GLenum format, GLenum type, void *pixels);
 
+__private_extern__ void
+__applegl_glCopyPixels(GLint x, GLint y, GLsizei width, GLsizei height, GLenum type);
+
+__private_extern__ void
+__applegl_glCopyColorTable(GLenum target, GLenum internalformat, GLint x, GLint y,
+                           GLsizei width);
+
+__private_extern__ void
+__applegl_glDrawBuffer(GLenum mode);
+
+__private_extern__ void
+__applegl_glDrawBuffersARB(GLsizei n, const GLenum * bufs);
+
+__private_extern__ void
+__applegl_glViewport(GLint x, GLint y, GLsizei width, GLsizei height);
+
+#endif

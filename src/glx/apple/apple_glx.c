@@ -37,7 +37,6 @@
 #include "apple_glx.h"
 #include "apple_glx_context.h"
 #include "apple_cgl.h"
-#include "apple_xgl_api.h"
 
 static bool initialized = false;
 static int dri_event_base = 0;

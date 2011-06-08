@@ -30,8 +30,7 @@ SOURCES = \
 	apple_glx_pixmap.c \
 	apple_glx_surface.c \
 	apple_visual.c \
-	apple_xgl_api.c \
-	apple_xgl_api_additional.c \
+	apple_glapi.c \
 	apple_xgl_api_read.c \
 	apple_xgl_api_stereo.c \
 	apple_xgl_api_viewport.c \
@@ -54,18 +53,18 @@ SOURCES = \
 
 include $(TOP)/src/mesa/sources.mak
 
+# override GLAPI_LIB
+GLAPI_LIB = $(TOP)/src/mapi/glapi/libglapi.a
+
 LDFLAGS += -lXplugin -framework ApplicationServices -framework CoreFoundation
 
-MESA_GLAPI_ASM_SOURCES = $(addprefix $(TOP)/src/mesa/, $(GLAPI_ASM_SOURCES))
-MESA_GLAPI_SOURCES = $(addprefix $(TOP)/src/mesa/, $(GLAPI_SOURCES))
-MESA_GLAPI_OBJECTS = $(addprefix $(TOP)/src/mesa/, $(GLAPI_OBJECTS))
-
-OBJECTS = $(SOURCES:.c=.o) # $(MESA_GLAPI_OBJECTS)
+OBJECTS = $(SOURCES:.c=.o)
 
 INCLUDES = -I. -Iinclude -I..\
 	-I$(TOP)/include \
 	-I$(TOP)/include/GL/internal \
 	-I$(TOP)/src/mesa \
+	-I$(TOP)/src/mesa/main \
 	-I$(TOP)/src/mapi \
 	-I$(TOP)/src/mapi/glapi \
 	$(LIBDRM_CFLAGS) \
@@ -73,13 +72,6 @@ INCLUDES = -I. -Iinclude -I..\
 	$(X11_INCLUDES)
 
 ##### RULES #####
-
-$(OBJECTS) : apple_xgl_api.h
-
-apple_xgl_api.c : apple_xgl_api.h
-
-apple_xgl_api.h : gen_api_header.tcl  gen_api_library.tcl  gen_code.tcl  gen_defs.tcl  gen_exports.tcl  gen_funcs.tcl  gen_types.tcl
-	$(TCLSH) gen_code.tcl
 
 .c.o:
 	$(CC) -c $(INCLUDES) $(CFLAGS) $(EXTRA_DEFINES) $< -o $@
@@ -92,11 +84,14 @@ apple_xgl_api.h : gen_api_header.tcl  gen_api_library.tcl  gen_code.tcl  gen_def
 default: depend $(TOP)/$(LIB_DIR)/$(GL_LIB_NAME)
 
 # Make libGL
-$(TOP)/$(LIB_DIR)/$(GL_LIB_NAME):  $(OBJECTS) Makefile
+$(TOP)/$(LIB_DIR)/$(GL_LIB_NAME):  $(OBJECTS) $(GLAPI_LIB) Makefile
 	$(MKLIB) -o $(GL_LIB) -linker '$(CC)' -ldflags '$(LDFLAGS)' \
 		-major 1 -minor 2 $(MKLIB_OPTIONS) \
 		-install $(TOP)/$(LIB_DIR) -id $(INSTALL_LIB_DIR)/lib$(GL_LIB).1.dylib \
-		$(GL_LIB_DEPS) $(OBJECTS)
+		$(GL_LIB_DEPS) $(OBJECTS) $(GLAPI_LIB)
+
+$(GLAPI_LIB):
+	@$(MAKE) -C $(TOP)/src/mapi/glapi
 
 depend: $(SOURCES) $(MESA_GLAPI_SOURCES) $(MESA_GLAPI_ASM_SOURCES) Makefile
 	rm -f depend
@@ -121,7 +116,6 @@ install: install_libraries
 clean:
 	-rm -f *.o *.a *~
 	-rm -f *.c~ *.h~
-	-rm -f apple_xgl_api.h apple_xgl_api.c
 	-rm -f *.dylib
 	-rm -f include/GL/gl.h
 	-rm -f $(TOP)/$(LIB_DIR)/$(GL_LIB_GLOB)

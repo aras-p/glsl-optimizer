@@ -1,5 +1,5 @@
 /*
- Copyright (c) 2009 Apple Inc.
+ Copyright (c) 2009-2011 Apple Inc.
  
  Permission is hereby granted, free of charge, to any person
  obtaining a copy of this software and associated documentation files
@@ -40,14 +40,16 @@
 #include "glxclient.h"
 #include "apple_glx_context.h"
 #include "apple_xgl_api.h"
+#include "glapitable.h"
 
-extern struct apple_xgl_api __ogl_framework_api;
+extern struct _glapi_table * __ogl_framework_api;
+
 /* 
  * These are special functions for stereoscopic support 
  * differences in MacOS X.
  */
 void
-glDrawBuffer(GLenum mode)
+__applegl_glDrawBuffer(GLenum mode)
 {
    struct glx_context * gc = __glXGetCurrentContext();
 
@@ -73,16 +75,16 @@ glDrawBuffer(GLenum mode)
          break;
       }
 
-      __ogl_framework_api.DrawBuffers(n, buf);
+      __ogl_framework_api->DrawBuffersARB(n, buf);
    }
    else {
-      __ogl_framework_api.DrawBuffer(mode);
+      __ogl_framework_api->DrawBuffer(mode);
    }
 }
 
 
 void
-glDrawBuffers(GLsizei n, const GLenum * bufs)
+__applegl_glDrawBuffersARB(GLsizei n, const GLenum * bufs)
 {
    struct glx_context * gc = __glXGetCurrentContext();
 
@@ -114,15 +116,9 @@ glDrawBuffers(GLsizei n, const GLenum * bufs)
          newbuf[outi++] = GL_FRONT_RIGHT;
       }
 
-      __ogl_framework_api.DrawBuffers(outi, newbuf);
+      __ogl_framework_api->DrawBuffersARB(outi, newbuf);
    }
    else {
-      __ogl_framework_api.DrawBuffers(n, bufs);
+      __ogl_framework_api->DrawBuffersARB(n, bufs);
    }
-}
-
-void
-glDrawBuffersARB(GLsizei n, const GLenum * bufs)
-{
-   glDrawBuffers(n, bufs);
 }

@@ -46,4 +46,6 @@ void *apple_glx_get_proc_address(const GLubyte * procname);
 void apple_glx_waitx(Display * dpy, void *ptr);
 int apple_get_dri_event_base(void);
 
+void apple_xgl_init_direct(void);
+
 #endif

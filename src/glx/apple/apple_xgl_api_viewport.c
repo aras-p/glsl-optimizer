@@ -1,5 +1,5 @@
 /*
- Copyright (c) 2009 Apple Inc.
+ Copyright (c) 2009-2011 Apple Inc.
  
  Permission is hereby granted, free of charge, to any person
  obtaining a copy of this software and associated documentation files
@@ -30,11 +30,12 @@
 #include "glxclient.h"
 #include "apple_glx_context.h"
 #include "apple_xgl_api.h"
+#include "glapitable.h"
 
-extern struct apple_xgl_api __ogl_framework_api;
+extern struct _glapi_table * __ogl_framework_api;
 
 void
-glViewport(GLint x, GLint y, GLsizei width, GLsizei height)
+__applegl_glViewport(GLint x, GLint y, GLsizei width, GLsizei height)
 {
    struct glx_context *gc = __glXGetCurrentContext();
    Display *dpy = glXGetCurrentDisplay();
@@ -42,5 +43,5 @@ glViewport(GLint x, GLint y, GLsizei width, GLsizei height)
    if (gc && gc->driContext)
       apple_glx_context_update(dpy, gc->driContext);
 
-   __ogl_framework_api.Viewport(x, y, width, height);
+   __ogl_framework_api->Viewport(x, y, width, height);
 }

@@ -179,7 +179,7 @@ proc main {argc argv} {
 	    set body "[set return]__ogl_framework_api.[set f]([set callvars]);"
 	}
 
-        puts $fd "GLAPI [dict get $attr return] APIENTRY gl[set f]([set pstr]) \{\n\t$body\n\}"
+        puts $fd "GLAPI [dict get $attr return] APIENTRY __apple_gl[set f]([set pstr]) \{\n\t$body\n\}"
     }
 
     puts $fd $::init_code
