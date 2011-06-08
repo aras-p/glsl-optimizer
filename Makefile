@@ -231,6 +231,7 @@ MAIN_FILES = \
 	$(DIRECTORY)/include/GL/wglext.h				\
 	$(DIRECTORY)/include/GL/wmesa.h					\
 	$(DIRECTORY)/include/pci_ids/*.h				\
+	$(DIRECTORY)/include/c99/*.h					\
 	$(DIRECTORY)/src/getopt/SConscript				\
 	$(DIRECTORY)/src/getopt/getopt*.[ch]				\
 	$(DIRECTORY)/src/glsl/Makefile					\
