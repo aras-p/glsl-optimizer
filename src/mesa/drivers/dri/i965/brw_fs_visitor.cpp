@@ -742,7 +742,37 @@ fs_visitor::emit_texture_gen5(ir_texture *ir, fs_reg dst, fs_reg coordinate,
 
       inst = emit(FS_OPCODE_TXL, dst);
       break;
-   case ir_txd:
+   case ir_txd: {
+      ir->lod_info.grad.dPdx->accept(this);
+      fs_reg dPdx = this->result;
+
+      ir->lod_info.grad.dPdy->accept(this);
+      fs_reg dPdy = this->result;
+
+      mlen = MAX2(mlen, header_present + 4 * reg_width); /* skip over 'ai' */
+
+      /**
+       *  P   =  u,    v,    r
+       * dPdx = dudx, dvdx, drdx
+       * dPdy = dudy, dvdy, drdy
+       *
+       * Load up these values:
+       * - dudx   dudy   dvdx   dvdy   drdx   drdy
+       * - dPdx.x dPdy.x dPdx.y dPdy.y dPdx.z dPdy.z
+       */
+      for (int i = 0; i < ir->lod_info.grad.dPdx->type->vector_elements; i++) {
+	 emit(BRW_OPCODE_MOV, fs_reg(MRF, base_mrf + mlen), dPdx);
+	 dPdx.reg_offset++;
+	 mlen += reg_width;
+
+	 emit(BRW_OPCODE_MOV, fs_reg(MRF, base_mrf + mlen), dPdy);
+	 dPdy.reg_offset++;
+	 mlen += reg_width;
+      }
+
+      inst = emit(FS_OPCODE_TXD, dst);
+      break;
+   }
    case ir_txf:
       assert(!"GLSL 1.30 features unsupported");
       break;
