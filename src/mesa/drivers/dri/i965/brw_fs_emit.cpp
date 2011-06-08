@@ -312,7 +312,9 @@ fs_visitor::generate_tex(fs_inst *inst, struct brw_reg dst, struct brw_reg src)
 	 }
 	 break;
       case FS_OPCODE_TXD:
-	 assert(!"TXD isn't supported on gen4 yet.");
+	 assert(!inst->shadow_compare); // not supported yet
+	 assert(inst->mlen == 7 || inst->mlen == 10);
+	 msg_type = BRW_SAMPLER_MESSAGE_SIMD8_SAMPLE_GRADIENTS;
 	 break;
       }
    }

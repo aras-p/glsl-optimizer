@@ -595,7 +595,42 @@ fs_visitor::emit_texture_gen4(ir_texture *ir, fs_reg dst, fs_reg coordinate,
       /* gen4's SIMD8 sampler always has the slots for u,v,r present. */
       mlen += 3;
    } else if (ir->op == ir_txd) {
-      assert(!"TXD isn't supported on gen4 yet.");
+      ir->lod_info.grad.dPdx->accept(this);
+      fs_reg dPdx = this->result;
+
+      ir->lod_info.grad.dPdy->accept(this);
+      fs_reg dPdy = this->result;
+
+      for (int i = 0; i < ir->coordinate->type->vector_elements; i++) {
+	 emit(BRW_OPCODE_MOV, fs_reg(MRF, base_mrf + mlen + i), coordinate);
+	 coordinate.reg_offset++;
+      }
+      /* the slots for u and v are always present, but r is optional */
+      mlen += MAX2(ir->coordinate->type->vector_elements, 2);
+
+      /*  P   = u, v, r
+       * dPdx = dudx, dvdx, drdx
+       * dPdy = dudy, dvdy, drdy
+       *
+       * 2-arg: dudx   dvdx   dudy   dvdy
+       *        dPdx.x dPdx.y dPdy.x dPdy.y
+       *        m4     m5     m6     m7
+       *
+       * 3-arg: dudx   dvdx   drdx   dudy   dvdy   drdy
+       *        dPdx.x dPdx.y dPdx.z dPdy.x dPdy.y dPdy.z
+       *        m5     m6     m7     m8     m9     m10
+       */
+      for (int i = 0; i < ir->lod_info.grad.dPdx->type->vector_elements; i++) {
+	 emit(BRW_OPCODE_MOV, fs_reg(MRF, base_mrf + mlen), dPdx);
+	 dPdx.reg_offset++;
+	 mlen++;
+      }
+
+      for (int i = 0; i < ir->lod_info.grad.dPdy->type->vector_elements; i++) {
+	 emit(BRW_OPCODE_MOV, fs_reg(MRF, base_mrf + mlen), dPdy);
+	 dPdy.reg_offset++;
+	 mlen++;
+      }
    } else {
       /* Oh joy.  gen4 doesn't have SIMD8 non-shadow-compare bias/lod
        * instructions.  We'll need to do SIMD16 here.
