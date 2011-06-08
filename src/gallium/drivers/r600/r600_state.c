@@ -1243,7 +1243,7 @@ void r600_init_config(struct r600_pipe_context *rctx)
 	/* SQ_GPR_RESOURCE_MGMT_2 */
 	tmp = 0;
 	tmp |= S_008C08_NUM_GS_GPRS(num_gs_gprs);
-	tmp |= S_008C08_NUM_GS_GPRS(num_es_gprs);
+	tmp |= S_008C08_NUM_ES_GPRS(num_es_gprs);
 	r600_pipe_state_add_reg(rstate, R_008C08_SQ_GPR_RESOURCE_MGMT_2, tmp, 0xFFFFFFFF, NULL);
 
 	/* SQ_THREAD_RESOURCE_MGMT */
