@@ -46,10 +46,10 @@
  *      to have allocated the fifo space before converting.
  *
  * Results:
- *      id is filld out.
+ *      id is filled out.
  *
  * Side effects:
- *      One surface relocation is preformed for texture handle.
+ *      One surface relocation is performed for texture handle.
  *
  *----------------------------------------------------------------------
  */
@@ -224,7 +224,7 @@ SVGA3D_DestroyContext(struct svga_winsys_context *swc)  // IN
  *      containers for host VRAM objects like textures, vertex
  *      buffers, and depth/stencil buffers.
  *
- *      Surfaces are hierarchial:
+ *      Surfaces are hierarchical:
  *
  *        - Surface may have multiple faces (for cube maps)
  *
@@ -376,11 +376,9 @@ SVGA3D_DestroySurface(struct svga_winsys_context *swc,
 /*
  *----------------------------------------------------------------------
  *
- * SVGA3D_BeginSurfaceDMA--
+ * SVGA3D_SurfaceDMA--
  *
- *      Begin a SURFACE_DMA command. This reserves space for it in
- *      the FIFO, and returns a pointer to the command's box array.
- *      This function must be paired with SVGA_FIFOCommitAll().
+ *      Emit a SURFACE_DMA command.
  *
  *      When the SVGA3D device asynchronously processes this FIFO
  *      command, a DMA operation is performed between host VRAM and
