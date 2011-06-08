@@ -1461,7 +1461,6 @@ _mesa_init_shader_uniform_dispatch(struct _glapi_table *exec)
    SET_UniformMatrix4x3fv(exec, _mesa_UniformMatrix4x3fv);
 
    /* OpenGL 3.0 */
-   /* XXX finish dispatch */
    SET_Uniform1uiEXT(exec, _mesa_Uniform1ui);
    SET_Uniform2uiEXT(exec, _mesa_Uniform2ui);
    SET_Uniform3uiEXT(exec, _mesa_Uniform3ui);
