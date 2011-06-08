@@ -40,7 +40,7 @@
 
 #include "glapi.h"
 #include "glapitable.h"
-#include "glapidispatch.h"
+#include "main/dispatch.h"
 
 #include "apple_glx.h"
 #include "apple_xgl_api.h"
@@ -83,7 +83,7 @@ void apple_xgl_init_direct(void) {
     assert(__ogl_framework_api);
 
     /* to update:
-     * for f in $(grep SET_ ../../mesa/main/glapidispatch.h | grep INLINE | sed 's:^.*\(SET_[^(]*\)(.*$:\1:' | sort -u); do grep -q "$f(" apple_glapi.c || echo $f ; done | sed 's:SET_\(.*\)$:    SET_\1(__ogl_framework_api, dlsym(handle, "gl\1"))\;:'
+     * for f in $(grep SET_ ../../mesa/main/dispatch.h | grep INLINE | sed 's:^.*\(SET_[^(]*\)(.*$:\1:' | sort -u); do grep -q "$f(" apple_glapi.c || echo $f ; done | sed 's:SET_\(.*\)$:    SET_\1(__ogl_framework_api, dlsym(handle, "gl\1"))\;:'
      */
 
     SET_Accum(__ogl_framework_api, dlsym(handle, "glAccum"));

@@ -681,9 +681,7 @@ print """
 #if FEATURE_remap_table
 
 /* define esLocalRemapTable */
-/* cannot include main/dispatch.h here */
-#define _GLAPI_USE_REMAP_TABLE
-#include "%sapi/main/glapidispatch.h"
+#include "%sapi/main/dispatch.h"
 
 #define need_MESA_remap_table
 #include "%sapi/main/remap_helper.h"
@@ -719,8 +717,7 @@ init_remap_table(void)
 
 #else /* FEATURE_remap_table */
 
-/* cannot include main/dispatch.h here */
-#include "%sapi/main/glapidispatch.h"
+#include "%sapi/main/dispatch.h"
 
 static INLINE void
 init_remap_table(void)

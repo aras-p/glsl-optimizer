@@ -5,7 +5,7 @@ include $(TOP)/configs/current
 
 OUTPUTS :=			\
 	glapi_mapi_tmp.h	\
-	main/glapidispatch.h	\
+	main/dispatch.h		\
 	main/remap_helper.h
 
 COMMON = gl_and_es_API.xml gl_XML.py glX_XML.py license.py typeexpr.py
@@ -57,7 +57,7 @@ endef
 	$(PYTHON2) $(PYTHON_FLAGS) $< \
 		--printer $(PRINTER) --mode lib $(GLAPI)/gl_and_es_API.xml > $@
 
-%/main/glapidispatch.h: $(GLAPI)/gl_table.py $(COMMON)
+%/main/dispatch.h: $(GLAPI)/gl_table.py $(COMMON)
 	$(call gen-glapi,-c -m remap_table)
 
 %/main/remap_helper.h: $(GLAPI)/remap_helper.py $(COMMON)
