@@ -1641,6 +1641,12 @@
 #define R_028818_PA_CL_VTE_CNTL                      0x00028818
 #define R_028820_PA_CL_NANINF_CNTL                   0x00028820
 #define R_028838_SQ_DYN_GPR_RESOURCE_LIMIT_1         0x00028838
+#define   S_028838_PS_GPRS(x)                          (((x) & 0x1F) << 0)
+#define   S_028838_VS_GPRS(x)                          (((x) & 0x1F) << 5)
+#define   S_028838_GS_GPRS(x)                          (((x) & 0x1F) << 10)
+#define   S_028838_ES_GPRS(x)                          (((x) & 0x1F) << 15)
+#define   S_028838_HS_GPRS(x)                          (((x) & 0x1F) << 20)
+#define   S_028838_LS_GPRS(x)                          (((x) & 0x1F) << 25)
 #define R_028840_SQ_PGM_START_PS                     0x00028840
 #define R_02884C_SQ_PGM_EXPORTS_PS                   0x0002884C
 #define   S_02884C_EXPORT_COLORS(x)                    (((x) & 0xF) << 1)
