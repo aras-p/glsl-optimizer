@@ -42,6 +42,7 @@
 
 #include "main/imports.h"
 #include "main/image.h"
+#include "main/bufferobj.h"
 #include "main/macros.h"
 #include "main/mfeatures.h"
 #include "program/prog_uniform.h"
@@ -336,7 +337,7 @@ setup_interleaved_attribs(struct gl_context *ctx,
       assert(element_size == array->Size * _mesa_sizeof_type(array->Type));
 
       if (attr == 0) {
-         if (bufobj && bufobj->Name) {
+         if (bufobj && _mesa_is_bufferobj(bufobj)) {
             vbuffer->buffer = NULL;
             pipe_resource_reference(&vbuffer->buffer, stobj->buffer);
             vbuffer->buffer_offset = pointer_to_offset(low_addr);
@@ -402,7 +403,7 @@ setup_non_interleaved_attribs(struct gl_context *ctx,
 
       assert(element_size == array->Size * _mesa_sizeof_type(array->Type));
 
-      if (bufobj && bufobj->Name) {
+      if (bufobj && _mesa_is_bufferobj(bufobj)) {
          /* Attribute data is in a VBO.
           * Recall that for VBOs, the gl_client_array->Ptr field is
           * really an offset from the start of the VBO, not a pointer.
@@ -493,7 +494,7 @@ setup_index_buffer(struct gl_context *ctx,
       }
 
       /* get/create the index buffer object */
-      if (bufobj && bufobj->Name) {
+      if (bufobj && _mesa_is_bufferobj(bufobj)) {
          /* elements/indexes are in a real VBO */
          struct st_buffer_object *stobj = st_buffer_object(bufobj);
          pipe_resource_reference(&ibuffer->buffer, stobj->buffer);
