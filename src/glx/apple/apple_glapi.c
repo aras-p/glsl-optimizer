@@ -83,7 +83,7 @@ void apple_xgl_init_direct(void) {
     assert(__ogl_framework_api);
 
     /* to update:
-     * for f in $(grep 'define SET_' ../../../glx/dispatch.h  | cut -f2 -d' ' | cut -f1 -d\( | sort -u); do grep -q $f indirect.c && echo $f ; done | grep -v by_offset | sed 's:SET_\(.*\)$:SET_\1(__ogl_framework_api, dlsym(handle, "gl\1"))\;:'
+     * for f in $(grep SET_ ../../mesa/main/glapidispatch.h | grep INLINE | sed 's:^.*\(SET_[^(]*\)(.*$:\1:' | sort -u); do grep -q "$f(" apple_glapi.c || echo $f ; done | sed 's:SET_\(.*\)$:    SET_\1(__ogl_framework_api, dlsym(handle, "gl\1"))\;:'
      */
 
     SET_Accum(__ogl_framework_api, dlsym(handle, "glAccum"));
@@ -422,21 +422,6 @@ void apple_xgl_init_direct(void) {
     SET_TexGenfv(__ogl_framework_api, dlsym(handle, "glTexGenfv"));
     SET_TexGeni(__ogl_framework_api, dlsym(handle, "glTexGeni"));
     SET_TexGeniv(__ogl_framework_api, dlsym(handle, "glTexGeniv"));
-    
-    /* Pointer Incompatability:
-     * internalformat is a GLenum according to /System/Library/Frameworks/OpenGL.framework/Headers/gl.h
-     * extern void glTexImage1D (GLenum target, GLint level, GLenum internalformat, GLsizei width, GLint border, GLenum format, GLenum type, const GLvoid *pixels);
-     * extern void glTexImage2D (GLenum target, GLint level, GLenum internalformat, GLsizei width, GLsizei height, GLint border, GLenum format, GLenum type, const GLvoid *pixels);
-     * extern void glTexImage3D (GLenum target, GLint level, GLenum internalformat, GLsizei width, GLsizei height, GLsizei depth, GLint border, GLenum format, GLenum type, const GLvoid *pixels);
-     *
-     * and it's a GLint in glx/glapitable.h and according to the man page
-     * void ( * TexImage1D)(GLenum target, GLint level, GLint internalformat, GLsizei width, GLint border, GLenum format, GLenum type, const GLvoid * pixels);
-     * void ( * TexImage2D)(GLenum target, GLint level, GLint internalformat, GLsizei width, GLsizei height, GLint border, GLenum format, GLenum type, const GLvoid * pixels);
-     * void ( * TexImage3D)(GLenum target, GLint level, GLint internalformat, GLsizei width, GLsizei height, GLsizei depth, GLint border, GLenum format, GLenum type, const GLvoid * pixels);
-     *
-     * <rdar://problem/6953344> gl.h contains incorrect prototypes for glTexImage[123]D
-     */
-    
     SET_TexImage1D(__ogl_framework_api, dlsym(handle, "glTexImage1D"));
     SET_TexImage2D(__ogl_framework_api, dlsym(handle, "glTexImage2D"));
     SET_TexImage3D(__ogl_framework_api, dlsym(handle, "glTexImage3D"));
@@ -478,12 +463,17 @@ void apple_xgl_init_direct(void) {
 
     /* GL_VERSION_2_0 */
     SET_AttachShader(__ogl_framework_api, dlsym(handle, "glAttachShader"));
+    SET_CreateProgram(__ogl_framework_api, dlsym(handle, "glCreateProgram"));
+    SET_CreateShader(__ogl_framework_api, dlsym(handle, "glCreateShader"));
+    SET_DeleteProgram(__ogl_framework_api, dlsym(handle, "glDeleteProgram"));
     SET_DeleteShader(__ogl_framework_api, dlsym(handle, "glDeleteShader"));
     SET_DetachShader(__ogl_framework_api, dlsym(handle, "glDetachShader"));
     SET_GetAttachedShaders(__ogl_framework_api, dlsym(handle, "glGetAttachedShaders"));
+    SET_GetProgramiv(__ogl_framework_api, dlsym(handle, "glGetProgramiv"));
     SET_GetProgramInfoLog(__ogl_framework_api, dlsym(handle, "glGetProgramInfoLog"));
     SET_GetShaderInfoLog(__ogl_framework_api, dlsym(handle, "glGetShaderInfoLog"));
     SET_GetShaderiv(__ogl_framework_api, dlsym(handle, "glGetShaderiv"));
+    SET_IsProgram(__ogl_framework_api, dlsym(handle, "glIsProgram"));
     SET_IsShader(__ogl_framework_api, dlsym(handle, "glIsShader"));
     SET_StencilFuncSeparate(__ogl_framework_api, dlsym(handle, "glStencilFuncSeparate"));
     SET_StencilMaskSeparate(__ogl_framework_api, dlsym(handle, "glStencilMaskSeparate"));
@@ -496,6 +486,22 @@ void apple_xgl_init_direct(void) {
     SET_UniformMatrix3x4fv(__ogl_framework_api, dlsym(handle, "glUniformMatrix3x4fv"));
     SET_UniformMatrix4x2fv(__ogl_framework_api, dlsym(handle, "glUniformMatrix4x2fv"));
     SET_UniformMatrix4x3fv(__ogl_framework_api, dlsym(handle, "glUniformMatrix4x3fv"));
+
+    /* GL_VERSION_3_0 */
+    SET_ClampColor(__ogl_framework_api, dlsym(handle, "glClampColor"));
+    SET_ClearBufferfi(__ogl_framework_api, dlsym(handle, "glClearBufferfi"));
+    SET_ClearBufferfv(__ogl_framework_api, dlsym(handle, "glClearBufferfv"));
+    SET_ClearBufferiv(__ogl_framework_api, dlsym(handle, "glClearBufferiv"));
+    SET_ClearBufferuiv(__ogl_framework_api, dlsym(handle, "glClearBufferuiv"));
+    SET_GetStringi(__ogl_framework_api, dlsym(handle, "glGetStringi"));
+
+    /* GL_VERSION_3_1 */
+    SET_TexBuffer(__ogl_framework_api, dlsym(handle, "glTexBuffer"));
+
+    /* GL_VERSION_3_2 */
+    SET_FramebufferTexture(__ogl_framework_api, dlsym(handle, "glFramebufferTexture"));
+    SET_GetBufferParameteri64v(__ogl_framework_api, dlsym(handle, "glGetBufferParameteri64v"));
+    SET_GetInteger64i_v(__ogl_framework_api, dlsym(handle, "glGetInteger64i_v"));
 
     /* GL_APPLE_vertex_array_object */
     SET_BindVertexArrayAPPLE(__ogl_framework_api, dlsym(handle, "glBindVertexArrayAPPLE"));
@@ -794,15 +800,6 @@ void apple_xgl_init_direct(void) {
     SET_ProgramEnvParameters4fvEXT(__ogl_framework_api, dlsym(handle, "glProgramEnvParameters4fvEXT"));
     SET_ProgramLocalParameters4fvEXT(__ogl_framework_api, dlsym(handle, "glProgramLocalParameters4fvEXT"));
 
-    /* Pointer Incompatability:
-     * This warning can be safely ignored.  OpenGL.framework adds const to the
-     * two pointers.
-     *
-     * extern void glMultiDrawArraysEXT (GLenum, const GLint *, const GLsizei *, GLsizei);
-     *
-     * void ( * MultiDrawArraysEXT)(GLenum mode, GLint * first, GLsizei * count, GLsizei primcount);
-     */
-
     /* GL_EXT_multi_draw_arrays */
     SET_MultiDrawArraysEXT(__ogl_framework_api, (void *)dlsym(handle, "glMultiDrawArraysEXT"));
     SET_MultiDrawElementsEXT(__ogl_framework_api, dlsym(handle, "glMultiDrawElementsEXT"));
@@ -989,6 +986,217 @@ void apple_xgl_init_direct(void) {
     SET_PixelTexGenParameteriSGIS(__ogl_framework_api, dlsym(handle, "glPixelTexGenParameteriSGIS"));
     SET_PixelTexGenParameterivSGIS(__ogl_framework_api, dlsym(handle, "glPixelTexGenParameterivSGIS"));
     SET_PixelTexGenSGIX(__ogl_framework_api, dlsym(handle, "glPixelTexGenSGIX"));
+
+    /* GL_EXT_separate_shader_objects */
+    SET_ActiveProgramEXT(__ogl_framework_api, dlsym(handle, "glActiveProgramEXT"));
+    SET_CreateShaderProgramEXT(__ogl_framework_api, dlsym(handle, "glCreateShaderProgramEXT"));
+    SET_UseShaderProgramEXT(__ogl_framework_api, dlsym(handle, "glUseShaderProgramEXT"));
+
+    /* GL_NV_conditional_render */
+    SET_BeginConditionalRenderNV(__ogl_framework_api, dlsym(handle, "glBeginConditionalRenderNV"));
+    SET_EndConditionalRenderNV(__ogl_framework_api, dlsym(handle, "glEndConditionalRenderNV"));
+
+    /* GL_EXT_transform_feedback */
+    SET_BeginTransformFeedbackEXT(__ogl_framework_api, dlsym(handle, "glBeginTransformFeedbackEXT"));
+    SET_EndTransformFeedbackEXT(__ogl_framework_api, dlsym(handle, "glEndTransformFeedbackEXT"));
+    SET_BindBufferBaseEXT(__ogl_framework_api, dlsym(handle, "glBindBufferBaseEXT"));
+    SET_BindBufferOffsetEXT(__ogl_framework_api, dlsym(handle, "glBindBufferOffsetEXT"));
+    SET_BindBufferRangeEXT(__ogl_framework_api, dlsym(handle, "glBindBufferRangeEXT"));
+    SET_TransformFeedbackVaryingsEXT(__ogl_framework_api, dlsym(handle, "glTransformFeedbackVaryingsEXT"));
+    SET_GetTransformFeedbackVaryingEXT(__ogl_framework_api, dlsym(handle, "glGetTransformFeedbackVaryingEXT"));
+
+    /* GL_EXT_gpu_shader4 */
+    SET_BindFragDataLocationEXT(__ogl_framework_api, dlsym(handle, "glBindFragDataLocationEXT"));
+    SET_GetFragDataLocationEXT(__ogl_framework_api, dlsym(handle, "glGetFragDataLocationEXT"));
+    SET_GetUniformuivEXT(__ogl_framework_api, dlsym(handle, "glGetUniformuivEXT"));
+    SET_Uniform1uiEXT(__ogl_framework_api, dlsym(handle, "glUniform1uiEXT"));
+    SET_Uniform1uivEXT(__ogl_framework_api, dlsym(handle, "glUniform1uivEXT"));
+    SET_Uniform2uiEXT(__ogl_framework_api, dlsym(handle, "glUniform2uiEXT"));
+    SET_Uniform2uivEXT(__ogl_framework_api, dlsym(handle, "glUniform2uivEXT"));
+    SET_Uniform3uiEXT(__ogl_framework_api, dlsym(handle, "glUniform3uiEXT"));
+    SET_Uniform3uivEXT(__ogl_framework_api, dlsym(handle, "glUniform3uivEXT"));
+    SET_Uniform4uiEXT(__ogl_framework_api, dlsym(handle, "glUniform4uiEXT"));
+    SET_Uniform4uivEXT(__ogl_framework_api, dlsym(handle, "glUniform4uivEXT"));
+
+    /* GL_ARB_sampler_objects */
+    SET_BindSampler(__ogl_framework_api, dlsym(handle, "glBindSampler"));
+    SET_DeleteSamplers(__ogl_framework_api, dlsym(handle, "glDeleteSamplers"));
+    SET_GenSamplers(__ogl_framework_api, dlsym(handle, "glGenSamplers"));
+    SET_GetSamplerParameterIiv(__ogl_framework_api, dlsym(handle, "glGetSamplerParameterIiv"));
+    SET_GetSamplerParameterIuiv(__ogl_framework_api, dlsym(handle, "glGetSamplerParameterIuiv"));
+    SET_GetSamplerParameterfv(__ogl_framework_api, dlsym(handle, "glGetSamplerParameterfv"));
+    SET_GetSamplerParameteriv(__ogl_framework_api, dlsym(handle, "glGetSamplerParameteriv"));
+    SET_IsSampler(__ogl_framework_api, dlsym(handle, "glIsSampler"));
+    SET_SamplerParameterIiv(__ogl_framework_api, dlsym(handle, "glSamplerParameterIiv"));
+    SET_SamplerParameterIuiv(__ogl_framework_api, dlsym(handle, "glSamplerParameterIuiv"));
+    SET_SamplerParameterf(__ogl_framework_api, dlsym(handle, "glSamplerParameterf"));
+    SET_SamplerParameterfv(__ogl_framework_api, dlsym(handle, "glSamplerParameterfv"));
+    SET_SamplerParameteri(__ogl_framework_api, dlsym(handle, "glSamplerParameteri"));
+    SET_SamplerParameteriv(__ogl_framework_api, dlsym(handle, "glSamplerParameteriv"));
+
+    /* GL_ARB_transform_feedback2 */
+    SET_BindTransformFeedback(__ogl_framework_api, dlsym(handle, "glBindTransformFeedback"));
+    SET_DeleteTransformFeedbacks(__ogl_framework_api, dlsym(handle, "glDeleteTransformFeedbacks"));
+    SET_DrawTransformFeedback(__ogl_framework_api, dlsym(handle, "glDrawTransformFeedback"));
+    SET_GenTransformFeedbacks(__ogl_framework_api, dlsym(handle, "glGenTransformFeedbacks"));
+    SET_IsTransformFeedback(__ogl_framework_api, dlsym(handle, "glIsTransformFeedback"));
+    SET_PauseTransformFeedback(__ogl_framework_api, dlsym(handle, "glPauseTransformFeedback"));
+    SET_ResumeTransformFeedback(__ogl_framework_api, dlsym(handle, "glResumeTransformFeedback"));
+
+    /* GL_ARB_vertex_array_object */
+    SET_BindVertexArray(__ogl_framework_api, dlsym(handle, "glBindVertexArray"));
+    SET_GenVertexArrays(__ogl_framework_api, dlsym(handle, "glGenVertexArrays"));
+
+    /* GL_ARB_draw_buffers_blend */
+    SET_BlendEquationSeparateiARB(__ogl_framework_api, dlsym(handle, "glBlendEquationSeparateiARB"));
+    SET_BlendEquationiARB(__ogl_framework_api, dlsym(handle, "glBlendEquationiARB"));
+    SET_BlendFuncSeparateiARB(__ogl_framework_api, dlsym(handle, "glBlendFuncSeparateiARB"));
+    SET_BlendFunciARB(__ogl_framework_api, dlsym(handle, "glBlendFunciARB"));
+
+    /* GL_APPLE_flush_buffer_range */
+    SET_BufferParameteriAPPLE(__ogl_framework_api, dlsym(handle, "glBufferParameteriAPPLE"));
+    SET_FlushMappedBufferRangeAPPLE(__ogl_framework_api, dlsym(handle, "glFlushMappedBufferRangeAPPLE"));
+
+    /* GL_ARB_color_buffer_float */
+    SET_ClampColorARB(__ogl_framework_api, dlsym(handle, "glClampColorARB"));
+
+    /* GL_EXT_texture_integer */
+    SET_ClearColorIiEXT(__ogl_framework_api, dlsym(handle, "glClearColorIiEXT"));
+    SET_ClearColorIuiEXT(__ogl_framework_api, dlsym(handle, "glClearColorIuiEXT"));
+    SET_TexParameterIivEXT(__ogl_framework_api, dlsym(handle, "glTexParameterIivEXT"));
+    SET_TexParameterIuivEXT(__ogl_framework_api, dlsym(handle, "glTexParameterIuivEXT"));
+    SET_GetTexParameterIivEXT(__ogl_framework_api, dlsym(handle, "glGetTexParameterIivEXT"));
+    SET_GetTexParameterIuivEXT(__ogl_framework_api, dlsym(handle, "glGetTexParameterIuivEXT"));
+
+    /* GL_ARB_ES2_compatibility */
+    SET_ClearDepthf(__ogl_framework_api, dlsym(handle, "glClearDepthf"));
+    SET_DepthRangef(__ogl_framework_api, dlsym(handle, "glDepthRangef"));
+    SET_GetShaderPrecisionFormat(__ogl_framework_api, dlsym(handle, "glGetShaderPrecisionFormat"));
+    SET_ReleaseShaderCompiler(__ogl_framework_api, dlsym(handle, "glReleaseShaderCompiler"));
+    SET_ShaderBinary(__ogl_framework_api, dlsym(handle, "glShaderBinary"));
+
+    /* GL_EXT_draw_buffers2 */
+    SET_ColorMaskIndexedEXT(__ogl_framework_api, dlsym(handle, "glColorMaskIndexedEXT"));
+    SET_DisableIndexedEXT(__ogl_framework_api, dlsym(handle, "glDisableIndexedEXT"));
+    SET_EnableIndexedEXT(__ogl_framework_api, dlsym(handle, "glEnableIndexedEXT"));
+    SET_GetBooleanIndexedvEXT(__ogl_framework_api, dlsym(handle, "glGetBooleanIndexedvEXT"));
+    SET_GetIntegerIndexedvEXT(__ogl_framework_api, dlsym(handle, "glGetIntegerIndexedvEXT"));
+    SET_IsEnabledIndexedEXT(__ogl_framework_api, dlsym(handle, "glIsEnabledIndexedEXT"));
+
+    /* GL_ARB_draw_instanced */
+    SET_DrawArraysInstancedARB(__ogl_framework_api, dlsym(handle, "glDrawArraysInstancedARB"));
+    SET_DrawElementsInstancedARB(__ogl_framework_api, dlsym(handle, "glDrawElementsInstancedARB"));
+
+    /* GL_ARB_geometry_shader4 */
+    SET_FramebufferTextureARB(__ogl_framework_api, dlsym(handle, "glFramebufferTextureARB"));
+    SET_FramebufferTextureFaceARB(__ogl_framework_api, dlsym(handle, "glFramebufferTextureFaceARB"));
+    SET_ProgramParameteriARB(__ogl_framework_api, dlsym(handle, "glProgramParameteriARB"));
+
+    /* GL_ARB_sync */
+    SET_ClientWaitSync(__ogl_framework_api, dlsym(handle, "glClientWaitSync"));
+    SET_DeleteSync(__ogl_framework_api, dlsym(handle, "glDeleteSync"));
+    SET_FenceSync(__ogl_framework_api, dlsym(handle, "glFenceSync"));
+    SET_GetInteger64v(__ogl_framework_api, dlsym(handle, "glGetInteger64v"));
+    SET_GetSynciv(__ogl_framework_api, dlsym(handle, "glGetSynciv"));
+    SET_IsSync(__ogl_framework_api, dlsym(handle, "glIsSync"));
+    SET_WaitSync(__ogl_framework_api, dlsym(handle, "glWaitSync"));
+
+    /* GL_ARB_copy_buffer */
+    SET_CopyBufferSubData(__ogl_framework_api, dlsym(handle, "glCopyBufferSubData"));
+
+    /* GL_ARB_draw_elements_base_vertex */
+    SET_DrawElementsBaseVertex(__ogl_framework_api, dlsym(handle, "glDrawElementsBaseVertex"));
+    SET_DrawElementsInstancedBaseVertex(__ogl_framework_api, dlsym(handle, "glDrawElementsInstancedBaseVertex"));
+    SET_DrawRangeElementsBaseVertex(__ogl_framework_api, dlsym(handle, "glDrawRangeElementsBaseVertex"));
+    SET_MultiDrawElementsBaseVertex(__ogl_framework_api, dlsym(handle, "glMultiDrawElementsBaseVertex"));
+
+    /* GL_ARB_map_buffer_range */
+    SET_FlushMappedBufferRange(__ogl_framework_api, dlsym(handle, "glFlushMappedBufferRange"));
+    SET_MapBufferRange(__ogl_framework_api, dlsym(handle, "glMapBufferRange"));
+
+    /* GL_ARB_robustness */
+    SET_GetGraphicsResetStatusARB(__ogl_framework_api, dlsym(handle, "glGetGraphicsResetStatusARB"));
+    SET_GetnColorTableARB(__ogl_framework_api, dlsym(handle, "glGetnColorTableARB"));
+    SET_GetnCompressedTexImageARB(__ogl_framework_api, dlsym(handle, "glGetnCompressedTexImageARB"));
+    SET_GetnConvolutionFilterARB(__ogl_framework_api, dlsym(handle, "glGetnConvolutionFilterARB"));
+    SET_GetnHistogramARB(__ogl_framework_api, dlsym(handle, "glGetnHistogramARB"));
+    SET_GetnMapdvARB(__ogl_framework_api, dlsym(handle, "glGetnMapdvARB"));
+    SET_GetnMapfvARB(__ogl_framework_api, dlsym(handle, "glGetnMapfvARB"));
+    SET_GetnMapivARB(__ogl_framework_api, dlsym(handle, "glGetnMapivARB"));
+    SET_GetnMinmaxARB(__ogl_framework_api, dlsym(handle, "glGetnMinmaxARB"));
+    SET_GetnPixelMapfvARB(__ogl_framework_api, dlsym(handle, "glGetnPixelMapfvARB"));
+    SET_GetnPixelMapuivARB(__ogl_framework_api, dlsym(handle, "glGetnPixelMapuivARB"));
+    SET_GetnPixelMapusvARB(__ogl_framework_api, dlsym(handle, "glGetnPixelMapusvARB"));
+    SET_GetnPolygonStippleARB(__ogl_framework_api, dlsym(handle, "glGetnPolygonStippleARB"));
+    SET_GetnSeparableFilterARB(__ogl_framework_api, dlsym(handle, "glGetnSeparableFilterARB"));
+    SET_GetnTexImageARB(__ogl_framework_api, dlsym(handle, "glGetnTexImageARB"));
+    SET_GetnUniformdvARB(__ogl_framework_api, dlsym(handle, "glGetnUniformdvARB"));
+    SET_GetnUniformfvARB(__ogl_framework_api, dlsym(handle, "glGetnUniformfvARB"));
+    SET_GetnUniformivARB(__ogl_framework_api, dlsym(handle, "glGetnUniformivARB"));
+    SET_GetnUniformuivARB(__ogl_framework_api, dlsym(handle, "glGetnUniformuivARB"));
+    SET_ReadnPixelsARB(__ogl_framework_api, dlsym(handle, "glReadnPixelsARB"));
+
+    /* GL_APPLE_object_purgeable */
+    SET_GetObjectParameterivAPPLE(__ogl_framework_api, dlsym(handle, "glGetObjectParameterivAPPLE"));
+    SET_ObjectPurgeableAPPLE(__ogl_framework_api, dlsym(handle, "glObjectPurgeableAPPLE"));
+    SET_ObjectUnpurgeableAPPLE(__ogl_framework_api, dlsym(handle, "glObjectUnpurgeableAPPLE"));
+
+    /* GL_ATI_envmap_bumpmap */
+    SET_GetTexBumpParameterfvATI(__ogl_framework_api, dlsym(handle, "glGetTexBumpParameterfvATI"));
+    SET_GetTexBumpParameterivATI(__ogl_framework_api, dlsym(handle, "glGetTexBumpParameterivATI"));
+    SET_TexBumpParameterfvATI(__ogl_framework_api, dlsym(handle, "glTexBumpParameterfvATI"));
+    SET_TexBumpParameterivATI(__ogl_framework_api, dlsym(handle, "glTexBumpParameterivATI"));
+
+    /* GL_APPLE_texture_range */
+    SET_GetTexParameterPointervAPPLE(__ogl_framework_api, dlsym(handle, "glGetTexParameterPointervAPPLE"));
+    SET_TextureRangeAPPLE(__ogl_framework_api, dlsym(handle, "glTextureRangeAPPLE"));
+
+    /* GL_NV_vertex_program4 */
+    SET_GetVertexAttribIivEXT(__ogl_framework_api, dlsym(handle, "glGetVertexAttribIivEXT"));
+    SET_GetVertexAttribIuivEXT(__ogl_framework_api, dlsym(handle, "glGetVertexAttribIuivEXT"));
+    SET_VertexAttribDivisor(__ogl_framework_api, dlsym(handle, "glVertexAttribDivisor"));
+    SET_VertexAttribDivisorARB(__ogl_framework_api, dlsym(handle, "glVertexAttribDivisorARB"));
+    SET_VertexAttribI1iEXT(__ogl_framework_api, dlsym(handle, "glVertexAttribI1iEXT"));
+    SET_VertexAttribI1ivEXT(__ogl_framework_api, dlsym(handle, "glVertexAttribI1ivEXT"));
+    SET_VertexAttribI1uiEXT(__ogl_framework_api, dlsym(handle, "glVertexAttribI1uiEXT"));
+    SET_VertexAttribI1uivEXT(__ogl_framework_api, dlsym(handle, "glVertexAttribI1uivEXT"));
+    SET_VertexAttribI2iEXT(__ogl_framework_api, dlsym(handle, "glVertexAttribI2iEXT"));
+    SET_VertexAttribI2ivEXT(__ogl_framework_api, dlsym(handle, "glVertexAttribI2ivEXT"));
+    SET_VertexAttribI2uiEXT(__ogl_framework_api, dlsym(handle, "glVertexAttribI2uiEXT"));
+    SET_VertexAttribI2uivEXT(__ogl_framework_api, dlsym(handle, "glVertexAttribI2uivEXT"));
+    SET_VertexAttribI3iEXT(__ogl_framework_api, dlsym(handle, "glVertexAttribI3iEXT"));
+    SET_VertexAttribI3ivEXT(__ogl_framework_api, dlsym(handle, "glVertexAttribI3ivEXT"));
+    SET_VertexAttribI3uiEXT(__ogl_framework_api, dlsym(handle, "glVertexAttribI3uiEXT"));
+    SET_VertexAttribI3uivEXT(__ogl_framework_api, dlsym(handle, "glVertexAttribI3uivEXT"));
+    SET_VertexAttribI4bvEXT(__ogl_framework_api, dlsym(handle, "glVertexAttribI4bvEXT"));
+    SET_VertexAttribI4iEXT(__ogl_framework_api, dlsym(handle, "glVertexAttribI4iEXT"));
+    SET_VertexAttribI4ivEXT(__ogl_framework_api, dlsym(handle, "glVertexAttribI4ivEXT"));
+    SET_VertexAttribI4svEXT(__ogl_framework_api, dlsym(handle, "glVertexAttribI4svEXT"));
+    SET_VertexAttribI4ubvEXT(__ogl_framework_api, dlsym(handle, "glVertexAttribI4ubvEXT"));
+    SET_VertexAttribI4uiEXT(__ogl_framework_api, dlsym(handle, "glVertexAttribI4uiEXT"));
+    SET_VertexAttribI4uivEXT(__ogl_framework_api, dlsym(handle, "glVertexAttribI4uivEXT"));
+    SET_VertexAttribI4usvEXT(__ogl_framework_api, dlsym(handle, "glVertexAttribI4usvEXT"));
+    SET_VertexAttribIPointerEXT(__ogl_framework_api, dlsym(handle, "glVertexAttribIPointerEXT"));
+
+    /* GL_NV_primitive_restart */
+    SET_PrimitiveRestartIndexNV(__ogl_framework_api, dlsym(handle, "glPrimitiveRestartIndexNV"));
+    SET_PrimitiveRestartNV(__ogl_framework_api, dlsym(handle, "glPrimitiveRestartNV"));
+
+    /* GL_EXT_provoking_vertex */
+    SET_ProvokingVertexEXT(__ogl_framework_api, dlsym(handle, "glProvokingVertexEXT"));
+
+    /* GL_ARB_texture_buffer_object */
+    SET_TexBufferARB(__ogl_framework_api, dlsym(handle, "glTexBufferARB"));
+
+    /* GL_NV_texture_barrier */
+    SET_TextureBarrierNV(__ogl_framework_api, dlsym(handle, "glTextureBarrierNV"));
+
+    /* GL_ARB_framebuffer_object */
+    SET_RenderbufferStorageMultisample(__ogl_framework_api, dlsym(handle, "glRenderbufferStorageMultisample"));
+
+    /* GL_OES_EGL_image */
+    SET_EGLImageTargetRenderbufferStorageOES(__ogl_framework_api, dlsym(handle, "glEGLImageTargetRenderbufferStorageOES"));
+    SET_EGLImageTargetTexture2DOES(__ogl_framework_api, dlsym(handle, "glEGLImageTargetTexture2DOES"));
 
     __applegl_api = malloc(sizeof(struct _glapi_table));
     assert(__applegl_api);
