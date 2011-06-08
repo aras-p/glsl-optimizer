@@ -171,6 +171,10 @@
 #define   S_008C0C_NUM_LS_GPRS(x)                      (((x) & 0xFF) << 16)
 #define   G_008C0C_NUM_LS_GPRS(x)                      (((x) >> 16) & 0xFF)
 #define   C_008C0C_NUM_LS_GPRS(x)                      0xFF00FFFF
+
+#define R_008C10_SQ_GLOBAL_GPR_RESOURCE_MGMT_1       0x00008C10
+#define R_008C14_SQ_GLOBAL_GPR_RESOURCE_MGMT_2       0x00008C14
+
 #define R_008C18_SQ_THREAD_RESOURCE_MGMT_1           0x00008C18
 #define   S_008C18_NUM_PS_THREADS(x)                   (((x) & 0xFF) << 0)
 #define   G_008C18_NUM_PS_THREADS(x)                   (((x) >> 0) & 0xFF)
@@ -1948,6 +1952,4 @@
 #define CM_R_028C38_PA_SC_AA_MASK_X0Y0_X1Y0 0x28c38
 #define CM_R_028C3C_PA_SC_AA_MASK_X0Y1_X1Y1 0x28c3c
 
-#define CM_R_008C10_SQ_GLOBAL_GPR_RESOURCE_MGMT_1              0x00008C10
-#define CM_R_008C14_SQ_GLOBAL_GPR_RESOURCE_MGMT_2              0x00008C14
 #endif

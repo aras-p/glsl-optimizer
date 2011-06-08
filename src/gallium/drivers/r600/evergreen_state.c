@@ -1023,7 +1023,7 @@ static void cayman_init_config(struct r600_pipe_context *rctx)
 	tmp |= S_008C00_EXPORT_SRC_C(1);
 	r600_pipe_state_add_reg(rstate, R_008C00_SQ_CONFIG, tmp, 0xFFFFFFFF, NULL);
 
-	r600_pipe_state_add_reg(rstate, CM_R_008C10_SQ_GLOBAL_GPR_RESOURCE_MGMT_1, (4 << 28), 0xFFFFFFFF, NULL);
+	r600_pipe_state_add_reg(rstate, R_008C10_SQ_GLOBAL_GPR_RESOURCE_MGMT_1, (4 << 28), 0xFFFFFFFF, NULL);
 	r600_pipe_state_add_reg(rstate, R_008D8C_SQ_DYN_GPR_CNTL_PS_FLUSH_REQ, (1 << 8), 0xFFFFFFFF, NULL);
 
 	r600_pipe_state_add_reg(rstate, R_028A48_PA_SC_MODE_CNTL_0, 0x0, 0xFFFFFFFF, NULL);
@@ -1375,21 +1375,8 @@ void evergreen_init_config(struct r600_pipe_context *rctx)
 	tmp |= S_008C00_ES_PRIO(es_prio);
 	r600_pipe_state_add_reg(rstate, R_008C00_SQ_CONFIG, tmp, 0xFFFFFFFF, NULL);
 
-	tmp = 0;
-	tmp |= S_008C04_NUM_PS_GPRS(num_ps_gprs);
-	tmp |= S_008C04_NUM_VS_GPRS(num_vs_gprs);
-	tmp |= S_008C04_NUM_CLAUSE_TEMP_GPRS(num_temp_gprs);
-	r600_pipe_state_add_reg(rstate, R_008C04_SQ_GPR_RESOURCE_MGMT_1, tmp, 0xFFFFFFFF, NULL);
-
-	tmp = 0;
-	tmp |= S_008C08_NUM_GS_GPRS(num_gs_gprs);
-	tmp |= S_008C08_NUM_ES_GPRS(num_es_gprs);
-	r600_pipe_state_add_reg(rstate, R_008C08_SQ_GPR_RESOURCE_MGMT_2, tmp, 0xFFFFFFFF, NULL);
-
-	tmp = 0;
-	tmp |= S_008C0C_NUM_HS_GPRS(num_hs_gprs);
-	tmp |= S_008C0C_NUM_LS_GPRS(num_ls_gprs);
-	r600_pipe_state_add_reg(rstate, R_008C0C_SQ_GPR_RESOURCE_MGMT_3, tmp, 0xFFFFFFFF, NULL);
+	r600_pipe_state_add_reg(rstate, R_008C10_SQ_GLOBAL_GPR_RESOURCE_MGMT_1, (4 << 28), 0xFFFFFFFF, NULL);
+	r600_pipe_state_add_reg(rstate, R_008D8C_SQ_DYN_GPR_CNTL_PS_FLUSH_REQ, (1 << 8), 0xFFFFFFFF, NULL);
 
 	tmp = 0;
 	tmp |= S_008C18_NUM_PS_THREADS(num_ps_threads);
