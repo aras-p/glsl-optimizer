@@ -686,12 +686,11 @@ static void DO_FALLBACK( struct gl_context *ctx )
    struct vbo_save_context *save = &vbo_context(ctx)->save;
 
    if (save->vert_count || save->prim_count) {
-      GLint i = save->prim_count - 1;
-
-      /* Close off in-progress primitive.
-       */
-      save->prim[i].count = (save->vert_count - 
-                             save->prim[i].start);
+      if (save->prim_count > 0) {
+         /* Close off in-progress primitive. */
+         GLint i = save->prim_count - 1;
+         save->prim[i].count = save->vert_count - save->prim[i].start;
+      }
 
       /* Need to replay this display list with loopback,
        * unfortunately, otherwise this primitive won't be handled
