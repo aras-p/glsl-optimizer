@@ -796,20 +796,52 @@ fs_visitor::emit_texture_gen7(ir_texture *ir, fs_reg dst, fs_reg coordinate,
       emit(BRW_OPCODE_MOV, fs_reg(MRF, base_mrf + mlen), this->result);
       mlen += reg_width;
       break;
-   case ir_txd:
+   case ir_txd: {
+      if (c->dispatch_width == 16)
+	 fail("Gen7 does not support sample_d/sample_d_c in SIMD16 mode.");
+
+      ir->lod_info.grad.dPdx->accept(this);
+      fs_reg dPdx = this->result;
+
+      ir->lod_info.grad.dPdy->accept(this);
+      fs_reg dPdy = this->result;
+
+      /* Load dPdx and the coordinate together:
+       * [hdr], [ref], x, dPdx.x, dPdy.x, y, dPdx.y, dPdy.y, z, dPdx.z, dPdy.z
+       */
+      for (int i = 0; i < ir->coordinate->type->vector_elements; i++) {
+	 fs_inst *inst = emit(BRW_OPCODE_MOV, fs_reg(MRF, base_mrf + mlen),
+			      coordinate);
+	 if (i < 3 && c->key.gl_clamp_mask[i] & (1 << sampler))
+	    inst->saturate = true;
+	 coordinate.reg_offset++;
+	 mlen += reg_width;
+
+	 emit(BRW_OPCODE_MOV, fs_reg(MRF, base_mrf + mlen), dPdx);
+	 dPdx.reg_offset++;
+	 mlen += reg_width;
+
+	 emit(BRW_OPCODE_MOV, fs_reg(MRF, base_mrf + mlen), dPdy);
+	 dPdy.reg_offset++;
+	 mlen += reg_width;
+      }
+      break;
+   }
    case ir_txf:
       assert(!"GLSL 1.30 features unsupported");
       break;
    }
 
-   /* Set up the coordinate */
-   for (int i = 0; i < ir->coordinate->type->vector_elements; i++) {
-      fs_inst *inst = emit(BRW_OPCODE_MOV, fs_reg(MRF, base_mrf + mlen),
-			   coordinate);
-      if (i < 3 && c->key.gl_clamp_mask[i] & (1 << sampler))
-	 inst->saturate = true;
-      coordinate.reg_offset++;
-      mlen += reg_width;
+   /* Set up the coordinate (except for TXD where it was done earlier) */
+   if (ir->op != ir_txd) {
+      for (int i = 0; i < ir->coordinate->type->vector_elements; i++) {
+	 fs_inst *inst = emit(BRW_OPCODE_MOV, fs_reg(MRF, base_mrf + mlen),
+			      coordinate);
+	 if (i < 3 && c->key.gl_clamp_mask[i] & (1 << sampler))
+	    inst->saturate = true;
+	 coordinate.reg_offset++;
+	 mlen += reg_width;
+      }
    }
 
    /* Generate the SEND */

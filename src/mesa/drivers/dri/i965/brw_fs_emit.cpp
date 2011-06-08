@@ -273,7 +273,8 @@ fs_visitor::generate_tex(fs_inst *inst, struct brw_reg dst, struct brw_reg src)
 	 }
 	 break;
       case FS_OPCODE_TXD:
-	 assert(!"TXD isn't supported on gen5+ yet.");
+	 assert(!inst->shadow_compare);
+	 msg_type = GEN5_SAMPLER_MESSAGE_SAMPLE_DERIVS;
 	 break;
       }
    } else {
