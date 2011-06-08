@@ -367,15 +367,7 @@ GALLIUM_FILES = \
 
 APPLE_DRI_FILES = \
 	$(DIRECTORY)/src/glx/apple/Makefile 				\
-	$(DIRECTORY)/src/glx/apple/*.[ch]				\
-	$(DIRECTORY)/src/glx/apple/*.tcl				\
-	$(DIRECTORY)/src/glx/apple/apple_exports.list			\
-	$(DIRECTORY)/src/glx/apple/GL_aliases				\
-	$(DIRECTORY)/src/glx/apple/GL_extensions			\
-	$(DIRECTORY)/src/glx/apple/GL_noop				\
-	$(DIRECTORY)/src/glx/apple/GL_promoted				\
-	$(DIRECTORY)/src/glx/apple/specs/*.spec				\
-	$(DIRECTORY)/src/glx/apple/specs/*.tm
+	$(DIRECTORY)/src/glx/apple/*.[ch]
 
 DRI_FILES = \
 	$(DIRECTORY)/include/GL/internal/dri_interface.h		\
