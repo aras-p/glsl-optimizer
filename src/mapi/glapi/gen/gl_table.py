@@ -149,14 +149,18 @@ class PrintRemapTable(gl_XML.gl_print_base):
 		print '#else /* !_GLAPI_USE_REMAP_TABLE */'
 		print ''
 
-		print '#define driDispatchRemapTable_size %u' % (count)
-		print 'extern int driDispatchRemapTable[ driDispatchRemapTable_size ];'
-		print ''
-		print '#if FEATURE_remap_table'
-		print '#define driDispatchRemapTable remap_table'
-		print 'static int remap_table[driDispatchRemapTable_size];'
-		print '#endif'
-		print ''
+		if self.es:
+			remap_table = "esLocalRemapTable"
+
+			print '#define %s_size %u' % (remap_table, count)
+			print 'static int %s[ %s_size ];' % (remap_table, remap_table)
+			print ''
+		else:
+			remap_table = "driDispatchRemapTable"
+
+			print '#define %s_size %u' % (remap_table, count)
+			print 'extern int %s[ %s_size ];' % (remap_table, remap_table)
+			print ''
 
 		for f, index in functions:
 			print '#define %s_remap_index %u' % (f.name, index)
@@ -164,7 +168,7 @@ class PrintRemapTable(gl_XML.gl_print_base):
 		print ''
 
 		for f, index in functions:
-			print '#define _gloffset_%s driDispatchRemapTable[%s_remap_index]' % (f.name, f.name)
+			print '#define _gloffset_%s %s[%s_remap_index]' % (f.name, remap_table, f.name)
 
 		print ''
 		print '#endif /* _GLAPI_USE_REMAP_TABLE */'
