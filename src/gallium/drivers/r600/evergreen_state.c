@@ -1401,6 +1401,7 @@ void evergreen_init_config(struct r600_pipe_context *rctx)
 		tmp = 0;
 		tmp |= S_008C0C_NUM_HS_GPRS(num_hs_gprs);
 		tmp |= S_008C0C_NUM_HS_GPRS(num_ls_gprs);
+		r600_pipe_state_add_reg(rstate, R_008C0C_SQ_GPR_RESOURCE_MGMT_3, tmp, 0xFFFFFFFF, NULL);
 	}
 
 	tmp = 0;
