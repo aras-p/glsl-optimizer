@@ -38,7 +38,7 @@
 #include "apple_glx_context.h"
 #include "apple_xgl_api.h"
 
-extern struct apple_xgl_api __gl_api;
+extern struct apple_xgl_api __ogl_framework_api;
 
 struct apple_xgl_saved_state
 {
@@ -102,7 +102,7 @@ glReadPixels(GLint x, GLint y, GLsizei width, GLsizei height,
 
    SetRead(&saved);
 
-   __gl_api.ReadPixels(x, y, width, height, format, type, pixels);
+   __ogl_framework_api.ReadPixels(x, y, width, height, format, type, pixels);
 
    UnsetRead(&saved);
 }
@@ -114,7 +114,7 @@ glCopyPixels(GLint x, GLint y, GLsizei width, GLsizei height, GLenum type)
 
    SetRead(&saved);
 
-   __gl_api.CopyPixels(x, y, width, height, type);
+   __ogl_framework_api.CopyPixels(x, y, width, height, type);
 
    UnsetRead(&saved);
 }
@@ -127,7 +127,7 @@ glCopyColorTable(GLenum target, GLenum internalformat, GLint x, GLint y,
 
    SetRead(&saved);
 
-   __gl_api.CopyColorTable(target, internalformat, x, y, width);
+   __ogl_framework_api.CopyColorTable(target, internalformat, x, y, width);
 
    UnsetRead(&saved);
 }

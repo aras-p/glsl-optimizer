@@ -121,7 +121,7 @@ proc main {argc argv} {
 #include "apple_glx_context.h"
     }
 
-    puts $fd "struct apple_xgl_api __gl_api;"
+    puts $fd "struct apple_xgl_api __ogl_framework_api;"
     
     set sorted [lsort -dictionary [array names api]]
     
@@ -176,7 +176,7 @@ proc main {argc argv} {
 	    set alias [dict get $attr alias_for]
 	    set body "[set return] gl[set alias]([set callvars]);"
 	} else {
-	    set body "[set return]__gl_api.[set f]([set callvars]);"
+	    set body "[set return]__ogl_framework_api.[set f]([set callvars]);"
 	}
 
         puts $fd "GLAPI [dict get $attr return] APIENTRY gl[set f]([set pstr]) \{\n\t$body\n\}"
@@ -201,7 +201,7 @@ proc main {argc argv} {
 	    continue
 	}
 
-	puts $fd "\t__gl_api.$f = glsym(handle, \"gl$f\");"
+	puts $fd "\t__ogl_framework_api.$f = glsym(handle, \"gl$f\");"
     }
     
     puts $fd "\}\n"

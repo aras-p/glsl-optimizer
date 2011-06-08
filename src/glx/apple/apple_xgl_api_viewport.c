@@ -31,7 +31,7 @@
 #include "apple_glx_context.h"
 #include "apple_xgl_api.h"
 
-extern struct apple_xgl_api __gl_api;
+extern struct apple_xgl_api __ogl_framework_api;
 
 void
 glViewport(GLint x, GLint y, GLsizei width, GLsizei height)
@@ -42,5 +42,5 @@ glViewport(GLint x, GLint y, GLsizei width, GLsizei height)
    if (gc && gc->driContext)
       apple_glx_context_update(dpy, gc->driContext);
 
-   __gl_api.Viewport(x, y, width, height);
+   __ogl_framework_api.Viewport(x, y, width, height);
 }

@@ -41,7 +41,7 @@
 #include "apple_glx_context.h"
 #include "apple_xgl_api.h"
 
-extern struct apple_xgl_api __gl_api;
+extern struct apple_xgl_api __ogl_framework_api;
 /* 
  * These are special functions for stereoscopic support 
  * differences in MacOS X.
@@ -73,10 +73,10 @@ glDrawBuffer(GLenum mode)
          break;
       }
 
-      __gl_api.DrawBuffers(n, buf);
+      __ogl_framework_api.DrawBuffers(n, buf);
    }
    else {
-      __gl_api.DrawBuffer(mode);
+      __ogl_framework_api.DrawBuffer(mode);
    }
 }
 
@@ -114,10 +114,10 @@ glDrawBuffers(GLsizei n, const GLenum * bufs)
          newbuf[outi++] = GL_FRONT_RIGHT;
       }
 
-      __gl_api.DrawBuffers(outi, newbuf);
+      __ogl_framework_api.DrawBuffers(outi, newbuf);
    }
    else {
-      __gl_api.DrawBuffers(n, bufs);
+      __ogl_framework_api.DrawBuffers(n, bufs);
    }
 }
 
