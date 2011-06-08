@@ -80,23 +80,6 @@ _mesa_free_texmemory(void *m)
 }
 
 
-/*
- * Returns the floor form of binary logarithm for a 32-bit integer.
- */
-static GLuint
-logbase2(GLuint n)
-{
-   GLuint pos = 0;
-   if (n >= 1<<16) { n >>= 16; pos += 16; }
-   if (n >= 1<< 8) { n >>=  8; pos +=  8; }
-   if (n >= 1<< 4) { n >>=  4; pos +=  4; }
-   if (n >= 1<< 2) { n >>=  2; pos +=  2; }
-   if (n >= 1<< 1) {           pos +=  1; }
-   return pos;
-}
-
-
-
 /**
  * Return the simple base format for a given internal texture format.
  * For example, given GL_LUMINANCE12_ALPHA4, return GL_LUMINANCE_ALPHA.
@@ -1155,7 +1138,7 @@ _mesa_init_teximage_fields(struct gl_context *ctx, GLenum target,
    img->Depth = depth;
 
    img->Width2 = width - 2 * border;   /* == 1 << img->WidthLog2; */
-   img->WidthLog2 = logbase2(img->Width2);
+   img->WidthLog2 = _mesa_logbase2(img->Width2);
 
    if (height == 1) { /* 1-D texture */
       img->Height2 = 1;
@@ -1163,7 +1146,7 @@ _mesa_init_teximage_fields(struct gl_context *ctx, GLenum target,
    }
    else {
       img->Height2 = height - 2 * border; /* == 1 << img->HeightLog2; */
-      img->HeightLog2 = logbase2(img->Height2);
+      img->HeightLog2 = _mesa_logbase2(img->Height2);
    }
 
    if (depth == 1) {  /* 2-D texture */
@@ -1172,7 +1155,7 @@ _mesa_init_teximage_fields(struct gl_context *ctx, GLenum target,
    }
    else {
       img->Depth2 = depth - 2 * border;   /* == 1 << img->DepthLog2; */
-      img->DepthLog2 = logbase2(img->Depth2);
+      img->DepthLog2 = _mesa_logbase2(img->Depth2);
    }
 
    img->MaxLog2 = MAX2(img->WidthLog2, img->HeightLog2);

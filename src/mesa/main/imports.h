@@ -486,6 +486,27 @@ _mesa_next_pow_two_64(uint64_t x)
 }
 
 
+/*
+ * Returns the floor form of binary logarithm for a 32-bit integer.
+ */
+static INLINE GLuint
+_mesa_logbase2(GLuint n)
+{
+#if defined(__GNUC__) && \
+   ((__GNUC__ == 3 && __GNUC_MINOR__ >= 4) || __GNUC__ >= 4)
+   return (31 - __builtin_clz(n | 1));
+#else
+   GLuint pos = 0;
+   if (n >= 1<<16) { n >>= 16; pos += 16; }
+   if (n >= 1<< 8) { n >>=  8; pos +=  8; }
+   if (n >= 1<< 4) { n >>=  4; pos +=  4; }
+   if (n >= 1<< 2) { n >>=  2; pos +=  2; }
+   if (n >= 1<< 1) {           pos +=  1; }
+   return pos;
+#endif
+}
+
+
 /**
  * Return 1 if this is a little endian machine, 0 if big endian.
  */
