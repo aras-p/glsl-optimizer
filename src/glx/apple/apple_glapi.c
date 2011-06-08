@@ -49,13 +49,9 @@
 #define OPENGL_FRAMEWORK_PATH "/System/Library/Frameworks/OpenGL.framework/OpenGL"
 #endif
 
-__private_extern__
 struct _glapi_table * __ogl_framework_api = NULL;
-
-__private_extern__
 struct _glapi_table * __applegl_api = NULL;
 
-__private_extern__
 void apple_xgl_init_direct(void) {
     static void *handle;
     const char *opengl_framework_path;

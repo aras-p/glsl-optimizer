@@ -29,24 +29,15 @@
 
 #ifndef APPLE_XGL_API_H
 
-__private_extern__ void 
-__applegl_glReadPixels(GLint x, GLint y, GLsizei width, GLsizei height,
+void __applegl_glReadPixels(GLint x, GLint y, GLsizei width, GLsizei height,
                             GLenum format, GLenum type, void *pixels);
+void __applegl_glCopyPixels(GLint x, GLint y, GLsizei width, GLsizei height, GLenum type);
+void __applegl_glCopyColorTable(GLenum target, GLenum internalformat, GLint x, GLint y,
+                                GLsizei width);
 
-__private_extern__ void
-__applegl_glCopyPixels(GLint x, GLint y, GLsizei width, GLsizei height, GLenum type);
+void __applegl_glDrawBuffer(GLenum mode);
+void __applegl_glDrawBuffersARB(GLsizei n, const GLenum * bufs);
 
-__private_extern__ void
-__applegl_glCopyColorTable(GLenum target, GLenum internalformat, GLint x, GLint y,
-                           GLsizei width);
-
-__private_extern__ void
-__applegl_glDrawBuffer(GLenum mode);
-
-__private_extern__ void
-__applegl_glDrawBuffersARB(GLsizei n, const GLenum * bufs);
-
-__private_extern__ void
-__applegl_glViewport(GLint x, GLint y, GLsizei width, GLsizei height);
+void __applegl_glViewport(GLint x, GLint y, GLsizei width, GLsizei height);
 
 #endif
