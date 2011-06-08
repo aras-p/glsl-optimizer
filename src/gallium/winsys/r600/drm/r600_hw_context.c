@@ -1067,7 +1067,6 @@ static void r600_context_dirty_resource_block(struct r600_context *ctx,
 
 void r600_context_pipe_state_set_resource(struct r600_context *ctx, struct r600_pipe_resource_state *state, struct r600_block *block)
 {
-	int i;
 	int dirty;
 	int num_regs = ctx->radeon->chip_class >= EVERGREEN ? 8 : 7;
 	boolean is_vertex;
@@ -1330,8 +1329,7 @@ out:
 void r600_context_block_resource_emit_dirty(struct r600_context *ctx, struct r600_block *block)
 {
 	int id;
-	int cp_dwords = block->pm4_ndwords, start_dword = 0;
-	int new_dwords = 0;
+	int cp_dwords = block->pm4_ndwords;
 	int nbo = block->nbo;
 
 	ctx->flags |= R600_CONTEXT_CHECK_EVENT_FLUSH;
@@ -1359,7 +1357,6 @@ void r600_context_block_resource_emit_dirty(struct r600_context *ctx, struct r60
 	memcpy(&ctx->pm4[ctx->pm4_cdwords], block->pm4, cp_dwords * 4);
 	ctx->pm4_cdwords += cp_dwords;
 
-out:
 	block->status ^= R600_BLOCK_STATUS_RESOURCE_DIRTY;
 	block->nreg_dirty = 0;
 	LIST_DELINIT(&block->list);
@@ -1489,7 +1486,7 @@ void r600_context_flush(struct r600_context *ctx)
 	uint64_t chunk_array[2];
 	unsigned fence;
 	int r;
-	struct r600_block *enable_block = NULL, *next_block;
+	struct r600_block *enable_block = NULL;
 
 	if (!ctx->pm4_cdwords)
 		return;
