@@ -46,30 +46,26 @@
 
 static uint32_t r300_translate_primitive(unsigned prim)
 {
-    switch (prim) {
-        case PIPE_PRIM_POINTS:
-            return R300_VAP_VF_CNTL__PRIM_POINTS;
-        case PIPE_PRIM_LINES:
-            return R300_VAP_VF_CNTL__PRIM_LINES;
-        case PIPE_PRIM_LINE_LOOP:
-            return R300_VAP_VF_CNTL__PRIM_LINE_LOOP;
-        case PIPE_PRIM_LINE_STRIP:
-            return R300_VAP_VF_CNTL__PRIM_LINE_STRIP;
-        case PIPE_PRIM_TRIANGLES:
-            return R300_VAP_VF_CNTL__PRIM_TRIANGLES;
-        case PIPE_PRIM_TRIANGLE_STRIP:
-            return R300_VAP_VF_CNTL__PRIM_TRIANGLE_STRIP;
-        case PIPE_PRIM_TRIANGLE_FAN:
-            return R300_VAP_VF_CNTL__PRIM_TRIANGLE_FAN;
-        case PIPE_PRIM_QUADS:
-            return R300_VAP_VF_CNTL__PRIM_QUADS;
-        case PIPE_PRIM_QUAD_STRIP:
-            return R300_VAP_VF_CNTL__PRIM_QUAD_STRIP;
-        case PIPE_PRIM_POLYGON:
-            return R300_VAP_VF_CNTL__PRIM_POLYGON;
-        default:
-            return 0;
-    }
+    static const int prim_conv[] = {
+        R300_VAP_VF_CNTL__PRIM_POINTS,
+        R300_VAP_VF_CNTL__PRIM_LINES,
+        R300_VAP_VF_CNTL__PRIM_LINE_LOOP,
+        R300_VAP_VF_CNTL__PRIM_LINE_STRIP,
+        R300_VAP_VF_CNTL__PRIM_TRIANGLES,
+        R300_VAP_VF_CNTL__PRIM_TRIANGLE_STRIP,
+        R300_VAP_VF_CNTL__PRIM_TRIANGLE_FAN,
+        R300_VAP_VF_CNTL__PRIM_QUADS,
+        R300_VAP_VF_CNTL__PRIM_QUAD_STRIP,
+        R300_VAP_VF_CNTL__PRIM_POLYGON,
+        -1,
+        -1,
+        -1,
+        -1
+    };
+    unsigned hwprim = prim_conv[prim];
+
+    assert(hwprim != -1);
+    return hwprim;
 }
 
 static uint32_t r300_provoking_vertex_fixes(struct r300_context *r300,
