@@ -49,7 +49,6 @@
 #include "eval.h"
 #include "framebuffer.h"
 #include "glapi/glapi.h"
-#include "glapidispatch.h"
 #include "hash.h"
 #include "image.h"
 #include "light.h"
