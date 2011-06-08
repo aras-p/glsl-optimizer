@@ -207,6 +207,10 @@ static GLuint get_surface_type( GLenum type, GLuint size,
       case GL_UNSIGNED_INT: return uint_types_scale[size];
       case GL_UNSIGNED_SHORT: return ushort_types_scale[size];
       case GL_UNSIGNED_BYTE: return ubyte_types_scale[size];
+      /* This produces GL_FIXED inputs as values between INT32_MIN and
+       * INT32_MAX, which will be scaled down by 1/65536 by the VS.
+       */
+      case GL_FIXED: return int_types_scale[size];
       default: assert(0); return 0;
       }
    }
@@ -225,6 +229,7 @@ static GLuint get_size( GLenum type )
    case GL_UNSIGNED_INT: return sizeof(GLuint);
    case GL_UNSIGNED_SHORT: return sizeof(GLushort);
    case GL_UNSIGNED_BYTE: return sizeof(GLubyte);
+   case GL_FIXED: return sizeof(GLuint);
    default: assert(0); return 0;
    }
 }

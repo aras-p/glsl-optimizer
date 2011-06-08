@@ -1878,6 +1878,26 @@ get_predicate(const struct prog_instruction *inst)
    }
 }
 
+static void
+brw_vs_rescale_gl_fixed(struct brw_vs_compile *c)
+{
+   struct brw_compile *p = &c->func;
+   int i;
+
+   for (i = 0; i < VERT_ATTRIB_MAX; i++) {
+      if (!(c->prog_data.inputs_read & (1 << i)))
+	 continue;
+
+      if (c->key.gl_fixed_input_size[i] != 0) {
+	 struct brw_reg reg = c->regs[PROGRAM_INPUT][i];
+
+	 brw_MUL(p,
+		 brw_writemask(reg, (1 << c->key.gl_fixed_input_size[i]) - 1),
+		 reg, brw_imm_f(1.0 / 65536.0));
+      }
+   }
+}
+
 /* Emit the vertex program instructions here.
  */
 void brw_vs_emit(struct brw_vs_compile *c )
@@ -1936,6 +1956,8 @@ void brw_vs_emit(struct brw_vs_compile *c )
    /* Static register allocation
     */
    brw_vs_alloc_regs(c);
+
+   brw_vs_rescale_gl_fixed(c);
 
    if (c->needs_stack)
       brw_MOV(p, get_addr_reg(stack_index), brw_address(c->stack));

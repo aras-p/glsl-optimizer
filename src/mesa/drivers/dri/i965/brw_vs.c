@@ -145,6 +145,14 @@ static void brw_upload_vs_prog(struct brw_context *brw)
       }
    }
 
+   /* BRW_NEW_VERTICES */
+   for (i = 0; i < VERT_ATTRIB_MAX; i++) {
+      if (vp->program.Base.InputsRead & (1 << i) &&
+	  brw->vb.inputs[i].glarray->Type == GL_FIXED) {
+	 key.gl_fixed_input_size[i] = brw->vb.inputs[i].glarray->Size;
+      }
+   }
+
    /* Make an early check for the key.
     */
    drm_intel_bo_unreference(brw->vs.prog_bo);
@@ -164,7 +172,8 @@ const struct brw_tracked_state brw_vs_prog = {
    .dirty = {
       .mesa  = (_NEW_TRANSFORM | _NEW_POLYGON | _NEW_POINT | _NEW_LIGHT |
 		_NEW_BUFFERS),
-      .brw   = BRW_NEW_VERTEX_PROGRAM,
+      .brw   = (BRW_NEW_VERTEX_PROGRAM |
+		BRW_NEW_VERTICES),
       .cache = 0
    },
    .prepare = brw_upload_vs_prog
