@@ -43,12 +43,6 @@ static int dri_event_base = 0;
 
 const GLuint __glXDefaultPixelStore[9] = { 0, 0, 0, 0, 0, 0, 0, 0, 1 };
 
-#ifndef OPENGL_LIB_PATH
-#define OPENGL_LIB_PATH "/System/Library/Frameworks/OpenGL.framework/Libraries/libGL.dylib"
-#endif
-
-static void *libgl_handle = NULL;
-
 static bool diagnostic = false;
 
 void
@@ -138,7 +132,6 @@ apple_init_glx(Display * dpy)
 
    apple_cgl_init();
    apple_xgl_init_direct();
-   libgl_handle = dlopen(OPENGL_LIB_PATH, RTLD_LAZY);
    (void) apple_glx_get_client_id();
 
    XAppleDRISetSurfaceNotifyHandler(surface_notify_handler);
@@ -158,46 +151,6 @@ apple_glx_swap_buffers(void *ptr)
    /* This may not be needed with CGLFlushDrawable: */
    glFlush();
    apple_cgl.flush_drawable(ac->context_obj);
-}
-
-void *
-apple_glx_get_proc_address(const GLubyte * procname)
-{
-   size_t len;
-   void *h, *s;
-   char *pname = (char *) procname;
-
-   assert(NULL != procname);
-   len = strlen(pname);
-
-   if (len < 3) {
-      return NULL;
-   }
-
-   if ((pname != strstr(pname, "glX")) && (pname != strstr(pname, "gl"))) {
-      fprintf(stderr,
-              "warning: get proc address request is not for a gl or glX function");
-      return NULL;
-   }
-
-   /* Search using the default symbols first. */
-   (void) dlerror();            /*drain dlerror */
-   h = dlopen(NULL, RTLD_NOW);
-   if (NULL == h) {
-      fprintf(stderr, "warning: get proc address: %s\n", dlerror());
-      return NULL;
-   }
-
-   s = dlsym(h, pname);
-
-   if (NULL == s) {
-      /* Try the libGL.dylib from the OpenGL.framework. */
-      s = dlsym(libgl_handle, pname);
-   }
-
-   dlclose(h);
-
-   return s;
 }
 
 void
