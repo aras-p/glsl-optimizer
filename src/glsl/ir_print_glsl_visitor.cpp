@@ -363,7 +363,7 @@ static const char *const operator_glsl_strs[] = {
 	"-",
 	"*",
 	"/",
-	"%",
+	"mod",
 	"<",
 	">",
 	"<=",
@@ -391,16 +391,23 @@ void ir_print_glsl_visitor::visit(ir_expression *ir)
 {
 	if (ir->get_num_operands() == 1) {
 		if (ir->operation >= ir_unop_f2i && ir->operation <= ir_unop_u2f) {
-			buffer = print_type(buffer, ir->type, true);
 			ralloc_asprintf_append (&buffer, "(");
+			buffer = print_type(buffer, ir->type, true);
+			ralloc_asprintf_append(&buffer, "(");
 		} else {
-			ralloc_asprintf_append (&buffer, "%s(", operator_glsl_strs[ir->operation]);
+			ralloc_asprintf_append (&buffer, "(%s(", operator_glsl_strs[ir->operation]);
 		}
 		if (ir->operands[0])
 			ir->operands[0]->accept(this);
-		ralloc_asprintf_append (&buffer, ")");
+		ralloc_asprintf_append (&buffer, "))");
 	}
-	else if (ir->operation == ir_binop_equal || ir->operation == ir_binop_nequal) {
+	else if (ir->operation == ir_binop_equal || ir->operation == ir_binop_nequal || ir->operation == ir_binop_mod) {
+		if (ir->operation == ir_binop_mod)
+		{
+			ralloc_asprintf_append (&buffer, "(");
+			buffer = print_type(buffer, ir->type, true);
+			ralloc_asprintf_append (&buffer, "(");
+	}
 		ralloc_asprintf_append (&buffer, "%s (", operator_glsl_strs[ir->operation]);
 		if (ir->operands[0])
 			ir->operands[0]->accept(this);
@@ -408,6 +415,8 @@ void ir_print_glsl_visitor::visit(ir_expression *ir)
 		if (ir->operands[1])
 			ir->operands[1]->accept(this);
 		ralloc_asprintf_append (&buffer, ")");
+		if (ir->operation == ir_binop_mod)
+            ralloc_asprintf_append (&buffer, "))");
 	}
 	else {
 		ralloc_asprintf_append (&buffer, "(");
@@ -420,6 +429,7 @@ void ir_print_glsl_visitor::visit(ir_expression *ir)
 			ir->operands[1]->accept(this);
 		ralloc_asprintf_append (&buffer, ")");
 	}
+
 }
 
 
