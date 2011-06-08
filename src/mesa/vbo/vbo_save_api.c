@@ -681,7 +681,7 @@ do {								\
  *     -- Flush current buffer
  *     -- Fallback to opcodes for the rest of the begin/end object.
  */
-static void DO_FALLBACK( struct gl_context *ctx )
+static void dlist_fallback( struct gl_context *ctx )
 {
    struct vbo_save_context *save = &vbo_context(ctx)->save;
 
@@ -711,56 +711,56 @@ static void DO_FALLBACK( struct gl_context *ctx )
 static void GLAPIENTRY _save_EvalCoord1f( GLfloat u )
 {
    GET_CURRENT_CONTEXT(ctx);
-   DO_FALLBACK(ctx);
+   dlist_fallback(ctx);
    CALL_EvalCoord1f(ctx->Save, (u));
 }
 
 static void GLAPIENTRY _save_EvalCoord1fv( const GLfloat *v )
 {
    GET_CURRENT_CONTEXT(ctx);
-   DO_FALLBACK(ctx);
+   dlist_fallback(ctx);
    CALL_EvalCoord1fv(ctx->Save, (v));
 }
 
 static void GLAPIENTRY _save_EvalCoord2f( GLfloat u, GLfloat v )
 {
    GET_CURRENT_CONTEXT(ctx);
-   DO_FALLBACK(ctx);
+   dlist_fallback(ctx);
    CALL_EvalCoord2f(ctx->Save, (u, v));
 }
 
 static void GLAPIENTRY _save_EvalCoord2fv( const GLfloat *v )
 {
    GET_CURRENT_CONTEXT(ctx);
-   DO_FALLBACK(ctx);
+   dlist_fallback(ctx);
    CALL_EvalCoord2fv(ctx->Save, (v));
 }
 
 static void GLAPIENTRY _save_EvalPoint1( GLint i )
 {
    GET_CURRENT_CONTEXT(ctx);
-   DO_FALLBACK(ctx);
+   dlist_fallback(ctx);
    CALL_EvalPoint1(ctx->Save, (i));
 }
 
 static void GLAPIENTRY _save_EvalPoint2( GLint i, GLint j )
 {
    GET_CURRENT_CONTEXT(ctx);
-   DO_FALLBACK(ctx);
+   dlist_fallback(ctx);
    CALL_EvalPoint2(ctx->Save, (i, j));
 }
 
 static void GLAPIENTRY _save_CallList( GLuint l )
 {
    GET_CURRENT_CONTEXT(ctx);
-   DO_FALLBACK(ctx);
+   dlist_fallback(ctx);
    CALL_CallList(ctx->Save, (l));
 }
 
 static void GLAPIENTRY _save_CallLists( GLsizei n, GLenum type, const GLvoid *v )
 {
    GET_CURRENT_CONTEXT(ctx);
-   DO_FALLBACK(ctx);
+   dlist_fallback(ctx);
    CALL_CallLists(ctx->Save, (n, type, v));
 }
 
