@@ -40,6 +40,17 @@
 
 #define GROUP_FORCE_NEW_BLOCK	0
 
+static inline void r600_context_ps_partial_flush(struct r600_context *ctx)
+{
+	if (!(ctx->flags & R600_CONTEXT_DRAW_PENDING))
+		return;
+
+	ctx->pm4[ctx->pm4_cdwords++] = PKT3(PKT3_EVENT_WRITE, 0, 0);
+	ctx->pm4[ctx->pm4_cdwords++] = EVENT_TYPE(EVENT_TYPE_PS_PARTIAL_FLUSH) | EVENT_INDEX(4);
+
+	ctx->flags &= ~R600_CONTEXT_DRAW_PENDING;
+}
+
 void r600_init_cs(struct r600_context *ctx)
 {
 	/* R6xx requires this packet at the start of each command buffer */
@@ -115,6 +126,9 @@ static void r600_init_block(struct r600_context *ctx,
 				LIST_ADDTAIL(&block->enable_list, &ctx->enable_list);
 				LIST_ADDTAIL(&block->list,&ctx->dirty);
 			}
+		}
+		if (reg[i+j].flags & REG_FLAG_FLUSH_CHANGE) {
+			block->flags |= REG_FLAG_FLUSH_CHANGE;
 		}
 
 		if (reg[i+j].flags & REG_FLAG_NEED_BO) {
@@ -206,13 +220,13 @@ int r600_context_add_block(struct r600_context *ctx, const struct r600_reg *reg,
 /* R600/R700 configuration */
 static const struct r600_reg r600_config_reg_list[] = {
 	{R_008958_VGT_PRIMITIVE_TYPE, 0, 0, 0},
-	{R_008C00_SQ_CONFIG, REG_FLAG_ENABLE_ALWAYS, 0, 0},
-	{R_008C04_SQ_GPR_RESOURCE_MGMT_1, REG_FLAG_ENABLE_ALWAYS, 0, 0},
-	{R_008C08_SQ_GPR_RESOURCE_MGMT_2, REG_FLAG_ENABLE_ALWAYS, 0, 0},
-	{R_008C0C_SQ_THREAD_RESOURCE_MGMT, REG_FLAG_ENABLE_ALWAYS, 0, 0},
-	{R_008C10_SQ_STACK_RESOURCE_MGMT_1, REG_FLAG_ENABLE_ALWAYS, 0, 0},
-	{R_008C14_SQ_STACK_RESOURCE_MGMT_2, REG_FLAG_ENABLE_ALWAYS, 0, 0},
-	{R_008D8C_SQ_DYN_GPR_CNTL_PS_FLUSH_REQ, REG_FLAG_ENABLE_ALWAYS, 0, 0},
+	{R_008C00_SQ_CONFIG, REG_FLAG_ENABLE_ALWAYS | REG_FLAG_FLUSH_CHANGE, 0, 0},
+	{R_008C04_SQ_GPR_RESOURCE_MGMT_1, REG_FLAG_ENABLE_ALWAYS | REG_FLAG_FLUSH_CHANGE, 0, 0},
+	{R_008C08_SQ_GPR_RESOURCE_MGMT_2, REG_FLAG_ENABLE_ALWAYS | REG_FLAG_FLUSH_CHANGE, 0, 0},
+	{R_008C0C_SQ_THREAD_RESOURCE_MGMT, REG_FLAG_ENABLE_ALWAYS | REG_FLAG_FLUSH_CHANGE, 0, 0},
+	{R_008C10_SQ_STACK_RESOURCE_MGMT_1, REG_FLAG_ENABLE_ALWAYS | REG_FLAG_FLUSH_CHANGE, 0, 0},
+	{R_008C14_SQ_STACK_RESOURCE_MGMT_2, REG_FLAG_ENABLE_ALWAYS | REG_FLAG_FLUSH_CHANGE, 0, 0},
+	{R_008D8C_SQ_DYN_GPR_CNTL_PS_FLUSH_REQ, REG_FLAG_ENABLE_ALWAYS | REG_FLAG_FLUSH_CHANGE, 0, 0},
 	{R_009508_TA_CNTL_AUX, REG_FLAG_ENABLE_ALWAYS, 0, 0},
 	{R_009714_VC_ENHANCE, REG_FLAG_ENABLE_ALWAYS, 0, 0},
 	{R_009830_DB_DEBUG, REG_FLAG_ENABLE_ALWAYS, 0, 0},
@@ -1008,6 +1022,10 @@ void r600_context_dirty_block(struct r600_context *ctx,
 			LIST_ADDTAIL(&block->enable_list, &ctx->enable_list);
 		}
 		LIST_ADDTAIL(&block->list,&ctx->dirty);
+
+		if (block->flags & REG_FLAG_FLUSH_CHANGE) {
+			r600_context_ps_partial_flush(ctx);
+		}
 	}
 }
 
@@ -1187,16 +1205,6 @@ static inline void r600_context_pipe_state_set_sampler(struct r600_context *ctx,
 		r600_context_dirty_block(ctx, block, dirty, 2);
 }
 
-static inline void r600_context_ps_partial_flush(struct r600_context *ctx)
-{
-	if (!(ctx->flags & R600_CONTEXT_DRAW_PENDING))
-		return;
-
-	ctx->pm4[ctx->pm4_cdwords++] = PKT3(PKT3_EVENT_WRITE, 0, 0);
-	ctx->pm4[ctx->pm4_cdwords++] = EVENT_TYPE(EVENT_TYPE_PS_PARTIAL_FLUSH) | EVENT_INDEX(4);
-
-	ctx->flags &= ~R600_CONTEXT_DRAW_PENDING;
-}
 
 static inline void r600_context_pipe_state_set_sampler_border(struct r600_context *ctx, struct r600_pipe_state *state, unsigned offset)
 {

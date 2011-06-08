@@ -205,6 +205,7 @@ struct r600_pipe_context {
 	struct util_slab_mempool	pool_transfers;
 	boolean				blit;
 
+	unsigned default_ps_gprs, default_vs_gprs;
 };
 
 struct r600_drawl {
@@ -270,6 +271,7 @@ void r600_pipe_init_buffer_resource(struct r600_pipe_context *rctx,
 void r600_pipe_mod_buffer_resource(struct r600_pipe_resource_state *rstate,
 				   struct r600_resource *rbuffer,
 				   unsigned offset, unsigned stride);
+void r600_adjust_gprs(struct r600_pipe_context *rctx);
 
 /* r600_texture.c */
 void r600_init_screen_texture_functions(struct pipe_screen *screen);

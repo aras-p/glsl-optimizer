@@ -273,8 +273,10 @@ void r600_bind_ps_shader(struct pipe_context *ctx, void *state)
 	if (state) {
 		r600_context_pipe_state_set(&rctx->ctx, &rctx->ps_shader->rstate);
 	}
-	if (rctx->ps_shader && rctx->vs_shader)
+	if (rctx->ps_shader && rctx->vs_shader) {
 		r600_spi_update(rctx);
+		r600_adjust_gprs(rctx);
+	}
 }
 
 void r600_bind_vs_shader(struct pipe_context *ctx, void *state)
@@ -286,8 +288,10 @@ void r600_bind_vs_shader(struct pipe_context *ctx, void *state)
 	if (state) {
 		r600_context_pipe_state_set(&rctx->ctx, &rctx->vs_shader->rstate);
 	}
-	if (rctx->ps_shader && rctx->vs_shader)
+	if (rctx->ps_shader && rctx->vs_shader) {
 		r600_spi_update(rctx);
+		r600_adjust_gprs(rctx);
+	}
 }
 
 void r600_delete_ps_shader(struct pipe_context *ctx, void *state)

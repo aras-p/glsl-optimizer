@@ -1025,6 +1025,46 @@ void r600_init_state_functions(struct r600_pipe_context *rctx)
 	rctx->context.texture_barrier = r600_texture_barrier;
 }
 
+void r600_adjust_gprs(struct r600_pipe_context *rctx)
+{
+	enum radeon_family family;
+	struct r600_pipe_state rstate;
+	unsigned num_ps_gprs = rctx->default_ps_gprs;
+	unsigned num_vs_gprs = rctx->default_vs_gprs;
+	unsigned tmp;
+	int diff;
+
+	family = r600_get_family(rctx->radeon);
+
+	if (family >= CHIP_CEDAR)
+		return;
+
+	if (!rctx->ps_shader && !rctx->vs_shader)
+		return;
+
+	if (rctx->ps_shader->shader.bc.ngpr > rctx->default_ps_gprs)
+	{
+		diff = rctx->ps_shader->shader.bc.ngpr - rctx->default_ps_gprs;
+		num_vs_gprs -= diff;
+		num_ps_gprs += diff;
+	}
+
+	if (rctx->vs_shader->shader.bc.ngpr > rctx->default_vs_gprs)
+	{
+		diff = rctx->vs_shader->shader.bc.ngpr - rctx->default_vs_gprs;
+		num_ps_gprs -= diff;
+		num_vs_gprs += diff;
+	}
+
+	tmp = 0;
+	tmp |= S_008C04_NUM_PS_GPRS(num_ps_gprs);
+	tmp |= S_008C04_NUM_VS_GPRS(num_vs_gprs);
+	rstate.nregs = 0;
+	r600_pipe_state_add_reg(&rstate, R_008C04_SQ_GPR_RESOURCE_MGMT_1, tmp, 0x0FFFFFFF, NULL);
+
+	r600_context_pipe_state_set(&rctx->ctx, &rstate);
+}
+
 void r600_init_config(struct r600_pipe_context *rctx)
 {
 	int ps_prio;
@@ -1166,6 +1206,9 @@ void r600_init_config(struct r600_pipe_context *rctx)
 		num_es_stack_entries = 0;
 		break;
 	}
+
+	rctx->default_ps_gprs = num_ps_gprs;
+	rctx->default_vs_gprs = num_vs_gprs;
 
 	rstate->id = R600_PIPE_STATE_CONFIG;
 
