@@ -76,10 +76,12 @@ entry_patch_public(void)
 {
 }
 
+static char
+x86_64_entry_start[];
+
 mapi_func
 entry_get_public(int slot)
 {
-   extern char x86_64_entry_start[];
    return (mapi_func) (x86_64_entry_start + slot * 32);
 }
 
