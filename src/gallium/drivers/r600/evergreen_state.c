@@ -1023,7 +1023,10 @@ static void cayman_init_config(struct r600_pipe_context *rctx)
 	tmp |= S_008C00_EXPORT_SRC_C(1);
 	r600_pipe_state_add_reg(rstate, R_008C00_SQ_CONFIG, tmp, 0xFFFFFFFF, NULL);
 
-	r600_pipe_state_add_reg(rstate, R_008C10_SQ_GLOBAL_GPR_RESOURCE_MGMT_1, (4 << 28), 0xFFFFFFFF, NULL);
+	/* always set the temp clauses */
+	r600_pipe_state_add_reg(rstate, R_008C04_SQ_GPR_RESOURCE_MGMT_1, S_008C04_NUM_CLAUSE_TEMP_GPRS(4), 0xFFFFFFFF, NULL);
+	r600_pipe_state_add_reg(rstate, R_008C10_SQ_GLOBAL_GPR_RESOURCE_MGMT_1, 0, 0xFFFFFFFF, NULL);
+	r600_pipe_state_add_reg(rstate, R_008C14_SQ_GLOBAL_GPR_RESOURCE_MGMT_2, 0, 0xFFFFFFFF, NULL);
 	r600_pipe_state_add_reg(rstate, R_008D8C_SQ_DYN_GPR_CNTL_PS_FLUSH_REQ, (1 << 8), 0xFFFFFFFF, NULL);
 
 	r600_pipe_state_add_reg(rstate, R_028A48_PA_SC_MODE_CNTL_0, 0x0, 0xFFFFFFFF, NULL);
@@ -1377,9 +1380,13 @@ void evergreen_init_config(struct r600_pipe_context *rctx)
 
 	/* enable dynamic GPR resource management */
 	if (r600_get_minor_version(rctx->radeon) >= 7) {
-		r600_pipe_state_add_reg(rstate, R_008C10_SQ_GLOBAL_GPR_RESOURCE_MGMT_1, (4 << 28), 0xFFFFFFFF, NULL);
+		/* always set temp clauses */
+		r600_pipe_state_add_reg(rstate, R_008C04_SQ_GPR_RESOURCE_MGMT_1,
+					S_008C04_NUM_CLAUSE_TEMP_GPRS(num_temp_gprs), 0xFFFFFFFF, NULL);
+		r600_pipe_state_add_reg(rstate, R_008C10_SQ_GLOBAL_GPR_RESOURCE_MGMT_1, 0, 0xFFFFFFFF, NULL);
+		r600_pipe_state_add_reg(rstate, R_008C14_SQ_GLOBAL_GPR_RESOURCE_MGMT_2, 0, 0xFFFFFFFF, NULL);
 		r600_pipe_state_add_reg(rstate, R_008D8C_SQ_DYN_GPR_CNTL_PS_FLUSH_REQ, (1 << 8), 0xFFFFFFFF, NULL);
-		r600_pipe_state_add_reg(rstate, R_028838_SQ_DYN_GPR_RESOURCE_LIMIT_1, 
+		r600_pipe_state_add_reg(rstate, R_028838_SQ_DYN_GPR_RESOURCE_LIMIT_1,
 					S_028838_PS_GPRS(0x1e) |
 					S_028838_VS_GPRS(0x1e) |
 					S_028838_GS_GPRS(0x1e) |
