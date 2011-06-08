@@ -110,9 +110,11 @@ static void r600_init_block(struct r600_context *ctx,
 			block->flags |= REG_FLAG_DIRTY_ALWAYS;
 		}
 		if (reg[i+j].flags & REG_FLAG_ENABLE_ALWAYS) {
-			block->status |= R600_BLOCK_STATUS_ENABLED;
-			LIST_ADDTAIL(&block->enable_list, &ctx->enable_list);
-			LIST_ADDTAIL(&block->list,&ctx->dirty);
+			if (!(block->status & R600_BLOCK_STATUS_ENABLED)) {
+				block->status |= R600_BLOCK_STATUS_ENABLED;
+				LIST_ADDTAIL(&block->enable_list, &ctx->enable_list);
+				LIST_ADDTAIL(&block->list,&ctx->dirty);
+			}
 		}
 
 		if (reg[i+j].flags & REG_FLAG_NEED_BO) {
