@@ -402,8 +402,7 @@ intel_miptree_image_data(struct intel_context *intel,
       if (dst->compressed) {
 	 unsigned int align_w, align_h;
 
-	 intel_get_texture_alignment_unit(dst->internal_format,
-					  &align_w, &align_h);
+	 intel_get_texture_alignment_unit(dst->format, &align_w, &align_h);
 	 height = (height + align_h - 1) / align_h;
 	 width = ALIGN(width, align_w);
       }
@@ -445,8 +444,7 @@ intel_miptree_image_copy(struct intel_context *intel,
    if (dst->compressed) {
        GLuint align_w, align_h;
 
-       intel_get_texture_alignment_unit(dst->internal_format,
-                                        &align_w, &align_h);
+       intel_get_texture_alignment_unit(dst->format, &align_w, &align_h);
        height = (height + 3) / 4;
        width = ALIGN(width, align_w);
    }
