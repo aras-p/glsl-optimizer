@@ -135,7 +135,6 @@ intel_finalize_mipmap_tree(struct intel_context *intel, GLuint unit)
                                           intelObj->base.Target,
 					  firstImage->base.TexFormat,
                                           firstImage->base._BaseFormat,
-                                          firstImage->base.InternalFormat,
                                           tObj->BaseLevel,
                                           intelObj->_MaxLevel,
                                           firstImage->base.Width,
