@@ -1405,8 +1405,9 @@ demote_shader_inputs_and_outputs(gl_shader *sh, enum ir_variable_mode mode)
 }
 
 
-void
-assign_varying_locations(struct gl_shader_program *prog,
+bool
+assign_varying_locations(struct gl_context *ctx,
+			 struct gl_shader_program *prog,
 			 gl_shader *producer, gl_shader *consumer)
 {
    /* FINISHME: Set dynamically when geometry shader support is added. */
@@ -1462,6 +1463,8 @@ assign_varying_locations(struct gl_shader_program *prog,
       }
    }
 
+   unsigned varying_vectors = 0;
+
    foreach_list(node, consumer->ir) {
       ir_variable *const var = ((ir_instruction *) node)->as_variable();
 
@@ -1492,8 +1495,32 @@ assign_varying_locations(struct gl_shader_program *prog,
 	  * value is written by the previous stage.
 	  */
 	 var->mode = ir_var_auto;
+      } else {
+	 /* The packing rules are used for vertex shader inputs are also used
+	  * for fragment shader inputs.
+	  */
+	 varying_vectors += count_attribute_slots(var->type);
       }
    }
+
+   if (ctx->API == API_OPENGLES2 || prog->Version == 100) {
+      if (varying_vectors > ctx->Const.MaxVarying) {
+	 linker_error_printf(prog, "shader uses too many varying vectors "
+			     "(%u > %u)\n",
+			     varying_vectors, ctx->Const.MaxVarying);
+	 return false;
+      }
+   } else {
+      const unsigned float_components = varying_vectors * 4;
+      if (float_components > ctx->Const.MaxVarying * 4) {
+	 linker_error_printf(prog, "shader uses too many varying components "
+			     "(%u > %u)\n",
+			     float_components, ctx->Const.MaxVarying * 4);
+	 return false;
+      }
+   }
+
+   return true;
 }
 
 
@@ -1666,9 +1693,13 @@ link_shaders(struct gl_context *ctx, struct gl_shader_program *prog)
       if (prog->_LinkedShaders[i] == NULL)
 	 continue;
 
-      assign_varying_locations(prog,
-			       prog->_LinkedShaders[prev],
-			       prog->_LinkedShaders[i]);
+      if (!assign_varying_locations(ctx, prog,
+				    prog->_LinkedShaders[prev],
+				    prog->_LinkedShaders[i])) {
+	 prog->LinkStatus = false;
+	 goto done;
+      }
+
       prev = i;
    }
 
