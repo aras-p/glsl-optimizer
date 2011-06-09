@@ -3,6 +3,7 @@
 GLAPI_SOURCES = \
 	glapi_dispatch.c \
 	glapi_entrypoint.c \
+	glapi_gentable.c \
 	glapi_getproc.c \
 	glapi_nop.c \
 	glthread.c \

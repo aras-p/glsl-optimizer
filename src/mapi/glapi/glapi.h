@@ -159,6 +159,10 @@ _GLAPI_EXPORT const char *
 _glapi_get_proc_name(unsigned int offset);
 
 
+_GLAPI_EXPORT struct _glapi_table *
+_glapi_create_table_from_handle(void *handle, const char *symbol_prefix);
+
+
 _GLAPI_EXPORT unsigned long
 _glthread_GetID(void);
 
