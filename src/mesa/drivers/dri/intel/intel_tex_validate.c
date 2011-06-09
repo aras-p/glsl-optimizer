@@ -77,7 +77,6 @@ intel_finalize_mipmap_tree(struct intel_context *intel, GLuint unit)
    struct gl_texture_object *tObj = intel->ctx.Texture.Unit[unit]._Current;
    struct intel_texture_object *intelObj = intel_texture_object(tObj);
    struct gl_sampler_object *sampler = _mesa_get_samplerobj(ctx, unit);
-   int cpp;
    GLuint face, i;
    GLuint nr_faces = 0;
    struct intel_texture_image *firstImage;
@@ -99,12 +98,6 @@ intel_finalize_mipmap_tree(struct intel_context *intel, GLuint unit)
       }
       return GL_FALSE;
    }
-
-   if (_mesa_is_format_compressed(firstImage->base.TexFormat)) {
-      cpp = intel_compressed_num_bytes(firstImage->base.TexFormat);
-   }
-   else
-      cpp = _mesa_get_format_bytes(firstImage->base.TexFormat);
 
    /* Check tree can hold all active levels.  Check tree matches
     * target, imageFormat, etc.
@@ -137,7 +130,6 @@ intel_finalize_mipmap_tree(struct intel_context *intel, GLuint unit)
                                           firstImage->base.Width,
                                           firstImage->base.Height,
                                           firstImage->base.Depth,
-                                          cpp,
 					  GL_TRUE);
       if (!intelObj->mt)
          return GL_FALSE;

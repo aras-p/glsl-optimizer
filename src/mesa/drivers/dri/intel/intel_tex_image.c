@@ -55,7 +55,6 @@ intel_miptree_create_for_teximage(struct intel_context *intel,
    GLuint height = intelImage->base.Height;
    GLuint depth = intelImage->base.Depth;
    GLuint i;
-   GLuint texelBytes;
 
    DBG("%s\n", __FUNCTION__);
 
@@ -108,8 +107,6 @@ intel_miptree_create_for_teximage(struct intel_context *intel,
       }
    }
 
-   texelBytes = _mesa_get_format_bytes(intelImage->base.TexFormat);
-
    return intel_miptree_create(intel,
 			       intelObj->base.Target,
 			       intelImage->base.TexFormat,
@@ -118,7 +115,6 @@ intel_miptree_create_for_teximage(struct intel_context *intel,
 			       width,
 			       height,
 			       depth,
-			       texelBytes,
 			       expect_accelerated_upload);
 }
 
