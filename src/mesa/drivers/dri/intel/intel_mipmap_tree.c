@@ -55,6 +55,7 @@ target_to_target(GLenum target)
 static struct intel_mipmap_tree *
 intel_miptree_create_internal(struct intel_context *intel,
 			      GLenum target,
+			      gl_format format,
 			      GLenum internal_format,
 			      GLuint first_level,
 			      GLuint last_level,
@@ -72,6 +73,7 @@ intel_miptree_create_internal(struct intel_context *intel,
        first_level, last_level, mt);
 
    mt->target = target_to_target(target);
+   mt->format = format;
    mt->internal_format = internal_format;
    mt->first_level = first_level;
    mt->last_level = last_level;
@@ -104,6 +106,7 @@ intel_miptree_create_internal(struct intel_context *intel,
 struct intel_mipmap_tree *
 intel_miptree_create(struct intel_context *intel,
 		     GLenum target,
+		     gl_format format,
 		     GLenum base_format,
 		     GLenum internal_format,
 		     GLuint first_level,
@@ -125,7 +128,7 @@ intel_miptree_create(struct intel_context *intel,
 	 tiling = I915_TILING_X;
    }
 
-   mt = intel_miptree_create_internal(intel, target, internal_format,
+   mt = intel_miptree_create_internal(intel, target, format, internal_format,
 				      first_level, last_level, width0,
 				      height0, depth0, cpp, compress_byte,
 				      tiling);
@@ -156,6 +159,7 @@ intel_miptree_create(struct intel_context *intel,
 struct intel_mipmap_tree *
 intel_miptree_create_for_region(struct intel_context *intel,
 				GLenum target,
+				gl_format format,
 				GLenum internal_format,
 				struct intel_region *region,
 				GLuint depth0,
@@ -163,7 +167,7 @@ intel_miptree_create_for_region(struct intel_context *intel,
 {
    struct intel_mipmap_tree *mt;
 
-   mt = intel_miptree_create_internal(intel, target, internal_format,
+   mt = intel_miptree_create_internal(intel, target, format, internal_format,
 				      0, 0,
 				      region->width, region->height, 1,
 				      region->cpp, compress_byte,

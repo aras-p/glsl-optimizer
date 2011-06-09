@@ -135,6 +135,7 @@ intel_finalize_mipmap_tree(struct intel_context *intel, GLuint unit)
    if (!intelObj->mt) {
       intelObj->mt = intel_miptree_create(intel,
                                           intelObj->base.Target,
+					  firstImage->base.TexFormat,
                                           firstImage->base._BaseFormat,
                                           firstImage->base.InternalFormat,
                                           tObj->BaseLevel,

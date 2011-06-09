@@ -641,6 +641,7 @@ intel_render_texture(struct gl_context * ctx,
       texel_bytes = _mesa_get_format_bytes(intel_image->base.TexFormat);
 
       new_mt = intel_miptree_create(intel, image->TexObject->Target,
+				    intel_image->base.TexFormat,
 				    intel_image->base._BaseFormat,
 				    intel_image->base.InternalFormat,
 				    intel_image->level,

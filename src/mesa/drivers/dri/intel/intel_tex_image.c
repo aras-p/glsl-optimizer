@@ -115,6 +115,7 @@ intel_miptree_create_for_teximage(struct intel_context *intel,
 
    return intel_miptree_create(intel,
 			       intelObj->base.Target,
+			       intelImage->base.TexFormat,
 			       intelImage->base._BaseFormat,
 			       intelImage->base.InternalFormat,
 			       firstLevel,
@@ -692,7 +693,7 @@ intelSetTexBuffer2(__DRIcontext *pDRICtx, GLint target,
       texFormat = MESA_FORMAT_ARGB8888;
    }
 
-   mt = intel_miptree_create_for_region(intel, target,
+   mt = intel_miptree_create_for_region(intel, target, texFormat,
 					internalFormat, rb->region, 1, 0);
    if (mt == NULL)
        return;
@@ -756,7 +757,7 @@ intel_image_target_texture_2d(struct gl_context *ctx, GLenum target,
    if (image == NULL)
       return;
 
-   mt = intel_miptree_create_for_region(intel, target,
+   mt = intel_miptree_create_for_region(intel, target, image->format,
 					image->internal_format,
 					image->region, 1, 0);
    if (mt == NULL)
