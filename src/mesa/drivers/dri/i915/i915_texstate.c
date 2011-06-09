@@ -39,8 +39,7 @@
 
 
 static GLuint
-translate_texture_format(gl_format mesa_format, GLuint internal_format,
-			 GLenum DepthMode)
+translate_texture_format(gl_format mesa_format, GLenum DepthMode)
 {
    switch (mesa_format) {
    case MESA_FORMAT_L8:
@@ -165,7 +164,6 @@ i915_update_tex_unit(struct intel_context *intel, GLuint unit, GLuint ss3)
    i915->state.tex_offset[unit] = 0; /* Always the origin of the miptree */
 
    format = translate_texture_format(firstImage->TexFormat,
-				     firstImage->InternalFormat,
 				     sampler->DepthMode);
    pitch = intelObj->mt->region->pitch * intelObj->mt->cpp;
 
