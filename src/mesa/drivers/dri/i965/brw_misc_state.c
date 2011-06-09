@@ -355,26 +355,48 @@ static void emit_depthbuffer(struct brw_context *brw)
       ADVANCE_BATCH();
    }
 
-   /* Emit hiz buffer. */
    if (hiz_region || stencil_irb) {
-      BEGIN_BATCH(3);
-      OUT_BATCH((_3DSTATE_HIER_DEPTH_BUFFER << 16) | (3 - 2));
-      OUT_BATCH(hiz_region->pitch * hiz_region->cpp - 1);
-      OUT_RELOC(hiz_region->buffer,
-		I915_GEM_DOMAIN_RENDER, I915_GEM_DOMAIN_RENDER,
-		0);
-      ADVANCE_BATCH();
-   }
+      /*
+       * In the 3DSTATE_DEPTH_BUFFER batch emitted above, the 'separate
+       * stencil enable' and 'hiz enable' bits were set. Therefore we must
+       * emit 3DSTATE_HIER_DEPTH_BUFFER and 3DSTATE_STENCIL_BUFFER. Even if
+       * there is no stencil buffer, 3DSTATE_STENCIL_BUFFER must be emitted;
+       * failure to do so causes hangs on gen5 and a stall on gen6.
+       */
 
-   /* Emit stencil buffer. */
-   if (hiz_region || stencil_irb) {
-      BEGIN_BATCH(3);
-      OUT_BATCH((_3DSTATE_STENCIL_BUFFER << 16) | (3 - 2));
-      OUT_BATCH(stencil_irb->region->pitch * stencil_irb->region->cpp - 1);
-      OUT_RELOC(stencil_irb->region->buffer,
-		I915_GEM_DOMAIN_RENDER, I915_GEM_DOMAIN_RENDER,
-		0);
-      ADVANCE_BATCH();
+      /* Emit hiz buffer. */
+      if (hiz_region) {
+	 BEGIN_BATCH(3);
+	 OUT_BATCH((_3DSTATE_HIER_DEPTH_BUFFER << 16) | (3 - 2));
+	 OUT_BATCH(hiz_region->pitch * hiz_region->cpp - 1);
+	 OUT_RELOC(hiz_region->buffer,
+		   I915_GEM_DOMAIN_RENDER, I915_GEM_DOMAIN_RENDER,
+		   0);
+	 ADVANCE_BATCH();
+      } else {
+	 BEGIN_BATCH(3);
+	 OUT_BATCH((_3DSTATE_HIER_DEPTH_BUFFER << 16) | (3 - 2));
+	 OUT_BATCH(0);
+	 OUT_BATCH(0);
+	 ADVANCE_BATCH();
+      }
+
+      /* Emit stencil buffer. */
+      if (stencil_irb) {
+	 BEGIN_BATCH(3);
+	 OUT_BATCH((_3DSTATE_STENCIL_BUFFER << 16) | (3 - 2));
+	 OUT_BATCH(stencil_irb->region->pitch * stencil_irb->region->cpp - 1);
+	 OUT_RELOC(stencil_irb->region->buffer,
+		   I915_GEM_DOMAIN_RENDER, I915_GEM_DOMAIN_RENDER,
+		   0);
+	 ADVANCE_BATCH();
+      } else {
+	 BEGIN_BATCH(3);
+	 OUT_BATCH((_3DSTATE_STENCIL_BUFFER << 16) | (3 - 2));
+	 OUT_BATCH(0);
+	 OUT_BATCH(0);
+	 ADVANCE_BATCH();
+      }
    }
 
    /*
