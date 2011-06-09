@@ -663,7 +663,7 @@ intelInitContext(struct intel_context *intel,
       ctx->TextureFormatSupported[MESA_FORMAT_AL1616] = GL_TRUE;
 
    /* Depth and stencil */
-   ctx->TextureFormatSupported[MESA_FORMAT_S8_Z24] = !intel->must_use_separate_stencil;
+   ctx->TextureFormatSupported[MESA_FORMAT_S8_Z24] = GL_TRUE;
    ctx->TextureFormatSupported[MESA_FORMAT_X8_Z24] = intel->has_separate_stencil;
    ctx->TextureFormatSupported[MESA_FORMAT_S8] = intel->has_separate_stencil;
 
