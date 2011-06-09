@@ -511,9 +511,10 @@ _mesa_ffsll(int64_t val)
 
    return 0;
 }
+#endif
 
-
-#if ((_GNUC__ == 3 && __GNUC_MINOR__ < 4) || __GNUC__ < 4)
+#if !defined(__GNUC__) ||\
+   ((_GNUC__ == 3 && __GNUC_MINOR__ < 4) && __GNUC__ < 4)
 /**
  * Return number of bits set in given GLuint.
  */
@@ -526,7 +527,6 @@ _mesa_bitcount(unsigned int n)
    }
    return bits;
 }
-#endif
 #endif
 
 

@@ -224,10 +224,14 @@ CreateContext(Display *dpy, int generic_id, struct glx_config *config,
       return NULL;
 
    gc = NULL;
+#ifdef GLX_USE_APPLEGL
+   gc = applegl_create_context(psc, config, shareList, renderType);
+#else
    if (allowDirect && psc->vtable->create_context)
       gc = psc->vtable->create_context(psc, config, shareList, renderType);
    if (!gc)
       gc = indirect_create_context(psc, config, shareList, renderType);
+#endif
    if (!gc)
       return NULL;
 
@@ -602,7 +606,7 @@ glXCreateGLXPixmap(Display * dpy, XVisualInfo * vis, Pixmap pixmap)
    struct glx_screen *const psc = GetGLXScreenConfigs(dpy, screen);
    const struct glx_config *config;
 
-   config = _gl_context_modes_find_visual(psc->visuals, vis->visualid);
+   config = glx_config_find_visual(psc->visuals, vis->visualid);
    
    if(apple_glx_pixmap_create(dpy, vis->screen, pixmap, config))
       return None;
@@ -706,7 +710,7 @@ _X_EXPORT void
 glXSwapBuffers(Display * dpy, GLXDrawable drawable)
 {
 #ifdef GLX_USE_APPLEGL
-   GLXContext gc = glXGetCurrentContext();
+   struct glx_context * gc = __glXGetCurrentContext();
    if(gc && apple_glx_is_current_drawable(dpy, gc->driContext, drawable)) {
       apple_glx_swap_buffers(gc->driContext);
    } else {
@@ -2475,7 +2479,6 @@ static const struct name_address_pair GLX_functions[] = {
    {NULL, NULL}                 /* end of list */
 };
 
-#ifndef GLX_USE_APPLEGL
 static const GLvoid *
 get_glx_proc_address(const char *funcName)
 {
@@ -2489,7 +2492,6 @@ get_glx_proc_address(const char *funcName)
 
    return NULL;
 }
-#endif
 
 /**
  * Get the address of a named GL function.  This is the pre-GLX 1.4 name for
@@ -2512,9 +2514,6 @@ _X_EXPORT void (*glXGetProcAddressARB(const GLubyte * procName)) (void)
     * DRI based drivers from searching the core GL function table for
     * internal API functions.
     */
-#ifdef GLX_USE_APPLEGL
-   f = (gl_function) apple_glx_get_proc_address(procName);
-#else
    f = (gl_function) get_glx_proc_address((const char *) procName);
    if ((f == NULL) && (procName[0] == 'g') && (procName[1] == 'l')
        && (procName[2] != 'X')) {
@@ -2524,7 +2523,6 @@ _X_EXPORT void (*glXGetProcAddressARB(const GLubyte * procName)) (void)
       if (!f)
          f = (gl_function) _glapi_get_proc_address((const char *) procName);
    }
-#endif
    return f;
 }
 

@@ -608,11 +608,15 @@ static void GLAPIENTRY vbo_exec_End( void )
 
    if (ctx->Driver.CurrentExecPrimitive != PRIM_OUTSIDE_BEGIN_END) {
       struct vbo_exec_context *exec = &vbo_context(ctx)->exec;
-      int idx = exec->vtx.vert_count;
-      int i = exec->vtx.prim_count - 1;
 
-      exec->vtx.prim[i].end = 1; 
-      exec->vtx.prim[i].count = idx - exec->vtx.prim[i].start;
+      if (exec->vtx.prim_count > 0) {
+         /* close off current primitive */
+         int idx = exec->vtx.vert_count;
+         int i = exec->vtx.prim_count - 1;
+
+         exec->vtx.prim[i].end = 1; 
+         exec->vtx.prim[i].count = idx - exec->vtx.prim[i].start;
+      }
 
       ctx->Driver.CurrentExecPrimitive = PRIM_OUTSIDE_BEGIN_END;
 

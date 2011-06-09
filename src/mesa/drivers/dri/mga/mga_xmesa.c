@@ -66,6 +66,7 @@
 
 #include "GL/internal/dri_interface.h"
 
+#define need_GL_ARB_vertex_array_object
 #define need_GL_ARB_vertex_program
 #define need_GL_EXT_fog_coord
 #define need_GL_EXT_gpu_program_parameters
@@ -382,6 +383,7 @@ static const struct dri_extension g400_extensions[] =
 static const struct dri_extension card_extensions[] =
 {
    { "GL_ARB_texture_rectangle",      NULL },
+   { "GL_ARB_vertex_array_object",    GL_ARB_vertex_array_object_functions },
    { "GL_EXT_blend_logic_op",         NULL },
    { "GL_EXT_fog_coord",              GL_EXT_fog_coord_functions },
    /* paletted_textures currently doesn't work, but we could fix them later */

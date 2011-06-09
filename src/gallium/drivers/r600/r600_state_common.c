@@ -318,12 +318,10 @@ void r600_delete_vs_shader(struct pipe_context *ctx, void *state)
 
 static void r600_update_alpha_ref(struct r600_pipe_context *rctx)
 {
-	unsigned alpha_ref = rctx->alpha_ref;
+	unsigned alpha_ref;
 	struct r600_pipe_state rstate;
 
-	if (!rctx->alpha_ref_dirty)
-		return;
-
+	alpha_ref = rctx->alpha_ref;
 	rstate.nregs = 0;
 	if (rctx->export_16bpc)
 		alpha_ref &= ~0x1FFF;
@@ -388,7 +386,7 @@ void r600_set_constant_buffer(struct pipe_context *ctx, uint shader, uint index,
 {
 	struct r600_pipe_context *rctx = (struct r600_pipe_context *)ctx;
 	struct r600_resource_buffer *rbuffer = r600_buffer(buffer);
-	struct r600_pipe_state *rstate;
+	struct r600_pipe_resource_state *rstate;
 	uint32_t offset;
 
 	/* Note that the state tracker can unbind constant buffers by
@@ -416,9 +414,9 @@ void r600_set_constant_buffer(struct pipe_context *ctx, uint shader, uint index,
 		rstate = &rctx->vs_const_buffer_resource[index];
 		if (!rstate->id) {
 			if (rctx->family >= CHIP_CEDAR) {
-				evergreen_pipe_init_buffer_resource(rctx, rstate, &rbuffer->r, offset, 16);
+				evergreen_pipe_init_buffer_resource(rctx, rstate);
 			} else {
-				r600_pipe_init_buffer_resource(rctx, rstate, &rbuffer->r, offset, 16);
+				r600_pipe_init_buffer_resource(rctx, rstate);
 			}
 		}
 
@@ -444,9 +442,9 @@ void r600_set_constant_buffer(struct pipe_context *ctx, uint shader, uint index,
 		rstate = &rctx->ps_const_buffer_resource[index];
 		if (!rstate->id) {
 			if (rctx->family >= CHIP_CEDAR) {
-				evergreen_pipe_init_buffer_resource(rctx, rstate, &rbuffer->r, offset, 16);
+				evergreen_pipe_init_buffer_resource(rctx, rstate);
 			} else {
-				r600_pipe_init_buffer_resource(rctx, rstate, &rbuffer->r, offset, 16);
+				r600_pipe_init_buffer_resource(rctx, rstate);
 			}
 		}
 		if (rctx->family >= CHIP_CEDAR) {
@@ -468,7 +466,7 @@ void r600_set_constant_buffer(struct pipe_context *ctx, uint shader, uint index,
 
 static void r600_vertex_buffer_update(struct r600_pipe_context *rctx)
 {
-	struct r600_pipe_state *rstate;
+	struct r600_pipe_resource_state *rstate;
 	struct r600_resource *rbuffer;
 	struct pipe_vertex_buffer *vertex_buffer;
 	unsigned i, count, offset;
@@ -503,9 +501,9 @@ static void r600_vertex_buffer_update(struct r600_pipe_context *rctx)
 
 		if (!rstate->id) {
 			if (rctx->family >= CHIP_CEDAR) {
-				evergreen_pipe_init_buffer_resource(rctx, rstate, rbuffer, offset, vertex_buffer->stride);
+				evergreen_pipe_init_buffer_resource(rctx, rstate);
 			} else {
-				r600_pipe_init_buffer_resource(rctx, rstate, rbuffer, offset, vertex_buffer->stride);
+				r600_pipe_init_buffer_resource(rctx, rstate);
 			}
 		}
 
@@ -595,7 +593,8 @@ void r600_draw_vbo(struct pipe_context *ctx, const struct pipe_draw_info *info)
 		return;
 	}
 
-	r600_update_alpha_ref(rctx);
+	if (rctx->alpha_ref_dirty)
+		r600_update_alpha_ref(rctx);
 
 	mask = 0;
 	for (int i = 0; i < rctx->framebuffer.nr_cbufs; i++) {

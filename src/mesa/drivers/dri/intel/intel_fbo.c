@@ -321,6 +321,18 @@ intel_renderbuffer_set_region(struct intel_context *intel,
 }
 
 
+void
+intel_renderbuffer_set_hiz_region(struct intel_context *intel,
+				  struct intel_renderbuffer *rb,
+				  struct intel_region *region)
+{
+   struct intel_region *old = rb->hiz_region;
+   rb->hiz_region = NULL;
+   intel_region_reference(&rb->hiz_region, region);
+   intel_region_release(&old);
+}
+
+
 /**
  * Create a new intel_renderbuffer which corresponds to an on-screen window,
  * not a user-created renderbuffer.

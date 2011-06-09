@@ -43,9 +43,9 @@
 
 #include "apple_glx.h"
 #include "apple_glx_context.h"
-#else
-#include "glapi.h"
 #endif
+
+#include "glapi.h"
 
 /*
 ** We setup some dummy structures here so that the API can be used
@@ -160,11 +160,9 @@ _X_HIDDEN void
 __glXSetCurrentContextNull(void)
 {
    __glXSetCurrentContext(&dummyContext);
-#ifndef GLX_USE_APPLEGL
-#if defined(GLX_DIRECT_RENDERING) && !defined(GLX_USE_APPLEGL)
+#if defined(GLX_DIRECT_RENDERING)
    _glapi_set_dispatch(NULL);   /* no-op functions */
    _glapi_set_context(NULL);
-#endif
 #endif
 }
 

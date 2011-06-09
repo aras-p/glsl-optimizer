@@ -30,6 +30,7 @@
 #include <stdint.h>
 #include <stdio.h>
 #include <util/u_double_list.h>
+#include <util/u_inlines.h>
 #include <pipe/p_compiler.h>
 
 #define RADEON_CTX_MAX_PM4	(64 * 1024 / 4)
@@ -47,33 +48,6 @@ struct winsys_handle;
 
 enum radeon_family {
 	CHIP_UNKNOWN,
-	CHIP_R100,
-	CHIP_RV100,
-	CHIP_RS100,
-	CHIP_RV200,
-	CHIP_RS200,
-	CHIP_R200,
-	CHIP_RV250,
-	CHIP_RS300,
-	CHIP_RV280,
-	CHIP_R300,
-	CHIP_R350,
-	CHIP_RV350,
-	CHIP_RV380,
-	CHIP_R420,
-	CHIP_R423,
-	CHIP_RV410,
-	CHIP_RS400,
-	CHIP_RS480,
-	CHIP_RS600,
-	CHIP_RS690,
-	CHIP_RS740,
-	CHIP_RV515,
-	CHIP_R520,
-	CHIP_RV530,
-	CHIP_RV560,
-	CHIP_RV570,
-	CHIP_R580,
 	CHIP_R600,
 	CHIP_RV610,
 	CHIP_RV630,
@@ -130,13 +104,23 @@ struct r600_bo *r600_bo_handle(struct radeon *radeon,
 				unsigned handle, unsigned *array_mode);
 void *r600_bo_map(struct radeon *radeon, struct r600_bo *bo, unsigned usage, void *ctx);
 void r600_bo_unmap(struct radeon *radeon, struct r600_bo *bo);
-void r600_bo_reference(struct radeon *radeon, struct r600_bo **dst,
-			    struct r600_bo *src);
 boolean r600_bo_get_winsys_handle(struct radeon *radeon, struct r600_bo *pb_bo,
 				unsigned stride, struct winsys_handle *whandle);
 static INLINE unsigned r600_bo_offset(struct r600_bo *bo)
 {
 	return 0;
+}
+void r600_bo_destroy(struct radeon *radeon, struct r600_bo *bo);
+
+/* this relies on the pipe_reference being the first member of r600_bo */
+static INLINE void r600_bo_reference(struct radeon *radeon, struct r600_bo **dst, struct r600_bo *src)
+{
+	struct r600_bo *old = *dst;
+
+	if (pipe_reference((struct pipe_reference *)(*dst), (struct pipe_reference *)src)) {
+		r600_bo_destroy(radeon, old);
+	}
+	*dst = src;
 }
 
 
@@ -170,8 +154,17 @@ struct r600_pipe_state {
 	struct r600_pipe_reg		regs[R600_BLOCK_MAX_REG];
 };
 
+struct r600_pipe_resource_state {
+	unsigned			id;
+	u32                             val[8];
+	struct r600_bo *bo[2];
+};
+
 #define R600_BLOCK_STATUS_ENABLED	(1 << 0)
 #define R600_BLOCK_STATUS_DIRTY		(1 << 1)
+#define R600_BLOCK_STATUS_RESOURCE_DIRTY	(1 << 2)
+
+#define R600_BLOCK_STATUS_RESOURCE_VERTEX	(1 << 3)
 
 struct r600_block_reloc {
 	struct r600_bo		*bo;
@@ -182,6 +175,7 @@ struct r600_block_reloc {
 
 struct r600_block {
 	struct list_head	list;
+	struct list_head	enable_list;
 	unsigned		status;
 	unsigned                flags;
 	unsigned		start_offset;
@@ -245,6 +239,8 @@ struct r600_context {
 	unsigned		nblocks;
 	struct r600_block	**blocks;
 	struct list_head	dirty;
+	struct list_head	resource_dirty;
+	struct list_head	enable_list;
 	unsigned		pm4_ndwords;
 	unsigned		pm4_cdwords;
 	unsigned		pm4_dirty_cdwords;
@@ -261,6 +257,10 @@ struct r600_context {
 	unsigned                num_dest_buffers;
 	unsigned		flags;
 	boolean                 predicate_drawing;
+	struct r600_range ps_resources;
+	struct r600_range vs_resources;
+	struct r600_range fs_resources;
+	int num_ps_resources, num_vs_resources, num_fs_resources;
 };
 
 struct r600_draw {
@@ -275,9 +275,9 @@ struct r600_draw {
 int r600_context_init(struct r600_context *ctx, struct radeon *radeon);
 void r600_context_fini(struct r600_context *ctx);
 void r600_context_pipe_state_set(struct r600_context *ctx, struct r600_pipe_state *state);
-void r600_context_pipe_state_set_ps_resource(struct r600_context *ctx, struct r600_pipe_state *state, unsigned rid);
-void r600_context_pipe_state_set_vs_resource(struct r600_context *ctx, struct r600_pipe_state *state, unsigned rid);
-void r600_context_pipe_state_set_fs_resource(struct r600_context *ctx, struct r600_pipe_state *state, unsigned rid);
+void r600_context_pipe_state_set_ps_resource(struct r600_context *ctx, struct r600_pipe_resource_state *state, unsigned rid);
+void r600_context_pipe_state_set_vs_resource(struct r600_context *ctx, struct r600_pipe_resource_state *state, unsigned rid);
+void r600_context_pipe_state_set_fs_resource(struct r600_context *ctx, struct r600_pipe_resource_state *state, unsigned rid);
 void r600_context_pipe_state_set_ps_sampler(struct r600_context *ctx, struct r600_pipe_state *state, unsigned id);
 void r600_context_pipe_state_set_vs_sampler(struct r600_context *ctx, struct r600_pipe_state *state, unsigned id);
 void r600_context_flush(struct r600_context *ctx);
@@ -303,9 +303,9 @@ void r600_context_flush_dest_caches(struct r600_context *ctx);
 int evergreen_context_init(struct r600_context *ctx, struct radeon *radeon);
 void evergreen_context_draw(struct r600_context *ctx, const struct r600_draw *draw);
 void evergreen_context_flush_dest_caches(struct r600_context *ctx);
-void evergreen_context_pipe_state_set_ps_resource(struct r600_context *ctx, struct r600_pipe_state *state, unsigned rid);
-void evergreen_context_pipe_state_set_vs_resource(struct r600_context *ctx, struct r600_pipe_state *state, unsigned rid);
-void evergreen_context_pipe_state_set_fs_resource(struct r600_context *ctx, struct r600_pipe_state *state, unsigned rid);
+void evergreen_context_pipe_state_set_ps_resource(struct r600_context *ctx, struct r600_pipe_resource_state *state, unsigned rid);
+void evergreen_context_pipe_state_set_vs_resource(struct r600_context *ctx, struct r600_pipe_resource_state *state, unsigned rid);
+void evergreen_context_pipe_state_set_fs_resource(struct r600_context *ctx, struct r600_pipe_resource_state *state, unsigned rid);
 void evergreen_context_pipe_state_set_ps_sampler(struct r600_context *ctx, struct r600_pipe_state *state, unsigned id);
 void evergreen_context_pipe_state_set_vs_sampler(struct r600_context *ctx, struct r600_pipe_state *state, unsigned id);
 

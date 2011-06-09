@@ -700,7 +700,8 @@ i915_texture_destroy(struct pipe_screen *screen,
    struct i915_winsys *iws = i915_screen(screen)->iws;
    uint i;
 
-   iws->buffer_destroy(iws, tex->buffer);
+   if (tex->buffer)
+      iws->buffer_destroy(iws, tex->buffer);
 
    for (i = 0; i < Elements(tex->image_offset); i++)
       if (tex->image_offset[i])

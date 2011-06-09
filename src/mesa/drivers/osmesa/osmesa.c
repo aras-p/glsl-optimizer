@@ -1553,3 +1553,31 @@ OSMesaColorClamp(GLboolean enable)
 }
 
 
+/**
+ * When GLX_INDIRECT_RENDERING is defined, some symbols are missing in
+ * libglapi.a.  We need to define them here.
+ */
+#ifdef GLX_INDIRECT_RENDERING
+
+#define GL_GLEXT_PROTOTYPES
+#include "GL/gl.h"
+#include "glapi/glapi.h"
+#include "glapi/glapitable.h"
+
+#if defined(USE_MGL_NAMESPACE)
+#define NAME(func)  mgl##func
+#else
+#define NAME(func)  gl##func
+#endif
+
+#define DISPATCH(FUNC, ARGS, MESSAGE)		\
+   GET_DISPATCH()->FUNC ARGS
+
+#define RETURN_DISPATCH(FUNC, ARGS, MESSAGE) 	\
+   return GET_DISPATCH()->FUNC ARGS
+
+/* skip normal ones */
+#define _GLAPI_SKIP_NORMAL_ENTRY_POINTS
+#include "glapi/glapitemp.h"
+
+#endif /* GLX_INDIRECT_RENDERING */

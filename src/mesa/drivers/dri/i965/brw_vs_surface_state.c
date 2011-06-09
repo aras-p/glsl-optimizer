@@ -114,6 +114,7 @@ brw_update_vs_constant_surface( struct gl_context *ctx,
                                 GLuint surf)
 {
    struct brw_context *brw = brw_context(ctx);
+   struct intel_context *intel = &brw->intel;
    struct brw_vertex_program *vp =
       (struct brw_vertex_program *) brw->vertex_program;
    const struct gl_program_parameter_list *params = vp->program.Base.Parameters;
@@ -128,8 +129,13 @@ brw_update_vs_constant_surface( struct gl_context *ctx,
       return;
    }
 
-   brw_create_constant_surface(brw, brw->vs.const_bo, params->NumParameters,
-			       &brw->vs.surf_offset[surf]);
+   if (intel->gen >= 7) {
+      gen7_create_constant_surface(brw, brw->vs.const_bo, params->NumParameters,
+				  &brw->vs.surf_offset[surf]);
+   } else {
+      brw_create_constant_surface(brw, brw->vs.const_bo, params->NumParameters,
+				  &brw->vs.surf_offset[surf]);
+   }
 }
 
 

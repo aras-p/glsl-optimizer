@@ -55,7 +55,7 @@ util_staging_transfer_init(struct pipe_context *pipe,
            unsigned level,
            unsigned usage,
            const struct pipe_box *box,
-           bool direct, struct util_staging_transfer *tx);
+           boolean direct, struct util_staging_transfer *tx);
 
 void
 util_staging_transfer_destroy(struct pipe_context *pipe, struct pipe_transfer *ptx);

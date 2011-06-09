@@ -477,6 +477,9 @@ float_to_byte_tex(float f)
 static INLINE unsigned
 util_logbase2(unsigned n)
 {
+#if defined(PIPE_CC_GCC) && (PIPE_CC_GCC_VERSION >= 304)
+   return ((sizeof(unsigned) * 8 - 1) - __builtin_clz(n | 1));
+#else
    unsigned pos = 0;
    if (n >= 1<<16) { n >>= 16; pos += 16; }
    if (n >= 1<< 8) { n >>=  8; pos +=  8; }
@@ -484,6 +487,7 @@ util_logbase2(unsigned n)
    if (n >= 1<< 2) { n >>=  2; pos +=  2; }
    if (n >= 1<< 1) {           pos +=  1; }
    return pos;
+#endif
 }
 
 
@@ -493,17 +497,29 @@ util_logbase2(unsigned n)
 static INLINE unsigned
 util_next_power_of_two(unsigned x)
 {
-   unsigned i;
+#if defined(PIPE_CC_GCC) && (PIPE_CC_GCC_VERSION >= 304)
+   if (x <= 1)
+       return 1;
 
-   if (x == 0)
+   return (1 << ((sizeof(unsigned) * 8) - __builtin_clz(x - 1)));
+#else
+   unsigned val = x;
+
+   if (x <= 1)
       return 1;
 
-   --x;
+   if (util_is_power_of_two(x))
+      return x;
 
-   for (i = 1; i < sizeof(unsigned) * 8; i <<= 1)
-      x |= x >> i;
-
-   return x + 1;
+   val--;
+   val = (val >> 1) | val;
+   val = (val >> 2) | val;
+   val = (val >> 4) | val;
+   val = (val >> 8) | val;
+   val = (val >> 16) | val;
+   val++;
+   return val;
+#endif
 }
 
 
@@ -513,7 +529,7 @@ util_next_power_of_two(unsigned x)
 static INLINE unsigned
 util_bitcount(unsigned n)
 {
-#if defined(PIPE_CC_GCC)
+#if defined(PIPE_CC_GCC) && (PIPE_CC_GCC_VERSION >= 304)
    return __builtin_popcount(n);
 #else
    /* K&R classic bitcount.

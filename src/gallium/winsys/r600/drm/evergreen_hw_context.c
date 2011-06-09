@@ -43,31 +43,33 @@
 static const struct r600_reg evergreen_config_reg_list[] = {
 	{R_008958_VGT_PRIMITIVE_TYPE, 0, 0, 0},
 	{R_008A14_PA_CL_ENHANCE, 0, 0, 0},
-	{R_008C00_SQ_CONFIG, 0, 0, 0},
-	{R_008C04_SQ_GPR_RESOURCE_MGMT_1, 0, 0, 0},
-	{R_008C08_SQ_GPR_RESOURCE_MGMT_2, 0, 0, 0},
-	{R_008C0C_SQ_THREAD_RESOURCE_MGMT, 0, 0, 0},
-	{R_008C18_SQ_THREAD_RESOURCE_MGMT_1, 0, 0, 0},
-	{R_008C1C_SQ_THREAD_RESOURCE_MGMT_2, 0, 0, 0},
-	{R_008C20_SQ_STACK_RESOURCE_MGMT_1, 0, 0, 0},
-	{R_008C24_SQ_STACK_RESOURCE_MGMT_2, 0, 0, 0},
-	{R_008C28_SQ_STACK_RESOURCE_MGMT_3, 0, 0, 0},
-	{R_008D8C_SQ_DYN_GPR_CNTL_PS_FLUSH_REQ, 0, 0, 0},
-	{R_009100_SPI_CONFIG_CNTL, 0, 0, 0},
-	{R_00913C_SPI_CONFIG_CNTL_1, 0, 0, 0},
+	{R_008C00_SQ_CONFIG, REG_FLAG_ENABLE_ALWAYS, 0, 0},
+	{R_008C04_SQ_GPR_RESOURCE_MGMT_1, REG_FLAG_ENABLE_ALWAYS, 0, 0},
+	{R_008C08_SQ_GPR_RESOURCE_MGMT_2, REG_FLAG_ENABLE_ALWAYS, 0, 0},
+	{R_008C0C_SQ_THREAD_RESOURCE_MGMT, REG_FLAG_ENABLE_ALWAYS, 0, 0},
+	{R_008C10_SQ_GLOBAL_GPR_RESOURCE_MGMT_1, REG_FLAG_ENABLE_ALWAYS, 0, 0},
+	{R_008C14_SQ_GLOBAL_GPR_RESOURCE_MGMT_2, REG_FLAG_ENABLE_ALWAYS, 0, 0},
+	{R_008C18_SQ_THREAD_RESOURCE_MGMT_1, REG_FLAG_ENABLE_ALWAYS, 0, 0},
+	{R_008C1C_SQ_THREAD_RESOURCE_MGMT_2, REG_FLAG_ENABLE_ALWAYS, 0, 0},
+	{R_008C20_SQ_STACK_RESOURCE_MGMT_1, REG_FLAG_ENABLE_ALWAYS, 0, 0},
+	{R_008C24_SQ_STACK_RESOURCE_MGMT_2, REG_FLAG_ENABLE_ALWAYS, 0, 0},
+	{R_008C28_SQ_STACK_RESOURCE_MGMT_3, REG_FLAG_ENABLE_ALWAYS, 0, 0},
+	{R_008D8C_SQ_DYN_GPR_CNTL_PS_FLUSH_REQ, REG_FLAG_ENABLE_ALWAYS, 0, 0},
+	{R_009100_SPI_CONFIG_CNTL, REG_FLAG_ENABLE_ALWAYS, 0, 0},
+	{R_00913C_SPI_CONFIG_CNTL_1, REG_FLAG_ENABLE_ALWAYS, 0, 0},
 };
 
 
 static const struct r600_reg cayman_config_reg_list[] = {
 	{R_008958_VGT_PRIMITIVE_TYPE, 0, 0, 0},
 	{R_008A14_PA_CL_ENHANCE, 0, 0, 0},
-	{R_008C00_SQ_CONFIG, 0, 0, 0},
-	{R_008C04_SQ_GPR_RESOURCE_MGMT_1, 0, 0, 0},
-	{CM_R_008C10_SQ_GLOBAL_GPR_RESOURCE_MGMT_1, 0, 0, 0},
-	{CM_R_008C14_SQ_GLOBAL_GPR_RESOURCE_MGMT_2, 0, 0, 0},
-	{R_008D8C_SQ_DYN_GPR_CNTL_PS_FLUSH_REQ, 0, 0, 0},
-	{R_009100_SPI_CONFIG_CNTL, 0, 0, 0},
-	{R_00913C_SPI_CONFIG_CNTL_1, 0, 0, 0},
+	{R_008C00_SQ_CONFIG, REG_FLAG_ENABLE_ALWAYS, 0, 0},
+	{R_008C04_SQ_GPR_RESOURCE_MGMT_1, REG_FLAG_ENABLE_ALWAYS, 0, 0},
+	{R_008C10_SQ_GLOBAL_GPR_RESOURCE_MGMT_1, REG_FLAG_ENABLE_ALWAYS, 0, 0},
+	{R_008C14_SQ_GLOBAL_GPR_RESOURCE_MGMT_2, REG_FLAG_ENABLE_ALWAYS, 0, 0},
+	{R_008D8C_SQ_DYN_GPR_CNTL_PS_FLUSH_REQ, REG_FLAG_ENABLE_ALWAYS, 0, 0},
+	{R_009100_SPI_CONFIG_CNTL, REG_FLAG_ENABLE_ALWAYS, 0, 0},
+	{R_00913C_SPI_CONFIG_CNTL_1, REG_FLAG_ENABLE_ALWAYS, 0, 0},
 };
 
 static const struct r600_reg evergreen_ctl_const_list[] = {
@@ -125,6 +127,8 @@ static const struct r600_reg evergreen_context_reg_list[] = {
 	{R_028244_PA_SC_GENERIC_SCISSOR_BR, 0, 0, 0},
 	{R_028250_PA_SC_VPORT_SCISSOR_0_TL, 0, 0, 0},
 	{R_028254_PA_SC_VPORT_SCISSOR_0_BR, 0, 0, 0},
+	{R_0282D0_PA_SC_VPORT_ZMIN_0, 0, 0, 0},
+	{R_0282D4_PA_SC_VPORT_ZMAX_0, 0, 0, 0},
 	{R_028350_SX_MISC, 0, 0, 0},
 	{R_028380_SQ_VTX_SEMANTIC_0, 0, 0, 0},
 	{R_028384_SQ_VTX_SEMANTIC_1, 0, 0, 0},
@@ -158,12 +162,12 @@ static const struct r600_reg evergreen_context_reg_list[] = {
 	{R_0283F4_SQ_VTX_SEMANTIC_29, 0, 0, 0},
 	{R_0283F8_SQ_VTX_SEMANTIC_30, 0, 0, 0},
 	{R_0283FC_SQ_VTX_SEMANTIC_31, 0, 0, 0},
-	{R_0282D0_PA_SC_VPORT_ZMIN_0, 0, 0, 0},
-	{R_0282D4_PA_SC_VPORT_ZMAX_0, 0, 0, 0},
+	{GROUP_FORCE_NEW_BLOCK, 0, 0, 0},
 	{R_028400_VGT_MAX_VTX_INDX, 0, 0, 0},
 	{R_028404_VGT_MIN_VTX_INDX, 0, 0, 0},
 	{R_028408_VGT_INDX_OFFSET, 0, 0, 0},
 	{R_02840C_VGT_MULTI_PRIM_IB_RESET_INDX, 0, 0, 0},
+	{GROUP_FORCE_NEW_BLOCK, 0, 0, 0},
 	{R_028410_SX_ALPHA_TEST_CONTROL, 0, 0, 0},
 	{R_028414_CB_BLEND_RED, 0, 0, 0},
 	{R_028418_CB_BLEND_GREEN, 0, 0, 0},
@@ -487,6 +491,8 @@ static const struct r600_reg cayman_context_reg_list[] = {
 	{R_028244_PA_SC_GENERIC_SCISSOR_BR, 0, 0, 0},
 	{R_028250_PA_SC_VPORT_SCISSOR_0_TL, 0, 0, 0},
 	{R_028254_PA_SC_VPORT_SCISSOR_0_BR, 0, 0, 0},
+	{R_0282D0_PA_SC_VPORT_ZMIN_0, 0, 0, 0},
+	{R_0282D4_PA_SC_VPORT_ZMAX_0, 0, 0, 0},
 	{R_028350_SX_MISC, 0, 0, 0},
 	{R_028380_SQ_VTX_SEMANTIC_0, 0, 0, 0},
 	{R_028384_SQ_VTX_SEMANTIC_1, 0, 0, 0},
@@ -520,12 +526,12 @@ static const struct r600_reg cayman_context_reg_list[] = {
 	{R_0283F4_SQ_VTX_SEMANTIC_29, 0, 0, 0},
 	{R_0283F8_SQ_VTX_SEMANTIC_30, 0, 0, 0},
 	{R_0283FC_SQ_VTX_SEMANTIC_31, 0, 0, 0},
-	{R_0282D0_PA_SC_VPORT_ZMIN_0, 0, 0, 0},
-	{R_0282D4_PA_SC_VPORT_ZMAX_0, 0, 0, 0},
+	{GROUP_FORCE_NEW_BLOCK, 0, 0, 0},
 	{R_028400_VGT_MAX_VTX_INDX, 0, 0, 0},
 	{R_028404_VGT_MIN_VTX_INDX, 0, 0, 0},
 	{R_028408_VGT_INDX_OFFSET, 0, 0, 0},
 	{R_02840C_VGT_MULTI_PRIM_IB_RESET_INDX, 0, 0, 0},
+	{GROUP_FORCE_NEW_BLOCK, 0, 0, 0},
 	{R_028410_SX_ALPHA_TEST_CONTROL, 0, 0, 0},
 	{R_028414_CB_BLEND_RED, 0, 0, 0},
 	{R_028418_CB_BLEND_GREEN, 0, 0, 0},
@@ -817,13 +823,13 @@ static const struct r600_reg cayman_context_reg_list[] = {
 };
 
 /* SHADER RESOURCE R600/R700 */
-static int evergreen_state_resource_init(struct r600_context *ctx, u32 offset)
+static int r600_resource_range_init(struct r600_context *ctx, struct r600_range *range, unsigned offset, unsigned nblocks, unsigned stride)
 {
 	struct r600_reg r600_shader_resource[] = {
-		{R_030000_RESOURCE0_WORD0, 0, 0, 0},
-		{R_030004_RESOURCE0_WORD1, 0, 0, 0},
-		{R_030008_RESOURCE0_WORD2, REG_FLAG_NEED_BO, S_0085F0_TC_ACTION_ENA(1) | S_0085F0_VC_ACTION_ENA(1), 0xFFFFFFFF},
-		{R_03000C_RESOURCE0_WORD3, REG_FLAG_NEED_BO, S_0085F0_TC_ACTION_ENA(1) | S_0085F0_VC_ACTION_ENA(1), 0xFFFFFFFF},
+		{R_030000_RESOURCE0_WORD0, REG_FLAG_NEED_BO, S_0085F0_TC_ACTION_ENA(1) | S_0085F0_VC_ACTION_ENA(1), 0xFFFFFFFF},
+		{R_030004_RESOURCE0_WORD1, REG_FLAG_NEED_BO, S_0085F0_TC_ACTION_ENA(1) | S_0085F0_VC_ACTION_ENA(1), 0xFFFFFFFF},
+		{R_030008_RESOURCE0_WORD2, 0, 0, 0},
+		{R_03000C_RESOURCE0_WORD3, 0, 0, 0},
 		{R_030010_RESOURCE0_WORD4, 0, 0, 0},
 		{R_030014_RESOURCE0_WORD5, 0, 0, 0},
 		{R_030018_RESOURCE0_WORD6, 0, 0, 0},
@@ -831,10 +837,7 @@ static int evergreen_state_resource_init(struct r600_context *ctx, u32 offset)
 	};
 	unsigned nreg = Elements(r600_shader_resource);
 
-	for (int i = 0; i < nreg; i++) {
-		r600_shader_resource[i].offset += offset;
-	}
-	return r600_context_add_block(ctx, r600_shader_resource, nreg, PKT3_SET_RESOURCE, EVERGREEN_RESOURCE_OFFSET);
+	return r600_resource_init(ctx, range, offset, nblocks, stride, r600_shader_resource, nreg, EVERGREEN_RESOURCE_OFFSET);
 }
 
 /* SHADER SAMPLER R600/R700 */
@@ -907,6 +910,11 @@ int evergreen_context_init(struct r600_context *ctx, struct radeon *radeon)
 	ctx->radeon = radeon;
 	LIST_INITHEAD(&ctx->query_list);
 
+	/* init dirty list */
+	LIST_INITHEAD(&ctx->dirty);
+	LIST_INITHEAD(&ctx->resource_dirty);
+	LIST_INITHEAD(&ctx->enable_list);
+
 	ctx->range = calloc(NUM_RANGES, sizeof(struct r600_range));
 	if (!ctx->range) {
 		r = -ENOMEM;
@@ -960,24 +968,19 @@ int evergreen_context_init(struct r600_context *ctx, struct radeon *radeon)
 		if (r)
 			goto out_err;
 	}
-	/* PS RESOURCE */
-	for (int j = 0, offset = 0; j < 176; j++, offset += 0x20) {
-		r = evergreen_state_resource_init(ctx, offset);
-		if (r)
-			goto out_err;
-	}
-	/* VS RESOURCE */
-	for (int j = 0, offset = 0x1600; j < 160; j++, offset += 0x20) {
-		r = evergreen_state_resource_init(ctx, offset);
-		if (r)
-			goto out_err;
-	}
-	/* FS RESOURCE */
-	for (int j = 0, offset = 0x7C00; j < 16; j++, offset += 0x20) {
-		r = evergreen_state_resource_init(ctx, offset);
-		if (r)
-			goto out_err;
-	}
+
+	ctx->num_ps_resources = 176;
+	ctx->num_vs_resources = 160;
+	ctx->num_fs_resources = 16;
+	r = r600_resource_range_init(ctx, &ctx->ps_resources, 0, 176, 0x20);
+	if (r)
+		goto out_err;
+	r = r600_resource_range_init(ctx, &ctx->vs_resources, 0x1600, 160, 0x20);
+	if (r)
+		goto out_err;
+	r = r600_resource_range_init(ctx, &ctx->fs_resources, 0x7C00, 16, 0x20);
+	if (r)
+		goto out_err;
 
 	/* PS loop const */
 	evergreen_loop_const_init(ctx, 0);
@@ -1015,33 +1018,31 @@ int evergreen_context_init(struct r600_context *ctx, struct radeon *radeon)
 
 	LIST_INITHEAD(&ctx->fenced_bo);
 
-	/* init dirty list */
-	LIST_INITHEAD(&ctx->dirty);
 	return 0;
 out_err:
 	r600_context_fini(ctx);
 	return r;
 }
 
-void evergreen_context_pipe_state_set_ps_resource(struct r600_context *ctx, struct r600_pipe_state *state, unsigned rid)
+void evergreen_context_pipe_state_set_ps_resource(struct r600_context *ctx, struct r600_pipe_resource_state *state, unsigned rid)
 {
-	unsigned offset = R_030000_SQ_TEX_RESOURCE_WORD0_0 + 0x20 * rid;
+	struct r600_block *block = ctx->ps_resources.blocks[rid];
 
-	r600_context_pipe_state_set_resource(ctx, state, offset);
+	r600_context_pipe_state_set_resource(ctx, state, block);
 }
 
-void evergreen_context_pipe_state_set_vs_resource(struct r600_context *ctx, struct r600_pipe_state *state, unsigned rid)
+void evergreen_context_pipe_state_set_vs_resource(struct r600_context *ctx, struct r600_pipe_resource_state *state, unsigned rid)
 {
-	unsigned offset = R_030000_SQ_TEX_RESOURCE_WORD0_0 + 0x1600 + 0x20 * rid;
+	struct r600_block *block = ctx->vs_resources.blocks[rid];
 
-	r600_context_pipe_state_set_resource(ctx, state, offset);
+	r600_context_pipe_state_set_resource(ctx, state, block);
 }
 
-void evergreen_context_pipe_state_set_fs_resource(struct r600_context *ctx, struct r600_pipe_state *state, unsigned rid)
+void evergreen_context_pipe_state_set_fs_resource(struct r600_context *ctx, struct r600_pipe_resource_state *state, unsigned rid)
 {
-	unsigned offset = R_030000_SQ_TEX_RESOURCE_WORD0_0 + 0x7C00 + 0x20 * rid;
+	struct r600_block *block = ctx->fs_resources.blocks[rid];
 
-	r600_context_pipe_state_set_resource(ctx, state, offset);
+	r600_context_pipe_state_set_resource(ctx, state, block);
 }
 
 static inline void evergreen_context_pipe_state_set_sampler(struct r600_context *ctx, struct r600_pipe_state *state, unsigned offset)
@@ -1056,6 +1057,7 @@ static inline void evergreen_context_pipe_state_set_sampler(struct r600_context 
 	if (state == NULL) {
 		block->status &= ~(R600_BLOCK_STATUS_ENABLED | R600_BLOCK_STATUS_DIRTY);
 		LIST_DELINIT(&block->list);
+		LIST_DELINIT(&block->enable_list);
 		return;
 	}
 	dirty = block->status & R600_BLOCK_STATUS_DIRTY;
@@ -1066,8 +1068,8 @@ static inline void evergreen_context_pipe_state_set_sampler(struct r600_context 
 			block->reg[i] = state->regs[i].value;
 		}
 	}
-
-	r600_context_dirty_block(ctx, block, dirty, 2);
+	if (dirty)
+		r600_context_dirty_block(ctx, block, dirty, 2);
 }
 
 static inline void evergreen_context_ps_partial_flush(struct r600_context *ctx)
@@ -1094,6 +1096,7 @@ static inline void evergreen_context_pipe_state_set_sampler_border(struct r600_c
 	if (state == NULL) {
 		block->status &= ~(R600_BLOCK_STATUS_ENABLED | R600_BLOCK_STATUS_DIRTY);
 		LIST_DELINIT(&block->list);
+		LIST_DELINIT(&block->enable_list);
 		return;
 	}
 	if (state->nregs <= 3) {
@@ -1119,7 +1122,8 @@ static inline void evergreen_context_pipe_state_set_sampler_border(struct r600_c
 	if (dirty & R600_BLOCK_STATUS_DIRTY)
 		evergreen_context_ps_partial_flush(ctx);
 
-	r600_context_dirty_block(ctx, block, dirty, 4);
+	if (dirty)
+		r600_context_dirty_block(ctx, block, dirty, 4);
 }
 
 void evergreen_context_pipe_state_set_ps_sampler(struct r600_context *ctx, struct r600_pipe_state *state, unsigned id)
@@ -1146,6 +1150,7 @@ void evergreen_context_draw(struct r600_context *ctx, const struct r600_draw *dr
 	unsigned ndwords = 7;
 	struct r600_block *dirty_block = NULL;
 	struct r600_block *next_block;
+	uint32_t *pm4;
 
 	if (draw->indices) {
 		ndwords = 11;
@@ -1186,25 +1191,31 @@ void evergreen_context_draw(struct r600_context *ctx, const struct r600_draw *dr
 		r600_context_block_emit_dirty(ctx, dirty_block);
 	}
 
-	/* draw packet */
-	ctx->pm4[ctx->pm4_cdwords++] = PKT3(PKT3_INDEX_TYPE, 0, ctx->predicate_drawing);
-	ctx->pm4[ctx->pm4_cdwords++] = draw->vgt_index_type;
-	ctx->pm4[ctx->pm4_cdwords++] = PKT3(PKT3_NUM_INSTANCES, 0, ctx->predicate_drawing);
-	ctx->pm4[ctx->pm4_cdwords++] = draw->vgt_num_instances;
-	if (draw->indices) {
-	        ctx->pm4[ctx->pm4_cdwords++] = PKT3(PKT3_DRAW_INDEX, 3, ctx->predicate_drawing);
-		ctx->pm4[ctx->pm4_cdwords++] = draw->indices_bo_offset + r600_bo_offset(draw->indices);
-		ctx->pm4[ctx->pm4_cdwords++] = 0;
-		ctx->pm4[ctx->pm4_cdwords++] = draw->vgt_num_indices;
-		ctx->pm4[ctx->pm4_cdwords++] = draw->vgt_draw_initiator;
-		ctx->pm4[ctx->pm4_cdwords++] = PKT3(PKT3_NOP, 0, ctx->predicate_drawing);
-		ctx->pm4[ctx->pm4_cdwords++] = 0;
-		r600_context_bo_reloc(ctx, &ctx->pm4[ctx->pm4_cdwords - 1], draw->indices);
-	} else {
-		ctx->pm4[ctx->pm4_cdwords++] = PKT3(PKT3_DRAW_INDEX_AUTO, 1, ctx->predicate_drawing);
-		ctx->pm4[ctx->pm4_cdwords++] = draw->vgt_num_indices;
-		ctx->pm4[ctx->pm4_cdwords++] = draw->vgt_draw_initiator;
+	LIST_FOR_EACH_ENTRY_SAFE(dirty_block, next_block, &ctx->resource_dirty,list) {
+		r600_context_block_resource_emit_dirty(ctx, dirty_block);
 	}
+
+	/* draw packet */
+	pm4 = &ctx->pm4[ctx->pm4_cdwords];
+	pm4[0] = PKT3(PKT3_INDEX_TYPE, 0, ctx->predicate_drawing);
+	pm4[1] = draw->vgt_index_type;
+	pm4[2] = PKT3(PKT3_NUM_INSTANCES, 0, ctx->predicate_drawing);
+	pm4[3] = draw->vgt_num_instances;
+	if (draw->indices) {
+	        pm4[4] = PKT3(PKT3_DRAW_INDEX, 3, ctx->predicate_drawing);
+		pm4[5] = draw->indices_bo_offset + r600_bo_offset(draw->indices);
+		pm4[6] = 0;
+		pm4[7] = draw->vgt_num_indices;
+		pm4[8] = draw->vgt_draw_initiator;
+		pm4[9] = PKT3(PKT3_NOP, 0, ctx->predicate_drawing);
+		pm4[10] = 0;
+		r600_context_bo_reloc(ctx, &pm4[10], draw->indices);
+	} else {
+		pm4[4] = PKT3(PKT3_DRAW_INDEX_AUTO, 1, ctx->predicate_drawing);
+		pm4[5] = draw->vgt_num_indices;
+		pm4[6] = draw->vgt_draw_initiator;
+	}
+	ctx->pm4_cdwords += ndwords;
 
 	ctx->flags |= (R600_CONTEXT_DRAW_PENDING | R600_CONTEXT_DST_CACHES_DIRTY);
 

@@ -162,3 +162,11 @@
 #define IS_9XX(devid)		(IS_915(devid) || \
 				 IS_945(devid) || \
 				 IS_965(devid))
+
+#define IS_GEN3(devid)		(IS_915(devid) ||	\
+				 IS_945(devid))
+
+#define IS_GEN2(devid)		(devid == PCI_CHIP_I830_M || \
+				 devid == PCI_CHIP_845_G ||  \
+				 devid == PCI_CHIP_I855_GM ||	\
+				 devid == PCI_CHIP_I865_G)

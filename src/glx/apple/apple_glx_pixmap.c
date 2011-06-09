@@ -40,7 +40,7 @@
 #include "apple_visual.h"
 #include "apple_glx_drawable.h"
 #include "appledri.h"
-#include "glcontextmodes.h"
+#include "glxconfig.h"
 
 static bool pixmap_make_current(struct apple_glx_context *ac,
                                 struct apple_glx_drawable *d);

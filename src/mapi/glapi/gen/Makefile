@@ -27,7 +27,7 @@ MESA_OUTPUTS = \
 	$(MESA_GLAPI_OUTPUTS) \
 	$(MESA_GLAPI_ASM_OUTPUTS) \
 	$(MESA_DIR)/main/enums.c \
-	$(MESA_DIR)/main/glapidispatch.h \
+	$(MESA_DIR)/main/dispatch.h \
 	$(MESA_DIR)/main/remap_helper.h \
 	$(MESA_GLX_DIR)/indirect.c \
 	$(MESA_GLX_DIR)/indirect.h \
@@ -180,7 +180,7 @@ $(MESA_DIR)/main/enums.c: gl_enums.py $(COMMON) $(ES_API)
 		-f $(MESA_GLAPI_DIR)/gen-es/es1_API.xml \
 		-f $(MESA_GLAPI_DIR)/gen-es/es2_API.xml > $@
 
-$(MESA_DIR)/main/glapidispatch.h: gl_table.py $(COMMON)
+$(MESA_DIR)/main/dispatch.h: gl_table.py $(COMMON)
 	$(PYTHON2) $(PYTHON_FLAGS) $< -m remap_table > $@
 
 $(MESA_DIR)/main/remap_helper.h: remap_helper.py $(COMMON)

@@ -15,6 +15,7 @@ C_SOURCES = \
 	r600_bomgr.c
 
 LIBRARY_INCLUDES = -I$(TOP)/src/gallium/drivers/r600 \
+		   -I$(TOP)/include \
 		   $(shell pkg-config libdrm --cflags-only-I)
 
 include ../../../Makefile.template

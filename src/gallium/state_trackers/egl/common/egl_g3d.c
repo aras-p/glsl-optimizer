@@ -259,6 +259,10 @@ init_config_attributes(_EGLConfig *conf, const struct native_config *nconf,
    conf->DepthSize = depth_stencil[0];
    conf->StencilSize = depth_stencil[1];
 
+   /* st/vega will allocate the mask on demand */
+   if (api_mask & EGL_OPENVG_BIT)
+      conf->AlphaMaskSize = 8;
+
    conf->SurfaceType = surface_type;
 
    conf->NativeRenderable = EGL_TRUE;

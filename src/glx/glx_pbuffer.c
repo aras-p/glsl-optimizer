@@ -835,7 +835,7 @@ glXCreatePixmap(Display * dpy, GLXFBConfig config, Pixmap pixmap,
    WARN_ONCE_GLX_1_3(dpy, __func__);
 
 #ifdef GLX_USE_APPLEGL
-   const struct glx_config *modes = (const __GLcontextModes *) config;
+   const struct glx_config *modes = (const struct glx_config *) config;
 
    if (apple_glx_pixmap_create(dpy, modes->screen, pixmap, modes))
       return None;

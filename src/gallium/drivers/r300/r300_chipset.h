@@ -96,26 +96,24 @@ struct r300_capabilities {
 
 /* Enumerations for legibility and telling which card we're running on. */
 enum {
-    CHIP_FAMILY_R300 = 0,
+    CHIP_FAMILY_R300 = 0, /* R3xx-based cores. */
     CHIP_FAMILY_R350,
-    CHIP_FAMILY_R360,
     CHIP_FAMILY_RV350,
     CHIP_FAMILY_RV370,
     CHIP_FAMILY_RV380,
-    CHIP_FAMILY_R420,
+    CHIP_FAMILY_RS400,
+    CHIP_FAMILY_RC410,
+    CHIP_FAMILY_RS480,
+    CHIP_FAMILY_R420,     /* R4xx-based cores. */
     CHIP_FAMILY_R423,
     CHIP_FAMILY_R430,
     CHIP_FAMILY_R480,
     CHIP_FAMILY_R481,
     CHIP_FAMILY_RV410,
-    CHIP_FAMILY_RS400,
-    CHIP_FAMILY_RC410,
-    CHIP_FAMILY_RS480,
-    CHIP_FAMILY_RS482,
     CHIP_FAMILY_RS600,
     CHIP_FAMILY_RS690,
     CHIP_FAMILY_RS740,
-    CHIP_FAMILY_RV515,
+    CHIP_FAMILY_RV515,    /* R5xx-based cores. */
     CHIP_FAMILY_R520,
     CHIP_FAMILY_RV530,
     CHIP_FAMILY_R580,

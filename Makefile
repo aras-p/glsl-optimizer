@@ -230,6 +230,8 @@ MAIN_FILES = \
 	$(DIRECTORY)/include/GL/vms_x_fix.h				\
 	$(DIRECTORY)/include/GL/wglext.h				\
 	$(DIRECTORY)/include/GL/wmesa.h					\
+	$(DIRECTORY)/include/pci_ids/*.h				\
+	$(DIRECTORY)/include/c99/*.h					\
 	$(DIRECTORY)/src/getopt/SConscript				\
 	$(DIRECTORY)/src/getopt/getopt*.[ch]				\
 	$(DIRECTORY)/src/glsl/Makefile					\
@@ -364,12 +366,16 @@ GALLIUM_FILES = \
 	$(DIRECTORY)/src/gallium/*/*/*/*.[ch]				\
 	$(DIRECTORY)/src/gallium/*/*/*/*.py
 
+APPLE_DRI_FILES = \
+	$(DIRECTORY)/src/glx/apple/Makefile 				\
+	$(DIRECTORY)/src/glx/apple/*.[ch]
 
 DRI_FILES = \
 	$(DIRECTORY)/include/GL/internal/dri_interface.h		\
 	$(DIRECTORY)/include/GL/internal/sarea.h			\
 	$(DIRECTORY)/src/glx/Makefile					\
 	$(DIRECTORY)/src/glx/*.[ch]					\
+	$(APPLE_DRI_FILES)						\
 	$(DIRECTORY)/src/mesa/drivers/dri/Makefile			\
 	$(DIRECTORY)/src/mesa/drivers/dri/Makefile.template		\
 	$(DIRECTORY)/src/mesa/drivers/dri/dri.pc.in			\

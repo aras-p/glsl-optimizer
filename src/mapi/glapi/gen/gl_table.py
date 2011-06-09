@@ -73,7 +73,7 @@ class PrintRemapTable(gl_XML.gl_print_base):
 		gl_XML.gl_print_base.__init__(self)
 
 		self.es = es
-		self.header_tag = '_GLAPI_DISPATCH_H_'
+		self.header_tag = '_DISPATCH_H_'
 		self.name = "gl_table.py (from Mesa)"
 		self.license = license.bsd_license_template % ("(C) Copyright IBM Corporation 2005", "IBM")
 		return
@@ -81,10 +81,8 @@ class PrintRemapTable(gl_XML.gl_print_base):
 
 	def printRealHeader(self):
 		print """
-/* this file should not be included directly in mesa */
-
 /**
- * \\file glapidispatch.h
+ * \\file main/dispatch.h
  * Macros for handling GL dispatch tables.
  *
  * For each known GL function, there are 3 macros in this file.  The first
@@ -93,8 +91,9 @@ class PrintRemapTable(gl_XML.gl_print_base):
  * can SET_FuncName, are used to get and set the dispatch pointer for the
  * named function in the specified dispatch table.
  */
+
+#include "main/mfeatures.h"
 """
-		
 		return
 
 	def printBody(self, api):
@@ -139,24 +138,28 @@ class PrintRemapTable(gl_XML.gl_print_base):
 			print '#define _gloffset_%s %d' % (f.name, f.offset)
 
 		print ''
-		print '#if !defined(_GLAPI_USE_REMAP_TABLE)'
+		print '#if !FEATURE_remap_table'
 		print ''
 
 		for f, index in functions:
 			print '#define _gloffset_%s %d' % (f.name, f.offset)
 
 		print ''
-		print '#else /* !_GLAPI_USE_REMAP_TABLE */'
+		print '#else /* !FEATURE_remap_table */'
 		print ''
 
-		print '#define driDispatchRemapTable_size %u' % (count)
-		print 'extern int driDispatchRemapTable[ driDispatchRemapTable_size ];'
-		print ''
-		print '#if FEATURE_remap_table'
-		print '#define driDispatchRemapTable remap_table'
-		print 'static int remap_table[driDispatchRemapTable_size];'
-		print '#endif'
-		print ''
+		if self.es:
+			remap_table = "esLocalRemapTable"
+
+			print '#define %s_size %u' % (remap_table, count)
+			print 'static int %s[ %s_size ];' % (remap_table, remap_table)
+			print ''
+		else:
+			remap_table = "driDispatchRemapTable"
+
+			print '#define %s_size %u' % (remap_table, count)
+			print 'extern int %s[ %s_size ];' % (remap_table, remap_table)
+			print ''
 
 		for f, index in functions:
 			print '#define %s_remap_index %u' % (f.name, index)
@@ -164,10 +167,10 @@ class PrintRemapTable(gl_XML.gl_print_base):
 		print ''
 
 		for f, index in functions:
-			print '#define _gloffset_%s driDispatchRemapTable[%s_remap_index]' % (f.name, f.name)
+			print '#define _gloffset_%s %s[%s_remap_index]' % (f.name, remap_table, f.name)
 
 		print ''
-		print '#endif /* _GLAPI_USE_REMAP_TABLE */'
+		print '#endif /* !FEATURE_remap_table */'
 		print ''
 
 		for f, index in abi_functions + functions:
@@ -196,12 +199,12 @@ class PrintRemapTable(gl_XML.gl_print_base):
 						print '#define SET_%s(disp, fn) SET_%s(disp, fn)' % (name, f.name)
 			print ''
 
-			print '#if defined(_GLAPI_USE_REMAP_TABLE)'
+			print '#if FEATURE_remap_table'
 			for f in alias_functions:
 				for name in f.entry_points:
 					if name != f.name:
 						print '#define %s_remap_index %s_remap_index' % (name, f.name)
-			print '#endif /* defined(_GLAPI_USE_REMAP_TABLE) */'
+			print '#endif /* FEATURE_remap_table */'
 			print ''
 
 		return

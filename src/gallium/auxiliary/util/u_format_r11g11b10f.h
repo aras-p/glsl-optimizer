@@ -45,14 +45,18 @@
 
 static INLINE unsigned f32_to_uf11(float val)
 {
-   uint32_t f32 = (*(uint32_t *) &val);
+   union {
+      float f;
+      uint32_t ui;
+   } f32 = {val};
+
    uint16_t uf11 = 0;
 
    /* Decode little-endian 32-bit floating-point value */
-   int sign = (f32 >> 16) & 0x8000;
+   int sign = (f32.ui >> 16) & 0x8000;
    /* Map exponent to the range [-127,128] */
-   int exponent = ((f32 >> 23) & 0xff) - 127;
-   int mantissa = f32 & 0x007fffff;
+   int exponent = ((f32.ui >> 23) & 0xff) - 127;
+   int mantissa = f32.ui & 0x007fffff;
 
    if (sign) return 0;
 
@@ -111,14 +115,18 @@ static INLINE float uf11_to_f32(uint16_t val)
 
 static INLINE unsigned f32_to_uf10(float val)
 {
-   uint32_t f32 = (*(uint32_t *) &val);
+   union {
+      float f;
+      uint32_t ui;
+   } f32 = {val};
+
    uint16_t uf10 = 0;
 
    /* Decode little-endian 32-bit floating-point value */
-   int sign = (f32 >> 16) & 0x8000;
+   int sign = (f32.ui >> 16) & 0x8000;
    /* Map exponent to the range [-127,128] */
-   int exponent = ((f32 >> 23) & 0xff) - 127;
-   int mantissa = f32 & 0x007fffff;
+   int exponent = ((f32.ui >> 23) & 0xff) - 127;
+   int mantissa = f32.ui & 0x007fffff;
 
    if (sign) return 0;
 

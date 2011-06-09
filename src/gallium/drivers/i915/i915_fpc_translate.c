@@ -133,7 +133,21 @@ i915_program_error(struct i915_fp_compile *p, const char *msg, ...)
    p->error = 1;
 }
 
-
+static uint get_mapping(struct i915_fragment_shader* fs, int unit)
+{
+   int i;
+   for (i = 0; i < I915_TEX_UNITS; i++)
+   {
+      if (fs->generic_mapping[i] == -1) {
+         fs->generic_mapping[i] = unit;
+         return i;
+      }
+      if (fs->generic_mapping[i] == unit)
+         return i;
+   }
+   debug_printf("Exceeded max generics\n");
+   return 0;
+}
 
 /**
  * Construct a ureg for the given source register.  Will emit
@@ -141,7 +155,8 @@ i915_program_error(struct i915_fp_compile *p, const char *msg, ...)
  */
 static uint
 src_vector(struct i915_fp_compile *p,
-           const struct tgsi_full_src_register *source)
+           const struct tgsi_full_src_register *source,
+           struct i915_fragment_shader* fs)
 {
    uint index = source->Register.Index;
    uint src = 0, sem_name, sem_ind;
@@ -192,9 +207,11 @@ src_vector(struct i915_fp_compile *p,
          src = swizzle(src, W, W, W, W);
          break;
       case TGSI_SEMANTIC_GENERIC:
-         /* usually a texcoord */
-         src = i915_emit_decl(p, REG_TYPE_T, T_TEX0 + sem_ind, D0_CHANNEL_ALL);
-         break;
+         {
+            int real_tex_unit = get_mapping(fs, sem_ind);
+            src = i915_emit_decl(p, REG_TYPE_T, T_TEX0 + real_tex_unit, D0_CHANNEL_ALL);
+            break;
+         }
       default:
          i915_program_error(p, "Bad source->Index");
          return 0;
@@ -336,13 +353,14 @@ translate_tex_src_target(struct i915_fp_compile *p, uint tex)
 static void
 emit_tex(struct i915_fp_compile *p,
          const struct tgsi_full_instruction *inst,
-         uint opcode)
+         uint opcode,
+         struct i915_fragment_shader* fs)
 {
    uint texture = inst->Texture.Texture;
    uint unit = inst->Src[1].Register.Index;
    uint tex = translate_tex_src_target( p, texture );
    uint sampler = i915_emit_decl(p, REG_TYPE_S, unit, tex);
-   uint coord = src_vector( p, &inst->Src[0]);
+   uint coord = src_vector( p, &inst->Src[0], fs);
 
    i915_emit_texld( p,
                     get_result_vector( p, &inst->Dst[0] ),
@@ -361,15 +379,16 @@ emit_tex(struct i915_fp_compile *p,
 static void
 emit_simple_arith(struct i915_fp_compile *p,
                   const struct tgsi_full_instruction *inst,
-                  uint opcode, uint numArgs)
+                  uint opcode, uint numArgs,
+                  struct i915_fragment_shader* fs)
 {
    uint arg1, arg2, arg3;
 
    assert(numArgs <= 3);
 
-   arg1 = (numArgs < 1) ? 0 : src_vector( p, &inst->Src[0] );
-   arg2 = (numArgs < 2) ? 0 : src_vector( p, &inst->Src[1] );
-   arg3 = (numArgs < 3) ? 0 : src_vector( p, &inst->Src[2] );
+   arg1 = (numArgs < 1) ? 0 : src_vector( p, &inst->Src[0], fs );
+   arg2 = (numArgs < 2) ? 0 : src_vector( p, &inst->Src[1], fs );
+   arg3 = (numArgs < 3) ? 0 : src_vector( p, &inst->Src[2], fs );
 
    i915_emit_arith( p,
                     opcode,
@@ -385,7 +404,8 @@ emit_simple_arith(struct i915_fp_compile *p,
 static void
 emit_simple_arith_swap2(struct i915_fp_compile *p,
                         const struct tgsi_full_instruction *inst,
-                        uint opcode, uint numArgs)
+                        uint opcode, uint numArgs,
+                        struct i915_fragment_shader* fs)
 {
    struct tgsi_full_instruction inst2;
 
@@ -396,7 +416,7 @@ emit_simple_arith_swap2(struct i915_fp_compile *p,
    inst2.Src[0] = inst->Src[1];
    inst2.Src[1] = inst->Src[0];
 
-   emit_simple_arith(p, &inst2, opcode, numArgs);
+   emit_simple_arith(p, &inst2, opcode, numArgs, fs);
 }
 
 
@@ -415,7 +435,8 @@ emit_simple_arith_swap2(struct i915_fp_compile *p,
  */ 
 static void
 i915_translate_instruction(struct i915_fp_compile *p,
-                           const struct tgsi_full_instruction *inst)
+                           const struct tgsi_full_instruction *inst,
+                           struct i915_fragment_shader *fs)
 {
    uint writemask;
    uint src0, src1, src2, flags;
@@ -423,7 +444,7 @@ i915_translate_instruction(struct i915_fp_compile *p,
 
    switch (inst->Instruction.Opcode) {
    case TGSI_OPCODE_ABS:
-      src0 = src_vector(p, &inst->Src[0]);
+      src0 = src_vector(p, &inst->Src[0], fs);
       i915_emit_arith(p,
                       A0_MAX,
                       get_result_vector(p, &inst->Dst[0]),
@@ -432,13 +453,13 @@ i915_translate_instruction(struct i915_fp_compile *p,
       break;
 
    case TGSI_OPCODE_ADD:
-      emit_simple_arith(p, inst, A0_ADD, 2);
+      emit_simple_arith(p, inst, A0_ADD, 2, fs);
       break;
 
    case TGSI_OPCODE_CMP:
-      src0 = src_vector(p, &inst->Src[0]);
-      src1 = src_vector(p, &inst->Src[1]);
-      src2 = src_vector(p, &inst->Src[2]);
+      src0 = src_vector(p, &inst->Src[0], fs);
+      src1 = src_vector(p, &inst->Src[1], fs);
+      src2 = src_vector(p, &inst->Src[2], fs);
       i915_emit_arith(p, A0_CMP, 
                       get_result_vector(p, &inst->Dst[0]),
                       get_result_flags(inst), 
@@ -446,7 +467,7 @@ i915_translate_instruction(struct i915_fp_compile *p,
       break;
 
    case TGSI_OPCODE_COS:
-      src0 = src_vector(p, &inst->Src[0]);
+      src0 = src_vector(p, &inst->Src[0], fs);
       tmp = i915_get_utemp(p);
 
       i915_emit_arith(p,
@@ -495,17 +516,28 @@ i915_translate_instruction(struct i915_fp_compile *p,
                       i915_emit_const4fv(p, cos_constants), 0);
       break;
 
+  case TGSI_OPCODE_DP2:
+      src0 = src_vector(p, &inst->Src[0], fs);
+      src1 = src_vector(p, &inst->Src[1], fs);
+
+      i915_emit_arith(p,
+                      A0_DP3,
+                      get_result_vector(p, &inst->Dst[0]),
+                      get_result_flags(inst), 0,
+                      swizzle(src0, X, Y, ZERO, ZERO), src1, 0);
+      break;
+
    case TGSI_OPCODE_DP3:
-      emit_simple_arith(p, inst, A0_DP3, 2);
+      emit_simple_arith(p, inst, A0_DP3, 2, fs);
       break;
 
    case TGSI_OPCODE_DP4:
-      emit_simple_arith(p, inst, A0_DP4, 2);
+      emit_simple_arith(p, inst, A0_DP4, 2, fs);
       break;
 
    case TGSI_OPCODE_DPH:
-      src0 = src_vector(p, &inst->Src[0]);
-      src1 = src_vector(p, &inst->Src[1]);
+      src0 = src_vector(p, &inst->Src[0], fs);
+      src1 = src_vector(p, &inst->Src[1], fs);
 
       i915_emit_arith(p,
                       A0_DP4,
@@ -515,8 +547,8 @@ i915_translate_instruction(struct i915_fp_compile *p,
       break;
 
    case TGSI_OPCODE_DST:
-      src0 = src_vector(p, &inst->Src[0]);
-      src1 = src_vector(p, &inst->Src[1]);
+      src0 = src_vector(p, &inst->Src[0], fs);
+      src1 = src_vector(p, &inst->Src[1], fs);
 
       /* result[0] = 1    * 1;
        * result[1] = a[1] * b[1];
@@ -536,7 +568,7 @@ i915_translate_instruction(struct i915_fp_compile *p,
       break;
 
    case TGSI_OPCODE_EX2:
-      src0 = src_vector(p, &inst->Src[0]);
+      src0 = src_vector(p, &inst->Src[0], fs);
 
       i915_emit_arith(p,
                       A0_EXP,
@@ -546,16 +578,16 @@ i915_translate_instruction(struct i915_fp_compile *p,
       break;
 
    case TGSI_OPCODE_FLR:
-      emit_simple_arith(p, inst, A0_FLR, 1);
+      emit_simple_arith(p, inst, A0_FLR, 1, fs);
       break;
 
    case TGSI_OPCODE_FRC:
-      emit_simple_arith(p, inst, A0_FRC, 1);
+      emit_simple_arith(p, inst, A0_FRC, 1, fs);
       break;
 
    case TGSI_OPCODE_KIL:
       /* kill if src[0].x < 0 || src[0].y < 0 ... */
-      src0 = src_vector(p, &inst->Src[0]);
+      src0 = src_vector(p, &inst->Src[0], fs);
       tmp = i915_get_utemp(p);
 
       i915_emit_texld(p,
@@ -571,7 +603,7 @@ i915_translate_instruction(struct i915_fp_compile *p,
       break;
 
    case TGSI_OPCODE_LG2:
-      src0 = src_vector(p, &inst->Src[0]);
+      src0 = src_vector(p, &inst->Src[0], fs);
 
       i915_emit_arith(p,
                       A0_LOG,
@@ -581,7 +613,7 @@ i915_translate_instruction(struct i915_fp_compile *p,
       break;
 
    case TGSI_OPCODE_LIT:
-      src0 = src_vector(p, &inst->Src[0]);
+      src0 = src_vector(p, &inst->Src[0], fs);
       tmp = i915_get_utemp(p);
 
       /* tmp = max( a.xyzw, a.00zw )
@@ -614,9 +646,9 @@ i915_translate_instruction(struct i915_fp_compile *p,
       break;
 
    case TGSI_OPCODE_LRP:
-      src0 = src_vector(p, &inst->Src[0]);
-      src1 = src_vector(p, &inst->Src[1]);
-      src2 = src_vector(p, &inst->Src[2]);
+      src0 = src_vector(p, &inst->Src[0], fs);
+      src1 = src_vector(p, &inst->Src[1], fs);
+      src2 = src_vector(p, &inst->Src[2], fs);
       flags = get_result_flags(inst);
       tmp = i915_get_utemp(p);
 
@@ -636,16 +668,16 @@ i915_translate_instruction(struct i915_fp_compile *p,
       break;
 
    case TGSI_OPCODE_MAD:
-      emit_simple_arith(p, inst, A0_MAD, 3);
+      emit_simple_arith(p, inst, A0_MAD, 3, fs);
       break;
 
    case TGSI_OPCODE_MAX:
-      emit_simple_arith(p, inst, A0_MAX, 2);
+      emit_simple_arith(p, inst, A0_MAX, 2, fs);
       break;
 
    case TGSI_OPCODE_MIN:
-      src0 = src_vector(p, &inst->Src[0]);
-      src1 = src_vector(p, &inst->Src[1]);
+      src0 = src_vector(p, &inst->Src[0], fs);
+      src1 = src_vector(p, &inst->Src[1], fs);
       tmp = i915_get_utemp(p);
       flags = get_result_flags(inst);
 
@@ -662,16 +694,16 @@ i915_translate_instruction(struct i915_fp_compile *p,
       break;
 
    case TGSI_OPCODE_MOV:
-      emit_simple_arith(p, inst, A0_MOV, 1);
+      emit_simple_arith(p, inst, A0_MOV, 1, fs);
       break;
 
    case TGSI_OPCODE_MUL:
-      emit_simple_arith(p, inst, A0_MUL, 2);
+      emit_simple_arith(p, inst, A0_MUL, 2, fs);
       break;
 
    case TGSI_OPCODE_POW:
-      src0 = src_vector(p, &inst->Src[0]);
-      src1 = src_vector(p, &inst->Src[1]);
+      src0 = src_vector(p, &inst->Src[0], fs);
+      src1 = src_vector(p, &inst->Src[1], fs);
       tmp = i915_get_utemp(p);
       flags = get_result_flags(inst);
 
@@ -695,17 +727,17 @@ i915_translate_instruction(struct i915_fp_compile *p,
       break;
       
    case TGSI_OPCODE_RCP:
-      src0 = src_vector(p, &inst->Src[0]);
+      src0 = src_vector(p, &inst->Src[0], fs);
 
       i915_emit_arith(p,
                       A0_RCP,
                       get_result_vector(p, &inst->Dst[0]),
-                         get_result_flags(inst), 0,
+                      get_result_flags(inst), 0,
                       swizzle(src0, X, X, X, X), 0, 0);
       break;
 
    case TGSI_OPCODE_RSQ:
-      src0 = src_vector(p, &inst->Src[0]);
+      src0 = src_vector(p, &inst->Src[0], fs);
 
       i915_emit_arith(p,
                       A0_RSQ,
@@ -715,7 +747,7 @@ i915_translate_instruction(struct i915_fp_compile *p,
       break;
 
    case TGSI_OPCODE_SCS:
-      src0 = src_vector(p, &inst->Src[0]);
+      src0 = src_vector(p, &inst->Src[0], fs);
       tmp = i915_get_utemp(p);
 
       /* 
@@ -778,17 +810,40 @@ i915_translate_instruction(struct i915_fp_compile *p,
       }
       break;
 
-   case TGSI_OPCODE_SGE:
-      emit_simple_arith(p, inst, A0_SGE, 2);
+   case TGSI_OPCODE_SEQ:
+      /* if we're both >= and <= then we're == */
+      src0 = src_vector(p, &inst->Src[0], fs);
+      src1 = src_vector(p, &inst->Src[1], fs);
+      tmp = i915_get_utemp(p);
+
+      i915_emit_arith(p,
+                      A0_SGE,
+                      tmp, A0_DEST_CHANNEL_ALL, 0,
+                      src0,
+                      src1, 0);
+
+      i915_emit_arith(p,
+                      A0_SGE,
+                      get_result_vector(p, &inst->Dst[0]),
+                      A0_DEST_CHANNEL_ALL, 0,
+                      src1,
+                      src0, 0);
+
+      i915_emit_arith(p,
+                      A0_MUL,
+                      get_result_vector(p, &inst->Dst[0]),
+                      A0_DEST_CHANNEL_ALL, 0,
+                      get_result_vector(p, &inst->Dst[0]),
+                      tmp, 0);
+
       break;
 
-   case TGSI_OPCODE_SLE:
-      /* like SGE, but swap reg0, reg1 */
-      emit_simple_arith_swap2(p, inst, A0_SGE, 2);
+   case TGSI_OPCODE_SGE:
+      emit_simple_arith(p, inst, A0_SGE, 2, fs);
       break;
 
    case TGSI_OPCODE_SIN:
-      src0 = src_vector(p, &inst->Src[0]);
+      src0 = src_vector(p, &inst->Src[0], fs);
       tmp = i915_get_utemp(p);
 
       i915_emit_arith(p,
@@ -837,18 +892,78 @@ i915_translate_instruction(struct i915_fp_compile *p,
                       i915_emit_const4fv(p, sin_constants), 0);
       break;
 
+   case TGSI_OPCODE_SLE:
+      /* like SGE, but swap reg0, reg1 */
+      emit_simple_arith_swap2(p, inst, A0_SGE, 2, fs);
+      break;
+
    case TGSI_OPCODE_SLT:
-      emit_simple_arith(p, inst, A0_SLT, 2);
+      emit_simple_arith(p, inst, A0_SLT, 2, fs);
       break;
 
    case TGSI_OPCODE_SGT:
       /* like SLT, but swap reg0, reg1 */
-      emit_simple_arith_swap2(p, inst, A0_SLT, 2);
+      emit_simple_arith_swap2(p, inst, A0_SLT, 2, fs);
+      break;
+
+   case TGSI_OPCODE_SNE:
+      /* if we're neither < nor > then we're != */
+      src0 = src_vector(p, &inst->Src[0], fs);
+      src1 = src_vector(p, &inst->Src[1], fs);
+      tmp = i915_get_utemp(p);
+
+      i915_emit_arith(p,
+                      A0_SLT,
+                      tmp,
+                      A0_DEST_CHANNEL_ALL, 0,
+                      src0,
+                      src1, 0);
+
+      i915_emit_arith(p,
+                      A0_SLT,
+                      get_result_vector(p, &inst->Dst[0]),
+                      A0_DEST_CHANNEL_ALL, 0,
+                      src1,
+                      src0, 0);
+
+      i915_emit_arith(p,
+                      A0_ADD,
+                      get_result_vector(p, &inst->Dst[0]),
+                      A0_DEST_CHANNEL_ALL, 0,
+                      get_result_vector(p, &inst->Dst[0]),
+                      tmp, 0);
+      break;
+
+   case TGSI_OPCODE_SSG:
+      /* compute (src>0) - (src<0) */
+      src0 = src_vector(p, &inst->Src[0], fs);
+      tmp = i915_get_utemp(p);
+
+      i915_emit_arith(p,
+                      A0_SLT,
+                      tmp,
+                      A0_DEST_CHANNEL_ALL, 0,
+                      src0,
+                      swizzle(src0, ZERO, ZERO, ZERO, ZERO), 0);
+
+      i915_emit_arith(p,
+                      A0_SLT,
+                      get_result_vector(p, &inst->Dst[0]),
+                      A0_DEST_CHANNEL_ALL, 0,
+                      swizzle(src0, ZERO, ZERO, ZERO, ZERO),
+                      src0, 0);
+
+      i915_emit_arith(p,
+                      A0_ADD,
+                      get_result_vector(p, &inst->Dst[0]),
+                      A0_DEST_CHANNEL_ALL, 0,
+                      get_result_vector(p, &inst->Dst[0]),
+                      negate(tmp, 1, 1, 1, 1), 0);
       break;
 
    case TGSI_OPCODE_SUB:
-      src0 = src_vector(p, &inst->Src[0]);
-      src1 = src_vector(p, &inst->Src[1]);
+      src0 = src_vector(p, &inst->Src[0], fs);
+      src1 = src_vector(p, &inst->Src[1], fs);
 
       i915_emit_arith(p,
                       A0_ADD,
@@ -858,15 +973,19 @@ i915_translate_instruction(struct i915_fp_compile *p,
       break;
 
    case TGSI_OPCODE_TEX:
-      emit_tex(p, inst, T0_TEXLD);
+      emit_tex(p, inst, T0_TEXLD, fs);
+      break;
+
+   case TGSI_OPCODE_TRUNC:
+      emit_simple_arith(p, inst, A0_TRC, 1, fs);
       break;
 
    case TGSI_OPCODE_TXB:
-      emit_tex(p, inst, T0_TEXLDB);
+      emit_tex(p, inst, T0_TEXLDB, fs);
       break;
 
    case TGSI_OPCODE_TXP:
-      emit_tex(p, inst, T0_TEXLDP);
+      emit_tex(p, inst, T0_TEXLDP, fs);
       break;
 
    case TGSI_OPCODE_XPD:
@@ -876,8 +995,8 @@ i915_translate_instruction(struct i915_fp_compile *p,
        *      result.z = src0.x * src1.y - src0.y * src1.x;
        *      result.w = undef;
        */
-      src0 = src_vector(p, &inst->Src[0]);
-      src1 = src_vector(p, &inst->Src[1]);
+      src0 = src_vector(p, &inst->Src[0], fs);
+      src1 = src_vector(p, &inst->Src[1], fs);
       tmp = i915_get_utemp(p);
 
       i915_emit_arith(p,
@@ -912,7 +1031,8 @@ i915_translate_instruction(struct i915_fp_compile *p,
  */
 static void
 i915_translate_instructions(struct i915_fp_compile *p,
-                            const struct tgsi_token *tokens)
+                            const struct tgsi_token *tokens,
+                            struct i915_fragment_shader *fs)
 {
    struct i915_fragment_shader *ifs = p->shader;
    struct tgsi_parse_context parse;
@@ -993,7 +1113,7 @@ i915_translate_instructions(struct i915_fp_compile *p,
             p->first_instruction = FALSE;
          }
 
-         i915_translate_instruction(p, &parse.FullToken.FullInstruction);
+         i915_translate_instruction(p, &parse.FullToken.FullInstruction, fs);
          break;
 
       default:
@@ -1011,6 +1131,7 @@ i915_init_compile(struct i915_context *i915,
                   struct i915_fragment_shader *ifs)
 {
    struct i915_fp_compile *p = CALLOC_STRUCT(i915_fp_compile);
+   int i;
 
    p->shader = ifs;
 
@@ -1022,6 +1143,9 @@ i915_init_compile(struct i915_context *i915,
     */
    ifs->num_constants = 0;
    memset(ifs->constant_flags, 0, sizeof(ifs->constant_flags));
+
+   for (i = 0; i < I915_TEX_UNITS; i++)
+      ifs->generic_mapping[i] = -1;
 
    p->first_instruction = TRUE;
 
@@ -1192,7 +1316,7 @@ i915_translate_fragment_program( struct i915_context *i915,
    p = i915_init_compile(i915, fs);
    i915_find_wpos_space(p);
 
-   i915_translate_instructions(p, tokens);
+   i915_translate_instructions(p, tokens, fs);
    i915_fixup_depth_write(p);
 
    i915_fini_compile(i915, p);

@@ -359,13 +359,12 @@ intelCreateBuffer(__DRIscreen * driScrnPriv,
                   const struct gl_config * mesaVis, GLboolean isPixmap)
 {
    struct intel_renderbuffer *rb;
+   struct intel_screen *screen = (struct intel_screen*) driScrnPriv->private;
 
    if (isPixmap) {
       return GL_FALSE;          /* not implemented */
    }
    else {
-      GLboolean swStencil = (mesaVis->stencilBits > 0 &&
-                             mesaVis->depthBits != 24);
       gl_format rgbFormat;
 
       struct gl_framebuffer *fb = CALLOC_STRUCT(gl_framebuffer);
@@ -391,27 +390,53 @@ intelCreateBuffer(__DRIscreen * driScrnPriv,
          _mesa_add_renderbuffer(fb, BUFFER_BACK_LEFT, &rb->Base);
       }
 
+      /*
+       * Assert here that the gl_config has an expected depth/stencil bit
+       * combination: one of d24/s8, d16/s0, d0/s0. (See intelInitScreen2(),
+       * which constructs the advertised configs.)
+       */
       if (mesaVis->depthBits == 24) {
 	 assert(mesaVis->stencilBits == 8);
-	 /* combined depth/stencil buffer */
-	 struct intel_renderbuffer *depthStencilRb
-	    = intel_create_renderbuffer(MESA_FORMAT_S8_Z24);
-	 /* note: bind RB to two attachment points */
-	 _mesa_add_renderbuffer(fb, BUFFER_DEPTH, &depthStencilRb->Base);
-	 _mesa_add_renderbuffer(fb, BUFFER_STENCIL, &depthStencilRb->Base);
+
+	 if (screen->hw_has_separate_stencil
+	     && screen->dri2_has_hiz != INTEL_DRI2_HAS_HIZ_FALSE) {
+	    /*
+	     * Request a separate stencil buffer even if we do not yet know if
+	     * the screen supports it. (See comments for
+	     * enum intel_dri2_has_hiz).
+	     */
+	    rb = intel_create_renderbuffer(MESA_FORMAT_X8_Z24);
+	    _mesa_add_renderbuffer(fb, BUFFER_DEPTH, &rb->Base);
+	    rb = intel_create_renderbuffer(MESA_FORMAT_S8);
+	    _mesa_add_renderbuffer(fb, BUFFER_STENCIL, &rb->Base);
+	 } else {
+	    /*
+	     * Use combined depth/stencil. Note that the renderbuffer is
+	     * attached to two attachment points.
+	     */
+	    rb = intel_create_renderbuffer(MESA_FORMAT_S8_Z24);
+	    _mesa_add_renderbuffer(fb, BUFFER_DEPTH, &rb->Base);
+	    _mesa_add_renderbuffer(fb, BUFFER_STENCIL, &rb->Base);
+	 }
       }
       else if (mesaVis->depthBits == 16) {
+	 assert(mesaVis->stencilBits == 0);
          /* just 16-bit depth buffer, no hw stencil */
          struct intel_renderbuffer *depthRb
 	    = intel_create_renderbuffer(MESA_FORMAT_Z16);
          _mesa_add_renderbuffer(fb, BUFFER_DEPTH, &depthRb->Base);
+      }
+      else {
+	 assert(mesaVis->depthBits == 0);
+	 assert(mesaVis->stencilBits == 0);
       }
 
       /* now add any/all software-based renderbuffers we may need */
       _mesa_add_soft_renderbuffers(fb,
                                    GL_FALSE, /* never sw color */
                                    GL_FALSE, /* never sw depth */
-                                   swStencil, mesaVis->accumRedBits > 0,
+                                   GL_FALSE, /* never sw stencil */
+                                   mesaVis->accumRedBits > 0,
                                    GL_FALSE, /* never sw alpha */
                                    GL_FALSE  /* never sw aux */ );
       driDrawPriv->driverPrivate = fb;
@@ -507,6 +532,54 @@ intel_init_bufmgr(struct intel_screen *intelScreen)
 }
 
 /**
+ * Override intel_screen.hw_has_hiz with environment variable INTEL_HIZ.
+ *
+ * Valid values for INTEL_HIZ are "0" and "1". If an invalid valid value is
+ * encountered, a warning is emitted and INTEL_HIZ is ignored.
+ */
+static void
+intel_override_hiz(struct intel_screen *intel)
+{
+   const char *s = getenv("INTEL_HIZ");
+   if (!s) {
+      return;
+   } else if (!strncmp("0", s, 2)) {
+      intel->hw_has_hiz = false;
+   } else if (!strncmp("1", s, 2)) {
+      intel->hw_has_hiz = true;
+   } else {
+      fprintf(stderr,
+	      "warning: env variable INTEL_HIZ=\"%s\" has invalid value "
+	      "and is ignored", s);
+   }
+}
+
+/**
+ * Override intel_screen.hw_has_separate_stencil with environment variable
+ * INTEL_SEPARATE_STENCIL.
+ *
+ * Valid values for INTEL_SEPARATE_STENCIL are "0" and "1". If an invalid
+ * valid value is encountered, a warning is emitted and INTEL_SEPARATE_STENCIL
+ * is ignored.
+ */
+static void
+intel_override_separate_stencil(struct intel_screen *screen)
+{
+   const char *s = getenv("INTEL_SEPARATE_STENCIL");
+   if (!s) {
+      return;
+   } else if (!strncmp("0", s, 2)) {
+      screen->hw_has_separate_stencil = false;
+   } else if (!strncmp("1", s, 2)) {
+      screen->hw_has_separate_stencil = true;
+   } else {
+      fprintf(stderr,
+	      "warning: env variable INTEL_SEPARATE_STENCIL=\"%s\" has "
+	      "invalid value and is ignored", s);
+   }
+}
+
+/**
  * This is the driver specific part of the createNewScreen entry point.
  * Called when using DRI2.
  *
@@ -569,6 +642,18 @@ __DRIconfig **intelInitScreen2(__DRIscreen *psp)
    } else {
       intelScreen->gen = 2;
    }
+
+   /*
+    * FIXME: The hiz and separate stencil fields need updating once the
+    * FIXME: features are completely implemented for a given chipset.
+    */
+   intelScreen->hw_has_separate_stencil = intelScreen->gen >= 7;
+   intelScreen->hw_must_use_separate_stencil = intelScreen->gen >= 7;
+   intelScreen->hw_has_hiz = false;
+   intelScreen->dri2_has_hiz = INTEL_DRI2_HAS_HIZ_UNKNOWN;
+
+   intel_override_hiz(intelScreen);
+   intel_override_separate_stencil(intelScreen);
 
    api_mask = (1 << __DRI_API_OPENGL);
 #if FEATURE_ES1

@@ -1186,6 +1186,8 @@ blitframebuffer_texture(struct gl_context *ctx,
          const GLint maxLevelSave = texObj->MaxLevel;
          const GLenum wrapSSave = texObj->Sampler.WrapS;
          const GLenum wrapTSave = texObj->Sampler.WrapT;
+         const GLenum srgbSave = texObj->Sampler.sRGBDecode;
+         const GLenum fbo_srgb_save = ctx->Color.sRGBEnabled;
          const GLenum target = texObj->Target;
 
          if (drawAtt->Texture == readAtt->Texture) {
@@ -1217,6 +1219,14 @@ blitframebuffer_texture(struct gl_context *ctx,
          }
          _mesa_TexParameteri(target, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
          _mesa_TexParameteri(target, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+
+	 /* Always do our blits with no sRGB decode or encode.*/
+	 if (ctx->Extensions.EXT_texture_sRGB_decode) {
+	    _mesa_TexParameteri(target, GL_TEXTURE_SRGB_DECODE_EXT,
+				GL_SKIP_DECODE_EXT);
+	 }
+	 _mesa_Disable(GL_FRAMEBUFFER_SRGB_EXT);
+
          _mesa_TexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_REPLACE);
          _mesa_set_enable(ctx, target, GL_TRUE);
 
@@ -1278,6 +1288,12 @@ blitframebuffer_texture(struct gl_context *ctx,
          }
          _mesa_TexParameteri(target, GL_TEXTURE_WRAP_S, wrapSSave);
          _mesa_TexParameteri(target, GL_TEXTURE_WRAP_T, wrapTSave);
+	 if (ctx->Extensions.EXT_texture_sRGB_decode) {
+	    _mesa_TexParameteri(target, GL_TEXTURE_SRGB_DECODE_EXT, srgbSave);
+	 }
+	 if (ctx->Extensions.EXT_texture_sRGB_decode && fbo_srgb_save) {
+	    _mesa_Enable(GL_FRAMEBUFFER_SRGB_EXT);
+	 }
 
          /* Done with color buffer */
          mask &= ~GL_COLOR_BUFFER_BIT;

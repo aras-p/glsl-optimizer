@@ -767,9 +767,8 @@ case $ARCH in
                 OPTS="${OPTS} -exported_symbols_list ${EXPORTS}"
             fi
 
-            LINKNAME="lib${LIBNAME}.${MAJOR}.${LIBSUFFIX}"
-            LINKNAME2="lib${LIBNAME}.${LIBSUFFIX}"
-            LIBNAME="lib${LIBNAME}.${MAJOR}.${MINOR}.${LIBSUFFIX}"
+            LINKNAME="lib${LIBNAME}.${LIBSUFFIX}"
+            LIBNAME="lib${LIBNAME}.${MAJOR}.${LIBSUFFIX}"
 
 	    # examine first object to determine ABI
     	    set ${OBJECTS}
@@ -782,9 +781,6 @@ case $ARCH in
                 OPTS=${ALTOPTS}
             fi
 
-	    # XXX can we always add -isysroot /Developer/SDKs/MacOSX10.4u.sdk
-	    # to OPTS here?
-
 	    # determine linker
 	    if [ $CPLUSPLUS = 1 ] ; then
 		LINK="g++"
@@ -796,8 +792,7 @@ case $ARCH in
 
             ${LINK} ${OPTS} ${LDFLAGS} -o ${LIBNAME} ${OBJECTS} ${DEPS}
             ln -s ${LIBNAME} ${LINKNAME}
-            ln -s ${LIBNAME} ${LINKNAME2}
-            FINAL_LIBS="${LIBNAME} ${LINKNAME} ${LINKNAME2}"
+            FINAL_LIBS="${LIBNAME} ${LINKNAME}"
         fi
         ;;
 

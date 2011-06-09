@@ -1087,8 +1087,8 @@ destroy_program_variants(struct st_context *st, struct gl_program *program)
       }
       break;
    default:
-      _mesa_problem(NULL, "Unexpected program target in "
-                    "destroy_program_variants_cb()");
+      _mesa_problem(NULL, "Unexpected program target 0x%x in "
+                    "destroy_program_variants_cb()", program->Target);
    }
 }
 

@@ -1,6 +1,6 @@
 #include "glxclient.h"
 #include "glxextensions.h"
-#include "glcontextmodes.h"
+#include "glxconfig.h"
 
 /*
 ** GLX_SGI_swap_control

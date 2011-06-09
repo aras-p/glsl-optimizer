@@ -44,7 +44,7 @@
 #include <pthread.h>
 #include <assert.h>
 #include "apple_glx.h"
-#include "glcontextmodes.h"
+#include "glxconfig.h"
 #include "apple_cgl.h"
 
 /* mesa defines in glew.h, Apple in glext.h.
@@ -128,7 +128,7 @@ apple_glx_pbuffer_create(Display * dpy, GLXFBConfig config,
    Window root;
    int screen;
    Pixmap xid;
-   struct glx_config *modes = (__GLcontextModes *) config;
+   struct glx_config *modes = (struct glx_config *) config;
 
    root = DefaultRootWindow(dpy);
    screen = DefaultScreen(dpy);

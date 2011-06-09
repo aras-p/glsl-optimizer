@@ -333,6 +333,11 @@ struct glx_context
      */
    Bool isDirect;
 
+#if defined(GLX_DIRECT_RENDERING) && defined(GLX_USE_APPLEGL)
+   void *driContext;
+   Bool do_destroy;
+#endif
+
     /**
      * \c dpy of current display for this context.  Will be \c NULL if not
      * current to any display, or if this is the "dummy context".
@@ -764,7 +769,19 @@ GarbageCollectDRIDrawables(struct glx_screen *psc);
 
 extern __GLXDRIdrawable *
 GetGLXDRIDrawable(Display *dpy, GLXDrawable drawable);
+#endif
 
+#ifdef GLX_USE_APPLEGL
+extern struct glx_screen *
+applegl_create_screen(int screen, struct glx_display * priv);
+
+extern struct glx_context *
+applegl_create_context(struct glx_screen *psc,
+			struct glx_config *mode,
+			struct glx_context *shareList, int renderType);
+
+extern int
+applegl_create_display(struct glx_display *display);
 #endif
 
 extern struct glx_context dummyContext;

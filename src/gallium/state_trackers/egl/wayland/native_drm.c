@@ -37,10 +37,6 @@
 
 #include "native_wayland.h"
 
-/* see get_drm_screen_name */
-#include <radeon_drm.h>
-#include "radeon/drm/radeon_drm_public.h"
-
 #include <wayland-client.h>
 #include "wayland-drm-client-protocol.h"
 #include "wayland-egl-priv.h"
@@ -143,27 +139,6 @@ wayland_create_drm_buffer(struct wayland_display *display,
                                width, height, wsh.stride, visual);
 }
 
-static const char *
-get_drm_screen_name(int fd, drmVersionPtr version)
-{
-   const char *name = version->name;
-
-   if (name && !strcmp(name, "radeon")) {
-      int chip_id;
-      struct drm_radeon_info info;
-
-      memset(&info, 0, sizeof(info));
-      info.request = RADEON_INFO_DEVICE_ID;
-      info.value = pointer_to_intptr(&chip_id);
-      if (drmCommandWriteRead(fd, DRM_RADEON_INFO, &info, sizeof(info)) != 0)
-         return NULL;
-
-      name = is_r3xx(chip_id) ? "r300" : "r600";
-   }
-
-   return name;
-}
-
 static void
 drm_handle_device(void *data, struct wl_drm *drm, const char *device)
 {
@@ -202,8 +177,6 @@ static boolean
 wayland_drm_display_init_screen(struct native_display *ndpy)
 {
    struct wayland_drm_display *drmdpy = wayland_drm_display(ndpy);
-   drmVersionPtr version;
-   const char *driver_name;
    uint32_t id;
 
    id = wl_display_get_global(drmdpy->base.dpy, "wl_drm", 1);
@@ -226,20 +199,9 @@ wayland_drm_display_init_screen(struct native_display *ndpy)
    if (!drmdpy->authenticated)
       return FALSE;
 
-   version = drmGetVersion(drmdpy->fd);
-   if (!version) {
-      _eglLog(_EGL_WARNING, "invalid fd %d", drmdpy->fd);
-      return FALSE;
-   }
-
-   /* FIXME: share this with native_drm or egl_dri2 */
-   driver_name = get_drm_screen_name(drmdpy->fd, version);
-
    drmdpy->base.base.screen =
       drmdpy->event_handler->new_drm_screen(&drmdpy->base.base,
-                                            driver_name, drmdpy->fd);
-   drmFreeVersion(version);
-
+                                            NULL, drmdpy->fd);
    if (!drmdpy->base.base.screen) {
       _eglLog(_EGL_WARNING, "failed to create DRM screen");
       return FALSE;

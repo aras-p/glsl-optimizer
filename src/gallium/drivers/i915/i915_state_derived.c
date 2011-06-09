@@ -35,6 +35,18 @@
 #include "i915_debug.h"
 #include "i915_reg.h"
 
+static uint find_mapping(struct i915_fragment_shader* fs, int unit)
+{
+   int i;
+   for (i = 0; i < I915_TEX_UNITS ; i++)
+   {
+      if (fs->generic_mapping[i] == unit)
+         return i;
+   }
+   debug_printf("Mapping not found\n");
+   return 0;
+}
+
 
 
 /***********************************************************************
@@ -46,7 +58,7 @@ static void calculate_vertex_layout(struct i915_context *i915)
    const struct i915_fragment_shader *fs = i915->fs;
    const enum interp_mode colorInterp = i915->rasterizer->color_interp;
    struct vertex_info vinfo;
-   boolean texCoords[8], colors[2], fog, needW;
+   boolean texCoords[I915_TEX_UNITS], colors[2], fog, needW;
    uint i;
    int src;
 
@@ -66,11 +78,12 @@ static void calculate_vertex_layout(struct i915_context *i915)
          colors[fs->info.input_semantic_index[i]] = TRUE;
          break;
       case TGSI_SEMANTIC_GENERIC:
-         /* usually a texcoord */
          {
-            const uint unit = fs->info.input_semantic_index[i];
-            assert(unit < 8);
-            texCoords[unit] = TRUE;
+            /* texcoords/varyings/other generic */
+            /* XXX handle back/front face and point size */
+            uint unit = fs->info.input_semantic_index[i];
+
+            texCoords[find_mapping(fs, unit)] = TRUE;
             needW = TRUE;
          }
          break;
@@ -82,7 +95,7 @@ static void calculate_vertex_layout(struct i915_context *i915)
       }
    }
 
-   
+
    /* pos */
    src = draw_find_shader_output(i915->draw, TGSI_SEMANTIC_POSITION, 0);
    if (needW) {
@@ -120,12 +133,12 @@ static void calculate_vertex_layout(struct i915_context *i915)
       vinfo.hwfmt[0] |= S4_VFMT_FOG_PARAM;
    }
 
-   /* texcoords */
-   for (i = 0; i < 8; i++) {
+   /* texcoords/varyings */
+   for (i = 0; i < I915_TEX_UNITS; i++) {
       uint hwtc;
       if (texCoords[i]) {
          hwtc = TEXCOORDFMT_4D;
-         src = draw_find_shader_output(i915->draw, TGSI_SEMANTIC_GENERIC, i);
+         src = draw_find_shader_output(i915->draw, TGSI_SEMANTIC_GENERIC, fs->generic_mapping[i]);
          draw_emit_vertex_attr(&vinfo, EMIT_4F, INTERP_PERSPECTIVE, src);
       }
       else {

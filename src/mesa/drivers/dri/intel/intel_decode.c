@@ -89,6 +89,9 @@ decode_mi(uint32_t *data, int count, uint32_t hw_offset, int *failures)
 	{ 0x24, 0x3f, 3, 3, "MI_STORE_REGISTER_MEM" },
 	{ 0x02, 0, 1, 1, "MI_USER_INTERRUPT" },
 	{ 0x03, 0, 1, 1, "MI_WAIT_FOR_EVENT" },
+	{ 0x16, 0x7f, 3, 3, "MI_SEMAPHORE_MBOX" },
+	{ 0x26, 0x1f, 3, 4, "MI_FLUSH_DW" },
+	{ 0x0b, 0, 1, 1, "MI_SUSPEND_FLUSH" },
     };
 
     switch ((data[0] & 0x1f800000) >> 23) {
@@ -299,7 +302,8 @@ decode_3d_1c(uint32_t *data, int count, uint32_t hw_offset, int *failures)
 	instr_out(data, hw_offset, 0, "3DSTATE_DEPTH_SUBRECTANGLE_DISABLE\n");
 	return 1;
     case 0x10:
-	instr_out(data, hw_offset, 0, "3DSTATE_SCISSOR_ENABLE\n");
+	instr_out(data, hw_offset, 0, "3DSTATE_SCISSOR_ENABLE %s\n",
+		data[0]&1?"enabled":"disabled");
 	return 1;
     case 0x01:
 	instr_out(data, hw_offset, 0, "3DSTATE_MAP_COORD_SET_I830\n");
@@ -786,6 +790,90 @@ i915_decode_instruction(uint32_t *data, uint32_t hw_offset,
     }
 }
 
+static char *
+decode_compare_func(uint32_t op)
+{
+    switch (op&0x7) {
+    case 0: return "always";
+    case 1: return "never";
+    case 2: return "less";
+    case 3: return "equal";
+    case 4: return "lequal";
+    case 5: return "greater";
+    case 6: return "notequal";
+    case 7: return "gequal";
+    }
+    return "";
+}
+
+static char *
+decode_stencil_op(uint32_t op)
+{
+    switch (op&0x7) {
+    case 0: return "keep";
+    case 1: return "zero";
+    case 2: return "replace";
+    case 3: return "incr_sat";
+    case 4: return "decr_sat";
+    case 5: return "greater";
+    case 6: return "incr";
+    case 7: return "decr";
+    }
+    return "";
+}
+
+static char *
+decode_blend_fact(uint32_t op)
+{
+    switch (op&0xf) {
+    case 1: return "zero";
+    case 2: return "one";
+    case 3: return "src_colr";
+    case 4: return "inv_src_colr";
+    case 5: return "src_alpha";
+    case 6: return "inv_src_alpha";
+    case 7: return "dst_alpha";
+    case 8: return "inv_dst_alpha";
+    case 9: return "dst_colr";
+    case 10: return "inv_dst_colr";
+    case 11: return "src_alpha_sat";
+    case 12: return "cnst_colr";
+    case 13: return "inv_cnst_colr";
+    case 14: return "cnst_alpha";
+    case 15: return "inv_const_alpha";
+    }
+    return "";
+}
+
+static char *
+decode_tex_coord_mode(uint32_t mode)
+{
+    switch (mode&0x7) {
+    case 0: return "wrap";
+    case 1: return "mirror";
+    case 2: return "clamp_edge";
+    case 3: return "cube";
+    case 4: return "clamp_border";
+    case 5: return "mirror_once";
+    }
+    return "";
+}
+
+static char *
+decode_sample_filter(uint32_t mode)
+{
+    switch (mode&0x7) {
+    case 0: return "nearest";
+    case 1: return "linear";
+    case 2: return "anisotropic";
+    case 3: return "4x4_1";
+    case 4: return "4x4_2";
+    case 5: return "4x4_flat";
+    case 6: return "6x5_mono";
+    }
+    return "";
+}
+
 static int
 decode_3d_1d(uint32_t *data, int count,
 	     uint32_t hw_offset,
@@ -793,7 +881,7 @@ decode_3d_1d(uint32_t *data, int count,
 	     int *failures)
 {
     unsigned int len, i, c, idx, word, map, sampler, instr;
-    char *format;
+    char *format, *zformat, *type;
     uint32_t opcode;
 
     struct {
@@ -803,21 +891,16 @@ decode_3d_1d(uint32_t *data, int count,
 	int max_len;
 	char *name;
     } opcodes_3d_1d[] = {
-	{ 0x8e, 0, 3, 3, "3DSTATE_BUFFER_INFO" },
 	{ 0x86, 0, 4, 4, "3DSTATE_CHROMA_KEY" },
-	{ 0x9c, 0, 7, 7, "3DSTATE_CLEAR_PARAMETERS" },
 	{ 0x88, 0, 2, 2, "3DSTATE_CONSTANT_BLEND_COLOR" },
 	{ 0x99, 0, 2, 2, "3DSTATE_DEFAULT_DIFFUSE" },
 	{ 0x9a, 0, 2, 2, "3DSTATE_DEFAULT_SPECULAR" },
 	{ 0x98, 0, 2, 2, "3DSTATE_DEFAULT_Z" },
 	{ 0x97, 0, 2, 2, "3DSTATE_DEPTH_OFFSET_SCALE" },
-	{ 0x85, 0, 2, 2, "3DSTATE_DEST_BUFFER_VARIABLES" },
-	{ 0x80, 0, 5, 5, "3DSTATE_DRAWING_RECTANGLE" },
 	{ 0x9d, 0, 65, 65, "3DSTATE_FILTER_COEFFICIENTS_4X4" },
 	{ 0x9e, 0, 4, 4, "3DSTATE_MONO_FILTER" },
 	{ 0x89, 0, 4, 4, "3DSTATE_FOG_MODE" },
 	{ 0x8f, 0, 2, 16, "3DSTATE_MAP_PALLETE_LOAD_32" },
-	{ 0x81, 0, 3, 3, "3DSTATE_SCISSOR_RECTANGLE" },
 	{ 0x83, 0, 2, 2, "3DSTATE_SPAN_STIPPLE" },
 	{ 0x8c, 1, 2, 2, "3DSTATE_MAP_COORD_TRANSFORM_I830" },
 	{ 0x8b, 1, 2, 2, "3DSTATE_MAP_VERTEX_TRANSFORM_I830" },
@@ -889,18 +972,137 @@ decode_3d_1d(uint32_t *data, int count,
 		    BUFFER_FAIL(count, len, "3DSTATE_LOAD_STATE_IMMEDIATE_1");
 
 		/* save vertex state for decode */
-		if (IS_9XX(devid)) {
-		    if (word == 2) {
-			saved_s2_set = 1;
-			saved_s2 = data[i];
-		    }
-		    if (word == 4) {
-			saved_s4_set = 1;
-			saved_s4 = data[i];
-		    }
-		}
+		if (!IS_GEN2(devid)) {
+			if (word == 2) {
+				saved_s2_set = 1;
+				saved_s2 = data[i];
+			}
+			if (word == 4) {
+				saved_s4_set = 1;
+				saved_s4 = data[i];
+			}
 
-		instr_out(data, hw_offset, i++, "S%d\n", word);
+			switch (word) {
+			case 0:
+				instr_out(data, hw_offset, i, "S0: vbo offset: 0x%08x%s\n",
+					  data[i]&(~1),data[i]&1?", auto cache invalidate disabled":"");
+				break;
+			case 1:
+				instr_out(data, hw_offset, i, "S1: vertex width: %i, vertex pitch: %i\n",
+					  (data[i]>>24)&0x3f,(data[i]>>16)&0x3f);
+				break;
+			case 2:
+				instr_out(data, hw_offset, i, "S2: texcoord formats: ");
+				for (int tex_num = 0; tex_num < 8; tex_num++) {
+					switch((data[i]>>tex_num*4)&0xf) {
+					case 0: fprintf(out, "%i=2D ", tex_num); break;
+					case 1: fprintf(out, "%i=3D ", tex_num); break;
+					case 2: fprintf(out, "%i=4D ", tex_num); break;
+					case 3: fprintf(out, "%i=1D ", tex_num); break;
+					case 4: fprintf(out, "%i=2D_16 ", tex_num); break;
+					case 5: fprintf(out, "%i=4D_16 ", tex_num); break;
+					case 0xf: fprintf(out, "%i=NP ", tex_num); break;
+					}
+				}
+				fprintf(out, "\n");
+
+				break;
+			case 3:
+				instr_out(data, hw_offset, i, "S3: not documented\n", word);
+				break;
+			case 4:
+				{
+					char *cullmode = "";
+					char *vfmt_xyzw = "";
+					switch((data[i]>>13)&0x3) {
+					case 0: cullmode = "both"; break;
+					case 1: cullmode = "none"; break;
+					case 2: cullmode = "cw"; break;
+					case 3: cullmode = "ccw"; break;
+					}
+					switch(data[i] & (7<<6 | 1<<2)) {
+					case 1<<6: vfmt_xyzw = "XYZ,"; break;
+					case 2<<6: vfmt_xyzw = "XYZW,"; break;
+					case 3<<6: vfmt_xyzw = "XY,"; break;
+					case 4<<6: vfmt_xyzw = "XYW,"; break;
+					case 1<<6 | 1<<2: vfmt_xyzw = "XYZF,"; break;
+					case 2<<6 | 1<<2: vfmt_xyzw = "XYZWF,"; break;
+					case 3<<6 | 1<<2: vfmt_xyzw = "XYF,"; break;
+					case 4<<6 | 1<<2: vfmt_xyzw = "XYWF,"; break;
+					}
+					instr_out(data, hw_offset, i, "S4: point_width=%i, line_width=%.1f,"
+						  "%s%s%s%s%s cullmode=%s, vfmt=%s%s%s%s%s%s "
+						  "%s%s\n",
+						  (data[i]>>23)&0x1ff,
+						  ((data[i]>>19)&0xf) / 2.0,
+						  data[i]&(0xf<<15)?" flatshade=":"",
+						  data[i]&(1<<18)?"Alpha,":"",
+						  data[i]&(1<<17)?"Fog,":"",
+						  data[i]&(1<<16)?"Specular,":"",
+						  data[i]&(1<<15)?"Color,":"",
+						  cullmode,
+						  data[i]&(1<<12)?"PointWidth,":"",
+						  data[i]&(1<<11)?"SpecFog,":"",
+						  data[i]&(1<<10)?"Color,":"",
+						  data[i]&(1<<9)?"DepthOfs,":"",
+						  vfmt_xyzw,
+						  data[i]&(1<<9)?"FogParam,":"",
+						  data[i]&(1<<5)?"force default diffuse, ":"",
+						  data[i]&(1<<4)?"force default specular, ":"",
+						  data[i]&(1<<3)?"local depth ofs enable, ":"",
+						  data[i]&(1<<1)?"point sprite enable, ":"",
+						  data[i]&(1<<0)?"line AA enable, ":"");
+					break;
+				}
+			case 5:
+				{
+					instr_out(data, hw_offset, i, "S5:%s%s%s%s%s"
+						  "%s%s%s%s stencil_ref=0x%x, stencil_test=%s, "
+						  "stencil_fail=%s, stencil_pass_z_fail=%s, "
+						  "stencil_pass_z_pass=%s, %s%s%s%s\n",
+						  data[i]&(0xf<<28)?" write_disable=":"",
+						  data[i]&(1<<31)?"Alpha,":"",
+						  data[i]&(1<<30)?"Red,":"",
+						  data[i]&(1<<29)?"Green,":"",
+						  data[i]&(1<<28)?"Blue,":"",
+						  data[i]&(1<<27)?" force default point size,":"",
+						  data[i]&(1<<26)?" last pixel enable,":"",
+						  data[i]&(1<<25)?" global depth ofs enable,":"",
+						  data[i]&(1<<24)?" fog enable,":"",
+						  (data[i]>>16)&0xff,
+						  decode_compare_func(data[i]>>13),
+						  decode_stencil_op(data[i]>>10),
+						  decode_stencil_op(data[i]>>7),
+						  decode_stencil_op(data[i]>>4),
+						  data[i]&(1<<3)?"stencil write enable, ":"",
+						  data[i]&(1<<2)?"stencil test enable, ":"",
+						  data[i]&(1<<1)?"color dither enable, ":"",
+						  data[i]&(1<<0)?"logicop enable, ":"");
+				}
+				break;
+			case 6:
+				instr_out(data, hw_offset, i, "S6: %salpha_test=%s, alpha_ref=0x%x, "
+					  "depth_test=%s, %ssrc_blnd_fct=%s, dst_blnd_fct=%s, "
+					  "%s%stristrip_provoking_vertex=%i\n",
+					  data[i]&(1<<31)?"alpha test enable, ":"",
+					  decode_compare_func(data[i]>>28),
+					  data[i]&(0xff<<20),
+					  decode_compare_func(data[i]>>16),
+					  data[i]&(1<<15)?"cbuf blend enable, ":"",
+					  decode_blend_fact(data[i]>>8),
+					  decode_blend_fact(data[i]>>4),
+					  data[i]&(1<<3)?"depth write enable, ":"",
+					  data[i]&(1<<2)?"cbuf write enable, ":"",
+					  data[i]&(0x3));
+				break;
+			case 7:
+				instr_out(data, hw_offset, i, "S7: depth offset constant: 0x%08x\n", data[i]);
+				break;
+			}
+		} else {
+			instr_out(data, hw_offset, i, "S%d: 0x%08x\n", i, data[i]);
+		}
+		i++;
 	    }
 	}
 	if (len != i) {
@@ -923,11 +1125,22 @@ decode_3d_1d(uint32_t *data, int count,
 		    instr_out(data, hw_offset, i++, "TB%dC\n", word - 7);
 		    instr_out(data, hw_offset, i++, "TB%dA\n", word - 7);
 		} else if (word >= 11 && word <= 14) {
-		    instr_out(data, hw_offset, i++, "TM%dS0\n", word - 11);
-		    instr_out(data, hw_offset, i++, "TM%dS1\n", word - 11);
-		    instr_out(data, hw_offset, i++, "TM%dS2\n", word - 11);
+		    instr_out(data, hw_offset, i, "TM%dS0: offset=0x%08x, %s\n",
+			      word - 11,
+			      data[i]&0xfffffffe,
+			      data[i]&1?"use fence":"");
+		    i++;
+		    instr_out(data, hw_offset, i, "TM%dS1: height=%i, width=%i, %s\n",
+			      word - 11,
+			      data[i]>>21, (data[i]>>10)&0x3ff,
+			      data[i]&2?(data[i]&1?"y-tiled":"x-tiled"):"");
+		    i++;
+		    instr_out(data, hw_offset, i, "TM%dS2: pitch=%i, \n",
+			      word - 11,
+			      ((data[i]>>21) + 1)*4);
+		    i++;
 		    instr_out(data, hw_offset, i++, "TM%dS3\n", word - 11);
-		    instr_out(data, hw_offset, i++, "TM%dS4\n", word - 11);
+		    instr_out(data, hw_offset, i++, "TM%dS4: dflt color\n", word - 11);
 		}
 	    }
 	}
@@ -950,7 +1163,11 @@ decode_3d_1d(uint32_t *data, int count,
 		if (i + 3 >= count)
 		    BUFFER_FAIL(count, len, "3DSTATE_MAP_STATE");
 
-		instr_out(data, hw_offset, i++, "map %d MS2\n", map);
+		dword = data[i];
+		instr_out(data, hw_offset, i++, "map %d MS2 %s%s%s\n", map,
+			  dword&(1<<31)?"untrusted surface, ":"",
+			  dword&(1<<1)?"vertical line stride enable, ":"",
+			  dword&(1<<0)?"vertical ofs enable, ":"");
 
 		dword = data[i];
 		width = ((dword >> 10) & ((1 << 11) - 1))+1;
@@ -961,11 +1178,84 @@ decode_3d_1d(uint32_t *data, int count,
 			tiling = "fenced";
 		else if (dword & (1 << 1))
 			tiling = dword & (1 << 0) ? "Y" : "X";
-		instr_out(data, hw_offset, i++, "map %d MS3 [width=%d, height=%d, tiling=%s]\n", map, width, height, tiling);
+		type = " BAD";
+		switch ((dword>>7) & 0x7) {
+		case 1:
+		    type = "8b";
+		    switch ((dword>>3) & 0xf) {
+		    case 0: format = "I"; break;
+		    case 1: format = "L"; break;
+		    case 2: format = "A"; break;
+		    case 3: format = " mono"; break; }
+		    break;
+		case 2:
+		    type = "16b";
+		    switch ((dword>>3) & 0xf) {
+		    case 0: format = " rgb565"; break;
+		    case 1: format = " argb1555"; break;
+		    case 2: format = " argb4444"; break;
+		    case 5: format = " ay88"; break;
+		    case 6: format = " bump655"; break;
+		    case 7: format = "I"; break;
+		    case 8: format = "L"; break;
+		    case 9: format = "A"; break; }
+		    break;
+		case 3:
+		    type = "32b";
+		    switch ((dword>>3) & 0xf) {
+		    case 0: format = " argb8888"; break;
+		    case 1: format = " abgr8888"; break;
+		    case 2: format = " xrgb8888"; break;
+		    case 3: format = " xbgr8888"; break;
+		    case 4: format = " qwvu8888"; break;
+		    case 5: format = " axvu8888"; break;
+		    case 6: format = " lxvu8888"; break;
+		    case 7: format = " xlvu8888"; break;
+		    case 8: format = " argb2101010"; break;
+		    case 9: format = " abgr2101010"; break;
+		    case 10: format = " awvu2101010"; break;
+		    case 11: format = " gr1616"; break;
+		    case 12: format = " vu1616"; break;
+		    case 13: format = " xI824"; break;
+		    case 14: format = " xA824"; break;
+		    case 15: format = " xL824"; break; }
+		    break;
+		case 5:
+		    type = "422";
+		    switch ((dword>>3) & 0xf) {
+		    case 0: format = " yuv_swapy"; break;
+		    case 1: format = " yuv"; break;
+		    case 2: format = " yuv_swapuv"; break;
+		    case 3: format = " yuv_swapuvy"; break; }
+		    break;
+		case 6:
+		    type = "compressed";
+		    switch ((dword>>3) & 0x7) {
+		    case 0: format = " dxt1"; break;
+		    case 1: format = " dxt2_3"; break;
+		    case 2: format = " dxt4_5"; break;
+		    case 3: format = " fxt1"; break;
+		    case 4: format = " dxt1_rb"; break; }
+		    break;
+		case 7:
+		    type = "4b indexed";
+		    switch ((dword>>3) & 0xf) {
+		    case 7: format = " argb8888"; break; }
+		    break;
+		default:
+		    format = "BAD";
+		}
+		dword = data[i];
+		instr_out(data, hw_offset, i++, "map %d MS3 [width=%d, height=%d, format=%s%s, tiling=%s%s]\n",
+			  map, width, height, type, format, tiling,
+			  dword&(1<<9)?" palette select":"");
 
 		dword = data[i];
 		pitch = 4*(((dword >> 21) & ((1 << 11) - 1))+1);
-		instr_out(data, hw_offset, i++, "map %d MS4 [pitch=%d]\n", map, pitch);
+		instr_out(data, hw_offset, i++, "map %d MS4 [pitch=%d, max_lod=%i, vol_depth=%i, cube_face_ena=%x, %s]\n",
+			  map, pitch,
+			  (dword>>9)&0x3f, dword&0xff, (dword>>15)&0x3f,
+			  dword&(1<<8)?"miplayout legacy":"miplayout right");
 	    }
 	}
 	if (len != i) {
@@ -1021,7 +1311,7 @@ decode_3d_1d(uint32_t *data, int count,
 	}
 	return len;
     case 0x01:
-	if (!IS_9XX(devid))
+	if (IS_GEN2(devid))
 		break;
 	instr_out(data, hw_offset, 0, "3DSTATE_SAMPLER_STATE\n");
 	instr_out(data, hw_offset, 1, "mask\n");
@@ -1029,14 +1319,45 @@ decode_3d_1d(uint32_t *data, int count,
 	i = 2;
 	for (sampler = 0; sampler <= 15; sampler++) {
 	    if (data[1] & (1 << sampler)) {
+		uint32_t dword;
+		char *mip_filter = "";
 		if (i + 3 >= count)
 		    BUFFER_FAIL(count, len, "3DSTATE_SAMPLER_STATE");
-		instr_out(data, hw_offset, i++, "sampler %d SS2\n",
-			  sampler);
-		instr_out(data, hw_offset, i++, "sampler %d SS3\n",
-			  sampler);
-		instr_out(data, hw_offset, i++, "sampler %d SS4\n",
-			  sampler);
+		dword = data[i];
+		switch ((dword>>20)&0x3) {
+		case 0: mip_filter = "none"; break;
+		case 1: mip_filter = "nearest"; break;
+		case 3: mip_filter = "linear"; break;
+		}
+		instr_out(data, hw_offset, i++, "sampler %d SS2:%s%s%s "
+			  "base_mip_level=%i, mip_filter=%s, mag_filter=%s, min_filter=%s "
+			  "lod_bias=%.2f,%s max_aniso=%i, shadow_func=%s\n", sampler,
+			  dword&(1<<31)?" reverse gamma,":"",
+			  dword&(1<<30)?" packed2planar,":"",
+			  dword&(1<<29)?" colorspace conversion,":"",
+			  (dword>>22)&0x1f,
+			  mip_filter,
+			  decode_sample_filter(dword>>17),
+			  decode_sample_filter(dword>>14),
+			  ((dword>>5)&0x1ff)/(0x10*1.0),
+			  dword&(1<<4)?" shadow,":"",
+			  dword&(1<<3)?4:2,
+			  decode_compare_func(dword));
+		dword = data[i];
+		instr_out(data, hw_offset, i++, "sampler %d SS3: min_lod=%.2f,%s "
+			  "tcmode_x=%s, tcmode_y=%s, tcmode_z=%s,%s texmap_idx=%i,%s\n",
+			  sampler, ((dword>>24)&0xff)/(0x10*1.0),
+			  dword&(1<<17)?" kill pixel enable,":"",
+			  decode_tex_coord_mode(dword>>12),
+			  decode_tex_coord_mode(dword>>9),
+			  decode_tex_coord_mode(dword>>6),
+			  dword&(1<<5)?" normalized coords,":"",
+			  (dword>>1)&0xf,
+			  dword&(1<<0)?" deinterlacer,":"");
+		dword = data[i];
+		instr_out(data, hw_offset, i++, "sampler %d SS4: border color\n",
+			  sampler, ((dword>>24)&0xff)/(0x10*1.0),
+			  dword);
 	    }
 	}
 	if (len != i) {
@@ -1069,8 +1390,14 @@ decode_3d_1d(uint32_t *data, int count,
 	case 0xa: format = "a2r10g10b10"; break;
 	default: format = "BAD"; break;
 	}
-	instr_out(data, hw_offset, 1, "%s format, early Z %sabled\n",
-		  format,
+	switch ((data[1] >> 2) & 0x3) {
+	case 0x0: zformat = "u16"; break;
+	case 0x1: zformat = "f16"; break;
+	case 0x2: zformat = "u24x8"; break;
+	default: zformat = "BAD"; break;
+	}
+	instr_out(data, hw_offset, 1, "%s format, %s depth format, early Z %sabled\n",
+		  format, zformat,
 		  (data[1] & (1 << 31)) ? "en" : "dis");
 	return len;
 
@@ -1102,12 +1429,70 @@ decode_3d_1d(uint32_t *data, int count,
 	    instr_out(data, hw_offset, 2, "address\n");
 	    return len;
 	}
+    case 0x81:
+	len = (data[0] & 0x0000000f) + 2;
+
+	if (len != 3)
+	    fprintf(out, "Bad count in 3DSTATE_SCISSOR_RECTANGLE\n");
+	if (count < 3)
+	    BUFFER_FAIL(count, len, "3DSTATE_SCISSOR_RECTANGLE");
+
+	instr_out(data, hw_offset, 0,
+		  "3DSTATE_SCISSOR_RECTANGLE\n");
+	instr_out(data, hw_offset, 1, "(%d,%d)\n",
+		  data[1] & 0xffff, data[1] >> 16);
+	instr_out(data, hw_offset, 2, "(%d,%d)\n",
+		  data[2] & 0xffff, data[2] >> 16);
+
+	return len;
+    case 0x80:
+	len = (data[0] & 0x0000000f) + 2;
+
+	if (len != 5)
+	    fprintf(out, "Bad count in 3DSTATE_DRAWING_RECTANGLE\n");
+	if (count < 5)
+	    BUFFER_FAIL(count, len, "3DSTATE_DRAWING_RECTANGLE");
+
+	instr_out(data, hw_offset, 0,
+		  "3DSTATE_DRAWING_RECTANGLE\n");
+	instr_out(data, hw_offset, 1, "%s\n",
+		  data[1]&(1<<30)?"depth ofs disabled ":"");
+	instr_out(data, hw_offset, 2, "(%d,%d)\n",
+		  data[2] & 0xffff, data[2] >> 16);
+	instr_out(data, hw_offset, 3, "(%d,%d)\n",
+		  data[3] & 0xffff, data[3] >> 16);
+	instr_out(data, hw_offset, 4, "(%d,%d)\n",
+		  data[4] & 0xffff, data[4] >> 16);
+
+	return len;
+    case 0x9c:
+	len = (data[0] & 0x0000000f) + 2;
+
+	if (len != 7)
+	    fprintf(out, "Bad count in 3DSTATE_CLEAR_PARAMETERS\n");
+	if (count < 7)
+	    BUFFER_FAIL(count, len, "3DSTATE_CLEAR_PARAMETERS");
+
+	instr_out(data, hw_offset, 0,
+		  "3DSTATE_CLEAR_PARAMETERS\n");
+	instr_out(data, hw_offset, 1, "prim_type=%s, clear=%s%s%s\n",
+		  data[1]&(1<<16)?"CLEAR_RECT":"ZONE_INIT",
+		  data[1]&(1<<2)?"color,":"",
+		  data[1]&(1<<1)?"depth,":"",
+		  data[1]&(1<<0)?"stencil,":"");
+	instr_out(data, hw_offset, 2, "clear color\n");
+	instr_out(data, hw_offset, 3, "clear depth/stencil\n");
+	instr_out(data, hw_offset, 4, "color value (rgba8888)\n");
+	instr_out(data, hw_offset, 5, "depth value %f\n",
+		  int_as_float(data[5]));
+	instr_out(data, hw_offset, 6, "clear stencil\n");
+	return len;
     }
 
     for (idx = 0; idx < ARRAY_SIZE(opcodes_3d_1d); idx++)
     {
 	opcode_3d_1d = &opcodes_3d_1d[idx];
-	if (opcode_3d_1d->i830_only && IS_9XX(devid))
+	if (opcode_3d_1d->i830_only && !IS_GEN2(devid))
 	    continue;
 
 	if (((data[0] & 0x00ff0000) >> 16) == opcode_3d_1d->opcode) {
@@ -1145,7 +1530,7 @@ decode_3d_primitive(uint32_t *data, int count, uint32_t hw_offset,
 		    int *failures)
 {
     char immediate = (data[0] & (1 << 23)) == 0;
-    unsigned int len, i, ret;
+    unsigned int len, i, j, ret;
     char *primtype;
     int original_s2 = saved_s2;
     int original_s4 = saved_s4;
@@ -1283,19 +1668,18 @@ decode_3d_primitive(uint32_t *data, int count, uint32_t hw_offset,
 		for (i = 1; i < count; i++) {
 		    if ((data[i] & 0xffff) == 0xffff) {
 			instr_out(data, hw_offset, i,
-				  "            indices: (terminator)\n");
+				  "    indices: (terminator)\n");
 			ret = i;
 			goto out;
 		    } else if ((data[i] >> 16) == 0xffff) {
 			instr_out(data, hw_offset, i,
-				  "            indices: 0x%04x, "
-				  "(terminator)\n",
+				  "    indices: 0x%04x, (terminator)\n",
 				  data[i] & 0xffff);
 			ret = i;
 			goto out;
 		    } else {
 			instr_out(data, hw_offset, i,
-				  "            indices: 0x%04x, 0x%04x\n",
+				  "    indices: 0x%04x, 0x%04x\n",
 				  data[i] & 0xffff, data[i] >> 16);
 		    }
 		}
@@ -1306,15 +1690,15 @@ decode_3d_primitive(uint32_t *data, int count, uint32_t hw_offset,
 		goto out;
 	    } else {
 		/* fixed size vertex index buffer */
-		for (i = 0; i < len; i += 2) {
+		for (j = 1, i = 0; i < len; i += 2, j++) {
 		    if (i * 2 == len - 1) {
-			instr_out(data, hw_offset, i,
-				  "            indices: 0x%04x\n",
-				  data[i] & 0xffff);
+			instr_out(data, hw_offset, j,
+				  "    indices: 0x%04x\n",
+				  data[j] & 0xffff);
 		    } else {
-			instr_out(data, hw_offset, i,
-				  "            indices: 0x%04x, 0x%04x\n",
-				  data[i] & 0xffff, data[i] >> 16);
+			instr_out(data, hw_offset, j,
+				  "    indices: 0x%04x, 0x%04x\n",
+				  data[j] & 0xffff, data[j] >> 16);
 		    }
 		}
 	    }
@@ -1586,10 +1970,10 @@ decode_3d_965(uint32_t *data, int count, uint32_t hw_offset, uint32_t devid, int
 	{ 0x6904, 1, 1, "3DSTATE_PIPELINE_SELECT" },
 	{ 0x7800, 7, 7, "3DSTATE_PIPELINED_POINTERS" },
 	{ 0x7801, 6, 6, "3DSTATE_BINDING_TABLE_POINTERS" },
-	{ 0x780b, 1, 1, "3DSTATE_VF_STATISTICS" },
 	{ 0x7808, 5, 257, "3DSTATE_VERTEX_BUFFERS" },
 	{ 0x7809, 3, 256, "3DSTATE_VERTEX_ELEMENTS" },
 	{ 0x780a, 3, 3, "3DSTATE_INDEX_BUFFER" },
+	{ 0x780b, 1, 1, "3DSTATE_VF_STATISTICS" },
 	{ 0x7900, 4, 4, "3DSTATE_DRAWING_RECTANGLE" },
 	{ 0x7901, 5, 5, "3DSTATE_CONSTANT_COLOR" },
 	{ 0x7905, 5, 7, "3DSTATE_DEPTH_BUFFER" },
@@ -1605,6 +1989,7 @@ decode_3d_965(uint32_t *data, int count, uint32_t hw_offset, uint32_t devid, int
 	{ 0x7b00, 6, 6, "3DPRIMITIVE" },
 	{ 0x7802, 4, 4, "3DSTATE_SAMPLER_STATE_POINTERS" },
 	{ 0x7805, 3, 3, "3DSTATE_URB" },
+	{ 0x780d, 4, 4, "3DSTATE_VIEWPORT_STATE_POINTERS" },
 	{ 0x780e, 4, 4, "3DSTATE_CC_STATE_POINTERS" },
 	{ 0x780f, 2, 2, "3DSTATE_SCISSOR_STATE_POINTERS" },
 	{ 0x7810, 6, 6, "3DSTATE_VS_STATE" },
@@ -1612,7 +1997,6 @@ decode_3d_965(uint32_t *data, int count, uint32_t hw_offset, uint32_t devid, int
 	{ 0x7812, 4, 4, "3DSTATE_CLIP_STATE" },
 	{ 0x7813, 20, 20, "3DSTATE_SF_STATE" },
 	{ 0x7814, 9, 9, "3DSTATE_WM_STATE" },
-	{ 0x7812, 4, 4, "3DSTATE_CLIP_STATE" },
 	{ 0x7815, 5, 5, "3DSTATE_CONSTANT_VS_STATE" },
 	{ 0x7816, 5, 5, "3DSTATE_CONSTANT_GS_STATE" },
 	{ 0x7817, 5, 5, "3DSTATE_CONSTANT_PS_STATE" },
@@ -1643,7 +2027,7 @@ decode_3d_965(uint32_t *data, int count, uint32_t hw_offset, uint32_t devid, int
     case 0x6101:
 	if (IS_GEN6(devid))
 	    sba_len = 10;
-	else if (IS_IRONLAKE(devid))
+	else if (IS_GEN5(devid))
 	    sba_len = 8;
 	else
 	    sba_len = 6;
@@ -1662,14 +2046,14 @@ decode_3d_965(uint32_t *data, int count, uint32_t hw_offset, uint32_t devid, int
 	if (IS_GEN6(devid))
 	    state_base_out(data, hw_offset, i++, "dynamic");
 	state_base_out(data, hw_offset, i++, "indirect");
-	if (IS_IRONLAKE(devid) || IS_GEN6(devid))
+	if (IS_GEN5(devid) || IS_GEN6(devid))
 	    state_base_out(data, hw_offset, i++, "instruction");
 
 	state_max_out(data, hw_offset, i++, "general");
 	if (IS_GEN6(devid))
 	    state_max_out(data, hw_offset, i++, "dynamic");
 	state_max_out(data, hw_offset, i++, "indirect");
-	if (IS_IRONLAKE(devid) || IS_GEN6(devid))
+	if (IS_GEN5(devid) || IS_GEN6(devid))
 	    state_max_out(data, hw_offset, i++, "instruction");
 
 	return len;
@@ -1711,13 +2095,40 @@ decode_3d_965(uint32_t *data, int count, uint32_t hw_offset, uint32_t devid, int
 		      "GS mod %d, PS mod %d\n",
 		      (data[0] & (1 << 8)) != 0,
 		      (data[0] & (1 << 9)) != 0,
-		      (data[0] & (1 << 10)) != 0);
+		      (data[0] & (1 << 12)) != 0);
 	    instr_out(data, hw_offset, 1, "VS binding table\n");
 	    instr_out(data, hw_offset, 2, "GS binding table\n");
 	    instr_out(data, hw_offset, 3, "WM binding table\n");
 	}
 
 	return len;
+    case 0x7802:
+        len = (data[0] & 0xff) + 2;
+        if (len != 4)
+            fprintf(out, "Bad count in 3DSTATE_SAMPLER_STATE_POINTERS\n");
+	if (count < 4)
+	    BUFFER_FAIL(count, len, "3DSTATE_SAMPLER_STATE_POINTERS");
+        instr_out(data, hw_offset, 0, "3DSTATE_SAMPLER_STATE_POINTERS: VS mod %d, "
+                  "GS mod %d, PS mod %d\n",
+                  (data[0] & (1 << 8)) != 0,
+                  (data[0] & (1 << 9)) != 0,
+                  (data[0] & (1 << 12)) != 0);
+        instr_out(data, hw_offset, 1, "VS sampler state\n");
+        instr_out(data, hw_offset, 2, "GS sampler state\n");
+        instr_out(data, hw_offset, 3, "WM sampler state\n");
+        return len;
+    case 0x7805:
+        len = (data[0] & 0xff) + 2;
+        if (len != 3)
+            fprintf(out, "Bad count in 3DSTATE_URB\n");
+	if (count < 3)
+	    BUFFER_FAIL(count, len, "3DSTATE_URB");
+        instr_out(data, hw_offset, 0, "3DSTATE_URB\n");
+        instr_out(data, hw_offset, 1, "VS entries %d, alloc size %d (1024bit row)\n",
+                        data[1] & 0xffff, ((data[1] >> 16) & 0x07f) + 1);
+        instr_out(data, hw_offset, 2, "GS entries %d, alloc size %d (1024bit row)\n",
+                        (data[2] >> 8) & 0x3ff, (data[2] & 7) + 1);
+        return len;
 
     case 0x7808:
 	len = (data[0] & 0xff) + 2;
@@ -1728,9 +2139,17 @@ decode_3d_965(uint32_t *data, int count, uint32_t hw_offset, uint32_t devid, int
 	instr_out(data, hw_offset, 0, "3DSTATE_VERTEX_BUFFERS\n");
 
 	for (i = 1; i < len;) {
+	    int idx, access;
+	    if (IS_GEN6(devid)) {
+                idx = 26;
+                access = 20;
+            } else {
+                idx = 27;
+                access = 26;
+            }
 	    instr_out(data, hw_offset, i, "buffer %d: %s, pitch %db\n",
-		      data[i] >> 27,
-		      data[i] & (1 << 26) ? "random" : "sequential",
+		      data[i] >> idx,
+		      data[i] & (1 << access) ? "random" : "sequential",
 		      data[i] & 0x07ff);
 	    i++;
 	    instr_out(data, hw_offset, i++, "buffer address\n");
@@ -1750,8 +2169,8 @@ decode_3d_965(uint32_t *data, int count, uint32_t hw_offset, uint32_t devid, int
 	for (i = 1; i < len;) {
 	    instr_out(data, hw_offset, i, "buffer %d: %svalid, type 0x%04x, "
 		      "src offset 0x%04x bytes\n",
-		      data[i] >> 27,
-		      data[i] & (1 << 26) ? "" : "in",
+		      data[i] >> (IS_GEN6(devid) ? 26 : 27),
+		      data[i] & (1 << (IS_GEN6(devid) ? 25 : 26)) ? "" : "in",
 		      (data[i] >> 16) & 0x1ff,
 		      data[i] & 0x07ff);
 	    i++;
@@ -1789,6 +2208,224 @@ decode_3d_965(uint32_t *data, int count, uint32_t hw_offset, uint32_t devid, int
 	instr_out(data, hw_offset, 2, "ending buffer address\n");
 	return len;
 
+    case 0x780e:
+        len = (data[0] & 0xff) + 2;
+        if (len != 4)
+            fprintf(out, "Bad count in 3DSTATE_CC_STATE_POINTERS\n");
+	if (count < 4)
+	    BUFFER_FAIL(count, len, "3DSTATE_CC_STATE_POINTERS");
+        instr_out(data, hw_offset, 0, "3DSTATE_CC_STATE_POINTERS\n");
+        instr_out(data, hw_offset, 1, "blend change %d\n", data[1] & 1);
+        instr_out(data, hw_offset, 2, "depth stencil change %d\n", data[2] & 1);
+        instr_out(data, hw_offset, 3, "cc change %d\n", data[3] & 1);
+        return len;
+
+    case 0x780f:
+        len = (data[0] & 0xff) + 2;
+        if (len != 2)
+            fprintf(out, "Bad count in 3DSTATE_SCISSOR_POINTERS\n");
+	if (count < 2)
+	    BUFFER_FAIL(count, len, "3DSTATE_SCISSOR_POINTERS");
+        instr_out(data, hw_offset, 0, "3DSTATE_SCISSOR_POINTERS\n");
+        instr_out(data, hw_offset, 1, "scissor rect offset\n");
+        return len;
+
+    case 0x7810:
+        len = (data[0] & 0xff) + 2;
+        if (len != 6)
+            fprintf(out, "Bad count in 3DSTATE_VS\n");
+	if (count < 6)
+	    BUFFER_FAIL(count, len, "3DSTATE_VS");
+        instr_out(data, hw_offset, 0, "3DSTATE_VS\n");
+        instr_out(data, hw_offset, 1, "kernel pointer\n");
+        instr_out(data, hw_offset, 2, "SPF=%d, VME=%d, Sampler Count %d, "
+                  "Binding table count %d\n",
+                  (data[2] >> 31) & 1,
+                  (data[2] >> 30) & 1,
+                  (data[2] >> 27) & 7,
+                  (data[2] >> 18) & 0xff);
+        instr_out(data, hw_offset, 3, "scratch offset\n");
+        instr_out(data, hw_offset, 4, "Dispatch GRF start %d, VUE read length %d, "
+                  "VUE read offset %d\n",
+                  (data[4] >> 20) & 0x1f,
+                  (data[4] >> 11) & 0x3f,
+                  (data[4] >> 4) & 0x3f);
+        instr_out(data, hw_offset, 5, "Max Threads %d, Vertex Cache %sable, "
+                  "VS func %sable\n",
+                  ((data[5] >> 25) & 0x7f) + 1,
+                  (data[5] & (1 << 1)) != 0 ? "dis" : "en",
+                  (data[5] & 1) != 0 ? "en" : "dis");
+        return len;
+
+    case 0x7811:
+        len = (data[0] & 0xff) + 2;
+        if (len != 7)
+            fprintf(out, "Bad count in 3DSTATE_GS\n");
+	if (count < 7)
+	    BUFFER_FAIL(count, len, "3DSTATE_GS");
+        instr_out(data, hw_offset, 0, "3DSTATE_GS\n");
+        instr_out(data, hw_offset, 1, "kernel pointer\n");
+        instr_out(data, hw_offset, 2, "SPF=%d, VME=%d, Sampler Count %d, "
+                  "Binding table count %d\n",
+                  (data[2] >> 31) & 1,
+                  (data[2] >> 30) & 1,
+                  (data[2] >> 27) & 7,
+                  (data[2] >> 18) & 0xff);
+        instr_out(data, hw_offset, 3, "scratch offset\n");
+        instr_out(data, hw_offset, 4, "Dispatch GRF start %d, VUE read length %d, "
+                  "VUE read offset %d\n",
+                  (data[4] & 0xf),
+                  (data[4] >> 11) & 0x3f,
+                  (data[4] >> 4) & 0x3f);
+        instr_out(data, hw_offset, 5, "Max Threads %d, Rendering %sable\n",
+                  ((data[5] >> 25) & 0x7f) + 1,
+                  (data[5] & (1 << 8)) != 0 ? "en" : "dis");
+        instr_out(data, hw_offset, 6, "Reorder %sable, Discard Adjaceny %sable, "
+                  "GS %sable\n",
+                  (data[6] & (1 << 30)) != 0 ? "en" : "dis",
+                  (data[6] & (1 << 29)) != 0 ? "en" : "dis",
+                  (data[6] & (1 << 15)) != 0 ? "en" : "dis");
+        return len;
+
+    case 0x7812:
+        len = (data[0] & 0xff) + 2;
+        if (len != 4)
+            fprintf(out, "Bad count in 3DSTATE_CLIP\n");
+	if (count < 4)
+	    BUFFER_FAIL(count, len, "3DSTATE_CLIP");
+        instr_out(data, hw_offset, 0, "3DSTATE_CLIP\n");
+        instr_out(data, hw_offset, 1, "UserClip distance cull test mask 0x%x\n",
+                  data[1] & 0xff);
+        instr_out(data, hw_offset, 2, "Clip %sable, API mode %s, Viewport XY test %sable, "
+                  "Viewport Z test %sable, Guardband test %sable, Clip mode %d, "
+                  "Perspective Divide %sable, Non-Perspective Barycentric %sable, "
+                  "Tri Provoking %d, Line Provoking %d, Trifan Provoking %d\n",
+                  (data[2] & (1 << 31)) != 0 ? "en" : "dis",
+                  (data[2] & (1 << 30)) != 0 ? "D3D" : "OGL",
+                  (data[2] & (1 << 28)) != 0 ? "en" : "dis",
+                  (data[2] & (1 << 27)) != 0 ? "en" : "dis",
+                  (data[2] & (1 << 26)) != 0 ? "en" : "dis",
+                  (data[2] >> 13) & 7,
+                  (data[2] & (1 << 9)) != 0 ? "dis" : "en",
+                  (data[2] & (1 << 8)) != 0 ? "en" : "dis",
+                  (data[2] >> 4) & 3,
+                  (data[2] >> 2) & 3,
+                  (data[2] & 3));
+        instr_out(data, hw_offset, 3, "Min PointWidth %d, Max PointWidth %d, "
+                  "Force Zero RTAIndex %sable, Max VPIndex %d\n",
+                  (data[3] >> 17) & 0x7ff,
+                  (data[3] >> 6) & 0x7ff,
+                  (data[3] & (1 << 5)) != 0 ? "en" : "dis",
+                  (data[3] & 0xf));
+        return len;
+
+    case 0x7813:
+        len = (data[0] & 0xff) + 2;
+        if (len != 20)
+            fprintf(out, "Bad count in 3DSTATE_SF\n");
+	if (count < 20)
+	    BUFFER_FAIL(count, len, "3DSTATE_SF");
+        instr_out(data, hw_offset, 0, "3DSTATE_SF\n");
+        instr_out(data, hw_offset, 1, "Attrib Out %d, Attrib Swizzle %sable, VUE read length %d, "
+                  "VUE read offset %d\n",
+                  (data[1] >> 22) & 0x3f,
+                  (data[1] & (1 << 21)) != 0 ? "en" : "dis",
+                  (data[1] >> 11) & 0x1f,
+                  (data[1] >> 4) & 0x3f);
+        instr_out(data, hw_offset, 2, "Legacy Global DepthBias %sable, FrontFace fill %d, BF fill %d, "
+                  "VP transform %sable, FrontWinding_%s\n",
+                  (data[2] & (1 << 11)) != 0 ? "en" : "dis",
+                  (data[2] >> 5) & 3,
+                  (data[2] >> 3) & 3,
+                  (data[2] & (1 << 1)) != 0 ? "en" : "dis",
+                  (data[2] & 1) != 0 ? "CCW" : "CW");
+        instr_out(data, hw_offset, 3, "AA %sable, CullMode %d, Scissor %sable, Multisample m ode %d\n",
+                  (data[3] & (1 << 31)) != 0 ? "en" : "dis",
+                  (data[3] >> 29) & 3,
+                  (data[3] & (1 << 11)) != 0 ? "en" : "dis",
+                  (data[3] >> 8) & 3);
+        instr_out(data, hw_offset, 4, "Last Pixel %sable, SubPixel Precision %d, Use PixelWidth %d\n",
+                  (data[4] & (1 << 31)) != 0 ? "en" : "dis",
+                  (data[4] & (1 << 12)) != 0 ? 4 : 8,
+                  (data[4] & (1 << 11)) != 0);
+        instr_out(data, hw_offset, 5, "Global Depth Offset Constant %f\n", data[5]);
+        instr_out(data, hw_offset, 6, "Global Depth Offset Scale %f\n", data[6]);
+        instr_out(data, hw_offset, 7, "Global Depth Offset Clamp %f\n", data[7]);
+        int i, j;
+        for (i = 0, j = 0; i < 8; i++, j+=2)
+            instr_out(data, hw_offset, i+8, "Attrib %d (Override %s%s%s%s, Const Source %d, Swizzle Select %d, "
+                  "Source %d); Attrib %d (Override %s%s%s%s, Const Source %d, Swizzle Select %d, Source %d)\n",
+                  j+1,
+                  (data[8+i] & (1 << 31)) != 0 ? "W":"",
+                  (data[8+i] & (1 << 30)) != 0 ? "Z":"",
+                  (data[8+i] & (1 << 29)) != 0 ? "Y":"",
+                  (data[8+i] & (1 << 28)) != 0 ? "X":"",
+                  (data[8+i] >> 25) & 3, (data[8+i] >> 22) & 3,
+                  (data[8+i] >> 16) & 0x1f,
+                  j,
+                  (data[8+i] & (1 << 15)) != 0 ? "W":"",
+                  (data[8+i] & (1 << 14)) != 0 ? "Z":"",
+                  (data[8+i] & (1 << 13)) != 0 ? "Y":"",
+                  (data[8+i] & (1 << 12)) != 0 ? "X":"",
+                  (data[8+i] >> 9) & 3, (data[8+i] >> 6) & 3,
+                  (data[8+i] & 0x1f));
+	instr_out(data, hw_offset, 16, "Point Sprite TexCoord Enable\n");
+        instr_out(data, hw_offset, 17, "Const Interp Enable\n");
+        instr_out(data, hw_offset, 18, "Attrib 7-0 WrapShortest Enable\n");
+        instr_out(data, hw_offset, 19, "Attrib 15-8 WrapShortest Enable\n");
+
+        return len;
+
+    case 0x7814:
+        len = (data[0] & 0xff) + 2;
+        if (len != 9)
+            fprintf(out, "Bad count in 3DSTATE_WM\n");
+	if (count < 9)
+	    BUFFER_FAIL(count, len, "3DSTATE_WM");
+        instr_out(data, hw_offset, 0, "3DSTATE_WM\n");
+        instr_out(data, hw_offset, 1, "kernel start pointer 0\n");
+        instr_out(data, hw_offset, 2, "SPF=%d, VME=%d, Sampler Count %d, "
+                  "Binding table count %d\n",
+                  (data[2] >> 31) & 1,
+                  (data[2] >> 30) & 1,
+                  (data[2] >> 27) & 7,
+                  (data[2] >> 18) & 0xff);
+        instr_out(data, hw_offset, 3, "scratch offset\n");
+        instr_out(data, hw_offset, 4, "Depth Clear %d, Depth Resolve %d, HiZ Resolve %d, "
+                  "Dispatch GRF start[0] %d, start[1] %d, start[2] %d\n",
+                  (data[4] & (1 << 30)) != 0,
+                  (data[4] & (1 << 28)) != 0,
+                  (data[4] & (1 << 27)) != 0,
+                  (data[4] >> 16) & 0x7f,
+                  (data[4] >> 8) & 0x7f,
+                  (data[4] & 0x7f));
+        instr_out(data, hw_offset, 5, "MaxThreads %d, PS KillPixel %d, PS computed Z %d, "
+                  "PS use sourceZ %d, Thread Dispatch %d, PS use sourceW %d, Dispatch32 %d, "
+                  "Dispatch16 %d, Dispatch8 %d\n",
+                  ((data[5] >> 25) & 0x7f) + 1,
+                  (data[5] & (1 << 22)) != 0,
+                  (data[5] & (1 << 21)) != 0,
+                  (data[5] & (1 << 20)) != 0,
+                  (data[5] & (1 << 19)) != 0,
+                  (data[5] & (1 << 8)) != 0,
+                  (data[5] & (1 << 2)) != 0,
+                  (data[5] & (1 << 1)) != 0,
+                  (data[5] & (1 << 0)) != 0);
+        instr_out(data, hw_offset, 6, "Num SF output %d, Pos XY offset %d, ZW interp mode %d , "
+                  "Barycentric interp mode 0x%x, Point raster rule %d, Multisample mode %d, "
+                  "Multisample Dispatch mode %d\n",
+                  (data[6] >> 20) & 0x3f,
+                  (data[6] >> 18) & 3,
+                  (data[6] >> 16) & 3,
+                  (data[6] >> 10) & 0x3f,
+                  (data[6] & (1 << 9)) != 0,
+                  (data[6] >> 1) & 3,
+                  (data[6] & 1));
+        instr_out(data, hw_offset, 7, "kernel start pointer 1\n");
+        instr_out(data, hw_offset, 8, "kernel start pointer 2\n");
+
+        return len;
+
     case 0x7900:
 	if (len != 4)
 	    fprintf(out, "Bad count in 3DSTATE_DRAWING_RECTANGLE\n");
@@ -1817,11 +2454,20 @@ decode_3d_965(uint32_t *data, int count, uint32_t hw_offset, uint32_t devid, int
 
 	instr_out(data, hw_offset, 0,
 		  "3DSTATE_DEPTH_BUFFER\n");
-	instr_out(data, hw_offset, 1, "%s, %s, pitch = %d bytes, %stiled\n",
-		  get_965_surfacetype(data[1] >> 29),
-		  get_965_depthformat((data[1] >> 18) & 0x7),
-		  (data[1] & 0x0001ffff) + 1,
-		  data[1] & (1 << 27) ? "" : "not ");
+	if (IS_GEN5(devid) || IS_GEN6(devid))
+            instr_out(data, hw_offset, 1, "%s, %s, pitch = %d bytes, %stiled, HiZ %d, Seperate Stencil %d\n",
+                    get_965_surfacetype(data[1] >> 29),
+                    get_965_depthformat((data[1] >> 18) & 0x7),
+                    (data[1] & 0x0001ffff) + 1,
+                    data[1] & (1 << 27) ? "" : "not ",
+                    (data[1] & (1 << 22)) != 0,
+                    (data[1] & (1 << 21)) != 0);
+        else
+            instr_out(data, hw_offset, 1, "%s, %s, pitch = %d bytes, %stiled\n",
+                    get_965_surfacetype(data[1] >> 29),
+                    get_965_depthformat((data[1] >> 18) & 0x7),
+                    (data[1] & 0x0001ffff) + 1,
+                    data[1] & (1 << 27) ? "" : "not ");
 	instr_out(data, hw_offset, 2, "depth offset\n");
 	instr_out(data, hw_offset, 3, "%dx%d\n",
 		  ((data[3] & 0x0007ffc0) >> 6) + 1,
@@ -1829,36 +2475,79 @@ decode_3d_965(uint32_t *data, int count, uint32_t hw_offset, uint32_t devid, int
 	instr_out(data, hw_offset, 4, "volume depth\n");
 	if (len >= 6)
 	    instr_out(data, hw_offset, 5, "\n");
-       if (len >= 7)
-           instr_out(data, hw_offset, 6, "render target view extent\n");
+	if (len >= 7) {
+            if (IS_GEN6(devid))
+                instr_out(data, hw_offset, 6, "\n");
+            else
+                instr_out(data, hw_offset, 6, "render target view extent\n");
+        }
+
 
 	return len;
 
     case 0x7a00:
-	len = (data[0] & 0xff) + 2;
-	if (len != 4)
-	    fprintf(out, "Bad count in PIPE_CONTROL\n");
-	if (count < len)
-	    BUFFER_FAIL(count, len, "PIPE_CONTROL");
+	if (IS_GEN6(devid)) {
+		int i;
+		len = (data[0] & 0xff) + 2;
+		if (len != 4 && len != 5)
+			fprintf(out, "Bad count in PIPE_CONTROL\n");
+		if (count < len)
+			BUFFER_FAIL(count, len, "PIPE_CONTROL");
 
-	switch ((data[0] >> 14) & 0x3) {
-	case 0: desc1 = "no write"; break;
-	case 1: desc1 = "qword write"; break;
-	case 2: desc1 = "PS_DEPTH_COUNT write"; break;
-	case 3: desc1 = "TIMESTAMP write"; break;
+		switch ((data[1] >> 14) & 0x3) {
+		case 0: desc1 = "no write"; break;
+		case 1: desc1 = "qword write"; break;
+		case 2: desc1 = "PS_DEPTH_COUNT write"; break;
+		case 3: desc1 = "TIMESTAMP write"; break;
+		}
+		instr_out(data, hw_offset, 0, "PIPE_CONTROL\n");
+		instr_out(data, hw_offset, 1,
+			  "%s, %scs stall, %stlb invalidate, "
+			  "%ssync gfdt, %sdepth stall, %sRC write flush, "
+			  "%sinst flush, %sTC flush\n",
+			  desc1,
+			  data[1] & (1 << 20) ? "" : "no ",
+			  data[1] & (1 << 18) ? "" : "no ",
+			  data[1] & (1 << 17) ? "" : "no ",
+			  data[1] & (1 << 13) ? "" : "no ",
+			  data[1] & (1 << 12) ? "" : "no ",
+			  data[1] & (1 << 11) ? "" : "no ",
+			  data[1] & (1 << 10) ? "" : "no ");
+		if (len == 5) {
+		    instr_out(data, hw_offset, 2, "destination address\n");
+		    instr_out(data, hw_offset, 3, "immediate dword low\n");
+		    instr_out(data, hw_offset, 4, "immediate dword high\n");
+		} else {
+		    for (i = 2; i < len; i++) {
+			instr_out(data, hw_offset, i, "\n");
+		    }
+		}
+		return len;
+	} else {
+		len = (data[0] & 0xff) + 2;
+		if (len != 4)
+			fprintf(out, "Bad count in PIPE_CONTROL\n");
+		if (count < len)
+			BUFFER_FAIL(count, len, "PIPE_CONTROL");
+
+		switch ((data[0] >> 14) & 0x3) {
+		case 0: desc1 = "no write"; break;
+		case 1: desc1 = "qword write"; break;
+		case 2: desc1 = "PS_DEPTH_COUNT write"; break;
+		case 3: desc1 = "TIMESTAMP write"; break;
+		}
+		instr_out(data, hw_offset, 0,
+			  "PIPE_CONTROL: %s, %sdepth stall, %sRC write flush, "
+			  "%sinst flush\n",
+			  desc1,
+			  data[0] & (1 << 13) ? "" : "no ",
+			  data[0] & (1 << 12) ? "" : "no ",
+			  data[0] & (1 << 11) ? "" : "no ");
+		instr_out(data, hw_offset, 1, "destination address\n");
+		instr_out(data, hw_offset, 2, "immediate dword low\n");
+		instr_out(data, hw_offset, 3, "immediate dword high\n");
+		return len;
 	}
-	instr_out(data, hw_offset, 0,
-		  "PIPE_CONTROL: %s, %sdepth stall, %sRC write flush, "
-		  "%sinst flush\n",
-		  desc1,
-		  data[0] & (1 << 13) ? "" : "no ",
-		  data[0] & (1 << 12) ? "" : "no ",
-		  data[0] & (1 << 11) ? "" : "no ");
-	instr_out(data, hw_offset, 1, "destination address\n");
-	instr_out(data, hw_offset, 2, "immediate dword low\n");
-	instr_out(data, hw_offset, 3, "immediate dword high\n");
-	return len;
-
     case 0x7b00:
 	len = (data[0] & 0xff) + 2;
 	if (len != 6)
@@ -2027,7 +2716,7 @@ intel_decode(uint32_t *data, int count,
 		index += decode_3d_965(data + index, count - index,
 				       hw_offset + index * 4,
 				       devid, &failures);
-	    } else if (IS_9XX(devid)) {
+	    } else if (IS_GEN3(devid)) {
 		index += decode_3d(data + index, count - index,
 				   hw_offset + index * 4,
 				   devid, &failures);

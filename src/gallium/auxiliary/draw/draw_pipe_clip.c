@@ -163,6 +163,7 @@ static void interp( const struct clip_stage *clip,
  */
 static void emit_poly( struct draw_stage *stage,
 		       struct vertex_header **inlist,
+                       const boolean *edgeflags,
 		       unsigned n,
 		       const struct prim_header *origPrim)
 {
@@ -180,6 +181,9 @@ static void emit_poly( struct draw_stage *stage,
       edge_middle = DRAW_PIPE_EDGE_FLAG_0;
       edge_last   = DRAW_PIPE_EDGE_FLAG_1;
    }
+
+   if (!edgeflags[0])
+      edge_first = 0;
 
    /* later stages may need the determinant, but only the sign matters */
    header.det = origPrim->det;
@@ -199,7 +203,11 @@ static void emit_poly( struct draw_stage *stage,
          header.v[2] = inlist[0];  /* the provoking vertex */
       }
 
-      if (i == n-1)
+      if (!edgeflags[i-1]) {
+         header.flags &= ~edge_middle;
+      }
+
+      if (i == n - 1 && edgeflags[i])
          header.flags |= edge_last;
 
       if (0) {
@@ -248,15 +256,33 @@ do_clip_tri( struct draw_stage *stage,
    unsigned tmpnr = 0;
    unsigned n = 3;
    unsigned i;
+   boolean aEdges[MAX_CLIPPED_VERTICES];
+   boolean bEdges[MAX_CLIPPED_VERTICES];
+   boolean *inEdges = aEdges;
+   boolean *outEdges = bEdges;
 
    inlist[0] = header->v[0];
    inlist[1] = header->v[1];
    inlist[2] = header->v[2];
 
+   /*
+    * Note: at this point we can't just use the per-vertex edge flags.
+    * We have to observe the edge flag bits set in header->flags which
+    * were set during primitive decomposition.  Put those flags into
+    * an edge flags array which parallels the vertex array.
+    * Later, in the 'unfilled' pipeline stage we'll draw the edge if both
+    * the header.flags bit is set AND the per-vertex edgeflag field is set.
+    */
+   inEdges[0] = !!(header->flags & DRAW_PIPE_EDGE_FLAG_0);
+   inEdges[1] = !!(header->flags & DRAW_PIPE_EDGE_FLAG_1);
+   inEdges[2] = !!(header->flags & DRAW_PIPE_EDGE_FLAG_2);
+
    while (clipmask && n >= 3) {
       const unsigned plane_idx = ffs(clipmask)-1;
+      const boolean is_user_clip_plane = plane_idx >= 6;
       const float *plane = clipper->plane[plane_idx];
       struct vertex_header *vert_prev = inlist[0];
+      boolean *edge_prev = &inEdges[0];
       float dp_prev = dot4( vert_prev->clip, plane );
       unsigned outcount = 0;
 
@@ -266,9 +292,11 @@ do_clip_tri( struct draw_stage *stage,
       if (n >= MAX_CLIPPED_VERTICES)
          return;
       inlist[n] = inlist[0]; /* prevent rotation of vertices */
+      inEdges[n] = inEdges[0];
 
       for (i = 1; i <= n; i++) {
 	 struct vertex_header *vert = inlist[i];
+         boolean *edge = &inEdges[i];
 
 	 float dp = dot4( vert->clip, plane );
 
@@ -276,11 +304,13 @@ do_clip_tri( struct draw_stage *stage,
             assert(outcount < MAX_CLIPPED_VERTICES);
             if (outcount >= MAX_CLIPPED_VERTICES)
                return;
+            outEdges[outcount] = *edge_prev;
 	    outlist[outcount++] = vert_prev;
 	 }
 
 	 if (DIFFERENT_SIGNS(dp, dp_prev)) {
 	    struct vertex_header *new_vert;
+            boolean *new_edge;
 
             assert(tmpnr < MAX_CLIPPED_VERTICES + 1);
             if (tmpnr >= MAX_CLIPPED_VERTICES + 1)
@@ -290,6 +320,8 @@ do_clip_tri( struct draw_stage *stage,
             assert(outcount < MAX_CLIPPED_VERTICES);
             if (outcount >= MAX_CLIPPED_VERTICES)
                return;
+
+            new_edge = &outEdges[outcount];
 	    outlist[outcount++] = new_vert;
 
 	    if (IS_NEGATIVE(dp)) {
@@ -299,10 +331,22 @@ do_clip_tri( struct draw_stage *stage,
 	       float t = dp / (dp - dp_prev);
 	       interp( clipper, new_vert, t, vert, vert_prev );
 	       
-	       /* Force edgeflag true in this case:
+	       /* Whether or not to set edge flag for the new vert depends
+                * on whether it's a user-defined clipping plane.  We're
+                * copying NVIDIA's behaviour here.
 		*/
-	       new_vert->edgeflag = 1;
-	    } else {
+               if (is_user_clip_plane) {
+                  /* we want to see an edge along the clip plane */
+                  *new_edge = TRUE;
+                  new_vert->edgeflag = TRUE;
+               }
+               else {
+                  /* we don't want to see an edge along the frustum clip plane */
+                  *new_edge = *edge_prev;
+                  new_vert->edgeflag = FALSE;
+               }
+	    }
+            else {
 	       /* Coming back in.
 		*/
 	       float t = dp_prev / (dp_prev - dp);
@@ -311,10 +355,12 @@ do_clip_tri( struct draw_stage *stage,
 	       /* Copy starting vert's edgeflag:
 		*/
 	       new_vert->edgeflag = vert_prev->edgeflag;
+               *new_edge = *edge_prev;
 	    }
 	 }
 
 	 vert_prev = vert;
+         edge_prev = edge;
 	 dp_prev = dp;
       }
 
@@ -325,6 +371,12 @@ do_clip_tri( struct draw_stage *stage,
 	 outlist = tmp;
 	 n = outcount;
       }
+      {
+         boolean *tmp = inEdges;
+         inEdges = outEdges;
+         outEdges = tmp;
+      }
+
    }
 
    /* If flat-shading, copy provoking vertex color to polygon vertex[0]
@@ -353,7 +405,7 @@ do_clip_tri( struct draw_stage *stage,
       
       /* Emit the polygon as triangles to the setup stage:
        */
-      emit_poly( stage, inlist, n, header );
+      emit_poly( stage, inlist, inEdges, n, header );
    }
 }
 

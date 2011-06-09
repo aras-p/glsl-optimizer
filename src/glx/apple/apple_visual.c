@@ -47,7 +47,7 @@
 #include "apple_cgl.h"
 #include "apple_visual.h"
 #include "apple_glx.h"
-#include "glcontextmodes.h"
+#include "glxconfig.h"
 
 enum
 {

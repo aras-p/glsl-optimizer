@@ -680,9 +680,8 @@ print """
 
 #if FEATURE_remap_table
 
-/* cannot include main/dispatch.h here */
-#define _GLAPI_USE_REMAP_TABLE
-#include "%sapi/main/glapidispatch.h"
+/* define esLocalRemapTable */
+#include "%sapi/main/dispatch.h"
 
 #define need_MESA_remap_table
 #include "%sapi/main/remap_helper.h"
@@ -701,7 +700,7 @@ init_remap_table(void)
       return;
    }
 
-   for (i = 0; i < driDispatchRemapTable_size; i++) {
+   for (i = 0; i < esLocalRemapTable_size; i++) {
       GLint offset;
       const char *spec;
 
@@ -710,7 +709,7 @@ init_remap_table(void)
       spec = _mesa_function_pool + remap[i].pool_index;
 
       offset = _mesa_map_function_spec(spec);
-      remap_table[i] = offset;
+      esLocalRemapTable[i] = offset;
    }
    initialized = GL_TRUE;
    _glthread_UNLOCK_MUTEX(mutex);
@@ -718,8 +717,7 @@ init_remap_table(void)
 
 #else /* FEATURE_remap_table */
 
-/* cannot include main/dispatch.h here */
-#include "%sapi/main/glapidispatch.h"
+#include "%sapi/main/dispatch.h"
 
 static INLINE void
 init_remap_table(void)

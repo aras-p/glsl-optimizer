@@ -109,12 +109,16 @@ is_sampler_type(GLenum type)
    case GL_SAMPLER_CUBE:
    case GL_SAMPLER_1D_SHADOW:
    case GL_SAMPLER_2D_SHADOW:
+   case GL_SAMPLER_CUBE_SHADOW:
    case GL_SAMPLER_2D_RECT_ARB:
    case GL_SAMPLER_2D_RECT_SHADOW_ARB:
    case GL_SAMPLER_1D_ARRAY_EXT:
    case GL_SAMPLER_2D_ARRAY_EXT:
    case GL_SAMPLER_1D_ARRAY_SHADOW_EXT:
    case GL_SAMPLER_2D_ARRAY_SHADOW_EXT:
+   case GL_SAMPLER_CUBE_MAP_ARRAY:
+   case GL_SAMPLER_CUBE_MAP_ARRAY_SHADOW:
+   case GL_SAMPLER_BUFFER:
       return GL_TRUE;
    default:
       return GL_FALSE;
@@ -1457,7 +1461,6 @@ _mesa_init_shader_uniform_dispatch(struct _glapi_table *exec)
    SET_UniformMatrix4x3fv(exec, _mesa_UniformMatrix4x3fv);
 
    /* OpenGL 3.0 */
-   /* XXX finish dispatch */
    SET_Uniform1uiEXT(exec, _mesa_Uniform1ui);
    SET_Uniform2uiEXT(exec, _mesa_Uniform2ui);
    SET_Uniform3uiEXT(exec, _mesa_Uniform3ui);
