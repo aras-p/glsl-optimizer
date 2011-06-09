@@ -118,14 +118,12 @@ intel_finalize_mipmap_tree(struct intel_context *intel, GLuint unit)
     */
    if (intelObj->mt &&
        (intelObj->mt->target != intelObj->base.Target ||
-	intelObj->mt->internal_format != firstImage->base.InternalFormat ||
+	intelObj->mt->format != firstImage->base.TexFormat ||
 	intelObj->mt->first_level != tObj->BaseLevel ||
 	intelObj->mt->last_level < intelObj->_MaxLevel ||
 	intelObj->mt->width0 != firstImage->base.Width ||
 	intelObj->mt->height0 != firstImage->base.Height ||
-	intelObj->mt->depth0 != firstImage->base.Depth ||
-	intelObj->mt->cpp != cpp ||
-	intelObj->mt->compressed != _mesa_is_format_compressed(firstImage->base.TexFormat))) {
+	intelObj->mt->depth0 != firstImage->base.Depth)) {
       intel_miptree_release(intel, &intelObj->mt);
    }
 

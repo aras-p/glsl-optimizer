@@ -227,7 +227,6 @@ GLboolean
 intel_miptree_match_image(struct intel_mipmap_tree *mt,
                           struct gl_texture_image *image)
 {
-   GLboolean isCompressed = _mesa_is_format_compressed(image->TexFormat);
    struct intel_texture_image *intelImage = intel_texture_image(image);
    GLuint level = intelImage->level;
 
@@ -235,13 +234,7 @@ intel_miptree_match_image(struct intel_mipmap_tree *mt,
    if (image->Border)
       return GL_FALSE;
 
-   if (image->InternalFormat != mt->internal_format ||
-       isCompressed != mt->compressed)
-      return GL_FALSE;
-
-   if (!isCompressed &&
-       !mt->compressed &&
-       _mesa_get_format_bytes(image->TexFormat) != mt->cpp)
+   if (image->TexFormat != mt->format)
       return GL_FALSE;
 
    /* Test image dimensions against the base level image adjusted for
