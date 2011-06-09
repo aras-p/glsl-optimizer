@@ -105,7 +105,6 @@ struct intel_mipmap_tree *
 intel_miptree_create(struct intel_context *intel,
 		     GLenum target,
 		     gl_format format,
-		     GLenum base_format,
 		     GLuint first_level,
 		     GLuint last_level,
 		     GLuint width0,
@@ -115,6 +114,7 @@ intel_miptree_create(struct intel_context *intel,
 {
    struct intel_mipmap_tree *mt;
    uint32_t tiling = I915_TILING_NONE;
+   GLenum base_format = _mesa_get_format_base_format(format);
 
    if (intel->use_texture_tiling && compress_byte == 0) {
       if (intel->gen >= 4 &&
