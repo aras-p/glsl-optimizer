@@ -633,10 +633,7 @@ intel_render_texture(struct gl_context * ctx,
       struct intel_context *intel = intel_context(ctx);
       struct intel_mipmap_tree *old_mt = intel_image->mt;
       struct intel_mipmap_tree *new_mt;
-      int comp_byte = 0, texel_bytes;
-
-      if (_mesa_is_format_compressed(intel_image->base.TexFormat))
-	 comp_byte = intel_compressed_num_bytes(intel_image->base.TexFormat);
+      int texel_bytes;
 
       texel_bytes = _mesa_get_format_bytes(intel_image->base.TexFormat);
 
@@ -647,7 +644,7 @@ intel_render_texture(struct gl_context * ctx,
 				    intel_image->base.Width,
 				    intel_image->base.Height,
 				    intel_image->base.Depth,
-				    texel_bytes, comp_byte, GL_TRUE);
+				    texel_bytes, GL_TRUE);
 
       intel_miptree_image_copy(intel,
                                new_mt,

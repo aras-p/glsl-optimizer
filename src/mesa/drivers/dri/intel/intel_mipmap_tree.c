@@ -29,6 +29,7 @@
 #include "intel_mipmap_tree.h"
 #include "intel_regions.h"
 #include "intel_tex_layout.h"
+#include "intel_tex.h"
 #include "main/enums.h"
 #include "main/formats.h"
 
@@ -60,16 +61,20 @@ intel_miptree_create_internal(struct intel_context *intel,
 			      GLuint last_level,
 			      GLuint width0,
 			      GLuint height0,
-			      GLuint depth0, GLuint cpp, GLuint compress_byte,
+			      GLuint depth0, GLuint cpp,
 			      uint32_t tiling)
 {
    GLboolean ok;
    struct intel_mipmap_tree *mt = calloc(sizeof(*mt), 1);
+   int compress_byte = 0;
 
    DBG("%s target %s format %s level %d..%d <-- %p\n", __FUNCTION__,
        _mesa_lookup_enum_by_nr(target),
        _mesa_get_format_name(format),
        first_level, last_level, mt);
+
+   if (_mesa_is_format_compressed(format))
+      compress_byte = intel_compressed_num_bytes(format);
 
    mt->target = target_to_target(target);
    mt->format = format;
@@ -109,14 +114,14 @@ intel_miptree_create(struct intel_context *intel,
 		     GLuint last_level,
 		     GLuint width0,
 		     GLuint height0,
-		     GLuint depth0, GLuint cpp, GLuint compress_byte,
+		     GLuint depth0, GLuint cpp,
 		     GLboolean expect_accelerated_upload)
 {
    struct intel_mipmap_tree *mt;
    uint32_t tiling = I915_TILING_NONE;
    GLenum base_format = _mesa_get_format_base_format(format);
 
-   if (intel->use_texture_tiling && compress_byte == 0) {
+   if (intel->use_texture_tiling && !_mesa_is_format_compressed(format)) {
       if (intel->gen >= 4 &&
 	  (base_format == GL_DEPTH_COMPONENT ||
 	   base_format == GL_DEPTH_STENCIL_EXT))
@@ -127,7 +132,7 @@ intel_miptree_create(struct intel_context *intel,
 
    mt = intel_miptree_create_internal(intel, target, format,
 				      first_level, last_level, width0,
-				      height0, depth0, cpp, compress_byte,
+				      height0, depth0, cpp,
 				      tiling);
    /*
     * pitch == 0 || height == 0  indicates the null texture
@@ -158,15 +163,14 @@ intel_miptree_create_for_region(struct intel_context *intel,
 				GLenum target,
 				gl_format format,
 				struct intel_region *region,
-				GLuint depth0,
-				GLuint compress_byte)
+				GLuint depth0)
 {
    struct intel_mipmap_tree *mt;
 
    mt = intel_miptree_create_internal(intel, target, format,
 				      0, 0,
 				      region->width, region->height, 1,
-				      region->cpp, compress_byte,
+				      region->cpp,
 				      I915_TILING_NONE);
    if (!mt)
       return mt;
