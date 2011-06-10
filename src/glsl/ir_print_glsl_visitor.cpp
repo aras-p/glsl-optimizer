@@ -28,7 +28,6 @@
 #include "ir_unused_structs.h"
 #include "program/hash_table.h"
 #include <math.h>
-#include <vector>
 
 static char* print_type(char* buffer, const glsl_type *t, bool arraySize);
 static char* print_type_post(char* buffer, const glsl_type *t, bool arraySize);
@@ -45,28 +44,34 @@ static inline const char* get_precision_string (glsl_precision p)
 	return "";
 }
 
+struct ga_entry : public exec_node
+{
+	ga_entry(ir_assignment *ass)
+	{
+		assert(ass);
+		this->ass = ass;
+	}	
+	ir_assignment* ass;
+};
+
+
 struct global_print_tracker {
 	global_print_tracker () {
+		mem_ctx = ralloc_context(0);
 		temp_var_counter = 0;
 		temp_var_hash = hash_table_ctor(0, hash_table_pointer_hash, hash_table_pointer_compare);
 		main_function_done = false;
 	}
 	
 	~global_print_tracker() {
-		clear_temps ();
 		hash_table_dtor (temp_var_hash);
-	}
-	
-	void clear_temps ()
-	{
-		hash_table_clear (temp_var_hash);
-		temp_var_counter = 0;
-		global_assignements.clear();
+		ralloc_free(mem_ctx);
 	}
 	
 	unsigned	temp_var_counter;
 	hash_table*	temp_var_hash;
-	std::vector<ir_assignment*> global_assignements;
+	exec_list	global_assignements;
+	void* mem_ctx;
 	bool	main_function_done;
 };
 
@@ -307,9 +312,9 @@ void ir_print_glsl_visitor::visit(ir_function_signature *ir)
 	{
 		assert (!globals->main_function_done);
 		globals->main_function_done = true;
-		for (std::vector<ir_assignment*>::iterator iter = globals->global_assignements.begin(); iter != globals->global_assignements.end(); ++iter)
+		foreach_iter(exec_list_iterator, it, globals->global_assignements)
 		{
-			ir_assignment *as = *iter;
+			ir_assignment* as = ((ga_entry *)it.get())->ass;
 			as->accept(this);
 			ralloc_asprintf_append(&buffer, ";\n");
 		}
@@ -583,7 +588,7 @@ void ir_print_glsl_visitor::visit(ir_assignment *ir)
 	if (this->mode != kPrintGlslNone)
 	{
 		assert (!this->globals->main_function_done);
-		this->globals->global_assignements.push_back(ir);
+		this->globals->global_assignements.push_tail (new(this->globals->mem_ctx) ga_entry(ir));
 		ralloc_asprintf_append(&buffer, "//"); // for the ; that will follow (ugly, I know)
 		return;
 	}
