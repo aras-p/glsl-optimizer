@@ -54,7 +54,7 @@ void i945_miptree_layout_2d(struct intel_context *intel,
 			    struct intel_mipmap_tree *mt,
 			    uint32_t tiling, int nr_images)
 {
-   GLuint align_h = 2, align_w = 4;
+   GLuint align_h, align_w;
    GLuint level;
    GLuint x = 0;
    GLuint y = 0;
