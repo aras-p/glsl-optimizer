@@ -388,6 +388,8 @@ static void brw_wm_populate_key( struct brw_context *brw,
 	  * all 4 channels.
 	  */
 	 if (sampler->CompareMode == GL_COMPARE_R_TO_TEXTURE_ARB) {
+	    key->compare_funcs[i] = sampler->CompareFunc;
+
 	    if (sampler->DepthMode == GL_ALPHA) {
 	       swizzles[0] = SWIZZLE_ZERO;
 	       swizzles[1] = SWIZZLE_ZERO;

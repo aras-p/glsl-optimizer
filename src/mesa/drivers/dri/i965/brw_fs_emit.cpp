@@ -273,7 +273,7 @@ fs_visitor::generate_tex(fs_inst *inst, struct brw_reg dst, struct brw_reg src)
 	 }
 	 break;
       case FS_OPCODE_TXD:
-	 assert(!inst->shadow_compare);
+	 /* There is no sample_d_c message; comparisons are done manually */
 	 msg_type = GEN5_SAMPLER_MESSAGE_SAMPLE_DERIVS;
 	 break;
       }
@@ -312,7 +312,7 @@ fs_visitor::generate_tex(fs_inst *inst, struct brw_reg dst, struct brw_reg src)
 	 }
 	 break;
       case FS_OPCODE_TXD:
-	 assert(!inst->shadow_compare); // not supported yet
+	 /* There is no sample_d_c message; comparisons are done manually */
 	 assert(inst->mlen == 7 || inst->mlen == 10);
 	 msg_type = BRW_SAMPLER_MESSAGE_SIMD8_SAMPLE_GRADIENTS;
 	 break;

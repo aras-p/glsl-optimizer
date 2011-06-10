@@ -549,7 +549,7 @@ fs_visitor::emit_texture_gen4(ir_texture *ir, fs_reg dst, fs_reg coordinate,
    /* g0 header. */
    mlen = 1;
 
-   if (ir->shadow_comparitor) {
+   if (ir->shadow_comparitor && ir->op != ir_txd) {
       for (int i = 0; i < ir->coordinate->type->vector_elements; i++) {
 	 fs_inst *inst = emit(BRW_OPCODE_MOV,
 			      fs_reg(MRF, base_mrf + mlen + i), coordinate);
@@ -744,7 +744,7 @@ fs_visitor::emit_texture_gen5(ir_texture *ir, fs_reg dst, fs_reg coordinate,
    }
    mlen += ir->coordinate->type->vector_elements * reg_width;
 
-   if (ir->shadow_comparitor) {
+   if (ir->shadow_comparitor && ir->op != ir_txd) {
       mlen = MAX2(mlen, header_present + 4 * reg_width);
 
       this->result = reg_undef;
@@ -841,7 +841,7 @@ fs_visitor::emit_texture_gen7(ir_texture *ir, fs_reg dst, fs_reg coordinate,
       base_mrf--;
    }
 
-   if (ir->shadow_comparitor) {
+   if (ir->shadow_comparitor && ir->op != ir_txd) {
       ir->shadow_comparitor->accept(this);
       emit(BRW_OPCODE_MOV, fs_reg(MRF, base_mrf + mlen), this->result);
       mlen += reg_width;
@@ -936,6 +936,19 @@ fs_visitor::visit(ir_texture *ir)
 
    int sampler = _mesa_get_sampler_uniform_value(ir->sampler, prog, &fp->Base);
    sampler = fp->Base.SamplerUnits[sampler];
+
+   /* Our hardware doesn't have a sample_d_c message, so shadow compares
+    * for textureGrad/TXD need to be emulated with instructions.
+    */
+   bool hw_compare_supported = ir->op != ir_txd;
+   if (ir->shadow_comparitor && !hw_compare_supported) {
+      assert(c->key.compare_funcs[sampler] != GL_NONE);
+      /* No need to even sample for GL_ALWAYS or GL_NEVER...bail early */
+      if (c->key.compare_funcs[sampler] == GL_ALWAYS)
+	 return swizzle_result(ir, fs_reg(1.0f), sampler);
+      else if (c->key.compare_funcs[sampler] == GL_NEVER)
+	 return swizzle_result(ir, fs_reg(0.0f), sampler);
+   }
 
    this->result = reg_undef;
    ir->coordinate->accept(this);
@@ -1045,8 +1058,47 @@ fs_visitor::visit(ir_texture *ir)
 
    inst->sampler = sampler;
 
-   if (ir->shadow_comparitor)
-      inst->shadow_compare = true;
+   if (ir->shadow_comparitor) {
+      if (hw_compare_supported) {
+	 inst->shadow_compare = true;
+      } else {
+	 ir->shadow_comparitor->accept(this);
+	 fs_reg ref = this->result;
+
+	 fs_reg value = dst;
+	 dst = fs_reg(this, glsl_type::vec4_type);
+
+	 /* FINISHME: This needs to be done pre-filtering. */
+
+	 uint32_t conditional = 0;
+	 switch (c->key.compare_funcs[sampler]) {
+	 /* GL_ALWAYS and GL_NEVER were handled at the top of the function */
+	 case GL_LESS:     conditional = BRW_CONDITIONAL_L;   break;
+	 case GL_GREATER:  conditional = BRW_CONDITIONAL_G;   break;
+	 case GL_LEQUAL:   conditional = BRW_CONDITIONAL_LE;  break;
+	 case GL_GEQUAL:   conditional = BRW_CONDITIONAL_GE;  break;
+	 case GL_EQUAL:    conditional = BRW_CONDITIONAL_EQ;  break;
+	 case GL_NOTEQUAL: conditional = BRW_CONDITIONAL_NEQ; break;
+	 default: assert(!"Should not get here: bad shadow compare function");
+	 }
+
+	 /* Use conditional moves to load 0 or 1 as the result */
+	 this->current_annotation = "manual shadow comparison";
+	 for (int i = 0; i < 4; i++) {
+	    inst = emit(BRW_OPCODE_MOV, dst, fs_reg(0.0f));
+
+	    inst = emit(BRW_OPCODE_CMP, reg_null_f, ref, value);
+	    inst->conditional_mod = conditional;
+
+	    inst = emit(BRW_OPCODE_MOV, dst, fs_reg(1.0f));
+	    inst->predicated = true;
+
+	    dst.reg_offset++;
+	    value.reg_offset++;
+	 }
+	 dst.reg_offset = 0;
+      }
+   }
 
    swizzle_result(ir, dst, sampler);
 }
