@@ -45,32 +45,46 @@ static inline const char* get_precision_string (glsl_precision p)
 	return "";
 }
 
-
-class ir_print_glsl_visitor : public ir_visitor {
-public:
-	ir_print_glsl_visitor(char* buf, PrintGlslMode mode_, bool use_precision_)
-	{
-		indentation = 0;
-		buffer = buf;
-		mode = mode_;
+struct global_print_tracker {
+	global_print_tracker () {
 		temp_var_counter = 0;
 		temp_var_hash = hash_table_ctor(0, hash_table_pointer_hash, hash_table_pointer_compare);
-		use_precision = use_precision_;
 		main_function_done = false;
 	}
-
-	virtual ~ir_print_glsl_visitor()
-	{
+	
+	~global_print_tracker() {
 		clear_temps ();
 		hash_table_dtor (temp_var_hash);
 	}
-
+	
 	void clear_temps ()
 	{
 		hash_table_clear (temp_var_hash);
 		temp_var_counter = 0;
 		global_assignements.clear();
 	}
+	
+	unsigned	temp_var_counter;
+	hash_table*	temp_var_hash;
+	std::vector<ir_assignment*> global_assignements;
+	bool	main_function_done;
+};
+
+class ir_print_glsl_visitor : public ir_visitor {
+public:
+	ir_print_glsl_visitor(char* buf, global_print_tracker* globals_, PrintGlslMode mode_, bool use_precision_)
+	{
+		indentation = 0;
+		buffer = buf;
+		globals = globals_;
+		mode = mode_;
+		use_precision = use_precision_;
+	}
+
+	virtual ~ir_print_glsl_visitor()
+	{
+	}
+
 
 	void indent(void);
 	void print_var_name (ir_variable* v);
@@ -96,11 +110,8 @@ public:
 
 	int indentation;
 	char* buffer;
+	global_print_tracker* globals;
 	PrintGlslMode mode;
-	unsigned	temp_var_counter;
-	hash_table*	temp_var_hash;
-	std::vector<ir_assignment*> global_assignements;
-	bool	main_function_done;
 	bool	use_precision;
 };
 
@@ -140,6 +151,8 @@ _mesa_print_ir_glsl(exec_list *instructions,
 	 ralloc_asprintf_append (&buffer, "};\n");
       }
    }
+	
+	global_print_tracker gtracker;
 
    foreach_iter(exec_list_iterator, iter, *instructions) {
       ir_instruction *ir = (ir_instruction *)iter.get();
@@ -149,7 +162,7 @@ _mesa_print_ir_glsl(exec_list *instructions,
 			continue;
 	  }
 
-	  ir_print_glsl_visitor v (buffer, mode, state->es_shader);
+	  ir_print_glsl_visitor v (buffer, &gtracker, mode, state->es_shader);
 	  ir->accept(&v);
 	  buffer = v.buffer;
       if (ir->ir_type != ir_type_function)
@@ -170,11 +183,11 @@ void ir_print_glsl_visitor::print_var_name (ir_variable* v)
 {
 	if (v->mode == ir_var_temporary)
 	{
-		long tempID = (long)hash_table_find (temp_var_hash, v);
+		long tempID = (long)hash_table_find (globals->temp_var_hash, v);
 		if (tempID == 0)
 		{
-			tempID = ++temp_var_counter;
-			hash_table_insert (temp_var_hash, (void*)tempID, v);
+			tempID = ++globals->temp_var_counter;
+			hash_table_insert (globals->temp_var_hash, (void*)tempID, v);
 		}
 		ralloc_asprintf_append (&buffer, "tmpvar_%d", tempID);
 	}
@@ -251,7 +264,7 @@ void ir_print_glsl_visitor::visit(ir_variable *ir)
 
 void ir_print_glsl_visitor::visit(ir_function_signature *ir)
 {
-   this->temp_var_counter = 0;
+   this->globals->temp_var_counter = 0;
    print_precision (ir);
    buffer = print_type(buffer, ir->return_type, true);
    ralloc_asprintf_append (&buffer, " %s (", ir->function_name());
@@ -292,9 +305,9 @@ void ir_print_glsl_visitor::visit(ir_function_signature *ir)
 	// insert postponed global assigments
 	if (strcmp(ir->function()->name, "main") == 0)
 	{
-		assert (!main_function_done);
-		main_function_done = true;
-		for (std::vector<ir_assignment*>::iterator iter = global_assignements.begin(); iter != global_assignements.end(); ++iter)
+		assert (!globals->main_function_done);
+		globals->main_function_done = true;
+		for (std::vector<ir_assignment*>::iterator iter = globals->global_assignements.begin(); iter != globals->global_assignements.end(); ++iter)
 		{
 			ir_assignment *as = *iter;
 			as->accept(this);
@@ -569,8 +582,8 @@ void ir_print_glsl_visitor::visit(ir_assignment *ir)
 	// assignement in global scope are postponed to main function
 	if (this->mode != kPrintGlslNone)
 	{
-		assert (!this->main_function_done);
-		this->global_assignements.push_back(ir);
+		assert (!this->globals->main_function_done);
+		this->globals->global_assignements.push_back(ir);
 		ralloc_asprintf_append(&buffer, "//"); // for the ; that will follow (ugly, I know)
 		return;
 	}
