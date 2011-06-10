@@ -249,6 +249,7 @@ static void radeon_generate_mipmap(struct gl_context *ctx, GLenum target,
 	radeonTexObj* t = radeon_tex_obj(texObj);
 	GLuint nr_faces = (t->base.Target == GL_TEXTURE_CUBE_MAP) ? 6 : 1;
 	int i, face;
+	struct gl_texture_image *first_image;
 
 	radeon_print(RADEON_TEXTURE, RADEON_VERBOSE,
 			"%s(%p, tex %p) Target type %s.\n",
@@ -256,6 +257,13 @@ static void radeon_generate_mipmap(struct gl_context *ctx, GLenum target,
 			_mesa_lookup_enum_by_nr(target));
 
 	_mesa_generate_mipmap(ctx, target, texObj);
+
+	/* For the compressed case, we don't need to do the
+	 * non-TexImage recovery path below.
+	 */
+	first_image = texObj->Image[0][texObj->BaseLevel];
+	if (_mesa_is_format_compressed(first_image->TexFormat))
+		return;
 
 	for (face = 0; face < nr_faces; face++) {
 		for (i = texObj->BaseLevel + 1; i < texObj->MaxLevel; i++) {

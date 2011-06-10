@@ -75,6 +75,7 @@ intelGenerateMipmap(struct gl_context *ctx, GLenum target,
       /* sw path: need to map texture images */
       struct intel_context *intel = intel_context(ctx);
       struct intel_texture_object *intelObj = intel_texture_object(texObj);
+      struct gl_texture_image *first_image = texObj->Image[0][texObj->BaseLevel];
 
       fallback_debug("%s - fallback to swrast\n", __FUNCTION__);
 
@@ -82,7 +83,7 @@ intelGenerateMipmap(struct gl_context *ctx, GLenum target,
       _mesa_generate_mipmap(ctx, target, texObj);
       intel_tex_unmap_level_images(intel, intelObj, texObj->BaseLevel);
 
-      {
+      if (!_mesa_is_format_compressed(first_image->TexFormat)) {
          GLuint nr_faces = (texObj->Target == GL_TEXTURE_CUBE_MAP) ? 6 : 1;
          GLuint face, i;
          /* Update the level information in our private data in the new images,
