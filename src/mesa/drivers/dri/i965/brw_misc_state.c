@@ -220,19 +220,13 @@ static void emit_depthbuffer(struct brw_context *brw)
    unsigned int len;
 
    /*
-    * If depth and stencil buffers are identical, then don't use separate
-    * stencil.
+    * If either depth or stencil buffer has packed depth/stencil format,
+    * then don't use separate stencil. Emit only a depth buffer.
     */
-   if (depth_irb && depth_irb == stencil_irb) {
+   if (depth_irb && depth_irb->Base.Format == MESA_FORMAT_S8_Z24) {
       stencil_irb = NULL;
-   }
-
-   /*
-    * If stencil buffer uses combined depth/stencil format, but no depth buffer
-    * is attached, then use stencil buffer as depth buffer.
-    */
-   if (!depth_irb && stencil_irb
-       && stencil_irb->Base.Format == MESA_FORMAT_S8_Z24) {
+   } else if (!depth_irb && stencil_irb
+	      && stencil_irb->Base.Format == MESA_FORMAT_S8_Z24) {
       depth_irb = stencil_irb;
       stencil_irb = NULL;
    }
