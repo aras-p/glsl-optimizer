@@ -172,6 +172,7 @@ static const struct dri_extension brw_extensions[] = {
    { "GL_ARB_occlusion_query",            GL_ARB_occlusion_query_functions },
    { "GL_ARB_point_sprite", 		  NULL },
    { "GL_ARB_seamless_cube_map",          NULL },
+   { "GL_ARB_shader_texture_lod",         NULL },
    { "GL_ARB_shadow",                     NULL },
 #ifdef TEXTURE_FLOAT_ENABLED
    { "GL_ARB_texture_float",              NULL },
