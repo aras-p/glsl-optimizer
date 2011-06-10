@@ -1970,79 +1970,72 @@ generate_mipmap_compressed(struct gl_context *ctx, GLenum target,
 			   GLuint maxLevel)
 {
    GLint level;
-   gl_format convertFormat;
+   gl_format temp_format;
    const GLubyte *srcData = NULL;
    GLubyte *dstData = NULL;
-   GLenum datatype;
+   GLenum datatype, temp_base_format;
    GLuint comps;
+   GLuint row;
+   GLint components, size;
+   GLchan *dst;
 
-   /* Find convertFormat - the format that do_row() will process */
-   if (_mesa_is_format_compressed(srcImage->TexFormat)) {
-      /* setup for compressed textures - need to allocate temporary
-       * image buffers to hold uncompressed images.
-       */
-      GLuint row;
-      GLint  components, size;
-      GLchan *dst;
+   /* Choose the format we will do _mesa_generate_mipmap_level() in,
+    * and uncompress the firstImage into a temporary of that format.
+    */
+   assert(texObj->Target == GL_TEXTURE_2D ||
+	  texObj->Target == GL_TEXTURE_CUBE_MAP_ARB);
 
-      assert(texObj->Target == GL_TEXTURE_2D ||
-             texObj->Target == GL_TEXTURE_CUBE_MAP_ARB);
-
-      if (srcImage->_BaseFormat == GL_RGB) {
-         convertFormat = MESA_FORMAT_RGB888;
-         components = 3;
-      } else if (srcImage->_BaseFormat == GL_RED) {
-         convertFormat = MESA_FORMAT_R8;
-         components = 1;
-      } else if (srcImage->_BaseFormat == GL_RG) {
-         convertFormat = MESA_FORMAT_RG88;
-         components = 2;
-      } else if (srcImage->_BaseFormat == GL_RGBA) {
-         convertFormat = MESA_FORMAT_RGBA8888;
-         components = 4;
-      } else if (srcImage->_BaseFormat == GL_LUMINANCE) {
-         convertFormat = MESA_FORMAT_L8;
-         components = 1;
-      } else if (srcImage->_BaseFormat == GL_LUMINANCE_ALPHA) {
-         convertFormat = MESA_FORMAT_AL88;
-         components = 2;
-      } else {
-         _mesa_problem(ctx, "bad srcImage->_BaseFormat in _mesa_generate_mipmaps");
-         return;
-      }
-
-      /* allocate storage for uncompressed GL_RGB or GL_RGBA images */
-      size = _mesa_bytes_per_pixel(srcImage->_BaseFormat, CHAN_TYPE)
-         * srcImage->Width * srcImage->Height * srcImage->Depth + 20;
-      /* 20 extra bytes, just be safe when calling last FetchTexel */
-      srcData = (GLubyte *) malloc(size);
-      if (!srcData) {
-         _mesa_error(ctx, GL_OUT_OF_MEMORY, "generate mipmaps");
-         return;
-      }
-      dstData = (GLubyte *) malloc(size / 2);  /* 1/4 would probably be OK */
-      if (!dstData) {
-         _mesa_error(ctx, GL_OUT_OF_MEMORY, "generate mipmaps");
-         free((void *) srcData);
-         return;
-      }
-
-      /* decompress base image here */
-      dst = (GLchan *) srcData;
-      for (row = 0; row < srcImage->Height; row++) {
-         GLuint col;
-         for (col = 0; col < srcImage->Width; col++) {
-            srcImage->FetchTexelc(srcImage, col, row, 0, dst);
-            dst += components;
-         }
-      }
-   }
-   else {
-      /* uncompressed */
-      convertFormat = srcImage->TexFormat;
+   if (srcImage->_BaseFormat == GL_RGB) {
+      temp_format = MESA_FORMAT_RGB888;
+      components = 3;
+   } else if (srcImage->_BaseFormat == GL_RED) {
+      temp_format = MESA_FORMAT_R8;
+      components = 1;
+   } else if (srcImage->_BaseFormat == GL_RG) {
+      temp_format = MESA_FORMAT_RG88;
+      components = 2;
+   } else if (srcImage->_BaseFormat == GL_RGBA) {
+      temp_format = MESA_FORMAT_RGBA8888;
+      components = 4;
+   } else if (srcImage->_BaseFormat == GL_LUMINANCE) {
+      temp_format = MESA_FORMAT_L8;
+      components = 1;
+   } else if (srcImage->_BaseFormat == GL_LUMINANCE_ALPHA) {
+      temp_format = MESA_FORMAT_AL88;
+      components = 2;
+   } else {
+      _mesa_problem(ctx, "bad srcImage->_BaseFormat in _mesa_generate_mipmaps");
+      return;
    }
 
-   _mesa_format_to_type_and_comps(convertFormat, &datatype, &comps);
+   /* allocate storage for uncompressed GL_RGB or GL_RGBA images */
+   size = _mesa_bytes_per_pixel(srcImage->_BaseFormat, CHAN_TYPE)
+      * srcImage->Width * srcImage->Height * srcImage->Depth + 20;
+   /* 20 extra bytes, just be safe when calling last FetchTexel */
+   srcData = (GLubyte *) malloc(size);
+   if (!srcData) {
+      _mesa_error(ctx, GL_OUT_OF_MEMORY, "generate mipmaps");
+      return;
+   }
+   dstData = (GLubyte *) malloc(size / 2);  /* 1/4 would probably be OK */
+   if (!dstData) {
+      _mesa_error(ctx, GL_OUT_OF_MEMORY, "generate mipmaps");
+      free((void *) srcData);
+      return;
+   }
+
+   /* decompress base image here */
+   dst = (GLchan *) srcData;
+   for (row = 0; row < srcImage->Height; row++) {
+      GLuint col;
+      for (col = 0; col < srcImage->Width; col++) {
+	 srcImage->FetchTexelc(srcImage, col, row, 0, dst);
+	 dst += components;
+      }
+   }
+
+   _mesa_format_to_type_and_comps(temp_format, &datatype, &comps);
+   temp_base_format = _mesa_get_format_base_format(temp_format);
 
    for (level = texObj->BaseLevel; level < maxLevel; level++) {
       /* generate image[level+1] from image[level] */
@@ -2066,10 +2059,8 @@ generate_mipmap_compressed(struct gl_context *ctx, GLenum target,
                                          &dstWidth, &dstHeight, &dstDepth);
       if (!nextLevel) {
          /* all done */
-         if (_mesa_is_format_compressed(srcImage->TexFormat)) {
-            free((void *) srcData);
-            free(dstData);
-         }
+	 free((void *) srcData);
+	 free(dstData);
          return;
       }
 
@@ -2103,17 +2094,6 @@ generate_mipmap_compressed(struct gl_context *ctx, GLenum target,
          }
       }
 
-      /* Setup src and dest data pointers */
-      if (_mesa_is_format_compressed(dstImage->TexFormat)) {
-         /* srcData and dstData are already set */
-         ASSERT(srcData);
-         ASSERT(dstData);
-      }
-      else {
-         srcData = (const GLubyte *) srcImage->Data;
-         dstData = (GLubyte *) dstImage->Data;
-      }
-
       ASSERT(dstImage->TexFormat);
       ASSERT(dstImage->FetchTexelc);
       ASSERT(dstImage->FetchTexelf);
@@ -2124,27 +2104,24 @@ generate_mipmap_compressed(struct gl_context *ctx, GLenum target,
                                   dstWidth, dstHeight, dstDepth,
                                   dstData, dstImage->RowStride);
 
-      if (_mesa_is_format_compressed(dstImage->TexFormat)) {
-         GLubyte *temp;
-         /* compress image from dstData into dstImage->Data */
-         const GLenum srcFormat = _mesa_get_format_base_format(convertFormat);
-         GLint dstRowStride
-            = _mesa_format_row_stride(dstImage->TexFormat, dstWidth);
+      /* compress image from dstData into dstImage->Data */
+      _mesa_texstore(ctx, 2, dstImage->_BaseFormat,
+		     dstImage->TexFormat,
+		     dstImage->Data,
+		     0, 0, 0, /* dstX/Y/Zoffset */
+		     _mesa_format_row_stride(dstImage->TexFormat, dstWidth),
+		     NULL,
+		     dstWidth, dstHeight, 1, /* size */
+		     temp_base_format, CHAN_TYPE,
+		     dstData, /* src data, actually */
+		     &ctx->DefaultPacking);
 
-         _mesa_texstore(ctx, 2, dstImage->_BaseFormat,
-                        dstImage->TexFormat,
-                        dstImage->Data,
-                        0, 0, 0, /* dstX/Y/Zoffset */
-                        dstRowStride, 0, /* strides */
-                        dstWidth, dstHeight, 1, /* size */
-                        srcFormat, CHAN_TYPE,
-                        dstData, /* src data, actually */
-                        &ctx->DefaultPacking);
-
-         /* swap src and dest pointers */
-         temp = (GLubyte *) srcData;
-         srcData = dstData;
-         dstData = temp;
+      /* swap src and dest pointers */
+      {
+	 GLubyte *temp;
+	 temp = (GLubyte *) srcData;
+	 srcData = dstData;
+	 dstData = temp;
       }
 
    } /* loop over mipmap levels */
