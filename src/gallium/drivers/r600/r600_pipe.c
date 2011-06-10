@@ -138,11 +138,6 @@ static void r600_flush(struct pipe_context *ctx,
 	dc++;
 #endif
 	r600_context_flush(&rctx->ctx);
-
-	/* XXX This shouldn't be really necessary, but removing it breaks some tests.
-	 * Needless buffer reallocations may significantly increase memory consumption,
-	 * so getting rid of this call is important. */
-	u_upload_flush(rctx->vbuf_mgr->uploader);
 }
 
 static void r600_update_num_contexts(struct r600_screen *rscreen, int diff)
