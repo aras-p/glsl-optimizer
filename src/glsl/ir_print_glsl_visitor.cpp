@@ -28,6 +28,7 @@
 #include "ir_unused_structs.h"
 #include "program/hash_table.h"
 #include <math.h>
+#include <vector>
 
 static char* print_type(char* buffer, const glsl_type *t, bool arraySize);
 static char* print_type_post(char* buffer, const glsl_type *t, bool arraySize);
@@ -55,6 +56,7 @@ public:
 		temp_var_counter = 0;
 		temp_var_hash = hash_table_ctor(0, hash_table_pointer_hash, hash_table_pointer_compare);
 		use_precision = use_precision_;
+		main_function_done = false;
 	}
 
 	virtual ~ir_print_glsl_visitor()
@@ -67,6 +69,7 @@ public:
 	{
 		hash_table_clear (temp_var_hash);
 		temp_var_counter = 0;
+		global_assignements.clear();
 	}
 
 	void indent(void);
@@ -96,6 +99,8 @@ public:
 	PrintGlslMode mode;
 	unsigned	temp_var_counter;
 	hash_table*	temp_var_hash;
+	std::vector<ir_assignment*> global_assignements;
+	bool	main_function_done;
 	bool	use_precision;
 };
 
@@ -283,6 +288,19 @@ void ir_print_glsl_visitor::visit(ir_function_signature *ir)
    indent();
    ralloc_asprintf_append (&buffer, "{\n");
    indentation++;
+	
+	// insert postponed global assigments
+	if (strcmp(ir->function()->name, "main") == 0)
+	{
+		assert (!main_function_done);
+		main_function_done = true;
+		for (std::vector<ir_assignment*>::iterator iter = global_assignements.begin(); iter != global_assignements.end(); ++iter)
+		{
+			ir_assignment *as = *iter;
+			as->accept(this);
+			ralloc_asprintf_append(&buffer, ";\n");
+		}
+	}
 
    foreach_iter(exec_list_iterator, iter, ir->body) {
       ir_instruction *const inst = (ir_instruction *) iter.get();
@@ -548,6 +566,15 @@ void ir_print_glsl_visitor::visit(ir_dereference_record *ir)
 
 void ir_print_glsl_visitor::visit(ir_assignment *ir)
 {
+	// assignement in global scope are postponed to main function
+	if (this->mode != kPrintGlslNone)
+	{
+		assert (!this->main_function_done);
+		this->global_assignements.push_back(ir);
+		ralloc_asprintf_append(&buffer, "//"); // for the ; that will follow (ugly, I know)
+		return;
+	}
+	
    if (ir->condition)
    {
       ir->condition->accept(this);
