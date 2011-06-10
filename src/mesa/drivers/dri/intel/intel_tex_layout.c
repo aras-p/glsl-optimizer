@@ -97,11 +97,9 @@ void i945_miptree_layout_2d(struct intel_context *intel,
       intel_miptree_set_level_info(mt, level, nr_images, x, y, width,
 				   height, 1);
 
+      img_height = ALIGN(height, align_h);
       if (mt->compressed)
-	 img_height = MAX2(1, height/4);
-      else
-	 img_height = ALIGN(height, align_h);
-
+	 img_height /= align_h;
 
       /* Because the images are packed better, the final offset
        * might not be the maximal one:
