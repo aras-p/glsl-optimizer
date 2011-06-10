@@ -1533,6 +1533,8 @@ fs_visitor::run()
 	 this->result = reg_undef;
 	 ir->accept(this);
       }
+      if (failed)
+	 return false;
 
       emit_fb_writes();
 
