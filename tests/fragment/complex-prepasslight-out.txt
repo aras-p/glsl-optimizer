@@ -28,7 +28,7 @@ void main ()
   normal = normalize (((tmpvar_2.xyz * 2.0) - 1.0));
   vec4 tmpvar_3;
   tmpvar_3.w = 1.0;
-  tmpvar_3.xyz = ((xlv_TEXCOORD1 * (_ProjectionParams.z / xlv_TEXCOORD1.z)) * 1.0/(((_ZBufferParams.x * texture2D (_CameraDepthTexture, tmpvar_1).x) + _ZBufferParams.y)));
+  tmpvar_3.xyz = ((xlv_TEXCOORD1 * (_ProjectionParams.z / xlv_TEXCOORD1.z)) * (1.0/(((_ZBufferParams.x * texture2D (_CameraDepthTexture, tmpvar_1).x) + _ZBufferParams.y))));
   vec3 tmpvar_4;
   tmpvar_4 = (_CameraToWorld * tmpvar_3).xyz;
   vec3 tmpvar_5;

@@ -80,7 +80,7 @@ void main ()
   vec4 tmpvar_18;
   tmpvar_18 = (((tmpvar_15 * tmpvar_15) + (tmpvar_16 * tmpvar_16)) + (tmpvar_17 * tmpvar_17));
   vec4 tmpvar_19;
-  tmpvar_19 = (max (vec4(0.0, 0.0, 0.0, 0.0), ((((tmpvar_15 * tmpvar_11.x) + (tmpvar_16 * tmpvar_11.y)) + (tmpvar_17 * tmpvar_11.z)) * inversesqrt (tmpvar_18))) * 1.0/((1.0 + (tmpvar_18 * unity_4LightAtten0))));
+  tmpvar_19 = (max (vec4(0.0, 0.0, 0.0, 0.0), ((((tmpvar_15 * tmpvar_11.x) + (tmpvar_16 * tmpvar_11.y)) + (tmpvar_17 * tmpvar_11.z)) * inversesqrt (tmpvar_18))) * (1.0/((1.0 + (tmpvar_18 * unity_4LightAtten0)))));
   vec4 o_i0;
   vec4 tmpvar_20;
   tmpvar_20 = (tmpvar_9 * 0.5);

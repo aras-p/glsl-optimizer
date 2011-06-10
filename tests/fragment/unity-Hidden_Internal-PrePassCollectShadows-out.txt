@@ -12,7 +12,7 @@ void main ()
 {
   vec4 res;
   float tmpvar_1;
-  tmpvar_1 = 1.0/(((_ZBufferParams.x * texture2D (_CameraDepthTexture, gl_TexCoord[0].xy).x) + _ZBufferParams.y));
+  tmpvar_1 = (1.0/(((_ZBufferParams.x * texture2D (_CameraDepthTexture, gl_TexCoord[0].xy).x) + _ZBufferParams.y)));
   vec4 tmpvar_2;
   tmpvar_2.w = 1.0;
   tmpvar_2.xyz = (gl_TexCoord[1].xyz * tmpvar_1);

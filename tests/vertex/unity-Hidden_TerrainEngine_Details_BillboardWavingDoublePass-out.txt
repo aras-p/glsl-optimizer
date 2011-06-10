@@ -96,7 +96,7 @@ void main ()
   vec4 tmpvar_20;
   tmpvar_20 = (((tmpvar_17 * tmpvar_17) + (tmpvar_18 * tmpvar_18)) + (tmpvar_19 * tmpvar_19));
   vec4 tmpvar_21;
-  tmpvar_21 = (max (vec4(0.0, 0.0, 0.0, 0.0), ((((tmpvar_17 * tmpvar_13.x) + (tmpvar_18 * tmpvar_13.y)) + (tmpvar_19 * tmpvar_13.z)) * inversesqrt (tmpvar_20))) * 1.0/((1.0 + (tmpvar_20 * unity_4LightAtten0))));
+  tmpvar_21 = (max (vec4(0.0, 0.0, 0.0, 0.0), ((((tmpvar_17 * tmpvar_13.x) + (tmpvar_18 * tmpvar_13.y)) + (tmpvar_19 * tmpvar_13.z)) * inversesqrt (tmpvar_20))) * (1.0/((1.0 + (tmpvar_20 * unity_4LightAtten0)))));
   gl_Position = tmpvar_11;
   vec4 tmpvar_22;
   tmpvar_22.yzw = vec3(0.0, 0.0, 0.0);

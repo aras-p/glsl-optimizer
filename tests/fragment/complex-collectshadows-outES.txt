@@ -19,7 +19,7 @@ void main ()
   tmpvar_2 = texture2D (_CameraDepthTexture, xlv_TEXCOORD0).x;
   depth = tmpvar_2;
   highp float tmpvar_3;
-  tmpvar_3 = 1.0/(((_ZBufferParams.x * depth) + _ZBufferParams.y));
+  tmpvar_3 = (1.0/(((_ZBufferParams.x * depth) + _ZBufferParams.y)));
   depth = tmpvar_3;
   highp vec4 tmpvar_4;
   tmpvar_4.w = 1.0;

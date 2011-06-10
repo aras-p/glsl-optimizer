@@ -28,7 +28,7 @@ void main ()
   tmpvar_4 = texture2D (_CameraNormalsTexture, tmpvar_3);
   normal = normalize (((tmpvar_4.xyz * 2.0) - 1.0));
   vec3 tmpvar_5;
-  tmpvar_5 = ((tmpvar_2 * (_ProjectionParams.z / tmpvar_2.z)) * 1.0/(((_ZBufferParams.x * texture2D (_CameraDepthTexture, tmpvar_3).x) + _ZBufferParams.y)));
+  tmpvar_5 = ((tmpvar_2 * (_ProjectionParams.z / tmpvar_2.z)) * (1.0/(((_ZBufferParams.x * texture2D (_CameraDepthTexture, tmpvar_3).x) + _ZBufferParams.y))));
   vec3 tmpvar_6;
   tmpvar_6 = (_LightPos.xyz - tmpvar_5);
   lightDir = normalize (tmpvar_6);
