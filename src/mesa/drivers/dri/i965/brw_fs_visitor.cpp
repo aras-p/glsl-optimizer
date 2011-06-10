@@ -932,8 +932,10 @@ fs_visitor::emit_texture_gen7(ir_texture *ir, fs_reg dst, fs_reg coordinate,
 void
 fs_visitor::visit(ir_texture *ir)
 {
-   int sampler;
    fs_inst *inst = NULL;
+
+   int sampler = _mesa_get_sampler_uniform_value(ir->sampler, prog, &fp->Base);
+   sampler = fp->Base.SamplerUnits[sampler];
 
    this->result = reg_undef;
    ir->coordinate->accept(this);
@@ -972,11 +974,6 @@ fs_visitor::visit(ir_texture *ir)
 
    /* Should be lowered by do_lower_texture_projection */
    assert(!ir->projector);
-
-   sampler = _mesa_get_sampler_uniform_value(ir->sampler,
-					     prog,
-					     &fp->Base);
-   sampler = fp->Base.SamplerUnits[sampler];
 
    /* The 965 requires the EU to do the normalization of GL rectangle
     * texture coordinates.  We use the program parameter state
