@@ -1,0 +1,16 @@
+float otherValue;
+uniform float value;
+float tmpvar_1;
+tmpvar_1 = log (value);
+float tmpvar_1;
+tmpvar_1 = tmpvar_2;
+otherValue = tmpvar_1;
+void main ()
+{
+  vec4 tmpvar_1;
+  tmpvar_1 = vec4(otherValue);
+  vec4 tmpvar_2;
+  tmpvar_2 = tmpvar_1;
+  gl_FragColor = tmpvar_2;
+}
+
