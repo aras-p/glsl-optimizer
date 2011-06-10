@@ -100,7 +100,7 @@ fs_visitor::fail(const char *format, ...)
    this->fail_msg = msg;
 
    if (INTEL_DEBUG & DEBUG_WM) {
-      fprintf(stderr, msg);
+      fprintf(stderr, "%s",  msg);
    }
 }
 
