@@ -278,6 +278,7 @@ static void brw_prepare_vertices(struct brw_context *brw)
 {
    struct gl_context *ctx = &brw->intel.ctx;
    struct intel_context *intel = intel_context(ctx);
+   /* CACHE_NEW_VS_PROG */
    GLbitfield vs_inputs = brw->vs.prog_data->inputs_read;
    const unsigned char *ptr = NULL;
    GLuint interleaved = 0, total_size = 0;
@@ -646,7 +647,7 @@ const struct brw_tracked_state brw_vertices = {
    .dirty = {
       .mesa = 0,
       .brw = BRW_NEW_BATCH | BRW_NEW_VERTICES,
-      .cache = 0,
+      .cache = CACHE_NEW_VS_PROG,
    },
    .prepare = brw_prepare_vertices,
    .emit = brw_emit_vertices,
