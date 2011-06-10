@@ -1045,20 +1045,30 @@ fs_visitor::visit(ir_texture *ir)
 
    inst->sampler = sampler;
 
-   this->result = dst;
-
    if (ir->shadow_comparitor)
       inst->shadow_compare = true;
+
+   swizzle_result(ir, dst, sampler);
+}
+
+/**
+ * Swizzle the result of a texture result.  This is necessary for
+ * EXT_texture_swizzle as well as DEPTH_TEXTURE_MODE for shadow comparisons.
+ */
+void
+fs_visitor::swizzle_result(ir_texture *ir, fs_reg orig_val, int sampler)
+{
+   this->result = orig_val;
 
    if (ir->type == glsl_type::float_type) {
       /* Ignore DEPTH_TEXTURE_MODE swizzling. */
       assert(ir->sampler->type->sampler_shadow);
-   } else if (c->key.tex_swizzles[inst->sampler] != SWIZZLE_NOOP) {
-      fs_reg swizzle_dst = fs_reg(this, glsl_type::vec4_type);
+   } else if (c->key.tex_swizzles[sampler] != SWIZZLE_NOOP) {
+      fs_reg swizzled_result = fs_reg(this, glsl_type::vec4_type);
 
       for (int i = 0; i < 4; i++) {
-	 int swiz = GET_SWZ(c->key.tex_swizzles[inst->sampler], i);
-	 fs_reg l = swizzle_dst;
+	 int swiz = GET_SWZ(c->key.tex_swizzles[sampler], i);
+	 fs_reg l = swizzled_result;
 	 l.reg_offset += i;
 
 	 if (swiz == SWIZZLE_ZERO) {
@@ -1066,12 +1076,12 @@ fs_visitor::visit(ir_texture *ir)
 	 } else if (swiz == SWIZZLE_ONE) {
 	    emit(BRW_OPCODE_MOV, l, fs_reg(1.0f));
 	 } else {
-	    fs_reg r = dst;
-	    r.reg_offset += GET_SWZ(c->key.tex_swizzles[inst->sampler], i);
+	    fs_reg r = orig_val;
+	    r.reg_offset += GET_SWZ(c->key.tex_swizzles[sampler], i);
 	    emit(BRW_OPCODE_MOV, l, r);
 	 }
       }
-      this->result = swizzle_dst;
+      this->result = swizzled_result;
    }
 }
 
