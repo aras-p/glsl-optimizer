@@ -48,6 +48,7 @@ void r600_translate_index_buffer(struct r600_pipe_context *r600,
 				&r600->context, *index_buffer, 0, *start, count, ptr);
 
 		pipe_resource_reference(index_buffer, out_buffer);
+		pipe_resource_reference(&out_buffer, NULL);
 		*index_size = 2;
 		*start = out_offset / 2;
 		break;
