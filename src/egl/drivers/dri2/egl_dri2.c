@@ -528,10 +528,24 @@ dri2_terminate(_EGLDriver *drv, _EGLDisplay *disp)
    if (dri2_dpy->fd)
       close(dri2_dpy->fd);
    dlclose(dri2_dpy->driver);
+
+   if (disp->PlatformDisplay == NULL) {
+      switch (disp->Platform) {
 #ifdef HAVE_X11_PLATFORM
-   if (disp->PlatformDisplay == NULL)
-      xcb_disconnect(dri2_dpy->conn);
+      case _EGL_PLATFORM_X11:
+         xcb_disconnect(dri2_dpy->conn);
+         break;
 #endif
+#ifdef HAVE_WAYLAND_PLATFORM
+      case _EGL_PLATFORM_WAYLAND:
+         wl_display_destroy(dri2_dpy->wl_dpy);
+         break;
+#endif
+      default:
+         break;
+      }
+   }
+
    free(dri2_dpy);
    disp->DriverData = NULL;
 
