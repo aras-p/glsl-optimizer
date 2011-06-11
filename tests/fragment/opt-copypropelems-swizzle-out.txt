@@ -1,10 +1,13 @@
-varying vec4 var;
+uniform sampler2D tex;
+varying vec2 uv;
 void main ()
 {
   vec4 v;
-  v = var;
-  v.xy = var.yx;
-  v.x = -(var.y);
+  vec4 tmpvar_1;
+  tmpvar_1 = texture2D (tex, uv);
+  v = tmpvar_1;
+  v.xy = tmpvar_1.yx;
+  v.x = -(tmpvar_1.y);
   gl_FragColor = v;
 }
 
