@@ -1,0 +1,10 @@
+varying vec4 var;
+void main ()
+{
+  vec4 v;
+  v = var;
+  v.xy = var.yx;
+  v.x = -(var.y);
+  gl_FragColor = v;
+}
+
