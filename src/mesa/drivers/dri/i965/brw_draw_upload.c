@@ -500,6 +500,8 @@ static void brw_prepare_vertices(struct brw_context *brw)
 	    break;
 
 	 d = brw->vb.buffers[i].offset - brw->vb.current_buffers[i].offset;
+	 if (d < 0)
+	    break;
 	 if (i == 0)
 	    delta = d / brw->vb.current_buffers[i].stride;
 	 if (delta * brw->vb.current_buffers[i].stride != d)
