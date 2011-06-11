@@ -97,6 +97,18 @@ EGLint dri2_to_egl_attribute_map[] = {
    0,				/* __DRI_ATTRIB_FRAMEBUFFER_SRGB_CAPABLE */
 };
 
+static EGLBoolean
+dri2_match_config(const _EGLConfig *conf, const _EGLConfig *criteria)
+{
+   if (_eglCompareConfigs(conf, criteria, NULL, EGL_FALSE) != 0)
+      return EGL_FALSE;
+
+   if (!_eglMatchConfig(conf, criteria))
+      return EGL_FALSE;
+
+   return EGL_TRUE;
+}
+
 struct dri2_egl_config *
 dri2_add_config(_EGLDisplay *disp, const __DRIconfig *dri_config, int id,
 		int depth, EGLint surface_type, const EGLint *attr_list)
@@ -190,7 +202,7 @@ dri2_add_config(_EGLDisplay *disp, const __DRIconfig *dri_config, int id,
    base.ConfigID    = EGL_DONT_CARE;
    base.SurfaceType = EGL_DONT_CARE;
    num_configs = _eglFilterArray(disp->Configs, (void **) &matching_config, 1,
-                                 (_EGLArrayForEach) _eglMatchConfig, &base);
+                                 (_EGLArrayForEach) dri2_match_config, &base);
 
    if (num_configs == 1) {
       conf = (struct dri2_egl_config *) matching_config;
