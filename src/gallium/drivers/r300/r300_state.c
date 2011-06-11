@@ -1307,7 +1307,7 @@ static void*
     sampler->filter0 |= r300_translate_tex_filters(state->min_img_filter,
                                                    state->mag_img_filter,
                                                    state->min_mip_filter,
-                                                   state->max_anisotropy > 0);
+                                                   state->max_anisotropy > 1);
 
     sampler->filter0 |= r300_anisotropy(state->max_anisotropy);
 
