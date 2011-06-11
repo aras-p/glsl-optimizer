@@ -98,6 +98,8 @@ wayland_drm_display_destroy(struct native_display *ndpy)
       FREE(drmdpy->device_name);
    if (drmdpy->base.config)
       FREE(drmdpy->base.config);
+   if (drmdpy->base.own_dpy)
+      wl_display_destroy(drmdpy->base.dpy);
 
    ndpy_uninit(ndpy);
 

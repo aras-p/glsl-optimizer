@@ -459,8 +459,16 @@ static struct native_display *
 native_create_display(void *dpy, boolean use_sw, void *user_data)
 {
    struct wayland_display *display = NULL;
+   boolean own_dpy = FALSE;
 
    use_sw = use_sw || debug_get_bool_option("EGL_SOFTWARE", FALSE);
+
+   if (dpy == NULL) {
+      dpy = wl_display_connect(NULL);
+      if (dpy == NULL)
+         return NULL;
+      own_dpy = TRUE;
+   }
 
    if (use_sw) {
       _eglLog(_EGL_INFO, "use software fallback");
@@ -481,6 +489,8 @@ native_create_display(void *dpy, boolean use_sw, void *user_data)
    display->base.is_pixmap_supported = wayland_display_is_pixmap_supported;
    display->base.create_window_surface = wayland_create_window_surface;
    display->base.create_pixmap_surface = wayland_create_pixmap_surface;
+
+   display->own_dpy = own_dpy;
 
    return &display->base;
 }

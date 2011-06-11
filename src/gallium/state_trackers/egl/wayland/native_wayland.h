@@ -41,6 +41,7 @@ struct wayland_display {
 
    struct wayland_config *config;
    struct wl_display *dpy;
+   boolean own_dpy;
 
    struct wl_buffer *(*create_buffer)(struct wayland_display *display,
                                       struct wayland_surface *surface,
