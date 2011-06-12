@@ -40,9 +40,18 @@
 #include <OpenGL/OpenGL.h>
 #include <OpenGL/CGLContext.h>
 #include <OpenGL/CGLRenderers.h>
+#include <OpenGL/CGLTypes.h>
 #undef glTexImage1D
 #undef glTexImage2D
 #undef glTexImage3D
+
+#ifndef kCGLPFAOpenGLProfile
+#define kCGLPFAOpenGLProfile 99
+#endif
+
+#ifndef kCGLOGLPVersion_3_2_Core
+#define kCGLOGLPVersion_3_2_Core 0x3200
+#endif
 
 #include "apple_cgl.h"
 #include "apple_visual.h"
@@ -63,6 +72,12 @@ apple_visual_create_pfobj(CGLPixelFormatObj * pfobj, const struct glx_config * m
    int numattr = 0;
    GLint vsref = 0;
    CGLError error = 0;
+
+   /* Request an OpenGL 3.2 profile if one is available */
+   if(apple_cgl.version_major > 1 || (apple_cgl.version_major == 1 && apple_cgl.version_minor >= 3)) {
+      attr[numattr++] = kCGLPFAOpenGLProfile;
+      attr[numattr++] = kCGLOGLPVersion_3_2_Core;
+   }
 
    if (offscreen) {
       apple_glx_diagnostic
