@@ -1635,7 +1635,7 @@ static void emit_vertex_write( struct brw_vs_compile *c)
 	    else
 	       m = brw_message_reg(4);
 
-	    brw_DP4(p, brw_writemask(m, (1 << (i & 7))),pos, c->userplane[i]);
+	    brw_DP4(p, brw_writemask(m, (1 << (i & 3))),pos, c->userplane[i]);
 	 }
       }
    } else if ((c->prog_data.outputs_written &
