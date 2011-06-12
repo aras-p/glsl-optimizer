@@ -40,7 +40,8 @@
 
 struct apple_cgl_api
 {
-   void (*get_version) (GLint * majorvers, GLint * minorvers);
+     GLint version_major, version_minor;
+     void (*get_version) (GLint * version_major, GLint * version_minor);
 
      CGLError(*choose_pixel_format) (const CGLPixelFormatAttribute * attribs,
                                      CGLPixelFormatObj * pix, GLint * npix);
