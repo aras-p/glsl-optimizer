@@ -650,7 +650,8 @@ st_draw_vbo(struct gl_context *ctx,
    struct pipe_draw_info info;
    unsigned i, num_instances = 1;
    GLboolean new_array =
-         st->dirty.st && (st->dirty.mesa & (_NEW_ARRAY | _NEW_PROGRAM)) != 0;
+      st->dirty.st &&
+      (st->dirty.mesa & (_NEW_ARRAY | _NEW_PROGRAM | _NEW_BUFFER_OBJECT)) != 0;
 
    /* Mesa core state should have been validated already */
    assert(ctx->NewState == 0x0);
