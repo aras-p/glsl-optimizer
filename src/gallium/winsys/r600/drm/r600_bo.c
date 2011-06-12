@@ -59,22 +59,18 @@ struct r600_bo *r600_bo(struct radeon *radeon,
 		}
 	}
 
-	if (binding & (PIPE_BIND_CONSTANT_BUFFER | PIPE_BIND_VERTEX_BUFFER | PIPE_BIND_INDEX_BUFFER)) {
+	switch(usage) {
+	case PIPE_USAGE_DYNAMIC:
+	case PIPE_USAGE_STREAM:
+	case PIPE_USAGE_STAGING:
 		initial_domain = RADEON_GEM_DOMAIN_GTT;
-	} else {
-		switch(usage) {
-		case PIPE_USAGE_DYNAMIC:
-		case PIPE_USAGE_STREAM:
-		case PIPE_USAGE_STAGING:
-			initial_domain = RADEON_GEM_DOMAIN_GTT;
-			break;
-		case PIPE_USAGE_DEFAULT:
-		case PIPE_USAGE_STATIC:
-		case PIPE_USAGE_IMMUTABLE:
-		default:
-			initial_domain = RADEON_GEM_DOMAIN_VRAM;
-			break;
-		}
+		break;
+	case PIPE_USAGE_DEFAULT:
+	case PIPE_USAGE_STATIC:
+	case PIPE_USAGE_IMMUTABLE:
+	default:
+		initial_domain = RADEON_GEM_DOMAIN_VRAM;
+		break;
 	}
 	rbo = radeon_bo(radeon, 0, size, alignment, initial_domain);
 	if (rbo == NULL) {
