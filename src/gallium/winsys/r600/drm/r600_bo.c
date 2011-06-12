@@ -38,11 +38,23 @@ struct r600_bo *r600_bo(struct radeon *radeon,
 {
 	struct r600_bo *bo;
 	struct radeon_bo *rbo;
-	uint32_t initial_domain;
+	uint32_t initial_domain, domains;
 	  
+	/* Staging resources particpate in transfers and blits only
+	 * and are used for uploads and downloads from regular
+	 * resources.  We generate them internally for some transfers.
+	 */
+	if (usage == PIPE_USAGE_STAGING)
+		domains = RADEON_GEM_DOMAIN_CPU | RADEON_GEM_DOMAIN_GTT;
+	else
+		domains = (RADEON_GEM_DOMAIN_CPU |
+				RADEON_GEM_DOMAIN_GTT |
+				RADEON_GEM_DOMAIN_VRAM);
+
 	if (binding & (PIPE_BIND_CONSTANT_BUFFER | PIPE_BIND_VERTEX_BUFFER | PIPE_BIND_INDEX_BUFFER)) {
 		bo = r600_bomgr_bo_create(radeon->bomgr, size, alignment, *radeon->cfence);
 		if (bo) {
+			bo->domains = domains;
 			return bo;
 		}
 	}
@@ -72,21 +84,11 @@ struct r600_bo *r600_bo(struct radeon *radeon,
 	bo = calloc(1, sizeof(struct r600_bo));
 	bo->size = size;
 	bo->alignment = alignment;
+	bo->domains = domains;
 	bo->bo = rbo;
 	if (binding & (PIPE_BIND_CONSTANT_BUFFER | PIPE_BIND_VERTEX_BUFFER | PIPE_BIND_INDEX_BUFFER)) {
 		r600_bomgr_bo_init(radeon->bomgr, bo);
 	}
-
-	/* Staging resources particpate in transfers and blits only
-	 * and are used for uploads and downloads from regular
-	 * resources.  We generate them internally for some transfers.
-	 */
-	if (usage == PIPE_USAGE_STAGING)
-		bo->domains = RADEON_GEM_DOMAIN_CPU | RADEON_GEM_DOMAIN_GTT;
-	else
-		bo->domains = (RADEON_GEM_DOMAIN_CPU |
-				RADEON_GEM_DOMAIN_GTT |
-				RADEON_GEM_DOMAIN_VRAM);
 
 	pipe_reference_init(&bo->reference, 1);
 	return bo;
