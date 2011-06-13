@@ -42,7 +42,6 @@ header = """
 
 #include "glapi.h"
 #include "glapitable.h"
-#include "main/dispatch.h"
 
 struct _glapi_table *
 _glapi_create_table_from_handle(void *handle, const char *symbol_prefix) {
@@ -50,7 +49,10 @@ _glapi_create_table_from_handle(void *handle, const char *symbol_prefix) {
     char symboln[512];
 
     if(!disp)
-         return NULL;
+        return NULL;
+
+    if(symbol_prefix == NULL)
+        symbol_prefix = "";
 """
 
 footer = """
@@ -60,8 +62,9 @@ footer = """
 
 body_template = """
     if(!disp->%(name)s) {
-         snprintf(symboln, sizeof(symboln), "%%s%(entry_point)s", symbol_prefix);
-         SET_%(name)s(disp, dlsym(handle, symboln));
+        snprintf(symboln, sizeof(symboln), "%%s%(entry_point)s", symbol_prefix);
+        _glapi_proc *procp = (_glapi_proc *)&disp->%(name)s;
+        *procp = (_glapi_proc) dlsym(handle, symboln);
     }
 """
 
