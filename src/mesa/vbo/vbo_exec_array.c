@@ -337,7 +337,8 @@ print_draw_arrays(struct gl_context *ctx,
 	  mode, start, count);
 
    for (i = 0; i < 32; i++) {
-      GLuint bufName = exec->array.inputs[i]->BufferObj->Name;
+      struct gl_buffer_object *bufObj = exec->array.inputs[i]->BufferObj;
+      GLuint bufName = bufObj->Name;
       GLint stride = exec->array.inputs[i]->Stride;
       printf("attr %2d: size %d stride %d  enabled %d  "
 	     "ptr %p  Bufobj %u\n",
@@ -350,9 +351,8 @@ print_draw_arrays(struct gl_context *ctx,
 	     bufName);
 
       if (bufName) {
-         struct gl_buffer_object *buf = _mesa_lookup_bufferobj(ctx, bufName);
          GLubyte *p = ctx->Driver.MapBuffer(ctx, GL_ARRAY_BUFFER_ARB,
-                                            GL_READ_ONLY_ARB, buf);
+                                            GL_READ_ONLY_ARB, bufObj);
          int offset = (int) (GLintptr) exec->array.inputs[i]->Ptr;
          float *f = (float *) (p + offset);
          int *k = (int *) f;
@@ -364,7 +364,7 @@ print_draw_arrays(struct gl_context *ctx,
          for (i = 0; i < n; i++) {
             printf("    float[%d] = 0x%08x %f\n", i, k[i], f[i]);
          }
-         ctx->Driver.UnmapBuffer(ctx, GL_ARRAY_BUFFER_ARB, buf);
+         ctx->Driver.UnmapBuffer(ctx, GL_ARRAY_BUFFER_ARB, bufObj);
       }
    }
 }
