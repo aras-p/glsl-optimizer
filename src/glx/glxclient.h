@@ -335,7 +335,6 @@ struct glx_context
 
 #if defined(GLX_DIRECT_RENDERING) && defined(GLX_USE_APPLEGL)
    void *driContext;
-   Bool do_destroy;
 #endif
 
     /**

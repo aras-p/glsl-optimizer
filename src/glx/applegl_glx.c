@@ -116,7 +116,6 @@ applegl_create_context(struct glx_screen *psc,
 
    gc->vtable = &applegl_context_vtable;
    gc->driContext = NULL;
-   gc->do_destroy = False;
 
    /* TODO: darwin: Integrate with above to do indirect */
    if(apple_glx_create_context(&gc->driContext, dpy, screen, config, 
