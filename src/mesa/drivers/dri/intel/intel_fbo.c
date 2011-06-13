@@ -35,7 +35,7 @@
 #include "main/renderbuffer.h"
 #include "main/context.h"
 #include "main/teximage.h"
-#include "swrast/s_texrender.h"
+#include "swrast/swrast.h"
 #include "drivers/common/meta.h"
 
 #include "intel_context.h"

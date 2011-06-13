@@ -35,7 +35,7 @@
 #include "main/framebuffer.h"
 #include "main/renderbuffer.h"
 #include "main/context.h"
-#include "swrast/s_texrender.h"
+#include "swrast/swrast.h"
 #include "drivers/common/meta.h"
 
 #include "radeon_common.h"
