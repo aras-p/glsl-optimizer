@@ -1,11 +1,11 @@
 TOP = ../../../..
 include $(TOP)/configs/current
 
-LIBNAME = radeon_drv.so
+LIBNAME = r300_drv.so
 
 C_SOURCES = \
-	radeon_target.c \
-	radeon_xorg.c
+	target.c \
+	xorg.c
 
 DRIVER_DEFINES = \
 	-DHAVE_CONFIG_H -DGALLIUM_RBUG -DGALLIUM_TRACE -DGALLIUM_GALAHAD
