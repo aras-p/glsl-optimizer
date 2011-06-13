@@ -86,12 +86,13 @@ __asm__(".text");
 extern unsigned long
 x86_current_tls();
 
+static char x86_entry_start[];
+static char x86_entry_end[];
+
 void
 entry_patch_public(void)
 {
 #ifndef GLX_X86_READONLY_TEXT
-   extern char x86_entry_start[];
-   extern char x86_entry_end[];
    char patch[8] = {
       0x65, 0xa1, 0x00, 0x00, 0x00, 0x00, /* movl %gs:0x0, %eax */
       0x90, 0x90                          /* nop's */
@@ -108,7 +109,6 @@ entry_patch_public(void)
 mapi_func
 entry_get_public(int slot)
 {
-   extern char x86_entry_start[];
    return (mapi_func) (x86_entry_start + slot * 16);
 }
 
