@@ -377,8 +377,7 @@ DestroyContext(Display * dpy, GLXContext ctx)
    }
    __glXUnlock();
 
-   if (gc->vtable->destroy)
-      gc->vtable->destroy(gc);
+   gc->vtable->destroy(gc);
 }
 
 _X_EXPORT void
