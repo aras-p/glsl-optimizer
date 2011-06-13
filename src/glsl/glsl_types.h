@@ -165,6 +165,21 @@ struct glsl_type {
    static const glsl_type *const mat4x3_type;
    static const glsl_type *const mat4_type;
    /*@}*/
+   
+   /**
+    * Get the built-in instance of the vec4 type for a specific base type
+    */
+   static const glsl_type *get_vec4_type(glsl_base_type base_type)
+   {
+      if (base_type == GLSL_TYPE_FLOAT)
+         return vec4_type;
+      else if (base_type == GLSL_TYPE_INT)
+         return ivec4_type;
+      else if (base_type == GLSL_TYPE_UINT)
+         return uvec4_type;
+      else
+         return NULL;
+   }
 
 
    /**

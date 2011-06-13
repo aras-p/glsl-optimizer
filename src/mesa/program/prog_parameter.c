@@ -241,9 +241,9 @@ _mesa_add_named_constant(struct gl_program_parameter_list *paramList,
  * \return index/position of the new parameter in the parameter list.
  */
 GLint
-_mesa_add_unnamed_constant(struct gl_program_parameter_list *paramList,
+_mesa_add_typed_unnamed_constant(struct gl_program_parameter_list *paramList,
                            const gl_constant_value values[4], GLuint size,
-                           GLuint *swizzleOut)
+                           GLenum datatype, GLuint *swizzleOut)
 {
    GLint pos;
    ASSERT(size >= 1);
@@ -276,7 +276,7 @@ _mesa_add_unnamed_constant(struct gl_program_parameter_list *paramList,
 
    /* add a new parameter to store this constant */
    pos = _mesa_add_parameter(paramList, PROGRAM_CONSTANT, NULL,
-                             size, GL_NONE, values, NULL, 0x0);
+                             size, datatype, values, NULL, 0x0);
    if (pos >= 0 && swizzleOut) {
       if (size == 1)
          *swizzleOut = SWIZZLE_XXXX;
@@ -284,6 +284,28 @@ _mesa_add_unnamed_constant(struct gl_program_parameter_list *paramList,
          *swizzleOut = SWIZZLE_NOOP;
    }
    return pos;
+}
+
+/**
+ * Add a new unnamed constant to the parameter list.  This will be used
+ * when a fragment/vertex program contains something like this:
+ *    MOV r, { 0, 1, 2, 3 };
+ * If swizzleOut is non-null we'll search the parameter list for an
+ * existing instance of the constant which matches with a swizzle.
+ *
+ * \param paramList  the parameter list
+ * \param values  four float values
+ * \param swizzleOut  returns swizzle mask for accessing the constant
+ * \return index/position of the new parameter in the parameter list.
+ * \sa _mesa_add_typed_unnamed_constant
+ */
+GLint
+_mesa_add_unnamed_constant(struct gl_program_parameter_list *paramList,
+                           const gl_constant_value values[4], GLuint size,
+                           GLuint *swizzleOut)
+{
+   return _mesa_add_typed_unnamed_constant(paramList, values, size, GL_NONE,
+                                           swizzleOut);
 }
 
 /**
