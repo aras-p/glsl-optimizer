@@ -1,12 +1,12 @@
 
-#include "context.h"
-#include "colormac.h"
-#include "fbobject.h"
-#include "macros.h"
-#include "texfetch.h"
-#include "teximage.h"
-#include "texrender.h"
-#include "renderbuffer.h"
+#include "main/context.h"
+#include "main/colormac.h"
+#include "main/fbobject.h"
+#include "main/macros.h"
+#include "main/texfetch.h"
+#include "main/teximage.h"
+#include "main/renderbuffer.h"
+#include "swrast/swrast.h"
 
 
 /*
@@ -628,9 +628,9 @@ update_wrapper(struct gl_context *ctx, struct gl_renderbuffer_attachment *att)
  * \sa _mesa_framebuffer_renderbuffer
  */
 void
-_mesa_render_texture(struct gl_context *ctx,
-                     struct gl_framebuffer *fb,
-                     struct gl_renderbuffer_attachment *att)
+_swrast_render_texture(struct gl_context *ctx,
+                       struct gl_framebuffer *fb,
+                       struct gl_renderbuffer_attachment *att)
 {
    (void) fb;
 
@@ -642,8 +642,8 @@ _mesa_render_texture(struct gl_context *ctx,
 
 
 void
-_mesa_finish_render_texture(struct gl_context *ctx,
-                            struct gl_renderbuffer_attachment *att)
+_swrast_finish_render_texture(struct gl_context *ctx,
+                              struct gl_renderbuffer_attachment *att)
 {
    /* do nothing */
    /* The renderbuffer texture wrapper will get deleted by the

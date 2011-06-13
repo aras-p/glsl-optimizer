@@ -35,7 +35,7 @@
 #include "main/renderbuffer.h"
 #include "main/context.h"
 #include "main/teximage.h"
-#include "main/texrender.h"
+#include "swrast/s_texrender.h"
 #include "drivers/common/meta.h"
 
 #include "intel_context.h"
@@ -557,7 +557,7 @@ intel_render_texture(struct gl_context * ctx,
        * (has a border, width/height 0, etc.)
        */
       _mesa_reference_renderbuffer(&att->Renderbuffer, NULL);
-      _mesa_render_texture(ctx, fb, att);
+      _swrast_render_texture(ctx, fb, att);
       return;
    }
    else if (!irb) {
@@ -568,14 +568,14 @@ intel_render_texture(struct gl_context * ctx,
       }
       else {
          /* fallback to software rendering */
-         _mesa_render_texture(ctx, fb, att);
+         _swrast_render_texture(ctx, fb, att);
          return;
       }
    }
 
    if (!intel_update_wrapper(ctx, irb, newImage)) {
        _mesa_reference_renderbuffer(&att->Renderbuffer, NULL);
-       _mesa_render_texture(ctx, fb, att);
+       _swrast_render_texture(ctx, fb, att);
        return;
    }
 

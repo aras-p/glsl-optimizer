@@ -40,7 +40,6 @@
 #include "main/texstore.h"
 #include "main/bufferobj.h"
 #include "main/fbobject.h"
-#include "main/texrender.h"
 #include "main/samplerobj.h"
 #include "main/syncobj.h"
 #include "main/texturebarrier.h"
@@ -183,8 +182,8 @@ _mesa_init_driver_functions(struct dd_function_table *driver)
 
    driver->NewFramebuffer = _mesa_new_framebuffer;
    driver->NewRenderbuffer = _mesa_new_soft_renderbuffer;
-   driver->RenderTexture = _mesa_render_texture;
-   driver->FinishRenderTexture = _mesa_finish_render_texture;
+   driver->RenderTexture = _swrast_render_texture;
+   driver->FinishRenderTexture = _swrast_finish_render_texture;
    driver->FramebufferRenderbuffer = _mesa_framebuffer_renderbuffer;
    driver->ValidateFramebuffer = _mesa_validate_framebuffer;
 
