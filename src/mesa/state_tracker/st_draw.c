@@ -237,7 +237,6 @@ st_pipe_vertex_format(GLenum type, GLuint size, GLenum format,
 /**
  * Examine the active arrays to determine if we have interleaved
  * vertex arrays all living in one VBO, or all living in user space.
- * \param userSpace  returns whether the arrays are in user space.
  */
 static GLboolean
 is_interleaved_arrays(const struct st_vertex_program *vp,
@@ -247,8 +246,8 @@ is_interleaved_arrays(const struct st_vertex_program *vp,
    GLuint attr;
    const struct gl_buffer_object *firstBufObj = NULL;
    GLint firstStride = -1;
-   const GLubyte *client_addr = NULL;
-   GLboolean user_memory = GL_FALSE;
+   const GLubyte *firstPtr = NULL;
+   GLboolean userSpaceBuffer = GL_FALSE;
 
    for (attr = 0; attr < vpv->num_inputs; attr++) {
       const GLuint mesaAttr = vp->index_to_input[attr];
@@ -256,37 +255,26 @@ is_interleaved_arrays(const struct st_vertex_program *vp,
       const struct gl_buffer_object *bufObj = array->BufferObj;
       const GLsizei stride = array->StrideB; /* in bytes */
 
-      if (firstStride < 0) {
+      if (attr == 0) {
+         /* save info about the first array */
          firstStride = stride;
-         user_memory = !bufObj || !bufObj->Name;
-      }
-      else if (firstStride != stride) {
-         return GL_FALSE;
-      }
-
-      if (!bufObj || !bufObj->Name) {
-         /* Try to detect if the client-space arrays are
-          * "close" to each other.
-          */
-         if (!user_memory) {
-            return GL_FALSE;
-         }
-         if (!client_addr) {
-            client_addr = array->Ptr;
-         }
-         else if (abs(array->Ptr - client_addr) > firstStride) {
-            /* arrays start too far apart */
-            return GL_FALSE;
-         }
-      }
-      else if (!firstBufObj) {
-         if (user_memory) {
-            return GL_FALSE;
-         }
+         firstPtr = array->Ptr;         
          firstBufObj = bufObj;
+         userSpaceBuffer = !bufObj || !bufObj->Name;
       }
-      else if (bufObj != firstBufObj) {
-         return GL_FALSE;
+      else {
+         /* check if other arrays interleave with the first, in same buffer */
+         if (stride != firstStride)
+            return GL_FALSE; /* strides don't match */
+
+         if (bufObj != firstBufObj)
+            return GL_FALSE; /* arrays in different VBOs */
+
+         if (abs(array->Ptr - firstPtr) > firstStride)
+            return GL_FALSE; /* arrays start too far apart */
+
+         if ((!bufObj || !_mesa_is_bufferobj(bufObj)) != userSpaceBuffer)
+            return GL_FALSE; /* mix of VBO and user-space arrays */
       }
    }
 
