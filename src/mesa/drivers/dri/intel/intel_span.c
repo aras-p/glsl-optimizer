@@ -148,7 +148,7 @@ intel_set_span_functions(struct intel_context *intel,
  *     x    | y     | byte offset
  *     --------------------------
  *     0    | 0     | 0
- *     0    | 0     | 1
+ *     0    | 1     | 1
  *     1    | 0     | 2
  *     1    | 1     | 3
  *     ...  | ...   | ...
