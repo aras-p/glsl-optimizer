@@ -1201,6 +1201,9 @@ if test "x$enable_egl" = xyes; then
     SRC_DIRS="$SRC_DIRS egl"
     EGL_LIB_DEPS="$DLOPEN_LIBS $SELINUX_LIBS -lpthread"
     EGL_DRIVERS_DIRS=""
+    GALLIUM_STATE_TRACKERS_DIRS="$GALLIUM_STATE_TRACKERS_DIRS egl"
+    HAVE_ST_EGL="yes"
+
     if test "$enable_static" != yes; then
         # build egl_glx when libGL is built
         if test "$mesa_driver" = xlib -o "$mesa_driver" = dri; then
@@ -1470,26 +1473,6 @@ dnl
 dnl Gallium state trackers configuration
 dnl
 
-AC_ARG_ENABLE([gallium-egl],
-    [AS_HELP_STRING([--enable-gallium-egl],
-        [enable gallium EGL state tracker @<:@default=auto@:>@])],
-    [enable_gallium_egl="$enableval"],
-    [enable_gallium_egl=auto])
-if test "x$enable_gallium_egl" = xauto; then
-    case "$mesa_driver" in
-    dri|no)
-        enable_gallium_egl=$enable_egl
-        ;;
-    *)
-        enable_gallium_egl=$enable_openvg
-        ;;
-    esac
-fi
-case "x$enable_egl$enable_gallium_egl" in
-xnoyes)
-    AC_MSG_ERROR([cannot build Gallium EGL state tracker without EGL])
-esac
-
 AC_ARG_WITH([state-trackers],
     [AS_HELP_STRING([--with-state-trackers@<:@=DIRS...@:>@],
         [comma delimited state_trackers list, e.g.
@@ -1521,11 +1504,6 @@ yes)
         if test "$enable_openvg" = yes; then
             GALLIUM_STATE_TRACKERS_DIRS="$GALLIUM_STATE_TRACKERS_DIRS vega"
             st_egl="yes"
-        fi
-
-        if test "$enable_gallium_egl" = yes; then
-            GALLIUM_STATE_TRACKERS_DIRS="$GALLIUM_STATE_TRACKERS_DIRS egl"
-            HAVE_ST_EGL="yes"
         fi
     fi
     ;;
@@ -1577,7 +1555,7 @@ yes)
     if test "x$have_st_vega" != xyes -a "x$enable_openvg" = xyes; then
         AC_MSG_ERROR([--with-state-trackers specified but vega is missing])
     fi
-    if test "x$HAVE_ST_EGL" != xyes -a "x$enable_gallium_egl" = xyes; then
+    if test "x$HAVE_ST_EGL" != xyes; then
         AC_MSG_ERROR([--with-state-trackers specified but egl is missing])
     fi
     ;;
