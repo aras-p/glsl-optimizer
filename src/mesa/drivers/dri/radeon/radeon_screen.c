@@ -1658,52 +1658,102 @@ radeonCreateScreen2(__DRIscreen *sPriv)
 	   screen->group_bytes = 512;
    else
 	   screen->group_bytes = 256;
-   if (IS_R600_CLASS(screen) && (sPriv->drm_version.minor >= 6) &&
-       (screen->chip_family < CHIP_FAMILY_CEDAR)) {
-	   ret = radeonGetParam(sPriv, RADEON_INFO_TILE_CONFIG, &temp);
-	   if (ret)
-		   fprintf(stderr, "failed to get tiling info\n");
-	   else {
-		   screen->tile_config = temp;
-		   screen->r7xx_bank_op = 0;
-		   switch((screen->tile_config & 0xe) >> 1) {
-		   case 0:
-			   screen->num_channels = 1;
-			   break;
-		   case 1:
-			   screen->num_channels = 2;
-			   break;
-		   case 2:
-			   screen->num_channels = 4;
-			   break;
-		   case 3:
-			   screen->num_channels = 8;
-			   break;
-		   default:
-			   fprintf(stderr, "bad channels\n");
-			   break;
+   if (IS_R600_CLASS(screen)) {
+	   if ((sPriv->drm_version.minor >= 6) &&
+	       (screen->chip_family < CHIP_FAMILY_CEDAR)) {
+		   ret = radeonGetParam(sPriv, RADEON_INFO_TILE_CONFIG, &temp);
+		   if (ret)
+			   fprintf(stderr, "failed to get tiling info\n");
+		   else {
+			   screen->tile_config = temp;
+			   screen->r7xx_bank_op = 0;
+			   switch ((screen->tile_config & 0xe) >> 1) {
+			   case 0:
+				   screen->num_channels = 1;
+				   break;
+			   case 1:
+				   screen->num_channels = 2;
+				   break;
+			   case 2:
+				   screen->num_channels = 4;
+				   break;
+			   case 3:
+				   screen->num_channels = 8;
+				   break;
+			   default:
+				   fprintf(stderr, "bad channels\n");
+				   break;
+			   }
+			   switch ((screen->tile_config & 0x30) >> 4) {
+			   case 0:
+				   screen->num_banks = 4;
+				   break;
+			   case 1:
+				   screen->num_banks = 8;
+				   break;
+			   default:
+				   fprintf(stderr, "bad banks\n");
+				   break;
+			   }
+			   switch ((screen->tile_config & 0xc0) >> 6) {
+			   case 0:
+				   screen->group_bytes = 256;
+				   break;
+			   case 1:
+				   screen->group_bytes = 512;
+				   break;
+			   default:
+				   fprintf(stderr, "bad group_bytes\n");
+				   break;
+			   }
 		   }
-		   switch((screen->tile_config & 0x30) >> 4) {
-		   case 0:
-			   screen->num_banks = 4;
-			   break;
-		   case 1:
-			   screen->num_banks = 8;
-			   break;
-		   default:
-			   fprintf(stderr, "bad banks\n");
-			   break;
-		   }
-		   switch((screen->tile_config & 0xc0) >> 6) {
-		   case 0:
-			   screen->group_bytes = 256;
-			   break;
-		   case 1:
-			   screen->group_bytes = 512;
-			   break;
-		   default:
-			   fprintf(stderr, "bad group_bytes\n");
-			   break;
+	   } else if ((sPriv->drm_version.minor >= 7) &&
+		      (screen->chip_family >= CHIP_FAMILY_CEDAR)) {
+		   ret = radeonGetParam(sPriv, RADEON_INFO_TILE_CONFIG, &temp);
+		   if (ret)
+			   fprintf(stderr, "failed to get tiling info\n");
+		   else {
+			   screen->tile_config = temp;
+			   screen->r7xx_bank_op = 0;
+			   switch (screen->tile_config & 0xf) {
+			   case 0:
+				   screen->num_channels = 1;
+				   break;
+			   case 1:
+				   screen->num_channels = 2;
+				   break;
+			   case 2:
+				   screen->num_channels = 4;
+				   break;
+			   case 3:
+				   screen->num_channels = 8;
+				   break;
+			   default:
+				   fprintf(stderr, "bad channels\n");
+				   break;
+			   }
+			   switch ((screen->tile_config & 0xf0) >> 4) {
+			   case 0:
+				   screen->num_banks = 4;
+				   break;
+			   case 1:
+				   screen->num_banks = 8;
+				   break;
+			   default:
+				   fprintf(stderr, "bad banks\n");
+				   break;
+			   }
+			   switch ((screen->tile_config & 0xf00) >> 8) {
+			   case 0:
+				   screen->group_bytes = 256;
+				   break;
+			   case 1:
+				   screen->group_bytes = 512;
+				   break;
+			   default:
+				   fprintf(stderr, "bad group_bytes\n");
+				   break;
+			   }
 		   }
 	   }
    }
