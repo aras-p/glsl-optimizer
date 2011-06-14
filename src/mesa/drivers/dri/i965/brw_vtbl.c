@@ -122,11 +122,7 @@ static void brw_new_batch( struct intel_context *intel )
     * This is probably not as severe as on 915, since almost all of our state
     * is just in referenced buffers.
     */
-   brw->state.dirty.brw |= BRW_NEW_CONTEXT;
-
-   brw->state.dirty.mesa |= ~0;
-   brw->state.dirty.brw |= ~0;
-   brw->state.dirty.cache |= ~0;
+   brw->state.dirty.brw |= BRW_NEW_CONTEXT | BRW_NEW_BATCH;
 
    brw->vb.nr_current_buffers = 0;
 }
