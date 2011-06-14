@@ -215,10 +215,12 @@ void
 nv50_gmtyprog_validate(struct nv50_context *nv50)
 {
    struct nouveau_channel *chan = nv50->screen->base.channel;
-   struct nv50_program *gp = nv50->vertprog;
+   struct nv50_program *gp = nv50->gmtyprog;
 
+   if (!gp) /* GP_ENABLE is updated in linkage validation */
+      return;
    if (!nv50_program_validate(nv50, gp))
-         return;
+      return;
 
    BEGIN_RING(chan, RING_3D(GP_REG_ALLOC_TEMP), 1);
    OUT_RING  (chan, gp->max_gpr);
