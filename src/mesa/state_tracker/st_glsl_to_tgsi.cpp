@@ -886,7 +886,7 @@ glsl_to_tgsi_visitor::get_temp(const glsl_type *type)
    int swizzle[4];
    int i;
 
-   src.type = type->base_type;
+   src.type = glsl_version >= 130 ? type->base_type : GLSL_TYPE_FLOAT;
    src.file = PROGRAM_TEMPORARY;
    src.index = next_temp;
    src.reladdr = NULL;
@@ -1632,6 +1632,8 @@ glsl_to_tgsi_visitor::visit(ir_dereference_variable *ir)
    }
 
    this->result = st_src_reg(entry->file, entry->index, var->type);
+   if (glsl_version <= 120)
+      this->result.type = GLSL_TYPE_FLOAT;
 }
 
 void
@@ -1966,10 +1968,11 @@ glsl_to_tgsi_visitor::visit(ir_constant *ir)
          values = (gl_constant_value *) &ir->value.f[i * ir->type->vector_elements];
 
          src = st_src_reg(PROGRAM_CONSTANT, -1, ir->type->base_type);
-         src.index = _mesa_add_unnamed_constant(this->prog->Parameters,
-                                                values,
-                                                ir->type->vector_elements,
-                                                &src.swizzle);
+         src.index = _mesa_add_typed_unnamed_constant(this->prog->Parameters,
+                                                      values,
+                                                      ir->type->vector_elements,
+                                                      GL_FLOAT,
+                                                      &src.swizzle);
          emit(ir, TGSI_OPCODE_MOV, mat_column, src);
 
          mat_column.index++;
@@ -4142,15 +4145,14 @@ get_mesa_program(struct gl_context *ctx,
    if (target == GL_VERTEX_PROGRAM_ARB)
       v->remove_output_reads(PROGRAM_VARYING);
 
-   /* Perform optimizations on the instructions in the glsl_to_tgsi_visitor. */
-   v->copy_propagate();
-   
-   /* FIXME: These passes to optimize temporary registers don't work when there
+   /* Perform optimizations on the instructions in the glsl_to_tgsi_visitor.
+    * FIXME: These passes to optimize temporary registers don't work when there
     * is indirect addressing of the temporary register space.  We need proper 
     * array support so that we don't have to give up these passes in every 
     * shader that uses arrays.
     */
    if (!v->indirect_addr_temps) {
+      v->copy_propagate();
       v->merge_registers();
       v->eliminate_dead_code();
       v->renumber_registers();
