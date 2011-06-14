@@ -507,7 +507,7 @@ if test "x$enable_selinux" = "xyes"; then
     DEFINES="$DEFINES -DMESA_SELINUX"
 fi
 
-dnl Determine which APIs to support
+dnl Options for APIs
 AC_ARG_ENABLE([opengl],
     [AS_HELP_STRING([--disable-opengl],
         [disable support for standard OpenGL API @<:@default=no@:>@])],
@@ -528,27 +528,40 @@ AC_ARG_ENABLE([gles-overlay],
         [DEPRECATED.  Same as --enable-gles1 and --enable-gles2])],
     [enable_gles1="$enableval"; enable_gles2="$enableval"],
     [])
-
 AC_ARG_ENABLE([openvg],
     [AS_HELP_STRING([--enable-openvg],
         [enable support for OpenVG API @<:@default=no@:>@])],
     [enable_openvg="$enableval"],
     [enable_openvg=no])
+AC_ARG_ENABLE([xorg],
+    [AS_HELP_STRING([--enable-xorg],
+        [enable support for X.Org DDX API @<:@default=no@:>@])],
+    [enable_xorg="$enableval"],
+    [enable_xorg=no])
+AC_ARG_ENABLE([d3d1x],
+    [AS_HELP_STRING([--enable-d3d1x],
+        [enable support for Direct3D 10 & 11 low-level API @<:@default=no@:>@])],
+    [enable_d3d1x="$enableval"],
+    [enable_d3d1x=no])
+AC_ARG_ENABLE([egl],
+    [AS_HELP_STRING([--disable-egl],
+        [disable EGL library @<:@default=enabled@:>@])],
+    [enable_egl="$enableval"],
+    [enable_egl=yes])
 
-dnl smooth the transition; should be removed eventually
-if test "x$enable_openvg" = xno; then
-    case "x$with_state_trackers" in
-    x*vega*)
-        AC_MSG_WARN([vega state tracker is enabled without --enable-openvg])
-        enable_openvg=yes
-        ;;
-    esac
-fi
+# Option for Gallium
+AC_ARG_ENABLE([gallium],
+    [AS_HELP_STRING([--disable-gallium],
+        [build gallium @<:@default=enabled@:>@])],
+    [enable_gallium="$enableval"],
+    [enable_gallium=yes])
 
 if test "x$enable_opengl" = xno -a \
         "x$enable_gles1" = xno -a \
         "x$enable_gles2" = xno -a \
-        "x$enable_openvg" = xno; then
+        "x$enable_openvg" = xno -a \
+        "x$enable_xorg" = xno -a \
+        "x$enable_d3d1x" = xno; then
     AC_MSG_ERROR([at least one API should be enabled])
 fi
 
@@ -657,11 +670,6 @@ if test "x$enable_gles2" = xyes; then
     CORE_DIRS="$CORE_DIRS mapi/es2api"
 fi
 
-# build vgapi if OpenVG is enabled
-if test "x$enable_openvg" = xyes; then
-    CORE_DIRS="$CORE_DIRS mapi/vgapi"
-fi
-
 # build glsl and mesa if OpenGL or OpenGL ES is enabled
 case "x$enable_opengl$enable_gles1$enable_gles2" in
 x*yes*)
@@ -674,11 +682,14 @@ xlib)
     DRIVER_DIRS="x11"
     GALLIUM_WINSYS_DIRS="$GALLIUM_WINSYS_DIRS sw/xlib"
     GALLIUM_TARGET_DIRS="$GALLIUM_TARGET_DIRS libgl-xlib"
+    GALLIUM_STATE_TRACKERS_DIRS="glx $GALLIUM_STATE_TRACKERS_DIRS"
     ;;
 dri)
     SRC_DIRS="$SRC_DIRS glx"
     DRIVER_DIRS="dri"
     GALLIUM_WINSYS_DIRS="$GALLIUM_WINSYS_DIRS sw/xlib sw/dri"
+    GALLIUM_STATE_TRACKERS_DIRS="dri $GALLIUM_STATE_TRACKERS_DIRS"
+    HAVE_ST_DRI="yes"
     ;;
 osmesa)
     DRIVER_DIRS="osmesa"
@@ -1184,24 +1195,19 @@ AC_SUBST([OSMESA_PC_LIB_PRIV])
 dnl
 dnl EGL configuration
 dnl
-AC_ARG_ENABLE([egl],
-    [AS_HELP_STRING([--disable-egl],
-        [disable EGL library @<:@default=enabled@:>@])],
-    [enable_egl="$enableval"],
-    [enable_egl=yes])
+EGL_CLIENT_APIS=""
+
 if test "x$enable_egl" = xno; then
     if test "x$mesa_driver" = xno; then
         AC_MSG_ERROR([cannot disable EGL when there is no mesa driver])
-    fi
-    if test "x$enable_openvg" = xyes; then
-        AC_MSG_ERROR([cannot enable OpenVG without EGL])
     fi
 fi
 if test "x$enable_egl" = xyes; then
     SRC_DIRS="$SRC_DIRS egl"
     EGL_LIB_DEPS="$DLOPEN_LIBS $SELINUX_LIBS -lpthread"
     EGL_DRIVERS_DIRS=""
-    GALLIUM_STATE_TRACKERS_DIRS="$GALLIUM_STATE_TRACKERS_DIRS egl"
+    GALLIUM_STATE_TRACKERS_DIRS="egl $GALLIUM_STATE_TRACKERS_DIRS"
+    GALLIUM_TARGET_DIRS="$GALLIUM_TARGET_DIRS egl"
     HAVE_ST_EGL="yes"
 
     if test "$enable_static" != yes; then
@@ -1234,6 +1240,49 @@ if test "x$enable_egl" = xyes; then
 fi
 AC_SUBST([EGL_LIB_DEPS])
 AC_SUBST([EGL_DRIVERS_DIRS])
+
+dnl
+dnl X.Org DDX configuration
+dnl
+if test "x$enable_xorg" = xyes; then
+    PKG_CHECK_MODULES([XORG], [xorg-server >= 1.6.0])
+    PKG_CHECK_MODULES([LIBDRM_XORG], [libdrm >= $LIBDRM_XORG_REQUIRED])
+    PKG_CHECK_MODULES([LIBKMS_XORG], [libkms >= $LIBKMS_XORG_REQUIRED])
+    PKG_CHECK_MODULES(XEXT, [xextproto >= 7.0.99.1],
+        HAVE_XEXTPROTO_71="yes"; DEFINES="$DEFINES -DHAVE_XEXTPROTO_71",
+        HAVE_XEXTPROTO_71="no")
+    GALLIUM_STATE_TRACKERS_DIRS="xorg $GALLIUM_STATE_TRACKERS_DIRS"
+    HAVE_ST_XORG=yes
+fi
+
+dnl
+dnl OpenVG configuration
+dnl
+VG_LIB_DEPS=""
+
+if test "x$enable_openvg" = xyes; then
+    if test "x$enable_egl" = xno; then
+        AC_MSG_ERROR([cannot enable OpenVG without EGL])
+    fi
+    if test "x$enable_gallium" = xno; then
+        AC_MSG_ERROR([cannot enable OpenVG without Gallium])
+    fi
+
+    EGL_CLIENT_APIS="$EGL_CLIENT_APIS "'$(VG_LIB)'
+    VG_LIB_DEPS="$VG_LIB_DEPS $SELINUX_LIBS -lpthread"
+    CORE_DIRS="$CORE_DIRS mapi/vgapi"
+    GALLIUM_STATE_TRACKERS_DIRS="vega $GALLIUM_STATE_TRACKERS_DIRS"
+    HAVE_ST_VEGA=yes
+fi
+
+dnl
+dnl D3D1X configuration
+dnl
+
+if test "x$enable_d3d1x" = xyes; then
+    GALLIUM_STATE_TRACKERS_DIRS="d3d1x $GALLIUM_STATE_TRACKERS_DIRS"
+    HAVE_ST_D3D1X=yes
+fi
 
 dnl
 dnl GLU configuration
@@ -1451,14 +1500,6 @@ AC_SUBST([PROGRAM_DIRS])
 dnl
 dnl Gallium configuration
 dnl
-AC_ARG_ENABLE([gallium],
-    [AS_HELP_STRING([--disable-gallium],
-        [build gallium @<:@default=enabled@:>@])],
-    [enable_gallium="$enableval"],
-    [enable_gallium=yes])
-if test "x$enable_gallium" = xno -a "x$enable_openvg" = xyes; then
-    AC_MSG_ERROR([cannot enable OpenVG without Gallium])
-fi
 if test "x$enable_gallium" = xyes; then
     SRC_DIRS="$SRC_DIRS gallium gallium/winsys gallium/targets"
     AC_PATH_PROG([LLVM_CONFIG], [llvm-config], [no])
@@ -1469,124 +1510,16 @@ AC_SUBST([LLVM_LIBS])
 AC_SUBST([LLVM_LDFLAGS])
 AC_SUBST([LLVM_VERSION])
 
-dnl
-dnl Gallium state trackers configuration
-dnl
 
-AC_ARG_WITH([state-trackers],
-    [AS_HELP_STRING([--with-state-trackers@<:@=DIRS...@:>@],
-        [comma delimited state_trackers list, e.g.
-        "egl,glx" @<:@default=auto@:>@])],
-    [with_state_trackers="$withval"],
-    [with_state_trackers=yes])
-
-case "$with_state_trackers" in
-no)
-    GALLIUM_STATE_TRACKERS_DIRS=""
-    ;;
-yes)
-    # look at what else is built
-    case "$mesa_driver" in
-    xlib)
-        GALLIUM_STATE_TRACKERS_DIRS=glx
-        ;;
-    dri)
-        GALLIUM_STATE_TRACKERS_DIRS="dri"
-        HAVE_ST_DRI="yes"
-        # Have only tested st/xorg on 1.6.0 servers
-        PKG_CHECK_MODULES(XORG, [xorg-server >= 1.6.0 libdrm >= $LIBDRM_XORG_REQUIRED libkms >= $LIBKMS_XORG_REQUIRED],
-            HAVE_ST_XORG="yes"; GALLIUM_STATE_TRACKERS_DIRS="$GALLIUM_STATE_TRACKERS_DIRS xorg",
-            HAVE_ST_XORG="no")
-        ;;
-    esac
-
-    if test "x$enable_egl" = xyes; then
-        if test "$enable_openvg" = yes; then
-            GALLIUM_STATE_TRACKERS_DIRS="$GALLIUM_STATE_TRACKERS_DIRS vega"
-            st_egl="yes"
-        fi
-    fi
-    ;;
-*)
-    # verify the requested state tracker exist
-    state_trackers=""
-    _state_trackers=`IFS=', '; echo $with_state_trackers`
-    for tracker in $_state_trackers; do
-        case "$tracker" in
-        dri)
-            if test "x$mesa_driver" != xdri; then
-                AC_MSG_ERROR([cannot build dri state tracker without mesa driver set to dri])
-            fi
-            HAVE_ST_DRI="yes"
-            ;;
-        egl)
-            if test "x$enable_egl" != xyes; then
-                AC_MSG_ERROR([cannot build egl state tracker without EGL library])
-            fi
-            HAVE_ST_EGL="yes"
-            ;;
-        xorg)
-            PKG_CHECK_MODULES([XORG], [xorg-server >= 1.6.0])
-            PKG_CHECK_MODULES([LIBDRM_XORG], [libdrm >= $LIBDRM_XORG_REQUIRED])
-            PKG_CHECK_MODULES([LIBKMS_XORG], [libkms >= $LIBKMS_XORG_REQUIRED])
-            HAVE_ST_XORG="yes"
-            ;;
-        vega)
-            if test "x$enable_openvg" != xyes; then
-                AC_MSG_ERROR([cannot build vega state tracker without --enable-openvg])
-            fi
-            have_st_vega="yes"
-            ;;
-        esac
-
-	if test -n "$tracker"; then
-            test -d "$srcdir/src/gallium/state_trackers/$tracker" || \
-                AC_MSG_ERROR([state tracker '$tracker' doesn't exist])
-            if test -n "$state_trackers"; then
-                state_trackers="$state_trackers $tracker"
-            else
-                state_trackers="$tracker"
-            fi
-        fi
-    done
-    GALLIUM_STATE_TRACKERS_DIRS="$state_trackers"
-
-    # append --enable-openvg/--enable-gallium-egl to --with-state-trackers
-    if test "x$have_st_vega" != xyes -a "x$enable_openvg" = xyes; then
-        AC_MSG_ERROR([--with-state-trackers specified but vega is missing])
-    fi
-    if test "x$HAVE_ST_EGL" != xyes; then
-        AC_MSG_ERROR([--with-state-trackers specified but egl is missing])
-    fi
-    ;;
-esac
-
-
-EGL_CLIENT_APIS=""
-VG_LIB_DEPS=""
 
 case "x$enable_opengl$enable_gles1$enable_gles2" in
 x*yes*)
     EGL_CLIENT_APIS="$EGL_CLIENT_APIS "'$(GL_LIB)'
     ;;
 esac
-if test "x$enable_openvg" = xyes; then
-    EGL_CLIENT_APIS="$EGL_CLIENT_APIS "'$(VG_LIB)'
-    VG_LIB_DEPS="$VG_LIB_DEPS $SELINUX_LIBS -lpthread"
-fi
 
 AC_SUBST([VG_LIB_DEPS])
 AC_SUBST([EGL_CLIENT_APIS])
-
-if test "x$HAVE_ST_EGL" = xyes; then
-	GALLIUM_TARGET_DIRS="$GALLIUM_TARGET_DIRS egl"
-fi
-
-if test "x$HAVE_ST_XORG" = xyes; then
-    PKG_CHECK_MODULES(XEXT, [xextproto >= 7.0.99.1],
-        HAVE_XEXTPROTO_71="yes"; DEFINES="$DEFINES -DHAVE_XEXTPROTO_71",
-        HAVE_XEXTPROTO_71="no")
-fi
 
 AC_ARG_WITH([egl-platforms],
     [AS_HELP_STRING([--with-egl-platforms@<:@=DIRS...@:>@],
