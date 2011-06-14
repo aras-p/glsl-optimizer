@@ -351,7 +351,7 @@ static void r600_spi_update(struct r600_pipe_context *rctx)
 	struct r600_pipe_shader *shader = rctx->ps_shader;
 	struct r600_pipe_state *rstate = &rctx->spi;
 	struct r600_shader *rshader = &shader->shader;
-	unsigned i, tmp;
+	unsigned i, tmp, sid;
 
 	if (rctx->spi.id == 0)
 		r600_spi_block_init(rctx, &rctx->spi);
@@ -360,9 +360,14 @@ static void r600_spi_update(struct r600_pipe_context *rctx)
 	for (i = 0; i < rshader->ninput; i++) {
 		if (rshader->input[i].name == TGSI_SEMANTIC_POSITION ||
 		    rshader->input[i].name == TGSI_SEMANTIC_FACE)
-			continue;
+			if (rctx->family >= CHIP_CEDAR)
+				continue;
+			else
+				sid=0;
+		else
+			sid=r600_find_vs_semantic_index(&rctx->vs_shader->shader, rshader, i);
 
-		tmp = S_028644_SEMANTIC(r600_find_vs_semantic_index(&rctx->vs_shader->shader, rshader, i));
+		tmp = S_028644_SEMANTIC(sid);
 
 		if (rshader->input[i].name == TGSI_SEMANTIC_COLOR ||
 		    rshader->input[i].name == TGSI_SEMANTIC_BCOLOR ||
