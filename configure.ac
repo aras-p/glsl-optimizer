@@ -1741,6 +1741,14 @@ gallium_check_st() {
     fi
 }
 
+gallium_require_llvm() {
+    if test "x$MESA_LLVM" = x0; then
+        case "$host_cpu" in
+        i*86|x86_64) AC_MSG_ERROR([LLVM is required to build $1 on x86 and x86_64]);;
+        esac
+    fi
+}
+
 
 dnl
 dnl Gallium SVGA configuration
@@ -1793,28 +1801,14 @@ dnl
 dnl Gallium Radeon r300g configuration
 dnl
 AC_ARG_ENABLE([gallium-r300],
-    [AS_HELP_STRING([--enable-gallium-r300],
-        [build gallium r300 @<:@default=build DRI driver only@:>@])],
+    [AS_HELP_STRING([--disable-gallium-r300],
+        [build R300 driver @<:@default=enabled@:>@])],
     [enable_gallium_r300="$enableval"],
-    [enable_gallium_r300=auto])
+    [enable_gallium_r300=yes])
 
-if test "$mesa_driver" != dri ; then
-    if test "x$enable_gallium_r300" = xauto; then
-      enable_gallium_r300=no
-    fi
-fi
+if test "x$enable_gallium_r300" = xyes && test "x$mesa_driver" = xdri; then
+    gallium_require_llvm "Gallium R300"
 
-if test "x$enable_gallium_r300" != xno; then
-    if test "x$MESA_LLVM" = x0; then
-        case "$host_cpu" in
-        i*86|x86_64) AC_MSG_ERROR([LLVM is required to build Gallium R300 on x86 and x86_64]);;
-        esac
-    fi
-fi
-if test "x$enable_gallium_r300" = xauto; then
-    GALLIUM_DRIVERS_DIRS="$GALLIUM_DRIVERS_DIRS r300"
-    gallium_check_st "radeon/drm" "dri-r300"
-elif test "x$enable_gallium_r300" = xyes; then
     GALLIUM_DRIVERS_DIRS="$GALLIUM_DRIVERS_DIRS r300"
     gallium_check_st "radeon/drm" "dri-r300" "xorg-r300"
 fi
