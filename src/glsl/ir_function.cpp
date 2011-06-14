@@ -165,6 +165,7 @@ ir_function_signature *
 ir_function::matching_signature(const exec_list *actual_parameters)
 {
    ir_function_signature *match = NULL;
+   int matched_score;
 
    foreach_iter(exec_list_iterator, iter, signatures) {
       ir_function_signature *const sig =
@@ -173,14 +174,14 @@ ir_function::matching_signature(const exec_list *actual_parameters)
       const int score = parameter_lists_match(& sig->parameters,
 					      actual_parameters);
 
+      /* If we found an exact match, simply return it */
       if (score == 0)
 	 return sig;
 
-      if (score > 0) {
-	 if (match != NULL)
-	    return NULL;
-
+      /* If we found a match with fewer conversions, use that instead */
+      if (score > 0 && (match == NULL || score < matched_score)) {
 	 match = sig;
+	 matched_score = score;
       }
    }
 
