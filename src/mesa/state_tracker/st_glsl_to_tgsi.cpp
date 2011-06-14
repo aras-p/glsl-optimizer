@@ -2200,7 +2200,7 @@ glsl_to_tgsi_visitor::visit(ir_texture *ir)
       ir->lod_info.grad.dPdy->accept(this);
       dy = this->result;
       break;
-   case ir_txf: // TODO: use TGSI_OPCODE_TXF here
+   case ir_txf: /* TODO: use TGSI_OPCODE_TXF here */
       assert(!"GLSL 1.30 features unsupported");
       break;
    }
@@ -3732,6 +3732,37 @@ emit_wpos(struct st_context *st,
 }
 
 /**
+ * OpenGL's fragment gl_FrontFace input is 1 for front-facing, 0 for back.
+ * TGSI uses +1 for front, -1 for back.
+ * This function converts the TGSI value to the GL value.  Simply clamping/
+ * saturating the value to [0,1] does the job.
+ */
+static void
+emit_face_var(struct st_translate *t)
+{
+   struct ureg_program *ureg = t->ureg;
+   struct ureg_dst face_temp = ureg_DECL_temporary(ureg);
+   struct ureg_src face_input = t->inputs[t->inputMapping[FRAG_ATTRIB_FACE]];
+
+   /* MOV_SAT face_temp, input[face] */
+   face_temp = ureg_saturate(face_temp);
+   ureg_MOV(ureg, face_temp, face_input);
+
+   /* Use face_temp as face input from here on: */
+   t->inputs[t->inputMapping[FRAG_ATTRIB_FACE]] = ureg_src(face_temp);
+}
+
+static void
+emit_edgeflags(struct st_translate *t)
+{
+   struct ureg_program *ureg = t->ureg;
+   struct ureg_dst edge_dst = t->outputs[t->outputMapping[VERT_RESULT_EDGE]];
+   struct ureg_src edge_src = t->inputs[t->inputMapping[VERT_ATTRIB_EDGEFLAG]];
+
+   ureg_MOV(ureg, edge_dst, edge_src);
+}
+
+/**
  * Translate intermediate IR (glsl_to_tgsi_instruction) to TGSI format.
  * \param program  the program to translate
  * \param numInputs  number of input registers used
@@ -3800,15 +3831,11 @@ st_translate_program(
          /* Must do this after setting up t->inputs, and before
           * emitting constant references, below:
           */
-          printf("FRAG_BIT_WPOS\n");
           emit_wpos(st_context(ctx), t, proginfo, ureg);
       }
 
-      if (proginfo->InputsRead & FRAG_BIT_FACE) {
-         // TODO: uncomment
-         printf("FRAG_BIT_FACE\n");
-         //emit_face_var( t, program );
-      }
+      if (proginfo->InputsRead & FRAG_BIT_FACE)
+         emit_face_var(t);
 
       /*
        * Declare output attributes.
@@ -3875,7 +3902,6 @@ st_translate_program(
                /* XXX: note we are modifying the incoming shader here!  Need to
                * do this before emitting the constant decls below, or this
                * will be missed.
-               * XXX: depends on "Parameters" field specific to Mesa IR
                */
             unsigned pointSizeClampConst =
                _mesa_add_state_reference(proginfo->Parameters,
@@ -3887,8 +3913,8 @@ st_translate_program(
             t->outputs[i] = psizregtemp;
          }
       }
-      /*if (passthrough_edgeflags)
-         emit_edgeflags( t, program ); */ // TODO: uncomment
+      if (passthrough_edgeflags)
+         emit_edgeflags(t);
    }
 
    /* Declare address register.
