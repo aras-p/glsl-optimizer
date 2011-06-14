@@ -1082,8 +1082,9 @@ uint32_t r600_translate_texformat(struct pipe_screen *screen,
 				goto out_word4;
 			}
 		}
-
+		goto out_unknown;
 	}
+
 out_word4:
 	if (word4_p)
 		*word4_p = word4;
