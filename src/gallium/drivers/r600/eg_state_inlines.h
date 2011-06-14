@@ -292,7 +292,7 @@ static inline uint32_t r600_translate_stencilformat(enum pipe_format format)
 static inline uint32_t r600_translate_colorswap(enum pipe_format format)
 {
 	switch (format) {
-		/* 8-bit buffers. */
+	/* 8-bit buffers. */
 	case PIPE_FORMAT_L4A4_UNORM:
 		return V_028C70_SWAP_ALT;
 
@@ -305,7 +305,7 @@ static inline uint32_t r600_translate_colorswap(enum pipe_format format)
 	case PIPE_FORMAT_R8_SNORM:
 		return V_028C70_SWAP_STD;
 
-		/* 16-bit buffers. */
+	/* 16-bit buffers. */
 	case PIPE_FORMAT_B5G6R5_UNORM:
 		return V_028C70_SWAP_STD_REV;
 
@@ -328,8 +328,8 @@ static inline uint32_t r600_translate_colorswap(enum pipe_format format)
 
 	case PIPE_FORMAT_R16_UNORM:
 		return V_028C70_SWAP_STD;
-		/* 32-bit buffers. */
 
+	/* 32-bit buffers. */
 	case PIPE_FORMAT_A8B8G8R8_SRGB:
 		return V_028C70_SWAP_STD_REV;
 	case PIPE_FORMAT_B8G8R8A8_SRGB:
@@ -373,13 +373,13 @@ static inline uint32_t r600_translate_colorswap(enum pipe_format format)
 	case PIPE_FORMAT_R16G16_UNORM:
 		return V_028C70_SWAP_STD;
 
-		/* 64-bit buffers. */
+	/* 64-bit buffers. */
 	case PIPE_FORMAT_R32G32_FLOAT:
 	case PIPE_FORMAT_R16G16B16A16_UNORM:
 	case PIPE_FORMAT_R16G16B16A16_SNORM:
 	case PIPE_FORMAT_R16G16B16A16_FLOAT:
 
-		/* 128-bit buffers. */
+	/* 128-bit buffers. */
 	case PIPE_FORMAT_R32G32B32A32_FLOAT:
 	case PIPE_FORMAT_R32G32B32A32_SNORM:
 	case PIPE_FORMAT_R32G32B32A32_UNORM:
@@ -394,7 +394,7 @@ static inline uint32_t r600_translate_colorswap(enum pipe_format format)
 static INLINE uint32_t r600_translate_colorformat(enum pipe_format format)
 {
 	switch (format) {
-		/* 8-bit buffers. */
+	/* 8-bit buffers. */
 	case PIPE_FORMAT_L4A4_UNORM:
 		return V_028C70_COLOR_4_4;
 
@@ -406,7 +406,7 @@ static INLINE uint32_t r600_translate_colorformat(enum pipe_format format)
 	case PIPE_FORMAT_R8_SNORM:
 		return V_028C70_COLOR_8;
 
-		/* 16-bit buffers. */
+	/* 16-bit buffers. */
 	case PIPE_FORMAT_B5G6R5_UNORM:
 		return V_028C70_COLOR_5_6_5;
 
@@ -429,7 +429,7 @@ static INLINE uint32_t r600_translate_colorformat(enum pipe_format format)
 	case PIPE_FORMAT_R16_UNORM:
 		return V_028C70_COLOR_16;
 
-		/* 32-bit buffers. */
+	/* 32-bit buffers. */
 	case PIPE_FORMAT_A8B8G8R8_SRGB:
 	case PIPE_FORMAT_A8B8G8R8_UNORM:
 	case PIPE_FORMAT_A8R8G8B8_UNORM:
@@ -472,7 +472,7 @@ static INLINE uint32_t r600_translate_colorformat(enum pipe_format format)
 	case PIPE_FORMAT_R11G11B10_FLOAT:
 		return V_028C70_COLOR_10_11_11_FLOAT;
 
-		/* 64-bit buffers. */
+	/* 64-bit buffers. */
 	case PIPE_FORMAT_R16G16B16_USCALED:
 	case PIPE_FORMAT_R16G16B16A16_USCALED:
 	case PIPE_FORMAT_R16G16B16_SSCALED:
@@ -492,20 +492,21 @@ static INLINE uint32_t r600_translate_colorformat(enum pipe_format format)
 	case PIPE_FORMAT_R32G32_SSCALED:
 		return V_028C70_COLOR_32_32;
 
-		/* 128-bit buffers. */
+	/* 96-bit buffers. */
+	case PIPE_FORMAT_R32G32B32_FLOAT:
+		return V_028C70_COLOR_32_32_32_FLOAT;
+
+	/* 128-bit buffers. */
 	case PIPE_FORMAT_R32G32B32A32_SNORM:
 	case PIPE_FORMAT_R32G32B32A32_UNORM:
 		return V_028C70_COLOR_32_32_32_32;
-	case PIPE_FORMAT_R32G32B32_FLOAT:
-	  	return V_028C70_COLOR_32_32_32_FLOAT;
 	case PIPE_FORMAT_R32G32B32A32_FLOAT:
 		return V_028C70_COLOR_32_32_32_32_FLOAT;
 
-		/* YUV buffers. */
+	/* YUV buffers. */
 	case PIPE_FORMAT_UYVY:
 	case PIPE_FORMAT_YUYV:
 	default:
-		/* R600_ERR("unsupported color format %d\n", format); */
 		return ~0; /* Unsupported. */
 	}
 }
@@ -517,11 +518,11 @@ static INLINE uint32_t r600_colorformat_endian_swap(uint32_t colorformat)
 		case V_028C70_COLOR_4_4:
 			return(ENDIAN_NONE);
 
-			/* 8-bit buffers. */
+		/* 8-bit buffers. */
 		case V_028C70_COLOR_8:
 			return(ENDIAN_NONE);
 
-			/* 16-bit buffers. */
+		/* 16-bit buffers. */
 		case V_028C70_COLOR_5_6_5:
 		case V_028C70_COLOR_1_5_5_5:
 		case V_028C70_COLOR_4_4_4_4:
@@ -529,7 +530,7 @@ static INLINE uint32_t r600_colorformat_endian_swap(uint32_t colorformat)
 		case V_028C70_COLOR_8_8:
 			return(ENDIAN_8IN16);
 
-			/* 32-bit buffers. */
+		/* 32-bit buffers. */
 		case V_028C70_COLOR_8_8_8_8:
 		case V_028C70_COLOR_2_10_10_10:
 		case V_028C70_COLOR_8_24:
@@ -539,7 +540,7 @@ static INLINE uint32_t r600_colorformat_endian_swap(uint32_t colorformat)
 		case V_028C70_COLOR_16_16:
 			return(ENDIAN_8IN32);
 
-			/* 64-bit buffers. */
+		/* 64-bit buffers. */
 		case V_028C70_COLOR_16_16_16_16:
 		case V_028C70_COLOR_16_16_16_16_FLOAT:
 			return(ENDIAN_8IN16);
@@ -548,8 +549,9 @@ static INLINE uint32_t r600_colorformat_endian_swap(uint32_t colorformat)
 		case V_028C70_COLOR_32_32:
 			return(ENDIAN_8IN32);
 
-			/* 128-bit buffers. */
+		/* 96-bit buffers. */
 		case V_028C70_COLOR_32_32_32_FLOAT:
+		/* 128-bit buffers. */
 		case V_028C70_COLOR_32_32_32_32_FLOAT:
 		case V_028C70_COLOR_32_32_32_32:
 			return(ENDIAN_8IN32);
