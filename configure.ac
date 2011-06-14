@@ -549,12 +549,16 @@ AC_ARG_ENABLE([egl],
     [enable_egl="$enableval"],
     [enable_egl=yes])
 
-# Option for Gallium
-AC_ARG_ENABLE([gallium],
-    [AS_HELP_STRING([--disable-gallium],
-        [build gallium @<:@default=enabled@:>@])],
-    [enable_gallium="$enableval"],
-    [enable_gallium=yes])
+# Option for Gallium drivers
+GALLIUM_DRIVERS_DEFAULT="r300,swrast"
+
+AC_ARG_WITH([gallium-drivers],
+    [AS_HELP_STRING([--with-gallium-drivers@<:@=DIRS...@:>@],
+        [comma delimited Gallium drivers list, e.g.
+        "i915,i965,nouveau,r300,r600,svga,swrast"
+        @<:@default=r300,swrast@:>@])],
+    [with_gallium_drivers="$withval"],
+    [with_gallium_drivers="$GALLIUM_DRIVERS_DEFAULT"])
 
 if test "x$enable_opengl" = xno -a \
         "x$enable_gles1" = xno -a \
@@ -1264,7 +1268,7 @@ if test "x$enable_openvg" = xyes; then
     if test "x$enable_egl" = xno; then
         AC_MSG_ERROR([cannot enable OpenVG without EGL])
     fi
-    if test "x$enable_gallium" = xno; then
+    if test "x$with_gallium_drivers" = x; then
         AC_MSG_ERROR([cannot enable OpenVG without Gallium])
     fi
 
@@ -1280,6 +1284,10 @@ dnl D3D1X configuration
 dnl
 
 if test "x$enable_d3d1x" = xyes; then
+    if test "x$with_gallium_drivers" = x; then
+        AC_MSG_ERROR([cannot enable D3D1X without Gallium])
+    fi
+
     GALLIUM_STATE_TRACKERS_DIRS="d3d1x $GALLIUM_STATE_TRACKERS_DIRS"
     HAVE_ST_D3D1X=yes
 fi
@@ -1500,7 +1508,7 @@ AC_SUBST([PROGRAM_DIRS])
 dnl
 dnl Gallium configuration
 dnl
-if test "x$enable_gallium" = xyes; then
+if test "x$with_gallium_drivers" != x; then
     SRC_DIRS="$SRC_DIRS gallium gallium/winsys gallium/targets"
     AC_PATH_PROG([LLVM_CONFIG], [llvm-config], [no])
 fi
@@ -1615,6 +1623,9 @@ AC_ARG_ENABLE([gallium-llvm],
         [build gallium LLVM support @<:@default=enabled on x86/x86_64@:>@])],
     [enable_gallium_llvm="$enableval"],
     [enable_gallium_llvm=auto])
+if test "x$with_gallium_drivers" = x; then
+    enable_gallium_llvm=no
+fi
 if test "x$enable_gallium_llvm" = xauto; then
     case "$host_cpu" in
     i*86|x86_64) enable_gallium_llvm=yes;;
@@ -1660,108 +1671,46 @@ gallium_require_llvm() {
     fi
 }
 
-
-dnl
-dnl Gallium SVGA configuration
-dnl
-AC_ARG_ENABLE([gallium-svga],
-    [AS_HELP_STRING([--enable-gallium-svga],
-        [build gallium SVGA @<:@default=disabled@:>@])],
-    [enable_gallium_svga="$enableval"],
-    [enable_gallium_svga=auto])
-if test "x$enable_gallium_svga" = xyes; then
-    GALLIUM_DRIVERS_DIRS="$GALLIUM_DRIVERS_DIRS svga"
-    gallium_check_st "svga/drm" "dri-vmwgfx" "xorg-vmwgfx"
-elif test "x$enable_gallium_svga" = xauto; then
-    GALLIUM_DRIVERS_DIRS="$GALLIUM_DRIVERS_DIRS svga"
-fi
-
-dnl
-dnl Gallium i915 configuration
-dnl
-AC_ARG_ENABLE([gallium-i915],
-    [AS_HELP_STRING([--enable-gallium-i915],
-        [build gallium i915 @<:@default=disabled@:>@])],
-    [enable_gallium_i915="$enableval"],
-    [enable_gallium_i915=auto])
-if test "x$enable_gallium_i915" = xyes; then
+dnl Gallium drivers
+if test "x$with_gallium_drivers" != x; then
+    # This is for compile-testing
+    GALLIUM_DRIVERS_DIRS="$GALLIUM_DRIVERS_DIRS i915 i965 r300 svga"
     GALLIUM_WINSYS_DIRS="$GALLIUM_WINSYS_DIRS i915/sw"
-    GALLIUM_DRIVERS_DIRS="$GALLIUM_DRIVERS_DIRS i915"
-    gallium_check_st "i915/drm" "dri-i915" "xorg-i915"
-elif test "x$enable_gallium_i915" = xauto; then
-    GALLIUM_WINSYS_DIRS="$GALLIUM_WINSYS_DIRS i915/sw"
-    GALLIUM_DRIVERS_DIRS="$GALLIUM_DRIVERS_DIRS i915"
-fi
 
-dnl
-dnl Gallium i965 configuration
-dnl
-AC_ARG_ENABLE([gallium-i965],
-    [AS_HELP_STRING([--enable-gallium-i965],
-        [build gallium i965 @<:@default=disabled@:>@])],
-    [enable_gallium_i965="$enableval"],
-    [enable_gallium_i965=auto])
-if test "x$enable_gallium_i965" = xyes; then
-    GALLIUM_DRIVERS_DIRS="$GALLIUM_DRIVERS_DIRS i965"
-    gallium_check_st "i965/drm" "dri-i965" "xorg-i965"
-elif test "x$enable_gallium_i965" = xauto; then
-    GALLIUM_DRIVERS_DIRS="$GALLIUM_DRIVERS_DIRS i965"
-fi
-
-dnl
-dnl Gallium Radeon r300g configuration
-dnl
-AC_ARG_ENABLE([gallium-r300],
-    [AS_HELP_STRING([--disable-gallium-r300],
-        [build R300 driver @<:@default=enabled@:>@])],
-    [enable_gallium_r300="$enableval"],
-    [enable_gallium_r300=yes])
-
-if test "x$enable_gallium_r300" = xyes && test "x$mesa_driver" = xdri; then
-    gallium_require_llvm "Gallium R300"
-
-    GALLIUM_DRIVERS_DIRS="$GALLIUM_DRIVERS_DIRS r300"
-    gallium_check_st "radeon/drm" "dri-r300" "xorg-r300"
-fi
-
-dnl
-dnl Gallium Radeon r600g configuration
-dnl
-AC_ARG_ENABLE([gallium-r600],
-    [AS_HELP_STRING([--enable-gallium-r600],
-        [build gallium r600 @<:@default=disabled@:>@])],
-    [enable_gallium_r600="$enableval"],
-    [enable_gallium_r600=auto])
-if test "x$enable_gallium_r600" = xyes; then
-    GALLIUM_DRIVERS_DIRS="$GALLIUM_DRIVERS_DIRS r600"
-    gallium_check_st "r600/drm" "dri-r600"
-fi
-
-dnl
-dnl Gallium Nouveau configuration
-dnl
-AC_ARG_ENABLE([gallium-nouveau],
-    [AS_HELP_STRING([--enable-gallium-nouveau],
-        [build gallium nouveau @<:@default=disabled@:>@])],
-    [enable_gallium_nouveau="$enableval"],
-    [enable_gallium_nouveau=no])
-if test "x$enable_gallium_nouveau" = xyes; then
-    GALLIUM_DRIVERS_DIRS="$GALLIUM_DRIVERS_DIRS nouveau nvfx nv50 nvc0"
-    gallium_check_st "nouveau/drm" "dri-nouveau" "xorg-nouveau"
-fi
-
-dnl
-dnl Gallium swrast configuration
-dnl
-AC_ARG_ENABLE([gallium-swrast],
-    [AS_HELP_STRING([--enable-gallium-swrast],
-        [build gallium swrast @<:@default=auto@:>@])],
-    [enable_gallium_swrast="$enableval"],
-    [enable_gallium_swrast=auto])
-if test "x$enable_gallium_swrast" = xyes || test "x$enable_gallium_swrast" = xauto; then
-    if test "x$HAVE_ST_DRI" = xyes; then
-        GALLIUM_TARGET_DIRS="$GALLIUM_TARGET_DIRS dri-swrast"
-    fi
+    gallium_drivers=`IFS=', '; echo $with_gallium_drivers`
+    for driver in $gallium_drivers; do
+        case "x$driver" in
+        xsvga)
+            gallium_check_st "svga/drm" "dri-vmwgfx" "xorg-vmwgfx"
+            ;;
+        xi915)
+            gallium_check_st "i915/drm" "dri-i915" "xorg-i915"
+            ;;
+        xi965)
+            gallium_check_st "i965/drm" "dri-i965" "xorg-i965"
+            ;;
+        xr300)
+            gallium_require_llvm "Gallium R300"
+            gallium_check_st "radeon/drm" "dri-r300" "xorg-r300"
+            ;;
+        xr600)
+            GALLIUM_DRIVERS_DIRS="$GALLIUM_DRIVERS_DIRS r600"
+            gallium_check_st "r600/drm" "dri-r600"
+            ;;
+        xnouveau)
+            GALLIUM_DRIVERS_DIRS="$GALLIUM_DRIVERS_DIRS nouveau nvfx nv50 nvc0"
+            gallium_check_st "nouveau/drm" "dri-nouveau" "xorg-nouveau"
+            ;;
+        xswrast)
+            if test "x$HAVE_ST_DRI" = xyes; then
+                GALLIUM_TARGET_DIRS="$GALLIUM_TARGET_DIRS dri-swrast"
+            fi
+            ;;
+        *)
+            AC_MSG_ERROR([Unknown Gallium driver: $driver])
+            ;;
+        esac
+    done
 fi
 
 dnl prepend CORE_DIRS to SRC_DIRS
