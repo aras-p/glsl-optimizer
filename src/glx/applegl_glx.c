@@ -59,6 +59,8 @@ applegl_bind_context(struct glx_context *gc, struct glx_context *old,
    if (error)
       return 1; /* GLXBadContext is the same as Success (0) */
 
+   apple_glapi_set_dispatch();
+
    return Success;
 }
 

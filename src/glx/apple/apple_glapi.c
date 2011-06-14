@@ -52,7 +52,7 @@
 struct _glapi_table * __ogl_framework_api = NULL;
 struct _glapi_table * __applegl_api = NULL;
 
-void apple_xgl_init_direct(void) {
+void apple_glapi_set_dispatch(void) {
     static void *handle;
     const char *opengl_framework_path;
 

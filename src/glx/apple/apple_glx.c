@@ -131,7 +131,6 @@ apple_init_glx(Display * dpy)
    }
 
    apple_cgl_init();
-   apple_xgl_init_direct();
    (void) apple_glx_get_client_id();
 
    XAppleDRISetSurfaceNotifyHandler(surface_notify_handler);
