@@ -34,6 +34,10 @@ import gl_XML, glX_XML
 import sys, getopt
 
 header = """
+#if defined(DEBUG) && !defined(_WIN32_WCE)
+#include <execinfo.h>
+#endif
+
 #include <dlfcn.h>
 #include <stdlib.h>
 #include <stdio.h>
@@ -42,6 +46,40 @@ header = """
 
 #include "glapi.h"
 #include "glapitable.h"
+
+static void
+__glapi_gentable_NoOp(void) {
+#if defined(DEBUG) && !defined(_WIN32_WCE)
+    if (getenv("MESA_DEBUG") || getenv("LIBGL_DEBUG")) {
+        const char *fstr = "Unknown";
+        void *frames[2];
+
+        if(backtrace(frames, 2) == 2) {
+            Dl_info info;
+            dladdr(frames[1], &info);
+            if(info.dli_sname)
+                fstr = info.dli_sname;
+        }
+
+        fprintf(stderr, "Call to unimplemented API: %s\\n", fstr);
+    }
+#endif
+}
+
+static void
+__glapi_gentable_set_remaining_noop(struct _glapi_table *disp) {
+    GLuint entries = _glapi_get_dispatch_table_size();
+    void **dispatch = (void **) disp;
+    int i;
+
+    /* ISO C is annoying sometimes */
+    union {_glapi_proc p; void *v;} p;
+    p.p = __glapi_gentable_NoOp;
+
+    for(i=0; i < entries; i++)
+        if(dispatch[i] == NULL)
+            dispatch[i] = p.v;
+}
 
 struct _glapi_table *
 _glapi_create_table_from_handle(void *handle, const char *symbol_prefix) {
@@ -56,15 +94,17 @@ _glapi_create_table_from_handle(void *handle, const char *symbol_prefix) {
 """
 
 footer = """
+    __glapi_gentable_set_remaining_noop(disp);
+
     return disp;
 }
 """
 
 body_template = """
     if(!disp->%(name)s) {
+        void ** procp = (void **) &disp->%(name)s;
         snprintf(symboln, sizeof(symboln), "%%s%(entry_point)s", symbol_prefix);
-        _glapi_proc *procp = (_glapi_proc *)&disp->%(name)s;
-        *procp = (_glapi_proc) dlsym(handle, symboln);
+        *procp = dlsym(handle, symboln);
     }
 """
 
