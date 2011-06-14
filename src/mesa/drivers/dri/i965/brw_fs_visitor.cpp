@@ -349,6 +349,14 @@ fs_visitor::visit(ir_expression *ir)
       emit_math(FS_OPCODE_RSQ, this->result, op[0]);
       break;
 
+   case ir_unop_i2u:
+      op[0].type = BRW_REGISTER_TYPE_UD;
+      this->result = op[0];
+      break;
+   case ir_unop_u2i:
+      op[0].type = BRW_REGISTER_TYPE_D;
+      this->result = op[0];
+      break;
    case ir_unop_i2f:
    case ir_unop_b2f:
    case ir_unop_b2i:
