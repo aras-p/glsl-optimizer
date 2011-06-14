@@ -33,7 +33,7 @@
  *
  * We basically convert the VBO's vertex attribute/array information into
  * Gallium vertex state, bind the vertex buffer objects and call
- * pipe->draw_elements(), pipe->draw_range_elements() or pipe->draw_arrays().
+ * pipe->draw_vbo().
  *
  * Authors:
  *   Keith Whitwell <keith@tungstengraphics.com>
@@ -498,6 +498,7 @@ setup_index_buffer(struct gl_context *ctx,
    }
 }
 
+
 /**
  * Prior to drawing, check that any uniforms referenced by the
  * current shader have been set.  If a uniform has not been set,
@@ -544,8 +545,8 @@ translate_prim(const struct gl_context *ctx, unsigned prim)
    assert(GL_TRIANGLE_STRIP_ADJACENCY == PIPE_PRIM_TRIANGLE_STRIP_ADJACENCY);
 
    /* Avoid quadstrips if it's easy to do so:
-    * Note: it's imporant to do the correct trimming if we change the prim type!
-    * We do that wherever this function is called.
+    * Note: it's important to do the correct trimming if we change the
+    * prim type!  We do that wherever this function is called.
     */
    if (prim == GL_QUAD_STRIP &&
        ctx->Light.ShadeModel != GL_FLAT &&
