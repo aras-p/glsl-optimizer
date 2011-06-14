@@ -728,8 +728,8 @@ st_draw_vbo(struct gl_context *ctx,
       }
    }
 
-   info.primitive_restart = st->ctx->Array.PrimitiveRestart;
-   info.restart_index = st->ctx->Array.RestartIndex;
+   info.primitive_restart = ctx->Array.PrimitiveRestart;
+   info.restart_index = ctx->Array.RestartIndex;
 
    /* do actual drawing */
    for (i = 0; i < nr_prims; i++) {

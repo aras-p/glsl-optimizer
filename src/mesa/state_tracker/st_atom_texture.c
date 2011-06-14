@@ -187,15 +187,16 @@ update_single_texture(struct st_context *st, struct pipe_sampler_view **sampler_
 		      GLuint texUnit)
 {
    struct pipe_context *pipe = st->pipe;
+   struct gl_context *ctx = st->ctx;
    const struct gl_sampler_object *samp;
    struct gl_texture_object *texObj;
    struct st_texture_object *stObj;
    enum pipe_format st_view_format;
    GLboolean retval;
 
-   samp = _mesa_get_samplerobj(st->ctx, texUnit);
+   samp = _mesa_get_samplerobj(ctx, texUnit);
 
-   texObj = st->ctx->Texture.Unit[texUnit]._Current;
+   texObj = ctx->Texture.Unit[texUnit]._Current;
 
    if (!texObj) {
       texObj = st_get_default_texture(st);
@@ -203,7 +204,7 @@ update_single_texture(struct st_context *st, struct pipe_sampler_view **sampler_
    }
    stObj = st_texture_object(texObj);
 
-   retval = st_finalize_texture(st->ctx, st->pipe, texObj);
+   retval = st_finalize_texture(ctx, st->pipe, texObj);
    if (!retval) {
       /* out of mem */
       return GL_FALSE;
@@ -253,13 +254,14 @@ update_single_texture(struct st_context *st, struct pipe_sampler_view **sampler_
 static void 
 update_vertex_textures(struct st_context *st)
 {
-   struct gl_vertex_program *vprog = st->ctx->VertexProgram._Current;
+   const struct gl_context *ctx = st->ctx;
+   struct gl_vertex_program *vprog = ctx->VertexProgram._Current;
    GLuint su;
 
    st->state.num_vertex_textures = 0;
 
    /* loop over sampler units (aka tex image units) */
-   for (su = 0; su < st->ctx->Const.MaxTextureImageUnits; su++) {
+   for (su = 0; su < ctx->Const.MaxTextureImageUnits; su++) {
       struct pipe_sampler_view *sampler_view = NULL;
       if (vprog->Base.SamplersUsed & (1 << su)) {
          GLboolean retval;
@@ -277,9 +279,9 @@ update_vertex_textures(struct st_context *st)
       pipe_sampler_view_reference(&st->state.sampler_vertex_views[su], sampler_view);
    }
 
-   if (st->ctx->Const.MaxVertexTextureImageUnits > 0) {
+   if (ctx->Const.MaxVertexTextureImageUnits > 0) {
       GLuint numUnits = MIN2(st->state.num_vertex_textures,
-                             st->ctx->Const.MaxVertexTextureImageUnits);
+                             ctx->Const.MaxVertexTextureImageUnits);
       cso_set_vertex_sampler_views(st->cso_context,
                                    numUnits,
                                    st->state.sampler_vertex_views);
@@ -289,13 +291,14 @@ update_vertex_textures(struct st_context *st)
 static void 
 update_fragment_textures(struct st_context *st)
 {
-   struct gl_fragment_program *fprog = st->ctx->FragmentProgram._Current;
+   const struct gl_context *ctx = st->ctx;
+   struct gl_fragment_program *fprog = ctx->FragmentProgram._Current;
    GLuint su;
 
    st->state.num_textures = 0;
 
    /* loop over sampler units (aka tex image units) */
-   for (su = 0; su < st->ctx->Const.MaxTextureImageUnits; su++) {
+   for (su = 0; su < ctx->Const.MaxTextureImageUnits; su++) {
       struct pipe_sampler_view *sampler_view = NULL;
       if (fprog->Base.SamplersUsed & (1 << su)) {
          GLboolean retval;
@@ -338,22 +341,23 @@ const struct st_tracked_state st_update_vertex_texture = {
 static void 
 finalize_textures(struct st_context *st)
 {
-   struct gl_fragment_program *fprog = st->ctx->FragmentProgram._Current;
+   struct gl_context *ctx = st->ctx;
+   struct gl_fragment_program *fprog = ctx->FragmentProgram._Current;
    const GLboolean prev_missing_textures = st->missing_textures;
    GLuint su;
 
    st->missing_textures = GL_FALSE;
 
-   for (su = 0; su < st->ctx->Const.MaxTextureCoordUnits; su++) {
+   for (su = 0; su < ctx->Const.MaxTextureCoordUnits; su++) {
       if (fprog->Base.SamplersUsed & (1 << su)) {
          const GLuint texUnit = fprog->Base.SamplerUnits[su];
          struct gl_texture_object *texObj
-            = st->ctx->Texture.Unit[texUnit]._Current;
+            = ctx->Texture.Unit[texUnit]._Current;
 
          if (texObj) {
             GLboolean retval;
 
-            retval = st_finalize_texture(st->ctx, st->pipe, texObj);
+            retval = st_finalize_texture(ctx, st->pipe, texObj);
             if (!retval) {
                /* out of mem */
                st->missing_textures = GL_TRUE;

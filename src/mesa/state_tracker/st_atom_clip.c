@@ -43,20 +43,21 @@
 static void update_clip( struct st_context *st )
 {
    struct pipe_clip_state clip;
+   const struct gl_context *ctx = st->ctx;
    GLuint i;
 
    memset(&clip, 0, sizeof(clip));
 
    for (i = 0; i < PIPE_MAX_CLIP_PLANES; i++) {
-      if (st->ctx->Transform.ClipPlanesEnabled & (1 << i)) {
+      if (ctx->Transform.ClipPlanesEnabled & (1 << i)) {
 	 memcpy(clip.ucp[clip.nr], 
-		st->ctx->Transform._ClipUserPlane[i], 
+		ctx->Transform._ClipUserPlane[i], 
 		sizeof(clip.ucp[0]));
 	 clip.nr++;
       }
    }
 
-   clip.depth_clamp = st->ctx->Transform.DepthClamp != GL_FALSE;
+   clip.depth_clamp = ctx->Transform.DepthClamp != GL_FALSE;
       
    if (memcmp(&clip, &st->state.clip, sizeof(clip)) != 0) {
       st->state.clip = clip;

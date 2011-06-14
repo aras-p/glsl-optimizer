@@ -125,14 +125,15 @@ static void convert_sampler(struct st_context *st,
 			    GLuint texUnit)
 {
     struct gl_texture_object *texobj;
+    struct gl_context *ctx = st->ctx;
     struct gl_sampler_object *msamp;
 
-    texobj = st->ctx->Texture.Unit[texUnit]._Current;
+    texobj = ctx->Texture.Unit[texUnit]._Current;
     if (!texobj) {
 	texobj = st_get_default_texture(st);
     }
 
-    msamp = _mesa_get_samplerobj(st->ctx, texUnit);
+    msamp = _mesa_get_samplerobj(ctx, texUnit);
 
     memset(sampler, 0, sizeof(*sampler));
     sampler->wrap_s = gl_wrap_xlate(msamp->WrapS);
@@ -146,7 +147,7 @@ static void convert_sampler(struct st_context *st,
     if (texobj->Target != GL_TEXTURE_RECTANGLE_ARB)
        sampler->normalized_coords = 1;
 
-    sampler->lod_bias = st->ctx->Texture.Unit[texUnit].LodBias +
+    sampler->lod_bias = ctx->Texture.Unit[texUnit].LodBias +
        msamp->LodBias;
 
     sampler->min_lod = CLAMP(msamp->MinLod,
@@ -188,19 +189,20 @@ static void convert_sampler(struct st_context *st,
     }
 
     sampler->seamless_cube_map =
-       st->ctx->Texture.CubeMapSeamless || msamp->CubeMapSeamless;
+       ctx->Texture.CubeMapSeamless || msamp->CubeMapSeamless;
 }
 
 static void
 update_vertex_samplers(struct st_context *st)
 {
-   struct gl_vertex_program *vprog = st->ctx->VertexProgram._Current;
+   const struct gl_context *ctx = st->ctx;
+   struct gl_vertex_program *vprog = ctx->VertexProgram._Current;
    GLuint su;
 
    st->state.num_vertex_samplers = 0;
 
    /* loop over sampler units (aka tex image units) */
-   for (su = 0; su < st->ctx->Const.MaxVertexTextureImageUnits; su++) {
+   for (su = 0; su < ctx->Const.MaxVertexTextureImageUnits; su++) {
       struct pipe_sampler_state *sampler = st->state.vertex_samplers + su;
 
       if (vprog->Base.SamplersUsed & (1 << su)) {
@@ -223,13 +225,14 @@ update_vertex_samplers(struct st_context *st)
 static void
 update_fragment_samplers(struct st_context *st)
 {
-   struct gl_fragment_program *fprog = st->ctx->FragmentProgram._Current;
+   const struct gl_context *ctx = st->ctx;
+   struct gl_fragment_program *fprog = ctx->FragmentProgram._Current;
    GLuint su;
 
    st->state.num_samplers = 0;
 
    /* loop over sampler units (aka tex image units) */
-   for (su = 0; su < st->ctx->Const.MaxTextureImageUnits; su++) {
+   for (su = 0; su < ctx->Const.MaxTextureImageUnits; su++) {
       struct pipe_sampler_state *sampler = st->state.samplers + su;
 
 
