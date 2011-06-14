@@ -550,13 +550,13 @@ AC_ARG_ENABLE([egl],
     [enable_egl=yes])
 
 # Option for Gallium drivers
-GALLIUM_DRIVERS_DEFAULT="r300,swrast"
+GALLIUM_DRIVERS_DEFAULT="r300,r600,swrast"
 
 AC_ARG_WITH([gallium-drivers],
     [AS_HELP_STRING([--with-gallium-drivers@<:@=DIRS...@:>@],
         [comma delimited Gallium drivers list, e.g.
         "i915,i965,nouveau,r300,r600,svga,swrast"
-        @<:@default=r300,swrast@:>@])],
+        @<:@default=r300,r600,swrast@:>@])],
     [with_gallium_drivers="$withval"],
     [with_gallium_drivers="$GALLIUM_DRIVERS_DEFAULT"])
 
