@@ -1511,6 +1511,8 @@ dnl
 if test "x$with_gallium_drivers" != x; then
     SRC_DIRS="$SRC_DIRS gallium gallium/winsys gallium/targets"
     AC_PATH_PROG([LLVM_CONFIG], [llvm-config], [no])
+else
+    LLVM_CONFIG=no
 fi
 
 AC_SUBST([LLVM_CFLAGS])
