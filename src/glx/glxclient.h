@@ -138,6 +138,7 @@ struct __GLXDRIdrawableRec
    GLenum textureTarget;
    GLenum textureFormat;        /* EXT_texture_from_pixmap support */
    unsigned long eventMask;
+   int refcount;
 };
 
 /*

@@ -255,8 +255,6 @@ MakeContextCurrent(Display * dpy, GLXDrawable draw,
       if (--oldGC->thread_refcount == 0) {
 	 oldGC->vtable->unbind(oldGC, gc);
 	 oldGC->currentDpy = 0;
-	 oldGC->currentDrawable = None;
-	 oldGC->currentReadable = None;
 
 	 if (oldGC->xid == None && oldGC != gc) {
 	    /* We are switching away from a context that was
@@ -268,13 +266,15 @@ MakeContextCurrent(Display * dpy, GLXDrawable draw,
    }
 
    if (gc) {
-      if (gc->thread_refcount++ == 0) {
-	 gc->currentDpy = dpy;
-	 gc->currentDrawable = draw;
-	 gc->currentReadable = read;
-      }
+      if (gc->thread_refcount == 0)
+         gc->currentDpy = dpy;
       __glXSetCurrentContext(gc);
       ret = gc->vtable->bind(gc, oldGC, draw, read);
+      if (gc->thread_refcount == 0) {
+         gc->currentDrawable = draw;
+         gc->currentReadable = read;
+      }
+      gc->thread_refcount++;
    } else {
       __glXSetCurrentContextNull();
    }

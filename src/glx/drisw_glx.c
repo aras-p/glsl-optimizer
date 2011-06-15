@@ -242,6 +242,8 @@ drisw_destroy_context(struct glx_context *context)
    struct drisw_context *pcp = (struct drisw_context *) context;
    struct drisw_screen *psc = (struct drisw_screen *) context->psc;
 
+   driReleaseDrawables(&pcp->base);
+
    if (context->xid)
       glx_send_destroy_context(psc->base.dpy, context->xid);
 
@@ -264,6 +266,8 @@ drisw_bind_context(struct glx_context *context, struct glx_context *old,
    pdraw = (struct drisw_drawable *) driFetchDrawable(context, draw);
    pread = (struct drisw_drawable *) driFetchDrawable(context, read);
 
+   driReleaseDrawables(&pcp->base);
+
    if (pdraw == NULL || pread == NULL)
       return GLXBadDrawable;
 
@@ -281,8 +285,6 @@ drisw_unbind_context(struct glx_context *context, struct glx_context *new)
    struct drisw_screen *psc = (struct drisw_screen *) pcp->base.psc;
 
    (*psc->core->unbindContext) (pcp->driContext);
-
-   driReleaseDrawables(&pcp->base);
 }
 
 static const struct glx_context_vtable drisw_context_vtable = {
