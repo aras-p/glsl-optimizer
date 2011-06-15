@@ -2001,9 +2001,19 @@ static int tgsi_tex(struct r600_shader_ctx *ctx)
 	}
 
 	opcode = ctx->inst_info->r600_opcode;
-	if (opcode == SQ_TEX_INST_SAMPLE &&
-	    (inst->Texture.Texture == TGSI_TEXTURE_SHADOW1D || inst->Texture.Texture == TGSI_TEXTURE_SHADOW2D))
-		opcode = SQ_TEX_INST_SAMPLE_C;
+	if (inst->Texture.Texture == TGSI_TEXTURE_SHADOW1D || inst->Texture.Texture == TGSI_TEXTURE_SHADOW2D) {
+		switch (opcode) {
+		case SQ_TEX_INST_SAMPLE:
+			opcode = SQ_TEX_INST_SAMPLE_C;
+			break;
+		case SQ_TEX_INST_SAMPLE_L:
+			opcode = SQ_TEX_INST_SAMPLE_C_L;
+			break;
+		case SQ_TEX_INST_SAMPLE_G:
+			opcode = SQ_TEX_INST_SAMPLE_C_G;
+			break;
+		}
+	}
 
 	memset(&tex, 0, sizeof(struct r600_bc_tex));
 	tex.inst = opcode;
