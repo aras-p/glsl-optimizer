@@ -416,7 +416,7 @@ static struct pipe_sampler_view *r600_create_sampler_view(struct pipe_context *c
 	uint32_t word4 = 0, yuv_format = 0, pitch = 0;
 	unsigned char swizzle[4], array_mode = 0, tile_type = 0;
 	struct r600_bo *bo[2];
-	unsigned height, depth;
+	unsigned width, height, depth, offset_level, last_level;
 
 	if (resource == NULL)
 		return NULL;
@@ -442,7 +442,7 @@ static struct pipe_sampler_view *r600_create_sampler_view(struct pipe_context *c
 	}
 	desc = util_format_description(state->format);
 	if (desc == NULL) {
-		R600_ERR("unknow format %d\n", state->format);
+		R600_ERR("unknown format %d\n", state->format);
 	}
 	tmp = (struct r600_resource_texture *)texture;
 	if (tmp->depth && !tmp->is_flushing_texture) {
@@ -458,12 +458,18 @@ static struct pipe_sampler_view *r600_create_sampler_view(struct pipe_context *c
 	rbuffer = &tmp->resource;
 	bo[0] = rbuffer->bo;
 	bo[1] = rbuffer->bo;
-	pitch = align(tmp->pitch_in_blocks[0] * util_format_get_blockwidth(state->format), 8);
+
+	offset_level = state->u.tex.first_level;
+	last_level = state->u.tex.last_level - offset_level;
+	width = u_minify(texture->width0, offset_level);
+	height = u_minify(texture->height0, offset_level);
+	depth = u_minify(texture->depth0, offset_level);
+
+	pitch = align(tmp->pitch_in_blocks[offset_level] *
+		      util_format_get_blockwidth(state->format), 8);
 	array_mode = tmp->array_mode[0];
 	tile_type = tmp->tile_type;
 
-	height = texture->height0;
-	depth = texture->depth0;
 	if (texture->target == PIPE_TEXTURE_1D_ARRAY) {
 	        height = 1;
 		depth = texture->array_size;
@@ -478,18 +484,18 @@ static struct pipe_sampler_view *r600_create_sampler_view(struct pipe_context *c
 			  S_038000_TILE_MODE(array_mode) |
 			  S_038000_TILE_TYPE(tile_type) |
 			  S_038000_PITCH((pitch / 8) - 1) |
-			  S_038000_TEX_WIDTH(texture->width0 - 1));
+			  S_038000_TEX_WIDTH(width - 1));
 	rstate->val[1] = (S_038004_TEX_HEIGHT(height - 1) |
 			  S_038004_TEX_DEPTH(depth - 1) |
 			  S_038004_DATA_FORMAT(format));
-	rstate->val[2] = (tmp->offset[0] + r600_bo_offset(bo[0])) >> 8;
-	rstate->val[3] = (tmp->offset[1] + r600_bo_offset(bo[1])) >> 8;
+	rstate->val[2] = (tmp->offset[offset_level] + r600_bo_offset(bo[0])) >> 8;
+	rstate->val[3] = (tmp->offset[offset_level+1] + r600_bo_offset(bo[1])) >> 8;
 	rstate->val[4] = (word4 |
 			  S_038010_SRF_MODE_ALL(V_038010_SRF_MODE_ZERO_CLAMP_MINUS_ONE) |
 			  S_038010_REQUEST_SIZE(1) |
 			  S_038010_ENDIAN_SWAP(endian) |
-			  S_038010_BASE_LEVEL(state->u.tex.first_level));
-	rstate->val[5] = (S_038014_LAST_LEVEL(state->u.tex.last_level) |
+			  S_038010_BASE_LEVEL(0));
+	rstate->val[5] = (S_038014_LAST_LEVEL(last_level) |
 			  S_038014_BASE_ARRAY(state->u.tex.first_layer) |
 			  S_038014_LAST_ARRAY(state->u.tex.last_layer));
 	rstate->val[6] = (S_038018_TYPE(V_038010_SQ_TEX_VTX_VALID_TEXTURE) |
