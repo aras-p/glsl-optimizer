@@ -44,38 +44,18 @@
 
 #include "apple_glx.h"
 #include "apple_xgl_api.h"
-
-#ifndef OPENGL_FRAMEWORK_PATH
-#define OPENGL_FRAMEWORK_PATH "/System/Library/Frameworks/OpenGL.framework/OpenGL"
-#endif
+#include "apple_cgl.h"
 
 struct _glapi_table * __ogl_framework_api = NULL;
 struct _glapi_table * __applegl_api = NULL;
 
 void apple_glapi_set_dispatch(void) {
-    static void *handle;
-    const char *opengl_framework_path;
-
     if(__applegl_api)  {
         _glapi_set_dispatch(__applegl_api);
         return;
     }
 
-    opengl_framework_path = getenv("OPENGL_FRAMEWORK_PATH");
-    if (!opengl_framework_path) {
-        opengl_framework_path = OPENGL_FRAMEWORK_PATH;
-    }
-
-    (void) dlerror();            /*drain dlerror */
-    handle = dlopen(opengl_framework_path, RTLD_LOCAL);
-
-    if (!handle) {
-        fprintf(stderr, "error: unable to dlopen %s : %s\n",
-                opengl_framework_path, dlerror());
-        abort();
-    }
-
-    __ogl_framework_api = _glapi_create_table_from_handle(handle, "gl");
+    __ogl_framework_api = _glapi_create_table_from_handle(apple_cgl_get_dl_handle(), "gl");
     assert(__ogl_framework_api);
 
     __applegl_api = malloc(sizeof(struct _glapi_table));
