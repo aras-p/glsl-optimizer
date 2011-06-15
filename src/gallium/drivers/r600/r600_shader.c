@@ -1745,6 +1745,22 @@ static int tgsi_dp(struct r600_shader_ctx *ctx)
 	return 0;
 }
 
+static inline boolean tgsi_tex_src_requires_loading(struct r600_shader_ctx *ctx,
+						    unsigned index)
+{
+	struct tgsi_full_instruction *inst = &ctx->parse.FullToken.FullInstruction;
+	return 	(inst->Src[index].Register.File != TGSI_FILE_TEMPORARY &&
+		inst->Src[index].Register.File != TGSI_FILE_INPUT) ||
+		ctx->src[index].neg || ctx->src[index].abs;
+}
+
+static inline unsigned tgsi_tex_get_src_gpr(struct r600_shader_ctx *ctx,
+					unsigned index)
+{
+	struct tgsi_full_instruction *inst = &ctx->parse.FullToken.FullInstruction;
+	return ctx->file_offset[inst->Src[index].Register.File] + inst->Src[index].Register.Index;
+}
+
 static int tgsi_tex(struct r600_shader_ctx *ctx)
 {
 	static float one_point_five = 1.5f;
@@ -1756,14 +1772,11 @@ static int tgsi_tex(struct r600_shader_ctx *ctx)
 	int opcode;
 	/* Texture fetch instructions can only use gprs as source.
 	 * Also they cannot negate the source or take the absolute value */
-	const boolean src_requires_loading =
-		(inst->Src[0].Register.File != TGSI_FILE_TEMPORARY &&
-		inst->Src[0].Register.File != TGSI_FILE_INPUT) ||
-		ctx->src[0].neg || ctx->src[0].abs;
+	const boolean src_requires_loading = tgsi_tex_src_requires_loading(ctx, 0);
 	boolean src_loaded = FALSE;
 	unsigned sampler_src_reg = 1;
 
-	src_gpr = ctx->file_offset[inst->Src[0].Register.File] + inst->Src[0].Register.Index;
+	src_gpr = tgsi_tex_get_src_gpr(ctx, 0);
 
 	if (inst->Instruction.Opcode == TGSI_OPCODE_TXD) {
 		/* TGSI moves the sampler to src reg 3 for TXD */
@@ -1772,9 +1785,9 @@ static int tgsi_tex(struct r600_shader_ctx *ctx)
 		/* set gradients h/v */
 		memset(&tex, 0, sizeof(struct r600_bc_tex));
 		tex.inst = SQ_TEX_INST_SET_GRADIENTS_H;
-		tex.sampler_id = ctx->file_offset[inst->Src[sampler_src_reg].Register.File] + inst->Src[sampler_src_reg].Register.Index;
+		tex.sampler_id = tgsi_tex_get_src_gpr(ctx, sampler_src_reg);
 		tex.resource_id = tex.sampler_id + R600_MAX_CONST_BUFFERS;
-		tex.src_gpr = ctx->file_offset[inst->Src[1].Register.File] + inst->Src[1].Register.Index;
+		tex.src_gpr = tgsi_tex_get_src_gpr(ctx, 1);
 		tex.src_sel_x = ctx->src[1].swizzle[0];
 		tex.src_sel_y = ctx->src[1].swizzle[1];
 		tex.src_sel_z = ctx->src[1].swizzle[2];
@@ -1795,9 +1808,9 @@ static int tgsi_tex(struct r600_shader_ctx *ctx)
 		/* set gradients h/v */
 		memset(&tex, 0, sizeof(struct r600_bc_tex));
 		tex.inst = SQ_TEX_INST_SET_GRADIENTS_V;
-		tex.sampler_id = ctx->file_offset[inst->Src[sampler_src_reg].Register.File] + inst->Src[sampler_src_reg].Register.Index;
+		tex.sampler_id = tgsi_tex_get_src_gpr(ctx, sampler_src_reg);
 		tex.resource_id = tex.sampler_id + R600_MAX_CONST_BUFFERS;
-		tex.src_gpr = ctx->file_offset[inst->Src[2].Register.File] + inst->Src[2].Register.Index;
+		tex.src_gpr = tgsi_tex_get_src_gpr(ctx, 2);
 		tex.src_sel_x = ctx->src[2].swizzle[0];
 		tex.src_sel_y = ctx->src[2].swizzle[1];
 		tex.src_sel_z = ctx->src[2].swizzle[2];
@@ -2017,8 +2030,8 @@ static int tgsi_tex(struct r600_shader_ctx *ctx)
 
 	memset(&tex, 0, sizeof(struct r600_bc_tex));
 	tex.inst = opcode;
-       
-	tex.sampler_id = ctx->file_offset[inst->Src[sampler_src_reg].Register.File] + inst->Src[sampler_src_reg].Register.Index;
+
+	tex.sampler_id = tgsi_tex_get_src_gpr(ctx, sampler_src_reg);
 	tex.resource_id = tex.sampler_id + R600_MAX_CONST_BUFFERS;
 	tex.src_gpr = src_gpr;
 	tex.dst_gpr = ctx->file_offset[inst->Dst[0].Register.File] + inst->Dst[0].Register.Index;
