@@ -1559,6 +1559,9 @@ yes)
             fi
             have_st_vega="yes"
             ;;
+	xa)
+	    HAVE_ST_XA="yes"
+	    ;;
         esac
 
 	if test -n "$tracker"; then
@@ -1730,7 +1733,8 @@ dnl
 dnl Gallium helper functions
 dnl
 gallium_check_st() {
-    if test "x$HAVE_ST_DRI" = xyes || test "x$HAVE_ST_XORG" = xyes; then
+    if test "x$HAVE_ST_DRI" = xyes || test "x$HAVE_ST_XORG" = xyes ||
+	 test "x$HAVE_ST_XA" = xyes; then
          GALLIUM_WINSYS_DIRS="$GALLIUM_WINSYS_DIRS $1"
     fi
     if test "x$HAVE_ST_DRI" = xyes && test "x$2" != x; then
@@ -1738,6 +1742,9 @@ gallium_check_st() {
     fi
     if test "x$HAVE_ST_XORG" = xyes && test "x$3" != x; then
          GALLIUM_TARGET_DIRS="$GALLIUM_TARGET_DIRS $3"
+    fi
+    if test "x$HAVE_ST_XA" = xyes && test "x$4" != x; then
+         GALLIUM_TARGET_DIRS="$GALLIUM_TARGET_DIRS $4"
     fi
 }
 
@@ -1749,7 +1756,6 @@ gallium_require_llvm() {
     fi
 }
 
-
 dnl
 dnl Gallium SVGA configuration
 dnl
@@ -1760,7 +1766,7 @@ AC_ARG_ENABLE([gallium-svga],
     [enable_gallium_svga=auto])
 if test "x$enable_gallium_svga" = xyes; then
     GALLIUM_DRIVERS_DIRS="$GALLIUM_DRIVERS_DIRS svga"
-    gallium_check_st "svga/drm" "dri-vmwgfx" "xorg-vmwgfx"
+    gallium_check_st "svga/drm" "dri-vmwgfx" "xorg-vmwgfx" "xa-vmwgfx"
 elif test "x$enable_gallium_svga" = xauto; then
     GALLIUM_DRIVERS_DIRS="$GALLIUM_DRIVERS_DIRS svga"
 fi
