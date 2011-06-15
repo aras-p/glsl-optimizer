@@ -25,6 +25,7 @@
 
 #include "svga_cmd.h"
 
+#include "util/u_format.h"
 #include "util/u_inlines.h"
 #include "util/u_prim.h"
 #include "util/u_time.h"
@@ -75,8 +76,9 @@ svga_upload_user_buffers(struct svga_context *svga,
             size = vb->stride *
                (instance_count + instance_div - 1) / instance_div;
          } else if (vb->stride) {
+            uint elemSize = util_format_get_blocksize(ve->src_format);
             first = vb->stride * start;
-            size = vb->stride * count;
+            size = vb->stride * (count - 1) + elemSize;
          } else {
             /* Only a single vertex!
              * Upload with the largest vertex size the hw supports,
