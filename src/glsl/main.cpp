@@ -76,6 +76,7 @@ initialize_context(struct gl_context *ctx, gl_api api)
    ctx->Extensions.ARB_fragment_coord_conventions = GL_TRUE;
    ctx->Extensions.EXT_texture_array = GL_TRUE;
    ctx->Extensions.NV_texture_rectangle = GL_TRUE;
+   ctx->Extensions.EXT_texture3D = GL_TRUE;
 
    /* GLSL 1.30 isn't fully supported, but we need to advertise 1.30 so that
     * the built-in functions for 1.30 can be built.
