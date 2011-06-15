@@ -767,6 +767,7 @@ static const struct glx_context_vtable dri2_context_vtable = {
    DRI_glXUseXFont,
    dri2_bind_tex_image,
    dri2_release_tex_image,
+   NULL, /* get_proc_address */
 };
 
 static void

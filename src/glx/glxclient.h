@@ -224,7 +224,7 @@ struct glx_context_vtable {
 			  GLXDrawable drawable,
 			  int buffer, const int *attrib_list);
    void (*release_tex_image)(Display * dpy, GLXDrawable drawable, int buffer);
-   
+   void * (*get_proc_address)(const char *symbol);
 };
 
 extern void
