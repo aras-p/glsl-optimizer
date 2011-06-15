@@ -35,7 +35,7 @@
 #include "i915_debug.h"
 #include "i915_reg.h"
 
-static uint find_mapping(struct i915_fragment_shader* fs, int unit)
+static uint find_mapping(const struct i915_fragment_shader* fs, int unit)
 {
    int i;
    for (i = 0; i < I915_TEX_UNITS ; i++)
