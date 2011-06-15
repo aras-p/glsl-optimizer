@@ -467,7 +467,7 @@ static struct pipe_sampler_view *r600_create_sampler_view(struct pipe_context *c
 
 	pitch = align(tmp->pitch_in_blocks[offset_level] *
 		      util_format_get_blockwidth(state->format), 8);
-	array_mode = tmp->array_mode[0];
+	array_mode = tmp->array_mode[offset_level];
 	tile_type = tmp->tile_type;
 
 	if (texture->target == PIPE_TEXTURE_1D_ARRAY) {
