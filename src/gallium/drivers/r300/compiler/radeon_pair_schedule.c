@@ -450,6 +450,7 @@ static int destructive_merge_instructions(
 	rgb->Alpha.OutputWriteMask = alpha->Alpha.OutputWriteMask;
 	rgb->Alpha.DepthWriteMask = alpha->Alpha.DepthWriteMask;
 	rgb->Alpha.Saturate = alpha->Alpha.Saturate;
+	rgb->Alpha.Omod = alpha->Alpha.Omod;
 
 	/* Merge ALU result writing */
 	if (alpha->WriteALUResult) {
@@ -714,6 +715,7 @@ static int convert_rgb_to_alpha(
 	pair_inst->Alpha.OutputWriteMask = pair_inst->RGB.OutputWriteMask;
 	pair_inst->Alpha.DepthWriteMask = pair_inst->RGB.DepthWriteMask;
 	pair_inst->Alpha.Saturate = pair_inst->RGB.Saturate;
+	pair_inst->Alpha.Omod = pair_inst->RGB.Omod;
 	memcpy(pair_inst->Alpha.Arg, pair_inst->RGB.Arg,
 						sizeof(pair_inst->Alpha.Arg));
 	/* Move the swizzles into the first chan */

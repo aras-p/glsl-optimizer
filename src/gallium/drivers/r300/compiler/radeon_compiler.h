@@ -54,6 +54,7 @@ struct radeon_compiler {
 	unsigned is_r500:1;
 	unsigned has_half_swizzles:1;
 	unsigned has_presub:1;
+	unsigned has_omod:1;
 	unsigned disable_optimizations:1;
 	unsigned max_temp_regs;
 	unsigned max_constants;
@@ -159,6 +160,7 @@ struct rc_program_stats {
 	unsigned num_alpha_insts;
 	unsigned num_presub_ops;
 	unsigned num_temp_regs;
+	unsigned num_omod_ops;
 };
 
 void rc_get_stats(struct radeon_compiler *c, struct rc_program_stats *s);

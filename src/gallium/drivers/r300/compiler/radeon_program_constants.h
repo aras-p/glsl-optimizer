@@ -170,6 +170,17 @@ typedef enum {
 	RC_PRESUB_INV
 } rc_presubtract_op;
 
+typedef enum {
+	RC_OMOD_MUL_1,
+	RC_OMOD_MUL_2,
+	RC_OMOD_MUL_4,
+	RC_OMOD_MUL_8,
+	RC_OMOD_DIV_2,
+	RC_OMOD_DIV_4,
+	RC_OMOD_DIV_8,
+	RC_OMOD_DISABLE
+} rc_omod_op;
+
 static inline int rc_presubtract_src_reg_count(rc_presubtract_op op){
 	switch(op){
 	case RC_PRESUB_BIAS:

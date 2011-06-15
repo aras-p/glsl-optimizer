@@ -56,6 +56,38 @@ static const char * presubtract_op_to_string(rc_presubtract_op op)
 	}
 }
 
+static void print_omod_op(FILE * f, rc_omod_op op)
+{
+	const char * omod_str;
+
+	switch(op) {
+	case RC_OMOD_MUL_1:
+	case RC_OMOD_DISABLE:
+		return;
+	case RC_OMOD_MUL_2:
+		omod_str = "* 2";
+		break;
+	case RC_OMOD_MUL_4:
+		omod_str = "* 4";
+		break;
+	case RC_OMOD_MUL_8:
+		omod_str = "* 8";
+		break;
+	case RC_OMOD_DIV_2:
+		omod_str = "/ 2";
+		break;
+	case RC_OMOD_DIV_4:
+		omod_str = "/ 4";
+		break;
+	case RC_OMOD_DIV_8:
+		omod_str = "/ 8";
+		break;
+	default:
+		return;
+	}
+	fprintf(f, " %s", omod_str);
+}
+
 static void rc_print_comparefunc(FILE * f, const char * lhs, rc_compare_func func, const char * rhs)
 {
 	if (func == RC_COMPARE_FUNC_NEVER) {
@@ -248,6 +280,7 @@ static void rc_print_normal_instruction(FILE * f, struct rc_instruction * inst, 
 	if (opcode->HasDstReg) {
 		fprintf(f, " ");
 		rc_print_dst_register(f, inst->U.I.DstReg);
+		print_omod_op(f, inst->U.I.Omod);
 		if (opcode->NumSrcRegs)
 			fprintf(f, ",");
 	}
@@ -337,6 +370,8 @@ static void rc_print_pair_instruction(FILE * f, struct rc_instruction * fullinst
 		if (inst->WriteALUResult == RC_ALURESULT_X)
 			fprintf(f, " aluresult");
 
+		print_omod_op(f, inst->RGB.Omod);
+
 		for(unsigned int arg = 0; arg < opcode->NumSrcRegs; ++arg) {
 			const char* abs = inst->RGB.Arg[arg].Abs ? "|" : "";
 			const char* neg = inst->RGB.Arg[arg].Negate ? "-" : "";
@@ -369,6 +404,8 @@ static void rc_print_pair_instruction(FILE * f, struct rc_instruction * fullinst
 			fprintf(f, " depth.w");
 		if (inst->WriteALUResult == RC_ALURESULT_W)
 			fprintf(f, " aluresult");
+
+		print_omod_op(f, inst->Alpha.Omod);
 
 		for(unsigned int arg = 0; arg < opcode->NumSrcRegs; ++arg) {
 			const char* abs = inst->Alpha.Arg[arg].Abs ? "|" : "";

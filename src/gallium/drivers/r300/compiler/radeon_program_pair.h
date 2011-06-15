@@ -76,6 +76,7 @@ struct rc_pair_sub_instruction {
 	unsigned int OutputWriteMask:3;
 	unsigned int DepthWriteMask:1;
 	unsigned int Saturate:1;
+	unsigned int Omod:3;
 
 	struct rc_pair_instruction_source Src[4];
 	struct rc_pair_instruction_arg Arg[3];

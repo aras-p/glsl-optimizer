@@ -389,6 +389,14 @@ void rc_get_stats(struct radeon_compiler *c, struct rc_program_stats *s)
 				s->num_alpha_insts++;
 			if (tmp->U.P.RGB.Opcode != RC_OPCODE_NOP)
 				s->num_rgb_insts++;
+			if (tmp->U.P.RGB.Omod != RC_OMOD_MUL_1 &&
+				tmp->U.P.RGB.Omod != RC_OMOD_DISABLE) {
+				s->num_omod_ops++;
+			}
+			if (tmp->U.P.Alpha.Omod != RC_OMOD_MUL_1 &&
+				tmp->U.P.Alpha.Omod != RC_OMOD_DISABLE) {
+				s->num_omod_ops++;
+			}
 			info = rc_get_opcode_info(tmp->U.P.RGB.Opcode);
 		}
 		if (info->IsFlowControl)
@@ -427,11 +435,12 @@ static void print_stats(struct radeon_compiler * c)
 			       "~%4u Flow Control Instructions\n"
 			       "~%4u Texture Instructions\n"
 			       "~%4u Presub Operations\n"
+			       "~%4u OMOD Operations\n"
 			       "~%4u Temporary Registers\n"
 			       "~~~~~~~~~~~~~~ END ~~~~~~~~~~~~~~\n",
 			       s.num_insts, s.num_rgb_insts, s.num_alpha_insts,
 			       s.num_fc_insts, s.num_tex_insts, s.num_presub_ops,
-			       s.num_temp_regs);
+			       s.num_omod_ops, s.num_temp_regs);
 		break;
 	default:
 		assert(0);

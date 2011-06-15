@@ -279,6 +279,22 @@ static int emit_alu(struct r300_emit_state * emit, struct rc_pair_instruction* i
 	if (inst->Nop)
 		code->alu.inst[ip].rgb_inst |= R300_ALU_INSERT_NOP;
 
+	/* Handle Output Modifier
+	 * According to the r300 docs, there is no RC_OMOD_DISABLE for r300 */
+	if (inst->RGB.Omod) {
+		if (inst->RGB.Omod == RC_OMOD_DISABLE) {
+			rc_error(&c->Base, "RC_OMOD_DISABLE not supported");
+		}
+		code->alu.inst[ip].rgb_inst |=
+			(inst->RGB.Omod << R300_ALU_OUTC_MOD_SHIFT);
+	}
+	if (inst->Alpha.Omod) {
+		if (inst->Alpha.Omod == RC_OMOD_DISABLE) {
+			rc_error(&c->Base, "RC_OMOD_DISABLE not supported");
+		}
+		code->alu.inst[ip].alpha_inst |=
+			(inst->Alpha.Omod << R300_ALU_OUTC_MOD_SHIFT);
+	}
 	return 1;
 }
 

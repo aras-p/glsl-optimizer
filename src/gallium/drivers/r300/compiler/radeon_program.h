@@ -116,6 +116,8 @@ struct rc_sub_instruction {
 	/** This holds information about the presubtract operation used by
 	 * this instruction. */
 	struct rc_presub_instruction PreSub;
+
+	rc_omod_op Omod;
 };
 
 typedef enum {

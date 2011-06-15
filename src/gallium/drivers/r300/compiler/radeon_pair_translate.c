@@ -297,6 +297,13 @@ static void set_pair_instruction(struct r300_fragment_program_compiler *c,
 		}
 	}
 
+	if (needrgb) {
+		pair->RGB.Omod = inst->Omod;
+	}
+	if (needalpha) {
+		pair->Alpha.Omod = inst->Omod;
+	}
+
 	if (inst->WriteALUResult) {
 		pair->WriteALUResult = inst->WriteALUResult;
 		pair->ALUResultCompare = inst->ALUResultCompare;

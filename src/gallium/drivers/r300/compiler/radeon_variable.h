@@ -84,6 +84,11 @@ struct rc_list * rc_variable_list_get_writers(
 	unsigned int src_type,
 	void * src);
 
+struct rc_list * rc_variable_list_get_writers_one_reader(
+	struct rc_list * var_list,
+	unsigned int src_type,
+	void * src);
+
 void rc_variable_print(struct rc_variable * var);
 
 #endif /* RADEON_VARIABLE_H */

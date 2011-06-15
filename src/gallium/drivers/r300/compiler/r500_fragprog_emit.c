@@ -319,6 +319,10 @@ static void emit_paired(struct r300_fragment_program_compiler *c, struct rc_pair
 			break;
 	}
 
+	/* Set the output modifier */
+	code->inst[ip].inst3 |= inst->RGB.Omod << R500_ALU_RGB_OMOD_SHIFT;
+	code->inst[ip].inst4 |= inst->Alpha.Omod << R500_ALPHA_OMOD_SHIFT;
+
 	code->inst[ip].inst1 |= R500_RGB_ADDR0(use_source(code, inst->RGB.Src[0]));
 	code->inst[ip].inst1 |= R500_RGB_ADDR1(use_source(code, inst->RGB.Src[1]));
 	code->inst[ip].inst1 |= R500_RGB_ADDR2(use_source(code, inst->RGB.Src[2]));

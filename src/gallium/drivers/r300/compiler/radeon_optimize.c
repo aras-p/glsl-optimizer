@@ -30,7 +30,9 @@
 
 #include "radeon_compiler.h"
 #include "radeon_compiler_util.h"
+#include "radeon_list.h"
 #include "radeon_swizzle.h"
+#include "radeon_variable.h"
 
 struct src_clobbered_reads_cb_data {
 	rc_register_file File;
@@ -519,7 +521,8 @@ static int is_presub_candidate(
 
 	if (inst->U.I.PreSub.Opcode != RC_PRESUB_NONE
 			|| inst->U.I.SaturateMode
-			|| inst->U.I.WriteALUResult) {
+			|| inst->U.I.WriteALUResult
+			|| inst->U.I.Omod) {
 		return 0;
 	}
 
@@ -658,6 +661,156 @@ static int peephole_add_presub_inv(
 	return 0;
 }
 
+struct peephole_mul_cb_data {
+	struct rc_dst_register * Writer;
+	unsigned int Clobbered;
+};
+
+static void omod_filter_reader_cb(
+	void * userdata,
+	struct rc_instruction * inst,
+	rc_register_file file,
+	unsigned int index,
+	unsigned int mask)
+{
+	struct peephole_mul_cb_data * d = userdata;
+	if (rc_src_reads_dst_mask(file, mask, index,
+		d->Writer->File, d->Writer->Index, d->Writer->WriteMask)) {
+
+		d->Clobbered = 1;
+	}
+}
+
+static int peephole_mul_omod(
+	struct radeon_compiler * c,
+	struct rc_instruction * inst_mul,
+	struct rc_list * var_list)
+{
+	unsigned int chan, swz, i;
+	int const_index = -1;
+	int temp_index = -1;
+	float const_value;
+	rc_omod_op omod_op = RC_OMOD_DISABLE;
+	struct rc_list * writer_list;
+	struct rc_variable * var;
+	struct peephole_mul_cb_data cb_data;
+
+	for (i = 0; i < 2; i++) {
+		unsigned int j;
+		if (inst_mul->U.I.SrcReg[i].File != RC_FILE_CONSTANT
+			&& inst_mul->U.I.SrcReg[i].File != RC_FILE_TEMPORARY) {
+			return 0;
+		}
+		if (inst_mul->U.I.SrcReg[i].File == RC_FILE_TEMPORARY) {
+			if (temp_index != -1) {
+				/* The instruction has two temp sources */
+				return 0;
+			} else {
+				temp_index = i;
+				continue;
+			}
+		}
+		/* If we get this far Src[i] must be a constant src */
+		if (inst_mul->U.I.SrcReg[i].Negate) {
+			return 0;
+		}
+		/* The constant src needs to read from the same swizzle */
+		swz = RC_SWIZZLE_UNUSED;
+		chan = 0;
+		for (j = 0; j < 4; j++) {
+			unsigned int j_swz =
+				GET_SWZ(inst_mul->U.I.SrcReg[i].Swizzle, j);
+			if (j_swz == RC_SWIZZLE_UNUSED) {
+				continue;
+			}
+			if (swz == RC_SWIZZLE_UNUSED) {
+				swz = j_swz;
+				chan = j;
+			} else if (j_swz != swz) {
+				return 0;
+			}
+		}
+
+		if (const_index != -1) {
+			/* The instruction has two constant sources */
+			return 0;
+		} else {
+			const_index = i;
+		}
+	}
+
+	if (!rc_src_reg_is_immediate(c, inst_mul->U.I.SrcReg[const_index].File,
+				inst_mul->U.I.SrcReg[const_index].Index)) {
+		return 0;
+	}
+	const_value = rc_get_constant_value(c,
+			inst_mul->U.I.SrcReg[const_index].Index,
+			inst_mul->U.I.SrcReg[const_index].Swizzle,
+			inst_mul->U.I.SrcReg[const_index].Negate,
+			chan);
+
+	if (const_value == 2.0f) {
+		omod_op = RC_OMOD_MUL_2;
+	} else if (const_value == 4.0f) {
+		omod_op = RC_OMOD_MUL_4;
+	} else if (const_value == 8.0f) {
+		omod_op = RC_OMOD_MUL_8;
+	} else if (const_value == (1.0f / 2.0f)) {
+		omod_op = RC_OMOD_DIV_2;
+	} else if (const_value == (1.0f / 4.0f)) {
+		omod_op = RC_OMOD_DIV_4;
+	} else if (const_value == (1.0f / 8.0f)) {
+		omod_op = RC_OMOD_DIV_8;
+	} else {
+		return 0;
+	}
+
+	writer_list = rc_variable_list_get_writers_one_reader(var_list,
+		RC_INSTRUCTION_NORMAL, &inst_mul->U.I.SrcReg[temp_index]);
+
+	if (!writer_list) {
+		return 0;
+	}
+
+	cb_data.Clobbered = 0;
+	cb_data.Writer = &inst_mul->U.I.DstReg;
+	for (var = writer_list->Item; var; var = var->Friend) {
+		struct rc_instruction * inst;
+		const struct rc_opcode_info * info = rc_get_opcode_info(
+				var->Inst->U.I.Opcode);
+		if (info->HasTexture) {
+			return 0;
+		}
+		if (var->Inst->U.I.SaturateMode != RC_SATURATE_NONE) {
+			return 0;
+		}
+		for (inst = inst_mul->Prev; inst != var->Inst;
+							inst = inst->Prev) {
+			rc_for_all_reads_mask(inst, omod_filter_reader_cb,
+								&cb_data);
+			if (cb_data.Clobbered) {
+				break;
+			}
+		}
+	}
+
+	if (cb_data.Clobbered) {
+		return 0;
+	}
+
+	/* Rewrite the instructions */
+	for (var = writer_list->Item; var; var = var->Friend) {
+		struct rc_variable * writer = writer_list->Item;
+		writer->Inst->U.I.Omod = omod_op;
+		writer->Inst->U.I.DstReg = inst_mul->U.I.DstReg;
+		writer->Inst->U.I.SaturateMode = inst_mul->U.I.SaturateMode;
+	}
+
+	rc_remove_instruction(inst_mul);
+
+	return 1;
+}
+
 /**
  * @return
  * 	0 if inst is still part of the program.
@@ -683,6 +836,7 @@ static int peephole(struct radeon_compiler * c, struct rc_instruction * inst)
 void rc_optimize(struct radeon_compiler * c, void *user)
 {
 	struct rc_instruction * inst = c->Program.Instructions.Next;
+	struct rc_list * var_list;
 	while(inst != &c->Program.Instructions) {
 		struct rc_instruction * cur = inst;
 		inst = inst->Next;
@@ -695,6 +849,20 @@ void rc_optimize(struct radeon_compiler * c, void *user)
 		if (cur->U.I.Opcode == RC_OPCODE_MOV) {
 			copy_propagate(c, cur);
 			/* cur may no longer be part of the program */
+		}
+	}
+
+	if (!c->has_omod) {
+		return;
+	}
+
+	inst = c->Program.Instructions.Next;
+	while(inst != &c->Program.Instructions) {
+		struct rc_instruction * cur = inst;
+		inst = inst->Next;
+		if (cur->U.I.Opcode == RC_OPCODE_MUL) {
+			var_list = rc_get_variables(c);
+			peephole_mul_omod(c, cur, var_list);
 		}
 	}
 }
