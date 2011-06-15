@@ -1383,6 +1383,9 @@ int r600_bc_add_tex(struct r600_bc *bc, const struct r600_bc_tex *tex)
 				break;
 			}
 		}
+		/* slight hack to make gradients always go into same cf */
+		if (ntex->inst == SQ_TEX_INST_SET_GRADIENTS_H)
+			bc->force_add_cf = 1;
 	}
 
 	/* cf can contains only alu or only vtx or only tex */

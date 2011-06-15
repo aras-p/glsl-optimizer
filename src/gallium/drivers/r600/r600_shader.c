@@ -1761,10 +1761,60 @@ static int tgsi_tex(struct r600_shader_ctx *ctx)
 		inst->Src[0].Register.File != TGSI_FILE_INPUT) ||
 		ctx->src[0].neg || ctx->src[0].abs;
 	boolean src_loaded = FALSE;
+	unsigned sampler_src_reg = 1;
 
 	src_gpr = ctx->file_offset[inst->Src[0].Register.File] + inst->Src[0].Register.Index;
 
-	if (inst->Instruction.Opcode == TGSI_OPCODE_TXP) {
+	if (inst->Instruction.Opcode == TGSI_OPCODE_TXD) {
+		/* TGSI moves the sampler to src reg 3 for TXD */
+		sampler_src_reg = 3;
+
+		/* set gradients h/v */
+		memset(&tex, 0, sizeof(struct r600_bc_tex));
+		tex.inst = SQ_TEX_INST_SET_GRADIENTS_H;
+		tex.sampler_id = ctx->file_offset[inst->Src[sampler_src_reg].Register.File] + inst->Src[sampler_src_reg].Register.Index;
+		tex.resource_id = tex.sampler_id + R600_MAX_CONST_BUFFERS;
+		tex.src_gpr = ctx->file_offset[inst->Src[1].Register.File] + inst->Src[1].Register.Index;
+		tex.src_sel_x = ctx->src[1].swizzle[0];
+		tex.src_sel_y = ctx->src[1].swizzle[1];
+		tex.src_sel_z = ctx->src[1].swizzle[2];
+		tex.src_sel_w = ctx->src[1].swizzle[3];
+		tex.src_rel = ctx->src[1].rel;
+		tex.dst_gpr = ctx->temp_reg; /* just to avoid confusing the asm scheduler */
+		tex.dst_sel_x = tex.dst_sel_y = tex.dst_sel_z = tex.dst_sel_w = 7;
+		if (inst->Texture.Texture != TGSI_TEXTURE_RECT) {
+			tex.coord_type_x = 1;
+			tex.coord_type_y = 1;
+			tex.coord_type_z = 1;
+			tex.coord_type_w = 1;
+		}
+		r = r600_bc_add_tex(ctx->bc, &tex);
+		if (r)
+			return r;
+
+		/* set gradients h/v */
+		memset(&tex, 0, sizeof(struct r600_bc_tex));
+		tex.inst = SQ_TEX_INST_SET_GRADIENTS_V;
+		tex.sampler_id = ctx->file_offset[inst->Src[sampler_src_reg].Register.File] + inst->Src[sampler_src_reg].Register.Index;
+		tex.resource_id = tex.sampler_id + R600_MAX_CONST_BUFFERS;
+		tex.src_gpr = ctx->file_offset[inst->Src[2].Register.File] + inst->Src[2].Register.Index;
+		tex.src_sel_x = ctx->src[2].swizzle[0];
+		tex.src_sel_y = ctx->src[2].swizzle[1];
+		tex.src_sel_z = ctx->src[2].swizzle[2];
+		tex.src_sel_w = ctx->src[2].swizzle[3];
+		tex.src_rel = ctx->src[2].rel;
+		tex.dst_gpr = ctx->temp_reg; /* just to avoid confusing the asm scheduler */
+		tex.dst_sel_x = tex.dst_sel_y = tex.dst_sel_z = tex.dst_sel_w = 7;
+		if (inst->Texture.Texture != TGSI_TEXTURE_RECT) {
+			tex.coord_type_x = 1;
+			tex.coord_type_y = 1;
+			tex.coord_type_z = 1;
+			tex.coord_type_w = 1;
+		}
+		r = r600_bc_add_tex(ctx->bc, &tex);
+		if (r)
+			return r;
+	} else if (inst->Instruction.Opcode == TGSI_OPCODE_TXP) {
 		int out_chan;
 		/* Add perspective divide */
 		if (ctx->bc->chiprev == CHIPREV_CAYMAN) {
@@ -1957,7 +2007,8 @@ static int tgsi_tex(struct r600_shader_ctx *ctx)
 
 	memset(&tex, 0, sizeof(struct r600_bc_tex));
 	tex.inst = opcode;
-	tex.sampler_id = ctx->file_offset[inst->Src[1].Register.File] + inst->Src[1].Register.Index;
+       
+	tex.sampler_id = ctx->file_offset[inst->Src[sampler_src_reg].Register.File] + inst->Src[sampler_src_reg].Register.Index;
 	tex.resource_id = tex.sampler_id + R600_MAX_CONST_BUFFERS;
 	tex.src_gpr = src_gpr;
 	tex.dst_gpr = ctx->file_offset[inst->Dst[0].Register.File] + inst->Dst[0].Register.Index;
@@ -3082,7 +3133,7 @@ static struct r600_shader_tgsi_instruction r600_shader_tgsi_instruction[] = {
 	{TGSI_OPCODE_SNE,	0, V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_SETNE, tgsi_op2},
 	{TGSI_OPCODE_STR,	0, V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_NOP, tgsi_unsupported},
 	{TGSI_OPCODE_TEX,	0, SQ_TEX_INST_SAMPLE, tgsi_tex},
-	{TGSI_OPCODE_TXD,	0, V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_NOP, tgsi_unsupported},
+	{TGSI_OPCODE_TXD,	0, SQ_TEX_INST_SAMPLE_G, tgsi_tex},
 	{TGSI_OPCODE_TXP,	0, SQ_TEX_INST_SAMPLE, tgsi_tex},
 	{TGSI_OPCODE_UP2H,	0, V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_NOP, tgsi_unsupported},
 	{TGSI_OPCODE_UP2US,	0, V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_NOP, tgsi_unsupported},
@@ -3240,7 +3291,7 @@ static struct r600_shader_tgsi_instruction eg_shader_tgsi_instruction[] = {
 	{TGSI_OPCODE_SNE,	0, EG_V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_SETNE, tgsi_op2},
 	{TGSI_OPCODE_STR,	0, EG_V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_NOP, tgsi_unsupported},
 	{TGSI_OPCODE_TEX,	0, SQ_TEX_INST_SAMPLE, tgsi_tex},
-	{TGSI_OPCODE_TXD,	0, EG_V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_NOP, tgsi_unsupported},
+	{TGSI_OPCODE_TXD,	0, SQ_TEX_INST_SAMPLE_G, tgsi_tex},
 	{TGSI_OPCODE_TXP,	0, SQ_TEX_INST_SAMPLE, tgsi_tex},
 	{TGSI_OPCODE_UP2H,	0, EG_V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_NOP, tgsi_unsupported},
 	{TGSI_OPCODE_UP2US,	0, EG_V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_NOP, tgsi_unsupported},
@@ -3398,7 +3449,7 @@ static struct r600_shader_tgsi_instruction cm_shader_tgsi_instruction[] = {
 	{TGSI_OPCODE_SNE,	0, EG_V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_SETNE, tgsi_op2},
 	{TGSI_OPCODE_STR,	0, EG_V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_NOP, tgsi_unsupported},
 	{TGSI_OPCODE_TEX,	0, SQ_TEX_INST_SAMPLE, tgsi_tex},
-	{TGSI_OPCODE_TXD,	0, EG_V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_NOP, tgsi_unsupported},
+	{TGSI_OPCODE_TXD,	0, SQ_TEX_INST_SAMPLE_G, tgsi_tex},
 	{TGSI_OPCODE_TXP,	0, SQ_TEX_INST_SAMPLE, tgsi_tex},
 	{TGSI_OPCODE_UP2H,	0, EG_V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_NOP, tgsi_unsupported},
 	{TGSI_OPCODE_UP2US,	0, EG_V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_NOP, tgsi_unsupported},
