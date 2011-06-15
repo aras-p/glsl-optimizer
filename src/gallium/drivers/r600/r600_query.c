@@ -75,6 +75,9 @@ static void r600_render_condition(struct pipe_context *ctx,
 	struct r600_query *rquery = (struct r600_query *)query;
 	int wait_flag = 0;
 
+	rctx->current_render_cond = query;
+	rctx->current_render_cond_mode = mode;
+
 	if (!query) {
 		rctx->ctx.predicate_drawing = false;
 		r600_query_predication(&rctx->ctx, NULL, PREDICATION_OP_CLEAR, 1);

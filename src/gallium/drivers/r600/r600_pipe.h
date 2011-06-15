@@ -191,6 +191,10 @@ struct r600_pipe_context {
 	struct r600_pipe_rasterizer	*rasterizer;
 	struct r600_pipe_state          vgt;
 	struct r600_pipe_state          spi;
+	struct pipe_query		*current_render_cond;
+	unsigned			current_render_cond_mode;
+	struct pipe_query		*saved_render_cond;
+	unsigned			saved_render_cond_mode;
 	/* shader information */
 	unsigned			sprite_coord_enable;
 	boolean				flatshade;

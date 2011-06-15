@@ -27,9 +27,18 @@
 
 enum r600_blitter_op /* bitmask */
 {
-	R600_CLEAR         = 1,
-	R600_CLEAR_SURFACE = 2,
-	R600_COPY          = 4
+	R600_SAVE_TEXTURES      = 1,
+	R600_SAVE_FRAMEBUFFER   = 2,
+	R600_DISABLE_RENDER_COND = 4,
+
+	R600_CLEAR         = 0,
+
+	R600_CLEAR_SURFACE = R600_SAVE_FRAMEBUFFER,
+
+	R600_COPY          = R600_SAVE_FRAMEBUFFER | R600_SAVE_TEXTURES |
+			     R600_DISABLE_RENDER_COND,
+
+	R600_DECOMPRESS    = R600_SAVE_FRAMEBUFFER | R600_DISABLE_RENDER_COND,
 };
 
 static void r600_blitter_begin(struct pipe_context *ctx, enum r600_blitter_op op)
@@ -58,10 +67,10 @@ static void r600_blitter_begin(struct pipe_context *ctx, enum r600_blitter_op op
 					 rctx->vbuf_mgr->nr_vertex_buffers,
 					 rctx->vbuf_mgr->vertex_buffer);
 
-	if (op & (R600_CLEAR_SURFACE | R600_COPY))
+	if (op & R600_SAVE_FRAMEBUFFER)
 		util_blitter_save_framebuffer(rctx->blitter, &rctx->framebuffer);
 
-	if (op & R600_COPY) {
+	if (op & R600_SAVE_TEXTURES) {
 		util_blitter_save_fragment_sampler_states(
 			rctx->blitter, rctx->ps_samplers.n_samplers,
 			(void**)rctx->ps_samplers.samplers);
@@ -71,11 +80,23 @@ static void r600_blitter_begin(struct pipe_context *ctx, enum r600_blitter_op op
 			(struct pipe_sampler_view**)rctx->ps_samplers.views);
 	}
 
+	if ((op & R600_DISABLE_RENDER_COND) && rctx->current_render_cond) {
+		rctx->saved_render_cond = rctx->current_render_cond;
+		rctx->saved_render_cond_mode = rctx->current_render_cond_mode;
+		rctx->context.render_condition(&rctx->context, NULL, 0);
+	}
+
 }
 
 static void r600_blitter_end(struct pipe_context *ctx)
 {
 	struct r600_pipe_context *rctx = (struct r600_pipe_context *)ctx;
+	if (rctx->saved_render_cond) {
+		rctx->context.render_condition(&rctx->context,
+					       rctx->saved_render_cond,
+					       rctx->saved_render_cond_mode);
+		rctx->saved_render_cond = NULL;
+	}
 	r600_context_queries_resume(&rctx->ctx);
 	rctx->blit = false;
 }
@@ -107,7 +128,7 @@ void r600_blit_uncompress_depth(struct pipe_context *ctx, struct r600_resource_t
 	    rctx->family == CHIP_RV620 || rctx->family == CHIP_RV635)
 		depth = 0.0f;
 
-	r600_blitter_begin(ctx, R600_CLEAR_SURFACE);
+	r600_blitter_begin(ctx, R600_DECOMPRESS);
 	util_blitter_custom_depth_stencil(rctx->blitter, zsurf, cbsurf, rctx->custom_dsa_flush, depth);
 	r600_blitter_end(ctx);
 
