@@ -32,6 +32,7 @@
 #include "radeon_emulate_loops.h"
 
 #include "radeon_compiler.h"
+#include "radeon_compiler_util.h"
 #include "radeon_dataflow.h"
 
 #define VERBOSE 0
@@ -53,30 +54,6 @@ struct count_inst {
 	int Unknown;
 	unsigned BranchDepth;
 };
-
-static float get_constant_value(struct radeon_compiler * c,
-						struct rc_src_register * src,
-						int chan)
-{
-	float base = 1.0f;
-	int swz = GET_SWZ(src->Swizzle, chan);
-	if(swz >= 4 || src->Index >= c->Program.Constants.Count ){
-		rc_error(c, "get_constant_value: Can't find a value.\n");
-		return 0.0f;
-	}
-	if(GET_BIT(src->Negate, chan)){
-		base = -1.0f;
-	}
-	return base *
-		c->Program.Constants.Constants[src->Index].u.Immediate[swz];
-}
-
-static int src_reg_is_immediate(struct rc_src_register * src,
-						struct radeon_compiler * c)
-{
-	return src->File == RC_FILE_CONSTANT &&
-	c->Program.Constants.Constants[src->Index].Type==RC_CONSTANT_IMMEDIATE;
-}
 
 static unsigned int loop_max_possible_iterations(struct radeon_compiler *c,
 			struct loop_info * loop)
@@ -119,12 +96,16 @@ static void update_const_value(void * data, struct rc_instruction * inst,
 	}
 	switch(inst->U.I.Opcode){
 	case RC_OPCODE_MOV:
-		if(!src_reg_is_immediate(&inst->U.I.SrcReg[0], value->C)){
+		if(!rc_src_reg_is_immediate(value->C, inst->U.I.SrcReg[0].File,
+						inst->U.I.SrcReg[0].Index)){
 			return;
 		}
 		value->HasValue = 1;
 		value->Value =
-			get_constant_value(value->C, &inst->U.I.SrcReg[0], 0);
+			rc_get_constant_value(value->C,
+					      inst->U.I.SrcReg[0].Index,
+					      inst->U.I.SrcReg[0].Swizzle,
+					      inst->U.I.SrcReg[0].Negate, 0);
 		break;
 	}
 }
@@ -169,10 +150,13 @@ static void get_incr_amount(void * data, struct rc_instruction * inst,
 		count_inst->Unknown = 1;
 		return;
 	}
-	if(src_reg_is_immediate(&inst->U.I.SrcReg[amnt_src_index],
-							count_inst->C)){
-		amount = get_constant_value(count_inst->C,
-				&inst->U.I.SrcReg[amnt_src_index], 0);
+	if(rc_src_reg_is_immediate(count_inst->C,
+				inst->U.I.SrcReg[amnt_src_index].File,
+				inst->U.I.SrcReg[amnt_src_index].Index)){
+		amount = rc_get_constant_value(count_inst->C,
+				inst->U.I.SrcReg[amnt_src_index].Index,
+				inst->U.I.SrcReg[amnt_src_index].Swizzle,
+				inst->U.I.SrcReg[amnt_src_index].Negate, 0);
 	}
 	else{
 		count_inst->Unknown = 1 ;
@@ -212,11 +196,13 @@ static int try_unroll_loop(struct radeon_compiler * c, struct loop_info * loop)
 
 	/* Find the counter and the upper limit */
 
-	if(src_reg_is_immediate(&loop->Cond->U.I.SrcReg[0], c)){
+	if(rc_src_reg_is_immediate(c, loop->Cond->U.I.SrcReg[0].File,
+					loop->Cond->U.I.SrcReg[0].Index)){
 		limit = &loop->Cond->U.I.SrcReg[0];
 		counter = &loop->Cond->U.I.SrcReg[1];
 	}
-	else if(src_reg_is_immediate(&loop->Cond->U.I.SrcReg[1], c)){
+	else if(rc_src_reg_is_immediate(c, loop->Cond->U.I.SrcReg[1].File,
+					loop->Cond->U.I.SrcReg[1].Index)){
 		limit = &loop->Cond->U.I.SrcReg[1];
 		counter = &loop->Cond->U.I.SrcReg[0];
 	}
@@ -290,7 +276,8 @@ static int try_unroll_loop(struct radeon_compiler * c, struct loop_info * loop)
 	/* Calculate the number of iterations of this loop.  Keeping this
 	 * simple, since we only support increment and decrement loops.
 	 */
-	limit_value = get_constant_value(c, limit, 0);
+	limit_value = rc_get_constant_value(c, limit->Index, limit->Swizzle,
+							limit->Negate, 0);
 	DBG("Limit is %f.\n", limit_value);
 	/* The iteration calculations are opposite of what you would expect.
 	 * In a normal loop, if the condition is met, then loop continues, but

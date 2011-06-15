@@ -699,3 +699,38 @@ unsigned int rc_make_conversion_swizzle(
 	}
 	return conversion_swizzle;
 }
+
+/**
+ * @return 1 if the register contains an immediate value, 0 otherwise.
+ */
+unsigned int rc_src_reg_is_immediate(
+	struct radeon_compiler * c,
+	unsigned int file,
+	unsigned int index)
+{
+	return file == RC_FILE_CONSTANT &&
+	c->Program.Constants.Constants[index].Type == RC_CONSTANT_IMMEDIATE;
+}
+
+/**
+ * @return The immediate value in the specified register.
+ */
+float rc_get_constant_value(
+	struct radeon_compiler * c,
+	unsigned int index,
+	unsigned int swizzle,
+	unsigned int negate,
+	unsigned int chan)
+{
+	float base = 1.0f;
+	int swz = GET_SWZ(swizzle, chan);
+	if(swz >= 4 || index >= c->Program.Constants.Count ){
+		rc_error(c, "get_constant_value: Can't find a value.\n");
+		return 0.0f;
+	}
+	if(GET_BIT(negate, chan)){
+		base = -1.0f;
+	}
+	return base *
+		c->Program.Constants.Constants[index].u.Immediate[swz];
+}

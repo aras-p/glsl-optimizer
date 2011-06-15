@@ -86,4 +86,17 @@ unsigned int rc_make_conversion_swizzle(
 	unsigned int old_mask,
 	unsigned int new_mask);
 
+unsigned int rc_src_reg_is_immediate(
+	struct radeon_compiler * c,
+	unsigned int file,
+	unsigned int index);
+
+float rc_get_constant_value(
+	struct radeon_compiler * c,
+	unsigned int index,
+	unsigned int swizzle,
+	unsigned int negate,
+	unsigned int chan);
+
+
 #endif /* RADEON_PROGRAM_UTIL_H */
