@@ -196,26 +196,26 @@ intel_alloc_renderbuffer_storage(struct gl_context * ctx, struct gl_renderbuffer
 				       width,
 				       height / 2,
 				       GL_TRUE);
+      if (!irb->region)
+	return false;
+
    } else {
       irb->region = intel_region_alloc(intel->intelScreen, tiling, cpp,
 				       width, height, GL_TRUE);
-   }
+      if (!irb->region)
+	 return false;
 
-   if (!irb->region)
-      return GL_FALSE;       /* out of memory? */
-
-   ASSERT(irb->region->buffer);
-
-   if (intel->vtbl.is_hiz_depth_format(intel, rb->Format)) {
-      irb->hiz_region = intel_region_alloc(intel->intelScreen,
-                                           I915_TILING_Y,
-                                           irb->region->cpp,
-                                           irb->region->width,
-                                           irb->region->height,
-                                           GL_TRUE);
-      if (!irb->hiz_region) {
-         intel_region_release(&irb->region);
-         return GL_FALSE;
+      if (intel->vtbl.is_hiz_depth_format(intel, rb->Format)) {
+	 irb->hiz_region = intel_region_alloc(intel->intelScreen,
+					      I915_TILING_Y,
+					      irb->region->cpp,
+					      irb->region->width,
+					      irb->region->height,
+					      GL_TRUE);
+	 if (!irb->hiz_region) {
+	    intel_region_release(&irb->region);
+	    return false;
+	 }
       }
    }
 
