@@ -1361,7 +1361,7 @@ glsl_to_tgsi_visitor::visit(ir_expression *ir)
       if (ir->operands[0]->type->is_vector() ||
           ir->operands[1]->type->is_vector()) {
          st_src_reg temp = get_temp(glsl_version >= 130 ? 
-               glsl_type::get_vec4_type(ir->operands[0]->type->base_type) : 
+               glsl_type::get_instance(ir->operands[0]->type->base_type, 4, 1) :
                glsl_type::vec4_type);
          assert(ir->operands[0]->type->base_type == GLSL_TYPE_FLOAT);
          emit(ir, TGSI_OPCODE_SNE, st_dst_reg(temp), op[0], op[1]);
@@ -1376,7 +1376,7 @@ glsl_to_tgsi_visitor::visit(ir_expression *ir)
       if (ir->operands[0]->type->is_vector() ||
           ir->operands[1]->type->is_vector()) {
          st_src_reg temp = get_temp(glsl_version >= 130 ? 
-               glsl_type::get_vec4_type(ir->operands[0]->type->base_type) : 
+               glsl_type::get_instance(ir->operands[0]->type->base_type, 4, 1) :
                glsl_type::vec4_type);
          assert(ir->operands[0]->type->base_type == GLSL_TYPE_FLOAT);
          emit(ir, TGSI_OPCODE_SNE, st_dst_reg(temp), op[0], op[1]);
