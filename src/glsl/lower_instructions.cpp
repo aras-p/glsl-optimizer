@@ -276,7 +276,7 @@ lower_instructions_visitor::visit_leave(ir_expression *ir)
       break;
 
    case ir_binop_mod:
-      if (lowering(MOD_TO_FRACT))
+      if (lowering(MOD_TO_FRACT) && ir->type->is_float())
 	 mod_to_fract(ir);
       break;
 
