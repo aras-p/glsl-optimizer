@@ -374,6 +374,7 @@ public:
    bool process_move_condition(ir_rvalue *ir);
 
    void remove_output_reads(gl_register_file type);
+   void simplify_cmp(void);
 
    void rename_temp_register(int index, int new_index);
    int get_first_temp_read(int index);
@@ -2788,6 +2789,97 @@ glsl_to_tgsi_visitor::remove_output_reads(gl_register_file type)
    }
 }
 
+/**
+ * Returns the mask of channels (bitmask of WRITEMASK_X,Y,Z,W) which
+ * are read from the given src in this instruction
+ */
+static int
+get_src_arg_mask(st_dst_reg dst, st_src_reg src)
+{
+   int read_mask = 0, comp;
+
+   /* Now, given the src swizzle and the written channels, find which
+    * components are actually read
+    */
+   for (comp = 0; comp < 4; ++comp) {
+      const unsigned coord = GET_SWZ(src.swizzle, comp);
+      ASSERT(coord < 4);
+      if (dst.writemask & (1 << comp) && coord <= SWIZZLE_W)
+         read_mask |= 1 << coord;
+   }
+
+   return read_mask;
+}
+
+/**
+ * This pass replaces CMP T0, T1 T2 T0 with MOV T0, T2 when the CMP
+ * instruction is the first instruction to write to register T0.  There are
+ * several lowering passes done in GLSL IR (e.g. branches and
+ * relative addressing) that create a large number of conditional assignments
+ * that ir_to_mesa converts to CMP instructions like the one mentioned above.
+ *
+ * Here is why this conversion is safe:
+ * CMP T0, T1 T2 T0 can be expanded to:
+ * if (T1 < 0.0)
+ * 	MOV T0, T2;
+ * else
+ * 	MOV T0, T0;
+ *
+ * If (T1 < 0.0) evaluates to true then our replacement MOV T0, T2 is the same
+ * as the original program.  If (T1 < 0.0) evaluates to false, executing
+ * MOV T0, T0 will store a garbage value in T0 since T0 is uninitialized.
+ * Therefore, it doesn't matter that we are replacing MOV T0, T0 with MOV T0, T2
+ * because any instruction that was going to read from T0 after this was going
+ * to read a garbage value anyway.
+ */
+void
+glsl_to_tgsi_visitor::simplify_cmp(void)
+{
+   unsigned tempWrites[MAX_PROGRAM_TEMPS];
+   unsigned outputWrites[MAX_PROGRAM_OUTPUTS];
+
+   memset(tempWrites, 0, sizeof(tempWrites));
+   memset(outputWrites, 0, sizeof(outputWrites));
+
+   foreach_iter(exec_list_iterator, iter, this->instructions) {
+      glsl_to_tgsi_instruction *inst = (glsl_to_tgsi_instruction *)iter.get();
+      unsigned prevWriteMask = 0;
+
+      /* Give up if we encounter relative addressing or flow control. */
+      if (inst->dst.reladdr ||
+          tgsi_get_opcode_info(inst->op)->is_branch ||
+          inst->op == TGSI_OPCODE_BGNSUB ||
+          inst->op == TGSI_OPCODE_CONT ||
+          inst->op == TGSI_OPCODE_END ||
+          inst->op == TGSI_OPCODE_ENDSUB ||
+          inst->op == TGSI_OPCODE_RET) {
+         return;
+      }
+
+      if (inst->dst.file == PROGRAM_OUTPUT) {
+         assert(inst->dst.index < MAX_PROGRAM_OUTPUTS);
+         prevWriteMask = outputWrites[inst->dst.index];
+         outputWrites[inst->dst.index] |= inst->dst.writemask;
+      } else if (inst->dst.file == PROGRAM_TEMPORARY) {
+         assert(inst->dst.index < MAX_PROGRAM_TEMPS);
+         prevWriteMask = tempWrites[inst->dst.index];
+         tempWrites[inst->dst.index] |= inst->dst.writemask;
+      }
+
+      /* For a CMP to be considered a conditional write, the destination
+       * register and source register two must be the same. */
+      if (inst->op == TGSI_OPCODE_CMP
+          && !(inst->dst.writemask & prevWriteMask)
+          && inst->src[2].file == inst->dst.file
+          && inst->src[2].index == inst->dst.index
+          && inst->dst.writemask == get_src_arg_mask(inst->dst, inst->src[2])) {
+
+         inst->op = TGSI_OPCODE_MOV;
+         inst->src[0] = inst->src[1];
+      }
+   }
+}
+
 /* Replaces all references to a temporary register index with another index. */
 void
 glsl_to_tgsi_visitor::rename_temp_register(int index, int new_index)
@@ -4170,6 +4262,9 @@ get_mesa_program(struct gl_context *ctx,
    v->remove_output_reads(PROGRAM_OUTPUT);
    if (target == GL_VERTEX_PROGRAM_ARB)
       v->remove_output_reads(PROGRAM_VARYING);
+   
+   /* Perform the simplify_cmp optimization, which is required by r300g. */
+   v->simplify_cmp();
 
    /* Perform optimizations on the instructions in the glsl_to_tgsi_visitor.
     * FIXME: These passes to optimize temporary registers don't work when there
