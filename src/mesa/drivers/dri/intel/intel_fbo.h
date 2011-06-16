@@ -45,6 +45,18 @@ struct intel_renderbuffer
    /** Only used by depth renderbuffers for which HiZ is enabled. */
    struct intel_region *hiz_region;
 
+   /**
+    * \name Packed depth/stencil unwrappers
+    *
+    * If the intel_context is using separate stencil and this renderbuffer has
+    * a a packed depth/stencil format, then wrapped_depth and wrapped_stencil
+    * are the real renderbuffers.
+    */
+   struct gl_renderbuffer *wrapped_depth;
+   struct gl_renderbuffer *wrapped_stencil;
+
+   /** \} */
+
    GLuint draw_offset; /**< Offset of drawing address within the region */
    GLuint draw_x, draw_y; /**< Offset of drawing within the region */
 };
@@ -76,15 +88,47 @@ intel_renderbuffer(struct gl_renderbuffer *rb)
 
 
 /**
- * Return a framebuffer's renderbuffer, named by a BUFFER_x index.
+ * \brief Return the framebuffer attachment specified by attIndex.
+ *
+ * If the framebuffer lacks the specified attachment, then return null.
+ *
+ * If the attached renderbuffer is a wrapper, then return wrapped
+ * renderbuffer.
  */
 static INLINE struct intel_renderbuffer *
-intel_get_renderbuffer(struct gl_framebuffer *fb, int attIndex)
+intel_get_renderbuffer(struct gl_framebuffer *fb, gl_buffer_index attIndex)
 {
-   if (attIndex >= 0)
-      return intel_renderbuffer(fb->Attachment[attIndex].Renderbuffer);
-   else
+   struct gl_renderbuffer *rb;
+   struct intel_renderbuffer *irb;
+
+   /* XXX: Who passes -1 to intel_get_renderbuffer? */
+   if (attIndex < 0)
       return NULL;
+
+   rb = fb->Attachment[attIndex].Renderbuffer;
+   if (!rb)
+      return NULL;
+
+   irb = intel_renderbuffer(rb);
+   if (!irb)
+      return NULL;
+
+   switch (attIndex) {
+   case BUFFER_DEPTH:
+      if (irb->wrapped_depth) {
+	 irb = intel_renderbuffer(irb->wrapped_depth);
+      }
+      break;
+   case BUFFER_STENCIL:
+      if (irb->wrapped_stencil) {
+	 irb = intel_renderbuffer(irb->wrapped_stencil);
+      }
+      break;
+   default:
+      break;
+   }
+
+   return irb;
 }
 
 /**

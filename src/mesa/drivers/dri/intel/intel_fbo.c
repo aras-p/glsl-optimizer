@@ -82,6 +82,12 @@ intel_delete_renderbuffer(struct gl_renderbuffer *rb)
    if (intel && irb->hiz_region) {
       intel_region_release(&irb->hiz_region);
    }
+   if (intel && irb->wrapped_depth) {
+      _mesa_reference_renderbuffer(&irb->wrapped_depth, NULL);
+   }
+   if (intel && irb->wrapped_stencil) {
+      _mesa_reference_renderbuffer(&irb->wrapped_stencil, NULL);
+   }
 
    free(irb);
 }

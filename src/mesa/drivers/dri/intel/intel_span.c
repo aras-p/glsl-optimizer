@@ -177,7 +177,15 @@ intel_renderbuffer_map(struct intel_context *intel, struct gl_renderbuffer *rb)
 {
    struct intel_renderbuffer *irb = intel_renderbuffer(rb);
 
-   if (irb == NULL || irb->region == NULL)
+   if (!irb)
+      return;
+
+   if (irb->wrapped_depth)
+      intel_renderbuffer_map(intel, irb->wrapped_depth);
+   if (irb->wrapped_stencil)
+      intel_renderbuffer_map(intel, irb->wrapped_stencil);
+
+   if (!irb->region)
       return;
 
    drm_intel_gem_bo_map_gtt(irb->region->buffer);
@@ -206,7 +214,15 @@ intel_renderbuffer_unmap(struct intel_context *intel,
 {
    struct intel_renderbuffer *irb = intel_renderbuffer(rb);
 
-   if (irb == NULL || irb->region == NULL)
+   if (!irb)
+      return;
+
+   if (irb->wrapped_depth)
+      intel_renderbuffer_unmap(intel, irb->wrapped_depth);
+   if (irb->wrapped_stencil)
+      intel_renderbuffer_unmap(intel, irb->wrapped_stencil);
+
+   if (!irb->region)
       return;
 
    drm_intel_gem_bo_unmap_gtt(irb->region->buffer);
