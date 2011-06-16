@@ -36,18 +36,6 @@
 #include "brw_defines.h"
 #include "main/macros.h"
 
-struct brw_vs_unit_key {
-   unsigned int total_grf;
-   unsigned int urb_entry_read_length;
-   unsigned int curb_entry_read_length;
-
-   unsigned int curbe_offset;
-
-   unsigned int nr_urb_entries, urb_size;
-
-   unsigned int nr_surfaces;
-};
-
 static void
 brw_prepare_vs_unit(struct brw_context *brw)
 {
