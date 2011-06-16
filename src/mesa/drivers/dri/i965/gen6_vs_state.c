@@ -110,7 +110,7 @@ const struct brw_tracked_state gen6_vs_constants = {
       .mesa  = _NEW_TRANSFORM | _NEW_PROGRAM_CONSTANTS,
       .brw   = (BRW_NEW_BATCH |
 		BRW_NEW_VERTEX_PROGRAM),
-      .cache = 0,
+      .cache = CACHE_NEW_VS_PROG,
    },
    .prepare = gen6_prepare_vs_push_constants,
 };
