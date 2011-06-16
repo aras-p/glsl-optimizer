@@ -167,6 +167,7 @@ xa_yuv_planar_blit(struct xa_context *r,
 			  (float)src_x + scale_x * (x - dst_x),
 			  (float)src_y + scale_y * (y - dst_y),
 			  scale_x * w, scale_y * h, x, y, w, h, yuv);
+	box++;
     }
 
     r->pipe->flush(r->pipe, &r->last_fence);
