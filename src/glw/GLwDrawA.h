@@ -136,7 +136,7 @@
 typedef struct _GLwMDrawingAreaClassRec	*GLwMDrawingAreaWidgetClass;
 typedef struct _GLwMDrawingAreaRec	*GLwMDrawingAreaWidget;
 
-extern WidgetClass glwMDrawingAreaWidgetClass;
+GLAPI WidgetClass glwMDrawingAreaWidgetClass;
 
 
 #else 
@@ -144,7 +144,7 @@ extern WidgetClass glwMDrawingAreaWidgetClass;
 typedef struct _GLwDrawingAreaClassRec	*GLwDrawingAreaWidgetClass;
 typedef struct _GLwDrawingAreaRec	*GLwDrawingAreaWidget;
 
-extern WidgetClass glwDrawingAreaWidgetClass;
+GLAPI WidgetClass glwDrawingAreaWidgetClass;
 
 
 #endif
@@ -177,8 +177,8 @@ extern "C" {
 #endif
 
 /* front ends to glXMakeCurrent and glXSwapBuffers */
-extern void GLwDrawingAreaMakeCurrent(Widget w,GLXContext ctx);
-extern void GLwDrawingAreaSwapBuffers(Widget w);
+GLAPI void GLwDrawingAreaMakeCurrent(Widget w,GLXContext ctx);
+GLAPI void GLwDrawingAreaSwapBuffers(Widget w);
 
 #ifdef __GLX_MOTIF
 #ifdef _NO_PROTO
