@@ -99,7 +99,7 @@ upload_wm_state(struct brw_context *brw)
       brw_fragment_program_const(brw->fragment_program);
    uint32_t dw2, dw4, dw5, dw6;
 
-   /* CACHE_NEW_WM_PROG */
+    /* CACHE_NEW_WM_PROG */
    if (brw->wm.prog_data->nr_params == 0) {
       /* Disable the push constant buffers. */
       BEGIN_BATCH(5);
@@ -159,7 +159,7 @@ upload_wm_state(struct brw_context *brw)
    if (ctx->Line.StippleFlag)
       dw5 |= GEN6_WM_LINE_STIPPLE_ENABLE;
 
-   /* _NEW_POLYGONSTIPPLE */
+   /* _NEW_POLYGON */
    if (ctx->Polygon.StippleFlag)
       dw5 |= GEN6_WM_POLYGON_STIPPLE_ENABLE;
 
@@ -204,8 +204,11 @@ upload_wm_state(struct brw_context *brw)
 
 const struct brw_tracked_state gen6_wm_state = {
    .dirty = {
-      .mesa  = (_NEW_LINE | _NEW_POLYGONSTIPPLE | _NEW_COLOR | _NEW_BUFFERS |
-		_NEW_PROGRAM_CONSTANTS | _NEW_POLYGON),
+      .mesa  = (_NEW_LINE |
+		_NEW_COLOR |
+		_NEW_BUFFERS |
+		_NEW_PROGRAM_CONSTANTS |
+		_NEW_POLYGON),
       .brw   = (BRW_NEW_CURBE_OFFSETS |
 		BRW_NEW_FRAGMENT_PROGRAM |
                 BRW_NEW_NR_WM_SURFACES |

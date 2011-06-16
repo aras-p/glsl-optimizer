@@ -105,7 +105,7 @@ upload_wm_state(struct brw_context *brw)
    if (ctx->Line.StippleFlag)
       dw1 |= GEN7_WM_LINE_STIPPLE_ENABLE;
 
-   /* _NEW_POLYGONSTIPPLE */
+   /* _NEW_POLYGON */
    if (ctx->Polygon.StippleFlag)
       dw1 |= GEN7_WM_POLYGON_STIPPLE_ENABLE;
 
@@ -240,7 +240,9 @@ upload_ps_state(struct brw_context *brw)
 
 const struct brw_tracked_state gen7_ps_state = {
    .dirty = {
-      .mesa  = (_NEW_LINE | _NEW_POLYGON | _NEW_POLYGONSTIPPLE |
+      .mesa  = (_NEW_LINE |
+		_NEW_POLYGON |
+		_NEW_POLYGONSTIPPLE |
 		_NEW_PROGRAM_CONSTANTS),
       .brw   = (BRW_NEW_CURBE_OFFSETS |
 		BRW_NEW_FRAGMENT_PROGRAM |
