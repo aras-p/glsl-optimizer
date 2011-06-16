@@ -65,8 +65,7 @@ upload_gs_state(struct brw_context *brw)
 const struct brw_tracked_state gen6_gs_state = {
    .dirty = {
       .mesa  = _NEW_TRANSFORM,
-      .brw   = (BRW_NEW_CURBE_OFFSETS |
-		BRW_NEW_URB_FENCE |
+      .brw   = (BRW_NEW_URB_FENCE |
 		BRW_NEW_CONTEXT),
       .cache = CACHE_NEW_GS_PROG
    },

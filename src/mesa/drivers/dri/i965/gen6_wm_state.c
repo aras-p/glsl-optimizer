@@ -209,8 +209,7 @@ const struct brw_tracked_state gen6_wm_state = {
 		_NEW_BUFFERS |
 		_NEW_PROGRAM_CONSTANTS |
 		_NEW_POLYGON),
-      .brw   = (BRW_NEW_CURBE_OFFSETS |
-		BRW_NEW_FRAGMENT_PROGRAM |
+      .brw   = (BRW_NEW_FRAGMENT_PROGRAM |
                 BRW_NEW_NR_WM_SURFACES |
 		BRW_NEW_URB_FENCE |
 		BRW_NEW_BATCH),
