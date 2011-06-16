@@ -1456,21 +1456,12 @@ _mesa_make_current( struct gl_context *newCtx,
           * or not bound to a user-created FBO.
           */
          if (!newCtx->DrawBuffer || newCtx->DrawBuffer->Name == 0) {
+            _mesa_reference_framebuffer(&newCtx->DrawBuffer, drawBuffer);
             /* Update the FBO's list of drawbuffers/renderbuffers.
              * For winsys FBOs this comes from the GL state (which may have
              * changed since the last time this FBO was bound).
              */
-            unsigned int i;
-            GLenum buffers[MAX_DRAW_BUFFERS];
-
-            _mesa_reference_framebuffer(&newCtx->DrawBuffer, drawBuffer);
-
-            for(i = 0; i < newCtx->Const.MaxDrawBuffers; i++) {
-               buffers[i] = newCtx->Color.DrawBuffer[i];
-            }
-
-            _mesa_drawbuffers(newCtx, newCtx->Const.MaxDrawBuffers,
-                              buffers, NULL);
+            _mesa_update_draw_buffers(newCtx);
          }
          if (!newCtx->ReadBuffer || newCtx->ReadBuffer->Name == 0) {
             _mesa_reference_framebuffer(&newCtx->ReadBuffer, readBuffer);
