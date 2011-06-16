@@ -389,7 +389,7 @@ public:
    void *mem_ctx;
 };
 
-static st_src_reg undef_src = st_src_reg(PROGRAM_UNDEFINED, 0, NULL);
+static st_src_reg undef_src = st_src_reg(PROGRAM_UNDEFINED, 0, GLSL_TYPE_ERROR);
 
 static st_dst_reg undef_dst = st_dst_reg(PROGRAM_UNDEFINED, SWIZZLE_NOOP, GLSL_TYPE_ERROR);
 
