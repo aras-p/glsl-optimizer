@@ -68,15 +68,15 @@ svga_upload_user_buffers(struct svga_context *svga,
          unsigned first, size;
          boolean flushed;
          unsigned instance_div = ve[i].instance_divisor;
+         unsigned elemSize = util_format_get_blocksize(ve->src_format);
 
          svga->dirty |= SVGA_NEW_VBUFFER;
 
          if (instance_div) {
             first = 0;
-            size = vb->stride *
-               (instance_count + instance_div - 1) / instance_div;
+            count = (instance_count + instance_div - 1) / instance_div;
+            size = vb->stride * (count - 1) + elemSize;
          } else if (vb->stride) {
-            uint elemSize = util_format_get_blocksize(ve->src_format);
             first = vb->stride * start;
             size = vb->stride * (count - 1) + elemSize;
          } else {
