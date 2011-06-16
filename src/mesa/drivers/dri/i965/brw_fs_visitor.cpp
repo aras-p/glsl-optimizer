@@ -1622,7 +1622,7 @@ fs_visitor::emit_dummy_fs()
 
    fs_inst *write;
    write = emit(FS_OPCODE_FB_WRITE, fs_reg(0), fs_reg(0));
-   write->base_mrf = 0;
+   write->base_mrf = 2;
 }
 
 /* The register location here is relative to the start of the URB
@@ -1783,7 +1783,7 @@ fs_visitor::emit_fb_writes()
 {
    this->current_annotation = "FB write header";
    GLboolean header_present = GL_TRUE;
-   int nr = 0;
+   int nr = 2;
    int reg_width = c->dispatch_width / 8;
 
    if (intel->gen >= 6 &&
@@ -1793,7 +1793,7 @@ fs_visitor::emit_fb_writes()
    }
 
    if (header_present) {
-      /* m0, m1 header */
+      /* m2, m3 header */
       nr += 2;
    }
 
@@ -1862,7 +1862,7 @@ fs_visitor::emit_fb_writes()
 
       fs_inst *inst = emit(FS_OPCODE_FB_WRITE);
       inst->target = target;
-      inst->base_mrf = 0;
+      inst->base_mrf = 2;
       inst->mlen = nr;
       if (target == c->key.nr_color_regions - 1)
 	 inst->eot = true;
@@ -1880,7 +1880,7 @@ fs_visitor::emit_fb_writes()
       }
 
       fs_inst *inst = emit(FS_OPCODE_FB_WRITE);
-      inst->base_mrf = 0;
+      inst->base_mrf = 2;
       inst->mlen = nr;
       inst->eot = true;
       inst->header_present = header_present;
