@@ -78,9 +78,32 @@ static struct gl_renderbuffer DummyRenderbuffer;
 static struct gl_framebuffer IncompleteFramebuffer;
 
 
-#define IS_CUBE_FACE(TARGET) \
-   ((TARGET) >= GL_TEXTURE_CUBE_MAP_POSITIVE_X && \
-    (TARGET) <= GL_TEXTURE_CUBE_MAP_NEGATIVE_Z)
+static INLINE GLboolean
+is_cube_face(GLenum target)
+{
+   return (target >= GL_TEXTURE_CUBE_MAP_POSITIVE_X &&
+           target <= GL_TEXTURE_CUBE_MAP_NEGATIVE_Z);
+}
+
+
+/**
+ * Is the given FBO a user-created FBO?
+ */
+static INLINE GLboolean
+is_user_fbo(const struct gl_framebuffer *fb)
+{
+   return fb->Name != 0;
+}
+
+
+/**
+ * Is the given FBO a window system FBO (like an X window)?
+ */
+static INLINE GLboolean
+is_winsys_fbo(const struct gl_framebuffer *fb)
+{
+   return fb->Name == 0;
+}
 
 
 static void
@@ -196,7 +219,7 @@ _mesa_get_attachment(struct gl_context *ctx, struct gl_framebuffer *fb,
 {
    GLuint i;
 
-   assert(fb->Name > 0);
+   assert(is_user_fbo(fb));
 
    switch (attachment) {
    case GL_COLOR_ATTACHMENT0_EXT:
@@ -244,7 +267,7 @@ static struct gl_renderbuffer_attachment *
 _mesa_get_fb0_attachment(struct gl_context *ctx, struct gl_framebuffer *fb,
                          GLenum attachment)
 {
-   assert(fb->Name == 0);
+   assert(is_winsys_fbo(fb));
 
    switch (attachment) {
    case GL_FRONT_LEFT:
@@ -669,7 +692,7 @@ _mesa_test_framebuffer_completeness(struct gl_context *ctx,
    GLint i;
    GLuint j;
 
-   assert(fb->Name != 0);
+   assert(is_user_fbo(fb));
 
    numImages = 0;
    fb->Width = 0;
@@ -968,10 +991,11 @@ _mesa_DeleteRenderbuffersEXT(GLsizei n, const GLuint *renderbuffers)
                _mesa_BindRenderbufferEXT(GL_RENDERBUFFER_EXT, 0);
             }
 
-            if (ctx->DrawBuffer->Name) {
+            if (is_user_fbo(ctx->DrawBuffer)) {
                detach_renderbuffer(ctx, ctx->DrawBuffer, rb);
             }
-            if (ctx->ReadBuffer->Name && ctx->ReadBuffer != ctx->DrawBuffer) {
+            if (is_user_fbo(ctx->ReadBuffer)
+                && ctx->ReadBuffer != ctx->DrawBuffer) {
                detach_renderbuffer(ctx, ctx->ReadBuffer, rb);
             }
 
@@ -1203,7 +1227,7 @@ invalidate_rb(GLuint key, void *data, void *userData)
    struct gl_renderbuffer *rb = (struct gl_renderbuffer *) userData;
 
    /* If this is a user-created FBO */
-   if (fb->Name) {
+   if (is_user_fbo(fb)) {
       GLuint i;
       for (i = 0; i < BUFFER_COUNT; i++) {
          struct gl_renderbuffer_attachment *att = fb->Attachment + i;
@@ -1532,7 +1556,7 @@ check_begin_texture_render(struct gl_context *ctx, struct gl_framebuffer *fb)
    GLuint i;
    ASSERT(ctx->Driver.RenderTexture);
 
-   if (fb->Name == 0)
+   if (is_winsys_fbo(fb));
       return; /* can't render to texture with winsys framebuffers */
 
    for (i = 0; i < BUFFER_COUNT; i++) {
@@ -1552,7 +1576,7 @@ check_begin_texture_render(struct gl_context *ctx, struct gl_framebuffer *fb)
 static void
 check_end_texture_render(struct gl_context *ctx, struct gl_framebuffer *fb)
 {
-   if (fb->Name == 0)
+   if (is_winsys_fbo(fb));
       return; /* can't render to texture with winsys framebuffers */
 
    if (ctx->Driver.FinishRenderTexture) {
@@ -1805,7 +1829,7 @@ _mesa_CheckFramebufferStatusEXT(GLenum target)
       return 0;
    }
 
-   if (buffer->Name == 0) {
+   if (is_winsys_fbo(buffer)) {
       /* The window system / default framebuffer is always complete */
       return GL_FRAMEBUFFER_COMPLETE_EXT;
    }
@@ -1843,7 +1867,7 @@ framebuffer_texture(struct gl_context *ctx, const char *caller, GLenum target,
    }
 
    /* check framebuffer binding */
-   if (fb->Name == 0) {
+   if (is_winsys_fbo(fb)) {
       _mesa_error(ctx, GL_INVALID_OPERATION,
                   "glFramebufferTexture%sEXT", caller);
       return;
@@ -1866,7 +1890,7 @@ framebuffer_texture(struct gl_context *ctx, const char *caller, GLenum target,
          }
          else {
             err = (texObj->Target == GL_TEXTURE_CUBE_MAP)
-                ? !IS_CUBE_FACE(textarget)
+                ? !is_cube_face(textarget)
                 : (texObj->Target != textarget);
          }
       }
@@ -1970,7 +1994,7 @@ _mesa_FramebufferTexture2DEXT(GLenum target, GLenum attachment,
    if ((texture != 0) &&
        (textarget != GL_TEXTURE_2D) &&
        (textarget != GL_TEXTURE_RECTANGLE_ARB) &&
-       (!IS_CUBE_FACE(textarget))) {
+       (!is_cube_face(textarget))) {
       _mesa_error(ctx, GL_INVALID_OPERATION,
                   "glFramebufferTexture2DEXT(textarget=0x%x)", textarget);
       return;
@@ -2034,7 +2058,7 @@ _mesa_FramebufferRenderbufferEXT(GLenum target, GLenum attachment,
       return;
    }
 
-   if (fb->Name == 0) {
+   if (is_winsys_fbo(fb)) {
       /* Can't attach new renderbuffers to a window system framebuffer */
       _mesa_error(ctx, GL_INVALID_OPERATION, "glFramebufferRenderbufferEXT");
       return;
@@ -2111,7 +2135,7 @@ _mesa_GetFramebufferAttachmentParameterivEXT(GLenum target, GLenum attachment,
       return;
    }
 
-   if (buffer->Name == 0) {
+   if (is_winsys_fbo(buffer)) {
       /* the default / window-system FBO */
       att = _mesa_get_fb0_attachment(ctx, buffer, attachment);
    }
@@ -2143,7 +2167,7 @@ _mesa_GetFramebufferAttachmentParameterivEXT(GLenum target, GLenum attachment,
 
    switch (pname) {
    case GL_FRAMEBUFFER_ATTACHMENT_OBJECT_TYPE_EXT:
-      *params = buffer->Name == 0 ? GL_FRAMEBUFFER_DEFAULT : att->Type;
+      *params = is_winsys_fbo(buffer) ? GL_FRAMEBUFFER_DEFAULT : att->Type;
       return;
    case GL_FRAMEBUFFER_ATTACHMENT_OBJECT_NAME_EXT:
       if (att->Type == GL_RENDERBUFFER_EXT) {
