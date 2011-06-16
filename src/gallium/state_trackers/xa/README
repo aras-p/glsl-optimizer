@@ -39,7 +39,7 @@ a number of interfaces to work with:
 3) KMS modesetting (versioned)
 4) Driver-private (hopefully versioned)
 
-Since Gallium3D is versioned, the Xorg state tracker needs to be compiled
+Since Gallium3D is not versioned, the Xorg state tracker needs to be compiled
 with Gallium, but it's really beneficial to be able to compile xorg drivers
 standalone.
 
