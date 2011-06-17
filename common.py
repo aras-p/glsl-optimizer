@@ -91,4 +91,5 @@ def AddOptions(opts):
 	opts.Add(BoolOption('debug', 'DEPRECATED: debug build', 'yes'))
 	opts.Add(BoolOption('profile', 'DEPRECATED: profile build', 'no'))
 	opts.Add(BoolOption('quiet', 'DEPRECATED: quiet command lines', 'yes'))
-	opts.Add(EnumOption('MSVS_VERSION', 'MS Visual C++ version', None, allowed_values=('7.1', '8.0', '9.0')))
+	if host_platform == 'windows':
+		opts.Add(EnumOption('MSVS_VERSION', 'MS Visual C++ version', None, allowed_values=('7.1', '8.0', '9.0')))
