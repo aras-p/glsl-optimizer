@@ -143,3 +143,18 @@ SConscript(
 	duplicate = 0 # http://www.scons.org/doc/0.97/HTML/scons-user/x2261.html
 )
 
+
+########################################################################
+# List all aliases
+
+try:
+    from SCons.Node.Alias import default_ans
+except ImportError:
+    pass
+else:
+    aliases = default_ans.keys()
+    aliases.sort()
+    env.Help('\n')
+    env.Help('Recognized targets:\n')
+    for alias in aliases:
+        env.Help('    %s\n' % alias)
