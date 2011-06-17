@@ -90,8 +90,7 @@ GLboolean vbo_any_varyings_in_vbos( const struct gl_client_array *arrays[] )
    GLuint i;
 
    for (i = 0; i < VERT_ATTRIB_MAX; i++)
-      if (arrays[i]->StrideB &&
-	  arrays[i]->BufferObj->Name != 0)
+      if (arrays[i]->BufferObj->Name != 0)
 	 return GL_TRUE;
 
    return GL_FALSE;
