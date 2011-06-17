@@ -40,6 +40,8 @@ env = Environment(
 	ENV = os.environ,
 )
 
+opts.Save('config.py', env)
+
 # Backwards compatability with old target configuration variable
 try:
     targets = ARGUMENTS['targets']
