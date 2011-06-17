@@ -1204,8 +1204,7 @@ st_ChooseTextureFormat_renderable(struct gl_context *ctx, GLint internalFormat,
     */
    bindings = PIPE_BIND_SAMPLER_VIEW;
    if (renderable == GL_TRUE) {
-      if (_mesa_is_depth_format(internalFormat) ||
-	  _mesa_is_depth_or_stencil_format(internalFormat))
+      if (_mesa_is_depth_or_stencil_format(internalFormat))
 	 bindings |= PIPE_BIND_DEPTH_STENCIL;
       else
 	 bindings |= PIPE_BIND_RENDER_TARGET;
