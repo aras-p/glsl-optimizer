@@ -80,27 +80,6 @@ env.Append(CPPPATH = [
 if env['msvc']:
     env.Append(CPPPATH = ['#include/c99'])
 
-# Posix
-if env['platform'] in ('posix', 'linux', 'freebsd', 'darwin'):
-	env.Append(CPPDEFINES = [
-		'_POSIX_SOURCE',
-		('_POSIX_C_SOURCE', '199309L'), 
-		'_SVID_SOURCE',
-		'_BSD_SOURCE', 
-		'_GNU_SOURCE',
-		'PTHREADS',
-		'HAVE_POSIX_MEMALIGN',
-	])
-	if env['gcc']:
-		env.Append(CFLAGS = ['-fvisibility=hidden'])
-	if env['platform'] == 'darwin':
-		env.Append(CPPDEFINES = ['_DARWIN_C_SOURCE'])
-	env.Append(LIBS = [
-		'm',
-		'pthread',
-		'dl',
-	])
-
 # for debugging
 #print env.Dump()
 

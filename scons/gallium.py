@@ -279,6 +279,18 @@ def generate(env):
         cppdefines += ['NDEBUG']
     if env['build'] == 'profile':
         cppdefines += ['PROFILE']
+    if env['platform'] in ('posix', 'linux', 'freebsd', 'darwin'):
+        cppdefines += [
+            '_POSIX_SOURCE',
+            ('_POSIX_C_SOURCE', '199309L'),
+            '_SVID_SOURCE',
+            '_BSD_SOURCE',
+            '_GNU_SOURCE',
+            'PTHREADS',
+            'HAVE_POSIX_MEMALIGN',
+        ]
+    if env['platform'] == 'darwin':
+        cppdefines += ['_DARWIN_C_SOURCE']
     if platform == 'windows':
         cppdefines += [
             'WIN32',
@@ -405,6 +417,8 @@ def generate(env):
             ccflags += ['-m64']
             if platform == 'darwin':
                 ccflags += ['-fno-common']
+        if env['platform'] != 'windows':
+            ccflags += ['-fvisibility=hidden']
         # See also:
         # - http://gcc.gnu.org/onlinedocs/gcc/Warning-Options.html
         ccflags += [
@@ -597,7 +611,10 @@ def generate(env):
         env['LINK'] = env['CXX']
 
     # Default libs
-    env.Append(LIBS = [])
+    libs = []
+    if env['platform'] in ('posix', 'linux', 'freebsd', 'darwin'):
+        libs += ['m', 'pthread', 'dl']
+    env.Append(LIBS = libs)
 
     # Load tools
     env.Tool('lex')
