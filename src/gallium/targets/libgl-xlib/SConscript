@@ -54,7 +54,7 @@ libgl = env.SharedLibrary(
     source = sources,
 )
 
-if True:
+if False:
     # XXX: Only install this libGL.so if DRI not enabled
     libgl = env.InstallSharedLibrary(libgl, version=(1, 5))
 
