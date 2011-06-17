@@ -193,23 +193,22 @@ static boolean r300_reserve_cs_dwords(struct r300_context *r300,
                                       unsigned cs_dwords)
 {
     boolean flushed        = FALSE;
-    boolean first_draw     = flags & PREP_EMIT_STATES;
+    boolean emit_states    = flags & PREP_EMIT_STATES;
     boolean emit_vertex_arrays       = flags & PREP_EMIT_AOS;
     boolean emit_vertex_arrays_swtcl = flags & PREP_EMIT_AOS_SWTCL;
 
     /* Add dirty state, index offset, and AOS. */
-    if (first_draw) {
+    if (emit_states)
         cs_dwords += r300_get_num_dirty_dwords(r300);
 
-        if (r300->screen->caps.is_r500)
-            cs_dwords += 2; /* emit_index_offset */
+    if (r300->screen->caps.is_r500)
+        cs_dwords += 2; /* emit_index_offset */
 
-        if (emit_vertex_arrays)
-            cs_dwords += 55; /* emit_vertex_arrays */
+    if (emit_vertex_arrays)
+        cs_dwords += 55; /* emit_vertex_arrays */
 
-        if (emit_vertex_arrays_swtcl)
-            cs_dwords += 7; /* emit_vertex_arrays_swtcl */
-    }
+    if (emit_vertex_arrays_swtcl)
+        cs_dwords += 7; /* emit_vertex_arrays_swtcl */
 
     cs_dwords += r300_get_num_cs_end_dwords(r300);
 
@@ -238,45 +237,47 @@ static boolean r300_emit_states(struct r300_context *r300,
                                 int buffer_offset,
                                 int index_bias, int instance_id)
 {
-    boolean first_draw     = flags & PREP_EMIT_STATES;
+    boolean emit_states    = flags & PREP_EMIT_STATES;
     boolean emit_vertex_arrays       = flags & PREP_EMIT_AOS;
     boolean emit_vertex_arrays_swtcl = flags & PREP_EMIT_AOS_SWTCL;
     boolean indexed        = flags & PREP_INDEXED;
     boolean validate_vbos  = flags & PREP_VALIDATE_VBOS;
 
     /* Validate buffers and emit dirty state if needed. */
-    if (first_draw) {
+    if (emit_states || (emit_vertex_arrays && validate_vbos)) {
         if (!r300_emit_buffer_validate(r300, validate_vbos,
                                        index_buffer)) {
            fprintf(stderr, "r300: CS space validation failed. "
                    "(not enough memory?) Skipping rendering.\n");
            return FALSE;
         }
-
-        r300_emit_dirty_state(r300);
-        if (r300->screen->caps.is_r500) {
-            if (r300->screen->caps.has_tcl)
-                r500_emit_index_bias(r300, index_bias);
-            else
-                r500_emit_index_bias(r300, 0);
-        }
-
-        if (emit_vertex_arrays &&
-            (r300->vertex_arrays_dirty ||
-             r300->vertex_arrays_indexed != indexed ||
-             r300->vertex_arrays_offset != buffer_offset ||
-             r300->vertex_arrays_instance_id != instance_id)) {
-            r300_emit_vertex_arrays(r300, buffer_offset, indexed, instance_id);
-
-            r300->vertex_arrays_dirty = FALSE;
-            r300->vertex_arrays_indexed = indexed;
-            r300->vertex_arrays_offset = buffer_offset;
-            r300->vertex_arrays_instance_id = instance_id;
-        }
-
-        if (emit_vertex_arrays_swtcl)
-            r300_emit_vertex_arrays_swtcl(r300, indexed);
     }
+
+    if (emit_states)
+        r300_emit_dirty_state(r300);
+
+    if (r300->screen->caps.is_r500) {
+        if (r300->screen->caps.has_tcl)
+            r500_emit_index_bias(r300, index_bias);
+        else
+            r500_emit_index_bias(r300, 0);
+    }
+
+    if (emit_vertex_arrays &&
+        (r300->vertex_arrays_dirty ||
+         r300->vertex_arrays_indexed != indexed ||
+         r300->vertex_arrays_offset != buffer_offset ||
+         r300->vertex_arrays_instance_id != instance_id)) {
+        r300_emit_vertex_arrays(r300, buffer_offset, indexed, instance_id);
+
+        r300->vertex_arrays_dirty = FALSE;
+        r300->vertex_arrays_indexed = indexed;
+        r300->vertex_arrays_offset = buffer_offset;
+        r300->vertex_arrays_instance_id = instance_id;
+    }
+
+    if (emit_vertex_arrays_swtcl)
+        r300_emit_vertex_arrays_swtcl(r300, indexed);
 
     return TRUE;
 }
