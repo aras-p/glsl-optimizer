@@ -1366,7 +1366,9 @@ static int tgsi_lit(struct r600_shader_ctx *ctx)
 			memset(&alu, 0, sizeof(struct r600_bc_alu));
 			alu.inst = CTX_INST(V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_LOG_CLAMPED);
 			r600_bc_src(&alu.src[0], &ctx->src[0], 1);
-			tgsi_dst(ctx, &inst->Dst[0], 2, &alu.dst);
+			alu.dst.sel = ctx->temp_reg;
+			alu.dst.chan = 2;
+			alu.dst.write = 1;
 			alu.last = 1;
 			r = r600_bc_add_alu(ctx->bc, &alu);
 			if (r)
