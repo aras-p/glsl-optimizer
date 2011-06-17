@@ -212,7 +212,6 @@ MakeContextCurrent(Display * dpy, GLXDrawable draw,
 {
    struct glx_context *gc = (struct glx_context *) gc_user;
    struct glx_context *oldGC = __glXGetCurrentContext();
-   int ret = Success;
 
    /* XXX: If this is left out, then libGL ends up not having this
     * symbol, and drivers using it fail to load.  Compare the
@@ -259,15 +258,28 @@ MakeContextCurrent(Display * dpy, GLXDrawable draw,
    }
 
    if (gc) {
+      /* Attempt to bind the context.  We do this before mucking with
+       * gc and __glXSetCurrentContext to properly handle our state in
+       * case of an error.
+       *
+       * If an error occurs, set the Null context since we've already
+       * blown away our old context.  The caller is responsible for
+       * figuring out how to handle setting a valid context.
+       */
+      if (gc->vtable->bind(gc, oldGC, draw, read) != Success) {
+         __glXSetCurrentContextNull();
+         __glXUnlock();
+         __glXGenerateError(dpy, None, GLXBadContext, X_GLXMakeContextCurrent);
+         return GL_FALSE;
+      }
+
       if (gc->thread_refcount == 0)
          gc->currentDpy = dpy;
-      __glXSetCurrentContext(gc);
-      ret = gc->vtable->bind(gc, oldGC, draw, read);
-      if (gc->thread_refcount == 0) {
          gc->currentDrawable = draw;
          gc->currentReadable = read;
       }
       gc->thread_refcount++;
+      __glXSetCurrentContext(gc);
    } else {
       __glXSetCurrentContextNull();
    }
@@ -280,11 +292,6 @@ MakeContextCurrent(Display * dpy, GLXDrawable draw,
    }
 
    __glXUnlock();
-
-   if (ret) {
-      __glXGenerateError(dpy, None, ret, X_GLXMakeContextCurrent);
-      return GL_FALSE;
-   }
 
    return GL_TRUE;
 }
