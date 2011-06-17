@@ -1188,9 +1188,6 @@ st_choose_renderbuffer_format(struct pipe_screen *screen,
 }
 
 
-/**
- * Called via ctx->Driver.chooseTextureFormat().
- */
 gl_format
 st_ChooseTextureFormat_renderable(struct gl_context *ctx, GLint internalFormat,
 				  GLenum format, GLenum type, GLboolean renderable)
@@ -1231,6 +1228,10 @@ st_ChooseTextureFormat_renderable(struct gl_context *ctx, GLint internalFormat,
    return st_pipe_format_to_mesa_format(pFormat);
 }
 
+
+/**
+ * Called via ctx->Driver.ChooseTextureFormat().
+ */
 gl_format
 st_ChooseTextureFormat(struct gl_context *ctx, GLint internalFormat,
                        GLenum format, GLenum type)
