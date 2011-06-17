@@ -80,23 +80,6 @@ env.Append(CPPPATH = [
 if env['msvc']:
     env.Append(CPPPATH = ['#include/c99'])
 
-# Embedded
-if env['platform'] == 'embedded':
-	env.Append(CPPDEFINES = [
-		'_POSIX_SOURCE',
-		('_POSIX_C_SOURCE', '199309L'), 
-		'_SVID_SOURCE',
-		'_BSD_SOURCE', 
-		'_GNU_SOURCE',
-		
-		'PTHREADS',
-	])
-	env.Append(LIBS = [
-		'm',
-		'pthread',
-		'dl',
-	])
-
 # Posix
 if env['platform'] in ('posix', 'linux', 'freebsd', 'darwin'):
 	env.Append(CPPDEFINES = [
@@ -130,7 +113,7 @@ if env['platform'] in ('posix', 'linux', 'freebsd', 'darwin'):
 #
 
 # Create host environent
-if env['crosscompile'] and env['platform'] != 'embedded':
+if env['crosscompile'] and not env['embedded']:
     host_env = Environment(
         options = opts,
         # no tool used
