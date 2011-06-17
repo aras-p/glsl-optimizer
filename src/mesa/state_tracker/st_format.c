@@ -1108,7 +1108,7 @@ static struct format_mapping format_map[] = {
  * Return first supported format from the given list.
  */
 static enum pipe_format
-find_supported_format(struct pipe_screen *screen, 
+find_supported_format(struct pipe_screen *screen,
                       const enum pipe_format formats[],
                       enum pipe_texture_target target,
                       unsigned sample_count,
@@ -1207,7 +1207,7 @@ st_ChooseTextureFormat_renderable(struct gl_context *ctx, GLint internalFormat,
       if (_mesa_is_depth_format(internalFormat) ||
 	  _mesa_is_depth_or_stencil_format(internalFormat))
 	 bindings |= PIPE_BIND_DEPTH_STENCIL;
-      else 
+      else
 	 bindings |= PIPE_BIND_RENDER_TARGET;
    }
 
