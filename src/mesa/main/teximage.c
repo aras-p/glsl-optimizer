@@ -1685,11 +1685,15 @@ texture_error_check( struct gl_context *ctx,
 
    /* additional checks for depth textures */
    if (_mesa_base_tex_format(ctx, internalFormat) == GL_DEPTH_COMPONENT) {
-      /* Only 1D, 2D and rectangular textures supported, not 3D or cubes */
+      /* Only 1D, 2D, rect and array textures supported, not 3D or cubes */
       if (target != GL_TEXTURE_1D &&
           target != GL_PROXY_TEXTURE_1D &&
           target != GL_TEXTURE_2D &&
           target != GL_PROXY_TEXTURE_2D &&
+          target != GL_TEXTURE_1D_ARRAY &&
+          target != GL_PROXY_TEXTURE_1D_ARRAY &&
+          target != GL_TEXTURE_2D_ARRAY &&
+          target != GL_PROXY_TEXTURE_2D_ARRAY &&
           target != GL_TEXTURE_RECTANGLE_ARB &&
           target != GL_PROXY_TEXTURE_RECTANGLE_ARB) {
          if (!isProxy)
