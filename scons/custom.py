@@ -157,7 +157,8 @@ def createCodeGenerateMethod(env):
 def generate(env):
     """Common environment generation code"""
 
-    if env.get('quiet', True):
+    verbose = env.get('verbose', False) or not env.get('quiet', True)
+    if not verbose:
         quietCommandLines(env)
 
     # Custom builders and methods

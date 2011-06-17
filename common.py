@@ -79,7 +79,7 @@ def AddOptions(opts):
 		from SCons.Options.EnumOption import EnumOption
 	opts.Add(EnumOption('build', 'build type', 'debug',
 	                  allowed_values=('debug', 'checked', 'profile', 'release')))
-	opts.Add(BoolOption('quiet', 'quiet command lines', 'yes'))
+	opts.Add(BoolOption('verbose', 'verbose output', 'no'))
 	opts.Add(EnumOption('machine', 'use machine-specific assembly code', default_machine,
 											 allowed_values=('generic', 'ppc', 'x86', 'x86_64')))
 	opts.Add(EnumOption('platform', 'target platform', host_platform,
@@ -90,4 +90,5 @@ def AddOptions(opts):
 	opts.Add(BoolOption('llvm', 'use LLVM', default_llvm))
 	opts.Add(BoolOption('debug', 'DEPRECATED: debug build', 'yes'))
 	opts.Add(BoolOption('profile', 'DEPRECATED: profile build', 'no'))
+	opts.Add(BoolOption('quiet', 'DEPRECATED: quiet command lines', 'yes'))
 	opts.Add(EnumOption('MSVS_VERSION', 'MS Visual C++ version', None, allowed_values=('7.1', '8.0', '9.0')))
