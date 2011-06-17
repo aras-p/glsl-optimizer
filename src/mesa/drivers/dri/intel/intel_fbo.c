@@ -107,6 +107,12 @@ intel_get_pointer(struct gl_context * ctx, struct gl_renderbuffer *rb,
 }
 
 
+static struct gl_renderbuffer*
+intel_create_wrapped_renderbuffer(struct gl_context * ctx,
+				  struct gl_renderbuffer *wrapper,
+				  gl_format format);
+
+
 /**
  * Called via glRenderbufferStorageEXT() to set the format and allocate
  * storage for a user-created renderbuffer.
@@ -147,6 +153,8 @@ intel_alloc_renderbuffer_storage(struct gl_context * ctx, struct gl_renderbuffer
       break;
    }
 
+   rb->Width = width;
+   rb->Height = height;
    rb->_BaseFormat = _mesa_base_fbo_format(ctx, internalFormat);
    rb->DataType = intel_mesa_format_to_rb_datatype(rb->Format);
    cpp = _mesa_get_format_bytes(rb->Format);
@@ -199,6 +207,38 @@ intel_alloc_renderbuffer_storage(struct gl_context * ctx, struct gl_renderbuffer
       if (!irb->region)
 	return false;
 
+   } else if (irb->Base.Format == MESA_FORMAT_S8_Z24
+	      && intel->must_use_separate_stencil) {
+
+      bool ok = true;
+      struct gl_renderbuffer *depth_rb;
+      struct gl_renderbuffer *stencil_rb;
+
+      depth_rb = intel_create_wrapped_renderbuffer(ctx, rb,
+						   MESA_FORMAT_X8_Z24);
+      stencil_rb = intel_create_wrapped_renderbuffer(ctx, rb,
+						     MESA_FORMAT_S8);
+      ok = depth_rb && stencil_rb;
+      ok = ok && intel_alloc_renderbuffer_storage(ctx, depth_rb,
+						  depth_rb->InternalFormat,
+						  width, height);
+      ok = ok && intel_alloc_renderbuffer_storage(ctx, stencil_rb,
+						  stencil_rb->InternalFormat,
+						  width, height);
+
+      if (!ok) {
+	 if (depth_rb) {
+	    intel_delete_renderbuffer(depth_rb);
+	 }
+	 if (stencil_rb) {
+	    intel_delete_renderbuffer(stencil_rb);
+	 }
+	 return false;
+      }
+
+      _mesa_reference_renderbuffer(&irb->wrapped_depth, depth_rb);
+      _mesa_reference_renderbuffer(&irb->wrapped_stencil, stencil_rb);
+
    } else {
       irb->region = intel_region_alloc(intel->intelScreen, tiling, cpp,
 				       width, height, GL_TRUE);
@@ -218,9 +258,6 @@ intel_alloc_renderbuffer_storage(struct gl_context * ctx, struct gl_renderbuffer
 	 }
       }
    }
-
-   rb->Width = width;
-   rb->Height = height;
 
    return GL_TRUE;
 }
@@ -369,6 +406,47 @@ intel_create_renderbuffer(gl_format format)
    irb->Base.GetPointer = intel_get_pointer;
 
    return irb;
+}
+
+
+static struct gl_renderbuffer *
+intel_create_wrapped_renderbuffer(struct gl_context * ctx,
+				  struct gl_renderbuffer *wrapper,
+				  gl_format format)
+{
+   /*
+    * The name here is irrelevant, as long as its nonzero, because the
+    * renderbuffer never gets entered into Mesa's renderbuffer hash table.
+    */
+   GLuint name = ~0;
+
+   struct intel_renderbuffer *irb = CALLOC_STRUCT(intel_renderbuffer);
+   if (!irb) {
+      _mesa_error(ctx, GL_OUT_OF_MEMORY, "creating renderbuffer");
+      return NULL;
+   }
+
+   struct gl_renderbuffer *rb = &irb->Base;
+   _mesa_init_renderbuffer(rb, name);
+   rb->ClassID = INTEL_RB_CLASS;
+   rb->_BaseFormat = _mesa_get_format_base_format(format);
+   rb->Format = format;
+   rb->InternalFormat = rb->_BaseFormat;
+   rb->DataType = intel_mesa_format_to_rb_datatype(format);
+   rb->Width = wrapper->Width;
+   rb->Height = wrapper->Height;
+
+   rb->AllocStorage = intel_nop_alloc_storage;
+   rb->Delete = intel_delete_renderbuffer;
+   rb->GetPointer = intel_get_pointer;
+
+   /*
+    * A refcount here would cause a cyclic reference. The wrapper references
+    * the unwrapper.
+    */
+   rb->Wrapped = wrapper;
+
+   return rb;
 }
 
 
