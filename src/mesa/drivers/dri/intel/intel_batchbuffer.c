@@ -53,6 +53,22 @@ static void clear_cache( struct intel_context *intel )
 }
 
 void
+intel_batchbuffer_init(struct intel_context *intel)
+{
+   intel_batchbuffer_reset(intel);
+
+   if (intel->gen == 6) {
+      /* We can't just use brw_state_batch to get a chunk of space for
+       * the gen6 workaround because it involves actually writing to
+       * the buffer, and the kernel doesn't let us write to the batch.
+       */
+      intel->batch.workaround_bo = drm_intel_bo_alloc(intel->bufmgr,
+						      "gen6 workaround",
+						      4096, 4096);
+   }
+}
+
+void
 intel_batchbuffer_reset(struct intel_context *intel)
 {
    if (intel->batch.last_bo != NULL) {
@@ -76,6 +92,7 @@ intel_batchbuffer_free(struct intel_context *intel)
 {
    drm_intel_bo_unreference(intel->batch.last_bo);
    drm_intel_bo_unreference(intel->batch.bo);
+   drm_intel_bo_unreference(intel->batch.workaround_bo);
    clear_cache(intel);
 }
 
@@ -282,7 +299,8 @@ intel_emit_post_sync_nonzero_flush(struct intel_context *intel)
    BEGIN_BATCH(4);
    OUT_BATCH(_3DSTATE_PIPE_CONTROL);
    OUT_BATCH(PIPE_CONTROL_WRITE_IMMEDIATE);
-   OUT_BATCH(0); /* write address */
+   OUT_RELOC(intel->batch.workaround_bo,
+	     I915_GEM_DOMAIN_GTT, I915_GEM_DOMAIN_GTT, 0);
    OUT_BATCH(0); /* write data */
    ADVANCE_BATCH();
 }

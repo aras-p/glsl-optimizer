@@ -9,6 +9,7 @@
 
 #define BATCH_RESERVED 16
 
+void intel_batchbuffer_init(struct intel_context *intel);
 void intel_batchbuffer_reset(struct intel_context *intel);
 void intel_batchbuffer_free(struct intel_context *intel);
 

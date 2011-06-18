@@ -854,7 +854,7 @@ intelInitContext(struct intel_context *intel,
    if (INTEL_DEBUG & DEBUG_BUFMGR)
       dri_bufmgr_set_debug(intel->bufmgr, GL_TRUE);
 
-   intel_batchbuffer_reset(intel);
+   intel_batchbuffer_init(intel);
 
    intel_fbo_init(intel);
 

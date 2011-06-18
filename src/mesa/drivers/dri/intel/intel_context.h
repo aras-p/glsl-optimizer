@@ -181,7 +181,8 @@ struct intel_context
       drm_intel_bo *bo;
       /** Last BO submitted to the hardware.  Used for glFinish(). */
       drm_intel_bo *last_bo;
-
+      /** BO for post-sync nonzero writes for gen6 workaround. */
+      drm_intel_bo *workaround_bo;
       struct cached_batch_item *cached_items;
 
       uint16_t emit, total;
