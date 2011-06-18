@@ -548,6 +548,13 @@ AC_ARG_ENABLE([egl],
         [disable EGL library @<:@default=enabled@:>@])],
     [enable_egl="$enableval"],
     [enable_egl=yes])
+AC_ARG_ENABLE([gallium_egl],
+    [AS_HELP_STRING([--enable-gallium-egl],
+        [enable optional EGL state tracker (not required
+         for EGL support in Gallium with OpenGL and OpenGL ES)
+         @<:@default=disable@:>@])],
+    [enable_gallium_egl="$enableval"],
+    [enable_gallium_egl=no])
 
 # Option for Gallium drivers
 GALLIUM_DRIVERS_DEFAULT="r300,r600,swrast"
@@ -1210,9 +1217,6 @@ if test "x$enable_egl" = xyes; then
     SRC_DIRS="$SRC_DIRS egl"
     EGL_LIB_DEPS="$DLOPEN_LIBS $SELINUX_LIBS -lpthread"
     EGL_DRIVERS_DIRS=""
-    GALLIUM_STATE_TRACKERS_DIRS="egl $GALLIUM_STATE_TRACKERS_DIRS"
-    GALLIUM_TARGET_DIRS="$GALLIUM_TARGET_DIRS egl"
-    HAVE_ST_EGL="yes"
 
     if test "$enable_static" != yes; then
         # build egl_glx when libGL is built
@@ -1246,6 +1250,22 @@ AC_SUBST([EGL_LIB_DEPS])
 AC_SUBST([EGL_DRIVERS_DIRS])
 
 dnl
+dnl EGL Gallium configuration
+dnl
+if test "x$enable_gallium_egl" = xyes; then
+    if test "x$with_gallium_drivers" = x; then
+        AC_MSG_ERROR([cannot enable egl_gallium without Gallium])
+    fi
+    if test "x$enable_egl" = xno; then
+        AC_MSG_ERROR([cannot enable egl_gallium without EGL])
+    fi
+
+    GALLIUM_STATE_TRACKERS_DIRS="egl $GALLIUM_STATE_TRACKERS_DIRS"
+    GALLIUM_TARGET_DIRS="$GALLIUM_TARGET_DIRS egl"
+    HAVE_ST_EGL="yes"
+fi
+
+dnl
 dnl X.Org DDX configuration
 dnl
 if test "x$enable_xorg" = xyes; then
@@ -1270,6 +1290,9 @@ if test "x$enable_openvg" = xyes; then
     fi
     if test "x$with_gallium_drivers" = x; then
         AC_MSG_ERROR([cannot enable OpenVG without Gallium])
+    fi
+    if test "x$enable_gallium_egl" = xno; then
+        AC_MSG_ERROR([cannot enable OpenVG without egl_gallium])
     fi
 
     EGL_CLIENT_APIS="$EGL_CLIENT_APIS "'$(VG_LIB)'
@@ -1787,7 +1810,7 @@ if test "$enable_egl" = yes; then
         egl_drivers="$egl_drivers builtin:egl_$d"
     done
 
-    if test "$enable_gallium" = yes -a "$HAVE_ST_EGL" = yes; then
+    if test "x$HAVE_ST_EGL" = xyes; then
         echo "        EGL drivers:    ${egl_drivers} egl_gallium"
         echo "        EGL Gallium STs:$EGL_CLIENT_APIS"
     else
