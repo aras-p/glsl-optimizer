@@ -240,6 +240,8 @@ GLboolean brwCreateContext( int api,
 
    brw->emit_state_always = 0;
 
+   intel->batch.need_workaround_flush = true;
+
    ctx->VertexProgram._MaintainTnlProgram = GL_TRUE;
    ctx->FragmentProgram._MaintainTexEnvProgram = GL_TRUE;
 

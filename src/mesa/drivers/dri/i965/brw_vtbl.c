@@ -118,6 +118,11 @@ static void brw_new_batch( struct intel_context *intel )
     */
    brw->state.dirty.brw |= BRW_NEW_CONTEXT | BRW_NEW_BATCH;
 
+   /* Assume that the last command before the start of our batch was a
+    * primitive, for safety.
+    */
+   intel->batch.need_workaround_flush = true;
+
    brw->vb.nr_current_buffers = 0;
 
    /* Mark that the current program cache BO has been used by the GPU.

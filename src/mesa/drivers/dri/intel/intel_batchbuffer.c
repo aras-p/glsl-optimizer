@@ -296,6 +296,9 @@ emit:
 static void
 intel_emit_post_sync_nonzero_flush(struct intel_context *intel)
 {
+   if (!intel->batch.need_workaround_flush)
+      return;
+
    BEGIN_BATCH(4);
    OUT_BATCH(_3DSTATE_PIPE_CONTROL);
    OUT_BATCH(PIPE_CONTROL_WRITE_IMMEDIATE);
@@ -303,6 +306,8 @@ intel_emit_post_sync_nonzero_flush(struct intel_context *intel)
 	     I915_GEM_DOMAIN_GTT, I915_GEM_DOMAIN_GTT, 0);
    OUT_BATCH(0); /* write data */
    ADVANCE_BATCH();
+
+   intel->batch.need_workaround_flush = false;
 }
 
 /* Emit a pipelined flush to either flush render and texture cache for
