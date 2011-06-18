@@ -293,7 +293,27 @@ emit:
    item->header = intel->batch.emit;
 }
 
-static void
+/**
+ * Emits a PIPE_CONTROL with a non-zero post-sync operation, for
+ * implementing two workarounds on gen6.  From section 1.4.7.1
+ * "PIPE_CONTROL" of the Sandy Bridge PRM volume 2 part 1:
+ *
+ * [DevSNB-C+{W/A}] Before any depth stall flush (including those
+ * produced by non-pipelined state commands), software needs to first
+ * send a PIPE_CONTROL with no bits set except Post-Sync Operation !=
+ * 0.
+ *
+ * [Dev-SNB{W/A}]: Before a PIPE_CONTROL with Write Cache Flush Enable
+ * =1, a PIPE_CONTROL with any non-zero post-sync-op is required.
+ *
+ * XXX: There is also a workaround that would appear to apply to this
+ * workaround, but it doesn't appear to be necessary so far:
+ *
+ * Dev-SNB{W/A}]: Pipe-control with CS-stall bit set must be sent
+ * BEFORE the pipe-control with a post-sync op and no write-cache
+ * flushes.
+ */
+void
 intel_emit_post_sync_nonzero_flush(struct intel_context *intel)
 {
    if (!intel->batch.need_workaround_flush)

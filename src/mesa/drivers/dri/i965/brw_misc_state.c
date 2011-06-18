@@ -219,6 +219,12 @@ static void emit_depthbuffer(struct brw_context *brw)
    struct intel_region *hiz_region = depth_irb ? depth_irb->hiz_region : NULL;
    unsigned int len;
 
+   /* 3DSTATE_DEPTH_BUFFER, 3DSTATE_STENCIL_BUFFER are both
+    * non-pipelined state that will need the PIPE_CONTROL workaround.
+    */
+   if (intel->gen == 6)
+      intel_emit_post_sync_nonzero_flush(intel);
+
    /*
     * If either depth or stencil buffer has packed depth/stencil format,
     * then don't use separate stencil. Emit only a depth buffer.
@@ -408,6 +414,9 @@ static void emit_depthbuffer(struct brw_context *brw)
     *     when HiZ is enabled and the DEPTH_BUFFER_STATE changes.
     */
    if (intel->gen >= 6 || hiz_region) {
+      if (intel->gen == 6)
+	 intel_emit_post_sync_nonzero_flush(intel);
+
       BEGIN_BATCH(2);
       OUT_BATCH(_3DSTATE_CLEAR_PARAMS << 16 | (2 - 2));
       OUT_BATCH(0);
@@ -523,6 +532,9 @@ static void upload_aa_line_parameters(struct brw_context *brw)
    if (!ctx->Line.SmoothFlag || !brw->has_aa_line_parameters)
       return;
 
+   if (intel->gen == 6)
+      intel_emit_post_sync_nonzero_flush(intel);
+
    OUT_BATCH(_3DSTATE_AA_LINE_PARAMETERS << 16 | (3 - 2));
    /* use legacy aa line coverage computation */
    OUT_BATCH(0);
@@ -553,6 +565,9 @@ static void upload_line_stipple(struct brw_context *brw)
    if (!ctx->Line.StippleFlag)
       return;
 
+   if (intel->gen == 6)
+      intel_emit_post_sync_nonzero_flush(intel);
+
    BEGIN_BATCH(3);
    OUT_BATCH(_3DSTATE_LINE_STIPPLE_PATTERN << 16 | (3 - 2));
    OUT_BATCH(ctx->Line.StipplePattern);
@@ -579,6 +594,10 @@ const struct brw_tracked_state brw_line_stipple = {
 static void upload_invarient_state( struct brw_context *brw )
 {
    struct intel_context *intel = &brw->intel;
+
+   /* 3DSTATE_SIP, 3DSTATE_MULTISAMPLE, etc. are nonpipelined. */
+   if (intel->gen == 6)
+      intel_emit_post_sync_nonzero_flush(intel);
 
    {
       /* 0x61040000  Pipeline Select */
@@ -643,6 +662,7 @@ static void upload_invarient_state( struct brw_context *brw )
       sip.header.length = 0;
       sip.bits0.pad = 0;
       sip.bits0.system_instruction_pointer = 0;
+
       BRW_BATCH_STRUCT(brw, &sip);
    }
 
@@ -683,6 +703,9 @@ static void upload_state_base_address( struct brw_context *brw )
    struct intel_context *intel = &brw->intel;
 
    if (intel->gen >= 6) {
+      if (intel->gen == 6)
+	 intel_emit_post_sync_nonzero_flush(intel);
+
        BEGIN_BATCH(10);
        OUT_BATCH(CMD_STATE_BASE_ADDRESS << 16 | (10 - 2));
        /* General state base address: stateless DP read/write requests */
