@@ -276,6 +276,17 @@ emit:
    item->header = intel->batch.emit;
 }
 
+static void
+intel_emit_post_sync_nonzero_flush(struct intel_context *intel)
+{
+   BEGIN_BATCH(4);
+   OUT_BATCH(_3DSTATE_PIPE_CONTROL);
+   OUT_BATCH(PIPE_CONTROL_WRITE_IMMEDIATE);
+   OUT_BATCH(0); /* write address */
+   OUT_BATCH(0); /* write data */
+   ADVANCE_BATCH();
+}
+
 /* Emit a pipelined flush to either flush render and texture cache for
  * reading from a FBO-drawn texture, or flush so that frontbuffer
  * render appears on the screen in DRI1.
@@ -294,15 +305,17 @@ intel_batchbuffer_emit_mi_flush(struct intel_context *intel)
 	 OUT_BATCH(0);
 	 ADVANCE_BATCH();
       } else {
-	 BEGIN_BATCH(8);
-	 /* XXX workaround: issue any post sync != 0 before write
-	  * cache flush = 1
-	  */
-	 OUT_BATCH(_3DSTATE_PIPE_CONTROL);
-	 OUT_BATCH(PIPE_CONTROL_WRITE_IMMEDIATE);
-	 OUT_BATCH(0); /* write address */
-	 OUT_BATCH(0); /* write data */
+	 if (intel->gen == 6) {
+	    /* Hardware workaround: SNB B-Spec says:
+	     *
+	     * [Dev-SNB{W/A}]: Before a PIPE_CONTROL with Write Cache
+	     * Flush Enable =1, a PIPE_CONTROL with any non-zero
+	     * post-sync-op is required.
+	     */
+	    intel_emit_post_sync_nonzero_flush(intel);
+	 }
 
+	 BEGIN_BATCH(4);
 	 OUT_BATCH(_3DSTATE_PIPE_CONTROL);
 	 OUT_BATCH(PIPE_CONTROL_INSTRUCTION_FLUSH |
 		   PIPE_CONTROL_WRITE_FLUSH |
