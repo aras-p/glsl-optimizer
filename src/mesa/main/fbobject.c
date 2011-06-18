@@ -1556,7 +1556,7 @@ check_begin_texture_render(struct gl_context *ctx, struct gl_framebuffer *fb)
    GLuint i;
    ASSERT(ctx->Driver.RenderTexture);
 
-   if (is_winsys_fbo(fb));
+   if (is_winsys_fbo(fb))
       return; /* can't render to texture with winsys framebuffers */
 
    for (i = 0; i < BUFFER_COUNT; i++) {
@@ -1576,7 +1576,7 @@ check_begin_texture_render(struct gl_context *ctx, struct gl_framebuffer *fb)
 static void
 check_end_texture_render(struct gl_context *ctx, struct gl_framebuffer *fb)
 {
-   if (is_winsys_fbo(fb));
+   if (is_winsys_fbo(fb))
       return; /* can't render to texture with winsys framebuffers */
 
    if (ctx->Driver.FinishRenderTexture) {
