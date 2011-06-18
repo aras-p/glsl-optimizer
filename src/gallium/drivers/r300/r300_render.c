@@ -175,8 +175,8 @@ static void r300_split_index_bias(struct r300_context *r300, int index_bias,
 enum r300_prepare_flags {
     PREP_EMIT_STATES    = (1 << 0), /* call emit_dirty_state and friends? */
     PREP_VALIDATE_VBOS  = (1 << 1), /* validate VBOs? */
-    PREP_EMIT_AOS       = (1 << 2), /* call emit_vertex_arrays? */
-    PREP_EMIT_AOS_SWTCL = (1 << 3), /* call emit_vertex_arrays_swtcl? */
+    PREP_EMIT_VARRAYS       = (1 << 2), /* call emit_vertex_arrays? */
+    PREP_EMIT_VARRAYS_SWTCL = (1 << 3), /* call emit_vertex_arrays_swtcl? */
     PREP_INDEXED        = (1 << 4)  /* is this draw_elements? */
 };
 
@@ -194,8 +194,8 @@ static boolean r300_reserve_cs_dwords(struct r300_context *r300,
 {
     boolean flushed        = FALSE;
     boolean emit_states    = flags & PREP_EMIT_STATES;
-    boolean emit_vertex_arrays       = flags & PREP_EMIT_AOS;
-    boolean emit_vertex_arrays_swtcl = flags & PREP_EMIT_AOS_SWTCL;
+    boolean emit_vertex_arrays       = flags & PREP_EMIT_VARRAYS;
+    boolean emit_vertex_arrays_swtcl = flags & PREP_EMIT_VARRAYS_SWTCL;
 
     /* Add dirty state, index offset, and AOS. */
     if (emit_states)
@@ -238,8 +238,8 @@ static boolean r300_emit_states(struct r300_context *r300,
                                 int index_bias, int instance_id)
 {
     boolean emit_states    = flags & PREP_EMIT_STATES;
-    boolean emit_vertex_arrays       = flags & PREP_EMIT_AOS;
-    boolean emit_vertex_arrays_swtcl = flags & PREP_EMIT_AOS_SWTCL;
+    boolean emit_vertex_arrays       = flags & PREP_EMIT_VARRAYS;
+    boolean emit_vertex_arrays_swtcl = flags & PREP_EMIT_VARRAYS_SWTCL;
     boolean indexed        = flags & PREP_INDEXED;
     boolean validate_vbos  = flags & PREP_VALIDATE_VBOS;
 
@@ -541,7 +541,7 @@ static void r300_draw_elements_immediate(struct r300_context *r300,
 
     /* 19 dwords for r300_draw_elements_immediate. Give up if the function fails. */
     if (!r300_prepare_for_rendering(r300,
-            PREP_EMIT_STATES | PREP_VALIDATE_VBOS | PREP_EMIT_AOS |
+            PREP_EMIT_STATES | PREP_VALIDATE_VBOS | PREP_EMIT_VARRAYS |
             PREP_INDEXED, NULL, 2+count_dwords, 0, info->index_bias, -1))
         return;
 
@@ -663,7 +663,7 @@ static void r300_draw_elements(struct r300_context *r300,
 
     /* 19 dwords for emit_draw_elements. Give up if the function fails. */
     if (!r300_prepare_for_rendering(r300,
-            PREP_EMIT_STATES | PREP_VALIDATE_VBOS | PREP_EMIT_AOS |
+            PREP_EMIT_STATES | PREP_VALIDATE_VBOS | PREP_EMIT_VARRAYS |
             PREP_INDEXED, indexBuffer, 19, buffer_offset, info->index_bias,
             instance_id))
         goto done;
@@ -690,7 +690,7 @@ static void r300_draw_elements(struct r300_context *r300,
             /* 15 dwords for emit_draw_elements */
             if (count) {
                 if (!r300_prepare_for_rendering(r300,
-                        PREP_VALIDATE_VBOS | PREP_EMIT_AOS | PREP_INDEXED,
+                        PREP_VALIDATE_VBOS | PREP_EMIT_VARRAYS | PREP_INDEXED,
                         indexBuffer, 19, buffer_offset, info->index_bias,
                         instance_id))
                     goto done;
@@ -716,7 +716,7 @@ static void r300_draw_arrays(struct r300_context *r300,
 
     /* 9 spare dwords for emit_draw_arrays. Give up if the function fails. */
     if (!r300_prepare_for_rendering(r300,
-                                    PREP_EMIT_STATES | PREP_VALIDATE_VBOS | PREP_EMIT_AOS,
+                                    PREP_EMIT_STATES | PREP_VALIDATE_VBOS | PREP_EMIT_VARRAYS,
                                     NULL, 9, start, 0, instance_id))
         return;
 
@@ -737,7 +737,7 @@ static void r300_draw_arrays(struct r300_context *r300,
             /* 9 spare dwords for emit_draw_arrays. Give up if the function fails. */
             if (count) {
                 if (!r300_prepare_for_rendering(r300,
-                                                PREP_VALIDATE_VBOS | PREP_EMIT_AOS, NULL, 9,
+                                                PREP_VALIDATE_VBOS | PREP_EMIT_VARRAYS, NULL, 9,
                                                 start, 0, instance_id))
                     return;
             }
@@ -844,7 +844,7 @@ static void r300_swtcl_draw_vbo(struct pipe_context* pipe,
     r300_update_derived_state(r300);
 
     r300_reserve_cs_dwords(r300,
-            PREP_EMIT_STATES | PREP_EMIT_AOS_SWTCL |
+            PREP_EMIT_STATES | PREP_EMIT_VARRAYS_SWTCL |
             (indexed ? PREP_INDEXED : 0),
             indexed ? 256 : 6);
 
@@ -1026,12 +1026,12 @@ static void r300_render_draw_arrays(struct vbuf_render* render,
 
     if (r300->draw_first_emitted) {
         if (!r300_prepare_for_rendering(r300,
-                PREP_EMIT_STATES | PREP_EMIT_AOS_SWTCL,
+                PREP_EMIT_STATES | PREP_EMIT_VARRAYS_SWTCL,
                 NULL, dwords, 0, 0, -1))
             return;
     } else {
         if (!r300_emit_states(r300,
-                PREP_EMIT_STATES | PREP_EMIT_AOS_SWTCL,
+                PREP_EMIT_STATES | PREP_EMIT_VARRAYS_SWTCL,
                 NULL, 0, 0, -1))
             return;
     }
@@ -1066,12 +1066,12 @@ static void r300_render_draw_elements(struct vbuf_render* render,
 
     if (r300->draw_first_emitted) {
         if (!r300_prepare_for_rendering(r300,
-                PREP_EMIT_STATES | PREP_EMIT_AOS_SWTCL | PREP_INDEXED,
+                PREP_EMIT_STATES | PREP_EMIT_VARRAYS_SWTCL | PREP_INDEXED,
                 NULL, 256, 0, 0, -1))
             return;
     } else {
         if (!r300_emit_states(r300,
-                PREP_EMIT_STATES | PREP_EMIT_AOS_SWTCL | PREP_INDEXED,
+                PREP_EMIT_STATES | PREP_EMIT_VARRAYS_SWTCL | PREP_INDEXED,
                 NULL, 0, 0, -1))
             return;
     }
@@ -1108,7 +1108,7 @@ static void r300_render_draw_elements(struct vbuf_render* render,
 
         if (count) {
             if (!r300_prepare_for_rendering(r300,
-                    PREP_EMIT_AOS_SWTCL | PREP_INDEXED,
+                    PREP_EMIT_VARRAYS_SWTCL | PREP_INDEXED,
                     NULL, 256, 0, 0, -1))
                 return;
 
