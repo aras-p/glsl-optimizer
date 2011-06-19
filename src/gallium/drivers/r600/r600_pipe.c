@@ -376,6 +376,7 @@ static int r600_get_param(struct pipe_screen* pscreen, enum pipe_cap param)
 	case PIPE_CAP_TGSI_FS_COORD_ORIGIN_UPPER_LEFT:
 	case PIPE_CAP_TGSI_FS_COORD_PIXEL_CENTER_HALF_INTEGER:
 	case PIPE_CAP_SM3:
+	case PIPE_CAP_SEAMLESS_CUBE_MAP:
 		return 1;
 
 	/* Supported except the original R600. */
@@ -385,7 +386,6 @@ static int r600_get_param(struct pipe_screen* pscreen, enum pipe_cap param)
 		return family == CHIP_R600 ? 0 : 1;
 
 	/* Supported on Evergreen. */
-	case PIPE_CAP_SEAMLESS_CUBE_MAP:
 	case PIPE_CAP_SEAMLESS_CUBE_MAP_PER_TEXTURE:
 		return family >= CHIP_CEDAR ? 1 : 0;
 

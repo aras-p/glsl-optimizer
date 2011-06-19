@@ -50,6 +50,7 @@ enum r600_pipe_state_id {
 	R600_PIPE_STATE_BLEND = 0,
 	R600_PIPE_STATE_BLEND_COLOR,
 	R600_PIPE_STATE_CONFIG,
+	R600_PIPE_STATE_SEAMLESS_CUBEMAP,
 	R600_PIPE_STATE_CLIP,
 	R600_PIPE_STATE_SCISSOR,
 	R600_PIPE_STATE_VIEWPORT,
@@ -124,6 +125,11 @@ struct r600_pipe_shader {
 	struct r600_bo			*bo;
 	struct r600_bo			*bo_fetch;
 	struct r600_vertex_element	vertex_elements;
+};
+
+struct r600_pipe_sampler_state {
+	struct r600_pipe_state		rstate;
+	boolean seamless_cube_map;
 };
 
 /* needed for blitter save */

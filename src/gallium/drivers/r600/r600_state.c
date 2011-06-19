@@ -369,14 +369,17 @@ static void *r600_create_rs_state(struct pipe_context *ctx,
 static void *r600_create_sampler_state(struct pipe_context *ctx,
 					const struct pipe_sampler_state *state)
 {
-	struct r600_pipe_state *rstate = CALLOC_STRUCT(r600_pipe_state);
+	struct r600_pipe_sampler_state *ss = CALLOC_STRUCT(r600_pipe_sampler_state);
+	struct r600_pipe_state *rstate;
 	union util_color uc;
 	unsigned aniso_flag_offset = state->max_anisotropy > 1 ? 4 : 0;
 
-	if (rstate == NULL) {
+	if (ss == NULL) {
 		return NULL;
 	}
 
+	ss->seamless_cube_map = state->seamless_cube_map;
+	rstate = &ss->rstate;
 	rstate->id = R600_PIPE_STATE_SAMPLER;
 	util_pack_color(state->border_color, PIPE_FORMAT_B8G8R8A8_UNORM, &uc);
 	r600_pipe_state_add_reg_noblock(rstate, R_03C000_SQ_TEX_SAMPLER_WORD0_0,
@@ -559,27 +562,57 @@ static void r600_set_ps_sampler_view(struct pipe_context *ctx, unsigned count,
 	rctx->ps_samplers.n_views = count;
 }
 
+static void r600_set_seamless_cubemap(struct r600_pipe_context *rctx, boolean enable)
+{
+	struct r600_pipe_state *rstate = CALLOC_STRUCT(r600_pipe_state);
+	if (rstate == NULL)
+		return;
+
+	rstate->id = R600_PIPE_STATE_SEAMLESS_CUBEMAP;
+	r600_pipe_state_add_reg(rstate, R_009508_TA_CNTL_AUX,
+				(enable ? 0 : S_009508_DISABLE_CUBE_WRAP(1)),
+				1, NULL);
+
+	free(rctx->states[R600_PIPE_STATE_SEAMLESS_CUBEMAP]);
+	rctx->states[R600_PIPE_STATE_SEAMLESS_CUBEMAP] = rstate;
+	r600_context_pipe_state_set(&rctx->ctx, rstate);
+}
+
 static void r600_bind_ps_sampler(struct pipe_context *ctx, unsigned count, void **states)
 {
 	struct r600_pipe_context *rctx = (struct r600_pipe_context *)ctx;
-	struct r600_pipe_state **rstates = (struct r600_pipe_state **)states;
+	struct r600_pipe_sampler_state **sstates = (struct r600_pipe_sampler_state **)states;
+	int seamless = -1;
 
 	memcpy(rctx->ps_samplers.samplers, states, sizeof(void*) * count);
 	rctx->ps_samplers.n_samplers = count;
 
 	for (int i = 0; i < count; i++) {
-		r600_context_pipe_state_set_ps_sampler(&rctx->ctx, rstates[i], i);
+		r600_context_pipe_state_set_ps_sampler(&rctx->ctx, &sstates[i]->rstate, i);
+
+		if (sstates[i])
+			seamless = sstates[i]->seamless_cube_map;
 	}
+
+	if (seamless != -1)
+		r600_set_seamless_cubemap(rctx, seamless);
 }
 
 static void r600_bind_vs_sampler(struct pipe_context *ctx, unsigned count, void **states)
 {
 	struct r600_pipe_context *rctx = (struct r600_pipe_context *)ctx;
-	struct r600_pipe_state **rstates = (struct r600_pipe_state **)states;
+	struct r600_pipe_sampler_state **sstates = (struct r600_pipe_sampler_state **)states;
+	int seamless = -1;
 
 	for (int i = 0; i < count; i++) {
-		r600_context_pipe_state_set_vs_sampler(&rctx->ctx, rstates[i], i);
+		r600_context_pipe_state_set_vs_sampler(&rctx->ctx, &sstates[i]->rstate, i);
+
+		if (sstates[i])
+			seamless = sstates[i]->seamless_cube_map;
 	}
+
+	if (seamless != -1)
+		r600_set_seamless_cubemap(rctx, seamless);
 }
 
 static void r600_set_clip_state(struct pipe_context *ctx,
