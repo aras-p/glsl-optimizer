@@ -479,9 +479,18 @@ dri2_connect(struct dri2_egl_display *dri2_dpy)
    xcb_generic_error_t *error;
    xcb_screen_iterator_t s;
    char *driver_name, *device_name;
+   const xcb_query_extension_reply_t *extension;
 
    xcb_prefetch_extension_data (dri2_dpy->conn, &xcb_xfixes_id);
    xcb_prefetch_extension_data (dri2_dpy->conn, &xcb_dri2_id);
+
+   extension = xcb_get_extension_data(dri2_dpy->conn, &xcb_xfixes_id);
+   if (!(extension && extension->present))
+      return EGL_FALSE;
+
+   extension = xcb_get_extension_data(dri2_dpy->conn, &xcb_dri2_id);
+   if (!(extension && extension->present))
+      return EGL_FALSE;
 
    xfixes_query_cookie = xcb_xfixes_query_version(dri2_dpy->conn,
 						  XCB_XFIXES_MAJOR_VERSION,
