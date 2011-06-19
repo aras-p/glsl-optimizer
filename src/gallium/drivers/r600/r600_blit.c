@@ -294,7 +294,8 @@ static void r600_resource_copy_region(struct pipe_context *ctx,
 {
 	struct r600_resource_texture *rsrc = (struct r600_resource_texture*)src;
 	struct texture_orig_info orig_info[2];
-	struct pipe_box sbox, *psbox;
+	struct pipe_box sbox;
+	const struct pipe_box *psbox;
 	boolean restore_orig[2];
 
 	/* Fallback for buffers. */
