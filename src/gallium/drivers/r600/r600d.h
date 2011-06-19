@@ -2556,6 +2556,9 @@
 #define   S_009508_DISABLE_CUBE_WRAP(x)                (((x) & 0x1) << 0)
 #define   G_009508_DISABLE_CUBE_WRAP(x)                (((x) >> 0) & 0x1)
 #define   C_009508_DISABLE_CUBE_WRAP                   0xFFFFFFFE
+#define   S_009508_DISABLE_CUBE_ANISO(x)               (((x) & 0x1) << 1)
+#define   G_009508_DISABLE_CUBE_ANISO(x)               (((x) >> 1) & 0x1)
+#define   C_009508_DISABLE_CUBE_ANISO                  (~(1 << 1))
 #define   S_009508_SYNC_GRADIENT(x)                    (((x) & 0x1) << 24)
 #define   G_009508_SYNC_GRADIENT(x)                    (((x) >> 24) & 0x1)
 #define   C_009508_SYNC_GRADIENT                       0xFEFFFFFF

@@ -1290,14 +1290,22 @@ void r600_init_config(struct r600_pipe_context *rctx)
 
 	if (family >= CHIP_RV770) {
 		r600_pipe_state_add_reg(rstate, R_008D8C_SQ_DYN_GPR_CNTL_PS_FLUSH_REQ, 0x00004000, 0xFFFFFFFF, NULL);
-		r600_pipe_state_add_reg(rstate, R_009508_TA_CNTL_AUX, 0x07000002, 0xFFFFFFFF, NULL);
+		r600_pipe_state_add_reg(rstate, R_009508_TA_CNTL_AUX,
+					S_009508_DISABLE_CUBE_ANISO(1) |
+					S_009508_SYNC_GRADIENT(1) |
+					S_009508_SYNC_WALKER(1) |
+					S_009508_SYNC_ALIGNER(1), 0xFFFFFFFF, NULL);
 		r600_pipe_state_add_reg(rstate, R_009830_DB_DEBUG, 0x00000000, 0xFFFFFFFF, NULL);
 		r600_pipe_state_add_reg(rstate, R_009838_DB_WATERMARKS, 0x00420204, 0xFFFFFFFF, NULL);
 		r600_pipe_state_add_reg(rstate, R_0286C8_SPI_THREAD_GROUPING, 0x00000000, 0xFFFFFFFF, NULL);
 		r600_pipe_state_add_reg(rstate, R_028A4C_PA_SC_MODE_CNTL, 0x00514002, 0xFFFFFFFF, NULL);
 	} else {
 		r600_pipe_state_add_reg(rstate, R_008D8C_SQ_DYN_GPR_CNTL_PS_FLUSH_REQ, 0x00000000, 0xFFFFFFFF, NULL);
-		r600_pipe_state_add_reg(rstate, R_009508_TA_CNTL_AUX, 0x07000003, 0xFFFFFFFF, NULL);
+		r600_pipe_state_add_reg(rstate, R_009508_TA_CNTL_AUX,
+					S_009508_DISABLE_CUBE_ANISO(1) |
+					S_009508_SYNC_GRADIENT(1) |
+					S_009508_SYNC_WALKER(1) |
+					S_009508_SYNC_ALIGNER(1), 0xFFFFFFFF, NULL);
 		r600_pipe_state_add_reg(rstate, R_009830_DB_DEBUG, 0x82000000, 0xFFFFFFFF, NULL);
 		r600_pipe_state_add_reg(rstate, R_009838_DB_WATERMARKS, 0x01020204, 0xFFFFFFFF, NULL);
 		r600_pipe_state_add_reg(rstate, R_0286C8_SPI_THREAD_GROUPING, 0x00000001, 0xFFFFFFFF, NULL);
