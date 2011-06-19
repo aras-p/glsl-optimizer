@@ -523,11 +523,6 @@ AC_ARG_ENABLE([gles2],
         [enable support for OpenGL ES 2.x API @<:@default=no@:>@])],
     [enable_gles2="$enableval"],
     [enable_gles2=no])
-AC_ARG_ENABLE([gles-overlay],
-    [AS_HELP_STRING([--enable-gles-overlay],
-        [DEPRECATED.  Same as --enable-gles1 and --enable-gles2])],
-    [enable_gles1="$enableval"; enable_gles2="$enableval"],
-    [])
 AC_ARG_ENABLE([openvg],
     [AS_HELP_STRING([--enable-openvg],
         [enable support for OpenVG API @<:@default=no@:>@])],
@@ -1560,10 +1555,6 @@ AC_ARG_WITH([egl-platforms],
         "x11,drm" @<:@default=auto@:>@])],
     [with_egl_platforms="$withval"],
     [with_egl_platforms=yes])
-AC_ARG_WITH([egl-displays],
-    [AS_HELP_STRING([--with-egl-displays@<:@=DIRS...@:>@],
-        [DEPRECATED.  Use --with-egl-platforms instead])],
-    [with_egl_platforms="$withval"])
 
 EGL_PLATFORMS=""
 WAYLAND_EGL_LIB_DEPS=""
