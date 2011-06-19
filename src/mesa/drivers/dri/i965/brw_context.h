@@ -144,6 +144,7 @@ enum brw_state_id {
    BRW_STATE_VS_CONSTBUF,
    BRW_STATE_WM_CONSTBUF,
    BRW_STATE_PROGRAM_CACHE,
+   BRW_STATE_STATE_BASE_ADDRESS,
 };
 
 #define BRW_NEW_URB_FENCE               (1 << BRW_STATE_URB_FENCE)
@@ -174,6 +175,7 @@ enum brw_state_id {
 #define BRW_NEW_VS_CONSTBUF            (1 << BRW_STATE_VS_CONSTBUF)
 #define BRW_NEW_WM_CONSTBUF            (1 << BRW_STATE_WM_CONSTBUF)
 #define BRW_NEW_PROGRAM_CACHE		(1 << BRW_STATE_PROGRAM_CACHE)
+#define BRW_NEW_STATE_BASE_ADDRESS	(1 << BRW_STATE_STATE_BASE_ADDRESS)
 
 struct brw_state_flags {
    /** State update flags signalled by mesa internals */

@@ -87,10 +87,11 @@ static void upload_binding_table_pointers(struct brw_context *brw)
 const struct brw_tracked_state brw_binding_table_pointers = {
    .dirty = {
       .mesa = 0,
-      .brw = BRW_NEW_BATCH
-	   | BRW_NEW_VS_BINDING_TABLE
-	   | BRW_NEW_GS_BINDING_TABLE
-	   | BRW_NEW_PS_BINDING_TABLE,
+      .brw = (BRW_NEW_BATCH |
+	      BRW_NEW_STATE_BASE_ADDRESS |
+	      BRW_NEW_VS_BINDING_TABLE |
+	      BRW_NEW_GS_BINDING_TABLE |
+	      BRW_NEW_PS_BINDING_TABLE),
       .cache = 0,
    },
    .emit = upload_binding_table_pointers,
@@ -122,10 +123,11 @@ static void upload_gen6_binding_table_pointers(struct brw_context *brw)
 const struct brw_tracked_state gen6_binding_table_pointers = {
    .dirty = {
       .mesa = 0,
-      .brw = BRW_NEW_BATCH
-	   | BRW_NEW_VS_BINDING_TABLE
-	   | BRW_NEW_GS_BINDING_TABLE
-	   | BRW_NEW_PS_BINDING_TABLE,
+      .brw = (BRW_NEW_BATCH |
+	      BRW_NEW_STATE_BASE_ADDRESS |
+	      BRW_NEW_VS_BINDING_TABLE |
+	      BRW_NEW_GS_BINDING_TABLE |
+	      BRW_NEW_PS_BINDING_TABLE),
       .cache = 0,
    },
    .emit = upload_gen6_binding_table_pointers,
@@ -180,7 +182,9 @@ static void upload_psp_urb_cbs(struct brw_context *brw )
 const struct brw_tracked_state brw_psp_urb_cbs = {
    .dirty = {
       .mesa = 0,
-      .brw = BRW_NEW_URB_FENCE | BRW_NEW_BATCH,
+      .brw = (BRW_NEW_URB_FENCE |
+	      BRW_NEW_BATCH |
+	      BRW_NEW_STATE_BASE_ADDRESS),
       .cache = (CACHE_NEW_VS_UNIT | 
 		CACHE_NEW_GS_UNIT | 
 		CACHE_NEW_GS_PROG | 
@@ -708,6 +712,15 @@ static void upload_state_base_address( struct brw_context *brw )
 {
    struct intel_context *intel = &brw->intel;
 
+   /* FINISHME: According to section 3.6.1 "STATE_BASE_ADDRESS" of
+    * vol1a of the G45 PRM, MI_FLUSH with the ISC invalidate should be
+    * programmed prior to STATE_BASE_ADDRESS.
+    *
+    * However, given that the instruction SBA (general state base
+    * address) on this chipset is always set to 0 across X and GL,
+    * maybe this isn't required for us in particular.
+    */
+
    if (intel->gen >= 6) {
       if (intel->gen == 6)
 	 intel_emit_post_sync_nonzero_flush(intel);
@@ -767,6 +780,30 @@ static void upload_state_base_address( struct brw_context *brw )
        OUT_BATCH(1); /* Indirect object upper bound */
        ADVANCE_BATCH();
    }
+
+   /* According to section 3.6.1 of VOL1 of the 965 PRM,
+    * STATE_BASE_ADDRESS updates require a reissue of:
+    *
+    * 3DSTATE_PIPELINE_POINTERS
+    * 3DSTATE_BINDING_TABLE_POINTERS
+    * MEDIA_STATE_POINTERS
+    *
+    * and this continues through Ironlake.  The Sandy Bridge PRM, vol
+    * 1 part 1 says that the folowing packets must be reissued:
+    *
+    * 3DSTATE_CC_POINTERS
+    * 3DSTATE_BINDING_TABLE_POINTERS
+    * 3DSTATE_SAMPLER_STATE_POINTERS
+    * 3DSTATE_VIEWPORT_STATE_POINTERS
+    * MEDIA_STATE_POINTERS
+    *
+    * Those are always reissued following SBA updates anyway (new
+    * batch time), except in the case of the program cache BO
+    * changing.  Having a separate state flag makes the sequence more
+    * obvious.
+    */
+
+   brw->state.dirty.brw |= BRW_NEW_STATE_BASE_ADDRESS;
 }
 
 const struct brw_tracked_state brw_state_base_address = {

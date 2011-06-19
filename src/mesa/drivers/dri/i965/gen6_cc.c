@@ -183,7 +183,8 @@ static void upload_cc_state_pointers(struct brw_context *brw)
 const struct brw_tracked_state gen6_cc_state_pointers = {
    .dirty = {
       .mesa = 0,
-      .brw = BRW_NEW_BATCH,
+      .brw = (BRW_NEW_BATCH |
+	      BRW_NEW_STATE_BASE_ADDRESS),
       .cache = (CACHE_NEW_BLEND_STATE |
 		CACHE_NEW_COLOR_CALC_STATE |
 		CACHE_NEW_DEPTH_STENCIL_STATE)
