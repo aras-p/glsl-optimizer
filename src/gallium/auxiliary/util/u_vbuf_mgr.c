@@ -537,6 +537,11 @@ static void u_vbuf_upload_buffers(struct u_vbuf_mgr_priv *mgr,
          } else if (vb->stride) {
             first = vb->stride * min_index;
             size = vb->stride * count;
+
+            /* Unusual case when stride is smaller than the format size.
+             * XXX This won't work with interleaved arrays. */
+            if (mgr->ve->native_format_size[i] > vb->stride)
+               size += mgr->ve->native_format_size[i] - vb->stride;
          } else {
             first = 0;
             size = mgr->ve->native_format_size[i];
