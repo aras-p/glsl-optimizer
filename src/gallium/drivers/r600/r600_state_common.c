@@ -543,7 +543,7 @@ void r600_draw_vbo(struct pipe_context *ctx, const struct pipe_draw_info *info)
 		if (rctx->have_depth_fb || rctx->have_depth_texture)
 			r600_flush_depth_textures(rctx);
 	}
-	u_vbuf_mgr_draw_begin(rctx->vbuf_mgr, info, NULL, NULL);
+	u_vbuf_mgr_draw_begin(rctx->vbuf_mgr, info);
 	r600_vertex_buffer_update(rctx);
 
 	draw.info = *info;

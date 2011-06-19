@@ -768,7 +768,6 @@ static void r300_draw_vbo(struct pipe_context* pipe,
 {
     struct r300_context* r300 = r300_context(pipe);
     struct pipe_draw_info info = *dinfo;
-    boolean buffers_updated, uploader_flushed;
 
     info.indexed = info.indexed && r300->index_buffer.buffer;
 
@@ -780,9 +779,7 @@ static void r300_draw_vbo(struct pipe_context* pipe,
     r300_update_derived_state(r300);
 
     /* Start the vbuf manager and update buffers if needed. */
-    u_vbuf_mgr_draw_begin(r300->vbuf_mgr, &info,
-                          &buffers_updated, &uploader_flushed);
-    if (buffers_updated) {
+    if (u_vbuf_mgr_draw_begin(r300->vbuf_mgr, &info) & U_VBUF_BUFFERS_UPDATED) {
         r300->vertex_arrays_dirty = TRUE;
     }
 

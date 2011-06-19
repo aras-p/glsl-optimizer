@@ -78,6 +78,11 @@ enum u_fetch_alignment {
    U_VERTEX_FETCH_DWORD_ALIGNED
 };
 
+enum u_vbuf_return_flags {
+   U_VBUF_BUFFERS_UPDATED = 1,
+   U_VBUF_UPLOAD_FLUSHED = 2
+};
+
 
 struct u_vbuf_mgr *
 u_vbuf_mgr_create(struct pipe_context *pipe,
@@ -105,10 +110,9 @@ void u_vbuf_mgr_set_vertex_buffers(struct u_vbuf_mgr *mgr,
                                    unsigned count,
                                    const struct pipe_vertex_buffer *bufs);
 
-void u_vbuf_mgr_draw_begin(struct u_vbuf_mgr *mgr,
-                           const struct pipe_draw_info *info,
-                           boolean *buffers_updated,
-                           boolean *uploader_flushed);
+enum u_vbuf_return_flags
+u_vbuf_mgr_draw_begin(struct u_vbuf_mgr *mgr,
+                      const struct pipe_draw_info *info);
 
 void u_vbuf_mgr_draw_end(struct u_vbuf_mgr *mgr);
 
