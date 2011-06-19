@@ -242,6 +242,9 @@ fs_visitor::generate_tex(fs_inst *inst, struct brw_reg dst, struct brw_reg src)
 	    msg_type = GEN5_SAMPLER_MESSAGE_SAMPLE_LOD;
 	 }
 	 break;
+      case FS_OPCODE_TXS:
+	 msg_type = GEN5_SAMPLER_MESSAGE_SAMPLE_RESINFO;
+	 break;
       case FS_OPCODE_TXD:
 	 /* There is no sample_d_c message; comparisons are done manually */
 	 msg_type = GEN5_SAMPLER_MESSAGE_SAMPLE_DERIVS;
@@ -775,6 +778,7 @@ fs_visitor::generate_code()
       case FS_OPCODE_TXB:
       case FS_OPCODE_TXD:
       case FS_OPCODE_TXL:
+      case FS_OPCODE_TXS:
 	 generate_tex(inst, dst, src[0]);
 	 break;
       case FS_OPCODE_DISCARD:

@@ -751,6 +751,8 @@ fs_visitor::emit_texture_gen5(ir_texture *ir, fs_reg dst, fs_reg coordinate,
    int base_mrf = 2;
    int reg_width = c->dispatch_width / 8;
    bool header_present = false;
+   const int vector_elements =
+      ir->coordinate ? ir->coordinate->type->vector_elements : 0;
 
    if (ir->offset) {
       /* The offsets set up by the ir_texture visitor are in the
@@ -761,7 +763,7 @@ fs_visitor::emit_texture_gen5(ir_texture *ir, fs_reg dst, fs_reg coordinate,
       base_mrf--;
    }
 
-   for (int i = 0; i < ir->coordinate->type->vector_elements; i++) {
+   for (int i = 0; i < vector_elements; i++) {
       fs_inst *inst = emit(BRW_OPCODE_MOV,
 			   fs_reg(MRF, base_mrf + mlen + i * reg_width),
 			   coordinate);
@@ -769,7 +771,7 @@ fs_visitor::emit_texture_gen5(ir_texture *ir, fs_reg dst, fs_reg coordinate,
 	 inst->saturate = true;
       coordinate.reg_offset++;
    }
-   mlen += ir->coordinate->type->vector_elements * reg_width;
+   mlen += vector_elements * reg_width;
 
    if (ir->shadow_comparitor && ir->op != ir_txd) {
       mlen = MAX2(mlen, header_present + 4 * reg_width);
@@ -837,8 +839,14 @@ fs_visitor::emit_texture_gen5(ir_texture *ir, fs_reg dst, fs_reg coordinate,
       inst = emit(FS_OPCODE_TXD, dst);
       break;
    }
-   case ir_txf:
    case ir_txs:
+      this->result = reg_undef;
+      ir->lod_info.lod->accept(this);
+      emit(BRW_OPCODE_MOV, fs_reg(MRF, base_mrf + mlen, BRW_REGISTER_TYPE_UD), this->result);
+      mlen += reg_width;
+      inst = emit(FS_OPCODE_TXS, dst);
+      break;
+   case ir_txf:
       assert(!"GLSL 1.30 features unsupported");
       break;
    }
@@ -927,14 +935,19 @@ fs_visitor::emit_texture_gen7(ir_texture *ir, fs_reg dst, fs_reg coordinate,
       }
       break;
    }
-   case ir_txf:
    case ir_txs:
+      this->result = reg_undef;
+      ir->lod_info.lod->accept(this);
+      emit(BRW_OPCODE_MOV, fs_reg(MRF, base_mrf + mlen, BRW_REGISTER_TYPE_UD), this->result);
+      mlen += reg_width;
+      break;
+   case ir_txf:
       assert(!"GLSL 1.30 features unsupported");
       break;
    }
 
    /* Set up the coordinate (except for TXD where it was done earlier) */
-   if (ir->op != ir_txd) {
+   if (ir->op != ir_txd && ir->op != ir_txs) {
       for (int i = 0; i < ir->coordinate->type->vector_elements; i++) {
 	 fs_inst *inst = emit(BRW_OPCODE_MOV, fs_reg(MRF, base_mrf + mlen),
 			      coordinate);
@@ -953,7 +966,7 @@ fs_visitor::emit_texture_gen7(ir_texture *ir, fs_reg dst, fs_reg coordinate,
    case ir_txl: inst = emit(FS_OPCODE_TXL, dst); break;
    case ir_txd: inst = emit(FS_OPCODE_TXD, dst); break;
    case ir_txf: assert(!"TXF unsupported."); break;
-   case ir_txs: assert(!"TXS unsupported."); break;
+   case ir_txs: inst = emit(FS_OPCODE_TXS, dst); break;
    }
    inst->base_mrf = base_mrf;
    inst->mlen = mlen;
@@ -988,7 +1001,8 @@ fs_visitor::visit(ir_texture *ir)
    }
 
    this->result = reg_undef;
-   ir->coordinate->accept(this);
+   if (ir->coordinate)
+      ir->coordinate->accept(this);
    fs_reg coordinate = this->result;
 
    if (ir->offset != NULL) {

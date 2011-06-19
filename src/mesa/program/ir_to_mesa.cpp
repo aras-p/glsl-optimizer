@@ -2104,7 +2104,10 @@ ir_to_mesa_visitor::visit(ir_texture *ir)
    ir_to_mesa_instruction *inst = NULL;
    prog_opcode opcode = OPCODE_NOP;
 
-   ir->coordinate->accept(this);
+   if (ir->op == ir_txs)
+      this->result = src_reg_for_float(0.0);
+   else
+      ir->coordinate->accept(this);
 
    /* Put our coords in a temp.  We'll need to modify them for shadow,
     * projection, or LOD, so the only case we'd use it as is is if
@@ -2128,6 +2131,7 @@ ir_to_mesa_visitor::visit(ir_texture *ir)
 
    switch (ir->op) {
    case ir_tex:
+   case ir_txs:
       opcode = OPCODE_TEX;
       break;
    case ir_txb:
@@ -2148,7 +2152,6 @@ ir_to_mesa_visitor::visit(ir_texture *ir)
       dy = this->result;
       break;
    case ir_txf:
-   case ir_txs:
       assert(!"GLSL 1.30 features unsupported");
       break;
    }
