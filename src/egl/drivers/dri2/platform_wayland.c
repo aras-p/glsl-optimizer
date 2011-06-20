@@ -720,7 +720,8 @@ dri2_initialize_wayland(_EGLDriver *drv, _EGLDisplay *disp)
       
    dri2_dpy->extensions[0] = &dri2_dpy->dri2_loader_extension.base;
    dri2_dpy->extensions[1] = &image_lookup_extension.base;
-   dri2_dpy->extensions[2] = NULL;
+   dri2_dpy->extensions[2] = &use_invalidate.base;
+   dri2_dpy->extensions[3] = NULL;
 
    if (!dri2_create_screen(disp))
       goto cleanup_driver;

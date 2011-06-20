@@ -84,7 +84,7 @@ struct dri2_egl_display
 
    __DRIdri2LoaderExtension    dri2_loader_extension;
    __DRIswrastLoaderExtension  swrast_loader_extension;
-   const __DRIextension     *extensions[3];
+   const __DRIextension     *extensions[4];
 
 #ifdef HAVE_X11_PLATFORM
    xcb_connection_t         *conn;
