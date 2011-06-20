@@ -616,7 +616,7 @@ static const struct format_mapping format_map[] = {
    },
    {
       { 4, GL_RGBA, GL_RGBA8, 0 },
-      { DEFAULT_RGBA_FORMATS, 0 }
+      { DEFAULT_RGBA_FORMATS }
    },
    {
       { GL_BGRA, 0 },
@@ -624,7 +624,7 @@ static const struct format_mapping format_map[] = {
    },
    {
       { 3, GL_RGB, GL_RGB8, 0 },
-      { DEFAULT_RGB_FORMATS, 0 }
+      { DEFAULT_RGB_FORMATS }
    },
    {
       { GL_RGB12, GL_RGB16, GL_RGBA12, GL_RGBA16, 0 },
