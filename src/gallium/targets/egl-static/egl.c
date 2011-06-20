@@ -28,6 +28,14 @@
 
 #include "common/egl_g3d_loader.h"
 #include "egldriver.h"
+#include "egllog.h"
+
+#ifdef HAVE_LIBUDEV
+#include <stdio.h>
+#include <libudev.h>
+#define DRIVER_MAP_GALLIUM_ONLY
+#include "pci_ids/pci_id_driver_map.h"
+#endif
 
 #include "egl_pipe.h"
 #include "egl_st.h"
@@ -52,9 +60,83 @@ get_st_api(enum st_api_type api)
    return stmod->stapi;
 }
 
+static const char *
+drm_fd_get_screen_name(int fd)
+{
+#ifdef HAVE_LIBUDEV
+   struct udev *udev;
+   struct udev_device *device, *parent;
+   struct stat buf;
+   const char *pci_id;
+   int vendor_id, chip_id, idx = -1, i;
+
+   udev = udev_new();
+   if (fstat(fd, &buf) < 0) {
+      _eglLog(_EGL_WARNING, "failed to stat fd %d", fd);
+      return NULL;
+   }
+
+   device = udev_device_new_from_devnum(udev, 'c', buf.st_rdev);
+   if (device == NULL) {
+      _eglLog(_EGL_WARNING,
+              "could not create udev device for fd %d", fd);
+      return NULL;
+   }
+
+   parent = udev_device_get_parent(device);
+   if (parent == NULL) {
+      _eglLog(_EGL_WARNING, "could not get parent device");
+      goto out;
+   }
+
+   pci_id = udev_device_get_property_value(parent, "PCI_ID");
+   if (pci_id == NULL ||
+       sscanf(pci_id, "%x:%x", &vendor_id, &chip_id) != 2) {
+      _eglLog(_EGL_WARNING, "malformed or no PCI ID");
+      goto out;
+   }
+
+   /* find the driver index */
+   for (idx = 0; driver_map[idx].driver; idx++) {
+      if (vendor_id != driver_map[idx].vendor_id)
+         continue;
+
+      if (driver_map[idx].num_chips_ids == -1)
+         goto out;
+
+      for (i = 0; i < driver_map[idx].num_chips_ids; i++) {
+         if (driver_map[idx].chip_ids[i] == chip_id)
+            goto out;
+      }
+   }
+
+out:
+   udev_device_unref(device);
+   udev_unref(udev);
+
+   if (idx >= 0) {
+      _eglLog((driver_map[idx].driver) ? _EGL_INFO : _EGL_WARNING,
+            "pci id for fd %d: %04x:%04x, driver %s",
+            fd, vendor_id, chip_id, driver_map[idx].driver);
+
+      return driver_map[idx].driver;
+   }
+#endif
+
+   _eglLog(_EGL_WARNING, "failed to get driver name for fd %d", fd);
+
+   return NULL;
+}
+
 static struct pipe_screen *
 create_drm_screen(const char *name, int fd)
 {
+   if (!name) {
+      name = drm_fd_get_screen_name(fd);
+      if (!name)
+         return NULL;
+   }
+
    return egl_pipe_create_drm_screen(name, fd);
 }
 
