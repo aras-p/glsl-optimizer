@@ -34,26 +34,9 @@ EGL drivers for your hardware.</p>
 
 <h2>Run the Demos</h2>
 
-<p>There are some demos in <code>progs/egl/</code>.  You can use them to test
-your build.  For example,</p>
-
-<pre>
-  $ cd progs/egl/eglut
-  $ make
-  $ cd ../opengles1
-  $ make
-  $ ./torus_x11
-</pre>
+<p>There are some demos in <code>mesa/demos</code> repository.</p>
 
 <h2>Developers</h2>
-
-<h3>Internal Libraries</h3>
-
-<table border="1" style="text-align: center;">
-	<tr><td>Library Name</td><td>Used By</td><td>Enabled</td><td>OpenGL</td><td>OpenGL ES 1.x</td><td>OpenGL ES 2.x</td></tr>
-	<tr><td><code>libmesa.a</td><td>Classic DRI drivers</td><td>y</td><td>y</td><td>--enable-gles1</td><td>--enable-gles2</td></tr>
-	<tr><td><code>libmesagallium.a</td><td>Gallium EGL and DRI drivers</td><td>y</td><td>y</td><td>--enable-gles1</td><td>--enable-gles2</td></tr>
-</table>
 
 <h3>Dispatch Table</h3>
 
