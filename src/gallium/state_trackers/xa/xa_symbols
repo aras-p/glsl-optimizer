@@ -7,6 +7,7 @@ xa_surface_redefine
 xa_surface_dma
 xa_surface_map
 xa_surface_unmap
+xa_surface_format
 xa_copy_prepare
 xa_copy
 xa_copy_done

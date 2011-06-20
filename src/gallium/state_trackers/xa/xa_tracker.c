@@ -418,3 +418,9 @@ xa_surface_handle(struct xa_surface *srf,
 
     return XA_ERR_NONE;
 }
+
+enum xa_formats
+xa_surface_format(const struct xa_surface *srf)
+{
+    return srf->fdesc.format;
+}

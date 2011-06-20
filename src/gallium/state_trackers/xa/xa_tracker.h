@@ -37,7 +37,7 @@
 #include <stdint.h>
 
 #define XA_TRACKER_VERSION_MAJOR 0
-#define XA_TRACKER_VERSION_MINOR 1
+#define XA_TRACKER_VERSION_MINOR 2
 #define XA_TRACKER_VERSION_PATCH 0
 
 #define XA_FLAG_SHARED         (1 << 0)
@@ -155,7 +155,7 @@ extern struct xa_surface *xa_surface_create(struct xa_tracker *xa,
 					    enum xa_formats pform,
 					    unsigned int flags);
 
-enum xa_formats xa_surface_pict_format(const struct xa_surface *srf);
+enum xa_formats xa_surface_format(const struct xa_surface *srf);
 
 extern void xa_surface_destroy(struct xa_surface *srf);
 
