@@ -1307,7 +1307,7 @@ if test "x$enable_gallium_egl" = xyes; then
     fi
 
     GALLIUM_STATE_TRACKERS_DIRS="egl $GALLIUM_STATE_TRACKERS_DIRS"
-    GALLIUM_TARGET_DIRS="$GALLIUM_TARGET_DIRS egl"
+    GALLIUM_TARGET_DIRS="$GALLIUM_TARGET_DIRS egl-static"
     HAVE_ST_EGL="yes"
 fi
 
