@@ -31,6 +31,7 @@
 #include "cso_cache/cso_context.h"
 #include "util/u_inlines.h"
 #include "util/u_rect.h"
+#include "util/u_surface.h"
 #include "pipe/p_context.h"
 
 
@@ -176,8 +177,27 @@ int
 xa_copy_prepare(struct xa_context *ctx,
 		struct xa_surface *dst, struct xa_surface *src)
 {
-    if (src == dst || src->tex->format != dst->tex->format)
+    if (src == dst || dst->srf != NULL)
 	return -XA_ERR_INVAL;
+
+    if (src->tex->format != dst->tex->format) {
+	struct pipe_screen *screen = ctx->pipe->screen;
+	struct pipe_surface srf_templ;
+
+	if (!screen->is_format_supported(screen,  dst->tex->format,
+					 PIPE_TEXTURE_2D, 0,
+					 PIPE_BIND_RENDER_TARGET))
+	    return -XA_ERR_INVAL;
+	u_surface_default_template(&srf_templ, dst->tex,
+				   PIPE_BIND_RENDER_TARGET);
+	dst->srf = ctx->pipe->create_surface(ctx->pipe, dst->tex, &srf_templ);
+	if (!dst->srf)
+	    return -XA_ERR_NORES;
+
+	renderer_copy_prepare(ctx, dst->srf, src->tex);
+	ctx->simple_copy = 0;
+    } else
+	ctx->simple_copy = 1;
 
     ctx->src = src;
     ctx->dst = dst;
@@ -191,17 +211,26 @@ xa_copy(struct xa_context *ctx,
 {
     struct pipe_box src_box;
 
-    u_box_2d(sx, sy, width, height, &src_box);
-    ctx->pipe->resource_copy_region(ctx->pipe,
-				    ctx->dst->tex, 0, dx, dy, 0, ctx->src->tex,
-				    0, &src_box);
-
+    if (ctx->simple_copy) {
+	u_box_2d(sx, sy, width, height, &src_box);
+	ctx->pipe->resource_copy_region(ctx->pipe,
+					ctx->dst->tex, 0, dx, dy, 0,
+					ctx->src->tex,
+					0, &src_box);
+    } else
+	renderer_copy(ctx, dx, dy, sx, sy, width, height,
+		      (float) width, (float) height);
 }
 
 void
 xa_copy_done(struct xa_context *ctx)
 {
-    ctx->pipe->flush(ctx->pipe, &ctx->last_fence);
+    if (!ctx->simple_copy) {
+	   renderer_draw_flush(ctx);
+	   ctx->pipe->flush(ctx->pipe, &ctx->last_fence);
+	   pipe_surface_reference(&ctx->dst->srf, NULL);
+    } else
+	ctx->pipe->flush(ctx->pipe, &ctx->last_fence);
 }
 
 struct xa_fence *

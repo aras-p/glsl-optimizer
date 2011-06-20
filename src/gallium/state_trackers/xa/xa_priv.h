@@ -95,6 +95,7 @@ struct xa_context {
     struct pipe_fence_handle *last_fence;
     struct xa_surface *src;
     struct xa_surface *dst;
+    int simple_copy;
 };
 
 enum xa_vs_traits {
@@ -175,5 +176,15 @@ void renderer_bind_destination(struct xa_context *r,
 			       int height);
 
 void renderer_init_state(struct xa_context *r);
+void renderer_copy_prepare(struct xa_context *r,
+			   struct pipe_surface *dst_surface,
+			   struct pipe_resource *src_texture);
+void renderer_copy(struct xa_context *r, int dx,
+		   int dy,
+		   int sx,
+		   int sy,
+		   int width, int height, float src_width, float src_height);
+
+void renderer_draw_flush(struct xa_context *r);
 
 #endif

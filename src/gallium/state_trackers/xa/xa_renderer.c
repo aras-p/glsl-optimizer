@@ -377,12 +377,12 @@ renderer_copy_prepare(struct xa_context *r,
 }
 
 void
-renderer_copy_pixmap(struct xa_context *r,
-		     int dx,
-		     int dy,
-		     int sx,
-		     int sy,
-		     int width, int height, float src_width, float src_height)
+renderer_copy(struct xa_context *r,
+	      int dx,
+	      int dy,
+	      int sx,
+	      int sy,
+	      int width, int height, float src_width, float src_height)
 {
     float s0, t0, s1, t1;
     float x0, y0, x1, y1;
