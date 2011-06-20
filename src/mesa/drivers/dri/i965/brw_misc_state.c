@@ -449,6 +449,9 @@ static void upload_polygon_stipple(struct brw_context *brw)
    if (!ctx->Polygon.StippleFlag)
       return;
 
+   if (intel->gen == 6)
+      intel_emit_post_sync_nonzero_flush(intel);
+
    BEGIN_BATCH(33);
    OUT_BATCH(_3DSTATE_POLY_STIPPLE_PATTERN << 16 | (33 - 2));
 
@@ -491,6 +494,9 @@ static void upload_polygon_stipple_offset(struct brw_context *brw)
 
    if (!ctx->Polygon.StippleFlag)
       return;
+
+   if (intel->gen == 6)
+      intel_emit_post_sync_nonzero_flush(intel);
 
    BEGIN_BATCH(2);
    OUT_BATCH(_3DSTATE_POLY_STIPPLE_OFFSET << 16 | (2-2));
