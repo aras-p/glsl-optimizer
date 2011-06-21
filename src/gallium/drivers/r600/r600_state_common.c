@@ -576,10 +576,7 @@ void r600_draw_vbo(struct pipe_context *ctx, const struct pipe_draw_info *info)
 	if (rctx->alpha_ref_dirty)
 		r600_update_alpha_ref(rctx);
 
-	mask = 0;
-	for (int i = 0; i < rctx->framebuffer.nr_cbufs; i++) {
-		mask |= (0xF << (i * 4));
-	}
+	mask = (1ULL << ((unsigned)rctx->framebuffer.nr_cbufs * 4)) - 1;
 
 	if (rctx->vgt.id != R600_PIPE_STATE_VGT) {
 		rctx->vgt.id = R600_PIPE_STATE_VGT;
