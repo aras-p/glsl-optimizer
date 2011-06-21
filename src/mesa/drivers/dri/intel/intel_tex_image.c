@@ -8,6 +8,7 @@
 #include "main/context.h"
 #include "main/formats.h"
 #include "main/pbo.h"
+#include "main/renderbuffer.h"
 #include "main/texcompress.h"
 #include "main/texstore.h"
 #include "main/texgetimage.h"
@@ -348,6 +349,61 @@ intel_tex_image_s8z24_gather(struct intel_context *intel,
    intel_tex_image_s8z24_scattergather(intel, intel_image, false);
 }
 
+static bool
+intel_tex_image_s8z24_create_renderbuffers(struct intel_context *intel,
+					   struct intel_texture_image *image)
+{
+   struct gl_context *ctx = &intel->ctx;
+
+   bool ok = true;
+   int width = image->base.Width;
+   int height = image->base.Height;
+   struct gl_renderbuffer *drb;
+   struct gl_renderbuffer *srb;
+   struct intel_renderbuffer *idrb;
+   struct intel_renderbuffer *isrb;
+
+   assert(intel->has_separate_stencil);
+   assert(image->base.TexFormat == MESA_FORMAT_S8_Z24);
+   assert(image->mt != NULL);
+
+   drb = intel_create_wrapped_renderbuffer(ctx, width, height,
+					   MESA_FORMAT_X8_Z24);
+   srb = intel_create_wrapped_renderbuffer(ctx, width, height,
+					   MESA_FORMAT_S8);
+
+   if (!drb || !srb) {
+      if (drb) {
+	 drb->Delete(drb);
+      }
+      if (srb) {
+	 srb->Delete(srb);
+      }
+      return false;
+   }
+
+   idrb = intel_renderbuffer(drb);
+   isrb = intel_renderbuffer(srb);
+
+   intel_region_reference(&idrb->region, image->mt->region);
+   ok = intel_alloc_renderbuffer_storage(ctx, srb, GL_STENCIL_INDEX8,
+					 width, height);
+
+   if (!ok) {
+      drb->Delete(drb);
+      srb->Delete(srb);
+      return false;
+   }
+
+   intel_renderbuffer_set_draw_offset(idrb, image, 0);
+   intel_renderbuffer_set_draw_offset(isrb, image, 0);
+
+   _mesa_reference_renderbuffer(&image->depth_rb, drb);
+   _mesa_reference_renderbuffer(&image->stencil_rb, srb);
+
+   return true;
+}
+
 static void
 intelTexImage(struct gl_context * ctx,
               GLint dims,
@@ -542,6 +598,12 @@ intelTexImage(struct gl_context * ctx,
    }
 
    _mesa_unmap_teximage_pbo(ctx, unpack);
+
+   if (intel->must_use_separate_stencil
+       && texImage->TexFormat == MESA_FORMAT_S8_Z24) {
+      intel_tex_image_s8z24_create_renderbuffers(intel, intelImage);
+      intel_tex_image_s8z24_scatter(intel, intelImage);
+   }
 
    if (intelImage->mt) {
       if (pixels != NULL)
