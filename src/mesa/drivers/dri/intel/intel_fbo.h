@@ -169,6 +169,10 @@ intel_renderbuffer_set_hiz_region(struct intel_context *intel,
 extern struct intel_renderbuffer *
 intel_create_renderbuffer(gl_format format);
 
+struct gl_renderbuffer*
+intel_create_wrapped_renderbuffer(struct gl_context * ctx,
+				  int width, int height,
+				  gl_format format);
 
 extern void
 intel_fbo_init(struct intel_context *intel);

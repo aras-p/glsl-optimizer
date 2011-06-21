@@ -107,12 +107,6 @@ intel_get_pointer(struct gl_context * ctx, struct gl_renderbuffer *rb,
 }
 
 
-static struct gl_renderbuffer*
-intel_create_wrapped_renderbuffer(struct gl_context * ctx,
-				  struct gl_renderbuffer *wrapper,
-				  gl_format format);
-
-
 /**
  * Called via glRenderbufferStorageEXT() to set the format and allocate
  * storage for a user-created renderbuffer.
@@ -214,9 +208,9 @@ intel_alloc_renderbuffer_storage(struct gl_context * ctx, struct gl_renderbuffer
       struct gl_renderbuffer *depth_rb;
       struct gl_renderbuffer *stencil_rb;
 
-      depth_rb = intel_create_wrapped_renderbuffer(ctx, rb,
+      depth_rb = intel_create_wrapped_renderbuffer(ctx, width, height,
 						   MESA_FORMAT_X8_Z24);
-      stencil_rb = intel_create_wrapped_renderbuffer(ctx, rb,
+      stencil_rb = intel_create_wrapped_renderbuffer(ctx, width, height,
 						     MESA_FORMAT_S8);
       ok = depth_rb && stencil_rb;
       ok = ok && intel_alloc_renderbuffer_storage(ctx, depth_rb,
@@ -236,6 +230,8 @@ intel_alloc_renderbuffer_storage(struct gl_context * ctx, struct gl_renderbuffer
 	 return false;
       }
 
+      depth_rb->Wrapped = rb;
+      stencil_rb->Wrapped = rb;
       _mesa_reference_renderbuffer(&irb->wrapped_depth, depth_rb);
       _mesa_reference_renderbuffer(&irb->wrapped_stencil, stencil_rb);
 
@@ -409,9 +405,9 @@ intel_create_renderbuffer(gl_format format)
 }
 
 
-static struct gl_renderbuffer *
+struct gl_renderbuffer*
 intel_create_wrapped_renderbuffer(struct gl_context * ctx,
-				  struct gl_renderbuffer *wrapper,
+				  int width, int height,
 				  gl_format format)
 {
    /*
@@ -433,18 +429,8 @@ intel_create_wrapped_renderbuffer(struct gl_context * ctx,
    rb->Format = format;
    rb->InternalFormat = rb->_BaseFormat;
    rb->DataType = intel_mesa_format_to_rb_datatype(format);
-   rb->Width = wrapper->Width;
-   rb->Height = wrapper->Height;
-
-   rb->AllocStorage = intel_nop_alloc_storage;
-   rb->Delete = intel_delete_renderbuffer;
-   rb->GetPointer = intel_get_pointer;
-
-   /*
-    * A refcount here would cause a cyclic reference. The wrapper references
-    * the unwrapper.
-    */
-   rb->Wrapped = wrapper;
+   rb->Width = width;
+   rb->Height = height;
 
    return rb;
 }
