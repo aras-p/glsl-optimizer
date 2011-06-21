@@ -1002,15 +1002,17 @@ memcpy_texture(struct gl_context *ctx,
 
 
 /**
- * Store a 32-bit integer depth component texture image.
+ * Store a 32-bit integer or float depth component texture image.
  */
 static GLboolean
 _mesa_texstore_z32(TEXSTORE_PARAMS)
 {
    const GLuint depthScale = 0xffffffff;
    const GLuint texelBytes = _mesa_get_format_bytes(dstFormat);
+   const GLenum dstType = _mesa_get_format_datatype(dstFormat);
    (void) dims;
-   ASSERT(dstFormat == MESA_FORMAT_Z32);
+   ASSERT(dstFormat == MESA_FORMAT_Z32 ||
+          dstFormat == MESA_FORMAT_Z32_FLOAT);
    ASSERT(texelBytes == sizeof(GLuint));
 
    if (ctx->Pixel.DepthScale == 1.0f &&
@@ -1018,7 +1020,7 @@ _mesa_texstore_z32(TEXSTORE_PARAMS)
        !srcPacking->SwapBytes &&
        baseInternalFormat == GL_DEPTH_COMPONENT &&
        srcFormat == GL_DEPTH_COMPONENT &&
-       srcType == GL_UNSIGNED_INT) {
+       srcType == dstType) {
       /* simple memcpy path */
       memcpy_texture(ctx, dims,
                      dstFormat, dstAddr, dstXoffset, dstYoffset, dstZoffset,
@@ -1039,7 +1041,7 @@ _mesa_texstore_z32(TEXSTORE_PARAMS)
             const GLvoid *src = _mesa_image_address(dims, srcPacking,
                 srcAddr, srcWidth, srcHeight, srcFormat, srcType, img, row, 0);
             _mesa_unpack_depth_span(ctx, srcWidth,
-                                    GL_UNSIGNED_INT, (GLuint *) dstRow,
+                                    dstType, dstRow,
                                     depthScale, srcType, src, srcPacking);
             dstRow += dstRowStride;
          }
@@ -4420,7 +4422,7 @@ texstore_funcs[MESA_FORMAT_COUNT] =
    { MESA_FORMAT_RGB9_E5_FLOAT, _mesa_texstore_rgb9_e5 },
    { MESA_FORMAT_R11_G11_B10_FLOAT, _mesa_texstore_r11_g11_b10f },
 
-   { MESA_FORMAT_Z32_FLOAT, NULL /* XXX */ },
+   { MESA_FORMAT_Z32_FLOAT, _mesa_texstore_z32 },
    { MESA_FORMAT_Z32_FLOAT_X24S8, /* XXX */ },
 };
 
