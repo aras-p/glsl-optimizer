@@ -4287,6 +4287,72 @@ _mesa_texstore_r11_g11_b10f(TEXSTORE_PARAMS)
 }
 
 
+static GLboolean
+_mesa_texstore_z32f_x24s8(TEXSTORE_PARAMS)
+{
+   ASSERT(dstFormat == MESA_FORMAT_Z32_FLOAT_X24S8);
+   ASSERT(srcFormat == GL_DEPTH_STENCIL ||
+          srcFormat == GL_DEPTH_COMPONENT ||
+          srcFormat == GL_STENCIL_INDEX);
+   ASSERT(srcFormat != GL_DEPTH_STENCIL ||
+          srcType == GL_FLOAT_32_UNSIGNED_INT_24_8_REV);
+
+   if (srcFormat == GL_DEPTH_STENCIL &&
+       ctx->Pixel.DepthScale == 1.0f &&
+       ctx->Pixel.DepthBias == 0.0f &&
+       !srcPacking->SwapBytes) {
+      /* simple path */
+      memcpy_texture(ctx, dims,
+                     dstFormat, dstAddr, dstXoffset, dstYoffset, dstZoffset,
+                     dstRowStride,
+                     dstImageOffsets,
+                     srcWidth, srcHeight, srcDepth, srcFormat, srcType,
+                     srcAddr, srcPacking);
+   }
+   else if (srcFormat == GL_DEPTH_COMPONENT ||
+            srcFormat == GL_STENCIL_INDEX) {
+      GLint img, row;
+      const GLint srcRowStride
+         = _mesa_image_row_stride(srcPacking, srcWidth, srcFormat, srcType)
+         / sizeof(uint64_t);
+
+      /* In case we only upload depth we need to preserve the stencil */
+      for (img = 0; img < srcDepth; img++) {
+         uint64_t *dstRow = (uint64_t *) dstAddr
+            + dstImageOffsets[dstZoffset + img]
+            + dstYoffset * dstRowStride / sizeof(uint64_t)
+            + dstXoffset;
+         const uint64_t *src
+            = (const uint64_t *) _mesa_image_address(dims, srcPacking, srcAddr,
+                  srcWidth, srcHeight,
+                  srcFormat, srcType,
+                  img, 0, 0);
+         for (row = 0; row < srcHeight; row++) {
+            /* The unpack functions with:
+             *    dstType = GL_FLOAT_32_UNSIGNED_INT_24_8_REV
+             * only write their own dword, so the other dword (stencil
+             * or depth) is preserved. */
+            if (srcFormat != GL_STENCIL_INDEX)
+               _mesa_unpack_depth_span(ctx, srcWidth,
+                                       GL_FLOAT_32_UNSIGNED_INT_24_8_REV, /* dst type */
+                                       dstRow, /* dst addr */
+                                       1.0f, srcType, src, srcPacking);
+
+            if (srcFormat != GL_DEPTH_COMPONENT)
+               _mesa_unpack_stencil_span(ctx, srcWidth,
+                                         GL_FLOAT_32_UNSIGNED_INT_24_8_REV, /* dst type */
+                                         dstRow, /* dst addr */
+                                         srcType, src, srcPacking,
+                                         ctx->_ImageTransferState);
+
+            src += srcRowStride;
+            dstRow += dstRowStride / sizeof(uint64_t);
+         }
+      }
+   }
+   return GL_TRUE;
+}
+
 
 /**
  * Table mapping MESA_FORMAT_* to _mesa_texstore_*()
@@ -4423,7 +4489,7 @@ texstore_funcs[MESA_FORMAT_COUNT] =
    { MESA_FORMAT_R11_G11_B10_FLOAT, _mesa_texstore_r11_g11_b10f },
 
    { MESA_FORMAT_Z32_FLOAT, _mesa_texstore_z32 },
-   { MESA_FORMAT_Z32_FLOAT_X24S8, /* XXX */ },
+   { MESA_FORMAT_Z32_FLOAT_X24S8, _mesa_texstore_z32f_x24s8 },
 };
 
 
