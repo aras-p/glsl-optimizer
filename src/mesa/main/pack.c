@@ -4827,6 +4827,20 @@ _mesa_unpack_depth_span( struct gl_context *ctx, GLuint n,
             }
          }
          break;
+      case GL_FLOAT_32_UNSIGNED_INT_24_8_REV:
+         {
+            GLuint i;
+            const GLfloat *src = (const GLfloat *)source;
+            for (i = 0; i < n; i++) {
+               GLfloat value = src[i * 2];
+               if (srcPacking->SwapBytes) {
+                  SWAP4BYTE(value);
+               }
+               depthValues[i] = value;
+            }
+            needClamp = GL_TRUE;
+         }
+         break;
       case GL_FLOAT:
          DEPTH_VALUES(GLfloat, 1*);
          needClamp = GL_TRUE;
@@ -4903,9 +4917,18 @@ _mesa_unpack_depth_span( struct gl_context *ctx, GLuint n,
          zValues[i] = (GLushort) (depthValues[i] * (GLfloat) depthMax);
       }
    }
+   else if (dstType == GL_FLOAT) {
+      /* Nothing to do. depthValues is pointing to dest. */
+   }
+   else if (dstType == GL_FLOAT_32_UNSIGNED_INT_24_8_REV) {
+      GLfloat *zValues = (GLfloat*) dest;
+      GLuint i;
+      for (i = 0; i < n; i++) {
+         zValues[i*2] = depthValues[i];
+      }
+   }
    else {
-      ASSERT(dstType == GL_FLOAT);
-      /*ASSERT(depthMax == 1.0F);*/
+      ASSERT(0);
    }
 
    free(depthTemp);
