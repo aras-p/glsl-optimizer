@@ -534,10 +534,9 @@ void r600_draw_vbo(struct pipe_context *ctx, const struct pipe_draw_info *info)
 {
 	struct r600_pipe_context *rctx = (struct r600_pipe_context *)ctx;
 	struct r600_resource *rbuffer;
-	u32 vgt_dma_index_type, vgt_dma_swap_mode, vgt_draw_initiator, mask;
 	struct r600_draw rdraw;
-	struct r600_drawl draw = {};
-	unsigned prim;
+	struct r600_drawl draw;
+	unsigned prim, mask;
 
 	if (!rctx->blit) {
 		if (rctx->have_depth_fb || rctx->have_depth_texture)
@@ -548,6 +547,7 @@ void r600_draw_vbo(struct pipe_context *ctx, const struct pipe_draw_info *info)
 
 	draw.info = *info;
 	draw.ctx = ctx;
+	draw.index_buffer = NULL;
 	if (info->indexed && rctx->index_buffer.buffer) {
 		draw.info.start += rctx->index_buffer.offset / rctx->index_buffer.index_size;
 		pipe_resource_reference(&draw.index_buffer, rctx->index_buffer.buffer);
@@ -565,49 +565,13 @@ void r600_draw_vbo(struct pipe_context *ctx, const struct pipe_draw_info *info)
 			r600_upload_index_buffer(rctx, &draw);
 		}
 	} else {
+		draw.index_size = 0;
+		draw.index_buffer_offset = 0;
 		draw.info.index_bias = info->start;
 	}
 
-	vgt_dma_swap_mode = 0;
-	switch (draw.index_size) {
-	case 2:
-		vgt_draw_initiator = 0;
-		vgt_dma_index_type = 0;
-		if (R600_BIG_ENDIAN) {
-			vgt_dma_swap_mode = ENDIAN_8IN16;
-		}
-		break;
-	case 4:
-		vgt_draw_initiator = 0;
-		vgt_dma_index_type = 1;
-		if (R600_BIG_ENDIAN) {
-			vgt_dma_swap_mode = ENDIAN_8IN32;
-		}
-		break;
-	case 0:
-		vgt_draw_initiator = 2;
-		vgt_dma_index_type = 0;
-		break;
-	default:
-		R600_ERR("unsupported index size %d\n", draw.index_size);
-		return;
-	}
 	if (r600_conv_pipe_prim(draw.info.mode, &prim))
 		return;
-	if (unlikely(rctx->ps_shader == NULL)) {
-		R600_ERR("missing vertex shader\n");
-		return;
-	}
-	if (unlikely(rctx->vs_shader == NULL)) {
-		R600_ERR("missing vertex shader\n");
-		return;
-	}
-	/* there should be enough input */
-	if (rctx->vertex_elements->count < rctx->vs_shader->shader.bc.nresource) {
-		R600_ERR("%d resources provided, expecting %d\n",
-			rctx->vertex_elements->count, rctx->vs_shader->shader.bc.nresource);
-		return;
-	}
 
 	if (rctx->alpha_ref_dirty)
 		r600_update_alpha_ref(rctx);
@@ -649,8 +613,10 @@ void r600_draw_vbo(struct pipe_context *ctx, const struct pipe_draw_info *info)
 
 	rdraw.vgt_num_indices = draw.info.count;
 	rdraw.vgt_num_instances = draw.info.instance_count;
-	rdraw.vgt_index_type = vgt_dma_index_type | (vgt_dma_swap_mode << 2);
-	rdraw.vgt_draw_initiator = vgt_draw_initiator;
+	rdraw.vgt_index_type = ((draw.index_size == 4) ? 1 : 0);
+	if (R600_BIG_ENDIAN)
+		rdraw.vgt_index_type |= (draw.index_size >> 1) << 2;
+	rdraw.vgt_draw_initiator = draw.index_size ? 0 : 2;
 	rdraw.indices = NULL;
 	if (draw.index_buffer) {
 		rbuffer = (struct r600_resource*)draw.index_buffer;
