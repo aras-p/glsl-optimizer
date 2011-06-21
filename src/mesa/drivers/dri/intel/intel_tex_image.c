@@ -314,18 +314,7 @@ intelTexImage(struct gl_context * ctx,
       }
    }
 
-   /* Release the reference to a potentially orphaned buffer.   
-    * Release any old malloced memory.
-    */
-   if (intelImage->mt) {
-      intel_miptree_release(intel, &intelImage->mt);
-      assert(!texImage->Data);
-   }
-   else if (texImage->Data) {
-      _mesa_free_texmemory(texImage->Data);
-      texImage->Data = NULL;
-   }
-
+   ctx->Driver.FreeTexImageData(ctx, texImage);
    assert(!intelImage->mt);
 
    if (intelObj->mt &&

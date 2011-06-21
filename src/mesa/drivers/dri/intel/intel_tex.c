@@ -1,4 +1,5 @@
 #include "swrast/swrast.h"
+#include "main/renderbuffer.h"
 #include "main/texobj.h"
 #include "main/teximage.h"
 #include "main/mipmap.h"
@@ -58,6 +59,14 @@ intelFreeTextureImageData(struct gl_context * ctx, struct gl_texture_image *texI
    if (texImage->Data) {
       _mesa_free_texmemory(texImage->Data);
       texImage->Data = NULL;
+   }
+
+   if (intelImage->depth_rb) {
+      _mesa_reference_renderbuffer(&intelImage->depth_rb, NULL);
+   }
+
+   if (intelImage->stencil_rb) {
+      _mesa_reference_renderbuffer(&intelImage->stencil_rb, NULL);
    }
 }
 
