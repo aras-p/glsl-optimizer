@@ -4274,8 +4274,8 @@ get_mesa_program(struct gl_context *ctx,
     */
    if (!v->indirect_addr_temps) {
       v->copy_propagate();
-      v->merge_registers();
       v->eliminate_dead_code();
+      v->merge_registers();
       v->renumber_registers();
    }
    
