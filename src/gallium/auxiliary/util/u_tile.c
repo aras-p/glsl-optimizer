@@ -318,6 +318,32 @@ z32f_get_tile_rgba(const float *src,
    }
 }
 
+/*** PIPE_FORMAT_Z32_FLOAT_S8X24_USCALED ***/
+
+/**
+ * Return each Z value as four floats in [0,1].
+ */
+static void
+z32f_x24s8_get_tile_rgba(const float *src,
+                         unsigned w, unsigned h,
+                         float *p,
+                         unsigned dst_stride)
+{
+   unsigned i, j;
+
+   for (i = 0; i < h; i++) {
+      float *pRow = p;
+      for (j = 0; j < w; j++, pRow += 4) {
+         pRow[0] =
+         pRow[1] =
+         pRow[2] =
+         pRow[3] = *src;
+         src += 2;
+      }
+      p += dst_stride;
+   }
+}
+
 
 void
 pipe_tile_raw_to_rgba(enum pipe_format format,
@@ -351,6 +377,9 @@ pipe_tile_raw_to_rgba(enum pipe_format format,
       break;
    case PIPE_FORMAT_Z32_FLOAT:
       z32f_get_tile_rgba((float *) src, w, h, dst, dst_stride);
+      break;
+   case PIPE_FORMAT_Z32_FLOAT_S8X24_USCALED:
+      z32f_x24s8_get_tile_rgba((float *) src, w, h, dst, dst_stride);
       break;
    default:
       util_format_read_4f(format,
@@ -444,6 +473,12 @@ pipe_put_tile_rgba_format(struct pipe_context *pipe,
    case PIPE_FORMAT_S8_USCALED_Z24_UNORM:
    case PIPE_FORMAT_X8Z24_UNORM:
       /*z24s8_put_tile_rgba((unsigned *) packed, w, h, p, src_stride);*/
+      break;
+   case PIPE_FORMAT_Z32_FLOAT:
+      /*z32f_put_tile_rgba((unsigned *) packed, w, h, p, src_stride);*/
+      break;
+   case PIPE_FORMAT_Z32_FLOAT_S8X24_USCALED:
+      /*z32f_s8x24_put_tile_rgba((unsigned *) packed, w, h, p, src_stride);*/
       break;
    default:
       util_format_write_4f(format,
