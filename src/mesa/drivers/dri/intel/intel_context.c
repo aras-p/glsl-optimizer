@@ -506,8 +506,6 @@ intelInvalidateState(struct gl_context * ctx, GLuint new_state)
    _swrast_InvalidateState(ctx, new_state);
    _swsetup_InvalidateState(ctx, new_state);
    _vbo_InvalidateState(ctx, new_state);
-   _tnl_InvalidateState(ctx, new_state);
-   _tnl_invalidate_vertex_state(ctx, new_state);
 
    intel->NewGLState |= new_state;
 

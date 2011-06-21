@@ -436,6 +436,7 @@ void brw_draw_prims( struct gl_context *ctx,
     */
    if (!retval) {
        _swsetup_Wakeup(ctx);
+       _tnl_wakeup(ctx);
       _tnl_draw_prims(ctx, arrays, prim, nr_prims, ib, min_index, max_index);
    }
 

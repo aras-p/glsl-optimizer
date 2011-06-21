@@ -33,6 +33,7 @@
 #include "main/macros.h"
 #include "main/colormac.h"
 
+#include "tnl/tnl.h"
 #include "tnl/t_context.h"
 #include "tnl/t_vertex.h"
 
@@ -703,6 +704,15 @@ i915_is_hiz_depth_format(struct intel_context *intel,
    return false;
 }
 
+static void
+i915_invalidate_state(struct intel_context *intel, GLuint new_state)
+{
+   struct gl_context *ctx = &intel->ctx;
+
+   _tnl_InvalidateState(ctx, new_state);
+   _tnl_invalidate_vertex_state(ctx, new_state);
+}
+
 void
 i915InitVtbl(struct i915_context *i915)
 {
@@ -717,6 +727,7 @@ i915InitVtbl(struct i915_context *i915)
    i915->intel.vtbl.update_texture_state = i915UpdateTextureState;
    i915->intel.vtbl.assert_not_dirty = i915_assert_not_dirty;
    i915->intel.vtbl.finish_batch = intel_finish_vb;
+   i915->intel.vtbl.invalidate_state = i915_invalidate_state;
    i915->intel.vtbl.render_target_supported = i915_render_target_supported;
    i915->intel.vtbl.is_hiz_depth_format = i915_is_hiz_depth_format;
 }
