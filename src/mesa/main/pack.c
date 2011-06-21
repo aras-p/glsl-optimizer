@@ -1971,7 +1971,8 @@ extract_uint_indexes(GLuint n, GLuint indexes[],
           srcType == GL_INT ||
           srcType == GL_UNSIGNED_INT_24_8_EXT ||
           srcType == GL_HALF_FLOAT_ARB ||
-          srcType == GL_FLOAT);
+          srcType == GL_FLOAT ||
+          srcType == GL_FLOAT_32_UNSIGNED_INT_24_8_REV);
 
    switch (srcType) {
       case GL_BITMAP:
@@ -2139,6 +2140,23 @@ extract_uint_indexes(GLuint n, GLuint indexes[],
             else {
                for (i = 0; i < n; i++)
                   indexes[i] = s[i] & 0xff;  /* lower 8 bits */
+            }
+         }
+         break;
+      case GL_FLOAT_32_UNSIGNED_INT_24_8_REV:
+         {
+            GLuint i;
+            const GLuint *s = (const GLuint *) src;
+            if (unpack->SwapBytes) {
+               for (i = 0; i < n; i++) {
+                  GLuint value = s[i*2+1];
+                  SWAP4BYTE(value);
+                  indexes[i] = value & 0xff;  /* lower 8 bits */
+               }
+            }
+            else {
+               for (i = 0; i < n; i++)
+                  indexes[i] = s[i*2+1] & 0xff;  /* lower 8 bits */
             }
          }
          break;
@@ -4412,11 +4430,13 @@ _mesa_unpack_stencil_span( struct gl_context *ctx, GLuint n,
           srcType == GL_INT ||
           srcType == GL_UNSIGNED_INT_24_8_EXT ||
           srcType == GL_HALF_FLOAT_ARB ||
-          srcType == GL_FLOAT);
+          srcType == GL_FLOAT ||
+          srcType == GL_FLOAT_32_UNSIGNED_INT_24_8_REV);
 
    ASSERT(dstType == GL_UNSIGNED_BYTE ||
           dstType == GL_UNSIGNED_SHORT ||
-          dstType == GL_UNSIGNED_INT);
+          dstType == GL_UNSIGNED_INT ||
+          dstType == GL_FLOAT_32_UNSIGNED_INT_24_8_REV);
 
    /* only shift and offset apply to stencil */
    transferOps &= IMAGE_SHIFT_OFFSET_BIT;
@@ -4487,6 +4507,15 @@ _mesa_unpack_stencil_span( struct gl_context *ctx, GLuint n,
             break;
          case GL_UNSIGNED_INT:
             memcpy(dest, indexes, n * sizeof(GLuint));
+            break;
+         case GL_FLOAT_32_UNSIGNED_INT_24_8_REV:
+            {
+               GLuint *dst = (GLuint *) dest;
+               GLuint i;
+               for (i = 0; i < n; i++) {
+                  dst[i*2+1] = indexes[i] & 0xff; /* lower 8 bits */
+               }
+            }
             break;
          default:
             _mesa_problem(ctx, "bad dstType in _mesa_unpack_stencil_span");
