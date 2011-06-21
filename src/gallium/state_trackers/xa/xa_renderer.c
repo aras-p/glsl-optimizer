@@ -202,6 +202,107 @@ add_vertex_2tex(struct xa_context *r,
     r->buffer_size += 12;
 }
 
+static void
+add_vertex_data1(struct xa_context *r,
+                 float srcX, float srcY,  float dstX, float dstY,
+                 float width, float height,
+                 struct pipe_resource *src, const float *src_matrix)
+{
+    float s0, t0, s1, t1, s2, t2, s3, t3;
+    float pt0[2], pt1[2], pt2[2], pt3[2];
+
+    pt0[0] = srcX;
+    pt0[1] = srcY;
+    pt1[0] = (srcX + width);
+    pt1[1] = srcY;
+    pt2[0] = (srcX + width);
+    pt2[1] = (srcY + height);
+    pt3[0] = srcX;
+    pt3[1] = (srcY + height);
+
+    if (src_matrix) {
+	map_point((float *)src_matrix, pt0[0], pt0[1], &pt0[0], &pt0[1]);
+	map_point((float *)src_matrix, pt1[0], pt1[1], &pt1[0], &pt1[1]);
+	map_point((float *)src_matrix, pt2[0], pt2[1], &pt2[0], &pt2[1]);
+	map_point((float *)src_matrix, pt3[0], pt3[1], &pt3[0], &pt3[1]);
+    }
+
+    s0 =  pt0[0] / src->width0;
+    s1 =  pt1[0] / src->width0;
+    s2 =  pt2[0] / src->width0;
+    s3 =  pt3[0] / src->width0;
+    t0 =  pt0[1] / src->height0;
+    t1 =  pt1[1] / src->height0;
+    t2 =  pt2[1] / src->height0;
+    t3 =  pt3[1] / src->height0;
+
+    /* 1st vertex */
+    add_vertex_1tex(r, dstX, dstY, s0, t0);
+    /* 2nd vertex */
+    add_vertex_1tex(r, dstX + width, dstY, s1, t1);
+    /* 3rd vertex */
+    add_vertex_1tex(r, dstX + width, dstY + height, s2, t2);
+    /* 4th vertex */
+    add_vertex_1tex(r, dstX, dstY + height, s3, t3);
+}
+
+static void
+add_vertex_data2(struct xa_context *r,
+                 float srcX, float srcY, float maskX, float maskY,
+                 float dstX, float dstY, float width, float height,
+                 struct pipe_resource *src,
+                 struct pipe_resource *mask,
+                 const float *src_matrix, const float *mask_matrix)
+{
+    float src_s0, src_t0, src_s1, src_t1;
+    float mask_s0, mask_t0, mask_s1, mask_t1;
+    float spt0[2], spt1[2];
+    float mpt0[2], mpt1[2];
+
+    spt0[0] = srcX;
+    spt0[1] = srcY;
+    spt1[0] = srcX + width;
+    spt1[1] = srcY + height;
+
+    mpt0[0] = maskX;
+    mpt0[1] = maskY;
+    mpt1[0] = maskX + width;
+    mpt1[1] = maskY + height;
+
+    if (src_matrix) {
+	map_point((float *)src_matrix, spt0[0], spt0[1], &spt0[0], &spt0[1]);
+	map_point((float *)src_matrix, spt1[0], spt1[1], &spt1[0], &spt1[1]);
+    }
+
+    if (mask_matrix) {
+	map_point((float *)mask_matrix, mpt0[0], mpt0[1], &mpt0[0], &mpt0[1]);
+	map_point((float *)mask_matrix, mpt1[0], mpt1[1], &mpt1[0], &mpt1[1]);
+    }
+
+    src_s0 = spt0[0] / src->width0;
+    src_t0 = spt0[1] / src->height0;
+    src_s1 = spt1[0] / src->width0;
+    src_t1 = spt1[1] / src->height0;
+
+    mask_s0 = mpt0[0] / mask->width0;
+    mask_t0 = mpt0[1] / mask->height0;
+    mask_s1 = mpt1[0] / mask->width0;
+    mask_t1 = mpt1[1] / mask->height0;
+
+    /* 1st vertex */
+    add_vertex_2tex(r, dstX, dstY,
+		    src_s0, src_t0, mask_s0, mask_t0);
+    /* 2nd vertex */
+    add_vertex_2tex(r, dstX + width, dstY,
+		    src_s1, src_t0, mask_s1, mask_t0);
+    /* 3rd vertex */
+    add_vertex_2tex(r, dstX + width, dstY + height,
+		    src_s1, src_t1, mask_s1, mask_t1);
+    /* 4th vertex */
+    add_vertex_2tex(r, dstX, dstY + height,
+		    src_s0, src_t1, mask_s0, mask_t1);
+}
+
 static struct pipe_resource *
 setup_vertex_data_yuv(struct xa_context *r,
 		      float srcX,
@@ -467,4 +568,59 @@ void
 renderer_draw_flush(struct xa_context *r)
 {
     renderer_draw_conditional(r, 0);
+}
+
+void
+renderer_begin_textures(struct xa_context *r)
+{
+    r->attrs_per_vertex = 1 + r->num_bound_samplers;
+    r->buffer_size = 0;
+}
+
+void
+renderer_texture(struct xa_context *r,
+		 int *pos,
+		 int width, int height,
+		 const float *src_matrix,
+		 const float *mask_matrix)
+{
+    struct pipe_sampler_view **sampler_view = r->bound_sampler_views;
+
+#if 0
+    if (src_matrix) {
+	debug_printf("src_matrix = \n");
+	debug_printf("%f, %f, %f\n", src_matrix[0], src_matrix[1], src_matrix[2]);
+	debug_printf("%f, %f, %f\n", src_matrix[3], src_matrix[4], src_matrix[5]);
+	debug_printf("%f, %f, %f\n", src_matrix[6], src_matrix[7], src_matrix[8]);
+    }
+    if (mask_matrix) {
+	debug_printf("mask_matrix = \n");
+	debug_printf("%f, %f, %f\n", mask_matrix[0], mask_matrix[1], mask_matrix[2]);
+	debug_printf("%f, %f, %f\n", mask_matrix[3], mask_matrix[4], mask_matrix[5]);
+	debug_printf("%f, %f, %f\n", mask_matrix[6], mask_matrix[7], mask_matrix[8]);
+    }
+#endif
+
+    switch(r->attrs_per_vertex) {
+    case 2:
+	renderer_draw_conditional(r, 4 * 8);
+	add_vertex_data1(r,
+			 pos[0], pos[1], /* src */
+			 pos[4], pos[5], /* dst */
+			 width, height,
+			 sampler_view[0]->texture, src_matrix);
+	break;
+    case 3:
+	renderer_draw_conditional(r, 4 * 12);
+	add_vertex_data2(r,
+			 pos[0], pos[1], /* src */
+			 pos[2], pos[3], /* mask */
+			 pos[4], pos[5], /* dst */
+			 width, height,
+			 sampler_view[0]->texture, sampler_view[1]->texture,
+			 src_matrix, mask_matrix);
+	break;
+    default:
+	break;
+    }
 }

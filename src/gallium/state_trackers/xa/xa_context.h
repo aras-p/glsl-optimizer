@@ -69,6 +69,15 @@ extern int xa_surface_dma(struct xa_context *ctx,
 			  int to_surface, struct xa_box *boxes,
 			  unsigned int num_boxes);
 
+extern int
+xa_solid_prepare(struct xa_context *ctx, struct xa_surface *dst,
+		 uint32_t fg);
+extern void
+xa_solid(struct xa_context *ctx, int x, int y, int width, int height);
+
+extern void
+xa_solid_done(struct xa_context *ctx);
+
 extern struct xa_fence *xa_fence_get(struct xa_context *ctx);
 
 extern int xa_fence_wait(struct xa_fence *fence, uint64_t timeout);

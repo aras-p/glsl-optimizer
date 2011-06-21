@@ -32,6 +32,7 @@
 
 #include "xa_tracker.h"
 #include "xa_context.h"
+#include "xa_composite.h"
 
 #include "pipe/p_screen.h"
 #include "pipe/p_context.h"
@@ -39,6 +40,7 @@
 
 #define XA_VB_SIZE (100 * 4 * 3 * 4)
 #define XA_LAST_SURFACE_TYPE (xa_type_yuv_component + 1)
+#define XA_MAX_SAMPLERS 3
 
 struct xa_fence {
     struct pipe_fence_handle *pipe_fence;
@@ -96,6 +98,13 @@ struct xa_context {
     struct xa_surface *src;
     struct xa_surface *dst;
     int simple_copy;
+
+    int has_solid_color;
+    float solid_color[4];
+
+    unsigned int num_bound_samplers;
+    struct pipe_sampler_view *bound_sampler_views[XA_MAX_SAMPLERS];
+    const struct xa_composite *comp;
 };
 
 enum xa_vs_traits {
@@ -136,13 +145,33 @@ struct xa_shader {
     void *vs;
 };
 
-static inline int
+struct xa_shaders;
+
+/*
+ * Inline utilities
+ */
+
+static INLINE int
 xa_min(int a, int b)
 {
     return ((a <= b) ? a : b);
 }
 
-struct xa_shaders;
+static INLINE void
+xa_pixel_to_float4(uint32_t pixel, float *color)
+{
+    uint32_t	    r, g, b, a;
+
+    a = (pixel >> 24) & 0xff;
+    r = (pixel >> 16) & 0xff;
+    g = (pixel >>  8) & 0xff;
+    b = (pixel >>  0) & 0xff;
+    color[0] = ((float)r) / 255.;
+    color[1] = ((float)g) / 255.;
+    color[2] = ((float)b) / 255.;
+    color[3] = ((float)a) / 255.;
+}
+
 
 /*
  * xa_tgsi.c
@@ -154,6 +183,15 @@ void xa_shaders_destroy(struct xa_shaders *shaders);
 
 struct xa_shader xa_shaders_get(struct xa_shaders *shaders,
 				unsigned vs_traits, unsigned fs_traits);
+
+/*
+ * xa_context.c
+ */
+extern int
+xa_surface_psurf_create(struct xa_context *ctx, struct xa_surface *dst);
+
+extern void
+xa_surface_psurf_destroy(struct xa_surface *dst);
 
 /*
  * xa_renderer.c
@@ -186,5 +224,18 @@ void renderer_copy(struct xa_context *r, int dx,
 		   int width, int height, float src_width, float src_height);
 
 void renderer_draw_flush(struct xa_context *r);
+
+void renderer_begin_solid(struct xa_context *r);
+void renderer_solid(struct xa_context *r,
+		    int x0, int y0, int x1, int y1, float *color);
+void
+renderer_begin_textures(struct xa_context *r);
+
+void
+renderer_texture(struct xa_context *r,
+		 int *pos,
+		 int width, int height,
+		 const float *src_matrix,
+		 const float *mask_matrix);
 
 #endif

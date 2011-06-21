@@ -4,7 +4,7 @@ include $(TOP)/configs/current
 ##### MACROS #####
 
 XA_MAJOR = 0
-XA_MINOR = 2
+XA_MINOR = 3
 XA_TINY = 0
 XA_CFLAGS = -g -fPIC
 
@@ -76,6 +76,7 @@ install: xatracker.pc
 	$(INSTALL) -d $(DESTDIR)$(INSTALL_LIB_DIR)/pkgconfig
 	$(INSTALL) -m 644 $(TOP)/src/gallium/state_trackers/xa/xa_tracker.h $(DESTDIR)$(INSTALL_INC_DIR)
 	$(INSTALL) -m 644 $(TOP)/src/gallium/state_trackers/xa/xa_context.h $(DESTDIR)$(INSTALL_INC_DIR)
+	$(INSTALL) -m 644 $(TOP)/src/gallium/state_trackers/xa/xa_composite.h $(DESTDIR)$(INSTALL_INC_DIR)
 	$(MINSTALL) -m 755 $(TOP)/$(LIB_DIR)/gallium/$(XA_LIB_GLOB) $(DESTDIR)$(INSTALL_LIB_DIR)
 	$(INSTALL) -m 644 xatracker.pc $(DESTDIR)$(INSTALL_LIB_DIR)/pkgconfig
 

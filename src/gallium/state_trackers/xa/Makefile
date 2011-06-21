@@ -4,7 +4,7 @@ include $(TOP)/configs/current
 ##### MACROS #####
 
 XA_MAJOR = 0
-XA_MINOR = 2
+XA_MINOR = 3
 XA_TINY = 0
 XA_CFLAGS = -g -fPIC -Wall
 
@@ -25,7 +25,8 @@ SOURCES = \
 	xa_context.c \
 	xa_renderer.c \
 	xa_tgsi.c \
-	xa_yuv.c
+	xa_yuv.c \
+	xa_composite.c
 OBJECTS = $(SOURCES:.c=.o)
 
 ##### RULES #####

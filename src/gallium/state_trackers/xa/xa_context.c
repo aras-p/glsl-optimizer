@@ -174,6 +174,35 @@ xa_surface_unmap(struct xa_surface *srf)
 }
 
 int
+xa_surface_psurf_create(struct xa_context *ctx, struct xa_surface *dst)
+{
+    struct pipe_screen *screen = ctx->pipe->screen;
+    struct pipe_surface srf_templ;
+
+    if (dst->srf)
+	return -XA_ERR_INVAL;
+
+    if (!screen->is_format_supported(screen,  dst->tex->format,
+				     PIPE_TEXTURE_2D, 0,
+				     PIPE_BIND_RENDER_TARGET))
+	return -XA_ERR_INVAL;
+
+    u_surface_default_template(&srf_templ, dst->tex,
+			       PIPE_BIND_RENDER_TARGET);
+    dst->srf = ctx->pipe->create_surface(ctx->pipe, dst->tex, &srf_templ);
+    if (!dst->srf)
+	return -XA_ERR_NORES;
+
+    return XA_ERR_NONE;
+}
+
+void
+xa_surface_psurf_destroy(struct xa_surface *dst)
+{
+    pipe_surface_reference(&dst->srf, NULL);
+}
+
+int
 xa_copy_prepare(struct xa_context *ctx,
 		struct xa_surface *dst, struct xa_surface *src)
 {
@@ -181,19 +210,9 @@ xa_copy_prepare(struct xa_context *ctx,
 	return -XA_ERR_INVAL;
 
     if (src->tex->format != dst->tex->format) {
-	struct pipe_screen *screen = ctx->pipe->screen;
-	struct pipe_surface srf_templ;
-
-	if (!screen->is_format_supported(screen,  dst->tex->format,
-					 PIPE_TEXTURE_2D, 0,
-					 PIPE_BIND_RENDER_TARGET))
-	    return -XA_ERR_INVAL;
-	u_surface_default_template(&srf_templ, dst->tex,
-				   PIPE_BIND_RENDER_TARGET);
-	dst->srf = ctx->pipe->create_surface(ctx->pipe, dst->tex, &srf_templ);
-	if (!dst->srf)
-	    return -XA_ERR_NORES;
-
+	int ret = xa_surface_psurf_create(ctx, dst);
+	if (ret != XA_ERR_NONE)
+	    return ret;
 	renderer_copy_prepare(ctx, dst->srf, src->tex);
 	ctx->simple_copy = 0;
     } else
@@ -228,9 +247,89 @@ xa_copy_done(struct xa_context *ctx)
     if (!ctx->simple_copy) {
 	   renderer_draw_flush(ctx);
 	   ctx->pipe->flush(ctx->pipe, &ctx->last_fence);
-	   pipe_surface_reference(&ctx->dst->srf, NULL);
+	   xa_surface_psurf_destroy(ctx->dst);
     } else
 	ctx->pipe->flush(ctx->pipe, &ctx->last_fence);
+}
+
+static void
+bind_solid_blend_state(struct xa_context *ctx)
+{
+    struct pipe_blend_state blend;
+
+    memset(&blend, 0, sizeof(struct pipe_blend_state));
+    blend.rt[0].blend_enable = 0;
+    blend.rt[0].colormask = PIPE_MASK_RGBA;
+
+    blend.rt[0].rgb_src_factor   = PIPE_BLENDFACTOR_ONE;
+    blend.rt[0].alpha_src_factor = PIPE_BLENDFACTOR_ONE;
+    blend.rt[0].rgb_dst_factor   = PIPE_BLENDFACTOR_ZERO;
+    blend.rt[0].alpha_dst_factor = PIPE_BLENDFACTOR_ZERO;
+
+    cso_set_blend(ctx->cso, &blend);
+}
+
+int
+xa_solid_prepare(struct xa_context *ctx, struct xa_surface *dst,
+		 uint32_t fg)
+{
+    unsigned vs_traits, fs_traits;
+    struct xa_shader shader;
+    int width, height;
+    int ret;
+
+    xa_pixel_to_float4(fg, ctx->solid_color);
+    ctx->has_solid_color = 1;
+
+    ret = xa_surface_psurf_create(ctx, dst);
+    if (ret != XA_ERR_NONE)
+	return ret;
+
+    ctx->dst = dst;
+    width = dst->srf->width;
+    height = dst->srf->height;
+
+#if 0
+    debug_printf("Color Pixel=(%d, %d, %d, %d), RGBA=(%f, %f, %f, %f)\n",
+		 (fg >> 24) & 0xff, (fg >> 16) & 0xff,
+		 (fg >> 8) & 0xff,  (fg >> 0) & 0xff,
+		 exa->solid_color[0], exa->solid_color[1],
+		 exa->solid_color[2], exa->solid_color[3]);
+#endif
+
+    vs_traits = VS_SOLID_FILL;
+    fs_traits = FS_SOLID_FILL;
+
+    renderer_bind_destination(ctx, dst->srf, width, height);
+    bind_solid_blend_state(ctx);
+    cso_set_samplers(ctx->cso, 0, NULL);
+    cso_set_fragment_sampler_views(ctx->cso, 0, NULL);
+
+    shader = xa_shaders_get(ctx->shaders, vs_traits, fs_traits);
+    cso_set_vertex_shader_handle(ctx->cso, shader.vs);
+    cso_set_fragment_shader_handle(ctx->cso, shader.fs);
+
+    renderer_begin_solid(ctx);
+
+    xa_surface_psurf_destroy(dst);
+    return XA_ERR_NONE;
+}
+
+void
+xa_solid(struct xa_context *ctx, int x, int y, int width, int height)
+{
+    renderer_solid(ctx, x, y, x + width, y + height, ctx->solid_color);
+}
+
+void
+xa_solid_done(struct xa_context *ctx)
+{
+    renderer_draw_flush(ctx);
+    ctx->pipe->flush(ctx->pipe, &ctx->last_fence);
+
+    ctx->comp = NULL;
+    ctx->has_solid_color = FALSE;
+    ctx->num_bound_samplers = 0;
 }
 
 struct xa_fence *
