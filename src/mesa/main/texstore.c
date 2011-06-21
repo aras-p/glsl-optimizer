@@ -3308,10 +3308,12 @@ _mesa_texstore_z24_s8(TEXSTORE_PARAMS)
    GLint img, row;
 
    ASSERT(dstFormat == MESA_FORMAT_Z24_S8);
-   ASSERT(srcFormat == GL_DEPTH_STENCIL_EXT || srcFormat == GL_DEPTH_COMPONENT);
+   ASSERT(srcFormat == GL_DEPTH_STENCIL_EXT ||
+          srcFormat == GL_DEPTH_COMPONENT ||
+          srcFormat == GL_STENCIL_INDEX);
    ASSERT(srcFormat != GL_DEPTH_STENCIL_EXT || srcType == GL_UNSIGNED_INT_24_8_EXT);
 
-   if (srcFormat != GL_DEPTH_COMPONENT && ctx->Pixel.DepthScale == 1.0f &&
+   if (srcFormat == GL_DEPTH_STENCIL && ctx->Pixel.DepthScale == 1.0f &&
        ctx->Pixel.DepthBias == 0.0f &&
        !srcPacking->SwapBytes) {
       /* simple path */
@@ -3322,7 +3324,8 @@ _mesa_texstore_z24_s8(TEXSTORE_PARAMS)
                      srcWidth, srcHeight, srcDepth, srcFormat, srcType,
                      srcAddr, srcPacking);
    }
-   else if (srcFormat == GL_DEPTH_COMPONENT) {
+   else if (srcFormat == GL_DEPTH_COMPONENT ||
+            srcFormat == GL_STENCIL_INDEX) {
       /* In case we only upload depth we need to preserve the stencil */
       for (img = 0; img < srcDepth; img++) {
 	 GLuint *dstRow = (GLuint *) dstAddr
