@@ -707,6 +707,15 @@ st_api_create_context(struct st_api *stapi, struct st_manager *smapi,
    return &st->iface;
 }
 
+static struct st_context_iface *
+st_api_get_current(struct st_api *stapi)
+{
+   GET_CURRENT_CONTEXT(ctx);
+   struct st_context *st = (ctx) ? ctx->st : NULL;
+
+   return (st) ? &st->iface : NULL;
+}
+
 static boolean
 st_api_make_current(struct st_api *stapi, struct st_context_iface *stctxi,
                     struct st_framebuffer_iface *stdrawi,
@@ -742,6 +751,10 @@ st_api_make_current(struct st_api *stapi, struct st_context_iface *stctxi,
       }
 
       if (stdraw && stread) {
+         if (stctxi != st_api_get_current(stapi)) {
+            p_atomic_set(&stdraw->revalidate, TRUE);
+            p_atomic_set(&stread->revalidate, TRUE);
+         }
          st_framebuffer_validate(stdraw, st);
          if (stread != stdraw)
             st_framebuffer_validate(stread, st);
@@ -771,15 +784,6 @@ st_api_make_current(struct st_api *stapi, struct st_context_iface *stctxi,
    }
 
    return ret;
-}
-
-static struct st_context_iface *
-st_api_get_current(struct st_api *stapi)
-{
-   GET_CURRENT_CONTEXT(ctx);
-   struct st_context *st = (ctx) ? ctx->st : NULL;
-
-   return (st) ? &st->iface : NULL;
 }
 
 static st_proc_t
