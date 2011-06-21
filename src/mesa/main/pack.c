@@ -4782,6 +4782,7 @@ _mesa_unpack_depth_span( struct gl_context *ctx, GLuint n,
                 }
                 zValues[i] = value & 0xffffff00;
             }
+            free(depthTemp);
             return;
          }
          else {
