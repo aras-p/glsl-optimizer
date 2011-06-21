@@ -4683,7 +4683,7 @@ _mesa_unpack_depth_span( struct gl_context *ctx, GLuint n,
                          GLenum srcType, const GLvoid *source,
                          const struct gl_pixelstore_attrib *srcPacking )
 {
-   GLfloat *depthTemp, *depthValues;
+   GLfloat *depthTemp = NULL, *depthValues;
    GLboolean needClamp = GL_FALSE;
 
    /* Look for special cases first.
@@ -4729,16 +4729,16 @@ _mesa_unpack_depth_span( struct gl_context *ctx, GLuint n,
 
    /* general case path follows */
 
-   depthTemp = (GLfloat *) malloc(n * sizeof(GLfloat));
-   if (!depthTemp) {
-      _mesa_error(ctx, GL_OUT_OF_MEMORY, "pixel unpacking");
-      return;
-   }
-
    if (dstType == GL_FLOAT) {
       depthValues = (GLfloat *) dest;
    }
    else {
+      depthTemp = (GLfloat *) malloc(n * sizeof(GLfloat));
+      if (!depthTemp) {
+         _mesa_error(ctx, GL_OUT_OF_MEMORY, "pixel unpacking");
+         return;
+      }
+
       depthValues = depthTemp;
    }
 
