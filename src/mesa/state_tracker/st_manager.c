@@ -716,38 +716,49 @@ st_api_get_current(struct st_api *stapi)
    return (st) ? &st->iface : NULL;
 }
 
+static struct st_framebuffer *
+st_framebuffer_reuse_or_create(struct gl_framebuffer *fb,
+                               struct st_framebuffer_iface *stfbi)
+{
+   struct st_framebuffer *cur = st_ws_framebuffer(fb), *stfb = NULL;
+
+   if (cur && cur->iface == stfbi) {
+      /* reuse the current stfb */
+      st_framebuffer_reference(&stfb, cur);
+   }
+   else {
+      /* create a new one */
+      stfb = st_framebuffer_create(stfbi);
+   }
+
+   return stfb;
+}
+
 static boolean
 st_api_make_current(struct st_api *stapi, struct st_context_iface *stctxi,
                     struct st_framebuffer_iface *stdrawi,
                     struct st_framebuffer_iface *streadi)
 {
    struct st_context *st = (struct st_context *) stctxi;
-   struct st_framebuffer *stdraw, *stread, *stfb;
+   struct st_framebuffer *stdraw, *stread;
    boolean ret;
 
    _glapi_check_multithread();
 
    if (st) {
-      /* reuse/create the draw fb */
-      stfb = st_ws_framebuffer(st->ctx->WinSysDrawBuffer);
-      if (stfb && stfb->iface == stdrawi) {
-         stdraw = NULL;
-         st_framebuffer_reference(&stdraw, stfb);
+      /* reuse or create the draw fb */
+      stdraw = st_framebuffer_reuse_or_create(st->ctx->WinSysDrawBuffer,
+                                              stdrawi);
+      if (streadi != stdrawi) {
+         /* do the same for the read fb */
+         stread = st_framebuffer_reuse_or_create(st->ctx->WinSysReadBuffer,
+                                                 streadi);
       }
       else {
-         stdraw = st_framebuffer_create(stdrawi);
-      }
-
-      /* reuse/create the read fb */
-      stfb = st_ws_framebuffer(st->ctx->WinSysReadBuffer);
-      if (!stfb || stfb->iface != streadi)
-         stfb = stdraw;
-      if (stfb && stfb->iface == streadi) {
          stread = NULL;
-         st_framebuffer_reference(&stread, stfb);
-      }
-      else {
-         stread = st_framebuffer_create(streadi);
+         /* reuse the draw fb for the read fb */
+         if (stdraw)
+            st_framebuffer_reference(&stread, stdraw);
       }
 
       if (stdraw && stread) {
