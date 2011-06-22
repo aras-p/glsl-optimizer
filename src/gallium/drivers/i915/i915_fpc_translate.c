@@ -907,7 +907,7 @@ i915_translate_instruction(struct i915_fp_compile *p,
       break;
 
    case TGSI_OPCODE_SNE:
-      /* if we're neither < nor > then we're != */
+      /* if we're < or > then we're != */
       src0 = src_vector(p, &inst->Src[0], fs);
       src1 = src_vector(p, &inst->Src[1], fs);
       tmp = i915_get_utemp(p);
