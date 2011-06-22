@@ -117,193 +117,123 @@ get_965_surface_format(unsigned int surface_format)
     }
 }
 
-static void dump_wm_surface_state(struct brw_context *brw)
+static void dump_surface_state(struct brw_context *brw, uint32_t offset)
 {
-   dri_bo *bo;
-   GLubyte *base;
-   int i;
+   const char *name = "SURF";
+   uint32_t *surf = brw->intel.batch.bo->virtual + offset;
 
-   bo = brw->intel.batch.bo;
-   drm_intel_bo_map(bo, GL_FALSE);
-   base = bo->virtual;
-
-   for (i = 0; i < brw->wm.nr_surfaces; i++) {
-      unsigned int surfoff;
-      uint32_t *surf;
-      char name[20];
-
-      if (brw->wm.surf_offset[i] == 0) {
-	 fprintf(stderr, "WM SURF%d: NULL\n", i);
-	 continue;
-      }
-      surfoff = bo->offset + brw->wm.surf_offset[i];
-      surf = (uint32_t *)(base + brw->wm.surf_offset[i]);
-
-      sprintf(name, "WM SURF%d", i);
-      state_out(name, surf, surfoff, 0, "%s %s\n",
-		get_965_surfacetype(GET_FIELD(surf[0], BRW_SURFACE_TYPE)),
-		get_965_surface_format(GET_FIELD(surf[0], BRW_SURFACE_FORMAT)));
-      state_out(name, surf, surfoff, 1, "offset\n");
-      state_out(name, surf, surfoff, 2, "%dx%d size, %d mips\n",
-		GET_FIELD(surf[2], BRW_SURFACE_WIDTH) + 1,
-		GET_FIELD(surf[2], BRW_SURFACE_HEIGHT) + 1);
-      state_out(name, surf, surfoff, 3, "pitch %d, %s tiled\n",
-		GET_FIELD(surf[3], BRW_SURFACE_PITCH) + 1,
-		(surf[3] & BRW_SURFACE_TILED) ?
-		((surf[3] & BRW_SURFACE_TILED_Y) ? "Y" : "X") : "not");
-      state_out(name, surf, surfoff, 4, "mip base %d\n",
-		GET_FIELD(surf[4], BRW_SURFACE_MIN_LOD));
-      state_out(name, surf, surfoff, 5, "x,y offset: %d,%d\n",
-		GET_FIELD(surf[5], BRW_SURFACE_X_OFFSET),
-		GET_FIELD(surf[5], BRW_SURFACE_Y_OFFSET));
-   }
-   drm_intel_bo_unmap(bo);
+   batch_out(brw, name, offset, 0, "%s %s\n",
+	     get_965_surfacetype(GET_FIELD(surf[0], BRW_SURFACE_TYPE)),
+	     get_965_surface_format(GET_FIELD(surf[0], BRW_SURFACE_FORMAT)));
+   batch_out(brw, name, offset, 1, "offset\n");
+   batch_out(brw, name, offset, 2, "%dx%d size, %d mips\n",
+	     GET_FIELD(surf[2], BRW_SURFACE_WIDTH) + 1,
+	     GET_FIELD(surf[2], BRW_SURFACE_HEIGHT) + 1,
+	     GET_FIELD(surf[2], BRW_SURFACE_LOD));
+   batch_out(brw, name, offset, 3, "pitch %d, %s tiled\n",
+	     GET_FIELD(surf[3], BRW_SURFACE_PITCH) + 1,
+	     (surf[3] & BRW_SURFACE_TILED) ?
+	     ((surf[3] & BRW_SURFACE_TILED_Y) ? "Y" : "X") : "not");
+   batch_out(brw, name, offset, 4, "mip base %d\n",
+	     GET_FIELD(surf[4], BRW_SURFACE_MIN_LOD));
+   batch_out(brw, name, offset, 5, "x,y offset: %d,%d\n",
+	     GET_FIELD(surf[5], BRW_SURFACE_X_OFFSET),
+	     GET_FIELD(surf[5], BRW_SURFACE_Y_OFFSET));
 }
 
-static void dump_gen7_surface_state(struct brw_context *brw)
+static void dump_gen7_surface_state(struct brw_context *brw, uint32_t offset)
 {
-   dri_bo *bo;
-   GLubyte *base;
-   int i;
+   const char *name = "SURF";
+   struct gen7_surface_state *surf = brw->intel.batch.bo->virtual + offset;
 
-   bo = brw->intel.batch.bo;
-   drm_intel_bo_map(bo, GL_FALSE);
-   base = bo->virtual;
-
-   for (i = 0; i < brw->wm.nr_surfaces; i++) {
-      unsigned int surfoff;
-      struct gen7_surface_state *surf;
-      char name[20];
-
-      if (brw->wm.surf_offset[i] == 0) {
-	 fprintf(stderr, "WM SURF%d: NULL\n", i);
-	 continue;
-      }
-      surfoff = bo->offset + brw->wm.surf_offset[i];
-      surf = (struct gen7_surface_state *) (base + brw->wm.surf_offset[i]);
-
-      sprintf(name, "WM SURF%d", i);
-      state_out(name, surf, surfoff, 0, "%s %s\n",
-		get_965_surfacetype(surf->ss0.surface_type),
-		get_965_surface_format(surf->ss0.surface_format));
-      state_out(name, surf, surfoff, 1, "offset\n");
-      state_out(name, surf, surfoff, 2, "%dx%d size, %d mips\n",
-		surf->ss2.width + 1, surf->ss2.height + 1, surf->ss5.mip_count);
-      state_out(name, surf, surfoff, 3, "pitch %d, %stiled\n",
-		surf->ss3.pitch + 1, surf->ss0.tiled_surface ? "" : "not ");
-      state_out(name, surf, surfoff, 4, "mip base %d\n",
-		surf->ss5.min_lod);
-      state_out(name, surf, surfoff, 5, "x,y offset: %d,%d\n",
-		surf->ss5.x_offset, surf->ss5.y_offset);
-   }
-   drm_intel_bo_unmap(bo);
+   batch_out(brw, name, offset, 0, "%s %s\n",
+	     get_965_surfacetype(surf->ss0.surface_type),
+	     get_965_surface_format(surf->ss0.surface_format));
+   batch_out(brw, name, offset, 1, "offset\n");
+   batch_out(brw, name, offset, 2, "%dx%d size, %d mips\n",
+	     surf->ss2.width + 1, surf->ss2.height + 1, surf->ss5.mip_count);
+   batch_out(brw, name, offset, 3, "pitch %d, %stiled\n",
+	     surf->ss3.pitch + 1, surf->ss0.tiled_surface ? "" : "not ");
+   batch_out(brw, name, offset, 4, "mip base %d\n",
+	     surf->ss5.min_lod);
+   batch_out(brw, name, offset, 5, "x,y offset: %d,%d\n",
+	     surf->ss5.x_offset, surf->ss5.y_offset);
 }
 
-static void dump_wm_sampler_state(struct brw_context *brw)
+static void
+dump_sdc(struct brw_context *brw, uint32_t offset)
+{
+   const char *name = "SDC";
+   struct intel_context *intel = &brw->intel;
+
+   if (intel->gen >= 5 && intel->gen <= 6) {
+      struct gen5_sampler_default_color *sdc = (intel->batch.bo->virtual +
+						offset);
+      batch_out(brw, name, offset, 0, "unorm rgba\n");
+      batch_out(brw, name, offset, 1, "r %f\n", sdc->f[0]);
+      batch_out(brw, name, offset, 2, "b %f\n", sdc->f[1]);
+      batch_out(brw, name, offset, 3, "g %f\n", sdc->f[2]);
+      batch_out(brw, name, offset, 4, "a %f\n", sdc->f[3]);
+      batch_out(brw, name, offset, 5, "half float rg\n");
+      batch_out(brw, name, offset, 6, "half float ba\n");
+      batch_out(brw, name, offset, 7, "u16 rg\n");
+      batch_out(brw, name, offset, 8, "u16 ba\n");
+      batch_out(brw, name, offset, 9, "s16 rg\n");
+      batch_out(brw, name, offset, 10, "s16 ba\n");
+      batch_out(brw, name, offset, 11, "s8 rgba\n");
+   } else {
+      struct brw_sampler_default_color *sdc = (intel->batch.bo->virtual +
+					       offset);
+      batch_out(brw, name, offset, 0, "r %f\n", sdc->color[0]);
+      batch_out(brw, name, offset, 1, "g %f\n", sdc->color[1]);
+      batch_out(brw, name, offset, 2, "b %f\n", sdc->color[2]);
+      batch_out(brw, name, offset, 3, "a %f\n", sdc->color[3]);
+   }
+}
+
+static void dump_sampler_state(struct brw_context *brw,
+			       uint32_t offset, uint32_t size)
 {
    struct intel_context *intel = &brw->intel;
-   struct gl_context *ctx = &brw->intel.ctx;
    int i;
+   struct brw_sampler_state *samp = intel->batch.bo->virtual + offset;
 
    assert(intel->gen < 7);
 
-   drm_intel_bo_map(intel->batch.bo, GL_FALSE);
-   for (i = 0; i < BRW_MAX_TEX_UNIT; i++) {
-      unsigned int offset;
-      uint32_t sdc_offset;
-      struct brw_sampler_state *samp;
+   for (i = 0; i < size / sizeof(*samp); i++) {
       char name[20];
 
-      if (!ctx->Texture.Unit[i]._ReallyEnabled) {
-	 fprintf(stderr, "WM SAMP%d: disabled\n", i);
-	 continue;
-      }
-
-      offset = (intel->batch.bo->offset +
-		brw->wm.sampler_offset +
-		i * sizeof(struct brw_sampler_state));
-      samp = (struct brw_sampler_state *)(intel->batch.bo->virtual +
-					  brw->wm.sampler_offset +
-					  i * sizeof(struct brw_sampler_state));
-
       sprintf(name, "WM SAMP%d", i);
-      state_out(name, samp, offset, 0, "filtering\n");
-      state_out(name, samp, offset, 1, "wrapping, lod\n");
-      state_out(name, samp, offset, 2, "default color pointer\n");
-      state_out(name, samp, offset, 3, "chroma key, aniso\n");
+      batch_out(brw, name, offset, 0, "filtering\n");
+      batch_out(brw, name, offset, 1, "wrapping, lod\n");
+      batch_out(brw, name, offset, 2, "default color pointer\n");
+      batch_out(brw, name, offset, 3, "chroma key, aniso\n");
 
-      sprintf(name, " WM SDC%d", i);
-
-      sdc_offset = intel->batch.bo->offset + brw->wm.sdc_offset[i];
-      if (intel->gen >= 5) {
-	 struct gen5_sampler_default_color *sdc = (intel->batch.bo->virtual +
-						   brw->wm.sdc_offset[i]);
-	 state_out(name, sdc, sdc_offset, 0, "unorm rgba\n");
-	 state_out(name, sdc, sdc_offset, 1, "r %f\n", sdc->f[0]);
-	 state_out(name, sdc, sdc_offset, 2, "b %f\n", sdc->f[1]);
-	 state_out(name, sdc, sdc_offset, 3, "g %f\n", sdc->f[2]);
-	 state_out(name, sdc, sdc_offset, 4, "a %f\n", sdc->f[3]);
-	 state_out(name, sdc, sdc_offset, 5, "half float rg\n");
-	 state_out(name, sdc, sdc_offset, 6, "half float ba\n");
-	 state_out(name, sdc, sdc_offset, 7, "u16 rg\n");
-	 state_out(name, sdc, sdc_offset, 8, "u16 ba\n");
-	 state_out(name, sdc, sdc_offset, 9, "s16 rg\n");
-	 state_out(name, sdc, sdc_offset, 10, "s16 ba\n");
-	 state_out(name, sdc, sdc_offset, 11, "s8 rgba\n");
-      } else {
-	 struct brw_sampler_default_color *sdc = (intel->batch.bo->virtual +
-						  brw->wm.sdc_offset[i]);
-	 state_out(name, sdc, sdc_offset, 0, "r %f\n", sdc->color[0]);
-	 state_out(name, sdc, sdc_offset, 1, "g %f\n", sdc->color[1]);
-	 state_out(name, sdc, sdc_offset, 2, "b %f\n", sdc->color[2]);
-	 state_out(name, sdc, sdc_offset, 3, "a %f\n", sdc->color[3]);
-      }
+      samp++;
+      offset += sizeof(*samp);
    }
-   drm_intel_bo_unmap(intel->batch.bo);
 }
 
-static void dump_gen7_sampler_state(struct brw_context *brw)
+static void dump_gen7_sampler_state(struct brw_context *brw,
+				    uint32_t offset, uint32_t size)
 {
    struct intel_context *intel = &brw->intel;
-   struct gl_context *ctx = &brw->intel.ctx;
+   struct gen7_sampler_state *samp = intel->batch.bo->virtual + offset;
    int i;
 
    assert(intel->gen >= 7);
 
-   drm_intel_bo_map(intel->batch.bo, GL_FALSE);
-   for (i = 0; i < BRW_MAX_TEX_UNIT; i++) {
-      unsigned int offset;
-      uint32_t sdc_offset;
-      struct gen7_sampler_state *samp;
+   for (i = 0; i < size / sizeof(*samp); i++) {
       char name[20];
 
-      if (!ctx->Texture.Unit[i]._ReallyEnabled) {
-	 fprintf(stderr, "WM SAMP%d: disabled\n", i);
-	 continue;
-      }
-
-      offset = (intel->batch.bo->offset +
-		brw->wm.sampler_offset +
-		i * sizeof(struct gen7_sampler_state));
-      samp = (struct gen7_sampler_state *)
-	     (intel->batch.bo->virtual + brw->wm.sampler_offset +
-	      i * sizeof(struct gen7_sampler_state));
-
       sprintf(name, "WM SAMP%d", i);
-      state_out(name, samp, offset, 0, "filtering\n");
-      state_out(name, samp, offset, 1, "wrapping, lod\n");
-      state_out(name, samp, offset, 2, "default color pointer\n");
-      state_out(name, samp, offset, 3, "chroma key, aniso\n");
+      batch_out(brw, name, offset, 0, "filtering\n");
+      batch_out(brw, name, offset, 1, "wrapping, lod\n");
+      batch_out(brw, name, offset, 2, "default color pointer\n");
+      batch_out(brw, name, offset, 3, "chroma key, aniso\n");
 
-      sprintf(name, " WM SDC%d", i);
-
-      sdc_offset = intel->batch.bo->offset + brw->wm.sdc_offset[i];
-      struct brw_sampler_default_color *sdc =
-	 intel->batch.bo->virtual + brw->wm.sdc_offset[i];
-      state_out(name, sdc, sdc_offset, 0, "r %f\n", sdc->color[0]);
-      state_out(name, sdc, sdc_offset, 1, "g %f\n", sdc->color[1]);
-      state_out(name, sdc, sdc_offset, 2, "b %f\n", sdc->color[2]);
-      state_out(name, sdc, sdc_offset, 3, "a %f\n", sdc->color[3]);
+      samp++;
+      offset += sizeof(*samp);
    }
    drm_intel_bo_unmap(intel->batch.bo);
 }
@@ -459,6 +389,7 @@ dump_state_batch(struct brw_context *brw)
 
    for (i = 0; i < brw->state_batch_count; i++) {
       uint32_t offset = brw->state_batch_list[i].offset;
+      uint32_t size = brw->state_batch_list[i].size;
 
       switch (brw->state_batch_list[i].type) {
       case AUB_TRACE_CLIP_VP_STATE:
@@ -482,6 +413,23 @@ dump_state_batch(struct brw_context *brw)
 	 break;
       case AUB_TRACE_BLEND_STATE:
 	 dump_blend_state(brw, offset);
+	 break;
+      case AUB_TRACE_SURFACE_STATE:
+	 if (intel->gen < 7) {
+	    dump_surface_state(brw, offset);
+	 } else {
+	    dump_gen7_surface_state(brw, offset);
+	 }
+	 break;
+      case AUB_TRACE_SAMPLER_STATE:
+	 if (intel->gen < 7) {
+	    dump_sampler_state(brw, offset, size);
+	 } else {
+	    dump_gen7_sampler_state(brw, offset, size);
+	 }
+	 break;
+      case AUB_TRACE_SAMPLER_DEFAULT_COLOR:
+	 dump_sdc(brw, offset);
 	 break;
       default:
 	 break;
@@ -507,13 +455,6 @@ void brw_debug_batch(struct intel_context *intel)
 		    brw->intel.batch.bo,
 		    brw->wm.bind_bo_offset,
 		    4 * brw->wm.nr_surfaces);
-   if (intel->gen < 7) {
-      dump_wm_surface_state(brw);
-      dump_wm_sampler_state(brw);
-   } else {
-      dump_gen7_surface_state(brw);
-      dump_gen7_sampler_state(brw);
-   }
 
    if (intel->gen < 6)
        state_struct_out("VS", intel->batch.bo, brw->vs.state_offset,
