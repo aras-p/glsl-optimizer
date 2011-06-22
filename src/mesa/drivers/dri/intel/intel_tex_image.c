@@ -21,6 +21,7 @@
 #include "intel_tex.h"
 #include "intel_blit.h"
 #include "intel_fbo.h"
+#include "intel_span.h"
 
 #define FILE_DEBUG_FLAG DEBUG_TEXTURE
 
@@ -277,6 +278,75 @@ try_pbo_zcopy(struct intel_context *intel,
    return GL_TRUE;
 }
 
+/**
+ * \param scatter Scatter if true. Gather if false.
+ *
+ * \see intel_tex_image_x8z24_scatter
+ * \see intel_tex_image_x8z24_gather
+ */
+static void
+intel_tex_image_s8z24_scattergather(struct intel_context *intel,
+				    struct intel_texture_image *intel_image,
+				    bool scatter)
+{
+   struct gl_context *ctx = &intel->ctx;
+   struct gl_renderbuffer *depth_rb = intel_image->depth_rb;
+   struct gl_renderbuffer *stencil_rb = intel_image->stencil_rb;
+
+   int w = intel_image->base.Width;
+   int h = intel_image->base.Height;
+
+   uint32_t depth_row[w];
+   uint8_t stencil_row[w];
+
+   intel_renderbuffer_map(intel, depth_rb);
+   intel_renderbuffer_map(intel, stencil_rb);
+
+   if (scatter) {
+      for (int y = 0; y < h; ++y) {
+	 depth_rb->GetRow(ctx, depth_rb, w, 0, y, depth_row);
+	 for (int x = 0; x < w; ++x) {
+	    stencil_row[x] = depth_row[x] >> 24;
+	 }
+	 stencil_rb->PutRow(ctx, stencil_rb, w, 0, y, stencil_row, NULL);
+      }
+   } else { /* gather */
+      for (int y = 0; y < h; ++y) {
+	 depth_rb->GetRow(ctx, depth_rb, w, 0, y, depth_row);
+	 stencil_rb->GetRow(ctx, stencil_rb, w, 0, y, stencil_row);
+	 for (int x = 0; x < w; ++x) {
+	    uint32_t s8_x24 = stencil_row[x] << 24;
+	    uint32_t x8_z24 = depth_row[x] & 0x00ffffff;
+	    depth_row[x] = s8_x24 | x8_z24;
+	 }
+	 depth_rb->PutRow(ctx, depth_rb, w, 0, y, depth_row, NULL);
+      }
+   }
+
+   intel_renderbuffer_unmap(intel, depth_rb);
+   intel_renderbuffer_unmap(intel, stencil_rb);
+}
+
+/**
+ * Copy the x8 bits from intel_image->depth_rb to intel_image->stencil_rb.
+ */
+static void
+intel_tex_image_s8z24_scatter(struct intel_context *intel,
+			      struct intel_texture_image *intel_image)
+{
+   intel_tex_image_s8z24_scattergather(intel, intel_image, true);
+}
+
+/**
+ * Copy the data in intel_image->stencil_rb to the x8 bits in
+ * intel_image->depth_rb.
+ */
+static void
+intel_tex_image_s8z24_gather(struct intel_context *intel,
+			     struct intel_texture_image *intel_image)
+{
+   intel_tex_image_s8z24_scattergather(intel, intel_image, false);
+}
 
 static void
 intelTexImage(struct gl_context * ctx,
