@@ -972,13 +972,13 @@ static void GLAPIENTRY
 vbo_exec_DrawRangeElements(GLenum mode, GLuint start, GLuint end,
                            GLsizei count, GLenum type, const GLvoid *indices)
 {
-   GET_CURRENT_CONTEXT(ctx);
-
-   if (MESA_VERBOSE & VERBOSE_DRAW)
+   if (MESA_VERBOSE & VERBOSE_DRAW) {
+      GET_CURRENT_CONTEXT(ctx);
       _mesa_debug(ctx,
                   "glDrawRangeElements(%s, %u, %u, %d, %s, %p)\n",
                   _mesa_lookup_enum_by_nr(mode), start, end, count,
                   _mesa_lookup_enum_by_nr(type), indices);
+   }
 
    vbo_exec_DrawRangeElementsBaseVertex(mode, start, end, count, type,
 					indices, 0);
