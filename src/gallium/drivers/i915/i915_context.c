@@ -173,6 +173,7 @@ i915_create_context(struct pipe_screen *screen, void *priv)
 
    draw_install_aaline_stage(i915->draw, &i915->base);
    draw_install_aapoint_stage(i915->draw, &i915->base);
+   draw_enable_point_sprites(i915->draw, TRUE);
 
    /* augmented draw pipeline clobbers state functions */
    i915_init_fixup_state_functions(i915);
