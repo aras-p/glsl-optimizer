@@ -376,8 +376,7 @@ DRI_FILES = \
 	$(DIRECTORY)/src/glx/Makefile					\
 	$(DIRECTORY)/src/glx/*.[ch]					\
 	$(APPLE_DRI_FILES)						\
-	$(DIRECTORY)/src/mesa/drivers/dri/Makefile			\
-	$(DIRECTORY)/src/mesa/drivers/dri/Makefile.template		\
+	$(DIRECTORY)/src/mesa/drivers/dri/Makefile*			\
 	$(DIRECTORY)/src/mesa/drivers/dri/dri.pc.in			\
 	$(DIRECTORY)/src/mesa/drivers/dri/common/xmlpool/*.po		\
 	$(DIRECTORY)/src/mesa/drivers/dri/*/*.[chS]			\
