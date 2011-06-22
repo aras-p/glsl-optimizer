@@ -243,7 +243,7 @@ static void r600_setup_miptree(struct pipe_screen *screen,
 	struct radeon *radeon = (struct radeon *)screen->winsys;
 	enum chip_class chipc = r600_get_family_class(radeon);
 	unsigned size, layer_size, i, offset;
-	unsigned nblocksx, nblocksy, extra_size;
+	unsigned nblocksx, nblocksy, extra_size = 0;
 
 	for (i = 0, offset = 0; i <= ptex->last_level; i++) {
 		unsigned blocksize = util_format_get_blocksize(ptex->format);
