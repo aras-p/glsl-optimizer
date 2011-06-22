@@ -1739,6 +1739,9 @@ radeonCreateScreen2(__DRIscreen *sPriv)
 			   case 1:
 				   screen->num_banks = 8;
 				   break;
+			   case 2:
+				   screen->num_banks = 16;
+				   break;
 			   default:
 				   fprintf(stderr, "bad banks\n");
 				   break;
