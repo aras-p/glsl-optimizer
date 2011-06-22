@@ -36,6 +36,7 @@
 #include "tnl/tnl.h"
 #include "tnl/t_context.h"
 #include "tnl/t_vertex.h"
+#include "swrast_setup/swrast_setup.h"
 
 #include "intel_batchbuffer.h"
 #include "intel_regions.h"
@@ -709,6 +710,7 @@ i915_invalidate_state(struct intel_context *intel, GLuint new_state)
 {
    struct gl_context *ctx = &intel->ctx;
 
+   _swsetup_InvalidateState(ctx, new_state);
    _tnl_InvalidateState(ctx, new_state);
    _tnl_invalidate_vertex_state(ctx, new_state);
 }
