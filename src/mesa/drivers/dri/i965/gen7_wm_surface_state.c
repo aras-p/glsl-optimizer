@@ -65,8 +65,8 @@ gen7_update_texture_surface(struct gl_context *ctx, GLuint unit)
    const GLuint surf_index = SURF_INDEX_TEXTURE(unit);
    struct gen7_surface_state *surf;
 
-   surf = brw_state_batch(brw, sizeof(*surf), 32,
-			 &brw->wm.surf_offset[surf_index]);
+   surf = brw_state_batch(brw, AUB_TRACE_SURFACE_STATE,
+			  sizeof(*surf), 32, &brw->wm.surf_offset[surf_index]);
    memset(surf, 0, sizeof(*surf));
 
    surf->ss0.surface_type = translate_tex_target(tObj->Target);
@@ -135,7 +135,8 @@ gen7_create_constant_surface(struct brw_context *brw,
    const GLint w = width - 1;
    struct gen7_surface_state *surf;
 
-   surf = brw_state_batch(brw, sizeof(*surf), 32, out_offset);
+   surf = brw_state_batch(brw, AUB_TRACE_SURFACE_STATE,
+			  sizeof(*surf), 32, out_offset);
    memset(surf, 0, sizeof(*surf));
 
    surf->ss0.surface_type = BRW_SURFACE_BUFFER;
@@ -210,8 +211,8 @@ gen7_update_null_renderbuffer_surface(struct brw_context *brw, unsigned unit)
 {
    struct gen7_surface_state *surf;
 
-   surf = brw_state_batch(brw, sizeof(*surf), 32,
-			 &brw->wm.surf_offset[unit]);
+   surf = brw_state_batch(brw, AUB_TRACE_SURFACE_STATE,
+			  sizeof(*surf), 32, &brw->wm.surf_offset[unit]);
    memset(surf, 0, sizeof(*surf));
 
    surf->ss0.surface_type = BRW_SURFACE_NULL;
@@ -235,8 +236,8 @@ gen7_update_renderbuffer_surface(struct brw_context *brw,
    struct gen7_surface_state *surf;
    uint32_t tile_x, tile_y;
 
-   surf = brw_state_batch(brw, sizeof(*surf), 32,
-			  &brw->wm.surf_offset[unit]);
+   surf = brw_state_batch(brw, AUB_TRACE_SURFACE_STATE,
+			  sizeof(*surf), 32, &brw->wm.surf_offset[unit]);
    memset(surf, 0, sizeof(*surf));
 
    switch (irb->Base.Format) {

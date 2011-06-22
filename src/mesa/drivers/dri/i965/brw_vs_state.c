@@ -43,7 +43,8 @@ brw_prepare_vs_unit(struct brw_context *brw)
    struct gl_context *ctx = &intel->ctx;
    struct brw_vs_unit_state *vs;
 
-   vs = brw_state_batch(brw, sizeof(*vs), 32, &brw->vs.state_offset);
+   vs = brw_state_batch(brw, AUB_TRACE_VS_STATE,
+			sizeof(*vs), 32, &brw->vs.state_offset);
    memset(vs, 0, sizeof(*vs));
 
    /* BRW_NEW_PROGRAM_CACHE | CACHE_NEW_VS_PROG */

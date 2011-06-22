@@ -172,6 +172,7 @@ void brw_destroy_caches( struct brw_context *brw );
 							sizeof(*(s)), false)
 
 void *brw_state_batch(struct brw_context *brw,
+		      enum state_struct_type type,
 		      int size,
 		      int alignment,
 		      uint32_t *out_offset);

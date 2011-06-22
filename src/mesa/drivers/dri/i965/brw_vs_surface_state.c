@@ -182,7 +182,8 @@ static void upload_vs_surfaces(struct brw_context *brw)
    /* Might want to calculate nr_surfaces first, to avoid taking up so much
     * space for the binding table. (once we have vs samplers)
     */
-   bind = brw_state_batch(brw, sizeof(uint32_t) * BRW_VS_MAX_SURF,
+   bind = brw_state_batch(brw, AUB_TRACE_SURFACE_STATE,
+			  sizeof(uint32_t) * BRW_VS_MAX_SURF,
 			  32, &brw->vs.bind_bo_offset);
 
    for (i = 0; i < BRW_VS_MAX_SURF; i++) {

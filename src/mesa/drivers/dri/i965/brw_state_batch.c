@@ -49,6 +49,7 @@
  */
 void *
 brw_state_batch(struct brw_context *brw,
+		enum state_struct_type type,
 		int size,
 		int alignment,
 		uint32_t *out_offset)

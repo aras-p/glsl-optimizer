@@ -226,7 +226,8 @@ brw_update_texture_surface( struct gl_context *ctx, GLuint unit )
    const GLuint surf_index = SURF_INDEX_TEXTURE(unit);
    uint32_t *surf;
 
-   surf = brw_state_batch(brw, 6 * 4, 32, &brw->wm.surf_offset[surf_index]);
+   surf = brw_state_batch(brw, AUB_TRACE_SURFACE_STATE,
+			  6 * 4, 32, &brw->wm.surf_offset[surf_index]);
 
    surf[0] = (translate_tex_target(tObj->Target) << BRW_SURFACE_TYPE_SHIFT |
 	      BRW_SURFACE_MIPMAPLAYOUT_BELOW << BRW_SURFACE_MIPLAYOUT_SHIFT |
@@ -272,7 +273,8 @@ brw_create_constant_surface(struct brw_context *brw,
    const GLint w = width - 1;
    uint32_t *surf;
 
-   surf = brw_state_batch(brw, 6 * 4, 32, out_offset);
+   surf = brw_state_batch(brw, AUB_TRACE_SURFACE_STATE,
+			  6 * 4, 32, out_offset);
 
    surf[0] = (BRW_SURFACE_BUFFER << BRW_SURFACE_TYPE_SHIFT |
 	      BRW_SURFACE_MIPMAPLAYOUT_BELOW << BRW_SURFACE_MIPLAYOUT_SHIFT |
@@ -404,7 +406,8 @@ brw_update_null_renderbuffer_surface(struct brw_context *brw, unsigned int unit)
    struct intel_context *intel = &brw->intel;
    uint32_t *surf;
 
-   surf = brw_state_batch(brw, 6 * 4, 32, &brw->wm.surf_offset[unit]);
+   surf = brw_state_batch(brw, AUB_TRACE_SURFACE_STATE,
+			  6 * 4, 32, &brw->wm.surf_offset[unit]);
 
    surf[0] = (BRW_SURFACE_NULL << BRW_SURFACE_TYPE_SHIFT |
 	      BRW_SURFACEFORMAT_B8G8R8A8_UNORM << BRW_SURFACE_FORMAT_SHIFT);
@@ -439,7 +442,8 @@ brw_update_renderbuffer_surface(struct brw_context *brw,
    uint32_t tile_x, tile_y;
    uint32_t format = 0;
 
-   surf = brw_state_batch(brw, 6 * 4, 32, &brw->wm.surf_offset[unit]);
+   surf = brw_state_batch(brw, AUB_TRACE_SURFACE_STATE,
+			  6 * 4, 32, &brw->wm.surf_offset[unit]);
 
    switch (irb->Base.Format) {
    case MESA_FORMAT_XRGB8888:
@@ -637,7 +641,8 @@ brw_wm_upload_binding_table(struct brw_context *brw)
    /* Might want to calculate nr_surfaces first, to avoid taking up so much
     * space for the binding table.
     */
-   bind = brw_state_batch(brw, sizeof(uint32_t) * BRW_WM_MAX_SURF,
+   bind = brw_state_batch(brw, AUB_TRACE_BINDING_TABLE,
+			  sizeof(uint32_t) * BRW_WM_MAX_SURF,
 			  32, &brw->wm.bind_bo_offset);
 
    for (i = 0; i < BRW_WM_MAX_SURF; i++) {
