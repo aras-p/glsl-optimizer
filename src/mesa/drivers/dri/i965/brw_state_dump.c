@@ -290,7 +290,8 @@ static void dump_gen7_sampler_state(struct brw_context *brw)
 }
 
 
-static void dump_sf_viewport_state(struct brw_context *brw)
+static void dump_sf_viewport_state(struct brw_context *brw,
+				   uint32_t offset)
 {
    struct intel_context *intel = &brw->intel;
    const char *name = "SF VP";
@@ -301,8 +302,8 @@ static void dump_sf_viewport_state(struct brw_context *brw)
 
    drm_intel_bo_map(intel->batch.bo, GL_FALSE);
 
-   vp = intel->batch.bo->virtual + brw->sf.vp_offset;
-   vp_off = intel->batch.bo->offset + brw->sf.vp_offset;
+   vp = intel->batch.bo->virtual + offset;
+   vp_off = intel->batch.bo->offset + offset;
 
    state_out(name, vp, vp_off, 0, "m00 = %f\n", vp->viewport.m00);
    state_out(name, vp, vp_off, 1, "m11 = %f\n", vp->viewport.m11);
@@ -341,7 +342,8 @@ static void dump_clip_viewport_state(struct brw_context *brw,
    drm_intel_bo_unmap(intel->batch.bo);
 }
 
-static void dump_sf_clip_viewport_state(struct brw_context *brw)
+static void dump_sf_clip_viewport_state(struct brw_context *brw,
+					uint32_t offset)
 {
    struct intel_context *intel = &brw->intel;
    const char *name = "SF_CLIP VP";
@@ -352,8 +354,8 @@ static void dump_sf_clip_viewport_state(struct brw_context *brw)
 
    drm_intel_bo_map(intel->batch.bo, GL_FALSE);
 
-   vp = intel->batch.bo->virtual + brw->sf.vp_offset;
-   vp_off = intel->batch.bo->offset + brw->sf.vp_offset;
+   vp = intel->batch.bo->virtual + offset;
+   vp_off = intel->batch.bo->offset + offset;
 
    state_out(name, vp, vp_off, 0, "m00 = %f\n", vp->viewport.m00);
    state_out(name, vp, vp_off, 1, "m11 = %f\n", vp->viewport.m11);
@@ -490,12 +492,22 @@ static void brw_debug_prog(struct brw_context *brw,
 static void
 dump_state_batch(struct brw_context *brw)
 {
+   struct intel_context *intel = &brw->intel;
    int i;
 
    for (i = 0; i < brw->state_batch_count; i++) {
+      uint32_t offset = brw->state_batch_list[i].offset;
+
       switch (brw->state_batch_list[i].type) {
       case AUB_TRACE_CLIP_VP_STATE:
-	 dump_clip_viewport_state(brw, brw->state_batch_list[i].offset);
+	 dump_clip_viewport_state(brw, offset);
+	 break;
+      case AUB_TRACE_SF_VP_STATE:
+	 if (intel->gen >= 7) {
+	    dump_sf_clip_viewport_state(brw, offset);
+	 } else {
+	    dump_sf_viewport_state(brw, offset);
+	 }
 	 break;
       default:
 	 break;
@@ -546,10 +558,6 @@ void brw_debug_batch(struct intel_context *intel)
 		       sizeof(struct brw_sf_unit_state));
       brw_debug_prog(brw, "SF prog", brw->sf.prog_offset);
    }
-   if (intel->gen >= 7)
-      dump_sf_clip_viewport_state(brw);
-   else
-      dump_sf_viewport_state(brw);
 
    if (intel->gen < 6)
        state_struct_out("WM", intel->batch.bo, brw->wm.state_offset,
