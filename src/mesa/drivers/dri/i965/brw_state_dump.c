@@ -371,7 +371,7 @@ static void dump_sf_clip_viewport_state(struct brw_context *brw,
 }
 
 
-static void dump_cc_viewport_state(struct brw_context *brw)
+static void dump_cc_viewport_state(struct brw_context *brw, uint32_t offset)
 {
    struct intel_context *intel = &brw->intel;
    const char *name = "CC VP";
@@ -380,15 +380,15 @@ static void dump_cc_viewport_state(struct brw_context *brw)
 
    drm_intel_bo_map(intel->batch.bo, GL_FALSE);
 
-   vp = intel->batch.bo->virtual + brw->cc.vp_offset;
-   vp_off = intel->batch.bo->offset + brw->cc.vp_offset;
+   vp = intel->batch.bo->virtual + offset;
+   vp_off = intel->batch.bo->offset + offset;
 
    state_out(name, vp, vp_off, 0, "min_depth = %f\n", vp->min_depth);
    state_out(name, vp, vp_off, 1, "max_depth = %f\n", vp->max_depth);
    drm_intel_bo_unmap(intel->batch.bo);
 }
 
-static void dump_depth_stencil_state(struct brw_context *brw)
+static void dump_depth_stencil_state(struct brw_context *brw, uint32_t offset)
 {
    struct intel_context *intel = &brw->intel;
    const char *name = "DEPTH STENCIL";
@@ -397,8 +397,8 @@ static void dump_depth_stencil_state(struct brw_context *brw)
 
    drm_intel_bo_map(intel->batch.bo, GL_FALSE);
 
-   ds = intel->batch.bo->virtual + brw->cc.depth_stencil_state_offset;
-   ds_off = intel->batch.bo->offset + brw->cc.depth_stencil_state_offset;
+   ds = intel->batch.bo->virtual + offset;
+   ds_off = intel->batch.bo->offset + offset;
 
    state_out(name, ds, ds_off, 0, "stencil %sable, func %d, write %sable\n",
 		ds->ds0.stencil_enable ? "en" : "dis",
@@ -413,19 +413,16 @@ static void dump_depth_stencil_state(struct brw_context *brw)
    drm_intel_bo_unmap(intel->batch.bo);
 }
 
-static void dump_cc_state(struct brw_context *brw)
+static void dump_cc_state(struct brw_context *brw, uint32_t offset)
 {
    const char *name = "CC";
    struct gen6_color_calc_state *cc;
    uint32_t cc_off;
    dri_bo *bo = brw->intel.batch.bo;
 
-   if (brw->cc.state_offset == 0)
-	return;
-
    drm_intel_bo_map(bo, GL_FALSE);
-   cc = bo->virtual + brw->cc.state_offset;
-   cc_off = bo->offset + brw->cc.state_offset;
+   cc = bo->virtual + offset;
+   cc_off = bo->offset + offset;
 
    state_out(name, cc, cc_off, 0, "alpha test format %s, round disable %d, stencil ref %d,"
 		"bf stencil ref %d\n",
@@ -443,7 +440,7 @@ static void dump_cc_state(struct brw_context *brw)
 
 }
 
-static void dump_blend_state(struct brw_context *brw)
+static void dump_blend_state(struct brw_context *brw, uint32_t offset)
 {
    struct intel_context *intel = &brw->intel;
    const char *name = "BLEND";
@@ -452,8 +449,8 @@ static void dump_blend_state(struct brw_context *brw)
 
    drm_intel_bo_map(intel->batch.bo, GL_FALSE);
 
-   blend = intel->batch.bo->virtual + brw->cc.blend_state_offset;
-   blend_off = intel->batch.bo->offset + brw->cc.blend_state_offset;
+   blend = intel->batch.bo->virtual + offset;
+   blend_off = intel->batch.bo->offset + offset;
 
    state_out(name, blend, blend_off, 0, "\n");
    state_out(name, blend, blend_off, 1, "\n");
@@ -509,6 +506,18 @@ dump_state_batch(struct brw_context *brw)
 	    dump_sf_viewport_state(brw, offset);
 	 }
 	 break;
+      case AUB_TRACE_CC_VP_STATE:
+	 dump_cc_viewport_state(brw, offset);
+	 break;
+      case AUB_TRACE_DEPTH_STENCIL_STATE:
+	 dump_depth_stencil_state(brw, offset);
+	 break;
+      case AUB_TRACE_CC_STATE:
+	 dump_cc_state(brw, offset);
+	 break;
+      case AUB_TRACE_BLEND_STATE:
+	 dump_blend_state(brw, offset);
+	 break;
       default:
 	 break;
       }
@@ -563,13 +572,6 @@ void brw_debug_batch(struct intel_context *intel)
        state_struct_out("WM", intel->batch.bo, brw->wm.state_offset,
 			sizeof(struct brw_wm_unit_state));
    brw_debug_prog(brw, "WM prog", brw->wm.prog_offset);
-
-   if (intel->gen >= 6) {
-	dump_cc_viewport_state(brw);
-	dump_depth_stencil_state(brw);
-	dump_cc_state(brw);
-	dump_blend_state(brw);
-   }
 
    dump_state_batch(brw);
 }
