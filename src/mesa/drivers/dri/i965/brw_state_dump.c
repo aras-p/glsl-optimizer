@@ -319,7 +319,8 @@ static void dump_sf_viewport_state(struct brw_context *brw)
    drm_intel_bo_unmap(intel->batch.bo);
 }
 
-static void dump_clip_viewport_state(struct brw_context *brw)
+static void dump_clip_viewport_state(struct brw_context *brw,
+				     uint32_t offset)
 {
    struct intel_context *intel = &brw->intel;
    const char *name = "CLIP VP";
@@ -330,8 +331,8 @@ static void dump_clip_viewport_state(struct brw_context *brw)
 
    drm_intel_bo_map(intel->batch.bo, GL_FALSE);
 
-   vp = intel->batch.bo->virtual + brw->clip.vp_offset;
-   vp_off = intel->batch.bo->offset + brw->clip.vp_offset;
+   vp = intel->batch.bo->virtual + offset;
+   vp_off = intel->batch.bo->offset + offset;
 
    state_out(name, vp, vp_off, 0, "xmin = %f\n", vp->xmin);
    state_out(name, vp, vp_off, 1, "xmax = %f\n", vp->xmax);
@@ -486,6 +487,21 @@ static void brw_debug_prog(struct brw_context *brw,
    drm_intel_bo_unmap(brw->cache.bo);
 }
 
+static void
+dump_state_batch(struct brw_context *brw)
+{
+   int i;
+
+   for (i = 0; i < brw->state_batch_count; i++) {
+      switch (brw->state_batch_list[i].type) {
+      case AUB_TRACE_CLIP_VP_STATE:
+	 dump_clip_viewport_state(brw, brw->state_batch_list[i].offset);
+	 break;
+      default:
+	 break;
+      }
+   }
+}
 
 /**
  * Print additional debug information associated with the batchbuffer
@@ -534,8 +550,6 @@ void brw_debug_batch(struct intel_context *intel)
       dump_sf_clip_viewport_state(brw);
    else
       dump_sf_viewport_state(brw);
-   if (intel->gen == 6)
-      dump_clip_viewport_state(brw);
 
    if (intel->gen < 6)
        state_struct_out("WM", intel->batch.bo, brw->wm.state_offset,
@@ -548,4 +562,6 @@ void brw_debug_batch(struct intel_context *intel)
 	dump_cc_state(brw);
 	dump_blend_state(brw);
    }
+
+   dump_state_batch(brw);
 }
