@@ -497,6 +497,10 @@ intel_framebuffer_renderbuffer(struct gl_context * ctx,
    intel_draw_buffer(ctx, fb);
 }
 
+static bool
+intel_update_tex_wrapper_regions(struct intel_context *intel,
+				 struct intel_renderbuffer *irb,
+				 struct intel_texture_image *intel_image);
 
 static GLboolean
 intel_update_wrapper(struct gl_context *ctx, struct intel_renderbuffer *irb, 
@@ -522,6 +526,20 @@ intel_update_wrapper(struct gl_context *ctx, struct intel_renderbuffer *irb,
 
    irb->Base.Delete = intel_delete_renderbuffer;
    irb->Base.AllocStorage = intel_nop_alloc_storage;
+
+   return intel_update_tex_wrapper_regions(intel, irb, intel_image);
+}
+
+/**
+ * FIXME: The handling of the hiz region is broken for mipmapped depth textures
+ * FIXME: because intel_finalize_mipmap_tree is unaware of it.
+ */
+static bool
+intel_update_tex_wrapper_regions(struct intel_context *intel,
+				 struct intel_renderbuffer *irb,
+				 struct intel_texture_image *intel_image)
+{
+   struct gl_texture_image *texImage = &intel_image->base;
 
    /* Point the renderbuffer's region to the texture's region. */
    if (irb->region != intel_image->mt->region) {
