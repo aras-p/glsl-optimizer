@@ -617,6 +617,13 @@ AC_ARG_WITH([gallium-drivers],
     [with_gallium_drivers="$withval"],
     [with_gallium_drivers="$GALLIUM_DRIVERS_DEFAULT"])
 
+# Doing '--without-gallium-drivers' will set this variable to 'no'.  Clear it
+# here so that the script doesn't choke on an unknown driver name later.
+case "$with_gallium_drivers" in
+    yes) with_gallium_drivers="$GALLIUM_DRIVERS_DEFAULT" ;;
+    no) with_gallium_drivers='' ;;
+esac
+
 if test "x$enable_opengl" = xno -a \
         "x$enable_gles1" = xno -a \
         "x$enable_gles2" = xno -a \
