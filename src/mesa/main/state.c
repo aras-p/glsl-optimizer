@@ -203,11 +203,12 @@ update_program_enables(struct gl_context *ctx)
 
 
 /**
- * Update vertex/fragment program state.  In particular, update these fields:
- *   ctx->VertexProgram._Current
- *   ctx->VertexProgram._TnlProgram,
- * These point to the highest priority enabled vertex/fragment program or are
- * NULL if fixed-function processing is to be done.
+ * Update the ctx->Vertex/Geometry/FragmentProgram._Current pointers to point
+ * to the current/active programs.  Then call ctx->Driver.BindProgram() to
+ * tell the driver which programs to use.
+ *
+ * Programs may come from 3 sources: GLSL shaders, ARB/NV_vertex/fragment
+ * programs or programs derived from fixed-function state.
  *
  * This function needs to be called after texture state validation in case
  * we're generating a fragment program from fixed-function texture state.
@@ -243,34 +244,33 @@ update_program(struct gl_context *ctx)
     */
 
    if (fsProg && fsProg->LinkStatus && fsProg->FragmentProgram) {
-      /* Use shader programs */
+      /* Use GLSL fragment shader */
       _mesa_reference_fragprog(ctx, &ctx->FragmentProgram._Current,
                                fsProg->FragmentProgram);
    }
    else if (ctx->FragmentProgram._Enabled) {
-      /* use user-defined vertex program */
+      /* Use user-defined fragment program */
       _mesa_reference_fragprog(ctx, &ctx->FragmentProgram._Current,
                                ctx->FragmentProgram.Current);
    }
    else if (ctx->FragmentProgram._MaintainTexEnvProgram) {
-      /* Use fragment program generated from fixed-function state.
-       */
+      /* Use fragment program generated from fixed-function state */
       _mesa_reference_fragprog(ctx, &ctx->FragmentProgram._Current,
                                _mesa_get_fixed_func_fragment_program(ctx));
       _mesa_reference_fragprog(ctx, &ctx->FragmentProgram._TexEnvProgram,
                                ctx->FragmentProgram._Current);
    }
    else {
-      /* no fragment program */
+      /* No fragment program */
       _mesa_reference_fragprog(ctx, &ctx->FragmentProgram._Current, NULL);
    }
 
    if (gsProg && gsProg->LinkStatus && gsProg->GeometryProgram) {
-      /* Use shader programs */
+      /* Use GLSL geometry shader */
       _mesa_reference_geomprog(ctx, &ctx->GeometryProgram._Current,
                                gsProg->GeometryProgram);
    } else {
-      /* no fragment program */
+      /* No geometry program */
       _mesa_reference_geomprog(ctx, &ctx->GeometryProgram._Current, NULL);
    }
 
@@ -279,18 +279,17 @@ update_program(struct gl_context *ctx)
     * fragprog inputs.
     */
    if (vsProg && vsProg->LinkStatus && vsProg->VertexProgram) {
-      /* Use shader programs */
+      /* Use GLSL vertex shader */
       _mesa_reference_vertprog(ctx, &ctx->VertexProgram._Current,
-                            vsProg->VertexProgram);
+                               vsProg->VertexProgram);
    }
    else if (ctx->VertexProgram._Enabled) {
-      /* use user-defined vertex program */
+      /* Use user-defined vertex program */
       _mesa_reference_vertprog(ctx, &ctx->VertexProgram._Current,
                                ctx->VertexProgram.Current);
    }
    else if (ctx->VertexProgram._MaintainTnlProgram) {
-      /* Use vertex program generated from fixed-function state.
-       */
+      /* Use vertex program generated from fixed-function state */
       _mesa_reference_vertprog(ctx, &ctx->VertexProgram._Current,
                                _mesa_get_fixed_func_vertex_program(ctx));
       _mesa_reference_vertprog(ctx, &ctx->VertexProgram._TnlProgram,
