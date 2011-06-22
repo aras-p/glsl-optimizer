@@ -33,6 +33,7 @@
 #include "intel_screen.h"
 
 struct intel_context;
+struct intel_texture_image;
 
 /**
  * Intel renderbuffer, derived from gl_renderbuffer.
@@ -174,12 +175,23 @@ intel_create_wrapped_renderbuffer(struct gl_context * ctx,
 				  int width, int height,
 				  gl_format format);
 
+GLboolean
+intel_alloc_renderbuffer_storage(struct gl_context * ctx,
+				 struct gl_renderbuffer *rb,
+                                 GLenum internalFormat,
+                                 GLuint width, GLuint height);
+
 extern void
 intel_fbo_init(struct intel_context *intel);
 
 
 extern void
 intel_flip_renderbuffers(struct gl_framebuffer *fb);
+
+void
+intel_renderbuffer_set_draw_offset(struct intel_renderbuffer *irb,
+				   struct intel_texture_image *intel_image,
+				   int zoffset);
 
 uint32_t
 intel_renderbuffer_tile_offsets(struct intel_renderbuffer *irb,

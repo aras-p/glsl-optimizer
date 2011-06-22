@@ -111,7 +111,7 @@ intel_get_pointer(struct gl_context * ctx, struct gl_renderbuffer *rb,
  * Called via glRenderbufferStorageEXT() to set the format and allocate
  * storage for a user-created renderbuffer.
  */
-static GLboolean
+GLboolean
 intel_alloc_renderbuffer_storage(struct gl_context * ctx, struct gl_renderbuffer *rb,
                                  GLenum internalFormat,
                                  GLuint width, GLuint height)
@@ -582,7 +582,7 @@ intel_wrap_texture(struct gl_context * ctx, struct gl_texture_image *texImage)
    return irb;
 }
 
-static void
+void
 intel_renderbuffer_set_draw_offset(struct intel_renderbuffer *irb,
 				   struct intel_texture_image *intel_image,
 				   int zoffset)
