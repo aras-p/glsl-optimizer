@@ -418,29 +418,44 @@ update_color(struct gl_context *ctx)
    ctx->Color._LogicOpEnabled = _mesa_rgba_logicop_enabled(ctx);
 }
 
+
+/**
+ * Update the ctx->Color._ClampFragmentColor field
+ */
 static void
 update_clamp_fragment_color(struct gl_context *ctx)
 {
-   if(ctx->Color.ClampFragmentColor == GL_FIXED_ONLY_ARB)
-      ctx->Color._ClampFragmentColor = !ctx->DrawBuffer || !ctx->DrawBuffer->Visual.floatMode;
+   if (ctx->Color.ClampFragmentColor == GL_FIXED_ONLY_ARB)
+      ctx->Color._ClampFragmentColor =
+         !ctx->DrawBuffer || !ctx->DrawBuffer->Visual.floatMode;
    else
       ctx->Color._ClampFragmentColor = ctx->Color.ClampFragmentColor;
 }
 
+
+/**
+ * Update the ctx->Color._ClampVertexColor field
+ */
 static void
 update_clamp_vertex_color(struct gl_context *ctx)
 {
-   if(ctx->Light.ClampVertexColor == GL_FIXED_ONLY_ARB)
-      ctx->Light._ClampVertexColor = !ctx->DrawBuffer || !ctx->DrawBuffer->Visual.floatMode;
+   if (ctx->Light.ClampVertexColor == GL_FIXED_ONLY_ARB)
+      ctx->Light._ClampVertexColor =
+         !ctx->DrawBuffer || !ctx->DrawBuffer->Visual.floatMode;
    else
       ctx->Light._ClampVertexColor = ctx->Light.ClampVertexColor;
 }
 
+
+/**
+ * Update the ctx->Color._ClampReadColor field
+ */
 static void
 update_clamp_read_color(struct gl_context *ctx)
 {
-   if(ctx->Color.ClampReadColor == GL_FIXED_ONLY_ARB)
-      ctx->Color._ClampReadColor = !ctx->ReadBuffer || !ctx->ReadBuffer->Visual.floatMode;
+   if (ctx->Color.ClampReadColor == GL_FIXED_ONLY_ARB)
+      ctx->Color._ClampReadColor =
+         !ctx->ReadBuffer || !ctx->ReadBuffer->Visual.floatMode;
    else
       ctx->Color._ClampReadColor = ctx->Color.ClampReadColor;
 }
