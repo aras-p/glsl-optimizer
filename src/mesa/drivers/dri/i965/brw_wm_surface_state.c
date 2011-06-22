@@ -73,7 +73,7 @@ translate_tex_target(GLenum target)
 uint32_t
 brw_format_for_mesa_format(gl_format mesa_format)
 {
-   uint32_t table[MESA_FORMAT_COUNT] =
+   static const uint32_t table[MESA_FORMAT_COUNT] =
    {
       [MESA_FORMAT_L8] = BRW_SURFACEFORMAT_L8_UNORM,
       [MESA_FORMAT_I8] = BRW_SURFACEFORMAT_I8_UNORM,
