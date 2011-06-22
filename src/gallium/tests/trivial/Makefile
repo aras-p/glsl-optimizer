@@ -11,7 +11,12 @@ INCLUDES = \
 	-I$(TOP)/src/gallium/winsys \
 	$(PROG_INCLUDES)
 
-LINKS = \
+ifeq ($(MESA_LLVM),1)
+LINKS = $(TOP)/src/gallium/drivers/llvmpipe/libllvmpipe.a
+LDFLAGS += $(LLVM_LDFLAGS)
+endif
+
+LINKS += \
 	$(TOP)/src/gallium/drivers/rbug/librbug.a \
 	$(TOP)/src/gallium/drivers/trace/libtrace.a \
 	$(TOP)/src/gallium/drivers/galahad/libgalahad.a \
@@ -46,4 +51,4 @@ $(OBJECTS): %.o: %.c
 	$(CC) -c $(INCLUDES) $(CFLAGS) $(DEFINES) $(PROG_DEFINES) $< -o $@
 
 $(PROGS): %: %.o $(LINKS)
-	$(CC) $(LDFLAGS) $< $(LINKS) -lm -lpthread -ldl -o $@
+	$(CC) $(LDFLAGS) $< $(LINKS) $(LLVM_LIBS) -lm -lpthread -ldl -o $@
