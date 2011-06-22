@@ -659,6 +659,14 @@ intel_get_tex_image(struct gl_context * ctx, GLenum target, GLint level,
       assert(intelImage->base.Data);
    }
 
+   if (intelImage->stencil_rb) {
+      /*
+       * The texture has packed depth/stencil format, but uses separate
+       * stencil. The texture's embedded stencil buffer contains the real
+       * stencil data, so copy that into the miptree.
+       */
+      intel_tex_image_s8z24_gather(intel, intelImage);
+   }
 
    if (compressed) {
       _mesa_get_compressed_teximage(ctx, target, level, pixels,
