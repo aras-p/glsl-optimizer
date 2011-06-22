@@ -32,6 +32,29 @@
 #include "brw_state.h"
 #include "intel_batchbuffer.h"
 #include "main/imports.h"
+#include "../glsl/ralloc.h"
+
+static void
+brw_track_state_batch(struct brw_context *brw,
+		      enum state_struct_type type,
+		      uint32_t offset,
+		      int size)
+{
+   struct intel_batchbuffer *batch = &brw->intel.batch;
+
+   if (!brw->state_batch_list) {
+      /* Our structs are always aligned to at least 32 bytes, so
+       * our array doesn't need to be any larger
+       */
+      brw->state_batch_list = ralloc_size(brw, sizeof(*brw->state_batch_list) *
+					  batch->bo->size / 32);
+   }
+
+   brw->state_batch_list[brw->state_batch_count].offset = offset;
+   brw->state_batch_list[brw->state_batch_count].size = size;
+   brw->state_batch_list[brw->state_batch_count].type = type;
+   brw->state_batch_count++;
+}
 
 /**
  * Allocates a block of space in the batchbuffer for indirect state.
@@ -71,6 +94,9 @@ brw_state_batch(struct brw_context *brw,
    }
 
    batch->state_batch_offset = offset;
+
+   if (unlikely(INTEL_DEBUG & DEBUG_BATCH))
+      brw_track_state_batch(brw, type, offset, size);
 
    *out_offset = offset;
    return batch->map + (offset>>2);

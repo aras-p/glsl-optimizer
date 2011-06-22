@@ -768,6 +768,14 @@ struct brw_context
 
    int num_prepare_atoms, num_emit_atoms;
    struct brw_tracked_state prepare_atoms[64], emit_atoms[64];
+
+   /* If (INTEL_DEBUG & DEBUG_BATCH) */
+   struct {
+      uint32_t offset;
+      uint32_t size;
+      enum state_struct_type type;
+   } *state_batch_list;
+   int state_batch_count;
 };
 
 
