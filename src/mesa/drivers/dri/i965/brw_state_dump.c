@@ -31,6 +31,10 @@
 #include "brw_context.h"
 #include "brw_defines.h"
 
+static void
+batch_out(struct brw_context *brw, const char *name, uint32_t offset,
+	  int index, char *fmt, ...) PRINTFLIKE(5, 6);
+
 /**
  * Prints out a header, the contents, and the message associated with
  * the hardware state data given.
@@ -51,6 +55,21 @@ state_out(const char *name, void *data, uint32_t hw_offset, int index,
     va_start(va, fmt);
     vfprintf(stderr, fmt, va);
     va_end(va);
+}
+
+static void
+batch_out(struct brw_context *brw, const char *name, uint32_t offset,
+	  int index, char *fmt, ...)
+{
+   struct intel_context *intel = &brw->intel;
+   uint32_t *data = intel->batch.bo->virtual + offset;
+   va_list va;
+
+   fprintf(stderr, "0x%08x:      0x%08x: %8s: ",
+	   offset + index * 4, data[index], name);
+   va_start(va, fmt);
+   vfprintf(stderr, fmt, va);
+   va_end(va);
 }
 
 /** Generic, undecoded state buffer debug printout */
@@ -295,24 +314,20 @@ static void dump_sf_viewport_state(struct brw_context *brw,
 {
    struct intel_context *intel = &brw->intel;
    const char *name = "SF VP";
-   struct brw_sf_viewport *vp;
-   uint32_t vp_off;
+   struct brw_sf_viewport *vp = intel->batch.bo->virtual + offset;
 
    assert(intel->gen < 7);
 
-   vp = intel->batch.bo->virtual + offset;
-   vp_off = intel->batch.bo->offset + offset;
+   batch_out(brw, name, offset, 0, "m00 = %f\n", vp->viewport.m00);
+   batch_out(brw, name, offset, 1, "m11 = %f\n", vp->viewport.m11);
+   batch_out(brw, name, offset, 2, "m22 = %f\n", vp->viewport.m22);
+   batch_out(brw, name, offset, 3, "m30 = %f\n", vp->viewport.m30);
+   batch_out(brw, name, offset, 4, "m31 = %f\n", vp->viewport.m31);
+   batch_out(brw, name, offset, 5, "m32 = %f\n", vp->viewport.m32);
 
-   state_out(name, vp, vp_off, 0, "m00 = %f\n", vp->viewport.m00);
-   state_out(name, vp, vp_off, 1, "m11 = %f\n", vp->viewport.m11);
-   state_out(name, vp, vp_off, 2, "m22 = %f\n", vp->viewport.m22);
-   state_out(name, vp, vp_off, 3, "m30 = %f\n", vp->viewport.m30);
-   state_out(name, vp, vp_off, 4, "m31 = %f\n", vp->viewport.m31);
-   state_out(name, vp, vp_off, 5, "m32 = %f\n", vp->viewport.m32);
-
-   state_out(name, vp, vp_off, 6, "top left = %d,%d\n",
+   batch_out(brw, name, offset, 6, "top left = %d,%d\n",
 	     vp->scissor.xmin, vp->scissor.ymin);
-   state_out(name, vp, vp_off, 7, "bottom right = %d,%d\n",
+   batch_out(brw, name, offset, 7, "bottom right = %d,%d\n",
 	     vp->scissor.xmax, vp->scissor.ymax);
 }
 
@@ -321,18 +336,14 @@ static void dump_clip_viewport_state(struct brw_context *brw,
 {
    struct intel_context *intel = &brw->intel;
    const char *name = "CLIP VP";
-   struct brw_clipper_viewport *vp;
-   uint32_t vp_off;
+   struct brw_clipper_viewport *vp = intel->batch.bo->virtual + offset;
 
    assert(intel->gen < 7);
 
-   vp = intel->batch.bo->virtual + offset;
-   vp_off = intel->batch.bo->offset + offset;
-
-   state_out(name, vp, vp_off, 0, "xmin = %f\n", vp->xmin);
-   state_out(name, vp, vp_off, 1, "xmax = %f\n", vp->xmax);
-   state_out(name, vp, vp_off, 2, "ymin = %f\n", vp->ymin);
-   state_out(name, vp, vp_off, 3, "ymax = %f\n", vp->ymax);
+   batch_out(brw, name, offset, 0, "xmin = %f\n", vp->xmin);
+   batch_out(brw, name, offset, 1, "xmax = %f\n", vp->xmax);
+   batch_out(brw, name, offset, 2, "ymin = %f\n", vp->ymin);
+   batch_out(brw, name, offset, 3, "ymax = %f\n", vp->ymax);
 }
 
 static void dump_sf_clip_viewport_state(struct brw_context *brw,
@@ -340,98 +351,77 @@ static void dump_sf_clip_viewport_state(struct brw_context *brw,
 {
    struct intel_context *intel = &brw->intel;
    const char *name = "SF_CLIP VP";
-   struct gen7_sf_clip_viewport *vp;
-   uint32_t vp_off;
+   struct gen7_sf_clip_viewport *vp = intel->batch.bo->virtual + offset;
 
    assert(intel->gen >= 7);
 
-   vp = intel->batch.bo->virtual + offset;
-   vp_off = intel->batch.bo->offset + offset;
-
-   state_out(name, vp, vp_off, 0, "m00 = %f\n", vp->viewport.m00);
-   state_out(name, vp, vp_off, 1, "m11 = %f\n", vp->viewport.m11);
-   state_out(name, vp, vp_off, 2, "m22 = %f\n", vp->viewport.m22);
-   state_out(name, vp, vp_off, 3, "m30 = %f\n", vp->viewport.m30);
-   state_out(name, vp, vp_off, 4, "m31 = %f\n", vp->viewport.m31);
-   state_out(name, vp, vp_off, 5, "m32 = %f\n", vp->viewport.m32);
-   state_out(name, vp, vp_off, 6, "guardband xmin = %f\n", vp->guardband.xmin);
-   state_out(name, vp, vp_off, 7, "guardband xmax = %f\n", vp->guardband.xmax);
-   state_out(name, vp, vp_off, 8, "guardband ymin = %f\n", vp->guardband.ymin);
-   state_out(name, vp, vp_off, 9, "guardband ymax = %f\n", vp->guardband.ymax);
+   batch_out(brw, name, offset, 0, "m00 = %f\n", vp->viewport.m00);
+   batch_out(brw, name, offset, 1, "m11 = %f\n", vp->viewport.m11);
+   batch_out(brw, name, offset, 2, "m22 = %f\n", vp->viewport.m22);
+   batch_out(brw, name, offset, 3, "m30 = %f\n", vp->viewport.m30);
+   batch_out(brw, name, offset, 4, "m31 = %f\n", vp->viewport.m31);
+   batch_out(brw, name, offset, 5, "m32 = %f\n", vp->viewport.m32);
+   batch_out(brw, name, offset, 6, "guardband xmin = %f\n", vp->guardband.xmin);
+   batch_out(brw, name, offset, 7, "guardband xmax = %f\n", vp->guardband.xmax);
+   batch_out(brw, name, offset, 8, "guardband ymin = %f\n", vp->guardband.ymin);
+   batch_out(brw, name, offset, 9, "guardband ymax = %f\n", vp->guardband.ymax);
 }
 
 
 static void dump_cc_viewport_state(struct brw_context *brw, uint32_t offset)
 {
-   struct intel_context *intel = &brw->intel;
    const char *name = "CC VP";
-   struct brw_cc_viewport *vp;
-   uint32_t vp_off;
+   struct brw_cc_viewport *vp = brw->intel.batch.bo->virtual + offset;
 
-   vp = intel->batch.bo->virtual + offset;
-   vp_off = intel->batch.bo->offset + offset;
-
-   state_out(name, vp, vp_off, 0, "min_depth = %f\n", vp->min_depth);
-   state_out(name, vp, vp_off, 1, "max_depth = %f\n", vp->max_depth);
+   batch_out(brw, name, offset, 0, "min_depth = %f\n", vp->min_depth);
+   batch_out(brw, name, offset, 1, "max_depth = %f\n", vp->max_depth);
 }
 
 static void dump_depth_stencil_state(struct brw_context *brw, uint32_t offset)
 {
-   struct intel_context *intel = &brw->intel;
-   const char *name = "DEPTH STENCIL";
-   struct gen6_depth_stencil_state *ds;
-   uint32_t ds_off;
+   const char *name = "D_S";
+   struct gen6_depth_stencil_state *ds = brw->intel.batch.bo->virtual + offset;
 
-   ds = intel->batch.bo->virtual + offset;
-   ds_off = intel->batch.bo->offset + offset;
-
-   state_out(name, ds, ds_off, 0, "stencil %sable, func %d, write %sable\n",
-		ds->ds0.stencil_enable ? "en" : "dis",
-		ds->ds0.stencil_func,
-		ds->ds0.stencil_write_enable ? "en" : "dis");
-   state_out(name, ds, ds_off, 1, "stencil test mask 0x%x, write mask 0x%x\n",
-		ds->ds1.stencil_test_mask, ds->ds1.stencil_write_mask);
-   state_out(name, ds, ds_off, 2, "depth test %sable, func %d, write %sable\n",
-		ds->ds2.depth_test_enable ? "en" : "dis",
-		ds->ds2.depth_test_func,
-		ds->ds2.depth_write_enable ? "en" : "dis");
+   batch_out(brw, name, offset, 0,
+	     "stencil %sable, func %d, write %sable\n",
+	     ds->ds0.stencil_enable ? "en" : "dis",
+	     ds->ds0.stencil_func,
+	     ds->ds0.stencil_write_enable ? "en" : "dis");
+   batch_out(brw, name, offset, 1,
+	     "stencil test mask 0x%x, write mask 0x%x\n",
+	     ds->ds1.stencil_test_mask, ds->ds1.stencil_write_mask);
+   batch_out(brw, name, offset, 2,
+	     "depth test %sable, func %d, write %sable\n",
+	     ds->ds2.depth_test_enable ? "en" : "dis",
+	     ds->ds2.depth_test_func,
+	     ds->ds2.depth_write_enable ? "en" : "dis");
 }
 
 static void dump_cc_state(struct brw_context *brw, uint32_t offset)
 {
    const char *name = "CC";
-   struct gen6_color_calc_state *cc;
-   uint32_t cc_off;
-   dri_bo *bo = brw->intel.batch.bo;
+   struct gen6_color_calc_state *cc = brw->intel.batch.bo->virtual + offset;
 
-   cc = bo->virtual + offset;
-   cc_off = bo->offset + offset;
-
-   state_out(name, cc, cc_off, 0, "alpha test format %s, round disable %d, stencil ref %d,"
-		"bf stencil ref %d\n",
-		cc->cc0.alpha_test_format ? "FLOAT32" : "UNORM8",
-		cc->cc0.round_disable,
-		cc->cc0.stencil_ref,
-		cc->cc0.bf_stencil_ref);
-   state_out(name, cc, cc_off, 1, "\n");
-   state_out(name, cc, cc_off, 2, "constant red %f\n", cc->constant_r);
-   state_out(name, cc, cc_off, 3, "constant green %f\n", cc->constant_g);
-   state_out(name, cc, cc_off, 4, "constant blue %f\n", cc->constant_b);
-   state_out(name, cc, cc_off, 5, "constant alpha %f\n", cc->constant_a);
+   batch_out(brw, name, offset, 0,
+	     "alpha test format %s, round disable %d, stencil ref %d, "
+	     "bf stencil ref %d\n",
+	     cc->cc0.alpha_test_format ? "FLOAT32" : "UNORM8",
+	     cc->cc0.round_disable,
+	     cc->cc0.stencil_ref,
+	     cc->cc0.bf_stencil_ref);
+   batch_out(brw, name, offset, 1, "\n");
+   batch_out(brw, name, offset, 2, "constant red %f\n", cc->constant_r);
+   batch_out(brw, name, offset, 3, "constant green %f\n", cc->constant_g);
+   batch_out(brw, name, offset, 4, "constant blue %f\n", cc->constant_b);
+   batch_out(brw, name, offset, 5, "constant alpha %f\n", cc->constant_a);
 }
 
 static void dump_blend_state(struct brw_context *brw, uint32_t offset)
 {
-   struct intel_context *intel = &brw->intel;
    const char *name = "BLEND";
-   struct gen6_blend_state *blend;
-   uint32_t blend_off;
 
-   blend = intel->batch.bo->virtual + offset;
-   blend_off = intel->batch.bo->offset + offset;
-
-   state_out(name, blend, blend_off, 0, "\n");
-   state_out(name, blend, blend_off, 1, "\n");
+   batch_out(brw, name, offset, 0, "\n");
+   batch_out(brw, name, offset, 1, "\n");
 }
 
 static void brw_debug_prog(struct brw_context *brw,
