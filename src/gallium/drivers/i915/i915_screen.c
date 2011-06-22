@@ -264,6 +264,8 @@ i915_is_format_supported(struct pipe_screen *screen,
    static const enum pipe_format tex_supported[] = {
       PIPE_FORMAT_B8G8R8A8_UNORM,
       PIPE_FORMAT_B8G8R8X8_UNORM,
+      PIPE_FORMAT_R8G8B8A8_UNORM,
+      PIPE_FORMAT_R8G8B8X8_UNORM,
       PIPE_FORMAT_B5G6R5_UNORM,
       PIPE_FORMAT_L8_UNORM,
       PIPE_FORMAT_A8_UNORM,
@@ -283,7 +285,11 @@ i915_is_format_supported(struct pipe_screen *screen,
    };
    static const enum pipe_format render_supported[] = {
       PIPE_FORMAT_B8G8R8A8_UNORM,
+      PIPE_FORMAT_R8G8B8A8_UNORM,
       PIPE_FORMAT_B5G6R5_UNORM,
+      PIPE_FORMAT_L8_UNORM,
+      PIPE_FORMAT_A8_UNORM,
+      PIPE_FORMAT_I8_UNORM,
       PIPE_FORMAT_NONE  /* list terminator */
    };
    static const enum pipe_format depth_supported[] = {
