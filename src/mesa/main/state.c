@@ -192,7 +192,10 @@ update_arrays( struct gl_context *ctx )
 static void
 update_program_enables(struct gl_context *ctx)
 {
-   /* These _Enabled flags indicate if the program is enabled AND valid. */
+   /* These _Enabled flags indicate if the user-defined ARB/NV vertex/fragment
+    * program is enabled AND valid.  Similarly for ATI fragment shaders.
+    * GLSL shaders not relevant here.
+    */
    ctx->VertexProgram._Enabled = ctx->VertexProgram.Enabled
       && ctx->VertexProgram.Current->Base.Instructions;
    ctx->FragmentProgram._Enabled = ctx->FragmentProgram.Enabled
