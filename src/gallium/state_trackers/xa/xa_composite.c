@@ -111,7 +111,7 @@ blend_for_op(struct xa_composite_blend *blend,
      */
 
     if (dst_pic &&
-	xa_format_a(xa_surface_format(dst_pic->srf)) == 0 &&
+	xa_format_a(dst_pic->pict_format) == 0 &&
 	blend->alpha_dst) {
 	if (blend->rgb_src == PIPE_BLENDFACTOR_DST_ALPHA)
 	    blend->rgb_src = PIPE_BLENDFACTOR_ONE;
@@ -125,7 +125,7 @@ blend_for_op(struct xa_composite_blend *blend,
      * channels multiplied by the source picture's alpha.
      */
     if (mask_pic && mask_pic->component_alpha &&
-	xa_format_rgb(xa_surface_format(mask_pic->srf)) &&
+	xa_format_rgb(mask_pic->pict_format) &&
 	blend->alpha_src) {
 	if (blend->rgb_dst == PIPE_BLENDFACTOR_SRC_ALPHA) {
 	    blend->rgb_dst = PIPE_BLENDFACTOR_SRC_COLOR;
@@ -184,34 +184,34 @@ xa_is_filter_accelerated(struct xa_picture *pic)
 }
 
 int
-xa_composite_is_accelerated(const struct xa_composite *comp)
+xa_composite_check_accelerated(const struct xa_composite *comp)
 {
     struct xa_composite_blend blend;
     struct xa_picture *src_pic = comp->src;
 
     if (!xa_is_filter_accelerated(src_pic) ||
 	!xa_is_filter_accelerated(comp->mask)) {
-	return 0;
+	return XA_ERR_INVAL;
     }
 
 
     if (src_pic->src_pict) {
 	if (src_pic->src_pict->type != xa_src_pict_solid_fill)
-	    return 0;
+	    return XA_ERR_INVAL;
     }
 
     if (blend_for_op(&blend, comp->op, comp->src, comp->mask, comp->dst)) {
 	struct xa_picture *mask = comp->mask;
 	if (mask && mask->component_alpha &&
-	    xa_format_rgb(xa_surface_format(mask->srf))) {
+	    xa_format_rgb(mask->pict_format)) {
 	    if (blend.alpha_src && blend.rgb_src != PIPE_BLENDFACTOR_ZERO) {
-		return 0;
+		return XA_ERR_INVAL;
 	    }
 	}
 
-	return 1;
+	return XA_ERR_NONE;
     }
-    return 0;
+    return XA_ERR_INVAL;
 }
 
 static void
@@ -247,11 +247,14 @@ picture_format_fixups(struct xa_picture *src_pic,
     enum xa_formats src_hw_format, src_pic_format;
     enum xa_surface_type src_hw_type, src_pic_type;
 
+    if (!src)
+	return 0;
+
     src_hw_format = xa_surface_format(src);
     src_pic_format = src_pic->pict_format;
 
-    if (src_hw_format == src_pic_format) {
-	if (src_pic->pict_format == xa_format_a8) {
+    if (!src || src_hw_format == src_pic_format) {
+	if (src_pic_format == xa_format_a8) {
 	    if (mask)
 		return FS_MASK_LUMINANCE;
 	    else if (dst_pic->pict_format != xa_format_a8) {
@@ -279,8 +282,8 @@ picture_format_fixups(struct xa_picture *src_pic,
     if (!swizzle && (src_hw_type != src_pic_type))
 	return 0;
 
-    set_alpha = (xa_format_type_is_color(src_hw_type) &&
-		 xa_format_a(src_hw_type) == 0);
+    set_alpha = (xa_format_type_is_color(src_pic_format) &&
+		 xa_format_a(src_pic_type) == 0);
 
     if (set_alpha)
 	ret |= mask ? FS_MASK_SET_ALPHA : FS_SRC_SET_ALPHA;
@@ -442,6 +445,7 @@ xa_composite_prepare(struct xa_context *ctx,
 	renderer_begin_solid(ctx);
     } else {
 	renderer_begin_textures(ctx);
+	ctx->comp = comp;
     }
 
     xa_surface_psurf_destroy(dst_srf);
@@ -463,7 +467,7 @@ void xa_composite_rect(struct xa_context *ctx,
 
 	if (comp->src->has_transform)
 	    src_matrix = comp->src->transform;
-	if (comp->mask->has_transform)
+	if (comp->mask && comp->mask->has_transform)
 	    mask_matrix = comp->mask->transform;
 
 	renderer_texture(ctx, pos, width, height,

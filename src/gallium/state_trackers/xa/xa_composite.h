@@ -103,6 +103,7 @@ struct xa_picture {
 struct xa_composite {
     struct xa_picture *src, *mask, *dst;
     int op;
+    int no_solid;
 };
 
 struct xa_composite_allocation {
@@ -117,10 +118,18 @@ struct xa_composite_allocation {
 
 extern const struct xa_composite_allocation *
 xa_composite_allocation(void);
+
+/*
+ * This function checks most things except the format of the hardware
+ * surfaces, since they are generally not available at the time this
+ * function is called. Returns usual XA error codes.
+ */
 extern int
-xa_composite_is_accelerated(const struct xa_composite *comp);
+xa_composite_check_accelerated(const struct xa_composite *comp);
+
 extern int
 xa_composite_prepare(struct xa_context *ctx, const struct xa_composite *comp);
+
 extern void
 xa_composite_rect(struct xa_context *ctx,
 		  int srcX, int srcY, int maskX, int maskY,
