@@ -481,9 +481,9 @@ static int r600_get_shader_param(struct pipe_screen* pscreen, unsigned shader, e
 		return 8; /* FIXME */
 	case PIPE_SHADER_CAP_MAX_INPUTS:
 		if(shader == PIPE_SHADER_FRAGMENT)
-			return 10;
+			return 34;
 		else
-			return 16;
+			return 32;
 	case PIPE_SHADER_CAP_MAX_TEMPS:
 		return 256; /* Max native temporaries. */
 	case PIPE_SHADER_CAP_MAX_ADDRS:
