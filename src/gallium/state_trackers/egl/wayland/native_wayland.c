@@ -195,13 +195,11 @@ wayland_window_surface_handle_resize(struct wayland_surface *surface)
             wl_buffer_destroy(surface->buffer[i]);
          surface->buffer[i] = NULL;
       }
+
+      surface->dx = surface->win->dx;
+      surface->dy = surface->win->dy;
    }
    pipe_resource_reference(&front_resource, NULL);
-
-   surface->dx = surface->win->dx;
-   surface->dy = surface->win->dy;
-   surface->win->dx = 0;
-   surface->win->dy = 0;
 }
 
 static boolean
