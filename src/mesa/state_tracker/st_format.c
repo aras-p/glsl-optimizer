@@ -1124,6 +1124,87 @@ find_supported_format(struct pipe_screen *screen,
    return PIPE_FORMAT_NONE;
 }
 
+struct exact_format_mapping
+{
+   GLenum format;
+   GLenum type;
+   enum pipe_format pformat;
+};
+
+static const struct exact_format_mapping rgba8888_tbl[] =
+{
+   { GL_RGBA,     GL_UNSIGNED_INT_8_8_8_8,        PIPE_FORMAT_A8B8G8R8_UNORM },
+   { GL_ABGR_EXT, GL_UNSIGNED_INT_8_8_8_8_REV,    PIPE_FORMAT_A8B8G8R8_UNORM },
+   { GL_RGBA,     GL_UNSIGNED_INT_8_8_8_8_REV,    PIPE_FORMAT_R8G8B8A8_UNORM },
+   { GL_ABGR_EXT, GL_UNSIGNED_INT_8_8_8_8,        PIPE_FORMAT_R8G8B8A8_UNORM },
+   { GL_BGRA,     GL_UNSIGNED_INT_8_8_8_8,        PIPE_FORMAT_A8R8G8B8_UNORM },
+   { GL_BGRA,     GL_UNSIGNED_INT_8_8_8_8_REV,    PIPE_FORMAT_B8G8R8A8_UNORM },
+   { GL_RGBA,     GL_UNSIGNED_BYTE,               PIPE_FORMAT_R8G8B8A8_UNORM },
+   { GL_ABGR_EXT, GL_UNSIGNED_BYTE,               PIPE_FORMAT_A8B8G8R8_UNORM },
+   { GL_BGRA,     GL_UNSIGNED_BYTE,               PIPE_FORMAT_B8G8R8A8_UNORM },
+   { 0,           0,                              0                          }
+};
+
+static const struct exact_format_mapping rgbx8888_tbl[] =
+{
+   { GL_RGBA,     GL_UNSIGNED_INT_8_8_8_8,        PIPE_FORMAT_X8B8G8R8_UNORM },
+   { GL_ABGR_EXT, GL_UNSIGNED_INT_8_8_8_8_REV,    PIPE_FORMAT_X8B8G8R8_UNORM },
+   { GL_RGBA,     GL_UNSIGNED_INT_8_8_8_8_REV,    PIPE_FORMAT_R8G8B8X8_UNORM },
+   { GL_ABGR_EXT, GL_UNSIGNED_INT_8_8_8_8,        PIPE_FORMAT_R8G8B8X8_UNORM },
+   { GL_BGRA,     GL_UNSIGNED_INT_8_8_8_8,        PIPE_FORMAT_X8R8G8B8_UNORM },
+   { GL_BGRA,     GL_UNSIGNED_INT_8_8_8_8_REV,    PIPE_FORMAT_B8G8R8X8_UNORM },
+   { GL_RGBA,     GL_UNSIGNED_BYTE,               PIPE_FORMAT_R8G8B8X8_UNORM },
+   { GL_ABGR_EXT, GL_UNSIGNED_BYTE,               PIPE_FORMAT_X8B8G8R8_UNORM },
+   { GL_BGRA,     GL_UNSIGNED_BYTE,               PIPE_FORMAT_B8G8R8X8_UNORM },
+   { 0,           0,                              0                          }
+};
+
+static const struct exact_format_mapping rgba1010102_tbl[] =
+{
+   { GL_BGRA,     GL_UNSIGNED_INT_2_10_10_10_REV, PIPE_FORMAT_B10G10R10A2_UNORM },
+   { GL_RGBA,     GL_UNSIGNED_INT_2_10_10_10_REV, PIPE_FORMAT_R10G10B10A2_UNORM },
+   { GL_ABGR_EXT, GL_UNSIGNED_INT_10_10_10_2,     PIPE_FORMAT_R10G10B10A2_UNORM },
+   { GL_ABGR_EXT, GL_UNSIGNED_INT,                PIPE_FORMAT_R10G10B10A2_UNORM },
+   { 0,           0,                              0                             }
+};
+
+/**
+ * If there is an exact pipe_format match for {internalFormat, format, type}
+ * return that, otherwise return PIPE_FORMAT_NONE so we can do fuzzy matching.
+ */
+static enum pipe_format
+find_exact_format(GLint internalFormat, GLenum format, GLenum type)
+{
+   uint i;
+   const struct exact_format_mapping* tbl;
+
+   if (format == GL_NONE || type == GL_NONE)
+      return PIPE_FORMAT_NONE;
+
+   switch (internalFormat) {
+   case 4:
+   case GL_RGBA:
+   case GL_RGBA8:
+      tbl = rgba8888_tbl;
+      break;
+   case 3:
+   case GL_RGB:
+   case GL_RGB8:
+      tbl = rgbx8888_tbl;
+      break;
+   case GL_RGB10_A2:
+      tbl = rgba1010102_tbl;
+      break;
+   default:
+      return PIPE_FORMAT_NONE;
+   }
+
+   for (i = 0; tbl[i].format; i++)
+      if (tbl[i].format == format && tbl[i].type == type)
+         return tbl[i].pformat;
+
+   return PIPE_FORMAT_NONE;
+}
 
 /**
  * Given an OpenGL internalFormat value for a texture or surface, return
@@ -1140,17 +1221,26 @@ find_supported_format(struct pipe_screen *screen,
  */
 enum pipe_format
 st_choose_format(struct pipe_screen *screen, GLenum internalFormat,
+                 GLenum format, GLenum type,
                  enum pipe_texture_target target, unsigned sample_count,
                  unsigned bindings)
 {
    GET_CURRENT_CONTEXT(ctx); /* XXX this should be a function parameter */
    int i, j;
+   enum pipe_format pf;
 
    /* can't render to compressed formats at this time */
    if (_mesa_is_compressed_format(ctx, internalFormat)
        && (bindings & ~PIPE_BIND_SAMPLER_VIEW)) {
       return PIPE_FORMAT_NONE;
    }
+
+   /* search for exact matches */
+   pf = find_exact_format(internalFormat, format, type);
+   if (pf != PIPE_FORMAT_NONE &&
+       screen->is_format_supported(screen, pf,
+                                   target, sample_count, bindings))
+      return pf;
 
    /* search table for internalFormat */
    for (i = 0; i < Elements(format_map); i++) {
@@ -1183,7 +1273,7 @@ st_choose_renderbuffer_format(struct pipe_screen *screen,
       usage = PIPE_BIND_DEPTH_STENCIL;
    else
       usage = PIPE_BIND_RENDER_TARGET;
-   return st_choose_format(screen, internalFormat, PIPE_TEXTURE_2D,
+   return st_choose_format(screen, internalFormat, GL_NONE, GL_NONE, PIPE_TEXTURE_2D,
                            sample_count, usage);
 }
 
@@ -1210,12 +1300,12 @@ st_ChooseTextureFormat_renderable(struct gl_context *ctx, GLint internalFormat,
 	 bindings |= PIPE_BIND_RENDER_TARGET;
    }
 
-   pFormat = st_choose_format(screen, internalFormat,
+   pFormat = st_choose_format(screen, internalFormat, format, type,
                               PIPE_TEXTURE_2D, 0, bindings);
 
    if (pFormat == PIPE_FORMAT_NONE) {
       /* try choosing format again, this time without render target bindings */
-      pFormat = st_choose_format(screen, internalFormat,
+      pFormat = st_choose_format(screen, internalFormat, format, type,
                                  PIPE_TEXTURE_2D, 0, PIPE_BIND_SAMPLER_VIEW);
    }
 

@@ -989,8 +989,9 @@ st_DrawPixels(struct gl_context *ctx, GLint x, GLint y,
       /* can we write to stencil if not fallback */
       if (!pipe->screen->get_param(pipe->screen, PIPE_CAP_SHADER_STENCIL_EXPORT))
 	 goto stencil_fallback;
-      
+
       tex_format = st_choose_format(st->pipe->screen, base_format(format),
+                                    GL_NONE, GL_NONE,
                                     PIPE_TEXTURE_2D,
 				    0, PIPE_BIND_SAMPLER_VIEW);
       if (tex_format == PIPE_FORMAT_Z24_UNORM_S8_USCALED)
@@ -1399,13 +1400,14 @@ st_CopyPixels(struct gl_context *ctx, GLint srcx, GLint srcy,
       /* srcFormat can't be used as a texture format */
       if (type == GL_DEPTH) {
          texFormat = st_choose_format(screen, GL_DEPTH_COMPONENT,
-                                      st->internal_target, sample_count,
-                                      PIPE_BIND_DEPTH_STENCIL);
+                                      st->internal_target, GL_NONE, GL_NONE,
+				      sample_count, PIPE_BIND_DEPTH_STENCIL);
          assert(texFormat != PIPE_FORMAT_NONE);
       }
       else {
          /* default color format */
-         texFormat = st_choose_format(screen, GL_RGBA, st->internal_target,
+         texFormat = st_choose_format(screen, GL_RGBA,
+                                      st->internal_target, GL_NONE, GL_NONE,
                                       sample_count, PIPE_BIND_SAMPLER_VIEW);
          assert(texFormat != PIPE_FORMAT_NONE);
       }
