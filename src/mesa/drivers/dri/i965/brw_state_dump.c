@@ -370,28 +370,55 @@ static void dump_binding_table(struct brw_context *brw, uint32_t offset,
    }
 }
 
-static void brw_debug_prog(struct brw_context *brw,
-			   const char *name, uint32_t prog_offset)
+static void
+dump_prog_cache(struct brw_context *brw)
 {
-   unsigned int i;
+   struct intel_context *intel = &brw->intel;
+   struct brw_cache *cache = &brw->cache;
+   unsigned int b, i;
    uint32_t *data;
 
    drm_intel_bo_map(brw->cache.bo, false);
 
-   data = brw->cache.bo->virtual + prog_offset;
+   for (b = 0; b < cache->size; b++) {
+      struct brw_cache_item *item;
 
-   for (i = 0; i < brw->cache.bo->size / 4 / 4; i++) {
-      fprintf(stderr, "%8s: 0x%08x: 0x%08x 0x%08x 0x%08x 0x%08x\n",
-	      name, (unsigned int)brw->cache.bo->offset + i * 4 * 4,
-	      data[i * 4], data[i * 4 + 1], data[i * 4 + 2], data[i * 4 + 3]);
-      /* Stop at the end of the program.  It'd be nice to keep track of the actual
-       * intended program size instead of guessing like this.
-       */
-      if (data[i * 4 + 0] == 0 &&
-	  data[i * 4 + 1] == 0 &&
-	  data[i * 4 + 2] == 0 &&
-	  data[i * 4 + 3] == 0)
-	 break;
+      for (item = cache->items[b]; item; item = item->next) {
+	 const char *name;
+	 uint32_t offset = item->offset;
+
+	 data = brw->cache.bo->virtual + item->offset;
+
+	 switch (item->cache_id) {
+	 case BRW_VS_PROG:
+	    name = "VS kernel";
+	    break;
+	 case BRW_GS_PROG:
+	    name = "GS kernel";
+	    break;
+	 case BRW_CLIP_PROG:
+	    name = "CLIP kernel";
+	    break;
+	 case BRW_SF_PROG:
+	    name = "SF kernel";
+	    break;
+	 case BRW_WM_PROG:
+	    name = "WM kernel";
+	    break;
+	 default:
+	    name = "unknown";
+	    break;
+	 }
+
+	 for (i = 0; i < item->size / 4 / 4; i++) {
+	    fprintf(stderr, "0x%08x: %8s: 0x%08x 0x%08x 0x%08x 0x%08x ",
+		    offset + i * 4 * 4,
+		    name,
+		    data[i * 4], data[i * 4 + 1], data[i * 4 + 2], data[i * 4 + 3]);
+
+	    brw_disasm(stderr, (void *)(data + i * 4), intel->gen);
+	 }
+      }
    }
 
    drm_intel_bo_unmap(brw->cache.bo);
@@ -473,27 +500,24 @@ void brw_debug_batch(struct intel_context *intel)
    if (intel->gen < 6)
        state_struct_out("VS", intel->batch.bo, brw->vs.state_offset,
 			sizeof(struct brw_vs_unit_state));
-   brw_debug_prog(brw, "VS prog", brw->vs.prog_offset);
 
    if (intel->gen < 6)
        state_struct_out("GS", intel->batch.bo, brw->gs.state_offset,
 			sizeof(struct brw_gs_unit_state));
-   if (brw->gs.prog_active) {
-      brw_debug_prog(brw, "GS prog", brw->gs.prog_offset);
-   }
 
    if (intel->gen < 6) {
       state_struct_out("SF", intel->batch.bo, brw->sf.state_offset,
 		       sizeof(struct brw_sf_unit_state));
-      brw_debug_prog(brw, "SF prog", brw->sf.prog_offset);
    }
 
    if (intel->gen < 6)
        state_struct_out("WM", intel->batch.bo, brw->wm.state_offset,
 			sizeof(struct brw_wm_unit_state));
-   brw_debug_prog(brw, "WM prog", brw->wm.prog_offset);
 
    drm_intel_bo_map(intel->batch.bo, false);
    dump_state_batch(brw);
    drm_intel_bo_unmap(intel->batch.bo);
+
+   if (0)
+      dump_prog_cache(brw);
 }
