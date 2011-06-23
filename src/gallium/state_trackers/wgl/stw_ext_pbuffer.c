@@ -268,7 +268,7 @@ wglQueryPbufferARB(HPBUFFERARB hPbuffer,
       *piValue = fb->width;
       return TRUE;
    case WGL_PBUFFER_HEIGHT_ARB:
-      *piValue = fb->width;
+      *piValue = fb->height;
       return TRUE;
    case WGL_PBUFFER_LOST_ARB:
       /* We assume that no content is ever lost due to display mode change */
