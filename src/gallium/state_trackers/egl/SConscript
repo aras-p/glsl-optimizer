@@ -41,6 +41,10 @@ else:
             sources.append(['#/src/glx/dri2.c'])
     if env['drm']:
         env.Append(CPPDEFINES = ['HAVE_DRM_BACKEND'])
+        env.Append(CPPPATH = [
+            '#/src/gbm/main',
+            '#/src/gallium/state_trackers/gbm',
+        ])
         sources.append(['drm/native_drm.c', 'drm/modeset.c'])
 
 st_egl = env.ConvenienceLibrary(
