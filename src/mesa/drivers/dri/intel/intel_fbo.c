@@ -527,7 +527,36 @@ intel_update_wrapper(struct gl_context *ctx, struct intel_renderbuffer *irb,
    irb->Base.Delete = intel_delete_renderbuffer;
    irb->Base.AllocStorage = intel_nop_alloc_storage;
 
-   return intel_update_tex_wrapper_regions(intel, irb, intel_image);
+   if (intel_image->stencil_rb) {
+      /*  The tex image has packed depth/stencil format, but is using separate
+       * stencil. */
+
+      bool ok;
+      struct intel_renderbuffer *depth_irb =
+	 intel_renderbuffer(intel_image->depth_rb);
+
+      /* Update the hiz region if necessary. */
+      ok =  intel_update_tex_wrapper_regions(intel, depth_irb, intel_image);
+      if (!ok) {
+	 return false;
+      }
+
+      /* The tex image shares its embedded depth and stencil renderbuffers with
+       * the renderbuffer wrapper. */
+      if (irb->wrapped_depth != intel_image->depth_rb) {
+	 _mesa_reference_renderbuffer(&irb->wrapped_depth,
+				      intel_image->depth_rb);
+      }
+      if (irb->wrapped_stencil != intel_image->stencil_rb) {
+	 _mesa_reference_renderbuffer(&irb->wrapped_stencil,
+				      intel_image->stencil_rb);
+      }
+
+      return true;
+
+   } else {
+      return intel_update_tex_wrapper_regions(intel, irb, intel_image);
+   }
 }
 
 /**
@@ -539,7 +568,7 @@ intel_update_tex_wrapper_regions(struct intel_context *intel,
 				 struct intel_renderbuffer *irb,
 				 struct intel_texture_image *intel_image)
 {
-   struct gl_texture_image *texImage = &intel_image->base;
+   struct gl_renderbuffer *rb = &irb->Base;
 
    /* Point the renderbuffer's region to the texture's region. */
    if (irb->region != intel_image->mt->region) {
@@ -548,14 +577,14 @@ intel_update_tex_wrapper_regions(struct intel_context *intel,
    }
 
    /* Allocate the texture's hiz region if necessary. */
-   if (intel->vtbl.is_hiz_depth_format(intel, texImage->TexFormat)
+   if (intel->vtbl.is_hiz_depth_format(intel, rb->Format)
        && !intel_image->mt->hiz_region) {
       intel_image->mt->hiz_region =
          intel_region_alloc(intel->intelScreen,
                             I915_TILING_Y,
-                            _mesa_get_format_bytes(texImage->TexFormat),
-                            texImage->Width,
-                            texImage->Height,
+                            _mesa_get_format_bytes(rb->Format),
+                            rb->Width,
+                            rb->Height,
                             GL_TRUE);
       if (!intel_image->mt->hiz_region)
          return GL_FALSE;
