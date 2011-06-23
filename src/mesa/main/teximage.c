@@ -3274,7 +3274,7 @@ compressedteximage(struct gl_context *ctx, GLuint dims,
                                           border, imageSize, &reason);
 
    if (error) {
-      _mesa_error(ctx, error, "glTexImage2D(%s)", reason);
+      _mesa_error(ctx, error, "glCompressedTexImage%uD(%s)", dims, reason);
       return;
    }
 
