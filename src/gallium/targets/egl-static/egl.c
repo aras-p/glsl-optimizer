@@ -170,7 +170,7 @@ loader_fini(void)
       struct st_module *stmod = &st_modules[i];
 
       if (stmod->stapi) {
-         stmod->stapi->destroy(stmod->stapi);
+         egl_st_destroy_api(stmod->stapi);
          stmod->stapi = NULL;
       }
       stmod->initialized = FALSE;

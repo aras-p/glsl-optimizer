@@ -25,19 +25,11 @@
  * Authors:
  *    Chia-I Wu <olv@lunarg.com>
  */
-#ifndef _EGL_ST_H_
-#define _EGL_ST_H_
-
+#include "state_tracker/st_gl_api.h"
 #include "pipe/p_compiler.h"
-#include "state_tracker/st_api.h"
 
-struct st_api *
-egl_st_create_api(enum st_api_type api);
-
-void
-egl_st_destroy_api(struct st_api *stapi);
-
-uint
-egl_st_get_profile_mask(enum st_api_type api);
-
-#endif /* _EGL_ST_H_ */
+PUBLIC struct st_api *
+st_api_create_OpenGL(void)
+{
+   return st_gl_api_create();
+}
