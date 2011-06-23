@@ -354,6 +354,22 @@ static void dump_blend_state(struct brw_context *brw, uint32_t offset)
    batch_out(brw, name, offset, 1, "\n");
 }
 
+static void dump_binding_table(struct brw_context *brw, uint32_t offset,
+			       uint32_t size)
+{
+   char name[20];
+   int i;
+   uint32_t *data = brw->intel.batch.bo->virtual + offset;
+
+   for (i = 0; i < size / 4; i++) {
+      if (data[i] == 0)
+	 continue;
+
+      sprintf(name, "BIND%d", i);
+      batch_out(brw, name, offset, i, "surface state address\n");
+   }
+}
+
 static void brw_debug_prog(struct brw_context *brw,
 			   const char *name, uint32_t prog_offset)
 {
@@ -414,6 +430,9 @@ dump_state_batch(struct brw_context *brw)
       case AUB_TRACE_BLEND_STATE:
 	 dump_blend_state(brw, offset);
 	 break;
+      case AUB_TRACE_BINDING_TABLE:
+	 dump_binding_table(brw, offset, size);
+	 break;
       case AUB_TRACE_SURFACE_STATE:
 	 if (intel->gen < 7) {
 	    dump_surface_state(brw, offset);
@@ -450,11 +469,6 @@ dump_state_batch(struct brw_context *brw)
 void brw_debug_batch(struct intel_context *intel)
 {
    struct brw_context *brw = brw_context(&intel->ctx);
-
-   state_struct_out("WM bind",
-		    brw->intel.batch.bo,
-		    brw->wm.bind_bo_offset,
-		    4 * brw->wm.nr_surfaces);
 
    if (intel->gen < 6)
        state_struct_out("VS", intel->batch.bo, brw->vs.state_offset,
