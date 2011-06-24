@@ -616,7 +616,7 @@ static const struct format_mapping format_map[] = {
    },
    {
       { 4, GL_RGBA, GL_RGBA8, 0 },
-      { DEFAULT_RGBA_FORMATS }
+      { PIPE_FORMAT_R8G8B8A8_UNORM, DEFAULT_RGBA_FORMATS }
    },
    {
       { GL_BGRA, 0 },
