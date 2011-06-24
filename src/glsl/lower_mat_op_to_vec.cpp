@@ -329,7 +329,18 @@ ir_mat_op_to_vec_visitor::visit_leave(ir_assignment *orig_assign)
     */
    for (i = 0; i < orig_expr->get_num_operands(); i++) {
       ir_assignment *assign;
+      ir_dereference *deref = orig_expr->operands[i]->as_dereference();
 
+      /* Avoid making a temporary if we don't need to to avoid aliasing. */
+      if (deref &&
+	  deref->variable_referenced() != result->variable_referenced()) {
+	 op[i] = deref;
+	 continue;
+      }
+
+      /* Otherwise, store the operand in a temporary generally if it's
+       * not a dereference.
+       */
       ir_variable *var = new(mem_ctx) ir_variable(orig_expr->operands[i]->type,
 						  "mat_op_to_vec",
 						  ir_var_temporary);
