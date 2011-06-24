@@ -208,6 +208,7 @@ public:
    int sampler; /**< sampler index */
    int tex_target; /**< One of TEXTURE_*_INDEX */
    GLboolean tex_shadow;
+   int dead_mask; /**< Used in dead code elimination */
 
    class function_entry *function; /* Set on TGSI_OPCODE_CAL or TGSI_OPCODE_BGNSUB */
 };
@@ -384,6 +385,7 @@ public:
 
    void copy_propagate(void);
    void eliminate_dead_code(void);
+   int eliminate_dead_code_advanced(void);
    void merge_registers(void);
    void renumber_registers(void);
 
@@ -480,6 +482,7 @@ glsl_to_tgsi_visitor::emit(ir_instruction *ir, unsigned op,
    inst->src[1] = src1;
    inst->src[2] = src2;
    inst->ir = ir;
+   inst->dead_mask = 0;
 
    inst->function = NULL;
    
@@ -3257,6 +3260,142 @@ glsl_to_tgsi_visitor::eliminate_dead_code(void)
    }
 }
 
+/*
+ * On a basic block basis, tracks available PROGRAM_TEMPORARY registers for dead
+ * code elimination.  This is less primitive than eliminate_dead_code(), as it
+ * is per-channel and can detect consecutive writes without a read between them
+ * as dead code.  However, there is some dead code that can be eliminated by 
+ * eliminate_dead_code() but not this function - for example, this function 
+ * cannot eliminate an instruction writing to a register that is never read and
+ * is the only instruction writing to that register.
+ *
+ * The glsl_to_tgsi_visitor lazily produces code assuming that this pass
+ * will occur.
+ */
+int
+glsl_to_tgsi_visitor::eliminate_dead_code_advanced(void)
+{
+   glsl_to_tgsi_instruction **writes = rzalloc_array(mem_ctx,
+                                                     glsl_to_tgsi_instruction *,
+                                                     this->next_temp * 4);
+   int *write_level = rzalloc_array(mem_ctx, int, this->next_temp * 4);
+   int level = 0;
+   int removed = 0;
+
+   foreach_iter(exec_list_iterator, iter, this->instructions) {
+      glsl_to_tgsi_instruction *inst = (glsl_to_tgsi_instruction *)iter.get();
+
+      assert(inst->dst.file != PROGRAM_TEMPORARY
+             || inst->dst.index < this->next_temp);
+      
+      switch (inst->op) {
+      case TGSI_OPCODE_BGNLOOP:
+      case TGSI_OPCODE_ENDLOOP:
+         /* End of a basic block, clear the write array entirely.
+          * FIXME: This keeps us from killing dead code when the writes are
+          * on either side of a loop, even when the register isn't touched
+          * inside the loop.
+          */
+         memset(writes, 0, sizeof(*writes) * this->next_temp * 4);
+         break;
+
+      case TGSI_OPCODE_IF:
+         ++level;
+         break;
+
+      case TGSI_OPCODE_ENDIF:
+         --level;
+         break;
+
+      case TGSI_OPCODE_ELSE:
+         /* Clear all channels written inside the preceding if block from the
+          * write array, but leave those that were not touched.
+          *
+          * FIXME: This destroys opportunities to remove dead code inside of
+          * IF blocks that are followed by an ELSE block.
+          */
+         for (int r = 0; r < this->next_temp; r++) {
+            for (int c = 0; c < 4; c++) {
+               if (!writes[4 * r + c])
+        	         continue;
+
+               if (write_level[4 * r + c] >= level)
+        	         writes[4 * r + c] = NULL;
+            }
+         }
+         break;
+
+      default:
+         /* Continuing the block, clear any channels from the write array that
+          * are read by this instruction.
+          */
+         for (int i = 0; i < 4; i++) {
+            if (inst->src[i].file == PROGRAM_TEMPORARY && inst->src[i].reladdr){
+               /* Any temporary might be read, so no dead code elimination 
+                * across this instruction.
+                */
+               memset(writes, 0, sizeof(*writes) * this->next_temp * 4);
+            } else if (inst->src[i].file == PROGRAM_TEMPORARY) {
+               /* Clear where it's used as src. */
+               int src_chans = 1 << GET_SWZ(inst->src[i].swizzle, 0);
+               src_chans |= 1 << GET_SWZ(inst->src[i].swizzle, 1);
+               src_chans |= 1 << GET_SWZ(inst->src[i].swizzle, 2);
+               src_chans |= 1 << GET_SWZ(inst->src[i].swizzle, 3);
+               
+               for (int c = 0; c < 4; c++) {
+              	   if (src_chans & (1 << c)) {
+              	      writes[4 * inst->src[i].index + c] = NULL;
+              	   }
+               }
+            }
+         }
+         break;
+      }
+
+      /* If this instruction writes to a temporary, add it to the write array.
+       * If there is already an instruction in the write array for one or more
+       * of the channels, flag that channel write as dead.
+       */
+      if (inst->dst.file == PROGRAM_TEMPORARY &&
+          !inst->dst.reladdr &&
+          !inst->saturate) {
+         for (int c = 0; c < 4; c++) {
+            if (inst->dst.writemask & (1 << c)) {
+               if (writes[4 * inst->dst.index + c]) {
+                  if (write_level[4 * inst->dst.index + c] < level)
+                     continue;
+                  else
+                     writes[4 * inst->dst.index + c]->dead_mask |= (1 << c);
+               }
+               writes[4 * inst->dst.index + c] = inst;
+               write_level[4 * inst->dst.index + c] = level;
+            }
+         }
+      }
+   }
+
+   /* Now actually remove the instructions that are completely dead and update
+    * the writemask of other instructions with dead channels.
+    */
+   foreach_iter(exec_list_iterator, iter, this->instructions) {
+      glsl_to_tgsi_instruction *inst = (glsl_to_tgsi_instruction *)iter.get();
+      
+      if (!inst->dead_mask || !inst->dst.writemask)
+         continue;
+      else if (inst->dead_mask == inst->dst.writemask) {
+         iter.remove();
+         delete inst;
+         removed++;
+      } else
+         inst->dst.writemask &= ~(inst->dead_mask);
+   }
+
+   ralloc_free(write_level);
+   ralloc_free(writes);
+   
+   return removed;
+}
+
 /* Merges temporary registers together where possible to reduce the number of 
  * registers needed to run a program.
  * 
@@ -4269,6 +4408,7 @@ get_mesa_program(struct gl_context *ctx,
     */
    if (!v->indirect_addr_temps) {
       v->copy_propagate();
+      while (v->eliminate_dead_code_advanced());
       v->eliminate_dead_code();
       v->merge_registers();
       v->renumber_registers();
