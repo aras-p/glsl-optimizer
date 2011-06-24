@@ -52,12 +52,6 @@ get_st_api(enum st_api_type api)
    return stmod->stapi;
 }
 
-static struct st_api *
-guess_gl_api(enum st_profile_type profile)
-{
-   return get_st_api(ST_API_OPENGL);
-}
-
 static struct pipe_screen *
 create_drm_screen(const char *name, int fd)
 {
@@ -79,7 +73,6 @@ loader_init(void)
       egl_g3d_loader.profile_masks[i] = egl_st_get_profile_mask(i);
 
    egl_g3d_loader.get_st_api = get_st_api;
-   egl_g3d_loader.guess_gl_api = guess_gl_api;
    egl_g3d_loader.create_drm_screen = create_drm_screen;
    egl_g3d_loader.create_sw_screen = create_sw_screen;
 

@@ -199,7 +199,7 @@ load_pipe_module(struct pipe_module *pmod, const char *name)
 }
 
 static struct st_api *
-get_st_api_full(enum st_api_type api, enum st_profile_type profile)
+get_st_api(enum st_api_type api)
 {
    struct st_module *stmod = &st_modules[api];
    const char *names[8], *symbol;
@@ -255,34 +255,6 @@ get_st_api_full(enum st_api_type api, enum st_profile_type profile)
    stmod->initialized = TRUE;
 
    return stmod->stapi;
-}
-
-static struct st_api *
-get_st_api(enum st_api_type api)
-{
-   enum st_profile_type profile = ST_PROFILE_DEFAULT;
-
-   /* determine the profile from the linked libraries */
-   if (api == ST_API_OPENGL) {
-      struct util_dl_library *self;
-
-      self = util_dl_open(NULL);
-      if (self) {
-         if (util_dl_get_proc_address(self, "glColor4x"))
-            profile = ST_PROFILE_OPENGL_ES1;
-         else if (util_dl_get_proc_address(self, "glShaderBinary"))
-            profile = ST_PROFILE_OPENGL_ES2;
-         util_dl_close(self);
-      }
-   }
-
-   return get_st_api_full(api, profile);
-}
-
-static struct st_api *
-guess_gl_api(enum st_profile_type profile)
-{
-   return get_st_api_full(ST_API_OPENGL, profile);
 }
 
 static struct pipe_module *
@@ -419,7 +391,6 @@ loader_init(void)
 #endif
 
    egl_g3d_loader.get_st_api = get_st_api;
-   egl_g3d_loader.guess_gl_api = guess_gl_api;
    egl_g3d_loader.create_drm_screen = create_drm_screen;
    egl_g3d_loader.create_sw_screen = create_sw_screen;
 
