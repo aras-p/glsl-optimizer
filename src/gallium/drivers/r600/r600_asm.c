@@ -1863,6 +1863,8 @@ void r600_bc_dump(struct r600_bc *bc)
 			break;
 		case V_SQ_CF_ALLOC_EXPORT_WORD1_SQ_CF_INST_EXPORT:
 		case V_SQ_CF_ALLOC_EXPORT_WORD1_SQ_CF_INST_EXPORT_DONE:
+		case EG_V_SQ_CF_ALLOC_EXPORT_WORD1_SQ_CF_INST_EXPORT:
+		case EG_V_SQ_CF_ALLOC_EXPORT_WORD1_SQ_CF_INST_EXPORT_DONE:
 			fprintf(stderr, "%04d %08X EXPORT ", id, bc->bytecode[id]);
 			fprintf(stderr, "GPR:%X ", cf->output.gpr);
 			fprintf(stderr, "ELEM_SIZE:%X ", cf->output.elem_size);

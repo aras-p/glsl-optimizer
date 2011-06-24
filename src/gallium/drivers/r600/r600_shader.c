@@ -606,7 +606,7 @@ static int r600_shader_from_tgsi(struct r600_pipe_context * rctx, struct r600_pi
 	struct r600_bc_output output[32];
 	unsigned output_done, noutput;
 	unsigned opcode;
-	int i, r = 0, pos0;
+	int i, j, r = 0, pos0;
 
 	ctx.bc = &shader->bc;
 	ctx.shader = shader;
@@ -622,6 +622,8 @@ static int r600_shader_from_tgsi(struct r600_pipe_context * rctx, struct r600_pi
 
 	shader->clamp_color = (((ctx.type == TGSI_PROCESSOR_FRAGMENT) && rctx->clamp_fragment_color) ||
 		((ctx.type == TGSI_PROCESSOR_VERTEX) && rctx->clamp_vertex_color));
+
+	shader->nr_cbufs = rctx->nr_cbufs;
 
 	/* register allocations */
 	/* Values [0,127] correspond to GPR[0..127].
@@ -767,50 +769,68 @@ static int r600_shader_from_tgsi(struct r600_pipe_context * rctx, struct r600_pi
 	}
 
 	/* export output */
+	j = 0;
 	for (i = 0, pos0 = 0; i < noutput; i++) {
 		memset(&output[i], 0, sizeof(struct r600_bc_output));
-		output[i].gpr = shader->output[i].gpr;
-		output[i].elem_size = 3;
-		output[i].swizzle_x = 0;
-		output[i].swizzle_y = 1;
-		output[i].swizzle_z = 2;
-		output[i].swizzle_w = 3;
-		output[i].burst_count = 1;
-		output[i].barrier = 1;
-		output[i].type = V_SQ_CF_ALLOC_EXPORT_WORD0_SQ_EXPORT_PARAM;
-		output[i].array_base = i - pos0;
-		output[i].inst = BC_INST(ctx.bc, V_SQ_CF_ALLOC_EXPORT_WORD1_SQ_CF_INST_EXPORT);
+		output[i + j].gpr = shader->output[i].gpr;
+		output[i + j].elem_size = 3;
+		output[i + j].swizzle_x = 0;
+		output[i + j].swizzle_y = 1;
+		output[i + j].swizzle_z = 2;
+		output[i + j].swizzle_w = 3;
+		output[i + j].burst_count = 1;
+		output[i + j].barrier = 1;
+		output[i + j].type = V_SQ_CF_ALLOC_EXPORT_WORD0_SQ_EXPORT_PARAM;
+		output[i + j].array_base = i - pos0;
+		output[i + j].inst = BC_INST(ctx.bc, V_SQ_CF_ALLOC_EXPORT_WORD1_SQ_CF_INST_EXPORT);
 		switch (ctx.type) {
 		case TGSI_PROCESSOR_VERTEX:
 			if (shader->output[i].name == TGSI_SEMANTIC_POSITION) {
-				output[i].array_base = 60;
-				output[i].type = V_SQ_CF_ALLOC_EXPORT_WORD0_SQ_EXPORT_POS;
+				output[i + j].array_base = 60;
+				output[i + j].type = V_SQ_CF_ALLOC_EXPORT_WORD0_SQ_EXPORT_POS;
 				/* position doesn't count in array_base */
 				pos0++;
 			}
 			if (shader->output[i].name == TGSI_SEMANTIC_PSIZE) {
-				output[i].array_base = 61;
-				output[i].type = V_SQ_CF_ALLOC_EXPORT_WORD0_SQ_EXPORT_POS;
+				output[i + j].array_base = 61;
+				output[i + j].type = V_SQ_CF_ALLOC_EXPORT_WORD0_SQ_EXPORT_POS;
 				/* position doesn't count in array_base */
 				pos0++;
 			}
 			break;
 		case TGSI_PROCESSOR_FRAGMENT:
 			if (shader->output[i].name == TGSI_SEMANTIC_COLOR) {
-				output[i].array_base = shader->output[i].sid;
-				output[i].type = V_SQ_CF_ALLOC_EXPORT_WORD0_SQ_EXPORT_PIXEL;
+				output[i + j].array_base = shader->output[i].sid;
+				output[i + j].type = V_SQ_CF_ALLOC_EXPORT_WORD0_SQ_EXPORT_PIXEL;
+				if (shader->fs_write_all && (shader->family >= CHIP_CEDAR)) {
+					for (j = 1; j < shader->nr_cbufs; j++) {
+						memset(&output[i + j], 0, sizeof(struct r600_bc_output));
+						output[i + j].gpr = shader->output[i].gpr;
+						output[i + j].elem_size = 3;
+						output[i + j].swizzle_x = 0;
+						output[i + j].swizzle_y = 1;
+						output[i + j].swizzle_z = 2;
+						output[i + j].swizzle_w = 3;
+						output[i + j].burst_count = 1;
+						output[i + j].barrier = 1;
+						output[i + j].array_base = shader->output[i].sid + j;
+						output[i + j].inst = BC_INST(ctx.bc, V_SQ_CF_ALLOC_EXPORT_WORD1_SQ_CF_INST_EXPORT);
+						output[i + j].type = V_SQ_CF_ALLOC_EXPORT_WORD0_SQ_EXPORT_PIXEL;
+					}
+					j--;
+				}
 			} else if (shader->output[i].name == TGSI_SEMANTIC_POSITION) {
-				output[i].array_base = 61;
-				output[i].swizzle_x = 2;
-				output[i].swizzle_y = 7;
-				output[i].swizzle_z = output[i].swizzle_w = 7;
-				output[i].type = V_SQ_CF_ALLOC_EXPORT_WORD0_SQ_EXPORT_PIXEL;
+				output[i + j].array_base = 61;
+				output[i + j].swizzle_x = 2;
+				output[i + j].swizzle_y = 7;
+				output[i + j].swizzle_z = output[i + j].swizzle_w = 7;
+				output[i + j].type = V_SQ_CF_ALLOC_EXPORT_WORD0_SQ_EXPORT_PIXEL;
 			} else if (shader->output[i].name == TGSI_SEMANTIC_STENCIL) {
-				output[i].array_base = 61;
-				output[i].swizzle_x = 7;
-				output[i].swizzle_y = 1;
-				output[i].swizzle_z = output[i].swizzle_w = 7;
-				output[i].type = V_SQ_CF_ALLOC_EXPORT_WORD0_SQ_EXPORT_PIXEL;
+				output[i + j].array_base = 61;
+				output[i + j].swizzle_x = 7;
+				output[i + j].swizzle_y = 1;
+				output[i + j].swizzle_z = output[i + j].swizzle_w = 7;
+				output[i + j].type = V_SQ_CF_ALLOC_EXPORT_WORD0_SQ_EXPORT_PIXEL;
 			} else {
 				R600_ERR("unsupported fragment output name %d\n", shader->output[i].name);
 				r = -EINVAL;
@@ -823,6 +843,7 @@ static int r600_shader_from_tgsi(struct r600_pipe_context * rctx, struct r600_pi
 			goto out_err;
 		}
 	}
+	noutput += j;
 	/* add fake param output for vertex shader if no param is exported */
 	if (ctx.type == TGSI_PROCESSOR_VERTEX) {
 		for (i = 0, pos0 = 0; i < noutput; i++) {

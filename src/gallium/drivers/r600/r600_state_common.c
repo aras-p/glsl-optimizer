@@ -599,7 +599,9 @@ void r600_draw_vbo(struct pipe_context *ctx, const struct pipe_draw_info *info)
 	if (rctx->vs_shader->shader.clamp_color != rctx->clamp_vertex_color)
 		r600_shader_rebuild(ctx, rctx->vs_shader);
 
-	if (rctx->ps_shader->shader.clamp_color != rctx->clamp_fragment_color)
+	if ((rctx->ps_shader->shader.clamp_color != rctx->clamp_fragment_color) ||
+	    (rctx->ps_shader->shader.fs_write_all &&
+	     (rctx->ps_shader->shader.nr_cbufs != rctx->nr_cbufs)))
 		r600_shader_rebuild(ctx, rctx->ps_shader);
 
 	if (rctx->spi_dirty)

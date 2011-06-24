@@ -885,6 +885,7 @@ static void evergreen_set_framebuffer_state(struct pipe_context *ctx,
 
 	/* build states */
 	rctx->have_depth_fb = 0;
+	rctx->nr_cbufs = state->nr_cbufs;
 	for (int i = 0; i < state->nr_cbufs; i++) {
 		evergreen_cb(rctx, rstate, state, i);
 	}
@@ -1631,7 +1632,10 @@ void evergreen_pipe_shader_ps(struct pipe_context *ctx, struct r600_pipe_shader 
 		    rshader->output[i].name == TGSI_SEMANTIC_STENCIL)
 			exports_ps |= 1;
 		else if (rshader->output[i].name == TGSI_SEMANTIC_COLOR) {
-			num_cout++;
+			if (rshader->fs_write_all)
+				num_cout = rshader->nr_cbufs;
+			else
+				num_cout++;
 		}
 	}
 	exports_ps |= S_02884C_EXPORT_COLORS(num_cout);

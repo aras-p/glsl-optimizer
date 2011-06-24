@@ -213,6 +213,7 @@ struct r600_pipe_context {
 	boolean				export_16bpc;
 	unsigned			alpha_ref;
 	boolean				alpha_ref_dirty;
+	unsigned			nr_cbufs;
 	struct r600_textures_info	ps_samplers;
 
 	struct r600_pipe_fences		fences;
