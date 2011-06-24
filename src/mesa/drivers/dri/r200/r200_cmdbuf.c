@@ -48,7 +48,7 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #define insert_at_tail_if(atom_list, atom) \
    do { \
       struct radeon_state_atom* current_atom = (atom); \
-      if (current__atom->check) \
+      if (current_atom->check) \
 	 insert_at_tail((atom_list), current_atom); \
    } while(0)
 
