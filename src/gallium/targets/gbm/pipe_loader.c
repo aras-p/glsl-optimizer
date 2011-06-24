@@ -107,11 +107,11 @@ find_pipe_module(struct pipe_module *pmod, const char *name)
    
    search_paths = NULL;
    if (geteuid() == getuid()) {
-      /* don't allow setuid apps to use EGL_DRIVERS_PATH */
-      search_paths = getenv("EGL_DRIVERS_PATH");
+      /* don't allow setuid apps to use GBM_BACKENDS_PATH */
+      search_paths = getenv("GBM_BACKENDS_PATH");
    }
    if (search_paths == NULL)
-      search_paths = _EGL_GALLIUM_DRIVER_SEARCH_DIR;
+      search_paths = GBM_BACKEND_SEARCH_DIR;
 
    end = search_paths + strlen(search_paths);
    for (p = search_paths; p < end && pmod->lib == NULL; p = next + 1) {

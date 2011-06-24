@@ -24,7 +24,7 @@ GBM_TARGET = $(GBM_BACKEND_PATH)
 GBM_INSTALL = install-so
 endif
 
-default: depend $(GBM_TARGET)
+default: depend $(GBM_TARGET) $(GBM_EXTRA_TARGETS)
 
 $(GBM_BACKEND_PATH): $(GBM_BACKEND).so
 	@$(INSTALL) -d $(TOP)/$(LIB_DIR)/gbm
@@ -46,20 +46,20 @@ install-so: $(GBM_BACKEND_PATH)
 	$(INSTALL) -d $(DESTDIR)$(GBM_BACKEND_INSTALL_DIR)
 	$(MINSTALL) $(GBM_BACKEND_PATH) $(DESTDIR)$(GBM_BACKEND_INSTALL_DIR)
 
-install: $(GBM_INSTALL)
+install: $(GBM_INSTALL) $(GBM_EXTRA_INSTALL)
 
-clean:
+clean: $(GBM_EXTRA_CLEAN)
 	rm -f $(GBM_BACKEND).so
 	rm -f lib$(GBM_BACKEND).a
 	rm -f $(GBM_OBJECTS)
 	rm -f depend depend.bak
 
-depend: $(GBM_SOURCES)
+depend: $(GBM_SOURCES) $(GBM_EXTRA_SOURCES)
 	@ echo "running $(MKDEP)"
 	@ rm -f depend
 	@ touch depend
 	$(MKDEP) $(MKDEP_OPTIONS) $(GBM_INCLUDES) $(GBM_SOURCES) \
-		>/dev/null 2>/dev/null
+		$(GBM_EXTRA_SOURCES) >/dev/null 2>/dev/null
 
 sinclude depend
 # DO NOT DELETE
