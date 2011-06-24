@@ -458,6 +458,19 @@ util_pack_mask_z(enum pipe_format format, uint32_t z)
    }
 }
 
+
+static INLINE uint64_t
+util_pack64_mask_z(enum pipe_format format, uint32_t z)
+{
+   switch (format) {
+   case PIPE_FORMAT_Z32_FLOAT_S8X24_USCALED:
+      return z;
+   default:
+      return util_pack_mask_z(format, z);
+   }
+}
+
+
 static INLINE uint32_t
 util_pack_mask_z_stencil(enum pipe_format format, uint32_t z, uint8_t s)
 {
@@ -480,6 +493,21 @@ util_pack_mask_z_stencil(enum pipe_format format, uint32_t z, uint8_t s)
    return packed;
 }
 
+
+static INLINE uint64_t
+util_pack64_mask_z_stencil(enum pipe_format format, uint32_t z, uint8_t s)
+{
+   uint64_t packed;
+
+   switch (format) {
+   case PIPE_FORMAT_Z32_FLOAT_S8X24_USCALED:
+      packed = util_pack64_mask_z(format, z);
+      packed |= (uint64_t)s << 32ull;
+      return packed;
+   default:
+      return util_pack_mask_z_stencil(format, z, s);
+   }
+}
 
 
 /**
@@ -525,6 +553,24 @@ util_pack_z(enum pipe_format format, double z)
       return 0;
    }
 }
+
+
+static INLINE uint64_t
+util_pack64_z(enum pipe_format format, double z)
+{
+   union fi fui;
+
+   if (z == 0)
+      return 0;
+
+   switch (format) {
+   case PIPE_FORMAT_Z32_FLOAT_S8X24_USCALED:
+      fui.f = (float)z;
+      return fui.ui;
+   default:
+      return util_pack_z(format, z);
+   }
+}
  
 
 /**
@@ -548,6 +594,24 @@ util_pack_z_stencil(enum pipe_format format, double z, uint8_t s)
       break;
    default:
       break;
+   }
+
+   return packed;
+}
+
+
+static INLINE uint64_t
+util_pack64_z_stencil(enum pipe_format format, double z, uint8_t s)
+{
+   uint64_t packed;
+
+   switch (format) {
+   case PIPE_FORMAT_Z32_FLOAT_S8X24_USCALED:
+      packed = util_pack64_z(format, z);
+      packed |= (uint64_t)s << 32ull;
+      break;
+   default:
+      return util_pack_z_stencil(format, z, s);
    }
 
    return packed;
