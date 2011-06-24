@@ -202,6 +202,7 @@ struct r600_pipe_context {
 	struct pipe_query		*saved_render_cond;
 	unsigned			saved_render_cond_mode;
 	/* shader information */
+	boolean				spi_dirty;
 	unsigned			sprite_coord_enable;
 	boolean				flatshade;
 	boolean				export_16bpc;

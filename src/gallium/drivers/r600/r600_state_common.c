@@ -112,7 +112,7 @@ void r600_bind_rs_state(struct pipe_context *ctx, void *state)
 		r600_polygon_offset_update(rctx);
 	}
 	if (rctx->ps_shader && rctx->vs_shader)
-		r600_spi_update(rctx);
+		rctx->spi_dirty = true;
 }
 
 void r600_delete_rs_state(struct pipe_context *ctx, void *state)
@@ -274,7 +274,7 @@ void r600_bind_ps_shader(struct pipe_context *ctx, void *state)
 		r600_context_pipe_state_set(&rctx->ctx, &rctx->ps_shader->rstate);
 	}
 	if (rctx->ps_shader && rctx->vs_shader) {
-		r600_spi_update(rctx);
+		rctx->spi_dirty = true;
 		r600_adjust_gprs(rctx);
 	}
 }
@@ -289,7 +289,7 @@ void r600_bind_vs_shader(struct pipe_context *ctx, void *state)
 		r600_context_pipe_state_set(&rctx->ctx, &rctx->vs_shader->rstate);
 	}
 	if (rctx->ps_shader && rctx->vs_shader) {
-		r600_spi_update(rctx);
+		rctx->spi_dirty = true;
 		r600_adjust_gprs(rctx);
 	}
 }
@@ -391,6 +391,7 @@ static void r600_spi_update(struct r600_pipe_context *rctx)
 		r600_pipe_state_mod_reg(rstate, tmp);
 	}
 
+	rctx->spi_dirty = false;
 	r600_context_pipe_state_set(&rctx->ctx, rstate);
 }
 
@@ -572,6 +573,9 @@ void r600_draw_vbo(struct pipe_context *ctx, const struct pipe_draw_info *info)
 
 	if (r600_conv_pipe_prim(draw.info.mode, &prim))
 		return;
+
+	if (rctx->spi_dirty)
+		r600_spi_update(rctx);
 
 	if (rctx->alpha_ref_dirty)
 		r600_update_alpha_ref(rctx);
