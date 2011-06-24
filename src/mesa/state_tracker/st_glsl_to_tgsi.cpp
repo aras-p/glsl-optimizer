@@ -3653,14 +3653,6 @@ compile_tgsi_instruction(struct st_translate *t,
                  src, num_src );
       break;
 
-   case TGSI_OPCODE_XPD:
-      dst[0] = ureg_writemask(dst[0], TGSI_WRITEMASK_XYZ );
-      ureg_insn( ureg, 
-                 inst->op, 
-                 dst, num_dst, 
-                 src, num_src );
-      break;
-
    default:
       ureg_insn( ureg, 
                  inst->op, 
