@@ -88,6 +88,8 @@ struct r600_pipe_sampler_view {
 
 struct r600_pipe_rasterizer {
 	struct r600_pipe_state		rstate;
+	boolean				clamp_vertex_color;
+	boolean				clamp_fragment_color;
 	boolean				flatshade;
 	unsigned			sprite_coord_enable;
 	float				offset_units;
@@ -125,6 +127,7 @@ struct r600_pipe_shader {
 	struct r600_bo			*bo;
 	struct r600_bo			*bo_fetch;
 	struct r600_vertex_element	vertex_elements;
+	struct tgsi_token		*tokens;
 };
 
 struct r600_pipe_sampler_state {
@@ -202,6 +205,8 @@ struct r600_pipe_context {
 	struct pipe_query		*saved_render_cond;
 	unsigned			saved_render_cond_mode;
 	/* shader information */
+	boolean				clamp_vertex_color;
+	boolean				clamp_fragment_color;
 	boolean				spi_dirty;
 	unsigned			sprite_coord_enable;
 	boolean				flatshade;
@@ -265,7 +270,7 @@ void r600_init_query_functions(struct r600_pipe_context *rctx);
 void r600_init_context_resource_functions(struct r600_pipe_context *r600);
 
 /* r600_shader.c */
-int r600_pipe_shader_create(struct pipe_context *ctx, struct r600_pipe_shader *shader, const struct tgsi_token *tokens);
+int r600_pipe_shader_create(struct pipe_context *ctx, struct r600_pipe_shader *shader);
 void r600_pipe_shader_destroy(struct pipe_context *ctx, struct r600_pipe_shader *shader);
 int r600_find_vs_semantic_index(struct r600_shader *vs,
 				struct r600_shader *ps, int id);

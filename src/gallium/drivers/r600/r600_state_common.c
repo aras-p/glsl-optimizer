@@ -28,6 +28,7 @@
 #include <util/u_format.h>
 #include <pipebuffer/pb_buffer.h>
 #include "pipe/p_shader_tokens.h"
+#include "tgsi/tgsi_parse.h"
 #include "r600_formats.h"
 #include "r600_pipe.h"
 #include "r600d.h"
@@ -99,6 +100,8 @@ void r600_bind_rs_state(struct pipe_context *ctx, void *state)
 	if (state == NULL)
 		return;
 
+	rctx->clamp_vertex_color = rs->clamp_vertex_color;
+	rctx->clamp_fragment_color = rs->clamp_fragment_color;
 	rctx->flatshade = rs->flatshade;
 	rctx->sprite_coord_enable = rs->sprite_coord_enable;
 	rctx->rasterizer = rs;
@@ -257,7 +260,9 @@ void *r600_create_shader_state(struct pipe_context *ctx,
 	struct r600_pipe_shader *shader =  CALLOC_STRUCT(r600_pipe_shader);
 	int r;
 
-	r =  r600_pipe_shader_create(ctx, shader, state->tokens);
+	shader->tokens = tgsi_dup_tokens(state->tokens);
+
+	r =  r600_pipe_shader_create(ctx, shader);
 	if (r) {
 		return NULL;
 	}
@@ -303,6 +308,7 @@ void r600_delete_ps_shader(struct pipe_context *ctx, void *state)
 		rctx->ps_shader = NULL;
 	}
 
+	free(shader->tokens);
 	r600_pipe_shader_destroy(ctx, shader);
 	free(shader);
 }
@@ -316,6 +322,7 @@ void r600_delete_vs_shader(struct pipe_context *ctx, void *state)
 		rctx->vs_shader = NULL;
 	}
 
+	free(shader->tokens);
 	r600_pipe_shader_destroy(ctx, shader);
 	free(shader);
 }
@@ -531,6 +538,21 @@ static void r600_vertex_buffer_update(struct r600_pipe_context *rctx)
 	}
 }
 
+static int r600_shader_rebuild(struct pipe_context * ctx, struct r600_pipe_shader * shader)
+{
+	struct r600_pipe_context *rctx = (struct r600_pipe_context *)ctx;
+	int r;
+
+	r600_pipe_shader_destroy(ctx, shader);
+	r = r600_pipe_shader_create(ctx, shader);
+	if (r) {
+		return r;
+	}
+	r600_context_pipe_state_set(&rctx->ctx, &shader->rstate);
+
+	return 0;
+}
+
 void r600_draw_vbo(struct pipe_context *ctx, const struct pipe_draw_info *info)
 {
 	struct r600_pipe_context *rctx = (struct r600_pipe_context *)ctx;
@@ -573,6 +595,12 @@ void r600_draw_vbo(struct pipe_context *ctx, const struct pipe_draw_info *info)
 
 	if (r600_conv_pipe_prim(draw.info.mode, &prim))
 		return;
+
+	if (rctx->vs_shader->shader.clamp_color != rctx->clamp_vertex_color)
+		r600_shader_rebuild(ctx, rctx->vs_shader);
+
+	if (rctx->ps_shader->shader.clamp_color != rctx->clamp_fragment_color)
+		r600_shader_rebuild(ctx, rctx->ps_shader);
 
 	if (rctx->spi_dirty)
 		r600_spi_update(rctx);

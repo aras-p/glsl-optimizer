@@ -46,6 +46,7 @@ struct r600_shader {
 	enum radeon_family	family;
 	boolean			uses_kill;
 	boolean			fs_write_all;
+	boolean			clamp_color;
 };
 
 #endif

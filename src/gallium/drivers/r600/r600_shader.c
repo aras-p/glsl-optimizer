@@ -118,9 +118,9 @@ static int r600_pipe_shader(struct pipe_context *ctx, struct r600_pipe_shader *s
 	return 0;
 }
 
-static int r600_shader_from_tgsi(const struct tgsi_token *tokens, struct r600_shader *shader);
+static int r600_shader_from_tgsi(struct r600_pipe_context * rctx, struct r600_pipe_shader *pipeshader);
 
-int r600_pipe_shader_create(struct pipe_context *ctx, struct r600_pipe_shader *shader, const struct tgsi_token *tokens)
+int r600_pipe_shader_create(struct pipe_context *ctx, struct r600_pipe_shader *shader)
 {
 	static int dump_shaders = -1;
 	struct r600_pipe_context *rctx = (struct r600_pipe_context *)ctx;
@@ -133,10 +133,10 @@ int r600_pipe_shader_create(struct pipe_context *ctx, struct r600_pipe_shader *s
 
 	if (dump_shaders) {
 		fprintf(stderr, "--------------------------------------------------------------\n");
-		tgsi_dump(tokens, 0);
+		tgsi_dump(shader->tokens, 0);
 	}
 	shader->shader.family = r600_get_family(rctx->radeon);
-	r = r600_shader_from_tgsi(tokens, &shader->shader);
+	r = r600_shader_from_tgsi(rctx, shader);
 	if (r) {
 		R600_ERR("translation from TGSI failed !\n");
 		return r;
@@ -159,6 +159,8 @@ void r600_pipe_shader_destroy(struct pipe_context *ctx, struct r600_pipe_shader 
 
 	r600_bo_reference(rctx->radeon, &shader->bo, NULL);
 	r600_bc_clear(&shader->shader.bc);
+
+	memset(&shader->shader,0,sizeof(struct r600_shader));
 }
 
 /*
@@ -594,8 +596,10 @@ static int tgsi_split_literal_constant(struct r600_shader_ctx *ctx)
 	return 0;
 }
 
-static int r600_shader_from_tgsi(const struct tgsi_token *tokens, struct r600_shader *shader)
+static int r600_shader_from_tgsi(struct r600_pipe_context * rctx, struct r600_pipe_shader *pipeshader)
 {
+	struct r600_shader *shader = &pipeshader->shader;
+	struct tgsi_token *tokens = pipeshader->tokens;
 	struct tgsi_full_immediate *immediate;
 	struct tgsi_full_property *property;
 	struct r600_shader_ctx ctx;
@@ -615,6 +619,9 @@ static int r600_shader_from_tgsi(const struct tgsi_token *tokens, struct r600_sh
 	ctx.type = ctx.parse.FullHeader.Processor.Processor;
 	shader->processor_type = ctx.type;
 	ctx.bc->type = shader->processor_type;
+
+	shader->clamp_color = (((ctx.type == TGSI_PROCESSOR_FRAGMENT) && rctx->clamp_fragment_color) ||
+		((ctx.type == TGSI_PROCESSOR_VERTEX) && rctx->clamp_vertex_color));
 
 	/* register allocations */
 	/* Values [0,127] correspond to GPR[0..127].
@@ -725,8 +732,41 @@ static int r600_shader_from_tgsi(const struct tgsi_token *tokens, struct r600_sh
 			goto out_err;
 		}
 	}
-	/* export output */
+
 	noutput = shader->noutput;
+
+	/* clamp color outputs */
+	if (shader->clamp_color) {
+		for (i = 0; i < noutput; i++) {
+			if (shader->output[i].name == TGSI_SEMANTIC_COLOR ||
+				shader->output[i].name == TGSI_SEMANTIC_BCOLOR) {
+
+				int j;
+				for (j = 0; j < 4; j++) {
+					struct r600_bc_alu alu;
+					memset(&alu, 0, sizeof(struct r600_bc_alu));
+
+					/* MOV_SAT R, R */
+					alu.inst = BC_INST(ctx.bc, V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_MOV);
+					alu.dst.sel = shader->output[i].gpr;
+					alu.dst.chan = j;
+					alu.dst.write = 1;
+					alu.dst.clamp = 1;
+					alu.src[0].sel = alu.dst.sel;
+					alu.src[0].chan = j;
+
+					if (j == 3) {
+						alu.last = 1;
+					}
+					r = r600_bc_add_alu(ctx.bc, &alu);
+					if (r)
+						return r;
+				}
+			}
+		}
+	}
+
+	/* export output */
 	for (i = 0, pos0 = 0; i < noutput; i++) {
 		memset(&output[i], 0, sizeof(struct r600_bc_output));
 		output[i].gpr = shader->output[i].gpr;

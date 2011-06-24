@@ -256,6 +256,8 @@ static void *evergreen_create_rs_state(struct pipe_context *ctx,
 	}
 
 	rstate = &rs->rstate;
+	rs->clamp_vertex_color = state->clamp_vertex_color;
+	rs->clamp_fragment_color = state->clamp_fragment_color;
 	rs->flatshade = state->flatshade;
 	rs->sprite_coord_enable = state->sprite_coord_enable;
 
