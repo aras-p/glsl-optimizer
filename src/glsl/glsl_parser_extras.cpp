@@ -165,133 +165,242 @@ _mesa_glsl_warning(const YYLTYPE *locp, _mesa_glsl_parse_state *state,
 }
 
 
-bool
-_mesa_glsl_process_extension(const char *name, YYLTYPE *name_locp,
-			     const char *behavior, YYLTYPE *behavior_locp,
-			     _mesa_glsl_parse_state *state)
-{
-   enum {
-      extension_disable,
-      extension_enable,
-      extension_require,
-      extension_warn
-   } ext_mode;
+/**
+ * Enum representing the possible behaviors that can be specified in
+ * an #extension directive.
+ */
+enum ext_behavior {
+   extension_disable,
+   extension_enable,
+   extension_require,
+   extension_warn
+};
 
-   if (strcmp(behavior, "warn") == 0) {
-      ext_mode = extension_warn;
-   } else if (strcmp(behavior, "require") == 0) {
-      ext_mode = extension_require;
-   } else if (strcmp(behavior, "enable") == 0) {
-      ext_mode = extension_enable;
-   } else if (strcmp(behavior, "disable") == 0) {
-      ext_mode = extension_disable;
-   } else {
-      _mesa_glsl_error(behavior_locp, state,
-		       "Unknown extension behavior `%s'",
-		       behavior);
+/**
+ * Element type for _mesa_glsl_supported_extensions
+ */
+struct _mesa_glsl_extension {
+   /**
+    * Name of the extension when referred to in a GLSL extension
+    * statement
+    */
+   const char *name;
+
+   /** True if this extension is available to vertex shaders */
+   bool avail_in_VS;
+
+   /** True if this extension is available to geometry shaders */
+   bool avail_in_GS;
+
+   /** True if this extension is available to fragment shaders */
+   bool avail_in_FS;
+
+   /** True if this extension is available to desktop GL shaders */
+   bool avail_in_GL;
+
+   /** True if this extension is available to GLES shaders */
+   bool avail_in_ES;
+
+   /**
+    * Flag in the gl_extensions struct indicating whether this
+    * extension is supported by the driver, or
+    * &gl_extensions::dummy_true if supported by all drivers.
+    *
+    * Note: the type (GLboolean gl_extensions::*) is a "pointer to
+    * member" type, the type-safe alternative to the "offsetof" macro.
+    * In a nutshell:
+    *
+    * - foo bar::* p declares p to be an "offset" to a field of type
+    *   foo that exists within struct bar
+    * - &bar::baz computes the "offset" of field baz within struct bar
+    * - x.*p accesses the field of x that exists at "offset" p
+    * - x->*p is equivalent to (*x).*p
+    */
+   const GLboolean gl_extensions::* supported_flag;
+
+   /**
+    * Flag in the _mesa_glsl_parse_state struct that should be set
+    * when this extension is enabled.
+    *
+    * See note in _mesa_glsl_extension::supported_flag about "pointer
+    * to member" types.
+    */
+   bool _mesa_glsl_parse_state::* enable_flag;
+
+   /**
+    * Flag in the _mesa_glsl_parse_state struct that should be set
+    * when the shader requests "warn" behavior for this extension.
+    *
+    * See note in _mesa_glsl_extension::supported_flag about "pointer
+    * to member" types.
+    */
+   bool _mesa_glsl_parse_state::* warn_flag;
+
+
+   bool compatible_with_state(const _mesa_glsl_parse_state *state) const;
+   void set_flags(_mesa_glsl_parse_state *state, ext_behavior behavior) const;
+};
+
+#define EXT(NAME, VS, GS, FS, GL, ES, SUPPORTED_FLAG)                   \
+   { "GL_" #NAME, VS, GS, FS, GL, ES, &gl_extensions::SUPPORTED_FLAG,   \
+         &_mesa_glsl_parse_state::NAME##_enable,                        \
+         &_mesa_glsl_parse_state::NAME##_warn }
+
+/**
+ * Table of extensions that can be enabled/disabled within a shader,
+ * and the conditions under which they are supported.
+ */
+static const _mesa_glsl_extension _mesa_glsl_supported_extensions[] = {
+   /*                                  target availability  API availability */
+   /* name                             VS     GS     FS     GL     ES         supported flag */
+   EXT(ARB_draw_buffers,               false, false, true,  true,  false,     dummy_true),
+   EXT(ARB_draw_instanced,             true,  false, false, true,  false,     ARB_draw_instanced),
+   EXT(ARB_explicit_attrib_location,   true,  false, true,  true,  false,     ARB_explicit_attrib_location),
+   EXT(ARB_fragment_coord_conventions, true,  false, true,  true,  false,     ARB_fragment_coord_conventions),
+   EXT(ARB_texture_rectangle,          true,  false, true,  true,  false,     dummy_true),
+   EXT(EXT_texture_array,              true,  false, true,  true,  false,     EXT_texture_array),
+   EXT(ARB_shader_texture_lod,         true,  false, true,  true,  false,     ARB_shader_texture_lod),
+   EXT(ARB_shader_stencil_export,      false, false, true,  true,  false,     ARB_shader_stencil_export),
+   EXT(AMD_conservative_depth,         true,  false, true,  true,  false,     AMD_conservative_depth),
+   EXT(AMD_shader_stencil_export,      false, false, true,  true,  false,     ARB_shader_stencil_export),
+   EXT(OES_texture_3D,                 true,  false, true,  false, true,      EXT_texture3D),
+};
+
+#undef EXT
+
+
+/**
+ * Determine whether a given extension is compatible with the target,
+ * API, and extension information in the current parser state.
+ */
+bool _mesa_glsl_extension::compatible_with_state(const _mesa_glsl_parse_state *
+                                                 state) const
+{
+   /* Check that this extension matches the type of shader we are
+    * compiling to.
+    */
+   switch (state->target) {
+   case vertex_shader:
+      if (!this->avail_in_VS) {
+         return false;
+      }
+      break;
+   case geometry_shader:
+      if (!this->avail_in_GS) {
+         return false;
+      }
+      break;
+   case fragment_shader:
+      if (!this->avail_in_FS) {
+         return false;
+      }
+      break;
+   default:
+      assert (!"Unrecognized shader target");
       return false;
    }
 
-   bool unsupported = false;
-
-   if (strcmp(name, "all") == 0) {
-      if ((ext_mode == extension_enable) || (ext_mode == extension_require)) {
-	 _mesa_glsl_error(name_locp, state, "Cannot %s all extensions",
-			  (ext_mode == extension_enable)
-			  ? "enable" : "require");
-	 return false;
-      }
-   } else if (strcmp(name, "GL_ARB_draw_buffers") == 0) {
-      /* This extension is only supported in fragment shaders.
-       */
-      if (state->target != fragment_shader) {
-	 unsupported = true;
-      } else {
-	 state->ARB_draw_buffers_enable = (ext_mode != extension_disable);
-	 state->ARB_draw_buffers_warn = (ext_mode == extension_warn);
-      }
-   } else if (strcmp(name, "GL_ARB_draw_instanced") == 0) {
-      state->ARB_draw_instanced_enable = (ext_mode != extension_disable);
-      state->ARB_draw_instanced_warn = (ext_mode == extension_warn);
-
-      /* This extension is only supported in vertex shaders.
-       */
-      unsupported = (state->target != vertex_shader)
-	 ||  !state->extensions->ARB_draw_instanced;
-   } else if (strcmp(name, "GL_ARB_explicit_attrib_location") == 0) {
-      state->ARB_explicit_attrib_location_enable =
-	 (ext_mode != extension_disable);
-      state->ARB_explicit_attrib_location_warn =
-	 (ext_mode == extension_warn);
-
-      unsupported = !state->extensions->ARB_explicit_attrib_location;
-   } else if (strcmp(name, "GL_ARB_fragment_coord_conventions") == 0) {
-      state->ARB_fragment_coord_conventions_enable =
-	 (ext_mode != extension_disable);
-      state->ARB_fragment_coord_conventions_warn =
-	 (ext_mode == extension_warn);
-
-      unsupported = !state->extensions->ARB_fragment_coord_conventions;
-   } else if (strcmp(name, "GL_ARB_texture_rectangle") == 0) {
-      state->ARB_texture_rectangle_enable = (ext_mode != extension_disable);
-      state->ARB_texture_rectangle_warn = (ext_mode == extension_warn);
-   } else if (strcmp(name, "GL_EXT_texture_array") == 0) {
-      state->EXT_texture_array_enable = (ext_mode != extension_disable);
-      state->EXT_texture_array_warn = (ext_mode == extension_warn);
-
-      unsupported = !state->extensions->EXT_texture_array;
-   } else if (strcmp(name, "GL_ARB_shader_texture_lod") == 0) {
-      /* Force ARB_texture_rectangle to be on so sampler2DRects are defined */
-      state->ARB_texture_rectangle_enable = true;
-
-      state->ARB_shader_texture_lod_enable = (ext_mode != extension_disable);
-      state->ARB_shader_texture_lod_warn = (ext_mode == extension_warn);
-
-      unsupported = !state->extensions->ARB_shader_texture_lod;
-   } else if (strcmp(name, "GL_ARB_shader_stencil_export") == 0) {
-      state->ARB_shader_stencil_export_enable = (ext_mode != extension_disable);
-      state->ARB_shader_stencil_export_warn = (ext_mode == extension_warn);
-
-      /* This extension is only supported in fragment shaders.
-       */
-      unsupported = (state->target != fragment_shader)
-	 || !state->extensions->ARB_shader_stencil_export;
-   } else if (strcmp(name, "GL_AMD_conservative_depth") == 0) {
-      /* The AMD_conservative spec does not forbid requiring the extension in
-       * the vertex shader.
-       */
-      state->AMD_conservative_depth_enable = (ext_mode != extension_disable);
-      state->AMD_conservative_depth_warn = (ext_mode == extension_warn);
-      unsupported = !state->extensions->AMD_conservative_depth;
-   } else if (strcmp(name, "GL_AMD_shader_stencil_export") == 0) {
-      state->AMD_shader_stencil_export_enable = (ext_mode != extension_disable);
-      state->AMD_shader_stencil_export_warn = (ext_mode == extension_warn);
-
-      /* This extension is only supported in fragment shaders.
-       * Both the ARB and AMD variants share the same ARB flag
-       * in gl_extensions.
-       */
-      unsupported = (state->target != fragment_shader)
-	 || !state->extensions->ARB_shader_stencil_export;
-   } else if (strcmp(name, "GL_OES_texture_3D") == 0 && state->es_shader) {
-      state->OES_texture_3D_enable = (ext_mode != extension_disable);
-      state->OES_texture_3D_warn = (ext_mode == extension_warn);
-
-      unsupported = !state->extensions->EXT_texture3D;
+   /* Check that this extension matches whether we are compiling
+    * for desktop GL or GLES.
+    */
+   if (state->es_shader) {
+      if (!this->avail_in_ES) return false;
    } else {
-      unsupported = true;
+      if (!this->avail_in_GL) return false;
    }
 
-   if (unsupported) {
-      static const char *const fmt = "extension `%s' unsupported in %s shader";
+   /* Check that this extension is supported by the OpenGL
+    * implementation.
+    *
+    * Note: the ->* operator indexes into state->extensions by the
+    * offset this->supported_flag.  See
+    * _mesa_glsl_extension::supported_flag for more info.
+    */
+   return state->extensions->*(this->supported_flag);
+}
 
-      if (ext_mode == extension_require) {
-	 _mesa_glsl_error(name_locp, state, fmt,
-			  name, _mesa_glsl_shader_target_name(state->target));
+/**
+ * Set the appropriate flags in the parser state to establish the
+ * given behavior for this extension.
+ */
+void _mesa_glsl_extension::set_flags(_mesa_glsl_parse_state *state,
+                                     ext_behavior behavior) const
+{
+   /* Note: the ->* operator indexes into state by the
+    * offsets this->enable_flag and this->warn_flag.  See
+    * _mesa_glsl_extension::supported_flag for more info.
+    */
+   state->*(this->enable_flag) = (behavior != extension_disable);
+   state->*(this->warn_flag)   = (behavior == extension_warn);
+}
+
+/**
+ * Find an extension by name in _mesa_glsl_supported_extensions.  If
+ * the name is not found, return NULL.
+ */
+static const _mesa_glsl_extension *find_extension(const char *name)
+{
+   for (unsigned i = 0; i < Elements(_mesa_glsl_supported_extensions); ++i) {
+      if (strcmp(name, _mesa_glsl_supported_extensions[i].name) == 0) {
+         return &_mesa_glsl_supported_extensions[i];
+      }
+   }
+   return NULL;
+}
+
+
+bool
+_mesa_glsl_process_extension(const char *name, YYLTYPE *name_locp,
+			     const char *behavior_string, YYLTYPE *behavior_locp,
+			     _mesa_glsl_parse_state *state)
+{
+   ext_behavior behavior;
+   if (strcmp(behavior_string, "warn") == 0) {
+      behavior = extension_warn;
+   } else if (strcmp(behavior_string, "require") == 0) {
+      behavior = extension_require;
+   } else if (strcmp(behavior_string, "enable") == 0) {
+      behavior = extension_enable;
+   } else if (strcmp(behavior_string, "disable") == 0) {
+      behavior = extension_disable;
+   } else {
+      _mesa_glsl_error(behavior_locp, state,
+		       "Unknown extension behavior `%s'",
+		       behavior_string);
+      return false;
+   }
+
+   if (strcmp(name, "all") == 0) {
+      if ((behavior == extension_enable) || (behavior == extension_require)) {
+	 _mesa_glsl_error(name_locp, state, "Cannot %s all extensions",
+			  (behavior == extension_enable)
+			  ? "enable" : "require");
 	 return false;
       } else {
-	 _mesa_glsl_warning(name_locp, state, fmt,
-			    name, _mesa_glsl_shader_target_name(state->target));
+         for (unsigned i = 0;
+              i < Elements(_mesa_glsl_supported_extensions); ++i) {
+            const _mesa_glsl_extension *extension
+               = &_mesa_glsl_supported_extensions[i];
+            if (extension->compatible_with_state(state)) {
+               _mesa_glsl_supported_extensions[i].set_flags(state, behavior);
+            }
+         }
+      }
+   } else {
+      const _mesa_glsl_extension *extension = find_extension(name);
+      if (extension && extension->compatible_with_state(state)) {
+         extension->set_flags(state, behavior);
+      } else {
+         static const char *const fmt = "extension `%s' unsupported in %s shader";
+
+         if (behavior == extension_require) {
+            _mesa_glsl_error(name_locp, state, fmt,
+                             name, _mesa_glsl_shader_target_name(state->target));
+            return false;
+         } else {
+            _mesa_glsl_warning(name_locp, state, fmt,
+                               name, _mesa_glsl_shader_target_name(state->target));
+         }
       }
    }
 
