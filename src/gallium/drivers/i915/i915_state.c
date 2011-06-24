@@ -466,6 +466,7 @@ i915_create_fs_state(struct pipe_context *pipe,
    if (!ifs)
       return NULL;
 
+   ifs->draw_data = draw_create_fragment_shader(i915->draw, templ);
    ifs->state.tokens = tgsi_dup_tokens(templ->tokens);
 
    tgsi_scan_shader(templ->tokens, &ifs->info);
@@ -494,6 +495,8 @@ i915_bind_fs_state(struct pipe_context *pipe, void *shader)
    draw_flush(i915->draw);
 
    i915->fs = (struct i915_fragment_shader*) shader;
+
+   draw_bind_fragment_shader(i915->draw,  (i915->fs ? i915->fs->draw_data : NULL));
 
    i915->dirty |= I915_NEW_FS;
 }

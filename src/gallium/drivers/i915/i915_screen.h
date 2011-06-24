@@ -65,5 +65,11 @@ i915_screen(struct pipe_screen *pscreen)
    return (struct i915_screen *) pscreen;
 }
 
+boolean
+i915_is_format_supported(struct pipe_screen *screen,
+                         enum pipe_format format,
+                         enum pipe_texture_target target,
+                         unsigned sample_count,
+                         unsigned tex_usage);
 
 #endif /* I915_SCREEN_H */

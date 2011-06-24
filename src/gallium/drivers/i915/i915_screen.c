@@ -253,7 +253,7 @@ i915_get_paramf(struct pipe_screen *screen, enum pipe_cap cap)
    }
 }
 
-static boolean
+boolean
 i915_is_format_supported(struct pipe_screen *screen,
                          enum pipe_format format,
                          enum pipe_texture_target target,

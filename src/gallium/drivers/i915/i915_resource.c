@@ -7,12 +7,12 @@
 
 static struct pipe_resource *
 i915_resource_create(struct pipe_screen *screen,
-                    const struct pipe_resource *template)
+                     const struct pipe_resource *template)
 {
    if (template->target == PIPE_BUFFER)
       return i915_buffer_create(screen, template);
    else
-      return i915_texture_create(screen, template);
+      return i915_texture_create(screen, template, FALSE);
 
 }
 

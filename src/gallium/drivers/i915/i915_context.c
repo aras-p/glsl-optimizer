@@ -106,7 +106,7 @@ static void i915_destroy(struct pipe_context *pipe)
 
    if (i915->blitter)
       util_blitter_destroy(i915->blitter);
-   
+
    if(i915->batch)
       i915->iws->batchbuffer_destroy(i915->batch);
 
@@ -149,6 +149,8 @@ i915_create_context(struct pipe_screen *screen, void *priv)
 
    /* init this before draw */
    util_slab_create(&i915->transfer_pool, sizeof(struct pipe_transfer),
+                    16, UTIL_SLAB_SINGLETHREADED);
+   util_slab_create(&i915->texture_transfer_pool, sizeof(struct i915_transfer),
                     16, UTIL_SLAB_SINGLETHREADED);
 
    /* Batch stream debugging is a bit hacked up at the moment:
