@@ -1882,10 +1882,13 @@ glsl_to_tgsi_visitor::visit(ir_assignment *ir)
       st_src_reg condition = this->result;
 
       for (i = 0; i < type_size(ir->lhs->type); i++) {
+         st_src_reg l_src = st_src_reg(l);
+         l_src.swizzle = swizzle_for_size(ir->lhs->type->vector_elements);
+         
          if (switch_order) {
-            emit(ir, TGSI_OPCODE_CMP, l, condition, st_src_reg(l), r);
+            emit(ir, TGSI_OPCODE_CMP, l, condition, l_src, r);
          } else {
-            emit(ir, TGSI_OPCODE_CMP, l, condition, r, st_src_reg(l));
+            emit(ir, TGSI_OPCODE_CMP, l, condition, r, l_src);
          }
 
          l.index++;
