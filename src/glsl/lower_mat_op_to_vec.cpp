@@ -144,9 +144,7 @@ ir_mat_op_to_vec_visitor::do_mul_mat_mat(ir_dereference *result,
 					   mul_expr);
       }
 
-      assign = new(mem_ctx) ir_assignment(get_column(result, b_col),
-					  expr,
-					  NULL);
+      assign = new(mem_ctx) ir_assignment(get_column(result, b_col), expr);
       base_ir->insert_before(assign);
    }
 }
@@ -176,9 +174,7 @@ ir_mat_op_to_vec_visitor::do_mul_mat_vec(ir_dereference *result,
    }
 
    result = result->clone(mem_ctx, NULL);
-   assign = new(mem_ctx) ir_assignment(result,
-				       expr,
-				       NULL);
+   assign = new(mem_ctx) ir_assignment(result, expr);
    base_ir->insert_before(assign);
 }
 
@@ -202,8 +198,7 @@ ir_mat_op_to_vec_visitor::do_mul_vec_mat(ir_dereference *result,
 					       get_column(b, i));
 
       column_assign = new(mem_ctx) ir_assignment(column_result,
-						 column_expr,
-						 NULL);
+						 column_expr);
       base_ir->insert_before(column_assign);
    }
 }
@@ -224,8 +219,7 @@ ir_mat_op_to_vec_visitor::do_mul_mat_scalar(ir_dereference *result,
 					       b->clone(mem_ctx, NULL));
 
       column_assign = new(mem_ctx) ir_assignment(get_column(result, i),
-						 column_expr,
-						 NULL);
+						 column_expr);
       base_ir->insert_before(column_assign);
    }
 }
@@ -285,7 +279,7 @@ ir_mat_op_to_vec_visitor::do_equal_mat_mat(ir_dereference *result,
       any = new(this->mem_ctx) ir_expression(ir_unop_logic_not, any);
 
    ir_assignment *const assign =
-      new(mem_ctx) ir_assignment(result->clone(mem_ctx, NULL), any, NULL);
+      new(mem_ctx) ir_assignment(result->clone(mem_ctx, NULL), any);
    base_ir->insert_before(assign);
 }
 
@@ -350,17 +344,13 @@ ir_mat_op_to_vec_visitor::visit_leave(ir_assignment *orig_assign)
        * that others that want to use op[i] have to clone the deref.
        */
       op[i] = new(mem_ctx) ir_dereference_variable(var);
-      assign = new(mem_ctx) ir_assignment(op[i],
-					  orig_expr->operands[i],
-					  NULL);
+      assign = new(mem_ctx) ir_assignment(op[i], orig_expr->operands[i]);
       base_ir->insert_before(assign);
    }
 
    /* OK, time to break down this matrix operation. */
    switch (orig_expr->operation) {
    case ir_unop_neg: {
-      const unsigned mask = (1U << result->type->vector_elements) - 1;
-
       /* Apply the operation to each column.*/
       for (i = 0; i < matrix_columns; i++) {
 	 ir_expression *column_expr;
@@ -370,9 +360,7 @@ ir_mat_op_to_vec_visitor::visit_leave(ir_assignment *orig_assign)
 						  get_column(op[0], i));
 
 	 column_assign = new(mem_ctx) ir_assignment(get_column(result, i),
-						    column_expr,
-						    NULL,
-						    mask);
+						    column_expr);
 	 assert(column_assign->write_mask != 0);
 	 base_ir->insert_before(column_assign);
       }
@@ -382,8 +370,6 @@ ir_mat_op_to_vec_visitor::visit_leave(ir_assignment *orig_assign)
    case ir_binop_sub:
    case ir_binop_div:
    case ir_binop_mod: {
-      const unsigned mask = (1U << result->type->vector_elements) - 1;
-
       /* For most operations, the matrix version is just going
        * column-wise through and applying the operation to each column
        * if available.
@@ -397,9 +383,7 @@ ir_mat_op_to_vec_visitor::visit_leave(ir_assignment *orig_assign)
 						  get_column(op[1], i));
 
 	 column_assign = new(mem_ctx) ir_assignment(get_column(result, i),
-						    column_expr,
-						    NULL,
-						    mask);
+						    column_expr);
 	 assert(column_assign->write_mask != 0);
 	 base_ir->insert_before(column_assign);
       }
