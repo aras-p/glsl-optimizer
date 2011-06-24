@@ -81,6 +81,22 @@ static const GLubyte kernel[16] = {
    DST[BCOMP] = *SRC & 0xff
 
 
+/* 24-bit BGR */
+#define STORE_PIXEL_R8G8B8(DST, X, Y, VALUE) \
+   DST[2] = VALUE[RCOMP]; \
+   DST[1] = VALUE[GCOMP]; \
+   DST[0] = VALUE[BCOMP]
+#define STORE_PIXEL_RGB_R8G8B8(DST, X, Y, VALUE) \
+   DST[2] = VALUE[RCOMP]; \
+   DST[1] = VALUE[GCOMP]; \
+   DST[0] = VALUE[BCOMP]
+#define FETCH_PIXEL_R8G8B8(DST, SRC) \
+   DST[ACOMP] = 0xff;                  \
+   DST[RCOMP] = (*SRC >> 16) & 0xff;   \
+   DST[GCOMP] = (*SRC >> 8) & 0xff;    \
+   DST[BCOMP] = *SRC & 0xff
+
+
 /* 16-bit BGR */
 #define STORE_PIXEL_R5G6B5(DST, X, Y, VALUE) \
    do { \
@@ -157,6 +173,24 @@ static const GLubyte kernel[16] = {
 #include "swrast/s_spantemp.h"
 
 
+/* 24-bit BGR */
+#define NAME(FUNC) FUNC##_R8G8B8
+#define RB_TYPE GLubyte
+#define SPAN_VARS \
+   struct swrast_renderbuffer *xrb = swrast_renderbuffer(rb);
+#define INIT_PIXEL_PTR(P, X, Y) \
+   GLubyte *P = (GLubyte *)xrb->Base.Data + YFLIP(xrb, Y) * xrb->pitch + (3*X);
+#define INC_PIXEL_PTR(P) P+=3
+#define STORE_PIXEL(DST, X, Y, VALUE) \
+   STORE_PIXEL_R8G8B8(DST, X, Y, VALUE)
+#define STORE_PIXEL_RGB(DST, X, Y, VALUE) \
+   STORE_PIXEL_RGB_R8G8B8(DST, X, Y, VALUE)
+#define FETCH_PIXEL(DST, SRC) \
+   FETCH_PIXEL_R8G8B8(DST, SRC)
+
+#include "swrast/s_spantemp.h"
+
+
 /* 16-bit BGR */
 #define NAME(FUNC) FUNC##_R5G6B5
 #define RB_TYPE GLubyte
@@ -229,6 +263,24 @@ static const GLubyte kernel[16] = {
 #include "swrast_spantemp.h"
 
 
+/* 24-bit BGR */
+#define NAME(FUNC) FUNC##_R8G8B8_front
+#define RB_TYPE GLubyte
+#define SPAN_VARS \
+   struct swrast_renderbuffer *xrb = swrast_renderbuffer(rb);
+#define INIT_PIXEL_PTR(P, X, Y) \
+   GLubyte *P = (GLubyte *)row;
+#define INC_PIXEL_PTR(P) P+=3
+#define STORE_PIXEL(DST, X, Y, VALUE) \
+   STORE_PIXEL_R8G8B8(DST, X, Y, VALUE)
+#define STORE_PIXEL_RGB(DST, X, Y, VALUE) \
+   STORE_PIXEL_RGB_R8G8B8(DST, X, Y, VALUE)
+#define FETCH_PIXEL(DST, SRC) \
+   FETCH_PIXEL_R8G8B8(DST, SRC)
+
+#include "swrast_spantemp.h"
+
+
 /* 16-bit BGR */
 #define NAME(FUNC) FUNC##_R5G6B5_front
 #define RB_TYPE GLubyte
@@ -290,6 +342,15 @@ swrast_set_span_funcs_back(struct swrast_renderbuffer *xrb,
 	xrb->Base.PutValues = put_values_X8R8G8B8;
 	xrb->Base.PutMonoValues = put_mono_values_X8R8G8B8;
 	break;
+   case PF_R8G8B8:
+        xrb->Base.GetRow = get_row_R8G8B8;
+        xrb->Base.GetValues = get_values_R8G8B8;
+        xrb->Base.PutRow = put_row_R8G8B8;
+        xrb->Base.PutRowRGB = put_row_rgb_R8G8B8;
+        xrb->Base.PutMonoRow = put_mono_row_R8G8B8;
+        xrb->Base.PutValues = put_values_R8G8B8;
+        xrb->Base.PutMonoValues = put_mono_values_R8G8B8;
+        break;
     case PF_R5G6B5:
 	xrb->Base.GetRow = get_row_R5G6B5;
 	xrb->Base.GetValues = get_values_R5G6B5;
@@ -346,6 +407,15 @@ swrast_set_span_funcs_front(struct swrast_renderbuffer *xrb,
 	xrb->Base.PutValues = put_values_X8R8G8B8_front;
 	xrb->Base.PutMonoValues = put_mono_values_X8R8G8B8_front;
 	break;
+    case PF_R8G8B8:
+        xrb->Base.GetRow = get_row_R8G8B8_front;
+        xrb->Base.GetValues = get_values_R8G8B8_front;
+        xrb->Base.PutRow = put_row_R8G8B8_front;
+        xrb->Base.PutRowRGB = put_row_rgb_R8G8B8_front;
+        xrb->Base.PutMonoRow = put_mono_row_R8G8B8_front;
+        xrb->Base.PutValues = put_values_R8G8B8_front;
+        xrb->Base.PutMonoValues = put_mono_values_R8G8B8_front;
+        break;
     case PF_R5G6B5:
 	xrb->Base.GetRow = get_row_R5G6B5_front;
 	xrb->Base.GetValues = get_values_R5G6B5_front;

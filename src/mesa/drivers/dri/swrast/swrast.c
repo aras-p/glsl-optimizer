@@ -233,10 +233,17 @@ choose_pixel_format(const struct gl_config *v)
 	&& v->blueMask  == 0x0000ff)
 	return PF_A8R8G8B8;
     else if (depth == 24
-	     && v->redMask   == 0xff0000
-	     && v->greenMask == 0x00ff00
-	     && v->blueMask  == 0x0000ff)
-	return PF_X8R8G8B8;
+             && v->depthBits == 32
+             && v->redMask   == 0xff0000
+             && v->greenMask == 0x00ff00
+             && v->blueMask  == 0x0000ff)
+        return PF_X8R8G8B8;
+    else if (depth == 24
+             && v->depthBits == 24
+             && v->redMask   == 0xff0000
+             && v->greenMask == 0x00ff00
+             && v->blueMask  == 0x0000ff)
+        return PF_R8G8B8;
     else if (depth == 16
 	     && v->redMask   == 0xf800
 	     && v->greenMask == 0x07e0
@@ -344,6 +351,13 @@ swrast_new_renderbuffer(const struct gl_config *visual, GLboolean front)
 	xrb->Base.DataType = GL_UNSIGNED_BYTE;
 	xrb->bpp = 32;
 	break;
+    case PF_R8G8B8:
+        xrb->Base.Format = MESA_FORMAT_RGB888;
+        xrb->Base.InternalFormat = GL_RGB;
+        xrb->Base._BaseFormat = GL_RGB;
+        xrb->Base.DataType = GL_UNSIGNED_BYTE;
+        xrb->bpp = 24;
+        break;
     case PF_R5G6B5:
 	xrb->Base.Format = MESA_FORMAT_RGB565;
 	xrb->Base.InternalFormat = GL_RGB;
