@@ -1,4 +1,4 @@
-# progs/gallium/simple/Makefile
+# src/gallium/tests/trivial/Makefile
 
 TOP = ../../../..
 include $(TOP)/configs/current
