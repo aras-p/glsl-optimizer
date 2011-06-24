@@ -546,10 +546,12 @@ dri2_initialize(_EGLDriver *drv, _EGLDisplay *disp)
 #endif
 
 #ifdef HAVE_LIBUDEV
+#ifdef HAVE_DRM_PLATFORM
    case _EGL_PLATFORM_DRM:
       if (disp->Options.TestOnly)
          return EGL_TRUE;
       return dri2_initialize_drm(drv, disp);
+#endif
 #ifdef HAVE_WAYLAND_PLATFORM
    case _EGL_PLATFORM_WAYLAND:
       if (disp->Options.TestOnly)
