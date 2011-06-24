@@ -1241,7 +1241,8 @@ fallback_copy_texsubimage(struct gl_context *ctx, GLenum target, GLint level,
 
    src_trans = pipe_get_transfer(pipe,
                                  strb->texture,
-                                 0, 0,
+                                 strb->rtt_level,
+                                 strb->rtt_face + strb->rtt_slice,
                                  PIPE_TRANSFER_READ,
                                  srcX, srcY,
                                  width, height);
