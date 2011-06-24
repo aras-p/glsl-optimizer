@@ -167,8 +167,8 @@ def trifan(intype, outtype):
 
 def polygon(intype, outtype):
     preamble(intype, outtype, prim='polygon')
-    print '  for (j = i = 0; j < nr; j+=6, i++) { '
-    do_tri( intype, outtype, 'out+j',  '0', 'i+1', 'i+2' );
+    print '  for (j = i = 0; j < nr; j+=2, i++) { '
+    line( intype, outtype, 'out+j', 'i', '(i+1)%(nr/2)' )
     print '   }'
     postamble()
 
