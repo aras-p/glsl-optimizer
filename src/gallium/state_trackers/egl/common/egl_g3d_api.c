@@ -37,7 +37,6 @@
 #include "egl_g3d_image.h"
 #include "egl_g3d_sync.h"
 #include "egl_g3d_st.h"
-#include "egl_g3d_loader.h"
 #include "native.h"
 
 /**
@@ -47,7 +46,6 @@ static struct st_api *
 egl_g3d_choose_st(_EGLDriver *drv, _EGLContext *ctx,
                   enum st_profile_type *profile)
 {
-   struct egl_g3d_driver *gdrv = egl_g3d_driver(drv);
    struct st_api *stapi;
    EGLint api = -1;
 
@@ -81,17 +79,7 @@ egl_g3d_choose_st(_EGLDriver *drv, _EGLContext *ctx,
       break;
    }
 
-   switch (api) {
-   case ST_API_OPENGL:
-      stapi = gdrv->loader->guess_gl_api(*profile);
-      break;
-   case ST_API_OPENVG:
-      stapi = gdrv->loader->get_st_api(api);
-      break;
-   default:
-      stapi = NULL;
-      break;
-   }
+   stapi = egl_g3d_get_st_api(drv, api);
    if (stapi && !(stapi->profile_mask & (1 << *profile)))
       stapi = NULL;
 
