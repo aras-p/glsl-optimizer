@@ -45,19 +45,19 @@ public:
 
    ir_visitor_status visit_leave(ir_assignment *);
 
-   ir_dereference *get_column(ir_variable *var, int col);
-   ir_rvalue *get_element(ir_variable *var, int col, int row);
+   ir_dereference *get_column(ir_dereference *val, int col);
+   ir_rvalue *get_element(ir_dereference *val, int col, int row);
 
-   void do_mul_mat_mat(ir_variable *result,
-		       ir_variable *a, ir_variable *b);
-   void do_mul_mat_vec(ir_variable *result,
-		       ir_variable *a, ir_variable *b);
-   void do_mul_vec_mat(ir_variable *result,
-		       ir_variable *a, ir_variable *b);
-   void do_mul_mat_scalar(ir_variable *result,
-			  ir_variable *a, ir_variable *b);
-   void do_equal_mat_mat(ir_variable *result, ir_variable *a,
-			 ir_variable *b, bool test_equal);
+   void do_mul_mat_mat(ir_dereference *result,
+		       ir_dereference *a, ir_dereference *b);
+   void do_mul_mat_vec(ir_dereference *result,
+		       ir_dereference *a, ir_dereference *b);
+   void do_mul_vec_mat(ir_dereference *result,
+		       ir_dereference *a, ir_dereference *b);
+   void do_mul_mat_scalar(ir_dereference *result,
+			  ir_dereference *a, ir_dereference *b);
+   void do_equal_mat_mat(ir_dereference *result, ir_dereference *a,
+			 ir_dereference *b, bool test_equal);
 
    void *mem_ctx;
    bool made_progress;
@@ -97,42 +97,30 @@ do_mat_op_to_vec(exec_list *instructions)
 }
 
 ir_rvalue *
-ir_mat_op_to_vec_visitor::get_element(ir_variable *var, int col, int row)
+ir_mat_op_to_vec_visitor::get_element(ir_dereference *val, int col, int row)
 {
-   ir_dereference *deref;
+   val = get_column(val, col);
 
-   deref = new(mem_ctx) ir_dereference_variable(var);
-
-   if (var->type->is_matrix()) {
-      deref = new(mem_ctx) ir_dereference_array(var,
-						new(mem_ctx) ir_constant(col));
-   } else {
-      assert(col == 0);
-   }
-
-   return new(mem_ctx) ir_swizzle(deref, row, 0, 0, 0, 1);
+   return new(mem_ctx) ir_swizzle(val, row, 0, 0, 0, 1);
 }
 
 ir_dereference *
-ir_mat_op_to_vec_visitor::get_column(ir_variable *var, int row)
+ir_mat_op_to_vec_visitor::get_column(ir_dereference *val, int row)
 {
-   ir_dereference *deref;
+   val = val->clone(mem_ctx, NULL);
 
-   if (!var->type->is_matrix()) {
-      deref = new(mem_ctx) ir_dereference_variable(var);
-   } else {
-      deref = new(mem_ctx) ir_dereference_variable(var);
-      deref = new(mem_ctx) ir_dereference_array(deref,
-						new(mem_ctx) ir_constant(row));
+   if (val->type->is_matrix()) {
+      val = new(mem_ctx) ir_dereference_array(val,
+					      new(mem_ctx) ir_constant(row));
    }
 
-   return deref;
+   return val;
 }
 
 void
-ir_mat_op_to_vec_visitor::do_mul_mat_mat(ir_variable *result_var,
-					 ir_variable *a,
-					 ir_variable *b)
+ir_mat_op_to_vec_visitor::do_mul_mat_mat(ir_dereference *result,
+					 ir_dereference *a,
+					 ir_dereference *b)
 {
    int b_col, i;
    ir_assignment *assign;
@@ -156,8 +144,7 @@ ir_mat_op_to_vec_visitor::do_mul_mat_mat(ir_variable *result_var,
 					   mul_expr);
       }
 
-      ir_rvalue *result = get_column(result_var, b_col);
-      assign = new(mem_ctx) ir_assignment(result,
+      assign = new(mem_ctx) ir_assignment(get_column(result, b_col),
 					  expr,
 					  NULL);
       base_ir->insert_before(assign);
@@ -165,9 +152,9 @@ ir_mat_op_to_vec_visitor::do_mul_mat_mat(ir_variable *result_var,
 }
 
 void
-ir_mat_op_to_vec_visitor::do_mul_mat_vec(ir_variable *result_var,
-					 ir_variable *a,
-					 ir_variable *b)
+ir_mat_op_to_vec_visitor::do_mul_mat_vec(ir_dereference *result,
+					 ir_dereference *a,
+					 ir_dereference *b)
 {
    int i;
    ir_assignment *assign;
@@ -188,7 +175,7 @@ ir_mat_op_to_vec_visitor::do_mul_mat_vec(ir_variable *result_var,
       expr = new(mem_ctx) ir_expression(ir_binop_add, expr, mul_expr);
    }
 
-   ir_rvalue *result = new(mem_ctx) ir_dereference_variable(result_var);
+   result = result->clone(mem_ctx, NULL);
    assign = new(mem_ctx) ir_assignment(result,
 				       expr,
 				       NULL);
@@ -196,9 +183,9 @@ ir_mat_op_to_vec_visitor::do_mul_mat_vec(ir_variable *result_var,
 }
 
 void
-ir_mat_op_to_vec_visitor::do_mul_vec_mat(ir_variable *result,
-					 ir_variable *a,
-					 ir_variable *b)
+ir_mat_op_to_vec_visitor::do_mul_vec_mat(ir_dereference *result,
+					 ir_dereference *a,
+					 ir_dereference *b)
 {
    int i;
 
@@ -207,11 +194,11 @@ ir_mat_op_to_vec_visitor::do_mul_vec_mat(ir_variable *result,
       ir_expression *column_expr;
       ir_assignment *column_assign;
 
-      column_result = new(mem_ctx) ir_dereference_variable(result);
+      column_result = result->clone(mem_ctx, NULL);
       column_result = new(mem_ctx) ir_swizzle(column_result, i, 0, 0, 0, 1);
 
       column_expr = new(mem_ctx) ir_expression(ir_binop_dot,
-					       new(mem_ctx) ir_dereference_variable(a),
+					       a->clone(mem_ctx, NULL),
 					       get_column(b, i));
 
       column_assign = new(mem_ctx) ir_assignment(column_result,
@@ -222,9 +209,9 @@ ir_mat_op_to_vec_visitor::do_mul_vec_mat(ir_variable *result,
 }
 
 void
-ir_mat_op_to_vec_visitor::do_mul_mat_scalar(ir_variable *result,
-					    ir_variable *a,
-					    ir_variable *b)
+ir_mat_op_to_vec_visitor::do_mul_mat_scalar(ir_dereference *result,
+					    ir_dereference *a,
+					    ir_dereference *b)
 {
    int i;
 
@@ -234,7 +221,7 @@ ir_mat_op_to_vec_visitor::do_mul_mat_scalar(ir_variable *result,
 
       column_expr = new(mem_ctx) ir_expression(ir_binop_mul,
 					       get_column(a, i),
-					       new(mem_ctx) ir_dereference_variable(b));
+					       b->clone(mem_ctx, NULL));
 
       column_assign = new(mem_ctx) ir_assignment(get_column(result, i),
 						 column_expr,
@@ -244,9 +231,9 @@ ir_mat_op_to_vec_visitor::do_mul_mat_scalar(ir_variable *result,
 }
 
 void
-ir_mat_op_to_vec_visitor::do_equal_mat_mat(ir_variable *result_var,
-					   ir_variable *a,
-					   ir_variable *b,
+ir_mat_op_to_vec_visitor::do_equal_mat_mat(ir_dereference *result,
+					   ir_dereference *a,
+					   ir_dereference *b,
 					   bool test_equal)
 {
    /* This essentially implements the following GLSL:
@@ -297,11 +284,8 @@ ir_mat_op_to_vec_visitor::do_equal_mat_mat(ir_variable *result_var,
    if (test_equal)
       any = new(this->mem_ctx) ir_expression(ir_unop_logic_not, any);
 
-   ir_rvalue *const result =
-      new(this->mem_ctx) ir_dereference_variable(result_var);
-
    ir_assignment *const assign =
-	 new(mem_ctx) ir_assignment(result, any, NULL);
+      new(mem_ctx) ir_assignment(result->clone(mem_ctx, NULL), any, NULL);
    base_ir->insert_before(assign);
 }
 
@@ -324,7 +308,7 @@ ir_mat_op_to_vec_visitor::visit_leave(ir_assignment *orig_assign)
 {
    ir_expression *orig_expr = orig_assign->rhs->as_expression();
    unsigned int i, matrix_columns = 1;
-   ir_variable *op[2];
+   ir_dereference *op[2];
 
    if (!orig_expr)
       return visit_continue;
@@ -336,11 +320,9 @@ ir_mat_op_to_vec_visitor::visit_leave(ir_assignment *orig_assign)
 
    mem_ctx = ralloc_parent(orig_assign);
 
-   ir_dereference_variable *lhs_deref =
+   ir_dereference_variable *result =
       orig_assign->lhs->as_dereference_variable();
-   assert(lhs_deref);
-
-   ir_variable *result = lhs_deref->var;
+   assert(result);
 
    /* Store the expression operands in temps so we can use them
     * multiple times.
@@ -348,13 +330,16 @@ ir_mat_op_to_vec_visitor::visit_leave(ir_assignment *orig_assign)
    for (i = 0; i < orig_expr->get_num_operands(); i++) {
       ir_assignment *assign;
 
-      op[i] = new(mem_ctx) ir_variable(orig_expr->operands[i]->type,
-				       "mat_op_to_vec",
-				       ir_var_temporary);
-      base_ir->insert_before(op[i]);
+      ir_variable *var = new(mem_ctx) ir_variable(orig_expr->operands[i]->type,
+						  "mat_op_to_vec",
+						  ir_var_temporary);
+      base_ir->insert_before(var);
 
-      lhs_deref = new(mem_ctx) ir_dereference_variable(op[i]);
-      assign = new(mem_ctx) ir_assignment(lhs_deref,
+      /* Note that we use this dereference for the assignment.  That means
+       * that others that want to use op[i] have to clone the deref.
+       */
+      op[i] = new(mem_ctx) ir_dereference_variable(var);
+      assign = new(mem_ctx) ir_assignment(op[i],
 					  orig_expr->operands[i],
 					  NULL);
       base_ir->insert_before(assign);
