@@ -355,8 +355,14 @@ static const struct
    { PIPE_FORMAT_NONE,           0x00000000},
 };
 
-static boolean need_fixup(enum pipe_format f)
+static boolean need_fixup(struct pipe_surface* p)
 {
+   enum pipe_format f;
+   /* if we don't have a surface bound yet, we don't need to fixup the shader */
+   if (!p)
+      return FALSE;
+
+   f = p->format;
    for(int i=0; fixup_formats[i].format != PIPE_FORMAT_NONE; i++)
       if (fixup_formats[i].format == f)
          return TRUE;
@@ -379,14 +385,14 @@ validate_program(struct i915_context *i915, unsigned *batch_space)
    struct pipe_surface *cbuf_surface = i915->framebuffer.cbufs[0];
 
    /* we need more batch space if we want to emulate rgba framebuffers */
-   *batch_space = i915->fs->program_len + (need_fixup(cbuf_surface->format) ? 3 : 0);
+   *batch_space = i915->fs->program_len + (need_fixup(cbuf_surface) ? 3 : 0);
 }
 
 static void
 emit_program(struct i915_context *i915)
 {
    struct pipe_surface *cbuf_surface = i915->framebuffer.cbufs[0];
-   boolean need_format_fixup = need_fixup(cbuf_surface->format);
+   boolean need_format_fixup = need_fixup(cbuf_surface);
    uint i;
 
    /* we should always have, at least, a pass-through program */
