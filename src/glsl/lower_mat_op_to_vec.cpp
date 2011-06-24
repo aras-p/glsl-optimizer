@@ -144,7 +144,6 @@ ir_mat_op_to_vec_visitor::do_mul_mat_mat(ir_variable *result_var,
 
       /* first column */
       expr = new(mem_ctx) ir_expression(ir_binop_mul,
-					a->type,
 					a,
 					b);
 
@@ -156,11 +155,9 @@ ir_mat_op_to_vec_visitor::do_mul_mat_mat(ir_variable *result_var,
 	 b = get_element(b_var, b_col, i);
 
 	 mul_expr = new(mem_ctx) ir_expression(ir_binop_mul,
-					       a->type,
 					       a,
 					       b);
 	 expr = new(mem_ctx) ir_expression(ir_binop_add,
-					   a->type,
 					   expr,
 					   mul_expr);
       }
@@ -186,7 +183,6 @@ ir_mat_op_to_vec_visitor::do_mul_mat_vec(ir_variable *result_var,
 
    /* first column */
    expr = new(mem_ctx) ir_expression(ir_binop_mul,
-				     result_var->type,
 				     a,
 				     b);
 
@@ -198,13 +194,9 @@ ir_mat_op_to_vec_visitor::do_mul_mat_vec(ir_variable *result_var,
       b = get_element(b_var, 0, i);
 
       mul_expr = new(mem_ctx) ir_expression(ir_binop_mul,
-					    result_var->type,
 					    a,
 					    b);
-      expr = new(mem_ctx) ir_expression(ir_binop_add,
-					result_var->type,
-					expr,
-					mul_expr);
+      expr = new(mem_ctx) ir_expression(ir_binop_add, expr, mul_expr);
    }
 
    ir_rvalue *result = new(mem_ctx) ir_dereference_variable(result_var);
@@ -232,7 +224,6 @@ ir_mat_op_to_vec_visitor::do_mul_vec_mat(ir_variable *result_var,
       result = new(mem_ctx) ir_swizzle(result, i, 0, 0, 0, 1);
 
       column_expr = new(mem_ctx) ir_expression(ir_binop_dot,
-					       result->type,
 					       a,
 					       b);
 
@@ -258,7 +249,6 @@ ir_mat_op_to_vec_visitor::do_mul_mat_scalar(ir_variable *result_var,
       ir_assignment *column_assign;
 
       column_expr = new(mem_ctx) ir_expression(ir_binop_mul,
-					       result->type,
 					       a,
 					       b);
 
@@ -307,8 +297,7 @@ ir_mat_op_to_vec_visitor::do_equal_mat_mat(ir_variable *result_var,
       ir_dereference *const op1 = get_column(b_var, i);
 
       ir_expression *const cmp =
-	 new(this->mem_ctx) ir_expression(ir_binop_any_nequal,
-					  glsl_type::bool_type, op0, op1);
+	 new(this->mem_ctx) ir_expression(ir_binop_any_nequal, op0, op1);
 
       ir_dereference *const lhs =
 	 new(this->mem_ctx) ir_dereference_variable(tmp_bvec);
@@ -319,17 +308,11 @@ ir_mat_op_to_vec_visitor::do_equal_mat_mat(ir_variable *result_var,
       this->base_ir->insert_before(assign);
    }
 
-   ir_rvalue *const val =
-      new(this->mem_ctx) ir_dereference_variable(tmp_bvec);
-
-   ir_expression *any =
-      new(this->mem_ctx) ir_expression(ir_unop_any, glsl_type::bool_type,
-				       val, NULL);
+   ir_rvalue *const val = new(this->mem_ctx) ir_dereference_variable(tmp_bvec);
+   ir_expression *any = new(this->mem_ctx) ir_expression(ir_unop_any, val);
 
    if (test_equal)
-      any = new(this->mem_ctx) ir_expression(ir_unop_logic_not,
-					     glsl_type::bool_type,
-					     any, NULL);
+      any = new(this->mem_ctx) ir_expression(ir_unop_logic_not, any);
 
    ir_rvalue *const result =
       new(this->mem_ctx) ir_dereference_variable(result_var);
@@ -406,10 +389,7 @@ ir_mat_op_to_vec_visitor::visit_leave(ir_assignment *orig_assign)
 	 ir_expression *column_expr;
 	 ir_assignment *column_assign;
 
-	 column_expr = new(mem_ctx) ir_expression(orig_expr->operation,
-						  result->type,
-						  op0,
-						  NULL);
+	 column_expr = new(mem_ctx) ir_expression(orig_expr->operation, op0);
 
 	 column_assign = new(mem_ctx) ir_assignment(result,
 						    column_expr,
@@ -438,7 +418,6 @@ ir_mat_op_to_vec_visitor::visit_leave(ir_assignment *orig_assign)
 	 ir_assignment *column_assign;
 
 	 column_expr = new(mem_ctx) ir_expression(orig_expr->operation,
-						  result->type,
 						  op0,
 						  op1);
 
