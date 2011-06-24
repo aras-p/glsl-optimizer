@@ -367,3 +367,75 @@ resource_surface_wait(struct resource_surface *rsurf)
 {
    while (resource_surface_throttle(rsurf));
 }
+
+#include "state_tracker/drm_driver.h"
+struct pipe_resource *
+drm_display_import_native_buffer(struct native_display *ndpy,
+                                 struct native_buffer *nbuf)
+{
+   struct pipe_screen *screen = ndpy->screen;
+   struct pipe_resource *res = NULL;
+
+   switch (nbuf->type) {
+   case NATIVE_BUFFER_DRM:
+      {
+         struct winsys_handle wsh;
+
+         memset(&wsh, 0, sizeof(wsh));
+         wsh.handle = nbuf->u.drm.name;
+         wsh.stride = nbuf->u.drm.stride;
+
+         res = screen->resource_from_handle(screen, &nbuf->u.drm.templ, &wsh);
+      }
+      break;
+   default:
+      break;
+   }
+
+   return res;
+}
+
+boolean
+drm_display_export_native_buffer(struct native_display *ndpy,
+                                 struct pipe_resource *res,
+                                 struct native_buffer *nbuf)
+{
+   struct pipe_screen *screen = ndpy->screen;
+   boolean ret = FALSE;
+
+   switch (nbuf->type) {
+   case NATIVE_BUFFER_DRM:
+      {
+         struct winsys_handle wsh;
+
+         if ((nbuf->u.drm.templ.bind & res->bind) != nbuf->u.drm.templ.bind)
+            break;
+
+         memset(&wsh, 0, sizeof(wsh));
+         wsh.type = DRM_API_HANDLE_TYPE_KMS;
+         if (!screen->resource_get_handle(screen, res, &wsh))
+            break;
+
+         nbuf->u.drm.handle = wsh.handle;
+         nbuf->u.drm.stride = wsh.stride;
+
+         /* get the name of the GEM object */
+         if (nbuf->u.drm.templ.bind & PIPE_BIND_SHARED) {
+            memset(&wsh, 0, sizeof(wsh));
+            wsh.type = DRM_API_HANDLE_TYPE_SHARED;
+            if (!screen->resource_get_handle(screen, res, &wsh))
+               break;
+
+            nbuf->u.drm.name = wsh.handle;
+         }
+
+         nbuf->u.drm.templ = *res;
+         ret = TRUE;
+      }
+      break;
+   default:
+      break;
+   }
+
+   return ret;
+}

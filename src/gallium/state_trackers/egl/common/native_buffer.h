@@ -30,30 +30,43 @@
 #define _NATIVE_BUFFER_H_
 
 #include "pipe/p_compiler.h"
+#include "pipe/p_state.h"
 
 struct native_display;
-struct pipe_resource;
+
+enum native_buffer_type {
+   NATIVE_BUFFER_DRM,
+
+   NUM_NATIVE_BUFFERS
+};
+
+struct native_buffer {
+   enum native_buffer_type type;
+
+   union {
+      struct {
+         struct pipe_resource templ;
+         unsigned name;   /**< the name of the GEM object */
+         unsigned handle; /**< the handle of the GEM object */
+         unsigned stride;
+      } drm;
+   } u;
+};
 
 /**
  * Buffer interface of the native display.  It allows native buffers to be
  * imported and exported.
- *
- * Just like a native window or a native pixmap, a native buffer is another
- * native type.  Its definition depends on the native display.
- *
- * For DRM platform, the type of a native buffer is struct winsys_handle.
  */
 struct native_display_buffer {
    struct pipe_resource *(*import_buffer)(struct native_display *ndpy,
-                                          const struct pipe_resource *templ,
-                                          void *buf);
+                                          struct native_buffer *buf);
 
    /**
     * The resource must be creatred with PIPE_BIND_SHARED.
     */
    boolean (*export_buffer)(struct native_display *ndpy,
                             struct pipe_resource *res,
-                            void *buf);
+                            struct native_buffer *nbuf);
 };
 
 #endif /* _NATIVE_BUFFER_H_ */

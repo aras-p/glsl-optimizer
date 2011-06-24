@@ -212,27 +212,10 @@ wayland_drm_display_init_screen(struct native_display *ndpy)
    return TRUE;
 }
 
-static struct pipe_resource *
-wayland_drm_display_import_buffer(struct native_display *ndpy,
-                                  const struct pipe_resource *templ,
-                                  void *buf)
-{
-   return ndpy->screen->resource_from_handle(ndpy->screen,
-                                             templ, (struct winsys_handle *) buf);
-}
-
-static boolean
-wayland_drm_display_export_buffer(struct native_display *ndpy,
-                                  struct pipe_resource *res,
-                                  void *buf)
-{
-   return ndpy->screen->resource_get_handle(ndpy->screen,
-                                            res, (struct winsys_handle *) buf);
-}
-
 static struct native_display_buffer wayland_drm_display_buffer = {
-   wayland_drm_display_import_buffer,
-   wayland_drm_display_export_buffer
+   /* use the helpers */
+   drm_display_import_native_buffer,
+   drm_display_export_native_buffer
 };
 
 static int
