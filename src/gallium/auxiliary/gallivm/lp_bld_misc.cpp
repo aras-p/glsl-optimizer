@@ -83,7 +83,11 @@ lp_set_target_options(void)
     * to only assume a 4 bytes alignment for backwards compatibility.
     */
 #if defined(PIPE_ARCH_X86)
+#if HAVE_LLVM >= 0x0300
+   llvm::StackAlignmentOverride = 4;
+#else
    llvm::StackAlignment = 4;
+#endif
 #endif
 
 #if defined(DEBUG) || defined(PROFILE)
