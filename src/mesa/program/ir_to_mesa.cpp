@@ -803,48 +803,44 @@ ir_to_mesa_visitor::visit(ir_loop *ir)
    ir_dereference_variable *counter = NULL;
 
    if (ir->counter != NULL)
-      counter = new(ir) ir_dereference_variable(ir->counter);
+      counter = new(mem_ctx) ir_dereference_variable(ir->counter);
 
    if (ir->from != NULL) {
       assert(ir->counter != NULL);
 
-      ir_assignment *a = new(ir) ir_assignment(counter, ir->from, NULL);
+      ir_assignment *a =
+	new(mem_ctx) ir_assignment(counter, ir->from, NULL);
 
       a->accept(this);
-      delete a;
    }
 
    emit(NULL, OPCODE_BGNLOOP);
 
    if (ir->to) {
       ir_expression *e =
-	 new(ir) ir_expression(ir->cmp, glsl_type::bool_type,
-			       counter, ir->to);
-      ir_if *if_stmt =  new(ir) ir_if(e);
+	 new(mem_ctx) ir_expression(ir->cmp, glsl_type::bool_type,
+					  counter, ir->to);
+      ir_if *if_stmt =  new(mem_ctx) ir_if(e);
 
-      ir_loop_jump *brk = new(ir) ir_loop_jump(ir_loop_jump::jump_break);
+      ir_loop_jump *brk =
+	new(mem_ctx) ir_loop_jump(ir_loop_jump::jump_break);
 
       if_stmt->then_instructions.push_tail(brk);
 
       if_stmt->accept(this);
-
-      delete if_stmt;
-      delete e;
-      delete brk;
    }
 
    visit_exec_list(&ir->body_instructions, this);
 
    if (ir->increment) {
       ir_expression *e =
-	 new(ir) ir_expression(ir_binop_add, counter->type,
-			       counter, ir->increment);
+	 new(mem_ctx) ir_expression(ir_binop_add, counter->type,
+					  counter, ir->increment);
 
-      ir_assignment *a = new(ir) ir_assignment(counter, e, NULL);
+      ir_assignment *a =
+	new(mem_ctx) ir_assignment(counter, e, NULL);
 
       a->accept(this);
-      delete a;
-      delete e;
    }
 
    emit(NULL, OPCODE_ENDLOOP);
