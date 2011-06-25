@@ -456,8 +456,6 @@ _eglIsConfigAttribValid(_EGLConfig *conf, EGLint attr)
       return EGL_FALSE;
 
    switch (attr) {
-   case EGL_MATCH_NATIVE_PIXMAP:
-      return EGL_FALSE;
    case EGL_Y_INVERTED_NOK:
       return conf->Display->Extensions.NOK_texture_from_pixmap;
    default:
@@ -767,6 +765,16 @@ _eglGetConfigAttrib(_EGLDriver *drv, _EGLDisplay *dpy, _EGLConfig *conf,
 {
    if (!_eglIsConfigAttribValid(conf, attribute))
       return _eglError(EGL_BAD_ATTRIBUTE, "eglGetConfigAttrib");
+
+   /* nonqueryable attributes */
+   switch (attribute) {
+   case EGL_MATCH_NATIVE_PIXMAP:
+      return _eglError(EGL_BAD_ATTRIBUTE, "eglGetConfigAttrib");
+      break;
+   default:
+      break;
+   }
+
    if (!value)
       return _eglError(EGL_BAD_PARAMETER, "eglGetConfigAttrib");
 
