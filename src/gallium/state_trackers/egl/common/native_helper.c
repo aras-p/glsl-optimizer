@@ -368,6 +368,47 @@ resource_surface_wait(struct resource_surface *rsurf)
    while (resource_surface_throttle(rsurf));
 }
 
+boolean
+native_display_copy_to_pixmap(struct native_display *ndpy,
+                              EGLNativePixmapType pix,
+                              struct pipe_resource *src)
+{
+   struct pipe_context *pipe;
+   struct native_surface *nsurf;
+   struct pipe_resource *dst;
+   struct pipe_resource *tmp[NUM_NATIVE_ATTACHMENTS];
+   const enum native_attachment natt = NATIVE_ATTACHMENT_FRONT_LEFT;
+
+   pipe = ndpy_get_copy_context(ndpy);
+   if (!pipe)
+      return FALSE;
+
+   nsurf = ndpy->create_pixmap_surface(ndpy, pix, NULL);
+   if (!nsurf)
+      return FALSE;
+
+   /* get the texutre */
+   tmp[natt] = NULL;
+   nsurf->validate(nsurf, 1 << natt, NULL, tmp, NULL, NULL);
+   dst = tmp[natt];
+
+   if (dst && dst->format == src->format) {
+      struct pipe_box src_box;
+
+      u_box_origin_2d(src->width0, src->height0, &src_box);
+      pipe->resource_copy_region(pipe, dst, 0, 0, 0, 0, src, 0, &src_box);
+      pipe->flush(pipe, NULL);
+      nsurf->present(nsurf, natt, FALSE, 0);
+   }
+
+   if (dst)
+      pipe_resource_reference(&dst, NULL);
+
+   nsurf->destroy(nsurf);
+
+   return TRUE;
+}
+
 #include "state_tracker/drm_driver.h"
 struct pipe_resource *
 drm_display_import_native_buffer(struct native_display *ndpy,

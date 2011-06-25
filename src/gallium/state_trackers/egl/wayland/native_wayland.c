@@ -477,6 +477,7 @@ native_create_display(void *dpy, boolean use_sw)
    display->base.get_param = wayland_display_get_param;
    display->base.get_configs = wayland_display_get_configs;
    display->base.is_pixmap_supported = wayland_display_is_pixmap_supported;
+   display->base.copy_to_pixmap = native_display_copy_to_pixmap;
    display->base.create_window_surface = wayland_create_window_surface;
    display->base.create_pixmap_surface = wayland_create_pixmap_surface;
 

@@ -38,6 +38,7 @@
 #include "native_x11.h"
 #include "x11_screen.h"
 
+#include "common/native_helper.h"
 #ifdef HAVE_WAYLAND_BACKEND
 #include "common/native_wayland_drm_bufmgr_helper.h"
 #endif
@@ -909,6 +910,7 @@ x11_create_dri2_display(Display *dpy,
    dri2dpy->base.get_param = dri2_display_get_param;
    dri2dpy->base.get_configs = dri2_display_get_configs;
    dri2dpy->base.is_pixmap_supported = dri2_display_is_pixmap_supported;
+   dri2dpy->base.copy_to_pixmap = native_display_copy_to_pixmap;
    dri2dpy->base.create_window_surface = dri2_display_create_window_surface;
    dri2dpy->base.create_pixmap_surface = dri2_display_create_pixmap_surface;
 #ifdef HAVE_WAYLAND_BACKEND

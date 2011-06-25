@@ -542,6 +542,7 @@ x11_create_ximage_display(Display *dpy,
 
    xdpy->base.get_configs = ximage_display_get_configs;
    xdpy->base.is_pixmap_supported = ximage_display_is_pixmap_supported;
+   xdpy->base.copy_to_pixmap = native_display_copy_to_pixmap;
    xdpy->base.create_window_surface = ximage_display_create_window_surface;
    xdpy->base.create_pixmap_surface = ximage_display_create_pixmap_surface;
 

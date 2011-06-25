@@ -180,11 +180,22 @@ struct native_display {
     *
     * This function is usually called to find a config that supports a given
     * pixmap.  Thus, it is usually called with the same pixmap in a row.
+    *
+    * TODO should be get_pixmap_format() and return the pipe format of the
+    * pixmap.
     */
    boolean (*is_pixmap_supported)(struct native_display *ndpy,
                                   EGLNativePixmapType pix,
                                   const struct native_config *nconf);
 
+   /**
+    * Copy the contents of the resource to the pixmap's front-left attachment.
+    * This is used to implement eglCopyBuffers.  Required unless no config has
+    * pixmap_bit set.
+    */
+   boolean (*copy_to_pixmap)(struct native_display *ndpy,
+                             EGLNativePixmapType pix,
+                             struct pipe_resource *src);
 
    /**
     * Create a window surface.  Required unless no config has window_bit set.

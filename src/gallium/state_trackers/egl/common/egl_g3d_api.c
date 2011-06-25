@@ -602,21 +602,6 @@ egl_g3d_swap_buffers(_EGLDriver *drv, _EGLDisplay *dpy, _EGLSurface *surf)
          gsurf->base.SwapInterval);
 }
 
-/**
- * Get the pipe surface of the given attachment of the native surface.
- */
-static struct pipe_resource *
-get_pipe_resource(struct native_display *ndpy, struct native_surface *nsurf,
-                  enum native_attachment natt)
-{
-   struct pipe_resource *textures[NUM_NATIVE_ATTACHMENTS];
-
-   textures[natt] = NULL;
-   nsurf->validate(nsurf, 1 << natt, NULL, textures, NULL, NULL);
-
-   return textures[natt];
-}
-
 static EGLBoolean
 egl_g3d_copy_buffers(_EGLDriver *drv, _EGLDisplay *dpy, _EGLSurface *surf,
                      EGLNativePixmapType target)
@@ -624,16 +609,9 @@ egl_g3d_copy_buffers(_EGLDriver *drv, _EGLDisplay *dpy, _EGLSurface *surf,
    struct egl_g3d_display *gdpy = egl_g3d_display(dpy);
    struct egl_g3d_surface *gsurf = egl_g3d_surface(surf);
    _EGLContext *ctx = _eglGetCurrentContext();
-   struct native_surface *nsurf;
-   struct pipe_resource *ptex;
-   struct pipe_context *pipe;
 
    if (!gsurf->render_texture)
       return EGL_TRUE;
-
-   nsurf = gdpy->native->create_pixmap_surface(gdpy->native, target, NULL);
-   if (!nsurf)
-      return _eglError(EGL_BAD_NATIVE_PIXMAP, "eglCopyBuffers");
 
    /* flush if the surface is current */
    if (ctx && ctx->DrawSurface == &gsurf->base) {
@@ -641,26 +619,8 @@ egl_g3d_copy_buffers(_EGLDriver *drv, _EGLDisplay *dpy, _EGLSurface *surf,
       gctx->stctxi->flush(gctx->stctxi, ST_FLUSH_FRONT, NULL);
    }
 
-   pipe = ndpy_get_copy_context(gdpy->native);
-   if (!pipe)
-      return EGL_FALSE;
-
-   ptex = get_pipe_resource(gdpy->native, nsurf, NATIVE_ATTACHMENT_FRONT_LEFT);
-   if (ptex) {
-      struct pipe_box src_box;
-
-      u_box_origin_2d(ptex->width0, ptex->height0, &src_box);
-      pipe->resource_copy_region(pipe, ptex, 0, 0, 0, 0,
-            gsurf->render_texture, 0, &src_box);
-      pipe->flush(pipe, NULL);
-      nsurf->present(nsurf, NATIVE_ATTACHMENT_FRONT_LEFT, FALSE, 0);
-
-      pipe_resource_reference(&ptex, NULL);
-   }
-
-   nsurf->destroy(nsurf);
-
-   return EGL_TRUE;
+   return gdpy->native->copy_to_pixmap(gdpy->native,
+         target, gsurf->render_texture);
 }
 
 static EGLBoolean
