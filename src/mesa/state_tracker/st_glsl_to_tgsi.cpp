@@ -1133,6 +1133,7 @@ glsl_to_tgsi_visitor::try_emit_mad(ir_expression *ir, int mul_operand)
 {
    int nonmul_operand = 1 - mul_operand;
    st_src_reg a, b, c;
+   st_dst_reg result_dst;
 
    ir_expression *expr = ir->operands[mul_operand]->as_expression();
    if (!expr || expr->operation != ir_binop_mul)
@@ -1146,7 +1147,9 @@ glsl_to_tgsi_visitor::try_emit_mad(ir_expression *ir, int mul_operand)
    c = this->result;
 
    this->result = get_temp(ir->type);
-   emit(ir, TGSI_OPCODE_MAD, st_dst_reg(this->result), a, b, c);
+   result_dst = st_dst_reg(this->result);
+   result_dst.writemask = (1 << ir->type->vector_elements) - 1;
+   emit(ir, TGSI_OPCODE_MAD, result_dst, a, b, c);
 
    return true;
 }
@@ -1168,8 +1171,10 @@ glsl_to_tgsi_visitor::try_emit_sat(ir_expression *ir)
    st_src_reg src = this->result;
 
    this->result = get_temp(ir->type);
+   st_dst_reg result_dst = st_dst_reg(this->result);
+   result_dst.writemask = (1 << ir->type->vector_elements) - 1;
    glsl_to_tgsi_instruction *inst;
-   inst = emit(ir, TGSI_OPCODE_MOV, st_dst_reg(this->result), src);
+   inst = emit(ir, TGSI_OPCODE_MOV, result_dst, src);
    inst->saturate = true;
 
    return true;
