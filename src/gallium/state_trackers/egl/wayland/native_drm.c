@@ -51,7 +51,7 @@
 struct wayland_drm_display {
    struct wayland_display base;
 
-   struct native_event_handler *event_handler;
+   const struct native_event_handler *event_handler;
 
    struct wl_drm *wl_drm;
    struct wl_drm *wl_server_drm; /* for EGL_WL_bind_wayland_display */
@@ -285,8 +285,7 @@ static struct native_display_wayland_bufmgr wayland_drm_display_wayland_bufmgr =
 
 struct wayland_display *
 wayland_create_drm_display(struct wl_display *dpy,
-                           struct native_event_handler *event_handler,
-                           void *user_data)
+                           const struct native_event_handler *event_handler)
 {
    struct wayland_drm_display *drmdpy;
 
@@ -295,7 +294,6 @@ wayland_create_drm_display(struct wl_display *dpy,
       return NULL;
 
    drmdpy->event_handler = event_handler;
-   drmdpy->base.base.user_data = user_data;
 
    drmdpy->base.dpy = dpy;
    if (!drmdpy->base.dpy) {
@@ -303,10 +301,7 @@ wayland_create_drm_display(struct wl_display *dpy,
       return NULL;
    }
 
-   if (!wayland_drm_display_init_screen(&drmdpy->base.base)) {
-      wayland_drm_display_destroy(&drmdpy->base.base);
-      return NULL;
-   }
+   drmdpy->base.base.init_screen = wayland_drm_display_init_screen;
    drmdpy->base.base.destroy = wayland_drm_display_destroy;
    drmdpy->base.base.buffer = &wayland_drm_display_buffer;
    drmdpy->base.base.wayland_bufmgr = &wayland_drm_display_wayland_bufmgr;

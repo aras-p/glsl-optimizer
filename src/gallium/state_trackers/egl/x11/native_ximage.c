@@ -43,7 +43,7 @@ struct ximage_display {
    Display *dpy;
    boolean own_dpy;
 
-   struct native_event_handler *event_handler;
+   const struct native_event_handler *event_handler;
 
    struct x11_screen *xscr;
    int xscr_number;
@@ -484,13 +484,32 @@ ximage_display_destroy(struct native_display *ndpy)
    FREE(xdpy);
 }
 
+static boolean
+ximage_display_init_screen(struct native_display *ndpy)
+{
+   struct ximage_display *xdpy = ximage_display(ndpy);
+   struct sw_winsys *winsys;
+
+   winsys = xlib_create_sw_winsys(xdpy->dpy);
+   if (!winsys)
+      return FALSE;
+
+   xdpy->base.screen =
+      xdpy->event_handler->new_sw_screen(&xdpy->base, winsys);
+   if (!xdpy->base.screen) {
+      if (winsys->destroy)
+         winsys->destroy(winsys);
+      return FALSE;
+   }
+
+   return TRUE;
+}
+
 struct native_display *
 x11_create_ximage_display(Display *dpy,
-                          struct native_event_handler *event_handler,
-                          void *user_data)
+                          const struct native_event_handler *event_handler)
 {
    struct ximage_display *xdpy;
-   struct sw_winsys *winsys = NULL;
 
    xdpy = CALLOC_STRUCT(ximage_display);
    if (!xdpy)
@@ -507,22 +526,17 @@ x11_create_ximage_display(Display *dpy,
    }
 
    xdpy->event_handler = event_handler;
-   xdpy->base.user_data = user_data;
 
    xdpy->xscr_number = DefaultScreen(xdpy->dpy);
    xdpy->xscr = x11_screen_create(xdpy->dpy, xdpy->xscr_number);
-   if (!xdpy->xscr)
-      goto fail;
+   if (!xdpy->xscr) {
+      if (xdpy->own_dpy)
+         XCloseDisplay(xdpy->dpy);
+      FREE(xdpy);
+      return NULL;
+   }
 
-   winsys = xlib_create_sw_winsys(xdpy->dpy);
-   if (!winsys)
-      goto fail;
-
-   xdpy->base.screen =
-      xdpy->event_handler->new_sw_screen(&xdpy->base, winsys);
-   if (!xdpy->base.screen)
-      goto fail;
-
+   xdpy->base.init_screen = ximage_display_init_screen;
    xdpy->base.destroy = ximage_display_destroy;
    xdpy->base.get_param = ximage_display_get_param;
 
@@ -532,14 +546,4 @@ x11_create_ximage_display(Display *dpy,
    xdpy->base.create_pixmap_surface = ximage_display_create_pixmap_surface;
 
    return &xdpy->base;
-
-fail:
-   if (winsys && winsys->destroy)
-      winsys->destroy(winsys);
-   if (xdpy->xscr)
-      x11_screen_destroy(xdpy->xscr);
-   if (xdpy->dpy && xdpy->own_dpy)
-      XCloseDisplay(xdpy->dpy);
-   FREE(xdpy);
-   return NULL;
 }

@@ -152,6 +152,11 @@ struct native_display {
     */
    void *user_data;
 
+   /**
+    * Initialize and create the pipe screen.
+    */
+   boolean (*init_screen)(struct native_display *ndpy);
+
    void (*destroy)(struct native_display *ndpy);
 
    /**
@@ -259,26 +264,29 @@ ndpy_uninit(struct native_display *ndpy)
 struct native_platform {
    const char *name;
 
-   void (*set_event_handler)(struct native_event_handler *handler);
-   struct native_display *(*create_display)(void *dpy,
-                                            boolean use_sw,
-                                            void *user_data);
+   /**
+    * Create the native display and usually establish a connection to the
+    * display server.
+    *
+    * No event should be generated at this stage.
+    */
+   struct native_display *(*create_display)(void *dpy, boolean use_sw);
 };
 
 const struct native_platform *
-native_get_gdi_platform(void);
+native_get_gdi_platform(const struct native_event_handler *event_handler);
 
 const struct native_platform *
-native_get_x11_platform(void);
+native_get_x11_platform(const struct native_event_handler *event_handler);
 
 const struct native_platform *
-native_get_wayland_platform(void);
+native_get_wayland_platform(const struct native_event_handler *event_handler);
 
 const struct native_platform *
-native_get_drm_platform(void);
+native_get_drm_platform(const struct native_event_handler *event_handler);
 
 const struct native_platform *
-native_get_fbdev_platform(void);
+native_get_fbdev_platform(const struct native_event_handler *event_handler);
 
 #ifdef __cplusplus
 }

@@ -35,7 +35,7 @@
 
 #include "native_wayland.h"
 
-static struct native_event_handler *wayland_event_handler;
+static const struct native_event_handler *wayland_event_handler;
 
 static void
 sync_callback(void *data)
@@ -447,14 +447,8 @@ wayland_create_window_surface(struct native_display *ndpy,
    return &surface->base;
 }
 
-static void
-native_set_event_handler(struct native_event_handler *event_handler)
-{
-   wayland_event_handler = event_handler;
-}
-
 static struct native_display *
-native_create_display(void *dpy, boolean use_sw, void *user_data)
+native_create_display(void *dpy, boolean use_sw)
 {
    struct wayland_display *display = NULL;
    boolean own_dpy = FALSE;
@@ -471,12 +465,10 @@ native_create_display(void *dpy, boolean use_sw, void *user_data)
    if (use_sw) {
       _eglLog(_EGL_INFO, "use software fallback");
       display = wayland_create_shm_display((struct wl_display *) dpy,
-                                           wayland_event_handler,
-                                           user_data);
+                                           wayland_event_handler);
    } else {
       display = wayland_create_drm_display((struct wl_display *) dpy,
-                                           wayland_event_handler,
-                                           user_data);
+                                           wayland_event_handler);
    }
 
    if (!display)
@@ -495,13 +487,13 @@ native_create_display(void *dpy, boolean use_sw, void *user_data)
 
 static const struct native_platform wayland_platform = {
    "wayland", /* name */
-   native_set_event_handler,
    native_create_display
 };
 
 const struct native_platform *
-native_get_wayland_platform(void)
+native_get_wayland_platform(const struct native_event_handler *event_handler)
 {
+   wayland_event_handler = event_handler;
    return &wayland_platform;
 }
 

@@ -50,7 +50,7 @@ struct drm_surface;
 struct drm_display {
    struct native_display base;
 
-   struct native_event_handler *event_handler;
+   const struct native_event_handler *event_handler;
 
    int fd;
    char *device_name;

@@ -41,7 +41,7 @@ struct gdi_display {
    struct native_display base;
 
    HDC hDC;
-   struct native_event_handler *event_handler;
+   const struct native_event_handler *event_handler;
 
    struct native_config *configs;
    int num_configs;
@@ -368,12 +368,30 @@ gdi_display_destroy(struct native_display *ndpy)
    FREE(gdpy);
 }
 
+static boolean
+gdi_display_init_screen(struct native_display *ndpy)
+{
+   struct gdi_display *gdpy = gdi_display(ndpy);
+   struct sw_winsys *winsys;
+
+   winsys = gdi_create_sw_winsys();
+   if (!winsys)
+      return FALSE;
+
+   gdpy->base.screen = gdpy->event_handler->new_sw_screen(&gdpy->base, winsys);
+   if (!gdpy->base.screen) {
+      if (winsys->destroy)
+         winsys->destroy(winsys);
+      return FALSE;
+   }
+
+   return TRUE;
+}
+
 static struct native_display *
-gdi_create_display(HDC hDC, struct native_event_handler *event_handler,
-                   void *user_data)
+gdi_create_display(HDC hDC, const struct native_event_handler *event_handler)
 {
    struct gdi_display *gdpy;
-   struct sw_winsys *winsys;
 
    gdpy = CALLOC_STRUCT(gdi_display);
    if (!gdpy)
@@ -381,22 +399,8 @@ gdi_create_display(HDC hDC, struct native_event_handler *event_handler,
 
    gdpy->hDC = hDC;
    gdpy->event_handler = event_handler;
-   gdpy->base.user_data = user_data;
 
-   winsys = gdi_create_sw_winsys();
-   if (!winsys) {
-      FREE(gdpy);
-      return NULL;
-   }
-
-   gdpy->base.screen = gdpy->event_handler->new_sw_screen(&gdpy->base, winsys);
-   if (!gdpy->base.screen) {
-      if (winsys->destroy)
-         winsys->destroy(winsys);
-      FREE(gdpy);
-      return NULL;
-   }
-
+   gdpy->base.init_screen = gdi_display_init_screen;
    gdpy->base.destroy = gdi_display_destroy;
    gdpy->base.get_param = gdi_display_get_param;
 
@@ -406,28 +410,22 @@ gdi_create_display(HDC hDC, struct native_event_handler *event_handler,
    return &gdpy->base;
 }
 
-static struct native_event_handler *gdi_event_handler;
-
-static void
-native_set_event_handler(struct native_event_handler *event_handler)
-{
-   gdi_event_handler = event_handler;
-}
+static const struct native_event_handler *gdi_event_handler;
 
 static struct native_display *
-native_create_display(void *dpy, boolean use_sw, void *user_data)
+native_create_display(void *dpy, boolean use_sw)
 {
-   return gdi_create_display((HDC) dpy, gdi_event_handler, user_data);
+   return gdi_create_display((HDC) dpy, gdi_event_handler);
 }
 
 static const struct native_platform gdi_platform = {
    "GDI", /* name */
-   native_set_event_handler,
    native_create_display
 };
 
 const struct native_platform *
-native_get_gdi_platform(void)
+native_get_gdi_platform(const struct native_event_handler *event_handler)
 {
+   gdi_event_handler = event_handler;
    return &gdi_platform;
 }

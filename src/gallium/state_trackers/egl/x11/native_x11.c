@@ -30,16 +30,10 @@
 
 #include "native_x11.h"
 
-static struct native_event_handler *x11_event_handler;
-
-static void
-native_set_event_handler(struct native_event_handler *event_handler)
-{
-   x11_event_handler = event_handler;
-}
+static const struct native_event_handler *x11_event_handler;
 
 static struct native_display *
-native_create_display(void *dpy, boolean use_sw, void *user_data)
+native_create_display(void *dpy, boolean use_sw)
 {
    struct native_display *ndpy = NULL;
    boolean force_sw;
@@ -48,12 +42,10 @@ native_create_display(void *dpy, boolean use_sw, void *user_data)
 
    if (force_sw || use_sw) {
       _eglLog(_EGL_INFO, "use software fallback");
-      ndpy = x11_create_ximage_display((Display *) dpy,
-            x11_event_handler, user_data);
+      ndpy = x11_create_ximage_display((Display *) dpy, x11_event_handler);
    }
    else {
-      ndpy = x11_create_dri2_display((Display *) dpy,
-            x11_event_handler, user_data);
+      ndpy = x11_create_dri2_display((Display *) dpy, x11_event_handler);
    }
 
    return ndpy;
@@ -61,12 +53,12 @@ native_create_display(void *dpy, boolean use_sw, void *user_data)
 
 static const struct native_platform x11_platform = {
    "X11", /* name */
-   native_set_event_handler,
    native_create_display
 };
 
 const struct native_platform *
-native_get_x11_platform(void)
+native_get_x11_platform(const struct native_event_handler *event_handler)
 {
+   x11_event_handler = event_handler;
    return &x11_platform;
 }

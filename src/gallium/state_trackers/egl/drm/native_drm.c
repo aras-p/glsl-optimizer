@@ -249,9 +249,15 @@ drm_create_pixmap_surface(struct native_display *ndpy,
    return drm_display_create_surface_from_resource(ndpy, bo->resource);
 }
 
+static boolean
+drm_display_init_screen(struct native_display *ndpy)
+{
+   return TRUE;
+}
+
 static struct native_display *
 drm_create_display(struct gbm_gallium_drm_device *gbmdrm,
-                   struct native_event_handler *event_handler, void *user_data)
+                   const struct native_event_handler *event_handler)
 {
    struct drm_display *drmdpy;
 
@@ -267,10 +273,10 @@ drm_create_display(struct gbm_gallium_drm_device *gbmdrm,
    gbmdrm->lookup_egl_image_data = &drmdpy->base;
 
    drmdpy->event_handler = event_handler;
-   drmdpy->base.user_data = user_data;
 
    drmdpy->base.screen = gbmdrm->screen;
 
+   drmdpy->base.init_screen = drm_display_init_screen;
    drmdpy->base.destroy = drm_display_destroy;
    drmdpy->base.get_param = drm_display_get_param;
    drmdpy->base.get_configs = drm_display_get_configs;
@@ -287,16 +293,10 @@ drm_create_display(struct gbm_gallium_drm_device *gbmdrm,
    return &drmdpy->base;
 }
 
-static struct native_event_handler *drm_event_handler;
-
-static void
-native_set_event_handler(struct native_event_handler *event_handler)
-{
-   drm_event_handler = event_handler;
-}
+static const struct native_event_handler *drm_event_handler;
 
 static struct native_display *
-native_create_display(void *dpy, boolean use_sw, void *user_data)
+native_create_display(void *dpy, boolean use_sw)
 {
    struct gbm_gallium_drm_device *gbm;
    int fd;
@@ -315,17 +315,17 @@ native_create_display(void *dpy, boolean use_sw, void *user_data)
        gbm->base.type != GBM_DRM_DRIVER_TYPE_GALLIUM)
       return NULL;
 
-   return drm_create_display(gbm, drm_event_handler, user_data);
+   return drm_create_display(gbm, drm_event_handler);
 }
 
 static const struct native_platform drm_platform = {
    "DRM", /* name */
-   native_set_event_handler,
    native_create_display
 };
 
 const struct native_platform *
-native_get_drm_platform(void)
+native_get_drm_platform(const struct native_event_handler *event_handler)
 {
+   drm_event_handler = event_handler;
    return &drm_platform;
 }

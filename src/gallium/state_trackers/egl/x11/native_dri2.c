@@ -49,7 +49,7 @@ struct dri2_display {
    Display *dpy;
    boolean own_dpy;
 
-   struct native_event_handler *event_handler;
+   const struct native_event_handler *event_handler;
 
    struct x11_screen *xscr;
    int xscr_number;
@@ -870,8 +870,7 @@ static struct native_display_wayland_bufmgr dri2_display_wayland_bufmgr = {
 
 struct native_display *
 x11_create_dri2_display(Display *dpy,
-                        struct native_event_handler *event_handler,
-                        void *user_data)
+                        const struct native_event_handler *event_handler)
 {
    struct dri2_display *dri2dpy;
 
@@ -880,7 +879,6 @@ x11_create_dri2_display(Display *dpy,
       return NULL;
 
    dri2dpy->event_handler = event_handler;
-   dri2dpy->base.user_data = user_data;
 
    dri2dpy->dpy = dpy;
    if (!dri2dpy->dpy) {
@@ -899,11 +897,6 @@ x11_create_dri2_display(Display *dpy,
       return NULL;
    }
 
-   if (!dri2_display_init_screen(&dri2dpy->base)) {
-      dri2_display_destroy(&dri2dpy->base);
-      return NULL;
-   }
-
    dri2dpy->surfaces = util_hash_table_create(dri2_display_hash_table_hash,
          dri2_display_hash_table_compare);
    if (!dri2dpy->surfaces) {
@@ -911,6 +904,7 @@ x11_create_dri2_display(Display *dpy,
       return NULL;
    }
 
+   dri2dpy->base.init_screen = dri2_display_init_screen;
    dri2dpy->base.destroy = dri2_display_destroy;
    dri2dpy->base.get_param = dri2_display_get_param;
    dri2dpy->base.get_configs = dri2_display_get_configs;
