@@ -123,7 +123,6 @@ swrast_renderbuffer(struct gl_renderbuffer *rb)
 #define PF_R5G6B5     2		/**< 16bpp TrueColor:  5-R, 6-G, 5-B bits */
 #define PF_R3G3B2     3		/**<  8bpp TrueColor:  3-R, 3-G, 2-B bits */
 #define PF_X8R8G8B8   4		/**< 32bpp TrueColor:  8-R, 8-G, 8-B bits */
-#define PF_R8G8B8     5         /**< 24bpp TrueColor:  8-R, 8-G, 8-B bits */
 
 
 /* swrast_span.c */
