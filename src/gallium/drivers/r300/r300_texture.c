@@ -447,16 +447,8 @@ static uint32_t r300_translate_colorformat(enum pipe_format format)
         /*case PIPE_FORMAT_B8G8R8A8_SNORM:*/
         case PIPE_FORMAT_B8G8R8X8_UNORM:
         /*case PIPE_FORMAT_B8G8R8X8_SNORM:*/
-        case PIPE_FORMAT_A8R8G8B8_UNORM:
-        /*case PIPE_FORMAT_A8R8G8B8_SNORM:*/
-        case PIPE_FORMAT_X8R8G8B8_UNORM:
-        /*case PIPE_FORMAT_X8R8G8B8_SNORM:*/
-        case PIPE_FORMAT_A8B8G8R8_UNORM:
-        /*case PIPE_FORMAT_A8B8G8R8_SNORM:*/
         case PIPE_FORMAT_R8G8B8A8_UNORM:
         case PIPE_FORMAT_R8G8B8A8_SNORM:
-        case PIPE_FORMAT_X8B8G8R8_UNORM:
-        /*case PIPE_FORMAT_X8B8G8R8_SNORM:*/
         case PIPE_FORMAT_R8G8B8X8_UNORM:
         /*case PIPE_FORMAT_R8G8B8X8_SNORM:*/
         /* These formats work fine with ARGB8888 if US_OUT_FMT is set
@@ -662,10 +654,6 @@ static uint32_t r300_translate_out_fmt(enum pipe_format format)
                 R300_C2_SEL_R | R300_C3_SEL_A;
 
         /* ARGB outputs. */
-        case PIPE_FORMAT_A8R8G8B8_UNORM:
-        /*case PIPE_FORMAT_A8R8G8B8_SNORM:*/
-        case PIPE_FORMAT_X8R8G8B8_UNORM:
-        /*case PIPE_FORMAT_X8R8G8B8_SNORM:*/
         case PIPE_FORMAT_A16_UNORM:
         case PIPE_FORMAT_A16_SNORM:
         case PIPE_FORMAT_A16_FLOAT:
@@ -673,15 +661,6 @@ static uint32_t r300_translate_out_fmt(enum pipe_format format)
             return modifier |
                 R300_C0_SEL_A | R300_C1_SEL_R |
                 R300_C2_SEL_G | R300_C3_SEL_B;
-
-        /* ABGR outputs. */
-        case PIPE_FORMAT_A8B8G8R8_UNORM:
-        /*case PIPE_FORMAT_A8B8G8R8_SNORM:*/
-        case PIPE_FORMAT_X8B8G8R8_UNORM:
-        /*case PIPE_FORMAT_X8B8G8R8_SNORM:*/
-            return modifier |
-                R300_C0_SEL_A | R300_C1_SEL_B |
-                R300_C2_SEL_G | R300_C3_SEL_R;
 
         /* RGBA outputs. */
         case PIPE_FORMAT_R8G8B8X8_UNORM:
