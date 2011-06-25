@@ -447,6 +447,45 @@ ximage_display_is_pixmap_supported(struct native_display *ndpy,
    return (fmt == nconf->color_format);
 }
 
+static boolean
+ximage_display_copy_to_pixmap(struct native_display *ndpy,
+                              EGLNativePixmapType pix,
+                              struct pipe_resource *src)
+{
+   /* fast path to avoid unnecessary allocation and resource_copy_region */
+   if (src->bind & PIPE_BIND_DISPLAY_TARGET) {
+      struct ximage_display *xdpy = ximage_display(ndpy);
+      enum pipe_format fmt = get_pixmap_format(&xdpy->base, pix);
+      const struct ximage_config *xconf;
+      struct xlib_drawable xdraw;
+      int i;
+
+      if (fmt == PIPE_FORMAT_NONE || src->format != fmt)
+         return FALSE;
+
+      for (i = 0; i < xdpy->num_configs; i++) {
+         if (xdpy->configs[i].base.color_format == fmt) {
+            xconf = &xdpy->configs[i];
+            break;
+         }
+      }
+      if (!xconf)
+         return FALSE;
+
+      memset(&xdraw, 0, sizeof(xdraw));
+      xdraw.visual = xconf->visual->visual;
+      xdraw.depth = xconf->visual->depth;
+      xdraw.drawable = (Drawable) pix;
+
+      xdpy->base.screen->flush_frontbuffer(xdpy->base.screen,
+            src, 0, 0, &xdraw);
+
+      return TRUE;
+   }
+
+   return native_display_copy_to_pixmap(ndpy, pix, src);
+}
+
 static int
 ximage_display_get_param(struct native_display *ndpy,
                          enum native_param_type param)
@@ -542,7 +581,7 @@ x11_create_ximage_display(Display *dpy,
 
    xdpy->base.get_configs = ximage_display_get_configs;
    xdpy->base.is_pixmap_supported = ximage_display_is_pixmap_supported;
-   xdpy->base.copy_to_pixmap = native_display_copy_to_pixmap;
+   xdpy->base.copy_to_pixmap = ximage_display_copy_to_pixmap;
    xdpy->base.create_window_surface = ximage_display_create_window_surface;
    xdpy->base.create_pixmap_surface = ximage_display_create_pixmap_surface;
 
