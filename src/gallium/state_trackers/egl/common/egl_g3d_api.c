@@ -86,11 +86,18 @@ egl_g3d_choose_st(_EGLDriver *drv, _EGLContext *ctx,
    return stapi;
 }
 
+struct egl_g3d_choose_config_data {
+   _EGLConfig criteria;
+   enum pipe_format format;
+};
+
 static int
 egl_g3d_compare_config(const _EGLConfig *conf1, const _EGLConfig *conf2,
                        void *priv_data)
 {
-   const _EGLConfig *criteria = (const _EGLConfig *) priv_data;
+   struct egl_g3d_choose_config_data *data =
+      (struct egl_g3d_choose_config_data *) priv_data;
+   const _EGLConfig *criteria = &data->criteria;;
 
    /* EGL_NATIVE_VISUAL_TYPE ignored? */
    return _eglCompareConfigs(conf1, conf2, criteria, EGL_TRUE);
@@ -99,36 +106,39 @@ egl_g3d_compare_config(const _EGLConfig *conf1, const _EGLConfig *conf2,
 static EGLBoolean
 egl_g3d_match_config(const _EGLConfig *conf, void *priv_data)
 {
-   const _EGLConfig *criteria = (const _EGLConfig *) priv_data;
+   struct egl_g3d_choose_config_data *data =
+      (struct egl_g3d_choose_config_data *) priv_data;
+   struct egl_g3d_config *gconf = egl_g3d_config(conf);
 
-   if (!_eglMatchConfig(conf, criteria))
+   if (data->format != PIPE_FORMAT_NONE &&
+       data->format != gconf->native->color_format)
       return EGL_FALSE;
 
-   if (criteria->MatchNativePixmap != EGL_NONE &&
-       criteria->MatchNativePixmap != EGL_DONT_CARE) {
-      struct egl_g3d_display *gdpy = egl_g3d_display(conf->Display);
-      struct egl_g3d_config *gconf = egl_g3d_config(conf);
-      EGLNativePixmapType pix =
-         (EGLNativePixmapType) criteria->MatchNativePixmap;
-
-      if (!gdpy->native->is_pixmap_supported(gdpy->native, pix, gconf->native))
-         return EGL_FALSE;
-   }
-
-   return EGL_TRUE;
+   return _eglMatchConfig(conf, &data->criteria);
 }
 
 static EGLBoolean
 egl_g3d_choose_config(_EGLDriver *drv, _EGLDisplay *dpy, const EGLint *attribs,
                       EGLConfig *configs, EGLint size, EGLint *num_configs)
 {
-   _EGLConfig criteria;
+   struct egl_g3d_choose_config_data data;
 
-   if (!_eglParseConfigAttribList(&criteria, dpy, attribs))
+   if (!_eglParseConfigAttribList(&data.criteria, dpy, attribs))
       return _eglError(EGL_BAD_ATTRIBUTE, "eglChooseConfig");
 
+   data.format = PIPE_FORMAT_NONE;
+   if (data.criteria.MatchNativePixmap != EGL_NONE &&
+       data.criteria.MatchNativePixmap != EGL_DONT_CARE) {
+      struct egl_g3d_display *gdpy = egl_g3d_display(dpy);
+
+      if (!gdpy->native->get_pixmap_format(gdpy->native,
+               (EGLNativePixmapType) data.criteria.MatchNativePixmap,
+               &data.format))
+         return _eglError(EGL_BAD_NATIVE_PIXMAP, "eglChooseConfig");
+   }
+
    return _eglFilterConfigArray(dpy->Configs, configs, size, num_configs,
-         egl_g3d_match_config, egl_g3d_compare_config, &criteria);
+         egl_g3d_match_config, egl_g3d_compare_config, &data);
 }
 
 static _EGLContext *

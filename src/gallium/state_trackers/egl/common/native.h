@@ -175,18 +175,12 @@ struct native_display {
                                                int *num_configs);
 
    /**
-    * Test if a pixmap is supported by the given config.  Required unless no
-    * config has pixmap_bit set.
-    *
-    * This function is usually called to find a config that supports a given
-    * pixmap.  Thus, it is usually called with the same pixmap in a row.
-    *
-    * TODO should be get_pixmap_format() and return the pipe format of the
-    * pixmap.
+    * Get the color format of the pixmap.  Required unless no config has
+    * pixmap_bit set.
     */
-   boolean (*is_pixmap_supported)(struct native_display *ndpy,
-                                  EGLNativePixmapType pix,
-                                  const struct native_config *nconf);
+   boolean (*get_pixmap_format)(struct native_display *ndpy,
+                                EGLNativePixmapType pix,
+                                enum pipe_format *format);
 
    /**
     * Copy the contents of the resource to the pixmap's front-left attachment.

@@ -437,14 +437,15 @@ ximage_display_get_configs(struct native_display *ndpy, int *num_configs)
 }
 
 static boolean
-ximage_display_is_pixmap_supported(struct native_display *ndpy,
-                                   EGLNativePixmapType pix,
-                                   const struct native_config *nconf)
+ximage_display_get_pixmap_format(struct native_display *ndpy,
+                                 EGLNativePixmapType pix,
+                                 enum pipe_format *format)
 {
    struct ximage_display *xdpy = ximage_display(ndpy);
-   enum pipe_format fmt = get_pixmap_format(&xdpy->base, pix);
 
-   return (fmt == nconf->color_format);
+   *format = get_pixmap_format(&xdpy->base, pix);
+
+   return (*format != PIPE_FORMAT_NONE);
 }
 
 static boolean
@@ -580,7 +581,7 @@ x11_create_ximage_display(Display *dpy,
    xdpy->base.get_param = ximage_display_get_param;
 
    xdpy->base.get_configs = ximage_display_get_configs;
-   xdpy->base.is_pixmap_supported = ximage_display_is_pixmap_supported;
+   xdpy->base.get_pixmap_format = ximage_display_get_pixmap_format;
    xdpy->base.copy_to_pixmap = ximage_display_copy_to_pixmap;
    xdpy->base.create_window_surface = ximage_display_create_window_surface;
    xdpy->base.create_pixmap_surface = ximage_display_create_pixmap_surface;
