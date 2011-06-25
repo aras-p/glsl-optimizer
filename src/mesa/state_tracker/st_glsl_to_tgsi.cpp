@@ -3379,6 +3379,15 @@ glsl_to_tgsi_visitor::eliminate_dead_code_advanced(void)
       }
    }
 
+   /* Anything still in the write array at this point is dead code. */
+   for (int r = 0; r < this->next_temp; r++) {
+      for (int c = 0; c < 4; c++) {
+         glsl_to_tgsi_instruction *inst = writes[4 * r + c];
+         if (inst)
+            inst->dead_mask |= (1 << c);
+      }
+   }
+
    /* Now actually remove the instructions that are completely dead and update
     * the writemask of other instructions with dead channels.
     */
