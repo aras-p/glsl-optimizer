@@ -936,8 +936,7 @@ x11_create_dri2_display(Display *dpy,
 
 struct native_display *
 x11_create_dri2_display(Display *dpy,
-                        struct native_event_handler *event_handler,
-                        void *user_data)
+                        const struct native_event_handler *event_handler)
 {
    return NULL;
 }
