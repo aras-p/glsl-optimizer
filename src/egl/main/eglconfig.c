@@ -634,7 +634,7 @@ void _eglSwapConfigs(const _EGLConfig **conf1, const _EGLConfig **conf2)
  * qsort() in that the compare function accepts an additional
  * argument.
  */
-void
+static void
 _eglSortConfigs(const _EGLConfig **configs, EGLint count,
                 EGLint (*compare)(const _EGLConfig *, const _EGLConfig *,
                                   void *),
@@ -672,34 +672,27 @@ _eglSortConfigs(const _EGLConfig **configs, EGLint count,
 }
 
 
-static int
-_eglFallbackCompare(const _EGLConfig *conf1, const _EGLConfig *conf2,
-                   void *priv_data)
-{
-   const _EGLConfig *criteria = (const _EGLConfig *) priv_data;
-   return _eglCompareConfigs(conf1, conf2, criteria, EGL_TRUE);
-}
-
-
 /**
- * Typical fallback routine for eglChooseConfig
+ * A helper function for implementing eglChooseConfig.  See _eglFilterArray and
+ * _eglSortConfigs for the meanings of match and compare.
  */
 EGLBoolean
-_eglChooseConfig(_EGLDriver *drv, _EGLDisplay *disp, const EGLint *attrib_list,
-                 EGLConfig *configs, EGLint config_size, EGLint *num_configs)
+_eglFilterConfigArray(_EGLArray *array, EGLConfig *configs,
+                      EGLint config_size, EGLint *num_configs,
+                      EGLBoolean (*match)(const _EGLConfig *, void *),
+                      EGLint (*compare)(const _EGLConfig *, const _EGLConfig *,
+                                        void *),
+                      void *priv_data)
 {
-   _EGLConfig **configList, criteria;
+   _EGLConfig **configList;
    EGLint i, count;
 
    if (!num_configs)
       return _eglError(EGL_BAD_PARAMETER, "eglChooseConfigs");
 
-   if (!_eglParseConfigAttribList(&criteria, disp, attrib_list))
-      return _eglError(EGL_BAD_ATTRIBUTE, "eglChooseConfig");
-
    /* get the number of matched configs */
-   count = _eglFilterArray(disp->Configs, NULL, 0,
-         (_EGLArrayForEach) _eglMatchConfig, (void *) &criteria);
+   count = _eglFilterArray(array, NULL, 0,
+         (_EGLArrayForEach) match, priv_data);
    if (!count) {
       *num_configs = count;
       return EGL_TRUE;
@@ -710,13 +703,13 @@ _eglChooseConfig(_EGLDriver *drv, _EGLDisplay *disp, const EGLint *attrib_list,
       return _eglError(EGL_BAD_ALLOC, "eglChooseConfig(out of memory)");
 
    /* get the matched configs */
-   _eglFilterArray(disp->Configs, (void **) configList, count,
-         (_EGLArrayForEach) _eglMatchConfig, (void *) &criteria);
+   _eglFilterArray(array, (void **) configList, count,
+         (_EGLArrayForEach) match, priv_data);
 
    /* perform sorting of configs */
    if (configs && count) {
       _eglSortConfigs((const _EGLConfig **) configList, count,
-                      _eglFallbackCompare, (void *) &criteria);
+                      compare, priv_data);
       count = MIN2(count, config_size);
       for (i = 0; i < count; i++)
          configs[i] = _eglGetConfigHandle(configList[i]);
@@ -727,6 +720,41 @@ _eglChooseConfig(_EGLDriver *drv, _EGLDisplay *disp, const EGLint *attrib_list,
    *num_configs = count;
 
    return EGL_TRUE;
+}
+
+
+static EGLBoolean
+_eglFallbackMatch(const _EGLConfig *conf, void *priv_data)
+{
+   return _eglMatchConfig(conf, (const _EGLConfig *) priv_data);
+}
+
+
+static EGLint
+_eglFallbackCompare(const _EGLConfig *conf1, const _EGLConfig *conf2,
+                    void *priv_data)
+{
+   return _eglCompareConfigs(conf1, conf2,
+         (const _EGLConfig *) priv_data, EGL_TRUE);
+}
+
+
+/**
+ * Typical fallback routine for eglChooseConfig
+ */
+EGLBoolean
+_eglChooseConfig(_EGLDriver *drv, _EGLDisplay *disp, const EGLint *attrib_list,
+                 EGLConfig *configs, EGLint config_size, EGLint *num_configs)
+{
+   _EGLConfig criteria;
+
+   if (!_eglParseConfigAttribList(&criteria, disp, attrib_list))
+      return _eglError(EGL_BAD_ATTRIBUTE, "eglChooseConfig");
+
+   return _eglFilterConfigArray(disp->Configs,
+         configs, config_size, num_configs,
+         _eglFallbackMatch, _eglFallbackCompare,
+         (void *) &criteria);
 }
 
 

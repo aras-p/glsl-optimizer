@@ -172,11 +172,13 @@ _eglCompareConfigs(const _EGLConfig *conf1, const _EGLConfig *conf2,
                    const _EGLConfig *criteria, EGLBoolean compare_id);
 
 
-PUBLIC void
-_eglSortConfigs(const _EGLConfig **configs, EGLint count,
-                EGLint (*compare)(const _EGLConfig *, const _EGLConfig *,
-                                  void *),
-                void *priv_data);
+PUBLIC EGLBoolean
+_eglFilterConfigArray(_EGLArray *array, EGLConfig *configs,
+                      EGLint config_size, EGLint *num_configs,
+                      EGLBoolean (*match)(const _EGLConfig *, void *),
+                      EGLint (*compare)(const _EGLConfig *, const _EGLConfig *,
+                                        void *),
+                      void *filter_data);
 
 
 extern EGLBoolean

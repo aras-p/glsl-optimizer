@@ -97,8 +97,10 @@ egl_g3d_compare_config(const _EGLConfig *conf1, const _EGLConfig *conf2,
 }
 
 static EGLBoolean
-egl_g3d_match_config(const _EGLConfig *conf, const _EGLConfig *criteria)
+egl_g3d_match_config(const _EGLConfig *conf, void *priv_data)
 {
+   const _EGLConfig *criteria = (const _EGLConfig *) priv_data;
+
    if (!_eglMatchConfig(conf, criteria))
       return EGL_FALSE;
 
@@ -120,45 +122,13 @@ static EGLBoolean
 egl_g3d_choose_config(_EGLDriver *drv, _EGLDisplay *dpy, const EGLint *attribs,
                       EGLConfig *configs, EGLint size, EGLint *num_configs)
 {
-   _EGLConfig **tmp_configs, criteria;
-   EGLint tmp_size, i;
-
-   if (!num_configs)
-      return _eglError(EGL_BAD_PARAMETER, "eglChooseConfigs");
+   _EGLConfig criteria;
 
    if (!_eglParseConfigAttribList(&criteria, dpy, attribs))
       return _eglError(EGL_BAD_ATTRIBUTE, "eglChooseConfig");
 
-   /* get the number of matched configs */
-   tmp_size = _eglFilterArray(dpy->Configs, NULL, 0,
-         (_EGLArrayForEach) egl_g3d_match_config, (void *) &criteria);
-   if (!tmp_size) {
-      *num_configs = tmp_size;
-      return EGL_TRUE;
-   }
-
-   tmp_configs = MALLOC(sizeof(tmp_configs[0]) * tmp_size);
-   if (!tmp_configs)
-      return _eglError(EGL_BAD_ALLOC, "eglChooseConfig(out of memory)");
-
-   /* get the matched configs */
-   _eglFilterArray(dpy->Configs, (void **) tmp_configs, tmp_size,
-         (_EGLArrayForEach) egl_g3d_match_config, (void *) &criteria);
-
-   /* perform sorting of configs */
-   if (configs && tmp_size) {
-      _eglSortConfigs((const _EGLConfig **) tmp_configs, tmp_size,
-            egl_g3d_compare_config, (void *) &criteria);
-      tmp_size = MIN2(tmp_size, size);
-      for (i = 0; i < tmp_size; i++)
-         configs[i] = _eglGetConfigHandle(tmp_configs[i]);
-   }
-
-   FREE(tmp_configs);
-
-   *num_configs = tmp_size;
-
-   return EGL_TRUE;
+   return _eglFilterConfigArray(dpy->Configs, configs, size, num_configs,
+         egl_g3d_match_config, egl_g3d_compare_config, &criteria);
 }
 
 static _EGLContext *
