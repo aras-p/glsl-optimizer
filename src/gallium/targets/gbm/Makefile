@@ -18,6 +18,7 @@ GBM_INCLUDES = \
 GBM_LIBS = $(LIBUDEV_LIBS) $(LIBDRM_LIB) \
 	   $(TOP)/src/gallium/state_trackers/gbm/libgbm.a \
 	   $(TOP)/src/gallium/drivers/identity/libidentity.a \
+	   $(TOP)/src/gallium/drivers/galahad/libgalahad.a \
 	   $(TOP)/src/gallium/drivers/trace/libtrace.a \
 	   $(TOP)/src/gallium/drivers/rbug/librbug.a \
 	   $(GALLIUM_AUXILIARIES)
@@ -37,44 +38,54 @@ pipe_INCLUDES = \
 	-I$(TOP)/src/gallium/include \
 	-I$(TOP)/src/gallium/winsys
 
-pipe_LIBS = $(LIBDRM_LIB) \
+pipe_LIBS = \
 	$(TOP)/src/gallium/drivers/identity/libidentity.a \
 	$(TOP)/src/gallium/drivers/trace/libtrace.a \
 	$(TOP)/src/gallium/drivers/rbug/librbug.a \
 	$(GALLIUM_AUXILIARIES)
 
-pipe_CLFLAGS = $(LIBDRM_CFLAGS)
+# as if we are DRI modules
+pipe_SYS = $(DRI_LIB_DEPS)
+
+pipe_CLFLAGS = \
+	-DGALLIUM_RBUG -DGALLIUM_TRACE -DGALLIUM_GALAHAD \
+	$(LIBDRM_CFLAGS)
 
 pipe_LDFLAGS = -Wl,--no-undefined
 
 # i915 pipe driver
-i915_LIBS = -ldrm_intel \
+i915_LIBS = \
 	$(TOP)/src/gallium/winsys/i915/drm/libi915drm.a \
 	$(TOP)/src/gallium/drivers/i915/libi915.a
+i915_SYS = -ldrm_intel
 
 # i965 pipe driver
-i965_LIBS = -ldrm_intel \
+i965_LIBS = \
 	$(TOP)/src/gallium/winsys/i965/drm/libi965drm.a \
 	$(TOP)/src/gallium/drivers/i965/libi965.a \
 	$(TOP)/src/gallium/winsys/sw/wrapper/libwsw.a
+i965_SYS = -ldrm_intel
 
 # nouveau pipe driver
-nouveau_LIBS = -ldrm_nouveau \
+nouveau_LIBS = \
 	$(TOP)/src/gallium/winsys/nouveau/drm/libnouveaudrm.a \
 	$(TOP)/src/gallium/drivers/nvfx/libnvfx.a \
 	$(TOP)/src/gallium/drivers/nv50/libnv50.a \
 	$(TOP)/src/gallium/drivers/nvc0/libnvc0.a \
 	$(TOP)/src/gallium/drivers/nouveau/libnouveau.a
+nouveau_SYS = -ldrm_nouveau
 
 # r300 pipe driver
-r300_LIBS = -ldrm \
+r300_LIBS = \
 	$(TOP)/src/gallium/winsys/radeon/drm/libradeonwinsys.a \
 	$(TOP)/src/gallium/drivers/r300/libr300.a
+r300_SYS = -ldrm_radeon
 
 # r600 pipe driver
-r600_LIBS = -ldrm -ldrm_radeon \
+r600_LIBS = \
 	$(TOP)/src/gallium/winsys/r600/drm/libr600winsys.a \
 	$(TOP)/src/gallium/drivers/r600/libr600.a
+r600_SYS = -ldrm_radeon
 
 # vmwgfx pipe driver
 vmwgfx_LIBS = \
@@ -83,7 +94,8 @@ vmwgfx_LIBS = \
 
 # LLVM
 ifeq ($(MESA_LLVM),1)
-pipe_LIBS += $(LLVM_LIBS)
+pipe_LIBS += $(TOP)/src/gallium/drivers/llvmpipe/libllvmpipe.a
+pipe_SYS += $(LLVM_LIBS)
 pipe_LDFLAGS += $(LLVM_LDFLAGS)
 endif
 
@@ -140,7 +152,8 @@ $(pipe_TARGETS): $(PIPE_PREFIX)%.so: pipe_%.o
 	$(MKLIB) -o $@ -noprefix -linker '$(CC)' \
 		-ldflags '-L$(TOP)/$(LIB_DIR) $(pipe_LDFLAGS) $(LDFLAGS)' \
 		$(MKLIB_OPTIONS) $< \
-		-Wl,--start-group $($*_LIBS) $(pipe_LIBS) -Wl,--end-group
+		-Wl,--start-group $(pipe_LIBS) $($*_LIBS) -Wl,--end-group \
+		$(pipe_SYS) $($*_SYS)
 
 $(pipe_OBJECTS): %.o: %.c
 	$(CC) -c -o $@ $< $(pipe_INCLUDES) $(pipe_CFLAGS) $(CFLAGS)
