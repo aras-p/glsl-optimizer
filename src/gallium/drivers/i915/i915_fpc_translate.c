@@ -516,6 +516,18 @@ i915_translate_instruction(struct i915_fp_compile *p,
                       i915_emit_const4fv(p, cos_constants), 0);
       break;
 
+  case TGSI_OPCODE_DDX:
+  case TGSI_OPCODE_DDY:
+      /* XXX We just output 0 here */
+      debug_printf("Punting DDX/DDX\n");
+      src0 = get_result_vector(p, &inst->Dst[0]);
+      i915_emit_arith(p,
+                      A0_MOV,
+                      get_result_vector(p, &inst->Dst[0]),
+                      get_result_flags(inst), 0,
+                      swizzle(src0, ZERO, ZERO, ZERO, ZERO), 0, 0);
+      break;
+
   case TGSI_OPCODE_DP2:
       src0 = src_vector(p, &inst->Src[0], fs);
       src1 = src_vector(p, &inst->Src[1], fs);
