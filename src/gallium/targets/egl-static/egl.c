@@ -33,9 +33,10 @@
 #ifdef HAVE_LIBUDEV
 #include <stdio.h> /* for sscanf */
 #include <libudev.h>
+#endif
+
 #define DRIVER_MAP_GALLIUM_ONLY
 #include "pci_ids/pci_id_driver_map.h"
-#endif
 
 #include "egl_pipe.h"
 #include "egl_st.h"
