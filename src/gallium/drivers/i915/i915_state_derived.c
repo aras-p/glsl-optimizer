@@ -33,6 +33,7 @@
 #include "i915_context.h"
 #include "i915_state.h"
 #include "i915_debug.h"
+#include "i915_fpc.h"
 #include "i915_reg.h"
 
 static uint find_mapping(const struct i915_fragment_shader* fs, int unit)
@@ -72,6 +73,10 @@ static void calculate_vertex_layout(struct i915_context *i915)
    for (i = 0; i < fs->info.num_inputs; i++) {
       switch (fs->info.input_semantic_name[i]) {
       case TGSI_SEMANTIC_POSITION:
+         {
+            uint unit = I915_SEMANTIC_POS;
+            texCoords[find_mapping(fs, unit)] = TRUE;
+         }
          break;
       case TGSI_SEMANTIC_COLOR:
          assert(fs->info.input_semantic_index[i] < 2);

@@ -37,6 +37,8 @@
 
 #define I915_PROGRAM_SIZE 192
 
+/* Use that index for pos routing, must be >= I915_TEX_UNITS */
+#define I915_SEMANTIC_POS 10
 
 
 /**
@@ -73,7 +75,6 @@ struct i915_fp_compile {
    uint nr_decl_insn;
 
    boolean error;      /**< Set if i915_program_error() is called */
-   uint wpos_tex;
    uint NumNativeInstructions;
    uint NumNativeAluInstructions;
    uint NumNativeTexInstructions;

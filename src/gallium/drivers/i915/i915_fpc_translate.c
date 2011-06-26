@@ -185,12 +185,12 @@ src_vector(struct i915_fp_compile *p,
 
       switch (sem_name) {
       case TGSI_SEMANTIC_POSITION:
-         debug_printf("SKIP SEM POS\n");
-         /*
-         assert(p->wpos_tex != -1);
-         src = i915_emit_decl(p, REG_TYPE_T, p->wpos_tex, D0_CHANNEL_ALL);
-         */
-         break;
+         {
+            /* for fragcoord */
+            int real_tex_unit = get_mapping(fs, I915_SEMANTIC_POS);
+            src = i915_emit_decl(p, REG_TYPE_T, T_TEX0 + real_tex_unit, D0_CHANNEL_ALL);
+            break;
+         }
       case TGSI_SEMANTIC_COLOR:
          if (sem_ind == 0) {
             src = i915_emit_decl(p, REG_TYPE_T, T_DIFFUSE, D0_CHANNEL_ALL);
@@ -1161,8 +1161,6 @@ i915_init_compile(struct i915_context *i915,
    p->temp_flag = ~0x0 << I915_MAX_TEMPORARY;
    p->utemp_flag = ~0x7;
 
-   p->wpos_tex = -1;
-
    /* initialize the first program word */
    *(p->decl++) = _3DSTATE_PIXEL_SHADER_PROGRAM;
 
@@ -1234,40 +1232,6 @@ i915_fini_compile(struct i915_context *i915, struct i915_fp_compile *p)
 }
 
 
-/**
- * Find an unused texture coordinate slot to use for fragment WPOS.
- * Update p->fp->wpos_tex with the result (-1 if no used texcoord slot is found).
- */
-static void
-i915_find_wpos_space(struct i915_fp_compile *p)
-{
-#if 0
-   const uint inputs
-      = p->shader->inputs_read | (1 << TGSI_ATTRIB_POS); /*XXX hack*/
-   uint i;
-
-   p->wpos_tex = -1;
-
-   if (inputs & (1 << TGSI_ATTRIB_POS)) {
-      for (i = 0; i < I915_TEX_UNITS; i++) {
-	 if ((inputs & (1 << (TGSI_ATTRIB_TEX0 + i))) == 0) {
-	    p->wpos_tex = i;
-	    return;
-	 }
-      }
-
-      i915_program_error(p, "No free texcoord for wpos value");
-   }
-#else
-   if (p->shader->info.input_semantic_name[0] == TGSI_SEMANTIC_POSITION) {
-      /* frag shader using the fragment position input */
-#if 0
-      assert(0);
-#endif
-   }
-#endif
-}
-
 
 
 
@@ -1314,7 +1278,6 @@ i915_translate_fragment_program( struct i915_context *i915,
    }
 
    p = i915_init_compile(i915, fs);
-   i915_find_wpos_space(p);
 
    i915_translate_instructions(p, tokens, fs);
    i915_fixup_depth_write(p);
