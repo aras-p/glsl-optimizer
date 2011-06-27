@@ -2,7 +2,6 @@
 
 
 ifeq ($(MESA_LLVM),1)
-PIPE_DRIVERS += $(TOP)/src/gallium/drivers/llvmpipe/libllvmpipe.a
 LDFLAGS += $(LLVM_LDFLAGS)
 DRIVER_EXTRAS = $(LLVM_LIBS)
 else

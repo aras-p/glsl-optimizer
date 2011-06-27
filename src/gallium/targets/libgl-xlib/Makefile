@@ -55,6 +55,7 @@ LIBS = \
 
 # LLVM
 ifeq ($(MESA_LLVM),1)
+PIPE_DRIVERS += $(TOP)/src/gallium/drivers/llvmpipe/libllvmpipe.a
 DEFINES += -DGALLIUM_LLVMPIPE
 GL_LIB_DEPS += $(LLVM_LIBS) 
 LDFLAGS += $(LLVM_LDFLAGS)

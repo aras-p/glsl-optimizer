@@ -14,6 +14,11 @@ PIPE_DRIVERS = \
 	$(TOP)/src/gallium/drivers/trace/libtrace.a \
 	$(TOP)/src/gallium/drivers/rbug/librbug.a
 
+ifeq ($(MESA_LLVM),1)
+PIPE_DRIVERS += $(TOP)/src/gallium/drivers/llvmpipe/libllvmpipe.a
+DRIVER_DEFINES += -DGALLIUM_LLVMPIPE
+endif
+
 SWRAST_COMMON_GALLIUM_SOURCES = \
 	$(TOP)/src/mesa/drivers/dri/common/utils.c \
 	$(TOP)/src/mesa/drivers/dri/common/drisw_util.c \
