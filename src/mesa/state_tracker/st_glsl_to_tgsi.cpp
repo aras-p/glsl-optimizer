@@ -695,13 +695,13 @@ glsl_to_tgsi_visitor::emit_arl(ir_instruction *ir,
    st_src_reg tmp = get_temp(glsl_type::float_type);
 
    if (src0.type == GLSL_TYPE_INT)
-      emit(ir, TGSI_OPCODE_I2F, st_dst_reg(tmp), src0);
+      emit(NULL, TGSI_OPCODE_I2F, st_dst_reg(tmp), src0);
    else if (src0.type == GLSL_TYPE_UINT)
-      emit(ir, TGSI_OPCODE_U2F, st_dst_reg(tmp), src0);
+      emit(NULL, TGSI_OPCODE_U2F, st_dst_reg(tmp), src0);
    else
       tmp = src0;
    
-   emit(ir, TGSI_OPCODE_ARL, dst, tmp);
+   emit(NULL, TGSI_OPCODE_ARL, dst, tmp);
 }
 
 /**
@@ -1902,6 +1902,17 @@ glsl_to_tgsi_visitor::visit(ir_assignment *ir)
          l.index++;
          r.index++;
       }
+   } else if (ir->rhs->as_expression() &&
+              this->instructions.get_tail() &&
+              ir->rhs == ((glsl_to_tgsi_instruction *)this->instructions.get_tail())->ir &&
+              type_size(ir->lhs->type) == 1) {
+      /* To avoid emitting an extra MOV when assigning an expression to a 
+       * variable, change the destination register of the last instruction 
+       * emitted as part of the expression to the assignment variable.
+       */
+      glsl_to_tgsi_instruction *inst;
+      inst = (glsl_to_tgsi_instruction *)this->instructions.get_tail();
+      inst->dst = l;
    } else {
       for (i = 0; i < type_size(ir->lhs->type); i++) {
          emit(ir, TGSI_OPCODE_MOV, l, r);
