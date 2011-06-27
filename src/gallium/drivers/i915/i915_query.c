@@ -69,7 +69,8 @@ static boolean i915_get_query_result(struct pipe_context *ctx,
 {
    uint64_t *result = (uint64_t*)vresult;
 
-   *result = 0;
+   /* 2* viewport Max */
+   *result = 512*1024*1024;
    return TRUE;
 }
 
