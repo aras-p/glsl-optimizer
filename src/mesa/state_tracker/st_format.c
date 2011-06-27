@@ -85,6 +85,10 @@ st_format_datatype(enum pipe_format format)
           format == PIPE_FORMAT_B5G6R5_UNORM) {
          return GL_UNSIGNED_SHORT;
       }
+      else if (format == PIPE_FORMAT_R11G11B10_FLOAT ||
+               format == PIPE_FORMAT_R9G9B9E5_FLOAT) {
+         return GL_FLOAT;
+      }
       else if (format == PIPE_FORMAT_Z24_UNORM_S8_USCALED ||
                format == PIPE_FORMAT_S8_USCALED_Z24_UNORM ||
                format == PIPE_FORMAT_Z24X8_UNORM ||
@@ -105,17 +109,25 @@ st_format_datatype(enum pipe_format format)
                return GL_BYTE;
          }
          else if (size == 16) {
+            if (desc->channel[i].type == UTIL_FORMAT_TYPE_FLOAT)
+               return GL_HALF_FLOAT;
             if (desc->channel[i].type == UTIL_FORMAT_TYPE_UNSIGNED)
                return GL_UNSIGNED_SHORT;
             else
                return GL_SHORT;
          }
-         else {
-            assert( size <= 32 );
+         else if (size <= 32) {
+            if (desc->channel[i].type == UTIL_FORMAT_TYPE_FLOAT)
+               return GL_FLOAT;
             if (desc->channel[i].type == UTIL_FORMAT_TYPE_UNSIGNED)
                return GL_UNSIGNED_INT;
             else
                return GL_INT;
+         }
+         else {
+            assert(size == 64);
+            assert(desc->channel[i].type == UTIL_FORMAT_TYPE_FLOAT);
+            return GL_DOUBLE;
          }
       }
    }
