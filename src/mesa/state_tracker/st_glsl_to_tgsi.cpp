@@ -4422,18 +4422,17 @@ get_mesa_program(struct gl_context *ctx,
    if (target == GL_VERTEX_PROGRAM_ARB)
       v->remove_output_reads(PROGRAM_VARYING);
    
-   /* Perform the simplify_cmp optimization, which is required by r300g. */
+   /* Perform optimizations on the instructions in the glsl_to_tgsi_visitor. */
    v->simplify_cmp();
+   v->copy_propagate();
+   while (v->eliminate_dead_code_advanced());
 
-   /* Perform optimizations on the instructions in the glsl_to_tgsi_visitor.
-    * FIXME: These passes to optimize temporary registers don't work when there
+   /* FIXME: These passes to optimize temporary registers don't work when there
     * is indirect addressing of the temporary register space.  We need proper 
     * array support so that we don't have to give up these passes in every 
     * shader that uses arrays.
     */
    if (!v->indirect_addr_temps) {
-      v->copy_propagate();
-      while (v->eliminate_dead_code_advanced());
       v->eliminate_dead_code();
       v->merge_registers();
       v->renumber_registers();
