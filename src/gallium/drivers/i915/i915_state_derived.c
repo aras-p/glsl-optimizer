@@ -59,12 +59,12 @@ static void calculate_vertex_layout(struct i915_context *i915)
    const struct i915_fragment_shader *fs = i915->fs;
    const enum interp_mode colorInterp = i915->rasterizer->color_interp;
    struct vertex_info vinfo;
-   boolean texCoords[I915_TEX_UNITS], colors[2], fog, needW;
+   boolean texCoords[I915_TEX_UNITS], colors[2], fog, needW, face;
    uint i;
    int src;
 
    memset(texCoords, 0, sizeof(texCoords));
-   colors[0] = colors[1] = fog = needW = FALSE;
+   colors[0] = colors[1] = fog = needW = face = FALSE;
    memset(&vinfo, 0, sizeof(vinfo));
 
    /* Determine which fragment program inputs are needed.  Setup HW vertex
@@ -85,7 +85,6 @@ static void calculate_vertex_layout(struct i915_context *i915)
       case TGSI_SEMANTIC_GENERIC:
          {
             /* texcoords/varyings/other generic */
-            /* XXX handle back/front face and point size */
             uint unit = fs->info.input_semantic_index[i];
 
             texCoords[find_mapping(fs, unit)] = TRUE;
@@ -95,7 +94,11 @@ static void calculate_vertex_layout(struct i915_context *i915)
       case TGSI_SEMANTIC_FOG:
          fog = TRUE;
          break;
+      case TGSI_SEMANTIC_FACE:
+         face = TRUE;
+         break;
       default:
+         debug_printf("Unknown input type %d\n", fs->info.input_semantic_name[i]);
          assert(0);
       }
    }
@@ -150,6 +153,16 @@ static void calculate_vertex_layout(struct i915_context *i915)
          hwtc = TEXCOORDFMT_NOT_PRESENT;
       }
       vinfo.hwfmt[1] |= hwtc << (i * 4);
+   }
+
+   /* front/back face */
+   if (face) {
+      uint slot = find_mapping(fs, I915_SEMANTIC_FACE);	 
+      debug_printf("Front/back face is broken\n");
+      src = draw_find_shader_output(i915->draw, TGSI_SEMANTIC_FACE, 0);
+      /* really here it's EMIT_1F_FACE */
+      draw_emit_vertex_attr(&vinfo, EMIT_1F, INTERP_CONSTANT, src);
+      vinfo.hwfmt[1] |= TEXCOORDFMT_1D << (slot * 4);
    }
 
    draw_compute_vertex_size(&vinfo);
