@@ -736,7 +736,8 @@ i915_texture_get_transfer(struct pipe_context *pipe,
    transfer->b.layer_stride = 0;
    transfer->b.data = NULL;
 
-   /* only support textures we can render to, because we need that for u_blitter */
+   /* if we use staging transfers, only support textures we can render to,
+    * because we need that for u_blitter */
    if (i915->blitter &&
        i915_is_format_supported(NULL, /* screen */
                                 transfer->b.resource->format,
