@@ -151,6 +151,24 @@ st_read_stencil_pixels(struct gl_context *ctx, GLint x, GLint y,
             }
          }
          break;
+      case PIPE_FORMAT_Z32_FLOAT_S8X24_USCALED:
+         if (format == GL_DEPTH_STENCIL) {
+            const uint *src = (uint *) (stmap + srcY * pt->stride);
+            const GLfloat *srcf = (const GLfloat*)src;
+            GLint k;
+            for (k = 0; k < width; k++) {
+               zValues[k] = srcf[k*2];
+               sValues[k] = src[k*2+1] & 0xff;
+            }
+         }
+         else {
+            const uint *src = (uint *) (stmap + srcY * pt->stride);
+            GLint k;
+            for (k = 0; k < width; k++) {
+               sValues[k] = src[k*2+1] & 0xff;
+            }
+         }
+         break;
       default:
          assert(0);
       }
@@ -562,6 +580,31 @@ st_readpixels(struct gl_context *ctx, GLint x, GLint y, GLsizei width, GLsizei h
             y += yStep;
             for (j = 0; j < width; j++) {
                zfloat[j] = (float) (scale * ztemp[j]);
+            }
+            _mesa_pack_depth_span(ctx, width, dst, type,
+                                  zfloat, &clippedPacking);
+            dst += dstStride;
+         }
+      }
+      else if (pformat == PIPE_FORMAT_Z32_FLOAT) {
+         for (i = 0; i < height; i++) {
+            GLfloat zfloat[MAX_WIDTH];
+            pipe_get_tile_raw(pipe, trans, 0, y, width, 1, zfloat, 0);
+            y += yStep;
+            _mesa_pack_depth_span(ctx, width, dst, type,
+                                  zfloat, &clippedPacking);
+            dst += dstStride;
+         }
+      }
+      else if (pformat == PIPE_FORMAT_Z32_FLOAT_S8X24_USCALED) {
+         assert(format == GL_DEPTH_COMPONENT);
+         for (i = 0; i < height; i++) {
+            GLfloat zfloat[MAX_WIDTH];    /* Z32 */
+            GLfloat zfloat2[MAX_WIDTH*2]; /* Z32X32 */
+            pipe_get_tile_raw(pipe, trans, 0, y, width, 1, zfloat2, 0);
+            y += yStep;
+            for (j = 0; j < width; j++) {
+               zfloat[j] = zfloat2[j*2];
             }
             _mesa_pack_depth_span(ctx, width, dst, type,
                                   zfloat, &clippedPacking);
