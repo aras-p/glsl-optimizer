@@ -49,16 +49,24 @@ functionality:
 1) Versioning.
 2) Surface functionality (creation and copying for a basic dri2 implementation)
 3) YUV blits for textured Xv.
-
-and coming up:
-4) Solid fills with ROP functionality.
-5) Copies with ROP functionality, format conversion and - reinterpretation.
+4) Solid fills without ROP functionality.
+5) Copies with format conversion and - reinterpretation but without ROP
 6) Xrender- type compositing for general acceleration.
 
-4-6 is not implemented yet since they are not directly used by the
-vmwgfx driver.
 
 The first user will be the vmwgfx xorg driver. When there are more users,
 we need to be able to load the appropriate gallium pipe driver, and we
 should investigate sharing the loadig mechanism with the EGL state tracker.
 
+IMPORTANT:
+Version compatibilities:
+While this library remains OUTSIDE any mesa release branch,
+and the major version number is still 0. Any minor bump should be viewed as
+an incompatibility event, and any user of this library should test for that
+and refuse to use the library if minor versions differ.
+As soon as the library enters a mesa release branch, if not earlier, major
+will be bumped to 1, and normal incompatibility rules (major bump)
+will be followed.
+It is allowed to add function interfaces while only bumping minor. Any
+user that uses these function interfaces must therefore use lazy symbol
+lookups and test minor for compatibility before using such a function.
