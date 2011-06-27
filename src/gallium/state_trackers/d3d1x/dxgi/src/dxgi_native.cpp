@@ -250,21 +250,21 @@ struct GalliumDXGIAdapter
 	DXGI_ADAPTER_DESC1 desc;
 	std::vector<ComPtr<IDXGIOutput> > outputs;
 	int num_outputs;
-	struct native_event_handler handler;
 
 	GalliumDXGIAdapter(GalliumDXGIFactory* factory, const struct native_platform* platform, void* dpy)
 	{
 		this->parent = factory;
 
-                /* FIXME handler should be static */
-		handler.invalid_surface = handle_invalid_surface;
-		handler.new_drm_screen = dxgi_loader_create_drm_screen;
-		handler.new_sw_screen = dxgi_loader_create_sw_screen;
-		platform->set_event_handler(&handler);
-
-		display = platform->create_display(dpy, FALSE, this);
+		display = platform->create_display(dpy, FALSE);
 		if(!display)
-                   display = platform->create_display(dpy, TRUE, this);
+                   display = platform->create_display(dpy, TRUE);
+                if (display) {
+                   display->user_data = this;
+                   if (!display->init_screen(display)) {
+                      display->destroy(display);
+                      display = NULL;
+                   }
+                }
                 if(!display)
 			throw E_FAIL;
 		memset(&desc, 0, sizeof(desc));
@@ -1413,6 +1413,11 @@ struct dxgi_binding
 
 static dxgi_binding dxgi_default_binding;
 static __thread dxgi_binding dxgi_thread_binding;
+static const struct native_event_handler dxgi_event_handler = {
+   GalliumDXGIAdapter::handle_invalid_surface,
+   dxgi_loader_create_drm_screen,
+   dxgi_loader_create_sw_screen
+};
 
 void STDMETHODCALLTYPE GalliumDXGIUseNothing()
 {
@@ -1427,7 +1432,7 @@ void STDMETHODCALLTYPE GalliumDXGIUseNothing()
 void STDMETHODCALLTYPE GalliumDXGIUseX11Display(Display* dpy, IGalliumDXGIBackend* backend)
 {
 	GalliumDXGIUseNothing();
-	dxgi_thread_binding.platform = native_get_x11_platform();
+	dxgi_thread_binding.platform = native_get_x11_platform(&dxgi_event_handler);
 	dxgi_thread_binding.display = dpy;
 
 	if(backend)
@@ -1443,7 +1448,7 @@ void STDMETHODCALLTYPE GalliumDXGIUseX11Display(Display* dpy, IGalliumDXGIBacken
 void STDMETHODCALLTYPE GalliumDXGIUseDRMCard(int fd)
 {
 	GalliumDXGIUseNothing();
-	dxgi_thread_binding.platform = native_get_drm_platform();
+	dxgi_thread_binding.platform = native_get_drm_platform(&dxgi_event_handler);
 	dxgi_thread_binding.display = (void*)fd;
 	dxgi_thread_binding.backend = 0;
 }
@@ -1453,7 +1458,7 @@ void STDMETHODCALLTYPE GalliumDXGIUseDRMCard(int fd)
 void STDMETHODCALLTYPE GalliumDXGIUseFBDev(int fd)
 {
 	GalliumDXGIUseNothing();
-	dxgi_thread_binding.platform = native_get_fbdev_platform();
+	dxgi_thread_binding.platform = native_get_fbdev_platform(&dxgi_event_handler);
 	dxgi_thread_binding.display = (void*)fd;
 	dxgi_thread_binding.backend = 0;
 }
@@ -1463,7 +1468,7 @@ void STDMETHODCALLTYPE GalliumDXGIUseFBDev(int fd)
 void STDMETHODCALLTYPE GalliumDXGIUseHDC(HDC hdc, PFNHWNDRESOLVER resolver, void* resolver_cookie)
 {
 	GalliumDXGIUseNothing();
-	dxgi_thread_binding.platform = native_get_gdi_platform();
+	dxgi_thread_binding.platform = native_get_gdi_platform(&dxgi_event_handler);
 	dxgi_thread_binding.display = (void*)hdc;
 	dxgi_thread_binding.backend = 0;
 }
@@ -1493,7 +1498,7 @@ void STDMETHODCALLTYPE GalliumDXGIMakeDefault()
 	 else if(dxgi_default_binding.platform)
 		 factory = new GalliumDXGIFactory(dxgi_default_binding.platform, dxgi_default_binding.display, dxgi_default_binding.backend);
 	 else
-		 factory = new GalliumDXGIFactory(native_get_x11_platform(), NULL, NULL);
+		 factory = new GalliumDXGIFactory(native_get_x11_platform(&dxgi_event_handler), NULL, NULL);
 	 HRESULT hres = factory->QueryInterface(riid, out_factory);
 	 factory->Release();
 	 return hres;
