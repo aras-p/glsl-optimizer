@@ -146,6 +146,7 @@ i915_create_blend_state(struct pipe_context *pipe,
    if (blend->dither)
       cso_data->LIS5 |= S5_COLOR_DITHER_ENABLE;
 
+   /* XXX here take the target fixup into account */
    if ((blend->rt[0].colormask & PIPE_MASK_R) == 0)
       cso_data->LIS5 |= S5_WRITEDISABLE_RED;
 
