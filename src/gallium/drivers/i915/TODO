@@ -26,5 +26,18 @@ Random list of problems with i915g:
 - src/xvmc/i915_structs.h in xf86-video-intel has a few more bits of various
   commands defined. Scavenge them and see what's useful.
 
+- Do smarter remapping. Right now we send everything onto tex coords 0-7.
+  We could also use diffuse/specular and pack two sets of 2D coords in a single
+  4D. Is it a big problem though? We're more limited by the # of texture
+  indirections and the # of instructions.
+
+- Leverage draw to enable more caps:
+  * PIPE_CAP_TGSI_INSTANCEID
+  * PIPE_CAP_VERTEX_ELEMENT_INSTANCE_DIVISOR
+  * PIPE_CAP_MAX_VERTEX_TEXTURE_UNITS
+
+- Finish front/back face. This would need EMIT_1F_FACE or adding a couple of
+  instructions in the shader.
+
 Other bugs can be found here:
 https://bugs.freedesktop.org/buglist.cgi?bug_status=NEW&bug_status=ASSIGNED&bug_status=REOPENED&component=Drivers/Gallium/i915g
