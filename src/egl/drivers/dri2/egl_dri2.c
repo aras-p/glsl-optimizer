@@ -506,6 +506,8 @@ dri2_create_screen(_EGLDisplay *disp)
       return EGL_FALSE;
    }
 
+   dri2_dpy->own_dri_screen = 1;
+
    extensions = dri2_dpy->core->getExtensions(dri2_dpy->dri_screen);
    
    if (dri2_dpy->dri2) {
@@ -576,10 +578,12 @@ dri2_terminate(_EGLDriver *drv, _EGLDisplay *disp)
    _eglReleaseDisplayResources(drv, disp);
    _eglCleanupDisplay(disp);
 
-   dri2_dpy->core->destroyScreen(dri2_dpy->dri_screen);
+   if (dri2_dpy->own_dri_screen)
+      dri2_dpy->core->destroyScreen(dri2_dpy->dri_screen);
    if (dri2_dpy->fd)
       close(dri2_dpy->fd);
-   dlclose(dri2_dpy->driver);
+   if (dri2_dpy->driver)
+      dlclose(dri2_dpy->driver);
 
    if (disp->PlatformDisplay == NULL) {
       switch (disp->Platform) {

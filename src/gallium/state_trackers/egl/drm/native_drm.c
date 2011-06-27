@@ -127,6 +127,8 @@ drm_display_destroy(struct native_display *ndpy)
 
    drm_display_fini_modeset(&drmdpy->base);
 
+   /* gbm owns screen */
+   ndpy->screen = NULL;
    ndpy_uninit(ndpy);
 
    if (drmdpy->device_name)

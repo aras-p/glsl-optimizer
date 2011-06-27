@@ -71,6 +71,7 @@ struct dri2_egl_display
    int                       dri2_major;
    int                       dri2_minor;
    __DRIscreen              *dri_screen;
+   int                       own_dri_screen;
    const __DRIconfig       **driver_configs;
    void                     *driver;
    __DRIcoreExtension       *core;
