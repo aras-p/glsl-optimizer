@@ -3315,10 +3315,6 @@ glsl_to_tgsi_visitor::eliminate_dead_code_advanced(void)
          memset(writes, 0, sizeof(*writes) * this->next_temp * 4);
          break;
 
-      case TGSI_OPCODE_IF:
-         ++level;
-         break;
-
       case TGSI_OPCODE_ENDIF:
          --level;
          break;
@@ -3341,6 +3337,10 @@ glsl_to_tgsi_visitor::eliminate_dead_code_advanced(void)
          }
          break;
 
+      case TGSI_OPCODE_IF:
+         ++level;
+         /* fallthrough to default case to mark the condition as read */
+      
       default:
          /* Continuing the block, clear any channels from the write array that
           * are read by this instruction.
