@@ -725,12 +725,6 @@ if test "x$enable_glx" = xno; then
     enable_xlib_glx=no
 fi
 
-if test "x$enable_dri" = xyes; then
-    if test "x$enable_glx" = xno -o "x$enable_xlib_glx" = xyes; then
-        AC_MSG_ERROR([cannot build DRI drivers without DRI-based GLX yet])
-    fi
-fi
-
 dnl
 dnl Driver specific build directories
 dnl
@@ -814,6 +808,23 @@ AC_SUBST([GALLIUM_WINSYS_DIRS])
 AC_SUBST([GALLIUM_DRIVERS_DIRS])
 AC_SUBST([GALLIUM_STATE_TRACKERS_DIRS])
 AC_SUBST([MESA_LLVM])
+
+# Check for libdrm
+PKG_CHECK_MODULES([LIBDRM], [libdrm >= $LIBDRM_REQUIRED],
+                  [have_libdrm=yes], [have_libdrm=no])
+
+if test "x$enable_dri" = xyes; then
+    # DRI must be shared, I think
+    if test "$enable_static" = yes; then
+        AC_MSG_ERROR([Can't use static libraries for DRI drivers])
+    fi
+
+    if test "x$have_libdrm" != xyes; then
+        AC_MSG_ERROR([DRI drivers require libdrm >= $LIBDRM_REQUIRED])
+    fi
+
+    DRI_PC_REQ_PRIV="libdrm >= $LIBDRM_REQUIRED"
+fi
 
 dnl
 dnl Find out if X is available. The variable have_x is set if libX11 is
@@ -919,8 +930,9 @@ xyesno)
     PKG_CHECK_MODULES([GLPROTO], [glproto >= $GLPROTO_REQUIRED])
     GL_PC_REQ_PRIV="glproto >= $GLPROTO_REQUIRED"
     if test x"$driglx_direct" = xyes; then
-        # Check for libdrm
-        PKG_CHECK_MODULES([LIBDRM], [libdrm >= $LIBDRM_REQUIRED])
+        if test "x$have_libdrm" != xyes; then
+            AC_MSG_ERROR([Direct rendering requires libdrm >= $LIBDRM_REQUIRED])
+        fi
         PKG_CHECK_MODULES([DRI2PROTO], [dri2proto >= $DRI2PROTO_REQUIRED])
         GL_PC_REQ_PRIV="$GL_PC_REQ_PRIV libdrm >= $LIBDRM_REQUIRED dri2proto >= $DRI2PROTO_REQUIRED"
     fi
@@ -970,14 +982,6 @@ xyesno)
     ;;
 esac
 
-if test "x$enable_dri" = xyes; then
-    # DRI must be shared, I think
-    if test "$enable_static" = yes; then
-        AC_MSG_ERROR([Can't use static libraries for DRI drivers])
-    fi
-fi
-
-DRI_PC_REQ_PRIV="libdrm >= $LIBDRM_REQUIRED"
 GLESv1_CM_LIB_DEPS="$LIBDRM_LIBS -lm -lpthread $DLOPEN_LIBS"
 GLESv1_CM_PC_LIB_PRIV="-lm -lpthread $DLOPEN_LIBS"
 GLESv2_LIB_DEPS="$LIBDRM_LIBS -lm -lpthread $DLOPEN_LIBS"
@@ -1363,6 +1367,9 @@ if test "x$enable_gallium_egl" = xyes; then
     fi
     if test "x$enable_egl" = xno; then
         AC_MSG_ERROR([cannot enable egl_gallium without EGL])
+    fi
+    if test "x$have_libdrm" != xyes; then
+        AC_MSG_ERROR([egl_gallium requires libdrm >= $LIBDRM_REQUIRED])
     fi
 
     GALLIUM_STATE_TRACKERS_DIRS="egl $GALLIUM_STATE_TRACKERS_DIRS"
