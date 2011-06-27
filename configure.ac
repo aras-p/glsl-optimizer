@@ -1814,6 +1814,12 @@ fi
 ln -s autoconf configs/current
 ])
 
+dnl Sort the dirs alphabetically
+GALLIUM_TARGET_DIRS=`echo $GALLIUM_TARGET_DIRS|tr " " "\n"|sort|tr "\n" " "`
+GALLIUM_WINSYS_DIRS=`echo $GALLIUM_WINSYS_DIRS|tr " " "\n"|sort|tr "\n" " "`
+GALLIUM_DRIVERS_DIRS=`echo $GALLIUM_DRIVERS_DIRS|tr " " "\n"|sort|tr "\n" " "`
+GALLIUM_STATE_TRACKERS_DIRS=`echo $GALLIUM_STATE_TRACKERS_DIRS|tr " " "\n"|sort|tr "\n" " "`
+
 AC_OUTPUT
 
 dnl
