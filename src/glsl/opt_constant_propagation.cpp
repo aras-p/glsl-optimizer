@@ -51,11 +51,23 @@ public:
       this->var = var;
       this->write_mask = write_mask;
       this->constant = constant;
+      this->initial_values = write_mask;
+   }
+
+   acp_entry(const acp_entry *src)
+   {
+      this->var = src->var;
+      this->write_mask = src->write_mask;
+      this->constant = src->constant;
+      this->initial_values = src->initial_values;
    }
 
    ir_variable *var;
    ir_constant *constant;
    unsigned write_mask;
+
+   /** Mask of values initially available in the constant. */
+   unsigned initial_values;
 };
 
 
@@ -172,7 +184,7 @@ ir_constant_propagation_visitor::handle_rvalue(ir_rvalue **rvalue)
       for (int j = 0; j < 4; j++) {
 	 if (j == channel)
 	    break;
-	 if (found->write_mask & (1 << j))
+	 if (found->initial_values & (1 << j))
 	    rhs_channel++;
       }
 
@@ -285,8 +297,7 @@ ir_constant_propagation_visitor::handle_if_block(exec_list *instructions)
    /* Populate the initial acp with a constant of the original */
    foreach_iter(exec_list_iterator, iter, *orig_acp) {
       acp_entry *a = (acp_entry *)iter.get();
-      this->acp->push_tail(new(this->mem_ctx) acp_entry(a->var, a->write_mask,
-							a->constant));
+      this->acp->push_tail(new(this->mem_ctx) acp_entry(a));
    }
 
    visit_list_elements(this, instructions);
