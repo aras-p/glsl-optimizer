@@ -1039,11 +1039,19 @@ PKG_CHECK_MODULES([LIBDRM_RADEON],
 		  HAVE_LIBDRM_RADEON=no)
 
 dnl
-dnl More X11 setup
+dnl More GLX setup
 dnl
-if test "x$enable_xlib_glx" = xyes; then
+case "x$enable_glx$enable_xlib_glx" in
+xyesyes)
     DEFINES="$DEFINES -DUSE_XSHM"
-fi
+    ;;
+xyesno)
+    DEFINES="$DEFINES -DGLX_INDIRECT_RENDERING"
+    if test "x$driglx_direct" = xyes; then
+        DEFINES="$DEFINES -DGLX_DIRECT_RENDERING"
+    fi
+    ;;
+esac
 
 dnl
 dnl TLS detection
@@ -1118,10 +1126,7 @@ if test "x$enable_dri" = xyes; then
     case "$host_os" in
     linux*)
         DEFINES="$DEFINES -DUSE_EXTERNAL_DXTN_LIB=1 -DIN_DRI_DRIVER"
-        if test "x$driglx_direct" = xyes; then
-            DEFINES="$DEFINES -DGLX_DIRECT_RENDERING"
-        fi
-        DEFINES="$DEFINES -DGLX_INDIRECT_RENDERING -DHAVE_ALIAS"
+        DEFINES="$DEFINES -DHAVE_ALIAS"
 
         case "$host_cpu" in
         x86_64)
@@ -1151,10 +1156,6 @@ if test "x$enable_dri" = xyes; then
     freebsd* | dragonfly* | *netbsd*)
         DEFINES="$DEFINES -DPTHREADS -DUSE_EXTERNAL_DXTN_LIB=1"
         DEFINES="$DEFINES -DIN_DRI_DRIVER -DHAVE_ALIAS"
-        DEFINES="$DEFINES -DGLX_INDIRECT_RENDERING"
-        if test "x$driglx_direct" = xyes; then
-            DEFINES="$DEFINES -DGLX_DIRECT_RENDERING"
-        fi
 
         if test "x$DRI_DIRS" = "xyes"; then
             DRI_DIRS="i810 i915 i965 mach64 mga nouveau r128 r200 r300 r600 \
@@ -1163,21 +1164,13 @@ if test "x$enable_dri" = xyes; then
         ;;
     gnu*)
         DEFINES="$DEFINES -DUSE_EXTERNAL_DXTN_LIB=1 -DIN_DRI_DRIVER"
-        DEFINES="$DEFINES -DGLX_INDIRECT_RENDERING -DHAVE_ALIAS"
+        DEFINES="$DEFINES -DHAVE_ALIAS"
 	;;
     solaris*)
         DEFINES="$DEFINES -DUSE_EXTERNAL_DXTN_LIB=1 -DIN_DRI_DRIVER"
-        DEFINES="$DEFINES -DGLX_INDIRECT_RENDERING"
-        if test "x$driglx_direct" = xyes; then
-            DEFINES="$DEFINES -DGLX_DIRECT_RENDERING"
-        fi
         ;;
     cygwin*)
         DEFINES="$DEFINES -DUSE_EXTERNAL_DXTN_LIB=1 -DIN_DRI_DRIVER"
-        DEFINES="$DEFINES -DGLX_INDIRECT_RENDERING"
-        if test "x$driglx_direct" = xyes; then
-            DEFINES="$DEFINES -DGLX_DIRECT_RENDERING"
-        fi
         if test "x$DRI_DIRS" = "xyes"; then
             DRI_DIRS="swrast"
         fi
