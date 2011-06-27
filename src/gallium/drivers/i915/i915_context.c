@@ -54,13 +54,11 @@ i915_draw_vbo(struct pipe_context *pipe, const struct pipe_draw_info *info)
    struct i915_context *i915 = i915_context(pipe);
    struct draw_context *draw = i915->draw;
    void *mapped_indices = NULL;
-   unsigned cbuf_dirty;
 
 
    /*
     * Ack vs contants here, helps ipers a lot.
     */
-   cbuf_dirty = i915->dirty & I915_NEW_VS_CONSTANTS;
    i915->dirty &= ~I915_NEW_VS_CONSTANTS;
 
    if (i915->dirty)
