@@ -9,6 +9,7 @@ xa_surface_map
 xa_surface_unmap
 xa_surface_format
 xa_surface_handle
+xa_format_check_supported
 xa_context_default
 xa_context_create
 xa_context_destroy

@@ -37,7 +37,7 @@
 #include <stdint.h>
 
 #define XA_TRACKER_VERSION_MAJOR 0
-#define XA_TRACKER_VERSION_MINOR 3
+#define XA_TRACKER_VERSION_MINOR 4
 #define XA_TRACKER_VERSION_PATCH 0
 
 #define XA_FLAG_SHARED         (1 << 0)
@@ -147,6 +147,10 @@ extern struct xa_tracker *xa_tracker_create(int drm_fd);
 
 extern void xa_tracker_destroy(struct xa_tracker *xa);
 
+extern int xa_format_check_supported(struct xa_tracker *xa,
+				     enum xa_formats xa_format,
+				     unsigned int flags);
+
 extern struct xa_surface *xa_surface_create(struct xa_tracker *xa,
 					    int width,
 					    int height,
@@ -165,8 +169,8 @@ extern int xa_surface_redefine(struct xa_surface *srf,
 			       int depth,
 			       enum xa_surface_type stype,
 			       enum xa_formats rgb_format,
-			       unsigned int add_flags,
-			       unsigned int remove_flags, int copy_contents);
+			       unsigned int new_flags,
+			       int copy_contents);
 
 extern int xa_surface_handle(struct xa_surface *srf,
 			     uint32_t * handle, unsigned int *byte_stride);

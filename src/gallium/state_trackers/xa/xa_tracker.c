@@ -248,6 +248,29 @@ xa_get_format_stype_depth(struct xa_tracker *xa,
     return fdesc;
 }
 
+int
+xa_format_check_supported(struct xa_tracker *xa,
+			  enum xa_formats xa_format, unsigned int flags)
+{
+    struct xa_format_descriptor fdesc = xa_get_pipe_format(xa_format);
+    unsigned int bind;
+
+    if (fdesc.xa_format == xa_format_unknown)
+	return -XA_ERR_INVAL;
+
+    bind = stype_bind[xa_format_type(fdesc.xa_format)];
+    if (flags & XA_FLAG_SHARED)
+	bind |= PIPE_BIND_SHARED;
+    if (flags & XA_FLAG_RENDER_TARGET)
+	bind |= PIPE_BIND_RENDER_TARGET;
+
+    if (!xa->screen->is_format_supported(xa->screen, fdesc.format,
+					 PIPE_TEXTURE_2D, 0, bind))
+	return -XA_ERR_INVAL;
+
+    return XA_ERR_NONE;
+}
+
 struct xa_surface *
 xa_surface_create(struct xa_tracker *xa,
 		  int width,
@@ -309,8 +332,8 @@ xa_surface_redefine(struct xa_surface *srf,
 		    int depth,
 		    enum xa_surface_type stype,
 		    enum xa_formats xa_format,
-		    unsigned int add_flags,
-		    unsigned int remove_flags, int copy_contents)
+		    unsigned int new_flags,
+		    int copy_contents)
 {
     struct pipe_resource *template = &srf->template;
     struct pipe_resource *texture;
@@ -318,7 +341,6 @@ xa_surface_redefine(struct xa_surface *srf,
     struct xa_tracker *xa = srf->xa;
     int save_width;
     int save_height;
-    unsigned int new_flags = (srf->flags | add_flags) & ~(remove_flags);
     struct xa_format_descriptor fdesc;
 
     if (xa_format == xa_format_unknown)
@@ -422,5 +444,5 @@ xa_surface_handle(struct xa_surface *srf,
 enum xa_formats
 xa_surface_format(const struct xa_surface *srf)
 {
-    return srf->fdesc.format;
+    return srf->fdesc.xa_format;
 }
