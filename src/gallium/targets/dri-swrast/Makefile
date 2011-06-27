@@ -1,7 +1,7 @@
 TOP = ../../../..
 include $(TOP)/configs/current
 
-LIBNAME = swrastg_dri.so
+LIBNAME = swrast_dri.so
 
 DRIVER_DEFINES = \
 	-D__NOT_HAVE_DRM_H -DGALLIUM_SOFTPIPE \

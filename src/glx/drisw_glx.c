@@ -425,9 +425,6 @@ driOpenSwrast(void)
    if (driver == NULL)
       driver = driOpenDriver("swrast");
 
-   if (driver == NULL)
-      driver = driOpenDriver("swrastg");
-
    return driver;
 }
 

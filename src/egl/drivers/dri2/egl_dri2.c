@@ -416,11 +416,6 @@ dri2_load_driver_swrast(_EGLDisplay *disp)
 
    dri2_dpy->driver_name = "swrast";
    extensions = dri2_open_driver(disp);
-   if (!extensions) {
-      /* try again with swrastg */
-      dri2_dpy->driver_name = "swrastg";
-      extensions = dri2_open_driver(disp);
-   }
 
    if (!extensions)
       return EGL_FALSE;
