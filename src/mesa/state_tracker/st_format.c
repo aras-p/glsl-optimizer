@@ -68,9 +68,17 @@ GLenum
 st_format_datatype(enum pipe_format format)
 {
    const struct util_format_description *desc;
+   int i;
 
    desc = util_format_description(format);
    assert(desc);
+
+   /* Find the first non-VOID channel. */
+   for (i = 0; i < 4; i++) {
+       if (desc->channel[i].type != UTIL_FORMAT_TYPE_VOID) {
+           break;
+       }
+   }
 
    if (desc->layout == UTIL_FORMAT_LAYOUT_PLAIN) {
       if (format == PIPE_FORMAT_B5G5R5A1_UNORM ||
@@ -85,21 +93,26 @@ st_format_datatype(enum pipe_format format)
       }
       else {
          const GLuint size = format_max_bits(format);
+
+         assert(i < 4);
+         if (i == 4)
+            return GL_NONE;
+
          if (size == 8) {
-            if (desc->channel[0].type == UTIL_FORMAT_TYPE_UNSIGNED)
+            if (desc->channel[i].type == UTIL_FORMAT_TYPE_UNSIGNED)
                return GL_UNSIGNED_BYTE;
             else
                return GL_BYTE;
          }
          else if (size == 16) {
-            if (desc->channel[0].type == UTIL_FORMAT_TYPE_UNSIGNED)
+            if (desc->channel[i].type == UTIL_FORMAT_TYPE_UNSIGNED)
                return GL_UNSIGNED_SHORT;
             else
                return GL_SHORT;
          }
          else {
             assert( size <= 32 );
-            if (desc->channel[0].type == UTIL_FORMAT_TYPE_UNSIGNED)
+            if (desc->channel[i].type == UTIL_FORMAT_TYPE_UNSIGNED)
                return GL_UNSIGNED_INT;
             else
                return GL_INT;
