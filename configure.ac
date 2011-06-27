@@ -769,7 +769,7 @@ GLU_DIRS="sgi"
 GALLIUM_DIRS="auxiliary drivers state_trackers"
 GALLIUM_TARGET_DIRS=""
 GALLIUM_WINSYS_DIRS="sw"
-GALLIUM_DRIVERS_DIRS="softpipe failover galahad trace rbug noop identity"
+GALLIUM_DRIVERS_DIRS="failover galahad trace rbug noop identity"
 GALLIUM_STATE_TRACKERS_DIRS=""
 
 # build shared-glapi if enabled for OpenGL or if OpenGL ES is enabled
@@ -1884,7 +1884,6 @@ if test "x$enable_gallium_llvm" = xyes; then
 	LLVM_LIBS="`$LLVM_CONFIG --libs` -lstdc++"
 
 	LLVM_LDFLAGS=`$LLVM_CONFIG --ldflags`
-	GALLIUM_DRIVERS_DIRS="$GALLIUM_DRIVERS_DIRS llvmpipe"
 	DEFINES="$DEFINES -D__STDC_CONSTANT_MACROS"
 	MESA_LLVM=1
     else
@@ -1951,26 +1950,34 @@ gallium_require_llvm() {
 }
 
 dnl Gallium drivers
+dnl Duplicates in GALLIUM_DRIVERS_DIRS are removed by sorting it after this block
 if test "x$with_gallium_drivers" != x; then
-    # This is for compile-testing
-    GALLIUM_DRIVERS_DIRS="$GALLIUM_DRIVERS_DIRS i915 i965 r300 svga"
-    GALLIUM_WINSYS_DIRS="$GALLIUM_WINSYS_DIRS i915/sw"
-
     gallium_drivers=`IFS=', '; echo $with_gallium_drivers`
     for driver in $gallium_drivers; do
         case "x$driver" in
         xsvga)
+            GALLIUM_DRIVERS_DIRS="$GALLIUM_DRIVERS_DIRS svga softpipe"
             gallium_check_st "svga/drm" "dri-vmwgfx" "xorg-vmwgfx" "xa-vmwgfx"
             ;;
         xi915)
+            GALLIUM_DRIVERS_DIRS="$GALLIUM_DRIVERS_DIRS i915 softpipe"
+            if test "x$MESA_LLVM" = x1; then
+                GALLIUM_DRIVERS_DIRS="$GALLIUM_DRIVERS_DIRS llvmpipe"
+            fi
+            GALLIUM_WINSYS_DIRS="$GALLIUM_WINSYS_DIRS i915/sw"
             gallium_check_st "i915/drm" "dri-i915" "xorg-i915"
             ;;
         xi965)
+            GALLIUM_DRIVERS_DIRS="$GALLIUM_DRIVERS_DIRS i965 softpipe"
+            if test "x$MESA_LLVM" = x1; then
+                GALLIUM_DRIVERS_DIRS="$GALLIUM_DRIVERS_DIRS llvmpipe"
+            fi
             gallium_check_st "i965/drm" "dri-i965" "xorg-i965"
             ;;
         xr300)
             gallium_require_llvm "Gallium R300"
-            gallium_check_st "radeon/drm" "dri-r300" "xorg-radeon" "" "xvmc-r300" "vdpau-r300" "va-r300"
+            GALLIUM_DRIVERS_DIRS="$GALLIUM_DRIVERS_DIRS r300"
+            gallium_check_st "radeon/drm" "dri-r300" "xorg-r300" "" "xvmc-r300" "vdpau-r300" "va-r300"
             ;;
         xr600)
             GALLIUM_DRIVERS_DIRS="$GALLIUM_DRIVERS_DIRS r600"
@@ -1982,6 +1989,10 @@ if test "x$with_gallium_drivers" != x; then
             ;;
         xswrast)
             if test "x$HAVE_ST_DRI" = xyes; then
+                GALLIUM_DRIVERS_DIRS="$GALLIUM_DRIVERS_DIRS softpipe"
+                if test "x$MESA_LLVM" = x1; then
+                    GALLIUM_DRIVERS_DIRS="$GALLIUM_DRIVERS_DIRS llvmpipe"
+                fi
                 GALLIUM_TARGET_DIRS="$GALLIUM_TARGET_DIRS dri-swrast"
             fi
             if test "x$HAVE_ST_VDPAU" = xyes; then
