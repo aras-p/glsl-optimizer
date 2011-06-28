@@ -173,14 +173,14 @@ default: $(OUTPUTS)
 
 $(OUTPUT_PATH)/egl_gallium.so: $(egl_OBJECTS) $(egl_LIBS)
 	$(MKLIB) -o $(notdir $@) -noprefix -linker '$(CXX)' \
-		-L$(TOP)/$(LIB_DIR) -ldflags '-Wl,--no-undefined $(LDFLAGS)' \
+		-ldflags '-L$(TOP)/$(LIB_DIR) -Wl,--no-undefined $(LDFLAGS)' \
 		-cplusplus -install $(OUTPUT_PATH) $(MKLIB_OPTIONS) \
 		$(egl_OBJECTS) -Wl,--start-group $(egl_LIBS) -Wl,--end-group \
 		$(egl_SYS)
 
 $(OUTPUT_PATH)/st_GL.so: st_GL.o $(st_GL_LIBS)
 	$(MKLIB) -o $(notdir $@) -noprefix -linker '$(CXX)' \
-		-L$(TOP)/$(LIB_DIR) -ldflags '$(LDFLAGS)' \
+		-ldflags '-L$(TOP)/$(LIB_DIR) $(LDFLAGS)' \
 		-cplusplus -install $(OUTPUT_PATH) $(MKLIB_OPTIONS) \
 		$< -Wl,--start-group $(st_GL_LIBS) -Wl,--end-group \
 		$(st_GL_SYS)
