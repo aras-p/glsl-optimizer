@@ -85,14 +85,14 @@ static const float scs_cos_constants[4] = { 1.0,
    -1.0f / (6 * 5 * 4 * 3 * 2 * 1)
 };
 
-/* 1, -1/3!, 1/5!, -1/7! */
+/* 2*pi, -(2*pi)^3/3!, (2*pi)^5/5!, -(2*pi)^7/7! */
 static const float sin_constants[4] = { 2.0 * M_PI,
    -8.0f * M_PI * M_PI * M_PI / (3 * 2 * 1),
    32.0f * M_PI * M_PI * M_PI * M_PI * M_PI / (5 * 4 * 3 * 2 * 1),
    -128.0f * M_PI * M_PI * M_PI * M_PI * M_PI * M_PI * M_PI / (7 * 6 * 5 * 4 * 3 * 2 * 1)
 };
 
-/* 1, -1/2!, 1/4!, -1/6! */
+/* 1, -(2*pi)^2/2!, (2*pi)^4/4!, -(2*pi)^6/6! */
 static const float cos_constants[4] = { 1.0,
    -4.0f * M_PI * M_PI / (2 * 1),
    16.0f * M_PI * M_PI * M_PI * M_PI / (4 * 3 * 2 * 1),
