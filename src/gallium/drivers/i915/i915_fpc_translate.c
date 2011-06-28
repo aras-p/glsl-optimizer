@@ -72,17 +72,31 @@ static unsigned passthrough[] =
 
 
 /* 1, -1/3!, 1/5!, -1/7! */
-static const float sin_constants[4] = { 1.0,
+static const float scs_sin_constants[4] = { 1.0,
    -1.0f / (3 * 2 * 1),
    1.0f / (5 * 4 * 3 * 2 * 1),
    -1.0f / (7 * 6 * 5 * 4 * 3 * 2 * 1)
 };
 
 /* 1, -1/2!, 1/4!, -1/6! */
-static const float cos_constants[4] = { 1.0,
+static const float scs_cos_constants[4] = { 1.0,
    -1.0f / (2 * 1),
    1.0f / (4 * 3 * 2 * 1),
    -1.0f / (6 * 5 * 4 * 3 * 2 * 1)
+};
+
+/* 1, -1/3!, 1/5!, -1/7! */
+static const float sin_constants[4] = { 2.0 * M_PI,
+   -8.0f * M_PI * M_PI * M_PI / (3 * 2 * 1),
+   32.0f * M_PI * M_PI * M_PI * M_PI * M_PI / (5 * 4 * 3 * 2 * 1),
+   -128.0f * M_PI * M_PI * M_PI * M_PI * M_PI * M_PI * M_PI / (7 * 6 * 5 * 4 * 3 * 2 * 1)
+};
+
+/* 1, -1/2!, 1/4!, -1/6! */
+static const float cos_constants[4] = { 1.0,
+   -4.0f * M_PI * M_PI / (2 * 1),
+   16.0f * M_PI * M_PI * M_PI * M_PI / (4 * 3 * 2 * 1),
+   -64.0f * M_PI * M_PI * M_PI * M_PI * M_PI * M_PI / (6 * 5 * 4 * 3 * 2 * 1)
 };
 
 
@@ -483,13 +497,6 @@ i915_translate_instruction(struct i915_fp_compile *p,
 
       i915_emit_arith(p, A0_MOD, tmp, A0_DEST_CHANNEL_X, 0, tmp, 0, 0);
 
-      /* By choosing different taylor constants, could get rid of this mul:
-       */
-      i915_emit_arith(p,
-                      A0_MUL,
-                      tmp, A0_DEST_CHANNEL_X, 0,
-                      tmp, i915_emit_const1f(p, (float) (M_PI * 2.0)), 0);
-
       /* 
        * t0.xy = MUL x.xx11, x.x1111  ; x^2, x, 1, 1
        * t0 = MUL t0.xyxy t0.xx11 ; x^4, x^3, x^2, 1
@@ -772,9 +779,9 @@ i915_translate_instruction(struct i915_fp_compile *p,
        * t0.xy = MUL x.xx11, x.x1111  ; x^2, x, 1, 1
        * t0 = MUL t0.xyxy t0.xx11 ; x^4, x^3, x^2, x
        * t1 = MUL t0.xyyw t0.yz11    ; x^7 x^5 x^3 x
-       * scs.x = DP4 t1, sin_constants
+       * scs.x = DP4 t1, scs_sin_constants
        * t1 = MUL t0.xxz1 t0.z111    ; x^6 x^4 x^2 1
-       * scs.y = DP4 t1, cos_constants
+       * scs.y = DP4 t1, scs_cos_constants
        */
       i915_emit_arith(p,
                       A0_MUL,
@@ -809,7 +816,7 @@ i915_translate_instruction(struct i915_fp_compile *p,
                          get_result_vector(p, &inst->Dst[0]),
                          A0_DEST_CHANNEL_Y, 0,
                          swizzle(tmp1, W, Z, Y, X),
-                         i915_emit_const4fv(p, sin_constants), 0);
+                         i915_emit_const4fv(p, scs_sin_constants), 0);
       }
 
       if (writemask & TGSI_WRITEMASK_X) {
@@ -824,7 +831,7 @@ i915_translate_instruction(struct i915_fp_compile *p,
                          get_result_vector(p, &inst->Dst[0]),
                          A0_DEST_CHANNEL_X, 0,
                          swizzle(tmp, ONE, Z, Y, X),
-                         i915_emit_const4fv(p, cos_constants), 0);
+                         i915_emit_const4fv(p, scs_cos_constants), 0);
       }
       break;
 
@@ -870,13 +877,6 @@ i915_translate_instruction(struct i915_fp_compile *p,
                       src0, i915_emit_const1f(p, 1.0f / (float) (M_PI * 2.0)), 0);
 
       i915_emit_arith(p, A0_MOD, tmp, A0_DEST_CHANNEL_X, 0, tmp, 0, 0);
-
-      /* By choosing different taylor constants, could get rid of this mul:
-       */
-      i915_emit_arith(p,
-                      A0_MUL,
-                      tmp, A0_DEST_CHANNEL_X, 0,
-                      tmp, i915_emit_const1f(p, (float) (M_PI * 2.0)), 0);
 
       /* 
        * t0.xy = MUL x.xx11, x.x1111  ; x^2, x, 1, 1
