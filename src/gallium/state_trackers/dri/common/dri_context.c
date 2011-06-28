@@ -151,8 +151,6 @@ dri_unbind_context(__DRIcontext * cPriv)
       if (ctx->st == ctx->stapi->get_current(ctx->stapi)) {
          ctx->st->flush(ctx->st, ST_FLUSH_FRONT, NULL);
          stapi->make_current(stapi, NULL, NULL, NULL);
-         draw->context = NULL;
-         read->context = NULL;
       }
    }
 
@@ -180,12 +178,10 @@ dri_make_current(__DRIcontext * cPriv,
    else if (!driDrawPriv || !driReadPriv)
       return GL_FALSE;
 
-   draw->context = ctx;
    if (ctx->dPriv != driDrawPriv) {
       ctx->dPriv = driDrawPriv;
       draw->texture_stamp = driDrawPriv->lastStamp - 1;
    }
-   read->context = ctx;
    if (ctx->rPriv != driReadPriv) {
       ctx->rPriv = driReadPriv;
       read->texture_stamp = driReadPriv->lastStamp - 1;
