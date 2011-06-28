@@ -272,6 +272,9 @@ src_vector(struct i915_fp_compile *p,
    /* XXX enable these assertions, or fix things */
    assert(!source->Register.Absolute);
 #endif
+   if (source->Register.Absolute)
+      debug_printf("Exceeded max generics\n");
+
    return src;
 }
 
