@@ -1940,7 +1940,7 @@ apply_type_qualifier_to_variable(const struct ast_type_qualifier *qual,
 	 break;
 
       case fragment_shader:
-	 if (!global_scope || (var->mode != ir_var_in)) {
+	 if (!global_scope || (var->mode != ir_var_out)) {
 	    fail = true;
 	    string = "output";
 	 }
