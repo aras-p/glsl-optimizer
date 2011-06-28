@@ -981,11 +981,7 @@ i915_texture_create(struct pipe_screen *screen,
    else
       buf_usage = I915_NEW_TEXTURE;
 
-   if (tex->tiling == I915_TILE_NONE)
-      tex->buffer = iws->buffer_create(iws, tex->total_nblocksy * tex->stride,
-                                       buf_usage);
-   else
-      tex->buffer = iws->buffer_create_tiled(iws, &tex->stride, tex->total_nblocksy,
+   tex->buffer = iws->buffer_create_tiled(iws, &tex->stride, tex->total_nblocksy,
                                              &tex->tiling, buf_usage);
    if (!tex->buffer)
       goto fail;
