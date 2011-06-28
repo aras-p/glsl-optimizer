@@ -883,7 +883,11 @@ dri|no) # these checks are still desired when there is no mesa_driver
     else
         # should check these...
         X11_INCLUDES="$X11_INCLUDES $X_CFLAGS"
-        GL_LIB_DEPS="$X_LIBS -lX11 -lXext -lXxf86vm -lXdamage -lXfixes"
+        if test "x$HAVE_XF86VIDMODE" == xyes; then
+           GL_LIB_DEPS="$X_LIBS -lX11 -lXext -lXxf86vm -lXdamage -lXfixes"
+	else
+           GL_LIB_DEPS="$X_LIBS -lX11 -lXext -lXdamage -lXfixes"
+	fi
         GL_PC_LIB_PRIV="$GL_LIB_DEPS"
         GL_PC_CFLAGS="$X11_INCLUDES"
 
