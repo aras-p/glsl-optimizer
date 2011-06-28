@@ -54,10 +54,8 @@ struct fbdev_sw_winsys
    struct sw_winsys base;
 
    int fd;
-   enum pipe_format format;
 
    struct fb_fix_screeninfo finfo;
-   void *fbmem;
    unsigned rows;
    unsigned stride;
 };
@@ -77,22 +75,53 @@ fbdev_sw_winsys(struct sw_winsys *ws)
 static void
 fbdev_displaytarget_display(struct sw_winsys *ws,
                             struct sw_displaytarget *dt,
-                            void *context_private)
+                            void *winsys_private)
 {
    struct fbdev_sw_winsys *fbdev = fbdev_sw_winsys(ws);
-   struct fbdev_sw_displaytarget *fbdt = fbdev_sw_displaytarget(dt);
-   unsigned rows, len, i;
+   struct fbdev_sw_displaytarget *src = fbdev_sw_displaytarget(dt);
+   const struct fbdev_sw_drawable *dst =
+      (const struct fbdev_sw_drawable *) winsys_private;
+   unsigned height, row_offset, row_len, i;
+   void *fbmem;
 
-   rows = MIN2(fbdt->height, fbdev->rows);
-   len = util_format_get_stride(fbdt->format, fbdt->width);
-   len = MIN2(len, fbdev->stride);
-
-   for (i = 0; i < rows; i++) {
-      void *dst = fbdev->fbmem + fbdev->stride * i;
-      void *src = fbdt->data + fbdt->stride * i;
-
-      memcpy(dst, src, len);
+   /* FIXME format conversion */
+   if (dst->format != src->format) {
+      assert(0);
+      return;
    }
+
+   height = dst->height;
+   if (dst->y + dst->height > fbdev->rows) {
+      /* nothing to copy */
+      if (dst->y >= fbdev->rows)
+         return;
+
+      height = fbdev->rows - dst->y;
+   }
+
+   row_offset = util_format_get_stride(dst->format, dst->x);
+   row_len = util_format_get_stride(dst->format, dst->width);
+   if (row_offset + row_len > fbdev->stride) {
+      /* nothing to copy */
+      if (row_offset >= fbdev->stride)
+         return;
+
+      row_len = fbdev->stride - row_offset;
+   }
+
+   fbmem = mmap(0, fbdev->finfo.smem_len,
+         PROT_WRITE, MAP_SHARED, fbdev->fd, 0);
+   if (fbmem == MAP_FAILED)
+      return;
+
+   for (i = 0; i < height; i++) {
+      char *from = (char *) src->data + src->stride * i;
+      char *to = (char *) fbmem + fbdev->stride * (dst->y + i) + row_offset;
+
+      memcpy(to, from, row_len);
+   }
+
+   munmap(fbmem, fbdev->finfo.smem_len);
 }
 
 static void
@@ -133,12 +162,8 @@ fbdev_displaytarget_create(struct sw_winsys *ws,
                            unsigned alignment,
                            unsigned *stride)
 {
-   struct fbdev_sw_winsys *fbdev = fbdev_sw_winsys(ws);
    struct fbdev_sw_displaytarget *fbdt;
    unsigned nblocksy, size, format_stride;
-
-   if (fbdev->format != format)
-      return NULL;
 
    fbdt = CALLOC_STRUCT(fbdev_sw_displaytarget);
    if (!fbdt)
@@ -170,8 +195,7 @@ fbdev_is_displaytarget_format_supported(struct sw_winsys *ws,
                                         unsigned tex_usage,
                                         enum pipe_format format)
 {
-   struct fbdev_sw_winsys *fbdev = fbdev_sw_winsys(ws);
-   return (fbdev->format == format);
+   return TRUE;
 }
 
 static void
@@ -179,12 +203,11 @@ fbdev_destroy(struct sw_winsys *ws)
 {
    struct fbdev_sw_winsys *fbdev = fbdev_sw_winsys(ws);
 
-   munmap(fbdev->fbmem, fbdev->finfo.smem_len);
    FREE(fbdev);
 }
 
 struct sw_winsys *
-fbdev_create_sw_winsys(int fd, enum pipe_format format)
+fbdev_create_sw_winsys(int fd)
 {
    struct fbdev_sw_winsys *fbdev;
 
@@ -193,15 +216,7 @@ fbdev_create_sw_winsys(int fd, enum pipe_format format)
       return NULL;
 
    fbdev->fd = fd;
-   fbdev->format = format;
    if (ioctl(fbdev->fd, FBIOGET_FSCREENINFO, &fbdev->finfo)) {
-      FREE(fbdev);
-      return NULL;
-   }
-
-   fbdev->fbmem = mmap(0, fbdev->finfo.smem_len,
-         PROT_WRITE, MAP_SHARED, fbdev->fd, 0);
-   if (fbdev->fbmem == MAP_FAILED) {
       FREE(fbdev);
       return NULL;
    }
