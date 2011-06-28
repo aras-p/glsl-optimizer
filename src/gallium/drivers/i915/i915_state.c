@@ -247,7 +247,7 @@ i915_create_sampler_state(struct pipe_context *pipe,
    if (sampler->compare_mode == PIPE_TEX_COMPARE_R_TO_TEXTURE) 
    {
       cso->state[0] |= (SS2_SHADOW_ENABLE |
-                        i915_translate_compare_func(sampler->compare_func));
+                        i915_translate_shadow_compare_func(sampler->compare_func));
 
       minFilt = FILTER_4X4_FLAT;
       magFilt = FILTER_4X4_FLAT;

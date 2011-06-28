@@ -60,6 +60,31 @@ i915_translate_compare_func(unsigned func)
 }
 
 static INLINE unsigned
+i915_translate_shadow_compare_func(unsigned func)
+{
+   switch (func) {
+   case PIPE_FUNC_NEVER:
+      return COMPAREFUNC_ALWAYS;
+   case PIPE_FUNC_LESS:
+      return COMPAREFUNC_LEQUAL;
+   case PIPE_FUNC_LEQUAL:
+      return COMPAREFUNC_LESS;
+   case PIPE_FUNC_GREATER:
+      return COMPAREFUNC_GEQUAL;
+   case PIPE_FUNC_GEQUAL:
+      return COMPAREFUNC_GREATER;
+   case PIPE_FUNC_NOTEQUAL:
+      return COMPAREFUNC_EQUAL;
+   case PIPE_FUNC_EQUAL:
+      return COMPAREFUNC_NOTEQUAL;
+   case PIPE_FUNC_ALWAYS:
+      return COMPAREFUNC_NEVER;
+   default:
+      return COMPAREFUNC_NEVER;
+   }
+}
+
+static INLINE unsigned
 i915_translate_stencil_op(unsigned op)
 {
    switch (op) {
