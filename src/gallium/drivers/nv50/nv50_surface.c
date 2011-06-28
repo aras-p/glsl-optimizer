@@ -34,25 +34,16 @@
 
 #include "nv50_defs.xml.h"
 
+#define NV50_ENG2D_SUPPORTED_FORMATS 0xff0843e080608409ULL
+
 /* return TRUE for formats that can be converted among each other by NV50_2D */
 static INLINE boolean
 nv50_2d_format_faithful(enum pipe_format format)
 {
-   switch (format) {
-   case PIPE_FORMAT_B8G8R8A8_UNORM:
-   case PIPE_FORMAT_B8G8R8X8_UNORM:
-   case PIPE_FORMAT_B8G8R8A8_SRGB:
-   case PIPE_FORMAT_B8G8R8X8_SRGB:
-   case PIPE_FORMAT_B5G6R5_UNORM:
-   case PIPE_FORMAT_B5G5R5A1_UNORM:
-   case PIPE_FORMAT_B10G10R10A2_UNORM:
-   case PIPE_FORMAT_R8_UNORM:
-   case PIPE_FORMAT_R32G32B32A32_FLOAT:
-   case PIPE_FORMAT_R32G32B32_FLOAT:
-      return TRUE;
-   default:
-      return FALSE;
-   }
+   uint8_t id = nv50_format_table[format].rt;
+
+   return (id >= 0xc0) &&
+      (NV50_ENG2D_SUPPORTED_FORMATS & (1ULL << (id - 0xc0)));
 }
 
 static INLINE uint8_t
@@ -63,7 +54,7 @@ nv50_2d_format(enum pipe_format format)
    /* Hardware values for color formats range from 0xc0 to 0xff,
     * but the 2D engine doesn't support all of them.
     */
-   if ((id >= 0xc0) && (0xff0843e080608409ULL & (1ULL << (id - 0xc0))))
+   if ((id >= 0xc0) && (NV50_ENG2D_SUPPORTED_FORMATS & (1ULL << (id - 0xc0))))
       return id;
 
    switch (util_format_get_blocksize(format)) {
