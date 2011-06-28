@@ -42,8 +42,14 @@ static unsigned translate_format(enum pipe_format format)
       return COLOR_BUF_ARGB8888;
    case PIPE_FORMAT_B5G6R5_UNORM:
       return COLOR_BUF_RGB565;
+   case PIPE_FORMAT_B5G5R5A1_UNORM:
+      return COLOR_BUF_ARGB1555;
    case PIPE_FORMAT_R8G8B8A8_UNORM:
       return COLOR_BUF_ARGB8888;
+   case PIPE_FORMAT_B4G4R4A4_UNORM:
+      return COLOR_BUF_ARGB4444;
+   case PIPE_FORMAT_B10G10R10A2_UNORM:
+      return COLOR_BUF_ARGB2101010;
    case PIPE_FORMAT_L8_UNORM:
    case PIPE_FORMAT_A8_UNORM:
    case PIPE_FORMAT_I8_UNORM:
