@@ -1400,14 +1400,14 @@ st_CopyPixels(struct gl_context *ctx, GLint srcx, GLint srcy,
       /* srcFormat can't be used as a texture format */
       if (type == GL_DEPTH) {
          texFormat = st_choose_format(screen, GL_DEPTH_COMPONENT,
-                                      st->internal_target, GL_NONE, GL_NONE,
+                                      GL_NONE, GL_NONE, st->internal_target,
 				      sample_count, PIPE_BIND_DEPTH_STENCIL);
          assert(texFormat != PIPE_FORMAT_NONE);
       }
       else {
          /* default color format */
          texFormat = st_choose_format(screen, GL_RGBA,
-                                      st->internal_target, GL_NONE, GL_NONE,
+                                      GL_NONE, GL_NONE, st->internal_target,
                                       sample_count, PIPE_BIND_SAMPLER_VIEW);
          assert(texFormat != PIPE_FORMAT_NONE);
       }
