@@ -349,8 +349,8 @@ static const struct
    uint hw_swizzle;
 } fixup_formats[] = {
    { PIPE_FORMAT_R8G8B8A8_UNORM, 0x21030000 /* BGRA */},
-   { PIPE_FORMAT_L8_UNORM,       0x00000000 /* RRRR */},
-   { PIPE_FORMAT_I8_UNORM,       0x00000000 /* RRRR */},
+   { PIPE_FORMAT_L8_UNORM,       0x00030000 /* RRRR */},
+   { PIPE_FORMAT_I8_UNORM,       0x00030000 /* RRRR */},
    { PIPE_FORMAT_A8_UNORM,       0x33330000 /* AAAA */},
    { PIPE_FORMAT_NONE,           0x00000000},
 };
