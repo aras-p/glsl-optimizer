@@ -100,6 +100,13 @@ XCreateDrawable(struct drisw_drawable * pdp,
                               32,                     /* bitmap_pad */
                               0);                     /* bytes_per_line */
 
+  /**
+   * swrast does not handle 24-bit depth with 24 bpp, so let X do the
+   * the conversion for us.
+   */
+  if (pdp->ximage->bits_per_pixel == 24)
+     pdp->ximage->bits_per_pixel = 32;
+
    return True;
 }
 
