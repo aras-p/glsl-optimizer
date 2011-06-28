@@ -215,9 +215,7 @@ src_vector(struct i915_fp_compile *p,
       case TGSI_SEMANTIC_FACE:
          {
             /* for back/front faces */
-            /* XXX also emit something from 0,1 to -1,1 */
             int real_tex_unit = get_mapping(fs, I915_SEMANTIC_FACE);
-            printf("semantic face fpc at %d\n",real_tex_unit);
             src = i915_emit_decl(p, REG_TYPE_T, T_TEX0 + real_tex_unit, D0_CHANNEL_X);
             break;
          }
@@ -245,7 +243,6 @@ src_vector(struct i915_fp_compile *p,
 		 source->Register.SwizzleY,
 		 source->Register.SwizzleZ,
 		 source->Register.SwizzleW);
-
 
    /* There's both negate-all-components and per-component negation.
     * Try to handle both here.

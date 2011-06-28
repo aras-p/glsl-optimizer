@@ -36,8 +36,7 @@ Random list of problems with i915g:
   * PIPE_CAP_VERTEX_ELEMENT_INSTANCE_DIVISOR
   * PIPE_CAP_MAX_VERTEX_TEXTURE_UNITS
 
-- Finish front/back face. This would need EMIT_1F_FACE or adding a couple of
-  instructions in the shader.
+- Finish front/back face. We need to add face support to lp_build_system_values_array and use it in draw_llvm.c.
 
 Other bugs can be found here:
 https://bugs.freedesktop.org/buglist.cgi?bug_status=NEW&bug_status=ASSIGNED&bug_status=REOPENED&component=Drivers/Gallium/i915g

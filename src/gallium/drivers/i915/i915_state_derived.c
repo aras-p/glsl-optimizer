@@ -157,11 +157,15 @@ static void calculate_vertex_layout(struct i915_context *i915)
 
    /* front/back face */
    if (face) {
-      uint slot = find_mapping(fs, I915_SEMANTIC_FACE);	 
+      uint slot = find_mapping(fs, I915_SEMANTIC_FACE);
       debug_printf("Front/back face is broken\n");
+      /* XXX Because of limitations in the draw module, currently src will be 0
+       * for SEMANTIC_FACE, so this aliases to POS. We need to fix in the draw
+       * module by adding an extra shader output.
+       */
       src = draw_find_shader_output(i915->draw, TGSI_SEMANTIC_FACE, 0);
-      /* really here it's EMIT_1F_FACE */
       draw_emit_vertex_attr(&vinfo, EMIT_1F, INTERP_CONSTANT, src);
+      vinfo.hwfmt[1] &= ~(TEXCOORDFMT_NOT_PRESENT << (slot * 4));
       vinfo.hwfmt[1] |= TEXCOORDFMT_1D << (slot * 4);
    }
 
