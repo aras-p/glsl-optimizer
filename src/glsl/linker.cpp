@@ -1194,16 +1194,43 @@ find_available_slots(unsigned used_mask, unsigned needed_count)
 }
 
 
+/**
+ * Assign locations for either VS inputs for FS outputs
+ *
+ * \param prog          Shader program whose variables need locations assigned
+ * \param target_index  Selector for the program target to receive location
+ *                      assignmnets.  Must be either \c MESA_SHADER_VERTEX or
+ *                      \c MESA_SHADER_FRAGMENT.
+ * \param max_index     Maximum number of generic locations.  This corresponds
+ *                      to either the maximum number of draw buffers or the
+ *                      maximum number of generic attributes.
+ *
+ * \return
+ * If locations are successfully assigned, true is returned.  Otherwise an
+ * error is emitted to the shader link log and false is returned.
+ *
+ * \bug
+ * Locations set via \c glBindFragDataLocation are not currently supported.
+ * Only locations assigned automatically by the linker, explicitly set by a
+ * layout qualifier, or explicitly set by a built-in variable (e.g., \c
+ * gl_FragColor) are supported for fragment shaders.
+ */
 bool
-assign_attribute_locations(gl_shader_program *prog, unsigned max_attribute_index)
+assign_attribute_or_color_locations(gl_shader_program *prog,
+				    unsigned target_index,
+				    unsigned max_index)
 {
-   /* Mark invalid attribute locations as being used.
+   /* Mark invalid locations as being used.
     */
-   unsigned used_locations = (max_attribute_index >= 32)
-      ? ~0 : ~((1 << max_attribute_index) - 1);
+   unsigned used_locations = (max_index >= 32)
+      ? ~0 : ~((1 << max_index) - 1);
 
-   gl_shader *const sh = prog->_LinkedShaders[0];
-   assert(sh->Type == GL_VERTEX_SHADER);
+   assert((target_index == MESA_SHADER_VERTEX)
+	  || (target_index == MESA_SHADER_FRAGMENT));
+
+   gl_shader *const sh = prog->_LinkedShaders[target_index];
+   if (sh == NULL)
+      return true;
 
    /* Operate in a total of four passes.
     *
@@ -1220,9 +1247,16 @@ assign_attribute_locations(gl_shader_program *prog, unsigned max_attribute_index
     * 4. Assign locations to any inputs without assigned locations.
     */
 
-   invalidate_variable_locations(sh, ir_var_in, VERT_ATTRIB_GENERIC0);
+   const int generic_base = (target_index == MESA_SHADER_VERTEX)
+     ? VERT_ATTRIB_GENERIC0 : FRAG_RESULT_DATA0;
 
-   if (prog->Attributes != NULL) {
+   const enum ir_variable_mode direction =
+      (target_index == MESA_SHADER_VERTEX) ? ir_var_in : ir_var_out;
+
+
+   invalidate_variable_locations(sh, direction, generic_base);
+
+   if ((target_index == MESA_SHADER_VERTEX) && (prog->Attributes != NULL)) {
       for (unsigned i = 0; i < prog->Attributes->NumParameters; i++) {
 	 ir_variable *const var =
 	    sh->symbols->get_variable(prog->Attributes->Parameters[i].Name);
@@ -1309,15 +1343,15 @@ assign_attribute_locations(gl_shader_program *prog, unsigned max_attribute_index
    foreach_list(node, sh->ir) {
       ir_variable *const var = ((ir_instruction *) node)->as_variable();
 
-      if ((var == NULL) || (var->mode != ir_var_in))
+      if ((var == NULL) || (var->mode != direction))
 	 continue;
 
       if (var->explicit_location) {
 	 const unsigned slots = count_attribute_slots(var->type);
 	 const unsigned use_mask = (1 << slots) - 1;
-	 const int attr = var->location - VERT_ATTRIB_GENERIC0;
+	 const int attr = var->location - generic_base;
 
-	 if ((var->location >= (int)(max_attribute_index + VERT_ATTRIB_GENERIC0))
+	 if ((var->location >= (int)(max_index + generic_base))
 	     || (var->location < 0)) {
 	    linker_error_printf(prog,
 				"invalid explicit location %d specified for "
@@ -1325,7 +1359,7 @@ assign_attribute_locations(gl_shader_program *prog, unsigned max_attribute_index
 				(var->location < 0) ? var->location : attr,
 				var->name);
 	    return false;
-	 } else if (var->location >= VERT_ATTRIB_GENERIC0) {
+	 } else if (var->location >= generic_base) {
 	    used_locations |= (use_mask << attr);
 	 }
       }
@@ -1349,14 +1383,16 @@ assign_attribute_locations(gl_shader_program *prog, unsigned max_attribute_index
 
    qsort(to_assign, num_attr, sizeof(to_assign[0]), temp_attr::compare);
 
-   /* VERT_ATTRIB_GENERIC0 is a pseudo-alias for VERT_ATTRIB_POS.  It can only
-    * be explicitly assigned by via glBindAttribLocation.  Mark it as reserved
-    * to prevent it from being automatically allocated below.
-    */
-   find_deref_visitor find("gl_Vertex");
-   find.run(sh->ir);
-   if (find.variable_found())
-      used_locations |= (1 << 0);
+   if (target_index == MESA_SHADER_VERTEX) {
+      /* VERT_ATTRIB_GENERIC0 is a pseudo-alias for VERT_ATTRIB_POS.  It can
+       * only be explicitly assigned by via glBindAttribLocation.  Mark it as
+       * reserved to prevent it from being automatically allocated below.
+       */
+      find_deref_visitor find("gl_Vertex");
+      find.run(sh->ir);
+      if (find.variable_found())
+	 used_locations |= (1 << 0);
+   }
 
    for (unsigned i = 0; i < num_attr; i++) {
       /* Mask representing the contiguous slots that will be used by this
@@ -1367,14 +1403,17 @@ assign_attribute_locations(gl_shader_program *prog, unsigned max_attribute_index
       int location = find_available_slots(used_locations, to_assign[i].slots);
 
       if (location < 0) {
+	 const char *const string = (target_index == MESA_SHADER_VERTEX)
+	    ? "vertex shader input" : "fragment shader output";
+
 	 linker_error_printf(prog,
 			     "insufficient contiguous attribute locations "
-			     "available for vertex shader input `%s'",
-			     to_assign[i].var->name);
+			     "available for %s `%s'",
+			     string, to_assign[i].var->name);
 	 return false;
       }
 
-      to_assign[i].var->location = VERT_ATTRIB_GENERIC0 + location;
+      to_assign[i].var->location = generic_base + location;
       used_locations |= (use_mask << location);
    }
 
@@ -1671,16 +1710,19 @@ link_shaders(struct gl_context *ctx, struct gl_shader_program *prog)
 
    assign_uniform_locations(prog);
 
-   if (prog->_LinkedShaders[MESA_SHADER_VERTEX] != NULL) {
-      /* FINISHME: The value of the max_attribute_index parameter is
-       * FINISHME: implementation dependent based on the value of
-       * FINISHME: GL_MAX_VERTEX_ATTRIBS.  GL_MAX_VERTEX_ATTRIBS must be
-       * FINISHME: at least 16, so hardcode 16 for now.
-       */
-      if (!assign_attribute_locations(prog, 16)) {
-	 prog->LinkStatus = false;
-	 goto done;
-      }
+   /* FINISHME: The value of the max_attribute_index parameter is
+    * FINISHME: implementation dependent based on the value of
+    * FINISHME: GL_MAX_VERTEX_ATTRIBS.  GL_MAX_VERTEX_ATTRIBS must be
+    * FINISHME: at least 16, so hardcode 16 for now.
+    */
+   if (!assign_attribute_or_color_locations(prog, MESA_SHADER_VERTEX, 16)) {
+      prog->LinkStatus = false;
+      goto done;
+   }
+
+   if (!assign_attribute_or_color_locations(prog, MESA_SHADER_FRAGMENT, ctx->Const.MaxDrawBuffers)) {
+      prog->LinkStatus = false;
+      goto done;
    }
 
    unsigned prev;
