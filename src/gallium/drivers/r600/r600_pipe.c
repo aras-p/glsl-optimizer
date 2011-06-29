@@ -126,9 +126,6 @@ static void r600_flush(struct pipe_context *ctx,
 	if (rfence)
 		*rfence = r600_create_fence(rctx);
 
-	if (!rctx->ctx.pm4_cdwords)
-		return;
-
 #if 0
 	sprintf(dname, "gallium-%08d.bof", dc);
 	if (dc < 20) {

@@ -62,6 +62,8 @@ void r600_init_cs(struct r600_context *ctx)
 	ctx->pm4[ctx->pm4_cdwords++] = PKT3(PKT3_CONTEXT_CONTROL, 1, 0);
 	ctx->pm4[ctx->pm4_cdwords++] = 0x80000000;
 	ctx->pm4[ctx->pm4_cdwords++] = 0x80000000;
+
+	ctx->init_dwords = ctx->pm4_cdwords;
 }
 
 static void INLINE r600_context_update_fenced_list(struct r600_context *ctx)
@@ -1496,7 +1498,7 @@ void r600_context_flush(struct r600_context *ctx)
 	int r;
 	struct r600_block *enable_block = NULL;
 
-	if (!ctx->pm4_cdwords)
+	if (ctx->pm4_cdwords == ctx->init_dwords)
 		return;
 
 	/* suspend queries */

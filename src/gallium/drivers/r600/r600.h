@@ -245,6 +245,7 @@ struct r600_context {
 	unsigned		pm4_cdwords;
 	unsigned		pm4_dirty_cdwords;
 	unsigned		ctx_pm4_ndwords;
+	unsigned		init_dwords;
 	unsigned		nreloc;
 	unsigned		creloc;
 	struct r600_reloc	*reloc;
