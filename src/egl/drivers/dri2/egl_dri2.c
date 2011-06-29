@@ -592,6 +592,13 @@ dri2_terminate(_EGLDriver *drv, _EGLDisplay *disp)
          wl_display_destroy(dri2_dpy->wl_dpy);
          break;
 #endif
+#ifdef HAVE_DRM_PLATFORM
+      case _EGL_PLATFORM_DRM:
+         if (dri2_dpy->own_gbm_device) {
+            gbm_device_destroy(&dri2_dpy->gbm_dri->base.base);
+         }
+         break;
+#endif
       default:
          break;
       }

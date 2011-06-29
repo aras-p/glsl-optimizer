@@ -134,8 +134,11 @@ drm_display_destroy(struct native_display *ndpy)
    if (drmdpy->device_name)
       FREE(drmdpy->device_name);
 
-   if (drmdpy->fd >= 0)
-      close(drmdpy->fd);
+   if (drmdpy->own_gbm) {
+      gbm_device_destroy(&drmdpy->gbmdrm->base.base);
+      if (drmdpy->fd >= 0)
+         close(drmdpy->fd);
+   }
 
    FREE(drmdpy);
 }
@@ -258,7 +261,7 @@ drm_display_init_screen(struct native_display *ndpy)
 }
 
 static struct native_display *
-drm_create_display(struct gbm_gallium_drm_device *gbmdrm,
+drm_create_display(struct gbm_gallium_drm_device *gbmdrm, int own_gbm,
                    const struct native_event_handler *event_handler)
 {
    struct drm_display *drmdpy;
@@ -267,6 +270,8 @@ drm_create_display(struct gbm_gallium_drm_device *gbmdrm,
    if (!drmdpy)
       return NULL;
 
+   drmdpy->gbmdrm = gbmdrm;
+   drmdpy->own_gbm = own_gbm;
    drmdpy->fd = gbmdrm->base.base.fd;
    drmdpy->device_name = drm_get_device_name(drmdpy->fd);
 
@@ -302,22 +307,30 @@ native_create_display(void *dpy, boolean use_sw)
 {
    struct gbm_gallium_drm_device *gbm;
    int fd;
+   int own_gbm = 0;
 
    gbm = dpy;
 
    if (gbm == NULL) {
       fd = open("/dev/dri/card0", O_RDWR);
+      /* FIXME: Use an internal constructor to create a gbm
+       * device with gallium backend directly, without setenv */
+      setenv("GBM_BACKEND", "gbm_gallium_drm.so", 1);
       gbm = gbm_gallium_drm_device(gbm_create_device(fd));
+      own_gbm = 1;
    }
 
    if (gbm == NULL)
       return NULL;
    
    if (strcmp(gbm_device_get_backend_name(&gbm->base.base), "drm") != 0 ||
-       gbm->base.type != GBM_DRM_DRIVER_TYPE_GALLIUM)
+       gbm->base.type != GBM_DRM_DRIVER_TYPE_GALLIUM) {
+      if (own_gbm)
+         gbm_device_destroy(&gbm->base.base);
       return NULL;
+   }
 
-   return drm_create_display(gbm, drm_event_handler);
+   return drm_create_display(gbm, own_gbm, drm_event_handler);
 }
 
 static const struct native_platform drm_platform = {

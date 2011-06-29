@@ -86,6 +86,7 @@ struct dri2_egl_display
 
 #ifdef HAVE_DRM_PLATFORM
    struct gbm_dri_device    *gbm_dri;
+   int                       own_gbm_device;
 #endif
 
    char                     *device_name;
