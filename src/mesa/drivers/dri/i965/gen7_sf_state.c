@@ -79,6 +79,9 @@ upload_sbe_state(struct brw_context *brw)
 	 dw10 |= (1 << input_index);
       }
 
+      if (attr == FRAG_ATTRIB_PNTC)
+	 dw10 |= (1 << input_index);
+
       /* The hardware can only do the overrides on 16 overrides at a
        * time, and the other up to 16 have to be lined up so that the
        * input index = the output index.  We'll need to do some
