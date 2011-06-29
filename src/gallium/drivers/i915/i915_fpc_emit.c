@@ -128,9 +128,13 @@ i915_emit_decl(struct i915_fp_compile *p,
    else
       return reg;
 
-   *(p->decl++) = (D0_DCL | D0_DEST(reg) | d0_flags);
-   *(p->decl++) = D1_MBZ;
-   *(p->decl++) = D2_MBZ;
+   if (p->decl< p->declarations + I915_PROGRAM_SIZE) {
+      *(p->decl++) = (D0_DCL | D0_DEST(reg) | d0_flags);
+      *(p->decl++) = D1_MBZ;
+      *(p->decl++) = D2_MBZ;
+   }
+   else
+      i915_program_error(p, "Out of declarations\n");
 
    p->nr_decl_insn++;
    return reg;
@@ -187,9 +191,13 @@ i915_emit_arith(struct i915_fp_compile * p,
       p->utemp_flag = old_utemp_flag;   /* restore */
    }
 
-   *(p->csr++) = (op | A0_DEST(dest) | mask | saturate | A0_SRC0(src0));
-   *(p->csr++) = (A1_SRC0(src0) | A1_SRC1(src1));
-   *(p->csr++) = (A2_SRC1(src1) | A2_SRC2(src2));
+   if (p->csr< p->program + I915_PROGRAM_SIZE) {
+      *(p->csr++) = (op | A0_DEST(dest) | mask | saturate | A0_SRC0(src0));
+      *(p->csr++) = (A1_SRC0(src0) | A1_SRC1(src1));
+      *(p->csr++) = (A2_SRC1(src1) | A2_SRC2(src2));
+   }
+   else
+      i915_program_error(p, "Out of instructions\n");
 
    p->nr_alu_insn++;
    return dest;
@@ -250,12 +258,16 @@ uint i915_emit_texld( struct i915_fp_compile *p,
 	 p->nr_tex_indirect++;
       }
 
-      *(p->csr++) = (opcode | 
-		     T0_DEST( dest ) |
-		     T0_SAMPLER( sampler ));
+      if (p->csr< p->program + I915_PROGRAM_SIZE) {
+         *(p->csr++) = (opcode |
+		        T0_DEST( dest ) |
+		        T0_SAMPLER( sampler ));
 
-      *(p->csr++) = T1_ADDRESS_REG( coord );
-      *(p->csr++) = T2_MBZ;
+         *(p->csr++) = T1_ADDRESS_REG( coord );
+         *(p->csr++) = T2_MBZ;
+      }
+   else
+      i915_program_error(p, "Out of instructions\n");
 
       p->nr_tex_insn++;
    }
@@ -313,6 +325,8 @@ i915_emit_const2f(struct i915_fp_compile * p, float c0, float c1)
    if (c1 == 1.0)
       return swizzle(i915_emit_const1f(p, c0), X, ONE, Z, W);
 
+   // XXX emit swizzle here for 0, 1, -1 and any combination thereof
+   // we can use swizzle + neg for that
    for (reg = 0; reg < I915_MAX_CONSTANT; reg++) {
       if (ifs->constant_flags[reg] == 0xf ||
           ifs->constant_flags[reg] == I915_CONSTFLAG_USER)
@@ -332,8 +346,6 @@ i915_emit_const2f(struct i915_fp_compile * p, float c0, float c1)
    i915_program_error(p, "i915_emit_const2f: out of constants\n");
    return 0;
 }
-
-
 
 uint
 i915_emit_const4f(struct i915_fp_compile * p,
