@@ -58,12 +58,6 @@ upload_sbe_state(struct brw_context *brw)
       dw1 |= GEN6_SF_POINT_SPRITE_LOWERLEFT;
 
    dw10 = 0;
-   if (ctx->Point.PointSprite) {
-       for (i = 0; i < 8; i++) {
-	   if (ctx->Point.CoordReplace[i])
-	       dw10 |= (1 << i);
-       }
-   }
 
    /* _NEW_LIGHT (flat shading) */
    dw11 = 0;
@@ -78,6 +72,12 @@ upload_sbe_state(struct brw_context *brw)
    for (; attr < FRAG_ATTRIB_MAX; attr++) {
       if (!(brw->fragment_program->Base.InputsRead & BITFIELD64_BIT(attr)))
 	 continue;
+
+      if (ctx->Point.PointSprite &&
+	  attr >= FRAG_ATTRIB_TEX0 && attr <= FRAG_ATTRIB_TEX7 &&
+	  ctx->Point.CoordReplace[attr - FRAG_ATTRIB_TEX0]) {
+	 dw10 |= (1 << input_index);
+      }
 
       /* The hardware can only do the overrides on 16 overrides at a
        * time, and the other up to 16 have to be lined up so that the
