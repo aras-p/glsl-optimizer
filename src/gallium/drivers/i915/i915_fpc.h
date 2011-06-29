@@ -70,6 +70,7 @@ struct i915_fp_compile {
    uint temp_flag;       /**< Tracks temporary regs which are in use */
    uint utemp_flag;      /**< Tracks TYPE_U temporary regs which are in use */
 
+   uint register_phases[16];
    uint nr_tex_indirect;
    uint nr_tex_insn;
    uint nr_alu_insn;

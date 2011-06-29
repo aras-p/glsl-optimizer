@@ -276,7 +276,7 @@ src_vector(struct i915_fp_compile *p,
    assert(!source->Register.Absolute);
 #endif
    if (source->Register.Absolute)
-      debug_printf("Unhandler absolute value\n");
+      debug_printf("Unhandled absolute value\n");
 
    return src;
 }
@@ -1089,9 +1089,11 @@ i915_translate_instructions(struct i915_fp_compile *p,
             for (i = parse.FullToken.FullDeclaration.Range.First;
                  i <= parse.FullToken.FullDeclaration.Range.Last;
                  i++) {
-               assert(i < I915_MAX_TEMPORARY);
-               /* XXX just use shader->info->file_mask[TGSI_FILE_TEMPORARY] */
-               p->temp_flag |= (1 << i); /* mark temp as used */
+               if (i >= I915_MAX_TEMPORARY)
+                  debug_printf("Too many temps (%d)\n",i);
+	       else
+                  /* XXX just use shader->info->file_mask[TGSI_FILE_TEMPORARY] */
+                  p->temp_flag |= (1 << i); /* mark temp as used */
             }
          }
          break;
@@ -1163,6 +1165,8 @@ i915_init_compile(struct i915_context *i915,
    ifs->num_constants = 0;
    memset(ifs->constant_flags, 0, sizeof(ifs->constant_flags));
 
+   memset(&p->register_phases, 0, sizeof(p->register_phases));
+
    for (i = 0; i < I915_TEX_UNITS; i++)
       ifs->generic_mapping[i] = -1;
 
@@ -1198,7 +1202,7 @@ i915_fini_compile(struct i915_context *i915, struct i915_fp_compile *p)
    unsigned long decl_size = (unsigned long) (p->decl - p->declarations);
 
    if (p->nr_tex_indirect > I915_MAX_TEX_INDIRECT)
-      i915_program_error(p, "Exceeded max nr indirect texture lookups");
+      debug_printf("Exceeded max nr indirect texture lookups\n");
 
    if (p->nr_tex_insn > I915_MAX_TEX_INSN)
       i915_program_error(p, "Exceeded max TEX instructions");
