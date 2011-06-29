@@ -41,6 +41,9 @@
 
 #include "draw/draw_vertex.h"
 
+#ifndef M_PI
+#define M_PI 3.14159265358979323846
+#endif
 
 /**
  * Simple pass-through fragment shader to use when we don't have
@@ -441,11 +444,6 @@ emit_simple_arith_swap2(struct i915_fp_compile *p,
 
    emit_simple_arith(p, &inst2, opcode, numArgs, fs);
 }
-
-
-#ifndef M_PI
-#define M_PI 3.14159265358979323846
-#endif
 
 /*
  * Translate TGSI instruction to i915 instruction.
