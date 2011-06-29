@@ -78,7 +78,7 @@ upload_urb(struct brw_context *brw)
    assert(brw->urb.nr_vs_entries % 8 == 0);
    assert(brw->urb.nr_gs_entries % 8 == 0);
    /* GS requirement */
-   assert(brw->gs.prog_active);
+   assert(!brw->gs.prog_active);
 
    BEGIN_BATCH(2);
    OUT_BATCH(_3DSTATE_PUSH_CONSTANT_ALLOC_VS << 16 | (2 - 2));
