@@ -70,24 +70,15 @@ intel_new_framebuffer(struct gl_context * ctx, GLuint name)
 static void
 intel_delete_renderbuffer(struct gl_renderbuffer *rb)
 {
-   GET_CURRENT_CONTEXT(ctx);
-   struct intel_context *intel = intel_context(ctx);
    struct intel_renderbuffer *irb = intel_renderbuffer(rb);
 
    ASSERT(irb);
 
-   if (intel && irb->region) {
-      intel_region_release(&irb->region);
-   }
-   if (intel && irb->hiz_region) {
-      intel_region_release(&irb->hiz_region);
-   }
-   if (intel && irb->wrapped_depth) {
-      _mesa_reference_renderbuffer(&irb->wrapped_depth, NULL);
-   }
-   if (intel && irb->wrapped_stencil) {
-      _mesa_reference_renderbuffer(&irb->wrapped_stencil, NULL);
-   }
+   intel_region_release(&irb->region);
+   intel_region_release(&irb->hiz_region);
+
+   _mesa_reference_renderbuffer(&irb->wrapped_depth, NULL);
+   _mesa_reference_renderbuffer(&irb->wrapped_stencil, NULL);
 
    free(irb);
 }
