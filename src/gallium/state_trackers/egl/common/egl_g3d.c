@@ -31,6 +31,7 @@
 #include "util/u_memory.h"
 #include "util/u_format.h"
 #include "util/u_string.h"
+#include "util/u_atomic.h"
 
 #include "egl_g3d.h"
 #include "egl_g3d_api.h"
@@ -45,15 +46,9 @@ egl_g3d_invalid_surface(struct native_display *ndpy,
 {
    /* XXX not thread safe? */
    struct egl_g3d_surface *gsurf = egl_g3d_surface(nsurf->user_data);
-   struct egl_g3d_context *gctx;
-   
-   /*
-    * Some functions such as egl_g3d_copy_buffers create a temporary native
-    * surface.  There is no gsurf associated with it.
-    */
-   gctx = (gsurf) ? egl_g3d_context(gsurf->base.CurrentContext) : NULL;
-   if (gctx)
-      gctx->stctxi->notify_invalid_framebuffer(gctx->stctxi, gsurf->stfbi);
+
+   if (gsurf && gsurf->stfbi)
+      p_atomic_inc(&gsurf->stfbi->stamp);
 }
 
 static struct pipe_screen *

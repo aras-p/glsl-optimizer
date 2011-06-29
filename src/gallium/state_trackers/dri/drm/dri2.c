@@ -52,13 +52,11 @@ static void
 dri2_invalidate_drawable(__DRIdrawable *dPriv)
 {
    struct dri_drawable *drawable = dri_drawable(dPriv);
-   struct dri_context *ctx = drawable->context;
 
    dri2InvalidateDrawable(dPriv);
    drawable->dPriv->lastStamp = *drawable->dPriv->pStamp;
 
-   if (ctx)
-      ctx->st->notify_invalid_framebuffer(ctx->st, &drawable->base);
+   p_atomic_inc(&drawable->base.stamp);
 }
 
 static const __DRI2flushExtension dri2FlushExtension = {

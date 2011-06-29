@@ -504,18 +504,11 @@ egl_g3d_make_current(_EGLDriver *drv, _EGLDisplay *dpy,
             (gdraw) ? gdraw->stfbi : NULL, (gread) ? gread->stfbi : NULL);
       if (ok) {
          if (gdraw) {
-            gctx->stctxi->notify_invalid_framebuffer(gctx->stctxi,
-                  gdraw->stfbi);
-
             if (gdraw->base.Type == EGL_WINDOW_BIT) {
                gctx->base.WindowRenderBuffer =
                   (gdraw->stvis.render_buffer == ST_ATTACHMENT_FRONT_LEFT) ?
                   EGL_SINGLE_BUFFER : EGL_BACK_BUFFER;
             }
-         }
-         if (gread && gread != gdraw) {
-            gctx->stctxi->notify_invalid_framebuffer(gctx->stctxi,
-                  gread->stfbi);
          }
       }
    }

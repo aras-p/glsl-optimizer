@@ -31,6 +31,7 @@
 #include "pipe/p_context.h"
 #include "pipe/p_state.h"
 #include "util/u_memory.h"
+#include "util/u_atomic.h"
 #include "state_tracker/st_api.h"
 
 #include "stw_icd.h"
@@ -361,10 +362,7 @@ stw_flush_current_locked( struct stw_framebuffer *fb )
 void
 stw_notify_current_locked( struct stw_framebuffer *fb )
 {
-   struct stw_context *ctx = stw_current_context();
-
-   if (ctx && ctx->current_framebuffer == fb)
-      ctx->st->notify_invalid_framebuffer(ctx->st, fb->stfb);
+   p_atomic_inc(&fb->stfb->stamp);
 }
 
 /**

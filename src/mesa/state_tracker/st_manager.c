@@ -139,23 +139,64 @@ buffer_index_to_attachment(gl_buffer_index index)
 }
 
 /**
- * Validate a framebuffer to make sure up-to-date pipe_textures are used.
+ * Make sure a context picks up the latest cached state of the
+ * drawables it binds to.
  */
 static void
-st_framebuffer_validate(struct st_framebuffer *stfb, struct st_context *st)
+st_context_validate(struct st_context *st,
+                    struct st_framebuffer *stdraw,
+                    struct st_framebuffer *stread)
 {
-   struct pipe_context *pipe = st->pipe;
+    if (stdraw && stdraw->stamp != st->draw_stamp) {
+       st->dirty.st |= ST_NEW_FRAMEBUFFER;
+       _mesa_resize_framebuffer(st->ctx, &stdraw->Base,
+                                stdraw->Base.Width,
+                                stdraw->Base.Height);
+       st->draw_stamp = stdraw->stamp;
+    }
+
+    if (stread && stread->stamp != st->read_stamp) {
+       if (stread != stdraw) {
+          st->dirty.st |= ST_NEW_FRAMEBUFFER;
+          _mesa_resize_framebuffer(st->ctx, &stread->Base,
+                                   stread->Base.Width,
+                                   stread->Base.Height);
+       }
+       st->read_stamp = stread->stamp;
+    }
+}
+
+/**
+ * Validate a framebuffer to make sure up-to-date pipe_textures are used.
+ * The context we need to pass in is s dummy context needed only to be
+ * able to get a pipe context to create pipe surfaces, and to have a
+ * context to call _mesa_resize_framebuffer():
+ * (That should probably be rethought, since those surfaces become
+ * drawable state, not context state, and can be freed by another pipe
+ * context).
+ */
+static void
+st_framebuffer_validate(struct st_framebuffer *stfb,
+                        struct st_context *st)
+{
    struct pipe_resource *textures[ST_ATTACHMENT_COUNT];
    uint width, height;
    unsigned i;
    boolean changed = FALSE;
+   int32_t new_stamp = p_atomic_read(&stfb->iface->stamp);
 
-   if (!p_atomic_read(&stfb->revalidate))
+   if (stfb->iface_stamp == new_stamp)
       return;
 
    /* validate the fb */
-   if (!stfb->iface->validate(stfb->iface, stfb->statts, stfb->num_statts, textures))
-      return;
+   do {
+      if (!stfb->iface->validate(stfb->iface, stfb->statts,
+				 stfb->num_statts, textures))
+	 return;
+
+      stfb->iface_stamp = new_stamp;
+      new_stamp = p_atomic_read(&stfb->iface->stamp);
+   } while(stfb->iface_stamp != new_stamp);
 
    width = stfb->Base.Width;
    height = stfb->Base.Height;
@@ -184,7 +225,7 @@ st_framebuffer_validate(struct st_framebuffer *stfb, struct st_context *st)
       memset(&surf_tmpl, 0, sizeof(surf_tmpl));
       u_surface_default_template(&surf_tmpl, textures[i],
                                  PIPE_BIND_RENDER_TARGET);
-      ps = pipe->create_surface(pipe, textures[i], &surf_tmpl);
+      ps = st->pipe->create_surface(st->pipe, textures[i], &surf_tmpl);
       if (ps) {
          pipe_surface_reference(&strb->surface, ps);
          pipe_resource_reference(&strb->texture, ps->texture);
@@ -204,14 +245,9 @@ st_framebuffer_validate(struct st_framebuffer *stfb, struct st_context *st)
    }
 
    if (changed) {
-      st->dirty.st |= ST_NEW_FRAMEBUFFER;
+      ++stfb->stamp;
       _mesa_resize_framebuffer(st->ctx, &stfb->Base, width, height);
-
-      assert(stfb->Base.Width == width);
-      assert(stfb->Base.Height == height);
    }
-
-   p_atomic_set(&stfb->revalidate, FALSE);
 }
 
 /**
@@ -236,8 +272,7 @@ st_framebuffer_update_attachments(struct st_framebuffer *stfb)
           st_visual_have_buffers(stfb->iface->visual, 1 << statt))
          stfb->statts[stfb->num_statts++] = statt;
    }
-
-   p_atomic_set(&stfb->revalidate, TRUE);
+   stfb->stamp++;
 }
 
 /**
@@ -443,6 +478,7 @@ st_framebuffer_create(struct st_framebuffer_iface *stfbi)
          &stfb->Base._ColorReadBufferIndex);
 
    stfb->iface = stfbi;
+   stfb->iface_stamp = p_atomic_read(&stfbi->stamp) - 1;
 
    /* add the color buffer */
    idx = stfb->Base._ColorDrawBufferIndexes[0];
@@ -454,6 +490,7 @@ st_framebuffer_create(struct st_framebuffer_iface *stfbi)
    st_framebuffer_add_renderbuffer(stfb, BUFFER_DEPTH);
    st_framebuffer_add_renderbuffer(stfb, BUFFER_ACCUM);
 
+   stfb->stamp = 0;
    st_framebuffer_update_attachments(stfb);
 
    stfb->Base.Initialized = GL_TRUE;
@@ -470,31 +507,6 @@ st_framebuffer_reference(struct st_framebuffer **ptr,
 {
    struct gl_framebuffer *fb = &stfb->Base;
    _mesa_reference_framebuffer((struct gl_framebuffer **) ptr, fb);
-}
-
-static void
-st_context_notify_invalid_framebuffer(struct st_context_iface *stctxi,
-                                      struct st_framebuffer_iface *stfbi)
-{
-   struct st_context *st = (struct st_context *) stctxi;
-   struct st_framebuffer *stfb;
-
-   /* either draw or read winsys fb */
-   stfb = st_ws_framebuffer(st->ctx->WinSysDrawBuffer);
-   if (!stfb || stfb->iface != stfbi)
-      stfb = st_ws_framebuffer(st->ctx->WinSysReadBuffer);
-
-   if (stfb && stfb->iface == stfbi) {
-      p_atomic_set(&stfb->revalidate, TRUE);
-   }
-   else {
-      /* This function is probably getting called when we've detected a
-       * change in a window's size but the currently bound context is
-       * not bound to that window.
-       * If the st_framebuffer_iface structure had a pointer to the
-       * corresponding st_framebuffer we'd be able to handle this.
-       */
-   }
 }
 
 static void
@@ -696,8 +708,6 @@ st_api_create_context(struct st_api *stapi, struct st_manager *smapi,
       smapi->get_param(smapi, ST_MANAGER_BROKEN_INVALIDATE);
 
    st->iface.destroy = st_context_destroy;
-   st->iface.notify_invalid_framebuffer =
-      st_context_notify_invalid_framebuffer;
    st->iface.flush = st_context_flush;
    st->iface.teximage = st_context_teximage;
    st->iface.copy = st_context_copy;
@@ -762,10 +772,6 @@ st_api_make_current(struct st_api *stapi, struct st_context_iface *stctxi,
       }
 
       if (stdraw && stread) {
-         if (stctxi != st_api_get_current(stapi)) {
-            p_atomic_set(&stdraw->revalidate, TRUE);
-            p_atomic_set(&stread->revalidate, TRUE);
-         }
          st_framebuffer_validate(stdraw, st);
          if (stread != stdraw)
             st_framebuffer_validate(stread, st);
@@ -781,6 +787,10 @@ st_api_make_current(struct st_api *stapi, struct st_context_iface *stctxi,
          }
 
          ret = _mesa_make_current(st->ctx, &stdraw->Base, &stread->Base);
+
+         st->draw_stamp = stdraw->stamp - 1;
+         st->read_stamp = stread->stamp - 1;
+         st_context_validate(st, stdraw, stread);
       }
       else {
          struct gl_framebuffer *incomplete = _mesa_get_incomplete_framebuffer();
@@ -872,6 +882,8 @@ st_manager_validate_framebuffers(struct st_context *st)
       st_framebuffer_validate(stdraw, st);
    if (stread && stread != stdraw)
       st_framebuffer_validate(stread, st);
+
+   st_context_validate(st, stdraw, stread);
 }
 
 /**

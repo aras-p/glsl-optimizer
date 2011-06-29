@@ -253,6 +253,12 @@ struct st_context_attribs
 struct st_framebuffer_iface
 {
    /**
+    * Atomic stamp which changes when framebuffers need to be updated.
+    */
+
+   int32_t stamp;
+
+   /**
     * Available for the state tracker manager to use.
     */
    void *st_manager_private;
@@ -313,25 +319,6 @@ struct st_context_iface
     * Destroy the context.
     */
    void (*destroy)(struct st_context_iface *stctxi);
-
-   /**
-    * Invalidate the current textures that was taken from a framebuffer.
-    *
-    * The state tracker manager calls this function to let the rendering
-    * context know that it should update the textures it got from
-    * st_framebuffer_iface::validate.  It should do so at the latest time possible.
-    * Possible right before sending triangles to the pipe context.
-    *
-    * For certain platforms this function might be called from a thread other
-    * than the thread that the context is currently bound in, and must
-    * therefore be thread safe. But it is the state tracker manager's
-    * responsibility to make sure that the framebuffer is bound to the context
-    * and the API context is current for the duration of this call.
-    *
-    * Thus reducing the sync primitive needed to a single atomic flag.
-    */
-   void (*notify_invalid_framebuffer)(struct st_context_iface *stctxi,
-                                      struct st_framebuffer_iface *stfbi);
 
    /**
     * Flush all drawing from context to the pipe also flushes the pipe.

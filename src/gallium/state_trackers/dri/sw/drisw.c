@@ -103,14 +103,11 @@ drisw_present_texture(__DRIdrawable *dPriv,
 static INLINE void
 drisw_invalidate_drawable(__DRIdrawable *dPriv)
 {
-   struct dri_context *ctx = dri_get_current(dPriv->driScreenPriv);
    struct dri_drawable *drawable = dri_drawable(dPriv);
 
    drawable->texture_stamp = dPriv->lastStamp - 1;
 
-   /* check if swapping currently bound buffer */
-   if (ctx && ctx->dPriv == dPriv)
-      ctx->st->notify_invalid_framebuffer(ctx->st, &drawable->base);
+   p_atomic_inc(&drawable->base.stamp);
 }
 
 static INLINE void
