@@ -343,25 +343,6 @@ intel_nop_alloc_storage(struct gl_context * ctx, struct gl_renderbuffer *rb,
    return GL_FALSE;
 }
 
-
-void
-intel_renderbuffer_set_region(struct intel_context *intel,
-			      struct intel_renderbuffer *rb,
-			      struct intel_region *region)
-{
-   intel_region_reference(&rb->region, region);
-}
-
-
-void
-intel_renderbuffer_set_hiz_region(struct intel_context *intel,
-				  struct intel_renderbuffer *rb,
-				  struct intel_region *region)
-{
-   intel_region_reference(&rb->hiz_region, region);
-}
-
-
 /**
  * Create a new intel_renderbuffer which corresponds to an on-screen window,
  * not a user-created renderbuffer.
