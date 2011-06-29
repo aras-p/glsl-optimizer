@@ -922,6 +922,8 @@ intelDestroyContext(__DRIcontext * driContextPriv)
       /* free the Mesa context */
       _mesa_free_context_data(&intel->ctx);
 
+      _math_matrix_dtr(&intel->ViewportMatrix);
+
       FREE(intel);
       driContextPriv->driverPrivate = NULL;
    }
