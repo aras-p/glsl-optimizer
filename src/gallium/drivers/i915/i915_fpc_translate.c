@@ -273,7 +273,7 @@ src_vector(struct i915_fp_compile *p,
    assert(!source->Register.Absolute);
 #endif
    if (source->Register.Absolute)
-      debug_printf("Exceeded max generics\n");
+      debug_printf("Unhandler absolute value\n");
 
    return src;
 }
