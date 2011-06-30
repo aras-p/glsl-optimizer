@@ -95,14 +95,6 @@ struct brw_mi_flush
    GLuint opcode:16;
 };
 
-struct brw_vf_statistics
-{
-   GLuint statistics_enable:1;
-   GLuint pad:15;
-   GLuint opcode:16;
-};
-
-
 
 struct brw_binding_table_pointers
 {

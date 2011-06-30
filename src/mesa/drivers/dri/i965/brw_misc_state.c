@@ -672,16 +672,10 @@ static void upload_invarient_state( struct brw_context *brw )
    }
 
 
-   {
-      struct brw_vf_statistics vfs;
-      memset(&vfs, 0, sizeof(vfs));
-
-      vfs.opcode = brw->CMD_VF_STATISTICS;
-      if (unlikely(INTEL_DEBUG & DEBUG_STATS))
-	 vfs.statistics_enable = 1; 
-
-      BRW_BATCH_STRUCT(brw, &vfs);
-   }
+   BEGIN_BATCH(1);
+   OUT_BATCH(brw->CMD_VF_STATISTICS << 16 |
+	     (unlikely(INTEL_DEBUG & DEBUG_STATS) ? 1 : 0));
+   ADVANCE_BATCH();
 }
 
 const struct brw_tracked_state brw_invarient_state = {
