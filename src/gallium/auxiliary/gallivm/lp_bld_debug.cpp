@@ -287,7 +287,11 @@ lp_disassemble(const void* func)
 
       pc += Size;
 
+#if HAVE_LLVM >= 0x0300
+      const MCInstrDesc &TID = TII->get(Inst.getOpcode());
+#else
       const TargetInstrDesc &TID = TII->get(Inst.getOpcode());
+#endif
 
       /*
        * Keep track of forward jumps to a nearby address.
