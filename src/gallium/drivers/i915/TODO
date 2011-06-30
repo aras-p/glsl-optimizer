@@ -39,5 +39,7 @@ Random list of problems with i915g:
 
 - Replace constants and immediates which are 0,1,-1 or a combination of those with a swizzle.
 
+- i915_delete_fs_state doesn't call draw_delete_fragment_shader. Why?
+
 Other bugs can be found here:
 https://bugs.freedesktop.org/buglist.cgi?bug_status=NEW&bug_status=ASSIGNED&bug_status=REOPENED&component=Drivers/Gallium/i915g
