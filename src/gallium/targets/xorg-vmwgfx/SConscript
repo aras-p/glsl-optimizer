@@ -4,10 +4,10 @@ Import('*')
 
 env = env.Clone()
 
-env.ParseConfig('pkg-config --cflags --libs libdrm xorg-server')
+env.PkgUseModules(['DRM', 'XORG'])
 
 if env['kms']:
-    env.ParseConfig('pkg-config --cflags --libs libkms')
+    env.PkgUseModules(['KMS'])
 
 env.Prepend(CPPPATH = [
     '#/include',

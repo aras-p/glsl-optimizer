@@ -8,11 +8,7 @@ radeon_sources = [
     'radeon_drm_winsys.c',
 ]
 
-try:
-    env.ParseConfig('pkg-config --cflags libdrm')
-except:
-    print 'warning: not building Gallium Radeon'
-    Return()
+env.PkgUseModules('DRM')
 
 radeonwinsys = env.ConvenienceLibrary(
     target ='radeonwinsys',

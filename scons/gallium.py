@@ -104,41 +104,6 @@ def num_jobs():
     return 1
 
 
-def pkg_config_modules(env, name, modules):
-    '''Simple wrapper for pkg-config.'''
-
-    env[name] = False
-
-    if env['platform'] == 'windows':
-        return
-
-    if not env.Detect('pkg-config'):
-        return
-
-    if subprocess.call(["pkg-config", "--exists", ' '.join(modules)]) != 0:
-        return
-
-    # Put -I and -L flags directly into the environment, as these don't affect
-    # the compilation of targets that do not use them
-    try:
-        env.ParseConfig('pkg-config --cflags-only-I --libs-only-L ' + ' '.join(modules))
-    except OSError:
-        return
-
-    # Other flags may affect the compilation of unrelated targets, so store
-    # them with a prefix, (e.g., XXX_CFLAGS, XXX_LIBS, etc)
-    try:
-        flags = env.ParseFlags('!pkg-config --cflags-only-other --libs-only-l --libs-only-other ' + ' '.join(modules))
-    except OSError:
-        return
-    prefix = name.upper() + '_'
-    for flag_name, flag_value in flags.iteritems():
-        env[prefix + flag_name] = flag_value
-
-    env[name] = True
-
-
-
 def generate(env):
     """Common environment generation code"""
 
@@ -637,18 +602,20 @@ def generate(env):
     if env['llvm']:
         env.Tool('llvm')
     
-    pkg_config_modules(env, 'x11', ['x11', 'xext'])
-    pkg_config_modules(env, 'drm', ['libdrm'])
-    pkg_config_modules(env, 'drm_intel', ['libdrm_intel'])
-    pkg_config_modules(env, 'drm_radeon', ['libdrm_radeon'])
-    pkg_config_modules(env, 'xorg', ['xorg-server'])
-    pkg_config_modules(env, 'kms', ['libkms'])
-
-    env['dri'] = env['x11'] and env['drm']
-
     # Custom builders and methods
     env.Tool('custom')
     createInstallMethods(env)
+
+    env.PkgCheckModules('X11', ['x11', 'xext', 'xdamage', 'xfixes'])
+    env.PkgCheckModules('XF86VIDMODE', ['xxf86vm'])
+    env.PkgCheckModules('DRM', ['libdrm'])
+    env.PkgCheckModules('DRM_INTEL', ['libdrm_intel'])
+    env.PkgCheckModules('DRM_RADEON', ['libdrm_radeon'])
+    env.PkgCheckModules('XORG', ['xorg-server'])
+    env.PkgCheckModules('KMS', ['libkms'])
+    env.PkgCheckModules('UDEV', ['libudev'])
+
+    env['dri'] = env['x11'] and env['drm']
 
     # for debugging
     #print env.Dump()

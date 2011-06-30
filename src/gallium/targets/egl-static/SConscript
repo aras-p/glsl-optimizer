@@ -79,21 +79,17 @@ if True:
     openvg_name = 'OpenVG' if env['platform'] != 'windows' else 'libOpenVG'
     env.Prepend(LIBS = [openvg_name, st_vega])
 
-if env['x11']:
+if env['HAVE_X11']:
     env.Prepend(LIBS = [
         ws_xlib,
-        env['X11_LIBS'],
     ])
-
-if env['dri']:
-    env.ParseConfig('pkg-config --cflags --libs xfixes')
+    env.PkgUseModules('X11')
 
 # pipe drivers
-if env['drm']:
-    env.ParseConfig('pkg-config --cflags --libs libdrm')
+if env['HAVE_DRM']:
+    env.PkgUseModules('DRM')
 
-    if env['drm_intel']:
-        env.ParseConfig('pkg-config --cflags --libs libdrm_intel')
+    if env['HAVE_DRM_INTEL']:
         env.Append(CPPDEFINES = ['_EGL_PIPE_I915', '_EGL_PIPE_I965'])
         env.Prepend(LIBS = [
             i915drm,
@@ -103,7 +99,7 @@ if env['drm']:
             ws_wrapper,
         ])
 
-    if env['drm_radeon']:
+    if env['HAVE_DRM_RADEON']:
         env.Append(CPPDEFINES = ['_EGL_PIPE_R300', '_EGL_PIPE_R600'])
         env.Prepend(LIBS = [
             radeonwinsys,

@@ -5,7 +5,7 @@ Import('*')
 
 env = env.Clone()
 
-env.ParseConfig('pkg-config --cflags --libs libdrm')
+env.PkgUseModules(['DRM'])
 
 env.Append(CPPPATH = [
     '#/src/mapi',

@@ -29,7 +29,7 @@ drienv.Replace(CPPPATH = [
     '#src/egl/drivers/dri',
 ])
 
-drienv.ParseConfig('pkg-config --cflags --libs libdrm')
+drienv.PkgUseModules('DRM')
 
 dri_common_utils = drienv.SharedObject(
     target = 'utils.o',
