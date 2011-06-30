@@ -609,16 +609,10 @@ static void upload_invarient_state( struct brw_context *brw )
    if (intel->gen == 6)
       intel_emit_post_sync_nonzero_flush(intel);
 
-   {
-      /* 0x61040000  Pipeline Select */
-      /*     PipelineSelect            : 0 */
-      struct brw_pipeline_select ps;
-
-      memset(&ps, 0, sizeof(ps));
-      ps.header.opcode = brw->CMD_PIPELINE_SELECT;
-      ps.header.pipeline_select = 0;
-      BRW_BATCH_STRUCT(brw, &ps);
-   }
+   /* Select the 3D pipeline (as opposed to media) */
+   BEGIN_BATCH(1);
+   OUT_BATCH(brw->CMD_PIPELINE_SELECT << 16 | 0);
+   ADVANCE_BATCH();
 
    if (intel->gen < 6) {
       /* Disable depth offset clamping. */
