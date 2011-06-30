@@ -129,14 +129,13 @@ struct svga_buffer
        * is the relative offset within that buffer.
        */
       unsigned offset;
-   } uploaded;
 
-   /**
-    * For user buffers, this is the offset to the data about to be
-    * referenced by the next draw command, and hence the data that needs
-    * to be uploaded.
-    */
-   unsigned source_offset;
+      /**
+       * Range of user buffer that is uploaded in @buffer at @offset.
+       */
+      unsigned start;
+      unsigned end;
+   } uploaded;
 
    /**
     * DMA'ble memory.

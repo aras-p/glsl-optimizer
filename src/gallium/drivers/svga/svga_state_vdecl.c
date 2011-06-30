@@ -82,8 +82,8 @@ static int emit_hw_vs_vdecl( struct svga_context *svga,
          continue;
 
       buffer = svga_buffer(vb->buffer);
-      if (buffer->source_offset > offset) {
-         tmp_neg_bias = buffer->source_offset - offset;
+      if (buffer->uploaded.start > offset) {
+         tmp_neg_bias = buffer->uploaded.start - offset;
          if (vb->stride)
             tmp_neg_bias = (tmp_neg_bias + vb->stride - 1) / vb->stride;
          neg_bias = MAX2(neg_bias, tmp_neg_bias);
@@ -116,7 +116,7 @@ static int emit_hw_vs_vdecl( struct svga_context *svga,
       decl.array.offset = (vb->buffer_offset
                            + ve[i].src_offset
 			   + neg_bias * vb->stride
-			   - buffer->source_offset);
+			   - buffer->uploaded.start);
 
       assert(decl.array.offset >= 0);
 

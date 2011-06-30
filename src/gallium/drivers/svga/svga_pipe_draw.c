@@ -42,11 +42,82 @@
 #include "util/u_upload_mgr.h"
 
 /**
+ * Determine the ranges to upload for the user-buffers referenced
+ * by the next draw command.
+ *
+ * TODO: It might be beneficial to support multiple ranges. In that case,
+ * the struct svga_buffer::uploaded member should be made an array or a
+ * list, since we need to account for the possibility that different ranges
+ * may be uploaded to different hardware buffers chosen by the utility
+ * upload manager.
+ */
+
+static void
+svga_user_buffer_range(struct svga_context *svga,
+                       unsigned start,
+                       unsigned count,
+                       unsigned instance_count)
+{
+   const struct pipe_vertex_element *ve = svga->curr.velems->velem;
+   int i;
+
+   /*
+    * Release old uploaded range (if not done already) and
+    * initialize new ranges.
+    */
+
+   for (i=0; i < svga->curr.velems->count; i++) {
+      struct pipe_vertex_buffer *vb =
+         &svga->curr.vb[ve[i].vertex_buffer_index];
+
+      if (vb->buffer && svga_buffer_is_user_buffer(vb->buffer)) {
+         struct svga_buffer *buffer = svga_buffer(vb->buffer);
+
+         pipe_resource_reference(&buffer->uploaded.buffer, NULL);
+         buffer->uploaded.start = ~0;
+         buffer->uploaded.end = 0;
+      }
+   }
+
+   for (i=0; i < svga->curr.velems->count; i++) {
+      struct pipe_vertex_buffer *vb =
+         &svga->curr.vb[ve[i].vertex_buffer_index];
+
+      if (vb->buffer && svga_buffer_is_user_buffer(vb->buffer)) {
+         struct svga_buffer *buffer = svga_buffer(vb->buffer);
+         unsigned first, size;
+         unsigned instance_div = ve[i].instance_divisor;
+         unsigned elemSize = util_format_get_blocksize(ve->src_format);
+
+         svga->dirty |= SVGA_NEW_VBUFFER;
+
+         if (instance_div) {
+            first = ve[i].src_offset;
+            count = (instance_count + instance_div - 1) / instance_div;
+            size = vb->stride * (count - 1) + elemSize;
+         } else if (vb->stride) {
+            first = vb->stride * start + ve[i].src_offset;
+            size = vb->stride * (count - 1) + elemSize;
+         } else {
+            /* Only a single vertex!
+             * Upload with the largest vertex size the hw supports,
+             * if possible.
+             */
+            first = ve[i].src_offset;
+            size = MIN2(16, vb->buffer->width0);
+         }
+
+         buffer->uploaded.start = MIN2(buffer->uploaded.start, first);
+         buffer->uploaded.end = MAX2(buffer->uploaded.end, first + size);
+      }
+   }
+}
+
+/**
  * svga_upload_user_buffers - upload parts of user buffers
  *
- * This function streams a part of a user buffer to hw and sets
- * svga_buffer::source_offset to the first byte uploaded. After upload
- * also svga_buffer::uploaded::buffer is set to !NULL
+ * This function streams a part of a user buffer to hw and fills
+ * svga_buffer::uploaded with information on the upload.
  */
 
 static int
@@ -59,37 +130,27 @@ svga_upload_user_buffers(struct svga_context *svga,
    unsigned i;
    int ret;
 
+   svga_user_buffer_range(svga, start, count, instance_count);
+
    for (i=0; i < svga->curr.velems->count; i++) {
       struct pipe_vertex_buffer *vb =
          &svga->curr.vb[ve[i].vertex_buffer_index];
 
       if (vb->buffer && svga_buffer_is_user_buffer(vb->buffer)) {
          struct svga_buffer *buffer = svga_buffer(vb->buffer);
-         unsigned first, size;
          boolean flushed;
-         unsigned instance_div = ve[i].instance_divisor;
-         unsigned elemSize = util_format_get_blocksize(ve->src_format);
 
-         svga->dirty |= SVGA_NEW_VBUFFER;
+         /*
+          * Check if already uploaded. Otherwise go ahead and upload.
+          */
 
-         if (instance_div) {
-            first = 0;
-            count = (instance_count + instance_div - 1) / instance_div;
-            size = vb->stride * (count - 1) + elemSize;
-         } else if (vb->stride) {
-            first = vb->stride * start;
-            size = vb->stride * (count - 1) + elemSize;
-         } else {
-            /* Only a single vertex!
-             * Upload with the largest vertex size the hw supports,
-             * if possible.
-             */
-            first = 0;
-            size = MIN2(16, vb->buffer->width0);
-         }
+         if (buffer->uploaded.buffer)
+            continue;
 
          ret = u_upload_buffer( svga->upload_vb,
-                                0, first, size,
+                                0,
+                                buffer->uploaded.start,
+                                buffer->uploaded.end - buffer->uploaded.start,
                                 &buffer->b.b,
                                 &buffer->uploaded.offset,
                                 &buffer->uploaded.buffer,
@@ -106,11 +167,10 @@ svga_upload_user_buffers(struct svga_context *svga,
                          buffer,
                          buffer->uploaded.buffer,
                          buffer->uploaded.offset,
-                         first,
-                         size);
+                         buffer->uploaded.start,
+                         buffer->uploaded.end - buffer->uploaded.start);
 
          vb->buffer_offset = buffer->uploaded.offset;
-         buffer->source_offset = first;
       }
    }
 
@@ -143,7 +203,8 @@ svga_release_user_upl_buffers(struct svga_context *svga)
       if (vb->buffer && svga_buffer_is_user_buffer(vb->buffer)) {
          struct svga_buffer *buffer = svga_buffer(vb->buffer);
 
-         buffer->source_offset = 0;
+         buffer->uploaded.start = ~0;
+         buffer->uploaded.end = 0;
          if (buffer->uploaded.buffer)
             pipe_resource_reference(&buffer->uploaded.buffer, NULL);
       }
