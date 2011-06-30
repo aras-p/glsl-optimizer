@@ -126,10 +126,10 @@ static GLboolean r200VertexProgUpdateParams(struct gl_context *ctx, struct r200_
       case PROGRAM_NAMED_PARAM:
       //fprintf(stderr, "%s", vp->Parameters->Parameters[pi].Name);
       case PROGRAM_CONSTANT:
-	 *fcmd++ = paramList->ParameterValues[pi][0];
-	 *fcmd++ = paramList->ParameterValues[pi][1];
-	 *fcmd++ = paramList->ParameterValues[pi][2];
-	 *fcmd++ = paramList->ParameterValues[pi][3];
+	 *fcmd++ = paramList->ParameterValues[pi][0].f;
+	 *fcmd++ = paramList->ParameterValues[pi][1].f;
+	 *fcmd++ = paramList->ParameterValues[pi][2].f;
+	 *fcmd++ = paramList->ParameterValues[pi][3].f;
 	 break;
       default:
 	 _mesa_problem(NULL, "Bad param type in %s", __FUNCTION__);

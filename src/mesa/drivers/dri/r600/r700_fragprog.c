@@ -778,10 +778,10 @@ GLboolean r700SetupFragmentProgram(struct gl_context * ctx)
 	    unNumParamData = paramList->NumParameters;
 
 	    for(ui=0; ui<unNumParamData; ui++) {
-		        r700->ps.consts[ui][0].f32All = paramList->ParameterValues[ui][0];
-		        r700->ps.consts[ui][1].f32All = paramList->ParameterValues[ui][1];
-		        r700->ps.consts[ui][2].f32All = paramList->ParameterValues[ui][2];
-		        r700->ps.consts[ui][3].f32All = paramList->ParameterValues[ui][3];
+		        r700->ps.consts[ui][0].f32All = paramList->ParameterValues[ui][0].f;
+		        r700->ps.consts[ui][1].f32All = paramList->ParameterValues[ui][1].f;
+		        r700->ps.consts[ui][2].f32All = paramList->ParameterValues[ui][2].f;
+		        r700->ps.consts[ui][3].f32All = paramList->ParameterValues[ui][3].f;
 	    }
 
         /* Load fp constants to gpu */

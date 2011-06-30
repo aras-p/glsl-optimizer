@@ -684,17 +684,17 @@ GLboolean evergreenSetupVPconstants(struct gl_context * ctx)
 	    for(ui=0; ui<unNumParamData; ui++) {
             if(paramList->Parameters[ui].Type == PROGRAM_UNIFORM) 
             {
-                evergreen->vs.consts[ui][0].f32All = paramListOrginal->ParameterValues[ui][0];
-		        evergreen->vs.consts[ui][1].f32All = paramListOrginal->ParameterValues[ui][1];
-		        evergreen->vs.consts[ui][2].f32All = paramListOrginal->ParameterValues[ui][2];
-		        evergreen->vs.consts[ui][3].f32All = paramListOrginal->ParameterValues[ui][3];
+                evergreen->vs.consts[ui][0].f32All = paramListOrginal->ParameterValues[ui][0].f;
+		        evergreen->vs.consts[ui][1].f32All = paramListOrginal->ParameterValues[ui][1].f;
+		        evergreen->vs.consts[ui][2].f32All = paramListOrginal->ParameterValues[ui][2].f;
+		        evergreen->vs.consts[ui][3].f32All = paramListOrginal->ParameterValues[ui][3].f;
             }
             else
             {
-		        evergreen->vs.consts[ui][0].f32All = paramList->ParameterValues[ui][0];
-		        evergreen->vs.consts[ui][1].f32All = paramList->ParameterValues[ui][1];
-		        evergreen->vs.consts[ui][2].f32All = paramList->ParameterValues[ui][2];
-		        evergreen->vs.consts[ui][3].f32All = paramList->ParameterValues[ui][3];
+		        evergreen->vs.consts[ui][0].f32All = paramList->ParameterValues[ui][0].f;
+		        evergreen->vs.consts[ui][1].f32All = paramList->ParameterValues[ui][1].f;
+		        evergreen->vs.consts[ui][2].f32All = paramList->ParameterValues[ui][2].f;
+		        evergreen->vs.consts[ui][3].f32All = paramList->ParameterValues[ui][3].f;
             }
 	    }
 
