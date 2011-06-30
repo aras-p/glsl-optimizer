@@ -1163,6 +1163,7 @@ draw_llvm_generate(struct draw_llvm *llvm, struct draw_llvm_variant *variant)
    struct lp_build_loop_state lp_loop;
    const int max_vertices = 4;
    LLVMValueRef outputs[PIPE_MAX_SHADER_OUTPUTS][NUM_CHANNELS];
+   LLVMValueRef fetch_max;
    void *code;
    struct lp_build_sampler_soa *sampler = 0;
    LLVMValueRef ret, ret_ptr;
@@ -1234,6 +1235,10 @@ draw_llvm_generate(struct draw_llvm *llvm, struct draw_llvm_variant *variant)
       draw_llvm_variant_key_samplers(&variant->key),
       context_ptr);
 
+   fetch_max = LLVMBuildSub(builder, count,
+                            lp_build_const_int32(gallivm, 1),
+                            "fetch_max");
+
 #if DEBUG_STORE
    lp_build_printf(builder, "start = %d, end = %d, step = %d\n",
                    start, end, step);
@@ -1257,6 +1262,12 @@ draw_llvm_generate(struct draw_llvm *llvm, struct draw_llvm_variant *variant)
             builder,
             lp_loop.counter,
             lp_build_const_int32(gallivm, i), "");
+
+         /* make sure we're not out of bounds which can happen
+          * if fetch_count % 4 != 0, because on the last iteration
+          * a few of the 4 vertex fetches will be out of bounds */
+         true_index = lp_build_min(&bld, true_index, fetch_max);
+
          for (j = 0; j < draw->pt.nr_vertex_elements; ++j) {
             struct pipe_vertex_element *velem = &draw->pt.vertex_element[j];
             LLVMValueRef vb_index = lp_build_const_int32(gallivm, velem->vertex_buffer_index);
