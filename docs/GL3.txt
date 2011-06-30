@@ -40,7 +40,7 @@ glTexParameterI, glGetTexParameterI commands          DONE
 glVertexAttribI commands                              DONE (but converts int
                                                             values to floats)
 Depth format cube textures                            0% done
-
+GLX_ARB_create_context (GLX 1.4 is required)          not started
 
 
 GL 3.1:
@@ -69,6 +69,7 @@ Seamless cubemaps (GL_ARB_seamless_cube_map)          DONE
 Multisample textures (GL_ARB_texture_multisample)     not started
 Frag depth clamp (GL_ARB_depth_clamp)                 DONE
 Fence objects (GL_ARB_sync)                           DONE
+GLX_ARB_create_context_profile                        not started
 
 
 GL 3.3:
