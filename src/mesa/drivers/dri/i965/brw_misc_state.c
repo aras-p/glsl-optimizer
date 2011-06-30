@@ -621,16 +621,11 @@ static void upload_invarient_state( struct brw_context *brw )
    }
 
    if (intel->gen < 6) {
-      struct brw_global_depth_offset_clamp gdo;
-      memset(&gdo, 0, sizeof(gdo));
-
-      /* Disable depth offset clamping. 
-       */
-      gdo.header.opcode = _3DSTATE_GLOBAL_DEPTH_OFFSET_CLAMP;
-      gdo.header.length = sizeof(gdo)/4 - 2;
-      gdo.depth_offset_clamp = 0.0;
-
-      BRW_BATCH_STRUCT(brw, &gdo);
+      /* Disable depth offset clamping. */
+      BEGIN_BATCH(2);
+      OUT_BATCH(_3DSTATE_GLOBAL_DEPTH_OFFSET_CLAMP << 16 | (2 - 2));
+      OUT_BATCH_F(0.0);
+      ADVANCE_BATCH();
    }
 
    if (intel->gen >= 6) {

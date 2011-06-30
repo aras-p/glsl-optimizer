@@ -225,15 +225,6 @@ struct brw_drawrect
    GLuint yorg:16;  
 };
 
-
-
-
-struct brw_global_depth_offset_clamp
-{
-   struct header header;
-   GLfloat depth_offset_clamp;  
-};
-
 struct brw_indexbuffer
 {   
    union {
