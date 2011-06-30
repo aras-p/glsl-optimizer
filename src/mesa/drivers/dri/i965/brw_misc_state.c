@@ -652,19 +652,10 @@ static void upload_invarient_state( struct brw_context *brw )
       }
    }
 
-   /* 0x61020000  State Instruction Pointer */
-   {
-      struct brw_system_instruction_pointer sip;
-      memset(&sip, 0, sizeof(sip));
-
-      sip.header.opcode = CMD_STATE_INSN_POINTER;
-      sip.header.length = 0;
-      sip.bits0.pad = 0;
-      sip.bits0.system_instruction_pointer = 0;
-
-      BRW_BATCH_STRUCT(brw, &sip);
-   }
-
+   BEGIN_BATCH(2);
+   OUT_BATCH(CMD_STATE_SIP << 16 | (2 - 2));
+   OUT_BATCH(0);
+   ADVANCE_BATCH();
 
    BEGIN_BATCH(1);
    OUT_BATCH(brw->CMD_VF_STATISTICS << 16 |
