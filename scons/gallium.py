@@ -437,10 +437,10 @@ def generate(env):
             ]
         if distutils.version.LooseVersion(ccversion) >= distutils.version.LooseVersion('4.2'):
             ccflags += [
-                '-Werror=pointer-arith',
+                '-Wpointer-arith',
             ]
             cflags += [
-                '-Werror=declaration-after-statement',
+                '-Wdeclaration-after-statement',
             ]
     if msvc:
         # See also:
