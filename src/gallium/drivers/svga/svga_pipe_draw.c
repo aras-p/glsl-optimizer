@@ -87,7 +87,7 @@ svga_user_buffer_range(struct svga_context *svga,
          struct svga_buffer *buffer = svga_buffer(vb->buffer);
          unsigned first, size;
          unsigned instance_div = ve[i].instance_divisor;
-         unsigned elemSize = util_format_get_blocksize(ve->src_format);
+         unsigned elemSize = util_format_get_blocksize(ve[i].src_format);
 
          svga->dirty |= SVGA_NEW_VBUFFER;
 
