@@ -305,6 +305,7 @@ _eglValidateConfig(const _EGLConfig *conf, EGLBoolean for_matching)
             break;
          default:
             assert(0);
+            mask = 0;
             break;
          }
          if (val & ~mask)
