@@ -37,9 +37,6 @@
 #include "egl_g3d.h"
 #include "egl_g3d_image.h"
 
-/* for struct winsys_handle */
-#include "state_tracker/drm_driver.h"
-
 /**
  * Reference and return the front left buffer of the native pixmap.
  */
