@@ -282,9 +282,9 @@ resource_surface_copy_swap(struct resource_surface *rsurf,
 			      btex, 0, &src_box);
    ret = TRUE;
 
- out_no_ftex:
-   pipe_resource_reference(&btex, NULL);
  out_no_btex:
+   pipe_resource_reference(&btex, NULL);
+ out_no_ftex:
    pipe_resource_reference(&ftex, NULL);
 
    return ret;
