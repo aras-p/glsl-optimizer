@@ -210,16 +210,17 @@ struct function_record
    ir_function_signature* signature;
    ir_variable* return_flag; /* used to break out of all loops and then jump to the return instruction */
    ir_variable* return_value;
-   bool is_main;
+   bool lower_return;
    unsigned nesting_depth;
 
-   function_record(ir_function_signature* p_signature = 0)
+   function_record(ir_function_signature* p_signature = 0,
+                   bool lower_return = false)
    {
       this->signature = p_signature;
       this->return_flag = 0;
       this->return_value = 0;
       this->nesting_depth = 0;
-      this->is_main = this->signature && (strcmp(this->signature->function_name(), "main") == 0);
+      this->lower_return = lower_return;
    }
 
    ir_variable* get_return_flag()
@@ -398,10 +399,8 @@ struct ir_lower_jumps_visitor : public ir_control_flow_visitor {
          /* never lower return at the end of a this->function */
          if(this->function.nesting_depth == 0 && ir->get_next()->is_tail_sentinel())
             lower = false;
-         else if (this->function.is_main)
-            lower = lower_main_return;
          else
-            lower = lower_sub_return;
+            lower = this->function.lower_return;
          break;
       }
       return lower;
@@ -833,9 +832,15 @@ lower_continue:
       assert(!this->function.signature);
       assert(!this->loop.loop);
 
+      bool lower_return;
+      if (strcmp(ir->function_name(), "main") == 0)
+         lower_return = lower_main_return;
+      else
+         lower_return = lower_sub_return;
+
       function_record saved_function = this->function;
       loop_record saved_loop = this->loop;
-      this->function = function_record(ir);
+      this->function = function_record(ir, lower_return);
       this->loop = loop_record(ir);
 
       assert(!this->loop.loop);
