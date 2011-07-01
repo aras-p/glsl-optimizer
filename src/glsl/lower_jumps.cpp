@@ -638,7 +638,10 @@ lower_continue:
             block_records[lower].min_strength = strength_always_clears_execute_flag;
             block_records[lower].may_clear_execute_flag = true;
             this->progress = true;
-            break;
+
+            /* Let the loop run again, in case the other branch of the
+             * if needs to be lowered too.
+             */
          }
       }
 
