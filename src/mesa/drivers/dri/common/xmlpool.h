@@ -60,7 +60,7 @@
 #define DRI_CONF_OPT_BEGIN(name,type,def) \
 "<option name=\""#name"\" type=\""#type"\" default=\""#def"\">\n"
 
-/** \brief Begin an option definition with qouted default value */
+/** \brief Begin an option definition with quoted default value */
 #define DRI_CONF_OPT_BEGIN_Q(name,type,def) \
 "<option name=\""#name"\" type=\""#type"\" default="#def">\n"
 
