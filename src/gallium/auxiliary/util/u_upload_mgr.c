@@ -240,10 +240,11 @@ enum pipe_error u_upload_buffer( struct u_upload_mgr *upload,
    struct pipe_transfer *transfer = NULL;
    const char *map = NULL;
 
-   map = (const char *)pipe_buffer_map(upload->pipe,
-				       inbuf,
-				       PIPE_TRANSFER_READ,
-				       &transfer);
+   map = (const char *)pipe_buffer_map_range(upload->pipe,
+                                             inbuf,
+                                             offset, size,
+                                             PIPE_TRANSFER_READ,
+                                             &transfer);
 
    if (map == NULL) {
       ret = PIPE_ERROR_OUT_OF_MEMORY;
@@ -256,7 +257,7 @@ enum pipe_error u_upload_buffer( struct u_upload_mgr *upload,
    ret = u_upload_data( upload,
                         min_out_offset,
                         size,
-                        map + offset,
+                        map,
                         out_offset,
                         outbuf, flushed );
 
