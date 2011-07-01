@@ -40,7 +40,8 @@ env = Environment(
 	ENV = os.environ,
 )
 
-opts.Save('config.py', env)
+# XXX: This creates a many problems as it saves...
+#opts.Save('config.py', env)
 
 # Backwards compatability with old target configuration variable
 try:
