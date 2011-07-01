@@ -851,6 +851,20 @@ lower_continue:
        */
       visit_block(&ir->body);
 
+      /* If the body ended in an unconditional return of non-void,
+       * then we don't need to lower it because it's the one canonical
+       * return.
+       *
+       * If the body ended in a return of void, eliminate it because
+       * it is redundant.
+       */
+      if (ir->return_type->is_void() &&
+          get_jump_strength((ir_instruction *) ir->body.get_tail())) {
+         ir_jump *jump = (ir_jump *) ir->body.get_tail();
+         assert (jump->ir_type == ir_type_return);
+         jump->remove();
+      }
+
       if(this->function.return_value)
          ir->body.push_tail(new(ir) ir_return(new (ir) ir_dereference_variable(this->function.return_value)));
 
