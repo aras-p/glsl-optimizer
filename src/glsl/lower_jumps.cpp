@@ -341,6 +341,50 @@ struct ir_lower_jumps_visitor : public ir_control_flow_visitor {
       ir->replace_with(new(ir) ir_loop_jump(ir_loop_jump::jump_break));
    }
 
+   /**
+    * Create the necessary instruction to replace a break instruction.
+    */
+   ir_instruction *create_lowered_break()
+   {
+      void *ctx = this->function.signature;
+      return new(ctx) ir_assignment(
+          new(ctx) ir_dereference_variable(this->loop.get_break_flag()),
+          new(ctx) ir_constant(true),
+          0);
+   }
+
+   /**
+    * If the given instruction is a break, lower it to an instruction
+    * that sets the break flag, without consulting
+    * should_lower_jump().
+    *
+    * It is safe to pass NULL to this function.
+    */
+   void lower_break_unconditionally(ir_instruction *ir)
+   {
+      if (get_jump_strength(ir) != strength_break) {
+         return;
+      }
+      ir->replace_with(create_lowered_break());
+   }
+
+   /**
+    * If the block ends in a conditional or unconditional break, lower
+    * it, even though should_lower_jump() says it needn't be lowered.
+    */
+   void lower_final_breaks(exec_list *block)
+   {
+      ir_instruction *ir = (ir_instruction *) block->get_tail();
+      lower_break_unconditionally(ir);
+      ir_if *ir_if = ir->as_if();
+      if (ir_if) {
+          lower_break_unconditionally(
+              (ir_instruction *) ir_if->then_instructions.get_tail());
+          lower_break_unconditionally(
+              (ir_instruction *) ir_if->else_instructions.get_tail());
+      }
+   }
+
    virtual void visit(class ir_loop_jump * ir)
    {
       /* Eliminate all instructions after each one, since they are
@@ -616,7 +660,7 @@ retry: /* we get here if we put code after the if inside a branch */
              * The visit() function for the loop will ensure that the
              * break flag is checked after executing the loop body.
              */
-            jumps[lower]->insert_before(new(ir) ir_assignment(new (ir) ir_dereference_variable(this->loop.get_break_flag()), new (ir) ir_constant(true), 0));
+            jumps[lower]->insert_before(create_lowered_break());
             goto lower_continue;
          } else if(jump_strengths[lower] == strength_continue) {
 lower_continue:
@@ -836,6 +880,9 @@ lower_continue:
       }
 
       if(this->loop.break_flag) {
+         /* We only get here if we are lowering breaks */
+         assert (lower_break);
+
          /* If a break flag was generated while visiting the body of
           * the loop, then at least one break was lowered, so we need
           * to generate an if statement at the end of the loop that
@@ -843,7 +890,13 @@ lower_continue:
           * generate won't violate the CONTAINED_JUMPS_LOWERED
           * postcondition, because should_lower_jump() always returns
           * false for a break that happens at the end of a loop.
+          *
+          * However, if the loop already ends in a conditional or
+          * unconditional break, then we need to lower that break,
+          * because it won't be at the end of the loop anymore.
           */
+         lower_final_breaks(&ir->body_instructions);
+
          ir_if* break_if = new(ir) ir_if(new(ir) ir_dereference_variable(this->loop.break_flag));
          break_if->then_instructions.push_tail(new(ir) ir_loop_jump(ir_loop_jump::jump_break));
          ir->body_instructions.push_tail(break_if);
