@@ -304,6 +304,43 @@ struct ir_lower_jumps_visitor : public ir_control_flow_visitor {
       }
    }
 
+   /**
+    * Insert the instructions necessary to lower a return statement,
+    * before the given return instruction.
+    */
+   void insert_lowered_return(ir_return *ir)
+   {
+      ir_variable* return_flag = this->function.get_return_flag();
+      if(!this->function.signature->return_type->is_void()) {
+         ir_variable* return_value = this->function.get_return_value();
+         ir->insert_before(
+            new(ir) ir_assignment(
+               new (ir) ir_dereference_variable(return_value),
+               ir->value));
+      }
+      ir->insert_before(
+         new(ir) ir_assignment(
+            new (ir) ir_dereference_variable(return_flag),
+            new (ir) ir_constant(true)));
+      this->loop.may_set_return_flag = true;
+   }
+
+   /**
+    * If the given instruction is a return, lower it to instructions
+    * that store the return value (if there is one), set the return
+    * flag, and then break.
+    *
+    * It is safe to pass NULL to this function.
+    */
+   void lower_return_unconditionally(ir_instruction *ir)
+   {
+      if (get_jump_strength(ir) != strength_return) {
+         return;
+      }
+      insert_lowered_return((ir_return*)ir);
+      ir->replace_with(new(ir) ir_loop_jump(ir_loop_jump::jump_break));
+   }
+
    virtual void visit(class ir_loop_jump * ir)
    {
       /* Eliminate all instructions after each one, since they are
@@ -532,13 +569,7 @@ retry: /* we get here if we put code after the if inside a branch */
              * that: 1. store the return value (if this function has a
              * non-void return) and 2. set the return flag
              */
-            ir_variable* return_flag = this->function.get_return_flag();
-            if(!this->function.signature->return_type->is_void()) {
-               ir_variable* return_value = this->function.get_return_value();
-               jumps[lower]->insert_before(new(ir) ir_assignment(new (ir) ir_dereference_variable(return_value), ((ir_return*)jumps[lower])->value, NULL));
-            }
-            jumps[lower]->insert_before(new(ir) ir_assignment(new (ir) ir_dereference_variable(return_flag), new (ir) ir_constant(true), NULL));
-            this->loop.may_set_return_flag = true;
+            insert_lowered_return((ir_return*)jumps[lower]);
             if(this->loop.loop) {
                /* If we are in a loop, replace the return instruction
                 * with a break instruction, and then loop so that the
@@ -761,9 +792,24 @@ lower_continue:
       /* Recursively lower nested jumps.  This satisfies the
        * CONTAINED_JUMPS_LOWERED postcondition, except in the case of
        * an unconditional continue or return at the bottom of the
-       * loop.
+       * loop, which are handled below.
        */
       block_record body = visit_block(&ir->body_instructions);
+
+      /* If the loop ends in an unconditional continue, eliminate it
+       * because it is redundant.
+       */
+      ir_instruction *ir_last
+         = (ir_instruction *) ir->body_instructions.get_tail();
+      if (get_jump_strength(ir_last) == strength_continue) {
+         ir_last->remove();
+      }
+
+      /* If the loop ends in an unconditional return, and we are
+       * lowering returns, lower it.
+       */
+      if (this->function.lower_return)
+         lower_return_unconditionally(ir_last);
 
       if(body.min_strength >= strength_break) {
          /* FINISHME: If the min_strength of the loop body is
