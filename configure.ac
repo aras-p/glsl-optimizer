@@ -1721,7 +1721,7 @@ yes)
 		WAYLAND_EGL_LIB_DEPS="$WAYLAND_LIBS $LIBDRM_LIBS"
                 GALLIUM_WINSYS_DIRS="$GALLIUM_WINSYS_DIRS sw/wayland"
 	fi
-        if test "$plat" = "drm" && test "x$enable_gbm" = no; then
+        if test "$plat" = "drm" && test "x$enable_gbm" = "xno"; then
                 AC_MSG_ERROR([EGL platform drm needs gbm])
         fi
     done
