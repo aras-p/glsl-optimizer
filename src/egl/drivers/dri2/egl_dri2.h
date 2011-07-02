@@ -44,7 +44,9 @@
 #include <GL/gl.h>
 #include <GL/internal/dri_interface.h>
 
+#ifdef HAVE_DRM_PLATFORM
 #include <gbm_driint.h>
+#endif
 
 #include "eglconfig.h"
 #include "eglcontext.h"
@@ -82,7 +84,9 @@ struct dri2_egl_display
    __DRIimageExtension      *image;
    int                       fd;
 
+#ifdef HAVE_DRM_PLATFORM
    struct gbm_dri_device    *gbm_dri;
+#endif
 
    char                     *device_name;
    char                     *driver_name;
