@@ -597,9 +597,9 @@ AC_ARG_ENABLE([gallium_gbm],
     [AS_HELP_STRING([--enable-gallium-gbm],
         [enable optional gbm state tracker (not required for
          gbm support in Gallium)
-         @<:@default=disable@:>@])],
+         @<:@default=auto@:>@])],
     [enable_gallium_gbm="$enableval"],
-    [enable_gallium_gbm=no])
+    [enable_gallium_gbm=auto])
 
 # Option for Gallium drivers
 GALLIUM_DRIVERS_DEFAULT="r300,r600,swrast"
@@ -1386,6 +1386,14 @@ fi
 dnl
 dnl gbm Gallium configuration
 dnl
+if test "x$enable_gallium_gbm" = xauto; then
+    case "$enable_gbm$HAVE_ST_EGL$with_egl_platforms" in
+        yesyes*drm*)
+            enable_gallium_gbm=yes ;;
+         *)
+            enable_gallium_gbm=no ;;
+    esac
+fi
 if test "x$enable_gallium_gbm" = xyes; then
     if test "x$with_gallium_drivers" = x; then
         AC_MSG_ERROR([cannot enable gbm_gallium without Gallium])
