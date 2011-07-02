@@ -1724,6 +1724,10 @@ yes)
         if test "$plat" = "drm" && test "x$enable_gbm" = "xno"; then
                 AC_MSG_ERROR([EGL platform drm needs gbm])
         fi
+        case "$plat$have_libudev" in
+                waylandno|drmno)
+                    AC_MSG_ERROR([cannot build $plat platfrom without udev]) ;;
+        esac
     done
     EGL_PLATFORMS="$egl_platforms"
     ;;
