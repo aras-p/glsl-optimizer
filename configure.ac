@@ -819,11 +819,10 @@ if test "x$enable_dri" = xyes; then
         AC_MSG_ERROR([Can't use static libraries for DRI drivers])
     fi
 
-    if test "x$have_libdrm" != xyes; then
-        AC_MSG_ERROR([DRI drivers require libdrm >= $LIBDRM_REQUIRED])
+    # not a hard requirement as swrast does not depend on it
+    if test "x$have_libdrm" = xyes; then
+        DRI_PC_REQ_PRIV="libdrm >= $LIBDRM_REQUIRED"
     fi
-
-    DRI_PC_REQ_PRIV="libdrm >= $LIBDRM_REQUIRED"
 fi
 
 dnl
@@ -1204,6 +1203,13 @@ if test "x$enable_dri" = xyes; then
         AC_CHECK_HEADER([expat.h],[],[AC_MSG_ERROR([Expat required for DRI.])])
         AC_CHECK_LIB([expat],[XML_ParserCreate],[],
             [AC_MSG_ERROR([Expat required for DRI.])])
+    fi
+
+    # libdrm is required for all except swrast
+    if test -n "$DRI_DIRS" -a x"$DRI_DIRS" != xswrast; then
+        if test "x$have_libdrm" != xyes; then
+            AC_MSG_ERROR([DRI drivers requires libdrm >= $LIBDRM_REQUIRED])
+        fi
     fi
 
     # put all the necessary libs together, including possibly libdricore
@@ -1793,6 +1799,9 @@ dnl Gallium helper functions
 dnl
 gallium_check_st() {
     if test "x$HAVE_ST_DRI" = xyes || test "x$HAVE_ST_XORG" = xyes; then
+         if test "x$have_libdrm" != xyes; then
+            AC_MSG_ERROR([DRI or Xorg DDX requires libdrm >= $LIBDRM_REQUIRED])
+         fi
          GALLIUM_WINSYS_DIRS="$GALLIUM_WINSYS_DIRS $1"
     fi
     if test "x$HAVE_ST_DRI" = xyes && test "x$2" != x; then
