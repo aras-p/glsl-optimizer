@@ -1124,11 +1124,18 @@ xmesa_notify_invalid_buffer(XMesaBuffer b)
 void
 xmesa_check_buffer_size(XMesaBuffer b)
 {
+   GLuint old_width, old_height;
+
    if (b->type == PBUFFER)
       return;
 
+   old_width = b->width;
+   old_height = b->height;
+
    xmesa_get_window_size(b->xm_visual->display, b, &b->width, &b->height);
-   xmesa_notify_invalid_buffer(b);
+
+   if (b->width != old_width || b->height != old_height)
+      xmesa_notify_invalid_buffer(b);
 }
 
 
