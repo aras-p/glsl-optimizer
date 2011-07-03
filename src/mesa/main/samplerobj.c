@@ -251,7 +251,7 @@ _mesa_BindSampler(GLuint unit, GLuint sampler)
    struct gl_sampler_object *sampObj;
    GET_CURRENT_CONTEXT(ctx);
 
-   if (unit >= ctx->Const.MaxTextureImageUnits) {
+   if (unit >= ctx->Const.MaxCombinedTextureImageUnits) {
       _mesa_error(ctx, GL_INVALID_VALUE, "glBindSampler(unit %u)", unit);
       return;
    }
