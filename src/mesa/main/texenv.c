@@ -419,7 +419,7 @@ _mesa_TexEnvfv( GLenum target, GLenum pname, const GLfloat *param )
    ASSERT_OUTSIDE_BEGIN_END(ctx);
 
    maxUnit = (target == GL_POINT_SPRITE_NV && pname == GL_COORD_REPLACE_NV)
-      ? ctx->Const.MaxTextureCoordUnits : ctx->Const.MaxTextureImageUnits;
+      ? ctx->Const.MaxTextureCoordUnits : ctx->Const.MaxCombinedTextureImageUnits;
    if (ctx->Texture.CurrentUnit >= maxUnit) {
       _mesa_error(ctx, GL_INVALID_OPERATION, "glTexEnvfv(current unit)");
       return;
@@ -748,7 +748,7 @@ _mesa_GetTexEnvfv( GLenum target, GLenum pname, GLfloat *params )
    ASSERT_OUTSIDE_BEGIN_END(ctx);
 
    maxUnit = (target == GL_POINT_SPRITE_NV && pname == GL_COORD_REPLACE_NV)
-      ? ctx->Const.MaxTextureCoordUnits : ctx->Const.MaxTextureImageUnits;
+      ? ctx->Const.MaxTextureCoordUnits : ctx->Const.MaxCombinedTextureImageUnits;
    if (ctx->Texture.CurrentUnit >= maxUnit) {
       _mesa_error(ctx, GL_INVALID_OPERATION, "glGetTexEnvfv(current unit)");
       return;
@@ -817,7 +817,7 @@ _mesa_GetTexEnviv( GLenum target, GLenum pname, GLint *params )
    ASSERT_OUTSIDE_BEGIN_END(ctx);
 
    maxUnit = (target == GL_POINT_SPRITE_NV && pname == GL_COORD_REPLACE_NV)
-      ? ctx->Const.MaxTextureCoordUnits : ctx->Const.MaxTextureImageUnits;
+      ? ctx->Const.MaxTextureCoordUnits : ctx->Const.MaxCombinedTextureImageUnits;
    if (ctx->Texture.CurrentUnit >= maxUnit) {
       _mesa_error(ctx, GL_INVALID_OPERATION, "glGetTexEnviv(current unit)");
       return;
