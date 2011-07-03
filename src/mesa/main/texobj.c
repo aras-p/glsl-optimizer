@@ -899,7 +899,7 @@ unbind_texobj_from_texunits(struct gl_context *ctx,
 {
    GLuint u, tex;
 
-   for (u = 0; u < MAX_TEXTURE_IMAGE_UNITS; u++) {
+   for (u = 0; u < Elements(ctx->Texture.Unit); u++) {
       struct gl_texture_unit *unit = &ctx->Texture.Unit[u];
       for (tex = 0; tex < NUM_TEXTURE_TARGETS; tex++) {
          if (texObj == unit->CurrentTex[tex]) {
