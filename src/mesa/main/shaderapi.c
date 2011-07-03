@@ -1032,7 +1032,7 @@ validate_samplers(const struct gl_program *prog, char *errMsg)
       "TEXTURE_2D",
       "TEXTURE_1D",
    };
-   GLint targetUsed[MAX_TEXTURE_IMAGE_UNITS];
+   GLint targetUsed[MAX_COMBINED_TEXTURE_IMAGE_UNITS];
    GLbitfield samplersUsed = prog->SamplersUsed;
    GLuint i;
 
