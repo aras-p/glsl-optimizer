@@ -1752,7 +1752,7 @@ void r600_query_begin(struct r600_context *ctx, struct r600_query *query)
 		u32 *results;
 		int i;
 
-		results = r600_bo_map(ctx->radeon, query->buffer, PB_USAGE_DONTBLOCK | PB_USAGE_CPU_WRITE, NULL);
+		results = r600_bo_map(ctx->radeon, query->buffer, PB_USAGE_CPU_WRITE, NULL);
 		if (results) {
 			memset(results + query->num_results, 0, ctx->max_db * 4 * 4);
 
