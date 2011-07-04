@@ -97,7 +97,7 @@ static void r600_blitter_end(struct pipe_context *ctx)
 					       rctx->saved_render_cond_mode);
 		rctx->saved_render_cond = NULL;
 	}
-	r600_context_queries_resume(&rctx->ctx);
+	r600_context_queries_resume(&rctx->ctx, FALSE);
 	rctx->blit = false;
 }
 

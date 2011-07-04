@@ -228,6 +228,7 @@ struct r600_query {
 #define R600_QUERY_STATE_STARTED	(1 << 0)
 #define R600_QUERY_STATE_ENDED		(1 << 1)
 #define R600_QUERY_STATE_SUSPENDED	(1 << 2)
+#define R600_QUERY_STATE_FLUSHED	(1 << 3)
 
 #define R600_CONTEXT_DRAW_PENDING	(1 << 0)
 #define R600_CONTEXT_DST_CACHES_DIRTY	(1 << 1)
@@ -294,7 +295,7 @@ boolean r600_context_query_result(struct r600_context *ctx,
 void r600_query_begin(struct r600_context *ctx, struct r600_query *query);
 void r600_query_end(struct r600_context *ctx, struct r600_query *query);
 void r600_context_queries_suspend(struct r600_context *ctx);
-void r600_context_queries_resume(struct r600_context *ctx);
+void r600_context_queries_resume(struct r600_context *ctx, boolean flushed);
 void r600_query_predication(struct r600_context *ctx, struct r600_query *query, int operation,
 			    int flag_wait);
 void r600_context_emit_fence(struct r600_context *ctx, struct r600_bo *fence,
