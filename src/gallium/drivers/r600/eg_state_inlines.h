@@ -215,38 +215,6 @@ static inline unsigned r600_tex_compare(unsigned compare)
 	}
 }
 
-static inline unsigned r600_tex_swizzle(unsigned swizzle)
-{
-	switch (swizzle) {
-	case PIPE_SWIZZLE_RED:
-		return V_030010_SQ_SEL_X;
-	case PIPE_SWIZZLE_GREEN:
-		return V_030010_SQ_SEL_Y;
-	case PIPE_SWIZZLE_BLUE:
-		return V_030010_SQ_SEL_Z;
-	case PIPE_SWIZZLE_ALPHA:
-		return V_030010_SQ_SEL_W;
-	case PIPE_SWIZZLE_ZERO:
-		return V_030010_SQ_SEL_0;
-	default:
-	case PIPE_SWIZZLE_ONE:
-		return V_030010_SQ_SEL_1;
-	}
-}
-
-static inline unsigned r600_format_type(unsigned format_type)
-{
-	switch (format_type) {
-	default:
-	case UTIL_FORMAT_TYPE_UNSIGNED:
-		return V_030010_SQ_FORMAT_COMP_UNSIGNED;
-	case UTIL_FORMAT_TYPE_SIGNED:
-		return V_030010_SQ_FORMAT_COMP_SIGNED;
-	case UTIL_FORMAT_TYPE_FIXED:
-		return V_030010_SQ_FORMAT_COMP_UNSIGNED_BIASED;
-	}
-}
-
 static inline unsigned r600_tex_dim(unsigned dim)
 {
 	switch (dim) {
