@@ -1725,7 +1725,7 @@ static boolean r600_query_result(struct r600_context *ctx, struct r600_query *qu
 
 void r600_query_begin(struct r600_context *ctx, struct r600_query *query)
 {
-	unsigned required_space;
+	unsigned required_space, required_buffer;
 	int num_backends = r600_get_num_backends(ctx->radeon);
 
 	/* query request needs 6/8 dwords for begin + 6/8 dwords for end */
@@ -1739,8 +1739,11 @@ void r600_query_begin(struct r600_context *ctx, struct r600_query *query)
 		r600_context_flush(ctx);
 	}
 
+	required_buffer = query->num_results +
+		4 * (query->type == PIPE_QUERY_OCCLUSION_COUNTER ? ctx->max_db : 1);
+
 	/* if query buffer is full force a flush */
-	if (query->num_results*4 >= query->buffer_size - 16) {
+	if (required_buffer*4 > query->buffer_size) {
 		if (!(query->state & R600_QUERY_STATE_FLUSHED))
 			r600_context_flush(ctx);
 		r600_query_result(ctx, query, TRUE);
