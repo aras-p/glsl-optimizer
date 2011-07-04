@@ -450,6 +450,7 @@ emit_simple_arith_swap2(struct i915_fp_compile *p,
  *
  * Possible concerns:
  *
+ * DDX, DDY -- return 0
  * SIN, COS -- could use another taylor step?
  * LIT      -- results seem a little different to sw mesa
  * LOG      -- different to mesa on negative numbers, but this is conformant.
