@@ -35,7 +35,6 @@
 #include "pipebuffer/pb_buffer.h"
 #include "r600_pipe.h"
 #include "r600_resource.h"
-#include "r600_state_inlines.h"
 #include "r600d.h"
 #include "r600_formats.h"
 
