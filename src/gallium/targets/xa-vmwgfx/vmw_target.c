@@ -3,7 +3,6 @@
 #include "state_tracker/drm_driver.h"
 #include "svga/drm/svga_drm_public.h"
 #include "svga/svga_public.h"
-#include "xa_tracker.h"
 
 static struct pipe_screen *
 create_screen(int fd)
