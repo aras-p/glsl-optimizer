@@ -576,8 +576,7 @@ static INLINE boolean r600_is_zs_format_supported(enum pipe_format format)
 	return r600_translate_dbformat(format) != ~0;
 }
 
-static INLINE boolean r600_is_vertex_format_supported(enum pipe_format format,
-						      enum radeon_family family)
+static INLINE boolean r600_is_vertex_format_supported(enum pipe_format format)
 {
 	unsigned i;
 	const struct util_format_description *desc = util_format_description(format);
