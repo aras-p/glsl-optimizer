@@ -570,6 +570,11 @@ AC_ARG_ENABLE([xorg],
         [enable support for X.Org DDX API @<:@default=no@:>@])],
     [enable_xorg="$enableval"],
     [enable_xorg=no])
+AC_ARG_ENABLE([xa],
+    [AS_HELP_STRING([--enable-xa],
+        [enable build of the XA X Acceleration API @<:@default=no@:>@])],
+    [enable_xa="$enableval"],
+    [enable_xa=no])
 AC_ARG_ENABLE([d3d1x],
     [AS_HELP_STRING([--enable-d3d1x],
         [enable support for Direct3D 10 & 11 low-level API @<:@default=no@:>@])],
@@ -617,6 +622,7 @@ if test "x$enable_opengl" = xno -a \
         "x$enable_gles2" = xno -a \
         "x$enable_openvg" = xno -a \
         "x$enable_xorg" = xno -a \
+        "x$enable_xa" = xno -a \
         "x$enable_d3d1x" = xno; then
     AC_MSG_ERROR([at least one API should be enabled])
 fi
@@ -1422,6 +1428,14 @@ if test "x$enable_xorg" = xyes; then
 fi
 
 dnl
+dnl XA configuration
+dnl
+if test "x$enable_xa" = xyes; then
+    GALLIUM_STATE_TRACKERS_DIRS="xa $GALLIUM_STATE_TRACKERS_DIRS"
+    HAVE_ST_XA=yes
+fi
+
+dnl
 dnl OpenVG configuration
 dnl
 VG_LIB_DEPS=""
@@ -1810,7 +1824,8 @@ dnl
 dnl Gallium helper functions
 dnl
 gallium_check_st() {
-    if test "x$HAVE_ST_DRI" = xyes || test "x$HAVE_ST_XORG" = xyes; then
+    if test "x$HAVE_ST_DRI" = xyes || test "x$HAVE_ST_XORG" = xyes ||
+	 test "x$HAVE_ST_XA" = xyes; then
          if test "x$have_libdrm" != xyes; then
             AC_MSG_ERROR([DRI or Xorg DDX requires libdrm >= $LIBDRM_REQUIRED])
          fi
@@ -1821,6 +1836,9 @@ gallium_check_st() {
     fi
     if test "x$HAVE_ST_XORG" = xyes && test "x$3" != x; then
          GALLIUM_TARGET_DIRS="$GALLIUM_TARGET_DIRS $3"
+    fi
+    if test "x$HAVE_ST_XA" = xyes && test "x$4" != x; then
+         GALLIUM_TARGET_DIRS="$GALLIUM_TARGET_DIRS $4"
     fi
 }
 
@@ -1842,7 +1860,7 @@ if test "x$with_gallium_drivers" != x; then
     for driver in $gallium_drivers; do
         case "x$driver" in
         xsvga)
-            gallium_check_st "svga/drm" "dri-vmwgfx" "xorg-vmwgfx"
+            gallium_check_st "svga/drm" "dri-vmwgfx" "xorg-vmwgfx" "xa-vmwgfx"
             ;;
         xi915)
             gallium_check_st "i915/drm" "dri-i915" "xorg-i915"
