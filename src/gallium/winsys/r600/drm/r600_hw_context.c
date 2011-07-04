@@ -1753,7 +1753,7 @@ void r600_query_begin(struct r600_context *ctx, struct r600_query *query)
 
 		results = r600_bo_map(ctx->radeon, query->buffer, PB_USAGE_DONTBLOCK | PB_USAGE_CPU_WRITE, NULL);
 		if (results) {
-			memset(results + (query->num_results * 4), 0, ctx->max_db * 4 * 4);
+			memset(results + query->num_results, 0, ctx->max_db * 4 * 4);
 
 			for (i = num_backends; i < ctx->max_db; i++) {
 				results[(i * 4)+1] = 0x80000000;
