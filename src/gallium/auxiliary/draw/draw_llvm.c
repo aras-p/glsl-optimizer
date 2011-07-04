@@ -1235,7 +1235,8 @@ draw_llvm_generate(struct draw_llvm *llvm, struct draw_llvm_variant *variant)
       draw_llvm_variant_key_samplers(&variant->key),
       context_ptr);
 
-   fetch_max = LLVMBuildSub(builder, count,
+   /* fetch_max = start + count - 1 */
+   fetch_max = LLVMBuildSub(builder, end,
                             lp_build_const_int32(gallivm, 1),
                             "fetch_max");
 
