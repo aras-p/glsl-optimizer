@@ -32,9 +32,9 @@
 
 #include <stdbool.h>
 #include <OpenGL/CGLTypes.h>
+#include "glxconfig.h"
 
-/* mode is expected to be of type struct glx_config. */
-void apple_visual_create_pfobj(CGLPixelFormatObj * pfobj, const void *mode,
+void apple_visual_create_pfobj(CGLPixelFormatObj * pfobj, const struct glx_config * mode,
                                bool * double_buffered, bool * uses_stereo,
                                bool offscreen);
 

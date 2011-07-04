@@ -24,9 +24,21 @@ nvfx_flush(struct pipe_context *pipe,
 		OUT_RING(chan, 1);
         }*/
 
-	FIRE_RING(chan);
-	if (fence)
+	if (fence) {
+		/* horrific hack to make glFinish() work in the absence of
+		 * having proper fences in nvfx.  a pending rewrite will
+		 * fix this properly, but may be a while off.
+		 */
+		MARK_RING(chan, 1, 1);
+		OUT_RELOC(chan, screen->fence, 0, NOUVEAU_BO_WR |
+				NOUVEAU_BO_DUMMY, 0, 0);
+		FIRE_RING(chan);
+		nouveau_bo_map(screen->fence, NOUVEAU_BO_RDWR);
+		nouveau_bo_unmap(screen->fence);
 		*fence = NULL;
+	} else {
+		FIRE_RING(chan);
+	}
 }
 
 static void

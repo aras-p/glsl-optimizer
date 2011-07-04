@@ -503,6 +503,8 @@ dri_destroy_context(struct glx_context * context)
    struct dri_context *pcp = (struct dri_context *) context;
    struct dri_screen *psc = (struct dri_screen *) context->psc;
 
+   driReleaseDrawables(&pcp->base);
+
    if (context->xid)
       glx_send_destroy_context(psc->base.dpy, context->xid);
 
@@ -526,6 +528,8 @@ dri_bind_context(struct glx_context *context, struct glx_context *old,
    pdraw = (struct dri_drawable *) driFetchDrawable(context, draw);
    pread = (struct dri_drawable *) driFetchDrawable(context, read);
 
+   driReleaseDrawables(&pcp->base);
+
    if (pdraw == NULL || pread == NULL)
       return GLXBadDrawable;
 
@@ -543,8 +547,6 @@ dri_unbind_context(struct glx_context *context, struct glx_context *new)
    struct dri_screen *psc = (struct dri_screen *) pcp->base.psc;
 
    (*psc->core->unbindContext) (pcp->driContext);
-
-   driReleaseDrawables(&pcp->base);
 }
 
 static const struct glx_context_vtable dri_context_vtable = {
@@ -556,6 +558,7 @@ static const struct glx_context_vtable dri_context_vtable = {
    DRI_glXUseXFont,
    NULL,
    NULL,
+   NULL, /* get_proc_address */
 };
 
 static struct glx_context *

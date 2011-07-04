@@ -335,6 +335,7 @@ static const struct glx_context_vtable indirect_context_vtable = {
    indirect_use_x_font,
    indirect_bind_tex_image,
    indirect_release_tex_image,
+   NULL, /* get_proc_address */
 };
 
 /**

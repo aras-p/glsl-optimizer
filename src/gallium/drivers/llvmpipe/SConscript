@@ -79,7 +79,7 @@ llvmpipe = env.ConvenienceLibrary(
 env.Alias('llvmpipe', llvmpipe)
 
 
-if env['platform'] != 'embedded':
+if not env['embedded']:
     env = env.Clone()
 
     env.Prepend(LIBS = [llvmpipe] + gallium)

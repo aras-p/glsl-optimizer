@@ -292,6 +292,8 @@ egl_g3d_create_st_framebuffer(_EGLSurface *surf)
       return NULL;
 
    stfbi->visual = &gsurf->stvis;
+   p_atomic_set(&stfbi->stamp, 1);
+
    if (gsurf->base.Type != EGL_PBUFFER_BIT) {
       stfbi->flush_front = egl_g3d_st_framebuffer_flush_front;
       stfbi->validate = egl_g3d_st_framebuffer_validate;

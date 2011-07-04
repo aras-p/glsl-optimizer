@@ -441,6 +441,8 @@ public:
    void visit(ir_function *ir);
    void visit(ir_function_signature *ir);
 
+   void swizzle_result(ir_texture *ir, fs_reg orig_val, int sampler);
+
    fs_inst *emit(fs_inst inst);
 
    fs_inst *emit(int opcode)

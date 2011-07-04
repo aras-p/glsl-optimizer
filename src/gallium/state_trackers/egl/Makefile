@@ -33,7 +33,8 @@ wayland_INCLUDES = \
 wayland_SOURCES = $(wildcard wayland/*.c)
 wayland_OBJECTS = $(wayland_SOURCES:.c=.o)
 
-drm_INCLUDES = -I$(TOP)/src/gallium/winsys $(shell pkg-config --cflags-only-I libdrm)
+drm_INCLUDES = -I$(TOP)/src/gallium/winsys $(shell pkg-config --cflags-only-I libdrm) \
+	       -I$(TOP)/src/gbm/main -I$(TOP)/src/gallium/state_trackers/gbm
 drm_SOURCES = $(wildcard drm/*.c)
 drm_OBJECTS = $(drm_SOURCES:.c=.o)
 

@@ -282,9 +282,9 @@ resource_surface_copy_swap(struct resource_surface *rsurf,
 			      btex, 0, &src_box);
    ret = TRUE;
 
- out_no_ftex:
-   pipe_resource_reference(&btex, NULL);
  out_no_btex:
+   pipe_resource_reference(&btex, NULL);
+ out_no_ftex:
    pipe_resource_reference(&ftex, NULL);
 
    return ret;
@@ -366,4 +366,117 @@ void
 resource_surface_wait(struct resource_surface *rsurf)
 {
    while (resource_surface_throttle(rsurf));
+}
+
+boolean
+native_display_copy_to_pixmap(struct native_display *ndpy,
+                              EGLNativePixmapType pix,
+                              struct pipe_resource *src)
+{
+   struct pipe_context *pipe;
+   struct native_surface *nsurf;
+   struct pipe_resource *dst;
+   struct pipe_resource *tmp[NUM_NATIVE_ATTACHMENTS];
+   const enum native_attachment natt = NATIVE_ATTACHMENT_FRONT_LEFT;
+
+   pipe = ndpy_get_copy_context(ndpy);
+   if (!pipe)
+      return FALSE;
+
+   nsurf = ndpy->create_pixmap_surface(ndpy, pix, NULL);
+   if (!nsurf)
+      return FALSE;
+
+   /* get the texutre */
+   tmp[natt] = NULL;
+   nsurf->validate(nsurf, 1 << natt, NULL, tmp, NULL, NULL);
+   dst = tmp[natt];
+
+   if (dst && dst->format == src->format) {
+      struct pipe_box src_box;
+
+      u_box_origin_2d(src->width0, src->height0, &src_box);
+      pipe->resource_copy_region(pipe, dst, 0, 0, 0, 0, src, 0, &src_box);
+      pipe->flush(pipe, NULL);
+      nsurf->present(nsurf, natt, FALSE, 0);
+   }
+
+   if (dst)
+      pipe_resource_reference(&dst, NULL);
+
+   nsurf->destroy(nsurf);
+
+   return TRUE;
+}
+
+#include "state_tracker/drm_driver.h"
+struct pipe_resource *
+drm_display_import_native_buffer(struct native_display *ndpy,
+                                 struct native_buffer *nbuf)
+{
+   struct pipe_screen *screen = ndpy->screen;
+   struct pipe_resource *res = NULL;
+
+   switch (nbuf->type) {
+   case NATIVE_BUFFER_DRM:
+      {
+         struct winsys_handle wsh;
+
+         memset(&wsh, 0, sizeof(wsh));
+         wsh.handle = nbuf->u.drm.name;
+         wsh.stride = nbuf->u.drm.stride;
+
+         res = screen->resource_from_handle(screen, &nbuf->u.drm.templ, &wsh);
+      }
+      break;
+   default:
+      break;
+   }
+
+   return res;
+}
+
+boolean
+drm_display_export_native_buffer(struct native_display *ndpy,
+                                 struct pipe_resource *res,
+                                 struct native_buffer *nbuf)
+{
+   struct pipe_screen *screen = ndpy->screen;
+   boolean ret = FALSE;
+
+   switch (nbuf->type) {
+   case NATIVE_BUFFER_DRM:
+      {
+         struct winsys_handle wsh;
+
+         if ((nbuf->u.drm.templ.bind & res->bind) != nbuf->u.drm.templ.bind)
+            break;
+
+         memset(&wsh, 0, sizeof(wsh));
+         wsh.type = DRM_API_HANDLE_TYPE_KMS;
+         if (!screen->resource_get_handle(screen, res, &wsh))
+            break;
+
+         nbuf->u.drm.handle = wsh.handle;
+         nbuf->u.drm.stride = wsh.stride;
+
+         /* get the name of the GEM object */
+         if (nbuf->u.drm.templ.bind & PIPE_BIND_SHARED) {
+            memset(&wsh, 0, sizeof(wsh));
+            wsh.type = DRM_API_HANDLE_TYPE_SHARED;
+            if (!screen->resource_get_handle(screen, res, &wsh))
+               break;
+
+            nbuf->u.drm.name = wsh.handle;
+         }
+
+         nbuf->u.drm.templ = *res;
+         ret = TRUE;
+      }
+      break;
+   default:
+      break;
+   }
+
+   return ret;
 }

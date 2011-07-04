@@ -67,7 +67,7 @@ i915_get_temp(struct i915_fp_compile *p)
 {
    int bit = ffs(~p->temp_flag);
    if (!bit) {
-      i915_program_error(p, "i915_get_temp: out of temporaries\n");
+      i915_program_error(p, "i915_get_temp: out of temporaries");
       return 0;
    }
 
@@ -92,7 +92,7 @@ i915_get_utemp(struct i915_fp_compile * p)
 {
    int bit = ffs(~p->utemp_flag);
    if (!bit) {
-      i915_program_error(p, "i915_get_utemp: out of temporaries\n");
+      i915_program_error(p, "i915_get_utemp: out of temporaries");
       return 0;
    }
 
@@ -128,9 +128,13 @@ i915_emit_decl(struct i915_fp_compile *p,
    else
       return reg;
 
-   *(p->decl++) = (D0_DCL | D0_DEST(reg) | d0_flags);
-   *(p->decl++) = D1_MBZ;
-   *(p->decl++) = D2_MBZ;
+   if (p->decl< p->declarations + I915_PROGRAM_SIZE) {
+      *(p->decl++) = (D0_DCL | D0_DEST(reg) | d0_flags);
+      *(p->decl++) = D1_MBZ;
+      *(p->decl++) = D2_MBZ;
+   }
+   else
+      i915_program_error(p, "Out of declarations");
 
    p->nr_decl_insn++;
    return reg;
@@ -187,9 +191,16 @@ i915_emit_arith(struct i915_fp_compile * p,
       p->utemp_flag = old_utemp_flag;   /* restore */
    }
 
-   *(p->csr++) = (op | A0_DEST(dest) | mask | saturate | A0_SRC0(src0));
-   *(p->csr++) = (A1_SRC0(src0) | A1_SRC1(src1));
-   *(p->csr++) = (A2_SRC1(src1) | A2_SRC2(src2));
+   if (p->csr< p->program + I915_PROGRAM_SIZE) {
+      *(p->csr++) = (op | A0_DEST(dest) | mask | saturate | A0_SRC0(src0));
+      *(p->csr++) = (A1_SRC0(src0) | A1_SRC1(src1));
+      *(p->csr++) = (A2_SRC1(src1) | A2_SRC2(src2));
+   }
+   else
+      i915_program_error(p, "Out of instructions");
+
+   if (GET_UREG_TYPE(dest) == REG_TYPE_R)
+      p->register_phases[GET_UREG_NR(dest)] = p->nr_tex_indirect;
 
    p->nr_alu_insn++;
    return dest;
@@ -245,17 +256,31 @@ uint i915_emit_texld( struct i915_fp_compile *p,
       assert(GET_UREG_TYPE(dest) != REG_TYPE_CONST);
       assert(dest == UREG(GET_UREG_TYPE(dest), GET_UREG_NR(dest)));
 
-      /* is the sampler coord a texcoord input reg? */
-      if (GET_UREG_TYPE(coord) != REG_TYPE_T) {
-	 p->nr_tex_indirect++;
+      /* Output register being oC or oD defines a phase boundary */
+      if (GET_UREG_TYPE(dest) == REG_TYPE_OC ||
+          GET_UREG_TYPE(dest) == REG_TYPE_OD)
+         p->nr_tex_indirect++;
+
+      /* Reading from an r# register whose contents depend on output of the
+       * current phase defines a phase boundary.
+       */
+      if (GET_UREG_TYPE(coord) == REG_TYPE_R &&
+          p->register_phases[GET_UREG_NR(coord)] == p->nr_tex_indirect)
+         p->nr_tex_indirect++;
+
+      if (p->csr< p->program + I915_PROGRAM_SIZE) {
+         *(p->csr++) = (opcode |
+                        T0_DEST( dest ) |
+                        T0_SAMPLER( sampler ));
+
+         *(p->csr++) = T1_ADDRESS_REG( coord );
+         *(p->csr++) = T2_MBZ;
       }
+      else
+         i915_program_error(p, "Out of instructions");
 
-      *(p->csr++) = (opcode | 
-		     T0_DEST( dest ) |
-		     T0_SAMPLER( sampler ));
-
-      *(p->csr++) = T1_ADDRESS_REG( coord );
-      *(p->csr++) = T2_MBZ;
+      if (GET_UREG_TYPE(dest) == REG_TYPE_R)
+         p->register_phases[GET_UREG_NR(dest)] = p->nr_tex_indirect;
 
       p->nr_tex_insn++;
    }
@@ -293,7 +318,7 @@ i915_emit_const1f(struct i915_fp_compile * p, float c0)
       }
    }
 
-   i915_program_error(p, "i915_emit_const1f: out of constants\n");
+   i915_program_error(p, "i915_emit_const1f: out of constants");
    return 0;
 }
 
@@ -313,6 +338,8 @@ i915_emit_const2f(struct i915_fp_compile * p, float c0, float c1)
    if (c1 == 1.0)
       return swizzle(i915_emit_const1f(p, c0), X, ONE, Z, W);
 
+   // XXX emit swizzle here for 0, 1, -1 and any combination thereof
+   // we can use swizzle + neg for that
    for (reg = 0; reg < I915_MAX_CONSTANT; reg++) {
       if (ifs->constant_flags[reg] == 0xf ||
           ifs->constant_flags[reg] == I915_CONSTFLAG_USER)
@@ -329,11 +356,9 @@ i915_emit_const2f(struct i915_fp_compile * p, float c0, float c1)
       }
    }
 
-   i915_program_error(p, "i915_emit_const2f: out of constants\n");
+   i915_program_error(p, "i915_emit_const2f: out of constants");
    return 0;
 }
-
-
 
 uint
 i915_emit_const4f(struct i915_fp_compile * p,
@@ -342,6 +367,9 @@ i915_emit_const4f(struct i915_fp_compile * p,
    struct i915_fragment_shader *ifs = p->shader;
    unsigned reg;
 
+   // XXX emit swizzle here for 0, 1, -1 and any combination thereof
+   // we can use swizzle + neg for that
+   printf("const %f %f %f %f\n",c0,c1,c2,c3);
    for (reg = 0; reg < I915_MAX_CONSTANT; reg++) {
       if (ifs->constant_flags[reg] == 0xf &&
           ifs->constants[reg][0] == c0 &&
@@ -363,7 +391,7 @@ i915_emit_const4f(struct i915_fp_compile * p,
       }
    }
 
-   i915_program_error(p, "i915_emit_const4f: out of constants\n");
+   i915_program_error(p, "i915_emit_const4f: out of constants");
    return 0;
 }
 

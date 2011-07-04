@@ -152,6 +152,11 @@ struct native_display {
     */
    void *user_data;
 
+   /**
+    * Initialize and create the pipe screen.
+    */
+   boolean (*init_screen)(struct native_display *ndpy);
+
    void (*destroy)(struct native_display *ndpy);
 
    /**
@@ -170,16 +175,21 @@ struct native_display {
                                                int *num_configs);
 
    /**
-    * Test if a pixmap is supported by the given config.  Required unless no
-    * config has pixmap_bit set.
-    *
-    * This function is usually called to find a config that supports a given
-    * pixmap.  Thus, it is usually called with the same pixmap in a row.
+    * Get the color format of the pixmap.  Required unless no config has
+    * pixmap_bit set.
     */
-   boolean (*is_pixmap_supported)(struct native_display *ndpy,
-                                  EGLNativePixmapType pix,
-                                  const struct native_config *nconf);
+   boolean (*get_pixmap_format)(struct native_display *ndpy,
+                                EGLNativePixmapType pix,
+                                enum pipe_format *format);
 
+   /**
+    * Copy the contents of the resource to the pixmap's front-left attachment.
+    * This is used to implement eglCopyBuffers.  Required unless no config has
+    * pixmap_bit set.
+    */
+   boolean (*copy_to_pixmap)(struct native_display *ndpy,
+                             EGLNativePixmapType pix,
+                             struct pipe_resource *src);
 
    /**
     * Create a window surface.  Required unless no config has window_bit set.
@@ -219,6 +229,9 @@ struct native_event_handler {
                                          const char *name, int fd);
    struct pipe_screen *(*new_sw_screen)(struct native_display *ndpy,
                                         struct sw_winsys *ws);
+
+   struct pipe_resource *(*lookup_egl_image)(struct native_display *ndpy,
+                                             void *egl_image);
 };
 
 /**
@@ -256,26 +269,29 @@ ndpy_uninit(struct native_display *ndpy)
 struct native_platform {
    const char *name;
 
-   void (*set_event_handler)(struct native_event_handler *handler);
-   struct native_display *(*create_display)(void *dpy,
-                                            boolean use_sw,
-                                            void *user_data);
+   /**
+    * Create the native display and usually establish a connection to the
+    * display server.
+    *
+    * No event should be generated at this stage.
+    */
+   struct native_display *(*create_display)(void *dpy, boolean use_sw);
 };
 
 const struct native_platform *
-native_get_gdi_platform(void);
+native_get_gdi_platform(const struct native_event_handler *event_handler);
 
 const struct native_platform *
-native_get_x11_platform(void);
+native_get_x11_platform(const struct native_event_handler *event_handler);
 
 const struct native_platform *
-native_get_wayland_platform(void);
+native_get_wayland_platform(const struct native_event_handler *event_handler);
 
 const struct native_platform *
-native_get_drm_platform(void);
+native_get_drm_platform(const struct native_event_handler *event_handler);
 
 const struct native_platform *
-native_get_fbdev_platform(void);
+native_get_fbdev_platform(const struct native_event_handler *event_handler);
 
 #ifdef __cplusplus
 }

@@ -35,7 +35,7 @@
 
 #include "native_wayland.h"
 
-static struct native_event_handler *wayland_event_handler;
+static const struct native_event_handler *wayland_event_handler;
 
 static void
 sync_callback(void *data)
@@ -114,11 +114,12 @@ wayland_display_get_param(struct native_display *ndpy,
 }
 
 static boolean
-wayland_display_is_pixmap_supported(struct native_display *ndpy,
-                                    EGLNativePixmapType pix,
-                                    const struct native_config *nconf)
+wayland_display_get_pixmap_format(struct native_display *ndpy,
+                                  EGLNativePixmapType pix,
+                                  enum pipe_format *format)
 {
    /* all wl_egl_pixmaps are supported */
+   *format = PIPE_FORMAT_NONE;
 
    return TRUE;
 }
@@ -195,13 +196,11 @@ wayland_window_surface_handle_resize(struct wayland_surface *surface)
             wl_buffer_destroy(surface->buffer[i]);
          surface->buffer[i] = NULL;
       }
+
+      surface->dx = surface->win->dx;
+      surface->dy = surface->win->dy;
    }
    pipe_resource_reference(&front_resource, NULL);
-
-   surface->dx = surface->win->dx;
-   surface->dy = surface->win->dy;
-   surface->win->dx = 0;
-   surface->win->dy = 0;
 }
 
 static boolean
@@ -449,28 +448,28 @@ wayland_create_window_surface(struct native_display *ndpy,
    return &surface->base;
 }
 
-static void
-native_set_event_handler(struct native_event_handler *event_handler)
-{
-   wayland_event_handler = event_handler;
-}
-
 static struct native_display *
-native_create_display(void *dpy, boolean use_sw, void *user_data)
+native_create_display(void *dpy, boolean use_sw)
 {
    struct wayland_display *display = NULL;
+   boolean own_dpy = FALSE;
 
    use_sw = use_sw || debug_get_bool_option("EGL_SOFTWARE", FALSE);
+
+   if (dpy == NULL) {
+      dpy = wl_display_connect(NULL);
+      if (dpy == NULL)
+         return NULL;
+      own_dpy = TRUE;
+   }
 
    if (use_sw) {
       _eglLog(_EGL_INFO, "use software fallback");
       display = wayland_create_shm_display((struct wl_display *) dpy,
-                                           wayland_event_handler,
-                                           user_data);
+                                           wayland_event_handler);
    } else {
       display = wayland_create_drm_display((struct wl_display *) dpy,
-                                           wayland_event_handler,
-                                           user_data);
+                                           wayland_event_handler);
    }
 
    if (!display)
@@ -478,22 +477,25 @@ native_create_display(void *dpy, boolean use_sw, void *user_data)
 
    display->base.get_param = wayland_display_get_param;
    display->base.get_configs = wayland_display_get_configs;
-   display->base.is_pixmap_supported = wayland_display_is_pixmap_supported;
+   display->base.get_pixmap_format = wayland_display_get_pixmap_format;
+   display->base.copy_to_pixmap = native_display_copy_to_pixmap;
    display->base.create_window_surface = wayland_create_window_surface;
    display->base.create_pixmap_surface = wayland_create_pixmap_surface;
+
+   display->own_dpy = own_dpy;
 
    return &display->base;
 }
 
 static const struct native_platform wayland_platform = {
    "wayland", /* name */
-   native_set_event_handler,
    native_create_display
 };
 
 const struct native_platform *
-native_get_wayland_platform(void)
+native_get_wayland_platform(const struct native_event_handler *event_handler)
 {
+   wayland_event_handler = event_handler;
    return &wayland_platform;
 }
 

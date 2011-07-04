@@ -64,7 +64,6 @@ void
 apple_cgl_init(void)
 {
    void *h;
-   GLint major = 0, minor = 0;
    const char *opengl_framework_path;
 
    if (initialized)
@@ -88,11 +87,11 @@ apple_cgl_init(void)
 
    apple_cgl.get_version = sym(h, "CGLGetVersion");
 
-   apple_cgl.get_version(&major, &minor);
+   apple_cgl.get_version(&apple_cgl.version_major, &apple_cgl.version_minor);
 
-   apple_glx_diagnostic("CGL major %d minor %d\n", major, minor);
+   apple_glx_diagnostic("CGL major %d minor %d\n", apple_cgl.version_major, apple_cgl.version_minor);
 
-   if (1 != major) {
+   if (1 != apple_cgl.version_major) {
       fprintf(stderr, "WARNING: the CGL major version has changed!\n"
               "libGL may be incompatible!\n");
    }

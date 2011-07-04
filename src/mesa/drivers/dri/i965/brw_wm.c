@@ -273,12 +273,11 @@ bool do_wm_prog(struct brw_context *brw,
     */
    program = brw_get_program(&c->func, &program_size);
 
-   drm_intel_bo_unreference(brw->wm.prog_bo);
-   brw->wm.prog_bo = brw_upload_cache(&brw->cache, BRW_WM_PROG,
-				      &c->key, sizeof(c->key),
-				      program, program_size,
-				      &c->prog_data, sizeof(c->prog_data),
-				      &brw->wm.prog_data);
+   brw_upload_cache(&brw->cache, BRW_WM_PROG,
+		    &c->key, sizeof(c->key),
+		    program, program_size,
+		    &c->prog_data, sizeof(c->prog_data),
+		    &brw->wm.prog_offset, &brw->wm.prog_data);
 
    return true;
 }
@@ -389,6 +388,8 @@ static void brw_wm_populate_key( struct brw_context *brw,
 	  * all 4 channels.
 	  */
 	 if (sampler->CompareMode == GL_COMPARE_R_TO_TEXTURE_ARB) {
+	    key->compare_funcs[i] = sampler->CompareFunc;
+
 	    if (sampler->DepthMode == GL_ALPHA) {
 	       swizzles[0] = SWIZZLE_ZERO;
 	       swizzles[1] = SWIZZLE_ZERO;
@@ -477,13 +478,9 @@ static void brw_prepare_wm_prog(struct brw_context *brw)
 
    brw_wm_populate_key(brw, &key);
 
-   /* Make an early check for the key.
-    */
-   drm_intel_bo_unreference(brw->wm.prog_bo);
-   brw->wm.prog_bo = brw_search_cache(&brw->cache, BRW_WM_PROG,
-				      &key, sizeof(key),
-				      &brw->wm.prog_data);
-   if (brw->wm.prog_bo == NULL) {
+   if (!brw_search_cache(&brw->cache, BRW_WM_PROG,
+			 &key, sizeof(key),
+			 &brw->wm.prog_offset, &brw->wm.prog_data)) {
       bool success = do_wm_prog(brw, ctx->Shader.CurrentFragmentProgram, fp,
 				&key);
       assert(success);

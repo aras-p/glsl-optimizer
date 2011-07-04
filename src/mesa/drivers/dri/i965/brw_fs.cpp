@@ -100,7 +100,7 @@ fs_visitor::fail(const char *format, ...)
    this->fail_msg = msg;
 
    if (INTEL_DEBUG & DEBUG_WM) {
-      fprintf(stderr, msg);
+      fprintf(stderr, "%s",  msg);
    }
 }
 
@@ -1533,6 +1533,8 @@ fs_visitor::run()
 	 this->result = reg_undef;
 	 ir->accept(this);
       }
+      if (failed)
+	 return false;
 
       emit_fb_writes();
 
@@ -1684,6 +1686,9 @@ brw_fs_precompile(struct gl_context *ctx, struct gl_shader_program *prog)
    key.clamp_fragment_color = true;
 
    for (int i = 0; i < BRW_MAX_TEX_UNIT; i++) {
+      if (fp->Base.ShadowSamplers & (1 << i))
+	 key.compare_funcs[i] = GL_LESS;
+
       /* FINISHME: depth compares might use (0,0,0,W) for example */
       key.tex_swizzles[i] = SWIZZLE_XYZW;
    }
@@ -1697,14 +1702,12 @@ brw_fs_precompile(struct gl_context *ctx, struct gl_shader_program *prog)
 
    key.program_string_id = bfp->id;
 
-   drm_intel_bo *old_prog_bo = brw->wm.prog_bo;
+   uint32_t old_prog_offset = brw->wm.prog_offset;
    struct brw_wm_prog_data *old_prog_data = brw->wm.prog_data;
-   brw->wm.prog_bo = NULL;
 
    bool success = do_wm_prog(brw, prog, bfp, &key);
 
-   drm_intel_bo_unreference(brw->wm.prog_bo);
-   brw->wm.prog_bo = old_prog_bo;
+   brw->wm.prog_offset = old_prog_offset;
    brw->wm.prog_data = old_prog_data;
 
    return success;

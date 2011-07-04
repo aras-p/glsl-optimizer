@@ -97,6 +97,18 @@ EGLint dri2_to_egl_attribute_map[] = {
    0,				/* __DRI_ATTRIB_FRAMEBUFFER_SRGB_CAPABLE */
 };
 
+static EGLBoolean
+dri2_match_config(const _EGLConfig *conf, const _EGLConfig *criteria)
+{
+   if (_eglCompareConfigs(conf, criteria, NULL, EGL_FALSE) != 0)
+      return EGL_FALSE;
+
+   if (!_eglMatchConfig(conf, criteria))
+      return EGL_FALSE;
+
+   return EGL_TRUE;
+}
+
 struct dri2_egl_config *
 dri2_add_config(_EGLDisplay *disp, const __DRIconfig *dri_config, int id,
 		int depth, EGLint surface_type, const EGLint *attr_list)
@@ -190,7 +202,7 @@ dri2_add_config(_EGLDisplay *disp, const __DRIconfig *dri_config, int id,
    base.ConfigID    = EGL_DONT_CARE;
    base.SurfaceType = EGL_DONT_CARE;
    num_configs = _eglFilterArray(disp->Configs, (void **) &matching_config, 1,
-                                 (_EGLArrayForEach) _eglMatchConfig, &base);
+                                 (_EGLArrayForEach) dri2_match_config, &base);
 
    if (num_configs == 1) {
       conf = (struct dri2_egl_config *) matching_config;
@@ -232,7 +244,7 @@ dri2_add_config(_EGLDisplay *disp, const __DRIconfig *dri_config, int id,
    return conf;
 }
 
-static __DRIimage *
+__DRIimage *
 dri2_lookup_egl_image(__DRIscreen *screen, void *image, void *data)
 {
    _EGLDisplay *disp = data;
@@ -322,8 +334,8 @@ dri2_bind_extensions(struct dri2_egl_display *dri2_dpy,
    return ret;
 }
 
-EGLBoolean
-dri2_load_driver(_EGLDisplay *disp)
+static const __DRIextension **
+dri2_open_driver(_EGLDisplay *disp)
 {
    struct dri2_egl_display *dri2_dpy = disp->DriverData;
    const __DRIextension **extensions;
@@ -362,9 +374,9 @@ dri2_load_driver(_EGLDisplay *disp)
 
    if (dri2_dpy->driver == NULL) {
       _eglLog(_EGL_WARNING,
-	      "DRI2: failed to open any driver (search paths %s)",
-	      search_paths);
-      return EGL_FALSE;
+	      "DRI2: failed to open %s (search paths %s)",
+	      dri2_dpy->driver_name, search_paths);
+      return NULL;
    }
 
    _eglLog(_EGL_DEBUG, "DRI2: dlopen(%s)", path);
@@ -373,59 +385,59 @@ dri2_load_driver(_EGLDisplay *disp)
       _eglLog(_EGL_WARNING,
 	      "DRI2: driver exports no extensions (%s)", dlerror());
       dlclose(dri2_dpy->driver);
-      return EGL_FALSE;
    }
 
-   if (strcmp(dri2_dpy->driver_name, "swrast") == 0) {
-      if (!dri2_bind_extensions(dri2_dpy, swrast_driver_extensions, extensions)) {
-         dlclose(dri2_dpy->driver);
-         return EGL_FALSE;
-      }
-   } else {
-      if (!dri2_bind_extensions(dri2_dpy, dri2_driver_extensions, extensions)) {
-         dlclose(dri2_dpy->driver);
-         return EGL_FALSE;
-      }
-   } 
+   return extensions;
+}
+
+EGLBoolean
+dri2_load_driver(_EGLDisplay *disp)
+{
+   struct dri2_egl_display *dri2_dpy = disp->DriverData;
+   const __DRIextension **extensions;
+
+   extensions = dri2_open_driver(disp);
+   if (!extensions)
+      return EGL_FALSE;
+
+   if (!dri2_bind_extensions(dri2_dpy, dri2_driver_extensions, extensions)) {
+      dlclose(dri2_dpy->driver);
+      return EGL_FALSE;
+   }
 
    return EGL_TRUE;
 }
 
 EGLBoolean
-dri2_create_screen(_EGLDisplay *disp)
+dri2_load_driver_swrast(_EGLDisplay *disp)
 {
+   struct dri2_egl_display *dri2_dpy = disp->DriverData;
    const __DRIextension **extensions;
-   struct dri2_egl_display *dri2_dpy;
-   unsigned int api_mask;
 
-   dri2_dpy = disp->DriverData;
-
-   if (dri2_dpy->dri2) {
-      dri2_dpy->dri_screen =
-         dri2_dpy->dri2->createNewScreen(0, dri2_dpy->fd, dri2_dpy->extensions,
-				         &dri2_dpy->driver_configs, disp);
-   } else {
-      assert(dri2_dpy->swrast);
-      dri2_dpy->dri_screen =
-         dri2_dpy->swrast->createNewScreen(0, dri2_dpy->extensions,
-                                           &dri2_dpy->driver_configs, disp);
+   dri2_dpy->driver_name = "swrast";
+   extensions = dri2_open_driver(disp);
+   if (!extensions) {
+      /* try again with swrastg */
+      dri2_dpy->driver_name = "swrastg";
+      extensions = dri2_open_driver(disp);
    }
 
-   if (dri2_dpy->dri_screen == NULL) {
-      _eglLog(_EGL_WARNING, "DRI2: failed to create dri screen");
+   if (!extensions)
+      return EGL_FALSE;
+
+   if (!dri2_bind_extensions(dri2_dpy, swrast_driver_extensions, extensions)) {
+      dlclose(dri2_dpy->driver);
       return EGL_FALSE;
    }
 
-   extensions = dri2_dpy->core->getExtensions(dri2_dpy->dri_screen);
-   
-   if (dri2_dpy->dri2) {
-      if (!dri2_bind_extensions(dri2_dpy, dri2_core_extensions, extensions))
-         goto cleanup_dri_screen;
-   } else {
-      assert(dri2_dpy->swrast);
-      if (!dri2_bind_extensions(dri2_dpy, swrast_core_extensions, extensions))
-         goto cleanup_dri_screen;
-   }
+   return EGL_TRUE;
+}
+
+void
+dri2_setup_screen(_EGLDisplay *disp)
+{
+   struct dri2_egl_display *dri2_dpy = dri2_egl_display(disp);
+   unsigned int api_mask;
 
    if (dri2_dpy->dri2) {
       if (dri2_dpy->dri2->base.version >= 2)
@@ -468,6 +480,46 @@ dri2_create_screen(_EGLDisplay *disp)
       disp->Extensions.KHR_image_base = EGL_TRUE;
       disp->Extensions.KHR_gl_renderbuffer_image = EGL_TRUE;
    }
+}
+
+EGLBoolean
+dri2_create_screen(_EGLDisplay *disp)
+{
+   const __DRIextension **extensions;
+   struct dri2_egl_display *dri2_dpy;
+
+   dri2_dpy = disp->DriverData;
+
+   if (dri2_dpy->dri2) {
+      dri2_dpy->dri_screen =
+         dri2_dpy->dri2->createNewScreen(0, dri2_dpy->fd, dri2_dpy->extensions,
+				         &dri2_dpy->driver_configs, disp);
+   } else {
+      assert(dri2_dpy->swrast);
+      dri2_dpy->dri_screen =
+         dri2_dpy->swrast->createNewScreen(0, dri2_dpy->extensions,
+                                           &dri2_dpy->driver_configs, disp);
+   }
+
+   if (dri2_dpy->dri_screen == NULL) {
+      _eglLog(_EGL_WARNING, "DRI2: failed to create dri screen");
+      return EGL_FALSE;
+   }
+
+   dri2_dpy->own_dri_screen = 1;
+
+   extensions = dri2_dpy->core->getExtensions(dri2_dpy->dri_screen);
+   
+   if (dri2_dpy->dri2) {
+      if (!dri2_bind_extensions(dri2_dpy, dri2_core_extensions, extensions))
+         goto cleanup_dri_screen;
+   } else {
+      assert(dri2_dpy->swrast);
+      if (!dri2_bind_extensions(dri2_dpy, swrast_core_extensions, extensions))
+         goto cleanup_dri_screen;
+   }
+
+   dri2_setup_screen(disp);
 
    return EGL_TRUE;
 
@@ -496,10 +548,12 @@ dri2_initialize(_EGLDriver *drv, _EGLDisplay *disp)
 #endif
 
 #ifdef HAVE_LIBUDEV
+#ifdef HAVE_DRM_PLATFORM
    case _EGL_PLATFORM_DRM:
       if (disp->Options.TestOnly)
          return EGL_TRUE;
       return dri2_initialize_drm(drv, disp);
+#endif
 #ifdef HAVE_WAYLAND_PLATFORM
    case _EGL_PLATFORM_WAYLAND:
       if (disp->Options.TestOnly)
@@ -524,14 +578,30 @@ dri2_terminate(_EGLDriver *drv, _EGLDisplay *disp)
    _eglReleaseDisplayResources(drv, disp);
    _eglCleanupDisplay(disp);
 
-   dri2_dpy->core->destroyScreen(dri2_dpy->dri_screen);
+   if (dri2_dpy->own_dri_screen)
+      dri2_dpy->core->destroyScreen(dri2_dpy->dri_screen);
    if (dri2_dpy->fd)
       close(dri2_dpy->fd);
-   dlclose(dri2_dpy->driver);
+   if (dri2_dpy->driver)
+      dlclose(dri2_dpy->driver);
+
+   if (disp->PlatformDisplay == NULL) {
+      switch (disp->Platform) {
 #ifdef HAVE_X11_PLATFORM
-   if (disp->PlatformDisplay == NULL)
-      xcb_disconnect(dri2_dpy->conn);
+      case _EGL_PLATFORM_X11:
+         xcb_disconnect(dri2_dpy->conn);
+         break;
 #endif
+#ifdef HAVE_WAYLAND_PLATFORM
+      case _EGL_PLATFORM_WAYLAND:
+         wl_display_destroy(dri2_dpy->wl_dpy);
+         break;
+#endif
+      default:
+         break;
+      }
+   }
+
    free(dri2_dpy);
    disp->DriverData = NULL;
 

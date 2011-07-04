@@ -41,6 +41,7 @@ struct wayland_display {
 
    struct wayland_config *config;
    struct wl_display *dpy;
+   boolean own_dpy;
 
    struct wl_buffer *(*create_buffer)(struct wayland_display *display,
                                       struct wayland_surface *surface,
@@ -102,11 +103,10 @@ wayland_config(const struct native_config *nconf)
 
 struct wayland_display *
 wayland_create_shm_display(struct wl_display *display,
-                           struct native_event_handler *event_handler,
-                           void *user_data);
+                           const struct native_event_handler *event_handler);
+
 struct wayland_display *
 wayland_create_drm_display(struct wl_display *display,
-                           struct native_event_handler *event_handler,
-                           void *user_data);
+                           const struct native_event_handler *event_handler);
 
 #endif /* _NATIVE_WAYLAND_H_ */

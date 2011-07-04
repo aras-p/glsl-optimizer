@@ -35,39 +35,26 @@
 #include "intel_context.h"
 #include "main/macros.h"
 
-void intel_get_texture_alignment_unit(GLenum internalFormat, GLuint *w, GLuint *h)
+void
+intel_get_texture_alignment_unit(gl_format format,
+				 unsigned int *w, unsigned int *h)
 {
-    switch (internalFormat) {
-    case GL_COMPRESSED_RGB_FXT1_3DFX:
-    case GL_COMPRESSED_RGBA_FXT1_3DFX:
-        *w = 8;
-        *h = 4;
-        break;
-
-    case GL_RGB_S3TC:
-    case GL_RGB4_S3TC:
-    case GL_COMPRESSED_RGB_S3TC_DXT1_EXT:
-    case GL_COMPRESSED_RGBA_S3TC_DXT1_EXT:
-    case GL_RGBA_S3TC:
-    case GL_RGBA4_S3TC:
-    case GL_COMPRESSED_RGBA_S3TC_DXT3_EXT:
-    case GL_COMPRESSED_RGBA_S3TC_DXT5_EXT:
-        *w = 4;
-        *h = 4;
-        break;
-
-    default:
-        *w = 4;
-        *h = 2;
-        break;
-    }
+   if (_mesa_is_format_compressed(format)) {
+      /* The hardware alignment requirements for compressed textures
+       * happen to match the block boundaries.
+       */
+      _mesa_get_format_block_size(format, w, h);
+   } else {
+      *w = 4;
+      *h = 2;
+   }
 }
 
 void i945_miptree_layout_2d(struct intel_context *intel,
 			    struct intel_mipmap_tree *mt,
 			    uint32_t tiling, int nr_images)
 {
-   GLuint align_h = 2, align_w = 4;
+   GLuint align_h, align_w;
    GLuint level;
    GLuint x = 0;
    GLuint y = 0;
@@ -75,7 +62,7 @@ void i945_miptree_layout_2d(struct intel_context *intel,
    GLuint height = mt->height0;
 
    mt->total_width = mt->width0;
-   intel_get_texture_alignment_unit(mt->internal_format, &align_w, &align_h);
+   intel_get_texture_alignment_unit(mt->format, &align_w, &align_h);
 
    if (mt->compressed) {
        mt->total_width = ALIGN(mt->width0, align_w);
@@ -110,11 +97,9 @@ void i945_miptree_layout_2d(struct intel_context *intel,
       intel_miptree_set_level_info(mt, level, nr_images, x, y, width,
 				   height, 1);
 
+      img_height = ALIGN(height, align_h);
       if (mt->compressed)
-	 img_height = MAX2(1, height/4);
-      else
-	 img_height = ALIGN(height, align_h);
-
+	 img_height /= align_h;
 
       /* Because the images are packed better, the final offset
        * might not be the maximal one:

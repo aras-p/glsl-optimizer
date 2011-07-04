@@ -28,6 +28,7 @@
 #include <util/u_format.h>
 #include <pipebuffer/pb_buffer.h>
 #include "pipe/p_shader_tokens.h"
+#include "tgsi/tgsi_parse.h"
 #include "r600_formats.h"
 #include "r600_pipe.h"
 #include "r600d.h"
@@ -99,6 +100,8 @@ void r600_bind_rs_state(struct pipe_context *ctx, void *state)
 	if (state == NULL)
 		return;
 
+	rctx->clamp_vertex_color = rs->clamp_vertex_color;
+	rctx->clamp_fragment_color = rs->clamp_fragment_color;
 	rctx->flatshade = rs->flatshade;
 	rctx->sprite_coord_enable = rs->sprite_coord_enable;
 	rctx->rasterizer = rs;
@@ -112,7 +115,7 @@ void r600_bind_rs_state(struct pipe_context *ctx, void *state)
 		r600_polygon_offset_update(rctx);
 	}
 	if (rctx->ps_shader && rctx->vs_shader)
-		r600_spi_update(rctx);
+		rctx->spi_dirty = true;
 }
 
 void r600_delete_rs_state(struct pipe_context *ctx, void *state)
@@ -257,7 +260,9 @@ void *r600_create_shader_state(struct pipe_context *ctx,
 	struct r600_pipe_shader *shader =  CALLOC_STRUCT(r600_pipe_shader);
 	int r;
 
-	r =  r600_pipe_shader_create(ctx, shader, state->tokens);
+	shader->tokens = tgsi_dup_tokens(state->tokens);
+
+	r =  r600_pipe_shader_create(ctx, shader);
 	if (r) {
 		return NULL;
 	}
@@ -273,8 +278,10 @@ void r600_bind_ps_shader(struct pipe_context *ctx, void *state)
 	if (state) {
 		r600_context_pipe_state_set(&rctx->ctx, &rctx->ps_shader->rstate);
 	}
-	if (rctx->ps_shader && rctx->vs_shader)
-		r600_spi_update(rctx);
+	if (rctx->ps_shader && rctx->vs_shader) {
+		rctx->spi_dirty = true;
+		r600_adjust_gprs(rctx);
+	}
 }
 
 void r600_bind_vs_shader(struct pipe_context *ctx, void *state)
@@ -286,8 +293,10 @@ void r600_bind_vs_shader(struct pipe_context *ctx, void *state)
 	if (state) {
 		r600_context_pipe_state_set(&rctx->ctx, &rctx->vs_shader->rstate);
 	}
-	if (rctx->ps_shader && rctx->vs_shader)
-		r600_spi_update(rctx);
+	if (rctx->ps_shader && rctx->vs_shader) {
+		rctx->spi_dirty = true;
+		r600_adjust_gprs(rctx);
+	}
 }
 
 void r600_delete_ps_shader(struct pipe_context *ctx, void *state)
@@ -299,6 +308,7 @@ void r600_delete_ps_shader(struct pipe_context *ctx, void *state)
 		rctx->ps_shader = NULL;
 	}
 
+	free(shader->tokens);
 	r600_pipe_shader_destroy(ctx, shader);
 	free(shader);
 }
@@ -312,6 +322,7 @@ void r600_delete_vs_shader(struct pipe_context *ctx, void *state)
 		rctx->vs_shader = NULL;
 	}
 
+	free(shader->tokens);
 	r600_pipe_shader_destroy(ctx, shader);
 	free(shader);
 }
@@ -347,14 +358,23 @@ static void r600_spi_update(struct r600_pipe_context *rctx)
 	struct r600_pipe_shader *shader = rctx->ps_shader;
 	struct r600_pipe_state *rstate = &rctx->spi;
 	struct r600_shader *rshader = &shader->shader;
-	unsigned i, tmp;
+	unsigned i, tmp, sid;
 
 	if (rctx->spi.id == 0)
 		r600_spi_block_init(rctx, &rctx->spi);
 
 	rstate->nregs = 0;
 	for (i = 0; i < rshader->ninput; i++) {
-		tmp = S_028644_SEMANTIC(r600_find_vs_semantic_index(&rctx->vs_shader->shader, rshader, i));
+		if (rshader->input[i].name == TGSI_SEMANTIC_POSITION ||
+		    rshader->input[i].name == TGSI_SEMANTIC_FACE)
+			if (rctx->family >= CHIP_CEDAR)
+				continue;
+			else
+				sid=0;
+		else
+			sid=r600_find_vs_semantic_index(&rctx->vs_shader->shader, rshader, i);
+
+		tmp = S_028644_SEMANTIC(sid);
 
 		if (rshader->input[i].name == TGSI_SEMANTIC_COLOR ||
 		    rshader->input[i].name == TGSI_SEMANTIC_BCOLOR ||
@@ -378,6 +398,7 @@ static void r600_spi_update(struct r600_pipe_context *rctx)
 		r600_pipe_state_mod_reg(rstate, tmp);
 	}
 
+	rctx->spi_dirty = false;
 	r600_context_pipe_state_set(&rctx->ctx, rstate);
 }
 
@@ -517,21 +538,39 @@ static void r600_vertex_buffer_update(struct r600_pipe_context *rctx)
 	}
 }
 
+static int r600_shader_rebuild(struct pipe_context * ctx, struct r600_pipe_shader * shader)
+{
+	struct r600_pipe_context *rctx = (struct r600_pipe_context *)ctx;
+	int r;
+
+	r600_pipe_shader_destroy(ctx, shader);
+	r = r600_pipe_shader_create(ctx, shader);
+	if (r) {
+		return r;
+	}
+	r600_context_pipe_state_set(&rctx->ctx, &shader->rstate);
+
+	return 0;
+}
+
 void r600_draw_vbo(struct pipe_context *ctx, const struct pipe_draw_info *info)
 {
 	struct r600_pipe_context *rctx = (struct r600_pipe_context *)ctx;
 	struct r600_resource *rbuffer;
-	u32 vgt_dma_index_type, vgt_dma_swap_mode, vgt_draw_initiator, mask;
 	struct r600_draw rdraw;
-	struct r600_drawl draw = {};
-	unsigned prim;
+	struct r600_drawl draw;
+	unsigned prim, mask;
 
-	r600_flush_depth_textures(rctx);
-	u_vbuf_mgr_draw_begin(rctx->vbuf_mgr, info, NULL, NULL);
+	if (!rctx->blit) {
+		if (rctx->have_depth_fb || rctx->have_depth_texture)
+			r600_flush_depth_textures(rctx);
+	}
+	u_vbuf_mgr_draw_begin(rctx->vbuf_mgr, info);
 	r600_vertex_buffer_update(rctx);
 
 	draw.info = *info;
 	draw.ctx = ctx;
+	draw.index_buffer = NULL;
 	if (info->indexed && rctx->index_buffer.buffer) {
 		draw.info.start += rctx->index_buffer.offset / rctx->index_buffer.index_size;
 		pipe_resource_reference(&draw.index_buffer, rctx->index_buffer.buffer);
@@ -549,57 +588,29 @@ void r600_draw_vbo(struct pipe_context *ctx, const struct pipe_draw_info *info)
 			r600_upload_index_buffer(rctx, &draw);
 		}
 	} else {
+		draw.index_size = 0;
+		draw.index_buffer_offset = 0;
 		draw.info.index_bias = info->start;
 	}
 
-	vgt_dma_swap_mode = 0;
-	switch (draw.index_size) {
-	case 2:
-		vgt_draw_initiator = 0;
-		vgt_dma_index_type = 0;
-		if (R600_BIG_ENDIAN) {
-			vgt_dma_swap_mode = ENDIAN_8IN16;
-		}
-		break;
-	case 4:
-		vgt_draw_initiator = 0;
-		vgt_dma_index_type = 1;
-		if (R600_BIG_ENDIAN) {
-			vgt_dma_swap_mode = ENDIAN_8IN32;
-		}
-		break;
-	case 0:
-		vgt_draw_initiator = 2;
-		vgt_dma_index_type = 0;
-		break;
-	default:
-		R600_ERR("unsupported index size %d\n", draw.index_size);
-		return;
-	}
 	if (r600_conv_pipe_prim(draw.info.mode, &prim))
 		return;
-	if (unlikely(rctx->ps_shader == NULL)) {
-		R600_ERR("missing vertex shader\n");
-		return;
-	}
-	if (unlikely(rctx->vs_shader == NULL)) {
-		R600_ERR("missing vertex shader\n");
-		return;
-	}
-	/* there should be enough input */
-	if (rctx->vertex_elements->count < rctx->vs_shader->shader.bc.nresource) {
-		R600_ERR("%d resources provided, expecting %d\n",
-			rctx->vertex_elements->count, rctx->vs_shader->shader.bc.nresource);
-		return;
-	}
+
+	if (rctx->vs_shader->shader.clamp_color != rctx->clamp_vertex_color)
+		r600_shader_rebuild(ctx, rctx->vs_shader);
+
+	if ((rctx->ps_shader->shader.clamp_color != rctx->clamp_fragment_color) ||
+	    ((rctx->family >= CHIP_CEDAR) && rctx->ps_shader->shader.fs_write_all &&
+	     (rctx->ps_shader->shader.nr_cbufs != rctx->nr_cbufs)))
+		r600_shader_rebuild(ctx, rctx->ps_shader);
+
+	if (rctx->spi_dirty)
+		r600_spi_update(rctx);
 
 	if (rctx->alpha_ref_dirty)
 		r600_update_alpha_ref(rctx);
 
-	mask = 0;
-	for (int i = 0; i < rctx->framebuffer.nr_cbufs; i++) {
-		mask |= (0xF << (i * 4));
-	}
+	mask = (1ULL << ((unsigned)rctx->framebuffer.nr_cbufs * 4)) - 1;
 
 	if (rctx->vgt.id != R600_PIPE_STATE_VGT) {
 		rctx->vgt.id = R600_PIPE_STATE_VGT;
@@ -633,8 +644,10 @@ void r600_draw_vbo(struct pipe_context *ctx, const struct pipe_draw_info *info)
 
 	rdraw.vgt_num_indices = draw.info.count;
 	rdraw.vgt_num_instances = draw.info.instance_count;
-	rdraw.vgt_index_type = vgt_dma_index_type | (vgt_dma_swap_mode << 2);
-	rdraw.vgt_draw_initiator = vgt_draw_initiator;
+	rdraw.vgt_index_type = ((draw.index_size == 4) ? 1 : 0);
+	if (R600_BIG_ENDIAN)
+		rdraw.vgt_index_type |= (draw.index_size >> 1) << 2;
+	rdraw.vgt_draw_initiator = draw.index_size ? 0 : 2;
 	rdraw.indices = NULL;
 	if (draw.index_buffer) {
 		rbuffer = (struct r600_resource*)draw.index_buffer;

@@ -145,7 +145,7 @@ svga_hwtnl_flush( struct svga_hwtnl *hwtnl )
       unsigned i;
 
       /* Unmap upload manager vertex buffers */
-      u_upload_flush(svga->upload_vb);
+      u_upload_unmap(svga->upload_vb);
 
       for (i = 0; i < hwtnl->cmd.vdecl_count; i++) {
          handle = svga_buffer_handle(svga, hwtnl->cmd.vdecl_vb[i]);
@@ -156,7 +156,7 @@ svga_hwtnl_flush( struct svga_hwtnl *hwtnl )
       }
 
       /* Unmap upload manager index buffers */
-      u_upload_flush(svga->upload_ib);
+      u_upload_unmap(svga->upload_ib);
 
       for (i = 0; i < hwtnl->cmd.prim_count; i++) {
          if (hwtnl->cmd.prim_ib[i]) {
@@ -242,6 +242,11 @@ svga_hwtnl_flush( struct svga_hwtnl *hwtnl )
 }
 
 
+void svga_hwtnl_set_index_bias( struct svga_hwtnl *hwtnl,
+				int index_bias)
+{
+   hwtnl->index_bias = index_bias;
+}
 
 
 
@@ -265,15 +270,16 @@ enum pipe_error svga_hwtnl_prim( struct svga_hwtnl *hwtnl,
          unsigned size = vb ? vb->width0 : 0;
          unsigned offset = hwtnl->cmd.vdecl[i].array.offset;
          unsigned stride = hwtnl->cmd.vdecl[i].array.stride;
-         unsigned index_bias = range->indexBias;
+         int index_bias = (int) range->indexBias + hwtnl->index_bias;
          unsigned width;
 
          assert(vb);
          assert(size);
          assert(offset < size);
-         assert(index_bias >= 0);
          assert(min_index <= max_index);
-         assert(offset + index_bias*stride < size);
+         if (index_bias >= 0) {
+            assert(offset + index_bias*stride < size);
+         }
          if (min_index != ~0) {
             assert(offset + (index_bias + min_index) * stride < size);
          }
@@ -394,6 +400,7 @@ enum pipe_error svga_hwtnl_prim( struct svga_hwtnl *hwtnl,
    hwtnl->cmd.max_index[hwtnl->cmd.prim_count] = max_index;
 
    hwtnl->cmd.prim[hwtnl->cmd.prim_count] = *range;
+   hwtnl->cmd.prim[hwtnl->cmd.prim_count].indexBias += hwtnl->index_bias;
 
    pipe_resource_reference(&hwtnl->cmd.prim_ib[hwtnl->cmd.prim_count], ib);
    hwtnl->cmd.prim_count++;

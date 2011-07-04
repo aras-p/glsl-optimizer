@@ -53,6 +53,22 @@ static void clear_cache( struct intel_context *intel )
 }
 
 void
+intel_batchbuffer_init(struct intel_context *intel)
+{
+   intel_batchbuffer_reset(intel);
+
+   if (intel->gen == 6) {
+      /* We can't just use brw_state_batch to get a chunk of space for
+       * the gen6 workaround because it involves actually writing to
+       * the buffer, and the kernel doesn't let us write to the batch.
+       */
+      intel->batch.workaround_bo = drm_intel_bo_alloc(intel->bufmgr,
+						      "gen6 workaround",
+						      4096, 4096);
+   }
+}
+
+void
 intel_batchbuffer_reset(struct intel_context *intel)
 {
    if (intel->batch.last_bo != NULL) {
@@ -76,6 +92,7 @@ intel_batchbuffer_free(struct intel_context *intel)
 {
    drm_intel_bo_unreference(intel->batch.last_bo);
    drm_intel_bo_unreference(intel->batch.bo);
+   drm_intel_bo_unreference(intel->batch.workaround_bo);
    clear_cache(intel);
 }
 
@@ -276,6 +293,43 @@ emit:
    item->header = intel->batch.emit;
 }
 
+/**
+ * Emits a PIPE_CONTROL with a non-zero post-sync operation, for
+ * implementing two workarounds on gen6.  From section 1.4.7.1
+ * "PIPE_CONTROL" of the Sandy Bridge PRM volume 2 part 1:
+ *
+ * [DevSNB-C+{W/A}] Before any depth stall flush (including those
+ * produced by non-pipelined state commands), software needs to first
+ * send a PIPE_CONTROL with no bits set except Post-Sync Operation !=
+ * 0.
+ *
+ * [Dev-SNB{W/A}]: Before a PIPE_CONTROL with Write Cache Flush Enable
+ * =1, a PIPE_CONTROL with any non-zero post-sync-op is required.
+ *
+ * XXX: There is also a workaround that would appear to apply to this
+ * workaround, but it doesn't appear to be necessary so far:
+ *
+ * Dev-SNB{W/A}]: Pipe-control with CS-stall bit set must be sent
+ * BEFORE the pipe-control with a post-sync op and no write-cache
+ * flushes.
+ */
+void
+intel_emit_post_sync_nonzero_flush(struct intel_context *intel)
+{
+   if (!intel->batch.need_workaround_flush)
+      return;
+
+   BEGIN_BATCH(4);
+   OUT_BATCH(_3DSTATE_PIPE_CONTROL);
+   OUT_BATCH(PIPE_CONTROL_WRITE_IMMEDIATE);
+   OUT_RELOC(intel->batch.workaround_bo,
+	     I915_GEM_DOMAIN_GTT, I915_GEM_DOMAIN_GTT, 0);
+   OUT_BATCH(0); /* write data */
+   ADVANCE_BATCH();
+
+   intel->batch.need_workaround_flush = false;
+}
+
 /* Emit a pipelined flush to either flush render and texture cache for
  * reading from a FBO-drawn texture, or flush so that frontbuffer
  * render appears on the screen in DRI1.
@@ -294,15 +348,17 @@ intel_batchbuffer_emit_mi_flush(struct intel_context *intel)
 	 OUT_BATCH(0);
 	 ADVANCE_BATCH();
       } else {
-	 BEGIN_BATCH(8);
-	 /* XXX workaround: issue any post sync != 0 before write
-	  * cache flush = 1
-	  */
-	 OUT_BATCH(_3DSTATE_PIPE_CONTROL);
-	 OUT_BATCH(PIPE_CONTROL_WRITE_IMMEDIATE);
-	 OUT_BATCH(0); /* write address */
-	 OUT_BATCH(0); /* write data */
+	 if (intel->gen == 6) {
+	    /* Hardware workaround: SNB B-Spec says:
+	     *
+	     * [Dev-SNB{W/A}]: Before a PIPE_CONTROL with Write Cache
+	     * Flush Enable =1, a PIPE_CONTROL with any non-zero
+	     * post-sync-op is required.
+	     */
+	    intel_emit_post_sync_nonzero_flush(intel);
+	 }
 
+	 BEGIN_BATCH(4);
 	 OUT_BATCH(_3DSTATE_PIPE_CONTROL);
 	 OUT_BATCH(PIPE_CONTROL_INSTRUCTION_FLUSH |
 		   PIPE_CONTROL_WRITE_FLUSH |

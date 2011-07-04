@@ -2556,6 +2556,9 @@
 #define   S_009508_DISABLE_CUBE_WRAP(x)                (((x) & 0x1) << 0)
 #define   G_009508_DISABLE_CUBE_WRAP(x)                (((x) >> 0) & 0x1)
 #define   C_009508_DISABLE_CUBE_WRAP                   0xFFFFFFFE
+#define   S_009508_DISABLE_CUBE_ANISO(x)               (((x) & 0x1) << 1)
+#define   G_009508_DISABLE_CUBE_ANISO(x)               (((x) >> 1) & 0x1)
+#define   C_009508_DISABLE_CUBE_ANISO                  (~(1 << 1))
 #define   S_009508_SYNC_GRADIENT(x)                    (((x) & 0x1) << 24)
 #define   G_009508_SYNC_GRADIENT(x)                    (((x) >> 24) & 0x1)
 #define   C_009508_SYNC_GRADIENT                       0xFEFFFFFF
@@ -3465,9 +3468,14 @@
 #define SQ_TEX_INST_LD 0x03
 #define SQ_TEX_INST_GET_GRADIENTS_H 0x7
 #define SQ_TEX_INST_GET_GRADIENTS_V 0x8
+#define SQ_TEX_INST_SET_GRADIENTS_H 0xB
+#define SQ_TEX_INST_SET_GRADIENTS_V 0xC
 
 #define SQ_TEX_INST_SAMPLE 0x10
 #define SQ_TEX_INST_SAMPLE_L 0x11
+#define SQ_TEX_INST_SAMPLE_G 0x14
 #define SQ_TEX_INST_SAMPLE_C 0x18
+#define SQ_TEX_INST_SAMPLE_C_L 0x19
+#define SQ_TEX_INST_SAMPLE_C_G 0x1C
 
 #endif

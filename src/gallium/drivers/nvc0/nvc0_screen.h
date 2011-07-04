@@ -16,6 +16,8 @@ struct nvc0_context;
 #define NVC0_SCRATCH_SIZE (2 << 20)
 #define NVC0_SCRATCH_NR_BUFFERS 2
 
+#define NVC0_SCREEN_RESIDENT_BO_COUNT 5
+
 struct nvc0_screen {
    struct nouveau_screen base;
    struct nouveau_winsys *nvws;

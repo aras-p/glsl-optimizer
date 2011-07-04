@@ -129,6 +129,12 @@ struct svga_buffer
        * is the relative offset within that buffer.
        */
       unsigned offset;
+
+      /**
+       * Range of user buffer that is uploaded in @buffer at @offset.
+       */
+      unsigned start;
+      unsigned end;
    } uploaded;
 
    /**
@@ -193,7 +199,11 @@ svga_buffer(struct pipe_resource *buffer)
 static INLINE boolean 
 svga_buffer_is_user_buffer( struct pipe_resource *buffer )
 {
-   return svga_buffer(buffer)->user;
+   if (buffer) {
+      return svga_buffer(buffer)->user;
+   } else {
+      return FALSE;
+   }
 }
 
 

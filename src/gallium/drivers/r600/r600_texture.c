@@ -243,10 +243,11 @@ static void r600_setup_miptree(struct pipe_screen *screen,
 	struct radeon *radeon = (struct radeon *)screen->winsys;
 	enum chip_class chipc = r600_get_family_class(radeon);
 	unsigned size, layer_size, i, offset;
-	unsigned nblocksx, nblocksy;
+	unsigned nblocksx, nblocksy, extra_size = 0;
 
 	for (i = 0, offset = 0; i <= ptex->last_level; i++) {
 		unsigned blocksize = util_format_get_blocksize(ptex->format);
+		unsigned base_align = r600_get_base_alignment(screen, ptex->format, array_mode);
 
 		r600_texture_set_array_mode(screen, rtex, i, array_mode);
 
@@ -265,9 +266,13 @@ static void r600_setup_miptree(struct pipe_screen *screen,
 		else
 			size = layer_size * ptex->array_size;
 
+		/* evergreen stores depth and stencil separately */
+		if ((chipc >= EVERGREEN) && util_format_is_depth_or_stencil(ptex->format))
+			extra_size = align(extra_size + (nblocksx * nblocksy * 1), base_align);
+
 		/* align base image and start of miptree */
 		if ((i == 0) || (i == 1))
-			offset = align(offset, r600_get_base_alignment(screen, ptex->format, array_mode));
+			offset = align(offset, base_align);
 		rtex->offset[i] = offset;
 		rtex->layer_size[i] = layer_size;
 		rtex->pitch_in_blocks[i] = nblocksx; /* CB talks in elements */
@@ -275,7 +280,7 @@ static void r600_setup_miptree(struct pipe_screen *screen,
 
 		offset += size;
 	}
-	rtex->size = offset;
+	rtex->size = offset + extra_size;
 }
 
 /* Figure out whether u_blitter will fallback to a transfer operation.
@@ -1091,8 +1096,9 @@ uint32_t r600_translate_texformat(struct pipe_screen *screen,
 				goto out_word4;
 			}
 		}
-
+		goto out_unknown;
 	}
+
 out_word4:
 	if (word4_p)
 		*word4_p = word4;

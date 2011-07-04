@@ -177,6 +177,8 @@ static void brw_emit_prim(struct brw_context *brw,
    OUT_BATCH(base_vertex_location);
    ADVANCE_BATCH();
 
+   intel->batch.need_workaround_flush = true;
+
    if (intel->always_flush_cache) {
       intel_batchbuffer_emit_mi_flush(intel);
    }
@@ -434,6 +436,7 @@ void brw_draw_prims( struct gl_context *ctx,
     */
    if (!retval) {
        _swsetup_Wakeup(ctx);
+       _tnl_wakeup(ctx);
       _tnl_draw_prims(ctx, arrays, prim, nr_prims, ib, min_index, max_index);
    }
 

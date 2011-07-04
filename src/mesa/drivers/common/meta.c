@@ -2691,12 +2691,26 @@ copy_tex_image(struct gl_context *ctx, GLuint dims, GLenum target, GLint level,
    GLenum format, type;
    GLint bpp;
    void *buf;
+   struct gl_renderbuffer *read_rb = ctx->ReadBuffer->_ColorReadBuffer;
 
    texObj = _mesa_get_current_tex_object(ctx, target);
    texImage = _mesa_get_tex_image(ctx, texObj, target, level);
 
    /* Choose format/type for temporary image buffer */
    format = _mesa_base_tex_format(ctx, internalFormat);
+
+   if (format == GL_LUMINANCE &&
+       _mesa_get_format_base_format(read_rb->Format) != GL_LUMINANCE) {
+      /* The glReadPixels() path will convert RGB to luminance by
+       * summing R+G+B.  glCopyTexImage() is supposed to behave as
+       * glCopyPixels, which doesn't do that change, and instead
+       * leaves it up to glTexImage which converts RGB to luminance by
+       * just taking the R channel.  To avoid glReadPixels() trashing
+       * our data, use RGBA for our temporary image.
+       */
+      format = GL_RGBA;
+   }
+
    type = get_temp_image_type(ctx, format);
    bpp = _mesa_bytes_per_pixel(format, type);
    if (bpp <= 0) {

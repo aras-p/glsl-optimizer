@@ -152,9 +152,9 @@ void u_vbuf_mgr_destroy(struct u_vbuf_mgr *mgrb)
 }
 
 
-static void u_vbuf_translate_begin(struct u_vbuf_mgr_priv *mgr,
-                                   int min_index, int max_index,
-                                   boolean *upload_flushed)
+static enum u_vbuf_return_flags
+u_vbuf_translate_begin(struct u_vbuf_mgr_priv *mgr,
+                       int min_index, int max_index)
 {
    struct translate_key key;
    struct translate_element *te;
@@ -166,6 +166,7 @@ static void u_vbuf_translate_begin(struct u_vbuf_mgr_priv *mgr,
    struct pipe_resource *out_buffer = NULL;
    unsigned i, num_verts, out_offset;
    struct pipe_vertex_element new_velems[PIPE_MAX_ATTRIBS];
+   boolean upload_flushed = FALSE;
 
    memset(&key, 0, sizeof(key));
    memset(tr_elem_index, 0xff, sizeof(tr_elem_index));
@@ -248,7 +249,7 @@ static void u_vbuf_translate_begin(struct u_vbuf_mgr_priv *mgr,
    u_upload_alloc(mgr->b.uploader,
                   key.output_stride * min_index,
                   key.output_stride * num_verts,
-                  &out_offset, &out_buffer, upload_flushed,
+                  &out_offset, &out_buffer, &upload_flushed,
                   (void**)&out_map);
 
    out_offset -= key.output_stride * min_index;
@@ -308,6 +309,8 @@ static void u_vbuf_translate_begin(struct u_vbuf_mgr_priv *mgr,
    }
 
    pipe_resource_reference(&out_buffer, NULL);
+
+   return upload_flushed ? U_VBUF_UPLOAD_FLUSHED : 0;
 }
 
 static void u_vbuf_translate_end(struct u_vbuf_mgr_priv *mgr)
@@ -510,14 +513,15 @@ void u_vbuf_mgr_set_vertex_buffers(struct u_vbuf_mgr *mgrb,
    mgr->b.nr_real_vertex_buffers = count;
 }
 
-static void u_vbuf_upload_buffers(struct u_vbuf_mgr_priv *mgr,
-                                  int min_index, int max_index,
-                                  unsigned instance_count,
-                                  boolean *upload_flushed)
+static enum u_vbuf_return_flags
+u_vbuf_upload_buffers(struct u_vbuf_mgr_priv *mgr,
+                      int min_index, int max_index,
+                      unsigned instance_count)
 {
    unsigned i, nr = mgr->ve->count;
    unsigned count = max_index + 1 - min_index;
    boolean uploaded[PIPE_MAX_ATTRIBS] = {0};
+   enum u_vbuf_return_flags retval = 0;
 
    for (i = 0; i < nr; i++) {
       unsigned index = mgr->ve->ve[i].vertex_buffer_index;
@@ -537,6 +541,11 @@ static void u_vbuf_upload_buffers(struct u_vbuf_mgr_priv *mgr,
          } else if (vb->stride) {
             first = vb->stride * min_index;
             size = vb->stride * count;
+
+            /* Unusual case when stride is smaller than the format size.
+             * XXX This won't work with interleaved arrays. */
+            if (mgr->ve->native_format_size[i] > vb->stride)
+               size += mgr->ve->native_format_size[i] - vb->stride;
          } else {
             first = 0;
             size = mgr->ve->native_format_size[i];
@@ -551,11 +560,14 @@ static void u_vbuf_upload_buffers(struct u_vbuf_mgr_priv *mgr,
          vb->buffer_offset -= first;
 
          uploaded[index] = TRUE;
-         *upload_flushed = *upload_flushed || flushed;
+         if (flushed)
+            retval |= U_VBUF_UPLOAD_FLUSHED;
       } else {
          assert(mgr->b.real_vertex_buffer[index]);
       }
    }
+
+   return retval;
 }
 
 static void u_vbuf_mgr_compute_max_index(struct u_vbuf_mgr_priv *mgr)
@@ -597,14 +609,13 @@ static void u_vbuf_mgr_compute_max_index(struct u_vbuf_mgr_priv *mgr)
    }
 }
 
-void u_vbuf_mgr_draw_begin(struct u_vbuf_mgr *mgrb,
-                           const struct pipe_draw_info *info,
-                           boolean *buffers_updated,
-                           boolean *uploader_flushed)
+enum u_vbuf_return_flags
+u_vbuf_mgr_draw_begin(struct u_vbuf_mgr *mgrb,
+                      const struct pipe_draw_info *info)
 {
    struct u_vbuf_mgr_priv *mgr = (struct u_vbuf_mgr_priv*)mgrb;
-   boolean bufs_updated = FALSE, upload_flushed = FALSE;
    int min_index, max_index;
+   enum u_vbuf_return_flags retval = 0;
 
    u_vbuf_mgr_compute_max_index(mgr);
 
@@ -617,27 +628,20 @@ void u_vbuf_mgr_draw_begin(struct u_vbuf_mgr *mgrb,
 
    /* Translate vertices with non-native layouts or formats. */
    if (mgr->incompatible_vb_layout || mgr->ve->incompatible_layout) {
-      u_vbuf_translate_begin(mgr, min_index, max_index, &upload_flushed);
+      retval |= u_vbuf_translate_begin(mgr, min_index, max_index);
 
       if (mgr->fallback_ve) {
-         bufs_updated = TRUE;
+         retval |= U_VBUF_BUFFERS_UPDATED;
       }
    }
 
    /* Upload user buffers. */
    if (mgr->any_user_vbs) {
-      u_vbuf_upload_buffers(mgr, min_index, max_index, info->instance_count,
-                            &upload_flushed);
-      bufs_updated = TRUE;
+      retval |= u_vbuf_upload_buffers(mgr, min_index, max_index,
+                                      info->instance_count);
+      retval |= U_VBUF_BUFFERS_UPDATED;
    }
-
-   /* Set the return values. */
-   if (buffers_updated) {
-      *buffers_updated = bufs_updated;
-   }
-   if (uploader_flushed) {
-      *uploader_flushed = upload_flushed;
-   }
+   return retval;
 }
 
 void u_vbuf_mgr_draw_end(struct u_vbuf_mgr *mgrb)

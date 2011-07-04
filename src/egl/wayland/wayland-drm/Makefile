@@ -34,6 +34,7 @@ depend:
 clean:
 	rm -rf libwayland-drm.a $(wayland_drm_OBJECTS) \
 		$(GEN_SOURCES) $(GEN_HEADERS)
+	rm -f depend depend.bak
 
 install:
 	@echo -n ""

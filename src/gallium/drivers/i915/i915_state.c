@@ -146,6 +146,7 @@ i915_create_blend_state(struct pipe_context *pipe,
    if (blend->dither)
       cso_data->LIS5 |= S5_COLOR_DITHER_ENABLE;
 
+   /* XXX here take the target fixup into account */
    if ((blend->rt[0].colormask & PIPE_MASK_R) == 0)
       cso_data->LIS5 |= S5_WRITEDISABLE_RED;
 
@@ -246,7 +247,7 @@ i915_create_sampler_state(struct pipe_context *pipe,
    if (sampler->compare_mode == PIPE_TEX_COMPARE_R_TO_TEXTURE) 
    {
       cso->state[0] |= (SS2_SHADOW_ENABLE |
-                        i915_translate_compare_func(sampler->compare_func));
+                        i915_translate_shadow_compare_func(sampler->compare_func));
 
       minFilt = FILTER_4X4_FLAT;
       magFilt = FILTER_4X4_FLAT;
@@ -466,6 +467,7 @@ i915_create_fs_state(struct pipe_context *pipe,
    if (!ifs)
       return NULL;
 
+   ifs->draw_data = draw_create_fragment_shader(i915->draw, templ);
    ifs->state.tokens = tgsi_dup_tokens(templ->tokens);
 
    tgsi_scan_shader(templ->tokens, &ifs->info);
@@ -495,6 +497,8 @@ i915_bind_fs_state(struct pipe_context *pipe, void *shader)
 
    i915->fs = (struct i915_fragment_shader*) shader;
 
+   draw_bind_fragment_shader(i915->draw,  (i915->fs ? i915->fs->draw_data : NULL));
+
    i915->dirty |= I915_NEW_FS;
 }
 
@@ -503,11 +507,13 @@ void i915_delete_fs_state(struct pipe_context *pipe, void *shader)
 {
    struct i915_fragment_shader *ifs = (struct i915_fragment_shader *) shader;
 
-   if (ifs->program)
+   if (ifs->program) {
       FREE(ifs->program);
+      ifs->program = NULL;
+      FREE((struct tgsi_token *)ifs->state.tokens);
+      ifs->state.tokens = NULL;
+   }
    ifs->program_len = 0;
-
-   FREE((struct tgsi_token *)ifs->state.tokens);
 
    FREE(ifs);
 }

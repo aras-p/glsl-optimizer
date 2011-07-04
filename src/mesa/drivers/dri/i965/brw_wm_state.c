@@ -90,13 +90,25 @@ brw_prepare_wm_unit(struct brw_context *brw)
 	     brw->wm.prog_data->first_curbe_grf_16);
    }
 
-   /* CACHE_NEW_WM_PROG */
+   /* BRW_NEW_PROGRAM_CACHE | CACHE_NEW_WM_PROG */
    wm->thread0.grf_reg_count = brw->wm.prog_data->reg_blocks;
    wm->wm9.grf_reg_count_2 = brw->wm.prog_data->reg_blocks_16;
-   wm->thread0.kernel_start_pointer = brw->wm.prog_bo->offset >> 6; /* reloc */
-   /* reloc */
-   wm->wm9.kernel_start_pointer_2 = (brw->wm.prog_bo->offset +
-				     brw->wm.prog_data->prog_offset_16) >> 6;
+
+   wm->thread0.kernel_start_pointer =
+      brw_program_reloc(brw,
+			brw->wm.state_offset +
+			offsetof(struct brw_wm_unit_state, thread0),
+			brw->wm.prog_offset +
+			(wm->thread0.grf_reg_count << 1)) >> 6;
+
+   wm->wm9.kernel_start_pointer_2 =
+      brw_program_reloc(brw,
+			brw->wm.state_offset +
+			offsetof(struct brw_wm_unit_state, wm9),
+			brw->wm.prog_offset +
+			brw->wm.prog_data->prog_offset_16 +
+			(wm->wm9.grf_reg_count_2 << 1)) >> 6;
+
    wm->thread1.depth_coef_urb_read_offset = 1;
    wm->thread1.floating_point_mode = BRW_FLOATING_POINT_NON_IEEE_754;
 
@@ -214,23 +226,6 @@ brw_prepare_wm_unit(struct brw_context *brw)
    if (unlikely(INTEL_DEBUG & DEBUG_STATS) || intel->stats_wm)
       wm->wm4.stats_enable = 1;
 
-   /* Emit WM program relocation */
-   drm_intel_bo_emit_reloc(intel->batch.bo,
-			   brw->wm.state_offset +
-			   offsetof(struct brw_wm_unit_state, thread0),
-			   brw->wm.prog_bo, wm->thread0.grf_reg_count << 1,
-			   I915_GEM_DOMAIN_INSTRUCTION, 0);
-
-   if (brw->wm.prog_data->prog_offset_16) {
-      drm_intel_bo_emit_reloc(intel->batch.bo,
-			      brw->wm.state_offset +
-			      offsetof(struct brw_wm_unit_state, wm9),
-			      brw->wm.prog_bo,
-			      ((wm->wm9.grf_reg_count_2 << 1) +
-			       brw->wm.prog_data->prog_offset_16),
-			      I915_GEM_DOMAIN_INSTRUCTION, 0);
-   }
-
    /* Emit scratch space relocation */
    if (brw->wm.prog_data->total_scratch != 0) {
       drm_intel_bo_emit_reloc(intel->batch.bo,
@@ -265,6 +260,7 @@ const struct brw_tracked_state brw_wm_unit = {
 	       _NEW_BUFFERS),
 
       .brw = (BRW_NEW_BATCH |
+	      BRW_NEW_PROGRAM_CACHE |
 	      BRW_NEW_FRAGMENT_PROGRAM |
 	      BRW_NEW_CURBE_OFFSETS |
 	      BRW_NEW_NR_WM_SURFACES),

@@ -1296,8 +1296,11 @@ ir_to_mesa_visitor::visit(ir_expression *ir)
       emit_scalar(ir, OPCODE_RSQ, result_dst, op[0]);
       break;
    case ir_unop_i2f:
+   case ir_unop_u2f:
    case ir_unop_b2f:
    case ir_unop_b2i:
+   case ir_unop_i2u:
+   case ir_unop_u2i:
       /* Mesa IR lacks types, ints are stored as truncated floats. */
       result_src = op[0];
       break;
@@ -1335,7 +1338,6 @@ ir_to_mesa_visitor::visit(ir_expression *ir)
       break;
 
    case ir_unop_bit_not:
-   case ir_unop_u2f:
    case ir_binop_lshift:
    case ir_binop_rshift:
    case ir_binop_bit_and:

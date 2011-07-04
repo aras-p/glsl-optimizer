@@ -91,7 +91,7 @@ struct intel_mipmap_tree
    /* Effectively the key:
     */
    GLenum target;
-   GLenum internal_format;
+   gl_format format;
 
    GLuint first_level;
    GLuint last_level;
@@ -136,24 +136,20 @@ struct intel_mipmap_tree
 
 struct intel_mipmap_tree *intel_miptree_create(struct intel_context *intel,
                                                GLenum target,
-                                               GLenum base_format,
-                                               GLenum internal_format,
+					       gl_format format,
                                                GLuint first_level,
                                                GLuint last_level,
                                                GLuint width0,
                                                GLuint height0,
                                                GLuint depth0,
-                                               GLuint cpp,
-                                               GLuint compress_byte,
 					       GLboolean expect_accelerated_upload);
 
 struct intel_mipmap_tree *
 intel_miptree_create_for_region(struct intel_context *intel,
 				GLenum target,
-				GLenum internal_format,
+				gl_format format,
 				struct intel_region *region,
-				GLuint depth0,
-				GLuint compress_byte);
+				GLuint depth0);
 
 int intel_miptree_pitch_align (struct intel_context *intel,
 			       struct intel_mipmap_tree *mt,

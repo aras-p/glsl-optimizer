@@ -166,7 +166,18 @@ ir_expression::constant_expression_value()
 	 data.b[c] = op[0]->value.u[c] ? true : false;
       }
       break;
-
+   case ir_unop_u2i:
+      assert(op[0]->type->base_type == GLSL_TYPE_UINT);
+      for (unsigned c = 0; c < op[0]->type->components(); c++) {
+	 data.i[c] = op[0]->value.u[c];
+      }
+      break;
+   case ir_unop_i2u:
+      assert(op[0]->type->base_type == GLSL_TYPE_INT);
+      for (unsigned c = 0; c < op[0]->type->components(); c++) {
+	 data.u[c] = op[0]->value.i[c];
+      }
+      break;
    case ir_unop_any:
       assert(op[0]->type->is_boolean());
       data.b[0] = false;

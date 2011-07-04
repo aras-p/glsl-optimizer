@@ -133,9 +133,14 @@ static void upload_sf_unit( struct brw_context *brw )
 
    memset(sf, 0, sizeof(*sf));
 
-   /* CACHE_NEW_SF_PROG */
+   /* BRW_NEW_PROGRAM_CACHE | CACHE_NEW_SF_PROG */
    sf->thread0.grf_reg_count = ALIGN(brw->sf.prog_data->total_grf, 16) / 16 - 1;
-   sf->thread0.kernel_start_pointer = brw->sf.prog_bo->offset >> 6; /* reloc */
+   sf->thread0.kernel_start_pointer =
+      brw_program_reloc(brw,
+			brw->sf.state_offset +
+			offsetof(struct brw_sf_unit_state, thread0),
+			brw->sf.prog_offset +
+			(sf->thread0.grf_reg_count << 1)) >> 6;
 
    sf->thread1.floating_point_mode = BRW_FLOATING_POINT_NON_IEEE_754;
 
@@ -282,11 +287,6 @@ static void upload_sf_unit( struct brw_context *brw )
    /* STATE_PREFETCH command description describes this state as being
     * something loaded through the GPE (L2 ISC), so it's INSTRUCTION domain.
     */
-   /* Emit SF program relocation */
-   drm_intel_bo_emit_reloc(bo, (brw->sf.state_offset +
-				offsetof(struct brw_sf_unit_state, thread0)),
-			   brw->sf.prog_bo, sf->thread0.grf_reg_count << 1,
-			   I915_GEM_DOMAIN_INSTRUCTION, 0);
 
    /* Emit SF viewport relocation */
    drm_intel_bo_emit_reloc(bo, (brw->sf.state_offset +
@@ -308,6 +308,7 @@ const struct brw_tracked_state brw_sf_unit = {
 		_NEW_SCISSOR |
 		_NEW_BUFFERS),
       .brw   = (BRW_NEW_BATCH |
+		BRW_NEW_PROGRAM_CACHE |
 		BRW_NEW_URB_FENCE),
       .cache = (CACHE_NEW_SF_VP |
 		CACHE_NEW_SF_PROG)

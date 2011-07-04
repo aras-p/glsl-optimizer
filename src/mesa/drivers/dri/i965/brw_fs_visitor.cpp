@@ -349,6 +349,14 @@ fs_visitor::visit(ir_expression *ir)
       emit_math(FS_OPCODE_RSQ, this->result, op[0]);
       break;
 
+   case ir_unop_i2u:
+      op[0].type = BRW_REGISTER_TYPE_UD;
+      this->result = op[0];
+      break;
+   case ir_unop_u2i:
+      op[0].type = BRW_REGISTER_TYPE_D;
+      this->result = op[0];
+      break;
    case ir_unop_i2f:
    case ir_unop_b2f:
    case ir_unop_b2i:
@@ -549,7 +557,7 @@ fs_visitor::emit_texture_gen4(ir_texture *ir, fs_reg dst, fs_reg coordinate,
    /* g0 header. */
    mlen = 1;
 
-   if (ir->shadow_comparitor) {
+   if (ir->shadow_comparitor && ir->op != ir_txd) {
       for (int i = 0; i < ir->coordinate->type->vector_elements; i++) {
 	 fs_inst *inst = emit(BRW_OPCODE_MOV,
 			      fs_reg(MRF, base_mrf + mlen + i), coordinate);
@@ -595,7 +603,42 @@ fs_visitor::emit_texture_gen4(ir_texture *ir, fs_reg dst, fs_reg coordinate,
       /* gen4's SIMD8 sampler always has the slots for u,v,r present. */
       mlen += 3;
    } else if (ir->op == ir_txd) {
-      assert(!"TXD isn't supported on gen4 yet.");
+      ir->lod_info.grad.dPdx->accept(this);
+      fs_reg dPdx = this->result;
+
+      ir->lod_info.grad.dPdy->accept(this);
+      fs_reg dPdy = this->result;
+
+      for (int i = 0; i < ir->coordinate->type->vector_elements; i++) {
+	 emit(BRW_OPCODE_MOV, fs_reg(MRF, base_mrf + mlen + i), coordinate);
+	 coordinate.reg_offset++;
+      }
+      /* the slots for u and v are always present, but r is optional */
+      mlen += MAX2(ir->coordinate->type->vector_elements, 2);
+
+      /*  P   = u, v, r
+       * dPdx = dudx, dvdx, drdx
+       * dPdy = dudy, dvdy, drdy
+       *
+       * 2-arg: dudx   dvdx   dudy   dvdy
+       *        dPdx.x dPdx.y dPdy.x dPdy.y
+       *        m4     m5     m6     m7
+       *
+       * 3-arg: dudx   dvdx   drdx   dudy   dvdy   drdy
+       *        dPdx.x dPdx.y dPdx.z dPdy.x dPdy.y dPdy.z
+       *        m5     m6     m7     m8     m9     m10
+       */
+      for (int i = 0; i < ir->lod_info.grad.dPdx->type->vector_elements; i++) {
+	 emit(BRW_OPCODE_MOV, fs_reg(MRF, base_mrf + mlen), dPdx);
+	 dPdx.reg_offset++;
+	 mlen++;
+      }
+
+      for (int i = 0; i < ir->lod_info.grad.dPdy->type->vector_elements; i++) {
+	 emit(BRW_OPCODE_MOV, fs_reg(MRF, base_mrf + mlen), dPdy);
+	 dPdy.reg_offset++;
+	 mlen++;
+      }
    } else {
       /* Oh joy.  gen4 doesn't have SIMD8 non-shadow-compare bias/lod
        * instructions.  We'll need to do SIMD16 here.
@@ -709,7 +752,7 @@ fs_visitor::emit_texture_gen5(ir_texture *ir, fs_reg dst, fs_reg coordinate,
    }
    mlen += ir->coordinate->type->vector_elements * reg_width;
 
-   if (ir->shadow_comparitor) {
+   if (ir->shadow_comparitor && ir->op != ir_txd) {
       mlen = MAX2(mlen, header_present + 4 * reg_width);
 
       this->result = reg_undef;
@@ -742,7 +785,37 @@ fs_visitor::emit_texture_gen5(ir_texture *ir, fs_reg dst, fs_reg coordinate,
 
       inst = emit(FS_OPCODE_TXL, dst);
       break;
-   case ir_txd:
+   case ir_txd: {
+      ir->lod_info.grad.dPdx->accept(this);
+      fs_reg dPdx = this->result;
+
+      ir->lod_info.grad.dPdy->accept(this);
+      fs_reg dPdy = this->result;
+
+      mlen = MAX2(mlen, header_present + 4 * reg_width); /* skip over 'ai' */
+
+      /**
+       *  P   =  u,    v,    r
+       * dPdx = dudx, dvdx, drdx
+       * dPdy = dudy, dvdy, drdy
+       *
+       * Load up these values:
+       * - dudx   dudy   dvdx   dvdy   drdx   drdy
+       * - dPdx.x dPdy.x dPdx.y dPdy.y dPdx.z dPdy.z
+       */
+      for (int i = 0; i < ir->lod_info.grad.dPdx->type->vector_elements; i++) {
+	 emit(BRW_OPCODE_MOV, fs_reg(MRF, base_mrf + mlen), dPdx);
+	 dPdx.reg_offset++;
+	 mlen += reg_width;
+
+	 emit(BRW_OPCODE_MOV, fs_reg(MRF, base_mrf + mlen), dPdy);
+	 dPdy.reg_offset++;
+	 mlen += reg_width;
+      }
+
+      inst = emit(FS_OPCODE_TXD, dst);
+      break;
+   }
    case ir_txf:
       assert(!"GLSL 1.30 features unsupported");
       break;
@@ -776,7 +849,7 @@ fs_visitor::emit_texture_gen7(ir_texture *ir, fs_reg dst, fs_reg coordinate,
       base_mrf--;
    }
 
-   if (ir->shadow_comparitor) {
+   if (ir->shadow_comparitor && ir->op != ir_txd) {
       ir->shadow_comparitor->accept(this);
       emit(BRW_OPCODE_MOV, fs_reg(MRF, base_mrf + mlen), this->result);
       mlen += reg_width;
@@ -796,20 +869,52 @@ fs_visitor::emit_texture_gen7(ir_texture *ir, fs_reg dst, fs_reg coordinate,
       emit(BRW_OPCODE_MOV, fs_reg(MRF, base_mrf + mlen), this->result);
       mlen += reg_width;
       break;
-   case ir_txd:
+   case ir_txd: {
+      if (c->dispatch_width == 16)
+	 fail("Gen7 does not support sample_d/sample_d_c in SIMD16 mode.");
+
+      ir->lod_info.grad.dPdx->accept(this);
+      fs_reg dPdx = this->result;
+
+      ir->lod_info.grad.dPdy->accept(this);
+      fs_reg dPdy = this->result;
+
+      /* Load dPdx and the coordinate together:
+       * [hdr], [ref], x, dPdx.x, dPdy.x, y, dPdx.y, dPdy.y, z, dPdx.z, dPdy.z
+       */
+      for (int i = 0; i < ir->coordinate->type->vector_elements; i++) {
+	 fs_inst *inst = emit(BRW_OPCODE_MOV, fs_reg(MRF, base_mrf + mlen),
+			      coordinate);
+	 if (i < 3 && c->key.gl_clamp_mask[i] & (1 << sampler))
+	    inst->saturate = true;
+	 coordinate.reg_offset++;
+	 mlen += reg_width;
+
+	 emit(BRW_OPCODE_MOV, fs_reg(MRF, base_mrf + mlen), dPdx);
+	 dPdx.reg_offset++;
+	 mlen += reg_width;
+
+	 emit(BRW_OPCODE_MOV, fs_reg(MRF, base_mrf + mlen), dPdy);
+	 dPdy.reg_offset++;
+	 mlen += reg_width;
+      }
+      break;
+   }
    case ir_txf:
       assert(!"GLSL 1.30 features unsupported");
       break;
    }
 
-   /* Set up the coordinate */
-   for (int i = 0; i < ir->coordinate->type->vector_elements; i++) {
-      fs_inst *inst = emit(BRW_OPCODE_MOV, fs_reg(MRF, base_mrf + mlen),
-			   coordinate);
-      if (i < 3 && c->key.gl_clamp_mask[i] & (1 << sampler))
-	 inst->saturate = true;
-      coordinate.reg_offset++;
-      mlen += reg_width;
+   /* Set up the coordinate (except for TXD where it was done earlier) */
+   if (ir->op != ir_txd) {
+      for (int i = 0; i < ir->coordinate->type->vector_elements; i++) {
+	 fs_inst *inst = emit(BRW_OPCODE_MOV, fs_reg(MRF, base_mrf + mlen),
+			      coordinate);
+	 if (i < 3 && c->key.gl_clamp_mask[i] & (1 << sampler))
+	    inst->saturate = true;
+	 coordinate.reg_offset++;
+	 mlen += reg_width;
+      }
    }
 
    /* Generate the SEND */
@@ -835,8 +940,23 @@ fs_visitor::emit_texture_gen7(ir_texture *ir, fs_reg dst, fs_reg coordinate,
 void
 fs_visitor::visit(ir_texture *ir)
 {
-   int sampler;
    fs_inst *inst = NULL;
+
+   int sampler = _mesa_get_sampler_uniform_value(ir->sampler, prog, &fp->Base);
+   sampler = fp->Base.SamplerUnits[sampler];
+
+   /* Our hardware doesn't have a sample_d_c message, so shadow compares
+    * for textureGrad/TXD need to be emulated with instructions.
+    */
+   bool hw_compare_supported = ir->op != ir_txd;
+   if (ir->shadow_comparitor && !hw_compare_supported) {
+      assert(c->key.compare_funcs[sampler] != GL_NONE);
+      /* No need to even sample for GL_ALWAYS or GL_NEVER...bail early */
+      if (c->key.compare_funcs[sampler] == GL_ALWAYS)
+	 return swizzle_result(ir, fs_reg(1.0f), sampler);
+      else if (c->key.compare_funcs[sampler] == GL_NEVER)
+	 return swizzle_result(ir, fs_reg(0.0f), sampler);
+   }
 
    this->result = reg_undef;
    ir->coordinate->accept(this);
@@ -875,11 +995,6 @@ fs_visitor::visit(ir_texture *ir)
 
    /* Should be lowered by do_lower_texture_projection */
    assert(!ir->projector);
-
-   sampler = _mesa_get_sampler_uniform_value(ir->sampler,
-					     prog,
-					     &fp->Base);
-   sampler = fp->Base.SamplerUnits[sampler];
 
    /* The 965 requires the EU to do the normalization of GL rectangle
     * texture coordinates.  We use the program parameter state
@@ -951,20 +1066,69 @@ fs_visitor::visit(ir_texture *ir)
 
    inst->sampler = sampler;
 
-   this->result = dst;
+   if (ir->shadow_comparitor) {
+      if (hw_compare_supported) {
+	 inst->shadow_compare = true;
+      } else {
+	 ir->shadow_comparitor->accept(this);
+	 fs_reg ref = this->result;
 
-   if (ir->shadow_comparitor)
-      inst->shadow_compare = true;
+	 fs_reg value = dst;
+	 dst = fs_reg(this, glsl_type::vec4_type);
+
+	 /* FINISHME: This needs to be done pre-filtering. */
+
+	 uint32_t conditional = 0;
+	 switch (c->key.compare_funcs[sampler]) {
+	 /* GL_ALWAYS and GL_NEVER were handled at the top of the function */
+	 case GL_LESS:     conditional = BRW_CONDITIONAL_L;   break;
+	 case GL_GREATER:  conditional = BRW_CONDITIONAL_G;   break;
+	 case GL_LEQUAL:   conditional = BRW_CONDITIONAL_LE;  break;
+	 case GL_GEQUAL:   conditional = BRW_CONDITIONAL_GE;  break;
+	 case GL_EQUAL:    conditional = BRW_CONDITIONAL_EQ;  break;
+	 case GL_NOTEQUAL: conditional = BRW_CONDITIONAL_NEQ; break;
+	 default: assert(!"Should not get here: bad shadow compare function");
+	 }
+
+	 /* Use conditional moves to load 0 or 1 as the result */
+	 this->current_annotation = "manual shadow comparison";
+	 for (int i = 0; i < 4; i++) {
+	    inst = emit(BRW_OPCODE_MOV, dst, fs_reg(0.0f));
+
+	    inst = emit(BRW_OPCODE_CMP, reg_null_f, ref, value);
+	    inst->conditional_mod = conditional;
+
+	    inst = emit(BRW_OPCODE_MOV, dst, fs_reg(1.0f));
+	    inst->predicated = true;
+
+	    dst.reg_offset++;
+	    value.reg_offset++;
+	 }
+	 dst.reg_offset = 0;
+      }
+   }
+
+   swizzle_result(ir, dst, sampler);
+}
+
+/**
+ * Swizzle the result of a texture result.  This is necessary for
+ * EXT_texture_swizzle as well as DEPTH_TEXTURE_MODE for shadow comparisons.
+ */
+void
+fs_visitor::swizzle_result(ir_texture *ir, fs_reg orig_val, int sampler)
+{
+   this->result = orig_val;
 
    if (ir->type == glsl_type::float_type) {
       /* Ignore DEPTH_TEXTURE_MODE swizzling. */
       assert(ir->sampler->type->sampler_shadow);
-   } else if (c->key.tex_swizzles[inst->sampler] != SWIZZLE_NOOP) {
-      fs_reg swizzle_dst = fs_reg(this, glsl_type::vec4_type);
+   } else if (c->key.tex_swizzles[sampler] != SWIZZLE_NOOP) {
+      fs_reg swizzled_result = fs_reg(this, glsl_type::vec4_type);
 
       for (int i = 0; i < 4; i++) {
-	 int swiz = GET_SWZ(c->key.tex_swizzles[inst->sampler], i);
-	 fs_reg l = swizzle_dst;
+	 int swiz = GET_SWZ(c->key.tex_swizzles[sampler], i);
+	 fs_reg l = swizzled_result;
 	 l.reg_offset += i;
 
 	 if (swiz == SWIZZLE_ZERO) {
@@ -972,12 +1136,12 @@ fs_visitor::visit(ir_texture *ir)
 	 } else if (swiz == SWIZZLE_ONE) {
 	    emit(BRW_OPCODE_MOV, l, fs_reg(1.0f));
 	 } else {
-	    fs_reg r = dst;
-	    r.reg_offset += GET_SWZ(c->key.tex_swizzles[inst->sampler], i);
+	    fs_reg r = orig_val;
+	    r.reg_offset += GET_SWZ(c->key.tex_swizzles[sampler], i);
 	    emit(BRW_OPCODE_MOV, l, r);
 	 }
       }
-      this->result = swizzle_dst;
+      this->result = swizzled_result;
    }
 }
 
@@ -1466,7 +1630,7 @@ fs_visitor::emit_dummy_fs()
 
    fs_inst *write;
    write = emit(FS_OPCODE_FB_WRITE, fs_reg(0), fs_reg(0));
-   write->base_mrf = 0;
+   write->base_mrf = 2;
 }
 
 /* The register location here is relative to the start of the URB
@@ -1627,7 +1791,7 @@ fs_visitor::emit_fb_writes()
 {
    this->current_annotation = "FB write header";
    GLboolean header_present = GL_TRUE;
-   int nr = 0;
+   int nr = 2;
    int reg_width = c->dispatch_width / 8;
 
    if (intel->gen >= 6 &&
@@ -1637,7 +1801,7 @@ fs_visitor::emit_fb_writes()
    }
 
    if (header_present) {
-      /* m0, m1 header */
+      /* m2, m3 header */
       nr += 2;
    }
 
@@ -1706,7 +1870,7 @@ fs_visitor::emit_fb_writes()
 
       fs_inst *inst = emit(FS_OPCODE_FB_WRITE);
       inst->target = target;
-      inst->base_mrf = 0;
+      inst->base_mrf = 2;
       inst->mlen = nr;
       if (target == c->key.nr_color_regions - 1)
 	 inst->eot = true;
@@ -1724,7 +1888,7 @@ fs_visitor::emit_fb_writes()
       }
 
       fs_inst *inst = emit(FS_OPCODE_FB_WRITE);
-      inst->base_mrf = 0;
+      inst->base_mrf = 2;
       inst->mlen = nr;
       inst->eot = true;
       inst->header_present = header_present;

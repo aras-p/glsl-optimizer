@@ -122,7 +122,8 @@ static void upload_viewport_state_pointers(struct brw_context *brw)
 const struct brw_tracked_state gen6_viewport_state = {
    .dirty = {
       .mesa = 0,
-      .brw = BRW_NEW_BATCH,
+      .brw = (BRW_NEW_BATCH |
+	      BRW_NEW_STATE_BASE_ADDRESS),
       .cache = (CACHE_NEW_CLIP_VP |
 		CACHE_NEW_SF_VP |
 		CACHE_NEW_CC_VP)

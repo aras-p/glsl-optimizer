@@ -204,6 +204,9 @@ struct st_context
    /* Active render condition. */
    struct pipe_query *render_condition;
    unsigned condition_mode;
+
+   int32_t draw_stamp;
+   int32_t read_stamp;
 };
 
 
@@ -227,7 +230,8 @@ struct st_framebuffer
    struct st_framebuffer_iface *iface;
    enum st_attachment_type statts[ST_ATTACHMENT_COUNT];
    unsigned num_statts;
-   int32_t revalidate;
+   int32_t stamp;
+   int32_t iface_stamp;
 };
 
 

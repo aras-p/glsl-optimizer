@@ -34,7 +34,9 @@
 
 #include "pipe/p_context.h"
 #include "pipe/p_defines.h"
+#include "pipe/p_format.h"
 
+#include "util/u_format.h"
 #include "util/u_math.h"
 #include "util/u_memory.h"
 
@@ -128,7 +130,7 @@ validate_immediate(struct i915_context *i915, unsigned *batch_space)
 static void
 emit_immediate(struct i915_context *i915)
 {
-   /* remove unwatned bits and S7 */
+   /* remove unwanted bits and S7 */
    unsigned dirty = (1 << I915_IMMEDIATE_S0 | 1 << I915_IMMEDIATE_S1 |
                      1 << I915_IMMEDIATE_S2 | 1 << I915_IMMEDIATE_S3 |
                      1 << I915_IMMEDIATE_S3 | 1 << I915_IMMEDIATE_S4 |
@@ -341,6 +343,59 @@ emit_constants(struct i915_context *i915)
    }
 }
 
+static const struct
+{
+   enum pipe_format format;
+   uint hw_shift_R;
+   uint hw_shift_G;
+   uint hw_shift_B;
+   uint hw_shift_A;
+} fixup_formats[] = {
+   { PIPE_FORMAT_R8G8B8A8_UNORM, 20, 24, 28, 16 /* BGRA */},
+   { PIPE_FORMAT_L8_UNORM,       28, 28, 28, 16 /* RRRA */},
+   { PIPE_FORMAT_I8_UNORM,       28, 28, 28, 16 /* RRRA */},
+   { PIPE_FORMAT_A8_UNORM,       16, 16, 16, 16 /* AAAA */},
+   { PIPE_FORMAT_NONE,           0,   0,  0,  0},
+};
+
+static boolean need_fixup(struct pipe_surface* p)
+{
+   enum pipe_format f;
+
+   /* if we don't have a surface bound yet, we don't need to fixup the shader */
+   if (!p)
+      return FALSE;
+
+   f = p->format;
+   for(int i=0; fixup_formats[i].format != PIPE_FORMAT_NONE; i++)
+      if (fixup_formats[i].format == f)
+         return TRUE;
+
+   return FALSE;
+}
+
+static uint fixup_swizzle(enum pipe_format f, uint v)
+{
+   int i;
+
+   for(i=0; fixup_formats[i].format != PIPE_FORMAT_NONE; i++)
+      if (fixup_formats[i].format == f)
+           break;
+
+   if (fixup_formats[i].format == PIPE_FORMAT_NONE)
+	   return v;
+
+   uint rgba = v & 0xFFFF0000;
+
+   v &= 0xFFFF;
+   v |= ((rgba >> fixup_formats[i].hw_shift_R) & 0xF) << 28;
+   v |= ((rgba >> fixup_formats[i].hw_shift_G) & 0xF) << 24;
+   v |= ((rgba >> fixup_formats[i].hw_shift_B) & 0xF) << 20;
+   v |= ((rgba >> fixup_formats[i].hw_shift_A) & 0xF) << 16;
+
+   return v;
+}
+
 static void
 validate_program(struct i915_context *i915, unsigned *batch_space)
 {
@@ -350,12 +405,39 @@ validate_program(struct i915_context *i915, unsigned *batch_space)
 static void
 emit_program(struct i915_context *i915)
 {
-      uint i;
-      /* we should always have, at least, a pass-through program */
-      assert(i915->fs->program_len > 0);
-      for (i = 0; i < i915->fs->program_len; i++) {
-         OUT_BATCH(i915->fs->program[i]);
+   struct pipe_surface *cbuf_surface = i915->framebuffer.cbufs[0];
+   boolean need_format_fixup = need_fixup(cbuf_surface);
+   int i;
+   int fixup_offset = -1;
+
+   /* we should always have, at least, a pass-through program */
+   assert(i915->fs->program_len > 0);
+
+   if (need_format_fixup) {
+      /* Find where we emit the output color */
+      for (i = i915->fs->program_len - 3; i>0; i-=3) {
+         uint instr = i915->fs->program[i];
+         if ((instr & (REG_NR_MASK << A0_DEST_TYPE_SHIFT)) == 
+             (REG_TYPE_OC << A0_DEST_TYPE_SHIFT) ) {
+            /* Found it! */
+            fixup_offset = i + 1;
+            break;
+	 }
       }
+      if (fixup_offset == -1) {
+         need_format_fixup = FALSE;
+         debug_printf("couldn't find fixup offset\n");
+      }
+   }
+
+   /* emit the program to the hw */
+   for (i = 0; i < i915->fs->program_len; i++) {
+      if (need_format_fixup && (i == fixup_offset) ) {
+         uint v = fixup_swizzle(cbuf_surface->format, i915->fs->program[i]);
+         OUT_BATCH(v);
+      } else
+         OUT_BATCH(i915->fs->program[i]);
+   }
 }
 
 static void

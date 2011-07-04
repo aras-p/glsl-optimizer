@@ -256,6 +256,8 @@ static void *evergreen_create_rs_state(struct pipe_context *ctx,
 	}
 
 	rstate = &rs->rstate;
+	rs->clamp_vertex_color = state->clamp_vertex_color;
+	rs->clamp_fragment_color = state->clamp_fragment_color;
 	rs->flatshade = state->flatshade;
 	rs->sprite_coord_enable = state->sprite_coord_enable;
 
@@ -482,19 +484,27 @@ static void evergreen_set_ps_sampler_view(struct pipe_context *ctx, unsigned cou
 	struct r600_pipe_context *rctx = (struct r600_pipe_context *)ctx;
 	struct r600_pipe_sampler_view **resource = (struct r600_pipe_sampler_view **)views;
 	int i;
+	int has_depth = 0;
 
 	for (i = 0; i < count; i++) {
 		if (&rctx->ps_samplers.views[i]->base != views[i]) {
-			if (resource[i])
+			if (resource[i]) {
+				if (((struct r600_resource_texture *)resource[i]->base.texture)->depth)
+					has_depth = 1;
 				evergreen_context_pipe_state_set_ps_resource(&rctx->ctx, &resource[i]->state,
 									     i + R600_MAX_CONST_BUFFERS);
-			else
+			} else
 				evergreen_context_pipe_state_set_ps_resource(&rctx->ctx, NULL,
 									     i + R600_MAX_CONST_BUFFERS);
 
 			pipe_sampler_view_reference(
 				(struct pipe_sampler_view **)&rctx->ps_samplers.views[i],
 				views[i]);
+		} else {
+			if (resource[i]) {
+				if (((struct r600_resource_texture *)resource[i]->base.texture)->depth)
+					has_depth = 1;
+			}
 		}
 	}
 	for (i = count; i < NUM_TEX_UNITS; i++) {
@@ -504,6 +514,7 @@ static void evergreen_set_ps_sampler_view(struct pipe_context *ctx, unsigned cou
 			pipe_sampler_view_reference((struct pipe_sampler_view **)&rctx->ps_samplers.views[i], NULL);
 		}
 	}
+	rctx->have_depth_texture = has_depth;
 	rctx->ps_samplers.n_views = count;
 }
 
@@ -689,6 +700,9 @@ static void evergreen_cb(struct r600_pipe_context *rctx, struct r600_pipe_state 
 	surf = (struct r600_surface *)state->cbufs[cb];
 	rtex = (struct r600_resource_texture*)state->cbufs[cb]->texture;
 
+	if (rtex->depth)
+		rctx->have_depth_fb = TRUE;
+
 	if (rtex->depth && !rtex->is_flushing_texture) {
 	        r600_texture_depth_flush(&rctx->context, state->cbufs[cb]->texture, TRUE);
 		rtex = rtex->flushed_depth_texture;
@@ -870,6 +884,8 @@ static void evergreen_set_framebuffer_state(struct pipe_context *ctx,
 	util_copy_framebuffer_state(&rctx->framebuffer, state);
 
 	/* build states */
+	rctx->have_depth_fb = 0;
+	rctx->nr_cbufs = state->nr_cbufs;
 	for (int i = 0; i < state->nr_cbufs; i++) {
 		evergreen_cb(rctx, rstate, state, i);
 	}
@@ -1616,7 +1632,10 @@ void evergreen_pipe_shader_ps(struct pipe_context *ctx, struct r600_pipe_shader 
 		    rshader->output[i].name == TGSI_SEMANTIC_STENCIL)
 			exports_ps |= 1;
 		else if (rshader->output[i].name == TGSI_SEMANTIC_COLOR) {
-			num_cout++;
+			if (rshader->fs_write_all)
+				num_cout = rshader->nr_cbufs;
+			else
+				num_cout++;
 		}
 	}
 	exports_ps |= S_02884C_EXPORT_COLORS(num_cout);

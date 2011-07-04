@@ -11,7 +11,7 @@
 <H1>OpenVG State Tracker</H1>
 
 <p>
-The current version of the OpenVG state tracker implements OpenVG 1.0.
+The current version of the OpenVG state tracker implements OpenVG 1.1.
 </p>
 <p>
 More informations about OpenVG can be found at
@@ -26,9 +26,9 @@ Please refer to <a href="egl.html">Mesa EGL</a> for more information about EGL.
 
 <h2>Building the library</h2>
 <ol>
-<li>Run <code>configure</code> with <code>--enable-openvg</code>.  If you do
-not need OpenGL, you can add <code>--disable-opengl</code> to save the
-compilation time.</li>
+<li>Run <code>configure</code> with <code>--enable-openvg</code> and
+<code>--enable-gallium-egl</code>.  If you do not need OpenGL, you can add
+<code>--disable-opengl</code> to save the compilation time.</li>
 
 <li>Build and install Mesa as usual.</li>
 </ol>
@@ -36,7 +36,7 @@ compilation time.</li>
 <h3>Sample build</h3>
 A sample build looks as follows:
 <pre>
-  $ ./configure --disable-opengl --enable-openvg
+  $ ./configure --disable-opengl --enable-openvg --enable-gallium-egl
   $ make
   $ make install
 </pre>

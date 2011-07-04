@@ -768,7 +768,16 @@ aapoint_reset_stipple_counter(struct draw_stage *stage)
 static void
 aapoint_destroy(struct draw_stage *stage)
 {
+   struct aapoint_stage* aapoint = aapoint_stage(stage);
+   struct pipe_context *pipe = stage->draw->pipe;
+
    draw_free_temp_verts( stage );
+
+   /* restore the old entry points */
+   pipe->create_fs_state = aapoint->driver_create_fs_state;
+   pipe->bind_fs_state = aapoint->driver_bind_fs_state;
+   pipe->delete_fs_state = aapoint->driver_delete_fs_state;
+
    FREE( stage );
 }
 

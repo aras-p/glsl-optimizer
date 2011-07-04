@@ -28,6 +28,15 @@
 
 #include "common/egl_g3d_loader.h"
 #include "egldriver.h"
+#include "egllog.h"
+
+#ifdef HAVE_LIBUDEV
+#include <stdio.h> /* for sscanf */
+#include <libudev.h>
+#endif
+
+#define DRIVER_MAP_GALLIUM_ONLY
+#include "pci_ids/pci_id_driver_map.h"
 
 #include "egl_pipe.h"
 #include "egl_st.h"
@@ -52,15 +61,108 @@ get_st_api(enum st_api_type api)
    return stmod->stapi;
 }
 
-static struct st_api *
-guess_gl_api(enum st_profile_type profile)
+#ifdef HAVE_LIBUDEV
+
+static boolean
+drm_fd_get_pci_id(int fd, int *vendor_id, int *chip_id)
 {
-   return get_st_api(ST_API_OPENGL);
+   struct udev *udev = NULL;
+   struct udev_device *device = NULL, *parent;
+   struct stat buf;
+   const char *pci_id;
+
+   *chip_id = -1;
+
+   udev = udev_new();
+   if (fstat(fd, &buf) < 0) {
+      _eglLog(_EGL_WARNING, "failed to stat fd %d", fd);
+      goto out;
+   }
+
+   device = udev_device_new_from_devnum(udev, 'c', buf.st_rdev);
+   if (device == NULL) {
+      _eglLog(_EGL_WARNING,
+              "could not create udev device for fd %d", fd);
+      goto out;
+   }
+
+   parent = udev_device_get_parent(device);
+   if (parent == NULL) {
+      _eglLog(_EGL_WARNING, "could not get parent device");
+      goto out;
+   }
+
+   pci_id = udev_device_get_property_value(parent, "PCI_ID");
+   if (pci_id == NULL ||
+       sscanf(pci_id, "%x:%x", vendor_id, chip_id) != 2) {
+      _eglLog(_EGL_WARNING, "malformed or no PCI ID");
+      *chip_id = -1;
+      goto out;
+   }
+
+out:
+   if (device)
+      udev_device_unref(device);
+   if (udev)
+      udev_unref(udev);
+
+   return (*chip_id >= 0);
+}
+
+#else
+
+static boolean
+drm_fd_get_pci_id(int fd, int *vendor_id, int *chip_id)
+{
+   return FALSE;
+}
+
+#endif /* HAVE_LIBUDEV */
+
+static const char *
+drm_fd_get_screen_name(int fd)
+{
+   int vendor_id, chip_id;
+   int idx, i;
+
+   if (!drm_fd_get_pci_id(fd, &vendor_id, &chip_id)) {
+      _eglLog(_EGL_WARNING, "failed to get driver name for fd %d", fd);
+      return NULL;
+   }
+
+   for (idx = 0; driver_map[idx].driver; idx++) {
+      if (vendor_id != driver_map[idx].vendor_id)
+         continue;
+
+      /* done if no chip id */
+      if (driver_map[idx].num_chips_ids == -1)
+         break;
+
+      for (i = 0; i < driver_map[idx].num_chips_ids; i++) {
+         if (driver_map[idx].chip_ids[i] == chip_id)
+            break;
+      }
+      /* matched! */
+      if (i < driver_map[idx].num_chips_ids)
+         break;
+   }
+
+   _eglLog((driver_map[idx].driver) ? _EGL_INFO : _EGL_WARNING,
+         "pci id for fd %d: %04x:%04x, driver %s",
+         fd, vendor_id, chip_id, driver_map[idx].driver);
+
+   return driver_map[idx].driver;
 }
 
 static struct pipe_screen *
 create_drm_screen(const char *name, int fd)
 {
+   if (!name) {
+      name = drm_fd_get_screen_name(fd);
+      if (!name)
+         return NULL;
+   }
+
    return egl_pipe_create_drm_screen(name, fd);
 }
 
@@ -79,7 +181,6 @@ loader_init(void)
       egl_g3d_loader.profile_masks[i] = egl_st_get_profile_mask(i);
 
    egl_g3d_loader.get_st_api = get_st_api;
-   egl_g3d_loader.guess_gl_api = guess_gl_api;
    egl_g3d_loader.create_drm_screen = create_drm_screen;
    egl_g3d_loader.create_sw_screen = create_sw_screen;
 
@@ -95,7 +196,7 @@ loader_fini(void)
       struct st_module *stmod = &st_modules[i];
 
       if (stmod->stapi) {
-         stmod->stapi->destroy(stmod->stapi);
+         egl_st_destroy_api(stmod->stapi);
          stmod->stapi = NULL;
       }
       stmod->initialized = FALSE;

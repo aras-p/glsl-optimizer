@@ -46,30 +46,26 @@
 
 static uint32_t r300_translate_primitive(unsigned prim)
 {
-    switch (prim) {
-        case PIPE_PRIM_POINTS:
-            return R300_VAP_VF_CNTL__PRIM_POINTS;
-        case PIPE_PRIM_LINES:
-            return R300_VAP_VF_CNTL__PRIM_LINES;
-        case PIPE_PRIM_LINE_LOOP:
-            return R300_VAP_VF_CNTL__PRIM_LINE_LOOP;
-        case PIPE_PRIM_LINE_STRIP:
-            return R300_VAP_VF_CNTL__PRIM_LINE_STRIP;
-        case PIPE_PRIM_TRIANGLES:
-            return R300_VAP_VF_CNTL__PRIM_TRIANGLES;
-        case PIPE_PRIM_TRIANGLE_STRIP:
-            return R300_VAP_VF_CNTL__PRIM_TRIANGLE_STRIP;
-        case PIPE_PRIM_TRIANGLE_FAN:
-            return R300_VAP_VF_CNTL__PRIM_TRIANGLE_FAN;
-        case PIPE_PRIM_QUADS:
-            return R300_VAP_VF_CNTL__PRIM_QUADS;
-        case PIPE_PRIM_QUAD_STRIP:
-            return R300_VAP_VF_CNTL__PRIM_QUAD_STRIP;
-        case PIPE_PRIM_POLYGON:
-            return R300_VAP_VF_CNTL__PRIM_POLYGON;
-        default:
-            return 0;
-    }
+    static const int prim_conv[] = {
+        R300_VAP_VF_CNTL__PRIM_POINTS,
+        R300_VAP_VF_CNTL__PRIM_LINES,
+        R300_VAP_VF_CNTL__PRIM_LINE_LOOP,
+        R300_VAP_VF_CNTL__PRIM_LINE_STRIP,
+        R300_VAP_VF_CNTL__PRIM_TRIANGLES,
+        R300_VAP_VF_CNTL__PRIM_TRIANGLE_STRIP,
+        R300_VAP_VF_CNTL__PRIM_TRIANGLE_FAN,
+        R300_VAP_VF_CNTL__PRIM_QUADS,
+        R300_VAP_VF_CNTL__PRIM_QUAD_STRIP,
+        R300_VAP_VF_CNTL__PRIM_POLYGON,
+        -1,
+        -1,
+        -1,
+        -1
+    };
+    unsigned hwprim = prim_conv[prim];
+
+    assert(hwprim != -1);
+    return hwprim;
 }
 
 static uint32_t r300_provoking_vertex_fixes(struct r300_context *r300,
@@ -179,8 +175,8 @@ static void r300_split_index_bias(struct r300_context *r300, int index_bias,
 enum r300_prepare_flags {
     PREP_EMIT_STATES    = (1 << 0), /* call emit_dirty_state and friends? */
     PREP_VALIDATE_VBOS  = (1 << 1), /* validate VBOs? */
-    PREP_EMIT_AOS       = (1 << 2), /* call emit_vertex_arrays? */
-    PREP_EMIT_AOS_SWTCL = (1 << 3), /* call emit_vertex_arrays_swtcl? */
+    PREP_EMIT_VARRAYS       = (1 << 2), /* call emit_vertex_arrays? */
+    PREP_EMIT_VARRAYS_SWTCL = (1 << 3), /* call emit_vertex_arrays_swtcl? */
     PREP_INDEXED        = (1 << 4)  /* is this draw_elements? */
 };
 
@@ -197,23 +193,22 @@ static boolean r300_reserve_cs_dwords(struct r300_context *r300,
                                       unsigned cs_dwords)
 {
     boolean flushed        = FALSE;
-    boolean first_draw     = flags & PREP_EMIT_STATES;
-    boolean emit_vertex_arrays       = flags & PREP_EMIT_AOS;
-    boolean emit_vertex_arrays_swtcl = flags & PREP_EMIT_AOS_SWTCL;
+    boolean emit_states    = flags & PREP_EMIT_STATES;
+    boolean emit_vertex_arrays       = flags & PREP_EMIT_VARRAYS;
+    boolean emit_vertex_arrays_swtcl = flags & PREP_EMIT_VARRAYS_SWTCL;
 
     /* Add dirty state, index offset, and AOS. */
-    if (first_draw) {
+    if (emit_states)
         cs_dwords += r300_get_num_dirty_dwords(r300);
 
-        if (r300->screen->caps.is_r500)
-            cs_dwords += 2; /* emit_index_offset */
+    if (r300->screen->caps.is_r500)
+        cs_dwords += 2; /* emit_index_offset */
 
-        if (emit_vertex_arrays)
-            cs_dwords += 55; /* emit_vertex_arrays */
+    if (emit_vertex_arrays)
+        cs_dwords += 55; /* emit_vertex_arrays */
 
-        if (emit_vertex_arrays_swtcl)
-            cs_dwords += 7; /* emit_vertex_arrays_swtcl */
-    }
+    if (emit_vertex_arrays_swtcl)
+        cs_dwords += 7; /* emit_vertex_arrays_swtcl */
 
     cs_dwords += r300_get_num_cs_end_dwords(r300);
 
@@ -242,45 +237,47 @@ static boolean r300_emit_states(struct r300_context *r300,
                                 int buffer_offset,
                                 int index_bias, int instance_id)
 {
-    boolean first_draw     = flags & PREP_EMIT_STATES;
-    boolean emit_vertex_arrays       = flags & PREP_EMIT_AOS;
-    boolean emit_vertex_arrays_swtcl = flags & PREP_EMIT_AOS_SWTCL;
+    boolean emit_states    = flags & PREP_EMIT_STATES;
+    boolean emit_vertex_arrays       = flags & PREP_EMIT_VARRAYS;
+    boolean emit_vertex_arrays_swtcl = flags & PREP_EMIT_VARRAYS_SWTCL;
     boolean indexed        = flags & PREP_INDEXED;
     boolean validate_vbos  = flags & PREP_VALIDATE_VBOS;
 
     /* Validate buffers and emit dirty state if needed. */
-    if (first_draw) {
+    if (emit_states || (emit_vertex_arrays && validate_vbos)) {
         if (!r300_emit_buffer_validate(r300, validate_vbos,
                                        index_buffer)) {
            fprintf(stderr, "r300: CS space validation failed. "
                    "(not enough memory?) Skipping rendering.\n");
            return FALSE;
         }
-
-        r300_emit_dirty_state(r300);
-        if (r300->screen->caps.is_r500) {
-            if (r300->screen->caps.has_tcl)
-                r500_emit_index_bias(r300, index_bias);
-            else
-                r500_emit_index_bias(r300, 0);
-        }
-
-        if (emit_vertex_arrays &&
-            (r300->vertex_arrays_dirty ||
-             r300->vertex_arrays_indexed != indexed ||
-             r300->vertex_arrays_offset != buffer_offset ||
-             r300->vertex_arrays_instance_id != instance_id)) {
-            r300_emit_vertex_arrays(r300, buffer_offset, indexed, instance_id);
-
-            r300->vertex_arrays_dirty = FALSE;
-            r300->vertex_arrays_indexed = indexed;
-            r300->vertex_arrays_offset = buffer_offset;
-            r300->vertex_arrays_instance_id = instance_id;
-        }
-
-        if (emit_vertex_arrays_swtcl)
-            r300_emit_vertex_arrays_swtcl(r300, indexed);
     }
+
+    if (emit_states)
+        r300_emit_dirty_state(r300);
+
+    if (r300->screen->caps.is_r500) {
+        if (r300->screen->caps.has_tcl)
+            r500_emit_index_bias(r300, index_bias);
+        else
+            r500_emit_index_bias(r300, 0);
+    }
+
+    if (emit_vertex_arrays &&
+        (r300->vertex_arrays_dirty ||
+         r300->vertex_arrays_indexed != indexed ||
+         r300->vertex_arrays_offset != buffer_offset ||
+         r300->vertex_arrays_instance_id != instance_id)) {
+        r300_emit_vertex_arrays(r300, buffer_offset, indexed, instance_id);
+
+        r300->vertex_arrays_dirty = FALSE;
+        r300->vertex_arrays_indexed = indexed;
+        r300->vertex_arrays_offset = buffer_offset;
+        r300->vertex_arrays_instance_id = instance_id;
+    }
+
+    if (emit_vertex_arrays_swtcl)
+        r300_emit_vertex_arrays_swtcl(r300, indexed);
 
     return TRUE;
 }
@@ -544,7 +541,7 @@ static void r300_draw_elements_immediate(struct r300_context *r300,
 
     /* 19 dwords for r300_draw_elements_immediate. Give up if the function fails. */
     if (!r300_prepare_for_rendering(r300,
-            PREP_EMIT_STATES | PREP_VALIDATE_VBOS | PREP_EMIT_AOS |
+            PREP_EMIT_STATES | PREP_VALIDATE_VBOS | PREP_EMIT_VARRAYS |
             PREP_INDEXED, NULL, 2+count_dwords, 0, info->index_bias, -1))
         return;
 
@@ -666,7 +663,7 @@ static void r300_draw_elements(struct r300_context *r300,
 
     /* 19 dwords for emit_draw_elements. Give up if the function fails. */
     if (!r300_prepare_for_rendering(r300,
-            PREP_EMIT_STATES | PREP_VALIDATE_VBOS | PREP_EMIT_AOS |
+            PREP_EMIT_STATES | PREP_VALIDATE_VBOS | PREP_EMIT_VARRAYS |
             PREP_INDEXED, indexBuffer, 19, buffer_offset, info->index_bias,
             instance_id))
         goto done;
@@ -677,10 +674,11 @@ static void r300_draw_elements(struct r300_context *r300,
                                 indices3);
     } else {
         do {
-            if (indexSize == 2 && (start & 1))
-                short_count = MIN2(count, 65535);
-            else
-                short_count = MIN2(count, 65534);
+            /* The maximum must be divisible by 4 and 3,
+             * so that quad and triangle lists are split correctly.
+             *
+             * Strips, loops, and fans won't work. */
+            short_count = MIN2(count, 65532);
 
             r300_emit_draw_elements(r300, indexBuffer, indexSize,
                                      info->min_index, info->max_index,
@@ -692,7 +690,7 @@ static void r300_draw_elements(struct r300_context *r300,
             /* 15 dwords for emit_draw_elements */
             if (count) {
                 if (!r300_prepare_for_rendering(r300,
-                        PREP_VALIDATE_VBOS | PREP_EMIT_AOS | PREP_INDEXED,
+                        PREP_VALIDATE_VBOS | PREP_EMIT_VARRAYS | PREP_INDEXED,
                         indexBuffer, 19, buffer_offset, info->index_bias,
                         instance_id))
                     goto done;
@@ -718,7 +716,7 @@ static void r300_draw_arrays(struct r300_context *r300,
 
     /* 9 spare dwords for emit_draw_arrays. Give up if the function fails. */
     if (!r300_prepare_for_rendering(r300,
-                                    PREP_EMIT_STATES | PREP_VALIDATE_VBOS | PREP_EMIT_AOS,
+                                    PREP_EMIT_STATES | PREP_VALIDATE_VBOS | PREP_EMIT_VARRAYS,
                                     NULL, 9, start, 0, instance_id))
         return;
 
@@ -726,7 +724,11 @@ static void r300_draw_arrays(struct r300_context *r300,
         r300_emit_draw_arrays(r300, info->mode, count);
     } else {
         do {
-            short_count = MIN2(count, 65535);
+            /* The maximum must be divisible by 4 and 3,
+             * so that quad and triangle lists are split correctly.
+             *
+             * Strips, loops, and fans won't work. */
+            short_count = MIN2(count, 65532);
             r300_emit_draw_arrays(r300, info->mode, short_count);
 
             start += short_count;
@@ -735,7 +737,7 @@ static void r300_draw_arrays(struct r300_context *r300,
             /* 9 spare dwords for emit_draw_arrays. Give up if the function fails. */
             if (count) {
                 if (!r300_prepare_for_rendering(r300,
-                                                PREP_VALIDATE_VBOS | PREP_EMIT_AOS, NULL, 9,
+                                                PREP_VALIDATE_VBOS | PREP_EMIT_VARRAYS, NULL, 9,
                                                 start, 0, instance_id))
                     return;
             }
@@ -766,7 +768,6 @@ static void r300_draw_vbo(struct pipe_context* pipe,
 {
     struct r300_context* r300 = r300_context(pipe);
     struct pipe_draw_info info = *dinfo;
-    boolean buffers_updated, uploader_flushed;
 
     info.indexed = info.indexed && r300->index_buffer.buffer;
 
@@ -778,9 +779,7 @@ static void r300_draw_vbo(struct pipe_context* pipe,
     r300_update_derived_state(r300);
 
     /* Start the vbuf manager and update buffers if needed. */
-    u_vbuf_mgr_draw_begin(r300->vbuf_mgr, &info,
-                          &buffers_updated, &uploader_flushed);
-    if (buffers_updated) {
+    if (u_vbuf_mgr_draw_begin(r300->vbuf_mgr, &info) & U_VBUF_BUFFERS_UPDATED) {
         r300->vertex_arrays_dirty = TRUE;
     }
 
@@ -842,7 +841,7 @@ static void r300_swtcl_draw_vbo(struct pipe_context* pipe,
     r300_update_derived_state(r300);
 
     r300_reserve_cs_dwords(r300,
-            PREP_EMIT_STATES | PREP_EMIT_AOS_SWTCL |
+            PREP_EMIT_STATES | PREP_EMIT_VARRAYS_SWTCL |
             (indexed ? PREP_INDEXED : 0),
             indexed ? 256 : 6);
 
@@ -1024,12 +1023,12 @@ static void r300_render_draw_arrays(struct vbuf_render* render,
 
     if (r300->draw_first_emitted) {
         if (!r300_prepare_for_rendering(r300,
-                PREP_EMIT_STATES | PREP_EMIT_AOS_SWTCL,
+                PREP_EMIT_STATES | PREP_EMIT_VARRAYS_SWTCL,
                 NULL, dwords, 0, 0, -1))
             return;
     } else {
         if (!r300_emit_states(r300,
-                PREP_EMIT_STATES | PREP_EMIT_AOS_SWTCL,
+                PREP_EMIT_STATES | PREP_EMIT_VARRAYS_SWTCL,
                 NULL, 0, 0, -1))
             return;
     }
@@ -1064,12 +1063,12 @@ static void r300_render_draw_elements(struct vbuf_render* render,
 
     if (r300->draw_first_emitted) {
         if (!r300_prepare_for_rendering(r300,
-                PREP_EMIT_STATES | PREP_EMIT_AOS_SWTCL | PREP_INDEXED,
+                PREP_EMIT_STATES | PREP_EMIT_VARRAYS_SWTCL | PREP_INDEXED,
                 NULL, 256, 0, 0, -1))
             return;
     } else {
         if (!r300_emit_states(r300,
-                PREP_EMIT_STATES | PREP_EMIT_AOS_SWTCL | PREP_INDEXED,
+                PREP_EMIT_STATES | PREP_EMIT_VARRAYS_SWTCL | PREP_INDEXED,
                 NULL, 0, 0, -1))
             return;
     }
@@ -1106,7 +1105,7 @@ static void r300_render_draw_elements(struct vbuf_render* render,
 
         if (count) {
             if (!r300_prepare_for_rendering(r300,
-                    PREP_EMIT_AOS_SWTCL | PREP_INDEXED,
+                    PREP_EMIT_VARRAYS_SWTCL | PREP_INDEXED,
                     NULL, 256, 0, 0, -1))
                 return;
 

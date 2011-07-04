@@ -4,12 +4,14 @@ TOP = ../../../..
 include $(TOP)/configs/current
 
 EGL_DRIVER = egl_dri2
-EGL_SOURCES = egl_dri2.c platform_drm.c common.c
+EGL_SOURCES = egl_dri2.c common.c
 
 EGL_INCLUDES = \
 	-I$(TOP)/include \
 	-I$(TOP)/src/egl/main \
 	-I$(TOP)/src/mapi \
+	-I$(TOP)/src/gbm/main \
+	-I$(TOP)/src/gbm/backends/dri \
 	-DDEFAULT_DRIVER_DIR=\"$(DRI_DRIVER_SEARCH_DIR)\" \
 	$(LIBUDEV_CFLAGS) \
 	$(LIBDRM_CFLAGS)
@@ -27,6 +29,11 @@ ifneq ($(findstring x11, $(EGL_PLATFORMS)),)
 EGL_SOURCES += platform_x11.c
 EGL_INCLUDES += -DHAVE_X11_PLATFORM $(XCB_DRI2_CFLAGS)
 EGL_LIBS +=  $(XCB_DRI2_LIBS)
+endif
+
+ifneq ($(findstring drm, $(EGL_PLATFORMS)),)
+EGL_SOURCES += platform_drm.c
+EGL_INCLUDES += -DHAVE_DRM_PLATFORM
 endif
 
 ifneq ($(findstring wayland, $(EGL_PLATFORMS)),)

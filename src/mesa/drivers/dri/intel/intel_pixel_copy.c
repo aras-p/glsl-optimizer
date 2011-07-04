@@ -40,37 +40,6 @@
 
 #define FILE_DEBUG_FLAG DEBUG_PIXEL
 
-static struct intel_region *
-copypix_src_region(struct intel_context *intel, GLenum type)
-{
-   struct intel_renderbuffer *depth;
-
-   depth = (struct intel_renderbuffer *)
-      &intel->ctx.DrawBuffer->Attachment[BUFFER_DEPTH].Renderbuffer;
-
-   switch (type) {
-   case GL_COLOR:
-      return intel_readbuf_region(intel);
-   case GL_DEPTH:
-      /* Don't think this is really possible execpt at 16bpp, when we
-       * have no stencil. */
-      if (depth && depth->region->cpp == 2)
-         return depth->region;
-   case GL_STENCIL:
-      /* Don't think this is really possible. */
-      break;
-   case GL_DEPTH_STENCIL_EXT:
-      /* Does it matter whether it is stencil/depth or depth/stencil?
-       */
-      return depth->region;
-   default:
-      break;
-   }
-
-   return NULL;
-}
-
-
 /**
  * Check if any fragment operations are in effect which might effect
  * glCopyPixels.  Differs from intel_check_blit_fragment_ops in that
@@ -109,8 +78,6 @@ do_blit_copypixels(struct gl_context * ctx,
                    GLint dstx, GLint dsty, GLenum type)
 {
    struct intel_context *intel = intel_context(ctx);
-   struct intel_region *dst;
-   struct intel_region *src;
    struct gl_framebuffer *fb = ctx->DrawBuffer;
    struct gl_framebuffer *read_fb = ctx->ReadBuffer;
    GLint orig_dstx;
@@ -118,14 +85,56 @@ do_blit_copypixels(struct gl_context * ctx,
    GLint orig_srcx;
    GLint orig_srcy;
    GLboolean flip = GL_FALSE;
-
-   if (type == GL_DEPTH || type == GL_STENCIL) {
-      fallback_debug("glCopyPixels() fallback: GL_DEPTH || GL_STENCIL\n");
-      return GL_FALSE;
-   }
+   struct intel_renderbuffer *draw_irb = NULL;
+   struct intel_renderbuffer *read_irb = NULL;
 
    /* Update draw buffer bounds */
    _mesa_update_state(ctx);
+
+   switch (type) {
+   case GL_COLOR:
+      if (fb->_NumColorDrawBuffers != 1) {
+	 fallback_debug("glCopyPixels() fallback: MRT\n");
+	 return GL_FALSE;
+      }
+
+      draw_irb = intel_renderbuffer(fb->_ColorDrawBuffers[0]);
+      read_irb = intel_renderbuffer(read_fb->_ColorReadBuffer);
+      break;
+   case GL_DEPTH_STENCIL_EXT:
+      draw_irb = intel_renderbuffer(fb->Attachment[BUFFER_DEPTH].Renderbuffer);
+      read_irb =
+	 intel_renderbuffer(read_fb->Attachment[BUFFER_DEPTH].Renderbuffer);
+      break;
+   case GL_DEPTH:
+      fallback_debug("glCopyPixels() fallback: GL_DEPTH\n");
+      return GL_FALSE;
+   case GL_STENCIL:
+      fallback_debug("glCopyPixels() fallback: GL_STENCIL\n");
+      return GL_FALSE;
+   default:
+      fallback_debug("glCopyPixels(): Unknown type\n");
+      return GL_FALSE;
+   }
+
+   if (!draw_irb) {
+      fallback_debug("glCopyPixels() fallback: missing draw buffer\n");
+      return GL_FALSE;
+   }
+
+   if (!read_irb) {
+      fallback_debug("glCopyPixels() fallback: missing read buffer\n");
+      return GL_FALSE;
+   }
+
+   if (draw_irb->Base.Format != read_irb->Base.Format &&
+       !(draw_irb->Base.Format == MESA_FORMAT_XRGB8888 &&
+	 read_irb->Base.Format == MESA_FORMAT_ARGB8888)) {
+      fallback_debug("glCopyPixels() fallback: mismatched formats (%s -> %s\n",
+		     _mesa_get_format_name(read_irb->Base.Format),
+		     _mesa_get_format_name(draw_irb->Base.Format));
+      return GL_FALSE;
+   }
 
    /* Copypixels can be more than a straight copy.  Ensure all the
     * extra operations are disabled:
@@ -135,12 +144,6 @@ do_blit_copypixels(struct gl_context * ctx,
       return GL_FALSE;
 
    intel_prepare_render(intel);
-
-   dst = intel_drawbuf_region(intel);
-   src = copypix_src_region(intel, type);
-
-   if (!src || !dst)
-      return GL_FALSE;
 
    intel_flush(&intel->ctx);
 
@@ -179,9 +182,14 @@ do_blit_copypixels(struct gl_context * ctx,
       flip = !flip;
    }
 
+   srcx += read_irb->draw_x;
+   srcy += read_irb->draw_y;
+   dstx += draw_irb->draw_x;
+   dsty += draw_irb->draw_y;
+
    if (!intel_region_copy(intel,
-			  dst, 0, dstx, dsty,
-			  src, 0, srcx, srcy,
+			  draw_irb->region, 0, dstx, dsty,
+			  read_irb->region, 0, srcx, srcy,
 			  width, height, flip,
 			  ctx->Color.ColorLogicOpEnabled ?
 			  ctx->Color.LogicOp : GL_COPY)) {

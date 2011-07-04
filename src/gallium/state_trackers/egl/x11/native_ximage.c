@@ -43,7 +43,7 @@ struct ximage_display {
    Display *dpy;
    boolean own_dpy;
 
-   struct native_event_handler *event_handler;
+   const struct native_event_handler *event_handler;
 
    struct x11_screen *xscr;
    int xscr_number;
@@ -437,14 +437,54 @@ ximage_display_get_configs(struct native_display *ndpy, int *num_configs)
 }
 
 static boolean
-ximage_display_is_pixmap_supported(struct native_display *ndpy,
-                                   EGLNativePixmapType pix,
-                                   const struct native_config *nconf)
+ximage_display_get_pixmap_format(struct native_display *ndpy,
+                                 EGLNativePixmapType pix,
+                                 enum pipe_format *format)
 {
    struct ximage_display *xdpy = ximage_display(ndpy);
-   enum pipe_format fmt = get_pixmap_format(&xdpy->base, pix);
 
-   return (fmt == nconf->color_format);
+   *format = get_pixmap_format(&xdpy->base, pix);
+
+   return (*format != PIPE_FORMAT_NONE);
+}
+
+static boolean
+ximage_display_copy_to_pixmap(struct native_display *ndpy,
+                              EGLNativePixmapType pix,
+                              struct pipe_resource *src)
+{
+   /* fast path to avoid unnecessary allocation and resource_copy_region */
+   if (src->bind & PIPE_BIND_DISPLAY_TARGET) {
+      struct ximage_display *xdpy = ximage_display(ndpy);
+      enum pipe_format fmt = get_pixmap_format(&xdpy->base, pix);
+      const struct ximage_config *xconf;
+      struct xlib_drawable xdraw;
+      int i;
+
+      if (fmt == PIPE_FORMAT_NONE || src->format != fmt)
+         return FALSE;
+
+      for (i = 0; i < xdpy->num_configs; i++) {
+         if (xdpy->configs[i].base.color_format == fmt) {
+            xconf = &xdpy->configs[i];
+            break;
+         }
+      }
+      if (!xconf)
+         return FALSE;
+
+      memset(&xdraw, 0, sizeof(xdraw));
+      xdraw.visual = xconf->visual->visual;
+      xdraw.depth = xconf->visual->depth;
+      xdraw.drawable = (Drawable) pix;
+
+      xdpy->base.screen->flush_frontbuffer(xdpy->base.screen,
+            src, 0, 0, &xdraw);
+
+      return TRUE;
+   }
+
+   return native_display_copy_to_pixmap(ndpy, pix, src);
 }
 
 static int
@@ -484,13 +524,32 @@ ximage_display_destroy(struct native_display *ndpy)
    FREE(xdpy);
 }
 
+static boolean
+ximage_display_init_screen(struct native_display *ndpy)
+{
+   struct ximage_display *xdpy = ximage_display(ndpy);
+   struct sw_winsys *winsys;
+
+   winsys = xlib_create_sw_winsys(xdpy->dpy);
+   if (!winsys)
+      return FALSE;
+
+   xdpy->base.screen =
+      xdpy->event_handler->new_sw_screen(&xdpy->base, winsys);
+   if (!xdpy->base.screen) {
+      if (winsys->destroy)
+         winsys->destroy(winsys);
+      return FALSE;
+   }
+
+   return TRUE;
+}
+
 struct native_display *
 x11_create_ximage_display(Display *dpy,
-                          struct native_event_handler *event_handler,
-                          void *user_data)
+                          const struct native_event_handler *event_handler)
 {
    struct ximage_display *xdpy;
-   struct sw_winsys *winsys = NULL;
 
    xdpy = CALLOC_STRUCT(ximage_display);
    if (!xdpy)
@@ -507,39 +566,25 @@ x11_create_ximage_display(Display *dpy,
    }
 
    xdpy->event_handler = event_handler;
-   xdpy->base.user_data = user_data;
 
    xdpy->xscr_number = DefaultScreen(xdpy->dpy);
    xdpy->xscr = x11_screen_create(xdpy->dpy, xdpy->xscr_number);
-   if (!xdpy->xscr)
-      goto fail;
+   if (!xdpy->xscr) {
+      if (xdpy->own_dpy)
+         XCloseDisplay(xdpy->dpy);
+      FREE(xdpy);
+      return NULL;
+   }
 
-   winsys = xlib_create_sw_winsys(xdpy->dpy);
-   if (!winsys)
-      goto fail;
-
-   xdpy->base.screen =
-      xdpy->event_handler->new_sw_screen(&xdpy->base, winsys);
-   if (!xdpy->base.screen)
-      goto fail;
-
+   xdpy->base.init_screen = ximage_display_init_screen;
    xdpy->base.destroy = ximage_display_destroy;
    xdpy->base.get_param = ximage_display_get_param;
 
    xdpy->base.get_configs = ximage_display_get_configs;
-   xdpy->base.is_pixmap_supported = ximage_display_is_pixmap_supported;
+   xdpy->base.get_pixmap_format = ximage_display_get_pixmap_format;
+   xdpy->base.copy_to_pixmap = ximage_display_copy_to_pixmap;
    xdpy->base.create_window_surface = ximage_display_create_window_surface;
    xdpy->base.create_pixmap_surface = ximage_display_create_pixmap_surface;
 
    return &xdpy->base;
-
-fail:
-   if (winsys && winsys->destroy)
-      winsys->destroy(winsys);
-   if (xdpy->xscr)
-      x11_screen_destroy(xdpy->xscr);
-   if (xdpy->dpy && xdpy->own_dpy)
-      XCloseDisplay(xdpy->dpy);
-   FREE(xdpy);
-   return NULL;
 }

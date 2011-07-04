@@ -879,6 +879,8 @@ unbind_texobj_from_fbo(struct gl_context *ctx,
          for (j = 0; j < BUFFER_COUNT; j++) {
             if (fb->Attachment[j].Type == GL_TEXTURE &&
                 fb->Attachment[j].Texture == texObj) {
+	       /* Vertices are already flushed by _mesa_DeleteTextures */
+	       ctx->NewState |= _NEW_BUFFERS;
                _mesa_remove_attachment(ctx, fb->Attachment + j);         
             }
          }

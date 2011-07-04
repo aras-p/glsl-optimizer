@@ -88,7 +88,7 @@ GLboolean brw_miptree_layout(struct intel_context *intel,
       GLuint align_w = 4;
 
       mt->total_height = 0;
-      intel_get_texture_alignment_unit(mt->internal_format, &align_w, &align_h);
+      intel_get_texture_alignment_unit(mt->format, &align_w, &align_h);
 
       if (mt->compressed) {
           mt->total_width = ALIGN(width, align_w);

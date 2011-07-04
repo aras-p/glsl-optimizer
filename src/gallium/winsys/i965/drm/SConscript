@@ -2,7 +2,7 @@ Import('*')
 
 env = env.Clone()
 
-env.ParseConfig('pkg-config --cflags libdrm')
+env.PkgUseModules('DRM')
 
 i965drm_sources = [
     'i965_drm_buffer.c',

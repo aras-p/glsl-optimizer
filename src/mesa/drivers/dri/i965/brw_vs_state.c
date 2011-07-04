@@ -36,18 +36,6 @@
 #include "brw_defines.h"
 #include "main/macros.h"
 
-struct brw_vs_unit_key {
-   unsigned int total_grf;
-   unsigned int urb_entry_read_length;
-   unsigned int curb_entry_read_length;
-
-   unsigned int curbe_offset;
-
-   unsigned int nr_urb_entries, urb_size;
-
-   unsigned int nr_surfaces;
-};
-
 static void
 brw_prepare_vs_unit(struct brw_context *brw)
 {
@@ -58,8 +46,14 @@ brw_prepare_vs_unit(struct brw_context *brw)
    vs = brw_state_batch(brw, sizeof(*vs), 32, &brw->vs.state_offset);
    memset(vs, 0, sizeof(*vs));
 
-   /* CACHE_NEW_VS_PROG */
-   vs->thread0.kernel_start_pointer = brw->vs.prog_bo->offset >> 6; /* reloc */
+   /* BRW_NEW_PROGRAM_CACHE | CACHE_NEW_VS_PROG */
+   vs->thread0.kernel_start_pointer =
+      brw_program_reloc(brw,
+			brw->vs.state_offset +
+			offsetof(struct brw_vs_unit_state, thread0),
+			brw->vs.prog_offset +
+			(vs->thread0.grf_reg_count << 1)) >> 6;
+
    vs->thread0.grf_reg_count = ALIGN(brw->vs.prog_data->total_grf, 16) / 16 - 1;
    vs->thread1.floating_point_mode = BRW_FLOATING_POINT_NON_IEEE_754;
    /* Choosing multiple program flow means that we may get 2-vertex threads,
@@ -152,13 +146,6 @@ brw_prepare_vs_unit(struct brw_context *brw)
     */
    vs->vs6.vs_enable = 1;
 
-   /* Emit VS program relocation */
-   drm_intel_bo_emit_reloc(intel->batch.bo, (brw->vs.state_offset +
-					     offsetof(struct brw_vs_unit_state,
-						      thread0)),
-			   brw->vs.prog_bo, vs->thread0.grf_reg_count << 1,
-			   I915_GEM_DOMAIN_INSTRUCTION, 0);
-
    brw->state.dirty.cache |= CACHE_NEW_VS_UNIT;
 }
 
@@ -166,6 +153,7 @@ const struct brw_tracked_state brw_vs_unit = {
    .dirty = {
       .mesa  = _NEW_TRANSFORM,
       .brw   = (BRW_NEW_BATCH |
+		BRW_NEW_PROGRAM_CACHE |
 		BRW_NEW_CURBE_OFFSETS |
                 BRW_NEW_NR_VS_SURFACES |
 		BRW_NEW_URB_FENCE),

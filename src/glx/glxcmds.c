@@ -354,8 +354,9 @@ glx_send_destroy_context(Display *dpy, XID xid)
 /*
 ** Destroy the named context
 */
-static void
-DestroyContext(Display * dpy, GLXContext ctx)
+
+_X_EXPORT void
+glXDestroyContext(Display * dpy, GLXContext ctx)
 {
    struct glx_context *gc = (struct glx_context *) ctx;
 
@@ -377,14 +378,7 @@ DestroyContext(Display * dpy, GLXContext ctx)
    }
    __glXUnlock();
 
-   if (gc->vtable->destroy)
-      gc->vtable->destroy(gc);
-}
-
-_X_EXPORT void
-glXDestroyContext(Display * dpy, GLXContext gc)
-{
-   DestroyContext(dpy, gc);
+   gc->vtable->destroy(gc);
 }
 
 /*
@@ -646,19 +640,33 @@ glXCreateGLXPixmap(Display * dpy, XVisualInfo * vis, Pixmap pixmap)
 
       psc = priv->screens[vis->screen];
       if (psc->driScreen == NULL)
-         break;
+         return xid;
+
       config = glx_config_find_visual(psc->visuals, vis->visualid);
       pdraw = psc->driScreen->createDrawable(psc, pixmap, xid, config);
       if (pdraw == NULL) {
          fprintf(stderr, "failed to create pixmap\n");
+         xid = None;
          break;
       }
 
       if (__glxHashInsert(priv->drawHash, xid, pdraw)) {
          (*pdraw->destroyDrawable) (pdraw);
-         return None;           /* FIXME: Check what we're supposed to do here... */
+         xid = None;
+         break;
       }
    } while (0);
+
+   if (xid == None) {
+      xGLXDestroyGLXPixmapReq *dreq;
+      LockDisplay(dpy);
+      GetReq(GLXDestroyGLXPixmap, dreq);
+      dreq->reqType = opcode;
+      dreq->glxCode = X_GLXDestroyGLXPixmap;
+      dreq->glxpixmap = xid;
+      UnlockDisplay(dpy);
+      SyncHandle();
+   }
 #endif
 
    return xid;
@@ -1480,12 +1488,9 @@ _X_EXPORT GLXContextID glXGetContextIDEXT(const GLXContext ctx_user)
    return ctx->xid;
 }
 
-_X_EXPORT void
-glXFreeContextEXT(Display * dpy, GLXContext ctx)
-{
-   DestroyContext(dpy, ctx);
-}
-
+_X_EXPORT
+GLX_ALIAS_VOID(glXFreeContextEXT, (Display *dpy, GLXContext ctx), (dpy, ctx),
+	       glXDestroyContext);
 
 _X_EXPORT GLXFBConfig *
 glXChooseFBConfig(Display * dpy, int screen,
@@ -2522,6 +2527,12 @@ _X_EXPORT void (*glXGetProcAddressARB(const GLubyte * procName)) (void)
 #endif
       if (!f)
          f = (gl_function) _glapi_get_proc_address((const char *) procName);
+      if (!f) {
+         struct glx_context *gc = __glXGetCurrentContext();
+      
+         if (gc != NULL && gc->vtable->get_proc_address != NULL)
+            f = gc->vtable->get_proc_address((const char *) procName);
+      }
    }
    return f;
 }

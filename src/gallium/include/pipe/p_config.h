@@ -134,8 +134,6 @@
 #error Unknown Endianness
 #endif
 
-#if !defined(PIPE_OS_EMBEDDED)
-
 /*
  * Auto-detect the operating system family.
  * 
@@ -221,8 +219,6 @@
 #endif /* !_WIN32_WCE */
 #endif
 #endif /* PIPE_OS_WINDOWS */
-
-#endif /* !PIPE_OS_EMBEDDED */
 
 
 #endif /* P_CONFIG_H_ */

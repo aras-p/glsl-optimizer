@@ -31,29 +31,29 @@
 
 #include "../../state_trackers/xorg/xorg_winsys.h"
 
-static void radeon_xorg_identify(int flags);
-static Bool radeon_xorg_pci_probe(DriverPtr driver,
+static void r300_xorg_identify(int flags);
+static Bool r300_xorg_pci_probe(DriverPtr driver,
 				 int entity_num,
 				 struct pci_device *device,
 				 intptr_t match_data);
 
-static const struct pci_id_match radeon_xorg_device_match[] = {
+static const struct pci_id_match r300_xorg_device_match[] = {
     {0x1002, PCI_MATCH_ANY, PCI_MATCH_ANY, PCI_MATCH_ANY, 0, 0, 0},
     {0, 0, 0},
 };
 
-static SymTabRec radeon_xorg_chipsets[] = {
-    {PCI_MATCH_ANY, "ATI/AMD Radeon Graphics Chipset"},
+static SymTabRec r300_xorg_chipsets[] = {
+    {PCI_MATCH_ANY, "ATI R300 Graphics Chipset"},
     {-1, NULL}
 };
 
-static PciChipsets radeon_xorg_pci_devices[] = {
+static PciChipsets r300_xorg_pci_devices[] = {
     {PCI_MATCH_ANY, PCI_MATCH_ANY, NULL},
     {-1, -1, NULL}
 };
 
-static XF86ModuleVersionInfo radeon_xorg_version = {
-    "radeong",
+static XF86ModuleVersionInfo r300_xorg_version = {
+    "r300",
     MODULEVENDORSTRING,
     MODINFOSTRING1,
     MODINFOSTRING2,
@@ -69,24 +69,24 @@ static XF86ModuleVersionInfo radeon_xorg_version = {
  * Xorg driver exported structures
  */
 
-_X_EXPORT DriverRec radeong = {
+_X_EXPORT DriverRec r300_driver = {
     1,
-    "radeong",
-    radeon_xorg_identify,
+    "r300",
+    r300_xorg_identify,
     NULL,
     xorg_tracker_available_options,
     NULL,
     0,
     NULL,
-    radeon_xorg_device_match,
-    radeon_xorg_pci_probe
+    r300_xorg_device_match,
+    r300_xorg_pci_probe
 };
 
-static MODULESETUPPROTO(radeon_xorg_setup);
+static MODULESETUPPROTO(r300_xorg_setup);
 
-_X_EXPORT XF86ModuleData radeongModuleData = {
-    &radeon_xorg_version,
-    radeon_xorg_setup,
+_X_EXPORT XF86ModuleData r300ModuleData = {
+    &r300_xorg_version,
+    r300_xorg_setup,
     NULL
 };
 
@@ -95,7 +95,7 @@ _X_EXPORT XF86ModuleData radeongModuleData = {
  */
 
 static pointer
-radeon_xorg_setup(pointer module, pointer opts, int *errmaj, int *errmin)
+r300_xorg_setup(pointer module, pointer opts, int *errmaj, int *errmin)
 {
     static Bool setupDone = 0;
 
@@ -103,7 +103,7 @@ radeon_xorg_setup(pointer module, pointer opts, int *errmaj, int *errmin)
      */
     if (!setupDone) {
 	setupDone = 1;
-	xf86AddDriver(&radeong, module, HaveDriverFuncs);
+	xf86AddDriver(&r300_driver, module, HaveDriverFuncs);
 
 	/*
 	 * The return value must be non-NULL on success even though there
@@ -118,25 +118,25 @@ radeon_xorg_setup(pointer module, pointer opts, int *errmaj, int *errmin)
 }
 
 static void
-radeon_xorg_identify(int flags)
+r300_xorg_identify(int flags)
 {
-    xf86PrintChipsets("radeong", "Driver for Radeon Gallium with KMS",
-		      radeon_xorg_chipsets);
+    xf86PrintChipsets("r300", "Driver for Radeon Gallium with KMS",
+		      r300_xorg_chipsets);
 }
 
 static Bool
-radeon_xorg_pci_probe(DriverPtr driver,
+r300_xorg_pci_probe(DriverPtr driver,
 	  int entity_num, struct pci_device *device, intptr_t match_data)
 {
     ScrnInfoPtr scrn = NULL;
     EntityInfoPtr entity;
 
-    scrn = xf86ConfigPciEntity(scrn, 0, entity_num, radeon_xorg_pci_devices,
+    scrn = xf86ConfigPciEntity(scrn, 0, entity_num, r300_xorg_pci_devices,
 			       NULL, NULL, NULL, NULL, NULL);
     if (scrn != NULL) {
 	scrn->driverVersion = 1;
-	scrn->driverName = "radeong";
-	scrn->name = "radeong";
+	scrn->driverName = "r300";
+	scrn->name = "r300";
 	scrn->Probe = NULL;
 
 	entity = xf86GetEntityInfo(entity_num);

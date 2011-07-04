@@ -842,7 +842,7 @@ decompress_with_blit(struct gl_context * ctx, GLenum target, GLint level,
    else {
       /* format translation via floats */
       GLuint row;
-      enum pipe_format format = util_format_linear(dst_texture->format);
+      enum pipe_format pformat = util_format_linear(dst_texture->format);
       for (row = 0; row < height; row++) {
          const GLbitfield transferOps = 0x0; /* bypassed for glGetTexImage() */
          GLfloat rgba[4 * MAX_WIDTH];
@@ -854,7 +854,7 @@ decompress_with_blit(struct gl_context * ctx, GLenum target, GLint level,
 
          /* get float[4] rgba row from surface */
          pipe_get_tile_rgba_format(pipe, tex_xfer, 0, row, width, 1,
-                                   format, rgba);
+                                   pformat, rgba);
 
          _mesa_pack_rgba_span_float(ctx, width, (GLfloat (*)[4]) rgba, format,
                                     type, dest, &ctx->Pack, transferOps);
@@ -1241,7 +1241,8 @@ fallback_copy_texsubimage(struct gl_context *ctx, GLenum target, GLint level,
 
    src_trans = pipe_get_transfer(pipe,
                                  strb->texture,
-                                 0, 0,
+                                 strb->rtt_level,
+                                 strb->rtt_face + strb->rtt_slice,
                                  PIPE_TRANSFER_READ,
                                  srcX, srcY,
                                  width, height);

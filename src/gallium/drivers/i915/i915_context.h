@@ -102,6 +102,8 @@ struct i915_fragment_shader
 
    struct tgsi_shader_info info;
 
+   struct draw_fragment_shader *draw_data;
+
    uint *program;
    uint program_len;
 
@@ -260,6 +262,7 @@ struct i915_context {
    int num_validation_buffers;
 
    struct util_slab_mempool transfer_pool;
+   struct util_slab_mempool texture_transfer_pool;
 
    /** blitter/hw-clear */
    struct blitter_context* blitter;

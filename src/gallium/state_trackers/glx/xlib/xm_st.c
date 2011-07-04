@@ -30,6 +30,7 @@
 #include "xm_st.h"
 
 #include "util/u_inlines.h"
+#include "util/u_atomic.h"
 
 struct xmesa_st_framebuffer {
    XMesaDisplay display;
@@ -302,6 +303,7 @@ xmesa_create_st_framebuffer(XMesaDisplay xmdpy, XMesaBuffer b)
    stfbi->visual = &xstfb->stvis;
    stfbi->flush_front = xmesa_st_framebuffer_flush_front;
    stfbi->validate = xmesa_st_framebuffer_validate;
+   p_atomic_set(&stfbi->stamp, 1);
    stfbi->st_manager_private = (void *) xstfb;
 
    return stfbi;

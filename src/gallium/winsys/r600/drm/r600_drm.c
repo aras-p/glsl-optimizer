@@ -156,7 +156,20 @@ static int eg_interpret_tiling(struct radeon *radeon, uint32_t tiling_config)
 		return -EINVAL;
 	}
 
-	radeon->tiling_info.num_banks = (tiling_config & 0xf0) >> 4;
+	switch ((tiling_config & 0xf0) >> 4) {
+	case 0:
+		radeon->tiling_info.num_banks = 4;
+		break;
+	case 1:
+		radeon->tiling_info.num_banks = 8;
+		break;
+	case 2:
+		radeon->tiling_info.num_banks = 16;
+		break;
+	default:
+		return -EINVAL;
+
+	}
 
 	switch ((tiling_config & 0xf00) >> 8) {
 	case 0:

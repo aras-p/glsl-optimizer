@@ -31,6 +31,7 @@
 #include "util/u_memory.h"
 #include "util/u_format.h"
 #include "util/u_string.h"
+#include "util/u_atomic.h"
 
 #include "egl_g3d.h"
 #include "egl_g3d_api.h"
@@ -45,15 +46,9 @@ egl_g3d_invalid_surface(struct native_display *ndpy,
 {
    /* XXX not thread safe? */
    struct egl_g3d_surface *gsurf = egl_g3d_surface(nsurf->user_data);
-   struct egl_g3d_context *gctx;
-   
-   /*
-    * Some functions such as egl_g3d_copy_buffers create a temporary native
-    * surface.  There is no gsurf associated with it.
-    */
-   gctx = (gsurf) ? egl_g3d_context(gsurf->base.CurrentContext) : NULL;
-   if (gctx)
-      gctx->stctxi->notify_invalid_framebuffer(gctx->stctxi, gsurf->stfbi);
+
+   if (gsurf && gsurf->stfbi)
+      p_atomic_inc(&gsurf->stfbi->stamp);
 }
 
 static struct pipe_screen *
@@ -72,10 +67,26 @@ egl_g3d_new_sw_screen(struct native_display *ndpy, struct sw_winsys *ws)
    return gdpy->loader->create_sw_screen(ws);
 }
 
-static struct native_event_handler egl_g3d_native_event_handler = {
+static struct pipe_resource *
+egl_g3d_lookup_egl_image(struct native_display *ndpy, void *egl_image)
+{
+   _EGLDisplay *dpy = (_EGLDisplay *) ndpy->user_data;
+   struct egl_g3d_display *gdpy = egl_g3d_display(dpy);
+   struct st_egl_image img;
+   struct pipe_resource *resource = NULL;
+
+   memset(&img, 0, sizeof(img));
+   if (gdpy->smapi->get_egl_image(gdpy->smapi, egl_image, &img))
+      resource = img.texture;
+
+   return resource;
+}
+
+static const struct native_event_handler egl_g3d_native_event_handler = {
    egl_g3d_invalid_surface,
    egl_g3d_new_drm_screen,
-   egl_g3d_new_sw_screen
+   egl_g3d_new_sw_screen,
+   egl_g3d_lookup_egl_image
 };
 
 /**
@@ -94,40 +105,38 @@ egl_g3d_get_platform(_EGLDriver *drv, _EGLPlatformType plat)
       case _EGL_PLATFORM_WINDOWS:
          plat_name = "Windows";
 #ifdef HAVE_GDI_BACKEND
-         nplat = native_get_gdi_platform();
+         nplat = native_get_gdi_platform(&egl_g3d_native_event_handler);
 #endif
          break;
       case _EGL_PLATFORM_X11:
          plat_name = "X11";
 #ifdef HAVE_X11_BACKEND
-         nplat = native_get_x11_platform();
+         nplat = native_get_x11_platform(&egl_g3d_native_event_handler);
 #endif
 	 break;
       case _EGL_PLATFORM_WAYLAND:
          plat_name = "wayland";
 #ifdef HAVE_WAYLAND_BACKEND
-         nplat = native_get_wayland_platform();
+         nplat = native_get_wayland_platform(&egl_g3d_native_event_handler);
 #endif
          break;
       case _EGL_PLATFORM_DRM:
          plat_name = "DRM";
 #ifdef HAVE_DRM_BACKEND
-         nplat = native_get_drm_platform();
+         nplat = native_get_drm_platform(&egl_g3d_native_event_handler);
 #endif
          break;
       case _EGL_PLATFORM_FBDEV:
          plat_name = "FBDEV";
 #ifdef HAVE_FBDEV_BACKEND
-         nplat = native_get_fbdev_platform();
+         nplat = native_get_fbdev_platform(&egl_g3d_native_event_handler);
 #endif
          break;
       default:
          break;
       }
 
-      if (nplat)
-         nplat->set_event_handler(&egl_g3d_native_event_handler);
-      else
+      if (!nplat)
          _eglLog(_EGL_WARNING, "unsupported platform %s", plat_name);
 
       gdrv->platforms[plat] = nplat;
@@ -504,11 +513,18 @@ egl_g3d_initialize(_EGLDriver *drv, _EGLDisplay *dpy)
    gdpy->loader = gdrv->loader;
    dpy->DriverData = gdpy;
 
-   _eglLog(_EGL_INFO, "use %s for display %p", nplat->name, dpy->PlatformDisplay);
-   gdpy->native = nplat->create_display(dpy->PlatformDisplay,
-         dpy->Options.UseFallback, (void *) dpy);
+   _eglLog(_EGL_INFO, "use %s for display %p",
+         nplat->name, dpy->PlatformDisplay);
+   gdpy->native =
+      nplat->create_display(dpy->PlatformDisplay, dpy->Options.UseFallback);
    if (!gdpy->native) {
       _eglError(EGL_NOT_INITIALIZED, "eglInitialize(no usable display)");
+      goto fail;
+   }
+   gdpy->native->user_data = (void *) dpy;
+   if (!gdpy->native->init_screen(gdpy->native)) {
+      _eglError(EGL_NOT_INITIALIZED,
+            "eglInitialize(failed to initialize screen)");
       goto fail;
    }
 

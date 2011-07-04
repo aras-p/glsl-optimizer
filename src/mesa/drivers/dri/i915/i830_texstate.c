@@ -40,7 +40,7 @@
 
 
 static GLuint
-translate_texture_format(GLuint mesa_format, GLuint internal_format)
+translate_texture_format(GLuint mesa_format)
 {
    switch (mesa_format) {
    case MESA_FORMAT_L8:
@@ -156,8 +156,7 @@ i830_update_tex_unit(struct intel_context *intel, GLuint unit, GLuint ss3)
     */
    i830->state.tex_offset[unit] = dst_x * intelObj->mt->cpp + dst_y * pitch;
 
-   format = translate_texture_format(firstImage->TexFormat,
-				     firstImage->InternalFormat);
+   format = translate_texture_format(firstImage->TexFormat);
 
    state[I830_TEXREG_TM0LI] = (_3DSTATE_LOAD_STATE_IMMEDIATE_2 |
                                (LOAD_TEXTURE_MAP0 << unit) | 4);

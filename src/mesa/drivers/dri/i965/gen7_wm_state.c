@@ -36,6 +36,7 @@ gen7_prepare_wm_constants(struct brw_context *brw)
 {
    struct intel_context *intel = &brw->intel;
    struct gl_context *ctx = &intel->ctx;
+   /* BRW_NEW_FRAGMENT_PROGRAM */
    const struct brw_fragment_program *fp =
       brw_fragment_program_const(brw->fragment_program);
 
@@ -45,7 +46,7 @@ gen7_prepare_wm_constants(struct brw_context *brw)
    /* XXX: Should this happen somewhere before to get our state flag set? */
    _mesa_load_state_parameters(ctx, fp->program.Base.Parameters);
 
-   /* BRW_NEW_FRAGMENT_PROGRAM */
+   /* CACHE_NEW_WM_PROG */
    if (brw->wm.prog_data->nr_params != 0) {
       float *constants;
       unsigned int i;
@@ -80,7 +81,7 @@ const struct brw_tracked_state gen7_wm_constants = {
    .dirty = {
       .mesa  = _NEW_PROGRAM_CONSTANTS,
       .brw   = (BRW_NEW_BATCH | BRW_NEW_FRAGMENT_PROGRAM),
-      .cache = 0,
+      .cache = CACHE_NEW_WM_PROG,
    },
    .prepare = gen7_prepare_wm_constants,
 };
@@ -104,7 +105,7 @@ upload_wm_state(struct brw_context *brw)
    if (ctx->Line.StippleFlag)
       dw1 |= GEN7_WM_LINE_STIPPLE_ENABLE;
 
-   /* _NEW_POLYGONSTIPPLE */
+   /* _NEW_POLYGON */
    if (ctx->Polygon.StippleFlag)
       dw1 |= GEN7_WM_POLYGON_STIPPLE_ENABLE;
 
@@ -227,24 +228,21 @@ upload_ps_state(struct brw_context *brw)
 
    BEGIN_BATCH(8);
    OUT_BATCH(_3DSTATE_PS << 16 | (8 - 2));
-   OUT_RELOC(brw->wm.prog_bo, I915_GEM_DOMAIN_INSTRUCTION, 0, 0);
+   OUT_BATCH(brw->wm.prog_offset);
    OUT_BATCH(dw2);
    OUT_BATCH(0); /* scratch space base offset */
    OUT_BATCH(dw4);
    OUT_BATCH(dw5);
    OUT_BATCH(0); /* kernel 1 pointer */
-   if (brw->wm.prog_data->prog_offset_16) {
-      OUT_RELOC(brw->wm.prog_bo, I915_GEM_DOMAIN_INSTRUCTION, 0,
-	        brw->wm.prog_data->prog_offset_16);
-   } else {
-      OUT_BATCH(0); /* kernel 2 pointer */
-   }
+   OUT_BATCH(brw->wm.prog_offset + brw->wm.prog_data->prog_offset_16);
    ADVANCE_BATCH();
 }
 
 const struct brw_tracked_state gen7_ps_state = {
    .dirty = {
-      .mesa  = (_NEW_LINE | _NEW_POLYGON | _NEW_POLYGONSTIPPLE |
+      .mesa  = (_NEW_LINE |
+		_NEW_POLYGON |
+		_NEW_POLYGONSTIPPLE |
 		_NEW_PROGRAM_CONSTANTS),
       .brw   = (BRW_NEW_CURBE_OFFSETS |
 		BRW_NEW_FRAGMENT_PROGRAM |

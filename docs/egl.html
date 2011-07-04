@@ -29,12 +29,14 @@ directly dispatched to the drivers.</p>
 the driver for your hardware.  For example</p>
 
 <pre>
-  $ ./configure --enable-gles2 --enable-openvg --enable-gallium-nouveau
+  $ ./configure --enable-gles1 --enable-gles2 \
+                --with-dri-drivers=... \
+                --with-gallium-drivers=...
 </pre>
 
-<p>The main library and OpenGL is enabled by default.  The first option above
-enables <a href="opengles.html">OpenGL ES 2.x</a>.  The second option enables
-<a href="openvg.html">OpenVG</a>.</p>
+<p>The main library and OpenGL is enabled by default.  The first two options
+above enables <a href="opengles.html">OpenGL ES 1.x and 2.x</a>.  The last two
+options enables the listed classic and and Gallium drivers respectively.</p>
 
 </li>
 
@@ -42,8 +44,8 @@ enables <a href="opengles.html">OpenGL ES 2.x</a>.  The second option enables
 </ol>
 
 <p>In the given example, it will build and install <code>libEGL</code>,
-<code>libGL</code>, <code>libGLESv1_CM</code>, <code>libGLESv2</code>,
-<code>libOpenVG</code>, and one or more EGL drivers.</p>
+<code>libGL</code>, <code>libGLESv1_CM</code>, <code>libGLESv2</code>, and one
+or more EGL drivers.</p>
 
 <h3>Configure Options</h3>
 
@@ -62,6 +64,12 @@ will not be built.</p>
 
 <p>The directory EGL drivers should be installed to.  If not specified, EGL
 drivers will be installed to <code>${libdir}/egl</code>.</p>
+
+</li>
+
+<li><code>--enable-gallium-egl</code>
+
+<p>Enable the optional <code>egl_gallium</code> driver.</p>
 
 </li>
 
@@ -88,15 +96,17 @@ internal library that supports multiple APIs.</p>
 
 </li>
 
-<li><code>--enable-openvg</code>
+<li><code>--enable-shared-glapi</code>
 
-<p>OpenVG must be explicitly enabled by this option.</p>
+<p>By default, <code>libGL</code> has its own copy of <code>libglapi</code>.
+This options makes <code>libGL</code> use the shared <code>libglapi</code>.  This
+is required if applications mix OpenGL and OpenGL ES.</p>
 
 </li>
 
-<li><code>--enable-gallium-egl</code>
+<li><code>--enable-openvg</code>
 
-<p>Explicitly enable or disable <code>egl_gallium</code>.</p>
+<p>OpenVG must be explicitly enabled by this option.</p>
 
 </li>
 
@@ -220,8 +230,7 @@ distribution.</p>
 <p>Generally, <code>egl_dri2</code> is preferred over <code>egl_gallium</code>
 when the system already has DRI drivers.  As <code>egl_gallium</code> is loaded
 before <code>egl_dri2</code> when both are available, <code>egl_gallium</code>
-may either be disabled with <code>--disable-gallium-egl</code> or packaged
-separately.</p>
+is disabled by default.</p>
 
 <h2>Developers</h2>
 
@@ -306,18 +315,6 @@ functions (well, except for GetProcAddress which does not take an
 not be called with the sample display at the same time.  If a driver has access
 to an <code>EGLDisplay</code> without going through the EGL APIs, the driver
 should as well lock the display before using it.
-
-<h3>TODOs</h3>
-
-<ul>
-<li>Pass the conformance tests</li>
-<li>Mixed use of OpenGL, OpenGL ES 1.1, and OpenGL ES 2.0 is supported.  But
-which one of <code>libGL.so</code>, <code>libGLESv1_CM.so</code>, and
-<code>libGLESv2.so</code> should an application link to?  Bad things may happen
-when, say, an application is linked to <code>libGLESv2.so</code> and
-<code>libcairo</code>, which is linked to <code>libGL.so</code> instead.</li>
-
-</ul>
 
 </body>
 </html>

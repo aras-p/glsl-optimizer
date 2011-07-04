@@ -233,6 +233,7 @@ get_tex_rgba(struct gl_context *ctx, GLuint dimensions,
    const GLint width = texImage->Width;
    const GLint height = texImage->Height;
    const GLint depth = texImage->Depth;
+   const GLenum dataType = _mesa_get_format_datatype(texImage->TexFormat);
    /* Normally, no pixel transfer ops are performed during glGetTexImage.
     * The only possible exception is component clamping to [0,1].
     */
@@ -246,6 +247,19 @@ get_tex_rgba(struct gl_context *ctx, GLuint dimensions,
    if (!rgba) {
       _mesa_error(ctx, GL_OUT_OF_MEMORY, "glGetTexImage");
       return;
+   }
+
+   /* Clamping does not apply to GetTexImage (final conversion)?
+    * Looks like we need clamp though when going from format
+    * containing negative values to unsigned format.
+    */
+   if (format == GL_LUMINANCE || format == GL_LUMINANCE_ALPHA) {
+      transferOps |= IMAGE_CLAMP_BIT;
+   }
+   else if (!type_with_negative_values(type) &&
+            (dataType == GL_FLOAT ||
+             dataType == GL_SIGNED_NORMALIZED)) {
+      transferOps |= IMAGE_CLAMP_BIT;
    }
 
    /* glGetTexImage always returns sRGB data for sRGB textures. Make sure the
@@ -262,20 +276,6 @@ get_tex_rgba(struct gl_context *ctx, GLuint dimensions,
                                           width, height, format, type,
                                           img, row, 0);
          GLint col;
-         GLenum dataType = _mesa_get_format_datatype(texImage->TexFormat);
-
-         /* clamp does not apply to GetTexImage (final conversion)?
-          * Looks like we need clamp though when going from format
-          * containing negative values to unsigned format.
-          */
-         if (format == GL_LUMINANCE || format == GL_LUMINANCE_ALPHA) {
-            transferOps |= IMAGE_CLAMP_BIT;
-         }
-         else if (!type_with_negative_values(type) &&
-                  (dataType == GL_FLOAT ||
-                   dataType == GL_SIGNED_NORMALIZED)) {
-            transferOps |= IMAGE_CLAMP_BIT;
-         }
 
          for (col = 0; col < width; col++) {
             texImage->FetchTexelf(texImage, col, row, img, rgba[col]);

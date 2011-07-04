@@ -16,7 +16,8 @@ MESA_GLAPI_OUTPUTS = \
 	$(MESA_GLAPI_DIR)/glapi_mapi_tmp.h \
 	$(MESA_GLAPI_DIR)/glprocs.h \
 	$(MESA_GLAPI_DIR)/glapitemp.h \
-	$(MESA_GLAPI_DIR)/glapitable.h
+	$(MESA_GLAPI_DIR)/glapitable.h \
+	$(MESA_GLAPI_DIR)/glapi_gentable.c
 
 MESA_GLAPI_ASM_OUTPUTS = \
 	$(MESA_GLAPI_DIR)/glapi_x86.S \
@@ -50,7 +51,8 @@ XORG_GLAPI_OUTPUTS = \
 	$(XORG_GLAPI_DIR)/glprocs.h \
 	$(XORG_GLAPI_DIR)/glapioffsets.h \
 	$(XORG_GLAPI_DIR)/glapitable.h \
-	$(XORG_GLAPI_DIR)/glapidispatch.h
+	$(XORG_GLAPI_DIR)/glapidispatch.h \
+	$(XORG_GLAPI_DIR)/glapi_gentable.c
 
 XORG_OUTPUTS = \
 	$(XORG_GLAPI_FILES) \
@@ -160,6 +162,9 @@ $(MESA_GLAPI_DIR)/glapitemp.h: gl_apitemp.py $(COMMON)
 	$(PYTHON2) $(PYTHON_FLAGS) $< > $@
 
 $(MESA_GLAPI_DIR)/glapitable.h: gl_table.py $(COMMON)
+	$(PYTHON2) $(PYTHON_FLAGS) $< > $@
+
+$(MESA_GLAPI_DIR)/glapi_gentable.c: gl_gentable.py $(COMMON)
 	$(PYTHON2) $(PYTHON_FLAGS) $< > $@
 
 ######################################################################

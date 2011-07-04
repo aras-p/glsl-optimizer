@@ -55,21 +55,18 @@ intel_set_span_functions(struct intel_context *intel,
 
 #define LOCAL_VARS							\
    struct intel_renderbuffer *irb = intel_renderbuffer(rb);		\
-   const GLint yScale = rb->Name ? 1 : -1;				\
-   const GLint yBias = rb->Name ? 0 : rb->Height - 1;			\
    int minx = 0, miny = 0;						\
    int maxx = rb->Width;						\
    int maxy = rb->Height;						\
-   int pitch = irb->region->pitch * irb->region->cpp;			\
-   void *buf = irb->region->buffer->virtual;				\
+   int pitch = rb->RowStride * irb->region->cpp;			\
+   void *buf = rb->Data;						\
    GLuint p;								\
-   (void) p;								\
-   (void)buf; (void)pitch; /* unused for non-gttmap. */			\
+   (void) p;
 
 #define HW_CLIPLOOP()
 #define HW_ENDCLIPLOOP()
 
-#define Y_FLIP(_y) ((_y) * yScale + yBias)
+#define Y_FLIP(_y) (_y)
 
 #define HW_LOCK()
 
@@ -151,7 +148,7 @@ intel_set_span_functions(struct intel_context *intel,
  *     x    | y     | byte offset
  *     --------------------------
  *     0    | 0     | 0
- *     0    | 0     | 1
+ *     0    | 1     | 1
  *     1    | 0     | 2
  *     1    | 1     | 3
  *     ...  | ...   | ...
@@ -180,7 +177,15 @@ intel_renderbuffer_map(struct intel_context *intel, struct gl_renderbuffer *rb)
 {
    struct intel_renderbuffer *irb = intel_renderbuffer(rb);
 
-   if (irb == NULL || irb->region == NULL)
+   if (!irb)
+      return;
+
+   if (irb->wrapped_depth)
+      intel_renderbuffer_map(intel, irb->wrapped_depth);
+   if (irb->wrapped_stencil)
+      intel_renderbuffer_map(intel, irb->wrapped_stencil);
+
+   if (!irb->region)
       return;
 
    drm_intel_gem_bo_map_gtt(irb->region->buffer);
@@ -188,10 +193,16 @@ intel_renderbuffer_map(struct intel_context *intel, struct gl_renderbuffer *rb)
    rb->Data = irb->region->buffer->virtual;
    rb->RowStride = irb->region->pitch;
 
-   /* Flip orientation if it's the window system buffer */
    if (!rb->Name) {
+      /* Flip orientation of the window system buffer */
       rb->Data += rb->RowStride * (irb->region->height - 1) * irb->region->cpp;
       rb->RowStride = -rb->RowStride;
+   } else {
+      /* Adjust the base pointer of a texture image drawbuffer to the image
+       * within the miptree region (all else has draw_x/y = 0).
+       */
+      rb->Data += irb->draw_x * irb->region->cpp;
+      rb->Data += irb->draw_y * rb->RowStride * irb->region->cpp;
    }
 
    intel_set_span_functions(intel, rb);
@@ -203,7 +214,15 @@ intel_renderbuffer_unmap(struct intel_context *intel,
 {
    struct intel_renderbuffer *irb = intel_renderbuffer(rb);
 
-   if (irb == NULL || irb->region == NULL)
+   if (!irb)
+      return;
+
+   if (irb->wrapped_depth)
+      intel_renderbuffer_unmap(intel, irb->wrapped_depth);
+   if (irb->wrapped_stencil)
+      intel_renderbuffer_unmap(intel, irb->wrapped_stencil);
+
+   if (!irb->region)
       return;
 
    drm_intel_gem_bo_unmap_gtt(irb->region->buffer);
@@ -214,71 +233,26 @@ intel_renderbuffer_unmap(struct intel_context *intel,
    rb->RowStride = 0;
 }
 
-/**
- * Map or unmap all the renderbuffers which we may need during
- * software rendering.
- * XXX in the future, we could probably convey extra information to
- * reduce the number of mappings needed.  I.e. if doing a glReadPixels
- * from the depth buffer, we really only need one mapping.
- *
- * XXX Rewrite this function someday.
- * We can probably just loop over all the renderbuffer attachments,
- * map/unmap all of them, and not worry about the _ColorDrawBuffers
- * _ColorReadBuffer, _DepthBuffer or _StencilBuffer fields.
- */
 static void
-intel_map_unmap_framebuffer(struct intel_context *intel,
-			    struct gl_framebuffer *fb,
-			    GLboolean map)
+intel_framebuffer_map(struct intel_context *intel, struct gl_framebuffer *fb)
 {
-   GLuint i;
+   int i;
 
-   /* color draw buffers */
-   for (i = 0; i < fb->_NumColorDrawBuffers; i++) {
-      if (map)
-         intel_renderbuffer_map(intel, fb->_ColorDrawBuffers[i]);
-      else
-         intel_renderbuffer_unmap(intel, fb->_ColorDrawBuffers[i]);
-   }
-
-   /* color read buffer */
-   if (map)
-      intel_renderbuffer_map(intel, fb->_ColorReadBuffer);
-   else
-      intel_renderbuffer_unmap(intel, fb->_ColorReadBuffer);
-
-   /* check for render to textures */
    for (i = 0; i < BUFFER_COUNT; i++) {
-      struct gl_renderbuffer_attachment *att =
-         fb->Attachment + i;
-      struct gl_texture_object *tex = att->Texture;
-      if (tex) {
-         /* render to texture */
-         ASSERT(att->Renderbuffer);
-         if (map)
-            intel_tex_map_images(intel, intel_texture_object(tex));
-         else
-            intel_tex_unmap_images(intel, intel_texture_object(tex));
-      }
-   }
-
-   /* depth buffer (Note wrapper!) */
-   if (fb->_DepthBuffer) {
-      if (map)
-         intel_renderbuffer_map(intel, fb->_DepthBuffer->Wrapped);
-      else
-         intel_renderbuffer_unmap(intel, fb->_DepthBuffer->Wrapped);
-   }
-
-   /* stencil buffer (Note wrapper!) */
-   if (fb->_StencilBuffer) {
-      if (map)
-         intel_renderbuffer_map(intel, fb->_StencilBuffer->Wrapped);
-      else
-         intel_renderbuffer_unmap(intel, fb->_StencilBuffer->Wrapped);
+      intel_renderbuffer_map(intel, fb->Attachment[i].Renderbuffer);
    }
 
    intel_check_front_buffer_rendering(intel);
+}
+
+static void
+intel_framebuffer_unmap(struct intel_context *intel, struct gl_framebuffer *fb)
+{
+   int i;
+
+   for (i = 0; i < BUFFER_COUNT; i++) {
+      intel_renderbuffer_unmap(intel, fb->Attachment[i].Renderbuffer);
+   }
 }
 
 /**
@@ -305,9 +279,10 @@ intelSpanRenderStart(struct gl_context * ctx)
       }
    }
 
-   intel_map_unmap_framebuffer(intel, ctx->DrawBuffer, GL_TRUE);
-   if (ctx->ReadBuffer != ctx->DrawBuffer)
-      intel_map_unmap_framebuffer(intel, ctx->ReadBuffer, GL_TRUE);
+   intel_framebuffer_map(intel, ctx->DrawBuffer);
+   if (ctx->ReadBuffer != ctx->DrawBuffer) {
+      intel_framebuffer_map(intel, ctx->ReadBuffer);
+   }
 }
 
 /**
@@ -329,9 +304,10 @@ intelSpanRenderFinish(struct gl_context * ctx)
       }
    }
 
-   intel_map_unmap_framebuffer(intel, ctx->DrawBuffer, GL_FALSE);
-   if (ctx->ReadBuffer != ctx->DrawBuffer)
-      intel_map_unmap_framebuffer(intel, ctx->ReadBuffer, GL_FALSE);
+   intel_framebuffer_unmap(intel, ctx->DrawBuffer);
+   if (ctx->ReadBuffer != ctx->DrawBuffer) {
+      intel_framebuffer_unmap(intel, ctx->ReadBuffer);
+   }
 }
 
 

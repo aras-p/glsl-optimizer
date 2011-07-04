@@ -43,11 +43,15 @@ brw_prepare_clip_unit(struct brw_context *brw)
    clip = brw_state_batch(brw, sizeof(*clip), 32, &brw->clip.state_offset);
    memset(clip, 0, sizeof(*clip));
 
-   /* CACHE_NEW_CLIP_PROG */
+   /* BRW_NEW_PROGRAM_CACHE | CACHE_NEW_CLIP_PROG */
    clip->thread0.grf_reg_count = (ALIGN(brw->clip.prog_data->total_grf, 16) /
 				 16 - 1);
-   /* reloc */
-   clip->thread0.kernel_start_pointer = brw->clip.prog_bo->offset >> 6;
+   clip->thread0.kernel_start_pointer =
+      brw_program_reloc(brw,
+			brw->clip.state_offset +
+			offsetof(struct brw_clip_unit_state, thread0),
+			brw->clip.prog_offset +
+			(clip->thread0.grf_reg_count << 1)) >> 6;
 
    clip->thread1.floating_point_mode = BRW_FLOATING_POINT_NON_IEEE_754;
    clip->thread1.single_program_flow = 1;
@@ -110,14 +114,6 @@ brw_prepare_clip_unit(struct brw_context *brw)
    clip->viewport_ymin = -1;
    clip->viewport_ymax = 1;
 
-   /* Emit clip program relocation */
-   assert(brw->clip.prog_bo);
-   drm_intel_bo_emit_reloc(intel->batch.bo,
-			   (brw->clip.state_offset +
-			    offsetof(struct brw_clip_unit_state, thread0)),
-			   brw->clip.prog_bo, clip->thread0.grf_reg_count << 1,
-			   I915_GEM_DOMAIN_INSTRUCTION, 0);
-
    brw->state.dirty.cache |= CACHE_NEW_CLIP_UNIT;
 }
 
@@ -125,6 +121,7 @@ const struct brw_tracked_state brw_clip_unit = {
    .dirty = {
       .mesa  = _NEW_TRANSFORM,
       .brw   = (BRW_NEW_BATCH |
+		BRW_NEW_PROGRAM_CACHE |
 		BRW_NEW_CURBE_OFFSETS |
 		BRW_NEW_URB_FENCE),
       .cache = CACHE_NEW_CLIP_PROG

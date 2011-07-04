@@ -28,7 +28,9 @@
 #include "intel_context.h"
 #include "intel_buffers.h"
 #include "intel_fbo.h"
+
 #include "main/framebuffer.h"
+#include "main/renderbuffer.h"
 
 /**
  * Return pointer to current color drawing region, or NULL.
@@ -100,6 +102,28 @@ intel_draw_buffer(struct gl_context * ctx, struct gl_framebuffer *fb)
       return;
    }
 
+   /*
+    * If intel_context is using separate stencil, but the depth attachment
+    * (gl_framebuffer.Attachment[BUFFER_DEPTH]) has a packed depth/stencil
+    * format, then we must install the real depth buffer at fb->_DepthBuffer
+    * and set fb->_DepthBuffer->Wrapped before calling _mesa_update_framebuffer.
+    * Otherwise, _mesa_update_framebuffer will create and install a swras
+    * depth wrapper instead.
+    *
+    * Ditto for stencil.
+    */
+   irbDepth = intel_get_renderbuffer(fb, BUFFER_DEPTH);
+   if (irbDepth && irbDepth->Base.Format == MESA_FORMAT_X8_Z24) {
+      _mesa_reference_renderbuffer(&fb->_DepthBuffer, &irbDepth->Base);
+      irbDepth->Base.Wrapped = fb->Attachment[BUFFER_DEPTH].Renderbuffer;
+   }
+
+   irbStencil = intel_get_renderbuffer(fb, BUFFER_STENCIL);
+   if (irbStencil && irbStencil->Base.Format == MESA_FORMAT_S8) {
+      _mesa_reference_renderbuffer(&fb->_StencilBuffer, &irbStencil->Base);
+      irbStencil->Base.Wrapped = fb->Attachment[BUFFER_STENCIL].Renderbuffer;
+   }
+
    /* Do this here, not core Mesa, since this function is called from
     * many places within the driver.
     */
@@ -165,47 +189,33 @@ intel_draw_buffer(struct gl_context * ctx, struct gl_framebuffer *fb)
       FALLBACK(intel, INTEL_FALLBACK_DRAW_BUFFER, GL_FALSE);
    }
 
-   /***
-    *** Get depth buffer region and check if we need a software fallback.
-    ***/
-   if (fb->_DepthBuffer && fb->_DepthBuffer->Wrapped) {
-      irbDepth = intel_renderbuffer(fb->_DepthBuffer->Wrapped);
-      if (irbDepth && irbDepth->region) {
-	 assert(!fb_has_hiz || irbDepth->Base.Format != MESA_FORMAT_S8_Z24);
-         FALLBACK(intel, INTEL_FALLBACK_DEPTH_BUFFER, GL_FALSE);
-         depthRegion = irbDepth->region;
-      }
-      else {
-         FALLBACK(intel, INTEL_FALLBACK_DEPTH_BUFFER, GL_TRUE);
-         depthRegion = NULL;
-      }
-   }
-   else {
-      /* not using depth buffer */
+   /* Check for depth fallback. */
+   if (irbDepth && irbDepth->region) {
+      assert(!fb_has_hiz || irbDepth->Base.Format != MESA_FORMAT_S8_Z24);
+      FALLBACK(intel, INTEL_FALLBACK_DEPTH_BUFFER, GL_FALSE);
+      depthRegion = irbDepth->region;
+   } else if (irbDepth && !irbDepth->region) {
+      FALLBACK(intel, INTEL_FALLBACK_DEPTH_BUFFER, GL_TRUE);
+      depthRegion = NULL;
+   } else { /* !irbDepth */
+      /* No fallback is needed because there is no depth buffer. */
       FALLBACK(intel, INTEL_FALLBACK_DEPTH_BUFFER, GL_FALSE);
       depthRegion = NULL;
    }
 
-   /***
-    *** Stencil buffer
-    ***/
-   if (fb->_StencilBuffer && fb->_StencilBuffer->Wrapped) {
-      irbStencil = intel_renderbuffer(fb->_StencilBuffer->Wrapped);
-      if (irbStencil && irbStencil->region) {
-	 if (!intel->has_separate_stencil)
-	    assert(irbStencil->Base.Format == MESA_FORMAT_S8_Z24);
-	 if (fb_has_hiz || intel->must_use_separate_stencil)
-	    assert(irbStencil->Base.Format == MESA_FORMAT_S8);
-	 if (irbStencil->Base.Format == MESA_FORMAT_S8)
-	    assert(intel->has_separate_stencil);
-         FALLBACK(intel, INTEL_FALLBACK_STENCIL_BUFFER, GL_FALSE);
-      }
-      else {
-         FALLBACK(intel, INTEL_FALLBACK_STENCIL_BUFFER, GL_TRUE);
-      }
-   }
-   else {
-      /* XXX FBO: instead of FALSE, pass ctx->Stencil._Enabled ??? */
+   /* Check for stencil fallback. */
+   if (irbStencil && irbStencil->region) {
+      if (!intel->has_separate_stencil)
+	 assert(irbStencil->Base.Format == MESA_FORMAT_S8_Z24);
+      if (fb_has_hiz || intel->must_use_separate_stencil)
+	 assert(irbStencil->Base.Format == MESA_FORMAT_S8);
+      if (irbStencil->Base.Format == MESA_FORMAT_S8)
+	 assert(intel->has_separate_stencil);
+      FALLBACK(intel, INTEL_FALLBACK_STENCIL_BUFFER, GL_FALSE);
+   } else if (irbStencil && !irbStencil->region) {
+      FALLBACK(intel, INTEL_FALLBACK_STENCIL_BUFFER, GL_TRUE);
+   } else { /* !irbStencil */
+      /* No fallback is needed because there is no stencil buffer. */
       FALLBACK(intel, INTEL_FALLBACK_STENCIL_BUFFER, GL_FALSE);
    }
 

@@ -44,6 +44,10 @@
 #include <GL/gl.h>
 #include <GL/internal/dri_interface.h>
 
+#ifdef HAVE_DRM_PLATFORM
+#include <gbm_driint.h>
+#endif
+
 #include "eglconfig.h"
 #include "eglcontext.h"
 #include "egldisplay.h"
@@ -69,6 +73,7 @@ struct dri2_egl_display
    int                       dri2_major;
    int                       dri2_minor;
    __DRIscreen              *dri_screen;
+   int                       own_dri_screen;
    const __DRIconfig       **driver_configs;
    void                     *driver;
    __DRIcoreExtension       *core;
@@ -79,12 +84,16 @@ struct dri2_egl_display
    __DRIimageExtension      *image;
    int                       fd;
 
+#ifdef HAVE_DRM_PLATFORM
+   struct gbm_dri_device    *gbm_dri;
+#endif
+
    char                     *device_name;
    char                     *driver_name;
 
    __DRIdri2LoaderExtension    dri2_loader_extension;
    __DRIswrastLoaderExtension  swrast_loader_extension;
-   const __DRIextension     *extensions[3];
+   const __DRIextension     *extensions[4];
 
 #ifdef HAVE_X11_PLATFORM
    xcb_connection_t         *conn;
@@ -110,6 +119,7 @@ struct dri2_egl_context
 enum wayland_buffer_type {
    WL_BUFFER_FRONT,
    WL_BUFFER_BACK,
+   WL_BUFFER_THIRD,
    WL_BUFFER_COUNT
 };
 
@@ -145,9 +155,11 @@ struct dri2_egl_surface
    struct wl_egl_window  *wl_win;
    struct wl_egl_pixmap  *wl_pix;
    struct wl_buffer      *wl_drm_buffer[WL_BUFFER_COUNT];
+   int                    wl_buffer_lock[WL_BUFFER_COUNT];
    int                    dx;
    int                    dy;
    __DRIbuffer           *dri_buffers[__DRI_BUFFER_COUNT];
+   __DRIbuffer           *third_buffer;
    __DRIbuffer           *pending_buffer;
    EGLBoolean             block_swap_buffers;
 #endif
@@ -182,8 +194,18 @@ extern const __DRIuseInvalidateExtension use_invalidate;
 EGLBoolean
 dri2_load_driver(_EGLDisplay *disp);
 
+/* Helper for platforms not using dri2_create_screen */
+void
+dri2_setup_screen(_EGLDisplay *disp);
+
+EGLBoolean
+dri2_load_driver_swrast(_EGLDisplay *disp);
+
 EGLBoolean
 dri2_create_screen(_EGLDisplay *disp);
+
+__DRIimage *
+dri2_lookup_egl_image(__DRIscreen *screen, void *image, void *data);
 
 struct dri2_egl_config *
 dri2_add_config(_EGLDisplay *disp, const __DRIconfig *dri_config, int id,

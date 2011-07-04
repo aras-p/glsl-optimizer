@@ -784,6 +784,14 @@ aaline_destroy(struct draw_stage *stage)
 
    draw_free_temp_verts( stage );
 
+   /* restore the old entry points */
+   pipe->create_fs_state = aaline->driver_create_fs_state;
+   pipe->bind_fs_state = aaline->driver_bind_fs_state;
+   pipe->delete_fs_state = aaline->driver_delete_fs_state;
+
+   pipe->bind_fragment_sampler_states = aaline->driver_bind_sampler_states;
+   pipe->set_fragment_sampler_views = aaline->driver_set_sampler_views;
+
    FREE( stage );
 }
 

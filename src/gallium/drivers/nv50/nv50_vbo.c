@@ -404,9 +404,6 @@ nv50_draw_arrays(struct nv50_context *nv50,
    struct nouveau_channel *chan = nv50->screen->base.channel;
    unsigned prim;
 
-   chan->flush_notify = nv50_draw_vbo_flush_notify;
-   chan->user_private = nv50;
-
    prim = nv50_prim_gl(mode);
 
    while (instance_count--) {
@@ -420,8 +417,6 @@ nv50_draw_arrays(struct nv50_context *nv50,
 
       prim |= NV50_3D_VERTEX_BEGIN_GL_INSTANCE_NEXT;
    }
-
-   chan->flush_notify = nv50_default_flush_notify;
 }
 
 static void
@@ -522,9 +517,6 @@ nv50_draw_elements(struct nv50_context *nv50, boolean shorten,
    void *data;
    unsigned prim;
    const unsigned index_size = nv50->idxbuf.index_size;
-
-   chan->flush_notify = nv50_draw_vbo_flush_notify;
-   chan->user_private = nv50;
 
    prim = nv50_prim_gl(mode);
 
@@ -631,8 +623,6 @@ nv50_draw_elements(struct nv50_context *nv50, boolean shorten,
          prim |= NV50_3D_VERTEX_BEGIN_GL_INSTANCE_NEXT;
       }
    }
-
-   chan->flush_notify = nv50_default_flush_notify;
 }
 
 void
@@ -659,8 +649,12 @@ nv50_draw_vbo(struct pipe_context *pipe, const struct pipe_draw_info *info)
 
    nv50_state_validate(nv50);
 
+   chan->flush_notify = nv50_draw_vbo_flush_notify;
+   chan->user_private = nv50;
+
    if (nv50->vbo_fifo) {
       nv50_push_vbo(nv50, info);
+      chan->flush_notify = nv50_default_flush_notify;
       return;
    }
 
@@ -712,6 +706,7 @@ nv50_draw_vbo(struct pipe_context *pipe, const struct pipe_draw_info *info)
                          info->mode, info->start, info->count,
                          info->instance_count, info->index_bias);
    }
+   chan->flush_notify = nv50_default_flush_notify;
 
    nv50_release_user_vbufs(nv50);
 }

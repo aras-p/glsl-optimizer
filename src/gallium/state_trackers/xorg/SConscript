@@ -9,10 +9,11 @@ env.Append(CPPPATH = [
     '#/src/mesa',
 ])
 
-env.ParseConfig('pkg-config --cflags --libs libdrm xorg-server')
+env.PkgUseModules(['DRM', 'XORG'])
 
-if env['kms']:
+if env['HAVE_KMS']:
     env.Append(CPPDEFINES = ['HAVE_LIBKMS'])
+    env.PkgUseModules(['KMS'])
 
 conf = env.Configure()
 

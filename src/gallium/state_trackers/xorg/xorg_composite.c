@@ -237,7 +237,7 @@ picture_format_fixups(struct exa_pixmap_priv *pSrc, PicturePtr pSrcPicture, bool
    boolean swizzle = FALSE;
    unsigned ret = 0;
 
-   if (pSrc->picture_format == pSrcPicture->format) {
+   if (pSrc && pSrc->picture_format == pSrcPicture->format) {
       if (pSrc->picture_format == PICT_a8) {
          if (mask)
             return FS_MASK_LUMINANCE;
@@ -252,7 +252,7 @@ picture_format_fixups(struct exa_pixmap_priv *pSrc, PicturePtr pSrcPicture, bool
       return 0;
    }
 
-   if (pSrc->picture_format != PICT_a8r8g8b8) {
+   if (pSrc && pSrc->picture_format != PICT_a8r8g8b8) {
       assert(!"can not handle formats");
       return 0;
    }
@@ -355,7 +355,7 @@ bind_samplers(struct exa_context *exa, int op,
               struct exa_pixmap_priv *pMask,
               struct exa_pixmap_priv *pDst)
 {
-   struct pipe_sampler_state *samplers[PIPE_MAX_SAMPLERS];
+   struct pipe_sampler_state *samplers[PIPE_MAX_SAMPLERS] = {0};
    struct pipe_sampler_state src_sampler, mask_sampler;
    struct pipe_sampler_view view_templ;
    struct pipe_sampler_view *src_view;

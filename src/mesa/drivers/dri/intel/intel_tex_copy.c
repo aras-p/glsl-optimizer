@@ -152,7 +152,7 @@ intel_copy_texsubimage(struct intel_context *intel,
 			     dst_bo,
 			     0,
 			     intelImage->mt->region->tiling,
-			     irb->region->draw_x + x, irb->region->draw_y + y,
+			     irb->draw_x + x, irb->draw_y + y,
 			     image_x + dstx, image_y + dsty,
 			     width, height,
 			     GL_COPY)) {

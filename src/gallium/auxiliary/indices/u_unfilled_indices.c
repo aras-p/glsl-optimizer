@@ -71,6 +71,11 @@ static void generate_linear_uint( unsigned nr,
 }
 
 
+/**
+ * Given a primitive type and number of vertices, return the number of vertices
+ * needed to draw the primitive with fill mode = PIPE_POLYGON_MODE_LINE using
+ * separate lines (PIPE_PRIM_LINES).
+ */
 static unsigned nr_lines( unsigned prim,
                           unsigned nr )
 {
@@ -86,7 +91,7 @@ static unsigned nr_lines( unsigned prim,
    case PIPE_PRIM_QUAD_STRIP:
       return (nr - 2) / 2 * 8;
    case PIPE_PRIM_POLYGON:
-      return (nr - 2) * 6;
+      return 2 * nr; /* a line (two verts) for each polygon edge */
    default:
       assert(0);
       return 0;

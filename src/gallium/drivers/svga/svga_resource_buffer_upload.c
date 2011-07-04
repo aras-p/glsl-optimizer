@@ -651,8 +651,6 @@ svga_redefine_user_buffer(struct pipe_context *pipe,
                           unsigned offset,
                           unsigned size)
 {
-   struct svga_screen *ss = svga_screen(pipe->screen);
-   struct svga_context *svga = svga_context(pipe);
    struct svga_buffer *sbuf = svga_buffer(resource);
 
    assert(sbuf->user);
@@ -661,19 +659,8 @@ svga_redefine_user_buffer(struct pipe_context *pipe,
    assert(!sbuf->hwbuf);
 
    /*
-    * Release any uploaded user buffer.
-    *
-    * TODO: As an optimization, we could try to update the uploaded buffer
-    * instead.
+    * We always treat the contents of user-buffers as volatile,
+    * so no particular action needed here.
     */
 
-   pipe_resource_reference(&sbuf->uploaded.buffer, NULL);
-
-   pipe_mutex_lock(ss->swc_mutex);
-
-   sbuf->key.size.width = sbuf->b.b.width0 = offset + size;
-
-   pipe_mutex_unlock(ss->swc_mutex);
-
-   svga->dirty |= SVGA_NEW_VBUFFER | SVGA_NEW_VELEMENT;
 }

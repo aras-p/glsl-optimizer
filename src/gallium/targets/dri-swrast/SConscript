@@ -39,4 +39,6 @@ module = env.LoadableModule(
     SHLIBPREFIX = '',
 )
 
+module = env.InstallSharedLibrary(module)
+
 env.Alias('dri-swrast', module)

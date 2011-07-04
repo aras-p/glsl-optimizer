@@ -187,7 +187,7 @@ determineTextureFormat(const int *attribs, int numAttribs)
    return 0;
 }
 
-static void
+static GLboolean
 CreateDRIDrawable(Display *dpy, struct glx_config *config,
 		  XID drawable, XID glxdrawable,
 		  const int *attrib_list, size_t num_attribs)
@@ -198,22 +198,24 @@ CreateDRIDrawable(Display *dpy, struct glx_config *config,
 
    psc = priv->screens[config->screen];
    if (psc->driScreen == NULL)
-      return;
+      return GL_TRUE;
 
    pdraw = psc->driScreen->createDrawable(psc, drawable,
 					  glxdrawable, config);
    if (pdraw == NULL) {
       fprintf(stderr, "failed to create drawable\n");
-      return;
+      return GL_FALSE;
    }
 
    if (__glxHashInsert(priv->drawHash, glxdrawable, pdraw)) {
       (*pdraw->destroyDrawable) (pdraw);
-      return; /* FIXME: Check what we're supposed to do here... */
+      return GL_FALSE;
    }
 
    pdraw->textureTarget = determineTextureTarget(attrib_list, num_attribs);
    pdraw->textureFormat = determineTextureFormat(attrib_list, num_attribs);
+
+   return GL_TRUE;
 }
 
 static void
@@ -234,11 +236,12 @@ DestroyDRIDrawable(Display *dpy, GLXDrawable drawable, int destroy_xdrawable)
 
 #else
 
-static void
+static GLboolean
 CreateDRIDrawable(Display *dpy, const struct glx_config * fbconfig,
 		  XID drawable, XID glxdrawable,
 		  const int *attrib_list, size_t num_attribs)
 {
+    return GL_FALSE;
 }
 
 static void
@@ -364,6 +367,27 @@ GetDrawableAttribute(Display * dpy, GLXDrawable drawable,
    return 0;
 }
 
+static void
+protocolDestroyDrawable(Display *dpy, GLXDrawable drawable, CARD32 glxCode)
+{
+   xGLXDestroyPbufferReq *req;
+   CARD8 opcode;
+
+   opcode = __glXSetupForCommand(dpy);
+   if (!opcode)
+      return;
+
+   LockDisplay(dpy);
+
+   GetReq(GLXDestroyPbuffer, req);
+   req->reqType = opcode;
+   req->glxCode = glxCode;
+   req->pbuffer = (GLXPbuffer) drawable;
+
+   UnlockDisplay(dpy);
+   SyncHandle();
+}
+
 /**
  * Create a non-pbuffer GLX drawable.
  */
@@ -405,7 +429,14 @@ CreateDrawable(Display *dpy, struct glx_config *config,
    UnlockDisplay(dpy);
    SyncHandle();
 
-   CreateDRIDrawable(dpy, config, drawable, xid, attrib_list, i);
+   if (!CreateDRIDrawable(dpy, config, drawable, xid, attrib_list, i)) {
+      if (glxCode == X_GLXCreatePixmap)
+         glxCode = X_GLXDestroyPixmap;
+      else
+         glxCode = X_GLXDestroyWindow;
+      protocolDestroyDrawable(dpy, xid, glxCode);
+      xid = None;
+   }
 
    return xid;
 }
@@ -417,27 +448,11 @@ CreateDrawable(Display *dpy, struct glx_config *config,
 static void
 DestroyDrawable(Display * dpy, GLXDrawable drawable, CARD32 glxCode)
 {
-   xGLXDestroyPbufferReq *req;
-   CARD8 opcode;
-
    if ((dpy == NULL) || (drawable == 0)) {
       return;
    }
 
-
-   opcode = __glXSetupForCommand(dpy);
-   if (!opcode)
-      return;
-
-   LockDisplay(dpy);
-
-   GetReq(GLXDestroyPbuffer, req);
-   req->reqType = opcode;
-   req->glxCode = glxCode;
-   req->pbuffer = (GLXPbuffer) drawable;
-
-   UnlockDisplay(dpy);
-   SyncHandle();
+   protocolDestroyDrawable(dpy, drawable, glxCode);
 
    DestroyDRIDrawable(dpy, drawable, GL_FALSE);
 
@@ -466,6 +481,7 @@ CreatePbuffer(Display * dpy, struct glx_config *config,
    CARD8 opcode;
    unsigned int i;
    Pixmap pixmap;
+   GLboolean glx_1_3 = GL_FALSE;
 
    i = 0;
    if (attrib_list) {
@@ -483,6 +499,8 @@ CreatePbuffer(Display * dpy, struct glx_config *config,
    if ((priv->majorVersion > 1) || (priv->minorVersion >= 3)) {
       xGLXCreatePbufferReq *req;
       unsigned int extra = (size_in_attribs) ? 0 : 2;
+
+      glx_1_3 = GL_TRUE;
 
       GetReqExtra(GLXCreatePbuffer, (8 * (i + extra)), req);
       data = (CARD32 *) (req + 1);
@@ -528,7 +546,12 @@ CreatePbuffer(Display * dpy, struct glx_config *config,
    pixmap = XCreatePixmap(dpy, RootWindow(dpy, config->screen),
 			  width, height, config->rgbBits);
 
-   CreateDRIDrawable(dpy, config, pixmap, id, attrib_list, i);
+   if (!CreateDRIDrawable(dpy, config, pixmap, id, attrib_list, i)) {
+      CARD32 o = glx_1_3 ? X_GLXDestroyPbuffer : X_GLXvop_DestroyGLXPbufferSGIX;
+      XFreePixmap(dpy, pixmap);
+      protocolDestroyDrawable(dpy, id, o);
+      id = None;
+   }
 
    return id;
 }

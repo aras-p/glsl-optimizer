@@ -62,6 +62,7 @@ struct nvc0_context {
    struct nvc0_screen *screen;
 
    struct util_dynarray residents[NVC0_BUFCTX_COUNT];
+   unsigned residents_size;
 
    uint32_t dirty;
 
@@ -163,6 +164,7 @@ void nvc0_bufctx_del_resident(struct nvc0_context *, int ctx,
 static INLINE void
 nvc0_bufctx_reset(struct nvc0_context *nvc0, int ctx)
 {
+   nvc0->residents_size -= nvc0->residents[ctx].size;
    util_dynarray_resize(&nvc0->residents[ctx], 0);
 }
 

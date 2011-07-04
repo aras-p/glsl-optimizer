@@ -102,7 +102,7 @@ if env['msvc']:
     env.Prepend(CPPPATH = ['#/src/getopt'])
     env.PrependUnique(LIBS = [getopt])
 
-if env['crosscompile'] and env['platform'] != 'embedded':
+if env['crosscompile'] and not env['embedded']:
     Import('builtin_glsl_function')
 else:
     # Copy these files to avoid generation object files into src/mesa/program
@@ -156,7 +156,7 @@ Export('glsl')
 
 # Skip building these programs as they will cause SCons error "Two environments
 # with different actions were specified for the same target"
-if env['crosscompile'] or env['platform'] == 'embedded':
+if env['crosscompile'] or env['embedded']:
     Return()
 
 env = env.Clone()

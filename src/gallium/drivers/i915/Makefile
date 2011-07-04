@@ -21,6 +21,7 @@ C_SOURCES = \
 	i915_screen.c \
 	i915_prim_emit.c \
 	i915_prim_vbuf.c \
+	i915_query.c \
 	i915_resource.c \
 	i915_resource_texture.c \
 	i915_resource_buffer.c \

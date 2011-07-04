@@ -60,6 +60,9 @@ __asm__(".balign 32\n"
 #include <string.h>
 #include "u_execmem.h"
 
+static const char x86_entry_start[];
+static const char x86_entry_end[];
+
 void
 entry_patch_public(void)
 {
@@ -68,7 +71,6 @@ entry_patch_public(void)
 mapi_func
 entry_get_public(int slot)
 {
-   extern const char x86_entry_start[];
    return (mapi_func) (x86_entry_start + slot * X86_ENTRY_SIZE);
 }
 
@@ -84,7 +86,6 @@ entry_patch(mapi_func entry, int slot)
 mapi_func
 entry_generate(int slot)
 {
-   extern const char x86_entry_end[];
    const char *code_templ = x86_entry_end - X86_ENTRY_SIZE;
    void *code;
    mapi_func entry;

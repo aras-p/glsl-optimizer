@@ -47,7 +47,7 @@
 struct wayland_shm_display {
    struct wayland_display base;
 
-   struct native_event_handler *event_handler;
+   const struct native_event_handler *event_handler;
    struct wl_shm *wl_shm;
 };
 
@@ -65,6 +65,8 @@ wayland_shm_display_destroy(struct native_display *ndpy)
 
    if (shmdpy->base.config)
       FREE(shmdpy->base.config);
+   if (shmdpy->base.own_dpy)
+      wl_display_destroy(shmdpy->base.dpy);
 
    ndpy_uninit(ndpy);
 
@@ -142,8 +144,7 @@ wayland_shm_display_init_screen(struct native_display *ndpy)
 
 struct wayland_display *
 wayland_create_shm_display(struct wl_display *dpy,
-                           struct native_event_handler *event_handler,
-                           void *user_data)
+                           const struct native_event_handler *event_handler)
 {
    struct wayland_shm_display *shmdpy;
 
@@ -152,7 +153,6 @@ wayland_create_shm_display(struct wl_display *dpy,
       return NULL;
 
    shmdpy->event_handler = event_handler;
-   shmdpy->base.base.user_data = user_data;
 
    shmdpy->base.dpy = dpy;
    if (!shmdpy->base.dpy) {
@@ -160,11 +160,7 @@ wayland_create_shm_display(struct wl_display *dpy,
       return NULL;
    }
 
-   if (!wayland_shm_display_init_screen(&shmdpy->base.base)) {
-      wayland_shm_display_destroy(&shmdpy->base.base);
-      return NULL;
-   }
-
+   shmdpy->base.base.init_screen = wayland_shm_display_init_screen;
    shmdpy->base.base.destroy = wayland_shm_display_destroy;
    shmdpy->base.create_buffer = wayland_create_shm_buffer;
 

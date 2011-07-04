@@ -38,57 +38,6 @@
 #include "svga_hw_reg.h"
 
 
-static int
-upload_user_buffers( struct svga_context *svga )
-{
-   enum pipe_error ret = PIPE_OK;
-   int i;
-   int nr;
-
-   if (0) 
-      debug_printf("%s: %d\n", __FUNCTION__, svga->curr.num_vertex_buffers);
-
-   nr = svga->curr.num_vertex_buffers;
-
-   for (i = 0; i < nr; i++) 
-   {
-      if (svga_buffer_is_user_buffer(svga->curr.vb[i].buffer))
-      {
-         struct svga_buffer *buffer = svga_buffer(svga->curr.vb[i].buffer);
-
-         if (!buffer->uploaded.buffer) {
-            boolean flushed;
-            ret = u_upload_buffer( svga->upload_vb,
-                                   0, 0,
-                                   buffer->b.b.width0,
-                                   &buffer->b.b,
-                                   &buffer->uploaded.offset,
-                                   &buffer->uploaded.buffer,
-                                   &flushed);
-            if (ret)
-               return ret;
-
-            if (0)
-               debug_printf("%s: %d: orig buf %p upl buf %p ofs %d sz %d\n",
-                            __FUNCTION__,
-                            i,
-                            buffer,
-                            buffer->uploaded.buffer,
-                            buffer->uploaded.offset,
-                            buffer->b.b.width0);
-         }
-
-         svga->curr.vb[i].buffer_offset = buffer->uploaded.offset;
-      }
-   }
-
-   if (0)
-      debug_printf("%s: DONE\n", __FUNCTION__);
-
-   return ret;
-}
-
-
 /***********************************************************************
  */
 
@@ -99,6 +48,7 @@ static int emit_hw_vs_vdecl( struct svga_context *svga,
    const struct pipe_vertex_element *ve = svga->curr.velems->velem;
    SVGA3dVertexDecl decl;
    unsigned i;
+   unsigned neg_bias = 0;
 
    assert(svga->curr.velems->count >=
           svga->curr.vs->base.info.file_count[TGSI_FILE_INPUT]);
@@ -106,12 +56,50 @@ static int emit_hw_vs_vdecl( struct svga_context *svga,
    svga_hwtnl_reset_vdecl( svga->hwtnl, 
                            svga->curr.velems->count );
 
+   /**
+    * We can't set the VDECL offset to something negative, so we
+    * must calculate a common negative additional index bias, and modify
+    * the VDECL offsets accordingly so they *all* end up positive.
+    *
+    * Note that the exact value of the negative index bias is not that
+    * important, since we compensate for it when we calculate the vertex
+    * buffer offset below. The important thing is that all vertex buffer
+    * offsets remain positive.
+    *
+    * Note that we use a negative bias variable in order to make the
+    * rounding maths more easy to follow, and to avoid int / unsigned
+    * confusion.
+    */
+
    for (i = 0; i < svga->curr.velems->count; i++) {
-      const struct pipe_vertex_buffer *vb = &svga->curr.vb[ve[i].vertex_buffer_index];
+      const struct pipe_vertex_buffer *vb =
+         &svga->curr.vb[ve[i].vertex_buffer_index];
+      struct svga_buffer *buffer;
+      unsigned int offset = vb->buffer_offset + ve[i].src_offset;
+      unsigned tmp_neg_bias = 0;
+
+      if (!vb->buffer)
+         continue;
+
+      buffer = svga_buffer(vb->buffer);
+      if (buffer->uploaded.start > offset) {
+         tmp_neg_bias = buffer->uploaded.start - offset;
+         if (vb->stride)
+            tmp_neg_bias = (tmp_neg_bias + vb->stride - 1) / vb->stride;
+         neg_bias = MAX2(neg_bias, tmp_neg_bias);
+      }
+   }
+
+   for (i = 0; i < svga->curr.velems->count; i++) {
+      const struct pipe_vertex_buffer *vb =
+         &svga->curr.vb[ve[i].vertex_buffer_index];
       unsigned usage, index;
-      struct svga_buffer *buffer = svga_buffer(vb->buffer);
+      struct svga_buffer *buffer;
 
+      if (!vb->buffer)
+         continue;
 
+      buffer= svga_buffer(vb->buffer);
       svga_generate_vdecl_semantics( i, &usage, &index );
 
       /* SVGA_NEW_VELEMENT
@@ -121,8 +109,16 @@ static int emit_hw_vs_vdecl( struct svga_context *svga,
       decl.identity.usage = usage;
       decl.identity.usageIndex = index;
       decl.array.stride = vb->stride;
-      decl.array.offset = (vb->buffer_offset +
-                           ve[i].src_offset);
+
+      /* Compensate for partially uploaded vbo, and
+       * for the negative index bias.
+       */
+      decl.array.offset = (vb->buffer_offset
+                           + ve[i].src_offset
+			   + neg_bias * vb->stride
+			   - buffer->uploaded.start);
+
+      assert(decl.array.offset >= 0);
 
       svga_hwtnl_vdecl( svga->hwtnl,
                         i,
@@ -131,6 +127,7 @@ static int emit_hw_vs_vdecl( struct svga_context *svga,
                         vb->buffer );
    }
 
+   svga_hwtnl_set_index_bias( svga->hwtnl, -neg_bias );
    return 0;
 }
 
@@ -138,22 +135,10 @@ static int emit_hw_vs_vdecl( struct svga_context *svga,
 static int emit_hw_vdecl( struct svga_context *svga,
                           unsigned dirty )
 {
-   int ret = 0;
-
    /* SVGA_NEW_NEED_SWTNL
     */
    if (svga->state.sw.need_swtnl)
       return 0; /* Do not emit during swtnl */
-
-   /* If we get to here, we know that we're going to draw.  Upload
-    * userbuffers now and try to combine multiple userbuffers from
-    * multiple draw calls into a single host buffer for performance.
-    */
-   if (svga->curr.any_user_vertex_buffers) {
-      ret = upload_user_buffers( svga );
-      if (ret)
-         return ret;
-   }
 
    return emit_hw_vs_vdecl( svga, dirty );
 }

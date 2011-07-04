@@ -168,8 +168,13 @@ lower_instructions_visitor::div_to_mul_rcp(ir_expression *ir)
 
       op0 = new(ir) ir_expression(ir_binop_mul, vec_type, op0, op1);
 
-      ir->operation = ir_unop_f2i;
-      ir->operands[0] = op0;
+      if (ir->operands[1]->type->base_type == GLSL_TYPE_INT) {
+	 ir->operation = ir_unop_f2i;
+	 ir->operands[0] = op0;
+      } else {
+	 ir->operation = ir_unop_i2u;
+	 ir->operands[0] = new(ir) ir_expression(ir_unop_f2i, op0);
+      }
       ir->operands[1] = NULL;
    }
 
@@ -271,7 +276,7 @@ lower_instructions_visitor::visit_leave(ir_expression *ir)
       break;
 
    case ir_binop_mod:
-      if (lowering(MOD_TO_FRACT))
+      if (lowering(MOD_TO_FRACT) && ir->type->is_float())
 	 mod_to_fract(ir);
       break;
 

@@ -8,6 +8,7 @@
 #include "main/context.h"
 #include "main/formats.h"
 #include "main/pbo.h"
+#include "main/renderbuffer.h"
 #include "main/texcompress.h"
 #include "main/texstore.h"
 #include "main/texgetimage.h"
@@ -21,6 +22,7 @@
 #include "intel_tex.h"
 #include "intel_blit.h"
 #include "intel_fbo.h"
+#include "intel_span.h"
 
 #define FILE_DEBUG_FLAG DEBUG_TEXTURE
 
@@ -54,8 +56,7 @@ intel_miptree_create_for_teximage(struct intel_context *intel,
    GLuint width = intelImage->base.Width;
    GLuint height = intelImage->base.Height;
    GLuint depth = intelImage->base.Depth;
-   GLuint i, comp_byte = 0;
-   GLuint texelBytes;
+   GLuint i;
 
    DBG("%s\n", __FUNCTION__);
 
@@ -108,22 +109,14 @@ intel_miptree_create_for_teximage(struct intel_context *intel,
       }
    }
 
-   if (_mesa_is_format_compressed(intelImage->base.TexFormat))
-      comp_byte = intel_compressed_num_bytes(intelImage->base.TexFormat);
-
-   texelBytes = _mesa_get_format_bytes(intelImage->base.TexFormat);
-
    return intel_miptree_create(intel,
 			       intelObj->base.Target,
-			       intelImage->base._BaseFormat,
-			       intelImage->base.InternalFormat,
+			       intelImage->base.TexFormat,
 			       firstLevel,
 			       lastLevel,
 			       width,
 			       height,
 			       depth,
-			       texelBytes,
-			       comp_byte,
 			       expect_accelerated_upload);
 }
 
@@ -286,6 +279,130 @@ try_pbo_zcopy(struct intel_context *intel,
    return GL_TRUE;
 }
 
+/**
+ * \param scatter Scatter if true. Gather if false.
+ *
+ * \see intel_tex_image_x8z24_scatter
+ * \see intel_tex_image_x8z24_gather
+ */
+static void
+intel_tex_image_s8z24_scattergather(struct intel_context *intel,
+				    struct intel_texture_image *intel_image,
+				    bool scatter)
+{
+   struct gl_context *ctx = &intel->ctx;
+   struct gl_renderbuffer *depth_rb = intel_image->depth_rb;
+   struct gl_renderbuffer *stencil_rb = intel_image->stencil_rb;
+
+   int w = intel_image->base.Width;
+   int h = intel_image->base.Height;
+
+   uint32_t depth_row[w];
+   uint8_t stencil_row[w];
+
+   intel_renderbuffer_map(intel, depth_rb);
+   intel_renderbuffer_map(intel, stencil_rb);
+
+   if (scatter) {
+      for (int y = 0; y < h; ++y) {
+	 depth_rb->GetRow(ctx, depth_rb, w, 0, y, depth_row);
+	 for (int x = 0; x < w; ++x) {
+	    stencil_row[x] = depth_row[x] >> 24;
+	 }
+	 stencil_rb->PutRow(ctx, stencil_rb, w, 0, y, stencil_row, NULL);
+      }
+   } else { /* gather */
+      for (int y = 0; y < h; ++y) {
+	 depth_rb->GetRow(ctx, depth_rb, w, 0, y, depth_row);
+	 stencil_rb->GetRow(ctx, stencil_rb, w, 0, y, stencil_row);
+	 for (int x = 0; x < w; ++x) {
+	    uint32_t s8_x24 = stencil_row[x] << 24;
+	    uint32_t x8_z24 = depth_row[x] & 0x00ffffff;
+	    depth_row[x] = s8_x24 | x8_z24;
+	 }
+	 depth_rb->PutRow(ctx, depth_rb, w, 0, y, depth_row, NULL);
+      }
+   }
+
+   intel_renderbuffer_unmap(intel, depth_rb);
+   intel_renderbuffer_unmap(intel, stencil_rb);
+}
+
+/**
+ * Copy the x8 bits from intel_image->depth_rb to intel_image->stencil_rb.
+ */
+static void
+intel_tex_image_s8z24_scatter(struct intel_context *intel,
+			      struct intel_texture_image *intel_image)
+{
+   intel_tex_image_s8z24_scattergather(intel, intel_image, true);
+}
+
+/**
+ * Copy the data in intel_image->stencil_rb to the x8 bits in
+ * intel_image->depth_rb.
+ */
+static void
+intel_tex_image_s8z24_gather(struct intel_context *intel,
+			     struct intel_texture_image *intel_image)
+{
+   intel_tex_image_s8z24_scattergather(intel, intel_image, false);
+}
+
+static bool
+intel_tex_image_s8z24_create_renderbuffers(struct intel_context *intel,
+					   struct intel_texture_image *image)
+{
+   struct gl_context *ctx = &intel->ctx;
+
+   bool ok = true;
+   int width = image->base.Width;
+   int height = image->base.Height;
+   struct gl_renderbuffer *drb;
+   struct gl_renderbuffer *srb;
+   struct intel_renderbuffer *idrb;
+   struct intel_renderbuffer *isrb;
+
+   assert(intel->has_separate_stencil);
+   assert(image->base.TexFormat == MESA_FORMAT_S8_Z24);
+   assert(image->mt != NULL);
+
+   drb = intel_create_wrapped_renderbuffer(ctx, width, height,
+					   MESA_FORMAT_X8_Z24);
+   srb = intel_create_wrapped_renderbuffer(ctx, width, height,
+					   MESA_FORMAT_S8);
+
+   if (!drb || !srb) {
+      if (drb) {
+	 drb->Delete(drb);
+      }
+      if (srb) {
+	 srb->Delete(srb);
+      }
+      return false;
+   }
+
+   idrb = intel_renderbuffer(drb);
+   isrb = intel_renderbuffer(srb);
+
+   intel_region_reference(&idrb->region, image->mt->region);
+   ok = intel_alloc_renderbuffer_storage(ctx, srb, GL_STENCIL_INDEX8,
+					 width, height);
+
+   if (!ok) {
+      drb->Delete(drb);
+      srb->Delete(srb);
+      return false;
+   }
+
+   intel_renderbuffer_set_draw_offset(idrb, image, 0);
+   intel_renderbuffer_set_draw_offset(isrb, image, 0);
+
+   _mesa_reference_renderbuffer(&image->depth_rb, drb);
+   _mesa_reference_renderbuffer(&image->stencil_rb, srb);
+
+   return true;
+}
 
 static void
 intelTexImage(struct gl_context * ctx,
@@ -323,18 +440,7 @@ intelTexImage(struct gl_context * ctx,
       }
    }
 
-   /* Release the reference to a potentially orphaned buffer.   
-    * Release any old malloced memory.
-    */
-   if (intelImage->mt) {
-      intel_miptree_release(intel, &intelImage->mt);
-      assert(!texImage->Data);
-   }
-   else if (texImage->Data) {
-      _mesa_free_texmemory(texImage->Data);
-      texImage->Data = NULL;
-   }
-
+   ctx->Driver.FreeTexImageData(ctx, texImage);
    assert(!intelImage->mt);
 
    if (intelObj->mt &&
@@ -493,6 +599,12 @@ intelTexImage(struct gl_context * ctx,
 
    _mesa_unmap_teximage_pbo(ctx, unpack);
 
+   if (intel->must_use_separate_stencil
+       && texImage->TexFormat == MESA_FORMAT_S8_Z24) {
+      intel_tex_image_s8z24_create_renderbuffers(intel, intelImage);
+      intel_tex_image_s8z24_scatter(intel, intelImage);
+   }
+
    if (intelImage->mt) {
       if (pixels != NULL)
          intel_miptree_image_unmap(intel, intelImage->mt);
@@ -609,6 +721,14 @@ intel_get_tex_image(struct gl_context * ctx, GLenum target, GLint level,
       assert(intelImage->base.Data);
    }
 
+   if (intelImage->stencil_rb) {
+      /*
+       * The texture has packed depth/stencil format, but uses separate
+       * stencil. The texture's embedded stencil buffer contains the real
+       * stencil data, so copy that into the miptree.
+       */
+      intel_tex_image_s8z24_gather(intel, intelImage);
+   }
 
    if (compressed) {
       _mesa_get_compressed_teximage(ctx, target, level, pixels,
@@ -692,8 +812,8 @@ intelSetTexBuffer2(__DRIcontext *pDRICtx, GLint target,
       texFormat = MESA_FORMAT_ARGB8888;
    }
 
-   mt = intel_miptree_create_for_region(intel, target,
-					internalFormat, rb->region, 1, 0);
+   mt = intel_miptree_create_for_region(intel, target, texFormat,
+					rb->region, 1);
    if (mt == NULL)
        return;
 
@@ -756,9 +876,8 @@ intel_image_target_texture_2d(struct gl_context *ctx, GLenum target,
    if (image == NULL)
       return;
 
-   mt = intel_miptree_create_for_region(intel, target,
-					image->internal_format,
-					image->region, 1, 0);
+   mt = intel_miptree_create_for_region(intel, target, image->format,
+					image->region, 1);
    if (mt == NULL)
        return;
 

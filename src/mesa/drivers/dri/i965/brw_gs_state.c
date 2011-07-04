@@ -45,12 +45,17 @@ brw_prepare_gs_unit(struct brw_context *brw)
 
    memset(gs, 0, sizeof(*gs));
 
-   /* CACHE_NEW_GS_PROG */
+   /* BRW_NEW_PROGRAM_CACHE | CACHE_NEW_GS_PROG */
    if (brw->gs.prog_active) {
       gs->thread0.grf_reg_count = (ALIGN(brw->gs.prog_data->total_grf, 16) /
 				   16 - 1);
-      /* reloc */
-      gs->thread0.kernel_start_pointer = brw->gs.prog_bo->offset >> 6;
+
+      gs->thread0.kernel_start_pointer =
+	 brw_program_reloc(brw,
+			   brw->gs.state_offset +
+			   offsetof(struct brw_gs_unit_state, thread0),
+			   brw->gs.prog_offset +
+			   (gs->thread0.grf_reg_count << 1)) >> 6;
 
       gs->thread1.floating_point_mode = BRW_FLOATING_POINT_NON_IEEE_754;
       gs->thread1.single_program_flow = 1;
@@ -69,13 +74,6 @@ brw_prepare_gs_unit(struct brw_context *brw)
 	 gs->thread4.max_threads = 1;
       else
 	 gs->thread4.max_threads = 0;
-
-      /* Emit GS program relocation */
-      drm_intel_bo_emit_reloc(intel->batch.bo,
-			      (brw->gs.state_offset +
-			       offsetof(struct brw_gs_unit_state, thread0)),
-			      brw->gs.prog_bo, gs->thread0.grf_reg_count << 1,
-			      I915_GEM_DOMAIN_INSTRUCTION, 0);
    }
 
    if (intel->gen == 5)
@@ -91,6 +89,7 @@ const struct brw_tracked_state brw_gs_unit = {
    .dirty = {
       .mesa  = 0,
       .brw   = (BRW_NEW_BATCH |
+		BRW_NEW_PROGRAM_CACHE |
 		BRW_NEW_CURBE_OFFSETS |
 		BRW_NEW_URB_FENCE),
       .cache = CACHE_NEW_GS_PROG

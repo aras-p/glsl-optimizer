@@ -39,7 +39,6 @@ struct sw_winsys;
 struct egl_g3d_loader {
    uint profile_masks[ST_API_COUNT];
    struct st_api *(*get_st_api)(enum st_api_type api);
-   struct st_api *(*guess_gl_api)(enum st_profile_type profile);
 
    struct pipe_screen *(*create_drm_screen)(const char *name, int fd);
    struct pipe_screen *(*create_sw_screen)(struct sw_winsys *ws);

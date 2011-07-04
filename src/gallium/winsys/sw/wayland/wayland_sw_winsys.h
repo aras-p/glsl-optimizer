@@ -27,6 +27,7 @@
 #define WAYLAND_SW_WINSYS
 
 struct sw_winsys;
+struct wl_display;
 
 struct winsys_handle {
    int fd;

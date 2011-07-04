@@ -101,7 +101,6 @@ fs_visitor::assign_regs()
     * for reg_width == 2.
     */
    int reg_width = c->dispatch_width / 8;
-   int last_grf = 0;
    int hw_reg_mapping[this->virtual_grf_next + 1];
    int first_assigned_grf = ALIGN(this->first_non_payload_grf, reg_width);
    int base_reg_count = (BRW_MAX_GRF - first_assigned_grf) / reg_width;
@@ -263,6 +262,7 @@ fs_visitor::assign_regs()
     * regs in the register classes back down to real hardware reg
     * numbers.
     */
+   this->grf_used = first_assigned_grf;
    hw_reg_mapping[0] = 0; /* unused */
    for (int i = 1; i < this->virtual_grf_next; i++) {
       int reg = ra_get_node_reg(g, i);
@@ -278,8 +278,9 @@ fs_visitor::assign_regs()
 
       assert(hw_reg >= 0);
       hw_reg_mapping[i] = first_assigned_grf + hw_reg * reg_width;
-      last_grf = MAX2(last_grf,
-		      hw_reg_mapping[i] + this->virtual_grf_sizes[i] - 1);
+      this->grf_used = MAX2(this->grf_used,
+			    hw_reg_mapping[i] + this->virtual_grf_sizes[i] *
+			    reg_width);
    }
 
    foreach_iter(exec_list_iterator, iter, this->instructions) {
@@ -289,8 +290,6 @@ fs_visitor::assign_regs()
       assign_reg(hw_reg_mapping, &inst->src[0], reg_width);
       assign_reg(hw_reg_mapping, &inst->src[1], reg_width);
    }
-
-   this->grf_used = last_grf + reg_width;
 
    ralloc_free(g);
    ralloc_free(regs);

@@ -29,6 +29,7 @@
 #include "intel_mipmap_tree.h"
 #include "intel_regions.h"
 #include "intel_tex_layout.h"
+#include "intel_tex.h"
 #include "main/enums.h"
 #include "main/formats.h"
 
@@ -55,30 +56,34 @@ target_to_target(GLenum target)
 static struct intel_mipmap_tree *
 intel_miptree_create_internal(struct intel_context *intel,
 			      GLenum target,
-			      GLenum internal_format,
+			      gl_format format,
 			      GLuint first_level,
 			      GLuint last_level,
 			      GLuint width0,
 			      GLuint height0,
-			      GLuint depth0, GLuint cpp, GLuint compress_byte,
+			      GLuint depth0,
 			      uint32_t tiling)
 {
    GLboolean ok;
    struct intel_mipmap_tree *mt = calloc(sizeof(*mt), 1);
+   int compress_byte = 0;
 
    DBG("%s target %s format %s level %d..%d <-- %p\n", __FUNCTION__,
        _mesa_lookup_enum_by_nr(target),
-       _mesa_lookup_enum_by_nr(internal_format), 
+       _mesa_get_format_name(format),
        first_level, last_level, mt);
 
+   if (_mesa_is_format_compressed(format))
+      compress_byte = intel_compressed_num_bytes(format);
+
    mt->target = target_to_target(target);
-   mt->internal_format = internal_format;
+   mt->format = format;
    mt->first_level = first_level;
    mt->last_level = last_level;
    mt->width0 = width0;
    mt->height0 = height0;
    mt->depth0 = depth0;
-   mt->cpp = compress_byte ? compress_byte : cpp;
+   mt->cpp = compress_byte ? compress_byte : _mesa_get_format_bytes(mt->format);
    mt->compressed = compress_byte ? 1 : 0;
    mt->refcount = 1; 
 
@@ -104,19 +109,19 @@ intel_miptree_create_internal(struct intel_context *intel,
 struct intel_mipmap_tree *
 intel_miptree_create(struct intel_context *intel,
 		     GLenum target,
-		     GLenum base_format,
-		     GLenum internal_format,
+		     gl_format format,
 		     GLuint first_level,
 		     GLuint last_level,
 		     GLuint width0,
 		     GLuint height0,
-		     GLuint depth0, GLuint cpp, GLuint compress_byte,
+		     GLuint depth0,
 		     GLboolean expect_accelerated_upload)
 {
    struct intel_mipmap_tree *mt;
    uint32_t tiling = I915_TILING_NONE;
+   GLenum base_format = _mesa_get_format_base_format(format);
 
-   if (intel->use_texture_tiling && compress_byte == 0) {
+   if (intel->use_texture_tiling && !_mesa_is_format_compressed(format)) {
       if (intel->gen >= 4 &&
 	  (base_format == GL_DEPTH_COMPONENT ||
 	   base_format == GL_DEPTH_STENCIL_EXT))
@@ -125,9 +130,9 @@ intel_miptree_create(struct intel_context *intel,
 	 tiling = I915_TILING_X;
    }
 
-   mt = intel_miptree_create_internal(intel, target, internal_format,
+   mt = intel_miptree_create_internal(intel, target, format,
 				      first_level, last_level, width0,
-				      height0, depth0, cpp, compress_byte,
+				      height0, depth0,
 				      tiling);
    /*
     * pitch == 0 || height == 0  indicates the null texture
@@ -156,17 +161,15 @@ intel_miptree_create(struct intel_context *intel,
 struct intel_mipmap_tree *
 intel_miptree_create_for_region(struct intel_context *intel,
 				GLenum target,
-				GLenum internal_format,
+				gl_format format,
 				struct intel_region *region,
-				GLuint depth0,
-				GLuint compress_byte)
+				GLuint depth0)
 {
    struct intel_mipmap_tree *mt;
 
-   mt = intel_miptree_create_internal(intel, target, internal_format,
+   mt = intel_miptree_create_internal(intel, target, format,
 				      0, 0,
 				      region->width, region->height, 1,
-				      region->cpp, compress_byte,
 				      I915_TILING_NONE);
    if (!mt)
       return mt;
@@ -223,7 +226,6 @@ GLboolean
 intel_miptree_match_image(struct intel_mipmap_tree *mt,
                           struct gl_texture_image *image)
 {
-   GLboolean isCompressed = _mesa_is_format_compressed(image->TexFormat);
    struct intel_texture_image *intelImage = intel_texture_image(image);
    GLuint level = intelImage->level;
 
@@ -231,13 +233,7 @@ intel_miptree_match_image(struct intel_mipmap_tree *mt,
    if (image->Border)
       return GL_FALSE;
 
-   if (image->InternalFormat != mt->internal_format ||
-       isCompressed != mt->compressed)
-      return GL_FALSE;
-
-   if (!isCompressed &&
-       !mt->compressed &&
-       _mesa_get_format_bytes(image->TexFormat) != mt->cpp)
+   if (image->TexFormat != mt->format)
       return GL_FALSE;
 
    /* Test image dimensions against the base level image adjusted for
@@ -389,26 +385,32 @@ intel_miptree_image_data(struct intel_context *intel,
    GLuint i;
 
    for (i = 0; i < depth; i++) {
-      GLuint dst_x, dst_y, height;
+      GLuint dst_x, dst_y, height, width;
 
       intel_miptree_get_image_offset(dst, level, face, i, &dst_x, &dst_y);
 
       height = dst->level[level].height;
-      if(dst->compressed)
-	 height = (height + 3) / 4;
+      width = dst->level[level].width;
+      if (dst->compressed) {
+	 unsigned int align_w, align_h;
+
+	 intel_get_texture_alignment_unit(dst->format, &align_w, &align_h);
+	 height = (height + align_h - 1) / align_h;
+	 width = ALIGN(width, align_w);
+      }
 
       DBG("%s: %d/%d %p/%d -> (%d, %d)/%d (%d, %d)\n",
 	  __FUNCTION__, face, level,
 	  src, src_row_pitch * dst->cpp,
 	  dst_x, dst_y, dst->region->pitch * dst->cpp,
-	  dst->level[level].width, height);
+	  width, height);
 
       intel_region_data(intel,
 			dst->region, 0, dst_x, dst_y,
 			src,
 			src_row_pitch,
 			0, 0,                             /* source x, y */
-			dst->level[level].width, height); /* width, height */
+			width, height);
 
       src = (char *)src + src_image_pitch * dst->cpp;
    }
@@ -434,8 +436,7 @@ intel_miptree_image_copy(struct intel_context *intel,
    if (dst->compressed) {
        GLuint align_w, align_h;
 
-       intel_get_texture_alignment_unit(dst->internal_format,
-                                        &align_w, &align_h);
+       intel_get_texture_alignment_unit(dst->format, &align_w, &align_h);
        height = (height + 3) / 4;
        width = ALIGN(width, align_w);
    }

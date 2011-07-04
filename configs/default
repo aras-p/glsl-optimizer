@@ -9,7 +9,7 @@ CONFIG_NAME = default
 
 # Version info
 MESA_MAJOR=7
-MESA_MINOR=11
+MESA_MINOR=12
 MESA_TINY=0
 MESA_VERSION = $(MESA_MAJOR).$(MESA_MINOR).$(MESA_TINY)
 
@@ -63,7 +63,7 @@ GLESv2_LIB = GLESv2
 VG_LIB = OpenVG
 GLAPI_LIB = glapi
 WAYLAND_EGL_LIB = wayland-egl
-
+GBM_LIB = gbm
 
 # Library names (actual file names)
 GL_LIB_NAME = lib$(GL_LIB).so
@@ -77,6 +77,7 @@ GLESv2_LIB_NAME = lib$(GLESv2_LIB).so
 VG_LIB_NAME = lib$(VG_LIB).so
 GLAPI_LIB_NAME = lib$(GLAPI_LIB).so
 WAYLAND_EGL_LIB_NAME = lib$(WAYLAND_EGL_LIB).so
+GBM_LIB_NAME = lib$(GBM_LIB).so
 
 # globs used to install the lib and all symlinks
 GL_LIB_GLOB = $(GL_LIB_NAME)*
@@ -90,6 +91,7 @@ GLESv2_LIB_GLOB = $(GLESv2_LIB_NAME)*
 VG_LIB_GLOB = $(VG_LIB_NAME)*
 GLAPI_LIB_GLOB = $(GLAPI_LIB_NAME)*
 WAYLAND_EGL_LIB_GLOB = $(WAYLAND_EGL_LIB_NAME)*
+GBM_LIB_GLOB = $(GBM_LIB_NAME)*
 
 DRI_CFLAGS = $(CFLAGS)
 DRI_CXXFLAGS = $(CXXFLAGS)
@@ -112,6 +114,9 @@ DRIVER_DIRS = x11 osmesa
 
 # EGL drivers to build
 EGL_DRIVERS_DIRS = glx
+
+# gbm backends to build
+GBM_BACKEND_DIRS = dri
 
 # Gallium directories and 
 GALLIUM_DIRS = auxiliary drivers state_trackers
@@ -140,6 +145,7 @@ GLESv2_LIB_DEPS = $(EXTRA_LIB_PATH) -lpthread
 VG_LIB_DEPS    = $(EXTRA_LIB_PATH) -lpthread
 GLAPI_LIB_DEPS = $(EXTRA_LIB_PATH) -lpthread
 WAYLAND_EGL_LIB_DEPS = $(EXTRA_LIB_PATH) -lwayland-client -ldrm
+GBM_LIB_DEPS = $(EXTRA_LIB_PATH) -ludev -ldl
 
 # Program dependencies - specific GL/glut libraries added in Makefiles
 APP_LIB_DEPS = -lm
@@ -158,6 +164,9 @@ DRI_DRIVER_SEARCH_DIR = $(DRI_DRIVER_INSTALL_DIR)
 
 # EGL driver install directory
 EGL_DRIVER_INSTALL_DIR = $(INSTALL_LIB_DIR)/egl
+
+# gbm backend install directory
+GBM_BACKEND_INSTALL_DIR = $(INSTALL_LIB_DIR)/gbm
 
 # Xorg driver install directory (for xorg state-tracker)
 XORG_DRIVER_INSTALL_DIR = $(INSTALL_LIB_DIR)/xorg/modules/drivers
@@ -191,3 +200,6 @@ VG_PC_CFLAGS =
 WAYLAND_EGL_PC_REQ_PRIV =
 WAYLAND_EGL_PC_LIB_PRIV =
 WAYLAND_EGL_PC_CFLAGS =
+GBM_PC_REQ_PRIV =
+GBM_PC_LIB_PRIV =
+GBM_PC_CFLAGS =

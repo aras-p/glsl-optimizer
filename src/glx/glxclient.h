@@ -138,6 +138,7 @@ struct __GLXDRIdrawableRec
    GLenum textureTarget;
    GLenum textureFormat;        /* EXT_texture_from_pixmap support */
    unsigned long eventMask;
+   int refcount;
 };
 
 /*
@@ -223,7 +224,7 @@ struct glx_context_vtable {
 			  GLXDrawable drawable,
 			  int buffer, const int *attrib_list);
    void (*release_tex_image)(Display * dpy, GLXDrawable drawable, int buffer);
-   
+   void * (*get_proc_address)(const char *symbol);
 };
 
 extern void
@@ -335,7 +336,6 @@ struct glx_context
 
 #if defined(GLX_DIRECT_RENDERING) && defined(GLX_USE_APPLEGL)
    void *driContext;
-   Bool do_destroy;
 #endif
 
     /**

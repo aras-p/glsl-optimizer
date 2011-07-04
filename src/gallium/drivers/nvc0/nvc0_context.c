@@ -169,6 +169,7 @@ nvc0_bufctx_add_resident(struct nvc0_context *nvc0, int ctx,
 
    if (!resource->bo)
       return;
+   nvc0->residents_size += sizeof(struct resident);
 
    /* We don't need to reference the resource here, it will be referenced
     * in the context/state, and bufctx will be reset when state changes.
@@ -190,6 +191,7 @@ nvc0_bufctx_del_resident(struct nvc0_context *nvc0, int ctx,
          top = util_dynarray_pop_ptr(&nvc0->residents[ctx], struct resident);
          if (rsd != top)
             *rsd = *top;
+         nvc0->residents_size -= sizeof(struct resident);
          break;
       }
    }
@@ -202,11 +204,15 @@ nvc0_bufctx_emit_relocs(struct nvc0_context *nvc0)
    struct util_dynarray *array;
    unsigned ctx, i, n;
 
+   n  = nvc0->residents_size / sizeof(struct resident);
+   n += NVC0_SCREEN_RESIDENT_BO_COUNT;
+
+   MARK_RING(nvc0->screen->base.channel, n, n);
+
    for (ctx = 0; ctx < NVC0_BUFCTX_COUNT; ++ctx) {
       array = &nvc0->residents[ctx];
 
       n = array->size / sizeof(struct resident);
-      MARK_RING(nvc0->screen->base.channel, n, n);
       for (i = 0; i < n; ++i) {
          rsd = util_dynarray_element(array, struct resident, i);
 

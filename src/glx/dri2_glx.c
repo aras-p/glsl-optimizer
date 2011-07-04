@@ -143,6 +143,8 @@ dri2_bind_context(struct glx_context *context, struct glx_context *old,
    pdraw = (struct dri2_drawable *) driFetchDrawable(context, draw);
    pread = (struct dri2_drawable *) driFetchDrawable(context, read);
 
+   driReleaseDrawables(&pcp->base);
+
    if (pdraw == NULL || pread == NULL)
       return GLXBadDrawable;
 
@@ -170,9 +172,6 @@ dri2_unbind_context(struct glx_context *context, struct glx_context *new)
    struct dri2_screen *psc = (struct dri2_screen *) pcp->base.psc;
 
    (*psc->core->unbindContext) (pcp->driContext);
-
-   if (context == new)
-      driReleaseDrawables(&pcp->base);
 }
 
 static struct glx_context *
@@ -768,6 +767,7 @@ static const struct glx_context_vtable dri2_context_vtable = {
    DRI_glXUseXFont,
    dri2_bind_tex_image,
    dri2_release_tex_image,
+   NULL, /* get_proc_address */
 };
 
 static void

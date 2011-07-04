@@ -27,6 +27,7 @@
 
 #include "util/u_memory.h"
 #include "util/u_inlines.h"
+#include "util/u_atomic.h"
 #include "state_tracker/st_gl_api.h" /* for st_gl_api_create */
 
 #include "stw_st.h"
@@ -196,6 +197,7 @@ stw_st_create_framebuffer(struct stw_framebuffer *fb)
    stwfb->stvis = fb->pfi->stvis;
 
    stwfb->base.visual = &stwfb->stvis;
+   p_atomic_set(&stwfb->base.stamp, 1);
    stwfb->base.flush_front = stw_st_framebuffer_flush_front;
    stwfb->base.validate = stw_st_framebuffer_validate;
 

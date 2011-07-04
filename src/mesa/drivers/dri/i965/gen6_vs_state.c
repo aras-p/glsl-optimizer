@@ -110,7 +110,7 @@ const struct brw_tracked_state gen6_vs_constants = {
       .mesa  = _NEW_TRANSFORM | _NEW_PROGRAM_CONSTANTS,
       .brw   = (BRW_NEW_BATCH |
 		BRW_NEW_VERTEX_PROGRAM),
-      .cache = 0,
+      .cache = CACHE_NEW_VS_PROG,
    },
    .prepare = gen6_prepare_vs_push_constants,
 };
@@ -147,7 +147,7 @@ upload_vs_state(struct brw_context *brw)
 
    BEGIN_BATCH(6);
    OUT_BATCH(_3DSTATE_VS << 16 | (6 - 2));
-   OUT_RELOC(brw->vs.prog_bo, I915_GEM_DOMAIN_INSTRUCTION, 0, 0);
+   OUT_BATCH(brw->vs.prog_offset);
    OUT_BATCH((0 << GEN6_VS_SAMPLER_COUNT_SHIFT) |
 	     GEN6_VS_FLOATING_POINT_MODE_ALT |
 	     (brw->vs.nr_surfaces << GEN6_VS_BINDING_TABLE_ENTRY_COUNT_SHIFT));
@@ -165,8 +165,7 @@ upload_vs_state(struct brw_context *brw)
 const struct brw_tracked_state gen6_vs_state = {
    .dirty = {
       .mesa  = _NEW_TRANSFORM | _NEW_PROGRAM_CONSTANTS,
-      .brw   = (BRW_NEW_CURBE_OFFSETS |
-                BRW_NEW_NR_VS_SURFACES |
+      .brw   = (BRW_NEW_NR_VS_SURFACES |
 		BRW_NEW_URB_FENCE |
 		BRW_NEW_CONTEXT |
 		BRW_NEW_VERTEX_PROGRAM |

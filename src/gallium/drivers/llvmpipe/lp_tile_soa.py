@@ -423,6 +423,70 @@ lp_tile_b8g8r8a8_unorm_unswizzle_4ub_sse2(const uint8_t * restrict src,
    }
 }
 
+static void
+lp_tile_b8g8r8x8_unorm_swizzle_4ub_sse2(uint8_t * restrict dst,
+                                        const uint8_t * restrict src, unsigned src_stride,
+                                        unsigned x0, unsigned y0)
+{
+   __m128i *dst128 = (__m128i *) dst;
+   unsigned x, y;
+
+   src += y0 * src_stride;
+   src += x0 * sizeof(uint32_t);
+
+   for (y = 0; y < TILE_SIZE; y += 4) {
+      const uint8_t *src_row = src;
+
+      for (x = 0; x < TILE_SIZE; x += 4) {
+         swz4((const __m128i *) (src_row + 0 * src_stride),
+              (const __m128i *) (src_row + 1 * src_stride),
+              (const __m128i *) (src_row + 2 * src_stride),
+              (const __m128i *) (src_row + 3 * src_stride),
+              dst128 + 2,     /* b */
+              dst128 + 1,     /* g */
+              dst128 + 0,     /* r */
+              dst128 + 3);    /* a */
+
+         dst128 += 4;
+         src_row += sizeof(__m128i);
+      }
+
+      src += 4 * src_stride;
+   }
+}
+
+static void
+lp_tile_b8g8r8x8_unorm_unswizzle_4ub_sse2(const uint8_t * restrict src,
+                                          uint8_t * restrict dst, unsigned dst_stride,
+                                          unsigned x0, unsigned y0)
+{
+   unsigned int x, y;
+   const __m128i *src128 = (const __m128i *) src;
+
+   dst += y0 * dst_stride;
+   dst += x0 * sizeof(uint32_t);
+
+   for (y = 0; y < TILE_SIZE; y += 4) {
+      const uint8_t *dst_row = dst;
+
+      for (x = 0; x < TILE_SIZE; x += 4) {
+         unswz4( &src128[2],     /* b */
+                 &src128[1],     /* g */
+                 &src128[0],     /* r */
+                 &src128[3],     /* a */
+                 (__m128i *) (dst_row + 0 * dst_stride),
+                 (__m128i *) (dst_row + 1 * dst_stride),
+                 (__m128i *) (dst_row + 2 * dst_stride),
+                 (__m128i *) (dst_row + 3 * dst_stride));
+
+         src128 += 4;
+         dst_row += sizeof(__m128i);;
+      }
+
+      dst += 4 * dst_stride;
+   }
+}
+
 #endif /* PIPE_ARCH_SSE */
 '''
 
@@ -446,7 +510,7 @@ def generate_swizzle(formats, dst_channel, dst_native_type, dst_suffix):
         if is_format_supported(format):
             print '   case %s:' % format.name
             func_name = 'lp_tile_%s_swizzle_%s' % (format.short_name(), dst_suffix)
-            if format.name == 'PIPE_FORMAT_B8G8R8A8_UNORM':
+            if format.name == 'PIPE_FORMAT_B8G8R8A8_UNORM' or format.name == 'PIPE_FORMAT_B8G8R8X8_UNORM':
                 print '#ifdef PIPE_ARCH_SSE'
                 print '      func = util_cpu_caps.has_sse2 ? %s_sse2 : %s;' % (func_name, func_name)
                 print '#else'
@@ -484,7 +548,7 @@ def generate_unswizzle(formats, src_channel, src_native_type, src_suffix):
         if is_format_supported(format):
             print '   case %s:' % format.name
             func_name = 'lp_tile_%s_unswizzle_%s' % (format.short_name(), src_suffix)
-            if format.name == 'PIPE_FORMAT_B8G8R8A8_UNORM':
+            if format.name == 'PIPE_FORMAT_B8G8R8A8_UNORM' or format.name == 'PIPE_FORMAT_B8G8R8X8_UNORM':
                 print '#ifdef PIPE_ARCH_SSE'
                 print '      func = util_cpu_caps.has_sse2 ? %s_sse2 : %s;' % (func_name, func_name)
                 print '#else'

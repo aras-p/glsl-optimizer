@@ -59,7 +59,7 @@ typedef struct _GLwMDrawingAreaClassRec {
   } GLwMDrawingAreaClassRec;
 
 
-extern GLwMDrawingAreaClassRec glwMDrawingAreaClassRec;
+GLAPI GLwMDrawingAreaClassRec glwMDrawingAreaClassRec;
 
 
 /* XT */
@@ -70,7 +70,7 @@ typedef struct _GLwDrawingAreaClassRec {
   GLwDrawingAreaClassPart     glwDrawingArea_class;
   } GLwDrawingAreaClassRec;
 
-extern GLwDrawingAreaClassRec glwDrawingAreaClassRec;
+GLAPI GLwDrawingAreaClassRec glwDrawingAreaClassRec;
 
 
 #endif 

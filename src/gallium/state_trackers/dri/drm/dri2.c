@@ -52,13 +52,11 @@ static void
 dri2_invalidate_drawable(__DRIdrawable *dPriv)
 {
    struct dri_drawable *drawable = dri_drawable(dPriv);
-   struct dri_context *ctx = drawable->context;
 
    dri2InvalidateDrawable(dPriv);
    drawable->dPriv->lastStamp = *drawable->dPriv->pStamp;
 
-   if (ctx)
-      ctx->st->notify_invalid_framebuffer(ctx->st, &drawable->base);
+   p_atomic_inc(&drawable->base.stamp);
 }
 
 static const __DRI2flushExtension dri2FlushExtension = {
@@ -564,6 +562,24 @@ dri2_query_image(__DRIimage *image, int attrib, int *value)
    }
 }
 
+static __DRIimage *
+dri2_dup_image(__DRIimage *image, void *loaderPrivate)
+{
+   __DRIimage *img;
+
+   img = CALLOC_STRUCT(__DRIimageRec);
+   if (!img)
+      return NULL;
+
+   img->texture = NULL;
+   pipe_resource_reference(&img->texture, image->texture);
+   img->level = image->level;
+   img->layer = image->layer;
+   img->loader_private = loaderPrivate;
+
+   return img;
+}
+
 static void
 dri2_destroy_image(__DRIimage *img)
 {
@@ -578,6 +594,7 @@ static struct __DRIimageExtensionRec dri2ImageExtension = {
     dri2_destroy_image,
     dri2_create_image,
     dri2_query_image,
+    dri2_dup_image,
 };
 
 /*

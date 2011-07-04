@@ -105,3 +105,17 @@ resource_surface_flush(struct resource_surface *rsurf,
  */
 void
 resource_surface_wait(struct resource_surface *rsurf);
+
+boolean
+native_display_copy_to_pixmap(struct native_display *ndpy,
+                              EGLNativePixmapType pix,
+                              struct pipe_resource *src);
+
+struct pipe_resource *
+drm_display_import_native_buffer(struct native_display *ndpy,
+                                 struct native_buffer *nbuf);
+
+boolean
+drm_display_export_native_buffer(struct native_display *ndpy,
+                                 struct pipe_resource *res,
+                                 struct native_buffer *nbuf);

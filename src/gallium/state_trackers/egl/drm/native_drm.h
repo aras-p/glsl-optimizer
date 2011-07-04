@@ -50,7 +50,7 @@ struct drm_surface;
 struct drm_display {
    struct native_display base;
 
-   struct native_event_handler *event_handler;
+   const struct native_event_handler *event_handler;
 
    int fd;
    char *device_name;
@@ -153,5 +153,9 @@ drm_display_init_modeset(struct native_display *ndpy);
 
 void
 drm_display_fini_modeset(struct native_display *ndpy);
+
+struct native_surface *
+drm_display_create_surface_from_resource(struct native_display *ndpy,
+                                         struct pipe_resource *resource);
 
 #endif /* _NATIVE_DRM_H_ */

@@ -45,7 +45,7 @@ upload_gs_state(struct brw_context *brw)
    ADVANCE_BATCH();
 
    // GS should never be used on Gen6.  Disable it.
-   assert(brw->gs.prog_bo == NULL);
+   assert(!brw->gs.prog_active);
    BEGIN_BATCH(7);
    OUT_BATCH(_3DSTATE_GS << 16 | (7 - 2));
    OUT_BATCH(0); /* prog_bo */
@@ -65,8 +65,7 @@ upload_gs_state(struct brw_context *brw)
 const struct brw_tracked_state gen6_gs_state = {
    .dirty = {
       .mesa  = _NEW_TRANSFORM,
-      .brw   = (BRW_NEW_CURBE_OFFSETS |
-		BRW_NEW_URB_FENCE |
+      .brw   = (BRW_NEW_URB_FENCE |
 		BRW_NEW_CONTEXT),
       .cache = CACHE_NEW_GS_PROG
    },

@@ -127,9 +127,6 @@ static void r600_flush(struct pipe_context *ctx,
 	if (rfence)
 		*rfence = r600_create_fence(rctx);
 
-	if (!rctx->ctx.pm4_cdwords)
-		return;
-
 #if 0
 	sprintf(dname, "gallium-%08d.bof", dc);
 	if (dc < 20) {
@@ -139,11 +136,6 @@ static void r600_flush(struct pipe_context *ctx,
 	dc++;
 #endif
 	r600_context_flush(&rctx->ctx);
-
-	/* XXX This shouldn't be really necessary, but removing it breaks some tests.
-	 * Needless buffer reallocations may significantly increase memory consumption,
-	 * so getting rid of this call is important. */
-	u_upload_flush(rctx->vbuf_mgr->uploader);
 }
 
 static void r600_update_num_contexts(struct r600_screen *rscreen, int diff)
@@ -373,7 +365,6 @@ static int r600_get_param(struct pipe_screen* pscreen, enum pipe_cap param)
 	case PIPE_CAP_TEXTURE_MIRROR_CLAMP:
 	case PIPE_CAP_TEXTURE_MIRROR_REPEAT:
 	case PIPE_CAP_BLEND_EQUATION_SEPARATE:
-	case PIPE_CAP_SM3:
 	case PIPE_CAP_TEXTURE_SWIZZLE:
 	case PIPE_CAP_DEPTHSTENCIL_CLEAR_SEPARATE:
 	case PIPE_CAP_DEPTH_CLAMP:
@@ -382,6 +373,9 @@ static int r600_get_param(struct pipe_screen* pscreen, enum pipe_cap param)
 	case PIPE_CAP_MIXED_COLORBUFFER_FORMATS:
 	case PIPE_CAP_TGSI_FS_COORD_ORIGIN_UPPER_LEFT:
 	case PIPE_CAP_TGSI_FS_COORD_PIXEL_CENTER_HALF_INTEGER:
+	case PIPE_CAP_SM3:
+	case PIPE_CAP_SEAMLESS_CUBE_MAP:
+	case PIPE_CAP_FRAGMENT_COLOR_CLAMP_CONTROL:
 		return 1;
 
 	/* Supported except the original R600. */
@@ -391,14 +385,12 @@ static int r600_get_param(struct pipe_screen* pscreen, enum pipe_cap param)
 		return family == CHIP_R600 ? 0 : 1;
 
 	/* Supported on Evergreen. */
-	case PIPE_CAP_SEAMLESS_CUBE_MAP:
 	case PIPE_CAP_SEAMLESS_CUBE_MAP_PER_TEXTURE:
 		return family >= CHIP_CEDAR ? 1 : 0;
 
 	/* Unsupported features. */
 	case PIPE_CAP_STREAM_OUTPUT:
 	case PIPE_CAP_PRIMITIVE_RESTART:
-	case PIPE_CAP_FRAGMENT_COLOR_CLAMP_CONTROL:
 	case PIPE_CAP_TGSI_INSTANCEID:
 	case PIPE_CAP_TGSI_FS_COORD_ORIGIN_LOWER_LEFT:
 	case PIPE_CAP_TGSI_FS_COORD_PIXEL_CENTER_INTEGER:
@@ -487,9 +479,9 @@ static int r600_get_shader_param(struct pipe_screen* pscreen, unsigned shader, e
 		return 8; /* FIXME */
 	case PIPE_SHADER_CAP_MAX_INPUTS:
 		if(shader == PIPE_SHADER_FRAGMENT)
-			return 10;
+			return 34;
 		else
-			return 16;
+			return 32;
 	case PIPE_SHADER_CAP_MAX_TEMPS:
 		return 256; /* Max native temporaries. */
 	case PIPE_SHADER_CAP_MAX_ADDRS:

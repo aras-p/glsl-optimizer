@@ -1,8 +1,8 @@
 /*
  * Mesa 3-D graphics library
- * Version:  7.9
+ * Version:  7.10
  *
- * Copyright (C) 2010 LunarG Inc.
+ * Copyright (C) 2011 LunarG Inc.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -25,20 +25,14 @@
  * Authors:
  *    Chia-I Wu <olv@lunarg.com>
  */
-
-#ifndef _EGL_H_
-#define _EGL_H_
-
+#include "state_tracker/st_gl_api.h"
 #include "pipe/p_compiler.h"
-#include "state_tracker/st_api.h"
-
-#define ST_CREATE_OPENGL_SYMBOL "st_api_create_OpenGL"
-#define ST_CREATE_OPENVG_SYMBOL "st_api_create_OpenVG"
 
 PUBLIC struct st_api *
 st_api_create_OpenGL(void);
 
-PUBLIC struct st_api *
-st_api_create_OpenVG(void);
-
-#endif /* _EGL_H_ */
+struct st_api *
+st_api_create_OpenGL(void)
+{
+   return st_gl_api_create();
+}

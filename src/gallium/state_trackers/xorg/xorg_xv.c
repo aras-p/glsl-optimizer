@@ -466,7 +466,6 @@ bind_samplers(struct xorg_xv_port_priv *port)
 {
    struct pipe_sampler_state *samplers[PIPE_MAX_SAMPLERS];
    struct pipe_sampler_state sampler;
-   struct pipe_resource **dst = port->yuv[port->current_set];
    struct pipe_sampler_view **dst_views = port->yuv_views[port->current_set];
 
    memset(&sampler, 0, sizeof(struct pipe_sampler_state));

@@ -32,7 +32,14 @@
 struct sw_winsys;
 enum pipe_format;
 
+/* for pipe_screen::flush_frontbuffer */
+struct fbdev_sw_drawable {
+   enum pipe_format format;
+   unsigned x, y;
+   unsigned width, height;
+};
+
 struct sw_winsys *
-fbdev_create_sw_winsys(int fd, enum pipe_format format);
+fbdev_create_sw_winsys(int fd);
 
 #endif /* FBDEV_SW_WINSYS */

@@ -92,7 +92,6 @@ MAIN_SOURCES = \
 	main/texobj.c \
 	main/texpal.c \
 	main/texparam.c \
-	main/texrender.c \
 	main/texstate.c \
 	main/texstore.c \
 	main/texturebarrier.c \
@@ -145,6 +144,7 @@ SWRAST_SOURCES = \
 	swrast/s_stencil.c \
 	swrast/s_texcombine.c \
 	swrast/s_texfilter.c \
+	swrast/s_texrender.c \
 	swrast/s_triangle.c \
 	swrast/s_zoom.c
 

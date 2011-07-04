@@ -18,4 +18,24 @@
      (parameters
        (declare (in) vec4 arg0))
      ((return (expression vec4 abs (var_ref arg0)))))
+
+   (signature int
+     (parameters
+       (declare (in) int arg0))
+     ((return (expression int abs (var_ref arg0)))))
+
+   (signature ivec2
+     (parameters
+       (declare (in) ivec2 arg0))
+     ((return (expression ivec2 abs (var_ref arg0)))))
+
+   (signature ivec3
+     (parameters
+       (declare (in) ivec3 arg0))
+     ((return (expression ivec3 abs (var_ref arg0)))))
+
+   (signature ivec4
+     (parameters
+       (declare (in) ivec4 arg0))
+     ((return (expression ivec4 abs (var_ref arg0)))))
 ))

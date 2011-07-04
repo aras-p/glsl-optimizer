@@ -447,9 +447,17 @@ modulus_result_type(const struct glsl_type *type_a,
     *    integer vectors. The operand types must both be signed or both be
     *    unsigned."
     */
-   if (!type_a->is_integer() || !type_b->is_integer()
-       || (type_a->base_type != type_b->base_type)) {
-      _mesa_glsl_error(loc, state, "type mismatch");
+   if (!type_a->is_integer()) {
+      _mesa_glsl_error(loc, state, "LHS of operator %% must be an integer.");
+      return glsl_type::error_type;
+   }
+   if (!type_b->is_integer()) {
+      _mesa_glsl_error(loc, state, "RHS of operator %% must be an integer.");
+      return glsl_type::error_type;
+   }
+   if (type_a->base_type != type_b->base_type) {
+      _mesa_glsl_error(loc, state,
+		       "operands of %% must have the same base type");
       return glsl_type::error_type;
    }
 
@@ -1940,7 +1948,7 @@ apply_type_qualifier_to_variable(const struct ast_type_qualifier *qual,
 	 break;
 
       case fragment_shader:
-	 if (!global_scope || (var->mode != ir_var_in)) {
+	 if (!global_scope || (var->mode != ir_var_out)) {
 	    fail = true;
 	    string = "output";
 	 }

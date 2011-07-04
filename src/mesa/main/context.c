@@ -1430,7 +1430,8 @@ _mesa_make_current( struct gl_context *newCtx,
    }
 
    if (curCtx && 
-      (curCtx->WinSysDrawBuffer || curCtx->WinSysReadBuffer) && /* make sure this context is valid for flushing */
+      (curCtx->WinSysDrawBuffer || curCtx->WinSysReadBuffer) &&
+       /* make sure this context is valid for flushing */
       curCtx != newCtx)
       _mesa_flush(curCtx);
 
@@ -1445,8 +1446,6 @@ _mesa_make_current( struct gl_context *newCtx,
       _glapi_set_dispatch(newCtx->CurrentDispatch);
 
       if (drawBuffer && readBuffer) {
-	 /* TODO: check if newCtx and buffer's visual match??? */
-
          ASSERT(drawBuffer->Name == 0);
          ASSERT(readBuffer->Name == 0);
          _mesa_reference_framebuffer(&newCtx->WinSysDrawBuffer, drawBuffer);
@@ -1457,23 +1456,12 @@ _mesa_make_current( struct gl_context *newCtx,
           * or not bound to a user-created FBO.
           */
          if (!newCtx->DrawBuffer || newCtx->DrawBuffer->Name == 0) {
-            /* KW: merge conflict here, revisit. 
-             */
-            /* fix up the fb fields - these will end up wrong otherwise
-             * if the DRIdrawable changes, and everything relies on them.
-             * This is a bit messy (same as needed in _mesa_BindFramebufferEXT)
-             */
-            unsigned int i;
-            GLenum buffers[MAX_DRAW_BUFFERS];
-
             _mesa_reference_framebuffer(&newCtx->DrawBuffer, drawBuffer);
-
-            for(i = 0; i < newCtx->Const.MaxDrawBuffers; i++) {
-               buffers[i] = newCtx->Color.DrawBuffer[i];
-            }
-
-            _mesa_drawbuffers(newCtx, newCtx->Const.MaxDrawBuffers,
-                              buffers, NULL);
+            /* Update the FBO's list of drawbuffers/renderbuffers.
+             * For winsys FBOs this comes from the GL state (which may have
+             * changed since the last time this FBO was bound).
+             */
+            _mesa_update_draw_buffers(newCtx);
          }
          if (!newCtx->ReadBuffer || newCtx->ReadBuffer->Name == 0) {
             _mesa_reference_framebuffer(&newCtx->ReadBuffer, readBuffer);

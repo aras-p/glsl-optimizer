@@ -73,7 +73,7 @@ translate_tex_target(GLenum target)
 uint32_t
 brw_format_for_mesa_format(gl_format mesa_format)
 {
-   uint32_t table[MESA_FORMAT_COUNT] =
+   static const uint32_t table[MESA_FORMAT_COUNT] =
    {
       [MESA_FORMAT_L8] = BRW_SURFACEFORMAT_L8_UNORM,
       [MESA_FORMAT_I8] = BRW_SURFACEFORMAT_I8_UNORM,
@@ -477,7 +477,7 @@ brw_update_renderbuffer_surface(struct brw_context *brw,
 	      format << BRW_SURFACE_FORMAT_SHIFT);
 
    /* reloc */
-   surf[1] = (intel_region_tile_offsets(region, &tile_x, &tile_y) +
+   surf[1] = (intel_renderbuffer_tile_offsets(irb, &tile_x, &tile_y) +
 	      region->buffer->offset);
 
    surf[2] = ((rb->Width - 1) << BRW_SURFACE_WIDTH_SHIFT |

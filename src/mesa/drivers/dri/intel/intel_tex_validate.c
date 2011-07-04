@@ -77,8 +77,6 @@ intel_finalize_mipmap_tree(struct intel_context *intel, GLuint unit)
    struct gl_texture_object *tObj = intel->ctx.Texture.Unit[unit]._Current;
    struct intel_texture_object *intelObj = intel_texture_object(tObj);
    struct gl_sampler_object *sampler = _mesa_get_samplerobj(ctx, unit);
-   int comp_byte = 0;
-   int cpp;
    GLuint face, i;
    GLuint nr_faces = 0;
    struct intel_texture_image *firstImage;
@@ -101,13 +99,6 @@ intel_finalize_mipmap_tree(struct intel_context *intel, GLuint unit)
       return GL_FALSE;
    }
 
-   if (_mesa_is_format_compressed(firstImage->base.TexFormat)) {
-      comp_byte = intel_compressed_num_bytes(firstImage->base.TexFormat);
-      cpp = comp_byte;
-   }
-   else
-      cpp = _mesa_get_format_bytes(firstImage->base.TexFormat);
-
    /* Check tree can hold all active levels.  Check tree matches
     * target, imageFormat, etc.
     *
@@ -118,14 +109,12 @@ intel_finalize_mipmap_tree(struct intel_context *intel, GLuint unit)
     */
    if (intelObj->mt &&
        (intelObj->mt->target != intelObj->base.Target ||
-	intelObj->mt->internal_format != firstImage->base.InternalFormat ||
+	intelObj->mt->format != firstImage->base.TexFormat ||
 	intelObj->mt->first_level != tObj->BaseLevel ||
 	intelObj->mt->last_level < intelObj->_MaxLevel ||
 	intelObj->mt->width0 != firstImage->base.Width ||
 	intelObj->mt->height0 != firstImage->base.Height ||
-	intelObj->mt->depth0 != firstImage->base.Depth ||
-	intelObj->mt->cpp != cpp ||
-	intelObj->mt->compressed != _mesa_is_format_compressed(firstImage->base.TexFormat))) {
+	intelObj->mt->depth0 != firstImage->base.Depth)) {
       intel_miptree_release(intel, &intelObj->mt);
    }
 
@@ -135,15 +124,12 @@ intel_finalize_mipmap_tree(struct intel_context *intel, GLuint unit)
    if (!intelObj->mt) {
       intelObj->mt = intel_miptree_create(intel,
                                           intelObj->base.Target,
-                                          firstImage->base._BaseFormat,
-                                          firstImage->base.InternalFormat,
+					  firstImage->base.TexFormat,
                                           tObj->BaseLevel,
                                           intelObj->_MaxLevel,
                                           firstImage->base.Width,
                                           firstImage->base.Height,
                                           firstImage->base.Depth,
-                                          cpp,
-                                          comp_byte,
 					  GL_TRUE);
       if (!intelObj->mt)
          return GL_FALSE;

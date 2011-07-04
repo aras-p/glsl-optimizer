@@ -108,8 +108,5 @@ extern void
 _mesa_reference_renderbuffer(struct gl_renderbuffer **ptr,
                              struct gl_renderbuffer *rb);
 
-extern struct gl_renderbuffer *
-_mesa_new_depthstencil_renderbuffer(struct gl_context *ctx, GLuint name);
-
 
 #endif /* RENDERBUFFER_H */

@@ -207,7 +207,11 @@ lp_disassemble(const void* func)
    }
 
    raw_debug_ostream Out;
+#if HAVE_LLVM >= 0x0300
+   TargetMachine *TM = T->createTargetMachine(Triple, sys::getHostCPUName(), "");
+#else
    TargetMachine *TM = T->createTargetMachine(Triple, "");
+#endif
 
 #if HAVE_LLVM >= 0x0300
    unsigned int AsmPrinterVariant = AsmInfo->getAssemblerDialect();
@@ -287,7 +291,11 @@ lp_disassemble(const void* func)
 
       pc += Size;
 
+#if HAVE_LLVM >= 0x0300
+      const MCInstrDesc &TID = TII->get(Inst.getOpcode());
+#else
       const TargetInstrDesc &TID = TII->get(Inst.getOpcode());
+#endif
 
       /*
        * Keep track of forward jumps to a nearby address.

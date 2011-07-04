@@ -1,3 +1,33 @@
+/**************************************************************************
+ *
+ * Copyright 2008 Tungsten Graphics, Inc., Cedar Park, Texas.
+ * Copyright 2009-2010 Chia-I Wu <olvaffe@gmail.com>
+ * Copyright 2010-2011 LunarG, Inc.
+ * All Rights Reserved.
+ *
+ * Permission is hereby granted, free of charge, to any person obtaining a
+ * copy of this software and associated documentation files (the
+ * "Software"), to deal in the Software without restriction, including
+ * without limitation the rights to use, copy, modify, merge, publish,
+ * distribute, sub license, and/or sell copies of the Software, and to
+ * permit persons to whom the Software is furnished to do so, subject to
+ * the following conditions:
+ *
+ * The above copyright notice and this permission notice (including the
+ * next paragraph) shall be included in all copies or substantial portions
+ * of the Software.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.  IN NO EVENT SHALL
+ * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
+ * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
+ * DEALINGS IN THE SOFTWARE.
+ *
+ **************************************************************************/
+
+
 /**
  * EGL Configuration (pixel format) functions.
  */
@@ -305,6 +335,7 @@ _eglValidateConfig(const _EGLConfig *conf, EGLBoolean for_matching)
             break;
          default:
             assert(0);
+            mask = 0;
             break;
          }
          if (val & ~mask)
@@ -456,8 +487,6 @@ _eglIsConfigAttribValid(_EGLConfig *conf, EGLint attr)
       return EGL_FALSE;
 
    switch (attr) {
-   case EGL_MATCH_NATIVE_PIXMAP:
-      return EGL_FALSE;
    case EGL_Y_INVERTED_NOK:
       return conf->Display->Extensions.NOK_texture_from_pixmap;
    default:
@@ -634,7 +663,7 @@ void _eglSwapConfigs(const _EGLConfig **conf1, const _EGLConfig **conf2)
  * qsort() in that the compare function accepts an additional
  * argument.
  */
-void
+static void
 _eglSortConfigs(const _EGLConfig **configs, EGLint count,
                 EGLint (*compare)(const _EGLConfig *, const _EGLConfig *,
                                   void *),
@@ -672,34 +701,27 @@ _eglSortConfigs(const _EGLConfig **configs, EGLint count,
 }
 
 
-static int
-_eglFallbackCompare(const _EGLConfig *conf1, const _EGLConfig *conf2,
-                   void *priv_data)
-{
-   const _EGLConfig *criteria = (const _EGLConfig *) priv_data;
-   return _eglCompareConfigs(conf1, conf2, criteria, EGL_TRUE);
-}
-
-
 /**
- * Typical fallback routine for eglChooseConfig
+ * A helper function for implementing eglChooseConfig.  See _eglFilterArray and
+ * _eglSortConfigs for the meanings of match and compare.
  */
 EGLBoolean
-_eglChooseConfig(_EGLDriver *drv, _EGLDisplay *disp, const EGLint *attrib_list,
-                 EGLConfig *configs, EGLint config_size, EGLint *num_configs)
+_eglFilterConfigArray(_EGLArray *array, EGLConfig *configs,
+                      EGLint config_size, EGLint *num_configs,
+                      EGLBoolean (*match)(const _EGLConfig *, void *),
+                      EGLint (*compare)(const _EGLConfig *, const _EGLConfig *,
+                                        void *),
+                      void *priv_data)
 {
-   _EGLConfig **configList, criteria;
+   _EGLConfig **configList;
    EGLint i, count;
 
    if (!num_configs)
       return _eglError(EGL_BAD_PARAMETER, "eglChooseConfigs");
 
-   if (!_eglParseConfigAttribList(&criteria, disp, attrib_list))
-      return _eglError(EGL_BAD_ATTRIBUTE, "eglChooseConfig");
-
    /* get the number of matched configs */
-   count = _eglFilterArray(disp->Configs, NULL, 0,
-         (_EGLArrayForEach) _eglMatchConfig, (void *) &criteria);
+   count = _eglFilterArray(array, NULL, 0,
+         (_EGLArrayForEach) match, priv_data);
    if (!count) {
       *num_configs = count;
       return EGL_TRUE;
@@ -710,13 +732,13 @@ _eglChooseConfig(_EGLDriver *drv, _EGLDisplay *disp, const EGLint *attrib_list,
       return _eglError(EGL_BAD_ALLOC, "eglChooseConfig(out of memory)");
 
    /* get the matched configs */
-   _eglFilterArray(disp->Configs, (void **) configList, count,
-         (_EGLArrayForEach) _eglMatchConfig, (void *) &criteria);
+   _eglFilterArray(array, (void **) configList, count,
+         (_EGLArrayForEach) match, priv_data);
 
    /* perform sorting of configs */
    if (configs && count) {
       _eglSortConfigs((const _EGLConfig **) configList, count,
-                      _eglFallbackCompare, (void *) &criteria);
+                      compare, priv_data);
       count = MIN2(count, config_size);
       for (i = 0; i < count; i++)
          configs[i] = _eglGetConfigHandle(configList[i]);
@@ -730,6 +752,41 @@ _eglChooseConfig(_EGLDriver *drv, _EGLDisplay *disp, const EGLint *attrib_list,
 }
 
 
+static EGLBoolean
+_eglFallbackMatch(const _EGLConfig *conf, void *priv_data)
+{
+   return _eglMatchConfig(conf, (const _EGLConfig *) priv_data);
+}
+
+
+static EGLint
+_eglFallbackCompare(const _EGLConfig *conf1, const _EGLConfig *conf2,
+                    void *priv_data)
+{
+   return _eglCompareConfigs(conf1, conf2,
+         (const _EGLConfig *) priv_data, EGL_TRUE);
+}
+
+
+/**
+ * Typical fallback routine for eglChooseConfig
+ */
+EGLBoolean
+_eglChooseConfig(_EGLDriver *drv, _EGLDisplay *disp, const EGLint *attrib_list,
+                 EGLConfig *configs, EGLint config_size, EGLint *num_configs)
+{
+   _EGLConfig criteria;
+
+   if (!_eglParseConfigAttribList(&criteria, disp, attrib_list))
+      return _eglError(EGL_BAD_ATTRIBUTE, "eglChooseConfig");
+
+   return _eglFilterConfigArray(disp->Configs,
+         configs, config_size, num_configs,
+         _eglFallbackMatch, _eglFallbackCompare,
+         (void *) &criteria);
+}
+
+
 /**
  * Fallback for eglGetConfigAttrib.
  */
@@ -739,6 +796,16 @@ _eglGetConfigAttrib(_EGLDriver *drv, _EGLDisplay *dpy, _EGLConfig *conf,
 {
    if (!_eglIsConfigAttribValid(conf, attribute))
       return _eglError(EGL_BAD_ATTRIBUTE, "eglGetConfigAttrib");
+
+   /* nonqueryable attributes */
+   switch (attribute) {
+   case EGL_MATCH_NATIVE_PIXMAP:
+      return _eglError(EGL_BAD_ATTRIBUTE, "eglGetConfigAttrib");
+      break;
+   default:
+      break;
+   }
+
    if (!value)
       return _eglError(EGL_BAD_PARAMETER, "eglGetConfigAttrib");
 

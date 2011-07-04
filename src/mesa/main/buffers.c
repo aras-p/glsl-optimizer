@@ -462,6 +462,27 @@ _mesa_drawbuffers(struct gl_context *ctx, GLuint n, const GLenum *buffers,
 
 
 /**
+ * Update the current drawbuffer's _ColorDrawBufferIndex[] list, etc.
+ * from the context's Color.DrawBuffer[] state.
+ * Use when changing contexts.
+ */
+void
+_mesa_update_draw_buffers(struct gl_context *ctx)
+{
+   GLenum buffers[MAX_DRAW_BUFFERS];
+   GLuint i;
+
+   /* should be a window system FBO */
+   assert(ctx->DrawBuffer->Name == 0);
+
+   for (i = 0; i < ctx->Const.MaxDrawBuffers; i++)
+      buffers[i] = ctx->Color.DrawBuffer[i];
+
+   _mesa_drawbuffers(ctx, ctx->Const.MaxDrawBuffers, buffers, NULL);
+}
+
+
+/**
  * Like \sa _mesa_drawbuffers(), this is a helper function for setting
  * GL_READ_BUFFER state in the context and current FBO.
  * \param ctx  the rendering context

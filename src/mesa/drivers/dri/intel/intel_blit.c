@@ -280,10 +280,10 @@ intelClearWithBlit(struct gl_context *ctx, GLbitfield mask)
       write_buffer = intel_region_buffer(intel, irb->region,
 					 all ? INTEL_WRITE_FULL :
 					 INTEL_WRITE_PART);
-      x1 = cx + irb->region->draw_x;
-      y1 = cy + irb->region->draw_y;
-      x2 = cx + cw + irb->region->draw_x;
-      y2 = cy + ch + irb->region->draw_y;
+      x1 = cx + irb->draw_x;
+      y1 = cy + irb->draw_y;
+      x2 = cx + cw + irb->draw_x;
+      y2 = cy + ch + irb->draw_y;
 
       pitch = irb->region->pitch;
       cpp = irb->region->cpp;

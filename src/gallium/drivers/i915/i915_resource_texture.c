@@ -37,6 +37,7 @@
 #include "util/u_format.h"
 #include "util/u_math.h"
 #include "util/u_memory.h"
+#include "util/u_rect.h"
 
 #include "i915_context.h"
 #include "i915_resource.h"
@@ -710,7 +711,7 @@ i915_texture_destroy(struct pipe_screen *screen,
    FREE(tex);
 }
 
-static struct pipe_transfer * 
+static struct pipe_transfer *
 i915_texture_get_transfer(struct pipe_context *pipe,
                           struct pipe_resource *resource,
                           unsigned level,
@@ -719,19 +720,45 @@ i915_texture_get_transfer(struct pipe_context *pipe,
 {
    struct i915_context *i915 = i915_context(pipe);
    struct i915_texture *tex = i915_texture(resource);
-   struct pipe_transfer *transfer = util_slab_alloc(&i915->transfer_pool);
+   struct i915_transfer *transfer = util_slab_alloc(&i915->texture_transfer_pool);
+   boolean use_staging_texture = FALSE;
 
    if (transfer == NULL)
       return NULL;
 
-   transfer->resource = resource;
-   transfer->level = level;
-   transfer->usage = usage;
-   transfer->box = *box;
-   transfer->stride = tex->stride;
-   /* FIXME: layer_stride */
+   transfer->b.resource = resource;
+   transfer->b.level = level;
+   transfer->b.usage = usage;
+   transfer->b.box = *box;
+   transfer->b.stride = tex->stride;
+   transfer->staging_texture = NULL;
+   /* XXX: handle depth textures everyhwere*/
+   transfer->b.layer_stride = 0;
+   transfer->b.data = NULL;
 
-   return transfer;
+   /* if we use staging transfers, only support textures we can render to,
+    * because we need that for u_blitter */
+   if (i915->blitter &&
+       i915_is_format_supported(NULL, /* screen */
+                                transfer->b.resource->format,
+                                0, /* target */
+                                1, /* sample count */
+                                PIPE_BIND_RENDER_TARGET) &&
+       (usage & PIPE_TRANSFER_WRITE) &&
+       !(usage & (PIPE_TRANSFER_READ | PIPE_TRANSFER_DONTBLOCK | PIPE_TRANSFER_UNSYNCHRONIZED)))
+      use_staging_texture = TRUE;
+
+   use_staging_texture = FALSE;
+
+   if (use_staging_texture) {
+      /* 
+       * Allocate the untiled staging texture.
+       * If the alloc fails, transfer->staging_texture is NULL and we fallback to a map() 
+       */
+      transfer->staging_texture = i915_texture_create(pipe->screen, resource, TRUE);
+   }
+
+   return (struct pipe_transfer*)transfer;
 }
 
 static void
@@ -739,17 +766,33 @@ i915_transfer_destroy(struct pipe_context *pipe,
                       struct pipe_transfer *transfer)
 {
    struct i915_context *i915 = i915_context(pipe);
-   util_slab_free(&i915->transfer_pool, transfer);
+   struct i915_transfer *itransfer = (struct i915_transfer*)transfer;
+
+   if ((itransfer->staging_texture) &&
+       (transfer->usage & PIPE_TRANSFER_WRITE)) {
+      struct pipe_box sbox;
+
+      u_box_origin_2d(itransfer->b.box.width, itransfer->b.box.height, &sbox);
+      pipe->resource_copy_region(pipe, itransfer->b.resource, itransfer->b.level,
+                                   itransfer->b.box.x, itransfer->b.box.y, itransfer->b.box.z,
+                                   itransfer->staging_texture,
+                                   0, &sbox);
+      pipe->flush(pipe, NULL);
+      pipe_resource_reference(&itransfer->staging_texture, NULL);
+   }
+
+   util_slab_free(&i915->texture_transfer_pool, itransfer);
 }
 
 static void *
 i915_texture_transfer_map(struct pipe_context *pipe,
                           struct pipe_transfer *transfer)
 {
-   struct pipe_resource *resource = transfer->resource;
-   struct i915_texture *tex = i915_texture(resource);
+   struct i915_transfer *itransfer = (struct i915_transfer*)transfer;
+   struct pipe_resource *resource = itransfer->b.resource;
+   struct i915_texture *tex = NULL;
    struct i915_winsys *iws = i915_screen(pipe->screen)->iws;
-   struct pipe_box *box = &transfer->box;
+   struct pipe_box *box = &itransfer->b.box;
    enum pipe_format format = resource->format;
    unsigned offset;
    char *map;
@@ -757,18 +800,25 @@ i915_texture_transfer_map(struct pipe_context *pipe,
    if (resource->target != PIPE_TEXTURE_3D &&
        resource->target != PIPE_TEXTURE_CUBE)
       assert(box->z == 0);
-   offset = i915_texture_offset(tex, transfer->level, box->z);
 
-   /* TODO this is a sledgehammer */
-   pipe->flush(pipe, NULL);
+   if (itransfer->staging_texture) {
+      tex = i915_texture(itransfer->staging_texture);
+   } else {
+      /* TODO this is a sledgehammer */
+      tex = i915_texture(resource);
+      pipe->flush(pipe, NULL);
+   }
+
+   offset = i915_texture_offset(tex, itransfer->b.level, box->z);
 
    map = iws->buffer_map(iws, tex->buffer,
-                         (transfer->usage & PIPE_TRANSFER_WRITE) ? TRUE : FALSE);
-   if (map == NULL)
+                         (itransfer->b.usage & PIPE_TRANSFER_WRITE) ? TRUE : FALSE);
+   if (map == NULL) {
       return NULL;
+   }
 
    return map + offset +
-      box->y / util_format_get_blockheight(format) * transfer->stride +
+      box->y / util_format_get_blockheight(format) * itransfer->b.stride +
       box->x / util_format_get_blockwidth(format) * util_format_get_blocksize(format);
 }
 
@@ -776,14 +826,106 @@ static void
 i915_texture_transfer_unmap(struct pipe_context *pipe,
 			    struct pipe_transfer *transfer)
 {
-   struct i915_texture *tex = i915_texture(transfer->resource);
+   struct i915_transfer *itransfer = (struct i915_transfer*)transfer;
+   struct i915_texture *tex = i915_texture(itransfer->b.resource);
    struct i915_winsys *iws = i915_screen(tex->b.b.screen)->iws;
+
+   if (itransfer->staging_texture)
+      tex = i915_texture(itransfer->staging_texture);
+
    iws->buffer_unmap(iws, tex->buffer);
+}
+
+static void i915_transfer_inline_write( struct pipe_context *pipe,
+                                 struct pipe_resource *resource,
+                                 unsigned level,
+                                 unsigned usage,
+                                 const struct pipe_box *box,
+                                 const void *data,
+                                 unsigned stride,
+                                 unsigned layer_stride)
+{
+   struct pipe_transfer *transfer = NULL;
+   struct i915_transfer *itransfer = NULL;
+   const uint8_t *src_data = data;
+   unsigned i;
+
+   transfer = pipe->get_transfer(pipe,
+                                 resource,
+                                 level,
+                                 usage,
+                                 box );
+   if (transfer == NULL)
+      goto out;
+
+   itransfer = (struct i915_transfer*)transfer;
+
+   if (itransfer->staging_texture) {
+      struct i915_texture *tex = i915_texture(itransfer->staging_texture);
+      enum pipe_format format = tex->b.b.format;
+      struct i915_winsys *iws = i915_screen(tex->b.b.screen)->iws;
+      size_t offset;
+      size_t size;
+
+      offset = i915_texture_offset(tex, transfer->level, transfer->box.z);
+
+      for (i = 0; i < box->depth; i++) {
+         if (!tex->b.b.last_level &&
+                     tex->b.b.width0 == transfer->box.width) {
+             unsigned nby = util_format_get_nblocksy(format, transfer->box.y);
+             assert(!offset);
+             assert(!transfer->box.x);
+             assert(tex->stride == transfer->stride);
+
+             offset += tex->stride * nby;
+             size = util_format_get_2d_size(format, transfer->stride,
+                             transfer->box.height);
+             iws->buffer_write(iws, tex->buffer, offset, size, transfer->data);
+
+         } else {
+             unsigned nby = util_format_get_nblocksy(format, transfer->box.y);
+             int i;
+             offset += util_format_get_stride(format, transfer->box.x);
+             size = transfer->stride;
+
+             for (i = 0; i < nby; i++) {
+                     iws->buffer_write(iws, tex->buffer, offset, size, transfer->data);
+                     offset += tex->stride;
+             }
+         }
+         offset += layer_stride;
+      }
+   } else {
+      uint8_t *map = pipe_transfer_map(pipe, &itransfer->b);
+      if (map == NULL)
+         goto nomap;
+
+      for (i = 0; i < box->depth; i++) {
+         util_copy_rect(map,
+                        resource->format,
+                        itransfer->b.stride, /* bytes */
+                        0, 0,
+                        box->width,
+                        box->height,
+                        src_data,
+                        stride,       /* bytes */
+                        0, 0);
+         map += itransfer->b.layer_stride;
+         src_data += layer_stride;
+      }
+nomap:
+      if (map)
+         pipe_transfer_unmap(pipe, &itransfer->b);
+   }
+
+out:
+   if (itransfer)
+      pipe_transfer_destroy(pipe, &itransfer->b);
 }
 
 
 
-struct u_resource_vtbl i915_texture_vtbl = 
+struct u_resource_vtbl i915_texture_vtbl =
 {
    i915_texture_get_handle,	      /* get_handle */
    i915_texture_destroy,	      /* resource_destroy */
@@ -792,7 +934,7 @@ struct u_resource_vtbl i915_texture_vtbl =
    i915_texture_transfer_map,	      /* transfer_map */
    u_default_transfer_flush_region,   /* transfer_flush_region */
    i915_texture_transfer_unmap,	      /* transfer_unmap */
-   u_default_transfer_inline_write    /* transfer_inline_write */
+   i915_transfer_inline_write         /* transfer_inline_write */
 };
 
 
@@ -800,7 +942,8 @@ struct u_resource_vtbl i915_texture_vtbl =
 
 struct pipe_resource *
 i915_texture_create(struct pipe_screen *screen,
-                    const struct pipe_resource *template)
+                    const struct pipe_resource *template,
+                    boolean force_untiled)
 {
    struct i915_screen *is = i915_screen(screen);
    struct i915_winsys *iws = is->iws;
@@ -815,7 +958,10 @@ i915_texture_create(struct pipe_screen *screen,
    pipe_reference_init(&tex->b.b.reference, 1);
    tex->b.b.screen = screen;
 
-   tex->tiling = i915_texture_tiling(is, tex);
+   if (force_untiled)
+      tex->tiling = I915_TILE_NONE;
+   else
+      tex->tiling = i915_texture_tiling(is, tex);
 
    if (is->is_i945) {
       if (!i945_texture_layout(tex))
@@ -836,7 +982,7 @@ i915_texture_create(struct pipe_screen *screen,
       buf_usage = I915_NEW_TEXTURE;
 
    tex->buffer = iws->buffer_create_tiled(iws, &tex->stride, tex->total_nblocksy,
-		   			  &tex->tiling, buf_usage);
+                                             &tex->tiling, buf_usage);
    if (!tex->buffer)
       goto fail;
 

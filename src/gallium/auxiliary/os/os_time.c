@@ -35,8 +35,6 @@
 
 #include "pipe/p_config.h"
 
-#if !defined(PIPE_OS_EMBEDDED)
-
 #if defined(PIPE_OS_UNIX)
 #  include <sys/time.h> /* timeval */
 #elif defined(PIPE_SUBSYSTEM_WINDOWS_DISPLAY)
@@ -123,6 +121,3 @@ os_time_sleep(int64_t usecs)
 }
 
 #endif
-
-
-#endif /* !PIPE_OS_EMBEDDED */

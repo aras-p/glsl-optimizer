@@ -39,6 +39,7 @@ gen6_prepare_wm_push_constants(struct brw_context *brw)
 {
    struct intel_context *intel = &brw->intel;
    struct gl_context *ctx = &intel->ctx;
+   /* BRW_NEW_FRAGMENT_PROGRAM */
    const struct brw_fragment_program *fp =
       brw_fragment_program_const(brw->fragment_program);
 
@@ -48,6 +49,7 @@ gen6_prepare_wm_push_constants(struct brw_context *brw)
    /* XXX: Should this happen somewhere before to get our state flag set? */
    _mesa_load_state_parameters(ctx, fp->program.Base.Parameters);
 
+   /* CACHE_NEW_VS_PROG */
    if (brw->wm.prog_data->nr_params != 0) {
       float *constants;
       unsigned int i;
@@ -83,7 +85,7 @@ const struct brw_tracked_state gen6_wm_constants = {
       .mesa  = _NEW_PROGRAM_CONSTANTS,
       .brw   = (BRW_NEW_BATCH |
 		BRW_NEW_FRAGMENT_PROGRAM),
-      .cache = 0,
+      .cache = CACHE_NEW_VS_PROG,
    },
    .prepare = gen6_prepare_wm_push_constants,
 };
@@ -97,7 +99,7 @@ upload_wm_state(struct brw_context *brw)
       brw_fragment_program_const(brw->fragment_program);
    uint32_t dw2, dw4, dw5, dw6;
 
-   /* CACHE_NEW_WM_PROG */
+    /* CACHE_NEW_WM_PROG */
    if (brw->wm.prog_data->nr_params == 0) {
       /* Disable the push constant buffers. */
       BEGIN_BATCH(5);
@@ -157,7 +159,7 @@ upload_wm_state(struct brw_context *brw)
    if (ctx->Line.StippleFlag)
       dw5 |= GEN6_WM_LINE_STIPPLE_ENABLE;
 
-   /* _NEW_POLYGONSTIPPLE */
+   /* _NEW_POLYGON */
    if (ctx->Polygon.StippleFlag)
       dw5 |= GEN6_WM_POLYGON_STIPPLE_ENABLE;
 
@@ -183,7 +185,7 @@ upload_wm_state(struct brw_context *brw)
 
    BEGIN_BATCH(9);
    OUT_BATCH(_3DSTATE_WM << 16 | (9 - 2));
-   OUT_RELOC(brw->wm.prog_bo, I915_GEM_DOMAIN_INSTRUCTION, 0, 0);
+   OUT_BATCH(brw->wm.prog_offset);
    OUT_BATCH(dw2);
    if (brw->wm.prog_data->total_scratch) {
       OUT_RELOC(brw->wm.scratch_bo, I915_GEM_DOMAIN_RENDER, I915_GEM_DOMAIN_RENDER,
@@ -195,21 +197,19 @@ upload_wm_state(struct brw_context *brw)
    OUT_BATCH(dw5);
    OUT_BATCH(dw6);
    OUT_BATCH(0); /* kernel 1 pointer */
-   if (brw->wm.prog_data->prog_offset_16) {
-      OUT_RELOC(brw->wm.prog_bo, I915_GEM_DOMAIN_INSTRUCTION, 0,
-		brw->wm.prog_data->prog_offset_16);
-   } else {
-      OUT_BATCH(0); /* kernel 2 pointer */
-   }
+   /* kernel 2 pointer */
+   OUT_BATCH(brw->wm.prog_offset + brw->wm.prog_data->prog_offset_16);
    ADVANCE_BATCH();
 }
 
 const struct brw_tracked_state gen6_wm_state = {
    .dirty = {
-      .mesa  = (_NEW_LINE | _NEW_POLYGONSTIPPLE | _NEW_COLOR | _NEW_BUFFERS |
-		_NEW_PROGRAM_CONSTANTS | _NEW_POLYGON),
-      .brw   = (BRW_NEW_CURBE_OFFSETS |
-		BRW_NEW_FRAGMENT_PROGRAM |
+      .mesa  = (_NEW_LINE |
+		_NEW_COLOR |
+		_NEW_BUFFERS |
+		_NEW_PROGRAM_CONSTANTS |
+		_NEW_POLYGON),
+      .brw   = (BRW_NEW_FRAGMENT_PROGRAM |
                 BRW_NEW_NR_WM_SURFACES |
 		BRW_NEW_URB_FENCE |
 		BRW_NEW_BATCH),

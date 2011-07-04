@@ -42,7 +42,6 @@ struct dri_drawable
    struct st_visual stvis;
 
    struct dri_screen *screen;
-   struct dri_context *context;
 
    /* dri */
    __DRIdrawable *dPriv;

@@ -31,7 +31,7 @@
 #include "intel_batchbuffer.h"
 
 static void
-gen6_prepare_scissor_state(struct brw_context *brw)
+gen6_upload_scissor_state(struct brw_context *brw)
 {
    struct intel_context *intel = &brw->intel;
    struct gl_context *ctx = &intel->ctx;
@@ -89,5 +89,5 @@ const struct brw_tracked_state gen6_scissor_state = {
       .brw = BRW_NEW_BATCH,
       .cache = 0,
    },
-   .prepare = gen6_prepare_scissor_state,
+   .emit = gen6_upload_scissor_state,
 };

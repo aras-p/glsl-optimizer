@@ -183,7 +183,7 @@ ultrix-gcc:
 
 # Rules for making release tarballs
 
-VERSION=7.11-devel
+VERSION=7.12-devel
 DIRECTORY = Mesa-$(VERSION)
 LIB_NAME = MesaLib-$(VERSION)
 GLUT_NAME = MesaGLUT-$(VERSION)
@@ -345,6 +345,16 @@ EGL_FILES = \
 	$(DIRECTORY)/src/egl/main/*.pc.in				\
 	$(DIRECTORY)/src/egl/main/*.def
 
+GBM_FILES = \
+	$(DIRECTORY)/src/gbm/Makefile					\
+	$(DIRECTORY)/src/gbm/main/*.pc.in				\
+	$(DIRECTORY)/src/gbm/main/*.[ch]				\
+	$(DIRECTORY)/src/gbm/main/Makefile				\
+	$(DIRECTORY)/src/gbm/backends/Makefile				\
+	$(DIRECTORY)/src/gbm/backends/Makefile.template			\
+	$(DIRECTORY)/src/gbm/backends/*/*.[ch]				\
+	$(DIRECTORY)/src/gbm/backends/*/Makefile			\
+
 GALLIUM_FILES = \
 	$(DIRECTORY)/src/mesa/state_tracker/*[ch]			\
 	$(DIRECTORY)/src/gallium/Makefile				\
@@ -376,8 +386,7 @@ DRI_FILES = \
 	$(DIRECTORY)/src/glx/Makefile					\
 	$(DIRECTORY)/src/glx/*.[ch]					\
 	$(APPLE_DRI_FILES)						\
-	$(DIRECTORY)/src/mesa/drivers/dri/Makefile			\
-	$(DIRECTORY)/src/mesa/drivers/dri/Makefile.template		\
+	$(DIRECTORY)/src/mesa/drivers/dri/Makefile*			\
 	$(DIRECTORY)/src/mesa/drivers/dri/dri.pc.in			\
 	$(DIRECTORY)/src/mesa/drivers/dri/common/xmlpool/*.po		\
 	$(DIRECTORY)/src/mesa/drivers/dri/*/*.[chS]			\
@@ -443,6 +452,7 @@ LIB_FILES = \
 	$(MAPI_FILES)		\
 	$(ES_FILES)		\
 	$(EGL_FILES)		\
+	$(GBM_FILES)		\
 	$(GALLIUM_FILES)	\
 	$(DRI_FILES)		\
 	$(SGI_GLU_FILES)	\

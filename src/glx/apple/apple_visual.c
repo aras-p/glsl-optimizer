@@ -40,9 +40,18 @@
 #include <OpenGL/OpenGL.h>
 #include <OpenGL/CGLContext.h>
 #include <OpenGL/CGLRenderers.h>
+#include <OpenGL/CGLTypes.h>
 #undef glTexImage1D
 #undef glTexImage2D
 #undef glTexImage3D
+
+#ifndef kCGLPFAOpenGLProfile
+#define kCGLPFAOpenGLProfile 99
+#endif
+
+#ifndef kCGLOGLPVersion_3_2_Core
+#define kCGLOGLPVersion_3_2_Core 0x3200
+#endif
 
 #include "apple_cgl.h"
 #include "apple_visual.h"
@@ -54,17 +63,21 @@ enum
    MAX_ATTR = 60
 };
 
-/*mode is a __GlcontextModes*/
 void
-apple_visual_create_pfobj(CGLPixelFormatObj * pfobj, const void *mode,
+apple_visual_create_pfobj(CGLPixelFormatObj * pfobj, const struct glx_config * mode,
                           bool * double_buffered, bool * uses_stereo,
                           bool offscreen)
 {
    CGLPixelFormatAttribute attr[MAX_ATTR];
-   const struct glx_config *c = mode;
    int numattr = 0;
    GLint vsref = 0;
    CGLError error = 0;
+
+   /* Request an OpenGL 3.2 profile if one is available */
+   if(apple_cgl.version_major > 1 || (apple_cgl.version_major == 1 && apple_cgl.version_minor >= 3)) {
+      attr[numattr++] = kCGLPFAOpenGLProfile;
+      attr[numattr++] = kCGLOGLPVersion_3_2_Core;
+   }
 
    if (offscreen) {
       apple_glx_diagnostic
@@ -95,7 +108,7 @@ apple_visual_create_pfobj(CGLPixelFormatObj * pfobj, const void *mode,
     */
    attr[numattr++] = kCGLPFAClosestPolicy;
 
-   if (c->stereoMode) {
+   if (mode->stereoMode) {
       attr[numattr++] = kCGLPFAStereo;
       *uses_stereo = true;
    }
@@ -103,7 +116,7 @@ apple_visual_create_pfobj(CGLPixelFormatObj * pfobj, const void *mode,
       *uses_stereo = false;
    }
 
-   if (c->doubleBufferMode) {
+   if (mode->doubleBufferMode) {
       attr[numattr++] = kCGLPFADoubleBuffer;
       *double_buffered = true;
    }
@@ -112,32 +125,32 @@ apple_visual_create_pfobj(CGLPixelFormatObj * pfobj, const void *mode,
    }
 
    attr[numattr++] = kCGLPFAColorSize;
-   attr[numattr++] = c->redBits + c->greenBits + c->blueBits;
+   attr[numattr++] = mode->redBits + mode->greenBits + mode->blueBits;
    attr[numattr++] = kCGLPFAAlphaSize;
-   attr[numattr++] = c->alphaBits;
+   attr[numattr++] = mode->alphaBits;
 
-   if ((c->accumRedBits + c->accumGreenBits + c->accumBlueBits) > 0) {
+   if ((mode->accumRedBits + mode->accumGreenBits + mode->accumBlueBits) > 0) {
       attr[numattr++] = kCGLPFAAccumSize;
-      attr[numattr++] = c->accumRedBits + c->accumGreenBits +
-         c->accumBlueBits + c->accumAlphaBits;
+      attr[numattr++] = mode->accumRedBits + mode->accumGreenBits +
+         mode->accumBlueBits + mode->accumAlphaBits;
    }
 
-   if (c->depthBits > 0) {
+   if (mode->depthBits > 0) {
       attr[numattr++] = kCGLPFADepthSize;
-      attr[numattr++] = c->depthBits;
+      attr[numattr++] = mode->depthBits;
    }
 
-   if (c->stencilBits > 0) {
+   if (mode->stencilBits > 0) {
       attr[numattr++] = kCGLPFAStencilSize;
-      attr[numattr++] = c->stencilBits;
+      attr[numattr++] = mode->stencilBits;
    }
 
-   if (c->sampleBuffers > 0) {
+   if (mode->sampleBuffers > 0) {
       attr[numattr++] = kCGLPFAMultisample;
       attr[numattr++] = kCGLPFASampleBuffers;
-      attr[numattr++] = c->sampleBuffers;
+      attr[numattr++] = mode->sampleBuffers;
       attr[numattr++] = kCGLPFASamples;
-      attr[numattr++] = c->samples;
+      attr[numattr++] = mode->samples;
    }
 
    attr[numattr++] = 0;

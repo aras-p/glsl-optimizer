@@ -41,6 +41,10 @@
 
 struct brw_vs_prog_key {
    GLuint program_string_id;
+   /**
+    * Number of channels of the vertex attribute that need GL_FIXED rescaling
+    */
+   uint8_t gl_fixed_input_size[VERT_ATTRIB_MAX];
    GLuint nr_userclip:4;
    GLuint copy_edgeflag:1;
    GLuint point_coord_replace:8;

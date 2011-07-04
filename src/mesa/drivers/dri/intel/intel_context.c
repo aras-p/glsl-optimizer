@@ -504,10 +504,7 @@ intelInvalidateState(struct gl_context * ctx, GLuint new_state)
     struct intel_context *intel = intel_context(ctx);
 
    _swrast_InvalidateState(ctx, new_state);
-   _swsetup_InvalidateState(ctx, new_state);
    _vbo_InvalidateState(ctx, new_state);
-   _tnl_InvalidateState(ctx, new_state);
-   _tnl_invalidate_vertex_state(ctx, new_state);
 
    intel->NewGLState |= new_state;
 
@@ -663,7 +660,7 @@ intelInitContext(struct intel_context *intel,
       ctx->TextureFormatSupported[MESA_FORMAT_AL1616] = GL_TRUE;
 
    /* Depth and stencil */
-   ctx->TextureFormatSupported[MESA_FORMAT_S8_Z24] = !intel->must_use_separate_stencil;
+   ctx->TextureFormatSupported[MESA_FORMAT_S8_Z24] = GL_TRUE;
    ctx->TextureFormatSupported[MESA_FORMAT_X8_Z24] = intel->has_separate_stencil;
    ctx->TextureFormatSupported[MESA_FORMAT_S8] = intel->has_separate_stencil;
 
@@ -854,7 +851,7 @@ intelInitContext(struct intel_context *intel,
    if (INTEL_DEBUG & DEBUG_BUFMGR)
       dri_bufmgr_set_debug(intel->bufmgr, GL_TRUE);
 
-   intel_batchbuffer_reset(intel);
+   intel_batchbuffer_init(intel);
 
    intel_fbo_init(intel);
 

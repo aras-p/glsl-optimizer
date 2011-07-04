@@ -33,8 +33,10 @@
 #include "main/macros.h"
 #include "main/colormac.h"
 
+#include "tnl/tnl.h"
 #include "tnl/t_context.h"
 #include "tnl/t_vertex.h"
+#include "swrast_setup/swrast_setup.h"
 
 #include "intel_batchbuffer.h"
 #include "intel_regions.h"
@@ -561,6 +563,8 @@ i915_set_draw_region(struct intel_context *intel,
    struct gl_context *ctx = &intel->ctx;
    struct gl_renderbuffer *rb = ctx->DrawBuffer->_ColorDrawBuffers[0];
    struct intel_renderbuffer *irb = intel_renderbuffer(rb);
+   struct gl_renderbuffer *drb;
+   struct intel_renderbuffer *idrb = NULL;
    GLuint value;
    struct i915_hw_state *state = &i915->state;
    uint32_t draw_x, draw_y, draw_offset;
@@ -609,6 +613,13 @@ i915_set_draw_region(struct intel_context *intel,
    }
    state->Buffer[I915_DESTREG_DV1] = value;
 
+   drb = ctx->DrawBuffer->Attachment[BUFFER_DEPTH].Renderbuffer;
+   if (!drb)
+      drb = ctx->DrawBuffer->Attachment[BUFFER_STENCIL].Renderbuffer;
+
+   if (drb)
+      idrb = intel_renderbuffer(drb);
+
    /* We set up the drawing rectangle to be offset into the color
     * region's location in the miptree.  If it doesn't match with
     * depth's offsets, we can't render to it.
@@ -620,16 +631,15 @@ i915_set_draw_region(struct intel_context *intel,
     * can't do in general due to tiling)
     */
    FALLBACK(intel, I915_FALLBACK_DRAW_OFFSET,
-	    (depth_region && color_regions[0]) &&
-	    (depth_region->draw_x != color_regions[0]->draw_x ||
-	     depth_region->draw_y != color_regions[0]->draw_y));
+	    idrb && irb && (idrb->draw_x != irb->draw_x ||
+			    idrb->draw_y != irb->draw_y));
 
-   if (color_regions[0]) {
-      draw_x = color_regions[0]->draw_x;
-      draw_y = color_regions[0]->draw_y;
-   } else if (depth_region) {
-      draw_x = depth_region->draw_x;
-      draw_y = depth_region->draw_y;
+   if (irb) {
+      draw_x = irb->draw_x;
+      draw_y = irb->draw_y;
+   } else if (idrb) {
+      draw_x = idrb->draw_x;
+      draw_y = idrb->draw_y;
    } else {
       draw_x = 0;
       draw_y = 0;
@@ -695,6 +705,16 @@ i915_is_hiz_depth_format(struct intel_context *intel,
    return false;
 }
 
+static void
+i915_invalidate_state(struct intel_context *intel, GLuint new_state)
+{
+   struct gl_context *ctx = &intel->ctx;
+
+   _swsetup_InvalidateState(ctx, new_state);
+   _tnl_InvalidateState(ctx, new_state);
+   _tnl_invalidate_vertex_state(ctx, new_state);
+}
+
 void
 i915InitVtbl(struct i915_context *i915)
 {
@@ -709,6 +729,7 @@ i915InitVtbl(struct i915_context *i915)
    i915->intel.vtbl.update_texture_state = i915UpdateTextureState;
    i915->intel.vtbl.assert_not_dirty = i915_assert_not_dirty;
    i915->intel.vtbl.finish_batch = intel_finish_vb;
+   i915->intel.vtbl.invalidate_state = i915_invalidate_state;
    i915->intel.vtbl.render_target_supported = i915_render_target_supported;
    i915->intel.vtbl.is_hiz_depth_format = i915_is_hiz_depth_format;
 }

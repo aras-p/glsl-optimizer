@@ -48,7 +48,7 @@
 
 void _debug_vprintf(const char *format, va_list ap)
 {
-#if defined(PIPE_OS_WINDOWS) || defined(PIPE_OS_EMBEDDED)
+#if defined(PIPE_OS_WINDOWS) || defined(PIPE_SUBSYSTEM_EMBEDDED)
    /* We buffer until we find a newline. */
    static char buf[4096] = {'\0'};
    size_t len = strlen(buf);

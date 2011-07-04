@@ -59,6 +59,7 @@
 #include "pipe/p_defines.h"
 #include "pipe/p_screen.h"
 #include "pipe/p_context.h"
+#include "util/u_atomic.h"
 
 #include "xm_public.h"
 #include <GL/glx.h>
@@ -1113,10 +1114,7 @@ XMesaDestroyBuffer(XMesaBuffer b)
 void
 xmesa_notify_invalid_buffer(XMesaBuffer b)
 {
-   XMesaContext xmctx = XMesaGetCurrentContext();
-
-   if (xmctx && xmctx->xm_buffer == b)
-      xmctx->st->notify_invalid_framebuffer(xmctx->st, b->stfb);
+   p_atomic_inc(&b->stfb->stamp);
 }
 
 
@@ -1126,11 +1124,18 @@ xmesa_notify_invalid_buffer(XMesaBuffer b)
 void
 xmesa_check_buffer_size(XMesaBuffer b)
 {
+   GLuint old_width, old_height;
+
    if (b->type == PBUFFER)
       return;
 
+   old_width = b->width;
+   old_height = b->height;
+
    xmesa_get_window_size(b->xm_visual->display, b, &b->width, &b->height);
-   xmesa_notify_invalid_buffer(b);
+
+   if (b->width != old_width || b->height != old_height)
+      xmesa_notify_invalid_buffer(b);
 }
 
 

@@ -688,8 +688,10 @@ nouveau_generate_mipmap(struct gl_context *ctx, GLenum target,
 		_mesa_generate_mipmap(ctx, target, t);
 		nouveau_teximage_unmap(ctx, base);
 
-		store_mipmap(ctx, target, t->BaseLevel + 1,
-			     get_last_level(t), t);
+		if (!_mesa_is_format_compressed(base->TexFormat)) {
+			store_mipmap(ctx, target, t->BaseLevel + 1,
+				     get_last_level(t), t);
+		}
 
 	} else {
 		_mesa_meta_GenerateMipmap(ctx, target, t);

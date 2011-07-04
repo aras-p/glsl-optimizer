@@ -206,6 +206,16 @@ extern void
 _swrast_eject_texture_images(struct gl_context *ctx);
 
 
+extern void
+_swrast_render_texture(struct gl_context *ctx,
+                       struct gl_framebuffer *fb,
+                       struct gl_renderbuffer_attachment *att);
+
+extern void
+_swrast_finish_render_texture(struct gl_context *ctx,
+                              struct gl_renderbuffer_attachment *att);
+
+
 
 /**
  * The driver interface for the software rasterizer.

@@ -1435,8 +1435,7 @@ struct gl_texgen
 
 /**
  * Texture unit state.  Contains enable flags, texture environment/function/
- * combiners, texgen state, pointers to current texture objects and
- * post-filter color tables.
+ * combiners, texgen state, and pointers to current texture objects.
  */
 struct gl_texture_unit
 {

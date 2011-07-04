@@ -37,9 +37,6 @@
 #include "egl_g3d.h"
 #include "egl_g3d_image.h"
 
-/* for struct winsys_handle */
-#include "state_tracker/drm_driver.h"
-
 /**
  * Reference and return the front left buffer of the native pixmap.
  */
@@ -137,10 +134,9 @@ egl_g3d_reference_drm_buffer(_EGLDisplay *dpy, EGLint name,
                              _EGLImage *img, const EGLint *attribs)
 {
    struct egl_g3d_display *gdpy = egl_g3d_display(dpy);
-   struct pipe_resource templ;
-   struct winsys_handle wsh;
    _EGLImageAttribs attrs;
    EGLint format;
+   struct native_buffer nbuf;
 
    if (!dpy->Extensions.MESA_drm_image)
       return NULL;
@@ -166,21 +162,21 @@ egl_g3d_reference_drm_buffer(_EGLDisplay *dpy, EGLint name,
       break;
    }
 
-   memset(&templ, 0, sizeof(templ));
-   templ.target = PIPE_TEXTURE_2D;
-   templ.format = format;
-   templ.bind = PIPE_BIND_RENDER_TARGET | PIPE_BIND_SAMPLER_VIEW;
-   templ.width0 = attrs.Width;
-   templ.height0 = attrs.Height;
-   templ.depth0 = 1;
-   templ.array_size = 1;
+   memset(&nbuf, 0, sizeof(nbuf));
+   nbuf.type = NATIVE_BUFFER_DRM;
+   nbuf.u.drm.templ.target = PIPE_TEXTURE_2D;
+   nbuf.u.drm.templ.format = format;
+   nbuf.u.drm.templ.bind = PIPE_BIND_RENDER_TARGET | PIPE_BIND_SAMPLER_VIEW;
+   nbuf.u.drm.templ.width0 = attrs.Width;
+   nbuf.u.drm.templ.height0 = attrs.Height;
+   nbuf.u.drm.templ.depth0 = 1;
+   nbuf.u.drm.templ.array_size = 1;
 
-   memset(&wsh, 0, sizeof(wsh));
-   wsh.handle = (unsigned) name;
-   wsh.stride =
-      attrs.DRMBufferStrideMESA * util_format_get_blocksize(templ.format);
+   nbuf.u.drm.name = name;
+   nbuf.u.drm.stride =
+      attrs.DRMBufferStrideMESA * util_format_get_blocksize(format);
 
-   return gdpy->native->buffer->import_buffer(gdpy->native, &templ, &wsh);
+   return gdpy->native->buffer->import_buffer(gdpy->native, &nbuf);
 }
 
 #endif /* EGL_MESA_drm_image */
@@ -327,35 +323,26 @@ egl_g3d_export_drm_image(_EGLDriver *drv, _EGLDisplay *dpy, _EGLImage *img,
 {
    struct egl_g3d_display *gdpy = egl_g3d_display(dpy);
    struct egl_g3d_image *gimg = egl_g3d_image(img);
-   struct winsys_handle wsh;
+   struct native_buffer nbuf;
 
    if (!dpy->Extensions.MESA_drm_image)
       return EGL_FALSE;
 
-   /* get shared handle */
-   if (name) {
-      memset(&handle, 0, sizeof(handle));
-      wsh.type = DRM_API_HANDLE_TYPE_SHARED;
-      if (!gdpy->native->buffer->export_buffer(gdpy->native,
-                                               gimg->texture, &wsh))
-         return EGL_FALSE;
+   memset(&nbuf, 0, sizeof(nbuf));
+   nbuf.type = NATIVE_BUFFER_DRM;
+   if (name)
+      nbuf.u.drm.templ.bind |= PIPE_BIND_SHARED;
 
-      *name = wsh.handle;
-   }
+   if (!gdpy->native->buffer->export_buffer(gdpy->native,
+                                            gimg->texture, &nbuf))
+      return EGL_FALSE;
 
-   /* get KMS handle */
-   if (handle || stride) {
-      memset(&wsh, 0, sizeof(wsh));
-      wsh.type = DRM_API_HANDLE_TYPE_KMS;
-      if (!gdpy->native->buffer->export_buffer(gdpy->native,
-                                               gimg->texture, &wsh))
-         return EGL_FALSE;
-
-      if (handle)
-         *handle = wsh.handle;
-      if (stride)
-         *stride = wsh.stride;
-   }
+   if (name)
+      *name = nbuf.u.drm.name;
+   if (handle)
+      *handle = nbuf.u.drm.handle;
+   if (stride)
+      *stride = nbuf.u.drm.stride;
 
    return EGL_TRUE;
 }

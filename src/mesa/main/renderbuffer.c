@@ -2567,26 +2567,3 @@ _mesa_reference_renderbuffer(struct gl_renderbuffer **ptr,
       *ptr = rb;
    }
 }
-
-
-/**
- * Create a new combined depth/stencil renderbuffer for implementing
- * the GL_EXT_packed_depth_stencil extension.
- * \return new depth/stencil renderbuffer
- */
-struct gl_renderbuffer *
-_mesa_new_depthstencil_renderbuffer(struct gl_context *ctx, GLuint name)
-{
-   struct gl_renderbuffer *dsrb;
-
-   dsrb = _mesa_new_renderbuffer(ctx, name);
-   if (!dsrb)
-      return NULL;
-
-   /* init fields not covered by _mesa_new_renderbuffer() */
-   dsrb->InternalFormat = GL_DEPTH24_STENCIL8_EXT;
-   dsrb->Format = MESA_FORMAT_Z24_S8;
-   dsrb->AllocStorage = _mesa_soft_renderbuffer_storage;
-
-   return dsrb;
-}

@@ -40,6 +40,9 @@ env = Environment(
 	ENV = os.environ,
 )
 
+# XXX: This creates a many problems as it saves...
+#opts.Save('config.py', env)
+
 # Backwards compatability with old target configuration variable
 try:
     targets = ARGUMENTS['targets']
@@ -80,44 +83,6 @@ env.Append(CPPPATH = [
 if env['msvc']:
     env.Append(CPPPATH = ['#include/c99'])
 
-# Embedded
-if env['platform'] == 'embedded':
-	env.Append(CPPDEFINES = [
-		'_POSIX_SOURCE',
-		('_POSIX_C_SOURCE', '199309L'), 
-		'_SVID_SOURCE',
-		'_BSD_SOURCE', 
-		'_GNU_SOURCE',
-		
-		'PTHREADS',
-	])
-	env.Append(LIBS = [
-		'm',
-		'pthread',
-		'dl',
-	])
-
-# Posix
-if env['platform'] in ('posix', 'linux', 'freebsd', 'darwin'):
-	env.Append(CPPDEFINES = [
-		'_POSIX_SOURCE',
-		('_POSIX_C_SOURCE', '199309L'), 
-		'_SVID_SOURCE',
-		'_BSD_SOURCE', 
-		'_GNU_SOURCE',
-		'PTHREADS',
-		'HAVE_POSIX_MEMALIGN',
-	])
-	if env['gcc']:
-		env.Append(CFLAGS = ['-fvisibility=hidden'])
-	if env['platform'] == 'darwin':
-		env.Append(CPPDEFINES = ['_DARWIN_C_SOURCE'])
-	env.Append(LIBS = [
-		'm',
-		'pthread',
-		'dl',
-	])
-
 # for debugging
 #print env.Dump()
 
@@ -130,7 +95,7 @@ if env['platform'] in ('posix', 'linux', 'freebsd', 'darwin'):
 #
 
 # Create host environent
-if env['crosscompile'] and env['platform'] != 'embedded':
+if env['crosscompile'] and not env['embedded']:
     host_env = Environment(
         options = opts,
         # no tool used
@@ -179,3 +144,18 @@ SConscript(
 	duplicate = 0 # http://www.scons.org/doc/0.97/HTML/scons-user/x2261.html
 )
 
+
+########################################################################
+# List all aliases
+
+try:
+    from SCons.Node.Alias import default_ans
+except ImportError:
+    pass
+else:
+    aliases = default_ans.keys()
+    aliases.sort()
+    env.Help('\n')
+    env.Help('Recognized targets:\n')
+    for alias in aliases:
+        env.Help('    %s\n' % alias)

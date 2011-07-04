@@ -305,6 +305,7 @@ nvfx_screen_destroy(struct pipe_screen *pscreen)
 	nouveau_notifier_free(&screen->sync);
 	nouveau_grobj_free(&screen->eng3d);
 	nvfx_screen_surface_takedown(pscreen);
+	nouveau_bo_ref(NULL, &screen->fence);
 
 	nouveau_screen_fini(&screen->base);
 
@@ -469,6 +470,12 @@ nvfx_screen_create(struct pipe_winsys *ws, struct nouveau_device *dev)
 	pscreen->is_format_supported = nvfx_screen_is_format_supported;
 	pscreen->context_create = nvfx_create;
 	pscreen->video_context_create = nvfx_video_create;
+
+	ret = nouveau_bo_new(dev, NOUVEAU_BO_VRAM, 0, 4096, &screen->fence);
+	if (ret) {
+		nvfx_screen_destroy(pscreen);
+		return NULL;
+	}
 
 	switch (dev->chipset & 0xf0) {
 	case 0x30:

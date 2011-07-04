@@ -41,6 +41,9 @@
 
 #include "draw/draw_vertex.h"
 
+#ifndef M_PI
+#define M_PI 3.14159265358979323846
+#endif
 
 /**
  * Simple pass-through fragment shader to use when we don't have
@@ -72,17 +75,31 @@ static unsigned passthrough[] =
 
 
 /* 1, -1/3!, 1/5!, -1/7! */
-static const float sin_constants[4] = { 1.0,
+static const float scs_sin_constants[4] = { 1.0,
    -1.0f / (3 * 2 * 1),
    1.0f / (5 * 4 * 3 * 2 * 1),
    -1.0f / (7 * 6 * 5 * 4 * 3 * 2 * 1)
 };
 
 /* 1, -1/2!, 1/4!, -1/6! */
-static const float cos_constants[4] = { 1.0,
+static const float scs_cos_constants[4] = { 1.0,
    -1.0f / (2 * 1),
    1.0f / (4 * 3 * 2 * 1),
    -1.0f / (6 * 5 * 4 * 3 * 2 * 1)
+};
+
+/* 2*pi, -(2*pi)^3/3!, (2*pi)^5/5!, -(2*pi)^7/7! */
+static const float sin_constants[4] = { 2.0 * M_PI,
+   -8.0f * M_PI * M_PI * M_PI / (3 * 2 * 1),
+   32.0f * M_PI * M_PI * M_PI * M_PI * M_PI / (5 * 4 * 3 * 2 * 1),
+   -128.0f * M_PI * M_PI * M_PI * M_PI * M_PI * M_PI * M_PI / (7 * 6 * 5 * 4 * 3 * 2 * 1)
+};
+
+/* 1, -(2*pi)^2/2!, (2*pi)^4/4!, -(2*pi)^6/6! */
+static const float cos_constants[4] = { 1.0,
+   -4.0f * M_PI * M_PI / (2 * 1),
+   16.0f * M_PI * M_PI * M_PI * M_PI / (4 * 3 * 2 * 1),
+   -64.0f * M_PI * M_PI * M_PI * M_PI * M_PI * M_PI / (6 * 5 * 4 * 3 * 2 * 1)
 };
 
 
@@ -185,12 +202,12 @@ src_vector(struct i915_fp_compile *p,
 
       switch (sem_name) {
       case TGSI_SEMANTIC_POSITION:
-         debug_printf("SKIP SEM POS\n");
-         /*
-         assert(p->wpos_tex != -1);
-         src = i915_emit_decl(p, REG_TYPE_T, p->wpos_tex, D0_CHANNEL_ALL);
-         */
-         break;
+         {
+            /* for fragcoord */
+            int real_tex_unit = get_mapping(fs, I915_SEMANTIC_POS);
+            src = i915_emit_decl(p, REG_TYPE_T, T_TEX0 + real_tex_unit, D0_CHANNEL_ALL);
+            break;
+         }
       case TGSI_SEMANTIC_COLOR:
          if (sem_ind == 0) {
             src = i915_emit_decl(p, REG_TYPE_T, T_DIFFUSE, D0_CHANNEL_ALL);
@@ -210,6 +227,13 @@ src_vector(struct i915_fp_compile *p,
          {
             int real_tex_unit = get_mapping(fs, sem_ind);
             src = i915_emit_decl(p, REG_TYPE_T, T_TEX0 + real_tex_unit, D0_CHANNEL_ALL);
+            break;
+         }
+      case TGSI_SEMANTIC_FACE:
+         {
+            /* for back/front faces */
+            int real_tex_unit = get_mapping(fs, I915_SEMANTIC_FACE);
+            src = i915_emit_decl(p, REG_TYPE_T, T_TEX0 + real_tex_unit, D0_CHANNEL_X);
             break;
          }
       default:
@@ -237,7 +261,6 @@ src_vector(struct i915_fp_compile *p,
 		 source->Register.SwizzleZ,
 		 source->Register.SwizzleW);
 
-
    /* There's both negate-all-components and per-component negation.
     * Try to handle both here.
     */
@@ -252,6 +275,9 @@ src_vector(struct i915_fp_compile *p,
    /* XXX enable these assertions, or fix things */
    assert(!source->Register.Absolute);
 #endif
+   if (source->Register.Absolute)
+      debug_printf("Unhandled absolute value\n");
+
    return src;
 }
 
@@ -419,11 +445,6 @@ emit_simple_arith_swap2(struct i915_fp_compile *p,
    emit_simple_arith(p, &inst2, opcode, numArgs, fs);
 }
 
-
-#ifndef M_PI
-#define M_PI 3.14159265358979323846
-#endif
-
 /*
  * Translate TGSI instruction to i915 instruction.
  *
@@ -477,13 +498,6 @@ i915_translate_instruction(struct i915_fp_compile *p,
 
       i915_emit_arith(p, A0_MOD, tmp, A0_DEST_CHANNEL_X, 0, tmp, 0, 0);
 
-      /* By choosing different taylor constants, could get rid of this mul:
-       */
-      i915_emit_arith(p,
-                      A0_MUL,
-                      tmp, A0_DEST_CHANNEL_X, 0,
-                      tmp, i915_emit_const1f(p, (float) (M_PI * 2.0)), 0);
-
       /* 
        * t0.xy = MUL x.xx11, x.x1111  ; x^2, x, 1, 1
        * t0 = MUL t0.xyxy t0.xx11 ; x^4, x^3, x^2, 1
@@ -514,6 +528,18 @@ i915_translate_instruction(struct i915_fp_compile *p,
                       get_result_flags(inst), 0,
                       swizzle(tmp, ONE, Z, Y, X),
                       i915_emit_const4fv(p, cos_constants), 0);
+      break;
+
+  case TGSI_OPCODE_DDX:
+  case TGSI_OPCODE_DDY:
+      /* XXX We just output 0 here */
+      debug_printf("Punting DDX/DDX\n");
+      src0 = get_result_vector(p, &inst->Dst[0]);
+      i915_emit_arith(p,
+                      A0_MOV,
+                      get_result_vector(p, &inst->Dst[0]),
+                      get_result_flags(inst), 0,
+                      swizzle(src0, ZERO, ZERO, ZERO, ZERO), 0, 0);
       break;
 
   case TGSI_OPCODE_DP2:
@@ -754,9 +780,9 @@ i915_translate_instruction(struct i915_fp_compile *p,
        * t0.xy = MUL x.xx11, x.x1111  ; x^2, x, 1, 1
        * t0 = MUL t0.xyxy t0.xx11 ; x^4, x^3, x^2, x
        * t1 = MUL t0.xyyw t0.yz11    ; x^7 x^5 x^3 x
-       * scs.x = DP4 t1, sin_constants
+       * scs.x = DP4 t1, scs_sin_constants
        * t1 = MUL t0.xxz1 t0.z111    ; x^6 x^4 x^2 1
-       * scs.y = DP4 t1, cos_constants
+       * scs.y = DP4 t1, scs_cos_constants
        */
       i915_emit_arith(p,
                       A0_MUL,
@@ -791,7 +817,7 @@ i915_translate_instruction(struct i915_fp_compile *p,
                          get_result_vector(p, &inst->Dst[0]),
                          A0_DEST_CHANNEL_Y, 0,
                          swizzle(tmp1, W, Z, Y, X),
-                         i915_emit_const4fv(p, sin_constants), 0);
+                         i915_emit_const4fv(p, scs_sin_constants), 0);
       }
 
       if (writemask & TGSI_WRITEMASK_X) {
@@ -806,7 +832,7 @@ i915_translate_instruction(struct i915_fp_compile *p,
                          get_result_vector(p, &inst->Dst[0]),
                          A0_DEST_CHANNEL_X, 0,
                          swizzle(tmp, ONE, Z, Y, X),
-                         i915_emit_const4fv(p, cos_constants), 0);
+                         i915_emit_const4fv(p, scs_cos_constants), 0);
       }
       break;
 
@@ -852,13 +878,6 @@ i915_translate_instruction(struct i915_fp_compile *p,
                       src0, i915_emit_const1f(p, 1.0f / (float) (M_PI * 2.0)), 0);
 
       i915_emit_arith(p, A0_MOD, tmp, A0_DEST_CHANNEL_X, 0, tmp, 0, 0);
-
-      /* By choosing different taylor constants, could get rid of this mul:
-       */
-      i915_emit_arith(p,
-                      A0_MUL,
-                      tmp, A0_DEST_CHANNEL_X, 0,
-                      tmp, i915_emit_const1f(p, (float) (M_PI * 2.0)), 0);
 
       /* 
        * t0.xy = MUL x.xx11, x.x1111  ; x^2, x, 1, 1
@@ -907,7 +926,7 @@ i915_translate_instruction(struct i915_fp_compile *p,
       break;
 
    case TGSI_OPCODE_SNE:
-      /* if we're neither < nor > then we're != */
+      /* if we're < or > then we're != */
       src0 = src_vector(p, &inst->Src[0], fs);
       src1 = src_vector(p, &inst->Src[1], fs);
       tmp = i915_get_utemp(p);
@@ -1070,9 +1089,11 @@ i915_translate_instructions(struct i915_fp_compile *p,
             for (i = parse.FullToken.FullDeclaration.Range.First;
                  i <= parse.FullToken.FullDeclaration.Range.Last;
                  i++) {
-               assert(i < I915_MAX_TEMPORARY);
-               /* XXX just use shader->info->file_mask[TGSI_FILE_TEMPORARY] */
-               p->temp_flag |= (1 << i); /* mark temp as used */
+               if (i >= I915_MAX_TEMPORARY)
+                  debug_printf("Too many temps (%d)\n",i);
+	       else
+                  /* XXX just use shader->info->file_mask[TGSI_FILE_TEMPORARY] */
+                  p->temp_flag |= (1 << i); /* mark temp as used */
             }
          }
          break;
@@ -1144,6 +1165,8 @@ i915_init_compile(struct i915_context *i915,
    ifs->num_constants = 0;
    memset(ifs->constant_flags, 0, sizeof(ifs->constant_flags));
 
+   memset(&p->register_phases, 0, sizeof(p->register_phases));
+
    for (i = 0; i < I915_TEX_UNITS; i++)
       ifs->generic_mapping[i] = -1;
 
@@ -1160,8 +1183,6 @@ i915_init_compile(struct i915_context *i915,
    p->decl_t = 0;
    p->temp_flag = ~0x0 << I915_MAX_TEMPORARY;
    p->utemp_flag = ~0x7;
-
-   p->wpos_tex = -1;
 
    /* initialize the first program word */
    *(p->decl++) = _3DSTATE_PIXEL_SHADER_PROGRAM;
@@ -1181,7 +1202,7 @@ i915_fini_compile(struct i915_context *i915, struct i915_fp_compile *p)
    unsigned long decl_size = (unsigned long) (p->decl - p->declarations);
 
    if (p->nr_tex_indirect > I915_MAX_TEX_INDIRECT)
-      i915_program_error(p, "Exceeded max nr indirect texture lookups");
+      debug_printf("Exceeded max nr indirect texture lookups\n");
 
    if (p->nr_tex_insn > I915_MAX_TEX_INSN)
       i915_program_error(p, "Exceeded max TEX instructions");
@@ -1234,40 +1255,6 @@ i915_fini_compile(struct i915_context *i915, struct i915_fp_compile *p)
 }
 
 
-/**
- * Find an unused texture coordinate slot to use for fragment WPOS.
- * Update p->fp->wpos_tex with the result (-1 if no used texcoord slot is found).
- */
-static void
-i915_find_wpos_space(struct i915_fp_compile *p)
-{
-#if 0
-   const uint inputs
-      = p->shader->inputs_read | (1 << TGSI_ATTRIB_POS); /*XXX hack*/
-   uint i;
-
-   p->wpos_tex = -1;
-
-   if (inputs & (1 << TGSI_ATTRIB_POS)) {
-      for (i = 0; i < I915_TEX_UNITS; i++) {
-	 if ((inputs & (1 << (TGSI_ATTRIB_TEX0 + i))) == 0) {
-	    p->wpos_tex = i;
-	    return;
-	 }
-      }
-
-      i915_program_error(p, "No free texcoord for wpos value");
-   }
-#else
-   if (p->shader->info.input_semantic_name[0] == TGSI_SEMANTIC_POSITION) {
-      /* frag shader using the fragment position input */
-#if 0
-      assert(0);
-#endif
-   }
-#endif
-}
-
 
 
 
@@ -1314,7 +1301,6 @@ i915_translate_fragment_program( struct i915_context *i915,
    }
 
    p = i915_init_compile(i915, fs);
-   i915_find_wpos_space(p);
 
    i915_translate_instructions(p, tokens, fs);
    i915_fixup_depth_write(p);
