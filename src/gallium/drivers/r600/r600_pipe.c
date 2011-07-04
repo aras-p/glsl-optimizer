@@ -45,7 +45,6 @@
 #include "r600_resource.h"
 #include "r600_shader.h"
 #include "r600_pipe.h"
-#include "r600_state_inlines.h"
 
 /*
  * pipe_context
@@ -506,60 +505,6 @@ static int r600_get_shader_param(struct pipe_screen* pscreen, unsigned shader, e
 	}
 }
 
-static boolean r600_is_format_supported(struct pipe_screen* screen,
-					enum pipe_format format,
-					enum pipe_texture_target target,
-					unsigned sample_count,
-                                        unsigned usage)
-{
-	unsigned retval = 0;
-	if (target >= PIPE_MAX_TEXTURE_TYPES) {
-		R600_ERR("r600: unsupported texture type %d\n", target);
-		return FALSE;
-	}
-
-        if (!util_format_is_supported(format, usage))
-                return FALSE;
-
-	/* Multisample */
-	if (sample_count > 1)
-		return FALSE;
-
-	if ((usage & PIPE_BIND_SAMPLER_VIEW) &&
-	    r600_is_sampler_format_supported(screen, format)) {
-		retval |= PIPE_BIND_SAMPLER_VIEW;
-	}
-
-	if ((usage & (PIPE_BIND_RENDER_TARGET |
-			PIPE_BIND_DISPLAY_TARGET |
-			PIPE_BIND_SCANOUT |
-			PIPE_BIND_SHARED)) &&
-			r600_is_colorbuffer_format_supported(format)) {
-		retval |= usage &
-			(PIPE_BIND_RENDER_TARGET |
-			 PIPE_BIND_DISPLAY_TARGET |
-			 PIPE_BIND_SCANOUT |
-			 PIPE_BIND_SHARED);
-	}
-
-	if ((usage & PIPE_BIND_DEPTH_STENCIL) &&
-	    r600_is_zs_format_supported(format)) {
-		retval |= PIPE_BIND_DEPTH_STENCIL;
-	}
-
-	if ((usage & PIPE_BIND_VERTEX_BUFFER) &&
-	    r600_is_vertex_format_supported(format)) {
-		retval |= PIPE_BIND_VERTEX_BUFFER;
-	}
-
-	if (usage & PIPE_BIND_TRANSFER_READ)
-		retval |= PIPE_BIND_TRANSFER_READ;
-	if (usage & PIPE_BIND_TRANSFER_WRITE)
-		retval |= PIPE_BIND_TRANSFER_WRITE;
-
-	return retval == usage;
-}
-
 static void r600_destroy_screen(struct pipe_screen* pscreen)
 {
 	struct r600_screen *rscreen = (struct r600_screen *)pscreen;
@@ -648,7 +593,11 @@ struct pipe_screen *r600_screen_create(struct radeon *radeon)
 	rscreen->screen.get_param = r600_get_param;
 	rscreen->screen.get_shader_param = r600_get_shader_param;
 	rscreen->screen.get_paramf = r600_get_paramf;
-	rscreen->screen.is_format_supported = r600_is_format_supported;
+	if (r600_get_family_class(radeon) >= EVERGREEN) {
+		rscreen->screen.is_format_supported = evergreen_is_format_supported;
+	} else {
+		rscreen->screen.is_format_supported = r600_is_format_supported;
+	}
 	rscreen->screen.context_create = r600_create_context;
 	rscreen->screen.fence_reference = r600_fence_reference;
 	rscreen->screen.fence_signalled = r600_fence_signalled;

@@ -48,6 +48,61 @@
 #include "r600_pipe.h"
 #include "eg_state_inlines.h"
 
+boolean evergreen_is_format_supported(struct pipe_screen *screen,
+				      enum pipe_format format,
+				      enum pipe_texture_target target,
+				      unsigned sample_count,
+				      unsigned usage)
+{
+	unsigned retval = 0;
+
+	if (target >= PIPE_MAX_TEXTURE_TYPES) {
+		R600_ERR("r600: unsupported texture type %d\n", target);
+		return FALSE;
+	}
+
+	if (!util_format_is_supported(format, usage))
+		return FALSE;
+
+	/* Multisample */
+	if (sample_count > 1)
+		return FALSE;
+
+	if ((usage & PIPE_BIND_SAMPLER_VIEW) &&
+	    r600_is_sampler_format_supported(screen, format)) {
+		retval |= PIPE_BIND_SAMPLER_VIEW;
+	}
+
+	if ((usage & (PIPE_BIND_RENDER_TARGET |
+		      PIPE_BIND_DISPLAY_TARGET |
+		      PIPE_BIND_SCANOUT |
+		      PIPE_BIND_SHARED)) &&
+	    r600_is_colorbuffer_format_supported(format)) {
+		retval |= usage &
+			  (PIPE_BIND_RENDER_TARGET |
+			   PIPE_BIND_DISPLAY_TARGET |
+			   PIPE_BIND_SCANOUT |
+			   PIPE_BIND_SHARED);
+	}
+
+	if ((usage & PIPE_BIND_DEPTH_STENCIL) &&
+	    r600_is_zs_format_supported(format)) {
+		retval |= PIPE_BIND_DEPTH_STENCIL;
+	}
+
+	if ((usage & PIPE_BIND_VERTEX_BUFFER) &&
+	    r600_is_vertex_format_supported(format)) {
+		retval |= PIPE_BIND_VERTEX_BUFFER;
+	}
+
+	if (usage & PIPE_BIND_TRANSFER_READ)
+		retval |= PIPE_BIND_TRANSFER_READ;
+	if (usage & PIPE_BIND_TRANSFER_WRITE)
+		retval |= PIPE_BIND_TRANSFER_WRITE;
+
+	return retval == usage;
+}
+
 static void evergreen_set_blend_color(struct pipe_context *ctx,
 					const struct pipe_blend_color *state)
 {
