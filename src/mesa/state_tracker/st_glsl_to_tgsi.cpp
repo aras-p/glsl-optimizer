@@ -77,6 +77,8 @@ extern "C" {
                            (1 << PROGRAM_CONSTANT) |     \
                            (1 << PROGRAM_UNIFORM))
 
+#define MAX_TEMPS         4096
+
 class st_src_reg;
 class st_dst_reg;
 
@@ -2751,11 +2753,11 @@ glsl_to_tgsi_visitor::remove_output_reads(gl_register_file type)
    GLint outputMap[VERT_RESULT_MAX];
    GLint outputTypes[VERT_RESULT_MAX];
    GLuint numVaryingReads = 0;
-   GLboolean usedTemps[MAX_PROGRAM_TEMPS];
+   GLboolean usedTemps[MAX_TEMPS];
    GLuint firstTemp = 0;
 
    _mesa_find_used_registers(prog, PROGRAM_TEMPORARY,
-                             usedTemps, MAX_PROGRAM_TEMPS);
+                             usedTemps, MAX_TEMPS);
 
    assert(type == PROGRAM_VARYING || type == PROGRAM_OUTPUT);
    assert(prog->Target == GL_VERTEX_PROGRAM_ARB || type != PROGRAM_VARYING);
@@ -2775,7 +2777,7 @@ glsl_to_tgsi_visitor::remove_output_reads(gl_register_file type)
             if (outputMap[var] == -1) {
                numVaryingReads++;
                outputMap[var] = _mesa_find_free_register(usedTemps,
-                                                         MAX_PROGRAM_TEMPS,
+                                                         MAX_TEMPS,
                                                          firstTemp);
                outputTypes[var] = inst->src[j].type;
                firstTemp = outputMap[var] + 1;
@@ -2857,7 +2859,7 @@ get_src_arg_mask(st_dst_reg dst, st_src_reg src)
 void
 glsl_to_tgsi_visitor::simplify_cmp(void)
 {
-   unsigned tempWrites[MAX_PROGRAM_TEMPS];
+   unsigned tempWrites[MAX_TEMPS];
    unsigned outputWrites[MAX_PROGRAM_OUTPUTS];
 
    memset(tempWrites, 0, sizeof(tempWrites));
@@ -2883,7 +2885,7 @@ glsl_to_tgsi_visitor::simplify_cmp(void)
          prevWriteMask = outputWrites[inst->dst.index];
          outputWrites[inst->dst.index] |= inst->dst.writemask;
       } else if (inst->dst.file == PROGRAM_TEMPORARY) {
-         assert(inst->dst.index < MAX_PROGRAM_TEMPS);
+         assert(inst->dst.index < MAX_TEMPS);
          prevWriteMask = tempWrites[inst->dst.index];
          tempWrites[inst->dst.index] |= inst->dst.writemask;
       }
@@ -3504,7 +3506,7 @@ struct label {
 struct st_translate {
    struct ureg_program *ureg;
 
-   struct ureg_dst temps[MAX_PROGRAM_TEMPS];
+   struct ureg_dst temps[MAX_TEMPS];
    struct ureg_src *constants;
    struct ureg_dst outputs[PIPE_MAX_SHADER_OUTPUTS];
    struct ureg_src inputs[PIPE_MAX_SHADER_INPUTS];
