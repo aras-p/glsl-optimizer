@@ -21,6 +21,10 @@ all: default
 doxygen:
 	cd doxygen && $(MAKE)
 
+check:
+	cd src/glsl/tests/ && ./optimization-test
+	@echo "All tests passed."
+
 clean:
 	-@touch $(TOP)/configs/current
 	-@for dir in $(SUBDIRS) ; do \
@@ -51,7 +55,7 @@ install:
 	done
 
 
-.PHONY: default doxygen clean realclean distclean install
+.PHONY: default doxygen clean realclean distclean install check
 
 # If there's no current configuration file
 $(TOP)/configs/current:
