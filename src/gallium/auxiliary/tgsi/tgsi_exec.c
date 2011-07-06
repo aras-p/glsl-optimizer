@@ -1839,6 +1839,17 @@ exec_tex(struct tgsi_exec_machine *mach,
       assert(0);
    }
 
+#if 0
+   debug_printf("fetch r: %g %g %g %g\n",
+         r[0].f[0], r[0].f[1], r[0].f[2], r[0].f[3]);
+   debug_printf("fetch g: %g %g %g %g\n",
+         r[1].f[0], r[1].f[1], r[1].f[2], r[1].f[3]);
+   debug_printf("fetch b: %g %g %g %g\n",
+         r[2].f[0], r[2].f[1], r[2].f[2], r[2].f[3]);
+   debug_printf("fetch a: %g %g %g %g\n",
+         r[3].f[0], r[3].f[1], r[3].f[2], r[3].f[3]);
+#endif
+
    for (chan = 0; chan < NUM_CHANNELS; chan++) {
       if (inst->Dst[0].Register.WriteMask & (1 << chan)) {
          store_dest(mach, &r[chan], &inst->Dst[0], inst, chan, TGSI_EXEC_DATA_FLOAT);
