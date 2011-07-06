@@ -1388,7 +1388,7 @@ static int tgsi_lit(struct r600_shader_ctx *ctx)
 					return r;
 			}
 		} else {
-			/* dst.z = log(src.y) */
+			/* tmp.z = log(src.y) */
 			memset(&alu, 0, sizeof(struct r600_bc_alu));
 			alu.inst = CTX_INST(V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_LOG_CLAMPED);
 			r600_bc_src(&alu.src[0], &ctx->src[0], 1);
@@ -1404,13 +1404,12 @@ static int tgsi_lit(struct r600_shader_ctx *ctx)
 		chan = alu.dst.chan;
 		sel = alu.dst.sel;
 
-		/* tmp.x = amd MUL_LIT(src.w, dst.z, src.x ) */
+		/* tmp.x = amd MUL_LIT(tmp.z, src.w, src.x ) */
 		memset(&alu, 0, sizeof(struct r600_bc_alu));
 		alu.inst = CTX_INST(V_SQ_ALU_WORD1_OP3_SQ_OP3_INST_MUL_LIT);
-		r600_bc_src(&alu.src[0], &ctx->src[0], 3);
-		alu.src[1].sel  = sel;
-		alu.src[1].chan = chan;
-
+		alu.src[0].sel  = sel;
+		alu.src[0].chan = chan;
+		r600_bc_src(&alu.src[1], &ctx->src[0], 3);
 		r600_bc_src(&alu.src[2], &ctx->src[0], 0);
 		alu.dst.sel = ctx->temp_reg;
 		alu.dst.chan = 0;
