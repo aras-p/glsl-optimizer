@@ -206,6 +206,7 @@ convert_quad_stencil( struct depth_data *data,
    case PIPE_FORMAT_Z24_UNORM_S8_USCALED:
    case PIPE_FORMAT_X8Z24_UNORM:
    case PIPE_FORMAT_S8_USCALED_Z24_UNORM:
+   case PIPE_FORMAT_S8_USCALED:
       for (j = 0; j < QUAD_SIZE; j++) {
          data->shader_stencil_refs[j] = ((unsigned)(quad->output.stencil[j]));
       }
