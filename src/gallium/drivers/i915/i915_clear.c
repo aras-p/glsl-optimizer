@@ -120,6 +120,11 @@ i915_clear_emit(struct pipe_context *pipe, unsigned buffers, const float *rgba,
    OUT_BATCH_F(desty + height);
    OUT_BATCH_F(destx);
    OUT_BATCH_F(desty);
+
+   /* Flush after clear, its expected to be a costly operation.
+    * This is not required, just a heuristic
+    */
+   FLUSH_BATCH(NULL);
 }
 
 /**
