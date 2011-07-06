@@ -54,6 +54,22 @@ static boolean same_src_reg(struct i915_full_src_register* d1, struct i915_full_
            d1->Register.Negate == d2->Register.Negate);
 }
 
+static boolean is_unswizzled(struct i915_full_src_register* r,
+                             int sx,
+                             int sy,
+                             int sz,
+                             int sw)
+{
+   if (sx && r->Register.SwizzleX != TGSI_SWIZZLE_X)
+      return FALSE;
+   if (sy && r->Register.SwizzleY != TGSI_SWIZZLE_Y)
+      return FALSE;
+   if (sz && r->Register.SwizzleZ != TGSI_SWIZZLE_Z)
+      return FALSE;
+   if (sw && r->Register.SwizzleW != TGSI_SWIZZLE_W)
+      return FALSE;
+   return FALSE;
+}
 
 /*
  * Optimize away things like:
@@ -72,11 +88,15 @@ static void i915_fpc_optimize_mov_after_mul(union i915_full_token* current, unio
         current->FullInstruction.Dst[0].Register.WriteMask == TGSI_WRITEMASK_XYZ &&
         next->FullInstruction.Dst[0].Register.WriteMask == TGSI_WRITEMASK_W &&
         same_dst_reg(&next->FullInstruction.Dst[0], &next->FullInstruction.Dst[0]) &&
-        same_src_reg(&next->FullInstruction.Src[0], &current->FullInstruction.Src[1]) )
+        same_src_reg(&next->FullInstruction.Src[0], &current->FullInstruction.Src[1]) &&
+        is_unswizzled(&current->FullInstruction.Src[0], 1, 1, 1, 0) &&
+        is_unswizzled(&current->FullInstruction.Src[1], 1, 1, 1, 0) &&
+        is_unswizzled(&next->FullInstruction.Src[0], 0, 0, 0, 1) )
    {
       next->FullInstruction.Instruction.Opcode = TGSI_OPCODE_NOP;
       current->FullInstruction.Dst[0].Register.WriteMask = TGSI_WRITEMASK_XYZW;
       current->FullInstruction.Src[0].Register.SwizzleW = TGSI_SWIZZLE_ONE;
+      current->FullInstruction.Src[1].Register.SwizzleW = TGSI_SWIZZLE_W;
       return;
    }
 
@@ -87,11 +107,15 @@ static void i915_fpc_optimize_mov_after_mul(union i915_full_token* current, unio
         current->FullInstruction.Dst[0].Register.WriteMask == TGSI_WRITEMASK_XYZ &&
         next->FullInstruction.Dst[0].Register.WriteMask == TGSI_WRITEMASK_W &&
         same_dst_reg(&next->FullInstruction.Dst[0], &next->FullInstruction.Dst[0]) &&
-        same_src_reg(&next->FullInstruction.Src[0], &current->FullInstruction.Src[0]) )
+        same_src_reg(&next->FullInstruction.Src[0], &current->FullInstruction.Src[0]) &&
+        is_unswizzled(&current->FullInstruction.Src[0], 1, 1, 1, 0) &&
+        is_unswizzled(&current->FullInstruction.Src[1], 1, 1, 1, 0) &&
+        is_unswizzled(&next->FullInstruction.Src[0], 0, 0, 0, 1) )
    {
       next->FullInstruction.Instruction.Opcode = TGSI_OPCODE_NOP;
       current->FullInstruction.Dst[0].Register.WriteMask = TGSI_WRITEMASK_XYZW;
       current->FullInstruction.Src[1].Register.SwizzleW = TGSI_SWIZZLE_ONE;
+      current->FullInstruction.Src[0].Register.SwizzleW = TGSI_SWIZZLE_W;
       return;
    }
 }
