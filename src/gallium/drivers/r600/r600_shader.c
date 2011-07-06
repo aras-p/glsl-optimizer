@@ -1506,6 +1506,7 @@ static int tgsi_rsq(struct r600_shader_ctx *ctx)
 	for (i = 0; i < inst->Instruction.NumSrcRegs; i++) {
 		r600_bc_src(&alu.src[i], &ctx->src[i], 0);
 		alu.src[i].abs = 1;
+		alu.src[i].neg = 0;
 	}
 	alu.dst.sel = ctx->temp_reg;
 	alu.dst.write = 1;
