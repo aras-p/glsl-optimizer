@@ -3303,8 +3303,7 @@ _mesa_texstore_z24_s8(TEXSTORE_PARAMS)
 {
    const GLuint depthScale = 0xffffff;
    const GLint srcRowStride
-      = _mesa_image_row_stride(srcPacking, srcWidth, srcFormat, srcType)
-      / sizeof(GLuint);
+      = _mesa_image_row_stride(srcPacking, srcWidth, srcFormat, srcType);
    GLint img, row;
 
    ASSERT(dstFormat == MESA_FORMAT_Z24_S8);
@@ -3332,8 +3331,8 @@ _mesa_texstore_z24_s8(TEXSTORE_PARAMS)
             + dstImageOffsets[dstZoffset + img]
             + dstYoffset * dstRowStride / sizeof(GLuint)
             + dstXoffset;
-         const GLuint *src
-            = (const GLuint *) _mesa_image_address(dims, srcPacking, srcAddr,
+         const GLubyte *src
+            = (const GLubyte *) _mesa_image_address(dims, srcPacking, srcAddr,
                   srcWidth, srcHeight,
                   srcFormat, srcType,
                   img, 0, 0);
@@ -3390,8 +3389,7 @@ _mesa_texstore_s8_z24(TEXSTORE_PARAMS)
 {
    const GLuint depthScale = 0xffffff;
    const GLint srcRowStride
-      = _mesa_image_row_stride(srcPacking, srcWidth, srcFormat, srcType)
-      / sizeof(GLuint);
+      = _mesa_image_row_stride(srcPacking, srcWidth, srcFormat, srcType);
    GLint img, row;
 
    ASSERT(dstFormat == MESA_FORMAT_S8_Z24);
@@ -3406,8 +3404,8 @@ _mesa_texstore_s8_z24(TEXSTORE_PARAMS)
 	 + dstImageOffsets[dstZoffset + img]
 	 + dstYoffset * dstRowStride / sizeof(GLuint)
 	 + dstXoffset;
-      const GLuint *src
-	 = (const GLuint *) _mesa_image_address(dims, srcPacking, srcAddr,
+      const GLubyte *src
+	 = (const GLubyte *) _mesa_image_address(dims, srcPacking, srcAddr,
 						srcWidth, srcHeight,
 						srcFormat, srcType,
 						img, 0, 0);
@@ -3479,8 +3477,7 @@ _mesa_texstore_s8(TEXSTORE_PARAMS)
    }
    else {
       const GLint srcRowStride
-	 = _mesa_image_row_stride(srcPacking, srcWidth, srcFormat, srcType)
-	 / sizeof(GLuint);
+	 = _mesa_image_row_stride(srcPacking, srcWidth, srcFormat, srcType);
       GLint img, row;
       
       for (img = 0; img < srcDepth; img++) {
@@ -3488,8 +3485,8 @@ _mesa_texstore_s8(TEXSTORE_PARAMS)
             + dstImageOffsets[dstZoffset + img]
             + dstYoffset * dstRowStride / sizeof(GLuint)
             + dstXoffset;
-         const GLuint *src
-            = (const GLuint *) _mesa_image_address(dims, srcPacking, srcAddr,
+         const GLubyte *src
+            = (const GLubyte *) _mesa_image_address(dims, srcPacking, srcAddr,
                                                    srcWidth, srcHeight,
                                                    srcFormat, srcType,
                                                    img, 0, 0);
