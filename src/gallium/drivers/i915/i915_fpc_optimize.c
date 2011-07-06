@@ -167,9 +167,10 @@ static void copy_token(union i915_full_token* o, union tgsi_full_token* i)
 struct i915_token_list* i915_optimize(const struct tgsi_token *tokens)
 {
    struct i915_token_list *out_tokens = MALLOC(sizeof(struct i915_token_list));
-   out_tokens->NumTokens = 0;
    struct tgsi_parse_context parse;
    int i = 0;
+
+   out_tokens->NumTokens = 0;
 
    /* Count the tokens */
    tgsi_parse_init( &parse, tokens );
