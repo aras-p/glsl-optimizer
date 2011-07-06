@@ -68,7 +68,7 @@ static boolean is_unswizzled(struct i915_full_src_register* r,
       return FALSE;
    if (sw && r->Register.SwizzleW != TGSI_SWIZZLE_W)
       return FALSE;
-   return FALSE;
+   return TRUE;
 }
 
 /*
