@@ -85,6 +85,7 @@ print_fs_traits(int fs_traits)
 	"FS_MASK_SET_ALPHA",	/* = 1 << 13, */
 	"FS_SRC_LUMINANCE",	/* = 1 << 14, */
 	"FS_MASK_LUMINANCE",	/* = 1 << 15, */
+	"FS_DST_LUMINANCE",     /* = 1 << 15, */
     };
     int i, k;
 
@@ -454,6 +455,7 @@ create_fs(struct pipe_context *pipe, unsigned fs_traits)
     unsigned mask_set_alpha = (fs_traits & FS_MASK_SET_ALPHA) != 0;
     unsigned src_luminance = (fs_traits & FS_SRC_LUMINANCE) != 0;
     unsigned mask_luminance = (fs_traits & FS_MASK_LUMINANCE) != 0;
+    unsigned dst_luminance = (fs_traits & FS_DST_LUMINANCE) != 0;
 
 #if 0
     print_fs_traits(fs_traits);
@@ -508,7 +510,7 @@ create_fs(struct pipe_context *pipe, unsigned fs_traits)
 #endif
 
     if (is_composite) {
-	if (has_mask || src_luminance)
+	if (has_mask || src_luminance || dst_luminance)
 	    src = ureg_DECL_temporary(ureg);
 	else
 	    src = out;
@@ -516,14 +518,14 @@ create_fs(struct pipe_context *pipe, unsigned fs_traits)
 		    src_repeat_none, src_swizzle, src_set_alpha);
     } else if (is_fill) {
 	if (is_solid) {
-	    if (has_mask || src_luminance)
+	    if (has_mask || src_luminance || dst_luminance)
 		src = ureg_dst(src_input);
 	    else
 		ureg_MOV(ureg, out, src_input);
 	} else if (is_lingrad || is_radgrad) {
 	    struct ureg_src coords, const0124, matrow0, matrow1, matrow2;
 
-	    if (has_mask || src_luminance)
+	    if (has_mask || src_luminance || dst_luminance)
 		src = ureg_DECL_temporary(ureg);
 	    else
 		src = out;
@@ -550,7 +552,7 @@ create_fs(struct pipe_context *pipe, unsigned fs_traits)
 	ureg_MOV(ureg, src, ureg_scalar(ureg_src(src), TGSI_SWIZZLE_X));
 	ureg_MOV(ureg, ureg_writemask(src, TGSI_WRITEMASK_XYZ),
 		 ureg_scalar(imm0, TGSI_SWIZZLE_X));
-	if (!has_mask)
+	if (!has_mask && !dst_luminance)
 	    ureg_MOV(ureg, out, ureg_src(src));
     }
 
@@ -559,9 +561,19 @@ create_fs(struct pipe_context *pipe, unsigned fs_traits)
 	xrender_tex(ureg, mask, mask_pos, mask_sampler, imm0,
 		    mask_repeat_none, mask_swizzle, mask_set_alpha);
 	/* src IN mask */
-	src_in_mask(ureg, out, ureg_src(src), ureg_src(mask),
+
+	src_in_mask(ureg, (dst_luminance) ? src : out, ureg_src(src),
+		    ureg_src(mask),
 		    comp_alpha_mask, mask_luminance);
+
 	ureg_release_temporary(ureg, mask);
+    }
+
+    if (dst_luminance) {
+	/*
+	 * Make sure the alpha channel goes into the output L8 surface.
+	 */
+	ureg_MOV(ureg, out, ureg_scalar(ureg_src(src), TGSI_SWIZZLE_W));
     }
 
     ureg_END(ureg);

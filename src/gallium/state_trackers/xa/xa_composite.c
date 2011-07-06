@@ -79,6 +79,25 @@ static const struct xa_composite_blend xa_blends[] = {
 };
 
 
+/*
+ * The alpha value stored in a luminance texture is read by the
+ * hardware as color.
+ */
+static unsigned
+xa_convert_blend_for_luminance(unsigned factor)
+{
+    switch(factor) {
+    case PIPE_BLENDFACTOR_DST_ALPHA:
+	return PIPE_BLENDFACTOR_DST_COLOR;
+    case PIPE_BLENDFACTOR_INV_DST_ALPHA:
+	return PIPE_BLENDFACTOR_INV_DST_COLOR;
+    default:
+	break;
+    }
+    return factor;
+}
+
+
 static boolean
 blend_for_op(struct xa_composite_blend *blend,
 	     enum xa_composite_op op,
@@ -104,15 +123,20 @@ blend_for_op(struct xa_composite_blend *blend,
 	}
     }
 
+    if (!dst_pic->srf)
+	return supported;
+
+    if (dst_pic->srf->tex->format == PIPE_FORMAT_L8_UNORM) {
+	blend->rgb_src = xa_convert_blend_for_luminance(blend->rgb_src);
+	blend->rgb_dst = xa_convert_blend_for_luminance(blend->rgb_dst);
+    }
 
     /*
      * If there's no dst alpha channel, adjust the blend op so that we'll treat
      * it as always 1.
      */
 
-    if (dst_pic &&
-	xa_format_a(dst_pic->pict_format) == 0 &&
-	blend->alpha_dst) {
+    if (xa_format_a(dst_pic->pict_format) == 0 && blend->alpha_dst) {
 	if (blend->rgb_src == PIPE_BLENDFACTOR_DST_ALPHA)
 	    blend->rgb_src = PIPE_BLENDFACTOR_ONE;
 	else if (blend->rgb_src == PIPE_BLENDFACTOR_INV_DST_ALPHA)
@@ -237,7 +261,6 @@ bind_composite_blend_state(struct xa_context *ctx,
 
 static unsigned int
 picture_format_fixups(struct xa_picture *src_pic,
-		      struct xa_picture *dst_pic,
 		      int mask)
 {
     boolean set_alpha = FALSE;
@@ -253,22 +276,17 @@ picture_format_fixups(struct xa_picture *src_pic,
     src_hw_format = xa_surface_format(src);
     src_pic_format = src_pic->pict_format;
 
-    if (!src || src_hw_format == src_pic_format) {
-	if (src_pic_format == xa_format_a8) {
-	    if (mask)
-		return FS_MASK_LUMINANCE;
-	    else if (dst_pic->pict_format != xa_format_a8) {
+    set_alpha = (xa_format_type_is_color(src_pic_format) &&
+		 xa_format_a(src_pic_format) == 0);
 
-		/*
-		 * if both dst and src are luminance then
-		 * we don't want to swizzle the alpha (X) of the
-		 * source into W component of the dst because
-		 * it will break our destination
-		 */
-		return FS_SRC_LUMINANCE;
-	    }
-	}
-	return 0;
+    if (set_alpha)
+	ret |= mask ? FS_MASK_SET_ALPHA : FS_SRC_SET_ALPHA;
+
+    if (src_hw_format == src_pic_format) {
+	if (src->tex->format == PIPE_FORMAT_L8_UNORM)
+	    return ((mask) ? FS_MASK_LUMINANCE : FS_SRC_LUMINANCE);
+
+	return ret;
     }
 
     src_hw_type = xa_format_type(src_hw_format);
@@ -280,13 +298,8 @@ picture_format_fixups(struct xa_picture *src_pic,
 		 src_pic_type == xa_type_argb)));
 
     if (!swizzle && (src_hw_type != src_pic_type))
-	return 0;
+      return ret;
 
-    set_alpha = (xa_format_type_is_color(src_pic_format) &&
-		 xa_format_a(src_pic_type) == 0);
-
-    if (set_alpha)
-	ret |= mask ? FS_MASK_SET_ALPHA : FS_SRC_SET_ALPHA;
     if (swizzle)
 	ret |= mask ? FS_MASK_SWIZZLE_RGB : FS_SRC_SWIZZLE_RGB;
 
@@ -300,7 +313,6 @@ bind_shaders(struct xa_context *ctx, const struct xa_composite *comp)
     struct xa_shader shader;
     struct xa_picture *src_pic = comp->src;
     struct xa_picture *mask_pic = comp->mask;
-    struct xa_picture *dst_pic = comp->dst;
 
     ctx->has_solid_color = FALSE;
 
@@ -321,7 +333,7 @@ bind_shaders(struct xa_context *ctx, const struct xa_composite *comp)
 	    vs_traits |= VS_COMPOSITE;
 	}
 
-	fs_traits |= picture_format_fixups(src_pic, dst_pic, 0);
+	fs_traits |= picture_format_fixups(src_pic, 0);
     }
 
     if (mask_pic) {
@@ -340,8 +352,11 @@ bind_shaders(struct xa_context *ctx, const struct xa_composite *comp)
 		fs_traits |= FS_CA_FULL;
 	}
 
-	fs_traits |= picture_format_fixups(mask_pic, dst_pic, 1);
+	fs_traits |= picture_format_fixups(mask_pic, 1);
     }
+
+    if (ctx->dst->srf->format == PIPE_FORMAT_L8_UNORM)
+	fs_traits |= FS_DST_LUMINANCE;
 
     shader = xa_shaders_get(ctx->shaders, vs_traits, fs_traits);
     cso_set_vertex_shader_handle(ctx->cso, shader.vs);
@@ -433,6 +448,7 @@ xa_composite_prepare(struct xa_context *ctx,
     if (ret != XA_ERR_NONE)
 	return ret;
 
+    ctx->dst = dst_srf;
     renderer_bind_destination(ctx, dst_srf->srf,
 			      dst_srf->srf->width,
 			      dst_srf->srf->height);

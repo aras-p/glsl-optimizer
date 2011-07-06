@@ -135,6 +135,7 @@ enum xa_fs_traits {
     FS_MASK_SET_ALPHA = 1 << 13,
     FS_SRC_LUMINANCE = 1 << 14,
     FS_MASK_LUMINANCE = 1 << 15,
+    FS_DST_LUMINANCE = 1 << 16,
 
     FS_FILL = (FS_SOLID_FILL | FS_LINGRAD_FILL | FS_RADGRAD_FILL),
     FS_COMPONENT_ALPHA = (FS_CA_FULL | FS_CA_SRCALPHA)
@@ -172,6 +173,17 @@ xa_pixel_to_float4(uint32_t pixel, float *color)
     color[3] = ((float)a) / 255.;
 }
 
+static INLINE void
+xa_pixel_to_float4_a8(uint32_t pixel, float *color)
+{
+    uint32_t a;
+
+    a = (pixel >> 24) & 0xff;
+    color[0] = ((float)a) / 255.;
+    color[1] = ((float)a) / 255.;
+    color[2] = ((float)a) / 255.;
+    color[3] = ((float)a) / 255.;
+}
 
 /*
  * xa_tgsi.c
