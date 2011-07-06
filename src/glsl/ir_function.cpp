@@ -165,7 +165,7 @@ ir_function_signature *
 ir_function::matching_signature(const exec_list *actual_parameters)
 {
    ir_function_signature *match = NULL;
-   int matched_score;
+   int matched_score = 0;
 
    foreach_iter(exec_list_iterator, iter, signatures) {
       ir_function_signature *const sig =
