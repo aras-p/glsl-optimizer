@@ -38,12 +38,11 @@ struct vl_context
 {
    struct pipe_video_context base;
    struct pipe_context *pipe;
-   bool pot_buffers;
 };
 
 /* drivers can call this function in their pipe_video_context constructors and pass it
    an accelerated pipe_context along with suitable buffering modes, etc */
 struct pipe_video_context *
-vl_create_context(struct pipe_context *pipe, bool pot_buffers);
+vl_create_context(struct pipe_context *pipe);
 
 #endif /* vl_context_h */

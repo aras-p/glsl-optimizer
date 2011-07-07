@@ -34,5 +34,5 @@ r300_video_create(struct pipe_screen *screen, void *priv)
    if (!pipe)
       return NULL;
 
-   return vl_create_context(pipe, false);
+   return vl_create_context(pipe);
 }

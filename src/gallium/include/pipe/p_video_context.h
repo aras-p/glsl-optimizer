@@ -56,12 +56,6 @@ struct pipe_video_context
    void (*destroy)(struct pipe_video_context *context);
 
    /**
-    * Query an integer-valued capability/parameter/limit
-    * \param param  one of PIPE_CAP_x
-    */
-   int (*get_param)(struct pipe_video_context *context, int param);
-
-   /**
     * Check if the given pipe_format is supported as a video buffer
     */
    boolean (*is_format_supported)(struct pipe_video_context *context,

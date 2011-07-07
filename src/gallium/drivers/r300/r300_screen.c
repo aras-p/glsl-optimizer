@@ -303,6 +303,18 @@ static float r300_get_paramf(struct pipe_screen* pscreen, enum pipe_cap param)
     }
 }
 
+static int r300_get_video_param(struct pipe_screen *screen,
+				enum pipe_video_profile profile,
+				enum pipe_video_cap param)
+{
+	switch (param) {
+	case PIPE_VIDEO_CAP_NPOT_TEXTURES:
+		return 0;
+	default:
+		return 0;
+	}
+}
+
 static boolean r300_is_format_supported(struct pipe_screen* screen,
                                         enum pipe_format format,
                                         enum pipe_texture_target target,
@@ -508,6 +520,7 @@ struct pipe_screen* r300_screen_create(struct radeon_winsys *rws)
     r300screen->screen.get_param = r300_get_param;
     r300screen->screen.get_shader_param = r300_get_shader_param;
     r300screen->screen.get_paramf = r300_get_paramf;
+    r300screen->screen.get_video_param = r300_get_video_param;
     r300screen->screen.is_format_supported = r300_is_format_supported;
     r300screen->screen.context_create = r300_create_context;
     r300screen->screen.video_context_create = r300_video_create;

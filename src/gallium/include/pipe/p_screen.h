@@ -92,6 +92,12 @@ struct pipe_screen {
     */
    int (*get_shader_param)( struct pipe_screen *, unsigned shader, enum pipe_shader_cap param );
 
+   /**
+    * Query an integer-valued capability/parameter/limit for a codec/profile
+    * \param param  one of PIPE_VIDEO_CAP_x
+    */
+   int (*get_video_param)( struct pipe_screen *, enum pipe_video_profile profile, enum pipe_video_cap param );
+
    struct pipe_context * (*context_create)( struct pipe_screen *, void *priv );
 
    struct pipe_video_context * (*video_context_create)( struct pipe_screen *screen, void *priv );

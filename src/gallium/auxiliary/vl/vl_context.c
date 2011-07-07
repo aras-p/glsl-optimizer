@@ -47,20 +47,6 @@ vl_context_destroy(struct pipe_video_context *context)
    FREE(ctx);
 }
 
-static int
-vl_context_get_param(struct pipe_video_context *context, int param)
-{
-   struct vl_context *ctx = (struct vl_context*)context;
-
-   assert(context);
-
-   if (param == PIPE_CAP_NPOT_TEXTURES)
-      return !ctx->pot_buffers;
-
-   debug_printf("vl_context: Unknown PIPE_CAP %d\n", param);
-   return 0;
-}
-
 static boolean
 vl_context_is_format_supported(struct pipe_video_context *context,
                                enum pipe_format format,
@@ -192,12 +178,15 @@ vl_context_create_decoder(struct pipe_video_context *context,
 {
    struct vl_context *ctx = (struct vl_context*)context;
    unsigned buffer_width, buffer_height;
+   bool pot_buffers;
 
    assert(context);
    assert(width > 0 && height > 0);
+   
+   pot_buffers = !ctx->base.screen->get_video_param(ctx->base.screen, profile, PIPE_VIDEO_CAP_NPOT_TEXTURES);
 
-   buffer_width = ctx->pot_buffers ? util_next_power_of_two(width) : align(width, MACROBLOCK_WIDTH);
-   buffer_height = ctx->pot_buffers ? util_next_power_of_two(height) : align(height, MACROBLOCK_HEIGHT);
+   buffer_width = pot_buffers ? util_next_power_of_two(width) : align(width, MACROBLOCK_WIDTH);
+   buffer_height = pot_buffers ? util_next_power_of_two(height) : align(height, MACROBLOCK_HEIGHT);
 
    switch (u_reduce_video_profile(profile)) {
       case PIPE_VIDEO_CODEC_MPEG12:
@@ -219,16 +208,24 @@ vl_context_create_buffer(struct pipe_video_context *context,
    const enum pipe_format *resource_formats;
    struct pipe_video_buffer *result;
    unsigned buffer_width, buffer_height;
+   bool pot_buffers;
 
    assert(context);
    assert(width > 0 && height > 0);
+
+   pot_buffers = !ctx->base.screen->get_video_param
+   (
+      ctx->base.screen,
+      PIPE_VIDEO_PROFILE_UNKNOWN,
+      PIPE_VIDEO_CAP_NPOT_TEXTURES
+   );
 
    resource_formats = vl_video_buffer_formats(ctx->pipe, buffer_format);
    if (!resource_formats)
       return NULL;
 
-   buffer_width = ctx->pot_buffers ? util_next_power_of_two(width) : align(width, MACROBLOCK_WIDTH);
-   buffer_height = ctx->pot_buffers ? util_next_power_of_two(height) : align(height, MACROBLOCK_HEIGHT);
+   buffer_width = pot_buffers ? util_next_power_of_two(width) : align(width, MACROBLOCK_WIDTH);
+   buffer_height = pot_buffers ? util_next_power_of_two(height) : align(height, MACROBLOCK_HEIGHT);
 
    result = vl_video_buffer_init(context, ctx->pipe,
                                  buffer_width, buffer_height, 1,
@@ -252,7 +249,7 @@ vl_context_create_compositor(struct pipe_video_context *context)
 }
 
 struct pipe_video_context *
-vl_create_context(struct pipe_context *pipe, bool pot_buffers)
+vl_create_context(struct pipe_context *pipe)
 {
    struct vl_context *ctx;
 
@@ -264,7 +261,6 @@ vl_create_context(struct pipe_context *pipe, bool pot_buffers)
    ctx->base.screen = pipe->screen;
 
    ctx->base.destroy = vl_context_destroy;
-   ctx->base.get_param = vl_context_get_param;
    ctx->base.is_format_supported = vl_context_is_format_supported;
    ctx->base.create_surface = vl_context_create_surface;
    ctx->base.create_sampler_view = vl_context_create_sampler_view;
@@ -275,7 +271,6 @@ vl_create_context(struct pipe_context *pipe, bool pot_buffers)
    ctx->base.create_compositor = vl_context_create_compositor;
 
    ctx->pipe = pipe;
-   ctx->pot_buffers = pot_buffers;
 
    return &ctx->base;
 }

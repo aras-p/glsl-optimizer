@@ -493,6 +493,11 @@ enum pipe_shader_cap
    PIPE_SHADER_CAP_SUBROUTINES = 16, /* BGNSUB, ENDSUB, CAL, RET */
 };
 
+/* Video caps, can be different for each codec/profile */
+enum pipe_video_cap
+{
+   PIPE_VIDEO_CAP_NPOT_TEXTURES = 0,
+};
 
 enum pipe_video_codec
 {

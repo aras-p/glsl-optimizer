@@ -171,6 +171,18 @@ softpipe_get_paramf(struct pipe_screen *screen, enum pipe_cap param)
    }
 }
 
+static int
+softpipe_get_video_param(struct pipe_screen *screen,
+                         enum pipe_video_profile profile,
+                         enum pipe_video_cap param)
+{
+   switch (param) {
+   case PIPE_VIDEO_CAP_NPOT_TEXTURES:
+      return 0;
+   default:
+      return 0;
+   }
+}
 
 /**
  * Query format support for creating a texture, drawing surface, etc.
@@ -299,7 +311,7 @@ sp_video_create(struct pipe_screen *screen, void *priv)
       return NULL;
 
    /* TODO: Use slice buffering for softpipe when implemented, no advantage to buffering an entire picture with softpipe */
-   return vl_create_context(pipe, true);
+   return vl_create_context(pipe);
 }
 
 /**
@@ -324,6 +336,7 @@ softpipe_create_screen(struct sw_winsys *winsys)
    screen->base.get_param = softpipe_get_param;
    screen->base.get_shader_param = softpipe_get_shader_param;
    screen->base.get_paramf = softpipe_get_paramf;
+   screen->base.get_video_param = softpipe_get_video_param;
    screen->base.is_format_supported = softpipe_is_format_supported;
    screen->base.context_create = softpipe_create_context;
    screen->base.flush_frontbuffer = softpipe_flush_frontbuffer;

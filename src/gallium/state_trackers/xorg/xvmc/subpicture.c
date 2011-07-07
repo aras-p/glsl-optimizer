@@ -232,7 +232,9 @@ Status XvMCCreateSubpicture(Display *dpy, XvMCContext *context, XvMCSubpicture *
    tex_templ.target = PIPE_TEXTURE_2D;
    tex_templ.format = XvIDToPipe(xvimage_id);
    tex_templ.last_level = 0;
-   if (vpipe->get_param(vpipe, PIPE_CAP_NPOT_TEXTURES)) {
+   if (vpipe->screen->get_video_param(vpipe->screen,
+                                      PIPE_VIDEO_PROFILE_UNKNOWN,
+                                      PIPE_VIDEO_CAP_NPOT_TEXTURES)) {
       tex_templ.width0 = width;
       tex_templ.height0 = height;
    }

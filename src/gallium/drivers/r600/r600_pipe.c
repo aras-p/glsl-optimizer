@@ -507,6 +507,18 @@ static int r600_get_shader_param(struct pipe_screen* pscreen, unsigned shader, e
 	}
 }
 
+static int r600_get_video_param(struct pipe_screen *screen,
+				enum pipe_video_profile profile,
+				enum pipe_video_cap param)
+{
+	switch (param) {
+	case PIPE_VIDEO_CAP_NPOT_TEXTURES:
+		return 1;
+	default:
+		return 0;
+	}
+}
+
 static boolean r600_is_format_supported(struct pipe_screen* screen,
 					enum pipe_format format,
 					enum pipe_texture_target target,
@@ -653,6 +665,7 @@ struct pipe_screen *r600_screen_create(struct radeon *radeon)
 	rscreen->screen.get_param = r600_get_param;
 	rscreen->screen.get_shader_param = r600_get_shader_param;
 	rscreen->screen.get_paramf = r600_get_paramf;
+	rscreen->screen.get_video_param = r600_get_video_param;
 	rscreen->screen.is_format_supported = r600_is_format_supported;
 	rscreen->screen.context_create = r600_create_context;
 	rscreen->screen.video_context_create = r600_video_create;
