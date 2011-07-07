@@ -538,7 +538,6 @@ i915_upload_program(struct i915_context *i915,
 {
    GLuint program_size = p->csr - p->program;
    GLuint decl_size = p->decl - p->declarations;
-   GLuint nr;
 
    if (p->error)
       return;
@@ -555,32 +554,32 @@ i915_upload_program(struct i915_context *i915,
       i915->state.ProgramSize = decl_size + program_size;
    }
 
-   nr = p->nr_constants;
-   if (i915->state.ConstantSize != 2 + nr*4 ||
-       memcmp(i915->state.Constant + 2,
-	      p->constant, 4*sizeof(int)*nr)) {
-      if (nr) {
-	 I915_ACTIVESTATE(i915, I915_UPLOAD_CONSTANTS, 1);
-	 I915_STATECHANGE(i915, I915_UPLOAD_CONSTANTS);
+   /* Always seemed to get a failure if I used memcmp() to
+    * shortcircuit this state upload.  Needs further investigation?
+    */
+   if (p->nr_constants) {
+      GLuint nr = p->nr_constants;
 
-	 i915->state.Constant[0] = _3DSTATE_PIXEL_SHADER_CONSTANTS | (nr * 4);
-	 i915->state.Constant[1] = (1 << nr) -1;
+      I915_ACTIVESTATE(i915, I915_UPLOAD_CONSTANTS, 1);
+      I915_STATECHANGE(i915, I915_UPLOAD_CONSTANTS);
 
-	 memcpy(&i915->state.Constant[2], p->constant, 4 * sizeof(int) * nr);
-	 i915->state.ConstantSize = 2 + nr * 4;
+      i915->state.Constant[0] = _3DSTATE_PIXEL_SHADER_CONSTANTS | ((nr) * 4);
+      i915->state.Constant[1] = (1 << (nr - 1)) | ((1 << (nr - 1)) - 1);
 
-	 if (0) {
-	    GLuint i;
-	    for (i = 0; i < nr; i++) {
-	       fprintf(stderr, "const[%d]: %f %f %f %f\n", i,
-		       p->constant[i][0],
-		       p->constant[i][1], p->constant[i][2], p->constant[i][3]);
-	    }
-	 }
+      memcpy(&i915->state.Constant[2], p->constant, 4 * sizeof(int) * (nr));
+      i915->state.ConstantSize = 2 + (nr) * 4;
+
+      if (0) {
+         GLuint i;
+         for (i = 0; i < nr; i++) {
+            fprintf(stderr, "const[%d]: %f %f %f %f\n", i,
+                    p->constant[i][0],
+                    p->constant[i][1], p->constant[i][2], p->constant[i][3]);
+         }
       }
-      else {
-	 I915_ACTIVESTATE(i915, I915_UPLOAD_CONSTANTS, 0);
-      }
+   }
+   else {
+      I915_ACTIVESTATE(i915, I915_UPLOAD_CONSTANTS, 0);
    }
 
    p->on_hardware = 1;
