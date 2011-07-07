@@ -111,9 +111,15 @@ blend_for_op(struct xa_composite_blend *blend,
     boolean supported = FALSE;
 
     /*
+     * Temporarily disable component alpha since it appears buggy.
+     */
+    if (src_pic->component_alpha ||
+	(mask_pic && mask_pic->component_alpha))
+	return FALSE;
+
+    /*
      * our default in case something goes wrong
      */
-
     *blend = xa_blends[XA_BLEND_OP_OVER];
 
     for (i = 0; i < num_blends; ++i) {
@@ -215,13 +221,13 @@ xa_composite_check_accelerated(const struct xa_composite *comp)
 
     if (!xa_is_filter_accelerated(src_pic) ||
 	!xa_is_filter_accelerated(comp->mask)) {
-	return XA_ERR_INVAL;
+	return -XA_ERR_INVAL;
     }
 
 
     if (src_pic->src_pict) {
 	if (src_pic->src_pict->type != xa_src_pict_solid_fill)
-	    return XA_ERR_INVAL;
+	    return -XA_ERR_INVAL;
     }
 
     if (blend_for_op(&blend, comp->op, comp->src, comp->mask, comp->dst)) {
@@ -229,23 +235,24 @@ xa_composite_check_accelerated(const struct xa_composite *comp)
 	if (mask && mask->component_alpha &&
 	    xa_format_rgb(mask->pict_format)) {
 	    if (blend.alpha_src && blend.rgb_src != PIPE_BLENDFACTOR_ZERO) {
-		return XA_ERR_INVAL;
+		return -XA_ERR_INVAL;
 	    }
 	}
 
 	return XA_ERR_NONE;
     }
-    return XA_ERR_INVAL;
+    return -XA_ERR_INVAL;
 }
 
-static void
+static int
 bind_composite_blend_state(struct xa_context *ctx,
 			   const struct xa_composite *comp)
 {
     struct xa_composite_blend blend_opt;
     struct pipe_blend_state blend;
 
-    blend_for_op(&blend_opt, comp->op, comp->src, comp->mask, comp->dst);
+    if (!blend_for_op(&blend_opt, comp->op, comp->src, comp->mask, comp->dst))
+	return -XA_ERR_INVAL;
 
     memset(&blend, 0, sizeof(struct pipe_blend_state));
     blend.rt[0].blend_enable = 1;
@@ -257,6 +264,7 @@ bind_composite_blend_state(struct xa_context *ctx,
     blend.rt[0].alpha_dst_factor = blend_opt.rgb_dst;
 
     cso_set_blend(ctx->cso, &blend);
+    return XA_ERR_NONE;
 }
 
 static unsigned int
@@ -306,7 +314,7 @@ picture_format_fixups(struct xa_picture *src_pic,
     return ret;
 }
 
-static void
+static int
 bind_shaders(struct xa_context *ctx, const struct xa_composite *comp)
 {
     unsigned vs_traits = 0, fs_traits = 0;
@@ -345,7 +353,9 @@ bind_shaders(struct xa_context *ctx, const struct xa_composite *comp)
 
 	if (mask_pic->component_alpha) {
 	    struct xa_composite_blend blend;
-	    blend_for_op(&blend, comp->op, src_pic, mask_pic, NULL);
+	    if (!blend_for_op(&blend, comp->op, src_pic, mask_pic, NULL))
+		return -XA_ERR_INVAL;
+
 	    if (blend.alpha_src) {
 		fs_traits |= FS_CA_SRCALPHA;
 	    } else
@@ -361,6 +371,7 @@ bind_shaders(struct xa_context *ctx, const struct xa_composite *comp)
     shader = xa_shaders_get(ctx->shaders, vs_traits, fs_traits);
     cso_set_vertex_shader_handle(ctx->cso, shader.vs);
     cso_set_fragment_shader_handle(ctx->cso, shader.fs);
+    return XA_ERR_NONE;
 }
 
 static void
@@ -453,8 +464,12 @@ xa_composite_prepare(struct xa_context *ctx,
 			      dst_srf->srf->width,
 			      dst_srf->srf->height);
 
-    bind_composite_blend_state(ctx, comp);
-    bind_shaders(ctx, comp);
+    ret = bind_composite_blend_state(ctx, comp);
+    if (ret != XA_ERR_NONE)
+	return ret;
+    ret = bind_shaders(ctx, comp);
+    if (ret != XA_ERR_NONE)
+	return ret;
     bind_samplers(ctx, comp);
 
     if (ctx->num_bound_samplers == 0 ) { /* solid fill */
