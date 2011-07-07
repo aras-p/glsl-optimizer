@@ -382,6 +382,8 @@ static const char *const operator_glsl_strs[] = {
 	"bool",
 	"int",
 	"float",
+	"int",
+	"int",
 	"any",
 	"trunc",
 	"ceil",
