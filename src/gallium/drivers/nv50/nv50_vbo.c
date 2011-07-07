@@ -389,11 +389,11 @@ nv50_prim_gl(unsigned prim)
 static void
 nv50_draw_vbo_flush_notify(struct nouveau_channel *chan)
 {
-   struct nv50_context *nv50 = chan->user_private;
+   struct nv50_screen *screen = chan->user_private;
 
-   nouveau_fence_update(&nv50->screen->base, TRUE);
+   nouveau_fence_update(&screen->base, TRUE);
 
-   nv50_bufctx_emit_relocs(nv50);
+   nv50_bufctx_emit_relocs(screen->cur_ctx);
 }
 
 static void
@@ -650,7 +650,6 @@ nv50_draw_vbo(struct pipe_context *pipe, const struct pipe_draw_info *info)
    nv50_state_validate(nv50);
 
    chan->flush_notify = nv50_draw_vbo_flush_notify;
-   chan->user_private = nv50;
 
    if (nv50->vbo_fifo) {
       nv50_push_vbo(nv50, info);

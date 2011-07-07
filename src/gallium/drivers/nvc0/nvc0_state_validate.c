@@ -428,8 +428,7 @@ nvc0_switch_pipe_context(struct nvc0_context *ctx_to)
    if (!ctx_to->zsa)
       ctx_to->dirty &= ~NVC0_NEW_ZSA;
 
-   ctx_to->screen->base.channel->user_private = ctx_to->screen->cur_ctx =
-      ctx_to;
+   ctx_to->screen->cur_ctx = ctx_to;
 }
 
 static struct state_validate {
