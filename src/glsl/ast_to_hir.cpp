@@ -447,9 +447,17 @@ modulus_result_type(const struct glsl_type *type_a,
     *    integer vectors. The operand types must both be signed or both be
     *    unsigned."
     */
-   if (!type_a->is_integer() || !type_b->is_integer()
-       || (type_a->base_type != type_b->base_type)) {
-      _mesa_glsl_error(loc, state, "type mismatch");
+   if (!type_a->is_integer()) {
+      _mesa_glsl_error(loc, state, "LHS of operator %% must be an integer.");
+      return glsl_type::error_type;
+   }
+   if (!type_b->is_integer()) {
+      _mesa_glsl_error(loc, state, "RHS of operator %% must be an integer.");
+      return glsl_type::error_type;
+   }
+   if (type_a->base_type != type_b->base_type) {
+      _mesa_glsl_error(loc, state,
+		       "operands of %% must have the same base type");
       return glsl_type::error_type;
    }
 
@@ -951,7 +959,7 @@ ast_expression::hir(exec_list *instructions,
    };
    ir_rvalue *result = NULL;
    ir_rvalue *op[3];
-   const struct glsl_type *type = glsl_type::error_type;
+   const struct glsl_type *type; /* a temporary variable for switch cases */
    bool error_emitted = false;
    YYLTYPE loc;
 
@@ -965,7 +973,6 @@ ast_expression::hir(exec_list *instructions,
       result = do_assignment(instructions, state, op[0], op[1], false,
 			     this->subexpressions[0]->get_location());
       error_emitted = result->type->is_error();
-      type = result->type;
       break;
    }
 
@@ -1089,9 +1096,7 @@ ast_expression::hir(exec_list *instructions,
       } else {
 	 result = do_comparison(ctx, operations[this->oper], op[0], op[1]);
 	 assert(result->type == glsl_type::bool_type);
-	 type = glsl_type::bool_type;
       }
-
       break;
 
    case ast_bit_and:
@@ -1221,7 +1226,6 @@ ast_expression::hir(exec_list *instructions,
 
       result = new(ctx) ir_expression(operations[this->oper], glsl_type::bool_type,
 				      op[0], op[1]);
-      type = glsl_type::bool_type;
       break;
 
    case ast_logic_not:
@@ -1230,7 +1234,6 @@ ast_expression::hir(exec_list *instructions,
 
       result = new(ctx) ir_expression(operations[this->oper], glsl_type::bool_type,
 				      op[0], NULL);
-      type = glsl_type::bool_type;
       break;
 
    case ast_mul_assign:
@@ -1250,7 +1253,6 @@ ast_expression::hir(exec_list *instructions,
       result = do_assignment(instructions, state,
 			     op[0]->clone(ctx, NULL), temp_rhs, false,
 			     this->subexpressions[0]->get_location());
-      type = result->type;
       error_emitted = (op[0]->type->is_error());
 
       /* GLSL 1.10 does not allow array assignment.  However, we don't have to
@@ -1276,7 +1278,6 @@ ast_expression::hir(exec_list *instructions,
       result = do_assignment(instructions, state,
 			     op[0]->clone(ctx, NULL), temp_rhs, false,
 			     this->subexpressions[0]->get_location());
-      type = result->type;
       error_emitted = type->is_error();
       break;
    }
@@ -1418,7 +1419,6 @@ ast_expression::hir(exec_list *instructions,
       result = do_assignment(instructions, state,
 			     op[0]->clone(ctx, NULL), temp_rhs, false,
 			     this->subexpressions[0]->get_location());
-      type = result->type;
       error_emitted = op[0]->type->is_error();
       break;
    }
@@ -1448,14 +1448,12 @@ ast_expression::hir(exec_list *instructions,
 			  op[0]->clone(ctx, NULL), temp_rhs, false,
 			  this->subexpressions[0]->get_location());
 
-      type = result->type;
       error_emitted = op[0]->type->is_error();
       break;
    }
 
    case ast_field_selection:
       result = _mesa_ast_field_selection_to_hir(this, instructions, state);
-      type = result->type;
       break;
 
    case ast_array_index: {
@@ -1612,7 +1610,6 @@ ast_expression::hir(exec_list *instructions,
       if (error_emitted)
 	 result->type = glsl_type::error_type;
 
-      type = result->type;
       break;
    }
 
@@ -1635,7 +1632,6 @@ ast_expression::hir(exec_list *instructions,
 
       if (var != NULL) {
 	 var->used = true;
-	 type = result->type;
       } else {
 	 _mesa_glsl_error(& loc, state, "`%s' undeclared",
 			  this->primary_expression.identifier);
@@ -1646,22 +1642,18 @@ ast_expression::hir(exec_list *instructions,
    }
 
    case ast_int_constant:
-      type = glsl_type::int_type;
       result = new(ctx) ir_constant(this->primary_expression.int_constant);
       break;
 
    case ast_uint_constant:
-      type = glsl_type::uint_type;
       result = new(ctx) ir_constant(this->primary_expression.uint_constant);
       break;
 
    case ast_float_constant:
-      type = glsl_type::float_type;
       result = new(ctx) ir_constant(this->primary_expression.float_constant);
       break;
 
    case ast_bool_constant:
-      type = glsl_type::bool_type;
       result = new(ctx) ir_constant(bool(this->primary_expression.bool_constant));
       break;
 
@@ -1676,10 +1668,42 @@ ast_expression::hir(exec_list *instructions,
        * therefore add instructions to the instruction list), they get dropped
        * on the floor.
        */
-      foreach_list_typed (ast_node, ast, link, &this->expressions)
-	 result = ast->hir(instructions, state);
+      exec_node *previous_tail_pred = NULL;
+      YYLTYPE previous_operand_loc = loc;
 
-      type = result->type;
+      foreach_list_typed (ast_node, ast, link, &this->expressions) {
+	 /* If one of the operands of comma operator does not generate any
+	  * code, we want to emit a warning.  At each pass through the loop
+	  * previous_tail_pred will point to the last instruction in the
+	  * stream *before* processing the previous operand.  Naturally,
+	  * instructions->tail_pred will point to the last instruction in the
+	  * stream *after* processing the previous operand.  If the two
+	  * pointers match, then the previous operand had no effect.
+	  *
+	  * The warning behavior here differs slightly from GCC.  GCC will
+	  * only emit a warning if none of the left-hand operands have an
+	  * effect.  However, it will emit a warning for each.  I believe that
+	  * there are some cases in C (especially with GCC extensions) where
+	  * it is useful to have an intermediate step in a sequence have no
+	  * effect, but I don't think these cases exist in GLSL.  Either way,
+	  * it would be a giant hassle to replicate that behavior.
+	  */
+	 if (previous_tail_pred == instructions->tail_pred) {
+	    _mesa_glsl_warning(&previous_operand_loc, state,
+			       "left-hand operand of comma expression has "
+			       "no effect");
+	 }
+
+	 /* tail_pred is directly accessed instead of using the get_tail()
+	  * method for performance reasons.  get_tail() has extra code to
+	  * return NULL when the list is empty.  We don't care about that
+	  * here, so using tail_pred directly is fine.
+	  */
+	 previous_tail_pred = instructions->tail_pred;
+	 previous_operand_loc = ast->get_location();
+
+	 result = ast->hir(instructions, state);
+      }
 
       /* Any errors should have already been emitted in the loop above.
        */
@@ -1687,8 +1711,10 @@ ast_expression::hir(exec_list *instructions,
       break;
    }
    }
+   type = NULL; /* use result->type, not type. */
+   assert(result != NULL);
 
-   if (type->is_error() && !error_emitted)
+   if (result->type->is_error() && !error_emitted)
       _mesa_glsl_error(& loc, state, "type mismatch");
 
    return result;
@@ -1934,7 +1960,7 @@ apply_type_qualifier_to_variable(const struct ast_type_qualifier *qual,
 	 break;
 
       case fragment_shader:
-	 if (!global_scope || (var->mode != ir_var_in)) {
+	 if (!global_scope || (var->mode != ir_var_out)) {
 	    fail = true;
 	    string = "output";
 	 }

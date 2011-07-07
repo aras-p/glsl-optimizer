@@ -96,6 +96,16 @@ void ir_print_visitor::indent(void)
 const char *
 ir_print_visitor::unique_name(ir_variable *var)
 {
+   /* var->name can be NULL in function prototypes when a type is given for a
+    * parameter but no name is given.  In that case, just return an empty
+    * string.  Don't worry about tracking the generated name in the printable
+    * names hash because this is the only scope where it can ever appear.
+    */
+   if (var->name == NULL) {
+      static unsigned arg = 1;
+      return ralloc_asprintf(this->mem_ctx, "parameter@%u", arg++);
+   }
+
    /* Do we already have a name for this variable? */
    const char *name = (const char *) hash_table_find(this->printable_names, var);
    if (name != NULL)
@@ -370,7 +380,7 @@ void ir_print_visitor::visit(ir_constant *ir)
    } else if (ir->type->is_record()) {
       ir_constant *value = (ir_constant *) ir->components.get_head();
       for (unsigned i = 0; i < ir->type->length; i++) {
-	 printf("(%s ", ir->type->fields.structure->name);
+	 printf("(%s ", ir->type->fields.structure[i].name);
 	 value->accept(this);
 	 printf(")");
 

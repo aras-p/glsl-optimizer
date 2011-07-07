@@ -82,10 +82,6 @@ def write_profile(filename, profile):
     kill_globals = re.compile(r'^\(declare.*\n', re.MULTILINE)
     proto_ir = kill_globals.sub('', proto_ir)
 
-    # Kill pointer addresses.  They're not necessary in prototypes and just
-    # clutter the diff output.
-    proto_ir = re.sub(r'@0x[0-9a-f]+', '', proto_ir)
-
     print 'static const char prototypes_for_' + profile + '[] ='
     print stringify(proto_ir), ';'
 

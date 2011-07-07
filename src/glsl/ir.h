@@ -692,7 +692,7 @@ public:
 
 class ir_assignment : public ir_instruction {
 public:
-   ir_assignment(ir_rvalue *lhs, ir_rvalue *rhs, ir_rvalue *condition);
+   ir_assignment(ir_rvalue *lhs, ir_rvalue *rhs, ir_rvalue *condition = NULL);
 
    /**
     * Construct an assignment with an explicit write mask
@@ -799,6 +799,8 @@ enum ir_expression_operation {
    ir_unop_i2b,      /**< int-to-boolean conversion */
    ir_unop_b2i,      /**< Boolean-to-int conversion */
    ir_unop_u2f,      /**< Unsigned-to-float conversion. */
+   ir_unop_i2u,      /**< Integer-to-unsigned conversion. */
+   ir_unop_u2i,      /**< Unsigned-to-integer conversion. */
    ir_unop_any,
 
    /**

@@ -128,7 +128,11 @@ match_function_by_name(exec_list *instructions, const char *name,
     * FINISHME: matching signature but shader X + N contains an _exact_
     * FINISHME: matching signature.
     */
-   if (sig == NULL && (f == NULL || state->es_shader || !f->has_user_signature()) && state->symbols->get_type(name) == NULL && (state->language_version == 110 || state->symbols->get_variable(name) == NULL)) {
+   if (sig == NULL
+       && (f == NULL || state->es_shader || !f->has_user_signature())
+       && state->symbols->get_type(name) == NULL
+       && (state->language_version == 110
+	   || state->symbols->get_variable(name) == NULL)) {
       /* The current shader doesn't contain a matching function or signature.
        * Before giving up, look for the prototype in the built-in functions.
        */
@@ -265,7 +269,7 @@ match_function_by_name(exec_list *instructions, const char *name,
 	    ir_function_signature *sig = (ir_function_signature *) node;
 
 	    str = prototype_string(sig->return_type, f->name, &sig->parameters);
-	    _mesa_glsl_error(loc, state, "%s%s\n", prefix, str);
+	    _mesa_glsl_error(loc, state, "%s%s", prefix, str);
 	    ralloc_free(str);
 
 	    prefix = "                ";
@@ -298,17 +302,36 @@ convert_component(ir_rvalue *src, const glsl_type *desired_type)
    assert(a <= GLSL_TYPE_BOOL);
    assert(b <= GLSL_TYPE_BOOL);
 
-   if ((a == b) || (src->type->is_integer() && desired_type->is_integer()))
+   if (a == b)
       return src;
 
    switch (a) {
    case GLSL_TYPE_UINT:
+      switch (b) {
+      case GLSL_TYPE_INT:
+	 result = new(ctx) ir_expression(ir_unop_i2u, src);
+	 break;
+      case GLSL_TYPE_FLOAT:
+	 result = new(ctx) ir_expression(ir_unop_i2u,
+		  new(ctx) ir_expression(ir_unop_f2i, src));
+	 break;
+      case GLSL_TYPE_BOOL:
+	 result = new(ctx) ir_expression(ir_unop_i2u,
+		  new(ctx) ir_expression(ir_unop_b2i, src));
+	 break;
+      }
+      break;
    case GLSL_TYPE_INT:
-      if (b == GLSL_TYPE_FLOAT)
-	 result = new(ctx) ir_expression(ir_unop_f2i, desired_type, src, NULL);
-      else {
-	 assert(b == GLSL_TYPE_BOOL);
-	 result = new(ctx) ir_expression(ir_unop_b2i, desired_type, src, NULL);
+      switch (b) {
+      case GLSL_TYPE_UINT:
+	 result = new(ctx) ir_expression(ir_unop_u2i, src);
+	 break;
+      case GLSL_TYPE_FLOAT:
+	 result = new(ctx) ir_expression(ir_unop_f2i, src);
+	 break;
+      case GLSL_TYPE_BOOL:
+	 result = new(ctx) ir_expression(ir_unop_b2i, src);
+	 break;
       }
       break;
    case GLSL_TYPE_FLOAT:
@@ -327,6 +350,9 @@ convert_component(ir_rvalue *src, const glsl_type *desired_type)
    case GLSL_TYPE_BOOL:
       switch (b) {
       case GLSL_TYPE_UINT:
+	 result = new(ctx) ir_expression(ir_unop_i2b,
+		  new(ctx) ir_expression(ir_unop_u2i, src));
+	 break;
       case GLSL_TYPE_INT:
 	 result = new(ctx) ir_expression(ir_unop_i2b, desired_type, src, NULL);
 	 break;
@@ -338,6 +364,7 @@ convert_component(ir_rvalue *src, const glsl_type *desired_type)
    }
 
    assert(result != NULL);
+   assert(result->type == desired_type);
 
    /* Try constant folding; it may fold in the conversion we just added. */
    ir_constant *const constant = result->constant_expression_value();

@@ -144,6 +144,13 @@ hash_table_pointer_hash(const void *key);
 int
 hash_table_pointer_compare(const void *key1, const void *key2);
 
+void
+hash_table_call_foreach(struct hash_table *ht,
+			void (*callback)(const void *key,
+					 void *data,
+					 void *closure),
+			void *closure);
+
 #ifdef __cplusplus
 }
 #endif

@@ -289,6 +289,7 @@ ir_expression::ir_expression(int op, ir_rvalue *op0)
 
    case ir_unop_f2i:
    case ir_unop_b2i:
+   case ir_unop_u2i:
       this->type = glsl_type::get_instance(GLSL_TYPE_INT,
 					   op0->type->vector_elements, 1);
       break;
@@ -303,6 +304,11 @@ ir_expression::ir_expression(int op, ir_rvalue *op0)
    case ir_unop_f2b:
    case ir_unop_i2b:
       this->type = glsl_type::get_instance(GLSL_TYPE_BOOL,
+					   op0->type->vector_elements, 1);
+      break;
+
+   case ir_unop_i2u:
+      this->type = glsl_type::get_instance(GLSL_TYPE_UINT,
 					   op0->type->vector_elements, 1);
       break;
 
@@ -437,6 +443,8 @@ static const char *const operator_strs[] = {
    "i2b",
    "b2i",
    "u2f",
+   "i2u",
+   "u2i",
    "any",
    "trunc",
    "ceil",
