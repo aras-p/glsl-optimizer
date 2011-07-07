@@ -95,7 +95,8 @@ GLSL2_C_SOURCES = \
 	../mesa/program/hash_table.c \
 	../mesa/program/symbol_table.c
 GLSL2_CXX_SOURCES = \
-	main.cpp
+	main.cpp \
+	standalone_scaffolding.cpp
 
 GLSL2_OBJECTS = \
 	$(GLSL2_C_SOURCES:.c=.o) \
