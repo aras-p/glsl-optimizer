@@ -118,7 +118,6 @@ intelClear(struct gl_context *ctx, GLbitfield mask)
    /* HW color buffers (front, back, aux, generic FBO, etc) */
    if (colorMask == ~0) {
       /* clear all R,G,B,A */
-      /* XXX FBO: need to check if colorbuffers are software RBOs! */
       blit_mask |= (mask & BUFFER_BITS_COLOR);
    }
    else {
