@@ -71,6 +71,24 @@ static boolean is_unswizzled(struct i915_full_src_register* r,
    return TRUE;
 }
 
+static boolean op_commutes(unsigned opcode)
+{
+   if (opcode == TGSI_OPCODE_ADD) return TRUE;
+   if (opcode == TGSI_OPCODE_MUL) return TRUE;
+   return FALSE;
+}
+
+static unsigned op_neutral_element(unsigned opcode)
+{
+   if (opcode == TGSI_OPCODE_ADD)
+      return TGSI_SWIZZLE_ZERO;
+   if (opcode == TGSI_OPCODE_MUL)
+      return TGSI_SWIZZLE_ONE;
+
+   debug_printf("Unknown opcode %d\n",opcode);
+   return TGSI_SWIZZLE_ZERO;
+}
+
 /*
  * Optimize away things like:
  *    MUL OUT[0].xyz, TEMP[1], TEMP[2]
@@ -78,12 +96,14 @@ static boolean is_unswizzled(struct i915_full_src_register* r,
  * into: 
  *    MUL OUT[0].xyzw, TEMP[1].xyz1, TEMP[2]
  * This is useful for optimizing texenv.
+ * XXX also handle swizzles other than XYZ/W
  */
-static void i915_fpc_optimize_mov_after_mul(union i915_full_token* current, union i915_full_token* next)
+static void i915_fpc_optimize_mov_after_alu(union i915_full_token* current, union i915_full_token* next)
 {
    if ( current->Token.Type == TGSI_TOKEN_TYPE_INSTRUCTION  &&
         next->Token.Type == TGSI_TOKEN_TYPE_INSTRUCTION  &&
-        current->FullInstruction.Instruction.Opcode == TGSI_OPCODE_MUL &&
+        op_commutes(current->FullInstruction.Instruction.Opcode) &&
+        current->FullInstruction.Instruction.Saturate == next->FullInstruction.Instruction.Saturate  &&
         next->FullInstruction.Instruction.Opcode == TGSI_OPCODE_MOV &&
         current->FullInstruction.Dst[0].Register.WriteMask == TGSI_WRITEMASK_XYZ &&
         next->FullInstruction.Dst[0].Register.WriteMask == TGSI_WRITEMASK_W &&
@@ -95,14 +115,15 @@ static void i915_fpc_optimize_mov_after_mul(union i915_full_token* current, unio
    {
       next->FullInstruction.Instruction.Opcode = TGSI_OPCODE_NOP;
       current->FullInstruction.Dst[0].Register.WriteMask = TGSI_WRITEMASK_XYZW;
-      current->FullInstruction.Src[0].Register.SwizzleW = TGSI_SWIZZLE_ONE;
+      current->FullInstruction.Src[0].Register.SwizzleW = op_neutral_element(current->FullInstruction.Instruction.Opcode);
       current->FullInstruction.Src[1].Register.SwizzleW = TGSI_SWIZZLE_W;
       return;
    }
 
    if ( current->Token.Type == TGSI_TOKEN_TYPE_INSTRUCTION  &&
         next->Token.Type == TGSI_TOKEN_TYPE_INSTRUCTION  &&
-        current->FullInstruction.Instruction.Opcode == TGSI_OPCODE_MUL &&
+        op_commutes(current->FullInstruction.Instruction.Opcode) &&
+        current->FullInstruction.Instruction.Saturate == next->FullInstruction.Instruction.Saturate  &&
         next->FullInstruction.Instruction.Opcode == TGSI_OPCODE_MOV &&
         current->FullInstruction.Dst[0].Register.WriteMask == TGSI_WRITEMASK_XYZ &&
         next->FullInstruction.Dst[0].Register.WriteMask == TGSI_WRITEMASK_W &&
@@ -114,7 +135,7 @@ static void i915_fpc_optimize_mov_after_mul(union i915_full_token* current, unio
    {
       next->FullInstruction.Instruction.Opcode = TGSI_OPCODE_NOP;
       current->FullInstruction.Dst[0].Register.WriteMask = TGSI_WRITEMASK_XYZW;
-      current->FullInstruction.Src[1].Register.SwizzleW = TGSI_SWIZZLE_ONE;
+      current->FullInstruction.Src[1].Register.SwizzleW = op_neutral_element(current->FullInstruction.Instruction.Opcode);
       current->FullInstruction.Src[0].Register.SwizzleW = TGSI_SWIZZLE_W;
       return;
    }
@@ -189,7 +210,7 @@ struct i915_token_list* i915_optimize(const struct tgsi_token *tokens)
       copy_token(&out_tokens->Tokens[i] , &parse.FullToken);
 
       if (i > 0)
-         i915_fpc_optimize_mov_after_mul(&out_tokens->Tokens[i-1], &out_tokens->Tokens[i]);
+         i915_fpc_optimize_mov_after_alu(&out_tokens->Tokens[i-1], &out_tokens->Tokens[i]);
 
       i++;
    }
