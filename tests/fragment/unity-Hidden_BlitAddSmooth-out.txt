@@ -1,6 +1,0 @@
-uniform sampler2D _RenderTex;
-void main ()
-{
-  gl_FragData[0] = texture2D (_RenderTex, gl_TexCoord[0].xy);
-}
-
