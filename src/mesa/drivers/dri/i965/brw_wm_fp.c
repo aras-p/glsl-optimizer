@@ -611,7 +611,17 @@ static void precalc_lit( struct brw_wm_compile *c,
 {
    struct prog_src_register src0 = inst->SrcReg[0];
    struct prog_dst_register dst = inst->DstReg;
-   
+
+   if (dst.WriteMask & WRITEMASK_YZ) {
+      emit_op(c,
+	      OPCODE_LIT,
+	      dst_mask(dst, WRITEMASK_YZ),
+	      inst->SaturateMode,
+	      src0,
+	      src_undef(),
+	      src_undef());
+   }
+
    if (dst.WriteMask & WRITEMASK_XW) {
       struct prog_instruction *swz;
 
@@ -626,16 +636,6 @@ static void precalc_lit( struct brw_wm_compile *c,
 		    src_undef());
       /* Avoid letting the negation flag of src0 affect our 1 constant. */
       swz->SrcReg[0].Negate = NEGATE_NONE;
-   }
-
-   if (dst.WriteMask & WRITEMASK_YZ) {
-      emit_op(c,
-	      OPCODE_LIT,
-	      dst_mask(dst, WRITEMASK_YZ),
-	      inst->SaturateMode,
-	      src0,
-	      src_undef(),
-	      src_undef());
    }
 }
 
