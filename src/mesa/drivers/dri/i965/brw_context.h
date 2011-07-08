@@ -211,6 +211,7 @@ enum state_struct_type {
    AUB_TRACE_NO_TYPE =			0x100,
    AUB_TRACE_BINDING_TABLE =		0x101,
    AUB_TRACE_SURFACE_STATE =		0x102,
+   AUB_TRACE_VS_CONSTANTS =		0x103,
 };
 
 /** Subclass of Mesa vertex program */

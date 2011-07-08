@@ -367,6 +367,23 @@ dump_scissor(struct brw_context *brw, uint32_t offset)
 	     scissor->xmax, scissor->ymax);
 }
 
+static void
+dump_vs_constants(struct brw_context *brw, uint32_t offset, uint32_t size)
+{
+   const char *name = "VS_CONST";
+   struct intel_context *intel = &brw->intel;
+   uint32_t *as_uint = intel->batch.bo->virtual + offset;
+   float *as_float = intel->batch.bo->virtual + offset;
+   int i;
+
+   for (i = 0; i < size / 4; i += 4) {
+      batch_out(brw, name, offset, i, "%3d: (% f % f % f % f) (0x%08x 0x%08x 0x%08x 0x%08x)\n",
+		i / 4,
+		as_float[i], as_float[i + 1], as_float[i + 2], as_float[i + 3],
+		as_uint[i], as_uint[i + 1], as_uint[i + 2], as_uint[i + 3]);
+   }
+}
+
 static void dump_binding_table(struct brw_context *brw, uint32_t offset,
 			       uint32_t size)
 {
@@ -492,6 +509,9 @@ dump_state_batch(struct brw_context *brw)
 	 break;
       case AUB_TRACE_SCISSOR_STATE:
 	 dump_scissor(brw, offset);
+	 break;
+      case AUB_TRACE_VS_CONSTANTS:
+	 dump_vs_constants(brw, offset, size);
 	 break;
       default:
 	 break;
