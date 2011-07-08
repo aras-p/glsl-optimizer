@@ -145,6 +145,18 @@ vlVdpDecoderGetParameters(VdpDecoder decoder,
                           uint32_t *width,
                           uint32_t *height)
 {
+   vlVdpDecoder *vldecoder;
+
+   VDPAU_MSG(VDPAU_TRACE, "[VDPAU] decoder get parameters called\n");
+
+   vldecoder = (vlVdpDecoder *)vlGetDataHTAB(decoder);
+   if (!vldecoder)
+      return VDP_STATUS_INVALID_HANDLE;
+      
+   *profile = PipeToProfile(vldecoder->decoder->profile);
+   *width = vldecoder->decoder->width;
+   *height = vldecoder->decoder->height;
+   
    return VDP_STATUS_OK;
 }
 

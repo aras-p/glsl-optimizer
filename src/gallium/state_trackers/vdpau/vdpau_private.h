@@ -171,6 +171,28 @@ ProfileToPipe(VdpDecoderProfile vdpau_profile)
    }
 }
 
+static inline VdpDecoderProfile
+PipeToProfile(enum pipe_video_profile p_profile)
+{
+   switch (p_profile) {
+      case PIPE_VIDEO_PROFILE_MPEG1:
+         return VDP_DECODER_PROFILE_MPEG1;
+      case PIPE_VIDEO_PROFILE_MPEG2_SIMPLE:
+         return VDP_DECODER_PROFILE_MPEG2_SIMPLE;
+      case PIPE_VIDEO_PROFILE_MPEG2_MAIN:
+         return VDP_DECODER_PROFILE_MPEG2_MAIN;
+      case PIPE_VIDEO_PROFILE_MPEG4_AVC_BASELINE:
+         return VDP_DECODER_PROFILE_H264_BASELINE;
+      case PIPE_VIDEO_PROFILE_MPEG4_AVC_MAIN: /* Not defined in p_format.h */
+         return VDP_DECODER_PROFILE_H264_MAIN;
+      case PIPE_VIDEO_PROFILE_MPEG4_AVC_HIGH:
+	     return VDP_DECODER_PROFILE_H264_HIGH;
+      default:
+         assert(0);
+         return -1;
+   }
+}
+
 typedef struct
 {
    Display *display;
