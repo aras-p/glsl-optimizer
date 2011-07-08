@@ -32,7 +32,7 @@
 #include <xorg/fourcc.h>
 
 #include <pipe/p_screen.h>
-#include <pipe/p_video_context.h>
+#include <pipe/p_video_decoder.h>
 #include <pipe/p_state.h>
 
 #include <util/u_memory.h>
@@ -224,7 +224,6 @@ Status XvMCCreateSubpicture(Display *dpy, XvMCContext *context, XvMCSubpicture *
    XvMCContextPrivate *context_priv;
    XvMCSubpicturePrivate *subpicture_priv;
    struct pipe_context *pipe;
-   struct pipe_video_context *vpipe;
    struct pipe_resource tex_templ, *tex;
    struct pipe_sampler_view sampler_templ;
    Status ret;
@@ -238,7 +237,6 @@ Status XvMCCreateSubpicture(Display *dpy, XvMCContext *context, XvMCSubpicture *
 
    context_priv = context->privData;
    pipe = context_priv->vctx->pipe;
-   vpipe = context_priv->vctx->vpipe;
 
    if (!subpicture)
       return XvMCBadSubpicture;
@@ -259,9 +257,9 @@ Status XvMCCreateSubpicture(Display *dpy, XvMCContext *context, XvMCSubpicture *
    tex_templ.target = PIPE_TEXTURE_2D;
    tex_templ.format = XvIDToPipe(xvimage_id);
    tex_templ.last_level = 0;
-   if (vpipe->screen->get_video_param(vpipe->screen,
-                                      PIPE_VIDEO_PROFILE_UNKNOWN,
-                                      PIPE_VIDEO_CAP_NPOT_TEXTURES)) {
+   if (pipe->screen->get_video_param(pipe->screen,
+                                     PIPE_VIDEO_PROFILE_UNKNOWN,
+                                     PIPE_VIDEO_CAP_NPOT_TEXTURES)) {
       tex_templ.width0 = width;
       tex_templ.height0 = height;
    }
@@ -275,7 +273,7 @@ Status XvMCCreateSubpicture(Display *dpy, XvMCContext *context, XvMCSubpicture *
    tex_templ.bind = PIPE_BIND_SAMPLER_VIEW;
    tex_templ.flags = 0;
 
-   tex = vpipe->screen->resource_create(vpipe->screen, &tex_templ);
+   tex = pipe->screen->resource_create(pipe->screen, &tex_templ);
 
    memset(&sampler_templ, 0, sizeof(sampler_templ));
    u_sampler_view_default_template(&sampler_templ, tex, tex->format);
@@ -305,7 +303,7 @@ Status XvMCCreateSubpicture(Display *dpy, XvMCContext *context, XvMCSubpicture *
       tex_templ.height0 = 1;
       tex_templ.usage = PIPE_USAGE_STATIC;
 
-      tex = vpipe->screen->resource_create(vpipe->screen, &tex_templ);
+      tex = pipe->screen->resource_create(pipe->screen, &tex_templ);
 
       memset(&sampler_templ, 0, sizeof(sampler_templ));
       u_sampler_view_default_template(&sampler_templ, tex, tex->format);

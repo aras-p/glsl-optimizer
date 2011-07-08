@@ -31,7 +31,7 @@
 #include <X11/extensions/XvMClib.h>
 
 #include <pipe/p_screen.h>
-#include <pipe/p_video_context.h>
+#include <pipe/p_video_decoder.h>
 #include <pipe/p_video_state.h>
 #include <pipe/p_state.h>
 
@@ -244,13 +244,14 @@ Status XvMCCreateContext(Display *dpy, XvPortID port, int surface_type_id,
       return BadAlloc;
    }
 
-   context_priv->decoder = vctx->vpipe->create_decoder(vctx->vpipe,
-                                                       ProfileToPipe(mc_type),
-                                                       (mc_type & XVMC_IDCT) ?
-                                                          PIPE_VIDEO_ENTRYPOINT_IDCT :
-                                                          PIPE_VIDEO_ENTRYPOINT_MC,
-                                                       FormatToPipe(chroma_format),
-                                                       width, height);
+   context_priv->decoder = vctx->pipe->create_video_decoder
+   (
+      vctx->pipe,
+      ProfileToPipe(mc_type),
+      (mc_type & XVMC_IDCT) ? PIPE_VIDEO_ENTRYPOINT_IDCT : PIPE_VIDEO_ENTRYPOINT_MC,
+      FormatToPipe(chroma_format),
+      width, height
+   );
 
    if (!context_priv->decoder) {
       XVMC_MSG(XVMC_ERR, "[XvMC] Could not create VL decoder.\n");

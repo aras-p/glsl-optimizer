@@ -25,7 +25,6 @@
 #include "util/u_format_s3tc.h"
 #include "util/u_memory.h"
 #include "os/os_time.h"
-#include "vl/vl_context.h"
 #include "vl/vl_video_buffer.h"
 
 #include "r300_context.h"
@@ -425,14 +424,6 @@ static boolean r300_is_format_supported(struct pipe_screen* screen,
     return retval == usage;
 }
 
-static struct pipe_video_context *
-r300_video_create(struct pipe_screen *screen, struct pipe_context *pipe)
-{
-   assert(screen);
-
-   return vl_create_context(pipe);
-}
-
 static void r300_destroy_screen(struct pipe_screen* pscreen)
 {
     struct r300_screen* r300screen = r300_screen(pscreen);
@@ -533,7 +524,6 @@ struct pipe_screen* r300_screen_create(struct radeon_winsys *rws)
     r300screen->screen.is_format_supported = r300_is_format_supported;
     r300screen->screen.is_video_format_supported = vl_video_buffer_is_format_supported;
     r300screen->screen.context_create = r300_create_context;
-    r300screen->screen.video_context_create = r300_video_create;
     r300screen->screen.fence_reference = r300_fence_reference;
     r300screen->screen.fence_signalled = r300_fence_signalled;
     r300screen->screen.fence_finish = r300_fence_finish;

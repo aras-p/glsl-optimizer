@@ -28,7 +28,6 @@
 
 #include <assert.h>
 
-#include <pipe/p_video_context.h>
 #include <pipe/p_state.h>
 
 #include <util/u_memory.h>
@@ -161,7 +160,6 @@ vlVdpVideoSurfacePutBitsYCbCr(VdpVideoSurface surface,
 {
    enum pipe_format pformat = FormatToPipe(source_ycbcr_format);
    struct pipe_context *pipe;
-   struct pipe_video_context *context;
    struct pipe_sampler_view **sampler_views;
    unsigned i;
 
@@ -173,8 +171,7 @@ vlVdpVideoSurfacePutBitsYCbCr(VdpVideoSurface surface,
       return VDP_STATUS_INVALID_HANDLE;
 
    pipe = p_surf->device->context->pipe;
-   context = p_surf->device->context->vpipe;
-   if (!pipe && !context)
+   if (!pipe)
       return VDP_STATUS_INVALID_HANDLE;
 
    if (p_surf->video_buffer == NULL || pformat != p_surf->video_buffer->buffer_format) {

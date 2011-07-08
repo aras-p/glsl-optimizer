@@ -33,7 +33,6 @@
 #include "pipe/p_defines.h"
 #include "pipe/p_screen.h"
 #include "draw/draw_context.h"
-#include "vl/vl_context.h"
 #include "vl/vl_video_buffer.h"
 
 #include "state_tracker/sw_winsys.h"
@@ -300,14 +299,6 @@ softpipe_flush_frontbuffer(struct pipe_screen *_screen,
       winsys->displaytarget_display(winsys, texture->dt, context_private);
 }
 
-static struct pipe_video_context *
-sp_video_create(struct pipe_screen *screen, struct pipe_context *context)
-{
-   assert(screen);
-
-   return vl_create_context(context);
-}
-
 /**
  * Create a new pipe_screen object
  * Note: we're not presently subclassing pipe_screen (no softpipe_screen).
@@ -335,7 +326,6 @@ softpipe_create_screen(struct sw_winsys *winsys)
    screen->base.is_video_format_supported = vl_video_buffer_is_format_supported;
    screen->base.context_create = softpipe_create_context;
    screen->base.flush_frontbuffer = softpipe_flush_frontbuffer;
-   screen->base.video_context_create = sp_video_create;
 
    util_format_s3tc_init();
 

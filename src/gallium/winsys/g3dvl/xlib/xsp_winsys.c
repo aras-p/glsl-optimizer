@@ -28,7 +28,6 @@
 #include <X11/Xlibint.h>
 
 #include <pipe/p_state.h>
-#include <pipe/p_video_context.h>
 
 #include <util/u_memory.h>
 #include <util/u_format.h>
@@ -173,30 +172,21 @@ struct vl_context*
 vl_video_create(struct vl_screen *vscreen)
 {
    struct pipe_context *pipe;
-   struct pipe_video_context *vpipe;
    struct vl_context *vctx;
 
    assert(vscreen);
-   assert(vscreen->pscreen->video_context_create);
 
    pipe = vscreen->pscreen->context_create(vscreen->pscreen, NULL);
    if (!pipe)
       return NULL;
 
-   vpipe = vscreen->pscreen->video_context_create(vscreen->pscreen, pipe);
-   if (!vpipe) {
-      pipe->destroy(pipe);
-      return NULL;
-   }
-
    vctx = CALLOC_STRUCT(vl_context);
    if (!vctx) {
       pipe->destroy(pipe);
-      vpipe->destroy(vpipe);
       return NULL;
    }
 
-   vctx->vpipe = vpipe;
+   vctx->pipe = pipe;
    vctx->vscreen = vscreen;
 
    return vctx;
@@ -207,6 +197,5 @@ void vl_video_destroy(struct vl_context *vctx)
    assert(vctx);
 
    vctx->pipe->destroy(vctx->pipe);
-   vctx->vpipe->destroy(vctx->vpipe);
    FREE(vctx);
 }

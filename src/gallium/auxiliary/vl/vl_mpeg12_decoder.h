@@ -28,7 +28,7 @@
 #ifndef vl_mpeg12_decoder_h
 #define vl_mpeg12_decoder_h
 
-#include <pipe/p_video_context.h>
+#include <pipe/p_video_decoder.h>
 
 #include "vl_mpeg12_bitstream.h"
 #include "vl_zscan.h"
@@ -44,7 +44,6 @@ struct pipe_context;
 struct vl_mpeg12_decoder
 {
    struct pipe_video_decoder base;
-   struct pipe_context *pipe;
 
    unsigned chroma_width, chroma_height;
 
@@ -93,11 +92,11 @@ struct vl_mpeg12_buffer
    short *texels[VL_MAX_PLANES];
 };
 
-/* drivers can call this function in their pipe_video_context constructors and pass it
-   an accelerated pipe_context along with suitable buffering modes, etc */
+/**
+ * creates a shader based mpeg12 decoder
+ */
 struct pipe_video_decoder *
-vl_create_mpeg12_decoder(struct pipe_video_context *context,
-                         struct pipe_context *pipe,
+vl_create_mpeg12_decoder(struct pipe_context *pipe,
                          enum pipe_video_profile profile,
                          enum pipe_video_entrypoint entrypoint,
                          enum pipe_video_chroma_format chroma_format,

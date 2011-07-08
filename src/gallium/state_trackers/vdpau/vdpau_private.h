@@ -34,7 +34,7 @@
 #include <vdpau/vdpau_x11.h>
 
 #include <pipe/p_compiler.h>
-#include <pipe/p_video_context.h>
+#include <pipe/p_video_decoder.h>
 
 #include <util/u_debug.h>
 #include <vl/vl_compositor.h>

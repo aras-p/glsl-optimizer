@@ -27,11 +27,13 @@
 
 #include <vl_winsys.h>
 #include <driclient.h>
-#include <pipe/p_video_context.h>
+#include <pipe/p_screen.h>
+#include <pipe/p_context.h>
 #include <pipe/p_state.h>
 #include <util/u_memory.h>
 #include <util/u_hash.h>
 #include <util/u_hash_table.h>
+#include <util/u_inlines.h>
 #include <state_tracker/drm_driver.h>
 #include <X11/Xlibint.h>
 
@@ -237,13 +239,6 @@ vl_video_create(struct vl_screen *vscreen)
    struct vl_dri_screen *vl_dri_scrn = (struct vl_dri_screen*)vscreen;
    struct vl_dri_context *vl_dri_ctx;
 
-   if (!vscreen->pscreen->video_context_create) {
-      debug_printf("[G3DVL] No video support found on %s/%s.\n",
-                   vscreen->pscreen->get_vendor(vscreen->pscreen),
-                   vscreen->pscreen->get_name(vscreen->pscreen));
-      goto no_vpipe;
-   }
-
    vl_dri_ctx = CALLOC_STRUCT(vl_dri_context);
    if (!vl_dri_ctx)
       goto no_struct;
@@ -256,11 +251,6 @@ vl_video_create(struct vl_screen *vscreen)
       goto no_pipe;
    }
 
-   vl_dri_ctx->base.vpipe = vscreen->pscreen->video_context_create(vscreen->pscreen, vl_dri_ctx->base.pipe);
-
-   if (!vl_dri_ctx->base.vpipe)
-      goto no_pipe;
-
    vl_dri_ctx->base.vscreen = vscreen;
    vl_dri_ctx->fd = vl_dri_scrn->dri_screen->fd;
 
@@ -270,7 +260,6 @@ no_pipe:
    FREE(vl_dri_ctx);
 
 no_struct:
-no_vpipe:
    return NULL;
 }
 
@@ -281,6 +270,5 @@ void vl_video_destroy(struct vl_context *vctx)
    assert(vctx);
 
    vl_dri_ctx->base.pipe->destroy(vl_dri_ctx->base.pipe);
-   vl_dri_ctx->base.vpipe->destroy(vl_dri_ctx->base.vpipe);
    FREE(vl_dri_ctx);
 }

@@ -40,7 +40,6 @@ vlVdpPresentationQueueCreate(VdpDevice device,
                              VdpPresentationQueue *presentation_queue)
 {
    vlVdpPresentationQueue *pq = NULL;
-   struct pipe_video_context *context;
    VdpStatus ret;
 
    VDPAU_MSG(VDPAU_TRACE, "[VDPAU] Creating PresentationQueue\n");
@@ -58,8 +57,6 @@ vlVdpPresentationQueueCreate(VdpDevice device,
 
    if (dev != pqt->device)
       return VDP_STATUS_HANDLE_DEVICE_MISMATCH;
-
-   context = dev->context->vpipe;
 
    pq = CALLOC(1, sizeof(vlVdpPresentationQueue));
    if (!pq)
@@ -175,9 +172,9 @@ vlVdpPresentationQueueDisplay(VdpPresentationQueue presentation_queue,
    vl_compositor_render(&pq->compositor, PIPE_MPEG12_PICTURE_TYPE_FRAME,
                         drawable_surface, NULL, NULL);
 
-   pq->device->context->vpipe->screen->flush_frontbuffer
+   pq->device->context->pipe->screen->flush_frontbuffer
    (
-      pq->device->context->vpipe->screen,
+      pq->device->context->pipe->screen,
       drawable_surface->texture,
       0, 0,
       vl_contextprivate_get(pq->device->context, drawable_surface)

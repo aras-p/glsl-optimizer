@@ -30,7 +30,7 @@
 
 #include <X11/Xlibint.h>
 
-#include <pipe/p_video_context.h>
+#include <pipe/p_video_decoder.h>
 #include <pipe/p_video_state.h>
 #include <pipe/p_state.h>
 
@@ -304,7 +304,6 @@ Status XvMCCreateSurface(Display *dpy, XvMCContext *context, XvMCSurface *surfac
 
    XvMCContextPrivate *context_priv;
    struct pipe_context *pipe;
-   struct pipe_video_context *vpipe;
    XvMCSurfacePrivate *surface_priv;
 
    XVMC_MSG(XVMC_TRACE, "[XvMC] Creating surface %p.\n", surface);
@@ -318,7 +317,6 @@ Status XvMCCreateSurface(Display *dpy, XvMCContext *context, XvMCSurface *surfac
 
    context_priv = context->privData;
    pipe = context_priv->vctx->pipe;
-   vpipe = context_priv->vctx->vpipe;
 
    surface_priv = CALLOC(1, sizeof(XvMCSurfacePrivate));
    if (!surface_priv)
@@ -357,10 +355,8 @@ Status XvMCRenderSurface(Display *dpy, XvMCContext *context, unsigned int pictur
                          XvMCMacroBlockArray *macroblocks, XvMCBlockArray *blocks
 )
 {
-   struct pipe_video_context *vpipe;
    struct pipe_video_decode_buffer *t_buffer;
 
-   XvMCContextPrivate *context_priv;
    XvMCSurfacePrivate *target_surface_priv;
    XvMCSurfacePrivate *past_surface_priv;
    XvMCSurfacePrivate *future_surface_priv;
@@ -405,9 +401,6 @@ Status XvMCRenderSurface(Display *dpy, XvMCContext *context, unsigned int pictur
    assert(target_surface_priv->context == context);
    assert(!past_surface || past_surface_priv->context == context);
    assert(!future_surface || future_surface_priv->context == context);
-
-   context_priv = context->privData;
-   vpipe = context_priv->vctx->vpipe;
 
    t_buffer = target_surface_priv->decode_buffer;
 
@@ -496,7 +489,7 @@ Status XvMCPutSurface(Display *dpy, XvMCSurface *surface, Drawable drawable,
 {
    static int dump_window = -1;
 
-   struct pipe_video_context *vpipe;
+   struct pipe_context *pipe;
    struct vl_compositor *compositor;
 
    XvMCSurfacePrivate *surface_priv;
@@ -522,7 +515,7 @@ Status XvMCPutSurface(Display *dpy, XvMCSurface *surface, Drawable drawable,
    assert(srcy + srch - 1 < surface->height);
 
    subpicture_priv = surface_priv->subpicture ? surface_priv->subpicture->privData : NULL;
-   vpipe = context_priv->vctx->vpipe;
+   pipe = context_priv->vctx->pipe;
    compositor = &context_priv->compositor;
 
    if (!context_priv->drawable_surface ||
@@ -571,15 +564,15 @@ Status XvMCPutSurface(Display *dpy, XvMCSurface *surface, Drawable drawable,
    }
 
    // Workaround for r600g, there seems to be a bug in the fence refcounting code
-   vpipe->screen->fence_reference(vpipe->screen, &surface_priv->fence, NULL);
+   pipe->screen->fence_reference(pipe->screen, &surface_priv->fence, NULL);
 
    vl_compositor_render(compositor, PictureToPipe(flags), context_priv->drawable_surface, &dst_rect, &surface_priv->fence);
 
    XVMC_MSG(XVMC_TRACE, "[XvMC] Submitted surface %p for display. Pushing to front buffer.\n", surface);
 
-   vpipe->screen->flush_frontbuffer
+   pipe->screen->flush_frontbuffer
    (
-      vpipe->screen,
+      pipe->screen,
       context_priv->drawable_surface->texture,
       0, 0,
       vl_contextprivate_get(context_priv->vctx, context_priv->drawable_surface)
@@ -606,7 +599,7 @@ Status XvMCPutSurface(Display *dpy, XvMCSurface *surface, Drawable drawable,
 PUBLIC
 Status XvMCGetSurfaceStatus(Display *dpy, XvMCSurface *surface, int *status)
 {
-   struct pipe_video_context *vpipe;
+   struct pipe_context *pipe;
    XvMCSurfacePrivate *surface_priv;
    XvMCContextPrivate *context_priv;
 
@@ -619,12 +612,12 @@ Status XvMCGetSurfaceStatus(Display *dpy, XvMCSurface *surface, int *status)
 
    surface_priv = surface->privData;
    context_priv = surface_priv->context->privData;
-   vpipe = context_priv->vctx->vpipe;
+   pipe = context_priv->vctx->pipe;
 
    *status = 0;
 
    if (surface_priv->fence)
-      if (!vpipe->screen->fence_signalled(vpipe->screen, surface_priv->fence))
+      if (!pipe->screen->fence_signalled(pipe->screen, surface_priv->fence))
          *status |= XVMC_RENDERING;
 
    return Success;

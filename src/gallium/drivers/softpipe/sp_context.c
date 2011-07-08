@@ -37,6 +37,7 @@
 #include "util/u_memory.h"
 #include "util/u_inlines.h"
 #include "tgsi/tgsi_exec.h"
+#include "vl/vl_decoder.h"
 #include "vl/vl_video_buffer.h"
 #include "sp_clear.h"
 #include "sp_context.h"
@@ -260,6 +261,7 @@ softpipe_create_context( struct pipe_screen *screen,
 
    softpipe->pipe.render_condition = softpipe_render_condition;
    
+   softpipe->pipe.create_video_decoder = vl_create_decoder;
    softpipe->pipe.create_video_buffer = vl_video_buffer_create;
 
    /*

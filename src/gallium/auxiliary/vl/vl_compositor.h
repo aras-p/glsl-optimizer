@@ -29,7 +29,7 @@
 #define vl_compositor_h
 
 #include <pipe/p_state.h>
-#include <pipe/p_video_context.h>
+#include <pipe/p_video_decoder.h>
 #include <pipe/p_video_state.h>
 
 #include "vl_types.h"

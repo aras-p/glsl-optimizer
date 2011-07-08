@@ -25,8 +25,6 @@
  *
  **************************************************************************/
 
-#include <pipe/p_video_context.h>
-
 #include <util/u_memory.h>
 #include <util/u_math.h>
 #include <util/u_debug.h>
@@ -41,7 +39,7 @@ vlVdpDecoderCreate(VdpDevice device,
                    VdpDecoder *decoder)
 {
    enum pipe_video_profile p_profile;
-   struct pipe_video_context *vpipe;
+   struct pipe_context *pipe;
    vlVdpDevice *dev;
    vlVdpDecoder *vldecoder;
    VdpStatus ret;
@@ -63,7 +61,7 @@ vlVdpDecoderCreate(VdpDevice device,
    if (!dev)
       return VDP_STATUS_INVALID_HANDLE;
 
-   vpipe = dev->context->vpipe;
+   pipe = dev->context->pipe;
 
    vldecoder = CALLOC(1,sizeof(vlVdpDecoder));
    if (!vldecoder)
@@ -72,9 +70,9 @@ vlVdpDecoderCreate(VdpDevice device,
    vldecoder->device = dev;
 
    // TODO: Define max_references. Used mainly for H264
-   vldecoder->decoder = vpipe->create_decoder
+   vldecoder->decoder = pipe->create_video_decoder
    (
-      vpipe, p_profile,
+      pipe, p_profile,
       PIPE_VIDEO_ENTRYPOINT_BITSTREAM,
       PIPE_VIDEO_CHROMA_FORMAT_420,
       width, height

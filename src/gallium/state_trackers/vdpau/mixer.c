@@ -44,7 +44,6 @@ vlVdpVideoMixerCreate(VdpDevice device,
                       VdpVideoMixer *mixer)
 {
    vlVdpVideoMixer *vmixer = NULL;
-   struct pipe_video_context *context;
    VdpStatus ret;
    float csc[16];
 
@@ -53,8 +52,6 @@ vlVdpVideoMixerCreate(VdpDevice device,
    vlVdpDevice *dev = vlGetDataHTAB(device);
    if (!dev)
       return VDP_STATUS_INVALID_HANDLE;
-
-   context = dev->context->vpipe;
 
    vmixer = CALLOC(1, sizeof(vlVdpVideoMixer));
    if (!vmixer)

@@ -1,7 +1,6 @@
 /**************************************************************************
  *
  * Copyright 2009 Younes Manton.
- * Copyright 2011 Christian König.
  * All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
@@ -26,23 +25,41 @@
  *
  **************************************************************************/
 
-#ifndef vl_context_h
-#define vl_context_h
+#include <pipe/p_video_decoder.h>
 
-#include <pipe/p_video_context.h>
+#include <util/u_video.h>
 
-struct pipe_screen;
-struct pipe_context;
+#include "vl_decoder.h"
+#include "vl_mpeg12_decoder.h"
 
-struct vl_context
+struct pipe_video_decoder *
+vl_create_decoder(struct pipe_context *pipe,
+                  enum pipe_video_profile profile,
+                  enum pipe_video_entrypoint entrypoint,
+                  enum pipe_video_chroma_format chroma_format,
+                  unsigned width, unsigned height)
 {
-   struct pipe_video_context base;
-   struct pipe_context *pipe;
-};
+   unsigned buffer_width, buffer_height;
+   bool pot_buffers;
 
-/* drivers can call this function in their pipe_video_context constructors and pass it
-   an accelerated pipe_context along with suitable buffering modes, etc */
-struct pipe_video_context *
-vl_create_context(struct pipe_context *pipe);
+   assert(pipe);
+   assert(width > 0 && height > 0);
+   
+   pot_buffers = !pipe->screen->get_video_param
+   (
+      pipe->screen,
+      profile,
+      PIPE_VIDEO_CAP_NPOT_TEXTURES
+   );
 
-#endif /* vl_context_h */
+   buffer_width = pot_buffers ? util_next_power_of_two(width) : align(width, MACROBLOCK_WIDTH);
+   buffer_height = pot_buffers ? util_next_power_of_two(height) : align(height, MACROBLOCK_HEIGHT);
+
+   switch (u_reduce_video_profile(profile)) {
+      case PIPE_VIDEO_CODEC_MPEG12:
+         return vl_create_mpeg12_decoder(pipe, profile, entrypoint, chroma_format, buffer_width, buffer_height);
+      default:
+         return NULL;
+   }
+   return NULL;
+}

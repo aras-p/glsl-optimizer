@@ -1,6 +1,7 @@
 /**************************************************************************
  *
  * Copyright 2009 Younes Manton.
+ * Copyright 2011 Christian König.
  * All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
@@ -25,41 +26,19 @@
  *
  **************************************************************************/
 
-#ifndef vl_winsys_h
-#define vl_winsys_h
+#ifndef vl_decoder_h
+#define vl_decoder_h
 
-#include <X11/Xlib.h>
-#include <pipe/p_defines.h>
-#include <pipe/p_format.h>
+#include <pipe/p_video_decoder.h>
 
-struct pipe_screen;
-struct pipe_surface;
+/**
+ * standard implementation of pipe->create_video_decoder
+ */
+struct pipe_video_decoder *
+vl_create_decoder(struct pipe_context *pipe,
+                  enum pipe_video_profile profile,
+                  enum pipe_video_entrypoint entrypoint,
+                  enum pipe_video_chroma_format chroma_format,
+                  unsigned width, unsigned height);
 
-struct vl_screen
-{
-   struct pipe_screen *pscreen;
-};
-
-struct vl_context
-{
-   struct vl_screen *vscreen;
-   struct pipe_context *pipe;
-};
-
-struct vl_screen*
-vl_screen_create(Display *display, int screen);
-
-void vl_screen_destroy(struct vl_screen *vscreen);
-
-struct vl_context*
-vl_video_create(struct vl_screen *vscreen);
-
-void vl_video_destroy(struct vl_context *vctx);
-
-struct pipe_surface*
-vl_drawable_surface_get(struct vl_context *vctx, Drawable drawable);
-
-void*
-vl_contextprivate_get(struct vl_context *vctx, struct pipe_surface *drawable_surface);
-
-#endif
+#endif /* vl_decoder_h */

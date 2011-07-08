@@ -27,6 +27,7 @@
 #include "util/u_simple_list.h"
 #include "util/u_upload_mgr.h"
 #include "os/os_time.h"
+#include "vl/vl_decoder.h"
 #include "vl/vl_video_buffer.h"
 
 #include "r300_cb.h"
@@ -438,6 +439,7 @@ struct pipe_context* r300_create_context(struct pipe_screen* screen,
     r300_init_state_functions(r300);
     r300_init_resource_functions(r300);
     
+    r300->context.create_video_decoder = vl_create_decoder;
     r300->context.create_video_buffer = vl_video_buffer_create;
 
     r300->vbuf_mgr = u_vbuf_mgr_create(&r300->context, 1024 * 1024, 16,

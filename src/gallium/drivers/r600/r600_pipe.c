@@ -38,7 +38,7 @@
 #include <util/u_memory.h>
 #include <util/u_inlines.h>
 #include "util/u_upload_mgr.h"
-#include <vl/vl_context.h>
+#include <vl/vl_decoder.h>
 #include <vl/vl_video_buffer.h>
 #include "os/os_time.h"
 #include <pipebuffer/pb_buffer.h>
@@ -226,6 +226,8 @@ static struct pipe_context *r600_create_context(struct pipe_screen *screen, void
 	r600_init_context_resource_functions(rctx);
 	r600_init_surface_functions(rctx);
 	rctx->context.draw_vbo = r600_draw_vbo;
+
+	rctx->context.create_video_decoder = vl_create_decoder;
 	rctx->context.create_video_buffer = vl_video_buffer_create;
 
 	switch (r600_get_family(rctx->radeon)) {
@@ -300,14 +302,6 @@ static struct pipe_context *r600_create_context(struct pipe_screen *screen, void
 		rctx->custom_dsa_flush = evergreen_create_db_flush_dsa(rctx);
 
 	return &rctx->context;
-}
-
-static struct pipe_video_context *
-r600_video_create(struct pipe_screen *screen, struct pipe_context *pipe)
-{
-	assert(screen && pipe);
-
-	return vl_create_context(pipe);
 }
 
 /*
@@ -679,7 +673,6 @@ struct pipe_screen *r600_screen_create(struct radeon *radeon)
 	rscreen->screen.is_format_supported = r600_is_format_supported;
 	rscreen->screen.is_video_format_supported = vl_video_buffer_is_format_supported;
 	rscreen->screen.context_create = r600_create_context;
-	rscreen->screen.video_context_create = r600_video_create;
 	rscreen->screen.fence_reference = r600_fence_reference;
 	rscreen->screen.fence_signalled = r600_fence_signalled;
 	rscreen->screen.fence_finish = r600_fence_finish;

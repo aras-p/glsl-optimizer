@@ -41,7 +41,6 @@ vlVdpOutputSurfaceCreate(VdpDevice device,
                          VdpOutputSurface  *surface)
 {
    struct pipe_context *pipe;
-   struct pipe_video_context *context;
    struct pipe_resource res_tmpl, *res;
    struct pipe_sampler_view sv_templ;
    struct pipe_surface surf_templ;
@@ -57,8 +56,7 @@ vlVdpOutputSurfaceCreate(VdpDevice device,
       return VDP_STATUS_INVALID_HANDLE;
 
    pipe = dev->context->pipe;
-   context = dev->context->vpipe;
-   if (!pipe || !context)
+   if (!pipe)
       return VDP_STATUS_INVALID_HANDLE;
 
    vlsurface = CALLOC(1, sizeof(vlVdpOutputSurface));
@@ -76,7 +74,7 @@ vlVdpOutputSurfaceCreate(VdpDevice device,
    res_tmpl.bind = PIPE_BIND_SAMPLER_VIEW | PIPE_BIND_RENDER_TARGET;
    res_tmpl.usage = PIPE_USAGE_STATIC;
 
-   res = context->screen->resource_create(context->screen, &res_tmpl);
+   res = pipe->screen->resource_create(pipe->screen, &res_tmpl);
    if (!res) {
       FREE(dev);
       return VDP_STATUS_ERROR;

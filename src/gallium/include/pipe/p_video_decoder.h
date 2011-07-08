@@ -41,35 +41,11 @@ struct pipe_picture_desc;
 struct pipe_fence_handle;
 
 /**
- * Gallium video rendering context
- */
-struct pipe_video_context
-{
-   struct pipe_screen *screen;
-
-   /**
-    * destroy context, all objects created from this context
-    * (buffers, decoders, compositors etc...) must be freed before calling this
-    */
-   void (*destroy)(struct pipe_video_context *context);
-
-   /**
-    * create a decoder for a specific video profile
-    */
-   struct pipe_video_decoder *(*create_decoder)(struct pipe_video_context *context,
-                                                enum pipe_video_profile profile,
-                                                enum pipe_video_entrypoint entrypoint,
-                                                enum pipe_video_chroma_format chroma_format,
-                                                unsigned width, unsigned height);
-
-};
-
-/**
- * decoder for a specific video codec
+ * Gallium video decoder for a specific codec/profile
  */
 struct pipe_video_decoder
 {
-   struct pipe_video_context *context;
+   struct pipe_context *context;
 
    enum pipe_video_profile profile;
    enum pipe_video_entrypoint entrypoint;
