@@ -42,8 +42,6 @@ vl_context_destroy(struct pipe_video_context *context)
 
    assert(context);
 
-   ctx->pipe->destroy(ctx->pipe);
-
    FREE(ctx);
 }
 

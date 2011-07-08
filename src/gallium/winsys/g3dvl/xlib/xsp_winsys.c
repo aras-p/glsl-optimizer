@@ -172,18 +172,26 @@ void vl_screen_destroy(struct vl_screen *vscreen)
 struct vl_context*
 vl_video_create(struct vl_screen *vscreen)
 {
+   struct pipe_video_context *pipe;
    struct pipe_video_context *vpipe;
    struct vl_context *vctx;
 
    assert(vscreen);
    assert(vscreen->pscreen->video_context_create);
 
-   vpipe = vscreen->pscreen->video_context_create(vscreen->pscreen, NULL);
-   if (!vpipe)
+   pipe = vscreen->pscreen->context_create(vscreen->pscreen, NULL);
+   if (!pipe)
       return NULL;
+
+   vpipe = vscreen->pscreen->video_context_create(vscreen->pscreen, pipe, NULL);
+   if (!vpipe) {
+      pipe->destroy(pipe);
+      return NULL;
+   }
 
    vctx = CALLOC_STRUCT(vl_context);
    if (!vctx) {
+      pipe->destroy(pipe);
       vpipe->destroy(vpipe);
       return NULL;
    }
@@ -199,6 +207,7 @@ void vl_video_destroy(struct vl_context *vctx)
 {
    assert(vctx);
 
+   vctx->pipe->destroy(vctx->pipe);
    vctx->vpipe->destroy(vctx->vpipe);
    FREE(vctx);
 }

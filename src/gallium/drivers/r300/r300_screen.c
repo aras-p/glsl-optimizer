@@ -25,6 +25,7 @@
 #include "util/u_format_s3tc.h"
 #include "util/u_memory.h"
 #include "os/os_time.h"
+#include "vl/vl_context.h"
 #include "vl/vl_video_buffer.h"
 
 #include "r300_context.h"
@@ -32,7 +33,6 @@
 #include "r300_screen_buffer.h"
 #include "r300_state_inlines.h"
 #include "r300_public.h"
-#include "r300_video_context.h"
 
 #include "draw/draw_context.h"
 
@@ -423,6 +423,14 @@ static boolean r300_is_format_supported(struct pipe_screen* screen,
         retval |= PIPE_BIND_TRANSFER_WRITE;
 
     return retval == usage;
+}
+
+static struct pipe_video_context *
+r300_video_create(struct pipe_screen *screen, struct pipe_context *pipe, void *priv)
+{
+   assert(screen);
+
+   return vl_create_context(pipe);
 }
 
 static void r300_destroy_screen(struct pipe_screen* pscreen)

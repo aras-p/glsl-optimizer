@@ -301,18 +301,11 @@ softpipe_flush_frontbuffer(struct pipe_screen *_screen,
 }
 
 static struct pipe_video_context *
-sp_video_create(struct pipe_screen *screen, void *priv)
+sp_video_create(struct pipe_screen *screen, struct pipe_context *context, void *priv)
 {
-   struct pipe_context *pipe;
-
    assert(screen);
 
-   pipe = screen->context_create(screen, NULL);
-   if (!pipe)
-      return NULL;
-
-   /* TODO: Use slice buffering for softpipe when implemented, no advantage to buffering an entire picture with softpipe */
-   return vl_create_context(pipe);
+   return vl_create_context(context);
 }
 
 /**

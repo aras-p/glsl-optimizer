@@ -38,6 +38,7 @@
 #include <util/u_memory.h>
 #include <util/u_inlines.h>
 #include "util/u_upload_mgr.h"
+#include <vl/vl_context.h>
 #include <vl/vl_video_buffer.h>
 #include "os/os_time.h"
 #include <pipebuffer/pb_buffer.h>
@@ -47,7 +48,6 @@
 #include "r600_shader.h"
 #include "r600_pipe.h"
 #include "r600_state_inlines.h"
-#include "r600_video_context.h"
 
 /*
  * pipe_context
@@ -299,6 +299,14 @@ static struct pipe_context *r600_create_context(struct pipe_screen *screen, void
 		rctx->custom_dsa_flush = evergreen_create_db_flush_dsa(rctx);
 
 	return &rctx->context;
+}
+
+static struct pipe_video_context *
+r600_video_create(struct pipe_screen *screen, struct pipe_context *pipe, void *priv)
+{
+	assert(screen && pipe);
+
+	return vl_create_context(pipe);
 }
 
 /*

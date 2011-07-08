@@ -44,6 +44,7 @@ struct vl_screen
 struct vl_context
 {
    struct vl_screen *vscreen;
+   struct pipe_context *pipe;
    struct pipe_video_context *vpipe;
 };
 
