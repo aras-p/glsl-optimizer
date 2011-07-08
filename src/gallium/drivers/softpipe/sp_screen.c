@@ -301,7 +301,7 @@ softpipe_flush_frontbuffer(struct pipe_screen *_screen,
 }
 
 static struct pipe_video_context *
-sp_video_create(struct pipe_screen *screen, struct pipe_context *context, void *priv)
+sp_video_create(struct pipe_screen *screen, struct pipe_context *context)
 {
    assert(screen);
 

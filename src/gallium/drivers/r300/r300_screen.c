@@ -426,7 +426,7 @@ static boolean r300_is_format_supported(struct pipe_screen* screen,
 }
 
 static struct pipe_video_context *
-r300_video_create(struct pipe_screen *screen, struct pipe_context *pipe, void *priv)
+r300_video_create(struct pipe_screen *screen, struct pipe_context *pipe)
 {
    assert(screen);
 

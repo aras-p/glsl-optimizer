@@ -47,8 +47,6 @@ struct pipe_video_context
 {
    struct pipe_screen *screen;
 
-   void *priv; /**< context private data (for DRI for example) */
-
    /**
     * destroy context, all objects created from this context
     * (buffers, decoders, compositors etc...) must be freed before calling this

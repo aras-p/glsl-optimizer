@@ -256,14 +256,11 @@ vl_video_create(struct vl_screen *vscreen)
       goto no_pipe;
    }
 
-   vl_dri_ctx->base.vpipe = vscreen->pscreen->video_context_create(vscreen->pscreen,
-                                                                   vl_dri_ctx->base.pipe,
-                                                                   vl_dri_ctx);
+   vl_dri_ctx->base.vpipe = vscreen->pscreen->video_context_create(vscreen->pscreen, vl_dri_ctx->base.pipe);
 
    if (!vl_dri_ctx->base.vpipe)
       goto no_pipe;
 
-   vl_dri_ctx->base.vpipe->priv = vl_dri_ctx;
    vl_dri_ctx->base.vscreen = vscreen;
    vl_dri_ctx->fd = vl_dri_scrn->dri_screen->fd;
 

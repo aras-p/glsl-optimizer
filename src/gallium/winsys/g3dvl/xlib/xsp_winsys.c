@@ -183,7 +183,7 @@ vl_video_create(struct vl_screen *vscreen)
    if (!pipe)
       return NULL;
 
-   vpipe = vscreen->pscreen->video_context_create(vscreen->pscreen, pipe, NULL);
+   vpipe = vscreen->pscreen->video_context_create(vscreen->pscreen, pipe);
    if (!vpipe) {
       pipe->destroy(pipe);
       return NULL;
@@ -196,7 +196,6 @@ vl_video_create(struct vl_screen *vscreen)
       return NULL;
    }
 
-   vpipe->priv = vctx;
    vctx->vpipe = vpipe;
    vctx->vscreen = vscreen;
 

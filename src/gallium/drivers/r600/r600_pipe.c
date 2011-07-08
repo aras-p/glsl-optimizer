@@ -302,7 +302,7 @@ static struct pipe_context *r600_create_context(struct pipe_screen *screen, void
 }
 
 static struct pipe_video_context *
-r600_video_create(struct pipe_screen *screen, struct pipe_context *pipe, void *priv)
+r600_video_create(struct pipe_screen *screen, struct pipe_context *pipe)
 {
 	assert(screen && pipe);
 

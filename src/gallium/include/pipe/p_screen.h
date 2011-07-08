@@ -101,8 +101,7 @@ struct pipe_screen {
    struct pipe_context * (*context_create)( struct pipe_screen *, void *priv );
 
    struct pipe_video_context * (*video_context_create)( struct pipe_screen *screen,
-                                                        struct pipe_context *context,
-                                                        void *priv );
+                                                        struct pipe_context *context );
 
    /**
     * Check if the given pipe_format is supported as a texture or
