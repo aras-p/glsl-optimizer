@@ -56,37 +56,6 @@ struct pipe_video_context
    void (*destroy)(struct pipe_video_context *context);
 
    /**
-    * sampler view handling, used for subpictures for example
-    */
-   /*@{*/
-
-   /**
-    * create a sampler view of a texture, for subpictures for example
-    */
-   struct pipe_sampler_view *(*create_sampler_view)(struct pipe_video_context *context,
-                                                    struct pipe_resource *resource,
-                                                    const struct pipe_sampler_view *templ);
-
-   /**
-    * upload image data to a sampler
-    */
-   void (*upload_sampler)(struct pipe_video_context *context,
-                          struct pipe_sampler_view *dst,
-                          const struct pipe_box *dst_box,
-                          const void *src, unsigned src_stride,
-                          unsigned src_x, unsigned src_y);
-
-   /**
-    * clear a sampler with a specific rgba color
-    */
-   void (*clear_sampler)(struct pipe_video_context *context,
-                         struct pipe_sampler_view *dst,
-                         const struct pipe_box *dst_box,
-                         const float *rgba);
-
-   /*}@*/
-
-   /**
     * create a decoder for a specific video profile
     */
    struct pipe_video_decoder *(*create_decoder)(struct pipe_video_context *context,

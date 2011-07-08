@@ -45,89 +45,6 @@ vl_context_destroy(struct pipe_video_context *context)
    FREE(ctx);
 }
 
-static struct pipe_sampler_view *
-vl_context_create_sampler_view(struct pipe_video_context *context,
-                               struct pipe_resource *resource,
-                               const struct pipe_sampler_view *templ)
-{
-   struct vl_context *ctx = (struct vl_context*)context;
-
-   assert(ctx);
-
-   return ctx->pipe->create_sampler_view(ctx->pipe, resource, templ);
-}
-
-static void
-vl_context_upload_sampler(struct pipe_video_context *context,
-                          struct pipe_sampler_view *dst,
-                          const struct pipe_box *dst_box,
-                          const void *src, unsigned src_stride,
-                          unsigned src_x, unsigned src_y)
-{
-   struct vl_context *ctx = (struct vl_context*)context;
-   struct pipe_transfer *transfer;
-   void *map;
-
-   assert(context);
-   assert(dst);
-   assert(dst_box);
-   assert(src);
-
-   transfer = ctx->pipe->get_transfer(ctx->pipe, dst->texture, 0, PIPE_TRANSFER_WRITE, dst_box);
-   if (!transfer)
-      return;
-
-   map = ctx->pipe->transfer_map(ctx->pipe, transfer);
-   if (!transfer)
-      goto error_map;
-
-   util_copy_rect(map, dst->texture->format, transfer->stride, 0, 0,
-                  dst_box->width, dst_box->height,
-                  src, src_stride, src_x, src_y);
-
-   ctx->pipe->transfer_unmap(ctx->pipe, transfer);
-
-error_map:
-   ctx->pipe->transfer_destroy(ctx->pipe, transfer);
-}
-
-static void
-vl_context_clear_sampler(struct pipe_video_context *context,
-                         struct pipe_sampler_view *dst,
-                         const struct pipe_box *dst_box,
-                         const float *rgba)
-{
-   struct vl_context *ctx = (struct vl_context*)context;
-   struct pipe_transfer *transfer;
-   union util_color uc;
-   void *map;
-   unsigned i;
-
-   assert(context);
-   assert(dst);
-   assert(dst_box);
-   assert(rgba);
-
-   transfer = ctx->pipe->get_transfer(ctx->pipe, dst->texture, 0, PIPE_TRANSFER_WRITE, dst_box);
-   if (!transfer)
-      return;
-
-   map = ctx->pipe->transfer_map(ctx->pipe, transfer);
-   if (!transfer)
-      goto error_map;
-
-   for ( i = 0; i < 4; ++i)
-      uc.f[i] = rgba[i];
-
-   util_fill_rect(map, dst->texture->format, transfer->stride, 0, 0,
-                  dst_box->width, dst_box->height, &uc);
-
-   ctx->pipe->transfer_unmap(ctx->pipe, transfer);
-
-error_map:
-   ctx->pipe->transfer_destroy(ctx->pipe, transfer);
-}
-
 static struct pipe_video_decoder *
 vl_context_create_decoder(struct pipe_video_context *context,
                           enum pipe_video_profile profile,
@@ -220,9 +137,6 @@ vl_create_context(struct pipe_context *pipe)
    ctx->base.screen = pipe->screen;
 
    ctx->base.destroy = vl_context_destroy;
-   ctx->base.create_sampler_view = vl_context_create_sampler_view;
-   ctx->base.clear_sampler = vl_context_clear_sampler;
-   ctx->base.upload_sampler = vl_context_upload_sampler;
    ctx->base.create_decoder = vl_context_create_decoder;
    ctx->base.create_buffer = vl_context_create_buffer;
    ctx->base.create_compositor = vl_context_create_compositor;

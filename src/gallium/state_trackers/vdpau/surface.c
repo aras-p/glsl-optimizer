@@ -33,6 +33,7 @@
 
 #include <util/u_memory.h>
 #include <util/u_debug.h>
+#include <util/u_rect.h>
 
 #include "vdpau_private.h"
 
@@ -159,6 +160,7 @@ vlVdpVideoSurfacePutBitsYCbCr(VdpVideoSurface surface,
                               uint32_t const *source_pitches)
 {
    enum pipe_format pformat = FormatToPipe(source_ycbcr_format);
+   struct pipe_context *pipe;
    struct pipe_video_context *context;
    struct pipe_sampler_view **sampler_views;
    unsigned i;
@@ -170,8 +172,9 @@ vlVdpVideoSurfacePutBitsYCbCr(VdpVideoSurface surface,
    if (!p_surf)
       return VDP_STATUS_INVALID_HANDLE;
 
+   pipe = p_surf->device->context->pipe;
    context = p_surf->device->context->vpipe;
-   if (!context)
+   if (!pipe && !context)
       return VDP_STATUS_INVALID_HANDLE;
 
    if (p_surf->video_buffer == NULL || pformat != p_surf->video_buffer->buffer_format) {
@@ -186,7 +189,24 @@ vlVdpVideoSurfacePutBitsYCbCr(VdpVideoSurface surface,
    for (i = 0; i < 3; ++i) { //TODO put nr of planes into util format
       struct pipe_sampler_view *sv = sampler_views[i ? i ^ 3 : 0];
       struct pipe_box dst_box = { 0, 0, 0, sv->texture->width0, sv->texture->height0, 1 };
-      context->upload_sampler(context, sv, &dst_box, source_data[i], source_pitches[i], 0, 0);
+
+      struct pipe_transfer *transfer;
+      void *map;
+
+      transfer = pipe->get_transfer(pipe, sv->texture, 0, PIPE_TRANSFER_WRITE, &dst_box);
+      if (!transfer)
+         return VDP_STATUS_RESOURCES;
+
+      map = pipe->transfer_map(pipe, transfer);
+      if (map) {
+         util_copy_rect(map, sv->texture->format, transfer->stride, 0, 0,
+                        dst_box.width, dst_box.height,
+                        source_data[i], source_pitches[i], 0, 0);
+
+         pipe->transfer_unmap(pipe, transfer);
+      }
+
+      pipe->transfer_destroy(pipe, transfer);
    }
 
    return VDP_STATUS_OK;

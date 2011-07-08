@@ -39,6 +39,7 @@
 #include <util/u_math.h>
 #include <util/u_format.h>
 #include <util/u_sampler.h>
+#include <util/u_rect.h>
 
 #include <vl_winsys.h>
 
@@ -192,12 +193,37 @@ static Status Validate(Display *dpy, XvPortID port, int surface_type_id, int xvi
    return i < num_subpics ? Success : BadMatch;
 }
 
+static void
+upload_sampler(struct pipe_context *pipe, struct pipe_sampler_view *dst,
+               const struct pipe_box *dst_box, const void *src, unsigned src_stride,
+               unsigned src_x, unsigned src_y)
+{
+   struct pipe_transfer *transfer;
+   void *map;
+
+   transfer = pipe->get_transfer(pipe, dst->texture, 0, PIPE_TRANSFER_WRITE, dst_box);
+   if (!transfer)
+      return;
+
+   map = pipe->transfer_map(pipe, transfer);
+   if (map) {
+      util_copy_rect(map, dst->texture->format, transfer->stride, 0, 0,
+                     dst_box->width, dst_box->height,
+                     src, src_stride, src_x, src_y);
+
+      pipe->transfer_unmap(pipe, transfer);
+   }
+
+   pipe->transfer_destroy(pipe, transfer);
+}
+
 PUBLIC
 Status XvMCCreateSubpicture(Display *dpy, XvMCContext *context, XvMCSubpicture *subpicture,
                             unsigned short width, unsigned short height, int xvimage_id)
 {
    XvMCContextPrivate *context_priv;
    XvMCSubpicturePrivate *subpicture_priv;
+   struct pipe_context *pipe;
    struct pipe_video_context *vpipe;
    struct pipe_resource tex_templ, *tex;
    struct pipe_sampler_view sampler_templ;
@@ -211,6 +237,7 @@ Status XvMCCreateSubpicture(Display *dpy, XvMCContext *context, XvMCSubpicture *
       return XvMCBadContext;
 
    context_priv = context->privData;
+   pipe = context_priv->vctx->pipe;
    vpipe = context_priv->vctx->vpipe;
 
    if (!subpicture)
@@ -254,7 +281,7 @@ Status XvMCCreateSubpicture(Display *dpy, XvMCContext *context, XvMCSubpicture *
    u_sampler_view_default_template(&sampler_templ, tex, tex->format);
    XvIDToSwizzle(xvimage_id, &sampler_templ);
 
-   subpicture_priv->sampler = vpipe->create_sampler_view(vpipe, tex, &sampler_templ);
+   subpicture_priv->sampler = pipe->create_sampler_view(pipe, tex, &sampler_templ);
    pipe_resource_reference(&tex, NULL);
    if (!subpicture_priv->sampler) {
       FREE(subpicture_priv);
@@ -283,7 +310,7 @@ Status XvMCCreateSubpicture(Display *dpy, XvMCContext *context, XvMCSubpicture *
       memset(&sampler_templ, 0, sizeof(sampler_templ));
       u_sampler_view_default_template(&sampler_templ, tex, tex->format);
       sampler_templ.swizzle_a = PIPE_SWIZZLE_ONE;
-      subpicture_priv->palette = vpipe->create_sampler_view(vpipe, tex, &sampler_templ);
+      subpicture_priv->palette = pipe->create_sampler_view(pipe, tex, &sampler_templ);
       pipe_resource_reference(&tex, NULL);
       if (!subpicture_priv->sampler) {
          FREE(subpicture_priv);
@@ -304,8 +331,12 @@ Status XvMCClearSubpicture(Display *dpy, XvMCSubpicture *subpicture, short x, sh
 {
    XvMCSubpicturePrivate *subpicture_priv;
    XvMCContextPrivate *context_priv;
+   struct pipe_context *pipe;
+   struct pipe_sampler_view *dst;
    struct pipe_box dst_box = {x, y, 0, width, height, 1};
-   float color_f[4];
+   struct pipe_transfer *transfer;
+   union util_color uc;
+   void *map;
 
    assert(dpy);
 
@@ -314,15 +345,28 @@ Status XvMCClearSubpicture(Display *dpy, XvMCSubpicture *subpicture, short x, sh
 
    /* Convert color to float */
    util_format_read_4f(PIPE_FORMAT_B8G8R8A8_UNORM,
-                       color_f, 1, &color, 4,
+                       uc.f, 1, &color, 4,
                        0, 0, 1, 1);
 
    subpicture_priv = subpicture->privData;
    context_priv = subpicture_priv->context->privData;
+   pipe = context_priv->vctx->pipe;
+   dst = subpicture_priv->sampler;
+   
    /* TODO: Assert clear rect is within bounds? Or clip? */
-   context_priv->vctx->vpipe->clear_sampler(context_priv->vctx->vpipe,
-                                            subpicture_priv->sampler, &dst_box,
-                                            color_f);
+   transfer = pipe->get_transfer(pipe, dst->texture, 0, PIPE_TRANSFER_WRITE, &dst_box);
+   if (!transfer)
+      return XvMCBadSubpicture;
+
+   map = pipe->transfer_map(pipe, transfer);
+   if (map) {
+      util_fill_rect(map, dst->texture->format, transfer->stride, 0, 0,
+                     dst_box.width, dst_box.height, &uc);
+
+      pipe->transfer_unmap(pipe, transfer);
+   }
+
+   pipe->transfer_destroy(pipe, transfer);
 
    return Success;
 }
@@ -334,7 +378,7 @@ Status XvMCCompositeSubpicture(Display *dpy, XvMCSubpicture *subpicture, XvImage
 {
    XvMCSubpicturePrivate *subpicture_priv;
    XvMCContextPrivate *context_priv;
-   struct pipe_video_context *vpipe;
+   struct pipe_context *pipe;
    struct pipe_box dst_box = {dstx, dsty, 0, width, height, 1};
    unsigned src_stride;
 
@@ -356,13 +400,12 @@ Status XvMCCompositeSubpicture(Display *dpy, XvMCSubpicture *subpicture, XvImage
 
    subpicture_priv = subpicture->privData;
    context_priv = subpicture_priv->context->privData;
-   vpipe = context_priv->vctx->vpipe;
+   pipe = context_priv->vctx->pipe;
 
    /* clipping should be done by upload_sampler and regardles what the documentation
    says image->pitches[0] doesn't seems to be in bytes, so don't use it */
    src_stride = image->width * util_format_get_blocksize(subpicture_priv->sampler->texture->format);
-   vpipe->upload_sampler(vpipe, subpicture_priv->sampler, &dst_box,
-                         image->data, src_stride, srcx, srcy);
+   upload_sampler(pipe, subpicture_priv->sampler, &dst_box, image->data, src_stride, srcx, srcy);
 
    XVMC_MSG(XVMC_TRACE, "[XvMC] Subpicture %p composited.\n", subpicture);
 
@@ -396,7 +439,7 @@ Status XvMCSetSubpicturePalette(Display *dpy, XvMCSubpicture *subpicture, unsign
 {
    XvMCSubpicturePrivate *subpicture_priv;
    XvMCContextPrivate *context_priv;
-   struct pipe_video_context *vpipe;
+   struct pipe_context *pipe;
    struct pipe_box dst_box = {0, 0, 0, 0, 1, 1};
 
    assert(dpy);
@@ -407,11 +450,11 @@ Status XvMCSetSubpicturePalette(Display *dpy, XvMCSubpicture *subpicture, unsign
 
    subpicture_priv = subpicture->privData;
    context_priv = subpicture_priv->context->privData;
-   vpipe = context_priv->vctx->vpipe;
+   pipe = context_priv->vctx->pipe;
 
    dst_box.width = subpicture->num_palette_entries;
 
-   vpipe->upload_sampler(vpipe, subpicture_priv->palette, &dst_box, palette, 0, 0, 0);
+   upload_sampler(pipe, subpicture_priv->palette, &dst_box, palette, 0, 0, 0);
 
    XVMC_MSG(XVMC_TRACE, "[XvMC] Palette of Subpicture %p set.\n", subpicture);
 
