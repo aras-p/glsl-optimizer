@@ -35,28 +35,6 @@ static void
 batch_out(struct brw_context *brw, const char *name, uint32_t offset,
 	  int index, char *fmt, ...) PRINTFLIKE(5, 6);
 
-/**
- * Prints out a header, the contents, and the message associated with
- * the hardware state data given.
- *
- * \param name Name of the state object
- * \param data Pointer to the base of the state object
- * \param hw_offset Hardware offset of the base of the state data.
- * \param index Index of the DWORD being output.
- */
-static void
-state_out(const char *name, void *data, uint32_t hw_offset, int index,
-	  char *fmt, ...)
-{
-    va_list va;
-
-    fprintf(stderr, "%8s: 0x%08x: 0x%08x: ",
-	    name, hw_offset + index * 4, ((uint32_t *)data)[index]);
-    va_start(va, fmt);
-    vfprintf(stderr, fmt, va);
-    va_end(va);
-}
-
 static void
 batch_out(struct brw_context *brw, const char *name, uint32_t offset,
 	  int index, char *fmt, ...)
@@ -70,24 +48,6 @@ batch_out(struct brw_context *brw, const char *name, uint32_t offset,
    va_start(va, fmt);
    vfprintf(stderr, fmt, va);
    va_end(va);
-}
-
-/** Generic, undecoded state buffer debug printout */
-static void
-state_struct_out(const char *name, drm_intel_bo *buffer,
-		 unsigned int offset, unsigned int size)
-{
-   int i;
-
-   if (buffer == NULL)
-      return;
-
-   drm_intel_bo_map(buffer, GL_FALSE);
-   for (i = 0; i < size / 4; i++) {
-      state_out(name, buffer->virtual + offset, buffer->offset + offset, i,
-		"dword %d\n", i);
-   }
-   drm_intel_bo_unmap(buffer);
 }
 
 static const char *
@@ -115,6 +75,103 @@ get_965_surface_format(unsigned int surface_format)
     case 0x104: return "b4g4r4a4_unorm";
     default: return "unknown";
     }
+}
+
+static void dump_vs_state(struct brw_context *brw, uint32_t offset)
+{
+   struct intel_context *intel = &brw->intel;
+   const char *name = "VS_STATE";
+   struct brw_vs_unit_state *vs = intel->batch.bo->virtual + offset;
+
+   batch_out(brw, name, offset, 0, "thread0\n");
+   batch_out(brw, name, offset, 1, "thread1\n");
+   batch_out(brw, name, offset, 2, "thread2\n");
+   batch_out(brw, name, offset, 3, "thread3\n");
+   batch_out(brw, name, offset, 4, "thread4: %d threads\n",
+	     vs->thread4.max_threads + 1);
+   batch_out(brw, name, offset, 5, "vs5\n");
+   batch_out(brw, name, offset, 6, "vs6\n");
+}
+
+static void dump_gs_state(struct brw_context *brw, uint32_t offset)
+{
+   struct intel_context *intel = &brw->intel;
+   const char *name = "GS_STATE";
+   struct brw_gs_unit_state *gs = intel->batch.bo->virtual + offset;
+
+   batch_out(brw, name, offset, 0, "thread0\n");
+   batch_out(brw, name, offset, 1, "thread1\n");
+   batch_out(brw, name, offset, 2, "thread2\n");
+   batch_out(brw, name, offset, 3, "thread3\n");
+   batch_out(brw, name, offset, 4, "thread4: %d threads\n",
+	     gs->thread4.max_threads + 1);
+   batch_out(brw, name, offset, 5, "vs5\n");
+   batch_out(brw, name, offset, 6, "vs6\n");
+}
+
+static void dump_clip_state(struct brw_context *brw, uint32_t offset)
+{
+   struct intel_context *intel = &brw->intel;
+   const char *name = "CLIP_STATE";
+   struct brw_clip_unit_state *clip = intel->batch.bo->virtual + offset;
+
+   batch_out(brw, name, offset, 0, "thread0\n");
+   batch_out(brw, name, offset, 1, "thread1\n");
+   batch_out(brw, name, offset, 2, "thread2\n");
+   batch_out(brw, name, offset, 3, "thread3\n");
+   batch_out(brw, name, offset, 4, "thread4: %d threads\n",
+	     clip->thread4.max_threads + 1);
+   batch_out(brw, name, offset, 5, "clip5\n");
+   batch_out(brw, name, offset, 6, "clip6\n");
+   batch_out(brw, name, offset, 7, "vp xmin %f\n", clip->viewport_xmin);
+   batch_out(brw, name, offset, 8, "vp xmax %f\n", clip->viewport_xmax);
+   batch_out(brw, name, offset, 9, "vp ymin %f\n", clip->viewport_ymin);
+   batch_out(brw, name, offset, 10, "vp ymax %f\n", clip->viewport_ymax);
+}
+
+static void dump_sf_state(struct brw_context *brw, uint32_t offset)
+{
+   struct intel_context *intel = &brw->intel;
+   const char *name = "SF_STATE";
+   struct brw_sf_unit_state *sf = intel->batch.bo->virtual + offset;
+
+   batch_out(brw, name, offset, 0, "thread0\n");
+   batch_out(brw, name, offset, 1, "thread1\n");
+   batch_out(brw, name, offset, 2, "thread2\n");
+   batch_out(brw, name, offset, 3, "thread3\n");
+   batch_out(brw, name, offset, 4, "thread4: %d threads\n",
+	     sf->thread4.max_threads + 1);
+   batch_out(brw, name, offset, 5, "sf5\n");
+   batch_out(brw, name, offset, 6, "sf6\n");
+   batch_out(brw, name, offset, 7, "sf7\n");
+}
+
+static void dump_wm_state(struct brw_context *brw, uint32_t offset)
+{
+   struct intel_context *intel = &brw->intel;
+   const char *name = "WM_STATE";
+   struct brw_wm_unit_state *wm = intel->batch.bo->virtual + offset;
+
+   batch_out(brw, name, offset, 0, "thread0\n");
+   batch_out(brw, name, offset, 1, "thread1\n");
+   batch_out(brw, name, offset, 2, "thread2\n");
+   batch_out(brw, name, offset, 3, "thread3\n");
+   batch_out(brw, name, offset, 4, "wm4\n");
+   batch_out(brw, name, offset, 5, "wm5: %s%s%s%s%s%s, %d threads\n",
+	     wm->wm5.enable_8_pix ? "8pix" : "",
+	     wm->wm5.enable_16_pix ? "16pix" : "",
+	     wm->wm5.program_uses_depth ? ", uses depth" : "",
+	     wm->wm5.program_computes_depth ? ", computes depth" : "",
+	     wm->wm5.program_uses_killpixel ? ", kills" : "",
+	     wm->wm5.thread_dispatch_enable ? "" : ", no dispatch",
+	     wm->wm5.max_threads + 1);
+   batch_out(brw, name, offset, 6, "depth offset constant %f\n",
+	     wm->global_depth_offset_constant);
+   batch_out(brw, name, offset, 7, "depth offset scale %f\n",
+	     wm->global_depth_offset_scale);
+   batch_out(brw, name, offset, 8, "wm8: kernel 1 (gen5+)\n");
+   batch_out(brw, name, offset, 9, "wm9: kernel 2 (gen5+)\n");
+   batch_out(brw, name, offset, 10, "wm10: kernel 3 (gen5+)\n");
 }
 
 static void dump_surface_state(struct brw_context *brw, uint32_t offset)
@@ -465,6 +522,21 @@ dump_state_batch(struct brw_context *brw)
       uint32_t size = brw->state_batch_list[i].size;
 
       switch (brw->state_batch_list[i].type) {
+      case AUB_TRACE_VS_STATE:
+	 dump_vs_state(brw, offset);
+	 break;
+      case AUB_TRACE_GS_STATE:
+	 dump_gs_state(brw, offset);
+	 break;
+      case AUB_TRACE_CLIP_STATE:
+	 dump_clip_state(brw, offset);
+	 break;
+      case AUB_TRACE_SF_STATE:
+	 dump_sf_state(brw, offset);
+	 break;
+      case AUB_TRACE_WM_STATE:
+	 dump_wm_state(brw, offset);
+	 break;
       case AUB_TRACE_CLIP_VP_STATE:
 	 dump_clip_viewport_state(brw, offset);
 	 break;
@@ -532,23 +604,6 @@ dump_state_batch(struct brw_context *brw)
 void brw_debug_batch(struct intel_context *intel)
 {
    struct brw_context *brw = brw_context(&intel->ctx);
-
-   if (intel->gen < 6)
-       state_struct_out("VS", intel->batch.bo, brw->vs.state_offset,
-			sizeof(struct brw_vs_unit_state));
-
-   if (intel->gen < 6)
-       state_struct_out("GS", intel->batch.bo, brw->gs.state_offset,
-			sizeof(struct brw_gs_unit_state));
-
-   if (intel->gen < 6) {
-      state_struct_out("SF", intel->batch.bo, brw->sf.state_offset,
-		       sizeof(struct brw_sf_unit_state));
-   }
-
-   if (intel->gen < 6)
-       state_struct_out("WM", intel->batch.bo, brw->wm.state_offset,
-			sizeof(struct brw_wm_unit_state));
 
    drm_intel_bo_map(intel->batch.bo, false);
    dump_state_batch(brw);
