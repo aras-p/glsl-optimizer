@@ -71,11 +71,6 @@ struct pipe_video_context
                                               enum pipe_format buffer_format,
                                               enum pipe_video_chroma_format chroma_format,
                                               unsigned width, unsigned height);
-
-   /**
-    * Creates a video compositor
-    */
-   struct pipe_video_compositor *(*create_compositor)(struct pipe_video_context *context);
 };
 
 /**
@@ -199,84 +194,6 @@ struct pipe_video_buffer
     * get a individual surfaces for each plane
     */
    struct pipe_surface **(*get_surfaces)(struct pipe_video_buffer *buffer);
-};
-
-/**
- * composing and displaying of image data
- */
-struct pipe_video_compositor
-{
-   struct pipe_video_context *context;
-
-   /**
-    * destroy this compositor
-    */
-   void (*destroy)(struct pipe_video_compositor *compositor);
-
-   /**
-    * set yuv -> rgba conversion matrix
-    */
-   void (*set_csc_matrix)(struct pipe_video_compositor *compositor, const float mat[16]);
-
-   /**
-    * reset dirty area, so it's cleared with the clear colour
-    */
-   void (*reset_dirty_area)(struct pipe_video_compositor *compositor);
-
-   /**
-    * set the clear color
-    */
-   void (*set_clear_color)(struct pipe_video_compositor *compositor, float color[4]);
-
-   /**
-    * set overlay samplers
-    */
-   /*@{*/
-
-   /**
-    * reset all currently set layers
-    */
-   void (*clear_layers)(struct pipe_video_compositor *compositor);
-
-   /**
-    * set a video buffer as a layer to render
-    */
-   void (*set_buffer_layer)(struct pipe_video_compositor *compositor,
-                            unsigned layer,
-                            struct pipe_video_buffer *buffer,
-                            struct pipe_video_rect *src_rect,
-                            struct pipe_video_rect *dst_rect);
-
-   /**
-    * set a paletted sampler as a layer to render
-    */
-   void (*set_palette_layer)(struct pipe_video_compositor *compositor,
-                             unsigned layer,
-                             struct pipe_sampler_view *indexes,
-                             struct pipe_sampler_view *palette,
-                             struct pipe_video_rect *src_rect,
-                             struct pipe_video_rect *dst_rect);
-
-   /**
-    * set a rgba sampler as a layer to render
-    */
-   void (*set_rgba_layer)(struct pipe_video_compositor *compositor,
-                          unsigned layer,
-                          struct pipe_sampler_view *rgba,
-                          struct pipe_video_rect *src_rect,
-                          struct pipe_video_rect *dst_rect);
-
-   /*@}*/
-
-   /**
-    * render the layers to the frontbuffer
-    */
-   void (*render_picture)(struct pipe_video_compositor  *compositor,
-                          enum pipe_mpeg12_picture_type picture_type,
-                          struct pipe_surface           *dst_surface,
-                          struct pipe_video_rect        *dst_area,
-                          struct pipe_fence_handle      **fence);
-
 };
 
 #ifdef __cplusplus

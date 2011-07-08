@@ -67,8 +67,8 @@ vlVdpPresentationQueueCreate(VdpDevice device,
 
    pq->device = dev;
    pq->drawable = pqt->drawable;
-   pq->compositor = context->create_compositor(context);
-   if (!pq->compositor) {
+   
+   if (!vl_compositor_init(&pq->compositor, dev->context->pipe)) {
       ret = VDP_STATUS_ERROR;
       goto no_compositor;
    }
@@ -97,7 +97,7 @@ vlVdpPresentationQueueDestroy(VdpPresentationQueue presentation_queue)
    if (!pq)
       return VDP_STATUS_INVALID_HANDLE;
 
-   pq->compositor->destroy(pq->compositor);
+   vl_compositor_cleanup(&pq->compositor);
 
    vlRemoveDataHTAB(presentation_queue);
    FREE(pq);
@@ -120,7 +120,7 @@ vlVdpPresentationQueueSetBackgroundColor(VdpPresentationQueue presentation_queue
    if (!pq)
       return VDP_STATUS_INVALID_HANDLE;
 
-   pq->compositor->set_clear_color(pq->compositor, (float*)background_color);
+   vl_compositor_set_clear_color(&pq->compositor, (float*)background_color);
 
    return VDP_STATUS_OK;
 }
@@ -170,10 +170,10 @@ vlVdpPresentationQueueDisplay(VdpPresentationQueue presentation_queue,
    if (!surf)
       return VDP_STATUS_INVALID_HANDLE;
 
-   pq->compositor->clear_layers(pq->compositor);
-   pq->compositor->set_rgba_layer(pq->compositor, 0, surf->sampler_view, NULL, NULL);
-   pq->compositor->render_picture(pq->compositor, PIPE_MPEG12_PICTURE_TYPE_FRAME,
-                                  drawable_surface, NULL, NULL);
+   vl_compositor_clear_layers(&pq->compositor);
+   vl_compositor_set_rgba_layer(&pq->compositor, 0, surf->sampler_view, NULL, NULL);
+   vl_compositor_render(&pq->compositor, PIPE_MPEG12_PICTURE_TYPE_FRAME,
+                        drawable_surface, NULL, NULL);
 
    pq->device->context->vpipe->screen->flush_frontbuffer
    (

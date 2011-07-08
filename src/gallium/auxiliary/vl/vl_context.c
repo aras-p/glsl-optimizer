@@ -114,16 +114,6 @@ vl_context_create_buffer(struct pipe_video_context *context,
    return result;
 }
 
-static struct pipe_video_compositor *
-vl_context_create_compositor(struct pipe_video_context *context)
-{
-   struct vl_context *ctx = (struct vl_context*)context;
-
-   assert(context);
-
-   return vl_compositor_init(context, ctx->pipe);
-}
-
 struct pipe_video_context *
 vl_create_context(struct pipe_context *pipe)
 {
@@ -139,7 +129,6 @@ vl_create_context(struct pipe_context *pipe)
    ctx->base.destroy = vl_context_destroy;
    ctx->base.create_decoder = vl_context_create_decoder;
    ctx->base.create_buffer = vl_context_create_buffer;
-   ctx->base.create_compositor = vl_context_create_compositor;
 
    ctx->pipe = pipe;
 

@@ -36,6 +36,10 @@
 
 struct pipe_context;
 
+/**
+ * composing and displaying of image data
+ */
+
 #define VL_COMPOSITOR_MAX_LAYERS 16
 
 struct vl_compositor_layer
@@ -53,7 +57,6 @@ struct vl_compositor_layer
 
 struct vl_compositor
 {
-   struct pipe_video_compositor base;
    struct pipe_context *pipe;
 
    struct pipe_framebuffer_state fb_state;
@@ -79,7 +82,88 @@ struct vl_compositor
    struct vl_compositor_layer layers[VL_COMPOSITOR_MAX_LAYERS];
 };
 
-struct pipe_video_compositor *vl_compositor_init(struct pipe_video_context *vpipe,
-                                                 struct pipe_context *pipe);
+/**
+ * initialize this compositor
+ */
+bool
+vl_compositor_init(struct vl_compositor *compositor, struct pipe_context *pipe);
+
+/**
+ * set yuv -> rgba conversion matrix
+ */
+void
+vl_compositor_set_csc_matrix(struct vl_compositor *compositor, const float mat[16]);
+
+/**
+ * reset dirty area, so it's cleared with the clear colour
+ */
+void
+vl_compositor_reset_dirty_area(struct vl_compositor *compositor);
+
+/**
+ * set the clear color
+ */
+void
+vl_compositor_set_clear_color(struct vl_compositor *compositor, float color[4]);
+
+/**
+ * set overlay samplers
+ */
+/*@{*/
+
+/**
+ * reset all currently set layers
+ */
+void
+vl_compositor_clear_layers(struct vl_compositor *compositor);
+
+/**
+ * set a video buffer as a layer to render
+ */
+void
+vl_compositor_set_buffer_layer(struct vl_compositor *compositor,
+                               unsigned layer,
+                               struct pipe_video_buffer *buffer,
+                               struct pipe_video_rect *src_rect,
+                               struct pipe_video_rect *dst_rect);
+
+/**
+ * set a paletted sampler as a layer to render
+ */
+void
+vl_compositor_set_palette_layer(struct vl_compositor *compositor,
+                                unsigned layer,
+                                struct pipe_sampler_view *indexes,
+                                struct pipe_sampler_view *palette,
+                                struct pipe_video_rect *src_rect,
+                                struct pipe_video_rect *dst_rect);
+
+/**
+ * set a rgba sampler as a layer to render
+ */
+void
+vl_compositor_set_rgba_layer(struct vl_compositor *compositor,
+                             unsigned layer,
+                             struct pipe_sampler_view *rgba,
+                             struct pipe_video_rect *src_rect,
+                             struct pipe_video_rect *dst_rect);
+
+/*@}*/
+
+/**
+ * render the layers to the frontbuffer
+ */
+void
+vl_compositor_render(struct vl_compositor          *compositor,
+                     enum pipe_mpeg12_picture_type picture_type,
+                     struct pipe_surface           *dst_surface,
+                     struct pipe_video_rect        *dst_area,
+                     struct pipe_fence_handle      **fence);
+
+/**
+* destroy this compositor
+*/
+void
+vl_compositor_cleanup(struct vl_compositor *compositor);
 
 #endif /* vl_compositor_h */

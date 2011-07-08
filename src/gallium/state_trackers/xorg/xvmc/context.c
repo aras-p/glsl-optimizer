@@ -260,8 +260,7 @@ Status XvMCCreateContext(Display *dpy, XvPortID port, int surface_type_id,
       return BadAlloc;
    }
 
-   context_priv->compositor = vctx->vpipe->create_compositor(vctx->vpipe);
-   if (!context_priv->compositor) {
+   if (!vl_compositor_init(&context_priv->compositor, vctx->pipe)) {
       XVMC_MSG(XVMC_ERR, "[XvMC] Could not create VL compositor.\n");
       context_priv->decoder->destroy(context_priv->decoder);
       vl_video_destroy(vctx);
@@ -280,7 +279,7 @@ Status XvMCCreateContext(Display *dpy, XvPortID port, int surface_type_id,
       context_priv->color_standard,
       &context_priv->procamp, true, csc
    );
-   context_priv->compositor->set_csc_matrix(context_priv->compositor, csc);
+   vl_compositor_set_csc_matrix(&context_priv->compositor, csc);
 
    context_priv->vctx = vctx;
    context_priv->subpicture_max_width = subpic_max_w;
@@ -320,7 +319,7 @@ Status XvMCDestroyContext(Display *dpy, XvMCContext *context)
    vscreen = vctx->vscreen;
    pipe_surface_reference(&context_priv->drawable_surface, NULL);
    context_priv->decoder->destroy(context_priv->decoder);
-   context_priv->compositor->destroy(context_priv->compositor);
+   vl_compositor_cleanup(&context_priv->compositor);
    vl_video_destroy(vctx);
    vl_screen_destroy(vscreen);
    FREE(context_priv);

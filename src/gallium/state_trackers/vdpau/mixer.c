@@ -61,7 +61,7 @@ vlVdpVideoMixerCreate(VdpDevice device,
       return VDP_STATUS_RESOURCES;
 
    vmixer->device = dev;
-   vmixer->compositor = context->create_compositor(context);
+   vl_compositor_init(&vmixer->compositor, dev->context->pipe);
 
    vl_csc_get_matrix
    (
@@ -69,7 +69,7 @@ vlVdpVideoMixerCreate(VdpDevice device,
       VL_CSC_COLOR_STANDARD_IDENTITY : VL_CSC_COLOR_STANDARD_BT_601,
       NULL, true, csc
    );
-   vmixer->compositor->set_csc_matrix(vmixer->compositor, csc);
+   vl_compositor_set_csc_matrix(&vmixer->compositor, csc);
 
    /*
     * TODO: Handle features and parameters
@@ -97,7 +97,7 @@ vlVdpVideoMixerDestroy(VdpVideoMixer mixer)
    if (!vmixer)
       return VDP_STATUS_INVALID_HANDLE;
 
-   vmixer->compositor->destroy(vmixer->compositor);
+   vl_compositor_cleanup(&vmixer->compositor);
 
    FREE(vmixer);
 
@@ -158,10 +158,10 @@ VdpStatus vlVdpVideoMixerRender(VdpVideoMixer mixer,
    if (!dst)
       return VDP_STATUS_INVALID_HANDLE;
 
-   vmixer->compositor->clear_layers(vmixer->compositor);
-   vmixer->compositor->set_buffer_layer(vmixer->compositor, 0, surf->video_buffer, NULL, NULL);
-   vmixer->compositor->render_picture(vmixer->compositor, PIPE_MPEG12_PICTURE_TYPE_FRAME,
-                                      dst->surface, NULL, NULL);
+   vl_compositor_clear_layers(&vmixer->compositor);
+   vl_compositor_set_buffer_layer(&vmixer->compositor, 0, surf->video_buffer, NULL, NULL);
+   vl_compositor_render(&vmixer->compositor, PIPE_MPEG12_PICTURE_TYPE_FRAME,
+                        dst->surface, NULL, NULL);
 
    return VDP_STATUS_OK;
 }

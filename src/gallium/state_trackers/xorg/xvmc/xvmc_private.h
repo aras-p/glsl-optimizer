@@ -37,6 +37,7 @@
 #include <util/u_math.h>
 
 #include <vl/vl_csc.h>
+#include <vl/vl_compositor.h>
 
 #define BLOCK_SIZE_SAMPLES 64
 #define BLOCK_SIZE_BYTES (BLOCK_SIZE_SAMPLES * 2)
@@ -44,7 +45,6 @@
 struct vl_context;
 
 struct pipe_video_decoder;
-struct pipe_video_compositor;
 struct pipe_video_decode_buffer;
 struct pipe_video_buffer;
 
@@ -55,10 +55,10 @@ typedef struct
 {
    struct vl_context *vctx;
    struct pipe_video_decoder *decoder;
-   struct pipe_video_compositor *compositor;
 
    enum VL_CSC_COLOR_STANDARD color_standard;
    struct vl_procamp procamp;
+   struct vl_compositor compositor;
 
    unsigned short subpicture_max_width;
    unsigned short subpicture_max_height;

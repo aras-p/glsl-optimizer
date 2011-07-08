@@ -500,36 +500,32 @@ draw_layers(struct vl_compositor *c)
    }
 }
 
-static void
-vl_compositor_reset_dirty_area(struct pipe_video_compositor *compositor)
+void
+vl_compositor_reset_dirty_area(struct vl_compositor *c)
 {
-   struct vl_compositor *c = (struct vl_compositor *)compositor;
-
-   assert(compositor);
+   assert(c);
 
    c->dirty_tl.x = c->dirty_tl.y = 0.0f;
    c->dirty_br.x = c->dirty_br.y = 1.0f;
 }
 
-static void
-vl_compositor_set_clear_color(struct pipe_video_compositor *compositor, float color[4])
+void
+vl_compositor_set_clear_color(struct vl_compositor *c, float color[4])
 {
-   struct vl_compositor *c = (struct vl_compositor *)compositor;
    unsigned i;
 
-   assert(compositor);
+   assert(c);
 
    for (i = 0; i < 4; ++i)
       c->clear_color[i] = color[i];
 }
 
-static void
-vl_compositor_clear_layers(struct pipe_video_compositor *compositor)
+void
+vl_compositor_clear_layers(struct vl_compositor *c)
 {
-   struct vl_compositor *c = (struct vl_compositor *)compositor;
    unsigned i, j;
 
-   assert(compositor);
+   assert(c);
 
    c->used_layers = 0;
    for ( i = 0; i < VL_COMPOSITOR_MAX_LAYERS; ++i) {
@@ -539,28 +535,24 @@ vl_compositor_clear_layers(struct pipe_video_compositor *compositor)
    }
 }
 
-static void
-vl_compositor_destroy(struct pipe_video_compositor *compositor)
+void
+vl_compositor_cleanup(struct vl_compositor *c)
 {
-   struct vl_compositor *c = (struct vl_compositor *)compositor;
-   assert(compositor);
+   assert(c);
 
-   vl_compositor_clear_layers(compositor);
+   vl_compositor_clear_layers(c);
 
    cleanup_buffers(c);
    cleanup_shaders(c);
    cleanup_pipe_state(c);
-
-   FREE(compositor);
 }
 
-static void
-vl_compositor_set_csc_matrix(struct pipe_video_compositor *compositor, const float matrix[16])
+void
+vl_compositor_set_csc_matrix(struct vl_compositor *c, const float matrix[16])
 {
-   struct vl_compositor *c = (struct vl_compositor *)compositor;
    struct pipe_transfer *buf_transfer;
 
-   assert(compositor);
+   assert(c);
 
    memcpy
    (
@@ -574,18 +566,17 @@ vl_compositor_set_csc_matrix(struct pipe_video_compositor *compositor, const flo
    pipe_buffer_unmap(c->pipe, buf_transfer);
 }
 
-static void
-vl_compositor_set_buffer_layer(struct pipe_video_compositor *compositor,
+void
+vl_compositor_set_buffer_layer(struct vl_compositor *c,
                                unsigned layer,
                                struct pipe_video_buffer *buffer,
                                struct pipe_video_rect *src_rect,
                                struct pipe_video_rect *dst_rect)
 {
-   struct vl_compositor *c = (struct vl_compositor *)compositor;
    struct pipe_sampler_view **sampler_views;
    unsigned i;
 
-   assert(compositor && buffer);
+   assert(c && buffer);
 
    assert(layer < VL_COMPOSITOR_MAX_LAYERS);
 
@@ -604,16 +595,15 @@ vl_compositor_set_buffer_layer(struct pipe_video_compositor *compositor,
                     dst_rect ? *dst_rect : default_rect(&c->layers[layer]));
 }
 
-static void
-vl_compositor_set_palette_layer(struct pipe_video_compositor *compositor,
+void
+vl_compositor_set_palette_layer(struct vl_compositor *c,
                                 unsigned layer,
                                 struct pipe_sampler_view *indexes,
                                 struct pipe_sampler_view *palette,
                                 struct pipe_video_rect *src_rect,
                                 struct pipe_video_rect *dst_rect)
 {
-   struct vl_compositor *c = (struct vl_compositor *)compositor;
-   assert(compositor && indexes && palette);
+   assert(c && indexes && palette);
 
    assert(layer < VL_COMPOSITOR_MAX_LAYERS);
 
@@ -632,15 +622,14 @@ vl_compositor_set_palette_layer(struct pipe_video_compositor *compositor,
 
 }
 
-static void
-vl_compositor_set_rgba_layer(struct pipe_video_compositor *compositor,
+void
+vl_compositor_set_rgba_layer(struct vl_compositor *c,
                              unsigned layer,
                              struct pipe_sampler_view *rgba,
                              struct pipe_video_rect *src_rect,
                              struct pipe_video_rect *dst_rect)
 {
-   struct vl_compositor *c = (struct vl_compositor *)compositor;
-   assert(compositor && rgba);
+   assert(c && rgba);
 
    assert(layer < VL_COMPOSITOR_MAX_LAYERS);
 
@@ -658,17 +647,16 @@ vl_compositor_set_rgba_layer(struct pipe_video_compositor *compositor,
                     dst_rect ? *dst_rect : default_rect(&c->layers[layer]));
 }
 
-static void
-vl_compositor_render(struct pipe_video_compositor *compositor,
+void
+vl_compositor_render(struct vl_compositor *c,
                      enum pipe_mpeg12_picture_type picture_type,
                      struct pipe_surface           *dst_surface,
                      struct pipe_video_rect        *dst_area,
                      struct pipe_fence_handle      **fence)
 {
-   struct vl_compositor *c = (struct vl_compositor *)compositor;
    struct pipe_scissor_state scissor;
 
-   assert(compositor);
+   assert(c);
    assert(dst_surface);
 
    c->fb_state.width = dst_surface->width;
@@ -713,48 +701,34 @@ vl_compositor_render(struct pipe_video_compositor *compositor,
    c->pipe->flush(c->pipe, fence);
 }
 
-struct pipe_video_compositor *
-vl_compositor_init(struct pipe_video_context *vpipe, struct pipe_context *pipe)
+bool
+vl_compositor_init(struct vl_compositor *c, struct pipe_context *pipe)
 {
    csc_matrix csc_matrix;
-   struct vl_compositor *compositor;
 
-   compositor = CALLOC_STRUCT(vl_compositor);
+   c->pipe = pipe;
 
-   compositor->base.context = vpipe;
-   compositor->base.destroy = vl_compositor_destroy;
-   compositor->base.set_csc_matrix = vl_compositor_set_csc_matrix;
-   compositor->base.reset_dirty_area = vl_compositor_reset_dirty_area;
-   compositor->base.set_clear_color = vl_compositor_set_clear_color;
-   compositor->base.clear_layers = vl_compositor_clear_layers;
-   compositor->base.set_buffer_layer = vl_compositor_set_buffer_layer;
-   compositor->base.set_palette_layer = vl_compositor_set_palette_layer;
-   compositor->base.set_rgba_layer = vl_compositor_set_rgba_layer;
-   compositor->base.render_picture = vl_compositor_render;
-
-   compositor->pipe = pipe;
-
-   if (!init_pipe_state(compositor))
+   if (!init_pipe_state(c))
       return false;
 
-   if (!init_shaders(compositor)) {
-      cleanup_pipe_state(compositor);
+   if (!init_shaders(c)) {
+      cleanup_pipe_state(c);
       return false;
    }
-   if (!init_buffers(compositor)) {
-      cleanup_shaders(compositor);
-      cleanup_pipe_state(compositor);
+   if (!init_buffers(c)) {
+      cleanup_shaders(c);
+      cleanup_pipe_state(c);
       return false;
    }
 
-   vl_compositor_clear_layers(&compositor->base);
+   vl_compositor_clear_layers(c);
 
    vl_csc_get_matrix(VL_CSC_COLOR_STANDARD_IDENTITY, NULL, true, csc_matrix);
-   vl_compositor_set_csc_matrix(&compositor->base, csc_matrix);
+   vl_compositor_set_csc_matrix(c, csc_matrix);
 
-   compositor->clear_color[0] = compositor->clear_color[1] = 0.0f;
-   compositor->clear_color[2] = compositor->clear_color[3] = 0.0f;
-   vl_compositor_reset_dirty_area(&compositor->base);
+   c->clear_color[0] = c->clear_color[1] = 0.0f;
+   c->clear_color[2] = c->clear_color[3] = 0.0f;
+   vl_compositor_reset_dirty_area(c);
 
-   return &compositor->base;
+   return true;
 }

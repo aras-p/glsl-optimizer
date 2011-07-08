@@ -493,7 +493,7 @@ Status XvMCPutSurface(Display *dpy, XvMCSurface *surface, Drawable drawable,
    static int dump_window = -1;
 
    struct pipe_video_context *vpipe;
-   struct pipe_video_compositor *compositor;
+   struct vl_compositor *compositor;
 
    XvMCSurfacePrivate *surface_priv;
    XvMCContextPrivate *context_priv;
@@ -519,7 +519,7 @@ Status XvMCPutSurface(Display *dpy, XvMCSurface *surface, Drawable drawable,
 
    subpicture_priv = surface_priv->subpicture ? surface_priv->subpicture->privData : NULL;
    vpipe = context_priv->vctx->vpipe;
-   compositor = context_priv->compositor;
+   compositor = &context_priv->compositor;
 
    if (!context_priv->drawable_surface ||
        context_priv->dst_rect.x != dst_rect.x || context_priv->dst_rect.y != dst_rect.y ||
@@ -527,7 +527,7 @@ Status XvMCPutSurface(Display *dpy, XvMCSurface *surface, Drawable drawable,
 
       context_priv->drawable_surface = vl_drawable_surface_get(context_priv->vctx, drawable);
       context_priv->dst_rect = dst_rect;
-      compositor->reset_dirty_area(compositor);
+      vl_compositor_reset_dirty_area(compositor);
    }
 
    if (!context_priv->drawable_surface)
@@ -547,8 +547,8 @@ Status XvMCPutSurface(Display *dpy, XvMCSurface *surface, Drawable drawable,
 
    unmap_and_flush_surface(surface_priv);
 
-   compositor->clear_layers(compositor);
-   compositor->set_buffer_layer(compositor, 0, surface_priv->video_buffer, &src_rect, NULL);
+   vl_compositor_clear_layers(compositor);
+   vl_compositor_set_buffer_layer(compositor, 0, surface_priv->video_buffer, &src_rect, NULL);
 
    if (subpicture_priv) {
       XVMC_MSG(XVMC_TRACE, "[XvMC] Surface %p has subpicture %p.\n", surface, surface_priv->subpicture);
@@ -556,11 +556,11 @@ Status XvMCPutSurface(Display *dpy, XvMCSurface *surface, Drawable drawable,
       assert(subpicture_priv->surface == surface);
 
       if (subpicture_priv->palette)
-         compositor->set_palette_layer(compositor, 1, subpicture_priv->sampler, subpicture_priv->palette,
-                                       &subpicture_priv->src_rect, &subpicture_priv->dst_rect);
+         vl_compositor_set_palette_layer(compositor, 1, subpicture_priv->sampler, subpicture_priv->palette,
+                                         &subpicture_priv->src_rect, &subpicture_priv->dst_rect);
       else
-         compositor->set_rgba_layer(compositor, 1, subpicture_priv->sampler,
-                                    &subpicture_priv->src_rect, &subpicture_priv->dst_rect);
+         vl_compositor_set_rgba_layer(compositor, 1, subpicture_priv->sampler,
+                                      &subpicture_priv->src_rect, &subpicture_priv->dst_rect);
 
       surface_priv->subpicture = NULL;
       subpicture_priv->surface = NULL;
@@ -569,7 +569,7 @@ Status XvMCPutSurface(Display *dpy, XvMCSurface *surface, Drawable drawable,
    // Workaround for r600g, there seems to be a bug in the fence refcounting code
    vpipe->screen->fence_reference(vpipe->screen, &surface_priv->fence, NULL);
 
-   compositor->render_picture(compositor, PictureToPipe(flags), context_priv->drawable_surface, &dst_rect, &surface_priv->fence);
+   vl_compositor_render(compositor, PictureToPipe(flags), context_priv->drawable_surface, &dst_rect, &surface_priv->fence);
 
    XVMC_MSG(XVMC_TRACE, "[XvMC] Submitted surface %p for display. Pushing to front buffer.\n", surface);
 

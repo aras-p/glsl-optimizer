@@ -37,6 +37,7 @@
 #include <pipe/p_video_context.h>
 
 #include <util/u_debug.h>
+#include <vl/vl_compositor.h>
 
 #include <vl_winsys.h>
 
@@ -188,13 +189,13 @@ typedef struct
 {
    vlVdpDevice *device;
    Drawable drawable;
-   struct pipe_video_compositor *compositor;
+   struct vl_compositor compositor;
 } vlVdpPresentationQueue;
 
 typedef struct
 {
    vlVdpDevice *device;
-   struct pipe_video_compositor *compositor;
+   struct vl_compositor compositor;
 } vlVdpVideoMixer;
 
 typedef struct

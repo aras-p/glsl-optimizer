@@ -113,7 +113,7 @@ Status XvMCSetAttribute(Display *dpy, XvMCContext *context, Atom attribute, int 
       context_priv->color_standard,
       &context_priv->procamp, true, csc
    );
-   context_priv->compositor->set_csc_matrix(context_priv->compositor, csc);
+   vl_compositor_set_csc_matrix(&context_priv->compositor, csc);
 
    XVMC_MSG(XVMC_TRACE, "[XvMC] Set attribute %s to value %d.\n", attr, value);
 
