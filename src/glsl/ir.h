@@ -1669,4 +1669,8 @@ ir_has_call(ir_instruction *ir);
 extern void
 do_set_program_inouts(exec_list *instructions, struct gl_program *prog);
 
+extern char *
+prototype_string(const glsl_type *return_type, const char *name,
+		 exec_list *parameters);
+
 #endif /* IR_H */

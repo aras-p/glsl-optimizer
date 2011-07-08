@@ -62,8 +62,10 @@ process_parameters(exec_list *instructions, exec_list *actual_parameters,
  *
  * \param return_type Return type of the function.  May be \c NULL.
  * \param name        Name of the function.
- * \param parameters  Parameter list for the function.  This may be either a
- *                    formal or actual parameter list.  Only the type is used.
+ * \param parameters  List of \c ir_instruction nodes representing the
+ *                    parameter list for the function.  This may be either a
+ *                    formal (\c ir_variable) or actual (\c ir_rvalue)
+ *                    parameter list.  Only the type is used.
  *
  * \return
  * A ralloced string representing the prototype of the function.
