@@ -167,21 +167,6 @@ static int drawable_cmp(void *key1, void *key2)
    return d1 != d2;
 }
 
-static enum pipe_error
-drawable_destroy(void *key, void *value, void *data)
-{
-   Drawable drawable = (Drawable)key;
-   struct vl_dri_screen *vl_dri_scrn = (struct vl_dri_screen*)data;
-
-   assert(drawable != None);
-   assert(value);
-   assert(data);
-
-   dri2DestroyDrawable(vl_dri_scrn->dri_screen, drawable);
-
-   return PIPE_OK;
-}
-
 struct vl_screen*
 vl_screen_create(Display *display, int screen)
 {
@@ -226,7 +211,6 @@ void vl_screen_destroy(struct vl_screen *vscreen)
 
    assert(vscreen);
 
-   util_hash_table_foreach(vl_dri_scrn->drawable_table, drawable_destroy, vl_dri_scrn);
    util_hash_table_destroy(vl_dri_scrn->drawable_table);
    vl_dri_scrn->base.pscreen->destroy(vl_dri_scrn->base.pscreen);
    dri2DestroyScreen(vl_dri_scrn->dri_screen);
