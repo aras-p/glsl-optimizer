@@ -25,6 +25,7 @@
 #include "util/u_format_s3tc.h"
 #include "util/u_memory.h"
 #include "os/os_time.h"
+#include "vl/vl_video_buffer.h"
 
 #include "r300_context.h"
 #include "r300_texture.h"
@@ -522,6 +523,7 @@ struct pipe_screen* r300_screen_create(struct radeon_winsys *rws)
     r300screen->screen.get_paramf = r300_get_paramf;
     r300screen->screen.get_video_param = r300_get_video_param;
     r300screen->screen.is_format_supported = r300_is_format_supported;
+    r300screen->screen.is_video_format_supported = vl_video_buffer_is_format_supported;
     r300screen->screen.context_create = r300_create_context;
     r300screen->screen.video_context_create = r300_video_create;
     r300screen->screen.fence_reference = r300_fence_reference;

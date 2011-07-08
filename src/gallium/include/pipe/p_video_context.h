@@ -56,13 +56,6 @@ struct pipe_video_context
    void (*destroy)(struct pipe_video_context *context);
 
    /**
-    * Check if the given pipe_format is supported as a video buffer
-    */
-   boolean (*is_format_supported)(struct pipe_video_context *context,
-                                  enum pipe_format format,
-                                  enum pipe_video_profile profile);
-
-   /**
     * create a surface of a texture
     */
    struct pipe_surface *(*create_surface)(struct pipe_video_context *context,

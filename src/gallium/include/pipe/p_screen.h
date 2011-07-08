@@ -112,6 +112,14 @@ struct pipe_screen {
                                    enum pipe_texture_target target,
                                    unsigned sample_count,
                                    unsigned bindings );
+                                   
+   /**
+    * Check if the given pipe_format is supported as output for this codec/profile.
+    * \param profile  profile to check, may also be PIPE_VIDEO_PROFILE_UNKNOWN
+    */
+   boolean (*is_video_format_supported)( struct pipe_screen *,
+                                         enum pipe_format format,
+                                         enum pipe_video_profile profile );
 
    /**
     * Create a new texture object, using the given template info.

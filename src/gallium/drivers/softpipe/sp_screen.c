@@ -34,6 +34,7 @@
 #include "pipe/p_screen.h"
 #include "draw/draw_context.h"
 #include "vl/vl_context.h"
+#include "vl/vl_video_buffer.h"
 
 #include "state_tracker/sw_winsys.h"
 #include "tgsi/tgsi_exec.h"
@@ -338,6 +339,7 @@ softpipe_create_screen(struct sw_winsys *winsys)
    screen->base.get_paramf = softpipe_get_paramf;
    screen->base.get_video_param = softpipe_get_video_param;
    screen->base.is_format_supported = softpipe_is_format_supported;
+   screen->base.is_video_format_supported = vl_video_buffer_is_format_supported;
    screen->base.context_create = softpipe_create_context;
    screen->base.flush_frontbuffer = softpipe_flush_frontbuffer;
    screen->base.video_context_create = sp_video_create;

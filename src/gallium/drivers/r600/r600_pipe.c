@@ -38,6 +38,7 @@
 #include <util/u_memory.h>
 #include <util/u_inlines.h>
 #include "util/u_upload_mgr.h"
+#include <vl/vl_video_buffer.h>
 #include "os/os_time.h"
 #include <pipebuffer/pb_buffer.h>
 #include "r600.h"
@@ -667,6 +668,7 @@ struct pipe_screen *r600_screen_create(struct radeon *radeon)
 	rscreen->screen.get_paramf = r600_get_paramf;
 	rscreen->screen.get_video_param = r600_get_video_param;
 	rscreen->screen.is_format_supported = r600_is_format_supported;
+	rscreen->screen.is_video_format_supported = vl_video_buffer_is_format_supported;
 	rscreen->screen.context_create = r600_create_context;
 	rscreen->screen.video_context_create = r600_video_create;
 	rscreen->screen.fence_reference = r600_fence_reference;

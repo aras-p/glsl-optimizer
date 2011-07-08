@@ -47,33 +47,6 @@ vl_context_destroy(struct pipe_video_context *context)
    FREE(ctx);
 }
 
-static boolean
-vl_context_is_format_supported(struct pipe_video_context *context,
-                               enum pipe_format format,
-                               enum pipe_video_profile profile)
-{
-   struct vl_context *ctx = (struct vl_context*)context;
-   const enum pipe_format *resource_formats;
-   unsigned i;
-
-   assert(context);
-
-   resource_formats = vl_video_buffer_formats(ctx->pipe, format);
-   if (!resource_formats)
-      return false;
-
-   for(i = 0; i < VL_MAX_PLANES; ++i) {
-      if (!resource_formats[i])
-         continue;
-
-      if (!ctx->pipe->screen->is_format_supported(ctx->pipe->screen, resource_formats[i],
-                                                  PIPE_TEXTURE_2D, 0, PIPE_USAGE_STATIC))
-         return false;
-   }
-
-   return true;
-}
-
 static struct pipe_surface *
 vl_context_create_surface(struct pipe_video_context *context,
                           struct pipe_resource *resource,
@@ -220,7 +193,7 @@ vl_context_create_buffer(struct pipe_video_context *context,
       PIPE_VIDEO_CAP_NPOT_TEXTURES
    );
 
-   resource_formats = vl_video_buffer_formats(ctx->pipe, buffer_format);
+   resource_formats = vl_video_buffer_formats(ctx->pipe->screen, buffer_format);
    if (!resource_formats)
       return NULL;
 
@@ -261,7 +234,6 @@ vl_create_context(struct pipe_context *pipe)
    ctx->base.screen = pipe->screen;
 
    ctx->base.destroy = vl_context_destroy;
-   ctx->base.is_format_supported = vl_context_is_format_supported;
    ctx->base.create_surface = vl_context_create_surface;
    ctx->base.create_sampler_view = vl_context_create_sampler_view;
    ctx->base.clear_sampler = vl_context_clear_sampler;

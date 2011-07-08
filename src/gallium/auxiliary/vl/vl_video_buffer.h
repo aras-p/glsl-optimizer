@@ -53,7 +53,16 @@ struct vl_video_buffer
  * get subformats for each plane
  */
 const enum pipe_format *
-vl_video_buffer_formats(struct pipe_context *pipe, enum pipe_format format);
+vl_video_buffer_formats(struct pipe_screen *screen, enum pipe_format format);
+
+/**
+ * check if video buffer format is supported for a codec/profile
+ * can be used as default implementation of screen->is_video_format_supported
+ */
+boolean
+vl_video_buffer_is_format_supported(struct pipe_screen *screen,
+                                    enum pipe_format format,
+                                    enum pipe_video_profile profile);
 
 /**
  * initialize a buffer, creating its resources

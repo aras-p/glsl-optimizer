@@ -51,7 +51,7 @@ const enum pipe_format const_resource_formats_NV12[3] = {
 };
 
 const enum pipe_format *
-vl_video_buffer_formats(struct pipe_context *pipe, enum pipe_format format)
+vl_video_buffer_formats(struct pipe_screen *screen, enum pipe_format format)
 {
    switch(format) {
    case PIPE_FORMAT_YV12:
@@ -63,6 +63,29 @@ vl_video_buffer_formats(struct pipe_context *pipe, enum pipe_format format)
    default:
       return NULL;
    }
+}
+
+boolean
+vl_video_buffer_is_format_supported(struct pipe_screen *screen,
+                                    enum pipe_format format,
+                                    enum pipe_video_profile profile)
+{
+   const enum pipe_format *resource_formats;
+   unsigned i;
+
+   resource_formats = vl_video_buffer_formats(screen, format);
+   if (!resource_formats)
+      return false;
+
+   for(i = 0; i < VL_MAX_PLANES; ++i) {
+      if (!resource_formats[i])
+         continue;
+
+      if (!screen->is_format_supported(screen, resource_formats[i], PIPE_TEXTURE_2D, 0, PIPE_USAGE_STATIC))
+         return false;
+   }
+
+   return true;
 }
 
 static void
