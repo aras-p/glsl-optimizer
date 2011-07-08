@@ -56,13 +56,6 @@ struct pipe_video_context
    void (*destroy)(struct pipe_video_context *context);
 
    /**
-    * create a surface of a texture
-    */
-   struct pipe_surface *(*create_surface)(struct pipe_video_context *context,
-                                          struct pipe_resource *resource,
-                                          const struct pipe_surface *templ);
-
-   /**
     * sampler view handling, used for subpictures for example
     */
    /*@{*/

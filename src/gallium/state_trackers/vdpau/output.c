@@ -30,6 +30,7 @@
 
 #include <util/u_debug.h>
 #include <util/u_memory.h>
+#include <util/u_sampler.h>
 
 #include "vdpau_private.h"
 
@@ -39,6 +40,7 @@ vlVdpOutputSurfaceCreate(VdpDevice device,
                          uint32_t width, uint32_t height,
                          VdpOutputSurface  *surface)
 {
+   struct pipe_context *pipe;
    struct pipe_video_context *context;
    struct pipe_resource res_tmpl, *res;
    struct pipe_sampler_view sv_templ;
@@ -54,8 +56,9 @@ vlVdpOutputSurfaceCreate(VdpDevice device,
    if (!dev)
       return VDP_STATUS_INVALID_HANDLE;
 
+   pipe = dev->context->pipe;
    context = dev->context->vpipe;
-   if (!context)
+   if (!pipe || !context)
       return VDP_STATUS_INVALID_HANDLE;
 
    vlsurface = CALLOC(1, sizeof(vlVdpOutputSurface));
@@ -85,7 +88,7 @@ vlVdpOutputSurfaceCreate(VdpDevice device,
    // as long as we don't have a background picture we don't want an alpha channel
    sv_templ.swizzle_a = PIPE_SWIZZLE_ONE;
 
-   vlsurface->sampler_view = context->create_sampler_view(context, res, &sv_templ);
+   vlsurface->sampler_view = pipe->create_sampler_view(pipe, res, &sv_templ);
    if (!vlsurface->sampler_view) {
       FREE(dev);
       return VDP_STATUS_ERROR;
@@ -94,7 +97,7 @@ vlVdpOutputSurfaceCreate(VdpDevice device,
    memset(&surf_templ, 0, sizeof(surf_templ));
    surf_templ.format = res->format;
    surf_templ.usage = PIPE_BIND_SAMPLER_VIEW | PIPE_BIND_RENDER_TARGET;
-   vlsurface->surface = context->create_surface(context, res, &surf_templ);
+   vlsurface->surface = pipe->create_surface(pipe, res, &surf_templ);
    if (!vlsurface->surface) {
       FREE(dev);
       return VDP_STATUS_ERROR;

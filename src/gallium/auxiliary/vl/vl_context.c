@@ -45,18 +45,6 @@ vl_context_destroy(struct pipe_video_context *context)
    FREE(ctx);
 }
 
-static struct pipe_surface *
-vl_context_create_surface(struct pipe_video_context *context,
-                          struct pipe_resource *resource,
-                          const struct pipe_surface *templ)
-{
-   struct vl_context *ctx = (struct vl_context*)context;
-
-   assert(ctx);
-
-   return ctx->pipe->create_surface(ctx->pipe, resource, templ);
-}
-
 static struct pipe_sampler_view *
 vl_context_create_sampler_view(struct pipe_video_context *context,
                                struct pipe_resource *resource,
@@ -232,7 +220,6 @@ vl_create_context(struct pipe_context *pipe)
    ctx->base.screen = pipe->screen;
 
    ctx->base.destroy = vl_context_destroy;
-   ctx->base.create_surface = vl_context_create_surface;
    ctx->base.create_sampler_view = vl_context_create_sampler_view;
    ctx->base.clear_sampler = vl_context_clear_sampler;
    ctx->base.upload_sampler = vl_context_upload_sampler;

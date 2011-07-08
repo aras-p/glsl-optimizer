@@ -99,8 +99,8 @@ vl_drawable_surface_get(struct vl_context *vctx, Drawable drawable)
    memset(&surf_template, 0, sizeof(surf_template));
    surf_template.format = templat.format;
    surf_template.usage = PIPE_BIND_RENDER_TARGET;
-   xsp_screen->drawable_surface = vctx->vpipe->create_surface(vctx->vpipe, drawable_tex,
-                                                              &surf_template);
+   xsp_screen->drawable_surface = vctx->pipe->create_surface(vctx->pipe, drawable_tex,
+                                                             &surf_template);
    pipe_resource_reference(&drawable_tex, NULL);
 
    if (!xsp_screen->drawable_surface)
@@ -172,7 +172,7 @@ void vl_screen_destroy(struct vl_screen *vscreen)
 struct vl_context*
 vl_video_create(struct vl_screen *vscreen)
 {
-   struct pipe_video_context *pipe;
+   struct pipe_context *pipe;
    struct pipe_video_context *vpipe;
    struct vl_context *vctx;
 

@@ -95,7 +95,7 @@ vl_dri2_get_front(struct vl_context *vctx, Drawable drawable)
          memset(&surf_template, 0, sizeof(surf_template));
          surf_template.format = front_tex->format;
          surf_template.usage = PIPE_BIND_RENDER_TARGET;
-         front_surf = vctx->vpipe->create_surface(vctx->vpipe, front_tex, &surf_template);
+         front_surf = vctx->pipe->create_surface(vctx->pipe, front_tex, &surf_template);
       }
       pipe_resource_reference(&front_tex, NULL);
       Xfree(dri2_front);
