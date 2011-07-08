@@ -365,7 +365,7 @@ bind_shaders(struct xa_context *ctx, const struct xa_composite *comp)
 	fs_traits |= picture_format_fixups(mask_pic, 1);
     }
 
-    if (ctx->dst->srf->format == PIPE_FORMAT_L8_UNORM)
+    if (ctx->srf->format == PIPE_FORMAT_L8_UNORM)
 	fs_traits |= FS_DST_LUMINANCE;
 
     shader = xa_shaders_get(ctx->shaders, vs_traits, fs_traits);
@@ -455,14 +455,13 @@ xa_composite_prepare(struct xa_context *ctx,
     struct xa_surface *dst_srf = comp->dst->srf;
     int ret;
 
-    ret = xa_surface_psurf_create(ctx, dst_srf);
+    ret = xa_ctx_srf_create(ctx, dst_srf);
     if (ret != XA_ERR_NONE)
 	return ret;
 
     ctx->dst = dst_srf;
-    renderer_bind_destination(ctx, dst_srf->srf,
-			      dst_srf->srf->width,
-			      dst_srf->srf->height);
+    renderer_bind_destination(ctx, ctx->srf, ctx->srf->width,
+			      ctx->srf->height);
 
     ret = bind_composite_blend_state(ctx, comp);
     if (ret != XA_ERR_NONE)
@@ -479,7 +478,7 @@ xa_composite_prepare(struct xa_context *ctx,
 	ctx->comp = comp;
     }
 
-    xa_surface_psurf_destroy(dst_srf);
+    xa_ctx_srf_destroy(ctx);
     return XA_ERR_NONE;
 }
 
@@ -514,7 +513,7 @@ xa_composite_done(struct xa_context *ctx)
 
     ctx->comp = NULL;
     ctx->has_solid_color = FALSE;
-    ctx->num_bound_samplers = 0;
+    xa_ctx_sampler_views_destroy(ctx);
 }
 
 static const struct xa_composite_allocation a = {

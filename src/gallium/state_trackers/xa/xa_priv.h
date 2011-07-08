@@ -56,11 +56,9 @@ struct xa_surface {
     struct pipe_resource template;
     struct xa_tracker *xa;
     struct pipe_resource *tex;
-    struct pipe_surface *srf;
-    struct pipe_sampler_view *view;
+    struct pipe_transfer *transfer;
     unsigned int flags;
     struct xa_format_descriptor fdesc;
-    struct pipe_transfer *transfer;
     struct pipe_context *mapping_pipe;
 };
 
@@ -97,6 +95,8 @@ struct xa_context {
     struct pipe_fence_handle *last_fence;
     struct xa_surface *src;
     struct xa_surface *dst;
+    struct pipe_surface *srf;
+
     int simple_copy;
 
     int has_solid_color;
@@ -200,10 +200,13 @@ struct xa_shader xa_shaders_get(struct xa_shaders *shaders,
  * xa_context.c
  */
 extern int
-xa_surface_psurf_create(struct xa_context *ctx, struct xa_surface *dst);
+xa_ctx_srf_create(struct xa_context *ctx, struct xa_surface *dst);
 
 extern void
-xa_surface_psurf_destroy(struct xa_surface *dst);
+xa_ctx_srf_destroy(struct xa_context *ctx);
+
+extern void
+xa_ctx_sampler_views_destroy(struct xa_context *ctx);
 
 /*
  * xa_renderer.c

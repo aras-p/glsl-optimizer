@@ -71,7 +71,6 @@ xa_yuv_bind_samplers(struct xa_context *r, struct xa_surface *yuv[])
 {
     struct pipe_sampler_state *samplers[3];
     struct pipe_sampler_state sampler;
-    struct pipe_sampler_view *views[3];
     struct pipe_sampler_view view_templ;
     unsigned int i;
 
@@ -86,19 +85,15 @@ xa_yuv_bind_samplers(struct xa_context *r, struct xa_surface *yuv[])
 
     for (i = 0; i < 3; ++i) {
 	samplers[i] = &sampler;
-	if (!yuv[i]->view) {
-	    u_sampler_view_default_template(&view_templ,
-					    yuv[i]->tex, yuv[i]->tex->format);
+	u_sampler_view_default_template(&view_templ, yuv[i]->tex,
+					yuv[i]->tex->format);
 
-	    yuv[i]->view = r->pipe->create_sampler_view(r->pipe,
-							yuv[i]->tex,
-							&view_templ);
-	}
-	views[i] = yuv[i]->view;
+	r->bound_sampler_views[i] =
+	    r->pipe->create_sampler_view(r->pipe, yuv[i]->tex, &view_templ);
     }
-
+    r->num_bound_samplers = 3;
     cso_set_samplers(r->cso, 3, (const struct pipe_sampler_state **)samplers);
-    cso_set_fragment_sampler_views(r->cso, 3, views);
+    cso_set_fragment_sampler_views(r->cso, 3, r->bound_sampler_views);
 }
 
 static void
@@ -108,16 +103,6 @@ xa_yuv_fs_constants(struct xa_context *r, const float conversion_matrix[])
 
     renderer_set_constants(r, PIPE_SHADER_FRAGMENT,
 			   conversion_matrix, param_bytes);
-}
-
-static void
-xa_yuv_destroy_sampler_views(struct xa_surface *yuv[])
-{
-    unsigned int i;
-
-    for (i = 0; i < 3; ++i) {
-	pipe_sampler_view_reference(&yuv[i]->view, NULL);
-    }
 }
 
 extern int
@@ -137,18 +122,16 @@ xa_yuv_planar_blit(struct xa_context *r,
 {
     float scale_x;
     float scale_y;
-    struct pipe_surface srf_templ;
+    int ret;
 
     if (dst_w == 0 || dst_h == 0)
 	return XA_ERR_NONE;
 
-    memset(&srf_templ, 0, sizeof(srf_templ));
-    u_surface_default_template(&srf_templ, dst->tex, PIPE_BIND_RENDER_TARGET);
-    dst->srf = r->pipe->create_surface(r->pipe, dst->tex, &srf_templ);
-    if (!dst->srf)
+    ret = xa_ctx_srf_create(r, dst);
+    if (ret != XA_ERR_NONE)
 	return -XA_ERR_NORES;
 
-    renderer_bind_destination(r, dst->srf, dst->srf->width, dst->srf->height);
+    renderer_bind_destination(r, r->srf, r->srf->width, r->srf->height);
     xa_yuv_bind_blend_state(r);
     xa_yuv_bind_shaders(r);
     xa_yuv_bind_samplers(r, yuv);
@@ -172,8 +155,8 @@ xa_yuv_planar_blit(struct xa_context *r,
 
     r->pipe->flush(r->pipe, &r->last_fence);
 
-    xa_yuv_destroy_sampler_views(yuv);
-    pipe_surface_reference(&dst->srf, NULL);
+    xa_ctx_sampler_views_destroy(r);
+    xa_ctx_srf_destroy(r);
 
     return XA_ERR_NONE;
 }

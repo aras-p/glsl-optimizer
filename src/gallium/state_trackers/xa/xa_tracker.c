@@ -314,7 +314,6 @@ xa_surface_create(struct xa_tracker *xa,
     if (!srf->tex)
 	goto out_no_tex;
 
-    srf->srf = NULL;
     srf->xa = xa;
     srf->flags = flags;
     srf->fdesc = fdesc;
@@ -341,7 +340,9 @@ xa_surface_redefine(struct xa_surface *srf,
     struct xa_tracker *xa = srf->xa;
     int save_width;
     int save_height;
+    unsigned int save_format;
     struct xa_format_descriptor fdesc;
+
 
     if (xa_format == xa_format_unknown)
 	fdesc = xa_get_format_stype_depth(xa, stype, depth);
@@ -373,18 +374,19 @@ xa_surface_redefine(struct xa_surface *srf,
 
     save_width = template->width0;
     save_height = template->height0;
+    save_format = template->format;
 
     template->width0 = width;
     template->height0 = height;
+    template->format = fdesc.format;
 
     texture = xa->screen->resource_create(xa->screen, template);
     if (!texture) {
 	template->width0 = save_width;
 	template->height0 = save_height;
+	template->format = save_format;
 	return -XA_ERR_NORES;
     }
-
-    pipe_surface_reference(&srf->srf, NULL);
 
     if (copy_contents) {
 	struct pipe_context *pipe = xa->default_ctx->pipe;
@@ -407,7 +409,6 @@ xa_surface_redefine(struct xa_surface *srf,
 void
 xa_surface_destroy(struct xa_surface *srf)
 {
-    pipe_surface_reference(&srf->srf, NULL);
     pipe_resource_reference(&srf->tex, NULL);
     free(srf);
 }

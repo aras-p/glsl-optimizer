@@ -72,6 +72,8 @@ xa_context_destroy(struct xa_context *r)
 	r->shaders = NULL;
     }
 
+    xa_ctx_sampler_views_destroy(r);
+
     if (r->cso) {
 	cso_release_all(r->cso);
 	cso_destroy_context(r->cso);
@@ -136,6 +138,9 @@ xa_surface_map(struct xa_context *ctx,
     unsigned int transfer_direction = 0;
     struct pipe_context *pipe = ctx->pipe;
 
+    /*
+     * A surface may only have a single map.
+     */
     if (srf->transfer)
 	return NULL;
 
@@ -174,12 +179,12 @@ xa_surface_unmap(struct xa_surface *srf)
 }
 
 int
-xa_surface_psurf_create(struct xa_context *ctx, struct xa_surface *dst)
+xa_ctx_srf_create(struct xa_context *ctx, struct xa_surface *dst)
 {
     struct pipe_screen *screen = ctx->pipe->screen;
     struct pipe_surface srf_templ;
 
-    if (dst->srf)
+    if (ctx->srf)
 	return -XA_ERR_INVAL;
 
     if (!screen->is_format_supported(screen,  dst->tex->format,
@@ -189,37 +194,38 @@ xa_surface_psurf_create(struct xa_context *ctx, struct xa_surface *dst)
 
     u_surface_default_template(&srf_templ, dst->tex,
 			       PIPE_BIND_RENDER_TARGET);
-    dst->srf = ctx->pipe->create_surface(ctx->pipe, dst->tex, &srf_templ);
-    if (!dst->srf)
+    ctx->srf = ctx->pipe->create_surface(ctx->pipe, dst->tex, &srf_templ);
+    if (!ctx->srf)
 	return -XA_ERR_NORES;
 
     return XA_ERR_NONE;
 }
 
 void
-xa_surface_psurf_destroy(struct xa_surface *dst)
+xa_ctx_srf_destroy(struct xa_context *ctx)
 {
-    pipe_surface_reference(&dst->srf, NULL);
+    pipe_surface_reference(&ctx->srf, NULL);
 }
 
 int
 xa_copy_prepare(struct xa_context *ctx,
 		struct xa_surface *dst, struct xa_surface *src)
 {
-    if (src == dst || dst->srf != NULL)
+    if (src == dst || ctx->srf != NULL)
 	return -XA_ERR_INVAL;
 
     if (src->tex->format != dst->tex->format) {
-	int ret = xa_surface_psurf_create(ctx, dst);
+	int ret = xa_ctx_srf_create(ctx, dst);
 	if (ret != XA_ERR_NONE)
 	    return ret;
-	renderer_copy_prepare(ctx, dst->srf, src->tex);
+	renderer_copy_prepare(ctx, ctx->srf, src->tex);
 	ctx->simple_copy = 0;
     } else
 	ctx->simple_copy = 1;
 
     ctx->src = src;
     ctx->dst = dst;
+    xa_ctx_srf_destroy(ctx);
 
     return 0;
 }
@@ -238,7 +244,8 @@ xa_copy(struct xa_context *ctx,
 					0, &src_box);
     } else
 	renderer_copy(ctx, dx, dy, sx, sy, width, height,
-		      (float) width, (float) height);
+		      (float) ctx->src->tex->width0,
+		      (float) ctx->src->tex->height0);
 }
 
 void
@@ -247,7 +254,6 @@ xa_copy_done(struct xa_context *ctx)
     if (!ctx->simple_copy) {
 	   renderer_draw_flush(ctx);
 	   ctx->pipe->flush(ctx->pipe, &ctx->last_fence);
-	   xa_surface_psurf_destroy(ctx->dst);
     } else
 	ctx->pipe->flush(ctx->pipe, &ctx->last_fence);
 }
@@ -278,19 +284,19 @@ xa_solid_prepare(struct xa_context *ctx, struct xa_surface *dst,
     int width, height;
     int ret;
 
-    ret = xa_surface_psurf_create(ctx, dst);
+    ret = xa_ctx_srf_create(ctx, dst);
     if (ret != XA_ERR_NONE)
 	return ret;
 
-    if (dst->srf->format == PIPE_FORMAT_L8_UNORM)
+    if (ctx->srf->format == PIPE_FORMAT_L8_UNORM)
 	xa_pixel_to_float4_a8(fg, ctx->solid_color);
     else
 	xa_pixel_to_float4(fg, ctx->solid_color);
     ctx->has_solid_color = 1;
 
     ctx->dst = dst;
-    width = dst->srf->width;
-    height = dst->srf->height;
+    width = ctx->srf->width;
+    height = ctx->srf->height;
 
 #if 0
     debug_printf("Color Pixel=(%d, %d, %d, %d), RGBA=(%f, %f, %f, %f)\n",
@@ -303,7 +309,7 @@ xa_solid_prepare(struct xa_context *ctx, struct xa_surface *dst,
     vs_traits = VS_SOLID_FILL;
     fs_traits = FS_SOLID_FILL;
 
-    renderer_bind_destination(ctx, dst->srf, width, height);
+    renderer_bind_destination(ctx, ctx->srf, width, height);
     bind_solid_blend_state(ctx);
     cso_set_samplers(ctx->cso, 0, NULL);
     cso_set_fragment_sampler_views(ctx->cso, 0, NULL);
@@ -314,7 +320,7 @@ xa_solid_prepare(struct xa_context *ctx, struct xa_surface *dst,
 
     renderer_begin_solid(ctx);
 
-    xa_surface_psurf_destroy(dst);
+    xa_ctx_srf_destroy(ctx);
     return XA_ERR_NONE;
 }
 
@@ -386,4 +392,14 @@ xa_fence_destroy(struct xa_fence *fence)
     }
 
     free(fence);
+}
+
+void
+xa_ctx_sampler_views_destroy(struct xa_context *ctx)
+{
+    int i;
+
+    for (i = 0; i < ctx->num_bound_samplers; ++i)
+	pipe_sampler_view_reference(&ctx->bound_sampler_views[i], NULL);
+    ctx->num_bound_samplers = 0;
 }
