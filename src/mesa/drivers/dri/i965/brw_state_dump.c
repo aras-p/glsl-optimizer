@@ -354,6 +354,19 @@ static void dump_blend_state(struct brw_context *brw, uint32_t offset)
    batch_out(brw, name, offset, 1, "\n");
 }
 
+static void
+dump_scissor(struct brw_context *brw, uint32_t offset)
+{
+   const char *name = "SCISSOR";
+   struct intel_context *intel = &brw->intel;
+   struct gen6_scissor_rect *scissor = intel->batch.bo->virtual + offset;
+
+   batch_out(brw, name, offset, 0, "xmin %d, ymin %d\n",
+	     scissor->xmin, scissor->ymin);
+   batch_out(brw, name, offset, 1, "xmax %d, ymax %d\n",
+	     scissor->xmax, scissor->ymax);
+}
+
 static void dump_binding_table(struct brw_context *brw, uint32_t offset,
 			       uint32_t size)
 {
@@ -476,6 +489,9 @@ dump_state_batch(struct brw_context *brw)
 	 break;
       case AUB_TRACE_SAMPLER_DEFAULT_COLOR:
 	 dump_sdc(brw, offset);
+	 break;
+      case AUB_TRACE_SCISSOR_STATE:
+	 dump_scissor(brw, offset);
 	 break;
       default:
 	 break;
