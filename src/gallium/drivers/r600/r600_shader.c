@@ -945,6 +945,11 @@ static void r600_bc_src_set_abs(struct r600_bc_alu_src *bc_src)
 	bc_src->neg = 0;
 }
 
+static void r600_bc_src_toggle_neg(struct r600_bc_alu_src *bc_src)
+{
+	bc_src->neg = !bc_src->neg;
+}
+
 static void tgsi_dst(struct r600_shader_ctx *ctx,
 		     const struct tgsi_full_dst_register *tgsi_dst,
 		     unsigned swizzle,
@@ -1001,7 +1006,7 @@ static int tgsi_op2_s(struct r600_shader_ctx *ctx, int swap)
 		/* handle some special cases */
 		switch (ctx->inst_info->tgsi_opcode) {
 		case TGSI_OPCODE_SUB:
-			alu.src[1].neg = 1;
+			r600_bc_src_toggle_neg(&alu.src[1]);
 			break;
 		case TGSI_OPCODE_ABS:
 			r600_bc_src_set_abs(&alu.src[0]);
@@ -2195,7 +2200,7 @@ static int tgsi_lrp(struct r600_shader_ctx *ctx)
 		alu.src[0].sel = V_SQ_ALU_SRC_1;
 		alu.src[0].chan = 0;
 		r600_bc_src(&alu.src[1], &ctx->src[0], i);
-		alu.src[1].neg = 1;
+		r600_bc_src_toggle_neg(&alu.src[1]);
 		alu.dst.sel = ctx->temp_reg;
 		alu.dst.chan = i;
 		if (i == lasti) {
