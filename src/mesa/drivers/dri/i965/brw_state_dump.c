@@ -141,7 +141,7 @@ static void dump_sf_state(struct brw_context *brw, uint32_t offset)
    batch_out(brw, name, offset, 3, "thread3\n");
    batch_out(brw, name, offset, 4, "thread4: %d threads\n",
 	     sf->thread4.max_threads + 1);
-   batch_out(brw, name, offset, 5, "sf5\n");
+   batch_out(brw, name, offset, 5, "sf5: viewport offset\n");
    batch_out(brw, name, offset, 6, "sf6\n");
    batch_out(brw, name, offset, 7, "sf7\n");
 }
@@ -384,7 +384,21 @@ static void dump_depth_stencil_state(struct brw_context *brw, uint32_t offset)
 	     ds->ds2.depth_write_enable ? "en" : "dis");
 }
 
-static void dump_cc_state(struct brw_context *brw, uint32_t offset)
+static void dump_cc_state_gen4(struct brw_context *brw, uint32_t offset)
+{
+   const char *name = "CC";
+
+   batch_out(brw, name, offset, 0, "cc0\n");
+   batch_out(brw, name, offset, 1, "cc1\n");
+   batch_out(brw, name, offset, 2, "cc2\n");
+   batch_out(brw, name, offset, 3, "cc3\n");
+   batch_out(brw, name, offset, 4, "cc4: viewport offset\n");
+   batch_out(brw, name, offset, 5, "cc5\n");
+   batch_out(brw, name, offset, 6, "cc6\n");
+   batch_out(brw, name, offset, 7, "cc7\n");
+}
+
+static void dump_cc_state_gen6(struct brw_context *brw, uint32_t offset)
 {
    const char *name = "CC";
    struct gen6_color_calc_state *cc = brw->intel.batch.bo->virtual + offset;
@@ -554,7 +568,10 @@ dump_state_batch(struct brw_context *brw)
 	 dump_depth_stencil_state(brw, offset);
 	 break;
       case AUB_TRACE_CC_STATE:
-	 dump_cc_state(brw, offset);
+	 if (intel->gen >= 6)
+	    dump_cc_state_gen6(brw, offset);
+	 else
+	    dump_cc_state_gen4(brw, offset);
 	 break;
       case AUB_TRACE_BLEND_STATE:
 	 dump_blend_state(brw, offset);
