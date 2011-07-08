@@ -47,6 +47,7 @@ brw_prepare_vs_unit(struct brw_context *brw)
    memset(vs, 0, sizeof(*vs));
 
    /* BRW_NEW_PROGRAM_CACHE | CACHE_NEW_VS_PROG */
+   vs->thread0.grf_reg_count = ALIGN(brw->vs.prog_data->total_grf, 16) / 16 - 1;
    vs->thread0.kernel_start_pointer =
       brw_program_reloc(brw,
 			brw->vs.state_offset +
@@ -54,7 +55,6 @@ brw_prepare_vs_unit(struct brw_context *brw)
 			brw->vs.prog_offset +
 			(vs->thread0.grf_reg_count << 1)) >> 6;
 
-   vs->thread0.grf_reg_count = ALIGN(brw->vs.prog_data->total_grf, 16) / 16 - 1;
    vs->thread1.floating_point_mode = BRW_FLOATING_POINT_NON_IEEE_754;
    /* Choosing multiple program flow means that we may get 2-vertex threads,
     * which will have the channel mask for dwords 4-7 enabled in the thread,
