@@ -55,18 +55,15 @@ static boolean same_src_reg(struct i915_full_src_register* d1, struct i915_full_
 }
 
 static boolean is_unswizzled(struct i915_full_src_register* r,
-                             int sx,
-                             int sy,
-                             int sz,
-                             int sw)
+                             unsigned write_mask)
 {
-   if (sx && r->Register.SwizzleX != TGSI_SWIZZLE_X)
+   if ( write_mask & TGSI_WRITEMASK_X && r->Register.SwizzleX != TGSI_SWIZZLE_X)
       return FALSE;
-   if (sy && r->Register.SwizzleY != TGSI_SWIZZLE_Y)
+   if ( write_mask & TGSI_WRITEMASK_Y && r->Register.SwizzleY != TGSI_SWIZZLE_Y)
       return FALSE;
-   if (sz && r->Register.SwizzleZ != TGSI_SWIZZLE_Z)
+   if ( write_mask & TGSI_WRITEMASK_Z && r->Register.SwizzleZ != TGSI_SWIZZLE_Z)
       return FALSE;
-   if (sw && r->Register.SwizzleW != TGSI_SWIZZLE_W)
+   if ( write_mask & TGSI_WRITEMASK_W && r->Register.SwizzleW != TGSI_SWIZZLE_W)
       return FALSE;
    return TRUE;
 }
@@ -90,53 +87,87 @@ static unsigned op_neutral_element(unsigned opcode)
 }
 
 /*
+ * Sets the swizzle to the neutral element for the operation for the bits
+ * of writemask which are set, swizzle to identity otherwise.
+ */
+static void set_neutral_element_swizzle(struct i915_full_src_register* r,
+                                        unsigned write_mask,
+                                        unsigned neutral)
+{
+   if ( write_mask & TGSI_WRITEMASK_X )
+      r->Register.SwizzleX = neutral;
+   else
+      r->Register.SwizzleX = TGSI_SWIZZLE_X;
+
+   if ( write_mask & TGSI_WRITEMASK_Y )
+      r->Register.SwizzleY = neutral;
+   else
+      r->Register.SwizzleY = TGSI_SWIZZLE_Y;
+
+   if ( write_mask & TGSI_WRITEMASK_Z )
+      r->Register.SwizzleZ = neutral;
+   else
+      r->Register.SwizzleZ = TGSI_SWIZZLE_Z;
+
+   if ( write_mask & TGSI_WRITEMASK_W )
+      r->Register.SwizzleW = neutral;
+   else
+      r->Register.SwizzleW = TGSI_SWIZZLE_W;
+}
+
+/*
  * Optimize away things like:
  *    MUL OUT[0].xyz, TEMP[1], TEMP[2]
  *    MOV OUT[0].w, TEMP[2]
  * into: 
  *    MUL OUT[0].xyzw, TEMP[1].xyz1, TEMP[2]
  * This is useful for optimizing texenv.
- * XXX also handle swizzles other than XYZ/W
  */
 static void i915_fpc_optimize_mov_after_alu(union i915_full_token* current, union i915_full_token* next)
 {
    if ( current->Token.Type == TGSI_TOKEN_TYPE_INSTRUCTION  &&
         next->Token.Type == TGSI_TOKEN_TYPE_INSTRUCTION  &&
         op_commutes(current->FullInstruction.Instruction.Opcode) &&
-        current->FullInstruction.Instruction.Saturate == next->FullInstruction.Instruction.Saturate  &&
+        current->FullInstruction.Instruction.Saturate == next->FullInstruction.Instruction.Saturate &&
         next->FullInstruction.Instruction.Opcode == TGSI_OPCODE_MOV &&
-        current->FullInstruction.Dst[0].Register.WriteMask == TGSI_WRITEMASK_XYZ &&
-        next->FullInstruction.Dst[0].Register.WriteMask == TGSI_WRITEMASK_W &&
         same_dst_reg(&next->FullInstruction.Dst[0], &next->FullInstruction.Dst[0]) &&
         same_src_reg(&next->FullInstruction.Src[0], &current->FullInstruction.Src[1]) &&
-        is_unswizzled(&current->FullInstruction.Src[0], 1, 1, 1, 0) &&
-        is_unswizzled(&current->FullInstruction.Src[1], 1, 1, 1, 0) &&
-        is_unswizzled(&next->FullInstruction.Src[0], 0, 0, 0, 1) )
+        is_unswizzled(&current->FullInstruction.Src[0], current->FullInstruction.Dst[0].Register.WriteMask) &&
+        is_unswizzled(&current->FullInstruction.Src[1], current->FullInstruction.Dst[0].Register.WriteMask) &&
+        is_unswizzled(&next->FullInstruction.Src[0], next->FullInstruction.Dst[0].Register.WriteMask) )
    {
       next->FullInstruction.Instruction.Opcode = TGSI_OPCODE_NOP;
-      current->FullInstruction.Dst[0].Register.WriteMask = TGSI_WRITEMASK_XYZW;
-      current->FullInstruction.Src[0].Register.SwizzleW = op_neutral_element(current->FullInstruction.Instruction.Opcode);
-      current->FullInstruction.Src[1].Register.SwizzleW = TGSI_SWIZZLE_W;
+
+      set_neutral_element_swizzle(&current->FullInstruction.Src[1], 0, 0);
+      set_neutral_element_swizzle(&current->FullInstruction.Src[0],
+                                  next->FullInstruction.Dst[0].Register.WriteMask,
+                                  op_neutral_element(current->FullInstruction.Instruction.Opcode));
+
+      current->FullInstruction.Dst[0].Register.WriteMask = current->FullInstruction.Dst[0].Register.WriteMask |
+                                                           next->FullInstruction.Dst[0].Register.WriteMask;
       return;
    }
 
    if ( current->Token.Type == TGSI_TOKEN_TYPE_INSTRUCTION  &&
         next->Token.Type == TGSI_TOKEN_TYPE_INSTRUCTION  &&
         op_commutes(current->FullInstruction.Instruction.Opcode) &&
-        current->FullInstruction.Instruction.Saturate == next->FullInstruction.Instruction.Saturate  &&
+        current->FullInstruction.Instruction.Saturate == next->FullInstruction.Instruction.Saturate &&
         next->FullInstruction.Instruction.Opcode == TGSI_OPCODE_MOV &&
-        current->FullInstruction.Dst[0].Register.WriteMask == TGSI_WRITEMASK_XYZ &&
-        next->FullInstruction.Dst[0].Register.WriteMask == TGSI_WRITEMASK_W &&
         same_dst_reg(&next->FullInstruction.Dst[0], &next->FullInstruction.Dst[0]) &&
         same_src_reg(&next->FullInstruction.Src[0], &current->FullInstruction.Src[0]) &&
-        is_unswizzled(&current->FullInstruction.Src[0], 1, 1, 1, 0) &&
-        is_unswizzled(&current->FullInstruction.Src[1], 1, 1, 1, 0) &&
-        is_unswizzled(&next->FullInstruction.Src[0], 0, 0, 0, 1) )
+        is_unswizzled(&current->FullInstruction.Src[0], current->FullInstruction.Dst[0].Register.WriteMask) &&
+        is_unswizzled(&current->FullInstruction.Src[1], current->FullInstruction.Dst[0].Register.WriteMask) &&
+        is_unswizzled(&next->FullInstruction.Src[0], next->FullInstruction.Dst[0].Register.WriteMask) )
    {
       next->FullInstruction.Instruction.Opcode = TGSI_OPCODE_NOP;
-      current->FullInstruction.Dst[0].Register.WriteMask = TGSI_WRITEMASK_XYZW;
-      current->FullInstruction.Src[1].Register.SwizzleW = op_neutral_element(current->FullInstruction.Instruction.Opcode);
-      current->FullInstruction.Src[0].Register.SwizzleW = TGSI_SWIZZLE_W;
+
+      set_neutral_element_swizzle(&current->FullInstruction.Src[0], 0, 0);
+      set_neutral_element_swizzle(&current->FullInstruction.Src[1],
+                                  next->FullInstruction.Dst[0].Register.WriteMask,
+                                  op_neutral_element(current->FullInstruction.Instruction.Opcode));
+
+      current->FullInstruction.Dst[0].Register.WriteMask = current->FullInstruction.Dst[0].Register.WriteMask |
+                                                           next->FullInstruction.Dst[0].Register.WriteMask;
       return;
    }
 }
