@@ -59,6 +59,9 @@ struct pipe_vertex_buffer;
 struct pipe_vertex_element;
 struct pipe_viewport_state;
 
+enum pipe_video_chroma_format;
+enum pipe_format;
+
 /**
  * Gallium rendering context.  Basically:
  *  - state setting functions
@@ -395,6 +398,14 @@ struct pipe_context {
     * Flush any pending framebuffer writes and invalidate texture caches.
     */
    void (*texture_barrier)(struct pipe_context *);
+   
+   /**
+    * Creates a video buffer as decoding target
+    */
+   struct pipe_video_buffer *(*create_video_buffer)( struct pipe_context *context,
+                                                     enum pipe_format buffer_format,
+                                                     enum pipe_video_chroma_format chroma_format,
+                                                     unsigned width, unsigned height );
 };
 
 

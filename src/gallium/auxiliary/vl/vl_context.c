@@ -74,46 +74,6 @@ vl_context_create_decoder(struct pipe_video_context *context,
    return NULL;
 }
 
-static struct pipe_video_buffer *
-vl_context_create_buffer(struct pipe_video_context *context,
-                         enum pipe_format buffer_format,
-                         enum pipe_video_chroma_format chroma_format,
-                         unsigned width, unsigned height)
-{
-   struct vl_context *ctx = (struct vl_context*)context;
-   const enum pipe_format *resource_formats;
-   struct pipe_video_buffer *result;
-   unsigned buffer_width, buffer_height;
-   bool pot_buffers;
-
-   assert(context);
-   assert(width > 0 && height > 0);
-
-   pot_buffers = !ctx->base.screen->get_video_param
-   (
-      ctx->base.screen,
-      PIPE_VIDEO_PROFILE_UNKNOWN,
-      PIPE_VIDEO_CAP_NPOT_TEXTURES
-   );
-
-   resource_formats = vl_video_buffer_formats(ctx->pipe->screen, buffer_format);
-   if (!resource_formats)
-      return NULL;
-
-   buffer_width = pot_buffers ? util_next_power_of_two(width) : align(width, MACROBLOCK_WIDTH);
-   buffer_height = pot_buffers ? util_next_power_of_two(height) : align(height, MACROBLOCK_HEIGHT);
-
-   result = vl_video_buffer_init(context, ctx->pipe,
-                                 buffer_width, buffer_height, 1,
-                                 chroma_format,
-                                 resource_formats,
-                                 PIPE_USAGE_STATIC);
-   if (result) // TODO move format handling into vl_video_buffer
-      result->buffer_format = buffer_format;
-
-   return result;
-}
-
 struct pipe_video_context *
 vl_create_context(struct pipe_context *pipe)
 {
@@ -128,7 +88,6 @@ vl_create_context(struct pipe_context *pipe)
 
    ctx->base.destroy = vl_context_destroy;
    ctx->base.create_decoder = vl_context_create_decoder;
-   ctx->base.create_buffer = vl_context_create_buffer;
 
    ctx->pipe = pipe;
 

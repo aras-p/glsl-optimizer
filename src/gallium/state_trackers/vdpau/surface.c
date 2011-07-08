@@ -70,9 +70,9 @@ vlVdpVideoSurfaceCreate(VdpDevice device, VdpChromaType chroma_type,
    }
 
    p_surf->device = dev;
-   p_surf->video_buffer = dev->context->vpipe->create_buffer
+   p_surf->video_buffer = dev->context->pipe->create_video_buffer
    (
-      dev->context->vpipe,
+      dev->context->pipe,
       PIPE_FORMAT_YV12, // most common used
       ChromaToPipe(chroma_type),
       width, height

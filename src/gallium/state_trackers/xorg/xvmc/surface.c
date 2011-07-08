@@ -303,6 +303,7 @@ Status XvMCCreateSurface(Display *dpy, XvMCContext *context, XvMCSurface *surfac
    };
 
    XvMCContextPrivate *context_priv;
+   struct pipe_context *pipe;
    struct pipe_video_context *vpipe;
    XvMCSurfacePrivate *surface_priv;
 
@@ -316,6 +317,7 @@ Status XvMCCreateSurface(Display *dpy, XvMCContext *context, XvMCSurface *surfac
       return XvMCBadSurface;
 
    context_priv = context->privData;
+   pipe = context_priv->vctx->pipe;
    vpipe = context_priv->vctx->vpipe;
 
    surface_priv = CALLOC(1, sizeof(XvMCSurfacePrivate));
@@ -326,10 +328,12 @@ Status XvMCCreateSurface(Display *dpy, XvMCContext *context, XvMCSurface *surfac
    surface_priv->decode_buffer->set_quant_matrix(surface_priv->decode_buffer, dummy_quant, dummy_quant);
 
    surface_priv->mv_stride = surface_priv->decode_buffer->get_mv_stream_stride(surface_priv->decode_buffer);
-   surface_priv->video_buffer = vpipe->create_buffer(vpipe, PIPE_FORMAT_NV12,
-                                                     context_priv->decoder->chroma_format,
-                                                     context_priv->decoder->width,
-                                                     context_priv->decoder->height);
+   surface_priv->video_buffer = pipe->create_video_buffer
+   (
+      pipe, PIPE_FORMAT_NV12, context_priv->decoder->chroma_format,
+      context_priv->decoder->width, context_priv->decoder->height
+   );
+   
    surface_priv->context = context;
 
    surface->surface_id = XAllocID(dpy);

@@ -114,7 +114,7 @@ vl_video_buffer_sampler_view_planes(struct pipe_video_buffer *buffer)
 
    assert(buf);
 
-   pipe = buf->pipe;
+   pipe = buf->base.context;
 
    for (i = 0; i < buf->num_planes; ++i ) {
       if (!buf->sampler_view_planes[i]) {
@@ -149,7 +149,7 @@ vl_video_buffer_sampler_view_components(struct pipe_video_buffer *buffer)
 
    assert(buf);
 
-   pipe = buf->pipe;
+   pipe = buf->base.context;
 
    for (component = 0, i = 0; i < buf->num_planes; ++i ) {
       unsigned nr_components = util_format_get_nr_components(buf->resources[i]->format);
@@ -188,7 +188,7 @@ vl_video_buffer_surfaces(struct pipe_video_buffer *buffer)
 
    assert(buf);
 
-   pipe = buf->pipe;
+   pipe = buf->base.context;
 
    for (i = 0; i < buf->num_planes; ++i ) {
       if (!buf->surfaces[i]) {
@@ -211,21 +211,60 @@ error:
 }
 
 struct pipe_video_buffer *
-vl_video_buffer_init(struct pipe_video_context *context,
-                     struct pipe_context *pipe,
-                     unsigned width, unsigned height, unsigned depth,
-                     enum pipe_video_chroma_format chroma_format,
-                     const enum pipe_format resource_formats[VL_MAX_PLANES],
-                     unsigned usage)
+vl_video_buffer_create(struct pipe_context *pipe,
+                       enum pipe_format buffer_format,
+                       enum pipe_video_chroma_format chroma_format,
+                       unsigned width, unsigned height)
+{
+   const enum pipe_format *resource_formats;
+   struct pipe_video_buffer *result;
+   unsigned buffer_width, buffer_height;
+   bool pot_buffers;
+
+   assert(pipe);
+   assert(width > 0 && height > 0);
+
+   pot_buffers = !pipe->screen->get_video_param
+   (
+      pipe->screen,
+      PIPE_VIDEO_PROFILE_UNKNOWN,
+      PIPE_VIDEO_CAP_NPOT_TEXTURES
+   );
+
+   resource_formats = vl_video_buffer_formats(pipe->screen, buffer_format);
+   if (!resource_formats)
+      return NULL;
+
+   buffer_width = pot_buffers ? util_next_power_of_two(width) : align(width, MACROBLOCK_WIDTH);
+   buffer_height = pot_buffers ? util_next_power_of_two(height) : align(height, MACROBLOCK_HEIGHT);
+
+   result = vl_video_buffer_create_ex
+   (
+      pipe, buffer_width, buffer_height, 1,
+      chroma_format, resource_formats, PIPE_USAGE_STATIC
+   );
+   if (result)
+      result->buffer_format = buffer_format;
+
+   return result;
+}
+
+struct pipe_video_buffer *
+vl_video_buffer_create_ex(struct pipe_context *pipe,
+                          unsigned width, unsigned height, unsigned depth,
+                          enum pipe_video_chroma_format chroma_format,
+                          const enum pipe_format resource_formats[VL_MAX_PLANES],
+                          unsigned usage)
 {
    struct vl_video_buffer *buffer;
    struct pipe_resource templ;
    unsigned i;
 
-   assert(context && pipe);
+   assert(pipe);
 
    buffer = CALLOC_STRUCT(vl_video_buffer);
 
+   buffer->base.context = pipe;
    buffer->base.destroy = vl_video_buffer_destroy;
    buffer->base.get_sampler_view_planes = vl_video_buffer_sampler_view_planes;
    buffer->base.get_sampler_view_components = vl_video_buffer_sampler_view_components;
@@ -233,7 +272,6 @@ vl_video_buffer_init(struct pipe_video_context *context,
    buffer->base.chroma_format = chroma_format;
    buffer->base.width = width;
    buffer->base.height = height;
-   buffer->pipe = pipe;
    buffer->num_planes = 1;
 
    memset(&templ, 0, sizeof(templ));

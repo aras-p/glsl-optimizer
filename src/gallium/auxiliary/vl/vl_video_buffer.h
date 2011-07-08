@@ -41,7 +41,6 @@
 struct vl_video_buffer
 {
    struct pipe_video_buffer base;
-   struct pipe_context      *pipe;
    unsigned                 num_planes;
    struct pipe_resource     *resources[VL_MAX_PLANES];
    struct pipe_sampler_view *sampler_view_planes[VL_MAX_PLANES];
@@ -63,15 +62,24 @@ boolean
 vl_video_buffer_is_format_supported(struct pipe_screen *screen,
                                     enum pipe_format format,
                                     enum pipe_video_profile profile);
-
+                                    
 /**
- * initialize a buffer, creating its resources
+ * creates a video buffer, can be used as a standard implementation for pipe->create_video_buffer
  */
 struct pipe_video_buffer *
-vl_video_buffer_init(struct pipe_video_context *context,
-                     struct pipe_context *pipe,
-                     unsigned width, unsigned height, unsigned depth,
-                     enum pipe_video_chroma_format chroma_format,
-                     const enum pipe_format resource_formats[VL_MAX_PLANES],
-                     unsigned usage);
+vl_video_buffer_create(struct pipe_context *pipe,
+                       enum pipe_format buffer_format,
+                       enum pipe_video_chroma_format chroma_format,
+                       unsigned width, unsigned height);
+
+/**
+ * extended create function, gets depth, usage and formats for each plane seperately
+ */
+struct pipe_video_buffer *
+vl_video_buffer_create_ex(struct pipe_context *pipe,
+                          unsigned width, unsigned height, unsigned depth,
+                          enum pipe_video_chroma_format chroma_format,
+                          const enum pipe_format resource_formats[VL_MAX_PLANES],
+                          unsigned usage);
+
 #endif /* vl_ycbcr_buffer_h */

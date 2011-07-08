@@ -92,11 +92,14 @@ init_zscan_buffer(struct vl_mpeg12_buffer *buffer)
    dec = (struct vl_mpeg12_decoder*)buffer->base.decoder;
 
    formats[0] = formats[1] = formats[2] = dec->zscan_source_format;
-   buffer->zscan_source = vl_video_buffer_init(dec->base.context, dec->pipe,
-                                               dec->blocks_per_line * BLOCK_WIDTH * BLOCK_HEIGHT,
-                                               align(dec->num_blocks, dec->blocks_per_line) / dec->blocks_per_line,
-                                               1, PIPE_VIDEO_CHROMA_FORMAT_444,
-                                               formats, PIPE_USAGE_STATIC);
+   buffer->zscan_source = vl_video_buffer_create_ex
+   (
+      dec->pipe,
+      dec->blocks_per_line * BLOCK_WIDTH * BLOCK_HEIGHT,
+      align(dec->num_blocks, dec->blocks_per_line) / dec->blocks_per_line,
+      1, PIPE_VIDEO_CHROMA_FORMAT_444, formats, PIPE_USAGE_STATIC
+   );
+
    if (!buffer->zscan_source)
       goto error_source;
 
@@ -718,19 +721,22 @@ init_idct(struct vl_mpeg12_decoder *dec, const struct format_config* format_conf
       nr_of_idct_render_targets = 1;
 
    formats[0] = formats[1] = formats[2] = format_config->idct_source_format;
-   dec->idct_source = vl_video_buffer_init(dec->base.context, dec->pipe,
-                                           dec->base.width / 4, dec->base.height, 1,
-                                           dec->base.chroma_format,
-                                           formats, PIPE_USAGE_STATIC);
+   dec->idct_source = vl_video_buffer_create_ex
+   (
+      dec->pipe, dec->base.width / 4, dec->base.height, 1,
+      dec->base.chroma_format, formats, PIPE_USAGE_STATIC
+   );
+
    if (!dec->idct_source)
       goto error_idct_source;
 
    formats[0] = formats[1] = formats[2] = format_config->mc_source_format;
-   dec->mc_source = vl_video_buffer_init(dec->base.context, dec->pipe,
-                                         dec->base.width / nr_of_idct_render_targets,
-                                         dec->base.height / 4, nr_of_idct_render_targets,
-                                         dec->base.chroma_format,
-                                         formats, PIPE_USAGE_STATIC);
+   dec->mc_source = vl_video_buffer_create_ex
+   (
+      dec->pipe, dec->base.width / nr_of_idct_render_targets,
+      dec->base.height / 4, nr_of_idct_render_targets,
+      dec->base.chroma_format, formats, PIPE_USAGE_STATIC
+   );
 
    if (!dec->mc_source)
       goto error_mc_source;
@@ -772,11 +778,12 @@ init_mc_source_widthout_idct(struct vl_mpeg12_decoder *dec, const struct format_
    enum pipe_format formats[3];
 
    formats[0] = formats[1] = formats[2] = format_config->mc_source_format;
-   dec->mc_source = vl_video_buffer_init(dec->base.context, dec->pipe,
-                                         dec->base.width, dec->base.height, 1,
-                                         dec->base.chroma_format,
-                                         formats, PIPE_USAGE_STATIC);
-
+   dec->mc_source = vl_video_buffer_create_ex
+   (
+      dec->pipe, dec->base.width, dec->base.height, 1,
+      dec->base.chroma_format, formats, PIPE_USAGE_STATIC
+   );
+      
    return dec->mc_source != NULL;
 }
 

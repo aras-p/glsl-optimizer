@@ -62,13 +62,6 @@ struct pipe_video_context
                                                 enum pipe_video_chroma_format chroma_format,
                                                 unsigned width, unsigned height);
 
-   /**
-    * Creates a buffer as decoding target
-    */
-   struct pipe_video_buffer *(*create_buffer)(struct pipe_video_context *context,
-                                              enum pipe_format buffer_format,
-                                              enum pipe_video_chroma_format chroma_format,
-                                              unsigned width, unsigned height);
 };
 
 /**
@@ -166,7 +159,7 @@ struct pipe_video_decode_buffer
  */
 struct pipe_video_buffer
 {
-   struct pipe_video_context *context;
+   struct pipe_context *context;
 
    enum pipe_format buffer_format;
    enum pipe_video_chroma_format chroma_format;
