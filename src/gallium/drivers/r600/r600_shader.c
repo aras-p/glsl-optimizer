@@ -316,7 +316,7 @@ static int tgsi_declaration(struct r600_shader_ctx *ctx)
 		ctx->shader->input[i].interpolate = d->Declaration.Interpolate;
 		ctx->shader->input[i].centroid = d->Declaration.Centroid;
 		ctx->shader->input[i].gpr = ctx->file_offset[TGSI_FILE_INPUT] + i;
-		if (ctx->type == TGSI_PROCESSOR_FRAGMENT && ctx->bc->chiprev >= CHIPREV_EVERGREEN) {
+		if (ctx->type == TGSI_PROCESSOR_FRAGMENT && ctx->bc->chip_class >= EVERGREEN) {
 			/* turn input into interpolate on EG */
 			if (ctx->shader->input[i].name != TGSI_SEMANTIC_POSITION) {
 				if (ctx->shader->input[i].interpolate > 0) {
@@ -650,13 +650,13 @@ static int r600_shader_from_tgsi(struct r600_pipe_context * rctx, struct r600_pi
 	}
 	if (ctx.type == TGSI_PROCESSOR_VERTEX) {
 		ctx.file_offset[TGSI_FILE_INPUT] = 1;
-		if (ctx.bc->chiprev >= CHIPREV_EVERGREEN) {
+		if (ctx.bc->chip_class >= EVERGREEN) {
 			r600_bc_add_cfinst(ctx.bc, EG_V_SQ_CF_WORD1_SQ_CF_INST_CALL_FS);
 		} else {
 			r600_bc_add_cfinst(ctx.bc, V_SQ_CF_WORD1_SQ_CF_INST_CALL_FS);
 		}
 	}
-	if (ctx.type == TGSI_PROCESSOR_FRAGMENT && ctx.bc->chiprev >= CHIPREV_EVERGREEN) {
+	if (ctx.type == TGSI_PROCESSOR_FRAGMENT && ctx.bc->chip_class >= EVERGREEN) {
 		ctx.file_offset[TGSI_FILE_INPUT] = evergreen_gpr_count(&ctx);
 	}
 	ctx.file_offset[TGSI_FILE_OUTPUT] = ctx.file_offset[TGSI_FILE_INPUT] +
@@ -710,9 +710,9 @@ static int r600_shader_from_tgsi(struct r600_pipe_context * rctx, struct r600_pi
 				goto out_err;
 			if ((r = tgsi_split_literal_constant(&ctx)))
 				goto out_err;
-			if (ctx.bc->chiprev == CHIPREV_CAYMAN)
+			if (ctx.bc->chip_class == CAYMAN)
 				ctx.inst_info = &cm_shader_tgsi_instruction[opcode];
-			else if (ctx.bc->chiprev >= CHIPREV_EVERGREEN)
+			else if (ctx.bc->chip_class >= EVERGREEN)
 				ctx.inst_info = &eg_shader_tgsi_instruction[opcode];
 			else
 				ctx.inst_info = &r600_shader_tgsi_instruction[opcode];
@@ -885,7 +885,7 @@ static int r600_shader_from_tgsi(struct r600_pipe_context * rctx, struct r600_pi
 	}
 	/* set export done on last export of each type */
 	for (i = noutput - 1, output_done = 0; i >= 0; i--) {
-		if (ctx.bc->chiprev < CHIPREV_CAYMAN) {
+		if (ctx.bc->chip_class < CAYMAN) {
 			if (i == (noutput - 1)) {
 				output[i].end_of_program = 1;
 			}
@@ -902,7 +902,7 @@ static int r600_shader_from_tgsi(struct r600_pipe_context * rctx, struct r600_pi
 			goto out_err;
 	}
 	/* add program end */
-	if (ctx.bc->chiprev == CHIPREV_CAYMAN)
+	if (ctx.bc->chip_class == CAYMAN)
 		cm_bc_add_cf_end(ctx.bc);
 
 	free(ctx.literals);
@@ -1122,7 +1122,7 @@ static int tgsi_setup_trig(struct r600_shader_ctx *ctx)
 	alu.src[2].sel = V_SQ_ALU_SRC_LITERAL;
 	alu.src[2].chan = 0;
 
-	if (ctx->bc->chiprev == CHIPREV_R600) {
+	if (ctx->bc->chip_class == R600) {
 		alu.src[1].value = *(uint32_t *)&double_pi;
 		alu.src[2].value = *(uint32_t *)&neg_pi;
 	} else {
@@ -1229,7 +1229,7 @@ static int tgsi_scs(struct r600_shader_ctx *ctx)
 
 	/* dst.x = COS */
 	if (inst->Dst[0].Register.WriteMask & TGSI_WRITEMASK_X) {
-		if (ctx->bc->chiprev == CHIPREV_CAYMAN) {
+		if (ctx->bc->chip_class == CAYMAN) {
 			for (i = 0 ; i < 3; i++) {
 				memset(&alu, 0, sizeof(struct r600_bc_alu));
 				alu.inst = CTX_INST(V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_COS);
@@ -1263,7 +1263,7 @@ static int tgsi_scs(struct r600_shader_ctx *ctx)
 
 	/* dst.y = SIN */
 	if (inst->Dst[0].Register.WriteMask & TGSI_WRITEMASK_Y) {
-		if (ctx->bc->chiprev == CHIPREV_CAYMAN) {
+		if (ctx->bc->chip_class == CAYMAN) {
 			for (i = 0 ; i < 3; i++) {
 				memset(&alu, 0, sizeof(struct r600_bc_alu));
 				alu.inst = CTX_INST(V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_SIN);
@@ -1378,7 +1378,7 @@ static int tgsi_lit(struct r600_shader_ctx *ctx)
 		int sel;
 		int i;
 
-		if (ctx->bc->chiprev == CHIPREV_CAYMAN) {
+		if (ctx->bc->chip_class == CAYMAN) {
 			for (i = 0; i < 3; i++) {
 				/* dst.z = log(src.y) */
 				memset(&alu, 0, sizeof(struct r600_bc_alu));
@@ -1428,7 +1428,7 @@ static int tgsi_lit(struct r600_shader_ctx *ctx)
 		if (r)
 			return r;
 
-		if (ctx->bc->chiprev == CHIPREV_CAYMAN) {
+		if (ctx->bc->chip_class == CAYMAN) {
 			for (i = 0; i < 3; i++) {
 				/* dst.z = exp(tmp.x) */
 				memset(&alu, 0, sizeof(struct r600_bc_alu));
@@ -1905,7 +1905,7 @@ static int tgsi_tex(struct r600_shader_ctx *ctx)
 	} else if (inst->Instruction.Opcode == TGSI_OPCODE_TXP) {
 		int out_chan;
 		/* Add perspective divide */
-		if (ctx->bc->chiprev == CHIPREV_CAYMAN) {
+		if (ctx->bc->chip_class == CAYMAN) {
 			out_chan = 2;
 			for (i = 0; i < 3; i++) {
 				memset(&alu, 0, sizeof(struct r600_bc_alu));
@@ -1987,7 +1987,7 @@ static int tgsi_tex(struct r600_shader_ctx *ctx)
 		}
 
 		/* tmp1.z = RCP_e(|tmp1.z|) */
-		if (ctx->bc->chiprev == CHIPREV_CAYMAN) {
+		if (ctx->bc->chip_class == CAYMAN) {
 			for (i = 0; i < 3; i++) {
 				memset(&alu, 0, sizeof(struct r600_bc_alu));
 				alu.inst = CTX_INST(V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_RECIP_IEEE);
@@ -2380,7 +2380,7 @@ static int tgsi_exp(struct r600_shader_ctx *ctx)
 		if (r)
 			return r;
 
-		if (ctx->bc->chiprev == CHIPREV_CAYMAN) {
+		if (ctx->bc->chip_class == CAYMAN) {
 			for (i = 0; i < 3; i++) {
 				alu.inst = CTX_INST(V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_EXP_IEEE);
 				alu.src[0].sel = ctx->temp_reg;
@@ -2436,7 +2436,7 @@ static int tgsi_exp(struct r600_shader_ctx *ctx)
 
 	/* result.z = RoughApprox2ToX(tmp);*/
 	if ((inst->Dst[0].Register.WriteMask >> 2) & 0x1) {
-		if (ctx->bc->chiprev == CHIPREV_CAYMAN) {
+		if (ctx->bc->chip_class == CAYMAN) {
 			for (i = 0; i < 3; i++) {
 				memset(&alu, 0, sizeof(struct r600_bc_alu));
 				alu.inst = CTX_INST(V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_EXP_IEEE);
@@ -2498,7 +2498,7 @@ static int tgsi_log(struct r600_shader_ctx *ctx)
 
 	/* result.x = floor(log2(|src|)); */
 	if (inst->Dst[0].Register.WriteMask & 1) {
-		if (ctx->bc->chiprev == CHIPREV_CAYMAN) {
+		if (ctx->bc->chip_class == CAYMAN) {
 			for (i = 0; i < 3; i++) {
 				memset(&alu, 0, sizeof(struct r600_bc_alu));
 
@@ -2550,7 +2550,7 @@ static int tgsi_log(struct r600_shader_ctx *ctx)
 	/* result.y = |src.x| / (2 ^ floor(log2(|src.x|))); */
 	if ((inst->Dst[0].Register.WriteMask >> 1) & 1) {
 
-		if (ctx->bc->chiprev == CHIPREV_CAYMAN) {
+		if (ctx->bc->chip_class == CAYMAN) {
 			for (i = 0; i < 3; i++) {
 				memset(&alu, 0, sizeof(struct r600_bc_alu));
 
@@ -2601,7 +2601,7 @@ static int tgsi_log(struct r600_shader_ctx *ctx)
 		if (r)
 			return r;
 
-		if (ctx->bc->chiprev == CHIPREV_CAYMAN) {
+		if (ctx->bc->chip_class == CAYMAN) {
 			for (i = 0; i < 3; i++) {
 				memset(&alu, 0, sizeof(struct r600_bc_alu));
 				alu.inst = CTX_INST(V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_EXP_IEEE);
@@ -2635,7 +2635,7 @@ static int tgsi_log(struct r600_shader_ctx *ctx)
 				return r;
 		}
 
-		if (ctx->bc->chiprev == CHIPREV_CAYMAN) {
+		if (ctx->bc->chip_class == CAYMAN) {
 			for (i = 0; i < 3; i++) {
 				memset(&alu, 0, sizeof(struct r600_bc_alu));
 				alu.inst = CTX_INST(V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_RECIP_IEEE);
@@ -2691,7 +2691,7 @@ static int tgsi_log(struct r600_shader_ctx *ctx)
 
 	/* result.z = log2(|src|);*/
 	if ((inst->Dst[0].Register.WriteMask >> 2) & 1) {
-		if (ctx->bc->chiprev == CHIPREV_CAYMAN) {
+		if (ctx->bc->chip_class == CAYMAN) {
 			for (i = 0; i < 3; i++) {
 				memset(&alu, 0, sizeof(struct r600_bc_alu));
 

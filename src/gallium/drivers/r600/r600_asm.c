@@ -41,9 +41,9 @@ static inline unsigned int r600_bc_get_num_operands(struct r600_bc *bc, struct r
 	if(alu->is_op3)
 		return 3;
 
-	switch (bc->chiprev) {
-	case CHIPREV_R600:
-	case CHIPREV_R700:
+	switch (bc->chip_class) {
+	case R600:
+	case R700:
 		switch (alu->inst) {
 		case V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_NOP:
 			return 0;
@@ -93,8 +93,8 @@ static inline unsigned int r600_bc_get_num_operands(struct r600_bc *bc, struct r
 			"Need instruction operand number for 0x%x.\n", alu->inst);
 		}
 		break;
-	case CHIPREV_EVERGREEN:
-	case CHIPREV_CAYMAN:
+	case EVERGREEN:
+	case CAYMAN:
 		switch (alu->inst) {
 		case EG_V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_NOP:
 			return 0;
@@ -208,13 +208,13 @@ int r600_bc_init(struct r600_bc *bc, enum radeon_family family)
 	case CHIP_RV635:
 	case CHIP_RS780:
 	case CHIP_RS880:
-		bc->chiprev = CHIPREV_R600;
+		bc->chip_class = R600;
 		break;
 	case CHIP_RV770:
 	case CHIP_RV730:
 	case CHIP_RV710:
 	case CHIP_RV740:
-		bc->chiprev = CHIPREV_R700;
+		bc->chip_class = R700;
 		break;
 	case CHIP_CEDAR:
 	case CHIP_REDWOOD:
@@ -227,10 +227,10 @@ int r600_bc_init(struct r600_bc *bc, enum radeon_family family)
 	case CHIP_BARTS:
 	case CHIP_TURKS:
 	case CHIP_CAICOS:
-		bc->chiprev = CHIPREV_EVERGREEN;
+		bc->chip_class = EVERGREEN;
 		break;
 	case CHIP_CAYMAN:
-		bc->chiprev = CHIPREV_CAYMAN;
+		bc->chip_class = CAYMAN;
 		break;
 	default:
 		R600_ERR("unknown family %d\n", bc->family);
@@ -301,9 +301,9 @@ int r600_bc_add_output(struct r600_bc *bc, const struct r600_bc_output *output)
 /* alu instructions that can ony exits once per group */
 static int is_alu_once_inst(struct r600_bc *bc, struct r600_bc_alu *alu)
 {
-	switch (bc->chiprev) {
-	case CHIPREV_R600:
-	case CHIPREV_R700:
+	switch (bc->chip_class) {
+	case R600:
+	case R700:
 		return !alu->is_op3 && (
 			alu->inst == V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_KILLE ||
 			alu->inst == V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_KILLGT ||
@@ -339,8 +339,8 @@ static int is_alu_once_inst(struct r600_bc *bc, struct r600_bc_alu *alu)
 			alu->inst == V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_PRED_SETNE_PUSH_INT ||
 			alu->inst == V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_PRED_SETLT_PUSH_INT ||
 			alu->inst == V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_PRED_SETLE_PUSH_INT);
-	case CHIPREV_EVERGREEN:
-	case CHIPREV_CAYMAN:
+	case EVERGREEN:
+	case CAYMAN:
 	default:
 		return !alu->is_op3 && (
 			alu->inst == EG_V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_KILLE ||
@@ -382,16 +382,16 @@ static int is_alu_once_inst(struct r600_bc *bc, struct r600_bc_alu *alu)
 
 static int is_alu_reduction_inst(struct r600_bc *bc, struct r600_bc_alu *alu)
 {
-	switch (bc->chiprev) {
-	case CHIPREV_R600:
-	case CHIPREV_R700:
+	switch (bc->chip_class) {
+	case R600:
+	case R700:
 		return !alu->is_op3 && (
 			alu->inst == V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_CUBE ||
 			alu->inst == V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_DOT4 ||
 			alu->inst == V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_DOT4_IEEE ||
 			alu->inst == V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_MAX4);
-	case CHIPREV_EVERGREEN:
-	case CHIPREV_CAYMAN:
+	case EVERGREEN:
+	case CAYMAN:
 	default:
 		return !alu->is_op3 && (
 			alu->inst == EG_V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_CUBE ||
@@ -403,13 +403,13 @@ static int is_alu_reduction_inst(struct r600_bc *bc, struct r600_bc_alu *alu)
 
 static int is_alu_cube_inst(struct r600_bc *bc, struct r600_bc_alu *alu)
 {
-	switch (bc->chiprev) {
-	case CHIPREV_R600:
-	case CHIPREV_R700:
+	switch (bc->chip_class) {
+	case R600:
+	case R700:
 		return !alu->is_op3 &&
 			alu->inst == V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_CUBE;
-	case CHIPREV_EVERGREEN:
-	case CHIPREV_CAYMAN:
+	case EVERGREEN:
+	case CAYMAN:
 	default:
 		return !alu->is_op3 &&
 			alu->inst == EG_V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_CUBE;
@@ -418,15 +418,15 @@ static int is_alu_cube_inst(struct r600_bc *bc, struct r600_bc_alu *alu)
 
 static int is_alu_mova_inst(struct r600_bc *bc, struct r600_bc_alu *alu)
 {
-	switch (bc->chiprev) {
-	case CHIPREV_R600:
-	case CHIPREV_R700:
+	switch (bc->chip_class) {
+	case R600:
+	case R700:
 		return !alu->is_op3 && (
 			alu->inst == V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_MOVA ||
 			alu->inst == V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_MOVA_FLOOR ||
 			alu->inst == V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_MOVA_INT);
-	case CHIPREV_EVERGREEN:
-	case CHIPREV_CAYMAN:
+	case EVERGREEN:
+	case CAYMAN:
 	default:
 		return !alu->is_op3 && (
 			alu->inst == EG_V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_MOVA_INT);
@@ -438,16 +438,16 @@ static int is_alu_vec_unit_inst(struct r600_bc *bc, struct r600_bc_alu *alu)
 {
 	return is_alu_reduction_inst(bc, alu) ||
 		is_alu_mova_inst(bc, alu) ||
-		(bc->chiprev == CHIPREV_EVERGREEN &&
+		(bc->chip_class == EVERGREEN &&
 		alu->inst == EG_V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_FLT_TO_INT_FLOOR);
 }
 
 /* alu instructions that can only execute on the trans unit */
 static int is_alu_trans_unit_inst(struct r600_bc *bc, struct r600_bc_alu *alu)
 {
-	switch (bc->chiprev) {
-	case CHIPREV_R600:
-	case CHIPREV_R700:
+	switch (bc->chip_class) {
+	case R600:
+	case R700:
 		if (!alu->is_op3)
 			return alu->inst == V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_ASHR_INT ||
 				alu->inst == V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_FLT_TO_INT ||
@@ -478,8 +478,8 @@ static int is_alu_trans_unit_inst(struct r600_bc *bc, struct r600_bc_alu *alu)
 				alu->inst == V_SQ_ALU_WORD1_OP3_SQ_OP3_INST_MUL_LIT_D2 ||
 				alu->inst == V_SQ_ALU_WORD1_OP3_SQ_OP3_INST_MUL_LIT_M2 ||
 				alu->inst == V_SQ_ALU_WORD1_OP3_SQ_OP3_INST_MUL_LIT_M4;
-	case CHIPREV_EVERGREEN:
-	case CHIPREV_CAYMAN:
+	case EVERGREEN:
+	case CAYMAN:
 	default:
 		if (!alu->is_op3)
 			/* Note that FLT_TO_INT_* instructions are vector-only instructions
@@ -525,7 +525,7 @@ static int assign_alu_units(struct r600_bc *bc, struct r600_bc_alu *alu_first,
 {
 	struct r600_bc_alu *alu;
 	unsigned i, chan, trans;
-	int max_slots = bc->chiprev == CHIPREV_CAYMAN ? 4 : 5;
+	int max_slots = bc->chip_class == CAYMAN ? 4 : 5;
 
 	for (i = 0; i < max_slots; i++)
 		assignment[i] = NULL;
@@ -612,7 +612,7 @@ static int reserve_gpr(struct alu_bank_swizzle *bs, unsigned sel, unsigned chan,
 static int reserve_cfile(struct r600_bc *bc, struct alu_bank_swizzle *bs, unsigned sel, unsigned chan)
 {
 	int res, num_res = 4;
-	if (bc->chiprev >= CHIPREV_R700) {
+	if (bc->chip_class >= R700) {
 		num_res = 2;
 		chan /= 2;
 	}
@@ -733,8 +733,8 @@ static int check_and_set_bank_swizzle(struct r600_bc *bc,
 	struct alu_bank_swizzle bs;
 	int bank_swizzle[5];
 	int i, r = 0, forced = 0;
-	boolean scalar_only = bc->chiprev == CHIPREV_CAYMAN ? false : true;
-	int max_slots = bc->chiprev == CHIPREV_CAYMAN ? 4 : 5;
+	boolean scalar_only = bc->chip_class == CAYMAN ? false : true;
+	int max_slots = bc->chip_class == CAYMAN ? 4 : 5;
 
 	for (i = 0; i < max_slots; i++) {
 		if (slots[i] && slots[i]->bank_swizzle_force) {
@@ -806,7 +806,7 @@ static int replace_gpr_with_pv_ps(struct r600_bc *bc,
 	struct r600_bc_alu *prev[5];
 	int gpr[5], chan[5];
 	int i, j, r, src, num_src;
-	int max_slots = bc->chiprev == CHIPREV_CAYMAN ? 4 : 5;
+	int max_slots = bc->chip_class == CAYMAN ? 4 : 5;
 
 	r = assign_alu_units(bc, alu_prev, prev);
 	if (r)
@@ -834,7 +834,7 @@ static int replace_gpr_with_pv_ps(struct r600_bc *bc,
 			if (!is_gpr(alu->src[src].sel) || alu->src[src].rel)
 				continue;
 
-			if (bc->chiprev < CHIPREV_CAYMAN) {
+			if (bc->chip_class < CAYMAN) {
 				if (alu->src[src].sel == gpr[4] &&
 				    alu->src[src].chan == chan[4]) {
 					alu->src[src].sel = V_SQ_ALU_SRC_PS;
@@ -948,7 +948,7 @@ static int merge_inst_groups(struct r600_bc *bc, struct r600_bc_alu *slots[5],
 	int i, j, r, src, num_src;
 	int num_once_inst = 0;
 	int have_mova = 0, have_rel = 0;
-	int max_slots = bc->chiprev == CHIPREV_CAYMAN ? 4 : 5;
+	int max_slots = bc->chip_class == CAYMAN ? 4 : 5;
 
 	r = assign_alu_units(bc, alu_prev, prev);
 	if (r)
@@ -1252,7 +1252,7 @@ int r600_bc_add_alu_type(struct r600_bc *bc, const struct r600_bc_alu *alu, int 
 		uint32_t literal[4];
 		unsigned nliteral;
 		struct r600_bc_alu *slots[5];
-		int max_slots = bc->chiprev == CHIPREV_CAYMAN ? 4 : 5;
+		int max_slots = bc->chip_class == CAYMAN ? 4 : 5;
 		r = assign_alu_units(bc, bc->cf_last->curr_bs_head, slots);
 		if (r)
 			return r;
@@ -1302,26 +1302,26 @@ int r600_bc_add_alu(struct r600_bc *bc, const struct r600_bc_alu *alu)
 
 static unsigned r600_bc_num_tex_and_vtx_instructions(const struct r600_bc *bc)
 {
-	switch (bc->chiprev) {
-	case CHIPREV_R600:
+	switch (bc->chip_class) {
+	case R600:
 		return 8;
 
-	case CHIPREV_R700:
+	case R700:
 		return 16;
 
-	case CHIPREV_EVERGREEN:
-	case CHIPREV_CAYMAN:
+	case EVERGREEN:
+	case CAYMAN:
 		return 64;
 
 	default:
-		R600_ERR("Unknown chiprev %d.\n", bc->chiprev);
+		R600_ERR("Unknown chip class %d.\n", bc->chip_class);
 		return 8;
 	}
 }
 
 static inline boolean last_inst_was_vtx_fetch(struct r600_bc *bc)
 {
-	if (bc->chiprev == CHIPREV_CAYMAN) {
+	if (bc->chip_class == CAYMAN) {
 		if (bc->cf_last->inst != CM_V_SQ_CF_WORD1_SQ_CF_INST_TC)
 			return TRUE;
 	} else {
@@ -1350,7 +1350,7 @@ int r600_bc_add_vtx(struct r600_bc *bc, const struct r600_bc_vtx *vtx)
 			free(nvtx);
 			return r;
 		}
-		if (bc->chiprev == CHIPREV_CAYMAN)
+		if (bc->chip_class == CAYMAN)
 			bc->cf_last->inst = CM_V_SQ_CF_WORD1_SQ_CF_INST_TC;
 		else
 			bc->cf_last->inst = V_SQ_CF_WORD1_SQ_CF_INST_VTX;
@@ -1438,7 +1438,7 @@ static int r600_bc_vtx_build(struct r600_bc *bc, struct r600_bc_vtx *vtx, unsign
 			S_SQ_VTX_WORD0_FETCH_TYPE(vtx->fetch_type) |
 			S_SQ_VTX_WORD0_SRC_GPR(vtx->src_gpr) |
 			S_SQ_VTX_WORD0_SRC_SEL_X(vtx->src_sel_x);
-	if (bc->chiprev < CHIPREV_CAYMAN)
+	if (bc->chip_class < CAYMAN)
 		bc->bytecode[id] |= S_SQ_VTX_WORD0_MEGA_FETCH_COUNT(vtx->mega_fetch_count);
 	id++;
 	bc->bytecode[id++] = S_SQ_VTX_WORD1_DST_SEL_X(vtx->dst_sel_x) |
@@ -1453,7 +1453,7 @@ static int r600_bc_vtx_build(struct r600_bc *bc, struct r600_bc_vtx *vtx, unsign
 				S_SQ_VTX_WORD1_GPR_DST_GPR(vtx->dst_gpr);
 	bc->bytecode[id] = S_SQ_VTX_WORD2_OFFSET(vtx->offset)|
 				S_SQ_VTX_WORD2_ENDIAN_SWAP(vtx->endian);
-	if (bc->chiprev < CHIPREV_CAYMAN)
+	if (bc->chip_class < CAYMAN)
 		bc->bytecode[id] |= S_SQ_VTX_WORD2_MEGA_FETCH(1);
 	id++;
 	bc->bytecode[id++] = 0;
@@ -1560,13 +1560,13 @@ static int r600_bc_cf_build(struct r600_bc *bc, struct r600_bc_cf *cf)
 			S_SQ_CF_ALU_WORD1_KCACHE_ADDR0(cf->kcache[0].addr) |
 			S_SQ_CF_ALU_WORD1_KCACHE_ADDR1(cf->kcache[1].addr) |
 					S_SQ_CF_ALU_WORD1_BARRIER(1) |
-					S_SQ_CF_ALU_WORD1_USES_WATERFALL(bc->chiprev == CHIPREV_R600 ? cf->r6xx_uses_waterfall : 0) |
+					S_SQ_CF_ALU_WORD1_USES_WATERFALL(bc->chip_class == R600 ? cf->r6xx_uses_waterfall : 0) |
 					S_SQ_CF_ALU_WORD1_COUNT((cf->ndw / 2) - 1);
 		break;
 	case V_SQ_CF_WORD1_SQ_CF_INST_TEX:
 	case V_SQ_CF_WORD1_SQ_CF_INST_VTX:
 	case V_SQ_CF_WORD1_SQ_CF_INST_VTX_TC:
-		if (bc->chiprev == CHIPREV_R700)
+		if (bc->chip_class == R700)
 			r700_bc_cf_vtx_build(&bc->bytecode[id], cf);
 		else
 			r600_bc_cf_vtx_build(&bc->bytecode[id], cf);
@@ -1673,7 +1673,7 @@ int r600_bc_build(struct r600_bc *bc)
 		return -ENOMEM;
 	LIST_FOR_EACH_ENTRY(cf, &bc->cf, list) {
 		addr = cf->addr;
-		if (bc->chiprev >= CHIPREV_EVERGREEN)
+		if (bc->chip_class >= EVERGREEN)
 			r = eg_bc_cf_build(bc, cf);
 		else
 			r = r600_bc_cf_build(bc, cf);
@@ -1691,13 +1691,13 @@ int r600_bc_build(struct r600_bc *bc)
 				if (r)
 					return r;
 				r600_bc_alu_adjust_literals(bc, alu, literal, nliteral);
-				switch(bc->chiprev) {
-				case CHIPREV_R600:
+				switch(bc->chip_class) {
+				case R600:
 					r = r600_bc_alu_build(bc, alu, addr);
 					break;
-				case CHIPREV_R700:
-				case CHIPREV_EVERGREEN: /* eg alu is same encoding as r700 */
-				case CHIPREV_CAYMAN: /* eg alu is same encoding as r700 */
+				case R700:
+				case EVERGREEN: /* eg alu is same encoding as r700 */
+				case CAYMAN: /* eg alu is same encoding as r700 */
 					r = r700_bc_alu_build(bc, alu, addr);
 					break;
 				default:
@@ -1726,7 +1726,7 @@ int r600_bc_build(struct r600_bc *bc)
 			}
 			break;
 		case V_SQ_CF_WORD1_SQ_CF_INST_TEX:
-			if (bc->chiprev == CHIPREV_CAYMAN) {
+			if (bc->chip_class == CAYMAN) {
 				LIST_FOR_EACH_ENTRY(vtx, &cf->vtx, list) {
 					r = r600_bc_vtx_build(bc, vtx, addr);
 					if (r)
@@ -1812,17 +1812,17 @@ void r600_bc_dump(struct r600_bc *bc)
 	unsigned nliteral;
 	char chip = '6';
 
-	switch (bc->chiprev) {
-	case 1:
+	switch (bc->chip_class) {
+	case R700:
 		chip = '7';
 		break;
-	case 2:
+	case EVERGREEN:
 		chip = 'E';
 		break;
-	case 3:
+	case CAYMAN:
 		chip = 'C';
 		break;
-	case 0:
+	case R600:
 	default:
 		chip = '6';
 		break;
@@ -1993,7 +1993,7 @@ void r600_bc_dump(struct r600_bc *bc)
 			fprintf(stderr, "%04d %08X   ", id, bc->bytecode[id]);
 			fprintf(stderr, "SRC(GPR:%d ", vtx->src_gpr);
 			fprintf(stderr, "SEL_X:%d) ", vtx->src_sel_x);
-			if (bc->chiprev < CHIPREV_CAYMAN)
+			if (bc->chip_class < CAYMAN)
 				fprintf(stderr, "MEGA_FETCH_COUNT:%d ", vtx->mega_fetch_count);
 			else
 				fprintf(stderr, "SEL_Y:%d) ", 0);
