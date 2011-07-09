@@ -99,14 +99,14 @@ static int r600_pipe_shader(struct pipe_context *ctx, struct r600_pipe_shader *s
 	/* build state */
 	switch (rshader->processor_type) {
 	case TGSI_PROCESSOR_VERTEX:
-		if (rshader->family >= CHIP_CEDAR) {
+		if (rctx->chip_class >= EVERGREEN) {
 			evergreen_pipe_shader_vs(ctx, shader);
 		} else {
 			r600_pipe_shader_vs(ctx, shader);
 		}
 		break;
 	case TGSI_PROCESSOR_FRAGMENT:
-		if (rshader->family >= CHIP_CEDAR) {
+		if (rctx->chip_class >= EVERGREEN) {
 			evergreen_pipe_shader_ps(ctx, shader);
 		} else {
 			r600_pipe_shader_ps(ctx, shader);
@@ -135,7 +135,6 @@ int r600_pipe_shader_create(struct pipe_context *ctx, struct r600_pipe_shader *s
 		fprintf(stderr, "--------------------------------------------------------------\n");
 		tgsi_dump(shader->tokens, 0);
 	}
-	shader->shader.family = r600_get_family(rctx->radeon);
 	r = r600_shader_from_tgsi(rctx, shader);
 	if (r) {
 		R600_ERR("translation from TGSI failed !\n");
@@ -610,7 +609,7 @@ static int r600_shader_from_tgsi(struct r600_pipe_context * rctx, struct r600_pi
 
 	ctx.bc = &shader->bc;
 	ctx.shader = shader;
-	r = r600_bc_init(ctx.bc, shader->family);
+	r = r600_bc_init(ctx.bc, rctx->family);
 	if (r)
 		return r;
 	ctx.tokens = tokens;
@@ -802,7 +801,7 @@ static int r600_shader_from_tgsi(struct r600_pipe_context * rctx, struct r600_pi
 			if (shader->output[i].name == TGSI_SEMANTIC_COLOR) {
 				output[i + j].array_base = shader->output[i].sid;
 				output[i + j].type = V_SQ_CF_ALLOC_EXPORT_WORD0_SQ_EXPORT_PIXEL;
-				if (shader->fs_write_all && (shader->family >= CHIP_CEDAR)) {
+				if (shader->fs_write_all && (rctx->chip_class >= EVERGREEN)) {
 					for (j = 1; j < shader->nr_cbufs; j++) {
 						memset(&output[i + j], 0, sizeof(struct r600_bc_output));
 						output[i + j].gpr = shader->output[i].gpr;
