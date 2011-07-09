@@ -1504,7 +1504,7 @@ void r600_context_flush(struct r600_context *ctx)
 	/* suspend queries */
 	r600_context_queries_suspend(ctx);
 
-	if (ctx->radeon->family >= CHIP_CEDAR)
+	if (ctx->radeon->chip_class >= EVERGREEN)
 		evergreen_context_flush_dest_caches(ctx);
 	else
 		r600_context_flush_dest_caches(ctx);
