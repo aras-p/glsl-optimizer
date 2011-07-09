@@ -55,15 +55,11 @@ get_teximage_readbuffer(struct intel_context *intel, GLenum internalFormat)
    DBG("%s %s\n", __FUNCTION__,
        _mesa_lookup_enum_by_nr(internalFormat));
 
-   switch (internalFormat) {
-   case GL_DEPTH_COMPONENT:
-   case GL_DEPTH_COMPONENT16:
-   case GL_DEPTH24_STENCIL8_EXT:
-   case GL_DEPTH_STENCIL_EXT:
+   if (_mesa_is_depth_format(internalFormat) ||
+       _mesa_is_depthstencil_format(internalFormat))
       return intel_get_renderbuffer(intel->ctx.ReadBuffer, BUFFER_DEPTH);
-   default:
-      return intel_renderbuffer(intel->ctx.ReadBuffer->_ColorReadBuffer);
-   }
+
+   return intel_renderbuffer(intel->ctx.ReadBuffer->_ColorReadBuffer);
 }
 
 
