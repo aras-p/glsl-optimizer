@@ -609,9 +609,7 @@ static int r600_shader_from_tgsi(struct r600_pipe_context * rctx, struct r600_pi
 
 	ctx.bc = &shader->bc;
 	ctx.shader = shader;
-	r = r600_bc_init(ctx.bc, rctx->family);
-	if (r)
-		return r;
+	r600_bc_init(ctx.bc, rctx->chip_class);
 	ctx.tokens = tokens;
 	tgsi_scan_shader(tokens, &ctx.info);
 	tgsi_parse_init(&ctx.parse, tokens);

@@ -195,48 +195,10 @@ static struct r600_bc_tex *r600_bc_tex(void)
 	return tex;
 }
 
-int r600_bc_init(struct r600_bc *bc, enum radeon_family family)
+void r600_bc_init(struct r600_bc *bc, enum chip_class chip_class)
 {
 	LIST_INITHEAD(&bc->cf);
-	bc->family = family;
-	switch (bc->family) {
-	case CHIP_R600:
-	case CHIP_RV610:
-	case CHIP_RV630:
-	case CHIP_RV670:
-	case CHIP_RV620:
-	case CHIP_RV635:
-	case CHIP_RS780:
-	case CHIP_RS880:
-		bc->chip_class = R600;
-		break;
-	case CHIP_RV770:
-	case CHIP_RV730:
-	case CHIP_RV710:
-	case CHIP_RV740:
-		bc->chip_class = R700;
-		break;
-	case CHIP_CEDAR:
-	case CHIP_REDWOOD:
-	case CHIP_JUNIPER:
-	case CHIP_CYPRESS:
-	case CHIP_HEMLOCK:
-	case CHIP_PALM:
-	case CHIP_SUMO:
-	case CHIP_SUMO2:
-	case CHIP_BARTS:
-	case CHIP_TURKS:
-	case CHIP_CAICOS:
-		bc->chip_class = EVERGREEN;
-		break;
-	case CHIP_CAYMAN:
-		bc->chip_class = CAYMAN;
-		break;
-	default:
-		R600_ERR("unknown family %d\n", bc->family);
-		return -EINVAL;
-	}
-	return 0;
+	bc->chip_class = chip_class;
 }
 
 static int r600_bc_add_cf(struct r600_bc *bc)
@@ -1701,7 +1663,7 @@ int r600_bc_build(struct r600_bc *bc)
 					r = r700_bc_alu_build(bc, alu, addr);
 					break;
 				default:
-					R600_ERR("unknown family %d\n", bc->family);
+					R600_ERR("unknown chip class %d.\n", bc->chip_class);
 					return -EINVAL;
 				}
 				if (r)
@@ -2180,9 +2142,7 @@ int r600_vertex_elements_build_fetch_shader(struct r600_pipe_context *rctx, stru
 	}
 
 	memset(&bc, 0, sizeof(bc));
-	r = r600_bc_init(&bc, r600_get_family(rctx->radeon));
-	if (r)
-		return r;
+	r600_bc_init(&bc, rctx->chip_class);
 
 	for (i = 0; i < ve->count; i++) {
 		if (elements[i].instance_divisor > 1) {
