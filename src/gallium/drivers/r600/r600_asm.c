@@ -2162,7 +2162,7 @@ int r600_vertex_elements_build_fetch_shader(struct r600_pipe_context *rctx, stru
 	struct r600_bc_vtx vtx;
 	struct pipe_vertex_element *elements = ve->elements;
 	const struct util_format_description *desc;
-	unsigned fetch_resource_start = rctx->family >= CHIP_CEDAR ? 0 : 160;
+	unsigned fetch_resource_start = rctx->chip_class >= EVERGREEN ? 0 : 160;
 	unsigned format, num_format, format_comp, endian;
 	u32 *bytecode;
 	int i, r;
@@ -2287,7 +2287,7 @@ int r600_vertex_elements_build_fetch_shader(struct r600_pipe_context *rctx, stru
 	r600_bo_unmap(rctx->radeon, ve->fetch_shader);
 	r600_bc_clear(&bc);
 
-	if (rctx->family >= CHIP_CEDAR)
+	if (rctx->chip_class >= EVERGREEN)
 		evergreen_fetch_shader(&rctx->context, ve);
 	else
 		r600_fetch_shader(&rctx->context, ve);

@@ -176,6 +176,7 @@ struct r600_pipe_context {
 	struct pipe_context		context;
 	struct blitter_context		*blitter;
 	enum radeon_family		family;
+	enum chip_class			chip_class;
 	void				*custom_dsa_flush;
 	struct r600_screen		*screen;
 	struct radeon			*radeon;

@@ -1399,7 +1399,7 @@ static void r600_cb(struct r600_pipe_context *rctx, struct r600_pipe_state *rsta
 	/* EXPORT_NORM is an optimzation that can be enabled for better
 	 * performance in certain cases
 	 */
-	if (rctx->family < CHIP_RV770) {
+	if (rctx->chip_class == R600) {
 		/* EXPORT_NORM can be enabled if:
 		 * - 11-bit or smaller UNORM/SNORM/SRGB
 		 * - BLEND_CLAMP is enabled
@@ -1559,7 +1559,7 @@ static void r600_set_framebuffer_state(struct pipe_context *ctx,
 	r600_pipe_state_add_reg(rstate,
 				R_028200_PA_SC_WINDOW_OFFSET, 0x00000000,
 				0xFFFFFFFF, NULL);
-	if (rctx->family >= CHIP_RV770) {
+	if (rctx->chip_class >= R700) {
 		r600_pipe_state_add_reg(rstate,
 					R_028230_PA_SC_EDGERULE, 0xAAAAAAAA,
 					0xFFFFFFFF, NULL);
@@ -1653,16 +1653,13 @@ void r600_init_state_functions(struct r600_pipe_context *rctx)
 
 void r600_adjust_gprs(struct r600_pipe_context *rctx)
 {
-	enum radeon_family family;
 	struct r600_pipe_state rstate;
 	unsigned num_ps_gprs = rctx->default_ps_gprs;
 	unsigned num_vs_gprs = rctx->default_vs_gprs;
 	unsigned tmp;
 	int diff;
 
-	family = r600_get_family(rctx->radeon);
-
-	if (family >= CHIP_CEDAR)
+	if (rctx->chip_class >= EVERGREEN)
 		return;
 
 	if (!rctx->ps_shader && !rctx->vs_shader)
@@ -1714,7 +1711,7 @@ void r600_init_config(struct r600_pipe_context *rctx)
 	struct r600_pipe_state *rstate = &rctx->config;
 	u32 tmp;
 
-	family = r600_get_family(rctx->radeon);
+	family = rctx->family;
 	ps_prio = 0;
 	vs_prio = 1;
 	gs_prio = 2;
@@ -1895,7 +1892,7 @@ void r600_init_config(struct r600_pipe_context *rctx)
 	r600_pipe_state_add_reg(rstate, R_009714_VC_ENHANCE, 0x00000000, 0xFFFFFFFF, NULL);
 	r600_pipe_state_add_reg(rstate, R_028350_SX_MISC, 0x00000000, 0xFFFFFFFF, NULL);
 
-	if (family >= CHIP_RV770) {
+	if (rctx->chip_class >= R700) {
 		r600_pipe_state_add_reg(rstate, R_008D8C_SQ_DYN_GPR_CNTL_PS_FLUSH_REQ, 0x00004000, 0xFFFFFFFF, NULL);
 		r600_pipe_state_add_reg(rstate, R_009508_TA_CNTL_AUX,
 					S_009508_DISABLE_CUBE_ANISO(1) |

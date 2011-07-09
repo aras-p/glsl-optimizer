@@ -657,13 +657,11 @@ static void *evergreen_create_blend_state(struct pipe_context *ctx,
 	u32 color_control, target_mask;
 	/* FIXME there is more then 8 framebuffer */
 	unsigned blend_cntl[8];
-	enum radeon_family family;
 
 	if (blend == NULL) {
 		return NULL;
 	}
 
-	family = r600_get_family(rctx->radeon);
 	rstate = &blend->rstate;
 
 	rstate->id = R600_PIPE_STATE_BLEND;
@@ -690,7 +688,7 @@ static void *evergreen_create_blend_state(struct pipe_context *ctx,
 	r600_pipe_state_add_reg(rstate, R_028808_CB_COLOR_CONTROL,
 				color_control, 0xFFFFFFFD, NULL);
 
-	if (family != CHIP_CAYMAN)
+	if (rctx->chip_class != CAYMAN)
 		r600_pipe_state_add_reg(rstate, R_028C3C_PA_SC_AA_MASK, 0xFFFFFFFF, 0xFFFFFFFF, NULL);
 	else {
 		r600_pipe_state_add_reg(rstate, CM_R_028C38_PA_SC_AA_MASK_X0Y0_X1Y0, 0xFFFFFFFF, 0xFFFFFFFF, NULL);
@@ -827,9 +825,6 @@ static void *evergreen_create_rs_state(struct pipe_context *ctx,
 	unsigned tmp;
 	unsigned prov_vtx = 1, polygon_dual_mode;
 	unsigned clip_rule;
-	enum radeon_family family;
-
-	family = r600_get_family(rctx->radeon);
 
 	if (rs == NULL) {
 		return NULL;
@@ -888,7 +883,7 @@ static void *evergreen_create_rs_state(struct pipe_context *ctx,
 	tmp = (unsigned)state->line_width * 8;
 	r600_pipe_state_add_reg(rstate, R_028A08_PA_SU_LINE_CNTL, S_028A08_WIDTH(tmp), 0xFFFFFFFF, NULL);
 
-	if (family == CHIP_CAYMAN) {
+	if (rctx->chip_class == CAYMAN) {
 		r600_pipe_state_add_reg(rstate, CM_R_028BDC_PA_SC_LINE_CNTL, 0x00000400, 0xFFFFFFFF, NULL);
 		r600_pipe_state_add_reg(rstate, CM_R_028BE4_PA_SU_VTX_CNTL,
 					S_028C08_PIX_CENTER_HALF(state->gl_rasterization_rules),
@@ -1447,13 +1442,10 @@ static void evergreen_set_framebuffer_state(struct pipe_context *ctx,
 	struct r600_pipe_context *rctx = (struct r600_pipe_context *)ctx;
 	struct r600_pipe_state *rstate = CALLOC_STRUCT(r600_pipe_state);
 	u32 shader_mask, tl, br, target_mask;
-	enum radeon_family family;
 	int tl_x, tl_y, br_x, br_y;
 
 	if (rstate == NULL)
 		return;
-
-	family = r600_get_family(rctx->radeon);
 
 	evergreen_context_flush_dest_caches(&rctx->ctx);
 	rctx->ctx.num_dest_buffers = state->nr_cbufs;
@@ -1491,7 +1483,7 @@ static void evergreen_set_framebuffer_state(struct pipe_context *ctx,
 	if (br_y == 0)
 		tl_y = 1;
 	/* cayman hw workaround */
-	if (family == CHIP_CAYMAN) {
+	if (rctx->chip_class == CAYMAN) {
 		if (br_x == 1 && br_y == 1)
 			br_x = 2;
 	}
@@ -1535,7 +1527,7 @@ static void evergreen_set_framebuffer_state(struct pipe_context *ctx,
 				shader_mask, 0xFFFFFFFF, NULL);
 
 
-	if (family == CHIP_CAYMAN) {
+	if (rctx->chip_class == CAYMAN) {
 		r600_pipe_state_add_reg(rstate, CM_R_028BE0_PA_SC_AA_CONFIG,
 					0x00000000, 0xFFFFFFFF, NULL);
 	} else {
@@ -1722,9 +1714,9 @@ void evergreen_init_config(struct r600_pipe_context *rctx)
 	enum radeon_family family;
 	unsigned tmp;
 
-	family = r600_get_family(rctx->radeon);
+	family = rctx->family;
 
-	if (family == CHIP_CAYMAN) {
+	if (rctx->chip_class == CAYMAN) {
 		cayman_init_config(rctx);
 		return;
 	}

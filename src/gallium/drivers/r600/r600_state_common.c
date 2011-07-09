@@ -109,7 +109,7 @@ void r600_bind_rs_state(struct pipe_context *ctx, void *state)
 	rctx->states[rs->rstate.id] = &rs->rstate;
 	r600_context_pipe_state_set(&rctx->ctx, &rs->rstate);
 
-	if (rctx->family >= CHIP_CEDAR) {
+	if (rctx->chip_class >= EVERGREEN) {
 		evergreen_polygon_offset_update(rctx);
 	} else {
 		r600_polygon_offset_update(rctx);
@@ -212,7 +212,7 @@ void r600_set_vertex_buffers(struct pipe_context *ctx, unsigned count,
 	/* Zero states. */
 	for (i = 0; i < count; i++) {
 		if (!buffers[i].buffer) {
-			if (rctx->family >= CHIP_CEDAR) {
+			if (rctx->chip_class >= EVERGREEN) {
 				evergreen_context_pipe_state_set_fs_resource(&rctx->ctx, NULL, i);
 			} else {
 				r600_context_pipe_state_set_fs_resource(&rctx->ctx, NULL, i);
@@ -220,7 +220,7 @@ void r600_set_vertex_buffers(struct pipe_context *ctx, unsigned count,
 		}
 	}
 	for (; i < rctx->vbuf_mgr->nr_real_vertex_buffers; i++) {
-		if (rctx->family >= CHIP_CEDAR) {
+		if (rctx->chip_class >= EVERGREEN) {
 			evergreen_context_pipe_state_set_fs_resource(&rctx->ctx, NULL, i);
 		} else {
 			r600_context_pipe_state_set_fs_resource(&rctx->ctx, NULL, i);
@@ -367,7 +367,7 @@ static void r600_spi_update(struct r600_pipe_context *rctx)
 	for (i = 0; i < rshader->ninput; i++) {
 		if (rshader->input[i].name == TGSI_SEMANTIC_POSITION ||
 		    rshader->input[i].name == TGSI_SEMANTIC_FACE)
-			if (rctx->family >= CHIP_CEDAR)
+			if (rctx->chip_class >= EVERGREEN)
 				continue;
 			else
 				sid=0;
@@ -387,7 +387,7 @@ static void r600_spi_update(struct r600_pipe_context *rctx)
 			tmp |= S_028644_PT_SPRITE_TEX(1);
 		}
 
-		if (rctx->family < CHIP_CEDAR) {
+		if (rctx->chip_class < EVERGREEN) {
 			if (rshader->input[i].centroid)
 				tmp |= S_028644_SEL_CENTROID(1);
 
@@ -434,14 +434,14 @@ void r600_set_constant_buffer(struct pipe_context *ctx, uint shader, uint index,
 
 		rstate = &rctx->vs_const_buffer_resource[index];
 		if (!rstate->id) {
-			if (rctx->family >= CHIP_CEDAR) {
+			if (rctx->chip_class >= EVERGREEN) {
 				evergreen_pipe_init_buffer_resource(rctx, rstate);
 			} else {
 				r600_pipe_init_buffer_resource(rctx, rstate);
 			}
 		}
 
-		if (rctx->family >= CHIP_CEDAR) {
+		if (rctx->chip_class >= EVERGREEN) {
 			evergreen_pipe_mod_buffer_resource(rstate, &rbuffer->r, offset, 16);
 			evergreen_context_pipe_state_set_vs_resource(&rctx->ctx, rstate, index);
 		} else {
@@ -462,13 +462,13 @@ void r600_set_constant_buffer(struct pipe_context *ctx, uint shader, uint index,
 
 		rstate = &rctx->ps_const_buffer_resource[index];
 		if (!rstate->id) {
-			if (rctx->family >= CHIP_CEDAR) {
+			if (rctx->chip_class >= EVERGREEN) {
 				evergreen_pipe_init_buffer_resource(rctx, rstate);
 			} else {
 				r600_pipe_init_buffer_resource(rctx, rstate);
 			}
 		}
-		if (rctx->family >= CHIP_CEDAR) {
+		if (rctx->chip_class >= EVERGREEN) {
 			evergreen_pipe_mod_buffer_resource(rstate, &rbuffer->r, offset, 16);
 			evergreen_context_pipe_state_set_ps_resource(&rctx->ctx, rstate, index);
 		} else {
@@ -521,14 +521,14 @@ static void r600_vertex_buffer_update(struct r600_pipe_context *rctx)
 		offset += vertex_buffer->buffer_offset + r600_bo_offset(rbuffer->bo);
 
 		if (!rstate->id) {
-			if (rctx->family >= CHIP_CEDAR) {
+			if (rctx->chip_class >= EVERGREEN) {
 				evergreen_pipe_init_buffer_resource(rctx, rstate);
 			} else {
 				r600_pipe_init_buffer_resource(rctx, rstate);
 			}
 		}
 
-		if (rctx->family >= CHIP_CEDAR) {
+		if (rctx->chip_class >= EVERGREEN) {
 			evergreen_pipe_mod_buffer_resource(rstate, rbuffer, offset, vertex_buffer->stride);
 			evergreen_context_pipe_state_set_fs_resource(&rctx->ctx, rstate, i);
 		} else {
@@ -600,7 +600,7 @@ void r600_draw_vbo(struct pipe_context *ctx, const struct pipe_draw_info *info)
 		r600_shader_rebuild(ctx, rctx->vs_shader);
 
 	if ((rctx->ps_shader->shader.clamp_color != rctx->clamp_fragment_color) ||
-	    ((rctx->family >= CHIP_CEDAR) && rctx->ps_shader->shader.fs_write_all &&
+	    ((rctx->chip_class >= EVERGREEN) && rctx->ps_shader->shader.fs_write_all &&
 	     (rctx->ps_shader->shader.nr_cbufs != rctx->nr_cbufs)))
 		r600_shader_rebuild(ctx, rctx->ps_shader);
 
@@ -655,7 +655,7 @@ void r600_draw_vbo(struct pipe_context *ctx, const struct pipe_draw_info *info)
 		rdraw.indices_bo_offset = draw.index_buffer_offset;
 	}
 
-	if (rctx->family >= CHIP_CEDAR) {
+	if (rctx->chip_class >= EVERGREEN) {
 		evergreen_context_draw(&rctx->ctx, &rdraw);
 	} else {
 		r600_context_draw(&rctx->ctx, &rdraw);
