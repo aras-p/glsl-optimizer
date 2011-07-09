@@ -3494,6 +3494,132 @@ glsl_to_tgsi_visitor::renumber_registers(void)
    this->next_temp = new_index;
 }
 
+/**
+ * Returns a fragment program which implements the current pixel transfer ops.
+ * Based on get_pixel_transfer_program in st_atom_pixeltransfer.c.
+ */
+extern "C" void
+get_pixel_transfer_visitor(struct st_fragment_program *fp,
+                           glsl_to_tgsi_visitor *original,
+                           int scale_and_bias, int pixel_maps)
+{
+   glsl_to_tgsi_visitor *v = new glsl_to_tgsi_visitor();
+   struct st_context *st = st_context(original->ctx);
+   struct gl_program *prog = &fp->Base.Base;
+   struct gl_program_parameter_list *params = _mesa_new_parameter_list();
+   st_src_reg coord, src0;
+   st_dst_reg dst0;
+   glsl_to_tgsi_instruction *inst;
+
+   /* Copy attributes of the glsl_to_tgsi_visitor in the original shader. */
+   v->ctx = original->ctx;
+   v->prog = prog;
+   v->glsl_version = original->glsl_version;
+   v->options = original->options;
+   v->next_temp = original->next_temp;
+   v->num_address_regs = original->num_address_regs;
+   v->samplers_used = prog->SamplersUsed = original->samplers_used;
+   v->indirect_addr_temps = original->indirect_addr_temps;
+   v->indirect_addr_consts = original->indirect_addr_consts;
+
+   /*
+    * Get initial pixel color from the texture.
+    * TEX colorTemp, fragment.texcoord[0], texture[0], 2D;
+    */
+   coord = st_src_reg(PROGRAM_INPUT, FRAG_ATTRIB_TEX0, glsl_type::vec2_type);
+   src0 = v->get_temp(glsl_type::vec4_type);
+   dst0 = st_dst_reg(src0);
+   inst = v->emit(NULL, TGSI_OPCODE_TEX, dst0, coord);
+   inst->sampler = 0;
+   inst->tex_target = TEXTURE_2D_INDEX;
+
+   prog->InputsRead |= (1 << FRAG_ATTRIB_TEX0);
+   prog->OutputsWritten |= BITFIELD64_BIT(FRAG_RESULT_COLOR);
+   prog->SamplersUsed |= (1 << 0); /* mark sampler 0 as used */
+   v->samplers_used |= (1 << 0);
+
+   if (scale_and_bias) {
+      static const gl_state_index scale_state[STATE_LENGTH] =
+         { STATE_INTERNAL, STATE_PT_SCALE,
+           (gl_state_index) 0, (gl_state_index) 0, (gl_state_index) 0 };
+      static const gl_state_index bias_state[STATE_LENGTH] =
+         { STATE_INTERNAL, STATE_PT_BIAS,
+           (gl_state_index) 0, (gl_state_index) 0, (gl_state_index) 0 };
+      GLint scale_p, bias_p;
+      st_src_reg scale, bias;
+
+      scale_p = _mesa_add_state_reference(params, scale_state);
+      bias_p = _mesa_add_state_reference(params, bias_state);
+
+      /* MAD colorTemp, colorTemp, scale, bias; */
+      scale = st_src_reg(PROGRAM_STATE_VAR, scale_p, GLSL_TYPE_FLOAT);
+      bias = st_src_reg(PROGRAM_STATE_VAR, bias_p, GLSL_TYPE_FLOAT);
+      inst = v->emit(NULL, TGSI_OPCODE_MAD, dst0, src0, scale, bias);
+   }
+
+   if (pixel_maps) {
+      st_src_reg temp = v->get_temp(glsl_type::vec4_type);
+      st_dst_reg temp_dst = st_dst_reg(temp);
+
+      assert(st->pixel_xfer.pixelmap_texture);
+
+      /* With a little effort, we can do four pixel map look-ups with
+       * two TEX instructions:
+       */
+
+      /* TEX temp.rg, colorTemp.rgba, texture[1], 2D; */
+      temp_dst.writemask = WRITEMASK_XY; /* write R,G */
+      inst = v->emit(NULL, TGSI_OPCODE_TEX, temp_dst, src0);
+      inst->sampler = 1;
+      inst->tex_target = TEXTURE_2D_INDEX;
+
+      /* TEX temp.ba, colorTemp.baba, texture[1], 2D; */
+      src0.swizzle = MAKE_SWIZZLE4(SWIZZLE_Z, SWIZZLE_W, SWIZZLE_Z, SWIZZLE_W);
+      temp_dst.writemask = WRITEMASK_ZW; /* write B,A */
+      inst = v->emit(NULL, TGSI_OPCODE_TEX, temp_dst, src0);
+      inst->sampler = 1;
+      inst->tex_target = TEXTURE_2D_INDEX;
+
+      prog->SamplersUsed |= (1 << 1); /* mark sampler 1 as used */
+      v->samplers_used |= (1 << 1);
+
+      /* MOV colorTemp, temp; */
+      inst = v->emit(NULL, TGSI_OPCODE_MOV, dst0, temp);
+   }
+
+   /* Now copy the instructions from the original glsl_to_tgsi_visitor into the
+    * new visitor. */
+   foreach_iter(exec_list_iterator, iter, original->instructions) {
+      glsl_to_tgsi_instruction *inst = (glsl_to_tgsi_instruction *)iter.get();
+      st_src_reg src_regs[3];
+
+      for (int i=0; i<3; i++) {
+         src_regs[i] = inst->src[i];
+         if (src_regs[i].file == PROGRAM_INPUT &&
+             src_regs[i].index == FRAG_ATTRIB_COL0)
+         {
+            src_regs[i].file = PROGRAM_TEMPORARY;
+            src_regs[i].index = src0.index;
+         }
+         else if (src_regs[i].file == PROGRAM_INPUT)
+            prog->InputsRead |= (1 << src_regs[i].index);
+         else if (src_regs[i].file == PROGRAM_OUTPUT)
+            prog->OutputsWritten |= BITFIELD64_BIT(src_regs[i].index);
+      }
+
+      v->emit(NULL, inst->op, inst->dst, src_regs[0], src_regs[1], src_regs[2]);
+   }
+
+   /* Make modifications to fragment program info. */
+   prog->Parameters = _mesa_combine_parameter_lists(params,
+                                                    original->prog->Parameters);
+   prog->Attributes = _mesa_clone_parameter_list(original->prog->Attributes);
+   prog->Varying = _mesa_clone_parameter_list(original->prog->Varying);
+   _mesa_free_parameter_list(params);
+   count_resources(v, prog);
+   fp->glsl_to_tgsi = v;
+}
+
 /* ------------------------- TGSI conversion stuff -------------------------- */
 struct label {
    unsigned branch_target;

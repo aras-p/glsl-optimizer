@@ -52,6 +52,9 @@ enum pipe_error st_translate_program(
    boolean passthrough_edgeflags);
 
 void free_glsl_to_tgsi_visitor(struct glsl_to_tgsi_visitor *v);
+void get_pixel_transfer_visitor(struct st_fragment_program *fp,
+                                struct glsl_to_tgsi_visitor *original,
+                                int scale_and_bias, int pixel_maps);
 
 struct gl_shader *st_new_shader(struct gl_context *ctx, GLuint name, GLuint type);
 
