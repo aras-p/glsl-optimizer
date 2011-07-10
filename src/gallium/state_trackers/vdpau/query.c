@@ -120,7 +120,7 @@ vlVdpVideoSurfaceQueryGetPutBitsYCbCrCapabilities(VdpDevice device, VdpChromaTyp
 
    if (bits_ycbcr_format != VDP_YCBCR_FORMAT_Y8U8V8A8 && bits_ycbcr_format != VDP_YCBCR_FORMAT_V8U8Y8A8)
       *is_supported = vlscreen->pscreen->is_format_supported(vlscreen->pscreen,
-                                                             FormatToPipe(bits_ycbcr_format),
+                                                             FormatYCBCRToPipe(bits_ycbcr_format),
                                                              PIPE_TEXTURE_2D,
                                                              1,
                                                              PIPE_BIND_RENDER_TARGET);

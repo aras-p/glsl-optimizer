@@ -84,7 +84,7 @@ PipeToChroma(enum pipe_video_chroma_format pipe_type)
 
 
 static inline enum pipe_format
-FormatToPipe(VdpYCbCrFormat vdpau_format)
+FormatYCBCRToPipe(VdpYCbCrFormat vdpau_format)
 {
    switch (vdpau_format) {
       case VDP_YCBCR_FORMAT_NV12:
@@ -99,6 +99,29 @@ FormatToPipe(VdpYCbCrFormat vdpau_format)
          return 0;
       case VDP_YCBCR_FORMAT_V8U8Y8A8:
 	     return PIPE_FORMAT_VUYA;
+      default:
+         assert(0);
+   }
+
+   return -1;
+}
+
+static inline VdpYCbCrFormat
+PipeToFormatYCBCR(enum pipe_format p_format)
+{
+   switch (p_format) {
+      case PIPE_FORMAT_NV12:
+         return VDP_YCBCR_FORMAT_NV12;
+      case PIPE_FORMAT_YV12:
+         return VDP_YCBCR_FORMAT_YV12;
+      case PIPE_FORMAT_UYVY:
+         return VDP_YCBCR_FORMAT_UYVY;
+      case PIPE_FORMAT_YUYV:
+         return VDP_YCBCR_FORMAT_YUYV;
+      //case PIPE_FORMAT_YUVA:
+        // return VDP_YCBCR_FORMAT_Y8U8V8A8;
+      case PIPE_FORMAT_VUYA:
+	 return VDP_YCBCR_FORMAT_V8U8Y8A8;
       default:
          assert(0);
    }
@@ -127,22 +150,20 @@ FormatRGBAToPipe(VdpRGBAFormat vdpau_format)
    return -1;
 }
 
-static inline VdpYCbCrFormat
-PipeToFormat(enum pipe_format p_format)
+static inline VdpRGBAFormat
+PipeToFormatRGBA(enum pipe_format p_format)
 {
    switch (p_format) {
-      case PIPE_FORMAT_NV12:
-         return VDP_YCBCR_FORMAT_NV12;
-      case PIPE_FORMAT_YV12:
-         return VDP_YCBCR_FORMAT_YV12;
-      case PIPE_FORMAT_UYVY:
-         return VDP_YCBCR_FORMAT_UYVY;
-      case PIPE_FORMAT_YUYV:
-         return VDP_YCBCR_FORMAT_YUYV;
-      //case PIPE_FORMAT_YUVA:
-        // return VDP_YCBCR_FORMAT_Y8U8V8A8;
-      case PIPE_FORMAT_VUYA:
-	 return VDP_YCBCR_FORMAT_V8U8Y8A8;
+      case PIPE_FORMAT_A8_UNORM:
+         return VDP_RGBA_FORMAT_A8;
+      case PIPE_FORMAT_B10G10R10A2_UNORM:
+         return VDP_RGBA_FORMAT_B10G10R10A2;
+      case PIPE_FORMAT_B8G8R8A8_UNORM:
+         return VDP_RGBA_FORMAT_B8G8R8A8;
+      case PIPE_FORMAT_R10G10B10A2_UNORM:
+         return VDP_RGBA_FORMAT_R10G10B10A2;
+      case PIPE_FORMAT_R8G8B8A8_UNORM:
+         return VDP_RGBA_FORMAT_R8G8B8A8;
       default:
          assert(0);
    }

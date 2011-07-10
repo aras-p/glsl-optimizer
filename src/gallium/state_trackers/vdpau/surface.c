@@ -158,7 +158,7 @@ vlVdpVideoSurfacePutBitsYCbCr(VdpVideoSurface surface,
                               void const *const *source_data,
                               uint32_t const *source_pitches)
 {
-   enum pipe_format pformat = FormatToPipe(source_ycbcr_format);
+   enum pipe_format pformat = FormatYCBCRToPipe(source_ycbcr_format);
    struct pipe_context *pipe;
    struct pipe_sampler_view **sampler_views;
    unsigned i;

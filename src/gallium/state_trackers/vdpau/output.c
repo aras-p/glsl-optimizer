@@ -135,7 +135,19 @@ vlVdpOutputSurfaceGetParameters(VdpOutputSurface surface,
                                 VdpRGBAFormat *rgba_format,
                                 uint32_t *width, uint32_t *height)
 {
-   return VDP_STATUS_NO_IMPLEMENTATION;
+   vlVdpOutputSurface *vlsurface;
+
+   VDPAU_MSG(VDPAU_TRACE, "[VDPAU] getting surface parameters\n");
+        
+   vlsurface = vlGetDataHTAB(surface);
+   if (!vlsurface)
+      return VDP_STATUS_INVALID_HANDLE;
+
+   *rgba_format = PipeToFormatRGBA(vlsurface->sampler_view->texture->format);
+   *width = vlsurface->sampler_view->texture->width0;
+   *height = vlsurface->sampler_view->texture->height0;
+
+   return VDP_STATUS_OK;
 }
 
 VdpStatus
