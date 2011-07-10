@@ -3620,6 +3620,79 @@ get_pixel_transfer_visitor(struct st_fragment_program *fp,
    fp->glsl_to_tgsi = v;
 }
 
+/**
+ * Make fragment program for glBitmap:
+ *   Sample the texture and kill the fragment if the bit is 0.
+ * This program will be combined with the user's fragment program.
+ *
+ * Based on make_bitmap_fragment_program in st_cb_bitmap.c.
+ */
+extern "C" void
+get_bitmap_visitor(struct st_fragment_program *fp,
+                   glsl_to_tgsi_visitor *original, int samplerIndex)
+{
+   glsl_to_tgsi_visitor *v = new glsl_to_tgsi_visitor();
+   struct st_context *st = st_context(original->ctx);
+   struct gl_program *prog = &fp->Base.Base;
+   st_src_reg coord, src0;
+   st_dst_reg dst0;
+   glsl_to_tgsi_instruction *inst;
+
+   /* Copy attributes of the glsl_to_tgsi_visitor in the original shader. */
+   v->ctx = original->ctx;
+   v->prog = prog;
+   v->glsl_version = original->glsl_version;
+   v->options = original->options;
+   v->next_temp = original->next_temp;
+   v->num_address_regs = original->num_address_regs;
+   v->samplers_used = prog->SamplersUsed = original->samplers_used;
+   v->indirect_addr_temps = original->indirect_addr_temps;
+   v->indirect_addr_consts = original->indirect_addr_consts;
+
+   /* TEX tmp0, fragment.texcoord[0], texture[0], 2D; */
+   coord = st_src_reg(PROGRAM_INPUT, FRAG_ATTRIB_TEX0, glsl_type::vec2_type);
+   src0 = v->get_temp(glsl_type::vec4_type);
+   dst0 = st_dst_reg(src0);
+   inst = v->emit(NULL, TGSI_OPCODE_TEX, dst0, coord);
+   inst->sampler = samplerIndex;
+   inst->tex_target = TEXTURE_2D_INDEX;
+
+   prog->InputsRead |= (1 << FRAG_ATTRIB_TEX0);
+   prog->SamplersUsed |= (1 << samplerIndex); /* mark sampler as used */
+   v->samplers_used |= (1 << samplerIndex);
+
+   /* KIL if -tmp0 < 0 # texel=0 -> keep / texel=0 -> discard */
+   src0.negate = NEGATE_XYZW;
+   if (st->bitmap.tex_format == PIPE_FORMAT_L8_UNORM)
+      src0.swizzle = SWIZZLE_XXXX;
+   inst = v->emit(NULL, TGSI_OPCODE_KIL, undef_dst, src0);
+
+   /* Now copy the instructions from the original glsl_to_tgsi_visitor into the
+    * new visitor. */
+   foreach_iter(exec_list_iterator, iter, original->instructions) {
+      glsl_to_tgsi_instruction *inst = (glsl_to_tgsi_instruction *)iter.get();
+      st_src_reg src_regs[3];
+
+      if (inst->dst.file == PROGRAM_OUTPUT)
+         prog->OutputsWritten |= BITFIELD64_BIT(inst->dst.index);
+
+      for (int i=0; i<3; i++) {
+         src_regs[i] = inst->src[i];
+         if (src_regs[i].file == PROGRAM_INPUT)
+            prog->InputsRead |= (1 << src_regs[i].index);
+      }
+
+      v->emit(NULL, inst->op, inst->dst, src_regs[0], src_regs[1], src_regs[2]);
+   }
+
+   /* Make modifications to fragment program info. */
+   prog->Parameters = _mesa_clone_parameter_list(original->prog->Parameters);
+   prog->Attributes = _mesa_clone_parameter_list(original->prog->Attributes);
+   prog->Varying = _mesa_clone_parameter_list(original->prog->Varying);
+   count_resources(v, prog);
+   fp->glsl_to_tgsi = v;
+}
+
 /* ------------------------- TGSI conversion stuff -------------------------- */
 struct label {
    unsigned branch_target;
