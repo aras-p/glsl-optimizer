@@ -2603,6 +2603,10 @@ _mesa_BlitFramebufferEXT(GLint srcX0, GLint srcY0, GLint srcX1, GLint srcY1,
       }
    }
 
+   if (!mask) {
+      return;
+   }
+
    ASSERT(ctx->Driver.BlitFramebuffer);
    ctx->Driver.BlitFramebuffer(ctx,
                                srcX0, srcY0, srcX1, srcY1,
