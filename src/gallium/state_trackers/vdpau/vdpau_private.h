@@ -216,8 +216,6 @@ PipeToProfile(enum pipe_video_profile p_profile)
 
 typedef struct
 {
-   Display *display;
-   int screen;
    struct vl_screen *vscreen;
    struct vl_context *context;
 } vlVdpDevice;

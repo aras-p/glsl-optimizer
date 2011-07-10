@@ -55,8 +55,6 @@ vdp_imp_device_create_x11(Display *display, int screen, VdpDevice *device,
       goto no_dev;
    }
 
-   dev->display = display;
-   dev->screen = screen;
    dev->vscreen = vl_screen_create(display, screen);
    if (!dev->vscreen) {
       ret = VDP_STATUS_RESOURCES;
