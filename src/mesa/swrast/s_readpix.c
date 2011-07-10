@@ -446,7 +446,7 @@ read_depth_stencil_pixels(struct gl_context *ctx,
             GLfloat depthVals[MAX_WIDTH];
             _swrast_read_depth_span_float(ctx, depthRb, width, x, y + i,
                                           depthVals);
-            _mesa_pack_depth_stencil_span(ctx, width, depthStencilDst,
+            _mesa_pack_depth_stencil_span(ctx, width, type, depthStencilDst,
                                           depthVals, stencilVals, packing);
          }
       }

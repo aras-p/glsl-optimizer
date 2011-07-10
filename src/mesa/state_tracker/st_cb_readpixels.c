@@ -177,7 +177,7 @@ st_read_stencil_pixels(struct gl_context *ctx, GLint x, GLint y,
       dest = _mesa_image_address2d(packing, pixels, width, height,
                                    format, type, j, 0);
       if (format == GL_DEPTH_STENCIL) {
-         _mesa_pack_depth_stencil_span(ctx, width, dest,
+         _mesa_pack_depth_stencil_span(ctx, width, type, dest,
                                        zValues, sValues, packing);
       }
       else {
