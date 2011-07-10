@@ -3534,7 +3534,6 @@ get_pixel_transfer_visitor(struct st_fragment_program *fp,
    inst->tex_target = TEXTURE_2D_INDEX;
 
    prog->InputsRead |= (1 << FRAG_ATTRIB_TEX0);
-   prog->OutputsWritten |= BITFIELD64_BIT(FRAG_RESULT_COLOR);
    prog->SamplersUsed |= (1 << 0); /* mark sampler 0 as used */
    v->samplers_used |= (1 << 0);
 
@@ -3593,6 +3592,9 @@ get_pixel_transfer_visitor(struct st_fragment_program *fp,
       glsl_to_tgsi_instruction *inst = (glsl_to_tgsi_instruction *)iter.get();
       st_src_reg src_regs[3];
 
+      if (inst->dst.file == PROGRAM_OUTPUT)
+         prog->OutputsWritten |= BITFIELD64_BIT(inst->dst.index);
+
       for (int i=0; i<3; i++) {
          src_regs[i] = inst->src[i];
          if (src_regs[i].file == PROGRAM_INPUT &&
@@ -3603,8 +3605,6 @@ get_pixel_transfer_visitor(struct st_fragment_program *fp,
          }
          else if (src_regs[i].file == PROGRAM_INPUT)
             prog->InputsRead |= (1 << src_regs[i].index);
-         else if (src_regs[i].file == PROGRAM_OUTPUT)
-            prog->OutputsWritten |= BITFIELD64_BIT(src_regs[i].index);
       }
 
       v->emit(NULL, inst->op, inst->dst, src_regs[0], src_regs[1], src_regs[2]);
