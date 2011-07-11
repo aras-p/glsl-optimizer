@@ -80,6 +80,20 @@ svga_translate_format(struct svga_screen *ss,
    case PIPE_FORMAT_DXT5_RGBA:
       return SVGA3D_DXT5;
 
+   /* Float formats (only 1, 2 and 4-component formats supported) */
+   case PIPE_FORMAT_R32_FLOAT:
+      return SVGA3D_R_S23E8;
+   case PIPE_FORMAT_R32G32_FLOAT:
+      return SVGA3D_RG_S23E8;
+   case PIPE_FORMAT_R32G32B32A32_FLOAT:
+      return SVGA3D_ARGB_S23E8;
+   case PIPE_FORMAT_R16_FLOAT:
+      return SVGA3D_R_S10E5;
+   case PIPE_FORMAT_R16G16_FLOAT:
+      return SVGA3D_RG_S10E5;
+   case PIPE_FORMAT_R16G16B16A16_FLOAT:
+      return SVGA3D_ARGB_S10E5;
+
    case PIPE_FORMAT_Z32_UNORM:
       /* SVGA3D_Z_D32 is not yet unsupported */
       /* fall-through */
