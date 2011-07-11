@@ -192,6 +192,8 @@ vlVdpPresentationQueueDisplay(VdpPresentationQueue presentation_queue,
       if (system(cmd) != 0)
          VDPAU_MSG(VDPAU_TRACE, "[VDPAU] Dumping surface %d failed.\n", surface);
    }
+   
+   pipe_surface_reference(&drawable_surface, NULL);
 
    return VDP_STATUS_OK;
 }

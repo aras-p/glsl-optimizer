@@ -447,6 +447,7 @@ vl_mpeg12_destroy(struct pipe_video_decoder *decoder)
 
    pipe_resource_reference(&dec->quads.buffer, NULL);
    pipe_resource_reference(&dec->pos.buffer, NULL);
+   pipe_resource_reference(&dec->block_num.buffer, NULL);
 
    pipe_sampler_view_reference(&dec->zscan_linear, NULL);
    pipe_sampler_view_reference(&dec->zscan_normal, NULL);

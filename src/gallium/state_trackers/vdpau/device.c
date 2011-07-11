@@ -151,6 +151,9 @@ vlVdpDeviceDestroy(VdpDevice device)
    vlVdpDevice *dev = vlGetDataHTAB(device);
    if (!dev)
       return VDP_STATUS_INVALID_HANDLE;
+      
+   vl_video_destroy(dev->context);
+   vl_screen_destroy(dev->vscreen);
 
    FREE(dev);
    vlDestroyHTAB();

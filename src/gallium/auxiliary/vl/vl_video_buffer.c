@@ -102,6 +102,8 @@ vl_video_buffer_destroy(struct pipe_video_buffer *buffer)
       pipe_sampler_view_reference(&buf->sampler_view_components[i], NULL);
       pipe_resource_reference(&buf->resources[i], NULL);
    }
+
+   FREE(buffer);
 }
 
 static struct pipe_sampler_view **

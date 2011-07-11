@@ -749,7 +749,8 @@ bool vl_idct_init(struct vl_idct *idct, struct pipe_context *pipe,
                   struct pipe_sampler_view *matrix,
                   struct pipe_sampler_view *transpose)
 {
-   assert(idct && pipe && matrix);
+   assert(idct && pipe);
+   assert(matrix && transpose);
 
    idct->pipe = pipe;
    idct->buffer_width = buffer_width;
@@ -777,6 +778,7 @@ vl_idct_cleanup(struct vl_idct *idct)
    cleanup_state(idct);
 
    pipe_sampler_view_reference(&idct->matrix, NULL);
+   pipe_sampler_view_reference(&idct->transpose, NULL);
 }
 
 bool
@@ -784,9 +786,8 @@ vl_idct_init_buffer(struct vl_idct *idct, struct vl_idct_buffer *buffer,
                     struct pipe_sampler_view *source,
                     struct pipe_sampler_view *intermediate)
 {
-   assert(buffer);
-   assert(idct);
-   assert(source);
+   assert(buffer && idct);
+   assert(source && intermediate);
 
    memset(buffer, 0, sizeof(struct vl_idct_buffer));
 
@@ -811,6 +812,9 @@ vl_idct_cleanup_buffer(struct vl_idct *idct, struct vl_idct_buffer *buffer)
 
    cleanup_source(idct, buffer);
    cleanup_intermediate(idct, buffer);
+
+   pipe_sampler_view_reference(&buffer->sampler_views.individual.matrix, NULL);
+   pipe_sampler_view_reference(&buffer->sampler_views.individual.transpose, NULL);
 }
 
 void

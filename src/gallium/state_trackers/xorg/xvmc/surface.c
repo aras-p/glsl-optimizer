@@ -522,6 +522,7 @@ Status XvMCPutSurface(Display *dpy, XvMCSurface *surface, Drawable drawable,
        context_priv->dst_rect.x != dst_rect.x || context_priv->dst_rect.y != dst_rect.y ||
        context_priv->dst_rect.w != dst_rect.w || context_priv->dst_rect.h != dst_rect.h) {
 
+      pipe_surface_reference(&context_priv->drawable_surface, NULL);
       context_priv->drawable_surface = vl_drawable_surface_get(context_priv->vctx, drawable);
       context_priv->dst_rect = dst_rect;
       vl_compositor_reset_dirty_area(compositor);
@@ -636,6 +637,9 @@ Status XvMCDestroySurface(Display *dpy, XvMCSurface *surface)
       return XvMCBadSurface;
 
    surface_priv = surface->privData;
+   
+   if (surface_priv->mapped)
+      surface_priv->decode_buffer->end_frame(surface_priv->decode_buffer);
    surface_priv->decode_buffer->destroy(surface_priv->decode_buffer);
    surface_priv->video_buffer->destroy(surface_priv->video_buffer);
    FREE(surface_priv);

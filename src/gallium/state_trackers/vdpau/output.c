@@ -88,6 +88,7 @@ vlVdpOutputSurfaceCreate(VdpDevice device,
 
    vlsurface->sampler_view = pipe->create_sampler_view(pipe, res, &sv_templ);
    if (!vlsurface->sampler_view) {
+      pipe_resource_reference(&res, NULL);
       FREE(dev);
       return VDP_STATUS_ERROR;
    }
@@ -97,15 +98,19 @@ vlVdpOutputSurfaceCreate(VdpDevice device,
    surf_templ.usage = PIPE_BIND_SAMPLER_VIEW | PIPE_BIND_RENDER_TARGET;
    vlsurface->surface = pipe->create_surface(pipe, res, &surf_templ);
    if (!vlsurface->surface) {
+      pipe_resource_reference(&res, NULL);
       FREE(dev);
       return VDP_STATUS_ERROR;
    }
 
    *surface = vlAddDataHTAB(vlsurface);
    if (*surface == 0) {
+      pipe_resource_reference(&res, NULL);
       FREE(dev);
       return VDP_STATUS_ERROR;
    }
+   
+   pipe_resource_reference(&res, NULL);
 
    return VDP_STATUS_OK;
 }
