@@ -63,7 +63,7 @@ nv50_2d_format(enum pipe_format format)
    case 2:
       return NV50_SURFACE_FORMAT_R16_UNORM;
    case 4:
-      return NV50_SURFACE_FORMAT_A8R8G8B8_UNORM;
+      return NV50_SURFACE_FORMAT_BGRA8_UNORM;
    default:
       return 0;
    }
