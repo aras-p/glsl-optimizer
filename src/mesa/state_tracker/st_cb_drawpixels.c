@@ -988,11 +988,12 @@ st_DrawPixels(struct gl_context *ctx, GLint x, GLint y,
    else if (format == GL_DEPTH_COMPONENT)
       write_depth = GL_TRUE;
 
-   if (write_stencil) {
-      enum pipe_format tex_format;
-      /* can we write to stencil if not fallback */
-      if (!pipe->screen->get_param(pipe->screen, PIPE_CAP_SHADER_STENCIL_EXPORT))
-	 goto stencil_fallback;
+   if (write_stencil &&
+       !pipe->screen->get_param(pipe->screen, PIPE_CAP_SHADER_STENCIL_EXPORT)) {
+      /* software fallback */
+      draw_stencil_pixels(ctx, x, y, width, height, format, type,
+                          unpack, pixels);
+      return;
    }
 
    /* Mesa state should be up to date by now */
@@ -1083,11 +1084,6 @@ st_DrawPixels(struct gl_context *ctx, GLint x, GLint y,
          pipe_resource_reference(&pt, NULL);
       }
    }
-   return;
-
-stencil_fallback:
-   draw_stencil_pixels(ctx, x, y, width, height, format, type,
-		       unpack, pixels);
 }
 
 
