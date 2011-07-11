@@ -59,10 +59,9 @@ SRC_DIRS := glx egl $(SRC_DIRS)
 EGL_DRIVERS_DIRS = glx
 
 DRIVER_DIRS = dri
-
 GALLIUM_WINSYS_DIRS = sw sw/xlib drm/vmware drm/intel drm/i965
-GALLIUM_TARGET_DIRS = egl-swrast
-GALLIUM_STATE_TRACKERS_DIRS = egl vdpau
+GALLIUM_TARGET_DIRS = 
+GALLIUM_STATE_TRACKERS_DIRS = egl
 
 DRI_DIRS = i810 i915 i965 mach64 mga nouveau r128 r200 r300 r600 radeon \
 	savage sis tdfx unichrome swrast
