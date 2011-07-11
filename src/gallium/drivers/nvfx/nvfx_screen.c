@@ -3,11 +3,11 @@
 #include "util/u_format.h"
 #include "util/u_format_s3tc.h"
 #include "util/u_simple_screen.h"
+#include "vl/vl_video_buffer.h"
 
 #include "nouveau/nouveau_screen.h"
 #include "nouveau/nv_object.xml.h"
 #include "nvfx_context.h"
-#include "nvfx_video_context.h"
 #include "nvfx_screen.h"
 #include "nvfx_resource.h"
 #include "nvfx_tex.h"
@@ -204,6 +204,19 @@ nvfx_screen_get_paramf(struct pipe_screen *pscreen, enum pipe_cap param)
 	default:
 		NOUVEAU_ERR("Unknown PIPE_CAP %d\n", param);
 		return 0.0;
+	}
+}
+
+static int
+nvfx_screen_get_video_param(struct pipe_screen *screen,
+				enum pipe_video_profile profile,
+				enum pipe_video_cap param)
+{
+	switch (param) {
+	case PIPE_VIDEO_CAP_NPOT_TEXTURES:
+		return 0;
+	default:
+		return 0;
 	}
 }
 
@@ -467,9 +480,10 @@ nvfx_screen_create(struct pipe_winsys *ws, struct nouveau_device *dev)
 	pscreen->get_param = nvfx_screen_get_param;
 	pscreen->get_shader_param = nvfx_screen_get_shader_param;
 	pscreen->get_paramf = nvfx_screen_get_paramf;
+	pscreen->get_video_param = nvfx_screen_get_video_param;
 	pscreen->is_format_supported = nvfx_screen_is_format_supported;
+	pscreen->is_video_format_supported = vl_video_buffer_is_format_supported;
 	pscreen->context_create = nvfx_create;
-	pscreen->video_context_create = nvfx_video_create;
 
 	ret = nouveau_bo_new(dev, NOUVEAU_BO_VRAM, 0, 4096, &screen->fence);
 	if (ret) {

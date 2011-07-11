@@ -24,8 +24,7 @@ C_SOURCES = \
 	nvfx_surface.c \
 	nvfx_transfer.c \
 	nvfx_vbo.c \
-	nvfx_vertprog.c \
-	nvfx_video_context.c
+	nvfx_vertprog.c
 
 LIBRARY_INCLUDES = \
 	$(LIBDRM_CFLAGS) \
