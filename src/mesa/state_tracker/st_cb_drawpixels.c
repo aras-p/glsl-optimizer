@@ -281,11 +281,36 @@ internal_format(struct gl_context *ctx, GLenum format, GLenum type)
 {
    switch (format) {
    case GL_DEPTH_COMPONENT:
-      return GL_DEPTH_COMPONENT;
+      switch (type) {
+      case GL_UNSIGNED_SHORT:
+         return GL_DEPTH_COMPONENT16;
+
+      case GL_UNSIGNED_INT:
+         return GL_DEPTH_COMPONENT32;
+
+      case GL_FLOAT:
+         if (ctx->Extensions.ARB_depth_buffer_float)
+            return GL_DEPTH_COMPONENT32F;
+         else
+            return GL_DEPTH_COMPONENT;
+
+      default:
+         return GL_DEPTH_COMPONENT;
+      }
+
    case GL_DEPTH_STENCIL:
-      return GL_DEPTH_STENCIL;
+      switch (type) {
+      case GL_FLOAT_32_UNSIGNED_INT_24_8_REV:
+         return GL_DEPTH32F_STENCIL8;
+
+      case GL_UNSIGNED_INT_24_8:
+      default:
+         return GL_DEPTH24_STENCIL8;
+      }
+
    case GL_STENCIL_INDEX:
       return GL_STENCIL_INDEX;
+
    default:
       if (_mesa_is_integer_format(format)) {
          switch (type) {
