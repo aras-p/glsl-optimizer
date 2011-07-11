@@ -346,97 +346,80 @@ emit_constants(struct i915_context *i915)
 static const struct
 {
    enum pipe_format format;
-   uint hw_shift_R;
-   uint hw_shift_G;
-   uint hw_shift_B;
-   uint hw_shift_A;
+   uint hw_swizzle;
 } fixup_formats[] = {
-   { PIPE_FORMAT_R8G8B8A8_UNORM, 20, 24, 28, 16 /* BGRA */},
-   { PIPE_FORMAT_L8_UNORM,       28, 28, 28, 16 /* RRRA */},
-   { PIPE_FORMAT_I8_UNORM,       28, 28, 28, 16 /* RRRA */},
-   { PIPE_FORMAT_A8_UNORM,       16, 16, 16, 16 /* AAAA */},
-   { PIPE_FORMAT_NONE,           0,   0,  0,  0},
+   { PIPE_FORMAT_R8G8B8A8_UNORM, 0x21030000 /* BGRA */},
+   { PIPE_FORMAT_L8_UNORM,       0x00030000 /* RRRA */},
+   { PIPE_FORMAT_I8_UNORM,       0x00030000 /* RRRA */},
+   { PIPE_FORMAT_A8_UNORM,       0x33330000 /* AAAA */},
+   { PIPE_FORMAT_NONE,           0x00000000},
 };
 
-static boolean need_fixup(struct pipe_surface* p)
+static uint need_target_fixup(struct pipe_surface* p)
 {
    enum pipe_format f;
-
    /* if we don't have a surface bound yet, we don't need to fixup the shader */
    if (!p)
-      return FALSE;
+      return 0;
 
    f = p->format;
    for(int i=0; fixup_formats[i].format != PIPE_FORMAT_NONE; i++)
       if (fixup_formats[i].format == f)
-         return TRUE;
+         return 1;
 
-   return FALSE;
+   return 0;
 }
 
-static uint fixup_swizzle(enum pipe_format f, uint v)
+static uint fixup_swizzle(enum pipe_format f)
 {
-   int i;
-
-   for(i=0; fixup_formats[i].format != PIPE_FORMAT_NONE; i++)
+   for(int i=0; fixup_formats[i].format != PIPE_FORMAT_NONE; i++)
       if (fixup_formats[i].format == f)
-           break;
+         return fixup_formats[i].hw_swizzle;
 
-   if (fixup_formats[i].format == PIPE_FORMAT_NONE)
-	   return v;
-
-   uint rgba = v & 0xFFFF0000;
-
-   v &= 0xFFFF;
-   v |= ((rgba >> fixup_formats[i].hw_shift_R) & 0xF) << 28;
-   v |= ((rgba >> fixup_formats[i].hw_shift_G) & 0xF) << 24;
-   v |= ((rgba >> fixup_formats[i].hw_shift_B) & 0xF) << 20;
-   v |= ((rgba >> fixup_formats[i].hw_shift_A) & 0xF) << 16;
-
-   return v;
+   return 0;
 }
 
 static void
 validate_program(struct i915_context *i915, unsigned *batch_space)
 {
-   *batch_space = i915->fs->program_len;
+   struct pipe_surface *cbuf_surface = i915->framebuffer.cbufs[0];
+   uint additional_size = need_target_fixup(cbuf_surface);
+
+   /* we need more batch space if we want to emulate rgba framebuffers */
+   *batch_space = i915->fs->program_len + 3 * additional_size;
 }
 
 static void
 emit_program(struct i915_context *i915)
 {
    struct pipe_surface *cbuf_surface = i915->framebuffer.cbufs[0];
-   boolean need_format_fixup = need_fixup(cbuf_surface);
-   int i;
-   int fixup_offset = -1;
+   uint target_fixup = need_target_fixup(cbuf_surface);
+   uint i;
 
    /* we should always have, at least, a pass-through program */
    assert(i915->fs->program_len > 0);
 
-   if (need_format_fixup) {
-      /* Find where we emit the output color */
-      for (i = i915->fs->program_len - 3; i>0; i-=3) {
-         uint instr = i915->fs->program[i];
-         if ((instr & (REG_NR_MASK << A0_DEST_TYPE_SHIFT)) == 
-             (REG_TYPE_OC << A0_DEST_TYPE_SHIFT) ) {
-            /* Found it! */
-            fixup_offset = i + 1;
-            break;
-	 }
-      }
-      if (fixup_offset == -1) {
-         need_format_fixup = FALSE;
-         debug_printf("couldn't find fixup offset\n");
-      }
+   {
+      /* first word has the size, we have to adjust that */
+      uint size = (i915->fs->program[0]);
+      size += target_fixup * 3;
+      OUT_BATCH(size);
    }
 
-   /* emit the program to the hw */
-   for (i = 0; i < i915->fs->program_len; i++) {
-      if (need_format_fixup && (i == fixup_offset) ) {
-         uint v = fixup_swizzle(cbuf_surface->format, i915->fs->program[i]);
-         OUT_BATCH(v);
-      } else
-         OUT_BATCH(i915->fs->program[i]);
+   /* output the declarations of the program */
+   for (i=1 ; i < i915->fs->program_len; i++) 
+      OUT_BATCH(i915->fs->program[i]);
+
+   /* we emit an additional mov with swizzle to fake RGBA framebuffers */
+   if (target_fixup) {
+      /* mov out_color, out_color.zyxw */
+      OUT_BATCH(A0_MOV |
+                (REG_TYPE_OC << A0_DEST_TYPE_SHIFT) |
+                A0_DEST_CHANNEL_ALL |
+                (REG_TYPE_OC << A0_SRC0_TYPE_SHIFT) |
+                (T_DIFFUSE << A0_SRC0_NR_SHIFT));
+      OUT_BATCH(fixup_swizzle(cbuf_surface->format));
+      OUT_BATCH(0);
    }
 }
 

@@ -213,6 +213,15 @@ i915_drm_buffer_destroy(struct i915_winsys *iws,
    FREE(buffer);
 }
 
+static boolean
+i915_drm_buffer_is_busy(struct i915_winsys *iws,
+                        struct i915_winsys_buffer *buffer)
+{
+   struct i915_drm_buffer* i915_buffer = i915_drm_buffer(buffer);
+   return drm_intel_bo_busy(i915_buffer->bo);
+}
+
+
 void
 i915_drm_winsys_init_buffer_functions(struct i915_drm_winsys *idws)
 {
@@ -224,4 +233,5 @@ i915_drm_winsys_init_buffer_functions(struct i915_drm_winsys *idws)
    idws->base.buffer_unmap = i915_drm_buffer_unmap;
    idws->base.buffer_write = i915_drm_buffer_write;
    idws->base.buffer_destroy = i915_drm_buffer_destroy;
+   idws->base.buffer_is_busy = i915_drm_buffer_is_busy;
 }

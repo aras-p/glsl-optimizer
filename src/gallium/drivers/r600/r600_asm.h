@@ -171,8 +171,7 @@ struct r600_cf_callstack {
 };
 
 struct r600_bc {
-	enum radeon_family		family;
-	int				chiprev; /* 0 - r600, 1 - r700, 2 - evergreen */
+	enum chip_class			chip_class;
 	int				type;
 	struct list_head		cf;
 	struct r600_bc_cf		*cf_last;
@@ -193,7 +192,7 @@ struct r600_bc {
 int eg_bc_cf_build(struct r600_bc *bc, struct r600_bc_cf *cf);
 
 /* r600_asm.c */
-int r600_bc_init(struct r600_bc *bc, enum radeon_family family);
+void r600_bc_init(struct r600_bc *bc, enum chip_class chip_class);
 void r600_bc_clear(struct r600_bc *bc);
 int r600_bc_add_alu(struct r600_bc *bc, const struct r600_bc_alu *alu);
 int r600_bc_add_vtx(struct r600_bc *bc, const struct r600_bc_vtx *vtx);

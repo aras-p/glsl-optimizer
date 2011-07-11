@@ -1791,7 +1791,8 @@ fs_visitor::emit_fb_writes()
 {
    this->current_annotation = "FB write header";
    GLboolean header_present = GL_TRUE;
-   int nr = 2;
+   int base_mrf = 2;
+   int nr = base_mrf;
    int reg_width = c->dispatch_width / 8;
 
    if (intel->gen >= 6 &&
@@ -1870,8 +1871,8 @@ fs_visitor::emit_fb_writes()
 
       fs_inst *inst = emit(FS_OPCODE_FB_WRITE);
       inst->target = target;
-      inst->base_mrf = 2;
-      inst->mlen = nr;
+      inst->base_mrf = base_mrf;
+      inst->mlen = nr - base_mrf;
       if (target == c->key.nr_color_regions - 1)
 	 inst->eot = true;
       inst->header_present = header_present;
@@ -1888,8 +1889,8 @@ fs_visitor::emit_fb_writes()
       }
 
       fs_inst *inst = emit(FS_OPCODE_FB_WRITE);
-      inst->base_mrf = 2;
-      inst->mlen = nr;
+      inst->base_mrf = base_mrf;
+      inst->mlen = nr - base_mrf;
       inst->eot = true;
       inst->header_present = header_present;
    }

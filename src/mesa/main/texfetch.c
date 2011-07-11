@@ -913,6 +913,20 @@ texfetch_funcs[MESA_FORMAT_COUNT] =
       fetch_texel_2d_r11_g11_b10f,
       fetch_texel_3d_r11_g11_b10f,
       store_texel_r11_g11_b10f
+   },
+   {
+      MESA_FORMAT_Z32_FLOAT,
+      fetch_texel_1d_f_r_f32, /* Reuse the R32F functions. */
+      fetch_texel_2d_f_r_f32,
+      fetch_texel_3d_f_r_f32,
+      store_texel_r_f32
+   },
+   {
+      MESA_FORMAT_Z32_FLOAT_X24S8,
+      fetch_texel_1d_z32f_x24s8,
+      fetch_texel_2d_z32f_x24s8,
+      fetch_texel_3d_z32f_x24s8,
+      store_texel_z32f_x24s8
    }
 };
 

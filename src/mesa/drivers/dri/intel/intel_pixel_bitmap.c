@@ -175,7 +175,7 @@ do_blit_bitmap( struct gl_context *ctx,
 		const GLubyte *bitmap )
 {
    struct intel_context *intel = intel_context(ctx);
-   struct intel_region *dst = intel_drawbuf_region(intel);
+   struct intel_region *dst;
    struct gl_framebuffer *fb = ctx->DrawBuffer;
    GLfloat tmpColor[4];
    GLubyte ubcolor[4];
@@ -197,6 +197,9 @@ do_blit_bitmap( struct gl_context *ctx,
        */
       return GL_FALSE;
    }
+
+   intel_prepare_render(intel);
+   dst = intel_drawbuf_region(intel);
 
    if (!dst)
        return GL_FALSE;
@@ -225,8 +228,6 @@ do_blit_bitmap( struct gl_context *ctx,
 
    if (!intel_check_blit_fragment_ops(ctx, tmpColor[3] == 1.0F))
       return GL_FALSE;
-
-   intel_prepare_render(intel);
 
    /* Clip to buffer bounds and scissor. */
    if (!_mesa_clip_to_region(fb->_Xmin, fb->_Ymin,

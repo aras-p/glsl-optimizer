@@ -172,7 +172,7 @@ static uint get_mapping(struct i915_fragment_shader* fs, int unit)
  */
 static uint
 src_vector(struct i915_fp_compile *p,
-           const struct tgsi_full_src_register *source,
+           const struct i915_full_src_register *source,
            struct i915_fragment_shader* fs)
 {
    uint index = source->Register.Index;
@@ -287,7 +287,7 @@ src_vector(struct i915_fp_compile *p,
  */
 static uint
 get_result_vector(struct i915_fp_compile *p,
-                  const struct tgsi_full_dst_register *dest)
+                  const struct i915_full_dst_register *dest)
 {
    switch (dest->Register.File) {
    case TGSI_FILE_OUTPUT:
@@ -316,7 +316,7 @@ get_result_vector(struct i915_fp_compile *p,
  * Compute flags for saturation and writemask.
  */
 static uint
-get_result_flags(const struct tgsi_full_instruction *inst)
+get_result_flags(const struct i915_full_instruction *inst)
 {
    const uint writeMask
       = inst->Dst[0].Register.WriteMask;
@@ -378,7 +378,7 @@ translate_tex_src_target(struct i915_fp_compile *p, uint tex)
  */
 static void
 emit_tex(struct i915_fp_compile *p,
-         const struct tgsi_full_instruction *inst,
+         const struct i915_full_instruction *inst,
          uint opcode,
          struct i915_fragment_shader* fs)
 {
@@ -404,7 +404,7 @@ emit_tex(struct i915_fp_compile *p,
  */
 static void
 emit_simple_arith(struct i915_fp_compile *p,
-                  const struct tgsi_full_instruction *inst,
+                  const struct i915_full_instruction *inst,
                   uint opcode, uint numArgs,
                   struct i915_fragment_shader* fs)
 {
@@ -429,11 +429,11 @@ emit_simple_arith(struct i915_fp_compile *p,
 /** As above, but swap the first two src regs */
 static void
 emit_simple_arith_swap2(struct i915_fp_compile *p,
-                        const struct tgsi_full_instruction *inst,
+                        const struct i915_full_instruction *inst,
                         uint opcode, uint numArgs,
                         struct i915_fragment_shader* fs)
 {
-   struct tgsi_full_instruction inst2;
+   struct i915_full_instruction inst2;
 
    assert(numArgs == 2);
 
@@ -450,13 +450,14 @@ emit_simple_arith_swap2(struct i915_fp_compile *p,
  *
  * Possible concerns:
  *
+ * DDX, DDY -- return 0
  * SIN, COS -- could use another taylor step?
  * LIT      -- results seem a little different to sw mesa
  * LOG      -- different to mesa on negative numbers, but this is conformant.
  */ 
 static void
 i915_translate_instruction(struct i915_fp_compile *p,
-                           const struct tgsi_full_instruction *inst,
+                           const struct i915_full_instruction *inst,
                            struct i915_fragment_shader *fs)
 {
    uint writemask;
@@ -725,6 +726,9 @@ i915_translate_instruction(struct i915_fp_compile *p,
 
    case TGSI_OPCODE_MUL:
       emit_simple_arith(p, inst, A0_MUL, 2, fs);
+      break;
+
+   case TGSI_OPCODE_NOP:
       break;
 
    case TGSI_OPCODE_POW:
@@ -1043,6 +1047,93 @@ i915_translate_instruction(struct i915_fp_compile *p,
 }
 
 
+static void i915_translate_token(struct i915_fp_compile *p,
+                                 const union i915_full_token* token,
+                                 struct i915_fragment_shader *fs)
+{
+   struct i915_fragment_shader *ifs = p->shader;
+   switch( token->Token.Type ) {
+   case TGSI_TOKEN_TYPE_PROPERTY:
+      /*
+       * We only support one cbuf, but we still need to ignore the property
+       * correctly so we don't hit the assert at the end of the switch case.
+       */
+      assert(token->FullProperty.Property.PropertyName ==
+             TGSI_PROPERTY_FS_COLOR0_WRITES_ALL_CBUFS);
+      break;
+
+   case TGSI_TOKEN_TYPE_DECLARATION:
+      if (token->FullDeclaration.Declaration.File
+               == TGSI_FILE_CONSTANT) {
+         uint i;
+         for (i = token->FullDeclaration.Range.First;
+              i <= token->FullDeclaration.Range.Last;
+              i++) {
+            assert(ifs->constant_flags[i] == 0x0);
+            ifs->constant_flags[i] = I915_CONSTFLAG_USER;
+            ifs->num_constants = MAX2(ifs->num_constants, i + 1);
+         }
+      }
+      else if (token->FullDeclaration.Declaration.File
+               == TGSI_FILE_TEMPORARY) {
+         uint i;
+         for (i = token->FullDeclaration.Range.First;
+              i <= token->FullDeclaration.Range.Last;
+              i++) {
+            if (i >= I915_MAX_TEMPORARY)
+               debug_printf("Too many temps (%d)\n",i);
+            else
+               /* XXX just use shader->info->file_mask[TGSI_FILE_TEMPORARY] */
+               p->temp_flag |= (1 << i); /* mark temp as used */
+         }
+      }
+      break;
+
+   case TGSI_TOKEN_TYPE_IMMEDIATE:
+      {
+         const struct tgsi_full_immediate *imm
+            = &token->FullImmediate;
+         const uint pos = p->num_immediates++;
+         uint j;
+         assert( imm->Immediate.NrTokens <= 4 + 1 );
+         for (j = 0; j < imm->Immediate.NrTokens - 1; j++) {
+            p->immediates[pos][j] = imm->u[j].Float;
+         }
+      }
+      break;
+
+   case TGSI_TOKEN_TYPE_INSTRUCTION:
+      if (p->first_instruction) {
+         /* resolve location of immediates */
+         uint i, j;
+         for (i = 0; i < p->num_immediates; i++) {
+            /* find constant slot for this immediate */
+            for (j = 0; j < I915_MAX_CONSTANT; j++) {
+               if (ifs->constant_flags[j] == 0x0) {
+                  memcpy(ifs->constants[j],
+                         p->immediates[i],
+                         4 * sizeof(float));
+                  /*printf("immediate %d maps to const %d\n", i, j);*/
+                  ifs->constant_flags[j] = 0xf;  /* all four comps used */
+                  p->immediates_map[i] = j;
+                  ifs->num_constants = MAX2(ifs->num_constants, j + 1);
+                  break;
+               }
+            }
+         }
+
+         p->first_instruction = FALSE;
+      }
+
+      i915_translate_instruction(p, &token->FullInstruction, fs);
+      break;
+
+   default:
+      assert( 0 );
+   }
+
+}
+
 /**
  * Translate TGSI fragment shader into i915 hardware instructions.
  * \param p  the translation state
@@ -1050,100 +1141,13 @@ i915_translate_instruction(struct i915_fp_compile *p,
  */
 static void
 i915_translate_instructions(struct i915_fp_compile *p,
-                            const struct tgsi_token *tokens,
+                            const struct i915_token_list *tokens,
                             struct i915_fragment_shader *fs)
 {
-   struct i915_fragment_shader *ifs = p->shader;
-   struct tgsi_parse_context parse;
-
-   tgsi_parse_init( &parse, tokens );
-
-   while( !tgsi_parse_end_of_tokens( &parse ) ) {
-
-      tgsi_parse_token( &parse );
-
-      switch( parse.FullToken.Token.Type ) {
-      case TGSI_TOKEN_TYPE_PROPERTY:
-         /*
-          * We only support one cbuf, but we still need to ignore the property
-          * correctly so we don't hit the assert at the end of the switch case.
-          */
-         assert(parse.FullToken.FullProperty.Property.PropertyName ==
-                TGSI_PROPERTY_FS_COLOR0_WRITES_ALL_CBUFS);
-         break;
-      case TGSI_TOKEN_TYPE_DECLARATION:
-         if (parse.FullToken.FullDeclaration.Declaration.File
-                  == TGSI_FILE_CONSTANT) {
-            uint i;
-            for (i = parse.FullToken.FullDeclaration.Range.First;
-                 i <= parse.FullToken.FullDeclaration.Range.Last;
-                 i++) {
-               assert(ifs->constant_flags[i] == 0x0);
-               ifs->constant_flags[i] = I915_CONSTFLAG_USER;
-               ifs->num_constants = MAX2(ifs->num_constants, i + 1);
-            }
-         }
-         else if (parse.FullToken.FullDeclaration.Declaration.File
-                  == TGSI_FILE_TEMPORARY) {
-            uint i;
-            for (i = parse.FullToken.FullDeclaration.Range.First;
-                 i <= parse.FullToken.FullDeclaration.Range.Last;
-                 i++) {
-               if (i >= I915_MAX_TEMPORARY)
-                  debug_printf("Too many temps (%d)\n",i);
-	       else
-                  /* XXX just use shader->info->file_mask[TGSI_FILE_TEMPORARY] */
-                  p->temp_flag |= (1 << i); /* mark temp as used */
-            }
-         }
-         break;
-
-      case TGSI_TOKEN_TYPE_IMMEDIATE:
-         {
-            const struct tgsi_full_immediate *imm
-               = &parse.FullToken.FullImmediate;
-            const uint pos = p->num_immediates++;
-            uint j;
-            assert( imm->Immediate.NrTokens <= 4 + 1 );
-            for (j = 0; j < imm->Immediate.NrTokens - 1; j++) {
-               p->immediates[pos][j] = imm->u[j].Float;
-            }
-         }
-         break;
-
-      case TGSI_TOKEN_TYPE_INSTRUCTION:
-         if (p->first_instruction) {
-            /* resolve location of immediates */
-            uint i, j;
-            for (i = 0; i < p->num_immediates; i++) {
-               /* find constant slot for this immediate */
-               for (j = 0; j < I915_MAX_CONSTANT; j++) {
-                  if (ifs->constant_flags[j] == 0x0) {
-                     memcpy(ifs->constants[j],
-                            p->immediates[i],
-                            4 * sizeof(float));
-                     /*printf("immediate %d maps to const %d\n", i, j);*/
-                     ifs->constant_flags[j] = 0xf;  /* all four comps used */
-                     p->immediates_map[i] = j;
-                     ifs->num_constants = MAX2(ifs->num_constants, j + 1);
-                     break;
-                  }
-               }
-            }
-
-            p->first_instruction = FALSE;
-         }
-
-         i915_translate_instruction(p, &parse.FullToken.FullInstruction, fs);
-         break;
-
-      default:
-         assert( 0 );
-      }
-
-   } /* while */
-
-   tgsi_parse_free (&parse);
+   int i;
+   for(i = 0; i<tokens->NumTokens; i++) {
+      i915_translate_token(p, &tokens->Tokens[i], fs);
+   }
 }
 
 
@@ -1302,8 +1306,10 @@ i915_translate_fragment_program( struct i915_context *i915,
 
    p = i915_init_compile(i915, fs);
 
-   i915_translate_instructions(p, tokens, fs);
+   struct i915_token_list* i_tokens = i915_optimize(tokens);
+   i915_translate_instructions(p, i_tokens, fs);
    i915_fixup_depth_write(p);
 
    i915_fini_compile(i915, p);
+   i915_optimize_free(i_tokens);
 }

@@ -89,10 +89,8 @@ nvc0_destroy(struct pipe_context *pipe)
 
    draw_destroy(nvc0->draw);
 
-   if (nvc0->screen->cur_ctx == nvc0) {
-      nvc0->screen->base.channel->user_private = NULL;
+   if (nvc0->screen->cur_ctx == nvc0)
       nvc0->screen->cur_ctx = NULL;
-   }
 
    FREE(nvc0);
 }
@@ -100,13 +98,13 @@ nvc0_destroy(struct pipe_context *pipe)
 void
 nvc0_default_flush_notify(struct nouveau_channel *chan)
 {
-   struct nvc0_context *nvc0 = chan->user_private;
+   struct nvc0_screen *screen = chan->user_private;
 
-   if (!nvc0)
+   if (!screen)
       return;
 
-   nouveau_fence_update(&nvc0->screen->base, TRUE);
-   nouveau_fence_next(&nvc0->screen->base);
+   nouveau_fence_update(&screen->base, TRUE);
+   nouveau_fence_next(&screen->base);
 }
 
 struct pipe_context *
@@ -141,7 +139,6 @@ nvc0_create(struct pipe_screen *pscreen, void *priv)
 
    if (!screen->cur_ctx)
       screen->cur_ctx = nvc0;
-   screen->base.channel->user_private = nvc0;
    screen->base.channel->flush_notify = nvc0_default_flush_notify;
 
    nvc0_init_query_functions(nvc0);

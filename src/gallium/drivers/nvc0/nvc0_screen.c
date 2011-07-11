@@ -198,8 +198,11 @@ nvc0_screen_destroy(struct pipe_screen *pscreen)
 {
    struct nvc0_screen *screen = nvc0_screen(pscreen);
 
-   nouveau_fence_wait(screen->base.fence.current);
-   nouveau_fence_ref(NULL, &screen->base.fence.current);
+   if (screen->base.fence.current) {
+      nouveau_fence_wait(screen->base.fence.current);
+      nouveau_fence_ref(NULL, &screen->base.fence.current);
+   }
+   screen->base.channel->user_private = NULL;
 
    nouveau_bo_ref(NULL, &screen->text);
    nouveau_bo_ref(NULL, &screen->tls);
@@ -358,6 +361,7 @@ nvc0_screen_create(struct pipe_winsys *ws, struct nouveau_device *dev)
       return NULL;
    }
    chan = screen->base.channel;
+   chan->user_private = screen;
 
    pscreen->winsys = ws;
    pscreen->destroy = nvc0_screen_destroy;

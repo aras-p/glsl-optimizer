@@ -48,14 +48,17 @@ if False:
     env.Append(CPPDEFINES = 'GALLIUM_CELL')
     env.Prepend(LIBS = [cell])
 
-# TODO: write a wrapper function http://www.scons.org/wiki/WrapperFunctions
-libgl = env.SharedLibrary(
+# libGL.so.1.5
+libgl_1_5 = env.SharedLibrary(
     target ='GL',
     source = sources,
+    SHLIBSUFFIX = env['SHLIBSUFFIX'] + '.1.5',
 )
 
-if False:
-    # XXX: Only install this libGL.so if DRI not enabled
-    libgl = env.InstallSharedLibrary(libgl, version=(1, 5))
+# libGL.so.1
+libgl = env.subst('${SHLIBPREFIX}GL${SHLIBSUFFIX}')
+libgl_1 = libgl + '.1'
+env.Command(libgl_1, libgl_1_5, "ln -sf ${SOURCE.file} ${TARGET}")
+env.Command(libgl, libgl_1, "ln -sf ${SOURCE.file} ${TARGET}")
 
 env.Alias('libgl-xlib', libgl)

@@ -369,7 +369,6 @@ i915_emit_const4f(struct i915_fp_compile * p,
 
    // XXX emit swizzle here for 0, 1, -1 and any combination thereof
    // we can use swizzle + neg for that
-   printf("const %f %f %f %f\n",c0,c1,c2,c3);
    for (reg = 0; reg < I915_MAX_CONSTANT; reg++) {
       if (ifs->constant_flags[reg] == 0xf &&
           ifs->constants[reg][0] == c0 &&

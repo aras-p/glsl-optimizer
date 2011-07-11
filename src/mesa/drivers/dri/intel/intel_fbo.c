@@ -70,24 +70,15 @@ intel_new_framebuffer(struct gl_context * ctx, GLuint name)
 static void
 intel_delete_renderbuffer(struct gl_renderbuffer *rb)
 {
-   GET_CURRENT_CONTEXT(ctx);
-   struct intel_context *intel = intel_context(ctx);
    struct intel_renderbuffer *irb = intel_renderbuffer(rb);
 
    ASSERT(irb);
 
-   if (intel && irb->region) {
-      intel_region_release(&irb->region);
-   }
-   if (intel && irb->hiz_region) {
-      intel_region_release(&irb->hiz_region);
-   }
-   if (intel && irb->wrapped_depth) {
-      _mesa_reference_renderbuffer(&irb->wrapped_depth, NULL);
-   }
-   if (intel && irb->wrapped_stencil) {
-      _mesa_reference_renderbuffer(&irb->wrapped_stencil, NULL);
-   }
+   intel_region_release(&irb->region);
+   intel_region_release(&irb->hiz_region);
+
+   _mesa_reference_renderbuffer(&irb->wrapped_depth, NULL);
+   _mesa_reference_renderbuffer(&irb->wrapped_stencil, NULL);
 
    free(irb);
 }
@@ -277,8 +268,6 @@ intel_image_target_renderbuffer_storage(struct gl_context *ctx,
       return;
 
    irb = intel_renderbuffer(rb);
-   if (irb->region)
-      intel_region_release(&irb->region);
    intel_region_reference(&irb->region, image->region);
 
    rb->InternalFormat = image->internal_format;
@@ -344,33 +333,6 @@ intel_nop_alloc_storage(struct gl_context * ctx, struct gl_renderbuffer *rb,
    _mesa_problem(ctx, "intel_op_alloc_storage should never be called.");
    return GL_FALSE;
 }
-
-
-void
-intel_renderbuffer_set_region(struct intel_context *intel,
-			      struct intel_renderbuffer *rb,
-			      struct intel_region *region)
-{
-   struct intel_region *old;
-
-   old = rb->region;
-   rb->region = NULL;
-   intel_region_reference(&rb->region, region);
-   intel_region_release(&old);
-}
-
-
-void
-intel_renderbuffer_set_hiz_region(struct intel_context *intel,
-				  struct intel_renderbuffer *rb,
-				  struct intel_region *region)
-{
-   struct intel_region *old = rb->hiz_region;
-   rb->hiz_region = NULL;
-   intel_region_reference(&rb->hiz_region, region);
-   intel_region_release(&old);
-}
-
 
 /**
  * Create a new intel_renderbuffer which corresponds to an on-screen window,
@@ -572,7 +534,6 @@ intel_update_tex_wrapper_regions(struct intel_context *intel,
 
    /* Point the renderbuffer's region to the texture's region. */
    if (irb->region != intel_image->mt->region) {
-      intel_region_release(&irb->region);
       intel_region_reference(&irb->region, intel_image->mt->region);
    }
 
@@ -592,7 +553,6 @@ intel_update_tex_wrapper_regions(struct intel_context *intel,
 
    /* Point the renderbuffer's hiz region to the texture's hiz region. */
    if (irb->hiz_region != intel_image->mt->hiz_region) {
-      intel_region_release(&irb->hiz_region);
       intel_region_reference(&irb->hiz_region, intel_image->mt->hiz_region);
    }
 
@@ -770,7 +730,6 @@ intel_render_texture(struct gl_context * ctx,
       intel_image->mt = new_mt;
       intel_renderbuffer_set_draw_offset(irb, intel_image, att->Zoffset);
 
-      intel_region_release(&irb->region);
       intel_region_reference(&irb->region, intel_image->mt->region);
    }
 #endif

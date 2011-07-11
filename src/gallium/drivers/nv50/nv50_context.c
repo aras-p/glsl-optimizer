@@ -60,13 +60,13 @@ nv50_texture_barrier(struct pipe_context *pipe)
 void
 nv50_default_flush_notify(struct nouveau_channel *chan)
 {
-   struct nv50_context *nv50 = chan->user_private;
+   struct nv50_screen *screen = chan->user_private;
 
-   if (!nv50)
+   if (!screen)
       return;
 
-   nouveau_fence_update(&nv50->screen->base, TRUE);
-   nouveau_fence_next(&nv50->screen->base);
+   nouveau_fence_update(&screen->base, TRUE);
+   nouveau_fence_next(&screen->base);
 }
 
 static void
@@ -100,10 +100,8 @@ nv50_destroy(struct pipe_context *pipe)
 
    draw_destroy(nv50->draw);
 
-   if (nv50->screen->cur_ctx == nv50) {
-      nv50->screen->base.channel->user_private = NULL;
+   if (nv50->screen->cur_ctx == nv50)
       nv50->screen->cur_ctx = NULL;
-   }
 
    FREE(nv50);
 }
@@ -140,7 +138,6 @@ nv50_create(struct pipe_screen *pscreen, void *priv)
 
    if (!screen->cur_ctx)
       screen->cur_ctx = nv50;
-   screen->base.channel->user_private = nv50;
    screen->base.channel->flush_notify = nv50_default_flush_notify;
 
    nv50_init_query_functions(nv50);

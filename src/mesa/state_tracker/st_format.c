@@ -68,14 +68,26 @@ GLenum
 st_format_datatype(enum pipe_format format)
 {
    const struct util_format_description *desc;
+   int i;
 
    desc = util_format_description(format);
    assert(desc);
+
+   /* Find the first non-VOID channel. */
+   for (i = 0; i < 4; i++) {
+       if (desc->channel[i].type != UTIL_FORMAT_TYPE_VOID) {
+           break;
+       }
+   }
 
    if (desc->layout == UTIL_FORMAT_LAYOUT_PLAIN) {
       if (format == PIPE_FORMAT_B5G5R5A1_UNORM ||
           format == PIPE_FORMAT_B5G6R5_UNORM) {
          return GL_UNSIGNED_SHORT;
+      }
+      else if (format == PIPE_FORMAT_R11G11B10_FLOAT ||
+               format == PIPE_FORMAT_R9G9B9E5_FLOAT) {
+         return GL_FLOAT;
       }
       else if (format == PIPE_FORMAT_Z24_UNORM_S8_USCALED ||
                format == PIPE_FORMAT_S8_USCALED_Z24_UNORM ||
@@ -83,26 +95,42 @@ st_format_datatype(enum pipe_format format)
                format == PIPE_FORMAT_X8Z24_UNORM) {
          return GL_UNSIGNED_INT_24_8;
       }
+      else if (format == PIPE_FORMAT_Z32_FLOAT_S8X24_USCALED) {
+         return GL_FLOAT_32_UNSIGNED_INT_24_8_REV;
+      }
       else {
          const GLuint size = format_max_bits(format);
+
+         assert(i < 4);
+         if (i == 4)
+            return GL_NONE;
+
          if (size == 8) {
-            if (desc->channel[0].type == UTIL_FORMAT_TYPE_UNSIGNED)
+            if (desc->channel[i].type == UTIL_FORMAT_TYPE_UNSIGNED)
                return GL_UNSIGNED_BYTE;
             else
                return GL_BYTE;
          }
          else if (size == 16) {
-            if (desc->channel[0].type == UTIL_FORMAT_TYPE_UNSIGNED)
+            if (desc->channel[i].type == UTIL_FORMAT_TYPE_FLOAT)
+               return GL_HALF_FLOAT;
+            if (desc->channel[i].type == UTIL_FORMAT_TYPE_UNSIGNED)
                return GL_UNSIGNED_SHORT;
             else
                return GL_SHORT;
          }
-         else {
-            assert( size <= 32 );
-            if (desc->channel[0].type == UTIL_FORMAT_TYPE_UNSIGNED)
+         else if (size <= 32) {
+            if (desc->channel[i].type == UTIL_FORMAT_TYPE_FLOAT)
+               return GL_FLOAT;
+            if (desc->channel[i].type == UTIL_FORMAT_TYPE_UNSIGNED)
                return GL_UNSIGNED_INT;
             else
                return GL_INT;
+         }
+         else {
+            assert(size == 64);
+            assert(desc->channel[i].type == UTIL_FORMAT_TYPE_FLOAT);
+            return GL_DOUBLE;
          }
       }
    }
@@ -180,6 +208,10 @@ st_mesa_format_to_pipe_format(gl_format mesaFormat)
       return PIPE_FORMAT_Z24X8_UNORM;
    case MESA_FORMAT_S8:
       return PIPE_FORMAT_S8_USCALED;
+   case MESA_FORMAT_Z32_FLOAT:
+      return PIPE_FORMAT_Z32_FLOAT;
+   case MESA_FORMAT_Z32_FLOAT_X24S8:
+      return PIPE_FORMAT_Z32_FLOAT_S8X24_USCALED;
    case MESA_FORMAT_YCBCR:
       return PIPE_FORMAT_UYVY;
 #if FEATURE_texture_s3tc
@@ -402,6 +434,10 @@ st_pipe_format_to_mesa_format(enum pipe_format format)
       return MESA_FORMAT_X8_Z24;
    case PIPE_FORMAT_Z24_UNORM_S8_USCALED:
       return MESA_FORMAT_S8_Z24;
+   case PIPE_FORMAT_Z32_FLOAT:
+      return MESA_FORMAT_Z32_FLOAT;
+   case PIPE_FORMAT_Z32_FLOAT_S8X24_USCALED:
+      return MESA_FORMAT_Z32_FLOAT_X24S8;
 
    case PIPE_FORMAT_UYVY:
       return MESA_FORMAT_YCBCR;
@@ -759,6 +795,10 @@ static const struct format_mapping format_map[] = {
       { GL_DEPTH_COMPONENT, 0 },
       { DEFAULT_DEPTH_FORMATS }
    },
+   {
+      { GL_DEPTH_COMPONENT32F, 0 },
+      { PIPE_FORMAT_Z32_FLOAT, 0 }
+   },
 
    /* stencil formats */
    {
@@ -774,6 +814,10 @@ static const struct format_mapping format_map[] = {
    {
       { GL_DEPTH_STENCIL_EXT, GL_DEPTH24_STENCIL8_EXT, 0 },
       { PIPE_FORMAT_Z24_UNORM_S8_USCALED, PIPE_FORMAT_S8_USCALED_Z24_UNORM, 0 }
+   },
+   {
+      { GL_DEPTH32F_STENCIL8, 0 },
+      { PIPE_FORMAT_Z32_FLOAT_S8X24_USCALED, 0 }
    },
 
    /* sRGB formats */

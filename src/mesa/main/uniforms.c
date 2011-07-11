@@ -580,7 +580,7 @@ _mesa_update_shader_textures_used(struct gl_program *prog)
       if (prog->SamplersUsed & (1 << s)) {
          GLuint unit = prog->SamplerUnits[s];
          GLuint tgt = prog->SamplerTargets[s];
-         assert(unit < MAX_TEXTURE_IMAGE_UNITS);
+         assert(unit < Elements(prog->TexturesUsed));
          assert(tgt < NUM_TEXTURE_TARGETS);
          prog->TexturesUsed[unit] |= (1 << tgt);
       }
@@ -674,7 +674,7 @@ set_program_uniform(struct gl_context *ctx, struct gl_program *program,
          GLuint texUnit = ((GLuint *) values)[i];
 
          /* check that the sampler (tex unit index) is legal */
-         if (texUnit >= ctx->Const.MaxTextureImageUnits) {
+         if (texUnit >= ctx->Const.MaxCombinedTextureImageUnits) {
             _mesa_error(ctx, GL_INVALID_VALUE,
                         "glUniform1(invalid sampler/tex unit index for '%s')",
                         param->Name);

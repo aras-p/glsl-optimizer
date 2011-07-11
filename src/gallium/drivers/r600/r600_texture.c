@@ -35,7 +35,6 @@
 #include "pipebuffer/pb_buffer.h"
 #include "r600_pipe.h"
 #include "r600_resource.h"
-#include "r600_state_inlines.h"
 #include "r600d.h"
 #include "r600_formats.h"
 
@@ -860,6 +859,12 @@ uint32_t r600_translate_texformat(struct pipe_screen *screen,
 		case PIPE_FORMAT_S8_USCALED:
 			result = FMT_8;
 			word4 |= S_038010_NUM_FORMAT_ALL(V_038010_SQ_NUM_FORMAT_INT);
+			goto out_word4;
+		case PIPE_FORMAT_Z32_FLOAT:
+			result = FMT_32_FLOAT;
+			goto out_word4;
+		case PIPE_FORMAT_Z32_FLOAT_S8X24_USCALED:
+			result = FMT_X24_8_32_FLOAT;
 			goto out_word4;
 		default:
 			goto out_unknown;

@@ -264,12 +264,15 @@ intel_region_alloc_for_handle(struct intel_screen *screen,
 void
 intel_region_reference(struct intel_region **dst, struct intel_region *src)
 {
-   if (src)
-      _DBG("%s %p %d\n", __FUNCTION__, src, src->refcount);
+   _DBG("%s: %p(%d) -> %p(%d)\n", __FUNCTION__,
+	*dst, *dst ? (*dst)->refcount : 0, src, src ? src->refcount : 0);
 
-   assert(*dst == NULL);
-   if (src) {
-      src->refcount++;
+   if (src != *dst) {
+      if (*dst)
+	 intel_region_release(dst);
+
+      if (src)
+         src->refcount++;
       *dst = src;
    }
 }

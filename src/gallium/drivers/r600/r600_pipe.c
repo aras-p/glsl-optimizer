@@ -47,7 +47,6 @@
 #include "r600_resource.h"
 #include "r600_shader.h"
 #include "r600_pipe.h"
-#include "r600_state_inlines.h"
 
 /*
  * pipe_context
@@ -197,7 +196,6 @@ static struct pipe_context *r600_create_context(struct pipe_screen *screen, void
 {
 	struct r600_pipe_context *rctx = CALLOC_STRUCT(r600_pipe_context);
 	struct r600_screen* rscreen = (struct r600_screen *)screen;
-	enum chip_class class;
 
 	if (rctx == NULL)
 		return NULL;
@@ -214,6 +212,7 @@ static struct pipe_context *r600_create_context(struct pipe_screen *screen, void
 	rctx->screen = rscreen;
 	rctx->radeon = rscreen->radeon;
 	rctx->family = r600_get_family(rctx->radeon);
+	rctx->chip_class = r600_get_family_class(rctx->radeon);
 
 	rctx->fences.bo = NULL;
 	rctx->fences.data = NULL;
@@ -230,47 +229,29 @@ static struct pipe_context *r600_create_context(struct pipe_screen *screen, void
 	rctx->context.create_video_decoder = vl_create_decoder;
 	rctx->context.create_video_buffer = vl_video_buffer_create;
 
-	switch (r600_get_family(rctx->radeon)) {
-	case CHIP_R600:
-	case CHIP_RV610:
-	case CHIP_RV630:
-	case CHIP_RV670:
-	case CHIP_RV620:
-	case CHIP_RV635:
-	case CHIP_RS780:
-	case CHIP_RS880:
-	case CHIP_RV770:
-	case CHIP_RV730:
-	case CHIP_RV710:
-	case CHIP_RV740:
+	switch (rctx->chip_class) {
+	case R600:
+	case R700:
 		r600_init_state_functions(rctx);
 		if (r600_context_init(&rctx->ctx, rctx->radeon)) {
 			r600_destroy_context(&rctx->context);
 			return NULL;
 		}
 		r600_init_config(rctx);
+		rctx->custom_dsa_flush = r600_create_db_flush_dsa(rctx);
 		break;
-	case CHIP_CEDAR:
-	case CHIP_REDWOOD:
-	case CHIP_JUNIPER:
-	case CHIP_CYPRESS:
-	case CHIP_HEMLOCK:
-	case CHIP_PALM:
-	case CHIP_SUMO:
-	case CHIP_SUMO2:
-	case CHIP_BARTS:
-	case CHIP_TURKS:
-	case CHIP_CAICOS:
-	case CHIP_CAYMAN:
+	case EVERGREEN:
+	case CAYMAN:
 		evergreen_init_state_functions(rctx);
 		if (evergreen_context_init(&rctx->ctx, rctx->radeon)) {
 			r600_destroy_context(&rctx->context);
 			return NULL;
 		}
 		evergreen_init_config(rctx);
+		rctx->custom_dsa_flush = evergreen_create_db_flush_dsa(rctx);
 		break;
 	default:
-		R600_ERR("unsupported family %d\n", r600_get_family(rctx->radeon));
+		R600_ERR("Unsupported chip class %d.\n", rctx->chip_class);
 		r600_destroy_context(&rctx->context);
 		return NULL;
 	}
@@ -294,12 +275,6 @@ static struct pipe_context *r600_create_context(struct pipe_screen *screen, void
 		r600_destroy_context(&rctx->context);
 		return NULL;
 	}
-
-	class = r600_get_family_class(rctx->radeon);
-	if (class == R600 || class == R700)
-		rctx->custom_dsa_flush = r600_create_db_flush_dsa(rctx);
-	else
-		rctx->custom_dsa_flush = evergreen_create_db_flush_dsa(rctx);
 
 	return &rctx->context;
 }
@@ -523,64 +498,6 @@ static int r600_get_video_param(struct pipe_screen *screen,
 	}
 }
 
-static boolean r600_is_format_supported(struct pipe_screen* screen,
-					enum pipe_format format,
-					enum pipe_texture_target target,
-					unsigned sample_count,
-                                        unsigned usage)
-{
-	unsigned retval = 0;
-	if (target >= PIPE_MAX_TEXTURE_TYPES) {
-		R600_ERR("r600: unsupported texture type %d\n", target);
-		return FALSE;
-	}
-
-        if (!util_format_is_supported(format, usage))
-                return FALSE;
-
-	/* Multisample */
-	if (sample_count > 1)
-		return FALSE;
-
-	if ((usage & PIPE_BIND_SAMPLER_VIEW) &&
-	    r600_is_sampler_format_supported(screen, format)) {
-		retval |= PIPE_BIND_SAMPLER_VIEW;
-	}
-
-	if ((usage & (PIPE_BIND_RENDER_TARGET |
-			PIPE_BIND_DISPLAY_TARGET |
-			PIPE_BIND_SCANOUT |
-			PIPE_BIND_SHARED)) &&
-			r600_is_colorbuffer_format_supported(format)) {
-		retval |= usage &
-			(PIPE_BIND_RENDER_TARGET |
-			 PIPE_BIND_DISPLAY_TARGET |
-			 PIPE_BIND_SCANOUT |
-			 PIPE_BIND_SHARED);
-	}
-
-	if ((usage & PIPE_BIND_DEPTH_STENCIL) &&
-	    r600_is_zs_format_supported(format)) {
-		retval |= PIPE_BIND_DEPTH_STENCIL;
-	}
-
-	if (usage & PIPE_BIND_VERTEX_BUFFER) {
-		struct r600_screen *rscreen = (struct r600_screen *)screen;
-		enum radeon_family family = r600_get_family(rscreen->radeon);
-
-		if (r600_is_vertex_format_supported(format, family)) {
-			retval |= PIPE_BIND_VERTEX_BUFFER;
-		}
-	}
-
-	if (usage & PIPE_BIND_TRANSFER_READ)
-		retval |= PIPE_BIND_TRANSFER_READ;
-	if (usage & PIPE_BIND_TRANSFER_WRITE)
-		retval |= PIPE_BIND_TRANSFER_WRITE;
-
-	return retval == usage;
-}
-
 static void r600_destroy_screen(struct pipe_screen* pscreen)
 {
 	struct r600_screen *rscreen = (struct r600_screen *)pscreen;
@@ -670,7 +587,11 @@ struct pipe_screen *r600_screen_create(struct radeon *radeon)
 	rscreen->screen.get_shader_param = r600_get_shader_param;
 	rscreen->screen.get_paramf = r600_get_paramf;
 	rscreen->screen.get_video_param = r600_get_video_param;
-	rscreen->screen.is_format_supported = r600_is_format_supported;
+	if (r600_get_family_class(radeon) >= EVERGREEN) {
+		rscreen->screen.is_format_supported = evergreen_is_format_supported;
+	} else {
+		rscreen->screen.is_format_supported = r600_is_format_supported;
+	}
 	rscreen->screen.is_video_format_supported = vl_video_buffer_is_format_supported;
 	rscreen->screen.context_create = r600_create_context;
 	rscreen->screen.fence_reference = r600_fence_reference;

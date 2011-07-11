@@ -416,6 +416,19 @@ _mesa_choose_tex_format( struct gl_context *ctx, GLint internalFormat,
       }
    }
 
+   if (ctx->Extensions.ARB_depth_buffer_float) {
+      switch (internalFormat) {
+         case GL_DEPTH_COMPONENT32F:
+            ASSERT(ctx->TextureFormatSupported[MESA_FORMAT_Z32_FLOAT]);
+            return MESA_FORMAT_Z32_FLOAT;
+         case GL_DEPTH32F_STENCIL8:
+            ASSERT(ctx->TextureFormatSupported[MESA_FORMAT_Z32_FLOAT_X24S8]);
+            return MESA_FORMAT_Z32_FLOAT_X24S8;
+         default:
+            ; /* fallthrough */
+      }
+   }
+
    if (ctx->Extensions.ATI_envmap_bumpmap) {
       switch (internalFormat) {
          case GL_DUDV_ATI:

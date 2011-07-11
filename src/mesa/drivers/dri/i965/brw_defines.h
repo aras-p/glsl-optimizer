@@ -867,7 +867,7 @@
 #define CMD_CONST_BUFFER              0x6002
 
 #define CMD_STATE_BASE_ADDRESS        0x6101
-#define CMD_STATE_INSN_POINTER        0x6102
+#define CMD_STATE_SIP                 0x6102
 #define CMD_PIPELINE_SELECT_965       0x6104
 #define CMD_PIPELINE_SELECT_GM45      0x6904
 

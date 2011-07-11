@@ -278,12 +278,15 @@ xa_solid_prepare(struct xa_context *ctx, struct xa_surface *dst,
     int width, height;
     int ret;
 
-    xa_pixel_to_float4(fg, ctx->solid_color);
-    ctx->has_solid_color = 1;
-
     ret = xa_surface_psurf_create(ctx, dst);
     if (ret != XA_ERR_NONE)
 	return ret;
+
+    if (dst->srf->format == PIPE_FORMAT_L8_UNORM)
+	xa_pixel_to_float4_a8(fg, ctx->solid_color);
+    else
+	xa_pixel_to_float4(fg, ctx->solid_color);
+    ctx->has_solid_color = 1;
 
     ctx->dst = dst;
     width = dst->srf->width;

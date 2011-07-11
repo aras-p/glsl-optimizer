@@ -609,28 +609,17 @@ static void upload_invarient_state( struct brw_context *brw )
    if (intel->gen == 6)
       intel_emit_post_sync_nonzero_flush(intel);
 
-   {
-      /* 0x61040000  Pipeline Select */
-      /*     PipelineSelect            : 0 */
-      struct brw_pipeline_select ps;
-
-      memset(&ps, 0, sizeof(ps));
-      ps.header.opcode = brw->CMD_PIPELINE_SELECT;
-      ps.header.pipeline_select = 0;
-      BRW_BATCH_STRUCT(brw, &ps);
-   }
+   /* Select the 3D pipeline (as opposed to media) */
+   BEGIN_BATCH(1);
+   OUT_BATCH(brw->CMD_PIPELINE_SELECT << 16 | 0);
+   ADVANCE_BATCH();
 
    if (intel->gen < 6) {
-      struct brw_global_depth_offset_clamp gdo;
-      memset(&gdo, 0, sizeof(gdo));
-
-      /* Disable depth offset clamping. 
-       */
-      gdo.header.opcode = _3DSTATE_GLOBAL_DEPTH_OFFSET_CLAMP;
-      gdo.header.length = sizeof(gdo)/4 - 2;
-      gdo.depth_offset_clamp = 0.0;
-
-      BRW_BATCH_STRUCT(brw, &gdo);
+      /* Disable depth offset clamping. */
+      BEGIN_BATCH(2);
+      OUT_BATCH(_3DSTATE_GLOBAL_DEPTH_OFFSET_CLAMP << 16 | (2 - 2));
+      OUT_BATCH_F(0.0);
+      ADVANCE_BATCH();
    }
 
    if (intel->gen >= 6) {
@@ -663,30 +652,15 @@ static void upload_invarient_state( struct brw_context *brw )
       }
    }
 
-   /* 0x61020000  State Instruction Pointer */
-   {
-      struct brw_system_instruction_pointer sip;
-      memset(&sip, 0, sizeof(sip));
+   BEGIN_BATCH(2);
+   OUT_BATCH(CMD_STATE_SIP << 16 | (2 - 2));
+   OUT_BATCH(0);
+   ADVANCE_BATCH();
 
-      sip.header.opcode = CMD_STATE_INSN_POINTER;
-      sip.header.length = 0;
-      sip.bits0.pad = 0;
-      sip.bits0.system_instruction_pointer = 0;
-
-      BRW_BATCH_STRUCT(brw, &sip);
-   }
-
-
-   {
-      struct brw_vf_statistics vfs;
-      memset(&vfs, 0, sizeof(vfs));
-
-      vfs.opcode = brw->CMD_VF_STATISTICS;
-      if (unlikely(INTEL_DEBUG & DEBUG_STATS))
-	 vfs.statistics_enable = 1; 
-
-      BRW_BATCH_STRUCT(brw, &vfs);
-   }
+   BEGIN_BATCH(1);
+   OUT_BATCH(brw->CMD_VF_STATISTICS << 16 |
+	     (unlikely(INTEL_DEBUG & DEBUG_STATS) ? 1 : 0));
+   ADVANCE_BATCH();
 }
 
 const struct brw_tracked_state brw_invarient_state = {

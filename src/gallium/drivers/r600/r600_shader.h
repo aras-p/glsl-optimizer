@@ -43,7 +43,6 @@ struct r600_shader {
 	unsigned		nlds;
 	struct r600_shader_io	input[32];
 	struct r600_shader_io	output[32];
-	enum radeon_family	family;
 	boolean			uses_kill;
 	boolean			fs_write_all;
 	boolean			clamp_color;

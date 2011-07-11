@@ -207,6 +207,12 @@ struct i915_winsys {
 
    void (*buffer_destroy)(struct i915_winsys *iws,
                           struct i915_winsys_buffer *buffer);
+
+   /**
+    * Check if a buffer is busy.
+    */
+   boolean (*buffer_is_busy)(struct i915_winsys *iws,
+                             struct i915_winsys_buffer *buffer);
    /*@}*/
 
 

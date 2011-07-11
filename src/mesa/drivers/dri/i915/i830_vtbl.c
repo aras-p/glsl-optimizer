@@ -618,11 +618,9 @@ i830_set_draw_region(struct intel_context *intel,
    uint32_t draw_x, draw_y;
 
    if (state->draw_region != color_regions[0]) {
-      intel_region_release(&state->draw_region);
       intel_region_reference(&state->draw_region, color_regions[0]);
    }
    if (state->depth_region != depth_region) {
-      intel_region_release(&state->depth_region);
       intel_region_reference(&state->depth_region, depth_region);
    }
 

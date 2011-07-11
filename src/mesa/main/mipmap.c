@@ -706,6 +706,17 @@ do_row(GLenum datatype, GLuint comps, GLint srcWidth,
       }
    }
 
+   else if (datatype == GL_FLOAT_32_UNSIGNED_INT_24_8_REV && comps == 1) {
+      GLuint i, j, k;
+      const GLfloat *rowA = (const GLfloat *) srcRowA;
+      const GLfloat *rowB = (const GLfloat *) srcRowB;
+      GLfloat *dst = (GLfloat *) dstRow;
+      for (i = j = 0, k = k0; i < (GLuint) dstWidth;
+           i++, j += colStride, k += colStride) {
+         dst[i*2] = (rowA[j*2] + rowA[k*2] + rowB[j*2] + rowB[k*2]) * 0.25F;
+      }
+   }
+
    else {
       _mesa_problem(NULL, "bad format in do_row()");
    }
@@ -1338,6 +1349,15 @@ do_row_3D(GLenum datatype, GLuint comps, GLint srcWidth,
          res[2] = (rowAj[2] + rowAk[2] + rowBj[2] + rowBk[2] +
                    rowCj[2] + rowCk[2] + rowDj[2] + rowDk[2]) * 0.125F;
          dst[i] = float3_to_r11g11b10f(res);
+      }
+   }
+
+   else if (datatype == GL_FLOAT_32_UNSIGNED_INT_24_8_REV && comps == 1) {
+      DECLARE_ROW_POINTERS(GLfloat, 2);
+
+      for (i = j = 0, k = k0; i < (GLuint) dstWidth;
+           i++, j += colStride, k += colStride) {
+         FILTER_F_3D(0);
       }
    }
 

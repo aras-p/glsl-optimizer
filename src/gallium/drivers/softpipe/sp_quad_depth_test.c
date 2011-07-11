@@ -189,7 +189,8 @@ convert_quad_depth( struct depth_data *data,
 
 
 /**
- * Compute the depth_data::shader_stencil_refs[] values from the float fragment stencil values.
+ * Compute the depth_data::shader_stencil_refs[] values from the float
+ * fragment stencil values.
  */
 static void
 convert_quad_stencil( struct depth_data *data, 
@@ -205,16 +206,16 @@ convert_quad_stencil( struct depth_data *data,
    case PIPE_FORMAT_Z24_UNORM_S8_USCALED:
    case PIPE_FORMAT_X8Z24_UNORM:
    case PIPE_FORMAT_S8_USCALED_Z24_UNORM:
-      {
-         for (j = 0; j < QUAD_SIZE; j++) {
-            data->shader_stencil_refs[j] = ((unsigned)(quad->output.stencil[j]));
-         }
+   case PIPE_FORMAT_S8_USCALED:
+      for (j = 0; j < QUAD_SIZE; j++) {
+         data->shader_stencil_refs[j] = ((unsigned)(quad->output.stencil[j]));
       }
       break;
    default:
       assert(0);
    }
 }
+
 
 /**
  * Write data->bzzzz[] values and data->stencilVals into the Z/stencil buffer.

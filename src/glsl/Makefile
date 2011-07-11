@@ -154,7 +154,7 @@ clean: clean-dricore
 	-rm -f $(APPS)
 
 clean-dricore:
-	-rm -f $(DRICORE_OBJ_DIR) $(TOP)/$(LIB_DIR)/libglsl.so libglsl.so
+	-rm -f $(OBJECTS_DRICORE) $(TOP)/$(LIB_DIR)/libglsl.so libglsl.so
 
 ifneq (,$(DRICORE_GLSL_LIBS))
 DRICORE_INSTALL_TARGET = install-dricore

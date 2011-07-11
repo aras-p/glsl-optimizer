@@ -138,11 +138,9 @@ upload_wm_state(struct brw_context *brw)
 
 const struct brw_tracked_state gen7_wm_state = {
    .dirty = {
-      .mesa  = (_NEW_LINE | _NEW_POLYGON | _NEW_POLYGONSTIPPLE |
+      .mesa  = (_NEW_LINE | _NEW_POLYGON |
 	        _NEW_COLOR | _NEW_BUFFERS),
-      .brw   = (BRW_NEW_CURBE_OFFSETS |
-		BRW_NEW_FRAGMENT_PROGRAM |
-                BRW_NEW_NR_WM_SURFACES |
+      .brw   = (BRW_NEW_FRAGMENT_PROGRAM |
 		BRW_NEW_URB_FENCE |
 		BRW_NEW_BATCH),
       .cache = 0,
@@ -240,10 +238,7 @@ upload_ps_state(struct brw_context *brw)
 
 const struct brw_tracked_state gen7_ps_state = {
    .dirty = {
-      .mesa  = (_NEW_LINE |
-		_NEW_POLYGON |
-		_NEW_POLYGONSTIPPLE |
-		_NEW_PROGRAM_CONSTANTS),
+      .mesa  = _NEW_PROGRAM_CONSTANTS,
       .brw   = (BRW_NEW_CURBE_OFFSETS |
 		BRW_NEW_FRAGMENT_PROGRAM |
                 BRW_NEW_NR_WM_SURFACES |

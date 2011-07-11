@@ -175,7 +175,8 @@ struct r600_pipe_fences {
 struct r600_pipe_context {
 	struct pipe_context		context;
 	struct blitter_context		*blitter;
-	unsigned			family;
+	enum radeon_family		family;
+	enum chip_class			chip_class;
 	void				*custom_dsa_flush;
 	struct r600_screen		*screen;
 	struct radeon			*radeon;
@@ -247,6 +248,11 @@ void evergreen_pipe_init_buffer_resource(struct r600_pipe_context *rctx,
 void evergreen_pipe_mod_buffer_resource(struct r600_pipe_resource_state *rstate,
 					struct r600_resource *rbuffer,
 					unsigned offset, unsigned stride);
+boolean evergreen_is_format_supported(struct pipe_screen *screen,
+				      enum pipe_format format,
+				      enum pipe_texture_target target,
+				      unsigned sample_count,
+				      unsigned usage);
 
 /* r600_blit.c */
 void r600_init_blit_functions(struct r600_pipe_context *rctx);
@@ -290,6 +296,11 @@ void r600_pipe_mod_buffer_resource(struct r600_pipe_resource_state *rstate,
 				   struct r600_resource *rbuffer,
 				   unsigned offset, unsigned stride);
 void r600_adjust_gprs(struct r600_pipe_context *rctx);
+boolean r600_is_format_supported(struct pipe_screen *screen,
+				 enum pipe_format format,
+				 enum pipe_texture_target target,
+				 unsigned sample_count,
+				 unsigned usage);
 
 /* r600_texture.c */
 void r600_init_screen_texture_functions(struct pipe_screen *screen);

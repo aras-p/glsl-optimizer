@@ -104,6 +104,7 @@ drm_create_buffer(struct wl_client *client, struct wl_drm *drm,
 		wl_client_post_error(client, &drm->object,
 				     WL_DRM_ERROR_INVALID_VISUAL,
 				     "invalid visual");
+		free(buffer);
 		return;
 	}
 

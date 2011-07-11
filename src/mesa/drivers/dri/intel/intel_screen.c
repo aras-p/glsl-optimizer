@@ -291,7 +291,6 @@ intel_dup_image(__DRIimage *orig_image, void *loaderPrivate)
    if (image == NULL)
       return NULL;
 
-   image->region = NULL;
    intel_region_reference(&image->region, orig_image->region);
    if (image->region == NULL) {
       FREE(image);

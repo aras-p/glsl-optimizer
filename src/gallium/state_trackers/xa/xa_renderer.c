@@ -418,6 +418,7 @@ renderer_copy_prepare(struct xa_context *r,
     struct pipe_context *pipe = r->pipe;
     struct pipe_screen *screen = pipe->screen;
     struct xa_shader shader;
+    uint32_t fs_traits = FS_COMPOSITE;
 
     assert(screen->is_format_supported(screen, dst_surface->format,
 				       PIPE_TEXTURE_2D, 0,
@@ -469,7 +470,12 @@ renderer_copy_prepare(struct xa_context *r,
     }
 
     /* shaders */
-    shader = xa_shaders_get(r->shaders, VS_COMPOSITE, FS_COMPOSITE);
+    if (src_texture->format == PIPE_FORMAT_L8_UNORM)
+	fs_traits |= FS_SRC_LUMINANCE;
+    if (dst_surface->format == PIPE_FORMAT_L8_UNORM)
+	fs_traits |= FS_DST_LUMINANCE;
+
+    shader = xa_shaders_get(r->shaders, VS_COMPOSITE, fs_traits);
     cso_set_vertex_shader_handle(r->cso, shader.vs);
     cso_set_fragment_shader_handle(r->cso, shader.fs);
 

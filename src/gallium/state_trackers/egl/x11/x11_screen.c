@@ -452,12 +452,30 @@ dri2InvalidateBuffers(Display *dpy, XID drawable)
 extern unsigned
 dri2GetSwapEventType(Display *dpy, XID drawable);
 
+extern void *
+dri2GetGlxDrawableFromXDrawableId(Display *dpy, XID id);
+
+extern void *
+GetGLXDrawable(Display *dpy, XID drawable);
+
 /**
  * This is also called from src/glx/dri2.c.
  */
 unsigned dri2GetSwapEventType(Display *dpy, XID drawable)
 {
    return 0;
+}
+
+void *
+dri2GetGlxDrawableFromXDrawableId(Display *dpy, XID id)
+{
+   return NULL;
+}
+
+void *
+GetGLXDrawable(Display *dpy, XID drawable)
+{
+   return NULL;
 }
 
 #endif /* GLX_DIRECT_RENDERING */

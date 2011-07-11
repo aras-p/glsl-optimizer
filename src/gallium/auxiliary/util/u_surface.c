@@ -358,8 +358,41 @@ util_clear_depth_stencil(struct pipe_context *pipe,
                dst_map += dst_stride;
             }
          }
-        break;
+         break;
       case 8:
+      {
+         uint64_t zstencil = util_pack64_z_stencil(dst->texture->format,
+                                                   depth, stencil);
+
+         assert(dst->format == PIPE_FORMAT_Z32_FLOAT_S8X24_USCALED);
+
+         if (!need_rmw) {
+            for (i = 0; i < height; i++) {
+               uint64_t *row = (uint64_t *)dst_map;
+               for (j = 0; j < width; j++)
+                  *row++ = zstencil;
+               dst_map += dst_stride;
+            }
+         }
+         else {
+            uint64_t src_mask;
+
+            if (clear_flags & PIPE_CLEAR_DEPTH)
+               src_mask = 0x00000000ffffffffull;
+            else
+               src_mask = 0x000000ff00000000ull;
+
+            for (i = 0; i < height; i++) {
+               uint64_t *row = (uint64_t *)dst_map;
+               for (j = 0; j < width; j++) {
+                  uint64_t tmp = *row & ~src_mask;
+                  *row++ = tmp | (zstencil & src_mask);
+               }
+               dst_map += dst_stride;
+            }
+         }
+         break;
+      }
       default:
          assert(0);
          break;

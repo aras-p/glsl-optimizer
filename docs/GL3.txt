@@ -19,7 +19,7 @@ Clamping controls (GL_ARB_color_buffer_float)         DONE
 Float textures, renderbuffers (GL_ARB_texture_float)  DONE (gallium r300)
 GL_EXT_packed_float                                   DONE (gallium r600)
 GL_EXT_texture_shared_exponent                        DONE (gallium, swrast)
-Float depth buffers (GL_ARB_depth_buffer_float)       not started
+Float depth buffers (GL_ARB_depth_buffer_float)       DONE
 Framebuffer objects (GL_EXT_framebuffer_object)       DONE
 Half-float                                            DONE
 Multisample blit                                      DONE

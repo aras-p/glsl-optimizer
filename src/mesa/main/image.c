@@ -84,6 +84,7 @@ _mesa_type_is_packed(GLenum type)
    case GL_UNSIGNED_INT_24_8_EXT:
    case GL_UNSIGNED_INT_5_9_9_9_REV:
    case GL_UNSIGNED_INT_10F_11F_11F_REV:
+   case GL_FLOAT_32_UNSIGNED_INT_24_8_REV:
       return GL_TRUE;
    }
 
@@ -228,6 +229,8 @@ _mesa_sizeof_packed_type( GLenum type )
          return sizeof(GLuint);
       case GL_UNSIGNED_INT_10F_11F_11F_REV:
          return sizeof(GLuint);
+      case GL_FLOAT_32_UNSIGNED_INT_24_8_REV:
+         return 8;
       default:
          return -1;
    }
@@ -377,6 +380,11 @@ _mesa_bytes_per_pixel( GLenum format, GLenum type )
       case GL_UNSIGNED_INT_10F_11F_11F_REV:
          if (format == GL_RGB)
             return sizeof(GLuint);
+         else
+            return -1;
+      case GL_FLOAT_32_UNSIGNED_INT_24_8_REV:
+         if (format == GL_DEPTH_STENCIL)
+            return 8;
          else
             return -1;
       default:
@@ -531,8 +539,10 @@ _mesa_is_legal_format_and_type(const struct gl_context *ctx,
          else
             return GL_FALSE;
       case GL_DEPTH_STENCIL_EXT:
-         if (ctx->Extensions.EXT_packed_depth_stencil
-             && type == GL_UNSIGNED_INT_24_8_EXT)
+         if ((ctx->Extensions.EXT_packed_depth_stencil &&
+              type == GL_UNSIGNED_INT_24_8_EXT) ||
+             (ctx->Extensions.ARB_depth_buffer_float &&
+              type == GL_FLOAT_32_UNSIGNED_INT_24_8_REV))
             return GL_TRUE;
          else
             return GL_FALSE;
@@ -884,6 +894,7 @@ _mesa_is_depth_format(GLenum format)
       case GL_DEPTH_COMPONENT16:
       case GL_DEPTH_COMPONENT24:
       case GL_DEPTH_COMPONENT32:
+      case GL_DEPTH_COMPONENT32F:
          return GL_TRUE;
       default:
          return GL_FALSE;
@@ -931,6 +942,7 @@ _mesa_is_depthstencil_format(GLenum format)
    switch (format) {
       case GL_DEPTH24_STENCIL8_EXT:
       case GL_DEPTH_STENCIL_EXT:
+      case GL_DEPTH32F_STENCIL8:
          return GL_TRUE;
       default:
          return GL_FALSE;
@@ -956,6 +968,8 @@ _mesa_is_depth_or_stencil_format(GLenum format)
       case GL_STENCIL_INDEX16_EXT:
       case GL_DEPTH_STENCIL_EXT:
       case GL_DEPTH24_STENCIL8_EXT:
+      case GL_DEPTH_COMPONENT32F:
+      case GL_DEPTH32F_STENCIL8:
          return GL_TRUE;
       default:
          return GL_FALSE;

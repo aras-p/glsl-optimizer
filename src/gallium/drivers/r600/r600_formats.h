@@ -81,4 +81,36 @@ static INLINE unsigned r600_endian_swap(unsigned size)
 	}
 }
 
+static INLINE bool r600_is_vertex_format_supported(enum pipe_format format)
+{
+	const struct util_format_description *desc = util_format_description(format);
+	unsigned i;
+
+	if (!desc)
+		return false;
+
+	/* Find the first non-VOID channel. */
+	for (i = 0; i < 4; i++) {
+		if (desc->channel[i].type != UTIL_FORMAT_TYPE_VOID)
+			break;
+	}
+	if (i == 4)
+		return false;
+
+	/* No fixed, no double. */
+	if (desc->layout != UTIL_FORMAT_LAYOUT_PLAIN ||
+	    desc->channel[i].type == UTIL_FORMAT_TYPE_FIXED ||
+	    (desc->channel[i].size == 64 &&
+	     desc->channel[i].type == UTIL_FORMAT_TYPE_FLOAT))
+		return false;
+
+	/* No scaled/norm formats with 32 bits per channel. */
+	if (desc->channel[i].size == 32 &&
+	    (desc->channel[i].type == UTIL_FORMAT_TYPE_SIGNED ||
+	     desc->channel[i].type == UTIL_FORMAT_TYPE_UNSIGNED))
+		return false;
+
+	return true;
+}
+
 #endif

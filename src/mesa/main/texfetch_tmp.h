@@ -2374,6 +2374,29 @@ static void store_texel_r11_g11_b10f(struct gl_texture_image *texImage,
 #endif
 
 
+/* MESA_FORMAT_Z32_FLOAT_X24S8 ***********************************************/
+
+static void FETCH(z32f_x24s8)(const struct gl_texture_image *texImage,
+			      GLint i, GLint j, GLint k, GLfloat *texel)
+{
+   const GLfloat *src = TEXEL_ADDR(GLfloat, texImage, i, j, k, 2);
+   texel[RCOMP] = src[0];
+   texel[GCOMP] = 0.0F;
+   texel[BCOMP] = 0.0F;
+   texel[ACOMP] = 1.0F;
+}
+
+#if DIM == 3
+static void store_texel_z32f_x24s8(struct gl_texture_image *texImage,
+                                   GLint i, GLint j, GLint k, const void *texel)
+{
+   const GLfloat *src = (const GLfloat *) texel;
+   GLfloat *dst = TEXEL_ADDR(GLfloat, texImage, i, j, k, 2);
+   dst[0] = src[0];
+}
+#endif
+
+
 #undef TEXEL_ADDR
 #undef DIM
 #undef FETCH

@@ -1032,7 +1032,7 @@ validate_samplers(const struct gl_program *prog, char *errMsg)
       "TEXTURE_2D",
       "TEXTURE_1D",
    };
-   GLint targetUsed[MAX_TEXTURE_IMAGE_UNITS];
+   GLint targetUsed[MAX_COMBINED_TEXTURE_IMAGE_UNITS];
    GLbitfield samplersUsed = prog->SamplersUsed;
    GLuint i;
 
@@ -1050,7 +1050,7 @@ validate_samplers(const struct gl_program *prog, char *errMsg)
       gl_texture_index target;
       GLint sampler = _mesa_ffs(samplersUsed) - 1;
       assert(sampler >= 0);
-      assert(sampler < MAX_TEXTURE_IMAGE_UNITS);
+      assert(sampler < Elements(prog->SamplerUnits));
       unit = prog->SamplerUnits[sampler];
       target = prog->SamplerTargets[sampler];
       if (targetUsed[unit] != -1 && targetUsed[unit] != (int) target) {
