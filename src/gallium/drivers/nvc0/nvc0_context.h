@@ -19,6 +19,8 @@
 #include "nvc0_program.h"
 #include "nvc0_resource.h"
 
+#include "nv50/nv50_transfer.h"
+
 #include "nouveau/nouveau_context.h"
 
 #include "nvc0_3ddefs.xml.h"
@@ -194,6 +196,11 @@ nvc0_create_sampler_view(struct pipe_context *,
                          const struct pipe_sampler_view *);
 
 /* nvc0_transfer.c */
+void
+nvc0_m2mf_transfer_rect(struct pipe_screen *pscreen,
+                        const struct nv50_m2mf_rect *dst,
+                        const struct nv50_m2mf_rect *src,
+                        uint32_t nblocksx, uint32_t nblocksy);
 void
 nvc0_m2mf_push_linear(struct nouveau_context *nv,
 		      struct nouveau_bo *dst, unsigned offset, unsigned domain,

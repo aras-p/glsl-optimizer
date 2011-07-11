@@ -88,6 +88,7 @@ nvc0_blend_state_create(struct pipe_context *pipe,
 {
     struct nvc0_blend_stateobj *so = CALLOC_STRUCT(nvc0_blend_stateobj);
     int i;
+    uint32_t ms;
 
     so->pipe = *cso;
 
@@ -144,6 +145,15 @@ nvc0_blend_state_create(struct pipe_context *pipe,
             SB_DATA(so, nvc0_colormask(cso->rt[i].colormask));
     }
 
+    ms = 0;
+    if (cso->alpha_to_coverage)
+       ms |= NVC0_3D_MULTISAMPLE_CTRL_ALPHA_TO_COVERAGE;
+    if (cso->alpha_to_one)
+       ms |= NVC0_3D_MULTISAMPLE_CTRL_ALPHA_TO_ONE;
+
+    SB_BEGIN_3D(so, MULTISAMPLE_CTRL, 1);
+    SB_DATA    (so, ms);
+
     assert(so->size <= (sizeof(so->state) / sizeof(so->state[0])));
     return so;
 }
@@ -189,6 +199,8 @@ nvc0_rasterizer_state_create(struct pipe_context *pipe,
     SB_IMMED_3D(so, VERT_COLOR_CLAMP_EN, cso->clamp_vertex_color);
     SB_BEGIN_3D(so, FRAG_COLOR_CLAMP_EN, 1);
     SB_DATA    (so, cso->clamp_fragment_color ? 0x11111111 : 0x00000000);
+
+    SB_IMMED_3D(so, MULTISAMPLE_ENABLE, cso->multisample);
 
     SB_IMMED_3D(so, LINE_SMOOTH_ENABLE, cso->line_smooth);
     if (cso->line_smooth)

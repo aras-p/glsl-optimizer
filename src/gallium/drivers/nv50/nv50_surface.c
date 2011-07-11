@@ -87,8 +87,8 @@ nv50_2d_texture_set(struct nouveau_channel *chan, int dst,
       return 1;
    }
 
-   width = u_minify(mt->base.base.width0, level);
-   height = u_minify(mt->base.base.height0, level);
+   width = u_minify(mt->base.base.width0, level) << mt->ms_x;
+   height = u_minify(mt->base.base.height0, level) << mt->ms_y;
 
    offset = mt->level[level].offset;
    if (!mt->layout_3d) {
@@ -143,7 +143,13 @@ nv50_2d_texture_do_copy(struct nouveau_channel *chan,
                         unsigned sx, unsigned sy, unsigned sz,
                         unsigned w, unsigned h)
 {
+   static const uint32_t duvdxy[5] =
+   {
+      0x40000000, 0x80000000, 0x00000001, 0x00000002, 0x00000004
+   };
+
    int ret;
+   uint32_t ctrl;
 
    ret = MARK_RING(chan, 2 * 16 + 32, 4);
    if (ret)
@@ -157,24 +163,28 @@ nv50_2d_texture_do_copy(struct nouveau_channel *chan,
    if (ret)
       return ret;
 
-   /* 0/1 = CENTER/CORNER, 10/00 = POINT/BILINEAR */
+   /* NOTE: 2D engine doesn't work for MS8 */
+   if (src->ms_x)
+      ctrl = 0x11;
+
+   /* 0/1 = CENTER/CORNER, 00/10 = POINT/BILINEAR */
    BEGIN_RING(chan, RING_2D(BLIT_CONTROL), 1);
-   OUT_RING  (chan, 0);
+   OUT_RING  (chan, ctrl);
    BEGIN_RING(chan, RING_2D(BLIT_DST_X), 4);
-   OUT_RING  (chan, dx);
-   OUT_RING  (chan, dy);
-   OUT_RING  (chan, w);
-   OUT_RING  (chan, h);
+   OUT_RING  (chan, dx << dst->ms_x);
+   OUT_RING  (chan, dy << dst->ms_y);
+   OUT_RING  (chan, w << dst->ms_x);
+   OUT_RING  (chan, h << dst->ms_y);
    BEGIN_RING(chan, RING_2D(BLIT_DU_DX_FRACT), 4);
-   OUT_RING  (chan, 0);
-   OUT_RING  (chan, 1);
-   OUT_RING  (chan, 0);
-   OUT_RING  (chan, 1);
+   OUT_RING  (chan, duvdxy[2 + ((int)src->ms_x - (int)dst->ms_x)] & 0xf0000000);
+   OUT_RING  (chan, duvdxy[2 + ((int)src->ms_x - (int)dst->ms_x)] & 0x0000000f);
+   OUT_RING  (chan, duvdxy[2 + ((int)src->ms_y - (int)dst->ms_y)] & 0xf0000000);
+   OUT_RING  (chan, duvdxy[2 + ((int)src->ms_y - (int)dst->ms_y)] & 0x0000000f);
    BEGIN_RING(chan, RING_2D(BLIT_SRC_X_FRACT), 4);
    OUT_RING  (chan, 0);
-   OUT_RING  (chan, sx);
+   OUT_RING  (chan, sx << src->ms_x);
    OUT_RING  (chan, 0);
-   OUT_RING  (chan, sy);
+   OUT_RING  (chan, sy << src->ms_y);
 
    return 0;
 }
@@ -194,6 +204,34 @@ nv50_resource_copy_region(struct pipe_context *pipe,
    if (dst->target == PIPE_BUFFER && src->target == PIPE_BUFFER) {
       util_resource_copy_region(pipe, dst, dst_level, dstx, dsty, dstz,
                                 src, src_level, src_box);
+      return;
+   }
+
+   nv04_resource(dst)->status |= NOUVEAU_BUFFER_STATUS_GPU_WRITING;
+
+   if (src->format == dst->format && src->nr_samples == dst->nr_samples) {
+      struct nv50_m2mf_rect drect, srect;
+      unsigned i;
+      unsigned nx = util_format_get_nblocksx(src->format, src_box->width);
+      unsigned ny = util_format_get_nblocksy(src->format, src_box->height);
+
+      nv50_m2mf_rect_setup(&drect, dst, dst_level, dstx, dsty, dstz);
+      nv50_m2mf_rect_setup(&srect, src, src_level,
+                           src_box->x, src_box->y, src_box->z);
+
+      for (i = 0; i < src_box->depth; ++i) {
+         nv50_m2mf_transfer_rect(&screen->base.base, &drect, &srect, nx, ny);
+
+         if (nv50_miptree(dst)->layout_3d)
+            drect.z++;
+         else
+            drect.base += nv50_miptree(dst)->layer_stride;
+
+         if (nv50_miptree(src)->layout_3d)
+            srect.z++;
+         else
+            srect.base += nv50_miptree(src)->layer_stride;
+      }
       return;
    }
 

@@ -8,6 +8,7 @@ nv50_validate_fb(struct nv50_context *nv50)
    struct nouveau_channel *chan = nv50->screen->base.channel;
    struct pipe_framebuffer_state *fb = &nv50->framebuffer;
    unsigned i;
+   unsigned ms_mode = NV50_3D_MULTISAMPLE_MODE_MS1;
    boolean serialize = FALSE;
 
    nv50_bufctx_reset(nv50, NV50_BUFCTX_FRAME);
@@ -37,6 +38,8 @@ nv50_validate_fb(struct nv50_context *nv50)
       OUT_RING  (chan, sf->height);
       BEGIN_RING(chan, RING_3D(RT_ARRAY_MODE), 1);
       OUT_RING  (chan, sf->depth);
+
+      ms_mode = mt->ms_mode;
 
       if (mt->base.status & NOUVEAU_BUFFER_STATUS_GPU_READING)
          serialize = TRUE;
@@ -69,6 +72,8 @@ nv50_validate_fb(struct nv50_context *nv50)
       OUT_RING  (chan, sf->height);
       OUT_RING  (chan, (unk << 16) | sf->depth);
 
+      ms_mode = mt->ms_mode;
+
       if (mt->base.status & NOUVEAU_BUFFER_STATUS_GPU_READING)
          serialize = TRUE;
       mt->base.status |= NOUVEAU_BUFFER_STATUS_GPU_WRITING;
@@ -80,6 +85,9 @@ nv50_validate_fb(struct nv50_context *nv50)
       BEGIN_RING(chan, RING_3D(ZETA_ENABLE), 1);
       OUT_RING  (chan, 0);
    }
+
+   BEGIN_RING(chan, RING_3D(MULTISAMPLE_MODE), 1);
+   OUT_RING  (chan, ms_mode);
 
    BEGIN_RING(chan, RING_3D(VIEWPORT_HORIZ(0)), 2);
    OUT_RING  (chan, fb->width << 16);
@@ -258,6 +266,26 @@ nv50_validate_rasterizer(struct nv50_context *nv50)
 }
 
 static void
+nv50_validate_sample_mask(struct nv50_context *nv50)
+{
+   struct nouveau_channel *chan = nv50->screen->base.channel;
+
+   unsigned mask[4] =
+   {
+      nv50->sample_mask & 0xffff,
+      nv50->sample_mask & 0xffff,
+      nv50->sample_mask & 0xffff,
+      nv50->sample_mask & 0xffff
+   };
+
+   BEGIN_RING(chan, RING_3D(MSAA_MASK(0)), 4);
+   OUT_RING  (chan, mask[0]);
+   OUT_RING  (chan, mask[1]);
+   OUT_RING  (chan, mask[2]);
+   OUT_RING  (chan, mask[3]);
+}
+
+static void
 nv50_switch_pipe_context(struct nv50_context *ctx_to)
 {
    struct nv50_context *ctx_from = ctx_to->screen->cur_ctx;
@@ -292,6 +320,7 @@ static struct state_validate {
     { nv50_validate_fb,            NV50_NEW_FRAMEBUFFER },
     { nv50_validate_blend,         NV50_NEW_BLEND },
     { nv50_validate_zsa,           NV50_NEW_ZSA },
+    { nv50_validate_sample_mask,   NV50_NEW_SAMPLE_MASK },
     { nv50_validate_rasterizer,    NV50_NEW_RASTERIZER },
     { nv50_validate_blend_colour,  NV50_NEW_BLEND_COLOUR },
     { nv50_validate_stencil_ref,   NV50_NEW_STENCIL_REF },

@@ -42,4 +42,20 @@ nvc0_miptree_surface_new(struct pipe_context *,
 unsigned
 nvc0_mt_zslice_offset(const struct nv50_miptree *, unsigned l, unsigned z);
 
+struct pipe_transfer *
+nvc0_miptree_transfer_new(struct pipe_context *pcontext,
+                          struct pipe_resource *pt,
+                          unsigned level,
+                          unsigned usage,
+                          const struct pipe_box *box);
+void
+nvc0_miptree_transfer_del(struct pipe_context *pcontext,
+                          struct pipe_transfer *ptx);
+void *
+nvc0_miptree_transfer_map(struct pipe_context *pcontext,
+                          struct pipe_transfer *ptx);
+void
+nvc0_miptree_transfer_unmap(struct pipe_context *pcontext,
+                            struct pipe_transfer *ptx);
+
 #endif

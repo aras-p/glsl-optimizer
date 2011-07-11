@@ -119,6 +119,7 @@ nv50_blend_state_create(struct pipe_context *pipe,
    struct nv50_blend_stateobj *so = CALLOC_STRUCT(nv50_blend_stateobj);
    int i;
    boolean emit_common_func = cso->rt[0].blend_enable;
+   uint32_t ms;
 
    if (nv50_context(pipe)->screen->tesla->grclass >= NVA3_3D) {
       SB_BEGIN_3D(so, BLEND_INDEPENDENT, 1);
@@ -190,6 +191,15 @@ nv50_blend_state_create(struct pipe_context *pipe,
       SB_DATA    (so, nv50_colormask(cso->rt[0].colormask));
    }
 
+   ms = 0;
+   if (cso->alpha_to_coverage)
+      ms |= NV50_3D_MULTISAMPLE_CTRL_ALPHA_TO_COVERAGE;
+   if (cso->alpha_to_one)
+      ms |= NV50_3D_MULTISAMPLE_CTRL_ALPHA_TO_ONE;
+
+   SB_BEGIN_3D(so, MULTISAMPLE_CTRL, 1);
+   SB_DATA    (so, ms);
+
    assert(so->size <= (sizeof(so->state) / sizeof(so->state[0])));
    return so;
 }
@@ -236,6 +246,9 @@ nv50_rasterizer_state_create(struct pipe_context *pipe,
 
    SB_BEGIN_3D(so, FRAG_COLOR_CLAMP_EN, 1);
    SB_DATA    (so, cso->clamp_fragment_color ? 0x11111111 : 0x00000000);
+
+   SB_BEGIN_3D(so, MULTISAMPLE_ENABLE, 1);
+   SB_DATA    (so, cso->multisample);
 
    SB_BEGIN_3D(so, LINE_WIDTH, 1);
    SB_DATA    (so, fui(cso->line_width));

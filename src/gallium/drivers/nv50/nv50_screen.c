@@ -43,7 +43,9 @@ nv50_screen_is_format_supported(struct pipe_screen *pscreen,
                                 unsigned sample_count,
                                 unsigned bindings)
 {
-   if (sample_count > 1)
+   if (sample_count > 2 && sample_count != 4 && sample_count != 8)
+      return FALSE;
+   if (sample_count == 8 && util_format_get_blocksizebits(format) >= 128)
       return FALSE;
 
    if (!util_format_is_supported(format, bindings))

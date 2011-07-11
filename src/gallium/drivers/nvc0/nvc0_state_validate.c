@@ -59,6 +59,7 @@ nvc0_validate_fb(struct nvc0_context *nvc0)
     struct nouveau_channel *chan = nvc0->screen->base.channel;
     struct pipe_framebuffer_state *fb = &nvc0->framebuffer;
     unsigned i;
+    unsigned ms_mode = NVC0_3D_MULTISAMPLE_MODE_MS1;
     boolean serialize = FALSE;
 
     nvc0_bufctx_reset(nvc0, NVC0_BUFCTX_FRAME);
@@ -88,6 +89,8 @@ nvc0_validate_fb(struct nvc0_context *nvc0)
         OUT_RING  (chan, sf->base.u.tex.first_layer + sf->depth);
         OUT_RING  (chan, mt->layer_stride >> 2);
         OUT_RING  (chan, sf->base.u.tex.first_layer);
+
+        ms_mode = mt->ms_mode;
 
         if (mt->base.status & NOUVEAU_BUFFER_STATUS_GPU_READING)
            serialize = TRUE;
@@ -123,6 +126,8 @@ nvc0_validate_fb(struct nvc0_context *nvc0)
         BEGIN_RING(chan, RING_3D(ZETA_BASE_LAYER), 1);
         OUT_RING  (chan, sf->base.u.tex.first_layer);
 
+        ms_mode = mt->ms_mode;
+
         if (mt->base.status & NOUVEAU_BUFFER_STATUS_GPU_READING)
            serialize = TRUE;
         mt->base.status |=  NOUVEAU_BUFFER_STATUS_GPU_WRITING;
@@ -134,6 +139,8 @@ nvc0_validate_fb(struct nvc0_context *nvc0)
         BEGIN_RING(chan, RING_3D(ZETA_ENABLE), 1);
         OUT_RING  (chan, 0);
     }
+
+    IMMED_RING(chan, RING_3D(MULTISAMPLE_MODE), ms_mode);
 
     if (serialize) {
        BEGIN_RING(chan, RING_3D(SERIALIZE), 1);
@@ -390,6 +397,28 @@ nvc0_constbufs_validate(struct nvc0_context *nvc0)
 }
 
 static void
+nvc0_validate_sample_mask(struct nvc0_context *nvc0)
+{
+   struct nouveau_channel *chan = nvc0->screen->base.channel;
+
+   unsigned mask[4] =
+   {
+      nvc0->sample_mask & 0xffff,
+      nvc0->sample_mask & 0xffff,
+      nvc0->sample_mask & 0xffff,
+      nvc0->sample_mask & 0xffff
+   };
+
+   BEGIN_RING(chan, RING_3D(MSAA_MASK(0)), 4);
+   OUT_RING  (chan, mask[0]);
+   OUT_RING  (chan, mask[1]);
+   OUT_RING  (chan, mask[2]);
+   OUT_RING  (chan, mask[3]);
+   BEGIN_RING(chan, RING_3D(SAMPLE_SHADING), 1);
+   OUT_RING  (chan, 0x01);
+}
+
+static void
 nvc0_validate_derived_1(struct nvc0_context *nvc0)
 {
    struct nouveau_channel *chan = nvc0->screen->base.channel;
@@ -438,6 +467,7 @@ static struct state_validate {
     { nvc0_validate_fb,            NVC0_NEW_FRAMEBUFFER },
     { nvc0_validate_blend,         NVC0_NEW_BLEND },
     { nvc0_validate_zsa,           NVC0_NEW_ZSA },
+    { nvc0_validate_sample_mask,   NVC0_NEW_SAMPLE_MASK },
     { nvc0_validate_rasterizer,    NVC0_NEW_RASTERIZER },
     { nvc0_validate_blend_colour,  NVC0_NEW_BLEND_COLOUR },
     { nvc0_validate_stencil_ref,   NVC0_NEW_STENCIL_REF },

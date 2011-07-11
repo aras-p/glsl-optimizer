@@ -18,6 +18,7 @@
 #include "nv50_screen.h"
 #include "nv50_program.h"
 #include "nv50_resource.h"
+#include "nv50_transfer.h"
 
 #include "nouveau/nouveau_context.h"
 #include "nouveau/nv_object.xml.h"
@@ -187,6 +188,11 @@ nv50_create_sampler_view(struct pipe_context *,
                          const struct pipe_sampler_view *);
 
 /* nv50_transfer.c */
+void
+nv50_m2mf_transfer_rect(struct pipe_screen *pscreen,
+                        const struct nv50_m2mf_rect *dst,
+                        const struct nv50_m2mf_rect *src,
+                        uint32_t nblocksx, uint32_t nblocksy);
 void
 nv50_sifc_linear_u8(struct nouveau_context *pipe,
                     struct nouveau_bo *dst, unsigned offset, unsigned domain,

@@ -114,6 +114,7 @@ nvc0_create_sampler_view(struct pipe_context *pipe,
    depth = MAX2(mt->base.base.array_size, mt->base.base.depth0);
 
    if (mt->base.base.target == PIPE_TEXTURE_1D_ARRAY ||
+   /*  mt->base.base.target == PIPE_TEXTURE_2D_ARRAY_MS || */
        mt->base.base.target == PIPE_TEXTURE_2D_ARRAY) {
       /* there doesn't seem to be a base layer field in TIC */
       tic[1] = view->pipe.u.tex.first_layer * mt->layer_stride;
@@ -124,6 +125,7 @@ nvc0_create_sampler_view(struct pipe_context *pipe,
    case PIPE_TEXTURE_1D:
       tic[2] |= NV50_TIC_2_TARGET_1D;
       break;
+/* case PIPE_TEXTURE_2D_MS: */
    case PIPE_TEXTURE_2D:
       tic[2] |= NV50_TIC_2_TARGET_2D;
       break;
@@ -143,6 +145,7 @@ nvc0_create_sampler_view(struct pipe_context *pipe,
    case PIPE_TEXTURE_1D_ARRAY:
       tic[2] |= NV50_TIC_2_TARGET_1D_ARRAY;
       break;
+/* case PIPE_TEXTURE_2D_ARRAY_MS: */
    case PIPE_TEXTURE_2D_ARRAY:
       tic[2] |= NV50_TIC_2_TARGET_2D_ARRAY;
       break;
@@ -159,15 +162,21 @@ nvc0_create_sampler_view(struct pipe_context *pipe,
    else
       tic[3] = 0x00300000;
 
-   tic[4] = (1 << 31) | mt->base.base.width0;
+   tic[4] = (1 << 31) | (mt->base.base.width0 << mt->ms_x);
 
-   tic[5] = mt->base.base.height0 & 0xffff;
+   tic[5] = (mt->base.base.height0 << mt->ms_y) & 0xffff;
    tic[5] |= depth << 16;
    tic[5] |= mt->base.base.last_level << 28;
 
-   tic[6] = 0x03000000;
+   tic[6] = (mt->ms_x > 1) ? 0x88000000 : 0x03000000; /* sampling points */
 
    tic[7] = (view->pipe.u.tex.last_level << 4) | view->pipe.u.tex.first_level;
+
+   /*
+   if (mt->base.base.target == PIPE_TEXTURE_2D_MS ||
+       mt->base.base.target == PIPE_TEXTURE_2D_ARRAY_MS)
+      tic[7] |= mt->ms_mode << 12;
+   */
 
    return &view->pipe;
 }

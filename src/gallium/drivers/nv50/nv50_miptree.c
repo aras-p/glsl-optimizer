@@ -27,7 +27,6 @@
 
 #include "nv50_context.h"
 #include "nv50_resource.h"
-#include "nv50_transfer.h"
 
 static INLINE uint32_t
 nv50_tex_choose_tile_dims(unsigned nx, unsigned ny, unsigned nz)

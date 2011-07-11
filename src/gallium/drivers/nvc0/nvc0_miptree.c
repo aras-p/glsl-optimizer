@@ -27,7 +27,6 @@
 
 #include "nvc0_context.h"
 #include "nvc0_resource.h"
-#include "nvc0_transfer.h"
 
 uint32_t
 nvc0_tex_choose_tile_dims(unsigned nx, unsigned ny, unsigned nz)

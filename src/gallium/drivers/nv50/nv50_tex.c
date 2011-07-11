@@ -159,13 +159,13 @@ nv50_create_sampler_view(struct pipe_context *pipe,
    else
       tic[3] = 0x00300000;
 
-   tic[4] = (1 << 31) | mt->base.base.width0;
+   tic[4] = (1 << 31) | (mt->base.base.width0 << mt->ms_x);
 
-   tic[5] = mt->base.base.height0 & 0xffff;
+   tic[5] = (mt->base.base.height0 << mt->ms_y) & 0xffff;
    tic[5] |= depth << 16;
    tic[5] |= mt->base.base.last_level << 28;
 
-   tic[6] = 0x03000000;
+   tic[6] = (mt->ms_x > 1) ? 0x88000000 : 0x03000000; /* sampling points */
 
    tic[7] = (view->pipe.u.tex.last_level << 4) | view->pipe.u.tex.first_level;
 

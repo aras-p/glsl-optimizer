@@ -2,13 +2,12 @@
 #include "util/u_format.h"
 
 #include "nvc0_context.h"
-#include "nvc0_transfer.h"
 
 #include "nv50/nv50_defs.xml.h"
 
 struct nvc0_transfer {
    struct pipe_transfer base;
-   struct nvc0_m2mf_rect rect[2];
+   struct nv50_m2mf_rect rect[2];
    uint32_t nblocksx;
    uint16_t nblocksy;
    uint16_t nlayers;
@@ -16,8 +15,8 @@ struct nvc0_transfer {
 
 void
 nvc0_m2mf_transfer_rect(struct pipe_screen *pscreen,
-                        const struct nvc0_m2mf_rect *dst,
-                        const struct nvc0_m2mf_rect *src,
+                        const struct nv50_m2mf_rect *dst,
+                        const struct nv50_m2mf_rect *src,
                         uint32_t nblocksx, uint32_t nblocksy)
 {
    struct nouveau_channel *chan = nouveau_screen(pscreen)->channel;
@@ -174,9 +173,10 @@ nvc0_m2mf_copy_linear(struct nouveau_context *nv,
    }
 }
 
+#if 0
 static void
 nvc0_m2mf_push_rect(struct pipe_screen *pscreen,
-                    const struct nvc0_m2mf_rect *dst,
+                    const struct nv50_m2mf_rect *dst,
                     const void *data,
                     unsigned nblocksx, unsigned nblocksy)
 {
@@ -228,6 +228,7 @@ nvc0_m2mf_push_rect(struct pipe_screen *pscreen,
       nblocksy -= line_count;
    }
 }
+#endif
 
 struct pipe_transfer *
 nvc0_miptree_transfer_new(struct pipe_context *pctx,
@@ -240,10 +241,8 @@ nvc0_miptree_transfer_new(struct pipe_context *pctx,
    struct pipe_screen *pscreen = pctx->screen;
    struct nouveau_device *dev = nvc0->screen->base.device;
    struct nv50_miptree *mt = nv50_miptree(res);
-   struct nv50_miptree_level *lvl = &mt->level[level];
    struct nvc0_transfer *tx;
    uint32_t size;
-   uint32_t w, h, d, z, layer;
    int ret;
 
    if (usage & PIPE_TRANSFER_MAP_DIRECTLY)
@@ -253,45 +252,25 @@ nvc0_miptree_transfer_new(struct pipe_context *pctx,
    if (!tx)
       return NULL;
 
-   if (mt->layout_3d) {
-      z = box->z;
-      d = u_minify(res->depth0, level);
-      layer = 0;
-   } else {
-      z = 0;
-      d = 1;
-      layer = box->z;
-   }
-   tx->nlayers = box->depth;
-
    pipe_resource_reference(&tx->base.resource, res);
 
    tx->base.level = level;
    tx->base.usage = usage;
    tx->base.box = *box;
 
-   tx->nblocksx = util_format_get_nblocksx(res->format, box->width);
-   tx->nblocksy = util_format_get_nblocksy(res->format, box->height);
+   if (util_format_is_plain(res->format)) {
+      tx->nblocksx = box->width << mt->ms_x;
+      tx->nblocksy = box->height << mt->ms_y;
+   } else {
+      tx->nblocksx = util_format_get_nblocksx(res->format, box->width);
+      tx->nblocksy = util_format_get_nblocksy(res->format, box->height);
+   }
+   tx->nlayers = box->depth;
 
    tx->base.stride = tx->nblocksx * util_format_get_blocksize(res->format);
    tx->base.layer_stride = tx->nblocksy * tx->base.stride;
 
-   w = u_minify(res->width0, level);
-   h = u_minify(res->height0, level);
-
-   tx->rect[0].cpp = tx->rect[1].cpp = util_format_get_blocksize(res->format);
-
-   tx->rect[0].bo = mt->base.bo;
-   tx->rect[0].base = lvl->offset + layer * mt->layer_stride;
-   tx->rect[0].tile_mode = lvl->tile_mode;
-   tx->rect[0].x = util_format_get_nblocksx(res->format, box->x);
-   tx->rect[0].y = util_format_get_nblocksy(res->format, box->y);
-   tx->rect[0].z = z;
-   tx->rect[0].width = util_format_get_nblocksx(res->format, w);
-   tx->rect[0].height = util_format_get_nblocksy(res->format, h);
-   tx->rect[0].depth = d;
-   tx->rect[0].pitch = lvl->pitch;
-   tx->rect[0].domain = NOUVEAU_BO_VRAM;
+   nv50_m2mf_rect_setup(&tx->rect[0], res, level, box->x, box->y, box->z);
 
    size = tx->base.layer_stride;
 
@@ -302,6 +281,7 @@ nvc0_miptree_transfer_new(struct pipe_context *pctx,
       return NULL;
    }
 
+   tx->rect[1].cpp = tx->rect[0].cpp;
    tx->rect[1].width = tx->nblocksx;
    tx->rect[1].height = tx->nblocksy;
    tx->rect[1].depth = 1;
@@ -310,6 +290,7 @@ nvc0_miptree_transfer_new(struct pipe_context *pctx,
 
    if (usage & PIPE_TRANSFER_READ) {
       unsigned base = tx->rect[0].base;
+      unsigned z = tx->rect[0].z;
       unsigned i;
       for (i = 0; i < tx->nlayers; ++i) {
          nvc0_m2mf_transfer_rect(pscreen, &tx->rect[1], &tx->rect[0],
