@@ -265,9 +265,6 @@ static uint32_t r600_translate_dbformat(enum pipe_format format)
 		return V_028040_Z_24;
 	case PIPE_FORMAT_Z24_UNORM_S8_USCALED:
 		return V_028040_Z_24;
-	case PIPE_FORMAT_Z32_FLOAT:
-	case PIPE_FORMAT_Z32_FLOAT_S8X24_USCALED:
-		return V_028040_Z_32_FLOAT;
 	default:
 		return ~0U;
 	}
@@ -275,8 +272,7 @@ static uint32_t r600_translate_dbformat(enum pipe_format format)
 
 static uint32_t r600_translate_stencilformat(enum pipe_format format)
 {
-	if (format == PIPE_FORMAT_Z24_UNORM_S8_USCALED ||
-	    format == PIPE_FORMAT_Z32_FLOAT_S8X24_USCALED)
+	if (format == PIPE_FORMAT_Z24_UNORM_S8_USCALED)
 		return 1;
 	else
 		return 0;
@@ -364,7 +360,6 @@ static uint32_t r600_translate_colorswap(enum pipe_format format)
 
 	case PIPE_FORMAT_R11G11B10_FLOAT:
 	case PIPE_FORMAT_R32_FLOAT:
-	case PIPE_FORMAT_Z32_FLOAT:
 	case PIPE_FORMAT_R16G16_FLOAT:
 	case PIPE_FORMAT_R16G16_UNORM:
 		return V_028C70_SWAP_STD;
@@ -374,7 +369,6 @@ static uint32_t r600_translate_colorswap(enum pipe_format format)
 	case PIPE_FORMAT_R16G16B16A16_UNORM:
 	case PIPE_FORMAT_R16G16B16A16_SNORM:
 	case PIPE_FORMAT_R16G16B16A16_FLOAT:
-	case PIPE_FORMAT_Z32_FLOAT_S8X24_USCALED:
 
 	/* 128-bit buffers. */
 	case PIPE_FORMAT_R32G32B32A32_FLOAT:
@@ -459,11 +453,7 @@ static uint32_t r600_translate_colorformat(enum pipe_format format)
 	case PIPE_FORMAT_S8_USCALED_Z24_UNORM:
 		return V_028C70_COLOR_24_8;
 
-	case PIPE_FORMAT_Z32_FLOAT_S8X24_USCALED:
-		return V_028C70_COLOR_X24_8_32_FLOAT;
-
 	case PIPE_FORMAT_R32_FLOAT:
-	case PIPE_FORMAT_Z32_FLOAT:
 		return V_028C70_COLOR_32_FLOAT;
 
 	case PIPE_FORMAT_R16G16_FLOAT:
@@ -551,7 +541,6 @@ static uint32_t r600_colorformat_endian_swap(uint32_t colorformat)
 
 		case V_028C70_COLOR_32_32_FLOAT:
 		case V_028C70_COLOR_32_32:
-		case V_028C70_COLOR_X24_8_32_FLOAT:
 			return ENDIAN_8IN32;
 
 		/* 96-bit buffers. */
@@ -2134,7 +2123,6 @@ void evergreen_polygon_offset_update(struct r600_pipe_context *rctx)
 			offset_units *= 2.0f;
 			break;
 		case PIPE_FORMAT_Z32_FLOAT:
-		case PIPE_FORMAT_Z32_FLOAT_S8X24_USCALED:
 			depth = -23;
 			offset_units *= 1.0f;
 			offset_db_fmt_cntl |= S_028B78_POLY_OFFSET_DB_IS_FLOAT_FMT(1);
