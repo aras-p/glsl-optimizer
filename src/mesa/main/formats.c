@@ -1485,7 +1485,8 @@ _mesa_test_formats(void)
              info->DataType == GL_SIGNED_NORMALIZED ||
              info->DataType == GL_UNSIGNED_INT ||
              info->DataType == GL_INT ||
-             info->DataType == GL_FLOAT);
+             info->DataType == GL_FLOAT ||
+             info->DataType == GL_NONE);
 
       if (info->BaseFormat == GL_RGB) {
          assert(info->RedBits > 0);
