@@ -798,7 +798,7 @@ esac
 if test "x$enable_dri" = xyes; then
     DRIVER_DIRS="$DRIVER_DIRS dri"
 
-    GALLIUM_WINSYS_DIRS="$GALLIUM_WINSYS_DIRS sw/xlib sw/dri"
+    GALLIUM_WINSYS_DIRS="$GALLIUM_WINSYS_DIRS sw/dri"
     GALLIUM_STATE_TRACKERS_DIRS="dri $GALLIUM_STATE_TRACKERS_DIRS"
     HAVE_ST_DRI="yes"
 fi
