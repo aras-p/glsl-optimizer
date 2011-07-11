@@ -179,6 +179,9 @@ struct st_context *st_create_context(gl_api api, struct pipe_context *pipe,
    st_init_driver_functions(&funcs);
 
    ctx = _mesa_create_context(api, visual, shareCtx, &funcs, NULL);
+   if (!ctx) {
+      return NULL;
+   }
 
    /* XXX: need a capability bit in gallium to query if the pipe
     * driver prefers DP4 or MUL/MAD for vertex transformation.
