@@ -32,6 +32,18 @@
 #include "vl_decoder.h"
 #include "vl_mpeg12_decoder.h"
 
+bool
+vl_profile_supported(struct pipe_screen *screen, enum pipe_video_profile profile)
+{
+   assert(screen);
+   switch (u_reduce_video_profile(profile)) {
+      case PIPE_VIDEO_CODEC_MPEG12:
+         return true;
+      default:
+         return false;
+   }
+}
+
 struct pipe_video_decoder *
 vl_create_decoder(struct pipe_context *pipe,
                   enum pipe_video_profile profile,

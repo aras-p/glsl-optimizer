@@ -3,6 +3,7 @@
 #include "util/u_format.h"
 #include "util/u_format_s3tc.h"
 #include "util/u_simple_screen.h"
+#include "vl/vl_decoder.h"
 #include "vl/vl_video_buffer.h"
 
 #include "nouveau/nouveau_screen.h"
@@ -213,8 +214,13 @@ nvfx_screen_get_video_param(struct pipe_screen *screen,
 				enum pipe_video_cap param)
 {
 	switch (param) {
+	case PIPE_VIDEO_CAP_SUPPORTED:
+		return vl_profile_supported(screen, profile);
 	case PIPE_VIDEO_CAP_NPOT_TEXTURES:
 		return 0;
+	case PIPE_VIDEO_CAP_MAX_WIDTH:
+	case PIPE_VIDEO_CAP_MAX_HEIGHT:
+		return vl_video_buffer_max_size(screen);
 	default:
 		return 0;
 	}

@@ -128,11 +128,7 @@ vlVdpDecoderQueryCapabilities(VdpDevice device, VdpDecoderProfile profile,
 {
    vlVdpDevice *dev;
    struct pipe_screen *pscreen;
-
    enum pipe_video_profile p_profile;
-   uint32_t max_decode_width;
-   uint32_t max_decode_height;
-   uint32_t max_2d_texture_level;
 
    VDPAU_MSG(VDPAU_TRACE, "[VDPAU] Querying decoder\n");
 
@@ -152,23 +148,19 @@ vlVdpDecoderQueryCapabilities(VdpDevice device, VdpDecoderProfile profile,
       *is_supported = false;
       return VDP_STATUS_OK;
    }
-
-   if (p_profile != PIPE_VIDEO_PROFILE_MPEG2_SIMPLE && p_profile != PIPE_VIDEO_PROFILE_MPEG2_MAIN)  {
-      *is_supported = false;
-      return VDP_STATUS_OK;
+   
+   *is_supported = pscreen->get_video_param(pscreen, p_profile, PIPE_VIDEO_CAP_SUPPORTED);
+   if (*is_supported) {
+      *max_width = pscreen->get_video_param(pscreen, p_profile, PIPE_VIDEO_CAP_MAX_WIDTH); 
+      *max_height = pscreen->get_video_param(pscreen, p_profile, PIPE_VIDEO_CAP_MAX_HEIGHT);
+      *max_level = 16;
+      *max_macroblocks = (*max_width/16)*(*max_height/16);
+   } else {
+      *max_width = 0;
+      *max_height = 0;
+      *max_level = 0;
+      *max_macroblocks = 0;
    }
-
-   /* XXX hack, need to implement something more sane when the decoders have been implemented */
-   max_2d_texture_level = pscreen->get_param(pscreen, PIPE_CAP_MAX_TEXTURE_2D_LEVELS);
-   max_decode_width = max_decode_height = pow(2,max_2d_texture_level-2);
-   if (!(max_decode_width && max_decode_height))
-      return VDP_STATUS_RESOURCES;
-
-   *is_supported = true;
-   *max_width = max_decode_width;
-   *max_height = max_decode_height;
-   *max_level = 16;
-   *max_macroblocks = (max_decode_width/16) * (max_decode_height/16);
 
    return VDP_STATUS_OK;
 }

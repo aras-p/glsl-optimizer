@@ -88,6 +88,16 @@ vl_video_buffer_is_format_supported(struct pipe_screen *screen,
    return true;
 }
 
+unsigned
+vl_video_buffer_max_size(struct pipe_screen *screen)
+{
+   uint32_t max_2d_texture_level;
+
+   max_2d_texture_level = screen->get_param(screen, PIPE_CAP_MAX_TEXTURE_2D_LEVELS);
+
+   return 1 << (max_2d_texture_level-1);
+}
+
 static void
 vl_video_buffer_destroy(struct pipe_video_buffer *buffer)
 {

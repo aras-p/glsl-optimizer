@@ -55,6 +55,12 @@ const enum pipe_format *
 vl_video_buffer_formats(struct pipe_screen *screen, enum pipe_format format);
 
 /**
+ * get maximum size of video buffers
+ */
+unsigned
+vl_video_buffer_max_size(struct pipe_screen *screen);
+
+/**
  * check if video buffer format is supported for a codec/profile
  * can be used as default implementation of screen->is_video_format_supported
  */

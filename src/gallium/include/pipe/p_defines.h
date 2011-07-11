@@ -496,7 +496,10 @@ enum pipe_shader_cap
 /* Video caps, can be different for each codec/profile */
 enum pipe_video_cap
 {
-   PIPE_VIDEO_CAP_NPOT_TEXTURES = 0,
+   PIPE_VIDEO_CAP_SUPPORTED = 0,
+   PIPE_VIDEO_CAP_NPOT_TEXTURES = 1,
+   PIPE_VIDEO_CAP_MAX_WIDTH = 2,
+   PIPE_VIDEO_CAP_MAX_HEIGHT = 3,
 };
 
 enum pipe_video_codec
