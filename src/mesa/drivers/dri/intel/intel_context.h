@@ -199,6 +199,7 @@ struct intel_context
    drm_intel_bo *first_post_swapbuffers_batch;
    GLboolean need_throttle;
    GLboolean no_batch_wrap;
+   bool tnl_pipeline_running; /**< Set while i915's _tnl_run_pipeline. */
 
    struct
    {
