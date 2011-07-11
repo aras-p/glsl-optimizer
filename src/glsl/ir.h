@@ -1635,6 +1635,32 @@ visit_exec_list(exec_list *list, ir_visitor *visitor);
  */
 void validate_ir_tree(exec_list *instructions);
 
+struct _mesa_glsl_parse_state;
+struct gl_shader_program;
+
+/**
+ * Detect whether an unlinked shader contains static recursion
+ *
+ * If the list of instructions is determined to contain static recursion,
+ * \c _mesa_glsl_error will be called to emit error messages for each function
+ * that is in the recursion cycle.
+ */
+void
+detect_recursion_unlinked(struct _mesa_glsl_parse_state *state,
+			  exec_list *instructions);
+
+/**
+ * Detect whether a linked shader contains static recursion
+ *
+ * If the list of instructions is determined to contain static recursion,
+ * \c link_error_printf will be called to emit error messages for each function
+ * that is in the recursion cycle.  In addition,
+ * \c gl_shader_program::LinkStatus will be set to false.
+ */
+void
+detect_recursion_linked(struct gl_shader_program *prog,
+			exec_list *instructions);
+
 /**
  * Make a clone of each IR instruction in a list
  *

@@ -1702,6 +1702,10 @@ link_shaders(struct gl_context *ctx, struct gl_shader_program *prog)
       if (prog->_LinkedShaders[i] == NULL)
 	 continue;
 
+      detect_recursion_linked(prog, prog->_LinkedShaders[i]->ir);
+      if (!prog->LinkStatus)
+	 goto done;
+
       while (do_common_optimization(prog->_LinkedShaders[i]->ir, true, 32))
 	 ;
    }

@@ -83,6 +83,8 @@ _mesa_ast_to_hir(exec_list *instructions, struct _mesa_glsl_parse_state *state)
 
    foreach_list_typed (ast_node, ast, link, & state->translation_unit)
       ast->hir(instructions, state);
+
+   detect_recursion_unlinked(state, instructions);
 }
 
 
