@@ -186,7 +186,7 @@ static int eg_interpret_tiling(struct radeon *radeon, uint32_t tiling_config)
 
 static int radeon_drm_get_tiling(struct radeon *radeon)
 {
-	struct drm_radeon_info info;
+	struct drm_radeon_info info = {};
 	int r;
 	uint32_t tiling_config = 0;
 
@@ -208,7 +208,7 @@ static int radeon_drm_get_tiling(struct radeon *radeon)
 
 static int radeon_get_clock_crystal_freq(struct radeon *radeon)
 {
-	struct drm_radeon_info info;
+	struct drm_radeon_info info = {};
 	uint32_t clock_crystal_freq;
 	int r;
 
@@ -226,7 +226,7 @@ static int radeon_get_clock_crystal_freq(struct radeon *radeon)
 
 static int radeon_get_num_backends(struct radeon *radeon)
 {
-	struct drm_radeon_info info;
+	struct drm_radeon_info info = {};
 	uint32_t num_backends;
 	int r;
 
