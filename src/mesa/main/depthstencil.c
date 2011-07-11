@@ -63,7 +63,8 @@ static void
 delete_wrapper(struct gl_renderbuffer *rb)
 {
    ASSERT(rb->Format == MESA_FORMAT_S8 ||
-          rb->Format == MESA_FORMAT_X8_Z24);
+          rb->Format == MESA_FORMAT_X8_Z24 ||
+          rb->Format == MESA_FORMAT_Z32_FLOAT);
    _mesa_reference_renderbuffer(&rb->Wrapped, NULL);
    free(rb);
 }
