@@ -273,26 +273,6 @@ make_passthrough_vertex_shader(struct st_context *st,
 
 
 /**
- * Return a texture base format for drawing/copying an image
- * of the given format.
- */
-static GLenum
-base_format(GLenum format)
-{
-   switch (format) {
-   case GL_DEPTH_COMPONENT:
-      return GL_DEPTH_COMPONENT;
-   case GL_DEPTH_STENCIL:
-      return GL_DEPTH_STENCIL;
-   case GL_STENCIL_INDEX:
-      return GL_STENCIL_INDEX;
-   default:
-      return GL_RGBA;
-   }
-}
-
-
-/**
  * Return a texture internalFormat for drawing/copying an image
  * of the given format and type.
  */
@@ -999,7 +979,6 @@ st_DrawPixels(struct gl_context *ctx, GLint x, GLint y,
    GLboolean write_stencil = GL_FALSE, write_depth = GL_FALSE;
    struct pipe_sampler_view *sv[2];
    int num_sampler_view = 1;
-   enum pipe_format stencil_format = PIPE_FORMAT_NONE;
    struct st_fp_variant *fpv;
 
    if (format == GL_DEPTH_STENCIL)
@@ -1014,28 +993,6 @@ st_DrawPixels(struct gl_context *ctx, GLint x, GLint y,
       /* can we write to stencil if not fallback */
       if (!pipe->screen->get_param(pipe->screen, PIPE_CAP_SHADER_STENCIL_EXPORT))
 	 goto stencil_fallback;
-
-      tex_format = st_choose_format(st->pipe->screen, base_format(format),
-                                    GL_NONE, GL_NONE,
-                                    PIPE_TEXTURE_2D,
-				    0, PIPE_BIND_SAMPLER_VIEW);
-
-      switch (tex_format) {
-      case PIPE_FORMAT_Z24_UNORM_S8_USCALED:
-         stencil_format = PIPE_FORMAT_X24S8_USCALED;
-         break;
-      case PIPE_FORMAT_S8_USCALED_Z24_UNORM:
-         stencil_format = PIPE_FORMAT_S8X24_USCALED;
-         break;
-      case PIPE_FORMAT_Z32_FLOAT_S8X24_USCALED:
-         stencil_format = PIPE_FORMAT_X32_S8X24_USCALED;
-         break;
-      case PIPE_FORMAT_S8_USCALED:
-         stencil_format = PIPE_FORMAT_S8_USCALED;
-         break;
-      default:
-         goto stencil_fallback;
-      }
    }
 
    /* Mesa state should be up to date by now */
@@ -1080,7 +1037,32 @@ st_DrawPixels(struct gl_context *ctx, GLint x, GLint y,
          sv[0] = st_create_texture_sampler_view(st->pipe, pt);
 
          if (sv[0]) {
-	    if (write_stencil) {
+            /* Create a second sampler view to read stencil.
+             * The stencil is written using the shader stencil export
+             * functionality. */
+            if (write_stencil) {
+               enum pipe_format stencil_format = PIPE_FORMAT_NONE;
+
+               switch (pt->format) {
+               case PIPE_FORMAT_Z24_UNORM_S8_USCALED:
+               case PIPE_FORMAT_X24S8_USCALED:
+                  stencil_format = PIPE_FORMAT_X24S8_USCALED;
+                  break;
+               case PIPE_FORMAT_S8_USCALED_Z24_UNORM:
+               case PIPE_FORMAT_S8X24_USCALED:
+                  stencil_format = PIPE_FORMAT_S8X24_USCALED;
+                  break;
+               case PIPE_FORMAT_Z32_FLOAT_S8X24_USCALED:
+               case PIPE_FORMAT_X32_S8X24_USCALED:
+                  stencil_format = PIPE_FORMAT_X32_S8X24_USCALED;
+                  break;
+               case PIPE_FORMAT_S8_USCALED:
+                  stencil_format = PIPE_FORMAT_S8_USCALED;
+                  break;
+               default:
+                  assert(0);
+               }
+
 	       sv[1] = st_create_texture_sampler_view_format(st->pipe, pt,
                                                              stencil_format);
 	       num_sampler_view++;
