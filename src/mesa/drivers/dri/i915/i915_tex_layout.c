@@ -219,9 +219,9 @@ i915_miptree_layout_2d(struct intel_context *intel,
 				   width, height, 1);
 
       if (mt->compressed)
-	 img_height = MAX2(1, height / 4);
+	 img_height = ALIGN(height, 4) / 4;
       else
-	 img_height = (MAX2(2, height) + 1) & ~1;
+	 img_height = ALIGN(height, 2);
 
       mt->total_height += img_height;
 
