@@ -89,6 +89,12 @@ nvc0_mt_choose_storage_type(struct nv50_miptree *mt, boolean compressed)
       else
          tile_flags = 0x1100;
       break;
+   case PIPE_FORMAT_Z32_FLOAT:
+      if (compressed)
+         tile_flags = 0x8600 + (ms << 8);
+      else
+         tile_flags = 0x7b00;
+      break;
    case PIPE_FORMAT_Z32_FLOAT_S8X24_USCALED:
       if (compressed)
          tile_flags = 0xce00 + (ms << 8);
