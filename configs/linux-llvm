@@ -30,7 +30,7 @@ else
 endif
 
 ifeq ($(MESA_LLVM),1)
-  LLVM_CFLAGS=`llvm-config --cppflags`
+  LLVM_CFLAGS=`llvm-config --cppflags|sed 's/-DNDEBUG\>//g'`
   LLVM_CXXFLAGS=`llvm-config --cxxflags` -Wno-long-long
   LLVM_LDFLAGS = $(shell llvm-config --ldflags)
   LLVM_LIBS = $(shell llvm-config --libs)
