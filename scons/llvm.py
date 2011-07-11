@@ -141,7 +141,15 @@ def generate(env):
         llvm_version = distutils.version.LooseVersion(llvm_version)
 
         try:
-            env.ParseConfig('llvm-config --cppflags')
+            # Treat --cppflags specially to prevent NDEBUG from disabling
+            # assertion failures in debug builds.
+            cppflags = env.ParseFlags('!llvm-config --cppflags')
+            try:
+                cppflags['CPPDEFINES'].remove('NDEBUG')
+            except ValueError:
+                pass
+            env.MergeFlags(cppflags)
+
             env.ParseConfig('llvm-config --libs')
             env.ParseConfig('llvm-config --ldflags')
         except OSError:
