@@ -1486,6 +1486,7 @@ _mesa_test_formats(void)
              info->DataType == GL_UNSIGNED_INT ||
              info->DataType == GL_INT ||
              info->DataType == GL_FLOAT ||
+             /* Z32_FLOAT_X24S8 has DataType of GL_NONE */
              info->DataType == GL_NONE);
 
       if (info->BaseFormat == GL_RGB) {
