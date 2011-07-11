@@ -120,25 +120,6 @@ intel_miptree_create_for_teximage(struct intel_context *intel,
 			       expect_accelerated_upload);
 }
 
-
-
-
-static GLuint
-target_to_face(GLenum target)
-{
-   switch (target) {
-   case GL_TEXTURE_CUBE_MAP_POSITIVE_X_ARB:
-   case GL_TEXTURE_CUBE_MAP_NEGATIVE_X_ARB:
-   case GL_TEXTURE_CUBE_MAP_POSITIVE_Y_ARB:
-   case GL_TEXTURE_CUBE_MAP_NEGATIVE_Y_ARB:
-   case GL_TEXTURE_CUBE_MAP_POSITIVE_Z_ARB:
-   case GL_TEXTURE_CUBE_MAP_NEGATIVE_Z_ARB:
-      return ((GLuint) target - (GLuint) GL_TEXTURE_CUBE_MAP_POSITIVE_X);
-   default:
-      return 0;
-   }
-}
-
 /* There are actually quite a few combinations this will work for,
  * more than what I've listed here.
  */
@@ -426,7 +407,7 @@ intelTexImage(struct gl_context * ctx,
    DBG("%s target %s level %d %dx%dx%d border %d\n", __FUNCTION__,
        _mesa_lookup_enum_by_nr(target), level, width, height, depth, border);
 
-   intelImage->face = target_to_face(target);
+   intelImage->face = _mesa_tex_target_to_face(target);
    intelImage->level = level;
 
    if (_mesa_is_format_compressed(texImage->TexFormat)) {
@@ -835,7 +816,7 @@ intelSetTexBuffer2(__DRIcontext *pDRICtx, GLint target,
 			      rb->region->width, rb->region->height, 1,
 			      0, internalFormat, texFormat);
 
-   intelImage->face = target_to_face(target);
+   intelImage->face = _mesa_tex_target_to_face(target);
    intelImage->level = level;
    texImage->RowStride = rb->region->pitch;
    intel_miptree_reference(&intelImage->mt, intelObj->mt);
@@ -893,7 +874,7 @@ intel_image_target_texture_2d(struct gl_context *ctx, GLenum target,
 			      image->region->width, image->region->height, 1,
 			      0, image->internal_format, image->format);
 
-   intelImage->face = target_to_face(target);
+   intelImage->face = _mesa_tex_target_to_face(target);
    intelImage->level = 0;
    texImage->RowStride = image->region->pitch;
    intel_miptree_reference(&intelImage->mt, intelObj->mt);
