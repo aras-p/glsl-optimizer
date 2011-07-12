@@ -401,31 +401,26 @@ void
 intelCalcViewport(struct gl_context * ctx)
 {
    struct intel_context *intel = intel_context(ctx);
-   const GLfloat *v = ctx->Viewport._WindowMap.m;
-   const GLfloat depthScale = 1.0F / ctx->DrawBuffer->_DepthMaxF;
-   GLfloat *m = intel->ViewportMatrix.m;
-   GLfloat yScale, yBias;
 
-   if (ctx->DrawBuffer->Name) {
-      /* User created FBO */
-      /* y=0=bottom */
-      yScale = 1.0;
-      yBias = 0.0;
+   if (ctx->DrawBuffer->Name == 0) {
+      _math_matrix_viewport(&intel->ViewportMatrix,
+			    ctx->Viewport.X,
+			    ctx->DrawBuffer->Height - ctx->Viewport.Y,
+			    ctx->Viewport.Width,
+			    -ctx->Viewport.Height,
+			    ctx->Viewport.Near,
+			    ctx->Viewport.Far,
+			    1.0);
+   } else {
+      _math_matrix_viewport(&intel->ViewportMatrix,
+			    ctx->Viewport.X,
+			    ctx->Viewport.Y,
+			    ctx->Viewport.Width,
+			    ctx->Viewport.Height,
+			    ctx->Viewport.Near,
+			    ctx->Viewport.Far,
+			    1.0);
    }
-   else {
-      /* window buffer, y=0=top */
-      yScale = -1.0;
-      yBias = ctx->DrawBuffer->Height;
-   }
-
-   m[MAT_SX] = v[MAT_SX];
-   m[MAT_TX] = v[MAT_TX];
-
-   m[MAT_SY] = v[MAT_SY] * yScale;
-   m[MAT_TY] = v[MAT_TY] * yScale + yBias;
-
-   m[MAT_SZ] = v[MAT_SZ] * depthScale;
-   m[MAT_TZ] = v[MAT_TZ] * depthScale;
 }
 
 
