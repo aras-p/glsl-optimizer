@@ -94,7 +94,6 @@ brw_update_draw_buffer(struct intel_context *intel)
 {
    struct gl_context *ctx = &intel->ctx;
    struct gl_framebuffer *fb = ctx->DrawBuffer;
-   struct intel_region *colorRegions[MAX_DRAW_BUFFERS], *depthRegion = NULL;
    struct intel_renderbuffer *irbDepth = NULL, *irbStencil = NULL;
    bool fb_has_hiz = intel_framebuffer_has_hiz(fb);
 
@@ -143,58 +142,9 @@ brw_update_draw_buffer(struct intel_context *intel)
       return;
    }
 
-   /* How many color buffers are we drawing into?
-    *
-    * If there are zero buffers or the buffer is too big, don't configure any
-    * regions for hardware drawing.  We'll fallback to software below.  Not
-    * having regions set makes some of the software fallback paths faster.
+   /* Check some stencil invariants.  These should probably be in
+    * emit_depthbuffer().
     */
-   if ((fb->Width > ctx->Const.MaxRenderbufferSize)
-       || (fb->Height > ctx->Const.MaxRenderbufferSize)
-       || (fb->_NumColorDrawBuffers == 0)) {
-      /* writing to 0  */
-      colorRegions[0] = NULL;
-   }
-   else if (fb->_NumColorDrawBuffers > 1) {
-       int i;
-       struct intel_renderbuffer *irb;
-
-       for (i = 0; i < fb->_NumColorDrawBuffers; i++) {
-           irb = intel_renderbuffer(fb->_ColorDrawBuffers[i]);
-           colorRegions[i] = irb ? irb->region : NULL;
-       }
-   }
-   else {
-      /* Get the intel_renderbuffer for the single colorbuffer we're drawing
-       * into.
-       */
-      if (fb->Name == 0) {
-	 /* drawing to window system buffer */
-	 if (fb->_ColorDrawBufferIndexes[0] == BUFFER_FRONT_LEFT)
-	    colorRegions[0] = intel_get_rb_region(fb, BUFFER_FRONT_LEFT);
-	 else
-	    colorRegions[0] = intel_get_rb_region(fb, BUFFER_BACK_LEFT);
-      }
-      else {
-	 /* drawing to user-created FBO */
-	 struct intel_renderbuffer *irb;
-	 irb = intel_renderbuffer(fb->_ColorDrawBuffers[0]);
-	 colorRegions[0] = (irb && irb->region) ? irb->region : NULL;
-      }
-   }
-
-   /* Check for depth fallback. */
-   if (irbDepth && irbDepth->region) {
-      assert(!fb_has_hiz || irbDepth->Base.Format != MESA_FORMAT_S8_Z24);
-      depthRegion = irbDepth->region;
-   } else if (irbDepth && !irbDepth->region) {
-      depthRegion = NULL;
-   } else { /* !irbDepth */
-      /* No fallback is needed because there is no depth buffer. */
-      depthRegion = NULL;
-   }
-
-   /* Check for stencil fallback. */
    if (irbStencil && irbStencil->region) {
       if (!intel->has_separate_stencil)
 	 assert(irbStencil->Base.Format == MESA_FORMAT_S8_Z24);
@@ -202,14 +152,6 @@ brw_update_draw_buffer(struct intel_context *intel)
 	 assert(irbStencil->Base.Format == MESA_FORMAT_S8);
       if (irbStencil->Base.Format == MESA_FORMAT_S8)
 	 assert(intel->has_separate_stencil);
-   }
-
-   /* If we have a (packed) stencil buffer attached but no depth buffer,
-    * we still need to set up the shared depth/stencil state so we can use it.
-    */
-   if (depthRegion == NULL && irbStencil && irbStencil->region
-       && irbStencil->Base.Format == MESA_FORMAT_S8_Z24) {
-      depthRegion = irbStencil->region;
    }
 
    /*
