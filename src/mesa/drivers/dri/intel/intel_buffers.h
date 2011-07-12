@@ -31,6 +31,7 @@
 
 #include "dri_util.h"
 #include "drm.h"
+#include "intel_context.h"
 
 struct intel_context;
 struct intel_framebuffer;
@@ -41,7 +42,13 @@ extern struct intel_region *intel_drawbuf_region(struct intel_context *intel);
 
 extern void intel_check_front_buffer_rendering(struct intel_context *intel);
 
-extern void intel_draw_buffer(struct gl_context * ctx, struct gl_framebuffer *fb);
+static inline void
+intel_draw_buffer(struct gl_context * ctx, struct gl_framebuffer *fb)
+{
+   struct intel_context *intel = intel_context(ctx);
+
+   intel->vtbl.update_draw_buffer(intel);
+}
 
 extern void intelInitBufferFuncs(struct dd_function_table *functions);
 
