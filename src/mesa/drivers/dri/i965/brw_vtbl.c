@@ -154,51 +154,25 @@ brw_update_draw_buffer(struct intel_context *intel)
 	 assert(intel->has_separate_stencil);
    }
 
-   /*
-    * Update depth and stencil test state
+   /* Mesa's Stencil._Enabled field is updated when
+    * _NEW_BUFFERS | _NEW_STENCIL, but i965 code assumes that the value
+    * only changes with _NEW_STENCIL (which seems sensible).  So flag it
+    * here since this is the _NEW_BUFFERS path.
     */
-   if (ctx->Driver.Enable) {
-      ctx->Driver.Enable(ctx, GL_DEPTH_TEST,
-                         (ctx->Depth.Test && fb->Visual.depthBits > 0));
-      ctx->Driver.Enable(ctx, GL_STENCIL_TEST,
-                         (ctx->Stencil.Enabled && fb->Visual.stencilBits > 0));
-   }
-   else {
-      /* Mesa's Stencil._Enabled field is updated when
-       * _NEW_BUFFERS | _NEW_STENCIL, but i965 code assumes that the value
-       * only changes with _NEW_STENCIL (which seems sensible).  So flag it
-       * here since this is the _NEW_BUFFERS path.
-       */
-      intel->NewGLState |= (_NEW_DEPTH | _NEW_STENCIL);
-   }
+   intel->NewGLState |= (_NEW_DEPTH | _NEW_STENCIL);
 
+   /* The driver uses this in places that need to look up
+    * renderbuffers' buffer objects.
+    */
    intel->NewGLState |= _NEW_BUFFERS;
 
-   /* update viewport since it depends on window size */
-#ifdef I915
-   intelCalcViewport(ctx);
-#else
-   intel->NewGLState |= _NEW_VIEWPORT;
-#endif
-   /* Set state we know depends on drawable parameters:
-    */
-   if (ctx->Driver.Scissor)
-      ctx->Driver.Scissor(ctx, ctx->Scissor.X, ctx->Scissor.Y,
-			  ctx->Scissor.Width, ctx->Scissor.Height);
-   intel->NewGLState |= _NEW_SCISSOR;
-
-   if (ctx->Driver.DepthRange)
-      ctx->Driver.DepthRange(ctx,
-			     ctx->Viewport.Near,
-			     ctx->Viewport.Far);
+   /* update viewport/scissor since it depends on window size */
+   intel->NewGLState |= _NEW_VIEWPORT | _NEW_SCISSOR;
 
    /* Update culling direction which changes depending on the
     * orientation of the buffer:
     */
-   if (ctx->Driver.FrontFace)
-      ctx->Driver.FrontFace(ctx, ctx->Polygon.FrontFace);
-   else
-      intel->NewGLState |= _NEW_POLYGON;
+   intel->NewGLState |= _NEW_POLYGON;
 }
 
 /**
