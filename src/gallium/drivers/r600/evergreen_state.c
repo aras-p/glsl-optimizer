@@ -2026,6 +2026,11 @@ void evergreen_init_config(struct r600_pipe_context *rctx)
 	tmp |= S_008C28_NUM_LS_STACK_ENTRIES(num_ls_stack_entries);
 	r600_pipe_state_add_reg(rstate, R_008C28_SQ_STACK_RESOURCE_MGMT_3, tmp, 0xFFFFFFFF, NULL);
 
+	tmp = 0;
+	tmp |= S_008E2C_NUM_PS_LDS(0x1000);
+	tmp |= S_008E2C_NUM_LS_LDS(0x1000);
+	r600_pipe_state_add_reg(rstate, R_008E2C_SQ_LDS_RESOURCE_MGMT, tmp, 0xFFFFFFFF, NULL);
+
 	r600_pipe_state_add_reg(rstate, R_009100_SPI_CONFIG_CNTL, 0x0, 0xFFFFFFFF, NULL);
 	r600_pipe_state_add_reg(rstate, R_00913C_SPI_CONFIG_CNTL_1, S_00913C_VTX_DONE_DELAY(4), 0xFFFFFFFF, NULL);
 

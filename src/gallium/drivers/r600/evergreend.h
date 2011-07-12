@@ -216,6 +216,13 @@
 #define   S_008C28_NUM_LS_STACK_ENTRIES(x)             (((x) & 0xFFF) << 16)
 #define   G_008C28_NUM_LS_STACK_ENTRIES(x)             (((x) >> 16) & 0xFFF)
 #define   C_008C28_NUM_LS_STACK_ENTRIES(x)             0xF000FFFF
+#define R_008E2C_SQ_LDS_RESOURCE_MGMT                0x00008E2C
+#define   S_008E2C_NUM_PS_LDS(x)                       (((x) & 0xFFFF) << 0)
+#define   G_008E2C_NUM_PS_LDS(x)                       (((x) >> 0) & 0xFFFF)
+#define   C_008E2C_NUM_PS_LDS(x)                       0x0000FFFF
+#define   S_008E2C_NUM_LS_LDS(x)                       (((x) & 0xFFFF) << 16)
+#define   G_008E2C_NUM_LS_LDS(x)                       (((x) >> 16) & 0xFFFF)
+#define   C_008E2C_NUM_LS_LDS(x)                       0xFFFF0000
 
 #define R_008CF0_SQ_MS_FIFO_SIZES                     0x00008CF0
 #define   S_008CF0_CACHE_FIFO_SIZE(x)                  (((x) & 0xFF) << 0)
