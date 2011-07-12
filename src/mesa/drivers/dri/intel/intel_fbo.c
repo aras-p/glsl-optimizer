@@ -783,22 +783,21 @@ intel_validate_framebuffer(struct gl_context *ctx, struct gl_framebuffer *fb)
     * The depth and stencil renderbuffers are the same renderbuffer or wrap
     * the same texture.
     */
-   bool depth_stencil_are_same;
-   if (depthRb && stencilRb && depthRb == stencilRb)
-      depth_stencil_are_same = true;
-   else if (depthRb && stencilRb && depthRb != stencilRb
-	    && (fb->Attachment[BUFFER_DEPTH].Type == GL_TEXTURE)
-	    && (fb->Attachment[BUFFER_STENCIL].Type == GL_TEXTURE)
-	    && (fb->Attachment[BUFFER_DEPTH].Texture->Name
-		== fb->Attachment[BUFFER_STENCIL].Texture->Name))
-      depth_stencil_are_same = true;
-   else
-      depth_stencil_are_same = false;
+   if (depthRb && stencilRb) {
+      bool depth_stencil_are_same;
+      if (depthRb == stencilRb)
+	 depth_stencil_are_same = true;
+      else if ((fb->Attachment[BUFFER_DEPTH].Type == GL_TEXTURE) &&
+	       (fb->Attachment[BUFFER_STENCIL].Type == GL_TEXTURE) &&
+	       (fb->Attachment[BUFFER_DEPTH].Texture->Name ==
+		fb->Attachment[BUFFER_STENCIL].Texture->Name))
+	 depth_stencil_are_same = true;
+      else
+	 depth_stencil_are_same = false;
 
-   if (!intel->has_separate_stencil
-       && depthRb && stencilRb
-       && !depth_stencil_are_same) {
-      fb->_Status = GL_FRAMEBUFFER_UNSUPPORTED_EXT;
+      if (!intel->has_separate_stencil && !depth_stencil_are_same) {
+	 fb->_Status = GL_FRAMEBUFFER_UNSUPPORTED_EXT;
+      }
    }
 
    for (i = 0; i < Elements(fb->Attachment); i++) {
