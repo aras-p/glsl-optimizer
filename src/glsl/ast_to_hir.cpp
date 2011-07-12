@@ -2704,6 +2704,17 @@ ast_declarator_list::hir(exec_list *instructions,
 						       : "and integer");
       }
 
+      /* From page 17 (page 23 of the PDF) of the GLSL 1.20 spec:
+       *
+       *    "[Sampler types] can only be declared as function
+       *    parameters or uniform variables (see Section 4.3.5
+       *    "Uniform")".
+       */
+      if (var_type->contains_sampler() &&
+          !this->type->qualifier.flags.q.uniform) {
+         _mesa_glsl_error(&loc, state, "samplers must be declared uniform");
+      }
+
       /* Process the initializer and add its instructions to a temporary
        * list.  This list will be added to the instruction stream (below) after
        * the declaration is added.  This is done because in some cases (such as
@@ -2864,6 +2875,18 @@ ast_parameter_declarator::hir(exec_list *instructions,
     */
    apply_type_qualifier_to_variable(& this->type->qualifier, var, state, & loc);
 
+   /* From page 17 (page 23 of the PDF) of the GLSL 1.20 spec:
+    *
+    *    "Samplers cannot be treated as l-values; hence cannot be used
+    *    as out or inout function parameters, nor can they be assigned
+    *    into."
+    */
+   if ((var->mode == ir_var_inout || var->mode == ir_var_out)
+       && type->contains_sampler()) {
+      _mesa_glsl_error(&loc, state, "out and inout parameters cannot contain samplers");
+      type = glsl_type::error_type;
+   }
+
    instructions->push_tail(var);
 
    /* Parameter declarations do not have r-values.
@@ -2990,6 +3013,18 @@ ast_function::hir(exec_list *instructions,
       YYLTYPE loc = this->get_location();
       _mesa_glsl_error(& loc, state,
 		       "function `%s' return type has qualifiers", name);
+   }
+
+   /* From page 17 (page 23 of the PDF) of the GLSL 1.20 spec:
+    *
+    *    "[Sampler types] can only be declared as function parameters
+    *    or uniform variables (see Section 4.3.5 "Uniform")".
+    */
+   if (return_type->contains_sampler()) {
+      YYLTYPE loc = this->get_location();
+      _mesa_glsl_error(&loc, state,
+                       "function `%s' return type can't contain a sampler",
+                       name);
    }
 
    /* Verify that this function's signature either doesn't match a previously
