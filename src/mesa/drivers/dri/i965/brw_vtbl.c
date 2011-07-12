@@ -183,24 +183,14 @@ brw_update_draw_buffer(struct intel_context *intel)
       }
    }
 
-   if (!colorRegions[0]) {
-      FALLBACK(intel, INTEL_FALLBACK_DRAW_BUFFER, GL_TRUE);
-   }
-   else {
-      FALLBACK(intel, INTEL_FALLBACK_DRAW_BUFFER, GL_FALSE);
-   }
-
    /* Check for depth fallback. */
    if (irbDepth && irbDepth->region) {
       assert(!fb_has_hiz || irbDepth->Base.Format != MESA_FORMAT_S8_Z24);
-      FALLBACK(intel, INTEL_FALLBACK_DEPTH_BUFFER, GL_FALSE);
       depthRegion = irbDepth->region;
    } else if (irbDepth && !irbDepth->region) {
-      FALLBACK(intel, INTEL_FALLBACK_DEPTH_BUFFER, GL_TRUE);
       depthRegion = NULL;
    } else { /* !irbDepth */
       /* No fallback is needed because there is no depth buffer. */
-      FALLBACK(intel, INTEL_FALLBACK_DEPTH_BUFFER, GL_FALSE);
       depthRegion = NULL;
    }
 
@@ -212,12 +202,6 @@ brw_update_draw_buffer(struct intel_context *intel)
 	 assert(irbStencil->Base.Format == MESA_FORMAT_S8);
       if (irbStencil->Base.Format == MESA_FORMAT_S8)
 	 assert(intel->has_separate_stencil);
-      FALLBACK(intel, INTEL_FALLBACK_STENCIL_BUFFER, GL_FALSE);
-   } else if (irbStencil && !irbStencil->region) {
-      FALLBACK(intel, INTEL_FALLBACK_STENCIL_BUFFER, GL_TRUE);
-   } else { /* !irbStencil */
-      /* No fallback is needed because there is no stencil buffer. */
-      FALLBACK(intel, INTEL_FALLBACK_STENCIL_BUFFER, GL_FALSE);
    }
 
    /* If we have a (packed) stencil buffer attached but no depth buffer,
