@@ -27,35 +27,34 @@
 
 #include <va/va.h>
 #include <va/va_backend.h>
+
 #include <util/u_debug.h>
+
 #include "va_private.h"
 
-VAStatus vlVaBeginPicture(       VADriverContextP ctx,
-                                 VAContextID context,
-                                 VASurfaceID render_target)
+VAStatus
+vlVaBeginPicture(VADriverContextP ctx, VAContextID context, VASurfaceID render_target)
 {
-	if (!ctx)
-		return VA_STATUS_ERROR_INVALID_CONTEXT;
+   if (!ctx)
+      return VA_STATUS_ERROR_INVALID_CONTEXT;
 
-	return VA_STATUS_ERROR_UNIMPLEMENTED;
+   return VA_STATUS_ERROR_UNIMPLEMENTED;
 }
 
-VAStatus vlVaRenderPicture(       VADriverContextP ctx,
-                                  VAContextID context,
-                                  VABufferID *buffers,
-                                  int num_buffers)
+VAStatus
+vlVaRenderPicture(VADriverContextP ctx, VAContextID context, VABufferID *buffers, int num_buffers)
 {
-	if (!ctx)
-		return VA_STATUS_ERROR_INVALID_CONTEXT;
+   if (!ctx)
+      return VA_STATUS_ERROR_INVALID_CONTEXT;
 
-	return VA_STATUS_ERROR_UNIMPLEMENTED;
+   return VA_STATUS_ERROR_UNIMPLEMENTED;
 }
 
-VAStatus vlVaEndPicture(       VADriverContextP ctx,
-                               VAContextID context)
+VAStatus
+vlVaEndPicture(VADriverContextP ctx, VAContextID context)
 {
-	if (!ctx)
-		return VA_STATUS_ERROR_INVALID_CONTEXT;
+   if (!ctx)
+      return VA_STATUS_ERROR_INVALID_CONTEXT;
 
-	return VA_STATUS_ERROR_UNIMPLEMENTED;
+   return VA_STATUS_ERROR_UNIMPLEMENTED;
 }

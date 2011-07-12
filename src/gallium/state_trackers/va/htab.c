@@ -27,24 +27,20 @@
 
 #include <util/u_handle_table.h>
 #include <os/os_thread.h>
-#include "va_private.h"
 
-boolean vlCreateHTAB(void);
-void vlDestroyHTAB(void);
-vlHandle vlAddDataHTAB(void *data);
-void* vlGetDataHTAB(vlHandle handle);
+#include "va_private.h"
 
 #ifdef VL_HANDLES
 static struct handle_table *htab = NULL;
 pipe_static_mutex(htab_lock);
 #endif
 
-boolean vlCreateHTAB(void)
+bool vlCreateHTAB(void)
 {
 #ifdef VL_HANDLES
-   boolean ret;
-   /* Make sure handle table handles match VDPAU handles. */
-   assert(sizeof(unsigned) <= sizeof(vlHandle));
+   bool ret;
+   /* Make sure handle table handles match VAAPI handles. */
+   assert(sizeof(unsigned) <= sizeof(VAGenericID));
    pipe_mutex_lock(htab_lock);
    if (!htab)
       htab = handle_table_create();
@@ -68,22 +64,22 @@ void vlDestroyHTAB(void)
 #endif
 }
 
-vlHandle vlAddDataHTAB(void *data)
+VAGenericID vlAddDataHTAB(void *data)
 {
    assert(data);
 #ifdef VL_HANDLES
-   vlHandle handle = 0;
+   VAGenericID handle = 0;
    pipe_mutex_lock(htab_lock);
    if (htab)
       handle = handle_table_add(htab, data);
    pipe_mutex_unlock(htab_lock);
    return handle;
 #else
-   return (vlHandle)data;
+   return (VAGenericID)data;
 #endif
 }
 
-void* vlGetDataHTAB(vlHandle handle)
+void* vlGetDataHTAB(VAGenericID handle)
 {
    assert(handle);
 #ifdef VL_HANDLES

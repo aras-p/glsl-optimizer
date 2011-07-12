@@ -25,83 +25,82 @@
  *
  **************************************************************************/
 
-#include <pipe/p_compiler.h>
-#include <pipe/p_video_context.h>
-#include <pipe/p_screen.h>
-#include <vl_winsys.h>
-#include <util/u_debug.h>
-#include <util/u_memory.h>
 #include <va/va.h>
 #include <va/va_backend.h>
+
+#include <pipe/p_screen.h>
+#include <pipe/p_screen.h>
+#include <pipe/p_video_decoder.h>
+
+#include <util/u_debug.h>
+#include <util/u_memory.h>
+
+#include <vl_winsys.h>
+
 #include "va_private.h"
 
-//struct VADriverVTable vlVaGetVtable();
-
-PUBLIC
-VAStatus __vaDriverInit_0_31 (VADriverContextP ctx)
+PUBLIC VAStatus
+__vaDriverInit_0_31(VADriverContextP ctx)
 {
-	vlVaDriverContextPriv *driver_context = NULL;
+   vlVaDriverContextPriv *driver_context = NULL;
 	
-	if (!ctx)
-		return VA_STATUS_ERROR_INVALID_CONTEXT;
+   if (!ctx)
+      return VA_STATUS_ERROR_INVALID_CONTEXT;
 		
 		
-	/* Create private driver context */
-	driver_context = CALLOC(1,sizeof(vlVaDriverContextPriv));
-	if (!driver_context)
-		return VA_STATUS_ERROR_ALLOCATION_FAILED;
+   /* Create private driver context */
+   driver_context = CALLOC(1,sizeof(vlVaDriverContextPriv));
+   if (!driver_context)
+      return VA_STATUS_ERROR_ALLOCATION_FAILED;
 		
-    driver_context->vscreen = vl_screen_create(ctx->native_dpy, ctx->x11_screen);
-	if (!driver_context->vscreen)
-	{
-		FREE(driver_context);
-		return VA_STATUS_ERROR_ALLOCATION_FAILED;
-	}
+   driver_context->vscreen = vl_screen_create(ctx->native_dpy, ctx->x11_screen);
+   if (!driver_context->vscreen) {
+      FREE(driver_context);
+      return VA_STATUS_ERROR_ALLOCATION_FAILED;
+   }
 		
-	ctx->str_vendor = "mesa gallium vaapi";
-	ctx->vtable = vlVaGetVtable();
-	ctx->max_attributes = 1;
-	ctx->max_display_attributes = 1;
-	ctx->max_entrypoints = VA_MAX_ENTRYPOINTS;
-	ctx->max_image_formats = VA_MAX_IMAGE_FORMATS_SUPPORTED;
-	ctx->max_profiles = 1;
-	ctx->max_subpic_formats = VA_MAX_SUBPIC_FORMATS_SUPPORTED;
-	ctx->version_major = 3;
-	ctx->version_minor = 1;
-	ctx->pDriverData = (void *)driver_context;
+   ctx->str_vendor = "mesa gallium vaapi";
+   ctx->vtable = vlVaGetVtable();
+   ctx->max_attributes = 1;
+   ctx->max_display_attributes = 1;
+   ctx->max_entrypoints = VA_MAX_ENTRYPOINTS;
+   ctx->max_image_formats = VA_MAX_IMAGE_FORMATS_SUPPORTED;
+   ctx->max_profiles = 1;
+   ctx->max_subpic_formats = VA_MAX_SUBPIC_FORMATS_SUPPORTED;
+   ctx->version_major = 3;
+   ctx->version_minor = 1;
+   ctx->pDriverData = (void *)driver_context;
 
-	VA_INFO("vl_screen_pointer %p\n",ctx->native_dpy);
+   VA_INFO("vl_screen_pointer %p\n",ctx->native_dpy);
 
-	return VA_STATUS_SUCCESS;
+   return VA_STATUS_SUCCESS;
 }
 
-VAStatus vlVaCreateContext(       VADriverContextP ctx,
-                                  VAConfigID config_id,
-                                  int picture_width,
-                                  int picture_height,
-                                  int flag,
-                                  VASurfaceID *render_targets,
-                                  int num_render_targets,
-                                  VAContextID *conext)
+VAStatus
+vlVaCreateContext(VADriverContextP ctx, VAConfigID config_id, int picture_width,
+                  int picture_height, int flag, VASurfaceID *render_targets,
+                  int num_render_targets, VAContextID *conext)
 {
-	if (!ctx)
-		return VA_STATUS_ERROR_INVALID_CONTEXT;
+   if (!ctx)
+      return VA_STATUS_ERROR_INVALID_CONTEXT;
 
-	return VA_STATUS_ERROR_UNIMPLEMENTED;
+   return VA_STATUS_ERROR_UNIMPLEMENTED;
 }
 
-VAStatus vlVaDestroyContext(       VADriverContextP ctx,
-                                   VAContextID context)
+VAStatus
+vlVaDestroyContext(VADriverContextP ctx, VAContextID context)
 {
-	if (!ctx)
-		return VA_STATUS_ERROR_INVALID_CONTEXT;
+   if (!ctx)
+      return VA_STATUS_ERROR_INVALID_CONTEXT;
 
-	return VA_STATUS_ERROR_UNIMPLEMENTED;
+   return VA_STATUS_ERROR_UNIMPLEMENTED;
 }
 
-VAStatus vlVaTerminate(       VADriverContextP ctx)
+VAStatus
+vlVaTerminate(VADriverContextP ctx)
 {
-	if (!ctx)
-		return VA_STATUS_ERROR_INVALID_CONTEXT;
-	return VA_STATUS_ERROR_UNIMPLEMENTED;
+   if (!ctx)
+      return VA_STATUS_ERROR_INVALID_CONTEXT;
+
+   return VA_STATUS_ERROR_UNIMPLEMENTED;
 }

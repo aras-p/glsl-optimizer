@@ -30,6 +30,7 @@
 
 #include <va/va.h>
 #include <va/va_backend.h>
+
 #include <pipe/p_format.h>
 #include <pipe/p_state.h>
 
@@ -44,18 +45,16 @@
 
 #define VL_HANDLES
 
-typedef unsigned int vlHandle;
-
 typedef struct {
-	struct vl_screen *vscreen;
-	struct pipe_surface *backbuffer;
+   struct vl_screen *vscreen;
+   struct pipe_surface *backbuffer;
 } vlVaDriverContextPriv;
 
 typedef struct {
-	unsigned int width;
-	unsigned int height;
-	enum pipe_video_chroma_format format;
-	VADriverContextP ctx;
+   unsigned int width;
+   unsigned int height;
+   enum pipe_video_chroma_format format;
+   VADriverContextP ctx;
 } vlVaSurfacePriv;
 
 // Public functions:
@@ -64,6 +63,10 @@ VAStatus __vaDriverInit_0_31 (VADriverContextP ctx);
 // Private functions:
 struct VADriverVTable vlVaGetVtable();
 
+bool vlCreateHTAB(void);
+void vlDestroyHTAB(void);
+VAGenericID vlAddDataHTAB(void *data);
+void* vlGetDataHTAB(VAGenericID handle);
 
 // Vtable functions:
 VAStatus vlVaTerminate (VADriverContextP ctx);

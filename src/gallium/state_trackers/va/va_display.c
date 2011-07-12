@@ -27,44 +27,37 @@
 
  #include <va/va.h>
  #include <va/va_backend.h>
+ 
  #include "va_private.h"
 
-
-VAStatus  vlVaQueryDisplayAttributes(		VADriverContextP ctx,
-								VADisplayAttribute *attr_list,
-								int *num_attributes)
+VAStatus
+vlVaQueryDisplayAttributes(VADriverContextP ctx, VADisplayAttribute *attr_list, int *num_attributes)
 {
-        if (!ctx)
-                return VA_STATUS_ERROR_INVALID_CONTEXT;
+   if (!ctx)
+      return VA_STATUS_ERROR_INVALID_CONTEXT;
 
-		if (!(attr_list && num_attributes))
-			return VA_STATUS_ERROR_UNKNOWN;
+   if (!(attr_list && num_attributes))
+      return VA_STATUS_ERROR_UNKNOWN;
 
-        *num_attributes = 0;
+   *num_attributes = 0;
 
-		return VA_STATUS_SUCCESS;
+   return VA_STATUS_SUCCESS;
 }
 
-VAStatus  vlVaGetDisplayAttributes(		VADriverContextP ctx,
-								VADisplayAttribute *attr_list,
-								int num_attributes)
+VAStatus
+vlVaGetDisplayAttributes(VADriverContextP ctx, VADisplayAttribute *attr_list, int num_attributes)
 {
-        if (!ctx)
-                return VA_STATUS_ERROR_INVALID_CONTEXT;
+   if (!ctx)
+      return VA_STATUS_ERROR_INVALID_CONTEXT;
 
-
-        return VA_STATUS_ERROR_UNIMPLEMENTED;
+   return VA_STATUS_ERROR_UNIMPLEMENTED;
 }
 
-VAStatus  vlVaSetDisplayAttributes(		VADriverContextP ctx,
-								VADisplayAttribute *attr_list,
-								int num_attributes)
+VAStatus
+vlVaSetDisplayAttributes(VADriverContextP ctx, VADisplayAttribute *attr_list, int num_attributes)
 {
-        if (!ctx)
-                return VA_STATUS_ERROR_INVALID_CONTEXT;
+   if (!ctx)
+      return VA_STATUS_ERROR_INVALID_CONTEXT;
 
-
-        return VA_STATUS_ERROR_UNIMPLEMENTED;
+   return VA_STATUS_ERROR_UNIMPLEMENTED;
 }
-
-

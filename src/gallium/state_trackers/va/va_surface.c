@@ -1,6 +1,6 @@
 /**************************************************************************
  *
-	* Copyright 2010 Thomas Balling Sørensen & Orasanu Lucian.
+ * Copyright 2010 Thomas Balling Sørensen & Orasanu Lucian.
  * All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
@@ -31,137 +31,112 @@
 #include <util/u_memory.h>
 #include "va_private.h"
 
-boolean vlCreateHTAB(void);
-void vlDestroyHTAB(void);
-vlHandle vlAddDataHTAB(void *data);
-void* vlGetDataHTAB(vlHandle handle);
-
-static enum pipe_video_chroma_format VaRTFormatToPipe(unsigned int va_type)
+static enum pipe_video_chroma_format
+VaRTFormatToPipe(unsigned int va_type)
 {
    switch (va_type) {
-      case VA_RT_FORMAT_YUV420:
-         return PIPE_VIDEO_CHROMA_FORMAT_420;
-      case VA_RT_FORMAT_YUV422:
-         return PIPE_VIDEO_CHROMA_FORMAT_422;
-      case VA_RT_FORMAT_YUV444:
-         return PIPE_VIDEO_CHROMA_FORMAT_444;
-      default:
-         assert(0);
+   case VA_RT_FORMAT_YUV420:
+      return PIPE_VIDEO_CHROMA_FORMAT_420;
+   case VA_RT_FORMAT_YUV422:
+      return PIPE_VIDEO_CHROMA_FORMAT_422;
+   case VA_RT_FORMAT_YUV444:
+      return PIPE_VIDEO_CHROMA_FORMAT_444;
+   default:
+      assert(0);
    }
 
    return -1;
 }
 
-VAStatus vlVaCreateSurfaces(       VADriverContextP ctx,
-                                   int width,
-                                   int height,
-                                   int format,
-                                   int num_surfaces,
-                                   VASurfaceID *surfaces)
+VAStatus
+vlVaCreateSurfaces(VADriverContextP ctx, int width, int height, int format,
+                   int num_surfaces, VASurfaceID *surfaces)
 {
-	if (!ctx)
-		return VA_STATUS_ERROR_INVALID_CONTEXT;
+   if (!ctx)
+      return VA_STATUS_ERROR_INVALID_CONTEXT;
 
-    /* We only support one format */
-    if (VA_RT_FORMAT_YUV420 != format)
-        return VA_STATUS_ERROR_UNSUPPORTED_RT_FORMAT;
+   /* We only support one format */
+   if (VA_RT_FORMAT_YUV420 != format)
+      return VA_STATUS_ERROR_UNSUPPORTED_RT_FORMAT;
 		
-	if (!(width && height))
-		return VA_STATUS_ERROR_INVALID_IMAGE_FORMAT;
+   if (!(width && height))
+      return VA_STATUS_ERROR_INVALID_IMAGE_FORMAT;
 		
-	if (!vlCreateHTAB())
-		return VA_STATUS_ERROR_UNKNOWN; 
+   if (!vlCreateHTAB())
+      return VA_STATUS_ERROR_UNKNOWN; 
 		
-	vlVaSurfacePriv *va_surface = (vlVaSurfacePriv *)CALLOC(num_surfaces,sizeof(vlVaSurfacePriv));
-	if (!va_surface)
-		return VA_STATUS_ERROR_ALLOCATION_FAILED;
+   vlVaSurfacePriv *va_surface = (vlVaSurfacePriv *)CALLOC(num_surfaces,sizeof(vlVaSurfacePriv));
+   if (!va_surface)
+      return VA_STATUS_ERROR_ALLOCATION_FAILED;
 		
-	int n = 0;
-	for (n = 0; n < num_surfaces; n++)
-	{
-		va_surface[n].width = width;
-		va_surface[n].height = height;
-		va_surface[n].format = VaRTFormatToPipe(format);
-		va_surface[n].ctx = ctx;
-		surfaces[n] = (VASurfaceID *)vlAddDataHTAB((void *)(va_surface + n));
-	}
+   int n = 0;
+   for (n = 0; n < num_surfaces; n++) {
+      va_surface[n].width = width;
+      va_surface[n].height = height;
+      va_surface[n].format = VaRTFormatToPipe(format);
+      va_surface[n].ctx = ctx;
+      surfaces[n] = vlAddDataHTAB((void *)(va_surface + n));
+   }
 
-	return VA_STATUS_SUCCESS;
+   return VA_STATUS_SUCCESS;
 }
 
-VAStatus vlVaDestroySurfaces(       VADriverContextP ctx,
-                                    VASurfaceID *surface_list,
-                                    int num_surfaces)
+VAStatus
+vlVaDestroySurfaces(VADriverContextP ctx, VASurfaceID *surface_list, int num_surfaces)
 {
-	if (!ctx)
-		return VA_STATUS_ERROR_INVALID_CONTEXT;
+   if (!ctx)
+      return VA_STATUS_ERROR_INVALID_CONTEXT;
 
-	return VA_STATUS_ERROR_UNIMPLEMENTED;
+   return VA_STATUS_ERROR_UNIMPLEMENTED;
 }
 
-VAStatus vlVaSyncSurface(       VADriverContextP ctx,
-                                VASurfaceID render_target)
+VAStatus
+vlVaSyncSurface(VADriverContextP ctx, VASurfaceID render_target)
 {
-	if (!ctx)
-		return VA_STATUS_ERROR_INVALID_CONTEXT;
+   if (!ctx)
+      return VA_STATUS_ERROR_INVALID_CONTEXT;
 
-	return VA_STATUS_ERROR_UNIMPLEMENTED;
+   return VA_STATUS_ERROR_UNIMPLEMENTED;
 }
 
-VAStatus vlVaQuerySurfaceStatus(       VADriverContextP ctx,
-                                       VASurfaceID render_target,
-                                       VASurfaceStatus *status)
+VAStatus
+vlVaQuerySurfaceStatus(VADriverContextP ctx, VASurfaceID render_target, VASurfaceStatus *status)
 {
-	if (!ctx)
-		return VA_STATUS_ERROR_INVALID_CONTEXT;
+   if (!ctx)
+      return VA_STATUS_ERROR_INVALID_CONTEXT;
 
-	return VA_STATUS_ERROR_UNIMPLEMENTED;
+   return VA_STATUS_ERROR_UNIMPLEMENTED;
 }
 
-VAStatus vlVaPutSurface(       VADriverContextP ctx,
-                               VASurfaceID surface,
-                               void* draw,
-                               short srcx,
-                               short srcy,
-                               unsigned short srcw,
-                               unsigned short srch,
-                               short destx,
-                               short desty,
-                               unsigned short destw,
-                               unsigned short desth,
-                               VARectangle *cliprects,
-                               unsigned int number_cliprects,
-                               unsigned int flags)
+VAStatus
+vlVaPutSurface(VADriverContextP ctx, VASurfaceID surface, void* draw, short srcx, short srcy,
+               unsigned short srcw, unsigned short srch, short destx, short desty,
+               unsigned short destw, unsigned short desth, VARectangle *cliprects,
+               unsigned int number_cliprects,  unsigned int flags)
 {
-	if (!ctx)
-		return VA_STATUS_ERROR_INVALID_CONTEXT;
+   if (!ctx)
+      return VA_STATUS_ERROR_INVALID_CONTEXT;
 
-	return VA_STATUS_ERROR_UNIMPLEMENTED;
+   return VA_STATUS_ERROR_UNIMPLEMENTED;
 }
 
-VAStatus vlVaLockSurface(	VADriverContextP ctx,
-                            VASurfaceID surface,
-                            unsigned int *fourcc,
-                            unsigned int *luma_stride,
-                            unsigned int *chroma_u_stride,
-                            unsigned int *chroma_v_stride,
-                            unsigned int *luma_offset,
-                            unsigned int *chroma_u_offset,
-                            unsigned int *chroma_v_offset,
-                            unsigned int *buffer_name,
-                            void **buffer)
+VAStatus
+vlVaLockSurface(VADriverContextP ctx, VASurfaceID surface, unsigned int *fourcc,
+                unsigned int *luma_stride, unsigned int *chroma_u_stride, unsigned int *chroma_v_stride,
+                unsigned int *luma_offset, unsigned int *chroma_u_offset, unsigned int *chroma_v_offset,
+                unsigned int *buffer_name, void **buffer)
 {
-	if (!ctx)
-		return VA_STATUS_ERROR_INVALID_CONTEXT;
+   if (!ctx)
+      return VA_STATUS_ERROR_INVALID_CONTEXT;
 
-	return VA_STATUS_ERROR_UNIMPLEMENTED;
+   return VA_STATUS_ERROR_UNIMPLEMENTED;
 }
 
-VAStatus vlVaUnlockSurface(	VADriverContextP ctx,
-                            VASurfaceID surface)
+VAStatus
+vlVaUnlockSurface(VADriverContextP ctx, VASurfaceID surface)
 {
-	if (!ctx)
-		return VA_STATUS_ERROR_INVALID_CONTEXT;
+   if (!ctx)
+      return VA_STATUS_ERROR_INVALID_CONTEXT;
 
-	return VA_STATUS_ERROR_UNIMPLEMENTED;
+   return VA_STATUS_ERROR_UNIMPLEMENTED;
 }

@@ -27,70 +27,62 @@
 
 #include <va/va.h>
 #include <va/va_backend.h>
+
 #include "va_private.h"
 
-
-VAStatus vlVaCreateBuffer(		VADriverContextP ctx,
-                                VAContextID context,
-                                VABufferType type,
-                                unsigned int size,
-                                unsigned int num_elements,
-                                void *data,
-                                VABufferID *buf_id)
+VAStatus
+vlVaCreateBuffer(VADriverContextP ctx, VAContextID context, VABufferType type,
+                 unsigned int size, unsigned int num_elements, void *data,
+                 VABufferID *buf_id)
 {
-	if (!ctx)
-		return VA_STATUS_ERROR_INVALID_CONTEXT;
+   if (!ctx)
+      return VA_STATUS_ERROR_INVALID_CONTEXT;
 
-	return VA_STATUS_ERROR_UNIMPLEMENTED;
+   return VA_STATUS_ERROR_UNIMPLEMENTED;
 }
 
-VAStatus vlVaBufferSetNumElements(	VADriverContextP ctx,
-                                    VABufferID buf_id,
-                                    unsigned int num_elements)
+VAStatus
+vlVaBufferSetNumElements(VADriverContextP ctx, VABufferID buf_id, unsigned int num_elements)
 {
-	if (!ctx)
-		return VA_STATUS_ERROR_INVALID_CONTEXT;
+   if (!ctx)
+      return VA_STATUS_ERROR_INVALID_CONTEXT;
 
-	return VA_STATUS_ERROR_UNIMPLEMENTED;
+   return VA_STATUS_ERROR_UNIMPLEMENTED;
 }
 
-VAStatus vlVaMapBuffer(			VADriverContextP ctx,
-                                VABufferID buf_id,
-                                void **pbuff)
+VAStatus
+vlVaMapBuffer(VADriverContextP ctx, VABufferID buf_id, void **pbuff)
 {
-	if (!ctx)
-		return VA_STATUS_ERROR_INVALID_CONTEXT;
+   if (!ctx)
+      return VA_STATUS_ERROR_INVALID_CONTEXT;
 
-	return VA_STATUS_ERROR_UNIMPLEMENTED;
+   return VA_STATUS_ERROR_UNIMPLEMENTED;
 }
 
-VAStatus vlVaUnmapBuffer(		VADriverContextP ctx,
-                                VABufferID buf_id)
+VAStatus
+vlVaUnmapBuffer(VADriverContextP ctx, VABufferID buf_id)
 {
-	if (!ctx)
-		return VA_STATUS_ERROR_INVALID_CONTEXT;
+   if (!ctx)
+      return VA_STATUS_ERROR_INVALID_CONTEXT;
 
-	return VA_STATUS_ERROR_UNIMPLEMENTED;
+   return VA_STATUS_ERROR_UNIMPLEMENTED;
 }
 
-VAStatus vlVaDestroyBuffer(		VADriverContextP ctx,
-                                    VABufferID buffer_id)
+VAStatus
+vlVaDestroyBuffer(VADriverContextP ctx, VABufferID buffer_id)
 {
-	if (!ctx)
-		return VA_STATUS_ERROR_INVALID_CONTEXT;
+   if (!ctx)
+      return VA_STATUS_ERROR_INVALID_CONTEXT;
 
-	return VA_STATUS_ERROR_UNIMPLEMENTED;
+   return VA_STATUS_ERROR_UNIMPLEMENTED;
 }
 
-VAStatus vlVaBufferInfo(		VADriverContextP ctx,
-                                VAContextID context,
-                                VABufferID buf_id,
-                                VABufferType *type,
-                                unsigned int *size,
-                                unsigned int *num_elements)
+VAStatus
+vlVaBufferInfo(VADriverContextP ctx, VAContextID context, VABufferID buf_id,
+               VABufferType *type, unsigned int *size, unsigned int *num_elements)
 {
-	if (!ctx)
-		return VA_STATUS_ERROR_INVALID_CONTEXT;
+   if (!ctx)
+      return VA_STATUS_ERROR_INVALID_CONTEXT;
 
-	return VA_STATUS_ERROR_UNIMPLEMENTED;
+   return VA_STATUS_ERROR_UNIMPLEMENTED;
 }
