@@ -375,6 +375,9 @@ i915DepthMask(struct gl_context * ctx, GLboolean flag)
 
    DBG("%s flag (%d)\n", __FUNCTION__, flag);
 
+   if (!ctx->DrawBuffer || !ctx->DrawBuffer->Visual.depthBits)
+      flag = false;
+
    dw = i915->state.Ctx[I915_CTXREG_LIS6];
    if (flag && ctx->Depth.Test)
       dw |= S6_DEPTH_WRITE_ENABLE;
@@ -797,6 +800,10 @@ i915Enable(struct gl_context * ctx, GLenum cap, GLboolean state)
 
    case GL_DEPTH_TEST:
       dw = i915->state.Ctx[I915_CTXREG_LIS6];
+
+      if (!ctx->DrawBuffer || !ctx->DrawBuffer->Visual.depthBits)
+	 state = false;
+
       if (state)
          dw |= S6_DEPTH_TEST_ENABLE;
       else
