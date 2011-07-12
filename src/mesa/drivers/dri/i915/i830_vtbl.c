@@ -722,27 +722,8 @@ i830_update_draw_buffer(struct intel_context *intel)
       return;
    }
 
-   /*
-    * If intel_context is using separate stencil, but the depth attachment
-    * (gl_framebuffer.Attachment[BUFFER_DEPTH]) has a packed depth/stencil
-    * format, then we must install the real depth buffer at fb->_DepthBuffer
-    * and set fb->_DepthBuffer->Wrapped before calling _mesa_update_framebuffer.
-    * Otherwise, _mesa_update_framebuffer will create and install a swras
-    * depth wrapper instead.
-    *
-    * Ditto for stencil.
-    */
    irbDepth = intel_get_renderbuffer(fb, BUFFER_DEPTH);
-   if (irbDepth && irbDepth->Base.Format == MESA_FORMAT_X8_Z24) {
-      _mesa_reference_renderbuffer(&fb->_DepthBuffer, &irbDepth->Base);
-      irbDepth->Base.Wrapped = fb->Attachment[BUFFER_DEPTH].Renderbuffer;
-   }
-
    irbStencil = intel_get_renderbuffer(fb, BUFFER_STENCIL);
-   if (irbStencil && irbStencil->Base.Format == MESA_FORMAT_S8) {
-      _mesa_reference_renderbuffer(&fb->_StencilBuffer, &irbStencil->Base);
-      irbStencil->Base.Wrapped = fb->Attachment[BUFFER_STENCIL].Renderbuffer;
-   }
 
    /* Do this here, not core Mesa, since this function is called from
     * many places within the driver.
@@ -825,12 +806,7 @@ i830_update_draw_buffer(struct intel_context *intel)
 
    /* Check for stencil fallback. */
    if (irbStencil && irbStencil->region) {
-      if (!intel->has_separate_stencil)
-	 assert(irbStencil->Base.Format == MESA_FORMAT_S8_Z24);
-      if (fb_has_hiz || intel->must_use_separate_stencil)
-	 assert(irbStencil->Base.Format == MESA_FORMAT_S8);
-      if (irbStencil->Base.Format == MESA_FORMAT_S8)
-	 assert(intel->has_separate_stencil);
+      assert(irbStencil->Base.Format == MESA_FORMAT_S8_Z24);
       FALLBACK(intel, INTEL_FALLBACK_STENCIL_BUFFER, GL_FALSE);
    } else if (irbStencil && !irbStencil->region) {
       FALLBACK(intel, INTEL_FALLBACK_STENCIL_BUFFER, GL_TRUE);
@@ -850,50 +826,29 @@ i830_update_draw_buffer(struct intel_context *intel)
    /*
     * Update depth and stencil test state
     */
-   if (ctx->Driver.Enable) {
-      ctx->Driver.Enable(ctx, GL_DEPTH_TEST,
-                         (ctx->Depth.Test && fb->Visual.depthBits > 0));
-      ctx->Driver.Enable(ctx, GL_STENCIL_TEST,
-                         (ctx->Stencil.Enabled && fb->Visual.stencilBits > 0));
-   }
-   else {
-      /* Mesa's Stencil._Enabled field is updated when
-       * _NEW_BUFFERS | _NEW_STENCIL, but i965 code assumes that the value
-       * only changes with _NEW_STENCIL (which seems sensible).  So flag it
-       * here since this is the _NEW_BUFFERS path.
-       */
-      intel->NewGLState |= (_NEW_DEPTH | _NEW_STENCIL);
-   }
+   ctx->Driver.Enable(ctx, GL_DEPTH_TEST,
+		      (ctx->Depth.Test && fb->Visual.depthBits > 0));
+   ctx->Driver.Enable(ctx, GL_STENCIL_TEST,
+		      (ctx->Stencil.Enabled && fb->Visual.stencilBits > 0));
 
    intel->vtbl.set_draw_region(intel, colorRegions, depthRegion,
                                fb->_NumColorDrawBuffers);
    intel->NewGLState |= _NEW_BUFFERS;
 
    /* update viewport since it depends on window size */
-#ifdef I915
    intelCalcViewport(ctx);
-#else
-   intel->NewGLState |= _NEW_VIEWPORT;
-#endif
+
    /* Set state we know depends on drawable parameters:
     */
-   if (ctx->Driver.Scissor)
-      ctx->Driver.Scissor(ctx, ctx->Scissor.X, ctx->Scissor.Y,
-			  ctx->Scissor.Width, ctx->Scissor.Height);
-   intel->NewGLState |= _NEW_SCISSOR;
+   ctx->Driver.Scissor(ctx, ctx->Scissor.X, ctx->Scissor.Y,
+		       ctx->Scissor.Width, ctx->Scissor.Height);
 
-   if (ctx->Driver.DepthRange)
-      ctx->Driver.DepthRange(ctx,
-			     ctx->Viewport.Near,
-			     ctx->Viewport.Far);
+   ctx->Driver.DepthRange(ctx, ctx->Viewport.Near, ctx->Viewport.Far);
 
    /* Update culling direction which changes depending on the
     * orientation of the buffer:
     */
-   if (ctx->Driver.FrontFace)
-      ctx->Driver.FrontFace(ctx, ctx->Polygon.FrontFace);
-   else
-      intel->NewGLState |= _NEW_POLYGON;
+   ctx->Driver.FrontFace(ctx, ctx->Polygon.FrontFace);
 }
 
 /* This isn't really handled at the moment.
