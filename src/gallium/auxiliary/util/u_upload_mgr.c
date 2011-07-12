@@ -257,7 +257,7 @@ enum pipe_error u_upload_buffer( struct u_upload_mgr *upload,
    ret = u_upload_data( upload,
                         min_out_offset,
                         size,
-                        map,
+                        map + offset,
                         out_offset,
                         outbuf, flushed );
 
