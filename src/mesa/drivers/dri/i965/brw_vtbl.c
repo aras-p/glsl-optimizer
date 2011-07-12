@@ -230,8 +230,6 @@ brw_update_draw_buffer(struct intel_context *intel)
       intel->NewGLState |= (_NEW_DEPTH | _NEW_STENCIL);
    }
 
-   intel->vtbl.set_draw_region(intel, colorRegions, depthRegion,
-                               fb->_NumColorDrawBuffers);
    intel->NewGLState |= _NEW_BUFFERS;
 
    /* update viewport since it depends on window size */
@@ -260,17 +258,6 @@ brw_update_draw_buffer(struct intel_context *intel)
    else
       intel->NewGLState |= _NEW_POLYGON;
 }
-
-/**
- * called from intelDrawBuffer()
- */
-static void brw_set_draw_region( struct intel_context *intel, 
-                                 struct intel_region *color_regions[],
-                                 struct intel_region *depth_region,
-                                 GLuint num_color_regions)
-{
-}
-
 
 /**
  * called from intel_batchbuffer_flush and children before sending a
@@ -347,7 +334,6 @@ void brwInitVtbl( struct brw_context *brw )
    brw->intel.vtbl.finish_batch = brw_finish_batch;
    brw->intel.vtbl.destroy = brw_destroy_context;
    brw->intel.vtbl.update_draw_buffer = brw_update_draw_buffer;
-   brw->intel.vtbl.set_draw_region = brw_set_draw_region;
    brw->intel.vtbl.debug_batch = brw_debug_batch;
    brw->intel.vtbl.render_target_supported = brw_render_target_supported;
    brw->intel.vtbl.is_hiz_depth_format = brw_is_hiz_depth_format;
