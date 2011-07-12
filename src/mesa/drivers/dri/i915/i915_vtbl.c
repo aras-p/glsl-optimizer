@@ -799,8 +799,7 @@ i915_update_draw_buffer(struct intel_context *intel)
     * Update depth and stencil test state
     */
    ctx->Driver.Enable(ctx, GL_DEPTH_TEST, ctx->Depth.Test);
-   ctx->Driver.Enable(ctx, GL_STENCIL_TEST,
-		      (ctx->Stencil.Enabled && fb->Visual.stencilBits > 0));
+   ctx->Driver.Enable(ctx, GL_STENCIL_TEST, ctx->Stencil.Enabled);
 
    intel->vtbl.set_draw_region(intel, colorRegions, depthRegion,
                                fb->_NumColorDrawBuffers);

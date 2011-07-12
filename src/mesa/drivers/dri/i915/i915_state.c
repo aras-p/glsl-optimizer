@@ -843,27 +843,17 @@ i915Enable(struct gl_context * ctx, GLenum cap, GLboolean state)
       break;
 
    case GL_STENCIL_TEST:
-      {
-         GLboolean hw_stencil = GL_FALSE;
-         if (ctx->DrawBuffer) {
-            struct intel_renderbuffer *irbStencil
-               = intel_get_renderbuffer(ctx->DrawBuffer, BUFFER_STENCIL);
-            hw_stencil = (irbStencil && irbStencil->region);
-         }
-         if (hw_stencil) {
-	    dw = i915->state.Ctx[I915_CTXREG_LIS5];
-            if (state)
-               dw |= (S5_STENCIL_TEST_ENABLE | S5_STENCIL_WRITE_ENABLE);
-            else
-               dw &= ~(S5_STENCIL_TEST_ENABLE | S5_STENCIL_WRITE_ENABLE);
-	    if (dw != i915->state.Ctx[I915_CTXREG_LIS5]) {
-	       i915->state.Ctx[I915_CTXREG_LIS5] = dw;
-	       I915_STATECHANGE(i915, I915_UPLOAD_CTX);
-	    }
-         }
-         else {
-            FALLBACK(&i915->intel, I915_FALLBACK_STENCIL, state);
-         }
+      if (!ctx->DrawBuffer || !ctx->DrawBuffer->Visual.stencilBits)
+	 state = false;
+
+      dw = i915->state.Ctx[I915_CTXREG_LIS5];
+      if (state)
+	 dw |= (S5_STENCIL_TEST_ENABLE | S5_STENCIL_WRITE_ENABLE);
+      else
+	 dw &= ~(S5_STENCIL_TEST_ENABLE | S5_STENCIL_WRITE_ENABLE);
+      if (dw != i915->state.Ctx[I915_CTXREG_LIS5]) {
+	 i915->state.Ctx[I915_CTXREG_LIS5] = dw;
+	 I915_STATECHANGE(i915, I915_UPLOAD_CTX);
       }
       break;
 
