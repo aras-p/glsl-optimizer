@@ -127,9 +127,11 @@ do_flush_locked(struct intel_context *intel)
    }
 
    if (unlikely(INTEL_DEBUG & DEBUG_BATCH)) {
-      intel_decode(batch->map, batch->used,
+      drm_intel_bo_map(batch->bo, false);
+      intel_decode(batch->bo->virtual, batch->used,
 		   batch->bo->offset,
 		   intel->intelScreen->deviceID, GL_TRUE);
+      drm_intel_bo_unmap(batch->bo);
 
       if (intel->vtbl.debug_batch != NULL)
 	 intel->vtbl.debug_batch(intel);
