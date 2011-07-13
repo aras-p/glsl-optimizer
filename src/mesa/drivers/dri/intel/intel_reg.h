@@ -49,7 +49,6 @@
 #define I1_LOAD_S(n)                      (1<<(4+n))
 
 #define _3DSTATE_DRAWRECT_INFO		(CMD_3D | (0x1d<<24) | (0x80<<16) | 0x3)
-#define _3DSTATE_DRAWRECT_INFO_I965	(CMD_3D | (3 << 27) | (1 << 24) | 0x2)
 
 /** @{
  *

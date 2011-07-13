@@ -46,7 +46,7 @@ static void upload_drawing_rect(struct brw_context *brw)
    struct gl_context *ctx = &intel->ctx;
 
    BEGIN_BATCH(4);
-   OUT_BATCH(_3DSTATE_DRAWRECT_INFO_I965);
+   OUT_BATCH(_3DSTATE_DRAWING_RECTANGLE);
    OUT_BATCH(0); /* xmin, ymin */
    OUT_BATCH(((ctx->DrawBuffer->Width - 1) & 0xffff) |
 	    ((ctx->DrawBuffer->Height - 1) << 16));
