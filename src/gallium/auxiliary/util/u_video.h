@@ -68,4 +68,8 @@ u_reduce_video_profile(enum pipe_video_profile profile)
    }
 }
 
+#ifdef __cplusplus
+}
+#endif
+
 #endif /* U_VIDEO_H */
