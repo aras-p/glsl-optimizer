@@ -330,8 +330,7 @@ static GLbitfield get_fp_input_mask( struct gl_context *ctx )
       /* _NEW_RENDERMODE */
       fp_inputs = (FRAG_BIT_COL0 | FRAG_BIT_TEX0);
    }
-   else if (!(vertexProgram || vertexShader) ||
-            !ctx->VertexProgram._Current) {
+   else if (!(vertexProgram || vertexShader)) {
       /* Fixed function vertex logic */
       /* _NEW_ARRAY */
       GLbitfield varying_inputs = ctx->varying_vp_inputs;
