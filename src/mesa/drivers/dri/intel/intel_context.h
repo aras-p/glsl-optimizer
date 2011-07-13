@@ -230,7 +230,6 @@ struct intel_context
    GLuint coloroffset;
    GLuint specoffset;
    GLuint wpos_offset;
-   GLuint wpos_size;
 
    struct tnl_attr_map vertex_attrs[VERT_ATTRIB_MAX];
    GLuint vertex_attr_count;
