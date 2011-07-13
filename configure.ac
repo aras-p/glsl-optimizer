@@ -85,7 +85,7 @@ if test "x$GCC" = xyes -a "x$CLANG" = xno; then
     GCC_VERSION=`$CC -dumpversion`
     if test $? -eq 0; then
         major=`echo $GCC_VERSION | cut -d. -f1`
-        minor=`echo $GCC_VERSION | cut -d. -f1`
+        minor=`echo $GCC_VERSION | cut -d. -f2`
     fi
 
     if test $major -lt 3 -o $major -eq 3 -a $minor -lt 3 ; then
