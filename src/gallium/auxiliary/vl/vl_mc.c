@@ -309,7 +309,8 @@ create_ycbcr_vert_shader(struct vl_mc *r, vl_mc_ycbcr_vert_shader vs_callback, v
 }
 
 static void *
-create_ycbcr_frag_shader(struct vl_mc *r, float scale, vl_mc_ycbcr_frag_shader fs_callback, void *callback_priv)
+create_ycbcr_frag_shader(struct vl_mc *r, float scale, bool invert,
+                         vl_mc_ycbcr_frag_shader fs_callback, void *callback_priv)
 {
    struct ureg_program *shader;
    struct ureg_src flags;
@@ -349,13 +350,14 @@ create_ycbcr_frag_shader(struct vl_mc *r, float scale, vl_mc_ycbcr_frag_shader f
       fs_callback(callback_priv, r, shader, VS_O_VTEX, tmp);
 
       if (scale != 1.0f)
-         ureg_MAD(shader, ureg_writemask(fragment, TGSI_WRITEMASK_XYZ),
+         ureg_MAD(shader, ureg_writemask(tmp, TGSI_WRITEMASK_XYZ),
                   ureg_src(tmp), ureg_imm1f(shader, scale),
                   ureg_scalar(flags, TGSI_SWIZZLE_Z));
       else
-         ureg_ADD(shader, ureg_writemask(fragment, TGSI_WRITEMASK_XYZ),
+         ureg_ADD(shader, ureg_writemask(tmp, TGSI_WRITEMASK_XYZ),
                   ureg_src(tmp), ureg_scalar(flags, TGSI_SWIZZLE_Z));
-
+                  
+      ureg_MUL(shader, ureg_writemask(fragment, TGSI_WRITEMASK_XYZ), ureg_src(tmp), ureg_imm1f(shader, invert ? -1.0f : 1.0f));
       ureg_MOV(shader, ureg_writemask(fragment, TGSI_WRITEMASK_W), ureg_imm1f(shader, 1.0f));
 
    ureg_fixup_label(shader, label, ureg_get_instruction_number(shader));
@@ -415,6 +417,12 @@ init_pipe_state(struct vl_mc *r)
       r->blend_add[i] = r->pipe->create_blend_state(r->pipe, &blend);
       if (!r->blend_add[i])
          goto error_blend;
+
+      blend.rt[0].rgb_func = PIPE_BLEND_REVERSE_SUBTRACT;
+      blend.rt[0].alpha_dst_factor = PIPE_BLEND_REVERSE_SUBTRACT;
+      r->blend_sub[i] = r->pipe->create_blend_state(r->pipe, &blend);
+      if (!r->blend_sub[i])
+         goto error_blend;
    }
 
    memset(&rs_state, 0, sizeof(rs_state));
@@ -432,6 +440,9 @@ init_pipe_state(struct vl_mc *r)
 error_rs_state:
 error_blend:
    for (i = 0; i < VL_MC_NUM_BLENDERS; ++i) {
+      if (r->blend_sub[i])
+         r->pipe->delete_blend_state(r->pipe, r->blend_sub[i]);
+
       if (r->blend_add[i])
          r->pipe->delete_blend_state(r->pipe, r->blend_add[i]);
 
@@ -456,6 +467,7 @@ cleanup_pipe_state(struct vl_mc *r)
    for (i = 0; i < VL_MC_NUM_BLENDERS; ++i) {
       r->pipe->delete_blend_state(r->pipe, r->blend_clear[i]);
       r->pipe->delete_blend_state(r->pipe, r->blend_add[i]);
+      r->pipe->delete_blend_state(r->pipe, r->blend_sub[i]);
    }
    r->pipe->delete_rasterizer_state(r->pipe, r->rs_state);
 }
@@ -493,11 +505,18 @@ vl_mc_init(struct vl_mc *renderer, struct pipe_context *pipe,
    if (!renderer->fs_ref)
       goto error_fs_ref;
 
-   renderer->fs_ycbcr = create_ycbcr_frag_shader(renderer, scale, fs_callback, callback_priv);
+   renderer->fs_ycbcr = create_ycbcr_frag_shader(renderer, scale, false, fs_callback, callback_priv);
    if (!renderer->fs_ycbcr)
       goto error_fs_ycbcr;
 
+   renderer->fs_ycbcr_sub = create_ycbcr_frag_shader(renderer, scale, true, fs_callback, callback_priv);
+   if (!renderer->fs_ycbcr_sub)
+      goto error_fs_ycbcr_sub;
+
    return true;
+   
+error_fs_ycbcr_sub:
+   renderer->pipe->delete_fs_state(renderer->pipe, renderer->fs_ycbcr);
 
 error_fs_ycbcr:
    renderer->pipe->delete_fs_state(renderer->pipe, renderer->fs_ref);
@@ -526,6 +545,7 @@ vl_mc_cleanup(struct vl_mc *renderer)
    renderer->pipe->delete_vs_state(renderer->pipe, renderer->vs_ycbcr);
    renderer->pipe->delete_fs_state(renderer->pipe, renderer->fs_ref);
    renderer->pipe->delete_fs_state(renderer->pipe, renderer->fs_ycbcr);
+   renderer->pipe->delete_fs_state(renderer->pipe, renderer->fs_ycbcr_sub);
 }
 
 bool
@@ -616,13 +636,14 @@ void
 vl_mc_render_ycbcr(struct vl_mc_buffer *buffer, unsigned component, unsigned num_instances)
 {
    struct vl_mc *renderer;
+   unsigned mask = 1 << component;
 
    assert(buffer);
 
    if (num_instances == 0)
       return;
 
-   prepare_pipe_4_rendering(buffer, 1 << component);
+   prepare_pipe_4_rendering(buffer, mask);
 
    renderer = buffer->renderer;
 
@@ -630,4 +651,10 @@ vl_mc_render_ycbcr(struct vl_mc_buffer *buffer, unsigned component, unsigned num
    renderer->pipe->bind_fs_state(renderer->pipe, renderer->fs_ycbcr);
 
    util_draw_arrays_instanced(renderer->pipe, PIPE_PRIM_QUADS, 0, 4, 0, num_instances);
+   
+   if (buffer->surface_cleared) {
+      renderer->pipe->bind_blend_state(renderer->pipe, renderer->blend_sub[mask]);
+      renderer->pipe->bind_fs_state(renderer->pipe, renderer->fs_ycbcr_sub);
+      util_draw_arrays_instanced(renderer->pipe, PIPE_PRIM_QUADS, 0, 4, 0, num_instances);
+   }
 }

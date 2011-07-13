@@ -51,8 +51,9 @@ struct vl_mc
 
    void *blend_clear[VL_MC_NUM_BLENDERS];
    void *blend_add[VL_MC_NUM_BLENDERS];
+   void *blend_sub[VL_MC_NUM_BLENDERS];
    void *vs_ref, *vs_ycbcr;
-   void *fs_ref, *fs_ycbcr;
+   void *fs_ref, *fs_ycbcr, *fs_ycbcr_sub;
    void *sampler_ref;
 };
 
