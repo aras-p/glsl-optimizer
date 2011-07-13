@@ -194,7 +194,6 @@ static struct pipe_context *r600_create_context(struct pipe_screen *screen, void
 {
 	struct r600_pipe_context *rctx = CALLOC_STRUCT(r600_pipe_context);
 	struct r600_screen* rscreen = (struct r600_screen *)screen;
-	enum chip_class class;
 
 	if (rctx == NULL)
 		return NULL;
@@ -211,6 +210,7 @@ static struct pipe_context *r600_create_context(struct pipe_screen *screen, void
 	rctx->screen = rscreen;
 	rctx->radeon = rscreen->radeon;
 	rctx->family = r600_get_family(rctx->radeon);
+	rctx->chip_class = r600_get_family_class(rctx->radeon);
 
 	rctx->fences.bo = NULL;
 	rctx->fences.data = NULL;
@@ -224,47 +224,29 @@ static struct pipe_context *r600_create_context(struct pipe_screen *screen, void
 	r600_init_surface_functions(rctx);
 	rctx->context.draw_vbo = r600_draw_vbo;
 
-	switch (r600_get_family(rctx->radeon)) {
-	case CHIP_R600:
-	case CHIP_RV610:
-	case CHIP_RV630:
-	case CHIP_RV670:
-	case CHIP_RV620:
-	case CHIP_RV635:
-	case CHIP_RS780:
-	case CHIP_RS880:
-	case CHIP_RV770:
-	case CHIP_RV730:
-	case CHIP_RV710:
-	case CHIP_RV740:
+	switch (rctx->chip_class) {
+	case R600:
+	case R700:
 		r600_init_state_functions(rctx);
 		if (r600_context_init(&rctx->ctx, rctx->radeon)) {
 			r600_destroy_context(&rctx->context);
 			return NULL;
 		}
 		r600_init_config(rctx);
+		rctx->custom_dsa_flush = r600_create_db_flush_dsa(rctx);
 		break;
-	case CHIP_CEDAR:
-	case CHIP_REDWOOD:
-	case CHIP_JUNIPER:
-	case CHIP_CYPRESS:
-	case CHIP_HEMLOCK:
-	case CHIP_PALM:
-	case CHIP_SUMO:
-	case CHIP_SUMO2:
-	case CHIP_BARTS:
-	case CHIP_TURKS:
-	case CHIP_CAICOS:
-	case CHIP_CAYMAN:
+	case EVERGREEN:
+	case CAYMAN:
 		evergreen_init_state_functions(rctx);
 		if (evergreen_context_init(&rctx->ctx, rctx->radeon)) {
 			r600_destroy_context(&rctx->context);
 			return NULL;
 		}
 		evergreen_init_config(rctx);
+		rctx->custom_dsa_flush = evergreen_create_db_flush_dsa(rctx);
 		break;
 	default:
-		R600_ERR("unsupported family %d\n", r600_get_family(rctx->radeon));
+		R600_ERR("Unsupported chip class %d.\n", rctx->chip_class);
 		r600_destroy_context(&rctx->context);
 		return NULL;
 	}
@@ -288,12 +270,6 @@ static struct pipe_context *r600_create_context(struct pipe_screen *screen, void
 		r600_destroy_context(&rctx->context);
 		return NULL;
 	}
-
-	class = r600_get_family_class(rctx->radeon);
-	if (class == R600 || class == R700)
-		rctx->custom_dsa_flush = r600_create_db_flush_dsa(rctx);
-	else
-		rctx->custom_dsa_flush = evergreen_create_db_flush_dsa(rctx);
 
 	return &rctx->context;
 }

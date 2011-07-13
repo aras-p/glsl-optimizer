@@ -56,7 +56,7 @@
 
 #include "drirenderbuffer.h"
 #include "utils.h"
-
+#include "../glsl/ralloc.h"
 
 #ifndef INTEL_DEBUG
 int INTEL_DEBUG = (0);
@@ -924,7 +924,7 @@ intelDestroyContext(__DRIcontext * driContextPriv)
 
       _math_matrix_dtr(&intel->ViewportMatrix);
 
-      FREE(intel);
+      ralloc_free(intel);
       driContextPriv->driverPrivate = NULL;
    }
 }

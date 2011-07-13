@@ -88,6 +88,7 @@ static Bool
 DRI2WireToEvent(Display *dpy, XEvent *event, xEvent *wire)
 {
    XExtDisplayInfo *info = DRI2FindDisplay(dpy);
+   struct glx_drawable *glxDraw;
 
    XextCheckExtension(dpy, info, dri2ExtensionName, False);
 
@@ -97,7 +98,10 @@ DRI2WireToEvent(Display *dpy, XEvent *event, xEvent *wire)
    case DRI2_BufferSwapComplete:
    {
       GLXBufferSwapComplete *aevent = (GLXBufferSwapComplete *)event;
-      xDRI2BufferSwapComplete *awire = (xDRI2BufferSwapComplete *)wire;
+      xDRI2BufferSwapComplete2 *awire = (xDRI2BufferSwapComplete2 *)wire;
+      __GLXDRIdrawable *pdraw;
+
+      pdraw = dri2GetGlxDrawableFromXDrawableId(dpy, awire->drawable);
 
       /* Ignore swap events if we're not looking for them */
       aevent->type = dri2GetSwapEventType(dpy, awire->drawable);
@@ -124,7 +128,13 @@ DRI2WireToEvent(Display *dpy, XEvent *event, xEvent *wire)
       }
       aevent->ust = ((CARD64)awire->ust_hi << 32) | awire->ust_lo;
       aevent->msc = ((CARD64)awire->msc_hi << 32) | awire->msc_lo;
-      aevent->sbc = ((CARD64)awire->sbc_hi << 32) | awire->sbc_lo;
+
+      glxDraw = GetGLXDrawable(dpy, pdraw->drawable);
+      if (awire->sbc < glxDraw->lastEventSbc)
+	 glxDraw->eventSbcWrap += 0x100000000;
+      glxDraw->lastEventSbc = awire->sbc;
+      aevent->sbc = awire->sbc + glxDraw->eventSbcWrap;
+
       return True;
    }
 #endif

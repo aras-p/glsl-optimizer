@@ -41,6 +41,7 @@
 #include "st_context.h"
 #include "st_cb_queryobj.h"
 #include "st_cb_condrender.h"
+#include "st_cb_bitmap.h"
 
 
 /**
@@ -54,6 +55,8 @@ st_BeginConditionalRender(struct gl_context *ctx, struct gl_query_object *q,
    struct st_context *st = st_context(ctx);
    struct pipe_context *pipe = st->pipe;
    uint m;
+
+   st_flush_bitmap_cache(st);
 
    switch (mode) {
    case GL_QUERY_WAIT:
@@ -89,6 +92,8 @@ st_EndConditionalRender(struct gl_context *ctx, struct gl_query_object *q)
    struct st_context *st = st_context(ctx);
    struct pipe_context *pipe = st->pipe;
    (void) q;
+
+   st_flush_bitmap_cache(st);
 
    pipe->render_condition(pipe, NULL, 0);
    st->render_condition = NULL;

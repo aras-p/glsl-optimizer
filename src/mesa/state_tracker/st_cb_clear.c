@@ -381,7 +381,8 @@ check_clear_depth_stencil_with_quad(struct gl_context *ctx, struct gl_renderbuff
 
    assert(rb->Format == MESA_FORMAT_S8 ||
           rb->Format == MESA_FORMAT_Z24_S8 ||
-          rb->Format == MESA_FORMAT_S8_Z24);
+          rb->Format == MESA_FORMAT_S8_Z24 ||
+          rb->Format == MESA_FORMAT_Z32_FLOAT_X24S8);
 
    if (ctx->Scissor.Enabled &&
        (ctx->Scissor.X != 0 ||
@@ -436,7 +437,8 @@ check_clear_stencil_with_quad(struct gl_context *ctx, struct gl_renderbuffer *rb
 
    assert(rb->Format == MESA_FORMAT_S8 ||
           rb->Format == MESA_FORMAT_Z24_S8 ||
-          rb->Format == MESA_FORMAT_S8_Z24);
+          rb->Format == MESA_FORMAT_S8_Z24 ||
+          rb->Format == MESA_FORMAT_Z32_FLOAT_X24S8);
 
    if (maskStencil) 
       return GL_TRUE;

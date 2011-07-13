@@ -43,7 +43,8 @@ prepare_clip_vp(struct brw_context *brw)
 {
    struct brw_clipper_viewport *vp;
 
-   vp = brw_state_batch(brw, sizeof(*vp), 32, &brw->clip.vp_offset);
+   vp = brw_state_batch(brw, AUB_TRACE_CLIP_VP_STATE,
+			sizeof(*vp), 32, &brw->clip.vp_offset);
 
    vp->xmin = -1.0;
    vp->xmax = 1.0;
@@ -72,7 +73,8 @@ prepare_sf_vp(struct brw_context *brw)
    const GLboolean render_to_fbo = (ctx->DrawBuffer->Name != 0);
    const GLfloat *v = ctx->Viewport._WindowMap.m;
 
-   sfv = brw_state_batch(brw, sizeof(*sfv), 32, &brw->sf.vp_offset);
+   sfv = brw_state_batch(brw, AUB_TRACE_SF_VP_STATE,
+			 sizeof(*sfv), 32, &brw->sf.vp_offset);
    memset(sfv, 0, sizeof(*sfv));
 
    /* _NEW_BUFFERS */

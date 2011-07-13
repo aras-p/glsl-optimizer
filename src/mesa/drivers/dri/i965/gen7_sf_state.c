@@ -39,11 +39,12 @@ upload_sbe_state(struct brw_context *brw)
    uint32_t num_outputs = brw_count_bits(brw->fragment_program->Base.InputsRead);
    uint32_t dw1, dw10, dw11;
    int i;
-   int attr = 0;
+   int attr = 0, input_index = 0;
    /* _NEW_TRANSFORM */
    int urb_start = ctx->Transform.ClipPlanesEnabled ? 2 : 1;
    /* _NEW_LIGHT */
    int two_side_color = (ctx->Light.Enabled && ctx->Light.Model.TwoSide);
+   uint16_t attr_overrides[FRAG_ATTRIB_MAX];
 
    /* FINISHME: Attribute Swizzle Control Mode? */
    dw1 =
@@ -57,12 +58,6 @@ upload_sbe_state(struct brw_context *brw)
       dw1 |= GEN6_SF_POINT_SPRITE_LOWERLEFT;
 
    dw10 = 0;
-   if (ctx->Point.PointSprite) {
-       for (i = 0; i < 8; i++) {
-	   if (ctx->Point.CoordReplace[i])
-	       dw10 |= (1 << i);
-       }
-   }
 
    /* _NEW_LIGHT (flat shading) */
    dw11 = 0;
@@ -71,30 +66,43 @@ upload_sbe_state(struct brw_context *brw)
                 ((brw->fragment_program->Base.InputsRead & FRAG_BIT_WPOS) ? 0 : 1));
    }
 
+   /* Create the mapping from the FS inputs we produce to the VS outputs
+    * they source from.
+    */
+   for (; attr < FRAG_ATTRIB_MAX; attr++) {
+      if (!(brw->fragment_program->Base.InputsRead & BITFIELD64_BIT(attr)))
+	 continue;
+
+      if (ctx->Point.PointSprite &&
+	  attr >= FRAG_ATTRIB_TEX0 && attr <= FRAG_ATTRIB_TEX7 &&
+	  ctx->Point.CoordReplace[attr - FRAG_ATTRIB_TEX0]) {
+	 dw10 |= (1 << input_index);
+      }
+
+      if (attr == FRAG_ATTRIB_PNTC)
+	 dw10 |= (1 << input_index);
+
+      /* The hardware can only do the overrides on 16 overrides at a
+       * time, and the other up to 16 have to be lined up so that the
+       * input index = the output index.  We'll need to do some
+       * tweaking to make sure that's the case.
+       */
+      assert(input_index < 16 || attr == input_index);
+
+      attr_overrides[input_index++] = get_attr_override(brw, attr,
+							two_side_color);
+   }
+
+   for (; attr < FRAG_ATTRIB_MAX; attr++)
+      attr_overrides[input_index++] = 0;
+
    BEGIN_BATCH(14);
    OUT_BATCH(_3DSTATE_SBE << 16 | (14 - 2));
    OUT_BATCH(dw1);
 
    /* Output dwords 2 through 9 */
    for (i = 0; i < 8; i++) {
-      uint32_t attr_overrides = 0;
-
-      for (; attr < 64; attr++) {
-	 if (brw->fragment_program->Base.InputsRead & BITFIELD64_BIT(attr)) {
-	    attr_overrides |= get_attr_override(brw, attr, two_side_color);
-	    attr++;
-	    break;
-	 }
-      }
-
-      for (; attr < 64; attr++) {
-	 if (brw->fragment_program->Base.InputsRead & BITFIELD64_BIT(attr)) {
-	    attr_overrides |= get_attr_override(brw, attr, two_side_color) << 16;
-	    attr++;
-	    break;
-	 }
-      }
-      OUT_BATCH(attr_overrides);
+      OUT_BATCH(attr_overrides[i * 2] | attr_overrides[i * 2 + 1] << 16);
    }
 
    OUT_BATCH(dw10); /* point sprite texcoord bitmask */

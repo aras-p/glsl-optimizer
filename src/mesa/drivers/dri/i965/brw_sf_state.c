@@ -46,7 +46,8 @@ static void upload_sf_vp(struct brw_context *brw)
    const GLboolean render_to_fbo = (ctx->DrawBuffer->Name != 0);
    const GLfloat *v = ctx->Viewport._WindowMap.m;
 
-   sfv = brw_state_batch(brw, sizeof(*sfv), 32, &brw->sf.vp_offset);
+   sfv = brw_state_batch(brw, AUB_TRACE_SF_VP_STATE,
+			 sizeof(*sfv), 32, &brw->sf.vp_offset);
    memset(sfv, 0, sizeof(*sfv));
 
    if (render_to_fbo) {
@@ -129,7 +130,8 @@ static void upload_sf_unit( struct brw_context *brw )
    int chipset_max_threads;
    bool render_to_fbo = brw->intel.ctx.DrawBuffer->Name != 0;
 
-   sf = brw_state_batch(brw, sizeof(*sf), 64, &brw->sf.state_offset);
+   sf = brw_state_batch(brw, AUB_TRACE_SF_STATE,
+			sizeof(*sf), 64, &brw->sf.state_offset);
 
    memset(sf, 0, sizeof(*sf));
 

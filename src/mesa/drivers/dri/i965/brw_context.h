@@ -188,6 +188,31 @@ struct brw_state_flags {
    GLuint cache;
 };
 
+enum state_struct_type {
+   AUB_TRACE_VS_STATE =			1,
+   AUB_TRACE_GS_STATE =			2,
+   AUB_TRACE_CLIP_STATE =		3,
+   AUB_TRACE_SF_STATE =			4,
+   AUB_TRACE_WM_STATE =			5,
+   AUB_TRACE_CC_STATE =			6,
+   AUB_TRACE_CLIP_VP_STATE =		7,
+   AUB_TRACE_SF_VP_STATE =		8,
+   AUB_TRACE_CC_VP_STATE =		0x9,
+   AUB_TRACE_SAMPLER_STATE =		0xa,
+   AUB_TRACE_KERNEL_INSTRUCTIONS =	0xb,
+   AUB_TRACE_SCRATCH_SPACE =		0xc,
+   AUB_TRACE_SAMPLER_DEFAULT_COLOR =    0xd,
+
+   AUB_TRACE_SCISSOR_STATE =		0x15,
+   AUB_TRACE_BLEND_STATE =		0x16,
+   AUB_TRACE_DEPTH_STENCIL_STATE =	0x17,
+
+   /* Not written to .aub files the same way the structures above are. */
+   AUB_TRACE_NO_TYPE =			0x100,
+   AUB_TRACE_BINDING_TABLE =		0x101,
+   AUB_TRACE_SURFACE_STATE =		0x102,
+   AUB_TRACE_VS_CONSTANTS =		0x103,
+};
 
 /** Subclass of Mesa vertex program */
 struct brw_vertex_program {
@@ -744,6 +769,14 @@ struct brw_context
 
    int num_prepare_atoms, num_emit_atoms;
    struct brw_tracked_state prepare_atoms[64], emit_atoms[64];
+
+   /* If (INTEL_DEBUG & DEBUG_BATCH) */
+   struct {
+      uint32_t offset;
+      uint32_t size;
+      enum state_struct_type type;
+   } *state_batch_list;
+   int state_batch_count;
 };
 
 

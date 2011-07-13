@@ -51,7 +51,8 @@ prepare_blend_state(struct brw_context *brw)
       nr_draw_buffers = 1;
 
    size = sizeof(*blend) * nr_draw_buffers;
-   blend = brw_state_batch(brw, size, 64, &brw->cc.blend_state_offset);
+   blend = brw_state_batch(brw, AUB_TRACE_BLEND_STATE,
+			   size, 64, &brw->cc.blend_state_offset);
 
    memset(blend, 0, size);
 
@@ -139,7 +140,8 @@ gen6_prepare_color_calc_state(struct brw_context *brw)
    struct gl_context *ctx = &brw->intel.ctx;
    struct gen6_color_calc_state *cc;
 
-   cc = brw_state_batch(brw, sizeof(*cc), 64, &brw->cc.state_offset);
+   cc = brw_state_batch(brw, AUB_TRACE_CC_STATE,
+			sizeof(*cc), 64, &brw->cc.state_offset);
    memset(cc, 0, sizeof(*cc));
 
    /* _NEW_COLOR */

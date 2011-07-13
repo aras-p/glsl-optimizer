@@ -1078,6 +1078,13 @@ intelRunPipeline(struct gl_context * ctx)
    if (ctx->NewState)
       _mesa_update_state_locked(ctx);
 
+   /* We need to get this done before we start the pipeline, or a
+    * change in the INTEL_FALLBACK() of its intel_draw_buffers() call
+    * while the pipeline is running will result in mismatched swrast
+    * map/unmaps, and later assertion failures.
+    */
+   intel_prepare_render(intel);
+
    if (intel->NewGLState) {
       if (intel->NewGLState & _NEW_TEXTURE) {
          intel->vtbl.update_texture_state(intel);
@@ -1092,7 +1099,9 @@ intelRunPipeline(struct gl_context * ctx)
    }
 
    intel_map_vertex_shader_textures(ctx);
+   intel->tnl_pipeline_running = true;
    _tnl_run_pipeline(ctx);
+   intel->tnl_pipeline_running = false;
    intel_unmap_vertex_shader_textures(ctx);
 
    _mesa_unlock_context_textures(ctx);
@@ -1228,6 +1237,8 @@ intelFallback(struct intel_context *intel, GLbitfield bit, GLboolean mode)
    if (mode) {
       intel->Fallback |= bit;
       if (oldfallback == 0) {
+	 assert(!intel->tnl_pipeline_running);
+
          intel_flush(ctx);
          if (INTEL_DEBUG & DEBUG_FALLBACKS)
             fprintf(stderr, "ENTER FALLBACK %x: %s\n",
@@ -1239,6 +1250,8 @@ intelFallback(struct intel_context *intel, GLbitfield bit, GLboolean mode)
    else {
       intel->Fallback &= ~bit;
       if (oldfallback == bit) {
+	 assert(!intel->tnl_pipeline_running);
+
          _swrast_flush(ctx);
          if (INTEL_DEBUG & DEBUG_FALLBACKS)
             fprintf(stderr, "LEAVE FALLBACK %s\n", getFallbackString(bit));

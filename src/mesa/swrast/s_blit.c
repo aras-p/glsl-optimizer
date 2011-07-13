@@ -568,9 +568,6 @@ _swrast_BlitFramebuffer(struct gl_context *ctx,
    };
    GLint i;
 
-   if (!ctx->DrawBuffer->_NumColorDrawBuffers)
-      return;
-
    if (!_mesa_clip_blit(ctx, &srcX0, &srcY0, &srcX1, &srcY1,
                         &dstX0, &dstY0, &dstX1, &dstY1)) {
       return;

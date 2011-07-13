@@ -1971,7 +1971,8 @@ extract_uint_indexes(GLuint n, GLuint indexes[],
           srcType == GL_INT ||
           srcType == GL_UNSIGNED_INT_24_8_EXT ||
           srcType == GL_HALF_FLOAT_ARB ||
-          srcType == GL_FLOAT);
+          srcType == GL_FLOAT ||
+          srcType == GL_FLOAT_32_UNSIGNED_INT_24_8_REV);
 
    switch (srcType) {
       case GL_BITMAP:
@@ -2139,6 +2140,23 @@ extract_uint_indexes(GLuint n, GLuint indexes[],
             else {
                for (i = 0; i < n; i++)
                   indexes[i] = s[i] & 0xff;  /* lower 8 bits */
+            }
+         }
+         break;
+      case GL_FLOAT_32_UNSIGNED_INT_24_8_REV:
+         {
+            GLuint i;
+            const GLuint *s = (const GLuint *) src;
+            if (unpack->SwapBytes) {
+               for (i = 0; i < n; i++) {
+                  GLuint value = s[i*2+1];
+                  SWAP4BYTE(value);
+                  indexes[i] = value & 0xff;  /* lower 8 bits */
+               }
+            }
+            else {
+               for (i = 0; i < n; i++)
+                  indexes[i] = s[i*2+1] & 0xff;  /* lower 8 bits */
             }
          }
          break;
@@ -4412,11 +4430,13 @@ _mesa_unpack_stencil_span( struct gl_context *ctx, GLuint n,
           srcType == GL_INT ||
           srcType == GL_UNSIGNED_INT_24_8_EXT ||
           srcType == GL_HALF_FLOAT_ARB ||
-          srcType == GL_FLOAT);
+          srcType == GL_FLOAT ||
+          srcType == GL_FLOAT_32_UNSIGNED_INT_24_8_REV);
 
    ASSERT(dstType == GL_UNSIGNED_BYTE ||
           dstType == GL_UNSIGNED_SHORT ||
-          dstType == GL_UNSIGNED_INT);
+          dstType == GL_UNSIGNED_INT ||
+          dstType == GL_FLOAT_32_UNSIGNED_INT_24_8_REV);
 
    /* only shift and offset apply to stencil */
    transferOps &= IMAGE_SHIFT_OFFSET_BIT;
@@ -4487,6 +4507,15 @@ _mesa_unpack_stencil_span( struct gl_context *ctx, GLuint n,
             break;
          case GL_UNSIGNED_INT:
             memcpy(dest, indexes, n * sizeof(GLuint));
+            break;
+         case GL_FLOAT_32_UNSIGNED_INT_24_8_REV:
+            {
+               GLuint *dst = (GLuint *) dest;
+               GLuint i;
+               for (i = 0; i < n; i++) {
+                  dst[i*2+1] = indexes[i] & 0xff; /* lower 8 bits */
+               }
+            }
             break;
          default:
             _mesa_problem(ctx, "bad dstType in _mesa_unpack_stencil_span");
@@ -4798,6 +4827,20 @@ _mesa_unpack_depth_span( struct gl_context *ctx, GLuint n,
             }
          }
          break;
+      case GL_FLOAT_32_UNSIGNED_INT_24_8_REV:
+         {
+            GLuint i;
+            const GLfloat *src = (const GLfloat *)source;
+            for (i = 0; i < n; i++) {
+               GLfloat value = src[i * 2];
+               if (srcPacking->SwapBytes) {
+                  SWAP4BYTE(value);
+               }
+               depthValues[i] = value;
+            }
+            needClamp = GL_TRUE;
+         }
+         break;
       case GL_FLOAT:
          DEPTH_VALUES(GLfloat, 1*);
          needClamp = GL_TRUE;
@@ -4874,9 +4917,18 @@ _mesa_unpack_depth_span( struct gl_context *ctx, GLuint n,
          zValues[i] = (GLushort) (depthValues[i] * (GLfloat) depthMax);
       }
    }
+   else if (dstType == GL_FLOAT) {
+      /* Nothing to do. depthValues is pointing to dest. */
+   }
+   else if (dstType == GL_FLOAT_32_UNSIGNED_INT_24_8_REV) {
+      GLfloat *zValues = (GLfloat*) dest;
+      GLuint i;
+      for (i = 0; i < n; i++) {
+         zValues[i*2] = depthValues[i];
+      }
+   }
    else {
-      ASSERT(dstType == GL_FLOAT);
-      /*ASSERT(depthMax == 1.0F);*/
+      ASSERT(0);
    }
 
    free(depthTemp);
@@ -5004,10 +5056,11 @@ _mesa_pack_depth_span( struct gl_context *ctx, GLuint n, GLvoid *dest,
 
 
 /**
- * Pack depth and stencil values as GL_DEPTH_STENCIL/GL_UNSIGNED_INT_24_8.
+ * Pack depth and stencil values as GL_DEPTH_STENCIL (GL_UNSIGNED_INT_24_8 etc)
  */
 void
-_mesa_pack_depth_stencil_span(struct gl_context *ctx, GLuint n, GLuint *dest,
+_mesa_pack_depth_stencil_span(struct gl_context *ctx,GLuint n,
+                              GLenum dstType, GLuint *dest,
                               const GLfloat *depthVals,
                               const GLstencil *stencilVals,
                               const struct gl_pixelstore_attrib *dstPacking)
@@ -5037,9 +5090,19 @@ _mesa_pack_depth_stencil_span(struct gl_context *ctx, GLuint n, GLuint *dest,
       stencilVals = stencilCopy;
    }
 
-   for (i = 0; i < n; i++) {
-      GLuint z = (GLuint) (depthVals[i] * 0xffffff);
-      dest[i] = (z << 8) | (stencilVals[i] & 0xff);
+   switch (dstType) {
+   case GL_UNSIGNED_INT_24_8:
+      for (i = 0; i < n; i++) {
+         GLuint z = (GLuint) (depthVals[i] * 0xffffff);
+         dest[i] = (z << 8) | (stencilVals[i] & 0xff);
+      }
+      break;
+   case GL_FLOAT_32_UNSIGNED_INT_24_8_REV:
+      for (i = 0; i < n; i++) {
+         ((GLfloat*)dest)[i*2] = depthVals[i];
+         dest[i*2+1] = stencilVals[i] & 0xff;
+      }
+      break;
    }
 
    if (dstPacking->SwapBytes) {

@@ -40,6 +40,7 @@
 #include "brw_state.h"
 #include "intel_span.h"
 #include "tnl/t_pipeline.h"
+#include "../glsl/ralloc.h"
 
 /***************************************
  * Mesa's Driver Functions
@@ -59,7 +60,7 @@ GLboolean brwCreateContext( int api,
 			    void *sharedContextPrivate)
 {
    struct dd_function_table functions;
-   struct brw_context *brw = (struct brw_context *) CALLOC_STRUCT(brw_context);
+   struct brw_context *brw = rzalloc(NULL, struct brw_context);
    struct intel_context *intel = &brw->intel;
    struct gl_context *ctx = &intel->ctx;
    unsigned i;

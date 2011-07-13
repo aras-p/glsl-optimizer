@@ -183,7 +183,8 @@ gen7_prepare_samplers(struct brw_context *brw)
    if (brw->wm.sampler_count == 0)
       return;
 
-   samplers = brw_state_batch(brw, brw->wm.sampler_count * sizeof(*samplers),
+   samplers = brw_state_batch(brw, AUB_TRACE_SAMPLER_STATE,
+			      brw->wm.sampler_count * sizeof(*samplers),
 			      32, &brw->wm.sampler_offset);
    memset(samplers, 0, brw->wm.sampler_count * sizeof(*samplers));
 

@@ -82,6 +82,7 @@ translate_texture_format(gl_format mesa_format, GLenum DepthMode)
    case MESA_FORMAT_RGBA_DXT5:
       return (MAPSURF_COMPRESSED | MT_COMPRESS_DXT4_5);
    case MESA_FORMAT_S8_Z24:
+   case MESA_FORMAT_X8_Z24:
       if (DepthMode == GL_ALPHA)
 	 return (MAPSURF_32BIT | MT_32BIT_x8A24);
       else if (DepthMode == GL_INTENSITY)
@@ -89,7 +90,8 @@ translate_texture_format(gl_format mesa_format, GLenum DepthMode)
       else
 	 return (MAPSURF_32BIT | MT_32BIT_x8L24);
    default:
-      fprintf(stderr, "%s: bad image format %x\n", __FUNCTION__, mesa_format);
+      fprintf(stderr, "%s: bad image format %s\n", __FUNCTION__,
+	      _mesa_get_format_name(mesa_format));
       abort();
       return 0;
    }

@@ -42,7 +42,7 @@ egl_CPPFLAGS += \
 	-I$(TOP)/src/egl/main \
 	-D_EGL_MAIN=_eglMain
 egl_LIBS += $(TOP)/src/gallium/state_trackers/egl/libegl.a
-egl_SYS += $(LIBUDEV_LIBS) $(DLOPEN_LIBS) -lEGL -lm
+egl_SYS += $(LIBUDEV_LIBS) $(DLOPEN_LIBS) -lEGL -lm -lpthread
 
 # EGL platforms
 ifneq ($(findstring x11, $(EGL_PLATFORMS)),)

@@ -271,7 +271,8 @@ intel_region_reference(struct intel_region **dst, struct intel_region *src)
       if (*dst)
 	 intel_region_release(dst);
 
-      src->refcount++;
+      if (src)
+         src->refcount++;
       *dst = src;
    }
 }

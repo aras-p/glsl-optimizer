@@ -563,13 +563,14 @@ static void precalc_dst( struct brw_wm_compile *c,
    struct prog_src_register src0 = inst->SrcReg[0];
    struct prog_src_register src1 = inst->SrcReg[1];
    struct prog_dst_register dst = inst->DstReg;
-   
+   struct prog_dst_register temp = get_temp(c);
+
    if (dst.WriteMask & WRITEMASK_Y) {      
       /* dst.y = mul src0.y, src1.y
        */
       emit_op(c,
 	      OPCODE_MUL,
-	      dst_mask(dst, WRITEMASK_Y),
+	      dst_mask(temp, WRITEMASK_Y),
 	      inst->SaturateMode,
 	      src0,
 	      src1,
@@ -584,7 +585,7 @@ static void precalc_dst( struct brw_wm_compile *c,
        */
       swz = emit_op(c,
 		    OPCODE_SWZ,
-		    dst_mask(dst, WRITEMASK_XZ),
+		    dst_mask(temp, WRITEMASK_XZ),
 		    inst->SaturateMode,
 		    src_swizzle(src0, SWIZZLE_ONE, z, z, z),
 		    src_undef(),
@@ -597,12 +598,26 @@ static void precalc_dst( struct brw_wm_compile *c,
        */
       emit_op(c,
 	      OPCODE_MOV,
-	      dst_mask(dst, WRITEMASK_W),
+	      dst_mask(temp, WRITEMASK_W),
 	      inst->SaturateMode,
 	      src1,
 	      src_undef(),
 	      src_undef());
    }
+
+   /* This will get optimized out in general, but it ensures that we
+    * don't overwrite src operands in our channel-wise splitting
+    * above.  See piglit fp-dst-aliasing-[12].
+    */
+   emit_op(c,
+	   OPCODE_MOV,
+	   dst,
+	   0,
+	   src_reg_from_dst(temp),
+	   src_undef(),
+	   src_undef());
+
+   release_temp(c, temp);
 }
 
 
@@ -611,7 +626,17 @@ static void precalc_lit( struct brw_wm_compile *c,
 {
    struct prog_src_register src0 = inst->SrcReg[0];
    struct prog_dst_register dst = inst->DstReg;
-   
+
+   if (dst.WriteMask & WRITEMASK_YZ) {
+      emit_op(c,
+	      OPCODE_LIT,
+	      dst_mask(dst, WRITEMASK_YZ),
+	      inst->SaturateMode,
+	      src0,
+	      src_undef(),
+	      src_undef());
+   }
+
    if (dst.WriteMask & WRITEMASK_XW) {
       struct prog_instruction *swz;
 
@@ -626,16 +651,6 @@ static void precalc_lit( struct brw_wm_compile *c,
 		    src_undef());
       /* Avoid letting the negation flag of src0 affect our 1 constant. */
       swz->SrcReg[0].Negate = NEGATE_NONE;
-   }
-
-   if (dst.WriteMask & WRITEMASK_YZ) {
-      emit_op(c,
-	      OPCODE_LIT,
-	      dst_mask(dst, WRITEMASK_YZ),
-	      inst->SaturateMode,
-	      src0,
-	      src_undef(),
-	      src_undef());
    }
 }
 

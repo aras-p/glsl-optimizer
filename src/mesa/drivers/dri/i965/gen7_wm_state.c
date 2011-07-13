@@ -51,7 +51,7 @@ gen7_prepare_wm_constants(struct brw_context *brw)
       float *constants;
       unsigned int i;
 
-      constants = brw_state_batch(brw,
+      constants = brw_state_batch(brw, AUB_TRACE_NO_TYPE,
 				  brw->wm.prog_data->nr_params *
 				  sizeof(float),
 				  32, &brw->wm.push_const_offset);
@@ -138,11 +138,9 @@ upload_wm_state(struct brw_context *brw)
 
 const struct brw_tracked_state gen7_wm_state = {
    .dirty = {
-      .mesa  = (_NEW_LINE | _NEW_POLYGON | _NEW_POLYGONSTIPPLE |
+      .mesa  = (_NEW_LINE | _NEW_POLYGON |
 	        _NEW_COLOR | _NEW_BUFFERS),
-      .brw   = (BRW_NEW_CURBE_OFFSETS |
-		BRW_NEW_FRAGMENT_PROGRAM |
-                BRW_NEW_NR_WM_SURFACES |
+      .brw   = (BRW_NEW_FRAGMENT_PROGRAM |
 		BRW_NEW_URB_FENCE |
 		BRW_NEW_BATCH),
       .cache = 0,
@@ -240,10 +238,7 @@ upload_ps_state(struct brw_context *brw)
 
 const struct brw_tracked_state gen7_ps_state = {
    .dirty = {
-      .mesa  = (_NEW_LINE |
-		_NEW_POLYGON |
-		_NEW_POLYGONSTIPPLE |
-		_NEW_PROGRAM_CONSTANTS),
+      .mesa  = _NEW_PROGRAM_CONSTANTS,
       .brw   = (BRW_NEW_CURBE_OFFSETS |
 		BRW_NEW_FRAGMENT_PROGRAM |
                 BRW_NEW_NR_WM_SURFACES |

@@ -143,8 +143,6 @@ dri_unbind_context(__DRIcontext * cPriv)
    /* dri_util.c ensures cPriv is not null */
    struct dri_screen *screen = dri_screen(cPriv->driScreenPriv);
    struct dri_context *ctx = dri_context(cPriv);
-   struct dri_drawable *draw = dri_drawable(ctx->dPriv);
-   struct dri_drawable *read = dri_drawable(ctx->rPriv);
    struct st_api *stapi = screen->st_api;
 
    if (--ctx->bind_count == 0) {

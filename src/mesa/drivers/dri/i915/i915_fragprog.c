@@ -210,6 +210,7 @@ get_result_vector(struct i915_fragment_program *p,
    case PROGRAM_OUTPUT:
       switch (inst->DstReg.Index) {
       case FRAG_RESULT_COLOR:
+      case FRAG_RESULT_DATA0:
          return UREG(REG_TYPE_OC, 0);
       case FRAG_RESULT_DEPTH:
          p->depth_written = 1;

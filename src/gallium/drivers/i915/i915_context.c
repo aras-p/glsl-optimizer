@@ -99,10 +99,10 @@ static void i915_destroy(struct pipe_context *pipe)
    struct i915_context *i915 = i915_context(pipe);
    int i;
 
-   draw_destroy(i915->draw);
-
    if (i915->blitter)
       util_blitter_destroy(i915->blitter);
+
+   draw_destroy(i915->draw);
 
    if(i915->batch)
       i915->iws->batchbuffer_destroy(i915->batch);

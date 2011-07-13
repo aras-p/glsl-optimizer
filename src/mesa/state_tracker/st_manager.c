@@ -918,6 +918,15 @@ st_manager_add_color_renderbuffer(struct st_context *st,
       return FALSE;
 
    st_framebuffer_update_attachments(stfb);
+
+   /*
+    * Force a call to the state tracker manager to validate the
+    * new renderbuffer. It might be that there is a window system
+    * renderbuffer available.
+    */
+   if(stfb->iface)
+      stfb->iface_stamp = p_atomic_read(&stfb->iface->stamp) - 1;
+
    st_invalidate_state(st->ctx, _NEW_BUFFERS);
 
    return TRUE;

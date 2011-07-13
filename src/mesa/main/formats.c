@@ -1091,6 +1091,25 @@ static struct gl_format_info format_info[MESA_FORMAT_COUNT] =
       0, 0, 0, 0, 0,
       1, 1, 4
    },
+   /* ARB_depth_buffer_float */
+   {
+      MESA_FORMAT_Z32_FLOAT,       /* Name */
+      "MESA_FORMAT_Z32_FLOAT",     /* StrName */
+      GL_DEPTH_COMPONENT,          /* BaseFormat */
+      GL_FLOAT,                    /* DataType */
+      0, 0, 0, 0,                  /* Red/Green/Blue/AlphaBits */
+      0, 0, 0, 32, 0,              /* Lum/Int/Index/Depth/StencilBits */
+      1, 1, 4                      /* BlockWidth/Height,Bytes */
+   },
+   {
+      MESA_FORMAT_Z32_FLOAT_X24S8, /* Name */
+      "MESA_FORMAT_Z32_FLOAT_X24S8", /* StrName */
+      GL_DEPTH_STENCIL,            /* BaseFormat */
+      GL_NONE /* XXX */,           /* DataType */
+      0, 0, 0, 0,                  /* Red/Green/Blue/AlphaBits */
+      0, 0, 0, 32, 8,              /* Lum/Int/Index/Depth/StencilBits */
+      1, 1, 8                      /* BlockWidth/Height,Bytes */
+   },
 };
 
 
@@ -1466,7 +1485,9 @@ _mesa_test_formats(void)
              info->DataType == GL_SIGNED_NORMALIZED ||
              info->DataType == GL_UNSIGNED_INT ||
              info->DataType == GL_INT ||
-             info->DataType == GL_FLOAT);
+             info->DataType == GL_FLOAT ||
+             /* Z32_FLOAT_X24S8 has DataType of GL_NONE */
+             info->DataType == GL_NONE);
 
       if (info->BaseFormat == GL_RGB) {
          assert(info->RedBits > 0);
@@ -1651,6 +1672,16 @@ _mesa_format_to_type_and_comps(gl_format format,
 
    case MESA_FORMAT_Z32:
       *datatype = GL_UNSIGNED_INT;
+      *comps = 1;
+      return;
+
+   case MESA_FORMAT_Z32_FLOAT:
+      *datatype = GL_FLOAT;
+      *comps = 1;
+      return;
+
+   case MESA_FORMAT_Z32_FLOAT_X24S8:
+      *datatype = GL_FLOAT_32_UNSIGNED_INT_24_8_REV;
       *comps = 1;
       return;
 

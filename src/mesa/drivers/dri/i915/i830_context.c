@@ -33,6 +33,7 @@
 #include "tnl/t_pipeline.h"
 #include "intel_span.h"
 #include "intel_tris.h"
+#include "../glsl/ralloc.h"
 
 /***************************************
  * Mesa's Driver Functions
@@ -53,7 +54,7 @@ i830CreateContext(const struct gl_config * mesaVis,
                   void *sharedContextPrivate)
 {
    struct dd_function_table functions;
-   struct i830_context *i830 = CALLOC_STRUCT(i830_context);
+   struct i830_context *i830 = rzalloc(NULL, struct i830_context);
    struct intel_context *intel = &i830->intel;
    struct gl_context *ctx = &intel->ctx;
    if (!i830)

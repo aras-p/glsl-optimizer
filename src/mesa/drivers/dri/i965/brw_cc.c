@@ -43,7 +43,8 @@ prepare_cc_vp(struct brw_context *brw)
    struct gl_context *ctx = &brw->intel.ctx;
    struct brw_cc_viewport *ccv;
 
-   ccv = brw_state_batch(brw, sizeof(*ccv), 32, &brw->cc.vp_offset);
+   ccv = brw_state_batch(brw, AUB_TRACE_CC_VP_STATE,
+			 sizeof(*ccv), 32, &brw->cc.vp_offset);
 
    /* _NEW_TRANSOFORM */
    if (ctx->Transform.DepthClamp) {
@@ -98,7 +99,8 @@ static void upload_cc_unit(struct brw_context *brw)
    struct gl_context *ctx = &brw->intel.ctx;
    struct brw_cc_unit_state *cc;
 
-   cc = brw_state_batch(brw, sizeof(*cc), 64, &brw->cc.state_offset);
+   cc = brw_state_batch(brw, AUB_TRACE_CC_STATE,
+			sizeof(*cc), 64, &brw->cc.state_offset);
    memset(cc, 0, sizeof(*cc));
 
    /* _NEW_STENCIL */

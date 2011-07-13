@@ -60,7 +60,7 @@ gen6_prepare_vs_push_constants(struct brw_context *brw)
       float *param;
       int i;
 
-      param = brw_state_batch(brw,
+      param = brw_state_batch(brw, AUB_TRACE_VS_CONSTANTS,
 			      (MAX_CLIP_PLANES + nr_params) *
 			      4 * sizeof(float),
 			      32, &brw->vs.push_const_offset);

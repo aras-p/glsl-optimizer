@@ -69,7 +69,7 @@ int eg_bc_cf_build(struct r600_bc *bc, struct r600_bc_cf *cf)
 			S_SQ_CF_ALLOC_EXPORT_WORD1_SWIZ_SEL_W(cf->output.swizzle_w) |
 			S_SQ_CF_ALLOC_EXPORT_WORD1_BARRIER(cf->output.barrier) |
 			S_SQ_CF_ALLOC_EXPORT_WORD1_CF_INST(cf->output.inst);
-		if (bc->chiprev == CHIPREV_EVERGREEN) /* no EOP on cayman */
+		if (bc->chip_class == EVERGREEN) /* no EOP on cayman */
 			bc->bytecode[id] |= S_SQ_CF_ALLOC_EXPORT_WORD1_END_OF_PROGRAM(cf->output.end_of_program);
 		id++;
 

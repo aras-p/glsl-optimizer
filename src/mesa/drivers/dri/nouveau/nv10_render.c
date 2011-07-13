@@ -99,7 +99,7 @@ get_hw_format(int type)
 	case GL_UNSIGNED_SHORT:
 		return NV10_3D_VTXBUF_FMT_TYPE_V16_SNORM;
 	case GL_UNSIGNED_BYTE:
-		return NV10_3D_VTXBUF_FMT_TYPE_B8G8R8A8_UNORM;
+		return NV10_3D_VTXBUF_FMT_TYPE_U8_UNORM;
 	default:
 		assert(0);
 	}

@@ -263,6 +263,10 @@ static uint32_t r600_translate_dbformat(enum pipe_format format)
 		return V_028010_DEPTH_X8_24;
 	case PIPE_FORMAT_Z24_UNORM_S8_USCALED:
 		return V_028010_DEPTH_8_24;
+	case PIPE_FORMAT_Z32_FLOAT:
+		return V_028010_DEPTH_32_FLOAT;
+	case PIPE_FORMAT_Z32_FLOAT_S8X24_USCALED:
+		return V_028010_DEPTH_X24_8_32_FLOAT;
 	default:
 		return ~0U;
 	}
@@ -353,6 +357,7 @@ static uint32_t r600_translate_colorswap(enum pipe_format format)
 	case PIPE_FORMAT_R16G16_UNORM:
 	case PIPE_FORMAT_R16G16_FLOAT:
 	case PIPE_FORMAT_R32_FLOAT:
+	case PIPE_FORMAT_Z32_FLOAT:
 		return V_0280A0_SWAP_STD;
 
 	/* 64-bit buffers. */
@@ -360,6 +365,7 @@ static uint32_t r600_translate_colorswap(enum pipe_format format)
 	case PIPE_FORMAT_R16G16B16A16_UNORM:
 	case PIPE_FORMAT_R16G16B16A16_SNORM:
 	case PIPE_FORMAT_R16G16B16A16_FLOAT:
+	case PIPE_FORMAT_Z32_FLOAT_S8X24_USCALED:
 
 	/* 128-bit buffers. */
 	case PIPE_FORMAT_R32G32B32A32_FLOAT:
@@ -444,7 +450,11 @@ static uint32_t r600_translate_colorformat(enum pipe_format format)
 	case PIPE_FORMAT_S8_USCALED_Z24_UNORM:
 		return V_0280A0_COLOR_24_8;
 
+	case PIPE_FORMAT_Z32_FLOAT_S8X24_USCALED:
+		return V_0280A0_COLOR_X24_8_32_FLOAT;
+
 	case PIPE_FORMAT_R32_FLOAT:
+	case PIPE_FORMAT_Z32_FLOAT:
 		return V_0280A0_COLOR_32_FLOAT;
 
 	case PIPE_FORMAT_R16G16_FLOAT:
@@ -501,11 +511,11 @@ static uint32_t r600_colorformat_endian_swap(uint32_t colorformat)
 	if (R600_BIG_ENDIAN) {
 		switch(colorformat) {
 		case V_0280A0_COLOR_4_4:
-			return(ENDIAN_NONE);
+			return ENDIAN_NONE;
 
 		/* 8-bit buffers. */
 		case V_0280A0_COLOR_8:
-			return(ENDIAN_NONE);
+			return ENDIAN_NONE;
 
 		/* 16-bit buffers. */
 		case V_0280A0_COLOR_5_6_5:
@@ -513,7 +523,7 @@ static uint32_t r600_colorformat_endian_swap(uint32_t colorformat)
 		case V_0280A0_COLOR_4_4_4_4:
 		case V_0280A0_COLOR_16:
 		case V_0280A0_COLOR_8_8:
-			return(ENDIAN_8IN16);
+			return ENDIAN_8IN16;
 
 		/* 32-bit buffers. */
 		case V_0280A0_COLOR_8_8_8_8:
@@ -523,22 +533,23 @@ static uint32_t r600_colorformat_endian_swap(uint32_t colorformat)
 		case V_0280A0_COLOR_32_FLOAT:
 		case V_0280A0_COLOR_16_16_FLOAT:
 		case V_0280A0_COLOR_16_16:
-			return(ENDIAN_8IN32);
+			return ENDIAN_8IN32;
 
 		/* 64-bit buffers. */
 		case V_0280A0_COLOR_16_16_16_16:
 		case V_0280A0_COLOR_16_16_16_16_FLOAT:
-			return(ENDIAN_8IN16);
+			return ENDIAN_8IN16;
 
 		case V_0280A0_COLOR_32_32_FLOAT:
 		case V_0280A0_COLOR_32_32:
-			return(ENDIAN_8IN32);
+		case V_0280A0_COLOR_X24_8_32_FLOAT:
+			return ENDIAN_8IN32;
 
 		/* 128-bit buffers. */
 		case V_0280A0_COLOR_32_32_32_FLOAT:
 		case V_0280A0_COLOR_32_32_32_32_FLOAT:
 		case V_0280A0_COLOR_32_32_32_32:
-			return(ENDIAN_8IN32);
+			return ENDIAN_8IN32;
 		default:
 			return ENDIAN_NONE; /* Unsupported. */
 		}
@@ -635,6 +646,7 @@ void r600_polygon_offset_update(struct r600_pipe_context *rctx)
 			offset_units *= 2.0f;
 			break;
 		case PIPE_FORMAT_Z32_FLOAT:
+		case PIPE_FORMAT_Z32_FLOAT_S8X24_USCALED:
 			depth = -23;
 			offset_units *= 1.0f;
 			offset_db_fmt_cntl |= S_028DF8_POLY_OFFSET_DB_IS_FLOAT_FMT(1);
@@ -1399,7 +1411,7 @@ static void r600_cb(struct r600_pipe_context *rctx, struct r600_pipe_state *rsta
 	/* EXPORT_NORM is an optimzation that can be enabled for better
 	 * performance in certain cases
 	 */
-	if (rctx->family < CHIP_RV770) {
+	if (rctx->chip_class == R600) {
 		/* EXPORT_NORM can be enabled if:
 		 * - 11-bit or smaller UNORM/SNORM/SRGB
 		 * - BLEND_CLAMP is enabled
@@ -1559,7 +1571,7 @@ static void r600_set_framebuffer_state(struct pipe_context *ctx,
 	r600_pipe_state_add_reg(rstate,
 				R_028200_PA_SC_WINDOW_OFFSET, 0x00000000,
 				0xFFFFFFFF, NULL);
-	if (rctx->family >= CHIP_RV770) {
+	if (rctx->chip_class >= R700) {
 		r600_pipe_state_add_reg(rstate,
 					R_028230_PA_SC_EDGERULE, 0xAAAAAAAA,
 					0xFFFFFFFF, NULL);
@@ -1653,16 +1665,13 @@ void r600_init_state_functions(struct r600_pipe_context *rctx)
 
 void r600_adjust_gprs(struct r600_pipe_context *rctx)
 {
-	enum radeon_family family;
 	struct r600_pipe_state rstate;
 	unsigned num_ps_gprs = rctx->default_ps_gprs;
 	unsigned num_vs_gprs = rctx->default_vs_gprs;
 	unsigned tmp;
 	int diff;
 
-	family = r600_get_family(rctx->radeon);
-
-	if (family >= CHIP_CEDAR)
+	if (rctx->chip_class >= EVERGREEN)
 		return;
 
 	if (!rctx->ps_shader && !rctx->vs_shader)
@@ -1714,7 +1723,7 @@ void r600_init_config(struct r600_pipe_context *rctx)
 	struct r600_pipe_state *rstate = &rctx->config;
 	u32 tmp;
 
-	family = r600_get_family(rctx->radeon);
+	family = rctx->family;
 	ps_prio = 0;
 	vs_prio = 1;
 	gs_prio = 2;
@@ -1895,7 +1904,7 @@ void r600_init_config(struct r600_pipe_context *rctx)
 	r600_pipe_state_add_reg(rstate, R_009714_VC_ENHANCE, 0x00000000, 0xFFFFFFFF, NULL);
 	r600_pipe_state_add_reg(rstate, R_028350_SX_MISC, 0x00000000, 0xFFFFFFFF, NULL);
 
-	if (family >= CHIP_RV770) {
+	if (rctx->chip_class >= R700) {
 		r600_pipe_state_add_reg(rstate, R_008D8C_SQ_DYN_GPR_CNTL_PS_FLUSH_REQ, 0x00004000, 0xFFFFFFFF, NULL);
 		r600_pipe_state_add_reg(rstate, R_009508_TA_CNTL_AUX,
 					S_009508_DISABLE_CUBE_ANISO(1) |

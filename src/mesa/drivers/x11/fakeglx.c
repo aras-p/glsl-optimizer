@@ -1097,12 +1097,16 @@ choose_visual( Display *dpy, int screen, const int *list, GLboolean fbConfig )
             parselist++;
             break;
          case GLX_FBCONFIG_ID:
+         case GLX_VISUAL_ID:
             if (!fbConfig)
                return NULL;
             parselist++;
             desiredVisualID = *parselist++;
             break;
          case GLX_X_RENDERABLE:
+         case GLX_MAX_PBUFFER_WIDTH:
+         case GLX_MAX_PBUFFER_HEIGHT:
+         case GLX_MAX_PBUFFER_PIXELS:
             if (!fbConfig)
                return NULL;
             parselist += 2;

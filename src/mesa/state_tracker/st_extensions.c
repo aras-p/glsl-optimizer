@@ -607,4 +607,15 @@ void st_init_extensions(struct st_context *st)
    if (screen->get_param(screen, PIPE_CAP_SM3)) {
       ctx->Extensions.ARB_shader_texture_lod = GL_TRUE;
    }
+
+   if (screen->is_format_supported(screen, PIPE_FORMAT_Z32_FLOAT,
+                                   PIPE_TEXTURE_2D, 0,
+                                   PIPE_BIND_DEPTH_STENCIL |
+                                   PIPE_BIND_SAMPLER_VIEW) &&
+       screen->is_format_supported(screen, PIPE_FORMAT_Z32_FLOAT_S8X24_USCALED,
+                                   PIPE_TEXTURE_2D, 0,
+                                   PIPE_BIND_DEPTH_STENCIL |
+                                   PIPE_BIND_SAMPLER_VIEW)) {
+      ctx->Extensions.ARB_depth_buffer_float = GL_TRUE;
+   }
 }

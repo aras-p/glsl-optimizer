@@ -1248,7 +1248,7 @@ assign_attribute_or_color_locations(gl_shader_program *prog,
     */
 
    const int generic_base = (target_index == MESA_SHADER_VERTEX)
-     ? VERT_ATTRIB_GENERIC0 : FRAG_RESULT_DATA0;
+      ? (int) VERT_ATTRIB_GENERIC0 : (int) FRAG_RESULT_DATA0;
 
    const enum ir_variable_mode direction =
       (target_index == MESA_SHADER_VERTEX) ? ir_var_in : ir_var_out;
