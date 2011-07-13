@@ -166,7 +166,7 @@ GLboolean brwCreateContext( int api,
        ctx->Const.QuadsFollowProvokingVertexConvention = GL_FALSE;
 
    if (intel->is_g4x || intel->gen >= 5) {
-      brw->CMD_VF_STATISTICS = CMD_VF_STATISTICS_GM45;
+      brw->CMD_VF_STATISTICS = GM45_3DSTATE_VF_STATISTICS;
       brw->CMD_PIPELINE_SELECT = CMD_PIPELINE_SELECT_GM45;
       brw->has_surface_tile_offset = GL_TRUE;
       if (intel->gen < 6)
@@ -174,7 +174,7 @@ GLboolean brwCreateContext( int api,
       brw->has_aa_line_parameters = GL_TRUE;
       brw->has_pln = GL_TRUE;
   } else {
-      brw->CMD_VF_STATISTICS = CMD_VF_STATISTICS_965;
+      brw->CMD_VF_STATISTICS = GEN4_3DSTATE_VF_STATISTICS;
       brw->CMD_PIPELINE_SELECT = CMD_PIPELINE_SELECT_965;
    }
 
