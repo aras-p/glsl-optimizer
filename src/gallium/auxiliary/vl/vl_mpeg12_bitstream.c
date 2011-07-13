@@ -52,6 +52,7 @@
 
 #include <stdint.h>
 
+#include <pipe/p_compiler.h>
 #include <pipe/p_video_state.h>
 
 #include "vl_vlc.h"
@@ -457,7 +458,7 @@ static const int non_linear_quantizer_scale[] = {
    56, 64, 72, 80, 88, 96, 104, 112
 };
 
-static inline int
+static INLINE int
 get_macroblock_modes(struct vl_mpg12_bs *bs, struct pipe_mpeg12_picture_desc * picture)
 {
    int macroblock_modes;
@@ -525,7 +526,7 @@ get_macroblock_modes(struct vl_mpg12_bs *bs, struct pipe_mpeg12_picture_desc * p
    }
 }
 
-static inline enum pipe_mpeg12_dct_type
+static INLINE enum pipe_mpeg12_dct_type
 get_dct_type(struct vl_mpg12_bs *bs, struct pipe_mpeg12_picture_desc * picture, int macroblock_modes)
 {
    enum pipe_mpeg12_dct_type dct_type = PIPE_MPEG12_DCT_TYPE_FRAME;
@@ -540,7 +541,7 @@ get_dct_type(struct vl_mpg12_bs *bs, struct pipe_mpeg12_picture_desc * picture, 
    return dct_type;
 }
 
-static inline int
+static INLINE int
 get_quantizer_scale(struct vl_mpg12_bs *bs, struct pipe_mpeg12_picture_desc * picture)
 {
    int quantizer_scale_code;
@@ -554,7 +555,7 @@ get_quantizer_scale(struct vl_mpg12_bs *bs, struct pipe_mpeg12_picture_desc * pi
       return quantizer_scale_code << 1;
 }
 
-static inline int
+static INLINE int
 get_motion_delta(struct vl_mpg12_bs *bs, unsigned f_code)
 {
    int delta;
@@ -600,7 +601,7 @@ get_motion_delta(struct vl_mpg12_bs *bs, unsigned f_code)
    }
 }
 
-static inline int
+static INLINE int
 bound_motion_vector(int vec, unsigned f_code)
 {
 #if 1
@@ -620,7 +621,7 @@ bound_motion_vector(int vec, unsigned f_code)
 #endif
 }
 
-static inline int
+static INLINE int
 get_dmv(struct vl_mpg12_bs *bs)
 {
    const DMVtab * tab;
@@ -630,7 +631,7 @@ get_dmv(struct vl_mpg12_bs *bs)
    return tab->dmv;
 }
 
-static inline int
+static INLINE int
 get_coded_block_pattern(struct vl_mpg12_bs *bs)
 {
    const CBPtab * tab;
@@ -651,7 +652,7 @@ get_coded_block_pattern(struct vl_mpg12_bs *bs)
    }
 }
 
-static inline int
+static INLINE int
 get_luma_dc_dct_diff(struct vl_mpg12_bs *bs)
 {
    const DCtab * tab;
@@ -682,7 +683,7 @@ get_luma_dc_dct_diff(struct vl_mpg12_bs *bs)
    }
 }
 
-static inline int
+static INLINE int
 get_chroma_dc_dct_diff(struct vl_mpg12_bs *bs)
 {
    const DCtab * tab;
@@ -713,7 +714,7 @@ get_chroma_dc_dct_diff(struct vl_mpg12_bs *bs)
    }
 }
 
-static inline void
+static INLINE void
 get_intra_block_B14(struct vl_mpg12_bs *bs, int quantizer_scale, short *dest)
 {
    int i, val;
@@ -800,7 +801,7 @@ get_intra_block_B14(struct vl_mpg12_bs *bs, int quantizer_scale, short *dest)
    vl_vlc_dumpbits(&bs->vlc, 2);	/* dump end of block code */
 }
 
-static inline void
+static INLINE void
 get_intra_block_B15(struct vl_mpg12_bs *bs, int quantizer_scale, short *dest)
 {
    int i, val;
@@ -886,7 +887,7 @@ get_intra_block_B15(struct vl_mpg12_bs *bs, int quantizer_scale, short *dest)
    vl_vlc_dumpbits(&bs->vlc, 4);	/* dump end of block code */
 }
 
-static inline void
+static INLINE void
 get_non_intra_block(struct vl_mpg12_bs *bs, int quantizer_scale, short *dest)
 {
    int i, val;
@@ -982,7 +983,7 @@ get_non_intra_block(struct vl_mpg12_bs *bs, int quantizer_scale, short *dest)
    vl_vlc_dumpbits(&bs->vlc, 2);	/* dump end of block code */
 }
 
-static inline void
+static INLINE void
 get_mpeg1_intra_block(struct vl_mpg12_bs *bs, int quantizer_scale, short *dest)
 {
    int i, val;
@@ -1080,7 +1081,7 @@ get_mpeg1_intra_block(struct vl_mpg12_bs *bs, int quantizer_scale, short *dest)
    vl_vlc_dumpbits(&bs->vlc, 2);	/* dump end of block code */
 }
 
-static inline void
+static INLINE void
 get_mpeg1_non_intra_block(struct vl_mpg12_bs *bs, int quantizer_scale, short *dest)
 {
    int i, val;
@@ -1188,7 +1189,7 @@ get_mpeg1_non_intra_block(struct vl_mpg12_bs *bs, int quantizer_scale, short *de
    vl_vlc_dumpbits(&bs->vlc, 2);	/* dump end of block code */
 }
 
-static inline void
+static INLINE void
 slice_intra_DCT(struct vl_mpg12_bs *bs, struct pipe_mpeg12_picture_desc * picture, int cc,
                  unsigned x, unsigned y, enum pipe_mpeg12_dct_type coding, int quantizer_scale, int dc_dct_pred[3])
 {
@@ -1224,7 +1225,7 @@ slice_intra_DCT(struct vl_mpg12_bs *bs, struct pipe_mpeg12_picture_desc * pictur
    bs->ycbcr_buffer[cc] += 64;
 }
 
-static inline void
+static INLINE void
 slice_non_intra_DCT(struct vl_mpg12_bs *bs, struct pipe_mpeg12_picture_desc * picture, int cc,
                     unsigned x, unsigned y,  enum pipe_mpeg12_dct_type coding, int quantizer_scale)
 {
@@ -1248,7 +1249,7 @@ slice_non_intra_DCT(struct vl_mpg12_bs *bs, struct pipe_mpeg12_picture_desc * pi
    bs->ycbcr_buffer[cc] += 64;
 }
 
-static inline void
+static INLINE void
 motion_mp1(struct vl_mpg12_bs *bs, unsigned f_code[2], struct pipe_motionvector *mv)
 {
    int motion_x, motion_y;
@@ -1266,7 +1267,7 @@ motion_mp1(struct vl_mpg12_bs *bs, unsigned f_code[2], struct pipe_motionvector 
    mv->top.y = mv->bottom.y = motion_y;
 }
 
-static inline void
+static INLINE void
 motion_fr_frame(struct vl_mpg12_bs *bs, unsigned f_code[2], struct pipe_motionvector *mv)
 {
    int motion_x, motion_y;
@@ -1284,7 +1285,7 @@ motion_fr_frame(struct vl_mpg12_bs *bs, unsigned f_code[2], struct pipe_motionve
    mv->top.y = mv->bottom.y = motion_y;
 }
 
-static inline void
+static INLINE void
 motion_fr_field(struct vl_mpg12_bs *bs, unsigned f_code[2], struct pipe_motionvector *mv)
 {
    int motion_x, motion_y;
@@ -1318,7 +1319,7 @@ motion_fr_field(struct vl_mpg12_bs *bs, unsigned f_code[2], struct pipe_motionve
    mv->bottom.y = motion_y << 1;
 }
 
-static inline void
+static INLINE void
 motion_fr_dmv(struct vl_mpg12_bs *bs, unsigned f_code[2], struct pipe_motionvector *mv)
 {
    int motion_x, motion_y;
@@ -1338,7 +1339,7 @@ motion_fr_dmv(struct vl_mpg12_bs *bs, unsigned f_code[2], struct pipe_motionvect
 }
 
 /* like motion_frame, but parsing without actual motion compensation */
-static inline void
+static INLINE void
 motion_fr_conceal(struct vl_mpg12_bs *bs, unsigned f_code[2], struct pipe_motionvector *mv)
 {
    int tmp;
@@ -1358,7 +1359,7 @@ motion_fr_conceal(struct vl_mpg12_bs *bs, unsigned f_code[2], struct pipe_motion
    vl_vlc_dumpbits(&bs->vlc, 1); /* remove marker_bit */
 }
 
-static inline void
+static INLINE void
 motion_fi_field(struct vl_mpg12_bs *bs, unsigned f_code[2], struct pipe_motionvector *mv)
 {
    int motion_x, motion_y;
@@ -1382,7 +1383,7 @@ motion_fi_field(struct vl_mpg12_bs *bs, unsigned f_code[2], struct pipe_motionve
    mv->top.y = mv->bottom.y = motion_y;
 }
 
-static inline void
+static INLINE void
 motion_fi_16x8(struct vl_mpg12_bs *bs, unsigned f_code[2], struct pipe_motionvector *mv)
 {
    int motion_x, motion_y;
@@ -1423,7 +1424,7 @@ motion_fi_16x8(struct vl_mpg12_bs *bs, unsigned f_code[2], struct pipe_motionvec
    mv->bottom.y = motion_y;
 }
 
-static inline void
+static INLINE void
 motion_fi_dmv(struct vl_mpg12_bs *bs, unsigned f_code[2], struct pipe_motionvector *mv)
 {
    int motion_x, motion_y;
@@ -1443,7 +1444,7 @@ motion_fi_dmv(struct vl_mpg12_bs *bs, unsigned f_code[2], struct pipe_motionvect
 }
 
 
-static inline void
+static INLINE void
 motion_fi_conceal(struct vl_mpg12_bs *bs, unsigned f_code[2], struct pipe_motionvector *mv)
 {
    int tmp;
@@ -1471,7 +1472,7 @@ do {							\
       routine(bs, picture->f_code[1], &mv_bwd);         \
 } while (0)
 
-static inline void
+static INLINE void
 store_motionvectors(struct vl_mpg12_bs *bs, unsigned *mv_pos,
                     struct pipe_motionvector *mv_fwd,
                     struct pipe_motionvector *mv_bwd)
@@ -1489,7 +1490,7 @@ store_motionvectors(struct vl_mpg12_bs *bs, unsigned *mv_pos,
    (*mv_pos)++;
 }
 
-static inline bool
+static INLINE bool
 slice_init(struct vl_mpg12_bs *bs, struct pipe_mpeg12_picture_desc * picture,
            int *quantizer_scale, unsigned *x, unsigned *y, unsigned *mv_pos)
 {
@@ -1550,7 +1551,7 @@ slice_init(struct vl_mpg12_bs *bs, struct pipe_mpeg12_picture_desc * picture,
    return true;
 }
 
-static inline bool
+static INLINE bool
 decode_slice(struct vl_mpg12_bs *bs, struct pipe_mpeg12_picture_desc *picture)
 {
    enum pipe_video_field_select default_field_select;

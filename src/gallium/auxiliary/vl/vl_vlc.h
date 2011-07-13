@@ -53,6 +53,8 @@
 #ifndef vl_vlc_h
 #define vl_vlc_h
 
+#include "pipe/p_compiler.h"
+
 struct vl_vlc
 {
    uint32_t buf; /* current 32 bit working set of buffer */
@@ -61,7 +63,7 @@ struct vl_vlc
    const uint8_t *max; /* ptr+len of buffer */
 };
 
-static inline void
+static INLINE void
 vl_vlc_restart(struct vl_vlc *vlc)
 {
    vlc->buf = (vlc->ptr[0] << 24) | (vlc->ptr[1] << 16) | (vlc->ptr[2] << 8) | vlc->ptr[3];
@@ -69,7 +71,7 @@ vl_vlc_restart(struct vl_vlc *vlc)
    vlc->ptr += 4;
 }
 
-static inline void
+static INLINE void
 vl_vlc_init(struct vl_vlc *vlc, const uint8_t *data, unsigned len)
 {
    vlc->ptr = data;
@@ -77,7 +79,7 @@ vl_vlc_init(struct vl_vlc *vlc, const uint8_t *data, unsigned len)
    vl_vlc_restart(vlc);
 }
 
-static inline bool
+static INLINE bool
 vl_vlc_getbyte(struct vl_vlc *vlc)
 {
    vlc->buf <<= 8;
@@ -102,7 +104,7 @@ do {                                            \
 } while (0)
 
 /* make sure that the full 32 bit of the buffer are valid */
-static inline void
+static INLINE void
 vl_vlc_need32bits(struct vl_vlc *vlc)
 {
    vl_vlc_needbits(vlc);

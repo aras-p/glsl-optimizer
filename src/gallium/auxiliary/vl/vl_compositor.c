@@ -27,6 +27,7 @@
 
 #include <assert.h>
 
+#include <pipe/p_compiler.h>
 #include <pipe/p_context.h>
 
 #include <util/u_memory.h>
@@ -369,7 +370,7 @@ cleanup_buffers(struct vl_compositor *c)
    pipe_resource_reference(&c->csc_matrix, NULL);
 }
 
-static inline struct pipe_video_rect
+static INLINE struct pipe_video_rect
 default_rect(struct vl_compositor_layer *layer)
 {
    struct pipe_resource *res = layer->sampler_views[0]->texture;
@@ -377,21 +378,21 @@ default_rect(struct vl_compositor_layer *layer)
    return rect;
 }
 
-static inline struct vertex2f
+static INLINE struct vertex2f
 calc_topleft(struct vertex2f size, struct pipe_video_rect rect)
 {
    struct vertex2f res = { rect.x / size.x, rect.y / size.y };
    return res;
 }
 
-static inline struct vertex2f
+static INLINE struct vertex2f
 calc_bottomright(struct vertex2f size, struct pipe_video_rect rect)
 {
    struct vertex2f res = { (rect.x + rect.w) / size.x, (rect.y + rect.h) / size.y };
    return res;
 }
 
-static inline void
+static INLINE void
 calc_src_and_dst(struct vl_compositor_layer *layer, unsigned width, unsigned height,
                  struct pipe_video_rect src, struct pipe_video_rect dst)
 {
