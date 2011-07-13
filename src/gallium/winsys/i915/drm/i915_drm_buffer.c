@@ -218,6 +218,8 @@ i915_drm_buffer_is_busy(struct i915_winsys *iws,
                         struct i915_winsys_buffer *buffer)
 {
    struct i915_drm_buffer* i915_buffer = i915_drm_buffer(buffer);
+   if (!i915_buffer)
+      return FALSE;
    return drm_intel_bo_busy(i915_buffer->bo);
 }
 
