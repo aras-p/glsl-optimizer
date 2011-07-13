@@ -1054,7 +1054,7 @@ void r600_context_pipe_state_set(struct r600_context *ctx, struct r600_pipe_stat
 		}
 		if (block->flags & REG_FLAG_DIRTY_ALWAYS)
 			dirty |= R600_BLOCK_STATUS_DIRTY;
-		if (block->pm4_bo_index[id] && state->regs[i].bo) {
+		if (block->pm4_bo_index[id]) {
 			/* find relocation */
 			reloc_id = block->pm4_bo_index[id];
 			r600_bo_reference(ctx->radeon, &block->reloc[reloc_id].bo, reg->bo);
@@ -1298,15 +1298,13 @@ void r600_context_block_emit_dirty(struct r600_context *ctx, struct r600_block *
 			if (block->pm4_bo_index[j]) {
 				/* find relocation */
 				id = block->pm4_bo_index[j];
-				if (block->reloc[id].bo) {
-					r600_context_bo_reloc(ctx,
-							      &block->pm4[block->reloc[id].bo_pm4_index],
-							      block->reloc[id].bo);
-					r600_context_bo_flush(ctx,
-							      block->reloc[id].flush_flags,
-							      block->reloc[id].flush_mask,
-							      block->reloc[id].bo);
-				}
+				r600_context_bo_reloc(ctx,
+						      &block->pm4[block->reloc[id].bo_pm4_index],
+						      block->reloc[id].bo);
+				r600_context_bo_flush(ctx,
+						      block->reloc[id].flush_flags,
+						      block->reloc[id].flush_mask,
+						      block->reloc[id].bo);
 				nbo--;
 				if (nbo == 0)
 					break;

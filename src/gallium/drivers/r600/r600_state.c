@@ -874,7 +874,7 @@ static void *r600_create_rs_state(struct pipe_context *ctx,
 	struct r600_pipe_context *rctx = (struct r600_pipe_context *)ctx;
 	struct r600_pipe_rasterizer *rs = CALLOC_STRUCT(r600_pipe_rasterizer);
 	struct r600_pipe_state *rstate;
-	unsigned tmp, cb;
+	unsigned tmp;
 	unsigned prov_vtx = 1, polygon_dual_mode;
 	unsigned clip_rule;
 
@@ -948,11 +948,6 @@ static void *r600_create_rs_state(struct pipe_context *ctx,
 	r600_pipe_state_add_reg(rstate, R_028C18_PA_CL_GB_HORZ_DISC_ADJ, 0x3F800000, 0xFFFFFFFF, NULL);
 	r600_pipe_state_add_reg(rstate, R_028DFC_PA_SU_POLY_OFFSET_CLAMP, 0x00000000, 0xFFFFFFFF, NULL);
 	r600_pipe_state_add_reg(rstate, R_02820C_PA_SC_CLIPRECT_RULE, clip_rule, 0xFFFFFFFF, NULL);
-
-	for (cb = 0; cb < 7; ++cb)
-		r600_pipe_state_add_reg(rstate, R_0280A0_CB_COLOR0_INFO + cb * 4,
-					S_0280A0_BLEND_CLAMP(state->clamp_fragment_color),
-					S_0280A0_BLEND_CLAMP(1), NULL);
 
 	return rstate;
 }
@@ -1409,6 +1404,7 @@ static void r600_cb(struct r600_pipe_context *rctx, struct r600_pipe_state *rsta
 	color_info = S_0280A0_FORMAT(format) |
 		S_0280A0_COMP_SWAP(swap) |
 		S_0280A0_ARRAY_MODE(rtex->array_mode[level]) |
+		S_0280A0_BLEND_CLAMP(1) |
 		S_0280A0_NUMBER_TYPE(ntype) |
 		S_0280A0_ENDIAN(endian);
 
@@ -1421,7 +1417,6 @@ static void r600_cb(struct r600_pipe_context *rctx, struct r600_pipe_state *rsta
 		 * - BLEND_CLAMP is enabled
 		 * - BLEND_FLOAT32 is disabled
 		 */
-		// TODO get BLEND_CLAMP state from rasterizer state
 		if (desc->colorspace != UTIL_FORMAT_COLORSPACE_ZS &&
 		    (desc->channel[i].size < 12 &&
 		     desc->channel[i].type != UTIL_FORMAT_TYPE_FLOAT &&
@@ -1449,7 +1444,7 @@ static void r600_cb(struct r600_pipe_context *rctx, struct r600_pipe_state *rsta
 				(offset + r600_bo_offset(bo[0])) >> 8, 0xFFFFFFFF, bo[0]);
 	r600_pipe_state_add_reg(rstate,
 				R_0280A0_CB_COLOR0_INFO + cb * 4,
-				color_info, ~S_0280A0_BLEND_CLAMP(1), NULL);
+				color_info, 0xFFFFFFFF, bo[0]);
 	r600_pipe_state_add_reg(rstate,
 				R_028060_CB_COLOR0_SIZE + cb * 4,
 				S_028060_PITCH_TILE_MAX(pitch) |
