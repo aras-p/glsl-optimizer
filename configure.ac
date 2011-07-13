@@ -586,6 +586,22 @@ AC_ARG_ENABLE([gbm],
    [enable_gbm="$enableval"],
    [enable_gbm=auto])
 
+AC_ARG_ENABLE([xvmc],
+   [AS_HELP_STRING([--enable-xvmc],
+         [enable xvmc library @<:@default=auto@:>@])],
+   [enable_xvmc="$enableval"],
+   [enable_xvmc=auto])
+AC_ARG_ENABLE([vdpau],
+   [AS_HELP_STRING([--enable-vdpau],
+         [enable vdpau library @<:@default=auto@:>@])],
+   [enable_vdpau="$enableval"],
+   [enable_vdpau=auto])
+AC_ARG_ENABLE([va],
+   [AS_HELP_STRING([--enable-va],
+         [enable va library @<:@default=auto@:>@])],
+   [enable_va="$enableval"],
+   [enable_va=auto])
+
 AC_ARG_ENABLE([xlib_glx],
     [AS_HELP_STRING([--enable-xlib-glx],
         [make GLX library Xlib-based instead of DRI-based @<:@default=disable@:>@])],
@@ -630,7 +646,10 @@ if test "x$enable_opengl" = xno -a \
         "x$enable_openvg" = xno -a \
         "x$enable_xorg" = xno -a \
         "x$enable_xa" = xno -a \
-        "x$enable_d3d1x" = xno; then
+        "x$enable_d3d1x" = xno -a \
+        "x$enable_xvmc" = xno -a \
+        "x$enable_vdpau" = xno -a \
+        "x$enable_va" = xno; then
     AC_MSG_ERROR([at least one API should be enabled])
 fi
 
@@ -1479,6 +1498,56 @@ if test "x$enable_d3d1x" = xyes; then
 fi
 
 dnl
+dnl Gallium G3DVL configuration
+dnl
+AC_ARG_ENABLE([gallium-g3dvl],
+    [AS_HELP_STRING([--enable-gallium-g3dvl],
+        [build gallium g3dvl @<:@default=disabled@:>@])],
+    [enable_gallium_g3dvl="$enableval"],
+    [enable_gallium_g3dvl=no])
+if test "x$enable_gallium_g3dvl" = xyes; then
+    if test "x$with_gallium_drivers" = x; then
+        AC_MSG_ERROR([cannot enable G3DVL without Gallium])
+    fi
+
+    if test "x$enable_xvmc" = xauto; then
+        enable_xvmc=yes
+    fi
+
+    if test "x$enable_vdpau" = xauto; then
+        enable_vdpau=yes
+    fi
+
+    if test "x$enable_va" = xauto; then
+        enable_va=no
+    fi
+fi
+
+#TODO: Check for xvmc libs/headers
+if test "x$enable_xvmc" = xyes; then
+    GALLIUM_STATE_TRACKERS_DIRS="$GALLIUM_STATE_TRACKERS_DIRS xorg/xvmc"
+    HAVE_ST_XVMC="yes"
+fi
+
+#TODO: Check for vdpau libs/headers
+if test "x$enable_vdpau" = xyes; then
+    GALLIUM_STATE_TRACKERS_DIRS="$GALLIUM_STATE_TRACKERS_DIRS vdpau"
+    HAVE_ST_VDPAU="yes"
+fi
+
+#TODO: Check for va libs/headers
+if test "x$enable_va" = xyes; then
+    GALLIUM_STATE_TRACKERS_DIRS="$GALLIUM_STATE_TRACKERS_DIRS va"
+    HAVE_ST_VA="yes"
+fi
+
+if test "x$enable_xvmc" = xyes || 
+    test "x$enable_vdpau" = xyes ||
+    test "x$enable_va" = xyes; then
+    GALLIUM_WINSYS_DIRS="$GALLIUM_WINSYS_DIRS g3dvl/dri"
+fi
+
+dnl
 dnl GLU configuration
 dnl
 AC_ARG_ENABLE([glu],
@@ -1697,8 +1766,6 @@ AC_SUBST([LLVM_LIBS])
 AC_SUBST([LLVM_LDFLAGS])
 AC_SUBST([LLVM_VERSION])
 
-
-
 case "x$enable_opengl$enable_gles1$enable_gles2" in
 x*yes*)
     EGL_CLIENT_APIS="$EGL_CLIENT_APIS "'$(GL_LIB)'
@@ -1827,12 +1894,29 @@ else
     MESA_LLVM=0
 fi
 
+dnl Directory for VDPAU libs
+AC_ARG_WITH([vdpau-libdir],
+    [AS_HELP_STRING([--with-vdpau-libdir=DIR],
+        [directory for the VDPAU libraries @<:@default=${libdir}/vdpau@:>@])],
+    [VDPAU_LIB_INSTALL_DIR="$withval"],
+    [VDPAU_LIB_INSTALL_DIR='${libdir}/vdpau'])
+AC_SUBST([VDPAU_LIB_INSTALL_DIR])
+
+dnl Directory for VA libs
+AC_ARG_WITH([va-libdir],
+    [AS_HELP_STRING([--with-va-libdir=DIR],
+        [directory for the VA libraries @<:@default=${libdir}/va@:>@])],
+    [VA_LIB_INSTALL_DIR="$withval"],
+    [VA_LIB_INSTALL_DIR='${libdir}/va'])
+AC_SUBST([VA_LIB_INSTALL_DIR])
+
 dnl
 dnl Gallium helper functions
 dnl
 gallium_check_st() {
     if test "x$HAVE_ST_DRI" = xyes || test "x$HAVE_ST_XORG" = xyes ||
-	 test "x$HAVE_ST_XA" = xyes; then
+	 test "x$HAVE_ST_XA" = xyes || test "x$HAVE_ST_XVMC" = xyes ||
+	 test "x$HAVE_ST_VDPAU" = xyes || test "x$HAVE_ST_VA" = xyes; then
          if test "x$have_libdrm" != xyes; then
             AC_MSG_ERROR([DRI or Xorg DDX requires libdrm >= $LIBDRM_REQUIRED])
          fi
@@ -1846,6 +1930,15 @@ gallium_check_st() {
     fi
     if test "x$HAVE_ST_XA" = xyes && test "x$4" != x; then
          GALLIUM_TARGET_DIRS="$GALLIUM_TARGET_DIRS $4"
+    fi
+    if test "x$HAVE_ST_XVMC" = xyes && test "x$5" != x; then
+         GALLIUM_TARGET_DIRS="$GALLIUM_TARGET_DIRS $5"
+    fi
+    if test "x$HAVE_ST_VDPAU" = xyes && test "x$6" != x; then
+         GALLIUM_TARGET_DIRS="$GALLIUM_TARGET_DIRS $6"
+    fi
+    if test "x$HAVE_ST_VA" = xyes && test "x$7" != x; then
+         GALLIUM_TARGET_DIRS="$GALLIUM_TARGET_DIRS $7"
     fi
 }
 
@@ -1877,19 +1970,28 @@ if test "x$with_gallium_drivers" != x; then
             ;;
         xr300)
             gallium_require_llvm "Gallium R300"
-            gallium_check_st "radeon/drm" "dri-r300" "xorg-r300"
+            gallium_check_st "radeon/drm" "dri-r300" "xorg-radeon" "" "xvmc-r300" "vdpau-r300" "va-r300"
             ;;
         xr600)
             GALLIUM_DRIVERS_DIRS="$GALLIUM_DRIVERS_DIRS r600"
-            gallium_check_st "r600/drm" "dri-r600"
+            gallium_check_st "r600/drm" "dri-r600" "" "" "xvmc-r600" "vdpau-r600" "va-r600"
             ;;
         xnouveau)
             GALLIUM_DRIVERS_DIRS="$GALLIUM_DRIVERS_DIRS nouveau nvfx nv50 nvc0"
-            gallium_check_st "nouveau/drm" "dri-nouveau" "xorg-nouveau"
+            gallium_check_st "nouveau/drm" "dri-nouveau" "xorg-nouveau" "" "xvmc-nouveau"
             ;;
         xswrast)
             if test "x$HAVE_ST_DRI" = xyes; then
                 GALLIUM_TARGET_DIRS="$GALLIUM_TARGET_DIRS dri-swrast"
+            fi
+            if test "x$HAVE_ST_VDPAU" = xyes; then
+                GALLIUM_TARGET_DIRS="$GALLIUM_TARGET_DIRS vdpau-softpipe"
+            fi
+            if test "x$HAVE_ST_XVMC" = xyes; then
+                GALLIUM_TARGET_DIRS="$GALLIUM_TARGET_DIRS xvmc-softpipe"
+            fi
+            if test "x$HAVE_ST_VA" = xyes; then
+                GALLIUM_TARGET_DIRS="$GALLIUM_TARGET_DIRS va-softpipe"
             fi
             ;;
         *)

@@ -147,14 +147,17 @@ C_SOURCES = \
 	util/u_transfer.c \
 	util/u_resource.c \
 	util/u_upload_mgr.c \
-	util/u_vbuf_mgr.c
-
-	# Disabling until pipe-video branch gets merged in
-	#vl/vl_bitstream_parser.c \
-	#vl/vl_mpeg12_mc_renderer.c \
-	#vl/vl_compositor.c \
-	#vl/vl_csc.c \
-	#vl/vl_shader_build.c \
+	util/u_vbuf_mgr.c \
+	vl/vl_csc.c \
+	vl/vl_compositor.c \
+	vl/vl_decoder.c \
+	vl/vl_mpeg12_decoder.c \
+	vl/vl_mpeg12_bitstream.c \
+	vl/vl_zscan.c \
+        vl/vl_idct.c \
+	vl/vl_mc.c \
+        vl/vl_vertex_buffers.c \
+        vl/vl_video_buffer.c
 
 GALLIVM_SOURCES = \
         gallivm/lp_bld_arit.c \
@@ -225,3 +228,4 @@ util/u_format_table.c: util/u_format_table.py util/u_format_pack.py util/u_forma
 
 util/u_half.c: util/u_half.py
 	$(PYTHON2) util/u_half.py > $@
+# DO NOT DELETE

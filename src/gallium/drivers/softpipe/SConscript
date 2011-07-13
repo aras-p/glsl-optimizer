@@ -35,6 +35,7 @@ softpipe = env.ConvenienceLibrary(
 		'sp_tex_tile_cache.c',
 		'sp_texture.c',
 		'sp_tile_cache.c',
+		'sp_video_context.c',
 	])
 
 env.Alias('softpipe', softpipe)

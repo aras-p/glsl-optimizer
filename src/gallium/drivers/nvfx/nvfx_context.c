@@ -1,6 +1,8 @@
 #include "draw/draw_context.h"
 #include "pipe/p_defines.h"
 #include "util/u_framebuffer.h"
+#include "vl/vl_decoder.h"
+#include "vl/vl_video_buffer.h"
 
 #include "nvfx_context.h"
 #include "nvfx_screen.h"
@@ -87,6 +89,9 @@ nvfx_create(struct pipe_screen *pscreen, void *priv)
 	nvfx->pipe.draw_vbo = nvfx_draw_vbo;
 	nvfx->pipe.clear = nvfx_clear;
 	nvfx->pipe.flush = nvfx_flush;
+
+	nvfx->pipe.create_video_decoder = vl_create_decoder;
+	nvfx->pipe.create_video_buffer = vl_video_buffer_create;
 
 	nvfx->is_nv4x = screen->is_nv4x;
 	nvfx->use_nv4x = screen->use_nv4x;

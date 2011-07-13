@@ -1,8 +1,8 @@
 /**************************************************************************
- * 
+ *
  * Copyright 2008 Tungsten Graphics, Inc., Cedar Park, Texas.
  * All Rights Reserved.
- * 
+ *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the
  * "Software"), to deal in the Software without restriction, including
@@ -10,11 +10,11 @@
  * distribute, sub license, and/or sell copies of the Software, and to
  * permit persons to whom the Software is furnished to do so, subject to
  * the following conditions:
- * 
+ *
  * The above copyright notice and this permission notice (including the
  * next paragraph) shall be included in all copies or substantial portions
  * of the Software.
- * 
+ *
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
  * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
  * MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NON-INFRINGEMENT.
@@ -22,16 +22,19 @@
  * ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT,
  * TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
  * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
- * 
+ *
  **************************************************************************/
 
 
 #include "util/u_memory.h"
 #include "util/u_format.h"
 #include "util/u_format_s3tc.h"
+#include "util/u_video.h"
 #include "pipe/p_defines.h"
 #include "pipe/p_screen.h"
 #include "draw/draw_context.h"
+#include "vl/vl_decoder.h"
+#include "vl/vl_video_buffer.h"
 
 #include "state_tracker/sw_winsys.h"
 #include "tgsi/tgsi_exec.h"
@@ -169,6 +172,23 @@ softpipe_get_paramf(struct pipe_screen *screen, enum pipe_cap param)
    }
 }
 
+static int
+softpipe_get_video_param(struct pipe_screen *screen,
+                         enum pipe_video_profile profile,
+                         enum pipe_video_cap param)
+{
+   switch (param) {
+   case PIPE_VIDEO_CAP_SUPPORTED:
+       return vl_profile_supported(screen, profile);
+   case PIPE_VIDEO_CAP_NPOT_TEXTURES:
+      return 0;
+   case PIPE_VIDEO_CAP_MAX_WIDTH:
+   case PIPE_VIDEO_CAP_MAX_HEIGHT:
+      return vl_video_buffer_max_size(screen);
+   default:
+      return 0;
+   }
+}
 
 /**
  * Query format support for creating a texture, drawing surface, etc.
@@ -307,7 +327,9 @@ softpipe_create_screen(struct sw_winsys *winsys)
    screen->base.get_param = softpipe_get_param;
    screen->base.get_shader_param = softpipe_get_shader_param;
    screen->base.get_paramf = softpipe_get_paramf;
+   screen->base.get_video_param = softpipe_get_video_param;
    screen->base.is_format_supported = softpipe_is_format_supported;
+   screen->base.is_video_format_supported = vl_video_buffer_is_format_supported;
    screen->base.context_create = softpipe_create_context;
    screen->base.flush_frontbuffer = softpipe_flush_frontbuffer;
 

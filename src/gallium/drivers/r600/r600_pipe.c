@@ -38,6 +38,8 @@
 #include <util/u_memory.h>
 #include <util/u_inlines.h>
 #include "util/u_upload_mgr.h"
+#include <vl/vl_decoder.h>
+#include <vl/vl_video_buffer.h>
 #include "os/os_time.h"
 #include <pipebuffer/pb_buffer.h>
 #include "r600.h"
@@ -223,6 +225,9 @@ static struct pipe_context *r600_create_context(struct pipe_screen *screen, void
 	r600_init_context_resource_functions(rctx);
 	r600_init_surface_functions(rctx);
 	rctx->context.draw_vbo = r600_draw_vbo;
+
+	rctx->context.create_video_decoder = vl_create_decoder;
+	rctx->context.create_video_buffer = vl_video_buffer_create;
 
 	switch (rctx->chip_class) {
 	case R600:
@@ -481,6 +486,23 @@ static int r600_get_shader_param(struct pipe_screen* pscreen, unsigned shader, e
 	}
 }
 
+static int r600_get_video_param(struct pipe_screen *screen,
+				enum pipe_video_profile profile,
+				enum pipe_video_cap param)
+{
+	switch (param) {
+	case PIPE_VIDEO_CAP_SUPPORTED:
+		return vl_profile_supported(screen, profile);
+	case PIPE_VIDEO_CAP_NPOT_TEXTURES:
+		return 1;
+	case PIPE_VIDEO_CAP_MAX_WIDTH:
+	case PIPE_VIDEO_CAP_MAX_HEIGHT:
+		return vl_video_buffer_max_size(screen);
+	default:
+		return 0;
+	}
+}
+
 static void r600_destroy_screen(struct pipe_screen* pscreen)
 {
 	struct r600_screen *rscreen = (struct r600_screen *)pscreen;
@@ -569,11 +591,13 @@ struct pipe_screen *r600_screen_create(struct radeon *radeon)
 	rscreen->screen.get_param = r600_get_param;
 	rscreen->screen.get_shader_param = r600_get_shader_param;
 	rscreen->screen.get_paramf = r600_get_paramf;
+	rscreen->screen.get_video_param = r600_get_video_param;
 	if (r600_get_family_class(radeon) >= EVERGREEN) {
 		rscreen->screen.is_format_supported = evergreen_is_format_supported;
 	} else {
 		rscreen->screen.is_format_supported = r600_is_format_supported;
 	}
+	rscreen->screen.is_video_format_supported = vl_video_buffer_is_format_supported;
 	rscreen->screen.context_create = r600_create_context;
 	rscreen->screen.fence_reference = r600_fence_reference;
 	rscreen->screen.fence_signalled = r600_fence_signalled;

@@ -79,7 +79,6 @@ struct softpipe_transfer
 };
 
 
-
 /** cast wrappers */
 static INLINE struct softpipe_resource *
 softpipe_resource(struct pipe_resource *pt)

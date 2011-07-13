@@ -2,6 +2,7 @@
 #define __NVFX_STATE_H__
 
 #include "pipe/p_state.h"
+#include "pipe/p_video_state.h"
 #include "tgsi/tgsi_scan.h"
 #include "nouveau/nouveau_statebuf.h"
 #include "util/u_dynarray.h"

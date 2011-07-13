@@ -259,3 +259,11 @@ PIPE_FORMAT_R32G32B32A32_FIXED    , plain, 1, 1, h32 , h32 , h32 , h32 , xyzw, r
 PIPE_FORMAT_R10G10B10X2_USCALED   , plain, 1, 1, u10 , u10 , u10  , x2 , xyz1, rgb
 # A.k.a. D3DDECLTYPE_DEC3N
 PIPE_FORMAT_R10G10B10X2_SNORM     , plain, 1, 1, sn10, sn10, sn10 , x2 , xyz1, rgb
+
+PIPE_FORMAT_YV12                  , subsampled, 1, 1, x8  , x8  , x8  , x8  , xyzw, yuv
+PIPE_FORMAT_YV16                  , subsampled, 1, 1, x8  , x8  , x8  , x8  , xyzw, yuv
+PIPE_FORMAT_IYUV                  , subsampled, 1, 1, x8  , x8  , x8  , x8  , xyzw, yuv
+PIPE_FORMAT_NV12                  , subsampled, 1, 1, x8  , x8  , x8  , x8  , xyzw, yuv
+PIPE_FORMAT_NV21                  , subsampled, 1, 1, x8  , x8  , x8  , x8  , xyzw, yuv
+PIPE_FORMAT_IA44                  , subsampled, 1, 1, x8  , x8  , x8  , x8  , xyzw, yuv
+PIPE_FORMAT_AI44                  , subsampled, 1, 1, x8  , x8  , x8  , x8  , xyzw, yuv

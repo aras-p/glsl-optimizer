@@ -92,6 +92,14 @@ struct pipe_screen {
     */
    int (*get_shader_param)( struct pipe_screen *, unsigned shader, enum pipe_shader_cap param );
 
+   /**
+    * Query an integer-valued capability/parameter/limit for a codec/profile
+    * \param param  one of PIPE_VIDEO_CAP_x
+    */
+   int (*get_video_param)( struct pipe_screen *,
+			   enum pipe_video_profile profile,
+			   enum pipe_video_cap param );
+
    struct pipe_context * (*context_create)( struct pipe_screen *,
 					    void *priv );
 
@@ -105,6 +113,14 @@ struct pipe_screen {
                                    enum pipe_texture_target target,
                                    unsigned sample_count,
                                    unsigned bindings );
+
+   /**
+    * Check if the given pipe_format is supported as output for this codec/profile.
+    * \param profile  profile to check, may also be PIPE_VIDEO_PROFILE_UNKNOWN
+    */
+   boolean (*is_video_format_supported)( struct pipe_screen *,
+                                         enum pipe_format format,
+                                         enum pipe_video_profile profile );
 
    /**
     * Create a new texture object, using the given template info.
