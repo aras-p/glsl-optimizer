@@ -791,6 +791,8 @@ vl_idct_init_buffer(struct vl_idct *idct, struct vl_idct_buffer *buffer,
 
    memset(buffer, 0, sizeof(struct vl_idct_buffer));
 
+   buffer->idct = idct;
+
    pipe_sampler_view_reference(&buffer->sampler_views.individual.matrix, idct->matrix);
    pipe_sampler_view_reference(&buffer->sampler_views.individual.source, source);
    pipe_sampler_view_reference(&buffer->sampler_views.individual.transpose, idct->transpose);
@@ -806,22 +808,24 @@ vl_idct_init_buffer(struct vl_idct *idct, struct vl_idct_buffer *buffer,
 }
 
 void
-vl_idct_cleanup_buffer(struct vl_idct *idct, struct vl_idct_buffer *buffer)
+vl_idct_cleanup_buffer(struct vl_idct_buffer *buffer)
 {
-   assert(idct && buffer);
+   assert(buffer);
 
-   cleanup_source(idct, buffer);
-   cleanup_intermediate(idct, buffer);
+   cleanup_source(buffer->idct, buffer);
+   cleanup_intermediate(buffer->idct, buffer);
 
    pipe_sampler_view_reference(&buffer->sampler_views.individual.matrix, NULL);
    pipe_sampler_view_reference(&buffer->sampler_views.individual.transpose, NULL);
 }
 
 void
-vl_idct_flush(struct vl_idct *idct, struct vl_idct_buffer *buffer, unsigned num_instances)
+vl_idct_flush(struct vl_idct_buffer *buffer, unsigned num_instances)
 {
-   assert(idct);
+   struct vl_idct *idct;
    assert(buffer);
+   
+   idct = buffer->idct;
 
    idct->pipe->bind_rasterizer_state(idct->pipe, idct->rs_state);
    idct->pipe->bind_blend_state(idct->pipe, idct->blend);
@@ -844,14 +848,13 @@ vl_idct_flush(struct vl_idct *idct, struct vl_idct_buffer *buffer, unsigned num_
 }
 
 void
-vl_idct_prepare_stage2(struct vl_idct *idct, struct vl_idct_buffer *buffer)
+vl_idct_prepare_stage2(struct vl_idct_buffer *buffer)
 {
-   assert(idct);
    assert(buffer);
 
    /* second stage */
-   idct->pipe->bind_rasterizer_state(idct->pipe, idct->rs_state);
-   idct->pipe->bind_fragment_sampler_states(idct->pipe, 2, idct->samplers);
-   idct->pipe->set_fragment_sampler_views(idct->pipe, 2, buffer->sampler_views.stage[1]);
+   buffer->idct->pipe->bind_rasterizer_state(buffer->idct->pipe, buffer->idct->rs_state);
+   buffer->idct->pipe->bind_fragment_sampler_states(buffer->idct->pipe, 2, buffer->idct->samplers);
+   buffer->idct->pipe->set_fragment_sampler_views(buffer->idct->pipe, 2, buffer->sampler_views.stage[1]);
 }
 
