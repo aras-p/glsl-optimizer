@@ -27,6 +27,7 @@
 #include "pipe/p_shader_tokens.h"
 #include "tgsi/tgsi_parse.h"
 #include "util/u_memory.h"
+#include "util/u_math.h"
 
 #include "svga_tgsi_emit.h"
 #include "svga_context.h"
@@ -623,8 +624,11 @@ create_zero_immediate( struct svga_shader_emitter *emit )
 {
    unsigned idx = emit->nr_hw_float_const++;
 
+   /* Emit the constant (0, 0, -1, 1) and use swizzling to generate
+    * other useful vectors.
+    */
    if (!emit_def_const( emit, SVGA3D_CONST_TYPE_FLOAT,
-                        idx, 0, 0, 0, 1 ))
+                        idx, 0, 0, -1, 1 ))
       return FALSE;
 
    emit->zero_immediate_idx = idx;
@@ -731,8 +735,20 @@ get_zero_immediate( struct svga_shader_emitter *emit )
 {
    assert(emit->created_zero_immediate);
    assert(emit->zero_immediate_idx >= 0);
-   return src_register( SVGA3DREG_CONST,
-                        emit->zero_immediate_idx );
+   return swizzle(src_register( SVGA3DREG_CONST,
+                                emit->zero_immediate_idx),
+                  0, 0, 0, 3);
+}
+
+/* returns {1, 1, 1, -1} immediate */
+static INLINE struct src_register
+get_pos_neg_one_immediate( struct svga_shader_emitter *emit )
+{
+   assert(emit->created_zero_immediate);
+   assert(emit->zero_immediate_idx >= 0);
+   return swizzle(src_register( SVGA3DREG_CONST,
+                                emit->zero_immediate_idx),
+                  3, 3, 3, 2);
 }
 
 /* returns the loop const */
@@ -2849,6 +2865,50 @@ static boolean emit_frontface( struct svga_shader_emitter *emit )
    return TRUE;
 }
 
+
+/**
+ * Emit code to invert the T component of the incoming texture coordinate.
+ * This is used for drawing point sprites when
+ * pipe_rasterizer_state::sprite_coord_mode == PIPE_SPRITE_COORD_LOWER_LEFT.
+ */
+static boolean emit_inverted_texcoords( struct svga_shader_emitter *emit )
+{
+   struct src_register zero = get_zero_immediate(emit);
+   struct src_register pos_neg_one = get_pos_neg_one_immediate( emit );
+   unsigned inverted_texcoords = emit->inverted_texcoords;
+
+   while (inverted_texcoords) {
+      const unsigned unit = ffs(inverted_texcoords) - 1;
+
+      assert(emit->inverted_texcoords & (1 << unit));
+
+      assert(unit < Elements(emit->ps_true_texcoord));
+
+      assert(unit < Elements(emit->ps_inverted_texcoord_input));
+
+      assert(emit->ps_inverted_texcoord_input[unit]
+             < Elements(emit->input_map));
+
+      /* inverted = coord * (1, -1, 1, 1) + (0, 1, 0, 0) */
+      if (!submit_op3(emit, 
+                      inst_token(SVGA3DOP_MAD), 
+                      dst(emit->ps_inverted_texcoord[unit]),
+                      emit->ps_true_texcoord[unit],
+                      swizzle(pos_neg_one, 0, 3, 0, 0),  /* (1, -1, 1, 1) */
+                      swizzle(zero, 0, 3, 0, 0)))  /* (0, 1, 0, 0) */
+         return FALSE;
+
+      /* Reassign the input_map entry to the new texcoord register */
+      emit->input_map[emit->ps_inverted_texcoord_input[unit]] =
+         emit->ps_inverted_texcoord[unit];
+
+      inverted_texcoords &= ~(1 << unit);      
+   }
+
+   return TRUE;
+}
+
+
 static INLINE boolean
 needs_to_create_zero( struct svga_shader_emitter *emit )
 {
@@ -2870,6 +2930,9 @@ needs_to_create_zero( struct svga_shader_emitter *emit )
       if (emit->info.opcode_count[TGSI_OPCODE_DST] >= 1 ||
           emit->info.opcode_count[TGSI_OPCODE_SSG] >= 1 ||
           emit->info.opcode_count[TGSI_OPCODE_LIT] >= 1)
+         return TRUE;
+
+      if (emit->inverted_texcoords)
          return TRUE;
    }
 
@@ -3034,6 +3097,10 @@ static boolean svga_shader_emit_helpers( struct svga_shader_emitter *emit )
       }
       if (emit->emit_frontface) {
          if (!emit_frontface( emit ))
+            return FALSE;
+      }
+      if (emit->inverted_texcoords) {
+         if (!emit_inverted_texcoords( emit ))
             return FALSE;
       }
    }

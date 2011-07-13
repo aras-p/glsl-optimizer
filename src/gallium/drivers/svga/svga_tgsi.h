@@ -52,12 +52,14 @@ struct svga_fs_compile_key
    unsigned white_fragments:1;
    unsigned num_textures:8;
    unsigned num_unnormalized_coords:8;
+   unsigned sprite_origin_lower_left:1;
    struct {
       unsigned compare_mode:1;
       unsigned compare_func:3;
       unsigned unnormalized:1;
       unsigned width_height_idx:7;
       unsigned texture_target:8;
+      unsigned sprite_texgen:1;
    } tex[PIPE_MAX_SAMPLERS];
 };
 

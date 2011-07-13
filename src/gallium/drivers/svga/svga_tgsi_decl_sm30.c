@@ -234,7 +234,36 @@ static boolean ps30_input( struct svga_shader_emitter *emit,
       emit->input_map[idx] = src_register( SVGA3DREG_INPUT, emit->ps30_input_count++ );
       reg = dst( emit->input_map[idx] );
 
-      return emit_decl( emit, reg, usage, index );
+      if (!emit_decl( emit, reg, usage, index ))
+         return FALSE;
+
+      if (semantic.Name == TGSI_SEMANTIC_GENERIC &&
+          emit->key.fkey.sprite_origin_lower_left &&
+          index >= 1 &&
+          emit->key.fkey.tex[index - 1].sprite_texgen) {
+         /* This is a sprite texture coord with lower-left origin.
+          * We need to invert the texture T coordinate since the SVGA3D
+          * device only supports an upper-left origin.
+          */
+         unsigned unit = index - 1;
+
+         emit->inverted_texcoords |= (1 << unit);
+
+         /* save original texcoord reg */
+         emit->ps_true_texcoord[unit] = emit->input_map[idx];
+
+         /* this temp register will be the results of the MAD instruction */
+         emit->ps_inverted_texcoord[unit] =
+            src_register(SVGA3DREG_TEMP, emit->nr_hw_temp);
+         emit->nr_hw_temp++;
+
+         emit->ps_inverted_texcoord_input[unit] = idx;
+
+         /* replace input_map entry with the temp register */
+         emit->input_map[idx] = emit->ps_inverted_texcoord[unit];
+      }
+
+      return TRUE;
    }
 
 }

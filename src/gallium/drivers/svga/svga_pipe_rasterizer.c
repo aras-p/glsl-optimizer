@@ -89,6 +89,7 @@ svga_create_rasterizer_state(struct pipe_context *pipe,
    rast->multisampleantialias = templ->multisample;
    rast->antialiasedlineenable = templ->line_smooth;
    rast->lastpixel = templ->line_last_pixel;
+   rast->pointsprite = templ->sprite_coord_enable != 0x0;
    rast->pointsize = templ->point_size;
    rast->hw_unfilled = PIPE_POLYGON_MODE_FILL;
 
