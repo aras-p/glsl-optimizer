@@ -17,6 +17,10 @@ AC_INIT([Mesa],[mesa_version],
 AC_CONFIG_AUX_DIR([bin])
 AC_CANONICAL_HOST
 
+dnl Save user CFLAGS and CXXFLAGS so one can override the default ones
+USER_CFLAGS="$CFLAGS"
+USER_CXXFLAGS="$CXXFLAGS"
+
 dnl Versions for external dependencies
 LIBDRM_REQUIRED=2.4.24
 LIBDRM_RADEON_REQUIRED=2.4.24
@@ -2021,6 +2025,10 @@ SRC_DIRS="$CORE_DIRS $SRC_DIRS"
 dnl Restore LDFLAGS and CPPFLAGS
 LDFLAGS="$_SAVE_LDFLAGS"
 CPPFLAGS="$_SAVE_CPPFLAGS"
+
+dnl Add user CFLAGS and CXXFLAGS
+CFLAGS="$CFLAGS $USER_CFLAGS"
+CXXFLAGS="$CXXFLAGS $USER_CXXFLAGS"
 
 dnl Substitute the config
 AC_CONFIG_FILES([configs/autoconf])
