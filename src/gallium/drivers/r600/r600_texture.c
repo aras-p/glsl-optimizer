@@ -298,7 +298,7 @@ static boolean permit_hardware_blit(struct pipe_screen *screen,
 	/* hackaround for S3TC */
 	if (util_format_is_compressed(res->format))
 		return TRUE;
-
+	    
 	if (!screen->is_format_supported(screen,
 				res->format,
 				res->target,
@@ -313,16 +313,14 @@ static boolean permit_hardware_blit(struct pipe_screen *screen,
                                 PIPE_BIND_SAMPLER_VIEW))
 		return FALSE;
 
-        switch (res->usage) {
-        case PIPE_USAGE_STREAM:
-        case PIPE_USAGE_STAGING:
-        case PIPE_USAGE_STATIC:
-        case PIPE_USAGE_IMMUTABLE:
-                return FALSE;
+	switch (res->usage) {
+	case PIPE_USAGE_STREAM:
+	case PIPE_USAGE_STAGING:
+		return FALSE;
 
-        default:
-                return TRUE;
-        }
+	default:
+		return TRUE;
+	}
 }
 
 static boolean r600_texture_get_handle(struct pipe_screen* screen,
