@@ -525,26 +525,23 @@ vl_zscan_set_layout(struct vl_zscan_buffer *buffer, struct pipe_sampler_view *la
 }
 
 void
-vl_zscan_upload_quant(struct vl_zscan_buffer *buffer,
-                      const uint8_t intra_matrix[64],
-                      const uint8_t non_intra_matrix[64])
+vl_zscan_upload_quant(struct vl_zscan_buffer *buffer, const uint8_t matrix[64], bool intra)
 {
    struct pipe_context *pipe;
    struct pipe_transfer *buf_transfer;
    unsigned x, y, i, pitch;
-   uint8_t *intra, *non_intra;
+   uint8_t *data;
 
    struct pipe_box rect =
    {
-      0, 0, 0,
+      0, 0, intra ? 1 : 0,
       BLOCK_WIDTH,
       BLOCK_HEIGHT,
-      2
+      1
    };
 
    assert(buffer);
-   assert(intra_matrix);
-   assert(non_intra_matrix);
+   assert(matrix);
 
    pipe = buffer->zscan->pipe;
 
@@ -561,18 +558,14 @@ vl_zscan_upload_quant(struct vl_zscan_buffer *buffer,
 
    pitch = buf_transfer->stride;
 
-   non_intra = pipe->transfer_map(pipe, buf_transfer);
-   if (!non_intra)
+   data = pipe->transfer_map(pipe, buf_transfer);
+   if (!data)
       goto error_map;
-
-   intra = non_intra + BLOCK_HEIGHT * pitch;
 
    for (i = 0; i < buffer->zscan->blocks_per_line; ++i)
       for (y = 0; y < BLOCK_HEIGHT; ++y)
-         for (x = 0; x < BLOCK_WIDTH; ++x) {
-            intra[i * BLOCK_WIDTH + y * pitch + x] = intra_matrix[x + y * BLOCK_WIDTH];
-            non_intra[i * BLOCK_WIDTH + y * pitch + x] = non_intra_matrix[x + y * BLOCK_WIDTH];
-         }
+         for (x = 0; x < BLOCK_WIDTH; ++x)
+            data[i * BLOCK_WIDTH + y * pitch + x] = matrix[x + y * BLOCK_WIDTH];
 
    pipe->transfer_unmap(pipe, buf_transfer);
 

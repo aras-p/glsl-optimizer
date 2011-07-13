@@ -330,8 +330,10 @@ vl_mpeg12_buffer_set_quant_matrix(struct pipe_video_decode_buffer *buffer,
    struct vl_mpeg12_buffer *buf = (struct vl_mpeg12_buffer*)buffer;
    unsigned i;
 
-   for (i = 0; i < VL_MAX_PLANES; ++i)
-      vl_zscan_upload_quant(&buf->zscan[i], intra_matrix, non_intra_matrix);
+   for (i = 0; i < VL_MAX_PLANES; ++i) {
+      vl_zscan_upload_quant(&buf->zscan[i], intra_matrix, true);
+      vl_zscan_upload_quant(&buf->zscan[i], non_intra_matrix, false);
+   }
 }
 
 static struct pipe_ycbcr_block *

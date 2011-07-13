@@ -93,9 +93,7 @@ void
 vl_zscan_set_layout(struct vl_zscan_buffer *buffer, struct pipe_sampler_view *layout);
 
 void
-vl_zscan_upload_quant(struct vl_zscan_buffer *buffer,
-                      const uint8_t intra_matrix[64],
-                      const uint8_t non_intra_matrix[64]);
+vl_zscan_upload_quant(struct vl_zscan_buffer *buffer, const uint8_t matrix[64], bool intra);
 
 void
 vl_zscan_render(struct vl_zscan_buffer *buffer, unsigned num_instances);
