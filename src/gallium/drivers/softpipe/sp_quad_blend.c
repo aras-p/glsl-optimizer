@@ -817,17 +817,25 @@ blend_fallback(struct quad_stage *qs,
                               quads[0]->input.y0);
       boolean has_dst_alpha
          = util_format_has_alpha(softpipe->framebuffer.cbufs[cbuf]->format);
-      uint q, i, j, qbuf;
-
-      qbuf = write_all ? 0 : cbuf;
+      uint q, i, j;
 
       for (q = 0; q < nr; q++) {
          struct quad_header *quad = quads[q];
          float (*quadColor)[4];
+         float temp_quad_color[QUAD_SIZE][4];
          const int itx = (quad->input.x0 & (TILE_SIZE-1));
          const int ity = (quad->input.y0 & (TILE_SIZE-1));
 
-         quadColor = quad->output.color[qbuf];
+         if (write_all) {
+            for (j = 0; j < QUAD_SIZE; j++) {
+               for (i = 0; i < 4; i++) {
+                  temp_quad_color[i][j] = quad->output.color[0][i][j];
+               }
+            }
+            quadColor = temp_quad_color;
+         } else {
+            quadColor = quad->output.color[cbuf];
+         }
 
          /* get/swizzle dest colors
           */
