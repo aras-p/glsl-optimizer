@@ -41,6 +41,7 @@
 #include "pipe/p_defines.h"
 #include "st_context.h"
 #include "st_cb_queryobj.h"
+#include "st_cb_bitmap.h"
 
 
 #if FEATURE_queryobj
@@ -82,6 +83,8 @@ st_BeginQuery(struct gl_context *ctx, struct gl_query_object *q)
    struct pipe_context *pipe = st_context(ctx)->pipe;
    struct st_query_object *stq = st_query_object(q);
    unsigned type;
+
+   st_flush_bitmap_cache(st_context(ctx));
 
    /* convert GL query type to Gallium query type */
    switch (q->Target) {
@@ -127,6 +130,8 @@ st_EndQuery(struct gl_context *ctx, struct gl_query_object *q)
 {
    struct pipe_context *pipe = st_context(ctx)->pipe;
    struct st_query_object *stq = st_query_object(q);
+
+   st_flush_bitmap_cache(st_context(ctx));
 
    pipe->end_query(pipe, stq->pq);
 }
