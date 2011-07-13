@@ -542,7 +542,7 @@ static void brw_emit_vertices(struct brw_context *brw)
     */
    if (brw->vb.nr_enabled == 0) {
       BEGIN_BATCH(3);
-      OUT_BATCH((CMD_VERTEX_ELEMENT << 16) | 1);
+      OUT_BATCH((_3DSTATE_VERTEX_ELEMENTS << 16) | 1);
       if (intel->gen >= 6) {
 	 OUT_BATCH((0 << GEN6_VE0_INDEX_SHIFT) |
 		   GEN6_VE0_VALID |
@@ -567,7 +567,7 @@ static void brw_emit_vertices(struct brw_context *brw)
 
    if (brw->vb.nr_buffers) {
       BEGIN_BATCH(1 + 4*brw->vb.nr_buffers);
-      OUT_BATCH((CMD_VERTEX_BUFFER << 16) | (4*brw->vb.nr_buffers - 1));
+      OUT_BATCH((_3DSTATE_VERTEX_BUFFERS << 16) | (4*brw->vb.nr_buffers - 1));
       for (i = 0; i < brw->vb.nr_buffers; i++) {
 	 struct brw_vertex_buffer *buffer = &brw->vb.buffers[i];
 	 uint32_t dw0;
@@ -598,7 +598,7 @@ static void brw_emit_vertices(struct brw_context *brw)
    }
 
    BEGIN_BATCH(1 + brw->vb.nr_enabled * 2);
-   OUT_BATCH((CMD_VERTEX_ELEMENT << 16) | (2*brw->vb.nr_enabled - 1));
+   OUT_BATCH((_3DSTATE_VERTEX_ELEMENTS << 16) | (2*brw->vb.nr_enabled - 1));
    for (i = 0; i < brw->vb.nr_enabled; i++) {
       struct brw_vertex_element *input = brw->vb.enabled[i];
       uint32_t format = get_surface_type(input->glarray->Type,
