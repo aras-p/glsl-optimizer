@@ -1427,7 +1427,6 @@ create_new_program(struct gl_context *ctx, struct state_key *key,
    struct texenv_fragment_program p;
    GLuint unit;
    struct ureg cf, out;
-   int i;
 
    memset(&p, 0, sizeof(p));
    p.state = key;
@@ -1450,12 +1449,8 @@ create_new_program(struct gl_context *ctx, struct state_key *key,
    p.program->Base.Parameters = _mesa_new_parameter_list();
    p.program->Base.InputsRead = 0x0;
 
-   if (key->num_draw_buffers == 1)
+   if (key->num_draw_buffers >= 1)
       p.program->Base.OutputsWritten = 1 << FRAG_RESULT_COLOR;
-   else {
-      for (i = 0; i < key->num_draw_buffers; i++)
-	 p.program->Base.OutputsWritten |= (1 << (FRAG_RESULT_DATA0 + i));
-   }
 
    for (unit = 0; unit < ctx->Const.MaxTextureUnits; unit++) {
       p.src_texture[unit] = undef;
@@ -1505,12 +1500,8 @@ create_new_program(struct gl_context *ctx, struct state_key *key,
 
    cf = get_source( &p, SRC_PREVIOUS, 0 );
 
-   for (i = 0; i < key->num_draw_buffers; i++) {
-      if (key->num_draw_buffers == 1)
-	 out = make_ureg( PROGRAM_OUTPUT, FRAG_RESULT_COLOR );
-      else {
-	 out = make_ureg( PROGRAM_OUTPUT, FRAG_RESULT_DATA0 + i );
-      }
+   if (key->num_draw_buffers >= 1) {
+      out = make_ureg( PROGRAM_OUTPUT, FRAG_RESULT_COLOR );
 
       if (key->separate_specular) {
 	 /* Emit specular add.
