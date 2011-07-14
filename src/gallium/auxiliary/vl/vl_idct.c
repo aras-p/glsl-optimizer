@@ -32,6 +32,7 @@
 
 #include <util/u_draw.h>
 #include <util/u_sampler.h>
+#include <util/u_memory.h>
 
 #include <tgsi/tgsi_ureg.h>
 
@@ -219,7 +220,9 @@ create_mismatch_frag_shader(struct vl_idct *idct)
    }
 
    for (i = 0; i < 8; ++i) {
-      struct ureg_src s_addr[2] = { ureg_src(m[i][0]), ureg_src(m[i][1]) };
+      struct ureg_src s_addr[2];
+      s_addr[0] = ureg_src(m[i][0]);
+      s_addr[1] = ureg_src(m[i][1]);
       fetch_four(shader, m[i], s_addr, ureg_DECL_sampler(shader, 0), false);
    }
 
@@ -323,13 +326,15 @@ create_stage1_frag_shader(struct vl_idct *idct)
    struct ureg_src l_addr[2], r_addr[2];
 
    struct ureg_dst l[4][2], r[2];
-   struct ureg_dst fragment[idct->nr_of_render_targets];
+   struct ureg_dst *fragment;
 
    int i, j;
 
    shader = ureg_create(TGSI_PROCESSOR_FRAGMENT);
    if (!shader)
       return NULL;
+
+   fragment = MALLOC(idct->nr_of_render_targets * sizeof(struct ureg_dst));
 
    l_addr[0] = ureg_DECL_fs_input(shader, TGSI_SEMANTIC_GENERIC, VS_O_L_ADDR0, TGSI_INTERPOLATE_LINEAR);
    l_addr[1] = ureg_DECL_fs_input(shader, TGSI_SEMANTIC_GENERIC, VS_O_L_ADDR1, TGSI_INTERPOLATE_LINEAR);
@@ -353,14 +358,19 @@ create_stage1_frag_shader(struct vl_idct *idct)
    }
 
    for (i = 0; i < 4; ++i) {
-      struct ureg_src s_addr[2] = { ureg_src(l[i][0]), ureg_src(l[i][1]) };
+      struct ureg_src s_addr[2];
+      s_addr[0] = ureg_src(l[i][0]);
+      s_addr[1] = ureg_src(l[i][1]);
       fetch_four(shader, l[i], s_addr, ureg_DECL_sampler(shader, 0), false);
    }
 
    for (i = 0; i < idct->nr_of_render_targets; ++i) {
+      struct ureg_src s_addr[2];
+
       increment_addr(shader, r, r_addr, true, true, i - (signed)idct->nr_of_render_targets / 2, BLOCK_HEIGHT);
 
-      struct ureg_src s_addr[2] = { ureg_src(r[0]), ureg_src(r[1]) };
+      s_addr[0] = ureg_src(r[0]);
+      s_addr[1] = ureg_src(r[1]);
       fetch_four(shader, r, s_addr, ureg_DECL_sampler(shader, 1), false);
 
       for (j = 0; j < 4; ++j) {
@@ -376,6 +386,8 @@ create_stage1_frag_shader(struct vl_idct *idct)
    ureg_release_temporary(shader, r[1]);
 
    ureg_END(shader);
+
+   FREE(fragment);
 
    return ureg_create_shader_and_destroy(shader, idct->pipe);
 }

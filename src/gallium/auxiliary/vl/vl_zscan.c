@@ -33,6 +33,7 @@
 #include <util/u_draw.h>
 #include <util/u_sampler.h>
 #include <util/u_inlines.h>
+#include <util/u_memory.h>
 
 #include <tgsi/tgsi_ureg.h>
 
@@ -96,13 +97,16 @@ create_vert_shader(struct vl_zscan *zscan)
    struct ureg_src vrect, vpos, block_num;
 
    struct ureg_dst tmp;
-   struct ureg_dst o_vpos, o_vtex[zscan->num_channels];
+   struct ureg_dst o_vpos;
+   struct ureg_dst *o_vtex;
 
    signed i;
 
    shader = ureg_create(TGSI_PROCESSOR_VERTEX);
    if (!shader)
       return NULL;
+
+   o_vtex = MALLOC(zscan->num_channels * sizeof(struct ureg_dst));
 
    scale = ureg_imm2f(shader,
       (float)BLOCK_WIDTH / zscan->buffer_width,
@@ -156,6 +160,8 @@ create_vert_shader(struct vl_zscan *zscan)
    ureg_release_temporary(shader, tmp);
    ureg_END(shader);
 
+   FREE(o_vtex);
+
    return ureg_create_shader_and_destroy(shader, zscan->pipe);
 }
 
@@ -163,11 +169,11 @@ static void *
 create_frag_shader(struct vl_zscan *zscan)
 {
    struct ureg_program *shader;
-   struct ureg_src vtex[zscan->num_channels];
+   struct ureg_src *vtex;
 
    struct ureg_src samp_src, samp_scan, samp_quant;
 
-   struct ureg_dst tmp[zscan->num_channels];
+   struct ureg_dst *tmp;
    struct ureg_dst quant, fragment;
 
    unsigned i;
@@ -175,6 +181,9 @@ create_frag_shader(struct vl_zscan *zscan)
    shader = ureg_create(TGSI_PROCESSOR_FRAGMENT);
    if (!shader)
       return NULL;
+
+   vtex = MALLOC(zscan->num_channels * sizeof(struct ureg_src));
+   tmp = MALLOC(zscan->num_channels * sizeof(struct ureg_dst));
 
    for (i = 0; i < zscan->num_channels; ++i)
       vtex[i] = ureg_DECL_fs_input(shader, TGSI_SEMANTIC_GENERIC, VS_O_VTEX + i, TGSI_INTERPOLATE_LINEAR);
@@ -211,6 +220,9 @@ create_frag_shader(struct vl_zscan *zscan)
    for (i = 0; i < zscan->num_channels; ++i)
       ureg_release_temporary(shader, tmp[i]);
    ureg_END(shader);
+
+   FREE(vtex);
+   FREE(tmp);
 
    return ureg_create_shader_and_destroy(shader, zscan->pipe);
 }
