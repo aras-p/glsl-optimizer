@@ -141,10 +141,18 @@ egl_LIBS += \
 	$(TOP)/src/gallium/drivers/svga/libsvga.a
 endif
 
-# swrast
+# softpipe
+ifneq ($(findstring softpipe,$(GALLIUM_DRIVERS_DIRS)),)
 egl_CPPFLAGS += -DGALLIUM_SOFTPIPE -DGALLIUM_RBUG -DGALLIUM_TRACE
 egl_LIBS += $(TOP)/src/gallium/drivers/softpipe/libsoftpipe.a
 egl_SYS += -lm
+endif
+
+# llvmpipe
+ifneq ($(findstring llvmpipe,$(GALLIUM_DRIVERS_DIRS)),)
+egl_CPPFLAGS += -DGALLIUM_LLVMPIPE
+egl_LIBS += $(TOP)/src/gallium/drivers/llvmpipe/libllvmpipe.a
+endif
 
 # sort to remove duplicates
 egl_CPPFLAGS := $(sort $(egl_CPPFLAGS))
@@ -158,8 +166,6 @@ st_GL_SYS := -lm -lpthread $(DLOPEN_LIBS)
 
 # LLVM
 ifeq ($(MESA_LLVM),1)
-egl_CPPFLAGS += -DGALLIUM_LLVMPIPE
-egl_LIBS += $(TOP)/src/gallium/drivers/llvmpipe/libllvmpipe.a
 egl_SYS += $(LLVM_LIBS)
 LDFLAGS += $(LLVM_LDFLAGS)
 
