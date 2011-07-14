@@ -1511,7 +1511,7 @@ if test "x$enable_gallium_g3dvl" = xyes; then
     fi
 
     if test "x$enable_xvmc" = xauto; then
-        enable_xvmc=yes
+	PKG_CHECK_EXISTS([xvmc], [enable_xvmc=yes], [enable_xvmc=no])
     fi
 
     if test "x$enable_vdpau" = xauto; then
@@ -1523,8 +1523,8 @@ if test "x$enable_gallium_g3dvl" = xyes; then
     fi
 fi
 
-#TODO: Check for xvmc libs/headers
 if test "x$enable_xvmc" = xyes; then
+    PKG_CHECK_MODULES([XVMC], [xvmc >= 1.0.6 xorg-server])
     GALLIUM_STATE_TRACKERS_DIRS="$GALLIUM_STATE_TRACKERS_DIRS xorg/xvmc"
     HAVE_ST_XVMC="yes"
 fi
