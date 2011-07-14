@@ -75,9 +75,19 @@ _mesa_initialize_buffer_object( struct gl_buffer_object *obj,
 				GLuint name, GLenum target );
 
 extern void
+_mesa_reference_buffer_object_(struct gl_context *ctx,
+                               struct gl_buffer_object **ptr,
+                               struct gl_buffer_object *bufObj);
+
+static INLINE void
 _mesa_reference_buffer_object(struct gl_context *ctx,
                               struct gl_buffer_object **ptr,
-                              struct gl_buffer_object *bufObj);
+                              struct gl_buffer_object *bufObj)
+{
+   if (*ptr != bufObj)
+      _mesa_reference_buffer_object_(ctx, ptr, bufObj);
+}
+
 
 extern void
 _mesa_init_buffer_object_functions(struct dd_function_table *driver);

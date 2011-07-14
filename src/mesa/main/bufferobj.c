@@ -241,15 +241,14 @@ _mesa_delete_buffer_object(struct gl_context *ctx,
 
 /**
  * Set ptr to bufObj w/ reference counting.
+ * This is normally only called from the _mesa_reference_buffer_object() macro
+ * when there's a real pointer change.
  */
 void
-_mesa_reference_buffer_object(struct gl_context *ctx,
-                              struct gl_buffer_object **ptr,
-                              struct gl_buffer_object *bufObj)
+_mesa_reference_buffer_object_(struct gl_context *ctx,
+                               struct gl_buffer_object **ptr,
+                               struct gl_buffer_object *bufObj)
 {
-   if (*ptr == bufObj)
-      return;
-
    if (*ptr) {
       /* Unreference the old buffer */
       GLboolean deleteFlag = GL_FALSE;
