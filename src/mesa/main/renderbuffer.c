@@ -2530,17 +2530,13 @@ _mesa_remove_renderbuffer(struct gl_framebuffer *fb,
  * Set *ptr to point to rb.  If *ptr points to another renderbuffer,
  * dereference that buffer first.  The new renderbuffer's refcount will
  * be incremented.  The old renderbuffer's refcount will be decremented.
+ * This is normally only called from the _mesa_reference_renderbuffer() macro
+ * when there's a real pointer change.
  */
 void
-_mesa_reference_renderbuffer(struct gl_renderbuffer **ptr,
-                             struct gl_renderbuffer *rb)
+_mesa_reference_renderbuffer_(struct gl_renderbuffer **ptr,
+                              struct gl_renderbuffer *rb)
 {
-   assert(ptr);
-   if (*ptr == rb) {
-      /* no change */
-      return;
-   }
-
    if (*ptr) {
       /* Unreference the old renderbuffer */
       GLboolean deleteFlag = GL_FALSE;

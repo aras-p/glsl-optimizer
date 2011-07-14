@@ -105,8 +105,17 @@ _mesa_remove_renderbuffer(struct gl_framebuffer *fb,
                           gl_buffer_index bufferName);
 
 extern void
+_mesa_reference_renderbuffer_(struct gl_renderbuffer **ptr,
+                              struct gl_renderbuffer *rb);
+
+static INLINE void
 _mesa_reference_renderbuffer(struct gl_renderbuffer **ptr,
-                             struct gl_renderbuffer *rb);
+                             struct gl_renderbuffer *rb)
+{
+   if (*ptr != rb)
+      _mesa_reference_renderbuffer_(ptr, rb);
+}
+      
 
 
 #endif /* RENDERBUFFER_H */
