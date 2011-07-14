@@ -1662,7 +1662,7 @@ mip_filter_nearest(struct tgsi_sampler *tgsi_sampler,
       samp->mag_img_filter(tgsi_sampler, s, t, p, NULL, tgsi_sampler_lod_bias, rgba);
    }
    else {
-      samp->level = samp->view->u.tex.first_level + (int)(lambda + 0.5) ;
+      samp->level = samp->view->u.tex.first_level + (int)(lambda + 0.5F) ;
       samp->level = MIN2(samp->level, (int)texture->last_level);
       samp->min_img_filter(tgsi_sampler, s, t, p, NULL, tgsi_sampler_lod_bias, rgba);
    }
@@ -1815,13 +1815,13 @@ img_filter_2d_ewa(struct tgsi_sampler *tgsi_sampler,
        * and incrementally update the value of Ax^2+Bxy*Cy^2; when this
        * value, q, is less than F, we're inside the ellipse
        */
-      float tex_u=-0.5 + s[j] * texture->width0 * scaling;
-      float tex_v=-0.5 + t[j] * texture->height0 * scaling;
+      float tex_u = -0.5F + s[j] * texture->width0 * scaling;
+      float tex_v = -0.5F + t[j] * texture->height0 * scaling;
 
-      int u0 = floor(tex_u - box_u);
-      int u1 = ceil (tex_u + box_u);
-      int v0 = floor(tex_v - box_v);
-      int v1 = ceil (tex_v + box_v);
+      int u0 = (int) floorf(tex_u - box_u);
+      int u1 = (int) ceilf(tex_u + box_u);
+      int v0 = (int) floorf(tex_v - box_v);
+      int v1 = (int) ceilf(tex_v + box_v);
 
       float num[4] = {0.0F, 0.0F, 0.0F, 0.0F};
       buffer_next = 0;
@@ -1849,7 +1849,7 @@ img_filter_2d_ewa(struct tgsi_sampler *tgsi_sampler,
                buffer_next++;
                if (buffer_next == QUAD_SIZE) {
                   /* 4 texel coords are in the buffer -> read it now */
-                  int jj;
+                  unsigned jj;
                   /* it is assumed that samp->min_img_filter is set to
                    * img_filter_2d_nearest or one of the
                    * accelerated img_filter_2d_nearest_XXX functions.
@@ -1879,7 +1879,7 @@ img_filter_2d_ewa(struct tgsi_sampler *tgsi_sampler,
        * parameter, we need to read the whole quad and ignore the unused values
        */
       if (buffer_next > 0) {
-         int jj;
+         unsigned jj;
          /* it is assumed that samp->min_img_filter is set to
           * img_filter_2d_nearest or one of the
           * accelerated img_filter_2d_nearest_XXX functions.
@@ -1984,7 +1984,7 @@ mip_filter_linear_aniso(struct tgsi_sampler *tgsi_sampler,
       /* note: we need to have Pmin=sqrt(Pmin2) here, but we can avoid
        * this since 0.5*log(x) = log(sqrt(x))
        */
-      lambda = 0.5 * util_fast_log2(Pmin2)  + samp->sampler->lod_bias;
+      lambda = 0.5F * util_fast_log2(Pmin2) + samp->sampler->lod_bias;
       compute_lod(samp->sampler, lambda, c0, lod);
    }
    else {
@@ -2001,7 +2001,7 @@ mip_filter_linear_aniso(struct tgsi_sampler *tgsi_sampler,
    /* If the ellipse covers the whole image, we can
     * simply return the average of the whole image.
     */
-   if (level0 >= texture->last_level) {
+   if (level0 >= (int) texture->last_level) {
       samp->level = texture->last_level;
       samp->min_img_filter(tgsi_sampler, s, t, p, NULL, tgsi_sampler_lod_bias, rgba);
    }
@@ -2226,9 +2226,9 @@ sample_cube(struct tgsi_sampler *tgsi_sampler,
     */
    {
       /* use the average of the four pixel's texcoords to choose the face */
-      const float rx = 0.25 * (s[0] + s[1] + s[2] + s[3]);
-      const float ry = 0.25 * (t[0] + t[1] + t[2] + t[3]);
-      const float rz = 0.25 * (p[0] + p[1] + p[2] + p[3]);
+      const float rx = 0.25F * (s[0] + s[1] + s[2] + s[3]);
+      const float ry = 0.25F * (t[0] + t[1] + t[2] + t[3]);
+      const float rz = 0.25F * (p[0] + p[1] + p[2] + p[3]);
       const float arx = fabsf(rx), ary = fabsf(ry), arz = fabsf(rz);
 
       if (arx >= ary && arx >= arz) {
@@ -2255,7 +2255,7 @@ sample_cube(struct tgsi_sampler *tgsi_sampler,
          float sign = (rz >= 0.0F) ? 1.0F : -1.0F;
          uint face = (rz >= 0.0F) ? PIPE_TEX_FACE_POS_Z : PIPE_TEX_FACE_NEG_Z;
          for (j = 0; j < QUAD_SIZE; j++) {
-            const float ima = -0.5 / fabsf(p[j]);
+            const float ima = -0.5F / fabsf(p[j]);
             ssss[j] = sign * -s[j] * ima + 0.5F;
             tttt[j] =         t[j] * ima + 0.5F;
             samp->faces[j] = face;
