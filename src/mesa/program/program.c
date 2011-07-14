@@ -421,12 +421,15 @@ _mesa_lookup_program(struct gl_context *ctx, GLuint id)
 
 /**
  * Reference counting for vertex/fragment programs
+ * This is normally only called from the _mesa_reference_program() macro
+ * when there's a real pointer change.
  */
 void
-_mesa_reference_program(struct gl_context *ctx,
-                        struct gl_program **ptr,
-                        struct gl_program *prog)
+_mesa_reference_program_(struct gl_context *ctx,
+                         struct gl_program **ptr,
+                         struct gl_program *prog)
 {
+#ifndef NDEBUG
    assert(ptr);
    if (*ptr && prog) {
       /* sanity check */
@@ -438,9 +441,8 @@ _mesa_reference_program(struct gl_context *ctx,
       else if ((*ptr)->Target == MESA_GEOMETRY_PROGRAM)
          ASSERT(prog->Target == MESA_GEOMETRY_PROGRAM);
    }
-   if (*ptr == prog) {
-      return;  /* no change */
-   }
+#endif
+
    if (*ptr) {
       GLboolean deleteFlag;
 

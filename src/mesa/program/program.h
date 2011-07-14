@@ -89,9 +89,18 @@ extern struct gl_program *
 _mesa_lookup_program(struct gl_context *ctx, GLuint id);
 
 extern void
+_mesa_reference_program_(struct gl_context *ctx,
+                         struct gl_program **ptr,
+                         struct gl_program *prog);
+
+static INLINE void
 _mesa_reference_program(struct gl_context *ctx,
                         struct gl_program **ptr,
-                        struct gl_program *prog);
+                        struct gl_program *prog)
+{
+   if (*ptr != prog)
+      _mesa_reference_program_(ctx, ptr, prog);
+}
 
 static INLINE void
 _mesa_reference_vertprog(struct gl_context *ctx,
