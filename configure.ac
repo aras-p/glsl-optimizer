@@ -1515,7 +1515,7 @@ if test "x$enable_gallium_g3dvl" = xyes; then
     fi
 
     if test "x$enable_vdpau" = xauto; then
-        enable_vdpau=yes
+	PKG_CHECK_EXISTS([vdpau], [enable_vdpau=yes], [enable_vdpau=no])
     fi
 
     if test "x$enable_va" = xauto; then
@@ -1529,8 +1529,8 @@ if test "x$enable_xvmc" = xyes; then
     HAVE_ST_XVMC="yes"
 fi
 
-#TODO: Check for vdpau libs/headers
 if test "x$enable_vdpau" = xyes; then
+    PKG_CHECK_MODULES([VDPAU], [vdpau >= 0.4.1])
     GALLIUM_STATE_TRACKERS_DIRS="$GALLIUM_STATE_TRACKERS_DIRS vdpau"
     HAVE_ST_VDPAU="yes"
 fi
