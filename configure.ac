@@ -811,6 +811,7 @@ xyesyes)
     GALLIUM_WINSYS_DIRS="$GALLIUM_WINSYS_DIRS sw/xlib"
     GALLIUM_TARGET_DIRS="$GALLIUM_TARGET_DIRS libgl-xlib"
     GALLIUM_STATE_TRACKERS_DIRS="glx $GALLIUM_STATE_TRACKERS_DIRS"
+    HAVE_WINSYS_XLIB="yes"
     ;;
 xyesno)
     # DRI-based GLX
@@ -1548,12 +1549,6 @@ if test "x$enable_va" = xyes; then
     HAVE_ST_VA="yes"
 fi
 
-if test "x$enable_xvmc" = xyes || 
-    test "x$enable_vdpau" = xyes ||
-    test "x$enable_va" = xyes; then
-    GALLIUM_WINSYS_DIRS="$GALLIUM_WINSYS_DIRS g3dvl/dri"
-fi
-
 dnl
 dnl GLU configuration
 dnl
@@ -1880,12 +1875,15 @@ gallium_check_st() {
     fi
     if test "x$HAVE_ST_XVMC" = xyes && test "x$5" != x; then
          GALLIUM_TARGET_DIRS="$GALLIUM_TARGET_DIRS $5"
+         NEED_G3DVL_DRI="yes"
     fi
     if test "x$HAVE_ST_VDPAU" = xyes && test "x$6" != x; then
          GALLIUM_TARGET_DIRS="$GALLIUM_TARGET_DIRS $6"
+         NEED_G3DVL_DRI="yes"
     fi
     if test "x$HAVE_ST_VA" = xyes && test "x$7" != x; then
          GALLIUM_TARGET_DIRS="$GALLIUM_TARGET_DIRS $7"
+         NEED_G3DVL_DRI="yes"
     fi
 }
 
@@ -1952,12 +1950,23 @@ if test "x$with_gallium_drivers" != x; then
             if test "x$HAVE_ST_VA" = xyes; then
                 GALLIUM_TARGET_DIRS="$GALLIUM_TARGET_DIRS va-softpipe"
             fi
+            if test "x$HAVE_ST_VDPAU" == xyes ||
+               test "x$HAVE_ST_XVMC" == xyes ||
+               test "x$HAVE_ST_VA" == xyes; then
+               if test "x$HAVE_WINSYS_XLIB" != xyes; then
+                  GALLIUM_WINSYS_DIRS="$GALLIUM_WINSYS_DIRS sw/xlib"
+               fi
+            fi
             ;;
         *)
             AC_MSG_ERROR([Unknown Gallium driver: $driver])
             ;;
         esac
     done
+fi
+
+if test "x$NEED_G3DVL_DRI" = xyes; then
+    GALLIUM_WINSYS_DIRS="$GALLIUM_WINSYS_DIRS g3dvl/dri"
 fi
 
 dnl prepend CORE_DIRS to SRC_DIRS
