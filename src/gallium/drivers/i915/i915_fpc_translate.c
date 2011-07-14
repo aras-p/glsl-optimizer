@@ -1291,6 +1291,7 @@ i915_translate_fragment_program( struct i915_context *i915,
 {
    struct i915_fp_compile *p;
    const struct tgsi_token *tokens = fs->state.tokens;
+   struct i915_token_list* i_tokens;
 
 #if 0
    tgsi_dump(tokens, 0);
@@ -1306,7 +1307,7 @@ i915_translate_fragment_program( struct i915_context *i915,
 
    p = i915_init_compile(i915, fs);
 
-   struct i915_token_list* i_tokens = i915_optimize(tokens);
+   i_tokens = i915_optimize(tokens);
    i915_translate_instructions(p, i_tokens, fs);
    i915_fixup_depth_write(p);
 
