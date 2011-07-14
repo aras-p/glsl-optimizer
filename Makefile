@@ -214,7 +214,7 @@ parsers: configure
 	-@touch $(TOP)/configs/current
 	$(MAKE) -C src/glsl glsl_parser.cpp glsl_parser.h glsl_lexer.cpp
 	$(MAKE) -C src/glsl/glcpp glcpp-lex.c glcpp-parse.c glcpp-parse.h
-	$(MAKE) -C src/mesa/program lex.yy.c program_parse.tab.c program_parse.tab.h
+	$(MAKE) -C src/mesa program/lex.yy.c program/program_parse.tab.c program/program_parse.tab.h
 
 # Everything for new a Mesa release:
 ARCHIVES = $(PACKAGE_NAME).tar.gz \
