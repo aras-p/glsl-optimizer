@@ -25,52 +25,50 @@
  *
  **************************************************************************/
 
-#ifndef U_VIDEO_H
-#define U_VIDEO_H
+#ifndef PIPE_VIDEO_ENUMS_H
+#define PIPE_VIDEO_ENUMS_H
 
-#ifdef __cplusplus
-extern "C" {
-#endif
-
-#include <pipe/p_defines.h>
-#include <pipe/p_video_enums.h>
-
-/* u_reduce_video_profile() needs these */
-#include <pipe/p_compiler.h>
-#include <util/u_debug.h>
-
-static INLINE enum pipe_video_codec
-u_reduce_video_profile(enum pipe_video_profile profile)
+enum pipe_video_profile
 {
-   switch (profile)
-   {
-      case PIPE_VIDEO_PROFILE_MPEG1:
-      case PIPE_VIDEO_PROFILE_MPEG2_SIMPLE:
-      case PIPE_VIDEO_PROFILE_MPEG2_MAIN:
-         return PIPE_VIDEO_CODEC_MPEG12;
+   PIPE_VIDEO_PROFILE_UNKNOWN,
+   PIPE_VIDEO_PROFILE_MPEG1,
+   PIPE_VIDEO_PROFILE_MPEG2_SIMPLE,
+   PIPE_VIDEO_PROFILE_MPEG2_MAIN,
+   PIPE_VIDEO_PROFILE_MPEG4_SIMPLE,
+   PIPE_VIDEO_PROFILE_MPEG4_ADVANCED_SIMPLE,
+   PIPE_VIDEO_PROFILE_VC1_SIMPLE,
+   PIPE_VIDEO_PROFILE_VC1_MAIN,
+   PIPE_VIDEO_PROFILE_VC1_ADVANCED,
+   PIPE_VIDEO_PROFILE_MPEG4_AVC_BASELINE,
+   PIPE_VIDEO_PROFILE_MPEG4_AVC_MAIN,
+   PIPE_VIDEO_PROFILE_MPEG4_AVC_HIGH
+};
 
-      case PIPE_VIDEO_PROFILE_MPEG4_SIMPLE:
-      case PIPE_VIDEO_PROFILE_MPEG4_ADVANCED_SIMPLE:
-         return PIPE_VIDEO_CODEC_MPEG4;
+/* Video caps, can be different for each codec/profile */
+enum pipe_video_cap
+{
+   PIPE_VIDEO_CAP_SUPPORTED = 0,
+   PIPE_VIDEO_CAP_NPOT_TEXTURES = 1,
+   PIPE_VIDEO_CAP_MAX_WIDTH = 2,
+   PIPE_VIDEO_CAP_MAX_HEIGHT = 3,
+};
 
-      case PIPE_VIDEO_PROFILE_VC1_SIMPLE:
-      case PIPE_VIDEO_PROFILE_VC1_MAIN:
-      case PIPE_VIDEO_PROFILE_VC1_ADVANCED:
-         return PIPE_VIDEO_CODEC_VC1;
+enum pipe_video_codec
+{
+   PIPE_VIDEO_CODEC_UNKNOWN = 0,
+   PIPE_VIDEO_CODEC_MPEG12,   /**< MPEG1, MPEG2 */
+   PIPE_VIDEO_CODEC_MPEG4,    /**< DIVX, XVID */
+   PIPE_VIDEO_CODEC_VC1,      /**< WMV */
+   PIPE_VIDEO_CODEC_MPEG4_AVC /**< H.264 */
+};
 
-      case PIPE_VIDEO_PROFILE_MPEG4_AVC_BASELINE:
-      case PIPE_VIDEO_PROFILE_MPEG4_AVC_MAIN:
-      case PIPE_VIDEO_PROFILE_MPEG4_AVC_HIGH:
-         return PIPE_VIDEO_CODEC_MPEG4_AVC;
+enum pipe_video_entrypoint
+{
+   PIPE_VIDEO_ENTRYPOINT_UNKNOWN,
+   PIPE_VIDEO_ENTRYPOINT_BITSTREAM,
+   PIPE_VIDEO_ENTRYPOINT_IDCT,
+   PIPE_VIDEO_ENTRYPOINT_MC
+};
 
-      default:
-         assert(0);
-         return PIPE_VIDEO_CODEC_UNKNOWN;
-   }
-}
 
-#ifdef __cplusplus
-}
-#endif
-
-#endif /* U_VIDEO_H */
+#endif /* PIPE_VIDEO_ENUMS_H */

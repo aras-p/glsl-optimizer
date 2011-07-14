@@ -29,6 +29,8 @@
 #define PIPE_CONTEXT_H
 
 #include "p_compiler.h"
+#include "p_format.h"
+#include "p_video_enums.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -57,12 +59,10 @@ struct pipe_stream_output_state;
 struct pipe_surface;
 struct pipe_vertex_buffer;
 struct pipe_vertex_element;
+struct pipe_video_buffer;
+struct pipe_video_decoder;
 struct pipe_viewport_state;
 
-enum pipe_video_profile;
-enum pipe_video_entrypoint;
-enum pipe_video_chroma_format;
-enum pipe_format;
 
 /**
  * Gallium rendering context.  Basically:
