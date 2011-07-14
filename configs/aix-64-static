@@ -16,7 +16,6 @@ LIB_DIR = lib64
 # Library names (actual file names)
 GL_LIB_NAME = libGL.a
 GLU_LIB_NAME = libGLU.a
-GLUT_LIB_NAME = libglut.a
 GLW_LIB_NAME = libGLw.a
 OSMESA_LIB_NAME = libOSMesa.a
 

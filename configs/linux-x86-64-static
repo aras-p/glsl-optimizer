@@ -10,7 +10,6 @@ PIC_FLAGS =
 # Library names (actual file names)
 GL_LIB_NAME = libGL.a
 GLU_LIB_NAME = libGLU.a
-GLUT_LIB_NAME = libglut.a
 GLW_LIB_NAME = libGLw.a
 OSMESA_LIB_NAME = libOSMesa.a
 
@@ -18,7 +17,6 @@ OSMESA_LIB_NAME = libOSMesa.a
 GL_LIB_DEPS = 
 OSMESA_LIB_DEPS = 
 GLU_LIB_DEPS = 
-GLUT_LIB_DEPS = 
 GLW_LIB_DEPS = 
 
 # Need to specify all libraries we may need

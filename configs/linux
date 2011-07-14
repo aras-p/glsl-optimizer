@@ -33,6 +33,5 @@ CXXFLAGS = -Wall -Wpointer-arith $(OPT_FLAGS) $(PIC_FLAGS) $(ARCH_FLAGS) \
 CFLAGS += -fno-strict-aliasing
 CXXFLAGS += -fno-strict-aliasing
 
-GLUT_CFLAGS = -fexceptions
 
 EXTRA_LIB_PATH = -L/usr/X11R6/lib

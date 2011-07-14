@@ -1679,65 +1679,6 @@ AC_SUBST([GLW_PC_LIB_PRIV])
 AC_SUBST([GLW_PC_CFLAGS])
 
 dnl
-dnl GLUT configuration
-dnl
-if test -f "$srcdir/include/GL/glut.h"; then
-    default_glut=yes
-else
-    default_glut=no
-fi
-AC_ARG_ENABLE([glut],
-    [AS_HELP_STRING([--disable-glut],
-        [enable GLUT library @<:@default=enabled if source available@:>@])],
-    [enable_glut="$enableval"],
-    [enable_glut="$default_glut"])
-
-dnl Don't build glut without GLX
-if test "x$enable_glut" = xyes -a "x$enable_glx" = xno; then
-    AC_MSG_NOTICE([Disabling glut since there is no OpenGL driver])
-    enable_glut=no
-fi
-dnl Can't build glut if GLU not available
-if test "x$enable_glu$enable_glut" = xnoyes; then
-    AC_MSG_WARN([Disabling glut since GLU is disabled])
-    enable_glut=no
-fi
-
-if test "x$enable_glut" = xyes; then
-    SRC_DIRS="$SRC_DIRS glut/glx"
-    if test "$x11_pkgconfig" = yes; then
-        PKG_CHECK_MODULES([GLUT],[x11 xmu xi])
-        GLUT_PC_REQ_PRIV="x11 xmu xi"
-        GLUT_LIB_DEPS="$GLUT_LIBS"
-    else
-        # should check these...
-        GLUT_LIB_DEPS="$X_LIBS -lX11 -lXmu -lXi"
-        GLUT_PC_LIB_PRIV="$GLUT_LIB_DEPS"
-        GLUT_PC_CFLAGS="$X11_INCLUDES"
-    fi
-    if test "x$GCC" = xyes; then
-        GLUT_CFLAGS="$GLUT_CFLAGS -fexceptions"
-    fi
-    GLUT_LIB_DEPS="$GLUT_LIB_DEPS -lm"
-    GLUT_PC_LIB_PRIV="$GLUT_PC_LIB_PRIV -lm"
-
-    # If static, empty GLUT_LIB_DEPS and add libs for programs to link
-    if test "$enable_static" = no; then
-        GLUT_MESA_DEPS='-l$(GLU_LIB) -l$(GL_LIB)'
-    else
-        APP_LIB_DEPS="$APP_LIB_DEPS $GLUT_LIB_DEPS"
-        GLUT_LIB_DEPS=""
-        GLUT_MESA_DEPS=""
-    fi
-fi
-AC_SUBST([GLUT_LIB_DEPS])
-AC_SUBST([GLUT_MESA_DEPS])
-AC_SUBST([GLUT_CFLAGS])
-AC_SUBST([GLUT_PC_REQ_PRIV])
-AC_SUBST([GLUT_PC_LIB_PRIV])
-AC_SUBST([GLUT_PC_CFLAGS])
-
-dnl
 dnl Program library dependencies
 dnl    Only libm is added here if necessary as the libraries should
 dnl    be pulled in by the linker
@@ -2099,7 +2040,6 @@ esac
 echo ""
 echo "        GLU:             $enable_glu"
 echo "        GLw:             $enable_glw (Motif: $enable_motif)"
-echo "        glut:            $enable_glut"
 
 dnl EGL
 echo ""

@@ -17,13 +17,11 @@ MKLIB_OPTIONS =
 # Library names (actual file names)
 GL_LIB_NAME = libGL.a
 GLU_LIB_NAME = libGLU.a
-GLUT_LIB_NAME = libglut.a
 GLW_LIB_NAME = libGLw.a
 OSMESA_LIB_NAME = libOSMesa.a
 
 GL_LIB_DEPS = -lX11 -lXext -lpthread -lm
 GLU_LIB_DEPS = -L$(TOP)/lib -l$(GL_LIB) -lm -lC
-GLUT_LIB_DEPS = -L$(TOP)/lib -l$(GLU_LIB) -l$(GL_LIB) -lXi -lXmu -lX11 -lm
 GLW_LIB_DEPS = -L$(TOP)/lib -l$(GL_LIB) -lXm -lXt -lX11
 OSMESA_LIB_DEPS = -L$(TOP)/lib -l$(GL_LIB)
 APP_LIB_DEPS = -L$(TOP)/lib -l$(GLUT_LIB) -l$(GLU_LIB) -l$(GL_LIB) -lX11 -lXext -lXmu -lXi -lpthread -lm -lC

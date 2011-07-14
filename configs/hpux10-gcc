@@ -10,7 +10,6 @@ CXX = g++
 
 CFLAGS = -ansi -O3 -D_HPUX_SOURCE -I/usr/include/X11R6 -I/usr/contrib/X11R6/include  -DUSE_XSHM
 CXXFLAGS = -ansi -O3 -D_HPUX_SOURCE
-GLUT_CFLAGS = -fexceptions
 
 # Work around aliasing bugs - developers should comment this out
 CFLAGS += -fno-strict-aliasing

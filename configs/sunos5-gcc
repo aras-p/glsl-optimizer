@@ -26,7 +26,6 @@ CFLAGS   = $(WARN_FLAGS) $(OPT_FLAGS) $(PIC_FLAGS) $(ARCH_FLAGS) $(DEFINES) \
 CXXFLAGS = $(WARN_FLAGS) $(OPT_FLAGS) $(PIC_FLAGS) $(ARCH_FLAGS) $(DEFINES) \
 	-I/usr/openwin/include
 
-GLUT_CFLAGS = -fexceptions -DSOLARIS_2_4_BUG
 
 # Work around aliasing bugs - developers should comment this out
 CFLAGS += -fno-strict-aliasing
@@ -36,5 +35,4 @@ CXXFLAGS += -fno-strict-aliasing
 EXTRA_LIB_PATH=-L/usr/openwin/lib
 
 GL_LIB_DEPS = $(EXTRA_LIB_PATH) -lX11 -lXext -lXmu -lXi -lm
-GLUT_LIB_DEPS = -L$(TOP)/$(LIB_DIR) -l$(GLU_LIB) -l$(GL_LIB) -lm
 APP_LIB_DEPS = -L$(TOP)/$(LIB_DIR) -lX11 -l$(GLUT_LIB) -l$(GLU_LIB) -l$(GL_LIB) -lm

@@ -90,7 +90,7 @@ else
 endif
 
 # Directories
-SRC_DIRS = gallium mesa glu glut/beos
+SRC_DIRS = gallium mesa glu
 GLU_DIRS = sgi
 DRIVER_DIRS = beos
 
@@ -98,6 +98,5 @@ DRIVER_DIRS = beos
 GL_LIB_DEPS = 
 OSMESA_LIB_DEPS = -L$(TOP)/$(LIB_DIR) -l$(GL_LIB)
 GLU_LIB_DEPS =  
-GLUT_LIB_DEPS = -lgame -L$(TOP)/$(LIB_DIR) -l$(GL_LIB)
 APP_LIB_DEPS = -lbe -L$(TOP)/$(LIB_DIR) -l$(GL_LIB) -l$(GLUT_LIB)
 

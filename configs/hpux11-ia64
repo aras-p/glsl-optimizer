@@ -19,12 +19,10 @@ LIB_DIR = lib64
 # Library names (actual file names)
 GL_LIB_NAME = libGL.so
 GLU_LIB_NAME = libGLU.so
-GLUT_LIB_NAME = libglut.so
 GLW_LIB_NAME = libGLw.so
 OSMESA_LIB_NAME = libOSMesa.so
 
 # Library/program dependencies
 GL_LIB_DEPS = -L/usr/lib/X11R6/ -L/usr/contrib/X11R6/lib/ -lXext -lXmu -lXt -lXi -lX11 -lm -lpthread
 GLU_LIB_DEPS = -L$(TOP)/$(LIB_DIR) -l$(GL_LIB) -lm -lCsup -lcl
-GLUT_LIB_DEPS = -L$(TOP)/$(LIB_DIR) -l$(GLU_LIB) -l$(GL_LIB) $(GL_LIB_DEPS)
 GLW_LIB_DEPS = -L$(TOP)/$(LIB_DIR) -l$(GL_LIB) $(GL_LIB_DEPS)

@@ -15,11 +15,10 @@ GLW_SOURCES = GLwDrawA.c GLwMDrawA.c
 
 LIB_DIR = lib32
 
-APP_LIB_DEPS = -L$(TOP)/$(LIB_DIR) -32 -glut -l$(GLU_LIB) -l$(GL_LIB) -lX11 -lXext -lXmu -lXi -lm -lC
+APP_LIB_DEPS = -L$(TOP)/$(LIB_DIR) -32 -l$(GLU_LIB) -l$(GL_LIB) -lX11 -lXext -lXmu -lXi -lm -lC
 
 GL_LIB_NAME = libGL.a
 GLU_LIB_NAME = libGLU.a
-GLUT_LIB_NAME = libglut.a
 GLW_LIB_NAME = libGLw.a
 OSMESA_LIB_NAME = libOSMesa.a
 

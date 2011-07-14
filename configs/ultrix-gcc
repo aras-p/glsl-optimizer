@@ -9,7 +9,6 @@ CC = gcc
 CXX = g++
 CFLAGS = -pedantic -O2
 CXXFLAGS = -pedantic -O2
-GLUT_CFLAGS = -fexceptions
 MKLIB_OPTIONS = -static
 
 # Work around aliasing bugs - developers should comment this out
@@ -18,7 +17,6 @@ CXXFLAGS += -fno-strict-aliasing
 
 GL_LIB_NAME = libGL.a
 GLU_LIB_NAME = libGLU.a
-GLUT_LIB_NAME = libglut.a
 GLW_LIB_NAME = libGLw.a
 OSMESA_LIB_NAME = libOSMesa.a
 

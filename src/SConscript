@@ -25,7 +25,6 @@ if env['platform'] != 'embedded':
     SConscript('glx/SConscript')
     SConscript('egl/main/SConscript')
     SConscript('glu/sgi/SConscript')
-    SConscript('glut/glx/SConscript')
 
     if env['gles']:
         SConscript('mapi/shared-glapi/SConscript')

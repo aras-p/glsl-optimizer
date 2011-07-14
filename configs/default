@@ -54,7 +54,6 @@ INDENT_FLAGS = -i4 -nut -br -brs -npcs -ce -T GLubyte -T GLbyte -T Bool
 # Library names (base name)
 GL_LIB = GL
 GLU_LIB = GLU
-GLUT_LIB = glut
 GLW_LIB = GLw
 OSMESA_LIB = OSMesa
 EGL_LIB = EGL
@@ -68,7 +67,6 @@ GBM_LIB = gbm
 # Library names (actual file names)
 GL_LIB_NAME = lib$(GL_LIB).so
 GLU_LIB_NAME = lib$(GLU_LIB).so
-GLUT_LIB_NAME = lib$(GLUT_LIB).so
 GLW_LIB_NAME = lib$(GLW_LIB).so
 OSMESA_LIB_NAME = lib$(OSMESA_LIB).so
 EGL_LIB_NAME = lib$(EGL_LIB).so
@@ -82,7 +80,6 @@ GBM_LIB_NAME = lib$(GBM_LIB).so
 # globs used to install the lib and all symlinks
 GL_LIB_GLOB = $(GL_LIB_NAME)*
 GLU_LIB_GLOB = $(GLU_LIB_NAME)*
-GLUT_LIB_GLOB = $(GLUT_LIB_NAME)*
 GLW_LIB_GLOB = $(GLW_LIB_NAME)*
 OSMESA_LIB_GLOB = $(OSMESA_LIB_NAME)*
 EGL_LIB_GLOB = $(EGL_LIB_NAME)*
@@ -108,7 +105,7 @@ MOTIF_CFLAGS = -I/usr/include/Motif1.2
 # Directories to build
 LIB_DIR = lib
 SRC_DIRS = glsl mapi/glapi mapi/vgapi mesa \
-	gallium egl gallium/winsys gallium/targets glu glut/glx glw
+	gallium egl gallium/winsys gallium/targets glu glw
 GLU_DIRS = sgi
 DRIVER_DIRS = x11 osmesa
 
@@ -137,7 +134,6 @@ GL_LIB_DEPS     = $(EXTRA_LIB_PATH) -lX11 -lXext -lm -lpthread
 EGL_LIB_DEPS    = $(EXTRA_LIB_PATH) -ldl -lpthread
 OSMESA_LIB_DEPS = $(EXTRA_LIB_PATH) -L$(TOP)/$(LIB_DIR) -l$(GL_LIB)
 GLU_LIB_DEPS    = $(EXTRA_LIB_PATH) -L$(TOP)/$(LIB_DIR) -l$(GL_LIB) -lm
-GLUT_LIB_DEPS   = $(EXTRA_LIB_PATH) -L$(TOP)/$(LIB_DIR) -l$(GLU_LIB) -l$(GL_LIB) -lX11 -lXmu -lXi -lm
 GLW_LIB_DEPS    = $(EXTRA_LIB_PATH) -L$(TOP)/$(LIB_DIR) -l$(GL_LIB) -lXt -lX11
 APP_LIB_DEPS    = $(EXTRA_LIB_PATH) -L$(TOP)/$(LIB_DIR) -l$(GLUT_LIB) -l$(GLU_LIB) -l$(GL_LIB) -lm
 GLESv1_CM_LIB_DEPS = $(EXTRA_LIB_PATH) -lpthread
@@ -147,7 +143,7 @@ GLAPI_LIB_DEPS = $(EXTRA_LIB_PATH) -lpthread
 WAYLAND_EGL_LIB_DEPS = $(EXTRA_LIB_PATH) -lwayland-client -ldrm
 GBM_LIB_DEPS = $(EXTRA_LIB_PATH) -ludev -ldl
 
-# Program dependencies - specific GL/glut libraries added in Makefiles
+# Program dependencies - specific GL libraries added in Makefiles
 APP_LIB_DEPS = -lm
 X11_LIBS = -lX11
 
@@ -180,9 +176,6 @@ GLU_PC_REQ = gl
 GLU_PC_REQ_PRIV =
 GLU_PC_LIB_PRIV =
 GLU_PC_CFLAGS =
-GLUT_PC_REQ_PRIV =
-GLUT_PC_LIB_PRIV =
-GLUT_PC_CFLAGS =
 GLW_PC_REQ_PRIV =
 GLW_PC_LIB_PRIV =
 GLW_PC_CFLAGS =
