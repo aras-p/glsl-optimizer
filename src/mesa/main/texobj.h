@@ -32,6 +32,7 @@
 #define TEXTOBJ_H
 
 
+#include "compiler.h"
 #include "glheader.h"
 
 struct gl_context;
@@ -64,8 +65,17 @@ _mesa_clear_texture_object(struct gl_context *ctx,
                            struct gl_texture_object *obj);
 
 extern void
+_mesa_reference_texobj_(struct gl_texture_object **ptr,
+                        struct gl_texture_object *tex);
+
+static INLINE void
 _mesa_reference_texobj(struct gl_texture_object **ptr,
-                       struct gl_texture_object *tex);
+                       struct gl_texture_object *tex)
+{
+   if (*ptr != tex)
+      _mesa_reference_texobj_(ptr, tex);
+}
+
 
 extern void
 _mesa_test_texobj_completeness( const struct gl_context *ctx,
