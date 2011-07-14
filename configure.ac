@@ -1519,6 +1519,8 @@ if test "x$enable_gallium_g3dvl" = xyes; then
     fi
 
     if test "x$enable_va" = xauto; then
+	#don't enable vaapi state tracker even if package exists
+	#PKG_CHECK_EXISTS([libva], [enable_vdpau=yes], [enable_vdpau=no])
         enable_va=no
     fi
 fi
@@ -1535,8 +1537,9 @@ if test "x$enable_vdpau" = xyes; then
     HAVE_ST_VDPAU="yes"
 fi
 
-#TODO: Check for va libs/headers
 if test "x$enable_va" = xyes; then
+    PKG_CHECK_MODULES([LIBVA], [libva = 0.31.1])
+    AC_MSG_WARN([vaapi state tracker currently unmaintained])
     GALLIUM_STATE_TRACKERS_DIRS="$GALLIUM_STATE_TRACKERS_DIRS va"
     HAVE_ST_VA="yes"
 fi
