@@ -156,10 +156,10 @@ static const float identity[16] =
 };
 
 const struct vl_procamp vl_default_procamp = {
-   .contrast = 1.0f,
-   .saturation = 1.0f,
-   .brightness = 0.0f,
-   .hue = 0.0f
+   0.0f,  /* brightness */
+   1.0f,  /* contrast   */
+   1.0f,  /* saturation */
+   0.0f   /* hue        */
 };
 
 void vl_csc_get_matrix(enum VL_CSC_COLOR_STANDARD cs,
