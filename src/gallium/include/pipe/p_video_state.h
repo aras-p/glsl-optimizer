@@ -85,18 +85,18 @@ enum pipe_video_mv_weight
 struct pipe_motionvector
 {
    struct {
-      signed x:16, y:16;
-      enum pipe_video_field_select field_select:16;
-      enum pipe_video_mv_weight weight:16;
+      short x, y;
+      ushort field_select; /**< enum pipe_video_field_select */
+      ushort weight;  /**< enum pipe_video_mv_weight  */
    } top, bottom;
 };
 
 /* bitfields because this is used as a vertex buffer element */
 struct pipe_ycbcr_block
 {
-   unsigned x:8, y:8;
-   enum pipe_mpeg12_dct_intra intra:8;
-   enum pipe_mpeg12_dct_type coding:8;
+   ubyte x, y;
+   ubyte intra;  /**< enum pipe_mpeg12_dct_intra */
+   ubyte coding; /**< enum pipe_mpeg12_dct_type */
 };
 
 struct pipe_picture_desc
