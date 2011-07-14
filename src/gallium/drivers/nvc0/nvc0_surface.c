@@ -75,7 +75,7 @@ nvc0_2d_format(enum pipe_format format)
 
 static int
 nvc0_2d_texture_set(struct nouveau_channel *chan, int dst,
-                    struct nvc0_miptree *mt, unsigned level, unsigned layer)
+                    struct nv50_miptree *mt, unsigned level, unsigned layer)
 {
    struct nouveau_bo *bo = mt->base.bo;
    uint32_t width, height, depth;
@@ -103,7 +103,7 @@ nvc0_2d_texture_set(struct nouveau_channel *chan, int dst,
       depth = 1;
    } else
    if (!dst) {
-      offset += nvc0_miptree_zslice_offset(mt, level, layer);
+      offset += nvc0_mt_zslice_offset(mt, level, layer);
       layer = 0;
    }
 
@@ -145,9 +145,9 @@ nvc0_2d_texture_set(struct nouveau_channel *chan, int dst,
 
 static int
 nvc0_2d_texture_do_copy(struct nouveau_channel *chan,
-                        struct nvc0_miptree *dst, unsigned dst_level,
+                        struct nv50_miptree *dst, unsigned dst_level,
                         unsigned dx, unsigned dy, unsigned dz,
-                        struct nvc0_miptree *src, unsigned src_level,
+                        struct nv50_miptree *src, unsigned src_level,
                         unsigned sx, unsigned sy, unsigned sz,
                         unsigned w, unsigned h)
 {
@@ -192,7 +192,7 @@ nvc0_setup_m2mf_rect(struct nvc0_m2mf_rect *rect,
                      struct pipe_resource *restrict res, unsigned l,
                      unsigned x, unsigned y, unsigned z)
 {
-   struct nvc0_miptree *mt = nvc0_miptree(res);
+   struct nv50_miptree *mt = nv50_miptree(res);
    const unsigned w = u_minify(res->width0, l);
    const unsigned h = u_minify(res->height0, l);
 
@@ -257,15 +257,15 @@ nvc0_resource_copy_region(struct pipe_context *pipe,
       for (i = 0; i < src_box->depth; ++i) {
          nvc0_m2mf_transfer_rect(&screen->base.base, &drect, &srect, nx, ny);
 
-         if (nvc0_miptree(dst)->layout_3d)
+         if (nv50_miptree(dst)->layout_3d)
             drect.z++;
          else
-            drect.base += nvc0_miptree(dst)->layer_stride;
+            drect.base += nv50_miptree(dst)->layer_stride;
 
-         if (nvc0_miptree(src)->layout_3d)
+         if (nv50_miptree(src)->layout_3d)
             srect.z++;
          else
-            srect.base += nvc0_miptree(src)->layer_stride;
+            srect.base += nv50_miptree(src)->layer_stride;
       }
       return;
    }
@@ -275,9 +275,9 @@ nvc0_resource_copy_region(struct pipe_context *pipe,
 
    for (; dst_layer < dstz + src_box->depth; ++dst_layer, ++src_layer) {
       ret = nvc0_2d_texture_do_copy(screen->base.channel,
-                                    nvc0_miptree(dst), dst_level,
+                                    nv50_miptree(dst), dst_level,
                                     dstx, dsty, dst_layer,
-                                    nvc0_miptree(src), src_level,
+                                    nv50_miptree(src), src_level,
                                     src_box->x, src_box->y, src_layer,
                                     src_box->width, src_box->height);
       if (ret)
@@ -295,8 +295,8 @@ nvc0_clear_render_target(struct pipe_context *pipe,
 	struct nvc0_context *nv50 = nvc0_context(pipe);
 	struct nvc0_screen *screen = nv50->screen;
 	struct nouveau_channel *chan = screen->base.channel;
-	struct nvc0_miptree *mt = nvc0_miptree(dst->texture);
-	struct nvc0_surface *sf = nvc0_surface(dst);
+	struct nv50_miptree *mt = nv50_miptree(dst->texture);
+	struct nv50_surface *sf = nv50_surface(dst);
 	struct nouveau_bo *bo = mt->base.bo;
 
 	BEGIN_RING(chan, RING_3D(CLEAR_COLOR(0)), 4);
@@ -347,8 +347,8 @@ nvc0_clear_depth_stencil(struct pipe_context *pipe,
 	struct nvc0_context *nv50 = nvc0_context(pipe);
 	struct nvc0_screen *screen = nv50->screen;
 	struct nouveau_channel *chan = screen->base.channel;
-	struct nvc0_miptree *mt = nvc0_miptree(dst->texture);
-	struct nvc0_surface *sf = nvc0_surface(dst);
+	struct nv50_miptree *mt = nv50_miptree(dst->texture);
+	struct nv50_surface *sf = nv50_surface(dst);
 	struct nouveau_bo *bo = mt->base.bo;
 	uint32_t mode = 0;
 	int unk = mt->base.base.target == PIPE_TEXTURE_2D;

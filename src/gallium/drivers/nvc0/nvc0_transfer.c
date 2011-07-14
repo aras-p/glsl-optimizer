@@ -239,8 +239,8 @@ nvc0_miptree_transfer_new(struct pipe_context *pctx,
    struct nvc0_context *nvc0 = nvc0_context(pctx);
    struct pipe_screen *pscreen = pctx->screen;
    struct nouveau_device *dev = nvc0->screen->base.device;
-   struct nvc0_miptree *mt = nvc0_miptree(res);
-   struct nvc0_miptree_level *lvl = &mt->level[level];
+   struct nv50_miptree *mt = nv50_miptree(res);
+   struct nv50_miptree_level *lvl = &mt->level[level];
    struct nvc0_transfer *tx;
    uint32_t size;
    uint32_t w, h, d, z, layer;
@@ -334,7 +334,7 @@ nvc0_miptree_transfer_del(struct pipe_context *pctx,
 {
    struct pipe_screen *pscreen = pctx->screen;
    struct nvc0_transfer *tx = (struct nvc0_transfer *)transfer;
-   struct nvc0_miptree *mt = nvc0_miptree(tx->base.resource);
+   struct nv50_miptree *mt = nv50_miptree(tx->base.resource);
    unsigned i;
 
    if (tx->base.usage & PIPE_TRANSFER_WRITE) {

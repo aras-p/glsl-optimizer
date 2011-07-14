@@ -137,20 +137,6 @@ nvc0_context(struct pipe_context *pipe)
    return (struct nvc0_context *)pipe;
 }
 
-struct nvc0_surface {
-   struct pipe_surface base;
-   uint32_t offset;
-   uint32_t width;
-   uint16_t height;
-   uint16_t depth;
-};
-
-static INLINE struct nvc0_surface *
-nvc0_surface(struct pipe_surface *ps)
-{
-   return (struct nvc0_surface *)ps;
-}
-
 /* nvc0_context.c */
 struct pipe_context *nvc0_create(struct pipe_screen *, void *);
 

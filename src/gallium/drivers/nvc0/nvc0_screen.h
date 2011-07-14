@@ -4,6 +4,7 @@
 #define NOUVEAU_NVC0
 #include "nouveau/nouveau_screen.h"
 #include "nouveau/nouveau_mm.h"
+#include "nouveau/nouveau_fence.h"
 #undef NOUVEAU_NVC0
 #include "nvc0_winsys.h"
 #include "nvc0_stateobj.h"

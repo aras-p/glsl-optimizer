@@ -130,20 +130,6 @@ nv50_context(struct pipe_context *pipe)
    return (struct nv50_context *)pipe;
 }
 
-struct nv50_surface {
-   struct pipe_surface base;
-   uint32_t offset;
-   uint32_t width;
-   uint16_t height;
-   uint16_t depth;
-};
-
-static INLINE struct nv50_surface *
-nv50_surface(struct pipe_surface *ps)
-{
-   return (struct nv50_surface *)ps;
-}
-
 /* nv50_context.c */
 struct pipe_context *nv50_create(struct pipe_screen *, void *);
 

@@ -8,8 +8,8 @@ nvc0_validate_zcull(struct nvc0_context *nvc0)
 {
     struct nouveau_channel *chan = nvc0->screen->base.channel;
     struct pipe_framebuffer_state *fb = &nvc0->framebuffer;
-    struct nvc0_surface *sf = nvc0_surface(fb->zsbuf);
-    struct nvc0_miptree *mt = nvc0_miptree(sf->base.texture);
+    struct nv50_surface *sf = nv50_surface(fb->zsbuf);
+    struct nv50_miptree *mt = nv50_miptree(sf->base.texture);
     struct nouveau_bo *bo = mt->base.bo;
     uint32_t size;
     uint32_t offset = align(mt->total_size, 1 << 17);
@@ -72,8 +72,8 @@ nvc0_validate_fb(struct nvc0_context *nvc0)
     MARK_RING(chan, 9 * fb->nr_cbufs, 2 * fb->nr_cbufs);
 
     for (i = 0; i < fb->nr_cbufs; ++i) {
-        struct nvc0_miptree *mt = nvc0_miptree(fb->cbufs[i]->texture);
-        struct nvc0_surface *sf = nvc0_surface(fb->cbufs[i]);
+        struct nv50_miptree *mt = nv50_miptree(fb->cbufs[i]->texture);
+        struct nv50_surface *sf = nv50_surface(fb->cbufs[i]);
         struct nouveau_bo *bo = mt->base.bo;
         uint32_t offset = sf->offset;
 
@@ -100,8 +100,8 @@ nvc0_validate_fb(struct nvc0_context *nvc0)
     }
 
     if (fb->zsbuf) {
-        struct nvc0_miptree *mt = nvc0_miptree(fb->zsbuf->texture);
-        struct nvc0_surface *sf = nvc0_surface(fb->zsbuf);
+        struct nv50_miptree *mt = nv50_miptree(fb->zsbuf->texture);
+        struct nv50_surface *sf = nv50_surface(fb->zsbuf);
         struct nouveau_bo *bo = mt->base.bo;
         int unk = mt->base.base.target == PIPE_TEXTURE_2D;
         uint32_t offset = sf->offset;

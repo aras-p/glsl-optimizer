@@ -437,7 +437,7 @@ nvc0_screen_create(struct pipe_winsys *ws, struct nouveau_device *dev)
    BEGIN_RING(chan, RING_3D(MULTISAMPLE_ENABLE), 1);
    OUT_RING  (chan, 0);
    BEGIN_RING(chan, RING_3D(MULTISAMPLE_MODE), 1);
-   OUT_RING  (chan, NVC0_3D_MULTISAMPLE_MODE_1X);
+   OUT_RING  (chan, NVC0_3D_MULTISAMPLE_MODE_MS1);
    BEGIN_RING(chan, RING_3D(MULTISAMPLE_CTRL), 1);
    OUT_RING  (chan, 0);
    BEGIN_RING(chan, RING_3D(LINE_WIDTH_SEPARATE), 1);

@@ -60,7 +60,7 @@ nvc0_create_sampler_view(struct pipe_context *pipe,
    uint32_t swz[4];
    uint32_t depth;
    struct nv50_tic_entry *view;
-   struct nvc0_miptree *mt = nvc0_miptree(texture);
+   struct nv50_miptree *mt = nv50_miptree(texture);
    boolean tex_int;
 
    view = MALLOC_STRUCT(nv50_tic_entry);
@@ -189,7 +189,7 @@ nvc0_validate_tic(struct nvc0_context *nvc0, int s)
          OUT_RING  (chan, (i << 1) | 0);
          continue;
       }
-      res = &nvc0_miptree(tic->pipe.texture)->base;
+      res = &nv50_miptree(tic->pipe.texture)->base;
 
       if (tic->id < 0) {
          uint32_t offset = tic->tic[1];

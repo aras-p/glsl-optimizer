@@ -21,10 +21,14 @@ nvc0_resource_from_handle(struct pipe_screen * screen,
                           const struct pipe_resource *templ,
                           struct winsys_handle *whandle)
 {
-   if (templ->target == PIPE_BUFFER)
+   if (templ->target == PIPE_BUFFER) {
       return NULL;
-   else
-      return nvc0_miptree_from_handle(screen, templ, whandle);
+   } else {
+      struct pipe_resource *res = nv50_miptree_from_handle(screen,
+                                                           templ, whandle);
+      nv04_resource(res)->vtbl = &nvc0_miptree_vtbl;
+      return res;
+   }
 }
 
 void
@@ -37,7 +41,7 @@ nvc0_init_resource_functions(struct pipe_context *pcontext)
    pcontext->transfer_destroy = u_transfer_destroy_vtbl;
    pcontext->transfer_inline_write = u_transfer_inline_write_vtbl;
    pcontext->create_surface = nvc0_miptree_surface_new;
-   pcontext->surface_destroy = nvc0_miptree_surface_del;
+   pcontext->surface_destroy = nv50_miptree_surface_del;
 }
 
 void
