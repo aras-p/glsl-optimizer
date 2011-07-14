@@ -380,10 +380,12 @@ vl_mpeg12_buffer_get_mv_stream(struct pipe_video_decode_buffer *buffer, int ref_
 static void
 vl_mpeg12_buffer_decode_bitstream(struct pipe_video_decode_buffer *buffer,
                                   unsigned num_bytes, const void *data,
-                                  struct pipe_mpeg12_picture_desc *picture,
+                                  struct pipe_picture_desc *picture,
                                   unsigned num_ycbcr_blocks[3])
 {
    struct vl_mpeg12_buffer *buf = (struct vl_mpeg12_buffer*)buffer;
+   struct pipe_mpeg12_picture_desc *pic = (struct pipe_mpeg12_picture_desc *)picture;
+   
    struct vl_mpeg12_decoder *dec;
    unsigned i;
 
@@ -393,9 +395,9 @@ vl_mpeg12_buffer_decode_bitstream(struct pipe_video_decode_buffer *buffer,
    assert(dec);
 
    for (i = 0; i < VL_MAX_PLANES; ++i)
-      vl_zscan_set_layout(&buf->zscan[i], picture->alternate_scan ? dec->zscan_alternate : dec->zscan_normal);
+      vl_zscan_set_layout(&buf->zscan[i], pic->alternate_scan ? dec->zscan_alternate : dec->zscan_normal);
 
-   vl_mpg12_bs_decode(&buf->bs, num_bytes, data, picture, num_ycbcr_blocks);
+   vl_mpg12_bs_decode(&buf->bs, num_bytes, data, pic, num_ycbcr_blocks);
 }
 
 static void

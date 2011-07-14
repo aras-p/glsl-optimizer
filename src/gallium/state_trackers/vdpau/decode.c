@@ -215,7 +215,7 @@ vlVdpDecoderRenderMpeg2(struct pipe_video_decoder *decoder,
 
    for (i = 0; i < bitstream_buffer_count; ++i)
       buffer->decode_bitstream(buffer, bitstream_buffers[i].bitstream_bytes,
-                               bitstream_buffers[i].bitstream, &picture, num_ycbcr_blocks);
+                               bitstream_buffers[i].bitstream, &picture.base, num_ycbcr_blocks);
 
    buffer->end_frame(buffer);
 

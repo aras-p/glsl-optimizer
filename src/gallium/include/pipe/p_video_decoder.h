@@ -121,7 +121,7 @@ struct pipe_video_decode_buffer
     */
    void (*decode_bitstream)(struct pipe_video_decode_buffer *decbuf,
                             unsigned num_bytes, const void *data,
-                            struct pipe_mpeg12_picture_desc *picture,
+                            struct pipe_picture_desc *picture,
                             unsigned num_ycbcr_blocks[3]);
 
    /**
