@@ -51,8 +51,16 @@ extern void
 _mesa_free_framebuffer_data(struct gl_framebuffer *buffer);
 
 extern void
+_mesa_reference_framebuffer_(struct gl_framebuffer **ptr,
+                             struct gl_framebuffer *fb);
+
+static INLINE void
 _mesa_reference_framebuffer(struct gl_framebuffer **ptr,
-                            struct gl_framebuffer *fb);
+                            struct gl_framebuffer *fb)
+{
+   if (*ptr != fb)
+      _mesa_reference_framebuffer_(ptr, fb);
+}
 
 extern void
 _mesa_resize_framebuffer(struct gl_context *ctx, struct gl_framebuffer *fb,

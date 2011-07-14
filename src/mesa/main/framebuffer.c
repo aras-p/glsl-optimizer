@@ -232,17 +232,13 @@ _mesa_free_framebuffer_data(struct gl_framebuffer *fb)
 
 /**
  * Set *ptr to point to fb, with refcounting and locking.
+ * This is normally only called from the _mesa_reference_framebuffer() macro
+ * when there's a real pointer change.
  */
 void
-_mesa_reference_framebuffer(struct gl_framebuffer **ptr,
-                            struct gl_framebuffer *fb)
+_mesa_reference_framebuffer_(struct gl_framebuffer **ptr,
+                             struct gl_framebuffer *fb)
 {
-   assert(ptr);
-   if (*ptr == fb) {
-      /* no change */
-      return;
-   }
-
    if (*ptr) {
       /* unreference old renderbuffer */
       GLboolean deleteFlag = GL_FALSE;
