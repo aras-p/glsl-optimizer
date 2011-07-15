@@ -961,17 +961,6 @@ convert_color_type(SWspan *span, GLenum newType, GLuint output)
 static INLINE void
 shade_texture_span(struct gl_context *ctx, SWspan *span)
 {
-   GLbitfield inputsRead;
-
-   /* Determine which fragment attributes are actually needed */
-   if (ctx->FragmentProgram._Current) {
-      inputsRead = ctx->FragmentProgram._Current->Base.InputsRead;
-   }
-   else {
-      /* XXX we could be a bit smarter about this */
-      inputsRead = ~0;
-   }
-
    if (ctx->FragmentProgram._Current ||
        ctx->ATIFragmentShader._Enabled) {
       /* programmable shading */
