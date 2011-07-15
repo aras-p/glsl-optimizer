@@ -687,7 +687,7 @@ static void get_readers_for_single_write(
 	struct rc_instruction * tmp;
 	unsigned int branch_depth = 0;
 	struct rc_instruction * endloop = NULL;
-	unsigned int abort_on_read_at_endloop;
+	unsigned int abort_on_read_at_endloop = 0;
 	struct get_readers_callback_data * d = userdata;
 
 	d->ReaderData->Writer = writer;
