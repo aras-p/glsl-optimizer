@@ -14,6 +14,13 @@ DEFINES = -DGALLIUM_TRACE -DVER_MAJOR=$(VDPAU_MAJOR) -DVER_MINOR=$(VDPAU_MINOR) 
 LIBS = $(EXTRA_LIB_PATH) $(DRIVER_LIBS) -lvdpau -lXext -lX11 -lm
 STATE_TRACKER_LIB = $(TOP)/src/gallium/state_trackers/vdpau/libvdpautracker.a
 
+ifeq ($(MESA_LLVM),1)
+LDFLAGS += $(LLVM_LDFLAGS)
+DRIVER_EXTRAS = $(LLVM_LIBS)
+else
+LDFLAGS += -lstdc++
+endif
+
 # XXX: Hack, VDPAU public funcs aren't exported if we link to libvdpautracker.a :(
 OBJECTS = $(C_SOURCES:.c=.o) \
 	  $(ASM_SOURCES:.S=.o) \
@@ -35,7 +42,7 @@ $(TOP)/$(LIB_DIR)/gallium/$(LIBNAME): $(OBJECTS) $(PIPE_DRIVERS) $(STATE_TRACKER
 	$(MKLIB) -o $(LIBBASENAME) -linker '$(CC)' -ldflags '$(LDFLAGS)' \
 		-major $(VDPAU_MAJOR) -minor $(VDPAU_MINOR) $(MKLIB_OPTIONS) \
 		-install $(TOP)/$(LIB_DIR)/gallium \
-		$(OBJECTS) $(STATE_TRACKER_LIB) $(PIPE_DRIVERS) $(LIBS)
+		$(OBJECTS) $(STATE_TRACKER_LIB) $(PIPE_DRIVERS) $(LIBS) $(DRIVER_EXTRAS)
 
 $(TOP)/$(LIB_DIR)/gallium:
 	mkdir -p $@
