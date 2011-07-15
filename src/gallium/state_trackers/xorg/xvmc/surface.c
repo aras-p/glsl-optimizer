@@ -567,8 +567,9 @@ Status XvMCPutSurface(Display *dpy, XvMCSurface *surface, Drawable drawable,
    // Workaround for r600g, there seems to be a bug in the fence refcounting code
    pipe->screen->fence_reference(pipe->screen, &surface_priv->fence, NULL);
 
-   vl_compositor_render(compositor, PictureToPipe(flags), context_priv->drawable_surface, 
-                        &dst_rect, NULL, &surface_priv->fence);
+   vl_compositor_render(compositor, PictureToPipe(flags), context_priv->drawable_surface, &dst_rect, NULL);
+                        
+   pipe->flush(pipe, &surface_priv->fence);
 
    XVMC_MSG(XVMC_TRACE, "[XvMC] Submitted surface %p for display. Pushing to front buffer.\n", surface);
 

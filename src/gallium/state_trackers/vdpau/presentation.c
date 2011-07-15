@@ -170,7 +170,7 @@ vlVdpPresentationQueueDisplay(VdpPresentationQueue presentation_queue,
    vl_compositor_clear_layers(&pq->compositor);
    vl_compositor_set_rgba_layer(&pq->compositor, 0, surf->sampler_view, NULL, NULL);
    vl_compositor_render(&pq->compositor, PIPE_MPEG12_PICTURE_TYPE_FRAME,
-                        drawable_surface, NULL, NULL, NULL);
+                        drawable_surface, NULL, NULL);
 
    pq->device->context->pipe->screen->flush_frontbuffer
    (
