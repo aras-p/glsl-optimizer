@@ -571,6 +571,8 @@ _mesa_set_tex_image(struct gl_texture_object *tObj,
 
    /* Set the 'back' pointer */
    texImage->TexObject = tObj;
+   texImage->Level = level;
+   texImage->Face = face;
 }
 
 
