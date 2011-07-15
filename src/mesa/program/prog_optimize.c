@@ -1304,6 +1304,9 @@ _mesa_simplify_cmp(struct gl_program * program)
          assert(inst->DstReg.Index < REG_ALLOCATE_MAX_PROGRAM_TEMPS);
          prevWriteMask = tempWrites[inst->DstReg.Index];
          tempWrites[inst->DstReg.Index] |= inst->DstReg.WriteMask;
+      } else {
+         /* No other register type can be a destination register. */
+         continue;
       }
 
       /* For a CMP to be considered a conditional write, the destination
