@@ -449,7 +449,6 @@ st_translate_fragment_program(struct st_context *st,
       GLuint inputMapping[FRAG_ATTRIB_MAX];
       GLuint interpMode[PIPE_MAX_SHADER_INPUTS];  /* XXX size? */
       GLuint attr;
-      enum pipe_error error;
       const GLbitfield inputsRead = stfp->Base.Base.InputsRead;
       struct ureg_program *ureg;
       GLboolean write_all = GL_FALSE;
@@ -606,21 +605,21 @@ st_translate_fragment_program(struct st_context *st,
       if (write_all == GL_TRUE)
          ureg_property_fs_color0_writes_all_cbufs(ureg, 1);
 
-      error = st_translate_mesa_program(st->ctx,
-                                        TGSI_PROCESSOR_FRAGMENT,
-                                        ureg,
-                                        &stfp->Base.Base,
-                                        /* inputs */
-                                        fs_num_inputs,
-                                        inputMapping,
-                                        input_semantic_name,
-                                        input_semantic_index,
-                                        interpMode,
-                                        /* outputs */
-                                        fs_num_outputs,
-                                        outputMapping,
-                                        fs_output_semantic_name,
-                                        fs_output_semantic_index, FALSE );
+      st_translate_mesa_program(st->ctx,
+                                TGSI_PROCESSOR_FRAGMENT,
+                                ureg,
+                                &stfp->Base.Base,
+                                /* inputs */
+                                fs_num_inputs,
+                                inputMapping,
+                                input_semantic_name,
+                                input_semantic_index,
+                                interpMode,
+                                /* outputs */
+                                fs_num_outputs,
+                                outputMapping,
+                                fs_output_semantic_name,
+                                fs_output_semantic_index, FALSE );
 
       stfp->tgsi.tokens = ureg_get_tokens( ureg, NULL );
       ureg_destroy( ureg );
@@ -687,7 +686,6 @@ st_translate_geometry_program(struct st_context *st,
    GLuint inputMapping[GEOM_ATTRIB_MAX];
    GLuint outputMapping[GEOM_RESULT_MAX];
    struct pipe_context *pipe = st->pipe;
-   enum pipe_error error;
    GLuint attr;
    const GLbitfield inputsRead = stgp->Base.Base.InputsRead;
    GLuint vslot = 0;
@@ -894,22 +892,22 @@ st_translate_geometry_program(struct st_context *st,
    ureg_property_gs_output_prim(ureg, stgp->Base.OutputType);
    ureg_property_gs_max_vertices(ureg, stgp->Base.VerticesOut);
 
-   error = st_translate_mesa_program(st->ctx,
-                                     TGSI_PROCESSOR_GEOMETRY,
-                                     ureg,
-                                     &stgp->Base.Base,
-                                     /* inputs */
-                                     gs_num_inputs,
-                                     inputMapping,
-                                     stgp->input_semantic_name,
-                                     stgp->input_semantic_index,
-                                     NULL,
-                                     /* outputs */
-                                     gs_num_outputs,
-                                     outputMapping,
-                                     gs_output_semantic_name,
-                                     gs_output_semantic_index,
-                                     FALSE);
+   st_translate_mesa_program(st->ctx,
+                             TGSI_PROCESSOR_GEOMETRY,
+                             ureg,
+                             &stgp->Base.Base,
+                             /* inputs */
+                             gs_num_inputs,
+                             inputMapping,
+                             stgp->input_semantic_name,
+                             stgp->input_semantic_index,
+                             NULL,
+                             /* outputs */
+                             gs_num_outputs,
+                             outputMapping,
+                             gs_output_semantic_name,
+                             gs_output_semantic_index,
+                             FALSE);
 
    stgp->num_inputs = gs_num_inputs;
    stgp->tgsi.tokens = ureg_get_tokens( ureg, NULL );
