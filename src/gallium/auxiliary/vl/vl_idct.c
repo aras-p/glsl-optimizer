@@ -143,7 +143,7 @@ static void *
 create_mismatch_vert_shader(struct vl_idct *idct)
 {
    struct ureg_program *shader;
-   struct ureg_src vrect, vpos;
+   struct ureg_src vpos;
    struct ureg_src scale;
    struct ureg_dst t_tex;
    struct ureg_dst o_vpos, o_addr[2];
@@ -152,7 +152,6 @@ create_mismatch_vert_shader(struct vl_idct *idct)
    if (!shader)
       return NULL;
 
-   vrect = ureg_DECL_vs_input(shader, VS_I_RECT);
    vpos = ureg_DECL_vs_input(shader, VS_I_VPOS);
 
    t_tex = ureg_DECL_temporary(shader);
