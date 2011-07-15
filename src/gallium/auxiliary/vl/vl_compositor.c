@@ -239,8 +239,6 @@ init_pipe_state(struct vl_compositor *c)
 
    c->viewport.scale[2] = 1;
    c->viewport.scale[3] = 1;
-   c->viewport.translate[0] = 0;
-   c->viewport.translate[1] = 0;
    c->viewport.translate[2] = 0;
    c->viewport.translate[3] = 0;
 
@@ -653,6 +651,7 @@ vl_compositor_render(struct vl_compositor *c,
                      enum pipe_mpeg12_picture_type picture_type,
                      struct pipe_surface           *dst_surface,
                      struct pipe_video_rect        *dst_area,
+                     struct pipe_video_rect        *dst_clip,
                      struct pipe_fence_handle      **fence)
 {
    struct pipe_scissor_state scissor;
@@ -663,15 +662,24 @@ vl_compositor_render(struct vl_compositor *c,
    c->fb_state.width = dst_surface->width;
    c->fb_state.height = dst_surface->height;
    c->fb_state.cbufs[0] = dst_surface;
-
-   c->viewport.scale[0] = dst_surface->width;
-   c->viewport.scale[1] = dst_surface->height;
-
+   
    if (dst_area) {
-      scissor.minx = dst_area->x;
-      scissor.miny = dst_area->y;
-      scissor.maxx = dst_area->x + dst_area->w;
-      scissor.maxy = dst_area->y + dst_area->h;
+      c->viewport.scale[0] = dst_area->w;
+      c->viewport.scale[1] = dst_area->h;
+      c->viewport.translate[0] = dst_area->x;
+      c->viewport.translate[1] = dst_area->y;
+   } else {
+      c->viewport.scale[0] = dst_surface->width;
+      c->viewport.scale[1] = dst_surface->height;
+      c->viewport.translate[0] = 0;
+      c->viewport.translate[1] = 0;
+   }
+
+   if (dst_clip) {
+      scissor.minx = dst_clip->x;
+      scissor.miny = dst_clip->y;
+      scissor.maxx = dst_clip->x + dst_clip->w;
+      scissor.maxy = dst_clip->y + dst_clip->h;
    } else {
       scissor.minx = 0;
       scissor.miny = 0;
