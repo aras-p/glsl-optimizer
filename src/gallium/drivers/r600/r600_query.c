@@ -43,7 +43,7 @@ static void r600_begin_query(struct pipe_context *ctx, struct pipe_query *query)
 	struct r600_query *rquery = (struct r600_query *)query;
 
 	rquery->result = 0;
-	rquery->num_results = 0;
+	rquery->results_start = rquery->results_end;
 	r600_query_begin(&rctx->ctx, (struct r600_query *)query);
 }
 
@@ -72,12 +72,18 @@ static void r600_render_condition(struct pipe_context *ctx,
 	struct r600_query *rquery = (struct r600_query *)query;
 	int wait_flag = 0;
 
+	/* If we already have nonzero result, render unconditionally */
+	if (query != NULL && rquery->result != 0)
+		return;
+
 	rctx->current_render_cond = query;
 	rctx->current_render_cond_mode = mode;
 
-	if (!query) {
-		rctx->ctx.predicate_drawing = false;
-		r600_query_predication(&rctx->ctx, NULL, PREDICATION_OP_CLEAR, 1);
+	if (query == NULL) {
+		if (rctx->ctx.predicate_drawing) {
+			rctx->ctx.predicate_drawing = false;
+			r600_query_predication(&rctx->ctx, NULL, PREDICATION_OP_CLEAR, 1);
+		}
 		return;
 	}
 
@@ -88,7 +94,6 @@ static void r600_render_condition(struct pipe_context *ctx,
 
 	rctx->ctx.predicate_drawing = true;
 	r600_query_predication(&rctx->ctx, rquery, PREDICATION_OP_ZPASS, wait_flag);
-	
 }
 
 void r600_init_query_functions(struct r600_pipe_context *rctx)

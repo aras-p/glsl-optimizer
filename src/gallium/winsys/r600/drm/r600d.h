@@ -114,6 +114,8 @@
 
 #define PRED_OP(x) ((x) << 16)
 
+#define PREDICATION_CONTINUE (1 << 31)
+
 #define PREDICATION_HINT_WAIT (0 << 12)
 #define PREDICATION_HINT_NOWAIT_DRAW (1 << 12)
 

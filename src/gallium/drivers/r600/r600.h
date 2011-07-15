@@ -211,14 +211,21 @@ struct r600_reloc {
  */
 struct r600_query {
 	u64					result;
-	/* The kind of query. Currently only OQ is supported. */
+	/* The kind of query */
 	unsigned				type;
-	/* How many results have been written, in dwords. It's incremented
-	 * after end_query and flush. */
-	unsigned				num_results;
-	/* if we've flushed the query */
+	/* Offset of the first result for current query */
+	unsigned				results_start;
+	/* Offset of the next free result after current query data */
+	unsigned				results_end;
+	/* Size of the result */
+	unsigned				result_size;
+	/* Count of new queries started in one stream without flushing */
+	unsigned				queries_emitted;
+	/* State flags */
 	unsigned				state;
-	/* The buffer where query results are stored. */
+	/* The buffer where query results are stored. It's used as a ring,
+	 * data blocks for current query are stored sequentially from
+	 * results_start to results_end, with wrapping on the buffer end */
 	struct r600_bo			*buffer;
 	unsigned				buffer_size;
 	/* linked list of queries */

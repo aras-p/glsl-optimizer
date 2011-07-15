@@ -1695,10 +1695,9 @@ out_err:
 
 static boolean r600_query_result(struct r600_context *ctx, struct r600_query *query, boolean wait)
 {
+	unsigned results_base = query->results_start;
 	u64 start, end;
-	u32 *results;
-	int i;
-	int size;
+	u32 *results, *current_result;
 
 	if (wait)
 		results = r600_bo_map(ctx->radeon, query->buffer, PB_USAGE_CPU_READ, NULL);
@@ -1707,25 +1706,31 @@ static boolean r600_query_result(struct r600_context *ctx, struct r600_query *qu
 	if (!results)
 		return FALSE;
 
-	/* query->num_results contains how many dwords were used for the query */
-	size = query->num_results;
-	for (i = 0; i < size; i += 4) {
-		start = (u64)results[i] | (u64)results[i + 1] << 32;
-		end = (u64)results[i + 2] | (u64)results[i + 3] << 32;
+
+	/* count all results across all data blocks */
+	while (results_base != query->results_end) {
+		current_result = (u32*)((char*)results + results_base);
+
+		start = (u64)current_result[0] | (u64)current_result[1] << 32;
+		end = (u64)current_result[2] | (u64)current_result[3] << 32;
 		if (((start & 0x8000000000000000UL) && (end & 0x8000000000000000UL))
                     || query->type == PIPE_QUERY_TIME_ELAPSED) {
 			query->result += end - start;
 		}
-	}
-	r600_bo_unmap(ctx->radeon, query->buffer);
-	query->num_results = 0;
 
+		results_base += 4 * 4;
+		if (results_base >= query->buffer_size)
+			results_base = 0;
+	}
+
+	query->results_start = query->results_end;
+	r600_bo_unmap(ctx->radeon, query->buffer);
 	return TRUE;
 }
 
 void r600_query_begin(struct r600_context *ctx, struct r600_query *query)
 {
-	unsigned required_space, required_buffer;
+	unsigned required_space, new_results_end;
 	int num_backends = r600_get_num_backends(ctx->radeon);
 
 	/* query request needs 6/8 dwords for begin + 6/8 dwords for end */
@@ -1739,26 +1744,41 @@ void r600_query_begin(struct r600_context *ctx, struct r600_query *query)
 		r600_context_flush(ctx);
 	}
 
-	required_buffer = query->num_results +
-		4 * (query->type == PIPE_QUERY_OCCLUSION_COUNTER ? ctx->max_db : 1);
+	/* if it's new OQ (not resume) */
+	if (query->type == PIPE_QUERY_OCCLUSION_COUNTER &&
+		query->results_start == query->results_end) {
+		/* Count queries emitted without flushes, and flush if more than
+		 * half of buffer used, to avoid overwriting results which may be
+		 * still in use. */
+		if (query->state & R600_QUERY_STATE_FLUSHED) {
+			query->queries_emitted = 1;
+		} else {
+			if (++query->queries_emitted > query->buffer_size / query->result_size / 2)
+				r600_context_flush(ctx);
+		}
+	}
 
-	/* if query buffer is full force a flush */
-	if (required_buffer*4 > query->buffer_size) {
+	new_results_end = query->results_end + query->result_size;
+	if (new_results_end > query->buffer_size)
+		new_results_end = 0;
+
+	/* collect current results if query buffer is full */
+	if (new_results_end == query->results_start) {
 		if (!(query->state & R600_QUERY_STATE_FLUSHED))
 			r600_context_flush(ctx);
 		r600_query_result(ctx, query, TRUE);
 	}
 
-	if (query->type == PIPE_QUERY_OCCLUSION_COUNTER &&
-	    num_backends > 0) {
-		/* as per info on ZPASS the driver must set the unusued DB top bits */
+	if (query->type == PIPE_QUERY_OCCLUSION_COUNTER) {
 		u32 *results;
 		int i;
 
 		results = r600_bo_map(ctx->radeon, query->buffer, PB_USAGE_CPU_WRITE, NULL);
 		if (results) {
-			memset(results + query->num_results, 0, ctx->max_db * 4 * 4);
+			results = (u32*)((char*)results + query->results_end);
+			memset(results, 0, query->result_size);
 
+			/* Set top bits for unused backends */
 			for (i = num_backends; i < ctx->max_db; i++) {
 				results[(i * 4)+1] = 0x80000000;
 				results[(i * 4)+3] = 0x80000000;
@@ -1771,14 +1791,14 @@ void r600_query_begin(struct r600_context *ctx, struct r600_query *query)
 	if (query->type == PIPE_QUERY_TIME_ELAPSED) {
 		ctx->pm4[ctx->pm4_cdwords++] = PKT3(PKT3_EVENT_WRITE_EOP, 4, 0);
 		ctx->pm4[ctx->pm4_cdwords++] = EVENT_TYPE(EVENT_TYPE_CACHE_FLUSH_AND_INV_TS_EVENT) | EVENT_INDEX(5);
-		ctx->pm4[ctx->pm4_cdwords++] = query->num_results*4 + r600_bo_offset(query->buffer);
+		ctx->pm4[ctx->pm4_cdwords++] = query->results_end + r600_bo_offset(query->buffer);
 		ctx->pm4[ctx->pm4_cdwords++] = (3 << 29);
 		ctx->pm4[ctx->pm4_cdwords++] = 0;
 		ctx->pm4[ctx->pm4_cdwords++] = 0;
 	} else {
 		ctx->pm4[ctx->pm4_cdwords++] = PKT3(PKT3_EVENT_WRITE, 2, 0);
 		ctx->pm4[ctx->pm4_cdwords++] = EVENT_TYPE(EVENT_TYPE_ZPASS_DONE) | EVENT_INDEX(1);
-		ctx->pm4[ctx->pm4_cdwords++] = query->num_results*4 + r600_bo_offset(query->buffer);
+		ctx->pm4[ctx->pm4_cdwords++] = query->results_end + r600_bo_offset(query->buffer);
 		ctx->pm4[ctx->pm4_cdwords++] = 0;
 	}
 	ctx->pm4[ctx->pm4_cdwords++] = PKT3(PKT3_NOP, 0, 0);
@@ -1792,50 +1812,75 @@ void r600_query_begin(struct r600_context *ctx, struct r600_query *query)
 
 void r600_query_end(struct r600_context *ctx, struct r600_query *query)
 {
-	/* emit begin query */
+	/* emit end query */
 	if (query->type == PIPE_QUERY_TIME_ELAPSED) {
 		ctx->pm4[ctx->pm4_cdwords++] = PKT3(PKT3_EVENT_WRITE_EOP, 4, 0);
 		ctx->pm4[ctx->pm4_cdwords++] = EVENT_TYPE(EVENT_TYPE_CACHE_FLUSH_AND_INV_TS_EVENT) | EVENT_INDEX(5);
-		ctx->pm4[ctx->pm4_cdwords++] = query->num_results*4 + 8 + r600_bo_offset(query->buffer);
+		ctx->pm4[ctx->pm4_cdwords++] = query->results_end + 8 + r600_bo_offset(query->buffer);
 		ctx->pm4[ctx->pm4_cdwords++] = (3 << 29);
 		ctx->pm4[ctx->pm4_cdwords++] = 0;
 		ctx->pm4[ctx->pm4_cdwords++] = 0;
 	} else {
 		ctx->pm4[ctx->pm4_cdwords++] = PKT3(PKT3_EVENT_WRITE, 2, 0);
 		ctx->pm4[ctx->pm4_cdwords++] = EVENT_TYPE(EVENT_TYPE_ZPASS_DONE) | EVENT_INDEX(1);
-		ctx->pm4[ctx->pm4_cdwords++] = query->num_results*4 + 8 + r600_bo_offset(query->buffer);
+		ctx->pm4[ctx->pm4_cdwords++] = query->results_end + 8 + r600_bo_offset(query->buffer);
 		ctx->pm4[ctx->pm4_cdwords++] = 0;
 	}
 	ctx->pm4[ctx->pm4_cdwords++] = PKT3(PKT3_NOP, 0, 0);
 	ctx->pm4[ctx->pm4_cdwords++] = 0;
 	r600_context_bo_reloc(ctx, &ctx->pm4[ctx->pm4_cdwords - 1], query->buffer);
 
-	query->num_results += 4 * (query->type == PIPE_QUERY_OCCLUSION_COUNTER ? ctx->max_db : 1);
+	query->results_end += query->result_size;
+	if (query->results_end >= query->buffer_size)
+		query->results_end = 0;
+
 	query->state ^= R600_QUERY_STATE_STARTED;
 	query->state |= R600_QUERY_STATE_ENDED;
 	query->state &= ~R600_QUERY_STATE_FLUSHED;
+
 	ctx->num_query_running--;
 }
 
 void r600_query_predication(struct r600_context *ctx, struct r600_query *query, int operation,
 			    int flag_wait)
 {
-	ctx->pm4[ctx->pm4_cdwords++] = PKT3(PKT3_SET_PREDICATION, 1, 0);
-
 	if (operation == PREDICATION_OP_CLEAR) {
+		if (ctx->pm4_cdwords + 3 > ctx->pm4_ndwords)
+			r600_context_flush(ctx);
+
+		ctx->pm4[ctx->pm4_cdwords++] = PKT3(PKT3_SET_PREDICATION, 1, 0);
 		ctx->pm4[ctx->pm4_cdwords++] = 0;
 		ctx->pm4[ctx->pm4_cdwords++] = PRED_OP(PREDICATION_OP_CLEAR);
 	} else {
-		int results_base = query->num_results - (4 * ctx->max_db);
+		unsigned results_base = query->results_start;
+		unsigned count;
+		u32 op;
 
-		if (results_base < 0)
-			results_base = 0;
+		/* find count of the query data blocks */
+		count = query->buffer_size + query->results_end - query->results_start;
+		if (count > query->buffer_size) count-=query->buffer_size;
+		count /= query->result_size;
 
-		ctx->pm4[ctx->pm4_cdwords++] = results_base*4 + r600_bo_offset(query->buffer);
-		ctx->pm4[ctx->pm4_cdwords++] = PRED_OP(operation) | (flag_wait ? PREDICATION_HINT_WAIT : PREDICATION_HINT_NOWAIT_DRAW) | PREDICATION_DRAW_VISIBLE;
-		ctx->pm4[ctx->pm4_cdwords++] = PKT3(PKT3_NOP, 0, 0);
-		ctx->pm4[ctx->pm4_cdwords++] = 0;
-		r600_context_bo_reloc(ctx, &ctx->pm4[ctx->pm4_cdwords - 1], query->buffer);
+		if (ctx->pm4_cdwords + 5 * count > ctx->pm4_ndwords)
+			r600_context_flush(ctx);
+
+		op = PRED_OP(operation) | PREDICATION_DRAW_VISIBLE |
+				(flag_wait ? PREDICATION_HINT_WAIT : PREDICATION_HINT_NOWAIT_DRAW);
+
+		/* emit predicate packets for all data blocks */
+		while (results_base != query->results_end) {
+			ctx->pm4[ctx->pm4_cdwords++] = PKT3(PKT3_SET_PREDICATION, 1, 0);
+			ctx->pm4[ctx->pm4_cdwords++] = results_base + r600_bo_offset(query->buffer);
+			ctx->pm4[ctx->pm4_cdwords++] = op;
+			ctx->pm4[ctx->pm4_cdwords++] = PKT3(PKT3_NOP, 0, 0);
+			ctx->pm4[ctx->pm4_cdwords++] = 0;
+			r600_context_bo_reloc(ctx, &ctx->pm4[ctx->pm4_cdwords - 1], query->buffer);
+			results_base += query->result_size;
+			if (results_base >= query->buffer_size)
+				results_base = 0;
+			/* set CONTINUE bit for all packets except the first */
+			op |= PREDICATION_CONTINUE;
+		}
 	}
 }
 
@@ -1852,6 +1897,14 @@ struct r600_query *r600_context_query_create(struct r600_context *ctx, unsigned 
 
 	query->type = query_type;
 	query->buffer_size = 4096;
+
+	if (query_type == PIPE_QUERY_OCCLUSION_COUNTER)
+		query->result_size = 4 * 4 * ctx->max_db;
+	else
+		query->result_size = 4 * 4;
+
+	/* adjust buffer size to simplify offsets wrapping math */
+	query->buffer_size -= query->buffer_size % query->result_size;
 
 	/* As of GL4, query buffers are normally read by the CPU after
 	 * being written by the gpu, hence staging is probably a good
@@ -1882,7 +1935,7 @@ boolean r600_context_query_result(struct r600_context *ctx,
 {
 	uint64_t *result = (uint64_t*)vresult;
 
-	if (query->num_results && !(query->state & R600_QUERY_STATE_FLUSHED)) {
+	if (!(query->state & R600_QUERY_STATE_FLUSHED)) {
 		r600_context_flush(ctx);
 	}
 	if (!r600_query_result(ctx, query, wait))
@@ -1912,10 +1965,12 @@ void r600_context_queries_resume(struct r600_context *ctx, boolean flushed)
 	struct r600_query *query;
 
 	LIST_FOR_EACH_ENTRY(query, &ctx->query_list, list) {
+		if (flushed)
+			query->state |= R600_QUERY_STATE_FLUSHED;
+
 		if (query->state & R600_QUERY_STATE_SUSPENDED) {
 			r600_query_begin(ctx, query);
 			query->state ^= R600_QUERY_STATE_SUSPENDED;
-		} else if (flushed && query->state==R600_QUERY_STATE_ENDED)
-			query->state |= R600_QUERY_STATE_FLUSHED;
+		}
 	}
 }
