@@ -1956,6 +1956,9 @@ if test "x$with_gallium_drivers" != x; then
                if test "x$HAVE_WINSYS_XLIB" != xyes; then
                   GALLIUM_WINSYS_DIRS="$GALLIUM_WINSYS_DIRS sw/xlib"
                fi
+               if test "x$HAVE_ST_DRI" != xyes; then
+                GALLIUM_DRIVERS_DIRS="$GALLIUM_DRIVERS_DIRS softpipe"
+               fi
             fi
             ;;
         *)
