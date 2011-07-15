@@ -541,8 +541,8 @@ intel_set_teximage_alpha_to_one(struct gl_context *ctx,
 
    /* get dest x/y in destination texture */
    intel_miptree_get_image_offset(intel_image->mt,
-				  intel_image->level,
-				  intel_image->face,
+				  intel_image->base.Level,
+				  intel_image->base.Face,
 				  0,
 				  &image_x, &image_y);
 

@@ -52,11 +52,6 @@ struct intel_texture_image
 {
    struct gl_texture_image base;
 
-   /* These aren't stored in gl_texture_image 
-    */
-   GLuint level;
-   GLuint face;
-
    /* If intelImage->mt != NULL, image data is stored here.
     * Else if intelImage->base.Data != NULL, image is stored there.
     * Else there is no image data.

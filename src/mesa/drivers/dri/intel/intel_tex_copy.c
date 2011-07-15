@@ -118,8 +118,8 @@ intel_copy_texsubimage(struct intel_context *intel,
 
       /* get dest x/y in destination texture */
       intel_miptree_get_image_offset(intelImage->mt,
-				     intelImage->level,
-				     intelImage->face,
+				     intelImage->base.Level,
+				     intelImage->base.Face,
 				     0,
 				     &image_x, &image_y);
 

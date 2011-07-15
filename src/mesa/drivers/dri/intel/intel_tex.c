@@ -95,17 +95,12 @@ intelGenerateMipmap(struct gl_context *ctx, GLenum target,
       if (!_mesa_is_format_compressed(first_image->TexFormat)) {
          GLuint nr_faces = (texObj->Target == GL_TEXTURE_CUBE_MAP) ? 6 : 1;
          GLuint face, i;
-         /* Update the level information in our private data in the new images,
-          * since it didn't get set as part of a normal TexImage path.
-          */
          for (face = 0; face < nr_faces; face++) {
             for (i = texObj->BaseLevel + 1; i < texObj->MaxLevel; i++) {
                struct intel_texture_image *intelImage =
                   intel_texture_image(texObj->Image[face][i]);
                if (!intelImage)
                   break;
-               intelImage->level = i;
-               intelImage->face = face;
                /* Unreference the miptree to signal that the new Data is a
                 * bare pointer from mesa.
                 */
