@@ -25,10 +25,13 @@
 #include <assert.h>
 #include "s_expression.h"
 
-s_symbol::s_symbol(const char *tmp, size_t n)
+s_symbol::s_symbol(const char *str, size_t n)
 {
-   this->str = ralloc_strndup (this, tmp, n);
-   assert(this->str != NULL);
+   /* Assume the given string is already nul-terminated and in memory that
+    * will live as long as this node.
+    */
+   assert(str[n] == '\0');
+   this->str = str;
 }
 
 s_list::s_list()
@@ -36,22 +39,26 @@ s_list::s_list()
 }
 
 static void
-skip_whitespace(const char *& src)
+skip_whitespace(const char *&src, char *&symbol_buffer)
 {
-   src += strspn(src, " \v\t\r\n");
+   size_t n = strspn(src, " \v\t\r\n");
+   src += n;
+   symbol_buffer += n;
    /* Also skip Scheme-style comments: semi-colon 'til end of line */
    if (src[0] == ';') {
-      src += strcspn(src, "\n");
-      skip_whitespace(src);
+      n = strcspn(src, "\n");
+      src += n;
+      symbol_buffer += n;
+      skip_whitespace(src, symbol_buffer);
    }
 }
 
 static s_expression *
-read_atom(void *ctx, const char *& src)
+read_atom(void *ctx, const char *&src, char *&symbol_buffer)
 {
    s_expression *expr = NULL;
 
-   skip_whitespace(src);
+   skip_whitespace(src, symbol_buffer);
 
    size_t n = strcspn(src, "( \v\t\r\n);");
    if (n == 0)
@@ -70,12 +77,44 @@ read_atom(void *ctx, const char *& src)
 	 expr = new(ctx) s_int(i);
    } else {
       // Not a number; return a symbol.
-      expr = new(ctx) s_symbol(src, n);
+      symbol_buffer[n] = '\0';
+      expr = new(ctx) s_symbol(symbol_buffer, n);
    }
 
    src += n;
+   symbol_buffer += n;
 
    return expr;
+}
+
+static s_expression *
+__read_expression(void *ctx, const char *&src, char *&symbol_buffer)
+{
+   s_expression *atom = read_atom(ctx, src, symbol_buffer);
+   if (atom != NULL)
+      return atom;
+
+   skip_whitespace(src, symbol_buffer);
+   if (src[0] == '(') {
+      ++src;
+      ++symbol_buffer;
+
+      s_list *list = new(ctx) s_list;
+      s_expression *expr;
+
+      while ((expr = __read_expression(ctx, src, symbol_buffer)) != NULL) {
+	 list->subexpressions.push_tail(expr);
+      }
+      skip_whitespace(src, symbol_buffer);
+      if (src[0] != ')') {
+	 printf("Unclosed expression (check your parenthesis).\n");
+	 return NULL;
+      }
+      ++src;
+      ++symbol_buffer;
+      return list;
+   }
+   return NULL;
 }
 
 s_expression *
@@ -83,29 +122,18 @@ s_expression::read_expression(void *ctx, const char *&src)
 {
    assert(src != NULL);
 
-   s_expression *atom = read_atom(ctx, src);
-   if (atom != NULL)
-      return atom;
-
-   skip_whitespace(src);
-   if (src[0] == '(') {
-      ++src;
-
-      s_list *list = new(ctx) s_list;
-      s_expression *expr;
-
-      while ((expr = read_expression(ctx, src)) != NULL) {
-	 list->subexpressions.push_tail(expr);
-      }
-      skip_whitespace(src);
-      if (src[0] != ')') {
-	 printf("Unclosed expression (check your parenthesis).\n");
-	 return NULL;
-      }
-      ++src;
-      return list;
-   }
-   return NULL;
+   /* When we encounter a Symbol, we need to save a nul-terminated copy of
+    * the string.  However, ralloc_strndup'ing every individual Symbol is
+    * extremely expensive.  We could avoid this by simply overwriting the
+    * next character (guaranteed to be whitespace, parens, or semicolon) with
+    * a nul-byte.  But overwriting non-whitespace would mess up parsing.
+    *
+    * So, just copy the whole buffer ahead of time.  Walk both, leaving the
+    * original source string unmodified, and altering the copy to contain the
+    * necessary nul-bytes whenever we encounter a symbol.
+    */
+   char *symbol_buffer = ralloc_strdup(ctx, src);
+   return __read_expression(ctx, src, symbol_buffer);
 }
 
 void s_int::print()

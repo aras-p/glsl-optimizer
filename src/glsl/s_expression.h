@@ -129,7 +129,7 @@ public:
    void print();
 
 private:
-   char *str;
+   const char *str;
 };
 
 /* Lists of expressions: (expr1 ... exprN) */
