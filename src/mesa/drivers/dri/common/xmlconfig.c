@@ -765,9 +765,9 @@ static void parseDeviceAttr (struct OptConfData *data, const XML_Char **attr) {
 /** \brief Parse attributes of an application element. */
 static void parseAppAttr (struct OptConfData *data, const XML_Char **attr) {
     GLuint i;
-    const XML_Char *name = NULL, *exec = NULL;
+    const XML_Char *exec = NULL;
     for (i = 0; attr[i]; i += 2) {
-	if (!strcmp (attr[i], "name")) name = attr[i+1];
+	if (!strcmp (attr[i], "name")) /* not needed here */;
 	else if (!strcmp (attr[i], "executable")) exec = attr[i+1];
 	else XML_WARNING("unknown application attribute: %s.", attr[i]);
     }
