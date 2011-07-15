@@ -560,7 +560,7 @@ static int peephole_add_presub_add(
 	struct radeon_compiler * c,
 	struct rc_instruction * inst_add)
 {
-	struct rc_src_register * src0 = NULL;
+	unsigned dstmask = inst_add->U.I.DstReg.WriteMask;
 	struct rc_src_register * src1 = NULL;
 	unsigned int i;
 
@@ -570,18 +570,15 @@ static int peephole_add_presub_add(
 	if (inst_add->U.I.SrcReg[0].Swizzle != inst_add->U.I.SrcReg[1].Swizzle)
 		return 0;
 
-	/* src0 and src1 can't have absolute values only one can be negative and they must be all negative or all positive. */
+	/* XXX This isn't fully implemented, is it? */
+	/*   src0 and src1 can't have absolute values only one can be negative and they must be all negative or all positive. */
 	for (i = 0; i < 2; i++) {
 		if (inst_add->U.I.SrcReg[i].Abs)
 			return 0;
-		if ((inst_add->U.I.SrcReg[i].Negate
-					& inst_add->U.I.DstReg.WriteMask) ==
-						inst_add->U.I.DstReg.WriteMask) {
-			src0 = &inst_add->U.I.SrcReg[i];
-		} else if (!src1) {
+
+		/* XXX This looks weird, but it's basically what was here before this commit (see git blame): */
+		if ((inst_add->U.I.SrcReg[i].Negate & dstmask) != dstmask && !src1) {
 			src1 = &inst_add->U.I.SrcReg[i];
-		} else {
-			src0 = &inst_add->U.I.SrcReg[i];
 		}
 	}
 
