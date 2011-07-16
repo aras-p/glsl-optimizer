@@ -193,7 +193,11 @@ lp_disassemble(const void* func)
 
    InitializeAllDisassemblers();
 
+#if HAVE_LLVM >= 0x0300
+   OwningPtr<const MCAsmInfo> AsmInfo(T->createMCAsmInfo(Triple));
+#else
    OwningPtr<const MCAsmInfo> AsmInfo(T->createAsmInfo(Triple));
+#endif
 
    if (!AsmInfo) {
       debug_printf("error: no assembly info for target %s\n", Triple.c_str());
