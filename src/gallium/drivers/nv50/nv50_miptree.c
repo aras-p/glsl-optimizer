@@ -409,7 +409,9 @@ nv50_miptree_surface_new(struct pipe_context *pipe,
       if (mt->layout_3d) {
          ns->offset += nv50_mt_zslice_offset(mt, l, z);
 
-         if (z & (NV50_TILE_SIZE_Z(mt->level[l].tile_mode) - 1))
+         /* TODO: switch to depth 1 tiles; but actually this shouldn't happen */
+         if (ns->depth > 1 &&
+             (z & (NV50_TILE_SIZE_Z(mt->level[l].tile_mode) - 1)))
             NOUVEAU_ERR("Creating unsupported 3D surface !\n");
       } else {
          ns->offset += mt->layer_stride * z;
