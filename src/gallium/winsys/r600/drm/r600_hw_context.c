@@ -1748,9 +1748,7 @@ void r600_query_begin(struct r600_context *ctx, struct r600_query *query)
 		r600_context_flush(ctx);
 	}
 
-	/* if it's new OQ (not resume) */
-	if (query->type == PIPE_QUERY_OCCLUSION_COUNTER &&
-		query->results_start == query->results_end) {
+	if (query->type == PIPE_QUERY_OCCLUSION_COUNTER) {
 		/* Count queries emitted without flushes, and flush if more than
 		 * half of buffer used, to avoid overwriting results which may be
 		 * still in use. */
@@ -1763,7 +1761,7 @@ void r600_query_begin(struct r600_context *ctx, struct r600_query *query)
 	}
 
 	new_results_end = query->results_end + query->result_size;
-	if (new_results_end > query->buffer_size)
+	if (new_results_end >= query->buffer_size)
 		new_results_end = 0;
 
 	/* collect current results if query buffer is full */
@@ -1862,7 +1860,7 @@ void r600_query_predication(struct r600_context *ctx, struct r600_query *query, 
 
 		/* find count of the query data blocks */
 		count = query->buffer_size + query->results_end - query->results_start;
-		if (count > query->buffer_size) count-=query->buffer_size;
+		if (count >= query->buffer_size) count-=query->buffer_size;
 		count /= query->result_size;
 
 		if (ctx->pm4_cdwords + 5 * count > ctx->pm4_ndwords)
