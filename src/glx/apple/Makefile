@@ -46,6 +46,7 @@ SOURCES = \
 	../glxcurrent.c \
 	../glxext.c \
 	../glxextensions.c \
+	../glxhash.c \
 	glxreply.c \
 	../pixel.c \
 	../xfont.c \
