@@ -388,7 +388,7 @@ driFetchDrawable(struct glx_context *gc, GLXDrawable glxDrawable)
 _X_HIDDEN void
 driReleaseDrawables(struct glx_context *gc)
 {
-   struct glx_display *const priv = __glXInitialize(gc->psc->dpy);
+   const struct glx_display *priv = gc->psc->display;
    __GLXDRIdrawable *pdraw;
 
    if (priv == NULL)
