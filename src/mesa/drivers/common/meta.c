@@ -62,6 +62,7 @@
 #include "main/teximage.h"
 #include "main/texparam.h"
 #include "main/texstate.h"
+#include "main/uniforms.h"
 #include "main/varray.h"
 #include "main/viewport.h"
 #include "program/program.h"
@@ -235,6 +236,8 @@ struct clear_state
 {
    GLuint ArrayObj;
    GLuint VBO;
+   GLuint ShaderProg;
+   GLint ColorLocation;
 };
 
 
@@ -1589,10 +1592,165 @@ _mesa_meta_Clear(struct gl_context *ctx, GLbitfield buffers)
    _mesa_meta_end(ctx);
 }
 
+static void
+meta_glsl_clear_init(struct gl_context *ctx, struct clear_state *clear)
+{
+   const char *vs_source =
+      "attribute vec4 position;\n"
+      "void main()\n"
+      "{\n"
+      "   gl_Position = position;\n"
+      "}\n";
+   const char *fs_source =
+      "uniform vec4 color;\n"
+      "void main()\n"
+      "{\n"
+      "   gl_FragColor = color;\n"
+      "}\n";
+   GLuint vs, fs;
+
+   if (clear->ArrayObj != 0)
+      return;
+
+   /* create vertex array object */
+   _mesa_GenVertexArrays(1, &clear->ArrayObj);
+   _mesa_BindVertexArray(clear->ArrayObj);
+
+   /* create vertex array buffer */
+   _mesa_GenBuffersARB(1, &clear->VBO);
+   _mesa_BindBufferARB(GL_ARRAY_BUFFER_ARB, clear->VBO);
+
+   /* setup vertex arrays */
+   _mesa_VertexAttribPointerARB(0, 3, GL_FLOAT, GL_FALSE, 0, (void *)0);
+   _mesa_EnableVertexAttribArrayARB(0);
+
+   vs = _mesa_CreateShaderObjectARB(GL_VERTEX_SHADER);
+   _mesa_ShaderSourceARB(vs, 1, &vs_source, NULL);
+   _mesa_CompileShaderARB(vs);
+
+   fs = _mesa_CreateShaderObjectARB(GL_FRAGMENT_SHADER);
+   _mesa_ShaderSourceARB(fs, 1, &fs_source, NULL);
+   _mesa_CompileShaderARB(fs);
+
+   clear->ShaderProg = _mesa_CreateProgramObjectARB();
+   _mesa_AttachShader(clear->ShaderProg, fs);
+   _mesa_AttachShader(clear->ShaderProg, vs);
+   _mesa_BindAttribLocationARB(clear->ShaderProg, 0, "position");
+   _mesa_LinkProgramARB(clear->ShaderProg);
+
+   clear->ColorLocation = _mesa_GetUniformLocationARB(clear->ShaderProg,
+						      "color");
+}
+
+/**
+ * Meta implementation of ctx->Driver.Clear() in terms of polygon rendering.
+ */
+void
+_mesa_meta_glsl_Clear(struct gl_context *ctx, GLbitfield buffers)
+{
+   struct clear_state *clear = &ctx->Meta->Clear;
+   GLbitfield metaSave;
+   const GLuint stencilMax = (1 << ctx->DrawBuffer->Visual.stencilBits) - 1;
+   struct gl_framebuffer *fb = ctx->DrawBuffer;
+   const float x0 = ((float)fb->_Xmin / fb->Width)  * 2.0f - 1.0f;
+   const float y0 = ((float)fb->_Ymin / fb->Height) * 2.0f - 1.0f;
+   const float x1 = ((float)fb->_Xmax / fb->Width)  * 2.0f - 1.0f;
+   const float y1 = ((float)fb->_Ymax / fb->Height) * 2.0f - 1.0f;
+   const float z = -invert_z(ctx->Depth.Clear);
+   struct vertex {
+      GLfloat x, y, z;
+   } verts[4];
+
+   metaSave = (META_ALPHA_TEST |
+	       META_BLEND |
+	       META_DEPTH_TEST |
+	       META_RASTERIZATION |
+	       META_SHADER |
+	       META_STENCIL_TEST |
+	       META_VERTEX |
+	       META_VIEWPORT |
+	       META_CLAMP_FRAGMENT_COLOR);
+
+   if (!(buffers & BUFFER_BITS_COLOR)) {
+      /* We'll use colormask to disable color writes.  Otherwise,
+       * respect color mask
+       */
+      metaSave |= META_COLOR_MASK;
+   }
+
+   _mesa_meta_begin(ctx, metaSave);
+
+   meta_glsl_clear_init(ctx, clear);
+
+   _mesa_UseProgramObjectARB(clear->ShaderProg);
+   _mesa_Uniform4fvARB(clear->ColorLocation, 1,
+		       ctx->Color.ClearColorUnclamped);
+
+   _mesa_BindVertexArray(clear->ArrayObj);
+   _mesa_BindBufferARB(GL_ARRAY_BUFFER_ARB, clear->VBO);
+
+   /* GL_COLOR_BUFFER_BIT */
+   if (buffers & BUFFER_BITS_COLOR) {
+      /* leave colormask, glDrawBuffer state as-is */
+
+      /* Clears never have the color clamped. */
+      _mesa_ClampColorARB(GL_CLAMP_FRAGMENT_COLOR, GL_FALSE);
+   }
+   else {
+      ASSERT(metaSave & META_COLOR_MASK);
+      _mesa_ColorMask(GL_FALSE, GL_FALSE, GL_FALSE, GL_FALSE);
+   }
+
+   /* GL_DEPTH_BUFFER_BIT */
+   if (buffers & BUFFER_BIT_DEPTH) {
+      _mesa_set_enable(ctx, GL_DEPTH_TEST, GL_TRUE);
+      _mesa_DepthFunc(GL_ALWAYS);
+      _mesa_DepthMask(GL_TRUE);
+   }
+   else {
+      assert(!ctx->Depth.Test);
+   }
+
+   /* GL_STENCIL_BUFFER_BIT */
+   if (buffers & BUFFER_BIT_STENCIL) {
+      _mesa_set_enable(ctx, GL_STENCIL_TEST, GL_TRUE);
+      _mesa_StencilOpSeparate(GL_FRONT_AND_BACK,
+                              GL_REPLACE, GL_REPLACE, GL_REPLACE);
+      _mesa_StencilFuncSeparate(GL_FRONT_AND_BACK, GL_ALWAYS,
+                                ctx->Stencil.Clear & stencilMax,
+                                ctx->Stencil.WriteMask[0]);
+   }
+   else {
+      assert(!ctx->Stencil.Enabled);
+   }
+
+   /* vertex positions */
+   verts[0].x = x0;
+   verts[0].y = y0;
+   verts[0].z = z;
+   verts[1].x = x1;
+   verts[1].y = y0;
+   verts[1].z = z;
+   verts[2].x = x1;
+   verts[2].y = y1;
+   verts[2].z = z;
+   verts[3].x = x0;
+   verts[3].y = y1;
+   verts[3].z = z;
+
+   /* upload new vertex data */
+   _mesa_BufferDataARB(GL_ARRAY_BUFFER_ARB, sizeof(verts), verts,
+		       GL_DYNAMIC_DRAW_ARB);
+
+   /* draw quad */
+   _mesa_DrawArrays(GL_TRIANGLE_FAN, 0, 4);
+
+   _mesa_meta_end(ctx);
+}
 
 /**
  * Meta implementation of ctx->Driver.CopyPixels() in terms
- * of texture mapping and polygon rendering.
+ * of texture mapping and polygon rendering and GLSL shaders.
  */
 void
 _mesa_meta_CopyPixels(struct gl_context *ctx, GLint srcX, GLint srcY,

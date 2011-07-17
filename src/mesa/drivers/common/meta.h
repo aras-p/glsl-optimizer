@@ -43,6 +43,9 @@ extern void
 _mesa_meta_Clear(struct gl_context *ctx, GLbitfield buffers);
 
 extern void
+_mesa_meta_glsl_Clear(struct gl_context *ctx, GLbitfield buffers);
+
+extern void
 _mesa_meta_CopyPixels(struct gl_context *ctx, GLint srcx, GLint srcy,
                       GLsizei width, GLsizei height,
                       GLint dstx, GLint dsty, GLenum type);
