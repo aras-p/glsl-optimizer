@@ -689,7 +689,6 @@ void* r600_texture_transfer_map(struct pipe_context *ctx,
 	enum pipe_format format = transfer->resource->format;
 	struct radeon *radeon = (struct radeon *)ctx->screen->winsys;
 	unsigned offset = 0;
-	unsigned usage = 0;
 	char *map;
 
 	if (rtransfer->staging_texture) {
@@ -707,30 +706,7 @@ void* r600_texture_transfer_map(struct pipe_context *ctx,
 			transfer->box.x / util_format_get_blockwidth(format) * util_format_get_blocksize(format);
 	}
 
-	if (transfer->usage & PIPE_TRANSFER_WRITE) {
-		usage |= PB_USAGE_CPU_WRITE;
-
-		if (transfer->usage & PIPE_TRANSFER_DISCARD) {
-		}
-
-		if (transfer->usage & PIPE_TRANSFER_FLUSH_EXPLICIT) {
-		}
-	}
-
-	if (transfer->usage & PIPE_TRANSFER_READ) {
-		usage |= PB_USAGE_CPU_READ;
-	}
-
-	if (transfer->usage & PIPE_TRANSFER_DONTBLOCK) {
-		usage |= PB_USAGE_DONTBLOCK;
-	}
-
-	if (transfer->usage & PIPE_TRANSFER_UNSYNCHRONIZED) {
-		usage |= PB_USAGE_UNSYNCHRONIZED;
-	}
-
-	map = r600_bo_map(radeon, bo, usage, ctx);
-	if (!map) {
+	if (!(map = r600_bo_map(radeon, bo, transfer->usage, ctx))) {
 		return NULL;
 	}
 

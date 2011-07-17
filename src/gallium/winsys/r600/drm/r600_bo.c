@@ -126,13 +126,13 @@ void *r600_bo_map(struct radeon *radeon, struct r600_bo *bo, unsigned usage, voi
 {
 	struct pipe_context *pctx = ctx;
 
-	if (usage & PB_USAGE_UNSYNCHRONIZED) {
+	if (usage & PIPE_TRANSFER_UNSYNCHRONIZED) {
 		radeon_bo_map(radeon, bo->bo);
 		return (uint8_t *) bo->bo->data + bo->offset;
 	}
 
 	if (p_atomic_read(&bo->bo->reference.count) > 1) {
-		if (usage & PB_USAGE_DONTBLOCK) {
+		if (usage & PIPE_TRANSFER_DONTBLOCK) {
 			return NULL;
 		}
 		if (ctx) {
@@ -140,7 +140,7 @@ void *r600_bo_map(struct radeon *radeon, struct r600_bo *bo, unsigned usage, voi
 		}
 	}
 
-	if (usage & PB_USAGE_DONTBLOCK) {
+	if (usage & PIPE_TRANSFER_DONTBLOCK) {
 		uint32_t domain;
 
 		if (radeon_bo_busy(radeon, bo->bo, &domain))

@@ -62,7 +62,7 @@ static struct r600_fence *r600_create_fence(struct r600_pipe_context *ctx)
 			R600_ERR("r600: failed to create bo for fence objects\n");
 			return NULL;
 		}
-		ctx->fences.data = r600_bo_map(ctx->radeon, ctx->fences.bo, PB_USAGE_UNSYNCHRONIZED, NULL);
+		ctx->fences.data = r600_bo_map(ctx->radeon, ctx->fences.bo, PIPE_TRANSFER_UNSYNCHRONIZED, NULL);
 	}
 
 	if (!LIST_IS_EMPTY(&ctx->fences.pool)) {

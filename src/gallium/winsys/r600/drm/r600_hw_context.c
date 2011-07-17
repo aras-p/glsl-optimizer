@@ -1704,9 +1704,9 @@ static boolean r600_query_result(struct r600_context *ctx, struct r600_query *qu
 	u32 *results, *current_result;
 
 	if (wait)
-		results = r600_bo_map(ctx->radeon, query->buffer, PB_USAGE_CPU_READ, NULL);
+		results = r600_bo_map(ctx->radeon, query->buffer, PIPE_TRANSFER_READ, NULL);
 	else
-		results = r600_bo_map(ctx->radeon, query->buffer, PB_USAGE_DONTBLOCK | PB_USAGE_CPU_READ, NULL);
+		results = r600_bo_map(ctx->radeon, query->buffer, PIPE_TRANSFER_DONTBLOCK | PIPE_TRANSFER_READ, NULL);
 	if (!results)
 		return FALSE;
 
@@ -1777,7 +1777,7 @@ void r600_query_begin(struct r600_context *ctx, struct r600_query *query)
 		u32 *results;
 		int i;
 
-		results = r600_bo_map(ctx->radeon, query->buffer, PB_USAGE_CPU_WRITE, NULL);
+		results = r600_bo_map(ctx->radeon, query->buffer, PIPE_TRANSFER_WRITE, NULL);
 		if (results) {
 			results = (u32*)((char*)results + query->results_end);
 			memset(results, 0, query->result_size);

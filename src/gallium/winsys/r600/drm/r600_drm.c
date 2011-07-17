@@ -249,7 +249,7 @@ static int radeon_init_fence(struct radeon *radeon)
 	if (radeon->fence_bo == NULL) {
 		return -ENOMEM;
 	}
-	radeon->cfence = r600_bo_map(radeon, radeon->fence_bo, PB_USAGE_UNSYNCHRONIZED, NULL);
+	radeon->cfence = r600_bo_map(radeon, radeon->fence_bo, PIPE_TRANSFER_UNSYNCHRONIZED, NULL);
 	*radeon->cfence = 0;
 	return 0;
 }
