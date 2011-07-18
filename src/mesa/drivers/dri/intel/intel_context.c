@@ -1439,7 +1439,12 @@ intel_verify_dri2_has_hiz(struct intel_context *intel,
       assert(stencil_rb->Base.Format == MESA_FORMAT_S8);
       assert(depth_rb && depth_rb->Base.Format == MESA_FORMAT_X8_Z24);
 
-      if (stencil_rb->region->tiling == I915_TILING_Y) {
+      if (stencil_rb->region->tiling == I915_TILING_NONE) {
+	 /*
+	  * The stencil buffer is actually W tiled. The region's tiling is
+	  * I915_TILING_NONE, however, because the GTT is incapable of W
+	  * fencing.
+	  */
 	 intel->intelScreen->dri2_has_hiz = INTEL_DRI2_HAS_HIZ_TRUE;
 	 return;
       } else {
@@ -1527,7 +1532,7 @@ intel_verify_dri2_has_hiz(struct intel_context *intel,
        * Presently, however, no verification or clean up is necessary, and
        * execution should not reach here. If the framebuffer still has a hiz
        * region, then we have already set dri2_has_hiz to true after
-       * confirming above that the stencil buffer is Y tiled.
+       * confirming above that the stencil buffer is W tiled.
        */
       assert(0);
    }

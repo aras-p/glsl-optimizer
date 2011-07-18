@@ -131,38 +131,84 @@ intel_set_span_functions(struct intel_context *intel,
    int miny = 0;							\
    int maxx = rb->Width;						\
    int maxy = rb->Height;						\
-   int stride = rb->RowStride;						\
-   uint8_t *buf = rb->Data;						\
+									\
+   /*									\
+    * Here we ignore rb->Data and rb->RowStride as set by		\
+    * intelSpanRenderStart. Since intel_offset_S8 decodes the W tile	\
+    * manually, the region's *real* base address and stride is		\
+    * required.								\
+    */									\
+   struct intel_renderbuffer *irb = intel_renderbuffer(rb);		\
+   uint8_t *buf = irb->region->buffer->virtual;				\
+   unsigned stride = irb->region->pitch;				\
+   unsigned height = 2 * irb->region->height;				\
+   bool flip = rb->Name == 0;						\
+   int y_scale = flip ? -1 : 1;						\
+   int y_bias = flip ? (height - 1) : 0;				\
 
-/* Don't flip y. */
 #undef Y_FLIP
-#define Y_FLIP(y) y
+#define Y_FLIP(y) (y_scale * (y) + y_bias)
 
 /**
  * \brief Get pointer offset into stencil buffer.
  *
- * The stencil buffer interleaves two rows into one. Yay for crazy hardware.
- * The table below demonstrates how the pointer arithmetic behaves for a buffer
- * with positive stride (s=stride).
+ * The stencil buffer is W tiled. Since the GTT is incapable of W fencing, we
+ * must decode the tile's layout in software.
  *
- *     x    | y     | byte offset
- *     --------------------------
- *     0    | 0     | 0
- *     0    | 1     | 1
- *     1    | 0     | 2
- *     1    | 1     | 3
- *     ...  | ...   | ...
- *     0    | 2     | s
- *     0    | 3     | s + 1
- *     1    | 2     | s + 2
- *     1    | 3     | s + 3
+ * See
+ *   - PRM, 2011 Sandy Bridge, Volume 1, Part 2, Section 4.5.2.1 W-Major Tile
+ *     Format.
+ *   - PRM, 2011 Sandy Bridge, Volume 1, Part 2, Section 4.5.3 Tiling Algorithm
  *
- *
+ * Even though the returned offset is always positive, the return type is
+ * signed due to
+ *    commit e8b1c6d6f55f5be3bef25084fdd8b6127517e137
+ *    mesa: Fix return type of  _mesa_get_format_bytes() (#37351)
  */
 static inline intptr_t
-intel_offset_S8(int stride, GLint x, GLint y)
+intel_offset_S8(uint32_t stride, uint32_t x, uint32_t y)
 {
-   return 2 * ((y / 2) * stride + x) + y % 2;
+   uint32_t tile_size = 4096;
+   uint32_t tile_width = 64;
+   uint32_t tile_height = 64;
+   uint32_t row_size = 64 * stride;
+
+   uint32_t tile_x = x / tile_width;
+   uint32_t tile_y = y / tile_height;
+
+   /* The byte's address relative to the tile's base addres. */
+   uint32_t byte_x = x % tile_width;
+   uint32_t byte_y = y % tile_height;
+
+   uintptr_t u = tile_y * row_size
+               + tile_x * tile_size
+               + 512 * (byte_x / 8)
+               +  64 * (byte_y / 8)
+               +  32 * ((byte_y / 4) % 2)
+               +  16 * ((byte_x / 4) % 2)
+               +   8 * ((byte_y / 2) % 2)
+               +   4 * ((byte_x / 2) % 2)
+               +   2 * (byte_y % 2)
+               +   1 * (byte_x % 2);
+
+   /*
+    * Errata for Gen5:
+    *
+    * An additional offset is needed which is not documented in the PRM.
+    *
+    * if ((byte_x / 8) % 2 == 1) {
+    *    if ((byte_y / 8) % 2) == 0) {
+    *       u += 64;
+    *    } else {
+    *       u -= 64;
+    *    }
+    * }
+    *
+    * The offset is expressed more tersely as
+    * u += ((int) x & 0x8) * (8 - (((int) y & 0x8) << 1));
+    */
+
+   return u;
 }
 
 #define WRITE_STENCIL(x, y, src)  buf[intel_offset_S8(stride, x, y)] = src;

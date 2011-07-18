@@ -143,6 +143,12 @@ intelClear(struct gl_context *ctx, GLbitfield mask)
 	     */
             tri_mask |= BUFFER_BIT_STENCIL;
          }
+	 else if (intel->has_separate_stencil &&
+	       stencilRegion->tiling == I915_TILING_NONE) {
+	    /* The stencil buffer is actually W tiled, which the hardware
+	     * cannot blit to. */
+	    tri_mask |= BUFFER_BIT_STENCIL;
+	 }
          else {
             /* clearing all stencil bits, use blitting */
             blit_mask |= BUFFER_BIT_STENCIL;
