@@ -239,12 +239,8 @@ public:
    bool lower_temps;
    bool lower_uniforms;
 
-   bool needs_lowering(ir_dereference_array *deref) const
+   bool storage_type_needs_lowering(ir_dereference_array *deref) const
    {
-      if (deref == NULL || deref->array_index->as_constant()
-	  || !is_array_or_matrix(deref->array))
-	 return false;
-
       if (deref->array->ir_type == ir_type_constant)
 	 return this->lower_temps;
 
@@ -266,6 +262,15 @@ public:
 
       assert(!"Should not get here.");
       return false;
+   }
+
+   bool needs_lowering(ir_dereference_array *deref) const
+   {
+      if (deref == NULL || deref->array_index->as_constant()
+	  || !is_array_or_matrix(deref->array))
+	 return false;
+
+      return this->storage_type_needs_lowering(deref);
    }
 
    ir_variable *convert_dereference_array(ir_dereference_array *orig_deref,
