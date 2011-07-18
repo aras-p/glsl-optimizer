@@ -29,6 +29,21 @@
  *
  * Pre-DX10 GPUs often don't have a native way to do this operation,
  * and this works around that.
+ *
+ * The lowering process proceeds as follows.  Each non-constant index
+ * found in an r-value is converted to a canonical form \c array[i].  Each
+ * element of the array is conditionally assigned to a temporary by comparing
+ * \c i to a constant index.  This is done by cloning the canonical form and
+ * replacing all occurances of \c i with a constant.  Each remaining occurance
+ * of the canonical form in the IR is replaced with a dereference of the
+ * temporary variable.
+ *
+ * L-values with non-constant indices are handled similarly.  In this case,
+ * the RHS of the assignment is assigned to a temporary.  The non-constant
+ * index is replace with the canonical form (just like for r-values).  The
+ * temporary is conditionally assigned to each element of the canonical form
+ * by comparing \c i with each index.  The same clone-and-replace scheme is
+ * used.
  */
 
 #include "ir.h"
@@ -43,10 +58,70 @@ is_array_or_matrix(const ir_instruction *ir)
    return (ir->type->is_array() || ir->type->is_matrix());
 }
 
+/**
+ * Replace a dereference of a variable with a specified r-value
+ *
+ * Each time a dereference of the specified value is replaced, the r-value
+ * tree is cloned.
+ */
+class deref_replacer : public ir_rvalue_visitor {
+public:
+   deref_replacer(const ir_variable *variable_to_replace, ir_rvalue *value)
+      : variable_to_replace(variable_to_replace), value(value),
+	progress(false)
+   {
+      assert(this->variable_to_replace != NULL);
+      assert(this->value != NULL);
+   }
+
+   virtual void handle_rvalue(ir_rvalue **rvalue)
+   {
+      ir_dereference_variable *const dv = (*rvalue)->as_dereference_variable();
+
+      if ((dv != NULL) && (dv->var == this->variable_to_replace)) {
+	 this->progress = true;
+	 *rvalue = this->value->clone(ralloc_parent(*rvalue), NULL);
+      }
+   }
+
+   const ir_variable *variable_to_replace;
+   ir_rvalue *value;
+   bool progress;
+};
+
+/**
+ * Find a variable index dereference of an array in an rvalue tree
+ */
+class find_variable_index : public ir_hierarchical_visitor {
+public:
+   find_variable_index()
+      : deref(NULL)
+   {
+      /* empty */
+   }
+
+   virtual ir_visitor_status visit_enter(ir_dereference_array *ir)
+   {
+      if (is_array_or_matrix(ir->array)
+	  && (ir->array_index->as_constant() == NULL)) {
+	 this->deref = ir;
+	 return visit_stop;
+      }
+
+      return visit_continue;
+   }
+
+   /**
+    * First array dereference found in the tree that has a non-constant index.
+    */
+   ir_dereference_array *deref;
+};
+
 struct assignment_generator
 {
    ir_instruction* base_ir;
-   ir_rvalue* array;
+   ir_dereference *rvalue;
+   ir_variable *old_index;
    bool is_write;
    unsigned int write_mask;
    ir_variable* var;
@@ -61,18 +136,23 @@ struct assignment_generator
        * underlying variable.
        */
       void *mem_ctx = ralloc_parent(base_ir);
-      ir_dereference *element =
-	 new(mem_ctx) ir_dereference_array(this->array->clone(mem_ctx, NULL),
-					   new(mem_ctx) ir_constant(i));
-      ir_rvalue *variable = new(mem_ctx) ir_dereference_variable(this->var);
 
-      ir_assignment *assignment;
-      if (is_write) {
-	 assignment = new(mem_ctx) ir_assignment(element, variable, condition,
-						 write_mask);
-      } else {
-	 assignment = new(mem_ctx) ir_assignment(variable, element, condition);
-      }
+      /* Clone the old r-value in its entirety.  Then replace any occurances of
+       * the old variable index with the new constant index.
+       */
+      ir_dereference *element = this->rvalue->clone(mem_ctx, NULL);
+      ir_constant *const index = new(mem_ctx) ir_constant(i);
+      deref_replacer r(this->old_index, index);
+      element->accept(&r);
+      assert(r.progress);
+
+      /* Generate a conditional assignment to (or from) the constant indexed
+       * array dereference.
+       */
+      ir_rvalue *variable = new(mem_ctx) ir_dereference_variable(this->var);
+      ir_assignment *const assignment = (is_write)
+	 ? new(mem_ctx) ir_assignment(element, variable, condition, write_mask)
+	 : new(mem_ctx) ir_assignment(variable, element, condition);
 
       list->push_tail(assignment);
    }
@@ -274,7 +354,8 @@ public:
    }
 
    ir_variable *convert_dereference_array(ir_dereference_array *orig_deref,
-					  ir_assignment* orig_assign)
+					  ir_assignment* orig_assign,
+					  ir_dereference *orig_base)
    {
       assert(is_array_or_matrix(orig_deref->array));
 
@@ -320,9 +401,12 @@ public:
 	 new(mem_ctx) ir_assignment(lhs, orig_deref->array_index, NULL);
       base_ir->insert_before(assign);
 
+      orig_deref->array_index = lhs->clone(mem_ctx, NULL);
+
       assignment_generator ag;
-      ag.array = orig_deref->array;
+      ag.rvalue = orig_base;
       ag.base_ir = base_ir;
+      ag.old_index = index;
       ag.var = var;
       if (orig_assign) {
 	 ag.is_write = true;
@@ -342,12 +426,16 @@ public:
 
    virtual void handle_rvalue(ir_rvalue **pir)
    {
+      if (this->in_assignee)
+	 return;
+
       if (!*pir)
          return;
 
       ir_dereference_array* orig_deref = (*pir)->as_dereference_array();
       if (needs_lowering(orig_deref)) {
-         ir_variable* var = convert_dereference_array(orig_deref, 0);
+         ir_variable *var =
+	    convert_dereference_array(orig_deref, NULL, orig_deref);
          assert(var);
          *pir = new(ralloc_parent(base_ir)) ir_dereference_variable(var);
          this->progress = true;
@@ -359,10 +447,11 @@ public:
    {
       ir_rvalue_visitor::visit_leave(ir);
 
-      ir_dereference_array *orig_deref = ir->lhs->as_dereference_array();
+      find_variable_index f;
+      ir->lhs->accept(&f);
 
-      if (needs_lowering(orig_deref)) {
-         convert_dereference_array(orig_deref, ir);
+      if ((f.deref != NULL) && storage_type_needs_lowering(f.deref)) {
+         convert_dereference_array(f.deref, ir, ir->lhs);
          ir->remove();
          this->progress = true;
       }
@@ -383,7 +472,15 @@ lower_variable_index_to_cond_assign(exec_list *instructions,
 					   lower_temp,
 					   lower_uniform);
 
-   visit_list_elements(&v, instructions);
+   /* Continue lowering until no progress is made.  If there are multiple
+    * levels of indirection (e.g., non-constant indexing of array elements and
+    * matrix columns of an array of matrix), each pass will only lower one
+    * level of indirection.
+    */
+   do {
+      v.progress = false;
+      visit_list_elements(&v, instructions);
+   } while (v.progress);
 
    return v.progress;
 }
