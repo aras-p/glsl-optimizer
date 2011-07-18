@@ -171,21 +171,23 @@ ir_vec_index_to_cond_assign_visitor::visit_leave(ir_assignment *ir)
 
    assert(orig_deref->array_index->type->base_type == GLSL_TYPE_INT);
 
+   exec_list list;
+
    /* Store the index to a temporary to avoid reusing its tree. */
    index = new(ir) ir_variable(glsl_type::int_type, "vec_index_tmp_i",
 			       ir_var_temporary);
-   ir->insert_before(index);
+   list.push_tail(index);
    deref = new(ir) ir_dereference_variable(index);
    assign = new(ir) ir_assignment(deref, orig_deref->array_index, NULL);
-   ir->insert_before(assign);
+   list.push_tail(assign);
 
    /* Store the RHS to a temporary to avoid reusing its tree. */
    var = new(ir) ir_variable(ir->rhs->type, "vec_index_tmp_v",
 			     ir_var_temporary);
-   ir->insert_before(var);
+   list.push_tail(var);
    deref = new(ir) ir_dereference_variable(var);
    assign = new(ir) ir_assignment(deref, ir->rhs, NULL);
-   ir->insert_before(assign);
+   list.push_tail(assign);
 
    /* Generate a conditional move of each vector element to the temp. */
    for (i = 0; i < orig_deref->array->type->vector_elements; i++) {
@@ -205,8 +207,25 @@ ir_vec_index_to_cond_assign_visitor::visit_leave(ir_assignment *ir)
 
       deref = new(ir) ir_dereference_variable(var);
       assign = new(ir) ir_assignment(swizzle, deref, condition);
-      ir->insert_before(assign);
+      list.push_tail(assign);
    }
+
+   /* If the original assignment has a condition, respect that original
+    * condition!  This is acomplished by wrapping the new conditional
+    * assignments in an if-statement that uses the original condition.
+    */
+   if (ir->condition != NULL) {
+      /* No need to clone the condition because the IR that it hangs on is
+       * going to be removed from the instruction sequence.
+       */
+      ir_if *if_stmt = new(mem_ctx) ir_if(ir->condition);
+
+      list.move_nodes_to(&if_stmt->then_instructions);
+      ir->insert_before(if_stmt);
+   } else {
+      ir->insert_before(&list);
+   }
+
    ir->remove();
 
    this->progress = true;
