@@ -161,12 +161,12 @@ vlVdpDecoderGetParameters(VdpDecoder decoder,
 }
 
 static VdpStatus
-vlVdpDecoderRenderMpeg2(struct pipe_video_decoder *decoder,
-                        struct pipe_video_decode_buffer *buffer,
-                        struct pipe_video_buffer *target,
-                        VdpPictureInfoMPEG1Or2 *picture_info,
-                        uint32_t bitstream_buffer_count,
-                        VdpBitstreamBuffer const *bitstream_buffers)
+vlVdpDecoderRenderMpeg12(struct pipe_video_decoder *decoder,
+                         struct pipe_video_decode_buffer *buffer,
+                         struct pipe_video_buffer *target,
+                         VdpPictureInfoMPEG1Or2 *picture_info,
+                         uint32_t bitstream_buffer_count,
+                         VdpBitstreamBuffer const *bitstream_buffers)
 {
    struct pipe_mpeg12_picture_desc picture;
    struct pipe_video_buffer *ref_frames[2];
@@ -254,17 +254,18 @@ vlVdpDecoderRender(VdpDecoder decoder,
       // TODO: Recreate decoder with correct chroma
       return VDP_STATUS_INVALID_CHROMA_TYPE;
 
-   // TODO: Right now only mpeg2 is supported.
+   // TODO: Right now only mpeg 1 & 2 is supported.
    switch (vldecoder->decoder->profile)   {
+   case PIPE_VIDEO_PROFILE_MPEG1:
    case PIPE_VIDEO_PROFILE_MPEG2_SIMPLE:
    case PIPE_VIDEO_PROFILE_MPEG2_MAIN:
       ++vldecoder->cur_buffer;
       vldecoder->cur_buffer %= VL_NUM_DECODE_BUFFERS;
-      return vlVdpDecoderRenderMpeg2(vldecoder->decoder,
-                                     vldecoder->buffer[vldecoder->cur_buffer],
-                                     vlsurf->video_buffer,
-                                     (VdpPictureInfoMPEG1Or2 *)picture_info,
-                                     bitstream_buffer_count,bitstream_buffers);
+      return vlVdpDecoderRenderMpeg12(vldecoder->decoder,
+                                      vldecoder->buffer[vldecoder->cur_buffer],
+                                      vlsurf->video_buffer,
+                                      (VdpPictureInfoMPEG1Or2 *)picture_info,
+                                      bitstream_buffer_count,bitstream_buffers);
       break;
 
    default:
