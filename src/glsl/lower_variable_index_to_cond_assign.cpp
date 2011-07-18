@@ -37,6 +37,12 @@
 #include "glsl_types.h"
 #include "main/macros.h"
 
+static inline bool
+is_array_or_matrix(const ir_instruction *ir)
+{
+   return (ir->type->is_array() || ir->type->is_matrix());
+}
+
 struct assignment_generator
 {
    ir_instruction* base_ir;
@@ -232,11 +238,6 @@ public:
    bool lower_outputs;
    bool lower_temps;
    bool lower_uniforms;
-
-   bool is_array_or_matrix(const ir_instruction *ir) const
-   {
-      return (ir->type->is_array() || ir->type->is_matrix());
-   }
 
    bool needs_lowering(ir_dereference_array *deref) const
    {
