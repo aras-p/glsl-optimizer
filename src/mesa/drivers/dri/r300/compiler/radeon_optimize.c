@@ -561,28 +561,29 @@ static int peephole_add_presub_add(
 	struct rc_instruction * inst_add)
 {
 	unsigned dstmask = inst_add->U.I.DstReg.WriteMask;
-	struct rc_src_register * src1 = NULL;
-	unsigned int i;
-
-	if (!is_presub_candidate(c, inst_add))
-		return 0;
+        unsigned src0_neg = inst_add->U.I.SrcReg[0].Negate & dstmask;
+        unsigned src1_neg = inst_add->U.I.SrcReg[1].Negate & dstmask;
 
 	if (inst_add->U.I.SrcReg[0].Swizzle != inst_add->U.I.SrcReg[1].Swizzle)
 		return 0;
 
-	/* XXX This isn't fully implemented, is it? */
-	/*   src0 and src1 can't have absolute values only one can be negative and they must be all negative or all positive. */
-	for (i = 0; i < 2; i++) {
-		if (inst_add->U.I.SrcReg[i].Abs)
-			return 0;
+	/* src0 and src1 can't have absolute values */
+	if (inst_add->U.I.SrcReg[0].Abs || inst_add->U.I.SrcReg[1].Abs)
+	        return 0;
 
-		/* XXX This looks weird, but it's basically what was here before this commit (see git blame): */
-		if ((inst_add->U.I.SrcReg[i].Negate & dstmask) != dstmask && !src1) {
-			src1 = &inst_add->U.I.SrcReg[i];
-		}
-	}
+	/* presub_replace_add() assumes only one is negative */
+	if (inst_add->U.I.SrcReg[0].Negate && inst_add->U.I.SrcReg[1].Negate)
+	        return 0;
 
-	if (!src1)
+        /* if src0 is negative, at least all bits of dstmask have to be set */
+        if (inst_add->U.I.SrcReg[0].Negate && src0_neg != dstmask)
+	        return 0;
+
+        /* if src1 is negative, at least all bits of dstmask have to be set */
+        if (inst_add->U.I.SrcReg[1].Negate && src1_neg != dstmask)
+	        return 0;
+
+	if (!is_presub_candidate(c, inst_add))
 		return 0;
 
 	if (presub_helper(c, inst_add, RC_PRESUB_ADD, presub_replace_add)) {
@@ -615,7 +616,7 @@ static void presub_replace_inv(
  * of the add instruction must have the constatnt 1 swizzle.  This function
  * does not check const registers to see if their value is 1.0, so it should
  * be called after the constant_folding optimization.
- * @return 
+ * @return
  * 	0 if the ADD instruction is still part of the program.
  * 	1 if the ADD instruction is no longer part of the program.
  */
