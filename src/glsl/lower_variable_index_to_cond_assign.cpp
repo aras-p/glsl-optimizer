@@ -321,10 +321,16 @@ public:
 
    bool storage_type_needs_lowering(ir_dereference_array *deref) const
    {
-      if (deref->array->ir_type == ir_type_constant)
+      /* If a variable isn't eventually the target of this dereference, then
+       * it must be a constant or some sort of anonymous temporary storage.
+       *
+       * FINISHME: Is this correct?  Most drivers treat arrays of constants as
+       * FINISHME: uniforms.  It seems like this should do the same.
+       */
+      const ir_variable *const var = deref->array->variable_referenced();
+      if (var == NULL)
 	 return this->lower_temps;
 
-      const ir_variable *const var = deref->array->variable_referenced();
       switch (var->mode) {
       case ir_var_auto:
       case ir_var_temporary:
