@@ -325,7 +325,7 @@ intel_emit_post_sync_nonzero_flush(struct intel_context *intel)
    OUT_BATCH(_3DSTATE_PIPE_CONTROL);
    OUT_BATCH(PIPE_CONTROL_WRITE_IMMEDIATE);
    OUT_RELOC(intel->batch.workaround_bo,
-	     I915_GEM_DOMAIN_GTT, I915_GEM_DOMAIN_GTT, 0);
+	     I915_GEM_DOMAIN_INSTRUCTION, I915_GEM_DOMAIN_INSTRUCTION, 0);
    OUT_BATCH(0); /* write data */
    ADVANCE_BATCH();
 
