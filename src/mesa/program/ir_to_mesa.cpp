@@ -134,7 +134,7 @@ src_reg::src_reg(dst_reg reg)
    this->index = reg.index;
    this->swizzle = SWIZZLE_XYZW;
    this->negate = 0;
-   this->reladdr = NULL;
+   this->reladdr = reg.reladdr;
 }
 
 dst_reg::dst_reg(src_reg reg)
