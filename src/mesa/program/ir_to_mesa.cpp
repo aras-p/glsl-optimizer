@@ -1496,6 +1496,18 @@ ir_to_mesa_visitor::visit(ir_dereference_array *ir)
 	      this->result, src_reg_for_float(element_size));
       }
 
+      /* If there was already a relative address register involved, add the
+       * new and the old together to get the new offset.
+       */
+      if (src.reladdr != NULL)  {
+	 src_reg accum_reg = get_temp(glsl_type::float_type);
+
+	 emit(ir, OPCODE_ADD, dst_reg(accum_reg),
+	      index_reg, *src.reladdr);
+
+	 index_reg = accum_reg;
+      }
+
       src.reladdr = ralloc(mem_ctx, src_reg);
       memcpy(src.reladdr, &index_reg, sizeof(index_reg));
    }
