@@ -417,9 +417,24 @@ public:
 
       switch_generator sg(ag, index, 4, 4);
 
-      exec_list list;
-      sg.generate(0, length, &list);
-      base_ir->insert_before(&list);
+      /* If the original assignment has a condition, respect that original
+       * condition!  This is acomplished by wrapping the new conditional
+       * assignments in an if-statement that uses the original condition.
+       */
+      if ((orig_assign != NULL) && (orig_assign->condition != NULL)) {
+	 /* No need to clone the condition because the IR that it hangs on is
+	  * going to be removed from the instruction sequence.
+	  */
+	 ir_if *if_stmt = new(mem_ctx) ir_if(orig_assign->condition);
+
+	 sg.generate(0, length, &if_stmt->then_instructions);
+	 base_ir->insert_before(if_stmt);
+      } else {
+	 exec_list list;
+
+	 sg.generate(0, length, &list);
+	 base_ir->insert_before(&list);
+      }
 
       return var;
    }
