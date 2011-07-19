@@ -308,18 +308,43 @@ emit:
  * [Dev-SNB{W/A}]: Before a PIPE_CONTROL with Write Cache Flush Enable
  * =1, a PIPE_CONTROL with any non-zero post-sync-op is required.
  *
- * XXX: There is also a workaround that would appear to apply to this
- * workaround, but it doesn't appear to be necessary so far:
+ * And the workaround for these two requires this workaround first:
  *
- * Dev-SNB{W/A}]: Pipe-control with CS-stall bit set must be sent
+ * [Dev-SNB{W/A}]: Pipe-control with CS-stall bit set must be sent
  * BEFORE the pipe-control with a post-sync op and no write-cache
  * flushes.
+ *
+ * And this last workaround is tricky because of the requirements on
+ * that bit.  From section 1.4.7.2.3 "Stall" of the Sandy Bridge PRM
+ * volume 2 part 1:
+ *
+ *     "1 of the following must also be set:
+ *      - Render Target Cache Flush Enable ([12] of DW1)
+ *      - Depth Cache Flush Enable ([0] of DW1)
+ *      - Stall at Pixel Scoreboard ([1] of DW1)
+ *      - Depth Stall ([13] of DW1)
+ *      - Post-Sync Operation ([13] of DW1)
+ *      - Notify Enable ([8] of DW1)"
+ *
+ * The cache flushes require the workaround flush that triggered this
+ * one, so we can't use it.  Depth stall would trigger the same.
+ * Post-sync nonzero is what triggered this second workaround, so we
+ * can't use that one either.  Notify enable is IRQs, which aren't
+ * really our business.  That leaves only stall at scoreboard.
  */
 void
 intel_emit_post_sync_nonzero_flush(struct intel_context *intel)
 {
    if (!intel->batch.need_workaround_flush)
       return;
+
+   BEGIN_BATCH(4);
+   OUT_BATCH(_3DSTATE_PIPE_CONTROL);
+   OUT_BATCH(PIPE_CONTROL_CS_STALL |
+	     PIPE_CONTROL_STALL_AT_SCOREBOARD);
+   OUT_BATCH(0); /* address */
+   OUT_BATCH(0); /* write data */
+   ADVANCE_BATCH();
 
    BEGIN_BATCH(4);
    OUT_BATCH(_3DSTATE_PIPE_CONTROL);
