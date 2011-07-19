@@ -52,6 +52,70 @@
 #include "glsl_types.h"
 #include "main/macros.h"
 
+/**
+ * Generate a comparison value for a block of indices
+ *
+ * Lowering passes for non-constant indexing of arrays, matrices, or vectors
+ * can use this to generate blocks of index comparison values.
+ *
+ * \param instructions  List where new instructions will be appended
+ * \param index         \c ir_variable containing the desired index
+ * \param base          Base value for this block of comparisons
+ * \param components    Number of unique index values to compare.  This must
+ *                      be on the range [1, 4].
+ * \param mem_ctx       ralloc memory context to be used for all allocations.
+ *
+ * \returns
+ * An \c ir_rvalue that \b must be cloned for each use in conditional
+ * assignments, etc.
+ */
+ir_rvalue *
+compare_index_block(exec_list *instructions, ir_variable *index,
+		    unsigned base, unsigned components, void *mem_ctx)
+{
+   ir_rvalue *broadcast_index = new(mem_ctx) ir_dereference_variable(index);
+
+   assert(index->type->is_scalar());
+   assert(index->type->base_type == GLSL_TYPE_INT);
+   assert(components >= 1 && components <= 4);
+
+   if (components > 1) {
+      const ir_swizzle_mask m = { 0, 0, 0, 0, components, false };
+      broadcast_index = new(mem_ctx) ir_swizzle(broadcast_index, m);
+   }
+
+   /* Compare the desired index value with the next block of four indices.
+    */
+   ir_constant_data test_indices_data;
+   memset(&test_indices_data, 0, sizeof(test_indices_data));
+   test_indices_data.i[0] = base;
+   test_indices_data.i[1] = base + 1;
+   test_indices_data.i[2] = base + 2;
+   test_indices_data.i[3] = base + 3;
+
+   ir_constant *const test_indices =
+      new(mem_ctx) ir_constant(broadcast_index->type,
+			       &test_indices_data);
+
+   ir_rvalue *const condition_val =
+      new(mem_ctx) ir_expression(ir_binop_equal,
+				 &glsl_type::bool_type[components - 1],
+				 broadcast_index,
+				 test_indices);
+
+   ir_variable *const condition =
+      new(mem_ctx) ir_variable(condition_val->type,
+			       "dereference_condition",
+			       ir_var_temporary);
+   instructions->push_tail(condition);
+
+   ir_rvalue *const cond_deref =
+      new(mem_ctx) ir_dereference_variable(condition);
+   instructions->push_tail(new(mem_ctx) ir_assignment(cond_deref, condition_val, 0));
+
+   return cond_deref;
+}
+
 static inline bool
 is_array_or_matrix(const ir_instruction *ir)
 {
@@ -204,54 +268,17 @@ struct switch_generator
       for (unsigned i = first; i < end; i += 4) {
          const unsigned comps = MIN2(condition_components, end - i);
 
-         ir_rvalue *broadcast_index =
-	    new(this->mem_ctx) ir_dereference_variable(index);
-
-         if (comps) {
-	    const ir_swizzle_mask m = { 0, 0, 0, 0, comps, false };
-	    broadcast_index = new(this->mem_ctx) ir_swizzle(broadcast_index, m);
-	 }
-
-	 /* Compare the desired index value with the next block of four indices.
-	  */
-         ir_constant_data test_indices_data;
-         memset(&test_indices_data, 0, sizeof(test_indices_data));
-         test_indices_data.i[0] = i;
-         test_indices_data.i[1] = i + 1;
-         test_indices_data.i[2] = i + 2;
-         test_indices_data.i[3] = i + 3;
-         ir_constant *const test_indices =
-	    new(this->mem_ctx) ir_constant(broadcast_index->type,
-					   &test_indices_data);
-
-         ir_rvalue *const condition_val =
-	    new(this->mem_ctx) ir_expression(ir_binop_equal,
-					     &glsl_type::bool_type[comps - 1],
-					     broadcast_index,
-					     test_indices);
-
-         ir_variable *const condition =
-	    new(this->mem_ctx) ir_variable(condition_val->type,
-					   "dereference_array_condition",
-					   ir_var_temporary);
-         list->push_tail(condition);
-
 	 ir_rvalue *const cond_deref =
-	    new(this->mem_ctx) ir_dereference_variable(condition);
-         list->push_tail(new(this->mem_ctx) ir_assignment(cond_deref,
-							  condition_val, 0));
+	    compare_index_block(list, index, i, comps, this->mem_ctx);
 
          if (comps == 1) {
-	    ir_rvalue *const cond_deref =
-	       new(this->mem_ctx) ir_dereference_variable(condition);
-
-            this->generator.generate(i, cond_deref, list);
+            this->generator.generate(i, cond_deref->clone(this->mem_ctx, NULL),
+				     list);
          } else {
             for (unsigned j = 0; j < comps; j++) {
-	       ir_rvalue *const cond_deref =
-		  new(this->mem_ctx) ir_dereference_variable(condition);
 	       ir_rvalue *const cond_swiz =
-		  new(this->mem_ctx) ir_swizzle(cond_deref, j, 0, 0, 0, 1);
+		  new(this->mem_ctx) ir_swizzle(cond_deref->clone(this->mem_ctx, NULL),
+						j, 0, 0, 0, 1);
 
                this->generator.generate(i + j, cond_swiz, list);
             }
