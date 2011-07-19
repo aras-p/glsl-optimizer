@@ -2151,7 +2151,7 @@ lp_build_exp(struct lp_build_context *bld,
 
    assert(lp_check_value(bld->type, x));
 
-   return lp_build_mul(bld, log2e, lp_build_exp2(bld, x));
+   return lp_build_exp2(bld, lp_build_mul(bld, log2e, x));
 }
 
 
@@ -2168,7 +2168,7 @@ lp_build_log(struct lp_build_context *bld,
 
    assert(lp_check_value(bld->type, x));
 
-   return lp_build_mul(bld, log2, lp_build_exp2(bld, x));
+   return lp_build_mul(bld, log2, lp_build_log2(bld, x));
 }
 
 
