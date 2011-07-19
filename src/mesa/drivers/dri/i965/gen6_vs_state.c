@@ -160,6 +160,32 @@ upload_vs_state(struct brw_context *brw)
 	     GEN6_VS_STATISTICS_ENABLE |
 	     GEN6_VS_ENABLE);
    ADVANCE_BATCH();
+
+   /* Based on my reading of the simulator, the VS constants don't get
+    * pulled into the VS FF unit until an appropriate pipeline flush
+    * happens, and instead the 3DSTATE_CONSTANT_VS packet just adds
+    * references to them into a little FIFO.  The flushes are common,
+    * but don't reliably happen between this and a 3DPRIMITIVE, causing
+    * the primitive to use the wrong constants.  Then the FIFO
+    * containing the constant setup gets added to again on the next
+    * constants change, and eventually when a flush does happen the
+    * unit is overwhelmed by constant changes and dies.
+    *
+    * To avoid this, send a PIPE_CONTROL down the line that will
+    * update the unit immediately loading the constants.  The flush
+    * type bits here were those set by the STATE_BASE_ADDRESS whose
+    * move in a82a43e8d99e1715dd11c9c091b5ab734079b6a6 triggered the
+    * bug reports that led to this workaround, and may be more than
+    * what is strictly required to avoid the issue.
+    */
+   BEGIN_BATCH(4);
+   OUT_BATCH(_3DSTATE_PIPE_CONTROL);
+   OUT_BATCH(PIPE_CONTROL_DEPTH_STALL |
+	     PIPE_CONTROL_INSTRUCTION_FLUSH |
+	     PIPE_CONTROL_STATE_CACHE_INVALIDATE);
+   OUT_BATCH(0); /* address */
+   OUT_BATCH(0); /* write data */
+   ADVANCE_BATCH();
 }
 
 const struct brw_tracked_state gen6_vs_state = {
