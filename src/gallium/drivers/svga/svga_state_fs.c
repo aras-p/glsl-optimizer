@@ -76,7 +76,7 @@ static enum pipe_error compile_fs( struct svga_context *svga,
 
    result = svga_translate_fragment_program( fs, key );
    if (result == NULL) {
-      ret = PIPE_ERROR_OUT_OF_MEMORY;
+      ret = PIPE_ERROR;  /* some problem during translation */
       goto fail;
    }
 

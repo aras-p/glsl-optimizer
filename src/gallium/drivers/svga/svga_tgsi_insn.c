@@ -3184,7 +3184,6 @@ boolean svga_shader_emit_instructions( struct svga_shader_emitter *emit,
       goto done;
 
 done:
-   assert(ret);
    tgsi_parse_free( &parse );
    return ret;
 }

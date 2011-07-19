@@ -124,6 +124,9 @@ ps30_input_emit_depth_fog( struct svga_shader_emitter *emit,
       return TRUE;
    }
 
+   if (emit->ps30_input_count >= SVGA3D_INPUTREG_MAX)
+      return FALSE;
+
    reg = src_register( SVGA3DREG_INPUT,
                        emit->ps30_input_count++ );
 
@@ -195,6 +198,9 @@ static boolean ps30_input( struct svga_shader_emitter *emit,
       if (!translate_vs_ps_semantic( semantic, &usage, &index ))
          return FALSE;
 
+      if (emit->ps30_input_count >= SVGA3D_INPUTREG_MAX)
+         return FALSE;
+
       reg = dst_register( SVGA3DREG_INPUT, emit->ps30_input_count++ );
 
       if (!emit_decl( emit, reg, usage, index ))
@@ -229,6 +235,9 @@ static boolean ps30_input( struct svga_shader_emitter *emit,
    else {
 
       if (!translate_vs_ps_semantic( semantic, &usage, &index ))
+         return FALSE;
+
+      if (emit->ps30_input_count >= SVGA3D_INPUTREG_MAX)
          return FALSE;
 
       emit->input_map[idx] = src_register( SVGA3DREG_INPUT, emit->ps30_input_count++ );
@@ -390,6 +399,9 @@ static boolean vs30_output( struct svga_shader_emitter *emit,
    dcl.values[1] = 0;
 
    if (!translate_vs_ps_semantic( semantic, &usage, &index ))
+      return FALSE;
+
+   if (emit->vs30_output_count >= SVGA3D_OUTPUTREG_MAX)
       return FALSE;
 
    dcl.dst = dst_register( SVGA3DREG_OUTPUT, emit->vs30_output_count++ );
