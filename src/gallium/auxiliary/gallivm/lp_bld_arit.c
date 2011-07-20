@@ -1645,7 +1645,7 @@ lp_build_rsqrt(struct lp_build_context *bld,
    assert(type.floating);
 
    if (util_cpu_caps.has_sse && type.width == 32 && type.length == 4) {
-      const unsigned num_iterations = 0;
+      const unsigned num_iterations = 1;
       LLVMValueRef res;
       unsigned i;
 
