@@ -15,8 +15,9 @@
  *
  * How to use this source:
  *
- * - Download and abuild the NTL library from
- *   http://shoup.net/ntl/download.html
+ * - Download and build the NTL library from
+ *   http://shoup.net/ntl/download.html , or install libntl-dev package if on
+ *   Debian.
  *
  * - Download boost source code matching to your distro. 
  *
@@ -24,22 +25,32 @@
  *
  * - Build as
  *
- *   g++ -o minimax -I /path/to/ntl/include main.cpp f.cpp /path/to/ntl/src/ntl.a -lboost_math_tr1
+ *   g++ -o minimax -I /path/to/ntl/include main.cpp f.cpp /path/to/ntl/src/ntl.a
  *
  * - Run as 
  *
  *    ./minimax
  *
- * - For example, to compute exp2 5th order polynomial between [0, 1] do:
+ * - For example, to compute log2 5th order polynomial between [1, 2] do:
+ *
+ *    variant 0
+ *    range 1 2
+ *    order 5 0
+ *    step 200
+ *    info
+ *
+ *  and take the coefficients from the P = { ... } array.
+ *
+ * - To compute exp2 5th order polynomial between [0, 1] do:
  *
  *    variant 1
  *    range 0 1
  *    order 5 0
- *    steps 200
+ *    step 200
  *    info
  *
  * - For more info see
- * http://www.boost.org/doc/libs/1_36_0/libs/math/doc/sf_and_dist/html/math_toolkit/toolkit/internals2/minimax.html
+ * http://www.boost.org/doc/libs/1_47_0/libs/math/doc/sf_and_dist/html/math_toolkit/toolkit/internals2/minimax.html
  */
 
 #define L22
