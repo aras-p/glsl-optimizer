@@ -1993,7 +1993,11 @@ void brw_vs_emit(struct brw_vs_compile *c )
       index = inst->DstReg.Index;
       file = inst->DstReg.File;
       if (file == PROGRAM_OUTPUT && c->output_regs[index].used_in_src)
-	  dst = c->output_regs[index].reg;
+	 /* Can't just make get_dst "do the right thing" here because other
+	  * callers of get_dst don't expect any special behavior for the
+	  * c->output_regs[index].used_in_src case.
+	  */
+	 dst = brw_writemask(c->output_regs[index].reg, inst->DstReg.WriteMask);
       else
 	  dst = get_dst(c, inst->DstReg);
 
