@@ -85,11 +85,12 @@ if not env['embedded']:
     env.Prepend(LIBS = [llvmpipe] + gallium)
 
     tests = [
+        'arit',
         'format',
         'blend',
         'conv',
-	'printf',
-	'sincos',
+        'printf',
+        'sincos',
     ]
 
     if not env['msvc']:
