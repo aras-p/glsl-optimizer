@@ -1610,59 +1610,6 @@ st_copy_texsubimage(struct gl_context *ctx,
 
 
 static void
-st_CopyTexImage1D(struct gl_context * ctx, GLenum target, GLint level,
-                  GLenum internalFormat,
-                  GLint x, GLint y, GLsizei width, GLint border)
-{
-   struct gl_texture_unit *texUnit =
-      &ctx->Texture.Unit[ctx->Texture.CurrentUnit];
-   struct gl_texture_object *texObj =
-      _mesa_select_tex_object(ctx, texUnit, target);
-   struct gl_texture_image *texImage =
-      _mesa_select_tex_image(ctx, texObj, target, level);
-
-   /* Setup or redefine the texture object, texture and texture
-    * image.  Don't populate yet.  
-    */
-   ctx->Driver.TexImage1D(ctx, target, level, internalFormat,
-                          width, border,
-                          GL_RGBA, CHAN_TYPE, NULL,
-                          &ctx->DefaultPacking, texObj, texImage);
-
-   st_copy_texsubimage(ctx, target, level,
-                       0, 0, 0,  /* destX,Y,Z */
-                       x, y, width, 1);  /* src X, Y, size */
-}
-
-
-static void
-st_CopyTexImage2D(struct gl_context * ctx, GLenum target, GLint level,
-                  GLenum internalFormat,
-                  GLint x, GLint y, GLsizei width, GLsizei height,
-                  GLint border)
-{
-   struct gl_texture_unit *texUnit =
-      &ctx->Texture.Unit[ctx->Texture.CurrentUnit];
-   struct gl_texture_object *texObj =
-      _mesa_select_tex_object(ctx, texUnit, target);
-   struct gl_texture_image *texImage =
-      _mesa_select_tex_image(ctx, texObj, target, level);
-
-   /* Setup or redefine the texture object, texture and texture
-    * image.  Don't populate yet.  
-    */
-   ctx->Driver.TexImage2D(ctx, target, level, internalFormat,
-                          width, height, border,
-                          GL_RGBA, CHAN_TYPE, NULL,
-                          &ctx->DefaultPacking, texObj, texImage);
-
-   st_copy_texsubimage(ctx, target, level,
-                       0, 0, 0,  /* destX,Y,Z */
-                       x, y, width, height);  /* src X, Y, size */
-}
-
-
-static void
 st_CopyTexSubImage1D(struct gl_context * ctx, GLenum target, GLint level,
                      GLint xoffset, GLint x, GLint y, GLsizei width)
 {
@@ -1947,8 +1894,6 @@ st_init_texture_functions(struct dd_function_table *functions)
    functions->CompressedTexSubImage1D = st_CompressedTexSubImage1D;
    functions->CompressedTexSubImage2D = st_CompressedTexSubImage2D;
    functions->CompressedTexSubImage3D = st_CompressedTexSubImage3D;
-   functions->CopyTexImage1D = st_CopyTexImage1D;
-   functions->CopyTexImage2D = st_CopyTexImage2D;
    functions->CopyTexSubImage1D = st_CopyTexSubImage1D;
    functions->CopyTexSubImage2D = st_CopyTexSubImage2D;
    functions->CopyTexSubImage3D = st_CopyTexSubImage3D;
