@@ -379,7 +379,6 @@ void r300InitTextureFuncs(radeonContextPtr radeon, struct dd_function_table *fun
 	functions->CompressedTexSubImage2D = radeonCompressedTexSubImage2D;
 
 	if (radeon->radeonScreen->kernel_mm) {
-		functions->CopyTexImage2D = radeonCopyTexImage2D;
 		functions->CopyTexSubImage2D = radeonCopyTexSubImage2D;
 	}
 
