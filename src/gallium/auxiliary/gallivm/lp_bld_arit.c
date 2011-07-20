@@ -2465,6 +2465,12 @@ lp_build_log2_approx(struct lp_build_context *bld,
 
       assert(type.floating && type.width == 32);
 
+      /* 
+       * We don't explicitly handle denormalized numbers. They will yield a
+       * result in the neighbourhood of -127, which appears to be adequate
+       * enough.
+       */
+
       i = LLVMBuildBitCast(builder, x, int_vec_type, "");
 
       /* exp = (float) exponent(x) */
