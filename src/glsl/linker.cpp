@@ -1343,7 +1343,7 @@ assign_attribute_or_color_locations(gl_shader_program *prog,
    foreach_list(node, sh->ir) {
       ir_variable *const var = ((ir_instruction *) node)->as_variable();
 
-      if ((var == NULL) || (var->mode != direction))
+      if ((var == NULL) || (var->mode != (unsigned) direction))
 	 continue;
 
       if (var->explicit_location) {
