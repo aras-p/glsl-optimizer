@@ -47,8 +47,11 @@
 
 /** Waits on the query object's BO and totals the results for this query */
 static void
-brw_queryobj_get_results(struct brw_query_object *query)
+brw_queryobj_get_results(struct gl_context *ctx,
+			 struct brw_query_object *query)
 {
+   struct intel_context *intel = intel_context(ctx);
+
    int i;
    uint64_t *results;
 
@@ -58,7 +61,10 @@ brw_queryobj_get_results(struct brw_query_object *query)
    drm_intel_bo_map(query->bo, GL_FALSE);
    results = query->bo->virtual;
    if (query->Base.Target == GL_TIME_ELAPSED_EXT) {
-      query->Base.Result += 1000 * ((results[1] >> 32) - (results[0] >> 32));
+      if (intel->gen >= 6)
+	 query->Base.Result += 80 * (results[1] - results[0]);
+      else
+	 query->Base.Result += 1000 * ((results[1] >> 32) - (results[0] >> 32));
    } else {
       /* Map and count the pixels from the current query BO */
       for (i = query->first_index; i <= query->last_index; i++) {
@@ -201,7 +207,7 @@ static void brw_wait_query(struct gl_context *ctx, struct gl_query_object *q)
 {
    struct brw_query_object *query = (struct brw_query_object *)q;
 
-   brw_queryobj_get_results(query);
+   brw_queryobj_get_results(ctx, query);
    query->Base.Ready = GL_TRUE;
 }
 
@@ -210,7 +216,7 @@ static void brw_check_query(struct gl_context *ctx, struct gl_query_object *q)
    struct brw_query_object *query = (struct brw_query_object *)q;
 
    if (query->bo == NULL || !drm_intel_bo_busy(query->bo)) {
-      brw_queryobj_get_results(query);
+      brw_queryobj_get_results(ctx, query);
       query->Base.Ready = GL_TRUE;
    }
 }
@@ -249,6 +255,7 @@ void
 brw_emit_query_begin(struct brw_context *brw)
 {
    struct intel_context *intel = &brw->intel;
+   struct gl_context *ctx = &intel->ctx;
    struct brw_query_object *query = brw->query.obj;
 
    /* Skip if we're not doing any queries, or we've emitted the start. */
@@ -295,7 +302,7 @@ brw_emit_query_begin(struct brw_context *brw)
 
    if (query->bo != brw->query.bo) {
       if (query->bo != NULL)
-	 brw_queryobj_get_results(query);
+	 brw_queryobj_get_results(ctx, query);
       drm_intel_bo_reference(brw->query.bo);
       query->bo = brw->query.bo;
       query->first_index = brw->query.index;
