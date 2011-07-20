@@ -68,6 +68,7 @@ struct vl_compositor
    void *sampler_nearest;
    void *blend;
    void *rast;
+   void *dsa;
    void *vertex_elems_state;
 
    void *vs;
