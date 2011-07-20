@@ -79,6 +79,8 @@ struct u_vbuf_mgr_priv {
    void *saved_ve, *fallback_ve;
    boolean ve_binding_lock;
 
+   unsigned saved_buffer_offset[PIPE_MAX_ATTRIBS];
+
    boolean any_user_vbs;
    boolean incompatible_vb_layout;
 };
@@ -488,6 +490,7 @@ void u_vbuf_mgr_set_vertex_buffers(struct u_vbuf_mgr *mgrb,
 
       pipe_resource_reference(&mgr->b.vertex_buffer[i].buffer, vb->buffer);
       pipe_resource_reference(&mgr->b.real_vertex_buffer[i], NULL);
+      mgr->saved_buffer_offset[i] = vb->buffer_offset;
 
       if (!vb->buffer) {
          continue;
@@ -647,6 +650,13 @@ u_vbuf_mgr_draw_begin(struct u_vbuf_mgr *mgrb,
 void u_vbuf_mgr_draw_end(struct u_vbuf_mgr *mgrb)
 {
    struct u_vbuf_mgr_priv *mgr = (struct u_vbuf_mgr_priv*)mgrb;
+   unsigned i;
+
+   /* buffer offsets were modified in u_vbuf_upload_buffers */
+   if (mgr->any_user_vbs) {
+      for (i = 0; i < mgr->b.nr_vertex_buffers; i++)
+         mgr->b.vertex_buffer[i].buffer_offset = mgr->saved_buffer_offset[i];
+   }
 
    if (mgr->fallback_ve) {
       u_vbuf_translate_end(mgr);
