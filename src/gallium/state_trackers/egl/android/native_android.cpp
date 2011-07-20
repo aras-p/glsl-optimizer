@@ -296,7 +296,7 @@ android_surface_swap_buffers(struct native_surface *nsurf)
    struct android_display *adpy = asurf->adpy;
 
    if (!asurf->buf)
-      return FALSE;
+      return TRUE;
 
    android_surface_enqueue_buffer(&asurf->base);
 
