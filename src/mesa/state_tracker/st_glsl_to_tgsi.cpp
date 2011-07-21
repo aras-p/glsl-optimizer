@@ -70,6 +70,7 @@ extern "C" {
 #include "st_mesa_to_tgsi.h"
 }
 
+#define PROGRAM_IMMEDIATE PROGRAM_FILE_MAX
 #define PROGRAM_ANY_CONST ((1 << PROGRAM_LOCAL_PARAM) |  \
                            (1 << PROGRAM_ENV_PARAM) |    \
                            (1 << PROGRAM_STATE_VAR) |    \
@@ -272,6 +273,7 @@ public:
    struct gl_program *prog;
    struct gl_shader_program *shader_program;
    struct gl_shader_compiler_options *options;
+   struct gl_program_parameter_list *immediates;
 
    int next_temp;
 
@@ -505,6 +507,9 @@ glsl_to_tgsi_visitor::emit(ir_instruction *ir, unsigned op,
       case PROGRAM_UNIFORM:
          this->indirect_addr_consts = true;
          break;
+      case PROGRAM_IMMEDIATE:
+         assert(!"immediates should not have indirect addressing");
+         break;
       default:
          break;
       }
@@ -523,6 +528,9 @@ glsl_to_tgsi_visitor::emit(ir_instruction *ir, unsigned op,
             case PROGRAM_CONSTANT:
             case PROGRAM_UNIFORM:
                this->indirect_addr_consts = true;
+               break;
+            case PROGRAM_IMMEDIATE:
+               assert(!"immediates should not have indirect addressing");
                break;
             default:
                break;
@@ -804,12 +812,12 @@ glsl_to_tgsi_visitor::emit_scs(ir_instruction *ir, unsigned op,
 struct st_src_reg
 glsl_to_tgsi_visitor::st_src_reg_for_float(float val)
 {
-   st_src_reg src(PROGRAM_CONSTANT, -1, GLSL_TYPE_FLOAT);
+   st_src_reg src(PROGRAM_IMMEDIATE, -1, GLSL_TYPE_FLOAT);
    union gl_constant_value uval;
 
    uval.f = val;
-   src.index = _mesa_add_typed_unnamed_constant(this->prog->Parameters,
-        				  &uval, 1, GL_FLOAT, &src.swizzle);
+   src.index = _mesa_add_typed_unnamed_constant(this->immediates, &uval, 1,
+                                                GL_FLOAT, &src.swizzle);
 
    return src;
 }
@@ -817,14 +825,14 @@ glsl_to_tgsi_visitor::st_src_reg_for_float(float val)
 struct st_src_reg
 glsl_to_tgsi_visitor::st_src_reg_for_int(int val)
 {
-   st_src_reg src(PROGRAM_CONSTANT, -1, GLSL_TYPE_INT);
+   st_src_reg src(PROGRAM_IMMEDIATE, -1, GLSL_TYPE_INT);
    union gl_constant_value uval;
    
    assert(glsl_version >= 130);
 
    uval.i = val;
-   src.index = _mesa_add_typed_unnamed_constant(this->prog->Parameters,
-        				  &uval, 1, GL_INT, &src.swizzle);
+   src.index = _mesa_add_typed_unnamed_constant(this->immediates, &uval, 1,
+                                                GL_INT, &src.swizzle);
 
    return src;
 }
@@ -1933,9 +1941,15 @@ glsl_to_tgsi_visitor::visit(ir_constant *ir)
    gl_constant_value *values = (gl_constant_value *) stack_vals;
    GLenum gl_type = GL_NONE;
    unsigned int i;
+   gl_register_file file;
+   gl_program_parameter_list *param_list;
+   static int in_array = 0;
+
+   file = in_array ? PROGRAM_CONSTANT : PROGRAM_IMMEDIATE;
+   param_list = in_array ? this->prog->Parameters : this->immediates;
 
    /* Unfortunately, 4 floats is all we can get into
-    * _mesa_add_unnamed_constant.  So, make a temp to store an
+    * _mesa_add_typed_unnamed_constant.  So, make a temp to store an
     * aggregate constant and move each constant value into it.  If we
     * get lucky, copy propagation will eliminate the extra moves.
     */
@@ -1969,6 +1983,7 @@ glsl_to_tgsi_visitor::visit(ir_constant *ir)
       int size = type_size(ir->type->fields.array);
 
       assert(size > 0);
+      in_array++;
 
       for (i = 0; i < ir->type->length; i++) {
          ir->array_elements[i]->accept(this);
@@ -1981,6 +1996,7 @@ glsl_to_tgsi_visitor::visit(ir_constant *ir)
          }
       }
       this->result = temp_base;
+      in_array--;
       return;
    }
 
@@ -1992,8 +2008,8 @@ glsl_to_tgsi_visitor::visit(ir_constant *ir)
          assert(ir->type->base_type == GLSL_TYPE_FLOAT);
          values = (gl_constant_value *) &ir->value.f[i * ir->type->vector_elements];
 
-         src = st_src_reg(PROGRAM_CONSTANT, -1, ir->type->base_type);
-         src.index = _mesa_add_typed_unnamed_constant(this->prog->Parameters,
+         src = st_src_reg(file, -1, ir->type->base_type);
+         src.index = _mesa_add_typed_unnamed_constant(param_list,
                                                       values,
                                                       ir->type->vector_elements,
                                                       GL_FLOAT,
@@ -2007,7 +2023,6 @@ glsl_to_tgsi_visitor::visit(ir_constant *ir)
       return;
    }
 
-   src.file = PROGRAM_CONSTANT;
    switch (ir->type->base_type) {
    case GLSL_TYPE_FLOAT:
       gl_type = GL_FLOAT;
@@ -2046,8 +2061,8 @@ glsl_to_tgsi_visitor::visit(ir_constant *ir)
       assert(!"Non-float/uint/int/bool constant");
    }
 
-   this->result = st_src_reg(PROGRAM_CONSTANT, -1, ir->type);
-   this->result.index = _mesa_add_typed_unnamed_constant(this->prog->Parameters,
+   this->result = st_src_reg(file, -1, ir->type);
+   this->result.index = _mesa_add_typed_unnamed_constant(param_list,
         					   values, ir->type->vector_elements, gl_type,
         					   &this->result.swizzle);
 }
@@ -2430,11 +2445,13 @@ glsl_to_tgsi_visitor::glsl_to_tgsi_visitor()
    num_address_regs = 0;
    indirect_addr_temps = false;
    indirect_addr_consts = false;
+   immediates = _mesa_new_parameter_list();
    mem_ctx = ralloc_context(NULL);
 }
 
 glsl_to_tgsi_visitor::~glsl_to_tgsi_visitor()
 {
+   _mesa_free_parameter_list(immediates);
    ralloc_free(mem_ctx);
 }
 
@@ -3521,6 +3538,8 @@ get_pixel_transfer_visitor(struct st_fragment_program *fp,
    v->samplers_used = prog->SamplersUsed = original->samplers_used;
    v->indirect_addr_temps = original->indirect_addr_temps;
    v->indirect_addr_consts = original->indirect_addr_consts;
+   _mesa_free_parameter_list(v->immediates);
+   v->immediates = _mesa_clone_parameter_list(original->immediates);
 
    /*
     * Get initial pixel color from the texture.
@@ -3648,6 +3667,8 @@ get_bitmap_visitor(struct st_fragment_program *fp,
    v->samplers_used = prog->SamplersUsed = original->samplers_used;
    v->indirect_addr_temps = original->indirect_addr_temps;
    v->indirect_addr_consts = original->indirect_addr_consts;
+   _mesa_free_parameter_list(v->immediates);
+   v->immediates = _mesa_clone_parameter_list(original->immediates);
 
    /* TEX tmp0, fragment.texcoord[0], texture[0], 2D; */
    coord = st_src_reg(PROGRAM_INPUT, FRAG_ATTRIB_TEX0, glsl_type::vec2_type);
@@ -3707,6 +3728,7 @@ struct st_translate {
 
    struct ureg_dst temps[MAX_TEMPS];
    struct ureg_src *constants;
+   struct ureg_src *immediates;
    struct ureg_dst outputs[PIPE_MAX_SHADER_OUTPUTS];
    struct ureg_src inputs[PIPE_MAX_SHADER_INPUTS];
    struct ureg_dst address[1];
@@ -3798,6 +3820,43 @@ static void set_insn_start( struct st_translate *t,
 }
 
 /**
+ * Map a glsl_to_tgsi constant/immediate to a TGSI immediate.
+ */
+static struct ureg_src
+emit_immediate( struct st_translate *t,
+                struct gl_program_parameter_list *params,
+                int index)
+{
+   struct ureg_program *ureg = t->ureg;
+
+   switch(params->Parameters[index].DataType)
+   {
+   case GL_FLOAT:
+   case GL_FLOAT_VEC2:
+   case GL_FLOAT_VEC3:
+   case GL_FLOAT_VEC4:
+      return ureg_DECL_immediate(ureg, (float *)params->ParameterValues[index], 4);
+   case GL_INT:
+   case GL_INT_VEC2:
+   case GL_INT_VEC3:
+   case GL_INT_VEC4:
+      return ureg_DECL_immediate_int(ureg, (int *)params->ParameterValues[index], 4);
+   case GL_UNSIGNED_INT:
+   case GL_UNSIGNED_INT_VEC2:
+   case GL_UNSIGNED_INT_VEC3:
+   case GL_UNSIGNED_INT_VEC4:
+   case GL_BOOL:
+   case GL_BOOL_VEC2:
+   case GL_BOOL_VEC3:
+   case GL_BOOL_VEC4:
+      return ureg_DECL_immediate_uint(ureg, (unsigned *)params->ParameterValues[index], 4);
+   default:
+      assert(!"should not get here - type must be float, int, uint, or bool");
+      return ureg_src_undef();
+   }
+}
+
+/**
  * Map a Mesa dst register to a TGSI ureg_dst register.
  */
 static struct ureg_dst
@@ -3870,6 +3929,9 @@ src_register( struct st_translate *t,
          return ureg_DECL_constant( t->ureg, 0 );
       else
          return t->constants[index];
+
+   case PROGRAM_IMMEDIATE:
+      return t->immediates[index];
 
    case PROGRAM_INPUT:
       assert(t->inputMapping[index] < Elements(t->inputs));
@@ -4402,9 +4464,8 @@ st_translate_program(
       }
    }
 
-   /* Emit constants and immediates.  Mesa uses a single index space
-    * for these, so we put all the translated regs in t->constants.
-    * XXX: this entire if block depends on proginfo->Parameters from Mesa IR
+   /* Emit constants and uniforms.  TGSI uses a single index space for these, 
+    * so we put all the translated regs in t->constants.
     */
    if (proginfo->Parameters) {
       t->constants = (struct ureg_src *)CALLOC( proginfo->Parameters->NumParameters * sizeof t->constants[0] );
@@ -4423,48 +4484,33 @@ st_translate_program(
             t->constants[i] = ureg_DECL_constant( ureg, i );
             break;
 
-            /* Emit immediates only when there's no indirect addressing of
-             * the const buffer.
-             * FIXME: Be smarter and recognize param arrays:
-             * indirect addressing is only valid within the referenced
-             * array.
-             */
+         /* Emit immediates for PROGRAM_CONSTANT only when there's no indirect
+          * addressing of the const buffer.
+          * FIXME: Be smarter and recognize param arrays:
+          * indirect addressing is only valid within the referenced
+          * array.
+          */
          case PROGRAM_CONSTANT:
             if (program->indirect_addr_consts)
                t->constants[i] = ureg_DECL_constant( ureg, i );
             else
-               switch(proginfo->Parameters->Parameters[i].DataType)
-               {
-               case GL_FLOAT:
-               case GL_FLOAT_VEC2:
-               case GL_FLOAT_VEC3:
-               case GL_FLOAT_VEC4:
-                  t->constants[i] = ureg_DECL_immediate(ureg, (float *)proginfo->Parameters->ParameterValues[i], 4);
-                  break;
-               case GL_INT:
-               case GL_INT_VEC2:
-               case GL_INT_VEC3:
-               case GL_INT_VEC4:
-                  t->constants[i] = ureg_DECL_immediate_int(ureg, (int *)proginfo->Parameters->ParameterValues[i], 4);
-                  break;
-               case GL_UNSIGNED_INT:
-               case GL_UNSIGNED_INT_VEC2:
-               case GL_UNSIGNED_INT_VEC3:
-               case GL_UNSIGNED_INT_VEC4:
-               case GL_BOOL:
-               case GL_BOOL_VEC2:
-               case GL_BOOL_VEC3:
-               case GL_BOOL_VEC4:
-                  t->constants[i] = ureg_DECL_immediate_uint(ureg, (unsigned *)proginfo->Parameters->ParameterValues[i], 4);
-                  break;
-               default:
-                  assert(!"should not get here");
-               }
+               t->constants[i] = emit_immediate( t, proginfo->Parameters, i );
             break;
          default:
             break;
          }
       }
+   }
+   
+   /* Emit immediate values.
+    */
+   t->immediates = (struct ureg_src *)CALLOC( program->immediates->NumParameters * sizeof(struct ureg_src) );
+   if (t->immediates == NULL) {
+      ret = PIPE_ERROR_OUT_OF_MEMORY;
+      goto out;
+   }
+   for (i = 0; i < program->immediates->NumParameters; i++) {
+      t->immediates[i] = emit_immediate( t, program->immediates, i );
    }
 
    /* texture samplers */
@@ -4512,6 +4558,7 @@ out:
    FREE(t->insn);
    FREE(t->labels);
    FREE(t->constants);
+   FREE(t->immediates);
 
    if (t->error) {
       debug_printf("%s: translate error flag set\n", __FUNCTION__);
