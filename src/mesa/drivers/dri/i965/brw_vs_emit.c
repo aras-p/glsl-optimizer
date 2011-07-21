@@ -1980,9 +1980,22 @@ void brw_vs_emit(struct brw_vs_compile *c )
 	      const struct prog_src_register *src = &inst->SrcReg[i];
 	      index = src->Index;
 	      file = src->File;	
-	      if (file == PROGRAM_OUTPUT && c->output_regs[index].used_in_src)
-		  args[i] = c->output_regs[index].reg;
-	      else
+	      if (file == PROGRAM_OUTPUT && c->output_regs[index].used_in_src) {
+		 /* Can't just make get_arg "do the right thing" here because
+		  * other callers of get_arg and get_src_reg don't expect any
+		  * special behavior for the c->output_regs[index].used_in_src
+		  * case.
+		  */
+		 args[i] = c->output_regs[index].reg;
+		 args[i].dw1.bits.swizzle =
+		    BRW_SWIZZLE4(GET_SWZ(src->Swizzle, 0),
+				 GET_SWZ(src->Swizzle, 1),
+				 GET_SWZ(src->Swizzle, 2),
+				 GET_SWZ(src->Swizzle, 3));
+
+		 /* Note this is ok for non-swizzle ARB_vp instructions */
+		 args[i].negate = src->Negate ? 1 : 0;
+	      } else
                   args[i] = get_arg(c, inst, i);
 	  }
 
