@@ -1917,12 +1917,13 @@ glsl_to_tgsi_visitor::visit(ir_assignment *ir)
               ir->rhs == ((glsl_to_tgsi_instruction *)this->instructions.get_tail())->ir &&
               type_size(ir->lhs->type) == 1) {
       /* To avoid emitting an extra MOV when assigning an expression to a 
-       * variable, change the destination register of the last instruction 
-       * emitted as part of the expression to the assignment variable.
+       * variable, emit the last instruction of the expression again, but
+       * replace the destination register with the target of the assignment.
+       * Dead code elimination will remove the original instruction.
        */
       glsl_to_tgsi_instruction *inst;
       inst = (glsl_to_tgsi_instruction *)this->instructions.get_tail();
-      inst->dst = l;
+      emit(ir, inst->op, l, inst->src[0], inst->src[1], inst->src[2]);
    } else {
       for (i = 0; i < type_size(ir->lhs->type); i++) {
          emit(ir, TGSI_OPCODE_MOV, l, r);
