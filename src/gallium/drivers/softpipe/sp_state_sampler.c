@@ -373,8 +373,9 @@ softpipe_reset_sampler_variants(struct softpipe_context *softpipe)
       }
    }
 
-   for (i = 0; i <= softpipe->fs->info.file_max[TGSI_FILE_SAMPLER]; i++) {
+   for (i = 0; i <= softpipe->fs_variant->info.file_max[TGSI_FILE_SAMPLER]; i++) {
       if (softpipe->fragment_samplers[i]) {
+         assert(softpipe->fragment_sampler_views[i]->texture);
          softpipe->tgsi.frag_samplers_list[i] =
             get_sampler_variant( i,
                                  sp_sampler(softpipe->fragment_samplers[i]),

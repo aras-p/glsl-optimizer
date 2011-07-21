@@ -64,7 +64,7 @@ softpipe_get_vertex_info(struct softpipe_context *softpipe)
 
    if (vinfo->num_attribs == 0) {
       /* compute vertex layout now */
-      const struct sp_fragment_shader *spfs = softpipe->fs;
+      const struct tgsi_shader_info *fsInfo = &softpipe->fs_variant->info;
       struct vertex_info *vinfo_vbuf = &softpipe->vertex_info_vbuf;
       const uint num = draw_num_shader_outputs(softpipe->draw);
       uint i;
@@ -84,11 +84,11 @@ softpipe_get_vertex_info(struct softpipe_context *softpipe)
        * from the vertex shader.
        */
       vinfo->num_attribs = 0;
-      for (i = 0; i < spfs->info.num_inputs; i++) {
+      for (i = 0; i < fsInfo->num_inputs; i++) {
          int src;
          enum interp_mode interp;
 
-         switch (spfs->info.input_interpolate[i]) {
+         switch (fsInfo->input_interpolate[i]) {
          case TGSI_INTERPOLATE_CONSTANT:
             interp = INTERP_CONSTANT;
             break;
@@ -103,7 +103,7 @@ softpipe_get_vertex_info(struct softpipe_context *softpipe)
             interp = INTERP_LINEAR;
          }
 
-         switch (spfs->info.input_semantic_name[i]) {
+         switch (fsInfo->input_semantic_name[i]) {
          case TGSI_SEMANTIC_POSITION:
             interp = INTERP_POS;
             break;
@@ -117,8 +117,8 @@ softpipe_get_vertex_info(struct softpipe_context *softpipe)
 
          /* this includes texcoords and varying vars */
          src = draw_find_shader_output(softpipe->draw,
-                                       spfs->info.input_semantic_name[i],
-                                       spfs->info.input_semantic_index[i]);
+                                       fsInfo->input_semantic_name[i],
+                                       fsInfo->input_semantic_index[i]);
          draw_emit_vertex_attr(vinfo, EMIT_4F, interp, src);
       }
 
@@ -241,10 +241,46 @@ update_tgsi_samplers( struct softpipe_context *softpipe )
 }
 
 
+static void
+update_fragment_shader(struct softpipe_context *softpipe)
+{
+   struct sp_fragment_shader_variant_key key;
+
+   memset(&key, 0, sizeof(key));
+
+   if (softpipe->fs) {
+      softpipe->fs_variant = softpipe_find_fs_variant(softpipe,
+                                                      softpipe->fs, &key);
+   }
+   else {
+      softpipe->fs_variant = NULL;
+   }
+
+   /* This would be the logical place to pass the fragment shader
+    * to the draw module.  However, doing this here, during state
+    * validation, causes problems with the 'draw' module helpers for
+    * wide/AA/stippled lines.
+    * In principle, the draw's fragment shader should be per-variant
+    * but that doesn't work.  So we use a single draw fragment shader
+    * per fragment shader, not per variant.
+    */
+#if 0
+   if (softpipe->fs_variant) {
+      draw_bind_fragment_shader(softpipe->draw,
+                                softpipe->fs_variant->draw_shader);
+   }
+   else {
+      draw_bind_fragment_shader(softpipe->draw, NULL);
+   }
+#endif
+}
+
+
 /* Hopefully this will remain quite simple, otherwise need to pull in
  * something like the state tracker mechanism.
  */
-void softpipe_update_derived( struct softpipe_context *softpipe )
+void
+softpipe_update_derived(struct softpipe_context *softpipe)
 {
    struct softpipe_screen *sp_screen = softpipe_screen(softpipe->pipe.screen);
 
@@ -255,6 +291,10 @@ void softpipe_update_derived( struct softpipe_context *softpipe )
       softpipe->dirty |= SP_NEW_TEXTURE;
    }
       
+   if (softpipe->dirty & (SP_NEW_RASTERIZER |
+                          SP_NEW_FS))
+      update_fragment_shader(softpipe);
+
    if (softpipe->dirty & (SP_NEW_SAMPLER |
                           SP_NEW_TEXTURE |
                           SP_NEW_FS | 

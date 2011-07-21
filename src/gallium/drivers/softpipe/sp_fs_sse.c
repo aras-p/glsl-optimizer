@@ -48,11 +48,11 @@
 
 
 /**
- * Subclass of sp_fragment_shader
+ * Subclass of sp_fragment_shader_variant
  */
 struct sp_sse_fragment_shader
 {
-   struct sp_fragment_shader base;
+   struct sp_fragment_shader_variant base;
    struct x86_function sse2_program;
    tgsi_sse2_fs_function func;
    float immediates[TGSI_EXEC_NUM_IMMEDIATES][4];
@@ -61,14 +61,14 @@ struct sp_sse_fragment_shader
 
 /** cast wrapper */
 static INLINE struct sp_sse_fragment_shader *
-sp_sse_fragment_shader(const struct sp_fragment_shader *base)
+sp_sse_fragment_shader(const struct sp_fragment_shader_variant *base)
 {
    return (struct sp_sse_fragment_shader *) base;
 }
 
 
 static void
-fs_sse_prepare( const struct sp_fragment_shader *base,
+fs_sse_prepare( const struct sp_fragment_shader_variant *base,
 		struct tgsi_exec_machine *machine,
 		struct tgsi_sampler **samplers )
 {
@@ -119,7 +119,7 @@ setup_pos_vector(const struct tgsi_interp_coef *coef,
  * TODO: process >1 quad at a time
  */
 static unsigned 
-fs_sse_run( const struct sp_fragment_shader *base,
+fs_sse_run( const struct sp_fragment_shader_variant *base,
 	    struct tgsi_exec_machine *machine,
 	    struct quad_header *quad )
 {
@@ -189,7 +189,7 @@ fs_sse_run( const struct sp_fragment_shader *base,
 
 
 static void 
-fs_sse_delete( struct sp_fragment_shader *base )
+fs_sse_delete( struct sp_fragment_shader_variant *base )
 {
    struct sp_sse_fragment_shader *shader = sp_sse_fragment_shader(base);
 
@@ -198,9 +198,9 @@ fs_sse_delete( struct sp_fragment_shader *base )
 }
 
 
-struct sp_fragment_shader *
-softpipe_create_fs_sse(struct softpipe_context *softpipe,
-		       const struct pipe_shader_state *templ)
+struct sp_fragment_shader_variant *
+softpipe_create_fs_variant_sse(struct softpipe_context *softpipe,
+                               const struct pipe_shader_state *templ)
 {
    struct sp_sse_fragment_shader *shader;
 
@@ -226,7 +226,6 @@ softpipe_create_fs_sse(struct softpipe_context *softpipe,
       return NULL;
    }
 
-   shader->base.shader.tokens = NULL; /* don't hold reference to templ->tokens */
    shader->base.prepare = fs_sse_prepare;
    shader->base.run = fs_sse_run;
    shader->base.delete = fs_sse_delete;
@@ -239,9 +238,9 @@ softpipe_create_fs_sse(struct softpipe_context *softpipe,
 
 /* Maybe put this variant in the header file.
  */
-struct sp_fragment_shader *
-softpipe_create_fs_sse(struct softpipe_context *softpipe,
-		       const struct pipe_shader_state *templ)
+struct sp_fragment_shader_variant *
+softpipe_create_fs_variant_sse(struct softpipe_context *softpipe,
+                               const struct pipe_shader_state *templ)
 {
    return NULL;
 }

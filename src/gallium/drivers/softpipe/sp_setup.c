@@ -568,17 +568,18 @@ tri_persp_coeff(struct setup_context *setup,
 static void
 setup_fragcoord_coeff(struct setup_context *setup, uint slot)
 {
-   struct sp_fragment_shader* spfs = setup->softpipe->fs;
+   const struct tgsi_shader_info *fsInfo = &setup->softpipe->fs_variant->info;
+
    /*X*/
-   setup->coef[slot].a0[0] = spfs->info.pixel_center_integer ? 0.0 : 0.5;
+   setup->coef[slot].a0[0] = fsInfo->pixel_center_integer ? 0.0 : 0.5;
    setup->coef[slot].dadx[0] = 1.0;
    setup->coef[slot].dady[0] = 0.0;
    /*Y*/
    setup->coef[slot].a0[1] =
-		   (spfs->info.origin_lower_left ? setup->softpipe->framebuffer.height-1 : 0)
-		   + (spfs->info.pixel_center_integer ? 0.0 : 0.5);
+		   (fsInfo->origin_lower_left ? setup->softpipe->framebuffer.height-1 : 0)
+		   + (fsInfo->pixel_center_integer ? 0.0 : 0.5);
    setup->coef[slot].dadx[1] = 0.0;
-   setup->coef[slot].dady[1] = spfs->info.origin_lower_left ? -1.0 : 1.0;
+   setup->coef[slot].dady[1] = fsInfo->origin_lower_left ? -1.0 : 1.0;
    /*Z*/
    setup->coef[slot].a0[2] = setup->posCoef.a0[2];
    setup->coef[slot].dadx[2] = setup->posCoef.dadx[2];
@@ -599,7 +600,7 @@ static void
 setup_tri_coefficients(struct setup_context *setup)
 {
    struct softpipe_context *softpipe = setup->softpipe;
-   const struct sp_fragment_shader *spfs = softpipe->fs;
+   const struct tgsi_shader_info *fsInfo = &setup->softpipe->fs_variant->info;
    const struct vertex_info *vinfo = softpipe_get_vertex_info(softpipe);
    uint fragSlot;
    float v[3];
@@ -618,7 +619,7 @@ setup_tri_coefficients(struct setup_context *setup)
 
    /* setup interpolation for all the remaining attributes:
     */
-   for (fragSlot = 0; fragSlot < spfs->info.num_inputs; fragSlot++) {
+   for (fragSlot = 0; fragSlot < fsInfo->num_inputs; fragSlot++) {
       const uint vertSlot = vinfo->attrib[fragSlot].src_index;
       uint j;
 
@@ -632,7 +633,7 @@ setup_tri_coefficients(struct setup_context *setup)
             tri_apply_cylindrical_wrap(setup->vmin[vertSlot][j],
                                        setup->vmid[vertSlot][j],
                                        setup->vmax[vertSlot][j],
-                                       spfs->info.input_cylindrical_wrap[fragSlot] & (1 << j),
+                                       fsInfo->input_cylindrical_wrap[fragSlot] & (1 << j),
                                        v);
             tri_linear_coeff(setup, &setup->coef[fragSlot], j, v);
          }
@@ -642,7 +643,7 @@ setup_tri_coefficients(struct setup_context *setup)
             tri_apply_cylindrical_wrap(setup->vmin[vertSlot][j],
                                        setup->vmid[vertSlot][j],
                                        setup->vmax[vertSlot][j],
-                                       spfs->info.input_cylindrical_wrap[fragSlot] & (1 << j),
+                                       fsInfo->input_cylindrical_wrap[fragSlot] & (1 << j),
                                        v);
             tri_persp_coeff(setup, &setup->coef[fragSlot], j, v);
          }
@@ -654,7 +655,7 @@ setup_tri_coefficients(struct setup_context *setup)
          assert(0);
       }
 
-      if (spfs->info.input_semantic_name[fragSlot] == TGSI_SEMANTIC_FACE) {
+      if (fsInfo->input_semantic_name[fragSlot] == TGSI_SEMANTIC_FACE) {
          /* convert 0 to 1.0 and 1 to -1.0 */
          setup->coef[fragSlot].a0[0] = setup->facing * -2.0f + 1.0f;
          setup->coef[fragSlot].dadx[0] = 0.0;
@@ -939,7 +940,7 @@ setup_line_coefficients(struct setup_context *setup,
                         const float (*v1)[4])
 {
    struct softpipe_context *softpipe = setup->softpipe;
-   const struct sp_fragment_shader *spfs = softpipe->fs;
+   const struct tgsi_shader_info *fsInfo = &setup->softpipe->fs_variant->info;
    const struct vertex_info *vinfo = softpipe_get_vertex_info(softpipe);
    uint fragSlot;
    float area;
@@ -974,7 +975,7 @@ setup_line_coefficients(struct setup_context *setup,
 
    /* setup interpolation for all the remaining attributes:
     */
-   for (fragSlot = 0; fragSlot < spfs->info.num_inputs; fragSlot++) {
+   for (fragSlot = 0; fragSlot < fsInfo->num_inputs; fragSlot++) {
       const uint vertSlot = vinfo->attrib[fragSlot].src_index;
       uint j;
 
@@ -987,7 +988,7 @@ setup_line_coefficients(struct setup_context *setup,
          for (j = 0; j < NUM_CHANNELS; j++) {
             line_apply_cylindrical_wrap(setup->vmin[vertSlot][j],
                                         setup->vmax[vertSlot][j],
-                                        spfs->info.input_cylindrical_wrap[fragSlot] & (1 << j),
+                                        fsInfo->input_cylindrical_wrap[fragSlot] & (1 << j),
                                         v);
             line_linear_coeff(setup, &setup->coef[fragSlot], j, v);
          }
@@ -996,7 +997,7 @@ setup_line_coefficients(struct setup_context *setup,
          for (j = 0; j < NUM_CHANNELS; j++) {
             line_apply_cylindrical_wrap(setup->vmin[vertSlot][j],
                                         setup->vmax[vertSlot][j],
-                                        spfs->info.input_cylindrical_wrap[fragSlot] & (1 << j),
+                                        fsInfo->input_cylindrical_wrap[fragSlot] & (1 << j),
                                         v);
             line_persp_coeff(setup, &setup->coef[fragSlot], j, v);
          }
@@ -1008,7 +1009,7 @@ setup_line_coefficients(struct setup_context *setup,
          assert(0);
       }
 
-      if (spfs->info.input_semantic_name[fragSlot] == TGSI_SEMANTIC_FACE) {
+      if (fsInfo->input_semantic_name[fragSlot] == TGSI_SEMANTIC_FACE) {
          /* convert 0 to 1.0 and 1 to -1.0 */
          setup->coef[fragSlot].a0[0] = setup->facing * -2.0f + 1.0f;
          setup->coef[fragSlot].dadx[0] = 0.0;
@@ -1188,7 +1189,7 @@ sp_setup_point(struct setup_context *setup,
                const float (*v0)[4])
 {
    struct softpipe_context *softpipe = setup->softpipe;
-   const struct sp_fragment_shader *spfs = softpipe->fs;
+   const struct tgsi_shader_info *fsInfo = &setup->softpipe->fs_variant->info;
    const int sizeAttr = setup->softpipe->psize_slot;
    const float size
       = sizeAttr > 0 ? v0[sizeAttr][0]
@@ -1232,7 +1233,7 @@ sp_setup_point(struct setup_context *setup,
    const_coeff(setup, &setup->posCoef, 0, 2);
    const_coeff(setup, &setup->posCoef, 0, 3);
 
-   for (fragSlot = 0; fragSlot < spfs->info.num_inputs; fragSlot++) {
+   for (fragSlot = 0; fragSlot < fsInfo->num_inputs; fragSlot++) {
       const uint vertSlot = vinfo->attrib[fragSlot].src_index;
       uint j;
 
@@ -1255,7 +1256,7 @@ sp_setup_point(struct setup_context *setup,
          assert(0);
       }
 
-      if (spfs->info.input_semantic_name[fragSlot] == TGSI_SEMANTIC_FACE) {
+      if (fsInfo->input_semantic_name[fragSlot] == TGSI_SEMANTIC_FACE) {
          /* convert 0 to 1.0 and 1 to -1.0 */
          setup->coef[fragSlot].a0[0] = setup->facing * -2.0f + 1.0f;
          setup->coef[fragSlot].dadx[0] = 0.0;

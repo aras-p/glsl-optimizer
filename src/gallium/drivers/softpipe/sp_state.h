@@ -60,31 +60,43 @@ struct tgsi_exec_machine;
 struct vertex_info;
 
 
-/**
- * Subclass of pipe_shader_state (though it doesn't really need to be).
- *
- * This is starting to look an awful lot like a quad pipeline stage...
- */
-struct sp_fragment_shader {
-   struct pipe_shader_state shader;
+struct sp_fragment_shader_variant_key
+{
+   int foo;  /* XXX temporary */
+};
 
+
+struct sp_fragment_shader_variant
+{
+   const struct tgsi_token *tokens;
+   struct sp_fragment_shader_variant_key key;
    struct tgsi_shader_info info;
 
+   /* See comments about this elsewhere */
+#if 0
    struct draw_fragment_shader *draw_shader;
+#endif
 
-   void (*prepare)( const struct sp_fragment_shader *shader,
-		    struct tgsi_exec_machine *machine,
-		    struct tgsi_sampler **samplers);
+   void (*prepare)(const struct sp_fragment_shader_variant *shader,
+		   struct tgsi_exec_machine *machine,
+		   struct tgsi_sampler **samplers);
 
-   /* Run the shader - this interface will get cleaned up in the
-    * future:
-    */
-   unsigned (*run)( const struct sp_fragment_shader *shader,
-		    struct tgsi_exec_machine *machine,
-		    struct quad_header *quad );
+   unsigned (*run)(const struct sp_fragment_shader_variant *shader,
+		   struct tgsi_exec_machine *machine,
+		   struct quad_header *quad);
+
+   /* Deletes this instance of the object */
+   void (*delete)(struct sp_fragment_shader_variant *shader);
+
+   struct sp_fragment_shader_variant *next;
+};
 
 
-   void (*delete)( struct sp_fragment_shader * );
+/** Subclass of pipe_shader_state */
+struct sp_fragment_shader {
+   struct pipe_shader_state shader;
+   struct sp_fragment_shader_variant *variants;
+   struct draw_fragment_shader *draw_shader;
 };
 
 
@@ -138,7 +150,7 @@ softpipe_set_framebuffer_state(struct pipe_context *,
                                const struct pipe_framebuffer_state *);
 
 void
-softpipe_update_derived( struct softpipe_context *softpipe );
+softpipe_update_derived(struct softpipe_context *softpipe);
 
 void
 softpipe_draw_vbo(struct pipe_context *pipe,
@@ -165,6 +177,12 @@ softpipe_get_vertex_info(struct softpipe_context *softpipe);
 
 struct vertex_info *
 softpipe_get_vbuf_vertex_info(struct softpipe_context *softpipe);
+
+
+struct sp_fragment_shader_variant *
+softpipe_find_fs_variant(struct softpipe_context *softpipe,
+                         struct sp_fragment_shader *fs,
+                         const struct sp_fragment_shader_variant_key *key);
 
 
 #endif
