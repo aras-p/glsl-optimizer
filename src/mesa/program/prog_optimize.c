@@ -1319,6 +1319,15 @@ _mesa_simplify_cmp(struct gl_program * program)
 
          inst->Opcode = OPCODE_MOV;
          inst->SrcReg[0] = inst->SrcReg[1];
+
+	 /* Unused operands are expected to have the file set to
+	  * PROGRAM_UNDEFINED.  This is how _mesa_init_instructions initializes
+	  * all of the sources.
+	  */
+	 inst->SrcReg[1].File = PROGRAM_UNDEFINED;
+	 inst->SrcReg[1].Swizzle = SWIZZLE_NOOP;
+	 inst->SrcReg[2].File = PROGRAM_UNDEFINED;
+	 inst->SrcReg[2].Swizzle = SWIZZLE_NOOP;
       }
    }
    if (dbg) {
