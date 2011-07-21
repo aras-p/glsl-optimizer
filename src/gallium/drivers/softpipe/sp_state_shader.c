@@ -73,15 +73,6 @@ softpipe_create_fs_state(struct pipe_context *pipe,
    /* get/save the summary info for this shader */
    tgsi_scan_shader(templ->tokens, &state->info);
 
-   for (i = 0; i < state->info.num_properties; ++i) {
-      if (state->info.properties[i].name == TGSI_PROPERTY_FS_COORD_ORIGIN)
-         state->origin_lower_left = state->info.properties[i].data[0];
-      else if (state->info.properties[i].name == TGSI_PROPERTY_FS_COORD_PIXEL_CENTER)
-	 state->pixel_center_integer = state->info.properties[i].data[0];
-      else if (state->info.properties[i].name == TGSI_PROPERTY_FS_COLOR0_WRITES_ALL_CBUFS)
-	 state->color0_writes_all_cbufs = state->info.properties[i].data[0];
-   }
-
    return state;
 }
 

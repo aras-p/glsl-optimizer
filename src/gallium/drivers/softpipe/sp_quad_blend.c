@@ -797,7 +797,7 @@ blend_fallback(struct quad_stage *qs,
    unsigned cbuf;
    boolean write_all;
 
-   write_all = softpipe->fs->color0_writes_all_cbufs;
+   write_all = softpipe->fs->info.color0_writes_all_cbufs;
 
    for (cbuf = 0; cbuf < softpipe->framebuffer.nr_cbufs; cbuf++) 
    {
