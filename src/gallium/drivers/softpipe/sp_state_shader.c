@@ -33,6 +33,7 @@
 #include "pipe/p_defines.h"
 #include "util/u_memory.h"
 #include "util/u_inlines.h"
+#include "util/u_pstipple.h"
 #include "draw/draw_context.h"
 #include "draw/draw_vs.h"
 #include "draw/draw_gs.h"
@@ -51,7 +52,15 @@ create_fs_variant(struct softpipe_context *softpipe,
                   const struct sp_fragment_shader_variant_key *key)
 {
    struct sp_fragment_shader_variant *var;
-   struct pipe_shader_state *curfs = &fs->shader;
+   struct pipe_shader_state *stipple_fs = NULL, *curfs = &fs->shader;
+   unsigned unit = 0;
+
+   if (key->polygon_stipple) {
+      /* get new shader that implements polygon stippling */
+      stipple_fs = util_pstipple_create_fragment_shader(&softpipe->pipe,
+                                                        curfs, &unit);
+      curfs = stipple_fs;
+   }
 
    /* codegen, create variant object */
    var = softpipe_create_fs_variant_sse(softpipe, curfs);
@@ -62,6 +71,7 @@ create_fs_variant(struct softpipe_context *softpipe,
    if (var) {
       var->key = *key;
       var->tokens = tgsi_dup_tokens(curfs->tokens);
+      var->stipple_sampler_unit = unit;
 
       tgsi_scan_shader(var->tokens, &var->info);
 
@@ -80,6 +90,11 @@ create_fs_variant(struct softpipe_context *softpipe,
       /* insert variant into linked list */
       var->next = fs->variants;
       fs->variants = var;
+   }
+
+   if (stipple_fs) {
+      free((void *) stipple_fs->tokens);
+      free(stipple_fs);
    }
 
    return var;

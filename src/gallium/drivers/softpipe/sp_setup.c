@@ -1397,7 +1397,7 @@ sp_setup_prepare(struct setup_context *setup)
    struct softpipe_context *sp = setup->softpipe;
 
    if (sp->dirty) {
-      softpipe_update_derived(sp);
+      softpipe_update_derived(sp, sp->reduced_api_prim);
    }
 
    /* Note: nr_attrs is only used for debugging (vertex printing) */

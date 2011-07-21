@@ -62,7 +62,7 @@ struct vertex_info;
 
 struct sp_fragment_shader_variant_key
 {
-   int foo;  /* XXX temporary */
+   boolean polygon_stipple;
 };
 
 
@@ -71,6 +71,8 @@ struct sp_fragment_shader_variant
    const struct tgsi_token *tokens;
    struct sp_fragment_shader_variant_key key;
    struct tgsi_shader_info info;
+
+   unsigned stipple_sampler_unit;
 
    /* See comments about this elsewhere */
 #if 0
@@ -150,7 +152,7 @@ softpipe_set_framebuffer_state(struct pipe_context *,
                                const struct pipe_framebuffer_state *);
 
 void
-softpipe_update_derived(struct softpipe_context *softpipe);
+softpipe_update_derived(struct softpipe_context *softpipe, unsigned prim);
 
 void
 softpipe_draw_vbo(struct pipe_context *pipe,
@@ -177,6 +179,12 @@ softpipe_get_vertex_info(struct softpipe_context *softpipe);
 
 struct vertex_info *
 softpipe_get_vbuf_vertex_info(struct softpipe_context *softpipe);
+
+
+struct sp_fragment_shader_variant *
+softpipe_find_fs_variant(struct softpipe_context *softpipe,
+                         struct sp_fragment_shader *fs,
+                         const struct sp_fragment_shader_variant_key *key);
 
 
 struct sp_fragment_shader_variant *

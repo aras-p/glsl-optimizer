@@ -64,7 +64,7 @@ softpipe_draw_stream_output(struct pipe_context *pipe, unsigned mode)
    sp->reduced_api_prim = u_reduced_prim(mode);
 
    if (sp->dirty) {
-      softpipe_update_derived(sp);
+      softpipe_update_derived(sp, sp->reduced_api_prim);
    }
 
    softpipe_map_transfers(sp);
@@ -122,7 +122,7 @@ softpipe_draw_vbo(struct pipe_context *pipe,
    sp->reduced_api_prim = u_reduced_prim(info->mode);
 
    if (sp->dirty) {
-      softpipe_update_derived(sp);
+      softpipe_update_derived(sp, sp->reduced_api_prim);
    }
 
    softpipe_map_transfers(sp);
