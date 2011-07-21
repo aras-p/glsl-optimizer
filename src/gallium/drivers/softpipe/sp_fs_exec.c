@@ -193,10 +193,6 @@ softpipe_create_fs_exec(struct softpipe_context *softpipe,
 {
    struct sp_exec_fragment_shader *shader;
 
-   /* Decide whether we'll be codegenerating this shader and if so do
-    * that now.
-    */
-
    shader = CALLOC_STRUCT(sp_exec_fragment_shader);
    if (!shader)
       return NULL;
