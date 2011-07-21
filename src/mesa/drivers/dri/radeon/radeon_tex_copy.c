@@ -141,61 +141,6 @@ do_copy_texsubimage(struct gl_context *ctx,
 }
 
 void
-radeonCopyTexImage2D(struct gl_context *ctx, GLenum target, GLint level,
-                     GLenum internalFormat,
-                     GLint x, GLint y, GLsizei width, GLsizei height,
-                     GLint border)
-{
-    struct gl_texture_unit *texUnit = _mesa_get_current_tex_unit(ctx);
-    struct gl_texture_object *texObj =
-        _mesa_select_tex_object(ctx, texUnit, target);
-    struct gl_texture_image *texImage =
-        _mesa_select_tex_image(ctx, texObj, target, level);
-    int srcx, srcy, dstx, dsty;
-
-    radeonContextPtr radeon = RADEON_CONTEXT(ctx);
-    radeon_prepare_render(radeon);
-
-    if (border)
-        goto fail;
-
-    /* Setup or redefine the texture object, mipmap tree and texture
-     * image.  Don't populate yet.
-     */
-    ctx->Driver.TexImage2D(ctx, target, level, internalFormat,
-                           width, height, border,
-                           GL_RGBA, GL_UNSIGNED_BYTE, NULL,
-                           &ctx->DefaultPacking, texObj, texImage);
-
-    srcx = x;
-    srcy = y;
-    dstx = 0;
-    dsty = 0;
-    if (!_mesa_clip_copytexsubimage(ctx,
-                                    &dstx, &dsty,
-                                    &srcx, &srcy,
-                                    &width, &height)) {
-        return;
-    }
-
-    if (!do_copy_texsubimage(ctx, target, level,
-                             radeon_tex_obj(texObj), (radeon_texture_image *)texImage,
-                             0, 0, x, y, width, height)) {
-        goto fail;
-    }
-
-    return;
-
-fail:
-    radeon_print(RADEON_FALLBACKS, RADEON_NORMAL,
-                 "Falling back to sw for glCopyTexImage2D (internalFormat %s, border %d)\n",
-                 _mesa_lookup_enum_by_nr(internalFormat), border);
-
-    _mesa_meta_CopyTexImage2D(ctx, target, level, internalFormat, x, y,
-                              width, height, border);
-}
-
-void
 radeonCopyTexSubImage2D(struct gl_context *ctx, GLenum target, GLint level,
                         GLint xoffset, GLint yoffset,
                         GLint x, GLint y,

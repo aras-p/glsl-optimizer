@@ -4577,8 +4577,7 @@ texture_row_stride(const struct gl_texture_image *texImage)
 
 
 /**
- * This is the software fallback for Driver.TexImage1D()
- * and Driver.CopyTexImage1D().
+ * This is the software fallback for Driver.TexImage1D().
  * \sa _mesa_store_teximage2d()
  */
 void
@@ -4629,8 +4628,7 @@ _mesa_store_teximage1d(struct gl_context *ctx, GLenum target, GLint level,
 
 
 /**
- * This is the software fallback for Driver.TexImage2D()
- * and Driver.CopyTexImage2D().
+ * This is the software fallback for Driver.TexImage2D().
  *
  * This function is oriented toward storing images in main memory, rather
  * than VRAM.  Device driver's can easily plug in their own replacement.
@@ -4684,8 +4682,7 @@ _mesa_store_teximage2d(struct gl_context *ctx, GLenum target, GLint level,
 
 
 /**
- * This is the software fallback for Driver.TexImage3D()
- * and Driver.CopyTexImage3D().
+ * This is the software fallback for Driver.TexImage3D().
  * \sa _mesa_store_teximage2d()
  */
 void

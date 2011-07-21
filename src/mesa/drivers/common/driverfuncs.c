@@ -95,8 +95,6 @@ _mesa_init_driver_functions(struct dd_function_table *driver)
    driver->TexSubImage2D = _mesa_store_texsubimage2d;
    driver->TexSubImage3D = _mesa_store_texsubimage3d;
    driver->GetTexImage = _mesa_get_teximage;
-   driver->CopyTexImage1D = _mesa_meta_CopyTexImage1D;
-   driver->CopyTexImage2D = _mesa_meta_CopyTexImage2D;
    driver->CopyTexSubImage1D = _mesa_meta_CopyTexSubImage1D;
    driver->CopyTexSubImage2D = _mesa_meta_CopyTexSubImage2D;
    driver->CopyTexSubImage3D = _mesa_meta_CopyTexSubImage3D;

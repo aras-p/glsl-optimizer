@@ -2797,29 +2797,43 @@ copyteximage(struct gl_context *ctx, GLuint dims,
 	 _mesa_error(ctx, GL_OUT_OF_MEMORY, "glCopyTexImage%uD", dims);
       }
       else {
-         gl_format texFormat;
-
-         if (texImage->Data) {
-            ctx->Driver.FreeTexImageData( ctx, texImage );
-         }
-
-         ASSERT(texImage->Data == NULL);
-
-         texFormat = _mesa_choose_texture_format(ctx, texObj, target, level,
-                                                 internalFormat, GL_NONE,
-                                                 GL_NONE);
+         /* choose actual hw format */
+         gl_format texFormat = _mesa_choose_texture_format(ctx, texObj,
+                                                           target, level,
+                                                           internalFormat,
+                                                           GL_NONE, GL_NONE);
 
          if (legal_texture_size(ctx, texFormat, width, height, 1)) {
+            GLint srcX = x, srcY = y, dstX = 0, dstY = 0;
+
+            /* Free old texture image */
+            ctx->Driver.FreeTexImageData(ctx, texImage);
+
             _mesa_init_teximage_fields(ctx, target, texImage, width, height, 1,
                                        border, internalFormat, texFormat);
 
-            ASSERT(ctx->Driver.CopyTexImage2D);
-            if (dims == 1)
-               ctx->Driver.CopyTexImage1D(ctx, target, level, internalFormat,
-                                          x, y, width, border);
-            else
-               ctx->Driver.CopyTexImage2D(ctx, target, level, internalFormat,
-                                          x, y, width, height, border);
+            /* Allocate texture memory (no pixel data yet) */
+            if (dims == 1) {
+               ctx->Driver.TexImage1D(ctx, target, level, internalFormat,
+                                      width, border, GL_NONE, GL_NONE, NULL,
+                                      &ctx->Unpack, texObj, texImage);
+            }
+            else {
+               ctx->Driver.TexImage2D(ctx, target, level, internalFormat,
+                                      width, height, border, GL_NONE, GL_NONE,
+                                      NULL, &ctx->Unpack, texObj, texImage);
+            }
+
+            if (_mesa_clip_copytexsubimage(ctx, &dstX, &dstY, &srcX, &srcY,
+                                           &width, &height)) {
+               if (dims == 1)
+                  ctx->Driver.CopyTexSubImage1D(ctx, target, level, dstX,
+                                                srcX, srcY, width);
+                                                
+               else
+                  ctx->Driver.CopyTexSubImage2D(ctx, target, level, dstX, dstY,
+                                                srcX, srcY, width, height);
+            }
 
             check_gen_mipmap(ctx, target, texObj, level);
 
@@ -2830,6 +2844,7 @@ copyteximage(struct gl_context *ctx, GLuint dims,
             ctx->NewState |= _NEW_TEXTURE;
          }
          else {
+            /* probably too large of image */
             _mesa_error(ctx, GL_OUT_OF_MEMORY, "glCopyTexImage%uD", dims);
          }
       }

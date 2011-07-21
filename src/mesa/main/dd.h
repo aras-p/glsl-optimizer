@@ -290,24 +290,6 @@ struct dd_function_table {
                         struct gl_texture_image *texImage );
 
    /**
-    * Called by glCopyTexImage1D().
-    * 
-    * Drivers should use a fallback routine from texstore.c if needed.
-    */
-   void (*CopyTexImage1D)( struct gl_context *ctx, GLenum target, GLint level,
-                           GLenum internalFormat, GLint x, GLint y,
-                           GLsizei width, GLint border );
-
-   /**
-    * Called by glCopyTexImage2D().
-    * 
-    * Drivers should use a fallback routine from texstore.c if needed.
-    */
-   void (*CopyTexImage2D)( struct gl_context *ctx, GLenum target, GLint level,
-                           GLenum internalFormat, GLint x, GLint y,
-                           GLsizei width, GLsizei height, GLint border );
-
-   /**
     * Called by glCopyTexSubImage1D().
     * 
     * Drivers should use a fallback routine from texstore.c if needed.
