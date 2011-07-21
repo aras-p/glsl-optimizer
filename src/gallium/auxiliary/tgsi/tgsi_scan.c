@@ -200,19 +200,20 @@ tgsi_scan_shader(const struct tgsi_token *tokens,
             info->file_max[file] = MAX2(info->file_max[file], (int)reg);
          }
          break;
+
       case TGSI_TOKEN_TYPE_PROPERTY:
-      {
-         const struct tgsi_full_property *fullprop
-            = &parse.FullToken.FullProperty;
+         {
+            const struct tgsi_full_property *fullprop
+               = &parse.FullToken.FullProperty;
 
-         info->properties[info->num_properties].name =
-            fullprop->Property.PropertyName;
-         memcpy(info->properties[info->num_properties].data,
-                fullprop->u, 8 * sizeof(unsigned));;
+            info->properties[info->num_properties].name =
+               fullprop->Property.PropertyName;
+            memcpy(info->properties[info->num_properties].data,
+                   fullprop->u, 8 * sizeof(unsigned));;
 
-         ++info->num_properties;
-      }
-      break;
+            ++info->num_properties;
+         }
+         break;
 
       default:
          assert( 0 );
@@ -221,6 +222,23 @@ tgsi_scan_shader(const struct tgsi_token *tokens,
 
    info->uses_kill = (info->opcode_count[TGSI_OPCODE_KIL] ||
                       info->opcode_count[TGSI_OPCODE_KILP]);
+
+   /* extract simple properties */
+   for (i = 0; i < info->num_properties; ++i) {
+      switch (info->properties[i].name) {
+      case TGSI_PROPERTY_FS_COORD_ORIGIN:
+         info->origin_lower_left = info->properties[i].data[0];
+         break;
+      case TGSI_PROPERTY_FS_COORD_PIXEL_CENTER:
+         info->pixel_center_integer = info->properties[i].data[0];
+         break;
+      case TGSI_PROPERTY_FS_COLOR0_WRITES_ALL_CBUFS:
+         info->color0_writes_all_cbufs = info->properties[i].data[0];
+         break;
+      default:
+         ;
+      }
+   }
 
    tgsi_parse_free (&parse);
 }
