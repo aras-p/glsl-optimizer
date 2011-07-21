@@ -30,9 +30,9 @@
 #include "sp_state.h"
 #include "pipe/p_shader_tokens.h"
 
+
 static void
-sp_push_quad_first( struct softpipe_context *sp,
-                    struct quad_stage *quad )
+insert_stage_at_head(struct softpipe_context *sp, struct quad_stage *quad)
 {
    quad->next = sp->quad.first;
    sp->quad.first = quad;
@@ -53,17 +53,17 @@ sp_build_quad_pipeline(struct softpipe_context *sp)
    sp->quad.first = sp->quad.blend;
 
    if (early_depth_test) {
-      sp_push_quad_first( sp, sp->quad.shade );
-      sp_push_quad_first( sp, sp->quad.depth_test );
+      insert_stage_at_head( sp, sp->quad.shade );
+      insert_stage_at_head( sp, sp->quad.depth_test );
    }
    else {
-      sp_push_quad_first( sp, sp->quad.depth_test );
-      sp_push_quad_first( sp, sp->quad.shade );
+      insert_stage_at_head( sp, sp->quad.depth_test );
+      insert_stage_at_head( sp, sp->quad.shade );
    }
 
 #if !DO_PSTIPPLE_IN_DRAW_MODULE
    if (sp->rasterizer->poly_stipple_enable)
-      sp_push_quad_first( sp, sp->quad.pstipple );
+      insert_stage_at_head( sp, sp->quad.pstipple );
 #endif
 }
 
