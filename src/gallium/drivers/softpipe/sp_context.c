@@ -35,6 +35,7 @@
 #include "pipe/p_defines.h"
 #include "util/u_math.h"
 #include "util/u_memory.h"
+#include "util/u_pstipple.h"
 #include "util/u_inlines.h"
 #include "tgsi/tgsi_exec.h"
 #include "vl/vl_decoder.h"
@@ -89,6 +90,14 @@ softpipe_destroy( struct pipe_context *pipe )
 {
    struct softpipe_context *softpipe = softpipe_context( pipe );
    uint i;
+
+#if DO_PSTIPPLE_IN_HELPER_MODULE
+   if (softpipe->pstipple.sampler)
+      pipe->delete_sampler_state(pipe, softpipe->pstipple.sampler);
+
+   pipe_resource_reference(&softpipe->pstipple.texture, NULL);
+   pipe_sampler_view_reference(&softpipe->pstipple.sampler_view, NULL);
+#endif
 
    if (softpipe->draw)
       draw_destroy( softpipe->draw );
@@ -345,6 +354,11 @@ softpipe_create_context( struct pipe_screen *screen,
    draw_wide_point_sprites(softpipe->draw, TRUE);
 
    sp_init_surface_functions(softpipe);
+
+#if DO_PSTIPPLE_IN_HELPER_MODULE
+   /* create the polgon stipple sampler */
+   softpipe->pstipple.sampler = util_pstipple_create_sampler(&softpipe->pipe);
+#endif
 
    return &softpipe->pipe;
 

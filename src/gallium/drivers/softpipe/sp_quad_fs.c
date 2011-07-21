@@ -74,7 +74,7 @@ shade_quad(struct quad_stage *qs, struct quad_header *quad)
    struct tgsi_exec_machine *machine = softpipe->fs_machine;
 
    /* run shader */
-   return softpipe->fs->run( softpipe->fs, machine, quad );
+   return softpipe->fs_variant->run( softpipe->fs_variant, machine, quad );
 }
 
 
@@ -140,10 +140,10 @@ shade_begin(struct quad_stage *qs)
 {
    struct softpipe_context *softpipe = qs->softpipe;
 
-   softpipe->fs->prepare( softpipe->fs, 
-			  softpipe->fs_machine,
-			  (struct tgsi_sampler **)
-                             softpipe->tgsi.frag_samplers_list );
+   softpipe->fs_variant->prepare( softpipe->fs_variant, 
+                                  softpipe->fs_machine,
+                                  (struct tgsi_sampler **)
+                                  softpipe->tgsi.frag_samplers_list );
 
    qs->next->begin(qs->next);
 }

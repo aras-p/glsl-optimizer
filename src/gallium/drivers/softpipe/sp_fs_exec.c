@@ -42,25 +42,25 @@
 
 
 /**
- * Subclass of sp_fragment_shader
+ * Subclass of sp_fragment_shader_variant
  */
 struct sp_exec_fragment_shader
 {
-   struct sp_fragment_shader base;
+   struct sp_fragment_shader_variant base;
    /* No other members for now */
 };
 
 
 /** cast wrapper */
 static INLINE struct sp_exec_fragment_shader *
-sp_exec_fragment_shader(const struct sp_fragment_shader *base)
+sp_exec_fragment_shader(const struct sp_fragment_shader_variant *var)
 {
-   return (struct sp_exec_fragment_shader *) base;
+   return (struct sp_exec_fragment_shader *) var;
 }
 
 
 static void
-exec_prepare( const struct sp_fragment_shader *base,
+exec_prepare( const struct sp_fragment_shader_variant *var,
 	      struct tgsi_exec_machine *machine,
 	      struct tgsi_sampler **samplers )
 {
@@ -68,9 +68,9 @@ exec_prepare( const struct sp_fragment_shader *base,
     * Bind tokens/shader to the interpreter's machine state.
     * Avoid redundant binding.
     */
-   if (machine->Tokens != base->shader.tokens) {
+   if (machine->Tokens != var->tokens) {
       tgsi_exec_machine_bind_shader( machine,
-                                     base->shader.tokens,
+                                     var->tokens,
                                      PIPE_MAX_SAMPLERS,
                                      samplers );
    }
@@ -118,7 +118,7 @@ setup_pos_vector(const struct tgsi_interp_coef *coef,
  * interface:
  */
 static unsigned 
-exec_run( const struct sp_fragment_shader *base,
+exec_run( const struct sp_fragment_shader_variant *var,
 	  struct tgsi_exec_machine *machine,
 	  struct quad_header *quad )
 {
@@ -136,9 +136,9 @@ exec_run( const struct sp_fragment_shader *base,
 
    /* store outputs */
    {
-      const ubyte *sem_name = base->info.output_semantic_name;
-      const ubyte *sem_index = base->info.output_semantic_index;
-      const uint n = base->info.num_outputs;
+      const ubyte *sem_name = var->info.output_semantic_name;
+      const ubyte *sem_index = var->info.output_semantic_index;
+      const uint n = var->info.num_outputs;
       uint i;
       for (i = 0; i < n; i++) {
          switch (sem_name[i]) {
@@ -180,29 +180,23 @@ exec_run( const struct sp_fragment_shader *base,
 
 
 static void 
-exec_delete( struct sp_fragment_shader *base )
+exec_delete( struct sp_fragment_shader_variant *var )
 {
-   FREE((void *) base->shader.tokens);
-   FREE(base);
+   FREE( (void *) var->tokens );
+   FREE(var);
 }
 
 
-struct sp_fragment_shader *
-softpipe_create_fs_exec(struct softpipe_context *softpipe,
-			const struct pipe_shader_state *templ)
+struct sp_fragment_shader_variant *
+softpipe_create_fs_variant_exec(struct softpipe_context *softpipe,
+                                const struct pipe_shader_state *templ)
 {
    struct sp_exec_fragment_shader *shader;
-
-   /* Decide whether we'll be codegenerating this shader and if so do
-    * that now.
-    */
 
    shader = CALLOC_STRUCT(sp_exec_fragment_shader);
    if (!shader)
       return NULL;
 
-   /* we need to keep a local copy of the tokens */
-   shader->base.shader.tokens = tgsi_dup_tokens(templ->tokens);
    shader->base.prepare = exec_prepare;
    shader->base.run = exec_run;
    shader->base.delete = exec_delete;

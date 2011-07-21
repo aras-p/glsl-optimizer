@@ -60,7 +60,7 @@ softpipe_clear(struct pipe_context *pipe, unsigned buffers, const float *rgba,
       return;
 
 #if 0
-   softpipe_update_derived(softpipe); /* not needed?? */
+   softpipe_update_derived(softpipe, PIPE_PRIM_TRIANGLES); /* not needed?? */
 #endif
 
    if (buffers & PIPE_CLEAR_COLOR) {
