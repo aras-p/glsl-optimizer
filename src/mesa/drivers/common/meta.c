@@ -90,13 +90,14 @@
 #define META_SCISSOR         0x100
 #define META_SHADER          0x200
 #define META_STENCIL_TEST    0x400
-#define META_TRANSFORM       0x800 /**< modelview, projection, clip planes */
+#define META_TRANSFORM       0x800 /**< modelview/projection matrix state */
 #define META_TEXTURE        0x1000
 #define META_VERTEX         0x2000
 #define META_VIEWPORT       0x4000
 #define META_CLAMP_FRAGMENT_COLOR 0x8000
 #define META_CLAMP_VERTEX_COLOR 0x10000
 #define META_CONDITIONAL_RENDER 0x20000
+#define META_CLIP          0x40000
 /*@}*/
 
 
@@ -165,6 +166,8 @@ struct save_state
    GLfloat ModelviewMatrix[16];
    GLfloat ProjectionMatrix[16];
    GLfloat TextureMatrix[16];
+
+   /** META_CLIP */
    GLbitfield ClipPlanesEnabled;
 
    /** META_TEXTURE */
@@ -547,6 +550,9 @@ _mesa_meta_begin(struct gl_context *ctx, GLbitfield state)
       _mesa_Ortho(0.0, ctx->DrawBuffer->Width,
                   0.0, ctx->DrawBuffer->Height,
                   -1.0, 1.0);
+   }
+
+   if (state & META_CLIP) {
       save->ClipPlanesEnabled = ctx->Transform.ClipPlanesEnabled;
       if (ctx->Transform.ClipPlanesEnabled) {
          GLuint i;
@@ -846,7 +852,9 @@ _mesa_meta_end(struct gl_context *ctx)
       _mesa_LoadMatrixf(save->ProjectionMatrix);
 
       _mesa_MatrixMode(save->MatrixMode);
+   }
 
+   if (state & META_CLIP) {
       if (save->ClipPlanesEnabled) {
          GLuint i;
          for (i = 0; i < ctx->Const.MaxClipPlanes; i++) {
@@ -1669,6 +1677,7 @@ _mesa_meta_glsl_Clear(struct gl_context *ctx, GLbitfield buffers)
 	       META_STENCIL_TEST |
 	       META_VERTEX |
 	       META_VIEWPORT |
+	       META_CLIP |
 	       META_CLAMP_FRAGMENT_COLOR);
 
    if (!(buffers & BUFFER_BITS_COLOR)) {
@@ -1783,6 +1792,7 @@ _mesa_meta_CopyPixels(struct gl_context *ctx, GLint srcX, GLint srcY,
                           META_SHADER |
                           META_TEXTURE |
                           META_TRANSFORM |
+                          META_CLIP |
                           META_VERTEX |
                           META_VIEWPORT));
 
@@ -2104,6 +2114,7 @@ _mesa_meta_DrawPixels(struct gl_context *ctx,
                           META_SHADER |
                           META_TEXTURE |
                           META_TRANSFORM |
+                          META_CLIP |
                           META_VERTEX |
                           META_VIEWPORT |
 			  META_CLAMP_FRAGMENT_COLOR |
@@ -2313,6 +2324,7 @@ _mesa_meta_Bitmap(struct gl_context *ctx,
                           META_SHADER |
                           META_TEXTURE |
                           META_TRANSFORM |
+                          META_CLIP |
                           META_VERTEX |
                           META_VIEWPORT));
 
