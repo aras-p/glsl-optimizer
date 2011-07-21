@@ -591,7 +591,7 @@ vl_mc_set_surface(struct vl_mc_buffer *buffer, struct pipe_surface *surface)
 }
 
 static void
-prepare_pipe_4_rendering(struct vl_mc_buffer *buffer, unsigned component, unsigned mask)
+prepare_pipe_4_rendering(struct vl_mc_buffer *buffer, unsigned mask)
 {
    struct vl_mc *renderer;
 
@@ -600,7 +600,7 @@ prepare_pipe_4_rendering(struct vl_mc_buffer *buffer, unsigned component, unsign
    renderer = buffer->renderer;
    renderer->pipe->bind_rasterizer_state(renderer->pipe, renderer->rs_state);
 
-   if (buffer->surface_cleared || component > 0)
+   if (buffer->surface_cleared)
       renderer->pipe->bind_blend_state(renderer->pipe, renderer->blend_add[mask]);
    else
       renderer->pipe->bind_blend_state(renderer->pipe, renderer->blend_clear[mask]);
@@ -616,7 +616,7 @@ vl_mc_render_ref(struct vl_mc_buffer *buffer, struct pipe_sampler_view *ref)
 
    assert(buffer && ref);
 
-   prepare_pipe_4_rendering(buffer, 0, PIPE_MASK_R | PIPE_MASK_G | PIPE_MASK_B);
+   prepare_pipe_4_rendering(buffer, PIPE_MASK_R | PIPE_MASK_G | PIPE_MASK_B);
 
    renderer = buffer->renderer;
 
@@ -644,7 +644,7 @@ vl_mc_render_ycbcr(struct vl_mc_buffer *buffer, unsigned component, unsigned num
    if (num_instances == 0)
       return;
 
-   prepare_pipe_4_rendering(buffer, component, mask);
+   prepare_pipe_4_rendering(buffer, mask);
 
    renderer = buffer->renderer;
 
