@@ -149,6 +149,8 @@ nv50_create(struct pipe_screen *pscreen, void *priv)
    assert(nv50->draw);
    draw_set_rasterize_stage(nv50->draw, nv50_draw_render_stage(nv50));
 
+   nouveau_context_init_vdec(&nv50->base);
+
    return pipe;
 }
 

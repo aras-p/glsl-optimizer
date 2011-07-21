@@ -315,6 +315,8 @@ nv50_screen_create(struct pipe_winsys *ws, struct nouveau_device *dev)
 
    nv50_screen_init_resource_functions(pscreen);
 
+   nouveau_screen_init_vdec(&screen->base);
+
    ret = nouveau_bo_new(dev, NOUVEAU_BO_GART | NOUVEAU_BO_MAP, 0, 4096,
                         &screen->fence.bo);
    if (ret)
