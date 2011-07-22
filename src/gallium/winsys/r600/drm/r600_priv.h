@@ -45,9 +45,6 @@ struct r600_bo;
 
 struct radeon {
 	struct radeon_info		info;
-	int				fd;
-	int				refcount;
-	unsigned			device;
 	unsigned			family;
 	enum chip_class			chip_class;
 	struct r600_tiling_info		tiling_info;
@@ -55,12 +52,9 @@ struct radeon {
 	unsigned			fence;
 	unsigned			*cfence;
 	struct r600_bo			*fence_bo;
-	unsigned			clock_crystal_freq;
-	unsigned			num_backends;
 	unsigned			num_tile_pipes;
 	unsigned			backend_map;
 	boolean				backend_map_valid;
-	unsigned                        minor_version;
 
         /* List of buffer handles and its mutex. */
 	struct util_hash_table          *bo_handles;

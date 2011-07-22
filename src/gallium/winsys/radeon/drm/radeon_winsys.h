@@ -83,6 +83,8 @@ struct radeon_info {
     uint32_t r300_num_z_pipes;
 
     uint32_t r600_num_backends;
+    uint32_t r600_clock_crystal_freq;
+    uint32_t r600_tiling_config;
 };
 
 enum radeon_feature_id {

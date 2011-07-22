@@ -44,14 +44,14 @@ int radeon_bo_fixed_map(struct radeon *radeon, struct radeon_bo *bo)
 	args.handle = bo->handle;
 	args.offset = 0;
 	args.size = (uint64_t)bo->size;
-	r = drmCommandWriteRead(radeon->fd, DRM_RADEON_GEM_MMAP,
+	r = drmCommandWriteRead(radeon->info.fd, DRM_RADEON_GEM_MMAP,
 				&args, sizeof(args));
 	if (r) {
 		fprintf(stderr, "error mapping %p 0x%08X (error = %d)\n",
 			bo, bo->handle, r);
 		return r;
 	}
-	ptr = mmap(0, args.size, PROT_READ|PROT_WRITE, MAP_SHARED, radeon->fd, args.addr_ptr);
+	ptr = mmap(0, args.size, PROT_READ|PROT_WRITE, MAP_SHARED, radeon->info.fd, args.addr_ptr);
 	if (ptr == MAP_FAILED) {
 		fprintf(stderr, "%s failed to map bo\n", __func__);
 		return -errno;
@@ -101,7 +101,7 @@ struct radeon_bo *radeon_bo(struct radeon *radeon, unsigned handle,
 
 		memset(&open_arg, 0, sizeof(open_arg));
 		open_arg.name = handle;
-		r = drmIoctl(radeon->fd, DRM_IOCTL_GEM_OPEN, &open_arg);
+		r = drmIoctl(radeon->info.fd, DRM_IOCTL_GEM_OPEN, &open_arg);
 		if (r != 0) {
 			free(bo);
 			return NULL;
@@ -118,7 +118,7 @@ struct radeon_bo *radeon_bo(struct radeon *radeon, unsigned handle,
 		args.initial_domain = initial_domain;
 		args.flags = 0;
 		args.handle = 0;
-		r = drmCommandWriteRead(radeon->fd, DRM_RADEON_GEM_CREATE,
+		r = drmCommandWriteRead(radeon->info.fd, DRM_RADEON_GEM_CREATE,
 					&args, sizeof(args));
 		bo->handle = args.handle;
 		if (r) {
@@ -153,7 +153,7 @@ static void radeon_bo_destroy(struct radeon *radeon, struct radeon_bo *bo)
 	radeon_bo_fixed_unmap(radeon, bo);
 	memset(&args, 0, sizeof(args));
 	args.handle = bo->handle;
-	drmIoctl(radeon->fd, DRM_IOCTL_GEM_CLOSE, &args);
+	drmIoctl(radeon->info.fd, DRM_IOCTL_GEM_CLOSE, &args);
 	memset(bo, 0, sizeof(struct radeon_bo));
 	free(bo);
 }
@@ -188,7 +188,7 @@ int radeon_bo_wait(struct radeon *radeon, struct radeon_bo *bo)
 	memset(&args, 0, sizeof(args));
 	args.handle = bo->handle;
 	do {
-		ret = drmCommandWriteRead(radeon->fd, DRM_RADEON_GEM_WAIT_IDLE,
+		ret = drmCommandWriteRead(radeon->info.fd, DRM_RADEON_GEM_WAIT_IDLE,
 					&args, sizeof(args));
 	} while (ret == -EBUSY);
 	return ret;
@@ -213,7 +213,7 @@ int radeon_bo_busy(struct radeon *radeon, struct radeon_bo *bo, uint32_t *domain
 	args.handle = bo->handle;
 	args.domain = 0;
 
-	ret = drmCommandWriteRead(radeon->fd, DRM_RADEON_GEM_BUSY,
+	ret = drmCommandWriteRead(radeon->info.fd, DRM_RADEON_GEM_BUSY,
 			&args, sizeof(args));
 
 	*domain = args.domain;
@@ -229,7 +229,7 @@ int radeon_bo_get_tiling_flags(struct radeon *radeon,
 	int ret;
 
 	args.handle = bo->handle;
-	ret = drmCommandWriteRead(radeon->fd, DRM_RADEON_GEM_GET_TILING,
+	ret = drmCommandWriteRead(radeon->info.fd, DRM_RADEON_GEM_GET_TILING,
 				  &args, sizeof(args));
 	if (ret)
 		return ret;
@@ -247,7 +247,7 @@ int radeon_bo_get_name(struct radeon *radeon,
 	int ret;
 
 	flink.handle = bo->handle;
-	ret = drmIoctl(radeon->fd, DRM_IOCTL_GEM_FLINK, &flink);
+	ret = drmIoctl(radeon->info.fd, DRM_IOCTL_GEM_FLINK, &flink);
 	if (ret)
 		return ret;
 

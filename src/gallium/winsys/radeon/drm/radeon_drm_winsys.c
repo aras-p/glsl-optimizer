@@ -41,12 +41,22 @@
 #include <xf86drm.h>
 #include <stdio.h>
 
+#ifndef RADEON_INFO_TILING_CONFIG
+#define RADEON_INFO_TILING_CONFIG 6
+#endif
+
 #ifndef RADEON_INFO_WANT_HYPERZ
 #define RADEON_INFO_WANT_HYPERZ 7
 #endif
+
 #ifndef RADEON_INFO_WANT_CMASK
 #define RADEON_INFO_WANT_CMASK 8
 #endif
+
+#ifndef RADEON_INFO_CLOCK_CRYSTAL_FREQ
+#define RADEON_INFO_CLOCK_CRYSTAL_FREQ 9
+#endif
+
 #ifndef RADEON_INFO_NUM_BACKENDS
 #define RADEON_INFO_NUM_BACKENDS 10
 #endif
@@ -107,7 +117,7 @@ static boolean radeon_set_fd_access(struct radeon_drm_cs *applier,
 }
 
 static boolean radeon_get_drm_value(int fd, unsigned request,
-                                    const char *name, uint32_t *out)
+                                    const char *errname, uint32_t *out)
 {
     struct drm_radeon_info info = {0};
     int retval;
@@ -116,9 +126,9 @@ static boolean radeon_get_drm_value(int fd, unsigned request,
     info.request = request;
 
     retval = drmCommandWriteRead(fd, DRM_RADEON_INFO, &info, sizeof(info));
-    if (retval) {
-        fprintf(stderr, "%s: Failed to get %s, error number %d\n",
-                __func__, name, retval);
+    if (retval && errname) {
+        fprintf(stderr, "radeon: Failed to get %s, error number %d\n",
+                errname, retval);
         return FALSE;
     }
     return TRUE;
@@ -196,8 +206,8 @@ static boolean do_winsys_init(struct radeon_drm_winsys *ws)
     retval = drmCommandWriteRead(ws->fd, DRM_RADEON_GEM_INFO,
             &gem_info, sizeof(gem_info));
     if (retval) {
-        fprintf(stderr, "%s: Failed to get MM info, error number %d\n",
-                __FUNCTION__, retval);
+        fprintf(stderr, "radeon: Failed to get MM info, error number %d\n",
+                retval);
         return FALSE;
     }
     ws->info.gart_size = gem_info.gart_size;
@@ -218,10 +228,18 @@ static boolean do_winsys_init(struct radeon_drm_winsys *ws)
             return FALSE;
     }
     else if (ws->gen == R600) {
-        if (!radeon_get_drm_value(ws->fd, RADEON_INFO_NUM_BACKENDS,
+        if (ws->info.drm_minor >= 9 &&
+            !radeon_get_drm_value(ws->fd, RADEON_INFO_NUM_BACKENDS,
                                   "num backends",
                                   &ws->info.r600_num_backends))
             return FALSE;
+
+        /* get the GPU counter frequency, failure is not fatal */
+        radeon_get_drm_value(ws->fd, RADEON_INFO_CLOCK_CRYSTAL_FREQ, NULL,
+                             &ws->info.r600_clock_crystal_freq);
+
+        radeon_get_drm_value(ws->fd, RADEON_INFO_TILING_CONFIG, NULL,
+                             &ws->info.r600_tiling_config);
     }
 
     return TRUE;

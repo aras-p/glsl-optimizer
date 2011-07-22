@@ -76,12 +76,12 @@ struct r600_tiling_info *r600_get_tiling_info(struct radeon *radeon)
 
 unsigned r600_get_clock_crystal_freq(struct radeon *radeon)
 {
-	return radeon->clock_crystal_freq;
+	return radeon->info.r600_clock_crystal_freq;
 }
 
 unsigned r600_get_num_backends(struct radeon *radeon)
 {
-	return radeon->num_backends;
+	return radeon->info.r600_num_backends;
 }
 
 unsigned r600_get_num_tile_pipes(struct radeon *radeon)
@@ -96,7 +96,7 @@ unsigned r600_get_backend_map(struct radeon *radeon)
 
 unsigned r600_get_minor_version(struct radeon *radeon)
 {
-	return radeon->minor_version;
+	return radeon->info.drm_minor;
 }
 
 static int r600_interpret_tiling(struct radeon *radeon, uint32_t tiling_config)
@@ -191,59 +191,16 @@ static int eg_interpret_tiling(struct radeon *radeon, uint32_t tiling_config)
 
 static int radeon_drm_get_tiling(struct radeon *radeon)
 {
-	struct drm_radeon_info info = {};
-	int r;
-	uint32_t tiling_config = 0;
+	uint32_t tiling_config = radeon->info.r600_tiling_config;
 
-	info.request = RADEON_INFO_TILING_CONFIG;
-	info.value = (uintptr_t)&tiling_config;
-	r = drmCommandWriteRead(radeon->fd, DRM_RADEON_INFO, &info,
-				sizeof(struct drm_radeon_info));
-
-	if (r)
+	if (!tiling_config)
 		return 0;
 
 	if (radeon->chip_class == R600 || radeon->chip_class == R700) {
-		r = r600_interpret_tiling(radeon, tiling_config);
+		return r600_interpret_tiling(radeon, tiling_config);
 	} else {
-		r = eg_interpret_tiling(radeon, tiling_config);
+		return eg_interpret_tiling(radeon, tiling_config);
 	}
-	return r;
-}
-
-static int radeon_get_clock_crystal_freq(struct radeon *radeon)
-{
-	struct drm_radeon_info info = {};
-	uint32_t clock_crystal_freq = 0;
-	int r;
-
-	info.request = RADEON_INFO_CLOCK_CRYSTAL_FREQ;
-	info.value = (uintptr_t)&clock_crystal_freq;
-	r = drmCommandWriteRead(radeon->fd, DRM_RADEON_INFO, &info,
-			sizeof(struct drm_radeon_info));
-	if (r)
-		return r;
-
-	radeon->clock_crystal_freq = clock_crystal_freq;
-	return 0;
-}
-
-
-static int radeon_get_num_backends(struct radeon *radeon)
-{
-	struct drm_radeon_info info = {};
-	uint32_t num_backends = 0;
-	int r;
-
-	info.request = RADEON_INFO_NUM_BACKENDS;
-	info.value = (uintptr_t)&num_backends;
-	r = drmCommandWriteRead(radeon->fd, DRM_RADEON_INFO, &info,
-			sizeof(struct drm_radeon_info));
-	if (r)
-		return r;
-
-	radeon->num_backends = num_backends;
-	return 0;
 }
 
 static int radeon_get_num_tile_pipes(struct radeon *radeon)
@@ -254,7 +211,7 @@ static int radeon_get_num_tile_pipes(struct radeon *radeon)
 
 	info.request = RADEON_INFO_NUM_TILE_PIPES;
 	info.value = (uintptr_t)&num_tile_pipes;
-	r = drmCommandWriteRead(radeon->fd, DRM_RADEON_INFO, &info,
+	r = drmCommandWriteRead(radeon->info.fd, DRM_RADEON_INFO, &info,
 			sizeof(struct drm_radeon_info));
 	if (r)
 		return r;
@@ -271,7 +228,7 @@ static int radeon_get_backend_map(struct radeon *radeon)
 
 	info.request = RADEON_INFO_BACKEND_MAP;
 	info.value = (uintptr_t)&backend_map;
-	r = drmCommandWriteRead(radeon->fd, DRM_RADEON_INFO, &info,
+	r = drmCommandWriteRead(radeon->info.fd, DRM_RADEON_INFO, &info,
 			sizeof(struct drm_radeon_info));
 	if (r)
 		return r;
@@ -281,7 +238,6 @@ static int radeon_get_backend_map(struct radeon *radeon)
 
 	return 0;
 }
-
 
 static int radeon_init_fence(struct radeon *radeon)
 {
@@ -307,7 +263,7 @@ static int handle_compare(void *key1, void *key2)
     return PTR_TO_UINT(key1) != PTR_TO_UINT(key2);
 }
 
-static struct radeon *radeon_new(struct radeon_winsys *rw)
+struct radeon *r600_drm_winsys_create(struct radeon_winsys *rw)
 {
 	struct radeon *radeon;
 	int r;
@@ -318,15 +274,10 @@ static struct radeon *radeon_new(struct radeon_winsys *rw)
 	}
 
 	rw->query_info(rw, &radeon->info);
-	radeon->fd = radeon->info.fd;
-	radeon->device = radeon->info.pci_id;
-	radeon->num_backends = radeon->info.r600_num_backends;
-	radeon->refcount = 1;
-	radeon->minor_version = radeon->info.drm_minor;
 
-	radeon->family = radeon_family_from_device(radeon->device);
+	radeon->family = radeon_family_from_device(radeon->info.pci_id);
 	if (radeon->family == CHIP_UNKNOWN) {
-		fprintf(stderr, "Unknown chipset 0x%04X\n", radeon->device);
+		fprintf(stderr, "Unknown chipset 0x%04X\n", radeon->info.pci_id);
 		return radeon_decref(radeon);
 	}
 	/* setup class */
@@ -373,20 +324,14 @@ static struct radeon *radeon_new(struct radeon_winsys *rw)
 		break;
 	default:
 		fprintf(stderr, "%s unknown or unsupported chipset 0x%04X\n",
-			__func__, radeon->device);
+			__func__, radeon->info.pci_id);
 		break;
 	}
 
 	if (radeon_drm_get_tiling(radeon))
 		return NULL;
 
-	/* get the GPU counter frequency, failure is non fatal */
-	radeon_get_clock_crystal_freq(radeon);
-
-	if (radeon->minor_version >= 9)
-		radeon_get_num_backends(radeon);
-
-	if (radeon->minor_version >= 11) {
+	if (radeon->info.drm_minor >= 11) {
 		radeon_get_num_tile_pipes(radeon);
 		radeon_get_backend_map(radeon);
 	}
@@ -406,18 +351,10 @@ static struct radeon *radeon_new(struct radeon_winsys *rw)
 	return radeon;
 }
 
-struct radeon *r600_drm_winsys_create(struct radeon_winsys *rw)
-{
-	return radeon_new(rw);
-}
-
 struct radeon *radeon_decref(struct radeon *radeon)
 {
 	if (radeon == NULL)
 		return NULL;
-	if (--radeon->refcount > 0) {
-		return NULL;
-	}
 
 	util_hash_table_destroy(radeon->bo_handles);
 	pipe_mutex_destroy(radeon->bo_handles_mutex);

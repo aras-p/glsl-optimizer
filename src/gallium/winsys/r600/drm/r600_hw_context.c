@@ -1621,7 +1621,7 @@ void r600_context_flush(struct r600_context *ctx)
 	chunks[1].chunk_data = (uint64_t)(uintptr_t)ctx->reloc;
 	chunk_array[0] = (uint64_t)(uintptr_t)&chunks[0];
 	chunk_array[1] = (uint64_t)(uintptr_t)&chunks[1];
-	r = drmCommandWriteRead(ctx->radeon->fd, DRM_RADEON_CS, &drmib,
+	r = drmCommandWriteRead(ctx->radeon->info.fd, DRM_RADEON_CS, &drmib,
 				sizeof(struct drm_radeon_cs));
 	if (r) {
 		fprintf(stderr, "radeon: The kernel rejected CS, "
