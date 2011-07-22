@@ -99,7 +99,7 @@ static void r300_destroy_context(struct pipe_context* context)
     struct r300_context* r300 = r300_context(context);
 
     if (r300->cs && r300->hyperz_enabled) {
-        r300->rws->cs_request_feature(r300->cs, RADEON_FID_HYPERZ_RAM_ACCESS, FALSE);
+        r300->rws->cs_request_feature(r300->cs, RADEON_FID_R300_HYPERZ_ACCESS, FALSE);
     }
 
     if (r300->blitter)

@@ -247,7 +247,7 @@ static void r300_clear(struct pipe_context* pipe,
             if (!r300->hyperz_enabled) {
                 r300->hyperz_enabled =
                     r300->rws->cs_request_feature(r300->cs,
-                                                RADEON_FID_HYPERZ_RAM_ACCESS,
+                                                RADEON_FID_R300_HYPERZ_ACCESS,
                                                 TRUE);
                 if (r300->hyperz_enabled) {
                    /* Need to emit HyperZ buffer regs for the first time. */

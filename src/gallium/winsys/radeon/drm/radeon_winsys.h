@@ -83,8 +83,8 @@ struct radeon_info {
 };
 
 enum radeon_feature_id {
-    RADEON_FID_HYPERZ_RAM_ACCESS,     /* ZMask + HiZ */
-    RADEON_FID_CMASK_RAM_ACCESS,
+    RADEON_FID_R300_HYPERZ_ACCESS,     /* ZMask + HiZ */
+    RADEON_FID_R300_CMASK_ACCESS,
 };
 
 struct radeon_winsys {

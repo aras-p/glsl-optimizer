@@ -234,7 +234,7 @@ static boolean radeon_cs_request_feature(struct radeon_winsys_cs *rcs,
     struct radeon_drm_cs *cs = radeon_drm_cs(rcs);
 
     switch (fid) {
-    case RADEON_FID_HYPERZ_RAM_ACCESS:
+    case RADEON_FID_R300_HYPERZ_ACCESS:
         if (debug_get_bool_option("RADEON_HYPERZ", FALSE)) {
             return radeon_set_fd_access(cs, &cs->ws->hyperz_owner,
                                         &cs->ws->hyperz_owner_mutex,
@@ -243,7 +243,7 @@ static boolean radeon_cs_request_feature(struct radeon_winsys_cs *rcs,
             return FALSE;
         }
 
-    case RADEON_FID_CMASK_RAM_ACCESS:
+    case RADEON_FID_R300_CMASK_ACCESS:
         if (debug_get_bool_option("RADEON_CMASK", FALSE)) {
             return radeon_set_fd_access(cs, &cs->ws->cmask_owner,
                                         &cs->ws->cmask_owner_mutex,

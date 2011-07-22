@@ -121,7 +121,7 @@ void r300_flush(struct pipe_context *pipe,
         }
 
         /* Release HyperZ. */
-        r300->rws->cs_request_feature(r300->cs, RADEON_FID_HYPERZ_RAM_ACCESS,
+        r300->rws->cs_request_feature(r300->cs, RADEON_FID_R300_HYPERZ_ACCESS,
                                       FALSE);
     }
     r300->num_z_clears = 0;
