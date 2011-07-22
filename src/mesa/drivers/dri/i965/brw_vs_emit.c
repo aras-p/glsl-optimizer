@@ -1821,6 +1821,9 @@ accumulator_contains(struct brw_vs_compile *c, struct brw_reg val)
    if (val.address_mode != BRW_ADDRESS_DIRECT)
       return GL_FALSE;
 
+   if (val.negate || val.abs)
+      return GL_FALSE;
+
    switch (prev_insn->header.opcode) {
    case BRW_OPCODE_MOV:
    case BRW_OPCODE_MAC:
