@@ -33,6 +33,9 @@ struct gl_context;
 
 #if _HAVE_FULL_GL
 
+extern GLenum
+_mesa_gl_compressed_format_base_format(GLenum format);
+
 extern GLuint
 _mesa_get_compressed_formats(struct gl_context *ctx, GLint *formats, GLboolean all);
 

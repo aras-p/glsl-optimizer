@@ -40,6 +40,94 @@
 
 
 /**
+ * Get the GL base format of a specified GL compressed texture format
+ *
+ * From page 232 of the OpenGL 3.3 (Compatiblity Profile) spec:
+ *
+ *     "Compressed Internal Format      Base Internal Format    Type
+ *     ---------------------------     --------------------    ---------
+ *     COMPRESSED_ALPHA                ALPHA                   Generic
+ *     COMPRESSED_LUMINANCE            LUMINANCE               Generic
+ *     COMPRESSED_LUMINANCE_ALPHA      LUMINANCE_ALPHA         Generic
+ *     COMPRESSED_INTENSITY            INTENSITY               Generic
+ *     COMPRESSED_RED                  RED                     Generic
+ *     COMPRESSED_RG                   RG                      Generic
+ *     COMPRESSED_RGB                  RGB                     Generic
+ *     COMPRESSED_RGBA                 RGBA                    Generic
+ *     COMPRESSED_SRGB                 RGB                     Generic
+ *     COMPRESSED_SRGB_ALPHA           RGBA                    Generic
+ *     COMPRESSED_SLUMINANCE           LUMINANCE               Generic
+ *     COMPRESSED_SLUMINANCE_ALPHA     LUMINANCE_ALPHA         Generic
+ *     COMPRESSED_RED_RGTC1            RED                     Specific
+ *     COMPRESSED_SIGNED_RED_RGTC1     RED                     Specific
+ *     COMPRESSED_RG_RGTC2             RG                      Specific
+ *     COMPRESSED_SIGNED_RG_RGTC2      RG                      Specific"
+ *
+ * \return
+ * The base format of \c format if \c format is a compressed format (either
+ * generic or specific.  Otherwise 0 is returned.
+ */
+GLenum
+_mesa_gl_compressed_format_base_format(GLenum format)
+{
+   switch (format) {
+   case GL_COMPRESSED_RED:
+   case GL_COMPRESSED_RED_RGTC1:
+   case GL_COMPRESSED_SIGNED_RED_RGTC1:
+      return GL_RED;
+
+   case GL_COMPRESSED_RG:
+   case GL_COMPRESSED_RG_RGTC2:
+   case GL_COMPRESSED_SIGNED_RG_RGTC2:
+      return GL_RG;
+
+   case GL_COMPRESSED_RGB:
+   case GL_COMPRESSED_SRGB:
+   case GL_COMPRESSED_RGB_S3TC_DXT1_EXT:
+   case GL_COMPRESSED_RGB_FXT1_3DFX:
+   case GL_COMPRESSED_SRGB_S3TC_DXT1_EXT:
+      return GL_RGB;
+
+   case GL_COMPRESSED_RGBA:
+   case GL_COMPRESSED_SRGB_ALPHA:
+   case GL_COMPRESSED_RGBA_BPTC_UNORM_ARB:
+   case GL_COMPRESSED_SRGB_ALPHA_BPTC_UNORM_ARB:
+   case GL_COMPRESSED_RGB_BPTC_SIGNED_FLOAT_ARB:
+   case GL_COMPRESSED_RGB_BPTC_UNSIGNED_FLOAT_ARB:
+   case GL_COMPRESSED_RGBA_S3TC_DXT1_EXT:
+   case GL_COMPRESSED_RGBA_S3TC_DXT3_EXT:
+   case GL_COMPRESSED_RGBA_S3TC_DXT5_EXT:
+   case GL_COMPRESSED_RGBA_FXT1_3DFX:
+   case GL_COMPRESSED_SRGB_ALPHA_S3TC_DXT1_EXT:
+   case GL_COMPRESSED_SRGB_ALPHA_S3TC_DXT3_EXT:
+   case GL_COMPRESSED_SRGB_ALPHA_S3TC_DXT5_EXT:
+      return GL_RGBA;
+
+   case GL_COMPRESSED_ALPHA:
+      return GL_ALPHA;
+
+   case GL_COMPRESSED_LUMINANCE:
+   case GL_COMPRESSED_SLUMINANCE:
+   case GL_COMPRESSED_LUMINANCE_LATC1_EXT:
+   case GL_COMPRESSED_SIGNED_LUMINANCE_LATC1_EXT:
+      return GL_LUMINANCE;
+
+   case GL_COMPRESSED_LUMINANCE_ALPHA:
+   case GL_COMPRESSED_SLUMINANCE_ALPHA:
+   case GL_COMPRESSED_LUMINANCE_ALPHA_LATC2_EXT:
+   case GL_COMPRESSED_SIGNED_LUMINANCE_ALPHA_LATC2_EXT:
+   case GL_COMPRESSED_LUMINANCE_ALPHA_3DC_ATI:
+      return GL_LUMINANCE_ALPHA;
+
+   case GL_COMPRESSED_INTENSITY:
+      return GL_INTENSITY;
+
+   default:
+      return 0;
+   }
+}
+
+/**
  * Return list of (and count of) all specific texture compression
  * formats that are supported.
  *
