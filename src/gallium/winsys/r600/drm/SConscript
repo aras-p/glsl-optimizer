@@ -3,7 +3,6 @@ Import('*')
 env = env.Clone()
 
 r600_sources = [
-    'bof.c',
     'evergreen_hw_context.c',
     'radeon_bo.c',
     'radeon_pciid.c',

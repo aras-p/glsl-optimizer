@@ -35,7 +35,6 @@
 #include "xf86drm.h"
 #include "radeon_drm.h"
 #include "r600_priv.h"
-#include "bof.h"
 #include "r600d.h"
 
 #define GROUP_FORCE_NEW_BLOCK	0
@@ -1613,88 +1612,6 @@ void r600_context_emit_fence(struct r600_context *ctx, struct r600_bo *fence_bo,
 	ctx->pm4[ctx->pm4_cdwords++] = PKT3(PKT3_NOP, 0, 0);
 	ctx->pm4[ctx->pm4_cdwords++] = 0;
 	r600_context_bo_reloc(ctx, &ctx->pm4[ctx->pm4_cdwords - 1], fence_bo);
-}
-
-void r600_context_dump_bof(struct r600_context *ctx, const char *file)
-{
-	bof_t *bcs, *blob, *array, *bo, *size, *handle, *device_id, *root;
-	unsigned i;
-
-	root = device_id = bcs = blob = array = bo = size = handle = NULL;
-	root = bof_object();
-	if (root == NULL)
-		goto out_err;
-	device_id = bof_int32(ctx->radeon->device);
-	if (device_id == NULL)
-		goto out_err;
-	if (bof_object_set(root, "device_id", device_id))
-		goto out_err;
-	bof_decref(device_id);
-	device_id = NULL;
-	/* dump relocs */
-	blob = bof_blob(ctx->creloc * 16, ctx->reloc);
-	if (blob == NULL)
-		goto out_err;
-	if (bof_object_set(root, "reloc", blob))
-		goto out_err;
-	bof_decref(blob);
-	blob = NULL;
-	/* dump cs */
-	blob = bof_blob(ctx->pm4_cdwords * 4, ctx->pm4);
-	if (blob == NULL)
-		goto out_err;
-	if (bof_object_set(root, "pm4", blob))
-		goto out_err;
-	bof_decref(blob);
-	blob = NULL;
-	/* dump bo */
-	array = bof_array();
-	if (array == NULL)
-		goto out_err;
-	for (i = 0; i < ctx->creloc; i++) {
-		struct radeon_bo *rbo = ctx->bo[i];
-		bo = bof_object();
-		if (bo == NULL)
-			goto out_err;
-		size = bof_int32(rbo->size);
-		if (size == NULL)
-			goto out_err;
-		if (bof_object_set(bo, "size", size))
-			goto out_err;
-		bof_decref(size);
-		size = NULL;
-		handle = bof_int32(rbo->handle);
-		if (handle == NULL)
-			goto out_err;
-		if (bof_object_set(bo, "handle", handle))
-			goto out_err;
-		bof_decref(handle);
-		handle = NULL;
-		radeon_bo_map(ctx->radeon, rbo);
-		blob = bof_blob(rbo->size, rbo->data);
-		radeon_bo_unmap(ctx->radeon, rbo);
-		if (blob == NULL)
-			goto out_err;
-		if (bof_object_set(bo, "data", blob))
-			goto out_err;
-		bof_decref(blob);
-		blob = NULL;
-		if (bof_array_append(array, bo))
-			goto out_err;
-		bof_decref(bo);
-		bo = NULL;
-	}
-	if (bof_object_set(root, "bo", array))
-		goto out_err;
-	bof_dump_file(root, file);
-out_err:
-	bof_decref(blob);
-	bof_decref(array);
-	bof_decref(bo);
-	bof_decref(size);
-	bof_decref(handle);
-	bof_decref(device_id);
-	bof_decref(root);
 }
 
 static boolean r600_query_result(struct r600_context *ctx, struct r600_query *query, boolean wait)

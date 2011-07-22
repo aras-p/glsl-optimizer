@@ -291,7 +291,6 @@ void r600_context_pipe_state_set_fs_resource(struct r600_context *ctx, struct r6
 void r600_context_pipe_state_set_ps_sampler(struct r600_context *ctx, struct r600_pipe_state *state, unsigned id);
 void r600_context_pipe_state_set_vs_sampler(struct r600_context *ctx, struct r600_pipe_state *state, unsigned id);
 void r600_context_flush(struct r600_context *ctx);
-void r600_context_dump_bof(struct r600_context *ctx, const char *file);
 void r600_context_draw(struct r600_context *ctx, const struct r600_draw *draw);
 
 struct r600_query *r600_context_query_create(struct r600_context *ctx, unsigned query_type);

@@ -5,7 +5,6 @@ include $(TOP)/configs/current
 LIBNAME = r600winsys
 
 C_SOURCES = \
-	bof.c \
 	evergreen_hw_context.c \
 	radeon_bo.c \
 	radeon_pciid.c \

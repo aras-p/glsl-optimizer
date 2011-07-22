@@ -32,7 +32,6 @@
 #include "r600.h"
 #include "evergreend.h"
 #include "radeon_drm.h"
-#include "bof.h"
 #include "pipe/p_compiler.h"
 #include "util/u_inlines.h"
 #include "util/u_memory.h"
