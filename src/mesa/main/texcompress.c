@@ -131,16 +131,101 @@ _mesa_gl_compressed_format_base_format(GLenum format)
  * Return list of (and count of) all specific texture compression
  * formats that are supported.
  *
+ * Some formats are \b not returned by this function.  The
+ * \c GL_COMPRESSED_TEXTURE_FORMATS query only returns formats that are
+ * "suitable for general-purpose usage."  All texture compression extensions
+ * have taken this to mean either linear RGB or linear RGBA.
+ *
+ * The GL_ARB_texture_compress_rgtc spec says:
+ *
+ *    "19) Should the GL_NUM_COMPRESSED_TEXTURE_FORMATS and
+ *        GL_COMPRESSED_TEXTURE_FORMATS queries return the RGTC formats?
+ *
+ *        RESOLVED:  No.
+ *
+ *        The OpenGL 2.1 specification says "The only values returned
+ *        by this query [GL_COMPRESSED_TEXTURE_FORMATS"] are those
+ *        corresponding to formats suitable for general-purpose usage.
+ *        The renderer will not enumerate formats with restrictions that
+ *        need to be specifically understood prior to use."
+ *
+ *        Compressed textures with just red or red-green components are
+ *        not general-purpose so should not be returned by these queries
+ *        because they have restrictions.
+ *
+ *        Applications that seek to use the RGTC formats should do so
+ *        by looking for this extension's name in the string returned by
+ *        glGetString(GL_EXTENSIONS) rather than
+ *        what GL_NUM_COMPRESSED_TEXTURE_FORMATS and
+ *        GL_COMPRESSED_TEXTURE_FORMATS return."
+ *
+ * There is nearly identical wording in the GL_EXT_texture_compression_rgtc
+ * spec.
+ *
+ * The GL_EXT_texture_rRGB spec says:
+ *
+ *    "22) Should the new COMPRESSED_SRGB_* formats be listed in an
+ *        implementation's GL_COMPRESSED_TEXTURE_FORMATS list?
+ *
+ *        RESOLVED:  No.  Section 3.8.1 says formats listed by
+ *        GL_COMPRESSED_TEXTURE_FORMATS are "suitable for general-purpose
+ *        usage."  The non-linear distribution of red, green, and
+ *        blue for these sRGB compressed formats makes them not really
+ *        general-purpose."
+ *
+ * The GL_EXT_texture_compression_latc spec says:
+ *
+ *    "16) Should the GL_NUM_COMPRESSED_TEXTURE_FORMATS and
+ *        GL_COMPRESSED_TEXTURE_FORMATS queries return the LATC formats?
+ *
+ *        RESOLVED:  No.
+ *
+ *        The OpenGL 2.1 specification says "The only values returned
+ *        by this query [GL_COMPRESSED_TEXTURE_FORMATS"] are those
+ *        corresponding to formats suitable for general-purpose usage.
+ *        The renderer will not enumerate formats with restrictions that
+ *        need to be specifically understood prior to use."
+ *
+ *        Historically, OpenGL implementation have advertised the RGB and
+ *        RGBA versions of the S3TC extensions compressed format tokens
+ *        through this mechanism.
+ *
+ *        The specification is not sufficiently clear about what "suitable
+ *        for general-purpose usage" means.  Historically that seems to mean
+ *        unsigned RGB or unsigned RGBA.  The DXT1 format supporting alpha
+ *        (GL_COMPRESSED_RGBA_S3TC_DXT1_EXT) is not exposed in the list (at
+ *        least for NVIDIA drivers) because the alpha is always 1.0 expect
+ *        when it is 0.0 when RGB is required to be black.  NVIDIA's even
+ *        limits itself to true linear RGB or RGBA formats, specifically
+ *        not including EXT_texture_sRGB's sRGB S3TC compressed formats.
+ *
+ *        Adding luminance and luminance-alpha texture formats (and
+ *        certainly signed versions of luminance and luminance-alpha
+ *        formats!) invites potential comptaibility problems with old
+ *        applications using this mechanism since old applications are
+ *        unlikely to expect non-RGB or non-RGBA formats to be advertised
+ *        through this mechanism.  However no specific misinteractions
+ *        with old applications is known.
+ *
+ *        Applications that seek to use the LATC formats should do so
+ *        by looking for this extension's name in the string returned by
+ *        glGetString(GL_EXTENSIONS) rather than
+ *        what GL_NUM_COMPRESSED_TEXTURE_FORMATS and
+ *        GL_COMPRESSED_TEXTURE_FORMATS return."
+ *
+ * There is no formal spec for GL_ATI_texture_compression_3dc.  Since the
+ * formats added by this extension are luminance-alpha formats, it is
+ * reasonable to expect them to follow the same rules as
+ * GL_EXT_texture_compression_latc.  At the very least, Catalyst 11.6 does not
+ * expose the 3dc formats through this mechanism.
+ *
  * \param ctx  the GL context
  * \param formats  the resulting format list (may be NULL).
- * \param all  if true return all formats, even those with  some kind
- *             of restrictions/limitations (See GL_ARB_texture_compression
- *             spec for more info).
  *
  * \return number of formats.
  */
 GLuint
-_mesa_get_compressed_formats(struct gl_context *ctx, GLint *formats, GLboolean all)
+_mesa_get_compressed_formats(struct gl_context *ctx, GLint *formats)
 {
    GLuint n = 0;
    if (ctx->Extensions.TDFX_texture_compression_FXT1) {
@@ -152,24 +237,15 @@ _mesa_get_compressed_formats(struct gl_context *ctx, GLint *formats, GLboolean a
          n += 2;
       }
    }
-   /* don't return RGTC - ARB_texture_compression_rgtc query 19 */
+
    if (ctx->Extensions.EXT_texture_compression_s3tc) {
       if (formats) {
          formats[n++] = GL_COMPRESSED_RGB_S3TC_DXT1_EXT;
-         /* This format has some restrictions/limitations and so should
-          * not be returned via the GL_COMPRESSED_TEXTURE_FORMATS query.
-          * Specifically, all transparent pixels become black.  NVIDIA
-          * omits this format too.
-          */
-         if (all)
-             formats[n++] = GL_COMPRESSED_RGBA_S3TC_DXT1_EXT;
          formats[n++] = GL_COMPRESSED_RGBA_S3TC_DXT3_EXT;
          formats[n++] = GL_COMPRESSED_RGBA_S3TC_DXT5_EXT;
       }
       else {
          n += 3;
-         if (all)
-             n += 1;
       }
    }
    if (ctx->Extensions.S3_s3tc) {
@@ -183,19 +259,6 @@ _mesa_get_compressed_formats(struct gl_context *ctx, GLint *formats, GLboolean a
          n += 4;
       }
    }
-#if FEATURE_EXT_texture_sRGB
-   if (ctx->Extensions.EXT_texture_sRGB) {
-      if (formats) {
-         formats[n++] = GL_COMPRESSED_SRGB_S3TC_DXT1_EXT;
-         formats[n++] = GL_COMPRESSED_SRGB_ALPHA_S3TC_DXT1_EXT;
-         formats[n++] = GL_COMPRESSED_SRGB_ALPHA_S3TC_DXT3_EXT;
-         formats[n++] = GL_COMPRESSED_SRGB_ALPHA_S3TC_DXT5_EXT;
-      }
-      else {
-         n += 4;
-      }
-   }
-#endif /* FEATURE_EXT_texture_sRGB */
    return n;
 
 #if FEATURE_ES1 || FEATURE_ES2
