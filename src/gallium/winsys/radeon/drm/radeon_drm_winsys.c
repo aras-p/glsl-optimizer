@@ -103,16 +103,30 @@ static boolean radeon_set_fd_access(struct radeon_drm_cs *applier,
     return FALSE;
 }
 
+static boolean radeon_get_drm_value(int fd, unsigned request,
+                                    const char *name, uint32_t *out)
+{
+    struct drm_radeon_info info = {0};
+    int retval;
+
+    info.value = (unsigned long)out;
+    info.request = request;
+
+    retval = drmCommandWriteRead(fd, DRM_RADEON_INFO, &info, sizeof(info));
+    if (retval) {
+        fprintf(stderr, "%s: Failed to get %s, error number %d\n",
+                __func__, name, retval);
+        return FALSE;
+    }
+    return TRUE;
+}
+
 /* Helper function to do the ioctls needed for setup and init. */
-static void do_ioctls(struct radeon_drm_winsys *winsys)
+static boolean do_winsys_init(struct radeon_drm_winsys *ws)
 {
     struct drm_radeon_gem_info gem_info = {0};
-    struct drm_radeon_info info = {0};
-    int target = 0;
     int retval;
     drmVersionPtr version;
-
-    info.value = (unsigned long)&target;
 
     /* We do things in a specific order here.
      *
@@ -123,71 +137,76 @@ static void do_ioctls(struct radeon_drm_winsys *winsys)
      * for all Radeons. If this fails, we probably got handed an FD for some
      * non-Radeon card.
      *
+     * The GEM info is actually bogus on the kernel side, as well as our side
+     * (see radeon_gem_info_ioctl in radeon_gem.c) but that's alright because
+     * we don't actually use the info for anything yet.
+     *
      * The GB and Z pipe requests should always succeed, but they might not
      * return sensical values for all chipsets, but that's alright because
      * the pipe drivers already know that.
-     *
-     * The GEM info is actually bogus on the kernel side, as well as our side
-     * (see radeon_gem_info_ioctl in radeon_gem.c) but that's alright because
-     * we don't actually use the info for anything yet. */
+     */
 
-    version = drmGetVersion(winsys->fd);
+    /* Get DRM version. */
+    version = drmGetVersion(ws->fd);
     if (version->version_major != 2 ||
         version->version_minor < 3) {
         fprintf(stderr, "%s: DRM version is %d.%d.%d but this driver is "
-                "only compatible with 2.3.x (kernel 2.6.34) and later.\n",
+                "only compatible with 2.3.x (kernel 2.6.34) or later.\n",
                 __FUNCTION__,
                 version->version_major,
                 version->version_minor,
                 version->version_patchlevel);
         drmFreeVersion(version);
-        exit(1);
+        return FALSE;
     }
 
-    winsys->drm_major = version->version_major;
-    winsys->drm_minor = version->version_minor;
-    winsys->drm_patchlevel = version->version_patchlevel;
+    ws->info.drm_major = version->version_major;
+    ws->info.drm_minor = version->version_minor;
+    ws->info.drm_patchlevel = version->version_patchlevel;
+    drmFreeVersion(version);
 
-    info.request = RADEON_INFO_DEVICE_ID;
-    retval = drmCommandWriteRead(winsys->fd, DRM_RADEON_INFO, &info, sizeof(info));
-    if (retval) {
-        fprintf(stderr, "%s: Failed to get PCI ID, "
-                "error number %d\n", __FUNCTION__, retval);
-        exit(1);
+    /* Get PCI ID. */
+    if (!radeon_get_drm_value(ws->fd, RADEON_INFO_DEVICE_ID, "PCI ID",
+                              &ws->info.pci_id))
+        return FALSE;
+
+    /* Check PCI ID. */
+    switch (ws->info.pci_id) {
+#define CHIPSET(pci_id, name, family) case pci_id:
+#include "pci_ids/r300_pci_ids.h"
+#undef CHIPSET
+        break;
+
+    default:
+        fprintf(stderr, "radeon: Invalid PCI ID.\n");
+        return FALSE;
     }
-    winsys->pci_id = target;
 
-    info.request = RADEON_INFO_NUM_GB_PIPES;
-    retval = drmCommandWriteRead(winsys->fd, DRM_RADEON_INFO, &info, sizeof(info));
-    if (retval) {
-        fprintf(stderr, "%s: Failed to get GB pipe count, "
-                "error number %d\n", __FUNCTION__, retval);
-        exit(1);
-    }
-    winsys->gb_pipes = target;
-
-    info.request = RADEON_INFO_NUM_Z_PIPES;
-    retval = drmCommandWriteRead(winsys->fd, DRM_RADEON_INFO, &info, sizeof(info));
-    if (retval) {
-        fprintf(stderr, "%s: Failed to get Z pipe count, "
-                "error number %d\n", __FUNCTION__, retval);
-        exit(1);
-    }
-    winsys->z_pipes = target;
-
-    retval = drmCommandWriteRead(winsys->fd, DRM_RADEON_GEM_INFO,
+    /* Get GEM info. */
+    retval = drmCommandWriteRead(ws->fd, DRM_RADEON_GEM_INFO,
             &gem_info, sizeof(gem_info));
     if (retval) {
         fprintf(stderr, "%s: Failed to get MM info, error number %d\n",
                 __FUNCTION__, retval);
-        exit(1);
+        return FALSE;
     }
-    winsys->gart_size = gem_info.gart_size;
-    winsys->vram_size = gem_info.vram_size;
+    ws->info.gart_size = gem_info.gart_size;
+    ws->info.vram_size = gem_info.vram_size;
 
-    drmFreeVersion(version);
+    ws->num_cpus = sysconf(_SC_NPROCESSORS_ONLN);
 
-    winsys->num_cpus = sysconf(_SC_NPROCESSORS_ONLN);
+    /* Generation-specific queries. */
+    if (!radeon_get_drm_value(ws->fd, RADEON_INFO_NUM_GB_PIPES,
+                              "GB pipe count",
+                              &ws->info.r300_num_gb_pipes))
+        return FALSE;
+
+    if (!radeon_get_drm_value(ws->fd, RADEON_INFO_NUM_Z_PIPES,
+                              "Z pipe count",
+                              &ws->info.r300_num_z_pipes))
+        return FALSE;
+
+    return TRUE;
 }
 
 static void radeon_winsys_destroy(struct radeon_winsys *rws)
@@ -202,34 +221,10 @@ static void radeon_winsys_destroy(struct radeon_winsys *rws)
     FREE(rws);
 }
 
-static uint32_t radeon_get_value(struct radeon_winsys *rws,
-                                 enum radeon_value_id id)
+static void radeon_query_info(struct radeon_winsys *rws,
+                              struct radeon_info *info)
 {
-    struct radeon_drm_winsys *ws = (struct radeon_drm_winsys *)rws;
-
-    switch(id) {
-    case RADEON_VID_PCI_ID:
-	return ws->pci_id;
-    case RADEON_VID_R300_GB_PIPES:
-	return ws->gb_pipes;
-    case RADEON_VID_R300_Z_PIPES:
-	return ws->z_pipes;
-    case RADEON_VID_GART_SIZE:
-        return ws->gart_size;
-    case RADEON_VID_VRAM_SIZE:
-        return ws->vram_size;
-    case RADEON_VID_DRM_MAJOR:
-        return ws->drm_major;
-    case RADEON_VID_DRM_MINOR:
-        return ws->drm_minor;
-    case RADEON_VID_DRM_PATCHLEVEL:
-        return ws->drm_patchlevel;
-    case RADEON_VID_DRM_2_6_0:
-        return ws->drm_major*100 + ws->drm_minor >= 206;
-    case RADEON_VID_DRM_2_8_0:
-        return ws->drm_major*100 + ws->drm_minor >= 208;
-    }
-    return 0;
+    *info = ((struct radeon_drm_winsys *)rws)->info;
 }
 
 static boolean radeon_cs_request_feature(struct radeon_winsys_cs *rcs,
@@ -268,16 +263,9 @@ struct radeon_winsys *radeon_drm_winsys_create(int fd)
     }
 
     ws->fd = fd;
-    do_ioctls(ws);
 
-    switch (ws->pci_id) {
-#define CHIPSET(pci_id, name, family) case pci_id:
-#include "pci_ids/r300_pci_ids.h"
-#undef CHIPSET
-       break;
-    default:
-       goto fail;
-    }
+    if (!do_winsys_init(ws))
+        goto fail;
 
     /* Create managers. */
     ws->kman = radeon_bomgr_create(ws);
@@ -289,7 +277,7 @@ struct radeon_winsys *radeon_drm_winsys_create(int fd)
 
     /* Set functions. */
     ws->base.destroy = radeon_winsys_destroy;
-    ws->base.get_value = radeon_get_value;
+    ws->base.query_info = radeon_query_info;
     ws->base.cs_request_feature = radeon_cs_request_feature;
 
     radeon_bomgr_init_functions(ws);

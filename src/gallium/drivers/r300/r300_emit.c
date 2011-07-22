@@ -574,11 +574,12 @@ static void r300_emit_query_end_frag_pipes(struct r300_context *r300,
                                            struct r300_query *query)
 {
     struct r300_capabilities* caps = &r300->screen->caps;
+    uint32_t gb_pipes = r300->screen->info.r300_num_gb_pipes;
     CS_LOCALS(r300);
 
-    assert(caps->num_frag_pipes);
+    assert(gb_pipes);
 
-    BEGIN_CS(6 * caps->num_frag_pipes + 2);
+    BEGIN_CS(6 * gb_pipes + 2);
     /* I'm not so sure I like this switch, but it's hard to be elegant
      * when there's so many special cases...
      *
@@ -587,7 +588,7 @@ static void r300_emit_query_end_frag_pipes(struct r300_context *r300,
      * 4-byte offset for each pipe. RV380 and older are special; they have
      * only two pipes, and the second pipe's enable is on bit 3, not bit 1,
      * so there's a chipset cap for that. */
-    switch (caps->num_frag_pipes) {
+    switch (gb_pipes) {
         case 4:
             /* pipe 3 only */
             OUT_CS_REG(R300_SU_REG_DEST, 1 << 3);
@@ -613,7 +614,7 @@ static void r300_emit_query_end_frag_pipes(struct r300_context *r300,
             break;
         default:
             fprintf(stderr, "r300: Implementation error: Chipset reports %d"
-                    " pixel pipes!\n", caps->num_frag_pipes);
+                    " pixel pipes!\n", gb_pipes);
             abort();
     }
 
@@ -663,7 +664,7 @@ void r300_emit_query_end(struct r300_context* r300)
         return;
 
     if (caps->family == CHIP_FAMILY_RV530) {
-        if (caps->num_z_pipes == 2)
+        if (r300->screen->info.r300_num_z_pipes == 2)
             rv530_emit_query_end_double_z(r300, query);
         else
             rv530_emit_query_end_single_z(r300, query);

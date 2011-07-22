@@ -360,9 +360,9 @@ static void r300_setup_hyperz_properties(struct r300_screen *screen,
         unsigned i, pipes;
 
         if (screen->caps.family == CHIP_FAMILY_RV530) {
-            pipes = screen->caps.num_z_pipes;
+            pipes = screen->info.r300_num_z_pipes;
         } else {
-            pipes = screen->caps.num_frag_pipes;
+            pipes = screen->info.r300_num_gb_pipes;
         }
 
         for (i = 0; i <= tex->b.b.b.last_level; i++) {

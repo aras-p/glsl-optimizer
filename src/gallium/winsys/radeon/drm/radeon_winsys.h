@@ -26,6 +26,20 @@
 
 /* The public winsys interface header for the radeon driver. */
 
+/* R300 features in DRM.
+ *
+ * 2.6.0:
+ * - Hyper-Z
+ * - GB_Z_PEQ_CONFIG on rv350->r4xx
+ * - R500 FG_ALPHA_VALUE
+ *
+ * 2.8.0:
+ * - R500 US_FORMAT regs
+ * - R500 ARGB2101010 colorbuffer
+ * - CMask and AA regs
+ * - R16F/RG16F
+ */
+
 #include "pipebuffer/pb_bufmgr.h"
 #include "pipe/p_defines.h"
 #include "pipe/p_state.h"
@@ -55,38 +69,17 @@ struct radeon_winsys_cs {
     uint32_t *buf; /* The command buffer. */
 };
 
-enum radeon_value_id {
-    RADEON_VID_PCI_ID,
-    RADEON_VID_R300_GB_PIPES,
-    RADEON_VID_R300_Z_PIPES,
-    RADEON_VID_GART_SIZE,
-    RADEON_VID_VRAM_SIZE,
-    RADEON_VID_DRM_MAJOR,
-    RADEON_VID_DRM_MINOR,
-    RADEON_VID_DRM_PATCHLEVEL,
+struct radeon_info {
+    uint32_t pci_id;
+    uint32_t gart_size;
+    uint32_t vram_size;
 
-    /* These should probably go away: */
+    uint32_t drm_major; /* version */
+    uint32_t drm_minor;
+    uint32_t drm_patchlevel;
 
-    /* R300 features:
-     * - Hyper-Z
-     * - GB_Z_PEQ_CONFIG on rv350->r4xx
-     * - R500 FG_ALPHA_VALUE
-     *
-     * R600 features:
-     * - TBD
-     */
-    RADEON_VID_DRM_2_6_0,
-
-    /* R300 features:
-     * - R500 US_FORMAT regs
-     * - R500 ARGB2101010 colorbuffer
-     * - CMask and AA regs
-     * - R16F/RG16F
-     *
-     * R600 features:
-     * - TBD
-     */
-    RADEON_VID_DRM_2_8_0,
+    uint32_t r300_num_gb_pipes;
+    uint32_t r300_num_z_pipes;
 };
 
 enum radeon_feature_id {
@@ -103,13 +96,13 @@ struct radeon_winsys {
     void (*destroy)(struct radeon_winsys *ws);
 
     /**
-     * Query a system value from a winsys.
+     * Query an info structure from winsys.
      *
      * \param ws        The winsys this function is called from.
-     * \param vid       One of the RADEON_VID_* enums.
+     * \param info      Return structure
      */
-    uint32_t (*get_value)(struct radeon_winsys *ws,
-                          enum radeon_value_id vid);
+    void (*query_info)(struct radeon_winsys *ws,
+                       struct radeon_info *info);
 
     /**************************************************************************
      * Buffer management. Buffer attributes are mostly fixed over its lifetime.

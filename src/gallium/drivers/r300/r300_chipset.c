@@ -31,9 +31,9 @@
  * Radeons. */
 
 /* Parse a PCI ID and fill an r300_capabilities struct with information. */
-void r300_parse_chipset(struct r300_capabilities* caps)
+void r300_parse_chipset(uint32_t pci_id, struct r300_capabilities* caps)
 {
-    switch (caps->pci_id) {
+    switch (pci_id) {
 #define CHIPSET(pci_id, name, chipfamily) \
         case pci_id: \
             caps->family = CHIP_FAMILY_##chipfamily; \
@@ -43,7 +43,7 @@ void r300_parse_chipset(struct r300_capabilities* caps)
 
     default:
         fprintf(stderr, "r300: Warning: Unknown chipset 0x%x\nAborting...",
-                caps->pci_id);
+                pci_id);
         abort();
     }
 

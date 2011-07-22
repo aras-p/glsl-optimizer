@@ -327,9 +327,8 @@ static boolean r300_is_format_supported(struct pipe_screen* screen,
                                         unsigned sample_count,
                                         unsigned usage)
 {
-    struct radeon_winsys *rws = r300_screen(screen)->rws;
     uint32_t retval = 0;
-    boolean drm_2_8_0 = rws->get_value(rws, RADEON_VID_DRM_2_8_0);
+    boolean drm_2_8_0 = r300_screen(screen)->info.drm_minor >= 8;
     boolean is_r500 = r300_screen(screen)->caps.is_r500;
     boolean is_r400 = r300_screen(screen)->caps.is_r400;
     boolean is_color2101010 = format == PIPE_FORMAT_R10G10B10A2_UNORM ||
@@ -497,19 +496,17 @@ struct pipe_screen* r300_screen_create(struct radeon_winsys *rws)
         return NULL;
     }
 
-    r300screen->caps.pci_id = rws->get_value(rws, RADEON_VID_PCI_ID);
-    r300screen->caps.num_frag_pipes = rws->get_value(rws, RADEON_VID_R300_GB_PIPES);
-    r300screen->caps.num_z_pipes = rws->get_value(rws, RADEON_VID_R300_Z_PIPES);
+    rws->query_info(rws, &r300screen->info);
 
     r300_init_debug(r300screen);
-    r300_parse_chipset(&r300screen->caps);
+    r300_parse_chipset(r300screen->info.pci_id, &r300screen->caps);
 
     if (SCREEN_DBG_ON(r300screen, DBG_NO_ZMASK))
         r300screen->caps.zmask_ram = 0;
     if (SCREEN_DBG_ON(r300screen, DBG_NO_HIZ))
         r300screen->caps.hiz_ram = 0;
 
-    if (!rws->get_value(rws, RADEON_VID_DRM_2_8_0))
+    if (r300screen->info.drm_minor < 8)
         r300screen->caps.has_us_format = FALSE;
 
     pipe_mutex_init(r300screen->num_contexts_mutex);

@@ -308,8 +308,8 @@ static boolean radeon_drm_cs_validate(struct radeon_winsys_cs *rcs)
 {
     struct radeon_drm_cs *cs = radeon_drm_cs(rcs);
 
-    return cs->csc->used_gart < cs->ws->gart_size * 0.8 &&
-           cs->csc->used_vram < cs->ws->vram_size * 0.8;
+    return cs->csc->used_gart < cs->ws->info.gart_size * 0.8 &&
+           cs->csc->used_vram < cs->ws->info.vram_size * 0.8;
 }
 
 static void radeon_drm_cs_write_reloc(struct radeon_winsys_cs *rcs,

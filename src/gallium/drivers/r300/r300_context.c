@@ -173,7 +173,7 @@ static boolean r300_setup_atoms(struct r300_context* r300)
     boolean is_rv350 = r300->screen->caps.is_rv350;
     boolean is_r500 = r300->screen->caps.is_r500;
     boolean has_tcl = r300->screen->caps.has_tcl;
-    boolean drm_2_6_0 = r300->rws->get_value(r300->rws, RADEON_VID_DRM_2_6_0);
+    boolean drm_2_6_0 = r300->screen->info.drm_minor >= 6;
 
     /* Create the actual atom list.
      *
@@ -380,7 +380,7 @@ static void r300_init_states(struct pipe_context *pipe)
 
         if (r300->screen->caps.is_r500 ||
             (r300->screen->caps.is_rv350 &&
-             r300->rws->get_value(r300->rws, RADEON_VID_DRM_2_6_0))) {
+             r300->screen->info.drm_minor >= 6)) {
             OUT_CB_REG(R300_GB_Z_PEQ_CONFIG, 0);
         }
         END_CB;
@@ -520,15 +520,15 @@ struct pipe_context* r300_create_context(struct pipe_screen* screen,
                 "r300: DRM version: %d.%d.%d, Name: %s, ID: 0x%04x, GB: %d, Z: %d\n"
                 "r300: GART size: %d MB, VRAM size: %d MB\n"
                 "r300: AA compression RAM: %s, Z compression RAM: %s, HiZ RAM: %s\n",
-                rws->get_value(rws, RADEON_VID_DRM_MAJOR),
-                rws->get_value(rws, RADEON_VID_DRM_MINOR),
-                rws->get_value(rws, RADEON_VID_DRM_PATCHLEVEL),
+                r300->screen->info.drm_major,
+                r300->screen->info.drm_minor,
+                r300->screen->info.drm_patchlevel,
                 screen->get_name(screen),
-                rws->get_value(rws, RADEON_VID_PCI_ID),
-                rws->get_value(rws, RADEON_VID_R300_GB_PIPES),
-                rws->get_value(rws, RADEON_VID_R300_Z_PIPES),
-                rws->get_value(rws, RADEON_VID_GART_SIZE) >> 20,
-                rws->get_value(rws, RADEON_VID_VRAM_SIZE) >> 20,
+                r300->screen->info.pci_id,
+                r300->screen->info.r300_num_gb_pipes,
+                r300->screen->info.r300_num_z_pipes,
+                r300->screen->info.gart_size >> 20,
+                r300->screen->info.vram_size >> 20,
                 "YES", /* XXX really? */
                 r300->screen->caps.zmask_ram ? "YES" : "NO",
                 r300->screen->caps.hiz_ram ? "YES" : "NO");
