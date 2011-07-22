@@ -472,8 +472,7 @@ can_downward_mov_be_modifed(const struct prog_instruction *mov)
       mov->SrcReg[0].HasIndex2 == 0 &&
       mov->SrcReg[0].RelAddr2 == 0 &&
       mov->DstReg.RelAddr == 0 &&
-      mov->DstReg.CondMask == COND_TR &&
-      mov->SaturateMode == SATURATE_OFF;
+      mov->DstReg.CondMask == COND_TR;
 }
 
 
@@ -482,7 +481,8 @@ can_upward_mov_be_modifed(const struct prog_instruction *mov)
 {
    return
       can_downward_mov_be_modifed(mov) &&
-      mov->DstReg.File == PROGRAM_TEMPORARY;
+      mov->DstReg.File == PROGRAM_TEMPORARY &&
+      mov->SaturateMode == SATURATE_OFF;
 }
 
 
@@ -656,6 +656,8 @@ _mesa_merge_mov_into_inst(struct prog_instruction *inst,
    /* Some components are not written by inst. We cannot remove the mov */
    if (mask != (inst->DstReg.WriteMask & mask))
       return GL_FALSE;
+
+   inst->SaturateMode |= mov->SaturateMode;
 
    /* Depending on the instruction, we may need to recompute the swizzles.
     * Also, some other instructions (like TEX) are not linear. We will only
