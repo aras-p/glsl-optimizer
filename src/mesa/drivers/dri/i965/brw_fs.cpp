@@ -463,9 +463,21 @@ fs_visitor::emit_general_interpolation(ir_variable *ir)
 	 } else {
 	    /* Perspective interpolation case. */
 	    for (unsigned int k = 0; k < type->vector_elements; k++) {
-	       struct brw_reg interp = interp_reg(location, k);
-	       emit(FS_OPCODE_LINTERP, attr,
-		    this->delta_x, this->delta_y, fs_reg(interp));
+	       /* FINISHME: At some point we probably want to push
+		* this farther by giving similar treatment to the
+		* other potentially constant components of the
+		* attribute, as well as making brw_vs_constval.c
+		* handle varyings other than gl_TexCoord.
+		*/
+	       if (location >= FRAG_ATTRIB_TEX0 &&
+		   location <= FRAG_ATTRIB_TEX7 &&
+		   k == 3 && !(c->key.proj_attrib_mask & (1 << location))) {
+		  emit(BRW_OPCODE_MOV, attr, fs_reg(1.0f));
+	       } else {
+		  struct brw_reg interp = interp_reg(location, k);
+		  emit(FS_OPCODE_LINTERP, attr,
+		       this->delta_x, this->delta_y, fs_reg(interp));
+	       }
 	       attr.reg_offset++;
 	    }
 
