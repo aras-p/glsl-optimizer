@@ -498,7 +498,8 @@ radeon_winsys_bo_create(struct radeon_winsys *rws,
     desc.usage = get_pb_usage_from_create_flags(domain);
 
     /* Assign a buffer manager. */
-    if (bind & (PIPE_BIND_VERTEX_BUFFER | PIPE_BIND_INDEX_BUFFER))
+    if (bind & (PIPE_BIND_VERTEX_BUFFER | PIPE_BIND_INDEX_BUFFER |
+                PIPE_BIND_CONSTANT_BUFFER))
 	provider = ws->cman;
     else
         provider = ws->kman;
