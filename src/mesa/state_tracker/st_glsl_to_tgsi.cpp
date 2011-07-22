@@ -236,7 +236,7 @@ public:
    /**
     * identifier of this function signature used by the program.
     *
-    * At the point that Mesa instructions for function calls are
+    * At the point that TGSI instructions for function calls are
     * generated, we don't know the address of the first instruction of
     * the function body.  So we make the BranchTarget that is called a
     * small integer and rewrite them during set_branchtargets().
@@ -251,10 +251,9 @@ public:
    glsl_to_tgsi_instruction *bgn_inst;
 
    /**
-    * Index of the first instruction of the function body in actual
-    * Mesa IR.
+    * Index of the first instruction of the function body in actual TGSI.
     *
-    * Set after convertion from glsl_to_tgsi_instruction to prog_instruction.
+    * Set after conversion from glsl_to_tgsi_instruction to TGSI.
     */
    int inst;
 
@@ -1672,7 +1671,7 @@ glsl_to_tgsi_visitor::visit(ir_dereference_array *ir)
    } else {
       st_src_reg array_base = this->result;
       /* Variable index array dereference.  It eats the "vec4" of the
-       * base of the array and an index that offsets the Mesa register
+       * base of the array and an index that offsets the TGSI register
        * index.
        */
       ir->array_index->accept(this);
@@ -1879,7 +1878,7 @@ glsl_to_tgsi_visitor::visit(ir_assignment *ir)
       /* Swizzle a small RHS vector into the channels being written.
        *
        * glsl ir treats write_mask as dictating how many channels are
-       * present on the RHS while Mesa IR treats write_mask as just
+       * present on the RHS while TGSI treats write_mask as just
        * showing which channels of the vec4 RHS get written.
        */
       for (int i = 0; i < 4; i++) {
@@ -2202,8 +2201,8 @@ glsl_to_tgsi_visitor::visit(ir_texture *ir)
 
    /* Put our coords in a temp.  We'll need to modify them for shadow,
     * projection, or LOD, so the only case we'd use it as is is if
-    * we're doing plain old texturing.  Mesa IR optimization should
-    * handle cleaning up our mess in that case.
+    * we're doing plain old texturing.  The optimization passes on
+    * glsl_to_tgsi_visitor should handle cleaning up our mess in that case.
     */
    coord = get_temp(glsl_type::vec4_type);
    coord_dst = st_dst_reg(coord);
@@ -3799,9 +3798,9 @@ static unsigned *get_label(struct st_translate *t, unsigned branch_target)
 }
 
 /**
- * Called prior to emitting the TGSI code for each Mesa instruction.
+ * Called prior to emitting the TGSI code for each instruction.
  * Allocate additional space for instructions if needed.
- * Update the insn[] array so the next Mesa instruction points to
+ * Update the insn[] array so the next glsl_to_tgsi_instruction points to
  * the next TGSI instruction.
  */
 static void set_insn_start(struct st_translate *t, unsigned start)
@@ -3856,7 +3855,7 @@ emit_immediate(struct st_translate *t,
 }
 
 /**
- * Map a Mesa dst register to a TGSI ureg_dst register.
+ * Map a glsl_to_tgsi dst register to a TGSI ureg_dst register.
  */
 static struct ureg_dst
 dst_register(struct st_translate *t,
@@ -3898,7 +3897,7 @@ dst_register(struct st_translate *t,
 }
 
 /**
- * Map a Mesa src register to a TGSI ureg_src register.
+ * Map a glsl_to_tgsi src register to a TGSI ureg_src register.
  */
 static struct ureg_src
 src_register(struct st_translate *t,
