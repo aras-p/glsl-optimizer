@@ -1067,6 +1067,7 @@ fs_visitor::propagate_constants()
 	       if (inst->src[0].imm.f != 0.0f) {
 		  scan_inst->opcode = BRW_OPCODE_MOV;
 		  scan_inst->src[0] = inst->src[0];
+		  scan_inst->src[0].imm.f = 1.0f / scan_inst->src[0].imm.f;
 		  progress = true;
 	       }
 	       break;
@@ -1087,6 +1088,47 @@ fs_visitor::propagate_constants()
 
    return progress;
 }
+
+
+/**
+ * Attempts to move immediate constants into the immediate
+ * constant slot of following instructions.
+ *
+ * Immediate constants are a bit tricky -- they have to be in the last
+ * operand slot, you can't do abs/negate on them,
+ */
+
+bool
+fs_visitor::opt_algebraic()
+{
+   bool progress = false;
+
+   calculate_live_intervals();
+
+   foreach_list(node, &this->instructions) {
+      fs_inst *inst = (fs_inst *)node;
+
+      switch (inst->opcode) {
+      case BRW_OPCODE_MUL:
+	 if (inst->src[1].file != IMM)
+	    continue;
+
+	 /* a * 1.0 = a */
+	 if (inst->src[1].type == BRW_REGISTER_TYPE_F &&
+	     inst->src[1].imm.f == 1.0) {
+	    inst->opcode = BRW_OPCODE_MOV;
+	    inst->src[1] = reg_undef;
+	    progress = true;
+	    break;
+	 }
+
+	 break;
+      }
+   }
+
+   return progress;
+}
+
 /**
  * Must be called after calculate_live_intervales() to remove unused
  * writes to registers -- register allocation will fail otherwise
@@ -1572,6 +1614,7 @@ fs_visitor::run()
 	 progress = remove_duplicate_mrf_writes() || progress;
 
 	 progress = propagate_constants() || progress;
+	 progress = opt_algebraic() || progress;
 	 progress = register_coalesce() || progress;
 	 progress = compute_to_mrf() || progress;
 	 progress = dead_code_eliminate() || progress;

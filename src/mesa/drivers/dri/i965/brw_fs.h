@@ -485,6 +485,7 @@ public:
    void setup_pull_constants();
    void calculate_live_intervals();
    bool propagate_constants();
+   bool opt_algebraic();
    bool register_coalesce();
    bool compute_to_mrf();
    bool dead_code_eliminate();
