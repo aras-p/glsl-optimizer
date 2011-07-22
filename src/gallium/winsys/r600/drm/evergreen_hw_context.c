@@ -23,19 +23,13 @@
  * Authors:
  *      Jerome Glisse
  */
-#include <errno.h>
-#include <stdint.h>
-#include <string.h>
-#include <stdlib.h>
-#include <assert.h>
-#include "xf86drm.h"
 #include "r600.h"
-#include "evergreend.h"
-#include "radeon_drm.h"
-#include "pipe/p_compiler.h"
-#include "util/u_inlines.h"
-#include "util/u_memory.h"
 #include "r600_priv.h"
+#include "evergreend.h"
+#include "util/u_memory.h"
+#include "radeon_drm.h"
+#include "xf86drm.h"
+#include <errno.h>
 
 #define GROUP_FORCE_NEW_BLOCK	0
 
@@ -1271,4 +1265,3 @@ void evergreen_context_flush_dest_caches(struct r600_context *ctx)
 
 	ctx->flags &= ~R600_CONTEXT_DST_CACHES_DIRTY;
 }
-

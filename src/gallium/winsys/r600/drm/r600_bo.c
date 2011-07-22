@@ -23,13 +23,9 @@
  * Authors:
  *      Dave Airlie
  */
-#include <pipe/p_compiler.h>
-#include <pipe/p_screen.h>
-#include <pipebuffer/pb_bufmgr.h>
-#include "state_tracker/drm_driver.h"
 #include "r600_priv.h"
 #include "r600d.h"
-#include "drm.h"
+#include "state_tracker/drm_driver.h"
 #include "radeon_drm.h"
 
 struct r600_bo *r600_bo(struct radeon *radeon,

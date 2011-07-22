@@ -24,14 +24,12 @@
  *      Jerome Glisse
  */
 #define _FILE_OFFSET_BITS 64
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
+#include "r600_priv.h"
+#include "util/u_hash_table.h"
+#include "radeon_drm.h"
+#include "xf86drm.h"
 #include <sys/mman.h>
 #include <errno.h>
-#include "r600_priv.h"
-#include "xf86drm.h"
-#include "radeon_drm.h"
 
 int radeon_bo_fixed_map(struct radeon *radeon, struct radeon_bo *bo)
 {

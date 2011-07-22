@@ -26,11 +26,9 @@
  *      Thomas Hellström <thomas-at-vmware-dot-com>
  *      Jerome Glisse <jglisse@redhat.com>
  */
-#include <util/u_memory.h>
-#include <util/u_double_list.h>
-#include <util/u_time.h>
-#include <pipebuffer/pb_bufmgr.h>
 #include "r600_priv.h"
+#include "util/u_memory.h"
+#include "util/u_time.h"
 
 static void r600_bomgr_timeout_flush(struct r600_bomgr *mgr)
 {

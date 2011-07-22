@@ -25,31 +25,12 @@
  *      Corbin Simpson <MostAwesomeDude@gmail.com>
  *      Joakim Sindholt <opensource@zhasha.com>
  */
-#include <stdio.h>
-#include <errno.h>
-#include <sys/ioctl.h>
-#include "util/u_inlines.h"
-#include "util/u_debug.h"
-#include "util/u_hash_table.h"
-#include <pipebuffer/pb_bufmgr.h>
-#include "r600.h"
+
 #include "r600_priv.h"
 #include "r600_drm_public.h"
-#include "xf86drm.h"
-#include "radeon_drm.h"
-#include "../../radeon/drm/radeon_winsys.h"
-
-#ifndef RADEON_INFO_TILING_CONFIG
-#define RADEON_INFO_TILING_CONFIG 0x6
-#endif
-
-#ifndef RADEON_INFO_CLOCK_CRYSTAL_FREQ
-#define RADEON_INFO_CLOCK_CRYSTAL_FREQ 0x9
-#endif
-
-#ifndef RADEON_INFO_NUM_BACKENDS
-#define RADEON_INFO_NUM_BACKENDS 0xa
-#endif
+#include <radeon_drm.h>
+#include <xf86drm.h>
+#include <errno.h>
 
 #ifndef RADEON_INFO_NUM_TILE_PIPES
 #define RADEON_INFO_NUM_TILE_PIPES 0xb

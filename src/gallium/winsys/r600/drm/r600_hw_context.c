@@ -23,19 +23,12 @@
  * Authors:
  *      Jerome Glisse
  */
-#include <errno.h>
-#include <stdint.h>
-#include <string.h>
-#include <stdlib.h>
-#include <assert.h>
-#include <pipe/p_compiler.h>
-#include <util/u_inlines.h>
-#include <util/u_memory.h>
-#include <pipebuffer/pb_bufmgr.h>
-#include "xf86drm.h"
-#include "radeon_drm.h"
 #include "r600_priv.h"
 #include "r600d.h"
+#include "util/u_memory.h"
+#include "radeon_drm.h"
+#include "xf86drm.h"
+#include <errno.h>
 
 #define GROUP_FORCE_NEW_BLOCK	0
 

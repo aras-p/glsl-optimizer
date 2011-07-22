@@ -26,16 +26,10 @@
 #ifndef R600_PRIV_H
 #define R600_PRIV_H
 
-#include <errno.h>
-#include <stdint.h>
-#include <stdlib.h>
-#include <assert.h>
-#include <util/u_double_list.h>
-#include <util/u_inlines.h>
-#include "util/u_hash_table.h"
-#include <os/os_thread.h>
 #include "r600.h"
 #include "../../radeon/drm/radeon_winsys.h"
+#include "util/u_hash_table.h"
+#include "os/os_thread.h"
 
 #define PKT_COUNT_C                     0xC000FFFF
 #define PKT_COUNT_S(x)                  (((x) & 0x3FFF) << 16)
