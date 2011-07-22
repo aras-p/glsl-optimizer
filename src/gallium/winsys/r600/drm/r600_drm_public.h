@@ -26,8 +26,8 @@
 #ifndef R600_DRM_PUBLIC_H
 #define R600_DRM_PUBLIC_H
 
-struct radeon;
+struct radeon_winsys;
 
-struct radeon *r600_drm_winsys_create(int drmFD);
+struct radeon *r600_drm_winsys_create(struct radeon_winsys *rw);
 
 #endif

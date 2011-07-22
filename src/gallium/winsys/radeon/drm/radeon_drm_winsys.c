@@ -47,6 +47,9 @@
 #ifndef RADEON_INFO_WANT_CMASK
 #define RADEON_INFO_WANT_CMASK 8
 #endif
+#ifndef RADEON_INFO_NUM_BACKENDS
+#define RADEON_INFO_NUM_BACKENDS 10
+#endif
 
 /* Enable/disable feature access for one command stream.
  * If enable == TRUE, return TRUE on success.
@@ -175,6 +178,13 @@ static boolean do_winsys_init(struct radeon_drm_winsys *ws)
 #define CHIPSET(pci_id, name, family) case pci_id:
 #include "pci_ids/r300_pci_ids.h"
 #undef CHIPSET
+        ws->gen = R300;
+        break;
+
+#define CHIPSET(pci_id, name, family) case pci_id:
+#include "pci_ids/r600_pci_ids.h"
+#undef CHIPSET
+        ws->gen = R600;
         break;
 
     default:
@@ -196,15 +206,23 @@ static boolean do_winsys_init(struct radeon_drm_winsys *ws)
     ws->num_cpus = sysconf(_SC_NPROCESSORS_ONLN);
 
     /* Generation-specific queries. */
-    if (!radeon_get_drm_value(ws->fd, RADEON_INFO_NUM_GB_PIPES,
-                              "GB pipe count",
-                              &ws->info.r300_num_gb_pipes))
-        return FALSE;
+    if (ws->gen == R300) {
+        if (!radeon_get_drm_value(ws->fd, RADEON_INFO_NUM_GB_PIPES,
+                                  "GB pipe count",
+                                  &ws->info.r300_num_gb_pipes))
+            return FALSE;
 
-    if (!radeon_get_drm_value(ws->fd, RADEON_INFO_NUM_Z_PIPES,
-                              "Z pipe count",
-                              &ws->info.r300_num_z_pipes))
-        return FALSE;
+        if (!radeon_get_drm_value(ws->fd, RADEON_INFO_NUM_Z_PIPES,
+                                  "Z pipe count",
+                                  &ws->info.r300_num_z_pipes))
+            return FALSE;
+    }
+    else if (ws->gen == R600) {
+        if (!radeon_get_drm_value(ws->fd, RADEON_INFO_NUM_BACKENDS,
+                                  "num backends",
+                                  &ws->info.r600_num_backends))
+            return FALSE;
+    }
 
     return TRUE;
 }
@@ -263,6 +281,7 @@ struct radeon_winsys *radeon_drm_winsys_create(int fd)
     }
 
     ws->fd = fd;
+    ws->info.fd = fd;
 
     if (!do_winsys_init(ws))
         goto fail;

@@ -42,7 +42,6 @@
 #include "radeon/drm/radeon_drm_public.h"
 #include "r300/r300_public.h"
 /* for r600 */
-#include "r600/drm/r600_drm_public.h"
 #include "r600/r600_public.h"
 /* for vmwgfx */
 #include "svga/drm/svga_drm_public.h"
@@ -141,10 +140,10 @@ static struct pipe_screen *
 pipe_r600_create_screen(int fd)
 {
 #if _EGL_PIPE_R600
-   struct radeon *rw;
+   struct radeon_winsys *rw;
    struct pipe_screen *screen;
 
-   rw = r600_drm_winsys_create(fd);
+   rw = radeon_drm_winsys_create(fd);
    if (!rw)
       return NULL;
 

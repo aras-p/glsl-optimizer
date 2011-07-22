@@ -37,6 +37,7 @@
 #include "r600_drm_public.h"
 #include "xf86drm.h"
 #include "radeon_drm.h"
+#include "../../radeon/drm/radeon_winsys.h"
 
 #ifndef RADEON_INFO_TILING_CONFIG
 #define RADEON_INFO_TILING_CONFIG 0x6
@@ -96,20 +97,6 @@ unsigned r600_get_backend_map(struct radeon *radeon)
 unsigned r600_get_minor_version(struct radeon *radeon)
 {
 	return radeon->minor_version;
-}
-
-
-static int radeon_get_device(struct radeon *radeon)
-{
-	struct drm_radeon_info info = {};
-	int r;
-
-	radeon->device = 0;
-	info.request = RADEON_INFO_DEVICE_ID;
-	info.value = (uintptr_t)&radeon->device;
-	r = drmCommandWriteRead(radeon->fd, DRM_RADEON_INFO, &info,
-			sizeof(struct drm_radeon_info));
-	return r;
 }
 
 static int r600_interpret_tiling(struct radeon *radeon, uint32_t tiling_config)
@@ -320,39 +307,22 @@ static int handle_compare(void *key1, void *key2)
     return PTR_TO_UINT(key1) != PTR_TO_UINT(key2);
 }
 
-static struct radeon *radeon_new(int fd, unsigned device)
+static struct radeon *radeon_new(struct radeon_winsys *rw)
 {
 	struct radeon *radeon;
 	int r;
-	drmVersionPtr version;
 
 	radeon = calloc(1, sizeof(*radeon));
 	if (radeon == NULL) {
 		return NULL;
 	}
-	radeon->fd = fd;
-	radeon->device = device;
+
+	rw->query_info(rw, &radeon->info);
+	radeon->fd = radeon->info.fd;
+	radeon->device = radeon->info.pci_id;
+	radeon->num_backends = radeon->info.r600_num_backends;
 	radeon->refcount = 1;
-
-	version = drmGetVersion(radeon->fd);
-	if (version->version_major != 2) {
-		fprintf(stderr, "%s: DRM version is %d.%d.%d but this driver is "
-			"only compatible with 2.x.x\n", __FUNCTION__,
-			version->version_major, version->version_minor,
-			version->version_patchlevel);
-		drmFreeVersion(version);
-		exit(1);
-	}
-
-	radeon->minor_version = version->version_minor;
-
-	drmFreeVersion(version);
-
-	r = radeon_get_device(radeon);
-	if (r) {
-		fprintf(stderr, "Failed to get device id\n");
-		return radeon_decref(radeon);
-	}
+	radeon->minor_version = radeon->info.drm_minor;
 
 	radeon->family = radeon_family_from_device(radeon->device);
 	if (radeon->family == CHIP_UNKNOWN) {
@@ -436,9 +406,9 @@ static struct radeon *radeon_new(int fd, unsigned device)
 	return radeon;
 }
 
-struct radeon *r600_drm_winsys_create(int drmfd)
+struct radeon *r600_drm_winsys_create(struct radeon_winsys *rw)
 {
-	return radeon_new(drmfd, 0);
+	return radeon_new(rw);
 }
 
 struct radeon *radeon_decref(struct radeon *radeon)

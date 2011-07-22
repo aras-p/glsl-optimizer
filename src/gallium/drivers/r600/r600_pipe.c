@@ -47,6 +47,7 @@
 #include "r600_resource.h"
 #include "r600_shader.h"
 #include "r600_pipe.h"
+#include "../../winsys/r600/drm/r600_drm_public.h"
 
 /*
  * pipe_context
@@ -563,9 +564,10 @@ static boolean r600_fence_finish(struct pipe_screen *pscreen,
 	return TRUE;
 }
 
-struct pipe_screen *r600_screen_create(struct radeon *radeon)
+struct pipe_screen *r600_screen_create(struct radeon_winsys *rw)
 {
 	struct r600_screen *rscreen;
+	struct radeon *radeon = r600_drm_winsys_create(rw);
 
 	rscreen = CALLOC_STRUCT(r600_screen);
 	if (rscreen == NULL) {

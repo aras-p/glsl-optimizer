@@ -35,6 +35,7 @@
 #include "util/u_hash_table.h"
 #include <os/os_thread.h>
 #include "r600.h"
+#include "../../radeon/drm/radeon_winsys.h"
 
 #define PKT_COUNT_C                     0xC000FFFF
 #define PKT_COUNT_S(x)                  (((x) & 0x3FFF) << 16)
@@ -43,6 +44,7 @@ struct r600_bomgr;
 struct r600_bo;
 
 struct radeon {
+	struct radeon_info		info;
 	int				fd;
 	int				refcount;
 	unsigned			device;

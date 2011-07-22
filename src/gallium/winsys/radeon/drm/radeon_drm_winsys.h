@@ -33,12 +33,18 @@
 #include "radeon_winsys.h"
 #include "os/os_thread.h"
 
+enum radeon_generation {
+    R300,
+    R600
+};
+
 struct radeon_drm_winsys {
     struct radeon_winsys base;
 
     int fd; /* DRM file descriptor */
     int num_cs; /* The number of command streams created. */
 
+    enum radeon_generation gen;
     struct radeon_info info;
 
     struct pb_manager *kman;

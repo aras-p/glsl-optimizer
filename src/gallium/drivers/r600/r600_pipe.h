@@ -26,6 +26,8 @@
 #ifndef R600_PIPE_H
 #define R600_PIPE_H
 
+#include "../../winsys/radeon/drm/radeon_winsys.h"
+
 #include <pipe/p_state.h>
 #include <pipe/p_screen.h>
 #include <pipe/p_context.h>
@@ -183,7 +185,7 @@ struct r600_pipe_context {
 	struct r600_pipe_state		*states[R600_PIPE_NSTATES];
 	struct r600_context		ctx;
 	struct r600_vertex_element	*vertex_elements;
-	struct r600_pipe_resource_state		fs_resource[PIPE_MAX_ATTRIBS];
+	struct r600_pipe_resource_state	fs_resource[PIPE_MAX_ATTRIBS];
 	struct pipe_framebuffer_state	framebuffer;
 	struct pipe_index_buffer	index_buffer;
 	unsigned			cb_target_mask;

@@ -73,6 +73,7 @@ struct radeon_info {
     uint32_t pci_id;
     uint32_t gart_size;
     uint32_t vram_size;
+    uint32_t fd; /* XXX transitional */
 
     uint32_t drm_major; /* version */
     uint32_t drm_minor;
@@ -80,6 +81,8 @@ struct radeon_info {
 
     uint32_t r300_num_gb_pipes;
     uint32_t r300_num_z_pipes;
+
+    uint32_t r600_num_backends;
 };
 
 enum radeon_feature_id {

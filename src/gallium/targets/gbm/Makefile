@@ -83,6 +83,7 @@ r300_LIBS = \
 # r600 pipe driver
 r600_LIBS = \
 	$(TOP)/src/gallium/winsys/r600/drm/libr600winsys.a \
+	$(TOP)/src/gallium/winsys/radeon/drm/libradeonwinsys.a \
 	$(TOP)/src/gallium/drivers/r600/libr600.a
 
 # vmwgfx pipe driver
@@ -90,11 +91,16 @@ vmwgfx_LIBS = \
 	$(TOP)/src/gallium/winsys/svga/drm/libsvgadrm.a \
 	$(TOP)/src/gallium/drivers/svga/libsvga.a
 
+
+
 # LLVM
 ifeq ($(MESA_LLVM),1)
-pipe_LIBS += $(TOP)/src/gallium/drivers/llvmpipe/libllvmpipe.a
 pipe_SYS += $(LLVM_LIBS)
 pipe_LDFLAGS += $(LLVM_LDFLAGS)
+endif
+
+ifneq ($(findstring llvmpipe,$(GALLIUM_DRIVERS_DIRS)),)
+pipe_LIBS += $(TOP)/src/gallium/drivers/llvmpipe/libllvmpipe.a
 endif
 
 # determine the targets/sources
@@ -117,8 +123,10 @@ pipe_SOURCES += pipe_nouveau.c
 endif
 
 ifneq ($(findstring radeon/drm,$(GALLIUM_WINSYS_DIRS)),)
+ifneq ($(findstring r300,$(GALLIUM_DRIVERS_DIRS)),)
 pipe_TARGETS += $(PIPE_PREFIX)r300.so
 pipe_SOURCES += pipe_r300.c
+endif
 endif
 
 ifneq ($(findstring r600/drm,$(GALLIUM_WINSYS_DIRS)),)
