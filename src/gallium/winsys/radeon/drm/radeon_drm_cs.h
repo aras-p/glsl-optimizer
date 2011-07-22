@@ -88,8 +88,9 @@ static INLINE boolean
 radeon_bo_is_referenced_by_cs(struct radeon_drm_cs *cs,
                               struct radeon_bo *bo)
 {
-    return bo->num_cs_references == bo->rws->num_cs ||
-           (bo->num_cs_references && radeon_get_reloc(cs->csc, bo) != -1);
+    int num_refs = bo->num_cs_references;
+    return num_refs == bo->rws->num_cs ||
+           (num_refs && radeon_get_reloc(cs->csc, bo) != -1);
 }
 
 static INLINE boolean
