@@ -603,9 +603,11 @@ fs_visitor::emit_texture_gen4(ir_texture *ir, fs_reg dst, fs_reg coordinate,
       /* gen4's SIMD8 sampler always has the slots for u,v,r present. */
       mlen += 3;
    } else if (ir->op == ir_txd) {
+      this->result = reg_undef;
       ir->lod_info.grad.dPdx->accept(this);
       fs_reg dPdx = this->result;
 
+      this->result = reg_undef;
       ir->lod_info.grad.dPdy->accept(this);
       fs_reg dPdy = this->result;
 
@@ -786,9 +788,11 @@ fs_visitor::emit_texture_gen5(ir_texture *ir, fs_reg dst, fs_reg coordinate,
       inst = emit(FS_OPCODE_TXL, dst);
       break;
    case ir_txd: {
+      this->result = reg_undef;
       ir->lod_info.grad.dPdx->accept(this);
       fs_reg dPdx = this->result;
 
+      this->result = reg_undef;
       ir->lod_info.grad.dPdy->accept(this);
       fs_reg dPdy = this->result;
 
@@ -850,6 +854,7 @@ fs_visitor::emit_texture_gen7(ir_texture *ir, fs_reg dst, fs_reg coordinate,
    }
 
    if (ir->shadow_comparitor && ir->op != ir_txd) {
+      this->result = reg_undef;
       ir->shadow_comparitor->accept(this);
       emit(BRW_OPCODE_MOV, fs_reg(MRF, base_mrf + mlen), this->result);
       mlen += reg_width;
@@ -860,11 +865,13 @@ fs_visitor::emit_texture_gen7(ir_texture *ir, fs_reg dst, fs_reg coordinate,
    case ir_tex:
       break;
    case ir_txb:
+      this->result = reg_undef;
       ir->lod_info.bias->accept(this);
       emit(BRW_OPCODE_MOV, fs_reg(MRF, base_mrf + mlen), this->result);
       mlen += reg_width;
       break;
    case ir_txl:
+      this->result = reg_undef;
       ir->lod_info.lod->accept(this);
       emit(BRW_OPCODE_MOV, fs_reg(MRF, base_mrf + mlen), this->result);
       mlen += reg_width;
@@ -873,9 +880,11 @@ fs_visitor::emit_texture_gen7(ir_texture *ir, fs_reg dst, fs_reg coordinate,
       if (c->dispatch_width == 16)
 	 fail("Gen7 does not support sample_d/sample_d_c in SIMD16 mode.");
 
+      this->result = reg_undef;
       ir->lod_info.grad.dPdx->accept(this);
       fs_reg dPdx = this->result;
 
+      this->result = reg_undef;
       ir->lod_info.grad.dPdy->accept(this);
       fs_reg dPdy = this->result;
 
@@ -1070,6 +1079,7 @@ fs_visitor::visit(ir_texture *ir)
       if (hw_compare_supported) {
 	 inst->shadow_compare = true;
       } else {
+	 this->result = reg_undef;
 	 ir->shadow_comparitor->accept(this);
 	 fs_reg ref = this->result;
 
