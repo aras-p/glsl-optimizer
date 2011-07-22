@@ -112,7 +112,7 @@ radeon_bo_is_referenced_by_cs_for_write(struct radeon_drm_cs *cs,
 static INLINE boolean
 radeon_bo_is_referenced_by_any_cs(struct radeon_bo *bo)
 {
-    return bo->num_cs_references;
+    return bo->num_cs_references != 0;
 }
 
 void radeon_drm_cs_sync_flush(struct radeon_drm_cs *cs);
