@@ -1056,6 +1056,20 @@ fs_visitor::propagate_constants()
 		  progress = true;
 	       }
 	       break;
+
+	    case FS_OPCODE_RCP:
+	       /* The hardware doesn't do math on immediate values
+		* (because why are you doing that, seriously?), but
+		* the correct answer is to just constant fold it
+		* anyway.
+		*/
+	       assert(i == 0);
+	       if (inst->src[0].imm.f != 0.0f) {
+		  scan_inst->opcode = BRW_OPCODE_MOV;
+		  scan_inst->src[0] = inst->src[0];
+		  progress = true;
+	       }
+	       break;
 	    }
 	 }
 
