@@ -96,6 +96,7 @@ glsl_sources = [
     'opt_tree_grafting.cpp',
     'ralloc.c',
     's_expression.cpp',
+    'standalone_scaffolding.cpp',
     'strtod.c',
 ] 
 
