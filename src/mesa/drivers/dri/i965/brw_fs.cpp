@@ -1196,7 +1196,8 @@ fs_visitor::register_coalesce()
       if (inst->opcode != BRW_OPCODE_MOV ||
 	  inst->predicated ||
 	  inst->saturate ||
-	  inst->dst.file != GRF || inst->src[0].file != GRF ||
+	  inst->dst.file != GRF || (inst->src[0].file != GRF &&
+				    inst->src[0].file != UNIFORM)||
 	  inst->dst.type != inst->src[0].type)
 	 continue;
 
@@ -1218,7 +1219,8 @@ fs_visitor::register_coalesce()
 	       interfered = true;
 	       break;
 	    }
-	    if (scan_inst->dst.reg == inst->src[0].reg &&
+	    if (inst->src[0].file == GRF &&
+		scan_inst->dst.reg == inst->src[0].reg &&
 		(scan_inst->dst.reg_offset == inst->src[0].reg_offset ||
 		 scan_inst->is_tex())) {
 	       interfered = true;
@@ -1226,10 +1228,13 @@ fs_visitor::register_coalesce()
 	    }
 	 }
 
-	 /* The gen6 MATH instruction can't handle source modifiers, so avoid
-	  * coalescing those for now.  We should do something more specific.
+	 /* The gen6 MATH instruction can't handle source modifiers or
+	  * unusual register regions, so avoid coalescing those for
+	  * now.  We should do something more specific.
 	  */
-	 if (intel->gen >= 6 && scan_inst->is_math() && has_source_modifiers) {
+	 if (intel->gen >= 6 &&
+	     scan_inst->is_math() &&
+	     (has_source_modifiers || inst->src[0].file == UNIFORM)) {
 	    interfered = true;
 	    break;
 	 }
@@ -1248,11 +1253,10 @@ fs_visitor::register_coalesce()
 	    if (scan_inst->src[i].file == GRF &&
 		scan_inst->src[i].reg == inst->dst.reg &&
 		scan_inst->src[i].reg_offset == inst->dst.reg_offset) {
-	       scan_inst->src[i].reg = inst->src[0].reg;
-	       scan_inst->src[i].reg_offset = inst->src[0].reg_offset;
-	       scan_inst->src[i].abs |= inst->src[0].abs;
-	       scan_inst->src[i].negate ^= inst->src[0].negate;
-	       scan_inst->src[i].smear = inst->src[0].smear;
+	       fs_reg new_src = inst->src[0];
+	       new_src.negate ^= scan_inst->src[i].negate;
+	       new_src.abs |= scan_inst->src[i].abs;
+	       scan_inst->src[i] = new_src;
 	    }
 	 }
       }
