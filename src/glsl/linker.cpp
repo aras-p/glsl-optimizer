@@ -1805,7 +1805,8 @@ link_shaders(struct gl_context *ctx, struct gl_shader_program *prog)
     * present in a linked program.  By checking for use of shading language
     * version 1.00, we also catch the GL_ARB_ES2_compatibility case.
     */
-   if (ctx->API == API_OPENGLES2 || prog->Version == 100) {
+   if (!prog->InternalSeparateShader &&
+       (ctx->API == API_OPENGLES2 || prog->Version == 100)) {
       if (prog->_LinkedShaders[MESA_SHADER_VERTEX] == NULL) {
 	 linker_error(prog, "program lacks a vertex shader\n");
       } else if (prog->_LinkedShaders[MESA_SHADER_FRAGMENT] == NULL) {
