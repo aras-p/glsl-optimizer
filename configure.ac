@@ -1699,9 +1699,6 @@ dnl Gallium configuration
 dnl
 if test "x$with_gallium_drivers" != x; then
     SRC_DIRS="$SRC_DIRS gallium gallium/winsys gallium/targets"
-    AC_PATH_PROG([LLVM_CONFIG], [llvm-config], [no])
-else
-    LLVM_CONFIG=no
 fi
 
 AC_SUBST([LLVM_CFLAGS])
@@ -1821,6 +1818,8 @@ if test "x$enable_gallium_llvm" = xauto; then
     esac
 fi
 if test "x$enable_gallium_llvm" = xyes; then
+    AC_PATH_PROG([LLVM_CONFIG], [llvm-config], [no])
+
     if test "x$LLVM_CONFIG" != xno; then
 	LLVM_VERSION=`$LLVM_CONFIG --version`
 	LLVM_CFLAGS=`$LLVM_CONFIG --cppflags|sed 's/-DNDEBUG\>//g'`
