@@ -105,11 +105,8 @@ struct r600_bo *r600_bo_handle(struct radeon *radeon,
 void *r600_bo_map(struct radeon *radeon, struct r600_bo *bo, unsigned usage, void *ctx);
 void r600_bo_unmap(struct radeon *radeon, struct r600_bo *bo);
 boolean r600_bo_get_winsys_handle(struct radeon *radeon, struct r600_bo *pb_bo,
-				unsigned stride, struct winsys_handle *whandle);
-static INLINE unsigned r600_bo_offset(struct r600_bo *bo)
-{
-	return 0;
-}
+				  unsigned stride, struct winsys_handle *whandle);
+
 void r600_bo_destroy(struct radeon *radeon, struct r600_bo *bo);
 
 /* this relies on the pipe_reference being the first member of r600_bo */

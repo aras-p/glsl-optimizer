@@ -1077,8 +1077,8 @@ static struct pipe_sampler_view *r600_create_sampler_view(struct pipe_context *c
 	rstate->val[1] = (S_038004_TEX_HEIGHT(height - 1) |
 			  S_038004_TEX_DEPTH(depth - 1) |
 			  S_038004_DATA_FORMAT(format));
-	rstate->val[2] = (tmp->offset[offset_level] + r600_bo_offset(bo[0])) >> 8;
-	rstate->val[3] = (tmp->offset[offset_level+1] + r600_bo_offset(bo[1])) >> 8;
+	rstate->val[2] = tmp->offset[offset_level] >> 8;
+	rstate->val[3] = tmp->offset[offset_level+1] >> 8;
 	rstate->val[4] = (word4 |
 			  S_038010_SRF_MODE_ALL(V_038010_SRF_MODE_ZERO_CLAMP_MINUS_ONE) |
 			  S_038010_REQUEST_SIZE(1) |
@@ -1441,7 +1441,7 @@ static void r600_cb(struct r600_pipe_context *rctx, struct r600_pipe_state *rsta
 
 	r600_pipe_state_add_reg(rstate,
 				R_028040_CB_COLOR0_BASE + cb * 4,
-				(offset + r600_bo_offset(bo[0])) >> 8, 0xFFFFFFFF, bo[0]);
+				offset >> 8, 0xFFFFFFFF, bo[0]);
 	r600_pipe_state_add_reg(rstate,
 				R_0280A0_CB_COLOR0_INFO + cb * 4,
 				color_info, 0xFFFFFFFF, bo[0]);
@@ -1455,10 +1455,10 @@ static void r600_cb(struct r600_pipe_context *rctx, struct r600_pipe_state *rsta
 				0x00000000, 0xFFFFFFFF, NULL);
 	r600_pipe_state_add_reg(rstate,
 				R_0280E0_CB_COLOR0_FRAG + cb * 4,
-				r600_bo_offset(bo[1]) >> 8, 0xFFFFFFFF, bo[1]);
+				0, 0xFFFFFFFF, bo[1]);
 	r600_pipe_state_add_reg(rstate,
 				R_0280C0_CB_COLOR0_TILE + cb * 4,
-				r600_bo_offset(bo[2]) >> 8, 0xFFFFFFFF, bo[2]);
+				0, 0xFFFFFFFF, bo[2]);
 	r600_pipe_state_add_reg(rstate,
 				R_028100_CB_COLOR0_MASK + cb * 4,
 				0x00000000, 0xFFFFFFFF, NULL);
@@ -1492,7 +1492,7 @@ static void r600_db(struct r600_pipe_context *rctx, struct r600_pipe_state *rsta
 	format = r600_translate_dbformat(state->zsbuf->texture->format);
 
 	r600_pipe_state_add_reg(rstate, R_02800C_DB_DEPTH_BASE,
-				(offset + r600_bo_offset(rbuffer->bo)) >> 8, 0xFFFFFFFF, rbuffer->bo);
+				offset >> 8, 0xFFFFFFFF, rbuffer->bo);
 	r600_pipe_state_add_reg(rstate, R_028000_DB_DEPTH_SIZE,
 				S_028000_PITCH_TILE_MAX(pitch) | S_028000_SLICE_TILE_MAX(slice),
 				0xFFFFFFFF, NULL);
@@ -2027,7 +2027,7 @@ void r600_pipe_shader_ps(struct pipe_context *ctx, struct r600_pipe_shader *shad
 	r600_pipe_state_add_reg(rstate, R_0286D8_SPI_INPUT_Z, spi_input_z, 0xFFFFFFFF, NULL);
 	r600_pipe_state_add_reg(rstate,
 				R_028840_SQ_PGM_START_PS,
-				r600_bo_offset(shader->bo) >> 8, 0xFFFFFFFF, shader->bo);
+				0, 0xFFFFFFFF, shader->bo);
 	r600_pipe_state_add_reg(rstate,
 				R_028850_SQ_PGM_RESOURCES_PS,
 				S_028868_NUM_GPRS(rshader->bc.ngpr) |
@@ -2106,7 +2106,7 @@ void r600_pipe_shader_vs(struct pipe_context *ctx, struct r600_pipe_shader *shad
 			0x00000000, 0xFFFFFFFF, NULL);
 	r600_pipe_state_add_reg(rstate,
 			R_028858_SQ_PGM_START_VS,
-			r600_bo_offset(shader->bo) >> 8, 0xFFFFFFFF, shader->bo);
+			0, 0xFFFFFFFF, shader->bo);
 
 	r600_pipe_state_add_reg(rstate,
 				R_03E200_SQ_LOOP_CONST_0 + (32 * 4), 0x01000FFF,
@@ -2127,7 +2127,7 @@ void r600_fetch_shader(struct pipe_context *ctx,
 	r600_pipe_state_add_reg(rstate, R_0288DC_SQ_PGM_CF_OFFSET_FS,
 				0x00000000, 0xFFFFFFFF, NULL);
 	r600_pipe_state_add_reg(rstate, R_028894_SQ_PGM_START_FS,
-				r600_bo_offset(ve->fetch_shader) >> 8,
+				0,
 				0xFFFFFFFF, ve->fetch_shader);
 }
 

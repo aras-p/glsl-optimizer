@@ -1202,7 +1202,7 @@ void evergreen_context_draw(struct r600_context *ctx, const struct r600_draw *dr
 	pm4[3] = draw->vgt_num_instances;
 	if (draw->indices) {
 	        pm4[4] = PKT3(PKT3_DRAW_INDEX, 3, ctx->predicate_drawing);
-		pm4[5] = draw->indices_bo_offset + r600_bo_offset(draw->indices);
+		pm4[5] = draw->indices_bo_offset;
 		pm4[6] = 0;
 		pm4[7] = draw->vgt_num_indices;
 		pm4[8] = draw->vgt_draw_initiator;

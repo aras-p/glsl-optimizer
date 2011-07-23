@@ -1468,7 +1468,7 @@ void r600_context_draw(struct r600_context *ctx, const struct r600_draw *draw)
 	pm4[3] = draw->vgt_num_instances;
 	if (draw->indices) {
 		pm4[4] = PKT3(PKT3_DRAW_INDEX, 3, ctx->predicate_drawing);
-		pm4[5] = draw->indices_bo_offset + r600_bo_offset(draw->indices);
+		pm4[5] = draw->indices_bo_offset;
 		pm4[6] = 0;
 		pm4[7] = draw->vgt_num_indices;
 		pm4[8] = draw->vgt_draw_initiator;
@@ -1710,14 +1710,14 @@ void r600_query_begin(struct r600_context *ctx, struct r600_query *query)
 	if (query->type == PIPE_QUERY_TIME_ELAPSED) {
 		ctx->pm4[ctx->pm4_cdwords++] = PKT3(PKT3_EVENT_WRITE_EOP, 4, 0);
 		ctx->pm4[ctx->pm4_cdwords++] = EVENT_TYPE(EVENT_TYPE_CACHE_FLUSH_AND_INV_TS_EVENT) | EVENT_INDEX(5);
-		ctx->pm4[ctx->pm4_cdwords++] = query->results_end + r600_bo_offset(query->buffer);
+		ctx->pm4[ctx->pm4_cdwords++] = query->results_end;
 		ctx->pm4[ctx->pm4_cdwords++] = (3 << 29);
 		ctx->pm4[ctx->pm4_cdwords++] = 0;
 		ctx->pm4[ctx->pm4_cdwords++] = 0;
 	} else {
 		ctx->pm4[ctx->pm4_cdwords++] = PKT3(PKT3_EVENT_WRITE, 2, 0);
 		ctx->pm4[ctx->pm4_cdwords++] = EVENT_TYPE(EVENT_TYPE_ZPASS_DONE) | EVENT_INDEX(1);
-		ctx->pm4[ctx->pm4_cdwords++] = query->results_end + r600_bo_offset(query->buffer);
+		ctx->pm4[ctx->pm4_cdwords++] = query->results_end;
 		ctx->pm4[ctx->pm4_cdwords++] = 0;
 	}
 	ctx->pm4[ctx->pm4_cdwords++] = PKT3(PKT3_NOP, 0, 0);
@@ -1735,14 +1735,14 @@ void r600_query_end(struct r600_context *ctx, struct r600_query *query)
 	if (query->type == PIPE_QUERY_TIME_ELAPSED) {
 		ctx->pm4[ctx->pm4_cdwords++] = PKT3(PKT3_EVENT_WRITE_EOP, 4, 0);
 		ctx->pm4[ctx->pm4_cdwords++] = EVENT_TYPE(EVENT_TYPE_CACHE_FLUSH_AND_INV_TS_EVENT) | EVENT_INDEX(5);
-		ctx->pm4[ctx->pm4_cdwords++] = query->results_end + 8 + r600_bo_offset(query->buffer);
+		ctx->pm4[ctx->pm4_cdwords++] = query->results_end + 8;
 		ctx->pm4[ctx->pm4_cdwords++] = (3 << 29);
 		ctx->pm4[ctx->pm4_cdwords++] = 0;
 		ctx->pm4[ctx->pm4_cdwords++] = 0;
 	} else {
 		ctx->pm4[ctx->pm4_cdwords++] = PKT3(PKT3_EVENT_WRITE, 2, 0);
 		ctx->pm4[ctx->pm4_cdwords++] = EVENT_TYPE(EVENT_TYPE_ZPASS_DONE) | EVENT_INDEX(1);
-		ctx->pm4[ctx->pm4_cdwords++] = query->results_end + 8 + r600_bo_offset(query->buffer);
+		ctx->pm4[ctx->pm4_cdwords++] = query->results_end + 8;
 		ctx->pm4[ctx->pm4_cdwords++] = 0;
 	}
 	ctx->pm4[ctx->pm4_cdwords++] = PKT3(PKT3_NOP, 0, 0);
@@ -1789,7 +1789,7 @@ void r600_query_predication(struct r600_context *ctx, struct r600_query *query, 
 		/* emit predicate packets for all data blocks */
 		while (results_base != query->results_end) {
 			ctx->pm4[ctx->pm4_cdwords++] = PKT3(PKT3_SET_PREDICATION, 1, 0);
-			ctx->pm4[ctx->pm4_cdwords++] = results_base + r600_bo_offset(query->buffer);
+			ctx->pm4[ctx->pm4_cdwords++] = results_base;
 			ctx->pm4[ctx->pm4_cdwords++] = op;
 			ctx->pm4[ctx->pm4_cdwords++] = PKT3(PKT3_NOP, 0, 0);
 			ctx->pm4[ctx->pm4_cdwords++] = 0;

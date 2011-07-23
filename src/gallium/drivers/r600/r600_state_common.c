@@ -418,7 +418,6 @@ void r600_set_constant_buffer(struct pipe_context *ctx, uint shader, uint index,
 	}
 
 	r600_upload_const_buffer(rctx, &rbuffer, &offset);
-	offset += r600_bo_offset(rbuffer->r.bo);
 
 	switch (shader) {
 	case PIPE_SHADER_VERTEX:
@@ -518,7 +517,7 @@ static void r600_vertex_buffer_update(struct r600_pipe_context *rctx)
 		}
 		if (vertex_buffer == NULL || rbuffer == NULL)
 			continue;
-		offset += vertex_buffer->buffer_offset + r600_bo_offset(rbuffer->bo);
+		offset += vertex_buffer->buffer_offset;
 
 		if (!rstate->id) {
 			if (rctx->chip_class >= EVERGREEN) {
