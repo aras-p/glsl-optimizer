@@ -468,8 +468,7 @@ static struct radeon_winsys_cs_handle *radeon_drm_get_cs_handle(
             get_radeon_bo(pb_buffer(_buf));
 }
 
-static unsigned get_pb_usage_from_create_flags(unsigned bind, unsigned usage,
-                                               enum radeon_bo_domain domain)
+static unsigned get_pb_usage_from_create_flags(enum radeon_bo_domain domain)
 {
     unsigned res = 0;
 
@@ -487,7 +486,6 @@ radeon_winsys_bo_create(struct radeon_winsys *rws,
                         unsigned size,
                         unsigned alignment,
                         unsigned bind,
-                        unsigned usage,
                         enum radeon_bo_domain domain)
 {
     struct radeon_drm_winsys *ws = radeon_drm_winsys(rws);
@@ -497,7 +495,7 @@ radeon_winsys_bo_create(struct radeon_winsys *rws,
 
     memset(&desc, 0, sizeof(desc));
     desc.alignment = alignment;
-    desc.usage = get_pb_usage_from_create_flags(bind, usage, domain);
+    desc.usage = get_pb_usage_from_create_flags(domain);
 
     /* Assign a buffer manager. */
     if (bind & (PIPE_BIND_VERTEX_BUFFER | PIPE_BIND_INDEX_BUFFER))

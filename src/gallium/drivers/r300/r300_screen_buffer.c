@@ -201,8 +201,7 @@ struct pipe_resource *r300_buffer_create(struct pipe_screen *screen,
     rbuf->buf =
         r300screen->rws->buffer_create(r300screen->rws,
                                        rbuf->b.b.b.width0, alignment,
-                                       rbuf->b.b.b.bind, rbuf->b.b.b.usage,
-                                       rbuf->domain);
+                                       rbuf->b.b.b.bind, rbuf->domain);
     if (!rbuf->buf) {
         util_slab_free(&r300screen->pool_buffers, rbuf);
         return NULL;

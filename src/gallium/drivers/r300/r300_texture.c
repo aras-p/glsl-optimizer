@@ -926,7 +926,7 @@ r300_texture_create_object(struct r300_screen *rscreen,
     if (!buffer) {
         tex->buf_size = tex->tex.size_in_bytes;
         tex->buf = rws->buffer_create(rws, tex->tex.size_in_bytes, 2048,
-                                         base->bind, base->usage, tex->domain);
+                                      base->bind, tex->domain);
 
         if (!tex->buf) {
             FREE(tex);

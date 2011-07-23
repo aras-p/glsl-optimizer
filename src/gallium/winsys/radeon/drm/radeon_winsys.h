@@ -119,7 +119,6 @@ struct radeon_winsys {
      * \param size      The size to allocate.
      * \param alignment An alignment of the buffer in memory.
      * \param bind      A bitmask of the PIPE_BIND_* flags.
-     * \param usage     A bitmask of the PIPE_USAGE_* flags.
      * \param domain    A bitmask of the RADEON_DOMAIN_* flags.
      * \return          The created buffer object.
      */
@@ -127,7 +126,6 @@ struct radeon_winsys {
                                        unsigned size,
                                        unsigned alignment,
                                        unsigned bind,
-                                       unsigned usage,
                                        enum radeon_bo_domain domain);
 
     struct radeon_winsys_cs_handle *(*buffer_get_cs_handle)(
