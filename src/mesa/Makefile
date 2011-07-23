@@ -12,10 +12,9 @@ DRICORE_OBJ_DIR := objs-dricore
 include sources.mak
 
 # adjust object dirs
+DRICORE_OBJECTS := $(addprefix $(DRICORE_OBJ_DIR)/, $(MESA_OBJECTS))
 MESA_OBJECTS := $(addprefix $(MESA_OBJ_DIR)/, $(MESA_OBJECTS))
 MESA_GALLIUM_OBJECTS := $(addprefix $(MESA_OBJ_DIR)/, $(MESA_GALLIUM_OBJECTS))
-
-DRICORE_OBJECTS := $(addprefix $(DRICORE_OBJ_DIR)/, $(MESA_OBJECTS))
 
 # define preprocessor flags
 MESA_CPPFLAGS := $(API_DEFINES) $(DEFINES)
@@ -123,6 +122,8 @@ depend: $(ALL_SOURCES)
 	@ echo "running $(MKDEP)"
 	@ touch depend
 	@$(MKDEP) $(MKDEP_OPTIONS) -p$(MESA_OBJ_DIR)/ $(MESA_CPPFLAGS) \
+		$(ALL_SOURCES) > /dev/null 2>/dev/null
+	@$(MKDEP) $(MKDEP_OPTIONS) -a -p$(DRICORE_OBJ_DIR)/ $(MESA_CPPFLAGS) \
 		$(ALL_SOURCES) > /dev/null 2>/dev/null
 
 ######################################################################
