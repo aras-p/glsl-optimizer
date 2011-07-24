@@ -297,7 +297,7 @@ struct radeon_winsys {
      */
     void (*cs_set_flush)(struct radeon_winsys_cs *cs,
                          void (*flush)(void *ctx, unsigned flags),
-                         void *user);
+                         void *ctx);
 
     /**
      * Return TRUE if a buffer is referenced by a command stream.
@@ -312,7 +312,8 @@ struct radeon_winsys {
      * Request access to a feature for a command stream.
      *
      * \param cs        A command stream.
-     * \param fid       A winsys buffer.
+     * \param fid       Feature ID, one of RADEON_FID_*
+     * \param enable	Whether to enable or disable the feature.
      */
     boolean (*cs_request_feature)(struct radeon_winsys_cs *cs,
                                   enum radeon_feature_id fid,
