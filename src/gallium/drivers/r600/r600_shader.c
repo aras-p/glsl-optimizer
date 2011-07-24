@@ -658,9 +658,9 @@ static int r600_shader_from_tgsi(struct r600_pipe_context * rctx, struct r600_pi
 		ctx.file_offset[TGSI_FILE_INPUT] = evergreen_gpr_count(&ctx);
 	}
 	ctx.file_offset[TGSI_FILE_OUTPUT] = ctx.file_offset[TGSI_FILE_INPUT] +
-						ctx.info.file_count[TGSI_FILE_INPUT];
+						ctx.info.file_max[TGSI_FILE_INPUT] + 1;
 	ctx.file_offset[TGSI_FILE_TEMPORARY] = ctx.file_offset[TGSI_FILE_OUTPUT] +
-						ctx.info.file_count[TGSI_FILE_OUTPUT];
+						ctx.info.file_max[TGSI_FILE_OUTPUT] + 1;
 
 	/* Outside the GPR range. This will be translated to one of the
 	 * kcache banks later. */
@@ -668,7 +668,7 @@ static int r600_shader_from_tgsi(struct r600_pipe_context * rctx, struct r600_pi
 
 	ctx.file_offset[TGSI_FILE_IMMEDIATE] = V_SQ_ALU_SRC_LITERAL;
 	ctx.ar_reg = ctx.file_offset[TGSI_FILE_TEMPORARY] +
-			ctx.info.file_count[TGSI_FILE_TEMPORARY];
+			ctx.info.file_max[TGSI_FILE_TEMPORARY] + 1;
 	ctx.temp_reg = ctx.ar_reg + 1;
 
 	ctx.nliterals = 0;
