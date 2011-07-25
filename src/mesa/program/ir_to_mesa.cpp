@@ -2977,11 +2977,31 @@ get_mesa_program(struct gl_context *ctx,
          if (mesa_inst->SrcReg[src].RelAddr)
             prog->IndirectRegisterFiles |= 1 << mesa_inst->SrcReg[src].File;
 
-      if (options->EmitNoIfs && mesa_inst->Opcode == OPCODE_IF) {
-	 linker_error(shader_program, "Couldn't flatten if statement\n");
-      }
-
       switch (mesa_inst->Opcode) {
+      case OPCODE_IF:
+	 if (options->EmitNoIfs) {
+	    linker_warning(shader_program,
+			   "Couldn't flatten if-statement.  "
+			   "This will likely result in software "
+			   "rasterization.\n");
+	 }
+	 break;
+      case OPCODE_BGNLOOP:
+	 if (options->EmitNoLoops) {
+	    linker_warning(shader_program,
+			   "Couldn't unroll loop.  "
+			   "This will likely result in software "
+			   "rasterization.\n");
+	 }
+	 break;
+      case OPCODE_CONT:
+	 if (options->EmitNoCont) {
+	    linker_warning(shader_program,
+			   "Couldn't lower continue-statement.  "
+			   "This will likely result in software "
+			   "rasterization.\n");
+	 }
+	 break;
       case OPCODE_BGNSUB:
 	 inst->function->inst = i;
 	 mesa_inst->Comment = strdup(inst->function->sig->function_name());
