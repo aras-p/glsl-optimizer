@@ -86,7 +86,7 @@ void main ()
   tmpvar_4.xyz = normalize (tmpvar_12.xyz);
   highp vec3 tmpvar_22;
   tmpvar_22 = (cross (tmpvar_21, tmpvar_4.xyz) * tmpvar_12.w);
-  mat3 tmpvar_23;
+  highp mat3 tmpvar_23;
   tmpvar_23[0].x = tmpvar_4.x;
   tmpvar_23[0].y = tmpvar_22.x;
   tmpvar_23[0].z = tmpvar_21.x;

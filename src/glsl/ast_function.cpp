@@ -221,6 +221,8 @@ match_function_by_name(exec_list *instructions, const char *name,
 	 formal_iter.next();
 	 ++params_counter;
       }
+	   
+      glsl_precision call_prec = precision_from_call(sig, prec_params_max, prec_params_first);
 
       /* Always insert the call in the instruction stream, and return a deref
        * of its return val if it returns a value, since we don't know if
@@ -230,12 +232,13 @@ match_function_by_name(exec_list *instructions, const char *name,
       if (!sig->return_type->is_void()) {
 	 ir_variable *var;
 	 ir_dereference_variable *deref;
-
+		  
 	 var = new(ctx) ir_variable(sig->return_type,
 				    ralloc_asprintf(ctx, "%s_retval",
 						    sig->function_name()),
-				    ir_var_temporary, precision_from_call(sig, prec_params_max, prec_params_first));
+				    ir_var_temporary, call_prec);
 	 instructions->push_tail(var);
+     call->set_precision (call_prec);
 
 	 deref = new(ctx) ir_dereference_variable(var);
 	 ir_assignment *assign = new(ctx) ir_assignment(deref, call, NULL);

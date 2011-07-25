@@ -42,7 +42,7 @@ void main ()
   normal.z = sqrt (((1.0 - (normal.x * normal.x)) - (normal.y * normal.y)));
   mediump vec3 tmpvar_8;
   tmpvar_8 = normal.xyz;
-  float x;
+  highp float x;
   x = (c_i0.w - _Cutoff);
   if ((x < 0.0)) {
     discard;

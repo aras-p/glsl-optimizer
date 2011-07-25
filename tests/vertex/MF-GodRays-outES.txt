@@ -67,7 +67,7 @@ void main ()
   tmpvar_15 = ((tmpvar_6 - ((tmpvar_12 * tmpvar_5.x) + (tmpvar_13 * tmpvar_5.y))) + (((tmpvar_12 * tmpvar_1.x) + (tmpvar_13 * tmpvar_1.y)) * (((tmpvar_14 * tmpvar_14) * _MaxGrowSize) * tmpvar_2.w)));
   highp float tmpvar_16;
   tmpvar_16 = (_Time.y + (_BlinkingTimeOffsScale * tmpvar_2.z));
-  float y;
+  highp float y;
   y = (_TimeOnDuration + _TimeOffDuration);
   float tmpvar_17;
   tmpvar_17 = (tmpvar_16 / y);
@@ -94,7 +94,7 @@ void main ()
   highp vec4 tmpvar_24;
   tmpvar_24.w = 1.0;
   tmpvar_24.xyz = tmpvar_15;
-  float tmpvar_25;
+  highp float tmpvar_25;
   tmpvar_25 = clamp ((tmpvar_9 / _FadeOutDistNear), 0.0, 1.0);
   highp float tmpvar_26;
   tmpvar_26 = (1.0 - clamp ((max ((tmpvar_9 - _FadeOutDistFar), 0.0) * 0.2), 0.0, 1.0));

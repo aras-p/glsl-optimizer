@@ -122,12 +122,80 @@ static inline void debug_print_ir (const char* name, exec_list* ir, _mesa_glsl_p
 {
 	#if 0
 	printf("**** %s:\n", name);
-	_mesa_print_ir (ir, state);
-	//char* foobar = _mesa_print_ir_glsl(ir, state, ralloc_strdup(memctx, ""), kPrintGlslFragment);
-	//printf(foobar);
+	//_mesa_print_ir (ir, state);
+	char* foobar = _mesa_print_ir_glsl(ir, state, ralloc_strdup(memctx, ""), kPrintGlslFragment);
+	printf(foobar);
 	validate_ir_tree(ir);
 	#endif
 }
+
+static void propagate_precision_deref(ir_instruction *ir, void *data)
+{
+	ir_dereference_variable* der = ir->as_dereference_variable();
+	if (der && der->get_precision() == glsl_precision_undefined && der->var->precision != glsl_precision_undefined)
+	{
+		der->set_precision ((glsl_precision)der->var->precision);
+		*(bool*)data = true;
+	}
+}
+
+static void propagate_precision_assign(ir_instruction *ir, void *data)
+{
+	ir_assignment* ass = ir->as_assignment();
+	if (ass && ass->lhs && ass->rhs)
+	{
+		glsl_precision lp = ass->lhs->get_precision();
+		glsl_precision rp = ass->rhs->get_precision();
+		if (lp == glsl_precision_undefined && rp != glsl_precision_undefined)
+		{		
+			if (ass->lhs->variable_referenced())
+				ass->lhs->variable_referenced()->precision = rp;
+			ass->lhs->set_precision (rp);
+			*(bool*)data = true;
+		}
+	}
+}
+
+static void propagate_precision_call(ir_instruction *ir, void *data)
+{
+	ir_call* call = ir->as_call();
+	if (call && call->get_precision() == glsl_precision_undefined && call->get_callee()->precision == glsl_precision_undefined)
+	{
+		glsl_precision prec_params_max = glsl_precision_undefined;
+		exec_list_iterator iter_sig  = call->get_callee()->parameters.iterator();
+		foreach_iter(exec_list_iterator, iter_param, call->actual_parameters)
+		{
+			ir_variable* sig_param = (ir_variable*)iter_sig.get();
+			ir_rvalue* param = (ir_rvalue*)iter_param.get();
+			
+			glsl_precision p = (glsl_precision)sig_param->precision;
+			if (p == glsl_precision_undefined)
+				p = param->get_precision();
+			
+			prec_params_max = higher_precision (prec_params_max, p);
+			
+			iter_sig.next();
+		}
+		if (call->get_precision() != prec_params_max)
+		{
+			call->set_precision (prec_params_max);
+			*(bool*)data = true;
+		}
+	}
+}
+
+static bool propagate_precision(exec_list* list)
+{
+	bool res = false;
+	foreach_iter(exec_list_iterator, iter, *list) {
+		ir_instruction* ir = (ir_instruction*)iter.get();
+		visit_tree (ir, propagate_precision_deref, &res);
+		visit_tree (ir, propagate_precision_assign, &res);
+		visit_tree (ir, propagate_precision_call, &res);
+	}
+	return res;
+}
+
 
 glslopt_shader* glslopt_optimize (glslopt_ctx* ctx, glslopt_shader_type type, const char* shaderSource, unsigned options)
 {
@@ -196,6 +264,7 @@ glslopt_shader* glslopt_optimize (glslopt_ctx* ctx, glslopt_shader_type type, co
 				progress2 = do_dead_code(ir); progress |= progress2; if (progress2) debug_print_ir ("After dead code", ir, state, ctx->mem_ctx);
 			}
 			progress2 = do_dead_code_local(ir); progress |= progress2; if (progress2) debug_print_ir ("After dead code local", ir, state, ctx->mem_ctx);
+			progress2 = propagate_precision (ir); progress |= progress2; if (progress2) debug_print_ir ("After prec propagation", ir, state, ctx->mem_ctx);
 			progress2 = do_tree_grafting(ir); progress |= progress2; if (progress2) debug_print_ir ("After tree grafting", ir, state, ctx->mem_ctx);
 			progress2 = do_constant_propagation(ir); progress |= progress2; if (progress2) debug_print_ir ("After const propagation", ir, state, ctx->mem_ctx);
 			if (!linked) {

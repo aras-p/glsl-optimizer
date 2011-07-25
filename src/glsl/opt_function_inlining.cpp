@@ -189,6 +189,7 @@ ir_call::generate_inline(ir_instruction *next_ir, ir_function_signature* parent)
    i = 0;
    exec_list_iterator sig_param_iter = this->callee->parameters.iterator();
    exec_list_iterator param_iter = this->actual_parameters.iterator();
+   glsl_precision prec_params_max = glsl_precision_undefined;
    for (i = 0; i < num_parameters; i++) {
       ir_variable *sig_param = (ir_variable *) sig_param_iter.get();
       ir_rvalue *param = (ir_rvalue *) param_iter.get();
@@ -205,6 +206,11 @@ ir_call::generate_inline(ir_instruction *next_ir, ir_function_signature* parent)
 	 parameters[i] = sig_param->clone(ctx, ht);
 	 rename_inlined_variable (parameters[i], parent);
 	 parameters[i]->mode = ir_var_auto;
+
+     parameters[i]->precision = (glsl_precision)parameters[i]->precision;
+     if (parameters[i]->precision == glsl_precision_undefined)
+        parameters[i]->precision = param->get_precision();
+     prec_params_max = higher_precision (prec_params_max, (glsl_precision)parameters[i]->precision);
 
 	 /* Remove the read-only decoration becuase we're going to write
 	  * directly to this variable.  If the cloned variable is left
@@ -229,6 +235,10 @@ ir_call::generate_inline(ir_instruction *next_ir, ir_function_signature* parent)
       sig_param_iter.next();
       param_iter.next();
    }
+	
+	if (retval && retval->precision == glsl_precision_undefined) {
+		retval->precision = prec_params_max;
+	}
 
    exec_list new_instructions;
 
