@@ -951,7 +951,7 @@ xyesyes)
         GL_PC_LIB_PRIV="$GL_LIB_DEPS"
         GL_PC_CFLAGS="$X11_INCLUDES"
     fi
-    GL_LIB_DEPS="$GL_LIB_DEPS $SELINUX_LIBS -lm -lpthread"
+    GL_LIB_DEPS="$GL_LIB_DEPS $SELINUX_LIBS -lm -lpthread $DLOPEN_LIBS"
     GL_PC_LIB_PRIV="$GL_PC_LIB_PRIV $SELINUX_LIBS -lm -lpthread"
 
     # if static, move the external libraries to the programs
