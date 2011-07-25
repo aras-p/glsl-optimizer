@@ -1,7 +1,7 @@
 #include <string>
 #include <vector>
 #include <time.h>
-#include "../glsl_optimizer.h"
+#include "../src/glsl/glsl_optimizer.h"
 
 #ifdef _MSC_VER
 #include <windows.h>
