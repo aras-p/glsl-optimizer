@@ -198,6 +198,7 @@ nv50_resource_copy_region(struct pipe_context *pipe,
 {
    struct nv50_screen *screen = nv50_context(pipe)->screen;
    int ret;
+   boolean m2mf;
    unsigned dst_layer = dstz, src_layer = src_box->z;
 
    /* Fallback for buffers. */
@@ -207,9 +208,15 @@ nv50_resource_copy_region(struct pipe_context *pipe,
       return;
    }
 
+   assert(src->nr_samples == dst->nr_samples);
+
+   m2mf = (src->format == dst->format) ||
+      (util_format_get_blocksizebits(src->format) ==
+       util_format_get_blocksizebits(dst->format));
+
    nv04_resource(dst)->status |= NOUVEAU_BUFFER_STATUS_GPU_WRITING;
 
-   if (src->format == dst->format && src->nr_samples == dst->nr_samples) {
+   if (m2mf) {
       struct nv50_m2mf_rect drect, srect;
       unsigned i;
       unsigned nx = util_format_get_nblocksx(src->format, src_box->width);
