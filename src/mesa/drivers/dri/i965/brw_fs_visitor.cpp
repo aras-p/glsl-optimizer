@@ -622,6 +622,8 @@ fs_visitor::emit_texture_gen4(ir_texture *ir, fs_reg dst, fs_reg coordinate,
        * dPdx = dudx, dvdx, drdx
        * dPdy = dudy, dvdy, drdy
        *
+       * 1-arg: Does not exist.
+       *
        * 2-arg: dudx   dvdx   dudy   dvdy
        *        dPdx.x dPdx.y dPdy.x dPdy.y
        *        m4     m5     m6     m7
@@ -633,14 +635,14 @@ fs_visitor::emit_texture_gen4(ir_texture *ir, fs_reg dst, fs_reg coordinate,
       for (int i = 0; i < ir->lod_info.grad.dPdx->type->vector_elements; i++) {
 	 emit(BRW_OPCODE_MOV, fs_reg(MRF, base_mrf + mlen), dPdx);
 	 dPdx.reg_offset++;
-	 mlen++;
       }
+      mlen += MAX2(ir->lod_info.grad.dPdx->type->vector_elements, 2);
 
       for (int i = 0; i < ir->lod_info.grad.dPdy->type->vector_elements; i++) {
 	 emit(BRW_OPCODE_MOV, fs_reg(MRF, base_mrf + mlen), dPdy);
 	 dPdy.reg_offset++;
-	 mlen++;
       }
+      mlen += MAX2(ir->lod_info.grad.dPdy->type->vector_elements, 2);
    } else {
       /* Oh joy.  gen4 doesn't have SIMD8 non-shadow-compare bias/lod
        * instructions.  We'll need to do SIMD16 here.
