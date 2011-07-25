@@ -1,0 +1,13 @@
+varying mediump vec2 xlv_TEXCOORD0;
+uniform mediump float _EmberFadeStart;
+uniform mediump float _EmberFadeEnd;
+uniform sampler2D _BurntTex;
+uniform sampler2D _MainTex;
+void main ()
+{
+  lowp vec4 tmpvar_1;
+  tmpvar_1.w = 1.0;
+  tmpvar_1.xyz = mix (texture2D (_MainTex, xlv_TEXCOORD0).xyz, texture2D (_BurntTex, xlv_TEXCOORD0).xyz, vec3(clamp (((_EmberFadeStart - 0.05) / (_EmberFadeStart - _EmberFadeEnd)), 0.0, 1.0)));
+  gl_FragColor = tmpvar_1;
+}
+
