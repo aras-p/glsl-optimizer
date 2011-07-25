@@ -1326,6 +1326,41 @@ AC_SUBST([OSMESA_PC_REQ])
 AC_SUBST([OSMESA_PC_LIB_PRIV])
 
 dnl
+dnl gbm configuration
+dnl
+if test "x$enable_gbm" = xauto; then
+    case "$with_egl_platforms" in
+        *drm*)
+            enable_gbm=yes ;;
+         *)
+            enable_gbm=no ;;
+    esac
+fi
+if test "x$enable_gbm" = xyes; then
+    SRC_DIRS="$SRC_DIRS gbm"
+    GBM_BACKEND_DIRS=""
+
+    PKG_CHECK_MODULES([LIBUDEV], [libudev], [],
+                      AC_MSG_ERROR([gbm needs udev]))
+    GBM_LIB_DEPS="$DLOPEN_LIBS $LIBUDEV_LIBS"
+
+    if test "x$enable_dri" = xyes; then
+        GBM_BACKEND_DIRS="$GBM_BACKEND_DIRS dri"
+        if test "$SHARED_GLAPI" -eq 0; then
+            AC_MSG_ERROR([gbm_dri requires --enable-shared-glapi])
+        fi
+    fi
+fi
+AC_SUBST([GBM_LIB_DEPS])
+AC_SUBST([GBM_BACKEND_DIRS])
+GBM_PC_REQ_PRIV="libudev"
+GBM_PC_LIB_PRIV="$DLOPEN_LIBS"
+GBM_PC_CFLAGS=
+AC_SUBST([GBM_PC_REQ_PRIV])
+AC_SUBST([GBM_PC_LIB_PRIV])
+AC_SUBST([GBM_PC_CFLAGS])
+
+dnl
 dnl EGL configuration
 dnl
 EGL_CLIENT_APIS=""
@@ -1365,41 +1400,6 @@ if test "x$enable_egl" = xyes; then
 fi
 AC_SUBST([EGL_LIB_DEPS])
 AC_SUBST([EGL_DRIVERS_DIRS])
-
-dnl
-dnl gbm configuration
-dnl
-if test "x$enable_gbm" = xauto; then
-    case "$with_egl_platforms" in
-        *drm*)
-            enable_gbm=yes ;;
-         *)
-            enable_gbm=no ;;
-    esac
-fi
-if test "x$enable_gbm" = xyes; then
-    SRC_DIRS="$SRC_DIRS gbm"
-    GBM_BACKEND_DIRS=""
-
-    PKG_CHECK_MODULES([LIBUDEV], [libudev], [],
-                      AC_MSG_ERROR([gbm needs udev]))
-    GBM_LIB_DEPS="$DLOPEN_LIBS $LIBUDEV_LIBS"
-
-    if test "x$enable_dri" = xyes; then
-        GBM_BACKEND_DIRS="$GBM_BACKEND_DIRS dri"
-        if test "$SHARED_GLAPI" -eq 0; then
-            AC_MSG_ERROR([gbm_dri requires --enable-shared-glapi])
-        fi
-    fi
-fi
-AC_SUBST([GBM_LIB_DEPS])
-AC_SUBST([GBM_BACKEND_DIRS])
-GBM_PC_REQ_PRIV="libudev"
-GBM_PC_LIB_PRIV="$DLOPEN_LIBS"
-GBM_PC_CFLAGS=
-AC_SUBST([GBM_PC_REQ_PRIV])
-AC_SUBST([GBM_PC_LIB_PRIV])
-AC_SUBST([GBM_PC_CFLAGS])
 
 dnl
 dnl EGL Gallium configuration
