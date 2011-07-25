@@ -390,6 +390,7 @@ intel_batchbuffer_emit_mi_flush(struct intel_context *intel)
 	 OUT_BATCH(PIPE_CONTROL_INSTRUCTION_FLUSH |
 		   PIPE_CONTROL_WRITE_FLUSH |
 		   PIPE_CONTROL_DEPTH_CACHE_FLUSH |
+		   PIPE_CONTROL_TC_FLUSH |
 		   PIPE_CONTROL_NO_WRITE);
 	 OUT_BATCH(0); /* write address */
 	 OUT_BATCH(0); /* write data */
