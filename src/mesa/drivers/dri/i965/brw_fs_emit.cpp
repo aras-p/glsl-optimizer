@@ -59,7 +59,8 @@ fs_visitor::generate_fb_write(fs_inst *inst)
 
 	 if (inst->target > 0) {
 	    /* Set the render target index for choosing BLEND_STATE. */
-	    brw_MOV(p, retype(brw_vec1_reg(BRW_MESSAGE_REGISTER_FILE, 0, 2),
+	    brw_MOV(p, retype(brw_vec1_reg(BRW_MESSAGE_REGISTER_FILE,
+					   inst->base_mrf, 2),
 			      BRW_REGISTER_TYPE_UD),
 		    brw_imm_ud(inst->target));
 	 }
