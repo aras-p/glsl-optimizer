@@ -331,20 +331,6 @@ dst_reg undef_dst = dst_reg(PROGRAM_UNDEFINED, SWIZZLE_NOOP);
 
 dst_reg address_reg = dst_reg(PROGRAM_ADDRESS, WRITEMASK_X);
 
-static void
-fail_link(struct gl_shader_program *prog, const char *fmt, ...) PRINTFLIKE(2, 3);
-
-static void
-fail_link(struct gl_shader_program *prog, const char *fmt, ...)
-{
-   va_list args;
-   va_start(args, fmt);
-   ralloc_vasprintf_append(&prog->InfoLog, fmt, args);
-   va_end(args);
-
-   prog->LinkStatus = GL_FALSE;
-}
-
 static int
 swizzle_for_size(int size)
 {
@@ -789,10 +775,11 @@ ir_to_mesa_visitor::visit(ir_variable *ir)
 
       if (storage->file == PROGRAM_TEMPORARY &&
 	  dst.index != storage->index + (int) ir->num_state_slots) {
-	 fail_link(this->shader_program,
-		   "failed to load builtin uniform `%s'  (%d/%d regs loaded)\n",
-		   ir->name, dst.index - storage->index,
-		   type_size(ir->type));
+	 linker_error(this->shader_program,
+		      "failed to load builtin uniform `%s' "
+		      "(%d/%d regs loaded)\n",
+		      ir->name, dst.index - storage->index,
+		      type_size(ir->type));
       }
    }
 }
@@ -2413,29 +2400,32 @@ check_resources(const struct gl_context *ctx,
    case GL_VERTEX_PROGRAM_ARB:
       if (_mesa_bitcount(prog->SamplersUsed) >
           ctx->Const.MaxVertexTextureImageUnits) {
-         fail_link(shader_program, "Too many vertex shader texture samplers");
+         linker_error(shader_program,
+		      "Too many vertex shader texture samplers");
       }
       if (prog->Parameters->NumParameters > MAX_UNIFORMS) {
-         fail_link(shader_program, "Too many vertex shader constants");
+         linker_error(shader_program, "Too many vertex shader constants");
       }
       break;
    case MESA_GEOMETRY_PROGRAM:
       if (_mesa_bitcount(prog->SamplersUsed) >
           ctx->Const.MaxGeometryTextureImageUnits) {
-         fail_link(shader_program, "Too many geometry shader texture samplers");
+         linker_error(shader_program,
+		      "Too many geometry shader texture samplers");
       }
       if (prog->Parameters->NumParameters >
           MAX_GEOMETRY_UNIFORM_COMPONENTS / 4) {
-         fail_link(shader_program, "Too many geometry shader constants");
+         linker_error(shader_program, "Too many geometry shader constants");
       }
       break;
    case GL_FRAGMENT_PROGRAM_ARB:
       if (_mesa_bitcount(prog->SamplersUsed) >
           ctx->Const.MaxTextureImageUnits) {
-         fail_link(shader_program, "Too many fragment shader texture samplers");
+         linker_error(shader_program,
+		      "Too many fragment shader texture samplers");
       }
       if (prog->Parameters->NumParameters > MAX_UNIFORMS) {
-         fail_link(shader_program, "Too many fragment shader constants");
+         linker_error(shader_program, "Too many fragment shader constants");
       }
       break;
    default:
@@ -2550,9 +2540,10 @@ add_uniforms_to_parameters_list(struct gl_shader_program *shader_program,
 	  * from _mesa_add_uniform) has to match what the linker chose.
 	  */
 	 if (index != parameter_index) {
-	    fail_link(shader_program, "Allocation of uniform `%s' to target "
-		      "failed (%d vs %d)\n",
-		      uniform->Name, index, parameter_index);
+	    linker_error(shader_program,
+			 "Allocation of uniform `%s' to target failed "
+			 "(%d vs %d)\n",
+			 uniform->Name, index, parameter_index);
 	 }
       }
    }
@@ -2585,8 +2576,8 @@ set_uniform_initializer(struct gl_context *ctx, void *mem_ctx,
    int loc = _mesa_get_uniform_location(ctx, shader_program, name);
 
    if (loc == -1) {
-      fail_link(shader_program,
-		"Couldn't find uniform for initializer %s\n", name);
+      linker_error(shader_program,
+		   "Couldn't find uniform for initializer %s\n", name);
       return;
    }
 
@@ -2987,7 +2978,7 @@ get_mesa_program(struct gl_context *ctx,
             prog->IndirectRegisterFiles |= 1 << mesa_inst->SrcReg[src].File;
 
       if (options->EmitNoIfs && mesa_inst->Opcode == OPCODE_IF) {
-	 fail_link(shader_program, "Couldn't flatten if statement\n");
+	 linker_error(shader_program, "Couldn't flatten if statement\n");
       }
 
       switch (mesa_inst->Opcode) {
@@ -3258,7 +3249,7 @@ _mesa_glsl_link_shader(struct gl_context *ctx, struct gl_shader_program *prog)
 
    for (i = 0; i < prog->NumShaders; i++) {
       if (!prog->Shaders[i]->CompileStatus) {
-	 fail_link(prog, "linking with uncompiled shader");
+	 linker_error(prog, "linking with uncompiled shader");
 	 prog->LinkStatus = GL_FALSE;
       }
    }
