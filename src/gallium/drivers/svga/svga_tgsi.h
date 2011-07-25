@@ -60,6 +60,10 @@ struct svga_fs_compile_key
       unsigned width_height_idx:7;
       unsigned texture_target:8;
       unsigned sprite_texgen:1;
+      unsigned swizzle_r:3;
+      unsigned swizzle_g:3;
+      unsigned swizzle_b:3;
+      unsigned swizzle_a:3;
    } tex[PIPE_MAX_SAMPLERS];
 };
 

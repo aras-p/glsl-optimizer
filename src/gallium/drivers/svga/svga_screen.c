@@ -148,6 +148,8 @@ svga_get_paramf(struct pipe_screen *screen, enum pipe_cap param)
       return 0;
    case PIPE_CAP_TEXTURE_SHADOW_MAP:
       return 1;
+   case PIPE_CAP_TEXTURE_SWIZZLE:
+      return 1;
 
    case PIPE_CAP_MAX_TEXTURE_2D_LEVELS:
       {

@@ -25,6 +25,7 @@
 
 
 #include "pipe/p_shader_tokens.h"
+#include "tgsi/tgsi_dump.h"
 #include "tgsi/tgsi_parse.h"
 #include "util/u_memory.h"
 #include "util/u_math.h"
@@ -1524,6 +1525,73 @@ static boolean emit_tex4(struct svga_shader_emitter *emit,
 }
 
 
+/**
+ * Emit texture swizzle code.
+ */
+static boolean emit_tex_swizzle( struct svga_shader_emitter *emit,
+                                 SVGA3dShaderDestToken dst,
+                                 struct src_register src,
+                                 unsigned swizzle_x,
+                                 unsigned swizzle_y,
+                                 unsigned swizzle_z,
+                                 unsigned swizzle_w)
+{
+   const unsigned swizzleIn[4] = {swizzle_x, swizzle_y, swizzle_z, swizzle_w};
+   unsigned srcSwizzle[4];
+   unsigned srcWritemask = 0x0, zeroWritemask = 0x0, oneWritemask = 0x0;
+   int i;
+
+   /* build writemasks and srcSwizzle terms */
+   for (i = 0; i < 4; i++) {
+      if (swizzleIn[i] == PIPE_SWIZZLE_ZERO) {
+         srcSwizzle[i] = TGSI_SWIZZLE_X + i;
+         zeroWritemask |= (1 << i);
+      }
+      else if (swizzleIn[i] == PIPE_SWIZZLE_ONE) {
+         srcSwizzle[i] = TGSI_SWIZZLE_X + i;
+         oneWritemask |= (1 << i);
+      }
+      else {
+         srcSwizzle[i] = swizzleIn[i];
+         srcWritemask |= (1 << i);
+      }
+   }
+
+   /* write x/y/z/w comps */
+   if (dst.mask & srcWritemask) {
+      if (!submit_op1(emit, 
+                      inst_token(SVGA3DOP_MOV), 
+                      writemask(dst, srcWritemask), 
+                      swizzle(src,
+                              srcSwizzle[0],
+                              srcSwizzle[1],
+                              srcSwizzle[2],
+                              srcSwizzle[3])))
+         return FALSE;
+   }
+
+   /* write 0 comps */
+   if (dst.mask & zeroWritemask) {
+      if (!submit_op1(emit, 
+                      inst_token(SVGA3DOP_MOV), 
+                      writemask(dst, zeroWritemask), 
+                      scalar(get_zero_immediate(emit), TGSI_SWIZZLE_X)))
+         return FALSE;
+   }
+
+   /* write 1 comps */
+   if (dst.mask & oneWritemask) {
+      if (!submit_op1(emit, 
+                      inst_token(SVGA3DOP_MOV), 
+                      writemask(dst, oneWritemask), 
+                      scalar(get_zero_immediate(emit), TGSI_SWIZZLE_W)))
+         return FALSE;
+   }
+
+   return TRUE;
+}
+
+
 static boolean emit_tex(struct svga_shader_emitter *emit,
                         const struct tgsi_full_instruction *insn )
 {
@@ -1535,16 +1603,23 @@ static boolean emit_tex(struct svga_shader_emitter *emit,
       translate_src_register( emit, &insn->Src[1] );
 
    SVGA3dShaderDestToken tex_result;
+   const unsigned unit = src1.base.num;
 
    /* check for shadow samplers */
-   boolean compare = (emit->key.fkey.tex[src1.base.num].compare_mode ==
+   boolean compare = (emit->key.fkey.tex[unit].compare_mode ==
                       PIPE_TEX_COMPARE_R_TO_TEXTURE);
 
+   /* texture swizzle */
+   boolean swizzle = (emit->key.fkey.tex[unit].swizzle_r != PIPE_SWIZZLE_RED ||
+                      emit->key.fkey.tex[unit].swizzle_g != PIPE_SWIZZLE_GREEN ||
+                      emit->key.fkey.tex[unit].swizzle_b != PIPE_SWIZZLE_BLUE ||
+                      emit->key.fkey.tex[unit].swizzle_a != PIPE_SWIZZLE_ALPHA);
 
-   /* If doing compare processing, need to put this value into a
-    * temporary so it can be used as a source later on.
+   /* If doing compare processing or tex swizzle, need to put fetched color into
+    * a temporary so it can be used as a source later on.
     */
    if (compare ||
+       swizzle ||
        (!emit->use_sm30 && dst.mask != TGSI_WRITEMASK_XYZW) ) {
       tex_result = get_temp( emit );
    }
@@ -1570,8 +1645,18 @@ static boolean emit_tex(struct svga_shader_emitter *emit,
 
 
    if (compare) {
+      SVGA3dShaderDestToken dst2;
+
+      if (swizzle)
+         dst2 = tex_result;
+      else
+         dst2 = dst;
+
       if (dst.mask & TGSI_WRITEMASK_XYZ) {
          SVGA3dShaderDestToken src0_zdivw = get_temp( emit );
+         /* When sampling a depth texture, the result of the comparison is in
+          * the Y component.
+          */
          struct src_register tex_src_x = scalar(src(tex_result), TGSI_SWIZZLE_Y);
 
          /* Divide texcoord R by Q */
@@ -1588,8 +1673,8 @@ static boolean emit_tex(struct svga_shader_emitter *emit,
 
          if (!emit_select(
                 emit,
-                emit->key.fkey.tex[src1.base.num].compare_func,
-                writemask( dst, TGSI_WRITEMASK_XYZ ),
+                emit->key.fkey.tex[unit].compare_func,
+                writemask( dst2, TGSI_WRITEMASK_XYZ ),
                 scalar(src(src0_zdivw), TGSI_SWIZZLE_X),
                 tex_src_x))
             return FALSE;
@@ -1600,15 +1685,29 @@ static boolean emit_tex(struct svga_shader_emitter *emit,
             scalar( get_zero_immediate( emit ), TGSI_SWIZZLE_W );
 
         if (!submit_op1( emit, inst_token( SVGA3DOP_MOV ),
-                         writemask( dst, TGSI_WRITEMASK_W ),
+                         writemask( dst2, TGSI_WRITEMASK_W ),
                          one ))
            return FALSE;
       }
-
-      return TRUE;
    }
-   else if (!emit->use_sm30 && dst.mask != TGSI_WRITEMASK_XYZW) 
-   {
+
+   if (swizzle) {
+      /* swizzle from tex_result to dst */
+      emit_tex_swizzle(emit,
+                       dst, src(tex_result),
+                       emit->key.fkey.tex[unit].swizzle_r,
+                       emit->key.fkey.tex[unit].swizzle_g,
+                       emit->key.fkey.tex[unit].swizzle_b,
+                       emit->key.fkey.tex[unit].swizzle_a);
+   }
+
+   if (!emit->use_sm30 &&
+       dst.mask != TGSI_WRITEMASK_XYZW &&
+       !compare &&
+       !swizzle) {
+      /* pre SM3.0 a TEX instruction can't have a writemask.  Do it as a
+       * separate step here.
+       */
       if (!emit_op1( emit, inst_token( SVGA3DOP_MOV ), dst, src(tex_result) ))
          return FALSE;
    }
@@ -2934,6 +3033,15 @@ needs_to_create_zero( struct svga_shader_emitter *emit )
 
       if (emit->inverted_texcoords)
          return TRUE;
+
+      /* look for any PIPE_SWIZZLE_ZERO/ONE terms */
+      for (i = 0; i < emit->key.fkey.num_textures; i++) {
+         if (emit->key.fkey.tex[i].swizzle_r > PIPE_SWIZZLE_ALPHA ||
+             emit->key.fkey.tex[i].swizzle_g > PIPE_SWIZZLE_ALPHA ||
+             emit->key.fkey.tex[i].swizzle_b > PIPE_SWIZZLE_ALPHA ||
+             emit->key.fkey.tex[i].swizzle_a > PIPE_SWIZZLE_ALPHA)
+            return TRUE;
+      }
    }
 
    if (emit->unit == PIPE_SHADER_VERTEX) {

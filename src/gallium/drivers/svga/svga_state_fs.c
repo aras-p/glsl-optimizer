@@ -167,6 +167,11 @@ static int make_fs_key( const struct svga_context *svga,
             key->tex[i].unnormalized = TRUE;
             ++key->num_unnormalized_coords;
          }
+
+         key->tex[i].swizzle_r = svga->curr.sampler_views[i]->swizzle_r;
+         key->tex[i].swizzle_g = svga->curr.sampler_views[i]->swizzle_g;
+         key->tex[i].swizzle_b = svga->curr.sampler_views[i]->swizzle_b;
+         key->tex[i].swizzle_a = svga->curr.sampler_views[i]->swizzle_a;
       }
    }
    key->num_textures = svga->curr.num_sampler_views;
