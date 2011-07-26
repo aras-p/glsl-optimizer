@@ -242,11 +242,12 @@ import_uniforms_callback(const void *key,
  * This brings in those uniform definitions
  */
 void
-fs_visitor::import_uniforms(struct hash_table *src_variable_ht)
+fs_visitor::import_uniforms(fs_visitor *v)
 {
-   hash_table_call_foreach(src_variable_ht,
+   hash_table_call_foreach(v->variable_ht,
 			   import_uniforms_callback,
 			   variable_ht);
+   this->params_remap = v->params_remap;
 }
 
 /* Our support for uniforms is piggy-backed on the struct
@@ -796,6 +797,86 @@ fs_visitor::split_virtual_grfs()
       }
    }
    this->live_intervals_valid = false;
+}
+
+bool
+fs_visitor::remove_dead_constants()
+{
+   if (c->dispatch_width == 8) {
+      this->params_remap = ralloc_array(mem_ctx, int, c->prog_data.nr_params);
+
+      for (unsigned int i = 0; i < c->prog_data.nr_params; i++)
+	 this->params_remap[i] = -1;
+
+      /* Find which params are still in use. */
+      foreach_list(node, &this->instructions) {
+	 fs_inst *inst = (fs_inst *)node;
+
+	 for (int i = 0; i < 3; i++) {
+	    int constant_nr = inst->src[i].hw_reg + inst->src[i].reg_offset;
+
+	    if (inst->src[i].file != UNIFORM)
+	       continue;
+
+	    assert(constant_nr < (int)c->prog_data.nr_params);
+
+	    /* For now, set this to non-negative.  We'll give it the
+	     * actual new number in a moment, in order to keep the
+	     * register numbers nicely ordered.
+	     */
+	    this->params_remap[constant_nr] = 0;
+	 }
+      }
+
+      /* Figure out what the new numbers for the params will be.  At some
+       * point when we're doing uniform array access, we're going to want
+       * to keep the distinction between .reg and .reg_offset, but for
+       * now we don't care.
+       */
+      unsigned int new_nr_params = 0;
+      for (unsigned int i = 0; i < c->prog_data.nr_params; i++) {
+	 if (this->params_remap[i] != -1) {
+	    this->params_remap[i] = new_nr_params++;
+	 }
+      }
+
+      /* Update the list of params to be uploaded to match our new numbering. */
+      for (unsigned int i = 0; i < c->prog_data.nr_params; i++) {
+	 int remapped = this->params_remap[i];
+
+	 if (remapped == -1)
+	    continue;
+
+	 /* We've already done setup_paramvalues_refs() so no need to worry
+	  * about param_index and param_offset.
+	  */
+	 c->prog_data.param[remapped] = c->prog_data.param[i];
+	 c->prog_data.param_convert[remapped] = c->prog_data.param_convert[i];
+      }
+
+      c->prog_data.nr_params = new_nr_params;
+   } else {
+      /* This should have been generated in the 8-wide pass already. */
+      assert(this->params_remap);
+   }
+
+   /* Now do the renumbering of the shader to remove unused params. */
+   foreach_list(node, &this->instructions) {
+      fs_inst *inst = (fs_inst *)node;
+
+      for (int i = 0; i < 3; i++) {
+	 int constant_nr = inst->src[i].hw_reg + inst->src[i].reg_offset;
+
+	 if (inst->src[i].file != UNIFORM)
+	    continue;
+
+	 assert(this->params_remap[constant_nr] != -1);
+	 inst->src[i].hw_reg = this->params_remap[constant_nr];
+	 inst->src[i].reg_offset = 0;
+      }
+   }
+
+   return true;
 }
 
 /**
@@ -1624,6 +1705,8 @@ fs_visitor::run()
 	 progress = dead_code_eliminate() || progress;
       } while (progress);
 
+      remove_dead_constants();
+
       schedule_instructions();
 
       assign_curb_setup();
@@ -1702,7 +1785,7 @@ brw_wm_fs_emit(struct brw_context *brw, struct brw_wm_compile *c,
    if (intel->gen >= 5 && c->prog_data.nr_pull_params == 0) {
       c->dispatch_width = 16;
       fs_visitor v2(c, prog, shader);
-      v2.import_uniforms(v.variable_ht);
+      v2.import_uniforms(&v);
       v2.run();
    }
 
