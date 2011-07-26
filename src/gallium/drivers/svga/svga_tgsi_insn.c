@@ -1658,25 +1658,33 @@ static boolean emit_tex(struct svga_shader_emitter *emit,
           * the Y component.
           */
          struct src_register tex_src_x = scalar(src(tex_result), TGSI_SWIZZLE_Y);
+         struct src_register r_coord;
 
-         /* Divide texcoord R by Q */
-         if (!submit_op1( emit, inst_token( SVGA3DOP_RCP ),
-                          writemask(src0_zdivw, TGSI_WRITEMASK_X),
-                          scalar(src0, TGSI_SWIZZLE_W) ))
-            return FALSE;
+         if (insn->Instruction.Opcode == TGSI_OPCODE_TXP) {
+            /* Divide texcoord R by Q */
+            if (!submit_op1( emit, inst_token( SVGA3DOP_RCP ),
+                             writemask(src0_zdivw, TGSI_WRITEMASK_X),
+                             scalar(src0, TGSI_SWIZZLE_W) ))
+               return FALSE;
 
-         if (!submit_op2( emit, inst_token( SVGA3DOP_MUL ),
-                          writemask(src0_zdivw, TGSI_WRITEMASK_X),
-                          scalar(src0, TGSI_SWIZZLE_Z),
-                          scalar(src(src0_zdivw), TGSI_SWIZZLE_X) ))
-            return FALSE;
+            if (!submit_op2( emit, inst_token( SVGA3DOP_MUL ),
+                             writemask(src0_zdivw, TGSI_WRITEMASK_X),
+                             scalar(src0, TGSI_SWIZZLE_Z),
+                             scalar(src(src0_zdivw), TGSI_SWIZZLE_X) ))
+               return FALSE;
 
-         if (!emit_select(
-                emit,
-                emit->key.fkey.tex[unit].compare_func,
-                writemask( dst2, TGSI_WRITEMASK_XYZ ),
-                scalar(src(src0_zdivw), TGSI_SWIZZLE_X),
-                tex_src_x))
+            r_coord = scalar(src(src0_zdivw), TGSI_SWIZZLE_X);
+         }
+         else {
+            r_coord = scalar(src0, TGSI_SWIZZLE_Z);
+         }
+
+         /* Compare texture sample value against R component of texcoord */
+         if (!emit_select(emit,
+                          emit->key.fkey.tex[unit].compare_func,
+                          writemask( dst2, TGSI_WRITEMASK_XYZ ),
+                          r_coord,
+                          tex_src_x))
             return FALSE;
       }
 
