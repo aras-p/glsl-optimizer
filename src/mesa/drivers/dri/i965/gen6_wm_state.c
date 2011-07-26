@@ -54,7 +54,7 @@ gen6_prepare_wm_push_constants(struct brw_context *brw)
       float *constants;
       unsigned int i;
 
-      constants = brw_state_batch(brw, AUB_TRACE_NO_TYPE,
+      constants = brw_state_batch(brw, AUB_TRACE_WM_CONSTANTS,
 				  brw->wm.prog_data->nr_params *
 				  sizeof(float),
 				  32, &brw->wm.push_const_offset);
