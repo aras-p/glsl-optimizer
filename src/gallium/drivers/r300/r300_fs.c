@@ -38,8 +38,7 @@
 #include "r300_texture.h"
 #include "r300_tgsi_to_rc.h"
 
-#include "radeon_code.h"
-#include "radeon_compiler.h"
+#include "compiler/radeon_compiler.h"
 
 /* Convert info about FS input semantics to r300_shader_semantics. */
 void r300_shader_read_fs_inputs(struct tgsi_shader_info* info,

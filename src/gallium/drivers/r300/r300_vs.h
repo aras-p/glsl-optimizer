@@ -26,7 +26,7 @@
 
 #include "pipe/p_state.h"
 #include "tgsi/tgsi_scan.h"
-#include "radeon_code.h"
+#include "compiler/radeon_code.h"
 
 #include "r300_context.h"
 #include "r300_shader_semantics.h"

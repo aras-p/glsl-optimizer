@@ -1,13 +1,11 @@
 Import('*')
 
-r300compiler = SConscript('#/src/mesa/drivers/dri/r300/compiler/SConscript')
-
 env = env.Clone()
-# add the paths for r300compiler
 env.Append(CPPPATH = [
-    '#/src/mesa/drivers/dri/r300/compiler', 
     '#/include', 
     '#/src/mesa',
+    '#/src/glsl',
+    '#/src/mapi',
 ])
 
 r300 = env.ConvenienceLibrary(
@@ -36,7 +34,41 @@ r300 = env.ConvenienceLibrary(
         'r300_texture_desc.c',
         'r300_tgsi_to_rc.c',
         'r300_transfer.c',
-    ] + r300compiler) + r300compiler
+        'compiler/radeon_code.c',
+        'compiler/radeon_compiler.c',
+        'compiler/radeon_compiler_util.c',
+        'compiler/radeon_program.c',
+        'compiler/radeon_program_print.c',
+        'compiler/radeon_opcodes.c',
+        'compiler/radeon_program_alu.c',
+        'compiler/radeon_program_pair.c',
+        'compiler/radeon_program_tex.c',
+        'compiler/radeon_pair_translate.c',
+        'compiler/radeon_pair_schedule.c',
+        'compiler/radeon_pair_regalloc.c',
+        'compiler/radeon_pair_dead_sources.c',
+        'compiler/radeon_optimize.c',
+        'compiler/radeon_remove_constants.c',
+        'compiler/radeon_rename_regs.c',
+        'compiler/radeon_emulate_branches.c',
+        'compiler/radeon_emulate_loops.c',
+        'compiler/radeon_dataflow.c',
+        'compiler/radeon_dataflow_deadcode.c',
+        'compiler/radeon_dataflow_swizzles.c',
+        'compiler/radeon_variable.c',
+        'compiler/radeon_list.c',
+        'compiler/r3xx_fragprog.c',
+        'compiler/r300_fragprog.c',
+        'compiler/r300_fragprog_swizzle.c',
+        'compiler/r300_fragprog_emit.c',
+        'compiler/r500_fragprog.c',
+        'compiler/r500_fragprog_emit.c',
+        'compiler/r3xx_vertprog.c',
+        'compiler/r3xx_vertprog_dump.c',
+        'compiler/memory_pool.c',
+        '#/src/glsl/ralloc.c',
+        '#/src/mesa/program/register_allocate.c'
+    ])
 
 env.Alias('r300', r300)
 
