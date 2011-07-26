@@ -525,10 +525,12 @@ lower_variable_index_to_cond_assign(exec_list *instructions,
     * matrix columns of an array of matrix), each pass will only lower one
     * level of indirection.
     */
+   bool progress_ever = false;
    do {
       v.progress = false;
       visit_list_elements(&v, instructions);
+      progress_ever = v.progress || progress_ever;
    } while (v.progress);
 
-   return v.progress;
+   return progress_ever;
 }
