@@ -606,7 +606,6 @@ intel_renderbuffer_set_draw_offset(struct intel_renderbuffer *irb,
 				  zoffset,
 				  &dst_x, &dst_y);
 
-   irb->draw_offset = (dst_y * mt->region->pitch + dst_x) * mt->cpp;
    irb->draw_x = dst_x;
    irb->draw_y = dst_y;
 }
