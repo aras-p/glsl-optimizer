@@ -647,6 +647,22 @@ intel_renderbuffer_tile_offsets(struct intel_renderbuffer *irb,
    }
 }
 
+#ifndef I915
+static bool
+need_tile_offset_workaround(struct brw_context *brw,
+			    struct intel_renderbuffer *irb)
+{
+   uint32_t tile_x, tile_y;
+
+   if (brw->has_surface_tile_offset)
+      return false;
+
+   intel_renderbuffer_tile_offsets(irb, &tile_x, &tile_y);
+
+   return tile_x != 0 || tile_y != 0;
+}
+#endif
+
 /**
  * Called by glFramebufferTexture[123]DEXT() (and other places) to
  * prepare for rendering into texture memory.  This might be called
@@ -700,8 +716,7 @@ intel_render_texture(struct gl_context * ctx,
    intel_image->used_as_render_target = GL_TRUE;
 
 #ifndef I915
-   if (!brw_context(ctx)->has_surface_tile_offset &&
-       (irb->draw_offset & 4095) != 0) {
+   if (need_tile_offset_workaround(brw_context(ctx), irb)) {
       /* Original gen4 hardware couldn't draw to a non-tile-aligned
        * destination in a miptree unless you actually setup your
        * renderbuffer as a miptree and used the fragile
