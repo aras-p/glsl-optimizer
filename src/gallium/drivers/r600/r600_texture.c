@@ -66,7 +66,7 @@ static void r600_copy_from_staging_texture(struct pipe_context *ctx, struct r600
 				  rtransfer->staging_texture,
 				  0, &sbox);
 
-	r600_flush(ctx, NULL, RADEON_FLUSH_ASYNC);
+	ctx->texture_barrier(ctx);
 }
 
 unsigned r600_texture_get_offset(struct r600_resource_texture *rtex,
