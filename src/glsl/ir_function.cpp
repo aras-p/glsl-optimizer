@@ -85,12 +85,25 @@ type_compare(const glsl_type *a, const glsl_type *b)
 }
 
 
+/**
+ * \brief Check if two parameter lists match.
+ *
+ * \param list_a Parameters of the function definition.
+ * \param list_b Actual parameters passed to the function.
+ * \return If an exact match, return 0.
+ *         If an inexact match requiring implicit conversion, return 1.
+ *         If not a match, return -1.
+ * \see matching_signature()
+ */
 static int
 parameter_lists_match(const exec_list *list_a, const exec_list *list_b)
 {
    const exec_node *node_a = list_a->head;
    const exec_node *node_b = list_b->head;
-   int total_score = 0;
+
+   /* This is set to true if there is an inexact match requiring an implicit
+    * conversion. */
+   bool inexact_match = false;
 
    for (/* empty */
 	; !node_a->is_tail_sentinel()
@@ -106,12 +119,11 @@ parameter_lists_match(const exec_list *list_a, const exec_list *list_b)
       const ir_variable *const param = (ir_variable *) node_a;
       const ir_instruction *const actual = (ir_instruction *) node_b;
 
-      /* Determine whether or not the types match.  If the types are an
-       * exact match, the match score is zero.  If the types don't match
-       * but the actual parameter can be coerced to the type of the declared
-       * parameter, the match score is one.
-       */
-      int score;
+      if (param->type == actual->type)
+	 continue;
+
+      /* Try to find an implicit conversion from actual to param. */
+      inexact_match = true;
       switch ((enum ir_variable_mode)(param->mode)) {
       case ir_var_auto:
       case ir_var_uniform:
@@ -125,11 +137,13 @@ parameter_lists_match(const exec_list *list_a, const exec_list *list_b)
 
       case ir_var_const_in:
       case ir_var_in:
-	 score = type_compare(param->type, actual->type);
+	 if (!actual->type->can_implicitly_convert_to(param->type))
+	    return -1;
 	 break;
 
       case ir_var_out:
-	 score = type_compare(actual->type, param->type);
+	 if (!param->type->can_implicitly_convert_to(actual->type))
+	    return -1;
 	 break;
 
       case ir_var_inout:
@@ -137,17 +151,12 @@ parameter_lists_match(const exec_list *list_a, const exec_list *list_b)
 	  * there is int -> float but no float -> int), inout parameters must
 	  * be exact matches.
 	  */
-	 score = (type_compare(actual->type, param->type) == 0) ? 0 : -1;
-	 break;
+	 return -1;
 
       default:
 	 assert(false);
-      }
-
-      if (score < 0)
 	 return -1;
-
-      total_score += score;
+      }
    }
 
    /* If all of the parameters from the other parameter list have been
@@ -157,7 +166,10 @@ parameter_lists_match(const exec_list *list_a, const exec_list *list_b)
    if (!node_b->is_tail_sentinel())
       return -1;
 
-   return total_score;
+   if (inexact_match)
+      return 1;
+   else
+      return 0;
 }
 
 
