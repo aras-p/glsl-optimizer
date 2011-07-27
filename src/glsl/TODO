@@ -9,6 +9,11 @@
 - Implement support for ir_binop_dot in ir_algebraic.cpp.  Perform
   transformations such as "dot(v, vec3(0.0, 1.0, 0.0))" -> v.y.
 
+- Track source locations throughout the IR.  There are currently several
+  places where we cannot emit line numbers for errors (and currently emit 0:0)
+  because we've "lost" the line number information.  This is particularly
+  noticeable at link time.
+
 1.30 features:
 
 - Implement AST-to-HIR conversion of switch-statements
