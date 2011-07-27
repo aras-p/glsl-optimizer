@@ -533,7 +533,7 @@ void r200InitTextureFuncs( radeonContextPtr radeon, struct dd_function_table *fu
    functions->GenerateMipmap = radeonGenerateMipmap;
 
    functions->NewTextureImage = radeonNewTextureImage;
-   functions->FreeTexImageData = radeonFreeTexImageData;
+   functions->FreeTextureImageBuffer = radeonFreeTextureImageBuffer;
    functions->MapTexture = radeonMapTexture;
    functions->UnmapTexture = radeonUnmapTexture;
 

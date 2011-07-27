@@ -907,7 +907,7 @@ _mesa_initialize_context(struct gl_context *ctx,
 
    /*ASSERT(driverContext);*/
    assert(driverFunctions->NewTextureObject);
-   assert(driverFunctions->FreeTexImageData);
+   assert(driverFunctions->FreeTextureImageBuffer);
 
    ctx->API = api;
    ctx->Visual = *visual;

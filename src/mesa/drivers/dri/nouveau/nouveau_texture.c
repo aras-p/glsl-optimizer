@@ -704,7 +704,7 @@ nouveau_texture_functions_init(struct dd_function_table *functions)
 	functions->NewTextureObject = nouveau_texture_new;
 	functions->DeleteTexture = nouveau_texture_free;
 	functions->NewTextureImage = nouveau_teximage_new;
-	functions->FreeTexImageData = nouveau_teximage_free;
+	functions->FreeTextureImageBuffer = nouveau_teximage_free;
 	functions->ChooseTextureFormat = nouveau_choose_tex_format;
 	functions->TexImage1D = nouveau_teximage_1d;
 	functions->TexImage2D = nouveau_teximage_2d;

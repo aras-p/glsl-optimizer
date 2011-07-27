@@ -123,5 +123,5 @@ intelInitTextureFuncs(struct dd_function_table *functions)
    functions->NewTextureObject = intelNewTextureObject;
    functions->NewTextureImage = intelNewTextureImage;
    functions->DeleteTexture = intelDeleteTextureObject;
-   functions->FreeTexImageData = intelFreeTextureImageData;
+   functions->FreeTextureImageBuffer = intelFreeTextureImageData;
 }

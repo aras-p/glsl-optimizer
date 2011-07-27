@@ -447,7 +447,7 @@ void r600InitTextureFuncs(radeonContextPtr radeon, struct dd_function_table *fun
 	 * since _mesa_init_driver_functions() was already called.
 	 */
 	functions->NewTextureImage = radeonNewTextureImage;
-	functions->FreeTexImageData = radeonFreeTexImageData;
+	functions->FreeTextureImageBuffer = radeonFreeTextureImageBuffer;
 	functions->MapTexture = radeonMapTexture;
 	functions->UnmapTexture = radeonUnmapTexture;
 

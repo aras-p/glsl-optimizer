@@ -479,7 +479,7 @@ struct dd_function_table {
    /** 
     * Called to free tImage->Data.
     */
-   void (*FreeTexImageData)( struct gl_context *ctx, struct gl_texture_image *tImage );
+   void (*FreeTextureImageBuffer)( struct gl_context *ctx, struct gl_texture_image *tImage );
 
    /** Map texture image data into user space */
    void (*MapTexture)( struct gl_context *ctx, struct gl_texture_object *tObj );

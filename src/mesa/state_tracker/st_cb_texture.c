@@ -142,7 +142,7 @@ st_DeleteTextureObject(struct gl_context *ctx,
 }
 
 
-/** called via ctx->Driver.FreeTexImageData() */
+/** called via ctx->Driver.FreeTextureImageBuffer() */
 static void
 st_FreeTextureImageData(struct gl_context * ctx, struct gl_texture_image *texImage)
 {
@@ -1880,7 +1880,7 @@ st_init_texture_functions(struct dd_function_table *functions)
    functions->NewTextureObject = st_NewTextureObject;
    functions->NewTextureImage = st_NewTextureImage;
    functions->DeleteTexture = st_DeleteTextureObject;
-   functions->FreeTexImageData = st_FreeTextureImageData;
+   functions->FreeTextureImageBuffer = st_FreeTextureImageData;
 
    functions->TextureMemCpy = do_memcpy;
 

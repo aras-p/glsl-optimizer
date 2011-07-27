@@ -111,7 +111,7 @@ _mesa_init_driver_functions(struct dd_function_table *driver)
    driver->NewTextureObject = _mesa_new_texture_object;
    driver->DeleteTexture = _mesa_delete_texture_object;
    driver->NewTextureImage = _mesa_new_texture_image;
-   driver->FreeTexImageData = _mesa_free_texture_image_data; 
+   driver->FreeTextureImageBuffer = _mesa_free_texture_image_data;
    driver->MapTexture = NULL;
    driver->UnmapTexture = NULL;
    driver->TextureMemCpy = memcpy;

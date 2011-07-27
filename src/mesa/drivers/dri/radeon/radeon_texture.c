@@ -86,7 +86,7 @@ struct gl_texture_image *radeonNewTextureImage(struct gl_context *ctx)
 /**
  * Free memory associated with this texture image.
  */
-void radeonFreeTexImageData(struct gl_context *ctx, struct gl_texture_image *timage)
+void radeonFreeTextureImageBuffer(struct gl_context *ctx, struct gl_texture_image *timage)
 {
 	radeon_texture_image* image = get_radeon_texture_image(timage);
 
@@ -791,7 +791,7 @@ static void radeon_teximage(
 	t->validated = GL_FALSE;
 
 	/* Mesa core only clears texImage->Data but not image->mt */
-	radeonFreeTexImageData(ctx, texImage);
+	radeonFreeTextureImageBuffer(ctx, texImage);
 
 	if (!t->bo) {
 		teximage_assign_miptree(rmesa, texObj, texImage, face, level);
@@ -1036,7 +1036,7 @@ void radeon_image_target_texture_2d(struct gl_context *ctx, GLenum target,
 	if (image == NULL)
 		return;
 
-	radeonFreeTexImageData(ctx, texImage);
+	radeonFreeTextureImageBuffer(ctx, texImage);
 
 	texImage->Width = image->width;
 	texImage->Height = image->height;
