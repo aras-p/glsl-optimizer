@@ -318,6 +318,10 @@
 					>
 				</File>
 				<File
+					RelativePath="..\ir_function_detect_recursion.cpp"
+					>
+				</File>
+				<File
 					RelativePath="..\ir_function_inlining.h"
 					>
 				</File>
@@ -579,6 +583,14 @@
 				</File>
 				<File
 					RelativePath="..\s_expression.h"
+					>
+				</File>
+				<File
+					RelativePath="..\standalone_scaffolding.cpp"
+					>
+				</File>
+				<File
+					RelativePath="..\standalone_scaffolding.h"
 					>
 				</File>
 				<File
