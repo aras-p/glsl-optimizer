@@ -24,67 +24,6 @@
 #include "glsl_types.h"
 #include "ir.h"
 
-int
-type_compare(const glsl_type *a, const glsl_type *b)
-{
-   /* If the types are the same, they trivially match.
-    */
-   if (a == b)
-      return 0;
-
-   switch (a->base_type) {
-   case GLSL_TYPE_UINT:
-   case GLSL_TYPE_INT:
-   case GLSL_TYPE_BOOL:
-      /* There is no implicit conversion to or from integer types or bool.
-       */
-      if ((a->is_integer() != b->is_integer())
-	  || (a->is_boolean() != b->is_boolean()))
-	 return -1;
-
-      /* FALLTHROUGH */
-
-   case GLSL_TYPE_FLOAT:
-      if ((a->vector_elements != b->vector_elements)
-	  || (a->matrix_columns != b->matrix_columns))
-	 return -1;
-
-      return 1;
-
-   case GLSL_TYPE_SAMPLER:
-   case GLSL_TYPE_STRUCT:
-      /* Samplers and structures must match exactly.
-       */
-      return -1;
-
-   case GLSL_TYPE_ARRAY:
-      if ((b->base_type != GLSL_TYPE_ARRAY)
-	  || (a->length != b->length))
-	 return -1;
-
-      /* From GLSL 1.50 spec, page 27 (page 33 of the PDF):
-       *    "There are no implicit array or structure conversions."
-       *
-       * If the comparison of the array element types detects that a conversion
-       * would be required, the array types do not match.
-       */
-      return (type_compare(a->fields.array, b->fields.array) == 0) ? 0 : -1;
-
-   case GLSL_TYPE_VOID:
-   case GLSL_TYPE_ERROR:
-   default:
-      /* These are all error conditions.  It is invalid for a parameter to
-       * a function to be declared as error, void, or a function.
-       */
-      return -1;
-   }
-
-   /* This point should be unreachable.
-    */
-   assert(0);
-}
-
-
 /**
  * \brief Check if two parameter lists match.
  *
