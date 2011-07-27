@@ -4825,7 +4825,7 @@ st_link_shader(struct gl_context *ctx, struct gl_shader_program *prog)
 
          progress = do_common_optimization(ir, true, options->MaxUnrollIterations) || progress;
 
-         progress = lower_quadop_vector(ir, true) || progress;
+         progress = lower_quadop_vector(ir, false) || progress;
 
          if (options->EmitNoIfs) {
             progress = lower_discard(ir) || progress;
