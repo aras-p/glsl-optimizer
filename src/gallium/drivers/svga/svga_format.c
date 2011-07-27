@@ -48,10 +48,16 @@ svga_translate_format(struct svga_screen *ss,
    case PIPE_FORMAT_B8G8R8X8_UNORM:
       return SVGA3D_X8R8G8B8;
 
-      /* Required for GL2.1:
-       */
+   /* sRGB required for GL2.1 */
    case PIPE_FORMAT_B8G8R8A8_SRGB:
       return SVGA3D_A8R8G8B8;
+   case PIPE_FORMAT_DXT1_SRGB:
+   case PIPE_FORMAT_DXT1_SRGBA:
+      return SVGA3D_DXT1;
+   case PIPE_FORMAT_DXT3_SRGBA:
+      return SVGA3D_DXT3;
+   case PIPE_FORMAT_DXT5_SRGBA:
+      return SVGA3D_DXT5;
 
    case PIPE_FORMAT_B5G6R5_UNORM:
       return SVGA3D_R5G6B5;
