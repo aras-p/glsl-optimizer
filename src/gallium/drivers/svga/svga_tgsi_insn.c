@@ -1225,28 +1225,56 @@ static boolean emit_sub(struct svga_shader_emitter *emit,
 static boolean emit_kil(struct svga_shader_emitter *emit,
                         const struct tgsi_full_instruction *insn )
 {
-   SVGA3dShaderInstToken inst;
    const struct tgsi_full_src_register *reg = &insn->Src[0];
-   struct src_register src0;
+   struct src_register src0, srcIn;
+   /* is the W component tested in another position? */
+   const boolean w_tested = (reg->Register.SwizzleW == reg->Register.SwizzleX ||
+                             reg->Register.SwizzleW == reg->Register.SwizzleY ||
+                             reg->Register.SwizzleW == reg->Register.SwizzleZ);
+   const boolean special = (reg->Register.Absolute ||
+                            reg->Register.Negate ||
+                            reg->Register.Indirect ||
+                            reg->Register.SwizzleX != 0 ||
+                            reg->Register.SwizzleY != 1 ||
+                            reg->Register.SwizzleZ != 2 ||
+                            reg->Register.File != TGSI_FILE_TEMPORARY);
+   SVGA3dShaderDestToken temp;
 
-   inst = inst_token( SVGA3DOP_TEXKILL );
-   src0 = translate_src_register( emit, reg );
+   src0 = srcIn = translate_src_register( emit, reg );
 
-   if (reg->Register.Absolute ||
-       reg->Register.Negate ||
-       reg->Register.Indirect ||
-       reg->Register.SwizzleX != 0 ||
-       reg->Register.SwizzleY != 1 ||
-       reg->Register.SwizzleZ != 2 ||
-       reg->Register.File != TGSI_FILE_TEMPORARY)
-   {
-      SVGA3dShaderDestToken temp = get_temp( emit );
+   if (special || !w_tested) {
+      /* need a temp reg */
+      temp = get_temp( emit );
+   }
 
-      submit_op1( emit, inst_token( SVGA3DOP_MOV ), temp, src0 );
+   if (special) {
+      /* move the source into a temp register */
+      submit_op1( emit, inst_token( SVGA3DOP_MOV ),
+                  writemask( temp, TGSI_WRITEMASK_XYZ ),
+                  src0 );
+
       src0 = src( temp );
    }
 
-   return submit_op0( emit, inst, dst(src0) );
+   /* do the texkill (on the xyz components) */
+   if (!submit_op0( emit, inst_token( SVGA3DOP_TEXKILL ), dst(src0) ))
+      return FALSE;
+
+   if (!w_tested) {
+      /* need to emit a second texkill to test the W component */
+      /* put src.wwww into temp register */
+      if (!submit_op1(emit,
+                      inst_token( SVGA3DOP_MOV ),
+                      writemask( temp, TGSI_WRITEMASK_XYZ ),
+                      scalar(srcIn, TGSI_SWIZZLE_W)))
+         return FALSE;
+
+      /* second texkill */
+      if (!submit_op0( emit, inst_token( SVGA3DOP_TEXKILL ), temp ))
+         return FALSE;
+   }
+
+   return TRUE;
 }
 
 
