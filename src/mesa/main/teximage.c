@@ -2456,9 +2456,7 @@ teximage(struct gl_context *ctx, GLuint dims,
          else {
             gl_format texFormat;
 
-            if (texImage->Data) {
-               ctx->Driver.FreeTextureImageBuffer( ctx, texImage );
-            }
+            ctx->Driver.FreeTextureImageBuffer(ctx, texImage);
 
             ASSERT(texImage->Data == NULL);
             texFormat = _mesa_choose_texture_format(ctx, texObj, target, level,
@@ -2597,8 +2595,7 @@ _mesa_EGLImageTargetTexture2DOES (GLenum target, GLeglImageOES image)
    if (!texImage) {
       _mesa_error(ctx, GL_OUT_OF_MEMORY, "glEGLImageTargetTexture2D");
    } else {
-      if (texImage->Data)
-	 ctx->Driver.FreeTextureImageBuffer( ctx, texImage );
+      ctx->Driver.FreeTextureImageBuffer(ctx, texImage);
 
       ASSERT(texImage->Data == NULL);
       ctx->Driver.EGLImageTargetTexture2D(ctx, target,
@@ -3362,9 +3359,7 @@ compressedteximage(struct gl_context *ctx, GLuint dims,
          else {
             gl_format texFormat;
 
-            if (texImage->Data) {
-               ctx->Driver.FreeTextureImageBuffer( ctx, texImage );
-            }
+            ctx->Driver.FreeTextureImageBuffer(ctx, texImage);
             ASSERT(texImage->Data == NULL);
 
             texFormat = _mesa_choose_texture_format(ctx, texObj, target, level,
