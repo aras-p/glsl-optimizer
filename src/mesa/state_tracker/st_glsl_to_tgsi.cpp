@@ -1741,6 +1741,18 @@ glsl_to_tgsi_visitor::visit(ir_dereference_array *ir)
               this->result, st_src_reg_for_float(element_size));
       }
 
+      /* If there was already a relative address register involved, add the
+       * new and the old together to get the new offset.
+       */
+      if (src.reladdr != NULL) {
+         st_src_reg accum_reg = get_temp(glsl_type::float_type);
+
+         emit(ir, TGSI_OPCODE_ADD, st_dst_reg(accum_reg),
+              index_reg, *src.reladdr);
+
+         index_reg = accum_reg;
+      }
+
       src.reladdr = ralloc(mem_ctx, st_src_reg);
       memcpy(src.reladdr, &index_reg, sizeof(index_reg));
    }
