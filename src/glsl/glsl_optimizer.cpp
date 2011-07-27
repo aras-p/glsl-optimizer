@@ -12,20 +12,6 @@
 extern "C" struct gl_shader *
 _mesa_new_shader(struct gl_context *ctx, GLuint name, GLenum type);
 
-struct gl_shader *
-_mesa_new_shader(struct gl_context *ctx, GLuint name, GLenum type)
-{
-   struct gl_shader *shader;
-   assert(type == GL_FRAGMENT_SHADER || type == GL_VERTEX_SHADER);
-   shader = rzalloc(NULL, struct gl_shader);
-   if (shader) {
-      shader->Type = type;
-      shader->Name = name;
-      shader->RefCount = 1;
-   }
-   return shader;
-}
-
 
 static void
 initialize_mesa_context(struct gl_context *ctx, gl_api api)

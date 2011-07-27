@@ -32,6 +32,11 @@
 		2B47DA041209C87B00937F2C /* symbol_table.h in Headers */ = {isa = PBXBuildFile; fileRef = 2B47DA001209C87B00937F2C /* symbol_table.h */; };
 		2B62491112191339003F6EEE /* ir_rvalue_visitor.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 2B62490D12191339003F6EEE /* ir_rvalue_visitor.cpp */; };
 		2B62491212191339003F6EEE /* ir_rvalue_visitor.h in Headers */ = {isa = PBXBuildFile; fileRef = 2B62490E12191339003F6EEE /* ir_rvalue_visitor.h */; };
+		2B655A7213E0322E00B5278F /* ir_function_detect_recursion.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 2B655A7113E0322E00B5278F /* ir_function_detect_recursion.cpp */; };
+		2B655A7313E0322E00B5278F /* ir_function_detect_recursion.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 2B655A7113E0322E00B5278F /* ir_function_detect_recursion.cpp */; };
+		2B655A7813E0324F00B5278F /* standalone_scaffolding.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 2B655A7613E0324F00B5278F /* standalone_scaffolding.cpp */; };
+		2B655A7913E0324F00B5278F /* standalone_scaffolding.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 2B655A7613E0324F00B5278F /* standalone_scaffolding.cpp */; };
+		2B655A7A13E0324F00B5278F /* standalone_scaffolding.h in Headers */ = {isa = PBXBuildFile; fileRef = 2B655A7713E0324F00B5278F /* standalone_scaffolding.h */; };
 		2B6A99F41223B1670059FBED /* glcpp-lex.c in Sources */ = {isa = PBXBuildFile; fileRef = 2B6A99EC1223B1670059FBED /* glcpp-lex.c */; };
 		2B6A99F61223B1670059FBED /* glcpp-parse.c in Sources */ = {isa = PBXBuildFile; fileRef = 2B6A99EE1223B1670059FBED /* glcpp-parse.c */; };
 		2B6A99F71223B1670059FBED /* glcpp-parse.h in Headers */ = {isa = PBXBuildFile; fileRef = 2B6A99EF1223B1670059FBED /* glcpp-parse.h */; };
@@ -221,6 +226,9 @@
 		2B47DA001209C87B00937F2C /* symbol_table.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = symbol_table.h; path = ../../mesa/program/symbol_table.h; sourceTree = SOURCE_ROOT; };
 		2B62490D12191339003F6EEE /* ir_rvalue_visitor.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = ir_rvalue_visitor.cpp; path = ../ir_rvalue_visitor.cpp; sourceTree = SOURCE_ROOT; };
 		2B62490E12191339003F6EEE /* ir_rvalue_visitor.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = ir_rvalue_visitor.h; path = ../ir_rvalue_visitor.h; sourceTree = SOURCE_ROOT; };
+		2B655A7113E0322E00B5278F /* ir_function_detect_recursion.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = ir_function_detect_recursion.cpp; path = ../ir_function_detect_recursion.cpp; sourceTree = SOURCE_ROOT; };
+		2B655A7613E0324F00B5278F /* standalone_scaffolding.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = standalone_scaffolding.cpp; path = ../standalone_scaffolding.cpp; sourceTree = SOURCE_ROOT; };
+		2B655A7713E0324F00B5278F /* standalone_scaffolding.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = standalone_scaffolding.h; path = ../standalone_scaffolding.h; sourceTree = SOURCE_ROOT; };
 		2B6A99EC1223B1670059FBED /* glcpp-lex.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = "glcpp-lex.c"; path = "../glcpp/glcpp-lex.c"; sourceTree = SOURCE_ROOT; };
 		2B6A99ED1223B1670059FBED /* glcpp-lex.l */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.lex; name = "glcpp-lex.l"; path = "../glcpp/glcpp-lex.l"; sourceTree = SOURCE_ROOT; };
 		2B6A99EE1223B1670059FBED /* glcpp-parse.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = "glcpp-parse.c"; path = "../glcpp/glcpp-parse.c"; sourceTree = SOURCE_ROOT; };
@@ -436,6 +444,7 @@
 				2BA55A711207FEA6002DC82D /* ir_expression_flattening.cpp */,
 				2BA55A721207FEA6002DC82D /* ir_expression_flattening.h */,
 				2BA55A731207FEA6002DC82D /* ir_function_can_inline.cpp */,
+				2B655A7113E0322E00B5278F /* ir_function_detect_recursion.cpp */,
 				2BA55A751207FEA6002DC82D /* ir_function_inlining.h */,
 				2BA55A761207FEA6002DC82D /* ir_function.cpp */,
 				2BA55A771207FEA6002DC82D /* ir_hierarchical_visitor.cpp */,
@@ -496,6 +505,8 @@
 				2BA07FAA1352E7BB00A1C074 /* ralloc.h */,
 				2BA55A9A1207FEA6002DC82D /* s_expression.cpp */,
 				2BA55A9B1207FEA6002DC82D /* s_expression.h */,
+				2B655A7613E0324F00B5278F /* standalone_scaffolding.cpp */,
+				2B655A7713E0324F00B5278F /* standalone_scaffolding.h */,
 			);
 			name = glsl;
 			sourceTree = "<group>";
@@ -574,6 +585,7 @@
 				2BB725B5135094BE0057D8B5 /* simple_list.h in Headers */,
 				2BB725B6135094BE0057D8B5 /* version.h in Headers */,
 				2BA07FAC1352E7BB00A1C074 /* ralloc.h in Headers */,
+				2B655A7A13E0324F00B5278F /* standalone_scaffolding.h in Headers */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -730,6 +742,8 @@
 				2BA080871352EBD100A1C074 /* builtin_stubs.cpp in Sources */,
 				2BA0808B1352EBFB00A1C074 /* main.cpp in Sources */,
 				2BEC22EB1356E98500B5E301 /* opt_copy_propagation_elements.cpp in Sources */,
+				2B655A7213E0322E00B5278F /* ir_function_detect_recursion.cpp in Sources */,
+				2B655A7813E0324F00B5278F /* standalone_scaffolding.cpp in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -807,6 +821,8 @@
 				2BB2F5B412B8F1580052C6B0 /* strtod.c in Sources */,
 				2BA07FAB1352E7BB00A1C074 /* ralloc.c in Sources */,
 				2BEC22EA1356E98300B5E301 /* opt_copy_propagation_elements.cpp in Sources */,
+				2B655A7313E0322E00B5278F /* ir_function_detect_recursion.cpp in Sources */,
+				2B655A7913E0324F00B5278F /* standalone_scaffolding.cpp in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

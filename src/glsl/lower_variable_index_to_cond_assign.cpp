@@ -106,7 +106,7 @@ compare_index_block(exec_list *instructions, ir_variable *index,
    ir_variable *const condition =
       new(mem_ctx) ir_variable(condition_val->type,
 			       "dereference_condition",
-			       ir_var_temporary);
+			       ir_var_temporary, precision_from_ir(condition_val));
    instructions->push_tail(condition);
 
    ir_rvalue *const cond_deref =
