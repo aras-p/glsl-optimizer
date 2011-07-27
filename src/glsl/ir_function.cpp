@@ -24,17 +24,28 @@
 #include "glsl_types.h"
 #include "ir.h"
 
+typedef enum {
+   PARAMETER_LIST_NO_MATCH,
+   PARAMETER_LIST_EXACT_MATCH,
+   PARAMETER_LIST_INEXACT_MATCH, /*< Match requires implicit conversion. */
+} parameter_list_match_t;
+
 /**
  * \brief Check if two parameter lists match.
  *
  * \param list_a Parameters of the function definition.
  * \param list_b Actual parameters passed to the function.
- * \return If an exact match, return 0.
- *         If an inexact match requiring implicit conversion, return 1.
- *         If not a match, return -1.
  * \see matching_signature()
  */
-static int
+
+/**
+ * \brief Check if two parameter lists match.
+ *
+ * \param list_a Parameters of the function definition.
+ * \param list_b Actual parameters passed to the function.
+ * \see matching_signature()
+ */
+static parameter_list_match_t
 parameter_lists_match(const exec_list *list_a, const exec_list *list_b)
 {
    const exec_node *node_a = list_a->head;
@@ -52,7 +63,7 @@ parameter_lists_match(const exec_list *list_a, const exec_list *list_b)
        * do not match.
        */
       if (node_b->is_tail_sentinel())
-	 return -1;
+	 return PARAMETER_LIST_NO_MATCH;
 
 
       const ir_variable *const param = (ir_variable *) node_a;
@@ -72,17 +83,17 @@ parameter_lists_match(const exec_list *list_a, const exec_list *list_b)
 	  * as uniform.
 	  */
 	 assert(0);
-	 return -1;
+	 return PARAMETER_LIST_NO_MATCH;
 
       case ir_var_const_in:
       case ir_var_in:
 	 if (!actual->type->can_implicitly_convert_to(param->type))
-	    return -1;
+	    return PARAMETER_LIST_NO_MATCH;
 	 break;
 
       case ir_var_out:
 	 if (!param->type->can_implicitly_convert_to(actual->type))
-	    return -1;
+	    return PARAMETER_LIST_NO_MATCH;
 	 break;
 
       case ir_var_inout:
@@ -90,11 +101,11 @@ parameter_lists_match(const exec_list *list_a, const exec_list *list_b)
 	  * there is int -> float but no float -> int), inout parameters must
 	  * be exact matches.
 	  */
-	 return -1;
+	 return PARAMETER_LIST_NO_MATCH;
 
       default:
 	 assert(false);
-	 return -1;
+	 return PARAMETER_LIST_NO_MATCH;
       }
    }
 
@@ -103,12 +114,12 @@ parameter_lists_match(const exec_list *list_a, const exec_list *list_b)
     * match.
     */
    if (!node_b->is_tail_sentinel())
-      return -1;
+      return PARAMETER_LIST_NO_MATCH;
 
    if (inexact_match)
-      return 1;
+      return PARAMETER_LIST_INEXACT_MATCH;
    else
-      return 0;
+      return PARAMETER_LIST_EXACT_MATCH;
 }
 
 
@@ -132,18 +143,20 @@ ir_function::matching_signature(const exec_list *actual_parameters)
       ir_function_signature *const sig =
 	 (ir_function_signature *) iter.get();
 
-      const int score = parameter_lists_match(& sig->parameters,
-					      actual_parameters);
-
-      /* If we found an exact match, simply return it */
-      if (score == 0)
+      switch (parameter_lists_match(& sig->parameters, actual_parameters)) {
+      case PARAMETER_LIST_EXACT_MATCH:
 	 return sig;
-
-      if (score > 0) {
+      case PARAMETER_LIST_INEXACT_MATCH:
 	 if (match == NULL)
 	    match = sig;
 	 else
 	    multiple_inexact_matches = true;
+	 continue;
+      case PARAMETER_LIST_NO_MATCH:
+	 continue;
+      default:
+	 assert(false);
+	 return NULL;
       }
    }
 
