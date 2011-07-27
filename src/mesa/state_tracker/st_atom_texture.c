@@ -221,9 +221,9 @@ update_single_texture(struct st_context *st, struct pipe_sampler_view **sampler_
 
       if ((samp->sRGBDecode == GL_SKIP_DECODE_EXT) &&
 	  (_mesa_get_format_color_encoding(texFormat) == GL_SRGB)) {
-	 /* don't do sRGB->RGB conversion.  Interpret the texture
-	  * texture data as linear values.
-	  */
+         /* Don't do sRGB->RGB conversion.  Interpret the texture data as
+          * linear values.
+          */
 	 const gl_format linearFormat =
 	    _mesa_get_srgb_format_linear(texFormat);
 	 firstImageFormat = st_mesa_format_to_pipe_format(linearFormat);
