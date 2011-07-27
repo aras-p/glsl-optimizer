@@ -229,6 +229,20 @@ public:
    ir_variable *var; /* variable that maps to this, if any */
 };
 
+class immediate_storage : public exec_node {
+public:
+   immediate_storage(gl_constant_value *values, int size, int type)
+   {
+      memcpy(this->values, values, size * sizeof(gl_constant_value));
+      this->size = size;
+      this->type = type;
+   }
+   
+   gl_constant_value values[4];
+   int size; /**< Number of components (1-4) */
+   int type; /**< GL_FLOAT, GL_INT, GL_BOOL, or GL_UNSIGNED_INT */
+};
+
 class function_entry : public exec_node {
 public:
    ir_function_signature *sig;
@@ -272,7 +286,6 @@ public:
    struct gl_program *prog;
    struct gl_shader_program *shader_program;
    struct gl_shader_compiler_options *options;
-   struct gl_program_parameter_list *immediates;
 
    int next_temp;
 
@@ -284,6 +297,9 @@ public:
    int glsl_version;
 
    variable_storage *find_variable_storage(ir_variable *var);
+
+   int add_constant(gl_register_file file, gl_constant_value values[4],
+                    int size, int datatype, GLuint *swizzle_out);
 
    function_entry *get_function_signature(ir_function_signature *sig);
 
@@ -325,6 +341,10 @@ public:
 
    /** List of variable_storage */
    exec_list variables;
+
+   /** List of immediate_storage */
+   exec_list immediates;
+   int num_immediates;
 
    /** List of function_entry */
    exec_list function_signatures;
@@ -808,6 +828,42 @@ glsl_to_tgsi_visitor::emit_scs(ir_instruction *ir, unsigned op,
    }
 }
 
+int
+glsl_to_tgsi_visitor::add_constant(gl_register_file file,
+        		     gl_constant_value values[4], int size, int datatype,
+        		     GLuint *swizzle_out)
+{
+   if (file == PROGRAM_CONSTANT) {
+      return _mesa_add_typed_unnamed_constant(this->prog->Parameters, values,
+                                              size, datatype, swizzle_out);
+   } else {
+      int index = 0;
+      immediate_storage *entry;
+      assert(file == PROGRAM_IMMEDIATE);
+      fprintf(stderr, "adding immediate\n");
+
+      /* Search immediate storage to see if we already have an identical
+       * immediate that we can use instead of adding a duplicate entry.
+       */
+      foreach_iter(exec_list_iterator, iter, this->immediates) {
+         entry = (immediate_storage *)iter.get();
+         
+         if (entry->size == size &&
+             entry->type == datatype &&
+             !memcmp(entry->values, values, size * sizeof(gl_constant_value))) {
+             return index;
+         }
+         index++;
+      }
+      
+      /* Add this immediate to the list. */
+      entry = new(mem_ctx) immediate_storage(values, size, datatype);
+      this->immediates.push_tail(entry);
+      this->num_immediates++;
+      return index;
+   }
+}
+
 struct st_src_reg
 glsl_to_tgsi_visitor::st_src_reg_for_float(float val)
 {
@@ -815,8 +871,7 @@ glsl_to_tgsi_visitor::st_src_reg_for_float(float val)
    union gl_constant_value uval;
 
    uval.f = val;
-   src.index = _mesa_add_typed_unnamed_constant(this->immediates, &uval, 1,
-                                                GL_FLOAT, &src.swizzle);
+   src.index = add_constant(src.file, &uval, 1, GL_FLOAT, &src.swizzle);
 
    return src;
 }
@@ -830,8 +885,7 @@ glsl_to_tgsi_visitor::st_src_reg_for_int(int val)
    assert(glsl_version >= 130);
 
    uval.i = val;
-   src.index = _mesa_add_typed_unnamed_constant(this->immediates, &uval, 1,
-                                                GL_INT, &src.swizzle);
+   src.index = add_constant(src.file, &uval, 1, GL_INT, &src.swizzle);
 
    return src;
 }
@@ -1941,12 +1995,8 @@ glsl_to_tgsi_visitor::visit(ir_constant *ir)
    gl_constant_value *values = (gl_constant_value *) stack_vals;
    GLenum gl_type = GL_NONE;
    unsigned int i;
-   gl_register_file file;
-   gl_program_parameter_list *param_list;
    static int in_array = 0;
-
-   file = in_array ? PROGRAM_CONSTANT : PROGRAM_IMMEDIATE;
-   param_list = in_array ? this->prog->Parameters : this->immediates;
+   gl_register_file file = in_array ? PROGRAM_CONSTANT : PROGRAM_IMMEDIATE;
 
    /* Unfortunately, 4 floats is all we can get into
     * _mesa_add_typed_unnamed_constant.  So, make a temp to store an
@@ -2009,11 +2059,11 @@ glsl_to_tgsi_visitor::visit(ir_constant *ir)
          values = (gl_constant_value *) &ir->value.f[i * ir->type->vector_elements];
 
          src = st_src_reg(file, -1, ir->type->base_type);
-         src.index = _mesa_add_typed_unnamed_constant(param_list,
-                                                      values,
-                                                      ir->type->vector_elements,
-                                                      GL_FLOAT,
-                                                      &src.swizzle);
+         src.index = add_constant(file,
+                                  values,
+                                  ir->type->vector_elements,
+                                  GL_FLOAT,
+                                  &src.swizzle);
          emit(ir, TGSI_OPCODE_MOV, mat_column, src);
 
          mat_column.index++;
@@ -2062,9 +2112,11 @@ glsl_to_tgsi_visitor::visit(ir_constant *ir)
    }
 
    this->result = st_src_reg(file, -1, ir->type);
-   this->result.index = _mesa_add_typed_unnamed_constant(param_list,
-        					   values, ir->type->vector_elements, gl_type,
-        					   &this->result.swizzle);
+   this->result.index = add_constant(file,
+                                     values,
+                                     ir->type->vector_elements,
+                                     gl_type,
+                                     &this->result.swizzle);
 }
 
 function_entry *
@@ -2441,17 +2493,16 @@ glsl_to_tgsi_visitor::glsl_to_tgsi_visitor()
    result.file = PROGRAM_UNDEFINED;
    next_temp = 1;
    next_signature_id = 1;
+   num_immediates = 0;
    current_function = NULL;
    num_address_regs = 0;
    indirect_addr_temps = false;
    indirect_addr_consts = false;
-   immediates = _mesa_new_parameter_list();
    mem_ctx = ralloc_context(NULL);
 }
 
 glsl_to_tgsi_visitor::~glsl_to_tgsi_visitor()
 {
-   _mesa_free_parameter_list(immediates);
    ralloc_free(mem_ctx);
 }
 
@@ -3538,8 +3589,7 @@ get_pixel_transfer_visitor(struct st_fragment_program *fp,
    v->samplers_used = prog->SamplersUsed = original->samplers_used;
    v->indirect_addr_temps = original->indirect_addr_temps;
    v->indirect_addr_consts = original->indirect_addr_consts;
-   _mesa_free_parameter_list(v->immediates);
-   v->immediates = _mesa_clone_parameter_list(original->immediates);
+   memcpy(&v->immediates, &original->immediates, sizeof(v->immediates));
 
    /*
     * Get initial pixel color from the texture.
@@ -3667,8 +3717,7 @@ get_bitmap_visitor(struct st_fragment_program *fp,
    v->samplers_used = prog->SamplersUsed = original->samplers_used;
    v->indirect_addr_temps = original->indirect_addr_temps;
    v->indirect_addr_consts = original->indirect_addr_consts;
-   _mesa_free_parameter_list(v->immediates);
-   v->immediates = _mesa_clone_parameter_list(original->immediates);
+   memcpy(&v->immediates, &original->immediates, sizeof(v->immediates));
 
    /* TEX tmp0, fragment.texcoord[0], texture[0], 2D; */
    coord = st_src_reg(PROGRAM_INPUT, FRAG_ATTRIB_TEX0, glsl_type::vec2_type);
@@ -3822,32 +3871,20 @@ static void set_insn_start(struct st_translate *t, unsigned start)
  */
 static struct ureg_src
 emit_immediate(struct st_translate *t,
-               struct gl_program_parameter_list *params,
-               int index)
+               gl_constant_value values[4],
+               int type, int size)
 {
    struct ureg_program *ureg = t->ureg;
 
-   switch(params->Parameters[index].DataType)
+   switch(type)
    {
    case GL_FLOAT:
-   case GL_FLOAT_VEC2:
-   case GL_FLOAT_VEC3:
-   case GL_FLOAT_VEC4:
-      return ureg_DECL_immediate(ureg, (float *)params->ParameterValues[index], 4);
+      return ureg_DECL_immediate(ureg, &values[0].f, size);
    case GL_INT:
-   case GL_INT_VEC2:
-   case GL_INT_VEC3:
-   case GL_INT_VEC4:
-      return ureg_DECL_immediate_int(ureg, (int *)params->ParameterValues[index], 4);
+      return ureg_DECL_immediate_int(ureg, &values[0].i, size);
    case GL_UNSIGNED_INT:
-   case GL_UNSIGNED_INT_VEC2:
-   case GL_UNSIGNED_INT_VEC3:
-   case GL_UNSIGNED_INT_VEC4:
    case GL_BOOL:
-   case GL_BOOL_VEC2:
-   case GL_BOOL_VEC3:
-   case GL_BOOL_VEC4:
-      return ureg_DECL_immediate_uint(ureg, (unsigned *)params->ParameterValues[index], 4);
+      return ureg_DECL_immediate_uint(ureg, &values[0].u, size);
    default:
       assert(!"should not get here - type must be float, int, uint, or bool");
       return ureg_src_undef();
@@ -4483,7 +4520,10 @@ st_translate_program(
             if (program->indirect_addr_consts)
                t->constants[i] = ureg_DECL_constant(ureg, i);
             else
-               t->constants[i] = emit_immediate(t, proginfo->Parameters, i);
+               t->constants[i] = emit_immediate(t,
+                                                proginfo->Parameters->ParameterValues[i],
+                                                proginfo->Parameters->Parameters[i].DataType,
+                                                4);
             break;
          default:
             break;
@@ -4493,14 +4533,15 @@ st_translate_program(
    
    /* Emit immediate values.
     */
-   t->immediates = (struct ureg_src *)CALLOC(program->immediates->NumParameters * sizeof(struct ureg_src));
+   t->immediates = (struct ureg_src *)CALLOC(program->num_immediates * sizeof(struct ureg_src));
    if (t->immediates == NULL) {
       ret = PIPE_ERROR_OUT_OF_MEMORY;
       goto out;
    }
-   for (i = 0; i < program->immediates->NumParameters; i++) {
-      assert(program->immediates->Parameters[i].Type == PROGRAM_IMMEDIATE);
-      t->immediates[i] = emit_immediate(t, program->immediates, i);
+   i = 0;
+   foreach_iter(exec_list_iterator, iter, program->immediates) {
+      immediate_storage *imm = (immediate_storage *)iter.get();
+      t->immediates[i++] = emit_immediate(t, imm->values, imm->type, imm->size);
    }
 
    /* texture samplers */
