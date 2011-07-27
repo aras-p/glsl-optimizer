@@ -39,6 +39,7 @@ CXX_SOURCES = \
 	ir.cpp \
 	ir_expression_flattening.cpp \
 	ir_function_can_inline.cpp \
+	ir_function_detect_recursion.cpp \
 	ir_function.cpp \
 	ir_hierarchical_visitor.cpp \
 	ir_hv_accept.cpp \
@@ -88,17 +89,31 @@ CXX_SOURCES = \
 LIBS = \
 	$(TOP)/src/glsl/libglsl.a
 
-APPS = glsl_compiler glcpp/glcpp
+APPS = glsl_compiler glsl_test glcpp/glcpp
 
 GLSL2_C_SOURCES = \
 	../mesa/program/hash_table.c \
 	../mesa/program/symbol_table.c
 GLSL2_CXX_SOURCES = \
-	main.cpp
+	main.cpp \
+	standalone_scaffolding.cpp
 
 GLSL2_OBJECTS = \
 	$(GLSL2_C_SOURCES:.c=.o) \
 	$(GLSL2_CXX_SOURCES:.cpp=.o)
+
+TEST_C_SOURCES = \
+	../mesa/program/hash_table.c \
+	../mesa/program/symbol_table.c
+
+TEST_CXX_SOURCES = \
+	standalone_scaffolding.cpp \
+	test.cpp \
+	test_optpass.cpp
+
+TEST_OBJECTS = \
+	$(TEST_C_SOURCES:.c=.o) \
+	$(TEST_CXX_SOURCES:.cpp=.o)
 
 ### Basic defines ###
 
@@ -128,7 +143,9 @@ ALL_SOURCES = \
 	$(C_SOURCES) \
 	$(CXX_SOURCES) \
 	$(GLSL2_CXX_SOURCES) \
-	$(GLSL2_C_SOURCES)
+	$(GLSL2_C_SOURCES) \
+	$(TEST_CXX_SOURCES) \
+	$(TEST_C_SOURCES)
 
 ##### TARGETS #####
 
@@ -150,7 +167,7 @@ depend: $(ALL_SOURCES) Makefile
 
 # Remove .o and backup files
 clean: clean-dricore
-	rm -f $(GLCPP_OBJECTS) $(GLSL2_OBJECTS) $(OBJECTS) lib$(LIBNAME).a depend depend.bak builtin_function.cpp builtin_function.o builtin_stubs.o builtin_compiler
+	rm -f $(GLCPP_OBJECTS) $(GLSL2_OBJECTS) $(TEST_OBJECTS) $(OBJECTS) lib$(LIBNAME).a depend depend.bak builtin_function.cpp builtin_function.o builtin_stubs.o builtin_compiler
 	-rm -f $(APPS)
 
 clean-dricore:
@@ -172,6 +189,9 @@ install-dricore: default
 
 glsl_compiler: $(GLSL2_OBJECTS) libglsl.a builtin_stubs.o
 	$(APP_CXX) $(INCLUDES) $(CFLAGS) $(LDFLAGS) $(GLSL2_OBJECTS) builtin_stubs.o $(LIBS) -o $@
+
+glsl_test: $(TEST_OBJECTS) libglsl.a builtin_stubs.o
+	$(APP_CXX) $(INCLUDES) $(CFLAGS) $(LDFLAGS) $(TEST_OBJECTS) builtin_stubs.o $(LIBS) -o $@
 
 glcpp: glcpp/glcpp
 glcpp/glcpp: $(GLCPP_OBJECTS)

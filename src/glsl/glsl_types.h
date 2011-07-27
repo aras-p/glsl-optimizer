@@ -302,6 +302,12 @@ struct glsl_type {
    }
 
    /**
+    * Query whether or not type is a sampler, or for struct and array
+    * types, contains a sampler.
+    */
+   bool contains_sampler() const;
+
+   /**
     * Query whether or not a type is an array
     */
    bool is_array() const

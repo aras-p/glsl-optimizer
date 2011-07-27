@@ -1248,7 +1248,7 @@ assign_attribute_or_color_locations(gl_shader_program *prog,
     */
 
    const int generic_base = (target_index == MESA_SHADER_VERTEX)
-     ? VERT_ATTRIB_GENERIC0 : FRAG_RESULT_DATA0;
+      ? (int) VERT_ATTRIB_GENERIC0 : (int) FRAG_RESULT_DATA0;
 
    const enum ir_variable_mode direction =
       (target_index == MESA_SHADER_VERTEX) ? ir_var_in : ir_var_out;
@@ -1343,7 +1343,7 @@ assign_attribute_or_color_locations(gl_shader_program *prog,
    foreach_list(node, sh->ir) {
       ir_variable *const var = ((ir_instruction *) node)->as_variable();
 
-      if ((var == NULL) || (var->mode != direction))
+      if ((var == NULL) || (var->mode != (unsigned) direction))
 	 continue;
 
       if (var->explicit_location) {
@@ -1701,6 +1701,10 @@ link_shaders(struct gl_context *ctx, struct gl_shader_program *prog)
    for (unsigned i = 0; i < MESA_SHADER_TYPES; i++) {
       if (prog->_LinkedShaders[i] == NULL)
 	 continue;
+
+      detect_recursion_linked(prog, prog->_LinkedShaders[i]->ir);
+      if (!prog->LinkStatus)
+	 goto done;
 
       while (do_common_optimization(prog->_LinkedShaders[i]->ir, true, 32))
 	 ;

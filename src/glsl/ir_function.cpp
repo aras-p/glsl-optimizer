@@ -165,8 +165,18 @@ ir_function_signature *
 ir_function::matching_signature(const exec_list *actual_parameters)
 {
    ir_function_signature *match = NULL;
-   int matched_score = 0;
+   bool multiple_inexact_matches = false;
 
+   /* From page 42 (page 49 of the PDF) of the GLSL 1.20 spec:
+    *
+    * "If an exact match is found, the other signatures are ignored, and
+    *  the exact match is used.  Otherwise, if no exact match is found, then
+    *  the implicit conversions in Section 4.1.10 "Implicit Conversions" will
+    *  be applied to the calling arguments if this can make their types match
+    *  a signature.  In this case, it is a semantic error if there are
+    *  multiple ways to apply these conversions to the actual arguments of a
+    *  call such that the call can be made to match multiple signatures."
+    */
    foreach_iter(exec_list_iterator, iter, signatures) {
       ir_function_signature *const sig =
 	 (ir_function_signature *) iter.get();
@@ -186,12 +196,23 @@ ir_function::matching_signature(const exec_list *actual_parameters)
       if (score == 0)
 	 return sig;
 
-      /* If we found a match with fewer conversions, use that instead */
-      if (score > 0 && (match == NULL || score < matched_score)) {
-	 match = sig;
-	 matched_score = score;
+      if (score > 0) {
+	 if (match == NULL)
+	    match = sig;
+	 else
+	    multiple_inexact_matches = true;
       }
    }
+
+   /* There is no exact match (we would have returned it by now).  If there
+    * are multiple inexact matches, the call is ambiguous, which is an error.
+    *
+    * FINISHME: Report a decent error.  Returning NULL will likely result in
+    * FINISHME: a "no matching signature" error; it should report that the
+    * FINISHME: call is ambiguous.  But reporting errors from here is hard.
+    */
+   if (multiple_inexact_matches)
+      return NULL;
 
    return match;
 }

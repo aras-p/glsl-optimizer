@@ -112,6 +112,22 @@ add_types_to_symbol_table(glsl_symbol_table *symtab,
    }
 }
 
+bool
+glsl_type::contains_sampler() const
+{
+   if (this->is_array()) {
+      return this->fields.array->contains_sampler();
+   } else if (this->is_record()) {
+      for (unsigned int i = 0; i < this->length; i++) {
+	 if (this->fields.structure[i].type->contains_sampler())
+	    return true;
+      }
+      return false;
+   } else {
+      return this->is_sampler();
+   }
+}
+
 void
 glsl_type::generate_100ES_types(glsl_symbol_table *symtab)
 {

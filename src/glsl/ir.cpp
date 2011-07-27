@@ -1130,21 +1130,6 @@ ir_dereference_record::ir_dereference_record(ir_variable *var,
       this->precision = this->record->type->field_precision(field);
 }
 
-bool type_contains_sampler(const glsl_type *type)
-{
-   if (type->is_array()) {
-      return type_contains_sampler(type->fields.array);
-   } else if (type->is_record()) {
-      for (unsigned int i = 0; i < type->length; i++) {
-	 if (type_contains_sampler(type->fields.structure[i].type))
-	    return true;
-      }
-      return false;
-   } else {
-      return type->is_sampler();
-   }
-}
-
 bool
 ir_dereference::is_lvalue()
 {
@@ -1164,7 +1149,7 @@ ir_dereference::is_lvalue()
     *     as out or inout function parameters, nor can they be
     *     assigned into."
     */
-   if (type_contains_sampler(this->type))
+   if (this->type->contains_sampler())
       return false;
 
    return true;

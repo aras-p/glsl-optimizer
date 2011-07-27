@@ -482,19 +482,21 @@ ir_reader::read_return(s_expression *expr)
 {
    s_expression *s_retval;
 
-   s_pattern pat[] = { "return", s_retval};
-   if (!MATCH(expr, pat)) {
-      ir_read_error(expr, "expected (return <rvalue>)");
+   s_pattern return_value_pat[] = { "return", s_retval};
+   s_pattern return_void_pat[] = { "return" };
+   if (MATCH(expr, return_value_pat)) {
+      ir_rvalue *retval = read_rvalue(s_retval);
+      if (retval == NULL) {
+         ir_read_error(NULL, "when reading return value");
+         return NULL;
+      }
+      return new(mem_ctx) ir_return(retval);
+   } else if (MATCH(expr, return_void_pat)) {
+      return new(mem_ctx) ir_return;
+   } else {
+      ir_read_error(expr, "expected (return <rvalue>) or (return)");
       return NULL;
    }
-
-   ir_rvalue *retval = read_rvalue(s_retval);
-   if (retval == NULL) {
-      ir_read_error(NULL, "when reading return value");
-      return NULL;
-   }
-
-   return new(mem_ctx) ir_return(retval);
 }
 
 

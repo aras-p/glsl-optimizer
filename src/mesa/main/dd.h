@@ -189,31 +189,22 @@ struct dd_function_table {
    /*@{*/
 
    /**
-    * Choose texture format.
-    * 
-    * This is called by the \c _mesa_store_tex[sub]image[123]d() fallback
-    * functions.  The driver should examine \p internalFormat and return a
-    * gl_format value.
+    * Choose actual hardware texture format given the user-provided source
+    * image format and type and the desired internal format.  In some
+    * cases, srcFormat and srcType can be GL_NONE.
+    * Called by glTexImage(), etc.
     */
    GLuint (*ChooseTextureFormat)( struct gl_context *ctx, GLint internalFormat,
                                      GLenum srcFormat, GLenum srcType );
 
    /**
-    * Called by glTexImage1D().
-    * 
-    * \param target user specified.
-    * \param format user specified.
-    * \param type user specified.
-    * \param pixels user specified.
-    * \param packing indicates the image packing of pixels.
+    * Called by glTexImage1D().  Simply copy the source texture data into the
+    * destination texture memory.  The gl_texture_image fields, etc. will be
+    * fully initialized.
+    * The parameters are the same as glTexImage1D(), plus:
+    * \param packing describes how to unpack the source data.
     * \param texObj is the target texture object.
-    * \param texImage is the target texture image.  It will have the texture \p
-    * width, \p height, \p depth, \p border and \p internalFormat information.
-    * 
-    * \p retainInternalCopy is returned by this function and indicates whether
-    * core Mesa should keep an internal copy of the texture image.
-    *
-    * Drivers should call a fallback routine from texstore.c if needed.
+    * \param texImage is the target texture image.
     */
    void (*TexImage1D)( struct gl_context *ctx, GLenum target, GLint level,
                        GLint internalFormat,
@@ -250,25 +241,9 @@ struct dd_function_table {
                        struct gl_texture_image *texImage );
 
    /**
-    * Called by glTexSubImage1D().
-    *
-    * \param target user specified.
-    * \param level user specified.
-    * \param xoffset user specified.
-    * \param yoffset user specified.
-    * \param zoffset user specified.
-    * \param width user specified.
-    * \param height user specified.
-    * \param depth user specified.
-    * \param format user specified.
-    * \param type user specified.
-    * \param pixels user specified.
-    * \param packing indicates the image packing of pixels.
-    * \param texObj is the target texture object.
-    * \param texImage is the target texture image.  It will have the texture \p
-    * width, \p height, \p border and \p internalFormat information.
-    *
-    * The driver should use a fallback routine from texstore.c if needed.
+    * Called by glTexSubImage1D().  Replace a subset of the target texture
+    * with new texel data.
+    * \sa dd_function_table::TexImage1D.
     */
    void (*TexSubImage1D)( struct gl_context *ctx, GLenum target, GLint level,
                           GLint xoffset, GLsizei width,
@@ -313,24 +288,6 @@ struct dd_function_table {
                         GLenum format, GLenum type, GLvoid *pixels,
                         struct gl_texture_object *texObj,
                         struct gl_texture_image *texImage );
-
-   /**
-    * Called by glCopyTexImage1D().
-    * 
-    * Drivers should use a fallback routine from texstore.c if needed.
-    */
-   void (*CopyTexImage1D)( struct gl_context *ctx, GLenum target, GLint level,
-                           GLenum internalFormat, GLint x, GLint y,
-                           GLsizei width, GLint border );
-
-   /**
-    * Called by glCopyTexImage2D().
-    * 
-    * Drivers should use a fallback routine from texstore.c if needed.
-    */
-   void (*CopyTexImage2D)( struct gl_context *ctx, GLenum target, GLint level,
-                           GLenum internalFormat, GLint x, GLint y,
-                           GLsizei width, GLsizei height, GLint border );
 
    /**
     * Called by glCopyTexSubImage1D().

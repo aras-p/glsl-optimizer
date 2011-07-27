@@ -29,79 +29,25 @@
 #include "ir_print_visitor.h"
 #include "program.h"
 #include "loop_analysis.h"
-
-extern "C" struct gl_shader *
-_mesa_new_shader(struct gl_context *ctx, GLuint name, GLenum type);
-
-extern "C" void
-_mesa_reference_shader(struct gl_context *ctx, struct gl_shader **ptr,
-                       struct gl_shader *sh);
-
-/* Copied from shader_api.c for the stand-alone compiler.
- */
-void
-_mesa_reference_shader(struct gl_context *ctx, struct gl_shader **ptr,
-                       struct gl_shader *sh)
-{
-   *ptr = sh;
-}
-
-struct gl_shader *
-_mesa_new_shader(struct gl_context *ctx, GLuint name, GLenum type)
-{
-   struct gl_shader *shader;
-
-   (void) ctx;
-
-   assert(type == GL_FRAGMENT_SHADER || type == GL_VERTEX_SHADER);
-   shader = rzalloc(NULL, struct gl_shader);
-   if (shader) {
-      shader->Type = type;
-      shader->Name = name;
-      shader->RefCount = 1;
-   }
-   return shader;
-}
+#include "standalone_scaffolding.h"
 
 static void
 initialize_context(struct gl_context *ctx, gl_api api)
 {
-   memset(ctx, 0, sizeof(*ctx));
-
-   ctx->API = api;
-
-   ctx->Extensions.ARB_ES2_compatibility = GL_TRUE;
-   ctx->Extensions.ARB_draw_buffers = GL_TRUE;
-   ctx->Extensions.ARB_draw_instanced = GL_TRUE;
-   ctx->Extensions.ARB_fragment_coord_conventions = GL_TRUE;
-   ctx->Extensions.EXT_texture_array = GL_TRUE;
-   ctx->Extensions.NV_texture_rectangle = GL_TRUE;
-   ctx->Extensions.EXT_texture3D = GL_TRUE;
+   initialize_context_to_defaults(ctx, api);
 
    /* GLSL 1.30 isn't fully supported, but we need to advertise 1.30 so that
     * the built-in functions for 1.30 can be built.
     */
    ctx->Const.GLSLVersion = 130;
 
-   /* 1.10 minimums. */
-   ctx->Const.MaxLights = 8;
    ctx->Const.MaxClipPlanes = 8;
-   ctx->Const.MaxTextureUnits = 2;
+   ctx->Const.MaxDrawBuffers = 2;
 
    /* More than the 1.10 minimum to appease parser tests taken from
     * apps that (hopefully) already checked the number of coords.
     */
    ctx->Const.MaxTextureCoordUnits = 4;
-
-   ctx->Const.VertexProgram.MaxAttribs = 16;
-   ctx->Const.VertexProgram.MaxUniformComponents = 512;
-   ctx->Const.MaxVarying = 8;
-   ctx->Const.MaxVertexTextureImageUnits = 0;
-   ctx->Const.MaxCombinedTextureImageUnits = 2;
-   ctx->Const.MaxTextureImageUnits = 2;
-   ctx->Const.FragmentProgram.MaxUniformComponents = 64;
-
-   ctx->Const.MaxDrawBuffers = 2;
 
    ctx->Driver.NewShader = _mesa_new_shader;
 }

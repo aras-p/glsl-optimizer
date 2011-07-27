@@ -1001,6 +1001,7 @@ public:
       assert(callee->return_type != NULL);
       type = callee->return_type;
       actual_parameters->move_nodes_to(& this->actual_parameters);
+      this->use_builtin = callee->is_builtin;
    }
 
    virtual ir_call *clone(void *mem_ctx, struct hash_table *ht) const;
@@ -1063,6 +1064,9 @@ public:
 
    /* List of ir_rvalue of paramaters passed in this call. */
    exec_list actual_parameters;
+
+   /** Should this call only bind to a built-in function? */
+   bool use_builtin;
 
 private:
    ir_call()
@@ -1644,6 +1648,32 @@ visit_exec_list(exec_list *list, ir_visitor *visitor);
  */
 void validate_ir_tree(exec_list *instructions);
 
+struct _mesa_glsl_parse_state;
+struct gl_shader_program;
+
+/**
+ * Detect whether an unlinked shader contains static recursion
+ *
+ * If the list of instructions is determined to contain static recursion,
+ * \c _mesa_glsl_error will be called to emit error messages for each function
+ * that is in the recursion cycle.
+ */
+void
+detect_recursion_unlinked(struct _mesa_glsl_parse_state *state,
+			  exec_list *instructions);
+
+/**
+ * Detect whether a linked shader contains static recursion
+ *
+ * If the list of instructions is determined to contain static recursion,
+ * \c link_error_printf will be called to emit error messages for each function
+ * that is in the recursion cycle.  In addition,
+ * \c gl_shader_program::LinkStatus will be set to false.
+ */
+void
+detect_recursion_linked(struct gl_shader_program *prog,
+			exec_list *instructions);
+
 /**
  * Make a clone of each IR instruction in a list
  *
@@ -1691,5 +1721,8 @@ static inline glsl_precision higher_precision (glsl_precision a, glsl_precision 
 	return MIN2 (a, b);
 }
 
+extern char *
+prototype_string(const glsl_type *return_type, const char *name,
+		 exec_list *parameters);
 
 #endif /* IR_H */
