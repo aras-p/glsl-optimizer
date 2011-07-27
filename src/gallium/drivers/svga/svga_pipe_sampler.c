@@ -25,6 +25,7 @@
 
 #include "util/u_inlines.h"
 #include "pipe/p_defines.h"
+#include "util/u_format.h"
 #include "util/u_math.h"
 #include "util/u_memory.h"
 #include "tgsi/tgsi_parse.h"
@@ -230,7 +231,7 @@ svga_set_fragment_sampler_views(struct pipe_context *pipe,
       if (!views[i])
          continue;
 
-      if (views[i]->texture->format == PIPE_FORMAT_B8G8R8A8_SRGB)
+      if (util_format_is_srgb(views[i]->format))
          flag_srgb |= 1 << i;
 
       if (views[i]->texture->target == PIPE_TEXTURE_1D)
