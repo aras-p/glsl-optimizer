@@ -888,7 +888,7 @@ _mesa_GetTexLevelParameteriv( GLenum target, GLint level,
    texObj = _mesa_select_tex_object(ctx, texUnit, target);
 
    img = _mesa_select_tex_image(ctx, texObj, target, level);
-   if (!img || !img->TexFormat) {
+   if (!img || img->TexFormat == MESA_FORMAT_NONE) {
       /* undefined texture image */
       if (pname == GL_TEXTURE_COMPONENTS)
          *params = 1;
