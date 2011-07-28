@@ -2869,6 +2869,16 @@ copy_tex_sub_image(struct gl_context *ctx,
 
    /* Choose format/type for temporary image buffer */
    format = _mesa_get_format_base_format(texImage->TexFormat);
+   if (format == GL_LUMINANCE ||
+       format == GL_LUMINANCE_ALPHA ||
+       format == GL_INTENSITY) {
+      /* We don't want to use GL_LUMINANCE, GL_INTENSITY, etc. for the
+       * temp image buffer because glReadPixels will do L=R+G+B which is
+       * not what we want (should be L=R).
+       */
+      format = GL_RGBA;
+   }
+
    type = get_temp_image_type(ctx, format);
    bpp = _mesa_bytes_per_pixel(format, type);
    if (bpp <= 0) {
