@@ -91,6 +91,7 @@ nv50_screen_get_param(struct pipe_screen *pscreen, enum pipe_cap param)
    case PIPE_CAP_TEXTURE_SHADOW_MAP:
    case PIPE_CAP_NPOT_TEXTURES:
    case PIPE_CAP_ANISOTROPIC_FILTER:
+   case PIPE_CAP_SCALED_RESOLVE:
       return 1;
    case PIPE_CAP_SEAMLESS_CUBE_MAP:
       return nv50_screen(pscreen)->tesla->grclass >= NVA0_3D;
@@ -603,6 +604,9 @@ nv50_screen_create(struct pipe_winsys *ws, struct nouveau_device *dev)
    screen->tsc.entries = screen->tic.entries + 2048;
 
    screen->mm_VRAM_fe0 = nouveau_mm_create(dev, NOUVEAU_BO_VRAM, 0xfe0);
+
+   if (!nv50_blitctx_create(screen))
+      goto fail;
 
    nouveau_fence_new(&screen->base, &screen->base.fence.current, FALSE);
 

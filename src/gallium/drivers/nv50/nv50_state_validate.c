@@ -350,7 +350,7 @@ static struct state_validate {
 #define validate_list_len (sizeof(validate_list) / sizeof(validate_list[0]))
 
 boolean
-nv50_state_validate(struct nv50_context *nv50)
+nv50_state_validate(struct nv50_context *nv50, unsigned words)
 {
    unsigned i;
 
@@ -366,6 +366,8 @@ nv50_state_validate(struct nv50_context *nv50)
       }
       nv50->dirty = 0;
    }
+
+   MARK_RING(nv50->screen->base.channel, words, 0);
 
    nv50_bufctx_emit_relocs(nv50);
 
