@@ -2252,8 +2252,6 @@ struct gl_shader_state
     */
    struct gl_shader_program *ActiveProgram;
 
-   void *MemPool;
-
    GLbitfield Flags;                    /**< Mask of GLSL_x flags */
 };
 
