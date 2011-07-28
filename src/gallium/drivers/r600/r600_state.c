@@ -2086,7 +2086,7 @@ void r600_pipe_shader_vs(struct pipe_context *ctx, struct r600_pipe_shader *shad
 
 	r600_pipe_state_add_reg(rstate,
 			R_0286C4_SPI_VS_OUT_CONFIG,
-			S_0286C4_VS_EXPORT_COUNT(rshader->noutput - 2),
+			S_0286C4_VS_EXPORT_COUNT(rshader->noutput - 1),
 			0xFFFFFFFF, NULL);
 	r600_pipe_state_add_reg(rstate,
 			R_028868_SQ_PGM_RESOURCES_VS,
