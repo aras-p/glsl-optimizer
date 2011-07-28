@@ -26,7 +26,7 @@
 #define GLSL_LINKER_H
 
 extern void
-linker_error_printf(gl_shader_program *prog, const char *fmt, ...);
+linker_error(gl_shader_program *prog, const char *fmt, ...);
 
 extern bool
 link_function_calls(gl_shader_program *prog, gl_shader *main,

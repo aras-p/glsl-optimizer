@@ -91,8 +91,8 @@ public:
       if (sig == NULL) {
 	 /* FINISHME: Log the full signature of unresolved function.
 	  */
-	 linker_error_printf(this->prog, "unresolved reference to function "
-			     "`%s'\n", name);
+	 linker_error(this->prog, "unresolved reference to function `%s'\n",
+		      name);
 	 this->success = false;
 	 return visit_stop;
       }

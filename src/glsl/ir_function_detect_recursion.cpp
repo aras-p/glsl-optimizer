@@ -311,9 +311,7 @@ emit_errors_linked(const void *key, void *data, void *closure)
 				  f->sig->function_name(),
 				  &f->sig->parameters);
 
-   linker_error_printf(prog,
-		       "function `%s' has static recursion.\n",
-		       proto);
+   linker_error(prog, "function `%s' has static recursion.\n", proto);
    ralloc_free(proto);
    prog->LinkStatus = false;
 }
