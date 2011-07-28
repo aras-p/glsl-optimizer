@@ -206,10 +206,6 @@ bool do_wm_prog(struct brw_context *brw,
           */
          return false;
       }
-      c->instruction = rzalloc_array(c, struct brw_wm_instruction, BRW_WM_MAX_INSN);
-      c->prog_instructions = rzalloc_array(c, struct prog_instruction, BRW_WM_MAX_INSN);
-      c->vreg = rzalloc_array(c, struct brw_wm_value, BRW_WM_MAX_VREG);
-      c->refs = rzalloc_array(c, struct brw_wm_ref, BRW_WM_MAX_REF);
    } else {
       void *instruction = c->instruction;
       void *prog_instructions = c->prog_instructions;
@@ -232,6 +228,13 @@ bool do_wm_prog(struct brw_context *brw,
       if (!brw_wm_fs_emit(brw, c, prog))
 	 return false;
    } else {
+      if (!c->instruction) {
+	 c->instruction = rzalloc_array(c, struct brw_wm_instruction, BRW_WM_MAX_INSN);
+	 c->prog_instructions = rzalloc_array(c, struct prog_instruction, BRW_WM_MAX_INSN);
+	 c->vreg = rzalloc_array(c, struct brw_wm_value, BRW_WM_MAX_VREG);
+	 c->refs = rzalloc_array(c, struct brw_wm_ref, BRW_WM_MAX_REF);
+      }
+
       /* Fallback for fixed function and ARB_fp shaders. */
       c->dispatch_width = 16;
       brw_wm_payload_setup(brw, c);
