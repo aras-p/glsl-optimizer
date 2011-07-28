@@ -178,6 +178,19 @@ linker_error(gl_shader_program *prog, const char *fmt, ...)
 
 
 void
+linker_warning(gl_shader_program *prog, const char *fmt, ...)
+{
+   va_list ap;
+
+   ralloc_strcat(&prog->InfoLog, "error: ");
+   va_start(ap, fmt);
+   ralloc_vasprintf_append(&prog->InfoLog, fmt, ap);
+   va_end(ap);
+
+}
+
+
+void
 invalidate_variable_locations(gl_shader *sh, enum ir_variable_mode mode,
 			      int generic_base)
 {

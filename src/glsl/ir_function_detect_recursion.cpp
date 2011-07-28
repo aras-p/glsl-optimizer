@@ -125,6 +125,7 @@
 #include "glsl_parser_extras.h"
 #include "linker.h"
 #include "program/hash_table.h"
+#include "program.h"
 
 struct call_node : public exec_node {
    class function *func;

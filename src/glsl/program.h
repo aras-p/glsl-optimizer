@@ -25,3 +25,11 @@
 
 extern void
 link_shaders(struct gl_context *ctx, struct gl_shader_program *prog);
+
+extern void
+linker_error(gl_shader_program *prog, const char *fmt, ...)
+   PRINTFLIKE(2, 3);
+
+extern void
+linker_warning(gl_shader_program *prog, const char *fmt, ...)
+   PRINTFLIKE(2, 3);
