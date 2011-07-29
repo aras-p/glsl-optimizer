@@ -332,6 +332,12 @@ static int tgsi_declaration(struct r600_shader_ctx *ctx)
 		ctx->shader->output[i].sid = d->Semantic.Index;
 		ctx->shader->output[i].gpr = ctx->file_offset[TGSI_FILE_OUTPUT] + i;
 		ctx->shader->output[i].interpolate = d->Declaration.Interpolate;
+		if (ctx->type == TGSI_PROCESSOR_VERTEX) {
+			/* these don't count as vertex param exports */
+			if ((ctx->shader->output[i].name == TGSI_SEMANTIC_POSITION) ||
+			    (ctx->shader->output[i].name == TGSI_SEMANTIC_PSIZE))
+				ctx->shader->npos++;
+		}
 		break;
 	case TGSI_FILE_CONSTANT:
 	case TGSI_FILE_TEMPORARY:

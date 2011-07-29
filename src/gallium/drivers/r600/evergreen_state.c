@@ -2298,7 +2298,7 @@ void evergreen_pipe_shader_vs(struct pipe_context *ctx, struct r600_pipe_shader 
 	struct r600_pipe_state *rstate = &shader->rstate;
 	struct r600_shader *rshader = &shader->shader;
 	unsigned spi_vs_out_id[10];
-	unsigned i, tmp;
+	unsigned i, tmp, nparams;
 
 	/* clear previous register */
 	rstate->nregs = 0;
@@ -2317,9 +2317,17 @@ void evergreen_pipe_shader_vs(struct pipe_context *ctx, struct r600_pipe_shader 
 					spi_vs_out_id[i], 0xFFFFFFFF, NULL);
 	}
 
+	/* Certain attributes (position, psize, etc.) don't count as params.
+	 * VS is required to export at least one param and r600_shader_from_tgsi()
+	 * takes care of adding a dummy export.
+	 */
+	nparams = rshader->noutput - rshader->npos;
+	if (nparams < 1)
+		nparams = 1;
+
 	r600_pipe_state_add_reg(rstate,
 			R_0286C4_SPI_VS_OUT_CONFIG,
-			S_0286C4_VS_EXPORT_COUNT(rshader->noutput - 1),
+			S_0286C4_VS_EXPORT_COUNT(nparams - 1),
 			0xFFFFFFFF, NULL);
 	r600_pipe_state_add_reg(rstate,
 			R_028860_SQ_PGM_RESOURCES_VS,
