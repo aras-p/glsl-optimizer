@@ -145,6 +145,7 @@ SWRAST_SOURCES = \
 	swrast/s_texcombine.c \
 	swrast/s_texfilter.c \
 	swrast/s_texrender.c \
+	swrast/s_texture.c \
 	swrast/s_triangle.c \
 	swrast/s_zoom.c
 

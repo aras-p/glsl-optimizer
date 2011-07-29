@@ -182,6 +182,20 @@ _swrast_render_start( struct gl_context *ctx );
 extern void
 _swrast_render_finish( struct gl_context *ctx );
 
+extern void
+_swrast_map_teximage(struct gl_context *ctx,
+		     struct gl_texture_image *texImage,
+		     GLuint slice,
+		     GLuint x, GLuint y, GLuint w, GLuint h,
+		     GLbitfield mode,
+		     GLubyte **mapOut,
+		     GLint *rowStrideOut);
+
+extern void
+_swrast_unmap_teximage(struct gl_context *ctx,
+		       struct gl_texture_image *texImage,
+		       GLuint slice);
+
 /* Tell the software rasterizer about core state changes.
  */
 extern void
