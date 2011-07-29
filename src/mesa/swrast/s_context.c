@@ -417,84 +417,6 @@ _swrast_validate_blend_func(struct gl_context *ctx, GLuint n, const GLubyte mask
    swrast->BlendFunc( ctx, n, mask, src, dst, chanType );
 }
 
-
-/**
- * Make sure we have texture image data for all the textures we may need
- * for subsequent rendering.
- */
-static void
-_swrast_validate_texture_images(struct gl_context *ctx)
-{
-   SWcontext *swrast = SWRAST_CONTEXT(ctx);
-   GLuint u;
-
-   if (!swrast->ValidateTextureImage || !ctx->Texture._EnabledUnits) {
-      /* no textures enabled, or no way to validate images! */
-      return;
-   }
-
-   for (u = 0; u < ctx->Const.MaxTextureImageUnits; u++) {
-      if (ctx->Texture.Unit[u]._ReallyEnabled) {
-         struct gl_texture_object *texObj = ctx->Texture.Unit[u]._Current;
-         ASSERT(texObj);
-         if (texObj) {
-            GLuint numFaces = (texObj->Target == GL_TEXTURE_CUBE_MAP) ? 6 : 1;
-            GLuint face;
-            for (face = 0; face < numFaces; face++) {
-               GLint lvl;
-               for (lvl = texObj->BaseLevel; lvl <= texObj->_MaxLevel; lvl++) {
-                  struct gl_texture_image *texImg = texObj->Image[face][lvl];
-                  if (texImg && !texImg->Data) {
-                     swrast->ValidateTextureImage(ctx, texObj, face, lvl);
-                     ASSERT(texObj->Image[face][lvl]->Data);
-                  }
-               }
-            }
-         }
-      }
-   }
-}
-
-
-/**
- * Free the texture image data attached to all currently enabled
- * textures.  Meant to be called by device drivers when transitioning
- * from software to hardware rendering.
- */
-void
-_swrast_eject_texture_images(struct gl_context *ctx)
-{
-   GLuint u;
-
-   if (!ctx->Texture._EnabledUnits) {
-      /* no textures enabled */
-      return;
-   }
-
-   for (u = 0; u < ctx->Const.MaxTextureImageUnits; u++) {
-      if (ctx->Texture.Unit[u]._ReallyEnabled) {
-         struct gl_texture_object *texObj = ctx->Texture.Unit[u]._Current;
-         ASSERT(texObj);
-         if (texObj) {
-            GLuint numFaces = (texObj->Target == GL_TEXTURE_CUBE_MAP) ? 6 : 1;
-            GLuint face;
-            for (face = 0; face < numFaces; face++) {
-               GLint lvl;
-               for (lvl = texObj->BaseLevel; lvl <= texObj->_MaxLevel; lvl++) {
-                  struct gl_texture_image *texImg = texObj->Image[face][lvl];
-                  if (texImg && texImg->Data) {
-                     _mesa_free_texmemory(texImg->Data);
-                     texImg->Data = NULL;
-                  }
-               }
-            }
-         }
-      }
-   }
-}
-
-
-
 static void
 _swrast_sleep( struct gl_context *ctx, GLbitfield new_state )
 {
@@ -640,7 +562,6 @@ _swrast_validate_derived( struct gl_context *ctx )
 
       if (swrast->NewState & (_NEW_TEXTURE | _NEW_PROGRAM)) {
          _swrast_update_texture_samplers( ctx );
-         _swrast_validate_texture_images(ctx);
       }
 
       if (swrast->NewState & (_NEW_COLOR | _NEW_PROGRAM))
