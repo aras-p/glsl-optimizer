@@ -32,6 +32,7 @@ sources = [
     'xorg_output.c',
     'xorg_renderer.c',
     'xorg_xv.c',
+    'xorg_xvmc.c',
 ]
 
 st_xorg = env.ConvenienceLibrary(
