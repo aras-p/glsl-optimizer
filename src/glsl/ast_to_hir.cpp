@@ -66,6 +66,8 @@ _mesa_ast_to_hir(exec_list *instructions, struct _mesa_glsl_parse_state *state)
 
    state->current_function = NULL;
 
+   state->toplevel_ir = instructions;
+
    /* Section 4.2 of the GLSL 1.20 specification states:
     * "The built-in functions are scoped in a scope outside the global scope
     *  users declare global variables in.  That is, a shader's global scope,
@@ -85,6 +87,8 @@ _mesa_ast_to_hir(exec_list *instructions, struct _mesa_glsl_parse_state *state)
       ast->hir(instructions, state);
 
    detect_recursion_unlinked(state, instructions);
+
+   state->toplevel_ir = NULL;
 }
 
 
@@ -2926,23 +2930,16 @@ ast_parameter_declarator::parameters_to_hir(exec_list *ast_parameters,
 
 
 void
-emit_function(_mesa_glsl_parse_state *state, exec_list *instructions,
-	      ir_function *f)
+emit_function(_mesa_glsl_parse_state *state, ir_function *f)
 {
-   /* Emit the new function header */
-   if (state->current_function == NULL) {
-      instructions->push_tail(f);
-   } else {
-      /* IR invariants disallow function declarations or definitions nested
-       * within other function definitions.  Insert the new ir_function
-       * block in the instruction sequence before the ir_function block
-       * containing the current ir_function_signature.
-       */
-      ir_function *const curr =
-	 const_cast<ir_function *>(state->current_function->function());
-
-      curr->insert_before(f);
-   }
+   /* IR invariants disallow function declarations or definitions
+    * nested within other function definitions.  But there is no
+    * requirement about the relative order of function declarations
+    * and definitions with respect to one another.  So simply insert
+    * the new ir_function block at the end of the toplevel instruction
+    * list.
+    */
+   state->toplevel_ir->push_tail(f);
 }
 
 
@@ -3069,7 +3066,7 @@ ast_function::hir(exec_list *instructions,
 	 return NULL;
       }
 
-      emit_function(state, instructions, f);
+      emit_function(state, f);
    }
 
    /* Verify the return type of main() */

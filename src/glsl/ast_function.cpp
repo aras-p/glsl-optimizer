@@ -125,7 +125,7 @@ match_function_by_name(exec_list *instructions, const char *name,
 	    if (f == NULL) {
 	       f = new(ctx) ir_function(name);
 	       state->symbols->add_global_function(f);
-	       emit_function(state, instructions, f);
+	       emit_function(state, f);
 	    }
 
 	    f->add_signature(sig->clone_prototype(f, NULL));

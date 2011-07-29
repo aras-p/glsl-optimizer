@@ -129,6 +129,12 @@ struct _mesa_glsl_parse_state {
     */
    class ir_function_signature *current_function;
 
+   /**
+    * During AST to IR conversion, pointer to the toplevel IR
+    * instruction list being generated.
+    */
+   exec_list *toplevel_ir;
+
    /** Have we found a return statement in this function? */
    bool found_return;
 
