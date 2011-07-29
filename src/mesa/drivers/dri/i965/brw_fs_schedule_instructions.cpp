@@ -283,8 +283,8 @@ instruction_scheduler::calculate_deps()
    memset(last_mrf_write, 0, sizeof(last_mrf_write));
 
    /* top-to-bottom dependencies: RAW and WAW. */
-   foreach_iter(exec_list_iterator, iter, instructions) {
-      schedule_node *n = (schedule_node *)iter.get();
+   foreach_list(node, &instructions) {
+      schedule_node *n = (schedule_node *)node;
       fs_inst *inst = n->inst;
 
       /* read-after-write deps. */
@@ -437,8 +437,8 @@ instruction_scheduler::schedule_instructions(fs_inst *next_block_header)
    int time = 0;
 
    /* Remove non-DAG heads from the list. */
-   foreach_iter(exec_list_iterator, iter, instructions) {
-      schedule_node *n = (schedule_node *)iter.get();
+   foreach_list_safe(node, &instructions) {
+      schedule_node *n = (schedule_node *)node;
       if (n->parent_count != 0)
 	 n->remove();
    }
@@ -447,8 +447,8 @@ instruction_scheduler::schedule_instructions(fs_inst *next_block_header)
       schedule_node *chosen = NULL;
       int chosen_time = 0;
 
-      foreach_iter(exec_list_iterator, iter, instructions) {
-	 schedule_node *n = (schedule_node *)iter.get();
+      foreach_list(node, &instructions) {
+	 schedule_node *n = (schedule_node *)node;
 
 	 if (!chosen || n->unblocked_time < chosen_time) {
 	    chosen = n;
@@ -490,8 +490,8 @@ instruction_scheduler::schedule_instructions(fs_inst *next_block_header)
        * progress until the first is done.
        */
       if (chosen->inst->is_math()) {
-	 foreach_iter(exec_list_iterator, iter, instructions) {
-	    schedule_node *n = (schedule_node *)iter.get();
+	 foreach_list(node, &instructions) {
+	    schedule_node *n = (schedule_node *)node;
 
 	    if (n->inst->is_math())
 	       n->unblocked_time = MAX2(n->unblocked_time,

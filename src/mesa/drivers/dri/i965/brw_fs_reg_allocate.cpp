@@ -75,8 +75,8 @@ fs_visitor::assign_regs_trivial()
    last_grf = hw_reg_mapping[i - 1] + (this->virtual_grf_sizes[i - 1] *
 				       reg_width);
 
-   foreach_iter(exec_list_iterator, iter, this->instructions) {
-      fs_inst *inst = (fs_inst *)iter.get();
+   foreach_list(node, &this->instructions) {
+      fs_inst *inst = (fs_inst *)node;
 
       assign_reg(hw_reg_mapping, &inst->dst, reg_width);
       assign_reg(hw_reg_mapping, &inst->src[0], reg_width);
@@ -283,8 +283,8 @@ fs_visitor::assign_regs()
 			    reg_width);
    }
 
-   foreach_iter(exec_list_iterator, iter, this->instructions) {
-      fs_inst *inst = (fs_inst *)iter.get();
+   foreach_list(node, &this->instructions) {
+      fs_inst *inst = (fs_inst *)node;
 
       assign_reg(hw_reg_mapping, &inst->dst, reg_width);
       assign_reg(hw_reg_mapping, &inst->src[0], reg_width);
@@ -336,8 +336,8 @@ fs_visitor::choose_spill_reg(struct ra_graph *g)
     * spill/unspill we'll have to do, and guess that the insides of
     * loops run 10 times.
     */
-   foreach_iter(exec_list_iterator, iter, this->instructions) {
-      fs_inst *inst = (fs_inst *)iter.get();
+   foreach_list(node, &this->instructions) {
+      fs_inst *inst = (fs_inst *)node;
 
       for (unsigned int i = 0; i < 3; i++) {
 	 if (inst->src[i].file == GRF) {
@@ -394,8 +394,8 @@ fs_visitor::spill_reg(int spill_reg)
     * virtual grf of the same size.  For most instructions, though, we
     * could just spill/unspill the GRF being accessed.
     */
-   foreach_iter(exec_list_iterator, iter, this->instructions) {
-      fs_inst *inst = (fs_inst *)iter.get();
+   foreach_list(node, &this->instructions) {
+      fs_inst *inst = (fs_inst *)node;
 
       for (unsigned int i = 0; i < 3; i++) {
 	 if (inst->src[i].file == GRF &&

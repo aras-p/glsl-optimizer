@@ -1477,8 +1477,8 @@ fs_visitor::visit(ir_if *ir)
       inst->predicated = true;
    }
 
-   foreach_iter(exec_list_iterator, iter, ir->then_instructions) {
-      ir_instruction *ir = (ir_instruction *)iter.get();
+   foreach_list(node, &ir->then_instructions) {
+      ir_instruction *ir = (ir_instruction *)node;
       this->base_ir = ir;
       this->result = reg_undef;
       ir->accept(this);
@@ -1487,8 +1487,8 @@ fs_visitor::visit(ir_if *ir)
    if (!ir->else_instructions.is_empty()) {
       emit(BRW_OPCODE_ELSE);
 
-      foreach_iter(exec_list_iterator, iter, ir->else_instructions) {
-	 ir_instruction *ir = (ir_instruction *)iter.get();
+      foreach_list(node, &ir->else_instructions) {
+	 ir_instruction *ir = (ir_instruction *)node;
 	 this->base_ir = ir;
 	 this->result = reg_undef;
 	 ir->accept(this);
@@ -1538,8 +1538,8 @@ fs_visitor::visit(ir_loop *ir)
       inst->predicated = true;
    }
 
-   foreach_iter(exec_list_iterator, iter, ir->body_instructions) {
-      ir_instruction *ir = (ir_instruction *)iter.get();
+   foreach_list(node, &ir->body_instructions) {
+      ir_instruction *ir = (ir_instruction *)node;
 
       this->base_ir = ir;
       this->result = reg_undef;
@@ -1595,8 +1595,8 @@ fs_visitor::visit(ir_function *ir)
 
       assert(sig);
 
-      foreach_iter(exec_list_iterator, iter, sig->body) {
-	 ir_instruction *ir = (ir_instruction *)iter.get();
+      foreach_list(node, &sig->body) {
+	 ir_instruction *ir = (ir_instruction *)node;
 	 this->base_ir = ir;
 	 this->result = reg_undef;
 	 ir->accept(this);

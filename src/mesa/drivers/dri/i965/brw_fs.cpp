@@ -621,8 +621,8 @@ fs_visitor::assign_curb_setup()
    }
 
    /* Map the offsets in the UNIFORM file to fixed HW regs. */
-   foreach_iter(exec_list_iterator, iter, this->instructions) {
-      fs_inst *inst = (fs_inst *)iter.get();
+   foreach_list(node, &this->instructions) {
+      fs_inst *inst = (fs_inst *)node;
 
       for (unsigned int i = 0; i < 3; i++) {
 	 if (inst->src[i].file == UNIFORM) {
@@ -684,8 +684,8 @@ fs_visitor::assign_urb_setup()
    /* Offset all the urb_setup[] index by the actual position of the
     * setup regs, now that the location of the constants has been chosen.
     */
-   foreach_iter(exec_list_iterator, iter, this->instructions) {
-      fs_inst *inst = (fs_inst *)iter.get();
+   foreach_list(node, &this->instructions) {
+      fs_inst *inst = (fs_inst *)node;
 
       if (inst->opcode == FS_OPCODE_LINTERP) {
 	 assert(inst->src[2].file == FIXED_HW_REG);
@@ -739,8 +739,8 @@ fs_visitor::split_virtual_grfs()
       split_grf[this->delta_x.reg] = false;
    }
 
-   foreach_iter(exec_list_iterator, iter, this->instructions) {
-      fs_inst *inst = (fs_inst *)iter.get();
+   foreach_list(node, &this->instructions) {
+      fs_inst *inst = (fs_inst *)node;
 
       /* Texturing produces 4 contiguous registers, so no splitting. */
       if (inst->is_tex()) {
@@ -763,8 +763,8 @@ fs_visitor::split_virtual_grfs()
       }
    }
 
-   foreach_iter(exec_list_iterator, iter, this->instructions) {
-      fs_inst *inst = (fs_inst *)iter.get();
+   foreach_list(node, &this->instructions) {
+      fs_inst *inst = (fs_inst *)node;
 
       if (inst->dst.file == GRF &&
 	  split_grf[inst->dst.reg] &&
@@ -815,8 +815,8 @@ fs_visitor::setup_pull_constants()
    int pull_uniform_base = max_uniform_components;
    int pull_uniform_count = c->prog_data.nr_params - pull_uniform_base;
 
-   foreach_iter(exec_list_iterator, iter, this->instructions) {
-      fs_inst *inst = (fs_inst *)iter.get();
+   foreach_list(node, &this->instructions) {
+      fs_inst *inst = (fs_inst *)node;
 
       for (int i = 0; i < 3; i++) {
 	 if (inst->src[i].file != UNIFORM)
@@ -871,8 +871,8 @@ fs_visitor::calculate_live_intervals()
    }
 
    int ip = 0;
-   foreach_iter(exec_list_iterator, iter, this->instructions) {
-      fs_inst *inst = (fs_inst *)iter.get();
+   foreach_list(node, &this->instructions) {
+      fs_inst *inst = (fs_inst *)node;
 
       if (inst->opcode == BRW_OPCODE_DO) {
 	 if (loop_depth++ == 0)
@@ -945,8 +945,8 @@ fs_visitor::propagate_constants()
 
    calculate_live_intervals();
 
-   foreach_iter(exec_list_iterator, iter, this->instructions) {
-      fs_inst *inst = (fs_inst *)iter.get();
+   foreach_list(node, &this->instructions) {
+      fs_inst *inst = (fs_inst *)node;
 
       if (inst->opcode != BRW_OPCODE_MOV ||
 	  inst->predicated ||
@@ -965,11 +965,9 @@ fs_visitor::propagate_constants()
       /* Found a move of a constant to a GRF.  Find anything else using the GRF
        * before it's written, and replace it with the constant if we can.
        */
-      exec_list_iterator scan_iter = iter;
-      scan_iter.next();
-      for (; scan_iter.has_next(); scan_iter.next()) {
-	 fs_inst *scan_inst = (fs_inst *)scan_iter.get();
-
+      for (fs_inst *scan_inst = (fs_inst *)inst->next;
+	   !scan_inst->is_tail_sentinel();
+	   scan_inst = (fs_inst *)scan_inst->next) {
 	 if (scan_inst->opcode == BRW_OPCODE_DO ||
 	     scan_inst->opcode == BRW_OPCODE_WHILE ||
 	     scan_inst->opcode == BRW_OPCODE_ELSE ||
@@ -1077,8 +1075,8 @@ fs_visitor::dead_code_eliminate()
 
    calculate_live_intervals();
 
-   foreach_iter(exec_list_iterator, iter, this->instructions) {
-      fs_inst *inst = (fs_inst *)iter.get();
+   foreach_list_safe(node, &this->instructions) {
+      fs_inst *inst = (fs_inst *)node;
 
       if (inst->dst.file == GRF && this->virtual_grf_use[inst->dst.reg] <= pc) {
 	 inst->remove();
@@ -1101,8 +1099,8 @@ fs_visitor::register_coalesce()
    int if_depth = 0;
    int loop_depth = 0;
 
-   foreach_iter(exec_list_iterator, iter, this->instructions) {
-      fs_inst *inst = (fs_inst *)iter.get();
+   foreach_list_safe(node, &this->instructions) {
+      fs_inst *inst = (fs_inst *)node;
 
       /* Make sure that we dominate the instructions we're going to
        * scan for interfering with our coalescing, or we won't have
@@ -1141,11 +1139,10 @@ fs_visitor::register_coalesce()
        * program.
        */
       bool interfered = false;
-      exec_list_iterator scan_iter = iter;
-      scan_iter.next();
-      for (; scan_iter.has_next(); scan_iter.next()) {
-	 fs_inst *scan_inst = (fs_inst *)scan_iter.get();
 
+      for (fs_inst *scan_inst = (fs_inst *)inst->next;
+	   !scan_inst->is_tail_sentinel();
+	   scan_inst = (fs_inst *)scan_inst->next) {
 	 if (scan_inst->dst.file == GRF) {
 	    if (scan_inst->dst.reg == inst->dst.reg &&
 		(scan_inst->dst.reg_offset == inst->dst.reg_offset ||
@@ -1176,10 +1173,9 @@ fs_visitor::register_coalesce()
       /* Rewrite the later usage to point at the source of the move to
        * be removed.
        */
-      for (exec_list_iterator scan_iter = iter; scan_iter.has_next();
-	   scan_iter.next()) {
-	 fs_inst *scan_inst = (fs_inst *)scan_iter.get();
-
+      for (fs_inst *scan_inst = inst;
+	   !scan_inst->is_tail_sentinel();
+	   scan_inst = (fs_inst *)scan_inst->next) {
 	 for (int i = 0; i < 3; i++) {
 	    if (scan_inst->src[i].file == GRF &&
 		scan_inst->src[i].reg == inst->dst.reg &&
@@ -1212,8 +1208,8 @@ fs_visitor::compute_to_mrf()
 
    calculate_live_intervals();
 
-   foreach_iter(exec_list_iterator, iter, this->instructions) {
-      fs_inst *inst = (fs_inst *)iter.get();
+   foreach_list_safe(node, &this->instructions) {
+      fs_inst *inst = (fs_inst *)node;
 
       int ip = next_ip;
       next_ip++;
@@ -1392,8 +1388,8 @@ fs_visitor::remove_duplicate_mrf_writes()
 
    memset(last_mrf_move, 0, sizeof(last_mrf_move));
 
-   foreach_iter(exec_list_iterator, iter, this->instructions) {
-      fs_inst *inst = (fs_inst *)iter.get();
+   foreach_list_safe(node, &this->instructions) {
+      fs_inst *inst = (fs_inst *)node;
 
       switch (inst->opcode) {
       case BRW_OPCODE_DO:
@@ -1527,8 +1523,8 @@ fs_visitor::run()
       /* Generate FS IR for main().  (the visitor only descends into
        * functions called "main").
        */
-      foreach_iter(exec_list_iterator, iter, *shader->ir) {
-	 ir_instruction *ir = (ir_instruction *)iter.get();
+      foreach_list(node, &*shader->ir) {
+	 ir_instruction *ir = (ir_instruction *)node;
 	 base_ir = ir;
 	 this->result = reg_undef;
 	 ir->accept(this);
