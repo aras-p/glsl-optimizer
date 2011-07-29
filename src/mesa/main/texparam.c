@@ -1266,12 +1266,13 @@ _mesa_GetTexParameterfv( GLenum target, GLenum pname, GLfloat *params )
          break;
 
       case GL_TEXTURE_CUBE_MAP_SEAMLESS:
-      if (ctx->Extensions.AMD_seamless_cubemap_per_texture) {
-         *params = (GLfloat) obj->Sampler.CubeMapSeamless;
-      }
-      else {
-         error = GL_TRUE;
-      }
+         if (ctx->Extensions.AMD_seamless_cubemap_per_texture) {
+            *params = (GLfloat) obj->Sampler.CubeMapSeamless;
+         }
+         else {
+            error = GL_TRUE;
+         }
+         break;
 
       default:
 	 error = GL_TRUE;
@@ -1441,6 +1442,7 @@ _mesa_GetTexParameteriv( GLenum target, GLenum pname, GLint *params )
          else {
             error = GL_TRUE;
          }
+         break;
 
       default:
          ; /* silence warnings */
