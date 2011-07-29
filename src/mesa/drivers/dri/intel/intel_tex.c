@@ -72,6 +72,88 @@ intel_free_texture_image_buffer(struct gl_context * ctx,
 }
 
 /**
+ * Map texture memory/buffer into user space.
+ * Note: the region of interest parameters are ignored here.
+ * \param mapOut  returns start of mapping of region of interest
+ * \param rowStrideOut  returns row stride in bytes
+ */
+static void
+intel_map_texture_image(struct gl_context *ctx,
+			struct gl_texture_image *tex_image,
+			GLuint slice,
+			GLuint x, GLuint y, GLuint w, GLuint h,
+			GLbitfield mode,
+			GLubyte **map,
+			GLint *stride)
+{
+   struct intel_context *intel = intel_context(ctx);
+   struct intel_texture_image *intel_image = intel_texture_image(tex_image);
+   struct intel_mipmap_tree *mt = intel_image->mt;
+   unsigned int bw, bh;
+
+   if (intel_image->stencil_rb) {
+      /*
+       * The texture has packed depth/stencil format, but uses separate
+       * stencil. The texture's embedded stencil buffer contains the real
+       * stencil data, so copy that into the miptree.
+       */
+      intel_tex_image_s8z24_gather(intel, intel_image);
+   }
+
+   /* For compressed formats, the stride is the number of bytes per
+    * row of blocks.  intel_miptree_get_image_offset() already does
+    * the divide.
+    */
+   _mesa_get_format_block_size(mt->format, &bw, &bh);
+   assert(y % bh == 0);
+   y /= bh;
+
+   if (likely(mt)) {
+      void *base = intel_region_map(intel, mt->region);
+      unsigned int image_x, image_y;
+
+      intel_miptree_get_image_offset(mt, tex_image->Level, tex_image->Face,
+				     slice, &image_x, &image_y);
+      x += image_x;
+      y += image_y;
+
+      *stride = mt->region->pitch * mt->cpp;
+      *map = base + y * *stride + x * mt->cpp;
+   } else {
+      /* texture data is in malloc'd memory */
+      GLuint width = tex_image->Width;
+      GLuint height = ALIGN(tex_image->Height, bh) / bh;
+      GLuint texelSize = _mesa_get_format_bytes(tex_image->TexFormat);
+
+      assert(map);
+
+      *stride = _mesa_format_row_stride(tex_image->TexFormat, width);
+      *map = tex_image->Data + (slice * height + y) * *stride + x * texelSize;
+
+      return;
+   }
+}
+
+static void
+intel_unmap_texture_image(struct gl_context *ctx,
+			  struct gl_texture_image *tex_image, GLuint slice)
+{
+   struct intel_context *intel = intel_context(ctx);
+   struct intel_texture_image *intel_image = intel_texture_image(tex_image);
+
+   intel_region_unmap(intel, intel_image->mt->region);
+
+   if (intel_image->stencil_rb) {
+      /*
+       * The texture has packed depth/stencil format, but uses separate
+       * stencil. The texture's embedded stencil buffer contains the real
+       * stencil data, so copy that into the miptree.
+       */
+      intel_tex_image_s8z24_scatter(intel, intel_image);
+   }
+}
+
+/**
  * Called via ctx->Driver.GenerateMipmap()
  * This is basically a wrapper for _mesa_meta_GenerateMipmap() which checks
  * if we'll be using software mipmap generation.  In that case, we need to
@@ -125,4 +207,6 @@ intelInitTextureFuncs(struct dd_function_table *functions)
    functions->NewTextureImage = intelNewTextureImage;
    functions->DeleteTexture = intelDeleteTextureObject;
    functions->FreeTextureImageBuffer = intel_free_texture_image_buffer;
+   functions->MapTextureImage = intel_map_texture_image;
+   functions->UnmapTextureImage = intel_unmap_texture_image;
 }

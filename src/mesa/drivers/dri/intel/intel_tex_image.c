@@ -312,7 +312,7 @@ intel_tex_image_s8z24_scattergather(struct intel_context *intel,
 /**
  * Copy the x8 bits from intel_image->depth_rb to intel_image->stencil_rb.
  */
-static void
+void
 intel_tex_image_s8z24_scatter(struct intel_context *intel,
 			      struct intel_texture_image *intel_image)
 {
@@ -323,7 +323,7 @@ intel_tex_image_s8z24_scatter(struct intel_context *intel,
  * Copy the data in intel_image->stencil_rb to the x8 bits in
  * intel_image->depth_rb.
  */
-static void
+void
 intel_tex_image_s8z24_gather(struct intel_context *intel,
 			     struct intel_texture_image *intel_image)
 {

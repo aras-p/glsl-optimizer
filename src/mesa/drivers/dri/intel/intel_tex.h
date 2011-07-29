@@ -63,6 +63,12 @@ void intel_tex_map_images(struct intel_context *intel,
 void intel_tex_unmap_images(struct intel_context *intel,
                             struct intel_texture_object *intelObj);
 
+void intel_tex_image_s8z24_scatter(struct intel_context *intel,
+				   struct intel_texture_image *intel_image);
+
+void intel_tex_image_s8z24_gather(struct intel_context *intel,
+				  struct intel_texture_image *intel_image);
+
 int intel_compressed_num_bytes(GLuint mesaFormat);
 
 GLboolean intel_copy_texsubimage(struct intel_context *intel,
