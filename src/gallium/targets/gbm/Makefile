@@ -79,13 +79,11 @@ nouveau_SYS = -ldrm_nouveau
 r300_LIBS = \
 	$(TOP)/src/gallium/winsys/radeon/drm/libradeonwinsys.a \
 	$(TOP)/src/gallium/drivers/r300/libr300.a
-r300_SYS = -ldrm_radeon
 
 # r600 pipe driver
 r600_LIBS = \
 	$(TOP)/src/gallium/winsys/r600/drm/libr600winsys.a \
 	$(TOP)/src/gallium/drivers/r600/libr600.a
-r600_SYS = -ldrm_radeon
 
 # vmwgfx pipe driver
 vmwgfx_LIBS = \
