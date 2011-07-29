@@ -1,6 +1,5 @@
 /*
- * mesa 3-D graphics library
- * Version:  7.6
+ * Mesa 3-D graphics library
  *
  * Copyright (C) 1999-2008  Brian Paul   All Rights Reserved.
  * Copyright (C) 2009  VMware, Inc.  All Rights Reserved.
@@ -556,8 +555,6 @@ _mesa_tex_target_to_face(GLenum target)
  * \param target texture target.
  * \param level image level.
  * \param texImage texture image.
- * 
- * This was basically prompted by the introduction of cube maps.
  */
 void
 _mesa_set_tex_image(struct gl_texture_object *tObj,
@@ -709,15 +706,13 @@ get_proxy_target(GLenum target)
 
 /**
  * Get the texture object that corresponds to the target of the given
- * texture unit.
+ * texture unit.  The target should have already been checked for validity.
  *
  * \param ctx GL context.
  * \param texUnit texture unit.
  * \param target texture target.
  *
  * \return pointer to the texture object on success, or NULL on failure.
- * 
- * \sa gl_texture_unit.
  */
 struct gl_texture_object *
 _mesa_select_tex_object(struct gl_context *ctx,
