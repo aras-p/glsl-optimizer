@@ -39,17 +39,17 @@
  * Need to map texture image into memory before copying image data,
  * then unmap it.
  */
-static void
-radeon_get_tex_image(struct gl_context * ctx, GLenum target, GLint level,
-             GLenum format, GLenum type, GLvoid * pixels,
-             struct gl_texture_object *texObj,
-             struct gl_texture_image *texImage, int compressed)
+void
+radeonGetTexImage(struct gl_context * ctx, GLenum target, GLint level,
+          GLenum format, GLenum type, GLvoid * pixels,
+          struct gl_texture_object *texObj,
+          struct gl_texture_image *texImage)
 {
     radeon_texture_image *image = get_radeon_texture_image(texImage);
 
     radeon_print(RADEON_TEXTURE, RADEON_NORMAL,
-                 "%s(%p, tex %p, image %p) compressed %d.\n",
-                 __func__, ctx, texObj, image, compressed);
+                 "%s(%p, tex %p, image %p).\n",
+                 __func__, ctx, texObj, image);
 
     if (image->mt) {
         radeonContextPtr rmesa = RADEON_CONTEXT(ctx);
@@ -67,37 +67,10 @@ radeon_get_tex_image(struct gl_context * ctx, GLenum target, GLint level,
         assert(image->base.Base.Data);
     }
 
-    if (compressed) {
-        /* FIXME: this can't work for small textures (mips) which
-                 use different hw stride */
-        _mesa_get_compressed_teximage(ctx, target, level, pixels,
-                          texObj, texImage);
-    } else {
-        _mesa_get_teximage(ctx, target, level, format, type, pixels,
-                   texObj, texImage);
-    }
+    _mesa_get_teximage(ctx, target, level, format, type, pixels,
+		       texObj, texImage);
 
     if (image->mt) {
         radeon_teximage_unmap(image);
     }
-}
-
-void
-radeonGetTexImage(struct gl_context * ctx, GLenum target, GLint level,
-          GLenum format, GLenum type, GLvoid * pixels,
-          struct gl_texture_object *texObj,
-          struct gl_texture_image *texImage)
-{
-    radeon_get_tex_image(ctx, target, level, format, type, pixels,
-                 texObj, texImage, 0);
-}
-
-void
-radeonGetCompressedTexImage(struct gl_context *ctx, GLenum target, GLint level,
-                GLvoid *pixels,
-                struct gl_texture_object *texObj,
-                struct gl_texture_image *texImage)
-{
-    radeon_get_tex_image(ctx, target, level, 0, 0, pixels,
-                 texObj, texImage, 1);
 }

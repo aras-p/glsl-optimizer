@@ -487,11 +487,11 @@ _mesa_get_compressed_teximage(struct gl_context *ctx, GLenum target, GLint level
                               struct gl_texture_object *texObj,
                               struct gl_texture_image *texImage)
 {
-   const GLuint row_stride = _mesa_format_row_stride(texImage->TexFormat,
-                                                     texImage->Width);
-   const GLuint row_stride_stored = _mesa_format_row_stride(texImage->TexFormat,
-                                                            texImage->RowStride);
+   const GLuint row_stride =
+      _mesa_format_row_stride(texImage->TexFormat, texImage->Width);
    GLuint i;
+   GLubyte *src;
+   GLint srcRowStride;
 
    if (_mesa_is_bufferobj(ctx->Pack.BufferObj)) {
       /* pack texture image into a PBO */
@@ -507,24 +507,31 @@ _mesa_get_compressed_teximage(struct gl_context *ctx, GLenum target, GLint level
       img = ADD_POINTERS(buf, img);
    }
 
+   /* map src texture buffer */
+   ctx->Driver.MapTextureImage(ctx, texImage, 0,
+                               0, 0, texImage->Width, texImage->Height,
+                               GL_MAP_READ_BIT, &src, &srcRowStride);
+
    /* no pixelstore or pixel transfer, but respect stride */
 
-   if (row_stride == row_stride_stored) {
+   if (row_stride == srcRowStride) {
       const GLuint size = _mesa_format_image_size(texImage->TexFormat,
                                                   texImage->Width,
                                                   texImage->Height,
                                                   texImage->Depth);
-      memcpy(img, texImage->Data, size);
+      memcpy(img, src, size);
    }
    else {
       GLuint bw, bh;
       _mesa_get_format_block_size(texImage->TexFormat, &bw, &bh);
       for (i = 0; i < (texImage->Height + bh - 1) / bh; i++) {
          memcpy((GLubyte *)img + i * row_stride,
-                (GLubyte *)texImage->Data + i * row_stride_stored,
+                (GLubyte *)src + i * srcRowStride,
                 row_stride);
       }
    }
+
+   ctx->Driver.UnmapTextureImage(ctx, texImage, 0);
 
    if (_mesa_is_bufferobj(ctx->Pack.BufferObj)) {
       ctx->Driver.UnmapBuffer(ctx, ctx->Pack.BufferObj);

@@ -510,16 +510,11 @@ intelTexImage1D(struct gl_context * ctx,
                  format, type, pixels, unpack, texObj, texImage, 0);
 }
 
-
-/**
- * Need to map texture image into memory before copying image data,
- * then unmap it.
- */
 static void
-intel_get_tex_image(struct gl_context * ctx, GLenum target, GLint level,
-		    GLenum format, GLenum type, GLvoid * pixels,
-		    struct gl_texture_object *texObj,
-		    struct gl_texture_image *texImage, GLboolean compressed)
+intelGetTexImage(struct gl_context * ctx, GLenum target, GLint level,
+                 GLenum format, GLenum type, GLvoid * pixels,
+                 struct gl_texture_object *texObj,
+                 struct gl_texture_image *texImage)
 {
    struct intel_context *intel = intel_context(ctx);
    struct intel_texture_image *intelImage = intel_texture_image(texImage);
@@ -565,43 +560,14 @@ intel_get_tex_image(struct gl_context * ctx, GLenum target, GLint level,
       intel_tex_image_s8z24_gather(intel, intelImage);
    }
 
-   if (compressed) {
-      _mesa_get_compressed_teximage(ctx, target, level, pixels,
-				    texObj, texImage);
-   }
-   else {
-      _mesa_get_teximage(ctx, target, level, format, type, pixels,
-                         texObj, texImage);
-   }
-     
+   _mesa_get_teximage(ctx, target, level, format, type, pixels,
+		      texObj, texImage);
 
    /* Unmap */
    if (intelImage->mt) {
       intel_miptree_image_unmap(intel, intelImage->mt);
       intelImage->base.Base.Data = NULL;
    }
-}
-
-
-static void
-intelGetTexImage(struct gl_context * ctx, GLenum target, GLint level,
-                 GLenum format, GLenum type, GLvoid * pixels,
-                 struct gl_texture_object *texObj,
-                 struct gl_texture_image *texImage)
-{
-   intel_get_tex_image(ctx, target, level, format, type, pixels,
-		       texObj, texImage, GL_FALSE);
-}
-
-
-static void
-intelGetCompressedTexImage(struct gl_context *ctx, GLenum target, GLint level,
-			   GLvoid *pixels,
-			   struct gl_texture_object *texObj,
-			   struct gl_texture_image *texImage)
-{
-   intel_get_tex_image(ctx, target, level, 0, 0, pixels,
-		       texObj, texImage, GL_TRUE);
 }
 
 /**
@@ -721,8 +687,6 @@ intelInitTextureImageFuncs(struct dd_function_table *functions)
    functions->TexImage2D = intelTexImage2D;
    functions->TexImage3D = intelTexImage3D;
    functions->GetTexImage = intelGetTexImage;
-
-   functions->GetCompressedTexImage = intelGetCompressedTexImage;
 
 #if FEATURE_OES_EGL_image
    functions->EGLImageTargetTexture2D = intel_image_target_texture_2d;
