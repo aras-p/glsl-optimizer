@@ -27,7 +27,7 @@
 #define LOG_TAG "MESA-EGL"
 #include <cutils/log.h>
 #include <cutils/properties.h>
-#include <ui/PixelFormat.h>
+#include <hardware/gralloc.h>
 #include <ui/android_native_buffer.h>
 
 extern "C" {
@@ -97,36 +97,26 @@ get_pipe_format(int native)
 {
    enum pipe_format fmt;
 
-   /* see libpixelflinger/format.cpp */
    switch (native) {
-   case PIXEL_FORMAT_RGBA_8888:
+   case HAL_PIXEL_FORMAT_RGBA_8888:
       fmt = PIPE_FORMAT_R8G8B8A8_UNORM;
       break;
-   case PIXEL_FORMAT_RGBX_8888:
+   case HAL_PIXEL_FORMAT_RGBX_8888:
       fmt = PIPE_FORMAT_R8G8B8X8_UNORM;
       break;
-   case PIXEL_FORMAT_RGB_888:
+   case HAL_PIXEL_FORMAT_RGB_888:
       fmt = PIPE_FORMAT_R8G8B8_UNORM;
       break;
-   case PIXEL_FORMAT_RGB_565:
+   case HAL_PIXEL_FORMAT_RGB_565:
       fmt = PIPE_FORMAT_B5G6R5_UNORM;
       break;
-   case PIXEL_FORMAT_BGRA_8888:
+   case HAL_PIXEL_FORMAT_BGRA_8888:
       fmt = PIPE_FORMAT_B8G8R8A8_UNORM;
       break;
-   case PIXEL_FORMAT_A_8:
-      fmt = PIPE_FORMAT_A8_UNORM;
-      break;
-   case PIXEL_FORMAT_L_8:
-      fmt = PIPE_FORMAT_L8_UNORM;
-      break;
-   case PIXEL_FORMAT_LA_88:
-      fmt = PIPE_FORMAT_L8A8_UNORM;
-      break;
-   case PIXEL_FORMAT_NONE:
-   case PIXEL_FORMAT_RGBA_5551:
-   case PIXEL_FORMAT_RGBA_4444:
-   case PIXEL_FORMAT_RGB_332:
+   case HAL_PIXEL_FORMAT_RGBA_5551:
+      /* fmt = PIPE_FORMAT_A1B5G5R5_UNORM; */
+   case HAL_PIXEL_FORMAT_RGBA_4444:
+      /* fmt = PIPE_FORMAT_A4B4G4R4_UNORM; */
    default:
       LOGE("unsupported native format 0x%x", native);
       fmt = PIPE_FORMAT_NONE;
@@ -443,12 +433,11 @@ android_display_init_configs(struct native_display *ndpy)
 {
    struct android_display *adpy = android_display(ndpy);
    const int native_formats[] = {
-      PIXEL_FORMAT_RGBA_8888,
-      PIXEL_FORMAT_RGBX_8888,
-      PIXEL_FORMAT_RGB_888,
-      PIXEL_FORMAT_RGB_565,
-      PIXEL_FORMAT_BGRA_8888,
-      PIXEL_FORMAT_A_8
+      HAL_PIXEL_FORMAT_RGBA_8888,
+      HAL_PIXEL_FORMAT_RGBX_8888,
+      HAL_PIXEL_FORMAT_RGB_888,
+      HAL_PIXEL_FORMAT_RGB_565,
+      HAL_PIXEL_FORMAT_BGRA_8888,
    };
    int i;
 
