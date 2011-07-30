@@ -199,6 +199,20 @@ match_function_by_name(exec_list *instructions, const char *name,
        */
       ir_call *call = new(ctx) ir_call(sig, actual_parameters);
       if (!sig->return_type->is_void()) {
+         /* If the function call is a constant expression, don't
+          * generate the instructions to call it; just generate an
+          * ir_constant representing the constant value.
+          *
+          * Function calls can only be constant expressions starting
+          * in GLSL 1.20.
+          */
+         if (state->language_version >= 120) {
+            ir_constant *const_val = call->constant_expression_value();
+            if (const_val) {
+               return const_val;
+            }
+         }
+
 	 ir_variable *var;
 	 ir_dereference_variable *deref;
 
@@ -211,8 +225,6 @@ match_function_by_name(exec_list *instructions, const char *name,
 	 deref = new(ctx) ir_dereference_variable(var);
 	 ir_assignment *assign = new(ctx) ir_assignment(deref, call, NULL);
 	 instructions->push_tail(assign);
-	 if (state->language_version >= 120)
-	    var->constant_value = call->constant_expression_value();
 
 	 deref = new(ctx) ir_dereference_variable(var);
 	 return deref;
