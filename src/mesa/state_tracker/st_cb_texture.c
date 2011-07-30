@@ -161,6 +161,49 @@ st_FreeTextureImageBuffer(struct gl_context * ctx, struct gl_texture_image *texI
 }
 
 
+/** called via ctx->Driver.MapTextureImage() */
+static void
+st_MapTextureImage(struct gl_context *ctx,
+                   struct gl_texture_image *texImage,
+                   GLuint slice, GLuint x, GLuint y, GLuint w, GLuint h,
+                   GLbitfield mode,
+                   GLubyte **mapOut, GLint *rowStrideOut)
+{
+   struct st_context *st = st_context(ctx);
+   struct st_texture_image *stImage = st_texture_image(texImage);
+   unsigned pipeMode;
+   GLubyte *map;
+
+   pipeMode = 0x0;
+   if (mode & GL_MAP_READ_BIT)
+      pipeMode |= PIPE_TRANSFER_READ;
+   if (mode & GL_MAP_WRITE_BIT)
+      pipeMode |= PIPE_TRANSFER_WRITE;
+
+   map = st_texture_image_map(st, stImage, slice, pipeMode, x, y, w, h);
+   if (map) {
+      *mapOut = map;
+      *rowStrideOut = stImage->transfer->stride;
+   }
+   else {
+      *mapOut = NULL;
+      *rowStrideOut = 0;
+   }
+}
+
+
+/** called via ctx->Driver.UnmapTextureImage() */
+static void
+st_UnmapTextureImage(struct gl_context *ctx,
+                     struct gl_texture_image *texImage,
+                     GLuint slice)
+{
+   struct st_context *st = st_context(ctx);
+   struct st_texture_image *stImage  = st_texture_image(texImage);
+   st_texture_image_unmap(st, stImage);
+}
+
+
 /**
  * From linux kernel i386 header files, copes with odd sizes better
  * than COPY_DWORDS would:
@@ -1881,6 +1924,8 @@ st_init_texture_functions(struct dd_function_table *functions)
    functions->NewTextureImage = st_NewTextureImage;
    functions->DeleteTexture = st_DeleteTextureObject;
    functions->FreeTextureImageBuffer = st_FreeTextureImageBuffer;
+   functions->MapTextureImage = st_MapTextureImage;
+   functions->UnmapTextureImage = st_UnmapTextureImage;
 
    functions->TextureMemCpy = do_memcpy;
 
