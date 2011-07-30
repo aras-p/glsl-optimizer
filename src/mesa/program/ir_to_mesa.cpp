@@ -297,11 +297,11 @@ public:
    /**
     * Emit the correct dot-product instruction for the type of arguments
     */
-   void emit_dp(ir_instruction *ir,
-	        dst_reg dst,
-	        src_reg src0,
-	        src_reg src1,
-	        unsigned elements);
+   ir_to_mesa_instruction * emit_dp(ir_instruction *ir,
+				    dst_reg dst,
+				    src_reg src0,
+				    src_reg src1,
+				    unsigned elements);
 
    void emit_scalar(ir_instruction *ir, enum prog_opcode op,
 		    dst_reg dst, src_reg src0);
@@ -408,7 +408,7 @@ ir_to_mesa_visitor::emit(ir_instruction *ir, enum prog_opcode op)
    return emit(ir, op, undef_dst, undef_src, undef_src, undef_src);
 }
 
-void
+ir_to_mesa_instruction *
 ir_to_mesa_visitor::emit_dp(ir_instruction *ir,
 			    dst_reg dst, src_reg src0, src_reg src1,
 			    unsigned elements)
@@ -417,7 +417,7 @@ ir_to_mesa_visitor::emit_dp(ir_instruction *ir,
       OPCODE_DP2, OPCODE_DP3, OPCODE_DP4
    };
 
-   emit(ir, dot_opcodes[elements - 2], dst, src0, src1);
+   return emit(ir, dot_opcodes[elements - 2], dst, src0, src1);
 }
 
 /**
