@@ -120,6 +120,15 @@
 # define PIPE_ARCH_BIG_ENDIAN
 #endif
 
+#elif defined(__APPLE__)
+#include <machine/endian.h>
+
+#if __DARWIN_BYTE_ORDER == __DARWIN_LITTLE_ENDIAN
+# define PIPE_ARCH_LITTLE_ENDIAN
+#elif __DARWIN_BYTE_ORDER == __DARWIN_BIG_ENDIAN
+# define PIPE_ARCH_BIG_ENDIAN
+#endif
+
 #else
 
 #if defined(PIPE_ARCH_X86) || defined(PIPE_ARCH_X86_64)
