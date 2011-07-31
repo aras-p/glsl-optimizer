@@ -37,6 +37,7 @@ extern "C" {
 #include "util/u_memory.h"
 #include "util/u_inlines.h"
 #include "util/u_format.h"
+#include "util/u_box.h"
 #include "common/native.h"
 #include "common/native_helper.h"
 #include "android/android_sw_winsys.h"
@@ -59,9 +60,12 @@ struct android_surface {
    struct android_display *adpy;
    android_native_window_t *win;
 
+   /* staging color buffer for when buffer preserving is enabled */
+   struct pipe_resource *color_res;
+
    uint stamp;
    android_native_buffer_t *buf;
-   struct pipe_resource *res;
+   struct pipe_resource *buf_res;
 
    /* cache the current back buffers */
    struct {
@@ -309,7 +313,7 @@ android_surface_dequeue_buffer(struct native_surface *nsurf)
    if (!res)
       return FALSE;
 
-   pipe_resource_reference(&asurf->res, res);
+   pipe_resource_reference(&asurf->buf_res, res);
 
    return TRUE;
 }
@@ -322,7 +326,7 @@ android_surface_enqueue_buffer(struct native_surface *nsurf)
 {
    struct android_surface *asurf = android_surface(nsurf);
 
-   pipe_resource_reference(&asurf->res, NULL);
+   pipe_resource_reference(&asurf->buf_res, NULL);
 
    asurf->win->queueBuffer(asurf->win, asurf->buf);
 
@@ -350,16 +354,62 @@ android_surface_swap_buffers(struct native_surface *nsurf)
    return TRUE;
 }
 
+static void
+copy_resources(struct native_display *ndpy,
+               struct pipe_resource *src,
+               struct pipe_resource *dst)
+{
+   struct pipe_context *pipe;
+   struct pipe_box box;
+
+   pipe = ndpy_get_copy_context(ndpy);
+   if (!pipe)
+      return;
+
+   u_box_origin_2d(src->width0, src->height0, &box);
+   pipe->resource_copy_region(pipe, dst, 0, 0, 0, 0, src, 0, &box);
+   pipe->flush(pipe, NULL);
+}
+
 static boolean
 android_surface_present(struct native_surface *nsurf,
                         enum native_attachment natt,
                         boolean preserve,
                         uint swap_interval)
 {
+   struct android_surface *asurf = android_surface(nsurf);
+   struct android_display *adpy = asurf->adpy;
    boolean ret;
 
    if (swap_interval || natt != NATIVE_ATTACHMENT_BACK_LEFT)
       return FALSE;
+
+   /* we always render to color_res first when it exists */
+   if (asurf->color_res) {
+      copy_resources(&adpy->base, asurf->color_res, asurf->buf_res);
+      if (!preserve)
+         pipe_resource_reference(&asurf->color_res, NULL);
+   }
+   else if (preserve) {
+      struct pipe_resource templ;
+
+      memset(&templ, 0, sizeof(templ));
+      templ.target = asurf->buf_res->target;
+      templ.format = asurf->buf_res->format;
+      templ.bind = PIPE_BIND_RENDER_TARGET;
+      templ.width0 = asurf->buf_res->width0;
+      templ.height0 = asurf->buf_res->height0;
+      templ.depth0 = asurf->buf_res->depth0;
+      templ.array_size = asurf->buf_res->array_size;
+
+      asurf->color_res =
+         adpy->base.screen->resource_create(adpy->base.screen, &templ);
+      if (!asurf->color_res)
+         return FALSE;
+
+      /* preserve the contents */
+      copy_resources(&adpy->base, asurf->buf_res, asurf->color_res);
+   }
 
    return android_surface_swap_buffers(nsurf);
 }
@@ -375,6 +425,13 @@ android_surface_validate(struct native_surface *nsurf, uint attachment_mask,
    if (!asurf->buf) {
       if (!android_surface_dequeue_buffer(&asurf->base))
          return FALSE;
+
+      /* color_res must be compatible with buf_res */
+      if (asurf->color_res &&
+          (asurf->color_res->format != asurf->buf_res->format ||
+           asurf->color_res->width0 != asurf->buf_res->width0 ||
+           asurf->color_res->height0 != asurf->buf_res->height0))
+         pipe_resource_reference(&asurf->color_res, NULL);
    }
 
    if (textures) {
@@ -383,7 +440,8 @@ android_surface_validate(struct native_surface *nsurf, uint attachment_mask,
 
       if (native_attachment_mask_test(attachment_mask, att)) {
          textures[att] = NULL;
-         pipe_resource_reference(&textures[att], asurf->res);
+         pipe_resource_reference(&textures[att],
+               (asurf->color_res) ? asurf->color_res : asurf->buf_res);
       }
    }
 
@@ -407,6 +465,8 @@ android_surface_destroy(struct native_surface *nsurf)
 {
    struct android_surface *asurf = android_surface(nsurf);
    int i;
+
+   pipe_resource_reference(&asurf->color_res, NULL);
 
    if (asurf->buf)
       android_surface_enqueue_buffer(&asurf->base);
@@ -625,6 +685,9 @@ android_display_get_param(struct native_display *ndpy,
    int val;
 
    switch (param) {
+   case NATIVE_PARAM_PRESERVE_BUFFER:
+      val = 1;
+      break;
    default:
       val = 0;
       break;
