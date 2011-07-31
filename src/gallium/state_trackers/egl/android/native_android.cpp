@@ -63,7 +63,12 @@ struct android_surface {
    android_native_buffer_t *buf;
    struct pipe_resource *res;
 
-   /* cache the current front and back resources */
+   /* cache the current back buffers */
+   struct {
+      int width;
+      int height;
+      int format;
+   } cache_key;
    void *cache_handles[2];
    struct pipe_resource *cache_resources[2];
 };
@@ -194,32 +199,42 @@ import_buffer(struct android_display *adpy, const struct pipe_resource *templ,
    return res;
 }
 
-/**
- * Dequeue the next back buffer for rendering.
- */
-static boolean
-android_surface_dequeue_buffer(struct native_surface *nsurf)
+static void
+android_surface_clear_cache(struct native_surface *nsurf)
+{
+   struct android_surface *asurf = android_surface(nsurf);
+   int i;
+
+   for (i = 0; i < Elements(asurf->cache_handles); i++) {
+      asurf->cache_handles[i] = NULL;
+      pipe_resource_reference(&asurf->cache_resources[i], NULL);
+   }
+
+   memset(&asurf->cache_key, 0, sizeof(asurf->cache_key));
+}
+
+static struct pipe_resource *
+android_surface_add_cache(struct native_surface *nsurf,
+                          struct android_native_buffer_t *abuf)
 {
    struct android_surface *asurf = android_surface(nsurf);
    void *handle;
    int idx;
 
-   if (asurf->win->dequeueBuffer(asurf->win, &asurf->buf) != NO_ERROR) {
-      LOGE("failed to dequeue window %p", asurf->win);
-      return FALSE;
-   }
-
-   asurf->buf->common.incRef(&asurf->buf->common);
-   asurf->win->lockBuffer(asurf->win, asurf->buf);
+   /* how about abuf->usage? */
+   if (asurf->cache_key.width != abuf->width ||
+       asurf->cache_key.height != abuf->height ||
+       asurf->cache_key.format != abuf->format)
+      android_surface_clear_cache(&asurf->base);
 
    if (asurf->adpy->use_drm)
-      handle = (void *) get_handle_name(asurf->buf->handle);
+      handle = (void *) get_handle_name(abuf->handle);
    else
-      handle = (void *) asurf->buf->handle;
+      handle = (void *) abuf->handle;
    /* NULL is invalid */
    if (!handle) {
-      LOGE("window %p returned an invalid buffer", asurf->win);
-      return TRUE;
+      LOGE("invalid buffer native buffer %p", abuf);
+      return NULL;
    }
 
    /* find the slot to use */
@@ -228,15 +243,18 @@ android_surface_dequeue_buffer(struct native_surface *nsurf)
          break;
    }
    if (idx == Elements(asurf->cache_handles)) {
-      /* buffer reallocated; clear the cache */
-      for (idx = 0; idx < Elements(asurf->cache_handles); idx++) {
-         asurf->cache_handles[idx] = 0;
-         pipe_resource_reference(&asurf->cache_resources[idx], NULL);
-      }
+      LOGW("cache full: buf %p, width %d, height %d, format %d, usage 0x%x",
+            abuf, abuf->width, abuf->height, abuf->format, abuf->usage);
+      android_surface_clear_cache(&asurf->base);
       idx = 0;
    }
 
-   /* update the cache */
+   if (idx == 0) {
+      asurf->cache_key.width = abuf->width;
+      asurf->cache_key.height = abuf->height;
+      asurf->cache_key.format = abuf->format;
+   }
+
    if (!asurf->cache_handles[idx]) {
       struct pipe_resource templ;
 
@@ -244,17 +262,18 @@ android_surface_dequeue_buffer(struct native_surface *nsurf)
 
       memset(&templ, 0, sizeof(templ));
       templ.target = PIPE_TEXTURE_2D;
-      templ.last_level = 0;
-      templ.width0 = asurf->buf->width;
-      templ.height0 = asurf->buf->height;
-      templ.depth0 = 1;
+      templ.format = get_pipe_format(asurf->buf->format);
       templ.bind = PIPE_BIND_RENDER_TARGET;
       if (!asurf->adpy->use_drm) {
          templ.bind |= PIPE_BIND_TRANSFER_WRITE |
                        PIPE_BIND_TRANSFER_READ;
       }
 
-      templ.format = get_pipe_format(asurf->buf->format);
+      templ.width0 = asurf->buf->width;
+      templ.height0 = asurf->buf->height;
+      templ.depth0 = 1;
+      templ.array_size = 1;
+
       if (templ.format != PIPE_FORMAT_NONE) {
          asurf->cache_resources[idx] =
             import_buffer(asurf->adpy, &templ, asurf->buf);
@@ -266,7 +285,31 @@ android_surface_dequeue_buffer(struct native_surface *nsurf)
       asurf->cache_handles[idx] = handle;
    }
 
-   pipe_resource_reference(&asurf->res, asurf->cache_resources[idx]);
+   return asurf->cache_resources[idx];
+}
+
+/**
+ * Dequeue the next back buffer for rendering.
+ */
+static boolean
+android_surface_dequeue_buffer(struct native_surface *nsurf)
+{
+   struct android_surface *asurf = android_surface(nsurf);
+   struct pipe_resource *res;
+
+   if (asurf->win->dequeueBuffer(asurf->win, &asurf->buf) != NO_ERROR) {
+      LOGE("failed to dequeue window %p", asurf->win);
+      return FALSE;
+   }
+
+   asurf->buf->common.incRef(&asurf->buf->common);
+   asurf->win->lockBuffer(asurf->win, asurf->buf);
+
+   res = android_surface_add_cache(&asurf->base, asurf->buf);
+   if (!res)
+      return FALSE;
+
+   pipe_resource_reference(&asurf->res, res);
 
    return TRUE;
 }
@@ -368,8 +411,7 @@ android_surface_destroy(struct native_surface *nsurf)
    if (asurf->buf)
       android_surface_enqueue_buffer(&asurf->base);
 
-   for (i = 0; i < Elements(asurf->cache_handles); i++)
-      pipe_resource_reference(&asurf->cache_resources[i], NULL);
+   android_surface_clear_cache(&asurf->base);
 
    asurf->win->common.decRef(&asurf->win->common);
 
