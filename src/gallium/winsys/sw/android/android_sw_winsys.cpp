@@ -32,8 +32,9 @@
 #include "util/u_format.h"
 #include "state_tracker/sw_winsys.h"
 
-#include <ui/PixelFormat.h>
+#include <utils/Errors.h>
 #include <private/ui/sw_gralloc_handle.h>
+
 #include <hardware/gralloc.h>
 
 #include "android_sw_winsys.h"
@@ -183,39 +184,29 @@ android_is_displaytarget_format_supported(struct sw_winsys *ws,
                                           enum pipe_format format)
 {
    struct android_sw_winsys *droid = android_sw_winsys(ws);
-   int fmt;
+   int fmt = -1;
 
    switch (format) {
    case PIPE_FORMAT_R8G8B8A8_UNORM:
-      fmt = PIXEL_FORMAT_RGBA_8888;
+      fmt = HAL_PIXEL_FORMAT_RGBA_8888;
       break;
    case PIPE_FORMAT_R8G8B8X8_UNORM:
-      fmt = PIXEL_FORMAT_RGBX_8888;
+      fmt = HAL_PIXEL_FORMAT_RGBX_8888;
       break;
    case PIPE_FORMAT_R8G8B8_UNORM:
-      fmt = PIXEL_FORMAT_RGB_888;
+      fmt = HAL_PIXEL_FORMAT_RGB_888;
       break;
    case PIPE_FORMAT_B5G6R5_UNORM:
-      fmt = PIXEL_FORMAT_RGB_565;
+      fmt = HAL_PIXEL_FORMAT_RGB_565;
       break;
    case PIPE_FORMAT_B8G8R8A8_UNORM:
-      fmt = PIXEL_FORMAT_BGRA_8888;
-      break;
-   case PIPE_FORMAT_A8_UNORM:
-      fmt = PIXEL_FORMAT_A_8;
-      break;
-   case PIPE_FORMAT_L8_UNORM:
-      fmt = PIXEL_FORMAT_L_8;
-      break;
-   case PIPE_FORMAT_L8A8_UNORM:
-      fmt = PIXEL_FORMAT_LA_88;
+      fmt = HAL_PIXEL_FORMAT_BGRA_8888;
       break;
    default:
-      fmt = PIXEL_FORMAT_NONE;
       break;
    }
 
-   return (fmt != PIXEL_FORMAT_NONE);
+   return (fmt != -1);
 }
 
 static void
