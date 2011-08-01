@@ -47,6 +47,7 @@
 
 #include "glsl_types.h"
 #include "ir.h"
+#include "program/hash_table.h"
 
 class ir_if_to_cond_assign_visitor : public ir_hierarchical_visitor {
 public:
@@ -55,6 +56,14 @@ public:
       this->progress = false;
       this->max_depth = max_depth;
       this->depth = 0;
+
+      this->condition_variables = hash_table_ctor(0, hash_table_pointer_hash,
+						  hash_table_pointer_compare);
+   }
+
+   ~ir_if_to_cond_assign_visitor()
+   {
+      hash_table_dtor(this->condition_variables);
    }
 
    ir_visitor_status visit_enter(ir_if *);
@@ -63,6 +72,8 @@ public:
    bool progress;
    unsigned max_depth;
    unsigned depth;
+
+   struct hash_table *condition_variables;
 };
 
 bool
@@ -95,7 +106,8 @@ check_control_flow(ir_instruction *ir, void *data)
 void
 move_block_to_cond_assign(void *mem_ctx,
 			  ir_if *if_ir, ir_rvalue *cond_expr,
-			  exec_list *instructions)
+			  exec_list *instructions,
+			  struct hash_table *ht)
 {
    foreach_list_safe(node, instructions) {
       ir_instruction *ir = (ir_instruction *) node;
@@ -103,14 +115,33 @@ move_block_to_cond_assign(void *mem_ctx,
       if (ir->ir_type == ir_type_assignment) {
 	 ir_assignment *assign = (ir_assignment *)ir;
 
-	 if (!assign->condition) {
-	    assign->condition = cond_expr->clone(mem_ctx, NULL);
-	 } else {
-	    assign->condition =
-	       new(mem_ctx) ir_expression(ir_binop_logic_and,
-					  glsl_type::bool_type,
-					  cond_expr->clone(mem_ctx, NULL),
-					  assign->condition);
+	 if (hash_table_find(ht, assign) == NULL) {
+	    hash_table_insert(ht, assign, assign);
+
+	    /* If the LHS of the assignment is a condition variable that was
+	     * previously added, insert an additional assignment of false to
+	     * the variable.
+	     */
+	    const bool assign_to_cv =
+	       hash_table_find(ht, assign->lhs->variable_referenced()) != NULL;
+
+	    if (!assign->condition) {
+	       if (assign_to_cv) {
+		  assign->rhs =
+		     new(mem_ctx) ir_expression(ir_binop_logic_and,
+						glsl_type::bool_type,
+						cond_expr->clone(mem_ctx, NULL),
+						assign->rhs);
+	       } else {
+		  assign->condition = cond_expr->clone(mem_ctx, NULL);
+	       }
+	    } else {
+	       assign->condition =
+		  new(mem_ctx) ir_expression(ir_binop_logic_and,
+					     glsl_type::bool_type,
+					     cond_expr->clone(mem_ctx, NULL),
+					     assign->condition);
+	    }
 	 }
       }
 
@@ -125,6 +156,7 @@ ir_if_to_cond_assign_visitor::visit_enter(ir_if *ir)
 {
    (void) ir;
    this->depth++;
+
    return visit_continue;
 }
 
@@ -170,7 +202,13 @@ ir_if_to_cond_assign_visitor::visit_leave(ir_if *ir)
    ir->insert_before(assign);
 
    move_block_to_cond_assign(mem_ctx, ir, then_cond,
-			     &ir->then_instructions);
+			     &ir->then_instructions,
+			     this->condition_variables);
+
+   /* Add the new condition variable to the hash table.  This allows us to
+    * find this variable when lowering other (enclosing) if-statements.
+    */
+   hash_table_insert(this->condition_variables, then_var, then_var);
 
    /* If there are instructions in the else-clause, store the inverse of the
     * condition to a variable.  Move all of the instructions from the
@@ -195,7 +233,13 @@ ir_if_to_cond_assign_visitor::visit_leave(ir_if *ir)
       ir->insert_before(assign);
 
       move_block_to_cond_assign(mem_ctx, ir, else_cond,
-				&ir->else_instructions);
+				&ir->else_instructions,
+				this->condition_variables);
+
+      /* Add the new condition variable to the hash table.  This allows us to
+       * find this variable when lowering other (enclosing) if-statements.
+       */
+      hash_table_insert(this->condition_variables, else_var, else_var);
    }
 
    ir->remove();
