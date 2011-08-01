@@ -71,14 +71,13 @@ type_with_negative_values(GLenum type)
 static void
 get_tex_depth(struct gl_context *ctx, GLuint dimensions,
               GLenum format, GLenum type, GLvoid *pixels,
-              const struct gl_texture_image *texImage)
+              struct gl_texture_image *texImage)
 {
    const GLint width = texImage->Width;
    const GLint height = texImage->Height;
    const GLint depth = texImage->Depth;
    GLint img, row;
    GLfloat *depthRow = (GLfloat *) malloc(width * sizeof(GLfloat));
-   const GLint texelSize = _mesa_get_format_bytes(texImage->TexFormat);
 
    if (!depthRow) {
       _mesa_error(ctx, GL_OUT_OF_MEMORY, "glGetTexImage");
@@ -86,18 +85,24 @@ get_tex_depth(struct gl_context *ctx, GLuint dimensions,
    }
 
    for (img = 0; img < depth; img++) {
+      GLubyte *srcMap;
+      GLint srcRowStride;
+
+      /* map src texture buffer */
+      ctx->Driver.MapTextureImage(ctx, texImage, img,
+                                  0, 0, width, height, GL_MAP_READ_BIT,
+                                  &srcMap, &srcRowStride);
+
       for (row = 0; row < height; row++) {
          void *dest = _mesa_image_address(dimensions, &ctx->Pack, pixels,
                                           width, height, format, type,
                                           img, row, 0);
-         const GLubyte *src = (GLubyte *) texImage->Data +
-            (texImage->ImageOffsets[img] +
-             texImage->RowStride * row) * texelSize;
-
+         const GLubyte *src = srcMap + row * srcRowStride;
          _mesa_unpack_float_z_row(texImage->TexFormat, width, src, depthRow);
-
          _mesa_pack_depth_span(ctx, width, dest, type, depthRow, &ctx->Pack);
       }
+
+      ctx->Driver.UnmapTextureImage(ctx, texImage, img);
    }
 
    free(depthRow);

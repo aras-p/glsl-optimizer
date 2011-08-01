@@ -950,7 +950,8 @@ st_GetTexImage(struct gl_context * ctx, GLenum target, GLint level,
       return;
    }
 
-   if (format == GL_DEPTH_STENCIL_EXT) {
+   if (format == GL_DEPTH_STENCIL ||
+       format == GL_DEPTH_COMPONENT) {
       do_map = GL_FALSE;
    }
 
