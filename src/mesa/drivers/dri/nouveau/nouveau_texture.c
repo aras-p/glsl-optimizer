@@ -621,19 +621,6 @@ nouveau_texsubimage_1d(struct gl_context *ctx, GLenum target, GLint level,
 }
 
 static void
-nouveau_get_teximage(struct gl_context *ctx, GLenum target, GLint level,
-		     GLenum format, GLenum type, GLvoid *pixels,
-		     struct gl_texture_object *t,
-		     struct gl_texture_image *ti)
-{
-	nouveau_teximage_map(ctx, ti, GL_MAP_READ_BIT,
-			     0, 0, ti->Width, ti->Height);
-	_mesa_get_teximage(ctx, target, level, format, type, pixels,
-			   t, ti);
-	nouveau_teximage_unmap(ctx, ti);
-}
-
-static void
 nouveau_bind_texture(struct gl_context *ctx, GLenum target,
 		     struct gl_texture_object *t)
 {
@@ -782,7 +769,6 @@ nouveau_texture_functions_init(struct dd_function_table *functions)
 	functions->TexSubImage1D = nouveau_texsubimage_1d;
 	functions->TexSubImage2D = nouveau_texsubimage_2d;
 	functions->TexSubImage3D = nouveau_texsubimage_3d;
-	functions->GetTexImage = nouveau_get_teximage;
 	functions->BindTexture = nouveau_bind_texture;
 	functions->MapTexture = nouveau_texture_map;
 	functions->UnmapTexture = nouveau_texture_unmap;
