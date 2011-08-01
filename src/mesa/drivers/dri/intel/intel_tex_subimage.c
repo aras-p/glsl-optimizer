@@ -58,86 +58,67 @@ intelTexSubimage(struct gl_context * ctx,
    drm_intel_bo *temp_bo = NULL, *dst_bo = NULL;
    unsigned int blit_x = 0, blit_y = 0;
 
-   DBG("%s target %s level %d offset %d,%d %dx%d\n", __FUNCTION__,
-       _mesa_lookup_enum_by_nr(target),
-       level, xoffset, yoffset, width, height);
-
-   intel_flush(ctx);
-
-   pixels = _mesa_validate_pbo_teximage(ctx, dims, width, height, depth,
-					format, type, pixels, packing,
-					"glTexSubImage");
-   if (!pixels)
-      return;
-
-   intel_prepare_render(intel);
-
-   /* Map buffer if necessary.  Need to lock to prevent other contexts
-    * from uploading the buffer under us.
+   /* Try to do a blit upload of the subimage if the texture is
+    * currently busy.
     */
-   if (intelImage->mt) {
-      dst_bo = intel_region_buffer(intel, intelImage->mt->region,
-				   INTEL_WRITE_PART);
+   if (intelImage->mt &&
+       intelImage->mt->region->tiling != I915_TILING_Y &&
+       intel->gen < 6 && target == GL_TEXTURE_2D &&
+       drm_intel_bo_busy(dst_bo)) {
+      unsigned long pitch;
+      uint32_t tiling_mode = I915_TILING_NONE;
 
-      if (intelImage->mt->region->tiling != I915_TILING_Y &&
-	  intel->gen < 6 && target == GL_TEXTURE_2D &&
-	  drm_intel_bo_busy(dst_bo))
-      {
-	 unsigned long pitch;
-	 uint32_t tiling_mode = I915_TILING_NONE;
+      DBG("BLT subimage %s target %s level %d offset %d,%d %dx%d\n",
+	  __FUNCTION__,
+	  _mesa_lookup_enum_by_nr(target),
+	  level, xoffset, yoffset, width, height);
 
-	 temp_bo = drm_intel_bo_alloc_tiled(intel->bufmgr,
-					    "subimage blit bo",
-					    width, height,
-					    intelImage->mt->cpp,
-					    &tiling_mode,
-					    &pitch,
-					    0);
-         if (temp_bo == NULL)
-            return;
+      pixels = _mesa_validate_pbo_teximage(ctx, dims, width, height, depth,
+					   format, type, pixels, packing,
+					   "glTexSubImage");
+      if (!pixels)
+	 return;
 
-	 if (drm_intel_gem_bo_map_gtt(temp_bo)) {
-            drm_intel_bo_unreference(temp_bo);
-            return;
-         }
-
-	 texImage->Data = temp_bo->virtual;
-	 texImage->ImageOffsets[0] = 0;
-	 dstRowStride = pitch;
-
-	 intel_miptree_get_image_offset(intelImage->mt, level,
-					intelImage->base.Face, 0,
-					&blit_x, &blit_y);
-	 blit_x += xoffset;
-	 blit_y += yoffset;
-	 xoffset = 0;
-	 yoffset = 0;
-      } else {
-	 texImage->Data = intel_miptree_image_map(intel,
-						  intelImage->mt,
-						  intelImage->base.Face,
-						  intelImage->base.Level,
-						  &dstRowStride,
-						  texImage->ImageOffsets);
+      temp_bo = drm_intel_bo_alloc_tiled(intel->bufmgr,
+					 "subimage blit bo",
+					 width, height,
+					 intelImage->mt->cpp,
+					 &tiling_mode,
+					 &pitch,
+					 0);
+      if (temp_bo == NULL) {
+	 _mesa_error(ctx, GL_OUT_OF_MEMORY, "intelTexSubImage");
+	 return;
       }
-   } else {
-      dstRowStride = texImage->RowStride * _mesa_get_format_bytes(texImage->TexFormat);
-   }
 
-   assert(dstRowStride);
+      if (drm_intel_gem_bo_map_gtt(temp_bo)) {
+	 _mesa_error(ctx, GL_OUT_OF_MEMORY, "intelTexSubImage");
+	 return;
+      }
 
-   if (!_mesa_texstore(ctx, dims, texImage->_BaseFormat,
-		       texImage->TexFormat,
-		       texImage->Data,
-		       xoffset, yoffset, zoffset,
-		       dstRowStride,
-		       texImage->ImageOffsets,
-		       width, height, depth,
-		       format, type, pixels, packing)) {
-      _mesa_error(ctx, GL_OUT_OF_MEMORY, "intelTexSubImage");
-   }
+      texImage->Data = temp_bo->virtual;
+      texImage->ImageOffsets[0] = 0;
+      dstRowStride = pitch;
 
-   if (temp_bo) {
+      intel_miptree_get_image_offset(intelImage->mt, level,
+				     intelImage->base.Face, 0,
+				     &blit_x, &blit_y);
+      blit_x += xoffset;
+      blit_y += yoffset;
+      xoffset = 0;
+      yoffset = 0;
+
+      if (!_mesa_texstore(ctx, dims, texImage->_BaseFormat,
+			  texImage->TexFormat,
+			  texImage->Data,
+			  xoffset, yoffset, zoffset,
+			  dstRowStride,
+			  texImage->ImageOffsets,
+			  width, height, depth,
+			  format, type, pixels, packing)) {
+	 _mesa_error(ctx, GL_OUT_OF_MEMORY, "intelTexSubImage");
+      }
+
       GLboolean ret;
       unsigned int dst_pitch = intelImage->mt->region->pitch *
 	 intelImage->mt->cpp;
@@ -154,17 +135,17 @@ intelTexSubimage(struct gl_context * ctx,
 			      0, 0, blit_x, blit_y, width, height,
 			      GL_COPY);
       assert(ret);
-   }
 
-   _mesa_unmap_teximage_pbo(ctx, packing);
-
-   if (temp_bo) {
       drm_intel_bo_unreference(temp_bo);
-      temp_bo = NULL;
-   } else if (intelImage->mt) {
-      intel_miptree_image_unmap(intel, intelImage->mt);
-      texImage->Data = NULL;
+      _mesa_unmap_teximage_pbo(ctx, packing);
+      return;
    }
+
+   _mesa_store_texsubimage3d(ctx, target, level,
+			     xoffset, yoffset, zoffset,
+			     width, height, depth,
+			     format, type, pixels,
+			     packing, texObj, texImage);
 }
 
 
