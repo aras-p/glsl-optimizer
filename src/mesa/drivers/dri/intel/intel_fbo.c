@@ -596,7 +596,6 @@ intel_renderbuffer_set_draw_offset(struct intel_renderbuffer *irb,
 				   struct intel_texture_image *intel_image,
 				   int zoffset)
 {
-   struct intel_mipmap_tree *mt = intel_image->mt;
    unsigned int dst_x, dst_y;
 
    /* compute offset of the particular 2D image within the texture region */
