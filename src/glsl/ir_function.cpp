@@ -37,14 +37,6 @@ typedef enum {
  * \param list_b Actual parameters passed to the function.
  * \see matching_signature()
  */
-
-/**
- * \brief Check if two parameter lists match.
- *
- * \param list_a Parameters of the function definition.
- * \param list_b Actual parameters passed to the function.
- * \see matching_signature()
- */
 static parameter_list_match_t
 parameter_lists_match(const exec_list *list_a, const exec_list *list_b)
 {
