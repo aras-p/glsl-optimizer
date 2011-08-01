@@ -117,11 +117,6 @@ void radeonTexSubImage3D(struct gl_context * ctx, GLenum target, GLint level,
 			 struct gl_texture_object *texObj,
 			 struct gl_texture_image *texImage);
 
-void radeonGetTexImage(struct gl_context * ctx, GLenum target, GLint level,
-		       GLenum format, GLenum type, GLvoid * pixels,
-		       struct gl_texture_object *texObj,
-		       struct gl_texture_image *texImage);
-
 void radeonCopyTexSubImage2D(struct gl_context *ctx, GLenum target, GLint level,
 			GLint xoffset, GLint yoffset,
 			GLint x, GLint y,

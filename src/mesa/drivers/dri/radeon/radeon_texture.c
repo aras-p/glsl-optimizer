@@ -1191,7 +1191,6 @@ radeon_init_common_texture_funcs(radeonContextPtr radeon,
 	functions->TexSubImage3D = radeonTexSubImage3D;
 	functions->CompressedTexImage2D = radeonCompressedTexImage2D;
 	functions->CompressedTexSubImage2D = radeonCompressedTexSubImage2D;
-	functions->GetTexImage = radeonGetTexImage;
 
 	functions->GenerateMipmap = radeonGenerateMipmap;
 
