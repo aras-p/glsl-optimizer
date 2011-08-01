@@ -319,14 +319,12 @@ get_tex_rgba(struct gl_context *ctx, GLuint dimensions,
  * \return GL_TRUE if done, GL_FALSE otherwise
  */
 static GLboolean
-get_tex_memcpy(struct gl_context *ctx, GLenum format, GLenum type, GLvoid *pixels,
-               const struct gl_texture_object *texObj,
-               const struct gl_texture_image *texImage)
+get_tex_memcpy(struct gl_context *ctx, GLenum format, GLenum type,
+               GLvoid *pixels,
+               struct gl_texture_object *texObj,
+               struct gl_texture_image *texImage)
 {
    GLboolean memCopy = GL_FALSE;
-
-   /* Texture image should have been mapped already */
-   assert(texImage->Data);
 
    /*
     * Check if the src/dst formats are compatible.
@@ -386,20 +384,28 @@ get_tex_memcpy(struct gl_context *ctx, GLenum format, GLenum type, GLvoid *pixel
                                texImage->Height, format, type, 0, 0);
       const GLint dstRowStride =
          _mesa_image_row_stride(&ctx->Pack, texImage->Width, format, type);
-      const GLubyte *src = texImage->Data;
-      const GLint srcRowStride = texImage->RowStride * bpp;
-      GLuint row;
+      GLubyte *src;
+      GLint srcRowStride;
+
+      /* map src texture buffer */
+      ctx->Driver.MapTextureImage(ctx, texImage, 0,
+                                  0, 0, texImage->Width, texImage->Height,
+                                  GL_MAP_READ_BIT, &src, &srcRowStride);
 
       if (bytesPerRow == dstRowStride && bytesPerRow == srcRowStride) {
          memcpy(dst, src, bytesPerRow * texImage->Height);
       }
       else {
+         GLuint row;
          for (row = 0; row < texImage->Height; row++) {
             memcpy(dst, src, bytesPerRow);
             dst += dstRowStride;
             src += srcRowStride;
          }
       }
+
+      /* unmap src texture buffer */
+      ctx->Driver.UnmapTextureImage(ctx, texImage, 0);
    }
 
    return memCopy;
