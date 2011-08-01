@@ -237,6 +237,81 @@ void radeonUnmapTexture(struct gl_context *ctx, struct gl_texture_object *texObj
 	radeon_bo_unmap(t->mt->bo);
 }
 
+
+/**
+ * Map texture memory/buffer into user space.
+ * Note: the region of interest parameters are ignored here.
+ * \param mapOut  returns start of mapping of region of interest
+ * \param rowStrideOut  returns row stride in bytes
+ */
+static void
+radeon_map_texture_image(struct gl_context *ctx,
+			 struct gl_texture_image *texImage,
+			 GLuint slice,
+			 GLuint x, GLuint y, GLuint w, GLuint h,
+			 GLbitfield mode,
+			 GLubyte **map,
+			 GLint *stride)
+{
+	radeonContextPtr rmesa = RADEON_CONTEXT(ctx);
+	radeon_texture_image *image = get_radeon_texture_image(texImage);
+	radeon_mipmap_tree *mt = image->mt;
+	GLuint texel_size = _mesa_get_format_bytes(texImage->TexFormat);
+	GLuint width = texImage->Width;
+	GLuint height = texImage->Height;
+	struct radeon_bo *bo = !image->mt ? image->bo : image->mt->bo;
+	unsigned int bw, bh;
+	GLboolean write = (mode & GL_MAP_WRITE_BIT) != 0;
+
+	_mesa_get_format_block_size(texImage->TexFormat, &bw, &bh);
+	assert(y % bh == 0);
+	y /= bh;
+	height /= bh;
+
+	if (bo && radeon_bo_is_referenced_by_cs(bo, rmesa->cmdbuf.cs)) {
+		radeon_print(RADEON_TEXTURE, RADEON_VERBOSE,
+			     "%s for texture that is "
+			     "queued for GPU processing.\n",
+			     __func__);
+		radeon_firevertices(rmesa);
+	}
+
+	if (image->bo) {
+		/* TFP case */
+		radeon_bo_map(image->bo, write);
+		*stride = get_texture_image_row_stride(rmesa, texImage->TexFormat, width, 0);
+		*map = bo->ptr;
+	} else if (likely(mt)) {
+		radeon_bo_map(mt->bo, write);
+		radeon_mipmap_level *lvl = &image->mt->levels[texImage->Level];
+		void *base = mt->bo->ptr + lvl->faces[image->mtface].offset;
+
+		*stride = lvl->rowstride;
+		*map = base + (slice * height) * *stride;
+	} else {
+		/* texture data is in malloc'd memory */
+
+		assert(map);
+
+		*stride = _mesa_format_row_stride(texImage->TexFormat, width);
+		*map = texImage->Data + (slice * height) * *stride;
+	}
+
+	*map += y * *stride + x * texel_size;
+}
+
+static void
+radeon_unmap_texture_image(struct gl_context *ctx,
+			   struct gl_texture_image *texImage, GLuint slice)
+{
+	radeon_texture_image *image = get_radeon_texture_image(texImage);
+
+	if (image->bo)
+		radeon_bo_unmap(image->bo);
+	else if (image->mt)
+		radeon_bo_unmap(image->mt->bo);
+}
+
 /**
  * Wraps Mesa's implementation to ensure that the base level image is mapped.
  *
@@ -1090,6 +1165,8 @@ radeon_init_common_texture_funcs(radeonContextPtr radeon,
 	functions->FreeTextureImageBuffer = radeonFreeTextureImageBuffer;
 	functions->MapTexture = radeonMapTexture;
 	functions->UnmapTexture = radeonUnmapTexture;
+	functions->MapTextureImage = radeon_map_texture_image;
+	functions->UnmapTextureImage = radeon_unmap_texture_image;
 
 	functions->ChooseTextureFormat	= radeonChooseTextureFormat_mesa;
 
