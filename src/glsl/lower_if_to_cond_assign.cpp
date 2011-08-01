@@ -94,40 +94,23 @@ check_control_flow(ir_instruction *ir, void *data)
 
 void
 move_block_to_cond_assign(void *mem_ctx,
-			  ir_if *if_ir, ir_variable *cond_var, bool then)
+			  ir_if *if_ir, ir_rvalue *cond_expr,
+			  exec_list *instructions)
 {
-   exec_list *instructions;
-
-   if (then) {
-      instructions = &if_ir->then_instructions;
-   } else {
-      instructions = &if_ir->else_instructions;
-   }
-
    foreach_iter(exec_list_iterator, iter, *instructions) {
       ir_instruction *ir = (ir_instruction *)iter.get();
 
       if (ir->ir_type == ir_type_assignment) {
 	 ir_assignment *assign = (ir_assignment *)ir;
-	 ir_rvalue *cond_expr;
-	 ir_dereference *deref = new(mem_ctx) ir_dereference_variable(cond_var);
-
-	 if (then) {
-	    cond_expr = deref;
-	 } else {
-	    cond_expr = new(mem_ctx) ir_expression(ir_unop_logic_not,
-						   glsl_type::bool_type,
-						   deref,
-						   NULL);
-	 }
 
 	 if (!assign->condition) {
-	    assign->condition = cond_expr;
+	    assign->condition = cond_expr->clone(mem_ctx, NULL);
 	 } else {
-	    assign->condition = new(mem_ctx) ir_expression(ir_binop_logic_and,
-							   glsl_type::bool_type,
-							   cond_expr,
-							   assign->condition);
+	    assign->condition =
+	       new(mem_ctx) ir_expression(ir_binop_logic_and,
+					  glsl_type::bool_type,
+					  cond_expr->clone(mem_ctx, NULL),
+					  assign->condition);
 	 }
       }
 
@@ -187,8 +170,15 @@ ir_if_to_cond_assign_visitor::visit_leave(ir_if *ir)
    /* Now, move all of the instructions out of the if blocks, putting
     * conditions on assignments.
     */
-   move_block_to_cond_assign(mem_ctx, ir, cond_var, true);
-   move_block_to_cond_assign(mem_ctx, ir, cond_var, false);
+   move_block_to_cond_assign(mem_ctx, ir, deref,
+			     &ir->then_instructions);
+
+   ir_rvalue *inverse =
+      new(mem_ctx) ir_expression(ir_unop_logic_not,
+				 glsl_type::bool_type,
+				 deref->clone(mem_ctx, NULL),
+				 NULL);
+   move_block_to_cond_assign(mem_ctx, ir, inverse, &ir->else_instructions);
 
    ir->remove();
 
