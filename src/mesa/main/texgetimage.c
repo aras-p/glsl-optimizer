@@ -241,8 +241,32 @@ get_tex_rgba(struct gl_context *ctx, GLuint dimensions,
          return;
       }
 
-      _mesa_decompress_image(texFormat, texImage->Width, texImage->Height,
-                             texImage->Data, texImage->RowStride, tempImage);
+      /* Decompress the texture image - results in 'tempImage' */
+      {
+         GLubyte *srcMap;
+         GLint srcRowStride;
+         GLuint bytes, bw, bh;
+
+         bytes = _mesa_get_format_bytes(texImage->TexFormat);
+         _mesa_get_format_block_size(texImage->TexFormat, &bw, &bh);
+
+         ctx->Driver.MapTextureImage(ctx, texImage, 0,
+                                     0, 0, width, height,
+                                     GL_MAP_READ_BIT,
+                                     &srcMap, &srcRowStride);
+
+         /* XXX This line is a bit of a hack to work around the
+          * mismatch of compressed row strides as returned by
+          * MapTextureImage() vs. what the texture decompression code
+          * uses.  This will be fixed in the future.
+          */
+         srcRowStride = srcRowStride * bh / bytes;
+
+         _mesa_decompress_image(texFormat, width, height,
+                                srcMap, srcRowStride, tempImage);
+
+         ctx->Driver.UnmapTextureImage(ctx, texImage, 0);
+      }
 
       if (baseFormat == GL_LUMINANCE ||
           baseFormat == GL_LUMINANCE_ALPHA) {
@@ -270,7 +294,6 @@ get_tex_rgba(struct gl_context *ctx, GLuint dimensions,
    }
    else {
       /* No decompression needed */
-      const GLint texelSize = _mesa_get_format_bytes(texFormat);
       GLuint img, row;
       GLfloat (*rgba)[4];
 
@@ -281,13 +304,19 @@ get_tex_rgba(struct gl_context *ctx, GLuint dimensions,
       }
 
       for (img = 0; img < depth; img++) {
+	 GLubyte *srcMap;
+	 GLint rowstride;
+
+         /* map src texture buffer */
+         ctx->Driver.MapTextureImage(ctx, texImage, img,
+                                     0, 0, width, height, GL_MAP_READ_BIT,
+                                     &srcMap, &rowstride);
+
          for (row = 0; row < height; row++) {
+	    const GLubyte *src = srcMap + row * rowstride;
             void *dest = _mesa_image_address(dimensions, &ctx->Pack, pixels,
                                              width, height, format, type,
                                              img, row, 0);
-            const GLubyte *src = (const GLubyte *) texImage->Data +
-               (texImage->ImageOffsets[img] +
-                texImage->RowStride * row) * texelSize;
 
             _mesa_unpack_rgba_row(texFormat, width, src, rgba);
 
@@ -327,6 +356,9 @@ get_tex_rgba(struct gl_context *ctx, GLuint dimensions,
                                        format, type, dest,
                                        &ctx->Pack, transferOps);
          }
+
+         /* Unmap the src texture buffer */
+         ctx->Driver.UnmapTextureImage(ctx, texImage, img);
       }
 
       free(rgba);

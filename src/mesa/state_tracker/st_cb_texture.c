@@ -938,7 +938,6 @@ st_GetTexImage(struct gl_context * ctx, GLenum target, GLint level,
                                format, type);
    GLuint depth, i;
    GLubyte *dest;
-   GLboolean do_map = GL_TRUE;
 
    if (stImage->pt && util_format_is_s3tc(stImage->pt->format)) {
       /* Need to decompress the texture.
@@ -948,37 +947,6 @@ st_GetTexImage(struct gl_context * ctx, GLenum target, GLint level,
       decompress_with_blit(ctx, target, level, format, type, pixels,
                            texObj, texImage);
       return;
-   }
-
-   if (format == GL_DEPTH_STENCIL ||
-       format == GL_DEPTH_COMPONENT) {
-      do_map = GL_FALSE;
-   }
-
-   /* Map */
-   if (do_map && stImage->pt) {
-      /* Image is stored in hardware format in a buffer managed by the
-       * kernel.  Need to explicitly map and unmap it.
-       */
-      texImage->Data = st_texture_image_map(st, stImage, 0,
-                                            PIPE_TRANSFER_READ, 0, 0,
-                                            stImage->base.Width,
-                                            stImage->base.Height);
-      /* compute stride in texels from stride in bytes */
-      texImage->RowStride = stImage->transfer->stride
-         * util_format_get_blockwidth(stImage->pt->format)
-         / util_format_get_blocksize(stImage->pt->format);
-   }
-   else if (do_map) {
-      /* Otherwise, the image should actually be stored in
-       * texImage->Data.  This is pretty confusing for
-       * everybody, I'd much prefer to separate the two functions of
-       * texImage->Data - storage for texture images in main memory
-       * and access (ie mappings) of images.  In other words, we'd
-       * create a new texImage->Map field and leave Data simply for
-       * storage.
-       */
-      assert(texImage->Data);
    }
 
    depth = texImage->Depth;
@@ -1003,12 +971,6 @@ st_GetTexImage(struct gl_context * ctx, GLenum target, GLint level,
    }
 
    texImage->Depth = depth;
-
-   /* Unmap */
-   if (do_map && stImage->pt) {
-      st_texture_image_unmap(st, stImage);
-      texImage->Data = NULL;
-   }
 }
 
 
