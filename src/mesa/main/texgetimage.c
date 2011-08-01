@@ -110,27 +110,35 @@ get_tex_depth(struct gl_context *ctx, GLuint dimensions,
 static void
 get_tex_depth_stencil(struct gl_context *ctx, GLuint dimensions,
                       GLenum format, GLenum type, GLvoid *pixels,
-                      const struct gl_texture_image *texImage)
+                      struct gl_texture_image *texImage)
 {
    const GLint width = texImage->Width;
    const GLint height = texImage->Height;
    const GLint depth = texImage->Depth;
-   const GLint rowstride = texImage->RowStride;
-   const GLuint *src = (const GLuint *) texImage->Data;
    GLint img, row;
 
    for (img = 0; img < depth; img++) {
+      GLubyte *srcMap;
+      GLint rowstride;
+
+      /* map src texture buffer */
+      ctx->Driver.MapTextureImage(ctx, texImage, img,
+                                  0, 0, width, height, GL_MAP_READ_BIT,
+                                  &srcMap, &rowstride);
+
       for (row = 0; row < height; row++) {
+	 const GLubyte *src = srcMap + row * rowstride;
          void *dest = _mesa_image_address(dimensions, &ctx->Pack, pixels,
                                           width, height, format, type,
                                           img, row, 0);
+         /* XXX Z24_S8 vs. S8_Z24??? */
          memcpy(dest, src, width * sizeof(GLuint));
          if (ctx->Pack.SwapBytes) {
             _mesa_swap4((GLuint *) dest, width);
          }
-
-         src += rowstride;
       }
+
+      ctx->Driver.UnmapTextureImage(ctx, texImage, img);
    }
 }
 

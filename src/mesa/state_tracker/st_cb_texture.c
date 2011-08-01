@@ -938,6 +938,7 @@ st_GetTexImage(struct gl_context * ctx, GLenum target, GLint level,
                                format, type);
    GLuint depth, i;
    GLubyte *dest;
+   GLboolean do_map = GL_TRUE;
 
    if (stImage->pt && util_format_is_s3tc(stImage->pt->format)) {
       /* Need to decompress the texture.
@@ -949,8 +950,12 @@ st_GetTexImage(struct gl_context * ctx, GLenum target, GLint level,
       return;
    }
 
+   if (format == GL_DEPTH_STENCIL_EXT) {
+      do_map = GL_FALSE;
+   }
+
    /* Map */
-   if (stImage->pt) {
+   if (do_map && stImage->pt) {
       /* Image is stored in hardware format in a buffer managed by the
        * kernel.  Need to explicitly map and unmap it.
        */
@@ -963,7 +968,7 @@ st_GetTexImage(struct gl_context * ctx, GLenum target, GLint level,
          * util_format_get_blockwidth(stImage->pt->format)
          / util_format_get_blocksize(stImage->pt->format);
    }
-   else {
+   else if (do_map) {
       /* Otherwise, the image should actually be stored in
        * texImage->Data.  This is pretty confusing for
        * everybody, I'd much prefer to separate the two functions of
@@ -999,7 +1004,7 @@ st_GetTexImage(struct gl_context * ctx, GLenum target, GLint level,
    texImage->Depth = depth;
 
    /* Unmap */
-   if (stImage->pt) {
+   if (do_map && stImage->pt) {
       st_texture_image_unmap(st, stImage);
       texImage->Data = NULL;
    }
