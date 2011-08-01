@@ -409,7 +409,8 @@ get_tex_memcpy(struct gl_context *ctx, GLenum format, GLenum type, GLvoid *pixel
 /**
  * This is the software fallback for Driver.GetTexImage().
  * All error checking will have been done before this routine is called.
- * The texture image must be mapped.
+ * We'll call ctx->Driver.MapTextureImage() to access the data, then
+ * unmap with ctx->Driver.UnmapTextureImage().
  */
 void
 _mesa_get_teximage(struct gl_context *ctx, GLenum target, GLint level,
@@ -418,9 +419,6 @@ _mesa_get_teximage(struct gl_context *ctx, GLenum target, GLint level,
                    struct gl_texture_image *texImage)
 {
    GLuint dimensions;
-
-   /* If we get here, the texture image should be mapped */
-   assert(texImage->Data);
 
    switch (target) {
    case GL_TEXTURE_1D:
@@ -433,6 +431,7 @@ _mesa_get_teximage(struct gl_context *ctx, GLenum target, GLint level,
       dimensions = 2;
    }
 
+   /* map dest buffer, if PBO */
    if (_mesa_is_bufferobj(ctx->Pack.BufferObj)) {
       /* Packing texture image into a PBO.
        * Map the (potentially) VRAM-based buffer into our process space so
