@@ -605,7 +605,6 @@ static uint32_t r300_get_border_color(enum pipe_format format,
 {
     const struct util_format_description *desc;
     float border_swizzled[4] = {0};
-    unsigned i;
     union util_color uc = {0};
 
     desc = util_format_description(format);
@@ -629,22 +628,7 @@ static uint32_t r300_get_border_color(enum pipe_format format,
     }
 
     /* Apply inverse swizzle of the format. */
-    for (i = 0; i < 4; i++) {
-        switch (desc->swizzle[i]) {
-        case UTIL_FORMAT_SWIZZLE_X:
-            border_swizzled[0] = border[i];
-            break;
-        case UTIL_FORMAT_SWIZZLE_Y:
-            border_swizzled[1] = border[i];
-            break;
-        case UTIL_FORMAT_SWIZZLE_Z:
-            border_swizzled[2] = border[i];
-            break;
-        case UTIL_FORMAT_SWIZZLE_W:
-            border_swizzled[3] = border[i];
-            break;
-        }
-    }
+    util_format_unswizzle_4f(border_swizzled, border, desc->swizzle);
 
     /* Compressed formats. */
     if (util_format_is_compressed(format)) {

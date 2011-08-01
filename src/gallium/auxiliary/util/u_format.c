@@ -390,3 +390,53 @@ util_format_translate(enum pipe_format dst_format,
       FREE(tmp_row);
    }
 }
+
+void util_format_compose_swizzles(const unsigned char swz1[4],
+                                  const unsigned char swz2[4],
+                                  unsigned char dst[4])
+{
+   unsigned i;
+
+   for (i = 0; i < 4; i++) {
+      dst[i] = swz2[i] <= UTIL_FORMAT_SWIZZLE_W ?
+               swz1[swz2[i]] : swz2[i];
+   }
+}
+
+void util_format_swizzle_4f(float *dst, const float *src,
+                            const unsigned char swz[4])
+{
+   unsigned i;
+
+   for (i = 0; i < 4; i++) {
+      if (swz[i] < UTIL_FORMAT_SWIZZLE_W)
+         dst[i] = src[swz[i]];
+      else if (swz[i] == UTIL_FORMAT_SWIZZLE_0)
+         dst[i] = 0;
+      else if (swz[i] == UTIL_FORMAT_SWIZZLE_1)
+         dst[i] = 1;
+   }
+}
+
+void util_format_unswizzle_4f(float *dst, const float *src,
+                              const unsigned char swz[4])
+{
+   unsigned i;
+
+   for (i = 0; i < 4; i++) {
+      switch (swz[i]) {
+      case UTIL_FORMAT_SWIZZLE_X:
+         dst[0] = src[i];
+         break;
+      case UTIL_FORMAT_SWIZZLE_Y:
+         dst[1] = src[i];
+         break;
+      case UTIL_FORMAT_SWIZZLE_Z:
+         dst[2] = src[i];
+         break;
+      case UTIL_FORMAT_SWIZZLE_W:
+         dst[3] = src[i];
+         break;
+      }
+   }
+}

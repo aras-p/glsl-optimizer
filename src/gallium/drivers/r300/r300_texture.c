@@ -38,18 +38,6 @@
 
 #include "pipe/p_screen.h"
 
-void util_format_combine_swizzles(unsigned char *dst,
-                                  const unsigned char *swz1,
-                                  const unsigned char *swz2)
-{
-    unsigned i;
-
-    for (i = 0; i < 4; i++) {
-        dst[i] = swz2[i] <= UTIL_FORMAT_SWIZZLE_W ?
-                 swz1[swz2[i]] : swz2[i];
-    }
-}
-
 unsigned r300_get_swizzle_combined(const unsigned char *swizzle_format,
                                    const unsigned char *swizzle_view,
                                    boolean dxtc_swizzle)
@@ -72,7 +60,7 @@ unsigned r300_get_swizzle_combined(const unsigned char *swizzle_format,
 
     if (swizzle_view) {
         /* Combine two sets of swizzles. */
-        util_format_combine_swizzles(swizzle, swizzle_format, swizzle_view);
+        util_format_compose_swizzles(swizzle_format, swizzle_view, swizzle);
     } else {
         memcpy(swizzle, swizzle_format, 4);
     }

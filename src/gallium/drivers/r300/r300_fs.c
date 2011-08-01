@@ -180,9 +180,10 @@ static void get_external_state(
             v->base.format == PIPE_FORMAT_LATC1_SNORM) {
             unsigned char swizzle[4];
 
-            util_format_combine_swizzles(swizzle,
+            util_format_compose_swizzles(
                             util_format_description(v->base.format)->swizzle,
-                            v->swizzle);
+                            v->swizzle,
+                            swizzle);
 
             state->unit[i].texture_swizzle =
                     RC_MAKE_SWIZZLE(swizzle[0], swizzle[1],

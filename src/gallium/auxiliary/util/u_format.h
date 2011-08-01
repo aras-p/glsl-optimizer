@@ -815,6 +815,25 @@ util_format_translate(enum pipe_format dst_format,
                       unsigned src_x, unsigned src_y,
                       unsigned width, unsigned height);
 
+/*
+ * Swizzle operations.
+ */
+
+/* Compose two sets of swizzles.
+ * If V is a 4D vector and the function parameters represent functions that
+ * swizzle vector components, this holds:
+ *     swz2(swz1(V)) = dst(V)
+ */
+void util_format_compose_swizzles(const unsigned char swz1[4],
+                                  const unsigned char swz2[4],
+                                  unsigned char dst[4]);
+
+void util_format_swizzle_4f(float *dst, const float *src,
+                            const unsigned char swz[4]);
+
+void util_format_unswizzle_4f(float *dst, const float *src,
+                              const unsigned char swz[4]);
+
 #ifdef __cplusplus
 } // extern "C" {
 #endif

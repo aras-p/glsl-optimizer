@@ -754,11 +754,7 @@ static unsigned r600_get_swizzle_combined(const unsigned char *swizzle_format,
 	};
 
 	if (swizzle_view) {
-		/* Combine two sets of swizzles. */
-		for (i = 0; i < 4; i++) {
-			swizzle[i] = swizzle_view[i] <= UTIL_FORMAT_SWIZZLE_W ?
-				swizzle_format[swizzle_view[i]] : swizzle_view[i];
-		}
+		util_format_compose_swizzles(swizzle_format, swizzle_view, swizzle);
 	} else {
 		memcpy(swizzle, swizzle_format, 4);
 	}
