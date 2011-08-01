@@ -136,7 +136,6 @@ ir_if_to_cond_assign_visitor::visit_leave(ir_if *ir)
       return visit_continue;
 
    bool found_control_flow = false;
-   ir_variable *cond_var;
    ir_assignment *assign;
    ir_dereference_variable *deref;
 
@@ -154,31 +153,50 @@ ir_if_to_cond_assign_visitor::visit_leave(ir_if *ir)
 
    void *mem_ctx = ralloc_parent(ir);
 
-   /* Store the condition to a variable so the assignment conditions are
-    * simpler.
+   /* Store the condition to a variable.  Move all of the instructions from
+    * the then-clause of the if-statement.  Use the condition variable as a
+    * condition for all assignments.
     */
-   cond_var = new(mem_ctx) ir_variable(glsl_type::bool_type,
-				       "if_to_cond_assign_condition",
-				       ir_var_temporary);
-   ir->insert_before(cond_var);
+   ir_variable *const then_var =
+      new(mem_ctx) ir_variable(glsl_type::bool_type,
+			       "if_to_cond_assign_then",
+			       ir_var_temporary);
+   ir->insert_before(then_var);
 
-   deref = new(mem_ctx) ir_dereference_variable(cond_var);
-   assign = new(mem_ctx) ir_assignment(deref,
-				       ir->condition, NULL);
+   ir_dereference_variable *then_cond =
+      new(mem_ctx) ir_dereference_variable(then_var);
+
+   assign = new(mem_ctx) ir_assignment(then_cond, ir->condition);
    ir->insert_before(assign);
 
-   /* Now, move all of the instructions out of the if blocks, putting
-    * conditions on assignments.
-    */
-   move_block_to_cond_assign(mem_ctx, ir, deref,
+   move_block_to_cond_assign(mem_ctx, ir, then_cond,
 			     &ir->then_instructions);
 
-   ir_rvalue *inverse =
-      new(mem_ctx) ir_expression(ir_unop_logic_not,
-				 glsl_type::bool_type,
-				 deref->clone(mem_ctx, NULL),
-				 NULL);
-   move_block_to_cond_assign(mem_ctx, ir, inverse, &ir->else_instructions);
+   /* If there are instructions in the else-clause, store the inverse of the
+    * condition to a variable.  Move all of the instructions from the
+    * else-clause if the if-statement.  Use the (inverse) condition variable
+    * as a condition for all assignments.
+    */
+   if (!ir->else_instructions.is_empty()) {
+      ir_variable *const else_var =
+	 new(mem_ctx) ir_variable(glsl_type::bool_type,
+				  "if_to_cond_assign_else",
+				  ir_var_temporary);
+      ir->insert_before(else_var);
+
+      ir_dereference_variable *else_cond =
+	 new(mem_ctx) ir_dereference_variable(else_var);
+
+      ir_rvalue *inverse =
+	 new(mem_ctx) ir_expression(ir_unop_logic_not,
+				    then_cond->clone(mem_ctx, NULL));
+
+      assign = new(mem_ctx) ir_assignment(else_cond, inverse);
+      ir->insert_before(assign);
+
+      move_block_to_cond_assign(mem_ctx, ir, else_cond,
+				&ir->else_instructions);
+   }
 
    ir->remove();
 
