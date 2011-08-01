@@ -403,62 +403,14 @@ intelTexImage(struct gl_context * ctx,
       return;
    }
 
-   pixels = _mesa_validate_pbo_teximage(ctx, dims, width, height, 1,
-					format, type,
-					pixels, unpack, "glTexImage");
-
-   if (intelImage->mt) {
-      if (pixels != NULL) {
-	 /* Flush any queued rendering with the texture before mapping. */
-	 if (drm_intel_bo_references(intel->batch.bo,
-				     intelImage->mt->region->bo)) {
-	    intel_flush(ctx);
-	 }
-         texImage->Data = intel_miptree_image_map(intel,
-                                                  intelImage->mt,
-                                                  intelImage->base.Base.Face,
-                                                  intelImage->base.Base.Level,
-                                                  &dstRowStride,
-                                                  intelImage->base.Base.ImageOffsets);
-      }
-
-      texImage->RowStride = dstRowStride / intelImage->mt->cpp;
-   }
-
    DBG("Upload image %dx%dx%d row_len %d pitch %d pixels %d\n",
        width, height, depth, width * texelBytes, dstRowStride,
        pixels ? 1 : 0);
 
-   /* Copy data.  Would like to know when it's ok for us to eg. use
-    * the blitter to copy.  Or, use the hardware to do the format
-    * conversion and copy:
-    */
-   if (pixels) {
-      if (!_mesa_texstore(ctx, dims,
-			  texImage->_BaseFormat,
-			  texImage->TexFormat,
-			  texImage->Data, 0, 0, 0, /* dstX/Y/Zoffset */
-			  dstRowStride,
-			  texImage->ImageOffsets,
-			  width, height, depth,
-			  format, type, pixels, unpack)) {
-	 _mesa_error(ctx, GL_OUT_OF_MEMORY, "glTexImage");
-      }
-   }
-
-   _mesa_unmap_teximage_pbo(ctx, unpack);
-
-   if (intel->must_use_separate_stencil
-       && texImage->TexFormat == MESA_FORMAT_S8_Z24) {
-      intel_tex_image_s8z24_create_renderbuffers(intel, intelImage);
-      intel_tex_image_s8z24_scatter(intel, intelImage);
-   }
-
-   if (intelImage->mt) {
-      if (pixels != NULL)
-         intel_miptree_image_unmap(intel, intelImage->mt);
-      texImage->Data = NULL;
-   }
+   _mesa_store_teximage3d(ctx, target, level, internalFormat,
+			  width, height, depth, border,
+			  format, type, pixels,
+			  unpack, texObj, texImage);
 }
 
 
