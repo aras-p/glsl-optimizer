@@ -435,13 +435,7 @@ radeonNewTextureObject( struct gl_context *ctx, GLuint name, GLenum target )
 
 void radeonInitTextureFuncs( radeonContextPtr radeon, struct dd_function_table *functions )
 {
-   functions->ChooseTextureFormat	= radeonChooseTextureFormat_mesa;
-   functions->TexImage1D		= radeonTexImage1D;
-   functions->TexImage2D		= radeonTexImage2D;
-   functions->TexSubImage1D		= radeonTexSubImage1D;
-   functions->TexSubImage2D		= radeonTexSubImage2D;
-   functions->GetTexImage               = radeonGetTexImage;
-   functions->GetCompressedTexImage     = radeonGetCompressedTexImage;
+   radeon_init_common_texture_funcs(radeon, functions);
 
    functions->NewTextureObject		= radeonNewTextureObject;
    //   functions->BindTexture		= radeonBindTexture;
@@ -450,24 +444,4 @@ void radeonInitTextureFuncs( radeonContextPtr radeon, struct dd_function_table *
    functions->TexEnv			= radeonTexEnv;
    functions->TexParameter		= radeonTexParameter;
    functions->TexGen			= radeonTexGen;
-
-   functions->CompressedTexImage2D	= radeonCompressedTexImage2D;
-   functions->CompressedTexSubImage2D	= radeonCompressedTexSubImage2D;
-
-   if (radeon->radeonScreen->kernel_mm) {
-      functions->CopyTexSubImage2D = radeonCopyTexSubImage2D;
-   }
-
-   functions->GenerateMipmap = radeonGenerateMipmap;
-
-   functions->NewTextureImage = radeonNewTextureImage;
-   functions->FreeTextureImageBuffer = radeonFreeTextureImageBuffer;
-   functions->MapTexture = radeonMapTexture;
-   functions->UnmapTexture = radeonUnmapTexture;
-
-#if FEATURE_OES_EGL_image
-   functions->EGLImageTargetTexture2D = radeon_image_target_texture_2d;
-#endif
-
-   driInitTextureFormats();
 }

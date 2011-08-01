@@ -1081,3 +1081,38 @@ void radeon_image_target_texture_2d(struct gl_context *ctx, GLenum target,
 		fprintf(stderr, "miptree doesn't match image\n");
 }
 #endif
+
+void
+radeon_init_common_texture_funcs(radeonContextPtr radeon,
+				 struct dd_function_table *functions)
+{
+	functions->NewTextureImage = radeonNewTextureImage;
+	functions->FreeTextureImageBuffer = radeonFreeTextureImageBuffer;
+	functions->MapTexture = radeonMapTexture;
+	functions->UnmapTexture = radeonUnmapTexture;
+
+	functions->ChooseTextureFormat	= radeonChooseTextureFormat_mesa;
+
+	functions->TexImage1D = radeonTexImage1D;
+	functions->TexImage2D = radeonTexImage2D;
+	functions->TexImage3D = radeonTexImage3D;
+	functions->TexSubImage1D = radeonTexSubImage1D;
+	functions->TexSubImage2D = radeonTexSubImage2D;
+	functions->TexSubImage3D = radeonTexSubImage3D;
+	functions->CompressedTexImage2D = radeonCompressedTexImage2D;
+	functions->CompressedTexSubImage2D = radeonCompressedTexSubImage2D;
+	functions->GetCompressedTexImage = radeonGetCompressedTexImage;
+	functions->GetTexImage = radeonGetTexImage;
+
+	functions->GenerateMipmap = radeonGenerateMipmap;
+
+	if (radeon->radeonScreen->kernel_mm) {
+		functions->CopyTexSubImage2D = radeonCopyTexSubImage2D;
+	}
+
+#if FEATURE_OES_EGL_image
+	functions->EGLImageTargetTexture2D = radeon_image_target_texture_2d;
+#endif
+
+	driInitTextureFormats();
+}

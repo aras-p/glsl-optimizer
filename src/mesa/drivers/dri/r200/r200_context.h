@@ -47,8 +47,6 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #include "r200_reg.h"
 #include "r200_vertprog.h"
 
-#define ENABLE_HW_3D_TEXTURE 1  /* XXX this is temporary! */
-
 #ifndef R200_EMIT_VAP_PVS_CNTL
 #error This driver requires a newer libdrm to compile
 #endif

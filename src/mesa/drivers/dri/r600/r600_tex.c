@@ -446,38 +446,12 @@ void r600InitTextureFuncs(radeonContextPtr radeon, struct dd_function_table *fun
 	/* Note: we only plug in the functions we implement in the driver
 	 * since _mesa_init_driver_functions() was already called.
 	 */
-	functions->NewTextureImage = radeonNewTextureImage;
-	functions->FreeTextureImageBuffer = radeonFreeTextureImageBuffer;
-	functions->MapTexture = radeonMapTexture;
-	functions->UnmapTexture = radeonUnmapTexture;
 
-	functions->ChooseTextureFormat = radeonChooseTextureFormat_mesa;
-	functions->TexImage1D = radeonTexImage1D;
-	functions->TexImage2D = radeonTexImage2D;
-	functions->TexImage3D = radeonTexImage3D;
-	functions->TexSubImage1D = radeonTexSubImage1D;
-	functions->TexSubImage2D = radeonTexSubImage2D;
-	functions->TexSubImage3D = radeonTexSubImage3D;
-	functions->GetTexImage = radeonGetTexImage;
-	functions->GetCompressedTexImage = radeonGetCompressedTexImage;
+	radeon_init_common_texture_funcs(radeon, functions);
+
 	functions->NewTextureObject = r600NewTextureObject;
 	functions->DeleteTexture = r600DeleteTexture;
 	functions->IsTextureResident = driIsTextureResident;
 
 	functions->TexParameter = r600TexParameter;
-
-	functions->CompressedTexImage2D = radeonCompressedTexImage2D;
-	functions->CompressedTexSubImage2D = radeonCompressedTexSubImage2D;
-
-	if (radeon->radeonScreen->kernel_mm) {
-		functions->CopyTexSubImage2D = radeonCopyTexSubImage2D;
-	}
-
-	functions->GenerateMipmap = radeonGenerateMipmap;
-
-#if FEATURE_OES_EGL_image
-	functions->EGLImageTargetTexture2D = radeon_image_target_texture_2d;
-#endif
-
-	driInitTextureFormats();
 }
