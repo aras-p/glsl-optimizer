@@ -170,9 +170,13 @@ intelGenerateMipmap(struct gl_context *ctx, GLenum target,
 
       fallback_debug("%s - fallback to swrast\n", __FUNCTION__);
 
-      intel_tex_map_level_images(intel, intelObj, texObj->BaseLevel);
-      _mesa_generate_mipmap(ctx, target, texObj);
-      intel_tex_unmap_level_images(intel, intelObj, texObj->BaseLevel);
+      if (_mesa_is_format_compressed(first_image->TexFormat)) {
+         _mesa_generate_mipmap(ctx, target, texObj);
+      } else {
+         intel_tex_map_level_images(intel, intelObj, texObj->BaseLevel);
+         _mesa_generate_mipmap(ctx, target, texObj);
+         intel_tex_unmap_level_images(intel, intelObj, texObj->BaseLevel);
+      }
 
       if (!_mesa_is_format_compressed(first_image->TexFormat)) {
          GLuint nr_faces = (texObj->Target == GL_TEXTURE_CUBE_MAP) ? 6 : 1;

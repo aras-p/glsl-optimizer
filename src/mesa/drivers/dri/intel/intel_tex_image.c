@@ -510,65 +510,6 @@ intelTexImage1D(struct gl_context * ctx,
                  format, type, pixels, unpack, texObj, texImage, 0);
 }
 
-static void
-intelGetTexImage(struct gl_context * ctx, GLenum target, GLint level,
-                 GLenum format, GLenum type, GLvoid * pixels,
-                 struct gl_texture_object *texObj,
-                 struct gl_texture_image *texImage)
-{
-   struct intel_context *intel = intel_context(ctx);
-   struct intel_texture_image *intelImage = intel_texture_image(texImage);
-
-   /* If we're reading from a texture that has been rendered to, need to
-    * make sure rendering is complete.
-    * We could probably predicate this on texObj->_RenderToTexture
-    */
-   intel_flush(ctx);
-
-   /* Map */
-   if (intelImage->mt) {
-      /* Image is stored in hardware format in a buffer managed by the
-       * kernel.  Need to explicitly map and unmap it.
-       */
-      intelImage->base.Base.Data =
-         intel_miptree_image_map(intel,
-                                 intelImage->mt,
-                                 intelImage->base.Base.Face,
-                                 intelImage->base.Base.Level,
-                                 &intelImage->base.Base.RowStride,
-                                 intelImage->base.Base.ImageOffsets);
-      intelImage->base.Base.RowStride /= intelImage->mt->cpp;
-   }
-   else {
-      /* Otherwise, the image should actually be stored in
-       * intelImage->base.Base.Data.  This is pretty confusing for
-       * everybody, I'd much prefer to separate the two functions of
-       * texImage->Data - storage for texture images in main memory
-       * and access (ie mappings) of images.  In other words, we'd
-       * create a new texImage->Map field and leave Data simply for
-       * storage.
-       */
-      assert(intelImage->base.Base.Data);
-   }
-
-   if (intelImage->stencil_rb) {
-      /*
-       * The texture has packed depth/stencil format, but uses separate
-       * stencil. The texture's embedded stencil buffer contains the real
-       * stencil data, so copy that into the miptree.
-       */
-      intel_tex_image_s8z24_gather(intel, intelImage);
-   }
-
-   _mesa_get_teximage(ctx, target, level, format, type, pixels,
-		      texObj, texImage);
-
-   /* Unmap */
-   if (intelImage->mt) {
-      intel_miptree_image_unmap(intel, intelImage->mt);
-      intelImage->base.Base.Data = NULL;
-   }
-}
 
 /**
  * Binds a region to a texture image, like it was uploaded by glTexImage2D().
@@ -686,7 +627,6 @@ intelInitTextureImageFuncs(struct dd_function_table *functions)
    functions->TexImage1D = intelTexImage1D;
    functions->TexImage2D = intelTexImage2D;
    functions->TexImage3D = intelTexImage3D;
-   functions->GetTexImage = intelGetTexImage;
 
 #if FEATURE_OES_EGL_image
    functions->EGLImageTargetTexture2D = intel_image_target_texture_2d;
