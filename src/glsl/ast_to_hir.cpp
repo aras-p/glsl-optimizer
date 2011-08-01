@@ -1769,11 +1769,6 @@ process_array_type(YYLTYPE *loc, const glsl_type *base, ast_node *array_size,
       ir_rvalue *const ir = array_size->hir(& dummy_instructions, state);
       YYLTYPE loc = array_size->get_location();
 
-      /* FINISHME: Verify that the grammar forbids side-effects in array
-       * FINISHME: sizes.   i.e., 'vec4 [x = 12] data'
-       */
-      assert(dummy_instructions.is_empty());
-
       if (ir != NULL) {
 	 if (!ir->type->is_integer()) {
 	    _mesa_glsl_error(& loc, state, "array size must be integer type");
@@ -1790,6 +1785,14 @@ process_array_type(YYLTYPE *loc, const glsl_type *base, ast_node *array_size,
 	    } else {
 	       assert(size->type == ir->type);
 	       length = size->value.u[0];
+
+               /* If the array size is const (and we've verified that
+                * it is) then no instructions should have been emitted
+                * when we converted it to HIR.  If they were emitted,
+                * then either the array size isn't const after all, or
+                * we are emitting unnecessary instructions.
+                */
+               assert(dummy_instructions.is_empty());
 	    }
 	 }
       }
