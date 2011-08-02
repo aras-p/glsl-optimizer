@@ -134,6 +134,8 @@ match_function_by_name(exec_list *instructions, const char *name,
       }
    }
 
+   exec_list post_call_conversions;
+
    if (sig != NULL) {
       /* Verify that 'out' and 'inout' actual parameters are lvalues.  This
        * isn't done in ir_function::matching_signature because that function
@@ -141,6 +143,12 @@ match_function_by_name(exec_list *instructions, const char *name,
        *
        * Also, validate that 'const_in' formal parameters (an extension of our
        * IR) correspond to ir_constant actual parameters.
+       *
+       * Also, perform implicit conversion of arguments.  Note: to implicitly
+       * convert out parameters, we need to place them in a temporary
+       * variable, and do the conversion after the call takes place.  Since we
+       * haven't emitted the call yet, we'll place the post-call conversions
+       * in a temporary exec_list, and emit them later.
        */
       exec_list_iterator actual_iter = actual_parameters->iterator();
       exec_list_iterator formal_iter = sig->parameters.iterator();
@@ -185,8 +193,63 @@ match_function_by_name(exec_list *instructions, const char *name,
 	 }
 
 	 if (formal->type->is_numeric() || formal->type->is_boolean()) {
-	    ir_rvalue *converted = convert_component(actual, formal->type);
-	    actual->replace_with(converted);
+            switch (formal->mode) {
+            case ir_var_in: {
+               ir_rvalue *converted
+                  = convert_component(actual, formal->type);
+               actual->replace_with(converted);
+               break;
+            }
+            case ir_var_out:
+               if (actual->type != formal->type) {
+                  /* To convert an out parameter, we need to create a
+                   * temporary variable to hold the value before conversion,
+                   * and then perform the conversion after the function call
+                   * returns.
+                   *
+                   * This has the effect of transforming code like this:
+                   *
+                   *   void f(out int x);
+                   *   float value;
+                   *   f(value);
+                   *
+                   * Into IR that's equivalent to this:
+                   *
+                   *   void f(out int x);
+                   *   float value;
+                   *   int out_parameter_conversion;
+                   *   f(out_parameter_conversion);
+                   *   value = float(out_parameter_conversion);
+                   */
+                  ir_variable *tmp =
+                     new(ctx) ir_variable(formal->type,
+                                          "out_parameter_conversion",
+                                          ir_var_temporary);
+                  instructions->push_tail(tmp);
+                  ir_dereference_variable *deref_tmp_1
+                     = new(ctx) ir_dereference_variable(tmp);
+                  ir_dereference_variable *deref_tmp_2
+                     = new(ctx) ir_dereference_variable(tmp);
+                  ir_rvalue *converted_tmp
+                     = convert_component(deref_tmp_1, actual->type);
+                  ir_assignment *assignment
+                     = new(ctx) ir_assignment(actual, converted_tmp);
+                  post_call_conversions.push_tail(assignment);
+                  actual->replace_with(deref_tmp_2);
+               }
+               break;
+            case ir_var_inout:
+               /* Inout parameters should never require conversion, since that
+                * would require an implicit conversion to exist both to and
+                * from the formal parameter type, and there are no
+                * bidirectional implicit conversions.
+                */
+               assert (actual->type == formal->type);
+               break;
+            default:
+               assert (!"Illegal formal parameter mode");
+               break;
+            }
 	 }
 
 	 actual_iter.next();
@@ -196,8 +259,11 @@ match_function_by_name(exec_list *instructions, const char *name,
       /* Always insert the call in the instruction stream, and return a deref
        * of its return val if it returns a value, since we don't know if
        * the rvalue is going to be assigned to anything or not.
+       *
+       * Also insert any out parameter conversions after the call.
        */
       ir_call *call = new(ctx) ir_call(sig, actual_parameters);
+      ir_dereference_variable *deref;
       if (!sig->return_type->is_void()) {
          /* If the function call is a constant expression, don't
           * generate the instructions to call it; just generate an
@@ -214,7 +280,6 @@ match_function_by_name(exec_list *instructions, const char *name,
          }
 
 	 ir_variable *var;
-	 ir_dereference_variable *deref;
 
 	 var = new(ctx) ir_variable(sig->return_type,
 				    ralloc_asprintf(ctx, "%s_retval",
@@ -227,11 +292,12 @@ match_function_by_name(exec_list *instructions, const char *name,
 	 instructions->push_tail(assign);
 
 	 deref = new(ctx) ir_dereference_variable(var);
-	 return deref;
       } else {
 	 instructions->push_tail(call);
-	 return NULL;
+	 deref = NULL;
       }
+      instructions->append_list(&post_call_conversions);
+      return deref;
    } else {
       char *str = prototype_string(NULL, name, actual_parameters);
 
