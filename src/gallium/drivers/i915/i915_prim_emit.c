@@ -166,8 +166,6 @@ emit_prim( struct draw_stage *stage,
 
    for (i = 0; i < nr; i++)
       emit_hw_vertex(i915, prim->v[i]);
-
-   i915_flush_heuristically(i915, nr);
 }
 
 

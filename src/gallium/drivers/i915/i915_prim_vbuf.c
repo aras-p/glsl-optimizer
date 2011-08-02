@@ -487,7 +487,6 @@ draw_arrays_fallback(struct vbuf_render *render,
 
    draw_arrays_generate_indices(render, start, nr, i915_render->fallback);
 
-   i915_flush_heuristically(i915, nr_indices);
 out:
    return;
 }
@@ -535,7 +534,6 @@ i915_vbuf_render_draw_arrays(struct vbuf_render *render,
              nr);
    OUT_BATCH(start); /* Beginning vertex index */
 
-   i915_flush_heuristically(i915, nr);
 out:
    return;
 }
@@ -659,7 +657,6 @@ i915_vbuf_render_draw_elements(struct vbuf_render *render,
                          save_nr_indices,
                          i915_render->fallback);
 
-   i915_flush_heuristically(i915, nr_indices);
 out:
    return;
 }
