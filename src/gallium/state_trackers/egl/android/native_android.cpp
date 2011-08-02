@@ -28,6 +28,7 @@
 #include <cutils/log.h>
 #include <cutils/properties.h>
 #include <hardware/gralloc.h>
+#include <utils/Errors.h>
 #include <ui/android_native_buffer.h>
 
 extern "C" {
