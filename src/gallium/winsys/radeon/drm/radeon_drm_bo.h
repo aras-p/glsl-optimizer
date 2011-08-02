@@ -80,10 +80,4 @@ void radeon_bo_reference(struct radeon_bo **dst, struct radeon_bo *src)
     pb_reference((struct pb_buffer**)dst, (struct pb_buffer*)src);
 }
 
-static INLINE struct pb_buffer *
-pb_buffer(struct pb_buffer *buffer)
-{
-    return (struct pb_buffer *)buffer;
-}
-
 #endif

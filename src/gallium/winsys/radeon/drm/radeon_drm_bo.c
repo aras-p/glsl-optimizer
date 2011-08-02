@@ -89,7 +89,7 @@ static struct radeon_bo *get_radeon_bo(struct pb_buffer *_buf)
 
 static void radeon_bo_wait(struct pb_buffer *_buf)
 {
-    struct radeon_bo *bo = get_radeon_bo(pb_buffer(_buf));
+    struct radeon_bo *bo = get_radeon_bo(_buf);
     struct drm_radeon_gem_wait_idle args = {};
 
     while (p_atomic_read(&bo->num_active_ioctls)) {
@@ -105,7 +105,7 @@ static void radeon_bo_wait(struct pb_buffer *_buf)
 
 static boolean radeon_bo_is_busy(struct pb_buffer *_buf)
 {
-    struct radeon_bo *bo = get_radeon_bo(pb_buffer(_buf));
+    struct radeon_bo *bo = get_radeon_bo(_buf);
     struct drm_radeon_gem_busy args = {};
     boolean busy;
 
@@ -395,16 +395,14 @@ static void *radeon_bo_map(struct pb_buffer *buf,
                            struct radeon_winsys_cs *cs,
                            enum pipe_transfer_usage usage)
 {
-    struct pb_buffer *_buf = pb_buffer(buf);
-
-    return pb_map(_buf, get_pb_usage_from_transfer_flags(usage), cs);
+    return pb_map(buf, get_pb_usage_from_transfer_flags(usage), cs);
 }
 
 static void radeon_bo_get_tiling(struct pb_buffer *_buf,
                                  enum radeon_bo_layout *microtiled,
                                  enum radeon_bo_layout *macrotiled)
 {
-    struct radeon_bo *bo = get_radeon_bo(pb_buffer(_buf));
+    struct radeon_bo *bo = get_radeon_bo(_buf);
     struct drm_radeon_gem_set_tiling args = {};
 
     args.handle = bo->handle;
@@ -429,7 +427,7 @@ static void radeon_bo_set_tiling(struct pb_buffer *_buf,
                                  enum radeon_bo_layout macrotiled,
                                  uint32_t pitch)
 {
-    struct radeon_bo *bo = get_radeon_bo(pb_buffer(_buf));
+    struct radeon_bo *bo = get_radeon_bo(_buf);
     struct radeon_drm_cs *cs = radeon_drm_cs(rcs);
     struct drm_radeon_gem_set_tiling args = {};
 
@@ -464,8 +462,7 @@ static struct radeon_winsys_cs_handle *radeon_drm_get_cs_handle(
         struct pb_buffer *_buf)
 {
     /* return radeon_bo. */
-    return (struct radeon_winsys_cs_handle*)
-            get_radeon_bo(pb_buffer(_buf));
+    return (struct radeon_winsys_cs_handle*)get_radeon_bo(_buf);
 }
 
 static unsigned get_pb_usage_from_create_flags(enum radeon_bo_domain domain)
@@ -586,7 +583,7 @@ static boolean radeon_winsys_bo_get_handle(struct pb_buffer *buffer,
                                            struct winsys_handle *whandle)
 {
     struct drm_gem_flink flink = {};
-    struct radeon_bo *bo = get_radeon_bo(pb_buffer(buffer));
+    struct radeon_bo *bo = get_radeon_bo(buffer);
 
     if (whandle->type == DRM_API_HANDLE_TYPE_SHARED) {
         if (!bo->flinked) {
