@@ -314,6 +314,8 @@ public:
 
    GLboolean try_emit_mad(ir_expression *ir,
 			  int mul_operand);
+   bool try_emit_mad_for_and_not(ir_expression *ir,
+				 int mul_operand);
    GLboolean try_emit_sat(ir_expression *ir);
 
    void emit_swz(ir_expression *ir);
@@ -892,6 +894,46 @@ ir_to_mesa_visitor::try_emit_mad(ir_expression *ir, int mul_operand)
    return true;
 }
 
+/**
+ * Emit OPCODE_MAD(a, -b, a) instead of AND(a, NOT(b))
+ *
+ * The logic values are 1.0 for true and 0.0 for false.  Logical-and is
+ * implemented using multiplication, and logical-or is implemented using
+ * addition.  Logical-not can be implemented as (true - x), or (1.0 - x).
+ * As result, the logical expression (a & !b) can be rewritten as:
+ *
+ *     - a * !b
+ *     - a * (1 - b)
+ *     - (a * 1) - (a * b)
+ *     - a + -(a * b)
+ *     - a + (a * -b)
+ *
+ * This final expression can be implemented as a single MAD(a, -b, a)
+ * instruction.
+ */
+bool
+ir_to_mesa_visitor::try_emit_mad_for_and_not(ir_expression *ir, int try_operand)
+{
+   const int other_operand = 1 - try_operand;
+   src_reg a, b;
+
+   ir_expression *expr = ir->operands[try_operand]->as_expression();
+   if (!expr || expr->operation != ir_unop_logic_not)
+      return false;
+
+   ir->operands[other_operand]->accept(this);
+   a = this->result;
+   expr->operands[0]->accept(this);
+   b = this->result;
+
+   b.negate = ~b.negate;
+
+   this->result = get_temp(ir->type);
+   emit(ir, OPCODE_MAD, dst_reg(this->result), a, b, a);
+
+   return true;
+}
+
 GLboolean
 ir_to_mesa_visitor::try_emit_sat(ir_expression *ir)
 {
@@ -1088,6 +1130,16 @@ ir_to_mesa_visitor::visit(ir_expression *ir)
       if (try_emit_mad(ir, 0))
 	 return;
    }
+
+   /* Quick peephole: Emit OPCODE_MAD(-a, -b, a) instead of AND(a, NOT(b))
+    */
+   if (ir->operation == ir_binop_logic_and) {
+      if (try_emit_mad_for_and_not(ir, 1))
+	 return;
+      if (try_emit_mad_for_and_not(ir, 0))
+	 return;
+   }
+
    if (try_emit_sat(ir))
       return;
 
