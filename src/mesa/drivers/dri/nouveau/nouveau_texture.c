@@ -739,17 +739,7 @@ nouveau_generate_mipmap(struct gl_context *ctx, GLenum target,
 {
 	if (_mesa_meta_check_generate_mipmap_fallback(ctx, target, t)) {
 		struct gl_texture_image *base = t->Image[0][t->BaseLevel];
-
-		nouveau_teximage_map(ctx, base, GL_MAP_READ_BIT,
-				     0, 0, base->Width, base->Height);
 		_mesa_generate_mipmap(ctx, target, t);
-		nouveau_teximage_unmap(ctx, base);
-
-		if (!_mesa_is_format_compressed(base->TexFormat)) {
-			store_mipmap(ctx, target, t->BaseLevel + 1,
-				     get_last_level(t), t);
-		}
-
 	} else {
 		_mesa_meta_GenerateMipmap(ctx, target, t);
 	}

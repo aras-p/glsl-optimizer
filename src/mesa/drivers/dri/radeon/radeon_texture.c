@@ -324,52 +324,6 @@ radeon_unmap_texture_image(struct gl_context *ctx,
 		radeon_bo_unmap(image->mt->bo);
 }
 
-/**
- * Wraps Mesa's implementation to ensure that the base level image is mapped.
- *
- * This relies on internal details of _mesa_generate_mipmap, in particular
- * the fact that the memory for recreated texture images is always freed.
- */
-static void radeon_generate_mipmap(struct gl_context *ctx, GLenum target,
-				   struct gl_texture_object *texObj)
-{
-	radeonTexObj* t = radeon_tex_obj(texObj);
-	GLuint nr_faces = (t->base.Target == GL_TEXTURE_CUBE_MAP) ? 6 : 1;
-	int i, face;
-	struct gl_texture_image *first_image;
-
-	radeon_print(RADEON_TEXTURE, RADEON_VERBOSE,
-			"%s(%p, tex %p) Target type %s.\n",
-			__func__, ctx, texObj,
-			_mesa_lookup_enum_by_nr(target));
-
-	_mesa_generate_mipmap(ctx, target, texObj);
-
-	/* For the compressed case, we don't need to do the
-	 * non-TexImage recovery path below.
-	 */
-	first_image = texObj->Image[0][texObj->BaseLevel];
-	if (_mesa_is_format_compressed(first_image->TexFormat))
-		return;
-
-	for (face = 0; face < nr_faces; face++) {
-		for (i = texObj->BaseLevel + 1; i < texObj->MaxLevel; i++) {
-			radeon_texture_image *image;
-
-			image = get_radeon_texture_image(texObj->Image[face][i]);
-
-			if (image == NULL)
-				break;
-
-			image->mtlevel = i;
-			image->mtface = face;
-
-			radeon_miptree_unreference(&image->mt);
-		}
-	}
-	
-}
-
 void radeonGenerateMipmap(struct gl_context* ctx, GLenum target, struct gl_texture_object *texObj)
 {
 	radeonContextPtr rmesa = RADEON_CONTEXT(ctx);
@@ -392,9 +346,7 @@ void radeonGenerateMipmap(struct gl_context* ctx, GLenum target, struct gl_textu
 	}
 
 	if (_mesa_meta_check_generate_mipmap_fallback(ctx, target, texObj)) {
-		radeon_teximage_map(baseimage, GL_FALSE);
-		radeon_generate_mipmap(ctx, target, texObj);
-		radeon_teximage_unmap(baseimage);
+		_mesa_generate_mipmap(ctx, target, texObj);
 	} else {
 		_mesa_meta_GenerateMipmap(ctx, target, texObj);
 	}

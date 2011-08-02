@@ -34,10 +34,10 @@ _mesa_generate_mipmap_level(GLenum target,
                             GLenum datatype, GLuint comps,
                             GLint border,
                             GLint srcWidth, GLint srcHeight, GLint srcDepth,
-                            const GLubyte *srcData,
+                            const GLubyte **srcData,
                             GLint srcRowStride,
                             GLint dstWidth, GLint dstHeight, GLint dstDepth,
-                            GLubyte *dstData,
+                            GLubyte **dstData,
                             GLint dstRowStride);
 
 

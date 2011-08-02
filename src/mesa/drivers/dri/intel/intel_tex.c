@@ -163,37 +163,9 @@ intelGenerateMipmap(struct gl_context *ctx, GLenum target,
                     struct gl_texture_object *texObj)
 {
    if (_mesa_meta_check_generate_mipmap_fallback(ctx, target, texObj)) {
-      /* sw path: need to map texture images */
-      struct intel_context *intel = intel_context(ctx);
-      struct intel_texture_object *intelObj = intel_texture_object(texObj);
-      struct gl_texture_image *first_image = texObj->Image[0][texObj->BaseLevel];
-
       fallback_debug("%s - fallback to swrast\n", __FUNCTION__);
 
-      if (_mesa_is_format_compressed(first_image->TexFormat)) {
-         _mesa_generate_mipmap(ctx, target, texObj);
-      } else {
-         intel_tex_map_level_images(intel, intelObj, texObj->BaseLevel);
-         _mesa_generate_mipmap(ctx, target, texObj);
-         intel_tex_unmap_level_images(intel, intelObj, texObj->BaseLevel);
-      }
-
-      if (!_mesa_is_format_compressed(first_image->TexFormat)) {
-         GLuint nr_faces = (texObj->Target == GL_TEXTURE_CUBE_MAP) ? 6 : 1;
-         GLuint face, i;
-         for (face = 0; face < nr_faces; face++) {
-            for (i = texObj->BaseLevel + 1; i < texObj->MaxLevel; i++) {
-               struct intel_texture_image *intelImage =
-                  intel_texture_image(texObj->Image[face][i]);
-               if (!intelImage)
-                  break;
-               /* Unreference the miptree to signal that the new Data is a
-                * bare pointer from mesa.
-                */
-               intel_miptree_release(&intelImage->mt);
-            }
-         }
-      }
+      _mesa_generate_mipmap(ctx, target, texObj);
    }
    else {
       _mesa_meta_GenerateMipmap(ctx, target, texObj);
