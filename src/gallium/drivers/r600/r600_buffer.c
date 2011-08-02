@@ -33,8 +33,6 @@
 #include <util/u_memory.h>
 #include "util/u_upload_mgr.h"
 
-#include "state_tracker/drm_driver.h"
-
 #include <xf86drm.h>
 #include "radeon_drm.h"
 
@@ -48,7 +46,7 @@ static void r600_buffer_destroy(struct pipe_screen *screen,
 	struct r600_resource_buffer *rbuffer = r600_buffer(buf);
 
 	if (rbuffer->r.bo) {
-		r600_bo_reference((struct radeon*)screen->winsys, &rbuffer->r.bo, NULL);
+		r600_bo_reference(rscreen->radeon, &rbuffer->r.bo, NULL);
 	}
 	rbuffer->r.bo = NULL;
 	util_slab_free(&rscreen->pool_buffers, rbuffer);
@@ -81,12 +79,13 @@ static void *r600_buffer_transfer_map(struct pipe_context *pipe,
 				      struct pipe_transfer *transfer)
 {
 	struct r600_resource_buffer *rbuffer = r600_buffer(transfer->resource);
+	struct r600_pipe_context *rctx = (struct r600_pipe_context*)pipe;
 	uint8_t *data;
 
 	if (rbuffer->r.b.user_ptr)
 		return (uint8_t*)rbuffer->r.b.user_ptr + transfer->box.x;
 
-	data = r600_bo_map((struct radeon*)pipe->winsys, rbuffer->r.bo, transfer->usage, pipe);
+	data = r600_bo_map(rctx->screen->radeon, rbuffer->r.bo, transfer->usage, pipe);
 	if (!data)
 		return NULL;
 
@@ -97,12 +96,13 @@ static void r600_buffer_transfer_unmap(struct pipe_context *pipe,
 					struct pipe_transfer *transfer)
 {
 	struct r600_resource_buffer *rbuffer = r600_buffer(transfer->resource);
+	struct r600_pipe_context *rctx = (struct r600_pipe_context*)pipe;
 
 	if (rbuffer->r.b.user_ptr)
 		return;
 
 	if (rbuffer->r.bo)
-		r600_bo_unmap((struct radeon*)pipe->winsys, rbuffer->r.bo);
+		r600_bo_unmap(rctx->screen->radeon, rbuffer->r.bo);
 }
 
 static void r600_buffer_transfer_flush_region(struct pipe_context *pipe,
@@ -127,20 +127,21 @@ static void r600_buffer_transfer_inline_write(struct pipe_context *pipe,
 						unsigned stride,
 						unsigned layer_stride)
 {
-	struct radeon *ws = (struct radeon*)pipe->winsys;
+	struct r600_pipe_context *rctx = (struct r600_pipe_context*)pipe;
+	struct radeon *radeon = rctx->screen->radeon;
 	struct r600_resource_buffer *rbuffer = r600_buffer(resource);
 	uint8_t *map = NULL;
 
 	assert(rbuffer->r.b.user_ptr == NULL);
 
-	map = r600_bo_map(ws, rbuffer->r.bo,
+	map = r600_bo_map(radeon, rbuffer->r.bo,
 			  PIPE_TRANSFER_WRITE | PIPE_TRANSFER_DISCARD | usage,
 			  pipe);
 
 	memcpy(map + box->x, data, box->width);
 
 	if (rbuffer->r.bo)
-		r600_bo_unmap(ws, rbuffer->r.bo);
+		r600_bo_unmap(radeon, rbuffer->r.bo);
 }
 
 static const struct u_resource_vtbl r600_buffer_vtbl =
@@ -175,7 +176,7 @@ struct pipe_resource *r600_buffer_create(struct pipe_screen *screen,
 	rbuffer->r.size = rbuffer->r.b.b.b.width0;
 	rbuffer->r.bo_size = rbuffer->r.size;
 
-	bo = r600_bo((struct radeon*)screen->winsys,
+	bo = r600_bo(rscreen->radeon,
 		     rbuffer->r.b.b.b.width0,
 		     alignment, rbuffer->r.b.b.b.bind,
 		     rbuffer->r.b.b.b.usage);
@@ -219,11 +220,11 @@ struct pipe_resource *r600_user_buffer_create(struct pipe_screen *screen,
 struct pipe_resource *r600_buffer_from_handle(struct pipe_screen *screen,
 					      struct winsys_handle *whandle)
 {
-	struct radeon *rw = (struct radeon*)screen->winsys;
+	struct radeon *rw = ((struct r600_screen*)screen)->radeon;
 	struct r600_resource *rbuffer;
 	struct r600_bo *bo = NULL;
 
-	bo = r600_bo_handle(rw, whandle->handle, NULL);
+	bo = r600_bo_handle(rw, whandle, NULL, NULL);
 	if (bo == NULL) {
 		return NULL;
 	}

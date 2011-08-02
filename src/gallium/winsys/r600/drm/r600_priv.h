@@ -38,6 +38,7 @@ struct r600_bomgr;
 struct r600_bo;
 
 struct radeon {
+	struct radeon_winsys		*ws;
 	struct radeon_info		info;
 	unsigned			family;
 	enum chip_class			chip_class;

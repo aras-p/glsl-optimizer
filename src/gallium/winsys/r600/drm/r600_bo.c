@@ -86,23 +86,26 @@ struct r600_bo *r600_bo(struct radeon *radeon,
 	return bo;
 }
 
-struct r600_bo *r600_bo_handle(struct radeon *radeon,
-			       unsigned handle, unsigned *array_mode)
+struct r600_bo *r600_bo_handle(struct radeon *radeon, struct winsys_handle *whandle,
+			       unsigned *stride, unsigned *array_mode)
 {
 	struct r600_bo *bo = calloc(1, sizeof(struct r600_bo));
 	struct radeon_bo *rbo;
 
-	rbo = bo->bo = radeon_bo(radeon, handle, 0, 0, 0);
+	rbo = bo->bo = radeon_bo(radeon, whandle->handle, 0, 0, 0);
 	if (rbo == NULL) {
 		free(bo);
 		return NULL;
 	}
+
+	pipe_reference_init(&bo->reference, 1);
 	bo->size = rbo->size;
 	bo->domains = (RADEON_GEM_DOMAIN_CPU |
 			RADEON_GEM_DOMAIN_GTT |
 			RADEON_GEM_DOMAIN_VRAM);
 
-	pipe_reference_init(&bo->reference, 1);
+	if (stride)
+		*stride = whandle->stride;
 
 	radeon_bo_get_tiling_flags(radeon, rbo, &bo->tiling_flags, &bo->kernel_pitch);
 	if (array_mode) {

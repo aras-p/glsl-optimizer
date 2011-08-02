@@ -500,7 +500,8 @@ static void r600_destroy_screen(struct pipe_screen* pscreen)
 	if (rscreen == NULL)
 		return;
 
-	radeon_decref(rscreen->radeon);
+	radeon_destroy(rscreen->radeon);
+	rscreen->ws->destroy(rscreen->ws);
 
 	util_slab_destroy(&rscreen->pool_buffers);
 	pipe_mutex_destroy(rscreen->mutex_num_contexts);
@@ -564,18 +565,19 @@ static boolean r600_fence_finish(struct pipe_screen *pscreen,
 	return TRUE;
 }
 
-struct pipe_screen *r600_screen_create(struct radeon_winsys *rw)
+struct pipe_screen *r600_screen_create(struct radeon_winsys *ws)
 {
 	struct r600_screen *rscreen;
-	struct radeon *radeon = r600_drm_winsys_create(rw);
+	struct radeon *radeon = radeon_create(ws);
 
 	rscreen = CALLOC_STRUCT(r600_screen);
 	if (rscreen == NULL) {
 		return NULL;
 	}
 
+	rscreen->ws = ws;
 	rscreen->radeon = radeon;
-	rscreen->screen.winsys = (struct pipe_winsys*)radeon;
+	rscreen->screen.winsys = (struct pipe_winsys*)ws;
 	rscreen->screen.destroy = r600_destroy_screen;
 	rscreen->screen.get_name = r600_get_name;
 	rscreen->screen.get_vendor = r600_get_vendor;

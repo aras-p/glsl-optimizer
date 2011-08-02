@@ -28,6 +28,7 @@
 
 #include "r600_priv.h"
 #include "r600_drm_public.h"
+#include "util/u_memory.h"
 #include <radeon_drm.h>
 #include <xf86drm.h>
 #include <errno.h>
@@ -244,22 +245,21 @@ static int handle_compare(void *key1, void *key2)
     return PTR_TO_UINT(key1) != PTR_TO_UINT(key2);
 }
 
-struct radeon *r600_drm_winsys_create(struct radeon_winsys *rw)
+struct radeon *radeon_create(struct radeon_winsys *ws)
 {
-	struct radeon *radeon;
 	int r;
-
-	radeon = calloc(1, sizeof(*radeon));
+	struct radeon *radeon = CALLOC_STRUCT(radeon);
 	if (radeon == NULL) {
 		return NULL;
 	}
 
-	rw->query_info(rw, &radeon->info);
+	radeon->ws = ws;
+	ws->query_info(ws, &radeon->info);
 
 	radeon->family = radeon_family_from_device(radeon->info.pci_id);
 	if (radeon->family == CHIP_UNKNOWN) {
 		fprintf(stderr, "Unknown chipset 0x%04X\n", radeon->info.pci_id);
-		return radeon_decref(radeon);
+		return radeon_destroy(radeon);
 	}
 	/* setup class */
 	switch (radeon->family) {
@@ -323,7 +323,7 @@ struct radeon *r600_drm_winsys_create(struct radeon_winsys *rw)
 	}
 	r = radeon_init_fence(radeon);
 	if (r) {
-		radeon_decref(radeon);
+		radeon_destroy(radeon);
 		return NULL;
 	}
 
@@ -332,7 +332,7 @@ struct radeon *r600_drm_winsys_create(struct radeon_winsys *rw)
 	return radeon;
 }
 
-struct radeon *radeon_decref(struct radeon *radeon)
+struct radeon *radeon_destroy(struct radeon *radeon)
 {
 	if (radeon == NULL)
 		return NULL;
@@ -346,6 +346,6 @@ struct radeon *radeon_decref(struct radeon *radeon)
 	if (radeon->bomgr)
 		r600_bomgr_destroy(radeon->bomgr);
 
-	free(radeon);
+	FREE(radeon);
 	return NULL;
 }

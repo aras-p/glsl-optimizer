@@ -95,11 +95,12 @@ unsigned r600_get_backend_map(struct radeon *radeon);
 
 /* r600_bo.c */
 struct r600_bo;
+
 struct r600_bo *r600_bo(struct radeon *radeon,
 			unsigned size, unsigned alignment,
 			unsigned binding, unsigned usage);
-struct r600_bo *r600_bo_handle(struct radeon *radeon,
-				unsigned handle, unsigned *array_mode);
+struct r600_bo *r600_bo_handle(struct radeon *radeon, struct winsys_handle *whandle,
+				unsigned *stride, unsigned *array_mode);
 void *r600_bo_map(struct radeon *radeon, struct r600_bo *bo, unsigned usage, void *ctx);
 void r600_bo_unmap(struct radeon *radeon, struct r600_bo *bo);
 boolean r600_bo_get_winsys_handle(struct radeon *radeon, struct r600_bo *pb_bo,
@@ -315,7 +316,7 @@ void evergreen_context_pipe_state_set_fs_resource(struct r600_context *ctx, stru
 void evergreen_context_pipe_state_set_ps_sampler(struct r600_context *ctx, struct r600_pipe_state *state, unsigned id);
 void evergreen_context_pipe_state_set_vs_sampler(struct r600_context *ctx, struct r600_pipe_state *state, unsigned id);
 
-struct radeon *radeon_decref(struct radeon *radeon);
+struct radeon *radeon_destroy(struct radeon *radeon);
 
 void _r600_pipe_state_add_reg(struct r600_context *ctx,
 			      struct r600_pipe_state *state,

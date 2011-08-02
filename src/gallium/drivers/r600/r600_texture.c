@@ -31,7 +31,6 @@
 #include <util/u_math.h>
 #include <util/u_inlines.h>
 #include <util/u_memory.h>
-#include "state_tracker/drm_driver.h"
 #include "pipebuffer/pb_buffer.h"
 #include "r600_pipe.h"
 #include "r600_resource.h"
@@ -239,7 +238,7 @@ static void r600_setup_miptree(struct pipe_screen *screen,
 			       unsigned array_mode)
 {
 	struct pipe_resource *ptex = &rtex->resource.b.b.b;
-	struct radeon *radeon = (struct radeon *)screen->winsys;
+	struct radeon *radeon = ((struct r600_screen*)screen)->radeon;
 	enum chip_class chipc = r600_get_family_class(radeon);
 	unsigned size, layer_size, i, offset;
 	unsigned nblocksx, nblocksy, extra_size = 0;
@@ -329,7 +328,7 @@ static boolean r600_texture_get_handle(struct pipe_screen* screen,
 {
 	struct r600_resource_texture *rtex = (struct r600_resource_texture*)ptex;
 	struct r600_resource *resource = &rtex->resource;
-	struct radeon *radeon = (struct radeon *)screen->winsys;
+	struct radeon *radeon = ((struct r600_screen*)screen)->radeon;
 
 	return r600_bo_get_winsys_handle(radeon, resource->bo,
 			rtex->pitch_in_bytes[0], whandle);
@@ -340,7 +339,7 @@ static void r600_texture_destroy(struct pipe_screen *screen,
 {
 	struct r600_resource_texture *rtex = (struct r600_resource_texture*)ptex;
 	struct r600_resource *resource = &rtex->resource;
-	struct radeon *radeon = (struct radeon *)screen->winsys;
+	struct radeon *radeon = ((struct r600_screen*)screen)->radeon;
 
 	if (rtex->flushed_depth_texture)
 		pipe_resource_reference((struct pipe_resource **)&rtex->flushed_depth_texture, NULL);
@@ -373,7 +372,7 @@ r600_texture_create_object(struct pipe_screen *screen,
 {
 	struct r600_resource_texture *rtex;
 	struct r600_resource *resource;
-	struct radeon *radeon = (struct radeon *)screen->winsys;
+	struct radeon *radeon = ((struct r600_screen*)screen)->radeon;
 
 	rtex = CALLOC_STRUCT(r600_resource_texture);
 	if (rtex == NULL)
@@ -483,8 +482,9 @@ struct pipe_resource *r600_texture_from_handle(struct pipe_screen *screen,
 					       const struct pipe_resource *templ,
 					       struct winsys_handle *whandle)
 {
-	struct radeon *rw = (struct radeon*)screen->winsys;
+	struct radeon *rw = ((struct r600_screen*)screen)->radeon;
 	struct r600_bo *bo = NULL;
+	unsigned stride = 0;
 	unsigned array_mode = 0;
 
 	/* Support only 2D textures without mipmaps */
@@ -492,15 +492,13 @@ struct pipe_resource *r600_texture_from_handle(struct pipe_screen *screen,
 	      templ->depth0 != 1 || templ->last_level != 0)
 		return NULL;
 
-	bo = r600_bo_handle(rw, whandle->handle, &array_mode);
+	bo = r600_bo_handle(rw, whandle, &stride, &array_mode);
 	if (bo == NULL) {
 		return NULL;
 	}
 
 	return (struct pipe_resource *)r600_texture_create_object(screen, templ, array_mode,
-								  whandle->stride,
-								  0,
-								  bo);
+								  stride, 0, bo);
 }
 
 int r600_texture_depth_flush(struct pipe_context *ctx,
@@ -687,7 +685,7 @@ void* r600_texture_transfer_map(struct pipe_context *ctx,
 	struct r600_transfer *rtransfer = (struct r600_transfer*)transfer;
 	struct r600_bo *bo;
 	enum pipe_format format = transfer->resource->format;
-	struct radeon *radeon = (struct radeon *)ctx->screen->winsys;
+	struct radeon *radeon = ((struct r600_screen*)ctx->screen)->radeon;
 	unsigned offset = 0;
 	char *map;
 
@@ -717,7 +715,7 @@ void r600_texture_transfer_unmap(struct pipe_context *ctx,
 				 struct pipe_transfer* transfer)
 {
 	struct r600_transfer *rtransfer = (struct r600_transfer*)transfer;
-	struct radeon *radeon = (struct radeon *)ctx->screen->winsys;
+	struct radeon *radeon = ((struct r600_screen*)ctx->screen)->radeon;
 	struct r600_bo *bo;
 
 	if (rtransfer->staging_texture) {

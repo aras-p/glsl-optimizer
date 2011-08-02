@@ -28,6 +28,6 @@
 
 struct radeon_winsys;
 
-struct radeon *r600_drm_winsys_create(struct radeon_winsys *rw);
+struct radeon *radeon_create(struct radeon_winsys *ws);
 
 #endif

@@ -74,6 +74,7 @@ enum r600_pipe_state_id {
 
 struct r600_screen {
 	struct pipe_screen		screen;
+	struct radeon_winsys		*ws;
 	struct radeon			*radeon;
 	struct r600_tiling_info		*tiling_info;
 	struct util_slab_mempool	pool_buffers;
