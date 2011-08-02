@@ -91,6 +91,7 @@ struct r600_bo *r600_bo_handle(struct radeon *radeon, struct winsys_handle *whan
 {
 	struct r600_bo *bo = calloc(1, sizeof(struct r600_bo));
 	struct radeon_bo *rbo;
+	unsigned tiling_flags;
 
 	rbo = bo->bo = radeon_bo(radeon, whandle->handle, 0, 0, 0);
 	if (rbo == NULL) {
@@ -107,12 +108,12 @@ struct r600_bo *r600_bo_handle(struct radeon *radeon, struct winsys_handle *whan
 	if (stride)
 		*stride = whandle->stride;
 
-	radeon_bo_get_tiling_flags(radeon, rbo, &bo->tiling_flags);
+	radeon_bo_get_tiling_flags(radeon, rbo, &tiling_flags);
 	if (array_mode) {
-		if (bo->tiling_flags) {
-			if (bo->tiling_flags & RADEON_TILING_MACRO)
+		if (tiling_flags) {
+			if (tiling_flags & RADEON_TILING_MACRO)
 				*array_mode = V_0280A0_ARRAY_2D_TILED_THIN1;
-			else if (bo->tiling_flags & RADEON_TILING_MICRO)
+			else if (tiling_flags & RADEON_TILING_MICRO)
 				*array_mode = V_0280A0_ARRAY_1D_TILED_THIN1;
 		} else {
 			*array_mode = 0;

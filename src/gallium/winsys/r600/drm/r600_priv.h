@@ -95,7 +95,6 @@ struct r600_bo {
 	struct pipe_reference		reference; /* this must be the first member for the r600_bo_reference inline to work */
 	/* DO NOT MOVE THIS ^ */
 	unsigned			size;
-	unsigned			tiling_flags;
 	unsigned			domains;
 	struct radeon_bo		*bo;
 	unsigned			fence;
