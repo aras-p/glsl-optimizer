@@ -648,18 +648,12 @@ void radeonSetTexBuffer2(__DRIcontext *pDRICtx, GLint target, GLint texture_form
 	struct radeon_renderbuffer *rb;
 	radeon_texture_image *rImage;
 	radeonContextPtr radeon;
-	r100ContextPtr rmesa;
 	struct radeon_framebuffer *rfb;
 	radeonTexObjPtr t;
 	uint32_t pitch_val;
-	uint32_t internalFormat, format;
 	gl_format texFormat;
 
-	format = GL_UNSIGNED_BYTE;
-	internalFormat = (texture_format == __DRI_TEXTURE_FORMAT_RGB ? GL_RGB : GL_RGBA);
-
 	radeon = pDRICtx->driverPrivate;
-	rmesa = pDRICtx->driverPrivate;
 
 	rfb = dPriv->driverPrivate;
         texUnit = _mesa_get_current_tex_unit(radeon->glCtx);

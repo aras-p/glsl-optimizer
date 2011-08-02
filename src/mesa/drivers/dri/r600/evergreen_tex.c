@@ -1288,19 +1288,12 @@ void evergreenSetTexBuffer(__DRIcontext *pDRICtx, GLint target, GLint glx_textur
 	struct radeon_renderbuffer *rb;
 	radeon_texture_image *rImage;
 	radeonContextPtr radeon;
-	context_t *rmesa;
 	struct radeon_framebuffer *rfb;
 	radeonTexObjPtr t;
 	uint32_t pitch_val;
-	uint32_t internalFormat, type, format;
 	gl_format texFormat;
 
-	type = GL_BGRA;
-	format = GL_UNSIGNED_BYTE;
-	internalFormat = (glx_texture_format == __DRI_TEXTURE_FORMAT_RGB ? 3 : 4);
-
 	radeon = pDRICtx->driverPrivate;
-	rmesa = pDRICtx->driverPrivate;
 
 	rfb = dPriv->driverPrivate;
         texUnit = &radeon->glCtx->Texture.Unit[radeon->glCtx->Texture.CurrentUnit];
