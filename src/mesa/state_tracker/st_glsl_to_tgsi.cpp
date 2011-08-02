@@ -840,7 +840,6 @@ glsl_to_tgsi_visitor::add_constant(gl_register_file file,
       int index = 0;
       immediate_storage *entry;
       assert(file == PROGRAM_IMMEDIATE);
-      fprintf(stderr, "adding immediate\n");
 
       /* Search immediate storage to see if we already have an identical
        * immediate that we can use instead of adding a duplicate entry.
