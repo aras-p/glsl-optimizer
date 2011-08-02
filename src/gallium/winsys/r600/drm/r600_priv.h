@@ -55,6 +55,9 @@ struct radeon {
 	struct r600_bo			*fence_bo;
 	unsigned			clock_crystal_freq;
 	unsigned			num_backends;
+	unsigned			num_tile_pipes;
+	unsigned			backend_map;
+	boolean				backend_map_valid;
 	unsigned                        minor_version;
 
         /* List of buffer handles and its mutex. */

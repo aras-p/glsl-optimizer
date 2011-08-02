@@ -50,6 +50,14 @@
 #define RADEON_INFO_NUM_BACKENDS 0xa
 #endif
 
+#ifndef RADEON_INFO_NUM_TILE_PIPES
+#define RADEON_INFO_NUM_TILE_PIPES 0xb
+#endif
+
+#ifndef RADEON_INFO_BACKEND_MAP
+#define RADEON_INFO_BACKEND_MAP 0xd
+#endif
+
 enum radeon_family r600_get_family(struct radeon *r600)
 {
 	return r600->family;
@@ -73,6 +81,16 @@ unsigned r600_get_clock_crystal_freq(struct radeon *radeon)
 unsigned r600_get_num_backends(struct radeon *radeon)
 {
 	return radeon->num_backends;
+}
+
+unsigned r600_get_num_tile_pipes(struct radeon *radeon)
+{
+	return radeon->num_tile_pipes;
+}
+
+unsigned r600_get_backend_map(struct radeon *radeon)
+{
+	return radeon->backend_map;
 }
 
 unsigned r600_get_minor_version(struct radeon *radeon)
@@ -241,6 +259,42 @@ static int radeon_get_num_backends(struct radeon *radeon)
 	return 0;
 }
 
+static int radeon_get_num_tile_pipes(struct radeon *radeon)
+{
+	struct drm_radeon_info info = {};
+	uint32_t num_tile_pipes = 0;
+	int r;
+
+	info.request = RADEON_INFO_NUM_TILE_PIPES;
+	info.value = (uintptr_t)&num_tile_pipes;
+	r = drmCommandWriteRead(radeon->fd, DRM_RADEON_INFO, &info,
+			sizeof(struct drm_radeon_info));
+	if (r)
+		return r;
+
+	radeon->num_tile_pipes = num_tile_pipes;
+	return 0;
+}
+
+static int radeon_get_backend_map(struct radeon *radeon)
+{
+	struct drm_radeon_info info = {};
+	uint32_t backend_map = 0;
+	int r;
+
+	info.request = RADEON_INFO_BACKEND_MAP;
+	info.value = (uintptr_t)&backend_map;
+	r = drmCommandWriteRead(radeon->fd, DRM_RADEON_INFO, &info,
+			sizeof(struct drm_radeon_info));
+	if (r)
+		return r;
+
+	radeon->backend_map = backend_map;
+	radeon->backend_map_valid = TRUE;
+
+	return 0;
+}
+
 
 static int radeon_init_fence(struct radeon *radeon)
 {
@@ -361,6 +415,11 @@ static struct radeon *radeon_new(int fd, unsigned device)
 
 	if (radeon->minor_version >= 9)
 		radeon_get_num_backends(radeon);
+
+	if (radeon->minor_version >= 11) {
+		radeon_get_num_tile_pipes(radeon);
+		radeon_get_backend_map(radeon);
+	}
 
 	radeon->bomgr = r600_bomgr_create(radeon, 1000000);
 	if (radeon->bomgr == NULL) {

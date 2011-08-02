@@ -39,6 +39,91 @@
 
 #define GROUP_FORCE_NEW_BLOCK	0
 
+/* Get backends mask */
+void r600_get_backend_mask(struct r600_context *ctx)
+{
+	struct r600_bo * buffer;
+	u32 * results;
+	unsigned num_backends = r600_get_num_backends(ctx->radeon);
+	unsigned i, mask = 0;
+
+	/* if backend_map query is supported by the kernel */
+	if (ctx->radeon->backend_map_valid) {
+		unsigned num_tile_pipes = r600_get_num_tile_pipes(ctx->radeon);
+		unsigned backend_map = r600_get_backend_map(ctx->radeon);
+		unsigned item_width, item_mask;
+
+		if (ctx->radeon->chip_class >= EVERGREEN) {
+			item_width = 4;
+			item_mask = 0x7;
+		} else {
+			item_width = 2;
+			item_mask = 0x3;
+		}
+
+		while(num_tile_pipes--) {
+			i = backend_map & item_mask;
+			mask |= (1<<i);
+			backend_map >>= item_width;
+		}
+		if (mask != 0) {
+			ctx->backend_mask = mask;
+			return;
+		}
+	}
+
+	/* otherwise backup path for older kernels */
+
+	/* create buffer for event data */
+	buffer = r600_bo(ctx->radeon, ctx->max_db*16, 1, 0,
+				PIPE_USAGE_STAGING);
+	if (!buffer)
+		goto err;
+
+	/* initialize buffer with zeroes */
+	results = r600_bo_map(ctx->radeon, buffer, PB_USAGE_CPU_WRITE, NULL);
+	if (results) {
+		memset(results, 0, ctx->max_db * 4 * 4);
+		r600_bo_unmap(ctx->radeon, buffer);
+
+		/* emit EVENT_WRITE for ZPASS_DONE */
+		ctx->pm4[ctx->pm4_cdwords++] = PKT3(PKT3_EVENT_WRITE, 2, 0);
+		ctx->pm4[ctx->pm4_cdwords++] = EVENT_TYPE(EVENT_TYPE_ZPASS_DONE) | EVENT_INDEX(1);
+		ctx->pm4[ctx->pm4_cdwords++] = 0;
+		ctx->pm4[ctx->pm4_cdwords++] = 0;
+
+		ctx->pm4[ctx->pm4_cdwords++] = PKT3(PKT3_NOP, 0, 0);
+		ctx->pm4[ctx->pm4_cdwords++] = 0;
+		r600_context_bo_reloc(ctx, &ctx->pm4[ctx->pm4_cdwords - 1], buffer);
+
+		/* execute */
+		r600_context_flush(ctx);
+
+		/* analyze results */
+		results = r600_bo_map(ctx->radeon, buffer, PB_USAGE_CPU_READ, NULL);
+		if (results) {
+			for(i = 0; i < ctx->max_db; i++) {
+				/* at least highest bit will be set if backend is used */
+				if (results[i*4 + 1])
+					mask |= (1<<i);
+			}
+			r600_bo_unmap(ctx->radeon, buffer);
+		}
+	}
+
+	r600_bo_reference(ctx->radeon, &buffer, NULL);
+
+	if (mask != 0) {
+		ctx->backend_mask = mask;
+		return;
+	}
+
+err:
+	/* fallback to old method - set num_backends lower bits to 1 */
+	ctx->backend_mask = (~((u32)0))>>(32-num_backends);
+	return;
+}
+
 static inline void r600_context_ps_partial_flush(struct r600_context *ctx)
 {
 	if (!(ctx->flags & R600_CONTEXT_DRAW_PENDING))
@@ -898,6 +983,8 @@ int r600_context_init(struct r600_context *ctx, struct radeon *radeon)
 
 	ctx->max_db = 4;
 
+	r600_get_backend_mask(ctx);
+
 	return 0;
 out_err:
 	r600_context_fini(ctx);
@@ -1652,7 +1739,6 @@ static boolean r600_query_result(struct r600_context *ctx, struct r600_query *qu
 void r600_query_begin(struct r600_context *ctx, struct r600_query *query)
 {
 	unsigned required_space, new_results_end;
-	int num_backends = r600_get_num_backends(ctx->radeon);
 
 	/* query request needs 6/8 dwords for begin + 6/8 dwords for end */
 	if (query->type == PIPE_QUERY_TIME_ELAPSED)
@@ -1698,9 +1784,11 @@ void r600_query_begin(struct r600_context *ctx, struct r600_query *query)
 			memset(results, 0, query->result_size);
 
 			/* Set top bits for unused backends */
-			for (i = num_backends; i < ctx->max_db; i++) {
-				results[(i * 4)+1] = 0x80000000;
-				results[(i * 4)+3] = 0x80000000;
+			for (i = 0; i < ctx->max_db; i++) {
+				if (!(ctx->backend_mask & (1<<i))) {
+					results[(i * 4)+1] = 0x80000000;
+					results[(i * 4)+3] = 0x80000000;
+				}
 			}
 			r600_bo_unmap(ctx->radeon, query->buffer);
 		}

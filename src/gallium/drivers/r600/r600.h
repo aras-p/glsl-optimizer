@@ -94,6 +94,8 @@ struct r600_tiling_info *r600_get_tiling_info(struct radeon *radeon);
 unsigned r600_get_clock_crystal_freq(struct radeon *radeon);
 unsigned r600_get_minor_version(struct radeon *radeon);
 unsigned r600_get_num_backends(struct radeon *radeon);
+unsigned r600_get_num_tile_pipes(struct radeon *radeon);
+unsigned r600_get_backend_map(struct radeon *radeon);
 
 /* r600_bo.c */
 struct r600_bo;
@@ -258,6 +260,7 @@ struct r600_context {
 	u32			*pm4;
 	struct list_head	query_list;
 	unsigned		num_query_running;
+	unsigned		backend_mask;
 	struct list_head	fenced_bo;
 	unsigned                max_db; /* for OQ */
 	unsigned                num_dest_buffers;
@@ -279,6 +282,7 @@ struct r600_draw {
 	struct r600_bo		*indices;
 };
 
+void r600_get_backend_mask(struct r600_context *ctx);
 int r600_context_init(struct r600_context *ctx, struct radeon *radeon);
 void r600_context_fini(struct r600_context *ctx);
 void r600_context_pipe_state_set(struct r600_context *ctx, struct r600_pipe_state *state);
