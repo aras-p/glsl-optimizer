@@ -233,18 +233,6 @@ static int radeon_init_fence(struct radeon *radeon)
 	return 0;
 }
 
-#define PTR_TO_UINT(x) ((unsigned)((intptr_t)(x)))
-
-static unsigned handle_hash(void *key)
-{
-    return PTR_TO_UINT(key);
-}
-
-static int handle_compare(void *key1, void *key2)
-{
-    return PTR_TO_UINT(key1) != PTR_TO_UINT(key2);
-}
-
 struct radeon *radeon_create(struct radeon_winsys *ws)
 {
 	int r;
@@ -327,8 +315,6 @@ struct radeon *radeon_create(struct radeon_winsys *ws)
 		return NULL;
 	}
 
-	radeon->bo_handles = util_hash_table_create(handle_hash, handle_compare);
-	pipe_mutex_init(radeon->bo_handles_mutex);
 	return radeon;
 }
 
@@ -337,8 +323,6 @@ struct radeon *radeon_destroy(struct radeon *radeon)
 	if (radeon == NULL)
 		return NULL;
 
-	util_hash_table_destroy(radeon->bo_handles);
-	pipe_mutex_destroy(radeon->bo_handles_mutex);
 	if (radeon->fence_bo) {
 		r600_bo_reference(radeon, &radeon->fence_bo, NULL);
 	}

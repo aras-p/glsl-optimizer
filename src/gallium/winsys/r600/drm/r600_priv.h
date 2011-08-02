@@ -50,10 +50,6 @@ struct radeon {
 	unsigned			num_tile_pipes;
 	unsigned			backend_map;
 	boolean				backend_map_valid;
-
-        /* List of buffer handles and its mutex. */
-	struct util_hash_table          *bo_handles;
-	pipe_mutex bo_handles_mutex;
 };
 
 /* these flags are used in register flags and added into block flags */
@@ -75,9 +71,10 @@ struct r600_reg {
 #define BO_BOUND_TEXTURE 1
 struct radeon_bo {
 	struct pipe_reference		reference;
+	struct pb_buffer		*buf;
+
 	unsigned			handle;
 	unsigned			size;
-	unsigned			alignment;
 	int				map_count;
 	void				*data;
 	struct list_head		fencedlist;
@@ -87,7 +84,6 @@ struct radeon_bo {
 	struct r600_reloc		*reloc;
 	unsigned			reloc_id;
 	unsigned			last_flush;
-	unsigned                        name;
 	unsigned                        binding;
 };
 
@@ -124,7 +120,7 @@ unsigned radeon_family_from_device(unsigned device);
  * radeon_bo.c
  */
 struct radeon_bo *radeon_bo(struct radeon *radeon, unsigned handle,
-			    unsigned size, unsigned alignment, unsigned initial_domain);
+			    unsigned size, unsigned alignment, unsigned bind, unsigned initial_domain);
 void radeon_bo_reference(struct radeon *radeon, struct radeon_bo **dst,
 			 struct radeon_bo *src);
 int radeon_bo_wait(struct radeon *radeon, struct radeon_bo *bo);

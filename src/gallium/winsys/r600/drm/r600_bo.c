@@ -68,7 +68,7 @@ struct r600_bo *r600_bo(struct radeon *radeon,
 		initial_domain = RADEON_GEM_DOMAIN_VRAM;
 		break;
 	}
-	rbo = radeon_bo(radeon, 0, size, alignment, initial_domain);
+	rbo = radeon_bo(radeon, 0, size, alignment, binding, initial_domain);
 	if (rbo == NULL) {
 		return NULL;
 	}
@@ -93,7 +93,7 @@ struct r600_bo *r600_bo_handle(struct radeon *radeon, struct winsys_handle *whan
 	struct radeon_bo *rbo;
 	unsigned tiling_flags;
 
-	rbo = bo->bo = radeon_bo(radeon, whandle->handle, 0, 0, 0);
+	rbo = bo->bo = radeon_bo(radeon, whandle->handle, 0, 0, 0, 0);
 	if (rbo == NULL) {
 		free(bo);
 		return NULL;

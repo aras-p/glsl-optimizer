@@ -26,6 +26,7 @@
 #define _FILE_OFFSET_BITS 64
 #include "r600_priv.h"
 #include "util/u_hash_table.h"
+#include "util/u_memory.h"
 #include "radeon_drm.h"
 #include "xf86drm.h"
 #include <sys/mman.h>
@@ -68,22 +69,16 @@ static void radeon_bo_fixed_unmap(struct radeon *radeon, struct radeon_bo *bo)
 	}
 }
 
+#include "state_tracker/drm_driver.h"
+
 struct radeon_bo *radeon_bo(struct radeon *radeon, unsigned handle,
-			    unsigned size, unsigned alignment, unsigned initial_domain)
+			    unsigned size, unsigned alignment, unsigned bind,
+			    unsigned initial_domain)
 {
 	struct radeon_bo *bo;
-	int r;
+	struct winsys_handle whandle = {};
+	whandle.handle = handle;
 
-	if (handle) {
-		pipe_mutex_lock(radeon->bo_handles_mutex);
-		bo = util_hash_table_get(radeon->bo_handles,
-					 (void *)(uintptr_t)handle);
-		if (bo) {
-			struct radeon_bo *b = NULL;
-			radeon_bo_reference(radeon, &b, bo);
-			goto done;
-		}
-	}
 	bo = calloc(1, sizeof(*bo));
 	if (bo == NULL) {
 		return NULL;
@@ -91,69 +86,35 @@ struct radeon_bo *radeon_bo(struct radeon *radeon, unsigned handle,
 	bo->size = size;
 	bo->handle = handle;
 	pipe_reference_init(&bo->reference, 1);
-	bo->alignment = alignment;
 	LIST_INITHEAD(&bo->fencedlist);
 
 	if (handle) {
-		struct drm_gem_open open_arg;
-
-		memset(&open_arg, 0, sizeof(open_arg));
-		open_arg.name = handle;
-		r = drmIoctl(radeon->info.fd, DRM_IOCTL_GEM_OPEN, &open_arg);
-		if (r != 0) {
-			free(bo);
+		unsigned size;
+		bo->buf = radeon->ws->buffer_from_handle(radeon->ws, &whandle, NULL, &size);
+		if (!bo->buf) {
+			FREE(bo);
 			return NULL;
 		}
-		bo->name = handle;
-		bo->handle = open_arg.handle;
-		bo->size = open_arg.size;
+		bo->handle = radeon->ws->trans_get_buffer_handle(bo->buf);
+		bo->size = size;
 		bo->shared = TRUE;
 	} else {
-		struct drm_radeon_gem_create args = {};
-
-		args.size = size;
-		args.alignment = alignment;
-		args.initial_domain = initial_domain;
-		args.flags = 0;
-		args.handle = 0;
-		r = drmCommandWriteRead(radeon->info.fd, DRM_RADEON_GEM_CREATE,
-					&args, sizeof(args));
-		bo->handle = args.handle;
-		if (r) {
-			fprintf(stderr, "Failed to allocate :\n");
-			fprintf(stderr, "   size      : %d bytes\n", size);
-			fprintf(stderr, "   alignment : %d bytes\n", alignment);
-			free(bo);
+		bo->buf = radeon->ws->buffer_create(radeon->ws, size, alignment, bind, initial_domain);
+		if (!bo->buf) {
+			FREE(bo);
 			return NULL;
 		}
+		bo->handle = radeon->ws->trans_get_buffer_handle(bo->buf);
 	}
-
-	if (handle)
-		util_hash_table_set(radeon->bo_handles, (void *)(uintptr_t)handle, bo);
-done:
-	if (handle)
-		pipe_mutex_unlock(radeon->bo_handles_mutex);
-
 	return bo;
 }
 
 static void radeon_bo_destroy(struct radeon *radeon, struct radeon_bo *bo)
 {
-	struct drm_gem_close args;
-
-	if (bo->name) {
-		pipe_mutex_lock(radeon->bo_handles_mutex);
-		util_hash_table_remove(radeon->bo_handles,
-				       (void *)(uintptr_t)bo->name);
-		pipe_mutex_unlock(radeon->bo_handles_mutex);
-	}
 	LIST_DEL(&bo->fencedlist);
 	radeon_bo_fixed_unmap(radeon, bo);
-	memset(&args, 0, sizeof(args));
-	args.handle = bo->handle;
-	drmIoctl(radeon->info.fd, DRM_IOCTL_GEM_CLOSE, &args);
-	memset(bo, 0, sizeof(struct radeon_bo));
-	free(bo);
+	pb_reference(&bo->buf, NULL);
+	FREE(bo);
 }
 
 void radeon_bo_reference(struct radeon *radeon,
