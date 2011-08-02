@@ -48,7 +48,7 @@ i915_winsys_batchbuffer_check(struct i915_winsys_batchbuffer *batch,
 
 static INLINE void
 i915_winsys_batchbuffer_dword_unchecked(struct i915_winsys_batchbuffer *batch,
-                              unsigned dword)
+                                        unsigned dword)
 {
    *(unsigned *)batch->ptr = dword;
    batch->ptr += 4;
@@ -74,8 +74,8 @@ i915_winsys_batchbuffer_dword(struct i915_winsys_batchbuffer *batch,
 
 static INLINE void
 i915_winsys_batchbuffer_write(struct i915_winsys_batchbuffer *batch,
-			      void *data,
-			      size_t size)
+                              void *data,
+                              size_t size)
 {
    assert (i915_winsys_batchbuffer_space(batch) >= size);
 
@@ -85,8 +85,8 @@ i915_winsys_batchbuffer_write(struct i915_winsys_batchbuffer *batch,
 
 static INLINE boolean
 i915_winsys_validate_buffers(struct i915_winsys_batchbuffer *batch,
-			     struct i915_winsys_buffer **buffers,
-			     int num_of_buffers)
+                             struct i915_winsys_buffer **buffers,
+                             int num_of_buffers)
 {
    return batch->iws->validate_buffers(batch, buffers, num_of_buffers);
 }
