@@ -34,7 +34,6 @@
 #define PKT_COUNT_C                     0xC000FFFF
 #define PKT_COUNT_S(x)                  (((x) & 0x3FFF) << 16)
 
-struct r600_bomgr;
 struct r600_bo;
 
 struct radeon {
@@ -43,7 +42,6 @@ struct radeon {
 	unsigned			family;
 	enum chip_class			chip_class;
 	struct r600_tiling_info		tiling_info;
-	struct r600_bomgr		*bomgr;
 	unsigned			fence;
 	unsigned			*cfence;
 	struct r600_bo			*fence_bo;
@@ -94,21 +92,6 @@ struct r600_bo {
 	unsigned			domains;
 	struct radeon_bo		*bo;
 	unsigned			fence;
-	/* manager data */
-	struct list_head		list;
-	unsigned			manager_id;
-	unsigned			alignment;
-	unsigned			offset;
-	int64_t				start;
-	int64_t				end;
-};
-
-struct r600_bomgr {
-	struct radeon			*radeon;
-	unsigned			usecs;
-	pipe_mutex			mutex;
-	struct list_head		delayed;
-	unsigned			num_delayed;
 };
 
 /*
@@ -173,23 +156,6 @@ static INLINE void r600_context_bo_reloc(struct r600_context *ctx, u32 *pm4, str
  * r600_bo.c
  */
 void r600_bo_destroy(struct radeon *radeon, struct r600_bo *bo);
-
-/*
- * r600_bomgr.c
- */
-struct r600_bomgr *r600_bomgr_create(struct radeon *radeon, unsigned usecs);
-void r600_bomgr_destroy(struct r600_bomgr *mgr);
-boolean r600_bomgr_bo_destroy(struct r600_bomgr *mgr, struct r600_bo *bo);
-void r600_bomgr_bo_init(struct r600_bomgr *mgr, struct r600_bo *bo);
-struct r600_bo *r600_bomgr_bo_create(struct r600_bomgr *mgr,
-					unsigned size,
-					unsigned alignment,
-					unsigned cfence);
-
-
-/*
- * helpers
- */
 
 
 /*

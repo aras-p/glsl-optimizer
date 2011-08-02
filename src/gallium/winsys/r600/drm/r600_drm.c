@@ -305,10 +305,6 @@ struct radeon *radeon_create(struct radeon_winsys *ws)
 		radeon_get_backend_map(radeon);
 	}
 
-	radeon->bomgr = r600_bomgr_create(radeon, 1000000);
-	if (radeon->bomgr == NULL) {
-		return NULL;
-	}
 	r = radeon_init_fence(radeon);
 	if (r) {
 		radeon_destroy(radeon);
@@ -326,9 +322,6 @@ struct radeon *radeon_destroy(struct radeon *radeon)
 	if (radeon->fence_bo) {
 		r600_bo_reference(radeon, &radeon->fence_bo, NULL);
 	}
-
-	if (radeon->bomgr)
-		r600_bomgr_destroy(radeon->bomgr);
 
 	FREE(radeon);
 	return NULL;

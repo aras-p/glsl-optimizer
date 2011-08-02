@@ -10,8 +10,7 @@ C_SOURCES = \
 	radeon_pciid.c \
 	r600_bo.c \
 	r600_drm.c \
-	r600_hw_context.c \
-	r600_bomgr.c
+	r600_hw_context.c
 
 LIBRARY_INCLUDES = -I$(TOP)/src/gallium/drivers/r600 \
 		   -I$(TOP)/include \

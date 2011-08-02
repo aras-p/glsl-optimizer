@@ -47,14 +47,6 @@ struct r600_bo *r600_bo(struct radeon *radeon,
 				RADEON_GEM_DOMAIN_GTT |
 				RADEON_GEM_DOMAIN_VRAM);
 
-	if (binding & (PIPE_BIND_CONSTANT_BUFFER | PIPE_BIND_VERTEX_BUFFER | PIPE_BIND_INDEX_BUFFER)) {
-		bo = r600_bomgr_bo_create(radeon->bomgr, size, alignment, *radeon->cfence);
-		if (bo) {
-			bo->domains = domains;
-			return bo;
-		}
-	}
-
 	switch(usage) {
 	case PIPE_USAGE_DYNAMIC:
 	case PIPE_USAGE_STREAM:
@@ -75,12 +67,8 @@ struct r600_bo *r600_bo(struct radeon *radeon,
 
 	bo = calloc(1, sizeof(struct r600_bo));
 	bo->size = size;
-	bo->alignment = alignment;
 	bo->domains = domains;
 	bo->bo = rbo;
-	if (binding & (PIPE_BIND_CONSTANT_BUFFER | PIPE_BIND_VERTEX_BUFFER | PIPE_BIND_INDEX_BUFFER)) {
-		r600_bomgr_bo_init(radeon->bomgr, bo);
-	}
 
 	pipe_reference_init(&bo->reference, 1);
 	return bo;
@@ -128,7 +116,7 @@ void *r600_bo_map(struct radeon *radeon, struct r600_bo *bo, unsigned usage, voi
 
 	if (usage & PIPE_TRANSFER_UNSYNCHRONIZED) {
 		radeon_bo_map(radeon, bo->bo);
-		return (uint8_t *) bo->bo->data + bo->offset;
+		return (uint8_t *) bo->bo->data;
 	}
 
 	if (p_atomic_read(&bo->bo->reference.count) > 1) {
@@ -158,7 +146,7 @@ void *r600_bo_map(struct radeon *radeon, struct r600_bo *bo, unsigned usage, voi
 	}
 
 out:
-	return (uint8_t *) bo->bo->data + bo->offset;
+	return (uint8_t *) bo->bo->data;
 }
 
 void r600_bo_unmap(struct radeon *radeon, struct r600_bo *bo)
@@ -168,12 +156,6 @@ void r600_bo_unmap(struct radeon *radeon, struct r600_bo *bo)
 
 void r600_bo_destroy(struct radeon *radeon, struct r600_bo *bo)
 {
-	if (bo->manager_id) {
-		if (!r600_bomgr_bo_destroy(radeon->bomgr, bo)) {
-			/* destroy is delayed by buffer manager */
-			return;
-		}
-	}
 	radeon_bo_reference(radeon, &bo->bo, NULL);
 	free(bo);
 }

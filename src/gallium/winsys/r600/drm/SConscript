@@ -9,7 +9,6 @@ r600_sources = [
     'r600_bo.c',
     'r600_drm.c',
     'r600_hw_context.c',
-    'r600_bomgr.c',
 ]
 
 env.PkgUseModules('DRM_RADEON')
