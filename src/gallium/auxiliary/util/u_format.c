@@ -409,7 +409,7 @@ void util_format_swizzle_4f(float *dst, const float *src,
    unsigned i;
 
    for (i = 0; i < 4; i++) {
-      if (swz[i] < UTIL_FORMAT_SWIZZLE_W)
+      if (swz[i] <= UTIL_FORMAT_SWIZZLE_W)
          dst[i] = src[swz[i]];
       else if (swz[i] == UTIL_FORMAT_SWIZZLE_0)
          dst[i] = 0;
