@@ -116,12 +116,6 @@ struct r600_bomgr {
 };
 
 /*
- * r600_drm.c
- */
-struct radeon *r600_new(int fd, unsigned device);
-void r600_delete(struct radeon *r600);
-
-/*
  * radeon_pciid.c
  */
 unsigned radeon_family_from_device(unsigned device);
