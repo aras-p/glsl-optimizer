@@ -114,16 +114,6 @@ void radeon_lock_hardware(radeonContextPtr radeon
 		)
 {
 	char ret = 0;
-	struct radeon_framebuffer *rfb = NULL;
-	struct radeon_renderbuffer *rrb = NULL;
-
-	if (radeon_get_drawable(radeon)) {
-		rfb = radeon_get_drawable(radeon)->driverPrivate;
-
-		if (rfb)
-			rrb = radeon_get_renderbuffer(&rfb->base,
-						      rfb->base._ColorDrawBufferIndexes[0]);
-	}
 
 	if (!radeon->radeonScreen->driScreen->dri2.enabled) {
 		if (ATOMIC_INC_AND_FETCH(radeon->dri.hwLockCount) > 1)
