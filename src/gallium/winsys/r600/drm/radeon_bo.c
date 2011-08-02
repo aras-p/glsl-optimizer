@@ -83,35 +83,24 @@ struct radeon_bo *radeon_bo(struct radeon *radeon, unsigned handle,
 	if (bo == NULL) {
 		return NULL;
 	}
-	bo->size = size;
-	bo->handle = handle;
 	pipe_reference_init(&bo->reference, 1);
-	LIST_INITHEAD(&bo->fencedlist);
 
 	if (handle) {
-		unsigned size;
 		bo->buf = radeon->ws->buffer_from_handle(radeon->ws, &whandle, NULL, &size);
-		if (!bo->buf) {
-			FREE(bo);
-			return NULL;
-		}
-		bo->handle = radeon->ws->trans_get_buffer_handle(bo->buf);
-		bo->size = size;
-		bo->shared = TRUE;
 	} else {
 		bo->buf = radeon->ws->buffer_create(radeon->ws, size, alignment, bind, initial_domain);
-		if (!bo->buf) {
-			FREE(bo);
-			return NULL;
-		}
-		bo->handle = radeon->ws->trans_get_buffer_handle(bo->buf);
 	}
+	if (!bo->buf) {
+		FREE(bo);
+		return NULL;
+	}
+	bo->handle = radeon->ws->trans_get_buffer_handle(bo->buf);
+	bo->size = size;
 	return bo;
 }
 
 static void radeon_bo_destroy(struct radeon *radeon, struct radeon_bo *bo)
 {
-	LIST_DEL(&bo->fencedlist);
 	radeon_bo_fixed_unmap(radeon, bo);
 	pb_reference(&bo->buf, NULL);
 	FREE(bo);
@@ -133,16 +122,6 @@ int radeon_bo_wait(struct radeon *radeon, struct radeon_bo *bo)
 	struct drm_radeon_gem_wait_idle args;
 	int ret;
 
-        if (!bo->shared) {
-                if (!bo->fence)
-			return 0;
-		if (bo->fence <= *radeon->cfence) {
-			LIST_DELINIT(&bo->fencedlist);
-			bo->fence = 0;
-			return 0;
-		}
-        }
-
 	/* Zero out args to make valgrind happy */
 	memset(&args, 0, sizeof(args));
 	args.handle = bo->handle;
@@ -157,16 +136,6 @@ int radeon_bo_busy(struct radeon *radeon, struct radeon_bo *bo, uint32_t *domain
 {
 	struct drm_radeon_gem_busy args;
 	int ret;
-
-	if (!bo->shared) {
-		if (!bo->fence)
-			return 0;
-		if (bo->fence <= *radeon->cfence) {
-			LIST_DELINIT(&bo->fencedlist);
-			bo->fence = 0;
-			return 0;
-		}
-	}
 
 	memset(&args, 0, sizeof(args));
 	args.handle = bo->handle;

@@ -34,17 +34,12 @@
 #define PKT_COUNT_C                     0xC000FFFF
 #define PKT_COUNT_S(x)                  (((x) & 0x3FFF) << 16)
 
-struct r600_bo;
-
 struct radeon {
 	struct radeon_winsys		*ws;
 	struct radeon_info		info;
 	unsigned			family;
 	enum chip_class			chip_class;
 	struct r600_tiling_info		tiling_info;
-	unsigned			fence;
-	unsigned			*cfence;
-	struct r600_bo			*fence_bo;
 	unsigned			num_tile_pipes;
 	unsigned			backend_map;
 	boolean				backend_map_valid;
@@ -70,15 +65,11 @@ struct r600_reg {
 struct radeon_bo {
 	struct pipe_reference		reference;
 	struct pb_buffer		*buf;
-
 	unsigned			handle;
 	unsigned			size;
 	int				map_count;
 	void				*data;
-	struct list_head		fencedlist;
-	unsigned			fence;
-	struct r600_context		*ctx;
-	boolean				shared;
+
 	struct r600_reloc		*reloc;
 	unsigned			reloc_id;
 	unsigned			last_flush;
@@ -90,7 +81,6 @@ struct r600_bo {
 	/* DO NOT MOVE THIS ^ */
 	unsigned			domains;
 	struct radeon_bo		*bo;
-	unsigned			fence;
 };
 
 /*

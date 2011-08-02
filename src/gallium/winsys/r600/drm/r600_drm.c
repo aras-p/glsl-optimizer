@@ -221,21 +221,8 @@ static int radeon_get_backend_map(struct radeon *radeon)
 	return 0;
 }
 
-static int radeon_init_fence(struct radeon *radeon)
-{
-	radeon->fence = 1;
-	radeon->fence_bo = r600_bo(radeon, 4096, 0, 0, 0);
-	if (radeon->fence_bo == NULL) {
-		return -ENOMEM;
-	}
-	radeon->cfence = r600_bo_map(radeon, radeon->fence_bo, PIPE_TRANSFER_UNSYNCHRONIZED, NULL);
-	*radeon->cfence = 0;
-	return 0;
-}
-
 struct radeon *radeon_create(struct radeon_winsys *ws)
 {
-	int r;
 	struct radeon *radeon = CALLOC_STRUCT(radeon);
 	if (radeon == NULL) {
 		return NULL;
@@ -305,12 +292,6 @@ struct radeon *radeon_create(struct radeon_winsys *ws)
 		radeon_get_backend_map(radeon);
 	}
 
-	r = radeon_init_fence(radeon);
-	if (r) {
-		radeon_destroy(radeon);
-		return NULL;
-	}
-
 	return radeon;
 }
 
@@ -318,10 +299,6 @@ struct radeon *radeon_destroy(struct radeon *radeon)
 {
 	if (radeon == NULL)
 		return NULL;
-
-	if (radeon->fence_bo) {
-		r600_bo_reference(radeon, &radeon->fence_bo, NULL);
-	}
 
 	FREE(radeon);
 	return NULL;
