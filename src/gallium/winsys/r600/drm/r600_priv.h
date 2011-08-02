@@ -96,7 +96,6 @@ struct r600_bo {
 	/* DO NOT MOVE THIS ^ */
 	unsigned			size;
 	unsigned			tiling_flags;
-	unsigned			kernel_pitch;
 	unsigned			domains;
 	struct radeon_bo		*bo;
 	unsigned			fence;
@@ -140,8 +139,7 @@ int radeon_bo_busy(struct radeon *radeon, struct radeon_bo *bo, uint32_t *domain
 int radeon_bo_fencelist(struct radeon *radeon, struct radeon_bo **bolist, uint32_t num_bo);
 int radeon_bo_get_tiling_flags(struct radeon *radeon,
 			       struct radeon_bo *bo,
-			       uint32_t *tiling_flags,
-			       uint32_t *pitch);
+			       uint32_t *tiling_flags);
 int radeon_bo_get_name(struct radeon *radeon,
 		       struct radeon_bo *bo,
 		       uint32_t *name);

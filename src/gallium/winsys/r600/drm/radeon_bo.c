@@ -220,8 +220,7 @@ int radeon_bo_busy(struct radeon *radeon, struct radeon_bo *bo, uint32_t *domain
 
 int radeon_bo_get_tiling_flags(struct radeon *radeon,
 			       struct radeon_bo *bo,
-			       uint32_t *tiling_flags,
-			       uint32_t *pitch)
+			       uint32_t *tiling_flags)
 {
 	struct drm_radeon_gem_get_tiling args = {};
 	int ret;
@@ -233,7 +232,6 @@ int radeon_bo_get_tiling_flags(struct radeon *radeon,
 		return ret;
 
 	*tiling_flags = args.tiling_flags;
-	*pitch = args.pitch;
 	return ret;
 }
 

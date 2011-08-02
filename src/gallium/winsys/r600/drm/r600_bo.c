@@ -107,7 +107,7 @@ struct r600_bo *r600_bo_handle(struct radeon *radeon, struct winsys_handle *whan
 	if (stride)
 		*stride = whandle->stride;
 
-	radeon_bo_get_tiling_flags(radeon, rbo, &bo->tiling_flags, &bo->kernel_pitch);
+	radeon_bo_get_tiling_flags(radeon, rbo, &bo->tiling_flags);
 	if (array_mode) {
 		if (bo->tiling_flags) {
 			if (bo->tiling_flags & RADEON_TILING_MACRO)
