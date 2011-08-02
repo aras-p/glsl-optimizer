@@ -66,7 +66,6 @@ struct r600_bo *r600_bo(struct radeon *radeon,
 	}
 
 	bo = calloc(1, sizeof(struct r600_bo));
-	bo->size = size;
 	bo->domains = domains;
 	bo->bo = rbo;
 
@@ -88,7 +87,6 @@ struct r600_bo *r600_bo_handle(struct radeon *radeon, struct winsys_handle *whan
 	}
 
 	pipe_reference_init(&bo->reference, 1);
-	bo->size = rbo->size;
 	bo->domains = (RADEON_GEM_DOMAIN_CPU |
 			RADEON_GEM_DOMAIN_GTT |
 			RADEON_GEM_DOMAIN_VRAM);
