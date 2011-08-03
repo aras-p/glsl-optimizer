@@ -1237,8 +1237,19 @@ ir_to_mesa_visitor::visit(ir_expression *ir)
 	  ir->operands[1]->type->is_vector()) {
 	 src_reg temp = get_temp(glsl_type::vec4_type);
 	 emit(ir, OPCODE_SNE, dst_reg(temp), op[0], op[1]);
+
+	 /* After the dot-product, the value will be an integer on the
+	  * range [0,4].  Zero becomes 1.0, and positive values become zero.
+	  */
 	 emit_dp(ir, result_dst, temp, temp, vector_elements);
-	 emit(ir, OPCODE_SEQ, result_dst, result_src, src_reg_for_float(0.0));
+
+	 /* Negating the result of the dot-product gives values on the range
+	  * [-4, 0].  Zero becomes 1.0, and negative values become zero.  This
+	  * achieved using SGE.
+	  */
+	 src_reg sge_src = result_src;
+	 sge_src.negate = ~sge_src.negate;
+	 emit(ir, OPCODE_SGE, result_dst, sge_src, src_reg_for_float(0.0));
       } else {
 	 emit(ir, OPCODE_SEQ, result_dst, op[0], op[1]);
       }
