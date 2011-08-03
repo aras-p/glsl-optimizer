@@ -41,6 +41,7 @@ struct radeon_cs_context {
     /* Relocs. */
     unsigned                    nrelocs;
     unsigned                    crelocs;
+    unsigned			validated_crelocs;
     struct radeon_bo            **relocs_bo;
     struct drm_radeon_cs_reloc  *relocs;
 

@@ -262,7 +262,9 @@ struct radeon_winsys {
 
     /**
      * Return TRUE if there is enough memory in VRAM and GTT for the relocs
-     * added so far.
+     * added so far. If the validation fails, all the relocations which have
+     * been added since the last call of cs_validate will be removed and
+     * the CS will be flushed (provided there are still any relocations).
      *
      * \param cs        A command stream to validate.
      */

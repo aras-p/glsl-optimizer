@@ -1238,13 +1238,12 @@ validate:
         r300->rws->cs_add_reloc(r300->cs, r300_resource(index_buffer)->cs_buf,
                                 r300_resource(index_buffer)->domain, 0);
 
-    /* Now do the validation. */
+    /* Now do the validation (flush is called inside cs_validate on failure). */
     if (!r300->rws->cs_validate(r300->cs)) {
         /* Ooops, an infinite loop, give up. */
         if (flushed)
             return FALSE;
 
-        r300_flush(&r300->context, RADEON_FLUSH_ASYNC, NULL);
         flushed = TRUE;
         goto validate;
     }

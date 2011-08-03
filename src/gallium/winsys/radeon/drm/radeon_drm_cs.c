@@ -115,6 +115,7 @@ static void radeon_cs_context_cleanup(struct radeon_cs_context *csc)
     }
 
     csc->crelocs = 0;
+    csc->validated_crelocs = 0;
     csc->chunks[0].length_dw = 0;
     csc->chunks[1].length_dw = 0;
     csc->used_gart = 0;
@@ -307,9 +308,37 @@ static void radeon_drm_cs_add_reloc(struct radeon_winsys_cs *rcs,
 static boolean radeon_drm_cs_validate(struct radeon_winsys_cs *rcs)
 {
     struct radeon_drm_cs *cs = radeon_drm_cs(rcs);
+    boolean status =
+        cs->csc->used_gart < cs->ws->info.gart_size * 0.8 &&
+        cs->csc->used_vram < cs->ws->info.vram_size * 0.8;
 
-    return cs->csc->used_gart < cs->ws->info.gart_size * 0.8 &&
-           cs->csc->used_vram < cs->ws->info.vram_size * 0.8;
+    if (status) {
+        cs->csc->validated_crelocs = cs->csc->crelocs;
+    } else {
+        /* Remove lately-added relocations. The validation failed with them
+         * and the CS is about to be flushed because of that. Keep only
+         * the already-validated relocations. */
+        unsigned i;
+
+        for (i = cs->csc->validated_crelocs; i < cs->csc->crelocs; i++) {
+            p_atomic_dec(&cs->csc->relocs_bo[i]->num_cs_references);
+            radeon_bo_reference(&cs->csc->relocs_bo[i], NULL);
+        }
+        cs->csc->crelocs = cs->csc->validated_crelocs;
+
+        /* Flush if there are any relocs. Clean up otherwise. */
+        if (cs->csc->crelocs) {
+            cs->flush_cs(cs->flush_data, RADEON_FLUSH_ASYNC);
+        } else {
+            radeon_cs_context_cleanup(cs->csc);
+
+            assert(cs->base.cdw == 0);
+            if (cs->base.cdw != 0) {
+                fprintf(stderr, "radeon: Unexpected error in %s.\n", __func__);
+            }
+        }
+    }
+    return status;
 }
 
 static void radeon_drm_cs_write_reloc(struct radeon_winsys_cs *rcs,
