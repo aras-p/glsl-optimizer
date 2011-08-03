@@ -260,6 +260,7 @@ static const _mesa_glsl_extension _mesa_glsl_supported_extensions[] = {
    EXT(ARB_texture_rectangle,          true,  false, true,  true,  false,     dummy_true),
    EXT(EXT_texture_array,              true,  false, true,  true,  false,     EXT_texture_array),
    EXT(ARB_shader_texture_lod,         true,  false, true,  true,  true,      ARB_shader_texture_lod),
+   EXT(EXT_shader_texture_lod,         true,  false, true,  true,  true,      ARB_shader_texture_lod),
    EXT(ARB_shader_stencil_export,      false, false, true,  true,  false,     ARB_shader_stencil_export),
    EXT(AMD_conservative_depth,         true,  false, true,  true,  false,     AMD_conservative_depth),
    EXT(AMD_shader_stencil_export,      false, false, true,  true,  false,     ARB_shader_stencil_export),
