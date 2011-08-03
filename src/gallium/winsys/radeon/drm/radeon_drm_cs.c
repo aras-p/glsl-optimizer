@@ -380,6 +380,8 @@ static PIPE_THREAD_ROUTINE(radeon_drm_cs_emit_ioctl, param)
 
     for (i = 0; i < csc->crelocs; i++)
         p_atomic_dec(&csc->relocs_bo[i]->num_active_ioctls);
+
+    radeon_cs_context_cleanup(csc);
     return NULL;
 }
 
@@ -424,6 +426,8 @@ static void radeon_drm_cs_flush(struct radeon_winsys_cs *rcs, unsigned flags)
         } else {
             radeon_drm_cs_emit_ioctl(cs->csc);
         }
+    } else {
+        radeon_cs_context_cleanup(cs->csc);
     }
 
     /* Flip command streams. */
@@ -432,8 +436,6 @@ static void radeon_drm_cs_flush(struct radeon_winsys_cs *rcs, unsigned flags)
     cs->cst = tmp;
 
     /* Prepare a new CS. */
-    radeon_cs_context_cleanup(cs->csc);
-
     cs->base.buf = cs->csc->buf;
     cs->base.cdw = 0;
 }
