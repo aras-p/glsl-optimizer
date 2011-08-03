@@ -102,7 +102,7 @@ struct i915_winsys {
     * @num_of_buffers size of the passed array
     */
    boolean (*validate_buffers)(struct i915_winsys_batchbuffer *batch,
-	 		       struct i915_winsys_buffer **buffers,
+			       struct i915_winsys_buffer **buffers,
 			       int num_of_buffers);
 
    /**
