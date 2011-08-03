@@ -6,7 +6,6 @@ struct v2f {
 };
 varying highp vec4 xlv_TEXCOORD1;
 varying highp vec2 xlv_TEXCOORD0;
-varying highp vec4 xlv_SV_POSITION;
 uniform highp vec4 _MainTex_TexelSize;
 uniform sampler2D _MainTex;
 vec4 xll_tex2Dlod (
@@ -26,7 +25,7 @@ float FxaaLuma (
   return rgba.y;
 }
 
-vec4 FxaaPixelShader (
+lowp vec4 FxaaPixelShader (
   in highp vec2 pos,
   in highp vec4 fxaaConsolePosPos,
   in sampler2D tex,
@@ -46,14 +45,14 @@ vec4 FxaaPixelShader (
 )
 {
   bool twoTap;
-  highp vec4 rgbyB;
-  highp vec4 rgbyA;
-  highp vec4 rgbyP2;
-  highp vec4 rgbyN2;
+  lowp vec4 rgbyB;
+  lowp vec4 rgbyA;
+  lowp vec4 rgbyP2;
+  lowp vec4 rgbyN2;
   highp vec2 dir2;
   highp float dirAbsMinTimesC;
-  highp vec4 rgbyP1;
-  highp vec4 rgbyN1;
+  lowp vec4 rgbyP1;
+  lowp vec4 rgbyN1;
   highp vec2 dir1;
   highp vec2 dir;
   highp float dirSeMinusNw;
@@ -246,10 +245,10 @@ vec4 FxaaPixelShader (
   highp vec4 tmpvar_65;
   tmpvar_65 = tmpvar_64;
   rgbyP2 = tmpvar_65;
-  highp vec4 tmpvar_66;
+  lowp vec4 tmpvar_66;
   tmpvar_66 = (rgbyN1 + rgbyP1);
   rgbyA = tmpvar_66;
-  highp vec4 tmpvar_67;
+  lowp vec4 tmpvar_67;
   tmpvar_67 = (((rgbyN2 + rgbyP2) * 0.25) + (rgbyA * 0.25));
   rgbyB = tmpvar_67;
   bool tmpvar_68;
@@ -262,14 +261,14 @@ vec4 FxaaPixelShader (
   tmpvar_69 = tmpvar_68;
   twoTap = tmpvar_69;
   if (twoTap) {
-    highp vec3 tmpvar_70;
+    lowp vec3 tmpvar_70;
     tmpvar_70 = (rgbyA.xyz * 0.5);
     rgbyB.xyz = tmpvar_70.xyz.xyz;
   };
   return rgbyB;
 }
 
-vec4 xlat_main (
+lowp vec4 xlat_main (
   in v2f i
 )
 {
@@ -282,7 +281,7 @@ vec4 xlat_main (
   tmpvar_2.y = -(fxaaN);
   tmpvar_2.z = fxaaN;
   tmpvar_2.w = fxaaN;
-  highp vec4 tmpvar_3;
+  lowp vec4 tmpvar_3;
   tmpvar_3 = FxaaPixelShader (i.uv, i.uvPosPos, _MainTex, _MainTex, _MainTex, _MainTex_TexelSize.xy, (_MainTex_TexelSize.xyxy * tmpvar_2), (_MainTex_TexelSize.xyxy * vec4(-2.0, -2.0, 2.0, 2.0)), (_MainTex_TexelSize.xyxy * vec4(8.0, 8.0, -4.0, -4.0)), 0.75, 0.166, 0.0833, 8.0, 0.125, 0.05, vec4(1.0, -1.0, 0.25, -0.25));
   return tmpvar_3;
 }
@@ -290,31 +289,29 @@ vec4 xlat_main (
 void main ()
 {
   v2f xlt_i;
-  highp vec4 xl_retval;
-  highp vec4 tmpvar_1;
-  tmpvar_1 = xlv_SV_POSITION.xyzw;
-  highp vec4 tmpvar_2;
-  tmpvar_2 = tmpvar_1;
-  xlt_i.pos = tmpvar_2;
+  lowp vec4 xl_retval;
+  vec4 tmpvar_1;
+  tmpvar_1 = vec4(0.0, 0.0, 0.0, 0.0);
+  xlt_i.pos = tmpvar_1;
+  highp vec2 tmpvar_2;
+  tmpvar_2 = xlv_TEXCOORD0.xy;
   highp vec2 tmpvar_3;
-  tmpvar_3 = xlv_TEXCOORD0.xy;
-  highp vec2 tmpvar_4;
-  tmpvar_4 = tmpvar_3;
-  xlt_i.uv = tmpvar_4;
+  tmpvar_3 = tmpvar_2;
+  xlt_i.uv = tmpvar_3;
+  highp vec4 tmpvar_4;
+  tmpvar_4 = xlv_TEXCOORD1.xyzw;
   highp vec4 tmpvar_5;
-  tmpvar_5 = xlv_TEXCOORD1.xyzw;
-  highp vec4 tmpvar_6;
-  tmpvar_6 = tmpvar_5;
-  xlt_i.uvPosPos = tmpvar_6;
-  highp vec4 tmpvar_7;
-  tmpvar_7 = xlat_main (xlt_i);
-  highp vec4 tmpvar_8;
-  tmpvar_8 = tmpvar_7;
-  xl_retval = tmpvar_8;
-  highp vec4 tmpvar_9;
-  tmpvar_9 = xl_retval.xyzw;
-  highp vec4 tmpvar_10;
-  tmpvar_10 = tmpvar_9;
-  gl_FragData[0] = tmpvar_10;
+  tmpvar_5 = tmpvar_4;
+  xlt_i.uvPosPos = tmpvar_5;
+  lowp vec4 tmpvar_6;
+  tmpvar_6 = xlat_main (xlt_i);
+  lowp vec4 tmpvar_7;
+  tmpvar_7 = tmpvar_6;
+  xl_retval = tmpvar_7;
+  lowp vec4 tmpvar_8;
+  tmpvar_8 = xl_retval.xyzw;
+  lowp vec4 tmpvar_9;
+  tmpvar_9 = tmpvar_8;
+  gl_FragData[0] = tmpvar_9;
 }
 

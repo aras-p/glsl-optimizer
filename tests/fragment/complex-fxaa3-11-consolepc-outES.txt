@@ -9,8 +9,12 @@ void main ()
   fxaaConsoleRcpFrameOpt = (_MainTex_TexelSize.xyxy * vec4(-0.5, -0.5, 0.5, 0.5));
   highp vec4 fxaaConsoleRcpFrameOpt2;
   fxaaConsoleRcpFrameOpt2 = (_MainTex_TexelSize.xyxy * vec4(-2.0, -2.0, 2.0, 2.0));
-  highp vec4 tmpvar_1;
-  highp vec4 rgbyB;
+  lowp vec4 tmpvar_1;
+  lowp vec4 rgbyB;
+  lowp vec4 rgbyP2;
+  lowp vec4 rgbyN2;
+  lowp vec4 rgbyP1;
+  lowp vec4 rgbyN1;
   highp vec2 dir;
   highp vec4 tmpvar_2;
   tmpvar_2.zw = vec2(0.0, 0.0);
@@ -83,6 +87,7 @@ void main ()
     lowp vec4 tmpvar_31;
     tmpvar_31 = texture2DLodEXT (_MainTex, tmpvar_29.xy, 0.0);
     tmpvar_30 = tmpvar_31;
+    rgbyN1 = tmpvar_30;
     highp vec4 tmpvar_32;
     tmpvar_32.zw = vec2(0.0, 0.0);
     tmpvar_32.xy = (xlv_TEXCOORD0 + (tmpvar_28 * fxaaConsoleRcpFrameOpt.zw));
@@ -90,6 +95,7 @@ void main ()
     lowp vec4 tmpvar_34;
     tmpvar_34 = texture2DLodEXT (_MainTex, tmpvar_32.xy, 0.0);
     tmpvar_33 = tmpvar_34;
+    rgbyP1 = tmpvar_33;
     highp vec2 tmpvar_35;
     tmpvar_35 = clamp ((tmpvar_28 / (min (abs (tmpvar_28.x), abs (tmpvar_28.y)) * 8.0)), vec2(-2.0, -2.0), vec2(2.0, 2.0));
     highp vec4 tmpvar_36;
@@ -99,6 +105,7 @@ void main ()
     lowp vec4 tmpvar_38;
     tmpvar_38 = texture2DLodEXT (_MainTex, tmpvar_36.xy, 0.0);
     tmpvar_37 = tmpvar_38;
+    rgbyN2 = tmpvar_37;
     highp vec4 tmpvar_39;
     tmpvar_39.zw = vec2(0.0, 0.0);
     tmpvar_39.xy = (xlv_TEXCOORD0 + (tmpvar_35 * fxaaConsoleRcpFrameOpt2.zw));
@@ -106,10 +113,11 @@ void main ()
     lowp vec4 tmpvar_41;
     tmpvar_41 = texture2DLodEXT (_MainTex, tmpvar_39.xy, 0.0);
     tmpvar_40 = tmpvar_41;
-    highp vec4 tmpvar_42;
-    tmpvar_42 = (tmpvar_30 + tmpvar_33);
-    highp vec4 tmpvar_43;
-    tmpvar_43 = (((tmpvar_37 + tmpvar_40) * 0.25) + (tmpvar_42 * 0.25));
+    rgbyP2 = tmpvar_40;
+    lowp vec4 tmpvar_42;
+    tmpvar_42 = (rgbyN1 + rgbyP1);
+    lowp vec4 tmpvar_43;
+    tmpvar_43 = (((rgbyN2 + rgbyP2) * 0.25) + (tmpvar_42 * 0.25));
     rgbyB = tmpvar_43;
     bool tmpvar_44;
     if ((tmpvar_43.y < tmpvar_23)) {
