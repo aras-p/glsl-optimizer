@@ -934,13 +934,9 @@ int r600_context_init(struct r600_context *ctx, struct radeon *radeon)
 	r600_init_cs(ctx);
 	/* save 16dwords space for fence mecanism */
 	ctx->pm4_ndwords -= 16;
-
-	LIST_INITHEAD(&ctx->fenced_bo);
-
 	ctx->max_db = 4;
 
 	r600_get_backend_mask(ctx);
-
 	return 0;
 out_err:
 	r600_context_fini(ctx);

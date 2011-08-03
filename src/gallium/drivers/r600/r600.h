@@ -254,11 +254,11 @@ struct r600_context {
 	unsigned		creloc;
 	struct r600_reloc	*reloc;
 	struct radeon_bo	**bo;
+
 	u32			*pm4;
 	struct list_head	query_list;
 	unsigned		num_query_running;
 	unsigned		backend_mask;
-	struct list_head	fenced_bo;
 	unsigned                max_db; /* for OQ */
 	unsigned                num_dest_buffers;
 	unsigned		flags;
