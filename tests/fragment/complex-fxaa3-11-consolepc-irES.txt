@@ -15,7 +15,7 @@ vec4 xll_tex2Dlod (
 )
 {
   lowp vec4 tmpvar_1;
-  tmpvar_1 = texture2DLod (s, coord.xy, coord.w);
+  tmpvar_1 = texture2DLodEXT (s, coord.xy, coord.w);
   return tmpvar_1;
 }
 

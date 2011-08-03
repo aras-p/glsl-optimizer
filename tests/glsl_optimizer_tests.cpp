@@ -118,6 +118,7 @@ static bool CheckGLSL (bool vertex, bool gles, const char* prefix, const std::st
 		src += "#define lowp\n";
 		src += "#define mediump\n";
 		src += "#define highp\n";
+		src += "#define texture2DLodEXT texture2DLod\n";
 	}
 	src += source;
 	if (gles)
