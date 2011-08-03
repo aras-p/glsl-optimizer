@@ -134,10 +134,11 @@ static INLINE unsigned r600_context_bo_reloc(struct r600_context *ctx, struct r6
 
 	assert(bo != NULL);
 
-	reloc_index = ctx->radeon->ws->trans_add_reloc(
-				ctx->cs, bo->cs_buf,
-				rbo->domains, rbo->domains,
-				(void**)&ctx->reloc, &ctx->creloc);
+	reloc_index =
+		ctx->radeon->ws->trans_add_reloc(ctx->cs, bo->cs_buf, rbo->domains, rbo->domains);
+
+	if (reloc_index >= ctx->creloc)
+		ctx->creloc = reloc_index+1;
 
 	radeon_bo_reference(ctx->radeon, &ctx->bo[reloc_index], bo);
 	return reloc_index * 4;

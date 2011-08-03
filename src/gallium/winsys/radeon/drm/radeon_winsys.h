@@ -332,8 +332,7 @@ struct radeon_winsys {
     unsigned (*trans_add_reloc)(struct radeon_winsys_cs *cs,
 				struct radeon_winsys_cs_handle *buf,
 				enum radeon_bo_domain rd,
-                                enum radeon_bo_domain wd,
-				void **reloc_list, unsigned *reloc_count);
+                                enum radeon_bo_domain wd);
 };
 
 #endif

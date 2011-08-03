@@ -776,7 +776,6 @@ void r600_context_fini(struct r600_context *ctx)
 	free(ctx->range);
 	free(ctx->blocks);
 	free(ctx->bo);
-	free(ctx->pm4);
 	ctx->radeon->ws->cs_destroy(ctx->cs);
 
 	memset(ctx, 0, sizeof(struct r600_context));
@@ -920,11 +919,7 @@ int r600_context_init(struct r600_context *ctx, struct radeon *radeon)
 		goto out_err;
 	}
 	ctx->pm4_ndwords = RADEON_CTX_MAX_PM4;
-	ctx->pm4 = calloc(ctx->pm4_ndwords, 4);
-	if (ctx->pm4 == NULL) {
-		r = -ENOMEM;
-		goto out_err;
-	}
+	ctx->pm4 = ctx->cs->buf;
 
 	r600_init_cs(ctx);
 	/* save 16dwords space for fence mecanism */
@@ -1492,10 +1487,6 @@ void r600_context_draw(struct r600_context *ctx, const struct r600_draw *draw)
 
 void r600_context_flush(struct r600_context *ctx)
 {
-	struct drm_radeon_cs drmib = {};
-	struct drm_radeon_cs_chunk chunks[2];
-	uint64_t chunk_array[2];
-	int r;
 	struct r600_block *enable_block = NULL;
 
 	if (ctx->pm4_cdwords == ctx->init_dwords)
@@ -1513,27 +1504,12 @@ void r600_context_flush(struct r600_context *ctx)
 	ctx->pm4[ctx->pm4_cdwords++] = PKT3(PKT3_EVENT_WRITE, 0, 0);
 	ctx->pm4[ctx->pm4_cdwords++] = EVENT_TYPE(EVENT_TYPE_PS_PARTIAL_FLUSH) | EVENT_INDEX(4);
 
-#if 1
-	/* emit cs */
-	drmib.num_chunks = 2;
-	drmib.chunks = (uint64_t)(uintptr_t)chunk_array;
-	chunks[0].chunk_id = RADEON_CHUNK_ID_IB;
-	chunks[0].length_dw = ctx->pm4_cdwords;
-	chunks[0].chunk_data = (uint64_t)(uintptr_t)ctx->pm4;
-	chunks[1].chunk_id = RADEON_CHUNK_ID_RELOCS;
-	chunks[1].length_dw = ctx->creloc * 4;
-	chunks[1].chunk_data = (uint64_t)(uintptr_t)ctx->reloc;
-	chunk_array[0] = (uint64_t)(uintptr_t)&chunks[0];
-	chunk_array[1] = (uint64_t)(uintptr_t)&chunks[1];
-	r = drmCommandWriteRead(ctx->radeon->info.fd, DRM_RADEON_CS, &drmib,
-				sizeof(struct drm_radeon_cs));
-	if (r) {
-		fprintf(stderr, "radeon: The kernel rejected CS, "
-			"see dmesg for more information.\n");
-	}
-#else
-	*ctx->radeon->cfence = ctx->radeon->fence;
-#endif
+	/* Flush the CS. */
+	ctx->cs->cdw = ctx->pm4_cdwords;
+	ctx->radeon->ws->cs_flush(ctx->cs, 0);
+	/* We need to get the pointer to the other CS,
+	 * the command streams are double-buffered. */
+	ctx->pm4 = ctx->cs->buf;
 
 	/* restart */
 	for (int i = 0; i < ctx->creloc; i++) {
@@ -1544,7 +1520,6 @@ void r600_context_flush(struct r600_context *ctx)
 	ctx->pm4_dirty_cdwords = 0;
 	ctx->pm4_cdwords = 0;
 	ctx->flags = 0;
-	ctx->radeon->ws->cs_flush(ctx->cs, 0);
 
 	r600_init_cs(ctx);
 

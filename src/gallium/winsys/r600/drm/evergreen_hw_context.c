@@ -995,11 +995,7 @@ int evergreen_context_init(struct r600_context *ctx, struct radeon *radeon)
 		goto out_err;
 	}
 	ctx->pm4_ndwords = RADEON_CTX_MAX_PM4;
-	ctx->pm4 = calloc(ctx->pm4_ndwords, 4);
-	if (ctx->pm4 == NULL) {
-		r = -ENOMEM;
-		goto out_err;
-	}
+	ctx->pm4 = ctx->cs->buf;
 
 	r600_init_cs(ctx);
 	/* save 16dwords space for fence mecanism */

@@ -236,16 +236,16 @@ struct r600_context {
 	struct list_head	resource_dirty;
 	struct list_head	enable_list;
 	unsigned		pm4_ndwords;
-	unsigned		pm4_cdwords;
 	unsigned		pm4_dirty_cdwords;
 	unsigned		ctx_pm4_ndwords;
 	unsigned		init_dwords;
 
 	unsigned		creloc;
-	unsigned		*reloc;
 	struct radeon_bo	**bo;
 
 	u32			*pm4;
+	unsigned		pm4_cdwords;
+
 	struct list_head	query_list;
 	unsigned		num_query_running;
 	unsigned		backend_mask;

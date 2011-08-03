@@ -473,8 +473,7 @@ static boolean radeon_bo_is_referenced(struct radeon_winsys_cs *rcs,
 static unsigned trans_add_reloc(struct radeon_winsys_cs *rcs,
 				struct radeon_winsys_cs_handle *buf,
 				enum radeon_bo_domain rd,
-                                enum radeon_bo_domain wd,
-				void **reloc_list, unsigned *reloc_count)
+                                enum radeon_bo_domain wd)
 {
 	struct radeon_drm_cs *cs = radeon_drm_cs(rcs);
         struct radeon_bo *bo = (struct radeon_bo*)buf;
@@ -487,8 +486,6 @@ static unsigned trans_add_reloc(struct radeon_winsys_cs *rcs,
         if (added_domains & RADEON_DOMAIN_VRAM)
             cs->csc->used_vram += bo->size;
 
-	*reloc_list = cs->csc->relocs;
-	*reloc_count = cs->csc->crelocs;
 	return index;
 }
 
