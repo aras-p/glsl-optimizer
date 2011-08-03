@@ -986,14 +986,10 @@ int evergreen_context_init(struct r600_context *ctx, struct radeon *radeon)
 	if (r)
 		goto out_err;
 
+	ctx->cs = radeon->ws->cs_create(radeon->ws);
+
 	/* allocate cs variables */
-	ctx->nreloc = RADEON_CTX_MAX_PM4;
-	ctx->reloc = calloc(ctx->nreloc, sizeof(struct r600_reloc));
-	if (ctx->reloc == NULL) {
-		r = -ENOMEM;
-		goto out_err;
-	}
-	ctx->bo = calloc(ctx->nreloc, sizeof(void *));
+	ctx->bo = calloc(RADEON_CTX_MAX_PM4, sizeof(void *));
 	if (ctx->bo == NULL) {
 		r = -ENOMEM;
 		goto out_err;
@@ -1146,10 +1142,6 @@ void evergreen_context_draw(struct r600_context *ctx, const struct r600_draw *dr
 
 	if (draw->indices) {
 		ndwords = 11;
-		/* make sure there is enough relocation space before scheduling draw */
-		if (ctx->creloc >= (ctx->nreloc - 1)) {
-			r600_context_flush(ctx);
-		}
 	}
 
 	/* queries need some special values */

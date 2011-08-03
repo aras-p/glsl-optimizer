@@ -329,6 +329,11 @@ struct radeon_winsys {
 
     /* Transitional functions for r600g when moving to winsys/radeon */
     unsigned (*trans_get_buffer_handle)(struct pb_buffer *buf);
+    unsigned (*trans_add_reloc)(struct radeon_winsys_cs *cs,
+				struct radeon_winsys_cs_handle *buf,
+				enum radeon_bo_domain rd,
+                                enum radeon_bo_domain wd,
+				void **reloc_list, unsigned *reloc_count);
 };
 
 #endif

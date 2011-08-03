@@ -776,9 +776,9 @@ void r600_context_fini(struct r600_context *ctx)
 	r600_free_resource_range(ctx, &ctx->fs_resources, ctx->num_fs_resources);
 	free(ctx->range);
 	free(ctx->blocks);
-	free(ctx->reloc);
 	free(ctx->bo);
 	free(ctx->pm4);
+	ctx->radeon->ws->cs_destroy(ctx->cs);
 
 	memset(ctx, 0, sizeof(struct r600_context));
 }
@@ -912,14 +912,10 @@ int r600_context_init(struct r600_context *ctx, struct radeon *radeon)
 	if (r)
 		goto out_err;
 
+	ctx->cs = radeon->ws->cs_create(radeon->ws);
+
 	/* allocate cs variables */
-	ctx->nreloc = RADEON_CTX_MAX_PM4;
-	ctx->reloc = calloc(ctx->nreloc, sizeof(struct r600_reloc));
-	if (ctx->reloc == NULL) {
-		r = -ENOMEM;
-		goto out_err;
-	}
-	ctx->bo = calloc(ctx->nreloc, sizeof(void *));
+	ctx->bo = calloc(RADEON_CTX_MAX_PM4, sizeof(void *));
 	if (ctx->bo == NULL) {
 		r = -ENOMEM;
 		goto out_err;
@@ -1009,14 +1005,15 @@ void r600_context_bo_flush(struct r600_context *ctx, unsigned flush_flags,
 void r600_context_get_reloc(struct r600_context *ctx, struct r600_bo *rbo)
 {
 	struct radeon_bo *bo = rbo->bo;
-	bo->reloc = &ctx->reloc[ctx->creloc];
-	bo->reloc_id = ctx->creloc * sizeof(struct r600_reloc) / 4;
-	ctx->reloc[ctx->creloc].handle = bo->handle;
-	ctx->reloc[ctx->creloc].read_domain = rbo->domains & (RADEON_GEM_DOMAIN_GTT | RADEON_GEM_DOMAIN_VRAM);
-	ctx->reloc[ctx->creloc].write_domain = rbo->domains & (RADEON_GEM_DOMAIN_GTT | RADEON_GEM_DOMAIN_VRAM);
-	ctx->reloc[ctx->creloc].flags = 0;
-	radeon_bo_reference(ctx->radeon, &ctx->bo[ctx->creloc], bo);
-	ctx->creloc++;
+
+	unsigned reloc_index = ctx->radeon->ws->trans_add_reloc(ctx->cs, bo->cs_buf,
+								rbo->domains & (RADEON_GEM_DOMAIN_GTT | RADEON_GEM_DOMAIN_VRAM),
+								rbo->domains & (RADEON_GEM_DOMAIN_GTT | RADEON_GEM_DOMAIN_VRAM),
+								(void**)&ctx->reloc, &ctx->creloc);
+
+	bo->reloc = (void*)1;
+	bo->reloc_id = reloc_index * 4;
+	radeon_bo_reference(ctx->radeon, &ctx->bo[reloc_index], bo);
 }
 
 void r600_context_reg(struct r600_context *ctx,
@@ -1444,10 +1441,6 @@ void r600_context_draw(struct r600_context *ctx, const struct r600_draw *draw)
 
 	if (draw->indices) {
 		ndwords = 11;
-		/* make sure there is enough relocation space before scheduling draw */
-		if (ctx->creloc >= (ctx->nreloc - 1)) {
-			r600_context_flush(ctx);
-		}
 	}
 
 	/* queries need some special values */
@@ -1570,6 +1563,7 @@ void r600_context_flush(struct r600_context *ctx)
 	ctx->pm4_dirty_cdwords = 0;
 	ctx->pm4_cdwords = 0;
 	ctx->flags = 0;
+	ctx->radeon->ws->cs_flush(ctx->cs, 0);
 
 	r600_init_cs(ctx);
 
@@ -1601,8 +1595,7 @@ void r600_context_emit_fence(struct r600_context *ctx, struct r600_bo *fence_bo,
 {
 	unsigned ndwords = 10;
 
-	if (((ctx->pm4_dirty_cdwords + ndwords + ctx->pm4_cdwords) > ctx->pm4_ndwords) ||
-	    (ctx->creloc >= (ctx->nreloc - 1))) {
+	if ((ctx->pm4_dirty_cdwords + ndwords + ctx->pm4_cdwords) > ctx->pm4_ndwords) {
 		/* need to flush */
 		r600_context_flush(ctx);
 	}

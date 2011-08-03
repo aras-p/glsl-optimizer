@@ -239,6 +239,7 @@ struct r600_query {
 
 struct r600_context {
 	struct radeon		*radeon;
+	struct radeon_winsys_cs	*cs;
 	struct r600_range	*range;
 	unsigned		nblocks;
 	struct r600_block	**blocks;
@@ -250,7 +251,7 @@ struct r600_context {
 	unsigned		pm4_dirty_cdwords;
 	unsigned		ctx_pm4_ndwords;
 	unsigned		init_dwords;
-	unsigned		nreloc;
+
 	unsigned		creloc;
 	struct r600_reloc	*reloc;
 	struct radeon_bo	**bo;
