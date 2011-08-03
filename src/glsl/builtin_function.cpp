@@ -15721,6 +15721,428 @@ static const char *functions_for_ARB_texture_rectangle_vert [] = {
    builtin_texture2DRect,
    builtin_texture2DRectProj,
 };
+static const char prototypes_for_EXT_shader_texture_lod_frag[] =
+   "(\n"
+   "(function texture1DLod\n"
+   "  (signature vec4\n"
+   "    (parameters\n"
+   "      (declare (in) sampler1D sampler)\n"
+   "      (declare (in) float coord)\n"
+   "      (declare (in) float lod))\n"
+   "    ()))\n"
+   "(function texture1DProjLod\n"
+   "  (signature vec4\n"
+   "    (parameters\n"
+   "      (declare (in) sampler1D sampler)\n"
+   "      (declare (in) vec2 coord)\n"
+   "      (declare (in) float lod))\n"
+   "    ())\n"
+   "  (signature vec4\n"
+   "    (parameters\n"
+   "      (declare (in) sampler1D sampler)\n"
+   "      (declare (in) vec4 coord)\n"
+   "      (declare (in) float lod))\n"
+   "    ()))\n"
+   "(function texture2DLod\n"
+   "  (signature vec4\n"
+   "    (parameters\n"
+   "      (declare (in) sampler2D sampler)\n"
+   "      (declare (in) vec2 coord)\n"
+   "      (declare (in) float lod))\n"
+   "    ()))\n"
+   "(function texture2DProjLod\n"
+   "  (signature vec4\n"
+   "    (parameters\n"
+   "      (declare (in) sampler2D sampler)\n"
+   "      (declare (in) vec3 coord)\n"
+   "      (declare (in) float lod))\n"
+   "    ())\n"
+   "  (signature vec4\n"
+   "    (parameters\n"
+   "      (declare (in) sampler2D sampler)\n"
+   "      (declare (in) vec4 coord)\n"
+   "      (declare (in) float lod))\n"
+   "    ()))\n"
+   "(function texture3DLod\n"
+   "  (signature vec4\n"
+   "    (parameters\n"
+   "      (declare (in) sampler3D sampler)\n"
+   "      (declare (in) vec3 coord)\n"
+   "      (declare (in) float lod))\n"
+   "    ()))\n"
+   "(function texture3DProjLod\n"
+   "  (signature vec4\n"
+   "    (parameters\n"
+   "      (declare (in) sampler3D sampler)\n"
+   "      (declare (in) vec4 coord)\n"
+   "      (declare (in) float lod))\n"
+   "    ()))\n"
+   "(function textureCubeLod\n"
+   "  (signature vec4\n"
+   "    (parameters\n"
+   "      (declare (in) samplerCube sampler)\n"
+   "      (declare (in) vec3 coord)\n"
+   "      (declare (in) float lod))\n"
+   "    ()))\n"
+   "(function shadow1DLod\n"
+   "  (signature vec4\n"
+   "    (parameters\n"
+   "      (declare (in) sampler1DShadow sampler)\n"
+   "      (declare (in) vec3 coord)\n"
+   "      (declare (in) float lod))\n"
+   "    ()))\n"
+   "(function shadow2DLod\n"
+   "  (signature vec4\n"
+   "    (parameters\n"
+   "      (declare (in) sampler2DShadow sampler)\n"
+   "      (declare (in) vec3 coord)\n"
+   "      (declare (in) float lod))\n"
+   "    ()))\n"
+   "(function shadow1DProjLod\n"
+   "  (signature vec4\n"
+   "    (parameters\n"
+   "      (declare (in) sampler1DShadow sampler)\n"
+   "      (declare (in) vec4 coord)\n"
+   "      (declare (in) float lod))\n"
+   "    ()))\n"
+   "(function shadow2DProjLod\n"
+   "  (signature vec4\n"
+   "    (parameters\n"
+   "      (declare (in) sampler2DShadow sampler)\n"
+   "      (declare (in) vec4 coord)\n"
+   "      (declare (in) float lod))\n"
+   "    ()))\n"
+   "(function texture1DGradARB\n"
+   "  (signature vec4\n"
+   "    (parameters\n"
+   "      (declare (in) sampler1D sampler)\n"
+   "      (declare (in) float P)\n"
+   "      (declare (in) float dPdx)\n"
+   "      (declare (in) float dPdy))\n"
+   "    ()))\n"
+   "(function texture1DProjGradARB\n"
+   "  (signature vec4\n"
+   "    (parameters\n"
+   "      (declare (in) sampler1D sampler)\n"
+   "      (declare (in) vec2 P)\n"
+   "      (declare (in) float dPdx)\n"
+   "      (declare (in) float dPdy))\n"
+   "    ())\n"
+   "  (signature vec4\n"
+   "    (parameters\n"
+   "      (declare (in) sampler1D sampler)\n"
+   "      (declare (in) vec4 P)\n"
+   "      (declare (in) float dPdx)\n"
+   "      (declare (in) float dPdy))\n"
+   "    ()))\n"
+   "(function texture2DGradARB\n"
+   "  (signature vec4\n"
+   "    (parameters\n"
+   "      (declare (in) sampler2D sampler)\n"
+   "      (declare (in) vec2 P)\n"
+   "      (declare (in) vec2 dPdx)\n"
+   "      (declare (in) vec2 dPdy))\n"
+   "    ()))\n"
+   "(function texture2DProjGradARB\n"
+   "  (signature vec4\n"
+   "    (parameters\n"
+   "      (declare (in) sampler2D sampler)\n"
+   "      (declare (in) vec3 P)\n"
+   "      (declare (in) vec2 dPdx)\n"
+   "      (declare (in) vec2 dPdy))\n"
+   "    ())\n"
+   "  (signature vec4\n"
+   "    (parameters\n"
+   "      (declare (in) sampler2D sampler)\n"
+   "      (declare (in) vec4 P)\n"
+   "      (declare (in) vec2 dPdx)\n"
+   "      (declare (in) vec2 dPdy))\n"
+   "    ()))\n"
+   "(function texture3DGradARB\n"
+   "  (signature vec4\n"
+   "    (parameters\n"
+   "      (declare (in) sampler3D sampler)\n"
+   "      (declare (in) vec3 P)\n"
+   "      (declare (in) vec3 dPdx)\n"
+   "      (declare (in) vec3 dPdy))\n"
+   "    ()))\n"
+   "(function texture3DProjGradARB\n"
+   "  (signature vec4\n"
+   "    (parameters\n"
+   "      (declare (in) sampler3D sampler)\n"
+   "      (declare (in) vec4 P)\n"
+   "      (declare (in) vec3 dPdx)\n"
+   "      (declare (in) vec3 dPdy))\n"
+   "    ()))\n"
+   "(function textureCubeGradARB\n"
+   "  (signature vec4\n"
+   "    (parameters\n"
+   "      (declare (in) samplerCube sampler)\n"
+   "      (declare (in) vec3 P)\n"
+   "      (declare (in) vec3 dPdx)\n"
+   "      (declare (in) vec3 dPdy))\n"
+   "    ()))\n"
+   "(function shadow1DGradARB\n"
+   "  (signature vec4\n"
+   "    (parameters\n"
+   "      (declare (in) sampler1DShadow sampler)\n"
+   "      (declare (in) vec3 P)\n"
+   "      (declare (in) float dPdx)\n"
+   "      (declare (in) float dPdy))\n"
+   "    ()))\n"
+   "(function shadow1DProjGradARB\n"
+   "  (signature vec4\n"
+   "    (parameters\n"
+   "      (declare (in) sampler1DShadow sampler)\n"
+   "      (declare (in) vec4 P)\n"
+   "      (declare (in) float dPdx)\n"
+   "      (declare (in) float dPdy))\n"
+   "    ()))\n"
+   "(function shadow2DGradARB\n"
+   "  (signature vec4\n"
+   "    (parameters\n"
+   "      (declare (in) sampler2DShadow sampler)\n"
+   "      (declare (in) vec3 P)\n"
+   "      (declare (in) vec2 dPdx)\n"
+   "      (declare (in) vec2 dPdy))\n"
+   "    ()))\n"
+   "(function shadow2DProjGradARB\n"
+   "  (signature vec4\n"
+   "    (parameters\n"
+   "      (declare (in) sampler2DShadow sampler)\n"
+   "      (declare (in) vec4 P)\n"
+   "      (declare (in) vec2 dPdx)\n"
+   "      (declare (in) vec2 dPdy))\n"
+   "    ()))\n"
+   "(function texture2DRectGradARB\n"
+   "  (signature vec4\n"
+   "    (parameters\n"
+   "      (declare (in) sampler2DRect sampler)\n"
+   "      (declare (in) vec2 P)\n"
+   "      (declare (in) vec2 dPdx)\n"
+   "      (declare (in) vec2 dPdy))\n"
+   "    ()))\n"
+   "(function texture2DRectProjGradARB\n"
+   "  (signature vec4\n"
+   "    (parameters\n"
+   "      (declare (in) sampler2DRect sampler)\n"
+   "      (declare (in) vec3 P)\n"
+   "      (declare (in) vec2 dPdx)\n"
+   "      (declare (in) vec2 dPdy))\n"
+   "    ())\n"
+   "  (signature vec4\n"
+   "    (parameters\n"
+   "      (declare (in) sampler2DRect sampler)\n"
+   "      (declare (in) vec4 P)\n"
+   "      (declare (in) vec2 dPdx)\n"
+   "      (declare (in) vec2 dPdy))\n"
+   "    ()))\n"
+   "(function shadow2DRectGradARB\n"
+   "  (signature vec4\n"
+   "    (parameters\n"
+   "      (declare (in) sampler2DRectShadow sampler)\n"
+   "      (declare (in) vec3 P)\n"
+   "      (declare (in) vec2 dPdx)\n"
+   "      (declare (in) vec2 dPdy))\n"
+   "    ()))\n"
+   "(function shadow2DRectProjGradARB\n"
+   "  (signature vec4\n"
+   "    (parameters\n"
+   "      (declare (in) sampler2DRectShadow sampler)\n"
+   "      (declare (in) vec4 P)\n"
+   "      (declare (in) vec2 dPdx)\n"
+   "      (declare (in) vec2 dPdy))\n"
+   "    ())))"
+;
+static const char *functions_for_EXT_shader_texture_lod_frag [] = {
+   builtin_shadow1DGradARB,
+   builtin_shadow1DLod,
+   builtin_shadow1DProjGradARB,
+   builtin_shadow1DProjLod,
+   builtin_shadow2DGradARB,
+   builtin_shadow2DLod,
+   builtin_shadow2DProjGradARB,
+   builtin_shadow2DProjLod,
+   builtin_shadow2DRectGradARB,
+   builtin_shadow2DRectProjGradARB,
+   builtin_texture1DGradARB,
+   builtin_texture1DLod,
+   builtin_texture1DProjGradARB,
+   builtin_texture1DProjLod,
+   builtin_texture2DGradARB,
+   builtin_texture2DLod,
+   builtin_texture2DProjGradARB,
+   builtin_texture2DProjLod,
+   builtin_texture2DRectGradARB,
+   builtin_texture2DRectProjGradARB,
+   builtin_texture3DGradARB,
+   builtin_texture3DLod,
+   builtin_texture3DProjGradARB,
+   builtin_texture3DProjLod,
+   builtin_textureCubeGradARB,
+   builtin_textureCubeLod,
+};
+static const char prototypes_for_EXT_shader_texture_lod_vert[] =
+   "(\n"
+   "(function texture1DGradARB\n"
+   "  (signature vec4\n"
+   "    (parameters\n"
+   "      (declare (in) sampler1D sampler)\n"
+   "      (declare (in) float P)\n"
+   "      (declare (in) float dPdx)\n"
+   "      (declare (in) float dPdy))\n"
+   "    ()))\n"
+   "(function texture1DProjGradARB\n"
+   "  (signature vec4\n"
+   "    (parameters\n"
+   "      (declare (in) sampler1D sampler)\n"
+   "      (declare (in) vec2 P)\n"
+   "      (declare (in) float dPdx)\n"
+   "      (declare (in) float dPdy))\n"
+   "    ())\n"
+   "  (signature vec4\n"
+   "    (parameters\n"
+   "      (declare (in) sampler1D sampler)\n"
+   "      (declare (in) vec4 P)\n"
+   "      (declare (in) float dPdx)\n"
+   "      (declare (in) float dPdy))\n"
+   "    ()))\n"
+   "(function texture2DGradARB\n"
+   "  (signature vec4\n"
+   "    (parameters\n"
+   "      (declare (in) sampler2D sampler)\n"
+   "      (declare (in) vec2 P)\n"
+   "      (declare (in) vec2 dPdx)\n"
+   "      (declare (in) vec2 dPdy))\n"
+   "    ()))\n"
+   "(function texture2DProjGradARB\n"
+   "  (signature vec4\n"
+   "    (parameters\n"
+   "      (declare (in) sampler2D sampler)\n"
+   "      (declare (in) vec3 P)\n"
+   "      (declare (in) vec2 dPdx)\n"
+   "      (declare (in) vec2 dPdy))\n"
+   "    ())\n"
+   "  (signature vec4\n"
+   "    (parameters\n"
+   "      (declare (in) sampler2D sampler)\n"
+   "      (declare (in) vec4 P)\n"
+   "      (declare (in) vec2 dPdx)\n"
+   "      (declare (in) vec2 dPdy))\n"
+   "    ()))\n"
+   "(function texture3DGradARB\n"
+   "  (signature vec4\n"
+   "    (parameters\n"
+   "      (declare (in) sampler3D sampler)\n"
+   "      (declare (in) vec3 P)\n"
+   "      (declare (in) vec3 dPdx)\n"
+   "      (declare (in) vec3 dPdy))\n"
+   "    ()))\n"
+   "(function texture3DProjGradARB\n"
+   "  (signature vec4\n"
+   "    (parameters\n"
+   "      (declare (in) sampler3D sampler)\n"
+   "      (declare (in) vec4 P)\n"
+   "      (declare (in) vec3 dPdx)\n"
+   "      (declare (in) vec3 dPdy))\n"
+   "    ()))\n"
+   "(function textureCubeGradARB\n"
+   "  (signature vec4\n"
+   "    (parameters\n"
+   "      (declare (in) samplerCube sampler)\n"
+   "      (declare (in) vec3 P)\n"
+   "      (declare (in) vec3 dPdx)\n"
+   "      (declare (in) vec3 dPdy))\n"
+   "    ()))\n"
+   "(function shadow1DGradARB\n"
+   "  (signature vec4\n"
+   "    (parameters\n"
+   "      (declare (in) sampler1DShadow sampler)\n"
+   "      (declare (in) vec3 P)\n"
+   "      (declare (in) float dPdx)\n"
+   "      (declare (in) float dPdy))\n"
+   "    ()))\n"
+   "(function shadow1DProjGradARB\n"
+   "  (signature vec4\n"
+   "    (parameters\n"
+   "      (declare (in) sampler1DShadow sampler)\n"
+   "      (declare (in) vec4 P)\n"
+   "      (declare (in) float dPdx)\n"
+   "      (declare (in) float dPdy))\n"
+   "    ()))\n"
+   "(function shadow2DGradARB\n"
+   "  (signature vec4\n"
+   "    (parameters\n"
+   "      (declare (in) sampler2DShadow sampler)\n"
+   "      (declare (in) vec3 P)\n"
+   "      (declare (in) vec2 dPdx)\n"
+   "      (declare (in) vec2 dPdy))\n"
+   "    ()))\n"
+   "(function shadow2DProjGradARB\n"
+   "  (signature vec4\n"
+   "    (parameters\n"
+   "      (declare (in) sampler2DShadow sampler)\n"
+   "      (declare (in) vec4 P)\n"
+   "      (declare (in) vec2 dPdx)\n"
+   "      (declare (in) vec2 dPdy))\n"
+   "    ()))\n"
+   "(function texture2DRectGradARB\n"
+   "  (signature vec4\n"
+   "    (parameters\n"
+   "      (declare (in) sampler2DRect sampler)\n"
+   "      (declare (in) vec2 P)\n"
+   "      (declare (in) vec2 dPdx)\n"
+   "      (declare (in) vec2 dPdy))\n"
+   "    ()))\n"
+   "(function texture2DRectProjGradARB\n"
+   "  (signature vec4\n"
+   "    (parameters\n"
+   "      (declare (in) sampler2DRect sampler)\n"
+   "      (declare (in) vec3 P)\n"
+   "      (declare (in) vec2 dPdx)\n"
+   "      (declare (in) vec2 dPdy))\n"
+   "    ())\n"
+   "  (signature vec4\n"
+   "    (parameters\n"
+   "      (declare (in) sampler2DRect sampler)\n"
+   "      (declare (in) vec4 P)\n"
+   "      (declare (in) vec2 dPdx)\n"
+   "      (declare (in) vec2 dPdy))\n"
+   "    ()))\n"
+   "(function shadow2DRectGradARB\n"
+   "  (signature vec4\n"
+   "    (parameters\n"
+   "      (declare (in) sampler2DRectShadow sampler)\n"
+   "      (declare (in) vec3 P)\n"
+   "      (declare (in) vec2 dPdx)\n"
+   "      (declare (in) vec2 dPdy))\n"
+   "    ()))\n"
+   "(function shadow2DRectProjGradARB\n"
+   "  (signature vec4\n"
+   "    (parameters\n"
+   "      (declare (in) sampler2DRectShadow sampler)\n"
+   "      (declare (in) vec4 P)\n"
+   "      (declare (in) vec2 dPdx)\n"
+   "      (declare (in) vec2 dPdy))\n"
+   "    ())))"
+;
+static const char *functions_for_EXT_shader_texture_lod_vert [] = {
+   builtin_shadow1DGradARB,
+   builtin_shadow1DProjGradARB,
+   builtin_shadow2DGradARB,
+   builtin_shadow2DProjGradARB,
+   builtin_shadow2DRectGradARB,
+   builtin_shadow2DRectProjGradARB,
+   builtin_texture1DGradARB,
+   builtin_texture1DProjGradARB,
+   builtin_texture2DGradARB,
+   builtin_texture2DProjGradARB,
+   builtin_texture2DRectGradARB,
+   builtin_texture2DRectProjGradARB,
+   builtin_texture3DGradARB,
+   builtin_texture3DProjGradARB,
+   builtin_textureCubeGradARB,
+};
 static const char prototypes_for_EXT_texture_array_frag[] =
    "(\n"
    "(function texture1DArray\n"
@@ -15895,7 +16317,7 @@ static const char *functions_for_OES_texture_3D_vert [] = {
    builtin_texture3DProj,
    builtin_texture3DProjLod,
 };
-static gl_shader *builtin_profiles[16];
+static gl_shader *builtin_profiles[18];
 
 void *builtin_mem_ctx = NULL;
 
@@ -16020,29 +16442,43 @@ _mesa_glsl_initialize_functions(struct _mesa_glsl_parse_state *state)
                          Elements(functions_for_ARB_texture_rectangle_vert));
    }
 
-   if (state->target == fragment_shader && state->EXT_texture_array_enable) {
+   if (state->target == fragment_shader && state->EXT_shader_texture_lod_enable) {
       _mesa_read_profile(state, 12,
+                         prototypes_for_EXT_shader_texture_lod_frag,
+                         functions_for_EXT_shader_texture_lod_frag,
+                         Elements(functions_for_EXT_shader_texture_lod_frag));
+   }
+
+   if (state->target == vertex_shader && state->EXT_shader_texture_lod_enable) {
+      _mesa_read_profile(state, 13,
+                         prototypes_for_EXT_shader_texture_lod_vert,
+                         functions_for_EXT_shader_texture_lod_vert,
+                         Elements(functions_for_EXT_shader_texture_lod_vert));
+   }
+
+   if (state->target == fragment_shader && state->EXT_texture_array_enable) {
+      _mesa_read_profile(state, 14,
                          prototypes_for_EXT_texture_array_frag,
                          functions_for_EXT_texture_array_frag,
                          Elements(functions_for_EXT_texture_array_frag));
    }
 
    if (state->target == vertex_shader && state->EXT_texture_array_enable) {
-      _mesa_read_profile(state, 13,
+      _mesa_read_profile(state, 15,
                          prototypes_for_EXT_texture_array_vert,
                          functions_for_EXT_texture_array_vert,
                          Elements(functions_for_EXT_texture_array_vert));
    }
 
    if (state->target == fragment_shader && state->OES_texture_3D_enable) {
-      _mesa_read_profile(state, 14,
+      _mesa_read_profile(state, 16,
                          prototypes_for_OES_texture_3D_frag,
                          functions_for_OES_texture_3D_frag,
                          Elements(functions_for_OES_texture_3D_frag));
    }
 
    if (state->target == vertex_shader && state->OES_texture_3D_enable) {
-      _mesa_read_profile(state, 15,
+      _mesa_read_profile(state, 17,
                          prototypes_for_OES_texture_3D_vert,
                          functions_for_OES_texture_3D_vert,
                          Elements(functions_for_OES_texture_3D_vert));
