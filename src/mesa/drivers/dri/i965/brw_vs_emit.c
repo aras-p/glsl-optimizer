@@ -1096,31 +1096,6 @@ static void emit_lrp_noalias(struct brw_vs_compile *c,
    brw_MAC(p, dst, arg0, arg1);
 }
 
-/** 3 or 4-component vector normalization */
-static void emit_nrm( struct brw_vs_compile *c, 
-                      struct brw_reg dst,
-                      struct brw_reg arg0,
-                      int num_comps)
-{
-   struct brw_compile *p = &c->func;
-   struct brw_reg tmp = get_tmp(c);
-
-   /* tmp = dot(arg0, arg0) */
-   if (num_comps == 3)
-      brw_DP3(p, tmp, arg0, arg0);
-   else
-      brw_DP4(p, tmp, arg0, arg0);
-
-   /* tmp = 1 / sqrt(tmp) */
-   emit_math1(c, BRW_MATH_FUNCTION_RSQ, tmp, tmp, BRW_MATH_PRECISION_FULL);
-
-   /* dst = arg0 * tmp */
-   brw_MUL(p, dst, arg0, tmp);
-
-   release_tmp(c, tmp);
-}
-
-
 static struct brw_reg
 get_constant(struct brw_vs_compile *c,
              const struct prog_instruction *inst,
@@ -2044,12 +2019,6 @@ void brw_old_vs_emit(struct brw_vs_compile *c )
 	 break;
       case OPCODE_DPH:
 	 brw_DPH(p, dst, args[0], args[1]);
-	 break;
-      case OPCODE_NRM3:
-	 emit_nrm(c, dst, args[0], 3);
-	 break;
-      case OPCODE_NRM4:
-	 emit_nrm(c, dst, args[0], 4);
 	 break;
       case OPCODE_DST:
 	 unalias2(c, dst, args[0], args[1], emit_dst_noalias); 
