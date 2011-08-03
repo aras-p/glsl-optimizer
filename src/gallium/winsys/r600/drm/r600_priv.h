@@ -136,8 +136,7 @@ static INLINE unsigned r600_context_bo_reloc(struct r600_context *ctx, struct r6
 
 	reloc_index = ctx->radeon->ws->trans_add_reloc(
 				ctx->cs, bo->cs_buf,
-				rbo->domains & (RADEON_GEM_DOMAIN_GTT | RADEON_GEM_DOMAIN_VRAM),
-				rbo->domains & (RADEON_GEM_DOMAIN_GTT | RADEON_GEM_DOMAIN_VRAM),
+				rbo->domains, rbo->domains,
 				(void**)&ctx->reloc, &ctx->creloc);
 
 	radeon_bo_reference(ctx->radeon, &ctx->bo[reloc_index], bo);

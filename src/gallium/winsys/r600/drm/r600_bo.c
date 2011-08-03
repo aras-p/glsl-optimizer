@@ -40,26 +40,27 @@ struct r600_bo *r600_bo(struct radeon *radeon,
 	 * and are used for uploads and downloads from regular
 	 * resources.  We generate them internally for some transfers.
 	 */
-	if (usage == PIPE_USAGE_STAGING)
-		domains = RADEON_GEM_DOMAIN_CPU | RADEON_GEM_DOMAIN_GTT;
-	else
-		domains = (RADEON_GEM_DOMAIN_CPU |
-				RADEON_GEM_DOMAIN_GTT |
-				RADEON_GEM_DOMAIN_VRAM);
-
-	switch(usage) {
-	case PIPE_USAGE_DYNAMIC:
-	case PIPE_USAGE_STREAM:
-	case PIPE_USAGE_STAGING:
+	if (usage == PIPE_USAGE_STAGING) {
+		domains = RADEON_GEM_DOMAIN_GTT;
 		initial_domain = RADEON_GEM_DOMAIN_GTT;
-		break;
-	case PIPE_USAGE_DEFAULT:
-	case PIPE_USAGE_STATIC:
-	case PIPE_USAGE_IMMUTABLE:
-	default:
-		initial_domain = RADEON_GEM_DOMAIN_VRAM;
-		break;
+	} else {
+		domains = RADEON_GEM_DOMAIN_GTT | RADEON_GEM_DOMAIN_VRAM;
+
+		switch(usage) {
+		case PIPE_USAGE_DYNAMIC:
+		case PIPE_USAGE_STREAM:
+		case PIPE_USAGE_STAGING:
+			initial_domain = RADEON_GEM_DOMAIN_GTT;
+			break;
+		case PIPE_USAGE_DEFAULT:
+		case PIPE_USAGE_STATIC:
+		case PIPE_USAGE_IMMUTABLE:
+		default:
+			initial_domain = RADEON_GEM_DOMAIN_VRAM;
+			break;
+		}
 	}
+
 	rbo = radeon_bo(radeon, 0, size, alignment, binding, initial_domain);
 	if (rbo == NULL) {
 		return NULL;
@@ -87,9 +88,7 @@ struct r600_bo *r600_bo_handle(struct radeon *radeon, struct winsys_handle *whan
 	}
 
 	pipe_reference_init(&bo->reference, 1);
-	bo->domains = (RADEON_GEM_DOMAIN_CPU |
-			RADEON_GEM_DOMAIN_GTT |
-			RADEON_GEM_DOMAIN_VRAM);
+	bo->domains = RADEON_GEM_DOMAIN_GTT | RADEON_GEM_DOMAIN_VRAM;
 
 	if (stride)
 		*stride = whandle->stride;
