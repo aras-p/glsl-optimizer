@@ -49,6 +49,7 @@ struct pipe_index_buffer;
 struct pipe_query;
 struct pipe_poly_stipple;
 struct pipe_rasterizer_state;
+struct pipe_resolve_info;
 struct pipe_resource;
 struct pipe_sampler_state;
 struct pipe_sampler_view;
@@ -268,13 +269,10 @@ struct pipe_context {
 
    /**
     * Resolve a multisampled resource into a non-multisampled one.
-    * Source and destination must have the same size and same format.
+    * Source and destination must be of the same format.
     */
    void (*resource_resolve)(struct pipe_context *pipe,
-                            struct pipe_resource *dst,
-                            unsigned dst_layer,
-                            struct pipe_resource *src,
-                            unsigned src_layer);
+                            const struct pipe_resolve_info *info);
 
    /*@}*/
 

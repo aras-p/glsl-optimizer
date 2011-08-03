@@ -329,8 +329,15 @@ textured quad blitter.. The source and destination may be the same resource,
 but overlapping blits are not permitted.
 
 ``resource_resolve`` resolves a multisampled resource into a non-multisampled
-one. Formats and dimensions must match. This function must be present if a driver
+one. Their formats must match. This function must be present if a driver
 supports multisampling.
+The region that is to be resolved is described by ``pipe_resolve_info``, which
+provides a source and a destination rectangle.
+The source rectangle may be vertically flipped, but otherwise the dimensions
+of the rectangles must match, unless PIPE_CAP_SCALED_RESOLVE is supported,
+in which case scaling and horizontal flipping are allowed as well.
+The result of resolving depth/stencil values may be any function of the values at
+the sample points, but returning the value of the centermost sample is preferred.
 
 The interfaces to these calls are likely to change to make it easier
 for a driver to batch multiple blits with the same source and
