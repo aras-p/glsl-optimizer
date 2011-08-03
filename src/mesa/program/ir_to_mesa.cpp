@@ -1256,12 +1256,31 @@ ir_to_mesa_visitor::visit(ir_expression *ir)
       }
       break;
 
-   case ir_unop_any:
+   case ir_unop_any: {
       assert(ir->operands[0]->type->is_vector());
-      emit_dp(ir, result_dst, op[0], op[0],
-	      ir->operands[0]->type->vector_elements);
-      emit(ir, OPCODE_SNE, result_dst, result_src, src_reg_for_float(0.0));
+
+      /* After the dot-product, the value will be an integer on the
+       * range [0,4].  Zero stays zero, and positive values become 1.0.
+       */
+      ir_to_mesa_instruction *const dp =
+	 emit_dp(ir, result_dst, op[0], op[0],
+		 ir->operands[0]->type->vector_elements);
+      if (this->prog->Target == GL_FRAGMENT_PROGRAM_ARB) {
+	 /* The clamping to [0,1] can be done for free in the fragment
+	  * shader with a saturate.
+	  */
+	 dp->saturate = true;
+      } else {
+	 /* Negating the result of the dot-product gives values on the range
+	  * [-4, 0].  Zero stays zero, and negative values become 1.0.  This
+	  * is achieved using SLT.
+	  */
+	 src_reg slt_src = result_src;
+	 slt_src.negate = ~slt_src.negate;
+	 emit(ir, OPCODE_SLT, result_dst, slt_src, src_reg_for_float(0.0));
+      }
       break;
+   }
 
    case ir_binop_logic_xor:
       emit(ir, OPCODE_SNE, result_dst, op[0], op[1]);
