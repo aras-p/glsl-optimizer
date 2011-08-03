@@ -97,6 +97,19 @@ static bool InitializeOpenGL ()
 	return hasGLSL;
 }
 
+static void replace_string (std::string& target, const std::string& search, const std::string& replace, size_t startPos)
+{
+	if (search.empty())
+		return;
+	
+	std::string::size_type p = startPos;
+	while ((p = target.find (search, p)) != std::string::npos)
+	{
+		target.replace (p, search.size (), replace);
+		p += replace.size ();
+	}
+}
+
 static bool CheckGLSL (bool vertex, bool gles, const char* prefix, const std::string& source)
 {
 	std::string src;
@@ -107,6 +120,10 @@ static bool CheckGLSL (bool vertex, bool gles, const char* prefix, const std::st
 		src += "#define highp\n";
 	}
 	src += source;
+	if (gles)
+	{
+		replace_string (src, "GL_EXT_shader_texture_lod", "GL_ARB_shader_texture_lod", 0);
+	}
 	const char* sourcePtr = src.c_str();
 	
 	
