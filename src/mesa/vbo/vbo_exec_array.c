@@ -422,8 +422,6 @@ bind_array_obj(struct gl_context *ctx)
       assert(i < Elements(exec->array.generic_array));
       exec->array.generic_array[i] = &arrayObj->VertexAttrib[i];
    }
-   
-   exec->array.array_obj = arrayObj->Name;
 }
 
 
@@ -444,10 +442,7 @@ recalculate_input_bindings(struct gl_context *ctx)
    GLbitfield const_inputs = 0x0;
    GLuint i;
 
-   exec->array.program_mode = get_program_mode(ctx);
-   exec->array.enabled_flags = ctx->Array.ArrayObj->_Enabled;
-
-   switch (exec->array.program_mode) {
+   switch (get_program_mode(ctx)) {
    case VP_NONE:
       /* When no vertex program is active (or the vertex program is generated
        * from fixed-function state).  We put the material values into the

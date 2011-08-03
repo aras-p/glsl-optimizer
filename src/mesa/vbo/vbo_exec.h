@@ -78,9 +78,6 @@ struct vbo_exec_copied_vtx {
 };
 
 
-typedef void (*vbo_attrfv_func)( const GLfloat * );
-
-
 struct vbo_exec_context
 {
    struct gl_context *ctx;   
@@ -113,8 +110,6 @@ struct vbo_exec_context
        * values are squashed down to the 32 attributes passed to the
        * vertex program below:
        */
-      enum vp_mode program_mode;
-      GLuint enabled_flags;
       const struct gl_client_array *inputs[VERT_ATTRIB_MAX];
    } vtx;
 
@@ -126,10 +121,6 @@ struct vbo_exec_context
    } eval;
 
    struct {
-      enum vp_mode program_mode;
-      GLuint enabled_flags;
-      GLuint array_obj;
-
       /* These just mirror the current arrayobj (todo: make arrayobj
        * look like this and remove the mirror):
        */

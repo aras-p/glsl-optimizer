@@ -146,7 +146,6 @@ struct vbo_save_context {
    GLuint vert_count;
    GLuint max_vert;
    GLboolean dangling_attr_ref;
-   GLboolean have_materials;
 
    GLuint opcode_vertex_list;
 
