@@ -191,18 +191,6 @@ struct r600_range {
 };
 
 /*
- * relocation
- */
-#pragma pack(1)
-struct r600_reloc {
-	uint32_t	handle;
-	uint32_t	read_domain;
-	uint32_t	write_domain;
-	uint32_t	flags;
-};
-#pragma pack()
-
-/*
  * query
  */
 struct r600_query {
@@ -240,6 +228,7 @@ struct r600_query {
 struct r600_context {
 	struct radeon		*radeon;
 	struct radeon_winsys_cs	*cs;
+
 	struct r600_range	*range;
 	unsigned		nblocks;
 	struct r600_block	**blocks;
@@ -253,7 +242,7 @@ struct r600_context {
 	unsigned		init_dwords;
 
 	unsigned		creloc;
-	struct r600_reloc	*reloc;
+	unsigned		*reloc;
 	struct radeon_bo	**bo;
 
 	u32			*pm4;

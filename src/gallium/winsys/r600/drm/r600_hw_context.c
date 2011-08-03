@@ -1521,7 +1521,7 @@ void r600_context_flush(struct r600_context *ctx)
 	chunks[0].length_dw = ctx->pm4_cdwords;
 	chunks[0].chunk_data = (uint64_t)(uintptr_t)ctx->pm4;
 	chunks[1].chunk_id = RADEON_CHUNK_ID_RELOCS;
-	chunks[1].length_dw = ctx->creloc * sizeof(struct r600_reloc) / 4;
+	chunks[1].length_dw = ctx->creloc * 4;
 	chunks[1].chunk_data = (uint64_t)(uintptr_t)ctx->reloc;
 	chunk_array[0] = (uint64_t)(uintptr_t)&chunks[0];
 	chunk_array[1] = (uint64_t)(uintptr_t)&chunks[1];
