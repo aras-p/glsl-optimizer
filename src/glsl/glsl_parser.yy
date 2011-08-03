@@ -971,13 +971,9 @@ single_declaration:
 	fully_specified_type
 	{
 	   void *ctx = state;
-	   if ($1->specifier->type_specifier != ast_struct) {
-	      _mesa_glsl_error(& @1, state, "empty declaration list\n");
-	      YYERROR;
-	   } else {
-	      $$ = new(ctx) ast_declarator_list($1);
-	      $$->set_location(yylloc);
-	   }
+	   /* Empty declaration list is valid. */
+	   $$ = new(ctx) ast_declarator_list($1);
+	   $$->set_location(yylloc);
 	}
 	| fully_specified_type any_identifier
 	{

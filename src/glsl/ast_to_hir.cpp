@@ -2399,12 +2399,12 @@ ast_declarator_list::hir(exec_list *instructions,
 
    decl_type = this->type->specifier->glsl_type(& type_name, state);
    if (this->declarations.is_empty()) {
-      /* The only valid case where the declaration list can be empty is when
-       * the declaration is setting the default precision of a built-in type
-       * (e.g., 'precision highp vec4;').
-       */
-
       if (decl_type != NULL) {
+	 /* Warn if this empty declaration is not for declaring a structure.
+	  */
+	 if (this->type->specifier->structure == NULL) {
+	    _mesa_glsl_warning(&loc, state, "empty declaration");
+	 }
       } else {
 	    _mesa_glsl_error(& loc, state, "incomplete declaration");
       }
