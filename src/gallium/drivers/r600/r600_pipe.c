@@ -119,22 +119,9 @@ static void r600_flush(struct pipe_context *ctx,
 	struct r600_pipe_context *rctx = (struct r600_pipe_context *)ctx;
 	struct r600_fence **rfence = (struct r600_fence**)fence;
 
-#if 0
-	static int dc = 0;
-	char dname[256];
-#endif
-
 	if (rfence)
 		*rfence = r600_create_fence(rctx);
 
-#if 0
-	sprintf(dname, "gallium-%08d.bof", dc);
-	if (dc < 20) {
-		r600_context_dump_bof(&rctx->ctx, dname);
-		R600_ERR("dumped %s\n", dname);
-	}
-	dc++;
-#endif
 	r600_context_flush(&rctx->ctx);
 }
 
