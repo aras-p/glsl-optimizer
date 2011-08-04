@@ -94,16 +94,11 @@ void radeon_bo_reference(struct radeon *radeon, struct radeon_bo **dst,
 			 struct radeon_bo *src);
 int radeon_bo_wait(struct radeon *radeon, struct radeon_bo *bo);
 int radeon_bo_busy(struct radeon *radeon, struct radeon_bo *bo, uint32_t *domain);
-int radeon_bo_fencelist(struct radeon *radeon, struct radeon_bo **bolist, uint32_t num_bo);
-int radeon_bo_get_tiling_flags(struct radeon *radeon,
-			       struct radeon_bo *bo,
-			       uint32_t *tiling_flags);
 int radeon_bo_fixed_map(struct radeon *radeon, struct radeon_bo *bo);
 
 /*
  * r600_hw_context.c
  */
-int r600_context_init_fence(struct r600_context *ctx);
 void r600_context_bo_flush(struct r600_context *ctx, unsigned flush_flags,
 				unsigned flush_mask, struct r600_bo *rbo);
 struct r600_bo *r600_context_reg_bo(struct r600_context *ctx, unsigned offset);
@@ -159,19 +154,6 @@ static inline void radeon_bo_unmap(struct radeon *radeon, struct radeon_bo *bo)
 {
 	bo->map_count--;
 	assert(bo->map_count >= 0);
-}
-
-/*
- * fence
- */
-static inline boolean fence_is_after(unsigned fence, unsigned ofence)
-{
-	/* handle wrap around */
-	if (fence < 0x80000000 && ofence > 0x80000000)
-		return TRUE;
-	if (fence > ofence)
-		return TRUE;
-	return FALSE;
 }
 
 #endif
