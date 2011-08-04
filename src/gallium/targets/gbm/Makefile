@@ -15,7 +15,7 @@ GBM_INCLUDES = \
 	       -I$(TOP)/src/gallium/auxiliary \
 	       -I$(TOP)/src/gallium/include \
 
-GBM_LIBS = $(LIBUDEV_LIBS) $(LIBDRM_LIB) \
+GBM_LIBS = $(LIBUDEV_LIBS) $(LIBDRM_LIB) -lm \
 	   $(TOP)/src/gallium/state_trackers/gbm/libgbm.a \
 	   $(TOP)/src/gallium/drivers/identity/libidentity.a \
 	   $(TOP)/src/gallium/drivers/galahad/libgalahad.a \
