@@ -58,7 +58,15 @@
 #endif
 
 #ifndef RADEON_INFO_NUM_BACKENDS
-#define RADEON_INFO_NUM_BACKENDS 10
+#define RADEON_INFO_NUM_BACKENDS 0xa
+#endif
+
+#ifndef RADEON_INFO_NUM_TILE_PIPES
+#define RADEON_INFO_NUM_TILE_PIPES 0xb
+#endif
+
+#ifndef RADEON_INFO_BACKEND_MAP
+#define RADEON_INFO_BACKEND_MAP 0xd
 #endif
 
 /* Enable/disable feature access for one command stream.
@@ -240,6 +248,15 @@ static boolean do_winsys_init(struct radeon_drm_winsys *ws)
 
         radeon_get_drm_value(ws->fd, RADEON_INFO_TILING_CONFIG, NULL,
                              &ws->info.r600_tiling_config);
+
+        if (ws->info.drm_minor >= 11) {
+            radeon_get_drm_value(ws->fd, RADEON_INFO_NUM_TILE_PIPES, NULL,
+                                 &ws->info.r600_num_tile_pipes);
+
+            if (radeon_get_drm_value(ws->fd, RADEON_INFO_BACKEND_MAP, NULL,
+                                      &ws->info.r600_backend_map))
+                ws->info.r600_backend_map_valid = TRUE;
+        }
     }
 
     return TRUE;

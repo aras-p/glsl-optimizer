@@ -41,9 +41,6 @@ struct radeon {
 	unsigned			family;
 	enum chip_class			chip_class;
 	struct r600_tiling_info		tiling_info;
-	unsigned			num_tile_pipes;
-	unsigned			backend_map;
-	boolean				backend_map_valid;
 };
 
 /* these flags are used in register flags and added into block flags */

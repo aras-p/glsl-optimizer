@@ -68,12 +68,12 @@ unsigned r600_get_num_backends(struct radeon *radeon)
 
 unsigned r600_get_num_tile_pipes(struct radeon *radeon)
 {
-	return radeon->num_tile_pipes;
+	return radeon->info.r600_num_tile_pipes;
 }
 
 unsigned r600_get_backend_map(struct radeon *radeon)
 {
-	return radeon->backend_map;
+	return radeon->info.r600_backend_map;
 }
 
 unsigned r600_get_minor_version(struct radeon *radeon)
@@ -185,42 +185,6 @@ static int radeon_drm_get_tiling(struct radeon *radeon)
 	}
 }
 
-static int radeon_get_num_tile_pipes(struct radeon *radeon)
-{
-	struct drm_radeon_info info = {};
-	uint32_t num_tile_pipes = 0;
-	int r;
-
-	info.request = RADEON_INFO_NUM_TILE_PIPES;
-	info.value = (uintptr_t)&num_tile_pipes;
-	r = drmCommandWriteRead(radeon->info.fd, DRM_RADEON_INFO, &info,
-			sizeof(struct drm_radeon_info));
-	if (r)
-		return r;
-
-	radeon->num_tile_pipes = num_tile_pipes;
-	return 0;
-}
-
-static int radeon_get_backend_map(struct radeon *radeon)
-{
-	struct drm_radeon_info info = {};
-	uint32_t backend_map = 0;
-	int r;
-
-	info.request = RADEON_INFO_BACKEND_MAP;
-	info.value = (uintptr_t)&backend_map;
-	r = drmCommandWriteRead(radeon->info.fd, DRM_RADEON_INFO, &info,
-			sizeof(struct drm_radeon_info));
-	if (r)
-		return r;
-
-	radeon->backend_map = backend_map;
-	radeon->backend_map_valid = TRUE;
-
-	return 0;
-}
-
 struct radeon *radeon_create(struct radeon_winsys *ws)
 {
 	struct radeon *radeon = CALLOC_STRUCT(radeon);
@@ -286,11 +250,6 @@ struct radeon *radeon_create(struct radeon_winsys *ws)
 
 	if (radeon_drm_get_tiling(radeon))
 		return NULL;
-
-	if (radeon->info.drm_minor >= 11) {
-		radeon_get_num_tile_pipes(radeon);
-		radeon_get_backend_map(radeon);
-	}
 
 	/* XXX disable ioctl thread offloading until the porting is done. */
 	setenv("RADEON_THREAD", "0", 0);

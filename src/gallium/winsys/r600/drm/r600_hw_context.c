@@ -41,7 +41,7 @@ void r600_get_backend_mask(struct r600_context *ctx)
 	unsigned i, mask = 0;
 
 	/* if backend_map query is supported by the kernel */
-	if (ctx->radeon->backend_map_valid) {
+	if (ctx->radeon->info.r600_backend_map_valid) {
 		unsigned num_tile_pipes = r600_get_num_tile_pipes(ctx->radeon);
 		unsigned backend_map = r600_get_backend_map(ctx->radeon);
 		unsigned item_width, item_mask;
