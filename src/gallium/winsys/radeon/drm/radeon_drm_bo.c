@@ -617,11 +617,6 @@ static boolean radeon_winsys_bo_get_handle(struct pb_buffer *buffer,
     return TRUE;
 }
 
-static unsigned trans_get_buffer_handle(struct pb_buffer *buf)
-{
-	return get_radeon_bo(buf)->handle;
-}
-
 void radeon_bomgr_init_functions(struct radeon_drm_winsys *ws)
 {
     ws->base.buffer_get_cs_handle = radeon_drm_get_cs_handle;
@@ -634,6 +629,4 @@ void radeon_bomgr_init_functions(struct radeon_drm_winsys *ws)
     ws->base.buffer_create = radeon_winsys_bo_create;
     ws->base.buffer_from_handle = radeon_winsys_bo_from_handle;
     ws->base.buffer_get_handle = radeon_winsys_bo_get_handle;
-
-    ws->base.trans_get_buffer_handle = trans_get_buffer_handle;
 }

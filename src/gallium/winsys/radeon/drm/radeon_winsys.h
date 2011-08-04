@@ -329,10 +329,6 @@ struct radeon_winsys {
     boolean (*cs_request_feature)(struct radeon_winsys_cs *cs,
                                   enum radeon_feature_id fid,
                                   boolean enable);
-
-
-    /* Transitional functions for r600g when moving to winsys/radeon */
-    unsigned (*trans_get_buffer_handle)(struct pb_buffer *buf);
 };
 
 #endif

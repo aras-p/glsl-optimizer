@@ -58,7 +58,6 @@ struct radeon_bo *radeon_bo(struct radeon *radeon, unsigned handle,
 		return NULL;
 	}
 	bo->cs_buf = radeon->ws->buffer_get_cs_handle(bo->buf);
-	bo->handle = radeon->ws->trans_get_buffer_handle(bo->buf);
 	bo->size = size;
 	return bo;
 }

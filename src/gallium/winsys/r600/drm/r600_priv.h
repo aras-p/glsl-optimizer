@@ -64,7 +64,6 @@ struct radeon_bo {
 	struct pipe_reference		reference;
 	struct pb_buffer		*buf;
 	struct radeon_winsys_cs_handle	*cs_buf;
-	unsigned			handle;
 	unsigned			size;
 
 	unsigned			last_flush;

@@ -1130,11 +1130,11 @@ void r600_context_pipe_state_set_resource(struct r600_context *ctx, struct r600_
 
 	if (!dirty) {
 		if (is_vertex) {
-			if (block->reloc[1].bo->bo->handle != state->bo[0]->bo->handle)
+			if (block->reloc[1].bo->bo->buf != state->bo[0]->bo->buf)
 				dirty |= R600_BLOCK_STATUS_RESOURCE_DIRTY;
 		} else {
-			if ((block->reloc[1].bo->bo->handle != state->bo[0]->bo->handle) ||
-			    (block->reloc[2].bo->bo->handle != state->bo[1]->bo->handle))
+			if ((block->reloc[1].bo->bo->buf != state->bo[0]->bo->buf) ||
+			    (block->reloc[2].bo->bo->buf != state->bo[1]->bo->buf))
 				dirty |= R600_BLOCK_STATUS_RESOURCE_DIRTY;
 		}
 	}
