@@ -26,7 +26,6 @@
 #include "r600_priv.h"
 #include "r600d.h"
 #include "state_tracker/drm_driver.h"
-#include "radeon_drm.h"
 
 struct r600_bo *r600_bo(struct radeon *radeon,
 			unsigned size, unsigned alignment,
@@ -41,22 +40,22 @@ struct r600_bo *r600_bo(struct radeon *radeon,
 	 * resources.  We generate them internally for some transfers.
 	 */
 	if (usage == PIPE_USAGE_STAGING) {
-		domains = RADEON_GEM_DOMAIN_GTT;
-		initial_domain = RADEON_GEM_DOMAIN_GTT;
+		domains = RADEON_DOMAIN_GTT;
+		initial_domain = RADEON_DOMAIN_GTT;
 	} else {
-		domains = RADEON_GEM_DOMAIN_GTT | RADEON_GEM_DOMAIN_VRAM;
+		domains = RADEON_DOMAIN_GTT | RADEON_DOMAIN_VRAM;
 
 		switch(usage) {
 		case PIPE_USAGE_DYNAMIC:
 		case PIPE_USAGE_STREAM:
 		case PIPE_USAGE_STAGING:
-			initial_domain = RADEON_GEM_DOMAIN_GTT;
+			initial_domain = RADEON_DOMAIN_GTT;
 			break;
 		case PIPE_USAGE_DEFAULT:
 		case PIPE_USAGE_STATIC:
 		case PIPE_USAGE_IMMUTABLE:
 		default:
-			initial_domain = RADEON_GEM_DOMAIN_VRAM;
+			initial_domain = RADEON_DOMAIN_VRAM;
 			break;
 		}
 	}
@@ -88,7 +87,7 @@ struct r600_bo *r600_bo_handle(struct radeon *radeon, struct winsys_handle *whan
 	}
 
 	pipe_reference_init(&bo->reference, 1);
-	bo->domains = RADEON_GEM_DOMAIN_GTT | RADEON_GEM_DOMAIN_VRAM;
+	bo->domains = RADEON_DOMAIN_GTT | RADEON_DOMAIN_VRAM;
 	bo->cs_buf = radeon->ws->buffer_get_cs_handle(pb);
 
 	if (stride)

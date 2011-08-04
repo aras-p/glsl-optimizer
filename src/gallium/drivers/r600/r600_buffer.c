@@ -33,9 +33,6 @@
 #include <util/u_memory.h>
 #include "util/u_upload_mgr.h"
 
-#include <xf86drm.h>
-#include "radeon_drm.h"
-
 #include "r600.h"
 #include "r600_pipe.h"
 

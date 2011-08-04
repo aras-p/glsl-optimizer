@@ -29,8 +29,6 @@
 #include "r600_priv.h"
 #include "r600_drm_public.h"
 #include "util/u_memory.h"
-#include <radeon_drm.h>
-#include <xf86drm.h>
 #include <errno.h>
 
 #ifndef RADEON_INFO_NUM_TILE_PIPES

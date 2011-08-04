@@ -30,7 +30,6 @@
 #include "../../radeon/drm/radeon_winsys.h"
 #include "util/u_hash_table.h"
 #include "os/os_thread.h"
-#include "radeon_drm.h"
 
 #define PKT_COUNT_C                     0xC000FFFF
 #define PKT_COUNT_S(x)                  (((x) & 0x3FFF) << 16)
