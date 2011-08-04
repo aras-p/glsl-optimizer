@@ -158,17 +158,10 @@ android_displaytarget_from_handle(struct sw_winsys *ws,
    adt->width = templ->width0;
    adt->height = templ->height0;
 
-   if (templ->usage & PIPE_BIND_RENDER_TARGET)
-      adt->usage |= GRALLOC_USAGE_HW_RENDER;
-   if (templ->usage & PIPE_BIND_SAMPLER_VIEW)
-      adt->usage |= GRALLOC_USAGE_HW_TEXTURE;
-   if (templ->usage & PIPE_BIND_SCANOUT)
-      adt->usage |= GRALLOC_USAGE_HW_FB;
-
-   if (templ->usage & PIPE_BIND_TRANSFER_READ)
-      adt->usage |= GRALLOC_USAGE_SW_READ_OFTEN;
-   if (templ->usage & PIPE_BIND_TRANSFER_WRITE)
+   if (templ->bind & (PIPE_BIND_RENDER_TARGET | PIPE_BIND_TRANSFER_WRITE))
       adt->usage |= GRALLOC_USAGE_SW_WRITE_OFTEN;
+   if (templ->bind & (PIPE_BIND_SAMPLER_VIEW | PIPE_BIND_TRANSFER_READ))
+      adt->usage |= GRALLOC_USAGE_SW_READ_OFTEN;
 
    if (stride)
       *stride = adt->stride;
