@@ -472,8 +472,9 @@ Parse_ScalarConstant(struct parse_state *parseState, GLfloat *number)
       const GLfloat *constant;
       if (!Parse_Identifier(parseState, ident))
          RETURN_ERROR1("Expected an identifier");
-      constant = _mesa_lookup_parameter_value(parseState->parameters,
-                                              -1, (const char *) ident);
+      constant = (GLfloat *)_mesa_lookup_parameter_value(parseState->parameters,
+                                                         -1, 
+                                                         (const char *) ident);
       /* XXX Check that it's a constant and not a parameter */
       if (!constant) {
          RETURN_ERROR1("Undefined symbol");
@@ -1039,7 +1040,8 @@ Parse_VectorSrc(struct parse_state *parseState,
       if (!Parse_ScalarConstant(parseState, values))
          RETURN_ERROR;
       paramIndex = _mesa_add_unnamed_constant(parseState->parameters,
-                                              values, 4, NULL);
+                                              (gl_constant_value *) values,
+                                              4, NULL);
       srcReg->File = PROGRAM_NAMED_PARAM;
       srcReg->Index = paramIndex;
    }
@@ -1051,7 +1053,8 @@ Parse_VectorSrc(struct parse_state *parseState,
       if (!Parse_VectorConstant(parseState, values))
          RETURN_ERROR;
       paramIndex = _mesa_add_unnamed_constant(parseState->parameters,
-                                              values, 4, NULL);
+                                              (gl_constant_value *) values,
+                                              4, NULL);
       srcReg->File = PROGRAM_NAMED_PARAM;
       srcReg->Index = paramIndex;      
    }
@@ -1145,7 +1148,8 @@ Parse_ScalarSrcReg(struct parse_state *parseState,
       if (!Parse_VectorConstant(parseState, values))
          RETURN_ERROR;
       paramIndex = _mesa_add_unnamed_constant(parseState->parameters,
-                                              values, 4, NULL);
+                                              (gl_constant_value *) values,
+                                              4, NULL);
       srcReg->File = PROGRAM_NAMED_PARAM;
       srcReg->Index = paramIndex;      
    }
@@ -1170,7 +1174,8 @@ Parse_ScalarSrcReg(struct parse_state *parseState,
       if (!Parse_ScalarConstant(parseState, values))
          RETURN_ERROR;
       paramIndex = _mesa_add_unnamed_constant(parseState->parameters,
-                                              values, 4, NULL);
+                                              (gl_constant_value *) values,
+                                              4, NULL);
       srcReg->Index = paramIndex;      
       srcReg->File = PROGRAM_NAMED_PARAM;
       needSuffix = GL_FALSE;
@@ -1296,7 +1301,8 @@ Parse_InstructionSequence(struct parse_state *parseState,
             RETURN_ERROR2(id, "already defined");
          }
          _mesa_add_named_parameter(parseState->parameters,
-                                   (const char *) id, value);
+                                   (const char *) id,
+                                   (gl_constant_value *) value);
       }
       else if (Parse_String(parseState, "DECLARE")) {
          GLubyte id[100];
@@ -1315,7 +1321,8 @@ Parse_InstructionSequence(struct parse_state *parseState,
             RETURN_ERROR2(id, "already declared");
          }
          _mesa_add_named_parameter(parseState->parameters,
-                                   (const char *) id, value);
+                                   (const char *) id,
+                                   (gl_constant_value *) value);
       }
       else if (Parse_String(parseState, "END")) {
          inst->Opcode = OPCODE_END;

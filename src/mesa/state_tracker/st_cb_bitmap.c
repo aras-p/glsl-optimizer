@@ -172,6 +172,23 @@ make_bitmap_fragment_program(struct gl_context *ctx, GLuint samplerIndex)
 }
 
 
+static struct gl_program *
+make_bitmap_fragment_program_glsl(struct st_context *st,
+                                  struct st_fragment_program *orig,
+                                  GLuint samplerIndex)
+{
+   struct gl_context *ctx = st->ctx;
+   struct st_fragment_program *fp = (struct st_fragment_program *)
+      ctx->Driver.NewProgram(ctx, GL_FRAGMENT_PROGRAM_ARB, 0);
+
+   if (!fp)
+      return NULL;
+   
+   get_bitmap_visitor(fp, orig->glsl_to_tgsi, samplerIndex);
+   return &fp->Base.Base;
+}
+
+
 static int
 find_free_bit(uint bitfield)
 {
@@ -199,6 +216,7 @@ st_make_bitmap_fragment_program(struct st_context *st,
                                 GLuint *bitmap_sampler)
 {
    struct st_fragment_program *bitmap_prog;
+   struct st_fragment_program *stfpIn = (struct st_fragment_program *) fpIn;
    struct gl_program *newProg;
    uint sampler;
 
@@ -207,13 +225,18 @@ st_make_bitmap_fragment_program(struct st_context *st,
     * with the bitmap sampler/kill instructions.
     */
    sampler = find_free_bit(fpIn->Base.SamplersUsed);
-   bitmap_prog = make_bitmap_fragment_program(st->ctx, sampler);
+   
+   if (stfpIn->glsl_to_tgsi)
+      newProg = make_bitmap_fragment_program_glsl(st, stfpIn, sampler);
+   else {
+      bitmap_prog = make_bitmap_fragment_program(st->ctx, sampler);
 
-   newProg = _mesa_combine_programs(st->ctx,
-                                    &bitmap_prog->Base.Base,
-                                    &fpIn->Base);
-   /* done with this after combining */
-   st_reference_fragprog(st, &bitmap_prog, NULL);
+      newProg = _mesa_combine_programs(st->ctx,
+                                       &bitmap_prog->Base.Base,
+                                       &fpIn->Base);
+      /* done with this after combining */
+      st_reference_fragprog(st, &bitmap_prog, NULL);
+   }
 
 #if 0
    {

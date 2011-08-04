@@ -455,13 +455,13 @@ static struct ureg register_const4f( struct tnl_program *p,
 			      GLfloat s2,
 			      GLfloat s3)
 {
-   GLfloat values[4];
+   gl_constant_value values[4];
    GLint idx;
    GLuint swizzle;
-   values[0] = s0;
-   values[1] = s1;
-   values[2] = s2;
-   values[3] = s3;
+   values[0].f = s0;
+   values[1].f = s1;
+   values[2].f = s2;
+   values[3].f = s3;
    idx = _mesa_add_unnamed_constant( p->program->Base.Parameters, values, 4,
                                      &swizzle );
    ASSERT(swizzle == SWIZZLE_NOOP);

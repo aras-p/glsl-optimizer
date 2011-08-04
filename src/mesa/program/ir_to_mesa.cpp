@@ -585,7 +585,7 @@ ir_to_mesa_visitor::src_reg_for_float(float val)
    src_reg src(PROGRAM_CONSTANT, -1, NULL);
 
    src.index = _mesa_add_unnamed_constant(this->prog->Parameters,
-					  &val, 1, &src.swizzle);
+					  (const gl_constant_value *)&val, 1, &src.swizzle);
 
    return src;
 }
@@ -1795,7 +1795,7 @@ ir_to_mesa_visitor::visit(ir_constant *ir)
 
 	 src = src_reg(PROGRAM_CONSTANT, -1, NULL);
 	 src.index = _mesa_add_unnamed_constant(this->prog->Parameters,
-						values,
+						(gl_constant_value *) values,
 						ir->type->vector_elements,
 						&src.swizzle);
 	 emit(ir, OPCODE_MOV, mat_column, src);
@@ -1833,7 +1833,7 @@ ir_to_mesa_visitor::visit(ir_constant *ir)
 
    this->result = src_reg(PROGRAM_CONSTANT, -1, ir->type);
    this->result.index = _mesa_add_unnamed_constant(this->prog->Parameters,
-						   values,
+						   (gl_constant_value *) values,
 						   ir->type->vector_elements,
 						   &this->result.swizzle);
 }
@@ -2533,7 +2533,7 @@ add_uniforms_to_parameters_list(struct gl_shader_program *shader_program,
 	  */
 	 if (file == PROGRAM_SAMPLER) {
 	    for (unsigned int j = 0; j < size / 4; j++)
-	       prog->Parameters->ParameterValues[index + j][0] = next_sampler++;
+	       prog->Parameters->ParameterValues[index + j][0].f = next_sampler++;
 	 }
 
 	 /* The location chosen in the Parameters list here (returned

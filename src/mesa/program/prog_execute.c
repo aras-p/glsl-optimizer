@@ -157,7 +157,7 @@ get_src_register_pointer(const struct prog_src_register *source,
    case PROGRAM_NAMED_PARAM:
       if (reg >= (GLint) prog->Parameters->NumParameters)
          return ZeroVec;
-      return prog->Parameters->ParameterValues[reg];
+      return (GLfloat *) prog->Parameters->ParameterValues[reg];
 
    case PROGRAM_SYSTEM_VALUE:
       assert(reg < Elements(machine->SystemValues));

@@ -267,7 +267,7 @@ src_register( struct st_translate *t,
 /**
  * Map mesa texture target to TGSI texture target.
  */
-static unsigned
+unsigned
 translate_texture_target( GLuint textarget,
                           GLboolean shadow )
 {
@@ -511,7 +511,7 @@ static void emit_ddy( struct st_translate *t,
 
 
 
-static unsigned
+unsigned
 translate_opcode( unsigned op )
 {
    switch( op ) {
@@ -1207,7 +1207,7 @@ st_translate_mesa_program(
             else
                t->constants[i] = 
                   ureg_DECL_immediate( ureg,
-                                       program->Parameters->ParameterValues[i],
+                                       (const float*) program->Parameters->ParameterValues[i],
                                        4 );
             break;
          default:

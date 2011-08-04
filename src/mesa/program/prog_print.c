@@ -985,7 +985,7 @@ _mesa_fprint_parameter_list(FILE *f,
    fprintf(f, "dirty state flags: 0x%x\n", list->StateFlags);
    for (i = 0; i < list->NumParameters; i++){
       struct gl_program_parameter *param = list->Parameters + i;
-      const GLfloat *v = list->ParameterValues[i];
+      const GLfloat *v = (GLfloat *) list->ParameterValues[i];
       fprintf(f, "param[%d] sz=%d %s %s = {%.3g, %.3g, %.3g, %.3g}",
 	      i, param->Size,
 	      _mesa_register_file_name(list->Parameters[i].Type),

@@ -38,6 +38,7 @@
 #include "program/program.h"
 #include "pipe/p_state.h"
 #include "st_context.h"
+#include "st_glsl_to_tgsi.h"
 
 
 /** Fragment program variant key */
@@ -83,6 +84,22 @@ struct st_fp_variant
 struct st_fragment_program
 {
    struct gl_fragment_program Base;
+   struct glsl_to_tgsi_visitor* glsl_to_tgsi;
+   
+   /** maps a Mesa FRAG_ATTRIB_x to a packed TGSI input index */
+   GLuint input_to_index[FRAG_ATTRIB_MAX];
+   /** maps a TGSI input index back to a Mesa FRAG_ATTRIB_x */
+   GLuint index_to_input[PIPE_MAX_SHADER_INPUTS];
+   ubyte input_semantic_name[PIPE_MAX_SHADER_INPUTS];
+   ubyte input_semantic_index[PIPE_MAX_SHADER_INPUTS];
+   GLuint num_inputs;
+   GLuint interp_mode[PIPE_MAX_SHADER_INPUTS];  /* XXX size? */
+
+   /** Maps FRAG_RESULT_x to slot */
+   GLuint result_to_output[FRAG_RESULT_MAX];
+   ubyte output_semantic_name[FRAG_RESULT_MAX];
+   ubyte output_semantic_index[FRAG_RESULT_MAX];
+   GLuint num_outputs;
 
    struct pipe_shader_state tgsi;
 
@@ -136,6 +153,7 @@ struct st_vp_variant
 struct st_vertex_program
 {
    struct gl_vertex_program Base;  /**< The Mesa vertex program */
+   struct glsl_to_tgsi_visitor* glsl_to_tgsi;
 
    /** maps a Mesa VERT_ATTRIB_x to a packed TGSI input index */
    GLuint input_to_index[VERT_ATTRIB_MAX];
@@ -184,6 +202,7 @@ struct st_gp_variant
 struct st_geometry_program
 {
    struct gl_geometry_program Base;  /**< The Mesa geometry program */
+   struct glsl_to_tgsi_visitor* glsl_to_tgsi;
 
    /** map GP input back to VP output */
    GLuint input_map[PIPE_MAX_SHADER_INPUTS];
@@ -275,6 +294,14 @@ st_get_gp_variant(struct st_context *st,
                   struct st_geometry_program *stgp,
                   const struct st_gp_variant_key *key);
 
+
+extern void
+st_prepare_vertex_program(struct gl_context *ctx,
+                          struct st_vertex_program *stvp);
+
+extern GLboolean
+st_prepare_fragment_program(struct gl_context *ctx,
+                            struct st_fragment_program *stfp);
 
 
 extern void

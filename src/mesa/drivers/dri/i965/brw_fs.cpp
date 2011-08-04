@@ -617,7 +617,7 @@ fs_visitor::setup_paramvalues_refs()
    /* Set up the pointers to ParamValues now that that array is finalized. */
    for (unsigned int i = 0; i < c->prog_data.nr_params; i++) {
       c->prog_data.param[i] =
-	 fp->Base.Parameters->ParameterValues[this->param_index[i]] +
+	 (const float *)fp->Base.Parameters->ParameterValues[this->param_index[i]] +
 	 this->param_offset[i];
    }
 }

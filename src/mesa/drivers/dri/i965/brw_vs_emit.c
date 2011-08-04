@@ -1359,7 +1359,7 @@ get_src_reg( struct brw_vs_compile *c,
 
 	 if (component >= 0) {
 	    params = c->vp->program.Base.Parameters;
-	    f = params->ParameterValues[src->Index][component];
+	    f = params->ParameterValues[src->Index][component].f;
 
 	    if (src->Abs)
 	       f = fabs(f);
