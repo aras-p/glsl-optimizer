@@ -221,13 +221,21 @@ drm_fd_get_screen_name(int fd)
 static struct pipe_screen *
 create_drm_screen(const char *name, int fd)
 {
+   struct pipe_screen *screen;
+
    if (!name) {
       name = drm_fd_get_screen_name(fd);
       if (!name)
          return NULL;
    }
 
-   return egl_pipe_create_drm_screen(name, fd);
+   screen = egl_pipe_create_drm_screen(name, fd);
+   if (screen)
+      _eglLog(_EGL_INFO, "created a pipe screen for %s", name);
+   else
+      _eglLog(_EGL_WARNING, "failed to create a pipe screen for %s", name);
+
+   return screen;
 }
 
 static struct pipe_screen *
