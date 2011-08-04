@@ -160,18 +160,5 @@ void r600_bo_destroy(struct radeon *radeon, struct r600_bo *bo)
 boolean r600_bo_get_winsys_handle(struct radeon *radeon, struct r600_bo *bo,
 				unsigned stride, struct winsys_handle *whandle)
 {
-	whandle->stride = stride;
-	switch(whandle->type) {
-	case DRM_API_HANDLE_TYPE_KMS:
-		whandle->handle = bo->bo->handle;
-		break;
-	case DRM_API_HANDLE_TYPE_SHARED:
-		if (radeon_bo_get_name(radeon, bo->bo, &whandle->handle))
-			return FALSE;
-		break;
-	default:
-		return FALSE;
-	}
-
-	return TRUE;
+	return radeon->ws->buffer_get_handle(bo->bo->buf, stride, whandle);
 }

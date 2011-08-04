@@ -165,19 +165,3 @@ int radeon_bo_get_tiling_flags(struct radeon *radeon,
 	*tiling_flags = args.tiling_flags;
 	return ret;
 }
-
-int radeon_bo_get_name(struct radeon *radeon,
-		       struct radeon_bo *bo,
-		       uint32_t *name)
-{
-	struct drm_gem_flink flink;
-	int ret;
-
-	flink.handle = bo->handle;
-	ret = drmIoctl(radeon->info.fd, DRM_IOCTL_GEM_FLINK, &flink);
-	if (ret)
-		return ret;
-
-	*name = flink.name;
-	return ret;
-}

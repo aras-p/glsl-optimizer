@@ -98,9 +98,6 @@ int radeon_bo_fencelist(struct radeon *radeon, struct radeon_bo **bolist, uint32
 int radeon_bo_get_tiling_flags(struct radeon *radeon,
 			       struct radeon_bo *bo,
 			       uint32_t *tiling_flags);
-int radeon_bo_get_name(struct radeon *radeon,
-		       struct radeon_bo *bo,
-		       uint32_t *name);
 int radeon_bo_fixed_map(struct radeon *radeon, struct radeon_bo *bo);
 
 /*
