@@ -639,7 +639,7 @@ _mesa_execute_program(struct gl_context * ctx,
                       struct gl_program_machine *machine)
 {
    const GLuint numInst = program->NumInstructions;
-   const GLuint maxExec = 10000;
+   const GLuint maxExec = 65536;
    GLuint pc, numExec = 0;
 
    machine->CurProgram = program;
