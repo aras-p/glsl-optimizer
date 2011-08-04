@@ -1111,7 +1111,7 @@ _mesa_load_state_parameters(struct gl_context *ctx,
       if (paramList->Parameters[i].Type == PROGRAM_STATE_VAR) {
          _mesa_fetch_state(ctx,
 			   paramList->Parameters[i].StateIndexes,
-                           paramList->ParameterValues[i]);
+                           &paramList->ParameterValues[i][0].f);
       }
    }
 }
