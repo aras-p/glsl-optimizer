@@ -89,7 +89,7 @@ void r600_get_backend_mask(struct r600_context *ctx)
 		ctx->pm4[ctx->pm4_cdwords++] = r600_context_bo_reloc(ctx, buffer);
 
 		/* execute */
-		r600_context_flush(ctx);
+		r600_context_flush(ctx, 0);
 
 		/* analyze results */
 		results = r600_bo_map(ctx->radeon, buffer, PB_USAGE_CPU_READ, NULL);
@@ -940,7 +940,7 @@ void r600_context_flush_all(struct r600_context *ctx, unsigned flush_flags)
 
 	if ((ctx->pm4_dirty_cdwords + ndwords + ctx->pm4_cdwords) > ctx->pm4_ndwords) {
 		/* need to flush */
-		r600_context_flush(ctx);
+		r600_context_flush(ctx, 0);
 	}
 
 	ctx->pm4[ctx->pm4_cdwords++] = PKT3(PKT3_SURFACE_SYNC, 3, ctx->predicate_drawing);
@@ -1441,7 +1441,7 @@ void r600_context_draw(struct r600_context *ctx, const struct r600_draw *draw)
 
 	if ((ctx->pm4_dirty_cdwords + ndwords + ctx->pm4_cdwords) > ctx->pm4_ndwords) {
 		/* need to flush */
-		r600_context_flush(ctx);
+		r600_context_flush(ctx, 0);
 	}
 	/* at that point everythings is flushed and ctx->pm4_cdwords = 0 */
 	if ((ctx->pm4_dirty_cdwords + ndwords) > ctx->pm4_ndwords) {
@@ -1485,7 +1485,7 @@ void r600_context_draw(struct r600_context *ctx, const struct r600_draw *draw)
 	ctx->pm4_dirty_cdwords = 0;
 }
 
-void r600_context_flush(struct r600_context *ctx)
+void r600_context_flush(struct r600_context *ctx, unsigned flags)
 {
 	struct r600_block *enable_block = NULL;
 
@@ -1506,7 +1506,8 @@ void r600_context_flush(struct r600_context *ctx)
 
 	/* Flush the CS. */
 	ctx->cs->cdw = ctx->pm4_cdwords;
-	ctx->radeon->ws->cs_flush(ctx->cs, 0);
+	ctx->radeon->ws->cs_flush(ctx->cs, flags);
+
 	/* We need to get the pointer to the other CS,
 	 * the command streams are double-buffered. */
 	ctx->pm4 = ctx->cs->buf;
@@ -1553,7 +1554,7 @@ void r600_context_emit_fence(struct r600_context *ctx, struct r600_bo *fence_bo,
 
 	if ((ctx->pm4_dirty_cdwords + ndwords + ctx->pm4_cdwords) > ctx->pm4_ndwords) {
 		/* need to flush */
-		r600_context_flush(ctx);
+		r600_context_flush(ctx, 0);
 	}
 
 	ctx->pm4[ctx->pm4_cdwords++] = PKT3(PKT3_EVENT_WRITE, 0, 0);
@@ -1615,7 +1616,7 @@ void r600_query_begin(struct r600_context *ctx, struct r600_query *query)
 
 	if ((required_space + ctx->pm4_cdwords) > ctx->pm4_ndwords) {
 		/* need to flush */
-		r600_context_flush(ctx);
+		r600_context_flush(ctx, 0);
 	}
 
 	if (query->type == PIPE_QUERY_OCCLUSION_COUNTER) {
@@ -1626,7 +1627,7 @@ void r600_query_begin(struct r600_context *ctx, struct r600_query *query)
 			query->queries_emitted = 1;
 		} else {
 			if (++query->queries_emitted > query->buffer_size / query->result_size / 2)
-				r600_context_flush(ctx);
+				r600_context_flush(ctx, 0);
 		}
 	}
 
@@ -1637,7 +1638,7 @@ void r600_query_begin(struct r600_context *ctx, struct r600_query *query)
 	/* collect current results if query buffer is full */
 	if (new_results_end == query->results_start) {
 		if (!(query->state & R600_QUERY_STATE_FLUSHED))
-			r600_context_flush(ctx);
+			r600_context_flush(ctx, 0);
 		r600_query_result(ctx, query, TRUE);
 	}
 
@@ -1718,7 +1719,7 @@ void r600_query_predication(struct r600_context *ctx, struct r600_query *query, 
 {
 	if (operation == PREDICATION_OP_CLEAR) {
 		if (ctx->pm4_cdwords + 3 > ctx->pm4_ndwords)
-			r600_context_flush(ctx);
+			r600_context_flush(ctx, 0);
 
 		ctx->pm4[ctx->pm4_cdwords++] = PKT3(PKT3_SET_PREDICATION, 1, 0);
 		ctx->pm4[ctx->pm4_cdwords++] = 0;
@@ -1734,7 +1735,7 @@ void r600_query_predication(struct r600_context *ctx, struct r600_query *query, 
 		count /= query->result_size;
 
 		if (ctx->pm4_cdwords + 5 * count > ctx->pm4_ndwords)
-			r600_context_flush(ctx);
+			r600_context_flush(ctx, 0);
 
 		op = PRED_OP(operation) | PREDICATION_DRAW_VISIBLE |
 				(flag_wait ? PREDICATION_HINT_WAIT : PREDICATION_HINT_NOWAIT_DRAW);
@@ -1807,7 +1808,7 @@ boolean r600_context_query_result(struct r600_context *ctx,
 	uint64_t *result = (uint64_t*)vresult;
 
 	if (!(query->state & R600_QUERY_STATE_FLUSHED)) {
-		r600_context_flush(ctx);
+		r600_context_flush(ctx, 0);
 	}
 	if (!r600_query_result(ctx, query, wait))
 		return FALSE;

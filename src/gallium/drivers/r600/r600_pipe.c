@@ -114,8 +114,10 @@ static struct r600_fence *r600_create_fence(struct r600_pipe_context *ctx)
 	return fence;
 }
 
+
 static void r600_flush(struct pipe_context *ctx,
-			struct pipe_fence_handle **fence)
+		       struct pipe_fence_handle **fence,
+		       unsigned flags)
 {
 	struct r600_pipe_context *rctx = (struct r600_pipe_context *)ctx;
 	struct r600_fence **rfence = (struct r600_fence**)fence;
@@ -123,7 +125,18 @@ static void r600_flush(struct pipe_context *ctx,
 	if (rfence)
 		*rfence = r600_create_fence(rctx);
 
-	r600_context_flush(&rctx->ctx);
+	r600_context_flush(&rctx->ctx, flags);
+}
+
+static void r600_flush_from_st(struct pipe_context *ctx,
+			       struct pipe_fence_handle **fence)
+{
+	r600_flush(ctx, fence, 0);
+}
+
+static void r600_flush_from_winsys(void *ctx, unsigned flags)
+{
+	r600_flush((struct pipe_context*)ctx, NULL, flags);
 }
 
 static void r600_update_num_contexts(struct r600_screen *rscreen, int diff)
@@ -194,7 +207,7 @@ static struct pipe_context *r600_create_context(struct pipe_screen *screen, void
 	rctx->context.screen = screen;
 	rctx->context.priv = priv;
 	rctx->context.destroy = r600_destroy_context;
-	rctx->context.flush = r600_flush;
+	rctx->context.flush = r600_flush_from_st;
 
 	/* Easy accessing of screen/winsys. */
 	rctx->screen = rscreen;
@@ -243,6 +256,8 @@ static struct pipe_context *r600_create_context(struct pipe_screen *screen, void
 		r600_destroy_context(&rctx->context);
 		return NULL;
 	}
+
+	rctx->screen->ws->cs_set_flush_callback(rctx->ctx.cs, r600_flush_from_winsys, rctx);
 
 	util_slab_create(&rctx->pool_transfers,
 			 sizeof(struct pipe_transfer), 64,

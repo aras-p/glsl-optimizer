@@ -1158,7 +1158,7 @@ void evergreen_context_draw(struct r600_context *ctx, const struct r600_draw *dr
 
 	if ((ctx->pm4_dirty_cdwords + ndwords + ctx->pm4_cdwords) > ctx->pm4_ndwords) {
 		/* need to flush */
-		r600_context_flush(ctx);
+		r600_context_flush(ctx, 0);
 	}
 	/* at that point everythings is flushed and ctx->pm4_cdwords = 0 */
 	if ((ctx->pm4_dirty_cdwords + ndwords) > ctx->pm4_ndwords) {

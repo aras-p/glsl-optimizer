@@ -306,9 +306,9 @@ struct radeon_winsys {
      * \param flush     A flush callback function associated with the command stream.
      * \param user      A user pointer that will be passed to the flush callback.
      */
-    void (*cs_set_flush)(struct radeon_winsys_cs *cs,
-                         void (*flush)(void *ctx, unsigned flags),
-                         void *ctx);
+    void (*cs_set_flush_callback)(struct radeon_winsys_cs *cs,
+                                  void (*flush)(void *ctx, unsigned flags),
+                                  void *ctx);
 
     /**
      * Return TRUE if a buffer is referenced by a command stream.
