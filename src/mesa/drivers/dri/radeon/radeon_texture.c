@@ -787,18 +787,6 @@ static void radeon_teximage(
 	radeon_print(RADEON_TEXTURE, RADEON_NORMAL,
 			"%s %dd: texObj %p, texImage %p, face %d, level %d\n",
 			__func__, dims, texObj, texImage, face, level);
-	{
-		struct radeon_bo *bo;
-		bo = !image->mt ? image->bo : image->mt->bo;
-		if (bo && radeon_bo_is_referenced_by_cs(bo, rmesa->cmdbuf.cs)) {
-			radeon_print(RADEON_TEXTURE, RADEON_VERBOSE,
-				"%s Calling teximage for texture that is "
-				"queued for GPU processing.\n",
-				__func__);
-			radeon_firevertices(rmesa);
-		}
-	}
-
 
 	t->validated = GL_FALSE;
 
@@ -817,6 +805,18 @@ static void radeon_teximage(
 					"%s %dd: texObj %p, texImage %p, "
 					" no miptree assigned, using local memory %p\n",
 					__func__, dims, texObj, texImage, texImage->Data);
+		}
+	}
+
+	{
+		struct radeon_bo *bo;
+		bo = !image->mt ? image->bo : image->mt->bo;
+		if (bo && radeon_bo_is_referenced_by_cs(bo, rmesa->cmdbuf.cs)) {
+			radeon_print(RADEON_TEXTURE, RADEON_VERBOSE,
+				"%s Calling teximage for texture that is "
+				"queued for GPU processing.\n",
+				__func__);
+			radeon_firevertices(rmesa);
 		}
 	}
 
