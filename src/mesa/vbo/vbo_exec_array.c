@@ -909,11 +909,10 @@ vbo_exec_DrawRangeElementsBaseVertex(GLenum mode,
       if (0)
          _mesa_print_arrays(ctx);
 
-#ifdef DEBUG
       /* 'end' was out of bounds, but now let's check the actual array
        * indexes to see if any of them are out of bounds.
        */
-      {
+      if (0) {
          GLuint max = _mesa_max_buffer_index(ctx, count, type, indices,
                                              ctx->Array.ElementArrayBufferObj);
          if (max >= ctx->Array.ArrayObj->_MaxElement) {
@@ -934,7 +933,6 @@ vbo_exec_DrawRangeElementsBaseVertex(GLenum mode,
           * upper bound wrong.
           */
       }
-#endif
 
       /* Set 'end' to the max possible legal value */
       assert(ctx->Array.ArrayObj->_MaxElement >= 1);
