@@ -12,10 +12,10 @@ struct v2f {
 };
 uniform sampler2D _MainTex;
 uniform highp vec4 _MainTex_TexelSize;
-highp float FxaaLuma( in highp vec4 rgba );
+highp float FxaaLuma( in lowp vec4 rgba );
 lowp vec4 FxaaPixelShader( in highp vec2 pos, in highp vec4 fxaaConsolePosPos, in sampler2D tex, in sampler2D fxaaConsole360TexExpBiasNegOne, in sampler2D fxaaConsole360TexExpBiasNegTwo, in highp vec2 fxaaQualityRcpFrame, in highp vec4 fxaaConsoleRcpFrameOpt, in highp vec4 fxaaConsoleRcpFrameOpt2, in highp vec4 fxaaConsole360RcpFrameOpt2, in highp float fxaaQualitySubpix, in highp float fxaaQualityEdgeThreshold, in highp float fxaaQualityEdgeThresholdMin, in highp float fxaaConsoleEdgeSharpness, in highp float fxaaConsoleEdgeThreshold, in highp float fxaaConsoleEdgeThresholdMin, in highp vec4 fxaaConsole360ConstDir );
 lowp vec4 xlat_main( in v2f i );
-highp float FxaaLuma( in highp vec4 rgba ) {
+highp float FxaaLuma( in lowp vec4 rgba ) {
     return rgba.y ;
 }
 lowp vec4 FxaaPixelShader( in highp vec2 pos, in highp vec4 fxaaConsolePosPos, in sampler2D tex, in sampler2D fxaaConsole360TexExpBiasNegOne, in sampler2D fxaaConsole360TexExpBiasNegTwo, in highp vec2 fxaaQualityRcpFrame, in highp vec4 fxaaConsoleRcpFrameOpt, in highp vec4 fxaaConsoleRcpFrameOpt2, in highp vec4 fxaaConsole360RcpFrameOpt2, in highp float fxaaQualitySubpix, in highp float fxaaQualityEdgeThreshold, in highp float fxaaQualityEdgeThresholdMin, in highp float fxaaConsoleEdgeSharpness, in highp float fxaaConsoleEdgeThreshold, in highp float fxaaConsoleEdgeThresholdMin, in highp vec4 fxaaConsole360ConstDir ) {

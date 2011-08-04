@@ -19,7 +19,7 @@ vec4 xll_tex2Dlod (
 }
 
 float FxaaLuma (
-  in highp vec4 rgba
+  in lowp vec4 rgba
 )
 {
   return rgba.y;
