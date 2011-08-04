@@ -66,8 +66,6 @@ struct radeon_bo {
 	struct radeon_winsys_cs_handle	*cs_buf;
 	unsigned			handle;
 	unsigned			size;
-	int				map_count;
-	void				*data;
 
 	unsigned			last_flush;
 	unsigned                        binding;
@@ -92,9 +90,6 @@ struct radeon_bo *radeon_bo(struct radeon *radeon, unsigned handle,
 			    unsigned size, unsigned alignment, unsigned bind, unsigned initial_domain);
 void radeon_bo_reference(struct radeon *radeon, struct radeon_bo **dst,
 			 struct radeon_bo *src);
-int radeon_bo_wait(struct radeon *radeon, struct radeon_bo *bo);
-int radeon_bo_busy(struct radeon *radeon, struct radeon_bo *bo, uint32_t *domain);
-int radeon_bo_fixed_map(struct radeon *radeon, struct radeon_bo *bo);
 
 /*
  * r600_hw_context.c
@@ -123,8 +118,8 @@ static INLINE unsigned r600_context_bo_reloc(struct r600_context *ctx, struct r6
 
 	assert(bo != NULL);
 
-	reloc_index =
-		ctx->radeon->ws->cs_add_reloc(ctx->cs, bo->cs_buf, rbo->domains, rbo->domains);
+	reloc_index = ctx->radeon->ws->cs_add_reloc(ctx->cs, bo->cs_buf,
+						    rbo->domains, rbo->domains);
 
 	if (reloc_index >= ctx->creloc)
 		ctx->creloc = reloc_index+1;
@@ -137,23 +132,5 @@ static INLINE unsigned r600_context_bo_reloc(struct r600_context *ctx, struct r6
  * r600_bo.c
  */
 void r600_bo_destroy(struct radeon *radeon, struct r600_bo *bo);
-
-
-/*
- * radeon_bo.c
- */
-static inline int radeon_bo_map(struct radeon *radeon, struct radeon_bo *bo)
-{
-	if (bo->map_count == 0 && !bo->data)
-		return radeon_bo_fixed_map(radeon, bo);
-	bo->map_count++;
-	return 0;
-}
-
-static inline void radeon_bo_unmap(struct radeon *radeon, struct radeon_bo *bo)
-{
-	bo->map_count--;
-	assert(bo->map_count >= 0);
-}
 
 #endif

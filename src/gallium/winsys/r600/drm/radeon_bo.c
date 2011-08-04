@@ -32,43 +32,6 @@
 #include <sys/mman.h>
 #include <errno.h>
 
-int radeon_bo_fixed_map(struct radeon *radeon, struct radeon_bo *bo)
-{
-	struct drm_radeon_gem_mmap args;
-	void *ptr;
-	int r;
-
-	/* Zero out args to make valgrind happy */
-	memset(&args, 0, sizeof(args));
-	args.handle = bo->handle;
-	args.offset = 0;
-	args.size = (uint64_t)bo->size;
-	r = drmCommandWriteRead(radeon->info.fd, DRM_RADEON_GEM_MMAP,
-				&args, sizeof(args));
-	if (r) {
-		fprintf(stderr, "error mapping %p 0x%08X (error = %d)\n",
-			bo, bo->handle, r);
-		return r;
-	}
-	ptr = mmap(0, args.size, PROT_READ|PROT_WRITE, MAP_SHARED, radeon->info.fd, args.addr_ptr);
-	if (ptr == MAP_FAILED) {
-		fprintf(stderr, "%s failed to map bo\n", __func__);
-		return -errno;
-	}
-	bo->data = ptr;
-
-	bo->map_count++;
-	return 0;
-}
-
-static void radeon_bo_fixed_unmap(struct radeon *radeon, struct radeon_bo *bo)
-{
-	if (bo->data) {
-		munmap(bo->data, bo->size);
-		bo->data = NULL;
-	}
-}
-
 #include "state_tracker/drm_driver.h"
 
 struct radeon_bo *radeon_bo(struct radeon *radeon, unsigned handle,
@@ -102,7 +65,6 @@ struct radeon_bo *radeon_bo(struct radeon *radeon, unsigned handle,
 
 static void radeon_bo_destroy(struct radeon *radeon, struct radeon_bo *bo)
 {
-	radeon_bo_fixed_unmap(radeon, bo);
 	pb_reference(&bo->buf, NULL);
 	FREE(bo);
 }
@@ -116,35 +78,4 @@ void radeon_bo_reference(struct radeon *radeon,
 		radeon_bo_destroy(radeon, old);
 	}
 	*dst = src;
-}
-
-int radeon_bo_wait(struct radeon *radeon, struct radeon_bo *bo)
-{
-	struct drm_radeon_gem_wait_idle args;
-	int ret;
-
-	/* Zero out args to make valgrind happy */
-	memset(&args, 0, sizeof(args));
-	args.handle = bo->handle;
-	do {
-		ret = drmCommandWriteRead(radeon->info.fd, DRM_RADEON_GEM_WAIT_IDLE,
-					&args, sizeof(args));
-	} while (ret == -EBUSY);
-	return ret;
-}
-
-int radeon_bo_busy(struct radeon *radeon, struct radeon_bo *bo, uint32_t *domain)
-{
-	struct drm_radeon_gem_busy args;
-	int ret;
-
-	memset(&args, 0, sizeof(args));
-	args.handle = bo->handle;
-	args.domain = 0;
-
-	ret = drmCommandWriteRead(radeon->info.fd, DRM_RADEON_GEM_BUSY,
-			&args, sizeof(args));
-
-	*domain = args.domain;
-	return ret;
 }

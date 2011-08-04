@@ -74,7 +74,7 @@ void r600_get_backend_mask(struct r600_context *ctx)
 		goto err;
 
 	/* initialize buffer with zeroes */
-	results = r600_bo_map(ctx->radeon, buffer, PB_USAGE_CPU_WRITE, NULL);
+	results = r600_bo_map(ctx->radeon, buffer, ctx->cs, PIPE_TRANSFER_WRITE);
 	if (results) {
 		memset(results, 0, ctx->max_db * 4 * 4);
 		r600_bo_unmap(ctx->radeon, buffer);
@@ -92,7 +92,7 @@ void r600_get_backend_mask(struct r600_context *ctx)
 		r600_context_flush(ctx, 0);
 
 		/* analyze results */
-		results = r600_bo_map(ctx->radeon, buffer, PB_USAGE_CPU_READ, NULL);
+		results = r600_bo_map(ctx->radeon, buffer, ctx->cs, PIPE_TRANSFER_READ);
 		if (results) {
 			for(i = 0; i < ctx->max_db; i++) {
 				/* at least highest bit will be set if backend is used */
@@ -1576,9 +1576,9 @@ static boolean r600_query_result(struct r600_context *ctx, struct r600_query *qu
 	u32 *results, *current_result;
 
 	if (wait)
-		results = r600_bo_map(ctx->radeon, query->buffer, PIPE_TRANSFER_READ, NULL);
+		results = r600_bo_map(ctx->radeon, query->buffer, ctx->cs, PIPE_TRANSFER_READ);
 	else
-		results = r600_bo_map(ctx->radeon, query->buffer, PIPE_TRANSFER_DONTBLOCK | PIPE_TRANSFER_READ, NULL);
+		results = r600_bo_map(ctx->radeon, query->buffer, ctx->cs, PIPE_TRANSFER_DONTBLOCK | PIPE_TRANSFER_READ);
 	if (!results)
 		return FALSE;
 
@@ -1646,7 +1646,7 @@ void r600_query_begin(struct r600_context *ctx, struct r600_query *query)
 		u32 *results;
 		int i;
 
-		results = r600_bo_map(ctx->radeon, query->buffer, PIPE_TRANSFER_WRITE, NULL);
+		results = r600_bo_map(ctx->radeon, query->buffer, ctx->cs, PIPE_TRANSFER_WRITE);
 		if (results) {
 			results = (u32*)((char*)results + query->results_end);
 			memset(results, 0, query->result_size);

@@ -95,13 +95,14 @@ unsigned r600_get_backend_map(struct radeon *radeon);
 
 /* r600_bo.c */
 struct r600_bo;
+struct radeon_winsys_cs;
 
 struct r600_bo *r600_bo(struct radeon *radeon,
 			unsigned size, unsigned alignment,
 			unsigned binding, unsigned usage);
 struct r600_bo *r600_bo_handle(struct radeon *radeon, struct winsys_handle *whandle,
 				unsigned *stride, unsigned *array_mode);
-void *r600_bo_map(struct radeon *radeon, struct r600_bo *bo, unsigned usage, void *ctx);
+void *r600_bo_map(struct radeon *radeon, struct r600_bo *bo, struct radeon_winsys_cs *cs, unsigned usage);
 void r600_bo_unmap(struct radeon *radeon, struct r600_bo *bo);
 boolean r600_bo_get_winsys_handle(struct radeon *radeon, struct r600_bo *pb_bo,
 				  unsigned stride, struct winsys_handle *whandle);

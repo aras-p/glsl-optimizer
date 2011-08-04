@@ -682,10 +682,11 @@ void r600_texture_transfer_destroy(struct pipe_context *ctx,
 void* r600_texture_transfer_map(struct pipe_context *ctx,
 				struct pipe_transfer* transfer)
 {
+	struct r600_pipe_context *rctx = (struct r600_pipe_context *)ctx;
 	struct r600_transfer *rtransfer = (struct r600_transfer*)transfer;
 	struct r600_bo *bo;
 	enum pipe_format format = transfer->resource->format;
-	struct radeon *radeon = ((struct r600_screen*)ctx->screen)->radeon;
+	struct radeon *radeon = rctx->screen->radeon;
 	unsigned offset = 0;
 	char *map;
 
@@ -704,7 +705,7 @@ void* r600_texture_transfer_map(struct pipe_context *ctx,
 			transfer->box.x / util_format_get_blockwidth(format) * util_format_get_blocksize(format);
 	}
 
-	if (!(map = r600_bo_map(radeon, bo, transfer->usage, ctx))) {
+	if (!(map = r600_bo_map(radeon, bo, rctx->ctx.cs, transfer->usage))) {
 		return NULL;
 	}
 

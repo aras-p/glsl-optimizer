@@ -85,7 +85,7 @@ static void *r600_buffer_transfer_map(struct pipe_context *pipe,
 	if (rbuffer->r.b.user_ptr)
 		return (uint8_t*)rbuffer->r.b.user_ptr + transfer->box.x;
 
-	data = r600_bo_map(rctx->screen->radeon, rbuffer->r.bo, transfer->usage, pipe);
+	data = r600_bo_map(rctx->screen->radeon, rbuffer->r.bo, rctx->ctx.cs, transfer->usage);
 	if (!data)
 		return NULL;
 
@@ -134,9 +134,8 @@ static void r600_buffer_transfer_inline_write(struct pipe_context *pipe,
 
 	assert(rbuffer->r.b.user_ptr == NULL);
 
-	map = r600_bo_map(radeon, rbuffer->r.bo,
-			  PIPE_TRANSFER_WRITE | PIPE_TRANSFER_DISCARD | usage,
-			  pipe);
+	map = r600_bo_map(radeon, rbuffer->r.bo, rctx->ctx.cs,
+			  PIPE_TRANSFER_WRITE | PIPE_TRANSFER_DISCARD | usage);
 
 	memcpy(map + box->x, data, box->width);
 

@@ -107,48 +107,14 @@ struct r600_bo *r600_bo_handle(struct radeon *radeon, struct winsys_handle *whan
 	return bo;
 }
 
-void *r600_bo_map(struct radeon *radeon, struct r600_bo *bo, unsigned usage, void *ctx)
+void *r600_bo_map(struct radeon *radeon, struct r600_bo *bo, struct radeon_winsys_cs *cs, unsigned usage)
 {
-	struct pipe_context *pctx = ctx;
-
-	if (usage & PIPE_TRANSFER_UNSYNCHRONIZED) {
-		radeon_bo_map(radeon, bo->bo);
-		return (uint8_t *) bo->bo->data;
-	}
-
-	if (p_atomic_read(&bo->bo->reference.count) > 1) {
-		if (usage & PIPE_TRANSFER_DONTBLOCK) {
-			return NULL;
-		}
-		if (ctx) {
-                        pctx->flush(pctx, NULL);
-		}
-	}
-
-	if (usage & PIPE_TRANSFER_DONTBLOCK) {
-		uint32_t domain;
-
-		if (radeon_bo_busy(radeon, bo->bo, &domain))
-			return NULL;
-		if (radeon_bo_map(radeon, bo->bo)) {
-			return NULL;
-		}
-		goto out;
-	}
-
-	radeon_bo_map(radeon, bo->bo);
-	if (radeon_bo_wait(radeon, bo->bo)) {
-		radeon_bo_unmap(radeon, bo->bo);
-		return NULL;
-	}
-
-out:
-	return (uint8_t *) bo->bo->data;
+	return radeon->ws->buffer_map(bo->bo->buf, cs, usage);
 }
 
 void r600_bo_unmap(struct radeon *radeon, struct r600_bo *bo)
 {
-	radeon_bo_unmap(radeon, bo->bo);
+	radeon->ws->buffer_unmap(bo->bo->buf);
 }
 
 void r600_bo_destroy(struct radeon *radeon, struct r600_bo *bo)

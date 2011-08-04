@@ -86,7 +86,7 @@ static int r600_pipe_shader(struct pipe_context *ctx, struct r600_pipe_shader *s
 		if (shader->bo == NULL) {
 			return -ENOMEM;
 		}
-		ptr = (uint32_t*)r600_bo_map(rctx->radeon, shader->bo, 0, NULL);
+		ptr = (uint32_t*)r600_bo_map(rctx->radeon, shader->bo, rctx->ctx.cs, PIPE_TRANSFER_WRITE);
 		if (R600_BIG_ENDIAN) {
 			for (i = 0; i < rshader->bc.ndw; ++i) {
 				ptr[i] = bswap_32(rshader->bc.bytecode[i]);
