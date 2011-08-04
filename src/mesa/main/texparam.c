@@ -1379,6 +1379,8 @@ _mesa_GetTexParameterIiv(GLenum target, GLenum pname, GLint *params)
    ASSERT_OUTSIDE_BEGIN_END(ctx);
 
    texObj = get_texobj(ctx, target, GL_TRUE);
+   if (!texObj)
+      return;
    
    switch (pname) {
    case GL_TEXTURE_BORDER_COLOR:
@@ -1399,6 +1401,8 @@ _mesa_GetTexParameterIuiv(GLenum target, GLenum pname, GLuint *params)
    ASSERT_OUTSIDE_BEGIN_END(ctx);
 
    texObj = get_texobj(ctx, target, GL_TRUE);
+   if (!texObj)
+      return;
    
    switch (pname) {
    case GL_TEXTURE_BORDER_COLOR:
