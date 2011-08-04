@@ -1854,64 +1854,64 @@ paramConstUse: paramConstScalarUse | paramConstVector;
 paramConstScalarDecl: signedFloatConstant
 	{
 	   $$.count = 4;
-	   $$.data[0] = $1;
-	   $$.data[1] = $1;
-	   $$.data[2] = $1;
-	   $$.data[3] = $1;
+	   $$.data[0].f = $1;
+	   $$.data[1].f = $1;
+	   $$.data[2].f = $1;
+	   $$.data[3].f = $1;
 	}
 	;
 
 paramConstScalarUse: REAL
 	{
 	   $$.count = 1;
-	   $$.data[0] = $1;
-	   $$.data[1] = $1;
-	   $$.data[2] = $1;
-	   $$.data[3] = $1;
+	   $$.data[0].f = $1;
+	   $$.data[1].f = $1;
+	   $$.data[2].f = $1;
+	   $$.data[3].f = $1;
 	}
 	| INTEGER
 	{
 	   $$.count = 1;
-	   $$.data[0] = (float) $1;
-	   $$.data[1] = (float) $1;
-	   $$.data[2] = (float) $1;
-	   $$.data[3] = (float) $1;
+	   $$.data[0].f = (float) $1;
+	   $$.data[1].f = (float) $1;
+	   $$.data[2].f = (float) $1;
+	   $$.data[3].f = (float) $1;
 	}
 	;
 
 paramConstVector: '{' signedFloatConstant '}'
 	{
 	   $$.count = 4;
-	   $$.data[0] = $2;
-	   $$.data[1] = 0.0f;
-	   $$.data[2] = 0.0f;
-	   $$.data[3] = 1.0f;
+	   $$.data[0].f = $2;
+	   $$.data[1].f = 0.0f;
+	   $$.data[2].f = 0.0f;
+	   $$.data[3].f = 1.0f;
 	}
 	| '{' signedFloatConstant ',' signedFloatConstant '}'
 	{
 	   $$.count = 4;
-	   $$.data[0] = $2;
-	   $$.data[1] = $4;
-	   $$.data[2] = 0.0f;
-	   $$.data[3] = 1.0f;
+	   $$.data[0].f = $2;
+	   $$.data[1].f = $4;
+	   $$.data[2].f = 0.0f;
+	   $$.data[3].f = 1.0f;
 	}
 	| '{' signedFloatConstant ',' signedFloatConstant ','
               signedFloatConstant '}'
 	{
 	   $$.count = 4;
-	   $$.data[0] = $2;
-	   $$.data[1] = $4;
-	   $$.data[2] = $6;
-	   $$.data[3] = 1.0f;
+	   $$.data[0].f = $2;
+	   $$.data[1].f = $4;
+	   $$.data[2].f = $6;
+	   $$.data[3].f = 1.0f;
 	}
 	| '{' signedFloatConstant ',' signedFloatConstant ','
               signedFloatConstant ',' signedFloatConstant '}'
 	{
 	   $$.count = 4;
-	   $$.data[0] = $2;
-	   $$.data[1] = $4;
-	   $$.data[2] = $6;
-	   $$.data[3] = $8;
+	   $$.data[0].f = $2;
+	   $$.data[1].f = $4;
+	   $$.data[2].f = $6;
+	   $$.data[3].f = $8;
 	}
 	;
 
