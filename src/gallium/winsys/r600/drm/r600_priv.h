@@ -60,35 +60,21 @@ struct r600_reg {
 };
 
 #define BO_BOUND_TEXTURE 1
-struct radeon_bo {
-	struct pipe_reference		reference;
-	struct pb_buffer		*buf;
-	struct radeon_winsys_cs_handle	*cs_buf;
-	unsigned			size;
-
-	unsigned			last_flush;
-	unsigned                        binding;
-};
 
 struct r600_bo {
 	struct pipe_reference		reference; /* this must be the first member for the r600_bo_reference inline to work */
 	/* DO NOT MOVE THIS ^ */
+	struct pb_buffer		*buf;
+	struct radeon_winsys_cs_handle	*cs_buf;
 	unsigned			domains;
-	struct radeon_bo		*bo;
+	unsigned			last_flush;
+	unsigned                        binding;
 };
 
 /*
  * radeon_pciid.c
  */
 unsigned radeon_family_from_device(unsigned device);
-
-/*
- * radeon_bo.c
- */
-struct radeon_bo *radeon_bo(struct radeon *radeon, unsigned handle,
-			    unsigned size, unsigned alignment, unsigned bind, unsigned initial_domain);
-void radeon_bo_reference(struct radeon *radeon, struct radeon_bo **dst,
-			 struct radeon_bo *src);
 
 /*
  * r600_hw_context.c
@@ -112,18 +98,14 @@ int r600_resource_init(struct r600_context *ctx, struct r600_range *range, unsig
 
 static INLINE unsigned r600_context_bo_reloc(struct r600_context *ctx, struct r600_bo *rbo)
 {
-	struct radeon_bo *bo = rbo->bo;
-	unsigned reloc_index;
-
-	assert(bo != NULL);
-
-	reloc_index = ctx->radeon->ws->cs_add_reloc(ctx->cs, bo->cs_buf,
-						    rbo->domains, rbo->domains);
+	unsigned reloc_index =
+		ctx->radeon->ws->cs_add_reloc(ctx->cs, rbo->cs_buf,
+					      rbo->domains, rbo->domains);
 
 	if (reloc_index >= ctx->creloc)
 		ctx->creloc = reloc_index+1;
 
-	radeon_bo_reference(ctx->radeon, &ctx->bo[reloc_index], bo);
+	r600_bo_reference(ctx->radeon, &ctx->bo[reloc_index], rbo);
 	return reloc_index * 4;
 }
 

@@ -33,7 +33,7 @@ struct r600_bo *r600_bo(struct radeon *radeon,
 			unsigned binding, unsigned usage)
 {
 	struct r600_bo *bo;
-	struct radeon_bo *rbo;
+	struct pb_buffer *pb;
 	uint32_t initial_domain, domains;
 	  
 	/* Staging resources particpate in transfers and blits only
@@ -61,14 +61,15 @@ struct r600_bo *r600_bo(struct radeon *radeon,
 		}
 	}
 
-	rbo = radeon_bo(radeon, 0, size, alignment, binding, initial_domain);
-	if (rbo == NULL) {
+	pb = radeon->ws->buffer_create(radeon->ws, size, alignment, binding, initial_domain);
+	if (!pb) {
 		return NULL;
 	}
 
 	bo = calloc(1, sizeof(struct r600_bo));
 	bo->domains = domains;
-	bo->bo = rbo;
+	bo->buf = pb;
+	bo->cs_buf = radeon->ws->buffer_get_cs_handle(pb);
 
 	pipe_reference_init(&bo->reference, 1);
 	return bo;
@@ -77,17 +78,18 @@ struct r600_bo *r600_bo(struct radeon *radeon,
 struct r600_bo *r600_bo_handle(struct radeon *radeon, struct winsys_handle *whandle,
 			       unsigned *stride, unsigned *array_mode)
 {
+	struct pb_buffer *pb;
 	struct r600_bo *bo = calloc(1, sizeof(struct r600_bo));
-	struct radeon_bo *rbo;
 
-	rbo = bo->bo = radeon_bo(radeon, whandle->handle, 0, 0, 0, 0);
-	if (rbo == NULL) {
+	pb = bo->buf = radeon->ws->buffer_from_handle(radeon->ws, whandle, stride, NULL);
+	if (!pb) {
 		free(bo);
 		return NULL;
 	}
 
 	pipe_reference_init(&bo->reference, 1);
 	bo->domains = RADEON_GEM_DOMAIN_GTT | RADEON_GEM_DOMAIN_VRAM;
+	bo->cs_buf = radeon->ws->buffer_get_cs_handle(pb);
 
 	if (stride)
 		*stride = whandle->stride;
@@ -95,7 +97,7 @@ struct r600_bo *r600_bo_handle(struct radeon *radeon, struct winsys_handle *whan
 	if (array_mode) {
 		enum radeon_bo_layout micro, macro;
 
-		radeon->ws->buffer_get_tiling(rbo->buf, &micro, &macro);
+		radeon->ws->buffer_get_tiling(bo->buf, &micro, &macro);
 
 		if (macro == RADEON_LAYOUT_TILED)
 			*array_mode = V_0280A0_ARRAY_2D_TILED_THIN1;
@@ -109,22 +111,22 @@ struct r600_bo *r600_bo_handle(struct radeon *radeon, struct winsys_handle *whan
 
 void *r600_bo_map(struct radeon *radeon, struct r600_bo *bo, struct radeon_winsys_cs *cs, unsigned usage)
 {
-	return radeon->ws->buffer_map(bo->bo->buf, cs, usage);
+	return radeon->ws->buffer_map(bo->buf, cs, usage);
 }
 
 void r600_bo_unmap(struct radeon *radeon, struct r600_bo *bo)
 {
-	radeon->ws->buffer_unmap(bo->bo->buf);
+	radeon->ws->buffer_unmap(bo->buf);
 }
 
 void r600_bo_destroy(struct radeon *radeon, struct r600_bo *bo)
 {
-	radeon_bo_reference(radeon, &bo->bo, NULL);
+	pb_reference(&bo->buf, NULL);
 	free(bo);
 }
 
 boolean r600_bo_get_winsys_handle(struct radeon *radeon, struct r600_bo *bo,
-				unsigned stride, struct winsys_handle *whandle)
+				  unsigned stride, struct winsys_handle *whandle)
 {
-	return radeon->ws->buffer_get_handle(bo->bo->buf, stride, whandle);
+	return radeon->ws->buffer_get_handle(bo->buf, stride, whandle);
 }

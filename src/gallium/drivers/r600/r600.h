@@ -242,7 +242,7 @@ struct r600_context {
 	unsigned		init_dwords;
 
 	unsigned		creloc;
-	struct radeon_bo	**bo;
+	struct r600_bo		**bo;
 
 	u32			*pm4;
 	unsigned		pm4_cdwords;
