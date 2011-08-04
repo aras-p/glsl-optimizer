@@ -259,11 +259,12 @@ struct radeon_winsys {
      * \param buf A winsys buffer to validate.
      * \param rd  A read domain containing a bitmask of the RADEON_DOMAIN_* flags.
      * \param wd  A write domain containing a bitmask of the RADEON_DOMAIN_* flags.
+     * \return Relocation index.
      */
-    void (*cs_add_reloc)(struct radeon_winsys_cs *cs,
-                         struct radeon_winsys_cs_handle *buf,
-                         enum radeon_bo_domain rd,
-                         enum radeon_bo_domain wd);
+    unsigned (*cs_add_reloc)(struct radeon_winsys_cs *cs,
+                             struct radeon_winsys_cs_handle *buf,
+                             enum radeon_bo_domain rd,
+                             enum radeon_bo_domain wd);
 
     /**
      * Return TRUE if there is enough memory in VRAM and GTT for the relocs
@@ -329,10 +330,6 @@ struct radeon_winsys {
 
     /* Transitional functions for r600g when moving to winsys/radeon */
     unsigned (*trans_get_buffer_handle)(struct pb_buffer *buf);
-    unsigned (*trans_add_reloc)(struct radeon_winsys_cs *cs,
-				struct radeon_winsys_cs_handle *buf,
-				enum radeon_bo_domain rd,
-                                enum radeon_bo_domain wd);
 };
 
 #endif

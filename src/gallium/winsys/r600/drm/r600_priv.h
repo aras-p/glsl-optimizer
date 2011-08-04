@@ -135,7 +135,7 @@ static INLINE unsigned r600_context_bo_reloc(struct r600_context *ctx, struct r6
 	assert(bo != NULL);
 
 	reloc_index =
-		ctx->radeon->ws->trans_add_reloc(ctx->cs, bo->cs_buf, rbo->domains, rbo->domains);
+		ctx->radeon->ws->cs_add_reloc(ctx->cs, bo->cs_buf, rbo->domains, rbo->domains);
 
 	if (reloc_index >= ctx->creloc)
 		ctx->creloc = reloc_index+1;

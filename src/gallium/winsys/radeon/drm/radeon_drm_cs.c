@@ -285,24 +285,23 @@ static unsigned radeon_add_reloc(struct radeon_cs_context *csc,
     return csc->crelocs++;
 }
 
-static void radeon_drm_cs_add_reloc(struct radeon_winsys_cs *rcs,
-                                    struct radeon_winsys_cs_handle *buf,
-                                    enum radeon_bo_domain rd,
-                                    enum radeon_bo_domain wd)
+static unsigned radeon_drm_cs_add_reloc(struct radeon_winsys_cs *rcs,
+                                        struct radeon_winsys_cs_handle *buf,
+                                        enum radeon_bo_domain rd,
+                                        enum radeon_bo_domain wd)
 {
     struct radeon_drm_cs *cs = radeon_drm_cs(rcs);
     struct radeon_bo *bo = (struct radeon_bo*)buf;
     enum radeon_bo_domain added_domains;
 
-    radeon_add_reloc(cs->csc, bo, rd, wd, &added_domains);
-
-    if (!added_domains)
-        return;
+    unsigned index = radeon_add_reloc(cs->csc, bo, rd, wd, &added_domains);
 
     if (added_domains & RADEON_DOMAIN_GTT)
         cs->csc->used_gart += bo->size;
     if (added_domains & RADEON_DOMAIN_VRAM)
         cs->csc->used_vram += bo->size;
+
+    return index;
 }
 
 static boolean radeon_drm_cs_validate(struct radeon_winsys_cs *rcs)
@@ -470,25 +469,6 @@ static boolean radeon_bo_is_referenced(struct radeon_winsys_cs *rcs,
     return radeon_bo_is_referenced_by_cs(cs, bo);
 }
 
-static unsigned trans_add_reloc(struct radeon_winsys_cs *rcs,
-				struct radeon_winsys_cs_handle *buf,
-				enum radeon_bo_domain rd,
-                                enum radeon_bo_domain wd)
-{
-	struct radeon_drm_cs *cs = radeon_drm_cs(rcs);
-        struct radeon_bo *bo = (struct radeon_bo*)buf;
-        enum radeon_bo_domain added_domains;
-
-        unsigned index = radeon_add_reloc(cs->csc, bo, rd, wd, &added_domains);
-
-        if (added_domains & RADEON_DOMAIN_GTT)
-            cs->csc->used_gart += bo->size;
-        if (added_domains & RADEON_DOMAIN_VRAM)
-            cs->csc->used_vram += bo->size;
-
-	return index;
-}
-
 void radeon_drm_cs_init_functions(struct radeon_drm_winsys *ws)
 {
     ws->base.cs_create = radeon_drm_cs_create;
@@ -499,6 +479,4 @@ void radeon_drm_cs_init_functions(struct radeon_drm_winsys *ws)
     ws->base.cs_flush = radeon_drm_cs_flush;
     ws->base.cs_set_flush = radeon_drm_cs_set_flush;
     ws->base.cs_is_buffer_referenced = radeon_bo_is_referenced;
-
-    ws->base.trans_add_reloc = trans_add_reloc;
 }
