@@ -29,8 +29,6 @@
 #include "util/u_double_list.h"
 #include "util/u_inlines.h"
 
-#define RADEON_CTX_MAX_PM4	(64 * 1024 / 4)
-
 #define R600_ERR(fmt, args...) \
 	fprintf(stderr, "EE %s:%d %s - "fmt, __FILE__, __LINE__, __func__, ##args)
 
