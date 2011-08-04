@@ -328,8 +328,8 @@ setup_bitmap_vertex_data(struct st_context *st, bool normalized,
 
    if(!normalized)
    {
-      sRight = width;
-      tBot = height;
+      sRight = (GLfloat) width;
+      tBot = (GLfloat) height;
    }
 
    /* XXX: Need to improve buffer_write to allow NO_WAIT (as well as
@@ -381,7 +381,7 @@ setup_bitmap_vertex_data(struct st_context *st, bool normalized,
    /* same for all verts: */
    for (i = 0; i < 4; i++) {
       st->bitmap.vertices[i][0][2] = z;
-      st->bitmap.vertices[i][0][3] = 1.0;
+      st->bitmap.vertices[i][0][3] = 1.0f;
       st->bitmap.vertices[i][1][0] = color[0];
       st->bitmap.vertices[i][1][1] = color[1];
       st->bitmap.vertices[i][1][2] = color[2];
@@ -513,7 +513,7 @@ draw_bitmap_quad(struct gl_context *ctx, GLint x, GLint y, GLfloat z,
    cso_set_vertex_elements(cso, 3, st->velems_util_draw);
 
    /* convert Z from [0,1] to [-1,-1] to match viewport Z scale/bias */
-   z = z * 2.0 - 1.0;
+   z = z * 2.0f - 1.0f;
 
    /* draw textured quad */
    offset = setup_bitmap_vertex_data(st,
