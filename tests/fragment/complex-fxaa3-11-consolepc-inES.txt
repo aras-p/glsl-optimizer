@@ -23,7 +23,7 @@ lowp vec4 FxaaPixelShader( in highp vec2 pos, in highp vec4 fxaaConsolePosPos, i
     highp float lumaSw;
     highp float lumaNe;
     highp float lumaSe;
-    highp vec4 rgbyM;
+    lowp vec4 rgbyM;
     highp float lumaM;
     highp float lumaMaxNwSw;
     highp float lumaMinNwSw;

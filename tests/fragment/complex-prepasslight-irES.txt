@@ -317,9 +317,9 @@ mediump float unitySampleShadow (
   tmpvar_16 = lessThan (shadowVals, tmpvar_15);
   highp vec4 tmpvar_17;
   tmpvar_17 = _LightShadowData.xxxx.xyzw;
-  highp vec4 tmpvar_18;
+  vec4 tmpvar_18;
   tmpvar_18 = xll_vecTSel (tmpvar_16, tmpvar_17, vec4(1.0, 1.0, 1.0, 1.0));
-  highp vec4 tmpvar_19;
+  vec4 tmpvar_19;
   tmpvar_19 = tmpvar_18;
   shadows = tmpvar_19;
   mediump float tmpvar_20;
@@ -338,9 +338,9 @@ mediump float ComputeShadow (
   highp float tmpvar_1;
   tmpvar_1 = ((z * _LightShadowData.z) + _LightShadowData.w);
   fade = tmpvar_1;
-  highp float tmpvar_2;
+  float tmpvar_2;
   tmpvar_2 = xll_saturate (fade);
-  highp float tmpvar_3;
+  float tmpvar_3;
   tmpvar_3 = tmpvar_2;
   fade = tmpvar_3;
   highp float tmpvar_4;
@@ -472,7 +472,7 @@ mediump vec4 xlat_main (
   mediump float tmpvar_38;
   tmpvar_38 = tmpvar_37;
   spec = tmpvar_38;
-  highp float tmpvar_39;
+  float tmpvar_39;
   tmpvar_39 = xll_saturate (atten);
   highp float tmpvar_40;
   tmpvar_40 = (spec * tmpvar_39);
@@ -488,9 +488,9 @@ mediump vec4 xlat_main (
   highp float tmpvar_44;
   tmpvar_44 = ((vpos.z * unity_LightmapFade.z) + unity_LightmapFade.w);
   fade = tmpvar_44;
-  highp float tmpvar_45;
+  float tmpvar_45;
   tmpvar_45 = xll_saturate ((1.0 - fade));
-  highp vec4 tmpvar_46;
+  mediump vec4 tmpvar_46;
   tmpvar_46 = (res * tmpvar_45);
   res = tmpvar_46;
   mediump vec4 tmpvar_47;

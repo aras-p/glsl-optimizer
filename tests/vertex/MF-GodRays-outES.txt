@@ -96,7 +96,7 @@ void main ()
   tmpvar_24.xyz = tmpvar_15;
   highp float tmpvar_25;
   tmpvar_25 = clamp ((tmpvar_9 / _FadeOutDistNear), 0.0, 1.0);
-  highp float tmpvar_26;
+  float tmpvar_26;
   tmpvar_26 = (1.0 - clamp ((max ((tmpvar_9 - _FadeOutDistFar), 0.0) * 0.2), 0.0, 1.0));
   highp float tmpvar_27;
   tmpvar_27 = (tmpvar_25 * tmpvar_25);

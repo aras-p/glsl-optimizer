@@ -18,7 +18,7 @@ mediump vec4 xlat_main (
   highp vec4 tmpvar_1;
   tmpvar_1.zw = vec2(0.0, 0.0);
   tmpvar_1.xy = uv.xy.xy;
-  highp vec4 tmpvar_2;
+  vec4 tmpvar_2;
   tmpvar_2 = xll_tex2Dlod (tex, tmpvar_1);
   return tmpvar_2;
 }

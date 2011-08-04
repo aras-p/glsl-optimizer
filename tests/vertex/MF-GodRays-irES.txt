@@ -331,16 +331,16 @@ float CalcFadeOutFactor (
 {
   highp float ffadeout;
   highp float nfadeout;
-  highp float tmpvar_1;
+  float tmpvar_1;
   tmpvar_1 = xll_saturate ((dist / _FadeOutDistNear));
-  highp float tmpvar_2;
+  float tmpvar_2;
   tmpvar_2 = tmpvar_1;
   nfadeout = tmpvar_2;
   highp float tmpvar_3;
   tmpvar_3 = max ((dist - _FadeOutDistFar), 0.0);
-  highp float tmpvar_4;
+  float tmpvar_4;
   tmpvar_4 = xll_saturate ((tmpvar_3 * 0.2));
-  highp float tmpvar_5;
+  float tmpvar_5;
   tmpvar_5 = (1.0 - tmpvar_4);
   ffadeout = tmpvar_5;
   highp float tmpvar_6;
@@ -439,9 +439,9 @@ v2f xlat_main (
   highp float tmpvar_16;
   tmpvar_16 = (_Time.y + (_BlinkingTimeOffsScale * v.color.z));
   time = tmpvar_16;
-  highp float tmpvar_17;
+  float tmpvar_17;
   tmpvar_17 = xll_mod (time, (_TimeOnDuration + _TimeOffDuration));
-  highp float tmpvar_18;
+  float tmpvar_18;
   tmpvar_18 = tmpvar_17;
   fracTime = tmpvar_18;
   highp float tmpvar_19;

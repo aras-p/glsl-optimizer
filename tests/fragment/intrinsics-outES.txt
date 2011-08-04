@@ -33,86 +33,72 @@ void main ()
   vec2 tmpvar_8;
   tmpvar_8.x = tmpvar_6;
   tmpvar_8.y = tmpvar_7;
-  highp vec2 tmpvar_9;
-  tmpvar_9 = (c.xy + tmpvar_8);
-  c.xy = tmpvar_9;
+  c.xy = (c.xy + tmpvar_8);
+  vec3 tmpvar_9;
+  tmpvar_9 = (xlv_TEXCOORD0.xyz / vec3(2.0, 2.0, 2.0));
   vec3 tmpvar_10;
-  tmpvar_10 = (xlv_TEXCOORD0.xyz / vec3(2.0, 2.0, 2.0));
-  vec3 tmpvar_11;
-  tmpvar_11 = (fract (abs (tmpvar_10)) * vec3(2.0, 2.0, 2.0));
-  float tmpvar_12;
-  if ((tmpvar_10.x >= 0.0)) {
-    tmpvar_12 = tmpvar_11.x;
+  tmpvar_10 = (fract (abs (tmpvar_9)) * vec3(2.0, 2.0, 2.0));
+  float tmpvar_11;
+  if ((tmpvar_9.x >= 0.0)) {
+    tmpvar_11 = tmpvar_10.x;
   } else {
-    tmpvar_12 = -(tmpvar_11.x);
+    tmpvar_11 = -(tmpvar_10.x);
+  };
+  float tmpvar_12;
+  if ((tmpvar_9.y >= 0.0)) {
+    tmpvar_12 = tmpvar_10.y;
+  } else {
+    tmpvar_12 = -(tmpvar_10.y);
   };
   float tmpvar_13;
-  if ((tmpvar_10.y >= 0.0)) {
-    tmpvar_13 = tmpvar_11.y;
+  if ((tmpvar_9.z >= 0.0)) {
+    tmpvar_13 = tmpvar_10.z;
   } else {
-    tmpvar_13 = -(tmpvar_11.y);
+    tmpvar_13 = -(tmpvar_10.z);
   };
-  float tmpvar_14;
-  if ((tmpvar_10.z >= 0.0)) {
-    tmpvar_14 = tmpvar_11.z;
+  vec3 tmpvar_14;
+  tmpvar_14.x = tmpvar_11;
+  tmpvar_14.y = tmpvar_12;
+  tmpvar_14.z = tmpvar_13;
+  c.xyz = (c.xyz + tmpvar_14);
+  vec4 tmpvar_15;
+  tmpvar_15 = (xlv_TEXCOORD0 / vec4(2.0, 2.0, 2.0, 2.0));
+  vec4 tmpvar_16;
+  tmpvar_16 = (fract (abs (tmpvar_15)) * vec4(2.0, 2.0, 2.0, 2.0));
+  float tmpvar_17;
+  if ((tmpvar_15.x >= 0.0)) {
+    tmpvar_17 = tmpvar_16.x;
   } else {
-    tmpvar_14 = -(tmpvar_11.z);
+    tmpvar_17 = -(tmpvar_16.x);
   };
-  vec3 tmpvar_15;
-  tmpvar_15.x = tmpvar_12;
-  tmpvar_15.y = tmpvar_13;
-  tmpvar_15.z = tmpvar_14;
-  highp vec3 tmpvar_16;
-  tmpvar_16 = (c.xyz + tmpvar_15);
-  c.xyz = tmpvar_16;
-  vec4 tmpvar_17;
-  tmpvar_17 = (xlv_TEXCOORD0 / vec4(2.0, 2.0, 2.0, 2.0));
-  vec4 tmpvar_18;
-  tmpvar_18 = (fract (abs (tmpvar_17)) * vec4(2.0, 2.0, 2.0, 2.0));
+  float tmpvar_18;
+  if ((tmpvar_15.y >= 0.0)) {
+    tmpvar_18 = tmpvar_16.y;
+  } else {
+    tmpvar_18 = -(tmpvar_16.y);
+  };
   float tmpvar_19;
-  if ((tmpvar_17.x >= 0.0)) {
-    tmpvar_19 = tmpvar_18.x;
+  if ((tmpvar_15.z >= 0.0)) {
+    tmpvar_19 = tmpvar_16.z;
   } else {
-    tmpvar_19 = -(tmpvar_18.x);
+    tmpvar_19 = -(tmpvar_16.z);
   };
   float tmpvar_20;
-  if ((tmpvar_17.y >= 0.0)) {
-    tmpvar_20 = tmpvar_18.y;
+  if ((tmpvar_15.w >= 0.0)) {
+    tmpvar_20 = tmpvar_16.w;
   } else {
-    tmpvar_20 = -(tmpvar_18.y);
+    tmpvar_20 = -(tmpvar_16.w);
   };
-  float tmpvar_21;
-  if ((tmpvar_17.z >= 0.0)) {
-    tmpvar_21 = tmpvar_18.z;
-  } else {
-    tmpvar_21 = -(tmpvar_18.z);
-  };
-  float tmpvar_22;
-  if ((tmpvar_17.w >= 0.0)) {
-    tmpvar_22 = tmpvar_18.w;
-  } else {
-    tmpvar_22 = -(tmpvar_18.w);
-  };
-  vec4 tmpvar_23;
-  tmpvar_23.x = tmpvar_19;
-  tmpvar_23.y = tmpvar_20;
-  tmpvar_23.z = tmpvar_21;
-  tmpvar_23.w = tmpvar_22;
-  highp vec4 tmpvar_24;
-  tmpvar_24 = (c + tmpvar_23);
-  c = tmpvar_24;
-  highp float tmpvar_25;
-  tmpvar_25 = (c.x + (xlv_TEXCOORD0.x - float(int(xlv_TEXCOORD0.x))));
-  c.x = tmpvar_25;
-  highp vec2 tmpvar_26;
-  tmpvar_26 = (c.xy + (xlv_TEXCOORD0.xy - vec2(ivec2(xlv_TEXCOORD0.xy))));
-  c.xy = tmpvar_26;
-  highp vec3 tmpvar_27;
-  tmpvar_27 = (c.xyz + (xlv_TEXCOORD0.xyz - vec3(ivec3(xlv_TEXCOORD0.xyz))));
-  c.xyz = tmpvar_27;
-  highp vec4 tmpvar_28;
-  tmpvar_28 = (c + (xlv_TEXCOORD0 - vec4(ivec4(xlv_TEXCOORD0))));
-  c = tmpvar_28;
+  vec4 tmpvar_21;
+  tmpvar_21.x = tmpvar_17;
+  tmpvar_21.y = tmpvar_18;
+  tmpvar_21.z = tmpvar_19;
+  tmpvar_21.w = tmpvar_20;
+  c = (c + tmpvar_21);
+  c.x = (c.x + (xlv_TEXCOORD0.x - float(int(xlv_TEXCOORD0.x))));
+  c.xy = (c.xy + (xlv_TEXCOORD0.xy - vec2(ivec2(xlv_TEXCOORD0.xy))));
+  c.xyz = (c.xyz + (xlv_TEXCOORD0.xyz - vec3(ivec3(xlv_TEXCOORD0.xyz))));
+  c = (c + (xlv_TEXCOORD0 - vec4(ivec4(xlv_TEXCOORD0))));
   gl_FragData[0] = c;
 }
 
