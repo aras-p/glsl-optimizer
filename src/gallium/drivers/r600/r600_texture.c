@@ -66,7 +66,7 @@ static void r600_copy_from_staging_texture(struct pipe_context *ctx, struct r600
 				  rtransfer->staging_texture,
 				  0, &sbox);
 
-        ctx->flush(ctx, NULL);
+	r600_flush(ctx, NULL, RADEON_FLUSH_ASYNC);
 }
 
 unsigned r600_texture_get_offset(struct r600_resource_texture *rtex,
@@ -645,7 +645,7 @@ struct pipe_transfer* r600_texture_get_transfer(struct pipe_context *ctx,
 		if (usage & PIPE_TRANSFER_READ) {
 			r600_copy_to_staging_texture(ctx, trans);
 			/* Always referenced in the blit. */
-                        ctx->flush(ctx, NULL);
+			r600_flush(ctx, NULL, 0);
 		}
 		return &trans->transfer;
 	}

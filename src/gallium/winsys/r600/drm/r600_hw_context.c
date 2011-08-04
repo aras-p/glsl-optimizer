@@ -938,7 +938,7 @@ void r600_context_flush_all(struct r600_context *ctx, unsigned flush_flags)
 
 	if ((ctx->pm4_dirty_cdwords + ndwords + ctx->pm4_cdwords) > ctx->pm4_ndwords) {
 		/* need to flush */
-		r600_context_flush(ctx, 0);
+		r600_context_flush(ctx, RADEON_FLUSH_ASYNC);
 	}
 
 	ctx->pm4[ctx->pm4_cdwords++] = PKT3(PKT3_SURFACE_SYNC, 3, ctx->predicate_drawing);
@@ -1436,7 +1436,7 @@ void r600_context_draw(struct r600_context *ctx, const struct r600_draw *draw)
 
 	if ((ctx->pm4_dirty_cdwords + ndwords + ctx->pm4_cdwords) > ctx->pm4_ndwords) {
 		/* need to flush */
-		r600_context_flush(ctx, 0);
+		r600_context_flush(ctx, RADEON_FLUSH_ASYNC);
 	}
 	/* at that point everythings is flushed and ctx->pm4_cdwords = 0 */
 	if ((ctx->pm4_dirty_cdwords + ndwords) > ctx->pm4_ndwords) {
@@ -1549,7 +1549,7 @@ void r600_context_emit_fence(struct r600_context *ctx, struct r600_bo *fence_bo,
 
 	if ((ctx->pm4_dirty_cdwords + ndwords + ctx->pm4_cdwords) > ctx->pm4_ndwords) {
 		/* need to flush */
-		r600_context_flush(ctx, 0);
+		r600_context_flush(ctx, RADEON_FLUSH_ASYNC);
 	}
 
 	ctx->pm4[ctx->pm4_cdwords++] = PKT3(PKT3_EVENT_WRITE, 0, 0);
@@ -1611,7 +1611,7 @@ void r600_query_begin(struct r600_context *ctx, struct r600_query *query)
 
 	if ((required_space + ctx->pm4_cdwords) > ctx->pm4_ndwords) {
 		/* need to flush */
-		r600_context_flush(ctx, 0);
+		r600_context_flush(ctx, RADEON_FLUSH_ASYNC);
 	}
 
 	if (query->type == PIPE_QUERY_OCCLUSION_COUNTER) {
@@ -1622,7 +1622,7 @@ void r600_query_begin(struct r600_context *ctx, struct r600_query *query)
 			query->queries_emitted = 1;
 		} else {
 			if (++query->queries_emitted > query->buffer_size / query->result_size / 2)
-				r600_context_flush(ctx, 0);
+				r600_context_flush(ctx, RADEON_FLUSH_ASYNC);
 		}
 	}
 
@@ -1714,7 +1714,7 @@ void r600_query_predication(struct r600_context *ctx, struct r600_query *query, 
 {
 	if (operation == PREDICATION_OP_CLEAR) {
 		if (ctx->pm4_cdwords + 3 > ctx->pm4_ndwords)
-			r600_context_flush(ctx, 0);
+			r600_context_flush(ctx, RADEON_FLUSH_ASYNC);
 
 		ctx->pm4[ctx->pm4_cdwords++] = PKT3(PKT3_SET_PREDICATION, 1, 0);
 		ctx->pm4[ctx->pm4_cdwords++] = 0;
@@ -1730,7 +1730,7 @@ void r600_query_predication(struct r600_context *ctx, struct r600_query *query, 
 		count /= query->result_size;
 
 		if (ctx->pm4_cdwords + 5 * count > ctx->pm4_ndwords)
-			r600_context_flush(ctx, 0);
+			r600_context_flush(ctx, RADEON_FLUSH_ASYNC);
 
 		op = PRED_OP(operation) | PREDICATION_DRAW_VISIBLE |
 				(flag_wait ? PREDICATION_HINT_WAIT : PREDICATION_HINT_NOWAIT_DRAW);

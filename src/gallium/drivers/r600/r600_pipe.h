@@ -273,6 +273,11 @@ struct pipe_resource *r600_buffer_from_handle(struct pipe_screen *screen,
 					      struct winsys_handle *whandle);
 void r600_upload_index_buffer(struct r600_pipe_context *rctx, struct r600_drawl *draw);
 
+
+/* r600_pipe.c */
+void r600_flush(struct pipe_context *ctx, struct pipe_fence_handle **fence,
+		unsigned flags);
+
 /* r600_query.c */
 void r600_init_query_functions(struct r600_pipe_context *rctx);
 

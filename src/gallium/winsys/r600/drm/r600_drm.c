@@ -249,9 +249,6 @@ struct radeon *radeon_create(struct radeon_winsys *ws)
 	if (radeon_drm_get_tiling(radeon))
 		return NULL;
 
-	/* XXX disable ioctl thread offloading until the porting is done. */
-	setenv("RADEON_THREAD", "0", 0);
-
 	return radeon;
 }
 

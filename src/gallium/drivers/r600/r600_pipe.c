@@ -117,9 +117,8 @@ static struct r600_fence *r600_create_fence(struct r600_pipe_context *ctx)
 }
 
 
-static void r600_flush(struct pipe_context *ctx,
-		       struct pipe_fence_handle **fence,
-		       unsigned flags)
+void r600_flush(struct pipe_context *ctx, struct pipe_fence_handle **fence,
+		unsigned flags)
 {
 	struct r600_pipe_context *rctx = (struct r600_pipe_context *)ctx;
 	struct r600_fence **rfence = (struct r600_fence**)fence;
