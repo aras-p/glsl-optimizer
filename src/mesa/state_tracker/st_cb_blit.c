@@ -90,13 +90,14 @@ st_BlitFramebuffer_resolve(struct gl_context *ctx,
    if (mask & depthStencil) {
       struct gl_renderbuffer_attachment *srcDepth, *srcStencil;
       struct gl_renderbuffer_attachment *dstDepth, *dstStencil;
+      boolean combined;
 
       srcDepth = &ctx->ReadBuffer->Attachment[BUFFER_DEPTH];
       dstDepth = &ctx->DrawBuffer->Attachment[BUFFER_DEPTH];
       srcStencil = &ctx->ReadBuffer->Attachment[BUFFER_STENCIL];
       dstStencil = &ctx->DrawBuffer->Attachment[BUFFER_STENCIL];
 
-      const boolean combined =
+      combined =
          st_is_depth_stencil_combined(srcDepth, srcStencil) &&
          st_is_depth_stencil_combined(dstDepth, dstStencil);
 
