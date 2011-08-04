@@ -109,9 +109,13 @@ static glsl_precision precision_from_call (const ir_function_signature* sig, gls
 			return first_prec;
 
 	}
+	
+	// other built-in: max precision of parameters
+	if (sig->is_builtin)
+		return max_prec;
 
-	// otherwise: max precision of parameters
-	return max_prec;
+	// otherwise: undefined
+	return glsl_precision_undefined;
 }
 
 
@@ -177,7 +181,9 @@ match_function_by_name(exec_list *instructions, const char *name,
 	 assert(actual != NULL);
 	 assert(formal != NULL);
 
-	 glsl_precision param_prec = higher_precision(actual->get_precision(), (glsl_precision)formal->precision);
+	 glsl_precision param_prec = (glsl_precision)formal->precision;
+	 if (param_prec == glsl_precision_undefined)
+		 param_prec = actual->get_precision();
 	 prec_params_max = higher_precision (prec_params_max, param_prec);
 	 if (params_counter == 0)
 		 prec_params_first = param_prec;

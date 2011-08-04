@@ -236,10 +236,6 @@ ir_call::generate_inline(ir_instruction *next_ir, ir_function_signature* parent)
       param_iter.next();
    }
 	
-	if (retval && retval->precision == glsl_precision_undefined) {
-		retval->precision = prec_params_max;
-	}
-
    exec_list new_instructions;
 
    /* Generate the inlined body of the function to a new list */
@@ -373,6 +369,16 @@ ir_function_inlining_visitor::visit_enter(ir_assignment *ir)
     */
    ir_rvalue *rhs = call->generate_inline(ir, this->current_function);
    assert(rhs);
+
+	// if function's return type had no precision specified, assign
+	// precision from lhs
+	if (rhs && rhs->get_precision() == glsl_precision_undefined) {
+		rhs->set_precision (ir->lhs->get_precision());
+		ir_dereference_variable* deref = rhs->as_dereference_variable();
+		if (deref)
+			deref->variable_referenced()->precision = ir->lhs->get_precision();
+	}
+	
 
    ir->rhs = rhs;
    this->progress = true;

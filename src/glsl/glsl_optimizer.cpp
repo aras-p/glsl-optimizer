@@ -123,6 +123,13 @@ static void propagate_precision_deref(ir_instruction *ir, void *data)
 		der->set_precision ((glsl_precision)der->var->precision);
 		*(bool*)data = true;
 	}
+	ir_swizzle* swz = ir->as_swizzle();
+	if (swz && swz->get_precision() == glsl_precision_undefined && swz->val->get_precision() != glsl_precision_undefined)
+	{
+		swz->set_precision (swz->val->get_precision());
+		*(bool*)data = true;
+	}
+	
 }
 
 static void propagate_precision_assign(ir_instruction *ir, void *data)
@@ -132,10 +139,13 @@ static void propagate_precision_assign(ir_instruction *ir, void *data)
 	{
 		glsl_precision lp = ass->lhs->get_precision();
 		glsl_precision rp = ass->rhs->get_precision();
-		if (lp == glsl_precision_undefined && rp != glsl_precision_undefined)
+		if (rp == glsl_precision_undefined)
+			return;
+		ir_variable* lhs_var = ass->lhs->variable_referenced();
+		if (lp == glsl_precision_undefined)
 		{		
-			if (ass->lhs->variable_referenced())
-				ass->lhs->variable_referenced()->precision = rp;
+			if (lhs_var)
+				lhs_var->precision = rp;
 			ass->lhs->set_precision (rp);
 			*(bool*)data = true;
 		}
@@ -145,7 +155,9 @@ static void propagate_precision_assign(ir_instruction *ir, void *data)
 static void propagate_precision_call(ir_instruction *ir, void *data)
 {
 	ir_call* call = ir->as_call();
-	if (call && call->get_precision() == glsl_precision_undefined && call->get_callee()->precision == glsl_precision_undefined)
+	if (!call)
+		return;
+	if (call->get_precision() == glsl_precision_undefined /*&& call->get_callee()->precision == glsl_precision_undefined*/)
 	{
 		glsl_precision prec_params_max = glsl_precision_undefined;
 		exec_list_iterator iter_sig  = call->get_callee()->parameters.iterator();
@@ -172,14 +184,19 @@ static void propagate_precision_call(ir_instruction *ir, void *data)
 
 static bool propagate_precision(exec_list* list)
 {
-	bool res = false;
-	foreach_iter(exec_list_iterator, iter, *list) {
-		ir_instruction* ir = (ir_instruction*)iter.get();
-		visit_tree (ir, propagate_precision_deref, &res);
-		visit_tree (ir, propagate_precision_assign, &res);
-		visit_tree (ir, propagate_precision_call, &res);
-	}
-	return res;
+	bool anyProgress = false;
+	bool res;
+	do {
+		res = false;
+		foreach_iter(exec_list_iterator, iter, *list) {
+			ir_instruction* ir = (ir_instruction*)iter.get();
+			visit_tree (ir, propagate_precision_deref, &res);
+			visit_tree (ir, propagate_precision_assign, &res);
+			visit_tree (ir, propagate_precision_call, &res);
+		}
+		anyProgress |= res;
+	} while (res);
+	return anyProgress;
 }
 
 
@@ -242,6 +259,7 @@ glslopt_shader* glslopt_optimize (glslopt_ctx* ctx, glslopt_shader_type type, co
 			progress2 = do_dead_functions(ir); progress |= progress2; if (progress2) debug_print_ir ("After dead functions", ir, state, ctx->mem_ctx);
 			progress2 = do_structure_splitting(ir); progress |= progress2; if (progress2) debug_print_ir ("After struct splitting", ir, state, ctx->mem_ctx);
 			progress2 = do_if_simplification(ir); progress |= progress2; if (progress2) debug_print_ir ("After if simpl", ir, state, ctx->mem_ctx);
+			progress2 = propagate_precision (ir); progress |= progress2; if (progress2) debug_print_ir ("After prec propagation", ir, state, ctx->mem_ctx);
 			progress2 = do_copy_propagation(ir); progress |= progress2; if (progress2) debug_print_ir ("After copy propagation", ir, state, ctx->mem_ctx);
 			progress2 = do_copy_propagation_elements(ir); progress |= progress2; if (progress2) debug_print_ir ("After copy propagation elems", ir, state, ctx->mem_ctx);
 			if (!linked) {
