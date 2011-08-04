@@ -232,4 +232,8 @@ st_texture_image_copy(struct pipe_context *pipe,
                       struct pipe_resource *src, GLuint srcLevel,
                       GLuint face);
 
+
+extern struct pipe_resource *
+st_create_color_map_texture(struct gl_context *ctx);
+
 #endif
