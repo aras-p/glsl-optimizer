@@ -1115,17 +1115,15 @@ _mesa_GetTexParameterfv( GLenum target, GLenum pname, GLfloat *params )
          *params = ENUM_TO_FLOAT(obj->Sampler.WrapR);
          break;
       case GL_TEXTURE_BORDER_COLOR:
-         if(ctx->NewState & (_NEW_BUFFERS | _NEW_FRAG_CLAMP))
+         if (ctx->NewState & (_NEW_BUFFERS | _NEW_FRAG_CLAMP))
             _mesa_update_state_locked(ctx);
-         if(ctx->Color._ClampFragmentColor)
-         {
+         if (ctx->Color._ClampFragmentColor) {
             params[0] = CLAMP(obj->Sampler.BorderColor.f[0], 0.0F, 1.0F);
             params[1] = CLAMP(obj->Sampler.BorderColor.f[1], 0.0F, 1.0F);
             params[2] = CLAMP(obj->Sampler.BorderColor.f[2], 0.0F, 1.0F);
             params[3] = CLAMP(obj->Sampler.BorderColor.f[3], 0.0F, 1.0F);
          }
-         else
-         {
+         else {
             params[0] = obj->Sampler.BorderColor.f[0];
             params[1] = obj->Sampler.BorderColor.f[1];
             params[2] = obj->Sampler.BorderColor.f[2];
@@ -1241,9 +1239,9 @@ _mesa_GetTexParameteriv( GLenum target, GLenum pname, GLint *params )
    GET_CURRENT_CONTEXT(ctx);
    ASSERT_OUTSIDE_BEGIN_END(ctx);
 
-    obj = get_texobj(ctx, target, GL_TRUE);
-    if (!obj)
-       return;
+   obj = get_texobj(ctx, target, GL_TRUE);
+   if (!obj)
+      return;
 
    _mesa_lock_texture(ctx, obj);
    switch (pname) {
