@@ -1133,14 +1133,8 @@ _mesa_GetTexParameterfv( GLenum target, GLenum pname, GLfloat *params )
          }
          break;
       case GL_TEXTURE_RESIDENT:
-         {
-            GLboolean resident;
-            if (ctx->Driver.IsTextureResident)
-               resident = ctx->Driver.IsTextureResident(ctx, obj);
-            else
-               resident = GL_TRUE;
-            *params = ENUM_TO_FLOAT(resident);
-         }
+         *params = ctx->Driver.IsTextureResident ?
+            ctx->Driver.IsTextureResident(ctx, obj) : 1.0F;
          break;
       case GL_TEXTURE_PRIORITY:
          *params = obj->Priority;
@@ -1282,14 +1276,8 @@ _mesa_GetTexParameteriv( GLenum target, GLenum pname, GLint *params )
          }
          break;;
       case GL_TEXTURE_RESIDENT:
-         {
-            GLboolean resident;
-            if (ctx->Driver.IsTextureResident)
-               resident = ctx->Driver.IsTextureResident(ctx, obj);
-            else
-               resident = GL_TRUE;
-            *params = (GLint) resident;
-         }
+         *params = ctx->Driver.IsTextureResident ?
+            ctx->Driver.IsTextureResident(ctx, obj) : 1;
          break;;
       case GL_TEXTURE_PRIORITY:
          *params = FLOAT_TO_INT(obj->Priority);
