@@ -154,9 +154,7 @@ int r600_pipe_shader_create(struct pipe_context *ctx, struct r600_pipe_shader *s
 
 void r600_pipe_shader_destroy(struct pipe_context *ctx, struct r600_pipe_shader *shader)
 {
-	struct r600_pipe_context *rctx = (struct r600_pipe_context *)ctx;
-
-	r600_bo_reference(rctx->radeon, &shader->bo, NULL);
+	r600_bo_reference(&shader->bo, NULL);
 	r600_bc_clear(&shader->shader.bc);
 
 	memset(&shader->shader,0,sizeof(struct r600_shader));

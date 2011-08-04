@@ -105,13 +105,8 @@ static INLINE unsigned r600_context_bo_reloc(struct r600_context *ctx, struct r6
 	if (reloc_index >= ctx->creloc)
 		ctx->creloc = reloc_index+1;
 
-	r600_bo_reference(ctx->radeon, &ctx->bo[reloc_index], rbo);
+	r600_bo_reference(&ctx->bo[reloc_index], rbo);
 	return reloc_index * 4;
 }
-
-/*
- * r600_bo.c
- */
-void r600_bo_destroy(struct radeon *radeon, struct r600_bo *bo);
 
 #endif

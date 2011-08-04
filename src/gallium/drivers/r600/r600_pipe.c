@@ -187,7 +187,7 @@ static void r600_destroy_context(struct pipe_context *context)
 		}
 
 		r600_bo_unmap(rctx->radeon, rctx->fences.bo);
-		r600_bo_reference(rctx->radeon, &rctx->fences.bo, NULL);
+		r600_bo_reference(&rctx->fences.bo, NULL);
 	}
 
 	r600_update_num_contexts(rctx->screen, -1);

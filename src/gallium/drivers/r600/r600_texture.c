@@ -339,13 +339,12 @@ static void r600_texture_destroy(struct pipe_screen *screen,
 {
 	struct r600_resource_texture *rtex = (struct r600_resource_texture*)ptex;
 	struct r600_resource *resource = &rtex->resource;
-	struct radeon *radeon = ((struct r600_screen*)screen)->radeon;
 
 	if (rtex->flushed_depth_texture)
 		pipe_resource_reference((struct pipe_resource **)&rtex->flushed_depth_texture, NULL);
 
 	if (resource->bo) {
-		r600_bo_reference(radeon, &resource->bo, NULL);
+		r600_bo_reference(&resource->bo, NULL);
 	}
 	FREE(rtex);
 }

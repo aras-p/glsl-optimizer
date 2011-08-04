@@ -150,7 +150,7 @@ void r600_delete_state(struct pipe_context *ctx, void *state)
 		rctx->states[rstate->id] = NULL;
 	}
 	for (int i = 0; i < rstate->nregs; i++) {
-		r600_bo_reference(rctx->radeon, &rstate->regs[i].bo, NULL);
+		r600_bo_reference(&rstate->regs[i].bo, NULL);
 	}
 	free(rstate);
 }
@@ -181,7 +181,7 @@ void r600_delete_vertex_element(struct pipe_context *ctx, void *state)
 	if (rctx->vertex_elements == state)
 		rctx->vertex_elements = NULL;
 
-	r600_bo_reference(rctx->radeon, &v->fetch_shader, NULL);
+	r600_bo_reference(&v->fetch_shader, NULL);
 	u_vbuf_mgr_destroy_vertex_elements(rctx->vbuf_mgr, v->vmgr_elements);
 	FREE(state);
 }

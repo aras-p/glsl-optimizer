@@ -119,7 +119,7 @@ void r600_bo_unmap(struct radeon *radeon, struct r600_bo *bo)
 	radeon->ws->buffer_unmap(bo->buf);
 }
 
-void r600_bo_destroy(struct radeon *radeon, struct r600_bo *bo)
+void r600_bo_destroy(struct r600_bo *bo)
 {
 	pb_reference(&bo->buf, NULL);
 	free(bo);

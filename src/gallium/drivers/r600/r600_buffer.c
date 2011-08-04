@@ -46,7 +46,7 @@ static void r600_buffer_destroy(struct pipe_screen *screen,
 	struct r600_resource_buffer *rbuffer = r600_buffer(buf);
 
 	if (rbuffer->r.bo) {
-		r600_bo_reference(rscreen->radeon, &rbuffer->r.bo, NULL);
+		r600_bo_reference(&rbuffer->r.bo, NULL);
 	}
 	rbuffer->r.bo = NULL;
 	util_slab_free(&rscreen->pool_buffers, rbuffer);
@@ -230,7 +230,7 @@ struct pipe_resource *r600_buffer_from_handle(struct pipe_screen *screen,
 
 	rbuffer = CALLOC_STRUCT(r600_resource);
 	if (rbuffer == NULL) {
-		r600_bo_reference(rw, &bo, NULL);
+		r600_bo_reference(&bo, NULL);
 		return NULL;
 	}
 

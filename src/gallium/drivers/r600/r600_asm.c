@@ -2234,7 +2234,7 @@ int r600_vertex_elements_build_fetch_shader(struct r600_pipe_context *rctx, stru
 	bytecode = r600_bo_map(rctx->radeon, ve->fetch_shader, rctx->ctx.cs, PIPE_TRANSFER_WRITE);
 	if (bytecode == NULL) {
 		r600_bc_clear(&bc);
-		r600_bo_reference(rctx->radeon, &ve->fetch_shader, NULL);
+		r600_bo_reference(&ve->fetch_shader, NULL);
 		return -ENOMEM;
 	}
 

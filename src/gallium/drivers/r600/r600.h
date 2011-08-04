@@ -107,15 +107,15 @@ void r600_bo_unmap(struct radeon *radeon, struct r600_bo *bo);
 boolean r600_bo_get_winsys_handle(struct radeon *radeon, struct r600_bo *pb_bo,
 				  unsigned stride, struct winsys_handle *whandle);
 
-void r600_bo_destroy(struct radeon *radeon, struct r600_bo *bo);
+void r600_bo_destroy(struct r600_bo *bo);
 
 /* this relies on the pipe_reference being the first member of r600_bo */
-static INLINE void r600_bo_reference(struct radeon *radeon, struct r600_bo **dst, struct r600_bo *src)
+static INLINE void r600_bo_reference(struct r600_bo **dst, struct r600_bo *src)
 {
 	struct r600_bo *old = *dst;
 
 	if (pipe_reference((struct pipe_reference *)(*dst), (struct pipe_reference *)src)) {
-		r600_bo_destroy(radeon, old);
+		r600_bo_destroy(old);
 	}
 	*dst = src;
 }

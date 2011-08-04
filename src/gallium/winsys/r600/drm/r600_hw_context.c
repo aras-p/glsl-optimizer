@@ -103,7 +103,7 @@ void r600_get_backend_mask(struct r600_context *ctx)
 		}
 	}
 
-	r600_bo_reference(ctx->radeon, &buffer, NULL);
+	r600_bo_reference(&buffer, NULL);
 
 	if (mask != 0) {
 		ctx->backend_mask = mask;
@@ -738,7 +738,7 @@ static void r600_free_resource_range(struct r600_context *ctx, struct r600_range
 		block = range->blocks[i];
 		if (block) {
 			for (int k = 1; k <= block->nbo; k++)
-				r600_bo_reference(ctx->radeon, &block->reloc[k].bo, NULL);
+				r600_bo_reference(&block->reloc[k].bo, NULL);
 			free(block);
 		}
 	}
@@ -763,7 +763,7 @@ void r600_context_fini(struct r600_context *ctx)
 					range->blocks[CTX_BLOCK_ID(offset)] = NULL;
 				}
 				for (int k = 1; k <= block->nbo; k++) {
-					r600_bo_reference(ctx->radeon, &block->reloc[k].bo, NULL);
+					r600_bo_reference(&block->reloc[k].bo, NULL);
 				}
 				free(block);
 			}
@@ -1068,7 +1068,7 @@ void r600_context_pipe_state_set(struct r600_context *ctx, struct r600_pipe_stat
 		if (block->pm4_bo_index[id]) {
 			/* find relocation */
 			reloc_id = block->pm4_bo_index[id];
-			r600_bo_reference(ctx->radeon, &block->reloc[reloc_id].bo, reg->bo);
+			r600_bo_reference(&block->reloc[reloc_id].bo, reg->bo);
 			/* always force dirty for relocs for now */
 			dirty |= R600_BLOCK_STATUS_DIRTY;
 		}
@@ -1106,8 +1106,8 @@ void r600_context_pipe_state_set_resource(struct r600_context *ctx, struct r600_
 		if (block->reloc[1].bo)
 			block->reloc[1].bo->binding &= ~BO_BOUND_TEXTURE;
 
-		r600_bo_reference(ctx->radeon, &block->reloc[1].bo, NULL);
-		r600_bo_reference(ctx->radeon, &block->reloc[2].bo, NULL);
+		r600_bo_reference(&block->reloc[1].bo, NULL);
+		r600_bo_reference(&block->reloc[2].bo, NULL);
 		LIST_DELINIT(&block->list);
 		LIST_DELINIT(&block->enable_list);
 		return;
@@ -1141,12 +1141,12 @@ void r600_context_pipe_state_set_resource(struct r600_context *ctx, struct r600_
 			/* VERTEX RESOURCE, we preted there is 2 bo to relocate so
 			 * we have single case btw VERTEX & TEXTURE resource
 			 */
-			r600_bo_reference(ctx->radeon, &block->reloc[1].bo, state->bo[0]);
-			r600_bo_reference(ctx->radeon, &block->reloc[2].bo, NULL);
+			r600_bo_reference(&block->reloc[1].bo, state->bo[0]);
+			r600_bo_reference(&block->reloc[2].bo, NULL);
 		} else {
 			/* TEXTURE RESOURCE */
-			r600_bo_reference(ctx->radeon, &block->reloc[1].bo, state->bo[0]);
-			r600_bo_reference(ctx->radeon, &block->reloc[2].bo, state->bo[1]);
+			r600_bo_reference(&block->reloc[1].bo, state->bo[0]);
+			r600_bo_reference(&block->reloc[2].bo, state->bo[1]);
 			state->bo[0]->binding |= BO_BOUND_TEXTURE;
 		}
 
@@ -1512,7 +1512,7 @@ void r600_context_flush(struct r600_context *ctx, unsigned flags)
 	/* restart */
 	for (int i = 0; i < ctx->creloc; i++) {
 		ctx->bo[i]->last_flush = 0;
-		r600_bo_reference(ctx->radeon, &ctx->bo[i], NULL);
+		r600_bo_reference(&ctx->bo[i], NULL);
 	}
 	ctx->creloc = 0;
 	ctx->pm4_dirty_cdwords = 0;
@@ -1793,7 +1793,7 @@ struct r600_query *r600_context_query_create(struct r600_context *ctx, unsigned 
 
 void r600_context_query_destroy(struct r600_context *ctx, struct r600_query *query)
 {
-	r600_bo_reference(ctx->radeon, &query->buffer, NULL);
+	r600_bo_reference(&query->buffer, NULL);
 	LIST_DELINIT(&query->list);
 	free(query);
 }
