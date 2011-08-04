@@ -73,7 +73,6 @@ struct radeon_info {
     uint32_t pci_id;
     uint32_t gart_size;
     uint32_t vram_size;
-    uint32_t fd; /* XXX transitional */
 
     uint32_t drm_major; /* version */
     uint32_t drm_minor;

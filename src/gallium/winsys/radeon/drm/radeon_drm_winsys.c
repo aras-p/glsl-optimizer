@@ -316,7 +316,6 @@ struct radeon_winsys *radeon_drm_winsys_create(int fd)
     }
 
     ws->fd = fd;
-    ws->info.fd = fd;
 
     if (!do_winsys_init(ws))
         goto fail;
