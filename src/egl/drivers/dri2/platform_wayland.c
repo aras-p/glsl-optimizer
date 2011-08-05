@@ -836,7 +836,7 @@ dri2_initialize_wayland(_EGLDriver *drv, _EGLDisplay *disp)
 
    for (i = 0; dri2_dpy->driver_configs[i]; i++)
       dri2_add_config(disp, dri2_dpy->driver_configs[i], i + 1, 0,
-		      EGL_WINDOW_BIT | EGL_PIXMAP_BIT, NULL);
+		      EGL_WINDOW_BIT | EGL_PIXMAP_BIT, NULL, NULL);
 
 
    disp->Extensions.KHR_image_pixmap = EGL_TRUE;

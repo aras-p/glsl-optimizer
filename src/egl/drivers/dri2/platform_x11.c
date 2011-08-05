@@ -642,7 +642,7 @@ dri2_add_configs_for_visuals(struct dri2_egl_display *dri2_dpy,
             config_attrs[3] = visuals[i]._class;
 
 	    dri2_add_config(disp, dri2_dpy->driver_configs[j], id++,
-			    d.data->depth, surface_type, config_attrs);
+			    d.data->depth, surface_type, config_attrs, NULL);
 	 }
       }
 

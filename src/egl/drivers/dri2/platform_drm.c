@@ -150,7 +150,7 @@ dri2_initialize_drm(_EGLDriver *drv, _EGLDisplay *disp)
 
    for (i = 0; dri2_dpy->driver_configs[i]; i++)
       dri2_add_config(disp, dri2_dpy->driver_configs[i],
-                      i + 1, 0, 0, NULL);
+                      i + 1, 0, 0, NULL, NULL);
 
    drv->API.CreateImageKHR = dri2_drm_create_image_khr;
 

@@ -111,13 +111,15 @@ dri2_match_config(const _EGLConfig *conf, const _EGLConfig *criteria)
 
 struct dri2_egl_config *
 dri2_add_config(_EGLDisplay *disp, const __DRIconfig *dri_config, int id,
-		int depth, EGLint surface_type, const EGLint *attr_list)
+		int depth, EGLint surface_type, const EGLint *attr_list,
+		const unsigned int *rgba_masks)
 {
    struct dri2_egl_config *conf;
    struct dri2_egl_display *dri2_dpy;
    _EGLConfig base;
    unsigned int attrib, value, double_buffer;
    EGLint key, bind_to_texture_rgb, bind_to_texture_rgba;
+   unsigned int dri_masks[4] = { 0, 0, 0, 0 };
    _EGLConfig *matching_config;
    EGLint num_configs = 0;
    EGLint config_id;
@@ -165,6 +167,22 @@ dri2_add_config(_EGLDisplay *disp, const __DRIconfig *dri_config, int id,
 	 double_buffer = value;
 	 break;
 
+      case __DRI_ATTRIB_RED_MASK:
+         dri_masks[0] = value;
+         break;
+
+      case __DRI_ATTRIB_GREEN_MASK:
+         dri_masks[1] = value;
+         break;
+
+      case __DRI_ATTRIB_BLUE_MASK:
+         dri_masks[2] = value;
+         break;
+
+      case __DRI_ATTRIB_ALPHA_MASK:
+         dri_masks[3] = value;
+         break;
+
       default:
 	 key = dri2_to_egl_attribute_map[attrib];
 	 if (key != 0)
@@ -178,6 +196,9 @@ dri2_add_config(_EGLDisplay *disp, const __DRIconfig *dri_config, int id,
          _eglSetConfigKey(&base, attr_list[i], attr_list[i+1]);
 
    if (depth > 0 && depth != base.BufferSize)
+      return NULL;
+
+   if (rgba_masks && memcmp(rgba_masks, dri_masks, sizeof(dri_masks)))
       return NULL;
 
    base.NativeRenderable = EGL_TRUE;
