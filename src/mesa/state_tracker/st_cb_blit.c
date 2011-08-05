@@ -107,8 +107,10 @@ st_BlitFramebuffer_resolve(struct gl_context *ctx,
          dstRb = st_renderbuffer(dstDepth->Renderbuffer);
 
          info->mask = (mask & GL_DEPTH_BUFFER_BIT) ? PIPE_MASK_Z : 0;
-         if (combined && (mask & GL_STENCIL_BUFFER_BIT))
+         if (combined && (mask & GL_STENCIL_BUFFER_BIT)) {
+            mask &= ~GL_STENCIL_BUFFER_BIT;
             info->mask |= PIPE_MASK_S;
+         }
 
          info->src.res = srcRb->texture;
          info->src.layer = srcRb->surface->u.tex.first_layer;
