@@ -634,6 +634,7 @@ vec4_visitor::visit(ir_variable *ir)
       }
       break;
 
+   case ir_var_auto:
    case ir_var_temporary:
       reg = new(mem_ctx) dst_reg(this, ir->type);
       break;
@@ -647,6 +648,9 @@ vec4_visitor::visit(ir_variable *ir)
 	 setup_uniform_values(ir->location, ir->type);
       }
       break;
+
+   default:
+      assert(!"not reached");
    }
 
    reg->type = brw_type_for_base_type(ir->type);
