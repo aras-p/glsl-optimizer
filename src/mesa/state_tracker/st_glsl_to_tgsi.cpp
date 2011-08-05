@@ -949,8 +949,6 @@ st_src_reg
 glsl_to_tgsi_visitor::get_temp(const glsl_type *type)
 {
    st_src_reg src;
-   int swizzle[4];
-   int i;
 
    src.type = glsl_version >= 130 ? type->base_type : GLSL_TYPE_FLOAT;
    src.file = PROGRAM_TEMPORARY;
@@ -961,12 +959,7 @@ glsl_to_tgsi_visitor::get_temp(const glsl_type *type)
    if (type->is_array() || type->is_record()) {
       src.swizzle = SWIZZLE_NOOP;
    } else {
-      for (i = 0; i < type->vector_elements; i++)
-         swizzle[i] = i;
-      for (; i < 4; i++)
-         swizzle[i] = type->vector_elements - 1;
-      src.swizzle = MAKE_SWIZZLE4(swizzle[0], swizzle[1],
-        			  swizzle[2], swizzle[3]);
+      src.swizzle = swizzle_for_size(type->vector_elements);
    }
    src.negate = 0;
 
