@@ -1391,10 +1391,10 @@ vec4_visitor::visit(ir_constant *ir)
       return;
    }
 
-   for (int i = 0; i < ir->type->vector_elements; i++) {
-      this->result = src_reg(this, ir->type);
-      dst_reg dst = dst_reg(this->result);
+   this->result = src_reg(this, ir->type);
+   dst_reg dst = dst_reg(this->result);
 
+   for (int i = 0; i < ir->type->vector_elements; i++) {
       dst.writemask = 1 << i;
 
       switch (ir->type->base_type) {
