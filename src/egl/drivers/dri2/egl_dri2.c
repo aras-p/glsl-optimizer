@@ -577,6 +577,12 @@ dri2_initialize(_EGLDriver *drv, _EGLDisplay *disp)
       return dri2_initialize_wayland(drv, disp);
 #endif
 #endif
+#ifdef HAVE_ANDROID_PLATFORM
+   case _EGL_PLATFORM_ANDROID:
+      if (disp->Options.TestOnly)
+         return EGL_TRUE;
+      return dri2_initialize_android(drv, disp);
+#endif
 
    default:
       return EGL_FALSE;
@@ -1323,7 +1329,11 @@ dri2_load(_EGLDriver *drv)
 {
    struct dri2_egl_driver *dri2_drv = dri2_egl_driver(drv);
 #ifdef HAVE_SHARED_GLAPI
+#ifdef HAVE_ANDROID_PLATFORM
+   const char *libname = "libglapi.so";
+#else
    const char *libname = "libglapi.so.0";
+#endif
 #else
    /*
     * Both libGL.so and libglapi.so are glapi providers.  There is no way to

@@ -48,6 +48,14 @@
 #include <gbm_driint.h>
 #endif
 
+#ifdef HAVE_ANDROID_PLATFORM
+#define LOG_TAG "EGL-DRI2"
+#include <ui/egl/android_natives.h>
+#include <ui/android_native_buffer.h>
+#include <cutils/log.h>
+#include <gralloc_drm_handle.h>
+#endif
+
 #include "eglconfig.h"
 #include "eglcontext.h"
 #include "egldisplay.h"
@@ -162,6 +170,14 @@ struct dri2_egl_surface
    __DRIbuffer           *pending_buffer;
    EGLBoolean             block_swap_buffers;
 #endif
+
+#ifdef HAVE_ANDROID_PLATFORM
+   android_native_window_t *window;
+   android_native_buffer_t *buffer;
+
+   /* EGL-owned buffers */
+   __DRIbuffer           *local_buffers[__DRI_BUFFER_COUNT];
+#endif
 };
 
 struct dri2_egl_buffer {
@@ -224,6 +240,9 @@ dri2_initialize_drm(_EGLDriver *drv, _EGLDisplay *disp);
 
 EGLBoolean
 dri2_initialize_wayland(_EGLDriver *drv, _EGLDisplay *disp);
+
+EGLBoolean
+dri2_initialize_android(_EGLDriver *drv, _EGLDisplay *disp);
 
 char *
 dri2_get_driver_for_fd(int fd);
