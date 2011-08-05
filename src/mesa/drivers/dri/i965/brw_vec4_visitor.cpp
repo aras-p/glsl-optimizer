@@ -1285,7 +1285,8 @@ vec4_visitor::visit(ir_assignment *ir)
    int first_enabled_chan = 0;
    int src_chan = 0;
 
-   assert(ir->lhs->type->is_vector());
+   assert(ir->lhs->type->is_vector() ||
+	  ir->lhs->type->is_scalar());
    dst.writemask = ir->write_mask;
 
    for (int i = 0; i < 4; i++) {
