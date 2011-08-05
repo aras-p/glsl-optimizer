@@ -266,7 +266,6 @@ dri2_allocate_buffer(__DRIscreen *sPriv,
    struct dri_screen *screen = dri_screen(sPriv);
    struct dri2_buffer *buffer;
    struct pipe_resource templ;
-   enum st_attachment_type statt;
    enum pipe_format pf;
    unsigned bind = 0;
    struct winsys_handle whandle;
@@ -274,21 +273,15 @@ dri2_allocate_buffer(__DRIscreen *sPriv,
    switch (attachment) {
       case __DRI_BUFFER_FRONT_LEFT:
       case __DRI_BUFFER_FAKE_FRONT_LEFT:
-         statt = ST_ATTACHMENT_FRONT_LEFT;
          bind = PIPE_BIND_RENDER_TARGET | PIPE_BIND_SAMPLER_VIEW;
          break;
       case __DRI_BUFFER_BACK_LEFT:
-         statt = ST_ATTACHMENT_BACK_LEFT;
          bind = PIPE_BIND_RENDER_TARGET | PIPE_BIND_SAMPLER_VIEW;
          break;
       case __DRI_BUFFER_DEPTH:
       case __DRI_BUFFER_DEPTH_STENCIL:
       case __DRI_BUFFER_STENCIL:
-            statt = ST_ATTACHMENT_DEPTH_STENCIL;
             bind = PIPE_BIND_DEPTH_STENCIL; /* XXX sampler? */
-         break;
-      default:
-         statt = ST_ATTACHMENT_INVALID;
          break;
    }
 
