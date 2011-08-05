@@ -250,14 +250,14 @@ fs_visitor::visit(ir_expression *ir)
 
       break;
    case ir_unop_rcp:
-      emit_math(FS_OPCODE_RCP, this->result, op[0]);
+      emit_math(SHADER_OPCODE_RCP, this->result, op[0]);
       break;
 
    case ir_unop_exp2:
-      emit_math(FS_OPCODE_EXP2, this->result, op[0]);
+      emit_math(SHADER_OPCODE_EXP2, this->result, op[0]);
       break;
    case ir_unop_log2:
-      emit_math(FS_OPCODE_LOG2, this->result, op[0]);
+      emit_math(SHADER_OPCODE_LOG2, this->result, op[0]);
       break;
    case ir_unop_exp:
    case ir_unop_log:
@@ -265,11 +265,11 @@ fs_visitor::visit(ir_expression *ir)
       break;
    case ir_unop_sin:
    case ir_unop_sin_reduced:
-      emit_math(FS_OPCODE_SIN, this->result, op[0]);
+      emit_math(SHADER_OPCODE_SIN, this->result, op[0]);
       break;
    case ir_unop_cos:
    case ir_unop_cos_reduced:
-      emit_math(FS_OPCODE_COS, this->result, op[0]);
+      emit_math(SHADER_OPCODE_COS, this->result, op[0]);
       break;
 
    case ir_unop_dFdx:
@@ -340,11 +340,11 @@ fs_visitor::visit(ir_expression *ir)
       break;
 
    case ir_unop_sqrt:
-      emit_math(FS_OPCODE_SQRT, this->result, op[0]);
+      emit_math(SHADER_OPCODE_SQRT, this->result, op[0]);
       break;
 
    case ir_unop_rsq:
-      emit_math(FS_OPCODE_RSQ, this->result, op[0]);
+      emit_math(SHADER_OPCODE_RSQ, this->result, op[0]);
       break;
 
    case ir_unop_i2u:
@@ -423,7 +423,7 @@ fs_visitor::visit(ir_expression *ir)
       break;
 
    case ir_binop_pow:
-      emit_math(FS_OPCODE_POW, this->result, op[0], op[1]);
+      emit_math(SHADER_OPCODE_POW, this->result, op[0], op[1]);
       break;
 
    case ir_unop_bit_not:
@@ -1694,7 +1694,7 @@ fs_visitor::emit_interpolation_setup_gen4()
 	interp_reg(FRAG_ATTRIB_WPOS, 3));
    /* Compute the pixel 1/W value from wpos.w. */
    this->pixel_w = fs_reg(this, glsl_type::float_type);
-   emit_math(FS_OPCODE_RCP, this->pixel_w, wpos_w);
+   emit_math(SHADER_OPCODE_RCP, this->pixel_w, wpos_w);
    this->current_annotation = NULL;
 }
 
@@ -1731,7 +1731,7 @@ fs_visitor::emit_interpolation_setup_gen6()
    this->current_annotation = "compute pos.w";
    this->pixel_w = fs_reg(brw_vec8_grf(c->source_w_reg, 0));
    this->wpos_w = fs_reg(this, glsl_type::float_type);
-   emit_math(FS_OPCODE_RCP, this->wpos_w, this->pixel_w);
+   emit_math(SHADER_OPCODE_RCP, this->wpos_w, this->pixel_w);
 
    this->delta_x = fs_reg(brw_vec8_grf(2, 0));
    this->delta_y = fs_reg(brw_vec8_grf(3, 0));

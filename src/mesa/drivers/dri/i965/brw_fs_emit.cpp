@@ -149,28 +149,28 @@ fs_visitor::generate_math(fs_inst *inst,
    int op;
 
    switch (inst->opcode) {
-   case FS_OPCODE_RCP:
+   case SHADER_OPCODE_RCP:
       op = BRW_MATH_FUNCTION_INV;
       break;
-   case FS_OPCODE_RSQ:
+   case SHADER_OPCODE_RSQ:
       op = BRW_MATH_FUNCTION_RSQ;
       break;
-   case FS_OPCODE_SQRT:
+   case SHADER_OPCODE_SQRT:
       op = BRW_MATH_FUNCTION_SQRT;
       break;
-   case FS_OPCODE_EXP2:
+   case SHADER_OPCODE_EXP2:
       op = BRW_MATH_FUNCTION_EXP;
       break;
-   case FS_OPCODE_LOG2:
+   case SHADER_OPCODE_LOG2:
       op = BRW_MATH_FUNCTION_LOG;
       break;
-   case FS_OPCODE_POW:
+   case SHADER_OPCODE_POW:
       op = BRW_MATH_FUNCTION_POW;
       break;
-   case FS_OPCODE_SIN:
+   case SHADER_OPCODE_SIN:
       op = BRW_MATH_FUNCTION_SIN;
       break;
-   case FS_OPCODE_COS:
+   case SHADER_OPCODE_COS:
       op = BRW_MATH_FUNCTION_COS;
       break;
    default:
@@ -182,7 +182,7 @@ fs_visitor::generate_math(fs_inst *inst,
    if (intel->gen >= 6) {
       assert(inst->mlen == 0);
 
-      if (inst->opcode == FS_OPCODE_POW) {
+      if (inst->opcode == SHADER_OPCODE_POW) {
 	 brw_set_compression_control(p, BRW_COMPRESSION_NONE);
 	 brw_math2(p, dst, op, src[0], src[1]);
 
@@ -775,14 +775,14 @@ fs_visitor::generate_code()
       }
 	 break;
 
-      case FS_OPCODE_RCP:
-      case FS_OPCODE_RSQ:
-      case FS_OPCODE_SQRT:
-      case FS_OPCODE_EXP2:
-      case FS_OPCODE_LOG2:
-      case FS_OPCODE_POW:
-      case FS_OPCODE_SIN:
-      case FS_OPCODE_COS:
+      case SHADER_OPCODE_RCP:
+      case SHADER_OPCODE_RSQ:
+      case SHADER_OPCODE_SQRT:
+      case SHADER_OPCODE_EXP2:
+      case SHADER_OPCODE_LOG2:
+      case SHADER_OPCODE_POW:
+      case SHADER_OPCODE_SIN:
+      case SHADER_OPCODE_COS:
 	 generate_math(inst, dst, src);
 	 break;
       case FS_OPCODE_PIXEL_X:

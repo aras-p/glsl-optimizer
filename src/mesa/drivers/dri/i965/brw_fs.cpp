@@ -143,15 +143,15 @@ fs_visitor::implied_mrf_writes(fs_inst *inst)
       return 0;
 
    switch (inst->opcode) {
-   case FS_OPCODE_RCP:
-   case FS_OPCODE_RSQ:
-   case FS_OPCODE_SQRT:
-   case FS_OPCODE_EXP2:
-   case FS_OPCODE_LOG2:
-   case FS_OPCODE_SIN:
-   case FS_OPCODE_COS:
+   case SHADER_OPCODE_RCP:
+   case SHADER_OPCODE_RSQ:
+   case SHADER_OPCODE_SQRT:
+   case SHADER_OPCODE_EXP2:
+   case SHADER_OPCODE_LOG2:
+   case SHADER_OPCODE_SIN:
+   case SHADER_OPCODE_COS:
       return 1 * c->dispatch_width / 8;
-   case FS_OPCODE_POW:
+   case SHADER_OPCODE_POW:
       return 2 * c->dispatch_width / 8;
    case FS_OPCODE_TEX:
    case FS_OPCODE_TXB:
@@ -525,13 +525,13 @@ fs_inst *
 fs_visitor::emit_math(enum opcode opcode, fs_reg dst, fs_reg src)
 {
    switch (opcode) {
-   case FS_OPCODE_RCP:
-   case FS_OPCODE_RSQ:
-   case FS_OPCODE_SQRT:
-   case FS_OPCODE_EXP2:
-   case FS_OPCODE_LOG2:
-   case FS_OPCODE_SIN:
-   case FS_OPCODE_COS:
+   case SHADER_OPCODE_RCP:
+   case SHADER_OPCODE_RSQ:
+   case SHADER_OPCODE_SQRT:
+   case SHADER_OPCODE_EXP2:
+   case SHADER_OPCODE_LOG2:
+   case SHADER_OPCODE_SIN:
+   case SHADER_OPCODE_COS:
       break;
    default:
       assert(!"not reached: bad math opcode");
@@ -570,7 +570,7 @@ fs_visitor::emit_math(enum opcode opcode, fs_reg dst, fs_reg src0, fs_reg src1)
    int base_mrf = 2;
    fs_inst *inst;
 
-   assert(opcode == FS_OPCODE_POW);
+   assert(opcode == SHADER_OPCODE_POW);
 
    if (intel->gen >= 6) {
       /* Can't do hstride == 0 args to gen6 math, so expand it out.
@@ -1135,7 +1135,7 @@ fs_visitor::propagate_constants()
 	       }
 	       break;
 
-	    case FS_OPCODE_RCP:
+	    case SHADER_OPCODE_RCP:
 	       /* The hardware doesn't do math on immediate values
 		* (because why are you doing that, seriously?), but
 		* the correct answer is to just constant fold it

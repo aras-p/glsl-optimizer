@@ -69,26 +69,26 @@ public:
       int math_latency = 22;
 
       switch (inst->opcode) {
-      case FS_OPCODE_RCP:
+      case SHADER_OPCODE_RCP:
 	 this->latency = 1 * chans * math_latency;
 	 break;
-      case FS_OPCODE_RSQ:
+      case SHADER_OPCODE_RSQ:
 	 this->latency = 2 * chans * math_latency;
 	 break;
-      case FS_OPCODE_SQRT:
-      case FS_OPCODE_LOG2:
+      case SHADER_OPCODE_SQRT:
+      case SHADER_OPCODE_LOG2:
 	 /* full precision log.  partial is 2. */
 	 this->latency = 3 * chans * math_latency;
 	 break;
-      case FS_OPCODE_EXP2:
+      case SHADER_OPCODE_EXP2:
 	 /* full precision.  partial is 3, same throughput. */
 	 this->latency = 4 * chans * math_latency;
 	 break;
-      case FS_OPCODE_POW:
+      case SHADER_OPCODE_POW:
 	 this->latency = 8 * chans * math_latency;
 	 break;
-      case FS_OPCODE_SIN:
-      case FS_OPCODE_COS:
+      case SHADER_OPCODE_SIN:
+      case SHADER_OPCODE_COS:
 	 /* minimum latency, max is 12 rounds. */
 	 this->latency = 5 * chans * math_latency;
 	 break;
