@@ -199,6 +199,16 @@ roundf(float x)
 #endif /* _MSC_VER */
 
 
+#ifdef PIPE_OS_ANDROID
+
+static INLINE
+double log2(double d)
+{
+   return log(d) * (1.0 / M_LN2);
+}
+
+#endif
+
 
 
 
@@ -409,7 +419,7 @@ unsigned ffs( unsigned u )
 
    return i;
 }
-#elif defined(__MINGW32__)
+#elif defined(__MINGW32__) || defined(PIPE_OS_ANDROID)
 #define ffs __builtin_ffs
 #endif
 

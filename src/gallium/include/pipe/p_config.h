@@ -154,6 +154,14 @@
 #define PIPE_OS_UNIX
 #endif
 
+/*
+ * Android defines __linux__ so PIPE_OS_LINUX and PIPE_OS_UNIX will also be
+ * defined.
+ */
+#if defined(ANDROID)
+#define PIPE_OS_ANDROID
+#endif
+
 #if defined(__FreeBSD__)
 #define PIPE_OS_FREEBSD
 #define PIPE_OS_BSD
