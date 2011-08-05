@@ -535,15 +535,15 @@ static struct prog_src_register search_or_add_const4f( struct brw_wm_compile *c,
 						     GLfloat s3)
 {
    struct gl_program_parameter_list *paramList = c->fp->program.Base.Parameters;
-   GLfloat values[4];
+   gl_constant_value values[4];
    GLuint idx;
    GLuint swizzle;
    struct prog_src_register reg;
 
-   values[0] = s0;
-   values[1] = s1;
-   values[2] = s2;
-   values[3] = s3;
+   values[0].f = s0;
+   values[1].f = s1;
+   values[2].f = s2;
+   values[3].f = s3;
 
    idx = _mesa_add_unnamed_constant( paramList, values, 4, &swizzle );
    reg = src_reg(PROGRAM_STATE_VAR, idx);
