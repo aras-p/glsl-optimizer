@@ -1109,7 +1109,7 @@ vec4_visitor::visit(ir_swizzle *ir)
    src = this->result;
    assert(src.file != BAD_FILE);
 
-   if (i < ir->type->vector_elements) {
+   for (i = 0; i < ir->type->vector_elements; i++) {
       switch (i) {
       case 0:
 	 swizzle[i] = BRW_GET_SWZ(src.swizzle, ir->mask.x);
