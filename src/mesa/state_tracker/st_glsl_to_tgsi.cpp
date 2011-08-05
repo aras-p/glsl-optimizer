@@ -1232,12 +1232,32 @@ glsl_to_tgsi_visitor::try_emit_sat(ir_expression *ir)
    sat_src->accept(this);
    st_src_reg src = this->result;
 
-   this->result = get_temp(ir->type);
-   st_dst_reg result_dst = st_dst_reg(this->result);
-   result_dst.writemask = (1 << ir->type->vector_elements) - 1;
-   glsl_to_tgsi_instruction *inst;
-   inst = emit(ir, TGSI_OPCODE_MOV, result_dst, src);
-   inst->saturate = true;
+   /* If we generated an expression instruction into a temporary in
+    * processing the saturate's operand, apply the saturate to that
+    * instruction.  Otherwise, generate a MOV to do the saturate.
+    *
+    * Note that we have to be careful to only do this optimization if
+    * the instruction in question was what generated src->result.  For
+    * example, ir_dereference_array might generate a MUL instruction
+    * to create the reladdr, and return us a src reg using that
+    * reladdr.  That MUL result is not the value we're trying to
+    * saturate.
+    */
+   ir_expression *sat_src_expr = sat_src->as_expression();
+   if (sat_src_expr && (sat_src_expr->operation == ir_binop_mul ||
+			sat_src_expr->operation == ir_binop_add ||
+			sat_src_expr->operation == ir_binop_dot)) {
+      glsl_to_tgsi_instruction *new_inst;
+      new_inst = (glsl_to_tgsi_instruction *)this->instructions.get_tail();
+      new_inst->saturate = true;
+   } else {
+      this->result = get_temp(ir->type);
+      st_dst_reg result_dst = st_dst_reg(this->result);
+      result_dst.writemask = (1 << ir->type->vector_elements) - 1;
+      glsl_to_tgsi_instruction *inst;
+      inst = emit(ir, TGSI_OPCODE_MOV, result_dst, src);
+      inst->saturate = true;
+   }
 
    return true;
 }
