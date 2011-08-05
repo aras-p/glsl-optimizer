@@ -662,20 +662,6 @@ fail:
 }
 
 static boolean
-dri2_create_context(gl_api api, const struct gl_config * visual,
-                    __DRIcontext * cPriv, void *sharedContextPrivate)
-{
-   struct dri_context *ctx = NULL;
-
-   if (!dri_create_context(api, visual, cPriv, sharedContextPrivate))
-      return FALSE;
-
-   ctx = cPriv->driverPrivate;
-
-   return TRUE;
-}
-
-static boolean
 dri2_create_buffer(__DRIscreen * sPriv,
                    __DRIdrawable * dPriv,
                    const struct gl_config * visual, boolean isPixmap)
@@ -702,7 +688,7 @@ const struct __DriverAPIRec driDriverAPI = {
    .InitScreen = NULL,
    .InitScreen2 = dri2_init_screen,
    .DestroyScreen = dri_destroy_screen,
-   .CreateContext = dri2_create_context,
+   .CreateContext = dri_create_context,
    .DestroyContext = dri_destroy_context,
    .CreateBuffer = dri2_create_buffer,
    .DestroyBuffer = dri_destroy_buffer,
