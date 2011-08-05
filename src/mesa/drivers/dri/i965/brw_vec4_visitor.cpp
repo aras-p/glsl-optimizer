@@ -1550,7 +1550,7 @@ vec4_visitor::emit_vue_header_gen4(int header_mrf)
        * dword 8-11 (m3) of the vertex header is the 4D space position
        * dword 12-19 (m4,m5) of the vertex header is the user clip distance.
        * m6 is a pad so that the vertex element data is aligned
-       * m7 is the first vertex data we fill, which is the vertex position.
+       * m7 is the first vertex data we fill.
        */
       current_annotation = "NDC";
       emit(BRW_OPCODE_MOV, brw_message_reg(header_mrf++), src_reg(ndc));
@@ -1561,15 +1561,14 @@ vec4_visitor::emit_vue_header_gen4(int header_mrf)
       /* user clip distance. */
       header_mrf += 2;
 
-      /* Pad so that vertex element data (starts with position) is aligned. */
+      /* Pad so that vertex element data is aligned. */
       header_mrf++;
    } else {
       /* There are 8 dwords in VUE header pre-Ironlake:
        * dword 0-3 (m1) is indices, point width, clip flags.
        * dword 4-7 (m2) is ndc position (set above)
        *
-       * dword 8-11 (m3) is the first vertex data, which we always have be the
-       * vertex position.
+       * dword 8-11 (m3) is the first vertex data.
        */
       current_annotation = "NDC";
       emit(BRW_OPCODE_MOV, brw_message_reg(header_mrf++), src_reg(ndc));
@@ -1592,8 +1591,7 @@ vec4_visitor::emit_vue_header_gen6(int header_mrf)
     * dword 8-15 (m4,m5) of the vertex header is the user clip distance if
     * enabled.
     *
-    * m4 or 6 is the first vertex element data we fill, which is
-    * the vertex position.
+    * m4 or 6 is the first vertex element data we fill.
     */
 
    current_annotation = "indices, point width, clip flags";
@@ -1679,6 +1677,10 @@ vec4_visitor::emit_urb_writes()
    int attr;
    for (attr = 0; attr < VERT_RESULT_MAX; attr++) {
       if (!(c->prog_data.outputs_written & BITFIELD64_BIT(attr)))
+	 continue;
+
+      /* This is set up in the VUE header. */
+      if (attr == VERT_RESULT_HPOS)
 	 continue;
 
       /* This is loaded into the VUE header, and thus doesn't occupy
