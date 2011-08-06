@@ -1140,6 +1140,7 @@ vec4_visitor::visit(ir_swizzle *ir)
 void
 vec4_visitor::visit(ir_dereference_variable *ir)
 {
+   const struct glsl_type *type = ir->type;
    dst_reg *reg = variable_storage(ir->var);
 
    if (!reg) {
@@ -1149,6 +1150,9 @@ vec4_visitor::visit(ir_dereference_variable *ir)
    }
 
    this->result = src_reg(*reg);
+
+   if (type->is_scalar() || type->is_vector() || type->is_matrix())
+      this->result.swizzle = swizzle_for_size(type->vector_elements);
 }
 
 void
