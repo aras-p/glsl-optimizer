@@ -1451,12 +1451,18 @@ vec4_visitor::visit(ir_discard *ir)
 void
 vec4_visitor::visit(ir_if *ir)
 {
+   /* Don't point the annotation at the if statement, because then it plus
+    * the then and else blocks get printed.
+    */
    this->base_ir = ir->condition;
-   ir->condition->accept(this);
-   assert(this->result.file != BAD_FILE);
 
-   /* FINISHME: condcode */
-   emit(BRW_OPCODE_IF);
+   if (intel->gen == 6) {
+      emit_if_gen6(ir);
+   } else {
+      emit_bool_to_cond_code(ir->condition);
+      vec4_instruction *inst = emit(BRW_OPCODE_IF);
+      inst->predicate = BRW_PREDICATE_NORMAL;
+   }
 
    visit_instructions(&ir->then_instructions);
 
