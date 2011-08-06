@@ -447,6 +447,18 @@ vec4_visitor::generate_code()
 	 brw_SEL(p, dst, src[0], src[1]);
 	 break;
 
+      case BRW_OPCODE_DP4:
+	 brw_DP4(p, dst, src[0], src[1]);
+	 break;
+
+      case BRW_OPCODE_DP3:
+	 brw_DP3(p, dst, src[0], src[1]);
+	 break;
+
+      case BRW_OPCODE_DP2:
+	 brw_DP2(p, dst, src[0], src[1]);
+	 break;
+
       case BRW_OPCODE_IF:
 	 if (inst->src[0].file != BAD_FILE) {
 	    /* The instruction has an embedded compare (only allowed on gen6) */
