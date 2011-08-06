@@ -1703,6 +1703,7 @@ vec4_visitor::emit_urb_writes()
    int base_mrf = 1;
    int mrf = base_mrf;
    int urb_entry_size;
+   uint64_t outputs_remaining = c->prog_data.outputs_written;
 
    /* FINISHME: edgeflag */
 
@@ -1717,10 +1718,13 @@ vec4_visitor::emit_urb_writes()
       mrf = emit_vue_header_gen4(mrf);
    }
 
+   /* Set up the VUE data for the first URB write */
    int attr;
    for (attr = 0; attr < VERT_RESULT_MAX; attr++) {
       if (!(c->prog_data.outputs_written & BITFIELD64_BIT(attr)))
 	 continue;
+
+      outputs_remaining &= ~BITFIELD64_BIT(attr);
 
       /* This is set up in the VUE header. */
       if (attr == VERT_RESULT_HPOS)
@@ -1734,27 +1738,49 @@ vec4_visitor::emit_urb_writes()
 
       emit(BRW_OPCODE_MOV, brw_message_reg(mrf++), src_reg(output_reg[attr]));
 
-      /* If this is MRF 15, we can't fit anything more into this URB
+      /* If this was MRF 15, we can't fit anything more into this URB
        * WRITE.  Note that base_mrf of 1 means that MRF 15 is an
        * even-numbered amount of URB write data, which will meet
        * gen6's requirements for length alignment.
        */
-      if (mrf == 15)
+      if (mrf == 16) {
+	 attr++;
 	 break;
+      }
    }
 
    vec4_instruction *inst = emit(VS_OPCODE_URB_WRITE);
    inst->base_mrf = base_mrf;
    inst->mlen = align_interleaved_urb_mlen(brw, mrf - base_mrf);
-   inst->eot = true;
+   inst->eot = !outputs_remaining;
 
    urb_entry_size = mrf - base_mrf;
 
-   for (; attr < VERT_RESULT_MAX; attr++) {
-      if (!(c->prog_data.outputs_written & BITFIELD64_BIT(attr)))
-	 continue;
-      fail("Second URB write not supported.\n");
-      break;
+   /* Optional second URB write */
+   if (outputs_remaining) {
+      mrf = base_mrf + 1;
+
+      for (; attr < VERT_RESULT_MAX; attr++) {
+	 if (!(c->prog_data.outputs_written & BITFIELD64_BIT(attr)))
+	    continue;
+
+	 emit(BRW_OPCODE_MOV, brw_message_reg(mrf++), src_reg(output_reg[attr]));
+
+	 assert(mrf != 16);
+      }
+
+      inst = emit(VS_OPCODE_URB_WRITE);
+      inst->base_mrf = base_mrf;
+      inst->mlen = align_interleaved_urb_mlen(brw, mrf - base_mrf);
+      inst->eot = true;
+      /* URB destination offset.  In the previous write, we got MRFs 2-
+       * 15 MRFs minus the one header MRF, so 14 regs.  URB offset is in
+       * URB row increments, and each of our MRFs is half of one of
+       * those, since we're doing interleaved writes.
+       */
+      inst->offset = 14 / 2;
+
+      urb_entry_size += mrf - base_mrf;
    }
 
    if (intel->gen == 6)
