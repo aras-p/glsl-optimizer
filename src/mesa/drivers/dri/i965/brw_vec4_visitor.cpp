@@ -662,6 +662,8 @@ vec4_visitor::visit(ir_loop *ir)
 {
    ir_dereference_variable *counter = NULL;
 
+   fail("not yet\n");
+
    /* We don't want debugging output to print the whole body of the
     * loop as the annotation.
     */
