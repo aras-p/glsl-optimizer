@@ -94,7 +94,7 @@ vec4_visitor::setup_uniforms(int reg)
    /* The pre-gen6 VS requires that some push constants get loaded no
     * matter what, or the GPU would hang.
     */
-   if (this->uniforms == 0) {
+   if (intel->gen < 6 && this->uniforms == 0) {
       this->uniform_size[this->uniforms] = 1;
 
       for (unsigned int i = 0; i < 4; i++) {
@@ -105,6 +105,7 @@ vec4_visitor::setup_uniforms(int reg)
       }
 
       this->uniforms++;
+      reg++;
    } else {
       reg += ALIGN(uniforms, 2) / 2;
    }
