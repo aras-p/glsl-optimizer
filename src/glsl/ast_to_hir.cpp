@@ -653,6 +653,16 @@ validate_assignment(struct _mesa_glsl_parse_state *state,
    return NULL;
 }
 
+static void
+mark_whole_array_access(ir_rvalue *access)
+{
+   ir_dereference_variable *deref = access->as_dereference_variable();
+
+   if (deref && deref->var) {
+      deref->var->max_array_access = deref->type->length - 1;
+   }
+}
+
 ir_rvalue *
 do_assignment(exec_list *instructions, struct _mesa_glsl_parse_state *state,
 	      ir_rvalue *lhs, ir_rvalue *rhs, bool is_initializer,
@@ -713,6 +723,7 @@ do_assignment(exec_list *instructions, struct _mesa_glsl_parse_state *state,
 						   rhs->type->array_size());
 	 d->type = var->type;
       }
+      mark_whole_array_access(lhs);
    }
 
    /* Most callers of do_assignment (assign, add_assign, pre_inc/dec,
@@ -771,16 +782,6 @@ ast_node::hir(exec_list *instructions,
    (void) state;
 
    return NULL;
-}
-
-static void
-mark_whole_array_access(ir_rvalue *access)
-{
-   ir_dereference_variable *deref = access->as_dereference_variable();
-
-   if (deref) {
-      deref->var->max_array_access = deref->type->length - 1;
-   }
 }
 
 static ir_rvalue *
