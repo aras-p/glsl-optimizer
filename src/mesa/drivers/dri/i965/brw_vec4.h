@@ -390,7 +390,8 @@ public:
    void emit_bool_comparison(unsigned int op, dst_reg dst, src_reg src0, src_reg src1);
    void emit_if_gen6(ir_if *ir);
 
-   void emit_block_move(ir_assignment *ir);
+   void emit_block_move(dst_reg *dst, src_reg *src,
+			const struct glsl_type *type, bool predicated);
 
    /**
     * Emit the correct dot-product instruction for the type of arguments

@@ -1269,38 +1269,69 @@ get_assignment_lhs(ir_dereference *ir, vec4_visitor *v)
 }
 
 void
-vec4_visitor::emit_block_move(ir_assignment *ir)
+vec4_visitor::emit_block_move(dst_reg *dst, src_reg *src,
+			      const struct glsl_type *type, bool predicated)
 {
-   ir->rhs->accept(this);
-   src_reg src = this->result;
-
-   dst_reg dst = get_assignment_lhs(ir->lhs, this);
-
-   if (ir->condition) {
-      emit_bool_to_cond_code(ir->condition);
+   if (type->base_type == GLSL_TYPE_STRUCT) {
+      for (unsigned int i = 0; i < type->length; i++) {
+	 emit_block_move(dst, src, type->fields.structure[i].type, predicated);
+      }
+      return;
    }
 
-   /* FINISHME: This should really set to the correct maximal writemask for each
-    * FINISHME: component written (in the loops below).
-    */
-   dst.writemask = WRITEMASK_XYZW;
-
-   for (int i = 0; i < type_size(ir->lhs->type); i++) {
-      vec4_instruction *inst = emit(BRW_OPCODE_MOV, dst, src);
-      if (ir->condition)
-	 inst->predicate = BRW_PREDICATE_NORMAL;
-
-      dst.reg_offset++;
-      src.reg_offset++;
+   if (type->is_array()) {
+      for (unsigned int i = 0; i < type->length; i++) {
+	 emit_block_move(dst, src, type->fields.array, predicated);
+      }
+      return;
    }
+
+   if (type->is_matrix()) {
+      const struct glsl_type *vec_type;
+
+      vec_type = glsl_type::get_instance(GLSL_TYPE_FLOAT,
+					 type->vector_elements, 1);
+
+      for (int i = 0; i < type->matrix_columns; i++) {
+	 emit_block_move(dst, src, vec_type, predicated);
+      }
+      return;
+   }
+
+   assert(type->is_scalar() || type->is_vector());
+
+   dst->type = brw_type_for_base_type(type);
+   src->type = dst->type;
+
+   dst->writemask = (1 << type->vector_elements) - 1;
+
+   /* Do we need to worry about swizzling a swizzle? */
+   assert(src->swizzle = BRW_SWIZZLE_NOOP);
+   src->swizzle = swizzle_for_size(type->vector_elements);
+
+   vec4_instruction *inst = emit(BRW_OPCODE_MOV, *dst, *src);
+   if (predicated)
+      inst->predicate = BRW_PREDICATE_NORMAL;
+
+   dst->reg_offset++;
+   src->reg_offset++;
 }
 
 void
 vec4_visitor::visit(ir_assignment *ir)
 {
+   dst_reg dst = get_assignment_lhs(ir->lhs, this);
+
    if (!ir->lhs->type->is_scalar() &&
        !ir->lhs->type->is_vector()) {
-      emit_block_move(ir);
+      ir->rhs->accept(this);
+      src_reg src = this->result;
+
+      if (ir->condition) {
+	 emit_bool_to_cond_code(ir->condition);
+      }
+
+      emit_block_move(&dst, &src, ir->rhs->type, ir->condition != NULL);
       return;
    }
 
@@ -1309,8 +1340,6 @@ vec4_visitor::visit(ir_assignment *ir)
 
    ir->rhs->accept(this);
    src_reg src = this->result;
-
-   dst_reg dst = get_assignment_lhs(ir->lhs, this);
 
    int swizzles[4];
    int first_enabled_chan = 0;
