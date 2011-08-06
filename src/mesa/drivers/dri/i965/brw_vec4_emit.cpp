@@ -146,7 +146,6 @@ vec4_instruction::get_dst(void)
 
    switch (dst.file) {
    case GRF:
-      assert(dst.reg_offset == 0);
       brw_reg = brw_vec8_grf(dst.reg + dst.reg_offset, 0);
       brw_reg = retype(brw_reg, dst.type);
       brw_reg.dw1.bits.writemask = dst.writemask;
