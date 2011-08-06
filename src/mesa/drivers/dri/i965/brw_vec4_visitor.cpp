@@ -122,14 +122,12 @@ vec4_visitor::emit_math1_gen6(enum opcode opcode, dst_reg dst, src_reg src)
 {
    /* The gen6 math instruction ignores the source modifiers --
     * swizzle, abs, negate, and at least some parts of the register
-    * region description.  Move the source to the corresponding slots
-    * of the destination generally work.
+    * region description.
     */
-   src_reg expanded = src_reg(this, glsl_type::float_type);
-   emit(BRW_OPCODE_MOV, dst, src);
-   src = expanded;
+   src_reg temp_src = src_reg(this, glsl_type::vec4_type);
+   emit(BRW_OPCODE_MOV, dst_reg(temp_src), src);
 
-   emit(opcode, dst, src);
+   emit(opcode, dst, temp_src);
 }
 
 void
