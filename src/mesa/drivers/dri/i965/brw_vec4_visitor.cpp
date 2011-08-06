@@ -1276,6 +1276,10 @@ vec4_visitor::emit_block_move(ir_assignment *ir)
 
    dst_reg dst = get_assignment_lhs(ir->lhs, this);
 
+   if (ir->condition) {
+      emit_bool_to_cond_code(ir->condition);
+   }
+
    /* FINISHME: This should really set to the correct maximal writemask for each
     * FINISHME: component written (in the loops below).
     */
