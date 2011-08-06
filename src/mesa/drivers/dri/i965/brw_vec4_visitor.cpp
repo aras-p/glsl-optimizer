@@ -646,6 +646,7 @@ vec4_visitor::visit(ir_variable *ir)
       for (int i = 0; i < type_size(ir->type); i++) {
 	 output_reg[ir->location + i] = *reg;
 	 output_reg[ir->location + i].reg_offset = i;
+	 output_reg[ir->location + i].type = BRW_REGISTER_TYPE_F;
       }
       break;
 
