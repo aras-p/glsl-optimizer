@@ -1387,96 +1387,71 @@ vec4_visitor::visit(ir_assignment *ir)
    }
 }
 
-
 void
-vec4_visitor::visit(ir_constant *ir)
+vec4_visitor::emit_constant_values(dst_reg *dst, ir_constant *ir)
 {
    if (ir->type->base_type == GLSL_TYPE_STRUCT) {
-      src_reg temp_base = src_reg(this, ir->type);
-      dst_reg temp = dst_reg(temp_base);
+      foreach_list(node, &ir->components) {
+	 ir_constant *field_value = (ir_constant *)node;
 
-      foreach_iter(exec_list_iterator, iter, ir->components) {
-	 ir_constant *field_value = (ir_constant *)iter.get();
-	 int size = type_size(field_value->type);
-
-	 assert(size > 0);
-
-	 field_value->accept(this);
-	 src_reg src = this->result;
-
-	 for (int i = 0; i < (unsigned int)size; i++) {
-	    emit(BRW_OPCODE_MOV, temp, src);
-
-	    src.reg_offset++;
-	    temp.reg_offset++;
-	 }
+	 emit_constant_values(dst, field_value);
       }
-      this->result = temp_base;
       return;
    }
 
    if (ir->type->is_array()) {
-      src_reg temp_base = src_reg(this, ir->type);
-      dst_reg temp = dst_reg(temp_base);
-      int size = type_size(ir->type->fields.array);
-
-      assert(size > 0);
-
       for (unsigned int i = 0; i < ir->type->length; i++) {
-	 ir->array_elements[i]->accept(this);
-	 src_reg src = this->result;
-	 for (int j = 0; j < size; j++) {
-	    emit(BRW_OPCODE_MOV, temp, src);
-
-	    src.reg_offset++;
-	    temp.reg_offset++;
-	 }
+	 emit_constant_values(dst, ir->array_elements[i]);
       }
-      this->result = temp_base;
       return;
    }
 
    if (ir->type->is_matrix()) {
-      this->result = src_reg(this, ir->type);
-      dst_reg dst = dst_reg(this->result);
-
-      assert(ir->type->base_type == GLSL_TYPE_FLOAT);
-
       for (int i = 0; i < ir->type->matrix_columns; i++) {
 	 for (int j = 0; j < ir->type->vector_elements; j++) {
-	    dst.writemask = 1 << j;
-	    emit(BRW_OPCODE_MOV, dst,
+	    dst->writemask = 1 << j;
+	    dst->type = BRW_REGISTER_TYPE_F;
+
+	    emit(BRW_OPCODE_MOV, *dst,
 		 src_reg(ir->value.f[i * ir->type->vector_elements + j]));
 	 }
-	 dst.reg_offset++;
+	 dst->reg_offset++;
       }
       return;
    }
 
-   this->result = src_reg(this, ir->type);
-   dst_reg dst = dst_reg(this->result);
-
    for (int i = 0; i < ir->type->vector_elements; i++) {
-      dst.writemask = 1 << i;
+      dst->writemask = 1 << i;
+      dst->type = brw_type_for_base_type(ir->type);
 
       switch (ir->type->base_type) {
       case GLSL_TYPE_FLOAT:
-	 emit(BRW_OPCODE_MOV, dst, src_reg(ir->value.f[i]));
+	 emit(BRW_OPCODE_MOV, *dst, src_reg(ir->value.f[i]));
 	 break;
       case GLSL_TYPE_INT:
-	 emit(BRW_OPCODE_MOV, dst, src_reg(ir->value.i[i]));
+	 emit(BRW_OPCODE_MOV, *dst, src_reg(ir->value.i[i]));
 	 break;
       case GLSL_TYPE_UINT:
-	 emit(BRW_OPCODE_MOV, dst, src_reg(ir->value.u[i]));
+	 emit(BRW_OPCODE_MOV, *dst, src_reg(ir->value.u[i]));
 	 break;
       case GLSL_TYPE_BOOL:
-	 emit(BRW_OPCODE_MOV, dst, src_reg(ir->value.b[i]));
+	 emit(BRW_OPCODE_MOV, *dst, src_reg(ir->value.b[i]));
 	 break;
       default:
 	 assert(!"Non-float/uint/int/bool constant");
 	 break;
       }
    }
+   dst->reg_offset++;
+}
+
+void
+vec4_visitor::visit(ir_constant *ir)
+{
+   dst_reg dst = dst_reg(this, ir->type);
+   this->result = src_reg(dst);
+
+   emit_constant_values(&dst, ir);
 }
 
 void

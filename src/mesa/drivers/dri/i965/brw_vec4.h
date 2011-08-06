@@ -393,6 +393,8 @@ public:
    void emit_block_move(dst_reg *dst, src_reg *src,
 			const struct glsl_type *type, bool predicated);
 
+   void emit_constant_values(dst_reg *dst, ir_constant *value);
+
    /**
     * Emit the correct dot-product instruction for the type of arguments
     */
