@@ -465,7 +465,8 @@ vec4_visitor::generate_code()
 	    assert(intel->gen == 6);
 	    gen6_IF(p, inst->conditional_mod, src[0], src[1]);
 	 } else {
-	    brw_IF(p, BRW_EXECUTE_8);
+	    struct brw_instruction *brw_inst = brw_IF(p, BRW_EXECUTE_8);
+	    brw_inst->header.predicate_control = inst->predicate;
 	 }
 	 if_depth_in_loop[loop_stack_depth]++;
 	 break;
