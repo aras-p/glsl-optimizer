@@ -1198,6 +1198,7 @@ vec4_visitor::visit(ir_dereference_array *ir)
       src.swizzle = swizzle_for_size(ir->type->vector_elements);
    else
       src.swizzle = BRW_SWIZZLE_NOOP;
+   src.type = brw_type_for_base_type(ir->type);
 
    this->result = src;
 }
@@ -1222,6 +1223,7 @@ vec4_visitor::visit(ir_dereference_record *ir)
       this->result.swizzle = swizzle_for_size(ir->type->vector_elements);
    else
       this->result.swizzle = BRW_SWIZZLE_NOOP;
+   this->result.type = brw_type_for_base_type(ir->type);
 
    this->result.reg_offset += offset;
 }
