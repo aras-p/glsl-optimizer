@@ -192,6 +192,17 @@ static void *radeon_bo_map_internal(struct pb_buffer *_buf,
                 if (radeon_bo_is_referenced_by_cs_for_write(cs, bo)) {
                     cs->flush_cs(cs->flush_data, 0);
                     radeon_bo_wait((struct pb_buffer*)bo);
+                } else {
+                    /* XXX We could check whether the buffer is busy for write here. */
+                    radeon_bo_wait((struct pb_buffer*)bo);
+                }
+#if 0
+                /* XXX This per-winsys busy-for-write tracking sucks.
+                 * What if some other process wrote something, e.g. using
+                 * DRI2CopyRegion? We wouldn't get the busy_for_write flag
+                 * set, skipping bo_wait.
+                 * We need to move the is-busy-for-write query into the kernel.
+                 */
                 } else if (bo->busy_for_write) {
                     /* Update the busy_for_write field (done by radeon_bo_is_busy)
                      * and wait if needed. */
@@ -199,6 +210,7 @@ static void *radeon_bo_map_internal(struct pb_buffer *_buf,
                         radeon_bo_wait((struct pb_buffer*)bo);
                     }
                 }
+#endif
             } else {
                 /* Mapping for write. */
                 if (radeon_bo_is_referenced_by_cs(cs, bo)) {
