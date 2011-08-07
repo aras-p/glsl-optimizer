@@ -1708,10 +1708,18 @@ align_interleaved_urb_mlen(struct brw_context *brw, int mlen)
 void
 vec4_visitor::emit_urb_writes()
 {
+   /* MRF 0 is reserved for the debugger, so start with message header
+    * in MRF 1.
+    */
    int base_mrf = 1;
    int mrf = base_mrf;
    int urb_entry_size;
    uint64_t outputs_remaining = c->prog_data.outputs_written;
+   /* In the process of generating our URB write message contents, we
+    * may need to unspill a register or load from an array.  Those
+    * reads would use MRFs 14-15.
+    */
+   int max_usable_mrf = 13;
 
    /* FINISHME: edgeflag */
 
@@ -1751,7 +1759,7 @@ vec4_visitor::emit_urb_writes()
        * even-numbered amount of URB write data, which will meet
        * gen6's requirements for length alignment.
        */
-      if (mrf == 16) {
+      if (mrf > max_usable_mrf) {
 	 attr++;
 	 break;
       }
@@ -1772,21 +1780,21 @@ vec4_visitor::emit_urb_writes()
 	 if (!(c->prog_data.outputs_written & BITFIELD64_BIT(attr)))
 	    continue;
 
-	 emit(BRW_OPCODE_MOV, brw_message_reg(mrf++), src_reg(output_reg[attr]));
+	 assert(mrf < max_usable_mrf);
 
-	 assert(mrf != 16);
+	 emit(BRW_OPCODE_MOV, brw_message_reg(mrf++), src_reg(output_reg[attr]));
       }
 
       inst = emit(VS_OPCODE_URB_WRITE);
       inst->base_mrf = base_mrf;
       inst->mlen = align_interleaved_urb_mlen(brw, mrf - base_mrf);
       inst->eot = true;
-      /* URB destination offset.  In the previous write, we got MRFs 2-
-       * 15 MRFs minus the one header MRF, so 14 regs.  URB offset is in
+      /* URB destination offset.  In the previous write, we got MRFs
+       * 2-13 minus the one header MRF, so 12 regs.  URB offset is in
        * URB row increments, and each of our MRFs is half of one of
        * those, since we're doing interleaved writes.
        */
-      inst->offset = 14 / 2;
+      inst->offset = (max_usable_mrf - base_mrf) / 2;
 
       urb_entry_size += mrf - base_mrf;
    }
