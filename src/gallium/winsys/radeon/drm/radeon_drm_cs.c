@@ -411,11 +411,6 @@ static void radeon_drm_cs_flush(struct radeon_winsys_cs *rcs, unsigned flags)
         for (i = 0; i < crelocs; i++) {
             /* Update the number of active asynchronous CS ioctls for the buffer. */
             p_atomic_inc(&cs->csc->relocs_bo[i]->num_active_ioctls);
-
-            /* Update whether the buffer is busy for write. */
-            if (cs->csc->relocs[i].write_domain) {
-                cs->csc->relocs_bo[i]->busy_for_write = TRUE;
-            }
         }
 
         if (cs->ws->num_cpus > 1 && debug_get_option_thread() &&
