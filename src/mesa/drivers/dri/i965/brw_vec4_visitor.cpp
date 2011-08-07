@@ -1805,6 +1805,169 @@ vec4_visitor::emit_urb_writes()
       c->prog_data.urb_entry_size = ALIGN(urb_entry_size, 4) / 4;
 }
 
+src_reg
+vec4_visitor::get_scratch_offset(vec4_instruction *inst,
+				 src_reg *reladdr, int reg_offset)
+{
+   /* Because we store the values to scratch interleaved like our
+    * vertex data, we need to scale the vec4 index by 2.
+    */
+   int message_header_scale = 2;
+
+   /* Pre-gen6, the message header uses byte offsets instead of vec4
+    * (16-byte) offset units.
+    */
+   if (intel->gen < 6)
+      message_header_scale *= 16;
+
+   if (reladdr) {
+      src_reg index = src_reg(this, glsl_type::int_type);
+
+      vec4_instruction *add = emit(BRW_OPCODE_ADD,
+				   dst_reg(index),
+				   *reladdr,
+				   src_reg(reg_offset));
+      /* Move our new instruction from the tail to its correct place. */
+      add->remove();
+      inst->insert_before(add);
+
+      vec4_instruction *mul = emit(BRW_OPCODE_MUL, dst_reg(index),
+				   index, src_reg(message_header_scale));
+      mul->remove();
+      inst->insert_before(mul);
+
+      return index;
+   } else {
+      return src_reg(reg_offset * message_header_scale);
+   }
+}
+
+/**
+ * Emits an instruction before @inst to load the value named by @orig_src
+ * from scratch space at @base_offset to @temp.
+ */
+void
+vec4_visitor::emit_scratch_read(vec4_instruction *inst,
+				dst_reg temp, src_reg orig_src,
+				int base_offset)
+{
+   int reg_offset = base_offset + orig_src.reg_offset;
+   src_reg index = get_scratch_offset(inst, orig_src.reladdr, reg_offset);
+
+   vec4_instruction *scratch_read_inst = emit(VS_OPCODE_SCRATCH_READ,
+					      temp, index);
+
+   scratch_read_inst->base_mrf = 14;
+   scratch_read_inst->mlen = 1;
+   /* Move our instruction from the tail to its correct place. */
+   scratch_read_inst->remove();
+   inst->insert_before(scratch_read_inst);
+}
+
+/**
+ * Emits an instruction after @inst to store the value to be written
+ * to @orig_dst to scratch space at @base_offset, from @temp.
+ */
+void
+vec4_visitor::emit_scratch_write(vec4_instruction *inst,
+				 src_reg temp, dst_reg orig_dst,
+				 int base_offset)
+{
+   int reg_offset = base_offset + orig_dst.reg_offset;
+   src_reg index = get_scratch_offset(inst, orig_dst.reladdr, reg_offset);
+
+   dst_reg dst = dst_reg(brw_writemask(brw_vec8_grf(0, 0),
+				       orig_dst.writemask));
+   vec4_instruction *scratch_write_inst = emit(VS_OPCODE_SCRATCH_WRITE,
+					       dst, temp, index);
+   scratch_write_inst->base_mrf = 13;
+   scratch_write_inst->mlen = 2;
+   scratch_write_inst->predicate = inst->predicate;
+   /* Move our instruction from the tail to its correct place. */
+   scratch_write_inst->remove();
+   inst->insert_after(scratch_write_inst);
+}
+
+/**
+ * We can't generally support array access in GRF space, because a
+ * single instruction's destination can only span 2 contiguous
+ * registers.  So, we send all GRF arrays that get variable index
+ * access to scratch space.
+ */
+void
+vec4_visitor::move_grf_array_access_to_scratch()
+{
+   int scratch_loc[this->virtual_grf_count];
+
+   for (int i = 0; i < this->virtual_grf_count; i++) {
+      scratch_loc[i] = -1;
+   }
+
+   /* First, calculate the set of virtual GRFs that need to be punted
+    * to scratch due to having any array access on them, and where in
+    * scratch.
+    */
+   foreach_list(node, &this->instructions) {
+      vec4_instruction *inst = (vec4_instruction *)node;
+
+      if (inst->dst.file == GRF && inst->dst.reladdr &&
+	  scratch_loc[inst->dst.reg] == -1) {
+	 scratch_loc[inst->dst.reg] = c->last_scratch;
+	 c->last_scratch += this->virtual_grf_sizes[inst->dst.reg] * 8 * 4;
+      }
+
+      for (int i = 0 ; i < 3; i++) {
+	 src_reg *src = &inst->src[i];
+
+	 if (src->file == GRF && src->reladdr &&
+	     scratch_loc[src->reg] == -1) {
+	    scratch_loc[src->reg] = c->last_scratch;
+	    c->last_scratch += this->virtual_grf_sizes[src->reg] * 8 * 4;
+	 }
+      }
+   }
+
+   /* Now, for anything that will be accessed through scratch, rewrite
+    * it to load/store.  Note that this is a _safe list walk, because
+    * we may generate a new scratch_write instruction after the one
+    * we're processing.
+    */
+   foreach_list_safe(node, &this->instructions) {
+      vec4_instruction *inst = (vec4_instruction *)node;
+
+      /* Set up the annotation tracking for new generated instructions. */
+      base_ir = inst->ir;
+      current_annotation = inst->annotation;
+
+      if (inst->dst.file == GRF && scratch_loc[inst->dst.reg] != -1) {
+	 src_reg temp = src_reg(this, glsl_type::vec4_type);
+
+	 emit_scratch_write(inst, temp, inst->dst, scratch_loc[inst->dst.reg]);
+
+	 inst->dst.file = temp.file;
+	 inst->dst.reg = temp.reg;
+	 inst->dst.reg_offset = temp.reg_offset;
+	 inst->dst.reladdr = NULL;
+      }
+
+      for (int i = 0 ; i < 3; i++) {
+	 if (inst->src[i].file != GRF || scratch_loc[inst->src[i].reg] == -1)
+	    continue;
+
+	 dst_reg temp = dst_reg(this, glsl_type::vec4_type);
+
+	 emit_scratch_read(inst, temp, inst->src[i],
+			   scratch_loc[inst->src[i].reg]);
+
+	 inst->src[i].file = temp.file;
+	 inst->src[i].reg = temp.reg;
+	 inst->src[i].reg_offset = temp.reg_offset;
+	 inst->src[i].reladdr = NULL;
+      }
+   }
+}
+
+
 vec4_visitor::vec4_visitor(struct brw_vs_compile *c,
 			   struct gl_shader_program *prog,
 			   struct brw_shader *shader)

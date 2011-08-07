@@ -376,6 +376,7 @@ public:
    void setup_payload();
    void reg_allocate_trivial();
    void reg_allocate();
+   void move_grf_array_access_to_scratch();
 
    vec4_instruction *emit(enum opcode opcode);
 
@@ -423,6 +424,17 @@ public:
    int emit_vue_header_gen6(int header_mrf);
    int emit_vue_header_gen4(int header_mrf);
    void emit_urb_writes(void);
+
+   src_reg get_scratch_offset(vec4_instruction *inst,
+			      src_reg *reladdr, int reg_offset);
+   void emit_scratch_read(vec4_instruction *inst,
+			  dst_reg dst,
+			  src_reg orig_src,
+			  int base_offset);
+   void emit_scratch_write(vec4_instruction *inst,
+			   src_reg temp,
+			   dst_reg orig_dst,
+			   int base_offset);
 
    GLboolean try_emit_sat(ir_expression *ir);
 

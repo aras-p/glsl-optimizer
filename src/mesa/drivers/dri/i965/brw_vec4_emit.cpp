@@ -321,7 +321,7 @@ vec4_visitor::generate_vs_instruction(vec4_instruction *instruction,
 bool
 vec4_visitor::run()
 {
-   /* Generate FS IR for main().  (the visitor only descends into
+   /* Generate VS IR for main().  (the visitor only descends into
     * functions called "main").
     */
    foreach_iter(exec_list_iterator, iter, *shader->ir) {
@@ -331,6 +331,14 @@ vec4_visitor::run()
    }
 
    emit_urb_writes();
+
+   /* Before any optimization, push array accesses out to scratch
+    * space where we need them to be.  This pass may allocate new
+    * virtual GRFs, so we want to do it early.  It also makes sure
+    * that we have reladdr computations available for CSE, since we'll
+    * often do repeated subexpressions for those.
+    */
+   move_grf_array_access_to_scratch();
 
    if (failed)
       return false;
