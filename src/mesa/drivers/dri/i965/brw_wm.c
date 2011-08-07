@@ -244,29 +244,10 @@ bool do_wm_prog(struct brw_context *brw,
 
    /* Scratch space is used for register spilling */
    if (c->last_scratch) {
-      uint32_t total_scratch;
+      c->prog_data.total_scratch = brw_get_scratch_size(c->last_scratch);
 
-      /* Per-thread scratch space is power-of-two sized. */
-      for (c->prog_data.total_scratch = 1024;
-	   c->prog_data.total_scratch <= c->last_scratch;
-	   c->prog_data.total_scratch *= 2) {
-	 /* empty */
-      }
-      total_scratch = c->prog_data.total_scratch * brw->wm_max_threads;
-
-      if (brw->wm.scratch_bo && total_scratch > brw->wm.scratch_bo->size) {
-	 drm_intel_bo_unreference(brw->wm.scratch_bo);
-	 brw->wm.scratch_bo = NULL;
-      }
-      if (brw->wm.scratch_bo == NULL) {
-	 brw->wm.scratch_bo = drm_intel_bo_alloc(intel->bufmgr,
-						 "wm scratch",
-						 total_scratch,
-						 4096);
-      }
-   }
-   else {
-      c->prog_data.total_scratch = 0;
+      brw_get_scratch_bo(intel, &brw->vs.scratch_bo,
+			 c->prog_data.total_scratch * brw->wm_max_threads);
    }
 
    if (unlikely(INTEL_DEBUG & DEBUG_WM))

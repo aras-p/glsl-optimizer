@@ -45,6 +45,7 @@ static void do_vs_prog( struct brw_context *brw,
 			struct brw_vs_prog_key *key )
 {
    struct gl_context *ctx = &brw->intel.ctx;
+   struct intel_context *intel = &brw->intel;
    GLuint program_size;
    const GLuint *program;
    struct brw_vs_compile c;
@@ -95,6 +96,14 @@ static void do_vs_prog( struct brw_context *brw,
 	 brw_old_vs_emit(&c);
    } else {
       brw_old_vs_emit(&c);
+   }
+
+   /* Scratch space is used for register spilling */
+   if (c.last_scratch) {
+      c.prog_data.total_scratch = brw_get_scratch_size(c.last_scratch);
+
+      brw_get_scratch_bo(intel, &brw->vs.scratch_bo,
+			 c.prog_data.total_scratch * brw->vs_max_threads);
    }
 
    /* get the program

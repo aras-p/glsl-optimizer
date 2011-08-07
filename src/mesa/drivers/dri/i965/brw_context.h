@@ -312,6 +312,7 @@ struct brw_vs_prog_data {
    GLuint total_grf;
    GLbitfield64 outputs_written;
    GLuint nr_params;       /**< number of float params/constants */
+   GLuint total_scratch;
 
    GLuint inputs_read;
 
@@ -671,6 +672,7 @@ struct brw_context
       struct brw_vs_prog_data *prog_data;
       int8_t *constant_map; /* variable array following prog_data */
 
+      drm_intel_bo *scratch_bo;
       drm_intel_bo *const_bo;
       /** Offset in the program cache to the VS program */
       uint32_t prog_offset;
@@ -857,6 +859,10 @@ void brw_validate_textures( struct brw_context *brw );
  * brw_program.c
  */
 void brwInitFragProgFuncs( struct dd_function_table *functions );
+
+int brw_get_scratch_size(int size);
+void brw_get_scratch_bo(struct intel_context *intel,
+			drm_intel_bo **scratch_bo, int size);
 
 
 /* brw_urb.c
