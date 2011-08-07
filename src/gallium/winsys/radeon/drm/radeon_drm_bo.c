@@ -197,13 +197,33 @@ static void *radeon_bo_map_internal(struct pb_buffer *_buf,
     if (!(flags & PB_USAGE_UNSYNCHRONIZED)) {
         /* DONTBLOCK doesn't make sense with UNSYNCHRONIZED. */
         if (flags & PB_USAGE_DONTBLOCK) {
-            if (radeon_bo_is_referenced_by_cs(cs, bo)) {
-                cs->flush_cs(cs->flush_data, RADEON_FLUSH_ASYNC);
-                return NULL;
-            }
+            if (!(flags & PB_USAGE_CPU_WRITE)) {
+                /* Mapping for read.
+                 *
+                 * Since we are mapping for read, we don't need to wait
+                 * if the GPU is using the buffer for read too
+                 * (neither one is changing it).
+                 *
+                 * Only check whether the buffer is being used for write. */
+                if (radeon_bo_is_referenced_by_cs_for_write(cs, bo)) {
+                    cs->flush_cs(cs->flush_data, RADEON_FLUSH_ASYNC);
+                    return NULL;
+                }
 
-            if (radeon_bo_is_busy((struct pb_buffer*)bo, RADEON_USAGE_READWRITE)) {
-                return NULL;
+                if (radeon_bo_is_busy((struct pb_buffer*)bo,
+                                      RADEON_USAGE_WRITE)) {
+                    return NULL;
+                }
+            } else {
+                if (radeon_bo_is_referenced_by_cs(cs, bo)) {
+                    cs->flush_cs(cs->flush_data, RADEON_FLUSH_ASYNC);
+                    return NULL;
+                }
+
+                if (radeon_bo_is_busy((struct pb_buffer*)bo,
+                                      RADEON_USAGE_READWRITE)) {
+                    return NULL;
+                }
             }
         } else {
             if (!(flags & PB_USAGE_CPU_WRITE)) {
@@ -216,13 +236,9 @@ static void *radeon_bo_map_internal(struct pb_buffer *_buf,
                  * Only check whether the buffer is being used for write. */
                 if (radeon_bo_is_referenced_by_cs_for_write(cs, bo)) {
                     cs->flush_cs(cs->flush_data, 0);
-                    radeon_bo_wait((struct pb_buffer*)bo,
-                                   RADEON_USAGE_READWRITE);
-                } else {
-                    /* XXX We could check whether the buffer is busy for write here. */
-                    radeon_bo_wait((struct pb_buffer*)bo,
-                                   RADEON_USAGE_READWRITE);
                 }
+                radeon_bo_wait((struct pb_buffer*)bo,
+                               RADEON_USAGE_WRITE);
             } else {
                 /* Mapping for write. */
                 if (radeon_bo_is_referenced_by_cs(cs, bo)) {
