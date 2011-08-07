@@ -735,7 +735,6 @@ struct brw_context
       GLuint render_surf;
       GLuint nr_surfaces;      
 
-      GLuint max_threads;
       drm_intel_bo *scratch_bo;
 
       GLuint sampler_count;
