@@ -97,7 +97,7 @@ r300_texture_get_transfer(struct pipe_context *ctx,
         referenced_hw = TRUE;
     } else {
         referenced_hw =
-            r300->rws->buffer_is_busy(tex->buf);
+            r300->rws->buffer_is_busy(tex->buf, RADEON_USAGE_READWRITE);
     }
 
     blittable = desc->layout == UTIL_FORMAT_LAYOUT_PLAIN ||

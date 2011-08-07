@@ -61,6 +61,12 @@ enum radeon_bo_domain { /* bitfield */
     RADEON_DOMAIN_VRAM = 4
 };
 
+enum radeon_bo_usage { /* bitfield */
+    RADEON_USAGE_READ = 2,
+    RADEON_USAGE_WRITE = 4,
+    RADEON_USAGE_READWRITE = RADEON_USAGE_READ | RADEON_USAGE_WRITE
+};
+
 struct winsys_handle;
 struct radeon_winsys_cs_handle;   /* for write_reloc etc. */
 
@@ -162,8 +168,10 @@ struct radeon_winsys {
      * Return TRUE if a buffer object is being used by the GPU.
      *
      * \param buf       A winsys buffer object.
+     * \param usage     Only check whether the buffer is busy for the given usage.
      */
-    boolean (*buffer_is_busy)(struct pb_buffer *buf);
+    boolean (*buffer_is_busy)(struct pb_buffer *buf,
+                              enum radeon_bo_usage usage);
 
     /**
      * Wait for a buffer object until it is not used by a GPU. This is
@@ -171,8 +179,10 @@ struct radeon_winsys {
      * and synchronizing to the fence.
      *
      * \param buf       A winsys buffer object to wait for.
+     * \param usage     Only wait until the buffer is idle for the given usage,
+     *                  but may still be busy for some other usage.
      */
-    void (*buffer_wait)(struct pb_buffer *buf);
+    void (*buffer_wait)(struct pb_buffer *buf, enum radeon_bo_usage usage);
 
     /**
      * Return tiling flags describing a memory layout of a buffer object.

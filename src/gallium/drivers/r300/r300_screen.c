@@ -454,7 +454,7 @@ static boolean r300_fence_signalled(struct pipe_screen *screen,
     struct radeon_winsys *rws = r300_screen(screen)->rws;
     struct pb_buffer *rfence = (struct pb_buffer*)fence;
 
-    return !rws->buffer_is_busy(rfence);
+    return !rws->buffer_is_busy(rfence, RADEON_USAGE_READWRITE);
 }
 
 static boolean r300_fence_finish(struct pipe_screen *screen,
@@ -471,7 +471,7 @@ static boolean r300_fence_finish(struct pipe_screen *screen,
         timeout /= 1000;
 
         /* Wait in a loop. */
-        while (rws->buffer_is_busy(rfence)) {
+        while (rws->buffer_is_busy(rfence, RADEON_USAGE_READWRITE)) {
             if (os_time_get() - start_time >= timeout) {
                 return FALSE;
             }
@@ -480,7 +480,7 @@ static boolean r300_fence_finish(struct pipe_screen *screen,
         return TRUE;
     }
 
-    rws->buffer_wait(rfence);
+    rws->buffer_wait(rfence, RADEON_USAGE_READWRITE);
     return TRUE;
 }
 
