@@ -89,9 +89,9 @@ gen7_convert_mrf_to_grf(struct brw_compile *p, struct brw_reg *reg)
 }
 
 
-static void brw_set_dest(struct brw_compile *p,
-			 struct brw_instruction *insn,
-			 struct brw_reg dest)
+void
+brw_set_dest(struct brw_compile *p, struct brw_instruction *insn,
+	     struct brw_reg dest)
 {
    if (dest.file != BRW_ARCHITECTURE_REGISTER_FILE &&
        dest.file != BRW_MESSAGE_REGISTER_FILE)
@@ -221,9 +221,9 @@ validate_reg(struct brw_instruction *insn, struct brw_reg reg)
    /* 10. Check destination issues. */
 }
 
-static void brw_set_src0(struct brw_compile *p,
-			 struct brw_instruction *insn,
-			 struct brw_reg reg)
+void
+brw_set_src0(struct brw_compile *p, struct brw_instruction *insn,
+	     struct brw_reg reg)
 {
    if (reg.type != BRW_ARCHITECTURE_REGISTER_FILE)
       assert(reg.nr < 128);
@@ -504,17 +504,18 @@ static void brw_set_urb_message( struct brw_compile *p,
     }
 }
 
-static void brw_set_dp_write_message( struct brw_compile *p,
-				      struct brw_instruction *insn,
-				      GLuint binding_table_index,
-				      GLuint msg_control,
-				      GLuint msg_type,
-				      GLuint msg_length,
-				      GLboolean header_present,
-				      GLuint pixel_scoreboard_clear,
-				      GLuint response_length,
-				      GLuint end_of_thread,
-				      GLuint send_commit_msg)
+void
+brw_set_dp_write_message(struct brw_compile *p,
+			 struct brw_instruction *insn,
+			 GLuint binding_table_index,
+			 GLuint msg_control,
+			 GLuint msg_type,
+			 GLuint msg_length,
+			 GLboolean header_present,
+			 GLuint pixel_scoreboard_clear,
+			 GLuint response_length,
+			 GLuint end_of_thread,
+			 GLuint send_commit_msg)
 {
    struct brw_context *brw = p->brw;
    struct intel_context *intel = &brw->intel;
@@ -570,7 +571,7 @@ static void brw_set_dp_write_message( struct brw_compile *p,
    }
 }
 
-static void
+void
 brw_set_dp_read_message(struct brw_compile *p,
 			struct brw_instruction *insn,
 			GLuint binding_table_index,
@@ -709,9 +710,9 @@ static void brw_set_sampler_message(struct brw_compile *p,
 }
 
 
-
-static struct brw_instruction *next_insn( struct brw_compile *p, 
-					  GLuint opcode )
+#define next_insn brw_next_insn
+struct brw_instruction *
+brw_next_insn(struct brw_compile *p, GLuint opcode)
 {
    struct brw_instruction *insn;
 
@@ -731,7 +732,6 @@ static struct brw_instruction *next_insn( struct brw_compile *p,
    insn->header.opcode = opcode;
    return insn;
 }
-
 
 static struct brw_instruction *brw_alu1( struct brw_compile *p,
 					 GLuint opcode,
