@@ -111,12 +111,14 @@ brw_link_shader(struct gl_context *ctx, struct gl_shader_program *prog)
       brw_do_cubemap_normalize(shader->ir);
       lower_noise(shader->ir);
       lower_quadop_vector(shader->ir, false);
+
+      bool input = true;
+      bool output = stage == MESA_SHADER_FRAGMENT;
+      bool temp = stage == MESA_SHADER_FRAGMENT;
+      bool uniform = true;
+
       lower_variable_index_to_cond_assign(shader->ir,
-					  GL_TRUE, /* input */
-					  GL_TRUE, /* output */
-					  GL_TRUE, /* temp */
-					  GL_TRUE /* uniform */
-					  );
+					  input, output, temp, uniform);
 
       do {
 	 progress = false;
