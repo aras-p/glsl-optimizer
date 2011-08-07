@@ -228,7 +228,13 @@ upload_ps_state(struct brw_context *brw)
    OUT_BATCH(_3DSTATE_PS << 16 | (8 - 2));
    OUT_BATCH(brw->wm.prog_offset);
    OUT_BATCH(dw2);
-   OUT_BATCH(0); /* scratch space base offset */
+   if (brw->wm.prog_data->total_scratch) {
+      OUT_RELOC(brw->wm.scratch_bo,
+		I915_GEM_DOMAIN_RENDER, I915_GEM_DOMAIN_RENDER,
+		ffs(brw->wm.prog_data->total_scratch) - 11);
+   } else {
+      OUT_BATCH(0);
+   }
    OUT_BATCH(dw4);
    OUT_BATCH(dw5);
    OUT_BATCH(0); /* kernel 1 pointer */
