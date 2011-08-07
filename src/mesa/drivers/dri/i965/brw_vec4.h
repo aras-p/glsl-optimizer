@@ -451,6 +451,15 @@ public:
 			    struct brw_reg dst,
 			    struct brw_reg src);
    void generate_urb_write(vec4_instruction *inst);
+   void generate_oword_dual_block_offsets(struct brw_reg m1,
+					  struct brw_reg index);
+   void generate_scratch_write(vec4_instruction *inst,
+			       struct brw_reg dst,
+			       struct brw_reg src,
+			       struct brw_reg index);
+   void generate_scratch_read(vec4_instruction *inst,
+			      struct brw_reg dst,
+			      struct brw_reg index);
 };
 
 } /* namespace brw */

@@ -1,5 +1,4 @@
-/*
- * Copyright © 2011 Intel Corporation
+/* Copyright © 2011 Intel Corporation
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -279,6 +278,139 @@ vec4_visitor::generate_urb_write(vec4_instruction *inst)
 }
 
 void
+vec4_visitor::generate_oword_dual_block_offsets(struct brw_reg m1,
+						struct brw_reg index)
+{
+   int second_vertex_offset;
+
+   if (intel->gen >= 6)
+      second_vertex_offset = 1;
+   else
+      second_vertex_offset = 16;
+
+   m1 = retype(m1, BRW_REGISTER_TYPE_D);
+
+   /* Set up M1 (message payload).  Only the block offsets in M1.0 and
+    * M1.4 are used, and the rest are ignored.
+    */
+   struct brw_reg m1_0 = suboffset(vec1(m1), 0);
+   struct brw_reg m1_4 = suboffset(vec1(m1), 4);
+   struct brw_reg index_0 = suboffset(vec1(index), 0);
+   struct brw_reg index_4 = suboffset(vec1(index), 4);
+
+   brw_push_insn_state(p);
+   brw_set_mask_control(p, BRW_MASK_DISABLE);
+   brw_set_access_mode(p, BRW_ALIGN_1);
+
+   brw_MOV(p, m1_0, index_0);
+
+   brw_set_predicate_inverse(p, true);
+   if (index.file == BRW_IMMEDIATE_VALUE) {
+      index_4.dw1.ud++;
+      brw_MOV(p, m1_4, index_4);
+   } else {
+      brw_ADD(p, m1_4, index_4, brw_imm_d(second_vertex_offset));
+   }
+
+   brw_pop_insn_state(p);
+}
+
+void
+vec4_visitor::generate_scratch_read(vec4_instruction *inst,
+				    struct brw_reg dst,
+				    struct brw_reg index)
+{
+   if (intel->gen >= 6) {
+      brw_push_insn_state(p);
+      brw_set_mask_control(p, BRW_MASK_DISABLE);
+      brw_MOV(p,
+	      retype(brw_message_reg(inst->base_mrf), BRW_REGISTER_TYPE_D),
+	      retype(brw_vec8_grf(0, 0), BRW_REGISTER_TYPE_D));
+      brw_pop_insn_state(p);
+   }
+
+   generate_oword_dual_block_offsets(brw_message_reg(inst->base_mrf + 1),
+				     index);
+
+   uint32_t msg_type;
+
+   if (intel->gen >= 6)
+      msg_type = GEN6_DATAPORT_READ_MESSAGE_OWORD_DUAL_BLOCK_READ;
+   else if (intel->gen == 5 || intel->is_g4x)
+      msg_type = G45_DATAPORT_READ_MESSAGE_OWORD_DUAL_BLOCK_READ;
+   else
+      msg_type = BRW_DATAPORT_READ_MESSAGE_OWORD_DUAL_BLOCK_READ;
+
+   /* Each of the 8 channel enables is considered for whether each
+    * dword is written.
+    */
+   struct brw_instruction *send = brw_next_insn(p, BRW_OPCODE_SEND);
+   brw_set_dest(p, send, dst);
+   brw_set_src0(p, send, brw_message_reg(inst->base_mrf));
+   brw_set_dp_read_message(p, send,
+			   255, /* binding table index: stateless access */
+			   BRW_DATAPORT_OWORD_DUAL_BLOCK_1OWORD,
+			   msg_type,
+			   BRW_DATAPORT_READ_TARGET_RENDER_CACHE,
+			   2, /* mlen */
+			   1 /* rlen */);
+}
+
+void
+vec4_visitor::generate_scratch_write(vec4_instruction *inst,
+				     struct brw_reg dst,
+				     struct brw_reg src,
+				     struct brw_reg index)
+{
+   /* If the instruction is predicated, we'll predicate the send, not
+    * the header setup.
+    */
+   brw_set_predicate_control(p, false);
+
+   if (intel->gen >= 6) {
+      brw_push_insn_state(p);
+      brw_set_mask_control(p, BRW_MASK_DISABLE);
+      brw_MOV(p,
+	      retype(brw_message_reg(inst->base_mrf), BRW_REGISTER_TYPE_D),
+	      retype(brw_vec8_grf(0, 0), BRW_REGISTER_TYPE_D));
+      brw_pop_insn_state(p);
+   }
+
+   generate_oword_dual_block_offsets(brw_message_reg(inst->base_mrf + 1),
+				     index);
+
+   brw_MOV(p,
+	   retype(brw_message_reg(inst->base_mrf + 2), BRW_REGISTER_TYPE_D),
+	   retype(src, BRW_REGISTER_TYPE_D));
+
+   uint32_t msg_type;
+
+   if (intel->gen >= 6)
+      msg_type = GEN6_DATAPORT_WRITE_MESSAGE_OWORD_DUAL_BLOCK_WRITE;
+   else
+      msg_type = BRW_DATAPORT_WRITE_MESSAGE_OWORD_DUAL_BLOCK_WRITE;
+
+   brw_set_predicate_control(p, inst->predicate);
+
+   /* Each of the 8 channel enables is considered for whether each
+    * dword is written.
+    */
+   struct brw_instruction *send = brw_next_insn(p, BRW_OPCODE_SEND);
+   brw_set_dest(p, send, dst);
+   brw_set_src0(p, send, brw_message_reg(inst->base_mrf));
+   brw_set_dp_write_message(p, send,
+			    255, /* binding table index: stateless access */
+			    BRW_DATAPORT_OWORD_DUAL_BLOCK_1OWORD,
+			    msg_type,
+			    3, /* mlen */
+			    true, /* header present */
+			    false, /* pixel scoreboard */
+			    0, /* rlen */
+			    false, /* eot */
+			    false /* commit */);
+}
+
+void
 vec4_visitor::generate_vs_instruction(vec4_instruction *instruction,
 				      struct brw_reg dst,
 				      struct brw_reg *src)
@@ -306,6 +438,14 @@ vec4_visitor::generate_vs_instruction(vec4_instruction *instruction,
 
    case VS_OPCODE_URB_WRITE:
       generate_urb_write(inst);
+      break;
+
+   case VS_OPCODE_SCRATCH_READ:
+      generate_scratch_read(inst, dst, src[0]);
+      break;
+
+   case VS_OPCODE_SCRATCH_WRITE:
+      generate_scratch_write(inst, dst, src[0], src[1]);
       break;
 
    default:
