@@ -85,21 +85,6 @@ struct st_fragment_program
 {
    struct gl_fragment_program Base;
    struct glsl_to_tgsi_visitor* glsl_to_tgsi;
-   
-   /** maps a Mesa FRAG_ATTRIB_x to a packed TGSI input index */
-   GLuint input_to_index[FRAG_ATTRIB_MAX];
-   /** maps a TGSI input index back to a Mesa FRAG_ATTRIB_x */
-   GLuint index_to_input[PIPE_MAX_SHADER_INPUTS];
-   ubyte input_semantic_name[PIPE_MAX_SHADER_INPUTS];
-   ubyte input_semantic_index[PIPE_MAX_SHADER_INPUTS];
-   GLuint num_inputs;
-   GLuint interp_mode[PIPE_MAX_SHADER_INPUTS];  /* XXX size? */
-
-   /** Maps FRAG_RESULT_x to slot */
-   GLuint result_to_output[FRAG_RESULT_MAX];
-   ubyte output_semantic_name[FRAG_RESULT_MAX];
-   ubyte output_semantic_index[FRAG_RESULT_MAX];
-   GLuint num_outputs;
 
    struct pipe_shader_state tgsi;
 
