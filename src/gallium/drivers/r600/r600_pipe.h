@@ -250,7 +250,8 @@ void evergreen_pipe_init_buffer_resource(struct r600_pipe_context *rctx,
 					 struct r600_pipe_resource_state *rstate);
 void evergreen_pipe_mod_buffer_resource(struct r600_pipe_resource_state *rstate,
 					struct r600_resource *rbuffer,
-					unsigned offset, unsigned stride);
+					unsigned offset, unsigned stride,
+					enum radeon_bo_usage usage);
 boolean evergreen_is_format_supported(struct pipe_screen *screen,
 				      enum pipe_format format,
 				      enum pipe_texture_target target,
@@ -302,7 +303,8 @@ void r600_pipe_init_buffer_resource(struct r600_pipe_context *rctx,
 				    struct r600_pipe_resource_state *rstate);
 void r600_pipe_mod_buffer_resource(struct r600_pipe_resource_state *rstate,
 				   struct r600_resource *rbuffer,
-				   unsigned offset, unsigned stride);
+				   unsigned offset, unsigned stride,
+				   enum radeon_bo_usage usage);
 void r600_adjust_gprs(struct r600_pipe_context *rctx);
 boolean r600_is_format_supported(struct pipe_screen *screen,
 				 enum pipe_format format,

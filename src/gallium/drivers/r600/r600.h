@@ -26,8 +26,8 @@
 #ifndef R600_H
 #define R600_H
 
+#include "../../winsys/radeon/drm/radeon_winsys.h"
 #include "util/u_double_list.h"
-#include "util/u_inlines.h"
 
 #define R600_ERR(fmt, args...) \
 	fprintf(stderr, "EE %s:%d %s - "fmt, __FILE__, __LINE__, __func__, ##args)
@@ -140,6 +140,7 @@ struct r600_pipe_reg {
 	u32				mask;
 	struct r600_block 		*block;
 	struct r600_bo			*bo;
+	enum radeon_bo_usage		bo_usage;
 	u32				id;
 };
 
@@ -152,7 +153,8 @@ struct r600_pipe_state {
 struct r600_pipe_resource_state {
 	unsigned			id;
 	u32                             val[8];
-	struct r600_bo *bo[2];
+	struct r600_bo			*bo[2];
+	enum radeon_bo_usage		bo_usage[2]; /* XXX set these */
 };
 
 #define R600_BLOCK_STATUS_ENABLED	(1 << 0)
@@ -163,6 +165,7 @@ struct r600_pipe_resource_state {
 
 struct r600_block_reloc {
 	struct r600_bo		*bo;
+	enum radeon_bo_usage	bo_usage;
 	unsigned		flush_flags;
 	unsigned		flush_mask;
 	unsigned		bo_pm4_index;
@@ -311,12 +314,15 @@ void _r600_pipe_state_add_reg(struct r600_context *ctx,
 			      struct r600_pipe_state *state,
 			      u32 offset, u32 value, u32 mask,
 			      u32 range_id, u32 block_id,
-			      struct r600_bo *bo);
+			      struct r600_bo *bo,
+			      enum radeon_bo_usage usage);
 
 void r600_pipe_state_add_reg_noblock(struct r600_pipe_state *state,
 				     u32 offset, u32 value, u32 mask,
-				     struct r600_bo *bo);
-#define r600_pipe_state_add_reg(state, offset, value, mask, bo) _r600_pipe_state_add_reg(&rctx->ctx, state, offset, value, mask, CTX_RANGE_ID(offset), CTX_BLOCK_ID(offset), bo)
+				     struct r600_bo *bo,
+				     enum radeon_bo_usage usage);
+
+#define r600_pipe_state_add_reg(state, offset, value, mask, bo, usage) _r600_pipe_state_add_reg(&rctx->ctx, state, offset, value, mask, CTX_RANGE_ID(offset), CTX_BLOCK_ID(offset), bo, usage)
 
 static inline void r600_pipe_state_mod_reg(struct r600_pipe_state *state,
 					   u32 value)
@@ -326,10 +332,12 @@ static inline void r600_pipe_state_mod_reg(struct r600_pipe_state *state,
 }
 
 static inline void r600_pipe_state_mod_reg_bo(struct r600_pipe_state *state,
-					   u32 value, struct r600_bo *bo)
+					      u32 value, struct r600_bo *bo,
+					      enum radeon_bo_usage usage)
 {
 	state->regs[state->nregs].value = value;
 	state->regs[state->nregs].bo = bo;
+	state->regs[state->nregs].bo_usage = usage;
 	state->nregs++;
 }
 

@@ -1186,7 +1186,7 @@ void evergreen_context_draw(struct r600_context *ctx, const struct r600_draw *dr
 		pm4[7] = draw->vgt_num_indices;
 		pm4[8] = draw->vgt_draw_initiator;
 		pm4[9] = PKT3(PKT3_NOP, 0, ctx->predicate_drawing);
-		pm4[10] = r600_context_bo_reloc(ctx, draw->indices);
+		pm4[10] = r600_context_bo_reloc(ctx, draw->indices, RADEON_USAGE_READ);
 	} else {
 		pm4[4] = PKT3(PKT3_DRAW_INDEX_AUTO, 1, ctx->predicate_drawing);
 		pm4[5] = draw->vgt_num_indices;

@@ -95,11 +95,17 @@ void r600_context_reg(struct r600_context *ctx,
 void r600_init_cs(struct r600_context *ctx);
 int r600_resource_init(struct r600_context *ctx, struct r600_range *range, unsigned offset, unsigned nblocks, unsigned stride, struct r600_reg *reg, int nreg, unsigned offset_base);
 
-static INLINE unsigned r600_context_bo_reloc(struct r600_context *ctx, struct r600_bo *rbo)
+static INLINE unsigned r600_context_bo_reloc(struct r600_context *ctx, struct r600_bo *rbo,
+					     enum radeon_bo_usage usage)
 {
+	enum radeon_bo_domain rd = usage & RADEON_USAGE_READ ? rbo->domains : 0;
+	enum radeon_bo_domain wd = usage & RADEON_USAGE_WRITE ? rbo->domains : 0;
+
+	assert(usage);
+
 	unsigned reloc_index =
 		ctx->radeon->ws->cs_add_reloc(ctx->cs, rbo->cs_buf,
-					      rbo->domains, rbo->domains);
+					      rd, wd);
 
 	if (reloc_index >= ctx->creloc)
 		ctx->creloc = reloc_index+1;
