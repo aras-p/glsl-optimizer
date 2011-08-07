@@ -37,6 +37,7 @@ src_reg::src_reg(dst_reg reg)
    this->reg = reg.reg;
    this->reg_offset = reg.reg_offset;
    this->type = reg.type;
+   this->reladdr = reg.reladdr;
 
    int swizzles[4];
    int next_chan = 0;
@@ -66,6 +67,7 @@ dst_reg::dst_reg(src_reg reg)
    this->reg_offset = reg.reg_offset;
    this->type = reg.type;
    this->writemask = WRITEMASK_XYZW;
+   this->reladdr = reg.reladdr;
 }
 
 vec4_instruction *
@@ -1186,7 +1188,6 @@ vec4_visitor::visit(ir_dereference_array *ir)
    if (constant_index) {
       src.reg_offset += constant_index->value.i[0] * element_size;
    } else {
-#if 0 /* Variable array index */
       /* Variable index array dereference.  It eats the "vec4" of the
        * base of the array and an index that offsets the Mesa register
        * index.
@@ -1198,15 +1199,22 @@ vec4_visitor::visit(ir_dereference_array *ir)
       if (element_size == 1) {
 	 index_reg = this->result;
       } else {
-	 index_reg = src_reg(this, glsl_type::float_type);
+	 index_reg = src_reg(this, glsl_type::int_type);
 
 	 emit(BRW_OPCODE_MUL, dst_reg(index_reg),
-	      this->result, src_reg_for_float(element_size));
+	      this->result, src_reg(element_size));
+      }
+
+      if (src.reladdr) {
+	 src_reg temp = src_reg(this, glsl_type::int_type);
+
+	 emit(BRW_OPCODE_ADD, dst_reg(temp), *src.reladdr, index_reg);
+
+	 index_reg = temp;
       }
 
       src.reladdr = ralloc(mem_ctx, src_reg);
       memcpy(src.reladdr, &index_reg, sizeof(index_reg));
-#endif
    }
 
    /* If the type is smaller than a vec4, replicate the last channel out. */

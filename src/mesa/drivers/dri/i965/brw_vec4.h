@@ -169,6 +169,8 @@ public:
    GLuint swizzle; /**< SWIZZLE_XYZW swizzles from Mesa. */
    bool negate;
    bool abs;
+
+   src_reg *reladdr;
 };
 
 class dst_reg : public reg
@@ -219,6 +221,8 @@ public:
    explicit dst_reg(src_reg reg);
 
    int writemask; /**< Bitfield of WRITEMASK_[XYZW] */
+
+   src_reg *reladdr;
 };
 
 class vec4_instruction : public exec_node {
