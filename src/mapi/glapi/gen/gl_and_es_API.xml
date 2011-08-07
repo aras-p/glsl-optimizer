@@ -3,6 +3,11 @@
 
 <!-- OpenGL + OpenGL ES -->
 
+<!-- IMPORTANT
+     Remember to update gles_api.py when new OpenGL ES specific entry points
+     are added.  Otherwise, they will be filtered out.
+-->
+
 <OpenGLAPI>
 
 <xi:include href="gl_API.xml" xmlns:xi="http://www.w3.org/2001/XInclude"/>
