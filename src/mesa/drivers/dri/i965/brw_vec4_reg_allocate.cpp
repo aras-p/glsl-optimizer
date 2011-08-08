@@ -41,15 +41,37 @@ vec4_visitor::reg_allocate_trivial()
 {
    int last_grf = 0;
    int hw_reg_mapping[this->virtual_grf_count];
+   bool virtual_grf_used[this->virtual_grf_count];
    int i;
    int next;
+
+   /* Calculate which virtual GRFs are actually in use after whatever
+    * optimization passes have occurred.
+    */
+   for (int i = 0; i < this->virtual_grf_count; i++) {
+      virtual_grf_used[i] = false;
+   }
+
+   foreach_iter(exec_list_iterator, iter, this->instructions) {
+      vec4_instruction *inst = (vec4_instruction *)iter.get();
+
+      if (inst->dst.file == GRF)
+	 virtual_grf_used[inst->dst.reg] = true;
+
+      for (int i = 0; i < 3; i++) {
+	 if (inst->src[i].file == GRF)
+	    virtual_grf_used[inst->src[i].reg] = true;
+      }
+   }
 
    /* Note that compressed instructions require alignment to 2 registers. */
    hw_reg_mapping[0] = this->first_non_payload_grf;
    next = hw_reg_mapping[0] + this->virtual_grf_sizes[0];
    for (i = 1; i < this->virtual_grf_count; i++) {
-      hw_reg_mapping[i] = next;
-      next += this->virtual_grf_sizes[i];
+      if (virtual_grf_used[i]) {
+	 hw_reg_mapping[i] = next;
+	 next += this->virtual_grf_sizes[i];
+      }
    }
    prog_data->total_grf = next;
 
