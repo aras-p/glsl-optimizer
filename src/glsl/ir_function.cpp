@@ -27,7 +27,7 @@
 typedef enum {
    PARAMETER_LIST_NO_MATCH,
    PARAMETER_LIST_EXACT_MATCH,
-   PARAMETER_LIST_INEXACT_MATCH, /*< Match requires implicit conversion. */
+   PARAMETER_LIST_INEXACT_MATCH /*< Match requires implicit conversion. */
 } parameter_list_match_t;
 
 /**
