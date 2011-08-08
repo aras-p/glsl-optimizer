@@ -88,6 +88,7 @@ static inline unsigned int r600_bc_get_num_operands(struct r600_bc *bc, struct r
 		case V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_INT_TO_FLT:
 		case V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_SIN:
 		case V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_COS:
+		case V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_RNDNE:
 			return 1;
 		default: R600_ERR(
 			"Need instruction operand number for 0x%x.\n", alu->inst);
@@ -140,6 +141,7 @@ static inline unsigned int r600_bc_get_num_operands(struct r600_bc *bc, struct r
 		case EG_V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_INT_TO_FLT:
 		case EG_V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_SIN:
 		case EG_V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_COS:
+		case EG_V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_RNDNE:
 			return 1;
 		default: R600_ERR(
 			"Need instruction operand number for 0x%x.\n", alu->inst);
