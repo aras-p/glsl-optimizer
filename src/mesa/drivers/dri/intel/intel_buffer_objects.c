@@ -282,12 +282,17 @@ intel_bufferobj_get_subdata(struct gl_context * ctx,
                             GLvoid * data, struct gl_buffer_object *obj)
 {
    struct intel_buffer_object *intel_obj = intel_buffer_object(obj);
+   struct intel_context *intel = intel_context(ctx);
 
    assert(intel_obj);
    if (intel_obj->sys_buffer)
       memcpy(data, (char *)intel_obj->sys_buffer + offset, size);
-   else
+   else {
+      if (drm_intel_bo_references(intel->batch.bo, intel_obj->buffer)) {
+	 intel_batchbuffer_flush(intel);
+      }
       drm_intel_bo_get_subdata(intel_obj->buffer, offset, size, data);
+   }
 }
 
 
