@@ -34,8 +34,6 @@ ESAPI = $(ES)api
 
 GLAPI := $(TOP)/src/mapi/glapi
 MAPI := $(TOP)/src/mapi/mapi
-# directory for generated sources/headers
-GEN := glapi
 
 esapi_CPPFLAGS := \
 	-I$(TOP)/include \
@@ -50,7 +48,7 @@ esapi_CPPFLAGS += -DMAPI_MODE_BRIDGE
 esapi_LIB_DEPS := -L$(TOP)/$(LIB_DIR) -l$(GLAPI_LIB) $(esapi_LIB_DEPS)
 
 .PHONY: default
-default: depend $(TOP)/$(LIB_DIR)/$(esapi_LIB_NAME)
+default: depend $(TOP)/$(LIB_DIR)/$(esapi_LIB_NAME) main/dispatch.h main/remap_helper.h
 
 $(TOP)/$(LIB_DIR)/$(esapi_LIB_NAME): $(esapi_OBJECTS)
 	$(MKLIB) -o $(esapi_LIB) -linker '$(CC)' -ldflags '$(LDFLAGS)' \
@@ -68,13 +66,17 @@ lib$(ESAPI).a: $(esapi_OBJECTS)
 $(esapi_OBJECTS): %.o: $(MAPI)/%.c
 	$(CC) -c $(esapi_CPPFLAGS) $(CFLAGS) $< -o $@
 
-$(esapi_SOURCES): | glapi-stamp
+$(esapi_SOURCES): glapi_mapi_tmp.h
 
-.PHONY: glapi-stamp
-glapi-stamp:
-	@# generate sources/headers
-	@$(MAKE) -C $(GLAPI)/gen-es $(ES)
-	@touch $@
+include $(GLAPI)/gen/glapi_gen.mk
+glapi_mapi_tmp.h: $(GLAPI)/gen/gl_and_es_API.xml $(glapi_gen_mapi_deps)
+	$(call glapi_gen_mapi,$<,$(ESAPI))
+
+main/dispatch.h: $(GLAPI)/gen/gl_and_es_API.xml $(glapi_gen_dispatch_deps)
+	$(call glapi_gen_dispatch,$<,$(ES))
+
+main/remap_helper.h: $(GLAPI)/gen/gl_and_es_API.xml $(glapi_gen_remap_deps)
+	$(call glapi_gen_remap,$<,$(ES))
 
 .PHONY: clean
 clean:
@@ -83,9 +85,8 @@ clean:
 	-rm -f lib$(ESAPI).a
 	-rm -f $(esapi_OBJECTS)
 	-rm -f depend depend.bak
-	-rm -f glapi-stamp
-	@# clean generated sources/headers
-	@$(MAKE) -C $(GLAPI)/gen-es clean-$(ES)
+	-rm -f glapi_mapi_tmp.h
+	-rm -rf main
 
 pcedit = \
 	-e 's,@INSTALL_DIR@,$(INSTALL_DIR),' \
