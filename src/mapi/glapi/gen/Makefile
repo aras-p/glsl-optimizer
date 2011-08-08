@@ -180,10 +180,8 @@ $(MESA_GLAPI_DIR)/glapi_sparc.S: gl_SPARC_asm.py $(COMMON)
 
 ######################################################################
 
-$(MESA_DIR)/main/enums.c: gl_enums.py $(COMMON) $(ES_API)
-	$(PYTHON2) $(PYTHON_FLAGS) $< -f gl_API.xml \
-		-f $(MESA_GLAPI_DIR)/gen-es/es1_API.xml \
-		-f $(MESA_GLAPI_DIR)/gen-es/es2_API.xml > $@
+$(MESA_DIR)/main/enums.c: gl_enums.py $(COMMON_ES)
+	$(PYTHON2) $(PYTHON_FLAGS) $< -f gl_and_es_API.xml > $@
 
 $(MESA_DIR)/main/dispatch.h: gl_table.py $(COMMON)
 	$(PYTHON2) $(PYTHON_FLAGS) $< -m remap_table > $@
