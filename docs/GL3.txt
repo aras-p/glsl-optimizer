@@ -123,7 +123,7 @@ GL_ARB_texture_storage                               not started
 GL_ARB_transform_feedback_instanced                  not started
 GL_ARB_base_instance                                 not started
 GL_ARB_shader_image_load_store                       not started
-GL_ARB_conservative_depth                            not started (may be close to AMD_conservative_depth though)
+GL_ARB_conservative_depth                            DONE (compiler)
 GL_ARB_shading_language_420pack                      not started
 GL_ARB_internalformat_query                          not started
 GL_ARB_map_buffer_alignment                          not started

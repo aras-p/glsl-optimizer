@@ -236,7 +236,7 @@ enum ir_variable_interpolation {
 /**
  * \brief Layout qualifiers for gl_FragDepth.
  *
- * The AMD_conservative_depth extension allows gl_FragDepth to be redeclared
+ * The AMD/ARB_conservative_depth extensions allow gl_FragDepth to be redeclared
  * with a layout qualifier.
  */
 enum ir_depth_layout {

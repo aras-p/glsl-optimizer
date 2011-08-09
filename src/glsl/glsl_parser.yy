@@ -1111,7 +1111,7 @@ layout_qualifier_id:
 	      }
 	   }
 
-	   /* Layout qualifiers for AMD_conservative_depth. */
+	   /* Layout qualifiers for AMD/ARB_conservative_depth. */
 	   if (!got_one && state->AMD_conservative_depth_enable) {
 	      if (strcmp($1, "depth_any") == 0) {
 	         got_one = true;
@@ -1129,7 +1129,7 @@ layout_qualifier_id:
 	
 	      if (got_one && state->AMD_conservative_depth_warn) {
 	         _mesa_glsl_warning(& @1, state,
-	                            "GL_AMD_conservative_depth "
+	                            "GL_ARB_conservative_depth "
 	                            "layout qualifier `%s' is used\n", $1);
 	      }
 	   }

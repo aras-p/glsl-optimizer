@@ -180,6 +180,8 @@ struct _mesa_glsl_parse_state {
    bool ARB_shader_stencil_export_warn;
    bool AMD_conservative_depth_enable;
    bool AMD_conservative_depth_warn;
+   bool ARB_conservative_depth_enable;
+   bool ARB_conservative_depth_warn;
    bool AMD_shader_stencil_export_enable;
    bool AMD_shader_stencil_export_warn;
    bool OES_texture_3D_enable;

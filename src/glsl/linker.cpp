@@ -395,7 +395,7 @@ cross_validate_globals(struct gl_shader_program *prog,
 
         /* Validate layout qualifiers for gl_FragDepth.
          *
-         * From the AMD_conservative_depth spec:
+         * From the AMD/ARB_conservative_depth specs:
          *    "If gl_FragDepth is redeclared in any fragment shader in
          *    a program, it must be redeclared in all fragment shaders in that
          *    program that have static assignments to gl_FragDepth. All
