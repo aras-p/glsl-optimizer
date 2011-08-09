@@ -35,7 +35,7 @@
 static struct rc_src_register shadow_fail_value(struct r300_fragment_program_compiler *compiler,
 						int tmu)
 {
-	struct rc_src_register reg = { 0, };
+	struct rc_src_register reg = { 0, 0, 0, 0, 0, 0 };
 
 	if (compiler->enable_shadow_ambient) {
 		reg.File = RC_FILE_CONSTANT;
@@ -55,7 +55,7 @@ static struct rc_src_register shadow_fail_value(struct r300_fragment_program_com
 static struct rc_src_register shadow_pass_value(struct r300_fragment_program_compiler *compiler,
 						int tmu)
 {
-	struct rc_src_register reg = { 0, };
+	struct rc_src_register reg = { 0, 0, 0, 0, 0, 0 };
 
 	reg.File = RC_FILE_NONE;
 	reg.Swizzle = combine_swizzles(RC_SWIZZLE_1111,

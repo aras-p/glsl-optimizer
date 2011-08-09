@@ -87,7 +87,7 @@ static struct rc_instruction *emit3(
 
 static struct rc_dst_register dstregtmpmask(int index, int mask)
 {
-	struct rc_dst_register dst = {0};
+	struct rc_dst_register dst = {0, 0, 0};
 	dst.File = RC_FILE_TEMPORARY;
 	dst.Index = index;
 	dst.WriteMask = mask;

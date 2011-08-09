@@ -409,10 +409,11 @@ void r300_decompress_zmask(struct r300_context *r300)
 
 void r300_decompress_zmask_locked_unsafe(struct r300_context *r300)
 {
-    struct pipe_framebuffer_state fb = {0};
+    struct pipe_framebuffer_state fb;
+
+    memset(&fb, 0, sizeof(fb));
     fb.width = r300->locked_zbuffer->width;
     fb.height = r300->locked_zbuffer->height;
-    fb.nr_cbufs = 0;
     fb.zsbuf = r300->locked_zbuffer;
 
     r300->context.set_framebuffer_state(&r300->context, &fb);
@@ -421,8 +422,9 @@ void r300_decompress_zmask_locked_unsafe(struct r300_context *r300)
 
 void r300_decompress_zmask_locked(struct r300_context *r300)
 {
-    struct pipe_framebuffer_state saved_fb = {0};
+    struct pipe_framebuffer_state saved_fb;
 
+    memset(&saved_fb, 0, sizeof(saved_fb));
     util_copy_framebuffer_state(&saved_fb, r300->fb_state.state);
     r300_decompress_zmask_locked_unsafe(r300);
     r300->context.set_framebuffer_state(&r300->context, &saved_fb);
