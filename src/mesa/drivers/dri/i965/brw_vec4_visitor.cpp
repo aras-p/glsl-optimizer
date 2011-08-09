@@ -700,58 +700,47 @@ vec4_visitor::visit(ir_variable *ir)
 void
 vec4_visitor::visit(ir_loop *ir)
 {
-   ir_dereference_variable *counter = NULL;
-
-   fail("not yet\n");
+   dst_reg counter;
 
    /* We don't want debugging output to print the whole body of the
     * loop as the annotation.
     */
    this->base_ir = NULL;
 
-   if (ir->counter != NULL)
-      counter = new(ir) ir_dereference_variable(ir->counter);
+   if (ir->counter != NULL) {
+      this->base_ir = ir->counter;
+      ir->counter->accept(this);
+      counter = *(variable_storage(ir->counter));
 
-   if (ir->from != NULL) {
-      assert(ir->counter != NULL);
+      if (ir->from != NULL) {
+	 this->base_ir = ir->from;
+	 ir->from->accept(this);
 
-      ir_assignment *a = new(ir) ir_assignment(counter, ir->from, NULL);
-
-      a->accept(this);
-      delete a;
+	 emit(BRW_OPCODE_MOV, counter, this->result);
+      }
    }
 
    emit(BRW_OPCODE_DO);
 
    if (ir->to) {
-      ir_expression *e =
-	 new(ir) ir_expression(ir->cmp, glsl_type::bool_type,
-			       counter, ir->to);
-      ir_if *if_stmt =  new(ir) ir_if(e);
+      this->base_ir = ir->to;
+      ir->to->accept(this);
 
-      ir_loop_jump *brk = new(ir) ir_loop_jump(ir_loop_jump::jump_break);
+      vec4_instruction *inst = emit(BRW_OPCODE_CMP, dst_null_d(),
+				    src_reg(counter), this->result);
+      inst->conditional_mod = brw_conditional_for_comparison(ir->cmp);
 
-      if_stmt->then_instructions.push_tail(brk);
-
-      if_stmt->accept(this);
-
-      delete if_stmt;
-      delete e;
-      delete brk;
+      inst = emit(BRW_OPCODE_BREAK);
+      inst->predicate = BRW_PREDICATE_NORMAL;
    }
 
    visit_instructions(&ir->body_instructions);
 
+
    if (ir->increment) {
-      ir_expression *e =
-	 new(ir) ir_expression(ir_binop_add, counter->type,
-			       counter, ir->increment);
-
-      ir_assignment *a = new(ir) ir_assignment(counter, e, NULL);
-
-      a->accept(this);
-      delete a;
-      delete e;
+      this->base_ir = ir->increment;
+      ir->increment->accept(this);
+      emit(BRW_OPCODE_ADD, counter, src_reg(counter), this->result);
    }
 
    emit(BRW_OPCODE_WHILE);
