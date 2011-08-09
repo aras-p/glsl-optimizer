@@ -443,13 +443,12 @@ vec4_visitor::setup_builtin_uniform_values(ir_variable *ir)
       int last_swiz = -1;
       for (unsigned int j = 0; j < 4; j++) {
 	 int swiz = GET_SWZ(slots[i].swizzle, j);
-	 if (swiz == last_swiz)
-	    break;
 	 last_swiz = swiz;
 
 	 c->prog_data.param[this->uniforms * 4 + j] = &values[swiz];
 	 c->prog_data.param_convert[this->uniforms * 4 + j] = PARAM_NO_CONVERT;
-	 this->uniform_size[this->uniforms]++;
+	 if (swiz <= last_swiz)
+	    this->uniform_size[this->uniforms]++;
       }
       this->uniforms++;
    }
