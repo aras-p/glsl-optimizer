@@ -1764,7 +1764,16 @@ vec4_visitor::emit_urb_writes()
       if (attr == VERT_RESULT_PSIZ)
 	 continue;
 
-      emit(BRW_OPCODE_MOV, brw_message_reg(mrf++), src_reg(output_reg[attr]));
+      vec4_instruction *inst = emit(BRW_OPCODE_MOV, brw_message_reg(mrf++),
+				    src_reg(output_reg[attr]));
+
+      if ((attr == VERT_RESULT_COL0 ||
+	   attr == VERT_RESULT_COL1 ||
+	   attr == VERT_RESULT_BFC0 ||
+	   attr == VERT_RESULT_BFC1) &&
+	  c->key.clamp_vertex_color) {
+	 inst->saturate = true;
+      }
 
       /* If this was MRF 15, we can't fit anything more into this URB
        * WRITE.  Note that base_mrf of 1 means that MRF 15 is an
