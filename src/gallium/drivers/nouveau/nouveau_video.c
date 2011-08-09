@@ -18,6 +18,8 @@ nouveau_screen_get_video_param(struct pipe_screen *pscreen,
    case PIPE_VIDEO_CAP_MAX_WIDTH:
    case PIPE_VIDEO_CAP_MAX_HEIGHT:
       return vl_video_buffer_max_size(pscreen);
+   case PIPE_VIDEO_CAP_NUM_BUFFERS_DESIRED:
+      return vl_num_buffers_desired(pscreen, profile);
    default:
       debug_printf("unknown video param: %d\n", param);
       return 0;

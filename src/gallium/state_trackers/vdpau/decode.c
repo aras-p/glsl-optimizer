@@ -82,13 +82,22 @@ vlVdpDecoderCreate(VdpDevice device,
       goto error_decoder;
    }
 
+   vldecoder->num_buffers = pipe->screen->get_video_param
+   (
+      pipe->screen, p_profile,
+      PIPE_VIDEO_CAP_NUM_BUFFERS_DESIRED
+   );
    vldecoder->cur_buffer = 0;
 
-   for (i = 0; i < VL_NUM_DECODE_BUFFERS; ++i) {
-      vldecoder->buffer[i] = vldecoder->decoder->create_buffer(vldecoder->decoder);
-      if (!vldecoder->buffer[i]) {
+   vldecoder->buffers = CALLOC(vldecoder->num_buffers, sizeof(void*));
+   if (!vldecoder->buffers)
+         goto error_alloc_buffers;
+
+   for (i = 0; i < vldecoder->num_buffers; ++i) {
+      vldecoder->buffers[i] = vldecoder->decoder->create_buffer(vldecoder->decoder);
+      if (!vldecoder->buffers[i]) {
          ret = VDP_STATUS_ERROR;
-         goto error_buffer;
+         goto error_create_buffers;
       }
    }
 
@@ -103,11 +112,15 @@ vlVdpDecoderCreate(VdpDevice device,
    return VDP_STATUS_OK;
 
 error_handle:
-error_buffer:
+error_create_buffers:
 
-   for (i = 0; i < VL_NUM_DECODE_BUFFERS; ++i)
-      if (vldecoder->buffer[i])
-         vldecoder->decoder->destroy_buffer(vldecoder->decoder, vldecoder->buffer[i]);
+   for (i = 0; i < vldecoder->num_buffers; ++i)
+      if (vldecoder->buffers[i])
+         vldecoder->decoder->destroy_buffer(vldecoder->decoder, vldecoder->buffers[i]);
+
+   FREE(vldecoder->buffers);
+
+error_alloc_buffers:
 
    vldecoder->decoder->destroy(vldecoder->decoder);
 
@@ -128,9 +141,11 @@ vlVdpDecoderDestroy(VdpDecoder decoder)
    if (!vldecoder)
       return VDP_STATUS_INVALID_HANDLE;
 
-   for (i = 0; i < VL_NUM_DECODE_BUFFERS; ++i)
-      if (vldecoder->buffer[i])
-         vldecoder->decoder->destroy_buffer(vldecoder->decoder, vldecoder->buffer[i]);
+   for (i = 0; i < vldecoder->num_buffers; ++i)
+      if (vldecoder->buffers[i])
+         vldecoder->decoder->destroy_buffer(vldecoder->decoder, vldecoder->buffers[i]);
+
+   FREE(vldecoder->buffers);
 
    vldecoder->decoder->destroy(vldecoder->decoder);
 
@@ -260,9 +275,9 @@ vlVdpDecoderRender(VdpDecoder decoder,
    case PIPE_VIDEO_PROFILE_MPEG2_SIMPLE:
    case PIPE_VIDEO_PROFILE_MPEG2_MAIN:
       ++vldecoder->cur_buffer;
-      vldecoder->cur_buffer %= VL_NUM_DECODE_BUFFERS;
+      vldecoder->cur_buffer %= vldecoder->num_buffers;
 
-      vldecoder->decoder->set_decode_buffer(vldecoder->decoder, vldecoder->buffer[vldecoder->cur_buffer]);
+      vldecoder->decoder->set_decode_buffer(vldecoder->decoder, vldecoder->buffers[vldecoder->cur_buffer]);
       vldecoder->decoder->set_decode_target(vldecoder->decoder, vlsurf->video_buffer);
 
       return vlVdpDecoderRenderMpeg12(vldecoder->decoder, (VdpPictureInfoMPEG1Or2 *)picture_info,
