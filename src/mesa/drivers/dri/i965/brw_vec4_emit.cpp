@@ -245,6 +245,15 @@ vec4_visitor::generate_math1_gen4(vec4_instruction *inst,
 	    BRW_MATH_PRECISION_FULL);
 }
 
+static void
+check_gen6_math_src_arg(struct brw_reg src)
+{
+   /* Source swizzles are ignored. */
+   assert(!src.abs);
+   assert(!src.negate);
+   assert(src.dw1.bits.swizzle = BRW_SWIZZLE_XYZW);
+}
+
 void
 vec4_visitor::generate_math1_gen6(vec4_instruction *inst,
 				  struct brw_reg dst,
@@ -252,10 +261,7 @@ vec4_visitor::generate_math1_gen6(vec4_instruction *inst,
 {
    /* Can't do writemask because math can't be align16. */
    assert(dst.dw1.bits.writemask == WRITEMASK_XYZW);
-   /* Source swizzles are ignored. */
-   assert(!src.abs);
-   assert(!src.negate);
-   assert(src.dw1.bits.swizzle = BRW_SWIZZLE_XYZW);
+   check_gen6_math_src_arg(src);
 
    brw_set_access_mode(p, BRW_ALIGN_1);
    brw_math(p,
@@ -265,6 +271,49 @@ vec4_visitor::generate_math1_gen6(vec4_instruction *inst,
 	    inst->base_mrf,
 	    src,
 	    BRW_MATH_DATA_SCALAR,
+	    BRW_MATH_PRECISION_FULL);
+   brw_set_access_mode(p, BRW_ALIGN_16);
+}
+
+void
+vec4_visitor::generate_math2_gen6(vec4_instruction *inst,
+				  struct brw_reg dst,
+				  struct brw_reg src0,
+				  struct brw_reg src1)
+{
+   /* Can't do writemask because math can't be align16. */
+   assert(dst.dw1.bits.writemask == WRITEMASK_XYZW);
+   /* Source swizzles are ignored. */
+   check_gen6_math_src_arg(src0);
+   check_gen6_math_src_arg(src1);
+
+   brw_set_access_mode(p, BRW_ALIGN_1);
+   brw_math2(p,
+	     dst,
+	     brw_math_function(inst->opcode),
+	     src0, src1);
+   brw_set_access_mode(p, BRW_ALIGN_16);
+}
+
+void
+vec4_visitor::generate_math2_gen4(vec4_instruction *inst,
+				  struct brw_reg dst,
+				  struct brw_reg src0,
+				  struct brw_reg src1)
+{
+   /* Can't do writemask because math can't be align16. */
+   assert(dst.dw1.bits.writemask == WRITEMASK_XYZW);
+
+   brw_MOV(p, brw_message_reg(inst->base_mrf + 1), src1);
+
+   brw_set_access_mode(p, BRW_ALIGN_1);
+   brw_math(p,
+	    dst,
+	    brw_math_function(inst->opcode),
+	    BRW_MATH_SATURATE_NONE,
+	    inst->base_mrf,
+	    src0,
+	    BRW_MATH_DATA_VECTOR,
 	    BRW_MATH_PRECISION_FULL);
    brw_set_access_mode(p, BRW_ALIGN_16);
 }
@@ -442,7 +491,11 @@ vec4_visitor::generate_vs_instruction(vec4_instruction *instruction,
       break;
 
    case SHADER_OPCODE_POW:
-      assert(!"finishme");
+      if (intel->gen >= 6) {
+	 generate_math2_gen6(inst, dst, src[0], src[1]);
+      } else {
+	 generate_math2_gen4(inst, dst, src[0], src[1]);
+      }
       break;
 
    case VS_OPCODE_URB_WRITE:

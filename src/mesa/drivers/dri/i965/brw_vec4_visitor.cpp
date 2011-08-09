@@ -188,11 +188,11 @@ vec4_visitor::emit_math2_gen6(enum opcode opcode,
     */
 
    expanded = src_reg(this, glsl_type::vec4_type);
-   emit(BRW_OPCODE_MOV, dst, src0);
+   emit(BRW_OPCODE_MOV, dst_reg(expanded), src0);
    src0 = expanded;
 
    expanded = src_reg(this, glsl_type::vec4_type);
-   emit(BRW_OPCODE_MOV, dst, src1);
+   emit(BRW_OPCODE_MOV, dst_reg(expanded), src1);
    src1 = expanded;
 
    if (dst.writemask != WRITEMASK_XYZW) {

@@ -444,12 +444,22 @@ public:
    void generate_vs_instruction(vec4_instruction *inst,
 				struct brw_reg dst,
 				struct brw_reg *src);
+
    void generate_math1_gen4(vec4_instruction *inst,
 			    struct brw_reg dst,
 			    struct brw_reg src);
    void generate_math1_gen6(vec4_instruction *inst,
 			    struct brw_reg dst,
 			    struct brw_reg src);
+   void generate_math2_gen4(vec4_instruction *inst,
+			    struct brw_reg dst,
+			    struct brw_reg src0,
+			    struct brw_reg src1);
+   void generate_math2_gen6(vec4_instruction *inst,
+			    struct brw_reg dst,
+			    struct brw_reg src0,
+			    struct brw_reg src1);
+
    void generate_urb_write(vec4_instruction *inst);
    void generate_oword_dual_block_offsets(struct brw_reg m1,
 					  struct brw_reg index);
