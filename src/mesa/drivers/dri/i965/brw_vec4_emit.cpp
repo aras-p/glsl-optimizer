@@ -250,6 +250,14 @@ vec4_visitor::generate_math1_gen6(vec4_instruction *inst,
 				  struct brw_reg dst,
 				  struct brw_reg src)
 {
+   /* Can't do writemask because math can't be align16. */
+   assert(dst.dw1.bits.writemask == WRITEMASK_XYZW);
+   /* Source swizzles are ignored. */
+   assert(!src.abs);
+   assert(!src.negate);
+   assert(src.dw1.bits.swizzle = BRW_SWIZZLE_XYZW);
+
+   brw_set_access_mode(p, BRW_ALIGN_1);
    brw_math(p,
 	    dst,
 	    brw_math_function(inst->opcode),
@@ -258,6 +266,7 @@ vec4_visitor::generate_math1_gen6(vec4_instruction *inst,
 	    src,
 	    BRW_MATH_DATA_SCALAR,
 	    BRW_MATH_PRECISION_FULL);
+   brw_set_access_mode(p, BRW_ALIGN_16);
 }
 
 void

@@ -129,7 +129,18 @@ vec4_visitor::emit_math1_gen6(enum opcode opcode, dst_reg dst, src_reg src)
    src_reg temp_src = src_reg(this, glsl_type::vec4_type);
    emit(BRW_OPCODE_MOV, dst_reg(temp_src), src);
 
-   emit(opcode, dst, temp_src);
+   if (dst.writemask != WRITEMASK_XYZW) {
+      /* The gen6 math instruction must be align1, so we can't do
+       * writemasks.
+       */
+      dst_reg temp_dst = dst_reg(this, glsl_type::vec4_type);
+
+      emit(opcode, temp_dst, temp_src);
+
+      emit(BRW_OPCODE_MOV, dst, src_reg(temp_dst));
+   } else {
+      emit(opcode, dst, temp_src);
+   }
 }
 
 void
@@ -184,7 +195,18 @@ vec4_visitor::emit_math2_gen6(enum opcode opcode,
    emit(BRW_OPCODE_MOV, dst, src1);
    src1 = expanded;
 
-   emit(opcode, dst, src0, src1);
+   if (dst.writemask != WRITEMASK_XYZW) {
+      /* The gen6 math instruction must be align1, so we can't do
+       * writemasks.
+       */
+      dst_reg temp_dst = dst_reg(this, glsl_type::vec4_type);
+
+      emit(opcode, temp_dst, src0, src1);
+
+      emit(BRW_OPCODE_MOV, dst, src_reg(temp_dst));
+   } else {
+      emit(opcode, dst, src0, src1);
+   }
 }
 
 void
