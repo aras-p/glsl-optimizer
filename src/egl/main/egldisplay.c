@@ -43,6 +43,23 @@
 #include "eglmutex.h"
 #include "egllog.h"
 
+/* Includes for _eglNativePlatformDetectNativeDisplay */
+#ifdef HAVE_MINCORE
+#include <unistd.h>
+#include <sys/mman.h>
+#endif
+#ifdef HAVE_WAYLAND_PLATFORM
+#include <wayland-client.h>
+#endif
+#ifdef HAVE_DRM_PLATFORM
+#include <gbm.h>
+#endif
+#ifdef HAVE_FBDEV_PLATFORM
+#include <stdint.h>
+#include <sys/types.h>
+#include <sys/stat.h>
+#endif
+
 
 /**
  * Return the native platform by parsing EGL_PLATFORM.
@@ -84,17 +101,94 @@ _eglGetNativePlatformFromEnv(void)
 
 
 /**
+ * Perform validity checks on a generic pointer.
+ */
+static EGLBoolean
+_eglPointerIsDereferencable(void *p)
+{
+#ifdef HAVE_MINCORE
+   uintptr_t addr = (uintptr_t) p;
+   unsigned char valid = 0;
+   const long page_size = getpagesize();
+
+   if (p == NULL)
+      return EGL_FALSE;
+
+   /* align addr to page_size */
+   addr &= ~(page_size - 1);
+
+   if (mincore((void *) addr, page_size, &valid) < 0) {
+      _eglLog(_EGL_DEBUG, "mincore failed: %m");
+      return EGL_FALSE;
+   }
+
+   return (valid & 0x01) == 0x01;
+#else
+   return p != NULL;
+#endif
+}
+
+
+/**
+ * Try detecting native platform with the help of native display characteristcs.
+ */
+static _EGLPlatformType
+_eglNativePlatformDetectNativeDisplay(EGLNativeDisplayType nativeDisplay)
+{
+#ifdef HAVE_FBDEV_PLATFORM
+   struct stat buf;
+#endif
+
+   if (nativeDisplay == EGL_DEFAULT_DISPLAY)
+      return _EGL_INVALID_PLATFORM;
+
+#ifdef HAVE_FBDEV_PLATFORM
+   /* fbdev is the only platform that can be a file descriptor. */
+   if (fstat((intptr_t) nativeDisplay, &buf) == 0 && S_ISCHR(buf.st_mode))
+      return _EGL_PLATFORM_FBDEV;
+#endif
+
+   if (_eglPointerIsDereferencable(nativeDisplay)) {
+      void *first_pointer = *(void **) nativeDisplay;
+
+#ifdef HAVE_WAYLAND_PLATFORM
+      /* wl_display is a wl_proxy, which is a wl_object.
+       * wl_object's first element points to the interfacetype. */
+      if (first_pointer == &wl_display_interface)
+         return _EGL_PLATFORM_WAYLAND;
+#endif
+
+#ifdef HAVE_DRM_PLATFORM
+      /* gbm has a pointer to its constructor as first element. */
+      if (first_pointer == gbm_create_device)
+         return _EGL_PLATFORM_DRM;
+#endif
+
+#ifdef HAVE_X11_PLATFORM
+      /* If not matched to any other platform, fallback to x11. */
+      return _EGL_PLATFORM_X11;
+#endif
+   }
+
+   return _EGL_INVALID_PLATFORM;
+}
+
+
+/**
  * Return the native platform.  It is the platform of the EGL native types.
  */
 _EGLPlatformType
-_eglGetNativePlatform(void)
+_eglGetNativePlatform(EGLNativeDisplayType nativeDisplay)
 {
    static _EGLPlatformType native_platform = _EGL_INVALID_PLATFORM;
 
    if (native_platform == _EGL_INVALID_PLATFORM) {
       native_platform = _eglGetNativePlatformFromEnv();
-      if (native_platform == _EGL_INVALID_PLATFORM)
-         native_platform = _EGL_NATIVE_PLATFORM;
+      if (native_platform == _EGL_INVALID_PLATFORM) {
+         native_platform = _eglNativePlatformDetectNativeDisplay(nativeDisplay);
+         if (native_platform == _EGL_INVALID_PLATFORM)
+            native_platform = _EGL_NATIVE_PLATFORM;
+      }
    }
 
    return native_platform;

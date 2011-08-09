@@ -93,6 +93,19 @@ ifeq ($(firstword $(EGL_PLATFORMS)),fbdev)
 EGL_NATIVE_PLATFORM=_EGL_PLATFORM_FBDEV
 endif
 
+ifneq ($(findstring x11, $(EGL_PLATFORMS)),)
+LOCAL_CFLAGS += -DHAVE_X11_PLATFORM
+endif
+ifneq ($(findstring wayland, $(EGL_PLATFORMS)),)
+LOCAL_CFLAGS += -DHAVE_WAYLAND_PLATFORM
+endif
+ifneq ($(findstring drm, $(EGL_PLATFORMS)),)
+LOCAL_CFLAGS += -DHAVE_DRM_PLATFORM
+endif
+ifneq ($(findstring fbdev, $(EGL_PLATFORMS)),)
+LOCAL_CFLAGS += -DHAVE_FBDEV_PLATFORM
+endif
+
 LOCAL_CFLAGS += \
 	-D_EGL_NATIVE_PLATFORM=$(EGL_NATIVE_PLATFORM) \
 	-D_EGL_DRIVER_SEARCH_DIR=\"$(EGL_DRIVER_INSTALL_DIR)\"

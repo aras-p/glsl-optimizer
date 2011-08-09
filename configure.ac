@@ -1370,6 +1370,8 @@ if test "x$enable_egl" = xyes; then
     EGL_LIB_DEPS="$DLOPEN_LIBS $SELINUX_LIBS -lpthread"
     EGL_DRIVERS_DIRS=""
 
+    AC_CHECK_FUNC(mincore, [DEFINES="$DEFINES -DHAVE_MINCORE"])
+
     if test "$enable_static" != yes; then
         # build egl_glx when libGL is built
         if test "x$enable_glx" = xyes; then
