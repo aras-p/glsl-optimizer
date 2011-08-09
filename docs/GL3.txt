@@ -114,6 +114,19 @@ GL_ARB_vertex_attrib_64bit                           not started
 GL_ARB_viewport_array                                not started
 
 
+GL 4.2:
+GLSL 4.2                                             not started
+GL_ARB_texture_compression_bptc                      not started
+GL_ARB_compressed_texture_pixel_storage              not started
+GL_ARB_shader_atomic_counters                        not started
+GL_ARB_texture_storage                               not started
+GL_ARB_transform_feedback_instanced                  not started
+GL_ARB_base_instance                                 not started
+GL_ARB_shader_image_load_store                       not started
+GL_ARB_conservative_depth                            not started (may be close to AMD_conservative_depth though)
+GL_ARB_shading_language_420pack                      not started
+GL_ARB_internalformat_query                          not started
+GL_ARB_map_buffer_alignment                          not started
 
 
 More info about these features and the work involved can be found at
