@@ -73,12 +73,17 @@ struct vl_mpeg12_decoder
    struct vl_mc mc_y, mc_c;
 
    void *dsa;
+
+   struct vl_mpeg12_buffer *current_buffer;
+   struct pipe_mpeg12_picture_desc picture_desc;
+   uint8_t intra_matrix[64];
+   uint8_t non_intra_matrix[64];
+   struct pipe_sampler_view *ref_frames[VL_MAX_REF_FRAMES][VL_MAX_PLANES];
+   struct pipe_surface *target_surfaces[VL_MAX_PLANES];
 };
 
 struct vl_mpeg12_buffer
 {
-   struct pipe_video_decode_buffer base;
-
    struct vl_vertex_buffer vertex_stream;
 
    struct pipe_video_buffer *zscan_source;

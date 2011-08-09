@@ -256,7 +256,7 @@ typedef struct
 {
    vlVdpDevice *device;
    struct pipe_video_decoder *decoder;
-   struct pipe_video_decode_buffer *buffer[VL_NUM_DECODE_BUFFERS];
+   void *buffer[VL_NUM_DECODE_BUFFERS];
    unsigned cur_buffer;
 } vlVdpDecoder;
 
