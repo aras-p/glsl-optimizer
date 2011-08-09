@@ -998,7 +998,9 @@ vec4_visitor::visit(ir_expression *ir)
       break;
 
    case ir_unop_any:
-      emit(BRW_OPCODE_CMP, dst_null_d(), op[0], src_reg(0));
+      inst = emit(BRW_OPCODE_CMP, dst_null_d(), op[0], src_reg(0));
+      inst->conditional_mod = BRW_CONDITIONAL_NZ;
+
       emit(BRW_OPCODE_MOV, result_dst, src_reg(0));
 
       inst = emit(BRW_OPCODE_MOV, result_dst, src_reg(1));
