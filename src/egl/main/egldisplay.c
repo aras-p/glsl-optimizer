@@ -62,22 +62,26 @@
 
 
 /**
+ * Map --with-egl-platforms names to platform types.
+ */
+static const struct {
+   _EGLPlatformType platform;
+   const char *name;
+} egl_platforms[_EGL_NUM_PLATFORMS] = {
+   { _EGL_PLATFORM_WINDOWS, "gdi" },
+   { _EGL_PLATFORM_X11, "x11" },
+   { _EGL_PLATFORM_WAYLAND, "wayland" },
+   { _EGL_PLATFORM_DRM, "drm" },
+   { _EGL_PLATFORM_FBDEV, "fbdev" }
+};
+
+
+/**
  * Return the native platform by parsing EGL_PLATFORM.
  */
 static _EGLPlatformType
 _eglGetNativePlatformFromEnv(void)
 {
-   /* map --with-egl-platforms names to platform types */
-   static const struct {
-      _EGLPlatformType platform;
-      const char *name;
-   } egl_platforms[_EGL_NUM_PLATFORMS] = {
-      { _EGL_PLATFORM_WINDOWS, "gdi" },
-      { _EGL_PLATFORM_X11, "x11" },
-      { _EGL_PLATFORM_WAYLAND, "wayland" },
-      { _EGL_PLATFORM_DRM, "drm" },
-      { _EGL_PLATFORM_FBDEV, "fbdev" }
-   };
    _EGLPlatformType plat = _EGL_INVALID_PLATFORM;
    const char *plat_name;
    EGLint i;
@@ -181,15 +185,24 @@ _EGLPlatformType
 _eglGetNativePlatform(EGLNativeDisplayType nativeDisplay)
 {
    static _EGLPlatformType native_platform = _EGL_INVALID_PLATFORM;
+   char *detection_method = NULL;
 
    if (native_platform == _EGL_INVALID_PLATFORM) {
       native_platform = _eglGetNativePlatformFromEnv();
+      detection_method = "environment overwrite";
       if (native_platform == _EGL_INVALID_PLATFORM) {
          native_platform = _eglNativePlatformDetectNativeDisplay(nativeDisplay);
-         if (native_platform == _EGL_INVALID_PLATFORM)
+         detection_method = "autodetected";
+         if (native_platform == _EGL_INVALID_PLATFORM) {
             native_platform = _EGL_NATIVE_PLATFORM;
+            detection_method = "build-time configuration";
+         }
       }
    }
+
+   if (detection_method != NULL)
+      _eglLog(_EGL_DEBUG, "Native platform type: %s (%s)",
+              egl_platforms[native_platform].name, detection_method);
 
    return native_platform;
 }
