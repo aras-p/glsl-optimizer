@@ -724,14 +724,14 @@ boolean is_overlap(unsigned sx1, unsigned sx2, unsigned sy1, unsigned sy2,
    return sx1 < dx2 && sx2 > dx1 && sy1 < dy2 && sy2 > dy1;
 }
 
-void util_blitter_copy_region(struct blitter_context *blitter,
-                              struct pipe_resource *dst,
-                              unsigned dstlevel,
-                              unsigned dstx, unsigned dsty, unsigned dstz,
-                              struct pipe_resource *src,
-                              unsigned srclevel,
-                              const struct pipe_box *srcbox,
-                              boolean ignore_stencil)
+void util_blitter_copy_texture(struct blitter_context *blitter,
+                               struct pipe_resource *dst,
+                               unsigned dstlevel,
+                               unsigned dstx, unsigned dsty, unsigned dstz,
+                               struct pipe_resource *src,
+                               unsigned srclevel,
+                               const struct pipe_box *srcbox,
+                               boolean ignore_stencil)
 {
    struct blitter_context_priv *ctx = (struct blitter_context_priv*)blitter;
    struct pipe_context *pipe = ctx->base.pipe;

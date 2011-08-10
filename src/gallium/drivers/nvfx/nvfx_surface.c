@@ -288,7 +288,7 @@ nvfx_resource_copy_region(struct pipe_context *pipe,
 		 * TODO: perhaps support reinterpreting the formats
 		 */
 		struct blitter_context* blitter = nvfx_get_blitter(pipe, 1);
-		util_blitter_copy_region(blitter, dstr, dst_level, dstx, dsty, dstz, srcr, src_level, src_box, TRUE);
+		util_blitter_copy_texture(blitter, dstr, dst_level, dstx, dsty, dstz, srcr, src_level, src_box, TRUE);
 		nvfx_put_blitter(pipe, blitter);
 	}
 	else
