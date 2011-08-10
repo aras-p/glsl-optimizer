@@ -1197,7 +1197,7 @@ slice_intra_DCT(struct vl_mpg12_bs *bs, struct pipe_mpeg12_picture_desc * pictur
 
    bs->ycbcr_stream[cc]->x = x;
    bs->ycbcr_stream[cc]->y = y;
-   bs->ycbcr_stream[cc]->intra = PIPE_MPEG12_DCT_INTRA;
+   bs->ycbcr_stream[cc]->intra = 1;
    bs->ycbcr_stream[cc]->coding = coding;
 
    vl_vlc_needbits(&bs->vlc);
@@ -1233,7 +1233,7 @@ slice_non_intra_DCT(struct vl_mpg12_bs *bs, struct pipe_mpeg12_picture_desc * pi
 
    bs->ycbcr_stream[cc]->x = x;
    bs->ycbcr_stream[cc]->y = y;
-   bs->ycbcr_stream[cc]->intra = PIPE_MPEG12_DCT_DELTA;
+   bs->ycbcr_stream[cc]->intra = 0;
    bs->ycbcr_stream[cc]->coding = coding;
 
    memset(dest, 0, sizeof(int16_t) * 64);
@@ -1250,7 +1250,7 @@ slice_non_intra_DCT(struct vl_mpg12_bs *bs, struct pipe_mpeg12_picture_desc * pi
 }
 
 static INLINE void
-motion_mp1(struct vl_mpg12_bs *bs, unsigned f_code[2], struct pipe_motionvector *mv)
+motion_mp1(struct vl_mpg12_bs *bs, unsigned f_code[2], struct vl_motionvector *mv)
 {
    int motion_x, motion_y;
 
@@ -1268,7 +1268,7 @@ motion_mp1(struct vl_mpg12_bs *bs, unsigned f_code[2], struct pipe_motionvector 
 }
 
 static INLINE void
-motion_fr_frame(struct vl_mpg12_bs *bs, unsigned f_code[2], struct pipe_motionvector *mv)
+motion_fr_frame(struct vl_mpg12_bs *bs, unsigned f_code[2], struct vl_motionvector *mv)
 {
    int motion_x, motion_y;
 
@@ -1286,7 +1286,7 @@ motion_fr_frame(struct vl_mpg12_bs *bs, unsigned f_code[2], struct pipe_motionve
 }
 
 static INLINE void
-motion_fr_field(struct vl_mpg12_bs *bs, unsigned f_code[2], struct pipe_motionvector *mv)
+motion_fr_field(struct vl_mpg12_bs *bs, unsigned f_code[2], struct vl_motionvector *mv)
 {
    int motion_x, motion_y;
 
@@ -1320,7 +1320,7 @@ motion_fr_field(struct vl_mpg12_bs *bs, unsigned f_code[2], struct pipe_motionve
 }
 
 static INLINE void
-motion_fr_dmv(struct vl_mpg12_bs *bs, unsigned f_code[2], struct pipe_motionvector *mv)
+motion_fr_dmv(struct vl_mpg12_bs *bs, unsigned f_code[2], struct vl_motionvector *mv)
 {
    int motion_x, motion_y;
 
@@ -1340,7 +1340,7 @@ motion_fr_dmv(struct vl_mpg12_bs *bs, unsigned f_code[2], struct pipe_motionvect
 
 /* like motion_frame, but parsing without actual motion compensation */
 static INLINE void
-motion_fr_conceal(struct vl_mpg12_bs *bs, unsigned f_code[2], struct pipe_motionvector *mv)
+motion_fr_conceal(struct vl_mpg12_bs *bs, unsigned f_code[2], struct vl_motionvector *mv)
 {
    int tmp;
 
@@ -1360,7 +1360,7 @@ motion_fr_conceal(struct vl_mpg12_bs *bs, unsigned f_code[2], struct pipe_motion
 }
 
 static INLINE void
-motion_fi_field(struct vl_mpg12_bs *bs, unsigned f_code[2], struct pipe_motionvector *mv)
+motion_fi_field(struct vl_mpg12_bs *bs, unsigned f_code[2], struct vl_motionvector *mv)
 {
    int motion_x, motion_y;
 
@@ -1384,7 +1384,7 @@ motion_fi_field(struct vl_mpg12_bs *bs, unsigned f_code[2], struct pipe_motionve
 }
 
 static INLINE void
-motion_fi_16x8(struct vl_mpg12_bs *bs, unsigned f_code[2], struct pipe_motionvector *mv)
+motion_fi_16x8(struct vl_mpg12_bs *bs, unsigned f_code[2], struct vl_motionvector *mv)
 {
    int motion_x, motion_y;
 
@@ -1425,7 +1425,7 @@ motion_fi_16x8(struct vl_mpg12_bs *bs, unsigned f_code[2], struct pipe_motionvec
 }
 
 static INLINE void
-motion_fi_dmv(struct vl_mpg12_bs *bs, unsigned f_code[2], struct pipe_motionvector *mv)
+motion_fi_dmv(struct vl_mpg12_bs *bs, unsigned f_code[2], struct vl_motionvector *mv)
 {
    int motion_x, motion_y;
 
@@ -1445,7 +1445,7 @@ motion_fi_dmv(struct vl_mpg12_bs *bs, unsigned f_code[2], struct pipe_motionvect
 
 
 static INLINE void
-motion_fi_conceal(struct vl_mpg12_bs *bs, unsigned f_code[2], struct pipe_motionvector *mv)
+motion_fi_conceal(struct vl_mpg12_bs *bs, unsigned f_code[2], struct vl_motionvector *mv)
 {
    int tmp;
 
@@ -1474,8 +1474,8 @@ do {							\
 
 static INLINE void
 store_motionvectors(struct vl_mpg12_bs *bs, unsigned *mv_pos,
-                    struct pipe_motionvector *mv_fwd,
-                    struct pipe_motionvector *mv_bwd)
+                    struct vl_motionvector *mv_fwd,
+                    struct vl_motionvector *mv_bwd)
 {
    bs->mv_stream[0][*mv_pos].top = mv_fwd->top;
    bs->mv_stream[0][*mv_pos].bottom =
@@ -1554,8 +1554,8 @@ slice_init(struct vl_mpg12_bs *bs, struct pipe_mpeg12_picture_desc * picture,
 static INLINE bool
 decode_slice(struct vl_mpg12_bs *bs, struct pipe_mpeg12_picture_desc *picture)
 {
-   enum pipe_video_field_select default_field_select;
-   struct pipe_motionvector mv_fwd, mv_bwd;
+   enum vl_field_select default_field_select;
+   struct vl_motionvector mv_fwd, mv_bwd;
    enum pipe_mpeg12_dct_type dct_type;
 
    /* predictor for DC coefficients in intra blocks */
@@ -1787,8 +1787,8 @@ vl_mpg12_bs_init(struct vl_mpg12_bs *bs, unsigned width, unsigned height)
 }
 
 void
-vl_mpg12_bs_set_buffers(struct vl_mpg12_bs *bs, struct pipe_ycbcr_block *ycbcr_stream[VL_MAX_PLANES],
-                        short *ycbcr_buffer[VL_MAX_PLANES], struct pipe_motionvector *mv_stream[VL_MAX_REF_FRAMES])
+vl_mpg12_bs_set_buffers(struct vl_mpg12_bs *bs, struct vl_ycbcr_block *ycbcr_stream[VL_MAX_PLANES],
+                        short *ycbcr_buffer[VL_MAX_PLANES], struct vl_motionvector *mv_stream[VL_MAX_REF_FRAMES])
 {
    unsigned i;
 

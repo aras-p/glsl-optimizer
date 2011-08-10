@@ -52,20 +52,55 @@ enum VS_INPUT
    NUM_VS_INPUTS = 4
 };
 
+enum vl_mv_weight
+{
+   PIPE_VIDEO_MV_WEIGHT_MIN = 0,
+   PIPE_VIDEO_MV_WEIGHT_HALF = 128,
+   PIPE_VIDEO_MV_WEIGHT_MAX = 256
+};
+
+enum vl_field_select
+{
+   PIPE_VIDEO_FRAME = 0,
+   PIPE_VIDEO_TOP_FIELD = 1,
+   PIPE_VIDEO_BOTTOM_FIELD = 3,
+
+   /* TODO
+   PIPE_VIDEO_DUALPRIME
+   PIPE_VIDEO_16x8
+   */
+};
+
+struct vl_motionvector
+{
+   struct {
+      int16_t x, y;
+      int16_t field_select; /**< enum pipe_video_field_select */
+      int16_t weight;  /**< enum pipe_video_mv_weight  */
+   } top, bottom;
+};
+
+struct vl_ycbcr_block
+{
+   uint8_t x, y;
+   uint8_t intra;
+   uint8_t coding;
+};
+
 struct vl_vertex_buffer
 {
    unsigned width, height;
 
    struct {
-      struct pipe_resource    *resource;
-      struct pipe_transfer    *transfer;
-      struct pipe_ycbcr_block *vertex_stream;
+      struct pipe_resource  *resource;
+      struct pipe_transfer  *transfer;
+      struct vl_ycbcr_block *vertex_stream;
    } ycbcr[VL_MAX_PLANES];
 
    struct {
-      struct pipe_resource     *resource;
-      struct pipe_transfer     *transfer;
-      struct pipe_motionvector *vertex_stream;
+      struct pipe_resource   *resource;
+      struct pipe_transfer   *transfer;
+      struct vl_motionvector *vertex_stream;
    } mv[VL_MAX_REF_FRAMES];
 };
 
@@ -89,13 +124,13 @@ void vl_vb_map(struct vl_vertex_buffer *buffer, struct pipe_context *pipe);
 
 struct pipe_vertex_buffer vl_vb_get_ycbcr(struct vl_vertex_buffer *buffer, int component);
 
-struct pipe_ycbcr_block *vl_vb_get_ycbcr_stream(struct vl_vertex_buffer *buffer, int component);
+struct vl_ycbcr_block *vl_vb_get_ycbcr_stream(struct vl_vertex_buffer *buffer, int component);
 
 struct pipe_vertex_buffer vl_vb_get_mv(struct vl_vertex_buffer *buffer, int ref_frame);
 
 unsigned vl_vb_get_mv_stream_stride(struct vl_vertex_buffer *buffer);
 
-struct pipe_motionvector *vl_vb_get_mv_stream(struct vl_vertex_buffer *buffer, int ref_frame);
+struct vl_motionvector *vl_vb_get_mv_stream(struct vl_vertex_buffer *buffer, int ref_frame);
 
 void vl_vb_unmap(struct vl_vertex_buffer *buffer, struct pipe_context *pipe);
 

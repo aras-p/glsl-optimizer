@@ -30,6 +30,7 @@
 
 #include "vl_defines.h"
 #include "vl_vlc.h"
+#include "vl_vertex_buffers.h"
 
 struct vl_mpg12_bs
 {
@@ -39,18 +40,18 @@ struct vl_mpg12_bs
 
    unsigned *num_ycbcr_blocks;
 
-   struct pipe_ycbcr_block *ycbcr_stream[VL_MAX_PLANES];
+   struct vl_ycbcr_block *ycbcr_stream[VL_MAX_PLANES];
    short *ycbcr_buffer[VL_MAX_PLANES];
 
-   struct pipe_motionvector *mv_stream[VL_MAX_REF_FRAMES];
+   struct vl_motionvector *mv_stream[VL_MAX_REF_FRAMES];
 };
 
 void
 vl_mpg12_bs_init(struct vl_mpg12_bs *bs, unsigned width, unsigned height);
 
 void
-vl_mpg12_bs_set_buffers(struct vl_mpg12_bs *bs, struct pipe_ycbcr_block *ycbcr_stream[VL_MAX_PLANES],
-                        short *ycbcr_buffer[VL_MAX_PLANES], struct pipe_motionvector *mv_stream[VL_MAX_REF_FRAMES]);
+vl_mpg12_bs_set_buffers(struct vl_mpg12_bs *bs, struct vl_ycbcr_block *ycbcr_stream[VL_MAX_PLANES],
+                        short *ycbcr_buffer[VL_MAX_PLANES], struct vl_motionvector *mv_stream[VL_MAX_REF_FRAMES]);
 
 void
 vl_mpg12_bs_decode(struct vl_mpg12_bs *bs, unsigned num_bytes, const void *buffer,

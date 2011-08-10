@@ -184,7 +184,6 @@ vlVdpDecoderRenderMpeg12(struct pipe_video_decoder *decoder,
    struct pipe_mpeg12_picture_desc picture;
    struct pipe_video_buffer *ref_frames[2];
    uint8_t intra_quantizer_matrix[64];
-   unsigned num_ycbcr_blocks[3] = { 0, 0, 0 };
    unsigned i;
 
    VDPAU_MSG(VDPAU_TRACE, "[VDPAU] Decoding MPEG2\n");
@@ -232,9 +231,9 @@ vlVdpDecoderRenderMpeg12(struct pipe_video_decoder *decoder,
 
    for (i = 0; i < bitstream_buffer_count; ++i)
       decoder->decode_bitstream(decoder, bitstream_buffers[i].bitstream_bytes,
-                                bitstream_buffers[i].bitstream, num_ycbcr_blocks);
+                                bitstream_buffers[i].bitstream);
 
-   decoder->end_frame(decoder, num_ycbcr_blocks);
+   decoder->end_frame(decoder);
 
    return VDP_STATUS_OK;
 }

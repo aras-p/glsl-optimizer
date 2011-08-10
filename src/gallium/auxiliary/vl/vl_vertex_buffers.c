@@ -266,7 +266,7 @@ vl_vb_init(struct vl_vertex_buffer *buffer, struct pipe_context *pipe,
          pipe->screen,
          PIPE_BIND_VERTEX_BUFFER,
          PIPE_USAGE_STREAM,
-         sizeof(struct pipe_ycbcr_block) * size * 4
+         sizeof(struct vl_ycbcr_block) * size * 4
       );
       if (!buffer->ycbcr[i].resource)
          goto error_ycbcr;
@@ -278,7 +278,7 @@ vl_vb_init(struct vl_vertex_buffer *buffer, struct pipe_context *pipe,
          pipe->screen,
          PIPE_BIND_VERTEX_BUFFER,
          PIPE_USAGE_STREAM,
-         sizeof(struct pipe_motionvector) * size
+         sizeof(struct vl_motionvector) * size
       );
       if (!buffer->mv[i].resource)
          goto error_mv;
@@ -310,7 +310,7 @@ vl_vb_get_ycbcr(struct vl_vertex_buffer *buffer, int component)
 
    assert(buffer);
 
-   buf.stride = sizeof(struct pipe_ycbcr_block);
+   buf.stride = sizeof(struct vl_ycbcr_block);
    buf.buffer_offset = 0;
    buf.buffer = buffer->ycbcr[component].resource;
 
@@ -324,7 +324,7 @@ vl_vb_get_mv(struct vl_vertex_buffer *buffer, int motionvector)
 
    assert(buffer);
 
-   buf.stride = sizeof(struct pipe_motionvector);
+   buf.stride = sizeof(struct vl_motionvector);
    buf.buffer_offset = 0;
    buf.buffer = buffer->mv[motionvector].resource;
 
@@ -360,7 +360,7 @@ vl_vb_map(struct vl_vertex_buffer *buffer, struct pipe_context *pipe)
 
 }
 
-struct pipe_ycbcr_block *
+struct vl_ycbcr_block *
 vl_vb_get_ycbcr_stream(struct vl_vertex_buffer *buffer, int component)
 {
    assert(buffer);
@@ -377,7 +377,7 @@ vl_vb_get_mv_stream_stride(struct vl_vertex_buffer *buffer)
    return buffer->width;
 }
 
-struct pipe_motionvector *
+struct vl_motionvector *
 vl_vb_get_mv_stream(struct vl_vertex_buffer *buffer, int ref_frame)
 {
    assert(buffer);

@@ -75,17 +75,7 @@ typedef struct
    // have we allready told the decoder to start a frame
    bool frame_started;
 
-   struct {
-      unsigned num_blocks_added;
-      struct pipe_ycbcr_block *stream;
-      short *buffer;
-   } ycbcr[3];
-
-   unsigned mv_stride;
-   struct {
-      XvMCSurface *surface;
-      struct pipe_motionvector *mv;
-   } ref[2];
+   XvMCSurface *ref[2];
 
    struct pipe_fence_handle *fence;
 

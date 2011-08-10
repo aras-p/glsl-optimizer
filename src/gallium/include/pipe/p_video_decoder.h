@@ -106,36 +106,22 @@ struct pipe_video_decoder
    void (*begin_frame)(struct pipe_video_decoder *decoder);
 
    /**
-    * get the pointer where to put the ycbcr blocks of a component
+    * decode a macroblock
     */
-   struct pipe_ycbcr_block *(*get_ycbcr_stream)(struct pipe_video_decoder *decoder, int component);
-
-   /**
-    * get the pointer where to put the ycbcr dct block data of a component
-    */
-   short *(*get_ycbcr_buffer)(struct pipe_video_decoder *decoder, int component);
-
-   /**
-    * get the stride of the mv buffer
-    */
-   unsigned (*get_mv_stream_stride)(struct pipe_video_decoder *decoder);
-
-   /**
-    * get the pointer where to put the motion vectors of a ref frame
-    */
-   struct pipe_motionvector *(*get_mv_stream)(struct pipe_video_decoder *decoder, int ref_frame);
+   void (*decode_macroblock)(struct pipe_video_decoder *decoder,
+                             const struct pipe_macroblock *macroblocks,
+                             unsigned num_macroblocks);
 
    /**
     * decode a bitstream
     */
    void (*decode_bitstream)(struct pipe_video_decoder *decoder,
-                            unsigned num_bytes, const void *data,
-                            unsigned num_ycbcr_blocks[3]);
+                            unsigned num_bytes, const void *data);
 
    /**
     * end decoding of the current frame
     */
-   void (*end_frame)(struct pipe_video_decoder *decoder, unsigned num_ycbcr_blocks[3]);
+   void (*end_frame)(struct pipe_video_decoder *decoder);
 
    /**
     * flush any outstanding command buffers to the hardware
