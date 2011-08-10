@@ -42,6 +42,18 @@ vec4_visitor::setup_attributes(int payload_reg)
       if (prog_data->inputs_read & BITFIELD64_BIT(i)) {
 	 attribute_map[i] = payload_reg + nr_attributes;
 	 nr_attributes++;
+
+	 /* Do GL_FIXED rescaling for GLES2.0.  Our GL_FIXED
+	  * attributes come in as floating point conversions of the
+	  * integer values.
+	  */
+	 if (c->key.gl_fixed_input_size[i] != 0) {
+	    struct brw_reg reg = brw_vec8_grf(attribute_map[i], 0);
+
+	    brw_MUL(p,
+		    brw_writemask(reg, (1 << c->key.gl_fixed_input_size[i]) - 1),
+		    reg, brw_imm_f(1.0 / 65536.0));
+	 }
       }
    }
 
