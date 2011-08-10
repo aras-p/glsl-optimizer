@@ -564,10 +564,6 @@ vec4_visitor::emit_if_gen6(ir_if *ir)
 
       assert(expr->get_num_operands() <= 2);
       for (unsigned int i = 0; i < expr->get_num_operands(); i++) {
-	 assert(expr->operands[i]->type->is_scalar() ||
-		expr->operation == ir_binop_any_nequal ||
-		expr->operation == ir_binop_all_equal);
-
 	 expr->operands[i]->accept(this);
 	 op[i] = this->result;
       }
@@ -628,6 +624,14 @@ vec4_visitor::emit_if_gen6(ir_if *ir)
 
       case ir_binop_any_nequal:
 	 inst = emit(BRW_OPCODE_CMP, dst_null_d(), op[0], op[1]);
+	 inst->conditional_mod = BRW_CONDITIONAL_NZ;
+
+	 inst = emit(BRW_OPCODE_IF);
+	 inst->predicate = BRW_PREDICATE_ALIGN16_ANY4H;
+	 return;
+
+      case ir_unop_any:
+	 inst = emit(BRW_OPCODE_CMP, dst_null_d(), op[0], src_reg(0));
 	 inst->conditional_mod = BRW_CONDITIONAL_NZ;
 
 	 inst = emit(BRW_OPCODE_IF);
