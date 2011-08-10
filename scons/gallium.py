@@ -596,6 +596,18 @@ def generate(env):
         libs += ['m', 'pthread', 'dl']
     env.Append(LIBS = libs)
 
+    # OpenMP
+    if env['openmp']:
+        if env['msvc']:
+            env.Append(CCFLAGS = ['/openmp'])
+            # When building openmp release VS2008 link.exe crashes with LNK1103 error.
+            # Workaround: overwrite PDB flags with empty value as it isn't required anyways
+            if env['build'] == 'release':
+                env['PDB'] = ''
+        if env['gcc']:
+            env.Append(CCFLAGS = ['-fopenmp'])
+            env.Append(LIBS = ['gomp'])
+
     # Load tools
     env.Tool('lex')
     env.Tool('yacc')

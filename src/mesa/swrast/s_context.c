@@ -772,6 +772,11 @@ _swrast_CreateContext( struct gl_context *ctx )
 {
    GLuint i;
    SWcontext *swrast = (SWcontext *)CALLOC(sizeof(SWcontext));
+#ifdef _OPENMP
+   const GLint maxThreads = omp_get_max_threads();
+#else
+   const GLint maxThreads = 1;
+#endif
 
    if (SWRAST_DEBUG) {
       _mesa_debug(ctx, "_swrast_CreateContext\n");
@@ -806,19 +811,25 @@ _swrast_CreateContext( struct gl_context *ctx )
    for (i = 0; i < MAX_TEXTURE_IMAGE_UNITS; i++)
       swrast->TextureSample[i] = NULL;
 
-   swrast->SpanArrays = MALLOC_STRUCT(sw_span_arrays);
+   /* SpanArrays is global and shared by all SWspan instances. However, when
+    * using multiple threads, it is necessary to have one SpanArrays instance
+    * per thread.
+    */
+   swrast->SpanArrays = (SWspanarrays *) MALLOC(maxThreads * sizeof(SWspanarrays));
    if (!swrast->SpanArrays) {
       FREE(swrast);
       return GL_FALSE;
    }
-   swrast->SpanArrays->ChanType = CHAN_TYPE;
+   for(i = 0; i < maxThreads; i++) {
+      swrast->SpanArrays[i].ChanType = CHAN_TYPE;
 #if CHAN_TYPE == GL_UNSIGNED_BYTE
-   swrast->SpanArrays->rgba = swrast->SpanArrays->rgba8;
+      swrast->SpanArrays[i].rgba = swrast->SpanArrays[i].rgba8;
 #elif CHAN_TYPE == GL_UNSIGNED_SHORT
-   swrast->SpanArrays->rgba = swrast->SpanArrays->rgba16;
+      swrast->SpanArrays[i].rgba = swrast->SpanArrays[i].rgba16;
 #else
-   swrast->SpanArrays->rgba = swrast->SpanArrays->attribs[FRAG_ATTRIB_COL0];
+      swrast->SpanArrays[i].rgba = swrast->SpanArrays[i].attribs[FRAG_ATTRIB_COL0];
 #endif
+   }
 
    /* init point span buffer */
    swrast->PointSpan.primitive = GL_POINT;
@@ -826,7 +837,10 @@ _swrast_CreateContext( struct gl_context *ctx )
    swrast->PointSpan.facing = 0;
    swrast->PointSpan.array = swrast->SpanArrays;
 
-   swrast->TexelBuffer = (GLfloat *) MALLOC(ctx->Const.MaxTextureImageUnits *
+   /* TexelBuffer is also global and normally shared by all SWspan instances;
+    * when running with multiple threads, create one per thread.
+    */
+   swrast->TexelBuffer = (GLfloat *) MALLOC(ctx->Const.MaxTextureImageUnits * maxThreads *
                                            MAX_WIDTH * 4 * sizeof(GLfloat));
    if (!swrast->TexelBuffer) {
       FREE(swrast->SpanArrays);

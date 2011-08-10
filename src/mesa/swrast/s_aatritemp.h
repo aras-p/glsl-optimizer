@@ -181,13 +181,20 @@
       const GLfloat *pMax = vMax->attrib[FRAG_ATTRIB_WPOS];
       const GLfloat dxdy = majDx / majDy;
       const GLfloat xAdj = dxdy < 0.0F ? -dxdy : 0.0F;
-      GLfloat x = pMin[0] - (yMin - iyMin) * dxdy;
       GLint iy;
-      for (iy = iyMin; iy < iyMax; iy++, x += dxdy) {
+#ifdef _OPENMP
+#pragma omp parallel for schedule(dynamic) private(iy) firstprivate(span)
+#endif
+      for (iy = iyMin; iy < iyMax; iy++) {
+         GLfloat x = pMin[0] - (yMin - iy) * dxdy;
          GLint ix, startX = (GLint) (x - xAdj);
          GLuint count;
          GLfloat coverage = 0.0F;
 
+#ifdef _OPENMP
+         /* each thread needs to use a different (global) SpanArrays variable */
+         span.array = SWRAST_CONTEXT(ctx)->SpanArrays + omp_get_thread_num();
+#endif
          /* skip over fragments with zero coverage */
          while (startX < MAX_WIDTH) {
             coverage = compute_coveragef(pMin, pMid, pMax, startX, iy);
@@ -228,13 +235,12 @@
             coverage = compute_coveragef(pMin, pMid, pMax, ix, iy);
          }
          
-         if (ix <= startX)
-            continue;
-         
-         span.x = startX;
-         span.y = iy;
-         span.end = (GLuint) ix - (GLuint) startX;
-         _swrast_write_rgba_span(ctx, &span);
+         if (ix > startX) {
+            span.x = startX;
+            span.y = iy;
+            span.end = (GLuint) ix - (GLuint) startX;
+            _swrast_write_rgba_span(ctx, &span);
+         }
       }
    }
    else {
@@ -244,13 +250,20 @@
       const GLfloat *pMax = vMax->attrib[FRAG_ATTRIB_WPOS];
       const GLfloat dxdy = majDx / majDy;
       const GLfloat xAdj = dxdy > 0 ? dxdy : 0.0F;
-      GLfloat x = pMin[0] - (yMin - iyMin) * dxdy;
       GLint iy;
-      for (iy = iyMin; iy < iyMax; iy++, x += dxdy) {
+#ifdef _OPENMP
+#pragma omp parallel for schedule(dynamic) private(iy) firstprivate(span)
+#endif
+      for (iy = iyMin; iy < iyMax; iy++) {
+         GLfloat x = pMin[0] - (yMin - iy) * dxdy;
          GLint ix, left, startX = (GLint) (x + xAdj);
          GLuint count, n;
          GLfloat coverage = 0.0F;
          
+#ifdef _OPENMP
+         /* each thread needs to use a different (global) SpanArrays variable */
+         span.array = SWRAST_CONTEXT(ctx)->SpanArrays + omp_get_thread_num();
+#endif
          /* make sure we're not past the window edge */
          if (startX >= ctx->DrawBuffer->_Xmax) {
             startX = ctx->DrawBuffer->_Xmax - 1;
@@ -296,31 +309,30 @@
          ATTRIB_LOOP_END
 #endif
 
-         if (startX <= ix)
-            continue;
+         if (startX > ix) {
+            n = (GLuint) startX - (GLuint) ix;
 
-         n = (GLuint) startX - (GLuint) ix;
+            left = ix + 1;
 
-         left = ix + 1;
-
-         /* shift all values to the left */
-         /* XXX this is temporary */
-         {
-            SWspanarrays *array = span.array;
-            GLint j;
-            for (j = 0; j < (GLint) n; j++) {
-               array->coverage[j] = array->coverage[j + left];
-               COPY_CHAN4(array->rgba[j], array->rgba[j + left]);
+            /* shift all values to the left */
+            /* XXX this is temporary */
+            {
+               SWspanarrays *array = span.array;
+               GLint j;
+               for (j = 0; j < (GLint) n; j++) {
+                  array->coverage[j] = array->coverage[j + left];
+                  COPY_CHAN4(array->rgba[j], array->rgba[j + left]);
 #ifdef DO_Z
-               array->z[j] = array->z[j + left];
+                  array->z[j] = array->z[j + left];
 #endif
+               }
             }
-         }
 
-         span.x = left;
-         span.y = iy;
-         span.end = n;
-         _swrast_write_rgba_span(ctx, &span);
+            span.x = left;
+            span.y = iy;
+            span.end = n;
+            _swrast_write_rgba_span(ctx, &span);
+         }
       }
    }
 }
