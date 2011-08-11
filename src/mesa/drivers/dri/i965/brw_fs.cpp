@@ -1781,7 +1781,7 @@ brw_wm_fs_emit(struct brw_context *brw, struct brw_wm_compile *c,
    fs_visitor v(c, prog, shader);
    if (!v.run()) {
       prog->LinkStatus = GL_FALSE;
-      prog->InfoLog = ralloc_strdup(prog, v.fail_msg);
+      ralloc_strcat(&prog->InfoLog, v.fail_msg);
 
       return false;
    }

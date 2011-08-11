@@ -93,7 +93,8 @@ struct brw_vs_compile {
    GLboolean needs_stack;
 };
 
-bool brw_vs_emit(struct brw_vs_compile *c);
+bool brw_vs_emit(struct gl_shader_program *prog, struct brw_vs_compile *c);
 void brw_old_vs_emit(struct brw_vs_compile *c);
+bool brw_vs_precompile(struct gl_context *ctx, struct gl_shader_program *prog);
 
 #endif

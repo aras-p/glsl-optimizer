@@ -24,6 +24,7 @@
 extern "C" {
 #include "main/macros.h"
 #include "brw_context.h"
+#include "brw_vs.h"
 }
 #include "brw_fs.h"
 #include "../glsl/ir_optimization.h"
@@ -65,6 +66,9 @@ bool
 brw_shader_precompile(struct gl_context *ctx, struct gl_shader_program *prog)
 {
    if (!brw_fs_precompile(ctx, prog))
+      return false;
+
+   if (!brw_vs_precompile(ctx, prog))
       return false;
 
    return true;

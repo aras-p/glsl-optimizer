@@ -2012,7 +2012,7 @@ vec4_visitor::vec4_visitor(struct brw_vs_compile *c,
    this->current_annotation = NULL;
 
    this->c = c;
-   this->vp = brw->vertex_program; /* FINISHME: change for precompile */
+   this->vp = prog->VertexProgram;
    this->prog_data = &c->prog_data;
 
    this->variable_ht = hash_table_ctor(0,

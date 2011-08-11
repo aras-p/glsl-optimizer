@@ -809,14 +809,8 @@ vec4_visitor::generate_code()
 extern "C" {
 
 bool
-brw_vs_emit(struct brw_vs_compile *c)
+brw_vs_emit(struct gl_shader_program *prog, struct brw_vs_compile *c)
 {
-   struct brw_compile *p = &c->func;
-   struct brw_context *brw = p->brw;
-   struct intel_context *intel = &brw->intel;
-   struct gl_context *ctx = &intel->ctx;
-   struct gl_shader_program *prog = ctx->Shader.CurrentVertexProgram;
-
    if (!prog)
       return false;
 
@@ -833,8 +827,8 @@ brw_vs_emit(struct brw_vs_compile *c)
 
    vec4_visitor v(c, prog, shader);
    if (!v.run()) {
-      /* FINISHME: Cleanly fail, test at link time, etc. */
-      assert(!"not reached");
+      prog->LinkStatus = GL_FALSE;
+      ralloc_strcat(&prog->InfoLog, v.fail_msg);
       return false;
    }
 
