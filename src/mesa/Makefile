@@ -67,6 +67,26 @@ $(DRICORE_OBJ_DIR)/%.o: %.S
 # then convenience libs (.a) and finally the device drivers:
 default: $(DEPENDS) asm_subdirs $(MESA_LIBS) $(DRICORE_LIBS) driver_subdirs
 
+# include glapi_gen.mk for generating glapi headers for GLES
+GLAPI := $(TOP)/src/mapi/glapi/gen
+include $(GLAPI)/glapi_gen.mk
+
+main/api_exec_es1_dispatch.h: $(GLAPI)/gl_and_es_API.xml $(glapi_gen_dispatch_deps)
+	$(call glapi_gen_dispatch,$<,es1)
+
+main/api_exec_es1_remap_helper.h: $(GLAPI)/gl_and_es_API.xml $(glapi_gen_remap_deps)
+	$(call glapi_gen_remap,$<,es1)
+
+main/api_exec_es1.o: main/api_exec_es1_dispatch.h main/api_exec_es1_remap_helper.h 
+
+main/api_exec_es2_dispatch.h: $(GLAPI)/gl_and_es_API.xml $(glapi_gen_dispatch_deps)
+	$(call glapi_gen_dispatch,$<,es2)
+
+main/api_exec_es2_remap_helper.h: $(GLAPI)/gl_and_es_API.xml $(glapi_gen_remap_deps)
+	$(call glapi_gen_remap,$<,es2)
+
+main/api_exec_es2.o: main/api_exec_es2_dispatch.h main/api_exec_es2_remap_helper.h 
+
 main/api_exec_es1.c: main/APIspec.xml main/es_generator.py main/APIspecutil.py main/APIspec.py
 	$(PYTHON2) $(PYTHON_FLAGS) main/es_generator.py -S main/APIspec.xml -V GLES1.1 > $@
 

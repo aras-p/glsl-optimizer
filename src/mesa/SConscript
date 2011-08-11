@@ -347,25 +347,25 @@ if env['gles']:
     GLAPI = '#src/mapi/glapi/'
     gles_headers = []
     gles_headers += env.CodeGenerate(
-        target = 'es1api/main/dispatch.h',
+        target = 'main/api_exec_es1_dispatch.h',
         script = GLAPI + 'gen/gl_table.py',
         source = GLAPI + 'gen/gl_and_es_API.xml',
         command = python_cmd + ' $SCRIPT -c es1 -m remap_table -f $SOURCE > $TARGET',
     )
     gles_headers += env.CodeGenerate(
-        target = 'es1api/main/remap_helper.h',
+        target = 'main/api_exec_es1_remap_helper.h',
         script = GLAPI + 'gen/remap_helper.py',
         source = GLAPI + 'gen/gl_and_es_API.xml',
         command = python_cmd + ' $SCRIPT -c es1 -f $SOURCE > $TARGET',
     )
     gles_headers += env.CodeGenerate(
-        target = 'es2api/main/dispatch.h',
+        target = 'main/api_exec_es2_dispatch.h',
         script = GLAPI + 'gen/gl_table.py',
         source = GLAPI + 'gen/gl_and_es_API.xml',
         command = python_cmd + ' $SCRIPT -c es2 -m remap_table -f $SOURCE > $TARGET',
     )
     gles_headers += env.CodeGenerate(
-        target = 'es2api/main/remap_helper.h',
+        target = 'main/api_exec_es2_remap_helper.h',
         script = GLAPI + 'gen/remap_helper.py',
         source = GLAPI + 'gen/gl_and_es_API.xml',
         command = python_cmd + ' $SCRIPT -c es2 -f $SOURCE > $TARGET',
