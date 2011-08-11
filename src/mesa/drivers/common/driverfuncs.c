@@ -248,10 +248,10 @@ _mesa_init_driver_state(struct gl_context *ctx)
       GLuint i;
       for (i = 0; i < ctx->Const.MaxDrawBuffers; i++) {
          ctx->Driver.ColorMaskIndexed(ctx, i,
-                                      ctx->Color.ColorMask[0][RCOMP],
-                                      ctx->Color.ColorMask[0][GCOMP],
-                                      ctx->Color.ColorMask[0][BCOMP],
-                                      ctx->Color.ColorMask[0][ACOMP]);
+                                      ctx->Color.ColorMask[i][RCOMP],
+                                      ctx->Color.ColorMask[i][GCOMP],
+                                      ctx->Color.ColorMask[i][BCOMP],
+                                      ctx->Color.ColorMask[i][ACOMP]);
       }
    }
    else {
