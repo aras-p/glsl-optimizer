@@ -912,6 +912,21 @@ check_builtin_array_max_size(const char *name, unsigned size,
                        "be larger than gl_MaxTextureCoords (%u)\n",
                        state->Const.MaxTextureCoords);
       return true;
+   } else if (strcmp("gl_ClipDistance", name) == 0
+              && size > state->Const.MaxClipPlanes) {
+      /* From section 7.1 (Vertex Shader Special Variables) of the
+       * GLSL 1.30 spec:
+       *
+       *   "The gl_ClipDistance array is predeclared as unsized and
+       *   must be sized by the shader either redeclaring it with a
+       *   size or indexing it only with integral constant
+       *   expressions. ... The size can be at most
+       *   gl_MaxClipDistances."
+       */
+      _mesa_glsl_error(&loc, state, "`gl_ClipDistance' array size cannot "
+                       "be larger than gl_MaxClipDistances (%u)\n",
+                       state->Const.MaxClipPlanes);
+      return true;
    }
    return false;
 }
