@@ -561,6 +561,9 @@ vec4_visitor::run()
    setup_payload();
    reg_allocate();
 
+   if (failed)
+      return false;
+
    brw_set_access_mode(p, BRW_ALIGN_16);
 
    generate_code();

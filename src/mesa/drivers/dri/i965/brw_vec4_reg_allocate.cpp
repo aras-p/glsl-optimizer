@@ -39,7 +39,6 @@ assign(int *reg_hw_locations, reg *reg)
 void
 vec4_visitor::reg_allocate_trivial()
 {
-   int last_grf = 0;
    int hw_reg_mapping[this->virtual_grf_count];
    bool virtual_grf_used[this->virtual_grf_count];
    int i;
@@ -84,9 +83,9 @@ vec4_visitor::reg_allocate_trivial()
       assign(hw_reg_mapping, &inst->src[2]);
    }
 
-   if (last_grf >= BRW_MAX_GRF) {
+   if (prog_data->total_grf > BRW_MAX_GRF) {
       fail("Ran out of regs on trivial allocator (%d/%d)\n",
-	   last_grf, BRW_MAX_GRF);
+	   prog_data->total_grf, BRW_MAX_GRF);
    }
 }
 
