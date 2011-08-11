@@ -65,9 +65,16 @@ vec4_visitor::setup_attributes(int payload_reg)
 	    continue;
 
 	 int grf = attribute_map[inst->src[i].reg + inst->src[i].reg_offset];
+
+	 struct brw_reg reg = brw_vec8_grf(grf, 0);
+	 reg.dw1.bits.swizzle = inst->src[i].swizzle;
+	 if (inst->src[i].abs)
+	    reg = brw_abs(reg);
+	 if (inst->src[i].negate)
+	    reg = negate(reg);
+
 	 inst->src[i].file = HW_REG;
-	 inst->src[i].fixed_hw_reg = brw_vec8_grf(grf, 0);
-	 inst->src[i].fixed_hw_reg.dw1.bits.swizzle = inst->src[i].swizzle;
+	 inst->src[i].fixed_hw_reg = reg;
       }
    }
 
