@@ -286,7 +286,10 @@ _mesa_init_driver_state(struct gl_context *ctx)
    ctx->Driver.Enable(ctx, GL_TEXTURE_CUBE_MAP, GL_FALSE);
 
    ctx->Driver.Fogfv(ctx, GL_FOG_COLOR, ctx->Fog.Color);
-   ctx->Driver.Fogfv(ctx, GL_FOG_MODE, 0);
+   {
+      GLfloat mode = (GLfloat) ctx->Fog.Mode;
+      ctx->Driver.Fogfv(ctx, GL_FOG_MODE, &mode);
+   }
    ctx->Driver.Fogfv(ctx, GL_FOG_DENSITY, &ctx->Fog.Density);
    ctx->Driver.Fogfv(ctx, GL_FOG_START, &ctx->Fog.Start);
    ctx->Driver.Fogfv(ctx, GL_FOG_END, &ctx->Fog.End);
