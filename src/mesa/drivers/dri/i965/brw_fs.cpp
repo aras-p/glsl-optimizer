@@ -279,23 +279,27 @@ fs_visitor::setup_uniform_values(int loc, const glsl_type *type)
 
 	 assert(param < ARRAY_SIZE(c->prog_data.param));
 
-	 switch (type->base_type) {
-	 case GLSL_TYPE_FLOAT:
+	 if (ctx->Const.NativeIntegers) {
 	    c->prog_data.param_convert[param] = PARAM_NO_CONVERT;
-	    break;
-	 case GLSL_TYPE_UINT:
-	    c->prog_data.param_convert[param] = PARAM_CONVERT_F2U;
-	    break;
-	 case GLSL_TYPE_INT:
-	    c->prog_data.param_convert[param] = PARAM_CONVERT_F2I;
-	    break;
-	 case GLSL_TYPE_BOOL:
-	    c->prog_data.param_convert[param] = PARAM_CONVERT_F2B;
-	    break;
-	 default:
-	    assert(!"not reached");
-	    c->prog_data.param_convert[param] = PARAM_NO_CONVERT;
-	    break;
+	 } else {
+	    switch (type->base_type) {
+	    case GLSL_TYPE_FLOAT:
+	       c->prog_data.param_convert[param] = PARAM_NO_CONVERT;
+	       break;
+	    case GLSL_TYPE_UINT:
+	       c->prog_data.param_convert[param] = PARAM_CONVERT_F2U;
+	       break;
+	    case GLSL_TYPE_INT:
+	       c->prog_data.param_convert[param] = PARAM_CONVERT_F2I;
+	       break;
+	    case GLSL_TYPE_BOOL:
+	       c->prog_data.param_convert[param] = PARAM_CONVERT_F2B;
+	       break;
+	    default:
+	       assert(!"not reached");
+	       c->prog_data.param_convert[param] = PARAM_NO_CONVERT;
+	       break;
+	    }
 	 }
 	 this->param_index[param] = loc;
 	 this->param_offset[param] = i;
