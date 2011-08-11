@@ -42,24 +42,6 @@
 
 #include "xvmc_private.h"
 
-static enum pipe_mpeg12_picture_type PictureToPipe(int xvmc_pic)
-{
-   switch (xvmc_pic) {
-      case XVMC_TOP_FIELD:
-         return PIPE_MPEG12_PICTURE_TYPE_FIELD_TOP;
-      case XVMC_BOTTOM_FIELD:
-         return PIPE_MPEG12_PICTURE_TYPE_FIELD_BOTTOM;
-      case XVMC_FRAME_PICTURE:
-         return PIPE_MPEG12_PICTURE_TYPE_FRAME;
-      default:
-         assert(0);
-   }
-
-   XVMC_MSG(XVMC_ERR, "[XvMC] Unrecognized picture type 0x%08X.\n", xvmc_pic);
-
-   return -1;
-}
-
 static void
 MacroBlocksToPipe(XvMCContextPrivate *context,
                   XvMCSurfacePrivate *surface,
@@ -447,7 +429,7 @@ Status XvMCPutSurface(Display *dpy, XvMCSurface *surface, Drawable drawable,
    // Workaround for r600g, there seems to be a bug in the fence refcounting code
    pipe->screen->fence_reference(pipe->screen, &surface_priv->fence, NULL);
 
-   vl_compositor_render(compositor, PictureToPipe(flags), context_priv->drawable_surface, &dst_rect, NULL);
+   vl_compositor_render(compositor, context_priv->drawable_surface, &dst_rect, NULL);
                         
    pipe->flush(pipe, &surface_priv->fence);
 

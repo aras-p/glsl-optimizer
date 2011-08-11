@@ -157,8 +157,7 @@ VdpStatus vlVdpVideoMixerRender(VdpVideoMixer mixer,
 
    vl_compositor_clear_layers(&vmixer->compositor);
    vl_compositor_set_buffer_layer(&vmixer->compositor, 0, surf->video_buffer, NULL, NULL);
-   vl_compositor_render(&vmixer->compositor, PIPE_MPEG12_PICTURE_TYPE_FRAME,
-                        dst->surface, NULL, NULL);
+   vl_compositor_render(&vmixer->compositor, dst->surface, NULL, NULL);
 
    return VDP_STATUS_OK;
 }

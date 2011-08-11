@@ -43,11 +43,15 @@ struct pipe_video_rect
    unsigned x, y, w, h;
 };
 
-enum pipe_mpeg12_picture_type
+/*
+ * see table 6-14 in the spec
+ */
+enum pipe_mpeg12_picture_structure
 {
-   PIPE_MPEG12_PICTURE_TYPE_FIELD_TOP,
-   PIPE_MPEG12_PICTURE_TYPE_FIELD_BOTTOM,
-   PIPE_MPEG12_PICTURE_TYPE_FRAME
+   PIPE_MPEG12_PICTURE_STRUCTURE_RESERVED = 0x00,
+   PIPE_MPEG12_PICTURE_STRUCTURE_FIELD_TOP = 0x01,
+   PIPE_MPEG12_PICTURE_STRUCTURE_FIELD_BOTTOM = 0x02,
+   PIPE_MPEG12_PICTURE_STRUCTURE_FRAME = 0x03
 };
 
 /*

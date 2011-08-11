@@ -673,7 +673,6 @@ vl_compositor_set_rgba_layer(struct vl_compositor *c,
 
 void
 vl_compositor_render(struct vl_compositor *c,
-                     enum pipe_mpeg12_picture_type picture_type,
                      struct pipe_surface           *dst_surface,
                      struct pipe_video_rect        *dst_area,
                      struct pipe_video_rect        *dst_clip)
