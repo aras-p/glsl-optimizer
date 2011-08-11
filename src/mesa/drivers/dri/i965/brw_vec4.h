@@ -388,6 +388,12 @@ public:
    vec4_instruction *emit(enum opcode opcode, dst_reg dst,
 			  src_reg src0, src_reg src1, src_reg src2);
 
+   bool try_rewrite_rhs_to_dst(ir_assignment *ir,
+			       dst_reg dst,
+			       src_reg src,
+			       vec4_instruction *pre_rhs_inst,
+			       vec4_instruction *last_rhs_inst);
+
    /** Walks an exec_list of ir_instruction and sends it through this visitor. */
    void visit_instructions(const exec_list *list);
 

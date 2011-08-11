@@ -1342,6 +1342,63 @@ vec4_visitor::emit_block_move(dst_reg *dst, src_reg *src,
    src->reg_offset++;
 }
 
+
+/* If the RHS processing resulted in an instruction generating a
+ * temporary value, and it would be easy to rewrite the instruction to
+ * generate its result right into the LHS instead, do so.  This ends
+ * up reliably removing instructions where it can be tricky to do so
+ * later without real UD chain information.
+ */
+bool
+vec4_visitor::try_rewrite_rhs_to_dst(ir_assignment *ir,
+				     dst_reg dst,
+				     src_reg src,
+				     vec4_instruction *pre_rhs_inst,
+				     vec4_instruction *last_rhs_inst)
+{
+   /* This could be supported, but it would take more smarts. */
+   if (ir->condition)
+      return false;
+
+   if (pre_rhs_inst == last_rhs_inst)
+      return false; /* No instructions generated to work with. */
+
+   /* Make sure the last instruction generated our source reg. */
+   if (src.file != GRF ||
+       src.file != last_rhs_inst->dst.file ||
+       src.reg != last_rhs_inst->dst.reg ||
+       src.reg_offset != last_rhs_inst->dst.reg_offset ||
+       src.reladdr ||
+       src.abs ||
+       src.negate ||
+       last_rhs_inst->predicate != BRW_PREDICATE_NONE)
+      return false;
+
+   /* Check that that last instruction fully initialized the channels
+    * we want to use, in the order we want to use them.  We could
+    * potentially reswizzle the operands of many instructions so that
+    * we could handle out of order channels, but don't yet.
+    */
+   for (int i = 0; i < 4; i++) {
+      if (dst.writemask & (1 << i)) {
+	 if (!(last_rhs_inst->dst.writemask & (1 << i)))
+	    return false;
+
+	 if (BRW_GET_SWZ(src.swizzle, i) != i)
+	    return false;
+      }
+   }
+
+   /* Success!  Rewrite the instruction. */
+   last_rhs_inst->dst.file = dst.file;
+   last_rhs_inst->dst.reg = dst.reg;
+   last_rhs_inst->dst.reg_offset = dst.reg_offset;
+   last_rhs_inst->dst.reladdr = dst.reladdr;
+   last_rhs_inst->dst.writemask &= dst.writemask;
+
+   return true;
+}
+
 void
 vec4_visitor::visit(ir_assignment *ir)
 {
@@ -1363,7 +1420,13 @@ vec4_visitor::visit(ir_assignment *ir)
    /* Now we're down to just a scalar/vector with writemasks. */
    int i;
 
+   vec4_instruction *pre_rhs_inst, *last_rhs_inst;
+   pre_rhs_inst = (vec4_instruction *)this->instructions.get_tail();
+
    ir->rhs->accept(this);
+
+   last_rhs_inst = (vec4_instruction *)this->instructions.get_tail();
+
    src_reg src = this->result;
 
    int swizzles[4];
@@ -1395,6 +1458,10 @@ vec4_visitor::visit(ir_assignment *ir)
    }
    src.swizzle = BRW_SWIZZLE4(swizzles[0], swizzles[1],
 			      swizzles[2], swizzles[3]);
+
+   if (try_rewrite_rhs_to_dst(ir, dst, src, pre_rhs_inst, last_rhs_inst)) {
+      return;
+   }
 
    if (ir->condition) {
       emit_bool_to_cond_code(ir->condition);
