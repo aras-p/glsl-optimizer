@@ -57,8 +57,8 @@ vec4_visitor::setup_attributes(int payload_reg)
       }
    }
 
-   foreach_iter(exec_list_iterator, iter, this->instructions) {
-      vec4_instruction *inst = (vec4_instruction *)iter.get();
+   foreach_list(node, &this->instructions) {
+      vec4_instruction *inst = (vec4_instruction *)node;
 
       for (int i = 0; i < 3; i++) {
 	 if (inst->src[i].file != ATTR)
@@ -546,11 +546,7 @@ vec4_visitor::run()
    /* Generate VS IR for main().  (the visitor only descends into
     * functions called "main").
     */
-   foreach_iter(exec_list_iterator, iter, *shader->ir) {
-      ir_instruction *ir = (ir_instruction *)iter.get();
-      base_ir = ir;
-      ir->accept(this);
-   }
+   visit_instructions(shader->ir);
 
    emit_urb_writes();
 

@@ -234,8 +234,8 @@ vec4_visitor::emit_math(enum opcode opcode,
 void
 vec4_visitor::visit_instructions(const exec_list *list)
 {
-   foreach_iter(exec_list_iterator, iter, *list) {
-      ir_instruction *ir = (ir_instruction *)iter.get();
+   foreach_list(node, list) {
+      ir_instruction *ir = (ir_instruction *)node;
 
       base_ir = ir;
       ir->accept(this);
