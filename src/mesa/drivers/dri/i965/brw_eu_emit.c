@@ -1341,8 +1341,7 @@ struct brw_instruction *brw_WHILE(struct brw_compile *p,
       brw_set_src1(p, insn, brw_imm_ud(0));
       insn->bits3.break_cont.jip = br * (do_insn - insn);
 
-      insn->header.execution_size = do_insn->header.execution_size;
-      assert(insn->header.execution_size == BRW_EXECUTE_8);
+      insn->header.execution_size = BRW_EXECUTE_8;
    } else if (intel->gen == 6) {
       insn = next_insn(p, BRW_OPCODE_WHILE);
 
@@ -1351,8 +1350,7 @@ struct brw_instruction *brw_WHILE(struct brw_compile *p,
       brw_set_src0(p, insn, retype(brw_null_reg(), BRW_REGISTER_TYPE_D));
       brw_set_src1(p, insn, retype(brw_null_reg(), BRW_REGISTER_TYPE_D));
 
-      insn->header.execution_size = do_insn->header.execution_size;
-      assert(insn->header.execution_size == BRW_EXECUTE_8);
+      insn->header.execution_size = BRW_EXECUTE_8;
    } else {
       if (p->single_program_flow) {
 	 insn = next_insn(p, BRW_OPCODE_ADD);
