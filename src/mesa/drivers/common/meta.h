@@ -26,12 +26,45 @@
 #ifndef META_H
 #define META_H
 
+/**
+ * \name Flags for meta operations
+ * \{
+ *
+ * These flags are passed to _mesa_meta_begin().
+ */
+#define MESA_META_ALL                      ~0x0
+#define MESA_META_ALPHA_TEST                0x1
+#define MESA_META_BLEND                     0x2  /**< includes logicop */
+#define MESA_META_COLOR_MASK                0x4
+#define MESA_META_DEPTH_TEST                0x8
+#define MESA_META_FOG                      0x10
+#define MESA_META_PIXEL_STORE              0x20
+#define MESA_META_PIXEL_TRANSFER           0x40
+#define MESA_META_RASTERIZATION            0x80
+#define MESA_META_SCISSOR                 0x100
+#define MESA_META_SHADER                  0x200
+#define MESA_META_STENCIL_TEST            0x400
+#define MESA_META_TRANSFORM               0x800 /**< modelview/projection matrix state */
+#define MESA_META_TEXTURE                0x1000
+#define MESA_META_VERTEX                 0x2000
+#define MESA_META_VIEWPORT               0x4000
+#define MESA_META_CLAMP_FRAGMENT_COLOR   0x8000
+#define MESA_META_CLAMP_VERTEX_COLOR    0x10000
+#define MESA_META_CONDITIONAL_RENDER    0x20000
+#define MESA_META_CLIP                  0x40000
+/**\}*/
 
 extern void
 _mesa_meta_init(struct gl_context *ctx);
 
 extern void
 _mesa_meta_free(struct gl_context *ctx);
+
+extern void
+_mesa_meta_begin(struct gl_context *ctx, GLbitfield state);
+
+extern void
+_mesa_meta_end(struct gl_context *ctx);
 
 extern void
 _mesa_meta_BlitFramebuffer(struct gl_context *ctx,
