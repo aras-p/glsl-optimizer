@@ -513,15 +513,16 @@ vl_mpeg12_set_picture_parameters(struct pipe_video_decoder *decoder,
 
 static void
 vl_mpeg12_set_quant_matrix(struct pipe_video_decoder *decoder,
-                           const uint8_t intra_matrix[64],
-                           const uint8_t non_intra_matrix[64])
+                           const struct pipe_quant_matrix *matrix)
 {
    struct vl_mpeg12_decoder *dec = (struct vl_mpeg12_decoder *)decoder;
+   const struct pipe_mpeg12_quant_matrix *m = (const struct pipe_mpeg12_quant_matrix *)matrix;
 
    assert(dec);
+   assert(matrix->codec == PIPE_VIDEO_CODEC_MPEG12);
 
-   memcpy(dec->intra_matrix, intra_matrix, 64);
-   memcpy(dec->non_intra_matrix, non_intra_matrix, 64);
+   memcpy(dec->intra_matrix, m->intra_matrix, 64);
+   memcpy(dec->non_intra_matrix, m->non_intra_matrix, 64);
 }
 
 static void
@@ -575,6 +576,9 @@ vl_mpeg12_begin_frame(struct pipe_video_decoder *decoder)
 
    buf = dec->current_buffer;
    assert(buf);
+
+   if (dec->base.entrypoint == PIPE_VIDEO_ENTRYPOINT_BITSTREAM)
+      dec->intra_matrix[0] = 1 << (7 - dec->picture_desc.intra_dc_precision);
 
    for (i = 0; i < VL_MAX_PLANES; ++i) {
       vl_zscan_upload_quant(&buf->zscan[i], dec->intra_matrix, true);
@@ -1151,6 +1155,9 @@ vl_create_mpeg12_decoder(struct pipe_context *context,
 
    if (!init_pipe_state(dec))
       goto error_pipe_state;
+
+   memset(dec->intra_matrix, 0x10, 64);
+   memset(dec->non_intra_matrix, 0x10, 64);
 
    return &dec->base;
 

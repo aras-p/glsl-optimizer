@@ -100,6 +100,11 @@ struct pipe_picture_desc
    enum pipe_video_profile profile;
 };
 
+struct pipe_quant_matrix
+{
+   enum pipe_video_codec codec;
+};
+
 struct pipe_macroblock
 {
    enum pipe_video_codec codec;
@@ -116,7 +121,16 @@ struct pipe_mpeg12_picture_desc
    unsigned alternate_scan;
    unsigned intra_vlc_format;
    unsigned concealment_motion_vectors;
+   unsigned intra_dc_precision;
    unsigned f_code[2][2];
+};
+
+struct pipe_mpeg12_quant_matrix
+{
+   struct pipe_quant_matrix base;
+
+   const uint8_t *intra_matrix;
+   const uint8_t *non_intra_matrix;
 };
 
 struct pipe_mpeg12_macroblock

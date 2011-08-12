@@ -182,8 +182,8 @@ vlVdpDecoderRenderMpeg12(struct pipe_video_decoder *decoder,
                          VdpBitstreamBuffer const *bitstream_buffers)
 {
    struct pipe_mpeg12_picture_desc picture;
+   struct pipe_mpeg12_quant_matrix quant;
    struct pipe_video_buffer *ref_frames[2];
-   uint8_t intra_quantizer_matrix[64];
    unsigned i;
 
    VDPAU_MSG(VDPAU_TRACE, "[VDPAU] Decoding MPEG2\n");
@@ -216,6 +216,7 @@ vlVdpDecoderRenderMpeg12(struct pipe_video_decoder *decoder,
    picture.alternate_scan = picture_info->alternate_scan;
    picture.intra_vlc_format = picture_info->intra_vlc_format;
    picture.concealment_motion_vectors = picture_info->concealment_motion_vectors;
+   picture.intra_dc_precision = picture_info->intra_dc_precision;
    picture.f_code[0][0] = picture_info->f_code[0][0] - 1;
    picture.f_code[0][1] = picture_info->f_code[0][1] - 1;
    picture.f_code[1][0] = picture_info->f_code[1][0] - 1;
@@ -223,9 +224,12 @@ vlVdpDecoderRenderMpeg12(struct pipe_video_decoder *decoder,
 
    decoder->set_picture_parameters(decoder, &picture.base);
 
-   memcpy(intra_quantizer_matrix, picture_info->intra_quantizer_matrix, sizeof(intra_quantizer_matrix));
-   intra_quantizer_matrix[0] = 1 << (7 - picture_info->intra_dc_precision);
-   decoder->set_quant_matrix(decoder, intra_quantizer_matrix, picture_info->non_intra_quantizer_matrix);
+   memset(&quant, 0, sizeof(quant));
+   quant.base.codec = PIPE_VIDEO_CODEC_MPEG12;
+   quant.intra_matrix = picture_info->intra_quantizer_matrix;
+   quant.non_intra_matrix = picture_info->non_intra_quantizer_matrix;
+
+   decoder->set_quant_matrix(decoder, &quant.base);
 
    decoder->begin_frame(decoder);
 

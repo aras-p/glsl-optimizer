@@ -84,8 +84,7 @@ struct pipe_video_decoder
     * set the quantification matrixes
     */
    void (*set_quant_matrix)(struct pipe_video_decoder *decoder,
-                            const uint8_t intra_matrix[64],
-                            const uint8_t non_intra_matrix[64]);
+                            const struct pipe_quant_matrix *matrix);
 
    /**
     * set target where video data is decoded to
