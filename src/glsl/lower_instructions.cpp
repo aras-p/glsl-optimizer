@@ -166,6 +166,10 @@ lower_instructions_visitor::div_to_mul_rcp(ir_expression *ir)
       else
 	 op0 = new(ir) ir_expression(ir_unop_u2f, vec_type, ir->operands[0], NULL);
 
+      vec_type = glsl_type::get_instance(GLSL_TYPE_FLOAT,
+					 ir->type->vector_elements,
+					 ir->type->matrix_columns);
+
       op0 = new(ir) ir_expression(ir_binop_mul, vec_type, op0, op1);
 
       if (ir->operands[1]->type->base_type == GLSL_TYPE_INT) {
