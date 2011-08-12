@@ -585,6 +585,17 @@ generate_120_vs_variables(exec_list *instructions,
 
 
 static void
+generate_130_uniforms(exec_list *instructions,
+		      struct _mesa_glsl_parse_state *state)
+{
+   glsl_symbol_table *const symtab = state->symbols;
+
+   add_builtin_constant(instructions, symtab, "gl_MaxClipDistances",
+                        state->Const.MaxClipPlanes);
+}
+
+
+static void
 generate_130_vs_variables(exec_list *instructions,
 			  struct _mesa_glsl_parse_state *state)
 {
@@ -594,6 +605,8 @@ generate_130_vs_variables(exec_list *instructions,
       add_builtin_variable(instructions, state->symbols,
 			   & builtin_130_vs_variables[i]);
    }
+
+   generate_130_uniforms(instructions, state);
 
    /* From the GLSL 1.30 spec, section 7.1 (Vertex Shader Special
     * Variables):
@@ -810,6 +823,8 @@ generate_130_fs_variables(exec_list *instructions,
 			  struct _mesa_glsl_parse_state *state)
 {
    generate_120_fs_variables(instructions, state);
+
+   generate_130_uniforms(instructions, state);
 
    /* From the GLSL 1.30 spec, section 7.2 (Fragment Shader Special
     * Variables):
