@@ -146,7 +146,7 @@ $(GBM_EXTRA_TARGETS): $(TOP)/$(LIB_DIR)/gbm/%: %
 	@$(INSTALL) -d $(dir $@)
 	$(INSTALL) $< $(dir $@)
 
-$(pipe_TARGETS): $(PIPE_PREFIX)%.so: pipe_%.o
+$(pipe_TARGETS): $(PIPE_PREFIX)%.so: pipe_%.o $(pipe_LIBS) $($*_LIBS)
 	$(MKLIB) -o $@ -noprefix -linker '$(CC)' \
 		-ldflags '-L$(TOP)/$(LIB_DIR) $(pipe_LDFLAGS) $(LDFLAGS)' \
 		$(MKLIB_OPTIONS) $< \
