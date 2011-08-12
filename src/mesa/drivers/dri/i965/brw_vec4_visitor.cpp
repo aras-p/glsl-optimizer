@@ -1554,7 +1554,12 @@ vec4_visitor::visit(ir_call *ir)
 void
 vec4_visitor::visit(ir_texture *ir)
 {
-   assert(!"not reached");
+   /* FINISHME: Implement vertex texturing.
+    *
+    * With 0 vertex samplers available, the linker will reject
+    * programs that do vertex texturing, but after our visitor has
+    * run.
+    */
 }
 
 void
