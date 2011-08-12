@@ -1743,6 +1743,9 @@ link_shaders(struct gl_context *ctx, struct gl_shader_program *prog)
       if (!prog->LinkStatus)
 	 goto done;
 
+      if (ctx->ShaderCompilerOptions[i].LowerClipDistance)
+         lower_clip_distance(prog->_LinkedShaders[i]->ir);
+
       while (do_common_optimization(prog->_LinkedShaders[i]->ir, true, 32))
 	 ;
    }

@@ -56,6 +56,7 @@ CXX_SOURCES = \
 	loop_analysis.cpp \
 	loop_controls.cpp \
 	loop_unroll.cpp \
+	lower_clip_distance.cpp \
 	lower_discard.cpp \
 	lower_if_to_cond_assign.cpp \
 	lower_instructions.cpp \
