@@ -262,6 +262,25 @@ validate_vertex_shader_executable(struct gl_shader_program *prog,
       return false;
    }
 
+   if (prog->Version >= 130) {
+      /* From section 7.1 (Vertex Shader Special Variables) of the
+       * GLSL 1.30 spec:
+       *
+       *   "It is an error for a shader to statically write both
+       *   gl_ClipVertex and gl_ClipDistance."
+       */
+      find_assignment_visitor clip_vertex("gl_ClipVertex");
+      find_assignment_visitor clip_distance("gl_ClipDistance");
+
+      clip_vertex.run(shader->ir);
+      clip_distance.run(shader->ir);
+      if (clip_vertex.variable_found() && clip_distance.variable_found()) {
+         linker_error(prog, "vertex shader writes to both `gl_ClipVertex' "
+                      "and `gl_ClipDistance'\n");
+         return false;
+      }
+   }
+
    return true;
 }
 
