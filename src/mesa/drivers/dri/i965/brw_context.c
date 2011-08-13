@@ -278,7 +278,23 @@ brwCreateContext(int api,
    }
 
    /* WM maximum threads is number of EUs times number of threads per EU. */
-   if (intel->gen >= 7) {
+   assert(intel->gen <= 7);
+
+   if (intel->is_haswell) {
+      if (intel->gt == 1) {
+	 brw->max_wm_threads = 102;
+	 brw->max_vs_threads = 70;
+	 brw->urb.size = 128;
+	 brw->urb.max_vs_entries = 640;
+	 brw->urb.max_gs_entries = 256;
+      } else if (intel->gt == 2) {
+	 brw->max_wm_threads = 204;
+	 brw->max_vs_threads = 280;
+	 brw->urb.size = 256;
+	 brw->urb.max_vs_entries = 1664;
+	 brw->urb.max_gs_entries = 640;
+      }
+   } else if (intel->gen == 7) {
       if (intel->gt == 1) {
 	 brw->max_wm_threads = 48;
 	 brw->max_vs_threads = 36;
