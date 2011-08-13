@@ -151,7 +151,14 @@
 
 #define IS_IVYBRIDGE(devid)     (IS_IVB_GT1(devid) || IS_IVB_GT2(devid))
 
-#define IS_GEN7(devid)	        IS_IVYBRIDGE(devid)
+#define IS_GEN7(devid)	        (IS_IVYBRIDGE(devid) || \
+				 IS_HASWELL(devid))
+
+#define IS_HSW_GT1(devid)	0
+#define IS_HSW_GT2(devid)	0
+
+#define IS_HASWELL(devid)       (IS_HSW_GT1(devid) || \
+				 IS_HSW_GT2(devid))
 
 #define IS_965(devid)		(IS_GEN4(devid) || \
 				 IS_G4X(devid) || \

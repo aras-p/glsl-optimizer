@@ -608,15 +608,16 @@ intelInitContext(struct intel_context *intel,
    intel->gen = intelScreen->gen;
 
    const int devID = intelScreen->deviceID;
-
-   if (IS_SNB_GT1(devID) || IS_IVB_GT1(devID))
+   if (IS_SNB_GT1(devID) || IS_IVB_GT1(devID) || IS_HSW_GT1(devID))
       intel->gt = 1;
-   else if (IS_SNB_GT2(devID) || IS_IVB_GT2(devID))
+   else if (IS_SNB_GT2(devID) || IS_IVB_GT2(devID) || IS_HSW_GT2(devID))
       intel->gt = 2;
    else
       intel->gt = 0;
 
-   if (IS_G4X(devID)) {
+   if (IS_HASWELL(devID)) {
+      intel->is_haswell = true;
+   } else if (IS_G4X(devID)) {
       intel->is_g4x = true;
    } else if (IS_945(devID)) {
       intel->is_945 = true;
