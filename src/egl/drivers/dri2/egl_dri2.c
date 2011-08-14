@@ -726,6 +726,23 @@ dri2_create_context(_EGLDriver *drv, _EGLDisplay *disp, _EGLConfig *conf,
 }
 
 /**
+ * Called via eglDestroyContext(), drv->API.DestroyContext().
+ */
+static EGLBoolean
+dri2_destroy_context(_EGLDriver *drv, _EGLDisplay *disp, _EGLContext *ctx)
+{
+   struct dri2_egl_context *dri2_ctx = dri2_egl_context(ctx);
+   struct dri2_egl_display *dri2_dpy = dri2_egl_display(disp);
+
+   if (_eglPutContext(ctx)) {
+      dri2_dpy->core->destroyContext(dri2_ctx->dri_context);
+      free(dri2_ctx);
+   }
+
+   return EGL_TRUE;
+}
+
+/**
  * Called via eglMakeCurrent(), drv->API.MakeCurrent().
  */
 static EGLBoolean
@@ -765,9 +782,8 @@ dri2_make_current(_EGLDriver *drv, _EGLDisplay *disp, _EGLSurface *dsurf,
          drv->API.DestroySurface(drv, disp, old_dsurf);
       if (old_rsurf)
          drv->API.DestroySurface(drv, disp, old_rsurf);
-      /* no destroy? */
       if (old_ctx)
-         _eglPutContext(old_ctx);
+         drv->API.DestroyContext(drv, disp, old_ctx);
 
       return EGL_TRUE;
    } else {
@@ -1348,6 +1364,7 @@ _EGL_MAIN(const char *args)
    dri2_drv->base.API.Initialize = dri2_initialize;
    dri2_drv->base.API.Terminate = dri2_terminate;
    dri2_drv->base.API.CreateContext = dri2_create_context;
+   dri2_drv->base.API.DestroyContext = dri2_destroy_context;
    dri2_drv->base.API.MakeCurrent = dri2_make_current;
    dri2_drv->base.API.GetProcAddress = dri2_get_proc_address;
    dri2_drv->base.API.WaitClient = dri2_wait_client;
