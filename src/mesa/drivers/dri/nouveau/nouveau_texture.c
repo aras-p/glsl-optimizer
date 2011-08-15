@@ -144,6 +144,85 @@ nouveau_teximage_unmap(struct gl_context *ctx, struct gl_texture_image *ti)
 	ti->Data = NULL;
 }
 
+
+static void
+nouveau_map_texture_image(struct gl_context *ctx,
+			  struct gl_texture_image *ti,
+			  GLuint slice,
+			  GLuint x, GLuint y, GLuint w, GLuint h,
+			  GLbitfield mode,
+			  GLubyte **map,
+			  GLint *stride)
+{
+	struct nouveau_teximage *nti = to_nouveau_teximage(ti);
+	struct nouveau_surface *s = &nti->surface;
+	struct nouveau_surface *st = &nti->transfer.surface;
+
+	/* Nouveau has no support for 3D or cubemap textures. */
+	assert(slice == 0);
+
+	if (s->bo) {
+		if (!(mode & GL_MAP_READ_BIT) &&
+		    nouveau_bo_pending(s->bo)) {
+			/*
+			 * Heuristic: use a bounce buffer to pipeline
+			 * teximage transfers.
+			 */
+			st->layout = LINEAR;
+			st->format = s->format;
+			st->cpp = s->cpp;
+			st->width = w;
+			st->height = h;
+			st->pitch = s->pitch;
+			nti->transfer.x = x;
+			nti->transfer.y = y;
+
+			*map = nouveau_get_scratch(ctx, st->pitch * h,
+						   &st->bo, &st->offset);
+			*stride = st->pitch;
+		} else {
+			int ret, flags = 0;
+
+			if (mode & GL_MAP_READ_BIT)
+				flags |= NOUVEAU_BO_RD;
+			if (mode & GL_MAP_WRITE_BIT)
+				flags |= NOUVEAU_BO_WR;
+
+			if (!s->bo->map) {
+				ret = nouveau_bo_map(s->bo, flags);
+				assert(!ret);
+			}
+
+			*map = s->bo->map + y * s->pitch + x * s->cpp;
+			*stride = s->pitch;
+		}
+	} else {
+		*map = ti->Data + y * s->pitch + x * s->cpp;
+		*stride = s->pitch;
+	}
+}
+
+static void
+nouveau_unmap_texture_image(struct gl_context *ctx, struct gl_texture_image *ti,
+			    GLuint slice)
+{
+	struct nouveau_teximage *nti = to_nouveau_teximage(ti);
+	struct nouveau_surface *s = &nti->surface;
+	struct nouveau_surface *st = &nti->transfer.surface;
+
+	if (st->bo) {
+		context_drv(ctx)->surface_copy(ctx, s, st, nti->transfer.x,
+					       nti->transfer.y, 0, 0,
+					       st->width, st->height);
+		nouveau_surface_ref(NULL, st);
+
+	} else if (s->bo) {
+		nouveau_bo_unmap(s->bo);
+	}
+
+	ti->Data = NULL;
+}
+
 static gl_format
 nouveau_choose_tex_format(struct gl_context *ctx, GLint internalFormat,
 			  GLenum srcFormat, GLenum srcType)
@@ -716,5 +795,7 @@ nouveau_texture_functions_init(struct dd_function_table *functions)
 	functions->BindTexture = nouveau_bind_texture;
 	functions->MapTexture = nouveau_texture_map;
 	functions->UnmapTexture = nouveau_texture_unmap;
+	functions->MapTextureImage = nouveau_map_texture_image;
+	functions->UnmapTextureImage = nouveau_unmap_texture_image;
 	functions->GenerateMipmap = nouveau_generate_mipmap;
 }
