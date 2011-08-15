@@ -26,8 +26,8 @@
 
 /**
  * @file
- * Blitter utility to facilitate acceleration of the clear, clear_render_target, clear_depth_stencil
- * resource_copy_region functions.
+ * Blitter utility to facilitate acceleration of the clear, clear_render_target,
+ * clear_depth_stencil, and resource_copy_region functions.
  *
  * @author Marek Olšák
  */
@@ -197,8 +197,6 @@ struct blitter_context *util_blitter_create(struct pipe_context *pipe)
    memset(&velem[0], 0, sizeof(velem[0]) * 2);
    for (i = 0; i < 2; i++) {
       velem[i].src_offset = i * 4 * sizeof(float);
-      velem[i].instance_divisor = 0;
-      velem[i].vertex_buffer_index = 0;
       velem[i].src_format = PIPE_FORMAT_R32G32B32A32_FLOAT;
    }
    ctx->velem_state = pipe->create_vertex_elements_state(pipe, 2, &velem[0]);
@@ -288,26 +286,33 @@ static void blitter_restore_CSOs(struct blitter_context_priv *ctx)
    unsigned i;
 
    /* restore the state objects which are always required to be saved */
-   pipe->bind_blend_state(pipe, ctx->base.saved_blend_state);
-   pipe->bind_depth_stencil_alpha_state(pipe, ctx->base.saved_dsa_state);
    pipe->bind_rasterizer_state(pipe, ctx->base.saved_rs_state);
-   pipe->bind_fs_state(pipe, ctx->base.saved_fs);
    pipe->bind_vs_state(pipe, ctx->base.saved_vs);
    pipe->bind_vertex_elements_state(pipe, ctx->base.saved_velem_state);
 
-   ctx->base.saved_blend_state = INVALID_PTR;
-   ctx->base.saved_dsa_state = INVALID_PTR;
    ctx->base.saved_rs_state = INVALID_PTR;
-   ctx->base.saved_fs = INVALID_PTR;
    ctx->base.saved_vs = INVALID_PTR;
    ctx->base.saved_velem_state = INVALID_PTR;
+
+   /* restore the state objects which are required to be saved for clear/copy
+    */
+   if (ctx->base.saved_blend_state != INVALID_PTR) {
+      pipe->bind_blend_state(pipe, ctx->base.saved_blend_state);
+      ctx->base.saved_blend_state = INVALID_PTR;
+   }
+   if (ctx->base.saved_dsa_state != INVALID_PTR) {
+      pipe->bind_depth_stencil_alpha_state(pipe, ctx->base.saved_dsa_state);
+      ctx->base.saved_dsa_state = INVALID_PTR;
+   }
+   if (ctx->base.saved_fs != INVALID_PTR) {
+      pipe->bind_fs_state(pipe, ctx->base.saved_fs);
+      ctx->base.saved_fs = INVALID_PTR;
+   }
 
    pipe->set_stencil_ref(pipe, &ctx->base.saved_stencil_ref);
    pipe->set_viewport_state(pipe, &ctx->base.saved_viewport);
    pipe->set_clip_state(pipe, &ctx->base.saved_clip);
 
-   /* restore the state objects which are required to be saved before copy/fill
-    */
    if (ctx->base.saved_fb_state.nr_cbufs != ~0) {
       pipe->set_framebuffer_state(pipe, &ctx->base.saved_fb_state);
       util_unreference_framebuffer_state(&ctx->base.saved_fb_state);
