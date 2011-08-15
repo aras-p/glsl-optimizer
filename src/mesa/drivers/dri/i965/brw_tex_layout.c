@@ -49,10 +49,13 @@ GLboolean brw_miptree_layout(struct intel_context *intel,
    switch (mt->target) {
    case GL_TEXTURE_CUBE_MAP:
       if (intel->gen >= 5) {
-          GLuint align_h = 2;
+          GLuint align_w;
+          GLuint align_h;
           GLuint level;
           GLuint qpitch = 0;
 	  int h0, h1, q;
+
+	  intel_get_texture_alignment_unit(mt->format, &align_w, &align_h);
 
 	  /* On Ironlake, cube maps are finally represented as just a series
 	   * of MIPLAYOUT_BELOW 2D textures (like 2D texture arrays), separated
