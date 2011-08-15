@@ -324,131 +324,34 @@ static const char *noop_get_name(struct pipe_screen* pscreen)
 
 static int noop_get_param(struct pipe_screen* pscreen, enum pipe_cap param)
 {
-	switch (param) {
-	/* Supported features (boolean caps). */
-	case PIPE_CAP_NPOT_TEXTURES:
-	case PIPE_CAP_TWO_SIDED_STENCIL:
-	case PIPE_CAP_GLSL:
-	case PIPE_CAP_OCCLUSION_QUERY:
-	case PIPE_CAP_POINT_SPRITE:
-	case PIPE_CAP_ANISOTROPIC_FILTER:
-	case PIPE_CAP_TEXTURE_MIRROR_CLAMP:
-	case PIPE_CAP_TEXTURE_MIRROR_REPEAT:
-	case PIPE_CAP_TEXTURE_SHADOW_MAP:
-	case PIPE_CAP_TEXTURE_SWIZZLE:
-	case PIPE_CAP_BLEND_EQUATION_SEPARATE:
-	case PIPE_CAP_MIXED_COLORBUFFER_FORMATS:
+	struct pipe_screen *screen = ((struct noop_pipe_screen*)pscreen)->oscreen;
 
-	  return 1;
-	case PIPE_CAP_DUAL_SOURCE_BLEND:
-
-	case PIPE_CAP_SM3:
-	case PIPE_CAP_INDEP_BLEND_ENABLE:
-	case PIPE_CAP_DEPTHSTENCIL_CLEAR_SEPARATE:
-	case PIPE_CAP_DEPTH_CLAMP:
-	case PIPE_CAP_SHADER_STENCIL_EXPORT:
-	case PIPE_CAP_TIMER_QUERY:
-	case PIPE_CAP_STREAM_OUTPUT:
-	case PIPE_CAP_PRIMITIVE_RESTART:
-	case PIPE_CAP_INDEP_BLEND_FUNC:
-		return 0;
-
-	/* Texturing. */
-	case PIPE_CAP_MAX_TEXTURE_2D_LEVELS:
-	case PIPE_CAP_MAX_TEXTURE_3D_LEVELS:
-	case PIPE_CAP_MAX_TEXTURE_CUBE_LEVELS:
-		return 14;
-	case PIPE_CAP_MAX_VERTEX_TEXTURE_UNITS:
-		return 16;
-	case PIPE_CAP_MAX_TEXTURE_IMAGE_UNITS:
-	case PIPE_CAP_MAX_COMBINED_SAMPLERS:
-		return 16;
-
-	/* Render targets. */
-	case PIPE_CAP_MAX_RENDER_TARGETS:
-		return 8;
-
-	/* Fragment coordinate conventions. */
-	case PIPE_CAP_TGSI_FS_COORD_ORIGIN_UPPER_LEFT:
-	case PIPE_CAP_TGSI_FS_COORD_PIXEL_CENTER_HALF_INTEGER:
-		return 1;
-	case PIPE_CAP_TGSI_FS_COORD_ORIGIN_LOWER_LEFT:
-	case PIPE_CAP_TGSI_FS_COORD_PIXEL_CENTER_INTEGER:
-		return 0;
-
-	default:
-		return 0;
-	}
+	return screen->get_param(screen, param);
 }
 
 static float noop_get_paramf(struct pipe_screen* pscreen, enum pipe_cap param)
 {
-	switch (param) {
-	case PIPE_CAP_MAX_LINE_WIDTH:
-	case PIPE_CAP_MAX_LINE_WIDTH_AA:
-	case PIPE_CAP_MAX_POINT_WIDTH:
-	case PIPE_CAP_MAX_POINT_WIDTH_AA:
-		return 8192.0f;
-	case PIPE_CAP_MAX_TEXTURE_ANISOTROPY:
-		return 16.0f;
-	case PIPE_CAP_MAX_TEXTURE_LOD_BIAS:
-		return 16.0f;
-	default:
-		return 0.0f;
-	}
+	struct pipe_screen *screen = ((struct noop_pipe_screen*)pscreen)->oscreen;
+
+	return screen->get_paramf(screen, param);
 }
 
 static int noop_get_shader_param(struct pipe_screen* pscreen, unsigned shader, enum pipe_shader_cap param)
 {
-	switch(shader)
-	{
-	case PIPE_SHADER_FRAGMENT:
-	case PIPE_SHADER_VERTEX:
-	case PIPE_SHADER_GEOMETRY:
-		break;
-	default:
-		return 0;
-	}
+	struct pipe_screen *screen = ((struct noop_pipe_screen*)pscreen)->oscreen;
 
-	switch (param) {
-	case PIPE_SHADER_CAP_MAX_INSTRUCTIONS:
-	case PIPE_SHADER_CAP_MAX_ALU_INSTRUCTIONS:
-	case PIPE_SHADER_CAP_MAX_TEX_INSTRUCTIONS:
-	case PIPE_SHADER_CAP_MAX_TEX_INDIRECTIONS:
-		return 16384;
-	case PIPE_SHADER_CAP_MAX_CONTROL_FLOW_DEPTH:
-		return 8;
-	case PIPE_SHADER_CAP_MAX_INPUTS:
-		return 16;
-	case PIPE_SHADER_CAP_MAX_TEMPS:
-		return 256;
-	case PIPE_SHADER_CAP_MAX_ADDRS:
-		return 1;
-	case PIPE_SHADER_CAP_MAX_CONSTS:
-		return 256;
-	case PIPE_SHADER_CAP_MAX_CONST_BUFFERS:
-		return 1;
-	case PIPE_SHADER_CAP_MAX_PREDS:
-		return 0;
-	case PIPE_SHADER_CAP_TGSI_CONT_SUPPORTED:
-		return 1;
-	case PIPE_SHADER_CAP_INDIRECT_INPUT_ADDR:
-	case PIPE_SHADER_CAP_INDIRECT_OUTPUT_ADDR:
-	case PIPE_SHADER_CAP_INDIRECT_TEMP_ADDR:
-	case PIPE_SHADER_CAP_INDIRECT_CONST_ADDR:
-		return 1;
-	default:
-		return 0;
-	}
+	return screen->get_shader_param(screen, shader, param);
 }
 
-static boolean noop_is_format_supported(struct pipe_screen* screen,
+static boolean noop_is_format_supported(struct pipe_screen* pscreen,
 					enum pipe_format format,
 					enum pipe_texture_target target,
 					unsigned sample_count,
                                         unsigned usage)
 {
-	return true;
+	struct pipe_screen *screen = ((struct noop_pipe_screen*)pscreen)->oscreen;
+
+	return screen->is_format_supported(screen, format, target, sample_count, usage);
 }
 
 static void noop_destroy_screen(struct pipe_screen *screen)
