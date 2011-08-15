@@ -454,9 +454,9 @@ get_uniform(struct gl_context *ctx, GLuint program, GLint location,
             for (i = 0; i < rows; i++) {
                const int base = paramPos + offset + i;
                for (j = 0; j < cols; j++ ) {
-                  params[k++] = ctx->Const.GLSLVersion <= 120 ? 
-                     (GLint) prog->Parameters->ParameterValues[base][j].f : 
-                     prog->Parameters->ParameterValues[base][j].i;
+                  params[k++] = ctx->Const.NativeIntegers ?
+                     prog->Parameters->ParameterValues[base][j].i :
+                     (GLint) prog->Parameters->ParameterValues[base][j].f;
                }
             }
          }
@@ -468,9 +468,9 @@ get_uniform(struct gl_context *ctx, GLuint program, GLint location,
             for (i = 0; i < rows; i++) {
                const int base = paramPos + offset + i;
                for (j = 0; j < cols; j++ ) {
-                  params[k++] = ctx->Const.GLSLVersion <= 120 ? 
-                     (GLuint) prog->Parameters->ParameterValues[base][j].f : 
-                     prog->Parameters->ParameterValues[base][j].u;
+                  params[k++] = ctx->Const.NativeIntegers ?
+                     prog->Parameters->ParameterValues[base][j].u :
+                     (GLuint) prog->Parameters->ParameterValues[base][j].f;
                }
             }
          }
@@ -750,7 +750,7 @@ set_program_uniform(struct gl_context *ctx, struct gl_program *program,
          if (basicType == GL_INT) {
             const GLint *iValues = ((const GLint *) values) + k * elems;
             for (i = 0; i < elems; i++) {
-               if (ctx->Const.GLSLVersion <= 120)
+               if (!ctx->Const.NativeIntegers)
                   uniformVal[i].f = (GLfloat) iValues[i];
                else
                   uniformVal[i].i = iValues[i];
@@ -759,7 +759,7 @@ set_program_uniform(struct gl_context *ctx, struct gl_program *program,
          else if (basicType == GL_UNSIGNED_INT) {
             const GLuint *iValues = ((const GLuint *) values) + k * elems;
             for (i = 0; i < elems; i++) {
-               if (ctx->Const.GLSLVersion <= 120)
+               if (!ctx->Const.NativeIntegers)
                   uniformVal[i].f = (GLfloat)(GLuint) iValues[i];
                else
                   uniformVal[i].u = iValues[i];
@@ -781,7 +781,7 @@ set_program_uniform(struct gl_context *ctx, struct gl_program *program,
                else
                   uniformVal[i].b = uniformVal[i].u ? 1 : 0;
                
-               if (ctx->Const.GLSLVersion <= 120)
+               if (!ctx->Const.NativeIntegers)
                   uniformVal[i].f = uniformVal[i].b ? 1.0f : 0.0f;
             }
          }

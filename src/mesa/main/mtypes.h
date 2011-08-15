@@ -2717,6 +2717,12 @@ struct gl_constants
 
    GLuint GLSLVersion;  /**< GLSL version supported (ex: 120 = 1.20) */
 
+   /**
+    * Does the driver support real 32-bit integers?  (Otherwise, integers are
+    * simulated via floats.)
+    */
+   GLboolean NativeIntegers;
+
    /** Which texture units support GL_ATI_envmap_bumpmap as targets */
    GLbitfield SupportedBumpUnits;
 

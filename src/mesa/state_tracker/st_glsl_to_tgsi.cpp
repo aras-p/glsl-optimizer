@@ -295,6 +295,7 @@ public:
    bool indirect_addr_consts;
    
    int glsl_version;
+   bool native_integers;
 
    variable_storage *find_variable_storage(ir_variable *var);
 
@@ -600,7 +601,7 @@ glsl_to_tgsi_visitor::get_opcode(ir_instruction *ir, unsigned op,
    
    if (src0.type == GLSL_TYPE_FLOAT || src1.type == GLSL_TYPE_FLOAT)
       type = GLSL_TYPE_FLOAT;
-   else if (glsl_version >= 130)
+   else if (native_integers)
       type = src0.type;
 
 #define case4(c, f, i, u) \
@@ -881,7 +882,7 @@ glsl_to_tgsi_visitor::st_src_reg_for_int(int val)
    st_src_reg src(PROGRAM_IMMEDIATE, -1, GLSL_TYPE_INT);
    union gl_constant_value uval;
    
-   assert(glsl_version >= 130);
+   assert(native_integers);
 
    uval.i = val;
    src.index = add_constant(src.file, &uval, 1, GL_INT, &src.swizzle);
@@ -892,7 +893,7 @@ glsl_to_tgsi_visitor::st_src_reg_for_int(int val)
 struct st_src_reg
 glsl_to_tgsi_visitor::st_src_reg_for_type(int type, int val)
 {
-   if (glsl_version >= 130)
+   if (native_integers)
       return type == GLSL_TYPE_FLOAT ? st_src_reg_for_float(val) : 
                                        st_src_reg_for_int(val);
    else
@@ -950,7 +951,7 @@ glsl_to_tgsi_visitor::get_temp(const glsl_type *type)
 {
    st_src_reg src;
 
-   src.type = glsl_version >= 130 ? type->base_type : GLSL_TYPE_FLOAT;
+   src.type = native_integers ? type->base_type : GLSL_TYPE_FLOAT;
    src.file = PROGRAM_TEMPORARY;
    src.index = next_temp;
    src.reladdr = NULL;
@@ -1053,7 +1054,7 @@ glsl_to_tgsi_visitor::visit(ir_variable *ir)
          this->next_temp += type_size(ir->type);
 
          dst = st_dst_reg(st_src_reg(PROGRAM_TEMPORARY, storage->index,
-               glsl_version >= 130 ? ir->type->base_type : GLSL_TYPE_FLOAT));
+               native_integers ? ir->type->base_type : GLSL_TYPE_FLOAT));
       }
 
 
@@ -1069,7 +1070,7 @@ glsl_to_tgsi_visitor::visit(ir_variable *ir)
             }
          } else {
             st_src_reg src(PROGRAM_STATE_VAR, index,
-                  glsl_version >= 130 ? ir->type->base_type : GLSL_TYPE_FLOAT);
+                  native_integers ? ir->type->base_type : GLSL_TYPE_FLOAT);
             src.swizzle = slots[i].swizzle;
             emit(ir, TGSI_OPCODE_MOV, dst, src);
             /* even a float takes up a whole vec4 reg in a struct/array. */
@@ -1444,7 +1445,7 @@ glsl_to_tgsi_visitor::visit(ir_expression *ir)
       /* "==" operator producing a scalar boolean. */
       if (ir->operands[0]->type->is_vector() ||
           ir->operands[1]->type->is_vector()) {
-         st_src_reg temp = get_temp(glsl_version >= 130 ? 
+         st_src_reg temp = get_temp(native_integers ?
                glsl_type::get_instance(ir->operands[0]->type->base_type, 4, 1) :
                glsl_type::vec4_type);
          assert(ir->operands[0]->type->base_type == GLSL_TYPE_FLOAT);
@@ -1459,7 +1460,7 @@ glsl_to_tgsi_visitor::visit(ir_expression *ir)
       /* "!=" operator producing a scalar boolean. */
       if (ir->operands[0]->type->is_vector() ||
           ir->operands[1]->type->is_vector()) {
-         st_src_reg temp = get_temp(glsl_version >= 130 ? 
+         st_src_reg temp = get_temp(native_integers ?
                glsl_type::get_instance(ir->operands[0]->type->base_type, 4, 1) :
                glsl_type::vec4_type);
          assert(ir->operands[0]->type->base_type == GLSL_TYPE_FLOAT);
@@ -1514,7 +1515,7 @@ glsl_to_tgsi_visitor::visit(ir_expression *ir)
       break;
    case ir_unop_i2f:
    case ir_unop_b2f:
-      if (glsl_version >= 130) {
+      if (native_integers) {
          emit(ir, TGSI_OPCODE_I2F, result_dst, op[0]);
          break;
       }
@@ -1526,7 +1527,7 @@ glsl_to_tgsi_visitor::visit(ir_expression *ir)
       result_src = op[0];
       break;
    case ir_unop_f2i:
-      if (glsl_version >= 130)
+      if (native_integers)
          emit(ir, TGSI_OPCODE_F2I, result_dst, op[0]);
       else
          emit(ir, TGSI_OPCODE_TRUNC, result_dst, op[0]);
@@ -1567,7 +1568,7 @@ glsl_to_tgsi_visitor::visit(ir_expression *ir)
          break;
       }
    case ir_unop_u2f:
-      if (glsl_version >= 130) {
+      if (native_integers) {
          emit(ir, TGSI_OPCODE_U2F, result_dst, op[0]);
          break;
       }
@@ -1719,7 +1720,7 @@ glsl_to_tgsi_visitor::visit(ir_dereference_variable *ir)
    }
 
    this->result = st_src_reg(entry->file, entry->index, var->type);
-   if (glsl_version <= 120)
+   if (!native_integers)
       this->result.type = GLSL_TYPE_FLOAT;
 }
 
@@ -2109,27 +2110,27 @@ glsl_to_tgsi_visitor::visit(ir_constant *ir)
       }
       break;
    case GLSL_TYPE_UINT:
-      gl_type = glsl_version >= 130 ? GL_UNSIGNED_INT : GL_FLOAT;
+      gl_type = native_integers ? GL_UNSIGNED_INT : GL_FLOAT;
       for (i = 0; i < ir->type->vector_elements; i++) {
-         if (glsl_version >= 130)
+         if (native_integers)
             values[i].u = ir->value.u[i];
          else
             values[i].f = ir->value.u[i];
       }
       break;
    case GLSL_TYPE_INT:
-      gl_type = glsl_version >= 130 ? GL_INT : GL_FLOAT;
+      gl_type = native_integers ? GL_INT : GL_FLOAT;
       for (i = 0; i < ir->type->vector_elements; i++) {
-         if (glsl_version >= 130)
+         if (native_integers)
             values[i].i = ir->value.i[i];
          else
             values[i].f = ir->value.i[i];
       }
       break;
    case GLSL_TYPE_BOOL:
-      gl_type = glsl_version >= 130 ? GL_BOOL : GL_FLOAT;
+      gl_type = native_integers ? GL_BOOL : GL_FLOAT;
       for (i = 0; i < ir->type->vector_elements; i++) {
-         if (glsl_version >= 130)
+         if (native_integers)
             values[i].b = ir->value.b[i];
          else
             values[i].f = ir->value.b[i];
@@ -3611,6 +3612,7 @@ get_pixel_transfer_visitor(struct st_fragment_program *fp,
    v->ctx = original->ctx;
    v->prog = prog;
    v->glsl_version = original->glsl_version;
+   v->native_integers = original->native_integers;
    v->options = original->options;
    v->next_temp = original->next_temp;
    v->num_address_regs = original->num_address_regs;
@@ -3739,6 +3741,7 @@ get_bitmap_visitor(struct st_fragment_program *fp,
    v->ctx = original->ctx;
    v->prog = prog;
    v->glsl_version = original->glsl_version;
+   v->native_integers = original->native_integers;
    v->options = original->options;
    v->next_temp = original->next_temp;
    v->num_address_regs = original->num_address_regs;
@@ -4674,6 +4677,7 @@ get_mesa_program(struct gl_context *ctx,
    v->shader_program = shader_program;
    v->options = options;
    v->glsl_version = ctx->Const.GLSLVersion;
+   v->native_integers = ctx->Const.NativeIntegers;
 
    add_uniforms_to_parameters_list(shader_program, shader, prog);
 
