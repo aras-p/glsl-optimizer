@@ -123,8 +123,6 @@ enum wayland_buffer_type {
    WL_BUFFER_THIRD,
    WL_BUFFER_COUNT
 };
-
-#define __DRI_BUFFER_COUNT 10
 #endif
 
 enum dri2_surface_type {

@@ -694,6 +694,9 @@ struct __DRIswrastExtensionRec {
 #define __DRI_BUFFER_DEPTH_STENCIL	9  /**< Only available with DRI2 1.1 */
 #define __DRI_BUFFER_HIZ		10
 
+/* Inofficial and for internal use. Increase when adding a new buffer token. */
+#define __DRI_BUFFER_COUNT		11
+
 struct __DRIbufferRec {
     unsigned int attachment;
     unsigned int name;
