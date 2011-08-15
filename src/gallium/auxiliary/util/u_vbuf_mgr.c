@@ -34,21 +34,6 @@
 #include "translate/translate.h"
 #include "translate/translate_cache.h"
 
-/* Hardware vertex fetcher limitations can be described by this structure. */
-struct u_vbuf_caps {
-   /* Vertex format CAPs. */
-   /* TRUE if hardware supports it. */
-   unsigned format_fixed32:1;    /* PIPE_FORMAT_*32*_FIXED */
-   unsigned format_float16:1;    /* PIPE_FORMAT_*16*_FLOAT */
-   unsigned format_float64:1;    /* PIPE_FORMAT_*64*_FLOAT */
-   unsigned format_norm32:1;     /* PIPE_FORMAT_*32*NORM */
-   unsigned format_scaled32:1;   /* PIPE_FORMAT_*32*SCALED */
-
-   /* Whether vertex fetches don't have to be dword-aligned. */
-   /* TRUE if hardware supports it. */
-   unsigned fetch_dword_unaligned:1;
-};
-
 struct u_vbuf_mgr_elements {
    unsigned count;
    struct pipe_vertex_element ve[PIPE_MAX_ATTRIBS];
@@ -69,7 +54,6 @@ struct u_vbuf_mgr_elements {
 
 struct u_vbuf_mgr_priv {
    struct u_vbuf_mgr b;
-   struct u_vbuf_caps caps;
    struct pipe_context *pipe;
 
    struct translate_cache *translate_cache;
@@ -89,25 +73,25 @@ static void u_vbuf_mgr_init_format_caps(struct u_vbuf_mgr_priv *mgr)
 {
    struct pipe_screen *screen = mgr->pipe->screen;
 
-   mgr->caps.format_fixed32 =
+   mgr->b.caps.format_fixed32 =
       screen->is_format_supported(screen, PIPE_FORMAT_R32_FIXED, PIPE_BUFFER,
                                   0, PIPE_BIND_VERTEX_BUFFER);
 
-   mgr->caps.format_float16 =
+   mgr->b.caps.format_float16 =
       screen->is_format_supported(screen, PIPE_FORMAT_R16_FLOAT, PIPE_BUFFER,
                                   0, PIPE_BIND_VERTEX_BUFFER);
 
-   mgr->caps.format_float64 =
+   mgr->b.caps.format_float64 =
       screen->is_format_supported(screen, PIPE_FORMAT_R64_FLOAT, PIPE_BUFFER,
                                   0, PIPE_BIND_VERTEX_BUFFER);
 
-   mgr->caps.format_norm32 =
+   mgr->b.caps.format_norm32 =
       screen->is_format_supported(screen, PIPE_FORMAT_R32_UNORM, PIPE_BUFFER,
                                   0, PIPE_BIND_VERTEX_BUFFER) &&
       screen->is_format_supported(screen, PIPE_FORMAT_R32_SNORM, PIPE_BUFFER,
                                   0, PIPE_BIND_VERTEX_BUFFER);
 
-   mgr->caps.format_scaled32 =
+   mgr->b.caps.format_scaled32 =
       screen->is_format_supported(screen, PIPE_FORMAT_R32_USCALED, PIPE_BUFFER,
                                   0, PIPE_BIND_VERTEX_BUFFER) &&
       screen->is_format_supported(screen, PIPE_FORMAT_R32_SSCALED, PIPE_BUFFER,
@@ -130,7 +114,7 @@ u_vbuf_mgr_create(struct pipe_context *pipe,
                                      upload_buffer_alignment,
                                      upload_buffer_bind);
 
-   mgr->caps.fetch_dword_unaligned =
+   mgr->b.caps.fetch_dword_unaligned =
          fetch_alignment == U_VERTEX_FETCH_BYTE_ALIGNED;
 
    u_vbuf_mgr_init_format_caps(mgr);
@@ -184,7 +168,7 @@ u_vbuf_translate_begin(struct u_vbuf_mgr_priv *mgr,
 
       /* Check for support. */
       if (mgr->ve->ve[i].src_format == mgr->ve->native_format[i] &&
-          (mgr->caps.fetch_dword_unaligned ||
+          (mgr->b.caps.fetch_dword_unaligned ||
            (vb->buffer_offset % 4 == 0 &&
             vb->stride % 4 == 0 &&
             mgr->ve->ve[i].src_offset % 4 == 0))) {
@@ -365,7 +349,7 @@ u_vbuf_mgr_create_vertex_elements(struct u_vbuf_mgr *mgrb,
       /* Choose a native format.
        * For now we don't care about the alignment, that's going to
        * be sorted out later. */
-      if (!mgr->caps.format_fixed32) {
+      if (!mgr->b.caps.format_fixed32) {
          switch (format) {
             FORMAT_REPLACE(R32_FIXED,           R32_FLOAT);
             FORMAT_REPLACE(R32G32_FIXED,        R32G32_FLOAT);
@@ -374,7 +358,7 @@ u_vbuf_mgr_create_vertex_elements(struct u_vbuf_mgr *mgrb,
             default:;
          }
       }
-      if (!mgr->caps.format_float16) {
+      if (!mgr->b.caps.format_float16) {
          switch (format) {
             FORMAT_REPLACE(R16_FLOAT,           R32_FLOAT);
             FORMAT_REPLACE(R16G16_FLOAT,        R32G32_FLOAT);
@@ -383,7 +367,7 @@ u_vbuf_mgr_create_vertex_elements(struct u_vbuf_mgr *mgrb,
             default:;
          }
       }
-      if (!mgr->caps.format_float64) {
+      if (!mgr->b.caps.format_float64) {
          switch (format) {
             FORMAT_REPLACE(R64_FLOAT,           R32_FLOAT);
             FORMAT_REPLACE(R64G64_FLOAT,        R32G32_FLOAT);
@@ -392,7 +376,7 @@ u_vbuf_mgr_create_vertex_elements(struct u_vbuf_mgr *mgrb,
             default:;
          }
       }
-      if (!mgr->caps.format_norm32) {
+      if (!mgr->b.caps.format_norm32) {
          switch (format) {
             FORMAT_REPLACE(R32_UNORM,           R32_FLOAT);
             FORMAT_REPLACE(R32G32_UNORM,        R32G32_FLOAT);
@@ -405,7 +389,7 @@ u_vbuf_mgr_create_vertex_elements(struct u_vbuf_mgr *mgrb,
             default:;
          }
       }
-      if (!mgr->caps.format_scaled32) {
+      if (!mgr->b.caps.format_scaled32) {
          switch (format) {
             FORMAT_REPLACE(R32_USCALED,         R32_FLOAT);
             FORMAT_REPLACE(R32G32_USCALED,      R32G32_FLOAT);
@@ -427,11 +411,11 @@ u_vbuf_mgr_create_vertex_elements(struct u_vbuf_mgr *mgrb,
       ve->incompatible_layout =
             ve->incompatible_layout ||
             ve->ve[i].src_format != ve->native_format[i] ||
-            (!mgr->caps.fetch_dword_unaligned && ve->ve[i].src_offset % 4 != 0);
+            (!mgr->b.caps.fetch_dword_unaligned && ve->ve[i].src_offset % 4 != 0);
    }
 
    /* Align the formats to the size of DWORD if needed. */
-   if (!mgr->caps.fetch_dword_unaligned) {
+   if (!mgr->b.caps.fetch_dword_unaligned) {
       for (i = 0; i < count; i++) {
          ve->native_format_size[i] = align(ve->native_format_size[i], 4);
       }
@@ -472,7 +456,7 @@ void u_vbuf_mgr_set_vertex_buffers(struct u_vbuf_mgr *mgrb,
    mgr->any_user_vbs = FALSE;
    mgr->incompatible_vb_layout = FALSE;
 
-   if (!mgr->caps.fetch_dword_unaligned) {
+   if (!mgr->b.caps.fetch_dword_unaligned) {
       /* Check if the strides and offsets are aligned to the size of DWORD. */
       for (i = 0; i < count; i++) {
          if (bufs[i].buffer) {

@@ -273,6 +273,7 @@ static struct pipe_context *r600_create_context(struct pipe_screen *screen, void
 		r600_destroy_context(&rctx->context);
 		return NULL;
 	}
+	rctx->vbuf_mgr->caps.format_fixed32 = 0;
 
 	rctx->blitter = util_blitter_create(&rctx->context);
 	if (rctx->blitter == NULL) {
