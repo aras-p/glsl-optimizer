@@ -125,6 +125,7 @@ CXX_SOURCES = \
 	brw_fs_schedule_instructions.cpp \
 	brw_fs_vector_splitting.cpp \
 	brw_shader.cpp \
+	brw_vec4.cpp \
 	brw_vec4_emit.cpp \
 	brw_vec4_reg_allocate.cpp \
 	brw_vec4_visitor.cpp

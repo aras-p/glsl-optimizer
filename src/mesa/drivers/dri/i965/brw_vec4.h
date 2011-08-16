@@ -320,6 +320,9 @@ public:
    int virtual_grf_count;
    int virtual_grf_array_size;
    int first_non_payload_grf;
+   int *virtual_grf_def;
+   int *virtual_grf_use;
+   bool live_intervals_valid;
 
    dst_reg *variable_storage(ir_variable *var);
 
@@ -377,6 +380,8 @@ public:
    void reg_allocate_trivial();
    void reg_allocate();
    void move_grf_array_access_to_scratch();
+   void calculate_live_intervals();
+   bool virtual_grf_interferes(int a, int b);
 
    vec4_instruction *emit(enum opcode opcode);
 
