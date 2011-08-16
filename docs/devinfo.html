@@ -72,6 +72,13 @@ If you use tabs, set them to 8 columns
 </p>
 
 <p>
+Line width: the preferred width to fill comments and code in Mesa is 78
+columns.  Exceptions are sometimes made for clarity (e.g. tabular data is
+sometimes filled to a much larger width so that extraneous carriage returns
+don't obscure the table).
+</p>
+
+<p>
 Brace example:
 </p>
 <pre>
@@ -81,10 +88,26 @@ Brace example:
 	else {
 	   bar;
 	}
+
+	switch (condition) {
+	case 0:
+	   foo();
+	   break;
+
+	case 1: {
+	   ...
+	   break;
+	}
+
+	default:
+	   ...
+	   break;
+	}
 </pre>
 
 <p>
 Here's the GNU indent command which will best approximate my preferred style:
+(Note that it won't format switch statements in the preferred way)
 </p>
 <pre>
 	indent -br -i3 -npcs --no-tabs infile.c -o outfile.c
