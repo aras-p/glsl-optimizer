@@ -985,7 +985,7 @@ vec4_visitor::visit(ir_expression *ir)
 	    temp.type = op[0].type;
 
 	 inst = emit(BRW_OPCODE_CMP, temp, op[0], op[1]);
-	 inst->conditional_mod = BRW_CONDITIONAL_NZ;
+	 inst->conditional_mod = BRW_CONDITIONAL_Z;
 	 emit(BRW_OPCODE_AND, result_dst, result_src, src_reg(0x1));
       }
       break;
