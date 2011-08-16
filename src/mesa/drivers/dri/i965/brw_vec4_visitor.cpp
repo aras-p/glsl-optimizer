@@ -38,6 +38,7 @@ src_reg::src_reg(dst_reg reg)
    this->reg_offset = reg.reg_offset;
    this->type = reg.type;
    this->reladdr = reg.reladdr;
+   this->fixed_hw_reg = reg.fixed_hw_reg;
 
    int swizzles[4];
    int next_chan = 0;
@@ -68,6 +69,7 @@ dst_reg::dst_reg(src_reg reg)
    this->type = reg.type;
    this->writemask = WRITEMASK_XYZW;
    this->reladdr = reg.reladdr;
+   this->fixed_hw_reg = reg.fixed_hw_reg;
 }
 
 vec4_instruction *
