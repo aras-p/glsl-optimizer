@@ -2311,7 +2311,7 @@ brw_find_loop_end(struct brw_compile *p, int start)
       if (insn->header.opcode == BRW_OPCODE_WHILE) {
 	 int jip = intel->gen == 6 ? insn->bits1.branch_gen6.jump_count
 				   : insn->bits3.break_cont.jip;
-	 if (ip + jip / br < start)
+	 if (ip + jip / br <= start)
 	    return ip;
       }
    }
