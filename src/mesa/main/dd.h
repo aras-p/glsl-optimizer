@@ -194,7 +194,7 @@ struct dd_function_table {
     * cases, srcFormat and srcType can be GL_NONE.
     * Called by glTexImage(), etc.
     */
-   GLuint (*ChooseTextureFormat)( struct gl_context *ctx, GLint internalFormat,
+   gl_format (*ChooseTextureFormat)( struct gl_context *ctx, GLint internalFormat,
                                      GLenum srcFormat, GLenum srcType );
 
    /**
