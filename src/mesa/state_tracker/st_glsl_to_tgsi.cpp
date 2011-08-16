@@ -3987,7 +3987,6 @@ get_pixel_transfer_visitor(struct st_fragment_program *fp,
    prog->Parameters = _mesa_combine_parameter_lists(params,
                                                     original->prog->Parameters);
    prog->Attributes = _mesa_clone_parameter_list(original->prog->Attributes);
-   prog->Varying = _mesa_clone_parameter_list(original->prog->Varying);
    _mesa_free_parameter_list(params);
    count_resources(v, prog);
    fp->glsl_to_tgsi = v;
@@ -4063,7 +4062,6 @@ get_bitmap_visitor(struct st_fragment_program *fp,
    /* Make modifications to fragment program info. */
    prog->Parameters = _mesa_clone_parameter_list(original->prog->Parameters);
    prog->Attributes = _mesa_clone_parameter_list(original->prog->Attributes);
-   prog->Varying = _mesa_clone_parameter_list(original->prog->Varying);
    count_resources(v, prog);
    fp->glsl_to_tgsi = v;
 }
@@ -4969,7 +4967,6 @@ get_mesa_program(struct gl_context *ctx,
    if (!prog)
       return NULL;
    prog->Parameters = _mesa_new_parameter_list();
-   prog->Varying = _mesa_new_parameter_list();
    prog->Attributes = _mesa_new_parameter_list();
    v->ctx = ctx;
    v->prog = prog;

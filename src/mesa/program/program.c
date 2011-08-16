@@ -394,9 +394,6 @@ _mesa_delete_program(struct gl_context *ctx, struct gl_program *prog)
    if (prog->Parameters) {
       _mesa_free_parameter_list(prog->Parameters);
    }
-   if (prog->Varying) {
-      _mesa_free_parameter_list(prog->Varying);
-   }
    if (prog->Attributes) {
       _mesa_free_parameter_list(prog->Attributes);
    }
@@ -522,8 +519,6 @@ _mesa_clone_program(struct gl_context *ctx, const struct gl_program *prog)
    if (prog->Parameters)
       clone->Parameters = _mesa_clone_parameter_list(prog->Parameters);
    memcpy(clone->LocalParams, prog->LocalParams, sizeof(clone->LocalParams));
-   if (prog->Varying)
-      clone->Varying = _mesa_clone_parameter_list(prog->Varying);
    if (prog->Attributes)
       clone->Attributes = _mesa_clone_parameter_list(prog->Attributes);
    memcpy(clone->LocalParams, prog->LocalParams, sizeof(clone->LocalParams));
