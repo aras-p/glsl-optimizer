@@ -63,6 +63,7 @@ EGL_LIB_DEPS += $(XCB_DRI2_LIBS)
 endif
 ifneq ($(findstring drm, $(EGL_PLATFORMS)),)
 EGL_LIB_DEPS += -lgbm
+INCLUDE_DIRS += -I$(TOP)/src/gbm/main
 endif
 EGL_LIB_DEPS += $(LIBUDEV_LIBS) $(DLOPEN_LIBS) $(LIBDRM_LIB) $(WAYLAND_LIBS)
 endif
@@ -70,6 +71,7 @@ endif
 
 ifneq ($(findstring wayland, $(EGL_PLATFORMS)),)
 LOCAL_LIBS += $(TOP)/src/egl/wayland/wayland-drm/libwayland-drm.a
+INCLUDE_DIRS += $(WAYLAND_CFLAGS)
 endif
 
 ifeq ($(filter glx, $(EGL_DRIVERS_DIRS)),glx)
