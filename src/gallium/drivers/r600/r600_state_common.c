@@ -619,6 +619,8 @@ void r600_draw_vbo(struct pipe_context *ctx, const struct pipe_draw_info *info)
 		r600_pipe_state_add_reg(&rctx->vgt, R_028400_VGT_MAX_VTX_INDX, draw.info.max_index, 0xFFFFFFFF, NULL, 0);
 		r600_pipe_state_add_reg(&rctx->vgt, R_028404_VGT_MIN_VTX_INDX, draw.info.min_index, 0xFFFFFFFF, NULL, 0);
 		r600_pipe_state_add_reg(&rctx->vgt, R_028408_VGT_INDX_OFFSET, draw.info.index_bias, 0xFFFFFFFF, NULL, 0);
+		r600_pipe_state_add_reg(&rctx->vgt, R_02840C_VGT_MULTI_PRIM_IB_RESET_INDX, draw.info.restart_index, 0xFFFFFFFF, NULL, 0);
+		r600_pipe_state_add_reg(&rctx->vgt, R_028A94_VGT_MULTI_PRIM_IB_RESET_EN, draw.info.primitive_restart, 0xFFFFFFFF, NULL, 0);
 		r600_pipe_state_add_reg(&rctx->vgt, R_03CFF0_SQ_VTX_BASE_VTX_LOC, 0, 0xFFFFFFFF, NULL, 0);
 		r600_pipe_state_add_reg(&rctx->vgt, R_03CFF4_SQ_VTX_START_INST_LOC, draw.info.start_instance, 0xFFFFFFFF, NULL, 0);
 		r600_pipe_state_add_reg(&rctx->vgt, R_028814_PA_SU_SC_MODE_CNTL,
@@ -633,6 +635,8 @@ void r600_draw_vbo(struct pipe_context *ctx, const struct pipe_draw_info *info)
 	r600_pipe_state_mod_reg(&rctx->vgt, draw.info.max_index);
 	r600_pipe_state_mod_reg(&rctx->vgt, draw.info.min_index);
 	r600_pipe_state_mod_reg(&rctx->vgt, draw.info.index_bias);
+	r600_pipe_state_mod_reg(&rctx->vgt, draw.info.restart_index);
+	r600_pipe_state_mod_reg(&rctx->vgt, draw.info.primitive_restart);
 	r600_pipe_state_mod_reg(&rctx->vgt, 0);
 	r600_pipe_state_mod_reg(&rctx->vgt, draw.info.start_instance);
 	if (draw.info.mode == PIPE_PRIM_QUADS || draw.info.mode == PIPE_PRIM_QUAD_STRIP || draw.info.mode == PIPE_PRIM_POLYGON) {
