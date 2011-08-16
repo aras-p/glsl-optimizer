@@ -630,6 +630,11 @@ fs_visitor::generate_code()
       case BRW_OPCODE_MUL:
 	 brw_MUL(p, dst, src[0], src[1]);
 	 break;
+      case BRW_OPCODE_MACH:
+	 brw_set_acc_write_control(p, 1);
+	 brw_MACH(p, dst, src[0], src[1]);
+	 brw_set_acc_write_control(p, 0);
+	 break;
 
       case BRW_OPCODE_FRC:
 	 brw_FRC(p, dst, src[0]);
