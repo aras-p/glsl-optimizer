@@ -63,7 +63,6 @@ vec4_visitor::reg_allocate_trivial()
       }
    }
 
-   /* Note that compressed instructions require alignment to 2 registers. */
    hw_reg_mapping[0] = this->first_non_payload_grf;
    next = hw_reg_mapping[0] + this->virtual_grf_sizes[0];
    for (i = 1; i < this->virtual_grf_count; i++) {
