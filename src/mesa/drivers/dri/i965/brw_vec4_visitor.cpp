@@ -945,7 +945,23 @@ vec4_visitor::visit(ir_expression *ir)
       break;
 
    case ir_binop_mul:
-      emit(BRW_OPCODE_MUL, result_dst, op[0], op[1]);
+      if (ir->type->is_integer()) {
+	 /* For integer multiplication, the MUL uses the low 16 bits
+	  * of one of the operands (src0 on gen6, src1 on gen7).  The
+	  * MACH accumulates in the contribution of the upper 16 bits
+	  * of that operand.
+	  *
+	  * FINISHME: Emit just the MUL if we know an operand is small
+	  * enough.
+	  */
+	 struct brw_reg acc = retype(brw_acc_reg(), BRW_REGISTER_TYPE_D);
+
+	 emit(BRW_OPCODE_MUL, acc, op[0], op[1]);
+	 emit(BRW_OPCODE_MACH, dst_null_d(), op[0], op[1]);
+	 emit(BRW_OPCODE_MOV, result_dst, src_reg(acc));
+      } else {
+	 emit(BRW_OPCODE_MUL, result_dst, op[0], op[1]);
+      }
       break;
    case ir_binop_div:
       assert(!"not reached: should be handled by ir_div_to_mul_rcp");
