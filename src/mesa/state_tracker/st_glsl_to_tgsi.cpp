@@ -3443,7 +3443,7 @@ glsl_to_tgsi_visitor::eliminate_dead_code_advanced(void)
          /* Continuing the block, clear any channels from the write array that
           * are read by this instruction.
           */
-         for (int i = 0; i < 4; i++) {
+         for (unsigned i = 0; i < Elements(inst->src); i++) {
             if (inst->src[i].file == PROGRAM_TEMPORARY && inst->src[i].reladdr){
                /* Any temporary might be read, so no dead code elimination 
                 * across this instruction.
