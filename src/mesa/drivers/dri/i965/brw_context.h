@@ -685,6 +685,23 @@ struct brw_context
 
       uint32_t push_const_offset; /* Offset in the batchbuffer */
       int push_const_size; /* in 256-bit register increments */
+
+      /** @{ register allocator */
+
+      struct ra_regs *regs;
+
+      /**
+       * Array of the ra classes for the unaligned contiguous register
+       * block sizes used.
+       */
+      int *classes;
+
+      /**
+       * Mapping for register-allocated objects in *regs to the first
+       * GRF for that object.
+      */
+      uint8_t *ra_reg_to_grf;
+      /** @} */
    } vs;
 
    struct {
