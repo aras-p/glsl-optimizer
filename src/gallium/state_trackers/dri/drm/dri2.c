@@ -46,6 +46,10 @@
 static void
 dri2_flush_drawable(__DRIdrawable *draw)
 {
+   struct dri_drawable *drawable = dri_drawable(draw);
+   struct dri_context *ctx = dri_get_current(draw->driScreenPriv);
+
+   ctx->st->flush(ctx->st, 0, NULL);
 }
 
 static void
