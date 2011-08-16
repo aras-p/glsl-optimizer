@@ -2104,6 +2104,7 @@ vec4_visitor::vec4_visitor(struct brw_vs_compile *c,
 
 vec4_visitor::~vec4_visitor()
 {
+   ralloc_free(this->mem_ctx);
    hash_table_dtor(this->variable_ht);
 }
 
