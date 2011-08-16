@@ -104,7 +104,8 @@ MAIN_SOURCES = \
 	$(MAIN_ES_SOURCES)
 
 MAIN_CXX_SOURCES = \
-	main/ff_fragment_shader.cpp
+	main/ff_fragment_shader.cpp \
+	main/shader_query.cpp
 
 MATH_SOURCES = \
 	math/m_debug_clip.c \

@@ -324,39 +324,6 @@ attach_shader(struct gl_context *ctx, GLuint program, GLuint shader)
 }
 
 
-static GLint
-get_attrib_location(struct gl_context *ctx, GLuint program, const GLchar *name)
-{
-   struct gl_shader_program *shProg
-      = _mesa_lookup_shader_program_err(ctx, program, "glGetAttribLocation");
-
-   if (!shProg) {
-      return -1;
-   }
-
-   if (!shProg->LinkStatus) {
-      _mesa_error(ctx, GL_INVALID_OPERATION,
-                  "glGetAttribLocation(program not linked)");
-      return -1;
-   }
-
-   if (!name)
-      return -1;
-
-   if (shProg->VertexProgram) {
-      const struct gl_program_parameter_list *attribs =
-         shProg->VertexProgram->Base.Attributes;
-      if (attribs) {
-         GLint i = _mesa_lookup_parameter_index(attribs, -1, name);
-         if (i >= 0) {
-            return attribs->Parameters[i].StateIndexes[0];
-         }
-      }
-   }
-   return -1;
-}
-
-
 static void
 bind_attrib_location(struct gl_context *ctx, GLuint program, GLuint index,
                      const GLchar *name)
@@ -1313,14 +1280,6 @@ _mesa_GetAttachedShaders(GLuint program, GLsizei maxCount,
 {
    GET_CURRENT_CONTEXT(ctx);
    get_attached_shaders(ctx, program, maxCount, count, obj);
-}
-
-
-GLint GLAPIENTRY
-_mesa_GetAttribLocationARB(GLhandleARB program, const GLcharARB * name)
-{
-   GET_CURRENT_CONTEXT(ctx);
-   return get_attrib_location(ctx, program, name);
 }
 
 
