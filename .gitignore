@@ -38,3 +38,4 @@ manifest.txt
 *.ncb
 *.user
 *.suo
+*.dSYM
