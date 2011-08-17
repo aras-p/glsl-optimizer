@@ -88,6 +88,11 @@ extern void *hash_table_find(struct hash_table *ht, const void *key);
 
 /**
  * Add an element to a hash table
+ *
+ * \warning
+ * If \c key is already in the hash table, it will be added again.  Future
+ * calls to \c hash_table_find and \c hash_table_remove will return or remove,
+ * repsectively, the most recently added instance of \c key.
  */
 extern void hash_table_insert(struct hash_table *ht, void *data,
     const void *key);
