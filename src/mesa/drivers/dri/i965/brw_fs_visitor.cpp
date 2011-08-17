@@ -657,10 +657,18 @@ fs_visitor::emit_texture_gen4(ir_texture *ir, fs_reg dst, fs_reg coordinate,
 	 dPdy.reg_offset++;
       }
       mlen += MAX2(ir->lod_info.grad.dPdy->type->vector_elements, 2);
+   } else if (ir->op == ir_txs) {
+      /* There's no SIMD8 resinfo message on Gen4.  Use SIMD16 instead. */
+      simd16 = true;
+      this->result = reg_undef;
+      ir->lod_info.lod->accept(this);
+      emit(BRW_OPCODE_MOV, fs_reg(MRF, base_mrf + mlen, BRW_REGISTER_TYPE_UD), this->result);
+      mlen += 2;
    } else {
       /* Oh joy.  gen4 doesn't have SIMD8 non-shadow-compare bias/lod
        * instructions.  We'll need to do SIMD16 here.
        */
+      simd16 = true;
       assert(ir->op == ir_txb || ir->op == ir_txl);
 
       for (int i = 0; i < ir->coordinate->type->vector_elements; i++) {
@@ -689,16 +697,19 @@ fs_visitor::emit_texture_gen4(ir_texture *ir, fs_reg dst, fs_reg coordinate,
 
       /* The unused upper half. */
       mlen++;
+   }
 
+   if (simd16) {
       /* Now, since we're doing simd16, the return is 2 interleaved
        * vec4s where the odd-indexed ones are junk. We'll need to move
        * this weirdness around to the expected layout.
        */
-      simd16 = true;
       orig_dst = dst;
-      dst = fs_reg(this, glsl_type::get_array_instance(glsl_type::vec4_type,
-						       2));
-      dst.type = BRW_REGISTER_TYPE_F;
+      const glsl_type *vec_type =
+	 glsl_type::get_instance(ir->type->base_type, 4, 1);
+      dst = fs_reg(this, glsl_type::get_array_instance(vec_type, 2));
+      dst.type = intel->is_g4x ? brw_type_for_base_type(ir->type)
+			       : BRW_REGISTER_TYPE_F;
    }
 
    fs_inst *inst = NULL;
@@ -715,8 +726,10 @@ fs_visitor::emit_texture_gen4(ir_texture *ir, fs_reg dst, fs_reg coordinate,
    case ir_txd:
       inst = emit(FS_OPCODE_TXD, dst);
       break;
-   case ir_txf:
    case ir_txs:
+      inst = emit(FS_OPCODE_TXS, dst);
+      break;
+   case ir_txf:
       assert(!"GLSL 1.30 features unsupported");
       break;
    }

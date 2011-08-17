@@ -292,6 +292,11 @@ fs_visitor::generate_tex(fs_inst *inst, struct brw_reg dst, struct brw_reg src)
 	 assert(inst->mlen == 7 || inst->mlen == 10);
 	 msg_type = BRW_SAMPLER_MESSAGE_SIMD8_SAMPLE_GRADIENTS;
 	 break;
+      case FS_OPCODE_TXS:
+	 assert(inst->mlen == 3);
+	 msg_type = BRW_SAMPLER_MESSAGE_SIMD16_RESINFO;
+	 simd_mode = BRW_SAMPLER_SIMD_MODE_SIMD16;
+	 break;
       default:
 	 assert(!"not reached");
 	 break;
