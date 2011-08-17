@@ -1336,7 +1336,17 @@ glsl_to_tgsi_visitor::visit(ir_expression *ir)
 
    switch (ir->operation) {
    case ir_unop_logic_not:
-      emit(ir, TGSI_OPCODE_SEQ, result_dst, op[0], st_src_reg_for_type(result_dst.type, 0));
+      if (result_dst.type != GLSL_TYPE_FLOAT)
+         emit(ir, TGSI_OPCODE_SEQ, result_dst, op[0], st_src_reg_for_type(result_dst.type, 0));
+      else {
+         /* Previously 'SEQ dst, src, 0.0' was used for this.  However, many
+          * older GPUs implement SEQ using multiple instructions (i915 uses two
+          * SGE instructions and a MUL instruction).  Since our logic values are
+          * 0.0 and 1.0, 1-x also implements !x.
+          */
+         op[0].negate = ~op[0].negate;
+         emit(ir, TGSI_OPCODE_ADD, result_dst, op[0], st_src_reg_for_float(1.0));
+      }
       break;
    case ir_unop_neg:
       assert(result_dst.type == GLSL_TYPE_FLOAT || result_dst.type == GLSL_TYPE_INT);
