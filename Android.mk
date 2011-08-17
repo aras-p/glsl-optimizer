@@ -70,7 +70,8 @@ endif
 
 ifneq ($(strip $(MESA_GPU_DRIVERS)),)
 
-SUBDIRS :=
+SUBDIRS := \
+	src/egl/main
 
 ifeq ($(strip $(MESA_BUILD_GALLIUM)),true)
 SUBDIRS += src/gallium
@@ -95,6 +96,6 @@ include $(MESA_COMMON_MK)
 include $(BUILD_SHARED_LIBRARY)
 
 mkfiles := $(patsubst %,$(MESA_TOP)/%/Android.mk,$(SUBDIRS))
--include $(mkfiles)
+include $(mkfiles)
 
 endif # MESA_GPU_DRIVERS
