@@ -37,6 +37,48 @@ extern "C" {
 #include "shaderapi.h"
 }
 
+void GLAPIENTRY
+_mesa_BindAttribLocationARB(GLhandleARB program, GLuint index,
+                            const GLcharARB *name)
+{
+   GET_CURRENT_CONTEXT(ctx);
+
+   const GLint size = -1; /* unknown size */
+   GLint i;
+   GLenum datatype = GL_FLOAT_VEC4;
+
+   struct gl_shader_program *const shProg =
+      _mesa_lookup_shader_program_err(ctx, program, "glBindAttribLocation");
+   if (!shProg)
+      return;
+
+   if (!name)
+      return;
+
+   if (strncmp(name, "gl_", 3) == 0) {
+      _mesa_error(ctx, GL_INVALID_OPERATION,
+                  "glBindAttribLocation(illegal name)");
+      return;
+   }
+
+   if (index >= ctx->Const.VertexProgram.MaxAttribs) {
+      _mesa_error(ctx, GL_INVALID_VALUE, "glBindAttribLocation(index)");
+      return;
+   }
+
+   /* this will replace the current value if it's already in the list */
+   i = _mesa_add_attribute(shProg->Attributes, name, size, datatype, index);
+   if (i < 0) {
+      _mesa_error(ctx, GL_OUT_OF_MEMORY, "glBindAttribLocation");
+      return;
+   }
+
+   /*
+    * Note that this attribute binding won't go into effect until
+    * glLinkProgram is called again.
+    */
+}
+
 GLint GLAPIENTRY
 _mesa_GetAttribLocationARB(GLhandleARB program, const GLcharARB * name)
 {
