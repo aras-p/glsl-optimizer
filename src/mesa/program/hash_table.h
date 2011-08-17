@@ -93,8 +93,23 @@ extern void *hash_table_find(struct hash_table *ht, const void *key);
  * If \c key is already in the hash table, it will be added again.  Future
  * calls to \c hash_table_find and \c hash_table_remove will return or remove,
  * repsectively, the most recently added instance of \c key.
+ *
+ * \sa hash_table_replace
  */
 extern void hash_table_insert(struct hash_table *ht, void *data,
+    const void *key);
+
+/**
+ * Add an element to a hash table with replacement
+ *
+ * \warning
+ * If \c key is already in the hash table, \c data will \b replace the most
+ * recently inserted \c data (see the warning in \c hash_table_insert) for
+ * that key.
+ *
+ * \sa hash_table_insert
+ */
+extern void hash_table_replace(struct hash_table *ht, void *data,
     const void *key);
 
 /**

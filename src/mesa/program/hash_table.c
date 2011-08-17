@@ -150,6 +150,31 @@ hash_table_insert(struct hash_table *ht, void *data, const void *key)
 }
 
 void
+hash_table_replace(struct hash_table *ht, void *data, const void *key)
+{
+    const unsigned hash_value = (*ht->hash)(key);
+    const unsigned bucket = hash_value % ht->num_buckets;
+    struct node *node;
+    struct hash_node *hn;
+
+    foreach(node, & ht->buckets[bucket]) {
+       hn = (struct hash_node *) node;
+
+       if ((*ht->compare)(hn->key, key) == 0) {
+	  hn->data = data;
+	  return;
+       }
+    }
+
+    hn = calloc(1, sizeof(*hn));
+
+    hn->data = data;
+    hn->key = key;
+
+    insert_at_head(& ht->buckets[bucket], & hn->link);
+}
+
+void
 hash_table_remove(struct hash_table *ht, const void *key)
 {
    struct node *node = (struct node *) get_node(ht, key);
