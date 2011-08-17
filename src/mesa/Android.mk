@@ -81,3 +81,35 @@ include $(LOCAL_PATH)/Android.gen.mk
 include $(MESA_COMMON_MK)
 include $(BUILD_STATIC_LIBRARY)
 endif # MESA_BUILD_GALLIUM
+
+# ---------------------------------------
+# Build libmesa_glsl_utils
+#
+# It is used to avoid circular dependency between core mesa and glsl.
+# ---------------------------------------
+
+include $(CLEAR_VARS)
+
+LOCAL_SRC_FILES := \
+	program/hash_table.c \
+	program/symbol_table.c
+
+LOCAL_MODULE := libmesa_glsl_utils
+
+include $(MESA_COMMON_MK)
+include $(BUILD_STATIC_LIBRARY)
+
+# ---------------------------------------
+# Build libmesa_glsl_utils for host
+# ---------------------------------------
+
+include $(CLEAR_VARS)
+
+LOCAL_SRC_FILES := \
+	program/hash_table.c \
+	program/symbol_table.c
+
+LOCAL_MODULE := libmesa_glsl_utils
+
+include $(MESA_COMMON_MK)
+include $(BUILD_HOST_STATIC_LIBRARY)
