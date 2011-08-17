@@ -21,14 +21,34 @@
 # FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 # DEALINGS IN THE SOFTWARE.
 
-# src/gallium/Android.mk
+LOCAL_PATH := $(call my-dir)
 
-GALLIUM_TOP := $(call my-dir)
-GALLIUM_COMMON_MK := $(GALLIUM_TOP)/Android.common.mk
+common_SOURCES := \
+	common/egl_g3d.c \
+	common/egl_g3d_api.c \
+	common/egl_g3d_image.c \
+	common/egl_g3d_st.c \
+	common/egl_g3d_sync.c \
+	common/native_helper.c
 
-SUBDIRS := \
-	state_trackers/egl \
-	auxiliary
+android_SOURCES := \
+	android/native_android.cpp
 
-mkfiles := $(patsubst %,$(GALLIUM_TOP)/%/Android.mk,$(SUBDIRS))
-include $(mkfiles)
+include $(CLEAR_VARS)
+
+LOCAL_SRC_FILES := \
+	$(common_SOURCES) \
+	$(android_SOURCES)
+
+LOCAL_CFLAGS := -DHAVE_ANDROID_BACKEND
+
+LOCAL_C_INCLUDES := \
+	$(GALLIUM_TOP)/state_trackers/egl \
+	$(GALLIUM_TOP)/winsys/sw \
+	$(MESA_TOP)/src/egl/main \
+	$(DRM_GRALLOC_TOP)
+
+LOCAL_MODULE := libmesa_st_egl
+
+include $(GALLIUM_COMMON_MK)
+include $(BUILD_STATIC_LIBRARY)
