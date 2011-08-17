@@ -84,6 +84,38 @@ _mesa_BindAttribLocationARB(GLhandleARB program, GLuint index,
     */
 }
 
+void GLAPIENTRY
+_mesa_GetActiveAttribARB(GLhandleARB program, GLuint index,
+                         GLsizei maxLength, GLsizei * length, GLint * size,
+                         GLenum * type, GLcharARB * name)
+{
+   GET_CURRENT_CONTEXT(ctx);
+   const struct gl_program_parameter_list *attribs = NULL;
+   struct gl_shader_program *shProg;
+
+   shProg = _mesa_lookup_shader_program_err(ctx, program, "glGetActiveAttrib");
+   if (!shProg)
+      return;
+
+   if (shProg->VertexProgram)
+      attribs = shProg->VertexProgram->Base.Attributes;
+
+   if (!attribs || index >= attribs->NumParameters) {
+      _mesa_error(ctx, GL_INVALID_VALUE, "glGetActiveAttrib(index)");
+      return;
+   }
+
+   _mesa_copy_string(name, maxLength, length,
+                     attribs->Parameters[index].Name);
+
+   if (size)
+      *size = attribs->Parameters[index].Size
+         / _mesa_sizeof_glsl_type(attribs->Parameters[index].DataType);
+
+   if (type)
+      *type = attribs->Parameters[index].DataType;
+}
+
 GLint GLAPIENTRY
 _mesa_GetAttribLocationARB(GLhandleARB program, const GLcharARB * name)
 {

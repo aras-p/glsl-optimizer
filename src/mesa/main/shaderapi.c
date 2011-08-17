@@ -481,38 +481,6 @@ detach_shader(struct gl_context *ctx, GLuint program, GLuint shader)
 }
 
 
-static void
-get_active_attrib(struct gl_context *ctx, GLuint program, GLuint index,
-                  GLsizei maxLength, GLsizei *length, GLint *size,
-                  GLenum *type, GLchar *nameOut)
-{
-   const struct gl_program_parameter_list *attribs = NULL;
-   struct gl_shader_program *shProg;
-
-   shProg = _mesa_lookup_shader_program_err(ctx, program, "glGetActiveAttrib");
-   if (!shProg)
-      return;
-
-   if (shProg->VertexProgram)
-      attribs = shProg->VertexProgram->Base.Attributes;
-
-   if (!attribs || index >= attribs->NumParameters) {
-      _mesa_error(ctx, GL_INVALID_VALUE, "glGetActiveAttrib(index)");
-      return;
-   }
-
-   _mesa_copy_string(nameOut, maxLength, length,
-                     attribs->Parameters[index].Name);
-
-   if (size)
-      *size = attribs->Parameters[index].Size
-         / _mesa_sizeof_glsl_type(attribs->Parameters[index].DataType);
-
-   if (type)
-      *type = attribs->Parameters[index].DataType;
-}
-
-
 /**
  * Return list of shaders attached to shader program.
  */
@@ -1200,16 +1168,6 @@ _mesa_DetachShader(GLuint program, GLuint shader)
 {
    GET_CURRENT_CONTEXT(ctx);
    detach_shader(ctx, program, shader);
-}
-
-
-void GLAPIENTRY
-_mesa_GetActiveAttribARB(GLhandleARB program, GLuint index,
-                         GLsizei maxLength, GLsizei * length, GLint * size,
-                         GLenum * type, GLcharARB * name)
-{
-   GET_CURRENT_CONTEXT(ctx);
-   get_active_attrib(ctx, program, index, maxLength, length, size, type, name);
 }
 
 
