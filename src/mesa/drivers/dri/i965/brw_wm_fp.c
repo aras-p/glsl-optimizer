@@ -664,6 +664,8 @@ static void precalc_lit( struct brw_wm_compile *c,
 static void precalc_tex( struct brw_wm_compile *c,
 			 const struct prog_instruction *inst )
 {
+   struct brw_compile *p = &c->func;
+   struct intel_context *intel = &p->brw->intel;
    struct prog_src_register coord;
    struct prog_dst_register tmpcoord = { 0 };
    const GLuint unit = c->fp->program.Base.SamplerUnits[inst->TexSrcUnit];
@@ -727,7 +729,7 @@ static void precalc_tex( struct brw_wm_compile *c,
        release_temp(c, tmp0);
        release_temp(c, tmp1);
    }
-   else if (inst->TexSrcTarget == TEXTURE_RECT_INDEX) {
+   else if (intel->gen < 6 && inst->TexSrcTarget == TEXTURE_RECT_INDEX) {
       struct prog_src_register scale = 
 	 search_or_add_param5( c, 
 			       STATE_INTERNAL, 

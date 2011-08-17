@@ -289,6 +289,13 @@ static void brw_update_sampler_state(struct brw_context *brw,
    sampler->ss1.max_lod = U_FIXED(CLAMP(gl_sampler->MaxLod, 0, 13), 6);
    sampler->ss1.min_lod = U_FIXED(CLAMP(gl_sampler->MinLod, 0, 13), 6);
 
+   /* On Gen6+, the sampler can handle non-normalized texture
+    * rectangle coordinates natively
+    */
+   if (intel->gen >= 6 && texObj->Target == GL_TEXTURE_RECTANGLE) {
+      sampler->ss3.non_normalized_coord = 1;
+   }
+
    upload_default_color(brw, gl_sampler, unit);
 
    if (intel->gen >= 6) {

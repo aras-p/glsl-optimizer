@@ -157,6 +157,13 @@ gen7_update_sampler_state(struct brw_context *brw, int unit,
    sampler->ss1.max_lod = U_FIXED(CLAMP(gl_sampler->MaxLod, 0, 13), 8);
    sampler->ss1.min_lod = U_FIXED(CLAMP(gl_sampler->MinLod, 0, 13), 8);
 
+   /* The sampler can handle non-normalized texture rectangle coordinates
+    * natively
+    */
+   if (texObj->Target == GL_TEXTURE_RECTANGLE) {
+      sampler->ss3.non_normalized_coord = 1;
+   }
+
    upload_default_color(brw, gl_sampler, unit);
 
    sampler->ss2.default_color_pointer = brw->wm.sdc_offset[unit] >> 5;
