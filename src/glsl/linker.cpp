@@ -1298,71 +1298,6 @@ assign_attribute_or_color_locations(gl_shader_program *prog,
 
    invalidate_variable_locations(sh, direction, generic_base);
 
-   if ((target_index == MESA_SHADER_VERTEX) && (prog->Attributes != NULL)) {
-      for (unsigned i = 0; i < prog->Attributes->NumParameters; i++) {
-	 ir_variable *const var =
-	    sh->symbols->get_variable(prog->Attributes->Parameters[i].Name);
-
-	 /* Note: attributes that occupy multiple slots, such as arrays or
-	  * matrices, may appear in the attrib array multiple times.
-	  */
-	 if ((var == NULL) || (var->location != -1))
-	    continue;
-
-	 /* From page 61 of the OpenGL 4.0 spec:
-	  *
-	  *     "LinkProgram will fail if the attribute bindings assigned by
-	  *     BindAttribLocation do not leave not enough space to assign a
-	  *     location for an active matrix attribute or an active attribute
-	  *     array, both of which require multiple contiguous generic
-	  *     attributes."
-	  *
-	  * Previous versions of the spec contain similar language but omit the
-	  * bit about attribute arrays.
-	  *
-	  * Page 61 of the OpenGL 4.0 spec also says:
-	  *
-	  *     "It is possible for an application to bind more than one
-	  *     attribute name to the same location. This is referred to as
-	  *     aliasing. This will only work if only one of the aliased
-	  *     attributes is active in the executable program, or if no path
-	  *     through the shader consumes more than one attribute of a set
-	  *     of attributes aliased to the same location. A link error can
-	  *     occur if the linker determines that every path through the
-	  *     shader consumes multiple aliased attributes, but
-	  *     implementations are not required to generate an error in this
-	  *     case."
-	  *
-	  * These two paragraphs are either somewhat contradictory, or I don't
-	  * fully understand one or both of them.
-	  */
-	 /* FINISHME: The code as currently written does not support attribute
-	  * FINISHME: location aliasing (see comment above).
-	  */
-	 const int attr = prog->Attributes->Parameters[i].StateIndexes[0];
-	 const unsigned slots = count_attribute_slots(var->type);
-
-	 /* Mask representing the contiguous slots that will be used by this
-	  * attribute.
-	  */
-	 const unsigned use_mask = (1 << slots) - 1;
-
-	 /* Generate a link error if the set of bits requested for this
-	  * attribute overlaps any previously allocated bits.
-	  */
-	 if ((~(use_mask << attr) & used_locations) != used_locations) {
-	    linker_error(prog,
-			 "insufficient contiguous attribute locations "
-			 "available for vertex shader input `%s'",
-			 var->name);
-	    return false;
-	 }
-
-	 var->location = VERT_ATTRIB_GENERIC0 + attr;
-	 used_locations |= (use_mask << attr);
-      }
-   }
-
    /* Temporary storage for the set of attributes that need locations assigned.
     */
    struct temp_attr {
@@ -1389,28 +1324,83 @@ assign_attribute_or_color_locations(gl_shader_program *prog,
 	 continue;
 
       if (var->explicit_location) {
-	 const unsigned slots = count_attribute_slots(var->type);
-	 const unsigned use_mask = (1 << slots) - 1;
-	 const int attr = var->location - generic_base;
-
 	 if ((var->location >= (int)(max_index + generic_base))
 	     || (var->location < 0)) {
 	    linker_error(prog,
 			 "invalid explicit location %d specified for `%s'\n",
-			 (var->location < 0) ? var->location : attr,
+			 (var->location < 0)
+			 ? var->location : var->location - generic_base,
 			 var->name);
 	    return false;
-	 } else if (var->location >= generic_base) {
-	    used_locations |= (use_mask << attr);
+	 }
+      } else if (target_index == MESA_SHADER_VERTEX) {
+	 unsigned binding;
+
+	 if (prog->AttributeBindings->get(binding, var->name)) {
+	    assert(binding >= VERT_ATTRIB_GENERIC0);
+	    var->location = binding;
 	 }
       }
 
       /* The location was explicitly assigned, nothing to do here.
        */
-      if (var->location != -1)
-	 continue;
+      const unsigned slots = count_attribute_slots(var->type);
+      if (var->location != -1) {
+	 if (var->location >= generic_base) {
+	    /* From page 61 of the OpenGL 4.0 spec:
+	     *
+	     *     "LinkProgram will fail if the attribute bindings assigned
+	     *     by BindAttribLocation do not leave not enough space to
+	     *     assign a location for an active matrix attribute or an
+	     *     active attribute array, both of which require multiple
+	     *     contiguous generic attributes."
+	     *
+	     * Previous versions of the spec contain similar language but omit
+	     * the bit about attribute arrays.
+	     *
+	     * Page 61 of the OpenGL 4.0 spec also says:
+	     *
+	     *     "It is possible for an application to bind more than one
+	     *     attribute name to the same location. This is referred to as
+	     *     aliasing. This will only work if only one of the aliased
+	     *     attributes is active in the executable program, or if no
+	     *     path through the shader consumes more than one attribute of
+	     *     a set of attributes aliased to the same location. A link
+	     *     error can occur if the linker determines that every path
+	     *     through the shader consumes multiple aliased attributes,
+	     *     but implementations are not required to generate an error
+	     *     in this case."
+	     *
+	     * These two paragraphs are either somewhat contradictory, or I
+	     * don't fully understand one or both of them.
+	     */
+	    /* FINISHME: The code as currently written does not support
+	     * FINISHME: attribute location aliasing (see comment above).
+	     */
+	    /* Mask representing the contiguous slots that will be used by
+	     * this attribute.
+	     */
+	    const unsigned attr = var->location - generic_base;
+	    const unsigned use_mask = (1 << slots) - 1;
 
-      to_assign[num_attr].slots = count_attribute_slots(var->type);
+	    /* Generate a link error if the set of bits requested for this
+	     * attribute overlaps any previously allocated bits.
+	     */
+	    if ((~(use_mask << attr) & used_locations) != used_locations) {
+	       linker_error(prog,
+			    "insufficient contiguous attribute locations "
+			    "available for vertex shader input `%s'",
+			    var->name);
+	       return false;
+	    }
+
+	    used_locations |= (use_mask << attr);
+	 }
+
+	 continue;
+      }
+
+      to_assign[num_attr].slots = slots;
       to_assign[num_attr].var = var;
       num_attr++;
    }
