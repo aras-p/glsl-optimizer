@@ -558,6 +558,12 @@ vec4_visitor::run()
     */
    move_grf_array_access_to_scratch();
 
+   bool progress;
+   do {
+      progress = false;
+      progress = dead_code_eliminate() || progress;
+   } while (progress);
+
    if (failed)
       return false;
 

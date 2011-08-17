@@ -381,6 +381,7 @@ public:
    void reg_allocate();
    void move_grf_array_access_to_scratch();
    void calculate_live_intervals();
+   bool dead_code_eliminate();
    bool virtual_grf_interferes(int a, int b);
 
    vec4_instruction *emit(enum opcode opcode);

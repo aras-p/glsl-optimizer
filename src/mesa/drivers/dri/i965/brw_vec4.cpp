@@ -127,4 +127,35 @@ vec4_visitor::virtual_grf_interferes(int a, int b)
    return start < end;
 }
 
+/**
+ * Must be called after calculate_live_intervales() to remove unused
+ * writes to registers -- register allocation will fail otherwise
+ * because something deffed but not used won't be considered to
+ * interfere with other regs.
+ */
+bool
+vec4_visitor::dead_code_eliminate()
+{
+   bool progress = false;
+   int pc = 0;
+
+   calculate_live_intervals();
+
+   foreach_list_safe(node, &this->instructions) {
+      vec4_instruction *inst = (vec4_instruction *)node;
+
+      if (inst->dst.file == GRF && this->virtual_grf_use[inst->dst.reg] <= pc) {
+	 inst->remove();
+	 progress = true;
+      }
+
+      pc++;
+   }
+
+   if (progress)
+      live_intervals_valid = false;
+
+   return progress;
+}
+
 } /* namespace brw */
