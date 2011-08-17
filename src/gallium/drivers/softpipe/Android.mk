@@ -21,18 +21,47 @@
 # FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 # DEALINGS IN THE SOFTWARE.
 
-# src/gallium/Android.mk
+LOCAL_PATH := $(call my-dir)
 
-GALLIUM_TOP := $(call my-dir)
-GALLIUM_COMMON_MK := $(GALLIUM_TOP)/Android.common.mk
+# from Makefile
+C_SOURCES = \
+	sp_fs_exec.c \
+	sp_fs_sse.c \
+	sp_clear.c \
+	sp_fence.c \
+	sp_flush.c \
+	sp_query.c \
+	sp_context.c \
+	sp_draw_arrays.c \
+	sp_prim_vbuf.c \
+	sp_quad_pipe.c \
+	sp_quad_stipple.c \
+	sp_quad_depth_test.c \
+	sp_quad_fs.c \
+	sp_quad_blend.c \
+	sp_screen.c \
+        sp_setup.c \
+	sp_state_blend.c \
+	sp_state_clip.c \
+	sp_state_derived.c \
+	sp_state_sampler.c \
+	sp_state_shader.c \
+	sp_state_so.c \
+	sp_state_rasterizer.c \
+	sp_state_surface.c \
+	sp_state_vertex.c \
+	sp_texture.c \
+	sp_tex_sample.c \
+	sp_tex_tile_cache.c \
+	sp_tile_cache.c \
+	sp_surface.c
 
-SUBDIRS := \
-	targets/egl-static \
-	state_trackers/egl \
-	auxiliary
+include $(CLEAR_VARS)
 
-# swrast
-SUBDIRS += winsys/sw/android drivers/softpipe
+LOCAL_SRC_FILES := \
+	$(C_SOURCES)
 
-mkfiles := $(patsubst %,$(GALLIUM_TOP)/%/Android.mk,$(SUBDIRS))
-include $(mkfiles)
+LOCAL_MODULE := libmesa_pipe_softpipe
+
+include $(GALLIUM_COMMON_MK)
+include $(BUILD_STATIC_LIBRARY)
