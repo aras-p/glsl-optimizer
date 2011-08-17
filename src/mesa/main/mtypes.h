@@ -2146,8 +2146,17 @@ struct gl_shader_program
    GLuint NumShaders;          /**< number of attached shaders */
    struct gl_shader **Shaders; /**< List of attached the shaders */
 
-   /** User-defined attribute bindings (glBindAttribLocation) */
+   /**
+    * User-defined attribute bindings
+    *
+    * These are set via \c glBindAttribLocation and are used to direct the
+    * GLSL linker.  These are \b not the values used in the compiled shader,
+    * and they are \b not the values returned by \c glGetAttribLocation.
+    *
+    * \sa gl_program::Attributes
+    */
    struct gl_program_parameter_list *Attributes;
+   struct string_to_uint_map *AttributeBindings;
 
    /** Transform feedback varyings */
    struct {

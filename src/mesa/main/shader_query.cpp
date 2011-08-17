@@ -32,6 +32,7 @@
 #include "glsl_symbol_table.h"
 #include "ir.h"
 #include "shaderobj.h"
+#include "program/hash_table.h"
 
 extern "C" {
 #include "shaderapi.h"
@@ -67,6 +68,10 @@ _mesa_BindAttribLocationARB(GLhandleARB program, GLuint index,
    }
 
    /* this will replace the current value if it's already in the list */
+   /* Add VERT_ATTRIB_GENERIC0 because that's how the linker differentiates
+    * between built-in attributes and user-defined attributes.
+    */
+   shProg->AttributeBindings->put(index + VERT_ATTRIB_GENERIC0, name);
    i = _mesa_add_attribute(shProg->Attributes, name, size, datatype, index);
    if (i < 0) {
       _mesa_error(ctx, GL_OUT_OF_MEMORY, "glBindAttribLocation");
