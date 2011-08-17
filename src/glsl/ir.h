@@ -146,7 +146,7 @@ public:
 
    ir_rvalue *as_rvalue_to_saturate();
 
-   virtual bool is_lvalue()
+   virtual bool is_lvalue() const
    {
       return false;
    }
@@ -154,7 +154,7 @@ public:
    /**
     * Get the variable that is ultimately referenced by an r-value
     */
-   virtual ir_variable *variable_referenced()
+   virtual ir_variable *variable_referenced() const
    {
       return NULL;
    }
@@ -1365,7 +1365,7 @@ public:
 
    virtual ir_visitor_status accept(ir_hierarchical_visitor *);
 
-   bool is_lvalue()
+   bool is_lvalue() const
    {
       return val->is_lvalue() && !mask.has_duplicates;
    }
@@ -1373,7 +1373,7 @@ public:
    /**
     * Get the variable that is ultimately referenced by an r-value
     */
-   virtual ir_variable *variable_referenced();
+   virtual ir_variable *variable_referenced() const;
 
    ir_rvalue *val;
    ir_swizzle_mask mask;
@@ -1397,12 +1397,12 @@ public:
       return this;
    }
 
-   bool is_lvalue();
+   bool is_lvalue() const;
 
    /**
     * Get the variable that is ultimately referenced by an r-value
     */
-   virtual ir_variable *variable_referenced() = 0;
+   virtual ir_variable *variable_referenced() const = 0;
 
 protected:
 	ir_dereference(glsl_precision precision) : ir_rvalue(precision) { }
@@ -1426,7 +1426,7 @@ public:
    /**
     * Get the variable that is ultimately referenced by an r-value
     */
-   virtual ir_variable *variable_referenced()
+   virtual ir_variable *variable_referenced() const
    {
       return this->var;
    }
@@ -1475,7 +1475,7 @@ public:
    /**
     * Get the variable that is ultimately referenced by an r-value
     */
-   virtual ir_variable *variable_referenced()
+   virtual ir_variable *variable_referenced() const
    {
       return this->array->variable_referenced();
    }
@@ -1509,7 +1509,7 @@ public:
    /**
     * Get the variable that is ultimately referenced by an r-value
     */
-   virtual ir_variable *variable_referenced()
+   virtual ir_variable *variable_referenced() const
    {
       return this->record->variable_referenced();
    }

@@ -739,7 +739,6 @@ _mesa_ast_field_selection_to_hir(const ast_expression *expr,
 				 struct _mesa_glsl_parse_state *state);
 
 void
-emit_function(_mesa_glsl_parse_state *state, exec_list *instructions,
-	      ir_function *f);
+emit_function(_mesa_glsl_parse_state *state, ir_function *f);
 
 #endif /* AST_H */

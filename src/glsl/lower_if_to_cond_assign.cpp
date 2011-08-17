@@ -47,6 +47,7 @@
 
 #include "glsl_types.h"
 #include "ir.h"
+#include "program/hash_table.h"
 
 class ir_if_to_cond_assign_visitor : public ir_hierarchical_visitor {
 public:
@@ -55,6 +56,14 @@ public:
       this->progress = false;
       this->max_depth = max_depth;
       this->depth = 0;
+
+      this->condition_variables = hash_table_ctor(0, hash_table_pointer_hash,
+						  hash_table_pointer_compare);
+   }
+
+   ~ir_if_to_cond_assign_visitor()
+   {
+      hash_table_dtor(this->condition_variables);
    }
 
    ir_visitor_status visit_enter(ir_if *);
@@ -63,6 +72,8 @@ public:
    bool progress;
    unsigned max_depth;
    unsigned depth;
+
+   struct hash_table *condition_variables;
 };
 
 bool
@@ -94,40 +105,43 @@ check_control_flow(ir_instruction *ir, void *data)
 
 void
 move_block_to_cond_assign(void *mem_ctx,
-			  ir_if *if_ir, ir_variable *cond_var, bool then)
+			  ir_if *if_ir, ir_rvalue *cond_expr,
+			  exec_list *instructions,
+			  struct hash_table *ht)
 {
-   exec_list *instructions;
-
-   if (then) {
-      instructions = &if_ir->then_instructions;
-   } else {
-      instructions = &if_ir->else_instructions;
-   }
-
-   foreach_iter(exec_list_iterator, iter, *instructions) {
-      ir_instruction *ir = (ir_instruction *)iter.get();
+   foreach_list_safe(node, instructions) {
+      ir_instruction *ir = (ir_instruction *) node;
 
       if (ir->ir_type == ir_type_assignment) {
 	 ir_assignment *assign = (ir_assignment *)ir;
-	 ir_rvalue *cond_expr;
-	 ir_dereference *deref = new(mem_ctx) ir_dereference_variable(cond_var);
 
-	 if (then) {
-	    cond_expr = deref;
-	 } else {
-	    cond_expr = new(mem_ctx) ir_expression(ir_unop_logic_not,
-						   glsl_type::bool_type,
-						   deref,
-						   NULL);
-	 }
+	 if (hash_table_find(ht, assign) == NULL) {
+	    hash_table_insert(ht, assign, assign);
 
-	 if (!assign->condition) {
-	    assign->condition = cond_expr;
-	 } else {
-	    assign->condition = new(mem_ctx) ir_expression(ir_binop_logic_and,
-							   glsl_type::bool_type,
-							   cond_expr,
-							   assign->condition);
+	    /* If the LHS of the assignment is a condition variable that was
+	     * previously added, insert an additional assignment of false to
+	     * the variable.
+	     */
+	    const bool assign_to_cv =
+	       hash_table_find(ht, assign->lhs->variable_referenced()) != NULL;
+
+	    if (!assign->condition) {
+	       if (assign_to_cv) {
+		  assign->rhs =
+		     new(mem_ctx) ir_expression(ir_binop_logic_and,
+						glsl_type::bool_type,
+						cond_expr->clone(mem_ctx, NULL),
+						assign->rhs);
+	       } else {
+		  assign->condition = cond_expr->clone(mem_ctx, NULL);
+	       }
+	    } else {
+	       assign->condition =
+		  new(mem_ctx) ir_expression(ir_binop_logic_and,
+					     glsl_type::bool_type,
+					     cond_expr->clone(mem_ctx, NULL),
+					     assign->condition);
+	    }
 	 }
       }
 
@@ -142,6 +156,7 @@ ir_if_to_cond_assign_visitor::visit_enter(ir_if *ir)
 {
    (void) ir;
    this->depth++;
+
    return visit_continue;
 }
 
@@ -153,9 +168,7 @@ ir_if_to_cond_assign_visitor::visit_leave(ir_if *ir)
       return visit_continue;
 
    bool found_control_flow = false;
-   ir_variable *cond_var;
    ir_assignment *assign;
-   ir_dereference_variable *deref;
 
    /* Check that both blocks don't contain anything we can't support. */
    foreach_iter(exec_list_iterator, then_iter, ir->then_instructions) {
@@ -171,24 +184,62 @@ ir_if_to_cond_assign_visitor::visit_leave(ir_if *ir)
 
    void *mem_ctx = ralloc_parent(ir);
 
-   /* Store the condition to a variable so the assignment conditions are
-    * simpler.
+   /* Store the condition to a variable.  Move all of the instructions from
+    * the then-clause of the if-statement.  Use the condition variable as a
+    * condition for all assignments.
     */
-   cond_var = new(mem_ctx) ir_variable(glsl_type::bool_type,
-				       "if_to_cond_assign_condition",
-				       ir_var_temporary, glsl_precision_low);
-   ir->insert_before(cond_var);
+   ir_variable *const then_var =
+      new(mem_ctx) ir_variable(glsl_type::bool_type,
+			       "if_to_cond_assign_then",
+			       ir_var_temporary, glsl_precision_low);
+   ir->insert_before(then_var);
 
-   deref = new(mem_ctx) ir_dereference_variable(cond_var);
-   assign = new(mem_ctx) ir_assignment(deref,
-				       ir->condition, NULL);
+   ir_dereference_variable *then_cond =
+      new(mem_ctx) ir_dereference_variable(then_var);
+
+   assign = new(mem_ctx) ir_assignment(then_cond, ir->condition);
    ir->insert_before(assign);
 
-   /* Now, move all of the instructions out of the if blocks, putting
-    * conditions on assignments.
+   move_block_to_cond_assign(mem_ctx, ir, then_cond,
+			     &ir->then_instructions,
+			     this->condition_variables);
+
+   /* Add the new condition variable to the hash table.  This allows us to
+    * find this variable when lowering other (enclosing) if-statements.
     */
-   move_block_to_cond_assign(mem_ctx, ir, cond_var, true);
-   move_block_to_cond_assign(mem_ctx, ir, cond_var, false);
+   hash_table_insert(this->condition_variables, then_var, then_var);
+
+   /* If there are instructions in the else-clause, store the inverse of the
+    * condition to a variable.  Move all of the instructions from the
+    * else-clause if the if-statement.  Use the (inverse) condition variable
+    * as a condition for all assignments.
+    */
+   if (!ir->else_instructions.is_empty()) {
+      ir_variable *const else_var =
+	 new(mem_ctx) ir_variable(glsl_type::bool_type,
+				  "if_to_cond_assign_else",
+				  ir_var_temporary, glsl_precision_low);
+      ir->insert_before(else_var);
+
+      ir_dereference_variable *else_cond =
+	 new(mem_ctx) ir_dereference_variable(else_var);
+
+      ir_rvalue *inverse =
+	 new(mem_ctx) ir_expression(ir_unop_logic_not,
+				    then_cond->clone(mem_ctx, NULL));
+
+      assign = new(mem_ctx) ir_assignment(else_cond, inverse);
+      ir->insert_before(assign);
+
+      move_block_to_cond_assign(mem_ctx, ir, else_cond,
+				&ir->else_instructions,
+				this->condition_variables);
+
+      /* Add the new condition variable to the hash table.  This allows us to
+       * find this variable when lowering other (enclosing) if-statements.
+       */
+      hash_table_insert(this->condition_variables, else_var, else_var);
+   }
 
    ir->remove();
 

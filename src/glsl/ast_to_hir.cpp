@@ -66,6 +66,8 @@ _mesa_ast_to_hir(exec_list *instructions, struct _mesa_glsl_parse_state *state)
 
    state->current_function = NULL;
 
+   state->toplevel_ir = instructions;
+
    /* Section 4.2 of the GLSL 1.20 specification states:
     * "The built-in functions are scoped in a scope outside the global scope
     *  users declare global variables in.  That is, a shader's global scope,
@@ -85,6 +87,8 @@ _mesa_ast_to_hir(exec_list *instructions, struct _mesa_glsl_parse_state *state)
       ast->hir(instructions, state);
 
    detect_recursion_unlinked(state, instructions);
+
+   state->toplevel_ir = NULL;
 }
 
 
@@ -649,6 +653,16 @@ validate_assignment(struct _mesa_glsl_parse_state *state,
    return NULL;
 }
 
+static void
+mark_whole_array_access(ir_rvalue *access)
+{
+   ir_dereference_variable *deref = access->as_dereference_variable();
+
+   if (deref && deref->var) {
+      deref->var->max_array_access = deref->type->length - 1;
+   }
+}
+
 ir_rvalue *
 do_assignment(exec_list *instructions, struct _mesa_glsl_parse_state *state,
 	      ir_rvalue *lhs, ir_rvalue *rhs, bool is_initializer,
@@ -709,6 +723,7 @@ do_assignment(exec_list *instructions, struct _mesa_glsl_parse_state *state,
 						   rhs->type->array_size());
 	 d->type = var->type;
       }
+      mark_whole_array_access(lhs);
    }
 
    if (lhs->get_precision() == glsl_precision_undefined)
@@ -778,16 +793,6 @@ ast_node::hir(exec_list *instructions,
    (void) state;
 
    return NULL;
-}
-
-static void
-mark_whole_array_access(ir_rvalue *access)
-{
-   ir_dereference_variable *deref = access->as_dereference_variable();
-
-   if (deref) {
-      deref->var->max_array_access = deref->type->length - 1;
-   }
 }
 
 static ir_rvalue *
@@ -1777,11 +1782,6 @@ process_array_type(YYLTYPE *loc, const glsl_type *base, ast_node *array_size,
       ir_rvalue *const ir = array_size->hir(& dummy_instructions, state);
       YYLTYPE loc = array_size->get_location();
 
-      /* FINISHME: Verify that the grammar forbids side-effects in array
-       * FINISHME: sizes.   i.e., 'vec4 [x = 12] data'
-       */
-      assert(dummy_instructions.is_empty());
-
       if (ir != NULL) {
 	 if (!ir->type->is_integer()) {
 	    _mesa_glsl_error(& loc, state, "array size must be integer type");
@@ -1798,6 +1798,14 @@ process_array_type(YYLTYPE *loc, const glsl_type *base, ast_node *array_size,
 	    } else {
 	       assert(size->type == ir->type);
 	       length = size->value.u[0];
+
+               /* If the array size is const (and we've verified that
+                * it is) then no instructions should have been emitted
+                * when we converted it to HIR.  If they were emitted,
+                * then either the array size isn't const after all, or
+                * we are emitting unnecessary instructions.
+                */
+               assert(dummy_instructions.is_empty());
 	    }
 	 }
       }
@@ -2425,12 +2433,12 @@ ast_declarator_list::hir(exec_list *instructions,
 
    decl_type = this->type->specifier->glsl_type(& type_name, state);
    if (this->declarations.is_empty()) {
-      /* The only valid case where the declaration list can be empty is when
-       * the declaration is setting the default precision of a built-in type
-       * (e.g., 'precision highp vec4;').
-       */
-
       if (decl_type != NULL) {
+	 /* Warn if this empty declaration is not for declaring a structure.
+	  */
+	 if (this->type->specifier->structure == NULL) {
+	    _mesa_glsl_warning(&loc, state, "empty declaration");
+	 }
       } else {
 	    _mesa_glsl_error(& loc, state, "incomplete declaration");
       }
@@ -2954,23 +2962,16 @@ ast_parameter_declarator::parameters_to_hir(exec_list *ast_parameters,
 
 
 void
-emit_function(_mesa_glsl_parse_state *state, exec_list *instructions,
-	      ir_function *f)
+emit_function(_mesa_glsl_parse_state *state, ir_function *f)
 {
-   /* Emit the new function header */
-   if (state->current_function == NULL) {
-      instructions->push_tail(f);
-   } else {
-      /* IR invariants disallow function declarations or definitions nested
-       * within other function definitions.  Insert the new ir_function
-       * block in the instruction sequence before the ir_function block
-       * containing the current ir_function_signature.
-       */
-      ir_function *const curr =
-	 const_cast<ir_function *>(state->current_function->function());
-
-      curr->insert_before(f);
-   }
+   /* IR invariants disallow function declarations or definitions
+    * nested within other function definitions.  But there is no
+    * requirement about the relative order of function declarations
+    * and definitions with respect to one another.  So simply insert
+    * the new ir_function block at the end of the toplevel instruction
+    * list.
+    */
+   state->toplevel_ir->push_tail(f);
 }
 
 
@@ -3097,7 +3098,7 @@ ast_function::hir(exec_list *instructions,
 	 return NULL;
       }
 
-      emit_function(state, instructions, f);
+      emit_function(state, f);
    }
 
    /* Verify the return type of main() */

@@ -230,6 +230,41 @@ struct glsl_type {
     */
    unsigned component_slots() const;
 
+   /**
+    * \brief Can this type be implicitly converted to another?
+    *
+    * \return True if the types are identical or if this type can be converted
+    *         to \c desired according to Section 4.1.10 of the GLSL spec.
+    *
+    * \verbatim
+    * From page 25 (31 of the pdf) of the GLSL 1.50 spec, Section 4.1.10
+    * Implicit Conversions:
+    *
+    *     In some situations, an expression and its type will be implicitly
+    *     converted to a different type. The following table shows all allowed
+    *     implicit conversions:
+    *
+    *     Type of expression | Can be implicitly converted to
+    *     --------------------------------------------------
+    *     int                  float
+    *     uint
+    *
+    *     ivec2                vec2
+    *     uvec2
+    *
+    *     ivec3                vec3
+    *     uvec3
+    *
+    *     ivec4                vec4
+    *     uvec4
+    *
+    *     There are no implicit array or structure conversions. For example,
+    *     an array of int cannot be implicitly converted to an array of float.
+    *     There are no implicit conversions between signed and unsigned
+    *     integers.
+    * \endverbatim
+    */
+   bool can_implicitly_convert_to(const glsl_type *desired) const;
 
    /**
     * Query whether or not a type is a scalar (non-vector and non-matrix).

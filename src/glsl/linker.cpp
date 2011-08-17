@@ -164,7 +164,7 @@ private:
 
 
 void
-linker_error_printf(gl_shader_program *prog, const char *fmt, ...)
+linker_error(gl_shader_program *prog, const char *fmt, ...)
 {
    va_list ap;
 
@@ -172,6 +172,21 @@ linker_error_printf(gl_shader_program *prog, const char *fmt, ...)
    va_start(ap, fmt);
    ralloc_vasprintf_append(&prog->InfoLog, fmt, ap);
    va_end(ap);
+
+   prog->LinkStatus = false;
+}
+
+
+void
+linker_warning(gl_shader_program *prog, const char *fmt, ...)
+{
+   va_list ap;
+
+   ralloc_strcat(&prog->InfoLog, "error: ");
+   va_start(ap, fmt);
+   ralloc_vasprintf_append(&prog->InfoLog, fmt, ap);
+   va_end(ap);
+
 }
 
 
@@ -243,8 +258,7 @@ validate_vertex_shader_executable(struct gl_shader_program *prog,
    find_assignment_visitor find("gl_Position");
    find.run(shader->ir);
    if (!find.variable_found()) {
-      linker_error_printf(prog,
-			  "vertex shader does not write to `gl_Position'\n");
+      linker_error(prog, "vertex shader does not write to `gl_Position'\n");
       return false;
    }
 
@@ -271,8 +285,8 @@ validate_fragment_shader_executable(struct gl_shader_program *prog,
    frag_data.run(shader->ir);
 
    if (frag_color.variable_found() && frag_data.variable_found()) {
-      linker_error_printf(prog,  "fragment shader writes to both "
-			  "`gl_FragColor' and `gl_FragData'\n");
+      linker_error(prog,  "fragment shader writes to both "
+		   "`gl_FragColor' and `gl_FragData'\n");
       return false;
    }
 
@@ -357,11 +371,11 @@ cross_validate_globals(struct gl_shader_program *prog,
 		     existing->type = var->type;
 		  }
 	       } else {
-		  linker_error_printf(prog, "%s `%s' declared as type "
-				      "`%s' and type `%s'\n",
-				      mode_string(var),
-				      var->name, var->type->name,
-				      existing->type->name);
+		  linker_error(prog, "%s `%s' declared as type "
+			       "`%s' and type `%s'\n",
+			       mode_string(var),
+			       var->name, var->type->name,
+			       existing->type->name);
 		  return false;
 	       }
 	    }
@@ -369,9 +383,9 @@ cross_validate_globals(struct gl_shader_program *prog,
 	    if (var->explicit_location) {
 	       if (existing->explicit_location
 		   && (var->location != existing->location)) {
-		     linker_error_printf(prog, "explicit locations for %s "
-					 "`%s' have differing values\n",
-					 mode_string(var), var->name);
+		     linker_error(prog, "explicit locations for %s "
+				  "`%s' have differing values\n",
+				  mode_string(var), var->name);
 		     return false;
 	       }
 
@@ -392,12 +406,12 @@ cross_validate_globals(struct gl_shader_program *prog,
            bool layout_declared = var->depth_layout != ir_depth_layout_none;
            bool layout_differs = var->depth_layout != existing->depth_layout;
            if (layout_declared && layout_differs) {
-              linker_error_printf(prog,
+              linker_error(prog,
                  "All redeclarations of gl_FragDepth in all fragment shaders "
                  "in a single program must have the same set of qualifiers.");
            }
            if (var->used && layout_differs) {
-              linker_error_printf(prog,
+              linker_error(prog,
                     "If gl_FragDepth is redeclared with a layout qualifier in"
                     "any fragment shader, it must be redeclared with the same"
                     "layout qualifier in all fragment shaders that have"
@@ -410,9 +424,9 @@ cross_validate_globals(struct gl_shader_program *prog,
 	    if (var->constant_value != NULL) {
 	       if (existing->constant_value != NULL) {
 		  if (!var->constant_value->has_value(existing->constant_value)) {
-		     linker_error_printf(prog, "initializers for %s "
-					 "`%s' have differing values\n",
-					 mode_string(var), var->name);
+		     linker_error(prog, "initializers for %s "
+				  "`%s' have differing values\n",
+				  mode_string(var), var->name);
 		     return false;
 		  }
 	       } else
@@ -433,15 +447,15 @@ cross_validate_globals(struct gl_shader_program *prog,
 	    }
 
 	    if (existing->invariant != var->invariant) {
-	       linker_error_printf(prog, "declarations for %s `%s' have "
-	                           "mismatching invariant qualifiers\n",
-	                           mode_string(var), var->name);
+	       linker_error(prog, "declarations for %s `%s' have "
+			    "mismatching invariant qualifiers\n",
+			    mode_string(var), var->name);
 	       return false;
 	    }
             if (existing->centroid != var->centroid) {
-               linker_error_printf(prog, "declarations for %s `%s' have "
-                                   "mismatching centroid qualifiers\n",
-                                   mode_string(var), var->name);
+               linker_error(prog, "declarations for %s `%s' have "
+			    "mismatching centroid qualifiers\n",
+			    mode_string(var), var->name);
                return false;
             }
 	 } else
@@ -529,13 +543,12 @@ cross_validate_outputs_to_inputs(struct gl_shader_program *prog,
 	     */
 	    if (!output->type->is_array()
 		|| (strncmp("gl_", output->name, 3) != 0)) {
-	       linker_error_printf(prog,
-				   "%s shader output `%s' declared as "
-				   "type `%s', but %s shader input declared "
-				   "as type `%s'\n",
-				   producer_stage, output->name,
-				   output->type->name,
-				   consumer_stage, input->type->name);
+	       linker_error(prog,
+			    "%s shader output `%s' declared as type `%s', "
+			    "but %s shader input declared as type `%s'\n",
+			    producer_stage, output->name,
+			    output->type->name,
+			    consumer_stage, input->type->name);
 	       return false;
 	    }
 	 }
@@ -543,40 +556,40 @@ cross_validate_outputs_to_inputs(struct gl_shader_program *prog,
 	 /* Check that all of the qualifiers match between stages.
 	  */
 	 if (input->centroid != output->centroid) {
-	    linker_error_printf(prog,
-				"%s shader output `%s' %s centroid qualifier, "
-				"but %s shader input %s centroid qualifier\n",
-				producer_stage,
-				output->name,
-				(output->centroid) ? "has" : "lacks",
-				consumer_stage,
-				(input->centroid) ? "has" : "lacks");
+	    linker_error(prog,
+			 "%s shader output `%s' %s centroid qualifier, "
+			 "but %s shader input %s centroid qualifier\n",
+			 producer_stage,
+			 output->name,
+			 (output->centroid) ? "has" : "lacks",
+			 consumer_stage,
+			 (input->centroid) ? "has" : "lacks");
 	    return false;
 	 }
 
 	 if (input->invariant != output->invariant) {
-	    linker_error_printf(prog,
-				"%s shader output `%s' %s invariant qualifier, "
-				"but %s shader input %s invariant qualifier\n",
-				producer_stage,
-				output->name,
-				(output->invariant) ? "has" : "lacks",
-				consumer_stage,
-				(input->invariant) ? "has" : "lacks");
+	    linker_error(prog,
+			 "%s shader output `%s' %s invariant qualifier, "
+			 "but %s shader input %s invariant qualifier\n",
+			 producer_stage,
+			 output->name,
+			 (output->invariant) ? "has" : "lacks",
+			 consumer_stage,
+			 (input->invariant) ? "has" : "lacks");
 	    return false;
 	 }
 
 	 if (input->interpolation != output->interpolation) {
-	    linker_error_printf(prog,
-				"%s shader output `%s' specifies %s "
-				"interpolation qualifier, "
-				"but %s shader input specifies %s "
-				"interpolation qualifier\n",
-				producer_stage,
-				output->name,
-				output->interpolation_string(),
-				consumer_stage,
-				input->interpolation_string());
+	    linker_error(prog,
+			 "%s shader output `%s' specifies %s "
+			 "interpolation qualifier, "
+			 "but %s shader input specifies %s "
+			 "interpolation qualifier\n",
+			 producer_stage,
+			 output->name,
+			 output->interpolation_string(),
+			 consumer_stage,
+			 input->interpolation_string());
 	    return false;
 	 }
       }
@@ -823,9 +836,8 @@ link_intrastage_shaders(void *mem_ctx,
 
 	       if ((other_sig != NULL) && other_sig->is_defined
 		   && !other_sig->is_builtin) {
-		  linker_error_printf(prog,
-				      "function `%s' is multiply defined",
-				      f->name);
+		  linker_error(prog, "function `%s' is multiply defined",
+			       f->name);
 		  return NULL;
 	       }
 	    }
@@ -849,9 +861,9 @@ link_intrastage_shaders(void *mem_ctx,
    }
 
    if (main == NULL) {
-      linker_error_printf(prog, "%s shader lacks `main'\n",
-			  (shader_list[0]->Type == GL_VERTEX_SHADER)
-			  ? "vertex" : "fragment");
+      linker_error(prog, "%s shader lacks `main'\n",
+		   (shader_list[0]->Type == GL_VERTEX_SHADER)
+		   ? "vertex" : "fragment");
       return NULL;
    }
 
@@ -909,6 +921,14 @@ link_intrastage_shaders(void *mem_ctx,
    }
 
    free(linking_shaders);
+
+#ifdef DEBUG
+   /* At this point linked should contain all of the linked IR, so
+    * validate it to make sure nothing went wrong.
+    */
+   if (linked)
+      validate_ir_tree(linked->ir);
+#endif
 
    /* Make a pass over all variable declarations to ensure that arrays with
     * unspecified sizes have a size specified.  The size is inferred from the
@@ -1309,10 +1329,10 @@ assign_attribute_or_color_locations(gl_shader_program *prog,
 	  * attribute overlaps any previously allocated bits.
 	  */
 	 if ((~(use_mask << attr) & used_locations) != used_locations) {
-	    linker_error_printf(prog,
-				"insufficient contiguous attribute locations "
-				"available for vertex shader input `%s'",
-				var->name);
+	    linker_error(prog,
+			 "insufficient contiguous attribute locations "
+			 "available for vertex shader input `%s'",
+			 var->name);
 	    return false;
 	 }
 
@@ -1353,11 +1373,10 @@ assign_attribute_or_color_locations(gl_shader_program *prog,
 
 	 if ((var->location >= (int)(max_index + generic_base))
 	     || (var->location < 0)) {
-	    linker_error_printf(prog,
-				"invalid explicit location %d specified for "
-				"`%s'\n",
-				(var->location < 0) ? var->location : attr,
-				var->name);
+	    linker_error(prog,
+			 "invalid explicit location %d specified for `%s'\n",
+			 (var->location < 0) ? var->location : attr,
+			 var->name);
 	    return false;
 	 } else if (var->location >= generic_base) {
 	    used_locations |= (use_mask << attr);
@@ -1406,10 +1425,10 @@ assign_attribute_or_color_locations(gl_shader_program *prog,
 	 const char *const string = (target_index == MESA_SHADER_VERTEX)
 	    ? "vertex shader input" : "fragment shader output";
 
-	 linker_error_printf(prog,
-			     "insufficient contiguous attribute locations "
-			     "available for %s `%s'",
-			     string, to_assign[i].var->name);
+	 linker_error(prog,
+		      "insufficient contiguous attribute locations "
+		      "available for %s `%s'",
+		      string, to_assign[i].var->name);
 	 return false;
       }
 
@@ -1525,9 +1544,8 @@ assign_varying_locations(struct gl_context *ctx,
 	     * "glsl1-varying read but not written" in piglit.
 	     */
 
-	    linker_error_printf(prog, "fragment shader varying %s not written "
-				"by vertex shader\n.", var->name);
-	    prog->LinkStatus = false;
+	    linker_error(prog, "fragment shader varying %s not written "
+			 "by vertex shader\n.", var->name);
 	 }
 
 	 /* An 'in' variable is only really a shader input if its
@@ -1544,17 +1562,17 @@ assign_varying_locations(struct gl_context *ctx,
 
    if (ctx->API == API_OPENGLES2 || prog->Version == 100) {
       if (varying_vectors > ctx->Const.MaxVarying) {
-	 linker_error_printf(prog, "shader uses too many varying vectors "
-			     "(%u > %u)\n",
-			     varying_vectors, ctx->Const.MaxVarying);
+	 linker_error(prog, "shader uses too many varying vectors "
+		      "(%u > %u)\n",
+		      varying_vectors, ctx->Const.MaxVarying);
 	 return false;
       }
    } else {
       const unsigned float_components = varying_vectors * 4;
       if (float_components > ctx->Const.MaxVarying * 4) {
-	 linker_error_printf(prog, "shader uses too many varying components "
-			     "(%u > %u)\n",
-			     float_components, ctx->Const.MaxVarying * 4);
+	 linker_error(prog, "shader uses too many varying components "
+		      "(%u > %u)\n",
+		      float_components, ctx->Const.MaxVarying * 4);
 	 return false;
       }
    }
@@ -1618,8 +1636,8 @@ link_shaders(struct gl_context *ctx, struct gl_shader_program *prog)
    assert(max_version <= 130);
    if ((max_version >= 130 || min_version == 100)
        && min_version != max_version) {
-      linker_error_printf(prog, "all shaders must use same shading "
-			  "language version\n");
+      linker_error(prog, "all shaders must use same shading "
+		   "language version\n");
       goto done;
    }
 
@@ -1720,12 +1738,10 @@ link_shaders(struct gl_context *ctx, struct gl_shader_program *prog)
     * FINISHME: at least 16, so hardcode 16 for now.
     */
    if (!assign_attribute_or_color_locations(prog, MESA_SHADER_VERTEX, 16)) {
-      prog->LinkStatus = false;
       goto done;
    }
 
    if (!assign_attribute_or_color_locations(prog, MESA_SHADER_FRAGMENT, ctx->Const.MaxDrawBuffers)) {
-      prog->LinkStatus = false;
       goto done;
    }
 
@@ -1742,7 +1758,6 @@ link_shaders(struct gl_context *ctx, struct gl_shader_program *prog)
       if (!assign_varying_locations(ctx, prog,
 				    prog->_LinkedShaders[prev],
 				    prog->_LinkedShaders[i])) {
-	 prog->LinkStatus = false;
 	 goto done;
       }
 
@@ -1774,11 +1789,9 @@ link_shaders(struct gl_context *ctx, struct gl_shader_program *prog)
     */
    if (ctx->API == API_OPENGLES2 || prog->Version == 100) {
       if (prog->_LinkedShaders[MESA_SHADER_VERTEX] == NULL) {
-	 linker_error_printf(prog, "program lacks a vertex shader\n");
-	 prog->LinkStatus = false;
+	 linker_error(prog, "program lacks a vertex shader\n");
       } else if (prog->_LinkedShaders[MESA_SHADER_FRAGMENT] == NULL) {
-	 linker_error_printf(prog, "program lacks a fragment shader\n");
-	 prog->LinkStatus = false;
+	 linker_error(prog, "program lacks a fragment shader\n");
       }
    }
 

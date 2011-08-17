@@ -125,6 +125,7 @@
 #include "glsl_parser_extras.h"
 #include "linker.h"
 #include "program/hash_table.h"
+#include "program.h"
 
 struct call_node : public exec_node {
    class function *func;
@@ -311,9 +312,7 @@ emit_errors_linked(const void *key, void *data, void *closure)
 				  f->sig->function_name(),
 				  &f->sig->parameters);
 
-   linker_error_printf(prog,
-		       "function `%s' has static recursion.\n",
-		       proto);
+   linker_error(prog, "function `%s' has static recursion.\n", proto);
    ralloc_free(proto);
    prog->LinkStatus = false;
 }

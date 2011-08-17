@@ -1131,7 +1131,7 @@ ir_dereference_record::ir_dereference_record(ir_variable *var,
 }
 
 bool
-ir_dereference::is_lvalue()
+ir_dereference::is_lvalue() const
 {
    ir_variable *var = this->variable_referenced();
 
@@ -1346,7 +1346,7 @@ ir_swizzle::create(ir_rvalue *val, const char *str, unsigned vector_length)
 #undef I
 
 ir_variable *
-ir_swizzle::variable_referenced()
+ir_swizzle::variable_referenced() const
 {
    return this->val->variable_referenced();
 }

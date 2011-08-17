@@ -540,3 +540,19 @@ glsl_type::component_slots() const
       return 0;
    }
 }
+
+bool
+glsl_type::can_implicitly_convert_to(const glsl_type *desired) const
+{
+   if (this == desired)
+      return true;
+
+   /* There is no conversion among matrix types. */
+   if (this->matrix_columns > 1 || desired->matrix_columns > 1)
+      return false;
+
+   /* int and uint can be converted to float. */
+   return desired->is_float()
+          && this->is_integer()
+          && this->vector_elements == desired->vector_elements;
+}

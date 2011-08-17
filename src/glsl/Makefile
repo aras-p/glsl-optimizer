@@ -164,6 +164,7 @@ depend: $(ALL_SOURCES) Makefile
 	rm -f depend
 	touch depend
 	$(MKDEP) $(MKDEP_OPTIONS) $(INCLUDES) $(ALL_SOURCES) 2> /dev/null
+	$(MKDEP) $(MKDEP_OPTIONS) -a -p $(DRICORE_OBJ_DIR)/ $(INCLUDES) $(ALL_SOURCES) 2> /dev/null
 
 # Remove .o and backup files
 clean: clean-dricore

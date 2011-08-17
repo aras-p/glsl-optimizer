@@ -91,8 +91,8 @@ public:
       if (sig == NULL) {
 	 /* FINISHME: Log the full signature of unresolved function.
 	  */
-	 linker_error_printf(this->prog, "unresolved reference to function "
-			     "`%s'\n", name);
+	 linker_error(this->prog, "unresolved reference to function `%s'\n",
+		      name);
 	 this->success = false;
 	 return visit_stop;
       }
@@ -104,10 +104,12 @@ public:
       if (f == NULL) {
 	 f = new(linked) ir_function(name);
 
-	 /* Add the new function to the linked IR.
+	 /* Add the new function to the linked IR.  Put it at the end
+          * so that it comes after any global variable declarations
+          * that it refers to.
 	  */
 	 linked->symbols->add_function(f);
-	 linked->ir->push_head(f);
+	 linked->ir->push_tail(f);
       }
 
       ir_function_signature *linked_sig =
