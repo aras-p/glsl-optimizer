@@ -71,6 +71,7 @@ endif
 ifneq ($(strip $(MESA_GPU_DRIVERS)),)
 
 SUBDIRS := \
+	src/mesa \
 	src/egl/main
 
 ifeq ($(strip $(MESA_BUILD_GALLIUM)),true)
