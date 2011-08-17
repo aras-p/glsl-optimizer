@@ -70,6 +70,12 @@ endif
 
 ifneq ($(strip $(MESA_GPU_DRIVERS)),)
 
+SUBDIRS :=
+
+ifeq ($(strip $(MESA_BUILD_GALLIUM)),true)
+SUBDIRS += src/gallium
+endif
+
 # ---------------------------------------
 # Build libGLES_mesa
 # ---------------------------------------
@@ -87,5 +93,8 @@ LOCAL_MODULE_PATH := $(TARGET_OUT_SHARED_LIBRARIES)/egl
 
 include $(MESA_COMMON_MK)
 include $(BUILD_SHARED_LIBRARY)
+
+mkfiles := $(patsubst %,$(MESA_TOP)/%/Android.mk,$(SUBDIRS))
+-include $(mkfiles)
 
 endif # MESA_GPU_DRIVERS
