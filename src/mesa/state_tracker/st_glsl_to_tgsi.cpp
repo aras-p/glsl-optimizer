@@ -1493,11 +1493,34 @@ glsl_to_tgsi_visitor::visit(ir_expression *ir)
       emit(ir, TGSI_OPCODE_SNE, result_dst, op[0], op[1]);
       break;
 
-   case ir_binop_logic_or:
-      /* This could be a saturated add and skip the SNE. */
-      emit(ir, TGSI_OPCODE_ADD, result_dst, op[0], op[1]);
-      emit(ir, TGSI_OPCODE_SNE, result_dst, result_src, st_src_reg_for_float(0.0));
+   case ir_binop_logic_or: {
+      /* After the addition, the value will be an integer on the
+       * range [0,2].  Zero stays zero, and positive values become 1.0.
+       */
+      glsl_to_tgsi_instruction *add =
+         emit(ir, TGSI_OPCODE_ADD, result_dst, op[0], op[1]);
+      if (this->prog->Target == GL_FRAGMENT_PROGRAM_ARB &&
+          result_dst.type == GLSL_TYPE_FLOAT) {
+         /* The clamping to [0,1] can be done for free in the fragment
+          * shader with a saturate if floats are being used as boolean values.
+          */
+         add->saturate = true;
+      } else if (result_dst.type == GLSL_TYPE_FLOAT) {
+         /* Negating the result of the addition gives values on the range
+          * [-2, 0].  Zero stays zero, and negative values become 1.0.  This
+          * is achieved using SLT.
+          */
+         st_src_reg slt_src = result_src;
+         slt_src.negate = ~slt_src.negate;
+         emit(ir, TGSI_OPCODE_SLT, result_dst, slt_src, st_src_reg_for_float(0.0));
+      } else {
+         /* Use an SNE on the result of the addition.  Zero stays zero,
+          * 1 stays 1, and 2 becomes 1.
+          */
+         emit(ir, TGSI_OPCODE_SNE, result_dst, result_src, st_src_reg_for_int(0));
+      }
       break;
+   }
 
    case ir_binop_logic_and:
       /* the bool args are stored as float 0.0 or 1.0, so "mul" gives us "and". */
