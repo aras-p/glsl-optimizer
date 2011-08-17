@@ -92,6 +92,43 @@ LOCAL_SRC_FILES :=
 LOCAL_CFLAGS :=
 LOCAL_C_INCLUDES :=
 
+LOCAL_STATIC_LIBRARIES :=
+LOCAL_WHOLE_STATIC_LIBRARIES := libmesa_egl
+
+LOCAL_SHARED_LIBRARIES := \
+	libglapi \
+	libdrm \
+	libdl \
+	libhardware \
+	liblog \
+	libcutils
+
+ifeq ($(strip $(MESA_BUILD_GALLIUM)),true)
+
+gallium_DRIVERS :=
+
+# swrast
+gallium_DRIVERS += libmesa_pipe_softpipe libmesa_winsys_sw_android
+
+#
+# Notes about the order here:
+#
+#  * libmesa_st_egl depends on libmesa_winsys_sw_android in $(gallium_DRIVERS)
+#  * libmesa_st_mesa depends on libmesa_glsl
+#  * libmesa_glsl depends on libmesa_glsl_utils
+#
+LOCAL_STATIC_LIBRARIES := \
+	libmesa_egl_gallium \
+	libmesa_st_egl \
+	$(gallium_DRIVERS) \
+	libmesa_st_mesa \
+	libmesa_glsl \
+	libmesa_glsl_utils \
+	libmesa_gallium \
+	$(LOCAL_STATIC_LIBRARIES)
+
+endif # MESA_BUILD_GALLIUM
+
 LOCAL_MODULE := libGLES_mesa
 LOCAL_MODULE_PATH := $(TARGET_OUT_SHARED_LIBRARIES)/egl
 
