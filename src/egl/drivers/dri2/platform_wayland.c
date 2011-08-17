@@ -41,25 +41,6 @@
 #include "wayland-drm-client-protocol.h"
 
 static void
-sync_callback(void *data)
-{
-   int *done = data;
-
-   *done = 1;
-}
-
-static void
-force_roundtrip(struct wl_display *display)
-{
-   int done = 0;
-
-   wl_display_sync_callback(display, sync_callback, &done);
-   wl_display_iterate(display, WL_DISPLAY_WRITABLE);
-   while (!done)
-      wl_display_iterate(display, WL_DISPLAY_READABLE);
-}
-
-static void
 wl_buffer_release(void *data, struct wl_buffer *buffer)
 {
    struct dri2_egl_surface *dri2_surf = data;
@@ -302,7 +283,8 @@ dri2_process_front_buffer(struct dri2_egl_surface *dri2_surf, unsigned format)
 }
 
 static void
-dri2_release_pending_buffer(void *data)
+dri2_release_pending_buffer(void *data,
+			    struct wl_callback *callback, uint32_t time)
 {
    struct dri2_egl_surface *dri2_surf = data;
    struct dri2_egl_display *dri2_dpy =
@@ -317,11 +299,16 @@ dri2_release_pending_buffer(void *data)
    dri2_surf->pending_buffer = NULL;
 }
 
+static const struct wl_callback_listener release_buffer_listener = {
+   dri2_release_pending_buffer
+};
+
 static void
 dri2_release_buffers(struct dri2_egl_surface *dri2_surf)
 {
    struct dri2_egl_display *dri2_dpy =
       dri2_egl_display(dri2_surf->base.Resource.Display);
+   struct wl_callback *callback;
    int i;
 
    if (dri2_surf->third_buffer) {
@@ -335,10 +322,11 @@ dri2_release_buffers(struct dri2_egl_surface *dri2_surf)
          switch (i) {
          case __DRI_BUFFER_FRONT_LEFT:
             if (dri2_surf->pending_buffer)
-               force_roundtrip(dri2_dpy->wl_dpy);
+	      wl_display_roundtrip(dri2_dpy->wl_dpy);
             dri2_surf->pending_buffer = dri2_surf->dri_buffers[i];
-            wl_display_sync_callback(dri2_dpy->wl_dpy,
-                                     dri2_release_pending_buffer, dri2_surf);
+            callback = wl_display_sync(dri2_dpy->wl_dpy);
+	    wl_callback_add_listener(callback,
+				     &release_buffer_listener, dri2_surf);
             break;
          default:
             dri2_dpy->dri2->releaseBuffer(dri2_dpy->dri_screen,
@@ -550,12 +538,17 @@ dri2_flush_front_buffer(__DRIdrawable * driDrawable, void *loaderPrivate)
 }
 
 static void
-wayland_frame_callback(struct wl_surface *surface, void *data, uint32_t time)
+wayland_frame_callback(void *data, struct wl_callback *callback, uint32_t time)
 {
    struct dri2_egl_surface *dri2_surf = data;
 
    dri2_surf->block_swap_buffers = EGL_FALSE;
+   wl_callback_destroy(callback);
 }
+
+static const struct wl_callback_listener frame_listener = {
+	wayland_frame_callback
+};
 
 /**
  * Called via eglSwapBuffers(), drv->API.SwapBuffers().
@@ -566,14 +559,14 @@ dri2_swap_buffers(_EGLDriver *drv, _EGLDisplay *disp, _EGLSurface *draw)
    struct dri2_egl_display *dri2_dpy = dri2_egl_display(disp);
    struct dri2_egl_surface *dri2_surf = dri2_egl_surface(draw);
    struct dri2_egl_driver *dri2_drv = dri2_egl_driver(drv);
+   struct wl_callback *callback;
 
    while (dri2_surf->block_swap_buffers)
       wl_display_iterate(dri2_dpy->wl_dpy, WL_DISPLAY_READABLE);
 
    dri2_surf->block_swap_buffers = EGL_TRUE;
-   wl_display_frame_callback(dri2_dpy->wl_dpy,
-                             dri2_surf->wl_win->surface,
-                             wayland_frame_callback, dri2_surf);
+   callback = wl_surface_frame(dri2_surf->wl_win->surface);
+   wl_callback_add_listener(callback, &frame_listener, dri2_surf);
 
    if (dri2_surf->base.Type == EGL_WINDOW_BIT) {
       pointer_swap(
@@ -695,7 +688,7 @@ dri2_wayland_authenticate(_EGLDisplay *disp, uint32_t id)
    dri2_dpy->authenticated = 0;
 
    wl_drm_authenticate(dri2_dpy->wl_drm, id);
-   force_roundtrip(dri2_dpy->wl_dpy);
+   wl_display_roundtrip(dri2_dpy->wl_dpy);
 
    if (!dri2_dpy->authenticated)
       ret = -1;
@@ -792,7 +785,7 @@ dri2_initialize_wayland(_EGLDriver *drv, _EGLDisplay *disp)
 
    id = wl_display_get_global(dri2_dpy->wl_dpy, "wl_drm", 1);
    if (id == 0)
-      force_roundtrip(dri2_dpy->wl_dpy);
+      wl_display_roundtrip(dri2_dpy->wl_dpy);
    id = wl_display_get_global(dri2_dpy->wl_dpy, "wl_drm", 1);
    if (id == 0)
       goto cleanup_dpy;
@@ -800,11 +793,11 @@ dri2_initialize_wayland(_EGLDriver *drv, _EGLDisplay *disp)
    if (!dri2_dpy->wl_drm)
       goto cleanup_dpy;
    wl_drm_add_listener(dri2_dpy->wl_drm, &drm_listener, dri2_dpy);
-   force_roundtrip(dri2_dpy->wl_dpy);
+   wl_display_roundtrip(dri2_dpy->wl_dpy);
    if (dri2_dpy->fd == -1)
       goto cleanup_drm;
 
-   force_roundtrip(dri2_dpy->wl_dpy);
+   wl_display_roundtrip(dri2_dpy->wl_dpy);
    if (!dri2_dpy->authenticated)
       goto cleanup_fd;
 
