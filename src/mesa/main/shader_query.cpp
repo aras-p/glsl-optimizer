@@ -33,6 +33,7 @@
 #include "ir.h"
 #include "shaderobj.h"
 #include "program/hash_table.h"
+#include "../glsl/program.h"
 
 extern "C" {
 #include "shaderapi.h"
@@ -85,35 +86,59 @@ _mesa_BindAttribLocationARB(GLhandleARB program, GLuint index,
 }
 
 void GLAPIENTRY
-_mesa_GetActiveAttribARB(GLhandleARB program, GLuint index,
+_mesa_GetActiveAttribARB(GLhandleARB program, GLuint desired_index,
                          GLsizei maxLength, GLsizei * length, GLint * size,
                          GLenum * type, GLcharARB * name)
 {
    GET_CURRENT_CONTEXT(ctx);
-   const struct gl_program_parameter_list *attribs = NULL;
    struct gl_shader_program *shProg;
 
    shProg = _mesa_lookup_shader_program_err(ctx, program, "glGetActiveAttrib");
    if (!shProg)
       return;
 
-   if (shProg->VertexProgram)
-      attribs = shProg->VertexProgram->Base.Attributes;
-
-   if (!attribs || index >= attribs->NumParameters) {
-      _mesa_error(ctx, GL_INVALID_VALUE, "glGetActiveAttrib(index)");
+   if (!shProg->LinkStatus) {
+      _mesa_error(ctx, GL_INVALID_VALUE,
+                  "glGetActiveAttrib(program not linked)");
       return;
    }
 
-   _mesa_copy_string(name, maxLength, length,
-                     attribs->Parameters[index].Name);
+   if (shProg->_LinkedShaders[MESA_SHADER_VERTEX] == NULL) {
+      _mesa_error(ctx, GL_INVALID_VALUE, "glGetActiveAttrib(no vertex shader)");
+      return;
+   }
 
-   if (size)
-      *size = attribs->Parameters[index].Size
-         / _mesa_sizeof_glsl_type(attribs->Parameters[index].DataType);
+   exec_list *const ir = shProg->_LinkedShaders[MESA_SHADER_VERTEX]->ir;
+   unsigned current_index = 0;
 
-   if (type)
-      *type = attribs->Parameters[index].DataType;
+   foreach_list(node, ir) {
+      const ir_variable *const var = ((ir_instruction *) node)->as_variable();
+
+      if (var == NULL
+	  || var->mode != ir_var_in
+	  || var->location == -1
+	  || var->location < VERT_ATTRIB_GENERIC0)
+	 continue;
+
+      if (current_index == desired_index) {
+	 _mesa_copy_string(name, maxLength, length, var->name);
+
+	 if (size)
+	    *size = (var->type->is_array()) ? var->type->length : 1;
+
+	 if (type)
+	    *type = var->type->gl_type;
+
+	 return;
+      }
+
+      current_index++;
+   }
+
+   /* If the loop did not return early, the caller must have asked for
+    * an index that did not exit.  Set an error.
+    */
+   _mesa_error(ctx, GL_INVALID_VALUE, "glGetActiveAttrib(index)");
 }
 
 GLint GLAPIENTRY
