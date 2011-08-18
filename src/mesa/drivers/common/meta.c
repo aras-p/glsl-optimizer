@@ -2424,7 +2424,9 @@ _mesa_meta_check_generate_mipmap_fallback(struct gl_context *ctx, GLenum target,
 
    /* check for fallbacks */
    if (!ctx->Extensions.EXT_framebuffer_object ||
-       target == GL_TEXTURE_3D) {
+       target == GL_TEXTURE_3D ||
+       target == GL_TEXTURE_1D_ARRAY ||
+       target == GL_TEXTURE_2D_ARRAY) {
       return GL_TRUE;
    }
 
@@ -2476,7 +2478,8 @@ _mesa_meta_check_generate_mipmap_fallback(struct gl_context *ctx, GLenum target,
 
 /**
  * Called via ctx->Driver.GenerateMipmap()
- * Note: texture borders and 3D texture support not yet complete.
+ * Note: We don't yet support 3D textures, 1D/2D array textures or texture
+ * borders.
  */
 void
 _mesa_meta_GenerateMipmap(struct gl_context *ctx, GLenum target,
