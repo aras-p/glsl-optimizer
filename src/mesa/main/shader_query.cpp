@@ -212,3 +212,32 @@ _mesa_count_active_attribs(struct gl_shader_program *shProg)
 
    return i;
 }
+
+
+size_t
+_mesa_longest_attribute_name_length(struct gl_shader_program *shProg)
+{
+   if (!shProg->LinkStatus
+       || shProg->_LinkedShaders[MESA_SHADER_VERTEX] == NULL) {
+      return 0;
+   }
+
+   exec_list *const ir = shProg->_LinkedShaders[MESA_SHADER_VERTEX]->ir;
+   size_t longest = 0;
+
+   foreach_list(node, ir) {
+      const ir_variable *const var = ((ir_instruction *) node)->as_variable();
+
+      if (var == NULL
+	  || var->mode != ir_var_in
+	  || var->location == -1
+	  || var->location < VERT_ATTRIB_GENERIC0)
+	 continue;
+
+      const size_t len = strlen(var->name);
+      if (len >= longest)
+	 longest = len + 1;
+   }
+
+   return longest;
+}

@@ -53,6 +53,8 @@ _mesa_init_shader_dispatch(struct _glapi_table *exec);
 extern unsigned
 _mesa_count_active_attribs(struct gl_shader_program *shProg);
 
+extern size_t
+_mesa_longest_attribute_name_length(struct gl_shader_program *shProg);
 
 extern void GLAPIENTRY
 _mesa_AttachObjectARB(GLhandleARB, GLhandleARB);

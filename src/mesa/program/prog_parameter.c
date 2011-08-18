@@ -640,28 +640,6 @@ _mesa_combine_parameter_lists(const struct gl_program_parameter_list *listA,
 }
 
 
-
-/**
- * Find longest name of all uniform parameters in list.
- */
-GLuint
-_mesa_longest_parameter_name(const struct gl_program_parameter_list *list,
-                             gl_register_file type)
-{
-   GLuint i, maxLen = 0;
-   if (!list)
-      return 0;
-   for (i = 0; i < list->NumParameters; i++) {
-      if (list->Parameters[i].Type == type) {
-         GLuint len = strlen(list->Parameters[i].Name);
-         if (len > maxLen)
-            maxLen = len;
-      }
-   }
-   return maxLen;
-}
-
-
 /**
  * Count the number of parameters in the last that match the given type.
  */

@@ -538,7 +538,6 @@ get_handle(struct gl_context *ctx, GLenum pname)
 static void
 get_programiv(struct gl_context *ctx, GLuint program, GLenum pname, GLint *params)
 {
-   const struct gl_program_parameter_list *attribs;
    struct gl_shader_program *shProg
       = _mesa_lookup_shader_program(ctx, program);
 
@@ -546,11 +545,6 @@ get_programiv(struct gl_context *ctx, GLuint program, GLenum pname, GLint *param
       _mesa_error(ctx, GL_INVALID_VALUE, "glGetProgramiv(program)");
       return;
    }
-
-   if (shProg->VertexProgram)
-      attribs = shProg->VertexProgram->Base.Attributes;
-   else
-      attribs = NULL;
 
    switch (pname) {
    case GL_DELETE_STATUS:
@@ -572,7 +566,7 @@ get_programiv(struct gl_context *ctx, GLuint program, GLenum pname, GLint *param
       *params = _mesa_count_active_attribs(shProg);
       break;
    case GL_ACTIVE_ATTRIBUTE_MAX_LENGTH:
-      *params = _mesa_longest_parameter_name(attribs, PROGRAM_INPUT) + 1;
+      *params = _mesa_longest_attribute_name_length(shProg);
       break;
    case GL_ACTIVE_UNIFORMS:
       *params = shProg->Uniforms ? shProg->Uniforms->NumUniforms : 0;
