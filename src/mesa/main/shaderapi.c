@@ -569,7 +569,7 @@ get_programiv(struct gl_context *ctx, GLuint program, GLenum pname, GLint *param
       *params = shProg->NumShaders;
       break;
    case GL_ACTIVE_ATTRIBUTES:
-      *params = attribs ? attribs->NumParameters : 0;
+      *params = _mesa_count_active_attribs(shProg);
       break;
    case GL_ACTIVE_ATTRIBUTE_MAX_LENGTH:
       *params = _mesa_longest_parameter_name(attribs, PROGRAM_INPUT) + 1;

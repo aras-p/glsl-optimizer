@@ -50,6 +50,8 @@ _mesa_active_program(struct gl_context *ctx, struct gl_shader_program *shProg,
 extern void
 _mesa_init_shader_dispatch(struct _glapi_table *exec);
 
+extern unsigned
+_mesa_count_active_attribs(struct gl_shader_program *shProg);
 
 
 extern void GLAPIENTRY

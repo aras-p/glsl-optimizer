@@ -185,3 +185,30 @@ _mesa_GetAttribLocationARB(GLhandleARB program, const GLcharARB * name)
 
    return -1;
 }
+
+
+unsigned
+_mesa_count_active_attribs(struct gl_shader_program *shProg)
+{
+   if (!shProg->LinkStatus
+       || shProg->_LinkedShaders[MESA_SHADER_VERTEX] == NULL) {
+      return 0;
+   }
+
+   exec_list *const ir = shProg->_LinkedShaders[MESA_SHADER_VERTEX]->ir;
+   unsigned i = 0;
+
+   foreach_list(node, ir) {
+      const ir_variable *const var = ((ir_instruction *) node)->as_variable();
+
+      if (var == NULL
+	  || var->mode != ir_var_in
+	  || var->location == -1
+	  || var->location < VERT_ATTRIB_GENERIC0)
+	 continue;
+
+      i++;
+   }
+
+   return i;
+}
