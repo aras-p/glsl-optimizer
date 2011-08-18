@@ -33,9 +33,11 @@
 #include "pipe/p_state.h"
 
 struct native_display;
+struct android_native_buffer_t;
 
 enum native_buffer_type {
    NATIVE_BUFFER_DRM,
+   NATIVE_BUFFER_ANDROID,
 
    NUM_NATIVE_BUFFERS
 };
@@ -50,6 +52,8 @@ struct native_buffer {
          unsigned handle; /**< the handle of the GEM object */
          unsigned stride;
       } drm;
+
+      struct android_native_buffer_t *android; /**< opaque native buffer */
    } u;
 };
 
