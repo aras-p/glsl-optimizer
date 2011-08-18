@@ -2244,10 +2244,13 @@ void brw_urb_WRITE(struct brw_compile *p,
 
    if (intel->gen == 7) {
       /* Enable Channel Masks in the URB_WRITE_HWORD message header */
+      brw_push_insn_state(p);
+      brw_set_access_mode(p, BRW_ALIGN_1);
       brw_OR(p, retype(brw_vec1_reg(BRW_MESSAGE_REGISTER_FILE, msg_reg_nr, 5),
 		       BRW_REGISTER_TYPE_UD),
 	        retype(brw_vec1_grf(0, 5), BRW_REGISTER_TYPE_UD),
 		brw_imm_ud(0xff00));
+      brw_pop_insn_state(p);
    }
 
    insn = next_insn(p, BRW_OPCODE_SEND);
