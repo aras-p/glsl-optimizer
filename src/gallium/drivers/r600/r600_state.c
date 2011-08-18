@@ -1676,7 +1676,7 @@ void r600_adjust_gprs(struct r600_pipe_context *rctx)
 	if (rctx->chip_class >= EVERGREEN)
 		return;
 
-	if (!rctx->ps_shader && !rctx->vs_shader)
+	if (!rctx->ps_shader || !rctx->vs_shader)
 		return;
 
 	if (rctx->ps_shader->shader.bc.ngpr > rctx->default_ps_gprs)
