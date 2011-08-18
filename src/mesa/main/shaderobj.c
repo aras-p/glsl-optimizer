@@ -239,7 +239,6 @@ _mesa_init_shader_program(struct gl_context *ctx, struct gl_shader_program *prog
 {
    prog->Type = GL_SHADER_PROGRAM_MESA;
    prog->RefCount = 1;
-   prog->Attributes = _mesa_new_parameter_list();
 
    prog->AttributeBindings = string_to_uint_map_ctor();
 
@@ -310,11 +309,6 @@ _mesa_free_shader_program_data(struct gl_context *ctx,
    assert(shProg->Type == GL_SHADER_PROGRAM_MESA);
 
    _mesa_clear_shader_program_data(ctx, shProg);
-
-   if (shProg->Attributes) {
-      _mesa_free_parameter_list(shProg->Attributes);
-      shProg->Attributes = NULL;
-   }
 
    if (shProg->AttributeBindings) {
       string_to_uint_map_dtor(shProg->AttributeBindings);

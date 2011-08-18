@@ -68,16 +68,11 @@ _mesa_BindAttribLocationARB(GLhandleARB program, GLuint index,
       return;
    }
 
-   /* this will replace the current value if it's already in the list */
-   /* Add VERT_ATTRIB_GENERIC0 because that's how the linker differentiates
+   /* Replace the current value if it's already in the list.  Add
+    * VERT_ATTRIB_GENERIC0 because that's how the linker differentiates
     * between built-in attributes and user-defined attributes.
     */
    shProg->AttributeBindings->put(index + VERT_ATTRIB_GENERIC0, name);
-   i = _mesa_add_attribute(shProg->Attributes, name, size, datatype, index);
-   if (i < 0) {
-      _mesa_error(ctx, GL_OUT_OF_MEMORY, "glBindAttribLocation");
-      return;
-   }
 
    /*
     * Note that this attribute binding won't go into effect until

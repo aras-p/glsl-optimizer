@@ -2155,7 +2155,6 @@ struct gl_shader_program
     *
     * \sa gl_program::Attributes
     */
-   struct gl_program_parameter_list *Attributes;
    struct string_to_uint_map *AttributeBindings;
 
    /** Transform feedback varyings */
