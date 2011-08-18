@@ -111,7 +111,7 @@ void r600_blit_uncompress_depth(struct pipe_context *ctx, struct r600_resource_t
 	if (!texture->dirty_db)
 		return;
 
-	surf_tmpl.format = texture->resource.b.b.b.format;
+	surf_tmpl.format = texture->real_format;
 	surf_tmpl.u.tex.level = level;
 	surf_tmpl.u.tex.first_layer = 0;
 	surf_tmpl.u.tex.last_layer = 0;
@@ -119,7 +119,7 @@ void r600_blit_uncompress_depth(struct pipe_context *ctx, struct r600_resource_t
 
 	zsurf = ctx->create_surface(ctx, &texture->resource.b.b.b, &surf_tmpl);
 
-	surf_tmpl.format = ((struct pipe_resource*)texture->flushed_depth_texture)->format;
+	surf_tmpl.format = texture->flushed_depth_texture->real_format;
 	surf_tmpl.usage = PIPE_BIND_RENDER_TARGET;
 	cbsurf = ctx->create_surface(ctx,
 			(struct pipe_resource*)texture->flushed_depth_texture, &surf_tmpl);
@@ -249,7 +249,7 @@ static void r600_compressed_to_blittable(struct pipe_resource *tex,
 				   struct texture_orig_info *orig)
 {
 	struct r600_resource_texture *rtex = (struct r600_resource_texture*)tex;
-	unsigned pixsize = util_format_get_blocksize(tex->format);
+	unsigned pixsize = util_format_get_blocksize(rtex->real_format);
 	int new_format;
 	int new_height, new_width;
 
@@ -269,7 +269,6 @@ static void r600_compressed_to_blittable(struct pipe_resource *tex,
 	tex->width0 = new_width;
 	tex->height0 = new_height;
 	tex->format = new_format;
-
 }
 
 static void r600_reset_blittable_to_compressed(struct pipe_resource *tex,

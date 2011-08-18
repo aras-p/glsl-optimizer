@@ -52,6 +52,12 @@ struct r600_resource {
 
 struct r600_resource_texture {
 	struct r600_resource		resource;
+
+	/* If this resource is a depth-stencil buffer on evergreen, this contains
+	 * the depth part of the format. There is a separate stencil resource
+	 * for the stencil buffer below. */
+	enum pipe_format		real_format;
+
 	unsigned			offset[PIPE_MAX_TEXTURE_LEVELS];
 	unsigned			pitch_in_bytes[PIPE_MAX_TEXTURE_LEVELS];  /* transfer */
 	unsigned			pitch_in_blocks[PIPE_MAX_TEXTURE_LEVELS]; /* texture resource */
@@ -62,6 +68,7 @@ struct r600_resource_texture {
 	unsigned			tile_type;
 	unsigned			depth;
 	unsigned			dirty_db;
+	struct r600_resource_texture    *stencil; /* Stencil is in a separate buffer on Evergreen. */
 	struct r600_resource_texture	*flushed_depth_texture;
 	boolean				is_flushing_texture;
 

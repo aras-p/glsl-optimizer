@@ -262,20 +262,11 @@ static uint32_t r600_translate_dbformat(enum pipe_format format)
 	case PIPE_FORMAT_Z16_UNORM:
 		return V_028040_Z_16;
 	case PIPE_FORMAT_Z24X8_UNORM:
-		return V_028040_Z_24;
 	case PIPE_FORMAT_Z24_UNORM_S8_USCALED:
 		return V_028040_Z_24;
 	default:
 		return ~0U;
 	}
-}
-
-static uint32_t r600_translate_stencilformat(enum pipe_format format)
-{
-	if (format == PIPE_FORMAT_Z24_UNORM_S8_USCALED)
-		return 1;
-	else
-		return 0;
 }
 
 static uint32_t r600_translate_colorswap(enum pipe_format format)
@@ -1381,55 +1372,51 @@ static void evergreen_cb(struct r600_pipe_context *rctx, struct r600_pipe_state 
 }
 
 static void evergreen_db(struct r600_pipe_context *rctx, struct r600_pipe_state *rstate,
-			const struct pipe_framebuffer_state *state)
+			 const struct pipe_framebuffer_state *state)
 {
 	struct r600_resource_texture *rtex;
-	struct r600_resource *rbuffer;
 	struct r600_surface *surf;
-	unsigned level;
-	unsigned pitch, slice, format, stencil_format;
+	unsigned level, first_layer;
+	unsigned pitch, slice, format;
 	unsigned offset;
 
 	if (state->zsbuf == NULL)
 		return;
 
-	level = state->zsbuf->u.tex.level;
-
 	surf = (struct r600_surface *)state->zsbuf;
-	rtex = (struct r600_resource_texture*)state->zsbuf->texture;
+	rtex = (struct r600_resource_texture*)surf->base.texture;
 
-	rbuffer = &rtex->resource;
-
-	/* XXX quite sure for dx10+ hw don't need any offset hacks */
-	offset = r600_texture_get_offset((struct r600_resource_texture *)state->zsbuf->texture,
-					 level, state->zsbuf->u.tex.first_layer);
+	level = surf->base.u.tex.level;
+	first_layer = surf->base.u.tex.first_layer;
+	offset = r600_texture_get_offset(rtex, level, first_layer);
 	pitch = rtex->pitch_in_blocks[level] / 8 - 1;
 	slice = rtex->pitch_in_blocks[level] * surf->aligned_height / 64 - 1;
-	format = r600_translate_dbformat(state->zsbuf->texture->format);
-	stencil_format = r600_translate_stencilformat(state->zsbuf->texture->format);
+	format = r600_translate_dbformat(rtex->real_format);
 
 	r600_pipe_state_add_reg(rstate, R_028048_DB_Z_READ_BASE,
-				offset >> 8, 0xFFFFFFFF, rbuffer->bo, RADEON_USAGE_READWRITE);
+				offset >> 8, 0xFFFFFFFF, rtex->resource.bo, RADEON_USAGE_READWRITE);
 	r600_pipe_state_add_reg(rstate, R_028050_DB_Z_WRITE_BASE,
-				offset >> 8, 0xFFFFFFFF, rbuffer->bo, RADEON_USAGE_READWRITE);
-
-	if (stencil_format) {
-		uint32_t stencil_offset;
-
-		stencil_offset = ((surf->aligned_height * rtex->pitch_in_bytes[level]) + 255) & ~255;
-		r600_pipe_state_add_reg(rstate, R_02804C_DB_STENCIL_READ_BASE,
-					(offset + stencil_offset) >> 8, 0xFFFFFFFF, rbuffer->bo, RADEON_USAGE_READWRITE);
-		r600_pipe_state_add_reg(rstate, R_028054_DB_STENCIL_WRITE_BASE,
-					(offset + stencil_offset) >> 8, 0xFFFFFFFF, rbuffer->bo, RADEON_USAGE_READWRITE);
-	}
-
+				offset >> 8, 0xFFFFFFFF, rtex->resource.bo, RADEON_USAGE_READWRITE);
 	r600_pipe_state_add_reg(rstate, R_028008_DB_DEPTH_VIEW, 0x00000000, 0xFFFFFFFF, NULL, 0);
-	r600_pipe_state_add_reg(rstate, R_028044_DB_STENCIL_INFO,
-				S_028044_FORMAT(stencil_format), 0xFFFFFFFF, rbuffer->bo, RADEON_USAGE_READWRITE);
+
+	if (rtex->stencil) {
+		uint32_t stencil_offset =
+			r600_texture_get_offset(rtex->stencil, level, first_layer);
+
+		r600_pipe_state_add_reg(rstate, R_02804C_DB_STENCIL_READ_BASE,
+					stencil_offset >> 8, 0xFFFFFFFF, rtex->stencil->resource.bo, RADEON_USAGE_READWRITE);
+		r600_pipe_state_add_reg(rstate, R_028054_DB_STENCIL_WRITE_BASE,
+					stencil_offset >> 8, 0xFFFFFFFF, rtex->stencil->resource.bo, RADEON_USAGE_READWRITE);
+		r600_pipe_state_add_reg(rstate, R_028044_DB_STENCIL_INFO,
+					1, 0xFFFFFFFF, rtex->stencil->resource.bo, RADEON_USAGE_READWRITE);
+	} else {
+		r600_pipe_state_add_reg(rstate, R_028044_DB_STENCIL_INFO,
+					0, 0xFFFFFFFF, NULL, RADEON_USAGE_READWRITE);
+	}
 
 	r600_pipe_state_add_reg(rstate, R_028040_DB_Z_INFO,
 				S_028040_ARRAY_MODE(rtex->array_mode[level]) | S_028040_FORMAT(format),
-				0xFFFFFFFF, rbuffer->bo, RADEON_USAGE_READWRITE);
+				0xFFFFFFFF, rtex->resource.bo, RADEON_USAGE_READWRITE);
 	r600_pipe_state_add_reg(rstate, R_028058_DB_DEPTH_SIZE,
 				S_028058_PITCH_TILE_MAX(pitch),
 				0xFFFFFFFF, NULL, 0);
