@@ -1454,6 +1454,13 @@ intel_verify_dri2_has_hiz(struct intel_context *intel,
 	  * a combined depth/stencil buffer. Discard the hiz buffer too.
 	  */
 	 intel->intelScreen->dri2_has_hiz = INTEL_DRI2_HAS_HIZ_FALSE;
+	 if (intel->must_use_separate_stencil) {
+	    _mesa_problem(&intel->ctx,
+			  "intel_context requires separate stencil, but the "
+			  "DRIscreen does not support it. You may need to "
+			  "upgrade the Intel X driver to 2.16.0");
+	    abort();
+	 }
 
 	 /* 1. Discard depth and stencil renderbuffers. */
 	 _mesa_remove_renderbuffer(fb, BUFFER_DEPTH);
