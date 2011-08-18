@@ -1075,7 +1075,7 @@ fs_visitor::visit(ir_texture *ir)
    /* Writemasking doesn't eliminate channels on SIMD8 texture
     * samples, so don't worry about them.
     */
-   fs_reg dst = fs_reg(this, glsl_type::vec4_type);
+   fs_reg dst = fs_reg(this, glsl_type::get_instance(ir->type->base_type, 4, 1));
 
    if (intel->gen >= 7) {
       inst = emit_texture_gen7(ir, dst, coordinate, sampler);
