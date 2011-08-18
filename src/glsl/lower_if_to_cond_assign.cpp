@@ -169,7 +169,6 @@ ir_if_to_cond_assign_visitor::visit_leave(ir_if *ir)
 
    bool found_control_flow = false;
    ir_assignment *assign;
-   ir_dereference_variable *deref;
 
    /* Check that both blocks don't contain anything we can't support. */
    foreach_iter(exec_list_iterator, then_iter, ir->then_instructions) {
