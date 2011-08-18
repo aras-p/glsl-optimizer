@@ -1651,6 +1651,14 @@ _mesa_execute_program(struct gl_context * ctx,
             GLfloat texcoord[4], color[4];
             fetch_vector4(&inst->SrcReg[0], machine, texcoord);
 
+            /* For TEX, texcoord.Q should not be used and its value should not
+             * matter (at most, we pass coord.xyz to texture3D() in GLSL).
+             * Set Q=1 so that FetchTexelDeriv() doesn't get a garbage value
+             * which is effectively what happens when the texcoord swizzle
+             * is .xyzz
+             */
+            texcoord[3] = 1.0f;
+
             fetch_texel(ctx, machine, inst, texcoord, 0.0, color);
 
             if (DEBUG_PROG) {
