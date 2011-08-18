@@ -1559,14 +1559,6 @@ ir_to_mesa_visitor::visit(ir_dereference_variable *ir)
          entry = new(mem_ctx) variable_storage(var,
                                                PROGRAM_INPUT,
                                                var->location);
-         if (this->prog->Target == GL_VERTEX_PROGRAM_ARB &&
-             var->location >= VERT_ATTRIB_GENERIC0) {
-            _mesa_add_attribute(this->prog->Attributes,
-                                var->name,
-                                _mesa_sizeof_glsl_type(var->type->gl_type),
-                                var->type->gl_type,
-                                var->location - VERT_ATTRIB_GENERIC0);
-         }
          break;
       case ir_var_out:
 	 assert(var->location != -1);
@@ -3048,7 +3040,6 @@ get_mesa_program(struct gl_context *ctx,
    if (!prog)
       return NULL;
    prog->Parameters = _mesa_new_parameter_list();
-   prog->Attributes = _mesa_new_parameter_list();
    v.ctx = ctx;
    v.prog = prog;
    v.shader_program = shader_program;

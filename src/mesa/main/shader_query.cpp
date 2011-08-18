@@ -45,10 +45,6 @@ _mesa_BindAttribLocationARB(GLhandleARB program, GLuint index,
 {
    GET_CURRENT_CONTEXT(ctx);
 
-   const GLint size = -1; /* unknown size */
-   GLint i;
-   GLenum datatype = GL_FLOAT_VEC4;
-
    struct gl_shader_program *const shProg =
       _mesa_lookup_shader_program_err(ctx, program, "glBindAttribLocation");
    if (!shProg)

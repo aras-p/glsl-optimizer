@@ -1933,14 +1933,6 @@ glsl_to_tgsi_visitor::visit(ir_dereference_variable *ir)
          entry = new(mem_ctx) variable_storage(var,
                                                PROGRAM_INPUT,
                                                var->location);
-         if (this->prog->Target == GL_VERTEX_PROGRAM_ARB &&
-             var->location >= VERT_ATTRIB_GENERIC0) {
-            _mesa_add_attribute(this->prog->Attributes,
-                                var->name,
-                                _mesa_sizeof_glsl_type(var->type->gl_type),
-                                var->type->gl_type,
-                                var->location - VERT_ATTRIB_GENERIC0);
-         }
          break;
       case ir_var_out:
          assert(var->location != -1);
@@ -3986,7 +3978,6 @@ get_pixel_transfer_visitor(struct st_fragment_program *fp,
    /* Make modifications to fragment program info. */
    prog->Parameters = _mesa_combine_parameter_lists(params,
                                                     original->prog->Parameters);
-   prog->Attributes = _mesa_clone_parameter_list(original->prog->Attributes);
    _mesa_free_parameter_list(params);
    count_resources(v, prog);
    fp->glsl_to_tgsi = v;
@@ -4061,7 +4052,6 @@ get_bitmap_visitor(struct st_fragment_program *fp,
 
    /* Make modifications to fragment program info. */
    prog->Parameters = _mesa_clone_parameter_list(original->prog->Parameters);
-   prog->Attributes = _mesa_clone_parameter_list(original->prog->Attributes);
    count_resources(v, prog);
    fp->glsl_to_tgsi = v;
 }
@@ -4967,7 +4957,6 @@ get_mesa_program(struct gl_context *ctx,
    if (!prog)
       return NULL;
    prog->Parameters = _mesa_new_parameter_list();
-   prog->Attributes = _mesa_new_parameter_list();
    v->ctx = ctx;
    v->prog = prog;
    v->shader_program = shader_program;
