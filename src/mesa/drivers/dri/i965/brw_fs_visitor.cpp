@@ -510,7 +510,7 @@ fs_visitor::emit_assignment_writes(fs_reg &l, fs_reg &r,
 void
 fs_visitor::visit(ir_assignment *ir)
 {
-   struct fs_reg l, r;
+   fs_reg l, r;
    fs_inst *inst;
 
    /* FINISHME: arrays on the lhs */
