@@ -64,6 +64,12 @@ C_SOURCES = \
 	pipebuffer/pb_bufmgr_pool.c \
 	pipebuffer/pb_bufmgr_slab.c \
 	pipebuffer/pb_validate.c \
+	postprocess/pp_celshade.c \
+	postprocess/pp_colors.c \
+	postprocess/pp_init.c \
+	postprocess/pp_mlaa.c \
+	postprocess/pp_run.c \
+	postprocess/pp_program.c \
 	rbug/rbug_connection.c \
 	rbug/rbug_context.c \
 	rbug/rbug_core.c \
