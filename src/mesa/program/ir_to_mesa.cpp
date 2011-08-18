@@ -581,7 +581,7 @@ ir_to_mesa_visitor::emit_scs(ir_instruction *ir, enum prog_opcode op,
    }
 }
 
-struct src_reg
+src_reg
 ir_to_mesa_visitor::src_reg_for_float(float val)
 {
    src_reg src(PROGRAM_CONSTANT, -1, NULL);
@@ -725,7 +725,7 @@ ir_to_mesa_visitor::visit(ir_variable *ir)
 	 }
       }
 
-      struct variable_storage *storage;
+      variable_storage *storage;
       dst_reg dst;
       if (i == ir->num_state_slots) {
 	 /* We'll set the index later. */
