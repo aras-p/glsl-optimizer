@@ -1991,6 +1991,9 @@ _mesa_FramebufferTexture1DEXT(GLenum target, GLenum attachment,
       case GL_TEXTURE_1D:
          error = GL_FALSE;
          break;
+      case GL_TEXTURE_1D_ARRAY:
+         error = !ctx->Extensions.EXT_texture_array;
+         break;
       default:
          error = GL_TRUE;
       }
@@ -2031,6 +2034,9 @@ _mesa_FramebufferTexture2DEXT(GLenum target, GLenum attachment,
       case GL_TEXTURE_CUBE_MAP_POSITIVE_Z:
       case GL_TEXTURE_CUBE_MAP_NEGATIVE_Z:
          error = !ctx->Extensions.ARB_texture_cube_map;
+         break;
+      case GL_TEXTURE_2D_ARRAY:
+         error = !ctx->Extensions.EXT_texture_array;
          break;
       default:
          error = GL_FALSE;
@@ -2380,6 +2386,8 @@ void GLAPIENTRY
 _mesa_GenerateMipmapEXT(GLenum target)
 {
    struct gl_texture_object *texObj;
+   GLboolean error;
+
    GET_CURRENT_CONTEXT(ctx);
 
    ASSERT_OUTSIDE_BEGIN_END(ctx);
@@ -2389,12 +2397,22 @@ _mesa_GenerateMipmapEXT(GLenum target)
    case GL_TEXTURE_1D:
    case GL_TEXTURE_2D:
    case GL_TEXTURE_3D:
+      error = GL_FALSE;
+      break;
    case GL_TEXTURE_CUBE_MAP:
-      /* OK, legal value */
+      error = !ctx->Extensions.ARB_texture_cube_map;
+      break;
+   case GL_TEXTURE_1D_ARRAY:
+   case GL_TEXTURE_2D_ARRAY:
+      error = !ctx->Extensions.EXT_texture_array;
       break;
    default:
-      /* XXX need to implement GL_TEXTURE_1D_ARRAY and GL_TEXTURE_2D_ARRAY */
-      _mesa_error(ctx, GL_INVALID_ENUM, "glGenerateMipmapEXT(target)");
+      error = GL_TRUE;
+   }
+
+   if (error) {
+      _mesa_error(ctx, GL_INVALID_ENUM, "glGenerateMipmapEXT(target=%s)",
+                  _mesa_lookup_enum_by_nr(target));
       return;
    }
 
