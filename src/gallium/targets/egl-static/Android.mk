@@ -21,15 +21,32 @@
 # FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 # DEALINGS IN THE SOFTWARE.
 
-# src/gallium/Android.mk
+LOCAL_PATH := $(call my-dir)
 
-GALLIUM_TOP := $(call my-dir)
-GALLIUM_COMMON_MK := $(GALLIUM_TOP)/Android.common.mk
+include $(CLEAR_VARS)
 
-SUBDIRS := \
-	targets/egl-static \
-	state_trackers/egl \
-	auxiliary
+LOCAL_SRC_FILES := \
+	egl.c \
+	egl_pipe.c \
+	egl_st.c
 
-mkfiles := $(patsubst %,$(GALLIUM_TOP)/%/Android.mk,$(SUBDIRS))
-include $(mkfiles)
+LOCAL_CFLAGS := \
+	-DFEATURE_ES1=1 \
+	-DFEATURE_ES2=1 \
+	-D_EGL_MAIN=_eglBuiltInDriverGALLIUM
+
+LOCAL_C_INCLUDES := \
+	$(GALLIUM_TOP)/state_trackers/vega \
+	$(GALLIUM_TOP)/state_trackers/egl \
+	$(MESA_TOP)/src/egl/main \
+	$(MESA_TOP)/src/mesa \
+	$(DRM_TOP)/include/drm \
+	$(DRM_TOP)
+
+# swrast
+LOCAL_CFLAGS += -DGALLIUM_SOFTPIPE
+
+LOCAL_MODULE := libmesa_egl_gallium
+
+include $(GALLIUM_COMMON_MK)
+include $(BUILD_STATIC_LIBRARY)
