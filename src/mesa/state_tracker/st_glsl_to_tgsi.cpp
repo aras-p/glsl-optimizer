@@ -373,11 +373,11 @@ public:
    /**
     * Emit the correct dot-product instruction for the type of arguments
     */
-   void emit_dp(ir_instruction *ir,
-                st_dst_reg dst,
-                st_src_reg src0,
-                st_src_reg src1,
-                unsigned elements);
+   glsl_to_tgsi_instruction *emit_dp(ir_instruction *ir,
+                                     st_dst_reg dst,
+                                     st_src_reg src0,
+                                     st_src_reg src1,
+                                     unsigned elements);
 
    void emit_scalar(ir_instruction *ir, unsigned op,
         	    st_dst_reg dst, st_src_reg src0);
@@ -642,7 +642,7 @@ glsl_to_tgsi_visitor::get_opcode(ir_instruction *ir, unsigned op,
    return op;
 }
 
-void
+glsl_to_tgsi_instruction *
 glsl_to_tgsi_visitor::emit_dp(ir_instruction *ir,
         		    st_dst_reg dst, st_src_reg src0, st_src_reg src1,
         		    unsigned elements)
@@ -651,7 +651,7 @@ glsl_to_tgsi_visitor::emit_dp(ir_instruction *ir,
       TGSI_OPCODE_DP2, TGSI_OPCODE_DP3, TGSI_OPCODE_DP4
    };
 
-   emit(ir, dot_opcodes[elements - 2], dst, src0, src1);
+   return emit(ir, dot_opcodes[elements - 2], dst, src0, src1);
 }
 
 /**
