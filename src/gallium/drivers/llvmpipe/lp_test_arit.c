@@ -32,6 +32,7 @@
 
 #include "util/u_pointer.h"
 #include "util/u_memory.h"
+#include "util/u_math.h"
 
 #include "gallivm/lp_bld.h"
 #include "gallivm/lp_bld_init.h"
