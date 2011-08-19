@@ -21,24 +21,22 @@
 # FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 # DEALINGS IN THE SOFTWARE.
 
-# src/gallium/Android.mk
+LOCAL_PATH := $(call my-dir)
 
-GALLIUM_TOP := $(call my-dir)
-GALLIUM_COMMON_MK := $(GALLIUM_TOP)/Android.common.mk
+# get C_SOURCES
+include $(LOCAL_PATH)/Makefile.sources
 
-SUBDIRS := \
-	targets/egl-static \
-	state_trackers/egl \
-	auxiliary
+include $(CLEAR_VARS)
 
-# swrast
-SUBDIRS += winsys/sw/android drivers/softpipe
+LOCAL_SRC_FILES := $(C_SOURCES)
 
-# r600g
-ifneq ($(filter r600g, $(MESA_GPU_DRIVERS)),)
-SUBDIRS += winsys/radeon/drm
-SUBDIRS += winsys/r600/drm drivers/r600
-endif
+LOCAL_CFLAGS := -std=c99
 
-mkfiles := $(patsubst %,$(GALLIUM_TOP)/%/Android.mk,$(SUBDIRS))
-include $(mkfiles)
+LOCAL_C_INCLUDES := \
+	$(DRM_TOP) \
+	$(DRM_TOP)/include/drm
+
+LOCAL_MODULE := libmesa_pipe_r600
+
+include $(GALLIUM_COMMON_MK)
+include $(BUILD_STATIC_LIBRARY)

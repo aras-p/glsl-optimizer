@@ -46,6 +46,10 @@ LOCAL_C_INCLUDES := \
 # swrast
 LOCAL_CFLAGS += -DGALLIUM_SOFTPIPE
 
+ifneq ($(filter r600g, $(MESA_GPU_DRIVERS)),)
+LOCAL_CFLAGS += -D_EGL_PIPE_R600=1
+endif
+
 LOCAL_MODULE := libmesa_egl_gallium
 
 include $(GALLIUM_COMMON_MK)
