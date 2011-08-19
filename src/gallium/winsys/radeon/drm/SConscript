@@ -2,11 +2,7 @@ Import('*')
 
 env = env.Clone()
 
-radeon_sources = [
-    'radeon_drm_bo.c',
-    'radeon_drm_cs.c',
-    'radeon_drm_winsys.c',
-]
+radeon_sources = env.ParseSourceList('Makefile.sources', 'C_SOURCES')
 
 env.PkgUseModules('DRM')
 
