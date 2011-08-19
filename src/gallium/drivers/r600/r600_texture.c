@@ -394,7 +394,8 @@ r600_texture_create_object(struct pipe_screen *screen,
 	rtex->real_format = base->format;
 
 	/* We must split depth and stencil into two separate buffers on Evergreen. */
-	if (r600_get_family_class(((struct r600_screen*)screen)->radeon) >= EVERGREEN &&
+	if (!(base->flags & R600_RESOURCE_FLAG_TRANSFER) &&
+	    r600_get_family_class(((struct r600_screen*)screen)->radeon) >= EVERGREEN &&
 	    util_format_is_depth_and_stencil(base->format)) {
 		struct pipe_resource stencil;
 		unsigned stencil_pitch_override = 0;
