@@ -464,34 +464,25 @@ r600_texture_create_object(struct pipe_screen *screen,
 	return rtex;
 }
 
+DEBUG_GET_ONCE_BOOL_OPTION(tiling_enabled, "R600_TILING", FALSE);
+
 struct pipe_resource *r600_texture_create(struct pipe_screen *screen,
 						const struct pipe_resource *templ)
 {
+	struct radeon *radeon = ((struct r600_screen*)screen)->radeon;
 	unsigned array_mode = 0;
-	static int force_tiling = -1;
 
-	/* Would like some magic "get_bool_option_once" routine.
-	 */
-	if (force_tiling == -1) {
-#if 0
-		/* reenable when 2D tiling is fixed better */
-		struct r600_screen *rscreen = (struct r600_screen *)screen;
-		if (r600_get_minor_version(rscreen->radeon) >= 9)
-			force_tiling = debug_get_bool_option("R600_TILING", TRUE);
-#endif
-		force_tiling = debug_get_bool_option("R600_TILING", FALSE);
-	}
-
-	if (force_tiling && permit_hardware_blit(screen, templ)) {
-		if (!(templ->flags & R600_RESOURCE_FLAG_TRANSFER) &&
-		    !(templ->bind & PIPE_BIND_SCANOUT)) {
+	if (!(templ->flags & R600_RESOURCE_FLAG_TRANSFER) &&
+	    !(templ->bind & PIPE_BIND_SCANOUT)) {
+		if (util_format_is_compressed(templ->format)) {
+			array_mode = V_038000_ARRAY_1D_TILED_THIN1;
+		}
+		else if (debug_get_option_tiling_enabled() &&
+			 r600_get_minor_version(radeon) >= 9 &&
+			 permit_hardware_blit(screen, templ)) {
 			array_mode = V_038000_ARRAY_2D_TILED_THIN1;
 		}
 	}
-
-	if (!(templ->flags & R600_RESOURCE_FLAG_TRANSFER) &&
-	    util_format_is_compressed(templ->format))
-		array_mode = V_038000_ARRAY_1D_TILED_THIN1;
 
 	return (struct pipe_resource *)r600_texture_create_object(screen, templ, array_mode,
 								  0, 0, NULL, TRUE);
