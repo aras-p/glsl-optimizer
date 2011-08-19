@@ -246,8 +246,7 @@ static void prepare_constant_buffer(struct brw_context *brw)
 
       if (brw->vs.prog_data->uses_new_param_layout) {
 	 for (i = 0; i < brw->vs.prog_data->nr_params; i++) {
-	    buf[offset + i] = convert_param(brw->vs.prog_data->param_convert[i],
-					    brw->vs.prog_data->param[i]);
+	    buf[offset + i] = *brw->vs.prog_data->param[i];
 	 }
       } else {
 	 /* Load the subset of push constants that will get used when

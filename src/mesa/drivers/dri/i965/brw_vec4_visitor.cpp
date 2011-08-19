@@ -362,32 +362,14 @@ vec4_visitor::setup_uniform_values(int loc, const glsl_type *type)
    case GLSL_TYPE_INT:
    case GLSL_TYPE_BOOL:
       for (unsigned int i = 0; i < type->vector_elements; i++) {
-	 int slot = this->uniforms * 4 + i;
-	 switch (type->base_type) {
-	 case GLSL_TYPE_FLOAT:
-	    c->prog_data.param_convert[slot] = PARAM_NO_CONVERT;
-	    break;
-	 case GLSL_TYPE_UINT:
-	    c->prog_data.param_convert[slot] = PARAM_CONVERT_F2U;
-	    break;
-	 case GLSL_TYPE_INT:
-	    c->prog_data.param_convert[slot] = PARAM_CONVERT_F2I;
-	    break;
-	 case GLSL_TYPE_BOOL:
-	    c->prog_data.param_convert[slot] = PARAM_CONVERT_F2B;
-	    break;
-	 default:
-	    assert(!"not reached");
-	    c->prog_data.param_convert[slot] = PARAM_NO_CONVERT;
-	    break;
-	 }
-	 c->prog_data.param[slot] = &values[i];
+	 c->prog_data.param[this->uniforms * 4 + i] = &values[i];
       }
 
+      /* Set up pad elements to get things aligned to a vec4 boundary. */
       for (unsigned int i = type->vector_elements; i < 4; i++) {
-	 c->prog_data.param_convert[this->uniforms * 4 + i] =
-	    PARAM_CONVERT_ZERO;
-	 c->prog_data.param[this->uniforms * 4 + i] = NULL;
+	 static float zero = 0;
+
+	 c->prog_data.param[this->uniforms * 4 + i] = &zero;
       }
 
       this->uniform_size[this->uniforms] = type->vector_elements;
@@ -448,7 +430,6 @@ vec4_visitor::setup_builtin_uniform_values(ir_variable *ir)
 	 last_swiz = swiz;
 
 	 c->prog_data.param[this->uniforms * 4 + j] = &values[swiz];
-	 c->prog_data.param_convert[this->uniforms * 4 + j] = PARAM_NO_CONVERT;
 	 if (swiz <= last_swiz)
 	    this->uniform_size[this->uniforms]++;
       }

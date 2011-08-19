@@ -120,7 +120,6 @@ vec4_visitor::setup_uniforms(int reg)
 	 unsigned int slot = this->uniforms * 4 + i;
 
 	 c->prog_data.param[slot] = NULL;
-	 c->prog_data.param_convert[slot] = PARAM_CONVERT_ZERO;
       }
 
       this->uniforms++;

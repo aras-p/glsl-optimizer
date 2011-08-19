@@ -321,9 +321,7 @@ struct brw_vs_prog_data {
    GLuint urb_entry_size;
 
    const float *param[MAX_UNIFORMS * 4]; /* should be: BRW_MAX_CURBE */
-   enum param_conversion param_convert[MAX_UNIFORMS * 4];
    const float *pull_param[MAX_UNIFORMS * 4];
-   enum param_conversion pull_param_convert[MAX_UNIFORMS * 4];
 
    bool uses_new_param_layout;
 };
