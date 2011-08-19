@@ -214,7 +214,9 @@ typedef enum
    VERT_RESULT_BFC0 = 13,
    VERT_RESULT_BFC1 = 14,
    VERT_RESULT_EDGE = 15,
-   VERT_RESULT_VAR0 = 16,  /**< shader varying */
+   VERT_RESULT_CLIP_DIST0 = 16,
+   VERT_RESULT_CLIP_DIST1 = 17,
+   VERT_RESULT_VAR0 = 18,  /**< shader varying */
    VERT_RESULT_MAX = (VERT_RESULT_VAR0 + MAX_VARYING)
 } gl_vert_result;
 
@@ -312,7 +314,9 @@ typedef enum
    FRAG_ATTRIB_TEX7 = 11,
    FRAG_ATTRIB_FACE = 12,  /**< front/back face */
    FRAG_ATTRIB_PNTC = 13,  /**< sprite/point coord */
-   FRAG_ATTRIB_VAR0 = 14,  /**< shader varying */
+   FRAG_ATTRIB_CLIP_DIST0 = 14,
+   FRAG_ATTRIB_CLIP_DIST1 = 15,
+   FRAG_ATTRIB_VAR0 = 16,  /**< shader varying */
    FRAG_ATTRIB_MAX = (FRAG_ATTRIB_VAR0 + MAX_VARYING)
 } gl_frag_attrib;
 
@@ -329,8 +333,8 @@ typedef enum
 static INLINE int
 _mesa_vert_result_to_frag_attrib(gl_vert_result vert_result)
 {
-   if (vert_result >= VERT_RESULT_VAR0)
-      return vert_result - VERT_RESULT_VAR0 + FRAG_ATTRIB_VAR0;
+   if (vert_result >= VERT_RESULT_CLIP_DIST0)
+      return vert_result - VERT_RESULT_CLIP_DIST0 + FRAG_ATTRIB_CLIP_DIST0;
    else if (vert_result <= VERT_RESULT_TEX7)
       return vert_result;
    else
@@ -351,8 +355,8 @@ _mesa_frag_attrib_to_vert_result(gl_frag_attrib frag_attrib)
 {
    if (frag_attrib <= FRAG_ATTRIB_TEX7)
       return frag_attrib;
-   else if (frag_attrib >= FRAG_ATTRIB_VAR0)
-      return frag_attrib - FRAG_ATTRIB_VAR0 + VERT_RESULT_VAR0;
+   else if (frag_attrib >= FRAG_ATTRIB_CLIP_DIST0)
+      return frag_attrib - FRAG_ATTRIB_CLIP_DIST0 + VERT_RESULT_CLIP_DIST0;
    else
       return -1;
 }

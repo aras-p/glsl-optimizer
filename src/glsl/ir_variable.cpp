@@ -621,9 +621,9 @@ generate_130_vs_variables(exec_list *instructions,
    const glsl_type *const clip_distance_array_type =
       glsl_type::get_array_instance(glsl_type::float_type, 0);
 
-   /* FINISHME: gl_ClipDistance needs a real location assigned. */
    add_variable(instructions, state->symbols,
-		"gl_ClipDistance", clip_distance_array_type, ir_var_out, -1);
+		"gl_ClipDistance", clip_distance_array_type, ir_var_out,
+                VERT_RESULT_CLIP_DIST0);
 
 }
 
@@ -841,9 +841,9 @@ generate_130_fs_variables(exec_list *instructions,
    const glsl_type *const clip_distance_array_type =
       glsl_type::get_array_instance(glsl_type::float_type, 0);
 
-   /* FINISHME: gl_ClipDistance needs a real location assigned. */
    add_variable(instructions, state->symbols,
-		"gl_ClipDistance", clip_distance_array_type, ir_var_in, -1);
+		"gl_ClipDistance", clip_distance_array_type, ir_var_in,
+                FRAG_ATTRIB_CLIP_DIST0);
 }
 
 static void
