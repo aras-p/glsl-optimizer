@@ -147,6 +147,7 @@ _mesa_lock_texture(struct gl_context *ctx, struct gl_texture_object *texObj)
 static INLINE void
 _mesa_unlock_texture(struct gl_context *ctx, struct gl_texture_object *texObj)
 {
+   (void) texObj;
    _glthread_UNLOCK_MUTEX(ctx->Shared->TexMutex);
 }
 
