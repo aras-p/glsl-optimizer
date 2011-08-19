@@ -2,13 +2,7 @@ Import('*')
 
 env = env.Clone()
 
-r600_sources = [
-    'evergreen_hw_context.c',
-    'radeon_pciid.c',
-    'r600_bo.c',
-    'r600_drm.c',
-    'r600_hw_context.c',
-]
+r600_sources = env.ParseSourceList('Makefile.sources', 'C_SOURCES')
 
 env.PkgUseModules('DRM_RADEON')
 

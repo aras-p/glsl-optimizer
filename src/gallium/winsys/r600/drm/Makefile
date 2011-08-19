@@ -4,12 +4,8 @@ include $(TOP)/configs/current
 
 LIBNAME = r600winsys
 
-C_SOURCES = \
-	evergreen_hw_context.c \
-	radeon_pciid.c \
-	r600_bo.c \
-	r600_drm.c \
-	r600_hw_context.c
+# get C_SOURCES
+include Makefile.sources
 
 LIBRARY_INCLUDES = -I$(TOP)/src/gallium/drivers/r600 \
 		   -I$(TOP)/include \
