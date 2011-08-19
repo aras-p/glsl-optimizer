@@ -363,7 +363,8 @@ r600_texture_create_object(struct pipe_screen *screen,
 			   unsigned array_mode,
 			   unsigned pitch_in_bytes_override,
 			   unsigned max_buffer_size,
-			   struct r600_bo *bo)
+			   struct r600_bo *bo,
+			   boolean alloc_bo)
 {
 	struct r600_resource_texture *rtex;
 	struct r600_resource *resource;
@@ -415,7 +416,8 @@ r600_texture_create_object(struct pipe_screen *screen,
 		stencil = *base;
 		stencil.format = PIPE_FORMAT_S8_USCALED;
 		rtex->stencil = r600_texture_create_object(screen, &stencil, array_mode,
-							   stencil_pitch_override, max_buffer_size, bo);
+							   stencil_pitch_override,
+							   max_buffer_size, NULL, FALSE);
 		if (!rtex->stencil) {
 			FREE(rtex);
 			return NULL;
@@ -429,11 +431,8 @@ r600_texture_create_object(struct pipe_screen *screen,
 
 	r600_setup_miptree(screen, rtex, array_mode);
 
-	resource->size = rtex->size;
-
-	/* If bo is not NULL, in which case depth and stencil must share the same buffer,
-	 * and we initialized separate stencil for Evergreen. place it after depth. */
-	if (bo && rtex->stencil) {
+	/* If we initialized separate stencil for Evergreen. place it after depth. */
+	if (rtex->stencil) {
 		unsigned stencil_align, stencil_offset;
 
 		stencil_align = r600_get_base_alignment(screen, rtex->stencil->real_format, array_mode);
@@ -441,9 +440,14 @@ r600_texture_create_object(struct pipe_screen *screen,
 
 		for (unsigned i = 0; i <= rtex->stencil->resource.b.b.b.last_level; i++)
 			rtex->stencil->offset[i] += stencil_offset;
+
+		rtex->size = stencil_offset + rtex->stencil->size;
 	}
 
-	if (!resource->bo) {
+	resource->size = rtex->size;
+
+	/* Now create the backing buffer. */
+	if (!resource->bo && alloc_bo) {
 		struct pipe_resource *ptex = &rtex->resource.b.b.b;
 		unsigned base_align = r600_get_base_alignment(screen, ptex->format, array_mode);
 
@@ -454,6 +458,9 @@ r600_texture_create_object(struct pipe_screen *screen,
 			return NULL;
 		}
 	}
+
+	if (rtex->stencil)
+		rtex->stencil->resource.bo = rtex->resource.bo;
 	return rtex;
 }
 
@@ -487,7 +494,7 @@ struct pipe_resource *r600_texture_create(struct pipe_screen *screen,
 		array_mode = V_038000_ARRAY_1D_TILED_THIN1;
 
 	return (struct pipe_resource *)r600_texture_create_object(screen, templ, array_mode,
-								  0, 0, NULL);
+								  0, 0, NULL, TRUE);
 }
 
 static struct pipe_surface *r600_create_surface(struct pipe_context *pipe,
@@ -548,7 +555,7 @@ struct pipe_resource *r600_texture_from_handle(struct pipe_screen *screen,
 	}
 
 	return (struct pipe_resource *)r600_texture_create_object(screen, templ, array_mode,
-								  stride, 0, bo);
+								  stride, 0, bo, FALSE);
 }
 
 int r600_texture_depth_flush(struct pipe_context *ctx,
