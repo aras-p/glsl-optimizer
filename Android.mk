@@ -26,7 +26,8 @@
 #   classic drivers:
 #   gallium drivers: swrast i915g nouveau r300g r600g vmwgfx
 #
-# The main target is libGLES_mesa.  There is no classic drivers yet.
+# The main target is libGLES_mesa.  For each classic driver enabled, a DRI
+# module will also be built.  DRI modules will be loaded by libGLES_mesa.
 
 MESA_TOP := $(call my-dir)
 MESA_COMMON_MK := $(MESA_TOP)/Android.common.mk
@@ -76,6 +77,10 @@ SUBDIRS := \
 	src/mesa \
 	src/egl/main
 
+ifeq ($(strip $(MESA_BUILD_CLASSIC)),true)
+SUBDIRS += src/egl/drivers/dri2
+endif
+
 ifeq ($(strip $(MESA_BUILD_GALLIUM)),true)
 SUBDIRS += src/gallium
 endif
@@ -105,6 +110,10 @@ LOCAL_SHARED_LIBRARIES := \
 # hardware drivers require DRM
 ifneq ($(MESA_GPU_DRIVERS),swrast)
 LOCAL_SHARED_LIBRARIES += libdrm
+endif
+
+ifeq ($(strip $(MESA_BUILD_CLASSIC)),true)
+LOCAL_STATIC_LIBRARIES += libmesa_egl_dri2
 endif
 
 ifeq ($(strip $(MESA_BUILD_GALLIUM)),true)

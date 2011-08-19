@@ -21,47 +21,30 @@
 # FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 # DEALINGS IN THE SOFTWARE.
 
-# Android.mk for core EGL
+# Android.mk for egl_dri2
 
 LOCAL_PATH := $(call my-dir)
 
-# from Makefile
-SOURCES = \
-	eglapi.c \
-	eglarray.c \
-	eglconfig.c \
-	eglcontext.c \
-	eglcurrent.c \
-	egldisplay.c \
-	egldriver.c \
-	eglfallbacks.c \
-	eglglobals.c \
-	eglimage.c \
-	egllog.c \
-	eglmisc.c \
-	eglmode.c \
-	eglscreen.c \
-	eglstring.c \
-	eglsurface.c \
-	eglsync.c
-
 include $(CLEAR_VARS)
 
-LOCAL_SRC_FILES := $(SOURCES)
+LOCAL_SRC_FILES := \
+	egl_dri2.c \
+	platform_android.c
 
 LOCAL_CFLAGS := \
-	-D_EGL_NATIVE_PLATFORM=_EGL_PLATFORM_ANDROID \
-	-D_EGL_DRIVER_SEARCH_DIR=\"/system/lib/egl\" \
-	-D_EGL_OS_UNIX=1
+	-D_EGL_MAIN=_eglBuiltInDriverDRI2 \
+	-DDEFAULT_DRIVER_DIR=\"/system/lib/dri\" \
+	-DHAVE_SHARED_GLAPI \
+	-DHAVE_ANDROID_PLATFORM
 
-ifeq ($(strip $(MESA_BUILD_CLASSIC)),true)
-LOCAL_CFLAGS += -D_EGL_BUILT_IN_DRIVER_DRI2
-endif
-ifeq ($(strip $(MESA_BUILD_GALLIUM)),true)
-LOCAL_CFLAGS += -D_EGL_BUILT_IN_DRIVER_GALLIUM
-endif
+LOCAL_C_INCLUDES := \
+	$(MESA_TOP)/src/mapi \
+	$(MESA_TOP)/src/egl/main \
+	$(DRM_GRALLOC_TOP) \
+	$(DRM_TOP) \
+	$(DRM_TOP)/include/drm
 
-LOCAL_MODULE := libmesa_egl
+LOCAL_MODULE := libmesa_egl_dri2
 
 include $(MESA_COMMON_MK)
 include $(BUILD_STATIC_LIBRARY)
