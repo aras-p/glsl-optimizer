@@ -948,43 +948,39 @@ static struct pipe_sampler_view *evergreen_create_sampler_view(struct pipe_conte
 							struct pipe_resource *texture,
 							const struct pipe_sampler_view *state)
 {
-	struct r600_pipe_sampler_view *resource = CALLOC_STRUCT(r600_pipe_sampler_view);
+	struct r600_pipe_sampler_view *view = CALLOC_STRUCT(r600_pipe_sampler_view);
 	struct r600_pipe_resource_state *rstate;
-	const struct util_format_description *desc;
-	struct r600_resource_texture *tmp;
+	struct r600_resource_texture *tmp = (struct r600_resource_texture*)texture;
 	struct r600_resource *rbuffer;
 	unsigned format, endian;
 	uint32_t word4 = 0, yuv_format = 0, pitch = 0;
 	unsigned char swizzle[4], array_mode = 0, tile_type = 0;
 	struct r600_bo *bo[2];
 
-	if (resource == NULL)
+	if (view == NULL)
 		return NULL;
-	rstate = &resource->state;
+	rstate = &view->state;
 
 	/* initialize base object */
-	resource->base = *state;
-	resource->base.texture = NULL;
+	view->base = *state;
+	view->base.texture = NULL;
 	pipe_reference(NULL, &texture->reference);
-	resource->base.texture = texture;
-	resource->base.reference.count = 1;
-	resource->base.context = ctx;
+	view->base.texture = texture;
+	view->base.reference.count = 1;
+	view->base.context = ctx;
 
 	swizzle[0] = state->swizzle_r;
 	swizzle[1] = state->swizzle_g;
 	swizzle[2] = state->swizzle_b;
 	swizzle[3] = state->swizzle_a;
+
 	format = r600_translate_texformat(ctx->screen, state->format,
 					  swizzle,
 					  &word4, &yuv_format);
 	if (format == ~0) {
 		format = 0;
 	}
-	desc = util_format_description(state->format);
-	if (desc == NULL) {
-		R600_ERR("unknow format %d\n", state->format);
-	}
-	tmp = (struct r600_resource_texture *)texture;
+
 	if (tmp->depth && !tmp->is_flushing_texture) {
 		r600_texture_depth_flush(ctx, texture, TRUE);
 		tmp = tmp->flushed_depth_texture;
@@ -1029,7 +1025,7 @@ static struct pipe_sampler_view *evergreen_create_sampler_view(struct pipe_conte
 	rstate->val[7] = (S_03001C_DATA_FORMAT(format) |
 			  S_03001C_TYPE(V_03001C_SQ_TEX_VTX_VALID_TEXTURE));
 
-	return &resource->base;
+	return &view->base;
 }
 
 static void evergreen_set_vs_sampler_view(struct pipe_context *ctx, unsigned count,

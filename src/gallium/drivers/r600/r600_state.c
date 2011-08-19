@@ -996,10 +996,9 @@ static struct pipe_sampler_view *r600_create_sampler_view(struct pipe_context *c
 							struct pipe_resource *texture,
 							const struct pipe_sampler_view *state)
 {
-	struct r600_pipe_sampler_view *resource = CALLOC_STRUCT(r600_pipe_sampler_view);
+	struct r600_pipe_sampler_view *view = CALLOC_STRUCT(r600_pipe_sampler_view);
 	struct r600_pipe_resource_state *rstate;
-	const struct util_format_description *desc;
-	struct r600_resource_texture *tmp;
+	struct r600_resource_texture *tmp = (struct r600_resource_texture*)texture;
 	struct r600_resource *rbuffer;
 	unsigned format, endian;
 	uint32_t word4 = 0, yuv_format = 0, pitch = 0;
@@ -1007,43 +1006,42 @@ static struct pipe_sampler_view *r600_create_sampler_view(struct pipe_context *c
 	struct r600_bo *bo[2];
 	unsigned width, height, depth, offset_level, last_level;
 
-	if (resource == NULL)
+	if (view == NULL)
 		return NULL;
-	rstate = &resource->state;
+	rstate = &view->state;
 
 	/* initialize base object */
-	resource->base = *state;
-	resource->base.texture = NULL;
+	view->base = *state;
+	view->base.texture = NULL;
 	pipe_reference(NULL, &texture->reference);
-	resource->base.texture = texture;
-	resource->base.reference.count = 1;
-	resource->base.context = ctx;
+	view->base.texture = texture;
+	view->base.reference.count = 1;
+	view->base.context = ctx;
 
 	swizzle[0] = state->swizzle_r;
 	swizzle[1] = state->swizzle_g;
 	swizzle[2] = state->swizzle_b;
 	swizzle[3] = state->swizzle_a;
+
 	format = r600_translate_texformat(ctx->screen, state->format,
 					  swizzle,
 					  &word4, &yuv_format);
 	if (format == ~0) {
 		format = 0;
 	}
-	desc = util_format_description(state->format);
-	if (desc == NULL) {
-		R600_ERR("unknown format %d\n", state->format);
-	}
-	tmp = (struct r600_resource_texture *)texture;
+
 	if (tmp->depth && !tmp->is_flushing_texture) {
 	        r600_texture_depth_flush(ctx, texture, TRUE);
 		tmp = tmp->flushed_depth_texture;
 	}
+
 	endian = r600_colorformat_endian_swap(format);
 
 	if (tmp->force_int_type) {
 		word4 &= C_038010_NUM_FORMAT_ALL;
 		word4 |= S_038010_NUM_FORMAT_ALL(V_038010_SQ_NUM_FORMAT_INT);
 	}
+
 	rbuffer = &tmp->resource;
 	bo[0] = rbuffer->bo;
 	bo[1] = rbuffer->bo;
@@ -1092,7 +1090,7 @@ static struct pipe_sampler_view *r600_create_sampler_view(struct pipe_context *c
 	rstate->val[6] = (S_038018_TYPE(V_038010_SQ_TEX_VTX_VALID_TEXTURE) |
 			  S_038018_MAX_ANISO(4 /* max 16 samples */));
 
-	return &resource->base;
+	return &view->base;
 }
 
 static void r600_set_vs_sampler_view(struct pipe_context *ctx, unsigned count,
