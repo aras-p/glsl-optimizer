@@ -54,7 +54,6 @@ do_vs_prog(struct brw_context *brw,
    void *mem_ctx;
    int aux_size;
    int i;
-   static int new_vs = -1;
 
    memset(&c, 0, sizeof(c));
    memcpy(&c.key, key, sizeof(*key));
@@ -90,10 +89,7 @@ do_vs_prog(struct brw_context *brw,
 
    /* Emit GEN4 code.
     */
-   if (new_vs == -1)
-      new_vs = getenv("INTEL_NEW_VS") != NULL;
-
-   if (new_vs && prog) {
+   if (brw->new_vs_backend && prog) {
       if (!brw_vs_emit(prog, &c)) {
 	 ralloc_free(mem_ctx);
 	 return false;
