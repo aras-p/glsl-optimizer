@@ -53,7 +53,7 @@
 typedef union gl_constant_value
 {
    GLfloat f;
-   GLboolean b;
+   GLint b;
    GLint i;
    GLuint u;
 } gl_constant_value;
