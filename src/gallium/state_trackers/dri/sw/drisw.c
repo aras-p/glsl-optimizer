@@ -136,6 +136,9 @@ drisw_swap_buffers(__DRIdrawable *dPriv)
    ptex = drawable->textures[ST_ATTACHMENT_BACK_LEFT];
 
    if (ptex) {
+      if (ctx->pp && drawable->textures[ST_ATTACHMENT_DEPTH_STENCIL])
+         pp_run(ctx->pp, ptex, ptex, drawable->textures[ST_ATTACHMENT_DEPTH_STENCIL]);
+
       ctx->st->flush(ctx->st, ST_FLUSH_FRONT, NULL);
 
       drisw_copy_to_front(dPriv, ptex);
