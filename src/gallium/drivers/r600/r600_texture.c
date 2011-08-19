@@ -198,6 +198,16 @@ static unsigned r600_texture_get_nblocksy(struct pipe_screen *screen,
 	height = util_format_get_nblocksy(rtex->real_format, height);
 	tile_height = r600_get_height_alignment(screen,
 						rtex->array_mode[level]);
+
+	/* XXX Hack around an alignment issue. Less tests fail with this.
+	 *
+	 * The thing is depth-stencil buffers should be tiled, i.e.
+	 * the alignment should be >=8. If I make them tiled, stencil starts
+	 * working because it no longer overlaps with the depth buffer
+	 * in memory, but texturing like drawpix-stencil breaks. */
+	if (util_format_is_depth_or_stencil(rtex->real_format) && tile_height < 8)
+		tile_height = 8;
+
 	height = align(height, tile_height);
 	return height;
 }
