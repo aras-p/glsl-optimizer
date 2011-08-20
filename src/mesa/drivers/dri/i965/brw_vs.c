@@ -354,14 +354,16 @@ brw_vs_precompile(struct gl_context *ctx, struct gl_shader_program *prog)
 {
    struct brw_context *brw = brw_context(ctx);
    struct brw_vs_prog_key key;
-   struct gl_vertex_program *vp = prog->VertexProgram;
-   struct brw_vertex_program *bvp = brw_vertex_program(vp);
    uint32_t old_prog_offset = brw->vs.prog_offset;
    struct brw_vs_prog_data *old_prog_data = brw->vs.prog_data;
    bool success;
 
-   if (!vp)
+   if (!prog->_LinkedShaders[MESA_SHADER_VERTEX])
       return true;
+
+   struct gl_vertex_program *vp = (struct gl_vertex_program *)
+      prog->_LinkedShaders[MESA_SHADER_VERTEX]->Program;
+   struct brw_vertex_program *bvp = brw_vertex_program(vp);
 
    memset(&key, 0, sizeof(key));
 

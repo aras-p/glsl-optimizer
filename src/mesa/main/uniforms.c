@@ -180,7 +180,7 @@ find_uniform_parameter_pos(struct gl_shader_program *shProg, GLint index,
 
    pos = shProg->Uniforms->Uniforms[index].VertPos;
    if (pos >= 0) {
-      prog = &shProg->VertexProgram->Base;
+      prog = shProg->_LinkedShaders[MESA_SHADER_VERTEX]->Program;
    }
    else {
       pos = shProg->Uniforms->Uniforms[index].FragPos;
@@ -911,11 +911,12 @@ _mesa_uniform(struct gl_context *ctx, struct gl_shader_program *shProg,
    /* A uniform var may be used by both a vertex shader and a fragment
     * shader.  We may need to update one or both shader's uniform here:
     */
-   if (shProg->VertexProgram) {
+   if (shProg->_LinkedShaders[MESA_SHADER_VERTEX]) {
       /* convert uniform location to program parameter index */
       GLint index = uniform->VertPos;
       if (index >= 0) {
-         set_program_uniform(ctx, &shProg->VertexProgram->Base,
+         set_program_uniform(ctx,
+                             shProg->_LinkedShaders[MESA_SHADER_VERTEX]->Program,
                              index, offset, type, count, elems, values);
       }
    }
@@ -1056,11 +1057,12 @@ _mesa_uniform_matrix(struct gl_context *ctx, struct gl_shader_program *shProg,
 
    uniform = &shProg->Uniforms->Uniforms[location];
 
-   if (shProg->VertexProgram) {
+   if (shProg->_LinkedShaders[MESA_SHADER_VERTEX]) {
       /* convert uniform location to program parameter index */
       GLint index = uniform->VertPos;
       if (index >= 0) {
-         set_program_uniform_matrix(ctx, &shProg->VertexProgram->Base,
+         set_program_uniform_matrix(ctx,
+				    shProg->_LinkedShaders[MESA_SHADER_VERTEX]->Program,
                                     index, offset,
                                     count, rows, cols, transpose, values);
       }

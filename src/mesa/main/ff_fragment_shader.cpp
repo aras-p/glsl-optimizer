@@ -315,7 +315,7 @@ static GLbitfield get_fp_input_mask( struct gl_context *ctx )
    const GLboolean vertexShader =
       (ctx->Shader.CurrentVertexProgram &&
        ctx->Shader.CurrentVertexProgram->LinkStatus &&
-       ctx->Shader.CurrentVertexProgram->VertexProgram);
+       ctx->Shader.CurrentVertexProgram->_LinkedShaders[MESA_SHADER_VERTEX]);
    const GLboolean vertexProgram = ctx->VertexProgram._Enabled;
    GLbitfield fp_inputs = 0x0;
 
@@ -371,7 +371,7 @@ static GLbitfield get_fp_input_mask( struct gl_context *ctx )
    }
    else {
       /* calculate from vp->outputs */
-      struct gl_vertex_program *vprog;
+      struct gl_program *vprog;
       GLbitfield64 vp_outputs;
 
       /* Choose GLSL vertex shader over ARB vertex program.  Need this
@@ -379,11 +379,11 @@ static GLbitfield get_fp_input_mask( struct gl_context *ctx )
        * validation (see additional comments in state.c).
        */
       if (vertexShader)
-         vprog = ctx->Shader.CurrentVertexProgram->VertexProgram;
+         vprog = ctx->Shader.CurrentVertexProgram->_LinkedShaders[MESA_SHADER_VERTEX]->Program;
       else
-         vprog = ctx->VertexProgram.Current;
+         vprog = &ctx->VertexProgram.Current->Base;
 
-      vp_outputs = vprog->Base.OutputsWritten;
+      vp_outputs = vprog->OutputsWritten;
 
       /* These get generated in the setup routine regardless of the
        * vertex program:

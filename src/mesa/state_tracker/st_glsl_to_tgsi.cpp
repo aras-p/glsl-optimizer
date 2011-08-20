@@ -5184,8 +5184,8 @@ st_link_shader(struct gl_context *ctx, struct gl_shader_program *prog)
 
          switch (prog->_LinkedShaders[i]->Type) {
          case GL_VERTEX_SHADER:
-            _mesa_reference_vertprog(ctx, &prog->VertexProgram,
-                                     (struct gl_vertex_program *)linked_prog);
+            _mesa_reference_program(ctx, &prog->_LinkedShaders[i]->Program,
+                                    linked_prog);
             ok = ctx->Driver.ProgramStringNotify(ctx, GL_VERTEX_PROGRAM_ARB,
                                                  linked_prog);
             if (!ok) {

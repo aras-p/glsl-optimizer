@@ -2171,7 +2171,6 @@ struct gl_shader_program
    } Vert;
 
    /* post-link info: */
-   struct gl_vertex_program *VertexProgram;     /**< Linked vertex program */
    struct gl_fragment_program *FragmentProgram; /**< Linked fragment prog */
    struct gl_geometry_program *GeometryProgram; /**< Linked geometry prog */
    struct gl_uniform_list *Uniforms;

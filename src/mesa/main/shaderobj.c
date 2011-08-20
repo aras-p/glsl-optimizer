@@ -275,7 +275,6 @@ void
 _mesa_clear_shader_program_data(struct gl_context *ctx,
                                 struct gl_shader_program *shProg)
 {
-   _mesa_reference_vertprog(ctx, &shProg->VertexProgram, NULL);
    _mesa_reference_fragprog(ctx, &shProg->FragmentProgram, NULL);
    _mesa_reference_geomprog(ctx, &shProg->GeometryProgram, NULL);
 

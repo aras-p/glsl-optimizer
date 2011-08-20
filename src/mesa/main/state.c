@@ -281,10 +281,12 @@ update_program(struct gl_context *ctx)
     * _mesa_get_fixed_func_vertex_program() needs to know active
     * fragprog inputs.
     */
-   if (vsProg && vsProg->LinkStatus && vsProg->VertexProgram) {
+   if (vsProg && vsProg->LinkStatus
+       && vsProg->_LinkedShaders[MESA_SHADER_VERTEX]) {
       /* Use GLSL vertex shader */
       _mesa_reference_vertprog(ctx, &ctx->VertexProgram._Current,
-                               vsProg->VertexProgram);
+			       (struct gl_vertex_program *)
+			       vsProg->_LinkedShaders[MESA_SHADER_VERTEX]->Program);
    }
    else if (ctx->VertexProgram._Enabled) {
       /* Use user-defined vertex program */
