@@ -2171,7 +2171,6 @@ struct gl_shader_program
    } Vert;
 
    /* post-link info: */
-   struct gl_fragment_program *FragmentProgram; /**< Linked fragment prog */
    struct gl_uniform_list *Uniforms;
    struct gl_program_parameter_list *Varying;
    GLboolean LinkStatus;   /**< GL_LINK_STATUS */

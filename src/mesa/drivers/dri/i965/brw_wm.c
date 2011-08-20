@@ -224,7 +224,7 @@ bool do_wm_prog(struct brw_context *brw,
 
    brw_init_compile(brw, &c->func, c);
 
-   if (prog && prog->FragmentProgram) {
+   if (prog && prog->_LinkedShaders[MESA_SHADER_FRAGMENT]) {
       if (!brw_wm_fs_emit(brw, c, prog))
 	 return false;
    } else {

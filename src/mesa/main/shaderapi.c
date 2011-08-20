@@ -811,8 +811,9 @@ print_shader_info(const struct gl_shader_program *shProg)
    if (shProg->_LinkedShaders[MESA_SHADER_VERTEX])
       printf("  vert prog %u\n",
 	     shProg->_LinkedShaders[MESA_SHADER_VERTEX]->Program->Id);
-   if (shProg->FragmentProgram)
-      printf("  frag prog %u\n", shProg->FragmentProgram->Base.Id);
+   if (shProg->_LinkedShaders[MESA_SHADER_FRAGMENT])
+      printf("  frag prog %u\n",
+	     shProg->_LinkedShaders[MESA_SHADER_FRAGMENT]->Program->Id);
    if (shProg->_LinkedShaders[MESA_SHADER_GEOMETRY])
       printf("  geom prog %u\n",
 	     shProg->_LinkedShaders[MESA_SHADER_GEOMETRY]->Program->Id);
@@ -967,7 +968,7 @@ validate_shader_program(const struct gl_shader_program *shProg,
 {
    const struct gl_shader *vs = shProg->_LinkedShaders[MESA_SHADER_VERTEX];
    const struct gl_shader *gs = shProg->_LinkedShaders[MESA_SHADER_GEOMETRY];
-   const struct gl_fragment_program *fp = shProg->FragmentProgram;
+   const struct gl_shader *fs = shProg->_LinkedShaders[MESA_SHADER_FRAGMENT];
 
    if (!shProg->LinkStatus) {
       return GL_FALSE;
@@ -999,7 +1000,7 @@ validate_shader_program(const struct gl_shader_program *shProg,
    if (gs && !validate_samplers(gs->Program, errMsg)) {
       return GL_FALSE;
    }
-   if (fp && !validate_samplers(&fp->Base, errMsg)) {
+   if (fs && !validate_samplers(fs->Program, errMsg)) {
       return GL_FALSE;
    }
 

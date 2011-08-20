@@ -246,10 +246,12 @@ update_program(struct gl_context *ctx)
     * come up, or matter.
     */
 
-   if (fsProg && fsProg->LinkStatus && fsProg->FragmentProgram) {
+   if (fsProg && fsProg->LinkStatus
+       && fsProg->_LinkedShaders[MESA_SHADER_FRAGMENT]) {
       /* Use GLSL fragment shader */
       _mesa_reference_fragprog(ctx, &ctx->FragmentProgram._Current,
-                               fsProg->FragmentProgram);
+			       (struct gl_fragment_program *)
+			       fsProg->_LinkedShaders[MESA_SHADER_FRAGMENT]->Program);
    }
    else if (ctx->FragmentProgram._Enabled) {
       /* Use user-defined fragment program */

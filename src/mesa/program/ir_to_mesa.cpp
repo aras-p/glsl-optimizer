@@ -3300,8 +3300,8 @@ _mesa_ir_link_shader(struct gl_context *ctx, struct gl_shader_program *prog)
                                                  linked_prog);
             break;
          case GL_FRAGMENT_SHADER:
-            _mesa_reference_fragprog(ctx, &prog->FragmentProgram,
-                                     (struct gl_fragment_program *)linked_prog);
+            _mesa_reference_program(ctx, &prog->_LinkedShaders[i]->Program,
+				    linked_prog);
             ok = ctx->Driver.ProgramStringNotify(ctx, GL_FRAGMENT_PROGRAM_ARB,
                                                  linked_prog);
             break;
@@ -3426,8 +3426,6 @@ _mesa_glsl_link_shader(struct gl_context *ctx, struct gl_shader_program *prog)
 	 prog->LinkStatus = GL_FALSE;
       }
    }
-
-   _mesa_reference_fragprog(ctx, &prog->FragmentProgram, NULL);
 
    if (prog->LinkStatus) {
       link_shaders(ctx, prog);

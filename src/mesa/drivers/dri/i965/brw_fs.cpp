@@ -1828,11 +1828,13 @@ brw_fs_precompile(struct gl_context *ctx, struct gl_shader_program *prog)
 {
    struct brw_context *brw = brw_context(ctx);
    struct brw_wm_prog_key key;
-   struct gl_fragment_program *fp = prog->FragmentProgram;
-   struct brw_fragment_program *bfp = brw_fragment_program(fp);
 
-   if (!fp)
+   if (!prog->_LinkedShaders[MESA_SHADER_FRAGMENT])
       return true;
+
+   struct gl_fragment_program *fp = (struct gl_fragment_program *)
+      prog->_LinkedShaders[MESA_SHADER_FRAGMENT]->Program;
+   struct brw_fragment_program *bfp = brw_fragment_program(fp);
 
    memset(&key, 0, sizeof(key));
 

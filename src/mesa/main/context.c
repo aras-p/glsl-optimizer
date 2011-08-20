@@ -1860,8 +1860,7 @@ _mesa_valid_to_render(struct gl_context *ctx, const char *where)
 	    break;
 
 	 case GL_FRAGMENT_SHADER:
-	    _mesa_append_uniforms_to_file(sh,
-					  &shProg[i]->FragmentProgram->Base);
+	    _mesa_append_uniforms_to_file(sh, sh->Program);
 	    break;
 	 }
       }

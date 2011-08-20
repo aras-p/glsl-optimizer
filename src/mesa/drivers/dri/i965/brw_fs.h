@@ -347,7 +347,8 @@ public:
       this->c = c;
       this->p = &c->func;
       this->brw = p->brw;
-      this->fp = prog->FragmentProgram;
+      this->fp = (struct gl_fragment_program *)
+	 prog->_LinkedShaders[MESA_SHADER_FRAGMENT]->Program;
       this->prog = prog;
       this->intel = &brw->intel;
       this->ctx = &intel->ctx;
