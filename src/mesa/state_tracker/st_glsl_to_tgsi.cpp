@@ -1460,8 +1460,26 @@ glsl_to_tgsi_visitor::visit(ir_expression *ir)
                glsl_type::vec4_type);
          assert(ir->operands[0]->type->base_type == GLSL_TYPE_FLOAT);
          emit(ir, TGSI_OPCODE_SNE, st_dst_reg(temp), op[0], op[1]);
+         
+         /* After the dot-product, the value will be an integer on the
+          * range [0,4].  Zero becomes 1.0, and positive values become zero.
+          */
          emit_dp(ir, result_dst, temp, temp, vector_elements);
-         emit(ir, TGSI_OPCODE_SEQ, result_dst, result_src, st_src_reg_for_float(0.0));
+         
+         if (result_dst.type == GLSL_TYPE_FLOAT) {
+            /* Negating the result of the dot-product gives values on the range
+             * [-4, 0].  Zero becomes 1.0, and negative values become zero.
+             * This is achieved using SGE.
+             */
+            st_src_reg sge_src = result_src;
+            sge_src.negate = ~sge_src.negate;
+            emit(ir, TGSI_OPCODE_SGE, result_dst, sge_src, st_src_reg_for_float(0.0));
+         } else {
+            /* The TGSI negate flag doesn't work for integers, so use SEQ 0
+             * instead.
+             */
+            emit(ir, TGSI_OPCODE_SEQ, result_dst, result_src, st_src_reg_for_int(0));
+         }
       } else {
          emit(ir, TGSI_OPCODE_SEQ, result_dst, op[0], op[1]);
       }
