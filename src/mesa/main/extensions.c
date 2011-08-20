@@ -74,8 +74,6 @@ struct extension {
 
 /**
  * \brief Table of supported OpenGL extensions for all API's.
- *
- * Note: The GL_MESAX_* extensions are placeholders for future ARB extensions.
  */
 static const struct extension extension_table[] = {
    /* ARB Extensions */
