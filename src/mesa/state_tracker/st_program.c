@@ -1153,12 +1153,9 @@ destroy_shader_program_variants_cb(GLuint key, void *data, void *userData)
             destroy_program_variants(st, shProg->Shaders[i]->Program);
          }
 
-         destroy_program_variants(st,
-                                  shProg->_LinkedShaders[MESA_SHADER_VERTEX]->Program);
-         destroy_program_variants(st,
-                                  shProg->_LinkedShaders[MESA_SHADER_FRAGMENT]->Program);
-         destroy_program_variants(st,
-                                  shProg->_LinkedShaders[MESA_SHADER_GEOMETRY]->Program);
+	 for (i = 0; i < Elements(shProg->_LinkedShaders); i++) {
+	    destroy_program_variants(st, shProg->_LinkedShaders[i]->Program);
+	 }
       }
       break;
    case GL_VERTEX_SHADER:
