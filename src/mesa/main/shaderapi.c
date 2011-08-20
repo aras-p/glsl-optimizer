@@ -966,9 +966,7 @@ static GLboolean
 validate_shader_program(const struct gl_shader_program *shProg,
                         char *errMsg)
 {
-   const struct gl_shader *vs = shProg->_LinkedShaders[MESA_SHADER_VERTEX];
-   const struct gl_shader *gs = shProg->_LinkedShaders[MESA_SHADER_GEOMETRY];
-   const struct gl_shader *fs = shProg->_LinkedShaders[MESA_SHADER_FRAGMENT];
+   unsigned i;
 
    if (!shProg->LinkStatus) {
       return GL_FALSE;
@@ -994,14 +992,11 @@ validate_shader_program(const struct gl_shader_program *shProg,
     * Check: any two active samplers in the current program object are of
     * different types, but refer to the same texture image unit,
     */
-   if (vs && !validate_samplers(vs->Program, errMsg)) {
-      return GL_FALSE;
-   }
-   if (gs && !validate_samplers(gs->Program, errMsg)) {
-      return GL_FALSE;
-   }
-   if (fs && !validate_samplers(fs->Program, errMsg)) {
-      return GL_FALSE;
+   for (i = 0; i < Elements(shProg->_LinkedShaders); i++) {
+      if (shProg->_LinkedShaders[i]
+	  && !validate_samplers(shProg->_LinkedShaders[i]->Program, errMsg)) {
+	 return GL_FALSE;
+      }
    }
 
    return GL_TRUE;
