@@ -1475,8 +1475,29 @@ glsl_to_tgsi_visitor::visit(ir_expression *ir)
                glsl_type::vec4_type);
          assert(ir->operands[0]->type->base_type == GLSL_TYPE_FLOAT);
          emit(ir, TGSI_OPCODE_SNE, st_dst_reg(temp), op[0], op[1]);
-         emit_dp(ir, result_dst, temp, temp, vector_elements);
-         emit(ir, TGSI_OPCODE_SNE, result_dst, result_src, st_src_reg_for_float(0.0));
+
+         /* After the dot-product, the value will be an integer on the
+          * range [0,4].  Zero stays zero, and positive values become 1.0.
+          */
+         glsl_to_tgsi_instruction *const dp =
+               emit_dp(ir, result_dst, temp, temp, vector_elements);
+         if (this->prog->Target == GL_FRAGMENT_PROGRAM_ARB &&
+             result_dst.type == GLSL_TYPE_FLOAT) {
+            /* The clamping to [0,1] can be done for free in the fragment
+             * shader with a saturate.
+             */
+            dp->saturate = true;
+         } else if (result_dst.type == GLSL_TYPE_FLOAT) {
+            /* Negating the result of the dot-product gives values on the range
+             * [-4, 0].  Zero stays zero, and negative values become 1.0.  This
+             * achieved using SLT.
+             */
+            st_src_reg slt_src = result_src;
+            slt_src.negate = ~slt_src.negate;
+            emit(ir, TGSI_OPCODE_SLT, result_dst, slt_src, st_src_reg_for_float(0.0));
+         } else {
+            emit(ir, TGSI_OPCODE_SNE, result_dst, result_src, st_src_reg_for_float(0.0));
+         }
       } else {
          emit(ir, TGSI_OPCODE_SNE, result_dst, op[0], op[1]);
       }
