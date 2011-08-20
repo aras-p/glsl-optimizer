@@ -190,7 +190,7 @@ find_uniform_parameter_pos(struct gl_shader_program *shProg, GLint index,
       else {
          pos = shProg->Uniforms->Uniforms[index].GeomPos;
          if (pos >= 0) {
-            prog = &shProg->GeometryProgram->Base;
+            prog = shProg->_LinkedShaders[MESA_SHADER_GEOMETRY]->Program;
          }
       }
    }
@@ -930,11 +930,12 @@ _mesa_uniform(struct gl_context *ctx, struct gl_shader_program *shProg,
       }
    }
 
-   if (shProg->GeometryProgram) {
+   if (shProg->_LinkedShaders[MESA_SHADER_GEOMETRY]) {
       /* convert uniform location to program parameter index */
       GLint index = uniform->GeomPos;
       if (index >= 0) {
-         set_program_uniform(ctx, &shProg->GeometryProgram->Base,
+         set_program_uniform(ctx,
+			     shProg->_LinkedShaders[MESA_SHADER_GEOMETRY]->Program,
                              index, offset, type, count, elems, values);
       }
    }
@@ -1078,11 +1079,12 @@ _mesa_uniform_matrix(struct gl_context *ctx, struct gl_shader_program *shProg,
       }
    }
 
-   if (shProg->GeometryProgram) {
+   if (shProg->_LinkedShaders[MESA_SHADER_GEOMETRY]) {
       /* convert uniform location to program parameter index */
       GLint index = uniform->GeomPos;
       if (index >= 0) {
-         set_program_uniform_matrix(ctx, &shProg->GeometryProgram->Base,
+         set_program_uniform_matrix(ctx,
+                                    shProg->_LinkedShaders[MESA_SHADER_GEOMETRY]->Program,
                                     index, offset,
                                     count, rows, cols, transpose, values);
       }

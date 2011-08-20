@@ -276,7 +276,6 @@ _mesa_clear_shader_program_data(struct gl_context *ctx,
                                 struct gl_shader_program *shProg)
 {
    _mesa_reference_fragprog(ctx, &shProg->FragmentProgram, NULL);
-   _mesa_reference_geomprog(ctx, &shProg->GeometryProgram, NULL);
 
    if (shProg->Uniforms) {
       _mesa_free_uniform_list(shProg->Uniforms);

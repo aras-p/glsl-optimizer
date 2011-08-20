@@ -268,10 +268,12 @@ update_program(struct gl_context *ctx)
       _mesa_reference_fragprog(ctx, &ctx->FragmentProgram._Current, NULL);
    }
 
-   if (gsProg && gsProg->LinkStatus && gsProg->GeometryProgram) {
+   if (gsProg && gsProg->LinkStatus
+       && gsProg->_LinkedShaders[MESA_SHADER_GEOMETRY]) {
       /* Use GLSL geometry shader */
       _mesa_reference_geomprog(ctx, &ctx->GeometryProgram._Current,
-                               gsProg->GeometryProgram);
+			       (struct gl_geometry_program *)
+			       gsProg->_LinkedShaders[MESA_SHADER_GEOMETRY]->Program);
    } else {
       /* No geometry program */
       _mesa_reference_geomprog(ctx, &ctx->GeometryProgram._Current, NULL);

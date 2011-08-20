@@ -1856,8 +1856,7 @@ _mesa_valid_to_render(struct gl_context *ctx, const char *where)
 	    break;
 
 	 case GL_GEOMETRY_SHADER_ARB:
-	    _mesa_append_uniforms_to_file(sh,
-					  &shProg[i]->GeometryProgram->Base);
+	    _mesa_append_uniforms_to_file(sh, sh->Program);
 	    break;
 
 	 case GL_FRAGMENT_SHADER:

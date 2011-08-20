@@ -1157,8 +1157,8 @@ destroy_shader_program_variants_cb(GLuint key, void *data, void *userData)
                                   shProg->_LinkedShaders[MESA_SHADER_VERTEX]->Program);
          destroy_program_variants(st, (struct gl_program *)
                                   shProg->FragmentProgram);
-         destroy_program_variants(st, (struct gl_program *)
-                                  shProg->GeometryProgram);
+         destroy_program_variants(st,
+                                  shProg->_LinkedShaders[MESA_SHADER_GEOMETRY]->Program);
       }
       break;
    case GL_VERTEX_SHADER:

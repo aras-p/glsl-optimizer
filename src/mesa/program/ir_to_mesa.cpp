@@ -3306,8 +3306,8 @@ _mesa_ir_link_shader(struct gl_context *ctx, struct gl_shader_program *prog)
                                                  linked_prog);
             break;
          case GL_GEOMETRY_SHADER:
-            _mesa_reference_geomprog(ctx, &prog->GeometryProgram,
-                                     (struct gl_geometry_program *)linked_prog);
+            _mesa_reference_program(ctx, &prog->_LinkedShaders[i]->Program,
+				    linked_prog);
             ok = ctx->Driver.ProgramStringNotify(ctx, GL_GEOMETRY_PROGRAM_NV,
                                                  linked_prog);
             break;
@@ -3428,7 +3428,6 @@ _mesa_glsl_link_shader(struct gl_context *ctx, struct gl_shader_program *prog)
    }
 
    _mesa_reference_fragprog(ctx, &prog->FragmentProgram, NULL);
-   _mesa_reference_geomprog(ctx, &prog->GeometryProgram, NULL);
 
    if (prog->LinkStatus) {
       link_shaders(ctx, prog);
