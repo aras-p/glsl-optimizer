@@ -1514,7 +1514,7 @@ glsl_to_tgsi_visitor::visit(ir_expression *ir)
             slt_src.negate = ~slt_src.negate;
             emit(ir, TGSI_OPCODE_SLT, result_dst, slt_src, st_src_reg_for_float(0.0));
          } else {
-            emit(ir, TGSI_OPCODE_SNE, result_dst, result_src, st_src_reg_for_float(0.0));
+            emit(ir, TGSI_OPCODE_SNE, result_dst, result_src, st_src_reg_for_int(0));
          }
       } else {
          emit(ir, TGSI_OPCODE_SNE, result_dst, op[0], op[1]);
