@@ -1482,12 +1482,36 @@ glsl_to_tgsi_visitor::visit(ir_expression *ir)
       }
       break;
 
-   case ir_unop_any:
+   case ir_unop_any: {
       assert(ir->operands[0]->type->is_vector());
-      emit_dp(ir, result_dst, op[0], op[0],
-              ir->operands[0]->type->vector_elements);
-      emit(ir, TGSI_OPCODE_SNE, result_dst, result_src, st_src_reg_for_float(0.0));
+
+      /* After the dot-product, the value will be an integer on the
+       * range [0,4].  Zero stays zero, and positive values become 1.0.
+       */
+      glsl_to_tgsi_instruction *const dp =
+         emit_dp(ir, result_dst, op[0], op[0],
+                 ir->operands[0]->type->vector_elements);
+      if (this->prog->Target == GL_FRAGMENT_PROGRAM_ARB &&
+          result_dst.type == GLSL_TYPE_FLOAT) {
+	      /* The clamping to [0,1] can be done for free in the fragment
+	       * shader with a saturate.
+	       */
+	      dp->saturate = true;
+      } else if (result_dst.type == GLSL_TYPE_FLOAT) {
+	      /* Negating the result of the dot-product gives values on the range
+	       * [-4, 0].  Zero stays zero, and negative values become 1.0.  This
+	       * is achieved using SLT.
+	       */
+	      st_src_reg slt_src = result_src;
+	      slt_src.negate = ~slt_src.negate;
+	      emit(ir, TGSI_OPCODE_SLT, result_dst, slt_src, st_src_reg_for_float(0.0));
+      }
+      else {
+         /* Use SNE 0 if integers are being used as boolean values. */
+         emit(ir, TGSI_OPCODE_SNE, result_dst, result_src, st_src_reg_for_int(0));
+      }
       break;
+   }
 
    case ir_binop_logic_xor:
       emit(ir, TGSI_OPCODE_SNE, result_dst, op[0], op[1]);
