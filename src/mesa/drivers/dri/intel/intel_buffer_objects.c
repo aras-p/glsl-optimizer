@@ -151,6 +151,12 @@ intel_bufferobj_data(struct gl_context * ctx,
    struct intel_context *intel = intel_context(ctx);
    struct intel_buffer_object *intel_obj = intel_buffer_object(obj);
 
+   /* Part of the ABI, but this function doesn't use it.
+    */
+#ifndef I915
+   (void) target;
+#endif
+
    intel_obj->Base.Size = size;
    intel_obj->Base.Usage = usage;
 
@@ -743,9 +749,7 @@ intel_bufferobj_copy_subdata(struct gl_context *ctx,
 
 #if FEATURE_APPLE_object_purgeable
 static GLenum
-intel_buffer_purgeable(struct gl_context * ctx,
-                       drm_intel_bo *buffer,
-                       GLenum option)
+intel_buffer_purgeable(drm_intel_bo *buffer)
 {
    int retained = 0;
 
@@ -760,25 +764,24 @@ intel_buffer_object_purgeable(struct gl_context * ctx,
                               struct gl_buffer_object *obj,
                               GLenum option)
 {
-   struct intel_buffer_object *intel;
+   struct intel_buffer_object *intel_obj = intel_buffer_object (obj);
 
-   intel = intel_buffer_object (obj);
-   if (intel->buffer != NULL)
-      return intel_buffer_purgeable (ctx, intel->buffer, option);
+   if (intel_obj->buffer != NULL)
+      return intel_buffer_purgeable(intel_obj->buffer);
 
    if (option == GL_RELEASED_APPLE) {
-      if (intel->sys_buffer != NULL) {
-         free(intel->sys_buffer);
-         intel->sys_buffer = NULL;
+      if (intel_obj->sys_buffer != NULL) {
+         free(intel_obj->sys_buffer);
+         intel_obj->sys_buffer = NULL;
       }
 
       return GL_RELEASED_APPLE;
    } else {
       /* XXX Create the buffer and madvise(MADV_DONTNEED)? */
-      return intel_buffer_purgeable (ctx,
-                                     intel_bufferobj_buffer(intel_context(ctx),
-                                                            intel, INTEL_READ),
-                                     option);
+      struct intel_context *intel = intel_context(ctx);
+      drm_intel_bo *bo = intel_bufferobj_buffer(intel, intel_obj, INTEL_READ);
+
+      return intel_buffer_purgeable(bo);
    }
 }
 
@@ -789,11 +792,14 @@ intel_texture_object_purgeable(struct gl_context * ctx,
 {
    struct intel_texture_object *intel;
 
+   (void) ctx;
+   (void) option;
+
    intel = intel_texture_object(obj);
    if (intel->mt == NULL || intel->mt->region == NULL)
       return GL_RELEASED_APPLE;
 
-   return intel_buffer_purgeable (ctx, intel->mt->region->buffer, option);
+   return intel_buffer_purgeable(intel->mt->region->buffer);
 }
 
 static GLenum
@@ -803,17 +809,18 @@ intel_render_object_purgeable(struct gl_context * ctx,
 {
    struct intel_renderbuffer *intel;
 
+   (void) ctx;
+   (void) option;
+
    intel = intel_renderbuffer(obj);
    if (intel->region == NULL)
       return GL_RELEASED_APPLE;
 
-   return intel_buffer_purgeable (ctx, intel->region->buffer, option);
+   return intel_buffer_purgeable(intel->region->buffer);
 }
 
 static GLenum
-intel_buffer_unpurgeable(struct gl_context * ctx,
-                         drm_intel_bo *buffer,
-                         GLenum option)
+intel_buffer_unpurgeable(drm_intel_bo *buffer)
 {
    int retained;
 
@@ -829,7 +836,10 @@ intel_buffer_object_unpurgeable(struct gl_context * ctx,
                                 struct gl_buffer_object *obj,
                                 GLenum option)
 {
-   return intel_buffer_unpurgeable (ctx, intel_buffer_object (obj)->buffer, option);
+   (void) ctx;
+   (void) option;
+
+   return intel_buffer_unpurgeable(intel_buffer_object (obj)->buffer);
 }
 
 static GLenum
@@ -839,11 +849,14 @@ intel_texture_object_unpurgeable(struct gl_context * ctx,
 {
    struct intel_texture_object *intel;
 
+   (void) ctx;
+   (void) option;
+
    intel = intel_texture_object(obj);
    if (intel->mt == NULL || intel->mt->region == NULL)
       return GL_UNDEFINED_APPLE;
 
-   return intel_buffer_unpurgeable (ctx, intel->mt->region->buffer, option);
+   return intel_buffer_unpurgeable(intel->mt->region->buffer);
 }
 
 static GLenum
@@ -853,11 +866,14 @@ intel_render_object_unpurgeable(struct gl_context * ctx,
 {
    struct intel_renderbuffer *intel;
 
+   (void) ctx;
+   (void) option;
+
    intel = intel_renderbuffer(obj);
    if (intel->region == NULL)
       return GL_UNDEFINED_APPLE;
 
-   return intel_buffer_unpurgeable (ctx, intel->region->buffer, option);
+   return intel_buffer_unpurgeable(intel->region->buffer);
 }
 #endif
 
