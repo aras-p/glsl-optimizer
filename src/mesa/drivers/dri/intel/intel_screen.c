@@ -152,6 +152,11 @@ intel_create_image_from_name(__DRIscreen *screen,
        image->internal_format = GL_RGBA;
        image->data_type = GL_UNSIGNED_BYTE;
        break;
+    case __DRI_IMAGE_FORMAT_ABGR8888:
+       image->format = MESA_FORMAT_RGBA8888_REV;
+       image->internal_format = GL_RGBA;
+       image->data_type = GL_UNSIGNED_BYTE;
+       break;
     default:
        free(image);
        return NULL;
@@ -246,6 +251,11 @@ intel_create_image(__DRIscreen *screen,
       image->internal_format = GL_RGBA;
       image->data_type = GL_UNSIGNED_BYTE;
       break;
+    case __DRI_IMAGE_FORMAT_ABGR8888:
+       image->format = MESA_FORMAT_RGBA8888_REV;
+       image->internal_format = GL_RGBA;
+       image->data_type = GL_UNSIGNED_BYTE;
+       break;
    default:
       free(image);
       return NULL;

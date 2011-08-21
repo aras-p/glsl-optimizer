@@ -60,6 +60,8 @@ translate_texture_format(gl_format mesa_format, GLenum DepthMode)
       return MAPSURF_32BIT | MT_32BIT_ARGB8888;
    case MESA_FORMAT_XRGB8888:
       return MAPSURF_32BIT | MT_32BIT_XRGB8888;
+   case MESA_FORMAT_RGBA8888_REV:
+      return MAPSURF_32BIT | MT_32BIT_ABGR8888;
    case MESA_FORMAT_YCBCR_REV:
       return (MAPSURF_422 | MT_422_YCRCB_NORMAL);
    case MESA_FORMAT_YCBCR:

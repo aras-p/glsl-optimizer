@@ -190,6 +190,10 @@ translate_tex_format(gl_format mesa_format,
       else if (srgb_decode == GL_SKIP_DECODE_EXT)
 	 return brw_format_for_mesa_format(_mesa_get_srgb_format_linear(mesa_format));
 
+   case MESA_FORMAT_RGBA8888_REV:
+      /* This format is not renderable? */
+      return BRW_SURFACEFORMAT_R8G8B8A8_UNORM;
+
    case MESA_FORMAT_RGBA_FLOAT32:
       /* The value of this BRW_SURFACEFORMAT is 0, which tricks the
        * assertion below.
