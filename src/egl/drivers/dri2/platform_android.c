@@ -308,6 +308,8 @@ dri2_create_image_android_native_buffer(_EGLDisplay *disp,
       format = __DRI_IMAGE_FORMAT_RGB565;
       break;
    case HAL_PIXEL_FORMAT_RGBA_8888:
+      format = __DRI_IMAGE_FORMAT_ABGR8888;
+      break;
    case HAL_PIXEL_FORMAT_RGBX_8888:
    case HAL_PIXEL_FORMAT_RGB_888:
    case HAL_PIXEL_FORMAT_RGBA_5551:
