@@ -30,7 +30,7 @@
 
 #include "intel_extensions.h"
 
-static const char *es2_extensions[] = {
+static const char *common_extensions[] = {
    /* Used by mesa internally (cf all_mesa_extensions in ../common/utils.c) */
    "GL_ARB_draw_buffers",
    "GL_ARB_multisample",
@@ -49,6 +49,43 @@ static const char *es2_extensions[] = {
    "GL_MESA_window_pos",
    "GL_NV_vertex_program",
 
+   /* Optional GLES1 or GLES2 */
+#if FEATURE_OES_EGL_image
+   "GL_OES_EGL_image",
+#endif
+   "GL_EXT_texture_filter_anisotropic",
+   "GL_EXT_packed_depth_stencil",
+   "GL_EXT_texture_format_BGRA8888",
+   "GL_EXT_blend_minmax",
+
+   NULL
+};
+
+static const char *es1_extensions[] = {
+   /* Required by GLES1 */
+   "GL_ARB_multitexture",
+   "GL_ARB_texture_env_add",
+   "GL_ARB_texture_env_combine",
+   "GL_ARB_texture_env_dot3",
+   "GL_ARB_point_parameters",
+
+   /* Optional GLES1 */
+   "GL_EXT_blend_equation_separate",
+   "GL_EXT_blend_func_separate",
+   "GL_EXT_blend_subtract",
+   "GL_ARB_framebuffer_object",
+   "GL_EXT_framebuffer_object",
+   "GL_ARB_point_sprite",
+   "GL_EXT_stencil_wrap",
+   "GL_ARB_texture_cube_map",
+   "GL_ARB_texture_env_crossbar",
+   "GL_ARB_texture_mirrored_repeat",
+   "GL_EXT_texture_lod_bias",
+
+   NULL
+};
+
+static const char *es2_extensions[] = {
    /* Required by GLES2 */
    "GL_ARB_fragment_program",
    "GL_ARB_fragment_shader",
@@ -67,18 +104,25 @@ static const char *es2_extensions[] = {
 
    /* Optional GLES2 */
    "GL_ARB_framebuffer_object",
-   "GL_EXT_texture_filter_anisotropic",
    "GL_ARB_depth_texture",
-   "GL_EXT_packed_depth_stencil",
    "GL_EXT_framebuffer_object",
-   "GL_EXT_texture_format_BGRA8888",
-
-#if FEATURE_OES_EGL_image
-   "GL_OES_EGL_image",
-#endif
 
    NULL,
 };
+
+void
+intelInitExtensionsES1(struct gl_context *ctx)
+{
+   int i;
+
+   /* Can't use driInitExtensions() since it uses extensions from
+    * main/remap_helper.h when called the first time. */
+
+   for (i = 0; common_extensions[i]; i++)
+      _mesa_enable_extension(ctx, common_extensions[i]);
+   for (i = 0; es1_extensions[i]; i++)
+      _mesa_enable_extension(ctx, es1_extensions[i]);
+}
 
 /**
  * \brief Extensions to disable.
@@ -103,6 +147,8 @@ intelInitExtensionsES2(struct gl_context *ctx)
    /* Can't use driInitExtensions() since it uses extensions from
     * main/remap_helper.h when called the first time. */
 
+   for (i = 0; common_extensions[i]; i++)
+      _mesa_enable_extension(ctx, common_extensions[i]);
    for (i = 0; es2_extensions[i]; i++)
       _mesa_enable_extension(ctx, es2_extensions[i]);
    for (i = 0; es2_extensions_disabled[i]; i++)

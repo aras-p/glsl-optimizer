@@ -841,6 +841,7 @@ intelInitContext(struct intel_context *intel,
       intelInitExtensions(ctx);
       break;
    case API_OPENGLES:
+      intelInitExtensionsES1(ctx);
       break;
    case API_OPENGLES2:
       intelInitExtensionsES2(ctx);
