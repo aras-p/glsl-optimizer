@@ -120,6 +120,7 @@ _mesa_init_driver_functions(struct dd_function_table *driver)
    driver->UnmapTexture = NULL;
    driver->TextureMemCpy = memcpy;
    driver->IsTextureResident = NULL;
+   driver->DrawTex = _mesa_meta_DrawTex;
 
    /* Vertex/fragment programs */
    driver->BindProgram = NULL;
