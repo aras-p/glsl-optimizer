@@ -465,6 +465,8 @@ static void TAG(WriteRGBASpan)( struct gl_context *ctx,
 				GLuint n, GLint x, GLint y,
 				const void *values, const GLubyte mask[] )
 {
+   (void) ctx;
+
    HW_WRITE_LOCK()
       {
          const GLubyte (*rgba)[4] = (const GLubyte (*)[4]) values;
@@ -508,6 +510,8 @@ static void TAG(WriteRGBSpan)( struct gl_context *ctx,
 			       GLuint n, GLint x, GLint y,
 			       const void *values, const GLubyte mask[] )
 {
+   (void) ctx;
+
    HW_WRITE_LOCK()
       {
          const GLubyte (*rgb)[3] = (const GLubyte (*)[3]) values;
@@ -547,6 +551,8 @@ static void TAG(WriteRGBAPixels)( struct gl_context *ctx,
                                   GLuint n, const GLint x[], const GLint y[],
                                   const void *values, const GLubyte mask[] )
 {
+   (void) ctx;
+
    HW_WRITE_LOCK()
       {
          const GLubyte (*rgba)[4] = (const GLubyte (*)[4]) values;
@@ -593,6 +599,8 @@ static void TAG(WriteMonoRGBASpan)( struct gl_context *ctx,
 				    GLuint n, GLint x, GLint y, 
 				    const void *value, const GLubyte mask[] )
 {
+   (void) ctx;
+
    HW_WRITE_LOCK()
       {
          const GLubyte *color = (const GLubyte *) value;
@@ -634,6 +642,8 @@ static void TAG(WriteMonoRGBAPixels)( struct gl_context *ctx,
 				      const void *value,
 				      const GLubyte mask[] ) 
 {
+   (void) ctx;
+
    HW_WRITE_LOCK()
       {
          const GLubyte *color = (const GLubyte *) value;
@@ -673,6 +683,8 @@ static void TAG(ReadRGBASpan)( struct gl_context *ctx,
                                struct gl_renderbuffer *rb,
 			       GLuint n, GLint x, GLint y, void *values)
 {
+   (void) ctx;
+
    HW_READ_LOCK()
       {
          GLubyte (*rgba)[4] = (GLubyte (*)[4]) values;
@@ -712,6 +724,8 @@ static void TAG2(ReadRGBASpan,_MMX)( struct gl_context *ctx,
     */
    __asm__ __volatile__( "emms" );
 #endif
+
+   (void) ctx;
 
    HW_READ_LOCK()
      {
@@ -757,6 +771,8 @@ static void TAG2(ReadRGBASpan,_SSE2)( struct gl_context *ctx,
                                       GLuint n, GLint x, GLint y,
                                       void *values)
 {
+   (void) ctx;
+
    HW_READ_LOCK()
      {
         GLubyte (*rgba)[4] = (GLubyte (*)[4]) values;
@@ -799,6 +815,8 @@ static void TAG2(ReadRGBASpan,_SSE)( struct gl_context *ctx,
    __asm__ __volatile__( "emms" );
 #endif
 
+   (void) ctx;
+
    HW_READ_LOCK()
      {
         GLubyte (*rgba)[4] = (GLubyte (*)[4]) values;
@@ -834,6 +852,8 @@ static void TAG(ReadRGBAPixels)( struct gl_context *ctx,
 				 GLuint n, const GLint x[], const GLint y[],
 				 void *values )
 {
+   (void) ctx;
+
    HW_READ_LOCK()
       {
          GLubyte (*rgba)[4] = (GLubyte (*)[4]) values;
