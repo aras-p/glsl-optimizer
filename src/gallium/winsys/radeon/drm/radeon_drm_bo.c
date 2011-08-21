@@ -31,11 +31,11 @@
 #include "util/u_memory.h"
 #include "util/u_simple_list.h"
 #include "os/os_thread.h"
+#include "os/os_mman.h"
 
 #include "state_tracker/drm_driver.h"
 
 #include <sys/ioctl.h>
-#include <sys/mman.h>
 #include <xf86drm.h>
 #include <errno.h>
 
@@ -160,7 +160,7 @@ static void radeon_bo_destroy(struct pb_buffer *_buf)
     }
 
     if (bo->ptr)
-        munmap(bo->ptr, bo->size);
+        os_munmap(bo->ptr, bo->size);
 
     /* Close object. */
     args.handle = bo->handle;
@@ -278,7 +278,7 @@ static void *radeon_bo_map_internal(struct pb_buffer *_buf,
         return NULL;
     }
 
-    ptr = mmap(0, args.size, PROT_READ|PROT_WRITE, MAP_SHARED,
+    ptr = os_mmap(0, args.size, PROT_READ|PROT_WRITE, MAP_SHARED,
                bo->rws->fd, args.addr_ptr);
     if (ptr == MAP_FAILED) {
         pipe_mutex_unlock(bo->map_mutex);
