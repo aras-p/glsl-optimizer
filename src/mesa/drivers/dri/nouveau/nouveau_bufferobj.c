@@ -169,7 +169,7 @@ nouveau_bufferobj_map_range(struct gl_context *ctx, GLenum target, GLintptr offs
 }
 
 static GLboolean
-nouveau_bufferobj_unmap(struct gl_context *ctx, GLenum target, struct gl_buffer_object *obj)
+nouveau_bufferobj_unmap(struct gl_context *ctx, struct gl_buffer_object *obj)
 {
 	assert(obj->Pointer);
 

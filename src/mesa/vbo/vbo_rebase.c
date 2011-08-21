@@ -183,9 +183,7 @@ void vbo_rebase_prims( struct gl_context *ctx,
       }      
 
       if (map_ib) 
-	 ctx->Driver.UnmapBuffer(ctx, 
-				 GL_ELEMENT_ARRAY_BUFFER,
-				 ib->obj);
+	 ctx->Driver.UnmapBuffer(ctx, ib->obj);
 
       tmp_ib.obj = ctx->Shared->NullBufferObj;
       tmp_ib.ptr = tmp_indices;

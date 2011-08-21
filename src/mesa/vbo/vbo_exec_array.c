@@ -176,7 +176,7 @@ vbo_get_minmax_index(struct gl_context *ctx,
    }
 
    if (_mesa_is_bufferobj(ib->obj)) {
-      ctx->Driver.UnmapBuffer(ctx, GL_ELEMENT_ARRAY_BUFFER_ARB, ib->obj);
+      ctx->Driver.UnmapBuffer(ctx, ib->obj);
    }
 }
 
@@ -238,7 +238,7 @@ unmap_array_buffer(struct gl_context *ctx, struct gl_client_array *array)
    if (array->Enabled &&
        _mesa_is_bufferobj(array->BufferObj) &&
        _mesa_bufferobj_mapped(array->BufferObj)) {
-      ctx->Driver.UnmapBuffer(ctx, GL_ARRAY_BUFFER_ARB, array->BufferObj);
+      ctx->Driver.UnmapBuffer(ctx, array->BufferObj);
    }
 }
 
@@ -296,8 +296,7 @@ check_draw_elements_data(struct gl_context *ctx, GLsizei count, GLenum elemType,
    }
 
    if (_mesa_is_bufferobj(ctx->Array.ElementArrayBufferObj)) {
-      ctx->Driver.UnmapBuffer(ctx, GL_ELEMENT_ARRAY_BUFFER_ARB,
-			      ctx->Array.ElementArrayBufferObj);
+      ctx->Driver.UnmapBuffer(ctx, ctx->Array.ElementArrayBufferObj);
    }
 
    unmap_array_buffer(ctx, &arrayObj->Vertex);
@@ -364,7 +363,7 @@ print_draw_arrays(struct gl_context *ctx,
          for (i = 0; i < n; i++) {
             printf("    float[%d] = 0x%08x %f\n", i, k[i], f[i]);
          }
-         ctx->Driver.UnmapBuffer(ctx, GL_ARRAY_BUFFER_ARB, bufObj);
+         ctx->Driver.UnmapBuffer(ctx, bufObj);
       }
    }
 }
@@ -760,8 +759,7 @@ dump_element_buffer(struct gl_context *ctx, GLenum type)
       ;
    }
 
-   ctx->Driver.UnmapBuffer(ctx, GL_ELEMENT_ARRAY_BUFFER_ARB,
-                           ctx->Array.ElementArrayBufferObj);
+   ctx->Driver.UnmapBuffer(ctx, ctx->Array.ElementArrayBufferObj);
 }
 
 

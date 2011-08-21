@@ -89,7 +89,7 @@ _mesa_max_buffer_index(struct gl_context *ctx, GLuint count, GLenum type,
    }
 
    if (map) {
-      ctx->Driver.UnmapBuffer(ctx, GL_ELEMENT_ARRAY_BUFFER_ARB, elementBuf);
+      ctx->Driver.UnmapBuffer(ctx, elementBuf);
    }
 
    return max;

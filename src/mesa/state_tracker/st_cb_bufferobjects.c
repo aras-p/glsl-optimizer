@@ -378,7 +378,7 @@ st_bufferobj_flush_mapped_range(struct gl_context *ctx, GLenum target,
  * Called via glUnmapBufferARB().
  */
 static GLboolean
-st_bufferobj_unmap(struct gl_context *ctx, GLenum target, struct gl_buffer_object *obj)
+st_bufferobj_unmap(struct gl_context *ctx, struct gl_buffer_object *obj)
 {
    struct pipe_context *pipe = st_context(ctx)->pipe;
    struct st_buffer_object *st_obj = st_buffer_object(obj);

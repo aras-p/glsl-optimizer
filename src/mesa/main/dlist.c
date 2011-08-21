@@ -906,8 +906,7 @@ unpack_image(struct gl_context *ctx, GLuint dimensions,
       image = _mesa_unpack_image(dimensions, width, height, depth,
                                  format, type, src, unpack);
 
-      ctx->Driver.UnmapBuffer(ctx, GL_PIXEL_UNPACK_BUFFER_EXT,
-                              unpack->BufferObj);
+      ctx->Driver.UnmapBuffer(ctx, unpack->BufferObj);
 
       if (!image) {
          _mesa_error(ctx, GL_OUT_OF_MEMORY, "display list construction");

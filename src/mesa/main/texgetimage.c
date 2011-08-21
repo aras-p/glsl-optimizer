@@ -474,8 +474,7 @@ _mesa_get_teximage(struct gl_context *ctx, GLenum target, GLint level,
    }
 
    if (_mesa_is_bufferobj(ctx->Pack.BufferObj)) {
-      ctx->Driver.UnmapBuffer(ctx, GL_PIXEL_PACK_BUFFER_EXT,
-                              ctx->Pack.BufferObj);
+      ctx->Driver.UnmapBuffer(ctx, ctx->Pack.BufferObj);
    }
 }
 
@@ -531,8 +530,7 @@ _mesa_get_compressed_teximage(struct gl_context *ctx, GLenum target, GLint level
    }
 
    if (_mesa_is_bufferobj(ctx->Pack.BufferObj)) {
-      ctx->Driver.UnmapBuffer(ctx, GL_PIXEL_PACK_BUFFER_EXT,
-                              ctx->Pack.BufferObj);
+      ctx->Driver.UnmapBuffer(ctx, ctx->Pack.BufferObj);
    }
 }
 

@@ -1622,9 +1622,7 @@ void _ae_unmap_vbos( struct gl_context *ctx )
    assert (!actx->NewState);
 
    for (i = 0; i < actx->nr_vbos; i++)
-      ctx->Driver.UnmapBuffer(ctx,
-			      GL_ARRAY_BUFFER_ARB,
-			      actx->vbo[i]);
+      ctx->Driver.UnmapBuffer(ctx, actx->vbo[i]);
 
    actx->mapped_vbos = GL_FALSE;
 }

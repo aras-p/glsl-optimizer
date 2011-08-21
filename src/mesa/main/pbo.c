@@ -201,8 +201,7 @@ _mesa_unmap_pbo_source(struct gl_context *ctx,
 {
    ASSERT(unpack != &ctx->Pack); /* catch pack/unpack mismatch */
    if (_mesa_is_bufferobj(unpack->BufferObj)) {
-      ctx->Driver.UnmapBuffer(ctx, GL_PIXEL_UNPACK_BUFFER_EXT,
-                              unpack->BufferObj);
+      ctx->Driver.UnmapBuffer(ctx, unpack->BufferObj);
    }
 }
 
@@ -297,7 +296,7 @@ _mesa_unmap_pbo_dest(struct gl_context *ctx,
 {
    ASSERT(pack != &ctx->Unpack); /* catch pack/unpack mismatch */
    if (_mesa_is_bufferobj(pack->BufferObj)) {
-      ctx->Driver.UnmapBuffer(ctx, GL_PIXEL_PACK_BUFFER_EXT, pack->BufferObj);
+      ctx->Driver.UnmapBuffer(ctx, pack->BufferObj);
    }
 }
 
@@ -384,8 +383,7 @@ _mesa_unmap_teximage_pbo(struct gl_context *ctx,
                          const struct gl_pixelstore_attrib *unpack)
 {
    if (_mesa_is_bufferobj(unpack->BufferObj)) {
-      ctx->Driver.UnmapBuffer(ctx, GL_PIXEL_UNPACK_BUFFER_EXT,
-                              unpack->BufferObj);
+      ctx->Driver.UnmapBuffer(ctx, unpack->BufferObj);
    }
 }
 

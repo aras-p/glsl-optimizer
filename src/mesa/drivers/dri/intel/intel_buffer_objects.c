@@ -41,8 +41,7 @@
 #include "intel_regions.h"
 
 static GLboolean
-intel_bufferobj_unmap(struct gl_context * ctx,
-                      GLenum target, struct gl_buffer_object *obj);
+intel_bufferobj_unmap(struct gl_context * ctx, struct gl_buffer_object *obj);
 
 /** Allocates a new drm_intel_bo to store the data for the buffer object. */
 static void
@@ -122,7 +121,7 @@ intel_bufferobj_free(struct gl_context * ctx, struct gl_buffer_object *obj)
     * (though it does if you call glDeleteBuffers)
     */
    if (obj->Pointer)
-      intel_bufferobj_unmap(ctx, 0, obj);
+      intel_bufferobj_unmap(ctx, obj);
 
    free(intel_obj->sys_buffer);
    if (intel_obj->region) {
@@ -507,8 +506,7 @@ intel_bufferobj_flush_mapped_range(struct gl_context *ctx, GLenum target,
  * Called via glUnmapBuffer().
  */
 static GLboolean
-intel_bufferobj_unmap(struct gl_context * ctx,
-                      GLenum target, struct gl_buffer_object *obj)
+intel_bufferobj_unmap(struct gl_context * ctx, struct gl_buffer_object *obj)
 {
    struct intel_context *intel = intel_context(ctx);
    struct intel_buffer_object *intel_obj = intel_buffer_object(obj);
@@ -766,7 +764,7 @@ intel_bufferobj_copy_subdata(struct gl_context *ctx,
 	 char *ptr = intel_bufferobj_map(ctx, GL_COPY_WRITE_BUFFER,
 					 GL_READ_WRITE, dst);
 	 memmove(ptr + write_offset, ptr + read_offset, size);
-	 intel_bufferobj_unmap(ctx, GL_COPY_WRITE_BUFFER, dst);
+	 intel_bufferobj_unmap(ctx, dst);
       } else {
 	 const char *src_ptr;
 	 char *dst_ptr;
@@ -778,8 +776,8 @@ intel_bufferobj_copy_subdata(struct gl_context *ctx,
 
 	 memcpy(dst_ptr + write_offset, src_ptr + read_offset, size);
 
-	 intel_bufferobj_unmap(ctx, GL_COPY_READ_BUFFER, src);
-	 intel_bufferobj_unmap(ctx, GL_COPY_WRITE_BUFFER, dst);
+	 intel_bufferobj_unmap(ctx, src);
+	 intel_bufferobj_unmap(ctx, dst);
       }
       return;
    }

@@ -247,7 +247,7 @@ static void
 unmap_vertex_store(struct gl_context *ctx,
                    struct vbo_save_vertex_store *vertex_store)
 {
-   ctx->Driver.UnmapBuffer(ctx, GL_ARRAY_BUFFER_ARB, vertex_store->bufferobj);
+   ctx->Driver.UnmapBuffer(ctx, vertex_store->bufferobj);
    vertex_store->buffer = NULL;
 }
 

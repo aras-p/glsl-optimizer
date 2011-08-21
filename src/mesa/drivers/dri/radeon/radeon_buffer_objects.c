@@ -205,7 +205,6 @@ radeonMapBuffer(struct gl_context * ctx,
  */
 static GLboolean
 radeonUnmapBuffer(struct gl_context * ctx,
-                  GLenum target,
                   struct gl_buffer_object *obj)
 {
     struct radeon_buffer_object *radeon_obj = get_radeon_buffer_object(obj);

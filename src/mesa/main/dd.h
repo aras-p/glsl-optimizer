@@ -725,7 +725,7 @@ struct dd_function_table {
                                   GLintptr offset, GLsizeiptr length,
                                   struct gl_buffer_object *obj);
 
-   GLboolean (*UnmapBuffer)( struct gl_context *ctx, GLenum target,
+   GLboolean (*UnmapBuffer)( struct gl_context *ctx,
 			     struct gl_buffer_object *obj );
    /*@}*/
 

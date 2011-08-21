@@ -456,7 +456,7 @@ static void evergreenConvertAttrib(struct gl_context *ctx, int count,
 
     if (mapped_named_bo) 
     {
-        ctx->Driver.UnmapBuffer(ctx, GL_ARRAY_BUFFER, input->BufferObj);
+        ctx->Driver.UnmapBuffer(ctx, input->BufferObj);
     }
 }
 
@@ -531,7 +531,7 @@ static void evergreenFixupIndexBuffer(struct gl_context *ctx, const struct _mesa
 
     if (mapped_named_bo)
     {
-        ctx->Driver.UnmapBuffer(ctx, GL_ELEMENT_ARRAY_BUFFER, mesa_ind_buf->obj);
+        ctx->Driver.UnmapBuffer(ctx, mesa_ind_buf->obj);
     }
 }
 
@@ -629,7 +629,7 @@ static void evergreenSetupIndexBuffer(struct gl_context *ctx, const struct _mesa
 
         if (mapped_named_bo)
         {
-	        ctx->Driver.UnmapBuffer(ctx, GL_ELEMENT_ARRAY_BUFFER, mesa_ind_buf->obj);
+	        ctx->Driver.UnmapBuffer(ctx, mesa_ind_buf->obj);
         }
     }
     else
@@ -675,7 +675,7 @@ static void evergreenAlignDataToDword(struct gl_context *ctx,
     radeon_bo_unmap(attr->bo);
     if (mapped_named_bo) 
     {
-        ctx->Driver.UnmapBuffer(ctx, GL_ARRAY_BUFFER, input->BufferObj);
+        ctx->Driver.UnmapBuffer(ctx, input->BufferObj);
     }
 
     attr->stride = dst_stride;

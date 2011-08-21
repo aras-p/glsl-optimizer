@@ -402,9 +402,7 @@ static void unmap_vbos( struct gl_context *ctx,
 {
    GLuint i;
    for (i = 0; i < nr_bo; i++) { 
-      ctx->Driver.UnmapBuffer(ctx, 
-			      0, /* target -- I don't see why this would be needed */
-			      bo[i]);
+      ctx->Driver.UnmapBuffer(ctx, bo[i]);
    }
 }
 

@@ -292,8 +292,7 @@ out:
 
    if (_mesa_is_bufferobj(unpack->BufferObj)) {
       /* done with PBO so unmap it now */
-      ctx->Driver.UnmapBuffer(ctx, GL_PIXEL_UNPACK_BUFFER_EXT,
-                              unpack->BufferObj);
+      ctx->Driver.UnmapBuffer(ctx, unpack->BufferObj);
    }
 
    intel_check_front_buffer_rendering(intel);

@@ -281,7 +281,7 @@ vbo_exec_vtx_unmap( struct vbo_exec_context *exec )
       assert(exec->vtx.buffer_used <= VBO_VERT_BUFFER_SIZE);
       assert(exec->vtx.buffer_ptr != NULL);
       
-      ctx->Driver.UnmapBuffer(ctx, target, exec->vtx.bufferobj);
+      ctx->Driver.UnmapBuffer(ctx, exec->vtx.bufferobj);
       exec->vtx.buffer_map = NULL;
       exec->vtx.buffer_ptr = NULL;
       exec->vtx.max_vert = 0;

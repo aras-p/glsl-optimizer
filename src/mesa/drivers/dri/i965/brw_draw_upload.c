@@ -699,7 +699,7 @@ static void brw_prepare_indices(struct brw_context *brw)
 			     &bo, &offset);
 	   brw->ib.start_vertex_offset = offset / ib_type_size;
 
-           ctx->Driver.UnmapBuffer(ctx, GL_ELEMENT_ARRAY_BUFFER_ARB, bufferobj);
+           ctx->Driver.UnmapBuffer(ctx, bufferobj);
        } else {
 	  /* Use CMD_3D_PRIM's start_vertex_offset to avoid re-uploading
 	   * the index buffer state when we're just moving the start index

@@ -512,11 +512,9 @@ _mesa_buffer_flush_mapped_range( struct gl_context *ctx, GLenum target,
  * \sa glUnmapBufferARB, dd_function_table::UnmapBuffer
  */
 static GLboolean
-_mesa_buffer_unmap( struct gl_context *ctx, GLenum target,
-                    struct gl_buffer_object *bufObj )
+_mesa_buffer_unmap( struct gl_context *ctx, struct gl_buffer_object *bufObj )
 {
    (void) ctx;
-   (void) target;
    /* XXX we might assert here that bufObj->Pointer is non-null */
    bufObj->Pointer = NULL;
    bufObj->Length = 0;
@@ -551,8 +549,8 @@ _mesa_copy_buffer_subdata(struct gl_context *ctx,
    if (srcPtr && dstPtr)
       memcpy(dstPtr + writeOffset, srcPtr + readOffset, size);
 
-   ctx->Driver.UnmapBuffer(ctx, GL_COPY_READ_BUFFER, src);
-   ctx->Driver.UnmapBuffer(ctx, GL_COPY_WRITE_BUFFER, dst);
+   ctx->Driver.UnmapBuffer(ctx, src);
+   ctx->Driver.UnmapBuffer(ctx, dst);
 }
 
 
@@ -774,7 +772,7 @@ _mesa_DeleteBuffersARB(GLsizei n, const GLuint *ids)
 
          if (_mesa_bufferobj_mapped(bufObj)) {
             /* if mapped, unmap it now */
-            ctx->Driver.UnmapBuffer(ctx, 0, bufObj);
+            ctx->Driver.UnmapBuffer(ctx, bufObj);
             bufObj->AccessFlags = DEFAULT_ACCESS;
             bufObj->Pointer = NULL;
          }
@@ -934,7 +932,7 @@ _mesa_BufferDataARB(GLenum target, GLsizeiptrARB size,
    
    if (_mesa_bufferobj_mapped(bufObj)) {
       /* Unmap the existing buffer.  We'll replace it now.  Not an error. */
-      ctx->Driver.UnmapBuffer(ctx, target, bufObj);
+      ctx->Driver.UnmapBuffer(ctx, bufObj);
       bufObj->AccessFlags = DEFAULT_ACCESS;
       ASSERT(bufObj->Pointer == NULL);
    }  
@@ -1147,7 +1145,7 @@ _mesa_UnmapBufferARB(GLenum target)
    }
 #endif
 
-   status = ctx->Driver.UnmapBuffer( ctx, target, bufObj );
+   status = ctx->Driver.UnmapBuffer( ctx, bufObj );
    bufObj->AccessFlags = DEFAULT_ACCESS;
    ASSERT(bufObj->Pointer == NULL);
    ASSERT(bufObj->Offset == 0);

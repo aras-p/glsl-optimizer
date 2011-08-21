@@ -230,8 +230,7 @@ vbo_save_loopback_vertex_list(struct gl_context *ctx,
                             list->wrap_count,
                             list->vertex_size);
 
-   ctx->Driver.UnmapBuffer(ctx, GL_ARRAY_BUFFER_ARB, 
-			   list->vertex_store->bufferobj);
+   ctx->Driver.UnmapBuffer(ctx, list->vertex_store->bufferobj);
 }
 
 

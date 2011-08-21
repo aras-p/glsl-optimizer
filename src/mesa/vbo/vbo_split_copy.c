@@ -564,14 +564,14 @@ replay_finish( struct copy_context *copy )
    for (i = 0; i < copy->nr_varying; i++) {
       struct gl_buffer_object *vbo = copy->varying[i].array->BufferObj;
       if (_mesa_is_bufferobj(vbo) && _mesa_bufferobj_mapped(vbo)) 
-	 ctx->Driver.UnmapBuffer(ctx, GL_ARRAY_BUFFER, vbo);
+	 ctx->Driver.UnmapBuffer(ctx, vbo);
    }
 
    /* Unmap index buffer:
     */
    if (_mesa_is_bufferobj(copy->ib->obj) &&
        _mesa_bufferobj_mapped(copy->ib->obj)) {
-      ctx->Driver.UnmapBuffer(ctx, GL_ELEMENT_ARRAY_BUFFER, copy->ib->obj);
+      ctx->Driver.UnmapBuffer(ctx, copy->ib->obj);
    }
 }
 

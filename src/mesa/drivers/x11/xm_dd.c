@@ -508,8 +508,7 @@ xmesa_DrawPixels_8R8G8B( struct gl_context *ctx,
       }
 
       if (_mesa_is_bufferobj(unpack->BufferObj)) {
-         ctx->Driver.UnmapBuffer(ctx, GL_PIXEL_UNPACK_BUFFER_EXT,
-                                 unpack->BufferObj);
+         ctx->Driver.UnmapBuffer(ctx, unpack->BufferObj);
       }
    }
    else {
@@ -642,8 +641,7 @@ xmesa_DrawPixels_5R6G5B( struct gl_context *ctx,
       }
 
       if (unpack->BufferObj->Name) {
-         ctx->Driver.UnmapBuffer(ctx, GL_PIXEL_UNPACK_BUFFER_EXT,
-                                 unpack->BufferObj);
+         ctx->Driver.UnmapBuffer(ctx, unpack->BufferObj);
       }
    }
    else {

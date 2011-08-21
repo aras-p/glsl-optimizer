@@ -543,7 +543,7 @@ static void r700ConvertAttrib(struct gl_context *ctx, int count,
 
     if (mapped_named_bo) 
     {
-        ctx->Driver.UnmapBuffer(ctx, GL_ARRAY_BUFFER, input->BufferObj);
+        ctx->Driver.UnmapBuffer(ctx, input->BufferObj);
     }
 }
 
@@ -584,7 +584,7 @@ static void r700AlignDataToDword(struct gl_context *ctx,
     radeon_bo_unmap(attr->bo);
     if (mapped_named_bo) 
     {
-        ctx->Driver.UnmapBuffer(ctx, GL_ARRAY_BUFFER, input->BufferObj);
+        ctx->Driver.UnmapBuffer(ctx, input->BufferObj);
     }
 
     attr->stride = dst_stride;
@@ -788,7 +788,7 @@ static void r700FixupIndexBuffer(struct gl_context *ctx, const struct _mesa_inde
 
     if (mapped_named_bo)
     {
-        ctx->Driver.UnmapBuffer(ctx, GL_ELEMENT_ARRAY_BUFFER, mesa_ind_buf->obj);
+        ctx->Driver.UnmapBuffer(ctx, mesa_ind_buf->obj);
     }
 }
 
@@ -836,7 +836,7 @@ static void r700SetupIndexBuffer(struct gl_context *ctx, const struct _mesa_inde
 
         if (mapped_named_bo)
         {
-	        ctx->Driver.UnmapBuffer(ctx, GL_ELEMENT_ARRAY_BUFFER, mesa_ind_buf->obj);
+	        ctx->Driver.UnmapBuffer(ctx, mesa_ind_buf->obj);
         }
     }
     else
