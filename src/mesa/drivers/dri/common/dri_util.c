@@ -418,6 +418,7 @@ driCreateNewDrawable(__DRIscreen *psp, const __DRIconfig *config,
      * supported either.
      */
     (void) attrs;
+    (void) renderType;
 
     pdp = malloc(sizeof *pdp);
     if (!pdp) {
@@ -594,8 +595,10 @@ driDestroyContext(__DRIcontext *pcp)
 /**
  * Create the per-drawable private driver information.
  * 
- * \param render_type   Type of rendering target.  \c GLX_RGBA is the only
+ * \param render_type   Type of rendering target.  \c GLX_RGBA_TYPE is the only
  *                      type likely to ever be supported for direct-rendering.
+ *                      However, \c GLX_RGBA_FLOAT_TYPE_ARB may eventually be
+ *                      supported by some drivers.
  * \param shared        Context with which to share textures, etc. or NULL
  *
  * \returns An opaque pointer to the per-context private information on
@@ -615,6 +618,8 @@ driCreateNewContext(__DRIscreen *psp, const __DRIconfig *config,
 {
     __DRIcontext *pcp;
     void * const shareCtx = (shared != NULL) ? shared->driverPrivate : NULL;
+
+    (void) render_type;
 
     pcp = malloc(sizeof *pcp);
     if (!pcp)
@@ -700,6 +705,9 @@ dri2CreateNewContext(__DRIscreen *screen, const __DRIconfig *config,
 static int
 driCopyContext(__DRIcontext *dest, __DRIcontext *src, unsigned long mask)
 {
+    (void) dest;
+    (void) src;
+    (void) mask;
     return GL_FALSE;
 }
 
@@ -805,6 +813,8 @@ driCreateNewScreen(int scrn,
 {
     static const __DRIextension *emptyExtensionList[] = { NULL };
     __DRIscreen *psp;
+
+    (void) loaderPrivate;
 
     if (driDriverAPI.InitScreen == NULL)
 	return NULL;
