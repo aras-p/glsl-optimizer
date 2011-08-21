@@ -372,7 +372,7 @@ struct ast_type_qualifier {
     * \note
     * This field is only valid if \c explicit_location is set.
     */
-   unsigned location;
+   int location;
 
    /**
     * Return true if and only if an interpolation qualifier is present.
