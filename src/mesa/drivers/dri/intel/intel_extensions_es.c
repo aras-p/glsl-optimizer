@@ -64,6 +64,7 @@ static const char *es1_extensions[] = {
    "GL_EXT_blend_equation_separate",
    "GL_EXT_blend_func_separate",
    "GL_EXT_blend_subtract",
+   "GL_OES_draw_texture",
    "GL_ARB_framebuffer_object",
    "GL_EXT_framebuffer_object",
    "GL_ARB_point_sprite",
