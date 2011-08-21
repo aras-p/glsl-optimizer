@@ -419,6 +419,9 @@ dri2_create_image_from_name(__DRIscreen *_screen,
    case __DRI_IMAGE_FORMAT_ARGB8888:
       pf = PIPE_FORMAT_B8G8R8A8_UNORM;
       break;
+   case __DRI_IMAGE_FORMAT_ABGR8888:
+      pf = PIPE_FORMAT_R8G8B8A8_UNORM;
+      break;
    default:
       pf = PIPE_FORMAT_NONE;
       break;
@@ -502,6 +505,9 @@ dri2_create_image(__DRIscreen *_screen,
       break;
    case __DRI_IMAGE_FORMAT_ARGB8888:
       pf = PIPE_FORMAT_B8G8R8A8_UNORM;
+      break;
+   case __DRI_IMAGE_FORMAT_ABGR8888:
+      pf = PIPE_FORMAT_R8G8B8A8_UNORM;
       break;
    default:
       pf = PIPE_FORMAT_NONE;
