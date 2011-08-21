@@ -57,10 +57,11 @@ static INLINE uint32_t float_as_int(float f)
  * be passed as structs rather than dwords, but that's a little bit of
  * work...
  */
-static INLINE GLint
+static INLINE unsigned
 intel_batchbuffer_space(struct intel_context *intel)
 {
-   return (intel->batch.state_batch_offset - intel->batch.reserved_space) - intel->batch.used*4;
+   return (intel->batch.state_batch_offset - intel->batch.reserved_space)
+      - intel->batch.used*4;
 }
 
 
