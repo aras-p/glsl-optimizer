@@ -165,4 +165,12 @@ intelInitExtensions(struct gl_context *ctx)
       if (driQueryOptionb(&intel->optionCache, "stub_occlusion_query"))
 	 ctx->Extensions.ARB_occlusion_query = true;
    }
+
+   if (intel->ctx.Mesa_DXTn) {
+      ctx->Extensions.EXT_texture_compression_s3tc = true;
+      ctx->Extensions.S3_s3tc = true;
+   }
+   else if (driQueryOptionb(&intel->optionCache, "force_s3tc_enable")) {
+      ctx->Extensions.EXT_texture_compression_s3tc = true;
+   }
 }

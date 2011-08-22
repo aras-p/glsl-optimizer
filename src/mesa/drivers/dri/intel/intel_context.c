@@ -856,13 +856,6 @@ intelInitContext(struct intel_context *intel,
 
    intel_fbo_init(intel);
 
-   if (intel->ctx.Mesa_DXTn) {
-      _mesa_enable_extension(ctx, "GL_EXT_texture_compression_s3tc");
-      _mesa_enable_extension(ctx, "GL_S3_s3tc");
-   }
-   else if (driQueryOptionb(&intel->optionCache, "force_s3tc_enable")) {
-      _mesa_enable_extension(ctx, "GL_EXT_texture_compression_s3tc");
-   }
    intel->use_texture_tiling = driQueryOptionb(&intel->optionCache,
 					       "texture_tiling");
    intel->use_early_z = driQueryOptionb(&intel->optionCache, "early_z");
