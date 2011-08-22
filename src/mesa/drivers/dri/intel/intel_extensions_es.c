@@ -115,9 +115,6 @@ intelInitExtensionsES1(struct gl_context *ctx)
 {
    int i;
 
-   /* Can't use driInitExtensions() since it uses extensions from
-    * main/remap_helper.h when called the first time. */
-
    for (i = 0; common_extensions[i]; i++)
       _mesa_enable_extension(ctx, common_extensions[i]);
    for (i = 0; es1_extensions[i]; i++)
@@ -143,9 +140,6 @@ void
 intelInitExtensionsES2(struct gl_context *ctx)
 {
    int i;
-
-   /* Can't use driInitExtensions() since it uses extensions from
-    * main/remap_helper.h when called the first time. */
 
    for (i = 0; common_extensions[i]; i++)
       _mesa_enable_extension(ctx, common_extensions[i]);

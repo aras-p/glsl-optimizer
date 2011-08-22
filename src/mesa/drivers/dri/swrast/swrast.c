@@ -623,9 +623,6 @@ InitExtensionsES2(struct gl_context *ctx)
 {
    int i;
 
-   /* Can't use driInitExtensions() since it uses extensions from
-    * main/remap_helper.h when called the first time. */
-
    for (i = 0; es2_extensions[i]; i++)
       _mesa_enable_extension(ctx, es2_extensions[i]);
 }
