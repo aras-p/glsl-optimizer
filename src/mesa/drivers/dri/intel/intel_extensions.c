@@ -32,186 +32,6 @@
 #include "intel_extensions.h"
 #include "utils.h"
 
-
-#define need_GL_ARB_ES2_compatibility
-#define need_GL_ARB_draw_elements_base_vertex
-#define need_GL_ARB_framebuffer_object
-#define need_GL_ARB_map_buffer_range
-#define need_GL_ARB_occlusion_query
-#define need_GL_ARB_point_parameters
-#define need_GL_ARB_shader_objects
-#define need_GL_ARB_sync
-#define need_GL_ARB_vertex_array_object
-#define need_GL_ARB_vertex_program
-#define need_GL_ARB_vertex_shader
-#define need_GL_ARB_window_pos
-#define need_GL_EXT_blend_color
-#define need_GL_EXT_blend_equation_separate
-#define need_GL_EXT_blend_func_separate
-#define need_GL_EXT_blend_minmax
-#define need_GL_EXT_draw_buffers2
-#define need_GL_EXT_fog_coord
-#define need_GL_EXT_framebuffer_blit
-#define need_GL_EXT_framebuffer_multisample
-#define need_GL_EXT_framebuffer_object
-#define need_GL_EXT_gpu_program_parameters
-#define need_GL_EXT_point_parameters
-#define need_GL_EXT_provoking_vertex
-#define need_GL_EXT_secondary_color
-#define need_GL_EXT_separate_shader_objects
-#define need_GL_EXT_stencil_two_side
-#define need_GL_EXT_timer_query
-#define need_GL_APPLE_vertex_array_object
-#define need_GL_APPLE_object_purgeable
-#define need_GL_ATI_separate_stencil
-#define need_GL_ATI_envmap_bumpmap
-#define need_GL_NV_point_sprite
-#define need_GL_NV_vertex_program
-#define need_GL_OES_EGL_image
-#define need_GL_VERSION_2_0
-#define need_GL_VERSION_2_1
-
-#include "main/remap_helper.h"
-
-
-/**
- * Extension strings exported by the intel driver.
- *
- * Extensions supported by all chips supported by i830_dri, i915_dri, or
- * i965_dri.
- */
-static const struct dri_extension card_extensions[] = {
-   { "GL_ARB_ES2_compatibility",          GL_ARB_ES2_compatibility_functions },
-   { "GL_ARB_draw_elements_base_vertex",  GL_ARB_draw_elements_base_vertex_functions },
-   { "GL_ARB_explicit_attrib_location",   NULL },
-   { "GL_ARB_framebuffer_object",         GL_ARB_framebuffer_object_functions},
-   { "GL_ARB_half_float_pixel",           NULL },
-   { "GL_ARB_map_buffer_range",           GL_ARB_map_buffer_range_functions },
-   { "GL_ARB_multitexture",               NULL },
-   { "GL_ARB_pixel_buffer_object",      NULL },
-   { "GL_ARB_point_parameters",           GL_ARB_point_parameters_functions },
-   { "GL_ARB_point_sprite",               NULL },
-   { "GL_ARB_sampler_objects",            NULL },
-   { "GL_ARB_shader_objects",             GL_ARB_shader_objects_functions },
-   { "GL_ARB_shading_language_100",       GL_VERSION_2_0_functions },
-   { "GL_ARB_sync",                       GL_ARB_sync_functions },
-   { "GL_ARB_texture_border_clamp",       NULL },
-   { "GL_ARB_texture_cube_map",           NULL },
-   { "GL_ARB_texture_env_add",            NULL },
-   { "GL_ARB_texture_env_combine",        NULL },
-   { "GL_ARB_texture_env_crossbar",       NULL },
-   { "GL_ARB_texture_env_dot3",           NULL },
-   { "GL_ARB_texture_mirrored_repeat",    NULL },
-   { "GL_ARB_texture_rectangle",          NULL },
-   { "GL_ARB_vertex_array_object",        GL_ARB_vertex_array_object_functions},
-   { "GL_ARB_vertex_program",             GL_ARB_vertex_program_functions },
-   { "GL_ARB_vertex_shader",              GL_ARB_vertex_shader_functions },
-   { "GL_ARB_window_pos",                 GL_ARB_window_pos_functions },
-   { "GL_EXT_blend_color",                GL_EXT_blend_color_functions },
-   { "GL_EXT_blend_equation_separate",    GL_EXT_blend_equation_separate_functions },
-   { "GL_EXT_blend_func_separate",        GL_EXT_blend_func_separate_functions },
-   { "GL_EXT_blend_minmax",               GL_EXT_blend_minmax_functions },
-   { "GL_EXT_blend_logic_op",             NULL },
-   { "GL_EXT_blend_subtract",             NULL },
-   { "GL_EXT_framebuffer_blit",         GL_EXT_framebuffer_blit_functions },
-   { "GL_EXT_framebuffer_object",       GL_EXT_framebuffer_object_functions },
-   { "GL_EXT_framebuffer_multisample",    GL_EXT_framebuffer_multisample_functions },
-   { "GL_EXT_fog_coord",                  GL_EXT_fog_coord_functions },
-   { "GL_EXT_gpu_program_parameters",     GL_EXT_gpu_program_parameters_functions },
-   { "GL_EXT_packed_depth_stencil",       NULL },
-   { "GL_EXT_provoking_vertex",           GL_EXT_provoking_vertex_functions },
-   { "GL_EXT_secondary_color",            GL_EXT_secondary_color_functions },
-   { "GL_EXT_separate_shader_objects",    GL_EXT_separate_shader_objects_functions },
-   { "GL_EXT_stencil_wrap",               NULL },
-   { "GL_EXT_texture_edge_clamp",         NULL },
-   { "GL_EXT_texture_env_combine",        NULL },
-   { "GL_EXT_texture_env_dot3",           NULL },
-   { "GL_EXT_texture_filter_anisotropic", NULL },
-   { "GL_EXT_texture_lod_bias",           NULL },
-   { "GL_3DFX_texture_compression_FXT1",  NULL },
-   { "GL_APPLE_client_storage",           NULL },
-   { "GL_APPLE_object_purgeable",         GL_APPLE_object_purgeable_functions },
-   { "GL_APPLE_vertex_array_object",      GL_APPLE_vertex_array_object_functions},
-   { "GL_MESA_pack_invert",               NULL },
-   { "GL_MESA_ycbcr_texture",             NULL },
-   { "GL_NV_blend_square",                NULL },
-   { "GL_NV_vertex_program",              GL_NV_vertex_program_functions },
-   { "GL_NV_vertex_program1_1",           NULL },
-#if FEATURE_OES_EGL_image
-   { "GL_OES_EGL_image",                  GL_OES_EGL_image_functions },
-#endif
-   { NULL, NULL }
-};
-
-
-/** i915 / i945-only extensions */
-static const struct dri_extension i915_extensions[] = {
-   { "GL_ARB_depth_texture",              NULL },
-   { "GL_ARB_fragment_program",           NULL },
-   { "GL_ARB_shadow",                     NULL },
-   { "GL_ARB_texture_non_power_of_two",   NULL },
-   { "GL_ATI_separate_stencil",           GL_ATI_separate_stencil_functions },
-   { "GL_ATI_texture_env_combine3",       NULL },
-   { "GL_EXT_shadow_funcs",               NULL },
-   { "GL_EXT_stencil_two_side",           GL_EXT_stencil_two_side_functions },
-   { "GL_NV_texture_env_combine4",        NULL },
-   { NULL,                                NULL }
-};
-
-
-/** i965-only extensions */
-static const struct dri_extension brw_extensions[] = {
-   { "GL_ARB_color_buffer_float",         NULL },
-   { "GL_ARB_depth_clamp",                NULL },
-   { "GL_ARB_depth_texture",              NULL },
-   { "GL_ARB_fragment_coord_conventions", NULL },
-   { "GL_ARB_fragment_program",           NULL },
-   { "GL_ARB_fragment_program_shadow",    NULL },
-   { "GL_ARB_fragment_shader",            NULL },
-   { "GL_ARB_half_float_vertex",          NULL },
-   { "GL_ARB_occlusion_query",            GL_ARB_occlusion_query_functions },
-   { "GL_ARB_point_sprite", 		  NULL },
-   { "GL_ARB_seamless_cube_map",          NULL },
-   { "GL_ARB_shader_texture_lod",         NULL },
-   { "GL_ARB_shadow",                     NULL },
-#ifdef TEXTURE_FLOAT_ENABLED
-   { "GL_ARB_texture_float",              NULL },
-#endif
-   { "GL_MESA_texture_signed_rgba",       NULL },
-   { "GL_ARB_texture_compression_rgtc",   NULL },
-   { "GL_ARB_texture_non_power_of_two",   NULL },
-   { "GL_ARB_texture_rg",                 NULL },
-   { "GL_EXT_draw_buffers2",              GL_EXT_draw_buffers2_functions },
-   { "GL_EXT_framebuffer_sRGB",           NULL },
-   { "GL_EXT_shadow_funcs",               NULL },
-   { "GL_EXT_stencil_two_side",           GL_EXT_stencil_two_side_functions },
-   { "GL_EXT_texture_sRGB",		  NULL },
-   { "GL_EXT_texture_sRGB_decode",	  NULL },
-   { "GL_EXT_texture_swizzle",		  NULL },
-   { "GL_EXT_vertex_array_bgra",	  NULL },
-   { "GL_ATI_envmap_bumpmap",             GL_ATI_envmap_bumpmap_functions },
-   { "GL_ATI_separate_stencil",           GL_ATI_separate_stencil_functions },
-   { "GL_ATI_texture_env_combine3",       NULL },
-   { "GL_NV_conditional_render",          NULL },
-   { "GL_NV_texture_env_combine4",        NULL },
-   { NULL,                                NULL }
-};
-
-static const struct dri_extension ironlake_extensions[] = {
-   { "GL_EXT_timer_query",                GL_EXT_timer_query_functions },
-};
-
-static const struct dri_extension arb_oq_extensions[] = {
-   { "GL_ARB_occlusion_query",            GL_ARB_occlusion_query_functions },
-   { NULL, NULL }
-};
-
-
-static const struct dri_extension fragment_shader_extensions[] = {
-   { "GL_ARB_fragment_shader",            NULL },
-   { NULL, NULL }
-};
-
 /**
  * \brief Get GLSL version from the environment.
  *
@@ -237,25 +57,112 @@ intelInitExtensions(struct gl_context *ctx)
 {
    struct intel_context *intel = intel_context(ctx);
 
-   driInitExtensions(ctx, card_extensions, GL_FALSE);
-
-   _mesa_map_function_array(GL_VERSION_2_1_functions);
+   ctx->Extensions.ARB_draw_elements_base_vertex = true;
+   ctx->Extensions.ARB_explicit_attrib_location = true;
+   ctx->Extensions.ARB_framebuffer_object = true;
+   ctx->Extensions.ARB_half_float_pixel = true;
+   ctx->Extensions.ARB_map_buffer_range = true;
+   ctx->Extensions.ARB_multitexture = true;
+   ctx->Extensions.ARB_point_sprite = true;
+   ctx->Extensions.ARB_sampler_objects = true;
+   ctx->Extensions.ARB_shader_objects = true;
+   ctx->Extensions.ARB_shading_language_100 = true;
+   ctx->Extensions.ARB_sync = true;
+   ctx->Extensions.ARB_texture_border_clamp = true;
+   ctx->Extensions.ARB_texture_cube_map = true;
+   ctx->Extensions.ARB_texture_env_combine = true;
+   ctx->Extensions.ARB_texture_env_crossbar = true;
+   ctx->Extensions.ARB_texture_env_dot3 = true;
+   ctx->Extensions.ARB_texture_mirrored_repeat = true;
+   ctx->Extensions.ARB_vertex_array_object = true;
+   ctx->Extensions.ARB_vertex_program = true;
+   ctx->Extensions.ARB_vertex_shader = true;
+   ctx->Extensions.ARB_window_pos = true;
+   ctx->Extensions.EXT_blend_color = true;
+   ctx->Extensions.EXT_blend_equation_separate = true;
+   ctx->Extensions.EXT_blend_func_separate = true;
+   ctx->Extensions.EXT_blend_minmax = true;
+   ctx->Extensions.EXT_blend_subtract = true;
+   ctx->Extensions.EXT_framebuffer_blit = true;
+   ctx->Extensions.EXT_framebuffer_object = true;
+   ctx->Extensions.EXT_framebuffer_multisample = true;
+   ctx->Extensions.EXT_fog_coord = true;
+   ctx->Extensions.EXT_gpu_program_parameters = true;
+   ctx->Extensions.EXT_packed_depth_stencil = true;
+   ctx->Extensions.EXT_pixel_buffer_object = true;
+   ctx->Extensions.EXT_point_parameters = true;
+   ctx->Extensions.EXT_provoking_vertex = true;
+   ctx->Extensions.EXT_secondary_color = true;
+   ctx->Extensions.EXT_separate_shader_objects = true;
+   ctx->Extensions.EXT_stencil_wrap = true;
+   ctx->Extensions.EXT_texture_env_add = true;
+   ctx->Extensions.EXT_texture_env_combine = true;
+   ctx->Extensions.EXT_texture_env_dot3 = true;
+   ctx->Extensions.EXT_texture_filter_anisotropic = true;
+   ctx->Extensions.EXT_texture_lod_bias = true;
+   ctx->Extensions.APPLE_client_storage = true;
+   ctx->Extensions.APPLE_object_purgeable = true;
+   ctx->Extensions.APPLE_vertex_array_object = true;
+   ctx->Extensions.MESA_pack_invert = true;
+   ctx->Extensions.MESA_ycbcr_texture = true;
+   ctx->Extensions.NV_blend_square = true;
+   ctx->Extensions.NV_texture_rectangle = true;
+   ctx->Extensions.NV_vertex_program = true;
+   ctx->Extensions.NV_vertex_program1_1 = true;
+   ctx->Extensions.SGIS_texture_edge_clamp = true;
+   ctx->Extensions.TDFX_texture_compression_FXT1 = true;
+#if FEATURE_OES_EGL_image
+   ctx->Extensions.OES_EGL_image = true;
+#endif
 
    ctx->Const.GLSLVersion = get_glsl_version();
 
    if (intel->gen >= 5)
-      driInitExtensions(ctx, ironlake_extensions, GL_FALSE);
+      ctx->Extensions.EXT_timer_query = true;
 
-   if (intel->gen >= 4)
-      driInitExtensions(ctx, brw_extensions, GL_FALSE);
+   if (intel->gen >= 4) {
+      ctx->Extensions.ARB_color_buffer_float = true;
+      ctx->Extensions.ARB_depth_clamp = true;
+      ctx->Extensions.ARB_fragment_coord_conventions = true;
+      ctx->Extensions.ARB_fragment_program_shadow = true;
+      ctx->Extensions.ARB_fragment_shader = true;
+      ctx->Extensions.ARB_half_float_vertex = true;
+      ctx->Extensions.ARB_occlusion_query = true;
+      ctx->Extensions.ARB_point_sprite = true;
+      ctx->Extensions.ARB_seamless_cube_map = true;
+      ctx->Extensions.ARB_shader_texture_lod = true;
+#ifdef TEXTURE_FLOAT_ENABLED
+      ctx->Extensions.ARB_texture_float = true;
+#endif
+      ctx->Extensions.ARB_texture_compression_rgtc = true;
+      ctx->Extensions.ARB_texture_rg = true;
+      ctx->Extensions.EXT_draw_buffers2 = true;
+      ctx->Extensions.EXT_framebuffer_sRGB = true;
+      ctx->Extensions.EXT_texture_snorm = true;
+      ctx->Extensions.EXT_texture_sRGB = true;
+      ctx->Extensions.EXT_texture_sRGB_decode = true;
+      ctx->Extensions.EXT_texture_swizzle = true;
+      ctx->Extensions.EXT_vertex_array_bgra = true;
+      ctx->Extensions.ATI_envmap_bumpmap = true;
+      ctx->Extensions.NV_conditional_render = true;
+   }
 
-   if (intel->gen == 3) {
-      driInitExtensions(ctx, i915_extensions, GL_FALSE);
+   if (intel->gen >= 3) {
+      ctx->Extensions.ARB_ES2_compatibility = true;
+      ctx->Extensions.ARB_depth_texture = true;
+      ctx->Extensions.ARB_fragment_program = true;
+      ctx->Extensions.ARB_shadow = true;
+      ctx->Extensions.ARB_texture_non_power_of_two = true;
+      ctx->Extensions.EXT_shadow_funcs = true;
+      ctx->Extensions.EXT_stencil_two_side = true;
+      ctx->Extensions.ATI_separate_stencil = true;
+      ctx->Extensions.ATI_texture_env_combine3 = true;
+      ctx->Extensions.NV_texture_env_combine4 = true;
 
       if (driQueryOptionb(&intel->optionCache, "fragment_shader"))
-	 driInitExtensions(ctx, fragment_shader_extensions, GL_FALSE);
+	 ctx->Extensions.ARB_fragment_shader = true;
 
       if (driQueryOptionb(&intel->optionCache, "stub_occlusion_query"))
-	 driInitExtensions(ctx, arb_oq_extensions, GL_FALSE);
+	 ctx->Extensions.ARB_occlusion_query = true;
    }
 }
