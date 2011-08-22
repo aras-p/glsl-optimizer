@@ -95,10 +95,25 @@ vbo_get_minmax_index(struct gl_context *ctx,
    GLuint i;
 
    if (_mesa_is_bufferobj(ib->obj)) {
-      const GLvoid *map =
-         ctx->Driver.MapBufferRange(ctx, 0, ib->obj->Size, GL_MAP_READ_BIT,
-				    ib->obj);
-      indices = ADD_POINTERS(map, ib->ptr);
+      unsigned map_size;
+
+      switch (ib->type) {
+      case GL_UNSIGNED_INT:
+	 map_size = count * sizeof(GLuint);
+	 break;
+      case GL_UNSIGNED_SHORT:
+	 map_size = count * sizeof(GLushort);
+	 break;
+      case GL_UNSIGNED_BYTE:
+	 map_size = count * sizeof(GLubyte);
+	 break;
+      default:
+	 assert(0);
+	 map_size = 0;
+      }
+
+      indices = ctx->Driver.MapBufferRange(ctx, (GLsizeiptr) ib->ptr, map_size,
+					   GL_MAP_READ_BIT, ib->obj);
    } else {
       indices = ib->ptr;
    }
