@@ -690,11 +690,10 @@ static void brw_prepare_indices(struct brw_context *brw)
        */
        if ((get_size(index_buffer->type) - 1) & offset) {
            GLubyte *map = ctx->Driver.MapBufferRange(ctx,
-						     0,
-						     bufferobj->Size,
+						     offset,
+						     ib_size,
 						     GL_MAP_WRITE_BIT,
 						     bufferobj);
-           map += offset;
 
 	   intel_upload_data(&brw->intel, map, ib_size, ib_type_size,
 			     &bo, &offset);
