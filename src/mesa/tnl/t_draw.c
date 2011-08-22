@@ -347,15 +347,31 @@ static void bind_indices( struct gl_context *ctx,
    }
 
    if (ib->obj->Name && !ib->obj->Pointer) {
+      unsigned map_size;
+
+      switch (ib->type) {
+      case GL_UNSIGNED_BYTE:
+	 map_size = ib->count * sizeof(GLubyte);
+	 break;
+      case GL_UNSIGNED_SHORT:
+	 map_size = ib->count * sizeof(GLushort);
+	 break;
+      case GL_UNSIGNED_INT:
+	 map_size = ib->count * sizeof(GLuint);
+	 break;
+      default:
+	 assert(0);
+	 map_size = 0;
+      }
+
       bo[*nr_bo] = ib->obj;
       (*nr_bo)++;
-      ctx->Driver.MapBufferRange(ctx, 0, ib->obj->Size, GL_MAP_READ_BIT,
-				 ib->obj);
-
+      ptr = ctx->Driver.MapBufferRange(ctx, (GLsizeiptr) ib->ptr, map_size,
+				       GL_MAP_READ_BIT, ib->obj);
       assert(ib->obj->Pointer);
+   } else {
+      ptr = ib->ptr;
    }
-
-   ptr = ADD_POINTERS(ib->obj->Pointer, ib->ptr);
 
    if (ib->type == GL_UNSIGNED_INT && VB->Primitive[0].basevertex == 0) {
       VB->Elts = (GLuint *) ptr;
