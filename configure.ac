@@ -1855,7 +1855,7 @@ if test "x$with_gallium_drivers" != x; then
             ;;
         xr600)
             GALLIUM_DRIVERS_DIRS="$GALLIUM_DRIVERS_DIRS r600"
-            gallium_check_st "r600/drm radeon/drm" "dri-r600" "" "" "xvmc-r600" "vdpau-r600" "va-r600"
+            gallium_check_st "r600/drm radeon/drm" "dri-r600" "xorg-r600" "" "xvmc-r600" "vdpau-r600" "va-r600"
             ;;
         xnouveau)
             PKG_CHECK_MODULES([NOUVEAU], [libdrm_nouveau >= $LIBDRM_NOUVEAU_REQUIRED])
