@@ -488,12 +488,11 @@ _mesa_buffer_map_range( struct gl_context *ctx, GLintptr offset,
  * Called via glFlushMappedBufferRange().
  */
 static void
-_mesa_buffer_flush_mapped_range( struct gl_context *ctx, GLenum target, 
+_mesa_buffer_flush_mapped_range( struct gl_context *ctx,
                                  GLintptr offset, GLsizeiptr length,
                                  struct gl_buffer_object *obj )
 {
    (void) ctx;
-   (void) target;
    (void) offset;
    (void) length;
    (void) obj;
@@ -1527,7 +1526,7 @@ _mesa_FlushMappedBufferRange(GLenum target, GLintptr offset, GLsizeiptr length)
    ASSERT(bufObj->AccessFlags & GL_MAP_WRITE_BIT);
 
    if (ctx->Driver.FlushMappedBufferRange)
-      ctx->Driver.FlushMappedBufferRange(ctx, target, offset, length, bufObj);
+      ctx->Driver.FlushMappedBufferRange(ctx, offset, length, bufObj);
 }
 
 

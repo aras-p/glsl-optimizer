@@ -351,7 +351,7 @@ st_bufferobj_map_range(struct gl_context *ctx,
 
 
 static void
-st_bufferobj_flush_mapped_range(struct gl_context *ctx, GLenum target, 
+st_bufferobj_flush_mapped_range(struct gl_context *ctx,
                                 GLintptr offset, GLsizeiptr length,
                                 struct gl_buffer_object *obj)
 {

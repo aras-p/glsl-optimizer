@@ -270,8 +270,7 @@ vbo_exec_vtx_unmap( struct vbo_exec_context *exec )
          GLsizeiptr length = (exec->vtx.buffer_ptr - exec->vtx.buffer_map) * sizeof(float);
 
          if (length)
-            ctx->Driver.FlushMappedBufferRange(ctx, target,
-                                               offset, length,
+            ctx->Driver.FlushMappedBufferRange(ctx, offset, length,
                                                exec->vtx.bufferobj);
       }
 

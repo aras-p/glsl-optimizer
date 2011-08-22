@@ -721,7 +721,7 @@ struct dd_function_table {
                              GLsizeiptr length, GLbitfield access,
                              struct gl_buffer_object *obj);
 
-   void (*FlushMappedBufferRange)(struct gl_context *ctx, GLenum target, 
+   void (*FlushMappedBufferRange)(struct gl_context *ctx,
                                   GLintptr offset, GLsizeiptr length,
                                   struct gl_buffer_object *obj);
 
