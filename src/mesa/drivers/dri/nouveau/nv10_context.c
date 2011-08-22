@@ -24,6 +24,7 @@
  *
  */
 
+#include <stdbool.h>
 #include "main/state.h"
 #include "nouveau_driver.h"
 #include "nouveau_context.h"
@@ -33,14 +34,6 @@
 #include "nv10_3d.xml.h"
 #include "nv04_driver.h"
 #include "nv10_driver.h"
-
-static const struct dri_extension nv10_extensions[] = {
-	{ "GL_ARB_texture_env_crossbar", NULL },
-	{ "GL_EXT_texture_rectangle",	NULL },
-	{ "GL_ARB_texture_env_combine", NULL },
-	{ "GL_ARB_texture_env_dot3",    NULL },
-	{ NULL,				NULL }
-};
 
 static GLboolean
 use_fast_zclear(struct gl_context *ctx, GLbitfield buffers)
@@ -439,7 +432,10 @@ nv10_context_create(struct nouveau_screen *screen, const struct gl_config *visua
 	if (!nouveau_context_init(ctx, screen, visual, share_ctx))
 		goto fail;
 
-	driInitExtensions(ctx, nv10_extensions, GL_FALSE);
+	ctx->Extensions.ARB_texture_env_crossbar = true;
+	ctx->Extensions.ARB_texture_env_combine = true;
+	ctx->Extensions.ARB_texture_env_dot3 = true;
+	ctx->Extensions.NV_texture_rectangle = true;
 
 	/* GL constants. */
 	ctx->Const.MaxTextureLevels = 12;

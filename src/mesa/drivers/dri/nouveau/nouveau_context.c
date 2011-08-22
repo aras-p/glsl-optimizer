@@ -24,6 +24,7 @@
  *
  */
 
+#include <stdbool.h>
 #include "nouveau_driver.h"
 #include "nouveau_context.h"
 #include "nouveau_bufferobj.h"
@@ -40,30 +41,6 @@
 #include "vbo/vbo.h"
 #include "tnl/tnl.h"
 #include "tnl/t_context.h"
-
-#define need_GL_EXT_framebuffer_object
-#define need_GL_EXT_fog_coord
-#define need_GL_EXT_secondary_color
-
-#include "main/remap_helper.h"
-
-static const struct dri_extension nouveau_extensions[] = {
-	{ "GL_ARB_multitexture",	NULL },
-	{ "GL_ARB_texture_env_add",	NULL },
-	{ "GL_ARB_texture_mirrored_repeat", NULL },
-	{ "GL_EXT_fog_coord",		GL_EXT_fog_coord_functions },
-	{ "GL_EXT_framebuffer_blit",	NULL },
-	{ "GL_EXT_framebuffer_object",	GL_EXT_framebuffer_object_functions },
-	{ "GL_EXT_packed_depth_stencil", NULL},
-	{ "GL_EXT_secondary_color",	GL_EXT_secondary_color_functions },
-	{ "GL_EXT_stencil_wrap",	NULL },
-	{ "GL_EXT_texture_env_combine",	NULL },
-	{ "GL_EXT_texture_filter_anisotropic", NULL },
-	{ "GL_EXT_texture_lod_bias",	NULL },
-	{ "GL_NV_blend_square",         NULL },
-	{ "GL_NV_texture_env_combine4",	NULL },
-	{ NULL,				NULL }
-};
 
 static void
 nouveau_channel_flush_notify(struct nouveau_channel *chan)
@@ -140,7 +117,23 @@ nouveau_context_init(struct gl_context *ctx, struct nouveau_screen *screen,
 	nctx->hw.chan->user_private = nctx;
 
 	/* Enable any supported extensions. */
-	driInitExtensions(ctx, nouveau_extensions, GL_TRUE);
+	ctx->Extensions.ARB_multitexture = true;
+	ctx->Extensions.ARB_texture_mirrored_repeat = true;
+	ctx->Extensions.EXT_blend_color = true;
+	ctx->Extensions.EXT_blend_minmax = true;
+	ctx->Extensions.EXT_blend_subtract = true;
+	ctx->Extensions.EXT_fog_coord = true;
+	ctx->Extensions.EXT_framebuffer_blit = true;
+	ctx->Extensions.EXT_framebuffer_object = true;
+	ctx->Extensions.EXT_packed_depth_stencil = true;
+	ctx->Extensions.EXT_secondary_color = true;
+	ctx->Extensions.EXT_stencil_wrap = true;
+	ctx->Extensions.EXT_texture_env_add = true;
+	ctx->Extensions.EXT_texture_env_combine = true;
+	ctx->Extensions.EXT_texture_filter_anisotropic = true;
+	ctx->Extensions.EXT_texture_lod_bias = true;
+	ctx->Extensions.NV_blend_square = true;
+	ctx->Extensions.NV_texture_env_combine4 = true;
 
 	return GL_TRUE;
 }
