@@ -1,7 +1,7 @@
 # Mesa 3-D graphics library
 #
-# Copyright (C) 2010-2011 Chia-I Wu <olvaffe@gmail.com>
-# Copyright (C) 2010-2011 LunarG Inc.
+# Copyright (C) 2011 Chia-I Wu <olvaffe@gmail.com>
+# Copyright (C) 2011 LunarG Inc.
 #
 # Permission is hereby granted, free of charge, to any person obtaining a
 # copy of this software and associated documentation files (the "Software"),
@@ -21,49 +21,17 @@
 # FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 # DEALINGS IN THE SOFTWARE.
 
-# src/gallium/Android.mk
+LOCAL_PATH := $(call my-dir)
 
-GALLIUM_TOP := $(call my-dir)
-GALLIUM_COMMON_MK := $(GALLIUM_TOP)/Android.common.mk
+# get C_SOURCES
+include $(LOCAL_PATH)/Makefile.sources
 
-SUBDIRS := \
-	targets/egl-static \
-	state_trackers/egl \
-	auxiliary
+include $(CLEAR_VARS)
 
-# swrast
-SUBDIRS += winsys/sw/android drivers/softpipe
+LOCAL_SRC_FILES := $(C_SOURCES)
+LOCAL_C_INCLUDES := $(DRM_TOP)
 
-# i915g
-ifneq ($(filter i915g, $(MESA_GPU_DRIVERS)),)
-SUBDIRS += winsys/i915/drm drivers/i915
-endif
+LOCAL_MODULE := libmesa_pipe_nouveau
 
-# nouveau
-ifneq ($(filter nouveau, $(MESA_GPU_DRIVERS)),)
-SUBDIRS += \
-	winsys/nouveau/drm \
-	drivers/nouveau \
-	drivers/nvfx \
-	drivers/nv50 \
-	drivers/nvc0
-endif
-
-# r300g/r600g
-ifneq ($(filter r300g r600g, $(MESA_GPU_DRIVERS)),)
-SUBDIRS += winsys/radeon/drm
-ifneq ($(filter r300g, $(MESA_GPU_DRIVERS)),)
-SUBDIRS += drivers/r300
-endif
-ifneq ($(filter r600g, $(MESA_GPU_DRIVERS)),)
-SUBDIRS += winsys/r600/drm drivers/r600
-endif
-endif
-
-# vmwgfx
-ifneq ($(filter vmwgfx, $(MESA_GPU_DRIVERS)),)
-SUBDIRS += winsys/svga/drm drivers/svga
-endif
-
-mkfiles := $(patsubst %,$(GALLIUM_TOP)/%/Android.mk,$(SUBDIRS))
-include $(mkfiles)
+include $(GALLIUM_COMMON_MK)
+include $(BUILD_STATIC_LIBRARY)

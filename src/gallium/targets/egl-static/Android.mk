@@ -49,6 +49,9 @@ LOCAL_CFLAGS += -DGALLIUM_SOFTPIPE
 ifneq ($(filter i915g, $(MESA_GPU_DRIVERS)),)
 LOCAL_CFLAGS += -D_EGL_PIPE_I915=1
 endif
+ifneq ($(filter nouveau, $(MESA_GPU_DRIVERS)),)
+LOCAL_CFLAGS += -D_EGL_PIPE_NOUVEAU=1
+endif
 ifneq ($(filter r300g, $(MESA_GPU_DRIVERS)),)
 LOCAL_CFLAGS += -D_EGL_PIPE_R300=1
 endif

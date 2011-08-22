@@ -24,7 +24,7 @@
 # BOARD_GPU_DRIVERS should be defined.  The valid values are
 #
 #   classic drivers:
-#   gallium drivers: swrast i915g r300g r600g vmwgfx
+#   gallium drivers: swrast i915g nouveau r300g r600g vmwgfx
 #
 # The main target is libGLES_mesa.  There is no classic drivers yet.
 
@@ -36,7 +36,7 @@ DRM_TOP := external/drm
 DRM_GRALLOC_TOP := hardware/drm_gralloc
 
 classic_drivers :=
-gallium_drivers := swrast i915g r300g r600g vmwgfx
+gallium_drivers := swrast i915g nouveau r300g r600g vmwgfx
 
 MESA_GPU_DRIVERS := $(BOARD_GPU_DRIVERS)
 
@@ -114,6 +114,17 @@ gallium_DRIVERS += libmesa_pipe_softpipe libmesa_winsys_sw_android
 ifneq ($(filter i915g, $(MESA_GPU_DRIVERS)),)
 gallium_DRIVERS += libmesa_winsys_i915 libmesa_pipe_i915
 LOCAL_SHARED_LIBRARIES += libdrm_intel
+endif
+
+# nouveau
+ifneq ($(filter nouveau, $(MESA_GPU_DRIVERS)),)
+gallium_DRIVERS += \
+	libmesa_winsys_nouveau \
+	libmesa_pipe_nvc0 \
+	libmesa_pipe_nv50 \
+	libmesa_pipe_nvfx \
+	libmesa_pipe_nouveau
+LOCAL_SHARED_LIBRARIES += libdrm_nouveau
 endif
 
 # r300g/r600g
