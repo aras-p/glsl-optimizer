@@ -4,8 +4,7 @@ env = env.Clone()
 
 nouveau = env.ConvenienceLibrary(
     target = 'nouveau',
-    source = [
-        'nouveau_screen.c',
-    ])
+    source = env.ParserSourceList('Makefile.sources', 'C_SOURCES')
+    )
 
 Export('nouveau')
