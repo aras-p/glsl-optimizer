@@ -4,12 +4,7 @@ env = env.Clone()
 
 env.PkgUseModules('DRM')
 
-i915drm_sources = [
-    'i915_drm_batchbuffer.c',
-    'i915_drm_buffer.c',
-    'i915_drm_fence.c',
-    'i915_drm_winsys.c',
-]
+i915drm_sources = env.ParseSourceList('Makefile.sources', 'C_SOURCES')
 
 i915drm = env.ConvenienceLibrary(
     target ='i915drm',
