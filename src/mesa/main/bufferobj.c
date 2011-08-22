@@ -432,38 +432,6 @@ _mesa_buffer_get_subdata( struct gl_context *ctx, GLintptrARB offset,
 
 
 /**
- * Default callback for \c dd_function_tabel::MapBuffer().
- *
- * The function parameters will have been already tested for errors.
- *
- * \param ctx     GL context.
- * \param target  Buffer object target on which to operate.
- * \param access  Information about how the buffer will be accessed.
- * \param bufObj  Object to be mapped.
- * \return  A pointer to the object's internal data store that can be accessed
- *          by the processor
- *
- * \sa glMapBufferARB, dd_function_table::MapBuffer
- */
-static void *
-_mesa_buffer_map( struct gl_context *ctx, GLenum access,
-		  struct gl_buffer_object *bufObj )
-{
-   (void) ctx;
-   (void) access;
-   /* Just return a direct pointer to the data */
-   if (_mesa_bufferobj_mapped(bufObj)) {
-      /* already mapped! */
-      return NULL;
-   }
-   bufObj->Pointer = bufObj->Data;
-   bufObj->Length = bufObj->Size;
-   bufObj->Offset = 0;
-   return bufObj->Pointer;
-}
-
-
-/**
  * Default fallback for \c dd_function_table::MapBufferRange().
  * Called via glMapBufferRange().
  */
@@ -537,8 +505,10 @@ _mesa_copy_buffer_subdata(struct gl_context *ctx,
    assert(!_mesa_bufferobj_mapped(src));
    assert(!_mesa_bufferobj_mapped(dst));
 
-   srcPtr = (GLubyte *) ctx->Driver.MapBuffer(ctx, GL_READ_ONLY, src);
-   dstPtr = (GLubyte *) ctx->Driver.MapBuffer(ctx, GL_WRITE_ONLY, dst);
+   srcPtr = (GLubyte *) ctx->Driver.MapBufferRange(ctx, 0, src->Size,
+						   GL_MAP_READ_BIT, src);
+   dstPtr = (GLubyte *) ctx->Driver.MapBufferRange(ctx, 0, dst->Size,
+						   GL_MAP_WRITE_BIT, dst);
 
    if (srcPtr && dstPtr)
       memcpy(dstPtr + writeOffset, srcPtr + readOffset, size);
@@ -704,7 +674,6 @@ _mesa_init_buffer_object_functions(struct dd_function_table *driver)
    driver->BufferData = _mesa_buffer_data;
    driver->BufferSubData = _mesa_buffer_subdata;
    driver->GetBufferSubData = _mesa_buffer_get_subdata;
-   driver->MapBuffer = _mesa_buffer_map;
    driver->UnmapBuffer = _mesa_buffer_unmap;
 
    /* GL_ARB_map_buffer_range */
@@ -1035,8 +1004,8 @@ _mesa_MapBufferARB(GLenum target, GLenum access)
       return NULL;
    }
 
-   ASSERT(ctx->Driver.MapBuffer);
-   map = ctx->Driver.MapBuffer( ctx, access, bufObj );
+   ASSERT(ctx->Driver.MapBufferRange);
+   map = ctx->Driver.MapBufferRange(ctx, 0, bufObj->Size, accessFlags, bufObj);
    if (!map) {
       _mesa_error(ctx, GL_OUT_OF_MEMORY, "glMapBufferARB(map failed)");
       return NULL;

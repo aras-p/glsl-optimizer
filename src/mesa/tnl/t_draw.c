@@ -280,9 +280,9 @@ static void bind_inputs( struct gl_context *ctx,
 	 if (!inputs[i]->BufferObj->Pointer) {
 	    bo[*nr_bo] = inputs[i]->BufferObj;
 	    (*nr_bo)++;
-	    ctx->Driver.MapBuffer(ctx, 
-				  GL_READ_ONLY_ARB,
-				  inputs[i]->BufferObj);
+	    ctx->Driver.MapBufferRange(ctx, 0, inputs[i]->BufferObj->Size,
+				       GL_MAP_READ_BIT,
+				       inputs[i]->BufferObj);
 	    
 	    assert(inputs[i]->BufferObj->Pointer);
 	 }
@@ -349,9 +349,8 @@ static void bind_indices( struct gl_context *ctx,
    if (ib->obj->Name && !ib->obj->Pointer) {
       bo[*nr_bo] = ib->obj;
       (*nr_bo)++;
-      ctx->Driver.MapBuffer(ctx, 
-			    GL_READ_ONLY_ARB,
-			    ib->obj);
+      ctx->Driver.MapBufferRange(ctx, 0, ib->obj->Size, GL_MAP_READ_BIT,
+				 ib->obj);
 
       assert(ib->obj->Pointer);
    }

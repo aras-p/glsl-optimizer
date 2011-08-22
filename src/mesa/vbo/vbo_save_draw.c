@@ -217,9 +217,11 @@ static void
 vbo_save_loopback_vertex_list(struct gl_context *ctx,
                               const struct vbo_save_vertex_list *list)
 {
-   const char *buffer = ctx->Driver.MapBuffer(ctx, 
-					      GL_READ_ONLY, /* ? */
-                                              list->vertex_store->bufferobj);
+   const char *buffer =
+      ctx->Driver.MapBufferRange(ctx, 0,
+				 list->vertex_store->bufferobj->Size,
+				 GL_MAP_READ_BIT, /* ? */
+				 list->vertex_store->bufferobj);
 
    vbo_loopback_vertex_list(ctx,
                             (const GLfloat *)(buffer + list->buffer_offset),

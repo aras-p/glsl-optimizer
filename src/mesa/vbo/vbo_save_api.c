@@ -232,10 +232,10 @@ map_vertex_store(struct gl_context *ctx,
    assert(vertex_store->bufferobj);
    assert(!vertex_store->buffer);
    vertex_store->buffer =
-      (GLfloat *) ctx->Driver.MapBuffer(ctx,
-                                        GL_WRITE_ONLY,      /* not used */
-                                        vertex_store->
-                                        bufferobj);
+      (GLfloat *) ctx->Driver.MapBufferRange(ctx, 0,
+					     vertex_store->bufferobj->Size,
+					     GL_MAP_WRITE_BIT,    /* not used */
+					     vertex_store->bufferobj);
 
    assert(vertex_store->buffer);
    return vertex_store->buffer + vertex_store->used;

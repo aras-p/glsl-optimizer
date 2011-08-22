@@ -444,7 +444,7 @@ replay_init( struct copy_context *copy )
 	 copy->vertex_size += attr_size(copy->array[i]);
       
 	 if (_mesa_is_bufferobj(vbo) && !_mesa_bufferobj_mapped(vbo)) 
-	    ctx->Driver.MapBuffer(ctx, GL_READ_ONLY, vbo);
+	    ctx->Driver.MapBufferRange(ctx, 0, vbo->Size, GL_MAP_READ_BIT, vbo);
 
 	 copy->varying[j].src_ptr = ADD_POINTERS(vbo->Pointer,
 						 copy->array[i]->Ptr);
@@ -459,7 +459,8 @@ replay_init( struct copy_context *copy )
     */
    if (_mesa_is_bufferobj(copy->ib->obj) &&
        !_mesa_bufferobj_mapped(copy->ib->obj)) 
-      ctx->Driver.MapBuffer(ctx, GL_READ_ONLY, copy->ib->obj);
+      ctx->Driver.MapBufferRange(ctx, 0, copy->ib->obj->Size, GL_MAP_READ_BIT,
+				 copy->ib->obj);
 
    srcptr = (const GLubyte *) ADD_POINTERS(copy->ib->obj->Pointer,
                                            copy->ib->ptr);

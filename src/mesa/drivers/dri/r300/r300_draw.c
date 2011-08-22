@@ -84,7 +84,8 @@ static void r300FixupIndexBuffer(struct gl_context *ctx, const struct _mesa_inde
 	GLboolean mapped_named_bo = GL_FALSE;
 
 	if (mesa_ind_buf->obj->Name && !mesa_ind_buf->obj->Pointer) {
-		ctx->Driver.MapBuffer(ctx, GL_READ_ONLY_ARB, mesa_ind_buf->obj);
+		ctx->Driver.MapBufferRange(ctx, 0, mesa_ind_buf->obj->Size,
+					   GL_MAP_READ_BIT, mesa_ind_buf->obj);
 		mapped_named_bo = GL_TRUE;
 		assert(mesa_ind_buf->obj->Pointer != NULL);
 	}
@@ -163,7 +164,10 @@ static void r300SetupIndexBuffer(struct gl_context *ctx, const struct _mesa_inde
 		GLboolean mapped_named_bo = GL_FALSE;
 
 		if (mesa_ind_buf->obj->Name && !mesa_ind_buf->obj->Pointer) {
-			ctx->Driver.MapBuffer(ctx, GL_READ_ONLY_ARB, mesa_ind_buf->obj);
+			ctx->Driver.MapBufferRange(ctx, 0,
+						   mesa_ind_buf->obj->Size,
+						   GL_MAP_READ_BIT,
+						   mesa_ind_buf->obj);
 			assert(mesa_ind_buf->obj->Pointer != NULL);
 			mapped_named_bo = GL_TRUE;
 		}
@@ -235,7 +239,8 @@ static void r300ConvertAttrib(struct gl_context *ctx, int count, const struct gl
 
 	if (input->BufferObj->Name) {
 		if (!input->BufferObj->Pointer) {
-			ctx->Driver.MapBuffer(ctx, GL_READ_ONLY_ARB, input->BufferObj);
+			ctx->Driver.MapBufferRange(ctx, 0, input->BufferObj->Size,
+					      GL_MAP_READ_BIT, input->BufferObj);
 			mapped_named_bo = GL_TRUE;
 		}
 
@@ -302,7 +307,8 @@ static void r300AlignDataToDword(struct gl_context *ctx, const struct gl_client_
 	radeon_bo_map(attr->bo, 1);
 
 	if (!input->BufferObj->Pointer) {
-		ctx->Driver.MapBuffer(ctx, GL_READ_ONLY_ARB, input->BufferObj);
+		ctx->Driver.MapBufferRange(ctx, 0, input->BufferObj->Size,
+					   GL_MAP_READ_BIT, input->BufferObj);
 		mapped_named_bo = GL_TRUE;
 	}
 

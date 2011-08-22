@@ -295,64 +295,7 @@ intel_bufferobj_get_subdata(struct gl_context * ctx,
 
 
 /**
- * Called via glMapBufferARB().
- */
-static void *
-intel_bufferobj_map(struct gl_context * ctx,
-                    GLenum access, struct gl_buffer_object *obj)
-{
-   struct intel_context *intel = intel_context(ctx);
-   struct intel_buffer_object *intel_obj = intel_buffer_object(obj);
-   GLboolean read_only = (access == GL_READ_ONLY_ARB);
-   GLboolean write_only = (access == GL_WRITE_ONLY_ARB);
-
-   assert(intel_obj);
-
-   if (intel_obj->sys_buffer) {
-      if (!read_only && intel_obj->source) {
-	 release_buffer(intel_obj);
-      }
-
-      if (!intel_obj->buffer || intel_obj->source) {
-	 obj->Pointer = intel_obj->sys_buffer;
-	 obj->Length = obj->Size;
-	 obj->Offset = 0;
-	 return obj->Pointer;
-      }
-
-      free(intel_obj->sys_buffer);
-      intel_obj->sys_buffer = NULL;
-   }
-
-   /* Flush any existing batchbuffer that might reference this data. */
-   if (drm_intel_bo_references(intel->batch.bo, intel_obj->buffer))
-      intel_flush(ctx);
-
-   if (intel_obj->region)
-      intel_bufferobj_cow(intel, intel_obj);
-
-   if (intel_obj->buffer == NULL) {
-      obj->Pointer = NULL;
-      return NULL;
-   }
-
-   if (write_only) {
-      drm_intel_gem_bo_map_gtt(intel_obj->buffer);
-      intel_obj->mapped_gtt = GL_TRUE;
-   } else {
-      drm_intel_bo_map(intel_obj->buffer, !read_only);
-      intel_obj->mapped_gtt = GL_FALSE;
-   }
-
-   obj->Pointer = intel_obj->buffer->virtual;
-   obj->Length = obj->Size;
-   obj->Offset = 0;
-
-   return obj->Pointer;
-}
-
-/**
- * Called via glMapBufferRange().
+ * Called via glMapBufferRange and glMapBuffer
  *
  * The goal of this extension is to allow apps to accumulate their rendering
  * at the same time as they accumulate their buffer object.  Without it,
@@ -760,15 +703,18 @@ intel_bufferobj_copy_subdata(struct gl_context *ctx,
        * not overlap.
        */
       if (src == dst) {
-	 char *ptr = intel_bufferobj_map(ctx, GL_READ_WRITE, dst);
+	 char *ptr = intel_bufferobj_map_range(ctx, 0, dst->Size,
+					       GL_MAP_READ_BIT, dst);
 	 memmove(ptr + write_offset, ptr + read_offset, size);
 	 intel_bufferobj_unmap(ctx, dst);
       } else {
 	 const char *src_ptr;
 	 char *dst_ptr;
 
-	 src_ptr =  intel_bufferobj_map(ctx, GL_READ_ONLY, src);
-	 dst_ptr =  intel_bufferobj_map(ctx, GL_WRITE_ONLY, dst);
+	 src_ptr =  intel_bufferobj_map_range(ctx, 0, src->Size,
+					      GL_MAP_READ_BIT, src);
+	 dst_ptr =  intel_bufferobj_map_range(ctx, 0, dst->Size,
+					      GL_MAP_WRITE_BIT, dst);
 
 	 memcpy(dst_ptr + write_offset, src_ptr + read_offset, size);
 
@@ -923,7 +869,6 @@ intelInitBufferObjectFuncs(struct dd_function_table *functions)
    functions->BufferData = intel_bufferobj_data;
    functions->BufferSubData = intel_bufferobj_subdata;
    functions->GetBufferSubData = intel_bufferobj_get_subdata;
-   functions->MapBuffer = intel_bufferobj_map;
    functions->MapBufferRange = intel_bufferobj_map_range;
    functions->FlushMappedBufferRange = intel_bufferobj_flush_mapped_range;
    functions->UnmapBuffer = intel_bufferobj_unmap;

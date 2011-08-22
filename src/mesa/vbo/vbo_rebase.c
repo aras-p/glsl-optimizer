@@ -159,7 +159,8 @@ void vbo_rebase_prims( struct gl_context *ctx,
       void *ptr;
 
       if (map_ib) 
-	 ctx->Driver.MapBuffer(ctx, GL_READ_ONLY_ARB, ib->obj);
+	 ctx->Driver.MapBufferRange(ctx, 0, ib->obj->Size, GL_MAP_READ_BIT,
+				    ib->obj);
 
 
       ptr = ADD_POINTERS(ib->obj->Pointer, ib->ptr);

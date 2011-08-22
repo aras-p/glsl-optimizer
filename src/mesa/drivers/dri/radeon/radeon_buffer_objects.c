@@ -169,36 +169,7 @@ radeonGetBufferSubData(struct gl_context * ctx,
 }
 
 /**
- * Called via glMapBufferARB()
- */
-static void *
-radeonMapBuffer(struct gl_context * ctx,
-                GLenum access,
-                struct gl_buffer_object *obj)
-{
-    struct radeon_buffer_object *radeon_obj = get_radeon_buffer_object(obj);
-
-    if (access == GL_WRITE_ONLY_ARB) {
-        ctx->Driver.Flush(ctx);
-    }
-
-    if (radeon_obj->bo == NULL) {
-        obj->Pointer = NULL;
-        return NULL;
-    }
-
-    radeon_bo_map(radeon_obj->bo, access == GL_WRITE_ONLY_ARB);
-
-    obj->Pointer = radeon_obj->bo->ptr;
-    obj->Length = obj->Size;
-    obj->Offset = 0;
-
-    return obj->Pointer;
-}
-
-
-/**
- * Called via glMapBufferRange()
+ * Called via glMapBuffer() and glMapBufferRange()
  */
 static void *
 radeonMapBufferRange(struct gl_context * ctx,
@@ -257,7 +228,6 @@ radeonInitBufferObjectFuncs(struct dd_function_table *functions)
     functions->BufferData = radeonBufferData;
     functions->BufferSubData = radeonBufferSubData;
     functions->GetBufferSubData = radeonGetBufferSubData;
-    functions->MapBuffer = radeonMapBuffer;
     functions->MapBufferRange = radeonMapBufferRange;
     functions->UnmapBuffer = radeonUnmapBuffer;
 }
