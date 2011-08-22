@@ -419,12 +419,11 @@ _mesa_buffer_subdata( struct gl_context *ctx, GLintptrARB offset,
  * \sa glBufferGetSubDataARB, dd_function_table::GetBufferSubData.
  */
 static void
-_mesa_buffer_get_subdata( struct gl_context *ctx,
-                          GLenum target, GLintptrARB offset,
+_mesa_buffer_get_subdata( struct gl_context *ctx, GLintptrARB offset,
 			  GLsizeiptrARB size, GLvoid * data,
 			  struct gl_buffer_object * bufObj )
 {
-   (void) ctx; (void) target;
+   (void) ctx;
 
    if (bufObj->Data && ((GLsizeiptrARB) (size + offset) <= bufObj->Size)) {
       memcpy( data, (GLubyte *) bufObj->Data + offset, size );
@@ -995,7 +994,7 @@ _mesa_GetBufferSubDataARB(GLenum target, GLintptrARB offset,
    }
 
    ASSERT(ctx->Driver.GetBufferSubData);
-   ctx->Driver.GetBufferSubData( ctx, target, offset, size, data, bufObj );
+   ctx->Driver.GetBufferSubData( ctx, offset, size, data, bufObj );
 }
 
 

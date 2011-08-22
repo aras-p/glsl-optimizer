@@ -274,7 +274,6 @@ intel_bufferobj_subdata(struct gl_context * ctx,
  */
 static void
 intel_bufferobj_get_subdata(struct gl_context * ctx,
-                            GLenum target,
                             GLintptrARB offset,
                             GLsizeiptrARB size,
                             GLvoid * data, struct gl_buffer_object *obj)

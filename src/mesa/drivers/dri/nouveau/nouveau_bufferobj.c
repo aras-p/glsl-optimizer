@@ -115,7 +115,7 @@ nouveau_bufferobj_subdata(struct gl_context *ctx, GLintptrARB offset,
 }
 
 static void
-nouveau_bufferobj_get_subdata(struct gl_context *ctx, GLenum target, GLintptrARB offset,
+nouveau_bufferobj_get_subdata(struct gl_context *ctx, GLintptrARB offset,
 			   GLsizeiptrARB size, GLvoid *data,
 			   struct gl_buffer_object *obj)
 {

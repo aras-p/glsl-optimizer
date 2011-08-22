@@ -702,7 +702,7 @@ struct dd_function_table {
 			  GLsizeiptrARB size, const GLvoid *data,
 			  struct gl_buffer_object *obj );
 
-   void (*GetBufferSubData)( struct gl_context *ctx, GLenum target,
+   void (*GetBufferSubData)( struct gl_context *ctx,
 			     GLintptrARB offset, GLsizeiptrARB size,
 			     GLvoid *data, struct gl_buffer_object *obj );
 

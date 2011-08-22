@@ -70,7 +70,7 @@ _playback_copy_to_current(struct gl_context *ctx,
       else
          offset = node->buffer_offset;
 
-      ctx->Driver.GetBufferSubData( ctx, 0, offset, 
+      ctx->Driver.GetBufferSubData( ctx, offset,
                                     node->vertex_size * sizeof(GLfloat), 
                                     data, node->vertex_store->bufferobj );
 
