@@ -3,16 +3,8 @@ include $(TOP)/configs/current
 
 LIBNAME = svgadrm
 
-C_SOURCES = \
-        vmw_buffer.c \
-        vmw_context.c  \
-        vmw_fence.c  \
-        vmw_screen.c  \
-        vmw_screen_dri.c  \
-        vmw_screen_ioctl.c  \
-        vmw_screen_pools.c  \
-        vmw_screen_svga.c  \
-        vmw_surface.c
+# get C_SOURCES
+include Makefile.sources
 
 LIBRARY_INCLUDES = \
        -I$(TOP)/src/gallium/drivers/svga \

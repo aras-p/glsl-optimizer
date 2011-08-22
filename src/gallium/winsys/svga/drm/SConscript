@@ -21,17 +21,7 @@ env.Prepend(CPPPATH = [
 env.Append(CPPDEFINES = [
 ])
 
-sources = [
-    'vmw_buffer.c',
-    'vmw_context.c',
-    'vmw_fence.c',
-    'vmw_screen.c',
-    'vmw_screen_dri.c',
-    'vmw_screen_ioctl.c',
-    'vmw_screen_pools.c',
-    'vmw_screen_svga.c',
-    'vmw_surface.c',
-]
+sources = env.ParseSourceList('Makefile.sources', 'C_SOURCES')
 
 svgadrm = env.ConvenienceLibrary(
     target = 'svgadrm',
