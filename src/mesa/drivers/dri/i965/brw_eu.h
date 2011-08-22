@@ -807,6 +807,9 @@ void brw_set_dest(struct brw_compile *p, struct brw_instruction *insn,
 void brw_set_src0(struct brw_compile *p, struct brw_instruction *insn,
 		  struct brw_reg reg);
 
+void gen6_resolve_implied_move(struct brw_compile *p,
+			       struct brw_reg *src,
+			       GLuint msg_reg_nr);
 
 /* Helpers for regular instructions:
  */

@@ -58,7 +58,7 @@ static void guess_execution_size(struct brw_compile *p,
  * On Sandybridge, this is no longer the case.  This function performs the
  * explicit move; it should be called before emitting a SEND instruction.
  */
-static void
+void
 gen6_resolve_implied_move(struct brw_compile *p,
 			  struct brw_reg *src,
 			  GLuint msg_reg_nr)
