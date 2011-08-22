@@ -866,7 +866,7 @@ glsl_to_tgsi_visitor::add_constant(gl_register_file file,
    }
 }
 
-struct st_src_reg
+st_src_reg
 glsl_to_tgsi_visitor::st_src_reg_for_float(float val)
 {
    st_src_reg src(PROGRAM_IMMEDIATE, -1, GLSL_TYPE_FLOAT);
@@ -878,7 +878,7 @@ glsl_to_tgsi_visitor::st_src_reg_for_float(float val)
    return src;
 }
 
-struct st_src_reg
+st_src_reg
 glsl_to_tgsi_visitor::st_src_reg_for_int(int val)
 {
    st_src_reg src(PROGRAM_IMMEDIATE, -1, GLSL_TYPE_INT);
@@ -892,7 +892,7 @@ glsl_to_tgsi_visitor::st_src_reg_for_int(int val)
    return src;
 }
 
-struct st_src_reg
+st_src_reg
 glsl_to_tgsi_visitor::st_src_reg_for_type(int type, int val)
 {
    if (native_integers)
@@ -1035,7 +1035,7 @@ glsl_to_tgsi_visitor::visit(ir_variable *ir)
          }
       }
 
-      struct variable_storage *storage;
+      variable_storage *storage;
       st_dst_reg dst;
       if (i == ir->num_state_slots) {
          /* We'll set the index later. */
@@ -4236,7 +4236,7 @@ translate_src(struct st_translate *t, const st_src_reg *src_reg)
 
 static void
 compile_tgsi_instruction(struct st_translate *t,
-                         const struct glsl_to_tgsi_instruction *inst)
+                         const glsl_to_tgsi_instruction *inst)
 {
    struct ureg_program *ureg = t->ureg;
    GLuint i;
