@@ -24,7 +24,7 @@
 # BOARD_GPU_DRIVERS should be defined.  The valid values are
 #
 #   classic drivers:
-#   gallium drivers: swrast r600g
+#   gallium drivers: swrast r600g vmwgfx
 #
 # The main target is libGLES_mesa.  There is no classic drivers yet.
 
@@ -36,7 +36,7 @@ DRM_TOP := external/drm
 DRM_GRALLOC_TOP := hardware/drm_gralloc
 
 classic_drivers :=
-gallium_drivers := swrast r600g
+gallium_drivers := swrast r600g vmwgfx
 
 MESA_GPU_DRIVERS := $(BOARD_GPU_DRIVERS)
 
@@ -114,6 +114,11 @@ gallium_DRIVERS += libmesa_pipe_softpipe libmesa_winsys_sw_android
 ifneq ($(filter r600g, $(MESA_GPU_DRIVERS)),)
 gallium_DRIVERS += libmesa_winsys_radeon
 gallium_DRIVERS += libmesa_pipe_r600 libmesa_winsys_r600
+endif
+
+# vmwgfx
+ifneq ($(filter vmwgfx, $(MESA_GPU_DRIVERS)),)
+gallium_DRIVERS += libmesa_winsys_svga libmesa_pipe_svga
 endif
 
 #

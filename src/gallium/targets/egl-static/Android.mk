@@ -49,6 +49,9 @@ LOCAL_CFLAGS += -DGALLIUM_SOFTPIPE
 ifneq ($(filter r600g, $(MESA_GPU_DRIVERS)),)
 LOCAL_CFLAGS += -D_EGL_PIPE_R600=1
 endif
+ifneq ($(filter vmwgfx, $(MESA_GPU_DRIVERS)),)
+LOCAL_CFLAGS += -D_EGL_PIPE_VMWGFX=1
+endif
 
 LOCAL_MODULE := libmesa_egl_gallium
 
