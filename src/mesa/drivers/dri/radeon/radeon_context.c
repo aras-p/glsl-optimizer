@@ -34,6 +34,7 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  *   Keith Whitwell <keith@tungstengraphics.com>
  */
 
+#include <stdbool.h>
 #include "main/glheader.h"
 #include "main/api_arrayelt.h"
 #include "main/context.h"
@@ -62,55 +63,8 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #include "radeon_queryobj.h"
 #include "radeon_blit.h"
 
-#define need_GL_ARB_occlusion_query
-#define need_GL_EXT_blend_minmax
-#define need_GL_EXT_fog_coord
-#define need_GL_EXT_secondary_color
-#define need_GL_EXT_framebuffer_object
-#define need_GL_OES_EGL_image
-#include "main/remap_helper.h"
-
 #include "utils.h"
 #include "xmlpool.h" /* for symbolic values of enum-type options */
-
-/* Extension strings exported by the R100 driver.
- */
-static const struct dri_extension card_extensions[] =
-{
-    { "GL_ARB_multitexture",               NULL },
-    { "GL_ARB_occlusion_query",		   GL_ARB_occlusion_query_functions},
-    { "GL_ARB_texture_border_clamp",       NULL },
-    { "GL_ARB_texture_env_add",            NULL },
-    { "GL_ARB_texture_env_combine",        NULL },
-    { "GL_ARB_texture_env_crossbar",       NULL },
-    { "GL_ARB_texture_env_dot3",           NULL },
-    { "GL_ARB_texture_mirrored_repeat",    NULL },
-    { "GL_EXT_blend_logic_op",             NULL },
-    { "GL_EXT_blend_subtract",             GL_EXT_blend_minmax_functions },
-    { "GL_EXT_fog_coord",                  GL_EXT_fog_coord_functions },
-    { "GL_EXT_packed_depth_stencil",	   NULL},
-    { "GL_EXT_secondary_color",            GL_EXT_secondary_color_functions },
-    { "GL_EXT_stencil_wrap",               NULL },
-    { "GL_EXT_texture_edge_clamp",         NULL },
-    { "GL_EXT_texture_env_combine",        NULL },
-    { "GL_EXT_texture_env_dot3",           NULL },
-    { "GL_EXT_texture_filter_anisotropic", NULL },
-    { "GL_EXT_texture_lod_bias",           NULL },
-    { "GL_EXT_texture_mirror_clamp",       NULL },
-    { "GL_ATI_texture_env_combine3",       NULL },
-    { "GL_ATI_texture_mirror_once",        NULL },
-    { "GL_MESA_ycbcr_texture",             NULL },
-    { "GL_NV_blend_square",                NULL },
-#if FEATURE_OES_EGL_image
-    { "GL_OES_EGL_image",                  GL_OES_EGL_image_functions },
-#endif
-    { NULL,                                NULL }
-};
-
-static const struct dri_extension mm_extensions[] = {
-  { "GL_EXT_framebuffer_object", GL_EXT_framebuffer_object_functions },
-  { NULL, NULL }
-};
 
 extern const struct tnl_pipeline_stage _radeon_render_stage;
 extern const struct tnl_pipeline_stage _radeon_tcl_stage;
@@ -359,24 +313,50 @@ r100CreateContext( gl_api api,
       _math_matrix_set_identity( &rmesa->tmpmat[i] );
    }
 
-   driInitExtensions( ctx, card_extensions, GL_TRUE );
-   if (rmesa->radeon.radeonScreen->kernel_mm)
-     driInitExtensions(ctx, mm_extensions, GL_FALSE);
-   if (rmesa->radeon.radeonScreen->drmSupportsCubeMapsR100)
-      _mesa_enable_extension( ctx, "GL_ARB_texture_cube_map" );
+   ctx->Extensions.ARB_multitexture = true;
+   ctx->Extensions.ARB_texture_border_clamp = true;
+   ctx->Extensions.ARB_texture_env_combine = true;
+   ctx->Extensions.ARB_texture_env_crossbar = true;
+   ctx->Extensions.ARB_texture_env_dot3 = true;
+   ctx->Extensions.ARB_texture_mirrored_repeat = true;
+   ctx->Extensions.EXT_blend_subtract = true;
+   ctx->Extensions.EXT_fog_coord = true;
+   ctx->Extensions.EXT_packed_depth_stencil = true;
+   ctx->Extensions.EXT_secondary_color = true;
+   ctx->Extensions.EXT_stencil_wrap = true;
+   ctx->Extensions.EXT_texture_env_add = true;
+   ctx->Extensions.EXT_texture_env_combine = true;
+   ctx->Extensions.EXT_texture_env_dot3 = true;
+   ctx->Extensions.EXT_texture_filter_anisotropic = true;
+   ctx->Extensions.EXT_texture_lod_bias = true;
+   ctx->Extensions.EXT_texture_mirror_clamp = true;
+   ctx->Extensions.ATI_texture_env_combine3 = true;
+   ctx->Extensions.ATI_texture_mirror_once = true;
+   ctx->Extensions.MESA_ycbcr_texture = true;
+   ctx->Extensions.NV_blend_square = true;
+#if FEATURE_OES_EGL_image
+   ctx->Extensions.OES_EGL_image = true;
+#endif
+   ctx->Extensions.SGIS_texture_edge_clamp = true;
+
+   ctx->Extensions.EXT_framebuffer_object =
+      rmesa->radeon.radeonScreen->kernel_mm;
+
+   ctx->Extensions.ARB_texture_cube_map =
+      rmesa->radeon.radeonScreen->drmSupportsCubeMapsR100;
+
    if (rmesa->radeon.glCtx->Mesa_DXTn) {
-      _mesa_enable_extension( ctx, "GL_EXT_texture_compression_s3tc" );
-      _mesa_enable_extension( ctx, "GL_S3_s3tc" );
+      ctx->Extensions.EXT_texture_compression_s3tc = true;
+      ctx->Extensions.S3_s3tc = true;
    }
    else if (driQueryOptionb (&rmesa->radeon.optionCache, "force_s3tc_enable")) {
-      _mesa_enable_extension( ctx, "GL_EXT_texture_compression_s3tc" );
+      ctx->Extensions.EXT_texture_compression_s3tc = true;
    }
 
-   if (rmesa->radeon.radeonScreen->kernel_mm || rmesa->radeon.dri.drmMinor >= 9)
-      _mesa_enable_extension( ctx, "GL_NV_texture_rectangle");
+   ctx->Extensions.NV_texture_rectangle = rmesa->radeon.radeonScreen->kernel_mm
+      || rmesa->radeon.dri.drmMinor >= 9;
 
-   if (!rmesa->radeon.radeonScreen->kernel_mm)
-      _mesa_disable_extension(ctx, "GL_ARB_occlusion_query");
+   ctx->Extensions.ARB_occlusion_query = rmesa->radeon.radeonScreen->kernel_mm;
 
    /* XXX these should really go right after _mesa_init_driver_functions() */
    radeon_fbo_init(&rmesa->radeon);
