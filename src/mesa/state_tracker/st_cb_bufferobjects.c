@@ -241,7 +241,7 @@ static long st_bufferobj_zero_length = 0;
  * Called via glMapBufferARB().
  */
 static void *
-st_bufferobj_map(struct gl_context *ctx, GLenum target, GLenum access,
+st_bufferobj_map(struct gl_context *ctx, GLenum access,
                  struct gl_buffer_object *obj)
 {
    struct st_buffer_object *st_obj = st_buffer_object(obj);

@@ -690,7 +690,6 @@ static void brw_prepare_indices(struct brw_context *brw)
        */
        if ((get_size(index_buffer->type) - 1) & offset) {
            GLubyte *map = ctx->Driver.MapBuffer(ctx,
-                                                GL_ELEMENT_ARRAY_BUFFER_ARB,
                                                 GL_DYNAMIC_DRAW_ARB,
                                                 bufferobj);
            map += offset;

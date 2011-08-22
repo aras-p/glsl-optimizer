@@ -1603,7 +1603,6 @@ void _ae_map_vbos( struct gl_context *ctx )
 
    for (i = 0; i < actx->nr_vbos; i++)
       ctx->Driver.MapBuffer(ctx,
-			    GL_ARRAY_BUFFER_ARB,
 			    GL_DYNAMIC_DRAW_ARB,
 			    actx->vbo[i]);
 

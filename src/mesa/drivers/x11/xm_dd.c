@@ -455,7 +455,6 @@ xmesa_DrawPixels_8R8G8B( struct gl_context *ctx,
             return;
          }
          buf = (GLubyte *) ctx->Driver.MapBuffer(ctx,
-                                                 GL_PIXEL_UNPACK_BUFFER_EXT,
                                                  GL_READ_ONLY_ARB,
                                                  unpack->BufferObj);
          if (!buf) {

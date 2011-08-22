@@ -894,8 +894,7 @@ unpack_image(struct gl_context *ctx, GLuint dimensions,
       GLvoid *image;
 
       map = (GLubyte *)
-         ctx->Driver.MapBuffer(ctx, GL_PIXEL_UNPACK_BUFFER_EXT,
-                               GL_READ_ONLY_ARB, unpack->BufferObj);
+         ctx->Driver.MapBuffer(ctx, GL_READ_ONLY_ARB, unpack->BufferObj);
       if (!map) {
          /* unable to map src buffer! */
          _mesa_error(ctx, GL_INVALID_OPERATION, "unable to map PBO");

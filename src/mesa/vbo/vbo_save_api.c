@@ -233,7 +233,6 @@ map_vertex_store(struct gl_context *ctx,
    assert(!vertex_store->buffer);
    vertex_store->buffer =
       (GLfloat *) ctx->Driver.MapBuffer(ctx,
-                                        GL_ARRAY_BUFFER_ARB,   /* not used */
                                         GL_WRITE_ONLY,      /* not used */
                                         vertex_store->
                                         bufferobj);

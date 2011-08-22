@@ -403,7 +403,7 @@ static void evergreenConvertAttrib(struct gl_context *ctx, int count,
     {
         if (!input->BufferObj->Pointer) 
         {
-            ctx->Driver.MapBuffer(ctx, GL_ARRAY_BUFFER, GL_READ_ONLY_ARB, input->BufferObj);
+            ctx->Driver.MapBuffer(ctx, GL_READ_ONLY_ARB, input->BufferObj);
             mapped_named_bo = GL_TRUE;
         }
 
@@ -470,7 +470,7 @@ static void evergreenFixupIndexBuffer(struct gl_context *ctx, const struct _mesa
 
     if (mesa_ind_buf->obj->Name && !mesa_ind_buf->obj->Pointer)
     {
-        ctx->Driver.MapBuffer(ctx, GL_ELEMENT_ARRAY_BUFFER, GL_READ_ONLY_ARB, mesa_ind_buf->obj);
+        ctx->Driver.MapBuffer(ctx, GL_READ_ONLY_ARB, mesa_ind_buf->obj);
         mapped_named_bo = GL_TRUE;
         assert(mesa_ind_buf->obj->Pointer != NULL);
     }
@@ -606,7 +606,7 @@ static void evergreenSetupIndexBuffer(struct gl_context *ctx, const struct _mesa
 
         if (mesa_ind_buf->obj->Name && !mesa_ind_buf->obj->Pointer)
         {
-	        ctx->Driver.MapBuffer(ctx, GL_ELEMENT_ARRAY_BUFFER, GL_READ_ONLY_ARB, mesa_ind_buf->obj);
+	        ctx->Driver.MapBuffer(ctx, GL_READ_ONLY_ARB, mesa_ind_buf->obj);
 	        assert(mesa_ind_buf->obj->Pointer != NULL);
 	        mapped_named_bo = GL_TRUE;
         }
@@ -655,7 +655,7 @@ static void evergreenAlignDataToDword(struct gl_context *ctx,
 
     if (!input->BufferObj->Pointer) 
     {
-        ctx->Driver.MapBuffer(ctx, GL_ARRAY_BUFFER, GL_READ_ONLY_ARB, input->BufferObj);
+        ctx->Driver.MapBuffer(ctx, GL_READ_ONLY_ARB, input->BufferObj);
         mapped_named_bo = GL_TRUE;
     }
 

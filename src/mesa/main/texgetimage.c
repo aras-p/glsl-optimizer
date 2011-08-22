@@ -441,8 +441,7 @@ _mesa_get_teximage(struct gl_context *ctx, GLenum target, GLint level,
        * texture data to the PBO if the PBO is in VRAM along with the texture.
        */
       GLubyte *buf = (GLubyte *)
-         ctx->Driver.MapBuffer(ctx, GL_PIXEL_PACK_BUFFER_EXT,
-                               GL_WRITE_ONLY_ARB, ctx->Pack.BufferObj);
+         ctx->Driver.MapBuffer(ctx, GL_WRITE_ONLY_ARB, ctx->Pack.BufferObj);
       if (!buf) {
          /* out of memory or other unexpected error */
          _mesa_error(ctx, GL_OUT_OF_MEMORY, "glGetTexImage(map PBO failed)");
@@ -499,8 +498,7 @@ _mesa_get_compressed_teximage(struct gl_context *ctx, GLenum target, GLint level
    if (_mesa_is_bufferobj(ctx->Pack.BufferObj)) {
       /* pack texture image into a PBO */
       GLubyte *buf = (GLubyte *)
-         ctx->Driver.MapBuffer(ctx, GL_PIXEL_PACK_BUFFER_EXT,
-                               GL_WRITE_ONLY_ARB, ctx->Pack.BufferObj);
+         ctx->Driver.MapBuffer(ctx, GL_WRITE_ONLY_ARB, ctx->Pack.BufferObj);
       if (!buf) {
          /* out of memory or other unexpected error */
          _mesa_error(ctx, GL_OUT_OF_MEMORY,

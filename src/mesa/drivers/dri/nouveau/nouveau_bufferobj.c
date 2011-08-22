@@ -123,7 +123,7 @@ nouveau_bufferobj_get_subdata(struct gl_context *ctx, GLenum target, GLintptrARB
 }
 
 static void *
-nouveau_bufferobj_map(struct gl_context *ctx, GLenum target, GLenum access,
+nouveau_bufferobj_map(struct gl_context *ctx, GLenum access,
 		   struct gl_buffer_object *obj)
 {
 	unsigned flags = 0;
@@ -135,7 +135,7 @@ nouveau_bufferobj_map(struct gl_context *ctx, GLenum target, GLenum access,
 	    access == GL_READ_WRITE_ARB)
 		flags |= GL_MAP_WRITE_BIT;
 
-	return ctx->Driver.MapBufferRange(ctx, target, 0, obj->Size, flags,
+	return ctx->Driver.MapBufferRange(ctx, 0, 0, obj->Size, flags,
 					  obj);
 }
 

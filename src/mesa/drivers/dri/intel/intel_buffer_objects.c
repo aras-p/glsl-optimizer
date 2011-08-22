@@ -301,7 +301,6 @@ intel_bufferobj_get_subdata(struct gl_context * ctx,
  */
 static void *
 intel_bufferobj_map(struct gl_context * ctx,
-                    GLenum target,
                     GLenum access, struct gl_buffer_object *obj)
 {
    struct intel_context *intel = intel_context(ctx);
@@ -761,18 +760,15 @@ intel_bufferobj_copy_subdata(struct gl_context *ctx,
        * not overlap.
        */
       if (src == dst) {
-	 char *ptr = intel_bufferobj_map(ctx, GL_COPY_WRITE_BUFFER,
-					 GL_READ_WRITE, dst);
+	 char *ptr = intel_bufferobj_map(ctx, GL_READ_WRITE, dst);
 	 memmove(ptr + write_offset, ptr + read_offset, size);
 	 intel_bufferobj_unmap(ctx, dst);
       } else {
 	 const char *src_ptr;
 	 char *dst_ptr;
 
-	 src_ptr =  intel_bufferobj_map(ctx, GL_COPY_READ_BUFFER,
-					GL_READ_ONLY, src);
-	 dst_ptr =  intel_bufferobj_map(ctx, GL_COPY_WRITE_BUFFER,
-					GL_WRITE_ONLY, dst);
+	 src_ptr =  intel_bufferobj_map(ctx, GL_READ_ONLY, src);
+	 dst_ptr =  intel_bufferobj_map(ctx, GL_WRITE_ONLY, dst);
 
 	 memcpy(dst_ptr + write_offset, src_ptr + read_offset, size);
 

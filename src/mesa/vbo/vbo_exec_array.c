@@ -96,8 +96,7 @@ vbo_get_minmax_index(struct gl_context *ctx,
 
    if (_mesa_is_bufferobj(ib->obj)) {
       const GLvoid *map =
-         ctx->Driver.MapBuffer(ctx, GL_ELEMENT_ARRAY_BUFFER_ARB,
-                               GL_READ_ONLY, ib->obj);
+         ctx->Driver.MapBuffer(ctx, GL_READ_ONLY, ib->obj);
       indices = ADD_POINTERS(map, ib->ptr);
    } else {
       indices = ib->ptr;
@@ -196,8 +195,7 @@ check_array_data(struct gl_context *ctx, struct gl_client_array *array,
          if (!array->BufferObj->Pointer) {
             /* need to map now */
             array->BufferObj->Pointer =
-               ctx->Driver.MapBuffer(ctx, GL_ARRAY_BUFFER_ARB,
-                                     GL_READ_ONLY, array->BufferObj);
+               ctx->Driver.MapBuffer(ctx, GL_READ_ONLY, array->BufferObj);
          }
          data = ADD_POINTERS(data, array->BufferObj->Pointer);
       }
@@ -257,7 +255,6 @@ check_draw_elements_data(struct gl_context *ctx, GLsizei count, GLenum elemType,
 
    if (_mesa_is_bufferobj(ctx->Array.ElementArrayBufferObj)) {
       elemMap = ctx->Driver.MapBuffer(ctx,
-                                      GL_ELEMENT_ARRAY_BUFFER_ARB,
                                       GL_READ_ONLY,
                                       ctx->Array.ElementArrayBufferObj);
       elements = ADD_POINTERS(elements, elemMap);
@@ -350,8 +347,7 @@ print_draw_arrays(struct gl_context *ctx,
 	     bufName);
 
       if (bufName) {
-         GLubyte *p = ctx->Driver.MapBuffer(ctx, GL_ARRAY_BUFFER_ARB,
-                                            GL_READ_ONLY_ARB, bufObj);
+         GLubyte *p = ctx->Driver.MapBuffer(ctx, GL_READ_ONLY_ARB, bufObj);
          int offset = (int) (GLintptr) exec->array.inputs[i]->Ptr;
          float *f = (float *) (p + offset);
          int *k = (int *) f;
@@ -715,7 +711,6 @@ static void
 dump_element_buffer(struct gl_context *ctx, GLenum type)
 {
    const GLvoid *map = ctx->Driver.MapBuffer(ctx,
-                                             GL_ELEMENT_ARRAY_BUFFER_ARB,
                                              GL_READ_ONLY,
                                              ctx->Array.ElementArrayBufferObj);
    switch (type) {

@@ -175,7 +175,6 @@ radeonGetBufferSubData(struct gl_context * ctx,
  */
 static void *
 radeonMapBuffer(struct gl_context * ctx,
-                GLenum target,
                 GLenum access,
                 struct gl_buffer_object *obj)
 {

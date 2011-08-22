@@ -74,7 +74,7 @@ static const GLubyte *map_pbo( struct gl_context *ctx,
       return NULL;
    }
 
-   buf = (GLubyte *) ctx->Driver.MapBuffer(ctx, GL_PIXEL_UNPACK_BUFFER_EXT,
+   buf = (GLubyte *) ctx->Driver.MapBuffer(ctx,
 					   GL_READ_ONLY_ARB,
 					   unpack->BufferObj);
    if (!buf) {

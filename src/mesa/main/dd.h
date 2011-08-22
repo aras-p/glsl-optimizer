@@ -706,7 +706,7 @@ struct dd_function_table {
 			     GLintptrARB offset, GLsizeiptrARB size,
 			     GLvoid *data, struct gl_buffer_object *obj );
 
-   void * (*MapBuffer)( struct gl_context *ctx, GLenum target, GLenum access,
+   void * (*MapBuffer)( struct gl_context *ctx, GLenum access,
 			struct gl_buffer_object *obj );
 
    void (*CopyBufferSubData)( struct gl_context *ctx,

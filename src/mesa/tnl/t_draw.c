@@ -281,7 +281,6 @@ static void bind_inputs( struct gl_context *ctx,
 	    bo[*nr_bo] = inputs[i]->BufferObj;
 	    (*nr_bo)++;
 	    ctx->Driver.MapBuffer(ctx, 
-				  GL_ARRAY_BUFFER,
 				  GL_READ_ONLY_ARB,
 				  inputs[i]->BufferObj);
 	    
@@ -351,7 +350,6 @@ static void bind_indices( struct gl_context *ctx,
       bo[*nr_bo] = ib->obj;
       (*nr_bo)++;
       ctx->Driver.MapBuffer(ctx, 
-			    GL_ELEMENT_ARRAY_BUFFER,
 			    GL_READ_ONLY_ARB,
 			    ib->obj);
 

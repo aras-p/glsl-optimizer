@@ -342,7 +342,7 @@ vbo_exec_vtx_map( struct vbo_exec_context *exec )
                                                   exec->vtx.bufferobj);
       if (!exec->vtx.buffer_map)
          exec->vtx.buffer_map =
-            (GLfloat *)ctx->Driver.MapBuffer(ctx, target, access, exec->vtx.bufferobj);
+            (GLfloat *)ctx->Driver.MapBuffer(ctx, access, exec->vtx.bufferobj);
       assert(exec->vtx.buffer_map);
       exec->vtx.buffer_ptr = exec->vtx.buffer_map;
    }
