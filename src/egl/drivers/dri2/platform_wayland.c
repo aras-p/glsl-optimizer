@@ -789,7 +789,7 @@ dri2_initialize_wayland(_EGLDriver *drv, _EGLDisplay *disp)
    id = wl_display_get_global(dri2_dpy->wl_dpy, "wl_drm", 1);
    if (id == 0)
       goto cleanup_dpy;
-   dri2_dpy->wl_drm = wl_drm_create(dri2_dpy->wl_dpy, id, 1);
+   dri2_dpy->wl_drm = wl_display_bind(dri2_dpy->wl_dpy, id, &wl_drm_interface);
    if (!dri2_dpy->wl_drm)
       goto cleanup_dpy;
    wl_drm_add_listener(dri2_dpy->wl_drm, &drm_listener, dri2_dpy);

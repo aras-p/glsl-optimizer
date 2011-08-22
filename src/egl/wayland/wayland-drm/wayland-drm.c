@@ -37,7 +37,6 @@
 #include "wayland-drm-server-protocol.h"
 
 struct wl_drm {
-	struct wl_object object;
 	struct wl_display *display;
 
 	void *user_data;
@@ -54,15 +53,15 @@ struct wl_drm_buffer {
 };
 
 static void
-buffer_damage(struct wl_client *client, struct wl_buffer *buffer,
+buffer_damage(struct wl_client *client, struct wl_resource *buffer,
 	      int32_t x, int32_t y, int32_t width, int32_t height)
 {
 }
 
 static void
-destroy_buffer(struct wl_resource *resource, struct wl_client *client)
+destroy_buffer(struct wl_resource *resource)
 {
-	struct wl_drm_buffer *buffer = (struct wl_drm_buffer *) resource;
+	struct wl_drm_buffer *buffer = resource->data;
 	struct wl_drm *drm = buffer->drm;
 
 	drm->callbacks->release_buffer(drm->user_data,
@@ -71,9 +70,9 @@ destroy_buffer(struct wl_resource *resource, struct wl_client *client)
 }
 
 static void
-buffer_destroy(struct wl_client *client, struct wl_buffer *buffer)
+buffer_destroy(struct wl_client *client, struct wl_resource *resource)
 {
-	wl_resource_destroy(&buffer->resource, client, 0);
+	wl_resource_destroy(resource, 0);
 }
 
 const static struct wl_buffer_interface drm_buffer_interface = {
@@ -82,15 +81,17 @@ const static struct wl_buffer_interface drm_buffer_interface = {
 };
 
 static void
-drm_create_buffer(struct wl_client *client, struct wl_drm *drm,
+drm_create_buffer(struct wl_client *client, struct wl_resource *resource,
 		  uint32_t id, uint32_t name, int32_t width, int32_t height,
-		  uint32_t stride, struct wl_visual *visual)
+		  uint32_t stride, struct wl_resource *visual_resource)
 {
+	struct wl_drm *drm = resource->data;
 	struct wl_drm_buffer *buffer;
+	struct wl_visual *visual = visual_resource->data;
 
 	buffer = calloc(1, sizeof *buffer);
 	if (buffer == NULL) {
-		wl_client_post_no_memory(client);
+		wl_client_post_no_memory(resource->client);
 		return;
 	}
 
@@ -98,12 +99,11 @@ drm_create_buffer(struct wl_client *client, struct wl_drm *drm,
 	buffer->buffer.width = width;
 	buffer->buffer.height = height;
 	buffer->buffer.visual = visual;
-	buffer->buffer.client = client;
 
-	if (!visual || visual->object.interface != &wl_visual_interface) {
-		wl_client_post_error(client, &drm->object,
-				     WL_DRM_ERROR_INVALID_VISUAL,
-				     "invalid visual");
+	if (!visual || visual_resource->object.interface != &wl_visual_interface) {
+		wl_resource_post_error(resource,
+				       WL_DRM_ERROR_INVALID_VISUAL,
+				       "invalid visual");
 		free(buffer);
 		return;
 	}
@@ -114,33 +114,36 @@ drm_create_buffer(struct wl_client *client, struct wl_drm *drm,
 						 stride, visual);
 
 	if (buffer->driver_buffer == NULL) {
-		wl_client_post_error(client, &drm->object,
-				     WL_DRM_ERROR_INVALID_NAME,
-				     "invalid name");
+		wl_resource_post_error(resource,
+				       WL_DRM_ERROR_INVALID_NAME,
+				       "invalid name");
 		return;
 	}
 
 	buffer->buffer.resource.object.id = id;
 	buffer->buffer.resource.object.interface = &wl_buffer_interface;
-	buffer->buffer.resource.object.implementation = (void (**)(void))
-		&drm_buffer_interface;
+	buffer->buffer.resource.object.implementation =
+		(void (**)(void)) &drm_buffer_interface;
+	buffer->buffer.resource.data = buffer;
 
 	buffer->buffer.resource.destroy = destroy_buffer;
+	buffer->buffer.resource.client = resource->client;
 
-	wl_client_add_resource(client, &buffer->buffer.resource);
+	wl_client_add_resource(resource->client, &buffer->buffer.resource);
 }
 
 static void
 drm_authenticate(struct wl_client *client,
-		 struct wl_drm *drm, uint32_t id)
+		 struct wl_resource *resource, uint32_t id)
 {
+	struct wl_drm *drm = resource->data;
+
 	if (drm->callbacks->authenticate(drm->user_data, id) < 0)
-		wl_client_post_error(client, &drm->object,
-				     WL_DRM_ERROR_AUTHENTICATE_FAIL,
-				     "authenicate failed");
+		wl_resource_post_error(resource,
+				       WL_DRM_ERROR_AUTHENTICATE_FAIL,
+				       "authenicate failed");
 	else
-		wl_client_post_event(client, &drm->object,
-				     WL_DRM_AUTHENTICATED);
+		wl_resource_post_event(resource, WL_DRM_AUTHENTICATED);
 }
 
 const static struct wl_drm_interface drm_interface = {
@@ -149,12 +152,14 @@ const static struct wl_drm_interface drm_interface = {
 };
 
 static void
-post_drm_device(struct wl_client *client, 
-		struct wl_object *global, uint32_t version)
+bind_drm(struct wl_client *client, void *data, uint32_t version, uint32_t id)
 {
-	struct wl_drm *drm = (struct wl_drm *) global;
+	struct wl_drm *drm = data;
+	struct wl_resource *resource;
 
-	wl_client_post_event(client, global, WL_DRM_DEVICE, drm->device_name);
+	resource = wl_client_add_object(client, &wl_drm_interface,
+					&drm_interface, id, data);
+	wl_resource_post_event(resource, WL_DRM_DEVICE, drm->device_name);
 }
 
 struct wl_drm *
@@ -170,10 +175,7 @@ wayland_drm_init(struct wl_display *display, char *device_name,
 	drm->callbacks = callbacks;
 	drm->user_data = user_data;
 
-	drm->object.interface = &wl_drm_interface;
-	drm->object.implementation = (void (**)(void)) &drm_interface;
-	wl_display_add_object(display, &drm->object);
-	wl_display_add_global(display, &drm->object, post_drm_device);
+	wl_display_add_global(display, &wl_drm_interface, drm, bind_drm);
 
 	return drm;
 }
