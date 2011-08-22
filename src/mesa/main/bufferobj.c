@@ -386,11 +386,11 @@ _mesa_buffer_data( struct gl_context *ctx, GLenum target, GLsizeiptrARB size,
  * \sa glBufferSubDataARB, dd_function_table::BufferSubData.
  */
 static void
-_mesa_buffer_subdata( struct gl_context *ctx, GLenum target, GLintptrARB offset,
+_mesa_buffer_subdata( struct gl_context *ctx, GLintptrARB offset,
 		      GLsizeiptrARB size, const GLvoid * data,
 		      struct gl_buffer_object * bufObj )
 {
-   (void) ctx; (void) target;
+   (void) ctx;
 
    /* this should have been caught in _mesa_BufferSubData() */
    ASSERT(size + offset <= bufObj->Size);
@@ -975,7 +975,7 @@ _mesa_BufferSubDataARB(GLenum target, GLintptrARB offset,
    bufObj->Written = GL_TRUE;
 
    ASSERT(ctx->Driver.BufferSubData);
-   ctx->Driver.BufferSubData( ctx, target, offset, size, data, bufObj );
+   ctx->Driver.BufferSubData( ctx, offset, size, data, bufObj );
 }
 
 

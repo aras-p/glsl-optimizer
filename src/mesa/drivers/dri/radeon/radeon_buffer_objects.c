@@ -130,7 +130,6 @@ radeonBufferData(struct gl_context * ctx,
  */
 static void
 radeonBufferSubData(struct gl_context * ctx,
-                    GLenum target,
                     GLintptrARB offset,
                     GLsizeiptrARB size,
                     const GLvoid * data,

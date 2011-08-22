@@ -202,7 +202,6 @@ intel_bufferobj_data(struct gl_context * ctx,
  */
 static void
 intel_bufferobj_subdata(struct gl_context * ctx,
-                        GLenum target,
                         GLintptrARB offset,
                         GLsizeiptrARB size,
                         const GLvoid * data, struct gl_buffer_object *obj)

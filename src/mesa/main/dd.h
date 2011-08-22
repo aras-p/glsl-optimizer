@@ -698,7 +698,7 @@ struct dd_function_table {
                             const GLvoid *data, GLenum usage,
                             struct gl_buffer_object *obj );
 
-   void (*BufferSubData)( struct gl_context *ctx, GLenum target, GLintptrARB offset,
+   void (*BufferSubData)( struct gl_context *ctx, GLintptrARB offset,
 			  GLsizeiptrARB size, const GLvoid *data,
 			  struct gl_buffer_object *obj );
 

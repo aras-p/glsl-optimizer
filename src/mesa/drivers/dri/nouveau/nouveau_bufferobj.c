@@ -107,7 +107,7 @@ nouveau_bufferobj_data(struct gl_context *ctx, GLenum target, GLsizeiptrARB size
 }
 
 static void
-nouveau_bufferobj_subdata(struct gl_context *ctx, GLenum target, GLintptrARB offset,
+nouveau_bufferobj_subdata(struct gl_context *ctx, GLintptrARB offset,
 			  GLsizeiptrARB size, const GLvoid *data,
 			  struct gl_buffer_object *obj)
 {

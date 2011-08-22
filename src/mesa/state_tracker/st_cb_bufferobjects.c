@@ -93,7 +93,6 @@ st_bufferobj_free(struct gl_context *ctx, struct gl_buffer_object *obj)
  */
 static void
 st_bufferobj_subdata(struct gl_context *ctx,
-		     GLenum target,
 		     GLintptrARB offset,
 		     GLsizeiptrARB size,
 		     const GLvoid * data, struct gl_buffer_object *obj)
