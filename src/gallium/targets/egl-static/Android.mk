@@ -46,6 +46,9 @@ LOCAL_C_INCLUDES := \
 # swrast
 LOCAL_CFLAGS += -DGALLIUM_SOFTPIPE
 
+ifneq ($(filter i915g, $(MESA_GPU_DRIVERS)),)
+LOCAL_CFLAGS += -D_EGL_PIPE_I915=1
+endif
 ifneq ($(filter r600g, $(MESA_GPU_DRIVERS)),)
 LOCAL_CFLAGS += -D_EGL_PIPE_R600=1
 endif
