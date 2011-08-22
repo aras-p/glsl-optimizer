@@ -717,7 +717,7 @@ struct dd_function_table {
 
    /* May return NULL if MESA_MAP_NOWAIT_BIT is set in access:
     */
-   void * (*MapBufferRange)( struct gl_context *ctx, GLenum target, GLintptr offset,
+   void * (*MapBufferRange)( struct gl_context *ctx, GLintptr offset,
                              GLsizeiptr length, GLbitfield access,
                              struct gl_buffer_object *obj);
 

@@ -316,7 +316,6 @@ vbo_exec_vtx_map( struct vbo_exec_context *exec )
       /* The VBO exists and there's room for more */
       exec->vtx.buffer_map = 
          (GLfloat *)ctx->Driver.MapBufferRange(ctx, 
-                                               target, 
                                                exec->vtx.buffer_used,
                                                (VBO_VERT_BUFFER_SIZE - 
                                                 exec->vtx.buffer_used),
@@ -336,7 +335,7 @@ vbo_exec_vtx_map( struct vbo_exec_context *exec )
 
       if (ctx->Driver.MapBufferRange)
          exec->vtx.buffer_map = 
-            (GLfloat *)ctx->Driver.MapBufferRange(ctx, target,
+            (GLfloat *)ctx->Driver.MapBufferRange(ctx,
                                                   0, VBO_VERT_BUFFER_SIZE,
                                                   accessRange,
                                                   exec->vtx.bufferobj);

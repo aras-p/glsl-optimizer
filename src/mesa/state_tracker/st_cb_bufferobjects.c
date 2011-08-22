@@ -281,7 +281,7 @@ st_bufferobj_map(struct gl_context *ctx, GLenum access,
  * Called via glMapBufferRange().
  */
 static void *
-st_bufferobj_map_range(struct gl_context *ctx, GLenum target, 
+st_bufferobj_map_range(struct gl_context *ctx,
                        GLintptr offset, GLsizeiptr length, GLbitfield access,
                        struct gl_buffer_object *obj)
 {

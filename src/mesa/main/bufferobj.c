@@ -468,12 +468,11 @@ _mesa_buffer_map( struct gl_context *ctx, GLenum access,
  * Called via glMapBufferRange().
  */
 static void *
-_mesa_buffer_map_range( struct gl_context *ctx, GLenum target, GLintptr offset,
+_mesa_buffer_map_range( struct gl_context *ctx, GLintptr offset,
                         GLsizeiptr length, GLbitfield access,
                         struct gl_buffer_object *bufObj )
 {
    (void) ctx;
-   (void) target;
    assert(!_mesa_bufferobj_mapped(bufObj));
    /* Just return a direct pointer to the data */
    bufObj->Pointer = bufObj->Data + offset;
@@ -1445,8 +1444,7 @@ _mesa_MapBufferRange(GLenum target, GLintptr offset, GLsizeiptr length,
    }
       
    ASSERT(ctx->Driver.MapBufferRange);
-   map = ctx->Driver.MapBufferRange(ctx, target, offset, length,
-                                    access, bufObj);
+   map = ctx->Driver.MapBufferRange(ctx, offset, length, access, bufObj);
    if (!map) {
       _mesa_error(ctx, GL_OUT_OF_MEMORY, "glMapBufferARB(map failed)");
    }

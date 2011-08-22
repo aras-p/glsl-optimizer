@@ -135,8 +135,7 @@ nouveau_bufferobj_map(struct gl_context *ctx, GLenum access,
 	    access == GL_READ_WRITE_ARB)
 		flags |= GL_MAP_WRITE_BIT;
 
-	return ctx->Driver.MapBufferRange(ctx, 0, 0, obj->Size, flags,
-					  obj);
+	return ctx->Driver.MapBufferRange(ctx, 0, obj->Size, flags, obj);
 }
 
 static void *
