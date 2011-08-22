@@ -147,6 +147,8 @@ static void brw_vs_alloc_regs( struct brw_vs_compile *c )
    int constant = 0;
    int vert_result_reoder[VERT_RESULT_MAX];
    int bfc = 0;
+   struct brw_vertex_program *vp = c->vp;
+   const struct gl_program_parameter_list *params = vp->program.Base.Parameters;
 
    /* Determine whether to use a real constant buffer or use a block
     * of GRF registers for constants.  The later is faster but only
@@ -248,6 +250,18 @@ static void brw_vs_alloc_regs( struct brw_vs_compile *c )
     */
    if (constant == max_constant)
       c->vp->use_const_buffer = GL_TRUE;
+
+   /* Set up the references to the pull parameters if present.  This backend
+    * uses a 1:1 mapping from Mesa IR's index to location in the pull constant
+    * buffer, while the new VS backend allocates values to the pull buffer on
+    * demand.
+    */
+   if (c->vp->use_const_buffer) {
+      for (i = 0; i < params->NumParameters * 4; i++) {
+	 c->prog_data.pull_param[i] = &params->ParameterValues[i / 4][i % 4].f;
+      }
+      c->prog_data.nr_pull_params = i;
+   }
 
    for (i = 0; i < constant; i++) {
       c->regs[PROGRAM_STATE_VAR][i] = stride(brw_vec4_grf(reg + i / 2,

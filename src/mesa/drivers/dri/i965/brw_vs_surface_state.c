@@ -47,10 +47,10 @@ prepare_vs_constants(struct brw_context *brw)
 {
    struct gl_context *ctx = &brw->intel.ctx;
    struct intel_context *intel = &brw->intel;
+   /* BRW_NEW_VERTEX_PROGRAM */
    struct brw_vertex_program *vp =
       (struct brw_vertex_program *) brw->vertex_program;
    const struct gl_program_parameter_list *params = vp->program.Base.Parameters;
-   const int size = params->NumParameters * 4 * sizeof(GLfloat);
    int i;
 
    if (vp->program.IsNVProgram)
@@ -61,8 +61,8 @@ prepare_vs_constants(struct brw_context *brw)
     */
    _mesa_load_state_parameters(&brw->intel.ctx, vp->program.Base.Parameters);
 
-   /* BRW_NEW_VERTEX_PROGRAM */
-   if (!vp->use_const_buffer) {
+   /* CACHE_NEW_VS_PROG */
+   if (!brw->vs.prog_data->nr_pull_params) {
       if (brw->vs.const_bo) {
 	 drm_intel_bo_unreference(brw->vs.const_bo);
 	 brw->vs.const_bo = NULL;
@@ -74,13 +74,14 @@ prepare_vs_constants(struct brw_context *brw)
    /* _NEW_PROGRAM_CONSTANTS */
    drm_intel_bo_unreference(brw->vs.const_bo);
    brw->vs.const_bo = drm_intel_bo_alloc(intel->bufmgr, "vp_const_buffer",
-					 size, 64);
+					 brw->vs.prog_data->nr_pull_params * 4,
+					 64);
 
    drm_intel_gem_bo_map_gtt(brw->vs.const_bo);
-   for (i = 0; i < params->NumParameters; i++) {
-      memcpy(brw->vs.const_bo->virtual + i * 4 * sizeof(float),
-	     params->ParameterValues[i],
-	     4 * sizeof(float));
+   for (i = 0; i < brw->vs.prog_data->nr_pull_params; i++) {
+      memcpy(brw->vs.const_bo->virtual + i * 4,
+	     brw->vs.prog_data->pull_param[i],
+	     4);
    }
 
    if (0) {
@@ -99,7 +100,7 @@ const struct brw_tracked_state brw_vs_constants = {
    .dirty = {
       .mesa = (_NEW_PROGRAM_CONSTANTS),
       .brw = (BRW_NEW_VERTEX_PROGRAM),
-      .cache = 0
+      .cache = CACHE_NEW_VS_PROG,
    },
    .prepare = prepare_vs_constants,
 };

@@ -312,6 +312,7 @@ struct brw_vs_prog_data {
    GLuint total_grf;
    GLbitfield64 outputs_written;
    GLuint nr_params;       /**< number of float params/constants */
+   GLuint nr_pull_params; /**< number of dwords referenced by pull_param[] */
    GLuint total_scratch;
 
    GLuint inputs_read;
