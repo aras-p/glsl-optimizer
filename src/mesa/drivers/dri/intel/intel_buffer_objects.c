@@ -374,7 +374,6 @@ intel_bufferobj_map_range(struct gl_context * ctx,
 {
    struct intel_context *intel = intel_context(ctx);
    struct intel_buffer_object *intel_obj = intel_buffer_object(obj);
-   GLboolean read_only = (access == GL_READ_ONLY_ARB);
 
    assert(intel_obj);
 
@@ -386,6 +385,9 @@ intel_bufferobj_map_range(struct gl_context * ctx,
    obj->AccessFlags = access;
 
    if (intel_obj->sys_buffer) {
+      const bool read_only =
+	 (access & (GL_MAP_READ_BIT | GL_MAP_WRITE_BIT)) == GL_MAP_READ_BIT;
+
       if (!read_only && intel_obj->source)
 	 release_buffer(intel_obj);
 
