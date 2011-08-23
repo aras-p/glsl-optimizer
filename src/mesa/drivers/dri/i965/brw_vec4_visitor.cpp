@@ -1706,6 +1706,7 @@ vec4_visitor::emit_vue_header_gen4(int header_mrf)
 
    /* Build ndc coords, which are (x/w, y/w, z/w, 1/w) */
    dst_reg ndc = dst_reg(this, glsl_type::vec4_type);
+   output_reg[BRW_VERT_RESULT_NDC] = ndc;
 
    current_annotation = "NDC";
    dst_reg ndc_w = ndc;
@@ -1738,7 +1739,8 @@ vec4_visitor::emit_vue_header_gen4(int header_mrf)
       for (i = 0; i < c->key.nr_userclip; i++) {
 	 vec4_instruction *inst;
 
-	 inst = emit(DP4(dst_null_f(), pos, src_reg(c->userplane[i])));
+	 inst = emit(DP4(dst_null_f(), src_reg(output_reg[VERT_RESULT_HPOS]),
+                         src_reg(c->userplane[i])));
 	 inst->conditional_mod = BRW_CONDITIONAL_L;
 
 	 emit(OR(header1, src_reg(header1), 1u << i));
@@ -1760,11 +1762,11 @@ vec4_visitor::emit_vue_header_gen4(int header_mrf)
 	 brw_CMP(p,
 		 vec8(brw_null_reg()),
 		 BRW_CONDITIONAL_L,
-		 brw_swizzle1(ndc, 3),
+		 brw_swizzle1(output_reg[BRW_VERT_RESULT_NDC], 3),
 		 brw_imm_f(0));
 
 	 brw_OR(p, brw_writemask(header1, WRITEMASK_W), header1, brw_imm_ud(1<<6));
-	 brw_MOV(p, ndc, brw_imm_f(0));
+	 brw_MOV(p, output_reg[BRW_VERT_RESULT_NDC], brw_imm_f(0));
 	 brw_set_predicate_control(p, BRW_PREDICATE_NONE);
 #endif
       }
@@ -1786,10 +1788,12 @@ vec4_visitor::emit_vue_header_gen4(int header_mrf)
        * m7 is the first vertex data we fill.
        */
       current_annotation = "NDC";
-      emit(MOV(brw_message_reg(header_mrf++), src_reg(ndc)));
+      emit(MOV(brw_message_reg(header_mrf++),
+               src_reg(output_reg[BRW_VERT_RESULT_NDC])));
 
       current_annotation = "gl_Position";
-      emit(MOV(brw_message_reg(header_mrf++), pos));
+      emit(MOV(brw_message_reg(header_mrf++),
+               src_reg(output_reg[VERT_RESULT_HPOS])));
 
       /* user clip distance. */
       header_mrf += 2;
@@ -1804,10 +1808,12 @@ vec4_visitor::emit_vue_header_gen4(int header_mrf)
        * dword 8-11 (m3) is the first vertex data.
        */
       current_annotation = "NDC";
-      emit(MOV(brw_message_reg(header_mrf++), src_reg(ndc)));
+      emit(MOV(brw_message_reg(header_mrf++),
+               src_reg(output_reg[BRW_VERT_RESULT_NDC])));
 
       current_annotation = "gl_Position";
-      emit(MOV(brw_message_reg(header_mrf++), pos));
+      emit(MOV(brw_message_reg(header_mrf++),
+               src_reg(output_reg[VERT_RESULT_HPOS])));
    }
 
    return header_mrf;

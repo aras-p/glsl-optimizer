@@ -360,7 +360,7 @@ public:
    /* Regs for vertex results.  Generated at ir_variable visiting time
     * for the ir->location's used.
     */
-   dst_reg output_reg[VERT_RESULT_MAX];
+   dst_reg output_reg[BRW_VERT_RESULT_MAX];
    int uniform_size[MAX_UNIFORMS];
    int uniform_vector_size[MAX_UNIFORMS];
    int uniforms;
