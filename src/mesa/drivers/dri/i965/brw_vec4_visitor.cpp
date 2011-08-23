@@ -1891,7 +1891,6 @@ vec4_visitor::emit_urb_writes()
     */
    int base_mrf = 1;
    int mrf = base_mrf;
-   int urb_entry_size;
    /* In the process of generating our URB write message contents, we
     * may need to unspill a register or load from an array.  Those
     * reads would use MRFs 14-15.
@@ -1937,8 +1936,6 @@ vec4_visitor::emit_urb_writes()
    inst->mlen = align_interleaved_urb_mlen(brw, mrf - base_mrf);
    inst->eot = (slot >= c->vue_map.num_slots);
 
-   urb_entry_size = mrf - base_mrf;
-
    /* Optional second URB write */
    if (!inst->eot) {
       mrf = base_mrf + 1;
@@ -1959,14 +1956,12 @@ vec4_visitor::emit_urb_writes()
        * those, since we're doing interleaved writes.
        */
       inst->offset = (max_usable_mrf - base_mrf) / 2;
-
-      urb_entry_size += mrf - base_mrf;
    }
 
    if (intel->gen == 6)
-      c->prog_data.urb_entry_size = ALIGN(urb_entry_size, 8) / 8;
+      c->prog_data.urb_entry_size = ALIGN(c->vue_map.num_slots, 8) / 8;
    else
-      c->prog_data.urb_entry_size = ALIGN(urb_entry_size, 4) / 4;
+      c->prog_data.urb_entry_size = ALIGN(c->vue_map.num_slots, 4) / 4;
 }
 
 src_reg
