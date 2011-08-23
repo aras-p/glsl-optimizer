@@ -405,36 +405,19 @@ static void brw_vs_alloc_regs( struct brw_vs_compile *c )
    /* The VS VUEs are shared by VF (outputting our inputs) and VS, so size
     * them to fit the biggest thing they need to.
     */
-   attributes_in_vue = MAX2(c->nr_outputs, c->nr_inputs);
+   attributes_in_vue = MAX2(c->vue_map.num_slots, c->nr_inputs);
 
-   /* See emit_vertex_write() for where the VUE's overhead on top of the
-    * attributes comes from.
-    */
-   if (intel->gen >= 7) {
-      int header_regs = 2;
-      if (c->key.nr_userclip)
-	 header_regs += 2;
-
-      /* Each attribute is 16 bytes (1 vec4), so dividing by 4 gives us the
-       * number of 64-byte (512-bit) units.
-       */
-      c->prog_data.urb_entry_size = (attributes_in_vue + header_regs + 3) / 4;
-   } else if (intel->gen == 6) {
-      int header_regs = 2;
-      if (c->key.nr_userclip)
-	 header_regs += 2;
-
-      /* Each attribute is 16 bytes (1 vec4), so dividing by 8 gives us the
+   if (intel->gen == 6) {
+      /* Each attribute is 32 bytes (2 vec4s), so dividing by 8 gives us the
        * number of 128-byte (1024-bit) units.
        */
-      c->prog_data.urb_entry_size = (attributes_in_vue + header_regs + 7) / 8;
-   } else if (intel->gen == 5)
+      c->prog_data.urb_entry_size = ALIGN(attributes_in_vue, 8) / 8;
+   } else {
       /* Each attribute is 16 bytes (1 vec4), so dividing by 4 gives us the
        * number of 64-byte (512-bit) units.
        */
-      c->prog_data.urb_entry_size = (attributes_in_vue + 6 + 3) / 4;
-   else
-      c->prog_data.urb_entry_size = (attributes_in_vue + 2 + 3) / 4;
+      c->prog_data.urb_entry_size = ALIGN(attributes_in_vue, 4) / 4;
+   }
 
    c->prog_data.total_grf = reg;
 
