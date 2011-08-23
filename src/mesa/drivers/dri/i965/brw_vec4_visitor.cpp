@@ -1807,83 +1807,53 @@ vec4_visitor::emit_clip_distances(struct brw_reg reg, int offset)
    }
 }
 
-int
-vec4_visitor::emit_vue_header_gen4(int header_mrf)
+void
+vec4_visitor::emit_urb_slot(int mrf, int vert_result)
 {
-   emit_ndc_computation();
+   struct brw_reg reg = brw_message_reg(mrf);
 
-   emit_psiz_and_flags(brw_message_reg(header_mrf++));
-
-   if (intel->gen == 5) {
-      /* There are 20 DWs (D0-D19) in VUE header on Ironlake:
-       * dword 0-3 (m1) of the header is indices, point width, clip flags.
-       * dword 4-7 (m2) is the ndc position (set above)
-       * dword 8-11 (m3) of the vertex header is the 4D space position
-       * dword 12-19 (m4,m5) of the vertex header is the user clip distance.
-       * m6 is a pad so that the vertex element data is aligned
-       * m7 is the first vertex data we fill.
-       */
+   switch (vert_result) {
+   case VERT_RESULT_PSIZ:
+      /* PSIZ is always in slot 0, and is coupled with other flags. */
+      current_annotation = "indices, point width, clip flags";
+      emit_psiz_and_flags(reg);
+      break;
+   case BRW_VERT_RESULT_NDC:
       current_annotation = "NDC";
-      emit(MOV(brw_message_reg(header_mrf++),
-               src_reg(output_reg[BRW_VERT_RESULT_NDC])));
-
+      emit(MOV(reg, src_reg(output_reg[BRW_VERT_RESULT_NDC])));
+      break;
+   case BRW_VERT_RESULT_HPOS_DUPLICATE:
+   case VERT_RESULT_HPOS:
       current_annotation = "gl_Position";
-      emit(MOV(brw_message_reg(header_mrf++),
-               src_reg(output_reg[VERT_RESULT_HPOS])));
-
-      /* user clip distance. */
-      emit_clip_distances(brw_message_reg(header_mrf++), 0);
-      emit_clip_distances(brw_message_reg(header_mrf++), 4);
-
-      /* Pad so that vertex element data is aligned. */
-      header_mrf++;
-   } else {
-      /* There are 8 dwords in VUE header pre-Ironlake:
-       * dword 0-3 (m1) is indices, point width, clip flags.
-       * dword 4-7 (m2) is ndc position (set above)
-       *
-       * dword 8-11 (m3) is the first vertex data.
-       */
-      current_annotation = "NDC";
-      emit(MOV(brw_message_reg(header_mrf++),
-               src_reg(output_reg[BRW_VERT_RESULT_NDC])));
-
-      current_annotation = "gl_Position";
-      emit(MOV(brw_message_reg(header_mrf++),
-               src_reg(output_reg[VERT_RESULT_HPOS])));
+      emit(MOV(reg, src_reg(output_reg[VERT_RESULT_HPOS])));
+      break;
+   case BRW_VERT_RESULT_CLIP0:
+      current_annotation = "user clip distances";
+      emit_clip_distances(reg, 0);
+      break;
+   case BRW_VERT_RESULT_CLIP1:
+      current_annotation = "user clip distances";
+      emit_clip_distances(reg, 4);
+      break;
+   case BRW_VERT_RESULT_PAD:
+      /* No need to write to this slot */
+      break;
+   default: {
+      assert (vert_result < VERT_RESULT_MAX);
+      current_annotation = NULL;
+      /* Copy the register, saturating if necessary */
+      vec4_instruction *inst = emit(MOV(reg,
+                                        src_reg(output_reg[vert_result])));
+      if ((vert_result == VERT_RESULT_COL0 ||
+	   vert_result == VERT_RESULT_COL1 ||
+	   vert_result == VERT_RESULT_BFC0 ||
+	   vert_result == VERT_RESULT_BFC1) &&
+	  c->key.clamp_vertex_color) {
+	 inst->saturate = true;
+      }
    }
-
-   return header_mrf;
-}
-
-int
-vec4_visitor::emit_vue_header_gen6(int header_mrf)
-{
-   /* There are 8 or 16 DWs (D0-D15) in VUE header on Sandybridge:
-    * dword 0-3 (m2) of the header is indices, point width, clip flags.
-    * dword 4-7 (m3) is the 4D space position
-    * dword 8-15 (m4,m5) of the vertex header is the user clip distance if
-    * enabled.
-    *
-    * m4 or 6 is the first vertex element data we fill.
-    */
-
-   current_annotation = "indices, point width, clip flags";
-   emit_psiz_and_flags(brw_message_reg(header_mrf++));
-
-   current_annotation = "gl_Position";
-   emit(MOV(brw_message_reg(header_mrf++),
-	    src_reg(output_reg[VERT_RESULT_HPOS])));
-
-   current_annotation = "user clip distances";
-   if (c->key.nr_userclip) {
-      emit_clip_distances(brw_message_reg(header_mrf++), 0);
-      emit_clip_distances(brw_message_reg(header_mrf++), 4);
+      break;
    }
-
-   current_annotation = NULL;
-
-   return header_mrf;
 }
 
 static int
@@ -1922,7 +1892,6 @@ vec4_visitor::emit_urb_writes()
    int base_mrf = 1;
    int mrf = base_mrf;
    int urb_entry_size;
-   uint64_t outputs_remaining = c->prog_data.outputs_written;
    /* In the process of generating our URB write message contents, we
     * may need to unspill a register or load from an array.  Those
     * reads would use MRFs 14-15.
@@ -1931,45 +1900,22 @@ vec4_visitor::emit_urb_writes()
 
    /* FINISHME: edgeflag */
 
+   brw_compute_vue_map(&c->vue_map, intel, c->key.nr_userclip,
+                       c->key.two_side_color, c->prog_data.outputs_written);
+
    /* First mrf is the g0-based message header containing URB handles and such,
     * which is implied in VS_OPCODE_URB_WRITE.
     */
    mrf++;
 
-   if (intel->gen >= 6) {
-      mrf = emit_vue_header_gen6(mrf);
-   } else {
-      mrf = emit_vue_header_gen4(mrf);
+   if (intel->gen < 6) {
+      emit_ndc_computation();
    }
 
    /* Set up the VUE data for the first URB write */
-   int attr;
-   for (attr = 0; attr < VERT_RESULT_MAX; attr++) {
-      if (!(c->prog_data.outputs_written & BITFIELD64_BIT(attr)))
-	 continue;
-
-      outputs_remaining &= ~BITFIELD64_BIT(attr);
-
-      /* This is set up in the VUE header. */
-      if (attr == VERT_RESULT_HPOS)
-	 continue;
-
-      /* This is loaded into the VUE header, and thus doesn't occupy
-       * an attribute slot.
-       */
-      if (attr == VERT_RESULT_PSIZ)
-	 continue;
-
-      vec4_instruction *inst = emit(MOV(brw_message_reg(mrf++),
-					src_reg(output_reg[attr])));
-
-      if ((attr == VERT_RESULT_COL0 ||
-	   attr == VERT_RESULT_COL1 ||
-	   attr == VERT_RESULT_BFC0 ||
-	   attr == VERT_RESULT_BFC1) &&
-	  c->key.clamp_vertex_color) {
-	 inst->saturate = true;
-      }
+   int slot;
+   for (slot = 0; slot < c->vue_map.num_slots; ++slot) {
+      emit_urb_slot(mrf++, c->vue_map.slot_to_vert_result[slot]);
 
       /* If this was MRF 15, we can't fit anything more into this URB
        * WRITE.  Note that base_mrf of 1 means that MRF 15 is an
@@ -1977,7 +1923,7 @@ vec4_visitor::emit_urb_writes()
        * gen6's requirements for length alignment.
        */
       if (mrf > max_usable_mrf) {
-	 attr++;
+	 slot++;
 	 break;
       }
    }
@@ -1985,21 +1931,18 @@ vec4_visitor::emit_urb_writes()
    vec4_instruction *inst = emit(VS_OPCODE_URB_WRITE);
    inst->base_mrf = base_mrf;
    inst->mlen = align_interleaved_urb_mlen(brw, mrf - base_mrf);
-   inst->eot = !outputs_remaining;
+   inst->eot = (slot >= c->vue_map.num_slots);
 
    urb_entry_size = mrf - base_mrf;
 
    /* Optional second URB write */
-   if (outputs_remaining) {
+   if (!inst->eot) {
       mrf = base_mrf + 1;
 
-      for (; attr < VERT_RESULT_MAX; attr++) {
-	 if (!(c->prog_data.outputs_written & BITFIELD64_BIT(attr)))
-	    continue;
-
+      for (; slot < c->vue_map.num_slots; ++slot) {
 	 assert(mrf < max_usable_mrf);
 
-	 emit(MOV(brw_message_reg(mrf++), src_reg(output_reg[attr])));
+         emit_urb_slot(mrf++, c->vue_map.slot_to_vert_result[slot]);
       }
 
       inst = emit(VS_OPCODE_URB_WRITE);
