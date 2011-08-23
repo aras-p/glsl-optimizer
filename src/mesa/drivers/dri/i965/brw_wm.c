@@ -246,7 +246,7 @@ bool do_wm_prog(struct brw_context *brw,
    if (c->last_scratch) {
       c->prog_data.total_scratch = brw_get_scratch_size(c->last_scratch);
 
-      brw_get_scratch_bo(intel, &brw->vs.scratch_bo,
+      brw_get_scratch_bo(intel, &brw->wm.scratch_bo,
 			 c->prog_data.total_scratch * brw->wm_max_threads);
    }
 
