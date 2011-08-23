@@ -4,6 +4,7 @@
 #include "xorg_exa_tgsi.h"
 
 #include "cso_cache/cso_context.h"
+#include "util/u_format.h"
 #include "util/u_sampler.h"
 
 
@@ -52,18 +53,17 @@ static const struct xorg_composite_blend xorg_blends[] = {
 
 
 static INLINE void
-pixel_to_float4(Pixel pixel, float *color)
+pixel_to_float4(Pixel pixel, float *color, enum pipe_format format)
 {
-   CARD32	    r, g, b, a;
+   const struct util_format_description *format_desc;
+   uint8_t packed[4];
 
-   a = (pixel >> 24) & 0xff;
-   r = (pixel >> 16) & 0xff;
-   g = (pixel >>  8) & 0xff;
-   b = (pixel >>  0) & 0xff;
-   color[0] = ((float)r) / 255.;
-   color[1] = ((float)g) / 255.;
-   color[2] = ((float)b) / 255.;
-   color[3] = ((float)a) / 255.;
+   format_desc = util_format_description(format);
+   packed[0] = pixel;
+   packed[1] = pixel >> 8;
+   packed[2] = pixel >> 16;
+   packed[3] = pixel >> 24;
+   format_desc->unpack_rgba_float(color, 0, packed, 0, 1, 1);
 }
 
 static boolean
@@ -311,7 +311,7 @@ bind_shaders(struct exa_context *exa, int op,
             vs_traits |= VS_SOLID_FILL;
             debug_assert(pSrcPicture->format == PICT_a8r8g8b8);
             pixel_to_float4(pSrcPicture->pSourcePict->solidFill.color,
-                            exa->solid_color);
+                            exa->solid_color, PIPE_FORMAT_B8G8R8A8_UNORM);
             exa->has_solid_color = TRUE;
          } else {
             debug_assert("!gradients not supported");
@@ -533,7 +533,7 @@ boolean xorg_solid_bind_state(struct exa_context *exa,
    unsigned vs_traits, fs_traits;
    struct xorg_shader shader;
 
-   pixel_to_float4(fg, exa->solid_color);
+   pixel_to_float4(fg, exa->solid_color, pixmap->tex->format);
    exa->has_solid_color = TRUE;
 
 #if 0
