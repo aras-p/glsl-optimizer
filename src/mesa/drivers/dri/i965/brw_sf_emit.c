@@ -43,6 +43,18 @@
 #include "brw_sf.h"
 
 
+/**
+ * Determine the vert_result corresponding to the given half of the given
+ * register.  half=0 means the first half of a register, half=1 means the
+ * second half.
+ */
+static inline int vert_reg_to_vert_result(struct brw_sf_compile *c, GLuint reg,
+                                          int half)
+{
+   int vue_slot = (reg + c->urb_entry_read_offset) * 2 + half;
+   return c->vue_map.slot_to_vert_result[vue_slot];
+}
+
 static struct brw_reg get_vert_attr(struct brw_sf_compile *c,
 				    struct brw_reg vert,
 				    GLuint attr)
@@ -359,22 +371,20 @@ static GLboolean calculate_masks( struct brw_sf_compile *c,
 static uint16_t
 calculate_point_sprite_mask(struct brw_sf_compile *c, GLuint reg)
 {
-   int attr1, attr2;
+   int vert_result1, vert_result2;
    uint16_t pc = 0;
 
-   attr1 = c->idx_to_attr[reg * 2];
-   if (attr1 >= VERT_RESULT_TEX0 && attr1 <= VERT_RESULT_TEX7) {
-      if (c->key.point_sprite_coord_replace & (1 << (attr1 - VERT_RESULT_TEX0)))
+   vert_result1 = vert_reg_to_vert_result(c, reg, 0);
+   if (vert_result1 >= VERT_RESULT_TEX0 && vert_result1 <= VERT_RESULT_TEX7) {
+      if (c->key.point_sprite_coord_replace & (1 << (vert_result1 - VERT_RESULT_TEX0)))
 	 pc |= 0x0f;
    }
 
-   if (reg * 2 + 1 < c->nr_setup_attrs) {
-       attr2 = c->idx_to_attr[reg * 2 + 1];
-       if (attr2 >= VERT_RESULT_TEX0 && attr2 <= VERT_RESULT_TEX7) {
-	  if (c->key.point_sprite_coord_replace & (1 << (attr2 -
-							 VERT_RESULT_TEX0)))
-	     pc |= 0xf0;
-       }
+   vert_result2 = vert_reg_to_vert_result(c, reg, 1);
+   if (vert_result2 >= VERT_RESULT_TEX0 && vert_result2 <= VERT_RESULT_TEX7) {
+      if (c->key.point_sprite_coord_replace & (1 << (vert_result2 -
+                                                     VERT_RESULT_TEX0)))
+         pc |= 0xf0;
    }
 
    return pc;
