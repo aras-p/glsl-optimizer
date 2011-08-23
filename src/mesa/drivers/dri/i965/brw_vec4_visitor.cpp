@@ -1721,13 +1721,12 @@ vec4_visitor::emit_ndc_computation()
    emit(MUL(ndc_xyz, pos, src_reg(ndc_w)));
 }
 
-int
-vec4_visitor::emit_vue_header_gen4(int header_mrf)
+void
+vec4_visitor::emit_psiz_and_flags(struct brw_reg reg)
 {
-   emit_ndc_computation();
-
-   if ((c->prog_data.outputs_written & BITFIELD64_BIT(VERT_RESULT_PSIZ)) ||
-       c->key.nr_userclip || brw->has_negative_rhw_bug) {
+   if (intel->gen < 6 &&
+       ((c->prog_data.outputs_written & BITFIELD64_BIT(VERT_RESULT_PSIZ)) ||
+        c->key.nr_userclip || brw->has_negative_rhw_bug)) {
       dst_reg header1 = dst_reg(this, glsl_type::uvec4_type);
       GLuint i;
 
@@ -1778,11 +1777,24 @@ vec4_visitor::emit_vue_header_gen4(int header_mrf)
       }
 
       header1.writemask = WRITEMASK_XYZW;
-      emit(MOV(brw_message_reg(header_mrf++), src_reg(header1)));
+      emit(MOV(reg, src_reg(header1)));
+   } else if (intel->gen < 6) {
+      emit(MOV(retype(reg, BRW_REGISTER_TYPE_UD), 0u));
    } else {
-      emit(MOV(retype(brw_message_reg(header_mrf++),
-		      BRW_REGISTER_TYPE_UD), 0u));
+      emit(MOV(retype(reg, BRW_REGISTER_TYPE_D), src_reg(0)));
+      if (c->prog_data.outputs_written & BITFIELD64_BIT(VERT_RESULT_PSIZ)) {
+         emit(MOV(brw_writemask(reg, WRITEMASK_W),
+                  src_reg(output_reg[VERT_RESULT_PSIZ])));
+      }
    }
+}
+
+int
+vec4_visitor::emit_vue_header_gen4(int header_mrf)
+{
+   emit_ndc_computation();
+
+   emit_psiz_and_flags(brw_message_reg(header_mrf++));
 
    if (intel->gen == 5) {
       /* There are 20 DWs (D0-D19) in VUE header on Ironlake:
@@ -1828,8 +1840,6 @@ vec4_visitor::emit_vue_header_gen4(int header_mrf)
 int
 vec4_visitor::emit_vue_header_gen6(int header_mrf)
 {
-   struct brw_reg reg;
-
    /* There are 8 or 16 DWs (D0-D15) in VUE header on Sandybridge:
     * dword 0-3 (m2) of the header is indices, point width, clip flags.
     * dword 4-7 (m3) is the 4D space position
@@ -1840,12 +1850,7 @@ vec4_visitor::emit_vue_header_gen6(int header_mrf)
     */
 
    current_annotation = "indices, point width, clip flags";
-   reg = brw_message_reg(header_mrf++);
-   emit(MOV(retype(reg, BRW_REGISTER_TYPE_D), src_reg(0)));
-   if (c->prog_data.outputs_written & BITFIELD64_BIT(VERT_RESULT_PSIZ)) {
-      emit(MOV(brw_writemask(reg, WRITEMASK_W),
-	       src_reg(output_reg[VERT_RESULT_PSIZ])));
-   }
+   emit_psiz_and_flags(brw_message_reg(header_mrf++));
 
    current_annotation = "gl_Position";
    emit(MOV(brw_message_reg(header_mrf++),
