@@ -2202,6 +2202,13 @@ vec4_visitor::move_uniform_array_access_to_pull_constants()
 	 inst->src[i].reladdr = NULL;
       }
    }
+
+   /* Now there are no accesses of the UNIFORM file with a reladdr, so
+    * no need to track them as larger-than-vec4 objects.  This will be
+    * relied on in cutting out unused uniform vectors from push
+    * constants.
+    */
+   split_uniform_registers();
 }
 
 vec4_visitor::vec4_visitor(struct brw_vs_compile *c,

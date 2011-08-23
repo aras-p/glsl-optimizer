@@ -158,4 +158,34 @@ vec4_visitor::dead_code_eliminate()
    return progress;
 }
 
+void
+vec4_visitor::split_uniform_registers()
+{
+   /* Prior to this, uniforms have been in an array sized according to
+    * the number of vector uniforms present, sparsely filled (so an
+    * aggregate results in reg indices being skipped over).  Now we're
+    * going to cut those aggregates up so each .reg index is one
+    * vector.  The goal is to make elimination of unused uniform
+    * components easier later.
+    */
+   foreach_list(node, &this->instructions) {
+      vec4_instruction *inst = (vec4_instruction *)node;
+
+      for (int i = 0 ; i < 3; i++) {
+	 if (inst->src[i].file != UNIFORM)
+	    continue;
+
+	 assert(!inst->src[i].reladdr);
+
+	 inst->src[i].reg += inst->src[i].reg_offset;
+	 inst->src[i].reg_offset = 0;
+      }
+   }
+
+   /* Update that everything is now vector-sized. */
+   for (int i = 0; i < this->uniforms; i++) {
+      this->uniform_size[i] = 1;
+   }
+}
+
 } /* namespace brw */
