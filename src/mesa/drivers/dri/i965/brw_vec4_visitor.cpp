@@ -1898,6 +1898,12 @@ vec4_visitor::emit_urb_writes()
     */
    int max_usable_mrf = 13;
 
+   /* The following assertion verifies that max_usable_mrf causes an
+    * even-numbered amount of URB write data, which will meet gen6's
+    * requirements for length alignment.
+    */
+   assert ((max_usable_mrf - base_mrf) % 2 == 0);
+
    /* FINISHME: edgeflag */
 
    brw_compute_vue_map(&c->vue_map, intel, c->key.nr_userclip,
@@ -1917,10 +1923,8 @@ vec4_visitor::emit_urb_writes()
    for (slot = 0; slot < c->vue_map.num_slots; ++slot) {
       emit_urb_slot(mrf++, c->vue_map.slot_to_vert_result[slot]);
 
-      /* If this was MRF 15, we can't fit anything more into this URB
-       * WRITE.  Note that base_mrf of 1 means that MRF 15 is an
-       * even-numbered amount of URB write data, which will meet
-       * gen6's requirements for length alignment.
+      /* If this was max_usable_mrf, we can't fit anything more into this URB
+       * WRITE.
        */
       if (mrf > max_usable_mrf) {
 	 slot++;
