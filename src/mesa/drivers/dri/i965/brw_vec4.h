@@ -463,6 +463,7 @@ public:
    void emit_math2_gen4(enum opcode opcode, dst_reg dst, src_reg src0, src_reg src1);
    void emit_math(enum opcode opcode, dst_reg dst, src_reg src0, src_reg src1);
 
+   void emit_ndc_computation();
    int emit_vue_header_gen6(int header_mrf);
    int emit_vue_header_gen4(int header_mrf);
    void emit_urb_writes(void);

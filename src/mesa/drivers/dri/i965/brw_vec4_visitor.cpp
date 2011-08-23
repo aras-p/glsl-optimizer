@@ -1698,8 +1698,8 @@ vec4_visitor::visit(ir_if *ir)
    emit(BRW_OPCODE_ENDIF);
 }
 
-int
-vec4_visitor::emit_vue_header_gen4(int header_mrf)
+void
+vec4_visitor::emit_ndc_computation()
 {
    /* Get the position */
    src_reg pos = src_reg(output_reg[VERT_RESULT_HPOS]);
@@ -1719,6 +1719,12 @@ vec4_visitor::emit_vue_header_gen4(int header_mrf)
    ndc_xyz.writemask = WRITEMASK_XYZ;
 
    emit(MUL(ndc_xyz, pos, src_reg(ndc_w)));
+}
+
+int
+vec4_visitor::emit_vue_header_gen4(int header_mrf)
+{
+   emit_ndc_computation();
 
    if ((c->prog_data.outputs_written & BITFIELD64_BIT(VERT_RESULT_PSIZ)) ||
        c->key.nr_userclip || brw->has_negative_rhw_bug) {
