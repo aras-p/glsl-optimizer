@@ -35,6 +35,7 @@
 #include "brw_state.h"
 #include "brw_defines.h"
 #include "main/macros.h"
+#include "brw_sf.h"
 
 static void upload_sf_vp(struct brw_context *brw)
 {
@@ -121,6 +122,19 @@ const struct brw_tracked_state brw_sf_vp = {
    .prepare = upload_sf_vp
 };
 
+/**
+ * Compute the offset within the URB (expressed in 256-bit register
+ * increments) that should be used to read the VUE in th efragment shader.
+ */
+int
+brw_sf_compute_urb_entry_read_offset(struct intel_context *intel)
+{
+   if (intel->gen == 5)
+      return 3;
+   else
+      return 1;
+}
+
 static void upload_sf_unit( struct brw_context *brw )
 {
    struct intel_context *intel = &brw->intel;
@@ -148,10 +162,8 @@ static void upload_sf_unit( struct brw_context *brw )
 
    sf->thread3.dispatch_grf_start_reg = 3;
 
-   if (intel->gen == 5)
-       sf->thread3.urb_entry_read_offset = 3;
-   else
-       sf->thread3.urb_entry_read_offset = 1;
+   sf->thread3.urb_entry_read_offset =
+      brw_sf_compute_urb_entry_read_offset(intel);
 
    /* CACHE_NEW_SF_PROG */
    sf->thread3.urb_entry_read_length = brw->sf.prog_data->urb_read_length;
