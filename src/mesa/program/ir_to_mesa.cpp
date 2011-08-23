@@ -312,11 +312,11 @@ public:
    void emit_scs(ir_instruction *ir, enum prog_opcode op,
 		 dst_reg dst, const src_reg &src);
 
-   GLboolean try_emit_mad(ir_expression *ir,
+   bool try_emit_mad(ir_expression *ir,
 			  int mul_operand);
    bool try_emit_mad_for_and_not(ir_expression *ir,
 				 int mul_operand);
-   GLboolean try_emit_sat(ir_expression *ir);
+   bool try_emit_sat(ir_expression *ir);
 
    void emit_swz(ir_expression *ir);
 
@@ -871,7 +871,7 @@ ir_to_mesa_visitor::visit(ir_function *ir)
    }
 }
 
-GLboolean
+bool
 ir_to_mesa_visitor::try_emit_mad(ir_expression *ir, int mul_operand)
 {
    int nonmul_operand = 1 - mul_operand;
@@ -934,7 +934,7 @@ ir_to_mesa_visitor::try_emit_mad_for_and_not(ir_expression *ir, int try_operand)
    return true;
 }
 
-GLboolean
+bool
 ir_to_mesa_visitor::try_emit_sat(ir_expression *ir)
 {
    /* Saturates were only introduced to vertex programs in
