@@ -666,6 +666,18 @@ vec4_visitor::visit(ir_variable *ir)
    switch (ir->mode) {
    case ir_var_in:
       reg = new(mem_ctx) dst_reg(ATTR, ir->location);
+
+      /* Do GL_FIXED rescaling for GLES2.0.  Our GL_FIXED attributes
+       * come in as floating point conversions of the integer values.
+       */
+      for (int i = ir->location; i < ir->location + type_size(ir->type); i++) {
+	 if (!c->key.gl_fixed_input_size[i])
+	    continue;
+
+	 dst_reg dst = *reg;
+	 dst.writemask = (1 << c->key.gl_fixed_input_size[i]) - 1;
+	 emit(BRW_OPCODE_MUL, dst, src_reg(dst), src_reg(1.0f / 65536.0f));
+      }
       break;
 
    case ir_var_out:

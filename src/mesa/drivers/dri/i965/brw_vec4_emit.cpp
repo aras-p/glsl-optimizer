@@ -42,23 +42,22 @@ vec4_visitor::setup_attributes(int payload_reg)
       if (prog_data->inputs_read & BITFIELD64_BIT(i)) {
 	 attribute_map[i] = payload_reg + nr_attributes;
 	 nr_attributes++;
-
-	 /* Do GL_FIXED rescaling for GLES2.0.  Our GL_FIXED
-	  * attributes come in as floating point conversions of the
-	  * integer values.
-	  */
-	 if (c->key.gl_fixed_input_size[i] != 0) {
-	    struct brw_reg reg = brw_vec8_grf(attribute_map[i], 0);
-
-	    brw_MUL(p,
-		    brw_writemask(reg, (1 << c->key.gl_fixed_input_size[i]) - 1),
-		    reg, brw_imm_f(1.0 / 65536.0));
-	 }
       }
    }
 
    foreach_list(node, &this->instructions) {
       vec4_instruction *inst = (vec4_instruction *)node;
+
+      /* We have to support ATTR as a destination for GL_FIXED fixup. */
+      if (inst->dst.file == ATTR) {
+	 int grf = attribute_map[inst->dst.reg + inst->dst.reg_offset];
+
+	 struct brw_reg reg = brw_vec8_grf(grf, 0);
+	 reg.dw1.bits.writemask = inst->dst.writemask;
+
+	 inst->dst.file = HW_REG;
+	 inst->dst.fixed_hw_reg = reg;
+      }
 
       for (int i = 0; i < 3; i++) {
 	 if (inst->src[i].file != ATTR)
@@ -625,7 +624,7 @@ vec4_visitor::run()
 void
 vec4_visitor::generate_code()
 {
-   int last_native_inst = p->nr_insn;
+   int last_native_inst = 0;
    const char *last_annotation_string = NULL;
    ir_instruction *last_annotation_ir = NULL;
 
