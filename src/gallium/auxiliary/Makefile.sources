@@ -88,6 +88,7 @@ C_SOURCES := \
 	translate/translate_sse.c \
 	util/u_debug.c \
 	util/u_debug_describe.c \
+	util/u_debug_memory.c \
 	util/u_debug_refcnt.c \
 	util/u_debug_stack.c \
 	util/u_debug_symbol.c \
