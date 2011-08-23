@@ -108,7 +108,6 @@ intelInitExtensions(struct gl_context *ctx)
    ctx->Extensions.NV_texture_rectangle = true;
    ctx->Extensions.NV_vertex_program = true;
    ctx->Extensions.NV_vertex_program1_1 = true;
-   ctx->Extensions.SGIS_texture_edge_clamp = true;
    ctx->Extensions.TDFX_texture_compression_FXT1 = true;
 #if FEATURE_OES_EGL_image
    ctx->Extensions.OES_EGL_image = true;

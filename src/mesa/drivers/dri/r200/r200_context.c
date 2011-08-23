@@ -386,7 +386,6 @@ GLboolean r200CreateContext( gl_api api,
 #if FEATURE_OES_EGL_image
    ctx->Extensions.OES_EGL_image = true;
 #endif
-   ctx->Extensions.SGIS_texture_edge_clamp = true;
 
    ctx->Extensions.EXT_framebuffer_object =
       rmesa->radeon.radeonScreen->kernel_mm;

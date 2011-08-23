@@ -406,7 +406,6 @@ static void r300InitGLExtensions(struct gl_context *ctx)
 #if FEATURE_OES_EGL_image
 	ctx->Extensions.OES_EGL_image = true;
 #endif
-	ctx->Extensions.SGIS_texture_edge_clamp = true;
 
 	if (r300->radeon.radeonScreen->kernel_mm) {
 		ctx->Extensions.EXT_framebuffer_blit = true;

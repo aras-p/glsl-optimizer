@@ -306,7 +306,6 @@ static void r600InitGLExtensions(struct gl_context *ctx)
 #if FEATURE_OES_EGL_image
 	ctx->Extensions.OES_EGL_image = true;
 #endif
-	ctx->Extensions.SGIS_texture_edge_clamp = true;
 
 	if (r600->radeon.radeonScreen->kernel_mm)
 		ctx->Extensions.EXT_framebuffer_object = true;
