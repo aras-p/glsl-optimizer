@@ -188,4 +188,93 @@ vec4_visitor::split_uniform_registers()
    }
 }
 
+void
+vec4_visitor::pack_uniform_registers()
+{
+   bool uniform_used[this->uniforms];
+   int new_loc[this->uniforms];
+   int new_chan[this->uniforms];
+
+   memset(uniform_used, 0, sizeof(uniform_used));
+   memset(new_loc, 0, sizeof(new_loc));
+   memset(new_chan, 0, sizeof(new_chan));
+
+   /* Find which uniform vectors are actually used by the program.  We
+    * expect unused vector elements when we've moved array access out
+    * to pull constants, and from some GLSL code generators like wine.
+    */
+   foreach_list(node, &this->instructions) {
+      vec4_instruction *inst = (vec4_instruction *)node;
+
+      for (int i = 0 ; i < 3; i++) {
+	 if (inst->src[i].file != UNIFORM)
+	    continue;
+
+	 uniform_used[inst->src[i].reg] = true;
+      }
+   }
+
+   int new_uniform_count = 0;
+
+   /* Now, figure out a packing of the live uniform vectors into our
+    * push constants.
+    */
+   for (int src = 0; src < uniforms; src++) {
+      int size = this->uniform_vector_size[src];
+
+      if (!uniform_used[src]) {
+	 this->uniform_vector_size[src] = 0;
+	 continue;
+      }
+
+      int dst;
+      /* Find the lowest place we can slot this uniform in. */
+      for (dst = 0; dst < src; dst++) {
+	 if (this->uniform_vector_size[dst] + size <= 4)
+	    break;
+      }
+
+      if (src == dst) {
+	 new_loc[src] = dst;
+	 new_chan[src] = 0;
+      } else {
+	 new_loc[src] = dst;
+	 new_chan[src] = this->uniform_vector_size[dst];
+
+	 /* Move the references to the data */
+	 for (int j = 0; j < size; j++) {
+	    c->prog_data.param[dst * 4 + new_chan[src] + j] =
+	       c->prog_data.param[src * 4 + j];
+	 }
+
+	 this->uniform_vector_size[dst] += size;
+	 this->uniform_vector_size[src] = 0;
+      }
+
+      new_uniform_count = MAX2(new_uniform_count, dst + 1);
+   }
+
+   this->uniforms = new_uniform_count;
+
+   /* Now, update the instructions for our repacked uniforms. */
+   foreach_list(node, &this->instructions) {
+      vec4_instruction *inst = (vec4_instruction *)node;
+
+      for (int i = 0 ; i < 3; i++) {
+	 int src = inst->src[i].reg;
+
+	 if (inst->src[i].file != UNIFORM)
+	    continue;
+
+	 inst->src[i].reg = new_loc[src];
+
+	 int sx = BRW_GET_SWZ(inst->src[i].swizzle, 0) + new_chan[src];
+	 int sy = BRW_GET_SWZ(inst->src[i].swizzle, 1) + new_chan[src];
+	 int sz = BRW_GET_SWZ(inst->src[i].swizzle, 2) + new_chan[src];
+	 int sw = BRW_GET_SWZ(inst->src[i].swizzle, 3) + new_chan[src];
+	 inst->src[i].swizzle = BRW_SWIZZLE4(sx, sy, sz, sw);
+      }
+   }
+}
+
 } /* namespace brw */

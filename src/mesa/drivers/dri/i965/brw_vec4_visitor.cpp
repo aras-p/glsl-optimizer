@@ -136,6 +136,12 @@ vec4_visitor::emit_math1_gen6(enum opcode opcode, dst_reg dst, src_reg src)
    /* The gen6 math instruction ignores the source modifiers --
     * swizzle, abs, negate, and at least some parts of the register
     * region description.
+    *
+    * While it would seem that this MOV could be avoided at this point
+    * in the case that the swizzle is matched up with the destination
+    * writemask, note that uniform packing and register allocation
+    * could rearrange our swizzle, so let's leave this matter up to
+    * copy propagation later.
     */
    src_reg temp_src = src_reg(this, glsl_type::vec4_type);
    emit(BRW_OPCODE_MOV, dst_reg(temp_src), src);

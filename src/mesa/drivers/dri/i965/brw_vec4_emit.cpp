@@ -128,9 +128,6 @@ vec4_visitor::setup_uniforms(int reg)
       reg += ALIGN(uniforms, 2) / 2;
    }
 
-   /* for now, we are not doing any elimination of unused slots, nor
-    * are we packing our uniforms.
-    */
    c->prog_data.nr_params = this->uniforms * 4;
 
    c->prog_data.curb_read_length = reg - 1;
@@ -606,6 +603,8 @@ vec4_visitor::run()
       progress = false;
       progress = dead_code_eliminate() || progress;
    } while (progress);
+
+   pack_uniform_registers();
 
    if (failed)
       return false;

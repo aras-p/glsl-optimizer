@@ -389,6 +389,7 @@ public:
    void move_grf_array_access_to_scratch();
    void move_uniform_array_access_to_pull_constants();
    void split_uniform_registers();
+   void pack_uniform_registers();
    void calculate_live_intervals();
    bool dead_code_eliminate();
    bool virtual_grf_interferes(int a, int b);
