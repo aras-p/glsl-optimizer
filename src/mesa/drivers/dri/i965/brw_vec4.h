@@ -465,6 +465,7 @@ public:
 
    void emit_ndc_computation();
    void emit_psiz_and_flags(struct brw_reg reg);
+   void emit_clip_distances(struct brw_reg reg, int offset);
    int emit_vue_header_gen6(int header_mrf);
    int emit_vue_header_gen4(int header_mrf);
    void emit_urb_writes(void);
