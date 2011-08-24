@@ -39,9 +39,9 @@
 
 #define I915_PROGRAM_SIZE 192
 
-/* Use those indices for pos/face routing, must be >= I915_TEX_UNITS */
-#define I915_SEMANTIC_POS  10
-#define I915_SEMANTIC_FACE 11
+/* Use those indices for pos/face routing, must be >= num of inputs */
+#define I915_SEMANTIC_POS  100
+#define I915_SEMANTIC_FACE 101
 
 
 /**
