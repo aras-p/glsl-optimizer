@@ -91,7 +91,7 @@ ErrorMessageF(const char *f, ...)
  * directories specified by the \c LIBGL_DRIVERS_PATH environment variable in
  * order to find the driver.
  *
- * \param driverName - a name like "tdfx", "i810", "mga", etc.
+ * \param driverName - a name like "i965", "radeon", "nouveau", etc.
  *
  * \returns
  * A handle from \c dlopen, or \c NULL if driver file not found.

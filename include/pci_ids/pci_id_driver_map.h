@@ -7,14 +7,6 @@
 #define ARRAY_SIZE(a) (sizeof(a) / sizeof((a)[0]))
 #endif
 
-#if !defined(DRIVER_MAP_DRI2_ONLY) && !defined(DRIVER_MAP_GALLIUM_ONLY)
-static const int i810_chip_ids[] = {
-#define CHIPSET(chip, desc, misc) chip,
-#include "pci_ids/i810_pci_ids.h"
-#undef CHIPSET
-};
-#endif
-
 static const int i915_chip_ids[] = {
 #define CHIPSET(chip, desc, misc) chip,
 #include "pci_ids/i915_pci_ids.h"
@@ -59,9 +51,6 @@ static const struct {
    const int *chip_ids;
    int num_chips_ids;
 } driver_map[] = {
-#if !defined(DRIVER_MAP_DRI2_ONLY) && !defined(DRIVER_MAP_GALLIUM_ONLY)
-   { 0x8086, "i810", i810_chip_ids, ARRAY_SIZE(i810_chip_ids) },
-#endif
    { 0x8086, "i915", i915_chip_ids, ARRAY_SIZE(i915_chip_ids) },
    { 0x8086, "i965", i965_chip_ids, ARRAY_SIZE(i965_chip_ids) },
 #ifndef DRIVER_MAP_GALLIUM_ONLY

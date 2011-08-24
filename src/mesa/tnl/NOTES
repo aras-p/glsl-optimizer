@@ -50,8 +50,8 @@ rasterization hardware (or software).
 The default pipeline is specified in t_pipeline.c, and is usually a
 starting point for driver pipelines.  Some drivers will remove a stage
 where hardware provides support for the implemented operation (for
-instance fog where per-pixel hardware fog is available, as in the dri
-tdfx driver), or add stages to shortcircuit latter operations (for
+instance fog where per-pixel hardware fog is available),
+or add stages to shortcircuit latter operations (for
 example taking advantage of hardware support for strips and other
 higher-level primitives (for example the radeon driver).
 

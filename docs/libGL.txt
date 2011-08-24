@@ -33,7 +33,7 @@ When libGL.so initializes itself it uses the DRI to determine the
 appropriate hardware driver for each screen on the local X display.
 The hardware drivers are expected to be in the /usr/X11R6/lib/modules/dri/
 directory.  Drivers are named with the convention <name>_dri.so where
-<name> is a driver such as "tdfx", "i810", "gamma", etc.
+<name> is a driver such as "radeon", "i965", "nouveau", etc.
 
 The LIBGL_DRIVERS_DIR environment variable may be used to specify a
 different DRI modules directory, overriding /usr/X11R6/lib/modules/dri/.

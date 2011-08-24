@@ -94,7 +94,7 @@ static const struct glx_context_vtable dri_context_vtable;
 
 /*
  * Given a display pointer and screen number, determine the name of
- * the DRI driver for the screen. (I.e. "r128", "tdfx", etc).
+ * the DRI driver for the screen (i.e., "i965", "radeon", "nouveau", etc).
  * Return True for success, False for failure.
  */
 static Bool
@@ -384,7 +384,7 @@ CallCreateNewScreen(Display *dpy, int scrn, struct dri_screen *psc,
       goto handle_error;
    }
 
-   /* Get device name (like "tdfx") and the ddx version numbers.
+   /* Get device name (like "radeon") and the ddx version numbers.
     * We'll check the version in each DRI driver's "createNewScreen"
     * function. */
    if (!XF86DRIGetClientDriverName(dpy, scrn,

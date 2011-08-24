@@ -1161,25 +1161,20 @@ if test "x$enable_dri" = xyes; then
 
         case "$host_cpu" in
         x86_64)
-            # sis is missing because they have not be converted to use
-            # the new interface.  i810 are missing because there is no
-            # x86-64 system where they could *ever* be used.
             if test "x$DRI_DIRS" = "xyes"; then
-                DRI_DIRS="i915 i965 mach64 mga nouveau r128 r200 r300 r600 \
-                    radeon savage tdfx unichrome swrast"
+                DRI_DIRS="i915 i965 nouveau r200 r300 r600 radeon swrast"
             fi
             ;;
         powerpc*)
             # Build only the drivers for cards that exist on PowerPC.
-            # At some point MGA will be added, but not yet.
             if test "x$DRI_DIRS" = "xyes"; then
-                DRI_DIRS="mach64 r128 r200 r300 r600 radeon tdfx swrast"
+                DRI_DIRS="r200 r300 r600 radeon swrast"
             fi
             ;;
         sparc*)
-            # Build only the drivers for cards that exist on sparc`
+            # Build only the drivers for cards that exist on sparc
             if test "x$DRI_DIRS" = "xyes"; then
-                DRI_DIRS="mach64 r128 r200 r300 r600 radeon swrast"
+                DRI_DIRS="r200 r300 r600 radeon swrast"
             fi
             ;;
         esac
@@ -1189,8 +1184,7 @@ if test "x$enable_dri" = xyes; then
         DEFINES="$DEFINES -DIN_DRI_DRIVER -DHAVE_ALIAS"
 
         if test "x$DRI_DIRS" = "xyes"; then
-            DRI_DIRS="i810 i915 i965 mach64 mga nouveau r128 r200 r300 r600 \
-                radeon tdfx unichrome savage sis swrast"
+            DRI_DIRS="i915 i965 nouveau r200 r300 r600 radeon swrast"
         fi
         ;;
     gnu*)
@@ -1210,8 +1204,7 @@ if test "x$enable_dri" = xyes; then
 
     # default drivers
     if test "x$DRI_DIRS" = "xyes"; then
-        DRI_DIRS="i810 i915 i965 mach64 mga nouveau r128 r200 r300 r600 radeon \
-            savage sis tdfx unichrome swrast"
+        DRI_DIRS="i915 i965 nouveau r200 r300 r600 radeon swrast"
     fi
 
     DRI_DIRS=`echo "$DRI_DIRS" | $SED 's/  */ /g'`
