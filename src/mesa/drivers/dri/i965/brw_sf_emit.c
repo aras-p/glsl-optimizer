@@ -350,10 +350,10 @@ static GLboolean calculate_masks( struct brw_sf_compile *c,
    *pc_linear = 0;
    *pc = 0xf;
       
-   if (persp_mask & BITFIELD64_BIT(c->idx_to_attr[reg*2]))
+   if (persp_mask & BITFIELD64_BIT(vert_reg_to_vert_result(c, reg, 0)))
       *pc_persp = 0xf;
 
-   if (linear_mask & BITFIELD64_BIT(c->idx_to_attr[reg*2]))
+   if (linear_mask & BITFIELD64_BIT(vert_reg_to_vert_result(c, reg, 0)))
       *pc_linear = 0xf;
 
    /* Maybe only processs one attribute on the final round:
@@ -361,10 +361,10 @@ static GLboolean calculate_masks( struct brw_sf_compile *c,
    if (reg*2+1 < c->nr_setup_attrs) {
       *pc |= 0xf0;
 
-      if (persp_mask & BITFIELD64_BIT(c->idx_to_attr[reg*2+1]))
+      if (persp_mask & BITFIELD64_BIT(vert_reg_to_vert_result(c, reg, 1)))
 	 *pc_persp |= 0xf0;
 
-      if (linear_mask & BITFIELD64_BIT(c->idx_to_attr[reg*2+1]))
+      if (linear_mask & BITFIELD64_BIT(vert_reg_to_vert_result(c, reg, 1)))
 	 *pc_linear |= 0xf0;
    }
 
