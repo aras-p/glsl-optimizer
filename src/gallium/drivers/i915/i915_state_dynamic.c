@@ -268,8 +268,8 @@ static void upload_SCISSOR_RECT(struct i915_context *i915)
 {
    unsigned x1 = i915->scissor.minx;
    unsigned y1 = i915->scissor.miny;
-   unsigned x2 = i915->scissor.maxx;
-   unsigned y2 = i915->scissor.maxy;
+   unsigned x2 = i915->scissor.maxx - 1;
+   unsigned y2 = i915->scissor.maxy - 1;
    unsigned sc[3];
 
    sc[0] = _3DSTATE_SCISSOR_RECT_0_CMD;
