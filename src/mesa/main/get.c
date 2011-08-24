@@ -250,12 +250,6 @@ static const int extra_flush_current[] = {
    EXTRA_END
 };
 
-static const int extra_new_buffers_OES_read_format[] = {
-   EXTRA_NEW_BUFFERS,
-   EXT(OES_read_format),
-   EXTRA_END
-};
-
 static const int extra_EXT_secondary_color_flush_current[] = {
    EXT(EXT_secondary_color),
    EXTRA_FLUSH_CURRENT,
@@ -486,9 +480,9 @@ static const struct value_desc values[] = {
 
    /* GL_OES_read_format */
    { GL_IMPLEMENTATION_COLOR_READ_TYPE_OES, LOC_CUSTOM, TYPE_INT, 0,
-     extra_new_buffers_OES_read_format },
+     extra_new_buffers },
    { GL_IMPLEMENTATION_COLOR_READ_FORMAT_OES, LOC_CUSTOM, TYPE_INT, 0,
-     extra_new_buffers_OES_read_format },
+     extra_new_buffers },
 
    /* GL_EXT_framebuffer_object */
    { GL_FRAMEBUFFER_BINDING_EXT, BUFFER_INT(Name),

@@ -239,7 +239,7 @@ static const struct extension extension_table[] = {
    { "GL_OES_point_size_array",                    o(dummy_true),                                   ES1,       2004 },
    { "GL_OES_point_sprite",                        o(ARB_point_sprite),                             ES1,       2004 },
    { "GL_OES_query_matrix",                        o(dummy_true),                                   ES1,       2003 },
-   { "GL_OES_read_format",                         o(OES_read_format),                         GL | ES1,       2003 },
+   { "GL_OES_read_format",                         o(dummy_true),                              GL | ES1,       2003 },
    { "GL_OES_rgb8_rgba8",                          o(EXT_framebuffer_object),                       ES1 | ES2, 2005 },
    { "GL_OES_single_precision",                    o(dummy_true),                                   ES1,       2003 },
    { "GL_OES_standard_derivatives",                o(OES_standard_derivatives),                           ES2, 2005 },
@@ -354,7 +354,6 @@ static const size_t default_extensions[] = {
    o(EXT_separate_specular_color),
    o(EXT_texture3D),
 
-   o(OES_read_format),
    o(OES_standard_derivatives),
 
    /* Vendor Extensions */
