@@ -55,12 +55,17 @@ static inline int vert_reg_to_vert_result(struct brw_sf_compile *c, GLuint reg,
    return c->vue_map.slot_to_vert_result[vue_slot];
 }
 
-static struct brw_reg get_vert_attr(struct brw_sf_compile *c,
-				    struct brw_reg vert,
-				    GLuint attr)
+/**
+ * Determine the register corresponding to the given vert_result.
+ */
+static struct brw_reg get_vert_result(struct brw_sf_compile *c,
+                                      struct brw_reg vert,
+                                      GLuint vert_result)
 {
-   GLuint off = c->attr_to_idx[attr] / 2;
-   GLuint sub = c->attr_to_idx[attr] % 2;
+   int vue_slot = c->vue_map.vert_result_to_slot[vert_result];
+   assert (vue_slot >= c->urb_entry_read_offset);
+   GLuint off = vue_slot / 2 - c->urb_entry_read_offset;
+   GLuint sub = vue_slot % 2;
 
    return brw_vec4_grf(vert.nr + off, sub * 4);
 }
@@ -84,8 +89,8 @@ static void copy_bfc( struct brw_sf_compile *c,
       if (have_attr(c, VERT_RESULT_COL0+i) &&
 	  have_attr(c, VERT_RESULT_BFC0+i))
 	 brw_MOV(p, 
-		 get_vert_attr(c, vert, VERT_RESULT_COL0+i), 
-		 get_vert_attr(c, vert, VERT_RESULT_BFC0+i));
+		 get_vert_result(c, vert, VERT_RESULT_COL0+i),
+		 get_vert_result(c, vert, VERT_RESULT_BFC0+i));
    }
 }
 
@@ -146,8 +151,8 @@ static void copy_colors( struct brw_sf_compile *c,
    for (i = VERT_RESULT_COL0; i <= VERT_RESULT_COL1; i++) {
       if (have_attr(c,i))
 	 brw_MOV(p, 
-		 get_vert_attr(c, dst, i), 
-		 get_vert_attr(c, src, i));
+		 get_vert_result(c, dst, i),
+		 get_vert_result(c, src, i));
    }
 }
 
