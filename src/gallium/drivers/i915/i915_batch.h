@@ -64,11 +64,16 @@ static INLINE void i915_flush_heuristically(struct i915_context* i915,
                                             int num_vertex)
 {
    struct i915_winsys *iws = i915->iws;
-   i915->vertices_since_last_flush += num_vertex;
-   if ( i915->vertices_since_last_flush > 4096
-      || ( i915->vertices_since_last_flush > 256 &&
-           !iws->buffer_is_busy(iws, i915->current.cbuf_bo)) )
+
+   i915->queued_vertices += num_vertex;
+
+   /* fire if we have more than 1/20th of the last frame's vertices */
+   if (i915->queued_vertices > i915->last_fired_vertices / 20) {
       FLUSH_BATCH(NULL);
+      i915->fired_vertices += i915->queued_vertices;
+      i915->queued_vertices = 0;
+      return;
+   }
 }
 
 

@@ -264,7 +264,10 @@ struct i915_context {
    struct util_slab_mempool transfer_pool;
    struct util_slab_mempool texture_transfer_pool;
 
-   int vertices_since_last_flush;
+   /* state for tracking flushes */
+   int last_fired_vertices;
+   int fired_vertices;
+   int queued_vertices;
 
    /** blitter/hw-clear */
    struct blitter_context* blitter;

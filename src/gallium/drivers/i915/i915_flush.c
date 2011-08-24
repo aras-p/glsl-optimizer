@@ -77,5 +77,6 @@ void i915_flush(struct i915_context *i915, struct pipe_fence_handle **fence)
    i915->static_dirty = ~0;
    /* kernel emits flushes in between batchbuffers */
    i915->flush_dirty = 0;
-   i915->vertices_since_last_flush = 0;
+   i915->fired_vertices += i915->queued_vertices;
+   i915->queued_vertices = 0;
 }

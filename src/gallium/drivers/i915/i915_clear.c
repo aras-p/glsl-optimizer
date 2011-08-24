@@ -125,6 +125,9 @@ i915_clear_emit(struct pipe_context *pipe, unsigned buffers, const float *rgba,
     * This is not required, just a heuristic
     */
    FLUSH_BATCH(NULL);
+
+   i915->last_fired_vertices = i915->fired_vertices;
+   i915->fired_vertices = 0;
 }
 
 /**
