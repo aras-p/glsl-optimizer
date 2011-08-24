@@ -25,116 +25,147 @@
  *
  **************************************************************************/
 
-/**
- * This file is based uppon slice_xvmc.c and vlc.h from the xine project,
- * which in turn is based on mpeg2dec. The following is the original copyright:
- *
- * Copyright (C) 2000-2002 Michel Lespinasse <walken@zoy.org>
- * Copyright (C) 1999-2000 Aaron Holtzman <aholtzma@ess.engr.uvic.ca>
- *
- * This file is part of mpeg2dec, a free MPEG-2 video stream decoder.
- * See http://libmpeg2.sourceforge.net/ for updates.
- *
- * mpeg2dec is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation; either version 2 of the License, or
- * (at your option) any later version.
- *
- * mpeg2dec is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program; if not, write to the Free Software
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
- */
-
 #ifndef vl_vlc_h
 #define vl_vlc_h
 
-#include "pipe/p_compiler.h"
+#include <assert.h>
+
+#include <pipe/p_compiler.h>
+
+#include <util/u_math.h>
 
 struct vl_vlc
 {
-   uint32_t buf; /* current 32 bit working set of buffer */
-   int bits;     /* used bits in working set */
-   const uint8_t *ptr; /* buffer with stream data */
-   const uint8_t *max; /* ptr+len of buffer */
+   uint64_t buffer;
+   unsigned valid_bits;
+   uint32_t *data;
+   uint32_t *end;
+};
+
+struct vl_vlc_entry
+{
+   int8_t length;
+   int8_t value;
+};
+
+struct vl_vlc_compressed
+{
+   uint16_t bitcode;
+   struct vl_vlc_entry entry;
 };
 
 static INLINE void
-vl_vlc_restart(struct vl_vlc *vlc)
+vl_vlc_init_table(struct vl_vlc_entry *dst, unsigned dst_size, const struct vl_vlc_compressed *src, unsigned src_size)
 {
-   vlc->buf = (vlc->ptr[0] << 24) | (vlc->ptr[1] << 16) | (vlc->ptr[2] << 8) | vlc->ptr[3];
-   vlc->bits = -16;
-   vlc->ptr += 4;
+   unsigned i, bits = util_logbase2(dst_size);
+
+   for (i=0;i<dst_size;++i) {
+      dst[i].length = 0;
+      dst[i].value = 0;
+   }
+
+   for(; src_size > 0; --src_size, ++src) {
+      for(i=0; i<(1 << (bits - src->entry.length)); ++i)
+         dst[src->bitcode >> (16 - bits) | i] = src->entry;
+   }
+}
+
+static INLINE void
+vl_vlc_fillbits(struct vl_vlc *vlc)
+{
+   if (vlc->valid_bits < 32) {
+      uint32_t value = *vlc->data;
+
+      //assert(vlc->data <= vlc->end);
+
+#ifndef PIPE_ARCH_BIG_ENDIAN
+      value = util_bswap32(value);
+#endif
+
+      vlc->buffer |= (uint64_t)value << (32 - vlc->valid_bits);
+      ++vlc->data;
+      vlc->valid_bits += 32;
+   }
 }
 
 static INLINE void
 vl_vlc_init(struct vl_vlc *vlc, const uint8_t *data, unsigned len)
 {
-   vlc->ptr = data;
-   vlc->max = data + len;
-   vl_vlc_restart(vlc);
+   assert(vlc);
+   assert(data && len);
+
+   vlc->buffer = 0;
+   vlc->valid_bits = 0;
+
+   /* align the data pointer */
+   while((uint64_t)data & 3) {
+      vlc->buffer |= (uint64_t)*data << (56 - vlc->valid_bits);
+      ++data;
+      --len;
+      vlc->valid_bits += 8;
+   }
+   vlc->data = (uint32_t*)data;
+   vlc->end = (uint32_t*)(data + len);
+
+   vl_vlc_fillbits(vlc);
+   vl_vlc_fillbits(vlc);
 }
 
-static INLINE bool
-vl_vlc_getbyte(struct vl_vlc *vlc)
+static INLINE unsigned
+vl_vlc_bytes_left(struct vl_vlc *vlc)
 {
-   vlc->buf <<= 8;
-   vlc->buf |= vlc->ptr[0];
-   vlc->ptr++;
-   return vlc->ptr < vlc->max;
+   return ((uint8_t*)vlc->end)-((uint8_t*)vlc->data);
 }
 
-#define vl_vlc_getword(vlc, shift)                                      \
-do {                                                                    \
-   (vlc)->buf |= (((vlc)->ptr[0] << 8) | (vlc)->ptr[1]) << (shift);     \
-   (vlc)->ptr += 2;                                                     \
-} while (0)
+static INLINE unsigned
+vl_vlc_peekbits(struct vl_vlc *vlc, unsigned num_bits)
+{
+   //assert(vlc->valid_bits >= num_bits);
 
-/* make sure that there are at least 16 valid bits in bit_buf */
-#define vl_vlc_needbits(vlc)                    \
-do {                                            \
-    if ((vlc)->bits >= 0) {                      \
-	vl_vlc_getword(vlc, (vlc)->bits);       \
-	(vlc)->bits -= 16;                      \
-    }                                           \
-} while (0)
+   return vlc->buffer >> (64 - num_bits);
+}
 
-/* make sure that the full 32 bit of the buffer are valid */
 static INLINE void
-vl_vlc_need32bits(struct vl_vlc *vlc)
+vl_vlc_eatbits(struct vl_vlc *vlc, unsigned num_bits)
 {
-   vl_vlc_needbits(vlc);
-   if (vlc->bits > -8) {
-      unsigned n = -vlc->bits;
-      vlc->buf <<= n;
-      vlc->buf |= *vlc->ptr << 8;
-      vlc->bits = -8;
-      vlc->ptr++;
-   }
-   if (vlc->bits > -16) {
-      unsigned n = -vlc->bits - 8;
-      vlc->buf <<= n;
-      vlc->buf |= *vlc->ptr;
-      vlc->bits = -16;
-      vlc->ptr++;
-   }
+   //assert(vlc->valid_bits > num_bits);
+
+   vlc->buffer <<= num_bits;
+   vlc->valid_bits -= num_bits;
 }
 
-/* remove num valid bits from bit_buf */
-#define vl_vlc_dumpbits(vlc, num)       \
-do {					\
-    (vlc)->buf <<= (num);		\
-    (vlc)->bits += (num);		\
-} while (0)
+static INLINE unsigned
+vl_vlc_get_uimsbf(struct vl_vlc *vlc, unsigned num_bits)
+{
+   unsigned value;
 
-/* take num bits from the high part of bit_buf and zero extend them */
-#define vl_vlc_ubits(vlc, num) (((uint32_t)((vlc)->buf)) >> (32 - (num)))
+   //assert(vlc->valid_bits >= num_bits);
 
-/* take num bits from the high part of bit_buf and sign extend them */
-#define vl_vlc_sbits(vlc, num) (((int32_t)((vlc)->buf)) >> (32 - (num)))
+   value = vlc->buffer >> (64 - num_bits);
+   vl_vlc_eatbits(vlc, num_bits);
+
+   return value;
+}
+
+static INLINE signed
+vl_vlc_get_simsbf(struct vl_vlc *vlc, unsigned num_bits)
+{
+   signed value;
+
+   //assert(vlc->valid_bits >= num_bits);
+
+   value = ((int64_t)vlc->buffer) >> (64 - num_bits);
+   vl_vlc_eatbits(vlc, num_bits);
+
+   return value;
+}
+
+static INLINE int8_t
+vl_vlc_get_vlclbf(struct vl_vlc *vlc, const struct vl_vlc_entry *tbl, unsigned num_bits)
+{
+   tbl += vl_vlc_peekbits(vlc, num_bits);
+   vl_vlc_eatbits(vlc, tbl->length);
+   return tbl->value;
+}
 
 #endif /* vl_vlc_h */

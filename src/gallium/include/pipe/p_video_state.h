@@ -44,6 +44,17 @@ struct pipe_video_rect
 };
 
 /*
+ * see table 6-12 in the spec
+ */
+enum pipe_mpeg12_picture_coding_type
+{
+   PIPE_MPEG12_PICTURE_CODING_TYPE_I = 0x01,
+   PIPE_MPEG12_PICTURE_CODING_TYPE_P = 0x02,
+   PIPE_MPEG12_PICTURE_CODING_TYPE_B = 0x03,
+   PIPE_MPEG12_PICTURE_CODING_TYPE_D = 0x04
+};
+
+/*
  * see table 6-14 in the spec
  */
 enum pipe_mpeg12_picture_structure

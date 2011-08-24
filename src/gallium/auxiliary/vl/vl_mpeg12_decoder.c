@@ -450,9 +450,7 @@ vl_mpeg12_create_buffer(struct pipe_video_decoder *decoder)
       goto error_zscan;
 
    if (dec->base.entrypoint == PIPE_VIDEO_ENTRYPOINT_BITSTREAM)
-      vl_mpg12_bs_init(&buffer->bs,
-                       dec->base.width / MACROBLOCK_WIDTH,
-                       dec->base.height / MACROBLOCK_HEIGHT);
+      vl_mpg12_bs_init(&buffer->bs, decoder);
 
    return buffer;
 
@@ -614,7 +612,7 @@ vl_mpeg12_begin_frame(struct pipe_video_decoder *decoder)
       buf->mv_stream[i] = vl_vb_get_mv_stream(&buf->vertex_stream, i);
 
    if (dec->base.entrypoint == PIPE_VIDEO_ENTRYPOINT_BITSTREAM) {
-      vl_mpg12_bs_set_buffers(&buf->bs, buf->ycbcr_stream, buf->texels, buf->mv_stream);
+      vl_mpg12_bs_set_picture_desc(&buf->bs, &dec->picture_desc);
 
    } else {
 
@@ -708,7 +706,7 @@ vl_mpeg12_decode_bitstream(struct pipe_video_decoder *decoder,
       vl_zscan_set_layout(&buf->zscan[i], dec->picture_desc.alternate_scan ?
                           dec->zscan_alternate : dec->zscan_normal);
 
-   vl_mpg12_bs_decode(&buf->bs, num_bytes, data, &dec->picture_desc, buf->num_ycbcr_blocks);
+   vl_mpg12_bs_decode(&buf->bs, num_bytes, data);
 }
 
 static void
