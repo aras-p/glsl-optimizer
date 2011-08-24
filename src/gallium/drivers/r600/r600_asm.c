@@ -787,7 +787,7 @@ static int replace_gpr_with_pv_ps(struct r600_bytecode *bc,
 		return r;
 
 	for (i = 0; i < max_slots; ++i) {
-		if(prev[i] && prev[i]->dst.write && !prev[i]->dst.rel) {
+		if (prev[i] && (prev[i]->dst.write || prev[i]->is_op3) && !prev[i]->dst.rel) {
 			gpr[i] = prev[i]->dst.sel;
 			/* cube writes more than PV.X */
 			if (!is_alu_cube_inst(bc, prev[i]) && is_alu_reduction_inst(bc, prev[i]))
