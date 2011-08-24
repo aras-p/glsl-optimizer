@@ -2963,36 +2963,6 @@ set_uniform_initializer(struct gl_context *ctx, void *mem_ctx,
    }
 }
 
-static void
-set_uniform_initializers(struct gl_context *ctx,
-        		 struct gl_shader_program *shader_program)
-{
-   void *mem_ctx = NULL;
-
-   for (unsigned int i = 0; i < MESA_SHADER_TYPES; i++) {
-      struct gl_shader *shader = shader_program->_LinkedShaders[i];
-
-      if (shader == NULL)
-         continue;
-
-      foreach_iter(exec_list_iterator, iter, *shader->ir) {
-         ir_instruction *ir = (ir_instruction *)iter.get();
-         ir_variable *var = ir->as_variable();
-
-         if (!var || var->mode != ir_var_uniform || !var->constant_value)
-            continue;
-
-         if (!mem_ctx)
-            mem_ctx = ralloc_context(NULL);
-
-         set_uniform_initializer(ctx, mem_ctx, shader_program, var->name,
-        			 var->type, var->constant_value);
-      }
-   }
-
-   ralloc_free(mem_ctx);
-}
-
 /*
  * Scan/rewrite program to remove reads of custom (output) registers.
  * The passed type has to be either PROGRAM_OUTPUT or PROGRAM_VARYING
@@ -5088,55 +5058,6 @@ st_link_shader(struct gl_context *ctx, struct gl_shader_program *prog)
    }
 
    return GL_TRUE;
-}
-
-
-/**
- * Link a GLSL shader program.  Called via glLinkProgram().
- */
-void
-st_glsl_link_shader(struct gl_context *ctx, struct gl_shader_program *prog)
-{
-   unsigned int i;
-
-   _mesa_clear_shader_program_data(ctx, prog);
-
-   prog->LinkStatus = GL_TRUE;
-
-   for (i = 0; i < prog->NumShaders; i++) {
-      if (!prog->Shaders[i]->CompileStatus) {
-         fail_link(prog, "linking with uncompiled shader");
-         prog->LinkStatus = GL_FALSE;
-      }
-   }
-
-   prog->Varying = _mesa_new_parameter_list();
-   _mesa_reference_vertprog(ctx, &prog->VertexProgram, NULL);
-   _mesa_reference_fragprog(ctx, &prog->FragmentProgram, NULL);
-   _mesa_reference_geomprog(ctx, &prog->GeometryProgram, NULL);
-
-   if (prog->LinkStatus) {
-      link_shaders(ctx, prog);
-   }
-
-   if (prog->LinkStatus) {
-      if (!ctx->Driver.LinkShader(ctx, prog)) {
-         prog->LinkStatus = GL_FALSE;
-      }
-   }
-
-   set_uniform_initializers(ctx, prog);
-
-   if (ctx->Shader.Flags & GLSL_DUMP) {
-      if (!prog->LinkStatus) {
-         printf("GLSL shader program %d failed to link\n", prog->Name);
-      }
-
-      if (prog->InfoLog && prog->InfoLog[0] != 0) {
-         printf("GLSL shader program %d info log:\n", prog->Name);
-         printf("%s\n", prog->InfoLog);
-      }
-   }
 }
 
 } /* extern "C" */
