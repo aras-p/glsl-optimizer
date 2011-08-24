@@ -334,14 +334,15 @@ static GLboolean calculate_masks( struct brw_sf_compile *c,
    GLbitfield64 linear_mask;
 
    if (c->key.do_flat_shading)
-      persp_mask = c->key.attrs & ~(FRAG_BIT_WPOS |
-                                    FRAG_BIT_COL0 |
-                                    FRAG_BIT_COL1);
+      persp_mask = c->key.attrs & ~(BITFIELD64_BIT(VERT_RESULT_HPOS) |
+                                    BITFIELD64_BIT(VERT_RESULT_COL0) |
+                                    BITFIELD64_BIT(VERT_RESULT_COL1));
    else
-      persp_mask = c->key.attrs & ~(FRAG_BIT_WPOS);
+      persp_mask = c->key.attrs & ~(BITFIELD64_BIT(VERT_RESULT_HPOS));
 
    if (c->key.do_flat_shading)
-      linear_mask = c->key.attrs & ~(FRAG_BIT_COL0|FRAG_BIT_COL1);
+      linear_mask = c->key.attrs & ~(BITFIELD64_BIT(VERT_RESULT_COL0) |
+                                     BITFIELD64_BIT(VERT_RESULT_COL1));
    else
       linear_mask = c->key.attrs;
 
