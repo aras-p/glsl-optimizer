@@ -63,6 +63,8 @@ void initialize_context_to_defaults(struct gl_context *ctx, gl_api api)
 
    ctx->API = api;
 
+   ctx->Extensions.dummy_false = false;
+   ctx->Extensions.dummy_true = true;
    ctx->Extensions.ARB_ES2_compatibility = true;
    ctx->Extensions.ARB_draw_buffers = true;
    ctx->Extensions.ARB_draw_instanced = true;
