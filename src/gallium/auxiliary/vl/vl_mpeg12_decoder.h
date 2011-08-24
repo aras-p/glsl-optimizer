@@ -55,7 +55,6 @@ struct vl_mpeg12_decoder
 
    struct pipe_vertex_buffer quads;
    struct pipe_vertex_buffer pos;
-   struct pipe_vertex_buffer block_num;
 
    void *ves_ycbcr;
    void *ves_mv;
@@ -87,17 +86,18 @@ struct vl_mpeg12_buffer
 {
    struct vl_vertex_buffer vertex_stream;
 
+   unsigned block_num;
    unsigned num_ycbcr_blocks[3];
 
-   struct pipe_video_buffer *zscan_source;
+   struct pipe_sampler_view *zscan_source;
 
    struct vl_mpg12_bs bs;
    struct vl_zscan_buffer zscan[VL_MAX_PLANES];
    struct vl_idct_buffer idct[VL_MAX_PLANES];
    struct vl_mc_buffer mc[VL_MAX_PLANES];
 
-   struct pipe_transfer *tex_transfer[VL_MAX_PLANES];
-   short *texels[VL_MAX_PLANES];
+   struct pipe_transfer *tex_transfer;
+   short *texels;
 
    struct vl_ycbcr_block *ycbcr_stream[VL_MAX_PLANES];
    struct vl_motionvector *mv_stream[VL_MAX_REF_FRAMES];

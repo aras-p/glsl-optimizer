@@ -85,6 +85,7 @@ struct vl_ycbcr_block
    uint8_t x, y;
    uint8_t intra;
    uint8_t coding;
+   float block_num;
 };
 
 struct vl_vertex_buffer
@@ -107,8 +108,6 @@ struct vl_vertex_buffer
 struct pipe_vertex_buffer vl_vb_upload_quads(struct pipe_context *pipe);
 
 struct pipe_vertex_buffer vl_vb_upload_pos(struct pipe_context *pipe, unsigned width, unsigned height);
-
-struct pipe_vertex_buffer vl_vb_upload_block_num(struct pipe_context *pipe, unsigned num_blocks);
 
 void *vl_vb_get_ves_ycbcr(struct pipe_context *pipe);
 

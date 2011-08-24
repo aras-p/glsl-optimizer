@@ -38,10 +38,11 @@ struct vl_mpg12_bs
 
    struct vl_vlc vlc;
 
+   unsigned block_num;
    unsigned *num_ycbcr_blocks;
 
    struct vl_ycbcr_block *ycbcr_stream[VL_MAX_PLANES];
-   short *ycbcr_buffer[VL_MAX_PLANES];
+   short *ycbcr_buffer;
 
    struct vl_motionvector *mv_stream[VL_MAX_REF_FRAMES];
 };
@@ -51,7 +52,7 @@ vl_mpg12_bs_init(struct vl_mpg12_bs *bs, unsigned width, unsigned height);
 
 void
 vl_mpg12_bs_set_buffers(struct vl_mpg12_bs *bs, struct vl_ycbcr_block *ycbcr_stream[VL_MAX_PLANES],
-                        short *ycbcr_buffer[VL_MAX_PLANES], struct vl_motionvector *mv_stream[VL_MAX_REF_FRAMES]);
+                        short *ycbcr_buffer, struct vl_motionvector *mv_stream[VL_MAX_REF_FRAMES]);
 
 void
 vl_mpg12_bs_decode(struct vl_mpg12_bs *bs, unsigned num_bytes, const void *buffer,

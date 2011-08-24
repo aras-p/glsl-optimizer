@@ -1199,6 +1199,7 @@ slice_intra_DCT(struct vl_mpg12_bs *bs, struct pipe_mpeg12_picture_desc * pictur
    bs->ycbcr_stream[cc]->y = y;
    bs->ycbcr_stream[cc]->intra = 1;
    bs->ycbcr_stream[cc]->coding = coding;
+   bs->ycbcr_stream[cc]->block_num = bs->block_num++;
 
    vl_vlc_needbits(&bs->vlc);
 
@@ -1218,11 +1219,11 @@ slice_intra_DCT(struct vl_mpg12_bs *bs, struct pipe_mpeg12_picture_desc * pictur
    else
       get_intra_block_B14(bs, quantizer_scale, dest);
 
-   memcpy(bs->ycbcr_buffer[cc], dest, sizeof(int16_t) * 64);
+   memcpy(bs->ycbcr_buffer, dest, sizeof(int16_t) * 64);
 
    bs->num_ycbcr_blocks[cc]++;
    bs->ycbcr_stream[cc]++;
-   bs->ycbcr_buffer[cc] += 64;
+   bs->ycbcr_buffer += 64;
 }
 
 static INLINE void
@@ -1235,6 +1236,7 @@ slice_non_intra_DCT(struct vl_mpg12_bs *bs, struct pipe_mpeg12_picture_desc * pi
    bs->ycbcr_stream[cc]->y = y;
    bs->ycbcr_stream[cc]->intra = 0;
    bs->ycbcr_stream[cc]->coding = coding;
+   bs->ycbcr_stream[cc]->block_num = bs->block_num++;
 
    memset(dest, 0, sizeof(int16_t) * 64);
    if (picture->base.profile == PIPE_VIDEO_PROFILE_MPEG1)
@@ -1242,11 +1244,11 @@ slice_non_intra_DCT(struct vl_mpg12_bs *bs, struct pipe_mpeg12_picture_desc * pi
    else
       get_non_intra_block(bs, quantizer_scale, dest);
 
-   memcpy(bs->ycbcr_buffer[cc], dest, sizeof(int16_t) * 64);
+   memcpy(bs->ycbcr_buffer, dest, sizeof(int16_t) * 64);
 
    bs->num_ycbcr_blocks[cc]++;
    bs->ycbcr_stream[cc]++;
-   bs->ycbcr_buffer[cc] += 64;
+   bs->ycbcr_buffer += 64;
 }
 
 static INLINE void
@@ -1788,7 +1790,7 @@ vl_mpg12_bs_init(struct vl_mpg12_bs *bs, unsigned width, unsigned height)
 
 void
 vl_mpg12_bs_set_buffers(struct vl_mpg12_bs *bs, struct vl_ycbcr_block *ycbcr_stream[VL_MAX_PLANES],
-                        short *ycbcr_buffer[VL_MAX_PLANES], struct vl_motionvector *mv_stream[VL_MAX_REF_FRAMES])
+                        short *ycbcr_buffer, struct vl_motionvector *mv_stream[VL_MAX_REF_FRAMES])
 {
    unsigned i;
 
@@ -1796,10 +1798,12 @@ vl_mpg12_bs_set_buffers(struct vl_mpg12_bs *bs, struct vl_ycbcr_block *ycbcr_str
    assert(ycbcr_stream && ycbcr_buffer);
    assert(mv_stream);
 
-   for (i = 0; i < VL_MAX_PLANES; ++i) {
+   bs->block_num = 0;
+
+   for (i = 0; i < VL_MAX_PLANES; ++i)
       bs->ycbcr_stream[i] = ycbcr_stream[i];
-      bs->ycbcr_buffer[i] = ycbcr_buffer[i];
-   }
+   bs->ycbcr_buffer = ycbcr_buffer;
+
    for (i = 0; i < VL_MAX_REF_FRAMES; ++i)
       bs->mv_stream[i] = mv_stream[i];
 
