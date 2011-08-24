@@ -52,14 +52,6 @@ typedef struct {
     * r200Renderbuffer class, derived from this class...  not a huge deal.
     */
    GLboolean depthHasSurface;
-
-   /**
-    * A handy flag to know if this is the back color buffer.
-    * 
-    * \note
-    * This is currently only used by tdfx.
-    */
-   GLboolean backBuffer;
 } driRenderbuffer;
 
 
