@@ -2426,16 +2426,18 @@ glsl_to_tgsi_visitor::visit(ir_texture *ir)
    glsl_to_tgsi_instruction *inst = NULL;
    unsigned opcode = TGSI_OPCODE_NOP;
 
-   ir->coordinate->accept(this);
+   if (ir->coordinate) {
+      ir->coordinate->accept(this);
 
-   /* Put our coords in a temp.  We'll need to modify them for shadow,
-    * projection, or LOD, so the only case we'd use it as is is if
-    * we're doing plain old texturing.  The optimization passes on
-    * glsl_to_tgsi_visitor should handle cleaning up our mess in that case.
-    */
-   coord = get_temp(glsl_type::vec4_type);
-   coord_dst = st_dst_reg(coord);
-   emit(ir, TGSI_OPCODE_MOV, coord_dst, this->result);
+      /* Put our coords in a temp.  We'll need to modify them for shadow,
+       * projection, or LOD, so the only case we'd use it as is is if
+       * we're doing plain old texturing.  The optimization passes on
+       * glsl_to_tgsi_visitor should handle cleaning up our mess in that case.
+       */
+      coord = get_temp(glsl_type::vec4_type);
+      coord_dst = st_dst_reg(coord);
+      emit(ir, TGSI_OPCODE_MOV, coord_dst, this->result);
+   }
 
    if (ir->projector) {
       ir->projector->accept(this);
@@ -2470,6 +2472,10 @@ glsl_to_tgsi_visitor::visit(ir_texture *ir)
       dy = this->result;
       break;
    case ir_txs:
+      opcode = TGSI_OPCODE_TXQ;
+      ir->lod_info.lod->accept(this);
+      lod_info = this->result;
+      break;
    case ir_txf: /* TODO: use TGSI_OPCODE_TXF here */
       assert(!"GLSL 1.30 features unsupported");
       break;
@@ -2544,6 +2550,8 @@ glsl_to_tgsi_visitor::visit(ir_texture *ir)
 
    if (opcode == TGSI_OPCODE_TXD)
       inst = emit(ir, opcode, result_dst, coord, dx, dy);
+   else if (opcode == TGSI_OPCODE_TXQ)
+      inst = emit(ir, opcode, result_dst, lod_info);
    else
       inst = emit(ir, opcode, result_dst, coord);
 
@@ -4276,6 +4284,7 @@ compile_tgsi_instruction(struct st_translate *t,
    case TGSI_OPCODE_TXD:
    case TGSI_OPCODE_TXL:
    case TGSI_OPCODE_TXP:
+   case TGSI_OPCODE_TXQ:
       src[num_src++] = t->samplers[inst->sampler];
       ureg_tex_insn(ureg,
                     inst->op,
