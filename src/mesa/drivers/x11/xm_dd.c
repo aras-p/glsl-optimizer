@@ -588,7 +588,7 @@ xmesa_DrawPixels_5R6G5B( struct gl_context *ctx,
                         "glDrawPixels(invalid PBO access)");
             return;
          }
-         buf = (GLubyte *) ctx->Driver.MapBufferRange(ctx, 0
+         buf = (GLubyte *) ctx->Driver.MapBufferRange(ctx, 0,
 						      unpack->BufferObj->Size,
 						      GL_MAP_READ_BIT,
 						      unpack->BufferObj);
