@@ -260,8 +260,6 @@ vbo_exec_bind_arrays( struct gl_context *ctx )
 static void
 vbo_exec_vtx_unmap( struct vbo_exec_context *exec )
 {
-   GLenum target = GL_ARRAY_BUFFER_ARB;
-
    if (_mesa_is_bufferobj(exec->vtx.bufferobj)) {
       struct gl_context *ctx = exec->ctx;
       
@@ -295,7 +293,6 @@ void
 vbo_exec_vtx_map( struct vbo_exec_context *exec )
 {
    struct gl_context *ctx = exec->ctx;
-   const GLenum target = GL_ARRAY_BUFFER_ARB;
    const GLenum accessRange = GL_MAP_WRITE_BIT |  /* for MapBufferRange */
                               GL_MAP_INVALIDATE_RANGE_BIT |
                               GL_MAP_UNSYNCHRONIZED_BIT |
@@ -325,7 +322,7 @@ vbo_exec_vtx_map( struct vbo_exec_context *exec )
       /* Need to allocate a new VBO */
       exec->vtx.buffer_used = 0;
 
-      ctx->Driver.BufferData(ctx, target, 
+      ctx->Driver.BufferData(ctx, GL_ARRAY_BUFFER_ARB,
                              VBO_VERT_BUFFER_SIZE, 
                              NULL, usage, exec->vtx.bufferobj);
 
