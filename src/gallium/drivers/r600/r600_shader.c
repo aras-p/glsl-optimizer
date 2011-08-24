@@ -1924,10 +1924,20 @@ static int tgsi_tex(struct r600_shader_ctx *ctx)
 	const boolean src_requires_loading = tgsi_tex_src_requires_loading(ctx, 0);
 	boolean src_loaded = FALSE;
 	unsigned sampler_src_reg = 1;
+	u8 offset_x = 0, offset_y = 0, offset_z = 0;
 
 	src_gpr = tgsi_tex_get_src_gpr(ctx, 0);
 
-	if (inst->Instruction.Opcode == TGSI_OPCODE_TXD) {
+	if (inst->Instruction.Opcode == TGSI_OPCODE_TXF) {
+		/* get offset values */
+		if (inst->Texture.NumOffsets) {
+			assert(inst->Texture.NumOffsets == 1);
+
+			offset_x = ctx->literals[inst->TexOffsets[0].Index + inst->TexOffsets[0].SwizzleX] << 1;
+			offset_y = ctx->literals[inst->TexOffsets[0].Index + inst->TexOffsets[0].SwizzleY] << 1;
+			offset_z = ctx->literals[inst->TexOffsets[0].Index + inst->TexOffsets[0].SwizzleZ] << 1;
+		}
+	} else if (inst->Instruction.Opcode == TGSI_OPCODE_TXD) {
 		/* TGSI moves the sampler to src reg 3 for TXD */
 		sampler_src_reg = 3;
 
@@ -2219,6 +2229,9 @@ static int tgsi_tex(struct r600_shader_ctx *ctx)
 		tex.coord_type_w = 1;
 	}
 
+	tex.offset_x = offset_x;
+	tex.offset_y = offset_y;
+	tex.offset_z = offset_z;
 	if (inst->Texture.Texture == TGSI_TEXTURE_1D_ARRAY) {
 		tex.coord_type_z = 0;
 		tex.src_sel_z = tex.src_sel_y;
@@ -3424,8 +3437,8 @@ static struct r600_shader_tgsi_instruction r600_shader_tgsi_instruction[] = {
 	{TGSI_OPCODE_MOD,	0, V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_NOP, tgsi_unsupported},
 	{TGSI_OPCODE_XOR,	0, V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_XOR_INT, tgsi_op2},
 	{TGSI_OPCODE_SAD,	0, V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_NOP, tgsi_unsupported},
-	{TGSI_OPCODE_TXF,	0, V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_NOP, tgsi_unsupported},
-	{TGSI_OPCODE_TXQ,	0, V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_NOP, tgsi_unsupported},
+	{TGSI_OPCODE_TXF,	0, SQ_TEX_INST_LD, tgsi_tex},
+	{TGSI_OPCODE_TXQ,	0, SQ_TEX_INST_GET_TEXTURE_RESINFO, tgsi_tex},
 	{TGSI_OPCODE_CONT,	0, V_SQ_CF_WORD1_SQ_CF_INST_LOOP_CONTINUE, tgsi_loop_brk_cont},
 	{TGSI_OPCODE_EMIT,	0, V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_NOP, tgsi_unsupported},
 	{TGSI_OPCODE_ENDPRIM,	0, V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_NOP, tgsi_unsupported},
@@ -3594,8 +3607,8 @@ static struct r600_shader_tgsi_instruction eg_shader_tgsi_instruction[] = {
 	{TGSI_OPCODE_MOD,	0, EG_V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_NOP, tgsi_unsupported},
 	{TGSI_OPCODE_XOR,	0, EG_V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_XOR_INT, tgsi_op2},
 	{TGSI_OPCODE_SAD,	0, EG_V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_NOP, tgsi_unsupported},
-	{TGSI_OPCODE_TXF,	0, EG_V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_NOP, tgsi_unsupported},
-	{TGSI_OPCODE_TXQ,	0, EG_V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_NOP, tgsi_unsupported},
+	{TGSI_OPCODE_TXF,	0, SQ_TEX_INST_LD, tgsi_tex},
+	{TGSI_OPCODE_TXQ,	0, SQ_TEX_INST_GET_TEXTURE_RESINFO, tgsi_tex},
 	{TGSI_OPCODE_CONT,	0, EG_V_SQ_CF_WORD1_SQ_CF_INST_LOOP_CONTINUE, tgsi_loop_brk_cont},
 	{TGSI_OPCODE_EMIT,	0, EG_V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_NOP, tgsi_unsupported},
 	{TGSI_OPCODE_ENDPRIM,	0, EG_V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_NOP, tgsi_unsupported},
@@ -3764,8 +3777,8 @@ static struct r600_shader_tgsi_instruction cm_shader_tgsi_instruction[] = {
 	{TGSI_OPCODE_MOD,	0, EG_V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_NOP, tgsi_unsupported},
 	{TGSI_OPCODE_XOR,	0, EG_V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_XOR_INT, tgsi_op2},
 	{TGSI_OPCODE_SAD,	0, EG_V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_NOP, tgsi_unsupported},
-	{TGSI_OPCODE_TXF,	0, EG_V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_NOP, tgsi_unsupported},
-	{TGSI_OPCODE_TXQ,	0, EG_V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_NOP, tgsi_unsupported},
+	{TGSI_OPCODE_TXF,	0, SQ_TEX_INST_LD, tgsi_tex},
+	{TGSI_OPCODE_TXQ,	0, SQ_TEX_INST_GET_TEXTURE_RESINFO, tgsi_tex},
 	{TGSI_OPCODE_CONT,	0, EG_V_SQ_CF_WORD1_SQ_CF_INST_LOOP_CONTINUE, tgsi_loop_brk_cont},
 	{TGSI_OPCODE_EMIT,	0, EG_V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_NOP, tgsi_unsupported},
 	{TGSI_OPCODE_ENDPRIM,	0, EG_V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_NOP, tgsi_unsupported},
