@@ -50,9 +50,6 @@
 #			As a consequence, you'll need the Win32 Glide3
 #			library to build any application.
 #			default = no
-#	ICD=1		build the installable client driver interface
-#			(windows opengl driver interface)
-#			default = no
 #	X86=1		optimize for x86 (if possible, use MMX, SSE, 3DNow).
 #			default = no
 #
@@ -69,11 +66,7 @@
 # Set this to the prefix of your build tools, i.e. mingw32-
 TOOLS_PREFIX = mingw32-
 
-ifeq ($(ICD),1)
-  LIB_NAME = mesa32
-else
-  LIB_NAME = opengl32
-endif
+LIB_NAME = opengl32
 
 DLL_EXT = .dll
 IMP_EXT = .a
@@ -106,12 +99,7 @@ ifeq ($(FX),1)
   GL_DEF = drivers/windows/fx/fxopengl.def
   GL_RES = drivers/windows/fx/fx.rc
 else
-  ifeq ($(ICD),1)
-    CFLAGS += -DUSE_MGL_NAMESPACE
-    GL_DEF = drivers/windows/icd/mesa.def
-  else    
-    GL_DEF = $(LIB_NAME).def
-  endif
+  GL_DEF = $(LIB_NAME).def
 endif
 
 
@@ -143,15 +131,9 @@ DRIVER_SOURCES = \
 	$(GLIDE_DRIVER_SOURCES) \
 	drivers/windows/fx/fxwgl.c
 else
-ifeq ($(ICD),1)
-DRIVER_SOURCES = \
-	drivers/windows/gdi/wmesa.c \
-	drivers/windows/icd/icd.c
-else
 DRIVER_SOURCES = \
 	drivers/windows/gdi/wmesa.c \
 	drivers/windows/gdi/wgl.c
-endif
 endif
 
 SOURCES = $(MESA_SOURCES) $(GLAPI_SOURCES) $(X86_SOURCES) $(DRIVER_SOURCES)
