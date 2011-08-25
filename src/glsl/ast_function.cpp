@@ -195,6 +195,7 @@ match_function_by_name(exec_list *instructions, const char *name,
 
 	 if (formal->type->is_numeric() || formal->type->is_boolean()) {
             switch (formal->mode) {
+            case ir_var_const_in:
             case ir_var_in: {
                ir_rvalue *converted
                   = convert_component(actual, formal->type);
