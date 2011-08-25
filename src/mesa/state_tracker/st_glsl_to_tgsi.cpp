@@ -2476,8 +2476,10 @@ glsl_to_tgsi_visitor::visit(ir_texture *ir)
       ir->lod_info.lod->accept(this);
       lod_info = this->result;
       break;
-   case ir_txf: /* TODO: use TGSI_OPCODE_TXF here */
-      assert(!"GLSL 1.30 features unsupported");
+   case ir_txf:
+      opcode = TGSI_OPCODE_TXF;
+      ir->lod_info.lod->accept(this);
+      lod_info = this->result;
       break;
    }
 
@@ -2541,7 +2543,8 @@ glsl_to_tgsi_visitor::visit(ir_texture *ir)
       coord_dst.writemask = WRITEMASK_XYZW;
    }
 
-   if (opcode == TGSI_OPCODE_TXL || opcode == TGSI_OPCODE_TXB) {
+   if (opcode == TGSI_OPCODE_TXL || opcode == TGSI_OPCODE_TXB ||
+       opcode == TGSI_OPCODE_TXF) {
       /* TGSI stores LOD or LOD bias in the last channel of the coords. */
       coord_dst.writemask = WRITEMASK_W;
       emit(ir, TGSI_OPCODE_MOV, coord_dst, lod_info);
@@ -4285,6 +4288,7 @@ compile_tgsi_instruction(struct st_translate *t,
    case TGSI_OPCODE_TXL:
    case TGSI_OPCODE_TXP:
    case TGSI_OPCODE_TXQ:
+   case TGSI_OPCODE_TXF:
       src[num_src++] = t->samplers[inst->sampler];
       ureg_tex_insn(ureg,
                     inst->op,
