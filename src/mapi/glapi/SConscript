@@ -74,6 +74,11 @@ if env['platform'] != 'winddk':
         else:
             pass
     
+    if env['toolchain'] == 'crossmingw':
+        # compile these files without -gstabs option
+        glapi_sources = env.compile_without_gstabs(glapi_sources, "glapi_dispatch.c")
+        glapi_sources = env.compile_without_gstabs(glapi_sources, "glapi_getproc.c")
+
     glapi = env.ConvenienceLibrary(
         target = 'glapi',
         source = glapi_sources,
