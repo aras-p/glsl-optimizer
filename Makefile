@@ -82,7 +82,6 @@ aix-static \
 autoconf \
 bluegene-osmesa \
 bluegene-xlc-osmesa \
-beos \
 catamount-osmesa-pgi \
 darwin \
 darwin-fat-32bit \

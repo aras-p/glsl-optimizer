@@ -59,11 +59,6 @@ extern "C" {
 typedef struct tfxMesaContext *fxMesaContext;
 
 
-#if defined (__BEOS__)
-#pragma export on
-#endif
-
-
 GLAPI fxMesaContext GLAPIENTRY fxMesaCreateContext(GLuint win, GrScreenResolution_t,
 						  GrScreenRefresh_t,
 						  const GLint attribList[]);
@@ -88,12 +83,6 @@ GLAPI void GLAPIENTRY fxMesaUpdateScreenSize(fxMesaContext ctx);
 GLAPI void GLAPIENTRY fxCloseHardware(void);
 
 GLAPI void GLAPIENTRY fxGetScreenGeometry (GLint *w, GLint *h);
-
-
-#if defined (__BEOS__)
-#pragma export off
-#endif
-
 
 #ifdef __cplusplus
 }

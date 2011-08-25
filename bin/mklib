@@ -802,22 +802,6 @@ case $ARCH in
         FINAL_LIBS=`make_ar_static_lib -ru 0 ${LIBNAME} ${OBJECTS}`
 	;;
 
-    'BeOS')
-        if [ $STATIC = 1 ] ; then
-            LIBNAME="lib${LIBNAME}.a"
-            echo "mklib: Making BeOS static library: " ${LIBNAME}
-            FINAL_LIBS=`make_ar_static_lib -cru 0 ${LIBNAME} ${OBJECTS}`
-        else
-	    LIBNAME="lib${LIBNAME}.so"
-	    echo "mklib: Making BeOS shared library: " ${LIBNAME}
-	    gcc -nostart -Xlinker "-soname=${LIBNAME}" -L/Be/develop/lib/x86 -lbe ${DEPS} ${OBJECTS} -o "${LIBNAME}"
-	    mimeset -f "${LIBNAME}"
-	    # XXX remove the Mesa3D stuff here since mklib isn't mesa-specific.
-	    setversion "${LIBNAME}" -app ${MAJOR} ${MINOR} ${PATCH} -short "Powered by Mesa3D!" -long "Powered by Mesa3D!"
-	fi
-	FINAL_LIBS=${LIBNAME}
-	;;
-
     'QNX')
 	LIBNAME="lib${LIBNAME}.a"
 	echo "mklib: Making QNX library: " ${LIBNAME}

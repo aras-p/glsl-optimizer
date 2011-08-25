@@ -101,7 +101,7 @@ extern "C" {
 typedef struct osmesa_context *OSMesaContext;
 
 
-#if defined(__BEOS__) || defined(__QUICKDRAW__)
+#if defined(__QUICKDRAW__)
 #pragma export on
 #endif
 
@@ -274,12 +274,6 @@ OSMesaGetProcAddress( const char *funcName );
  */
 GLAPI void GLAPIENTRY
 OSMesaColorClamp(GLboolean enable);
-
-
-#if defined(__BEOS__) || defined(__QUICKDRAW__)
-#pragma export off
-#endif
-
 
 #ifdef __cplusplus
 }

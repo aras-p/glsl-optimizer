@@ -169,45 +169,6 @@ u_tsd_set(struct u_tsd *tsd, void *ptr)
 
 #endif /* WIN32 */
 
-/*
- * BeOS threads
- */
-#ifdef BEOS_THREADS
-
-unsigned long
-u_thread_self(void)
-{
-   return (unsigned long) find_thread(NULL);
-}
-
-void
-u_tsd_init(struct u_tsd *tsd)
-{
-   tsd->key = tls_allocate();
-   tsd->initMagic = INIT_MAGIC;
-}
-
-void *
-u_tsd_get(struct u_tsd *tsd)
-{
-   if (tsd->initMagic != (int) INIT_MAGIC) {
-      u_tsd_init(tsd);
-   }
-   return tls_get(tsd->key);
-}
-
-void
-u_tsd_set(struct u_tsd *tsd, void *ptr)
-{
-   if (tsd->initMagic != (int) INIT_MAGIC) {
-      u_tsd_init(tsd);
-   }
-   tls_set(tsd->key, ptr);
-}
-
-#endif /* BEOS_THREADS */
-
-
 
 #else  /* THREADS */
 

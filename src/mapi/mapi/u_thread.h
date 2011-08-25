@@ -44,7 +44,7 @@
 
 #include "u_compiler.h"
 
-#if defined(PTHREADS) || defined(WIN32) || defined(BEOS_THREADS)
+#if defined(PTHREADS) || defined(WIN32)
 #ifndef THREADS
 #define THREADS
 #endif
@@ -105,62 +105,6 @@ typedef CRITICAL_SECTION u_mutex;
 #define u_mutex_unlock(name)  LeaveCriticalSection(&name)
 
 #endif /* WIN32 */
-
-
-/*
- * BeOS threads. R5.x required.
- */
-#ifdef BEOS_THREADS
-
-/* Problem with OS.h and this file on haiku */
-#ifndef __HAIKU__
-#include <kernel/OS.h>
-#endif
-
-#include <support/TLS.h>
-
-/* The only two typedefs required here
- * this is cause of the OS.h problem
- */
-#ifdef __HAIKU__
-typedef int32 thread_id;
-typedef int32 sem_id;
-#endif
-
-struct u_tsd {
-   int32        key;
-   int          initMagic;
-};
-
-/* Use Benaphore, aka speeder semaphore */
-typedef struct {
-    int32   lock;
-    sem_id  sem;
-} benaphore;
-typedef benaphore u_mutex;
-
-#define u_mutex_declare_static(name) \
-   static u_mutex name = { 0, 0 }
-
-#define u_mutex_init(name) \
-   name.sem = create_sem(0, #name"_benaphore"), \
-   name.lock = 0
-
-#define u_mutex_destroy(name) \
-   delete_sem(name.sem), \
-   name.lock = 0
-
-#define u_mutex_lock(name) \
-   if (name.sem == 0) \
-      u_mutex_init(name); \
-   if (atomic_add(&(name.lock), 1) >= 1) \
-      acquire_sem(name.sem)
-
-#define u_mutex_unlock(name) \
-   if (atomic_add(&(name.lock), -1) > 1) \
-      release_sem(name.sem)
-
-#endif /* BEOS_THREADS */
 
 
 /*
