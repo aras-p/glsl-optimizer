@@ -5050,6 +5050,7 @@ st_link_shader(struct gl_context *ctx, struct gl_shader_program *prog)
             break;
          }
          if (!ok) {
+            _mesa_reference_program(ctx, &linked_prog, NULL);
             return GL_FALSE;
          }
       }
