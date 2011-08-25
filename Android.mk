@@ -38,7 +38,7 @@ DRM_GRALLOC_TOP := hardware/drm_gralloc
 classic_drivers :=
 gallium_drivers := swrast i915g nouveau r300g r600g vmwgfx
 
-MESA_GPU_DRIVERS := $(BOARD_GPU_DRIVERS)
+MESA_GPU_DRIVERS := $(strip $(BOARD_GPU_DRIVERS))
 
 # warn about invalid drivers
 invalid_drivers := $(filter-out \
@@ -97,11 +97,15 @@ LOCAL_WHOLE_STATIC_LIBRARIES := libmesa_egl
 
 LOCAL_SHARED_LIBRARIES := \
 	libglapi \
-	libdrm \
 	libdl \
 	libhardware \
 	liblog \
 	libcutils
+
+# hardware drivers require DRM
+ifneq ($(MESA_GPU_DRIVERS),swrast)
+LOCAL_SHARED_LIBRARIES += libdrm
+endif
 
 ifeq ($(strip $(MESA_BUILD_GALLIUM)),true)
 

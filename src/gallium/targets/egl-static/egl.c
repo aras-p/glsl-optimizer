@@ -109,7 +109,7 @@ out:
    return (*chip_id >= 0);
 }
 
-#elif defined(PIPE_OS_ANDROID)
+#elif defined(PIPE_OS_ANDROID) && !defined(_EGL_NO_DRM)
 
 #include <xf86drm.h>
 /* for i915 */

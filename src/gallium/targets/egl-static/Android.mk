@@ -39,12 +39,19 @@ LOCAL_C_INCLUDES := \
 	$(GALLIUM_TOP)/state_trackers/vega \
 	$(GALLIUM_TOP)/state_trackers/egl \
 	$(MESA_TOP)/src/egl/main \
-	$(MESA_TOP)/src/mesa \
-	$(DRM_TOP)/include/drm \
-	$(DRM_TOP)
+	$(MESA_TOP)/src/mesa
 
 # swrast
 LOCAL_CFLAGS += -DGALLIUM_SOFTPIPE
+
+# swrast only
+ifeq ($(MESA_GPU_DRIVERS),swrast)
+LOCAL_CFLAGS += -D_EGL_NO_DRM
+else
+LOCAL_C_INCLUDES += \
+	$(DRM_TOP)/include/drm \
+	$(DRM_TOP)
+endif
 
 ifneq ($(filter i915g, $(MESA_GPU_DRIVERS)),)
 LOCAL_CFLAGS += -D_EGL_PIPE_I915=1

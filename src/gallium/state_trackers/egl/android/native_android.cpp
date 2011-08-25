@@ -136,6 +136,8 @@ get_pipe_format(int native)
    return fmt;
 }
 
+#ifndef ANDROID_BACKEND_NO_DRM
+
 #include <gralloc_drm_handle.h>
 static int
 get_handle_name(buffer_handle_t handle)
@@ -147,6 +149,16 @@ get_handle_name(buffer_handle_t handle)
 
    return (dh) ? dh->name : 0;
 }
+
+#else
+
+static int
+get_handle_name(buffer_handle_t handle)
+{
+   return 0;
+}
+
+#endif /* ANDROID_BACKEND_NO_DRM */
 
 /**
  * Import an android_native_buffer_t allocated by the server.
@@ -581,6 +593,7 @@ android_display_init_drm(struct native_display *ndpy)
    const hw_module_t *mod;
    int fd, err;
 
+#ifndef ANDROID_BACKEND_NO_DRM
    /* get the authorized fd from gralloc */
    err = hw_get_module(GRALLOC_HARDWARE_MODULE_ID, &mod);
    if (!err) {
@@ -594,6 +607,7 @@ android_display_init_drm(struct native_display *ndpy)
       adpy->base.screen =
          adpy->event_handler->new_drm_screen(&adpy->base, NULL, fd);
    }
+#endif
 
    if (adpy->base.screen) {
       LOGI("using DRM screen");

@@ -45,8 +45,14 @@ LOCAL_CFLAGS := -DHAVE_ANDROID_BACKEND
 LOCAL_C_INCLUDES := \
 	$(GALLIUM_TOP)/state_trackers/egl \
 	$(GALLIUM_TOP)/winsys/sw \
-	$(MESA_TOP)/src/egl/main \
-	$(DRM_GRALLOC_TOP)
+	$(MESA_TOP)/src/egl/main
+
+# swrast only
+ifeq ($(MESA_GPU_DRIVERS),swrast)
+LOCAL_CFLAGS += -DANDROID_BACKEND_NO_DRM
+else
+LOCAL_C_INCLUDES += $(DRM_GRALLOC_TOP)
+endif
 
 LOCAL_MODULE := libmesa_st_egl
 
