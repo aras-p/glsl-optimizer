@@ -152,7 +152,7 @@ void brw_clip_interp_vertex( struct brw_clip_compile *c,
    /* Iterate over each attribute (could be done in pairs?)
     */
    for (i = 0; i < c->nr_attrs; i++) {
-      GLuint delta = c->offset[c->idx_to_attr[i]];
+      GLuint delta = ATTR_SIZE * (2*c->header_regs + i);
 
       if (c->idx_to_attr[i] == VERT_RESULT_EDGE) {
 	 if (force_edgeflag) 
@@ -183,7 +183,7 @@ void brw_clip_interp_vertex( struct brw_clip_compile *c,
    }
 
    if (i & 1) {
-      GLuint delta = c->offset[c->idx_to_attr[c->nr_attrs - 1]] + ATTR_SIZE;
+      GLuint delta = c->vue_map.num_slots * ATTR_SIZE;
 
       brw_MOV(p, deref_4f(dest_ptr, delta), brw_imm_f(0));
    }
