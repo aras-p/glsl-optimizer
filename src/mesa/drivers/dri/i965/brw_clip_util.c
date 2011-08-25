@@ -290,22 +290,22 @@ void brw_clip_copy_colors( struct brw_clip_compile *c,
 {
    struct brw_compile *p = &c->func;
 
-   if (c->offset[VERT_RESULT_COL0])
+   if (brw_clip_have_vert_result(c, VERT_RESULT_COL0))
       brw_MOV(p, 
 	      byte_offset(c->reg.vertex[to], c->offset[VERT_RESULT_COL0]),
 	      byte_offset(c->reg.vertex[from], c->offset[VERT_RESULT_COL0]));
 
-   if (c->offset[VERT_RESULT_COL1])
+   if (brw_clip_have_vert_result(c, VERT_RESULT_COL1))
       brw_MOV(p, 
 	      byte_offset(c->reg.vertex[to], c->offset[VERT_RESULT_COL1]),
 	      byte_offset(c->reg.vertex[from], c->offset[VERT_RESULT_COL1]));
 
-   if (c->offset[VERT_RESULT_BFC0])
+   if (brw_clip_have_vert_result(c, VERT_RESULT_BFC0))
       brw_MOV(p, 
 	      byte_offset(c->reg.vertex[to], c->offset[VERT_RESULT_BFC0]),
 	      byte_offset(c->reg.vertex[from], c->offset[VERT_RESULT_BFC0]));
 
-   if (c->offset[VERT_RESULT_BFC1])
+   if (brw_clip_have_vert_result(c, VERT_RESULT_BFC1))
       brw_MOV(p, 
 	      byte_offset(c->reg.vertex[to], c->offset[VERT_RESULT_BFC1]),
 	      byte_offset(c->reg.vertex[from], c->offset[VERT_RESULT_BFC1]));

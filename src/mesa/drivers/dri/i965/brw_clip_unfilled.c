@@ -130,8 +130,10 @@ static void copy_bfc( struct brw_clip_compile *c )
 
    /* Do we have any colors to copy? 
     */
-   if (!(c->offset[VERT_RESULT_COL0] && c->offset[VERT_RESULT_BFC0]) &&
-       !(c->offset[VERT_RESULT_COL1] && c->offset[VERT_RESULT_BFC1]))
+   if (!(brw_clip_have_vert_result(c, VERT_RESULT_COL0) &&
+         brw_clip_have_vert_result(c, VERT_RESULT_BFC0)) &&
+       !(brw_clip_have_vert_result(c, VERT_RESULT_COL1) &&
+         brw_clip_have_vert_result(c, VERT_RESULT_BFC1)))
       return;
 
    /* In some wierd degnerate cases we can end up testing the
@@ -154,12 +156,14 @@ static void copy_bfc( struct brw_clip_compile *c )
       GLuint i;
 
       for (i = 0; i < 3; i++) {
-	 if (c->offset[VERT_RESULT_COL0] && c->offset[VERT_RESULT_BFC0])
+	 if (brw_clip_have_vert_result(c, VERT_RESULT_COL0) &&
+             brw_clip_have_vert_result(c, VERT_RESULT_BFC0))
 	    brw_MOV(p, 
 		    byte_offset(c->reg.vertex[i], c->offset[VERT_RESULT_COL0]),
 		    byte_offset(c->reg.vertex[i], c->offset[VERT_RESULT_BFC0]));
 
-	 if (c->offset[VERT_RESULT_COL1] && c->offset[VERT_RESULT_BFC1])
+	 if (brw_clip_have_vert_result(c, VERT_RESULT_COL1) &&
+             brw_clip_have_vert_result(c, VERT_RESULT_BFC1))
 	    brw_MOV(p, 
 		    byte_offset(c->reg.vertex[i], c->offset[VERT_RESULT_COL1]),
 		    byte_offset(c->reg.vertex[i], c->offset[VERT_RESULT_BFC1]));
@@ -449,7 +453,7 @@ void brw_emit_unfilled_clip( struct brw_clip_compile *c )
    brw_clip_tri_init_vertices(c);
    brw_clip_init_ff_sync(c);
 
-   assert(c->offset[VERT_RESULT_EDGE]);
+   assert(brw_clip_have_vert_result(c, VERT_RESULT_EDGE));
 
    if (c->key.fill_ccw == CLIP_CULL &&
        c->key.fill_cw == CLIP_CULL) {

@@ -126,6 +126,15 @@ struct brw_clip_compile {
 
 #define ATTR_SIZE  (4*4)
 
+/**
+ * True if the given vert_result is one of the outputs of the vertex shader.
+ */
+static inline bool brw_clip_have_vert_result(struct brw_clip_compile *c,
+                                             GLuint vert_result)
+{
+   return (c->key.attrs & BITFIELD64_BIT(vert_result)) ? 1 : 0;
+}
+
 /* Points are only culled, so no need for a clip routine, however it
  * works out easier to have a dummy one.
  */
