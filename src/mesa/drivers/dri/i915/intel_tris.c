@@ -1154,10 +1154,9 @@ intelRenderPrimitive(struct gl_context * ctx, GLenum prim)
     */
    intel->render_primitive = prim;
 
-   /* Shortcircuit this when called from t_dd_rendertmp.h for unfilled
-    * triangles.  The rasterized primitive will always be reset by
-    * lower level functions in that case, potentially pingponging the
-    * state:
+   /* Shortcircuit this when called for unfilled triangles.  The rasterized
+    * primitive will always be reset by lower level functions in that case,
+    * potentially pingponging the state:
     */
    if (reduced_prim[prim] == GL_TRIANGLES &&
        (ctx->_TriangleCaps & DD_TRI_UNFILLED))
