@@ -288,8 +288,9 @@ static void TAG(triangle)( struct gl_context *ctx, GLuint e0, GLuint e1, GLuint 
 	 VERT_Z_ADD(v[1], offset);
 	 VERT_Z_ADD(v[2], offset);
       }
-      if (DO_UNFILLED)
+      if (DO_UNFILLED) {
 	 RASTERIZE( GL_TRIANGLES );
+      }
       if (DO_TWOSTENCIL && !HAVE_STENCIL_TWOSIDE && ctx->Stencil.TestTwoSide) {
          SETUP_STENCIL(facing);
          TRI( v[0], v[1], v[2] );
