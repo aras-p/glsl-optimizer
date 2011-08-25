@@ -138,11 +138,18 @@ nvc0_tctlprog_validate(struct nvc0_context *nvc0)
          return;
    nvc0_program_update_context_state(nvc0, tp, 1);
 
+   if (tp->tp.tess_mode != ~0) {
+      BEGIN_RING(chan, RING_3D(TESS_MODE), 1);
+      OUT_RING  (chan, tp->tp.tess_mode);
+   }
    BEGIN_RING(chan, RING_3D(SP_SELECT(2)), 2);
    OUT_RING  (chan, 0x21);
    OUT_RING  (chan, tp->code_base);
    BEGIN_RING(chan, RING_3D(SP_GPR_ALLOC(2)), 1);
-   OUT_RING  (chan, tp->max_gpr);   
+   OUT_RING  (chan, tp->max_gpr);
+
+   if (tp->tp.input_patch_size <= 32)
+      IMMED_RING(chan, RING_3D(PATCH_VERTICES), tp->tp.input_patch_size);
 }
 
 void
@@ -160,6 +167,10 @@ nvc0_tevlprog_validate(struct nvc0_context *nvc0)
          return;
    nvc0_program_update_context_state(nvc0, tp, 2);
 
+   if (tp->tp.tess_mode != ~0) {
+      BEGIN_RING(chan, RING_3D(TESS_MODE), 1);
+      OUT_RING  (chan, tp->tp.tess_mode);
+   }
    BEGIN_RING(chan, RING_3D(TEP_SELECT), 1);
    OUT_RING  (chan, 0x31);
    BEGIN_RING(chan, RING_3D(SP_START_ID(3)), 1);
