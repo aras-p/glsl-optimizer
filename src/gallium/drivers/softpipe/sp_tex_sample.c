@@ -2606,6 +2606,74 @@ sample_get_dims(struct tgsi_sampler *tgsi_sampler, int level,
     }
 }
 
+/* this function is only used for unfiltered texel gets
+   via the TGSI TXF opcode. */
+static void
+sample_get_texels(struct tgsi_sampler *tgsi_sampler,
+	   const int v_i[QUAD_SIZE],
+	   const int v_j[QUAD_SIZE],
+	   const int v_k[QUAD_SIZE],
+	   const int lod[QUAD_SIZE],
+	   float rgba[NUM_CHANNELS][QUAD_SIZE])
+{
+   const struct sp_sampler_variant *samp = sp_sampler_variant(tgsi_sampler);
+   union tex_tile_address addr;
+   const struct pipe_resource *texture = samp->view->texture;
+   int j, c;
+   float *tx;
+
+   addr.value = 0;
+   /* TODO write a better test for LOD */
+   addr.bits.level = lod[0];
+
+   switch(texture->target) {
+   case PIPE_TEXTURE_1D:
+      for (j = 0; j < QUAD_SIZE; j++) {
+	 tx = get_texel_2d(samp, addr, v_i[j], 0);
+	 for (c = 0; c < 4; c++) {
+	    rgba[c][j] = tx[c];
+	 }
+      }
+      break;
+   case PIPE_TEXTURE_1D_ARRAY:
+      for (j = 0; j < QUAD_SIZE; j++) {
+	 tx = get_texel_1d_array(samp, addr, v_i[j], v_j[j]);
+	 for (c = 0; c < 4; c++) {
+	    rgba[c][j] = tx[c];
+	 }
+      }
+      break;
+   case PIPE_TEXTURE_2D:
+   case PIPE_TEXTURE_RECT:
+      for (j = 0; j < QUAD_SIZE; j++) {
+	 tx = get_texel_2d(samp, addr, v_i[j], v_j[j]);
+	 for (c = 0; c < 4; c++) {
+	    rgba[c][j] = tx[c];
+	 }
+      }
+      break;
+   case PIPE_TEXTURE_2D_ARRAY:
+      for (j = 0; j < QUAD_SIZE; j++) {
+	 tx = get_texel_2d_array(samp, addr, v_i[j], v_j[j], v_k[j]);
+	 for (c = 0; c < 4; c++) {
+	    rgba[c][j] = tx[c];
+	 }
+      }
+      break;
+   case PIPE_TEXTURE_3D:
+      for (j = 0; j < QUAD_SIZE; j++) {
+	 tx = get_texel_3d(samp, addr, v_i[j], v_j[j], v_k[j]);
+	 for (c = 0; c < 4; c++) {
+	    rgba[c][j] = tx[c];
+	 }
+      }
+      break;
+   case PIPE_TEXTURE_CUBE: /* TXF can't work on CUBE according to spec */
+   default:
+      assert(!"Unknown or CUBE texture type in TXF processing\n");
+      break;
+   }
+}
 /**
  * Create a sampler variant for a given set of non-orthogonal state.
  */
@@ -2732,5 +2800,6 @@ sp_create_sampler_variant( const struct pipe_sampler_state *sampler,
    }
 
    samp->base.get_dims = sample_get_dims;
+   samp->base.get_texel = sample_get_texels;
    return samp;
 }
