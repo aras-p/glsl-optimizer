@@ -1132,8 +1132,10 @@ glcpp_parser_create (const struct gl_extensions *extensions, int api)
 	   if (extensions->ARB_shader_texture_lod)
 	      add_builtin_define(parser, "GL_ARB_shader_texture_lod", 1);
 
-	   if (extensions->AMD_conservative_depth)
+	   if (extensions->AMD_conservative_depth) {
 	      add_builtin_define(parser, "GL_AMD_conservative_depth", 1);
+	      add_builtin_define(parser, "GL_ARB_conservative_depth", 1);
+	   }
 	}
 
 	language_version = 110;
