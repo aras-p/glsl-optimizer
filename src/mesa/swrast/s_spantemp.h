@@ -65,6 +65,7 @@ NAME(get_row)( struct gl_context *ctx, struct gl_renderbuffer *rb,
       INC_PIXEL_PTR(pixel);
    }
    (void) rb;
+   (void) ctx;
 }
 
 
@@ -82,6 +83,7 @@ NAME(get_values)( struct gl_context *ctx, struct gl_renderbuffer *rb,
       FETCH_PIXEL(dest[i], pixel);
    }
    (void) rb;
+   (void) ctx;
 }
 
 
@@ -111,6 +113,7 @@ NAME(put_row)( struct gl_context *ctx, struct gl_renderbuffer *rb,
       }
    }
    (void) rb;
+   (void) ctx;
 }
 
 
@@ -136,6 +139,7 @@ NAME(put_row_rgb)( struct gl_context *ctx, struct gl_renderbuffer *rb,
       INC_PIXEL_PTR(pixel);
    }
    (void) rb;
+   (void) ctx;
 }
 
 
@@ -165,6 +169,7 @@ NAME(put_mono_row)( struct gl_context *ctx, struct gl_renderbuffer *rb,
       }
    }
    (void) rb;
+   (void) ctx;
 }
 
 
@@ -186,6 +191,7 @@ NAME(put_values)( struct gl_context *ctx, struct gl_renderbuffer *rb,
       }
    }
    (void) rb;
+   (void) ctx;
 }
 
 
@@ -207,6 +213,7 @@ NAME(put_mono_values)( struct gl_context *ctx, struct gl_renderbuffer *rb,
       }
    }
    (void) rb;
+   (void) ctx;
 }
 
 
