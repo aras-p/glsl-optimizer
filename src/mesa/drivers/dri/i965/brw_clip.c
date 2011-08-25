@@ -71,6 +71,8 @@ static void compile_clip_prog( struct brw_context *brw,
    c.func.single_program_flow = 1;
 
    c.key = *key;
+   brw_compute_vue_map(&c.vue_map, intel, c.key.nr_userclip,
+                       c.key.do_twoside_color, c.key.attrs);
 
    /* Need to locate the two positions present in vertex + header.
     * These are currently hardcoded:
@@ -174,6 +176,7 @@ static void upload_clip_prog(struct brw_context *brw)
    /* _NEW_LIGHT */
    key.do_flat_shading = (ctx->Light.ShadeModel == GL_FLAT);
    key.pv_first = (ctx->Light.ProvokingVertex == GL_FIRST_VERTEX_CONVENTION);
+   key.do_twoside_color = (ctx->Light.Enabled && ctx->Light.Model.TwoSide);
    /* _NEW_TRANSFORM */
    key.nr_userclip = brw_count_bits(ctx->Transform.ClipPlanesEnabled);
 

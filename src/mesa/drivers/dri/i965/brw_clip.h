@@ -55,7 +55,8 @@ struct brw_clip_prog_key {
    GLuint copy_bfc_cw:1;
    GLuint copy_bfc_ccw:1;
    GLuint clip_mode:3;
-   GLuint pad0:11;
+   GLuint do_twoside_color:1;
+   GLuint pad0:10;
 
    GLfloat offset_factor;
    GLfloat offset_units;
@@ -119,6 +120,8 @@ struct brw_clip_compile {
    GLuint offset[VERT_RESULT_MAX];
    /** Mapping from attribute index to VERT_RESULT_* */
    GLuint idx_to_attr[VERT_RESULT_MAX];
+
+   struct brw_vue_map vue_map;
 };
 
 #define ATTR_SIZE  (4*4)
