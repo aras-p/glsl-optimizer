@@ -90,9 +90,7 @@ struct brw_sf_compile {
    struct brw_reg m3C0;
 
    GLuint nr_verts;
-   GLuint nr_attrs;
    GLuint nr_attr_regs;
-   GLuint nr_setup_attrs;
    GLuint nr_setup_regs;
    int urb_entry_read_offset;
 
