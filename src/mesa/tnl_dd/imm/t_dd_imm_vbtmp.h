@@ -46,7 +46,7 @@ static void TAG(emit_vfmt)( struct gl_context *ctx, VERTEX *v )
    LOCALVARS
       ;
 
-   /* This template assumes (like t_dd_vbtmp.h) that color is ubyte.
+   /* This template assumes that color is ubyte.
     */
    if (DO_TEX0 || DO_TEX1 || !HAVE_TINY_VERTICES)
    {
