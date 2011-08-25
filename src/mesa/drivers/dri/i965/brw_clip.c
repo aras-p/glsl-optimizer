@@ -77,7 +77,7 @@ static void compile_clip_prog( struct brw_context *brw,
    /* Need to locate the two positions present in vertex + header.
     * These are currently hardcoded:
     */
-   c.header_position_offset = ATTR_SIZE;
+   c.ndc_offset = ATTR_SIZE;
 
    if (intel->gen == 5)
       header_regs = 3;
