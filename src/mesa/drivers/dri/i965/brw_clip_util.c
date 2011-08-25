@@ -109,13 +109,17 @@ static void brw_clip_project_vertex( struct brw_clip_compile *c,
 {
    struct brw_compile *p = &c->func;
    struct brw_reg tmp = get_tmp(c);
+   GLuint hpos_offset = brw_vert_result_to_offset(&c->vue_map,
+                                                  VERT_RESULT_HPOS);
+   GLuint ndc_offset = brw_vert_result_to_offset(&c->vue_map,
+                                                 BRW_VERT_RESULT_NDC);
 
    /* Fixup position.  Extract from the original vertex and re-project
     * to screen space:
     */
-   brw_MOV(p, tmp, deref_4f(vert_addr, c->offset[VERT_RESULT_HPOS]));
+   brw_MOV(p, tmp, deref_4f(vert_addr, hpos_offset));
    brw_clip_project_position(c, tmp);
-   brw_MOV(p, deref_4f(vert_addr, c->ndc_offset), tmp);
+   brw_MOV(p, deref_4f(vert_addr, ndc_offset), tmp);
 	 
    release_tmp(c, tmp);
 }

@@ -52,9 +52,11 @@ static void compute_tri_direction( struct brw_clip_compile *c )
    struct brw_compile *p = &c->func;
    struct brw_reg e = c->reg.tmp0;
    struct brw_reg f = c->reg.tmp1;
-   struct brw_reg v0 = byte_offset(c->reg.vertex[0], c->offset[VERT_RESULT_HPOS]); 
-   struct brw_reg v1 = byte_offset(c->reg.vertex[1], c->offset[VERT_RESULT_HPOS]); 
-   struct brw_reg v2 = byte_offset(c->reg.vertex[2], c->offset[VERT_RESULT_HPOS]); 
+   GLuint hpos_offset = brw_vert_result_to_offset(&c->vue_map,
+                                                  VERT_RESULT_HPOS);
+   struct brw_reg v0 = byte_offset(c->reg.vertex[0], hpos_offset);
+   struct brw_reg v1 = byte_offset(c->reg.vertex[1], hpos_offset);
+   struct brw_reg v2 = byte_offset(c->reg.vertex[2], hpos_offset);
 
 
    struct brw_reg v0n = get_tmp(c);
@@ -236,7 +238,9 @@ static void apply_one_offset( struct brw_clip_compile *c,
 			  struct brw_indirect vert )
 {
    struct brw_compile *p = &c->func;
-   struct brw_reg z = deref_1f(vert, c->ndc_offset +
+   GLuint ndc_offset = brw_vert_result_to_offset(&c->vue_map,
+                                                 BRW_VERT_RESULT_NDC);
+   struct brw_reg z = deref_1f(vert, ndc_offset +
 			       2 * type_sz(BRW_REGISTER_TYPE_F));
 
    brw_ADD(p, z, z, vec1(c->reg.offset));

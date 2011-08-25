@@ -115,7 +115,6 @@ struct brw_clip_compile {
 
    GLboolean need_direction;
 
-   GLuint ndc_offset;
    /** Mapping from VERT_RESULT_* to offset within the VUE. */
    GLuint offset[VERT_RESULT_MAX];
    /** Mapping from attribute index to VERT_RESULT_* */
