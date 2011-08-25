@@ -58,7 +58,6 @@ static void compile_clip_prog( struct brw_context *brw,
    GLuint program_size;
    GLuint delta;
    GLuint i;
-   GLuint header_regs;
 
    memset(&c, 0, sizeof(c));
 
@@ -78,11 +77,11 @@ static void compile_clip_prog( struct brw_context *brw,
     * These are currently hardcoded:
     */
    if (intel->gen == 5)
-      header_regs = 3;
+      c.header_regs = 3;
    else
-      header_regs = 1;
+      c.header_regs = 1;
 
-   delta = header_regs * REG_SIZE;
+   delta = c.header_regs * REG_SIZE;
 
    for (i = 0; i < VERT_RESULT_MAX; i++) {
       if (c.key.attrs & BITFIELD64_BIT(i)) {
@@ -99,7 +98,7 @@ static void compile_clip_prog( struct brw_context *brw,
     * length.  nr_regs determines the urb_read_length from the start
     * of the header to the end of the vertex data.
     */
-   c.nr_regs = header_regs + (c.nr_attrs + 1) / 2;
+   c.nr_regs = c.header_regs + (c.nr_attrs + 1) / 2;
 
    c.nr_bytes = c.nr_regs * REG_SIZE;
 
