@@ -1920,7 +1920,35 @@ exec_txd(struct tgsi_exec_machine *mach,
    }
 }
 
+static void
+exec_txq(struct tgsi_exec_machine *mach,
+         const struct tgsi_full_instruction *inst)
+{
+   struct tgsi_sampler *sampler;
+   const uint unit = inst->Src[1].Register.Index;
+   int result[4];
+   union tgsi_exec_channel r[4], src;
+   uint chan;
+   int i,j;
 
+   fetch_source(mach, &src, &inst->Src[0], CHAN_X, TGSI_EXEC_DATA_INT);
+   sampler = mach->Samplers[unit];
+
+   sampler->get_dims(sampler, src.i[0], result);
+
+   for (i = 0; i < QUAD_SIZE; i++) {
+      for (j = 0; j < 4; j++) {
+	 r[j].i[i] = result[j];
+      }
+   }
+
+   for (chan = 0; chan < NUM_CHANNELS; chan++) {
+      if (inst->Dst[0].Register.WriteMask & (1 << chan)) {
+	 store_dest(mach, &r[chan], &inst->Dst[0], inst, chan,
+		    TGSI_EXEC_DATA_INT);
+      }
+   }
+}
 
 static void
 exec_sample(struct tgsi_exec_machine *mach,
@@ -3718,7 +3746,7 @@ exec_instruction(
       break;
 
    case TGSI_OPCODE_TXQ:
-      assert (0);
+      exec_txq(mach, inst);
       break;
 
    case TGSI_OPCODE_EMIT:

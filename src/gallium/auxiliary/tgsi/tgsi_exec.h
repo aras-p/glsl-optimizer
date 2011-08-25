@@ -90,6 +90,8 @@ struct tgsi_sampler
                        const float c0[QUAD_SIZE],
                        enum tgsi_sampler_control control,
                        float rgba[NUM_CHANNELS][QUAD_SIZE]);
+   void (*get_dims)(struct tgsi_sampler *sampler, int level,
+		    int dims[4]);
 };
 
 #define TGSI_EXEC_NUM_TEMPS       128
