@@ -352,9 +352,9 @@ struct GalliumD3D10Device : public GalliumD3D10ScreenImpl<threadsafe>
 	{
 		for(unsigned i = 0; i < count; ++i)
 		{
-			if(constbufs[i] != constant_buffers[s][i].p)
+			if(constbufs[i] != constant_buffers[s][start + i].p)
 			{
-				constant_buffers[s][i] = constbufs[i];
+				constant_buffers[s][start + i] = constbufs[i];
 				if(s < caps.stages && start + i < caps.constant_buffers[s])
 					pipe->set_constant_buffer(pipe, s, start + i, constbufs[i] ? constbufs[i]->resource : NULL);
 			}
