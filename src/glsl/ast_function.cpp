@@ -164,6 +164,7 @@ match_function_by_name(exec_list *instructions, const char *name,
 	    _mesa_glsl_error(loc, state,
 			     "parameter `%s' must be a constant expression",
 			     formal->name);
+	    return ir_call::get_error_instruction(ctx);
 	 }
 
 	 if ((formal->mode == ir_var_out)
