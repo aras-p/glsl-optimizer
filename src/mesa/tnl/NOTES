@@ -8,9 +8,7 @@ This module provides an implementation of the routines required by the
 combinations of compile and execute modes.
 
 Most current drivers use the tnl module exclusively to provide this
-functionality, though there is an experimental alternate
-implementation provided by the tnl_dd/t_dd_imm_* files which can
-handle a small subset of GL states in execute mode only.
+functionality.
 
 
 STATE
