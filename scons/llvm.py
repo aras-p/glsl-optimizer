@@ -135,6 +135,8 @@ def generate(env):
         env.Append(LIBS = [
             'imagehlp',
             'psapi',
+            'shell32',
+            'advapi32'
         ])
         if env['msvc']:
             # Some of the LLVM C headers use the inline keyword without
