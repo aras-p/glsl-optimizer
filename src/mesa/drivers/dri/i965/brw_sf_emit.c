@@ -358,7 +358,7 @@ static GLboolean calculate_masks( struct brw_sf_compile *c,
 
    /* Maybe only processs one attribute on the final round:
     */
-   if (reg*2+1 < c->nr_setup_attrs) {
+   if (vert_reg_to_vert_result(c, reg, 1) != BRW_VERT_RESULT_MAX) {
       *pc |= 0xf0;
 
       if (persp_mask & BITFIELD64_BIT(vert_reg_to_vert_result(c, reg, 1)))
