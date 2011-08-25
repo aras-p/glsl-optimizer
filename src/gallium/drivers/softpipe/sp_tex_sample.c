@@ -2620,7 +2620,7 @@ sample_get_texels(struct tgsi_sampler *tgsi_sampler,
    union tex_tile_address addr;
    const struct pipe_resource *texture = samp->view->texture;
    int j, c;
-   float *tx;
+   const float *tx;
 
    addr.value = 0;
    /* TODO write a better test for LOD */
