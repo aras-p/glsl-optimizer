@@ -34,6 +34,7 @@
 
 #include "pipe/p_compiler.h"
 #include "dri_wrapper.h"
+#include "postprocess/filters.h"
 
 struct pipe_context;
 struct pipe_fence;
@@ -61,6 +62,8 @@ struct dri_context
    /* gallium */
    struct st_api *stapi;
    struct st_context_iface *st;
+   struct pp_queue_t *pp;
+   unsigned int pp_enabled[PP_FILTERS];
 };
 
 static INLINE struct dri_context *
