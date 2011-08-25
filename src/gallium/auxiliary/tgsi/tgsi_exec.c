@@ -1594,6 +1594,9 @@ store_dest(struct tgsi_exec_machine *mach,
 #define FETCH(VAL,INDEX,CHAN)\
     fetch_source(mach, VAL, &inst->Src[INDEX], CHAN, TGSI_EXEC_DATA_FLOAT)
 
+#define IFETCH(VAL,INDEX,CHAN)\
+    fetch_source(mach, VAL, &inst->Src[INDEX], CHAN, TGSI_EXEC_DATA_INT)
+
 
 /**
  * Execute ARB-style KIL which is predicated by a src register.
@@ -1911,6 +1914,58 @@ exec_txd(struct tgsi_exec_machine *mach,
 
    default:
       assert(0);
+   }
+
+   for (chan = 0; chan < NUM_CHANNELS; chan++) {
+      if (inst->Dst[0].Register.WriteMask & (1 << chan)) {
+         store_dest(mach, &r[chan], &inst->Dst[0], inst, chan, TGSI_EXEC_DATA_FLOAT);
+      }
+   }
+}
+
+
+static void
+exec_txf(struct tgsi_exec_machine *mach,
+	 const struct tgsi_full_instruction *inst)
+{
+   struct tgsi_sampler *sampler;
+   const uint unit = inst->Src[1].Register.Index;
+   union tgsi_exec_channel r[4];
+   uint chan;
+   float rgba[NUM_CHANNELS][QUAD_SIZE];
+   int j;
+
+   IFETCH(&r[3], 0, CHAN_W);
+
+   switch(inst->Texture.Texture) {
+   case TGSI_TEXTURE_3D:
+   case TGSI_TEXTURE_2D_ARRAY:
+      IFETCH(&r[2], 0, CHAN_Z);
+      /* fallthrough */
+   case TGSI_TEXTURE_2D:
+   case TGSI_TEXTURE_RECT:
+   case TGSI_TEXTURE_SHADOW2D:
+   case TGSI_TEXTURE_SHADOWRECT:
+   case TGSI_TEXTURE_1D_ARRAY:
+      IFETCH(&r[1], 0, CHAN_Y);
+      /* fallthrough */
+   case TGSI_TEXTURE_1D:
+   case TGSI_TEXTURE_SHADOW1D:
+      IFETCH(&r[0], 0, CHAN_X);
+      break;
+   default:
+      assert(0);
+      break;
+   }      
+
+   sampler = mach->Samplers[unit];
+   sampler->get_texel(sampler, r[0].i, r[1].i, r[2].i, r[3].i, rgba);
+
+   for (j = 0; j < QUAD_SIZE; j++) {
+      r[0].f[j] = rgba[0][j];
+      r[1].f[j] = rgba[1][j];
+      r[2].f[j] = rgba[2][j];
+      r[3].f[j] = rgba[3][j];
    }
 
    for (chan = 0; chan < NUM_CHANNELS; chan++) {
@@ -3742,7 +3797,7 @@ exec_instruction(
       break;
 
    case TGSI_OPCODE_TXF:
-      assert (0);
+      exec_txf(mach, inst);
       break;
 
    case TGSI_OPCODE_TXQ:

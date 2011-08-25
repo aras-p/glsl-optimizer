@@ -92,6 +92,9 @@ struct tgsi_sampler
                        float rgba[NUM_CHANNELS][QUAD_SIZE]);
    void (*get_dims)(struct tgsi_sampler *sampler, int level,
 		    int dims[4]);
+   void (*get_texel)(struct tgsi_sampler *sampler, const int i[QUAD_SIZE],
+		     const int j[QUAD_SIZE], const int k[QUAD_SIZE],
+		     const int lod[QUAD_SIZE], float rgba[NUM_CHANNELS][QUAD_SIZE]);
 };
 
 #define TGSI_EXEC_NUM_TEMPS       128
