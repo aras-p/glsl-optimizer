@@ -96,8 +96,6 @@ struct brw_sf_compile {
    GLuint nr_setup_regs;
    int urb_entry_read_offset;
 
-   GLubyte attr_to_idx[VERT_RESULT_MAX];   
-   GLubyte idx_to_attr[VERT_RESULT_MAX];   
    struct brw_vue_map vue_map;
 };
 

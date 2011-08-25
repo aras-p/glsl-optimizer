@@ -53,7 +53,7 @@ static void compile_sf_prog( struct brw_context *brw,
    const GLuint *program;
    void *mem_ctx;
    GLuint program_size;
-   GLuint i, idx;
+   GLuint i;
 
    memset(&c, 0, sizeof(c));
 
@@ -73,16 +73,6 @@ static void compile_sf_prog( struct brw_context *brw,
 
    c.prog_data.urb_read_length = c.nr_attr_regs;
    c.prog_data.urb_entry_size = c.nr_setup_regs * 2;
-
-   /* Construct map from attribute number to position in the vertex.
-    */
-   for (i = idx = 0; i < VERT_RESULT_MAX; i++) {
-      if (c.key.attrs & BITFIELD64_BIT(i)) {
-	 c.attr_to_idx[i] = idx;
-	 c.idx_to_attr[idx] = i;
-	 idx++;
-      }
-   }
 
    /* Which primitive?  Or all three? 
     */
