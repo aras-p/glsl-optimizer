@@ -2566,6 +2566,45 @@ sp_sampler_variant_destroy( struct sp_sampler_variant *samp )
    FREE(samp);
 }
 
+static void
+sample_get_dims(struct tgsi_sampler *tgsi_sampler, int level,
+		int dims[4])
+{
+    struct sp_sampler_variant *samp = sp_sampler_variant(tgsi_sampler);
+    const struct pipe_sampler_view *view = samp->view;
+    const struct pipe_resource *texture = view->texture;
+
+    /* undefined according to EXT_gpu_program */
+    level += view->u.tex.first_level;
+    if (level > view->u.tex.last_level)
+	return;
+
+    dims[0] = u_minify(texture->width0, level);
+
+    switch(texture->target) {
+    case PIPE_TEXTURE_1D_ARRAY:
+       dims[1] = texture->array_size;
+       /* fallthrough */
+    case PIPE_TEXTURE_1D:
+    case PIPE_BUFFER:
+       return;
+    case PIPE_TEXTURE_2D_ARRAY:
+       dims[2] = texture->array_size;
+       /* fallthrough */
+    case PIPE_TEXTURE_2D:
+    case PIPE_TEXTURE_CUBE:
+    case PIPE_TEXTURE_RECT:
+       dims[1] = u_minify(texture->height0, level);
+       return;
+    case PIPE_TEXTURE_3D:
+       dims[1] = u_minify(texture->height0, level);
+       dims[2] = u_minify(texture->depth0, level);
+       return;
+    default:
+       assert(!"unexpected texture target in sample_get_dims()");
+       return;
+    }
+}
 
 /**
  * Create a sampler variant for a given set of non-orthogonal state.
@@ -2692,5 +2731,6 @@ sp_create_sampler_variant( const struct pipe_sampler_state *sampler,
       samp->base.get_samples = samp->sample_target;
    }
 
+   samp->base.get_dims = sample_get_dims;
    return samp;
 }
