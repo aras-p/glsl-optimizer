@@ -66,6 +66,8 @@ static void TAG(WriteDepthSpan)( struct gl_context *ctx,
 #endif
       }
    HW_WRITE_UNLOCK();
+
+   (void) ctx;
 }
 
 
@@ -120,6 +122,8 @@ static void TAG(WriteMonoDepthSpan)( struct gl_context *ctx,
 	 HW_ENDCLIPLOOP();
       }
    HW_WRITE_UNLOCK();
+
+   (void) ctx;
 }
 #endif
 
@@ -168,6 +172,8 @@ static void TAG(WriteDepthPixels)( struct gl_context *ctx,
 #endif
       }
    HW_WRITE_UNLOCK();
+
+   (void) ctx;
 }
 
 
@@ -238,6 +244,8 @@ static void TAG(ReadDepthPixels)( struct gl_context *ctx,
 #endif
       }
    HW_READ_UNLOCK();
+
+   (void) ctx;
 }
 
 
