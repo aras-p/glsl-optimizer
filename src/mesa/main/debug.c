@@ -588,7 +588,6 @@ _mesa_print_texture(struct gl_context *ctx, struct gl_texture_image *img)
          case MESA_FORMAT_A8:
          case MESA_FORMAT_L8:
          case MESA_FORMAT_I8:
-         case MESA_FORMAT_CI8:
             c = 1;
             break;
          case MESA_FORMAT_AL88:

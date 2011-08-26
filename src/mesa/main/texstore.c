@@ -2724,50 +2724,6 @@ _mesa_texstore_unorm8(TEXSTORE_PARAMS)
 
 
 
-static GLboolean
-_mesa_texstore_ci8(TEXSTORE_PARAMS)
-{
-   const GLuint texelBytes = _mesa_get_format_bytes(dstFormat);
-
-   (void) dims; (void) baseInternalFormat;
-   ASSERT(dstFormat == MESA_FORMAT_CI8);
-   ASSERT(texelBytes == 1);
-   ASSERT(baseInternalFormat == GL_COLOR_INDEX);
-
-   if (!ctx->_ImageTransferState &&
-       !srcPacking->SwapBytes &&
-       srcFormat == GL_COLOR_INDEX &&
-       srcType == GL_UNSIGNED_BYTE) {
-      /* simple memcpy path */
-      memcpy_texture(ctx, dims,
-                     dstFormat, dstAddr, dstXoffset, dstYoffset, dstZoffset,
-                     dstRowStride,
-                     dstImageOffsets,
-                     srcWidth, srcHeight, srcDepth, srcFormat, srcType,
-                     srcAddr, srcPacking);
-   }
-   else {
-      /* general path */
-      GLint img, row;
-      for (img = 0; img < srcDepth; img++) {
-         GLubyte *dstRow = (GLubyte *) dstAddr
-            + dstImageOffsets[dstZoffset + img] * texelBytes
-            + dstYoffset * dstRowStride
-            + dstXoffset * texelBytes;
-         for (row = 0; row < srcHeight; row++) {
-            const GLvoid *src = _mesa_image_address(dims, srcPacking,
-                srcAddr, srcWidth, srcHeight, srcFormat, srcType, img, row, 0);
-            _mesa_unpack_index_span(ctx, srcWidth, GL_UNSIGNED_BYTE, dstRow,
-                                    srcType, src, srcPacking,
-                                    ctx->_ImageTransferState);
-            dstRow += dstRowStride;
-         }
-      }
-   }
-   return GL_TRUE;
-}
-
-
 /**
  * Texstore for _mesa_texformat_ycbcr or _mesa_texformat_ycbcr_REV.
  */
@@ -4392,7 +4348,6 @@ texstore_funcs[MESA_FORMAT_COUNT] =
    { MESA_FORMAT_L16, _mesa_texstore_unorm16 },
    { MESA_FORMAT_I8, _mesa_texstore_unorm8 },
    { MESA_FORMAT_I16, _mesa_texstore_unorm16 },
-   { MESA_FORMAT_CI8, _mesa_texstore_ci8 },
    { MESA_FORMAT_YCBCR, _mesa_texstore_ycbcr },
    { MESA_FORMAT_YCBCR_REV, _mesa_texstore_ycbcr },
    { MESA_FORMAT_R8, _mesa_texstore_unorm8 },

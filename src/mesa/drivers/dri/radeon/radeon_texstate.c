@@ -101,7 +101,6 @@ static const struct tx_table tx_table[] =
    _ALPHA(A8),
    _COLOR(L8),
    _ALPHA(I8),
-   _INVALID(CI8),
    _YUV(YCBCR),
    _YUV(YCBCR_REV),
    _INVALID(RGB_FXT1),

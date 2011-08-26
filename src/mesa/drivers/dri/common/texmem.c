@@ -1310,7 +1310,6 @@ gl_format _dri_texformat_argb4444 = MESA_FORMAT_NONE;
 gl_format _dri_texformat_argb1555 = MESA_FORMAT_NONE;
 gl_format _dri_texformat_al88 = MESA_FORMAT_NONE;
 gl_format _dri_texformat_a8 = MESA_FORMAT_A8;
-gl_format _dri_texformat_ci8 = MESA_FORMAT_CI8;
 gl_format _dri_texformat_i8 = MESA_FORMAT_I8;
 gl_format _dri_texformat_l8 = MESA_FORMAT_L8;
 /*@}*/

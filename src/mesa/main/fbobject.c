@@ -2321,7 +2321,7 @@ _mesa_GetFramebufferAttachmentParameterivEXT(GLenum target, GLenum attachment,
       }
       else {
          gl_format format = att->Renderbuffer->Format;
-         if (format == MESA_FORMAT_CI8 || format == MESA_FORMAT_S8) {
+         if (format == MESA_FORMAT_S8) {
             /* special cases */
             *params = GL_INDEX;
          }

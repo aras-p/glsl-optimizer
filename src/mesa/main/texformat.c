@@ -204,9 +204,6 @@ _mesa_choose_tex_format( struct gl_context *ctx, GLint internalFormat,
       case GL_COLOR_INDEX12_EXT:
       case GL_COLOR_INDEX16_EXT:
       case GL_COLOR_INDEX8_EXT:
-	 RETURN_IF_SUPPORTED(MESA_FORMAT_CI8);
-	 break;
-
       default:
          ; /* fallthrough */
    }

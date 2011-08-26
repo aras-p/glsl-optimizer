@@ -325,13 +325,6 @@ texfetch_funcs[MESA_FORMAT_COUNT] =
       store_texel_i16
    },
    {
-      MESA_FORMAT_CI8,
-      fetch_texel_1d_f_ci8,
-      fetch_texel_2d_f_ci8,
-      fetch_texel_3d_f_ci8,
-      store_texel_ci8
-   },
-   {
       MESA_FORMAT_YCBCR,
       fetch_texel_1d_f_ycbcr,
       fetch_texel_2d_f_ycbcr,

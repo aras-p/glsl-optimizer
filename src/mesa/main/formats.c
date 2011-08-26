@@ -42,8 +42,7 @@ struct gl_format_info
    /**
     * Base format is one of GL_RED, GL_RG, GL_RGB, GL_RGBA, GL_ALPHA,
     * GL_LUMINANCE, GL_LUMINANCE_ALPHA, GL_INTENSITY, GL_YCBCR_MESA,
-    * GL_COLOR_INDEX, GL_DEPTH_COMPONENT, GL_STENCIL_INDEX,
-    * GL_DEPTH_STENCIL, GL_DUDV_ATI.
+    * GL_DEPTH_COMPONENT, GL_STENCIL_INDEX, GL_DEPTH_STENCIL, GL_DUDV_ATI.
     */
    GLenum BaseFormat;
 
@@ -329,15 +328,6 @@ static struct gl_format_info format_info[MESA_FORMAT_COUNT] =
       0, 0, 0, 0,                  /* Red/Green/Blue/AlphaBits */
       0, 16, 0, 0, 0,              /* Lum/Int/Index/Depth/StencilBits */
       1, 1, 2                      /* BlockWidth/Height,Bytes */
-   },
-   {
-      MESA_FORMAT_CI8,             /* Name */
-      "MESA_FORMAT_CI8",           /* StrName */
-      GL_COLOR_INDEX,              /* BaseFormat */
-      GL_UNSIGNED_INT,             /* DataType */
-      0, 0, 0, 0,                  /* Red/Green/Blue/AlphaBits */
-      0, 0, 8, 0, 0,               /* Lum/Int/Index/Depth/StencilBits */
-      1, 1, 1                      /* BlockWidth/Height,Bytes */
    },
    {
       MESA_FORMAT_YCBCR,           /* Name */
@@ -1223,10 +1213,9 @@ _mesa_get_format_datatype(gl_format format)
 
 
 /**
- * Return the basic format for the given type.  The result will be
- * one of GL_RGB, GL_RGBA, GL_ALPHA, GL_LUMINANCE, GL_LUMINANCE_ALPHA,
- * GL_INTENSITY, GL_YCBCR_MESA, GL_COLOR_INDEX, GL_DEPTH_COMPONENT,
- * GL_STENCIL_INDEX, GL_DEPTH_STENCIL.
+ * Return the basic format for the given type.  The result will be one of
+ * GL_RGB, GL_RGBA, GL_ALPHA, GL_LUMINANCE, GL_LUMINANCE_ALPHA, GL_INTENSITY,
+ * GL_YCBCR_MESA, GL_DEPTH_COMPONENT, GL_STENCIL_INDEX, GL_DEPTH_STENCIL.
  */
 GLenum
 _mesa_get_format_base_format(gl_format format)
@@ -1632,7 +1621,6 @@ _mesa_format_to_type_and_comps(gl_format format,
    case MESA_FORMAT_A8:
    case MESA_FORMAT_L8:
    case MESA_FORMAT_I8:
-   case MESA_FORMAT_CI8:
    case MESA_FORMAT_R8:
    case MESA_FORMAT_S8:
       *datatype = GL_UNSIGNED_BYTE;
