@@ -50,9 +50,7 @@ intel_get_texture_alignment_unit(gl_format format,
    }
 }
 
-void i945_miptree_layout_2d(struct intel_context *intel,
-			    struct intel_mipmap_tree *mt,
-			    uint32_t tiling, int nr_images)
+void i945_miptree_layout_2d(struct intel_mipmap_tree *mt, int nr_images)
 {
    GLuint align_h, align_w;
    GLuint level;

@@ -112,9 +112,7 @@ static GLint bottom_offsets[6] = {
  *
  */
 static void
-i915_miptree_layout_cube(struct intel_context *intel,
-			 struct intel_mipmap_tree * mt,
-			 uint32_t tiling)
+i915_miptree_layout_cube(struct intel_mipmap_tree * mt)
 {
    const GLuint dim = mt->width0;
    GLuint face;
@@ -156,9 +154,7 @@ i915_miptree_layout_cube(struct intel_context *intel,
 }
 
 static void
-i915_miptree_layout_3d(struct intel_context *intel,
-		       struct intel_mipmap_tree * mt,
-		       uint32_t tiling)
+i915_miptree_layout_3d(struct intel_mipmap_tree * mt)
 {
    GLuint width = mt->width0;
    GLuint height = mt->height0;
@@ -201,9 +197,7 @@ i915_miptree_layout_3d(struct intel_context *intel,
 }
 
 static void
-i915_miptree_layout_2d(struct intel_context *intel,
-		       struct intel_mipmap_tree * mt,
-		       uint32_t tiling)
+i915_miptree_layout_2d(struct intel_mipmap_tree * mt)
 {
    GLuint width = mt->width0;
    GLuint height = mt->height0;
@@ -231,20 +225,19 @@ i915_miptree_layout_2d(struct intel_context *intel,
 }
 
 GLboolean
-i915_miptree_layout(struct intel_context *intel, struct intel_mipmap_tree * mt,
-		    uint32_t tiling)
+i915_miptree_layout(struct intel_mipmap_tree * mt)
 {
    switch (mt->target) {
    case GL_TEXTURE_CUBE_MAP:
-      i915_miptree_layout_cube(intel, mt, tiling);
+      i915_miptree_layout_cube(mt);
       break;
    case GL_TEXTURE_3D:
-      i915_miptree_layout_3d(intel, mt, tiling);
+      i915_miptree_layout_3d(mt);
       break;
    case GL_TEXTURE_1D:
    case GL_TEXTURE_2D:
    case GL_TEXTURE_RECTANGLE_ARB:
-      i915_miptree_layout_2d(intel, mt, tiling);
+      i915_miptree_layout_2d(mt);
       break;
    default:
       _mesa_problem(NULL, "Unexpected tex target in i915_miptree_layout()");
@@ -319,9 +312,7 @@ i915_miptree_layout(struct intel_context *intel, struct intel_mipmap_tree * mt,
  */
 
 static void
-i945_miptree_layout_cube(struct intel_context *intel,
-			 struct intel_mipmap_tree * mt,
-			 uint32_t tiling)
+i945_miptree_layout_cube(struct intel_mipmap_tree * mt)
 {
    const GLuint dim = mt->width0;
    GLuint face;
@@ -411,9 +402,7 @@ i945_miptree_layout_cube(struct intel_context *intel,
 }
 
 static void
-i945_miptree_layout_3d(struct intel_context *intel,
-		       struct intel_mipmap_tree * mt,
-		       uint32_t tiling)
+i945_miptree_layout_3d(struct intel_mipmap_tree * mt)
 {
    GLuint width = mt->width0;
    GLuint height = mt->height0;
@@ -467,23 +456,22 @@ i945_miptree_layout_3d(struct intel_context *intel,
 }
 
 GLboolean
-i945_miptree_layout(struct intel_context *intel, struct intel_mipmap_tree * mt,
-		    uint32_t tiling)
+i945_miptree_layout(struct intel_mipmap_tree * mt)
 {
    switch (mt->target) {
    case GL_TEXTURE_CUBE_MAP:
       if (mt->compressed)
-	 i945_miptree_layout_cube(intel, mt, tiling);
+	 i945_miptree_layout_cube(mt);
       else
-	 i915_miptree_layout_cube(intel, mt, tiling);
+	 i915_miptree_layout_cube(mt);
       break;
    case GL_TEXTURE_3D:
-      i945_miptree_layout_3d(intel, mt, tiling);
+      i945_miptree_layout_3d(mt);
       break;
    case GL_TEXTURE_1D:
    case GL_TEXTURE_2D:
    case GL_TEXTURE_RECTANGLE_ARB:
-      i945_miptree_layout_2d(intel, mt, tiling, 1);
+      i945_miptree_layout_2d(mt, 1);
       break;
    default:
       _mesa_problem(NULL, "Unexpected tex target in i945_miptree_layout()");

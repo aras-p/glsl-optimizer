@@ -61,8 +61,7 @@ intel_miptree_create_internal(struct intel_context *intel,
 			      GLuint last_level,
 			      GLuint width0,
 			      GLuint height0,
-			      GLuint depth0,
-			      uint32_t tiling)
+			      GLuint depth0)
 {
    GLboolean ok;
    struct intel_mipmap_tree *mt = calloc(sizeof(*mt), 1);
@@ -88,12 +87,13 @@ intel_miptree_create_internal(struct intel_context *intel,
    mt->refcount = 1; 
 
 #ifdef I915
+   (void) intel;
    if (intel->is_945)
-      ok = i945_miptree_layout(intel, mt, tiling);
+      ok = i945_miptree_layout(mt);
    else
-      ok = i915_miptree_layout(intel, mt, tiling);
+      ok = i915_miptree_layout(mt);
 #else
-   ok = brw_miptree_layout(intel, mt, tiling);
+   ok = brw_miptree_layout(intel, mt);
 #endif
 
    if (!ok) {
@@ -132,8 +132,7 @@ intel_miptree_create(struct intel_context *intel,
 
    mt = intel_miptree_create_internal(intel, target, format,
 				      first_level, last_level, width0,
-				      height0, depth0,
-				      tiling);
+				      height0, depth0);
    /*
     * pitch == 0 || height == 0  indicates the null texture
     */
@@ -169,8 +168,7 @@ intel_miptree_create_for_region(struct intel_context *intel,
 
    mt = intel_miptree_create_internal(intel, target, format,
 				      0, 0,
-				      region->width, region->height, 1,
-				      I915_TILING_NONE);
+				      region->width, region->height, 1);
    if (!mt)
       return mt;
 
