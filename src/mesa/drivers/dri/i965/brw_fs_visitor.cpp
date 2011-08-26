@@ -957,12 +957,29 @@ fs_visitor::emit_texture_gen7(ir_texture *ir, fs_reg dst, fs_reg coordinate,
       mlen += reg_width;
       break;
    case ir_txf:
-      assert(!"GLSL 1.30 features unsupported");
+      /* Unfortunately, the parameters for LD are intermixed: u, lod, v, r. */
+      fs_inst *inst = emit(BRW_OPCODE_MOV,
+			   fs_reg(MRF, base_mrf + mlen, BRW_REGISTER_TYPE_D),
+			   coordinate);
+      coordinate.reg_offset++;
+      mlen += reg_width;
+
+      ir->lod_info.lod->accept(this);
+      emit(BRW_OPCODE_MOV, fs_reg(MRF, base_mrf + mlen, BRW_REGISTER_TYPE_D), this->result);
+      mlen += reg_width;
+
+      for (int i = 1; i < ir->coordinate->type->vector_elements; i++) {
+	 fs_inst *inst = emit(BRW_OPCODE_MOV,
+			      fs_reg(MRF, base_mrf + mlen, BRW_REGISTER_TYPE_D),
+			      coordinate);
+	 coordinate.reg_offset++;
+	 mlen += reg_width;
+      }
       break;
    }
 
-   /* Set up the coordinate (except for TXD where it was done earlier) */
-   if (ir->op != ir_txd && ir->op != ir_txs) {
+   /* Set up the coordinate (except for cases where it was done above) */
+   if (ir->op != ir_txd && ir->op != ir_txs && ir->op != ir_txf) {
       for (int i = 0; i < ir->coordinate->type->vector_elements; i++) {
 	 fs_inst *inst = emit(BRW_OPCODE_MOV, fs_reg(MRF, base_mrf + mlen),
 			      coordinate);
@@ -980,7 +997,7 @@ fs_visitor::emit_texture_gen7(ir_texture *ir, fs_reg dst, fs_reg coordinate,
    case ir_txb: inst = emit(FS_OPCODE_TXB, dst); break;
    case ir_txl: inst = emit(FS_OPCODE_TXL, dst); break;
    case ir_txd: inst = emit(FS_OPCODE_TXD, dst); break;
-   case ir_txf: assert(!"TXF unsupported."); break;
+   case ir_txf: inst = emit(FS_OPCODE_TXF, dst); break;
    case ir_txs: inst = emit(FS_OPCODE_TXS, dst); break;
    }
    inst->base_mrf = base_mrf;
