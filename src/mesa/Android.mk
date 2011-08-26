@@ -25,6 +25,12 @@
 
 LOCAL_PATH := $(call my-dir)
 
+# Import the following variables:
+#     MESA_CXX_SOURCES
+#     MESA_GALLIUM_CXX_SOURCES
+#     MESA_GALLIUM_SOURCES
+#     MESA_SOURCES
+#     X86_SOURCES
 include $(LOCAL_PATH)/sources.mak
 
 common_CFLAGS := \
