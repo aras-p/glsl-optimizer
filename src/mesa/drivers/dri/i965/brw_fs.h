@@ -291,6 +291,7 @@ public:
       return (opcode == FS_OPCODE_TEX ||
 	      opcode == FS_OPCODE_TXB ||
 	      opcode == FS_OPCODE_TXD ||
+	      opcode == FS_OPCODE_TXF ||
 	      opcode == FS_OPCODE_TXL ||
 	      opcode == FS_OPCODE_TXS);
    }

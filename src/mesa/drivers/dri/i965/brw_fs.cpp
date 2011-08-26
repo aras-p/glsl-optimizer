@@ -156,6 +156,7 @@ fs_visitor::implied_mrf_writes(fs_inst *inst)
    case FS_OPCODE_TEX:
    case FS_OPCODE_TXB:
    case FS_OPCODE_TXD:
+   case FS_OPCODE_TXF:
    case FS_OPCODE_TXL:
    case FS_OPCODE_TXS:
       return 1;

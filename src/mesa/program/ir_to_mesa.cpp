@@ -2139,6 +2139,8 @@ ir_to_mesa_visitor::visit(ir_texture *ir)
       ir->lod_info.bias->accept(this);
       lod_info = this->result;
       break;
+   case ir_txf:
+      /* Pretend to be TXL so the sampler, coordinate, lod are available */
    case ir_txl:
       opcode = OPCODE_TXL;
       ir->lod_info.lod->accept(this);
@@ -2150,9 +2152,6 @@ ir_to_mesa_visitor::visit(ir_texture *ir)
       dx = this->result;
       ir->lod_info.grad.dPdy->accept(this);
       dy = this->result;
-      break;
-   case ir_txf:
-      assert(!"GLSL 1.30 features unsupported");
       break;
    }
 

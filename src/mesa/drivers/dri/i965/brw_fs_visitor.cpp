@@ -785,7 +785,8 @@ fs_visitor::emit_texture_gen5(ir_texture *ir, fs_reg dst, fs_reg coordinate,
 
    for (int i = 0; i < vector_elements; i++) {
       fs_inst *inst = emit(BRW_OPCODE_MOV,
-			   fs_reg(MRF, base_mrf + mlen + i * reg_width),
+			   fs_reg(MRF, base_mrf + mlen + i * reg_width,
+				  coordinate.type),
 			   coordinate);
       if (i < 3 && c->key.gl_clamp_mask[i] & (1 << sampler))
 	 inst->saturate = true;
@@ -861,7 +862,13 @@ fs_visitor::emit_texture_gen5(ir_texture *ir, fs_reg dst, fs_reg coordinate,
       inst = emit(FS_OPCODE_TXS, dst);
       break;
    case ir_txf:
-      assert(!"GLSL 1.30 features unsupported");
+      mlen = header_present + 4 * reg_width;
+
+      ir->lod_info.lod->accept(this);
+      emit(BRW_OPCODE_MOV,
+	   fs_reg(MRF, base_mrf + mlen - reg_width, BRW_REGISTER_TYPE_UD),
+	   this->result);
+      inst = emit(FS_OPCODE_TXF, dst);
       break;
    }
    inst->base_mrf = base_mrf;
