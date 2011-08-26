@@ -503,7 +503,16 @@ class ABIPrinter(object):
 
             proto = self._c_decl(ent, prefix, False, 'static')
 
-            stmt1 = self.indent + '%s(%s);' % (self.noop_warn,
+            stmt1 = self.indent;
+            space = ''
+            for t, n, a in ent.params:
+                stmt1 += "%s(void) %s;" % (space, n)
+                space = ' '
+
+            if ent.params:
+                stmt1 += '\n';
+
+            stmt1 += self.indent + '%s(%s);' % (self.noop_warn,
                     self._c_function(ent, warn_prefix, False, True))
 
             if ent.ret:

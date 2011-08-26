@@ -64,6 +64,8 @@ class PrintGlOffsets(gl_XML.gl_print_base):
 
 		n = f.static_name(name)
 
+		silence = ''
+		space = ''
 		for p in f.parameterIterator():
 			if p.is_padding:
 				continue
@@ -77,6 +79,9 @@ class PrintGlOffsets(gl_XML.gl_print_base):
 			p_string = p_string + comma + p.name
 			o_string = o_string + comma + cast + p.name
 			comma = ", "
+
+			silence += "%s(void) %s;" % (space, p.name);
+			space = ' '
 
 
 		if f.return_type != 'void':
@@ -97,6 +102,8 @@ class PrintGlOffsets(gl_XML.gl_print_base):
 
 		print '%s %s KEYWORD2 NAME(%s)(%s)' % (keyword, f.return_type, n, f.get_parameter_string(name))
 		print '{'
+		if silence:
+			print '    %s' % (silence)
 		if p_string == "":
 			print '   %s(%s, (), (F, "gl%s();\\n"));' \
 				% (dispatch, f.name, name)
