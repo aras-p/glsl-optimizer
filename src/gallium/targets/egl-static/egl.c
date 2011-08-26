@@ -167,6 +167,16 @@ drm_fd_get_pci_id(int fd, int *vendor_id, int *chip_id)
 	 *chip_id = -1;
       }
    }
+   else if (util_strcmp(version->name, "nouveau") == 0) {
+      *vendor_id = 0x10de;
+      /* not used */
+      *chip_id = 0;
+   }
+   else if (util_strcmp(version->name, "vmwgfx") == 0) {
+      *vendor_id = 0x15ad;
+      /* assume SVGA II */
+      *chip_id = 0x0405;
+   }
 
    drmFreeVersion(version);
 
