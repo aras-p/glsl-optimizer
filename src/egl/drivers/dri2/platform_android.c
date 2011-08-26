@@ -149,23 +149,6 @@ droid_create_surface(_EGLDriver *drv, _EGLDisplay *disp, EGLint type,
    struct dri2_egl_display *dri2_dpy = dri2_egl_display(disp);
    struct dri2_egl_config *dri2_conf = dri2_egl_config(conf);
    struct dri2_egl_surface *dri2_surf;
-   int format;
-
-   (void) drv;
-
-   if (!window || window->common.magic != ANDROID_NATIVE_WINDOW_MAGIC) {
-      _eglError(EGL_BAD_NATIVE_WINDOW, "droid_create_surface");
-      return NULL;
-   }
-   if (window->query(window, NATIVE_WINDOW_FORMAT, &format)) {
-      _eglError(EGL_BAD_NATIVE_WINDOW, "droid_create_surface");
-      return NULL;
-   }
-   if (format != dri2_conf->base.NativeVisualID) {
-      _eglLog(_EGL_WARNING, "Native format mismatch: 0x%x != 0x%x",
-            format, dri2_conf->base.NativeVisualID);
-   }
-
    dri2_surf = calloc(1, sizeof *dri2_surf);
    if (!dri2_surf) {
       _eglError(EGL_BAD_ALLOC, "droid_create_surface");
@@ -173,7 +156,28 @@ droid_create_surface(_EGLDriver *drv, _EGLDisplay *disp, EGLint type,
    }
 
    if (!_eglInitSurface(&dri2_surf->base, disp, type, conf, attrib_list))
-      goto cleanup_surf;
+      goto cleanup_surface;
+
+   if (type == EGL_WINDOW_BIT) {
+      int format;
+
+      if (!window || window->common.magic != ANDROID_NATIVE_WINDOW_MAGIC) {
+         _eglError(EGL_BAD_NATIVE_WINDOW, "droid_create_surface");
+         goto cleanup_surface;
+      }
+      if (window->query(window, NATIVE_WINDOW_FORMAT, &format)) {
+         _eglError(EGL_BAD_NATIVE_WINDOW, "droid_create_surface");
+         goto cleanup_surface;
+      }
+
+      if (format != dri2_conf->base.NativeVisualID) {
+         _eglLog(_EGL_WARNING, "Native format mismatch: 0x%x != 0x%x",
+               format, dri2_conf->base.NativeVisualID);
+      }
+
+      window->query(window, NATIVE_WINDOW_WIDTH, &dri2_surf->base.Width);
+      window->query(window, NATIVE_WINDOW_HEIGHT, &dri2_surf->base.Height);
+   }
 
    dri2_surf->dri_drawable =
       (*dri2_dpy->dri2->createNewDrawable)(dri2_dpy->dri_screen,
@@ -181,18 +185,17 @@ droid_create_surface(_EGLDriver *drv, _EGLDisplay *disp, EGLint type,
                                            dri2_surf);
    if (dri2_surf->dri_drawable == NULL) {
       _eglError(EGL_BAD_ALLOC, "dri2->createNewDrawable");
-      goto cleanup_surf;
+      goto cleanup_surface;
    }
 
-   window->common.incRef(&window->common);
-   window->query(window, NATIVE_WINDOW_WIDTH, &dri2_surf->base.Width);
-   window->query(window, NATIVE_WINDOW_HEIGHT, &dri2_surf->base.Height);
-
-   dri2_surf->window = window;
+   if (window) {
+      window->common.incRef(&window->common);
+      dri2_surf->window = window;
+   }
 
    return &dri2_surf->base;
 
-cleanup_surf:
+cleanup_surface:
    free(dri2_surf);
 
    return NULL;
@@ -233,10 +236,12 @@ droid_destroy_surface(_EGLDriver *drv, _EGLDisplay *disp, _EGLSurface *surf)
 
    droid_free_local_buffers(dri2_surf);
 
-   if (dri2_surf->buffer)
-      droid_window_cancel_buffer(dri2_surf);
+   if (dri2_surf->base.Type == EGL_WINDOW_BIT) {
+      if (dri2_surf->buffer)
+         droid_window_cancel_buffer(dri2_surf);
 
-   dri2_surf->window->common.decRef(&dri2_surf->window->common);
+      dri2_surf->window->common.decRef(&dri2_surf->window->common);
+   }
 
    (*dri2_dpy->core->destroyDrawable)(dri2_surf->dri_drawable);
 
@@ -252,6 +257,9 @@ droid_swap_buffers(_EGLDriver *drv, _EGLDisplay *disp, _EGLSurface *draw)
    struct dri2_egl_display *dri2_dpy = dri2_egl_display(disp);
    struct dri2_egl_surface *dri2_surf = dri2_egl_surface(draw);
    _EGLContext *ctx;
+
+   if (dri2_surf->base.Type != EGL_WINDOW_BIT)
+      return EGL_TRUE;
 
    if (dri2_drv->glFlush) {
       ctx = _eglGetCurrentContext();
@@ -384,14 +392,16 @@ droid_get_buffers_parse_attachments(struct dri2_egl_surface *dri2_surf,
 
       switch (attachments[i]) {
       case __DRI_BUFFER_BACK_LEFT:
-         buf->attachment = attachments[i];
-         buf->name = get_native_buffer_name(dri2_surf->buffer);
-         buf->cpp = get_format_bpp(dri2_surf->buffer->format);
-         buf->pitch = dri2_surf->buffer->stride * buf->cpp;
-         buf->flags = 0;
+         if (dri2_surf->base.Type == EGL_WINDOW_BIT) {
+            buf->attachment = attachments[i];
+            buf->name = get_native_buffer_name(dri2_surf->buffer);
+            buf->cpp = get_format_bpp(dri2_surf->buffer->format);
+            buf->pitch = dri2_surf->buffer->stride * buf->cpp;
+            buf->flags = 0;
 
-         if (buf->name)
-            num_buffers++;
+            if (buf->name)
+               num_buffers++;
+         }
          break;
       case __DRI_BUFFER_DEPTH:
       case __DRI_BUFFER_STENCIL:
@@ -431,17 +441,18 @@ droid_get_buffers_with_format(__DRIdrawable * driDrawable,
       dri2_egl_display(dri2_surf->base.Resource.Display);
    int i;
 
-   if (!dri2_surf->buffer) {
-      if (!droid_window_dequeue_buffer(dri2_surf))
+   if (dri2_surf->base.Type == EGL_WINDOW_BIT) {
+      /* try to dequeue the next back buffer */
+      if (!dri2_surf->buffer && !droid_window_dequeue_buffer(dri2_surf))
          return NULL;
-   }
 
-   /* free outdated buffers and update the surface size */
-   if (dri2_surf->base.Width != dri2_surf->buffer->width ||
-       dri2_surf->base.Height != dri2_surf->buffer->height) {
-      droid_free_local_buffers(dri2_surf);
-      dri2_surf->base.Width = dri2_surf->buffer->width;
-      dri2_surf->base.Height = dri2_surf->buffer->height;
+      /* free outdated buffers and update the surface size */
+      if (dri2_surf->base.Width != dri2_surf->buffer->width ||
+          dri2_surf->base.Height != dri2_surf->buffer->height) {
+         droid_free_local_buffers(dri2_surf);
+         dri2_surf->base.Width = dri2_surf->buffer->width;
+         dri2_surf->base.Height = dri2_surf->buffer->height;
+      }
    }
 
    dri2_surf->buffer_count =
