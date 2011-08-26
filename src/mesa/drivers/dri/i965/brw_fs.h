@@ -515,6 +515,11 @@ public:
 
    void emit_color_write(int index, int first_color_mrf, fs_reg color);
    void emit_fb_writes();
+   bool try_rewrite_rhs_to_dst(ir_assignment *ir,
+			       fs_reg dst,
+			       fs_reg src,
+			       fs_inst *pre_rhs_inst,
+			       fs_inst *last_rhs_inst);
    void emit_assignment_writes(fs_reg &l, fs_reg &r,
 			       const glsl_type *type, bool predicated);
 

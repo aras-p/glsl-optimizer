@@ -495,6 +495,42 @@ fs_visitor::emit_assignment_writes(fs_reg &l, fs_reg &r,
    }
 }
 
+/* If the RHS processing resulted in an instruction generating a
+ * temporary value, and it would be easy to rewrite the instruction to
+ * generate its result right into the LHS instead, do so.  This ends
+ * up reliably removing instructions where it can be tricky to do so
+ * later without real UD chain information.
+ */
+bool
+fs_visitor::try_rewrite_rhs_to_dst(ir_assignment *ir,
+                                   fs_reg dst,
+                                   fs_reg src,
+                                   fs_inst *pre_rhs_inst,
+                                   fs_inst *last_rhs_inst)
+{
+   if (pre_rhs_inst == last_rhs_inst)
+      return false; /* No instructions generated to work with. */
+
+   /* Only attempt if we're doing a direct assignment. */
+   if (ir->condition ||
+       !(ir->lhs->type->is_scalar() ||
+        (ir->lhs->type->is_vector() &&
+         ir->write_mask == (1 << ir->lhs->type->vector_elements) - 1)))
+      return false;
+
+   /* Make sure the last instruction generated our source reg. */
+   if (last_rhs_inst->predicated ||
+       last_rhs_inst->force_uncompressed ||
+       last_rhs_inst->force_sechalf ||
+       !src.equals(&last_rhs_inst->dst))
+      return false;
+
+   /* Success!  Rewrite the instruction. */
+   last_rhs_inst->dst = dst;
+
+   return true;
+}
+
 void
 fs_visitor::visit(ir_assignment *ir)
 {
@@ -505,11 +541,18 @@ fs_visitor::visit(ir_assignment *ir)
    ir->lhs->accept(this);
    l = this->result;
 
+   fs_inst *pre_rhs_inst = (fs_inst *) this->instructions.get_tail();
+
    ir->rhs->accept(this);
    r = this->result;
 
+   fs_inst *last_rhs_inst = (fs_inst *) this->instructions.get_tail();
+
    assert(l.file != BAD_FILE);
    assert(r.file != BAD_FILE);
+
+   if (try_rewrite_rhs_to_dst(ir, l, r, pre_rhs_inst, last_rhs_inst))
+      return;
 
    if (ir->condition) {
       emit_bool_to_cond_code(ir->condition);
