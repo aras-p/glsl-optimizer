@@ -239,6 +239,12 @@ public:
       return node;
    }
 
+   vec4_instruction(vec4_visitor *v, enum opcode opcode,
+		    dst_reg dst = dst_reg(),
+		    src_reg src0 = src_reg(),
+		    src_reg src1 = src_reg(),
+		    src_reg src2 = src_reg());
+
    struct brw_reg get_dst(void);
    struct brw_reg get_src(int i);
 
@@ -383,6 +389,8 @@ public:
    void calculate_live_intervals();
    bool dead_code_eliminate();
    bool virtual_grf_interferes(int a, int b);
+
+   vec4_instruction *emit(vec4_instruction *inst);
 
    vec4_instruction *emit(enum opcode opcode);
 

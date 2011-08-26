@@ -72,43 +72,52 @@ dst_reg::dst_reg(src_reg reg)
    this->fixed_hw_reg = reg.fixed_hw_reg;
 }
 
+vec4_instruction::vec4_instruction(vec4_visitor *v,
+				   enum opcode opcode, dst_reg dst,
+				   src_reg src0, src_reg src1, src_reg src2)
+{
+   this->opcode = opcode;
+   this->dst = dst;
+   this->src[0] = src0;
+   this->src[1] = src1;
+   this->src[2] = src2;
+   this->ir = v->base_ir;
+   this->annotation = v->current_annotation;
+}
+
+vec4_instruction *
+vec4_visitor::emit(vec4_instruction *inst)
+{
+   this->instructions.push_tail(inst);
+
+   return inst;
+}
+
 vec4_instruction *
 vec4_visitor::emit(enum opcode opcode, dst_reg dst,
 		   src_reg src0, src_reg src1, src_reg src2)
 {
-   vec4_instruction *inst = new(mem_ctx) vec4_instruction();
-
-   inst->opcode = opcode;
-   inst->dst = dst;
-   inst->src[0] = src0;
-   inst->src[1] = src1;
-   inst->src[2] = src2;
-   inst->ir = this->base_ir;
-   inst->annotation = this->current_annotation;
-
-   this->instructions.push_tail(inst);
-
-   return inst;
+   return emit(new(mem_ctx) vec4_instruction(this, opcode, dst,
+					     src0, src1, src2));
 }
 
 
 vec4_instruction *
 vec4_visitor::emit(enum opcode opcode, dst_reg dst, src_reg src0, src_reg src1)
 {
-   return emit(opcode, dst, src0, src1, src_reg());
+   return emit(new(mem_ctx) vec4_instruction(this, opcode, dst, src0, src1));
 }
 
 vec4_instruction *
 vec4_visitor::emit(enum opcode opcode, dst_reg dst, src_reg src0)
 {
-   assert(dst.writemask != 0);
-   return emit(opcode, dst, src0, src_reg(), src_reg());
+   return emit(new(mem_ctx) vec4_instruction(this, opcode, dst, src0));
 }
 
 vec4_instruction *
 vec4_visitor::emit(enum opcode opcode)
 {
-   return emit(opcode, dst_reg(), src_reg(), src_reg(), src_reg());
+   return emit(new(mem_ctx) vec4_instruction(this, opcode, dst_reg()));
 }
 
 void
