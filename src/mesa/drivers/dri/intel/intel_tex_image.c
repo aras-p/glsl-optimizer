@@ -160,9 +160,7 @@ static GLboolean
 try_pbo_upload(struct intel_context *intel,
                struct intel_texture_image *intelImage,
                const struct gl_pixelstore_attrib *unpack,
-               GLint internalFormat,
-               GLint width, GLint height,
-               GLenum format, GLenum type, const void *pixels)
+               GLint width, GLint height, const void *pixels)
 {
    struct intel_buffer_object *pbo = intel_buffer_object(unpack->BufferObj);
    GLuint src_offset, src_stride;
@@ -220,9 +218,7 @@ static GLboolean
 try_pbo_zcopy(struct intel_context *intel,
               struct intel_texture_image *intelImage,
               const struct gl_pixelstore_attrib *unpack,
-              GLint internalFormat,
-              GLint width, GLint height,
-              GLenum format, GLenum type, const void *pixels)
+              GLint width, const void *pixels)
 {
    struct intel_buffer_object *pbo = intel_buffer_object(unpack->BufferObj);
    GLuint src_offset, src_stride;
@@ -466,10 +462,7 @@ intelTexImage(struct gl_context * ctx,
           intelObj->mt->first_level == level &&
           intelObj->mt->last_level == level) {
 
-         if (try_pbo_zcopy(intel, intelImage, unpack,
-                           internalFormat,
-                           width, height, format, type, pixels)) {
-
+         if (try_pbo_zcopy(intel, intelImage, unpack, width, pixels)) {
             DBG("pbo zcopy upload succeeded\n");
             return;
          }
@@ -478,9 +471,7 @@ intelTexImage(struct gl_context * ctx,
 
       /* Otherwise, attempt to use the blitter for PBO image uploads.
        */
-      if (try_pbo_upload(intel, intelImage, unpack,
-                         internalFormat,
-                         width, height, format, type, pixels)) {
+      if (try_pbo_upload(intel, intelImage, unpack, width, height, pixels)) {
          DBG("pbo upload succeeded\n");
          return;
       }
