@@ -448,7 +448,7 @@ intel_bind_framebuffer(struct gl_context * ctx, GLenum target,
                        struct gl_framebuffer *fb, struct gl_framebuffer *fbread)
 {
    if (target == GL_FRAMEBUFFER_EXT || target == GL_DRAW_FRAMEBUFFER_EXT) {
-      intel_draw_buffer(ctx, fb);
+      intel_draw_buffer(ctx);
    }
    else {
       /* don't need to do anything if target == GL_READ_FRAMEBUFFER_EXT */
@@ -469,7 +469,7 @@ intel_framebuffer_renderbuffer(struct gl_context * ctx,
    intel_flush(ctx);
 
    _mesa_framebuffer_renderbuffer(ctx, fb, attachment, rb);
-   intel_draw_buffer(ctx, fb);
+   intel_draw_buffer(ctx);
 }
 
 static bool
@@ -760,7 +760,7 @@ intel_render_texture(struct gl_context * ctx,
    }
 #endif
    /* update drawing region, etc */
-   intel_draw_buffer(ctx, fb);
+   intel_draw_buffer(ctx);
 }
 
 

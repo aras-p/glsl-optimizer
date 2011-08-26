@@ -97,7 +97,7 @@ intelDrawBuffer(struct gl_context * ctx, GLenum mode)
 	 dri2InvalidateDrawable(intel->driContext->driDrawablePriv);
    }
 
-   intel_draw_buffer(ctx, ctx->DrawBuffer);
+   intel_draw_buffer(ctx);
 }
 
 

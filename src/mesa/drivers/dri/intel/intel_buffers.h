@@ -43,7 +43,7 @@ extern struct intel_region *intel_drawbuf_region(struct intel_context *intel);
 extern void intel_check_front_buffer_rendering(struct intel_context *intel);
 
 static inline void
-intel_draw_buffer(struct gl_context * ctx, struct gl_framebuffer *fb)
+intel_draw_buffer(struct gl_context * ctx)
 {
    struct intel_context *intel = intel_context(ctx);
 

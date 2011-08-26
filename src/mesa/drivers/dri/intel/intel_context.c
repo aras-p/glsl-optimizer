@@ -409,7 +409,7 @@ intel_prepare_render(struct intel_context *intel)
    if (drawable && drawable->dri2.stamp != driContext->dri2.draw_stamp) {
       if (drawable->lastStamp != drawable->dri2.stamp)
 	 intel_update_renderbuffers(driContext, drawable);
-      intel_draw_buffer(&intel->ctx, intel->ctx.DrawBuffer);
+      intel_draw_buffer(&intel->ctx);
       driContext->dri2.draw_stamp = drawable->dri2.stamp;
    }
 
@@ -980,7 +980,7 @@ intelMakeCurrent(__DRIcontext * driContextPriv,
        * is NULL at that point.  We can't call _mesa_makecurrent()
        * first, since we need the buffer size for the initial
        * viewport.  So just call intel_draw_buffer() again here. */
-      intel_draw_buffer(&intel->ctx, intel->ctx.DrawBuffer);
+      intel_draw_buffer(&intel->ctx);
    }
    else {
       _mesa_make_current(NULL, NULL, NULL);
