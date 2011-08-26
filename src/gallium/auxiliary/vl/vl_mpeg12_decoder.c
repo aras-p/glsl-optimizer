@@ -238,7 +238,7 @@ cleanup_mc_buffer(struct vl_mpeg12_buffer *buf)
       vl_mc_cleanup_buffer(&buf->mc[i]);
 }
 
-static inline void
+static INLINE void
 MacroBlockTypeToPipeWeights(const struct pipe_mpeg12_macroblock *mb, unsigned weights[2])
 {
    assert(mb);
@@ -272,7 +272,7 @@ MacroBlockTypeToPipeWeights(const struct pipe_mpeg12_macroblock *mb, unsigned we
    }
 }
 
-static inline struct vl_motionvector
+static INLINE struct vl_motionvector
 MotionVectorToPipe(const struct pipe_mpeg12_macroblock *mb, unsigned vector,
                    unsigned field_select_mask, unsigned weight)
 {
@@ -323,7 +323,7 @@ MotionVectorToPipe(const struct pipe_mpeg12_macroblock *mb, unsigned vector,
    return mv;
 }
 
-static inline void
+static INLINE void
 UploadYcbcrBlocks(struct vl_mpeg12_decoder *dec,
                   struct vl_mpeg12_buffer *buf,
                   const struct pipe_mpeg12_macroblock *mb)
