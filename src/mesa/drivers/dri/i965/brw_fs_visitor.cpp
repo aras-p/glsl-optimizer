@@ -46,9 +46,9 @@ extern "C" {
 }
 #include "brw_shader.h"
 #include "brw_fs.h"
-#include "../glsl/glsl_types.h"
-#include "../glsl/ir_optimization.h"
-#include "../glsl/ir_print_visitor.h"
+#include "glsl/glsl_types.h"
+#include "glsl/ir_optimization.h"
+#include "glsl/ir_print_visitor.h"
 
 void
 fs_visitor::visit(ir_variable *ir)

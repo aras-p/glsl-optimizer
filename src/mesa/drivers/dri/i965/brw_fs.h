@@ -44,8 +44,8 @@ extern "C" {
 #include "brw_eu.h"
 #include "brw_wm.h"
 }
-#include "../glsl/glsl_types.h"
-#include "../glsl/ir.h"
+#include "glsl/glsl_types.h"
+#include "glsl/ir.h"
 
 enum register_file {
    ARF = BRW_ARCHITECTURE_REGISTER_FILE,

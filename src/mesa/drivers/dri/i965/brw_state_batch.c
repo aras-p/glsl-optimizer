@@ -32,7 +32,7 @@
 #include "brw_state.h"
 #include "intel_batchbuffer.h"
 #include "main/imports.h"
-#include "../glsl/ralloc.h"
+#include "glsl/ralloc.h"
 
 static void
 brw_track_state_batch(struct brw_context *brw,

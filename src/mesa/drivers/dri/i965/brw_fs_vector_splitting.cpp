@@ -41,11 +41,11 @@ extern "C" {
 #include "main/core.h"
 #include "intel_context.h"
 }
-#include "../glsl/ir.h"
-#include "../glsl/ir_visitor.h"
-#include "../glsl/ir_print_visitor.h"
-#include "../glsl/ir_rvalue_visitor.h"
-#include "../glsl/glsl_types.h"
+#include "glsl/ir.h"
+#include "glsl/ir_visitor.h"
+#include "glsl/ir_print_visitor.h"
+#include "glsl/ir_rvalue_visitor.h"
+#include "glsl/glsl_types.h"
 
 static bool debug = false;
 

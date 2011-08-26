@@ -46,8 +46,8 @@ extern "C" {
 }
 #include "brw_shader.h"
 #include "brw_fs.h"
-#include "../glsl/glsl_types.h"
-#include "../glsl/ir_print_visitor.h"
+#include "glsl/glsl_types.h"
+#include "glsl/ir_print_visitor.h"
 
 #define MAX_INSTRUCTION (1 << 30)
 

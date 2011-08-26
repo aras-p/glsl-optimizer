@@ -40,7 +40,7 @@
 #include "brw_state.h"
 #include "intel_span.h"
 #include "tnl/t_pipeline.h"
-#include "../glsl/ralloc.h"
+#include "glsl/ralloc.h"
 
 /***************************************
  * Mesa's Driver Functions

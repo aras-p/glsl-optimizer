@@ -34,7 +34,7 @@
 #include "brw_defines.h"
 #include "brw_eu.h"
 
-#include "../glsl/ralloc.h"
+#include "glsl/ralloc.h"
 
 /* Returns the corresponding conditional mod for swapping src0 and
  * src1 in e.g. CMP.

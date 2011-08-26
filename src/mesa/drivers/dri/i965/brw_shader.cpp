@@ -27,8 +27,8 @@ extern "C" {
 #include "brw_vs.h"
 }
 #include "brw_fs.h"
-#include "../glsl/ir_optimization.h"
-#include "../glsl/ir_print_visitor.h"
+#include "glsl/ir_optimization.h"
+#include "glsl/ir_print_visitor.h"
 
 struct gl_shader *
 brw_new_shader(struct gl_context *ctx, GLuint name, GLuint type)

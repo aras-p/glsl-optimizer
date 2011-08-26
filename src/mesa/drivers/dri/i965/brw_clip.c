@@ -42,7 +42,7 @@
 #include "brw_state.h"
 #include "brw_clip.h"
 
-#include "../glsl/ralloc.h"
+#include "glsl/ralloc.h"
 
 #define FRONT_UNFILLED_BIT  0x1
 #define BACK_UNFILLED_BIT   0x2

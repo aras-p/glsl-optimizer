@@ -49,7 +49,7 @@
 #include "brw_vs.h"
 #include "brw_wm.h"
 
-#include "../glsl/ralloc.h"
+#include "glsl/ralloc.h"
 
 static void
 dri_bo_release(drm_intel_bo **bo)

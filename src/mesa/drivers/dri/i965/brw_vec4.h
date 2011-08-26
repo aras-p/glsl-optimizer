@@ -35,7 +35,7 @@ extern "C" {
 #include "brw_eu.h"
 };
 
-#include "../glsl/ir.h"
+#include "glsl/ir.h"
 
 namespace brw {
 

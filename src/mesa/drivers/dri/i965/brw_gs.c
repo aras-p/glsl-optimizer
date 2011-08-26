@@ -42,7 +42,7 @@
 #include "brw_state.h"
 #include "brw_gs.h"
 
-#include "../glsl/ralloc.h"
+#include "glsl/ralloc.h"
 
 static void compile_gs_prog( struct brw_context *brw,
 			     struct brw_gs_prog_key *key )

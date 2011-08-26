@@ -34,7 +34,7 @@ extern "C" {
 } /* extern "C" */
 
 #include "brw_fs.h"
-#include "../glsl/ir_print_visitor.h"
+#include "glsl/ir_print_visitor.h"
 
 void
 fs_visitor::generate_fb_write(fs_inst *inst)

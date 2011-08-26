@@ -38,7 +38,7 @@
 #include "program/prog_print.h"
 #include "program/prog_parameter.h"
 
-#include "../glsl/ralloc.h"
+#include "glsl/ralloc.h"
 
 static bool
 do_vs_prog(struct brw_context *brw,

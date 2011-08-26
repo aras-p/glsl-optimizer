@@ -36,7 +36,7 @@
 #include "main/samplerobj.h"
 #include "program/prog_parameter.h"
 
-#include "../glsl/ralloc.h"
+#include "glsl/ralloc.h"
 
 /** Return number of src args for given instruction */
 GLuint brw_wm_nr_args( GLuint opcode )

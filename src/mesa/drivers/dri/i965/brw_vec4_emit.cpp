@@ -21,7 +21,7 @@
  */
 
 #include "brw_vec4.h"
-#include "../glsl/ir_print_visitor.h"
+#include "glsl/ir_print_visitor.h"
 
 extern "C" {
 #include "brw_eu.h"

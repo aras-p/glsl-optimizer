@@ -26,9 +26,9 @@
  */
 
 #include "brw_fs.h"
-#include "../glsl/glsl_types.h"
-#include "../glsl/ir_optimization.h"
-#include "../glsl/ir_print_visitor.h"
+#include "glsl/glsl_types.h"
+#include "glsl/ir_optimization.h"
+#include "glsl/ir_print_visitor.h"
 
 /** @file brw_fs_schedule_instructions.cpp
  *
