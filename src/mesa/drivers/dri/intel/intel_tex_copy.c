@@ -65,14 +65,13 @@ get_teximage_readbuffer(struct intel_context *intel, GLenum internalFormat)
 
 GLboolean
 intel_copy_texsubimage(struct intel_context *intel,
-                       GLenum target,
                        struct intel_texture_image *intelImage,
-                       GLenum internalFormat,
                        GLint dstx, GLint dsty,
                        GLint x, GLint y, GLsizei width, GLsizei height)
 {
    struct gl_context *ctx = &intel->ctx;
    struct intel_renderbuffer *irb;
+   const GLenum internalFormat = intelImage->base.InternalFormat;
    bool copy_supported = false;
    bool copy_supported_with_alpha_override = false;
 
@@ -172,16 +171,15 @@ intelCopyTexSubImage1D(struct gl_context * ctx, GLenum target, GLint level,
       _mesa_select_tex_object(ctx, texUnit, target);
    struct gl_texture_image *texImage =
       _mesa_select_tex_image(ctx, texObj, target, level);
-   GLenum internalFormat = texImage->InternalFormat;
 
    /* XXX need to check <border> as in above function? */
 
    /* Need to check texture is compatible with source format. 
     */
 
-   if (!intel_copy_texsubimage(intel_context(ctx), target,
+   if (!intel_copy_texsubimage(intel_context(ctx),
                                intel_texture_image(texImage),
-                               internalFormat, xoffset, 0, x, y, width, 1)) {
+                               xoffset, 0, x, y, width, 1)) {
       fallback_debug("%s - fallback to swrast\n", __FUNCTION__);
       _mesa_meta_CopyTexSubImage1D(ctx, target, level, xoffset, x, y, width);
    }
@@ -198,14 +196,12 @@ intelCopyTexSubImage2D(struct gl_context * ctx, GLenum target, GLint level,
       _mesa_select_tex_object(ctx, texUnit, target);
    struct gl_texture_image *texImage =
       _mesa_select_tex_image(ctx, texObj, target, level);
-   GLenum internalFormat = texImage->InternalFormat;
 
    /* Need to check texture is compatible with source format. 
     */
 
-   if (!intel_copy_texsubimage(intel_context(ctx), target,
+   if (!intel_copy_texsubimage(intel_context(ctx),
                                intel_texture_image(texImage),
-                               internalFormat,
                                xoffset, yoffset, x, y, width, height)) {
       fallback_debug("%s - fallback to swrast\n", __FUNCTION__);
       _mesa_meta_CopyTexSubImage2D(ctx, target, level,

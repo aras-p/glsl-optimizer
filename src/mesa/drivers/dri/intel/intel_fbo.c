@@ -903,11 +903,9 @@ intel_blit_framebuffer_copy_tex_sub_image(struct gl_context *ctx,
 
          struct gl_texture_image *texImage =
             _mesa_select_tex_image(ctx, texObj, target, dstLevel);
-         GLenum internalFormat = texImage->InternalFormat;
 
-         if (intel_copy_texsubimage(intel_context(ctx), target,
+         if (intel_copy_texsubimage(intel_context(ctx),
                                     intel_texture_image(texImage),
-                                    internalFormat,
                                     dstX0, dstY0,
                                     srcX0, srcY0,
                                     srcX1 - srcX0, /* width */

@@ -72,9 +72,7 @@ void intel_tex_image_s8z24_gather(struct intel_context *intel,
 int intel_compressed_num_bytes(GLuint mesaFormat);
 
 GLboolean intel_copy_texsubimage(struct intel_context *intel,
-                                 GLenum target,
                                  struct intel_texture_image *intelImage,
-                                 GLenum internalFormat,
                                  GLint dstx, GLint dsty,
                                  GLint x, GLint y,
                                  GLsizei width, GLsizei height);
