@@ -104,22 +104,13 @@ struct brw_clip_compile {
       struct brw_reg ff_sync;
    } reg;
 
-   /* 3 different ways of expressing vertex size:
-    */
-   GLuint nr_attrs;
+   /* Number of registers storing VUE data */
    GLuint nr_regs;
-   GLuint nr_bytes;
 
    GLuint first_tmp;
    GLuint last_tmp;
 
    GLboolean need_direction;
-
-   GLuint header_regs;
-   /** Mapping from VERT_RESULT_* to offset within the VUE. */
-   GLuint offset[VERT_RESULT_MAX];
-   /** Mapping from attribute index to VERT_RESULT_* */
-   GLuint idx_to_attr[VERT_RESULT_MAX];
 
    struct brw_vue_map vue_map;
 };
