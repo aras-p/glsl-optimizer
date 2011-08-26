@@ -54,6 +54,7 @@ union tgsi_any_token {
    struct tgsi_instruction_predicate insn_predicate;
    struct tgsi_instruction_label insn_label;
    struct tgsi_instruction_texture insn_texture;
+   struct tgsi_texture_offset insn_texture_offset;
    struct tgsi_src_register src;
    struct tgsi_dimension dim;
    struct tgsi_dst_register dst;
@@ -997,7 +998,7 @@ ureg_fixup_label(struct ureg_program *ureg,
 void
 ureg_emit_texture(struct ureg_program *ureg,
                   unsigned extended_token,
-                  unsigned target )
+                  unsigned target, unsigned num_offsets)
 {
    union tgsi_any_token *out, *insn;
 
@@ -1008,6 +1009,20 @@ ureg_emit_texture(struct ureg_program *ureg,
 
    out[0].value = 0;
    out[0].insn_texture.Texture = target;
+   out[0].insn_texture.NumOffsets = num_offsets;
+}
+
+void
+ureg_emit_texture_offset(struct ureg_program *ureg,
+                         const struct tgsi_texture_offset *offset)
+{
+   union tgsi_any_token *out;
+
+   out = get_tokens( ureg, DOMAIN_INSN, 1);
+
+   out[0].value = 0;
+   out[0].insn_texture_offset = *offset;
+   
 }
 
 
@@ -1074,6 +1089,8 @@ ureg_tex_insn(struct ureg_program *ureg,
               const struct ureg_dst *dst,
               unsigned nr_dst,
               unsigned target,
+              const struct tgsi_texture_offset *texoffsets,
+              unsigned nr_offset,
               const struct ureg_src *src,
               unsigned nr_src )
 {
@@ -1106,7 +1123,10 @@ ureg_tex_insn(struct ureg_program *ureg,
                          nr_dst,
                          nr_src);
 
-   ureg_emit_texture( ureg, insn.extended_token, target );
+   ureg_emit_texture( ureg, insn.extended_token, target, nr_offset );
+
+   for (i = 0; i < nr_offset; i++)
+      ureg_emit_texture_offset( ureg, &texoffsets[i]);
 
    for (i = 0; i < nr_dst; i++)
       ureg_emit_dst( ureg, dst[i] );

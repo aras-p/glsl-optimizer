@@ -693,6 +693,17 @@ iter_instruction(
    if (inst->Instruction.Texture) {
       TXT( ", " );
       ENM( inst->Texture.Texture, tgsi_texture_names );
+      for (i = 0; i < inst->Texture.NumOffsets; i++) {
+         TXT( ", " );
+         ENM( inst->TexOffsets[i].File, tgsi_file_names);
+         CHR( '[' );
+         SID( inst->TexOffsets[i].Index );
+         CHR( ']' );
+         CHR( '.' );
+         ENM( inst->TexOffsets[i].SwizzleX, tgsi_swizzle_names);
+         ENM( inst->TexOffsets[i].SwizzleY, tgsi_swizzle_names);
+         ENM( inst->TexOffsets[i].SwizzleZ, tgsi_swizzle_names);
+      }
    }
 
    switch (inst->Instruction.Opcode) {

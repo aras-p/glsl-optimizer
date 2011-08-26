@@ -401,6 +401,8 @@ struct tgsi_instruction
  * If tgsi_instruction::Label is TRUE, tgsi_instruction_label follows.
  *
  * If tgsi_instruction::Texture is TRUE, tgsi_instruction_texture follows.
+ *   if texture instruction has a number of offsets,
+ *   then tgsi_instruction::Texture::NumOffset of tgsi_texture_offset follow.
  * 
  * Then, tgsi_instruction::NumDstRegs of tgsi_dst_register follow.
  * 
@@ -437,7 +439,23 @@ struct tgsi_instruction_label
 struct tgsi_instruction_texture
 {
    unsigned Texture  : 8;    /* TGSI_TEXTURE_ */
-   unsigned Padding  : 24;
+   unsigned NumOffsets : 4;
+   unsigned Padding : 20;
+};
+
+/* for texture offsets in GLSL and DirectX.
+ * Generally these always come from TGSI_FILE_IMMEDIATE,
+ * however DX11 appears to have the capability to do
+ * non-constant texture offsets.
+ */
+struct tgsi_texture_offset
+{
+   int      Index    : 16;
+   unsigned File     : 4;  /**< one of TGSI_FILE_x */
+   unsigned SwizzleX : 2;  /* TGSI_SWIZZLE_x */
+   unsigned SwizzleY : 2;  /* TGSI_SWIZZLE_x */
+   unsigned SwizzleZ : 2;  /* TGSI_SWIZZLE_x */
+   unsigned Padding  : 6;
 };
 
 /*

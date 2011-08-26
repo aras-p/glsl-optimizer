@@ -80,6 +80,9 @@ extern "C" {
 
 #define MAX_TEMPS         4096
 
+/* will be 4 for GLSL 4.00 */
+#define MAX_GLSL_TEXTURE_OFFSET 1
+
 class st_src_reg;
 class st_dst_reg;
 
@@ -211,6 +214,8 @@ public:
    int sampler; /**< sampler index */
    int tex_target; /**< One of TEXTURE_*_INDEX */
    GLboolean tex_shadow;
+   struct tgsi_texture_offset tex_offsets[MAX_GLSL_TEXTURE_OFFSET];
+   unsigned tex_offset_num_offset;
    int dead_mask; /**< Used in dead code elimination */
 
    class function_entry *function; /* Set on TGSI_OPCODE_CAL or TGSI_OPCODE_BGNSUB */
@@ -2421,7 +2426,7 @@ glsl_to_tgsi_visitor::visit(ir_call *ir)
 void
 glsl_to_tgsi_visitor::visit(ir_texture *ir)
 {
-   st_src_reg result_src, coord, lod_info, projector, dx, dy;
+   st_src_reg result_src, coord, lod_info, projector, dx, dy, offset;
    st_dst_reg result_dst, coord_dst;
    glsl_to_tgsi_instruction *inst = NULL;
    unsigned opcode = TGSI_OPCODE_NOP;
@@ -2480,6 +2485,10 @@ glsl_to_tgsi_visitor::visit(ir_texture *ir)
       opcode = TGSI_OPCODE_TXF;
       ir->lod_info.lod->accept(this);
       lod_info = this->result;
+      if (ir->offset) {
+	 ir->offset->accept(this);
+	 offset = this->result;
+      }
       break;
    }
 
@@ -2555,7 +2564,9 @@ glsl_to_tgsi_visitor::visit(ir_texture *ir)
       inst = emit(ir, opcode, result_dst, coord, dx, dy);
    else if (opcode == TGSI_OPCODE_TXQ)
       inst = emit(ir, opcode, result_dst, lod_info);
-   else
+   else if (opcode == TGSI_OPCODE_TXF) {
+      inst = emit(ir, opcode, result_dst, coord);
+   } else
       inst = emit(ir, opcode, result_dst, coord);
 
    if (ir->shadow_comparitor)
@@ -2564,6 +2575,15 @@ glsl_to_tgsi_visitor::visit(ir_texture *ir)
    inst->sampler = _mesa_get_sampler_uniform_value(ir->sampler,
         					   this->shader_program,
         					   this->prog);
+
+   if (ir->offset) {
+       inst->tex_offset_num_offset = 1;
+       inst->tex_offsets[0].Index = offset.index;
+       inst->tex_offsets[0].File = offset.file;
+       inst->tex_offsets[0].SwizzleX = GET_SWZ(offset.swizzle, 0);
+       inst->tex_offsets[0].SwizzleY = GET_SWZ(offset.swizzle, 1);
+       inst->tex_offsets[0].SwizzleZ = GET_SWZ(offset.swizzle, 2);
+   }
 
    const glsl_type *sampler_type = ir->sampler->type;
 
@@ -4216,6 +4236,23 @@ translate_src(struct st_translate *t, const st_src_reg *src_reg)
    return src;
 }
 
+static struct tgsi_texture_offset
+translate_tex_offset(struct st_translate *t,
+                     const struct tgsi_texture_offset *in_offset)
+{
+   struct tgsi_texture_offset offset;
+
+   assert(in_offset->File == PROGRAM_IMMEDIATE);
+
+   offset.File = TGSI_FILE_IMMEDIATE;
+   offset.Index = in_offset->Index;
+   offset.SwizzleX = in_offset->SwizzleX;
+   offset.SwizzleY = in_offset->SwizzleY;
+   offset.SwizzleZ = in_offset->SwizzleZ;
+
+   return offset;
+}
+
 static void
 compile_tgsi_instruction(struct st_translate *t,
                          const glsl_to_tgsi_instruction *inst)
@@ -4224,6 +4261,8 @@ compile_tgsi_instruction(struct st_translate *t,
    GLuint i;
    struct ureg_dst dst[1];
    struct ureg_src src[4];
+   struct tgsi_texture_offset texoffsets[MAX_GLSL_TEXTURE_OFFSET];
+
    unsigned num_dst;
    unsigned num_src;
 
@@ -4260,10 +4299,14 @@ compile_tgsi_instruction(struct st_translate *t,
    case TGSI_OPCODE_TXQ:
    case TGSI_OPCODE_TXF:
       src[num_src++] = t->samplers[inst->sampler];
+      for (i = 0; i < inst->tex_offset_num_offset; i++) {
+         texoffsets[i] = translate_tex_offset(t, &inst->tex_offsets[i]);
+      }
       ureg_tex_insn(ureg,
                     inst->op,
                     dst, num_dst, 
                     translate_texture_target(inst->tex_target, inst->tex_shadow),
+                    texoffsets, inst->tex_offset_num_offset,
                     src, num_src);
       return;
 

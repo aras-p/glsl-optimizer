@@ -705,6 +705,7 @@ compile_instruction(
                      dst, num_dst, 
                      translate_texture_target( inst->TexSrcTarget,
                                                inst->TexShadow ),
+                     NULL, 0,
                      src, num_src );
       return;
 

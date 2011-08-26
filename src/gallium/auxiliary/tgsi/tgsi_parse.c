@@ -188,6 +188,9 @@ tgsi_parse_token(
 
       if (inst->Instruction.Texture) {
          next_token( ctx, &inst->Texture);
+         for( i = 0; i < inst->Texture.NumOffsets; i++ ) {
+            next_token( ctx, &inst->TexOffsets[i] );
+         }
       }
 
       assert( inst->Instruction.NumDstRegs <= TGSI_FULL_MAX_DST_REGISTERS );

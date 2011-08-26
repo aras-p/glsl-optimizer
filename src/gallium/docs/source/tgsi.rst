@@ -1026,9 +1026,16 @@ XXX so let's discuss it, yeah?
   dst.w = |src0.w - src1.w| + src2.w
 
 
-.. opcode:: TXF - Texel Fetch
-
-  TBD
+.. opcode:: TXF - Texel Fetch (as per NV_gpu_shader4), extract a single texel
+                  from a specified texture image. The source sampler may
+		  not be a CUBE or SHADOW.
+                  src 0 is a four-component signed integer vector used to
+		  identify the single texel accessed. 3 components + level.
+		  src 1 is a 3 component constant signed integer vector,
+		  with each component only have a range of
+		  -8..+8 (hw only seems to deal with this range, interface
+		  allows for up to unsigned int).
+		  TXF(uint_vec coord, int_vec offset).
 
 
 .. opcode:: TXQ - Texture Size Query (as per NV_gpu_program4)

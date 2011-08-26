@@ -1929,11 +1929,28 @@ exec_txf(struct tgsi_exec_machine *mach,
 	 const struct tgsi_full_instruction *inst)
 {
    struct tgsi_sampler *sampler;
-   const uint unit = inst->Src[1].Register.Index;
+   const uint unit = inst->Src[2].Register.Index;
    union tgsi_exec_channel r[4];
+   union tgsi_exec_channel offset[3];
    uint chan;
    float rgba[NUM_CHANNELS][QUAD_SIZE];
    int j;
+   int8_t offsets[3];
+
+   if (inst->Texture.NumOffsets == 1) {
+      union tgsi_exec_channel index;
+      index.i[0] = index.i[1] = index.i[2] = index.i[3] = inst->TexOffsets[0].Index;
+      fetch_src_file_channel(mach, inst->TexOffsets[0].File,
+                             inst->TexOffsets[0].SwizzleX, &index, &ZeroVec, &offset[0]);
+      fetch_src_file_channel(mach, inst->TexOffsets[0].File,
+                             inst->TexOffsets[0].SwizzleY, &index, &ZeroVec, &offset[1]);
+      fetch_src_file_channel(mach, inst->TexOffsets[0].File,
+                             inst->TexOffsets[0].SwizzleZ, &index, &ZeroVec, &offset[2]);
+     offsets[0] = offset[0].i[0];
+     offsets[1] = offset[1].i[0];
+     offsets[2] = offset[2].i[0];
+   } else
+     offsets[0] = offsets[1] = offsets[2] = 0;
 
    IFETCH(&r[3], 0, CHAN_W);
 
@@ -1959,7 +1976,8 @@ exec_txf(struct tgsi_exec_machine *mach,
    }      
 
    sampler = mach->Samplers[unit];
-   sampler->get_texel(sampler, r[0].i, r[1].i, r[2].i, r[3].i, rgba);
+   sampler->get_texel(sampler, r[0].i, r[1].i, r[2].i, r[3].i,
+		      offsets, rgba);
 
    for (j = 0; j < QUAD_SIZE; j++) {
       r[0].f[j] = rgba[0][j];

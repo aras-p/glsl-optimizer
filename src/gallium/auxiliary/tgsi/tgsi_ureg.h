@@ -451,6 +451,8 @@ ureg_tex_insn(struct ureg_program *ureg,
               const struct ureg_dst *dst,
               unsigned nr_dst,
               unsigned target,
+              const struct tgsi_texture_offset *texoffsets,
+              unsigned nr_offset,
               const struct ureg_src *src,
               unsigned nr_src );
 
@@ -493,7 +495,11 @@ ureg_emit_label(struct ureg_program *ureg,
 void
 ureg_emit_texture(struct ureg_program *ureg,
                   unsigned insn_token,
-                  unsigned target );
+                  unsigned target, unsigned num_offsets);
+
+void
+ureg_emit_texture_offset(struct ureg_program *ureg,
+                         const struct tgsi_texture_offset *offset);
 
 void 
 ureg_emit_dst( struct ureg_program *ureg,
@@ -677,7 +683,7 @@ static INLINE void ureg_##op( struct ureg_program *ureg,                \
                          dst.PredSwizzleW,                              \
                          1,                                             \
                          2);                                            \
-   ureg_emit_texture( ureg, insn.extended_token, target );              \
+   ureg_emit_texture( ureg, insn.extended_token, target, 0 );		\
    ureg_emit_dst( ureg, dst );                                          \
    ureg_emit_src( ureg, src0 );                                         \
    ureg_emit_src( ureg, src1 );                                         \
@@ -732,7 +738,7 @@ static INLINE void ureg_##op( struct ureg_program *ureg,                \
                          dst.PredSwizzleW,                              \
                          1,                                             \
                          4);                                            \
-   ureg_emit_texture( ureg, insn.extended_token, target );              \
+   ureg_emit_texture( ureg, insn.extended_token, target, 0 );		\
    ureg_emit_dst( ureg, dst );                                          \
    ureg_emit_src( ureg, src0 );                                         \
    ureg_emit_src( ureg, src1 );                                         \

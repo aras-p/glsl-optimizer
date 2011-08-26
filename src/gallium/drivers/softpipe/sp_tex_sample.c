@@ -2614,6 +2614,7 @@ sample_get_texels(struct tgsi_sampler *tgsi_sampler,
 	   const int v_j[QUAD_SIZE],
 	   const int v_k[QUAD_SIZE],
 	   const int lod[QUAD_SIZE],
+	   const int8_t offset[3],
 	   float rgba[NUM_CHANNELS][QUAD_SIZE])
 {
    const struct sp_sampler_variant *samp = sp_sampler_variant(tgsi_sampler);
@@ -2629,7 +2630,7 @@ sample_get_texels(struct tgsi_sampler *tgsi_sampler,
    switch(texture->target) {
    case PIPE_TEXTURE_1D:
       for (j = 0; j < QUAD_SIZE; j++) {
-	 tx = get_texel_2d(samp, addr, v_i[j], 0);
+	 tx = get_texel_2d(samp, addr, v_i[j] + offset[0], 0);
 	 for (c = 0; c < 4; c++) {
 	    rgba[c][j] = tx[c];
 	 }
@@ -2637,7 +2638,8 @@ sample_get_texels(struct tgsi_sampler *tgsi_sampler,
       break;
    case PIPE_TEXTURE_1D_ARRAY:
       for (j = 0; j < QUAD_SIZE; j++) {
-	 tx = get_texel_1d_array(samp, addr, v_i[j], v_j[j]);
+	 tx = get_texel_1d_array(samp, addr, v_i[j] + offset[0],
+				 v_j[j] + offset[1]);
 	 for (c = 0; c < 4; c++) {
 	    rgba[c][j] = tx[c];
 	 }
@@ -2646,7 +2648,8 @@ sample_get_texels(struct tgsi_sampler *tgsi_sampler,
    case PIPE_TEXTURE_2D:
    case PIPE_TEXTURE_RECT:
       for (j = 0; j < QUAD_SIZE; j++) {
-	 tx = get_texel_2d(samp, addr, v_i[j], v_j[j]);
+	 tx = get_texel_2d(samp, addr, v_i[j] + offset[0],
+			   v_j[j] + offset[1]);
 	 for (c = 0; c < 4; c++) {
 	    rgba[c][j] = tx[c];
 	 }
@@ -2654,7 +2657,9 @@ sample_get_texels(struct tgsi_sampler *tgsi_sampler,
       break;
    case PIPE_TEXTURE_2D_ARRAY:
       for (j = 0; j < QUAD_SIZE; j++) {
-	 tx = get_texel_2d_array(samp, addr, v_i[j], v_j[j], v_k[j]);
+	 tx = get_texel_2d_array(samp, addr, v_i[j] + offset[0],
+				 v_j[j] + offset[1],
+				 v_k[j] + offset[2]);
 	 for (c = 0; c < 4; c++) {
 	    rgba[c][j] = tx[c];
 	 }
@@ -2662,7 +2667,9 @@ sample_get_texels(struct tgsi_sampler *tgsi_sampler,
       break;
    case PIPE_TEXTURE_3D:
       for (j = 0; j < QUAD_SIZE; j++) {
-	 tx = get_texel_3d(samp, addr, v_i[j], v_j[j], v_k[j]);
+	 tx = get_texel_3d(samp, addr, v_i[j] + offset[0], 
+			   v_j[j] + offset[1],
+			   v_k[j] + offset[2]);
 	 for (c = 0; c < 4; c++) {
 	    rgba[c][j] = tx[c];
 	 }

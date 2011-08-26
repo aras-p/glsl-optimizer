@@ -631,6 +631,7 @@ tgsi_default_instruction_texture( void )
    struct tgsi_instruction_texture instruction_texture;
 
    instruction_texture.Texture = TGSI_TEXTURE_UNKNOWN;
+   instruction_texture.NumOffsets = 0;
    instruction_texture.Padding = 0;
 
    return instruction_texture;
@@ -639,6 +640,7 @@ tgsi_default_instruction_texture( void )
 static struct tgsi_instruction_texture
 tgsi_build_instruction_texture(
    unsigned texture,
+   unsigned num_offsets,
    struct tgsi_token *prev_token,
    struct tgsi_instruction *instruction,
    struct tgsi_header *header )
@@ -646,12 +648,50 @@ tgsi_build_instruction_texture(
    struct tgsi_instruction_texture instruction_texture;
 
    instruction_texture.Texture = texture;
+   instruction_texture.NumOffsets = num_offsets;
    instruction_texture.Padding = 0;
    instruction->Texture = 1;
 
    instruction_grow( instruction, header );
 
    return instruction_texture;
+}
+
+
+static struct tgsi_texture_offset
+tgsi_default_texture_offset( void )
+{
+   struct tgsi_texture_offset texture_offset;
+
+   texture_offset.Index = 0;
+   texture_offset.File = 0;
+   texture_offset.SwizzleX = 0;
+   texture_offset.SwizzleY = 0;
+   texture_offset.SwizzleZ = 0;
+   texture_offset.Padding = 0;
+
+   return texture_offset;
+}
+
+static struct tgsi_texture_offset
+tgsi_build_texture_offset(
+   int index, int file, int swizzle_x, int swizzle_y, int swizzle_z,
+   struct tgsi_token *prev_token,
+   struct tgsi_instruction *instruction,
+   struct tgsi_header *header )
+{
+   struct tgsi_texture_offset texture_offset;
+
+   texture_offset.Index = index;
+   texture_offset.File = file;
+   texture_offset.SwizzleX = swizzle_x;
+   texture_offset.SwizzleY = swizzle_y;
+   texture_offset.SwizzleZ = swizzle_z;
+   texture_offset.Padding = 0;
+
+   instruction_grow( instruction, header );
+
+   return texture_offset;
 }
 
 static struct tgsi_src_register
@@ -825,6 +865,9 @@ tgsi_default_full_instruction( void )
    full_instruction.Predicate = tgsi_default_instruction_predicate();
    full_instruction.Label = tgsi_default_instruction_label();
    full_instruction.Texture = tgsi_default_instruction_texture();
+   for( i = 0;  i < TGSI_FULL_MAX_TEX_OFFSETS; i++ ) {
+      full_instruction.TexOffsets[i] = tgsi_default_texture_offset();
+   }
    for( i = 0;  i < TGSI_FULL_MAX_DST_REGISTERS; i++ ) {
       full_instruction.Dst[i] = tgsi_default_full_dst_register();
    }
@@ -908,12 +951,31 @@ tgsi_build_full_instruction(
 
       *instruction_texture = tgsi_build_instruction_texture(
          full_inst->Texture.Texture,
+	 full_inst->Texture.NumOffsets,
          prev_token,
          instruction,
          header   );
       prev_token = (struct tgsi_token  *) instruction_texture;
-   }
 
+      for (i = 0; i < full_inst->Texture.NumOffsets; i++) {
+         struct tgsi_texture_offset *texture_offset;
+	
+         if ( maxsize <= size )
+            return 0;
+	 texture_offset = (struct tgsi_texture_offset *)&tokens[size];
+         size++;
+         *texture_offset = tgsi_build_texture_offset(
+            full_inst->TexOffsets[i].Index,
+            full_inst->TexOffsets[i].File,
+            full_inst->TexOffsets[i].SwizzleX,
+            full_inst->TexOffsets[i].SwizzleY,
+            full_inst->TexOffsets[i].SwizzleZ,
+            prev_token,
+            instruction,
+            header);
+         prev_token = (struct tgsi_token *) texture_offset;
+      }
+   }
    for( i = 0;  i <   full_inst->Instruction.NumDstRegs; i++ ) {
       const struct tgsi_full_dst_register *reg = &full_inst->Dst[i];
       struct tgsi_dst_register *dst_register;
