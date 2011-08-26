@@ -120,6 +120,76 @@ vec4_visitor::emit(enum opcode opcode)
    return emit(new(mem_ctx) vec4_instruction(this, opcode, dst_reg()));
 }
 
+#define ALU1(op)							\
+   vec4_instruction *							\
+   vec4_visitor::op(dst_reg dst, src_reg src0)				\
+   {									\
+      return new(mem_ctx) vec4_instruction(this, BRW_OPCODE_##op, dst,	\
+					   src0);			\
+   }
+
+#define ALU2(op)							\
+   vec4_instruction *							\
+   vec4_visitor::op(dst_reg dst, src_reg src0, src_reg src1)		\
+   {									\
+      return new(mem_ctx) vec4_instruction(this, BRW_OPCODE_##op, dst,	\
+					   src0, src1);			\
+   }
+
+ALU1(NOT)
+ALU1(MOV)
+ALU1(FRC)
+ALU1(RNDD)
+ALU1(RNDE)
+ALU1(RNDZ)
+ALU2(ADD)
+ALU2(MUL)
+ALU2(MACH)
+ALU2(AND)
+ALU2(OR)
+ALU2(XOR)
+ALU2(DP3)
+ALU2(DP4)
+
+/** Gen4 predicated IF. */
+vec4_instruction *
+vec4_visitor::IF(uint32_t predicate)
+{
+   vec4_instruction *inst;
+
+   inst = new(mem_ctx) vec4_instruction(this, BRW_OPCODE_IF);
+   inst->predicate = predicate;
+
+   return inst;
+}
+
+/** Gen6+ IF with embedded comparison. */
+vec4_instruction *
+vec4_visitor::IF(src_reg src0, src_reg src1, uint32_t condition)
+{
+   assert(intel->gen >= 6);
+
+   vec4_instruction *inst;
+
+   inst = new(mem_ctx) vec4_instruction(this, BRW_OPCODE_IF, dst_null_d(),
+					src0, src1);
+   inst->conditional_mod = condition;
+
+   return inst;
+}
+
+vec4_instruction *
+vec4_visitor::CMP(dst_reg dst, src_reg src0, src_reg src1, uint32_t condition)
+{
+   vec4_instruction *inst;
+
+   inst = new(mem_ctx) vec4_instruction(this, BRW_OPCODE_CMP, dst,
+					src0, src1, src_reg());
+   inst->conditional_mod = condition;
+
+   return inst;
+}
+
 void
 vec4_visitor::emit_dp(dst_reg dst, src_reg src0, src_reg src1, unsigned elements)
 {

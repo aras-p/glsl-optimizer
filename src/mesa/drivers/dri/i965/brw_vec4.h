@@ -406,6 +406,26 @@ public:
    vec4_instruction *emit(enum opcode opcode, dst_reg dst,
 			  src_reg src0, src_reg src1, src_reg src2);
 
+   vec4_instruction *MOV(dst_reg dst, src_reg src0);
+   vec4_instruction *NOT(dst_reg dst, src_reg src0);
+   vec4_instruction *RNDD(dst_reg dst, src_reg src0);
+   vec4_instruction *RNDE(dst_reg dst, src_reg src0);
+   vec4_instruction *RNDZ(dst_reg dst, src_reg src0);
+   vec4_instruction *FRC(dst_reg dst, src_reg src0);
+   vec4_instruction *ADD(dst_reg dst, src_reg src0, src_reg src1);
+   vec4_instruction *MUL(dst_reg dst, src_reg src0, src_reg src1);
+   vec4_instruction *MACH(dst_reg dst, src_reg src0, src_reg src1);
+   vec4_instruction *MAC(dst_reg dst, src_reg src0, src_reg src1);
+   vec4_instruction *AND(dst_reg dst, src_reg src0, src_reg src1);
+   vec4_instruction *OR(dst_reg dst, src_reg src0, src_reg src1);
+   vec4_instruction *XOR(dst_reg dst, src_reg src0, src_reg src1);
+   vec4_instruction *DP3(dst_reg dst, src_reg src0, src_reg src1);
+   vec4_instruction *DP4(dst_reg dst, src_reg src0, src_reg src1);
+   vec4_instruction *CMP(dst_reg dst, src_reg src0, src_reg src1,
+			 uint32_t condition);
+   vec4_instruction *IF(src_reg src0, src_reg src1, uint32_t condition);
+   vec4_instruction *IF(uint32_t predicate);
+
    bool try_rewrite_rhs_to_dst(ir_assignment *ir,
 			       dst_reg dst,
 			       src_reg src,
