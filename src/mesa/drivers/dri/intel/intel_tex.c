@@ -24,6 +24,8 @@ intelNewTextureObject(struct gl_context * ctx, GLuint name, GLenum target)
 {
    struct intel_texture_object *obj = CALLOC_STRUCT(intel_texture_object);
 
+   (void) ctx;
+
    DBG("%s\n", __FUNCTION__);
    _mesa_initialize_texture_object(&obj->base, name, target);
 
