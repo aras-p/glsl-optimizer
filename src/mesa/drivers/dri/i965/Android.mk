@@ -1,5 +1,7 @@
 #
 # Copyright (C) 2011 Intel Corporation
+# Copyright (C) 2010-2011 Chia-I Wu <olvaffe@gmail.com>
+# Copyright (C) 2010-2011 LunarG
 #
 # Permission is hereby granted, free of charge, to any person obtaining a
 # copy of this software and associated documentation files (the "Software"),
@@ -21,42 +23,39 @@
 #
 
 LOCAL_PATH := $(call my-dir)
+include $(CLEAR_VARS)
 
-# Import mesa_dri_common_INCLUDES.
-include $(LOCAL_PATH)/common/Makefile.sources
+LOCAL_MODULE := i965_dri
+LOCAL_MODULE_PATH := $(MESA_DRI_MODULE_PATH)
+LOCAL_UNSTRIPPED_PATH := $(MESA_DRI_MODULE_UNSTRIPPED_PATH)
 
-#-----------------------------------------------
-# Variables common to all DRI drivers
+# Import variables i965_*.
+include $(LOCAL_PATH)/Makefile.sources
 
-MESA_DRI_MODULE_PATH := $(TARGET_OUT_SHARED_LIBRARIES)/dri
-MESA_DRI_MODULE_UNSTRIPPED_PATH := $(TARGET_OUT_SHARED_LIBRARIES_UNSTRIPPED)/dri
+# Overriding LOCAL_CC below is an ugly workaround.  We cannot place -std=c99
+# in LOCAL_C_FLAGS because Android appends LOCAL_C_FLAGS to LOCAL_CPP_FLAGS.
+LOCAL_CC := $(CC) -std=c99
 
-MESA_DRI_C_INCLUDES := \
-	$(addprefix $(MESA_TOP)/, $(mesa_dri_common_INCLUDES)) \
-	$(DRM_TOP) \
-	$(DRM_TOP)/include/drm \
-	external/expat/lib
+LOCAL_C_FLAGS := \
+	$(MESA_DRI_C_FLAGS) \
+	-DI965
 
-MESA_DRI_WHOLE_STATIC_LIBRARIES := \
-	libmesa_glsl \
-	libmesa_dri_common \
-	libmesa_dricore
+LOCAL_C_INCLUDES := \
+	$(i965_INCLUDES) \
+	$(MESA_DRI_C_INCLUDES) \
+	$(DRM_TOP)/intel
 
-MESA_DRI_SHARED_LIBRARIES := \
-	libcutils \
-	libdl \
-	libdrm \
-	libexpat \
-	libglapi \
-	liblog
+LOCAL_SRC_FILES := \
+	$(i965_C_SOURCES) \
+	$(i965_CXX_SOURCES) \
+	$(i965_ASM_SOURCES)
 
-#-----------------------------------------------
-# Build drivers and libmesa_dri_common
+LOCAL_WHOLE_STATIC_LIBRARIES := \
+	$(MESA_DRI_WHOLE_STATIC_LIBRARIES)
 
-SUBDIRS := common
+LOCAL_SHARED_LIBRARIES := \
+	$(MESA_DRI_SHARED_LIBRARIES) \
+	libdrm_intel
 
-ifneq ($(filter i965, $(MESA_GPU_DRIVERS)),)
-	SUBDIRS += i965
-endif
-
-include $(foreach d, $(SUBDIRS), $(LOCAL_PATH)/$(d)/Android.mk)
+include $(MESA_COMMON_MK)
+include $(BUILD_SHARED_LIBRARY)

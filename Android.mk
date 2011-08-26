@@ -23,7 +23,7 @@
 
 # BOARD_GPU_DRIVERS should be defined.  The valid values are
 #
-#   classic drivers:
+#   classic drivers: i965
 #   gallium drivers: swrast i915g nouveau r300g r600g vmwgfx
 #
 # The main target is libGLES_mesa.  For each classic driver enabled, a DRI
@@ -36,7 +36,7 @@ MESA_PYTHON2 := python
 DRM_TOP := external/drm
 DRM_GRALLOC_TOP := hardware/drm_gralloc
 
-classic_drivers :=
+classic_drivers := i965
 gallium_drivers := swrast i915g nouveau r300g r600g vmwgfx
 
 MESA_GPU_DRIVERS := $(strip $(BOARD_GPU_DRIVERS))
