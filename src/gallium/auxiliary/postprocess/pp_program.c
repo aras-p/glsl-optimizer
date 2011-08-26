@@ -133,5 +133,7 @@ pp_init_prog(struct pp_queue_t *ppq, struct pipe_screen *pscreen)
    p->surf.usage = PIPE_BIND_RENDER_TARGET;
    p->surf.format = PIPE_FORMAT_B8G8R8A8_UNORM;
 
+   p->pipe->set_sample_mask(p->pipe, ~0);
+
    return p;
 }
