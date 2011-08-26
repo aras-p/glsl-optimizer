@@ -14,8 +14,7 @@
  * but BaseLevel.
  */
 static void
-intel_update_max_level(struct intel_context *intel,
-		       struct intel_texture_object *intelObj,
+intel_update_max_level(struct intel_texture_object *intelObj,
 		       struct gl_sampler_object *sampler)
 {
    struct gl_texture_object *tObj = &intelObj->base;
@@ -87,7 +86,7 @@ intel_finalize_mipmap_tree(struct intel_context *intel, GLuint unit)
 
    /* What levels must the tree include at a minimum?
     */
-   intel_update_max_level(intel, intelObj, sampler);
+   intel_update_max_level(intelObj, sampler);
    firstImage = intel_texture_image(tObj->Image[0][tObj->BaseLevel]);
 
    /* Fallback case:

@@ -106,8 +106,7 @@ intel_buffer_object(struct gl_buffer_object *obj)
  */
 void intel_bufferobj_cow(struct intel_context *intel,
                          struct intel_buffer_object *intel_obj);
-void intel_bufferobj_release_region(struct intel_context *intel,
-                                    struct intel_buffer_object *intel_obj);
+void intel_bufferobj_release_region(struct intel_buffer_object *intel_obj);
 
 
 #endif

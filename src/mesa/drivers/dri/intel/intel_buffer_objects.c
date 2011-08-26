@@ -82,8 +82,7 @@ intel_bufferobj_alloc(struct gl_context * ctx, GLuint name, GLenum target)
 /* Break the COW tie to the region.  The region gets to keep the data.
  */
 void
-intel_bufferobj_release_region(struct intel_context *intel,
-                               struct intel_buffer_object *intel_obj)
+intel_bufferobj_release_region(struct intel_buffer_object *intel_obj)
 {
    assert(intel_obj->region->buffer == intel_obj->buffer);
    intel_obj->region->pbo = NULL;
@@ -111,7 +110,6 @@ intel_bufferobj_cow(struct intel_context *intel,
 static void
 intel_bufferobj_free(struct gl_context * ctx, struct gl_buffer_object *obj)
 {
-   struct intel_context *intel = intel_context(ctx);
    struct intel_buffer_object *intel_obj = intel_buffer_object(obj);
 
    assert(intel_obj);
@@ -125,7 +123,7 @@ intel_bufferobj_free(struct gl_context * ctx, struct gl_buffer_object *obj)
 
    free(intel_obj->sys_buffer);
    if (intel_obj->region) {
-      intel_bufferobj_release_region(intel, intel_obj);
+      intel_bufferobj_release_region(intel_obj);
    }
 
    drm_intel_bo_unreference(intel_obj->buffer);
@@ -163,7 +161,7 @@ intel_bufferobj_data(struct gl_context * ctx,
    assert(!obj->Pointer); /* Mesa should have unmapped it */
 
    if (intel_obj->region)
-      intel_bufferobj_release_region(intel, intel_obj);
+      intel_bufferobj_release_region(intel_obj);
 
    if (intel_obj->buffer != NULL)
       release_buffer(intel_obj);
@@ -516,7 +514,7 @@ intel_bufferobj_buffer(struct intel_context *intel,
       if (flag == INTEL_WRITE_PART)
          intel_bufferobj_cow(intel, intel_obj);
       else if (flag == INTEL_WRITE_FULL) {
-         intel_bufferobj_release_region(intel, intel_obj);
+         intel_bufferobj_release_region(intel_obj);
 	 intel_bufferobj_alloc_buffer(intel, intel_obj);
       }
    }
