@@ -33,6 +33,7 @@
 #include <pipe/p_compiler.h>
 
 #include <util/u_math.h>
+#include "util/u_pointer.h"
 
 struct vl_vlc
 {
@@ -98,7 +99,7 @@ vl_vlc_init(struct vl_vlc *vlc, const uint8_t *data, unsigned len)
    vlc->valid_bits = 0;
 
    /* align the data pointer */
-   while((uint64_t)data & 3) {
+   while (pointer_to_uintptr(data) & 3) {
       vlc->buffer |= (uint64_t)*data << (56 - vlc->valid_bits);
       ++data;
       --len;
