@@ -1427,7 +1427,7 @@ _mesa_parse_nv_vertex_program(struct gl_context *ctx, GLenum dstTarget,
       }
       program->Base.NumParameters = program->Base.Parameters->NumParameters;
 
-      _mesa_setup_nv_temporary_count(ctx, &program->Base);
+      _mesa_setup_nv_temporary_count(&program->Base);
       _mesa_emit_nv_temp_initialization(ctx, &program->Base);
    }
    else {
