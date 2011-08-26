@@ -29,7 +29,9 @@
 #define INTEL_FBO_H
 
 #include <stdbool.h>
+#include <assert.h>
 #include "main/formats.h"
+#include "intel_context.h"
 #include "intel_screen.h"
 
 struct intel_context;
@@ -101,9 +103,7 @@ intel_get_renderbuffer(struct gl_framebuffer *fb, gl_buffer_index attIndex)
    struct gl_renderbuffer *rb;
    struct intel_renderbuffer *irb;
 
-   /* XXX: Who passes -1 to intel_get_renderbuffer? */
-   if (attIndex < 0)
-      return NULL;
+   assert((unsigned)attIndex < ARRAY_SIZE(fb->Attachment));
 
    rb = fb->Attachment[attIndex].Renderbuffer;
    if (!rb)
