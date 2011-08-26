@@ -369,6 +369,57 @@ droid_flush_front_buffer(__DRIdrawable * driDrawable, void *loaderPrivate)
 {
 }
 
+static int
+droid_get_buffers_parse_attachments(struct dri2_egl_surface *dri2_surf,
+                                    unsigned int *attachments, int count)
+{
+   int num_buffers = 0, i;
+
+   /* fill dri2_surf->buffers */
+   for (i = 0; i < count * 2; i += 2) {
+      __DRIbuffer *buf, *local;
+
+      assert(num_buffers < ARRAY_SIZE(dri2_surf->buffers));
+      buf = &dri2_surf->buffers[num_buffers];
+
+      switch (attachments[i]) {
+      case __DRI_BUFFER_BACK_LEFT:
+         buf->attachment = attachments[i];
+         buf->name = get_native_buffer_name(dri2_surf->buffer);
+         buf->cpp = get_format_bpp(dri2_surf->buffer->format);
+         buf->pitch = dri2_surf->buffer->stride * buf->cpp;
+         buf->flags = 0;
+
+         if (buf->name)
+            num_buffers++;
+         break;
+      case __DRI_BUFFER_DEPTH:
+      case __DRI_BUFFER_STENCIL:
+      case __DRI_BUFFER_ACCUM:
+      case __DRI_BUFFER_DEPTH_STENCIL:
+      case __DRI_BUFFER_HIZ:
+         local = droid_alloc_local_buffer(dri2_surf,
+               attachments[i], attachments[i + 1]);
+
+         if (local) {
+            *buf = *local;
+            num_buffers++;
+         }
+         break;
+      case __DRI_BUFFER_FRONT_LEFT:
+      case __DRI_BUFFER_FRONT_RIGHT:
+      case __DRI_BUFFER_FAKE_FRONT_LEFT:
+      case __DRI_BUFFER_FAKE_FRONT_RIGHT:
+      case __DRI_BUFFER_BACK_RIGHT:
+      default:
+         /* no front or right buffers */
+         break;
+      }
+   }
+
+   return num_buffers;
+}
+
 static __DRIbuffer *
 droid_get_buffers_with_format(__DRIdrawable * driDrawable,
 			     int *width, int *height,
@@ -393,47 +444,8 @@ droid_get_buffers_with_format(__DRIdrawable * driDrawable,
       dri2_surf->base.Height = dri2_surf->buffer->height;
    }
 
-   dri2_surf->buffer_count = 0;
-   for (i = 0; i < count * 2; i += 2) {
-      __DRIbuffer *buf, *local;
-
-      assert(dri2_surf->buffer_count < ARRAY_SIZE(dri2_surf->buffers));
-      buf = &dri2_surf->buffers[dri2_surf->buffer_count];
-
-      switch (attachments[i]) {
-      case __DRI_BUFFER_BACK_LEFT:
-         buf->attachment = attachments[i];
-         buf->name = get_native_buffer_name(dri2_surf->buffer);
-         buf->cpp = get_format_bpp(dri2_surf->buffer->format);
-         buf->pitch = dri2_surf->buffer->stride * buf->cpp;
-         buf->flags = 0;
-
-         if (buf->name)
-            dri2_surf->buffer_count++;
-         break;
-      case __DRI_BUFFER_DEPTH:
-      case __DRI_BUFFER_STENCIL:
-      case __DRI_BUFFER_ACCUM:
-      case __DRI_BUFFER_DEPTH_STENCIL:
-      case __DRI_BUFFER_HIZ:
-         local = droid_alloc_local_buffer(dri2_surf,
-               attachments[i], attachments[i + 1]);
-
-         if (local) {
-            *buf = *local;
-            dri2_surf->buffer_count++;
-         }
-         break;
-      case __DRI_BUFFER_FRONT_LEFT:
-      case __DRI_BUFFER_FRONT_RIGHT:
-      case __DRI_BUFFER_FAKE_FRONT_LEFT:
-      case __DRI_BUFFER_FAKE_FRONT_RIGHT:
-      case __DRI_BUFFER_BACK_RIGHT:
-      default:
-         /* no front or right buffers */
-         break;
-      }
-   }
+   dri2_surf->buffer_count =
+      droid_get_buffers_parse_attachments(dri2_surf, attachments, count);
 
    if (width)
       *width = dri2_surf->base.Width;
