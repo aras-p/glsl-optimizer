@@ -20,7 +20,6 @@ C_SOURCES = \
 ASM_SOURCES =
 
 SWRAST_COMMON_SOURCES = \
-	../../common/driverfuncs.c \
 	../common/utils.c \
 	../common/drisw_util.c
 

@@ -7,7 +7,6 @@ COMMON_GALLIUM_SOURCES = \
         ../common/xmlconfig.c
 
 COMMON_SOURCES = $(COMMON_GALLIUM_SOURCES) \
-        ../../common/driverfuncs.c \
         ../common/texmem.c \
         ../common/drirenderbuffer.c
 
