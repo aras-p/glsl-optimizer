@@ -1536,6 +1536,7 @@ gl_dispatch_functions_start:
 	GL_STUB_ALIAS(glVertexAttribI4usv, glVertexAttribI4usvEXT)
 	GL_STUB_ALIAS(glVertexAttribIPointer, glVertexAttribIPointerEXT)
 	GL_STUB_ALIAS(glFramebufferTextureLayer, glFramebufferTextureLayerEXT)
+	GL_STUB_ALIAS(glFramebufferTextureLayerARB, glFramebufferTextureLayerEXT)
 	GL_STUB_ALIAS(glColorMaski, glColorMaskIndexedEXT)
 	GL_STUB_ALIAS(glDisablei, glDisableIndexedEXT)
 	GL_STUB_ALIAS(glEnablei, glEnableIndexedEXT)

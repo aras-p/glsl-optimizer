@@ -1325,6 +1325,7 @@ static const char gl_string_table[] =
     "glVertexAttribI4usv\0"
     "glVertexAttribIPointer\0"
     "glFramebufferTextureLayer\0"
+    "glFramebufferTextureLayerARB\0"
     "glColorMaski\0"
     "glDisablei\0"
     "glEnablei\0"
@@ -2724,25 +2725,26 @@ static const glprocs_table_t static_functions[] = {
     NAME_FUNC_OFFSET(23501, glVertexAttribI4usvEXT, glVertexAttribI4usvEXT, NULL, 888),
     NAME_FUNC_OFFSET(23521, glVertexAttribIPointerEXT, glVertexAttribIPointerEXT, NULL, 889),
     NAME_FUNC_OFFSET(23544, glFramebufferTextureLayerEXT, glFramebufferTextureLayerEXT, NULL, 890),
-    NAME_FUNC_OFFSET(23570, glColorMaskIndexedEXT, glColorMaskIndexedEXT, NULL, 891),
-    NAME_FUNC_OFFSET(23583, glDisableIndexedEXT, glDisableIndexedEXT, NULL, 892),
-    NAME_FUNC_OFFSET(23594, glEnableIndexedEXT, glEnableIndexedEXT, NULL, 893),
-    NAME_FUNC_OFFSET(23604, glGetBooleanIndexedvEXT, glGetBooleanIndexedvEXT, NULL, 894),
-    NAME_FUNC_OFFSET(23620, glGetIntegerIndexedvEXT, glGetIntegerIndexedvEXT, NULL, 895),
-    NAME_FUNC_OFFSET(23636, glIsEnabledIndexedEXT, glIsEnabledIndexedEXT, NULL, 896),
-    NAME_FUNC_OFFSET(23649, glGetTexParameterIivEXT, glGetTexParameterIivEXT, NULL, 899),
-    NAME_FUNC_OFFSET(23670, glGetTexParameterIuivEXT, glGetTexParameterIuivEXT, NULL, 900),
-    NAME_FUNC_OFFSET(23692, glTexParameterIivEXT, glTexParameterIivEXT, NULL, 901),
-    NAME_FUNC_OFFSET(23710, glTexParameterIuivEXT, glTexParameterIuivEXT, NULL, 902),
-    NAME_FUNC_OFFSET(23729, glBeginConditionalRenderNV, glBeginConditionalRenderNV, NULL, 903),
-    NAME_FUNC_OFFSET(23754, glEndConditionalRenderNV, glEndConditionalRenderNV, NULL, 904),
-    NAME_FUNC_OFFSET(23777, glBeginTransformFeedbackEXT, glBeginTransformFeedbackEXT, NULL, 905),
-    NAME_FUNC_OFFSET(23802, glBindBufferBaseEXT, glBindBufferBaseEXT, NULL, 906),
-    NAME_FUNC_OFFSET(23819, glBindBufferRangeEXT, glBindBufferRangeEXT, NULL, 908),
-    NAME_FUNC_OFFSET(23837, glEndTransformFeedbackEXT, glEndTransformFeedbackEXT, NULL, 909),
-    NAME_FUNC_OFFSET(23860, glGetTransformFeedbackVaryingEXT, glGetTransformFeedbackVaryingEXT, NULL, 910),
-    NAME_FUNC_OFFSET(23890, glTransformFeedbackVaryingsEXT, glTransformFeedbackVaryingsEXT, NULL, 911),
-    NAME_FUNC_OFFSET(23918, glProvokingVertexEXT, glProvokingVertexEXT, NULL, 912),
+    NAME_FUNC_OFFSET(23570, glFramebufferTextureLayerEXT, glFramebufferTextureLayerEXT, NULL, 890),
+    NAME_FUNC_OFFSET(23599, glColorMaskIndexedEXT, glColorMaskIndexedEXT, NULL, 891),
+    NAME_FUNC_OFFSET(23612, glDisableIndexedEXT, glDisableIndexedEXT, NULL, 892),
+    NAME_FUNC_OFFSET(23623, glEnableIndexedEXT, glEnableIndexedEXT, NULL, 893),
+    NAME_FUNC_OFFSET(23633, glGetBooleanIndexedvEXT, glGetBooleanIndexedvEXT, NULL, 894),
+    NAME_FUNC_OFFSET(23649, glGetIntegerIndexedvEXT, glGetIntegerIndexedvEXT, NULL, 895),
+    NAME_FUNC_OFFSET(23665, glIsEnabledIndexedEXT, glIsEnabledIndexedEXT, NULL, 896),
+    NAME_FUNC_OFFSET(23678, glGetTexParameterIivEXT, glGetTexParameterIivEXT, NULL, 899),
+    NAME_FUNC_OFFSET(23699, glGetTexParameterIuivEXT, glGetTexParameterIuivEXT, NULL, 900),
+    NAME_FUNC_OFFSET(23721, glTexParameterIivEXT, glTexParameterIivEXT, NULL, 901),
+    NAME_FUNC_OFFSET(23739, glTexParameterIuivEXT, glTexParameterIuivEXT, NULL, 902),
+    NAME_FUNC_OFFSET(23758, glBeginConditionalRenderNV, glBeginConditionalRenderNV, NULL, 903),
+    NAME_FUNC_OFFSET(23783, glEndConditionalRenderNV, glEndConditionalRenderNV, NULL, 904),
+    NAME_FUNC_OFFSET(23806, glBeginTransformFeedbackEXT, glBeginTransformFeedbackEXT, NULL, 905),
+    NAME_FUNC_OFFSET(23831, glBindBufferBaseEXT, glBindBufferBaseEXT, NULL, 906),
+    NAME_FUNC_OFFSET(23848, glBindBufferRangeEXT, glBindBufferRangeEXT, NULL, 908),
+    NAME_FUNC_OFFSET(23866, glEndTransformFeedbackEXT, glEndTransformFeedbackEXT, NULL, 909),
+    NAME_FUNC_OFFSET(23889, glGetTransformFeedbackVaryingEXT, glGetTransformFeedbackVaryingEXT, NULL, 910),
+    NAME_FUNC_OFFSET(23919, glTransformFeedbackVaryingsEXT, glTransformFeedbackVaryingsEXT, NULL, 911),
+    NAME_FUNC_OFFSET(23947, glProvokingVertexEXT, glProvokingVertexEXT, NULL, 912),
     NAME_FUNC_OFFSET(-1, NULL, NULL, NULL, 0)
 };
 

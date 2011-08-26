@@ -1287,6 +1287,7 @@ GLAPI void APIENTRY GLAPI_PREFIX(VertexAttribIPointerEXT)(GLuint index, GLint si
 GLAPI void APIENTRY GLAPI_PREFIX(VertexAttribIPointer)(GLuint index, GLint size, GLenum type, GLsizei stride, const GLvoid *pointer);
 GLAPI void APIENTRY GLAPI_PREFIX(FramebufferTextureLayerEXT)(GLenum target, GLenum attachment, GLuint texture, GLint level, GLint layer);
 GLAPI void APIENTRY GLAPI_PREFIX(FramebufferTextureLayer)(GLenum target, GLenum attachment, GLuint texture, GLint level, GLint layer);
+GLAPI void APIENTRY GLAPI_PREFIX(FramebufferTextureLayerARB)(GLenum target, GLenum attachment, GLuint texture, GLint level, GLint layer);
 GLAPI void APIENTRY GLAPI_PREFIX(ColorMaskIndexedEXT)(GLuint buf, GLboolean r, GLboolean g, GLboolean b, GLboolean a);
 GLAPI void APIENTRY GLAPI_PREFIX(ColorMaski)(GLuint buf, GLboolean r, GLboolean g, GLboolean b, GLboolean a);
 GLAPI void APIENTRY GLAPI_PREFIX(DisableIndexedEXT)(GLenum target, GLuint index);
@@ -9538,6 +9539,13 @@ GLAPI void APIENTRY GLAPI_PREFIX(FramebufferTextureLayer)(GLenum target, GLenum 
    ((void (APIENTRY *)(GLenum target, GLenum attachment, GLuint texture, GLint level, GLint layer)) _func)(target, attachment, texture, level, layer);
 }
 
+GLAPI void APIENTRY GLAPI_PREFIX(FramebufferTextureLayerARB)(GLenum target, GLenum attachment, GLuint texture, GLint level, GLint layer)
+{
+   const struct mapi_table *_tbl = entry_current_get();
+   mapi_func _func = ((const mapi_func *) _tbl)[949];
+   ((void (APIENTRY *)(GLenum target, GLenum attachment, GLuint texture, GLint level, GLint layer)) _func)(target, attachment, texture, level, layer);
+}
+
 GLAPI void APIENTRY GLAPI_PREFIX(ColorMaskIndexedEXT)(GLuint buf, GLboolean r, GLboolean g, GLboolean b, GLboolean a)
 {
    const struct mapi_table *_tbl = entry_current_get();
@@ -13411,6 +13419,9 @@ STUB_ASM_ENTRY(GLAPI_PREFIX_STR(FramebufferTextureLayerEXT))"\n"
 
 ".globl "GLAPI_PREFIX_STR(FramebufferTextureLayer)"\n"
 ".set "GLAPI_PREFIX_STR(FramebufferTextureLayer)", "GLAPI_PREFIX_STR(FramebufferTextureLayerEXT)"\n"
+
+".globl "GLAPI_PREFIX_STR(FramebufferTextureLayerARB)"\n"
+".set "GLAPI_PREFIX_STR(FramebufferTextureLayerARB)", "GLAPI_PREFIX_STR(FramebufferTextureLayerEXT)"\n"
 
 STUB_ASM_ENTRY(GLAPI_PREFIX_STR(ColorMaskIndexedEXT))"\n"
 "\t"STUB_ASM_CODE("950")"\n"

@@ -8727,6 +8727,13 @@ _glapi_create_table_from_handle(void *handle, const char *symbol_prefix) {
 
     if(!disp->FramebufferTextureLayerEXT) {
         void ** procp = (void **) &disp->FramebufferTextureLayerEXT;
+        snprintf(symboln, sizeof(symboln), "%sFramebufferTextureLayerARB", symbol_prefix);
+        *procp = dlsym(handle, symboln);
+    }
+
+
+    if(!disp->FramebufferTextureLayerEXT) {
+        void ** procp = (void **) &disp->FramebufferTextureLayerEXT;
         snprintf(symboln, sizeof(symboln), "%sFramebufferTextureLayerEXT", symbol_prefix);
         *procp = dlsym(handle, symboln);
     }

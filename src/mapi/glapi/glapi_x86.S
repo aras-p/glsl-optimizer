@@ -1433,6 +1433,7 @@ GLNAME(gl_dispatch_functions_start):
 	GL_STUB_ALIAS(VertexAttribI4usv, 888, VertexAttribI4usv@8, VertexAttribI4usvEXT, VertexAttribI4usvEXT@8)
 	GL_STUB_ALIAS(VertexAttribIPointer, 889, VertexAttribIPointer@20, VertexAttribIPointerEXT, VertexAttribIPointerEXT@20)
 	GL_STUB_ALIAS(FramebufferTextureLayer, 890, FramebufferTextureLayer@20, FramebufferTextureLayerEXT, FramebufferTextureLayerEXT@20)
+	GL_STUB_ALIAS(FramebufferTextureLayerARB, 890, FramebufferTextureLayerARB@20, FramebufferTextureLayerEXT, FramebufferTextureLayerEXT@20)
 	GL_STUB_ALIAS(ColorMaski, 891, ColorMaski@20, ColorMaskIndexedEXT, ColorMaskIndexedEXT@20)
 	GL_STUB_ALIAS(Disablei, 892, Disablei@8, DisableIndexedEXT, DisableIndexedEXT@8)
 	GL_STUB_ALIAS(Enablei, 893, Enablei@8, EnableIndexedEXT, EnableIndexedEXT@8)

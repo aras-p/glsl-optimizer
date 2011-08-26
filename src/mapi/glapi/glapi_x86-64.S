@@ -35662,6 +35662,7 @@ GL_PREFIX(EGLImageTargetTexture2DOES):
 	.globl GL_PREFIX(VertexAttribI4usv) ; .set GL_PREFIX(VertexAttribI4usv), GL_PREFIX(VertexAttribI4usvEXT)
 	.globl GL_PREFIX(VertexAttribIPointer) ; .set GL_PREFIX(VertexAttribIPointer), GL_PREFIX(VertexAttribIPointerEXT)
 	.globl GL_PREFIX(FramebufferTextureLayer) ; .set GL_PREFIX(FramebufferTextureLayer), GL_PREFIX(FramebufferTextureLayerEXT)
+	.globl GL_PREFIX(FramebufferTextureLayerARB) ; .set GL_PREFIX(FramebufferTextureLayerARB), GL_PREFIX(FramebufferTextureLayerEXT)
 	.globl GL_PREFIX(ColorMaski) ; .set GL_PREFIX(ColorMaski), GL_PREFIX(ColorMaskIndexedEXT)
 	.globl GL_PREFIX(Disablei) ; .set GL_PREFIX(Disablei), GL_PREFIX(DisableIndexedEXT)
 	.globl GL_PREFIX(Enablei) ; .set GL_PREFIX(Enablei), GL_PREFIX(EnableIndexedEXT)
