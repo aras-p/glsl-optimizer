@@ -83,6 +83,35 @@ include $(BUILD_STATIC_LIBRARY)
 endif # MESA_BUILD_GALLIUM
 
 # ---------------------------------------
+# Build libmesa_dricore for DRI modules
+# ---------------------------------------
+
+ifeq ($(strip $(MESA_BUILD_CLASSIC)),true)
+
+include $(CLEAR_VARS)
+
+LOCAL_MODULE := libmesa_dricore
+LOCAL_MODULE_CLASS := STATIC_LIBRARIES
+
+LOCAL_CFLAGS := \
+	$(common_CFLAGS) \
+	-DFEATURE_GL=1
+
+LOCAL_C_INCLUDES := \
+	$(common_C_INCLUDES)
+
+LOCAL_SRC_FILES := \
+        $(MESA_SOURCES) \
+        $(MESA_CXX_SOURCES) \
+        $(common_ASM)
+
+include $(LOCAL_PATH)/Android.gen.mk
+include $(MESA_COMMON_MK)
+include $(BUILD_STATIC_LIBRARY)
+
+endif # MESA_BUILD_CLASSIC
+
+# ---------------------------------------
 # Build libmesa_glsl_utils
 #
 # It is used to avoid circular dependency between core mesa and glsl.
