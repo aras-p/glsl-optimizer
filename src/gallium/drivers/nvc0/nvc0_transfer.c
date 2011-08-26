@@ -105,7 +105,7 @@ nvc0_m2mf_transfer_rect(struct pipe_screen *pscreen,
 void
 nvc0_m2mf_push_linear(struct nouveau_context *nv,
                       struct nouveau_bo *dst, unsigned offset, unsigned domain,
-                      unsigned size, void *data)
+                      unsigned size, const void *data)
 {
    struct nouveau_channel *chan = nv->screen->channel;
    uint32_t *src = (uint32_t *)data;

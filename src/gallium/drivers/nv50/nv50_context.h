@@ -198,7 +198,7 @@ nv50_m2mf_transfer_rect(struct pipe_screen *pscreen,
 void
 nv50_sifc_linear_u8(struct nouveau_context *pipe,
                     struct nouveau_bo *dst, unsigned offset, unsigned domain,
-                    unsigned size, void *data);
+                    unsigned size, const void *data);
 void
 nv50_m2mf_copy_linear(struct nouveau_context *pipe,
                       struct nouveau_bo *dst, unsigned dstoff, unsigned dstdom,

@@ -14,7 +14,7 @@ struct nouveau_context {
                      struct nouveau_bo *src, unsigned, unsigned, unsigned);
    void (*push_data)(struct nouveau_context *,
                      struct nouveau_bo *dst, unsigned, unsigned,
-                     unsigned, void *);
+                     unsigned, const void *);
 };
 
 static INLINE struct nouveau_context *

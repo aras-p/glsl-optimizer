@@ -204,8 +204,8 @@ nvc0_m2mf_transfer_rect(struct pipe_screen *pscreen,
                         uint32_t nblocksx, uint32_t nblocksy);
 void
 nvc0_m2mf_push_linear(struct nouveau_context *nv,
-		      struct nouveau_bo *dst, unsigned offset, unsigned domain,
-		      unsigned size, void *data);
+                      struct nouveau_bo *dst, unsigned offset, unsigned domain,
+                      unsigned size, const void *data);
 void
 nvc0_m2mf_copy_linear(struct nouveau_context *nv,
 		      struct nouveau_bo *dst, unsigned dstoff, unsigned dstdom,
