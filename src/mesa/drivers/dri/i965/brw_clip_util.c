@@ -151,17 +151,20 @@ void brw_clip_interp_vertex( struct brw_clip_compile *c,
       
    /* Iterate over each attribute (could be done in pairs?)
     */
-   for (slot = 2*c->header_regs; slot < c->vue_map.num_slots; slot++) {
+   for (slot = 0; slot < c->vue_map.num_slots; slot++) {
+      int vert_result = c->vue_map.slot_to_vert_result[slot];
       GLuint delta = brw_vue_slot_to_offset(slot);
 
-      if (c->vue_map.slot_to_vert_result[slot] == VERT_RESULT_EDGE) {
+      if (vert_result == VERT_RESULT_EDGE) {
 	 if (force_edgeflag) 
 	    brw_MOV(p, deref_4f(dest_ptr, delta), brw_imm_f(1));
 	 else
 	    brw_MOV(p, deref_4f(dest_ptr, delta), deref_4f(v0_ptr, delta));
-      }
-      else {
-	 /* Interpolate: 
+      } else if (vert_result == VERT_RESULT_PSIZ) {
+	 /* PSIZ doesn't need interpolation */
+      } else if (vert_result < VERT_RESULT_MAX) {
+	 /* This is a true vertex result (and not a special value for the VUE
+	  * header), so interpolate:
 	  *
 	  *        New = attr0 + t*attr1 - t*attr0
 	  */
