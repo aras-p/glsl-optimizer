@@ -93,12 +93,12 @@ static void compile_clip_prog( struct brw_context *brw,
       }
    }
 
-   /* The vertex attributes start at a URB row-aligned offset after
-    * the 8-20 dword vertex header, and continue for a URB row-aligned
-    * length.  nr_regs determines the urb_read_length from the start
-    * of the header to the end of the vertex data.
+   /* nr_regs is the number of registers filled by reading data from the VUE.
+    * This program accesses the entire VUE, so nr_regs needs to be the size of
+    * the VUE (measured in pairs, since two slots are stored in each
+    * register).
     */
-   c.nr_regs = c.header_regs + (c.nr_attrs + 1) / 2;
+   c.nr_regs = (c.vue_map.num_slots + 1)/2;
 
    c.nr_bytes = c.nr_regs * REG_SIZE;
 
