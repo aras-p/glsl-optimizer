@@ -789,11 +789,12 @@ entry:
 static INLINE bool
 decode_slice(struct vl_mpg12_bs *bs)
 {
-   struct pipe_mpeg12_macroblock mb = {};
+   struct pipe_mpeg12_macroblock mb;
    short dct_blocks[64*6];
    unsigned dct_scale;
    signed x = -1;
 
+   memset(&mb, 0, sizeof(mb));
    mb.base.codec = PIPE_VIDEO_CODEC_MPEG12;
    mb.y = vl_vlc_get_uimsbf(&bs->vlc, 8) - 1;
    mb.blocks = dct_blocks;
