@@ -398,6 +398,9 @@ public:
    vec4_instruction *emit(enum opcode opcode, dst_reg dst,
 			  src_reg src0, src_reg src1, src_reg src2);
 
+   vec4_instruction *emit_before(vec4_instruction *inst,
+				 vec4_instruction *new_inst);
+
    vec4_instruction *MOV(dst_reg dst, src_reg src0);
    vec4_instruction *NOT(dst_reg dst, src_reg src0);
    vec4_instruction *RNDD(dst_reg dst, src_reg src0);
@@ -417,6 +420,9 @@ public:
 			 uint32_t condition);
    vec4_instruction *IF(src_reg src0, src_reg src1, uint32_t condition);
    vec4_instruction *IF(uint32_t predicate);
+   vec4_instruction *PULL_CONSTANT_LOAD(dst_reg dst, src_reg index);
+   vec4_instruction *SCRATCH_READ(dst_reg dst, src_reg index);
+   vec4_instruction *SCRATCH_WRITE(dst_reg dst, src_reg src, src_reg index);
 
    bool try_rewrite_rhs_to_dst(ir_assignment *ir,
 			       dst_reg dst,

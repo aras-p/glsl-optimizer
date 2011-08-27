@@ -94,6 +94,17 @@ vec4_visitor::emit(vec4_instruction *inst)
 }
 
 vec4_instruction *
+vec4_visitor::emit_before(vec4_instruction *inst, vec4_instruction *new_inst)
+{
+   new_inst->ir = inst->ir;
+   new_inst->annotation = inst->annotation;
+
+   inst->insert_before(new_inst);
+
+   return inst;
+}
+
+vec4_instruction *
 vec4_visitor::emit(enum opcode opcode, dst_reg dst,
 		   src_reg src0, src_reg src1, src_reg src2)
 {
@@ -197,6 +208,32 @@ vec4_visitor::CMP(dst_reg dst, src_reg src0, src_reg src1, uint32_t condition)
 
    inst = new(mem_ctx) vec4_instruction(this, BRW_OPCODE_CMP, dst, src0, src1);
    inst->conditional_mod = condition;
+
+   return inst;
+}
+
+vec4_instruction *
+vec4_visitor::SCRATCH_READ(dst_reg dst, src_reg index)
+{
+   vec4_instruction *inst;
+
+   inst = new(mem_ctx) vec4_instruction(this, VS_OPCODE_SCRATCH_READ,
+					dst, index);
+   inst->base_mrf = 14;
+   inst->mlen = 1;
+
+   return inst;
+}
+
+vec4_instruction *
+vec4_visitor::SCRATCH_WRITE(dst_reg dst, src_reg src, src_reg index)
+{
+   vec4_instruction *inst;
+
+   inst = new(mem_ctx) vec4_instruction(this, VS_OPCODE_SCRATCH_WRITE,
+					dst, src, index);
+   inst->base_mrf = 13;
+   inst->mlen = 2;
 
    return inst;
 }
@@ -736,7 +773,7 @@ vec4_visitor::visit(ir_variable *ir)
 
 	 dst_reg dst = *reg;
 	 dst.writemask = (1 << c->key.gl_fixed_input_size[i]) - 1;
-	 emit(BRW_OPCODE_MUL, dst, src_reg(dst), src_reg(1.0f / 65536.0f));
+	 emit(MUL(dst, src_reg(dst), src_reg(1.0f / 65536.0f)));
       }
       break;
 
@@ -1977,17 +2014,9 @@ vec4_visitor::get_scratch_offset(vec4_instruction *inst,
    if (reladdr) {
       src_reg index = src_reg(this, glsl_type::int_type);
 
-      vec4_instruction *add = emit(ADD(dst_reg(index),
-				       *reladdr,
-				       src_reg(reg_offset)));
-      /* Move our new instruction from the tail to its correct place. */
-      add->remove();
-      inst->insert_before(add);
-
-      vec4_instruction *mul = emit(MUL(dst_reg(index),
-				       index, src_reg(message_header_scale)));
-      mul->remove();
-      inst->insert_before(mul);
+      emit_before(inst, ADD(dst_reg(index), *reladdr, src_reg(reg_offset)));
+      emit_before(inst, MUL(dst_reg(index),
+			    index, src_reg(message_header_scale)));
 
       return index;
    } else {
@@ -2002,26 +2031,13 @@ vec4_visitor::get_pull_constant_offset(vec4_instruction *inst,
    if (reladdr) {
       src_reg index = src_reg(this, glsl_type::int_type);
 
-      vec4_instruction *add = new(mem_ctx) vec4_instruction(this, BRW_OPCODE_ADD,
-							    dst_reg(index),
-							    *reladdr,
-							    src_reg(reg_offset));
-      add->ir = inst->ir;
-      add->annotation = inst->annotation;
-      inst->insert_before(add);
+      emit_before(inst, ADD(dst_reg(index), *reladdr, src_reg(reg_offset)));
 
       /* Pre-gen6, the message header uses byte offsets instead of vec4
        * (16-byte) offset units.
        */
       if (intel->gen < 6) {
-	 vec4_instruction *mul = new(mem_ctx) vec4_instruction(this,
-							       BRW_OPCODE_MUL,
-							       dst_reg(index),
-							       index,
-							       src_reg(16));
-	 mul->ir = inst->ir;
-	 mul->annotation = inst->annotation;
-	 inst->insert_before(mul);
+	 emit_before(inst, MUL(dst_reg(index), index, src_reg(16)));
       }
 
       return index;
@@ -2043,14 +2059,7 @@ vec4_visitor::emit_scratch_read(vec4_instruction *inst,
    int reg_offset = base_offset + orig_src.reg_offset;
    src_reg index = get_scratch_offset(inst, orig_src.reladdr, reg_offset);
 
-   vec4_instruction *scratch_read_inst = emit(VS_OPCODE_SCRATCH_READ,
-					      temp, index);
-
-   scratch_read_inst->base_mrf = 14;
-   scratch_read_inst->mlen = 1;
-   /* Move our instruction from the tail to its correct place. */
-   scratch_read_inst->remove();
-   inst->insert_before(scratch_read_inst);
+   emit_before(inst, SCRATCH_READ(temp, index));
 }
 
 /**
@@ -2067,14 +2076,11 @@ vec4_visitor::emit_scratch_write(vec4_instruction *inst,
 
    dst_reg dst = dst_reg(brw_writemask(brw_vec8_grf(0, 0),
 				       orig_dst.writemask));
-   vec4_instruction *scratch_write_inst = emit(VS_OPCODE_SCRATCH_WRITE,
-					       dst, temp, index);
-   scratch_write_inst->base_mrf = 13;
-   scratch_write_inst->mlen = 2;
-   scratch_write_inst->predicate = inst->predicate;
-   /* Move our instruction from the tail to its correct place. */
-   scratch_write_inst->remove();
-   inst->insert_after(scratch_write_inst);
+   vec4_instruction *write = SCRATCH_WRITE(dst, temp, index);
+   write->predicate = inst->predicate;
+   write->ir = inst->ir;
+   write->annotation = inst->annotation;
+   inst->insert_after(write);
 }
 
 /**
@@ -2171,11 +2177,9 @@ vec4_visitor::emit_pull_constant_load(vec4_instruction *inst,
 
    load = new(mem_ctx) vec4_instruction(this, VS_OPCODE_PULL_CONSTANT_LOAD,
 					temp, index);
-   load->annotation = inst->annotation;
-   load->ir = inst->ir;
    load->base_mrf = 14;
    load->mlen = 1;
-   inst->insert_before(load);
+   emit_before(inst, load);
 }
 
 /**
