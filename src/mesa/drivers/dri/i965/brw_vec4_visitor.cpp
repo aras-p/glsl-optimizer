@@ -1858,9 +1858,9 @@ vec4_visitor::emit_vue_header_gen6(int header_mrf)
 	 else
 	    m = brw_message_reg(header_mrf + 1);
 
-	 emit(BRW_OPCODE_DP4,
-	      dst_reg(brw_writemask(m, 1 << (i & 3))),
-	      src_reg(c->userplane[i]));
+	 emit(DP4(dst_reg(brw_writemask(m, 1 << (i & 3))),
+		  src_reg(output_reg[VERT_RESULT_HPOS]),
+		  src_reg(c->userplane[i])));
       }
       header_mrf += 2;
    }
