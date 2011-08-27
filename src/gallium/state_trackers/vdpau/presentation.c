@@ -29,8 +29,8 @@
 
 #include <vdpau/vdpau.h>
 
-#include <util/u_debug.h>
-#include <util/u_memory.h>
+#include "util/u_debug.h"
+#include "util/u_memory.h"
 
 #include "vdpau_private.h"
 

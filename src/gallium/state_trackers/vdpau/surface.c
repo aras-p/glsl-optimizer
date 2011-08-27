@@ -28,11 +28,11 @@
 
 #include <assert.h>
 
-#include <pipe/p_state.h>
+#include "pipe/p_state.h"
 
-#include <util/u_memory.h>
-#include <util/u_debug.h>
-#include <util/u_rect.h>
+#include "util/u_memory.h"
+#include "util/u_debug.h"
+#include "util/u_rect.h"
 
 #include "vdpau_private.h"
 

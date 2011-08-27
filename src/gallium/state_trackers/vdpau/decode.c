@@ -25,9 +25,9 @@
  *
  **************************************************************************/
 
-#include <util/u_memory.h>
-#include <util/u_math.h>
-#include <util/u_debug.h>
+#include "util/u_memory.h"
+#include "util/u_math.h"
+#include "util/u_debug.h"
 
 #include "vdpau_private.h"
 

@@ -25,8 +25,8 @@
  *
  **************************************************************************/
 
-#include <util/u_handle_table.h>
-#include <os/os_thread.h>
+#include "util/u_handle_table.h"
+#include "os/os_thread.h"
 #include "vdpau_private.h"
 
 #ifdef VL_HANDLES

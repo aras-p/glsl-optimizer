@@ -25,13 +25,14 @@
  *
  **************************************************************************/
 
-#include "vdpau_private.h"
-#include <vl_winsys.h>
 #include <assert.h>
-#include <pipe/p_screen.h>
-#include <pipe/p_defines.h>
 #include <math.h>
-#include <util/u_debug.h>
+
+#include "vdpau_private.h"
+#include "vl_winsys.h"
+#include "pipe/p_screen.h"
+#include "pipe/p_defines.h"
+#include "util/u_debug.h"
 
 
 VdpStatus
