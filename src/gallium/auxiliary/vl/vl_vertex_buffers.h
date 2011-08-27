@@ -27,8 +27,8 @@
 #ifndef vl_vertex_buffers_h
 #define vl_vertex_buffers_h
 
-#include <pipe/p_state.h>
-#include <pipe/p_video_state.h>
+#include "pipe/p_state.h"
+#include "pipe/p_video_state.h"
 
 #include "vl_defines.h"
 #include "vl_types.h"

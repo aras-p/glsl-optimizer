@@ -27,12 +27,12 @@
 
 #include <assert.h>
 
-#include <pipe/p_context.h>
+#include "pipe/p_context.h"
 
-#include <util/u_sampler.h>
-#include <util/u_draw.h>
+#include "util/u_sampler.h"
+#include "util/u_draw.h"
 
-#include <tgsi/tgsi_ureg.h>
+#include "tgsi/tgsi_ureg.h"
 
 #include "vl_defines.h"
 #include "vl_vertex_buffers.h"

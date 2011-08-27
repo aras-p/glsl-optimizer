@@ -28,9 +28,9 @@
 #ifndef vl_idct_h
 #define vl_idct_h
 
-#include <pipe/p_state.h>
+#include "pipe/p_state.h"
 
-#include <tgsi/tgsi_ureg.h>
+#include "tgsi/tgsi_ureg.h"
 
 /* shader based inverse distinct cosinus transformation
  * expect usage of vl_vertex_buffers as a todo list

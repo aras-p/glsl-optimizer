@@ -28,8 +28,8 @@
 #ifndef vl_zscan_h
 #define vl_zscan_h
 
-#include <pipe/p_compiler.h>
-#include <pipe/p_state.h>
+#include "pipe/p_compiler.h"
+#include "pipe/p_state.h"
 
 /*
  * shader based zscan and quantification

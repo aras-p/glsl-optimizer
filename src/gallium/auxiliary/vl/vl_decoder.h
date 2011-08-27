@@ -29,7 +29,7 @@
 #ifndef vl_decoder_h
 #define vl_decoder_h
 
-#include <pipe/p_video_decoder.h>
+#include "pipe/p_video_decoder.h"
 
 /**
  * check if a given profile is supported with shader based decoding

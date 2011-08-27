@@ -28,8 +28,8 @@
 #ifndef vl_ycbcr_buffer_h
 #define vl_ycbcr_buffer_h
 
-#include <pipe/p_context.h>
-#include <pipe/p_video_decoder.h>
+#include "pipe/p_context.h"
+#include "pipe/p_video_decoder.h"
 
 #include "vl_defines.h"
 

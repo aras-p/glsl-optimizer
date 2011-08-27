@@ -26,8 +26,8 @@
  *
  **************************************************************************/
 
-#include <pipe/p_video_decoder.h>
-#include <util/u_memory.h>
+#include "pipe/p_video_decoder.h"
+#include "util/u_memory.h"
 
 #include "vl_vlc.h"
 #include "vl_mpeg12_bitstream.h"

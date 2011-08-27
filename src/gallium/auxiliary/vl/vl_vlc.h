@@ -30,9 +30,9 @@
 
 #include <assert.h>
 
-#include <pipe/p_compiler.h>
+#include "pipe/p_compiler.h"
 
-#include <util/u_math.h>
+#include "util/u_math.h"
 #include "util/u_pointer.h"
 
 struct vl_vlc

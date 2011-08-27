@@ -26,7 +26,7 @@
  **************************************************************************/
 
 #include <assert.h>
-#include <util/u_format.h>
+#include "util/u_format.h"
 #include "vl_vertex_buffers.h"
 #include "vl_types.h"
 

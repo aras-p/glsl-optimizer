@@ -25,8 +25,8 @@
  *
  **************************************************************************/
 
-#include <util/u_math.h>
-#include <util/u_debug.h>
+#include "util/u_math.h"
+#include "util/u_debug.h"
 
 #include "vl_csc.h"
 

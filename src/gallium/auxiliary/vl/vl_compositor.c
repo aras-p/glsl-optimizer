@@ -27,14 +27,14 @@
 
 #include <assert.h>
 
-#include <pipe/p_compiler.h>
-#include <pipe/p_context.h>
+#include "pipe/p_compiler.h"
+#include "pipe/p_context.h"
 
-#include <util/u_memory.h>
-#include <util/u_draw.h>
-#include <util/u_surface.h>
+#include "util/u_memory.h"
+#include "util/u_draw.h"
+#include "util/u_surface.h"
 
-#include <tgsi/tgsi_ureg.h>
+#include "tgsi/tgsi_ureg.h"
 
 #include "vl_csc.h"
 #include "vl_types.h"

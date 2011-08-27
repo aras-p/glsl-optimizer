@@ -28,7 +28,7 @@
 #ifndef vl_csc_h
 #define vl_csc_h
 
-#include <pipe/p_compiler.h>
+#include "pipe/p_compiler.h"
 
 struct vl_procamp
 {

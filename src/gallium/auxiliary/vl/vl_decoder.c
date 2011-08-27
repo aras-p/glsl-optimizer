@@ -25,9 +25,9 @@
  *
  **************************************************************************/
 
-#include <pipe/p_video_decoder.h>
+#include "pipe/p_video_decoder.h"
 
-#include <util/u_video.h>
+#include "util/u_video.h"
 
 #include "vl_decoder.h"
 #include "vl_mpeg12_decoder.h"

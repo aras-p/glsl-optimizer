@@ -28,10 +28,10 @@
 #ifndef vl_mc_h
 #define vl_mc_h
 
-#include <pipe/p_state.h>
-#include <pipe/p_video_state.h>
+#include "pipe/p_state.h"
+#include "pipe/p_video_state.h"
 
-#include <tgsi/tgsi_ureg.h>
+#include "tgsi/tgsi_ureg.h"
 
 #include "vl_defines.h"
 #include "vl_types.h"

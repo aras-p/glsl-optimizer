@@ -28,7 +28,7 @@
 #ifndef vl_mpeg12_decoder_h
 #define vl_mpeg12_decoder_h
 
-#include <pipe/p_video_decoder.h>
+#include "pipe/p_video_decoder.h"
 
 #include "vl_mpeg12_bitstream.h"
 #include "vl_zscan.h"
