@@ -631,7 +631,7 @@ _mesa_update_state_locked( struct gl_context *ctx )
    if (new_state & (_NEW_BUFFERS | _NEW_VIEWPORT))
       update_viewport_matrix(ctx);
 
-   if (new_state & _NEW_MULTISAMPLE)
+   if (new_state & (_NEW_MULTISAMPLE | _NEW_BUFFERS))
       update_multisample( ctx );
 
    if (new_state & _NEW_COLOR)
