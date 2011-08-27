@@ -100,6 +100,7 @@ brw_link_shader(struct gl_context *ctx, struct gl_shader_program *prog)
       lower_instructions(shader->ir,
 			 MOD_TO_FRACT |
 			 DIV_TO_MUL_RCP |
+			 INT_DIV_TO_MUL_RCP |
 			 SUB_TO_ADD_NEG |
 			 EXP_TO_EXP2 |
 			 LOG_TO_LOG2);
