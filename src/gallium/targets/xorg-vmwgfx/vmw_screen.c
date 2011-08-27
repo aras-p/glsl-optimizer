@@ -32,7 +32,7 @@
 
 #include "vmw_hook.h"
 #include "vmw_driver.h"
-#include <pipe/p_context.h>
+#include "pipe/p_context.h"
 
 #include "cursorstr.h"
 #include "../../winsys/svga/drm/vmwgfx_drm.h"
