@@ -226,6 +226,8 @@ nv50_screen_destroy(struct pipe_screen *pscreen)
       nouveau_fence_ref (NULL, &screen->base.fence.current);
    }
    screen->base.channel->user_private = NULL;
+   if (screen->blitctx)
+      FREE(screen->blitctx);
 
    nouveau_bo_ref(NULL, &screen->code);
    nouveau_bo_ref(NULL, &screen->tls_bo);
