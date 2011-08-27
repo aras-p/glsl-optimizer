@@ -27,8 +27,8 @@
 #ifndef U_DEBUG_REFCNT_H_
 #define U_DEBUG_REFCNT_H_
 
-#include <pipe/p_config.h>
-#include <pipe/p_state.h>
+#include "pipe/p_config.h"
+#include "pipe/p_state.h"
 
 #ifdef __cplusplus
 extern "C" {

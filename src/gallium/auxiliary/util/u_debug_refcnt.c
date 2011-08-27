@@ -29,14 +29,14 @@
 /* see http://www.mozilla.org/performance/refcnt-balancer.html for what do with the output
  * on Linux, use tools/addr2line.sh to postprocess it before anything else
  **/
-#include <util/u_debug.h>
-#include <util/u_debug_refcnt.h>
-#include <util/u_debug_stack.h>
-#include <util/u_debug_symbol.h>
-#include <util/u_string.h>
-#include <util/u_hash_table.h>
-#include <os/os_thread.h>
-#include <os/os_stream.h>
+#include "util/u_debug.h"
+#include "util/u_debug_refcnt.h"
+#include "util/u_debug_stack.h"
+#include "util/u_debug_symbol.h"
+#include "util/u_string.h"
+#include "util/u_hash_table.h"
+#include "os/os_thread.h"
+#include "os/os_stream.h"
 
 int debug_refcnt_state;
 

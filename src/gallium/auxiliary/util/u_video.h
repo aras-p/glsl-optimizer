@@ -32,12 +32,12 @@
 extern "C" {
 #endif
 
-#include <pipe/p_defines.h>
-#include <pipe/p_video_enums.h>
+#include "pipe/p_defines.h"
+#include "pipe/p_video_enums.h"
 
 /* u_reduce_video_profile() needs these */
-#include <pipe/p_compiler.h>
-#include <util/u_debug.h>
+#include "pipe/p_compiler.h"
+#include "util/u_debug.h"
 
 static INLINE enum pipe_video_codec
 u_reduce_video_profile(enum pipe_video_profile profile)
