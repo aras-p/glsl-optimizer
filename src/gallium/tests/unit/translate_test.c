@@ -24,11 +24,11 @@
  **************************************************************************/
 
 #include <stdio.h>
-#include <translate/translate.h>
-#include <util/u_memory.h>
-#include <util/u_format.h>
-#include <util/u_cpu_detect.h>
-#include <rtasm/rtasm_cpu.h>
+#include "translate/translate.h"
+#include "util/u_memory.h"
+#include "util/u_format.h"
+#include "util/u_cpu_detect.h"
+#include "rtasm/rtasm_cpu.h"
 
 /* don't use this for serious use */
 static double rand_double()
