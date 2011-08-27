@@ -32,7 +32,7 @@
 #include <X11/extensions/Xvlib.h>
 #include <X11/extensions/XvMClib.h>
 
-#include <vl/vl_compositor.h>
+#include "vl/vl_compositor.h"
 
 #include "xvmc_private.h"
 

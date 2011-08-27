@@ -31,17 +31,17 @@
 #include <X11/extensions/XvMClib.h>
 #include <xorg/fourcc.h>
 
-#include <pipe/p_screen.h>
-#include <pipe/p_video_decoder.h>
-#include <pipe/p_state.h>
+#include "pipe/p_screen.h"
+#include "pipe/p_video_decoder.h"
+#include "pipe/p_state.h"
 
-#include <util/u_memory.h>
-#include <util/u_math.h>
-#include <util/u_format.h>
-#include <util/u_sampler.h>
-#include <util/u_rect.h>
+#include "util/u_memory.h"
+#include "util/u_math.h"
+#include "util/u_format.h"
+#include "util/u_sampler.h"
+#include "util/u_rect.h"
 
-#include <vl_winsys.h>
+#include "vl_winsys.h"
 
 #include "xvmc_private.h"
 

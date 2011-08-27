@@ -30,7 +30,7 @@
 #include <X11/Xlib.h>
 #include <X11/extensions/XvMClib.h>
 
-#include <util/u_memory.h>
+#include "util/u_memory.h"
 
 #include "xvmc_private.h"
 

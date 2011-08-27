@@ -3,7 +3,7 @@
 
 #include "xorg_tracker.h"
 
-#include <pipe/p_state.h>
+#include "pipe/p_state.h"
 
 struct cso_context;
 struct xorg_shaders;

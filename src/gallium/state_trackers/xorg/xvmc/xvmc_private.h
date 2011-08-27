@@ -31,13 +31,13 @@
 #include <X11/Xlib.h>
 #include <X11/extensions/XvMClib.h>
 
-#include <pipe/p_video_state.h>
+#include "pipe/p_video_state.h"
 
-#include <util/u_debug.h>
-#include <util/u_math.h>
+#include "util/u_debug.h"
+#include "util/u_math.h"
 
-#include <vl/vl_csc.h>
-#include <vl/vl_compositor.h>
+#include "vl/vl_csc.h"
+#include "vl/vl_compositor.h"
 
 #define BLOCK_SIZE_SAMPLES 64
 #define BLOCK_SIZE_BYTES (BLOCK_SIZE_SAMPLES * 2)

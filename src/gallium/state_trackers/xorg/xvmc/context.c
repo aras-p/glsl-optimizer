@@ -30,15 +30,15 @@
 #include <X11/Xlibint.h>
 #include <X11/extensions/XvMClib.h>
 
-#include <pipe/p_screen.h>
-#include <pipe/p_video_decoder.h>
-#include <pipe/p_video_state.h>
-#include <pipe/p_state.h>
+#include "pipe/p_screen.h"
+#include "pipe/p_video_decoder.h"
+#include "pipe/p_video_state.h"
+#include "pipe/p_state.h"
 
-#include <util/u_memory.h>
+#include "util/u_memory.h"
 
-#include <vl/vl_csc.h>
-#include <vl_winsys.h>
+#include "vl/vl_csc.h"
+#include "vl_winsys.h"
 
 #include "xvmc_private.h"
 
