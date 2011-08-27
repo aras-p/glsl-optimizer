@@ -27,8 +27,8 @@
 
 #include <va/va.h>
 #include <va/va_backend.h>
-#include <util/u_debug.h>
-#include <util/u_memory.h>
+#include "util/u_debug.h"
+#include "util/u_memory.h"
 #include "va_private.h"
 
 static enum pipe_video_chroma_format

@@ -31,8 +31,8 @@
 #include <va/va.h>
 #include <va/va_backend.h>
 
-#include <pipe/p_format.h>
-#include <pipe/p_state.h>
+#include "pipe/p_format.h"
+#include "pipe/p_state.h"
 
 #define VA_DEBUG(_str,...) debug_printf("[Gallium VA backend]: " _str,__VA_ARGS__)
 #define VA_INFO(_str,...) VA_DEBUG("INFO: " _str,__VA_ARGS__)

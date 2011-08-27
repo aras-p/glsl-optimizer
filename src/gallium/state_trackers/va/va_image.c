@@ -28,11 +28,11 @@
 #include <va/va.h>
 #include <va/va_backend.h>
 
-#include <pipe/p_format.h>
+#include "pipe/p_format.h"
 
-#include <util/u_memory.h>
-#include <util/u_format.h>
-#include <util/u_debug.h>
+#include "util/u_memory.h"
+#include "util/u_format.h"
+#include "util/u_debug.h"
 
 #include "va_private.h"
 

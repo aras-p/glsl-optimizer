@@ -28,14 +28,14 @@
 #include <va/va.h>
 #include <va/va_backend.h>
 
-#include <pipe/p_screen.h>
-#include <pipe/p_screen.h>
-#include <pipe/p_video_decoder.h>
+#include "pipe/p_screen.h"
+#include "pipe/p_screen.h"
+#include "pipe/p_video_decoder.h"
 
-#include <util/u_debug.h>
-#include <util/u_memory.h>
+#include "util/u_debug.h"
+#include "util/u_memory.h"
 
-#include <vl_winsys.h>
+#include "vl_winsys.h"
 
 #include "va_private.h"
 

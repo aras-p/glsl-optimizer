@@ -28,7 +28,7 @@
 #include <va/va.h>
 #include <va/va_backend.h>
 
-#include <pipe/p_format.h>
+#include "pipe/p_format.h"
 
 #include "va_private.h"
 

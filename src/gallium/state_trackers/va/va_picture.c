@@ -28,7 +28,7 @@
 #include <va/va.h>
 #include <va/va_backend.h>
 
-#include <util/u_debug.h>
+#include "util/u_debug.h"
 
 #include "va_private.h"
 
