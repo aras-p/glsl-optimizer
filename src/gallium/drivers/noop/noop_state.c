@@ -22,12 +22,12 @@
  */
 #include <stdio.h>
 #include <errno.h>
-#include <pipe/p_defines.h>
-#include <pipe/p_state.h>
-#include <pipe/p_context.h>
-#include <pipe/p_screen.h>
-#include <util/u_memory.h>
-#include <util/u_inlines.h>
+#include "pipe/p_defines.h"
+#include "pipe/p_state.h"
+#include "pipe/p_context.h"
+#include "pipe/p_screen.h"
+#include "util/u_memory.h"
+#include "util/u_inlines.h"
 #include "util/u_transfer.h"
 
 static void noop_draw_vbo(struct pipe_context *ctx, const struct pipe_draw_info *info)

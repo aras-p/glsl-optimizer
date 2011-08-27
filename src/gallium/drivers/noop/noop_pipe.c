@@ -22,13 +22,13 @@
  */
 #include <stdio.h>
 #include <errno.h>
-#include <pipe/p_defines.h>
-#include <pipe/p_state.h>
-#include <pipe/p_context.h>
-#include <pipe/p_screen.h>
-#include <util/u_memory.h>
-#include <util/u_inlines.h>
-#include <util/u_format.h>
+#include "pipe/p_defines.h"
+#include "pipe/p_state.h"
+#include "pipe/p_context.h"
+#include "pipe/p_screen.h"
+#include "util/u_memory.h"
+#include "util/u_inlines.h"
+#include "util/u_format.h"
 #include "noop_public.h"
 
 DEBUG_GET_ONCE_BOOL_OPTION(noop, "GALLIUM_NOOP", FALSE)
