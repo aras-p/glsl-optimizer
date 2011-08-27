@@ -214,7 +214,7 @@ vec4_visitor::emit_math1_gen6(enum opcode opcode, dst_reg dst, src_reg src)
     * copy propagation later.
     */
    src_reg temp_src = src_reg(this, glsl_type::vec4_type);
-   emit(BRW_OPCODE_MOV, dst_reg(temp_src), src);
+   emit(MOV(dst_reg(temp_src), src));
 
    if (dst.writemask != WRITEMASK_XYZW) {
       /* The gen6 math instruction must be align1, so we can't do
@@ -224,7 +224,7 @@ vec4_visitor::emit_math1_gen6(enum opcode opcode, dst_reg dst, src_reg src)
 
       emit(opcode, temp_dst, temp_src);
 
-      emit(BRW_OPCODE_MOV, dst, src_reg(temp_dst));
+      emit(MOV(dst, src_reg(temp_dst)));
    } else {
       emit(opcode, dst, temp_src);
    }
@@ -275,11 +275,11 @@ vec4_visitor::emit_math2_gen6(enum opcode opcode,
     */
 
    expanded = src_reg(this, glsl_type::vec4_type);
-   emit(BRW_OPCODE_MOV, dst_reg(expanded), src0);
+   emit(MOV(dst_reg(expanded), src0));
    src0 = expanded;
 
    expanded = src_reg(this, glsl_type::vec4_type);
-   emit(BRW_OPCODE_MOV, dst_reg(expanded), src1);
+   emit(MOV(dst_reg(expanded), src1));
    src1 = expanded;
 
    if (dst.writemask != WRITEMASK_XYZW) {
@@ -290,7 +290,7 @@ vec4_visitor::emit_math2_gen6(enum opcode opcode,
 
       emit(opcode, temp_dst, src0, src1);
 
-      emit(BRW_OPCODE_MOV, dst, src_reg(temp_dst));
+      emit(MOV(dst, src_reg(temp_dst)));
    } else {
       emit(opcode, dst, src0, src1);
    }
@@ -550,41 +550,41 @@ vec4_visitor::emit_bool_to_cond_code(ir_rvalue *ir)
 
       switch (expr->operation) {
       case ir_unop_logic_not:
-	 inst = emit(BRW_OPCODE_AND, dst_null_d(), op[0], src_reg(1));
+	 inst = emit(AND(dst_null_d(), op[0], src_reg(1)));
 	 inst->conditional_mod = BRW_CONDITIONAL_Z;
 	 break;
 
       case ir_binop_logic_xor:
-	 inst = emit(BRW_OPCODE_XOR, dst_null_d(), op[0], op[1]);
+	 inst = emit(XOR(dst_null_d(), op[0], op[1]));
 	 inst->conditional_mod = BRW_CONDITIONAL_NZ;
 	 break;
 
       case ir_binop_logic_or:
-	 inst = emit(BRW_OPCODE_OR, dst_null_d(), op[0], op[1]);
+	 inst = emit(OR(dst_null_d(), op[0], op[1]));
 	 inst->conditional_mod = BRW_CONDITIONAL_NZ;
 	 break;
 
       case ir_binop_logic_and:
-	 inst = emit(BRW_OPCODE_AND, dst_null_d(), op[0], op[1]);
+	 inst = emit(AND(dst_null_d(), op[0], op[1]));
 	 inst->conditional_mod = BRW_CONDITIONAL_NZ;
 	 break;
 
       case ir_unop_f2b:
 	 if (intel->gen >= 6) {
-	    inst = emit(BRW_OPCODE_CMP, dst_null_d(), op[0], src_reg(0.0f));
+	    emit(CMP(dst_null_d(), op[0], src_reg(0.0f), BRW_CONDITIONAL_NZ));
 	 } else {
-	    inst = emit(BRW_OPCODE_MOV, dst_null_f(), op[0]);
+	    inst = emit(MOV(dst_null_f(), op[0]));
+	    inst->conditional_mod = BRW_CONDITIONAL_NZ;
 	 }
-	 inst->conditional_mod = BRW_CONDITIONAL_NZ;
 	 break;
 
       case ir_unop_i2b:
 	 if (intel->gen >= 6) {
-	    inst = emit(BRW_OPCODE_CMP, dst_null_d(), op[0], src_reg(0));
+	    emit(CMP(dst_null_d(), op[0], src_reg(0), BRW_CONDITIONAL_NZ));
 	 } else {
-	    inst = emit(BRW_OPCODE_MOV, dst_null_d(), op[0]);
+	    inst = emit(MOV(dst_null_d(), op[0]));
+	    inst->conditional_mod = BRW_CONDITIONAL_NZ;
 	 }
-	 inst->conditional_mod = BRW_CONDITIONAL_NZ;
 	 break;
 
       case ir_binop_greater:
@@ -595,9 +595,8 @@ vec4_visitor::emit_bool_to_cond_code(ir_rvalue *ir)
       case ir_binop_all_equal:
       case ir_binop_nequal:
       case ir_binop_any_nequal:
-	 inst = emit(BRW_OPCODE_CMP, dst_null_cmp(), op[0], op[1]);
-	 inst->conditional_mod =
-	    brw_conditional_for_comparison(expr->operation);
+	 emit(CMP(dst_null_cmp(), op[0], op[1],
+		  brw_conditional_for_comparison(expr->operation)));
 	 break;
 
       default:
@@ -610,11 +609,11 @@ vec4_visitor::emit_bool_to_cond_code(ir_rvalue *ir)
    ir->accept(this);
 
    if (intel->gen >= 6) {
-      vec4_instruction *inst = emit(BRW_OPCODE_AND, dst_null_d(),
-			       this->result, src_reg(1));
+      vec4_instruction *inst = emit(AND(dst_null_d(),
+					this->result, src_reg(1)));
       inst->conditional_mod = BRW_CONDITIONAL_NZ;
    } else {
-      vec4_instruction *inst = emit(BRW_OPCODE_MOV, dst_null_d(), this->result);
+      vec4_instruction *inst = emit(MOV(dst_null_d(), this->result));
       inst->conditional_mod = BRW_CONDITIONAL_NZ;
    }
 }
@@ -630,7 +629,6 @@ vec4_visitor::emit_if_gen6(ir_if *ir)
 
    if (expr) {
       src_reg op[2];
-      vec4_instruction *inst;
       dst_reg temp;
 
       assert(expr->get_num_operands() <= 2);
@@ -641,37 +639,31 @@ vec4_visitor::emit_if_gen6(ir_if *ir)
 
       switch (expr->operation) {
       case ir_unop_logic_not:
-	 inst = emit(BRW_OPCODE_IF, dst_null_d(), op[0], src_reg(0));
-	 inst->conditional_mod = BRW_CONDITIONAL_Z;
+	 emit(IF(op[0], src_reg(0), BRW_CONDITIONAL_Z));
 	 return;
 
       case ir_binop_logic_xor:
-	 inst = emit(BRW_OPCODE_IF, dst_null_d(), op[0], op[1]);
-	 inst->conditional_mod = BRW_CONDITIONAL_NZ;
+	 emit(IF(op[0], op[1], BRW_CONDITIONAL_NZ));
 	 return;
 
       case ir_binop_logic_or:
 	 temp = dst_reg(this, glsl_type::bool_type);
-	 emit(BRW_OPCODE_OR, temp, op[0], op[1]);
-	 inst = emit(BRW_OPCODE_IF, dst_null_d(), src_reg(temp), src_reg(0));
-	 inst->conditional_mod = BRW_CONDITIONAL_NZ;
+	 emit(OR(temp, op[0], op[1]));
+	 emit(IF(src_reg(temp), src_reg(0), BRW_CONDITIONAL_NZ));
 	 return;
 
       case ir_binop_logic_and:
 	 temp = dst_reg(this, glsl_type::bool_type);
-	 emit(BRW_OPCODE_AND, temp, op[0], op[1]);
-	 inst = emit(BRW_OPCODE_IF, dst_null_d(), src_reg(temp), src_reg(0));
-	 inst->conditional_mod = BRW_CONDITIONAL_NZ;
+	 emit(AND(temp, op[0], op[1]));
+	 emit(IF(src_reg(temp), src_reg(0), BRW_CONDITIONAL_NZ));
 	 return;
 
       case ir_unop_f2b:
-	 inst = emit(BRW_OPCODE_IF, dst_null_f(), op[0], src_reg(0));
-	 inst->conditional_mod = BRW_CONDITIONAL_NZ;
+	 emit(IF(op[0], src_reg(0), BRW_CONDITIONAL_NZ));
 	 return;
 
       case ir_unop_i2b:
-	 inst = emit(BRW_OPCODE_IF, dst_null_d(), op[0], src_reg(0));
-	 inst->conditional_mod = BRW_CONDITIONAL_NZ;
+	 emit(IF(op[0], src_reg(0), BRW_CONDITIONAL_NZ));
 	 return;
 
       case ir_binop_greater:
@@ -680,39 +672,28 @@ vec4_visitor::emit_if_gen6(ir_if *ir)
       case ir_binop_lequal:
       case ir_binop_equal:
       case ir_binop_nequal:
-	 inst = emit(BRW_OPCODE_IF, dst_null_d(), op[0], op[1]);
-	 inst->conditional_mod =
-	    brw_conditional_for_comparison(expr->operation);
+	 emit(IF(op[0], op[1],
+		 brw_conditional_for_comparison(expr->operation)));
 	 return;
 
       case ir_binop_all_equal:
-	 inst = emit(BRW_OPCODE_CMP, dst_null_d(), op[0], op[1]);
-	 inst->conditional_mod = BRW_CONDITIONAL_Z;
-
-	 inst = emit(BRW_OPCODE_IF);
-	 inst->predicate = BRW_PREDICATE_ALIGN16_ALL4H;
+	 emit(CMP(dst_null_d(), op[0], op[1], BRW_CONDITIONAL_Z));
+	 emit(IF(BRW_PREDICATE_ALIGN16_ALL4H));
 	 return;
 
       case ir_binop_any_nequal:
-	 inst = emit(BRW_OPCODE_CMP, dst_null_d(), op[0], op[1]);
-	 inst->conditional_mod = BRW_CONDITIONAL_NZ;
-
-	 inst = emit(BRW_OPCODE_IF);
-	 inst->predicate = BRW_PREDICATE_ALIGN16_ANY4H;
+	 emit(CMP(dst_null_d(), op[0], op[1], BRW_CONDITIONAL_NZ));
+	 emit(IF(BRW_PREDICATE_ALIGN16_ANY4H));
 	 return;
 
       case ir_unop_any:
-	 inst = emit(BRW_OPCODE_CMP, dst_null_d(), op[0], src_reg(0));
-	 inst->conditional_mod = BRW_CONDITIONAL_NZ;
-
-	 inst = emit(BRW_OPCODE_IF);
-	 inst->predicate = BRW_PREDICATE_ALIGN16_ANY4H;
+	 emit(CMP(dst_null_d(), op[0], src_reg(0), BRW_CONDITIONAL_NZ));
+	 emit(IF(BRW_PREDICATE_ALIGN16_ANY4H));
 	 return;
 
       default:
 	 assert(!"not reached");
-	 inst = emit(BRW_OPCODE_IF, dst_null_d(), op[0], src_reg(0));
-	 inst->conditional_mod = BRW_CONDITIONAL_NZ;
+	 emit(IF(op[0], src_reg(0), BRW_CONDITIONAL_NZ));
 	 return;
       }
       return;
@@ -720,9 +701,7 @@ vec4_visitor::emit_if_gen6(ir_if *ir)
 
    ir->condition->accept(this);
 
-   vec4_instruction *inst = emit(BRW_OPCODE_IF, dst_null_d(),
-			    this->result, src_reg(0));
-   inst->conditional_mod = BRW_CONDITIONAL_NZ;
+   emit(IF(this->result, src_reg(0), BRW_CONDITIONAL_NZ));
 }
 
 void
@@ -807,7 +786,7 @@ vec4_visitor::visit(ir_loop *ir)
 	 this->base_ir = ir->from;
 	 ir->from->accept(this);
 
-	 emit(BRW_OPCODE_MOV, counter, this->result);
+	 emit(MOV(counter, this->result));
       }
    }
 
@@ -817,11 +796,10 @@ vec4_visitor::visit(ir_loop *ir)
       this->base_ir = ir->to;
       ir->to->accept(this);
 
-      vec4_instruction *inst = emit(BRW_OPCODE_CMP, dst_null_d(),
-				    src_reg(counter), this->result);
-      inst->conditional_mod = brw_conditional_for_comparison(ir->cmp);
+      emit(CMP(dst_null_d(), src_reg(counter), this->result,
+	       brw_conditional_for_comparison(ir->cmp)));
 
-      inst = emit(BRW_OPCODE_BREAK);
+      vec4_instruction *inst = emit(BRW_OPCODE_BREAK);
       inst->predicate = BRW_PREDICATE_NORMAL;
    }
 
@@ -831,7 +809,7 @@ vec4_visitor::visit(ir_loop *ir)
    if (ir->increment) {
       this->base_ir = ir->increment;
       ir->increment->accept(this);
-      emit(BRW_OPCODE_ADD, counter, src_reg(counter), this->result);
+      emit(ADD(counter, src_reg(counter), this->result));
    }
 
    emit(BRW_OPCODE_WHILE);
@@ -888,7 +866,7 @@ vec4_visitor::try_emit_sat(ir_expression *ir)
 
    this->result = src_reg(this, ir->type);
    vec4_instruction *inst;
-   inst = emit(BRW_OPCODE_MOV, dst_reg(this->result), src);
+   inst = emit(MOV(dst_reg(this->result), src));
    inst->saturate = true;
 
    return true;
@@ -902,11 +880,10 @@ vec4_visitor::emit_bool_comparison(unsigned int op,
    if (intel->gen < 5)
       dst.type = src0.type;
 
-   vec4_instruction *inst = emit(BRW_OPCODE_CMP, dst, src0, src1);
-   inst->conditional_mod = brw_conditional_for_comparison(op);
+   emit(CMP(dst, src0, src1, brw_conditional_for_comparison(op)));
 
    dst.type = BRW_REGISTER_TYPE_D;
-   emit(BRW_OPCODE_AND, dst, src_reg(dst), src_reg(0x1));
+   emit(AND(dst, src_reg(dst), src_reg(0x1)));
 }
 
 void
@@ -964,7 +941,7 @@ vec4_visitor::visit(ir_expression *ir)
       /* Note that BRW_OPCODE_NOT is not appropriate here, since it is
        * ones complement of the whole register, not just bit 0.
        */
-      emit(BRW_OPCODE_XOR, result_dst, op[0], src_reg(1));
+      emit(XOR(result_dst, op[0], src_reg(1)));
       break;
    case ir_unop_neg:
       op[0].negate = !op[0].negate;
@@ -977,16 +954,14 @@ vec4_visitor::visit(ir_expression *ir)
       break;
 
    case ir_unop_sign:
-      emit(BRW_OPCODE_MOV, result_dst, src_reg(0.0f));
+      emit(MOV(result_dst, src_reg(0.0f)));
 
-      inst = emit(BRW_OPCODE_CMP, dst_null_f(), op[0], src_reg(0.0f));
-      inst->conditional_mod = BRW_CONDITIONAL_G;
-      inst = emit(BRW_OPCODE_MOV, result_dst, src_reg(1.0f));
+      emit(CMP(dst_null_f(), op[0], src_reg(0.0f), BRW_CONDITIONAL_G));
+      inst = emit(MOV(result_dst, src_reg(1.0f)));
       inst->predicate = BRW_PREDICATE_NORMAL;
 
-      inst = emit(BRW_OPCODE_CMP, dst_null_f(), op[0], src_reg(0.0f));
-      inst->conditional_mod = BRW_CONDITIONAL_L;
-      inst = emit(BRW_OPCODE_MOV, result_dst, src_reg(-1.0f));
+      emit(CMP(dst_null_f(), op[0], src_reg(0.0f), BRW_CONDITIONAL_L));
+      inst = emit(MOV(result_dst, src_reg(-1.0f)));
       inst->predicate = BRW_PREDICATE_NORMAL;
 
       break;
@@ -1024,7 +999,7 @@ vec4_visitor::visit(ir_expression *ir)
       break;
 
    case ir_binop_add:
-      emit(BRW_OPCODE_ADD, result_dst, op[0], op[1]);
+      emit(ADD(result_dst, op[0], op[1]));
       break;
    case ir_binop_sub:
       assert(!"not reached: should be handled by ir_sub_to_add_neg");
@@ -1042,11 +1017,11 @@ vec4_visitor::visit(ir_expression *ir)
 	  */
 	 struct brw_reg acc = retype(brw_acc_reg(), BRW_REGISTER_TYPE_D);
 
-	 emit(BRW_OPCODE_MUL, acc, op[0], op[1]);
-	 emit(BRW_OPCODE_MACH, dst_null_d(), op[0], op[1]);
-	 emit(BRW_OPCODE_MOV, result_dst, src_reg(acc));
+	 emit(MUL(acc, op[0], op[1]));
+	 emit(MACH(dst_null_d(), op[0], op[1]));
+	 emit(MOV(result_dst, src_reg(acc)));
       } else {
-	 emit(BRW_OPCODE_MUL, result_dst, op[0], op[1]);
+	 emit(MUL(result_dst, op[0], op[1]));
       }
       break;
    case ir_binop_div:
@@ -1066,9 +1041,9 @@ vec4_visitor::visit(ir_expression *ir)
       if (intel->gen < 5)
 	 temp.type = op[0].type;
 
-      inst = emit(BRW_OPCODE_CMP, temp, op[0], op[1]);
-      inst->conditional_mod = brw_conditional_for_comparison(ir->operation);
-      emit(BRW_OPCODE_AND, result_dst, this->result, src_reg(0x1));
+      emit(CMP(temp, op[0], op[1],
+	       brw_conditional_for_comparison(ir->operation)));
+      emit(AND(result_dst, this->result, src_reg(0x1)));
       break;
    }
 
@@ -1076,11 +1051,9 @@ vec4_visitor::visit(ir_expression *ir)
       /* "==" operator producing a scalar boolean. */
       if (ir->operands[0]->type->is_vector() ||
 	  ir->operands[1]->type->is_vector()) {
-	 inst = emit(BRW_OPCODE_CMP, dst_null_cmp(), op[0], op[1]);
-	 inst->conditional_mod = BRW_CONDITIONAL_Z;
-
-	 emit(BRW_OPCODE_MOV, result_dst, src_reg(0));
-	 inst = emit(BRW_OPCODE_MOV, result_dst, src_reg(1));
+	 emit(CMP(dst_null_cmp(), op[0], op[1], BRW_CONDITIONAL_Z));
+	 emit(MOV(result_dst, src_reg(0)));
+	 inst = emit(MOV(result_dst, src_reg(1)));
 	 inst->predicate = BRW_PREDICATE_ALIGN16_ALL4H;
       } else {
 	 dst_reg temp = result_dst;
@@ -1088,20 +1061,18 @@ vec4_visitor::visit(ir_expression *ir)
 	 if (intel->gen < 5)
 	    temp.type = op[0].type;
 
-	 inst = emit(BRW_OPCODE_CMP, temp, op[0], op[1]);
-	 inst->conditional_mod = BRW_CONDITIONAL_Z;
-	 emit(BRW_OPCODE_AND, result_dst, result_src, src_reg(0x1));
+	 emit(CMP(temp, op[0], op[1], BRW_CONDITIONAL_Z));
+	 emit(AND(result_dst, result_src, src_reg(0x1)));
       }
       break;
    case ir_binop_any_nequal:
       /* "!=" operator producing a scalar boolean. */
       if (ir->operands[0]->type->is_vector() ||
 	  ir->operands[1]->type->is_vector()) {
-	 inst = emit(BRW_OPCODE_CMP, dst_null_cmp(), op[0], op[1]);
-	 inst->conditional_mod = BRW_CONDITIONAL_NZ;
+	 emit(CMP(dst_null_cmp(), op[0], op[1], BRW_CONDITIONAL_NZ));
 
-	 emit(BRW_OPCODE_MOV, result_dst, src_reg(0));
-	 inst = emit(BRW_OPCODE_MOV, result_dst, src_reg(1));
+	 emit(MOV(result_dst, src_reg(0)));
+	 inst = emit(MOV(result_dst, src_reg(1)));
 	 inst->predicate = BRW_PREDICATE_ALIGN16_ANY4H;
       } else {
 	 dst_reg temp = result_dst;
@@ -1109,32 +1080,29 @@ vec4_visitor::visit(ir_expression *ir)
 	 if (intel->gen < 5)
 	    temp.type = op[0].type;
 
-	 inst = emit(BRW_OPCODE_CMP, temp, op[0], op[1]);
-	 inst->conditional_mod = BRW_CONDITIONAL_NZ;
-	 emit(BRW_OPCODE_AND, result_dst, result_src, src_reg(0x1));
+	 emit(CMP(temp, op[0], op[1], BRW_CONDITIONAL_NZ));
+	 emit(AND(result_dst, result_src, src_reg(0x1)));
       }
       break;
 
    case ir_unop_any:
-      inst = emit(BRW_OPCODE_CMP, dst_null_d(), op[0], src_reg(0));
-      inst->conditional_mod = BRW_CONDITIONAL_NZ;
+      emit(CMP(dst_null_d(), op[0], src_reg(0), BRW_CONDITIONAL_NZ));
+      emit(MOV(result_dst, src_reg(0)));
 
-      emit(BRW_OPCODE_MOV, result_dst, src_reg(0));
-
-      inst = emit(BRW_OPCODE_MOV, result_dst, src_reg(1));
+      inst = emit(MOV(result_dst, src_reg(1)));
       inst->predicate = BRW_PREDICATE_ALIGN16_ANY4H;
       break;
 
    case ir_binop_logic_xor:
-      emit(BRW_OPCODE_XOR, result_dst, op[0], op[1]);
+      emit(XOR(result_dst, op[0], op[1]));
       break;
 
    case ir_binop_logic_or:
-      emit(BRW_OPCODE_OR, result_dst, op[0], op[1]);
+      emit(OR(result_dst, op[0], op[1]));
       break;
 
    case ir_binop_logic_and:
-      emit(BRW_OPCODE_AND, result_dst, op[0], op[1]);
+      emit(AND(result_dst, op[0], op[1]));
       break;
 
    case ir_binop_dot:
@@ -1156,7 +1124,7 @@ vec4_visitor::visit(ir_expression *ir)
    case ir_unop_b2f:
    case ir_unop_b2i:
    case ir_unop_f2i:
-      emit(BRW_OPCODE_MOV, result_dst, op[0]);
+      emit(MOV(result_dst, op[0]));
       break;
    case ir_unop_f2b:
    case ir_unop_i2b: {
@@ -1165,40 +1133,37 @@ vec4_visitor::visit(ir_expression *ir)
       if (intel->gen < 5)
 	 temp.type = op[0].type;
 
-      inst = emit(BRW_OPCODE_CMP, temp, op[0], src_reg(0.0f));
-      inst->conditional_mod = BRW_CONDITIONAL_NZ;
-      inst = emit(BRW_OPCODE_AND, result_dst, result_src, src_reg(1));
+      emit(CMP(temp, op[0], src_reg(0.0f), BRW_CONDITIONAL_NZ));
+      emit(AND(result_dst, result_src, src_reg(1)));
       break;
    }
 
    case ir_unop_trunc:
-      emit(BRW_OPCODE_RNDZ, result_dst, op[0]);
+      emit(RNDZ(result_dst, op[0]));
       break;
    case ir_unop_ceil:
       op[0].negate = !op[0].negate;
-      inst = emit(BRW_OPCODE_RNDD, result_dst, op[0]);
+      inst = emit(RNDD(result_dst, op[0]));
       this->result.negate = true;
       break;
    case ir_unop_floor:
-      inst = emit(BRW_OPCODE_RNDD, result_dst, op[0]);
+      inst = emit(RNDD(result_dst, op[0]));
       break;
    case ir_unop_fract:
-      inst = emit(BRW_OPCODE_FRC, result_dst, op[0]);
+      inst = emit(FRC(result_dst, op[0]));
       break;
    case ir_unop_round_even:
-      emit(BRW_OPCODE_RNDE, result_dst, op[0]);
+      emit(RNDE(result_dst, op[0]));
       break;
 
    case ir_binop_min:
-      inst = emit(BRW_OPCODE_CMP, result_dst, op[0], op[1]);
-      inst->conditional_mod = BRW_CONDITIONAL_L;
+      emit(CMP(result_dst, op[0], op[1], BRW_CONDITIONAL_L));
 
       inst = emit(BRW_OPCODE_SEL, result_dst, op[0], op[1]);
       inst->predicate = BRW_PREDICATE_NORMAL;
       break;
    case ir_binop_max:
-      inst = emit(BRW_OPCODE_CMP, result_dst, op[0], op[1]);
-      inst->conditional_mod = BRW_CONDITIONAL_G;
+      emit(CMP(result_dst, op[0], op[1], BRW_CONDITIONAL_G));
 
       inst = emit(BRW_OPCODE_SEL, result_dst, op[0], op[1]);
       inst->predicate = BRW_PREDICATE_NORMAL;
@@ -1209,16 +1174,16 @@ vec4_visitor::visit(ir_expression *ir)
       break;
 
    case ir_unop_bit_not:
-      inst = emit(BRW_OPCODE_NOT, result_dst, op[0]);
+      inst = emit(NOT(result_dst, op[0]));
       break;
    case ir_binop_bit_and:
-      inst = emit(BRW_OPCODE_AND, result_dst, op[0], op[1]);
+      inst = emit(AND(result_dst, op[0], op[1]));
       break;
    case ir_binop_bit_xor:
-      inst = emit(BRW_OPCODE_XOR, result_dst, op[0], op[1]);
+      inst = emit(XOR(result_dst, op[0], op[1]));
       break;
    case ir_binop_bit_or:
-      inst = emit(BRW_OPCODE_OR, result_dst, op[0], op[1]);
+      inst = emit(OR(result_dst, op[0], op[1]));
       break;
 
    case ir_binop_lshift:
@@ -1321,14 +1286,13 @@ vec4_visitor::visit(ir_dereference_array *ir)
       } else {
 	 index_reg = src_reg(this, glsl_type::int_type);
 
-	 emit(BRW_OPCODE_MUL, dst_reg(index_reg),
-	      this->result, src_reg(element_size));
+	 emit(MUL(dst_reg(index_reg), this->result, src_reg(element_size)));
       }
 
       if (src.reladdr) {
 	 src_reg temp = src_reg(this, glsl_type::int_type);
 
-	 emit(BRW_OPCODE_ADD, dst_reg(temp), *src.reladdr, index_reg);
+	 emit(ADD(dst_reg(temp), *src.reladdr, index_reg));
 
 	 index_reg = temp;
       }
@@ -1438,7 +1402,7 @@ vec4_visitor::emit_block_move(dst_reg *dst, src_reg *src,
    assert(src->swizzle = BRW_SWIZZLE_NOOP);
    src->swizzle = swizzle_for_size(type->vector_elements);
 
-   vec4_instruction *inst = emit(BRW_OPCODE_MOV, *dst, *src);
+   vec4_instruction *inst = emit(MOV(*dst, *src));
    if (predicated)
       inst->predicate = BRW_PREDICATE_NORMAL;
 
@@ -1572,7 +1536,7 @@ vec4_visitor::visit(ir_assignment *ir)
    }
 
    for (i = 0; i < type_size(ir->lhs->type); i++) {
-      vec4_instruction *inst = emit(BRW_OPCODE_MOV, dst, src);
+      vec4_instruction *inst = emit(MOV(dst, src));
 
       if (ir->condition)
 	 inst->predicate = BRW_PREDICATE_NORMAL;
@@ -1607,8 +1571,8 @@ vec4_visitor::emit_constant_values(dst_reg *dst, ir_constant *ir)
 	    dst->writemask = 1 << j;
 	    dst->type = BRW_REGISTER_TYPE_F;
 
-	    emit(BRW_OPCODE_MOV, *dst,
-		 src_reg(ir->value.f[i * ir->type->vector_elements + j]));
+	    emit(MOV(*dst,
+		     src_reg(ir->value.f[i * ir->type->vector_elements + j])));
 	 }
 	 dst->reg_offset++;
       }
@@ -1621,16 +1585,16 @@ vec4_visitor::emit_constant_values(dst_reg *dst, ir_constant *ir)
 
       switch (ir->type->base_type) {
       case GLSL_TYPE_FLOAT:
-	 emit(BRW_OPCODE_MOV, *dst, src_reg(ir->value.f[i]));
+	 emit(MOV(*dst, src_reg(ir->value.f[i])));
 	 break;
       case GLSL_TYPE_INT:
-	 emit(BRW_OPCODE_MOV, *dst, src_reg(ir->value.i[i]));
+	 emit(MOV(*dst, src_reg(ir->value.i[i])));
 	 break;
       case GLSL_TYPE_UINT:
-	 emit(BRW_OPCODE_MOV, *dst, src_reg(ir->value.u[i]));
+	 emit(MOV(*dst, src_reg(ir->value.u[i])));
 	 break;
       case GLSL_TYPE_BOOL:
-	 emit(BRW_OPCODE_MOV, *dst, src_reg(ir->value.b[i]));
+	 emit(MOV(*dst, src_reg(ir->value.b[i])));
 	 break;
       default:
 	 assert(!"Non-float/uint/int/bool constant");
@@ -1690,8 +1654,7 @@ vec4_visitor::visit(ir_if *ir)
       emit_if_gen6(ir);
    } else {
       emit_bool_to_cond_code(ir->condition);
-      vec4_instruction *inst = emit(BRW_OPCODE_IF);
-      inst->predicate = BRW_PREDICATE_NORMAL;
+      emit(IF(BRW_PREDICATE_NORMAL));
    }
 
    visit_instructions(&ir->then_instructions);
@@ -1726,32 +1689,31 @@ vec4_visitor::emit_vue_header_gen4(int header_mrf)
    dst_reg ndc_xyz = ndc;
    ndc_xyz.writemask = WRITEMASK_XYZ;
 
-   emit(BRW_OPCODE_MUL, ndc_xyz, pos, src_reg(ndc_w));
+   emit(MUL(ndc_xyz, pos, src_reg(ndc_w)));
 
    if ((c->prog_data.outputs_written & BITFIELD64_BIT(VERT_RESULT_PSIZ)) ||
        c->key.nr_userclip || brw->has_negative_rhw_bug) {
       dst_reg header1 = dst_reg(this, glsl_type::uvec4_type);
       GLuint i;
 
-      emit(BRW_OPCODE_MOV, header1, 0u);
+      emit(MOV(header1, 0u));
 
       if (c->prog_data.outputs_written & BITFIELD64_BIT(VERT_RESULT_PSIZ)) {
 	 assert(!"finishme: psiz");
 	 src_reg psiz;
 
 	 header1.writemask = WRITEMASK_W;
-	 emit(BRW_OPCODE_MUL, header1, psiz, 1u << 11);
-	 emit(BRW_OPCODE_AND, header1, src_reg(header1), 0x7ff << 8);
+	 emit(MUL(header1, psiz, 1u << 11));
+	 emit(AND(header1, src_reg(header1), 0x7ff << 8));
       }
 
       for (i = 0; i < c->key.nr_userclip; i++) {
 	 vec4_instruction *inst;
 
-	 inst = emit(BRW_OPCODE_DP4, dst_reg(brw_null_reg()),
-		     pos, src_reg(c->userplane[i]));
+	 inst = emit(DP4(dst_null_f(), pos, src_reg(c->userplane[i])));
 	 inst->conditional_mod = BRW_CONDITIONAL_L;
 
-	 emit(BRW_OPCODE_OR, header1, src_reg(header1), 1u << i);
+	 emit(OR(header1, src_reg(header1), 1u << i));
 	 inst->predicate = BRW_PREDICATE_NORMAL;
       }
 
@@ -1780,10 +1742,10 @@ vec4_visitor::emit_vue_header_gen4(int header_mrf)
       }
 
       header1.writemask = WRITEMASK_XYZW;
-      emit(BRW_OPCODE_MOV, brw_message_reg(header_mrf++), src_reg(header1));
+      emit(MOV(brw_message_reg(header_mrf++), src_reg(header1)));
    } else {
-      emit(BRW_OPCODE_MOV, retype(brw_message_reg(header_mrf++),
-				  BRW_REGISTER_TYPE_UD), 0u);
+      emit(MOV(retype(brw_message_reg(header_mrf++),
+		      BRW_REGISTER_TYPE_UD), 0u));
    }
 
    if (intel->gen == 5) {
@@ -1796,10 +1758,10 @@ vec4_visitor::emit_vue_header_gen4(int header_mrf)
        * m7 is the first vertex data we fill.
        */
       current_annotation = "NDC";
-      emit(BRW_OPCODE_MOV, brw_message_reg(header_mrf++), src_reg(ndc));
+      emit(MOV(brw_message_reg(header_mrf++), src_reg(ndc)));
 
       current_annotation = "gl_Position";
-      emit(BRW_OPCODE_MOV, brw_message_reg(header_mrf++), pos);
+      emit(MOV(brw_message_reg(header_mrf++), pos));
 
       /* user clip distance. */
       header_mrf += 2;
@@ -1814,10 +1776,10 @@ vec4_visitor::emit_vue_header_gen4(int header_mrf)
        * dword 8-11 (m3) is the first vertex data.
        */
       current_annotation = "NDC";
-      emit(BRW_OPCODE_MOV, brw_message_reg(header_mrf++), src_reg(ndc));
+      emit(MOV(brw_message_reg(header_mrf++), src_reg(ndc)));
 
       current_annotation = "gl_Position";
-      emit(BRW_OPCODE_MOV, brw_message_reg(header_mrf++), pos);
+      emit(MOV(brw_message_reg(header_mrf++), pos));
    }
 
    return header_mrf;
@@ -1839,15 +1801,15 @@ vec4_visitor::emit_vue_header_gen6(int header_mrf)
 
    current_annotation = "indices, point width, clip flags";
    reg = brw_message_reg(header_mrf++);
-   emit(BRW_OPCODE_MOV, retype(reg, BRW_REGISTER_TYPE_D), src_reg(0));
+   emit(MOV(retype(reg, BRW_REGISTER_TYPE_D), src_reg(0)));
    if (c->prog_data.outputs_written & BITFIELD64_BIT(VERT_RESULT_PSIZ)) {
-      emit(BRW_OPCODE_MOV, brw_writemask(reg, WRITEMASK_W),
-	   src_reg(output_reg[VERT_RESULT_PSIZ]));
+      emit(MOV(brw_writemask(reg, WRITEMASK_W),
+	       src_reg(output_reg[VERT_RESULT_PSIZ])));
    }
 
    current_annotation = "gl_Position";
-   emit(BRW_OPCODE_MOV,
-	brw_message_reg(header_mrf++), src_reg(output_reg[VERT_RESULT_HPOS]));
+   emit(MOV(brw_message_reg(header_mrf++),
+	    src_reg(output_reg[VERT_RESULT_HPOS])));
 
    current_annotation = "user clip distances";
    if (c->key.nr_userclip) {
@@ -1944,8 +1906,8 @@ vec4_visitor::emit_urb_writes()
       if (attr == VERT_RESULT_PSIZ)
 	 continue;
 
-      vec4_instruction *inst = emit(BRW_OPCODE_MOV, brw_message_reg(mrf++),
-				    src_reg(output_reg[attr]));
+      vec4_instruction *inst = emit(MOV(brw_message_reg(mrf++),
+					src_reg(output_reg[attr])));
 
       if ((attr == VERT_RESULT_COL0 ||
 	   attr == VERT_RESULT_COL1 ||
@@ -1983,7 +1945,7 @@ vec4_visitor::emit_urb_writes()
 
 	 assert(mrf < max_usable_mrf);
 
-	 emit(BRW_OPCODE_MOV, brw_message_reg(mrf++), src_reg(output_reg[attr]));
+	 emit(MOV(brw_message_reg(mrf++), src_reg(output_reg[attr])));
       }
 
       inst = emit(VS_OPCODE_URB_WRITE);
@@ -2024,16 +1986,15 @@ vec4_visitor::get_scratch_offset(vec4_instruction *inst,
    if (reladdr) {
       src_reg index = src_reg(this, glsl_type::int_type);
 
-      vec4_instruction *add = emit(BRW_OPCODE_ADD,
-				   dst_reg(index),
-				   *reladdr,
-				   src_reg(reg_offset));
+      vec4_instruction *add = emit(ADD(dst_reg(index),
+				       *reladdr,
+				       src_reg(reg_offset)));
       /* Move our new instruction from the tail to its correct place. */
       add->remove();
       inst->insert_before(add);
 
-      vec4_instruction *mul = emit(BRW_OPCODE_MUL, dst_reg(index),
-				   index, src_reg(message_header_scale));
+      vec4_instruction *mul = emit(MUL(dst_reg(index),
+				       index, src_reg(message_header_scale)));
       mul->remove();
       inst->insert_before(mul);
 
