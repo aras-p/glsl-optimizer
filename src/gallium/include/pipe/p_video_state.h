@@ -28,11 +28,11 @@
 #ifndef PIPE_VIDEO_STATE_H
 #define PIPE_VIDEO_STATE_H
 
-#include <pipe/p_defines.h>
-#include <pipe/p_format.h>
-#include <pipe/p_state.h>
-#include <pipe/p_screen.h>
-#include <util/u_inlines.h>
+#include "pipe/p_defines.h"
+#include "pipe/p_format.h"
+#include "pipe/p_state.h"
+#include "pipe/p_screen.h"
+#include "util/u_inlines.h"
 
 #ifdef __cplusplus
 extern "C" {

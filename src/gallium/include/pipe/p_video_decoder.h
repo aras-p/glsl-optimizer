@@ -32,7 +32,7 @@
 extern "C" {
 #endif
 
-#include <pipe/p_video_state.h>
+#include "pipe/p_video_state.h"
 
 struct pipe_screen;
 struct pipe_surface;
