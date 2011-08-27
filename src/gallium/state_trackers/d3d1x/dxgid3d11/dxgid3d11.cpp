@@ -27,8 +27,8 @@
 #include "d3d1xstutil.h"
 #include "galliumd3d11.h"
 #include <dxgi.h>
-#include <pipe/p_screen.h>
-#include <pipe/p_context.h>
+#include "pipe/p_screen.h"
+#include "pipe/p_context.h"
 
 HRESULT D3D11CreateDevice(
 	IDXGIAdapter *adapter,

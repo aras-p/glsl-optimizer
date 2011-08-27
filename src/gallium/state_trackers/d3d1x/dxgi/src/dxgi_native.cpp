@@ -27,10 +27,10 @@
 #include "dxgi_private.h"
 extern "C" {
 #include "native.h"
-#include <util/u_format.h>
-#include <util/u_inlines.h>
-#include <util/u_simple_shaders.h>
-#include <pipe/p_shader_tokens.h>
+#include "util/u_format.h"
+#include "util/u_inlines.h"
+#include "util/u_simple_shaders.h"
+#include "pipe/p_shader_tokens.h"
 }
 #include <iostream>
 #include <memory>

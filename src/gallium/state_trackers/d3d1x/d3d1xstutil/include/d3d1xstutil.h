@@ -49,9 +49,9 @@ namespace std
 
 extern "C"
 {
-#include <util/u_atomic.h>
-#include <pipe/p_format.h>
-#include <os/os_thread.h>
+#include "util/u_atomic.h"
+#include "pipe/p_format.h"
+#include "os/os_thread.h"
 }
 
 #include <assert.h>

@@ -43,14 +43,14 @@
 
 extern "C"
 {
-#include <pipe/p_defines.h>
-#include <pipe/p_screen.h>
-#include <pipe/p_context.h>
-#include <util/u_inlines.h>
-#include <util/u_format.h>
-#include <util/u_caps.h>
-#include <util/u_debug.h>
-#include <os/os_thread.h>
+#include "pipe/p_defines.h"
+#include "pipe/p_screen.h"
+#include "pipe/p_context.h"
+#include "util/u_inlines.h"
+#include "util/u_format.h"
+#include "util/u_caps.h"
+#include "util/u_debug.h"
+#include "os/os_thread.h"
 }
 
 #include "galliumdxgi.h"
