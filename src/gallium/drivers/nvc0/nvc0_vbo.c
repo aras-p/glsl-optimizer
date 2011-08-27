@@ -584,7 +584,8 @@ nvc0_draw_vbo(struct pipe_context *pipe, const struct pipe_draw_info *info)
    if (nvc0->vbo_user && !(nvc0->dirty & (NVC0_NEW_VERTEX | NVC0_NEW_ARRAYS)))
       nvc0_update_user_vbufs(nvc0);
 
-   nvc0_state_validate(nvc0);
+   /* 8 as minimum to avoid immediate double validation of new buffers */
+   nvc0_state_validate(nvc0, ~0, 8);
 
    chan->flush_notify = nvc0_draw_vbo_flush_notify;
 

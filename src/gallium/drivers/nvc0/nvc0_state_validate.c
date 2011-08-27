@@ -453,7 +453,7 @@ nvc0_switch_pipe_context(struct nvc0_context *ctx_to)
    if (!ctx_to->blend)
       ctx_to->dirty &= ~NVC0_NEW_BLEND;
    if (!ctx_to->rast)
-      ctx_to->dirty &= ~NVC0_NEW_RASTERIZER;
+      ctx_to->dirty &= ~(NVC0_NEW_RASTERIZER | NVC0_NEW_SCISSOR);
    if (!ctx_to->zsa)
       ctx_to->dirty &= ~NVC0_NEW_ZSA;
 
@@ -490,22 +490,27 @@ static struct state_validate {
 #define validate_list_len (sizeof(validate_list) / sizeof(validate_list[0]))
 
 boolean
-nvc0_state_validate(struct nvc0_context *nvc0)
+nvc0_state_validate(struct nvc0_context *nvc0, uint32_t mask, unsigned words)
 {
+   uint32_t state_mask;
    unsigned i;
 
    if (nvc0->screen->cur_ctx != nvc0)
       nvc0_switch_pipe_context(nvc0);
 
-   if (nvc0->dirty) {
+   state_mask = nvc0->dirty & mask;
+
+   if (state_mask) {
       for (i = 0; i < validate_list_len; ++i) {
          struct state_validate *validate = &validate_list[i];
 
-         if (nvc0->dirty & validate->states)
+         if (state_mask & validate->states)
             validate->func(nvc0);
       }
-      nvc0->dirty = 0;
+      nvc0->dirty &= ~state_mask;
    }
+
+   MARK_RING(nvc0->screen->base.channel, words, 0);
 
    nvc0_bufctx_emit_relocs(nvc0);
 

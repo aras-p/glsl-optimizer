@@ -647,7 +647,7 @@ nv50_draw_vbo(struct pipe_context *pipe, const struct pipe_draw_info *info)
    if (nv50->vbo_user && !(nv50->dirty & (NV50_NEW_VERTEX | NV50_NEW_ARRAYS)))
       nv50_update_user_vbufs(nv50);
 
-   nv50_state_validate(nv50, 8); /* 8 as minimum, we use flush_notify here */
+   nv50_state_validate(nv50, ~0, 8); /* 8 as minimum, we use flush_notify */
 
    chan->flush_notify = nv50_draw_vbo_flush_notify;
 

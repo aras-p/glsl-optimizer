@@ -370,12 +370,10 @@ nv50_clear(struct pipe_context *pipe, unsigned buffers,
    struct nouveau_channel *chan = nv50->screen->base.channel;
    struct pipe_framebuffer_state *fb = &nv50->framebuffer;
    unsigned i;
-   const unsigned dirty = nv50->dirty;
    uint32_t mode = 0;
 
    /* don't need NEW_BLEND, COLOR_MASK doesn't affect CLEAR_BUFFERS */
-   nv50->dirty &= NV50_NEW_FRAMEBUFFER;
-   if (!nv50_state_validate(nv50, 9 + (fb->nr_cbufs * 2)))
+   if (!nv50_state_validate(nv50, NV50_NEW_FRAMEBUFFER, 9 + (fb->nr_cbufs * 2)))
       return;
 
    if (buffers & PIPE_CLEAR_COLOR && fb->nr_cbufs) {
@@ -408,8 +406,6 @@ nv50_clear(struct pipe_context *pipe, unsigned buffers,
       BEGIN_RING(chan, RING_3D(CLEAR_BUFFERS), 1);
       OUT_RING  (chan, (i << 6) | 0x3c);
    }
-
-   nv50->dirty = dirty & ~NV50_NEW_FRAMEBUFFER;
 }
 
 
@@ -851,7 +847,7 @@ nv50_resource_resolve(struct pipe_context *pipe,
 
    nv50_blitctx_prepare_state(blit);
 
-   nv50_state_validate(nv50, 36);
+   nv50_state_validate(nv50, ~0, 36);
 
    x_range =
       (float)(info->src.x1 - info->src.x0) /

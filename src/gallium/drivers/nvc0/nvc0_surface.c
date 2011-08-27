@@ -383,12 +383,10 @@ nvc0_clear(struct pipe_context *pipe, unsigned buffers,
    struct nouveau_channel *chan = nvc0->screen->base.channel;
    struct pipe_framebuffer_state *fb = &nvc0->framebuffer;
    unsigned i;
-   const unsigned dirty = nvc0->dirty;
    uint32_t mode = 0;
 
    /* don't need NEW_BLEND, COLOR_MASK doesn't affect CLEAR_BUFFERS */
-   nvc0->dirty &= NVC0_NEW_FRAMEBUFFER;
-   if (!nvc0_state_validate(nvc0))
+   if (!nvc0_state_validate(nvc0, NVC0_NEW_FRAMEBUFFER, 9 + (fb->nr_cbufs * 2)))
       return;
 
    if (buffers & PIPE_CLEAR_COLOR && fb->nr_cbufs) {
@@ -421,8 +419,6 @@ nvc0_clear(struct pipe_context *pipe, unsigned buffers,
       BEGIN_RING(chan, RING_3D(CLEAR_BUFFERS), 1);
       OUT_RING  (chan, (i << 6) | 0x3c);
    }
-
-   nvc0->dirty = dirty & ~NVC0_NEW_FRAMEBUFFER;
 }
 
 void

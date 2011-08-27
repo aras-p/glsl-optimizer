@@ -179,7 +179,8 @@ void nvc0_tfb_validate(struct nvc0_context *);
 extern void nvc0_init_state_functions(struct nvc0_context *);
 
 /* nvc0_state_validate.c */
-extern boolean nvc0_state_validate(struct nvc0_context *);
+extern boolean nvc0_state_validate(struct nvc0_context *, uint32_t state_mask,
+                                   unsigned space_words);
 
 /* nvc0_surface.c */
 extern void nvc0_clear(struct pipe_context *, unsigned buffers,

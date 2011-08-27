@@ -306,7 +306,11 @@ nv50_switch_pipe_context(struct nv50_context *ctx_to)
    if (!ctx_to->blend)
       ctx_to->dirty &= ~NV50_NEW_BLEND;
    if (!ctx_to->rast)
+#ifdef NV50_SCISSORS_CLIPPING
+      ctx_to->dirty &= ~(NV50_NEW_RASTERIZER | NV50_NEW_SCISSOR);
+#else
       ctx_to->dirty &= ~NV50_NEW_RASTERIZER;
+#endif
    if (!ctx_to->zsa)
       ctx_to->dirty &= ~NV50_NEW_ZSA;
 
@@ -350,21 +354,24 @@ static struct state_validate {
 #define validate_list_len (sizeof(validate_list) / sizeof(validate_list[0]))
 
 boolean
-nv50_state_validate(struct nv50_context *nv50, unsigned words)
+nv50_state_validate(struct nv50_context *nv50, uint32_t mask, unsigned words)
 {
+   uint32_t state_mask;
    unsigned i;
 
    if (nv50->screen->cur_ctx != nv50)
       nv50_switch_pipe_context(nv50);
 
-   if (nv50->dirty) {
+   state_mask = nv50->dirty & mask;
+
+   if (state_mask) {
       for (i = 0; i < validate_list_len; ++i) {
          struct state_validate *validate = &validate_list[i];
 
-         if (nv50->dirty & validate->states)
+         if (state_mask & validate->states)
             validate->func(nv50);
       }
-      nv50->dirty = 0;
+      nv50->dirty &= ~state_mask;
    }
 
    MARK_RING(nv50->screen->base.channel, words, 0);
