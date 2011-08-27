@@ -29,8 +29,8 @@
 #define vl_winsys_h
 
 #include <X11/Xlib.h>
-#include <pipe/p_defines.h>
-#include <pipe/p_format.h>
+#include "pipe/p_defines.h"
+#include "pipe/p_format.h"
 
 struct pipe_screen;
 struct pipe_surface;

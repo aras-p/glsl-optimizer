@@ -25,16 +25,16 @@
  *
  **************************************************************************/
 
-#include <vl_winsys.h>
-#include <driclient.h>
-#include <pipe/p_screen.h>
-#include <pipe/p_context.h>
-#include <pipe/p_state.h>
-#include <util/u_memory.h>
-#include <util/u_hash.h>
-#include <util/u_hash_table.h>
-#include <util/u_inlines.h>
-#include <state_tracker/drm_driver.h>
+#include "vl_winsys.h"
+#include "driclient.h"
+#include "pipe/p_screen.h"
+#include "pipe/p_context.h"
+#include "pipe/p_state.h"
+#include "util/u_memory.h"
+#include "util/u_hash.h"
+#include "util/u_hash_table.h"
+#include "util/u_inlines.h"
+#include "state_tracker/drm_driver.h"
 #include <X11/Xlibint.h>
 
 struct vl_dri_screen

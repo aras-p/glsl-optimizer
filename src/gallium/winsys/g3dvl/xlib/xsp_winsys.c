@@ -27,16 +27,16 @@
 
 #include <X11/Xlibint.h>
 
-#include <pipe/p_state.h>
+#include "pipe/p_state.h"
 
-#include <util/u_memory.h>
-#include <util/u_format.h>
-#include <util/u_inlines.h>
+#include "util/u_memory.h"
+#include "util/u_format.h"
+#include "util/u_inlines.h"
 
-#include <state_tracker/xlib_sw_winsys.h>
-#include <softpipe/sp_public.h>
+#include "state_tracker/xlib_sw_winsys.h"
+#include "softpipe/sp_public.h"
 
-#include <vl_winsys.h>
+#include "vl_winsys.h"
 
 struct vl_xsp_screen
 {
