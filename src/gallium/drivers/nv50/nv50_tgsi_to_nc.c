@@ -803,6 +803,7 @@ translate_opcode(uint opcode)
    case TGSI_OPCODE_CEIL: return NV_OP_CEIL;
    case TGSI_OPCODE_FLR: return NV_OP_FLOOR;
    case TGSI_OPCODE_TRUNC: return NV_OP_TRUNC;
+   case TGSI_OPCODE_ROUND: return NV_OP_ROUND;
    case TGSI_OPCODE_COS: return NV_OP_COS;
    case TGSI_OPCODE_SIN: return NV_OP_SIN;
    case TGSI_OPCODE_DDX: return NV_OP_DFDX;
@@ -1819,6 +1820,7 @@ bld_instruction(struct bld_context *bld,
    case TGSI_OPCODE_CEIL:
    case TGSI_OPCODE_FLR:
    case TGSI_OPCODE_TRUNC:
+   case TGSI_OPCODE_ROUND:
    case TGSI_OPCODE_DDX:
    case TGSI_OPCODE_DDY:
       FOR_EACH_DST0_ENABLED_CHANNEL(c, insn) {

@@ -86,7 +86,8 @@
 #define NV_OP_SELECT    54
 #define NV_OP_EXPORT    55
 #define NV_OP_JOIN      56
-#define NV_OP_COUNT     57
+#define NV_OP_ROUND     57
+#define NV_OP_COUNT     58
 
 #define NV_FILE_GPR      0
 #define NV_FILE_OUT      1

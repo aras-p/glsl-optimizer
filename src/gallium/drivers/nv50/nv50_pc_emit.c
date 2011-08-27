@@ -94,7 +94,7 @@ const ubyte nv50_inst_min_size_tab[NV_OP_COUNT] =
    0, 0, 0, 8, 8, 4, 4, 4, 8, 4, 4, 8, 8, 8, 8, 8, /* 15 */
    8, 8, 8, 4, 0, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 4, /* 31 */
    8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 4, /* 47 */
-   4, 8, 8, 8, 8, 8, 0, 0, 8
+   4, 8, 8, 8, 8, 8, 0, 0, 8, 8
 };
 
 unsigned
@@ -1009,13 +1009,14 @@ emit_cvt(struct nv_pc *pc, struct nv_instruction *nvi)
    }
    if (pc->emit[1] == CVT_F32_F32 &&
        (nvi->opcode == NV_OP_CEIL || nvi->opcode == NV_OP_FLOOR ||
-	nvi->opcode == NV_OP_TRUNC))
+        nvi->opcode == NV_OP_TRUNC || nvi->opcode == NV_OP_ROUND))
        pc->emit[1] |= CVT_RI;
 
    switch (nvi->opcode) {
    case NV_OP_CEIL:  pc->emit[1] |= CVT_CEIL; break;
    case NV_OP_FLOOR: pc->emit[1] |= CVT_FLOOR; break;
    case NV_OP_TRUNC: pc->emit[1] |= CVT_TRUNC; break;
+   case NV_OP_ROUND: pc->emit[1] |= CVT_RN; break;
 
    case NV_OP_ABS: pc->emit[1] |= CVT_ABS; break;
    case NV_OP_SAT: pc->emit[1] |= CVT_SAT; break;
@@ -1163,6 +1164,7 @@ nv50_emit_instruction(struct nv_pc *pc, struct nv_instruction *i)
    case NV_OP_CEIL:
    case NV_OP_FLOOR:
    case NV_OP_TRUNC:
+   case NV_OP_ROUND:
       emit_cvt(pc, i);
       break;
    case NV_OP_DFDX:
