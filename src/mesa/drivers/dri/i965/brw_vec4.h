@@ -292,14 +292,6 @@ public:
       return dst_reg(retype(brw_null_reg(), BRW_REGISTER_TYPE_D));
    }
 
-   dst_reg dst_null_cmp()
-   {
-      if (intel->gen > 4)
-	 return dst_null_d();
-      else
-	 return dst_null_f();
-   }
-
    struct brw_context *brw;
    const struct gl_vertex_program *vp;
    struct intel_context *intel;

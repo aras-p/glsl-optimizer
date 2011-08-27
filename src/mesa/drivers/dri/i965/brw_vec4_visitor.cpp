@@ -178,13 +178,24 @@ vec4_visitor::IF(src_reg src0, src_reg src1, uint32_t condition)
    return inst;
 }
 
+/**
+ * CMP: Sets the low bit of the destination channels with the result
+ * of the comparison, while the upper bits are undefined, and updates
+ * the flag register with the packed 16 bits of the result.
+ */
 vec4_instruction *
 vec4_visitor::CMP(dst_reg dst, src_reg src0, src_reg src1, uint32_t condition)
 {
    vec4_instruction *inst;
 
-   inst = new(mem_ctx) vec4_instruction(this, BRW_OPCODE_CMP, dst,
-					src0, src1, src_reg());
+   /* original gen4 does type conversion to the destination type
+    * before before comparison, producing garbage results for floating
+    * point comparisons.
+    */
+   if (intel->gen == 4)
+      dst.type = src0.type;
+
+   inst = new(mem_ctx) vec4_instruction(this, BRW_OPCODE_CMP, dst, src0, src1);
    inst->conditional_mod = condition;
 
    return inst;
@@ -595,7 +606,7 @@ vec4_visitor::emit_bool_to_cond_code(ir_rvalue *ir)
       case ir_binop_all_equal:
       case ir_binop_nequal:
       case ir_binop_any_nequal:
-	 emit(CMP(dst_null_cmp(), op[0], op[1],
+	 emit(CMP(dst_null_d(), op[0], op[1],
 		  brw_conditional_for_comparison(expr->operation)));
 	 break;
 
@@ -956,11 +967,11 @@ vec4_visitor::visit(ir_expression *ir)
    case ir_unop_sign:
       emit(MOV(result_dst, src_reg(0.0f)));
 
-      emit(CMP(dst_null_f(), op[0], src_reg(0.0f), BRW_CONDITIONAL_G));
+      emit(CMP(dst_null_d(), op[0], src_reg(0.0f), BRW_CONDITIONAL_G));
       inst = emit(MOV(result_dst, src_reg(1.0f)));
       inst->predicate = BRW_PREDICATE_NORMAL;
 
-      emit(CMP(dst_null_f(), op[0], src_reg(0.0f), BRW_CONDITIONAL_L));
+      emit(CMP(dst_null_d(), op[0], src_reg(0.0f), BRW_CONDITIONAL_L));
       inst = emit(MOV(result_dst, src_reg(-1.0f)));
       inst->predicate = BRW_PREDICATE_NORMAL;
 
@@ -1036,14 +1047,9 @@ vec4_visitor::visit(ir_expression *ir)
    case ir_binop_gequal:
    case ir_binop_equal:
    case ir_binop_nequal: {
-      dst_reg temp = result_dst;
-      /* original gen4 does implicit conversion before comparison. */
-      if (intel->gen < 5)
-	 temp.type = op[0].type;
-
-      emit(CMP(temp, op[0], op[1],
+      emit(CMP(result_dst, op[0], op[1],
 	       brw_conditional_for_comparison(ir->operation)));
-      emit(AND(result_dst, this->result, src_reg(0x1)));
+      emit(AND(result_dst, result_src, src_reg(0x1)));
       break;
    }
 
@@ -1051,17 +1057,12 @@ vec4_visitor::visit(ir_expression *ir)
       /* "==" operator producing a scalar boolean. */
       if (ir->operands[0]->type->is_vector() ||
 	  ir->operands[1]->type->is_vector()) {
-	 emit(CMP(dst_null_cmp(), op[0], op[1], BRW_CONDITIONAL_Z));
+	 emit(CMP(dst_null_d(), op[0], op[1], BRW_CONDITIONAL_Z));
 	 emit(MOV(result_dst, src_reg(0)));
 	 inst = emit(MOV(result_dst, src_reg(1)));
 	 inst->predicate = BRW_PREDICATE_ALIGN16_ALL4H;
       } else {
-	 dst_reg temp = result_dst;
-	 /* original gen4 does implicit conversion before comparison. */
-	 if (intel->gen < 5)
-	    temp.type = op[0].type;
-
-	 emit(CMP(temp, op[0], op[1], BRW_CONDITIONAL_Z));
+	 emit(CMP(result_dst, op[0], op[1], BRW_CONDITIONAL_Z));
 	 emit(AND(result_dst, result_src, src_reg(0x1)));
       }
       break;
@@ -1069,18 +1070,13 @@ vec4_visitor::visit(ir_expression *ir)
       /* "!=" operator producing a scalar boolean. */
       if (ir->operands[0]->type->is_vector() ||
 	  ir->operands[1]->type->is_vector()) {
-	 emit(CMP(dst_null_cmp(), op[0], op[1], BRW_CONDITIONAL_NZ));
+	 emit(CMP(dst_null_d(), op[0], op[1], BRW_CONDITIONAL_NZ));
 
 	 emit(MOV(result_dst, src_reg(0)));
 	 inst = emit(MOV(result_dst, src_reg(1)));
 	 inst->predicate = BRW_PREDICATE_ALIGN16_ANY4H;
       } else {
-	 dst_reg temp = result_dst;
-	 /* original gen4 does implicit conversion before comparison. */
-	 if (intel->gen < 5)
-	    temp.type = op[0].type;
-
-	 emit(CMP(temp, op[0], op[1], BRW_CONDITIONAL_NZ));
+	 emit(CMP(result_dst, op[0], op[1], BRW_CONDITIONAL_NZ));
 	 emit(AND(result_dst, result_src, src_reg(0x1)));
       }
       break;
@@ -1128,12 +1124,7 @@ vec4_visitor::visit(ir_expression *ir)
       break;
    case ir_unop_f2b:
    case ir_unop_i2b: {
-      dst_reg temp = result_dst;
-      /* original gen4 does implicit conversion before comparison. */
-      if (intel->gen < 5)
-	 temp.type = op[0].type;
-
-      emit(CMP(temp, op[0], src_reg(0.0f), BRW_CONDITIONAL_NZ));
+      emit(CMP(result_dst, op[0], src_reg(0.0f), BRW_CONDITIONAL_NZ));
       emit(AND(result_dst, result_src, src_reg(1)));
       break;
    }
