@@ -40,11 +40,21 @@ nvc0_screen_is_format_supported(struct pipe_screen *pscreen,
                                 unsigned sample_count,
                                 unsigned bindings)
 {
-   if (sample_count > 2 && sample_count != 4 && sample_count != 8)
+   if (!(0x117 & (1 << sample_count))) /* 0, 1, 2, 4 or 8 */
       return FALSE;
 
    if (!util_format_is_supported(format, bindings))
       return FALSE;
+
+   switch (format) {
+   case PIPE_FORMAT_R8G8B8A8_UNORM:
+   case PIPE_FORMAT_R8G8B8X8_UNORM:
+      /* HACK: GL requires equal formats for MS resolve and window is BGRA */
+      if (sample_count > 1)
+         return FALSE;
+   default:
+      break;
+   }
 
    /* transfers & shared are always supported */
    bindings &= ~(PIPE_BIND_TRANSFER_READ |

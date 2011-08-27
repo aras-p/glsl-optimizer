@@ -43,7 +43,7 @@ nv50_screen_is_format_supported(struct pipe_screen *pscreen,
                                 unsigned sample_count,
                                 unsigned bindings)
 {
-   if (sample_count > 2 && sample_count != 4 && sample_count != 8)
+   if (!(0x117 & (1 << sample_count))) /* 0, 1, 2, 4 or 8 */
       return FALSE;
    if (sample_count == 8 && util_format_get_blocksizebits(format) >= 128)
       return FALSE;
@@ -56,6 +56,11 @@ nv50_screen_is_format_supported(struct pipe_screen *pscreen,
       if (nv50_screen(pscreen)->tesla->grclass < NVA0_3D)
          return FALSE;
       break;
+   case PIPE_FORMAT_R8G8B8A8_UNORM:
+   case PIPE_FORMAT_R8G8B8X8_UNORM:
+      /* HACK: GL requires equal formats for MS resolve and window is BGRA */
+      if (sample_count > 1)
+         return FALSE;
    default:
       break;
    }
