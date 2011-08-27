@@ -130,6 +130,9 @@ static void radeon_destroy_cs_context(struct radeon_cs_context *csc)
     FREE(csc->relocs);
 }
 
+DEBUG_GET_ONCE_BOOL_OPTION(thread, "RADEON_THREAD", TRUE)
+static PIPE_THREAD_ROUTINE(radeon_drm_cs_emit_ioctl, param);
+
 static struct radeon_winsys_cs *radeon_drm_cs_create(struct radeon_winsys *rws)
 {
     struct radeon_drm_winsys *ws = radeon_drm_winsys(rws);
@@ -139,6 +142,8 @@ static struct radeon_winsys_cs *radeon_drm_cs_create(struct radeon_winsys *rws)
     if (!cs) {
         return NULL;
     }
+    pipe_semaphore_init(&cs->flush_queued, 0);
+    pipe_semaphore_init(&cs->flush_completed, 0);
 
     cs->ws = ws;
 
@@ -158,6 +163,8 @@ static struct radeon_winsys_cs *radeon_drm_cs_create(struct radeon_winsys *rws)
     cs->base.buf = cs->csc->buf;
 
     p_atomic_inc(&ws->num_cs);
+    if (cs->ws->num_cpus > 1 && debug_get_option_thread())
+        cs->thread = pipe_thread_create(radeon_drm_cs_emit_ioctl, cs);
     return &cs->base;
 }
 
@@ -357,9 +364,8 @@ static void radeon_drm_cs_write_reloc(struct radeon_winsys_cs *rcs,
     OUT_CS(&cs->base, index * RELOC_DWORDS);
 }
 
-static PIPE_THREAD_ROUTINE(radeon_drm_cs_emit_ioctl, param)
+static void radeon_drm_cs_emit_ioctl_oneshot(struct radeon_cs_context *csc)
 {
-    struct radeon_cs_context *csc = (struct radeon_cs_context*)param;
     unsigned i;
 
     if (drmCommandWriteRead(csc->fd, DRM_RADEON_CS,
@@ -381,19 +387,31 @@ static PIPE_THREAD_ROUTINE(radeon_drm_cs_emit_ioctl, param)
         p_atomic_dec(&csc->relocs_bo[i]->num_active_ioctls);
 
     radeon_cs_context_cleanup(csc);
+}
+
+static PIPE_THREAD_ROUTINE(radeon_drm_cs_emit_ioctl, param)
+{
+    struct radeon_drm_cs *cs = (struct radeon_drm_cs*)param;
+
+    while (1) {
+        pipe_semaphore_wait(&cs->flush_queued);
+        if (cs->kill_thread)
+            break;
+        radeon_drm_cs_emit_ioctl_oneshot(cs->cst);
+        pipe_semaphore_signal(&cs->flush_completed);
+    }
+    pipe_semaphore_signal(&cs->flush_completed);
     return NULL;
 }
 
 void radeon_drm_cs_sync_flush(struct radeon_drm_cs *cs)
 {
     /* Wait for any pending ioctl to complete. */
-    if (cs->thread) {
-        pipe_thread_wait(cs->thread);
-        cs->thread = 0;
+    if (cs->thread && cs->flush_started) {
+        pipe_semaphore_wait(&cs->flush_completed);
+        cs->flush_started = 0;
     }
 }
-
-DEBUG_GET_ONCE_BOOL_OPTION(thread, "RADEON_THREAD", TRUE)
 
 static void radeon_drm_cs_flush(struct radeon_winsys_cs *rcs, unsigned flags)
 {
@@ -402,32 +420,32 @@ static void radeon_drm_cs_flush(struct radeon_winsys_cs *rcs, unsigned flags)
 
     radeon_drm_cs_sync_flush(cs);
 
-    /* If the CS is not empty, emit it in a newly-spawned thread. */
-    if (cs->base.cdw) {
-        unsigned i, crelocs = cs->csc->crelocs;
-
-        cs->csc->chunks[0].length_dw = cs->base.cdw;
-
-        for (i = 0; i < crelocs; i++) {
-            /* Update the number of active asynchronous CS ioctls for the buffer. */
-            p_atomic_inc(&cs->csc->relocs_bo[i]->num_active_ioctls);
-        }
-
-        if (cs->ws->num_cpus > 1 && debug_get_option_thread() &&
-            (flags & RADEON_FLUSH_ASYNC)) {
-            cs->thread = pipe_thread_create(radeon_drm_cs_emit_ioctl, cs->csc);
-            assert(cs->thread);
-        } else {
-            radeon_drm_cs_emit_ioctl(cs->csc);
-        }
-    } else {
-        radeon_cs_context_cleanup(cs->csc);
-    }
-
     /* Flip command streams. */
     tmp = cs->csc;
     cs->csc = cs->cst;
     cs->cst = tmp;
+
+    /* If the CS is not empty, emit it in a separate thread. */
+    if (cs->base.cdw) {
+        unsigned i, crelocs = cs->cst->crelocs;
+
+        cs->cst->chunks[0].length_dw = cs->base.cdw;
+
+        for (i = 0; i < crelocs; i++) {
+            /* Update the number of active asynchronous CS ioctls for the buffer. */
+            p_atomic_inc(&cs->cst->relocs_bo[i]->num_active_ioctls);
+        }
+
+        if (cs->thread &&
+            (flags & RADEON_FLUSH_ASYNC)) {
+            cs->flush_started = 1;
+            pipe_semaphore_signal(&cs->flush_queued);
+        } else {
+            radeon_drm_cs_emit_ioctl_oneshot(cs->cst);
+        }
+    } else {
+        radeon_cs_context_cleanup(cs->cst);
+    }
 
     /* Prepare a new CS. */
     cs->base.buf = cs->csc->buf;
@@ -438,6 +456,15 @@ static void radeon_drm_cs_destroy(struct radeon_winsys_cs *rcs)
 {
     struct radeon_drm_cs *cs = radeon_drm_cs(rcs);
     radeon_drm_cs_sync_flush(cs);
+    if (cs->thread) {
+        cs->kill_thread = 1;
+        pipe_semaphore_signal(&cs->flush_queued);
+        pipe_semaphore_wait(&cs->flush_completed);
+        pipe_thread_wait(cs->thread);
+        pipe_thread_destroy(cs->thread);
+    }
+    pipe_semaphore_destroy(&cs->flush_queued);
+    pipe_semaphore_destroy(&cs->flush_completed);
     radeon_cs_context_cleanup(&cs->csc1);
     radeon_cs_context_cleanup(&cs->csc2);
     p_atomic_dec(&cs->ws->num_cs);
