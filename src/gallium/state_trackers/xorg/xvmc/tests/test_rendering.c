@@ -40,8 +40,8 @@
 #define MACROBLOCK_HEIGHT_IN_BLOCKS	(MACROBLOCK_HEIGHT / BLOCK_HEIGHT)
 #define BLOCKS_PER_MACROBLOCK		6
 
-#define INPUT_WIDTH			16
-#define INPUT_HEIGHT			16
+#define INPUT_WIDTH			64
+#define INPUT_HEIGHT			64
 #define INPUT_WIDTH_IN_MACROBLOCKS	(INPUT_WIDTH / MACROBLOCK_WIDTH)
 #define INPUT_HEIGHT_IN_MACROBLOCKS	(INPUT_HEIGHT / MACROBLOCK_HEIGHT)
 #define NUM_MACROBLOCKS			(INPUT_WIDTH_IN_MACROBLOCKS * INPUT_HEIGHT_IN_MACROBLOCKS)
@@ -51,7 +51,6 @@
 #define DEFAULT_ACCEPTABLE_ERR		0.01
 
 void ParseArgs(int argc, char **argv, unsigned int *output_width, unsigned int *output_height, double *acceptable_error, int *prompt);
-void Gradient(short *block, unsigned int start, unsigned int stop, int horizontal);
 
 void ParseArgs(int argc, char **argv, unsigned int *output_width, unsigned int *output_height, double *acceptable_error, int *prompt)
 {
@@ -59,7 +58,7 @@ void ParseArgs(int argc, char **argv, unsigned int *output_width, unsigned int *
 	int i;
 
 	*output_width = DEFAULT_OUTPUT_WIDTH;
-	*output_height = DEFAULT_OUTPUT_WIDTH;
+	*output_height = DEFAULT_OUTPUT_HEIGHT;
 	*acceptable_error = DEFAULT_ACCEPTABLE_ERR;
 	*prompt = 1;
 
@@ -101,7 +100,7 @@ void ParseArgs(int argc, char **argv, unsigned int *output_width, unsigned int *
 		);
 }
 
-void Gradient(short *block, unsigned int start, unsigned int stop, int horizontal)
+static void Gradient(short *block, unsigned int start, unsigned int stop, int horizontal, unsigned int intra_unsigned)
 {
 	unsigned int x, y;
 	unsigned int range = stop - start;
@@ -109,14 +108,22 @@ void Gradient(short *block, unsigned int start, unsigned int stop, int horizonta
 	if (horizontal)
 	{
 		for (y = 0; y < BLOCK_HEIGHT; ++y)
-			for (x = 0; x < BLOCK_WIDTH; ++x)
-				block[y * BLOCK_WIDTH + x] = (short)(start + range * (x / (float)(BLOCK_WIDTH - 1)));
+			for (x = 0; x < BLOCK_WIDTH; ++x) {
+				*block = (short)(start + range * (x / (float)(BLOCK_WIDTH - 1)));
+				if (intra_unsigned)
+					*block += 1 << 10;
+				block++;
+			}
 	}
 	else
 	{
 		for (y = 0; y < BLOCK_HEIGHT; ++y)
-			for (x = 0; x < BLOCK_WIDTH; ++x)
-				block[y * BLOCK_WIDTH + x] = (short)(start + range * (y / (float)(BLOCK_HEIGHT - 1)));
+			for (x = 0; x < BLOCK_WIDTH; ++x) {
+				*block = (short)(start + range * (y / (float)(BLOCK_WIDTH - 1)));
+				if (intra_unsigned)
+					*block += 1 << 10;
+				block++;
+			}
 	}
 }
 
@@ -128,7 +135,7 @@ int main(int argc, char **argv)
 	int			prompt;
 	Display			*display;
 	Window			root, window;
-	const unsigned int	mc_types[2] = {XVMC_MOCOMP | XVMC_MPEG_2, XVMC_IDCT | XVMC_MPEG_2};
+	const unsigned int	mc_types[] = {XVMC_MOCOMP | XVMC_MPEG_2};
 	XvPortID		port_num;
 	int			surface_type_id;
 	unsigned int		is_overlay, intra_unsigned;
@@ -153,7 +160,7 @@ int main(int argc, char **argv)
 		INPUT_HEIGHT,
 		XVMC_CHROMA_FORMAT_420,
     		mc_types,
-    		2,
+		sizeof(mc_types)/sizeof(*mc_types),
     		&port_num,
     		&surface_type_id,
     		&is_overlay,
@@ -213,7 +220,8 @@ int main(int argc, char **argv)
 						blocks,
 						(short)(start + range * ((mbx * MACROBLOCK_WIDTH + bx * BLOCK_WIDTH) / (float)(INPUT_WIDTH - 1))),
 						(short)(start + range * ((mbx * MACROBLOCK_WIDTH + bx * BLOCK_WIDTH + BLOCK_WIDTH - 1) / (float)(INPUT_WIDTH - 1))),
-						1
+						1,
+						intra_unsigned
 					);
 
 					blocks += BLOCK_SIZE;
@@ -229,7 +237,8 @@ int main(int argc, char **argv)
 						blocks,
 						(short)(start + range * ((mbx * MACROBLOCK_WIDTH + bx * BLOCK_WIDTH) / (float)(INPUT_WIDTH - 1))),
 						(short)(start + range * ((mbx * MACROBLOCK_WIDTH + bx * BLOCK_WIDTH + BLOCK_WIDTH - 1) / (float)(INPUT_WIDTH - 1))),
-						1
+						1,
+						intra_unsigned
 					);
 
 					blocks += BLOCK_SIZE;
@@ -239,7 +248,8 @@ int main(int argc, char **argv)
 						blocks,
 						(short)(start + range * ((mbx * MACROBLOCK_WIDTH + bx * BLOCK_WIDTH) / (float)(INPUT_WIDTH - 1))),
 						(short)(start + range * ((mbx * MACROBLOCK_WIDTH + bx * BLOCK_WIDTH + BLOCK_WIDTH - 1) / (float)(INPUT_WIDTH - 1))),
-						1
+						1,
+						intra_unsigned
 					);
 
 					blocks += BLOCK_SIZE;
