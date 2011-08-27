@@ -24,9 +24,9 @@
  * Authors: Dave Airlie <airlied@redhat.com>
  *          Jerome Glisse <jglisse@redhat.com>
  */
-#include <util/u_memory.h>
-#include <util/u_format.h>
-#include <pipebuffer/pb_buffer.h>
+#include "util/u_memory.h"
+#include "util/u_format.h"
+#include "pipebuffer/pb_buffer.h"
 #include "pipe/p_shader_tokens.h"
 #include "tgsi/tgsi_parse.h"
 #include "r600_formats.h"

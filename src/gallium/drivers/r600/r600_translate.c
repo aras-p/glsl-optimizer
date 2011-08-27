@@ -23,7 +23,7 @@
  * Authors: Dave Airlie <airlied@redhat.com>
  */
 
-#include <util/u_index_modify.h>
+#include "util/u_index_modify.h"
 #include "util/u_inlines.h"
 #include "util/u_upload_mgr.h"
 #include "r600_pipe.h"

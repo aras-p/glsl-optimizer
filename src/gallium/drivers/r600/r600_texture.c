@@ -25,12 +25,12 @@
  *      Corbin Simpson
  */
 #include <errno.h>
-#include <pipe/p_screen.h>
-#include <util/u_format.h>
-#include <util/u_format_s3tc.h>
-#include <util/u_math.h>
-#include <util/u_inlines.h>
-#include <util/u_memory.h>
+#include "pipe/p_screen.h"
+#include "util/u_format.h"
+#include "util/u_format_s3tc.h"
+#include "util/u_math.h"
+#include "util/u_inlines.h"
+#include "util/u_memory.h"
 #include "pipebuffer/pb_buffer.h"
 #include "r600_pipe.h"
 #include "r600_resource.h"

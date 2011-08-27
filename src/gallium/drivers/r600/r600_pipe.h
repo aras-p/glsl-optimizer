@@ -28,10 +28,10 @@
 
 #include "../../winsys/radeon/drm/radeon_winsys.h"
 
-#include <pipe/p_state.h>
-#include <pipe/p_screen.h>
-#include <pipe/p_context.h>
-#include <util/u_math.h>
+#include "pipe/p_state.h"
+#include "pipe/p_screen.h"
+#include "pipe/p_context.h"
+#include "util/u_math.h"
 #include "util/u_slab.h"
 #include "util/u_vbuf_mgr.h"
 #include "r600.h"

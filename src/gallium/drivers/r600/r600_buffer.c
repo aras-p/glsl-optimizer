@@ -26,11 +26,11 @@
  */
 #include <byteswap.h>
 
-#include <pipe/p_screen.h>
-#include <util/u_format.h>
-#include <util/u_math.h>
-#include <util/u_inlines.h>
-#include <util/u_memory.h>
+#include "pipe/p_screen.h"
+#include "util/u_format.h"
+#include "util/u_math.h"
+#include "util/u_inlines.h"
+#include "util/u_memory.h"
 #include "util/u_upload_mgr.h"
 
 #include "r600.h"
