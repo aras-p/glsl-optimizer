@@ -103,16 +103,15 @@ create_ref_vert_shader(struct vl_mc *r)
 {
    struct ureg_program *shader;
    struct ureg_src mv_scale;
-   struct ureg_src vrect, vmv[2];
+   struct ureg_src vmv[2];
    struct ureg_dst t_vpos;
-   struct ureg_dst o_vpos, o_vmv[2];
+   struct ureg_dst o_vmv[2];
    unsigned i;
 
    shader = ureg_create(TGSI_PROCESSOR_VERTEX);
    if (!shader)
       return NULL;
 
-   vrect = ureg_DECL_vs_input(shader, VS_I_RECT);
    vmv[0] = ureg_DECL_vs_input(shader, VS_I_MV_TOP);
    vmv[1] = ureg_DECL_vs_input(shader, VS_I_MV_BOTTOM);
 
@@ -121,7 +120,6 @@ create_ref_vert_shader(struct vl_mc *r)
       (float)MACROBLOCK_HEIGHT / r->buffer_height)
    );
 
-   o_vpos = ureg_DECL_output(shader, TGSI_SEMANTIC_POSITION, VS_O_VPOS);
    o_vmv[0] = ureg_DECL_output(shader, TGSI_SEMANTIC_GENERIC, VS_O_VTOP);
    o_vmv[1] = ureg_DECL_output(shader, TGSI_SEMANTIC_GENERIC, VS_O_VBOTTOM);
 

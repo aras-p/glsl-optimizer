@@ -34,17 +34,16 @@ $(glapi_OBJECTS): %.o: $(MAPI)/%.c
 
 $(glapi_SOURCES): glapi_mapi_tmp.h
 
-.PHONY: glapi_mapi_tmp.h
-glapi_mapi_tmp.h:
-	@$(MAKE) -C $(GLAPI)/gen-es shared-glapi
+include $(GLAPI)/gen/glapi_gen.mk
+glapi_mapi_tmp.h: $(GLAPI)/gen/gl_and_es_API.xml $(glapi_gen_mapi_deps)
+	$(call glapi_gen_mapi,$<,shared-glapi)
 
 .PHONY: clean
 clean:
 	-rm -f $(TOP)/$(LIB_DIR)/$(GLAPI_LIB_NAME)
 	-rm -f $(glapi_OBJECTS)
 	-rm -f depend depend.bak
-	@# clean generated sources/headers
-	@$(MAKE) -C $(GLAPI)/gen-es clean-shared-glapi
+	-rm -f glapi_mapi_tmp.h
 
 install:
 	$(INSTALL) -d $(DESTDIR)$(INSTALL_LIB_DIR)

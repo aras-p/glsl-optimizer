@@ -794,15 +794,17 @@ glXSwapBuffers(Display * dpy, GLXDrawable drawable)
    gc = __glXGetCurrentContext();
 
 #if defined(GLX_DIRECT_RENDERING) && !defined(GLX_USE_APPLEGL)
-   __GLXDRIdrawable *pdraw = GetGLXDRIDrawable(dpy, drawable);
+   {
+      __GLXDRIdrawable *pdraw = GetGLXDRIDrawable(dpy, drawable);
 
-   if (pdraw != NULL) {
-      if (gc && drawable == gc->currentDrawable) {
-	 glFlush();
+      if (pdraw != NULL) {
+         if (gc && drawable == gc->currentDrawable) {
+            glFlush();
+         }
+
+         (*pdraw->psc->driScreen->swapBuffers)(pdraw, 0, 0, 0);
+         return;
       }
-
-      (*pdraw->psc->driScreen->swapBuffers)(pdraw, 0, 0, 0);
-      return;
    }
 #endif
 

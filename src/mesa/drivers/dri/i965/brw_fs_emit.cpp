@@ -59,7 +59,8 @@ fs_visitor::generate_fb_write(fs_inst *inst)
 
 	 if (inst->target > 0) {
 	    /* Set the render target index for choosing BLEND_STATE. */
-	    brw_MOV(p, retype(brw_vec1_reg(BRW_MESSAGE_REGISTER_FILE, 0, 2),
+	    brw_MOV(p, retype(brw_vec1_reg(BRW_MESSAGE_REGISTER_FILE,
+					   inst->base_mrf, 2),
 			      BRW_REGISTER_TYPE_UD),
 		    brw_imm_ud(inst->target));
 	 }
@@ -145,43 +146,12 @@ void
 fs_visitor::generate_math(fs_inst *inst,
 			  struct brw_reg dst, struct brw_reg *src)
 {
-   int op;
-
-   switch (inst->opcode) {
-   case FS_OPCODE_RCP:
-      op = BRW_MATH_FUNCTION_INV;
-      break;
-   case FS_OPCODE_RSQ:
-      op = BRW_MATH_FUNCTION_RSQ;
-      break;
-   case FS_OPCODE_SQRT:
-      op = BRW_MATH_FUNCTION_SQRT;
-      break;
-   case FS_OPCODE_EXP2:
-      op = BRW_MATH_FUNCTION_EXP;
-      break;
-   case FS_OPCODE_LOG2:
-      op = BRW_MATH_FUNCTION_LOG;
-      break;
-   case FS_OPCODE_POW:
-      op = BRW_MATH_FUNCTION_POW;
-      break;
-   case FS_OPCODE_SIN:
-      op = BRW_MATH_FUNCTION_SIN;
-      break;
-   case FS_OPCODE_COS:
-      op = BRW_MATH_FUNCTION_COS;
-      break;
-   default:
-      assert(!"not reached: unknown math function");
-      op = 0;
-      break;
-   }
+   int op = brw_math_function(inst->opcode);
 
    if (intel->gen >= 6) {
       assert(inst->mlen == 0);
 
-      if (inst->opcode == FS_OPCODE_POW) {
+      if (inst->opcode == SHADER_OPCODE_POW) {
 	 brw_set_compression_control(p, BRW_COMPRESSION_NONE);
 	 brw_math2(p, dst, op, src[0], src[1]);
 
@@ -272,9 +242,15 @@ fs_visitor::generate_tex(fs_inst *inst, struct brw_reg dst, struct brw_reg src)
 	    msg_type = GEN5_SAMPLER_MESSAGE_SAMPLE_LOD;
 	 }
 	 break;
+      case FS_OPCODE_TXS:
+	 msg_type = GEN5_SAMPLER_MESSAGE_SAMPLE_RESINFO;
+	 break;
       case FS_OPCODE_TXD:
 	 /* There is no sample_d_c message; comparisons are done manually */
 	 msg_type = GEN5_SAMPLER_MESSAGE_SAMPLE_DERIVS;
+	 break;
+      default:
+	 assert(!"not reached");
 	 break;
       }
    } else {
@@ -315,6 +291,14 @@ fs_visitor::generate_tex(fs_inst *inst, struct brw_reg dst, struct brw_reg src)
 	 /* There is no sample_d_c message; comparisons are done manually */
 	 assert(inst->mlen == 7 || inst->mlen == 10);
 	 msg_type = BRW_SAMPLER_MESSAGE_SIMD8_SAMPLE_GRADIENTS;
+	 break;
+      case FS_OPCODE_TXS:
+	 assert(inst->mlen == 3);
+	 msg_type = BRW_SAMPLER_MESSAGE_SIMD16_RESINFO;
+	 simd_mode = BRW_SAMPLER_SIMD_MODE_SIMD16;
+	 break;
+      default:
+	 assert(!"not reached");
 	 break;
       }
    }
@@ -537,11 +521,9 @@ brw_reg_from_fs_reg(fs_reg *reg)
    case ARF:
    case MRF:
       if (reg->smear == -1) {
-	 brw_reg = brw_vec8_reg(reg->file,
-				reg->hw_reg, 0);
+	 brw_reg = brw_vec8_reg(reg->file, reg->reg, 0);
       } else {
-	 brw_reg = brw_vec1_reg(reg->file,
-				reg->hw_reg, reg->smear);
+	 brw_reg = brw_vec1_reg(reg->file, reg->reg, reg->smear);
       }
       brw_reg = retype(brw_reg, reg->type);
       if (reg->sechalf)
@@ -608,8 +590,8 @@ fs_visitor::generate_code()
 	     prog->Name, c->dispatch_width);
    }
 
-   foreach_iter(exec_list_iterator, iter, this->instructions) {
-      fs_inst *inst = (fs_inst *)iter.get();
+   foreach_list(node, &this->instructions) {
+      fs_inst *inst = (fs_inst *)node;
       struct brw_reg src[3], dst;
 
       if (unlikely(INTEL_DEBUG & DEBUG_WM)) {
@@ -655,6 +637,11 @@ fs_visitor::generate_code()
 	 break;
       case BRW_OPCODE_MUL:
 	 brw_MUL(p, dst, src[0], src[1]);
+	 break;
+      case BRW_OPCODE_MACH:
+	 brw_set_acc_write_control(p, 1);
+	 brw_MACH(p, dst, src[0], src[1]);
+	 brw_set_acc_write_control(p, 0);
 	 break;
 
       case BRW_OPCODE_FRC:
@@ -770,14 +757,14 @@ fs_visitor::generate_code()
       }
 	 break;
 
-      case FS_OPCODE_RCP:
-      case FS_OPCODE_RSQ:
-      case FS_OPCODE_SQRT:
-      case FS_OPCODE_EXP2:
-      case FS_OPCODE_LOG2:
-      case FS_OPCODE_POW:
-      case FS_OPCODE_SIN:
-      case FS_OPCODE_COS:
+      case SHADER_OPCODE_RCP:
+      case SHADER_OPCODE_RSQ:
+      case SHADER_OPCODE_SQRT:
+      case SHADER_OPCODE_EXP2:
+      case SHADER_OPCODE_LOG2:
+      case SHADER_OPCODE_POW:
+      case SHADER_OPCODE_SIN:
+      case SHADER_OPCODE_COS:
 	 generate_math(inst, dst, src);
 	 break;
       case FS_OPCODE_PIXEL_X:
@@ -796,6 +783,7 @@ fs_visitor::generate_code()
       case FS_OPCODE_TXB:
       case FS_OPCODE_TXD:
       case FS_OPCODE_TXL:
+      case FS_OPCODE_TXS:
 	 generate_tex(inst, dst, src[0]);
 	 break;
       case FS_OPCODE_DISCARD:

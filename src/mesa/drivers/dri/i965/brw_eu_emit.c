@@ -89,9 +89,9 @@ gen7_convert_mrf_to_grf(struct brw_compile *p, struct brw_reg *reg)
 }
 
 
-static void brw_set_dest(struct brw_compile *p,
-			 struct brw_instruction *insn,
-			 struct brw_reg dest)
+void
+brw_set_dest(struct brw_compile *p, struct brw_instruction *insn,
+	     struct brw_reg dest)
 {
    if (dest.file != BRW_ARCHITECTURE_REGISTER_FILE &&
        dest.file != BRW_MESSAGE_REGISTER_FILE)
@@ -221,9 +221,9 @@ validate_reg(struct brw_instruction *insn, struct brw_reg reg)
    /* 10. Check destination issues. */
 }
 
-static void brw_set_src0(struct brw_compile *p,
-			 struct brw_instruction *insn,
-			 struct brw_reg reg)
+void
+brw_set_src0(struct brw_compile *p, struct brw_instruction *insn,
+	     struct brw_reg reg)
 {
    if (reg.type != BRW_ARCHITECTURE_REGISTER_FILE)
       assert(reg.nr < 128);
@@ -504,17 +504,18 @@ static void brw_set_urb_message( struct brw_compile *p,
     }
 }
 
-static void brw_set_dp_write_message( struct brw_compile *p,
-				      struct brw_instruction *insn,
-				      GLuint binding_table_index,
-				      GLuint msg_control,
-				      GLuint msg_type,
-				      GLuint msg_length,
-				      GLboolean header_present,
-				      GLuint pixel_scoreboard_clear,
-				      GLuint response_length,
-				      GLuint end_of_thread,
-				      GLuint send_commit_msg)
+void
+brw_set_dp_write_message(struct brw_compile *p,
+			 struct brw_instruction *insn,
+			 GLuint binding_table_index,
+			 GLuint msg_control,
+			 GLuint msg_type,
+			 GLuint msg_length,
+			 GLboolean header_present,
+			 GLuint pixel_scoreboard_clear,
+			 GLuint response_length,
+			 GLuint end_of_thread,
+			 GLuint send_commit_msg)
 {
    struct brw_context *brw = p->brw;
    struct intel_context *intel = &brw->intel;
@@ -570,7 +571,7 @@ static void brw_set_dp_write_message( struct brw_compile *p,
    }
 }
 
-static void
+void
 brw_set_dp_read_message(struct brw_compile *p,
 			struct brw_instruction *insn,
 			GLuint binding_table_index,
@@ -709,9 +710,9 @@ static void brw_set_sampler_message(struct brw_compile *p,
 }
 
 
-
-static struct brw_instruction *next_insn( struct brw_compile *p, 
-					  GLuint opcode )
+#define next_insn brw_next_insn
+struct brw_instruction *
+brw_next_insn(struct brw_compile *p, GLuint opcode)
 {
    struct brw_instruction *insn;
 
@@ -731,7 +732,6 @@ static struct brw_instruction *next_insn( struct brw_compile *p,
    insn->header.opcode = opcode;
    return insn;
 }
-
 
 static struct brw_instruction *brw_alu1( struct brw_compile *p,
 					 GLuint opcode,
@@ -1341,8 +1341,7 @@ struct brw_instruction *brw_WHILE(struct brw_compile *p,
       brw_set_src1(p, insn, brw_imm_ud(0));
       insn->bits3.break_cont.jip = br * (do_insn - insn);
 
-      insn->header.execution_size = do_insn->header.execution_size;
-      assert(insn->header.execution_size == BRW_EXECUTE_8);
+      insn->header.execution_size = BRW_EXECUTE_8;
    } else if (intel->gen == 6) {
       insn = next_insn(p, BRW_OPCODE_WHILE);
 
@@ -1351,8 +1350,7 @@ struct brw_instruction *brw_WHILE(struct brw_compile *p,
       brw_set_src0(p, insn, retype(brw_null_reg(), BRW_REGISTER_TYPE_D));
       brw_set_src1(p, insn, retype(brw_null_reg(), BRW_REGISTER_TYPE_D));
 
-      insn->header.execution_size = do_insn->header.execution_size;
-      assert(insn->header.execution_size == BRW_EXECUTE_8);
+      insn->header.execution_size = BRW_EXECUTE_8;
    } else {
       if (p->single_program_flow) {
 	 insn = next_insn(p, BRW_OPCODE_ADD);
@@ -2246,10 +2244,13 @@ void brw_urb_WRITE(struct brw_compile *p,
 
    if (intel->gen == 7) {
       /* Enable Channel Masks in the URB_WRITE_HWORD message header */
+      brw_push_insn_state(p);
+      brw_set_access_mode(p, BRW_ALIGN_1);
       brw_OR(p, retype(brw_vec1_reg(BRW_MESSAGE_REGISTER_FILE, msg_reg_nr, 5),
 		       BRW_REGISTER_TYPE_UD),
 	        retype(brw_vec1_grf(0, 5), BRW_REGISTER_TYPE_UD),
 		brw_imm_ud(0xff00));
+      brw_pop_insn_state(p);
    }
 
    insn = next_insn(p, BRW_OPCODE_SEND);
@@ -2311,7 +2312,7 @@ brw_find_loop_end(struct brw_compile *p, int start)
       if (insn->header.opcode == BRW_OPCODE_WHILE) {
 	 int jip = intel->gen == 6 ? insn->bits1.branch_gen6.jump_count
 				   : insn->bits3.break_cont.jip;
-	 if (ip + jip / br < start)
+	 if (ip + jip / br <= start)
 	    return ip;
       }
    }

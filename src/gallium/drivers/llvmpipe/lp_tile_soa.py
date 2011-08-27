@@ -75,7 +75,7 @@ def generate_format_read(format, dst_channel, dst_native_type, dst_suffix):
     src_native_type = native_type(format)
 
     print 'static void'
-    print 'lp_tile_%s_swizzle_%s(%s *dst, const uint8_t *src, unsigned src_stride, unsigned x0, unsigned y0)' % (name, dst_suffix, dst_native_type)
+    print 'lp_tile_%s_swizzle_%s(%s * restrict dst, const uint8_t * restrict src, unsigned src_stride, unsigned x0, unsigned y0)' % (name, dst_suffix, dst_native_type)
     print '{'
     print '   unsigned x, y;'
     print '   const uint8_t *src_row = src + y0*src_stride;'
@@ -273,7 +273,7 @@ def generate_format_write(format, src_channel, src_native_type, src_suffix):
     name = format.short_name()
 
     print 'static void'
-    print 'lp_tile_%s_unswizzle_%s(const %s *src, uint8_t *dst, unsigned dst_stride, unsigned x0, unsigned y0)' % (name, src_suffix, src_native_type)
+    print 'lp_tile_%s_unswizzle_%s(const %s * restrict src, uint8_t * restrict dst, unsigned dst_stride, unsigned x0, unsigned y0)' % (name, src_suffix, src_native_type)
     print '{'
     if format.layout == PLAIN \
         and format.colorspace == 'rgb' \
@@ -501,7 +501,7 @@ def generate_swizzle(formats, dst_channel, dst_native_type, dst_suffix):
     print 'void'
     print 'lp_tile_swizzle_%s(enum pipe_format format, %s *dst, const void *src, unsigned src_stride, unsigned x, unsigned y)' % (dst_suffix, dst_native_type)
     print '{'
-    print '   void (*func)(%s *dst, const uint8_t *src, unsigned src_stride, unsigned x0, unsigned y0);' % dst_native_type
+    print '   void (*func)(%s * restrict dst, const uint8_t * restrict src, unsigned src_stride, unsigned x0, unsigned y0);' % dst_native_type
     print '#ifdef DEBUG'
     print '   lp_tile_swizzle_count += 1;'
     print '#endif'
@@ -539,7 +539,7 @@ def generate_unswizzle(formats, src_channel, src_native_type, src_suffix):
     print 'lp_tile_unswizzle_%s(enum pipe_format format, const %s *src, void *dst, unsigned dst_stride, unsigned x, unsigned y)' % (src_suffix, src_native_type)
     
     print '{'
-    print '   void (*func)(const %s *src, uint8_t *dst, unsigned dst_stride, unsigned x0, unsigned y0);' % src_native_type
+    print '   void (*func)(const %s * restrict src, uint8_t * restrict dst, unsigned dst_stride, unsigned x0, unsigned y0);' % src_native_type
     print '#ifdef DEBUG'
     print '   lp_tile_unswizzle_count += 1;'
     print '#endif'

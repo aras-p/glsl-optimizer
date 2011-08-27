@@ -1602,10 +1602,10 @@ void _ae_map_vbos( struct gl_context *ctx )
       _ae_update_state(ctx);
 
    for (i = 0; i < actx->nr_vbos; i++)
-      ctx->Driver.MapBuffer(ctx,
-			    GL_ARRAY_BUFFER_ARB,
-			    GL_DYNAMIC_DRAW_ARB,
-			    actx->vbo[i]);
+      ctx->Driver.MapBufferRange(ctx, 0,
+				 actx->vbo[i]->Size,
+				 GL_MAP_READ_BIT,
+				 actx->vbo[i]);
 
    if (actx->nr_vbos)
       actx->mapped_vbos = GL_TRUE;
@@ -1622,9 +1622,7 @@ void _ae_unmap_vbos( struct gl_context *ctx )
    assert (!actx->NewState);
 
    for (i = 0; i < actx->nr_vbos; i++)
-      ctx->Driver.UnmapBuffer(ctx,
-			      GL_ARRAY_BUFFER_ARB,
-			      actx->vbo[i]);
+      ctx->Driver.UnmapBuffer(ctx, actx->vbo[i]);
 
    actx->mapped_vbos = GL_FALSE;
 }

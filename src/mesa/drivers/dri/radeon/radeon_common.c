@@ -436,7 +436,6 @@ void radeonCopyBuffer( __DRIdrawable *dPriv,
 		       const drm_clip_rect_t	  *rect)
 {
 	radeonContextPtr rmesa;
-	struct radeon_framebuffer *rfb;
 	GLint nbox, i, ret;
 
 	assert(dPriv);
@@ -446,8 +445,6 @@ void radeonCopyBuffer( __DRIdrawable *dPriv,
 	rmesa = (radeonContextPtr) dPriv->driContextPriv->driverPrivate;
 
 	LOCK_HARDWARE(rmesa);
-
-	rfb = dPriv->driverPrivate;
 
 	if ( RADEON_DEBUG & RADEON_IOCTL ) {
 		fprintf( stderr, "\n%s( %p )\n\n", __FUNCTION__, (void *) rmesa->glCtx );
@@ -527,8 +524,6 @@ static GLboolean radeonPageFlip( __DRIdrawable *dPriv )
 {
 	radeonContextPtr radeon;
 	GLint ret;
-	__DRIscreen *psp;
-	struct radeon_renderbuffer *rrb;
 	struct radeon_framebuffer *rfb;
 
 	assert(dPriv);
@@ -537,9 +532,6 @@ static GLboolean radeonPageFlip( __DRIdrawable *dPriv )
 
 	radeon = (radeonContextPtr) dPriv->driContextPriv->driverPrivate;
 	rfb = dPriv->driverPrivate;
-	rrb = (void *)rfb->base.Attachment[BUFFER_FRONT_LEFT].Renderbuffer;
-
-	psp = dPriv->driScreenPriv;
 
 	LOCK_HARDWARE(radeon);
 

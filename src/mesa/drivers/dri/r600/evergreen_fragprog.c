@@ -752,10 +752,10 @@ GLboolean evergreenSetupFPconstants(struct gl_context * ctx)
 	    unNumParamData = paramList->NumParameters;
 
 	    for(ui=0; ui<unNumParamData; ui++) {
-		        evergreen->ps.consts[ui][0].f32All = paramList->ParameterValues[ui][0];
-		        evergreen->ps.consts[ui][1].f32All = paramList->ParameterValues[ui][1];
-		        evergreen->ps.consts[ui][2].f32All = paramList->ParameterValues[ui][2];
-		        evergreen->ps.consts[ui][3].f32All = paramList->ParameterValues[ui][3];
+		        evergreen->ps.consts[ui][0].f32All = paramList->ParameterValues[ui][0].f;
+		        evergreen->ps.consts[ui][1].f32All = paramList->ParameterValues[ui][1].f;
+		        evergreen->ps.consts[ui][2].f32All = paramList->ParameterValues[ui][2].f;
+		        evergreen->ps.consts[ui][3].f32All = paramList->ParameterValues[ui][3].f;
 	    }
 
 	    /* alloc multiple of 16 constants */

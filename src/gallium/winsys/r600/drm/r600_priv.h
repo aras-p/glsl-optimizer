@@ -26,40 +26,20 @@
 #ifndef R600_PRIV_H
 #define R600_PRIV_H
 
-#include <errno.h>
-#include <stdint.h>
-#include <stdlib.h>
-#include <assert.h>
-#include <util/u_double_list.h>
-#include <util/u_inlines.h>
-#include "util/u_hash_table.h"
-#include <os/os_thread.h>
 #include "r600.h"
+#include "../../radeon/drm/radeon_winsys.h"
+#include "util/u_hash_table.h"
+#include "os/os_thread.h"
 
 #define PKT_COUNT_C                     0xC000FFFF
 #define PKT_COUNT_S(x)                  (((x) & 0x3FFF) << 16)
 
-struct r600_bomgr;
-struct r600_bo;
-
 struct radeon {
-	int				fd;
-	int				refcount;
-	unsigned			device;
+	struct radeon_winsys		*ws;
+	struct radeon_info		info;
 	unsigned			family;
 	enum chip_class			chip_class;
 	struct r600_tiling_info		tiling_info;
-	struct r600_bomgr		*bomgr;
-	unsigned			fence;
-	unsigned			*cfence;
-	struct r600_bo			*fence_bo;
-	unsigned			clock_crystal_freq;
-	unsigned			num_backends;
-	unsigned                        minor_version;
-
-        /* List of buffer handles and its mutex. */
-	struct util_hash_table          *bo_handles;
-	pipe_mutex bo_handles_mutex;
 };
 
 /* these flags are used in register flags and added into block flags */
@@ -79,55 +59,16 @@ struct r600_reg {
 };
 
 #define BO_BOUND_TEXTURE 1
-struct radeon_bo {
-	struct pipe_reference		reference;
-	unsigned			handle;
-	unsigned			size;
-	unsigned			alignment;
-	int				map_count;
-	void				*data;
-	struct list_head		fencedlist;
-	unsigned			fence;
-	struct r600_context		*ctx;
-	boolean				shared;
-	struct r600_reloc		*reloc;
-	unsigned			reloc_id;
-	unsigned			last_flush;
-	unsigned                        name;
-	unsigned                        binding;
-};
 
 struct r600_bo {
 	struct pipe_reference		reference; /* this must be the first member for the r600_bo_reference inline to work */
 	/* DO NOT MOVE THIS ^ */
-	unsigned			size;
-	unsigned			tiling_flags;
-	unsigned			kernel_pitch;
+	struct pb_buffer		*buf;
+	struct radeon_winsys_cs_handle	*cs_buf;
 	unsigned			domains;
-	struct radeon_bo		*bo;
-	unsigned			fence;
-	/* manager data */
-	struct list_head		list;
-	unsigned			manager_id;
-	unsigned			alignment;
-	unsigned			offset;
-	int64_t				start;
-	int64_t				end;
+	unsigned			last_flush;
+	unsigned                        binding;
 };
-
-struct r600_bomgr {
-	struct radeon			*radeon;
-	unsigned			usecs;
-	pipe_mutex			mutex;
-	struct list_head		delayed;
-	unsigned			num_delayed;
-};
-
-/*
- * r600_drm.c
- */
-struct radeon *r600_new(int fd, unsigned device);
-void r600_delete(struct radeon *r600);
 
 /*
  * radeon_pciid.c
@@ -135,29 +76,8 @@ void r600_delete(struct radeon *r600);
 unsigned radeon_family_from_device(unsigned device);
 
 /*
- * radeon_bo.c
- */
-struct radeon_bo *radeon_bo(struct radeon *radeon, unsigned handle,
-			    unsigned size, unsigned alignment, unsigned initial_domain);
-void radeon_bo_reference(struct radeon *radeon, struct radeon_bo **dst,
-			 struct radeon_bo *src);
-int radeon_bo_wait(struct radeon *radeon, struct radeon_bo *bo);
-int radeon_bo_busy(struct radeon *radeon, struct radeon_bo *bo, uint32_t *domain);
-int radeon_bo_fencelist(struct radeon *radeon, struct radeon_bo **bolist, uint32_t num_bo);
-int radeon_bo_get_tiling_flags(struct radeon *radeon,
-			       struct radeon_bo *bo,
-			       uint32_t *tiling_flags,
-			       uint32_t *pitch);
-int radeon_bo_get_name(struct radeon *radeon,
-		       struct radeon_bo *bo,
-		       uint32_t *name);
-int radeon_bo_fixed_map(struct radeon *radeon, struct radeon_bo *bo);
-
-/*
  * r600_hw_context.c
  */
-int r600_context_init_fence(struct r600_context *ctx);
-void r600_context_get_reloc(struct r600_context *ctx, struct r600_bo *rbo);
 void r600_context_bo_flush(struct r600_context *ctx, unsigned flush_flags,
 				unsigned flush_mask, struct r600_bo *rbo);
 struct r600_bo *r600_context_reg_bo(struct r600_context *ctx, unsigned offset);
@@ -175,70 +95,23 @@ void r600_context_reg(struct r600_context *ctx,
 void r600_init_cs(struct r600_context *ctx);
 int r600_resource_init(struct r600_context *ctx, struct r600_range *range, unsigned offset, unsigned nblocks, unsigned stride, struct r600_reg *reg, int nreg, unsigned offset_base);
 
-static INLINE void r600_context_bo_reloc(struct r600_context *ctx, u32 *pm4, struct r600_bo *rbo)
+static INLINE unsigned r600_context_bo_reloc(struct r600_context *ctx, struct r600_bo *rbo,
+					     enum radeon_bo_usage usage)
 {
-	struct radeon_bo *bo = rbo->bo;
+	enum radeon_bo_domain rd = usage & RADEON_USAGE_READ ? rbo->domains : 0;
+	enum radeon_bo_domain wd = usage & RADEON_USAGE_WRITE ? rbo->domains : 0;
 
-	assert(bo != NULL);
+	assert(usage);
 
-	if (!bo->reloc)
-		r600_context_get_reloc(ctx, rbo);
+	unsigned reloc_index =
+		ctx->radeon->ws->cs_add_reloc(ctx->cs, rbo->cs_buf,
+					      rd, wd);
 
-	/* set PKT3 to point to proper reloc */
-	*pm4 = bo->reloc_id;
-}
+	if (reloc_index >= ctx->creloc)
+		ctx->creloc = reloc_index+1;
 
-/*
- * r600_bo.c
- */
-void r600_bo_destroy(struct radeon *radeon, struct r600_bo *bo);
-
-/*
- * r600_bomgr.c
- */
-struct r600_bomgr *r600_bomgr_create(struct radeon *radeon, unsigned usecs);
-void r600_bomgr_destroy(struct r600_bomgr *mgr);
-boolean r600_bomgr_bo_destroy(struct r600_bomgr *mgr, struct r600_bo *bo);
-void r600_bomgr_bo_init(struct r600_bomgr *mgr, struct r600_bo *bo);
-struct r600_bo *r600_bomgr_bo_create(struct r600_bomgr *mgr,
-					unsigned size,
-					unsigned alignment,
-					unsigned cfence);
-
-
-/*
- * helpers
- */
-
-
-/*
- * radeon_bo.c
- */
-static inline int radeon_bo_map(struct radeon *radeon, struct radeon_bo *bo)
-{
-	if (bo->map_count == 0 && !bo->data)
-		return radeon_bo_fixed_map(radeon, bo);
-	bo->map_count++;
-	return 0;
-}
-
-static inline void radeon_bo_unmap(struct radeon *radeon, struct radeon_bo *bo)
-{
-	bo->map_count--;
-	assert(bo->map_count >= 0);
-}
-
-/*
- * fence
- */
-static inline boolean fence_is_after(unsigned fence, unsigned ofence)
-{
-	/* handle wrap around */
-	if (fence < 0x80000000 && ofence > 0x80000000)
-		return TRUE;
-	if (fence > ofence)
-		return TRUE;
-	return FALSE;
+	r600_bo_reference(&ctx->bo[reloc_index], rbo);
+	return reloc_index * 4;
 }
 
 #endif

@@ -24,6 +24,9 @@
 #include "util/u_format_s3tc.h"
 #include "pipe/p_screen.h"
 
+#include "vl/vl_decoder.h"
+#include "vl/vl_video_buffer.h"
+
 #include "nvc0_context.h"
 #include "nvc0_screen.h"
 
@@ -167,6 +170,8 @@ nvc0_screen_get_shader_param(struct pipe_screen *pscreen, unsigned shader,
       return 1;
    case PIPE_SHADER_CAP_SUBROUTINES:
       return 0; /* please inline, or provide function declarations */
+   case PIPE_SHADER_CAP_INTEGERS:
+      return 0;
    default:
       NOUVEAU_ERR("unknown PIPE_SHADER_CAP %d\n", param);
       return 0;
@@ -372,6 +377,8 @@ nvc0_screen_create(struct pipe_winsys *ws, struct nouveau_device *dev)
    pscreen->get_paramf = nvc0_screen_get_paramf;
 
    nvc0_screen_init_resource_functions(pscreen);
+
+   nouveau_screen_init_vdec(&screen->base);
 
    ret = nouveau_bo_new(dev, NOUVEAU_BO_GART | NOUVEAU_BO_MAP, 0, 4096,
                         &screen->fence.bo);

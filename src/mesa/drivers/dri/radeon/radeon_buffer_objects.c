@@ -130,7 +130,6 @@ radeonBufferData(struct gl_context * ctx,
  */
 static void
 radeonBufferSubData(struct gl_context * ctx,
-                    GLenum target,
                     GLintptrARB offset,
                     GLsizeiptrARB size,
                     const GLvoid * data,
@@ -155,7 +154,6 @@ radeonBufferSubData(struct gl_context * ctx,
  */
 static void
 radeonGetBufferSubData(struct gl_context * ctx,
-                       GLenum target,
                        GLintptrARB offset,
                        GLsizeiptrARB size,
                        GLvoid * data,
@@ -171,17 +169,18 @@ radeonGetBufferSubData(struct gl_context * ctx,
 }
 
 /**
- * Called via glMapBufferARB()
+ * Called via glMapBuffer() and glMapBufferRange()
  */
 static void *
-radeonMapBuffer(struct gl_context * ctx,
-                GLenum target,
-                GLenum access,
-                struct gl_buffer_object *obj)
+radeonMapBufferRange(struct gl_context * ctx,
+		     GLintptr offset, GLsizeiptr length,
+		     GLbitfield access, struct gl_buffer_object *obj)
 {
     struct radeon_buffer_object *radeon_obj = get_radeon_buffer_object(obj);
+    const GLboolean write_only =
+       (access & (GL_MAP_READ_BIT | GL_MAP_WRITE_BIT)) == GL_MAP_WRITE_BIT;
 
-    if (access == GL_WRITE_ONLY_ARB) {
+    if (write_only) {
         ctx->Driver.Flush(ctx);
     }
 
@@ -190,12 +189,13 @@ radeonMapBuffer(struct gl_context * ctx,
         return NULL;
     }
 
-    radeon_bo_map(radeon_obj->bo, access == GL_WRITE_ONLY_ARB);
+    obj->Offset = offset;
+    obj->Length = length;
+    obj->AccessFlags = access;
 
-    obj->Pointer = radeon_obj->bo->ptr;
-    obj->Length = obj->Size;
-    obj->Offset = 0;
+    radeon_bo_map(radeon_obj->bo, write_only);
 
+    obj->Pointer = radeon_obj->bo->ptr + offset;
     return obj->Pointer;
 }
 
@@ -205,7 +205,6 @@ radeonMapBuffer(struct gl_context * ctx,
  */
 static GLboolean
 radeonUnmapBuffer(struct gl_context * ctx,
-                  GLenum target,
                   struct gl_buffer_object *obj)
 {
     struct radeon_buffer_object *radeon_obj = get_radeon_buffer_object(obj);
@@ -229,6 +228,6 @@ radeonInitBufferObjectFuncs(struct dd_function_table *functions)
     functions->BufferData = radeonBufferData;
     functions->BufferSubData = radeonBufferSubData;
     functions->GetBufferSubData = radeonGetBufferSubData;
-    functions->MapBuffer = radeonMapBuffer;
+    functions->MapBufferRange = radeonMapBufferRange;
     functions->UnmapBuffer = radeonUnmapBuffer;
 }

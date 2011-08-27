@@ -157,7 +157,7 @@ softpipe_get_query_result(struct pipe_context *pipe,
       /*os_get_time is in microseconds*/
       td.frequency = 1000000;
       td.disjoint = FALSE;
-      memcpy(vresult, &sq->so,
+      memcpy(vresult, &td,
              sizeof(struct pipe_query_data_timestamp_disjoint));
    }
       break;

@@ -132,6 +132,12 @@ egl_g3d_get_platform(_EGLDriver *drv, _EGLPlatformType plat)
          nplat = native_get_fbdev_platform(&egl_g3d_native_event_handler);
 #endif
          break;
+      case _EGL_PLATFORM_ANDROID:
+         plat_name = "Android";
+#ifdef HAVE_ANDROID_BACKEND
+         nplat = native_get_android_platform(&egl_g3d_native_event_handler);
+#endif
+         break;
       default:
          break;
       }
@@ -571,6 +577,11 @@ egl_g3d_initialize(_EGLDriver *drv, _EGLDisplay *dpy)
 
    if (dpy->Platform == _EGL_PLATFORM_WAYLAND && gdpy->native->buffer)
       dpy->Extensions.MESA_drm_image = EGL_TRUE;
+
+#ifdef EGL_ANDROID_image_native_buffer
+   if (dpy->Platform == _EGL_PLATFORM_ANDROID && gdpy->native->buffer)
+      dpy->Extensions.ANDROID_image_native_buffer = EGL_TRUE;
+#endif
 
 #ifdef EGL_WL_bind_wayland_display
    if (gdpy->native->wayland_bufmgr)

@@ -194,6 +194,8 @@ dri_screen_create(struct gbm_dri_device *dri)
    dri->screen = dri->dri2->createNewScreen(0, dri->base.base.fd,
                                             dri->extensions,
                                             &dri->driver_configs, dri);
+   if (dri->screen == NULL)
+      return -1;
 
    extensions = dri->core->getExtensions(dri->screen);
    if (dri_bind_extensions(dri, dri_core_extensions, extensions) < 0) {

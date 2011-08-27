@@ -842,7 +842,7 @@ _mesa_GenTextures( GLsizei n, GLuint *textures )
       struct gl_texture_object *texObj;
       GLuint name = first + i;
       GLenum target = 0;
-      texObj = (*ctx->Driver.NewTextureObject)( ctx, name, target);
+      texObj = ctx->Driver.NewTextureObject(ctx, name, target);
       if (!texObj) {
          _glthread_UNLOCK_MUTEX(ctx->Shared->Mutex);
          _mesa_error(ctx, GL_OUT_OF_MEMORY, "glGenTextures");
@@ -1066,7 +1066,7 @@ _mesa_BindTexture( GLenum target, GLuint texName )
       }
       else {
          /* if this is a new texture id, allocate a texture object now */
-         newTexObj = (*ctx->Driver.NewTextureObject)(ctx, texName, target);
+         newTexObj = ctx->Driver.NewTextureObject(ctx, texName, target);
          if (!newTexObj) {
             _mesa_error(ctx, GL_OUT_OF_MEMORY, "glBindTexture");
             return;
@@ -1108,7 +1108,7 @@ _mesa_BindTexture( GLenum target, GLuint texName )
 
    /* Pass BindTexture call to device driver */
    if (ctx->Driver.BindTexture)
-      (*ctx->Driver.BindTexture)( ctx, target, newTexObj );
+      ctx->Driver.BindTexture(ctx, target, newTexObj);
 }
 
 

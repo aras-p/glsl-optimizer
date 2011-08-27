@@ -113,7 +113,7 @@ intelTexSubimage(struct gl_context * ctx,
 	 dstRowStride = pitch;
 
 	 intel_miptree_get_image_offset(intelImage->mt, level,
-					intelImage->face, 0,
+					intelImage->base.Face, 0,
 					&blit_x, &blit_y);
 	 blit_x += xoffset;
 	 blit_y += yoffset;
@@ -122,8 +122,8 @@ intelTexSubimage(struct gl_context * ctx,
       } else {
 	 texImage->Data = intel_miptree_image_map(intel,
 						  intelImage->mt,
-						  intelImage->face,
-						  intelImage->level,
+						  intelImage->base.Face,
+						  intelImage->base.Level,
 						  &dstRowStride,
 						  texImage->ImageOffsets);
       }

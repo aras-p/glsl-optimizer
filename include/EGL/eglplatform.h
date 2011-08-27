@@ -90,6 +90,15 @@ typedef struct gbm_device  *EGLNativeDisplayType;
 typedef struct gbm_bo      *EGLNativePixmapType;
 typedef void               *EGLNativeWindowType;
 
+#elif defined(ANDROID) /* Android */
+
+struct ANativeWindow;
+struct egl_native_pixmap_t;
+
+typedef struct ANativeWindow        *EGLNativeWindowType;
+typedef struct egl_native_pixmap_t  *EGLNativePixmapType;
+typedef void                        *EGLNativeDisplayType;
+
 #elif defined(__unix__) || defined(__unix)
 
 #ifdef MESA_EGL_NO_X11_HEADERS

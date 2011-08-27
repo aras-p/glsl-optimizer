@@ -258,6 +258,7 @@ ir_tree_grafting_visitor::visit_enter(ir_texture *ir)
       break;
    case ir_txf:
    case ir_txl:
+   case ir_txs:
       if (do_graft(&ir->lod_info.lod))
 	 return visit_stop;
       break;

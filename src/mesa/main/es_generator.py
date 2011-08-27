@@ -681,10 +681,10 @@ print """
 #if FEATURE_remap_table
 
 /* define esLocalRemapTable */
-#include "%sapi/main/dispatch.h"
+#include "main/api_exec_%s_dispatch.h"
 
 #define need_MESA_remap_table
-#include "%sapi/main/remap_helper.h"
+#include "main/api_exec_%s_remap_helper.h"
 
 static void
 init_remap_table(void)

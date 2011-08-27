@@ -25,29 +25,18 @@
  *      Corbin Simpson <MostAwesomeDude@gmail.com>
  *      Joakim Sindholt <opensource@zhasha.com>
  */
-#include <stdio.h>
-#include <errno.h>
-#include <sys/ioctl.h>
-#include "util/u_inlines.h"
-#include "util/u_debug.h"
-#include "util/u_hash_table.h"
-#include <pipebuffer/pb_bufmgr.h>
-#include "r600.h"
+
 #include "r600_priv.h"
 #include "r600_drm_public.h"
-#include "xf86drm.h"
-#include "radeon_drm.h"
+#include "util/u_memory.h"
+#include <errno.h>
 
-#ifndef RADEON_INFO_TILING_CONFIG
-#define RADEON_INFO_TILING_CONFIG 0x6
+#ifndef RADEON_INFO_NUM_TILE_PIPES
+#define RADEON_INFO_NUM_TILE_PIPES 0xb
 #endif
 
-#ifndef RADEON_INFO_CLOCK_CRYSTAL_FREQ
-#define RADEON_INFO_CLOCK_CRYSTAL_FREQ 0x9
-#endif
-
-#ifndef RADEON_INFO_NUM_BACKENDS
-#define RADEON_INFO_NUM_BACKENDS 0xa
+#ifndef RADEON_INFO_BACKEND_MAP
+#define RADEON_INFO_BACKEND_MAP 0xd
 #endif
 
 enum radeon_family r600_get_family(struct radeon *r600)
@@ -67,31 +56,27 @@ struct r600_tiling_info *r600_get_tiling_info(struct radeon *radeon)
 
 unsigned r600_get_clock_crystal_freq(struct radeon *radeon)
 {
-	return radeon->clock_crystal_freq;
+	return radeon->info.r600_clock_crystal_freq;
 }
 
 unsigned r600_get_num_backends(struct radeon *radeon)
 {
-	return radeon->num_backends;
+	return radeon->info.r600_num_backends;
+}
+
+unsigned r600_get_num_tile_pipes(struct radeon *radeon)
+{
+	return radeon->info.r600_num_tile_pipes;
+}
+
+unsigned r600_get_backend_map(struct radeon *radeon)
+{
+	return radeon->info.r600_backend_map;
 }
 
 unsigned r600_get_minor_version(struct radeon *radeon)
 {
-	return radeon->minor_version;
-}
-
-
-static int radeon_get_device(struct radeon *radeon)
-{
-	struct drm_radeon_info info = {};
-	int r;
-
-	radeon->device = 0;
-	info.request = RADEON_INFO_DEVICE_ID;
-	info.value = (uintptr_t)&radeon->device;
-	r = drmCommandWriteRead(radeon->fd, DRM_RADEON_INFO, &info,
-			sizeof(struct drm_radeon_info));
-	return r;
+	return radeon->info.drm_minor;
 }
 
 static int r600_interpret_tiling(struct radeon *radeon, uint32_t tiling_config)
@@ -186,124 +171,32 @@ static int eg_interpret_tiling(struct radeon *radeon, uint32_t tiling_config)
 
 static int radeon_drm_get_tiling(struct radeon *radeon)
 {
-	struct drm_radeon_info info = {};
-	int r;
-	uint32_t tiling_config = 0;
+	uint32_t tiling_config = radeon->info.r600_tiling_config;
 
-	info.request = RADEON_INFO_TILING_CONFIG;
-	info.value = (uintptr_t)&tiling_config;
-	r = drmCommandWriteRead(radeon->fd, DRM_RADEON_INFO, &info,
-				sizeof(struct drm_radeon_info));
-
-	if (r)
+	if (!tiling_config)
 		return 0;
 
 	if (radeon->chip_class == R600 || radeon->chip_class == R700) {
-		r = r600_interpret_tiling(radeon, tiling_config);
+		return r600_interpret_tiling(radeon, tiling_config);
 	} else {
-		r = eg_interpret_tiling(radeon, tiling_config);
+		return eg_interpret_tiling(radeon, tiling_config);
 	}
-	return r;
 }
 
-static int radeon_get_clock_crystal_freq(struct radeon *radeon)
+struct radeon *radeon_create(struct radeon_winsys *ws)
 {
-	struct drm_radeon_info info = {};
-	uint32_t clock_crystal_freq = 0;
-	int r;
-
-	info.request = RADEON_INFO_CLOCK_CRYSTAL_FREQ;
-	info.value = (uintptr_t)&clock_crystal_freq;
-	r = drmCommandWriteRead(radeon->fd, DRM_RADEON_INFO, &info,
-			sizeof(struct drm_radeon_info));
-	if (r)
-		return r;
-
-	radeon->clock_crystal_freq = clock_crystal_freq;
-	return 0;
-}
-
-
-static int radeon_get_num_backends(struct radeon *radeon)
-{
-	struct drm_radeon_info info = {};
-	uint32_t num_backends = 0;
-	int r;
-
-	info.request = RADEON_INFO_NUM_BACKENDS;
-	info.value = (uintptr_t)&num_backends;
-	r = drmCommandWriteRead(radeon->fd, DRM_RADEON_INFO, &info,
-			sizeof(struct drm_radeon_info));
-	if (r)
-		return r;
-
-	radeon->num_backends = num_backends;
-	return 0;
-}
-
-
-static int radeon_init_fence(struct radeon *radeon)
-{
-	radeon->fence = 1;
-	radeon->fence_bo = r600_bo(radeon, 4096, 0, 0, 0);
-	if (radeon->fence_bo == NULL) {
-		return -ENOMEM;
-	}
-	radeon->cfence = r600_bo_map(radeon, radeon->fence_bo, PIPE_TRANSFER_UNSYNCHRONIZED, NULL);
-	*radeon->cfence = 0;
-	return 0;
-}
-
-#define PTR_TO_UINT(x) ((unsigned)((intptr_t)(x)))
-
-static unsigned handle_hash(void *key)
-{
-    return PTR_TO_UINT(key);
-}
-
-static int handle_compare(void *key1, void *key2)
-{
-    return PTR_TO_UINT(key1) != PTR_TO_UINT(key2);
-}
-
-static struct radeon *radeon_new(int fd, unsigned device)
-{
-	struct radeon *radeon;
-	int r;
-	drmVersionPtr version;
-
-	radeon = calloc(1, sizeof(*radeon));
+	struct radeon *radeon = CALLOC_STRUCT(radeon);
 	if (radeon == NULL) {
 		return NULL;
 	}
-	radeon->fd = fd;
-	radeon->device = device;
-	radeon->refcount = 1;
 
-	version = drmGetVersion(radeon->fd);
-	if (version->version_major != 2) {
-		fprintf(stderr, "%s: DRM version is %d.%d.%d but this driver is "
-			"only compatible with 2.x.x\n", __FUNCTION__,
-			version->version_major, version->version_minor,
-			version->version_patchlevel);
-		drmFreeVersion(version);
-		exit(1);
-	}
+	radeon->ws = ws;
+	ws->query_info(ws, &radeon->info);
 
-	radeon->minor_version = version->version_minor;
-
-	drmFreeVersion(version);
-
-	r = radeon_get_device(radeon);
-	if (r) {
-		fprintf(stderr, "Failed to get device id\n");
-		return radeon_decref(radeon);
-	}
-
-	radeon->family = radeon_family_from_device(radeon->device);
+	radeon->family = radeon_family_from_device(radeon->info.pci_id);
 	if (radeon->family == CHIP_UNKNOWN) {
-		fprintf(stderr, "Unknown chipset 0x%04X\n", radeon->device);
-		return radeon_decref(radeon);
+		fprintf(stderr, "Unknown chipset 0x%04X\n", radeon->info.pci_id);
+		return radeon_destroy(radeon);
 	}
 	/* setup class */
 	switch (radeon->family) {
@@ -349,56 +242,21 @@ static struct radeon *radeon_new(int fd, unsigned device)
 		break;
 	default:
 		fprintf(stderr, "%s unknown or unsupported chipset 0x%04X\n",
-			__func__, radeon->device);
+			__func__, radeon->info.pci_id);
 		break;
 	}
 
 	if (radeon_drm_get_tiling(radeon))
 		return NULL;
 
-	/* get the GPU counter frequency, failure is non fatal */
-	radeon_get_clock_crystal_freq(radeon);
-
-	if (radeon->minor_version >= 9)
-		radeon_get_num_backends(radeon);
-
-	radeon->bomgr = r600_bomgr_create(radeon, 1000000);
-	if (radeon->bomgr == NULL) {
-		return NULL;
-	}
-	r = radeon_init_fence(radeon);
-	if (r) {
-		radeon_decref(radeon);
-		return NULL;
-	}
-
-	radeon->bo_handles = util_hash_table_create(handle_hash, handle_compare);
-	pipe_mutex_init(radeon->bo_handles_mutex);
 	return radeon;
 }
 
-struct radeon *r600_drm_winsys_create(int drmfd)
-{
-	return radeon_new(drmfd, 0);
-}
-
-struct radeon *radeon_decref(struct radeon *radeon)
+struct radeon *radeon_destroy(struct radeon *radeon)
 {
 	if (radeon == NULL)
 		return NULL;
-	if (--radeon->refcount > 0) {
-		return NULL;
-	}
 
-	util_hash_table_destroy(radeon->bo_handles);
-	pipe_mutex_destroy(radeon->bo_handles_mutex);
-	if (radeon->fence_bo) {
-		r600_bo_reference(radeon, &radeon->fence_bo, NULL);
-	}
-
-	if (radeon->bomgr)
-		r600_bomgr_destroy(radeon->bomgr);
-
-	free(radeon);
+	FREE(radeon);
 	return NULL;
 }

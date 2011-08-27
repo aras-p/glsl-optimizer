@@ -99,9 +99,9 @@
 #endif
 #endif
 
-#if defined(__PPC__)
+#if defined(__ppc__) || defined(__ppc64__) || defined(__PPC__)
 #define PIPE_ARCH_PPC
-#if defined(__PPC64__)
+#if defined(__ppc64__) || defined(__PPC64__)
 #define PIPE_ARCH_PPC_64
 #endif
 #endif
@@ -117,6 +117,15 @@
 #if __BYTE_ORDER == __LITTLE_ENDIAN
 # define PIPE_ARCH_LITTLE_ENDIAN
 #elif __BYTE_ORDER == __BIG_ENDIAN
+# define PIPE_ARCH_BIG_ENDIAN
+#endif
+
+#elif defined(__APPLE__)
+#include <machine/endian.h>
+
+#if __DARWIN_BYTE_ORDER == __DARWIN_LITTLE_ENDIAN
+# define PIPE_ARCH_LITTLE_ENDIAN
+#elif __DARWIN_BYTE_ORDER == __DARWIN_BIG_ENDIAN
 # define PIPE_ARCH_BIG_ENDIAN
 #endif
 
@@ -143,6 +152,14 @@
 #if defined(__linux__)
 #define PIPE_OS_LINUX
 #define PIPE_OS_UNIX
+#endif
+
+/*
+ * Android defines __linux__ so PIPE_OS_LINUX and PIPE_OS_UNIX will also be
+ * defined.
+ */
+#if defined(ANDROID)
+#define PIPE_OS_ANDROID
 #endif
 
 #if defined(__FreeBSD__)

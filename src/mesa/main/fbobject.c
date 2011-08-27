@@ -1984,10 +1984,26 @@ _mesa_FramebufferTexture1DEXT(GLenum target, GLenum attachment,
 {
    GET_CURRENT_CONTEXT(ctx);
 
-   if ((texture != 0) && (textarget != GL_TEXTURE_1D)) {
-      _mesa_error(ctx, GL_INVALID_ENUM,
-                  "glFramebufferTexture1DEXT(textarget)");
-      return;
+   if (texture != 0) {
+      GLboolean error;
+
+      switch (textarget) {
+      case GL_TEXTURE_1D:
+         error = GL_FALSE;
+         break;
+      case GL_TEXTURE_1D_ARRAY:
+         error = !ctx->Extensions.EXT_texture_array;
+         break;
+      default:
+         error = GL_TRUE;
+      }
+
+      if (error) {
+         _mesa_error(ctx, GL_INVALID_OPERATION,
+                     "glFramebufferTexture1DEXT(textarget=%s)",
+                     _mesa_lookup_enum_by_nr(textarget));
+         return;
+      }
    }
 
    framebuffer_texture(ctx, "1D", target, attachment, textarget, texture,
@@ -2001,13 +2017,37 @@ _mesa_FramebufferTexture2DEXT(GLenum target, GLenum attachment,
 {
    GET_CURRENT_CONTEXT(ctx);
 
-   if ((texture != 0) &&
-       (textarget != GL_TEXTURE_2D) &&
-       (textarget != GL_TEXTURE_RECTANGLE_ARB) &&
-       (!is_cube_face(textarget))) {
-      _mesa_error(ctx, GL_INVALID_OPERATION,
-                  "glFramebufferTexture2DEXT(textarget=0x%x)", textarget);
-      return;
+   if (texture != 0) {
+      GLboolean error;
+
+      switch (textarget) {
+      case GL_TEXTURE_2D:
+         error = GL_FALSE;
+         break;
+      case GL_TEXTURE_RECTANGLE:
+         error = !ctx->Extensions.NV_texture_rectangle;
+         break;
+      case GL_TEXTURE_CUBE_MAP_POSITIVE_X:
+      case GL_TEXTURE_CUBE_MAP_NEGATIVE_X:
+      case GL_TEXTURE_CUBE_MAP_POSITIVE_Y:
+      case GL_TEXTURE_CUBE_MAP_NEGATIVE_Y:
+      case GL_TEXTURE_CUBE_MAP_POSITIVE_Z:
+      case GL_TEXTURE_CUBE_MAP_NEGATIVE_Z:
+         error = !ctx->Extensions.ARB_texture_cube_map;
+         break;
+      case GL_TEXTURE_2D_ARRAY:
+         error = !ctx->Extensions.EXT_texture_array;
+         break;
+      default:
+         error = GL_FALSE;
+      }
+
+      if (error) {
+         _mesa_error(ctx, GL_INVALID_OPERATION,
+                     "glFramebufferTexture2DEXT(textarget=%s)",
+                     _mesa_lookup_enum_by_nr(textarget));
+         return;
+      }
    }
 
    framebuffer_texture(ctx, "2D", target, attachment, textarget, texture,
@@ -2023,7 +2063,7 @@ _mesa_FramebufferTexture3DEXT(GLenum target, GLenum attachment,
    GET_CURRENT_CONTEXT(ctx);
 
    if ((texture != 0) && (textarget != GL_TEXTURE_3D)) {
-      _mesa_error(ctx, GL_INVALID_ENUM,
+      _mesa_error(ctx, GL_INVALID_OPERATION,
                   "glFramebufferTexture3DEXT(textarget)");
       return;
    }
@@ -2134,9 +2174,13 @@ _mesa_GetFramebufferAttachmentParameterivEXT(GLenum target, GLenum attachment,
 {
    const struct gl_renderbuffer_attachment *att;
    struct gl_framebuffer *buffer;
+   GLenum err;
    GET_CURRENT_CONTEXT(ctx);
 
    ASSERT_OUTSIDE_BEGIN_END(ctx);
+
+   /* The error differs in GL andd GLES. */
+   err = ctx->API == API_OPENGL ? GL_INVALID_OPERATION : GL_INVALID_ENUM;
 
    buffer = get_framebuffer_target(ctx, target);
    if (!buffer) {
@@ -2188,7 +2232,12 @@ _mesa_GetFramebufferAttachmentParameterivEXT(GLenum target, GLenum attachment,
       }
       else {
          assert(att->Type == GL_NONE);
-         *params = 0;
+         if (ctx->API == API_OPENGL) {
+            *params = 0;
+         } else {
+            _mesa_error(ctx, GL_INVALID_ENUM,
+                        "glGetFramebufferAttachmentParameterivEXT(pname)");
+         }
       }
       return;
    case GL_FRAMEBUFFER_ATTACHMENT_TEXTURE_LEVEL_EXT:
@@ -2196,7 +2245,7 @@ _mesa_GetFramebufferAttachmentParameterivEXT(GLenum target, GLenum attachment,
 	 *params = att->TextureLevel;
       }
       else if (att->Type == GL_NONE) {
-         _mesa_error(ctx, GL_INVALID_OPERATION,
+         _mesa_error(ctx, err,
                      "glGetFramebufferAttachmentParameterivEXT(pname)");
       }
       else {
@@ -2214,7 +2263,7 @@ _mesa_GetFramebufferAttachmentParameterivEXT(GLenum target, GLenum attachment,
          }
       }
       else if (att->Type == GL_NONE) {
-         _mesa_error(ctx, GL_INVALID_OPERATION,
+         _mesa_error(ctx, err,
                      "glGetFramebufferAttachmentParameterivEXT(pname)");
       }
       else {
@@ -2232,7 +2281,7 @@ _mesa_GetFramebufferAttachmentParameterivEXT(GLenum target, GLenum attachment,
          }
       }
       else if (att->Type == GL_NONE) {
-         _mesa_error(ctx, GL_INVALID_OPERATION,
+         _mesa_error(ctx, err,
                      "glGetFramebufferAttachmentParameterivEXT(pname)");
       }
       else {
@@ -2246,7 +2295,7 @@ _mesa_GetFramebufferAttachmentParameterivEXT(GLenum target, GLenum attachment,
                      "glGetFramebufferAttachmentParameterivEXT(pname)");
       }
       else if (att->Type == GL_NONE) {
-         _mesa_error(ctx, GL_INVALID_OPERATION,
+         _mesa_error(ctx, err,
                      "glGetFramebufferAttachmentParameterivEXT(pname)");
       }
       else {
@@ -2267,7 +2316,7 @@ _mesa_GetFramebufferAttachmentParameterivEXT(GLenum target, GLenum attachment,
          return;
       }
       else if (att->Type == GL_NONE) {
-         _mesa_error(ctx, GL_INVALID_OPERATION,
+         _mesa_error(ctx, err,
                      "glGetFramebufferAttachmentParameterivEXT(pname)");
       }
       else {
@@ -2301,7 +2350,7 @@ _mesa_GetFramebufferAttachmentParameterivEXT(GLenum target, GLenum attachment,
                      "glGetFramebufferAttachmentParameterivEXT(pname)");
       }
       else if (att->Type == GL_NONE) {
-         _mesa_error(ctx, GL_INVALID_OPERATION,
+         _mesa_error(ctx, err,
                      "glGetFramebufferAttachmentParameterivEXT(pname)");
       }
       else if (att->Texture) {
@@ -2337,6 +2386,8 @@ void GLAPIENTRY
 _mesa_GenerateMipmapEXT(GLenum target)
 {
    struct gl_texture_object *texObj;
+   GLboolean error;
+
    GET_CURRENT_CONTEXT(ctx);
 
    ASSERT_OUTSIDE_BEGIN_END(ctx);
@@ -2346,12 +2397,22 @@ _mesa_GenerateMipmapEXT(GLenum target)
    case GL_TEXTURE_1D:
    case GL_TEXTURE_2D:
    case GL_TEXTURE_3D:
+      error = GL_FALSE;
+      break;
    case GL_TEXTURE_CUBE_MAP:
-      /* OK, legal value */
+      error = !ctx->Extensions.ARB_texture_cube_map;
+      break;
+   case GL_TEXTURE_1D_ARRAY:
+   case GL_TEXTURE_2D_ARRAY:
+      error = !ctx->Extensions.EXT_texture_array;
       break;
    default:
-      /* XXX need to implement GL_TEXTURE_1D_ARRAY and GL_TEXTURE_2D_ARRAY */
-      _mesa_error(ctx, GL_INVALID_ENUM, "glGenerateMipmapEXT(target)");
+      error = GL_TRUE;
+   }
+
+   if (error) {
+      _mesa_error(ctx, GL_INVALID_ENUM, "glGenerateMipmapEXT(target=%s)",
+                  _mesa_lookup_enum_by_nr(target));
       return;
    }
 

@@ -119,8 +119,15 @@ util_format_s3tc_init(void)
 
    library = util_dl_open(DXTN_LIBNAME);
    if (!library) {
-      debug_printf("couldn't open " DXTN_LIBNAME ", software DXTn "
-         "compression/decompression unavailable\n");
+      if (getenv("force_s3tc_enable") &&
+          !strcmp(getenv("force_s3tc_enable"), "true")) {
+         debug_printf("couldn't open " DXTN_LIBNAME ", enabling DXTn due to "
+            "force_s3tc_enable=true environment variable\n");
+         util_format_s3tc_enabled = TRUE;
+      } else {
+         debug_printf("couldn't open " DXTN_LIBNAME ", software DXTn "
+            "compression/decompression unavailable\n");
+      }
       return;
    }
 

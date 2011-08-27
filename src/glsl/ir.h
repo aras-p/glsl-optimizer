@@ -144,7 +144,7 @@ public:
 
    ir_rvalue *as_rvalue_to_saturate();
 
-   virtual bool is_lvalue()
+   virtual bool is_lvalue() const
    {
       return false;
    }
@@ -152,7 +152,7 @@ public:
    /**
     * Get the variable that is ultimately referenced by an r-value
     */
-   virtual ir_variable *variable_referenced()
+   virtual ir_variable *variable_referenced() const
    {
       return NULL;
    }
@@ -236,7 +236,7 @@ enum ir_variable_interpolation {
 /**
  * \brief Layout qualifiers for gl_FragDepth.
  *
- * The AMD_conservative_depth extension allows gl_FragDepth to be redeclared
+ * The AMD/ARB_conservative_depth extensions allow gl_FragDepth to be redeclared
  * with a layout qualifier.
  */
 enum ir_depth_layout {
@@ -1212,7 +1212,8 @@ enum ir_texture_opcode {
    ir_txb,		/**< Texture look-up with LOD bias */
    ir_txl,		/**< Texture look-up with explicit LOD */
    ir_txd,		/**< Texture look-up with partial derivatvies */
-   ir_txf		/**< Texel fetch with explicit LOD */
+   ir_txf,		/**< Texel fetch with explicit LOD */
+   ir_txs		/**< Texture size */
 };
 
 
@@ -1233,6 +1234,7 @@ enum ir_texture_opcode {
  * (txl <type> <sampler> <coordinate> 0 1 ( ) <lod>)
  * (txd <type> <sampler> <coordinate> 0 1 ( ) (dPdx dPdy))
  * (txf <type> <sampler> <coordinate> 0       <lod>)
+ * (txs <type> <sampler> <lod>)
  */
 class ir_texture : public ir_rvalue {
 public:
@@ -1355,7 +1357,7 @@ public:
 
    virtual ir_visitor_status accept(ir_hierarchical_visitor *);
 
-   bool is_lvalue()
+   bool is_lvalue() const
    {
       return val->is_lvalue() && !mask.has_duplicates;
    }
@@ -1363,7 +1365,7 @@ public:
    /**
     * Get the variable that is ultimately referenced by an r-value
     */
-   virtual ir_variable *variable_referenced();
+   virtual ir_variable *variable_referenced() const;
 
    ir_rvalue *val;
    ir_swizzle_mask mask;
@@ -1387,12 +1389,12 @@ public:
       return this;
    }
 
-   bool is_lvalue();
+   bool is_lvalue() const;
 
    /**
     * Get the variable that is ultimately referenced by an r-value
     */
-   virtual ir_variable *variable_referenced() = 0;
+   virtual ir_variable *variable_referenced() const = 0;
 };
 
 
@@ -1413,7 +1415,7 @@ public:
    /**
     * Get the variable that is ultimately referenced by an r-value
     */
-   virtual ir_variable *variable_referenced()
+   virtual ir_variable *variable_referenced() const
    {
       return this->var;
    }
@@ -1462,7 +1464,7 @@ public:
    /**
     * Get the variable that is ultimately referenced by an r-value
     */
-   virtual ir_variable *variable_referenced()
+   virtual ir_variable *variable_referenced() const
    {
       return this->array->variable_referenced();
    }
@@ -1496,7 +1498,7 @@ public:
    /**
     * Get the variable that is ultimately referenced by an r-value
     */
-   virtual ir_variable *variable_referenced()
+   virtual ir_variable *variable_referenced() const
    {
       return this->record->variable_referenced();
    }
@@ -1635,6 +1637,32 @@ visit_exec_list(exec_list *list, ir_visitor *visitor);
  */
 void validate_ir_tree(exec_list *instructions);
 
+struct _mesa_glsl_parse_state;
+struct gl_shader_program;
+
+/**
+ * Detect whether an unlinked shader contains static recursion
+ *
+ * If the list of instructions is determined to contain static recursion,
+ * \c _mesa_glsl_error will be called to emit error messages for each function
+ * that is in the recursion cycle.
+ */
+void
+detect_recursion_unlinked(struct _mesa_glsl_parse_state *state,
+			  exec_list *instructions);
+
+/**
+ * Detect whether a linked shader contains static recursion
+ *
+ * If the list of instructions is determined to contain static recursion,
+ * \c link_error_printf will be called to emit error messages for each function
+ * that is in the recursion cycle.  In addition,
+ * \c gl_shader_program::LinkStatus will be set to false.
+ */
+void
+detect_recursion_linked(struct gl_shader_program *prog,
+			exec_list *instructions);
+
 /**
  * Make a clone of each IR instruction in a list
  *
@@ -1668,5 +1696,9 @@ ir_has_call(ir_instruction *ir);
 
 extern void
 do_set_program_inouts(exec_list *instructions, struct gl_program *prog);
+
+extern char *
+prototype_string(const glsl_type *return_type, const char *name,
+		 exec_list *parameters);
 
 #endif /* IR_H */

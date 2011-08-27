@@ -548,6 +548,7 @@ _mesa_update_framebuffer_visual(struct gl_context *ctx,
             fb->Visual.rgbBits = fb->Visual.redBits
                + fb->Visual.greenBits + fb->Visual.blueBits;
             fb->Visual.samples = rb->NumSamples;
+            fb->Visual.sampleBuffers = rb->NumSamples > 0 ? 1 : 0;
             if (_mesa_get_format_color_encoding(fmt) == GL_SRGB)
                 fb->Visual.sRGBCapable = ctx->Const.sRGBCapable;
             break;

@@ -42,6 +42,7 @@ import SCons.Scanner
 
 import fixes
 
+import source_list
 
 def quietCommandLines(env):
     # Quiet command lines
@@ -229,6 +230,40 @@ def createPkgConfigMethods(env):
     env.AddMethod(pkg_use_modules, 'PkgUseModules')
 
 
+def parse_source_list(env, filename, names=None):
+    # parse the source list file
+    parser = source_list.SourceListParser()
+    src = env.File(filename).srcnode()
+    sym_table = parser.parse(src.abspath)
+
+    if names:
+        if isinstance(names, basestring):
+            names = [names]
+
+        symbols = names
+    else:
+        symbols = sym_table.keys()
+
+    # convert the symbol table to source lists
+    src_lists = {}
+    for sym in symbols:
+        val = sym_table[sym]
+        src_lists[sym] = [f for f in val.split(' ') if f]
+
+    # if names are given, concatenate the lists
+    if names:
+        srcs = []
+        for name in names:
+            srcs.extend(src_lists[name])
+
+        return srcs
+    else:
+        return src_lists
+
+def createParseSourceListMethod(env):
+    env.AddMethod(parse_source_list, 'ParseSourceList')
+
+
 def generate(env):
     """Common environment generation code"""
 
@@ -240,6 +275,7 @@ def generate(env):
     createConvenienceLibBuilder(env)
     createCodeGenerateMethod(env)
     createPkgConfigMethods(env)
+    createParseSourceListMethod(env)
 
     # for debugging
     #print env.Dump()

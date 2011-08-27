@@ -68,10 +68,17 @@ lp_jit_create_types(struct llvmpipe_context *lp)
       elem_types[LP_JIT_TEXTURE_BORDER_COLOR] = 
          LLVMArrayType(LLVMFloatTypeInContext(lc), 4);
 
+#if HAVE_LLVM >= 0x0300
+   texture_type = LLVMStructCreateNamed(gallivm->context, "texture");
+   LLVMStructSetBody(texture_type, elem_types,
+                     Elements(elem_types), 0);
+#else
       texture_type = LLVMStructTypeInContext(lc, elem_types,
                                              Elements(elem_types), 0);
+      LLVMAddTypeName(gallivm->module, "texture", texture_type);
 
       LLVMInvalidateStructLayout(gallivm->target, texture_type);
+#endif
 
       LP_CHECK_MEMBER_OFFSET(struct lp_jit_texture, width,
                              gallivm->target, texture_type,
@@ -112,8 +119,6 @@ lp_jit_create_types(struct llvmpipe_context *lp)
 
       LP_CHECK_STRUCT_SIZE(struct lp_jit_texture,
                            gallivm->target, texture_type);
-
-      LLVMAddTypeName(gallivm->module, "texture", texture_type);
    }
 
    /* struct lp_jit_context */
@@ -129,10 +134,18 @@ lp_jit_create_types(struct llvmpipe_context *lp)
       elem_types[LP_JIT_CTX_TEXTURES] = LLVMArrayType(texture_type,
                                                       PIPE_MAX_SAMPLERS);
 
+#if HAVE_LLVM >= 0x0300
+   context_type = LLVMStructCreateNamed(gallivm->context, "context");
+   LLVMStructSetBody(context_type, elem_types,
+                     Elements(elem_types), 0);
+#else
       context_type = LLVMStructTypeInContext(lc, elem_types,
                                              Elements(elem_types), 0);
 
       LLVMInvalidateStructLayout(gallivm->target, context_type);
+
+      LLVMAddTypeName(gallivm->module, "context", context_type);
+#endif
 
       LP_CHECK_MEMBER_OFFSET(struct lp_jit_context, constants,
                              gallivm->target, context_type,
@@ -154,8 +167,6 @@ lp_jit_create_types(struct llvmpipe_context *lp)
                              LP_JIT_CTX_TEXTURES);
       LP_CHECK_STRUCT_SIZE(struct lp_jit_context,
                            gallivm->target, context_type);
-
-      LLVMAddTypeName(gallivm->module, "context", context_type);
 
       lp->jit_context_ptr_type = LLVMPointerType(context_type, 0);
    }

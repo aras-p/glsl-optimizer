@@ -43,16 +43,10 @@ enum r300_zmask_compression {
 /* Structure containing all the possible information about a specific Radeon
  * in the R3xx, R4xx, and R5xx families. */
 struct r300_capabilities {
-    /* PCI ID */
-    uint32_t pci_id;
     /* Chipset family */
     int family;
     /* The number of vertex floating-point units */
     unsigned num_vert_fpus;
-    /* The number of fragment pipes */
-    unsigned num_frag_pipes;
-    /* The number of z pipes */
-    unsigned num_z_pipes;
     /* The number of texture units. */
     unsigned num_tex_units;
     /* Whether or not TCL is physically present */
@@ -121,6 +115,6 @@ enum {
     CHIP_FAMILY_RV570
 };
 
-void r300_parse_chipset(struct r300_capabilities* caps);
+void r300_parse_chipset(uint32_t pci_id, struct r300_capabilities* caps);
 
 #endif /* R300_CHIPSET_H */

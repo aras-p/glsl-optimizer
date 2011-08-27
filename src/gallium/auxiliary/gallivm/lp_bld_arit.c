@@ -61,7 +61,7 @@
 #include "lp_bld_arit.h"
 
 
-#define EXP_POLY_DEGREE 3
+#define EXP_POLY_DEGREE 5
 
 #define LOG_POLY_DEGREE 5
 
@@ -1645,7 +1645,7 @@ lp_build_rsqrt(struct lp_build_context *bld,
    assert(type.floating);
 
    if (util_cpu_caps.has_sse && type.width == 32 && type.length == 4) {
-      const unsigned num_iterations = 0;
+      const unsigned num_iterations = 1;
       LLVMValueRef res;
       unsigned i;
 
@@ -2151,7 +2151,7 @@ lp_build_exp(struct lp_build_context *bld,
 
    assert(lp_check_value(bld->type, x));
 
-   return lp_build_mul(bld, log2e, lp_build_exp2(bld, x));
+   return lp_build_exp2(bld, lp_build_mul(bld, log2e, x));
 }
 
 
@@ -2168,7 +2168,7 @@ lp_build_log(struct lp_build_context *bld,
 
    assert(lp_check_value(bld->type, x));
 
-   return lp_build_mul(bld, log2, lp_build_exp2(bld, x));
+   return lp_build_mul(bld, log2, lp_build_log2(bld, x));
 }
 
 
@@ -2218,18 +2218,18 @@ lp_build_polynomial(struct lp_build_context *bld,
  */
 const double lp_build_exp2_polynomial[] = {
 #if EXP_POLY_DEGREE == 5
-   0.999999999690134838155,
-   0.583974334321735217258,
-   0.164553105719676828492,
-   0.0292811063701710962255,
-   0.00354944426657875141846,
-   0.000296253726543423377365
+   0.999999925063526176901,
+   0.693153073200168932794,
+   0.240153617044375388211,
+   0.0558263180532956664775,
+   0.00898934009049466391101,
+   0.00187757667519147912699
 #elif EXP_POLY_DEGREE == 4
-   1.00000001502262084505,
-   0.563586057338685991394,
-   0.150436017652442413623,
-   0.0243220604213317927308,
-   0.0025359088446580436489
+   1.00000259337069434683,
+   0.693003834469974940458,
+   0.24144275689150793076,
+   0.0520114606103070150235,
+   0.0135341679161270268764
 #elif EXP_POLY_DEGREE == 3
    0.999925218562710312959,
    0.695833540494823811697,
@@ -2464,6 +2464,12 @@ lp_build_log2_approx(struct lp_build_context *bld,
       }
 
       assert(type.floating && type.width == 32);
+
+      /* 
+       * We don't explicitly handle denormalized numbers. They will yield a
+       * result in the neighbourhood of -127, which appears to be adequate
+       * enough.
+       */
 
       i = LLVMBuildBitCast(builder, x, int_vec_type, "");
 

@@ -66,6 +66,7 @@ struct brw_vs_compile {
    GLuint first_output;
    GLuint nr_outputs;
    GLuint first_overflow_output; /**< VERT_ATTRIB_x */
+   GLuint last_scratch;
 
    GLuint first_tmp;
    GLuint last_tmp;
@@ -92,6 +93,8 @@ struct brw_vs_compile {
    GLboolean needs_stack;
 };
 
-void brw_vs_emit( struct brw_vs_compile *c );
+bool brw_vs_emit(struct gl_shader_program *prog, struct brw_vs_compile *c);
+void brw_old_vs_emit(struct brw_vs_compile *c);
+bool brw_vs_precompile(struct gl_context *ctx, struct gl_shader_program *prog);
 
 #endif

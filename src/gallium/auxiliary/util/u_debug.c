@@ -730,7 +730,7 @@ debug_dump_float_rgba_bmp(const char *filename,
          pixel.rgbRed   = float_to_ubyte(ptr[x*4 + 0]);
          pixel.rgbGreen = float_to_ubyte(ptr[x*4 + 1]);
          pixel.rgbBlue  = float_to_ubyte(ptr[x*4 + 2]);
-         pixel.rgbAlpha = 255;
+         pixel.rgbAlpha = float_to_ubyte(ptr[x*4 + 3]);
          os_stream_write(stream, &pixel, 4);
       }
    }

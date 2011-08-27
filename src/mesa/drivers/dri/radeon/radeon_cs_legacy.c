@@ -218,11 +218,9 @@ static int cs_end(struct radeon_cs_int *cs,
 
 static int cs_process_relocs(struct radeon_cs_int *cs)
 {
-    struct cs_manager_legacy *csm = (struct cs_manager_legacy*)cs->csm;
     struct cs_reloc_legacy *relocs;
     int i, j, r;
 
-    csm = (struct cs_manager_legacy*)cs->csm;
     relocs = (struct cs_reloc_legacy *)cs->relocs;
 restart:
     for (i = 0; i < cs->crelocs; i++) 

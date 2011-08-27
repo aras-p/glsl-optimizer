@@ -181,7 +181,7 @@ static void TAG(encode_rgtc_chan)(TYPE *blkaddr, TYPE srccolors[4][4],
       fprintf(stderr, "%d ", alphaenc1[i]);
    }
    fprintf(stderr, "cutVals ");
-   for (i = 0; i < 8; i++) {
+   for (i = 0; i < 7; i++) {
       fprintf(stderr, "%d ", acutValues[i]);
    }
    fprintf(stderr, "srcVals ");

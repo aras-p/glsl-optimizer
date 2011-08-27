@@ -211,28 +211,28 @@ class PrintRemapTable(gl_XML.gl_print_base):
 
 
 def show_usage():
-	print "Usage: %s [-f input_file_name] [-m mode] [-c]" % sys.argv[0]
+	print "Usage: %s [-f input_file_name] [-m mode] [-c ver]" % sys.argv[0]
 	print "    -m mode   Mode can be 'table' or 'remap_table'."
-	print "    -c        Enable compatibility with OpenGL ES."
+	print "    -c ver    Version can be 'es1' or 'es2'."
 	sys.exit(1)
 
 if __name__ == '__main__':
 	file_name = "gl_API.xml"
     
 	try:
-		(args, trail) = getopt.getopt(sys.argv[1:], "f:m:c")
+		(args, trail) = getopt.getopt(sys.argv[1:], "f:m:c:")
 	except Exception,e:
 		show_usage()
 
 	mode = "table"
-	es = False
+	es = None
 	for (arg,val) in args:
 		if arg == "-f":
 			file_name = val
 		elif arg == "-m":
 			mode = val
 		elif arg == "-c":
-			es = True
+			es = val
 
 	if mode == "table":
 		printer = PrintGlTable(es)
@@ -242,5 +242,15 @@ if __name__ == '__main__':
 		show_usage()
 
 	api = gl_XML.parse_GL_API( file_name )
+
+	if es is not None:
+		import gles_api
+
+		api_map = {
+			'es1': gles_api.es1_api,
+			'es2': gles_api.es2_api,
+		}
+
+		api.filter_functions(api_map[es])
 
 	printer.Print( api )

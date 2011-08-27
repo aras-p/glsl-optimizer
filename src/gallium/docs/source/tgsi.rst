@@ -1031,9 +1031,21 @@ XXX so let's discuss it, yeah?
   TBD
 
 
-.. opcode:: TXQ - Texture Size Query
+.. opcode:: TXQ - Texture Size Query (as per NV_gpu_program4)
+                  retrieve the dimensions of the texture
+                  depending on the target. For 1D (width), 2D/RECT/CUBE
+		  (width, height), 3D (width, height, depth),
+		  1D array (width, layers), 2D array (width, height, layers)
 
-  TBD
+.. math::
+
+  lod = src0
+
+  dst.x = texture_width(unit, lod)
+
+  dst.y = texture_height(unit, lod)
+
+  dst.z = texture_depth(unit, lod)
 
 
 .. opcode:: CONT - Continue

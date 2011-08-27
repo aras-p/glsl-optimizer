@@ -330,8 +330,7 @@ static GLbitfield get_fp_input_mask( struct gl_context *ctx )
       /* _NEW_RENDERMODE */
       fp_inputs = (FRAG_BIT_COL0 | FRAG_BIT_TEX0);
    }
-   else if (!(vertexProgram || vertexShader) ||
-            !ctx->VertexProgram._Current) {
+   else if (!(vertexProgram || vertexShader)) {
       /* Fixed function vertex logic */
       /* _NEW_ARRAY */
       GLbitfield varying_inputs = ctx->varying_vp_inputs;
@@ -875,7 +874,8 @@ static struct ureg register_const4f( struct texenv_fragment_program *p,
    values[1] = s1;
    values[2] = s2;
    values[3] = s3;
-   idx = _mesa_add_unnamed_constant( p->program->Base.Parameters, values, 4,
+   idx = _mesa_add_unnamed_constant( p->program->Base.Parameters,
+                                     (gl_constant_value *) values, 4,
                                      &swizzle );
    r = make_ureg(PROGRAM_CONSTANT, idx);
    r.swz = swizzle;

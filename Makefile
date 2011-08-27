@@ -21,6 +21,10 @@ all: default
 doxygen:
 	cd doxygen && $(MAKE)
 
+check:
+	cd src/glsl/tests/ && ./optimization-test
+	@echo "All tests passed."
+
 clean:
 	-@touch $(TOP)/configs/current
 	-@for dir in $(SUBDIRS) ; do \
@@ -51,7 +55,7 @@ install:
 	done
 
 
-.PHONY: default doxygen clean realclean distclean install
+.PHONY: default doxygen clean realclean distclean install check
 
 # If there's no current configuration file
 $(TOP)/configs/current:
@@ -203,12 +207,6 @@ EXTRA_FILES = \
 IGNORE_FILES = \
 	-x autogen.sh
 
-DEPEND_FILES = \
-	src/mesa/depend		\
-	src/glx/depend		\
-	src/glw/depend		\
-	src/glu/sgi/depend
-
 
 parsers: configure
 	-@touch $(TOP)/configs/current
@@ -231,14 +229,8 @@ AUTOCONF = autoconf
 AC_FLAGS =
 aclocal.m4: configure.ac acinclude.m4
 	$(ACLOCAL) $(ACLOCAL_FLAGS)
-configure: rm_depend configure.ac aclocal.m4 acinclude.m4
+configure: configure.ac aclocal.m4 acinclude.m4
 	$(AUTOCONF) $(AC_FLAGS)
-
-rm_depend:
-	@for dep in $(DEPEND_FILES) ; do \
-		rm -f $$dep ; \
-		touch $$dep ; \
-	done
 
 manifest.txt: .git
 	( \
@@ -269,4 +261,4 @@ md5: $(ARCHIVES)
 	@-md5sum $(PACKAGE_NAME).tar.bz2
 	@-md5sum $(PACKAGE_NAME).zip
 
-.PHONY: tarballs rm_depend md5
+.PHONY: tarballs md5

@@ -23,6 +23,7 @@
 #pragma once
 
 #include "main/config.h"
+#include "program/prog_parameter.h"
 
 struct gl_context;
 
@@ -96,7 +97,7 @@ struct asm_symbol {
 
 struct asm_vector {
    unsigned count;
-   float    data[4];
+   gl_constant_value data[4];
 };
 
 

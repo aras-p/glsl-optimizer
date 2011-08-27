@@ -231,6 +231,8 @@ init_pipe_state(struct vl_compositor *c)
    struct pipe_rasterizer_state rast;
    struct pipe_sampler_state sampler;
    struct pipe_blend_state blend;
+   struct pipe_depth_stencil_alpha_state dsa;
+   unsigned i;
 
    assert(c);
 
@@ -289,6 +291,24 @@ init_pipe_state(struct vl_compositor *c)
 
    c->rast = c->pipe->create_rasterizer_state(c->pipe, &rast);
 
+   memset(&dsa, 0, sizeof dsa);
+   dsa.depth.enabled = 0;
+   dsa.depth.writemask = 0;
+   dsa.depth.func = PIPE_FUNC_ALWAYS;
+   for (i = 0; i < 2; ++i) {
+      dsa.stencil[i].enabled = 0;
+      dsa.stencil[i].func = PIPE_FUNC_ALWAYS;
+      dsa.stencil[i].fail_op = PIPE_STENCIL_OP_KEEP;
+      dsa.stencil[i].zpass_op = PIPE_STENCIL_OP_KEEP;
+      dsa.stencil[i].zfail_op = PIPE_STENCIL_OP_KEEP;
+      dsa.stencil[i].valuemask = 0;
+      dsa.stencil[i].writemask = 0;
+   }
+   dsa.alpha.enabled = 0;
+   dsa.alpha.func = PIPE_FUNC_ALWAYS;
+   dsa.alpha.ref_value = 0;
+   c->dsa = c->pipe->create_depth_stencil_alpha_state(c->pipe, &dsa);
+   c->pipe->bind_depth_stencil_alpha_state(c->pipe, c->dsa);
    return true;
 }
 
@@ -296,6 +316,11 @@ static void cleanup_pipe_state(struct vl_compositor *c)
 {
    assert(c);
 
+   /* Asserted in softpipe_delete_fs_state() for some reason */
+   c->pipe->bind_vs_state(c->pipe, NULL);
+   c->pipe->bind_fs_state(c->pipe, NULL);
+
+   c->pipe->delete_depth_stencil_alpha_state(c->pipe, c->dsa);
    c->pipe->delete_sampler_state(c->pipe, c->sampler_linear);
    c->pipe->delete_sampler_state(c->pipe, c->sampler_nearest);
    c->pipe->delete_blend_state(c->pipe, c->blend);
@@ -648,7 +673,6 @@ vl_compositor_set_rgba_layer(struct vl_compositor *c,
 
 void
 vl_compositor_render(struct vl_compositor *c,
-                     enum pipe_mpeg12_picture_type picture_type,
                      struct pipe_surface           *dst_surface,
                      struct pipe_video_rect        *dst_area,
                      struct pipe_video_rect        *dst_clip)

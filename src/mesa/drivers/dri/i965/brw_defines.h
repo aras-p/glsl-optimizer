@@ -557,58 +557,93 @@
 #define BRW_WE_ALL		1
 /** @} */
 
-#define BRW_OPCODE_MOV        1
-#define BRW_OPCODE_SEL        2
-#define BRW_OPCODE_NOT        4
-#define BRW_OPCODE_AND        5
-#define BRW_OPCODE_OR         6
-#define BRW_OPCODE_XOR        7
-#define BRW_OPCODE_SHR        8
-#define BRW_OPCODE_SHL        9
-#define BRW_OPCODE_RSR        10
-#define BRW_OPCODE_RSL        11
-#define BRW_OPCODE_ASR        12
-#define BRW_OPCODE_CMP        16
-#define BRW_OPCODE_CMPN       17
-#define BRW_OPCODE_JMPI       32
-#define BRW_OPCODE_IF         34
-#define BRW_OPCODE_IFF        35
-#define BRW_OPCODE_ELSE       36
-#define BRW_OPCODE_ENDIF      37
-#define BRW_OPCODE_DO         38
-#define BRW_OPCODE_WHILE      39
-#define BRW_OPCODE_BREAK      40
-#define BRW_OPCODE_CONTINUE   41
-#define BRW_OPCODE_HALT       42
-#define BRW_OPCODE_MSAVE      44
-#define BRW_OPCODE_MRESTORE   45
-#define BRW_OPCODE_PUSH       46
-#define BRW_OPCODE_POP        47
-#define BRW_OPCODE_WAIT       48
-#define BRW_OPCODE_SEND       49
-#define BRW_OPCODE_SENDC      50
-#define BRW_OPCODE_MATH       56
-#define BRW_OPCODE_ADD        64
-#define BRW_OPCODE_MUL        65
-#define BRW_OPCODE_AVG        66
-#define BRW_OPCODE_FRC        67
-#define BRW_OPCODE_RNDU       68
-#define BRW_OPCODE_RNDD       69
-#define BRW_OPCODE_RNDE       70
-#define BRW_OPCODE_RNDZ       71
-#define BRW_OPCODE_MAC        72
-#define BRW_OPCODE_MACH       73
-#define BRW_OPCODE_LZD        74
-#define BRW_OPCODE_SAD2       80
-#define BRW_OPCODE_SADA2      81
-#define BRW_OPCODE_DP4        84
-#define BRW_OPCODE_DPH        85
-#define BRW_OPCODE_DP3        86
-#define BRW_OPCODE_DP2        87
-#define BRW_OPCODE_DPA2       88
-#define BRW_OPCODE_LINE       89
-#define BRW_OPCODE_PLN        90
-#define BRW_OPCODE_NOP        126
+enum opcode {
+   /* These are the actual hardware opcodes. */
+   BRW_OPCODE_MOV =	1,
+   BRW_OPCODE_SEL =	2,
+   BRW_OPCODE_NOT =	4,
+   BRW_OPCODE_AND =	5,
+   BRW_OPCODE_OR =	6,
+   BRW_OPCODE_XOR =	7,
+   BRW_OPCODE_SHR =	8,
+   BRW_OPCODE_SHL =	9,
+   BRW_OPCODE_RSR =	10,
+   BRW_OPCODE_RSL =	11,
+   BRW_OPCODE_ASR =	12,
+   BRW_OPCODE_CMP =	16,
+   BRW_OPCODE_CMPN =	17,
+   BRW_OPCODE_JMPI =	32,
+   BRW_OPCODE_IF =	34,
+   BRW_OPCODE_IFF =	35,
+   BRW_OPCODE_ELSE =	36,
+   BRW_OPCODE_ENDIF =	37,
+   BRW_OPCODE_DO =	38,
+   BRW_OPCODE_WHILE =	39,
+   BRW_OPCODE_BREAK =	40,
+   BRW_OPCODE_CONTINUE = 41,
+   BRW_OPCODE_HALT =	42,
+   BRW_OPCODE_MSAVE =	44,
+   BRW_OPCODE_MRESTORE = 45,
+   BRW_OPCODE_PUSH =	46,
+   BRW_OPCODE_POP =	47,
+   BRW_OPCODE_WAIT =	48,
+   BRW_OPCODE_SEND =	49,
+   BRW_OPCODE_SENDC =	50,
+   BRW_OPCODE_MATH =	56,
+   BRW_OPCODE_ADD =	64,
+   BRW_OPCODE_MUL =	65,
+   BRW_OPCODE_AVG =	66,
+   BRW_OPCODE_FRC =	67,
+   BRW_OPCODE_RNDU =	68,
+   BRW_OPCODE_RNDD =	69,
+   BRW_OPCODE_RNDE =	70,
+   BRW_OPCODE_RNDZ =	71,
+   BRW_OPCODE_MAC =	72,
+   BRW_OPCODE_MACH =	73,
+   BRW_OPCODE_LZD =	74,
+   BRW_OPCODE_SAD2 =	80,
+   BRW_OPCODE_SADA2 =	81,
+   BRW_OPCODE_DP4 =	84,
+   BRW_OPCODE_DPH =	85,
+   BRW_OPCODE_DP3 =	86,
+   BRW_OPCODE_DP2 =	87,
+   BRW_OPCODE_DPA2 =	88,
+   BRW_OPCODE_LINE =	89,
+   BRW_OPCODE_PLN =	90,
+   BRW_OPCODE_NOP =	126,
+
+   /* These are compiler backend opcodes that get translated into other
+    * instructions.
+    */
+   FS_OPCODE_FB_WRITE = 128,
+   SHADER_OPCODE_RCP,
+   SHADER_OPCODE_RSQ,
+   SHADER_OPCODE_SQRT,
+   SHADER_OPCODE_EXP2,
+   SHADER_OPCODE_LOG2,
+   SHADER_OPCODE_POW,
+   SHADER_OPCODE_SIN,
+   SHADER_OPCODE_COS,
+   FS_OPCODE_DDX,
+   FS_OPCODE_DDY,
+   FS_OPCODE_PIXEL_X,
+   FS_OPCODE_PIXEL_Y,
+   FS_OPCODE_CINTERP,
+   FS_OPCODE_LINTERP,
+   FS_OPCODE_TEX,
+   FS_OPCODE_TXB,
+   FS_OPCODE_TXD,
+   FS_OPCODE_TXL,
+   FS_OPCODE_TXS,
+   FS_OPCODE_DISCARD,
+   FS_OPCODE_SPILL,
+   FS_OPCODE_UNSPILL,
+   FS_OPCODE_PULL_CONSTANT_LOAD,
+
+   VS_OPCODE_URB_WRITE,
+   VS_OPCODE_SCRATCH_READ,
+   VS_OPCODE_SCRATCH_WRITE,
+};
 
 #define BRW_PREDICATE_NONE             0
 #define BRW_PREDICATE_NORMAL           1
@@ -734,7 +769,6 @@
 #define BRW_SAMPLER_MESSAGE_SIMD8_SAMPLE_BIAS_COMPARE 0
 #define BRW_SAMPLER_MESSAGE_SIMD8_SAMPLE_LOD_COMPARE  1
 #define BRW_SAMPLER_MESSAGE_SIMD4X2_RESINFO           2
-#define BRW_SAMPLER_MESSAGE_SIMD8_RESINFO             2
 #define BRW_SAMPLER_MESSAGE_SIMD16_RESINFO            2
 #define BRW_SAMPLER_MESSAGE_SIMD4X2_LD                3
 #define BRW_SAMPLER_MESSAGE_SIMD8_LD                  3
@@ -747,6 +781,7 @@
 #define GEN5_SAMPLER_MESSAGE_SAMPLE_DERIVS       4
 #define GEN5_SAMPLER_MESSAGE_SAMPLE_BIAS_COMPARE 5
 #define GEN5_SAMPLER_MESSAGE_SAMPLE_LOD_COMPARE  6
+#define GEN5_SAMPLER_MESSAGE_SAMPLE_RESINFO      10
 
 /* for GEN5 only */
 #define BRW_SAMPLER_SIMD_MODE_SIMD4X2                   0

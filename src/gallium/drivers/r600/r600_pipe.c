@@ -47,12 +47,14 @@
 #include "r600_resource.h"
 #include "r600_shader.h"
 #include "r600_pipe.h"
+#include "../../winsys/r600/drm/r600_drm_public.h"
 
 /*
  * pipe_context
  */
 static struct r600_fence *r600_create_fence(struct r600_pipe_context *ctx)
 {
+	struct r600_pipe_context *rctx = (struct r600_pipe_context *)ctx;
 	struct r600_fence *fence = NULL;
 
 	if (!ctx->fences.bo) {
@@ -62,7 +64,8 @@ static struct r600_fence *r600_create_fence(struct r600_pipe_context *ctx)
 			R600_ERR("r600: failed to create bo for fence objects\n");
 			return NULL;
 		}
-		ctx->fences.data = r600_bo_map(ctx->radeon, ctx->fences.bo, PIPE_TRANSFER_UNSYNCHRONIZED, NULL);
+		ctx->fences.data = r600_bo_map(ctx->radeon, ctx->fences.bo, rctx->ctx.cs,
+					       PIPE_TRANSFER_UNSYNCHRONIZED | PIPE_TRANSFER_WRITE);
 	}
 
 	if (!LIST_IS_EMPTY(&ctx->fences.pool)) {
@@ -113,29 +116,28 @@ static struct r600_fence *r600_create_fence(struct r600_pipe_context *ctx)
 	return fence;
 }
 
-static void r600_flush(struct pipe_context *ctx,
-			struct pipe_fence_handle **fence)
+
+void r600_flush(struct pipe_context *ctx, struct pipe_fence_handle **fence,
+		unsigned flags)
 {
 	struct r600_pipe_context *rctx = (struct r600_pipe_context *)ctx;
 	struct r600_fence **rfence = (struct r600_fence**)fence;
 
-#if 0
-	static int dc = 0;
-	char dname[256];
-#endif
-
 	if (rfence)
 		*rfence = r600_create_fence(rctx);
 
-#if 0
-	sprintf(dname, "gallium-%08d.bof", dc);
-	if (dc < 20) {
-		r600_context_dump_bof(&rctx->ctx, dname);
-		R600_ERR("dumped %s\n", dname);
-	}
-	dc++;
-#endif
-	r600_context_flush(&rctx->ctx);
+	r600_context_flush(&rctx->ctx, flags);
+}
+
+static void r600_flush_from_st(struct pipe_context *ctx,
+			       struct pipe_fence_handle **fence)
+{
+	r600_flush(ctx, fence, 0);
+}
+
+static void r600_flush_from_winsys(void *ctx, unsigned flags)
+{
+	r600_flush((struct pipe_context*)ctx, NULL, flags);
 }
 
 static void r600_update_num_contexts(struct r600_screen *rscreen, int diff)
@@ -184,7 +186,7 @@ static void r600_destroy_context(struct pipe_context *context)
 		}
 
 		r600_bo_unmap(rctx->radeon, rctx->fences.bo);
-		r600_bo_reference(rctx->radeon, &rctx->fences.bo, NULL);
+		r600_bo_reference(&rctx->fences.bo, NULL);
 	}
 
 	r600_update_num_contexts(rctx->screen, -1);
@@ -206,7 +208,7 @@ static struct pipe_context *r600_create_context(struct pipe_screen *screen, void
 	rctx->context.screen = screen;
 	rctx->context.priv = priv;
 	rctx->context.destroy = r600_destroy_context;
-	rctx->context.flush = r600_flush;
+	rctx->context.flush = r600_flush_from_st;
 
 	/* Easy accessing of screen/winsys. */
 	rctx->screen = rscreen;
@@ -256,6 +258,8 @@ static struct pipe_context *r600_create_context(struct pipe_screen *screen, void
 		return NULL;
 	}
 
+	rctx->screen->ws->cs_set_flush_callback(rctx->ctx.cs, r600_flush_from_winsys, rctx);
+
 	util_slab_create(&rctx->pool_transfers,
 			 sizeof(struct pipe_transfer), 64,
 			 UTIL_SLAB_SINGLETHREADED);
@@ -269,6 +273,7 @@ static struct pipe_context *r600_create_context(struct pipe_screen *screen, void
 		r600_destroy_context(&rctx->context);
 		return NULL;
 	}
+	rctx->vbuf_mgr->caps.format_fixed32 = 0;
 
 	rctx->blitter = util_blitter_create(&rctx->context);
 	if (rctx->blitter == NULL) {
@@ -355,6 +360,7 @@ static int r600_get_param(struct pipe_screen* pscreen, enum pipe_cap param)
 	case PIPE_CAP_SM3:
 	case PIPE_CAP_SEAMLESS_CUBE_MAP:
 	case PIPE_CAP_FRAGMENT_COLOR_CLAMP_CONTROL:
+	case PIPE_CAP_PRIMITIVE_RESTART:
 		return 1;
 
 	/* Supported except the original R600. */
@@ -369,7 +375,6 @@ static int r600_get_param(struct pipe_screen* pscreen, enum pipe_cap param)
 
 	/* Unsupported features. */
 	case PIPE_CAP_STREAM_OUTPUT:
-	case PIPE_CAP_PRIMITIVE_RESTART:
 	case PIPE_CAP_TGSI_INSTANCEID:
 	case PIPE_CAP_TGSI_FS_COORD_ORIGIN_LOWER_LEFT:
 	case PIPE_CAP_TGSI_FS_COORD_PIXEL_CENTER_INTEGER:
@@ -481,6 +486,8 @@ static int r600_get_shader_param(struct pipe_screen* pscreen, unsigned shader, e
 		return 1;
 	case PIPE_SHADER_CAP_SUBROUTINES:
 		return 0;
+	case PIPE_SHADER_CAP_INTEGERS:
+		return 0;
 	default:
 		return 0;
 	}
@@ -498,6 +505,8 @@ static int r600_get_video_param(struct pipe_screen *screen,
 	case PIPE_VIDEO_CAP_MAX_WIDTH:
 	case PIPE_VIDEO_CAP_MAX_HEIGHT:
 		return vl_video_buffer_max_size(screen);
+	case PIPE_VIDEO_CAP_NUM_BUFFERS_DESIRED:
+		return vl_num_buffers_desired(screen, profile);
 	default:
 		return 0;
 	}
@@ -510,7 +519,8 @@ static void r600_destroy_screen(struct pipe_screen* pscreen)
 	if (rscreen == NULL)
 		return;
 
-	radeon_decref(rscreen->radeon);
+	radeon_destroy(rscreen->radeon);
+	rscreen->ws->destroy(rscreen->ws);
 
 	util_slab_destroy(&rscreen->pool_buffers);
 	pipe_mutex_destroy(rscreen->mutex_num_contexts);
@@ -574,17 +584,19 @@ static boolean r600_fence_finish(struct pipe_screen *pscreen,
 	return TRUE;
 }
 
-struct pipe_screen *r600_screen_create(struct radeon *radeon)
+struct pipe_screen *r600_screen_create(struct radeon_winsys *ws)
 {
 	struct r600_screen *rscreen;
+	struct radeon *radeon = radeon_create(ws);
 
 	rscreen = CALLOC_STRUCT(r600_screen);
 	if (rscreen == NULL) {
 		return NULL;
 	}
 
+	rscreen->ws = ws;
 	rscreen->radeon = radeon;
-	rscreen->screen.winsys = (struct pipe_winsys*)radeon;
+	rscreen->screen.winsys = (struct pipe_winsys*)ws;
 	rscreen->screen.destroy = r600_destroy_screen;
 	rscreen->screen.get_name = r600_get_name;
 	rscreen->screen.get_vendor = r600_get_vendor;

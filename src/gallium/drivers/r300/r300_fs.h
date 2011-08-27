@@ -27,7 +27,7 @@
 
 #include "pipe/p_state.h"
 #include "tgsi/tgsi_scan.h"
-#include "radeon_code.h"
+#include "compiler/radeon_code.h"
 #include "r300_shader_semantics.h"
 
 struct r300_fragment_shader_code {

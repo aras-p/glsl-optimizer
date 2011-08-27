@@ -23,22 +23,96 @@
  * Authors:
  *      Jerome Glisse
  */
-#include <errno.h>
-#include <stdint.h>
-#include <string.h>
-#include <stdlib.h>
-#include <assert.h>
-#include <pipe/p_compiler.h>
-#include <util/u_inlines.h>
-#include <util/u_memory.h>
-#include <pipebuffer/pb_bufmgr.h>
-#include "xf86drm.h"
-#include "radeon_drm.h"
 #include "r600_priv.h"
-#include "bof.h"
 #include "r600d.h"
+#include "util/u_memory.h"
+#include <errno.h>
 
 #define GROUP_FORCE_NEW_BLOCK	0
+
+/* Get backends mask */
+void r600_get_backend_mask(struct r600_context *ctx)
+{
+	struct r600_bo * buffer;
+	u32 * results;
+	unsigned num_backends = r600_get_num_backends(ctx->radeon);
+	unsigned i, mask = 0;
+
+	/* if backend_map query is supported by the kernel */
+	if (ctx->radeon->info.r600_backend_map_valid) {
+		unsigned num_tile_pipes = r600_get_num_tile_pipes(ctx->radeon);
+		unsigned backend_map = r600_get_backend_map(ctx->radeon);
+		unsigned item_width, item_mask;
+
+		if (ctx->radeon->chip_class >= EVERGREEN) {
+			item_width = 4;
+			item_mask = 0x7;
+		} else {
+			item_width = 2;
+			item_mask = 0x3;
+		}
+
+		while(num_tile_pipes--) {
+			i = backend_map & item_mask;
+			mask |= (1<<i);
+			backend_map >>= item_width;
+		}
+		if (mask != 0) {
+			ctx->backend_mask = mask;
+			return;
+		}
+	}
+
+	/* otherwise backup path for older kernels */
+
+	/* create buffer for event data */
+	buffer = r600_bo(ctx->radeon, ctx->max_db*16, 1, 0,
+				PIPE_USAGE_STAGING);
+	if (!buffer)
+		goto err;
+
+	/* initialize buffer with zeroes */
+	results = r600_bo_map(ctx->radeon, buffer, ctx->cs, PIPE_TRANSFER_WRITE);
+	if (results) {
+		memset(results, 0, ctx->max_db * 4 * 4);
+		r600_bo_unmap(ctx->radeon, buffer);
+
+		/* emit EVENT_WRITE for ZPASS_DONE */
+		ctx->pm4[ctx->pm4_cdwords++] = PKT3(PKT3_EVENT_WRITE, 2, 0);
+		ctx->pm4[ctx->pm4_cdwords++] = EVENT_TYPE(EVENT_TYPE_ZPASS_DONE) | EVENT_INDEX(1);
+		ctx->pm4[ctx->pm4_cdwords++] = 0;
+		ctx->pm4[ctx->pm4_cdwords++] = 0;
+
+		ctx->pm4[ctx->pm4_cdwords++] = PKT3(PKT3_NOP, 0, 0);
+		ctx->pm4[ctx->pm4_cdwords++] = r600_context_bo_reloc(ctx, buffer, RADEON_USAGE_WRITE);
+
+		/* execute */
+		r600_context_flush(ctx, 0);
+
+		/* analyze results */
+		results = r600_bo_map(ctx->radeon, buffer, ctx->cs, PIPE_TRANSFER_READ);
+		if (results) {
+			for(i = 0; i < ctx->max_db; i++) {
+				/* at least highest bit will be set if backend is used */
+				if (results[i*4 + 1])
+					mask |= (1<<i);
+			}
+			r600_bo_unmap(ctx->radeon, buffer);
+		}
+	}
+
+	r600_bo_reference(&buffer, NULL);
+
+	if (mask != 0) {
+		ctx->backend_mask = mask;
+		return;
+	}
+
+err:
+	/* fallback to old method - set num_backends lower bits to 1 */
+	ctx->backend_mask = (~((u32)0))>>(32-num_backends);
+	return;
+}
 
 static inline void r600_context_ps_partial_flush(struct r600_context *ctx)
 {
@@ -64,32 +138,6 @@ void r600_init_cs(struct r600_context *ctx)
 	ctx->pm4[ctx->pm4_cdwords++] = 0x80000000;
 
 	ctx->init_dwords = ctx->pm4_cdwords;
-}
-
-static void INLINE r600_context_update_fenced_list(struct r600_context *ctx)
-{
-	for (int i = 0; i < ctx->creloc; i++) {
-		if (!LIST_IS_EMPTY(&ctx->bo[i]->fencedlist))
-			LIST_DELINIT(&ctx->bo[i]->fencedlist);
-		LIST_ADDTAIL(&ctx->bo[i]->fencedlist, &ctx->fenced_bo);
-		ctx->bo[i]->fence = ctx->radeon->fence;
-		ctx->bo[i]->ctx = ctx;
-	}
-}
-
-static void INLINE r600_context_fence_wraparound(struct r600_context *ctx, unsigned fence)
-{
-	struct radeon_bo *bo = NULL;
-	struct radeon_bo *tmp;
-
-	LIST_FOR_EACH_ENTRY_SAFE(bo, tmp, &ctx->fenced_bo, fencedlist) {
-		if (bo->fence <= *ctx->radeon->cfence) {
-			LIST_DELINIT(&bo->fencedlist);
-			bo->fence = 0;
-		} else {
-			bo->fence = fence;
-		}
-	}
 }
 
 static void r600_init_block(struct r600_context *ctx,
@@ -680,17 +728,6 @@ static int r600_loop_const_init(struct r600_context *ctx, u32 offset)
 	return r600_context_add_block(ctx, r600_loop_consts, nreg, PKT3_SET_LOOP_CONST, R600_LOOP_CONST_OFFSET);
 }
 
-static void r600_context_clear_fenced_bo(struct r600_context *ctx)
-{
-	struct radeon_bo *bo, *tmp;
-
-	LIST_FOR_EACH_ENTRY_SAFE(bo, tmp, &ctx->fenced_bo, fencedlist) {
-		LIST_DELINIT(&bo->fencedlist);
-		bo->fence = 0;
-		bo->ctx = NULL;
-	}
-}
-
 static void r600_free_resource_range(struct r600_context *ctx, struct r600_range *range, int nblocks)
 {
 	struct r600_block *block;
@@ -699,7 +736,7 @@ static void r600_free_resource_range(struct r600_context *ctx, struct r600_range
 		block = range->blocks[i];
 		if (block) {
 			for (int k = 1; k <= block->nbo; k++)
-				r600_bo_reference(ctx->radeon, &block->reloc[k].bo, NULL);
+				r600_bo_reference(&block->reloc[k].bo, NULL);
 			free(block);
 		}
 	}
@@ -724,7 +761,7 @@ void r600_context_fini(struct r600_context *ctx)
 					range->blocks[CTX_BLOCK_ID(offset)] = NULL;
 				}
 				for (int k = 1; k <= block->nbo; k++) {
-					r600_bo_reference(ctx->radeon, &block->reloc[k].bo, NULL);
+					r600_bo_reference(&block->reloc[k].bo, NULL);
 				}
 				free(block);
 			}
@@ -736,11 +773,9 @@ void r600_context_fini(struct r600_context *ctx)
 	r600_free_resource_range(ctx, &ctx->fs_resources, ctx->num_fs_resources);
 	free(ctx->range);
 	free(ctx->blocks);
-	free(ctx->reloc);
 	free(ctx->bo);
-	free(ctx->pm4);
+	ctx->radeon->ws->cs_destroy(ctx->cs);
 
-	r600_context_clear_fenced_bo(ctx);
 	memset(ctx, 0, sizeof(struct r600_context));
 }
 
@@ -797,6 +832,7 @@ int r600_context_init(struct r600_context *ctx, struct radeon *radeon)
 
 	memset(ctx, 0, sizeof(struct r600_context));
 	ctx->radeon = radeon;
+
 	LIST_INITHEAD(&ctx->query_list);
 
 	/* init dirty list */
@@ -872,33 +908,23 @@ int r600_context_init(struct r600_context *ctx, struct radeon *radeon)
 	if (r)
 		goto out_err;
 
+	ctx->cs = radeon->ws->cs_create(radeon->ws);
+
 	/* allocate cs variables */
-	ctx->nreloc = RADEON_CTX_MAX_PM4;
-	ctx->reloc = calloc(ctx->nreloc, sizeof(struct r600_reloc));
-	if (ctx->reloc == NULL) {
-		r = -ENOMEM;
-		goto out_err;
-	}
-	ctx->bo = calloc(ctx->nreloc, sizeof(void *));
+	ctx->bo = calloc(RADEON_MAX_CMDBUF_DWORDS, sizeof(void *));
 	if (ctx->bo == NULL) {
 		r = -ENOMEM;
 		goto out_err;
 	}
-	ctx->pm4_ndwords = RADEON_CTX_MAX_PM4;
-	ctx->pm4 = calloc(ctx->pm4_ndwords, 4);
-	if (ctx->pm4 == NULL) {
-		r = -ENOMEM;
-		goto out_err;
-	}
+	ctx->pm4_ndwords = RADEON_MAX_CMDBUF_DWORDS;
+	ctx->pm4 = ctx->cs->buf;
 
 	r600_init_cs(ctx);
 	/* save 16dwords space for fence mecanism */
 	ctx->pm4_ndwords -= 16;
-
-	LIST_INITHEAD(&ctx->fenced_bo);
-
 	ctx->max_db = 4;
 
+	r600_get_backend_mask(ctx);
 	return 0;
 out_err:
 	r600_context_fini(ctx);
@@ -912,7 +938,7 @@ void r600_context_flush_all(struct r600_context *ctx, unsigned flush_flags)
 
 	if ((ctx->pm4_dirty_cdwords + ndwords + ctx->pm4_cdwords) > ctx->pm4_ndwords) {
 		/* need to flush */
-		r600_context_flush(ctx);
+		r600_context_flush(ctx, RADEON_FLUSH_ASYNC);
 	}
 
 	ctx->pm4[ctx->pm4_cdwords++] = PKT3(PKT3_SURFACE_SYNC, 3, ctx->predicate_drawing);
@@ -923,11 +949,8 @@ void r600_context_flush_all(struct r600_context *ctx, unsigned flush_flags)
 }
 
 void r600_context_bo_flush(struct r600_context *ctx, unsigned flush_flags,
-				unsigned flush_mask, struct r600_bo *rbo)
+				unsigned flush_mask, struct r600_bo *bo)
 {
-	struct radeon_bo *bo;
-
-	bo = rbo->bo;
 	/* if bo has already been flushed */
 	if (!(~bo->last_flush & flush_flags)) {
 		bo->last_flush &= flush_mask;
@@ -959,27 +982,13 @@ void r600_context_bo_flush(struct r600_context *ctx, unsigned flush_flags,
 	} else {
 		ctx->pm4[ctx->pm4_cdwords++] = PKT3(PKT3_SURFACE_SYNC, 3, ctx->predicate_drawing);
 		ctx->pm4[ctx->pm4_cdwords++] = flush_flags;
-		ctx->pm4[ctx->pm4_cdwords++] = (bo->size + 255) >> 8;
+		ctx->pm4[ctx->pm4_cdwords++] = (bo->buf->base.size + 255) >> 8;
 		ctx->pm4[ctx->pm4_cdwords++] = 0x00000000;
 		ctx->pm4[ctx->pm4_cdwords++] = 0x0000000A;
 		ctx->pm4[ctx->pm4_cdwords++] = PKT3(PKT3_NOP, 0, ctx->predicate_drawing);
-		ctx->pm4[ctx->pm4_cdwords++] = bo->reloc_id;
+		ctx->pm4[ctx->pm4_cdwords++] = r600_context_bo_reloc(ctx, bo, RADEON_USAGE_WRITE);
 	}
 	bo->last_flush = (bo->last_flush | flush_flags) & flush_mask;
-}
-
-void r600_context_get_reloc(struct r600_context *ctx, struct r600_bo *rbo)
-{
-	struct radeon_bo *bo = rbo->bo;
-	bo->reloc = &ctx->reloc[ctx->creloc];
-	bo->reloc_id = ctx->creloc * sizeof(struct r600_reloc) / 4;
-	ctx->reloc[ctx->creloc].handle = bo->handle;
-	ctx->reloc[ctx->creloc].read_domain = rbo->domains & (RADEON_GEM_DOMAIN_GTT | RADEON_GEM_DOMAIN_VRAM);
-	ctx->reloc[ctx->creloc].write_domain = rbo->domains & (RADEON_GEM_DOMAIN_GTT | RADEON_GEM_DOMAIN_VRAM);
-	ctx->reloc[ctx->creloc].flags = 0;
-	radeon_bo_reference(ctx->radeon, &ctx->bo[ctx->creloc], bo);
-	rbo->fence = ctx->radeon->fence;
-	ctx->creloc++;
 }
 
 void r600_context_reg(struct r600_context *ctx,
@@ -1057,8 +1066,8 @@ void r600_context_pipe_state_set(struct r600_context *ctx, struct r600_pipe_stat
 		if (block->pm4_bo_index[id]) {
 			/* find relocation */
 			reloc_id = block->pm4_bo_index[id];
-			r600_bo_reference(ctx->radeon, &block->reloc[reloc_id].bo, reg->bo);
-			reg->bo->fence = ctx->radeon->fence;
+			r600_bo_reference(&block->reloc[reloc_id].bo, reg->bo);
+			block->reloc[reloc_id].bo_usage = reg->bo_usage;
 			/* always force dirty for relocs for now */
 			dirty |= R600_BLOCK_STATUS_DIRTY;
 		}
@@ -1094,10 +1103,10 @@ void r600_context_pipe_state_set_resource(struct r600_context *ctx, struct r600_
 	if (state == NULL) {
 		block->status &= ~(R600_BLOCK_STATUS_ENABLED | R600_BLOCK_STATUS_RESOURCE_DIRTY);
 		if (block->reloc[1].bo)
-			block->reloc[1].bo->bo->binding &= ~BO_BOUND_TEXTURE;
+			block->reloc[1].bo->binding &= ~BO_BOUND_TEXTURE;
 
-		r600_bo_reference(ctx->radeon, &block->reloc[1].bo, NULL);
-		r600_bo_reference(ctx->radeon, &block->reloc[2].bo, NULL);
+		r600_bo_reference(&block->reloc[1].bo, NULL);
+		r600_bo_reference(&block->reloc[2].bo, NULL);
 		LIST_DELINIT(&block->list);
 		LIST_DELINIT(&block->enable_list);
 		return;
@@ -1117,39 +1126,32 @@ void r600_context_pipe_state_set_resource(struct r600_context *ctx, struct r600_
 
 	if (!dirty) {
 		if (is_vertex) {
-			if (block->reloc[1].bo->bo->handle != state->bo[0]->bo->handle)
+			if (block->reloc[1].bo->buf != state->bo[0]->buf)
 				dirty |= R600_BLOCK_STATUS_RESOURCE_DIRTY;
 		} else {
-			if ((block->reloc[1].bo->bo->handle != state->bo[0]->bo->handle) ||
-			    (block->reloc[2].bo->bo->handle != state->bo[1]->bo->handle))
+			if ((block->reloc[1].bo->buf != state->bo[0]->buf) ||
+			    (block->reloc[2].bo->buf != state->bo[1]->buf))
 				dirty |= R600_BLOCK_STATUS_RESOURCE_DIRTY;
 		}
 	}
-	if (!dirty) {
-		if (is_vertex)
-			state->bo[0]->fence = ctx->radeon->fence;
-		else {
-			state->bo[0]->fence = ctx->radeon->fence;
-			state->bo[1]->fence = ctx->radeon->fence;
-		}
-	} else {
+
+	if (dirty) {
 		if (is_vertex) {
 			/* VERTEX RESOURCE, we preted there is 2 bo to relocate so
 			 * we have single case btw VERTEX & TEXTURE resource
 			 */
-			r600_bo_reference(ctx->radeon, &block->reloc[1].bo, state->bo[0]);
-			r600_bo_reference(ctx->radeon, &block->reloc[2].bo, NULL);
-			state->bo[0]->fence = ctx->radeon->fence;
+			r600_bo_reference(&block->reloc[1].bo, state->bo[0]);
+			block->reloc[1].bo_usage = state->bo_usage[0];
+			r600_bo_reference(&block->reloc[2].bo, NULL);
 		} else {
 			/* TEXTURE RESOURCE */
-			r600_bo_reference(ctx->radeon, &block->reloc[1].bo, state->bo[0]);
-			r600_bo_reference(ctx->radeon, &block->reloc[2].bo, state->bo[1]);
-			state->bo[0]->fence = ctx->radeon->fence;
-			state->bo[1]->fence = ctx->radeon->fence;
-			state->bo[0]->bo->binding |= BO_BOUND_TEXTURE;
+			r600_bo_reference(&block->reloc[1].bo, state->bo[0]);
+			block->reloc[1].bo_usage = state->bo_usage[0];
+			r600_bo_reference(&block->reloc[2].bo, state->bo[1]);
+			block->reloc[2].bo_usage = state->bo_usage[1];
+			state->bo[0]->binding |= BO_BOUND_TEXTURE;
 		}
-	}
-	if (dirty) {
+
 		if (is_vertex)
 			block->status |= R600_BLOCK_STATUS_RESOURCE_VERTEX;
 		else
@@ -1281,7 +1283,6 @@ struct r600_bo *r600_context_reg_bo(struct r600_context *ctx, unsigned offset)
 
 void r600_context_block_emit_dirty(struct r600_context *ctx, struct r600_block *block)
 {
-	int id;
 	int optional = block->nbo == 0 && !(block->flags & REG_FLAG_DIRTY_ALWAYS);
 	int cp_dwords = block->pm4_ndwords, start_dword = 0;
 	int new_dwords = 0;
@@ -1297,14 +1298,13 @@ void r600_context_block_emit_dirty(struct r600_context *ctx, struct r600_block *
 		for (int j = 0; j < block->nreg; j++) {
 			if (block->pm4_bo_index[j]) {
 				/* find relocation */
-				id = block->pm4_bo_index[j];
-				r600_context_bo_reloc(ctx,
-						      &block->pm4[block->reloc[id].bo_pm4_index],
-						      block->reloc[id].bo);
+				struct r600_block_reloc *reloc = &block->reloc[block->pm4_bo_index[j]];
+				block->pm4[reloc->bo_pm4_index] =
+					r600_context_bo_reloc(ctx, reloc->bo, reloc->bo_usage);
 				r600_context_bo_flush(ctx,
-						      block->reloc[id].flush_flags,
-						      block->reloc[id].flush_mask,
-						      block->reloc[id].bo);
+						      reloc->flush_flags,
+						      reloc->flush_mask,
+						      reloc->bo);
 				nbo--;
 				if (nbo == 0)
 					break;
@@ -1338,7 +1338,6 @@ out:
 
 void r600_context_block_resource_emit_dirty(struct r600_context *ctx, struct r600_block *block)
 {
-	int id;
 	int cp_dwords = block->pm4_ndwords;
 	int nbo = block->nbo;
 
@@ -1352,14 +1351,13 @@ void r600_context_block_resource_emit_dirty(struct r600_context *ctx, struct r60
 	for (int j = 0; j < nbo; j++) {
 		if (block->pm4_bo_index[j]) {
 			/* find relocation */
-			id = block->pm4_bo_index[j];
-			r600_context_bo_reloc(ctx,
-					      &block->pm4[block->reloc[id].bo_pm4_index],
-					      block->reloc[id].bo);
+			struct r600_block_reloc *reloc = &block->reloc[block->pm4_bo_index[j]];
+			block->pm4[reloc->bo_pm4_index] =
+				r600_context_bo_reloc(ctx, reloc->bo, reloc->bo_usage);
 			r600_context_bo_flush(ctx,
-					      block->reloc[id].flush_flags,
-					      block->reloc[id].flush_mask,
-					      block->reloc[id].bo);
+					      reloc->flush_flags,
+					      reloc->flush_mask,
+					      reloc->bo);
 		}
 	}
 	ctx->flags &= ~R600_CONTEXT_CHECK_EVENT_FLUSH;
@@ -1418,10 +1416,6 @@ void r600_context_draw(struct r600_context *ctx, const struct r600_draw *draw)
 
 	if (draw->indices) {
 		ndwords = 11;
-		/* make sure there is enough relocation space before scheduling draw */
-		if (ctx->creloc >= (ctx->nreloc - 1)) {
-			r600_context_flush(ctx);
-		}
 	}
 
 	/* queries need some special values */
@@ -1440,11 +1434,11 @@ void r600_context_draw(struct r600_context *ctx, const struct r600_draw *draw)
 
 	/* update the max dword count to make sure we have enough space
 	 * reserved for flushing the destination caches */
-	ctx->pm4_ndwords = RADEON_CTX_MAX_PM4 - ctx->num_dest_buffers * 7 - 16;
+	ctx->pm4_ndwords = RADEON_MAX_CMDBUF_DWORDS - ctx->num_dest_buffers * 7 - 16;
 
 	if ((ctx->pm4_dirty_cdwords + ndwords + ctx->pm4_cdwords) > ctx->pm4_ndwords) {
 		/* need to flush */
-		r600_context_flush(ctx);
+		r600_context_flush(ctx, RADEON_FLUSH_ASYNC);
 	}
 	/* at that point everythings is flushed and ctx->pm4_cdwords = 0 */
 	if ((ctx->pm4_dirty_cdwords + ndwords) > ctx->pm4_ndwords) {
@@ -1469,13 +1463,12 @@ void r600_context_draw(struct r600_context *ctx, const struct r600_draw *draw)
 	pm4[3] = draw->vgt_num_instances;
 	if (draw->indices) {
 		pm4[4] = PKT3(PKT3_DRAW_INDEX, 3, ctx->predicate_drawing);
-		pm4[5] = draw->indices_bo_offset + r600_bo_offset(draw->indices);
+		pm4[5] = draw->indices_bo_offset;
 		pm4[6] = 0;
 		pm4[7] = draw->vgt_num_indices;
 		pm4[8] = draw->vgt_draw_initiator;
 		pm4[9] = PKT3(PKT3_NOP, 0, ctx->predicate_drawing);
-		pm4[10] = 0;
-		r600_context_bo_reloc(ctx, &pm4[10], draw->indices);
+		pm4[10] = r600_context_bo_reloc(ctx, draw->indices, RADEON_USAGE_READ);
 	} else {
 		pm4[4] = PKT3(PKT3_DRAW_INDEX_AUTO, 1, ctx->predicate_drawing);
 		pm4[5] = draw->vgt_num_indices;
@@ -1489,13 +1482,8 @@ void r600_context_draw(struct r600_context *ctx, const struct r600_draw *draw)
 	ctx->pm4_dirty_cdwords = 0;
 }
 
-void r600_context_flush(struct r600_context *ctx)
+void r600_context_flush(struct r600_context *ctx, unsigned flags)
 {
-	struct drm_radeon_cs drmib = {};
-	struct drm_radeon_cs_chunk chunks[2];
-	uint64_t chunk_array[2];
-	unsigned fence;
-	int r;
 	struct r600_block *enable_block = NULL;
 
 	if (ctx->pm4_cdwords == ctx->init_dwords)
@@ -1512,54 +1500,19 @@ void r600_context_flush(struct r600_context *ctx)
 	/* partial flush is needed to avoid lockups on some chips with user fences */
 	ctx->pm4[ctx->pm4_cdwords++] = PKT3(PKT3_EVENT_WRITE, 0, 0);
 	ctx->pm4[ctx->pm4_cdwords++] = EVENT_TYPE(EVENT_TYPE_PS_PARTIAL_FLUSH) | EVENT_INDEX(4);
-	/* emit fence */
-	ctx->pm4[ctx->pm4_cdwords++] = PKT3(PKT3_EVENT_WRITE_EOP, 4, 0);
-	ctx->pm4[ctx->pm4_cdwords++] = EVENT_TYPE(EVENT_TYPE_CACHE_FLUSH_AND_INV_TS_EVENT) | EVENT_INDEX(5);
-	ctx->pm4[ctx->pm4_cdwords++] = 0;
-	ctx->pm4[ctx->pm4_cdwords++] = (1 << 29) | (0 << 24);
-	ctx->pm4[ctx->pm4_cdwords++] = ctx->radeon->fence;
-	ctx->pm4[ctx->pm4_cdwords++] = 0;
-	ctx->pm4[ctx->pm4_cdwords++] = PKT3(PKT3_NOP, 0, 0);
-	ctx->pm4[ctx->pm4_cdwords++] = 0;
-	r600_context_bo_reloc(ctx, &ctx->pm4[ctx->pm4_cdwords - 1], ctx->radeon->fence_bo);
 
-#if 1
-	/* emit cs */
-	drmib.num_chunks = 2;
-	drmib.chunks = (uint64_t)(uintptr_t)chunk_array;
-	chunks[0].chunk_id = RADEON_CHUNK_ID_IB;
-	chunks[0].length_dw = ctx->pm4_cdwords;
-	chunks[0].chunk_data = (uint64_t)(uintptr_t)ctx->pm4;
-	chunks[1].chunk_id = RADEON_CHUNK_ID_RELOCS;
-	chunks[1].length_dw = ctx->creloc * sizeof(struct r600_reloc) / 4;
-	chunks[1].chunk_data = (uint64_t)(uintptr_t)ctx->reloc;
-	chunk_array[0] = (uint64_t)(uintptr_t)&chunks[0];
-	chunk_array[1] = (uint64_t)(uintptr_t)&chunks[1];
-	r = drmCommandWriteRead(ctx->radeon->fd, DRM_RADEON_CS, &drmib,
-				sizeof(struct drm_radeon_cs));
-	if (r) {
-		fprintf(stderr, "radeon: The kernel rejected CS, "
-			"see dmesg for more information.\n");
-	}
-#else
-	*ctx->radeon->cfence = ctx->radeon->fence;
-#endif
+	/* Flush the CS. */
+	ctx->cs->cdw = ctx->pm4_cdwords;
+	ctx->radeon->ws->cs_flush(ctx->cs, flags);
 
-	r600_context_update_fenced_list(ctx);
-
-	fence = ctx->radeon->fence + 1;
-	if (fence < ctx->radeon->fence) {
-		/* wrap around */
-		fence = 1;
-		r600_context_fence_wraparound(ctx, fence);
-	}
-	ctx->radeon->fence = fence;
+	/* We need to get the pointer to the other CS,
+	 * the command streams are double-buffered. */
+	ctx->pm4 = ctx->cs->buf;
 
 	/* restart */
 	for (int i = 0; i < ctx->creloc; i++) {
-		ctx->bo[i]->reloc = NULL;
 		ctx->bo[i]->last_flush = 0;
-		radeon_bo_reference(ctx->radeon, &ctx->bo[i], NULL);
+		r600_bo_reference(&ctx->bo[i], NULL);
 	}
 	ctx->creloc = 0;
 	ctx->pm4_dirty_cdwords = 0;
@@ -1596,10 +1549,9 @@ void r600_context_emit_fence(struct r600_context *ctx, struct r600_bo *fence_bo,
 {
 	unsigned ndwords = 10;
 
-	if (((ctx->pm4_dirty_cdwords + ndwords + ctx->pm4_cdwords) > ctx->pm4_ndwords) ||
-	    (ctx->creloc >= (ctx->nreloc - 1))) {
+	if ((ctx->pm4_dirty_cdwords + ndwords + ctx->pm4_cdwords) > ctx->pm4_ndwords) {
 		/* need to flush */
-		r600_context_flush(ctx);
+		r600_context_flush(ctx, RADEON_FLUSH_ASYNC);
 	}
 
 	ctx->pm4[ctx->pm4_cdwords++] = PKT3(PKT3_EVENT_WRITE, 0, 0);
@@ -1611,90 +1563,7 @@ void r600_context_emit_fence(struct r600_context *ctx, struct r600_bo *fence_bo,
 	ctx->pm4[ctx->pm4_cdwords++] = value;                   /* DATA_LO */
 	ctx->pm4[ctx->pm4_cdwords++] = 0;                       /* DATA_HI */
 	ctx->pm4[ctx->pm4_cdwords++] = PKT3(PKT3_NOP, 0, 0);
-	ctx->pm4[ctx->pm4_cdwords++] = 0;
-	r600_context_bo_reloc(ctx, &ctx->pm4[ctx->pm4_cdwords - 1], fence_bo);
-}
-
-void r600_context_dump_bof(struct r600_context *ctx, const char *file)
-{
-	bof_t *bcs, *blob, *array, *bo, *size, *handle, *device_id, *root;
-	unsigned i;
-
-	root = device_id = bcs = blob = array = bo = size = handle = NULL;
-	root = bof_object();
-	if (root == NULL)
-		goto out_err;
-	device_id = bof_int32(ctx->radeon->device);
-	if (device_id == NULL)
-		goto out_err;
-	if (bof_object_set(root, "device_id", device_id))
-		goto out_err;
-	bof_decref(device_id);
-	device_id = NULL;
-	/* dump relocs */
-	blob = bof_blob(ctx->creloc * 16, ctx->reloc);
-	if (blob == NULL)
-		goto out_err;
-	if (bof_object_set(root, "reloc", blob))
-		goto out_err;
-	bof_decref(blob);
-	blob = NULL;
-	/* dump cs */
-	blob = bof_blob(ctx->pm4_cdwords * 4, ctx->pm4);
-	if (blob == NULL)
-		goto out_err;
-	if (bof_object_set(root, "pm4", blob))
-		goto out_err;
-	bof_decref(blob);
-	blob = NULL;
-	/* dump bo */
-	array = bof_array();
-	if (array == NULL)
-		goto out_err;
-	for (i = 0; i < ctx->creloc; i++) {
-		struct radeon_bo *rbo = ctx->bo[i];
-		bo = bof_object();
-		if (bo == NULL)
-			goto out_err;
-		size = bof_int32(rbo->size);
-		if (size == NULL)
-			goto out_err;
-		if (bof_object_set(bo, "size", size))
-			goto out_err;
-		bof_decref(size);
-		size = NULL;
-		handle = bof_int32(rbo->handle);
-		if (handle == NULL)
-			goto out_err;
-		if (bof_object_set(bo, "handle", handle))
-			goto out_err;
-		bof_decref(handle);
-		handle = NULL;
-		radeon_bo_map(ctx->radeon, rbo);
-		blob = bof_blob(rbo->size, rbo->data);
-		radeon_bo_unmap(ctx->radeon, rbo);
-		if (blob == NULL)
-			goto out_err;
-		if (bof_object_set(bo, "data", blob))
-			goto out_err;
-		bof_decref(blob);
-		blob = NULL;
-		if (bof_array_append(array, bo))
-			goto out_err;
-		bof_decref(bo);
-		bo = NULL;
-	}
-	if (bof_object_set(root, "bo", array))
-		goto out_err;
-	bof_dump_file(root, file);
-out_err:
-	bof_decref(blob);
-	bof_decref(array);
-	bof_decref(bo);
-	bof_decref(size);
-	bof_decref(handle);
-	bof_decref(device_id);
-	bof_decref(root);
+	ctx->pm4[ctx->pm4_cdwords++] = r600_context_bo_reloc(ctx, fence_bo, RADEON_USAGE_WRITE);
 }
 
 static boolean r600_query_result(struct r600_context *ctx, struct r600_query *query, boolean wait)
@@ -1704,9 +1573,9 @@ static boolean r600_query_result(struct r600_context *ctx, struct r600_query *qu
 	u32 *results, *current_result;
 
 	if (wait)
-		results = r600_bo_map(ctx->radeon, query->buffer, PIPE_TRANSFER_READ, NULL);
+		results = r600_bo_map(ctx->radeon, query->buffer, ctx->cs, PIPE_TRANSFER_READ);
 	else
-		results = r600_bo_map(ctx->radeon, query->buffer, PIPE_TRANSFER_DONTBLOCK | PIPE_TRANSFER_READ, NULL);
+		results = r600_bo_map(ctx->radeon, query->buffer, ctx->cs, PIPE_TRANSFER_DONTBLOCK | PIPE_TRANSFER_READ);
 	if (!results)
 		return FALSE;
 
@@ -1735,7 +1604,6 @@ static boolean r600_query_result(struct r600_context *ctx, struct r600_query *qu
 void r600_query_begin(struct r600_context *ctx, struct r600_query *query)
 {
 	unsigned required_space, new_results_end;
-	int num_backends = r600_get_num_backends(ctx->radeon);
 
 	/* query request needs 6/8 dwords for begin + 6/8 dwords for end */
 	if (query->type == PIPE_QUERY_TIME_ELAPSED)
@@ -1745,7 +1613,7 @@ void r600_query_begin(struct r600_context *ctx, struct r600_query *query)
 
 	if ((required_space + ctx->pm4_cdwords) > ctx->pm4_ndwords) {
 		/* need to flush */
-		r600_context_flush(ctx);
+		r600_context_flush(ctx, RADEON_FLUSH_ASYNC);
 	}
 
 	if (query->type == PIPE_QUERY_OCCLUSION_COUNTER) {
@@ -1756,7 +1624,7 @@ void r600_query_begin(struct r600_context *ctx, struct r600_query *query)
 			query->queries_emitted = 1;
 		} else {
 			if (++query->queries_emitted > query->buffer_size / query->result_size / 2)
-				r600_context_flush(ctx);
+				r600_context_flush(ctx, RADEON_FLUSH_ASYNC);
 		}
 	}
 
@@ -1767,7 +1635,7 @@ void r600_query_begin(struct r600_context *ctx, struct r600_query *query)
 	/* collect current results if query buffer is full */
 	if (new_results_end == query->results_start) {
 		if (!(query->state & R600_QUERY_STATE_FLUSHED))
-			r600_context_flush(ctx);
+			r600_context_flush(ctx, 0);
 		r600_query_result(ctx, query, TRUE);
 	}
 
@@ -1775,15 +1643,17 @@ void r600_query_begin(struct r600_context *ctx, struct r600_query *query)
 		u32 *results;
 		int i;
 
-		results = r600_bo_map(ctx->radeon, query->buffer, PIPE_TRANSFER_WRITE, NULL);
+		results = r600_bo_map(ctx->radeon, query->buffer, ctx->cs, PIPE_TRANSFER_WRITE);
 		if (results) {
 			results = (u32*)((char*)results + query->results_end);
 			memset(results, 0, query->result_size);
 
 			/* Set top bits for unused backends */
-			for (i = num_backends; i < ctx->max_db; i++) {
-				results[(i * 4)+1] = 0x80000000;
-				results[(i * 4)+3] = 0x80000000;
+			for (i = 0; i < ctx->max_db; i++) {
+				if (!(ctx->backend_mask & (1<<i))) {
+					results[(i * 4)+1] = 0x80000000;
+					results[(i * 4)+3] = 0x80000000;
+				}
 			}
 			r600_bo_unmap(ctx->radeon, query->buffer);
 		}
@@ -1793,19 +1663,18 @@ void r600_query_begin(struct r600_context *ctx, struct r600_query *query)
 	if (query->type == PIPE_QUERY_TIME_ELAPSED) {
 		ctx->pm4[ctx->pm4_cdwords++] = PKT3(PKT3_EVENT_WRITE_EOP, 4, 0);
 		ctx->pm4[ctx->pm4_cdwords++] = EVENT_TYPE(EVENT_TYPE_CACHE_FLUSH_AND_INV_TS_EVENT) | EVENT_INDEX(5);
-		ctx->pm4[ctx->pm4_cdwords++] = query->results_end + r600_bo_offset(query->buffer);
+		ctx->pm4[ctx->pm4_cdwords++] = query->results_end;
 		ctx->pm4[ctx->pm4_cdwords++] = (3 << 29);
 		ctx->pm4[ctx->pm4_cdwords++] = 0;
 		ctx->pm4[ctx->pm4_cdwords++] = 0;
 	} else {
 		ctx->pm4[ctx->pm4_cdwords++] = PKT3(PKT3_EVENT_WRITE, 2, 0);
 		ctx->pm4[ctx->pm4_cdwords++] = EVENT_TYPE(EVENT_TYPE_ZPASS_DONE) | EVENT_INDEX(1);
-		ctx->pm4[ctx->pm4_cdwords++] = query->results_end + r600_bo_offset(query->buffer);
+		ctx->pm4[ctx->pm4_cdwords++] = query->results_end;
 		ctx->pm4[ctx->pm4_cdwords++] = 0;
 	}
 	ctx->pm4[ctx->pm4_cdwords++] = PKT3(PKT3_NOP, 0, 0);
-	ctx->pm4[ctx->pm4_cdwords++] = 0;
-	r600_context_bo_reloc(ctx, &ctx->pm4[ctx->pm4_cdwords - 1], query->buffer);
+	ctx->pm4[ctx->pm4_cdwords++] = r600_context_bo_reloc(ctx, query->buffer, RADEON_USAGE_WRITE);
 
 	query->state |= R600_QUERY_STATE_STARTED;
 	query->state ^= R600_QUERY_STATE_ENDED;
@@ -1818,19 +1687,18 @@ void r600_query_end(struct r600_context *ctx, struct r600_query *query)
 	if (query->type == PIPE_QUERY_TIME_ELAPSED) {
 		ctx->pm4[ctx->pm4_cdwords++] = PKT3(PKT3_EVENT_WRITE_EOP, 4, 0);
 		ctx->pm4[ctx->pm4_cdwords++] = EVENT_TYPE(EVENT_TYPE_CACHE_FLUSH_AND_INV_TS_EVENT) | EVENT_INDEX(5);
-		ctx->pm4[ctx->pm4_cdwords++] = query->results_end + 8 + r600_bo_offset(query->buffer);
+		ctx->pm4[ctx->pm4_cdwords++] = query->results_end + 8;
 		ctx->pm4[ctx->pm4_cdwords++] = (3 << 29);
 		ctx->pm4[ctx->pm4_cdwords++] = 0;
 		ctx->pm4[ctx->pm4_cdwords++] = 0;
 	} else {
 		ctx->pm4[ctx->pm4_cdwords++] = PKT3(PKT3_EVENT_WRITE, 2, 0);
 		ctx->pm4[ctx->pm4_cdwords++] = EVENT_TYPE(EVENT_TYPE_ZPASS_DONE) | EVENT_INDEX(1);
-		ctx->pm4[ctx->pm4_cdwords++] = query->results_end + 8 + r600_bo_offset(query->buffer);
+		ctx->pm4[ctx->pm4_cdwords++] = query->results_end + 8;
 		ctx->pm4[ctx->pm4_cdwords++] = 0;
 	}
 	ctx->pm4[ctx->pm4_cdwords++] = PKT3(PKT3_NOP, 0, 0);
-	ctx->pm4[ctx->pm4_cdwords++] = 0;
-	r600_context_bo_reloc(ctx, &ctx->pm4[ctx->pm4_cdwords - 1], query->buffer);
+	ctx->pm4[ctx->pm4_cdwords++] = r600_context_bo_reloc(ctx, query->buffer, RADEON_USAGE_WRITE);
 
 	query->results_end += query->result_size;
 	if (query->results_end >= query->buffer_size)
@@ -1848,7 +1716,7 @@ void r600_query_predication(struct r600_context *ctx, struct r600_query *query, 
 {
 	if (operation == PREDICATION_OP_CLEAR) {
 		if (ctx->pm4_cdwords + 3 > ctx->pm4_ndwords)
-			r600_context_flush(ctx);
+			r600_context_flush(ctx, RADEON_FLUSH_ASYNC);
 
 		ctx->pm4[ctx->pm4_cdwords++] = PKT3(PKT3_SET_PREDICATION, 1, 0);
 		ctx->pm4[ctx->pm4_cdwords++] = 0;
@@ -1864,7 +1732,7 @@ void r600_query_predication(struct r600_context *ctx, struct r600_query *query, 
 		count /= query->result_size;
 
 		if (ctx->pm4_cdwords + 5 * count > ctx->pm4_ndwords)
-			r600_context_flush(ctx);
+			r600_context_flush(ctx, RADEON_FLUSH_ASYNC);
 
 		op = PRED_OP(operation) | PREDICATION_DRAW_VISIBLE |
 				(flag_wait ? PREDICATION_HINT_WAIT : PREDICATION_HINT_NOWAIT_DRAW);
@@ -1872,11 +1740,11 @@ void r600_query_predication(struct r600_context *ctx, struct r600_query *query, 
 		/* emit predicate packets for all data blocks */
 		while (results_base != query->results_end) {
 			ctx->pm4[ctx->pm4_cdwords++] = PKT3(PKT3_SET_PREDICATION, 1, 0);
-			ctx->pm4[ctx->pm4_cdwords++] = results_base + r600_bo_offset(query->buffer);
+			ctx->pm4[ctx->pm4_cdwords++] = results_base;
 			ctx->pm4[ctx->pm4_cdwords++] = op;
 			ctx->pm4[ctx->pm4_cdwords++] = PKT3(PKT3_NOP, 0, 0);
-			ctx->pm4[ctx->pm4_cdwords++] = 0;
-			r600_context_bo_reloc(ctx, &ctx->pm4[ctx->pm4_cdwords - 1], query->buffer);
+			ctx->pm4[ctx->pm4_cdwords++] = r600_context_bo_reloc(ctx, query->buffer,
+									     RADEON_USAGE_READ);
 			results_base += query->result_size;
 			if (results_base >= query->buffer_size)
 				results_base = 0;
@@ -1926,7 +1794,7 @@ struct r600_query *r600_context_query_create(struct r600_context *ctx, unsigned 
 
 void r600_context_query_destroy(struct r600_context *ctx, struct r600_query *query)
 {
-	r600_bo_reference(ctx->radeon, &query->buffer, NULL);
+	r600_bo_reference(&query->buffer, NULL);
 	LIST_DELINIT(&query->list);
 	free(query);
 }
@@ -1938,7 +1806,7 @@ boolean r600_context_query_result(struct r600_context *ctx,
 	uint64_t *result = (uint64_t*)vresult;
 
 	if (!(query->state & R600_QUERY_STATE_FLUSHED)) {
-		r600_context_flush(ctx);
+		r600_context_flush(ctx, 0);
 	}
 	if (!r600_query_result(ctx, query, wait))
 		return FALSE;

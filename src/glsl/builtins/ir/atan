@@ -54,7 +54,9 @@
     )
     (
       (declare () float r)
-      (if (expression bool > (expression float abs (var_ref x)) (constant float (0.000100))) (
+      (if (expression bool >
+           (expression float abs (var_ref x))
+           (expression float * (constant float (1.0e-8)) (expression float abs (var_ref y)))) (
         (assign (x) (var_ref r) (call atan ((expression float / (var_ref y) (var_ref x)))))
         (if (expression bool < (var_ref x) (constant float (0.000000)) ) (
           (if (expression bool >= (var_ref y) (constant float (0.000000)) )

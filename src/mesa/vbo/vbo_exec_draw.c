@@ -260,8 +260,6 @@ vbo_exec_bind_arrays( struct gl_context *ctx )
 static void
 vbo_exec_vtx_unmap( struct vbo_exec_context *exec )
 {
-   GLenum target = GL_ARRAY_BUFFER_ARB;
-
    if (_mesa_is_bufferobj(exec->vtx.bufferobj)) {
       struct gl_context *ctx = exec->ctx;
       
@@ -270,8 +268,7 @@ vbo_exec_vtx_unmap( struct vbo_exec_context *exec )
          GLsizeiptr length = (exec->vtx.buffer_ptr - exec->vtx.buffer_map) * sizeof(float);
 
          if (length)
-            ctx->Driver.FlushMappedBufferRange(ctx, target,
-                                               offset, length,
+            ctx->Driver.FlushMappedBufferRange(ctx, offset, length,
                                                exec->vtx.bufferobj);
       }
 
@@ -281,7 +278,7 @@ vbo_exec_vtx_unmap( struct vbo_exec_context *exec )
       assert(exec->vtx.buffer_used <= VBO_VERT_BUFFER_SIZE);
       assert(exec->vtx.buffer_ptr != NULL);
       
-      ctx->Driver.UnmapBuffer(ctx, target, exec->vtx.bufferobj);
+      ctx->Driver.UnmapBuffer(ctx, exec->vtx.bufferobj);
       exec->vtx.buffer_map = NULL;
       exec->vtx.buffer_ptr = NULL;
       exec->vtx.max_vert = 0;
@@ -296,8 +293,6 @@ void
 vbo_exec_vtx_map( struct vbo_exec_context *exec )
 {
    struct gl_context *ctx = exec->ctx;
-   const GLenum target = GL_ARRAY_BUFFER_ARB;
-   const GLenum access = GL_READ_WRITE_ARB; /* for MapBuffer */
    const GLenum accessRange = GL_MAP_WRITE_BIT |  /* for MapBufferRange */
                               GL_MAP_INVALIDATE_RANGE_BIT |
                               GL_MAP_UNSYNCHRONIZED_BIT |
@@ -311,12 +306,10 @@ vbo_exec_vtx_map( struct vbo_exec_context *exec )
    assert(!exec->vtx.buffer_map);
    assert(!exec->vtx.buffer_ptr);
 
-   if (VBO_VERT_BUFFER_SIZE > exec->vtx.buffer_used + 1024 &&
-       ctx->Driver.MapBufferRange) {
+   if (VBO_VERT_BUFFER_SIZE > exec->vtx.buffer_used + 1024) {
       /* The VBO exists and there's room for more */
       exec->vtx.buffer_map = 
          (GLfloat *)ctx->Driver.MapBufferRange(ctx, 
-                                               target, 
                                                exec->vtx.buffer_used,
                                                (VBO_VERT_BUFFER_SIZE - 
                                                 exec->vtx.buffer_used),
@@ -329,20 +322,16 @@ vbo_exec_vtx_map( struct vbo_exec_context *exec )
       /* Need to allocate a new VBO */
       exec->vtx.buffer_used = 0;
 
-      ctx->Driver.BufferData(ctx, target, 
+      ctx->Driver.BufferData(ctx, GL_ARRAY_BUFFER_ARB,
                              VBO_VERT_BUFFER_SIZE, 
                              NULL, usage, exec->vtx.bufferobj);
 
 
-      if (ctx->Driver.MapBufferRange)
-         exec->vtx.buffer_map = 
-            (GLfloat *)ctx->Driver.MapBufferRange(ctx, target,
-                                                  0, VBO_VERT_BUFFER_SIZE,
-                                                  accessRange,
-                                                  exec->vtx.bufferobj);
-      if (!exec->vtx.buffer_map)
-         exec->vtx.buffer_map =
-            (GLfloat *)ctx->Driver.MapBuffer(ctx, target, access, exec->vtx.bufferobj);
+      exec->vtx.buffer_map =
+	 (GLfloat *)ctx->Driver.MapBufferRange(ctx,
+					       0, VBO_VERT_BUFFER_SIZE,
+					       accessRange,
+					       exec->vtx.bufferobj);
       assert(exec->vtx.buffer_map);
       exec->vtx.buffer_ptr = exec->vtx.buffer_map;
    }

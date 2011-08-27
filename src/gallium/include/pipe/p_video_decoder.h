@@ -59,75 +59,74 @@ struct pipe_video_decoder
    void (*destroy)(struct pipe_video_decoder *decoder);
 
    /**
-    * Creates a buffer as decoding input
+    * Creates a decoder buffer
     */
-   struct pipe_video_decode_buffer *(*create_buffer)(struct pipe_video_decoder *decoder);
+   void *(*create_buffer)(struct pipe_video_decoder *decoder);
 
    /**
-    * flush decoder buffer to video hardware
+    * Destroys a decoder buffer
     */
-   void (*flush_buffer)(struct pipe_video_decode_buffer *decbuf,
-                        unsigned num_ycbcr_blocks[3],
-                        struct pipe_video_buffer *ref_frames[2],
-                        struct pipe_video_buffer *dst);
-};
-
-/**
- * input buffer for a decoder
- */
-struct pipe_video_decode_buffer
-{
-   struct pipe_video_decoder *decoder;
+   void (*destroy_buffer)(struct pipe_video_decoder *decoder, void *buffer);
 
    /**
-    * destroy this decode buffer
+    * set the current decoder buffer
     */
-   void (*destroy)(struct pipe_video_decode_buffer *decbuf);
+   void (*set_decode_buffer)(struct pipe_video_decoder *decoder, void *buffer);
 
    /**
-    * map the input buffer into memory before starting decoding
+    * set the picture parameters for the next frame
+    * only used for bitstream decoding
     */
-   void (*begin_frame)(struct pipe_video_decode_buffer *decbuf);
+   void (*set_picture_parameters)(struct pipe_video_decoder *decoder,
+                                  struct pipe_picture_desc *picture);
 
    /**
     * set the quantification matrixes
     */
-   void (*set_quant_matrix)(struct pipe_video_decode_buffer *decbuf,
-                            const uint8_t intra_matrix[64],
-                            const uint8_t non_intra_matrix[64]);
+   void (*set_quant_matrix)(struct pipe_video_decoder *decoder,
+                            const struct pipe_quant_matrix *matrix);
 
    /**
-    * get the pointer where to put the ycbcr blocks of a component
+    * set target where video data is decoded to
     */
-   struct pipe_ycbcr_block *(*get_ycbcr_stream)(struct pipe_video_decode_buffer *, int component);
+   void (*set_decode_target)(struct pipe_video_decoder *decoder,
+                             struct pipe_video_buffer *target);
 
    /**
-    * get the pointer where to put the ycbcr dct block data of a component
+    * set reference frames for motion compensation
     */
-   short *(*get_ycbcr_buffer)(struct pipe_video_decode_buffer *, int component);
+   void (*set_reference_frames)(struct pipe_video_decoder *decoder,
+                                struct pipe_video_buffer **ref_frames,
+                                unsigned num_ref_frames);
 
    /**
-    * get the stride of the mv buffer
+    * start decoding of a new frame
     */
-   unsigned (*get_mv_stream_stride)(struct pipe_video_decode_buffer *decbuf);
+   void (*begin_frame)(struct pipe_video_decoder *decoder);
 
    /**
-    * get the pointer where to put the motion vectors of a ref frame
+    * decode a macroblock
     */
-   struct pipe_motionvector *(*get_mv_stream)(struct pipe_video_decode_buffer *decbuf, int ref_frame);
+   void (*decode_macroblock)(struct pipe_video_decoder *decoder,
+                             const struct pipe_macroblock *macroblocks,
+                             unsigned num_macroblocks);
 
    /**
     * decode a bitstream
     */
-   void (*decode_bitstream)(struct pipe_video_decode_buffer *decbuf,
-                            unsigned num_bytes, const void *data,
-                            struct pipe_picture_desc *picture,
-                            unsigned num_ycbcr_blocks[3]);
+   void (*decode_bitstream)(struct pipe_video_decoder *decoder,
+                            unsigned num_bytes, const void *data);
 
    /**
-    * unmap decoder buffer before flushing
+    * end decoding of the current frame
     */
-   void (*end_frame)(struct pipe_video_decode_buffer *decbuf);
+   void (*end_frame)(struct pipe_video_decoder *decoder);
+
+   /**
+    * flush any outstanding command buffers to the hardware
+    * should be called before a video_buffer is acessed by the state tracker again
+    */
+   void (*flush)(struct pipe_video_decoder *decoder);
 };
 
 /**

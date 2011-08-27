@@ -713,6 +713,24 @@ GLX_eglCreateContext(_EGLDriver *drv, _EGLDisplay *disp, _EGLConfig *conf,
    return &GLX_ctx->Base;
 }
 
+/**
+ * Called via eglDestroyContext(), drv->API.DestroyContext().
+ */
+static EGLBoolean
+GLX_eglDestroyContext(_EGLDriver *drv, _EGLDisplay *disp, _EGLContext *ctx)
+{
+   struct GLX_egl_driver *GLX_drv = GLX_egl_driver(drv);
+   struct GLX_egl_context *GLX_ctx = GLX_egl_context(ctx);
+
+   if (_eglPutContext(ctx)) {
+      assert(GLX_ctx);
+      GLX_drv->glXDestroyContext(disp, ctx);
+
+      free(GLX_ctx);
+   }
+
+   return EGL_TRUE;
+}
 
 /**
  * Destroy a surface.  The display is allowed to be uninitialized.
@@ -1142,6 +1160,7 @@ _EGL_MAIN(const char *args)
    GLX_drv->Base.API.Initialize = GLX_eglInitialize;
    GLX_drv->Base.API.Terminate = GLX_eglTerminate;
    GLX_drv->Base.API.CreateContext = GLX_eglCreateContext;
+   GLX_drv->Base.API.DestroyContext = GLX_eglDestroyContext;
    GLX_drv->Base.API.MakeCurrent = GLX_eglMakeCurrent;
    GLX_drv->Base.API.CreateWindowSurface = GLX_eglCreateWindowSurface;
    GLX_drv->Base.API.CreatePixmapSurface = GLX_eglCreatePixmapSurface;

@@ -94,6 +94,46 @@ is_passthrough_program(const struct gl_fragment_program *prog)
 }
 
 
+/**
+ * Returns a fragment program which implements the current pixel transfer ops.
+ */
+static struct gl_fragment_program *
+get_glsl_pixel_transfer_program(struct st_context *st,
+                                struct st_fragment_program *orig)
+{
+   int pixelMaps = 0, scaleAndBias = 0;
+   struct gl_context *ctx = st->ctx;
+   struct st_fragment_program *fp = (struct st_fragment_program *)
+      ctx->Driver.NewProgram(ctx, GL_FRAGMENT_PROGRAM_ARB, 0);
+
+   if (!fp)
+      return NULL;
+
+   if (ctx->Pixel.RedBias != 0.0 || ctx->Pixel.RedScale != 1.0 ||
+       ctx->Pixel.GreenBias != 0.0 || ctx->Pixel.GreenScale != 1.0 ||
+       ctx->Pixel.BlueBias != 0.0 || ctx->Pixel.BlueScale != 1.0 ||
+       ctx->Pixel.AlphaBias != 0.0 || ctx->Pixel.AlphaScale != 1.0) {
+      scaleAndBias = 1;
+   }
+
+   pixelMaps = ctx->Pixel.MapColorFlag;
+
+   if (pixelMaps) {
+      /* create the colormap/texture now if not already done */
+      if (!st->pixel_xfer.pixelmap_texture) {
+         st->pixel_xfer.pixelmap_texture = st_create_color_map_texture(ctx);
+         st->pixel_xfer.pixelmap_sampler_view =
+            st_create_texture_sampler_view(st->pipe,
+                                           st->pixel_xfer.pixelmap_texture);
+      }
+   }
+
+   get_pixel_transfer_visitor(fp, orig->glsl_to_tgsi,
+                              scaleAndBias, pixelMaps);
+
+   return &fp->Base;
+}
+
 
 /**
  * Make fragment shader for glDraw/CopyPixels.  This shader is made
@@ -107,10 +147,14 @@ st_make_drawpix_fragment_program(struct st_context *st,
                                  struct gl_fragment_program **fpOut)
 {
    struct gl_program *newProg;
+   struct st_fragment_program *stfp = (struct st_fragment_program *) fpIn;
 
    if (is_passthrough_program(fpIn)) {
       newProg = (struct gl_program *) _mesa_clone_fragment_program(st->ctx,
                                              &st->pixel_xfer.program->Base);
+   }
+   else if (stfp->glsl_to_tgsi != NULL) {
+      newProg = (struct gl_program *) get_glsl_pixel_transfer_program(st, stfp);
    }
    else {
 #if 0

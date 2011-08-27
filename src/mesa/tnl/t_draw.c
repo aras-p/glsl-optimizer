@@ -280,10 +280,9 @@ static void bind_inputs( struct gl_context *ctx,
 	 if (!inputs[i]->BufferObj->Pointer) {
 	    bo[*nr_bo] = inputs[i]->BufferObj;
 	    (*nr_bo)++;
-	    ctx->Driver.MapBuffer(ctx, 
-				  GL_ARRAY_BUFFER,
-				  GL_READ_ONLY_ARB,
-				  inputs[i]->BufferObj);
+	    ctx->Driver.MapBufferRange(ctx, 0, inputs[i]->BufferObj->Size,
+				       GL_MAP_READ_BIT,
+				       inputs[i]->BufferObj);
 	    
 	    assert(inputs[i]->BufferObj->Pointer);
 	 }
@@ -348,17 +347,31 @@ static void bind_indices( struct gl_context *ctx,
    }
 
    if (ib->obj->Name && !ib->obj->Pointer) {
+      unsigned map_size;
+
+      switch (ib->type) {
+      case GL_UNSIGNED_BYTE:
+	 map_size = ib->count * sizeof(GLubyte);
+	 break;
+      case GL_UNSIGNED_SHORT:
+	 map_size = ib->count * sizeof(GLushort);
+	 break;
+      case GL_UNSIGNED_INT:
+	 map_size = ib->count * sizeof(GLuint);
+	 break;
+      default:
+	 assert(0);
+	 map_size = 0;
+      }
+
       bo[*nr_bo] = ib->obj;
       (*nr_bo)++;
-      ctx->Driver.MapBuffer(ctx, 
-			    GL_ELEMENT_ARRAY_BUFFER,
-			    GL_READ_ONLY_ARB,
-			    ib->obj);
-
+      ptr = ctx->Driver.MapBufferRange(ctx, (GLsizeiptr) ib->ptr, map_size,
+				       GL_MAP_READ_BIT, ib->obj);
       assert(ib->obj->Pointer);
+   } else {
+      ptr = ib->ptr;
    }
-
-   ptr = ADD_POINTERS(ib->obj->Pointer, ib->ptr);
 
    if (ib->type == GL_UNSIGNED_INT && VB->Primitive[0].basevertex == 0) {
       VB->Elts = (GLuint *) ptr;
@@ -402,9 +415,7 @@ static void unmap_vbos( struct gl_context *ctx,
 {
    GLuint i;
    for (i = 0; i < nr_bo; i++) { 
-      ctx->Driver.UnmapBuffer(ctx, 
-			      0, /* target -- I don't see why this would be needed */
-			      bo[i]);
+      ctx->Driver.UnmapBuffer(ctx, bo[i]);
    }
 }
 

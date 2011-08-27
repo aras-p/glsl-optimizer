@@ -51,6 +51,7 @@ enum pipe_video_cap
    PIPE_VIDEO_CAP_NPOT_TEXTURES = 1,
    PIPE_VIDEO_CAP_MAX_WIDTH = 2,
    PIPE_VIDEO_CAP_MAX_HEIGHT = 3,
+   PIPE_VIDEO_CAP_NUM_BUFFERS_DESIRED = 4
 };
 
 enum pipe_video_codec

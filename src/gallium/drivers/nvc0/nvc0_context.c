@@ -150,6 +150,8 @@ nvc0_create(struct pipe_screen *pscreen, void *priv)
    assert(nvc0->draw);
    draw_set_rasterize_stage(nvc0->draw, nvc0_draw_render_stage(nvc0));
 
+   nouveau_context_init_vdec(&nvc0->base);
+
    return pipe;
 }
 

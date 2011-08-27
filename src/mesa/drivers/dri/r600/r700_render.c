@@ -490,7 +490,8 @@ static void r700ConvertAttrib(struct gl_context *ctx, int count,
     {
         if (!input->BufferObj->Pointer) 
         {
-            ctx->Driver.MapBuffer(ctx, GL_ARRAY_BUFFER, GL_READ_ONLY_ARB, input->BufferObj);
+	   ctx->Driver.MapBufferRange(ctx, 0, input->BufferObj->Size,
+				      GL_MAP_READ_BIT, input->BufferObj);
             mapped_named_bo = GL_TRUE;
         }
 
@@ -543,7 +544,7 @@ static void r700ConvertAttrib(struct gl_context *ctx, int count,
 
     if (mapped_named_bo) 
     {
-        ctx->Driver.UnmapBuffer(ctx, GL_ARRAY_BUFFER, input->BufferObj);
+        ctx->Driver.UnmapBuffer(ctx, input->BufferObj);
     }
 }
 
@@ -564,7 +565,8 @@ static void r700AlignDataToDword(struct gl_context *ctx,
 
     if (!input->BufferObj->Pointer) 
     {
-        ctx->Driver.MapBuffer(ctx, GL_ARRAY_BUFFER, GL_READ_ONLY_ARB, input->BufferObj);
+        ctx->Driver.MapBufferRange(ctx, 0, input->BufferObj->Size,
+				   GL_MAP_READ_BIT, input->BufferObj);
         mapped_named_bo = GL_TRUE;
     }
 
@@ -584,7 +586,7 @@ static void r700AlignDataToDword(struct gl_context *ctx,
     radeon_bo_unmap(attr->bo);
     if (mapped_named_bo) 
     {
-        ctx->Driver.UnmapBuffer(ctx, GL_ARRAY_BUFFER, input->BufferObj);
+        ctx->Driver.UnmapBuffer(ctx, input->BufferObj);
     }
 
     attr->stride = dst_stride;
@@ -727,7 +729,8 @@ static void r700FixupIndexBuffer(struct gl_context *ctx, const struct _mesa_inde
 
     if (mesa_ind_buf->obj->Name && !mesa_ind_buf->obj->Pointer)
     {
-        ctx->Driver.MapBuffer(ctx, GL_ELEMENT_ARRAY_BUFFER, GL_READ_ONLY_ARB, mesa_ind_buf->obj);
+	ctx->Driver.MapBufferRange(ctx, 0, mesa_ind_buf->obj->Size,
+				   GL_MAP_READ_BIT, mesa_ind_buf->obj);
         mapped_named_bo = GL_TRUE;
         assert(mesa_ind_buf->obj->Pointer != NULL);
     }
@@ -788,7 +791,7 @@ static void r700FixupIndexBuffer(struct gl_context *ctx, const struct _mesa_inde
 
     if (mapped_named_bo)
     {
-        ctx->Driver.UnmapBuffer(ctx, GL_ELEMENT_ARRAY_BUFFER, mesa_ind_buf->obj);
+        ctx->Driver.UnmapBuffer(ctx, mesa_ind_buf->obj);
     }
 }
 
@@ -813,7 +816,8 @@ static void r700SetupIndexBuffer(struct gl_context *ctx, const struct _mesa_inde
 
         if (mesa_ind_buf->obj->Name && !mesa_ind_buf->obj->Pointer)
         {
-	        ctx->Driver.MapBuffer(ctx, GL_ELEMENT_ARRAY_BUFFER, GL_READ_ONLY_ARB, mesa_ind_buf->obj);
+		ctx->Driver.MapBufferRange(ctx, 0, mesa_ind_buf->obj->Size,
+					   GL_MAP_READ_BIT, mesa_ind_buf->obj);
 	        assert(mesa_ind_buf->obj->Pointer != NULL);
 	        mapped_named_bo = GL_TRUE;
         }
@@ -836,7 +840,7 @@ static void r700SetupIndexBuffer(struct gl_context *ctx, const struct _mesa_inde
 
         if (mapped_named_bo)
         {
-	        ctx->Driver.UnmapBuffer(ctx, GL_ELEMENT_ARRAY_BUFFER, mesa_ind_buf->obj);
+	        ctx->Driver.UnmapBuffer(ctx, mesa_ind_buf->obj);
         }
     }
     else

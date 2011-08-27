@@ -31,17 +31,32 @@
 #include "util/u_memory.h"
 #include "util/u_simple_list.h"
 #include "os/os_thread.h"
+#include "os/os_mman.h"
 
 #include "state_tracker/drm_driver.h"
 
 #include <sys/ioctl.h>
-#include <sys/mman.h>
 #include <xf86drm.h>
 #include <errno.h>
 
 #define RADEON_BO_FLAGS_MACRO_TILE  1
 #define RADEON_BO_FLAGS_MICRO_TILE  2
 #define RADEON_BO_FLAGS_MICRO_TILE_SQUARE 0x20
+
+#ifndef DRM_RADEON_GEM_WAIT
+#define DRM_RADEON_GEM_WAIT		0x2b
+
+#define RADEON_GEM_NO_WAIT	0x1
+#define RADEON_GEM_USAGE_READ	0x2
+#define RADEON_GEM_USAGE_WRITE	0x4
+
+struct drm_radeon_gem_wait {
+	uint32_t	handle;
+	uint32_t        flags;  /* one of RADEON_GEM_* */
+};
+
+#endif
+
 
 extern const struct pb_vtbl radeon_bo_vtbl;
 
@@ -87,39 +102,49 @@ static struct radeon_bo *get_radeon_bo(struct pb_buffer *_buf)
     return bo;
 }
 
-static void radeon_bo_wait(struct pb_buffer *_buf)
+static void radeon_bo_wait(struct pb_buffer *_buf, enum radeon_bo_usage usage)
 {
-    struct radeon_bo *bo = get_radeon_bo(pb_buffer(_buf));
-    struct drm_radeon_gem_wait_idle args = {};
+    struct radeon_bo *bo = get_radeon_bo(_buf);
 
     while (p_atomic_read(&bo->num_active_ioctls)) {
         sched_yield();
     }
 
-    args.handle = bo->handle;
-    while (drmCommandWriteRead(bo->rws->fd, DRM_RADEON_GEM_WAIT_IDLE,
-                               &args, sizeof(args)) == -EBUSY);
-
-    bo->busy_for_write = FALSE;
+    if (bo->rws->info.drm_minor >= 12) {
+        struct drm_radeon_gem_wait args = {};
+        args.handle = bo->handle;
+        args.flags = usage;
+        while (drmCommandWriteRead(bo->rws->fd, DRM_RADEON_GEM_WAIT,
+                                   &args, sizeof(args)) == -EBUSY);
+    } else {
+        struct drm_radeon_gem_wait_idle args = {};
+        args.handle = bo->handle;
+        while (drmCommandWriteRead(bo->rws->fd, DRM_RADEON_GEM_WAIT_IDLE,
+                                   &args, sizeof(args)) == -EBUSY);
+    }
 }
 
-static boolean radeon_bo_is_busy(struct pb_buffer *_buf)
+static boolean radeon_bo_is_busy(struct pb_buffer *_buf,
+                                 enum radeon_bo_usage usage)
 {
-    struct radeon_bo *bo = get_radeon_bo(pb_buffer(_buf));
-    struct drm_radeon_gem_busy args = {};
-    boolean busy;
+    struct radeon_bo *bo = get_radeon_bo(_buf);
 
     if (p_atomic_read(&bo->num_active_ioctls)) {
         return TRUE;
     }
 
-    args.handle = bo->handle;
-    busy = drmCommandWriteRead(bo->rws->fd, DRM_RADEON_GEM_BUSY,
-                               &args, sizeof(args)) != 0;
-
-    if (!busy)
-        bo->busy_for_write = FALSE;
-    return busy;
+    if (bo->rws->info.drm_minor >= 12) {
+        struct drm_radeon_gem_wait args = {};
+        args.handle = bo->handle;
+        args.flags = usage | RADEON_GEM_NO_WAIT;
+        return drmCommandWriteRead(bo->rws->fd, DRM_RADEON_GEM_WAIT,
+                                   &args, sizeof(args)) != 0;
+    } else {
+        struct drm_radeon_gem_busy args = {};
+        args.handle = bo->handle;
+        return drmCommandWriteRead(bo->rws->fd, DRM_RADEON_GEM_BUSY,
+                                   &args, sizeof(args)) != 0;
+    }
 }
 
 static void radeon_bo_destroy(struct pb_buffer *_buf)
@@ -135,7 +160,7 @@ static void radeon_bo_destroy(struct pb_buffer *_buf)
     }
 
     if (bo->ptr)
-        munmap(bo->ptr, bo->size);
+        os_munmap(bo->ptr, bo->size);
 
     /* Close object. */
     args.handle = bo->handle;
@@ -172,13 +197,33 @@ static void *radeon_bo_map_internal(struct pb_buffer *_buf,
     if (!(flags & PB_USAGE_UNSYNCHRONIZED)) {
         /* DONTBLOCK doesn't make sense with UNSYNCHRONIZED. */
         if (flags & PB_USAGE_DONTBLOCK) {
-            if (radeon_bo_is_referenced_by_cs(cs, bo)) {
-                cs->flush_cs(cs->flush_data, RADEON_FLUSH_ASYNC);
-                return NULL;
-            }
+            if (!(flags & PB_USAGE_CPU_WRITE)) {
+                /* Mapping for read.
+                 *
+                 * Since we are mapping for read, we don't need to wait
+                 * if the GPU is using the buffer for read too
+                 * (neither one is changing it).
+                 *
+                 * Only check whether the buffer is being used for write. */
+                if (radeon_bo_is_referenced_by_cs_for_write(cs, bo)) {
+                    cs->flush_cs(cs->flush_data, RADEON_FLUSH_ASYNC);
+                    return NULL;
+                }
 
-            if (radeon_bo_is_busy((struct pb_buffer*)bo)) {
-                return NULL;
+                if (radeon_bo_is_busy((struct pb_buffer*)bo,
+                                      RADEON_USAGE_WRITE)) {
+                    return NULL;
+                }
+            } else {
+                if (radeon_bo_is_referenced_by_cs(cs, bo)) {
+                    cs->flush_cs(cs->flush_data, RADEON_FLUSH_ASYNC);
+                    return NULL;
+                }
+
+                if (radeon_bo_is_busy((struct pb_buffer*)bo,
+                                      RADEON_USAGE_READWRITE)) {
+                    return NULL;
+                }
             }
         } else {
             if (!(flags & PB_USAGE_CPU_WRITE)) {
@@ -191,14 +236,9 @@ static void *radeon_bo_map_internal(struct pb_buffer *_buf,
                  * Only check whether the buffer is being used for write. */
                 if (radeon_bo_is_referenced_by_cs_for_write(cs, bo)) {
                     cs->flush_cs(cs->flush_data, 0);
-                    radeon_bo_wait((struct pb_buffer*)bo);
-                } else if (bo->busy_for_write) {
-                    /* Update the busy_for_write field (done by radeon_bo_is_busy)
-                     * and wait if needed. */
-                    if (radeon_bo_is_busy((struct pb_buffer*)bo)) {
-                        radeon_bo_wait((struct pb_buffer*)bo);
-                    }
                 }
+                radeon_bo_wait((struct pb_buffer*)bo,
+                               RADEON_USAGE_WRITE);
             } else {
                 /* Mapping for write. */
                 if (radeon_bo_is_referenced_by_cs(cs, bo)) {
@@ -209,7 +249,7 @@ static void *radeon_bo_map_internal(struct pb_buffer *_buf,
                         radeon_drm_cs_sync_flush(cs);
                 }
 
-                radeon_bo_wait((struct pb_buffer*)bo);
+                radeon_bo_wait((struct pb_buffer*)bo, RADEON_USAGE_READWRITE);
             }
         }
     }
@@ -238,7 +278,7 @@ static void *radeon_bo_map_internal(struct pb_buffer *_buf,
         return NULL;
     }
 
-    ptr = mmap(0, args.size, PROT_READ|PROT_WRITE, MAP_SHARED,
+    ptr = os_mmap(0, args.size, PROT_READ|PROT_WRITE, MAP_SHARED,
                bo->rws->fd, args.addr_ptr);
     if (ptr == MAP_FAILED) {
         pipe_mutex_unlock(bo->map_mutex);
@@ -345,7 +385,7 @@ static boolean radeon_bomgr_is_buffer_busy(struct pb_manager *_mgr,
        return TRUE;
    }
 
-   if (radeon_bo_is_busy((struct pb_buffer*)bo)) {
+   if (radeon_bo_is_busy((struct pb_buffer*)bo, RADEON_USAGE_READWRITE)) {
        return TRUE;
    }
 
@@ -395,16 +435,14 @@ static void *radeon_bo_map(struct pb_buffer *buf,
                            struct radeon_winsys_cs *cs,
                            enum pipe_transfer_usage usage)
 {
-    struct pb_buffer *_buf = pb_buffer(buf);
-
-    return pb_map(_buf, get_pb_usage_from_transfer_flags(usage), cs);
+    return pb_map(buf, get_pb_usage_from_transfer_flags(usage), cs);
 }
 
 static void radeon_bo_get_tiling(struct pb_buffer *_buf,
                                  enum radeon_bo_layout *microtiled,
                                  enum radeon_bo_layout *macrotiled)
 {
-    struct radeon_bo *bo = get_radeon_bo(pb_buffer(_buf));
+    struct radeon_bo *bo = get_radeon_bo(_buf);
     struct drm_radeon_gem_set_tiling args = {};
 
     args.handle = bo->handle;
@@ -429,7 +467,7 @@ static void radeon_bo_set_tiling(struct pb_buffer *_buf,
                                  enum radeon_bo_layout macrotiled,
                                  uint32_t pitch)
 {
-    struct radeon_bo *bo = get_radeon_bo(pb_buffer(_buf));
+    struct radeon_bo *bo = get_radeon_bo(_buf);
     struct radeon_drm_cs *cs = radeon_drm_cs(rcs);
     struct drm_radeon_gem_set_tiling args = {};
 
@@ -464,12 +502,10 @@ static struct radeon_winsys_cs_handle *radeon_drm_get_cs_handle(
         struct pb_buffer *_buf)
 {
     /* return radeon_bo. */
-    return (struct radeon_winsys_cs_handle*)
-            get_radeon_bo(pb_buffer(_buf));
+    return (struct radeon_winsys_cs_handle*)get_radeon_bo(_buf);
 }
 
-static unsigned get_pb_usage_from_create_flags(unsigned bind, unsigned usage,
-                                               enum radeon_bo_domain domain)
+static unsigned get_pb_usage_from_create_flags(enum radeon_bo_domain domain)
 {
     unsigned res = 0;
 
@@ -487,7 +523,6 @@ radeon_winsys_bo_create(struct radeon_winsys *rws,
                         unsigned size,
                         unsigned alignment,
                         unsigned bind,
-                        unsigned usage,
                         enum radeon_bo_domain domain)
 {
     struct radeon_drm_winsys *ws = radeon_drm_winsys(rws);
@@ -497,10 +532,11 @@ radeon_winsys_bo_create(struct radeon_winsys *rws,
 
     memset(&desc, 0, sizeof(desc));
     desc.alignment = alignment;
-    desc.usage = get_pb_usage_from_create_flags(bind, usage, domain);
+    desc.usage = get_pb_usage_from_create_flags(domain);
 
     /* Assign a buffer manager. */
-    if (bind & (PIPE_BIND_VERTEX_BUFFER | PIPE_BIND_INDEX_BUFFER))
+    if (bind & (PIPE_BIND_VERTEX_BUFFER | PIPE_BIND_INDEX_BUFFER |
+                PIPE_BIND_CONSTANT_BUFFER))
 	provider = ws->cman;
     else
         provider = ws->kman;
@@ -587,7 +623,7 @@ static boolean radeon_winsys_bo_get_handle(struct pb_buffer *buffer,
                                            struct winsys_handle *whandle)
 {
     struct drm_gem_flink flink = {};
-    struct radeon_bo *bo = get_radeon_bo(pb_buffer(buffer));
+    struct radeon_bo *bo = get_radeon_bo(buffer);
 
     if (whandle->type == DRM_API_HANDLE_TYPE_SHARED) {
         if (!bo->flinked) {

@@ -117,11 +117,12 @@ endif
 
 # r300
 ifneq ($(findstring radeon/drm,$(GALLIUM_WINSYS_DIRS)),)
+ifneq ($(findstring r300,$(GALLIUM_DRIVERS_DIRS)),)
 egl_CPPFLAGS += -D_EGL_PIPE_R300=1
 egl_LIBS += \
 	$(TOP)/src/gallium/winsys/radeon/drm/libradeonwinsys.a \
 	$(TOP)/src/gallium/drivers/r300/libr300.a
-egl_SYS += -ldrm_radeon
+endif
 endif
 
 # r600
@@ -129,8 +130,8 @@ ifneq ($(findstring r600/drm,$(GALLIUM_WINSYS_DIRS)),)
 egl_CPPFLAGS += -D_EGL_PIPE_R600=1
 egl_LIBS += \
 	$(TOP)/src/gallium/winsys/r600/drm/libr600winsys.a \
+	$(TOP)/src/gallium/winsys/radeon/drm/libradeonwinsys.a \
 	$(TOP)/src/gallium/drivers/r600/libr600.a
-egl_SYS += -ldrm_radeon
 endif
 
 # vmwgfx
@@ -141,10 +142,18 @@ egl_LIBS += \
 	$(TOP)/src/gallium/drivers/svga/libsvga.a
 endif
 
-# swrast
+# softpipe
+ifneq ($(findstring softpipe,$(GALLIUM_DRIVERS_DIRS)),)
 egl_CPPFLAGS += -DGALLIUM_SOFTPIPE -DGALLIUM_RBUG -DGALLIUM_TRACE
 egl_LIBS += $(TOP)/src/gallium/drivers/softpipe/libsoftpipe.a
 egl_SYS += -lm
+endif
+
+# llvmpipe
+ifneq ($(findstring llvmpipe,$(GALLIUM_DRIVERS_DIRS)),)
+egl_CPPFLAGS += -DGALLIUM_LLVMPIPE
+egl_LIBS += $(TOP)/src/gallium/drivers/llvmpipe/libllvmpipe.a
+endif
 
 # sort to remove duplicates
 egl_CPPFLAGS := $(sort $(egl_CPPFLAGS))
@@ -158,8 +167,6 @@ st_GL_SYS := -lm -lpthread $(DLOPEN_LIBS)
 
 # LLVM
 ifeq ($(MESA_LLVM),1)
-egl_CPPFLAGS += -DGALLIUM_LLVMPIPE
-egl_LIBS += $(TOP)/src/gallium/drivers/llvmpipe/libllvmpipe.a
 egl_SYS += $(LLVM_LIBS)
 LDFLAGS += $(LLVM_LDFLAGS)
 

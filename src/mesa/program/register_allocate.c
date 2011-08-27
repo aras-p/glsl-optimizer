@@ -200,6 +200,27 @@ ra_add_reg_conflict(struct ra_regs *regs, unsigned int r1, unsigned int r2)
    }
 }
 
+/**
+ * Adds a conflict between base_reg and reg, and also between reg and
+ * anything that base_reg conflicts with.
+ *
+ * This can simplify code for setting up multiple register classes
+ * which are aggregates of some base hardware registers, compared to
+ * explicitly using ra_add_reg_conflict.
+ */
+void
+ra_add_transitive_reg_conflict(struct ra_regs *regs,
+			       unsigned int base_reg, unsigned int reg)
+{
+   int i;
+
+   ra_add_reg_conflict(regs, reg, base_reg);
+
+   for (i = 0; i < regs->regs[base_reg].num_conflicts; i++) {
+      ra_add_reg_conflict(regs, reg, regs->regs[base_reg].conflict_list[i]);
+   }
+}
+
 unsigned int
 ra_alloc_reg_class(struct ra_regs *regs)
 {

@@ -88,11 +88,12 @@ if not env['embedded']:
         'format',
         'blend',
         'conv',
-	'printf',
-	'sincos',
+        'printf',
+        'sincos',
     ]
 
     if not env['msvc']:
+        tests.append('arit')
         tests.append('round')
 
     for test in tests:

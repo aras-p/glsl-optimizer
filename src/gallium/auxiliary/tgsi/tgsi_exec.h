@@ -90,6 +90,11 @@ struct tgsi_sampler
                        const float c0[QUAD_SIZE],
                        enum tgsi_sampler_control control,
                        float rgba[NUM_CHANNELS][QUAD_SIZE]);
+   void (*get_dims)(struct tgsi_sampler *sampler, int level,
+		    int dims[4]);
+   void (*get_texel)(struct tgsi_sampler *sampler, const int i[QUAD_SIZE],
+		     const int j[QUAD_SIZE], const int k[QUAD_SIZE],
+		     const int lod[QUAD_SIZE], float rgba[NUM_CHANNELS][QUAD_SIZE]);
 };
 
 #define TGSI_EXEC_NUM_TEMPS       128
@@ -399,6 +404,8 @@ tgsi_exec_get_shader_param(enum pipe_shader_cap param)
    case PIPE_SHADER_CAP_INDIRECT_CONST_ADDR:
       return 1;
    case PIPE_SHADER_CAP_SUBROUTINES:
+      return 1;
+   case PIPE_SHADER_CAP_INTEGERS:
       return 1;
    default:
       return 0;

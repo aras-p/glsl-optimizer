@@ -212,6 +212,7 @@ enum state_struct_type {
    AUB_TRACE_BINDING_TABLE =		0x101,
    AUB_TRACE_SURFACE_STATE =		0x102,
    AUB_TRACE_VS_CONSTANTS =		0x103,
+   AUB_TRACE_WM_CONSTANTS =		0x104,
 };
 
 /** Subclass of Mesa vertex program */
@@ -247,6 +248,7 @@ enum param_conversion {
    PARAM_CONVERT_F2I,
    PARAM_CONVERT_F2U,
    PARAM_CONVERT_F2B,
+   PARAM_CONVERT_ZERO,
 };
 
 /* Data about a particular attempt to compile a program.  Note that
@@ -310,12 +312,20 @@ struct brw_vs_prog_data {
    GLuint total_grf;
    GLbitfield64 outputs_written;
    GLuint nr_params;       /**< number of float params/constants */
+   GLuint total_scratch;
 
    GLuint inputs_read;
 
    /* Used for calculating urb partitions:
     */
    GLuint urb_entry_size;
+
+   const float *param[MAX_UNIFORMS * 4]; /* should be: BRW_MAX_CURBE */
+   enum param_conversion param_convert[MAX_UNIFORMS * 4];
+   const float *pull_param[MAX_UNIFORMS * 4];
+   enum param_conversion pull_param_convert[MAX_UNIFORMS * 4];
+
+   bool uses_new_param_layout;
 };
 
 
@@ -528,7 +538,7 @@ struct brw_context
        * the CURBE, the depth buffer, and a query BO.
        */
       drm_intel_bo *validated_bos[VERT_ATTRIB_MAX + BRW_WM_MAX_SURF + 16];
-      int validated_bo_count;
+      unsigned int validated_bo_count;
    } state;
 
    struct brw_cache cache;
@@ -662,6 +672,7 @@ struct brw_context
       struct brw_vs_prog_data *prog_data;
       int8_t *constant_map; /* variable array following prog_data */
 
+      drm_intel_bo *scratch_bo;
       drm_intel_bo *const_bo;
       /** Offset in the program cache to the VS program */
       uint32_t prog_offset;
@@ -674,6 +685,23 @@ struct brw_context
 
       uint32_t push_const_offset; /* Offset in the batchbuffer */
       int push_const_size; /* in 256-bit register increments */
+
+      /** @{ register allocator */
+
+      struct ra_regs *regs;
+
+      /**
+       * Array of the ra classes for the unaligned contiguous register
+       * block sizes used.
+       */
+      int *classes;
+
+      /**
+       * Mapping for register-allocated objects in *regs to the first
+       * GRF for that object.
+      */
+      uint8_t *ra_reg_to_grf;
+      /** @} */
    } vs;
 
    struct {
@@ -726,7 +754,6 @@ struct brw_context
       GLuint render_surf;
       GLuint nr_surfaces;      
 
-      GLuint max_threads;
       drm_intel_bo *scratch_bo;
 
       GLuint sampler_count;
@@ -747,6 +774,29 @@ struct brw_context
        * Pre-gen6, push constants live in the CURBE.
        */
       uint32_t push_const_offset;
+
+      /** @{ register allocator */
+
+      struct ra_regs *regs;
+
+      /** Array of the ra classes for the unaligned contiguous
+       * register block sizes used.
+       */
+      int *classes;
+
+      /**
+       * Mapping for register-allocated objects in *regs to the first
+       * GRF for that object.
+      */
+      uint8_t *ra_reg_to_grf;
+
+      /**
+       * ra class for the aligned pairs we use for PLN, which doesn't
+       * appear in *classes.
+       */
+      int aligned_pairs_class;
+
+      /** @} */
    } wm;
 
 
@@ -827,6 +877,10 @@ void brw_validate_textures( struct brw_context *brw );
  */
 void brwInitFragProgFuncs( struct dd_function_table *functions );
 
+int brw_get_scratch_size(int size);
+void brw_get_scratch_bo(struct intel_context *intel,
+			drm_intel_bo **scratch_bo, int size);
+
 
 /* brw_urb.c
  */
@@ -874,7 +928,7 @@ brw_fragment_program_const(const struct gl_fragment_program *p)
 }
 
 static inline
-float convert_param(enum param_conversion conversion, float param)
+float convert_param(enum param_conversion conversion, const float *param)
 {
    union {
       float f;
@@ -884,21 +938,23 @@ float convert_param(enum param_conversion conversion, float param)
 
    switch (conversion) {
    case PARAM_NO_CONVERT:
-      return param;
+      return *param;
    case PARAM_CONVERT_F2I:
-      fi.i = param;
+      fi.i = *param;
       return fi.f;
    case PARAM_CONVERT_F2U:
-      fi.u = param;
+      fi.u = *param;
       return fi.f;
    case PARAM_CONVERT_F2B:
-      if (param != 0.0)
+      if (*param != 0.0)
 	 fi.i = 1;
       else
 	 fi.i = 0;
       return fi.f;
+   case PARAM_CONVERT_ZERO:
+      return 0.0;
    default:
-      return param;
+      return *param;
    }
 }
 

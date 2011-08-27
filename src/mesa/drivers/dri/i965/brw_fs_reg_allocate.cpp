@@ -25,23 +25,6 @@
  *
  */
 
-extern "C" {
-
-#include <sys/types.h>
-
-#include "main/macros.h"
-#include "main/shaderobj.h"
-#include "main/uniforms.h"
-#include "program/prog_parameter.h"
-#include "program/prog_print.h"
-#include "program/prog_optimize.h"
-#include "program/register_allocate.h"
-#include "program/sampler.h"
-#include "program/hash_table.h"
-#include "brw_context.h"
-#include "brw_eu.h"
-#include "brw_wm.h"
-}
 #include "brw_fs.h"
 #include "../glsl/glsl_types.h"
 #include "../glsl/ir_optimization.h"
@@ -50,45 +33,115 @@ extern "C" {
 static void
 assign_reg(int *reg_hw_locations, fs_reg *reg, int reg_width)
 {
-   if (reg->file == GRF && reg->reg != 0) {
+   if (reg->file == GRF) {
       assert(reg->reg_offset >= 0);
-      reg->hw_reg = reg_hw_locations[reg->reg] + reg->reg_offset * reg_width;
-      reg->reg = 0;
+      reg->reg = reg_hw_locations[reg->reg] + reg->reg_offset * reg_width;
+      reg->reg_offset = 0;
    }
 }
 
 void
 fs_visitor::assign_regs_trivial()
 {
-   int last_grf = 0;
-   int hw_reg_mapping[this->virtual_grf_next];
+   int hw_reg_mapping[this->virtual_grf_next + 1];
    int i;
    int reg_width = c->dispatch_width / 8;
 
-   hw_reg_mapping[0] = 0;
    /* Note that compressed instructions require alignment to 2 registers. */
-   hw_reg_mapping[1] = ALIGN(this->first_non_payload_grf, reg_width);
-   for (i = 2; i < this->virtual_grf_next; i++) {
+   hw_reg_mapping[0] = ALIGN(this->first_non_payload_grf, reg_width);
+   for (i = 1; i <= this->virtual_grf_next; i++) {
       hw_reg_mapping[i] = (hw_reg_mapping[i - 1] +
 			   this->virtual_grf_sizes[i - 1] * reg_width);
    }
-   last_grf = hw_reg_mapping[i - 1] + (this->virtual_grf_sizes[i - 1] *
-				       reg_width);
+   this->grf_used = hw_reg_mapping[this->virtual_grf_next];
 
-   foreach_iter(exec_list_iterator, iter, this->instructions) {
-      fs_inst *inst = (fs_inst *)iter.get();
+   foreach_list(node, &this->instructions) {
+      fs_inst *inst = (fs_inst *)node;
 
       assign_reg(hw_reg_mapping, &inst->dst, reg_width);
       assign_reg(hw_reg_mapping, &inst->src[0], reg_width);
       assign_reg(hw_reg_mapping, &inst->src[1], reg_width);
    }
 
-   if (last_grf >= BRW_MAX_GRF) {
+   if (this->grf_used >= BRW_MAX_GRF) {
       fail("Ran out of regs on trivial allocator (%d/%d)\n",
-	   last_grf, BRW_MAX_GRF);
+	   this->grf_used, BRW_MAX_GRF);
    }
 
-   this->grf_used = last_grf + reg_width;
+}
+
+static void
+brw_alloc_reg_set_for_classes(struct brw_context *brw,
+			      int *class_sizes,
+			      int class_count,
+			      int reg_width,
+			      int base_reg_count)
+{
+   struct intel_context *intel = &brw->intel;
+
+   /* Compute the total number of registers across all classes. */
+   int ra_reg_count = 0;
+   for (int i = 0; i < class_count; i++) {
+      ra_reg_count += base_reg_count - (class_sizes[i] - 1);
+   }
+
+   ralloc_free(brw->wm.ra_reg_to_grf);
+   brw->wm.ra_reg_to_grf = ralloc_array(brw, uint8_t, ra_reg_count);
+   ralloc_free(brw->wm.regs);
+   brw->wm.regs = ra_alloc_reg_set(ra_reg_count);
+   ralloc_free(brw->wm.classes);
+   brw->wm.classes = ralloc_array(brw, int, class_count + 1);
+
+   brw->wm.aligned_pairs_class = -1;
+
+   /* Now, add the registers to their classes, and add the conflicts
+    * between them and the base GRF registers (and also each other).
+    */
+   int reg = 0;
+   int pairs_base_reg = 0;
+   int pairs_reg_count = 0;
+   for (int i = 0; i < class_count; i++) {
+      int class_reg_count = base_reg_count - (class_sizes[i] - 1);
+      brw->wm.classes[i] = ra_alloc_reg_class(brw->wm.regs);
+
+      /* Save this off for the aligned pair class at the end. */
+      if (class_sizes[i] == 2) {
+	 pairs_base_reg = reg;
+	 pairs_reg_count = class_reg_count;
+      }
+
+      for (int j = 0; j < class_reg_count; j++) {
+	 ra_class_add_reg(brw->wm.regs, brw->wm.classes[i], reg);
+
+	 brw->wm.ra_reg_to_grf[reg] = j;
+
+	 for (int base_reg = j;
+	      base_reg < j + class_sizes[i];
+	      base_reg++) {
+	    ra_add_transitive_reg_conflict(brw->wm.regs, base_reg, reg);
+	 }
+
+	 reg++;
+      }
+   }
+   assert(reg == ra_reg_count);
+
+   /* Add a special class for aligned pairs, which we'll put delta_x/y
+    * in on gen5 so that we can do PLN.
+    */
+   if (brw->has_pln && reg_width == 1 && intel->gen < 6) {
+      brw->wm.aligned_pairs_class = ra_alloc_reg_class(brw->wm.regs);
+
+      for (int i = 0; i < pairs_reg_count; i++) {
+	 if ((brw->wm.ra_reg_to_grf[pairs_base_reg + i] & 1) == 0) {
+	    ra_class_add_reg(brw->wm.regs, brw->wm.aligned_pairs_class,
+			     pairs_base_reg + i);
+	 }
+      }
+      class_count++;
+   }
+
+   ra_set_finalize(brw->wm.regs);
 }
 
 bool
@@ -101,12 +154,11 @@ fs_visitor::assign_regs()
     * for reg_width == 2.
     */
    int reg_width = c->dispatch_width / 8;
-   int hw_reg_mapping[this->virtual_grf_next + 1];
+   int hw_reg_mapping[this->virtual_grf_next];
    int first_assigned_grf = ALIGN(this->first_non_payload_grf, reg_width);
    int base_reg_count = (BRW_MAX_GRF - first_assigned_grf) / reg_width;
    int class_sizes[base_reg_count];
    int class_count = 0;
-   int aligned_pair_class = -1;
 
    calculate_live_intervals();
 
@@ -125,7 +177,7 @@ fs_visitor::assign_regs()
        */
       class_sizes[class_count++] = 2;
    }
-   for (int r = 1; r < this->virtual_grf_next; r++) {
+   for (int r = 0; r < this->virtual_grf_next; r++) {
       int i;
 
       for (i = 0; i < class_count; i++) {
@@ -141,94 +193,26 @@ fs_visitor::assign_regs()
       }
    }
 
-   int ra_reg_count = 0;
-   int class_base_reg[class_count];
-   int class_reg_count[class_count];
-   int classes[class_count + 1];
+   brw_alloc_reg_set_for_classes(brw, class_sizes, class_count,
+				 reg_width, base_reg_count);
 
-   for (int i = 0; i < class_count; i++) {
-      class_base_reg[i] = ra_reg_count;
-      class_reg_count[i] = base_reg_count - (class_sizes[i] - 1);
-      ra_reg_count += class_reg_count[i];
-   }
-
-   struct ra_regs *regs = ra_alloc_reg_set(ra_reg_count);
-   for (int i = 0; i < class_count; i++) {
-      classes[i] = ra_alloc_reg_class(regs);
-
-      for (int i_r = 0; i_r < class_reg_count[i]; i_r++) {
-	 ra_class_add_reg(regs, classes[i], class_base_reg[i] + i_r);
-      }
-
-      /* Add conflicts between our contiguous registers aliasing
-       * base regs and other register classes' contiguous registers
-       * that alias base regs, or the base regs themselves for classes[0].
-       */
-      for (int c = 0; c <= i; c++) {
-	 for (int i_r = 0; i_r < class_reg_count[i]; i_r++) {
-	    for (int c_r = MAX2(0, i_r - (class_sizes[c] - 1));
-		 c_r < MIN2(class_reg_count[c], i_r + class_sizes[i]);
-		 c_r++) {
-
-	       if (0) {
-		  printf("%d/%d conflicts %d/%d\n",
-			 class_sizes[i], first_assigned_grf + i_r,
-			 class_sizes[c], first_assigned_grf + c_r);
-	       }
-
-	       ra_add_reg_conflict(regs,
-				   class_base_reg[i] + i_r,
-				   class_base_reg[c] + c_r);
-	    }
-	 }
-      }
-   }
-
-   /* Add a special class for aligned pairs, which we'll put delta_x/y
-    * in on gen5 so that we can do PLN.
-    */
-   if (brw->has_pln && reg_width == 1 && intel->gen < 6) {
-      int reg_count = (base_reg_count - 1) / 2;
-      int unaligned_pair_class = 1;
-      assert(class_sizes[unaligned_pair_class] == 2);
-
-      aligned_pair_class = class_count;
-      classes[aligned_pair_class] = ra_alloc_reg_class(regs);
-      class_sizes[aligned_pair_class] = 2;
-      class_base_reg[aligned_pair_class] = 0;
-      class_reg_count[aligned_pair_class] = 0;
-      int start = (first_assigned_grf & 1) ? 1 : 0;
-
-      for (int i = 0; i < reg_count; i++) {
-	 ra_class_add_reg(regs, classes[aligned_pair_class],
-			  class_base_reg[unaligned_pair_class] + i * 2 + start);
-      }
-      class_count++;
-   }
-
-   ra_set_finalize(regs);
-
-   struct ra_graph *g = ra_alloc_interference_graph(regs,
+   struct ra_graph *g = ra_alloc_interference_graph(brw->wm.regs,
 						    this->virtual_grf_next);
-   /* Node 0 is just a placeholder to keep virtual_grf[] mapping 1:1
-    * with nodes.
-    */
-   ra_set_node_class(g, 0, classes[0]);
 
-   for (int i = 1; i < this->virtual_grf_next; i++) {
+   for (int i = 0; i < this->virtual_grf_next; i++) {
       for (int c = 0; c < class_count; c++) {
 	 if (class_sizes[c] == this->virtual_grf_sizes[i]) {
-	    if (aligned_pair_class >= 0 &&
+	    if (brw->wm.aligned_pairs_class >= 0 &&
 		this->delta_x.reg == i) {
-	       ra_set_node_class(g, i, classes[aligned_pair_class]);
+	       ra_set_node_class(g, i, brw->wm.aligned_pairs_class);
 	    } else {
-	       ra_set_node_class(g, i, classes[c]);
+	       ra_set_node_class(g, i, brw->wm.classes[c]);
 	    }
 	    break;
 	 }
       }
 
-      for (int j = 1; j < i; j++) {
+      for (int j = 0; j < i; j++) {
 	 if (virtual_grf_interferes(i, j)) {
 	    ra_add_node_interference(g, i, j);
 	 }
@@ -253,7 +237,6 @@ fs_visitor::assign_regs()
 
 
       ralloc_free(g);
-      ralloc_free(regs);
 
       return false;
    }
@@ -263,28 +246,18 @@ fs_visitor::assign_regs()
     * numbers.
     */
    this->grf_used = first_assigned_grf;
-   hw_reg_mapping[0] = 0; /* unused */
-   for (int i = 1; i < this->virtual_grf_next; i++) {
+   for (int i = 0; i < this->virtual_grf_next; i++) {
       int reg = ra_get_node_reg(g, i);
-      int hw_reg = -1;
 
-      for (int c = 0; c < class_count; c++) {
-	 if (reg >= class_base_reg[c] &&
-	     reg < class_base_reg[c] + class_reg_count[c]) {
-	    hw_reg = reg - class_base_reg[c];
-	    break;
-	 }
-      }
-
-      assert(hw_reg >= 0);
-      hw_reg_mapping[i] = first_assigned_grf + hw_reg * reg_width;
+      hw_reg_mapping[i] = (first_assigned_grf +
+			   brw->wm.ra_reg_to_grf[reg] * reg_width);
       this->grf_used = MAX2(this->grf_used,
 			    hw_reg_mapping[i] + this->virtual_grf_sizes[i] *
 			    reg_width);
    }
 
-   foreach_iter(exec_list_iterator, iter, this->instructions) {
-      fs_inst *inst = (fs_inst *)iter.get();
+   foreach_list(node, &this->instructions) {
+      fs_inst *inst = (fs_inst *)node;
 
       assign_reg(hw_reg_mapping, &inst->dst, reg_width);
       assign_reg(hw_reg_mapping, &inst->src[0], reg_width);
@@ -292,7 +265,6 @@ fs_visitor::assign_regs()
    }
 
    ralloc_free(g);
-   ralloc_free(regs);
 
    return true;
 }
@@ -336,8 +308,8 @@ fs_visitor::choose_spill_reg(struct ra_graph *g)
     * spill/unspill we'll have to do, and guess that the insides of
     * loops run 10 times.
     */
-   foreach_iter(exec_list_iterator, iter, this->instructions) {
-      fs_inst *inst = (fs_inst *)iter.get();
+   foreach_list(node, &this->instructions) {
+      fs_inst *inst = (fs_inst *)node;
 
       for (unsigned int i = 0; i < 3; i++) {
 	 if (inst->src[i].file == GRF) {
@@ -370,6 +342,9 @@ fs_visitor::choose_spill_reg(struct ra_graph *g)
 	 if (inst->dst.file == GRF)
 	    no_spill[inst->dst.reg] = true;
 	 break;
+
+      default:
+	 break;
       }
    }
 
@@ -394,8 +369,8 @@ fs_visitor::spill_reg(int spill_reg)
     * virtual grf of the same size.  For most instructions, though, we
     * could just spill/unspill the GRF being accessed.
     */
-   foreach_iter(exec_list_iterator, iter, this->instructions) {
-      fs_inst *inst = (fs_inst *)iter.get();
+   foreach_list(node, &this->instructions) {
+      fs_inst *inst = (fs_inst *)node;
 
       for (unsigned int i = 0; i < 3; i++) {
 	 if (inst->src[i].file == GRF &&

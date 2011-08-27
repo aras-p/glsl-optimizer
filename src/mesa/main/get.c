@@ -1569,11 +1569,11 @@ find_custom_value(struct gl_context *ctx, const struct value_desc *d, union valu
       break;
 
    case GL_NUM_COMPRESSED_TEXTURE_FORMATS_ARB:
-      v->value_int = _mesa_get_compressed_formats(ctx, NULL, GL_FALSE);
+      v->value_int = _mesa_get_compressed_formats(ctx, NULL);
       break;
    case GL_COMPRESSED_TEXTURE_FORMATS_ARB:
       v->value_int_n.n = 
-	 _mesa_get_compressed_formats(ctx, v->value_int_n.ints, GL_FALSE);
+	 _mesa_get_compressed_formats(ctx, v->value_int_n.ints);
       ASSERT(v->value_int_n.n <= 100);
       break;
 

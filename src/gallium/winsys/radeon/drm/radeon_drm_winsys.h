@@ -31,8 +31,12 @@
 #define RADEON_DRM_WINSYS_H
 
 #include "radeon_winsys.h"
-
 #include "os/os_thread.h"
+
+enum radeon_generation {
+    R300,
+    R600
+};
 
 struct radeon_drm_winsys {
     struct radeon_winsys base;
@@ -40,19 +44,13 @@ struct radeon_drm_winsys {
     int fd; /* DRM file descriptor */
     int num_cs; /* The number of command streams created. */
 
+    enum radeon_generation gen;
+    struct radeon_info info;
+
     struct pb_manager *kman;
     struct pb_manager *cman;
 
-    uint32_t pci_id;        /* PCI ID */
-    uint32_t gb_pipes;      /* GB pipe count */
-    uint32_t z_pipes;       /* Z pipe count (rv530 only) */
-    uint32_t gart_size;     /* GART size. */
-    uint32_t vram_size;     /* VRAM size. */
     uint32_t num_cpus;      /* Number of CPUs. */
-
-    unsigned drm_major;
-    unsigned drm_minor;
-    unsigned drm_patchlevel;
 
     struct radeon_drm_cs *hyperz_owner;
     pipe_mutex hyperz_owner_mutex;

@@ -21,6 +21,8 @@ struct nv50_context;
 
 #define NV50_SCREEN_RESIDENT_BO_COUNT 5
 
+struct nv50_blitctx;
+
 struct nv50_screen {
    struct nouveau_screen base;
    struct nouveau_winsys *nvws;
@@ -38,6 +40,8 @@ struct nv50_screen {
    struct nouveau_resource *vp_code_heap;
    struct nouveau_resource *gp_code_heap;
    struct nouveau_resource *fp_code_heap;
+
+   struct nv50_blitctx *blitctx;
 
    struct {
       void **entries;
@@ -70,6 +74,8 @@ nv50_screen(struct pipe_screen *screen)
 {
    return (struct nv50_screen *)screen;
 }
+
+boolean nv50_blitctx_create(struct nv50_screen *);
 
 void nv50_screen_make_buffers_resident(struct nv50_screen *);
 

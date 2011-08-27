@@ -1279,6 +1279,9 @@ struct gl_texture_image
    GLboolean _IsPowerOfTwo;	/**< Are all dimensions powers of two? */
 
    struct gl_texture_object *TexObject;  /**< Pointer back to parent object */
+   GLuint Level;                /**< Which mipmap level am I? */
+   /** Cube map face: index into gl_texture_object::Image[] array */
+   GLuint Face;
 
    FetchTexelFuncC FetchTexelc;	/**< GLchan texel fetch function pointer */
    FetchTexelFuncF FetchTexelf;	/**< Float texel fetch function pointer */
@@ -2252,8 +2255,6 @@ struct gl_shader_state
     */
    struct gl_shader_program *ActiveProgram;
 
-   void *MemPool;
-
    GLbitfield Flags;                    /**< Mask of GLSL_x flags */
 };
 
@@ -2718,6 +2719,12 @@ struct gl_constants
    GLuint MaxGeometryTotalOutputComponents;
 
    GLuint GLSLVersion;  /**< GLSL version supported (ex: 120 = 1.20) */
+
+   /**
+    * Does the driver support real 32-bit integers?  (Otherwise, integers are
+    * simulated via floats.)
+    */
+   GLboolean NativeIntegers;
 
    /** Which texture units support GL_ATI_envmap_bumpmap as targets */
    GLbitfield SupportedBumpUnits;

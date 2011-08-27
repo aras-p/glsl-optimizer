@@ -750,6 +750,8 @@ xorg_xv_init(ScreenPtr pScreen)
 
    if (num_adaptors) {
       xf86XVScreenInit(pScreen, adaptors, num_adaptors);
+      if (textured_adapter)
+         xorg_xvmc_init(pScreen, textured_adapter->name);
    } else {
       xf86DrvMsg(pScrn->scrnIndex, X_WARNING,
                  "Disabling Xv because no adaptors could be initialized.\n");

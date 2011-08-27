@@ -95,8 +95,6 @@ _mesa_init_driver_functions(struct dd_function_table *driver)
    driver->TexSubImage2D = _mesa_store_texsubimage2d;
    driver->TexSubImage3D = _mesa_store_texsubimage3d;
    driver->GetTexImage = _mesa_get_teximage;
-   driver->CopyTexImage1D = _mesa_meta_CopyTexImage1D;
-   driver->CopyTexImage2D = _mesa_meta_CopyTexImage2D;
    driver->CopyTexSubImage1D = _mesa_meta_CopyTexSubImage1D;
    driver->CopyTexSubImage2D = _mesa_meta_CopyTexSubImage2D;
    driver->CopyTexSubImage3D = _mesa_meta_CopyTexSubImage3D;
@@ -250,10 +248,10 @@ _mesa_init_driver_state(struct gl_context *ctx)
       GLuint i;
       for (i = 0; i < ctx->Const.MaxDrawBuffers; i++) {
          ctx->Driver.ColorMaskIndexed(ctx, i,
-                                      ctx->Color.ColorMask[0][RCOMP],
-                                      ctx->Color.ColorMask[0][GCOMP],
-                                      ctx->Color.ColorMask[0][BCOMP],
-                                      ctx->Color.ColorMask[0][ACOMP]);
+                                      ctx->Color.ColorMask[i][RCOMP],
+                                      ctx->Color.ColorMask[i][GCOMP],
+                                      ctx->Color.ColorMask[i][BCOMP],
+                                      ctx->Color.ColorMask[i][ACOMP]);
       }
    }
    else {
@@ -288,7 +286,10 @@ _mesa_init_driver_state(struct gl_context *ctx)
    ctx->Driver.Enable(ctx, GL_TEXTURE_CUBE_MAP, GL_FALSE);
 
    ctx->Driver.Fogfv(ctx, GL_FOG_COLOR, ctx->Fog.Color);
-   ctx->Driver.Fogfv(ctx, GL_FOG_MODE, 0);
+   {
+      GLfloat mode = (GLfloat) ctx->Fog.Mode;
+      ctx->Driver.Fogfv(ctx, GL_FOG_MODE, &mode);
+   }
    ctx->Driver.Fogfv(ctx, GL_FOG_DENSITY, &ctx->Fog.Density);
    ctx->Driver.Fogfv(ctx, GL_FOG_START, &ctx->Fog.Start);
    ctx->Driver.Fogfv(ctx, GL_FOG_END, &ctx->Fog.End);

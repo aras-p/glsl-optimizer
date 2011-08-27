@@ -96,7 +96,7 @@ draw_llvm_generate_elts(struct draw_llvm *llvm, struct draw_llvm_variant *var);
  * Create LLVM type for struct draw_jit_texture
  */
 static LLVMTypeRef
-create_jit_texture_type(struct gallivm_state *gallivm)
+create_jit_texture_type(struct gallivm_state *gallivm, const char *struct_name)
 {
    LLVMTargetDataRef target = gallivm->target;
    LLVMTypeRef texture_type;
@@ -120,13 +120,21 @@ create_jit_texture_type(struct gallivm_state *gallivm)
    elem_types[DRAW_JIT_TEXTURE_BORDER_COLOR] = 
       LLVMArrayType(LLVMFloatTypeInContext(gallivm->context), 4);
 
+#if HAVE_LLVM >= 0x0300
+   texture_type = LLVMStructCreateNamed(gallivm->context, struct_name);
+   LLVMStructSetBody(texture_type, elem_types,
+                     Elements(elem_types), 0);
+#else
    texture_type = LLVMStructTypeInContext(gallivm->context, elem_types,
                                           Elements(elem_types), 0);
+
+   LLVMAddTypeName(gallivm->module, struct_name, texture_type);
 
    /* Make sure the target's struct layout cache doesn't return
     * stale/invalid data.
     */
    LLVMInvalidateStructLayout(gallivm->target, texture_type);
+#endif
 
    LP_CHECK_MEMBER_OFFSET(struct draw_jit_texture, width,
                           target, texture_type,
@@ -176,7 +184,7 @@ create_jit_texture_type(struct gallivm_state *gallivm)
  */
 static LLVMTypeRef
 create_jit_context_type(struct gallivm_state *gallivm,
-                        LLVMTypeRef texture_type)
+                        LLVMTypeRef texture_type, const char *struct_name)
 {
    LLVMTargetDataRef target = gallivm->target;
    LLVMTypeRef float_type = LLVMFloatTypeInContext(gallivm->context);
@@ -189,11 +197,17 @@ create_jit_context_type(struct gallivm_state *gallivm,
    elem_types[3] = LLVMPointerType(float_type, 0); /* viewport */
    elem_types[4] = LLVMArrayType(texture_type,
                                  PIPE_MAX_VERTEX_SAMPLERS); /* textures */
-
+#if HAVE_LLVM >= 0x0300
+   context_type = LLVMStructCreateNamed(gallivm->context, struct_name);
+   LLVMStructSetBody(context_type, elem_types,
+                     Elements(elem_types), 0);
+#else
    context_type = LLVMStructTypeInContext(gallivm->context, elem_types,
                                           Elements(elem_types), 0);
+   LLVMAddTypeName(gallivm->module, struct_name, context_type);
 
    LLVMInvalidateStructLayout(gallivm->target, context_type);
+#endif
 
    LP_CHECK_MEMBER_OFFSET(struct draw_jit_context, vs_constants,
                           target, context_type, 0);
@@ -215,7 +229,7 @@ create_jit_context_type(struct gallivm_state *gallivm,
  * Create LLVM type for struct pipe_vertex_buffer
  */
 static LLVMTypeRef
-create_jit_vertex_buffer_type(struct gallivm_state *gallivm)
+create_jit_vertex_buffer_type(struct gallivm_state *gallivm, const char *struct_name)
 {
    LLVMTargetDataRef target = gallivm->target;
    LLVMTypeRef elem_types[3];
@@ -225,10 +239,17 @@ create_jit_vertex_buffer_type(struct gallivm_state *gallivm)
    elem_types[1] = LLVMInt32TypeInContext(gallivm->context);
    elem_types[2] = LLVMPointerType(LLVMInt8TypeInContext(gallivm->context), 0); /* vs_constants */
 
+#if HAVE_LLVM >= 0x0300
+   vb_type = LLVMStructCreateNamed(gallivm->context, struct_name);
+   LLVMStructSetBody(vb_type, elem_types,
+                     Elements(elem_types), 0);
+#else
    vb_type = LLVMStructTypeInContext(gallivm->context, elem_types,
                                      Elements(elem_types), 0);
+   LLVMAddTypeName(gallivm->module, struct_name, vb_type);
 
    LLVMInvalidateStructLayout(gallivm->target, vb_type);
+#endif
 
    LP_CHECK_MEMBER_OFFSET(struct pipe_vertex_buffer, stride,
                           target, vb_type, 0);
@@ -258,10 +279,17 @@ create_jit_vertex_header(struct gallivm_state *gallivm, int data_elems)
    elem_types[1]  = LLVMArrayType(LLVMFloatTypeInContext(gallivm->context), 4);
    elem_types[2]  = LLVMArrayType(elem_types[1], data_elems);
 
+#if HAVE_LLVM >= 0x0300
+   vertex_header = LLVMStructCreateNamed(gallivm->context, struct_name);
+   LLVMStructSetBody(vertex_header, elem_types,
+                     Elements(elem_types), 0);
+#else
    vertex_header = LLVMStructTypeInContext(gallivm->context, elem_types,
                                            Elements(elem_types), 0);
+   LLVMAddTypeName(gallivm->module, struct_name, vertex_header);
 
    LLVMInvalidateStructLayout(gallivm->target, vertex_header);
+#endif
 
    /* these are bit-fields and we can't take address of them
       LP_CHECK_MEMBER_OFFSET(struct vertex_header, clipmask,
@@ -284,8 +312,6 @@ create_jit_vertex_header(struct gallivm_state *gallivm, int data_elems)
                           target, vertex_header,
                           DRAW_JIT_VERTEX_DATA);
 
-   LLVMAddTypeName(gallivm->module, struct_name, vertex_header);
-
    return vertex_header;
 }
 
@@ -299,19 +325,15 @@ create_jit_types(struct draw_llvm *llvm)
    struct gallivm_state *gallivm = llvm->gallivm;
    LLVMTypeRef texture_type, context_type, buffer_type, vb_type;
 
-   texture_type = create_jit_texture_type(gallivm);
-   LLVMAddTypeName(gallivm->module, "texture", texture_type);
+   texture_type = create_jit_texture_type(gallivm, "texture");
 
-   context_type = create_jit_context_type(gallivm, texture_type);
-   LLVMAddTypeName(gallivm->module, "draw_jit_context", context_type);
+   context_type = create_jit_context_type(gallivm, texture_type, "draw_jit_context");
    llvm->context_ptr_type = LLVMPointerType(context_type, 0);
 
    buffer_type = LLVMPointerType(LLVMIntTypeInContext(gallivm->context, 8), 0);
-   LLVMAddTypeName(gallivm->module, "buffer", buffer_type);
    llvm->buffer_ptr_type = LLVMPointerType(buffer_type, 0);
 
-   vb_type = create_jit_vertex_buffer_type(gallivm);
-   LLVMAddTypeName(gallivm->module, "pipe_vertex_buffer", vb_type);
+   vb_type = create_jit_vertex_buffer_type(gallivm, "pipe_vertex_buffer");
    llvm->vb_ptr_type = LLVMPointerType(vb_type, 0);
 }
 

@@ -82,13 +82,22 @@ vlVdpDecoderCreate(VdpDevice device,
       goto error_decoder;
    }
 
+   vldecoder->num_buffers = pipe->screen->get_video_param
+   (
+      pipe->screen, p_profile,
+      PIPE_VIDEO_CAP_NUM_BUFFERS_DESIRED
+   );
    vldecoder->cur_buffer = 0;
 
-   for (i = 0; i < VL_NUM_DECODE_BUFFERS; ++i) {
-      vldecoder->buffer[i] = vldecoder->decoder->create_buffer(vldecoder->decoder);
-      if (!vldecoder->buffer[i]) {
+   vldecoder->buffers = CALLOC(vldecoder->num_buffers, sizeof(void*));
+   if (!vldecoder->buffers)
+         goto error_alloc_buffers;
+
+   for (i = 0; i < vldecoder->num_buffers; ++i) {
+      vldecoder->buffers[i] = vldecoder->decoder->create_buffer(vldecoder->decoder);
+      if (!vldecoder->buffers[i]) {
          ret = VDP_STATUS_ERROR;
-         goto error_buffer;
+         goto error_create_buffers;
       }
    }
 
@@ -103,11 +112,15 @@ vlVdpDecoderCreate(VdpDevice device,
    return VDP_STATUS_OK;
 
 error_handle:
-error_buffer:
+error_create_buffers:
 
-   for (i = 0; i < VL_NUM_DECODE_BUFFERS; ++i)
-      if (vldecoder->buffer[i])
-         vldecoder->buffer[i]->destroy(vldecoder->buffer[i]);
+   for (i = 0; i < vldecoder->num_buffers; ++i)
+      if (vldecoder->buffers[i])
+         vldecoder->decoder->destroy_buffer(vldecoder->decoder, vldecoder->buffers[i]);
+
+   FREE(vldecoder->buffers);
+
+error_alloc_buffers:
 
    vldecoder->decoder->destroy(vldecoder->decoder);
 
@@ -128,9 +141,11 @@ vlVdpDecoderDestroy(VdpDecoder decoder)
    if (!vldecoder)
       return VDP_STATUS_INVALID_HANDLE;
 
-   for (i = 0; i < VL_NUM_DECODE_BUFFERS; ++i)
-      if (vldecoder->buffer[i])
-         vldecoder->buffer[i]->destroy(vldecoder->buffer[i]);
+   for (i = 0; i < vldecoder->num_buffers; ++i)
+      if (vldecoder->buffers[i])
+         vldecoder->decoder->destroy_buffer(vldecoder->decoder, vldecoder->buffers[i]);
+
+   FREE(vldecoder->buffers);
 
    vldecoder->decoder->destroy(vldecoder->decoder);
 
@@ -161,37 +176,36 @@ vlVdpDecoderGetParameters(VdpDecoder decoder,
 }
 
 static VdpStatus
-vlVdpDecoderRenderMpeg2(struct pipe_video_decoder *decoder,
-                        struct pipe_video_decode_buffer *buffer,
-                        struct pipe_video_buffer *target,
-                        VdpPictureInfoMPEG1Or2 *picture_info,
-                        uint32_t bitstream_buffer_count,
-                        VdpBitstreamBuffer const *bitstream_buffers)
+vlVdpDecoderRenderMpeg12(struct pipe_video_decoder *decoder,
+                         VdpPictureInfoMPEG1Or2 *picture_info,
+                         uint32_t bitstream_buffer_count,
+                         VdpBitstreamBuffer const *bitstream_buffers)
 {
    struct pipe_mpeg12_picture_desc picture;
+   struct pipe_mpeg12_quant_matrix quant;
    struct pipe_video_buffer *ref_frames[2];
-   uint8_t intra_quantizer_matrix[64];
-   unsigned num_ycbcr_blocks[3] = { 0, 0, 0 };
    unsigned i;
 
    VDPAU_MSG(VDPAU_TRACE, "[VDPAU] Decoding MPEG2\n");
 
+   i = 0;
+
    /* if surfaces equals VDP_STATUS_INVALID_HANDLE, they are not used */
-   if (picture_info->forward_reference ==  VDP_INVALID_HANDLE)
-      ref_frames[0] = NULL;
-   else {
-      ref_frames[0] = ((vlVdpSurface *)vlGetDataHTAB(picture_info->forward_reference))->video_buffer;
-      if (!ref_frames[0])
+   if (picture_info->forward_reference !=  VDP_INVALID_HANDLE) {
+      ref_frames[i] = ((vlVdpSurface *)vlGetDataHTAB(picture_info->forward_reference))->video_buffer;
+      if (!ref_frames[i])
          return VDP_STATUS_INVALID_HANDLE;
+      ++i;
    }
 
-   if (picture_info->backward_reference ==  VDP_INVALID_HANDLE)
-      ref_frames[1] = NULL;
-   else {
-      ref_frames[1] = ((vlVdpSurface *)vlGetDataHTAB(picture_info->backward_reference))->video_buffer;
-      if (!ref_frames[1])
+   if (picture_info->backward_reference !=  VDP_INVALID_HANDLE) {
+      ref_frames[i] = ((vlVdpSurface *)vlGetDataHTAB(picture_info->backward_reference))->video_buffer;
+      if (!ref_frames[i])
          return VDP_STATUS_INVALID_HANDLE;
+      ++i;
    }
+
+   decoder->set_reference_frames(decoder, ref_frames, i);
 
    memset(&picture, 0, sizeof(picture));
    picture.base.profile = decoder->profile;
@@ -202,24 +216,28 @@ vlVdpDecoderRenderMpeg2(struct pipe_video_decoder *decoder,
    picture.alternate_scan = picture_info->alternate_scan;
    picture.intra_vlc_format = picture_info->intra_vlc_format;
    picture.concealment_motion_vectors = picture_info->concealment_motion_vectors;
+   picture.intra_dc_precision = picture_info->intra_dc_precision;
    picture.f_code[0][0] = picture_info->f_code[0][0] - 1;
    picture.f_code[0][1] = picture_info->f_code[0][1] - 1;
    picture.f_code[1][0] = picture_info->f_code[1][0] - 1;
    picture.f_code[1][1] = picture_info->f_code[1][1] - 1;
 
-   buffer->begin_frame(buffer);
+   decoder->set_picture_parameters(decoder, &picture.base);
 
-   memcpy(intra_quantizer_matrix, picture_info->intra_quantizer_matrix, sizeof(intra_quantizer_matrix));
-   intra_quantizer_matrix[0] = 1 << (7 - picture_info->intra_dc_precision);
-   buffer->set_quant_matrix(buffer, intra_quantizer_matrix, picture_info->non_intra_quantizer_matrix);
+   memset(&quant, 0, sizeof(quant));
+   quant.base.codec = PIPE_VIDEO_CODEC_MPEG12;
+   quant.intra_matrix = picture_info->intra_quantizer_matrix;
+   quant.non_intra_matrix = picture_info->non_intra_quantizer_matrix;
+
+   decoder->set_quant_matrix(decoder, &quant.base);
+
+   decoder->begin_frame(decoder);
 
    for (i = 0; i < bitstream_buffer_count; ++i)
-      buffer->decode_bitstream(buffer, bitstream_buffers[i].bitstream_bytes,
-                               bitstream_buffers[i].bitstream, &picture.base, num_ycbcr_blocks);
+      decoder->decode_bitstream(decoder, bitstream_buffers[i].bitstream_bytes,
+                                bitstream_buffers[i].bitstream);
 
-   buffer->end_frame(buffer);
-
-   decoder->flush_buffer(buffer, num_ycbcr_blocks, ref_frames, target);
+   decoder->end_frame(decoder);
 
    return VDP_STATUS_OK;
 }
@@ -254,17 +272,19 @@ vlVdpDecoderRender(VdpDecoder decoder,
       // TODO: Recreate decoder with correct chroma
       return VDP_STATUS_INVALID_CHROMA_TYPE;
 
-   // TODO: Right now only mpeg2 is supported.
+   // TODO: Right now only mpeg 1 & 2 is supported.
    switch (vldecoder->decoder->profile)   {
+   case PIPE_VIDEO_PROFILE_MPEG1:
    case PIPE_VIDEO_PROFILE_MPEG2_SIMPLE:
    case PIPE_VIDEO_PROFILE_MPEG2_MAIN:
       ++vldecoder->cur_buffer;
-      vldecoder->cur_buffer %= VL_NUM_DECODE_BUFFERS;
-      return vlVdpDecoderRenderMpeg2(vldecoder->decoder,
-                                     vldecoder->buffer[vldecoder->cur_buffer],
-                                     vlsurf->video_buffer,
-                                     (VdpPictureInfoMPEG1Or2 *)picture_info,
-                                     bitstream_buffer_count,bitstream_buffers);
+      vldecoder->cur_buffer %= vldecoder->num_buffers;
+
+      vldecoder->decoder->set_decode_buffer(vldecoder->decoder, vldecoder->buffers[vldecoder->cur_buffer]);
+      vldecoder->decoder->set_decode_target(vldecoder->decoder, vlsurf->video_buffer);
+
+      return vlVdpDecoderRenderMpeg12(vldecoder->decoder, (VdpPictureInfoMPEG1Or2 *)picture_info,
+                                      bitstream_buffer_count, bitstream_buffers);
       break;
 
    default:

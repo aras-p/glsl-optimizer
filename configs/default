@@ -105,7 +105,7 @@ MOTIF_CFLAGS = -I/usr/include/Motif1.2
 # Directories to build
 LIB_DIR = lib
 SRC_DIRS = glsl mapi/glapi mapi/vgapi mesa \
-	gallium egl gallium/winsys gallium/targets glu glw
+	gallium egl gallium/winsys gallium/targets glu
 GLU_DIRS = sgi
 DRIVER_DIRS = x11 osmesa
 

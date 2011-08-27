@@ -99,6 +99,9 @@ enum pipe_error {
 #define PIPE_MASK_B  0x4
 #define PIPE_MASK_A  0x8
 #define PIPE_MASK_RGBA 0xf
+#define PIPE_MASK_Z  0x10
+#define PIPE_MASK_S  0x20
+#define PIPE_MASK_ZS 0x30
 
 
 /**
@@ -468,6 +471,7 @@ enum pipe_cap {
    PIPE_CAP_MIXED_COLORBUFFER_FORMATS = 46,
    PIPE_CAP_SEAMLESS_CUBE_MAP = 47,
    PIPE_CAP_SEAMLESS_CUBE_MAP_PER_TEXTURE = 48,
+   PIPE_CAP_SCALED_RESOLVE = 49
 };
 
 /* Shader caps not specific to any single stage */
@@ -491,6 +495,7 @@ enum pipe_shader_cap
    PIPE_SHADER_CAP_INDIRECT_TEMP_ADDR = 14,
    PIPE_SHADER_CAP_INDIRECT_CONST_ADDR = 15,
    PIPE_SHADER_CAP_SUBROUTINES = 16, /* BGNSUB, ENDSUB, CAL, RET */
+   PIPE_SHADER_CAP_INTEGERS = 17
 };
 
 

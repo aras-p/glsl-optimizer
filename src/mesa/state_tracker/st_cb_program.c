@@ -44,6 +44,7 @@
 #include "st_program.h"
 #include "st_mesa_to_tgsi.h"
 #include "st_cb_program.h"
+#include "st_glsl_to_tgsi.h"
 
 
 
@@ -129,6 +130,9 @@ st_delete_program(struct gl_context *ctx, struct gl_program *prog)
       {
          struct st_vertex_program *stvp = (struct st_vertex_program *) prog;
          st_release_vp_variants( st, stvp );
+         
+         if (stvp->glsl_to_tgsi)
+            free_glsl_to_tgsi_visitor(stvp->glsl_to_tgsi);
       }
       break;
    case MESA_GEOMETRY_PROGRAM:
@@ -137,6 +141,9 @@ st_delete_program(struct gl_context *ctx, struct gl_program *prog)
             (struct st_geometry_program *) prog;
 
          st_release_gp_variants(st, stgp);
+         
+         if (stgp->glsl_to_tgsi)
+            free_glsl_to_tgsi_visitor(stgp->glsl_to_tgsi);
 
          if (stgp->tgsi.tokens) {
             st_free_tokens((void *) stgp->tgsi.tokens);
@@ -150,6 +157,9 @@ st_delete_program(struct gl_context *ctx, struct gl_program *prog)
             (struct st_fragment_program *) prog;
 
          st_release_fp_variants(st, stfp);
+         
+         if (stfp->glsl_to_tgsi)
+            free_glsl_to_tgsi_visitor(stfp->glsl_to_tgsi);
          
          if (stfp->tgsi.tokens) {
             st_free_tokens(stfp->tgsi.tokens);
@@ -242,4 +252,8 @@ st_init_program_functions(struct dd_function_table *functions)
    functions->DeleteProgram = st_delete_program;
    functions->IsProgramNative = st_is_program_native;
    functions->ProgramStringNotify = st_program_string_notify;
+   
+   functions->NewShader = st_new_shader;
+   functions->NewShaderProgram = st_new_shader_program;
+   functions->LinkShader = st_link_shader;
 }

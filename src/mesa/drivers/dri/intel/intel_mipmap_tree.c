@@ -227,7 +227,7 @@ intel_miptree_match_image(struct intel_mipmap_tree *mt,
                           struct gl_texture_image *image)
 {
    struct intel_texture_image *intelImage = intel_texture_image(image);
-   GLuint level = intelImage->level;
+   GLuint level = intelImage->base.Level;
 
    /* Images with borders are never pulled into mipmap trees. */
    if (image->Border)

@@ -30,6 +30,10 @@
 #include <string.h>
 #include <xf86drm.h>
 #include <dlfcn.h>
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <fcntl.h>
+#include <unistd.h>
 
 #include "egl_dri2.h"
 
@@ -90,6 +94,7 @@ dri2_initialize_drm(_EGLDriver *drv, _EGLDisplay *disp)
 {
    struct dri2_egl_display *dri2_dpy;
    struct gbm_device *gbm;
+   int fd = -1;
    int i;
 
    dri2_dpy = malloc(sizeof *dri2_dpy);
@@ -100,7 +105,15 @@ dri2_initialize_drm(_EGLDriver *drv, _EGLDisplay *disp)
 
    disp->DriverData = (void *) dri2_dpy;
 
-   gbm = (struct gbm_device *) disp->PlatformDisplay;
+   gbm = disp->PlatformDisplay;
+   if (gbm == NULL) {
+      fd = open("/dev/dri/card0", O_RDWR);
+      dri2_dpy->own_gbm_device = 1;
+      gbm = gbm_create_device(fd);
+      if (gbm == NULL)
+         return EGL_FALSE;
+   }
+
    if (strcmp(gbm_device_get_backend_name(gbm), "drm") != 0) {
       free(dri2_dpy);
       return EGL_FALSE;
@@ -112,7 +125,15 @@ dri2_initialize_drm(_EGLDriver *drv, _EGLDisplay *disp)
       return EGL_FALSE;
    }
 
-   dri2_dpy->fd = gbm_device_get_fd(gbm);
+   if (fd < 0) {
+      fd = dup(gbm_device_get_fd(gbm));
+      if (fd < 0) {
+         free(dri2_dpy);
+         return EGL_FALSE;
+      }
+   }
+
+   dri2_dpy->fd = fd;
    dri2_dpy->device_name = dri2_get_device_name_for_fd(dri2_dpy->fd);
    dri2_dpy->driver_name = dri2_dpy->gbm_dri->base.driver_name;
 

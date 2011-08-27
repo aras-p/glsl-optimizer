@@ -24,7 +24,6 @@
 #define R300_EMIT_H
 
 #include "r300_context.h"
-#include "radeon_code.h"
 
 struct rX00_fragment_program_code;
 struct r300_vertex_program_code;

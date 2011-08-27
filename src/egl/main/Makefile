@@ -63,6 +63,7 @@ EGL_LIB_DEPS += $(XCB_DRI2_LIBS)
 endif
 ifneq ($(findstring drm, $(EGL_PLATFORMS)),)
 EGL_LIB_DEPS += -lgbm
+INCLUDE_DIRS += -I$(TOP)/src/gbm/main
 endif
 EGL_LIB_DEPS += $(LIBUDEV_LIBS) $(DLOPEN_LIBS) $(LIBDRM_LIB) $(WAYLAND_LIBS)
 endif
@@ -70,6 +71,7 @@ endif
 
 ifneq ($(findstring wayland, $(EGL_PLATFORMS)),)
 LOCAL_LIBS += $(TOP)/src/egl/wayland/wayland-drm/libwayland-drm.a
+INCLUDE_DIRS += $(WAYLAND_CFLAGS)
 endif
 
 ifeq ($(filter glx, $(EGL_DRIVERS_DIRS)),glx)
@@ -91,6 +93,19 @@ EGL_NATIVE_PLATFORM=_EGL_PLATFORM_DRM
 endif
 ifeq ($(firstword $(EGL_PLATFORMS)),fbdev)
 EGL_NATIVE_PLATFORM=_EGL_PLATFORM_FBDEV
+endif
+
+ifneq ($(findstring x11, $(EGL_PLATFORMS)),)
+LOCAL_CFLAGS += -DHAVE_X11_PLATFORM
+endif
+ifneq ($(findstring wayland, $(EGL_PLATFORMS)),)
+LOCAL_CFLAGS += -DHAVE_WAYLAND_PLATFORM
+endif
+ifneq ($(findstring drm, $(EGL_PLATFORMS)),)
+LOCAL_CFLAGS += -DHAVE_DRM_PLATFORM
+endif
+ifneq ($(findstring fbdev, $(EGL_PLATFORMS)),)
+LOCAL_CFLAGS += -DHAVE_FBDEV_PLATFORM
 endif
 
 LOCAL_CFLAGS += \

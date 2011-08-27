@@ -2078,7 +2078,7 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
 #       define R300_ALU_OUTC_D2A                (3 << 23)
 #       define R300_ALU_OUTC_MIN                (4 << 23)
 #       define R300_ALU_OUTC_MAX                (5 << 23)
-#       define R300_ALU_OUTC_CMPH               (7 << 23)
+#       define R300_ALU_OUTC_CND                (7 << 23)
 #       define R300_ALU_OUTC_CMP                (8 << 23)
 #       define R300_ALU_OUTC_FRC                (9 << 23)
 #       define R300_ALU_OUTC_REPL_ALPHA         (10 << 23)
@@ -2944,6 +2944,23 @@ enum {
 
 /*\}*/
 
+#define PVS_OP_DST_OPERAND(opcode, math_inst, macro_inst, reg_index, reg_writemask, reg_class)	\
+	 (((opcode & PVS_DST_OPCODE_MASK) << PVS_DST_OPCODE_SHIFT)	\
+	 | ((math_inst & PVS_DST_MATH_INST_MASK) << PVS_DST_MATH_INST_SHIFT)	\
+	 | ((macro_inst & PVS_DST_MACRO_INST_MASK) << PVS_DST_MACRO_INST_SHIFT)	\
+	 | ((reg_index & PVS_DST_OFFSET_MASK) << PVS_DST_OFFSET_SHIFT)	\
+	 | ((reg_writemask & 0xf) << PVS_DST_WE_X_SHIFT)	/* X Y Z W */	\
+	 | ((reg_class & PVS_DST_REG_TYPE_MASK) << PVS_DST_REG_TYPE_SHIFT))
+
+#define PVS_SRC_OPERAND(in_reg_index, comp_x, comp_y, comp_z, comp_w, reg_class, negate)	\
+	(((in_reg_index & PVS_SRC_OFFSET_MASK) << PVS_SRC_OFFSET_SHIFT)				\
+	 | ((comp_x & PVS_SRC_SWIZZLE_X_MASK) << PVS_SRC_SWIZZLE_X_SHIFT)			\
+	 | ((comp_y & PVS_SRC_SWIZZLE_Y_MASK) << PVS_SRC_SWIZZLE_Y_SHIFT)			\
+	 | ((comp_z & PVS_SRC_SWIZZLE_Z_MASK) << PVS_SRC_SWIZZLE_Z_SHIFT)			\
+	 | ((comp_w & PVS_SRC_SWIZZLE_W_MASK) << PVS_SRC_SWIZZLE_W_SHIFT)			\
+	 | ((negate & 0xf) << PVS_SRC_MODIFIER_X_SHIFT)	/* X Y Z W */				\
+	 | ((reg_class & PVS_SRC_REG_TYPE_MASK) << PVS_SRC_REG_TYPE_SHIFT))
+
 /* BEGIN: Packet 3 commands */
 
 /* A primitive emission dword. */
@@ -3249,6 +3266,8 @@ enum {
 #   define R500_INST_RGB_CLAMP				(1 << 19)
 #   define R500_INST_ALPHA_CLAMP			(1 << 20)
 #   define R500_INST_ALU_RESULT_SEL			(1 << 21)
+#   define R500_INST_ALU_RESULT_SEL_RED			(0 << 21)
+#   define R500_INST_ALU_RESULT_SEL_ALPHA		(1 << 21)
 #   define R500_INST_ALPHA_PRED_INV			(1 << 22)
 #   define R500_INST_ALU_RESULT_OP_EQ			(0 << 23)
 #   define R500_INST_ALU_RESULT_OP_LT			(1 << 23)

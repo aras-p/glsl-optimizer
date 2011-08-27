@@ -116,13 +116,13 @@ intelClear(struct gl_context *ctx, GLbitfield mask)
    }
 
    /* HW color buffers (front, back, aux, generic FBO, etc) */
-   if (colorMask == ~0) {
+   if (intel->gen < 6 && colorMask == ~0) {
       /* clear all R,G,B,A */
       blit_mask |= (mask & BUFFER_BITS_COLOR);
    }
    else {
       /* glColorMask in effect */
-      tri_mask |= (mask & (BUFFER_BIT_FRONT_LEFT | BUFFER_BIT_BACK_LEFT));
+      tri_mask |= (mask & BUFFER_BITS_COLOR);
    }
 
    /* Make sure we have up to date buffers before we start looking at
@@ -143,6 +143,12 @@ intelClear(struct gl_context *ctx, GLbitfield mask)
 	     */
             tri_mask |= BUFFER_BIT_STENCIL;
          }
+	 else if (intel->has_separate_stencil &&
+	       stencilRegion->tiling == I915_TILING_NONE) {
+	    /* The stencil buffer is actually W tiled, which the hardware
+	     * cannot blit to. */
+	    tri_mask |= BUFFER_BIT_STENCIL;
+	 }
          else {
             /* clearing all stencil bits, use blitting */
             blit_mask |= BUFFER_BIT_STENCIL;
@@ -182,7 +188,10 @@ intelClear(struct gl_context *ctx, GLbitfield mask)
 
    if (tri_mask) {
       debug_mask("tri", tri_mask);
-      _mesa_meta_Clear(&intel->ctx, tri_mask);
+      if (ctx->Extensions.ARB_fragment_shader)
+	 _mesa_meta_glsl_Clear(&intel->ctx, tri_mask);
+      else
+	 _mesa_meta_Clear(&intel->ctx, tri_mask);
    }
 }
 

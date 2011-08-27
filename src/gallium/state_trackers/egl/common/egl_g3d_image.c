@@ -202,6 +202,24 @@ egl_g3d_reference_wl_buffer(_EGLDisplay *dpy, struct wl_buffer *buffer,
 
 #endif /* EGL_WL_bind_wayland_display */
 
+#ifdef EGL_ANDROID_image_native_buffer
+
+static struct pipe_resource *
+egl_g3d_reference_android_native_buffer(_EGLDisplay *dpy,
+                                        struct android_native_buffer_t *buf)
+{
+   struct egl_g3d_display *gdpy = egl_g3d_display(dpy);
+   struct native_buffer nbuf;
+
+   memset(&nbuf, 0, sizeof(nbuf));
+   nbuf.type = NATIVE_BUFFER_ANDROID;
+   nbuf.u.android = buf;
+    
+   return gdpy->native->buffer->import_buffer(gdpy->native, &nbuf);
+}
+
+#endif /* EGL_ANDROID_image_native_buffer */
+
 _EGLImage *
 egl_g3d_create_image(_EGLDriver *drv, _EGLDisplay *dpy, _EGLContext *ctx,
                      EGLenum target, EGLClientBuffer buffer,
@@ -237,6 +255,12 @@ egl_g3d_create_image(_EGLDriver *drv, _EGLDisplay *dpy, _EGLContext *ctx,
    case EGL_WAYLAND_BUFFER_WL:
       ptex = egl_g3d_reference_wl_buffer(dpy,
             (struct wl_buffer *) buffer, &gimg->base, attribs);
+      break;
+#endif
+#ifdef EGL_ANDROID_image_native_buffer
+   case EGL_NATIVE_BUFFER_ANDROID:
+      ptex = egl_g3d_reference_android_native_buffer(dpy,
+            (struct android_native_buffer_t *) buffer);
       break;
 #endif
    default:

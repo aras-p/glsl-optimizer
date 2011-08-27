@@ -190,6 +190,15 @@ DRI2Error(Display *display, xError *err, XExtCodes *codes, int *ret_code)
 	err->minorCode == X_DRI2DestroyDrawable)
 	return True;
 
+    /* If the server is non-local DRI2Connect will raise BadRequest.
+     * Swallow this so that DRI2Connect can signal this in its return code */
+    if (err->majorCode == codes->major_opcode &&
+        err->minorCode == X_DRI2Connect &&
+        err->errorCode == BadRequest) {
+	*ret_code = False;
+	return True;
+    }
+
     return False;
 }
 

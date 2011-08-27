@@ -529,8 +529,9 @@ _eglParseConfigAttribList(_EGLConfig *conf, _EGLDisplay *dpy,
    if (!_eglValidateConfig(conf, EGL_TRUE))
       return EGL_FALSE;
 
-   /* the spec says that EGL_LEVEL cannot be EGL_DONT_CARE */
-   if (conf->Level == EGL_DONT_CARE)
+   /* EGL_LEVEL and EGL_MATCH_NATIVE_PIXMAP cannot be EGL_DONT_CARE */
+   if (conf->Level == EGL_DONT_CARE ||
+       conf->MatchNativePixmap == EGL_DONT_CARE)
       return EGL_FALSE;
 
    /* ignore other attributes when EGL_CONFIG_ID is given */

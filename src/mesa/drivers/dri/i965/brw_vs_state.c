@@ -77,6 +77,16 @@ brw_prepare_vs_unit(struct brw_context *brw)
    else
       vs->thread1.binding_table_entry_count = brw->vs.nr_surfaces;
 
+   if (brw->vs.prog_data->total_scratch != 0) {
+      vs->thread2.scratch_space_base_pointer =
+	 brw->vs.scratch_bo->offset >> 10; /* reloc */
+      vs->thread2.per_thread_scratch_space =
+	 ffs(brw->vs.prog_data->total_scratch) - 11;
+   } else {
+      vs->thread2.scratch_space_base_pointer = 0;
+      vs->thread2.per_thread_scratch_space = 0;
+   }
+
    vs->thread3.urb_entry_read_length = brw->vs.prog_data->urb_read_length;
    vs->thread3.const_urb_entry_read_length = brw->vs.prog_data->curb_read_length;
    vs->thread3.dispatch_grf_start_reg = 1;

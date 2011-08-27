@@ -42,266 +42,125 @@
 
 #include "xvmc_private.h"
 
-static const unsigned const_empty_block_mask_420[3][2][2] = {
-   { { 0x20, 0x10 },  { 0x08, 0x04 } },
-   { { 0x02, 0x02 },  { 0x02, 0x02 } },
-   { { 0x01, 0x01 },  { 0x01, 0x01 } }
-};
-
-static enum pipe_mpeg12_picture_type PictureToPipe(int xvmc_pic)
-{
-   switch (xvmc_pic) {
-      case XVMC_TOP_FIELD:
-         return PIPE_MPEG12_PICTURE_TYPE_FIELD_TOP;
-      case XVMC_BOTTOM_FIELD:
-         return PIPE_MPEG12_PICTURE_TYPE_FIELD_BOTTOM;
-      case XVMC_FRAME_PICTURE:
-         return PIPE_MPEG12_PICTURE_TYPE_FRAME;
-      default:
-         assert(0);
-   }
-
-   XVMC_MSG(XVMC_ERR, "[XvMC] Unrecognized picture type 0x%08X.\n", xvmc_pic);
-
-   return -1;
-}
-
-static inline void
-MacroBlockTypeToPipeWeights(const XvMCMacroBlock *xvmc_mb, unsigned weights[2])
-{
-   assert(xvmc_mb);
-
-   switch (xvmc_mb->macroblock_type & (XVMC_MB_TYPE_MOTION_FORWARD | XVMC_MB_TYPE_MOTION_BACKWARD)) {
-   case XVMC_MB_TYPE_MOTION_FORWARD:
-      weights[0] = PIPE_VIDEO_MV_WEIGHT_MAX;
-      weights[1] = PIPE_VIDEO_MV_WEIGHT_MIN;
-      break;
-
-   case (XVMC_MB_TYPE_MOTION_FORWARD | XVMC_MB_TYPE_MOTION_BACKWARD):
-      weights[0] = PIPE_VIDEO_MV_WEIGHT_HALF;
-      weights[1] = PIPE_VIDEO_MV_WEIGHT_HALF;
-      break;
-
-   case XVMC_MB_TYPE_MOTION_BACKWARD:
-      weights[0] = PIPE_VIDEO_MV_WEIGHT_MIN;
-      weights[1] = PIPE_VIDEO_MV_WEIGHT_MAX;
-      break;
-
-   default:
-      /* workaround for xines xxmc video out plugin */
-      if (!(xvmc_mb->macroblock_type & ~XVMC_MB_TYPE_PATTERN)) {
-         weights[0] = PIPE_VIDEO_MV_WEIGHT_MAX;
-         weights[1] = PIPE_VIDEO_MV_WEIGHT_MIN;
-      } else {
-         weights[0] = PIPE_VIDEO_MV_WEIGHT_MIN;
-         weights[1] = PIPE_VIDEO_MV_WEIGHT_MIN;
-      }
-      break;
-   }
-}
-
-static inline struct pipe_motionvector
-MotionVectorToPipe(const XvMCMacroBlock *xvmc_mb, unsigned vector,
-                   unsigned field_select_mask, unsigned weight)
-{
-   struct pipe_motionvector mv;
-
-   assert(xvmc_mb);
-
-   switch (xvmc_mb->motion_type) {
-   case XVMC_PREDICTION_FRAME:
-      mv.top.x = xvmc_mb->PMV[0][vector][0];
-      mv.top.y = xvmc_mb->PMV[0][vector][1];
-      mv.top.field_select = PIPE_VIDEO_FRAME;
-      mv.top.weight = weight;
-
-      mv.bottom.x = xvmc_mb->PMV[0][vector][0];
-      mv.bottom.y = xvmc_mb->PMV[0][vector][1];
-      mv.bottom.weight = weight;
-      mv.bottom.field_select = PIPE_VIDEO_FRAME;
-      break;
-
-   case XVMC_PREDICTION_FIELD:
-      mv.top.x = xvmc_mb->PMV[0][vector][0];
-      mv.top.y = xvmc_mb->PMV[0][vector][1];
-      mv.top.field_select = (xvmc_mb->motion_vertical_field_select & field_select_mask) ?
-         PIPE_VIDEO_BOTTOM_FIELD : PIPE_VIDEO_TOP_FIELD;
-      mv.top.weight = weight;
-
-      mv.bottom.x = xvmc_mb->PMV[1][vector][0];
-      mv.bottom.y = xvmc_mb->PMV[1][vector][1];
-      mv.bottom.field_select = (xvmc_mb->motion_vertical_field_select & (field_select_mask << 2)) ?
-         PIPE_VIDEO_BOTTOM_FIELD : PIPE_VIDEO_TOP_FIELD;
-      mv.bottom.weight = weight;
-      break;
-
-   default: // TODO: Support DUALPRIME and 16x8
-      break;
-   }
-
-   return mv;
-}
-
-static inline void
-UploadYcbcrBlocks(XvMCSurfacePrivate *surface,
-                  const XvMCMacroBlock *xvmc_mb,
-                  const XvMCBlockArray *xvmc_blocks)
-{
-   enum pipe_mpeg12_dct_intra intra;
-   enum pipe_mpeg12_dct_type coding;
-
-   unsigned tb, x, y, luma_blocks;
-   short *blocks;
-
-   assert(surface);
-   assert(xvmc_mb);
-
-   if (!xvmc_mb->coded_block_pattern)
-      return;
-
-   intra = xvmc_mb->macroblock_type & XVMC_MB_TYPE_INTRA ?
-           PIPE_MPEG12_DCT_INTRA : PIPE_MPEG12_DCT_DELTA;
-
-   coding = xvmc_mb->dct_type == XVMC_DCT_TYPE_FIELD ?
-            PIPE_MPEG12_DCT_TYPE_FIELD : PIPE_MPEG12_DCT_TYPE_FRAME;
-
-   blocks = xvmc_blocks->blocks + xvmc_mb->index * BLOCK_SIZE_SAMPLES;
-
-   for (y = 0, luma_blocks = 0; y < 2; ++y) {
-      for (x = 0; x < 2; ++x, ++tb) {
-         if (xvmc_mb->coded_block_pattern & const_empty_block_mask_420[0][y][x]) {
-
-            struct pipe_ycbcr_block *stream = surface->ycbcr[0].stream;
-            stream->x = xvmc_mb->x * 2 + x;
-            stream->y = xvmc_mb->y * 2 + y;
-            stream->intra = intra;
-            stream->coding = coding;
-
-            surface->ycbcr[0].num_blocks_added++;
-            surface->ycbcr[0].stream++;
-
-            luma_blocks++;
-         }
-      }
-   }
-
-   if (luma_blocks > 0) {
-      memcpy(surface->ycbcr[0].buffer, blocks, BLOCK_SIZE_BYTES * luma_blocks);
-      surface->ycbcr[0].buffer += BLOCK_SIZE_SAMPLES * luma_blocks;
-      blocks += BLOCK_SIZE_SAMPLES * luma_blocks;
-   }
-
-   /* TODO: Implement 422, 444 */
-   //assert(ctx->base.chroma_format == PIPE_VIDEO_CHROMA_FORMAT_420);
-
-   for (tb = 1; tb < 3; ++tb) {
-      if (xvmc_mb->coded_block_pattern & const_empty_block_mask_420[tb][0][0]) {
-
-         struct pipe_ycbcr_block *stream = surface->ycbcr[tb].stream;
-         stream->x = xvmc_mb->x;
-         stream->y = xvmc_mb->y;
-         stream->intra = intra;
-         stream->coding = PIPE_MPEG12_DCT_TYPE_FRAME;
-
-         memcpy(surface->ycbcr[tb].buffer, blocks, BLOCK_SIZE_BYTES);
-
-         surface->ycbcr[tb].num_blocks_added++;
-         surface->ycbcr[tb].stream++;
-         surface->ycbcr[tb].buffer += BLOCK_SIZE_SAMPLES;
-         blocks += BLOCK_SIZE_SAMPLES;
-      }
-   }
-
-}
-
 static void
-MacroBlocksToPipe(XvMCSurfacePrivate *surface,
+MacroBlocksToPipe(XvMCContextPrivate *context,
+                  XvMCSurfacePrivate *surface,
                   unsigned int xvmc_picture_structure,
                   const XvMCMacroBlock *xvmc_mb,
                   const XvMCBlockArray *xvmc_blocks,
+                  struct pipe_mpeg12_macroblock *mb,
                   unsigned int num_macroblocks)
 {
-   unsigned int i, j;
+   unsigned int i, j, k;
 
    assert(xvmc_mb);
    assert(xvmc_blocks);
    assert(num_macroblocks);
 
-   for (i = 0; i < num_macroblocks; ++i) {
-      unsigned mv_pos = xvmc_mb->x + surface->mv_stride * xvmc_mb->y;
-      unsigned mv_weights[2];
+   for (; num_macroblocks > 0; --num_macroblocks) {
+      mb->base.codec = PIPE_VIDEO_CODEC_MPEG12;
+      mb->x = xvmc_mb->x;
+      mb->y = xvmc_mb->y;
+      mb->macroblock_type = xvmc_mb->macroblock_type;
 
-      if (xvmc_mb->macroblock_type & (XVMC_MB_TYPE_PATTERN | XVMC_MB_TYPE_INTRA))
-         UploadYcbcrBlocks(surface, xvmc_mb, xvmc_blocks);
+      switch (xvmc_picture_structure) {
+      case XVMC_FRAME_PICTURE:
+         mb->macroblock_modes.bits.frame_motion_type = xvmc_mb->motion_type;
+         mb->macroblock_modes.bits.field_motion_type = 0;
+         break;
 
-      MacroBlockTypeToPipeWeights(xvmc_mb, mv_weights);
+      case XVMC_TOP_FIELD:
+      case XVMC_BOTTOM_FIELD:
+         mb->macroblock_modes.bits.frame_motion_type = 0;
+         mb->macroblock_modes.bits.field_motion_type = xvmc_mb->motion_type;
+         break;
 
-      for (j = 0; j < 2; ++j) {
-         if (!surface->ref[j].mv) continue;
-
-         surface->ref[j].mv[mv_pos] = MotionVectorToPipe
-         (
-            xvmc_mb, j,
-            j ? XVMC_SELECT_FIRST_BACKWARD : XVMC_SELECT_FIRST_FORWARD,
-            mv_weights[j]
-         );
+      default:
+         assert(0);
       }
 
+      mb->macroblock_modes.bits.dct_type = xvmc_mb->dct_type;
+      mb->motion_vertical_field_select = xvmc_mb->motion_vertical_field_select;
+
+      for (i = 0; i < 2; ++i)
+         for (j = 0; j < 2; ++j)
+            for (k = 0; k < 2; ++k)
+               mb->PMV[i][j][k] = xvmc_mb->PMV[i][j][k];
+
+      mb->coded_block_pattern = xvmc_mb->coded_block_pattern;
+      mb->blocks = xvmc_blocks->blocks + xvmc_mb->index * BLOCK_SIZE_SAMPLES;
+      mb->num_skipped_macroblocks = 0;
+
       ++xvmc_mb;
+      ++mb;
    }
 }
 
 static void
-unmap_and_flush_surface(XvMCSurfacePrivate *surface)
+SetDecoderStatus(XvMCSurfacePrivate *surface)
 {
+   struct pipe_video_decoder *decoder;
    struct pipe_video_buffer *ref_frames[2];
+
    XvMCContextPrivate *context_priv;
-   unsigned i, num_ycbcr_blocks[3];
+
+   unsigned i, num_refs = 0;
+
+   assert(surface);
+
+   context_priv = surface->context->privData;
+   decoder = context_priv->decoder;
+
+   decoder->set_decode_buffer(decoder, surface->decode_buffer);
+   decoder->set_decode_target(decoder, surface->video_buffer);
+
+   for (i = 0; i < 2; ++i) {
+      if (surface->ref[i]) {
+         XvMCSurfacePrivate *ref = surface->ref[i]->privData;
+
+         if (ref)
+            ref_frames[num_refs++] = ref->video_buffer;
+      }
+   }
+   decoder->set_reference_frames(decoder, ref_frames, num_refs);
+}
+
+static void
+RecursiveEndFrame(XvMCSurfacePrivate *surface)
+{
+   XvMCContextPrivate *context_priv;
+   unsigned i;
 
    assert(surface);
 
    context_priv = surface->context->privData;
 
    for ( i = 0; i < 2; ++i ) {
-      if (surface->ref[i].surface) {
-         XvMCSurfacePrivate *ref = surface->ref[i].surface->privData;
+      if (surface->ref[i]) {
+         XvMCSurface *ref = surface->ref[i];
 
          assert(ref);
 
-         unmap_and_flush_surface(ref);
-         surface->ref[i].surface = NULL;
-         ref_frames[i] = ref->video_buffer;
-      } else {
-         ref_frames[i] = NULL;
+         surface->ref[i] = NULL;
+         RecursiveEndFrame(ref->privData);
+         surface->ref[i] = ref;
       }
    }
 
-   if (surface->mapped) {
-      surface->decode_buffer->end_frame(surface->decode_buffer);
-      for (i = 0; i < 3; ++i)
-         num_ycbcr_blocks[i] = surface->ycbcr[i].num_blocks_added;
-      context_priv->decoder->flush_buffer(surface->decode_buffer,
-                                          num_ycbcr_blocks,
-                                          ref_frames,
-                                          surface->video_buffer);
-      surface->mapped = 0;
+   if (surface->frame_started) {
+      surface->frame_started = 0;
+      SetDecoderStatus(surface);
+
+      for (i = 0; i < 2; ++i)
+         surface->ref[i] = NULL;
+
+      context_priv->decoder->end_frame(context_priv->decoder);
    }
 }
 
 PUBLIC
 Status XvMCCreateSurface(Display *dpy, XvMCContext *context, XvMCSurface *surface)
 {
-   static const uint8_t dummy_quant[64] = {
-      0x10, 0x10, 0x10, 0x10, 0x10, 0x10, 0x10, 0x10,
-      0x10, 0x10, 0x10, 0x10, 0x10, 0x10, 0x10, 0x10,
-      0x10, 0x10, 0x10, 0x10, 0x10, 0x10, 0x10, 0x10,
-      0x10, 0x10, 0x10, 0x10, 0x10, 0x10, 0x10, 0x10,
-      0x10, 0x10, 0x10, 0x10, 0x10, 0x10, 0x10, 0x10,
-      0x10, 0x10, 0x10, 0x10, 0x10, 0x10, 0x10, 0x10,
-      0x10, 0x10, 0x10, 0x10, 0x10, 0x10, 0x10, 0x10,
-      0x10, 0x10, 0x10, 0x10, 0x10, 0x10, 0x10, 0x10
-   };
-
    XvMCContextPrivate *context_priv;
    struct pipe_context *pipe;
    XvMCSurfacePrivate *surface_priv;
@@ -323,9 +182,6 @@ Status XvMCCreateSurface(Display *dpy, XvMCContext *context, XvMCSurface *surfac
       return BadAlloc;
 
    surface_priv->decode_buffer = context_priv->decoder->create_buffer(context_priv->decoder);
-   surface_priv->decode_buffer->set_quant_matrix(surface_priv->decode_buffer, dummy_quant, dummy_quant);
-
-   surface_priv->mv_stride = surface_priv->decode_buffer->get_mv_stream_stride(surface_priv->decode_buffer);
    surface_priv->video_buffer = pipe->create_video_buffer
    (
       pipe, PIPE_FORMAT_NV12, context_priv->decoder->chroma_format,
@@ -355,14 +211,14 @@ Status XvMCRenderSurface(Display *dpy, XvMCContext *context, unsigned int pictur
                          XvMCMacroBlockArray *macroblocks, XvMCBlockArray *blocks
 )
 {
-   struct pipe_video_decode_buffer *t_buffer;
+   struct pipe_mpeg12_macroblock mb[num_macroblocks];
+   struct pipe_video_decoder *decoder;
 
+   XvMCContextPrivate *context_priv;
    XvMCSurfacePrivate *target_surface_priv;
    XvMCSurfacePrivate *past_surface_priv;
    XvMCSurfacePrivate *future_surface_priv;
    XvMCMacroBlock *xvmc_mb;
-
-   unsigned i;
 
    XVMC_MSG(XVMC_TRACE, "[XvMC] Rendering to surface %p, with past %p and future %p\n",
             target_surface, past_surface, future_surface);
@@ -394,6 +250,9 @@ Status XvMCRenderSurface(Display *dpy, XvMCContext *context, unsigned int pictur
 
    assert(flags == 0 || flags == XVMC_SECOND_FIELD);
 
+   context_priv = context->privData;
+   decoder = context_priv->decoder;
+
    target_surface_priv = target_surface->privData;
    past_surface_priv = past_surface ? past_surface->privData : NULL;
    future_surface_priv = future_surface ? future_surface->privData : NULL;
@@ -402,50 +261,39 @@ Status XvMCRenderSurface(Display *dpy, XvMCContext *context, unsigned int pictur
    assert(!past_surface || past_surface_priv->context == context);
    assert(!future_surface || future_surface_priv->context == context);
 
-   t_buffer = target_surface_priv->decode_buffer;
-
-   // enshure that all reference frames are flushed
-   // not really nessasary, but speeds ups rendering
+   // call end frame on all referenced frames
    if (past_surface)
-      unmap_and_flush_surface(past_surface->privData);
+      RecursiveEndFrame(past_surface->privData);
 
    if (future_surface)
-      unmap_and_flush_surface(future_surface->privData);
+      RecursiveEndFrame(future_surface->privData);
 
    xvmc_mb = macroblocks->macro_blocks + first_macroblock;
 
    /* If the surface we're rendering hasn't changed the ref frames shouldn't change. */
-   if (target_surface_priv->mapped && (
-       target_surface_priv->ref[0].surface != past_surface ||
-       target_surface_priv->ref[1].surface != future_surface ||
+   if (target_surface_priv->frame_started && (
+       target_surface_priv->ref[0] != past_surface ||
+       target_surface_priv->ref[1] != future_surface ||
        (xvmc_mb->x == 0 && xvmc_mb->y == 0))) {
 
-      // If they change anyway we need to clear our surface
-      unmap_and_flush_surface(target_surface_priv);
+      // If they change anyway we must assume that the current frame is ended
+      RecursiveEndFrame(target_surface_priv);
    }
 
-   if (!target_surface_priv->mapped) {
-      t_buffer->begin_frame(t_buffer);
+   target_surface_priv->ref[0] = past_surface;
+   target_surface_priv->ref[1] = future_surface;
 
-      for (i = 0; i < 3; ++i) {
-         target_surface_priv->ycbcr[i].num_blocks_added = 0;
-         target_surface_priv->ycbcr[i].stream = t_buffer->get_ycbcr_stream(t_buffer, i);
-         target_surface_priv->ycbcr[i].buffer = t_buffer->get_ycbcr_buffer(t_buffer, i);
-      }
+   SetDecoderStatus(target_surface_priv);
 
-      for (i = 0; i < 2; ++i) {
-         target_surface_priv->ref[i].surface = i == 0 ? past_surface : future_surface;
-
-         if (target_surface_priv->ref[i].surface)
-            target_surface_priv->ref[i].mv = t_buffer->get_mv_stream(t_buffer, i);
-         else
-            target_surface_priv->ref[i].mv = NULL;
-      }
-
-      target_surface_priv->mapped = 1;
+   if (!target_surface_priv->frame_started) {
+      target_surface_priv->frame_started = 1;
+      decoder->begin_frame(decoder);
    }
 
-   MacroBlocksToPipe(target_surface_priv, picture_structure, xvmc_mb, blocks, num_macroblocks);
+   MacroBlocksToPipe(context_priv, target_surface_priv, picture_structure,
+                     xvmc_mb, blocks, mb, num_macroblocks);
+
+   context_priv->decoder->decode_macroblock(context_priv->decoder, &mb[0].base, num_macroblocks);
 
    XVMC_MSG(XVMC_TRACE, "[XvMC] Submitted surface %p for rendering.\n", target_surface);
 
@@ -543,7 +391,9 @@ Status XvMCPutSurface(Display *dpy, XvMCSurface *surface, Drawable drawable,
    assert(desty + desth - 1 < drawable_surface->height);
     */
 
-   unmap_and_flush_surface(surface_priv);
+   RecursiveEndFrame(surface_priv);
+
+   context_priv->decoder->flush(context_priv->decoder);
 
    vl_compositor_clear_layers(compositor);
    vl_compositor_set_buffer_layer(compositor, 0, surface_priv->video_buffer, &src_rect, NULL);
@@ -567,7 +417,7 @@ Status XvMCPutSurface(Display *dpy, XvMCSurface *surface, Drawable drawable,
    // Workaround for r600g, there seems to be a bug in the fence refcounting code
    pipe->screen->fence_reference(pipe->screen, &surface_priv->fence, NULL);
 
-   vl_compositor_render(compositor, PictureToPipe(flags), context_priv->drawable_surface, &dst_rect, NULL);
+   vl_compositor_render(compositor, context_priv->drawable_surface, &dst_rect, NULL);
                         
    pipe->flush(pipe, &surface_priv->fence);
 
@@ -630,6 +480,7 @@ PUBLIC
 Status XvMCDestroySurface(Display *dpy, XvMCSurface *surface)
 {
    XvMCSurfacePrivate *surface_priv;
+   XvMCContextPrivate *context_priv;
 
    XVMC_MSG(XVMC_TRACE, "[XvMC] Destroying surface %p.\n", surface);
 
@@ -639,10 +490,13 @@ Status XvMCDestroySurface(Display *dpy, XvMCSurface *surface)
       return XvMCBadSurface;
 
    surface_priv = surface->privData;
+   context_priv = surface_priv->context->privData;
    
-   if (surface_priv->mapped)
-      surface_priv->decode_buffer->end_frame(surface_priv->decode_buffer);
-   surface_priv->decode_buffer->destroy(surface_priv->decode_buffer);
+   if (surface_priv->frame_started) {
+      SetDecoderStatus(surface_priv);
+      context_priv->decoder->end_frame(context_priv->decoder);
+   }
+   context_priv->decoder->destroy_buffer(context_priv->decoder, surface_priv->decode_buffer);
    surface_priv->video_buffer->destroy(surface_priv->video_buffer);
    FREE(surface_priv);
    surface->privData = NULL;

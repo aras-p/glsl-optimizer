@@ -65,8 +65,8 @@ _mesa_max_buffer_index(struct gl_context *ctx, GLuint count, GLenum type,
 
    if (_mesa_is_bufferobj(elementBuf)) {
       /* elements are in a user-defined buffer object.  need to map it */
-      map = ctx->Driver.MapBuffer(ctx, GL_ELEMENT_ARRAY_BUFFER,
-                                  GL_READ_ONLY, elementBuf);
+      map = ctx->Driver.MapBufferRange(ctx, 0, elementBuf->Size,
+				       GL_MAP_READ_BIT, elementBuf);
       /* Actual address is the sum of pointers */
       indices = (const GLvoid *) ADD_POINTERS(map, (const GLubyte *) indices);
    }
@@ -89,7 +89,7 @@ _mesa_max_buffer_index(struct gl_context *ctx, GLuint count, GLenum type,
    }
 
    if (map) {
-      ctx->Driver.UnmapBuffer(ctx, GL_ELEMENT_ARRAY_BUFFER_ARB, elementBuf);
+      ctx->Driver.UnmapBuffer(ctx, elementBuf);
    }
 
    return max;

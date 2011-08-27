@@ -49,12 +49,12 @@ struct vl_mpeg12_decoder
 
    unsigned blocks_per_line;
    unsigned num_blocks;
+   unsigned width_in_macroblocks;
 
    enum pipe_format zscan_source_format;
 
    struct pipe_vertex_buffer quads;
    struct pipe_vertex_buffer pos;
-   struct pipe_vertex_buffer block_num;
 
    void *ves_ycbcr;
    void *ves_mv;
@@ -73,23 +73,34 @@ struct vl_mpeg12_decoder
    struct vl_mc mc_y, mc_c;
 
    void *dsa;
+
+   struct vl_mpeg12_buffer *current_buffer;
+   struct pipe_mpeg12_picture_desc picture_desc;
+   uint8_t intra_matrix[64];
+   uint8_t non_intra_matrix[64];
+   struct pipe_sampler_view *ref_frames[VL_MAX_REF_FRAMES][VL_MAX_PLANES];
+   struct pipe_surface *target_surfaces[VL_MAX_PLANES];
 };
 
 struct vl_mpeg12_buffer
 {
-   struct pipe_video_decode_buffer base;
-
    struct vl_vertex_buffer vertex_stream;
 
-   struct pipe_video_buffer *zscan_source;
+   unsigned block_num;
+   unsigned num_ycbcr_blocks[3];
+
+   struct pipe_sampler_view *zscan_source;
 
    struct vl_mpg12_bs bs;
    struct vl_zscan_buffer zscan[VL_MAX_PLANES];
    struct vl_idct_buffer idct[VL_MAX_PLANES];
    struct vl_mc_buffer mc[VL_MAX_PLANES];
 
-   struct pipe_transfer *tex_transfer[VL_MAX_PLANES];
-   short *texels[VL_MAX_PLANES];
+   struct pipe_transfer *tex_transfer;
+   short *texels;
+
+   struct vl_ycbcr_block *ycbcr_stream[VL_MAX_PLANES];
+   struct vl_motionvector *mv_stream[VL_MAX_REF_FRAMES];
 };
 
 /**

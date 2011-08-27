@@ -134,7 +134,7 @@ src_reg::src_reg(dst_reg reg)
    this->index = reg.index;
    this->swizzle = SWIZZLE_XYZW;
    this->negate = 0;
-   this->reladdr = NULL;
+   this->reladdr = reg.reladdr;
 }
 
 dst_reg::dst_reg(src_reg reg)
@@ -297,11 +297,11 @@ public:
    /**
     * Emit the correct dot-product instruction for the type of arguments
     */
-   void emit_dp(ir_instruction *ir,
-	        dst_reg dst,
-	        src_reg src0,
-	        src_reg src1,
-	        unsigned elements);
+   ir_to_mesa_instruction * emit_dp(ir_instruction *ir,
+				    dst_reg dst,
+				    src_reg src0,
+				    src_reg src1,
+				    unsigned elements);
 
    void emit_scalar(ir_instruction *ir, enum prog_opcode op,
 		    dst_reg dst, src_reg src0);
@@ -312,9 +312,11 @@ public:
    void emit_scs(ir_instruction *ir, enum prog_opcode op,
 		 dst_reg dst, const src_reg &src);
 
-   GLboolean try_emit_mad(ir_expression *ir,
+   bool try_emit_mad(ir_expression *ir,
 			  int mul_operand);
-   GLboolean try_emit_sat(ir_expression *ir);
+   bool try_emit_mad_for_and_not(ir_expression *ir,
+				 int mul_operand);
+   bool try_emit_sat(ir_expression *ir);
 
    void emit_swz(ir_expression *ir);
 
@@ -330,20 +332,6 @@ src_reg undef_src = src_reg(PROGRAM_UNDEFINED, 0, NULL);
 dst_reg undef_dst = dst_reg(PROGRAM_UNDEFINED, SWIZZLE_NOOP);
 
 dst_reg address_reg = dst_reg(PROGRAM_ADDRESS, WRITEMASK_X);
-
-static void
-fail_link(struct gl_shader_program *prog, const char *fmt, ...) PRINTFLIKE(2, 3);
-
-static void
-fail_link(struct gl_shader_program *prog, const char *fmt, ...)
-{
-   va_list args;
-   va_start(args, fmt);
-   ralloc_vasprintf_append(&prog->InfoLog, fmt, args);
-   va_end(args);
-
-   prog->LinkStatus = GL_FALSE;
-}
 
 static int
 swizzle_for_size(int size)
@@ -422,7 +410,7 @@ ir_to_mesa_visitor::emit(ir_instruction *ir, enum prog_opcode op)
    return emit(ir, op, undef_dst, undef_src, undef_src, undef_src);
 }
 
-void
+ir_to_mesa_instruction *
 ir_to_mesa_visitor::emit_dp(ir_instruction *ir,
 			    dst_reg dst, src_reg src0, src_reg src1,
 			    unsigned elements)
@@ -431,7 +419,7 @@ ir_to_mesa_visitor::emit_dp(ir_instruction *ir,
       OPCODE_DP2, OPCODE_DP3, OPCODE_DP4
    };
 
-   emit(ir, dot_opcodes[elements - 2], dst, src0, src1);
+   return emit(ir, dot_opcodes[elements - 2], dst, src0, src1);
 }
 
 /**
@@ -593,13 +581,13 @@ ir_to_mesa_visitor::emit_scs(ir_instruction *ir, enum prog_opcode op,
    }
 }
 
-struct src_reg
+src_reg
 ir_to_mesa_visitor::src_reg_for_float(float val)
 {
    src_reg src(PROGRAM_CONSTANT, -1, NULL);
 
    src.index = _mesa_add_unnamed_constant(this->prog->Parameters,
-					  &val, 1, &src.swizzle);
+					  (const gl_constant_value *)&val, 1, &src.swizzle);
 
    return src;
 }
@@ -655,8 +643,6 @@ src_reg
 ir_to_mesa_visitor::get_temp(const glsl_type *type)
 {
    src_reg src;
-   int swizzle[4];
-   int i;
 
    src.file = PROGRAM_TEMPORARY;
    src.index = next_temp;
@@ -666,12 +652,7 @@ ir_to_mesa_visitor::get_temp(const glsl_type *type)
    if (type->is_array() || type->is_record()) {
       src.swizzle = SWIZZLE_NOOP;
    } else {
-      for (i = 0; i < type->vector_elements; i++)
-	 swizzle[i] = i;
-      for (; i < 4; i++)
-	 swizzle[i] = type->vector_elements - 1;
-      src.swizzle = MAKE_SWIZZLE4(swizzle[0], swizzle[1],
-				  swizzle[2], swizzle[3]);
+      src.swizzle = swizzle_for_size(type->vector_elements);
    }
    src.negate = 0;
 
@@ -744,7 +725,7 @@ ir_to_mesa_visitor::visit(ir_variable *ir)
 	 }
       }
 
-      struct variable_storage *storage;
+      variable_storage *storage;
       dst_reg dst;
       if (i == ir->num_state_slots) {
 	 /* We'll set the index later. */
@@ -789,10 +770,11 @@ ir_to_mesa_visitor::visit(ir_variable *ir)
 
       if (storage->file == PROGRAM_TEMPORARY &&
 	  dst.index != storage->index + (int) ir->num_state_slots) {
-	 fail_link(this->shader_program,
-		   "failed to load builtin uniform `%s'  (%d/%d regs loaded)\n",
-		   ir->name, dst.index - storage->index,
-		   type_size(ir->type));
+	 linker_error(this->shader_program,
+		      "failed to load builtin uniform `%s' "
+		      "(%d/%d regs loaded)\n",
+		      ir->name, dst.index - storage->index,
+		      type_size(ir->type));
       }
    }
 }
@@ -889,7 +871,7 @@ ir_to_mesa_visitor::visit(ir_function *ir)
    }
 }
 
-GLboolean
+bool
 ir_to_mesa_visitor::try_emit_mad(ir_expression *ir, int mul_operand)
 {
    int nonmul_operand = 1 - mul_operand;
@@ -912,7 +894,47 @@ ir_to_mesa_visitor::try_emit_mad(ir_expression *ir, int mul_operand)
    return true;
 }
 
-GLboolean
+/**
+ * Emit OPCODE_MAD(a, -b, a) instead of AND(a, NOT(b))
+ *
+ * The logic values are 1.0 for true and 0.0 for false.  Logical-and is
+ * implemented using multiplication, and logical-or is implemented using
+ * addition.  Logical-not can be implemented as (true - x), or (1.0 - x).
+ * As result, the logical expression (a & !b) can be rewritten as:
+ *
+ *     - a * !b
+ *     - a * (1 - b)
+ *     - (a * 1) - (a * b)
+ *     - a + -(a * b)
+ *     - a + (a * -b)
+ *
+ * This final expression can be implemented as a single MAD(a, -b, a)
+ * instruction.
+ */
+bool
+ir_to_mesa_visitor::try_emit_mad_for_and_not(ir_expression *ir, int try_operand)
+{
+   const int other_operand = 1 - try_operand;
+   src_reg a, b;
+
+   ir_expression *expr = ir->operands[try_operand]->as_expression();
+   if (!expr || expr->operation != ir_unop_logic_not)
+      return false;
+
+   ir->operands[other_operand]->accept(this);
+   a = this->result;
+   expr->operands[0]->accept(this);
+   b = this->result;
+
+   b.negate = ~b.negate;
+
+   this->result = get_temp(ir->type);
+   emit(ir, OPCODE_MAD, dst_reg(this->result), a, b, a);
+
+   return true;
+}
+
+bool
 ir_to_mesa_visitor::try_emit_sat(ir_expression *ir)
 {
    /* Saturates were only introduced to vertex programs in
@@ -928,10 +950,30 @@ ir_to_mesa_visitor::try_emit_sat(ir_expression *ir)
    sat_src->accept(this);
    src_reg src = this->result;
 
-   this->result = get_temp(ir->type);
-   ir_to_mesa_instruction *inst;
-   inst = emit(ir, OPCODE_MOV, dst_reg(this->result), src);
-   inst->saturate = true;
+   /* If we generated an expression instruction into a temporary in
+    * processing the saturate's operand, apply the saturate to that
+    * instruction.  Otherwise, generate a MOV to do the saturate.
+    *
+    * Note that we have to be careful to only do this optimization if
+    * the instruction in question was what generated src->result.  For
+    * example, ir_dereference_array might generate a MUL instruction
+    * to create the reladdr, and return us a src reg using that
+    * reladdr.  That MUL result is not the value we're trying to
+    * saturate.
+    */
+   ir_expression *sat_src_expr = sat_src->as_expression();
+   ir_to_mesa_instruction *new_inst;
+   new_inst = (ir_to_mesa_instruction *)this->instructions.get_tail();
+   if (sat_src_expr && (sat_src_expr->operation == ir_binop_mul ||
+			sat_src_expr->operation == ir_binop_add ||
+			sat_src_expr->operation == ir_binop_dot)) {
+      new_inst->saturate = true;
+   } else {
+      this->result = get_temp(ir->type);
+      ir_to_mesa_instruction *inst;
+      inst = emit(ir, OPCODE_MOV, dst_reg(this->result), src);
+      inst->saturate = true;
+   }
 
    return true;
 }
@@ -1088,6 +1130,16 @@ ir_to_mesa_visitor::visit(ir_expression *ir)
       if (try_emit_mad(ir, 0))
 	 return;
    }
+
+   /* Quick peephole: Emit OPCODE_MAD(-a, -b, a) instead of AND(a, NOT(b))
+    */
+   if (ir->operation == ir_binop_logic_and) {
+      if (try_emit_mad_for_and_not(ir, 1))
+	 return;
+      if (try_emit_mad_for_and_not(ir, 0))
+	 return;
+   }
+
    if (try_emit_sat(ir))
       return;
 
@@ -1135,7 +1187,13 @@ ir_to_mesa_visitor::visit(ir_expression *ir)
 
    switch (ir->operation) {
    case ir_unop_logic_not:
-      emit(ir, OPCODE_SEQ, result_dst, op[0], src_reg_for_float(0.0));
+      /* Previously 'SEQ dst, src, 0.0' was used for this.  However, many
+       * older GPUs implement SEQ using multiple instructions (i915 uses two
+       * SGE instructions and a MUL instruction).  Since our logic values are
+       * 0.0 and 1.0, 1-x also implements !x.
+       */
+      op[0].negate = ~op[0].negate;
+      emit(ir, OPCODE_ADD, result_dst, op[0], src_reg_for_float(1.0));
       break;
    case ir_unop_neg:
       op[0].negate = ~op[0].negate;
@@ -1231,8 +1289,19 @@ ir_to_mesa_visitor::visit(ir_expression *ir)
 	  ir->operands[1]->type->is_vector()) {
 	 src_reg temp = get_temp(glsl_type::vec4_type);
 	 emit(ir, OPCODE_SNE, dst_reg(temp), op[0], op[1]);
+
+	 /* After the dot-product, the value will be an integer on the
+	  * range [0,4].  Zero becomes 1.0, and positive values become zero.
+	  */
 	 emit_dp(ir, result_dst, temp, temp, vector_elements);
-	 emit(ir, OPCODE_SEQ, result_dst, result_src, src_reg_for_float(0.0));
+
+	 /* Negating the result of the dot-product gives values on the range
+	  * [-4, 0].  Zero becomes 1.0, and negative values become zero.  This
+	  * achieved using SGE.
+	  */
+	 src_reg sge_src = result_src;
+	 sge_src.negate = ~sge_src.negate;
+	 emit(ir, OPCODE_SGE, result_dst, sge_src, src_reg_for_float(0.0));
       } else {
 	 emit(ir, OPCODE_SEQ, result_dst, op[0], op[1]);
       }
@@ -1243,29 +1312,83 @@ ir_to_mesa_visitor::visit(ir_expression *ir)
 	  ir->operands[1]->type->is_vector()) {
 	 src_reg temp = get_temp(glsl_type::vec4_type);
 	 emit(ir, OPCODE_SNE, dst_reg(temp), op[0], op[1]);
-	 emit_dp(ir, result_dst, temp, temp, vector_elements);
-	 emit(ir, OPCODE_SNE, result_dst, result_src, src_reg_for_float(0.0));
+
+	 /* After the dot-product, the value will be an integer on the
+	  * range [0,4].  Zero stays zero, and positive values become 1.0.
+	  */
+	 ir_to_mesa_instruction *const dp =
+	    emit_dp(ir, result_dst, temp, temp, vector_elements);
+	 if (this->prog->Target == GL_FRAGMENT_PROGRAM_ARB) {
+	    /* The clamping to [0,1] can be done for free in the fragment
+	     * shader with a saturate.
+	     */
+	    dp->saturate = true;
+	 } else {
+	    /* Negating the result of the dot-product gives values on the range
+	     * [-4, 0].  Zero stays zero, and negative values become 1.0.  This
+	     * achieved using SLT.
+	     */
+	    src_reg slt_src = result_src;
+	    slt_src.negate = ~slt_src.negate;
+	    emit(ir, OPCODE_SLT, result_dst, slt_src, src_reg_for_float(0.0));
+	 }
       } else {
 	 emit(ir, OPCODE_SNE, result_dst, op[0], op[1]);
       }
       break;
 
-   case ir_unop_any:
+   case ir_unop_any: {
       assert(ir->operands[0]->type->is_vector());
-      emit_dp(ir, result_dst, op[0], op[0],
-	      ir->operands[0]->type->vector_elements);
-      emit(ir, OPCODE_SNE, result_dst, result_src, src_reg_for_float(0.0));
+
+      /* After the dot-product, the value will be an integer on the
+       * range [0,4].  Zero stays zero, and positive values become 1.0.
+       */
+      ir_to_mesa_instruction *const dp =
+	 emit_dp(ir, result_dst, op[0], op[0],
+		 ir->operands[0]->type->vector_elements);
+      if (this->prog->Target == GL_FRAGMENT_PROGRAM_ARB) {
+	 /* The clamping to [0,1] can be done for free in the fragment
+	  * shader with a saturate.
+	  */
+	 dp->saturate = true;
+      } else {
+	 /* Negating the result of the dot-product gives values on the range
+	  * [-4, 0].  Zero stays zero, and negative values become 1.0.  This
+	  * is achieved using SLT.
+	  */
+	 src_reg slt_src = result_src;
+	 slt_src.negate = ~slt_src.negate;
+	 emit(ir, OPCODE_SLT, result_dst, slt_src, src_reg_for_float(0.0));
+      }
       break;
+   }
 
    case ir_binop_logic_xor:
       emit(ir, OPCODE_SNE, result_dst, op[0], op[1]);
       break;
 
-   case ir_binop_logic_or:
-      /* This could be a saturated add and skip the SNE. */
-      emit(ir, OPCODE_ADD, result_dst, op[0], op[1]);
-      emit(ir, OPCODE_SNE, result_dst, result_src, src_reg_for_float(0.0));
+   case ir_binop_logic_or: {
+      /* After the addition, the value will be an integer on the
+       * range [0,2].  Zero stays zero, and positive values become 1.0.
+       */
+      ir_to_mesa_instruction *add =
+	 emit(ir, OPCODE_ADD, result_dst, op[0], op[1]);
+      if (this->prog->Target == GL_FRAGMENT_PROGRAM_ARB) {
+	 /* The clamping to [0,1] can be done for free in the fragment
+	  * shader with a saturate.
+	  */
+	 add->saturate = true;
+      } else {
+	 /* Negating the result of the addition gives values on the range
+	  * [-2, 0].  Zero stays zero, and negative values become 1.0.  This
+	  * is achieved using SLT.
+	  */
+	 src_reg slt_src = result_src;
+	 slt_src.negate = ~slt_src.negate;
+	 emit(ir, OPCODE_SLT, result_dst, slt_src, src_reg_for_float(0.0));
+      }
       break;
+   }
 
    case ir_binop_logic_and:
       /* the bool args are stored as float 0.0 or 1.0, so "mul" gives us "and". */
@@ -1494,6 +1617,18 @@ ir_to_mesa_visitor::visit(ir_dereference_array *ir)
 
 	 emit(ir, OPCODE_MUL, dst_reg(index_reg),
 	      this->result, src_reg_for_float(element_size));
+      }
+
+      /* If there was already a relative address register involved, add the
+       * new and the old together to get the new offset.
+       */
+      if (src.reladdr != NULL)  {
+	 src_reg accum_reg = get_temp(glsl_type::float_type);
+
+	 emit(ir, OPCODE_ADD, dst_reg(accum_reg),
+	      index_reg, *src.reladdr);
+
+	 index_reg = accum_reg;
       }
 
       src.reladdr = ralloc(mem_ctx, src_reg);
@@ -1796,7 +1931,7 @@ ir_to_mesa_visitor::visit(ir_constant *ir)
 
 	 src = src_reg(PROGRAM_CONSTANT, -1, NULL);
 	 src.index = _mesa_add_unnamed_constant(this->prog->Parameters,
-						values,
+						(gl_constant_value *) values,
 						ir->type->vector_elements,
 						&src.swizzle);
 	 emit(ir, OPCODE_MOV, mat_column, src);
@@ -1834,7 +1969,7 @@ ir_to_mesa_visitor::visit(ir_constant *ir)
 
    this->result = src_reg(PROGRAM_CONSTANT, -1, ir->type);
    this->result.index = _mesa_add_unnamed_constant(this->prog->Parameters,
-						   values,
+						   (gl_constant_value *) values,
 						   ir->type->vector_elements,
 						   &this->result.swizzle);
 }
@@ -1969,7 +2104,10 @@ ir_to_mesa_visitor::visit(ir_texture *ir)
    ir_to_mesa_instruction *inst = NULL;
    prog_opcode opcode = OPCODE_NOP;
 
-   ir->coordinate->accept(this);
+   if (ir->op == ir_txs)
+      this->result = src_reg_for_float(0.0);
+   else
+      ir->coordinate->accept(this);
 
    /* Put our coords in a temp.  We'll need to modify them for shadow,
     * projection, or LOD, so the only case we'd use it as is is if
@@ -1993,6 +2131,7 @@ ir_to_mesa_visitor::visit(ir_texture *ir)
 
    switch (ir->op) {
    case ir_tex:
+   case ir_txs:
       opcode = OPCODE_TEX;
       break;
    case ir_txb:
@@ -2401,29 +2540,32 @@ check_resources(const struct gl_context *ctx,
    case GL_VERTEX_PROGRAM_ARB:
       if (_mesa_bitcount(prog->SamplersUsed) >
           ctx->Const.MaxVertexTextureImageUnits) {
-         fail_link(shader_program, "Too many vertex shader texture samplers");
+         linker_error(shader_program,
+		      "Too many vertex shader texture samplers");
       }
       if (prog->Parameters->NumParameters > MAX_UNIFORMS) {
-         fail_link(shader_program, "Too many vertex shader constants");
+         linker_error(shader_program, "Too many vertex shader constants");
       }
       break;
    case MESA_GEOMETRY_PROGRAM:
       if (_mesa_bitcount(prog->SamplersUsed) >
           ctx->Const.MaxGeometryTextureImageUnits) {
-         fail_link(shader_program, "Too many geometry shader texture samplers");
+         linker_error(shader_program,
+		      "Too many geometry shader texture samplers");
       }
       if (prog->Parameters->NumParameters >
           MAX_GEOMETRY_UNIFORM_COMPONENTS / 4) {
-         fail_link(shader_program, "Too many geometry shader constants");
+         linker_error(shader_program, "Too many geometry shader constants");
       }
       break;
    case GL_FRAGMENT_PROGRAM_ARB:
       if (_mesa_bitcount(prog->SamplersUsed) >
           ctx->Const.MaxTextureImageUnits) {
-         fail_link(shader_program, "Too many fragment shader texture samplers");
+         linker_error(shader_program,
+		      "Too many fragment shader texture samplers");
       }
       if (prog->Parameters->NumParameters > MAX_UNIFORMS) {
-         fail_link(shader_program, "Too many fragment shader constants");
+         linker_error(shader_program, "Too many fragment shader constants");
       }
       break;
    default:
@@ -2531,16 +2673,17 @@ add_uniforms_to_parameters_list(struct gl_shader_program *shader_program,
 	  */
 	 if (file == PROGRAM_SAMPLER) {
 	    for (unsigned int j = 0; j < size / 4; j++)
-	       prog->Parameters->ParameterValues[index + j][0] = next_sampler++;
+	       prog->Parameters->ParameterValues[index + j][0].f = next_sampler++;
 	 }
 
 	 /* The location chosen in the Parameters list here (returned
 	  * from _mesa_add_uniform) has to match what the linker chose.
 	  */
 	 if (index != parameter_index) {
-	    fail_link(shader_program, "Allocation of uniform `%s' to target "
-		      "failed (%d vs %d)\n",
-		      uniform->Name, index, parameter_index);
+	    linker_error(shader_program,
+			 "Allocation of uniform `%s' to target failed "
+			 "(%d vs %d)\n",
+			 uniform->Name, index, parameter_index);
 	 }
       }
    }
@@ -2573,8 +2716,8 @@ set_uniform_initializer(struct gl_context *ctx, void *mem_ctx,
    int loc = _mesa_get_uniform_location(ctx, shader_program, name);
 
    if (loc == -1) {
-      fail_link(shader_program,
-		"Couldn't find uniform for initializer %s\n", name);
+      linker_error(shader_program,
+		   "Couldn't find uniform for initializer %s\n", name);
       return;
    }
 
@@ -2974,11 +3117,31 @@ get_mesa_program(struct gl_context *ctx,
          if (mesa_inst->SrcReg[src].RelAddr)
             prog->IndirectRegisterFiles |= 1 << mesa_inst->SrcReg[src].File;
 
-      if (options->EmitNoIfs && mesa_inst->Opcode == OPCODE_IF) {
-	 fail_link(shader_program, "Couldn't flatten if statement\n");
-      }
-
       switch (mesa_inst->Opcode) {
+      case OPCODE_IF:
+	 if (options->EmitNoIfs) {
+	    linker_warning(shader_program,
+			   "Couldn't flatten if-statement.  "
+			   "This will likely result in software "
+			   "rasterization.\n");
+	 }
+	 break;
+      case OPCODE_BGNLOOP:
+	 if (options->EmitNoLoops) {
+	    linker_warning(shader_program,
+			   "Couldn't unroll loop.  "
+			   "This will likely result in software "
+			   "rasterization.\n");
+	 }
+	 break;
+      case OPCODE_CONT:
+	 if (options->EmitNoCont) {
+	    linker_warning(shader_program,
+			   "Couldn't lower continue-statement.  "
+			   "This will likely result in software "
+			   "rasterization.\n");
+	 }
+	 break;
       case OPCODE_BGNSUB:
 	 inst->function->inst = i;
 	 mesa_inst->Comment = strdup(inst->function->sig->function_name());
@@ -3246,7 +3409,7 @@ _mesa_glsl_link_shader(struct gl_context *ctx, struct gl_shader_program *prog)
 
    for (i = 0; i < prog->NumShaders; i++) {
       if (!prog->Shaders[i]->CompileStatus) {
-	 fail_link(prog, "linking with uncompiled shader");
+	 linker_error(prog, "linking with uncompiled shader");
 	 prog->LinkStatus = GL_FALSE;
       }
    }

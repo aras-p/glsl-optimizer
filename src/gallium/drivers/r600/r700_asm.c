@@ -26,7 +26,7 @@
 #include "r600_asm.h"
 #include "r700_sq.h"
 
-void r700_bc_cf_vtx_build(uint32_t *bytecode, const struct r600_bc_cf *cf)
+void r700_bytecode_cf_vtx_build(uint32_t *bytecode, const struct r600_bytecode_cf *cf)
 {
 	unsigned count = (cf->ndw / 4) - 1;
 	*bytecode++ = S_SQ_CF_WORD0_ADDR(cf->addr >> 1);
@@ -36,7 +36,7 @@ void r700_bc_cf_vtx_build(uint32_t *bytecode, const struct r600_bc_cf *cf)
 			S_SQ_CF_WORD1_COUNT_3(count >> 3);
 }
 
-int r700_bc_alu_build(struct r600_bc *bc, struct r600_bc_alu *alu, unsigned id)
+int r700_bytecode_alu_build(struct r600_bytecode *bc, struct r600_bytecode_alu *alu, unsigned id)
 {
 	bc->bytecode[id++] = S_SQ_ALU_WORD0_SRC0_SEL(alu->src[0].sel) |
 		S_SQ_ALU_WORD0_SRC0_REL(alu->src[0].rel) |

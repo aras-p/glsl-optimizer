@@ -269,11 +269,13 @@ _eglInitSurface(_EGLSurface *surf, _EGLDisplay *dpy, EGLint type,
 {
    const char *func;
    EGLint renderBuffer = EGL_BACK_BUFFER;
+   EGLint swapBehavior = EGL_BUFFER_PRESERVED;
    EGLint err;
 
    switch (type) {
    case EGL_WINDOW_BIT:
       func = "eglCreateWindowSurface";
+      swapBehavior = EGL_BUFFER_DESTROYED;
       break;
    case EGL_PIXMAP_BIT:
       func = "eglCreatePixmapSurface";
@@ -315,7 +317,7 @@ _eglInitSurface(_EGLSurface *surf, _EGLDisplay *dpy, EGLint type,
 
    surf->MipmapLevel = 0;
    surf->MultisampleResolve = EGL_MULTISAMPLE_RESOLVE_DEFAULT;
-   surf->SwapBehavior = EGL_BUFFER_DESTROYED;
+   surf->SwapBehavior = swapBehavior;
 
    surf->HorizontalResolution = EGL_UNKNOWN;
    surf->VerticalResolution = EGL_UNKNOWN;

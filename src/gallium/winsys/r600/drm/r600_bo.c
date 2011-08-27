@@ -23,176 +23,109 @@
  * Authors:
  *      Dave Airlie
  */
-#include <pipe/p_compiler.h>
-#include <pipe/p_screen.h>
-#include <pipebuffer/pb_bufmgr.h>
-#include "state_tracker/drm_driver.h"
 #include "r600_priv.h"
 #include "r600d.h"
-#include "drm.h"
-#include "radeon_drm.h"
+#include "state_tracker/drm_driver.h"
 
 struct r600_bo *r600_bo(struct radeon *radeon,
 			unsigned size, unsigned alignment,
 			unsigned binding, unsigned usage)
 {
 	struct r600_bo *bo;
-	struct radeon_bo *rbo;
+	struct pb_buffer *pb;
 	uint32_t initial_domain, domains;
 	  
 	/* Staging resources particpate in transfers and blits only
 	 * and are used for uploads and downloads from regular
 	 * resources.  We generate them internally for some transfers.
 	 */
-	if (usage == PIPE_USAGE_STAGING)
-		domains = RADEON_GEM_DOMAIN_CPU | RADEON_GEM_DOMAIN_GTT;
-	else
-		domains = (RADEON_GEM_DOMAIN_CPU |
-				RADEON_GEM_DOMAIN_GTT |
-				RADEON_GEM_DOMAIN_VRAM);
+	if (usage == PIPE_USAGE_STAGING) {
+		domains = RADEON_DOMAIN_GTT;
+		initial_domain = RADEON_DOMAIN_GTT;
+	} else {
+		domains = RADEON_DOMAIN_GTT | RADEON_DOMAIN_VRAM;
 
-	if (binding & (PIPE_BIND_CONSTANT_BUFFER | PIPE_BIND_VERTEX_BUFFER | PIPE_BIND_INDEX_BUFFER)) {
-		bo = r600_bomgr_bo_create(radeon->bomgr, size, alignment, *radeon->cfence);
-		if (bo) {
-			bo->domains = domains;
-			return bo;
+		switch(usage) {
+		case PIPE_USAGE_DYNAMIC:
+		case PIPE_USAGE_STREAM:
+		case PIPE_USAGE_STAGING:
+			initial_domain = RADEON_DOMAIN_GTT;
+			break;
+		case PIPE_USAGE_DEFAULT:
+		case PIPE_USAGE_STATIC:
+		case PIPE_USAGE_IMMUTABLE:
+		default:
+			initial_domain = RADEON_DOMAIN_VRAM;
+			break;
 		}
 	}
 
-	switch(usage) {
-	case PIPE_USAGE_DYNAMIC:
-	case PIPE_USAGE_STREAM:
-	case PIPE_USAGE_STAGING:
-		initial_domain = RADEON_GEM_DOMAIN_GTT;
-		break;
-	case PIPE_USAGE_DEFAULT:
-	case PIPE_USAGE_STATIC:
-	case PIPE_USAGE_IMMUTABLE:
-	default:
-		initial_domain = RADEON_GEM_DOMAIN_VRAM;
-		break;
-	}
-	rbo = radeon_bo(radeon, 0, size, alignment, initial_domain);
-	if (rbo == NULL) {
+	pb = radeon->ws->buffer_create(radeon->ws, size, alignment, binding, initial_domain);
+	if (!pb) {
 		return NULL;
 	}
 
 	bo = calloc(1, sizeof(struct r600_bo));
-	bo->size = size;
-	bo->alignment = alignment;
 	bo->domains = domains;
-	bo->bo = rbo;
-	if (binding & (PIPE_BIND_CONSTANT_BUFFER | PIPE_BIND_VERTEX_BUFFER | PIPE_BIND_INDEX_BUFFER)) {
-		r600_bomgr_bo_init(radeon->bomgr, bo);
-	}
+	bo->buf = pb;
+	bo->cs_buf = radeon->ws->buffer_get_cs_handle(pb);
 
 	pipe_reference_init(&bo->reference, 1);
 	return bo;
 }
 
-struct r600_bo *r600_bo_handle(struct radeon *radeon,
-			       unsigned handle, unsigned *array_mode)
+struct r600_bo *r600_bo_handle(struct radeon *radeon, struct winsys_handle *whandle,
+			       unsigned *stride, unsigned *array_mode)
 {
+	struct pb_buffer *pb;
 	struct r600_bo *bo = calloc(1, sizeof(struct r600_bo));
-	struct radeon_bo *rbo;
 
-	rbo = bo->bo = radeon_bo(radeon, handle, 0, 0, 0);
-	if (rbo == NULL) {
+	pb = bo->buf = radeon->ws->buffer_from_handle(radeon->ws, whandle, stride, NULL);
+	if (!pb) {
 		free(bo);
 		return NULL;
 	}
-	bo->size = rbo->size;
-	bo->domains = (RADEON_GEM_DOMAIN_CPU |
-			RADEON_GEM_DOMAIN_GTT |
-			RADEON_GEM_DOMAIN_VRAM);
 
 	pipe_reference_init(&bo->reference, 1);
+	bo->domains = RADEON_DOMAIN_GTT | RADEON_DOMAIN_VRAM;
+	bo->cs_buf = radeon->ws->buffer_get_cs_handle(pb);
 
-	radeon_bo_get_tiling_flags(radeon, rbo, &bo->tiling_flags, &bo->kernel_pitch);
+	if (stride)
+		*stride = whandle->stride;
+
 	if (array_mode) {
-		if (bo->tiling_flags) {
-			if (bo->tiling_flags & RADEON_TILING_MACRO)
-				*array_mode = V_0280A0_ARRAY_2D_TILED_THIN1;
-			else if (bo->tiling_flags & RADEON_TILING_MICRO)
-				*array_mode = V_0280A0_ARRAY_1D_TILED_THIN1;
-		} else {
+		enum radeon_bo_layout micro, macro;
+
+		radeon->ws->buffer_get_tiling(bo->buf, &micro, &macro);
+
+		if (macro == RADEON_LAYOUT_TILED)
+			*array_mode = V_0280A0_ARRAY_2D_TILED_THIN1;
+		else if (micro == RADEON_LAYOUT_TILED)
+			*array_mode = V_0280A0_ARRAY_1D_TILED_THIN1;
+		else
 			*array_mode = 0;
-		}
 	}
 	return bo;
 }
 
-void *r600_bo_map(struct radeon *radeon, struct r600_bo *bo, unsigned usage, void *ctx)
+void *r600_bo_map(struct radeon *radeon, struct r600_bo *bo, struct radeon_winsys_cs *cs, unsigned usage)
 {
-	struct pipe_context *pctx = ctx;
-
-	if (usage & PIPE_TRANSFER_UNSYNCHRONIZED) {
-		radeon_bo_map(radeon, bo->bo);
-		return (uint8_t *) bo->bo->data + bo->offset;
-	}
-
-	if (p_atomic_read(&bo->bo->reference.count) > 1) {
-		if (usage & PIPE_TRANSFER_DONTBLOCK) {
-			return NULL;
-		}
-		if (ctx) {
-                        pctx->flush(pctx, NULL);
-		}
-	}
-
-	if (usage & PIPE_TRANSFER_DONTBLOCK) {
-		uint32_t domain;
-
-		if (radeon_bo_busy(radeon, bo->bo, &domain))
-			return NULL;
-		if (radeon_bo_map(radeon, bo->bo)) {
-			return NULL;
-		}
-		goto out;
-	}
-
-	radeon_bo_map(radeon, bo->bo);
-	if (radeon_bo_wait(radeon, bo->bo)) {
-		radeon_bo_unmap(radeon, bo->bo);
-		return NULL;
-	}
-
-out:
-	return (uint8_t *) bo->bo->data + bo->offset;
+	return radeon->ws->buffer_map(bo->buf, cs, usage);
 }
 
 void r600_bo_unmap(struct radeon *radeon, struct r600_bo *bo)
 {
-	radeon_bo_unmap(radeon, bo->bo);
+	radeon->ws->buffer_unmap(bo->buf);
 }
 
-void r600_bo_destroy(struct radeon *radeon, struct r600_bo *bo)
+void r600_bo_destroy(struct r600_bo *bo)
 {
-	if (bo->manager_id) {
-		if (!r600_bomgr_bo_destroy(radeon->bomgr, bo)) {
-			/* destroy is delayed by buffer manager */
-			return;
-		}
-	}
-	radeon_bo_reference(radeon, &bo->bo, NULL);
+	pb_reference(&bo->buf, NULL);
 	free(bo);
 }
 
 boolean r600_bo_get_winsys_handle(struct radeon *radeon, struct r600_bo *bo,
-				unsigned stride, struct winsys_handle *whandle)
+				  unsigned stride, struct winsys_handle *whandle)
 {
-	whandle->stride = stride;
-	switch(whandle->type) {
-	case DRM_API_HANDLE_TYPE_KMS:
-		whandle->handle = bo->bo->handle;
-		break;
-	case DRM_API_HANDLE_TYPE_SHARED:
-		if (radeon_bo_get_name(radeon, bo->bo, &whandle->handle))
-			return FALSE;
-		break;
-	default:
-		return FALSE;
-	}
-
-	return TRUE;
+	return radeon->ws->buffer_get_handle(bo->buf, stride, whandle);
 }

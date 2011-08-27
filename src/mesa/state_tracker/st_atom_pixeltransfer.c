@@ -84,26 +84,6 @@ make_state_key(struct gl_context *ctx,  struct state_key *key)
 }
 
 
-static struct pipe_resource *
-create_color_map_texture(struct gl_context *ctx)
-{
-   struct st_context *st = st_context(ctx);
-   struct pipe_context *pipe = st->pipe;
-   struct pipe_resource *pt;
-   enum pipe_format format;
-   const uint texSize = 256; /* simple, and usually perfect */
-
-   /* find an RGBA texture format */
-   format = st_choose_format(pipe->screen, GL_RGBA, GL_NONE, GL_NONE,
-                             PIPE_TEXTURE_2D, 0, PIPE_BIND_SAMPLER_VIEW);
-
-   /* create texture for color map/table */
-   pt = st_texture_create(st, PIPE_TEXTURE_2D, format, 0,
-                          texSize, texSize, 1, 1, PIPE_BIND_SAMPLER_VIEW);
-   return pt;
-}
-
-
 /**
  * Update the pixelmap texture with the contents of the R/G/B/A pixel maps.
  */
@@ -219,7 +199,7 @@ get_pixel_transfer_program(struct gl_context *ctx, const struct state_key *key)
 
       /* create the colormap/texture now if not already done */
       if (!st->pixel_xfer.pixelmap_texture) {
-         st->pixel_xfer.pixelmap_texture = create_color_map_texture(ctx);
+         st->pixel_xfer.pixelmap_texture = st_create_color_map_texture(ctx);
          st->pixel_xfer.pixelmap_sampler_view =
             st_create_texture_sampler_view(st->pipe,
                                            st->pixel_xfer.pixelmap_texture);

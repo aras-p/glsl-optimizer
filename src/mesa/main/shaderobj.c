@@ -244,6 +244,8 @@ _mesa_init_shader_program(struct gl_context *ctx, struct gl_shader_program *prog
    prog->Geom.InputType = GL_TRIANGLES;
    prog->Geom.OutputType = GL_TRIANGLE_STRIP;
 #endif
+
+   prog->InfoLog = ralloc_strdup(prog, "");
 }
 
 /**
@@ -283,6 +285,10 @@ _mesa_clear_shader_program_data(struct gl_context *ctx,
       _mesa_free_parameter_list(shProg->Varying);
       shProg->Varying = NULL;
    }
+
+   assert(shProg->InfoLog != NULL);
+   ralloc_free(shProg->InfoLog);
+   shProg->InfoLog = ralloc_strdup(shProg, "");
 }
 
 
@@ -315,11 +321,6 @@ _mesa_free_shader_program_data(struct gl_context *ctx,
    if (shProg->Shaders) {
       free(shProg->Shaders);
       shProg->Shaders = NULL;
-   }
-
-   if (shProg->InfoLog) {
-      ralloc_free(shProg->InfoLog);
-      shProg->InfoLog = NULL;
    }
 
    /* Transform feedback varying vars */

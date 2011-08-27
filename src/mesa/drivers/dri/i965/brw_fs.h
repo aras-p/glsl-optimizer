@@ -25,6 +25,8 @@
  *
  */
 
+#include "brw_shader.h"
+
 extern "C" {
 
 #include <sys/types.h>
@@ -51,36 +53,9 @@ enum register_file {
    MRF = BRW_MESSAGE_REGISTER_FILE,
    IMM = BRW_IMMEDIATE_VALUE,
    FIXED_HW_REG, /* a struct brw_reg */
-   UNIFORM, /* prog_data->params[hw_reg] */
+   UNIFORM, /* prog_data->params[reg] */
    BAD_FILE
 };
-
-enum fs_opcodes {
-   FS_OPCODE_FB_WRITE = 256,
-   FS_OPCODE_RCP,
-   FS_OPCODE_RSQ,
-   FS_OPCODE_SQRT,
-   FS_OPCODE_EXP2,
-   FS_OPCODE_LOG2,
-   FS_OPCODE_POW,
-   FS_OPCODE_SIN,
-   FS_OPCODE_COS,
-   FS_OPCODE_DDX,
-   FS_OPCODE_DDY,
-   FS_OPCODE_PIXEL_X,
-   FS_OPCODE_PIXEL_Y,
-   FS_OPCODE_CINTERP,
-   FS_OPCODE_LINTERP,
-   FS_OPCODE_TEX,
-   FS_OPCODE_TXB,
-   FS_OPCODE_TXD,
-   FS_OPCODE_TXL,
-   FS_OPCODE_DISCARD,
-   FS_OPCODE_SPILL,
-   FS_OPCODE_UNSPILL,
-   FS_OPCODE_PULL_CONSTANT_LOAD,
-};
-
 
 class fs_reg {
 public:
@@ -99,7 +74,6 @@ public:
    void init()
    {
       memset(this, 0, sizeof(*this));
-      this->hw_reg = -1;
       this->smear = -1;
    }
 
@@ -146,8 +120,8 @@ public:
       this->type = fixed_hw_reg.type;
    }
 
-   fs_reg(enum register_file file, int hw_reg);
-   fs_reg(enum register_file file, int hw_reg, uint32_t type);
+   fs_reg(enum register_file file, int reg);
+   fs_reg(enum register_file file, int reg, uint32_t type);
    fs_reg(class fs_visitor *v, const struct glsl_type *type);
 
    bool equals(fs_reg *r)
@@ -155,7 +129,6 @@ public:
       return (file == r->file &&
 	      reg == r->reg &&
 	      reg_offset == r->reg_offset &&
-	      hw_reg == r->hw_reg &&
 	      type == r->type &&
 	      negate == r->negate &&
 	      abs == r->abs &&
@@ -167,12 +140,17 @@ public:
 
    /** Register file: ARF, GRF, MRF, IMM. */
    enum register_file file;
-   /** virtual register number.  0 = fixed hw reg */
+   /**
+    * Register number.  For ARF/MRF, it's the hardware register.  For
+    * GRF, it's a virtual register number until register allocation
+    */
    int reg;
-   /** Offset within the virtual register. */
+   /**
+    * For virtual registers, this is a hardware register offset from
+    * the start of the register block (for example, a constant index
+    * in an array access).
+    */
    int reg_offset;
-   /** HW register number.  Generally unset until register allocation. */
-   int hw_reg;
    /** Register type.  BRW_REGISTER_TYPE_* */
    int type;
    bool negate;
@@ -224,13 +202,13 @@ public:
       init();
    }
 
-   fs_inst(int opcode)
+   fs_inst(enum opcode opcode)
    {
       init();
       this->opcode = opcode;
    }
 
-   fs_inst(int opcode, fs_reg dst)
+   fs_inst(enum opcode opcode, fs_reg dst)
    {
       init();
       this->opcode = opcode;
@@ -240,7 +218,7 @@ public:
 	 assert(dst.reg_offset >= 0);
    }
 
-   fs_inst(int opcode, fs_reg dst, fs_reg src0)
+   fs_inst(enum opcode opcode, fs_reg dst, fs_reg src0)
    {
       init();
       this->opcode = opcode;
@@ -253,7 +231,7 @@ public:
 	 assert(src[0].reg_offset >= 0);
    }
 
-   fs_inst(int opcode, fs_reg dst, fs_reg src0, fs_reg src1)
+   fs_inst(enum opcode opcode, fs_reg dst, fs_reg src0, fs_reg src1)
    {
       init();
       this->opcode = opcode;
@@ -269,7 +247,7 @@ public:
 	 assert(src[1].reg_offset >= 0);
    }
 
-   fs_inst(int opcode, fs_reg dst, fs_reg src0, fs_reg src1, fs_reg src2)
+   fs_inst(enum opcode opcode, fs_reg dst, fs_reg src0, fs_reg src1, fs_reg src2)
    {
       init();
       this->opcode = opcode;
@@ -313,22 +291,23 @@ public:
       return (opcode == FS_OPCODE_TEX ||
 	      opcode == FS_OPCODE_TXB ||
 	      opcode == FS_OPCODE_TXD ||
-	      opcode == FS_OPCODE_TXL);
+	      opcode == FS_OPCODE_TXL ||
+	      opcode == FS_OPCODE_TXS);
    }
 
    bool is_math()
    {
-      return (opcode == FS_OPCODE_RCP ||
-	      opcode == FS_OPCODE_RSQ ||
-	      opcode == FS_OPCODE_SQRT ||
-	      opcode == FS_OPCODE_EXP2 ||
-	      opcode == FS_OPCODE_LOG2 ||
-	      opcode == FS_OPCODE_SIN ||
-	      opcode == FS_OPCODE_COS ||
-	      opcode == FS_OPCODE_POW);
+      return (opcode == SHADER_OPCODE_RCP ||
+	      opcode == SHADER_OPCODE_RSQ ||
+	      opcode == SHADER_OPCODE_SQRT ||
+	      opcode == SHADER_OPCODE_EXP2 ||
+	      opcode == SHADER_OPCODE_LOG2 ||
+	      opcode == SHADER_OPCODE_SIN ||
+	      opcode == SHADER_OPCODE_COS ||
+	      opcode == SHADER_OPCODE_POW);
    }
 
-   int opcode; /* BRW_OPCODE_* or FS_OPCODE_* */
+   enum opcode opcode; /* BRW_OPCODE_* or FS_OPCODE_* */
    fs_reg dst;
    fs_reg src[3];
    bool saturate;
@@ -402,7 +381,7 @@ public:
       this->base_ir = NULL;
 
       this->virtual_grf_sizes = NULL;
-      this->virtual_grf_next = 1;
+      this->virtual_grf_next = 0;
       this->virtual_grf_array_size = 0;
       this->virtual_grf_def = NULL;
       this->virtual_grf_use = NULL;
@@ -421,7 +400,7 @@ public:
 
    fs_reg *variable_storage(ir_variable *var);
    int virtual_grf_alloc(int size);
-   void import_uniforms(struct hash_table *src_variable_ht);
+   void import_uniforms(fs_visitor *v);
 
    void visit(ir_variable *ir);
    void visit(ir_assignment *ir);
@@ -445,27 +424,28 @@ public:
 
    fs_inst *emit(fs_inst inst);
 
-   fs_inst *emit(int opcode)
+   fs_inst *emit(enum opcode opcode)
    {
       return emit(fs_inst(opcode));
    }
 
-   fs_inst *emit(int opcode, fs_reg dst)
+   fs_inst *emit(enum opcode opcode, fs_reg dst)
    {
       return emit(fs_inst(opcode, dst));
    }
 
-   fs_inst *emit(int opcode, fs_reg dst, fs_reg src0)
+   fs_inst *emit(enum opcode opcode, fs_reg dst, fs_reg src0)
    {
       return emit(fs_inst(opcode, dst, src0));
    }
 
-   fs_inst *emit(int opcode, fs_reg dst, fs_reg src0, fs_reg src1)
+   fs_inst *emit(enum opcode opcode, fs_reg dst, fs_reg src0, fs_reg src1)
    {
       return emit(fs_inst(opcode, dst, src0, src1));
    }
 
-   fs_inst *emit(int opcode, fs_reg dst, fs_reg src0, fs_reg src1, fs_reg src2)
+   fs_inst *emit(enum opcode opcode, fs_reg dst,
+		 fs_reg src0, fs_reg src1, fs_reg src2)
    {
       return emit(fs_inst(opcode, dst, src0, src1, src2));
    }
@@ -485,9 +465,11 @@ public:
    void setup_pull_constants();
    void calculate_live_intervals();
    bool propagate_constants();
+   bool opt_algebraic();
    bool register_coalesce();
    bool compute_to_mrf();
    bool dead_code_eliminate();
+   bool remove_dead_constants();
    bool remove_duplicate_mrf_writes();
    bool virtual_grf_interferes(int a, int b);
    void schedule_instructions();
@@ -524,8 +506,8 @@ public:
 			      int sampler);
    fs_inst *emit_texture_gen7(ir_texture *ir, fs_reg dst, fs_reg coordinate,
 			      int sampler);
-   fs_inst *emit_math(fs_opcodes op, fs_reg dst, fs_reg src0);
-   fs_inst *emit_math(fs_opcodes op, fs_reg dst, fs_reg src0, fs_reg src1);
+   fs_inst *emit_math(enum opcode op, fs_reg dst, fs_reg src0);
+   fs_inst *emit_math(enum opcode op, fs_reg dst, fs_reg src0, fs_reg src1);
    bool try_emit_saturate(ir_expression *ir);
    void emit_bool_to_cond_code(ir_rvalue *condition);
    void emit_if_gen6(ir_if *ir);
@@ -564,6 +546,13 @@ public:
    int *virtual_grf_def;
    int *virtual_grf_use;
    bool live_intervals_valid;
+
+   /* This is the map from UNIFORM hw_reg + reg_offset as generated by
+    * the visitor to the packed uniform number after
+    * remove_dead_constants() that represents the actual uploaded
+    * uniform index.
+    */
+   int *params_remap;
 
    struct hash_table *variable_ht;
    ir_variable *frag_color, *frag_data, *frag_depth;

@@ -1096,31 +1096,6 @@ static void emit_lrp_noalias(struct brw_vs_compile *c,
    brw_MAC(p, dst, arg0, arg1);
 }
 
-/** 3 or 4-component vector normalization */
-static void emit_nrm( struct brw_vs_compile *c, 
-                      struct brw_reg dst,
-                      struct brw_reg arg0,
-                      int num_comps)
-{
-   struct brw_compile *p = &c->func;
-   struct brw_reg tmp = get_tmp(c);
-
-   /* tmp = dot(arg0, arg0) */
-   if (num_comps == 3)
-      brw_DP3(p, tmp, arg0, arg0);
-   else
-      brw_DP4(p, tmp, arg0, arg0);
-
-   /* tmp = 1 / sqrt(tmp) */
-   emit_math1(c, BRW_MATH_FUNCTION_RSQ, tmp, tmp, BRW_MATH_PRECISION_FULL);
-
-   /* dst = arg0 * tmp */
-   brw_MUL(p, dst, arg0, tmp);
-
-   release_tmp(c, tmp);
-}
-
-
 static struct brw_reg
 get_constant(struct brw_vs_compile *c,
              const struct prog_instruction *inst,
@@ -1359,7 +1334,7 @@ get_src_reg( struct brw_vs_compile *c,
 
 	 if (component >= 0) {
 	    params = c->vp->program.Base.Parameters;
-	    f = params->ParameterValues[src->Index][component];
+	    f = params->ParameterValues[src->Index][component].f;
 
 	    if (src->Abs)
 	       f = fabs(f);
@@ -1821,6 +1796,9 @@ accumulator_contains(struct brw_vs_compile *c, struct brw_reg val)
    if (val.address_mode != BRW_ADDRESS_DIRECT)
       return GL_FALSE;
 
+   if (val.negate || val.abs)
+      return GL_FALSE;
+
    switch (prev_insn->header.opcode) {
    case BRW_OPCODE_MOV:
    case BRW_OPCODE_MAC:
@@ -1900,7 +1878,7 @@ brw_vs_rescale_gl_fixed(struct brw_vs_compile *c)
 
 /* Emit the vertex program instructions here.
  */
-void brw_vs_emit(struct brw_vs_compile *c )
+void brw_old_vs_emit(struct brw_vs_compile *c )
 {
 #define MAX_IF_DEPTH 32
 #define MAX_LOOP_DEPTH 32
@@ -1980,9 +1958,22 @@ void brw_vs_emit(struct brw_vs_compile *c )
 	      const struct prog_src_register *src = &inst->SrcReg[i];
 	      index = src->Index;
 	      file = src->File;	
-	      if (file == PROGRAM_OUTPUT && c->output_regs[index].used_in_src)
-		  args[i] = c->output_regs[index].reg;
-	      else
+	      if (file == PROGRAM_OUTPUT && c->output_regs[index].used_in_src) {
+		 /* Can't just make get_arg "do the right thing" here because
+		  * other callers of get_arg and get_src_reg don't expect any
+		  * special behavior for the c->output_regs[index].used_in_src
+		  * case.
+		  */
+		 args[i] = c->output_regs[index].reg;
+		 args[i].dw1.bits.swizzle =
+		    BRW_SWIZZLE4(GET_SWZ(src->Swizzle, 0),
+				 GET_SWZ(src->Swizzle, 1),
+				 GET_SWZ(src->Swizzle, 2),
+				 GET_SWZ(src->Swizzle, 3));
+
+		 /* Note this is ok for non-swizzle ARB_vp instructions */
+		 args[i].negate = src->Negate ? 1 : 0;
+	      } else
                   args[i] = get_arg(c, inst, i);
 	  }
 
@@ -1993,7 +1984,11 @@ void brw_vs_emit(struct brw_vs_compile *c )
       index = inst->DstReg.Index;
       file = inst->DstReg.File;
       if (file == PROGRAM_OUTPUT && c->output_regs[index].used_in_src)
-	  dst = c->output_regs[index].reg;
+	 /* Can't just make get_dst "do the right thing" here because other
+	  * callers of get_dst don't expect any special behavior for the
+	  * c->output_regs[index].used_in_src case.
+	  */
+	 dst = brw_writemask(c->output_regs[index].reg, inst->DstReg.WriteMask);
       else
 	  dst = get_dst(c, inst->DstReg);
 
@@ -2024,12 +2019,6 @@ void brw_vs_emit(struct brw_vs_compile *c )
 	 break;
       case OPCODE_DPH:
 	 brw_DPH(p, dst, args[0], args[1]);
-	 break;
-      case OPCODE_NRM3:
-	 emit_nrm(c, dst, args[0], 3);
-	 break;
-      case OPCODE_NRM4:
-	 emit_nrm(c, dst, args[0], 4);
 	 break;
       case OPCODE_DST:
 	 unalias2(c, dst, args[0], args[1], emit_dst_noalias); 

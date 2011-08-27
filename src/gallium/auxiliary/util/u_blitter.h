@@ -126,12 +126,15 @@ struct pipe_context *util_blitter_get_pipe(struct blitter_context *blitter)
 }
 
 /*
- * These CSOs must be saved before any of the following functions is called:
+ * These states must be saved before any of the following functions is called:
  * - blend state
  * - depth stencil alpha state
  * - rasterizer state
  * - vertex shader
+ * - any other shader??? (XXX)
  * - fragment shader
+ * - vertex buffers
+ * - vertex elements
  */
 
 /**
@@ -169,14 +172,14 @@ void util_blitter_clear_depth_custom(struct blitter_context *blitter,
  * - fragment sampler states
  * - fragment sampler textures
  */
-void util_blitter_copy_region(struct blitter_context *blitter,
-                              struct pipe_resource *dst,
-                              unsigned dstlevel,
-                              unsigned dstx, unsigned dsty, unsigned dstz,
-                              struct pipe_resource *src,
-                              unsigned srclevel,
-                              const struct pipe_box *srcbox,
-                              boolean ignore_stencil);
+void util_blitter_copy_texture(struct blitter_context *blitter,
+                               struct pipe_resource *dst,
+                               unsigned dstlevel,
+                               unsigned dstx, unsigned dsty, unsigned dstz,
+                               struct pipe_resource *src,
+                               unsigned srclevel,
+                               const struct pipe_box *srcbox,
+                               boolean ignore_stencil);
 
 /**
  * Clear a region of a (color) surface to a constant value.

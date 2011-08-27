@@ -309,6 +309,35 @@ char *target_function[16] = {
     [BRW_MESSAGE_TARGET_THREAD_SPAWNER] = "thread_spawner"
 };
 
+char *target_function_gen6[16] = {
+    [BRW_MESSAGE_TARGET_NULL] = "null",
+    [BRW_MESSAGE_TARGET_MATH] = "math",
+    [BRW_MESSAGE_TARGET_SAMPLER] = "sampler",
+    [BRW_MESSAGE_TARGET_GATEWAY] = "gateway",
+    [GEN6_MESSAGE_TARGET_DP_SAMPLER_CACHE] = "sampler",
+    [GEN6_MESSAGE_TARGET_DP_RENDER_CACHE] = "render",
+    [GEN6_MESSAGE_TARGET_DP_CONST_CACHE] = "const",
+    [BRW_MESSAGE_TARGET_URB] = "urb",
+    [BRW_MESSAGE_TARGET_THREAD_SPAWNER] = "thread_spawner"
+};
+
+char *dp_rc_msg_type_gen6[16] = {
+    [BRW_DATAPORT_READ_MESSAGE_OWORD_BLOCK_READ] = "OWORD block read",
+    [GEN6_DATAPORT_READ_MESSAGE_RENDER_UNORM_READ] = "RT UNORM read",
+    [GEN6_DATAPORT_READ_MESSAGE_OWORD_DUAL_BLOCK_READ] = "OWORD dual block read",
+    [GEN6_DATAPORT_READ_MESSAGE_MEDIA_BLOCK_READ] = "media block read",
+    [GEN6_DATAPORT_READ_MESSAGE_OWORD_UNALIGN_BLOCK_READ] = "OWORD unaligned block read",
+    [GEN6_DATAPORT_READ_MESSAGE_DWORD_SCATTERED_READ] = "DWORD scattered read",
+    [GEN6_DATAPORT_WRITE_MESSAGE_DWORD_ATOMIC_WRITE] = "DWORD atomic write",
+    [GEN6_DATAPORT_WRITE_MESSAGE_OWORD_BLOCK_WRITE] = "OWORD block write",
+    [GEN6_DATAPORT_WRITE_MESSAGE_OWORD_DUAL_BLOCK_WRITE] = "OWORD dual block write",
+    [GEN6_DATAPORT_WRITE_MESSAGE_MEDIA_BLOCK_WRITE] = "media block write",
+    [GEN6_DATAPORT_WRITE_MESSAGE_DWORD_SCATTERED_WRITE] = "DWORD scattered write",
+    [GEN6_DATAPORT_WRITE_MESSAGE_RENDER_TARGET_WRITE] = "RT write",
+    [GEN6_DATAPORT_WRITE_MESSAGE_STREAMED_VB_WRITE] = "streamed VB write",
+    [GEN6_DATAPORT_WRITE_MESSAGE_RENDER_TARGET_UNORM_WRITE] = "RT UNORMc write",
+};
+
 char *math_function[16] = {
     [BRW_MATH_FUNCTION_INV] = "inv",
     [BRW_MATH_FUNCTION_LOG] = "log",
@@ -927,8 +956,14 @@ int brw_disasm (FILE *file, struct brw_instruction *inst, int gen)
 	newline (file);
 	pad (file, 16);
 	space = 0;
-	err |= control (file, "target function", target_function,
-			target, &space);
+
+	if (gen >= 6) {
+	   err |= control (file, "target function", target_function_gen6,
+			   target, &space);
+	} else {
+	   err |= control (file, "target function", target_function,
+			   target, &space);
+	}
 
 	switch (target) {
 	case BRW_MESSAGE_TARGET_MATH:
@@ -985,9 +1020,16 @@ int brw_disasm (FILE *file, struct brw_instruction *inst, int gen)
 			inst->bits3.dp_read.msg_type);
 	    }
 	    break;
+
 	case BRW_MESSAGE_TARGET_DATAPORT_WRITE:
 	    if (gen >= 6) {
-		format (file, " (%d, %d, %d, %d, %d, %d)",
+		format (file, " (");
+
+		err |= control (file, "DP rc message type",
+				dp_rc_msg_type_gen6,
+				inst->bits3.gen6_dp.msg_type, &space);
+
+		format (file, ", %d, %d, %d, %d, %d, %d)",
 			inst->bits3.gen6_dp.binding_table_index,
 			inst->bits3.gen6_dp.msg_control,
 			inst->bits3.gen6_dp.msg_type,
@@ -1003,6 +1045,7 @@ int brw_disasm (FILE *file, struct brw_instruction *inst, int gen)
 			inst->bits3.dp_write.send_commit_msg);
 	    }
 	    break;
+
 	case BRW_MESSAGE_TARGET_URB:
 	    if (gen >= 5) {
 		format (file, " %d", inst->bits3.urb_gen5.offset);

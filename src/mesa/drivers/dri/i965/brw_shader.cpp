@@ -24,6 +24,7 @@
 extern "C" {
 #include "main/macros.h"
 #include "brw_context.h"
+#include "brw_vs.h"
 }
 #include "brw_fs.h"
 #include "../glsl/ir_optimization.h"
@@ -67,6 +68,9 @@ brw_shader_precompile(struct gl_context *ctx, struct gl_shader_program *prog)
    if (!brw_fs_precompile(ctx, prog))
       return false;
 
+   if (!brw_vs_precompile(ctx, prog))
+      return false;
+
    return true;
 }
 
@@ -75,10 +79,15 @@ brw_link_shader(struct gl_context *ctx, struct gl_shader_program *prog)
 {
    struct brw_context *brw = brw_context(ctx);
    struct intel_context *intel = &brw->intel;
+   unsigned int stage;
 
-   struct brw_shader *shader =
-      (struct brw_shader *)prog->_LinkedShaders[MESA_SHADER_FRAGMENT];
-   if (shader != NULL) {
+   for (stage = 0; stage < ARRAY_SIZE(prog->_LinkedShaders); stage++) {
+      struct brw_shader *shader =
+	 (struct brw_shader *)prog->_LinkedShaders[stage];
+
+      if (!shader)
+	 continue;
+
       void *mem_ctx = ralloc_context(NULL);
       bool progress;
 
@@ -106,18 +115,22 @@ brw_link_shader(struct gl_context *ctx, struct gl_shader_program *prog)
       brw_do_cubemap_normalize(shader->ir);
       lower_noise(shader->ir);
       lower_quadop_vector(shader->ir, false);
+
+      bool input = true;
+      bool output = stage == MESA_SHADER_FRAGMENT;
+      bool temp = stage == MESA_SHADER_FRAGMENT;
+      bool uniform = true;
+
       lower_variable_index_to_cond_assign(shader->ir,
-					  GL_TRUE, /* input */
-					  GL_TRUE, /* output */
-					  GL_TRUE, /* temp */
-					  GL_TRUE /* uniform */
-					  );
+					  input, output, temp, uniform);
 
       do {
 	 progress = false;
 
-	 brw_do_channel_expressions(shader->ir);
-	 brw_do_vector_splitting(shader->ir);
+	 if (stage == MESA_SHADER_FRAGMENT) {
+	    brw_do_channel_expressions(shader->ir);
+	    brw_do_vector_splitting(shader->ir);
+	 }
 
 	 progress = do_lower_jumps(shader->ir, true, true,
 				   true, /* main return */
@@ -190,5 +203,31 @@ brw_conditional_for_comparison(unsigned int op)
    default:
       assert(!"not reached: bad operation for comparison");
       return BRW_CONDITIONAL_NZ;
+   }
+}
+
+uint32_t
+brw_math_function(enum opcode op)
+{
+   switch (op) {
+   case SHADER_OPCODE_RCP:
+      return BRW_MATH_FUNCTION_INV;
+   case SHADER_OPCODE_RSQ:
+      return BRW_MATH_FUNCTION_RSQ;
+   case SHADER_OPCODE_SQRT:
+      return BRW_MATH_FUNCTION_SQRT;
+   case SHADER_OPCODE_EXP2:
+      return BRW_MATH_FUNCTION_EXP;
+   case SHADER_OPCODE_LOG2:
+      return BRW_MATH_FUNCTION_LOG;
+   case SHADER_OPCODE_POW:
+      return BRW_MATH_FUNCTION_POW;
+   case SHADER_OPCODE_SIN:
+      return BRW_MATH_FUNCTION_SIN;
+   case SHADER_OPCODE_COS:
+      return BRW_MATH_FUNCTION_COS;
+   default:
+      assert(!"not reached: unknown math function");
+      return 0;
    }
 }

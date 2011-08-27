@@ -32,7 +32,7 @@
 #include "tgsi/tgsi_parse.h"
 #include "tgsi/tgsi_ureg.h"
 
-#include "radeon_compiler.h"
+#include "compiler/radeon_compiler.h"
 
 /* Convert info about VS output semantics into r300_shader_semantics. */
 static void r300_shader_read_vs_outputs(

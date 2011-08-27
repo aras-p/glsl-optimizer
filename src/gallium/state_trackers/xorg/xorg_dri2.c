@@ -372,13 +372,15 @@ dri2_copy_region(DrawablePtr pDraw, RegionPtr pRegion,
     save_accel = ms->exa->accel;
     ms->exa->accel = TRUE;
 
-    /* In case it won't be though, make sure the GPU copy contents of the
-     * source pixmap will be used for the software fallback - presumably the
-     * client modified them before calling in here.
-     */
-    exaMoveInPixmap(src_priv->pPixmap);
-    DamageRegionAppend(src_draw, pRegion);
-    DamageRegionProcessPending(src_draw);
+    if (pSrcBuffer->attachment != DRI2BufferFrontLeft) {
+	/* In case it won't be though, make sure the GPU copy contents of the
+	 * source pixmap will be used for the software fallback - presumably the
+	 * client modified them before calling in here.
+	 */
+	exaMoveInPixmap(src_priv->pPixmap);
+	DamageRegionAppend(src_draw, pRegion);
+	DamageRegionProcessPending(src_draw);
+    }
 
    if (cust && cust->winsys_context_throttle)
        cust->winsys_context_throttle(cust, ms->ctx, THROTTLE_SWAP);

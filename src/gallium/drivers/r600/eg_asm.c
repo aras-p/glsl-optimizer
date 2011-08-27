@@ -29,7 +29,7 @@
 #include "r600_opcodes.h"
 #include "evergreend.h"
 
-int eg_bc_cf_build(struct r600_bc *bc, struct r600_bc_cf *cf)
+int eg_bytecode_cf_build(struct r600_bytecode *bc, struct r600_bytecode_cf *cf)
 {
 	unsigned id = cf->id;
 

@@ -42,7 +42,8 @@
 #include "xf86drm.h"
 #include "vmwgfx_drm.h"
 
-#include <sys/mman.h>
+#include "os/os_mman.h"
+
 #include <errno.h>
 #include <unistd.h>
 
@@ -94,7 +95,7 @@ static void
 vmw_ioctl_fifo_unmap(struct vmw_winsys_screen *vws, void *mapping)
 {
    VMW_FUNC;
-   (void)munmap(mapping, getpagesize());
+   (void)os_munmap(mapping, getpagesize());
 }
 
 
@@ -106,7 +107,7 @@ vmw_ioctl_fifo_map(struct vmw_winsys_screen *vws,
 
    VMW_FUNC;
 
-   map = mmap(NULL, getpagesize(), PROT_READ, MAP_SHARED,
+   map = os_mmap(NULL, getpagesize(), PROT_READ, MAP_SHARED,
 	      vws->ioctl.drm_fd, fifo_offset);
 
    if (map == MAP_FAILED) {
@@ -362,7 +363,7 @@ vmw_ioctl_region_destroy(struct vmw_region *region)
               region->ptr.gmrId, region->ptr.offset);
 
    if (region->data) {
-      munmap(region->data, region->size);
+      os_munmap(region->data, region->size);
       region->data = NULL;
    }
 
@@ -388,7 +389,7 @@ vmw_ioctl_region_map(struct vmw_region *region)
               region->ptr.gmrId, region->ptr.offset);
 
    if (region->data == NULL) {
-      map = mmap(NULL, region->size, PROT_READ | PROT_WRITE, MAP_SHARED,
+      map = os_mmap(NULL, region->size, PROT_READ | PROT_WRITE, MAP_SHARED,
 		 region->drm_fd, region->map_handle);
       if (map == MAP_FAILED) {
 	 debug_printf("%s: Map failed.\n", __FUNCTION__);

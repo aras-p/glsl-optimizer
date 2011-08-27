@@ -247,7 +247,7 @@ static void r300_clear(struct pipe_context* pipe,
             if (!r300->hyperz_enabled) {
                 r300->hyperz_enabled =
                     r300->rws->cs_request_feature(r300->cs,
-                                                RADEON_FID_HYPERZ_RAM_ACCESS,
+                                                RADEON_FID_R300_HYPERZ_ACCESS,
                                                 TRUE);
                 if (r300->hyperz_enabled) {
                    /* Need to emit HyperZ buffer regs for the first time. */
@@ -409,10 +409,11 @@ void r300_decompress_zmask(struct r300_context *r300)
 
 void r300_decompress_zmask_locked_unsafe(struct r300_context *r300)
 {
-    struct pipe_framebuffer_state fb = {0};
+    struct pipe_framebuffer_state fb;
+
+    memset(&fb, 0, sizeof(fb));
     fb.width = r300->locked_zbuffer->width;
     fb.height = r300->locked_zbuffer->height;
-    fb.nr_cbufs = 0;
     fb.zsbuf = r300->locked_zbuffer;
 
     r300->context.set_framebuffer_state(&r300->context, &fb);
@@ -421,8 +422,9 @@ void r300_decompress_zmask_locked_unsafe(struct r300_context *r300)
 
 void r300_decompress_zmask_locked(struct r300_context *r300)
 {
-    struct pipe_framebuffer_state saved_fb = {0};
+    struct pipe_framebuffer_state saved_fb;
 
+    memset(&saved_fb, 0, sizeof(saved_fb));
     util_copy_framebuffer_state(&saved_fb, r300->fb_state.state);
     r300_decompress_zmask_locked_unsafe(r300);
     r300->context.set_framebuffer_state(&r300->context, &saved_fb);
@@ -443,8 +445,8 @@ static void r300_hw_copy_region(struct pipe_context* pipe,
     struct r300_context* r300 = r300_context(pipe);
 
     r300_blitter_begin(r300, R300_COPY);
-    util_blitter_copy_region(r300->blitter, dst, dst_level, dstx, dsty, dstz,
-                             src, src_level, src_box, TRUE);
+    util_blitter_copy_texture(r300->blitter, dst, dst_level, dstx, dsty, dstz,
+                              src, src_level, src_box, TRUE);
     r300_blitter_end(r300);
 }
 

@@ -44,6 +44,9 @@
 #define BRW_SWIZZLE_NOOP      BRW_SWIZZLE4(0,1,2,3)
 #define BRW_SWIZZLE_XYZW      BRW_SWIZZLE4(0,1,2,3)
 #define BRW_SWIZZLE_XXXX      BRW_SWIZZLE4(0,0,0,0)
+#define BRW_SWIZZLE_YYYY      BRW_SWIZZLE4(1,1,1,1)
+#define BRW_SWIZZLE_ZZZZ      BRW_SWIZZLE4(2,2,2,2)
+#define BRW_SWIZZLE_WWWW      BRW_SWIZZLE4(3,3,3,3)
 #define BRW_SWIZZLE_XYXY      BRW_SWIZZLE4(0,1,0,1)
 
 
@@ -798,6 +801,12 @@ void brw_init_compile(struct brw_context *, struct brw_compile *p,
 		      void *mem_ctx);
 const GLuint *brw_get_program( struct brw_compile *p, GLuint *sz );
 
+struct brw_instruction *brw_next_insn(struct brw_compile *p, GLuint opcode);
+void brw_set_dest(struct brw_compile *p, struct brw_instruction *insn,
+		  struct brw_reg dest);
+void brw_set_src0(struct brw_compile *p, struct brw_instruction *insn,
+		  struct brw_reg reg);
+
 
 /* Helpers for regular instructions:
  */
@@ -852,6 +861,27 @@ ROUND(RNDE)
 
 /* Helpers for SEND instruction:
  */
+void brw_set_dp_read_message(struct brw_compile *p,
+			     struct brw_instruction *insn,
+			     GLuint binding_table_index,
+			     GLuint msg_control,
+			     GLuint msg_type,
+			     GLuint target_cache,
+			     GLuint msg_length,
+			     GLuint response_length);
+
+void brw_set_dp_write_message(struct brw_compile *p,
+			      struct brw_instruction *insn,
+			      GLuint binding_table_index,
+			      GLuint msg_control,
+			      GLuint msg_type,
+			      GLuint msg_length,
+			      GLboolean header_present,
+			      GLuint pixel_scoreboard_clear,
+			      GLuint response_length,
+			      GLuint end_of_thread,
+			      GLuint send_commit_msg);
+
 void brw_urb_WRITE(struct brw_compile *p,
 		   struct brw_reg dest,
 		   GLuint msg_reg_nr,

@@ -344,7 +344,7 @@ guess_and_alloc_texture(struct st_context *st,
                               stImage->base.Width2,
                               stImage->base.Height2,
                               stImage->base.Depth2,
-                              stImage->level,
+                              stImage->base.Level,
                               &width, &height, &depth)) {
       /* we can't determine the image size at level=0 */
       stObj->width0 = stObj->height0 = stObj->depth0 = 0;
@@ -367,7 +367,7 @@ guess_and_alloc_texture(struct st_context *st,
         stImage->base._BaseFormat == GL_DEPTH_COMPONENT ||
         stImage->base._BaseFormat == GL_DEPTH_STENCIL_EXT) &&
        !stObj->base.GenerateMipmap &&
-       stImage->level == 0) {
+       stImage->base.Level == 0) {
       /* only alloc space for a single mipmap level */
       lastLevel = 0;
    }
@@ -506,8 +506,8 @@ st_TexImage(struct gl_context * ctx,
       assert(texImage->Depth == depth);
    }
 
-   stImage->face = _mesa_tex_target_to_face(target);
-   stImage->level = level;
+   stImage->base.Face = _mesa_tex_target_to_face(target);
+   stImage->base.Level = level;
 
    _mesa_set_fetch_functions(texImage, dims);
 
@@ -529,7 +529,7 @@ st_TexImage(struct gl_context * ctx,
    if (stObj->pt) {
       if (level > (GLint) stObj->pt->last_level ||
           !st_texture_match_image(stObj->pt, &stImage->base,
-                                  stImage->face, stImage->level)) {
+                                  stImage->base.Face, stImage->base.Level)) {
          DBG("release it\n");
          pipe_resource_reference(&stObj->pt, NULL);
          assert(!stObj->pt);
@@ -563,7 +563,7 @@ st_TexImage(struct gl_context * ctx,
     */
    if (stObj->pt &&
        st_texture_match_image(stObj->pt, &stImage->base,
-                              stImage->face, stImage->level)) {
+                              stImage->base.Face, stImage->base.Level)) {
 
       pipe_resource_reference(&stImage->pt, stObj->pt);
       assert(stImage->pt);
@@ -1466,34 +1466,6 @@ st_copy_texsubimage(struct gl_context *ctx,
       depth/stencil samples per pixel? Need some transfer clarifications. */
    assert(sample_count < 2);
 
-   if (srcX < 0) {
-      width -= -srcX;
-      destX += -srcX;
-      srcX = 0;
-   }
-
-   if (srcY < 0) {
-      height -= -srcY;
-      destY += -srcY;
-      srcY = 0;
-   }
-
-   if (destX < 0) {
-      width -= -destX;
-      srcX += -destX;
-      destX = 0;
-   }
-
-   if (destY < 0) {
-      height -= -destY;
-      srcY += -destY;
-      destY = 0;
-   }
-
-   if (width < 0 || height < 0)
-      return;
-
-
    assert(strb);
    assert(strb->surface);
    assert(stImage->pt);
@@ -1529,8 +1501,8 @@ st_copy_texsubimage(struct gl_context *ctx,
          pipe->resource_copy_region(pipe,
                                     /* dest */
                                     stImage->pt,
-                                    stImage->level,
-                                    destX, destY, destZ + stImage->face,
+                                    stImage->base.Level,
+                                    destX, destY, destZ + stImage->base.Face,
                                     /* src */
                                     strb->texture,
                                     strb->surface->u.tex.level,
@@ -1552,9 +1524,9 @@ st_copy_texsubimage(struct gl_context *ctx,
          memset(&surf_tmpl, 0, sizeof(surf_tmpl));
          surf_tmpl.format = util_format_linear(stImage->pt->format);
          surf_tmpl.usage = PIPE_BIND_RENDER_TARGET;
-         surf_tmpl.u.tex.level = stImage->level;
-         surf_tmpl.u.tex.first_layer = stImage->face + destZ;
-         surf_tmpl.u.tex.last_layer = stImage->face + destZ;
+         surf_tmpl.u.tex.level = stImage->base.Level;
+         surf_tmpl.u.tex.first_layer = stImage->base.Face + destZ;
+         surf_tmpl.u.tex.last_layer = stImage->base.Face + destZ;
 
          dest_surface = pipe->create_surface(pipe, stImage->pt,
                                              &surf_tmpl);
@@ -1610,59 +1582,6 @@ st_copy_texsubimage(struct gl_context *ctx,
 
 
 static void
-st_CopyTexImage1D(struct gl_context * ctx, GLenum target, GLint level,
-                  GLenum internalFormat,
-                  GLint x, GLint y, GLsizei width, GLint border)
-{
-   struct gl_texture_unit *texUnit =
-      &ctx->Texture.Unit[ctx->Texture.CurrentUnit];
-   struct gl_texture_object *texObj =
-      _mesa_select_tex_object(ctx, texUnit, target);
-   struct gl_texture_image *texImage =
-      _mesa_select_tex_image(ctx, texObj, target, level);
-
-   /* Setup or redefine the texture object, texture and texture
-    * image.  Don't populate yet.  
-    */
-   ctx->Driver.TexImage1D(ctx, target, level, internalFormat,
-                          width, border,
-                          GL_RGBA, CHAN_TYPE, NULL,
-                          &ctx->DefaultPacking, texObj, texImage);
-
-   st_copy_texsubimage(ctx, target, level,
-                       0, 0, 0,  /* destX,Y,Z */
-                       x, y, width, 1);  /* src X, Y, size */
-}
-
-
-static void
-st_CopyTexImage2D(struct gl_context * ctx, GLenum target, GLint level,
-                  GLenum internalFormat,
-                  GLint x, GLint y, GLsizei width, GLsizei height,
-                  GLint border)
-{
-   struct gl_texture_unit *texUnit =
-      &ctx->Texture.Unit[ctx->Texture.CurrentUnit];
-   struct gl_texture_object *texObj =
-      _mesa_select_tex_object(ctx, texUnit, target);
-   struct gl_texture_image *texImage =
-      _mesa_select_tex_image(ctx, texObj, target, level);
-
-   /* Setup or redefine the texture object, texture and texture
-    * image.  Don't populate yet.  
-    */
-   ctx->Driver.TexImage2D(ctx, target, level, internalFormat,
-                          width, height, border,
-                          GL_RGBA, CHAN_TYPE, NULL,
-                          &ctx->DefaultPacking, texObj, texImage);
-
-   st_copy_texsubimage(ctx, target, level,
-                       0, 0, 0,  /* destX,Y,Z */
-                       x, y, width, height);  /* src X, Y, size */
-}
-
-
-static void
 st_CopyTexSubImage1D(struct gl_context * ctx, GLenum target, GLint level,
                      GLint xoffset, GLint x, GLint y, GLsizei width)
 {
@@ -1710,7 +1629,7 @@ copy_image_data_to_texture(struct st_context *st,
    /* debug checks */
    {
       const struct gl_texture_image *dstImage =
-         stObj->base.Image[stImage->face][dstLevel];
+         stObj->base.Image[stImage->base.Face][dstLevel];
       assert(dstImage);
       assert(dstImage->Width == stImage->base.Width);
       assert(dstImage->Height == stImage->base.Height);
@@ -1722,15 +1641,15 @@ copy_image_data_to_texture(struct st_context *st,
        */
       st_texture_image_copy(st->pipe,
                             stObj->pt, dstLevel,  /* dest texture, level */
-                            stImage->pt, stImage->level, /* src texture, level */
-                            stImage->face);
+                            stImage->pt, stImage->base.Level, /* src texture, level */
+                            stImage->base.Face);
 
       pipe_resource_reference(&stImage->pt, NULL);
    }
    else if (stImage->base.Data) {
       st_texture_image_data(st,
                             stObj->pt,
-                            stImage->face,
+                            stImage->base.Face,
                             dstLevel,
                             stImage->base.Data,
                             stImage->base.RowStride * 
@@ -1947,8 +1866,6 @@ st_init_texture_functions(struct dd_function_table *functions)
    functions->CompressedTexSubImage1D = st_CompressedTexSubImage1D;
    functions->CompressedTexSubImage2D = st_CompressedTexSubImage2D;
    functions->CompressedTexSubImage3D = st_CompressedTexSubImage3D;
-   functions->CopyTexImage1D = st_CopyTexImage1D;
-   functions->CopyTexImage2D = st_CopyTexImage2D;
    functions->CopyTexSubImage1D = st_CopyTexSubImage1D;
    functions->CopyTexSubImage2D = st_CopyTexSubImage2D;
    functions->CopyTexSubImage3D = st_CopyTexSubImage3D;

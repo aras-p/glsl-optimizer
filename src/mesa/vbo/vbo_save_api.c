@@ -232,11 +232,10 @@ map_vertex_store(struct gl_context *ctx,
    assert(vertex_store->bufferobj);
    assert(!vertex_store->buffer);
    vertex_store->buffer =
-      (GLfloat *) ctx->Driver.MapBuffer(ctx,
-                                        GL_ARRAY_BUFFER_ARB,   /* not used */
-                                        GL_WRITE_ONLY,      /* not used */
-                                        vertex_store->
-                                        bufferobj);
+      (GLfloat *) ctx->Driver.MapBufferRange(ctx, 0,
+					     vertex_store->bufferobj->Size,
+					     GL_MAP_WRITE_BIT,    /* not used */
+					     vertex_store->bufferobj);
 
    assert(vertex_store->buffer);
    return vertex_store->buffer + vertex_store->used;
@@ -247,7 +246,7 @@ static void
 unmap_vertex_store(struct gl_context *ctx,
                    struct vbo_save_vertex_store *vertex_store)
 {
-   ctx->Driver.UnmapBuffer(ctx, GL_ARRAY_BUFFER_ARB, vertex_store->bufferobj);
+   ctx->Driver.UnmapBuffer(ctx, vertex_store->bufferobj);
    vertex_store->buffer = NULL;
 }
 

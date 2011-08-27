@@ -212,10 +212,10 @@ interpolate_active_attribs(struct gl_context *ctx, SWspan *span, GLbitfield attr
 static INLINE void
 interpolate_int_colors(struct gl_context *ctx, SWspan *span)
 {
+#if CHAN_BITS != 32
    const GLuint n = span->end;
    GLuint i;
 
-#if CHAN_BITS != 32
    ASSERT(!(span->arrayMask & SPAN_RGBA));
 #endif
 

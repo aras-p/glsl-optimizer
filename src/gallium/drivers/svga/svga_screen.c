@@ -71,13 +71,22 @@ svga_get_vendor( struct pipe_screen *pscreen )
 static const char *
 svga_get_name( struct pipe_screen *pscreen )
 {
+   const char *build = "", *llvm = "", *mutex = "";
+   static char name[100];
 #ifdef DEBUG
    /* Only return internal details in the DEBUG version:
     */
-   return "SVGA3D; build: DEBUG; mutex: " PIPE_ATOMIC;
-#else
-   return "SVGA3D; build: RELEASE; ";
+   build = "build: DEBUG;";
+   mutex = "mutex: " PIPE_ATOMIC ";";
+#ifdef HAVE_LLVM
+   llvm = "LLVM;";
 #endif
+#else
+   build = "build: RELEASE;";
+#endif
+
+   util_snprintf(name, sizeof(name), "SVGA3D; %s %s %s", build, mutex, llvm);
+   return name;
 }
 
 
@@ -245,6 +254,8 @@ static int svga_get_shader_param(struct pipe_screen *screen, unsigned shader, en
          return 0;
       case PIPE_SHADER_CAP_SUBROUTINES:
          return 0;
+      case PIPE_SHADER_CAP_INTEGERS:
+         return 0;
       }
       break;
    case PIPE_SHADER_VERTEX:
@@ -285,6 +296,8 @@ static int svga_get_shader_param(struct pipe_screen *screen, unsigned shader, en
       case PIPE_SHADER_CAP_INDIRECT_CONST_ADDR:
          return 1;
       case PIPE_SHADER_CAP_SUBROUTINES:
+         return 0;
+      case PIPE_SHADER_CAP_INTEGERS:
          return 0;
       default:
          break;

@@ -126,11 +126,6 @@ void radeonGetCompressedTexImage(struct gl_context *ctx, GLenum target, GLint le
 				 struct gl_texture_object *texObj,
 				 struct gl_texture_image *texImage);
 
-void radeonCopyTexImage2D(struct gl_context *ctx, GLenum target, GLint level,
-			GLenum internalFormat,
-			GLint x, GLint y, GLsizei width, GLsizei height,
-			GLint border);
-
 void radeonCopyTexSubImage2D(struct gl_context *ctx, GLenum target, GLint level,
 			GLint xoffset, GLint yoffset,
 			GLint x, GLint y,

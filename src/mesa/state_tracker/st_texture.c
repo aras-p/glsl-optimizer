@@ -221,8 +221,8 @@ st_texture_image_map(struct st_context *st, struct st_texture_image *stImage,
 
    DBG("%s \n", __FUNCTION__);
 
-   stImage->transfer = pipe_get_transfer(st->pipe, pt, stImage->level,
-                                         stImage->face + zoffset,
+   stImage->transfer = pipe_get_transfer(st->pipe, pt, stImage->base.Level,
+                                         stImage->base.Face + zoffset,
                                          usage, x, y, w, h);
 
    if (stImage->transfer)
@@ -394,5 +394,25 @@ st_texture_image_copy(struct pipe_context *pipe,
                                  srcLevel,
                                  &src_box);
    }
+}
+
+
+struct pipe_resource *
+st_create_color_map_texture(struct gl_context *ctx)
+{
+   struct st_context *st = st_context(ctx);
+   struct pipe_context *pipe = st->pipe;
+   struct pipe_resource *pt;
+   enum pipe_format format;
+   const uint texSize = 256; /* simple, and usually perfect */
+
+   /* find an RGBA texture format */
+   format = st_choose_format(pipe->screen, GL_RGBA, GL_NONE, GL_NONE,
+                             PIPE_TEXTURE_2D, 0, PIPE_BIND_SAMPLER_VIEW);
+
+   /* create texture for color map/table */
+   pt = st_texture_create(st, PIPE_TEXTURE_2D, format, 0,
+                          texSize, texSize, 1, 1, PIPE_BIND_SAMPLER_VIEW);
+   return pt;
 }
 

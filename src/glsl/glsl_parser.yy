@@ -971,13 +971,9 @@ single_declaration:
 	fully_specified_type
 	{
 	   void *ctx = state;
-	   if ($1->specifier->type_specifier != ast_struct) {
-	      _mesa_glsl_error(& @1, state, "empty declaration list\n");
-	      YYERROR;
-	   } else {
-	      $$ = new(ctx) ast_declarator_list($1);
-	      $$->set_location(yylloc);
-	   }
+	   /* Empty declaration list is valid. */
+	   $$ = new(ctx) ast_declarator_list($1);
+	   $$->set_location(yylloc);
 	}
 	| fully_specified_type any_identifier
 	{
@@ -1115,7 +1111,7 @@ layout_qualifier_id:
 	      }
 	   }
 
-	   /* Layout qualifiers for AMD_conservative_depth. */
+	   /* Layout qualifiers for AMD/ARB_conservative_depth. */
 	   if (!got_one && state->AMD_conservative_depth_enable) {
 	      if (strcmp($1, "depth_any") == 0) {
 	         got_one = true;
@@ -1133,7 +1129,7 @@ layout_qualifier_id:
 	
 	      if (got_one && state->AMD_conservative_depth_warn) {
 	         _mesa_glsl_warning(& @1, state,
-	                            "GL_AMD_conservative_depth "
+	                            "GL_ARB_conservative_depth "
 	                            "layout qualifier `%s' is used\n", $1);
 	      }
 	   }

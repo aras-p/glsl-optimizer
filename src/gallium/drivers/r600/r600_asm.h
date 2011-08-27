@@ -23,12 +23,10 @@
 #ifndef R600_ASM_H
 #define R600_ASM_H
 
-#include "util/u_double_list.h"
-
 struct r600_vertex_element;
 struct r600_pipe_context;
 
-struct r600_bc_alu_src {
+struct r600_bytecode_alu_src {
 	unsigned			sel;
 	unsigned			chan;
 	unsigned			neg;
@@ -37,7 +35,7 @@ struct r600_bc_alu_src {
 	uint32_t			value;
 };
 
-struct r600_bc_alu_dst {
+struct r600_bytecode_alu_dst {
 	unsigned			sel;
 	unsigned			chan;
 	unsigned			clamp;
@@ -45,10 +43,10 @@ struct r600_bc_alu_dst {
 	unsigned			rel;
 };
 
-struct r600_bc_alu {
+struct r600_bytecode_alu {
 	struct list_head		list;
-	struct r600_bc_alu_src		src[3];
-	struct r600_bc_alu_dst		dst;
+	struct r600_bytecode_alu_src		src[3];
+	struct r600_bytecode_alu_dst		dst;
 	unsigned			inst;
 	unsigned			last;
 	unsigned			is_op3;
@@ -58,7 +56,7 @@ struct r600_bc_alu {
 	unsigned			omod;
 };
 
-struct r600_bc_tex {
+struct r600_bytecode_tex {
 	struct list_head		list;
 	unsigned			inst;
 	unsigned			resource_id;
@@ -85,7 +83,7 @@ struct r600_bc_tex {
 	unsigned			src_sel_w;
 };
 
-struct r600_bc_vtx {
+struct r600_bytecode_vtx {
 	struct list_head		list;
 	unsigned			inst;
 	unsigned			fetch_type;
@@ -107,7 +105,7 @@ struct r600_bc_vtx {
 	unsigned			endian;
 };
 
-struct r600_bc_output {
+struct r600_bytecode_output {
 	unsigned			array_base;
 	unsigned			type;
 	unsigned			end_of_program;
@@ -122,13 +120,13 @@ struct r600_bc_output {
 	unsigned			barrier;
 };
 
-struct r600_bc_kcache {
+struct r600_bytecode_kcache {
 	unsigned			bank;
 	unsigned			mode;
 	unsigned			addr;
 };
 
-struct r600_bc_cf {
+struct r600_bytecode_cf {
 	struct list_head		list;
 	unsigned			inst;
 	unsigned			addr;
@@ -137,15 +135,15 @@ struct r600_bc_cf {
 	unsigned			cond;
 	unsigned			pop_count;
 	unsigned			cf_addr; /* control flow addr */
-	struct r600_bc_kcache		kcache[2];
+	struct r600_bytecode_kcache		kcache[2];
 	unsigned			r6xx_uses_waterfall;
 	struct list_head		alu;
 	struct list_head		tex;
 	struct list_head		vtx;
-	struct r600_bc_output		output;
-	struct r600_bc_alu		*curr_bs_head;
-	struct r600_bc_alu		*prev_bs_head;
-	struct r600_bc_alu		*prev2_bs_head;
+	struct r600_bytecode_output		output;
+	struct r600_bytecode_alu		*curr_bs_head;
+	struct r600_bytecode_alu		*prev_bs_head;
+	struct r600_bytecode_alu		*prev2_bs_head;
 };
 
 #define FC_NONE				0
@@ -157,8 +155,8 @@ struct r600_bc_cf {
 
 struct r600_cf_stack_entry {
 	int				type;
-	struct r600_bc_cf		*start;
-	struct r600_bc_cf		**mid; /* used to store the else point */
+	struct r600_bytecode_cf		*start;
+	struct r600_bytecode_cf		**mid; /* used to store the else point */
 	int				num_mid;
 };
 
@@ -170,11 +168,11 @@ struct r600_cf_callstack {
 	int				max;
 };
 
-struct r600_bc {
+struct r600_bytecode {
 	enum chip_class			chip_class;
 	int				type;
 	struct list_head		cf;
-	struct r600_bc_cf		*cf_last;
+	struct r600_bytecode_cf		*cf_last;
 	unsigned			ndw;
 	unsigned			ncf;
 	unsigned			ngpr;
@@ -189,27 +187,27 @@ struct r600_bc {
 };
 
 /* eg_asm.c */
-int eg_bc_cf_build(struct r600_bc *bc, struct r600_bc_cf *cf);
+int eg_bytecode_cf_build(struct r600_bytecode *bc, struct r600_bytecode_cf *cf);
 
 /* r600_asm.c */
-void r600_bc_init(struct r600_bc *bc, enum chip_class chip_class);
-void r600_bc_clear(struct r600_bc *bc);
-int r600_bc_add_alu(struct r600_bc *bc, const struct r600_bc_alu *alu);
-int r600_bc_add_vtx(struct r600_bc *bc, const struct r600_bc_vtx *vtx);
-int r600_bc_add_tex(struct r600_bc *bc, const struct r600_bc_tex *tex);
-int r600_bc_add_output(struct r600_bc *bc, const struct r600_bc_output *output);
-int r600_bc_build(struct r600_bc *bc);
-int r600_bc_add_cfinst(struct r600_bc *bc, int inst);
-int r600_bc_add_alu_type(struct r600_bc *bc, const struct r600_bc_alu *alu, int type);
-void r600_bc_special_constants(u32 value, unsigned *sel, unsigned *neg);
-void r600_bc_dump(struct r600_bc *bc);
+void r600_bytecode_init(struct r600_bytecode *bc, enum chip_class chip_class);
+void r600_bytecode_clear(struct r600_bytecode *bc);
+int r600_bytecode_add_alu(struct r600_bytecode *bc, const struct r600_bytecode_alu *alu);
+int r600_bytecode_add_vtx(struct r600_bytecode *bc, const struct r600_bytecode_vtx *vtx);
+int r600_bytecode_add_tex(struct r600_bytecode *bc, const struct r600_bytecode_tex *tex);
+int r600_bytecode_add_output(struct r600_bytecode *bc, const struct r600_bytecode_output *output);
+int r600_bytecode_build(struct r600_bytecode *bc);
+int r600_bytecode_add_cfinst(struct r600_bytecode *bc, int inst);
+int r600_bytecode_add_alu_type(struct r600_bytecode *bc, const struct r600_bytecode_alu *alu, int type);
+void r600_bytecode_special_constants(u32 value, unsigned *sel, unsigned *neg);
+void r600_bytecode_dump(struct r600_bytecode *bc);
 
-int cm_bc_add_cf_end(struct r600_bc *bc);
+int cm_bytecode_add_cf_end(struct r600_bytecode *bc);
 
 int r600_vertex_elements_build_fetch_shader(struct r600_pipe_context *rctx, struct r600_vertex_element *ve);
 
 /* r700_asm.c */
-void r700_bc_cf_vtx_build(uint32_t *bytecode, const struct r600_bc_cf *cf);
-int r700_bc_alu_build(struct r600_bc *bc, struct r600_bc_alu *alu, unsigned id);
+void r700_bytecode_cf_vtx_build(uint32_t *bytecode, const struct r600_bytecode_cf *cf);
+int r700_bytecode_alu_build(struct r600_bytecode *bc, struct r600_bytecode_alu *alu, unsigned id);
 
 #endif

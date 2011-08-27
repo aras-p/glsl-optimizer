@@ -58,7 +58,6 @@ struct intel_renderbuffer
 
    /** \} */
 
-   GLuint draw_offset; /**< Offset of drawing address within the region */
    GLuint draw_x, draw_y; /**< Offset of drawing within the region */
 };
 

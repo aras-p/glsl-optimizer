@@ -1,4 +1,3 @@
-
 #include "target-helpers/inline_debug_helper.h"
 #include "state_tracker/drm_driver.h"
 #include "radeon/drm/radeon_drm_public.h"

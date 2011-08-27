@@ -1697,6 +1697,10 @@
 #define R_028A3C_VGT_GROUP_VECT_1_FMT_CNTL           0x00028A3C
 #define R_028A48_PA_SC_MODE_CNTL_0                   0x00028A48
 #define R_028A4C_PA_SC_MODE_CNTL_1                   0x00028A4C
+#define R_028A94_VGT_MULTI_PRIM_IB_RESET_EN          0x00028A94
+#define   S_028A94_RESET_EN(x)                         (((x) & 0x1) << 0)
+#define   G_028A94_RESET_EN(x)                         (((x) >> 0) & 0x1)
+#define   C_028A94_RESET_EN                            0xFFFFFFFE
 #define R_028AB4_VGT_REUSE_OFF                       0x00028AB4
 #define R_028AB8_VGT_VTX_CNT_EN                      0x00028AB8
 #define R_028ABC_DB_HTILE_SURFACE                    0x00028ABC

@@ -37,6 +37,21 @@
 #include "pipe/p_state.h"
 #include "util/u_transfer.h"
 
+/* Hardware vertex fetcher limitations can be described by this structure. */
+struct u_vbuf_caps {
+   /* Vertex format CAPs. */
+   /* TRUE if hardware supports it. */
+   unsigned format_fixed32:1;    /* PIPE_FORMAT_*32*_FIXED */
+   unsigned format_float16:1;    /* PIPE_FORMAT_*16*_FLOAT */
+   unsigned format_float64:1;    /* PIPE_FORMAT_*64*_FLOAT */
+   unsigned format_norm32:1;     /* PIPE_FORMAT_*32*NORM */
+   unsigned format_scaled32:1;   /* PIPE_FORMAT_*32*SCALED */
+
+   /* Whether vertex fetches don't have to be dword-aligned. */
+   /* TRUE if hardware supports it. */
+   unsigned fetch_dword_unaligned:1;
+};
+
 /* The manager.
  * This structure should also be used to access vertex buffers
  * from a driver. */
@@ -63,6 +78,8 @@ struct u_vbuf_mgr {
     * - u_upload_buffer
     * - u_upload_flush */
    struct u_upload_mgr *uploader;
+
+   struct u_vbuf_caps caps;
 };
 
 struct u_vbuf_resource {

@@ -260,24 +260,19 @@ glx_display_free(struct glx_display *priv)
 static int
 __glXCloseDisplay(Display * dpy, XExtCodes * codes)
 {
-   struct glx_display *priv, **prev, *next;
+   struct glx_display *priv, **prev;
 
    _XLockMutex(_Xglobal_lock);
    prev = &glx_displays;
    for (priv = glx_displays; priv; prev = &priv->next, priv = priv->next) {
       if (priv->dpy == dpy) {
+         *prev = priv->next;
 	 break;
       }
    }
-
-   /* Only remove the display from the list after it's destroyed. The cleanup
-    * code (e.g. driReleaseDrawables()) ends up calling __glXInitialize(),
-    * which would create a new glx_display while we're trying to destroy this
-    * one. */
-   next = priv->next;
-   glx_display_free(priv);
-   *prev = next;
    _XUnlockMutex(_Xglobal_lock);
+
+   glx_display_free(priv);
 
    return 1;
 }

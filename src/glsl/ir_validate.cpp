@@ -59,7 +59,8 @@ public:
 
    virtual ir_visitor_status visit(ir_variable *v);
    virtual ir_visitor_status visit(ir_dereference_variable *ir);
-   virtual ir_visitor_status visit(ir_if *ir);
+
+   virtual ir_visitor_status visit_enter(ir_if *ir);
 
    virtual ir_visitor_status visit_leave(ir_loop *ir);
    virtual ir_visitor_status visit_enter(ir_function *ir);
@@ -102,7 +103,7 @@ ir_validate::visit(ir_dereference_variable *ir)
 }
 
 ir_visitor_status
-ir_validate::visit(ir_if *ir)
+ir_validate::visit_enter(ir_if *ir)
 {
    if (ir->condition->type != glsl_type::bool_type) {
       printf("ir_if condition %s type instead of bool.\n",
@@ -541,7 +542,43 @@ ir_validate::visit_enter(ir_call *ir)
       abort();
    }
 
+   const exec_node *formal_param_node = callee->parameters.head;
+   const exec_node *actual_param_node = ir->actual_parameters.head;
+   while (true) {
+      if (formal_param_node->is_tail_sentinel()
+          != actual_param_node->is_tail_sentinel()) {
+         printf("ir_call has the wrong number of parameters:\n");
+         goto dump_ir;
+      }
+      if (formal_param_node->is_tail_sentinel()) {
+         break;
+      }
+      const ir_variable *formal_param
+         = (const ir_variable *) formal_param_node;
+      const ir_rvalue *actual_param
+         = (const ir_rvalue *) actual_param_node;
+      if (formal_param->type != actual_param->type) {
+         printf("ir_call parameter type mismatch:\n");
+         goto dump_ir;
+      }
+      if (formal_param->mode == ir_var_out
+          || formal_param->mode == ir_var_inout) {
+         if (!actual_param->is_lvalue()) {
+            printf("ir_call out/inout parameters must be lvalues:\n");
+            goto dump_ir;
+         }
+      }
+      formal_param_node = formal_param_node->next;
+      actual_param_node = actual_param_node->next;
+   }
+
    return visit_continue;
+
+dump_ir:
+   ir->print();
+   printf("callee:\n");
+   callee->print();
+   abort();
 }
 
 void

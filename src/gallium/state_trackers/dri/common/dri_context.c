@@ -48,6 +48,16 @@ dri_init_extensions(struct dri_context *ctx)
    driInitExtensions(st->ctx, NULL, GL_FALSE);
 }
 
+static void
+dri_pp_query(struct dri_context *ctx)
+{
+   unsigned int i;
+
+   for (i = 0; i < PP_FILTERS; i++) {
+      ctx->pp_enabled[i] = driQueryOptioni(&ctx->optionCache, pp_filters[i].name);
+   }
+}
+
 GLboolean
 dri_create_context(gl_api api, const struct gl_config * visual,
 		   __DRIcontext * cPriv, void *sharedContextPrivate)
@@ -105,6 +115,11 @@ dri_create_context(gl_api api, const struct gl_config * visual,
    if (api == API_OPENGL)
       dri_init_extensions(ctx);
 
+   // Context successfully created. See if post-processing is requested.
+   dri_pp_query(ctx);
+
+   ctx->pp = pp_init(screen->base.screen, ctx->pp_enabled);
+
    return GL_TRUE;
 
  fail:
@@ -133,6 +148,8 @@ dri_destroy_context(__DRIcontext * cPriv)
     */
    ctx->st->flush(ctx->st, 0, NULL);
    ctx->st->destroy(ctx->st);
+
+   if (ctx->pp) pp_free(ctx->pp);
 
    FREE(ctx);
 }
@@ -186,6 +203,13 @@ dri_make_current(__DRIcontext * cPriv,
    }
 
    ctx->stapi->make_current(ctx->stapi, ctx->st, &draw->base, &read->base);
+
+   // This is ok to call here. If they are already init, it's a no-op.
+   if (draw->textures[ST_ATTACHMENT_BACK_LEFT] && draw->textures[ST_ATTACHMENT_DEPTH_STENCIL]
+      && ctx->pp)
+         pp_init_fbos(ctx->pp, draw->textures[ST_ATTACHMENT_BACK_LEFT]->width0,
+            draw->textures[ST_ATTACHMENT_BACK_LEFT]->height0,
+            draw->textures[ST_ATTACHMENT_DEPTH_STENCIL]);
 
    return GL_TRUE;
 }

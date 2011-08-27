@@ -23,4 +23,7 @@ nouveau_context(struct pipe_context *pipe)
    return (struct nouveau_context *)pipe;
 }
 
+void
+nouveau_context_init_vdec(struct nouveau_context *);
+
 #endif

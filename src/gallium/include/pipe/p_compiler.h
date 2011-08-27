@@ -67,7 +67,9 @@ extern "C" {
 
 
 #if !defined(__HAIKU__) && !defined(__USE_MISC)
+#if !defined(PIPE_OS_ANDROID)
 typedef unsigned int       uint;
+#endif
 typedef unsigned short     ushort;
 #endif
 typedef unsigned char      ubyte;

@@ -30,6 +30,7 @@
   */
            
 
+#include "main/compiler.h"
 #include "brw_context.h"
 #include "brw_vs.h"
 #include "brw_util.h"
@@ -39,17 +40,21 @@
 
 #include "../glsl/ralloc.h"
 
-static void do_vs_prog( struct brw_context *brw, 
-			struct brw_vertex_program *vp,
-			struct brw_vs_prog_key *key )
+static bool
+do_vs_prog(struct brw_context *brw,
+	   struct gl_shader_program *prog,
+	   struct brw_vertex_program *vp,
+	   struct brw_vs_prog_key *key)
 {
    struct gl_context *ctx = &brw->intel.ctx;
+   struct intel_context *intel = &brw->intel;
    GLuint program_size;
    const GLuint *program;
    struct brw_vs_compile c;
    void *mem_ctx;
    int aux_size;
    int i;
+   static int new_vs = -1;
 
    memset(&c, 0, sizeof(c));
    memcpy(&c.key, key, sizeof(*key));
@@ -85,7 +90,25 @@ static void do_vs_prog( struct brw_context *brw,
 
    /* Emit GEN4 code.
     */
-   brw_vs_emit(&c);
+   if (new_vs == -1)
+      new_vs = getenv("INTEL_NEW_VS") != NULL;
+
+   if (new_vs && prog) {
+      if (!brw_vs_emit(prog, &c)) {
+	 ralloc_free(mem_ctx);
+	 return false;
+      }
+   } else {
+      brw_old_vs_emit(&c);
+   }
+
+   /* Scratch space is used for register spilling */
+   if (c.last_scratch) {
+      c.prog_data.total_scratch = brw_get_scratch_size(c.last_scratch);
+
+      brw_get_scratch_bo(intel, &brw->vs.scratch_bo,
+			 c.prog_data.total_scratch * brw->vs_max_threads);
+   }
 
    /* get the program
     */
@@ -111,6 +134,8 @@ static void do_vs_prog( struct brw_context *brw,
 		    &c.prog_data, aux_size,
 		    &brw->vs.prog_offset, &brw->vs.prog_data);
    ralloc_free(mem_ctx);
+
+   return true;
 }
 
 
@@ -155,12 +180,14 @@ static void brw_upload_vs_prog(struct brw_context *brw)
    if (!brw_search_cache(&brw->cache, BRW_VS_PROG,
 			 &key, sizeof(key),
 			 &brw->vs.prog_offset, &brw->vs.prog_data)) {
-      do_vs_prog(brw, vp, &key);
+      bool success = do_vs_prog(brw, ctx->Shader.CurrentVertexProgram,
+				vp, &key);
+
+      assert(success);
    }
    brw->vs.constant_map = ((int8_t *)brw->vs.prog_data +
 			   sizeof(*brw->vs.prog_data));
 }
-
 
 /* See brw_vs.c:
  */
@@ -174,3 +201,30 @@ const struct brw_tracked_state brw_vs_prog = {
    },
    .prepare = brw_upload_vs_prog
 };
+
+bool
+brw_vs_precompile(struct gl_context *ctx, struct gl_shader_program *prog)
+{
+   struct brw_context *brw = brw_context(ctx);
+   struct brw_vs_prog_key key;
+   struct gl_vertex_program *vp = prog->VertexProgram;
+   struct brw_vertex_program *bvp = brw_vertex_program(vp);
+   uint32_t old_prog_offset = brw->vs.prog_offset;
+   struct brw_vs_prog_data *old_prog_data = brw->vs.prog_data;
+   bool success;
+
+   if (!vp)
+      return true;
+
+   memset(&key, 0, sizeof(key));
+
+   key.program_string_id = bvp->id;
+   key.clamp_vertex_color = true;
+
+   success = do_vs_prog(brw, prog, bvp, &key);
+
+   brw->vs.prog_offset = old_prog_offset;
+   brw->vs.prog_data = old_prog_data;
+
+   return success;
+}

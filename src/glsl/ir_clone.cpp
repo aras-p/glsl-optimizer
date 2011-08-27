@@ -222,7 +222,8 @@ ir_texture::clone(void *mem_ctx, struct hash_table *ht) const
    new_tex->type = this->type;
 
    new_tex->sampler = this->sampler->clone(mem_ctx, ht);
-   new_tex->coordinate = this->coordinate->clone(mem_ctx, ht);
+   if (this->coordinate)
+      new_tex->coordinate = this->coordinate->clone(mem_ctx, ht);
    if (this->projector)
       new_tex->projector = this->projector->clone(mem_ctx, ht);
    if (this->shadow_comparitor) {
@@ -240,6 +241,7 @@ ir_texture::clone(void *mem_ctx, struct hash_table *ht) const
       break;
    case ir_txl:
    case ir_txf:
+   case ir_txs:
       new_tex->lod_info.lod = this->lod_info.lod->clone(mem_ctx, ht);
       break;
    case ir_txd:

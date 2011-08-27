@@ -33,27 +33,22 @@
 
 struct vl_mpg12_bs
 {
-   unsigned width, height;
+   struct pipe_video_decoder *decoder;
+
+   struct pipe_mpeg12_picture_desc desc;
+   struct dct_coeff *intra_dct_tbl;
 
    struct vl_vlc vlc;
-
-   unsigned *num_ycbcr_blocks;
-
-   struct pipe_ycbcr_block *ycbcr_stream[VL_MAX_PLANES];
-   short *ycbcr_buffer[VL_MAX_PLANES];
-
-   struct pipe_motionvector *mv_stream[VL_MAX_REF_FRAMES];
+   short pred_dc[3];
 };
 
 void
-vl_mpg12_bs_init(struct vl_mpg12_bs *bs, unsigned width, unsigned height);
+vl_mpg12_bs_init(struct vl_mpg12_bs *bs, struct pipe_video_decoder *decoder);
 
 void
-vl_mpg12_bs_set_buffers(struct vl_mpg12_bs *bs, struct pipe_ycbcr_block *ycbcr_stream[VL_MAX_PLANES],
-                        short *ycbcr_buffer[VL_MAX_PLANES], struct pipe_motionvector *mv_stream[VL_MAX_REF_FRAMES]);
+vl_mpg12_bs_set_picture_desc(struct vl_mpg12_bs *bs, struct pipe_mpeg12_picture_desc *picture);
 
 void
-vl_mpg12_bs_decode(struct vl_mpg12_bs *bs, unsigned num_bytes, const void *buffer,
-                   struct pipe_mpeg12_picture_desc *picture, unsigned num_ycbcr_blocks[3]);
+vl_mpg12_bs_decode(struct vl_mpg12_bs *bs, unsigned num_bytes, const uint8_t *buffer);
 
 #endif /* vl_mpeg12_bitstream_h */

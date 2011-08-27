@@ -388,8 +388,9 @@ _mesa_delete_program(struct gl_context *ctx, struct gl_program *prog)
    if (prog->String)
       free(prog->String);
 
-   _mesa_free_instructions(prog->Instructions, prog->NumInstructions);
-
+   if (prog->Instructions) {
+      _mesa_free_instructions(prog->Instructions, prog->NumInstructions);
+   }
    if (prog->Parameters) {
       _mesa_free_parameter_list(prog->Parameters);
    }
@@ -1031,7 +1032,8 @@ _mesa_postprocess_program(struct gl_context *ctx, struct gl_program *prog)
    GLuint i;
    GLuint whiteSwizzle;
    GLint whiteIndex = _mesa_add_unnamed_constant(prog->Parameters,
-                                                 white, 4, &whiteSwizzle);
+                                                 (gl_constant_value *) white,
+                                                 4, &whiteSwizzle);
 
    (void) whiteIndex;
 

@@ -5,7 +5,6 @@
 
 /*
  * Mesa 3-D graphics library
- * Version:  7.0.3
  *
  * Copyright (C) 1999-2007  Brian Paul   All Rights Reserved.
  *
@@ -560,7 +559,6 @@ _mesa_set_enable(struct gl_context *ctx, GLenum cap, GLboolean state)
          ctx->Polygon.OffsetLine = state;
          break;
       case GL_POLYGON_OFFSET_FILL:
-         /*case GL_POLYGON_OFFSET_EXT:*/
          if (ctx->Polygon.OffsetFill == state)
             return;
          FLUSH_VERTICES(ctx, _NEW_POLYGON);
@@ -643,9 +641,7 @@ _mesa_set_enable(struct gl_context *ctx, GLenum cap, GLboolean state)
          break;
 #endif
 
-      /*
-       * CLIENT STATE!!!
-       */
+      /* client-side state */
       case GL_VERTEX_ARRAY:
       case GL_NORMAL_ARRAY:
       case GL_COLOR_ARRAY:
@@ -1174,7 +1170,6 @@ _mesa_IsEnabled( GLenum cap )
       case GL_POLYGON_OFFSET_LINE:
 	 return ctx->Polygon.OffsetLine;
       case GL_POLYGON_OFFSET_FILL:
-      /*case GL_POLYGON_OFFSET_EXT:*/
 	 return ctx->Polygon.OffsetFill;
       case GL_RESCALE_NORMAL_EXT:
          return ctx->Transform.RescaleNormals;
@@ -1213,9 +1208,7 @@ _mesa_IsEnabled( GLenum cap )
          }
 #endif
 
-      /*
-       * CLIENT STATE!!!
-       */
+      /* client-side state */
       case GL_VERTEX_ARRAY:
          return (ctx->Array.ArrayObj->Vertex.Enabled != 0);
       case GL_NORMAL_ARRAY:

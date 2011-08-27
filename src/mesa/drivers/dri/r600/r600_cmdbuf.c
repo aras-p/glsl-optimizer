@@ -259,13 +259,11 @@ static int r600_cs_process_relocs(struct radeon_cs_int *csi,
                                   uint32_t * reloc_chunk,
                                   uint32_t * length_dw_reloc_chunk) 
 {
-    struct r600_cs_manager_legacy *csm = (struct r600_cs_manager_legacy*)csi->csm;
     struct r600_cs_reloc_legacy *relocs;
     int i, j, r;
 
     uint32_t offset_dw = 0;
 
-    csm = (struct r600_cs_manager_legacy*)csi->csm;
     relocs = (struct r600_cs_reloc_legacy *)csi->relocs;
 restart:
     for (i = 0; i < csi->crelocs; i++) {

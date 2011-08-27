@@ -23,20 +23,11 @@
  * Authors:
  *      Jerome Glisse
  */
-#include <errno.h>
-#include <stdint.h>
-#include <string.h>
-#include <stdlib.h>
-#include <assert.h>
-#include "xf86drm.h"
 #include "r600.h"
-#include "evergreend.h"
-#include "radeon_drm.h"
-#include "bof.h"
-#include "pipe/p_compiler.h"
-#include "util/u_inlines.h"
-#include "util/u_memory.h"
 #include "r600_priv.h"
+#include "evergreend.h"
+#include "util/u_memory.h"
+#include <errno.h>
 
 #define GROUP_FORCE_NEW_BLOCK	0
 
@@ -168,6 +159,7 @@ static const struct r600_reg evergreen_context_reg_list[] = {
 	{R_028404_VGT_MIN_VTX_INDX, 0, 0, 0},
 	{R_028408_VGT_INDX_OFFSET, 0, 0, 0},
 	{R_02840C_VGT_MULTI_PRIM_IB_RESET_INDX, 0, 0, 0},
+	{R_028A94_VGT_MULTI_PRIM_IB_RESET_EN, 0, 0, 0},
 	{GROUP_FORCE_NEW_BLOCK, 0, 0, 0},
 	{R_028410_SX_ALPHA_TEST_CONTROL, 0, 0, 0},
 	{R_028414_CB_BLEND_RED, 0, 0, 0},
@@ -532,6 +524,7 @@ static const struct r600_reg cayman_context_reg_list[] = {
 	{R_028404_VGT_MIN_VTX_INDX, 0, 0, 0},
 	{R_028408_VGT_INDX_OFFSET, 0, 0, 0},
 	{R_02840C_VGT_MULTI_PRIM_IB_RESET_INDX, 0, 0, 0},
+	{R_028A94_VGT_MULTI_PRIM_IB_RESET_EN, 0, 0, 0},
 	{GROUP_FORCE_NEW_BLOCK, 0, 0, 0},
 	{R_028410_SX_ALPHA_TEST_CONTROL, 0, 0, 0},
 	{R_028414_CB_BLEND_RED, 0, 0, 0},
@@ -909,6 +902,7 @@ int evergreen_context_init(struct r600_context *ctx, struct radeon *radeon)
 
 	memset(ctx, 0, sizeof(struct r600_context));
 	ctx->radeon = radeon;
+
 	LIST_INITHEAD(&ctx->query_list);
 
 	/* init dirty list */
@@ -992,33 +986,23 @@ int evergreen_context_init(struct r600_context *ctx, struct radeon *radeon)
 	if (r)
 		goto out_err;
 
+	ctx->cs = radeon->ws->cs_create(radeon->ws);
+
 	/* allocate cs variables */
-	ctx->nreloc = RADEON_CTX_MAX_PM4;
-	ctx->reloc = calloc(ctx->nreloc, sizeof(struct r600_reloc));
-	if (ctx->reloc == NULL) {
-		r = -ENOMEM;
-		goto out_err;
-	}
-	ctx->bo = calloc(ctx->nreloc, sizeof(void *));
+	ctx->bo = calloc(RADEON_MAX_CMDBUF_DWORDS, sizeof(void *));
 	if (ctx->bo == NULL) {
 		r = -ENOMEM;
 		goto out_err;
 	}
-	ctx->pm4_ndwords = RADEON_CTX_MAX_PM4;
-	ctx->pm4 = calloc(ctx->pm4_ndwords, 4);
-	if (ctx->pm4 == NULL) {
-		r = -ENOMEM;
-		goto out_err;
-	}
+	ctx->pm4_ndwords = RADEON_MAX_CMDBUF_DWORDS;
+	ctx->pm4 = ctx->cs->buf;
 
 	r600_init_cs(ctx);
 	/* save 16dwords space for fence mecanism */
 	ctx->pm4_ndwords -= 16;
-
 	ctx->max_db = 8;
 
-	LIST_INITHEAD(&ctx->fenced_bo);
-
+	r600_get_backend_mask(ctx);
 	return 0;
 out_err:
 	r600_context_fini(ctx);
@@ -1154,10 +1138,6 @@ void evergreen_context_draw(struct r600_context *ctx, const struct r600_draw *dr
 
 	if (draw->indices) {
 		ndwords = 11;
-		/* make sure there is enough relocation space before scheduling draw */
-		if (ctx->creloc >= (ctx->nreloc - 1)) {
-			r600_context_flush(ctx);
-		}
 	}
 
 	/* queries need some special values */
@@ -1174,11 +1154,11 @@ void evergreen_context_draw(struct r600_context *ctx, const struct r600_draw *dr
 
 	/* update the max dword count to make sure we have enough space
 	 * reserved for flushing the destination caches */
-	ctx->pm4_ndwords = RADEON_CTX_MAX_PM4 - ctx->num_dest_buffers * 7 - 16;
+	ctx->pm4_ndwords = RADEON_MAX_CMDBUF_DWORDS - ctx->num_dest_buffers * 7 - 16;
 
 	if ((ctx->pm4_dirty_cdwords + ndwords + ctx->pm4_cdwords) > ctx->pm4_ndwords) {
 		/* need to flush */
-		r600_context_flush(ctx);
+		r600_context_flush(ctx, RADEON_FLUSH_ASYNC);
 	}
 	/* at that point everythings is flushed and ctx->pm4_cdwords = 0 */
 	if ((ctx->pm4_dirty_cdwords + ndwords) > ctx->pm4_ndwords) {
@@ -1203,13 +1183,12 @@ void evergreen_context_draw(struct r600_context *ctx, const struct r600_draw *dr
 	pm4[3] = draw->vgt_num_instances;
 	if (draw->indices) {
 	        pm4[4] = PKT3(PKT3_DRAW_INDEX, 3, ctx->predicate_drawing);
-		pm4[5] = draw->indices_bo_offset + r600_bo_offset(draw->indices);
+		pm4[5] = draw->indices_bo_offset;
 		pm4[6] = 0;
 		pm4[7] = draw->vgt_num_indices;
 		pm4[8] = draw->vgt_draw_initiator;
 		pm4[9] = PKT3(PKT3_NOP, 0, ctx->predicate_drawing);
-		pm4[10] = 0;
-		r600_context_bo_reloc(ctx, &pm4[10], draw->indices);
+		pm4[10] = r600_context_bo_reloc(ctx, draw->indices, RADEON_USAGE_READ);
 	} else {
 		pm4[4] = PKT3(PKT3_DRAW_INDEX_AUTO, 1, ctx->predicate_drawing);
 		pm4[5] = draw->vgt_num_indices;
@@ -1270,4 +1249,3 @@ void evergreen_context_flush_dest_caches(struct r600_context *ctx)
 
 	ctx->flags &= ~R600_CONTEXT_DST_CACHES_DIRTY;
 }
-

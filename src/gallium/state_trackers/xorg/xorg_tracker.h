@@ -222,4 +222,11 @@ void
 xorg_xv_init(ScreenPtr pScreen);
 
 
+/***********************************************************************
+ * xorg_xvmc.c
+ */
+void
+xorg_xvmc_init(ScreenPtr pScreen, char *name);
+
+
 #endif /* _XORG_TRACKER_H_ */

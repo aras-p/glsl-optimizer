@@ -1096,7 +1096,7 @@ ir_dereference_record::ir_dereference_record(ir_variable *var,
 }
 
 bool
-ir_dereference::is_lvalue()
+ir_dereference::is_lvalue() const
 {
    ir_variable *var = this->variable_referenced();
 
@@ -1121,7 +1121,7 @@ ir_dereference::is_lvalue()
 }
 
 
-const char *tex_opcode_strs[] = { "tex", "txb", "txl", "txd", "txf" };
+const char *tex_opcode_strs[] = { "tex", "txb", "txl", "txd", "txf", "txs" };
 
 const char *ir_texture::opcode_string()
 {
@@ -1150,11 +1150,15 @@ ir_texture::set_sampler(ir_dereference *sampler, const glsl_type *type)
    this->sampler = sampler;
    this->type = type;
 
-   assert(sampler->type->sampler_type == (int) type->base_type);
-   if (sampler->type->sampler_shadow)
-      assert(type->vector_elements == 4 || type->vector_elements == 1);
-   else
-      assert(type->vector_elements == 4);
+   if (this->op == ir_txs) {
+      assert(type->base_type == GLSL_TYPE_INT);
+   } else {
+      assert(sampler->type->sampler_type == (int) type->base_type);
+      if (sampler->type->sampler_shadow)
+	 assert(type->vector_elements == 4 || type->vector_elements == 1);
+      else
+	 assert(type->vector_elements == 4);
+   }
 }
 
 
@@ -1310,7 +1314,7 @@ ir_swizzle::create(ir_rvalue *val, const char *str, unsigned vector_length)
 #undef I
 
 ir_variable *
-ir_swizzle::variable_referenced()
+ir_swizzle::variable_referenced() const
 {
    return this->val->variable_referenced();
 }

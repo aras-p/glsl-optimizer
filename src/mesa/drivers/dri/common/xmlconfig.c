@@ -567,7 +567,7 @@ static void parseOptInfoAttr (struct OptInfoData *data, const XML_Char **attr) {
     } else
 	defaultVal = attrVal[OA_DEFAULT];
     if (!parseValue (&cache->values[opt], cache->info[opt].type, defaultVal))
-	XML_FATAL ("illegal default value: %s.", defaultVal);
+	XML_FATAL ("illegal default value for %s: %s.", cache->info[opt].name, defaultVal);
 
     if (attrVal[OA_VALID]) {
 	if (cache->info[opt].type == DRI_BOOL)

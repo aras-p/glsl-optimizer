@@ -431,6 +431,24 @@ do {									\
 #include "vbo_attrib_tmp.h"
 
 
+/**
+ * Flush (draw) vertices.
+ * \param  unmap - leave VBO unmapped after flushing?
+ */
+static void
+vbo_exec_FlushVertices_internal(struct vbo_exec_context *exec, GLboolean unmap)
+{
+   if (exec->vtx.vert_count || unmap) {
+      vbo_exec_vtx_flush( exec, unmap );
+   }
+
+   if (exec->vtx.vertex_size) {
+      vbo_exec_copy_to_current( exec );
+      reset_attrfv( exec );
+   }
+}
+
+
 #if FEATURE_beginend
 
 
@@ -532,24 +550,6 @@ static void GLAPIENTRY vbo_exec_EvalPoint2( GLint i, GLint j )
 #define vbo_exec_EvalMesh2 _mesa_noop_EvalMesh2
 
 #endif /* FEATURE_evaluators */
-
-
-/**
- * Flush (draw) vertices.
- * \param  unmap - leave VBO unmapped after flushing?
- */
-static void
-vbo_exec_FlushVertices_internal(struct vbo_exec_context *exec, GLboolean unmap)
-{
-   if (exec->vtx.vert_count || unmap) {
-      vbo_exec_vtx_flush( exec, unmap );
-   }
-
-   if (exec->vtx.vertex_size) {
-      vbo_exec_copy_to_current( exec );
-      reset_attrfv( exec );
-   }
-}
 
 
 /**
@@ -947,7 +947,7 @@ void vbo_exec_vtx_destroy( struct vbo_exec_context *exec )
    /* Free the vertex buffer.  Unmap first if needed.
     */
    if (_mesa_bufferobj_mapped(exec->vtx.bufferobj)) {
-      ctx->Driver.UnmapBuffer(ctx, GL_ARRAY_BUFFER, exec->vtx.bufferobj);
+      ctx->Driver.UnmapBuffer(ctx, exec->vtx.bufferobj);
    }
    _mesa_reference_buffer_object(ctx, &exec->vtx.bufferobj, NULL);
 }

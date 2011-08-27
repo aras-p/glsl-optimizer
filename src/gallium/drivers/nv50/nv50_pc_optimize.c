@@ -462,6 +462,10 @@ nv_pass_lower_mods(struct nv_pass *ctx, struct nv_basic_block *b)
          mi->saturate = 1;
          mi->def[0] = nvi->def[0];
          mi->def[0]->insn = mi;
+         if (nvi->flags_def) {
+            mi->flags_def = nvi->flags_def;
+            mi->flags_def->insn = mi;
+         }
          nv_nvi_delete(nvi);
       }
    }

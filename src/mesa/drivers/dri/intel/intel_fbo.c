@@ -173,6 +173,9 @@ intel_alloc_renderbuffer_storage(struct gl_context * ctx, struct gl_renderbuffer
 
    if (irb->Base.Format == MESA_FORMAT_S8) {
       /*
+       * The stencil buffer is W tiled. However, we request from the kernel a
+       * non-tiled buffer because the GTT is incapable of W fencing.
+       *
        * The stencil buffer has quirky pitch requirements.  From Vol 2a,
        * 11.5.6.2.1 3DSTATE_STENCIL_BUFFER, field "Surface Pitch":
        *    The pitch must be set to 2x the value computed based on width, as
@@ -180,14 +183,13 @@ intel_alloc_renderbuffer_storage(struct gl_context * ctx, struct gl_renderbuffer
        * To accomplish this, we resort to the nasty hack of doubling the drm
        * region's cpp and halving its height.
        *
-       * If we neglect to double the pitch, then drm_intel_gem_bo_map_gtt()
-       * maps the memory incorrectly.
+       * If we neglect to double the pitch, then render corruption occurs.
        */
       irb->region = intel_region_alloc(intel->intelScreen,
-				       I915_TILING_Y,
+				       I915_TILING_NONE,
 				       cpp * 2,
-				       width,
-				       height / 2,
+				       ALIGN(width, 64),
+				       ALIGN((height + 1) / 2, 64),
 				       GL_TRUE);
       if (!irb->region)
 	return false;
@@ -594,17 +596,15 @@ intel_renderbuffer_set_draw_offset(struct intel_renderbuffer *irb,
 				   struct intel_texture_image *intel_image,
 				   int zoffset)
 {
-   struct intel_mipmap_tree *mt = intel_image->mt;
    unsigned int dst_x, dst_y;
 
    /* compute offset of the particular 2D image within the texture region */
    intel_miptree_get_image_offset(intel_image->mt,
-				  intel_image->level,
-				  intel_image->face,
+				  intel_image->base.Level,
+				  intel_image->base.Face,
 				  zoffset,
 				  &dst_x, &dst_y);
 
-   irb->draw_offset = (dst_y * mt->region->pitch + dst_x) * mt->cpp;
    irb->draw_x = dst_x;
    irb->draw_y = dst_y;
 }
@@ -644,6 +644,22 @@ intel_renderbuffer_tile_offsets(struct intel_renderbuffer *irb,
 	      (irb->draw_x - *tile_x) / (128 / cpp) * 4096);
    }
 }
+
+#ifndef I915
+static bool
+need_tile_offset_workaround(struct brw_context *brw,
+			    struct intel_renderbuffer *irb)
+{
+   uint32_t tile_x, tile_y;
+
+   if (brw->has_surface_tile_offset)
+      return false;
+
+   intel_renderbuffer_tile_offsets(irb, &tile_x, &tile_y);
+
+   return tile_x != 0 || tile_y != 0;
+}
+#endif
 
 /**
  * Called by glFramebufferTexture[123]DEXT() (and other places) to
@@ -698,8 +714,7 @@ intel_render_texture(struct gl_context * ctx,
    intel_image->used_as_render_target = GL_TRUE;
 
 #ifndef I915
-   if (!brw_context(ctx)->has_surface_tile_offset &&
-       (irb->draw_offset & 4095) != 0) {
+   if (need_tile_offset_workaround(brw_context(ctx), irb)) {
       /* Original gen4 hardware couldn't draw to a non-tile-aligned
        * destination in a miptree unless you actually setup your
        * renderbuffer as a miptree and used the fragile
@@ -713,8 +728,8 @@ intel_render_texture(struct gl_context * ctx,
 
       new_mt = intel_miptree_create(intel, image->TexObject->Target,
 				    intel_image->base.TexFormat,
-				    intel_image->level,
-				    intel_image->level,
+				    intel_image->base.Level,
+				    intel_image->base.Level,
 				    intel_image->base.Width,
 				    intel_image->base.Height,
 				    intel_image->base.Depth,
@@ -722,8 +737,8 @@ intel_render_texture(struct gl_context * ctx,
 
       intel_miptree_image_copy(intel,
                                new_mt,
-                               intel_image->face,
-			       intel_image->level,
+			       intel_image->base.Face,
+			       intel_image->base.Level,
 			       old_mt);
 
       intel_miptree_release(intel, &intel_image->mt);

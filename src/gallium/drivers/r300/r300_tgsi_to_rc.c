@@ -22,8 +22,7 @@
 
 #include "r300_tgsi_to_rc.h"
 
-#include "radeon_compiler.h"
-#include "radeon_program.h"
+#include "compiler/radeon_compiler.h"
 
 #include "tgsi/tgsi_info.h"
 #include "tgsi/tgsi_parse.h"

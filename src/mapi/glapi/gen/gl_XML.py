@@ -618,7 +618,7 @@ class gl_function( gl_item ):
 		# for each entry-point.  Otherwise, they may generate code
 		# that won't compile.
 
-		self.parameter_strings = {}
+		self.entry_point_parameters = {}
 
 		self.process_element( element )
 
@@ -703,12 +703,34 @@ class gl_function( gl_item ):
 
 		if element.children:
 			self.initialized = 1
-			self.parameter_strings[name] = create_parameter_string(parameters, 1)
+			self.entry_point_parameters[name] = parameters
 		else:
-			self.parameter_strings[name] = None
+			self.entry_point_parameters[name] = []
 
 		return
 
+	def filter_entry_points(self, entry_point_list):
+		"""Filter out entry points not in entry_point_list."""
+		if not self.initialized:
+			raise RuntimeError('%s is not initialized yet' % self.name)
+
+		entry_points = []
+		for ent in self.entry_points:
+			if ent not in entry_point_list:
+				if ent in self.static_entry_points:
+					self.static_entry_points.remove(ent)
+				self.entry_point_parameters.pop(ent)
+			else:
+				entry_points.append(ent)
+
+		if not entry_points:
+			raise RuntimeError('%s has no entry point after filtering' % self.name)
+
+		self.entry_points = entry_points
+		if self.name not in entry_points:
+			# use the first remaining entry point
+			self.name = entry_points[0]
+			self.parameters = self.entry_point_parameters[entry_points[0]]
 
 	def get_images(self):
 		"""Return potentially empty list of input images."""
@@ -721,11 +743,11 @@ class gl_function( gl_item ):
 
 	def get_parameter_string(self, entrypoint = None):
 		if entrypoint:
-			s = self.parameter_strings[ entrypoint ]
-			if s:
-				return s
+			params = self.entry_point_parameters[ entrypoint ]
+		else:
+			params = self.parameters
 		
-		return create_parameter_string( self.parameters, 1 )
+		return create_parameter_string( params, 1 )
 
 	def get_called_parameter_string(self):
 		p_string = ""
@@ -791,6 +813,16 @@ class gl_api:
 		typeexpr.create_initial_types()
 		return
 
+	def filter_functions(self, entry_point_list):
+		"""Filter out entry points not in entry_point_list."""
+		functions_by_name = {}
+		for func in self.functions_by_name.itervalues():
+			entry_points = [ent for ent in func.entry_points if ent in entry_point_list]
+			if entry_points:
+				func.filter_entry_points(entry_points)
+				functions_by_name[func.name] = func
+
+		self.functions_by_name = functions_by_name
 
 	def process_element(self, doc):
 		element = doc.children

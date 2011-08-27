@@ -130,12 +130,13 @@ nv50_program_validate(struct nv50_context *nv50, struct nv50_program *prog)
    int ret;
    unsigned size;
 
-   if (prog->translated)
+   if (!prog->translated) {
+      prog->translated = nv50_program_translate(prog);
+      if (!prog->translated)
+         return FALSE;
+   } else
+   if (prog->res)
       return TRUE;
-
-   prog->translated = nv50_program_translate(prog);
-   if (!prog->translated)
-      return FALSE;
 
    if (prog->type == PIPE_SHADER_FRAGMENT) heap = nv50->screen->fp_code_heap;
    else

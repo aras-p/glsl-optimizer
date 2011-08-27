@@ -76,7 +76,6 @@ void r300_flush(struct pipe_context *pipe,
         /* Create a fence, which is a dummy BO. */
         *rfence = r300->rws->buffer_create(r300->rws, 1, 1,
                                            PIPE_BIND_VERTEX_BUFFER,
-                                           PIPE_USAGE_STATIC,
                                            RADEON_DOMAIN_GTT);
         /* Add the fence as a dummy relocation. */
         r300->rws->cs_add_reloc(r300->cs,
@@ -121,7 +120,7 @@ void r300_flush(struct pipe_context *pipe,
         }
 
         /* Release HyperZ. */
-        r300->rws->cs_request_feature(r300->cs, RADEON_FID_HYPERZ_RAM_ACCESS,
+        r300->rws->cs_request_feature(r300->cs, RADEON_FID_R300_HYPERZ_ACCESS,
                                       FALSE);
     }
     r300->num_z_clears = 0;

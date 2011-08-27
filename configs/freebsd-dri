@@ -42,7 +42,7 @@ GLW_LIB_DEPS = -L$(TOP)/$(LIB_DIR) -L/usr/local/lib -lGL -lXt -lX11
 
 
 # Directories
-SRC_DIRS = glx gallium mesa glu glw
+SRC_DIRS = glx gallium mesa glu
 DRIVER_DIRS = dri
 
 DRM_SOURCE_PATH=$(TOP)/../drm

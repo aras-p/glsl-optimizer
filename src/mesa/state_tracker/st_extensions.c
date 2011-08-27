@@ -208,6 +208,15 @@ void st_init_limits(struct st_context *st)
 }
 
 
+static GLboolean st_get_s3tc_override(void)
+{
+   const char *override = _mesa_getenv("force_s3tc_enable");
+   if (override && !strcmp(override, "true"))
+      return GL_TRUE;
+   return GL_FALSE;
+}
+
+
 /**
  * Use pipe_screen::get_param() to query PIPE_CAP_ values to determine
  * which GL extensions are supported.
@@ -219,6 +228,7 @@ void st_init_extensions(struct st_context *st)
 {
    struct pipe_screen *screen = st->pipe->screen;
    struct gl_context *ctx = st->ctx;
+   int i;
 
    /*
     * Extensions that are supported by all Gallium drivers:
@@ -426,7 +436,7 @@ void st_init_extensions(struct st_context *st)
    if (screen->is_format_supported(screen, PIPE_FORMAT_DXT5_RGBA,
                                    PIPE_TEXTURE_2D, 0,
                                    PIPE_BIND_SAMPLER_VIEW) &&
-       ctx->Mesa_DXTn) {
+       (ctx->Mesa_DXTn || st_get_s3tc_override())) {
       ctx->Extensions.EXT_texture_compression_s3tc = GL_TRUE;
       ctx->Extensions.S3_s3tc = GL_TRUE;
    }
@@ -594,6 +604,16 @@ void st_init_extensions(struct st_context *st)
                                    PIPE_BIND_RENDER_TARGET |
                                    PIPE_BIND_SAMPLER_VIEW)) {
       ctx->Extensions.EXT_packed_float = GL_TRUE;
+   }
+
+   /* Maximum sample count. */
+   for (i = 16; i > 0; --i) {
+      if (screen->is_format_supported(screen, PIPE_FORMAT_B8G8R8A8_UNORM,
+                                      PIPE_TEXTURE_2D, i,
+                                      PIPE_BIND_RENDER_TARGET)) {
+         ctx->Const.MaxSamples = i;
+         break;
+      }
    }
 
    if (screen->get_param(screen, PIPE_CAP_SEAMLESS_CUBE_MAP_PER_TEXTURE)) {

@@ -93,7 +93,6 @@ st_bufferobj_free(struct gl_context *ctx, struct gl_buffer_object *obj)
  */
 static void
 st_bufferobj_subdata(struct gl_context *ctx,
-		     GLenum target,
 		     GLintptrARB offset,
 		     GLsizeiptrARB size,
 		     const GLvoid * data, struct gl_buffer_object *obj)
@@ -133,7 +132,6 @@ st_bufferobj_subdata(struct gl_context *ctx,
  */
 static void
 st_bufferobj_get_subdata(struct gl_context *ctx,
-                         GLenum target,
                          GLintptrARB offset,
                          GLsizeiptrARB size,
                          GLvoid * data, struct gl_buffer_object *obj)
@@ -238,52 +236,10 @@ static long st_bufferobj_zero_length = 0;
 
 
 /**
- * Called via glMapBufferARB().
- */
-static void *
-st_bufferobj_map(struct gl_context *ctx, GLenum target, GLenum access,
-                 struct gl_buffer_object *obj)
-{
-   struct st_buffer_object *st_obj = st_buffer_object(obj);
-   uint flags;
-
-   switch (access) {
-   case GL_WRITE_ONLY:
-      flags = PIPE_TRANSFER_WRITE;
-      break;
-   case GL_READ_ONLY:
-      flags = PIPE_TRANSFER_READ;
-      break;
-   case GL_READ_WRITE:
-   default:
-      flags = PIPE_TRANSFER_READ_WRITE;
-      break;      
-   }
-
-   /* Handle zero-size buffers here rather than in drivers */
-   if (obj->Size == 0) {
-      obj->Pointer = &st_bufferobj_zero_length;
-   }
-   else {
-      obj->Pointer = pipe_buffer_map(st_context(ctx)->pipe,
-                                     st_obj->buffer,
-                                     flags,
-                                     &st_obj->transfer);
-   }
-
-   if (obj->Pointer) {
-      obj->Offset = 0;
-      obj->Length = obj->Size;
-   }
-   return obj->Pointer;
-}
-
-
-/**
  * Called via glMapBufferRange().
  */
 static void *
-st_bufferobj_map_range(struct gl_context *ctx, GLenum target, 
+st_bufferobj_map_range(struct gl_context *ctx,
                        GLintptr offset, GLsizeiptr length, GLbitfield access,
                        struct gl_buffer_object *obj)
 {
@@ -353,7 +309,7 @@ st_bufferobj_map_range(struct gl_context *ctx, GLenum target,
 
 
 static void
-st_bufferobj_flush_mapped_range(struct gl_context *ctx, GLenum target, 
+st_bufferobj_flush_mapped_range(struct gl_context *ctx,
                                 GLintptr offset, GLsizeiptr length,
                                 struct gl_buffer_object *obj)
 {
@@ -378,7 +334,7 @@ st_bufferobj_flush_mapped_range(struct gl_context *ctx, GLenum target,
  * Called via glUnmapBufferARB().
  */
 static GLboolean
-st_bufferobj_unmap(struct gl_context *ctx, GLenum target, struct gl_buffer_object *obj)
+st_bufferobj_unmap(struct gl_context *ctx, struct gl_buffer_object *obj)
 {
    struct pipe_context *pipe = st_context(ctx)->pipe;
    struct st_buffer_object *st_obj = st_buffer_object(obj);
@@ -444,7 +400,6 @@ st_init_bufferobject_functions(struct dd_function_table *functions)
    functions->BufferData = st_bufferobj_data;
    functions->BufferSubData = st_bufferobj_subdata;
    functions->GetBufferSubData = st_bufferobj_get_subdata;
-   functions->MapBuffer = st_bufferobj_map;
    functions->MapBufferRange = st_bufferobj_map_range;
    functions->FlushMappedBufferRange = st_bufferobj_flush_mapped_range;
    functions->UnmapBuffer = st_bufferobj_unmap;

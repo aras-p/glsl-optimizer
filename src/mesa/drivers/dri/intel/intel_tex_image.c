@@ -63,7 +63,7 @@ intel_miptree_create_for_teximage(struct intel_context *intel,
    if (intelImage->base.Border)
       return NULL;
 
-   if (intelImage->level > intelObj->base.BaseLevel &&
+   if (intelImage->base.Level > intelObj->base.BaseLevel &&
        (intelImage->base.Width == 1 ||
         (intelObj->base.Target != GL_TEXTURE_1D &&
          intelImage->base.Height == 1) ||
@@ -74,19 +74,19 @@ intel_miptree_create_for_teximage(struct intel_context *intel,
        * likely base level width/height/depth for a full mipmap stack
        * from this info, so just allocate this one level.
        */
-      firstLevel = intelImage->level;
-      lastLevel = intelImage->level;
+      firstLevel = intelImage->base.Level;
+      lastLevel = intelImage->base.Level;
    } else {
       /* If this image disrespects BaseLevel, allocate from level zero.
        * Usually BaseLevel == 0, so it's unlikely to happen.
        */
-      if (intelImage->level < intelObj->base.BaseLevel)
+      if (intelImage->base.Level < intelObj->base.BaseLevel)
 	 firstLevel = 0;
       else
 	 firstLevel = intelObj->base.BaseLevel;
 
       /* Figure out image dimensions at start level. */
-      for (i = intelImage->level; i > firstLevel; i--) {
+      for (i = intelImage->base.Level; i > firstLevel; i--) {
 	 width <<= 1;
 	 if (height != 1)
 	    height <<= 1;
@@ -101,7 +101,7 @@ intel_miptree_create_for_teximage(struct intel_context *intel,
        */
       if ((intelObj->base.Sampler.MinFilter == GL_NEAREST ||
 	   intelObj->base.Sampler.MinFilter == GL_LINEAR) &&
-	  intelImage->level == firstLevel &&
+	  intelImage->base.Level == firstLevel &&
 	  (intel->gen < 4 || firstLevel == 0)) {
 	 lastLevel = firstLevel;
       } else {
@@ -186,8 +186,8 @@ try_pbo_upload(struct intel_context *intel,
    else
       src_stride = width;
 
-   intel_miptree_get_image_offset(intelImage->mt, intelImage->level,
-				  intelImage->face, 0,
+   intel_miptree_get_image_offset(intelImage->mt, intelImage->base.Level,
+				  intelImage->base.Face, 0,
 				  &dst_x, &dst_y);
 
    dst_stride = intelImage->mt->region->pitch;
@@ -243,8 +243,8 @@ try_pbo_zcopy(struct intel_context *intel,
    else
       src_stride = width;
 
-   intel_miptree_get_image_offset(intelImage->mt, intelImage->level,
-				  intelImage->face, 0,
+   intel_miptree_get_image_offset(intelImage->mt, intelImage->base.Level,
+				  intelImage->base.Face, 0,
 				  &dst_x, &dst_y);
 
    dst_stride = intelImage->mt->region->pitch;
@@ -407,9 +407,6 @@ intelTexImage(struct gl_context * ctx,
    DBG("%s target %s level %d %dx%dx%d border %d\n", __FUNCTION__,
        _mesa_lookup_enum_by_nr(target), level, width, height, depth, border);
 
-   intelImage->face = _mesa_tex_target_to_face(target);
-   intelImage->level = level;
-
    if (_mesa_is_format_compressed(texImage->TexFormat)) {
       texelBytes = 0;
    }
@@ -514,8 +511,8 @@ intelTexImage(struct gl_context * ctx,
 	 }
          texImage->Data = intel_miptree_image_map(intel,
                                                   intelImage->mt,
-                                                  intelImage->face,
-                                                  intelImage->level,
+                                                  intelImage->base.Face,
+                                                  intelImage->base.Level,
                                                   &dstRowStride,
                                                   intelImage->base.ImageOffsets);
       }
@@ -684,8 +681,8 @@ intel_get_tex_image(struct gl_context * ctx, GLenum target, GLint level,
       intelImage->base.Data =
          intel_miptree_image_map(intel,
                                  intelImage->mt,
-                                 intelImage->face,
-                                 intelImage->level,
+                                 intelImage->base.Face,
+                                 intelImage->base.Level,
                                  &intelImage->base.RowStride,
                                  intelImage->base.ImageOffsets);
       intelImage->base.RowStride /= intelImage->mt->cpp;
@@ -816,8 +813,6 @@ intelSetTexBuffer2(__DRIcontext *pDRICtx, GLint target,
 			      rb->region->width, rb->region->height, 1,
 			      0, internalFormat, texFormat);
 
-   intelImage->face = _mesa_tex_target_to_face(target);
-   intelImage->level = level;
    texImage->RowStride = rb->region->pitch;
    intel_miptree_reference(&intelImage->mt, intelObj->mt);
 
@@ -874,8 +869,6 @@ intel_image_target_texture_2d(struct gl_context *ctx, GLenum target,
 			      image->region->width, image->region->height, 1,
 			      0, image->internal_format, image->format);
 
-   intelImage->face = _mesa_tex_target_to_face(target);
-   intelImage->level = 0;
    texImage->RowStride = image->region->pitch;
    intel_miptree_reference(&intelImage->mt, intelObj->mt);
 

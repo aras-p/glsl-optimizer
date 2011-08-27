@@ -78,6 +78,9 @@ static inline uint32_t radeon_gem_name_bo(struct radeon_bo *dummy)
 
 static inline void *radeon_bo_manager_gem_ctor(int fd)
 {
+  fprintf(stderr, "[%s:%u] Mesa built without Radeon libdrm support.\n",
+	  __func__, __LINE__);
+
   return NULL;
 }
 
@@ -87,6 +90,9 @@ static inline void radeon_bo_manager_gem_dtor(void *dummy)
 
 static inline void *radeon_cs_manager_gem_ctor(int fd)
 {
+  fprintf(stderr, "[%s:%u] Mesa built without Radeon libdrm support.\n",
+	  __func__, __LINE__);
+
   return NULL;
 }
 

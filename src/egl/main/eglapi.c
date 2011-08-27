@@ -301,7 +301,7 @@ _eglUnlockDisplay(_EGLDisplay *dpy)
 EGLDisplay EGLAPIENTRY
 eglGetDisplay(EGLNativeDisplayType nativeDisplay)
 {
-   _EGLPlatformType plat = _eglGetNativePlatform();
+   _EGLPlatformType plat = _eglGetNativePlatform(nativeDisplay);
    _EGLDisplay *dpy = _eglFindDisplay(plat, (void *) nativeDisplay);
    return _eglGetDisplayHandle(dpy);
 }
@@ -538,7 +538,7 @@ eglCreateWindowSurface(EGLDisplay dpy, EGLConfig config,
    EGLSurface ret;
 
    _EGL_CHECK_CONFIG(disp, conf, EGL_NO_SURFACE, drv);
-   if (disp->Platform != _eglGetNativePlatform())
+   if (disp->Platform != _eglGetNativePlatform(disp->PlatformDisplay))
       RETURN_EGL_ERROR(disp, EGL_BAD_NATIVE_WINDOW, EGL_NO_SURFACE);
 
    surf = drv->API.CreateWindowSurface(drv, disp, conf, window, attrib_list);
@@ -559,7 +559,7 @@ eglCreatePixmapSurface(EGLDisplay dpy, EGLConfig config,
    EGLSurface ret;
 
    _EGL_CHECK_CONFIG(disp, conf, EGL_NO_SURFACE, drv);
-   if (disp->Platform != _eglGetNativePlatform())
+   if (disp->Platform != _eglGetNativePlatform(disp->PlatformDisplay))
       RETURN_EGL_ERROR(disp, EGL_BAD_NATIVE_PIXMAP, EGL_NO_SURFACE);
 
    surf = drv->API.CreatePixmapSurface(drv, disp, conf, pixmap, attrib_list);
@@ -720,7 +720,7 @@ eglCopyBuffers(EGLDisplay dpy, EGLSurface surface, EGLNativePixmapType target)
    EGLBoolean ret;
 
    _EGL_CHECK_SURFACE(disp, surf, EGL_FALSE, drv);
-   if (disp->Platform != _eglGetNativePlatform())
+   if (disp->Platform != _eglGetNativePlatform(disp->PlatformDisplay))
       RETURN_EGL_ERROR(disp, EGL_BAD_NATIVE_PIXMAP, EGL_FALSE);
    ret = drv->API.CopyBuffers(drv, disp, surf, target);
 
@@ -947,6 +947,9 @@ eglGetProcAddress(const char *procname)
 #ifdef EGL_WL_bind_wayland_display
       { "eglBindWaylandDisplayWL", (_EGLProc) eglBindWaylandDisplayWL },
       { "eglUnbindWaylandDisplayWL", (_EGLProc) eglUnbindWaylandDisplayWL },
+#endif
+#ifdef EGL_ANDROID_swap_rectangle
+      { "eglSetSwapRectangleANDROID", (_EGLProc) eglSetSwapRectangleANDROID },
 #endif
       { NULL, NULL }
    };
@@ -1561,6 +1564,28 @@ eglUnbindWaylandDisplayWL(EGLDisplay dpy, struct wl_display *display)
       RETURN_EGL_ERROR(disp, EGL_BAD_PARAMETER, EGL_FALSE);
 
    ret = drv->API.UnbindWaylandDisplayWL(drv, disp, display);
+
+   RETURN_EGL_EVAL(disp, ret);
+}
+#endif
+
+#ifdef EGL_ANDROID_swap_rectangle
+EGLBoolean EGLAPIENTRY
+eglSetSwapRectangleANDROID(EGLDisplay dpy, EGLSurface draw,
+                           EGLint left, EGLint top,
+                           EGLint width, EGLint height)
+{
+   _EGLDisplay *disp = _eglLockDisplay(dpy);
+   _EGLSurface *surf = _eglLookupSurface(draw, disp);
+   _EGLDriver *drv;
+   EGLBoolean ret;
+
+   _EGL_CHECK_SURFACE(disp, surf, EGL_FALSE, drv);
+
+   if (!disp->Extensions.ANDROID_swap_rectangle)
+      RETURN_EGL_EVAL(disp, EGL_FALSE);
+
+   ret = drv->API.SetSwapRectangleANDROID(drv, disp, surf, left, top, width, height);
 
    RETURN_EGL_EVAL(disp, ret);
 }

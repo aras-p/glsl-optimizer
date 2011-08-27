@@ -648,18 +648,12 @@ void radeonSetTexBuffer2(__DRIcontext *pDRICtx, GLint target, GLint texture_form
 	struct radeon_renderbuffer *rb;
 	radeon_texture_image *rImage;
 	radeonContextPtr radeon;
-	r100ContextPtr rmesa;
 	struct radeon_framebuffer *rfb;
 	radeonTexObjPtr t;
 	uint32_t pitch_val;
-	uint32_t internalFormat, format;
 	gl_format texFormat;
 
-	format = GL_UNSIGNED_BYTE;
-	internalFormat = (texture_format == __DRI_TEXTURE_FORMAT_RGB ? GL_RGB : GL_RGBA);
-
 	radeon = pDRICtx->driverPrivate;
-	rmesa = pDRICtx->driverPrivate;
 
 	rfb = dPriv->driverPrivate;
         texUnit = _mesa_get_current_tex_unit(radeon->glCtx);
@@ -1018,7 +1012,7 @@ static GLboolean radeon_validate_texgen( struct gl_context *ctx, GLuint unit )
 static GLboolean setup_hardware_state(r100ContextPtr rmesa, radeonTexObj *t, int unit)
 {
    const struct gl_texture_image *firstImage;
-   GLint log2Width, log2Height, log2Depth, texelBytes;
+   GLint log2Width, log2Height, texelBytes;
 
    if ( t->bo ) {
 	return GL_TRUE;
@@ -1033,7 +1027,6 @@ static GLboolean setup_hardware_state(r100ContextPtr rmesa, radeonTexObj *t, int
 
    log2Width  = firstImage->WidthLog2;
    log2Height = firstImage->HeightLog2;
-   log2Depth  = firstImage->DepthLog2;
    texelBytes = _mesa_get_format_bytes(firstImage->TexFormat);
 
    if (!t->image_override) {

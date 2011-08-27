@@ -26,6 +26,8 @@
 #ifndef R600_PIPE_H
 #define R600_PIPE_H
 
+#include "../../winsys/radeon/drm/radeon_winsys.h"
+
 #include <pipe/p_state.h>
 #include <pipe/p_screen.h>
 #include <pipe/p_context.h>
@@ -72,6 +74,7 @@ enum r600_pipe_state_id {
 
 struct r600_screen {
 	struct pipe_screen		screen;
+	struct radeon_winsys		*ws;
 	struct radeon			*radeon;
 	struct r600_tiling_info		*tiling_info;
 	struct util_slab_mempool	pool_buffers;
@@ -183,7 +186,7 @@ struct r600_pipe_context {
 	struct r600_pipe_state		*states[R600_PIPE_NSTATES];
 	struct r600_context		ctx;
 	struct r600_vertex_element	*vertex_elements;
-	struct r600_pipe_resource_state		fs_resource[PIPE_MAX_ATTRIBS];
+	struct r600_pipe_resource_state	fs_resource[PIPE_MAX_ATTRIBS];
 	struct pipe_framebuffer_state	framebuffer;
 	struct pipe_index_buffer	index_buffer;
 	unsigned			cb_target_mask;
@@ -247,7 +250,8 @@ void evergreen_pipe_init_buffer_resource(struct r600_pipe_context *rctx,
 					 struct r600_pipe_resource_state *rstate);
 void evergreen_pipe_mod_buffer_resource(struct r600_pipe_resource_state *rstate,
 					struct r600_resource *rbuffer,
-					unsigned offset, unsigned stride);
+					unsigned offset, unsigned stride,
+					enum radeon_bo_usage usage);
 boolean evergreen_is_format_supported(struct pipe_screen *screen,
 				      enum pipe_format format,
 				      enum pipe_texture_target target,
@@ -269,6 +273,11 @@ struct pipe_resource *r600_user_buffer_create(struct pipe_screen *screen,
 struct pipe_resource *r600_buffer_from_handle(struct pipe_screen *screen,
 					      struct winsys_handle *whandle);
 void r600_upload_index_buffer(struct r600_pipe_context *rctx, struct r600_drawl *draw);
+
+
+/* r600_pipe.c */
+void r600_flush(struct pipe_context *ctx, struct pipe_fence_handle **fence,
+		unsigned flags);
 
 /* r600_query.c */
 void r600_init_query_functions(struct r600_pipe_context *rctx);
@@ -294,7 +303,8 @@ void r600_pipe_init_buffer_resource(struct r600_pipe_context *rctx,
 				    struct r600_pipe_resource_state *rstate);
 void r600_pipe_mod_buffer_resource(struct r600_pipe_resource_state *rstate,
 				   struct r600_resource *rbuffer,
-				   unsigned offset, unsigned stride);
+				   unsigned offset, unsigned stride,
+				   enum radeon_bo_usage usage);
 void r600_adjust_gprs(struct r600_pipe_context *rctx);
 boolean r600_is_format_supported(struct pipe_screen *screen,
 				 enum pipe_format format,

@@ -11,22 +11,8 @@ env.Append(CPPPATH = [
 
 r600 = env.ConvenienceLibrary(
     target = 'r600',
-    source = [
-        'r600_asm.c',
-        'r600_buffer.c',
-        'r600_blit.c',
-        'r600_pipe.c',
-        'r600_query.c',
-        'r600_resource.c',
-        'r600_shader.c',
-        'r600_state.c',
-        'r600_state_common.c',
-        'r600_texture.c',
-        'r600_translate.c',
-        'r700_asm.c',
-        'evergreen_state.c',
-        'eg_asm.c',
-    ])
+    source = env.ParseSourceList('Makefile.sources', 'C_SOURCES')
+    )
 
 env.Alias('r600', r600)
 

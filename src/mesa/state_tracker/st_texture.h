@@ -45,11 +45,6 @@ struct st_texture_image
 {
    struct gl_texture_image base;
 
-   /* These aren't stored in gl_texture_image 
-    */
-   GLuint level;
-   GLuint face;
-
    /* If stImage->pt != NULL, image data is stored here.
     * Else if stImage->base.Data != NULL, image is stored there.
     * Else there is no image data.
@@ -231,5 +226,9 @@ st_texture_image_copy(struct pipe_context *pipe,
                       struct pipe_resource *dst, GLuint dstLevel,
                       struct pipe_resource *src, GLuint srcLevel,
                       GLuint face);
+
+
+extern struct pipe_resource *
+st_create_color_map_texture(struct gl_context *ctx);
 
 #endif

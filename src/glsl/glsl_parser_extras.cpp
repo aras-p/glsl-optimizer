@@ -253,6 +253,7 @@ struct _mesa_glsl_extension {
 static const _mesa_glsl_extension _mesa_glsl_supported_extensions[] = {
    /*                                  target availability  API availability */
    /* name                             VS     GS     FS     GL     ES         supported flag */
+   EXT(ARB_conservative_depth,         true,  false, true,  true,  false,     AMD_conservative_depth),
    EXT(ARB_draw_buffers,               false, false, true,  true,  false,     dummy_true),
    EXT(ARB_draw_instanced,             true,  false, false, true,  false,     ARB_draw_instanced),
    EXT(ARB_explicit_attrib_location,   true,  false, true,  true,  false,     ARB_explicit_attrib_location),

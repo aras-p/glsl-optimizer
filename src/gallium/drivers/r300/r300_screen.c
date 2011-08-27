@@ -142,6 +142,7 @@ static int r300_get_param(struct pipe_screen* pscreen, enum pipe_cap param)
         case PIPE_CAP_MAX_VERTEX_TEXTURE_UNITS:
         case PIPE_CAP_SEAMLESS_CUBE_MAP:
         case PIPE_CAP_SEAMLESS_CUBE_MAP_PER_TEXTURE:
+        case PIPE_CAP_SCALED_RESOLVE:
             return 0;
 
         /* SWTCL-only features. */
@@ -211,13 +212,12 @@ static int r300_get_shader_param(struct pipe_screen *pscreen, unsigned shader, e
         case PIPE_SHADER_CAP_MAX_PREDS:
             return is_r500 ? 1 : 0;
         case PIPE_SHADER_CAP_TGSI_CONT_SUPPORTED:
-            return 0;
         case PIPE_SHADER_CAP_INDIRECT_INPUT_ADDR:
         case PIPE_SHADER_CAP_INDIRECT_OUTPUT_ADDR:
         case PIPE_SHADER_CAP_INDIRECT_TEMP_ADDR:
         case PIPE_SHADER_CAP_INDIRECT_CONST_ADDR:
-            return 0;
         case PIPE_SHADER_CAP_SUBROUTINES:
+        case PIPE_SHADER_CAP_INTEGERS:
             return 0;
         }
         break;
@@ -248,18 +248,15 @@ static int r300_get_shader_param(struct pipe_screen *pscreen, unsigned shader, e
             return 1; /* XXX guessed */
         case PIPE_SHADER_CAP_MAX_PREDS:
             return is_r500 ? 4 : 0; /* XXX guessed. */
+        case PIPE_SHADER_CAP_INDIRECT_CONST_ADDR:
+            return 1;
         case PIPE_SHADER_CAP_TGSI_CONT_SUPPORTED:
-            return 0;
         case PIPE_SHADER_CAP_INDIRECT_INPUT_ADDR:
         case PIPE_SHADER_CAP_INDIRECT_OUTPUT_ADDR:
         case PIPE_SHADER_CAP_INDIRECT_TEMP_ADDR:
-            return 0;
-        case PIPE_SHADER_CAP_INDIRECT_CONST_ADDR:
-            return 1;
         case PIPE_SHADER_CAP_SUBROUTINES:
+        case PIPE_SHADER_CAP_INTEGERS:
             return 0;
-        default:
-            break;
         }
         break;
     default:
@@ -316,6 +313,8 @@ static int r300_get_video_param(struct pipe_screen *screen,
       case PIPE_VIDEO_CAP_MAX_WIDTH:
       case PIPE_VIDEO_CAP_MAX_HEIGHT:
          return vl_video_buffer_max_size(screen);
+      case PIPE_VIDEO_CAP_NUM_BUFFERS_DESIRED:
+         return vl_num_buffers_desired(screen, profile);
       default:
          return 0;
    }
@@ -327,9 +326,8 @@ static boolean r300_is_format_supported(struct pipe_screen* screen,
                                         unsigned sample_count,
                                         unsigned usage)
 {
-    struct radeon_winsys *rws = r300_screen(screen)->rws;
     uint32_t retval = 0;
-    boolean drm_2_8_0 = rws->get_value(rws, RADEON_VID_DRM_2_8_0);
+    boolean drm_2_8_0 = r300_screen(screen)->info.drm_minor >= 8;
     boolean is_r500 = r300_screen(screen)->caps.is_r500;
     boolean is_r400 = r300_screen(screen)->caps.is_r400;
     boolean is_color2101010 = format == PIPE_FORMAT_R10G10B10A2_UNORM ||
@@ -458,7 +456,7 @@ static boolean r300_fence_signalled(struct pipe_screen *screen,
     struct radeon_winsys *rws = r300_screen(screen)->rws;
     struct pb_buffer *rfence = (struct pb_buffer*)fence;
 
-    return !rws->buffer_is_busy(rfence);
+    return !rws->buffer_is_busy(rfence, RADEON_USAGE_READWRITE);
 }
 
 static boolean r300_fence_finish(struct pipe_screen *screen,
@@ -475,7 +473,7 @@ static boolean r300_fence_finish(struct pipe_screen *screen,
         timeout /= 1000;
 
         /* Wait in a loop. */
-        while (rws->buffer_is_busy(rfence)) {
+        while (rws->buffer_is_busy(rfence, RADEON_USAGE_READWRITE)) {
             if (os_time_get() - start_time >= timeout) {
                 return FALSE;
             }
@@ -484,7 +482,7 @@ static boolean r300_fence_finish(struct pipe_screen *screen,
         return TRUE;
     }
 
-    rws->buffer_wait(rfence);
+    rws->buffer_wait(rfence, RADEON_USAGE_READWRITE);
     return TRUE;
 }
 
@@ -497,19 +495,17 @@ struct pipe_screen* r300_screen_create(struct radeon_winsys *rws)
         return NULL;
     }
 
-    r300screen->caps.pci_id = rws->get_value(rws, RADEON_VID_PCI_ID);
-    r300screen->caps.num_frag_pipes = rws->get_value(rws, RADEON_VID_R300_GB_PIPES);
-    r300screen->caps.num_z_pipes = rws->get_value(rws, RADEON_VID_R300_Z_PIPES);
+    rws->query_info(rws, &r300screen->info);
 
     r300_init_debug(r300screen);
-    r300_parse_chipset(&r300screen->caps);
+    r300_parse_chipset(r300screen->info.pci_id, &r300screen->caps);
 
     if (SCREEN_DBG_ON(r300screen, DBG_NO_ZMASK))
         r300screen->caps.zmask_ram = 0;
     if (SCREEN_DBG_ON(r300screen, DBG_NO_HIZ))
         r300screen->caps.hiz_ram = 0;
 
-    if (!rws->get_value(rws, RADEON_VID_DRM_2_8_0))
+    if (r300screen->info.drm_minor < 8)
         r300screen->caps.has_us_format = FALSE;
 
     pipe_mutex_init(r300screen->num_contexts_mutex);

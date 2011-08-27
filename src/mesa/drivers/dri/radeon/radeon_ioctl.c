@@ -560,7 +560,6 @@ static void radeonClear( struct gl_context *ctx, GLbitfield mask )
    r100ContextPtr rmesa = R100_CONTEXT(ctx);
    __DRIdrawable *dPriv = radeon_get_drawable(&rmesa->radeon);
    GLuint flags = 0;
-   GLuint color_mask = 0;
    GLuint orig_mask = mask;
 
    if (mask & (BUFFER_BIT_FRONT_LEFT | BUFFER_BIT_FRONT_RIGHT)) {
@@ -582,13 +581,11 @@ static void radeonClear( struct gl_context *ctx, GLbitfield mask )
 
    if ( mask & BUFFER_BIT_FRONT_LEFT ) {
       flags |= RADEON_FRONT;
-      color_mask = rmesa->hw.msk.cmd[MSK_RB3D_PLANEMASK];
       mask &= ~BUFFER_BIT_FRONT_LEFT;
    }
 
    if ( mask & BUFFER_BIT_BACK_LEFT ) {
       flags |= RADEON_BACK;
-      color_mask = rmesa->hw.msk.cmd[MSK_RB3D_PLANEMASK];
       mask &= ~BUFFER_BIT_BACK_LEFT;
    }
 

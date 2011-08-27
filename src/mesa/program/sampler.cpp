@@ -132,6 +132,6 @@ _mesa_get_sampler_uniform_value(class ir_dereference *sampler,
 
    index += getname.offset;
 
-   return prog->Parameters->ParameterValues[index][0];
+   return prog->Parameters->ParameterValues[index][0].f;
 }
 }

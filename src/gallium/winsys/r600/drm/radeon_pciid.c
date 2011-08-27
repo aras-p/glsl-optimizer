@@ -23,7 +23,6 @@
  * Authors:
  *      Jerome Glisse
  */
-#include <stdlib.h>
 #include "r600_priv.h"
 
 struct pci_id {

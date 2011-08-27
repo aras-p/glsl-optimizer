@@ -86,6 +86,7 @@ struct dri2_egl_display
 
 #ifdef HAVE_DRM_PLATFORM
    struct gbm_dri_device    *gbm_dri;
+   int                       own_gbm_device;
 #endif
 
    char                     *device_name;
@@ -122,8 +123,6 @@ enum wayland_buffer_type {
    WL_BUFFER_THIRD,
    WL_BUFFER_COUNT
 };
-
-#define __DRI_BUFFER_COUNT 10
 #endif
 
 enum dri2_surface_type {

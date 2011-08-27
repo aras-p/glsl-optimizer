@@ -352,9 +352,9 @@ struct GalliumD3D10Device : public GalliumD3D10ScreenImpl<threadsafe>
 	{
 		for(unsigned i = 0; i < count; ++i)
 		{
-			if(constbufs[i] != constant_buffers[s][i].p)
+			if(constbufs[i] != constant_buffers[s][start + i].p)
 			{
-				constant_buffers[s][i] = constbufs[i];
+				constant_buffers[s][start + i] = constbufs[i];
 				if(s < caps.stages && start + i < caps.constant_buffers[s])
 					pipe->set_constant_buffer(pipe, s, start + i, constbufs[i] ? constbufs[i]->resource : NULL);
 			}
@@ -391,11 +391,12 @@ struct GalliumD3D10Device : public GalliumD3D10ScreenImpl<threadsafe>
 			{
 				samplers[s][start + i] = samps[i];
 				sampler_csos[s].v[start + i] = samps[i] ? samps[i]->object : default_sampler;
+				last_different = i;
 			}
 			if(last_different >= 0)
 			{
 				num_samplers[s] = std::max(num_samplers[s], start + last_different + 1);
-				update_flags |= (UPDATE_SAMPLERS_SHIFT + s);
+				update_flags |= 1 << (UPDATE_SAMPLERS_SHIFT + s);
 			}
 		}
 	}
@@ -1726,9 +1727,26 @@ changed:
 		SYNCHRONIZED;
 		GalliumD3D11Resource<>* dst = (GalliumD3D11Resource<>*)dst_resource;
 		GalliumD3D11Resource<>* src = (GalliumD3D11Resource<>*)src_resource;
-		unsigned dst_layer = d3d11_subresource_to_face(dst->resource, dst_subresource);
-		unsigned src_layer = d3d11_subresource_to_face(src->resource, src_subresource);
-		pipe->resource_resolve(pipe, dst->resource, dst_layer, src->resource, src_layer);
+		struct pipe_resolve_info info;
+
+		info.dst.res = dst->resource;
+		info.src.res = src->resource;
+		info.dst.level = 0;
+		info.dst.layer = d3d11_subresource_to_face(dst->resource, dst_subresource);
+		info.src.layer = d3d11_subresource_to_face(src->resource, src_subresource);
+
+		info.src.x0 = 0;
+		info.src.x1 = info.src.res->width0;
+		info.src.y0 = 0;
+		info.src.y1 = info.src.res->height0;
+		info.dst.x0 = 0;
+		info.dst.x1 = info.dst.res->width0;
+		info.dst.y0 = 0;
+		info.dst.y1 = info.dst.res->height0;
+
+		info.mask = PIPE_MASK_RGBA | PIPE_MASK_ZS;
+
+		pipe->resource_resolve(pipe, &info);
 	}
 
 #if API >= 11

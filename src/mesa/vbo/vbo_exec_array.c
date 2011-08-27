@@ -95,10 +95,25 @@ vbo_get_minmax_index(struct gl_context *ctx,
    GLuint i;
 
    if (_mesa_is_bufferobj(ib->obj)) {
-      const GLvoid *map =
-         ctx->Driver.MapBuffer(ctx, GL_ELEMENT_ARRAY_BUFFER_ARB,
-                               GL_READ_ONLY, ib->obj);
-      indices = ADD_POINTERS(map, ib->ptr);
+      unsigned map_size;
+
+      switch (ib->type) {
+      case GL_UNSIGNED_INT:
+	 map_size = count * sizeof(GLuint);
+	 break;
+      case GL_UNSIGNED_SHORT:
+	 map_size = count * sizeof(GLushort);
+	 break;
+      case GL_UNSIGNED_BYTE:
+	 map_size = count * sizeof(GLubyte);
+	 break;
+      default:
+	 assert(0);
+	 map_size = 0;
+      }
+
+      indices = ctx->Driver.MapBufferRange(ctx, (GLsizeiptr) ib->ptr, map_size,
+					   GL_MAP_READ_BIT, ib->obj);
    } else {
       indices = ib->ptr;
    }
@@ -176,7 +191,7 @@ vbo_get_minmax_index(struct gl_context *ctx,
    }
 
    if (_mesa_is_bufferobj(ib->obj)) {
-      ctx->Driver.UnmapBuffer(ctx, GL_ELEMENT_ARRAY_BUFFER_ARB, ib->obj);
+      ctx->Driver.UnmapBuffer(ctx, ib->obj);
    }
 }
 
@@ -196,8 +211,8 @@ check_array_data(struct gl_context *ctx, struct gl_client_array *array,
          if (!array->BufferObj->Pointer) {
             /* need to map now */
             array->BufferObj->Pointer =
-               ctx->Driver.MapBuffer(ctx, GL_ARRAY_BUFFER_ARB,
-                                     GL_READ_ONLY, array->BufferObj);
+               ctx->Driver.MapBufferRange(ctx, 0, array->BufferObj->Size,
+					  GL_MAP_READ_BIT, array->BufferObj);
          }
          data = ADD_POINTERS(data, array->BufferObj->Pointer);
       }
@@ -238,7 +253,7 @@ unmap_array_buffer(struct gl_context *ctx, struct gl_client_array *array)
    if (array->Enabled &&
        _mesa_is_bufferobj(array->BufferObj) &&
        _mesa_bufferobj_mapped(array->BufferObj)) {
-      ctx->Driver.UnmapBuffer(ctx, GL_ARRAY_BUFFER_ARB, array->BufferObj);
+      ctx->Driver.UnmapBuffer(ctx, array->BufferObj);
    }
 }
 
@@ -256,10 +271,10 @@ check_draw_elements_data(struct gl_context *ctx, GLsizei count, GLenum elemType,
    GLint i, k;
 
    if (_mesa_is_bufferobj(ctx->Array.ElementArrayBufferObj)) {
-      elemMap = ctx->Driver.MapBuffer(ctx,
-                                      GL_ELEMENT_ARRAY_BUFFER_ARB,
-                                      GL_READ_ONLY,
-                                      ctx->Array.ElementArrayBufferObj);
+      elemMap = ctx->Driver.MapBufferRange(ctx, 0,
+					   ctx->Array.ElementArrayBufferObj->Size,
+					   GL_MAP_READ_BIT,
+					   ctx->Array.ElementArrayBufferObj);
       elements = ADD_POINTERS(elements, elemMap);
    }
 
@@ -296,8 +311,7 @@ check_draw_elements_data(struct gl_context *ctx, GLsizei count, GLenum elemType,
    }
 
    if (_mesa_is_bufferobj(ctx->Array.ElementArrayBufferObj)) {
-      ctx->Driver.UnmapBuffer(ctx, GL_ELEMENT_ARRAY_BUFFER_ARB,
-			      ctx->Array.ElementArrayBufferObj);
+      ctx->Driver.UnmapBuffer(ctx, ctx->Array.ElementArrayBufferObj);
    }
 
    unmap_array_buffer(ctx, &arrayObj->Vertex);
@@ -351,8 +365,8 @@ print_draw_arrays(struct gl_context *ctx,
 	     bufName);
 
       if (bufName) {
-         GLubyte *p = ctx->Driver.MapBuffer(ctx, GL_ARRAY_BUFFER_ARB,
-                                            GL_READ_ONLY_ARB, bufObj);
+         GLubyte *p = ctx->Driver.MapBufferRange(ctx, 0, bufObj->Size,
+						 GL_MAP_READ_BIT, bufObj);
          int offset = (int) (GLintptr) exec->array.inputs[i]->Ptr;
          float *f = (float *) (p + offset);
          int *k = (int *) f;
@@ -364,7 +378,7 @@ print_draw_arrays(struct gl_context *ctx,
          for (i = 0; i < n; i++) {
             printf("    float[%d] = 0x%08x %f\n", i, k[i], f[i]);
          }
-         ctx->Driver.UnmapBuffer(ctx, GL_ARRAY_BUFFER_ARB, bufObj);
+         ctx->Driver.UnmapBuffer(ctx, bufObj);
       }
    }
 }
@@ -715,10 +729,11 @@ vbo_exec_DrawArraysInstanced(GLenum mode, GLint start, GLsizei count,
 static void
 dump_element_buffer(struct gl_context *ctx, GLenum type)
 {
-   const GLvoid *map = ctx->Driver.MapBuffer(ctx,
-                                             GL_ELEMENT_ARRAY_BUFFER_ARB,
-                                             GL_READ_ONLY,
-                                             ctx->Array.ElementArrayBufferObj);
+   const GLvoid *map =
+      ctx->Driver.MapBufferRange(ctx, 0,
+				 ctx->Array.ElementArrayBufferObj->Size,
+				 GL_MAP_READ_BIT,
+				 ctx->Array.ElementArrayBufferObj);
    switch (type) {
    case GL_UNSIGNED_BYTE:
       {
@@ -760,8 +775,7 @@ dump_element_buffer(struct gl_context *ctx, GLenum type)
       ;
    }
 
-   ctx->Driver.UnmapBuffer(ctx, GL_ELEMENT_ARRAY_BUFFER_ARB,
-                           ctx->Array.ElementArrayBufferObj);
+   ctx->Driver.UnmapBuffer(ctx, ctx->Array.ElementArrayBufferObj);
 }
 
 
@@ -909,11 +923,10 @@ vbo_exec_DrawRangeElementsBaseVertex(GLenum mode,
       if (0)
          _mesa_print_arrays(ctx);
 
-#ifdef DEBUG
       /* 'end' was out of bounds, but now let's check the actual array
        * indexes to see if any of them are out of bounds.
        */
-      {
+      if (0) {
          GLuint max = _mesa_max_buffer_index(ctx, count, type, indices,
                                              ctx->Array.ElementArrayBufferObj);
          if (max >= ctx->Array.ArrayObj->_MaxElement) {
@@ -934,7 +947,6 @@ vbo_exec_DrawRangeElementsBaseVertex(GLenum mode,
           * upper bound wrong.
           */
       }
-#endif
 
       /* Set 'end' to the max possible legal value */
       assert(ctx->Array.ArrayObj->_MaxElement >= 1);

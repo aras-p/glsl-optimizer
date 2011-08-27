@@ -24,15 +24,11 @@
 #ifndef R300_SCREEN_H
 #define R300_SCREEN_H
 
-#include "pipe/p_screen.h"
-
 #include "r300_chipset.h"
-
+#include "../../winsys/radeon/drm/radeon_winsys.h"
+#include "pipe/p_screen.h"
 #include "util/u_slab.h"
-
 #include <stdio.h>
-
-struct radeon_winsys;
 
 struct r300_screen {
     /* Parent class */
@@ -40,7 +36,8 @@ struct r300_screen {
 
     struct radeon_winsys *rws;
 
-    /* Chipset capabilities */
+    /* Chipset info and capabilities. */
+    struct radeon_info info;
     struct r300_capabilities caps;
 
     /* Memory pools. */

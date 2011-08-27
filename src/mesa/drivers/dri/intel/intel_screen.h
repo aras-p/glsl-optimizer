@@ -63,9 +63,12 @@
  * x8_z24 and s8).
  *
  * Eventually, intel_update_renderbuffers() makes a DRI2 request for
- * DRI2BufferStencil and DRI2BufferHiz. If the returned buffers are Y tiled,
- * then we joyfully set intel_screen.dri2_has_hiz to true and continue as if
- * nothing happend.
+ * DRI2BufferStencil and DRI2BufferHiz. If the stencil buffer's tiling is
+ * I915_TILING_NONE [1], then we joyfully set intel_screen.dri2_has_hiz to
+ * true and continue as if nothing happend.
+ *
+ * [1] The stencil buffer is actually W tiled. However, we request from the
+ *     kernel a non-tiled buffer because the GTT is incapable of W fencing.
  *
  * If the buffers are X tiled, however, the handshake has failed and we must
  * clean up.

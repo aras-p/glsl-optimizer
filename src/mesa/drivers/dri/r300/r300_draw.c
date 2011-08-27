@@ -84,7 +84,8 @@ static void r300FixupIndexBuffer(struct gl_context *ctx, const struct _mesa_inde
 	GLboolean mapped_named_bo = GL_FALSE;
 
 	if (mesa_ind_buf->obj->Name && !mesa_ind_buf->obj->Pointer) {
-		ctx->Driver.MapBuffer(ctx, GL_ELEMENT_ARRAY_BUFFER, GL_READ_ONLY_ARB, mesa_ind_buf->obj);
+		ctx->Driver.MapBufferRange(ctx, 0, mesa_ind_buf->obj->Size,
+					   GL_MAP_READ_BIT, mesa_ind_buf->obj);
 		mapped_named_bo = GL_TRUE;
 		assert(mesa_ind_buf->obj->Pointer != NULL);
 	}
@@ -138,7 +139,7 @@ static void r300FixupIndexBuffer(struct gl_context *ctx, const struct _mesa_inde
 	r300->ind_buf.count = mesa_ind_buf->count;
 
 	if (mapped_named_bo) {
-		ctx->Driver.UnmapBuffer(ctx, GL_ELEMENT_ARRAY_BUFFER, mesa_ind_buf->obj);
+		ctx->Driver.UnmapBuffer(ctx, mesa_ind_buf->obj);
 	}
 }
 
@@ -163,7 +164,10 @@ static void r300SetupIndexBuffer(struct gl_context *ctx, const struct _mesa_inde
 		GLboolean mapped_named_bo = GL_FALSE;
 
 		if (mesa_ind_buf->obj->Name && !mesa_ind_buf->obj->Pointer) {
-			ctx->Driver.MapBuffer(ctx, GL_ELEMENT_ARRAY_BUFFER, GL_READ_ONLY_ARB, mesa_ind_buf->obj);
+			ctx->Driver.MapBufferRange(ctx, 0,
+						   mesa_ind_buf->obj->Size,
+						   GL_MAP_READ_BIT,
+						   mesa_ind_buf->obj);
 			assert(mesa_ind_buf->obj->Pointer != NULL);
 			mapped_named_bo = GL_TRUE;
 		}
@@ -184,7 +188,7 @@ static void r300SetupIndexBuffer(struct gl_context *ctx, const struct _mesa_inde
 		r300->ind_buf.count = mesa_ind_buf->count;
 
 		if (mapped_named_bo) {
-			ctx->Driver.UnmapBuffer(ctx, GL_ELEMENT_ARRAY_BUFFER, mesa_ind_buf->obj);
+			ctx->Driver.UnmapBuffer(ctx, mesa_ind_buf->obj);
 		}
 	} else {
 		r300FixupIndexBuffer(ctx, mesa_ind_buf);
@@ -235,7 +239,8 @@ static void r300ConvertAttrib(struct gl_context *ctx, int count, const struct gl
 
 	if (input->BufferObj->Name) {
 		if (!input->BufferObj->Pointer) {
-			ctx->Driver.MapBuffer(ctx, GL_ARRAY_BUFFER, GL_READ_ONLY_ARB, input->BufferObj);
+			ctx->Driver.MapBufferRange(ctx, 0, input->BufferObj->Size,
+					      GL_MAP_READ_BIT, input->BufferObj);
 			mapped_named_bo = GL_TRUE;
 		}
 
@@ -286,7 +291,7 @@ static void r300ConvertAttrib(struct gl_context *ctx, int count, const struct gl
 
 	radeon_bo_unmap(attr->bo);
 	if (mapped_named_bo) {
-		ctx->Driver.UnmapBuffer(ctx, GL_ARRAY_BUFFER, input->BufferObj);
+		ctx->Driver.UnmapBuffer(ctx, input->BufferObj);
 	}
 }
 
@@ -302,7 +307,8 @@ static void r300AlignDataToDword(struct gl_context *ctx, const struct gl_client_
 	radeon_bo_map(attr->bo, 1);
 
 	if (!input->BufferObj->Pointer) {
-		ctx->Driver.MapBuffer(ctx, GL_ARRAY_BUFFER, GL_READ_ONLY_ARB, input->BufferObj);
+		ctx->Driver.MapBufferRange(ctx, 0, input->BufferObj->Size,
+					   GL_MAP_READ_BIT, input->BufferObj);
 		mapped_named_bo = GL_TRUE;
 	}
 
@@ -321,7 +327,7 @@ static void r300AlignDataToDword(struct gl_context *ctx, const struct gl_client_
 	}
 
 	if (mapped_named_bo) {
-		ctx->Driver.UnmapBuffer(ctx, GL_ARRAY_BUFFER, input->BufferObj);
+		ctx->Driver.UnmapBuffer(ctx, input->BufferObj);
 	}
 
 	radeon_bo_unmap(attr->bo);

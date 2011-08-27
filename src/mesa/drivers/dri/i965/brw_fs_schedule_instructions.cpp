@@ -25,21 +25,6 @@
  *
  */
 
-extern "C" {
-
-#include <sys/types.h>
-
-#include "main/macros.h"
-#include "main/shaderobj.h"
-#include "main/uniforms.h"
-#include "program/prog_optimize.h"
-#include "program/register_allocate.h"
-#include "program/sampler.h"
-#include "program/hash_table.h"
-#include "brw_context.h"
-#include "brw_eu.h"
-#include "brw_wm.h"
-}
 #include "brw_fs.h"
 #include "../glsl/glsl_types.h"
 #include "../glsl/ir_optimization.h"
@@ -84,26 +69,26 @@ public:
       int math_latency = 22;
 
       switch (inst->opcode) {
-      case FS_OPCODE_RCP:
+      case SHADER_OPCODE_RCP:
 	 this->latency = 1 * chans * math_latency;
 	 break;
-      case FS_OPCODE_RSQ:
+      case SHADER_OPCODE_RSQ:
 	 this->latency = 2 * chans * math_latency;
 	 break;
-      case FS_OPCODE_SQRT:
-      case FS_OPCODE_LOG2:
+      case SHADER_OPCODE_SQRT:
+      case SHADER_OPCODE_LOG2:
 	 /* full precision log.  partial is 2. */
 	 this->latency = 3 * chans * math_latency;
 	 break;
-      case FS_OPCODE_EXP2:
+      case SHADER_OPCODE_EXP2:
 	 /* full precision.  partial is 3, same throughput. */
 	 this->latency = 4 * chans * math_latency;
 	 break;
-      case FS_OPCODE_POW:
+      case SHADER_OPCODE_POW:
 	 this->latency = 8 * chans * math_latency;
 	 break;
-      case FS_OPCODE_SIN:
-      case FS_OPCODE_COS:
+      case SHADER_OPCODE_SIN:
+      case SHADER_OPCODE_COS:
 	 /* minimum latency, max is 12 rounds. */
 	 this->latency = 5 * chans * math_latency;
 	 break;
@@ -283,8 +268,8 @@ instruction_scheduler::calculate_deps()
    memset(last_mrf_write, 0, sizeof(last_mrf_write));
 
    /* top-to-bottom dependencies: RAW and WAW. */
-   foreach_iter(exec_list_iterator, iter, instructions) {
-      schedule_node *n = (schedule_node *)iter.get();
+   foreach_list(node, &instructions) {
+      schedule_node *n = (schedule_node *)node;
       fs_inst *inst = n->inst;
 
       /* read-after-write deps. */
@@ -321,12 +306,12 @@ instruction_scheduler::calculate_deps()
 	 add_dep(last_grf_write[inst->dst.reg], n);
 	 last_grf_write[inst->dst.reg] = n;
       } else if (inst->dst.file == MRF) {
-	 int reg = inst->dst.hw_reg & ~BRW_MRF_COMPR4;
+	 int reg = inst->dst.reg & ~BRW_MRF_COMPR4;
 
 	 add_dep(last_mrf_write[reg], n);
 	 last_mrf_write[reg] = n;
 	 if (is_compressed(inst)) {
-	    if (inst->dst.hw_reg & BRW_MRF_COMPR4)
+	    if (inst->dst.reg & BRW_MRF_COMPR4)
 	       reg += 4;
 	    else
 	       reg++;
@@ -401,12 +386,12 @@ instruction_scheduler::calculate_deps()
       if (inst->dst.file == GRF) {
 	 last_grf_write[inst->dst.reg] = n;
       } else if (inst->dst.file == MRF) {
-	 int reg = inst->dst.hw_reg & ~BRW_MRF_COMPR4;
+	 int reg = inst->dst.reg & ~BRW_MRF_COMPR4;
 
 	 last_mrf_write[reg] = n;
 
 	 if (is_compressed(inst)) {
-	    if (inst->dst.hw_reg & BRW_MRF_COMPR4)
+	    if (inst->dst.reg & BRW_MRF_COMPR4)
 	       reg += 4;
 	    else
 	       reg++;
@@ -437,8 +422,8 @@ instruction_scheduler::schedule_instructions(fs_inst *next_block_header)
    int time = 0;
 
    /* Remove non-DAG heads from the list. */
-   foreach_iter(exec_list_iterator, iter, instructions) {
-      schedule_node *n = (schedule_node *)iter.get();
+   foreach_list_safe(node, &instructions) {
+      schedule_node *n = (schedule_node *)node;
       if (n->parent_count != 0)
 	 n->remove();
    }
@@ -447,8 +432,8 @@ instruction_scheduler::schedule_instructions(fs_inst *next_block_header)
       schedule_node *chosen = NULL;
       int chosen_time = 0;
 
-      foreach_iter(exec_list_iterator, iter, instructions) {
-	 schedule_node *n = (schedule_node *)iter.get();
+      foreach_list(node, &instructions) {
+	 schedule_node *n = (schedule_node *)node;
 
 	 if (!chosen || n->unblocked_time < chosen_time) {
 	    chosen = n;
@@ -490,8 +475,8 @@ instruction_scheduler::schedule_instructions(fs_inst *next_block_header)
        * progress until the first is done.
        */
       if (chosen->inst->is_math()) {
-	 foreach_iter(exec_list_iterator, iter, instructions) {
-	    schedule_node *n = (schedule_node *)iter.get();
+	 foreach_list(node, &instructions) {
+	    schedule_node *n = (schedule_node *)node;
 
 	    if (n->inst->is_math())
 	       n->unblocked_time = MAX2(n->unblocked_time,

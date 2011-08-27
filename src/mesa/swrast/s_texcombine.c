@@ -48,7 +48,11 @@ typedef float (*float4_array)[4];
 static INLINE float4_array
 get_texel_array(SWcontext *swrast, GLuint unit)
 {
+#ifdef _OPENMP
+   return (float4_array) (swrast->TexelBuffer + unit * MAX_WIDTH * 4 * omp_get_num_threads() + (MAX_WIDTH * 4 * omp_get_thread_num()));
+#else
    return (float4_array) (swrast->TexelBuffer + unit * MAX_WIDTH * 4);
+#endif
 }
 
 

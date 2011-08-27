@@ -817,7 +817,7 @@ drv_screen_init(int scrnIndex, ScreenPtr pScreen, int argc, char **argv)
 				&ms->swapThrottling) ?
 	X_CONFIG : X_DEFAULT;
 
-    ms->dirtyThrottling = cust ?  cust->dirty_throttling : TRUE;
+    ms->dirtyThrottling = cust ?  cust->dirty_throttling : FALSE;
     from_dt = xf86GetOptValBool(ms->Options, OPTION_THROTTLE_DIRTY,
 				&ms->dirtyThrottling) ?
 	X_CONFIG : X_DEFAULT;

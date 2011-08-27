@@ -1125,7 +1125,7 @@ static void
 validate_program(struct gl_context *ctx, GLuint program)
 {
    struct gl_shader_program *shProg;
-   char errMsg[100];
+   char errMsg[100] = "";
 
    shProg = _mesa_lookup_shader_program_err(ctx, program, "glValidateProgram");
    if (!shProg) {

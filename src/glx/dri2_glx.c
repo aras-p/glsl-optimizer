@@ -455,16 +455,20 @@ dri2_wait_gl(struct glx_context *gc)
 static void
 dri2FlushFrontBuffer(__DRIdrawable *driDrawable, void *loaderPrivate)
 {
+   struct glx_display *priv;
+   struct dri2_display *pdp;
+   struct glx_context *gc;
    struct dri2_drawable *pdraw = loaderPrivate;
+
    if (!pdraw)
       return;
 
    if (!pdraw->base.psc)
       return;
 
-   struct glx_display *priv = __glXInitialize(pdraw->base.psc->dpy);
-   struct dri2_display *pdp = (struct dri2_display *)priv->dri2Display;
-   struct glx_context *gc = __glXGetCurrentContext();
+   priv = __glXInitialize(pdraw->base.psc->dpy);
+   pdp = (struct dri2_display *) priv->dri2Display;
+   gc = __glXGetCurrentContext();
 
    /* Old servers don't send invalidate events */
    if (!pdp->invalidateAvailable)
@@ -539,6 +543,11 @@ dri2SwapBuffers(__GLXDRIdrawable *pdraw, int64_t target_msc, int64_t divisor,
 	(struct dri2_display *)dpyPriv->dri2Display;
     CARD64 ret = 0;
 
+    /* Old servers can't handle swapbuffers */
+    if (!pdp->swapAvailable) {
+       dri2CopySubBuffer(pdraw, 0, 0, priv->width, priv->height);
+    } else {
+#ifdef X_DRI2SwapBuffers
 #ifdef __DRI2_FLUSH
     if (psc->f) {
        struct glx_context *gc = __glXGetCurrentContext();
@@ -549,20 +558,14 @@ dri2SwapBuffers(__GLXDRIdrawable *pdraw, int64_t target_msc, int64_t divisor,
     }
 #endif
 
+       DRI2SwapBuffers(psc->base.dpy, pdraw->xDrawable,
+		       target_msc, divisor, remainder, &ret);
+#endif
+    }
+
     /* Old servers don't send invalidate events */
     if (!pdp->invalidateAvailable)
        dri2InvalidateBuffers(dpyPriv->dpy, pdraw->xDrawable);
-
-    /* Old servers can't handle swapbuffers */
-    if (!pdp->swapAvailable) {
-       dri2CopySubBuffer(pdraw, 0, 0, priv->width, priv->height);
-       return 0;
-    }
-
-#ifdef X_DRI2SwapBuffers
-    DRI2SwapBuffers(psc->base.dpy, pdraw->xDrawable, target_msc, divisor,
-		    remainder, &ret);
-#endif
 
     return ret;
 }

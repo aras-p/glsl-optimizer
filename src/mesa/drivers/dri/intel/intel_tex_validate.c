@@ -42,8 +42,8 @@ copy_image_data_to_tree(struct intel_context *intel,
        */
       intel_miptree_image_copy(intel,
                                intelObj->mt,
-                               intelImage->face,
-                               intelImage->level, intelImage->mt);
+                               intelImage->base.Face,
+                               intelImage->base.Level, intelImage->mt);
 
       intel_miptree_release(intel, &intelImage->mt);
    }
@@ -54,8 +54,8 @@ copy_image_data_to_tree(struct intel_context *intel,
        */
       intel_miptree_image_data(intel,
                                intelObj->mt,
-                               intelImage->face,
-                               intelImage->level,
+                               intelImage->base.Face,
+                               intelImage->base.Level,
                                intelImage->base.Data,
                                intelImage->base.RowStride,
                                intelImage->base.RowStride *
@@ -177,8 +177,8 @@ intel_tex_map_level_images(struct intel_context *intel,
 	 intelImage->base.Data =
 	    intel_miptree_image_map(intel,
 				    intelImage->mt,
-				    intelImage->face,
-				    intelImage->level,
+				    intelImage->base.Face,
+				    intelImage->base.Level,
 				    &intelImage->base.RowStride,
 				    intelImage->base.ImageOffsets);
 	 /* convert stride to texels, not bytes */

@@ -2566,7 +2566,114 @@ sp_sampler_variant_destroy( struct sp_sampler_variant *samp )
    FREE(samp);
 }
 
+static void
+sample_get_dims(struct tgsi_sampler *tgsi_sampler, int level,
+		int dims[4])
+{
+    struct sp_sampler_variant *samp = sp_sampler_variant(tgsi_sampler);
+    const struct pipe_sampler_view *view = samp->view;
+    const struct pipe_resource *texture = view->texture;
 
+    /* undefined according to EXT_gpu_program */
+    level += view->u.tex.first_level;
+    if (level > view->u.tex.last_level)
+	return;
+
+    dims[0] = u_minify(texture->width0, level);
+
+    switch(texture->target) {
+    case PIPE_TEXTURE_1D_ARRAY:
+       dims[1] = texture->array_size;
+       /* fallthrough */
+    case PIPE_TEXTURE_1D:
+    case PIPE_BUFFER:
+       return;
+    case PIPE_TEXTURE_2D_ARRAY:
+       dims[2] = texture->array_size;
+       /* fallthrough */
+    case PIPE_TEXTURE_2D:
+    case PIPE_TEXTURE_CUBE:
+    case PIPE_TEXTURE_RECT:
+       dims[1] = u_minify(texture->height0, level);
+       return;
+    case PIPE_TEXTURE_3D:
+       dims[1] = u_minify(texture->height0, level);
+       dims[2] = u_minify(texture->depth0, level);
+       return;
+    default:
+       assert(!"unexpected texture target in sample_get_dims()");
+       return;
+    }
+}
+
+/* this function is only used for unfiltered texel gets
+   via the TGSI TXF opcode. */
+static void
+sample_get_texels(struct tgsi_sampler *tgsi_sampler,
+	   const int v_i[QUAD_SIZE],
+	   const int v_j[QUAD_SIZE],
+	   const int v_k[QUAD_SIZE],
+	   const int lod[QUAD_SIZE],
+	   float rgba[NUM_CHANNELS][QUAD_SIZE])
+{
+   const struct sp_sampler_variant *samp = sp_sampler_variant(tgsi_sampler);
+   union tex_tile_address addr;
+   const struct pipe_resource *texture = samp->view->texture;
+   int j, c;
+   const float *tx;
+
+   addr.value = 0;
+   /* TODO write a better test for LOD */
+   addr.bits.level = lod[0];
+
+   switch(texture->target) {
+   case PIPE_TEXTURE_1D:
+      for (j = 0; j < QUAD_SIZE; j++) {
+	 tx = get_texel_2d(samp, addr, v_i[j], 0);
+	 for (c = 0; c < 4; c++) {
+	    rgba[c][j] = tx[c];
+	 }
+      }
+      break;
+   case PIPE_TEXTURE_1D_ARRAY:
+      for (j = 0; j < QUAD_SIZE; j++) {
+	 tx = get_texel_1d_array(samp, addr, v_i[j], v_j[j]);
+	 for (c = 0; c < 4; c++) {
+	    rgba[c][j] = tx[c];
+	 }
+      }
+      break;
+   case PIPE_TEXTURE_2D:
+   case PIPE_TEXTURE_RECT:
+      for (j = 0; j < QUAD_SIZE; j++) {
+	 tx = get_texel_2d(samp, addr, v_i[j], v_j[j]);
+	 for (c = 0; c < 4; c++) {
+	    rgba[c][j] = tx[c];
+	 }
+      }
+      break;
+   case PIPE_TEXTURE_2D_ARRAY:
+      for (j = 0; j < QUAD_SIZE; j++) {
+	 tx = get_texel_2d_array(samp, addr, v_i[j], v_j[j], v_k[j]);
+	 for (c = 0; c < 4; c++) {
+	    rgba[c][j] = tx[c];
+	 }
+      }
+      break;
+   case PIPE_TEXTURE_3D:
+      for (j = 0; j < QUAD_SIZE; j++) {
+	 tx = get_texel_3d(samp, addr, v_i[j], v_j[j], v_k[j]);
+	 for (c = 0; c < 4; c++) {
+	    rgba[c][j] = tx[c];
+	 }
+      }
+      break;
+   case PIPE_TEXTURE_CUBE: /* TXF can't work on CUBE according to spec */
+   default:
+      assert(!"Unknown or CUBE texture type in TXF processing\n");
+      break;
+   }
+}
 /**
  * Create a sampler variant for a given set of non-orthogonal state.
  */
@@ -2692,5 +2799,7 @@ sp_create_sampler_variant( const struct pipe_sampler_state *sampler,
       samp->base.get_samples = samp->sample_target;
    }
 
+   samp->base.get_dims = sample_get_dims;
+   samp->base.get_texel = sample_get_texels;
    return samp;
 }

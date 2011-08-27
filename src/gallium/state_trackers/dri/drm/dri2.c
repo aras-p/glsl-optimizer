@@ -44,8 +44,19 @@
  * DRI2 flush extension.
  */
 static void
-dri2_flush_drawable(__DRIdrawable *draw)
+dri2_flush_drawable(__DRIdrawable *dPriv)
 {
+   struct dri_context *ctx = dri_get_current(dPriv->driScreenPriv);
+   struct dri_drawable *drawable = dri_drawable(dPriv);
+
+   struct pipe_resource *ptex = drawable->textures[ST_ATTACHMENT_BACK_LEFT];
+
+   if (ctx) {
+      if (ptex && ctx->pp && drawable->textures[ST_ATTACHMENT_DEPTH_STENCIL])
+         pp_run(ctx->pp, ptex, ptex, drawable->textures[ST_ATTACHMENT_DEPTH_STENCIL]);
+
+      ctx->st->flush(ctx->st, 0, NULL);
+   }
 }
 
 static void
@@ -266,7 +277,6 @@ dri2_allocate_buffer(__DRIscreen *sPriv,
    struct dri_screen *screen = dri_screen(sPriv);
    struct dri2_buffer *buffer;
    struct pipe_resource templ;
-   enum st_attachment_type statt;
    enum pipe_format pf;
    unsigned bind = 0;
    struct winsys_handle whandle;
@@ -274,21 +284,15 @@ dri2_allocate_buffer(__DRIscreen *sPriv,
    switch (attachment) {
       case __DRI_BUFFER_FRONT_LEFT:
       case __DRI_BUFFER_FAKE_FRONT_LEFT:
-         statt = ST_ATTACHMENT_FRONT_LEFT;
          bind = PIPE_BIND_RENDER_TARGET | PIPE_BIND_SAMPLER_VIEW;
          break;
       case __DRI_BUFFER_BACK_LEFT:
-         statt = ST_ATTACHMENT_BACK_LEFT;
          bind = PIPE_BIND_RENDER_TARGET | PIPE_BIND_SAMPLER_VIEW;
          break;
       case __DRI_BUFFER_DEPTH:
       case __DRI_BUFFER_DEPTH_STENCIL:
       case __DRI_BUFFER_STENCIL:
-            statt = ST_ATTACHMENT_DEPTH_STENCIL;
             bind = PIPE_BIND_DEPTH_STENCIL; /* XXX sampler? */
-         break;
-      default:
-         statt = ST_ATTACHMENT_INVALID;
          break;
    }
 
@@ -662,20 +666,6 @@ fail:
 }
 
 static boolean
-dri2_create_context(gl_api api, const struct gl_config * visual,
-                    __DRIcontext * cPriv, void *sharedContextPrivate)
-{
-   struct dri_context *ctx = NULL;
-
-   if (!dri_create_context(api, visual, cPriv, sharedContextPrivate))
-      return FALSE;
-
-   ctx = cPriv->driverPrivate;
-
-   return TRUE;
-}
-
-static boolean
 dri2_create_buffer(__DRIscreen * sPriv,
                    __DRIdrawable * dPriv,
                    const struct gl_config * visual, boolean isPixmap)
@@ -702,7 +692,7 @@ const struct __DriverAPIRec driDriverAPI = {
    .InitScreen = NULL,
    .InitScreen2 = dri2_init_screen,
    .DestroyScreen = dri_destroy_screen,
-   .CreateContext = dri2_create_context,
+   .CreateContext = dri_create_context,
    .DestroyContext = dri_destroy_context,
    .CreateBuffer = dri2_create_buffer,
    .DestroyBuffer = dri_destroy_buffer,

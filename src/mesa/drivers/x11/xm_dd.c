@@ -454,10 +454,10 @@ xmesa_DrawPixels_8R8G8B( struct gl_context *ctx,
                         "glDrawPixels(invalid PBO access)");
             return;
          }
-         buf = (GLubyte *) ctx->Driver.MapBuffer(ctx,
-                                                 GL_PIXEL_UNPACK_BUFFER_EXT,
-                                                 GL_READ_ONLY_ARB,
-                                                 unpack->BufferObj);
+         buf = (GLubyte *) ctx->Driver.MapBufferRange(ctx, 0,
+						      unpack->BufferObj->Size,
+						      GL_MAP_READ_BIT,
+						      unpack->BufferObj);
          if (!buf) {
             /* buffer is already mapped - that's an error */
             _mesa_error(ctx, GL_INVALID_OPERATION,
@@ -508,8 +508,7 @@ xmesa_DrawPixels_8R8G8B( struct gl_context *ctx,
       }
 
       if (_mesa_is_bufferobj(unpack->BufferObj)) {
-         ctx->Driver.UnmapBuffer(ctx, GL_PIXEL_UNPACK_BUFFER_EXT,
-                                 unpack->BufferObj);
+         ctx->Driver.UnmapBuffer(ctx, unpack->BufferObj);
       }
    }
    else {
@@ -589,10 +588,10 @@ xmesa_DrawPixels_5R6G5B( struct gl_context *ctx,
                         "glDrawPixels(invalid PBO access)");
             return;
          }
-         buf = (GLubyte *) ctx->Driver.MapBuffer(ctx,
-                                                 GL_PIXEL_UNPACK_BUFFER_EXT,
-                                                 GL_READ_ONLY_ARB,
-                                                 unpack->BufferObj);
+         buf = (GLubyte *) ctx->Driver.MapBufferRange(ctx, 0,
+						      unpack->BufferObj->Size,
+						      GL_MAP_READ_BIT,
+						      unpack->BufferObj);
          if (!buf) {
             /* buffer is already mapped - that's an error */
             _mesa_error(ctx, GL_INVALID_OPERATION,
@@ -642,8 +641,7 @@ xmesa_DrawPixels_5R6G5B( struct gl_context *ctx,
       }
 
       if (unpack->BufferObj->Name) {
-         ctx->Driver.UnmapBuffer(ctx, GL_PIXEL_UNPACK_BUFFER_EXT,
-                                 unpack->BufferObj);
+         ctx->Driver.UnmapBuffer(ctx, unpack->BufferObj);
       }
    }
    else {

@@ -109,6 +109,70 @@ out:
    return (*chip_id >= 0);
 }
 
+#elif defined(PIPE_OS_ANDROID)
+
+#include <xf86drm.h>
+/* for i915 */
+#include <i915_drm.h>
+/* for radeon */
+#include <radeon_drm.h>
+/* for util_strcmp */
+#include "util/u_string.h"
+
+static boolean
+drm_fd_get_pci_id(int fd, int *vendor_id, int *chip_id)
+{
+   drmVersionPtr version;
+
+   *chip_id = -1;
+
+   version = drmGetVersion(fd);
+   if (!version) {
+      _eglLog(_EGL_WARNING, "invalid drm fd");
+      return FALSE;
+   }
+   if (!version->name) {
+      _eglLog(_EGL_WARNING, "unable to determine the driver name");
+      drmFreeVersion(version);
+      return FALSE;
+   }
+
+   if (util_strcmp(version->name, "i915") == 0) {
+      struct drm_i915_getparam gp;
+      int ret;
+
+      *vendor_id = 0x8086;
+
+      memset(&gp, 0, sizeof(gp));
+      gp.param = I915_PARAM_CHIPSET_ID;
+      gp.value = chip_id;
+      ret = drmCommandWriteRead(fd, DRM_I915_GETPARAM, &gp, sizeof(gp));
+      if (ret) {
+         _eglLog(_EGL_WARNING, "failed to get param for i915");
+	 *chip_id = -1;
+      }
+   }
+   else if (util_strcmp(version->name, "radeon") == 0) {
+      struct drm_radeon_info info;
+      int ret;
+
+      *vendor_id = 0x1002;
+
+      memset(&info, 0, sizeof(info));
+      info.request = RADEON_INFO_DEVICE_ID;
+      info.value = (unsigned long) chip_id;
+      ret = drmCommandWriteRead(fd, DRM_RADEON_INFO, &info, sizeof(info));
+      if (ret) {
+         _eglLog(_EGL_WARNING, "failed to get info for radeon");
+	 *chip_id = -1;
+      }
+   }
+
+   drmFreeVersion(version);
+
+   return (*chip_id >= 0);
+}
+
 #else
 
 static boolean
@@ -157,13 +221,21 @@ drm_fd_get_screen_name(int fd)
 static struct pipe_screen *
 create_drm_screen(const char *name, int fd)
 {
+   struct pipe_screen *screen;
+
    if (!name) {
       name = drm_fd_get_screen_name(fd);
       if (!name)
          return NULL;
    }
 
-   return egl_pipe_create_drm_screen(name, fd);
+   screen = egl_pipe_create_drm_screen(name, fd);
+   if (screen)
+      _eglLog(_EGL_INFO, "created a pipe screen for %s", name);
+   else
+      _eglLog(_EGL_WARNING, "failed to create a pipe screen for %s", name);
+
+   return screen;
 }
 
 static struct pipe_screen *

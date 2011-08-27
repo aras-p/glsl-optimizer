@@ -34,8 +34,6 @@ ESAPI = $(ES)api
 
 GLAPI := $(TOP)/src/mapi/glapi
 MAPI := $(TOP)/src/mapi/mapi
-# directory for generated sources/headers
-GEN := glapi
 
 esapi_CPPFLAGS := \
 	-I$(TOP)/include \
@@ -68,13 +66,11 @@ lib$(ESAPI).a: $(esapi_OBJECTS)
 $(esapi_OBJECTS): %.o: $(MAPI)/%.c
 	$(CC) -c $(esapi_CPPFLAGS) $(CFLAGS) $< -o $@
 
-$(esapi_SOURCES): | glapi-stamp
+$(esapi_SOURCES): glapi_mapi_tmp.h
 
-.PHONY: glapi-stamp
-glapi-stamp:
-	@# generate sources/headers
-	@$(MAKE) -C $(GLAPI)/gen-es $(ES)
-	@touch $@
+include $(GLAPI)/gen/glapi_gen.mk
+glapi_mapi_tmp.h: $(GLAPI)/gen/gl_and_es_API.xml $(glapi_gen_mapi_deps)
+	$(call glapi_gen_mapi,$<,$(ESAPI))
 
 .PHONY: clean
 clean:
@@ -83,9 +79,7 @@ clean:
 	-rm -f lib$(ESAPI).a
 	-rm -f $(esapi_OBJECTS)
 	-rm -f depend depend.bak
-	-rm -f glapi-stamp
-	@# clean generated sources/headers
-	@$(MAKE) -C $(GLAPI)/gen-es clean-$(ES)
+	-rm -f glapi_mapi_tmp.h
 
 pcedit = \
 	-e 's,@INSTALL_DIR@,$(INSTALL_DIR),' \

@@ -28,6 +28,11 @@
 #ifndef _GBM_H_
 #define _GBM_H_
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+
 #define __GBM__ 1
 
 #include <stdint.h>
@@ -96,5 +101,9 @@ gbm_bo_get_handle(struct gbm_bo *bo);
 
 void
 gbm_bo_destroy(struct gbm_bo *bo);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif

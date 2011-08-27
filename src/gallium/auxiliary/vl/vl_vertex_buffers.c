@@ -125,49 +125,6 @@ vl_vb_upload_pos(struct pipe_context *pipe, unsigned width, unsigned height)
    return pos;
 }
 
-struct pipe_vertex_buffer
-vl_vb_upload_block_num(struct pipe_context *pipe, unsigned num_blocks)
-{
-   struct pipe_vertex_buffer buf;
-   struct pipe_transfer *buf_transfer;
-   struct vertex2s *v;
-   unsigned i;
-
-   assert(pipe);
-
-   /* create buffer */
-   buf.stride = sizeof(struct vertex2s);
-   buf.buffer_offset = 0;
-   buf.buffer = pipe_buffer_create
-   (
-      pipe->screen,
-      PIPE_BIND_VERTEX_BUFFER,
-      PIPE_USAGE_STATIC,
-      sizeof(struct vertex2s) * num_blocks
-   );
-
-   if(!buf.buffer)
-      return buf;
-
-   /* and fill it */
-   v = pipe_buffer_map
-   (
-      pipe,
-      buf.buffer,
-      PIPE_TRANSFER_WRITE | PIPE_TRANSFER_DISCARD,
-      &buf_transfer
-   );
-
-   for ( i = 0; i < num_blocks; ++i, ++v) {
-      v->x = i;
-      v->y = i;
-   }
-
-   pipe_buffer_unmap(pipe, buf_transfer);
-
-   return buf;
-}
-
 static struct pipe_vertex_element
 vl_vb_get_quad_vertex_element(void)
 {
@@ -211,12 +168,10 @@ vl_vb_get_ves_ycbcr(struct pipe_context *pipe)
    /* Position element */
    vertex_elems[VS_I_VPOS].src_format = PIPE_FORMAT_R8G8B8A8_USCALED;
 
-   vl_vb_element_helper(&vertex_elems[VS_I_VPOS], 1, 1);
-
    /* block num element */
-   vertex_elems[VS_I_BLOCK_NUM].src_format = PIPE_FORMAT_R16G16_SSCALED;
+   vertex_elems[VS_I_BLOCK_NUM].src_format = PIPE_FORMAT_R32_FLOAT;
 
-   vl_vb_element_helper(&vertex_elems[VS_I_BLOCK_NUM], 1, 2);
+   vl_vb_element_helper(&vertex_elems[VS_I_VPOS], 2, 1);
 
    return pipe->create_vertex_elements_state(pipe, 3, vertex_elems);
 }
@@ -266,7 +221,7 @@ vl_vb_init(struct vl_vertex_buffer *buffer, struct pipe_context *pipe,
          pipe->screen,
          PIPE_BIND_VERTEX_BUFFER,
          PIPE_USAGE_STREAM,
-         sizeof(struct pipe_ycbcr_block) * size * 4
+         sizeof(struct vl_ycbcr_block) * size * 4
       );
       if (!buffer->ycbcr[i].resource)
          goto error_ycbcr;
@@ -278,7 +233,7 @@ vl_vb_init(struct vl_vertex_buffer *buffer, struct pipe_context *pipe,
          pipe->screen,
          PIPE_BIND_VERTEX_BUFFER,
          PIPE_USAGE_STREAM,
-         sizeof(struct pipe_motionvector) * size
+         sizeof(struct vl_motionvector) * size
       );
       if (!buffer->mv[i].resource)
          goto error_mv;
@@ -310,7 +265,7 @@ vl_vb_get_ycbcr(struct vl_vertex_buffer *buffer, int component)
 
    assert(buffer);
 
-   buf.stride = sizeof(struct pipe_ycbcr_block);
+   buf.stride = sizeof(struct vl_ycbcr_block);
    buf.buffer_offset = 0;
    buf.buffer = buffer->ycbcr[component].resource;
 
@@ -324,7 +279,7 @@ vl_vb_get_mv(struct vl_vertex_buffer *buffer, int motionvector)
 
    assert(buffer);
 
-   buf.stride = sizeof(struct pipe_motionvector);
+   buf.stride = sizeof(struct vl_motionvector);
    buf.buffer_offset = 0;
    buf.buffer = buffer->mv[motionvector].resource;
 
@@ -360,7 +315,7 @@ vl_vb_map(struct vl_vertex_buffer *buffer, struct pipe_context *pipe)
 
 }
 
-struct pipe_ycbcr_block *
+struct vl_ycbcr_block *
 vl_vb_get_ycbcr_stream(struct vl_vertex_buffer *buffer, int component)
 {
    assert(buffer);
@@ -377,7 +332,7 @@ vl_vb_get_mv_stream_stride(struct vl_vertex_buffer *buffer)
    return buffer->width;
 }
 
-struct pipe_motionvector *
+struct vl_motionvector *
 vl_vb_get_mv_stream(struct vl_vertex_buffer *buffer, int ref_frame)
 {
    assert(buffer);

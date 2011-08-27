@@ -81,12 +81,21 @@ gen6_prepare_vs_push_constants(struct brw_context *brw)
 	 params_uploaded++;
       }
 
-      for (i = 0; i < vp->program.Base.Parameters->NumParameters; i++) {
-	 if (brw->vs.constant_map[i] != -1) {
-	    memcpy(param + brw->vs.constant_map[i] * 4,
-		   vp->program.Base.Parameters->ParameterValues[i],
-		   4 * sizeof(float));
-	    params_uploaded++;
+      if (brw->vs.prog_data->uses_new_param_layout) {
+	 for (i = 0; i < brw->vs.prog_data->nr_params; i++) {
+	    *param = convert_param(brw->vs.prog_data->param_convert[i],
+				   brw->vs.prog_data->param[i]);
+	    param++;
+	 }
+	 params_uploaded += brw->vs.prog_data->nr_params / 4;
+      } else {
+	 for (i = 0; i < vp->program.Base.Parameters->NumParameters; i++) {
+	    if (brw->vs.constant_map[i] != -1) {
+	       memcpy(param + brw->vs.constant_map[i] * 4,
+		      vp->program.Base.Parameters->ParameterValues[i],
+		      4 * sizeof(float));
+	       params_uploaded++;
+	    }
 	 }
       }
 
@@ -151,7 +160,15 @@ upload_vs_state(struct brw_context *brw)
    OUT_BATCH((0 << GEN6_VS_SAMPLER_COUNT_SHIFT) |
 	     GEN6_VS_FLOATING_POINT_MODE_ALT |
 	     (brw->vs.nr_surfaces << GEN6_VS_BINDING_TABLE_ENTRY_COUNT_SHIFT));
-   OUT_BATCH(0); /* scratch space base offset */
+
+   if (brw->vs.prog_data->total_scratch) {
+      OUT_RELOC(brw->vs.scratch_bo,
+		I915_GEM_DOMAIN_RENDER, I915_GEM_DOMAIN_RENDER,
+		ffs(brw->vs.prog_data->total_scratch) - 11);
+   } else {
+      OUT_BATCH(0);
+   }
+
    OUT_BATCH((1 << GEN6_VS_DISPATCH_START_GRF_SHIFT) |
 	     (brw->vs.prog_data->urb_read_length << GEN6_VS_URB_READ_LENGTH_SHIFT) |
 	     (0 << GEN6_VS_URB_ENTRY_READ_OFFSET_SHIFT));
@@ -159,6 +176,32 @@ upload_vs_state(struct brw_context *brw)
    OUT_BATCH(((brw->vs_max_threads - 1) << GEN6_VS_MAX_THREADS_SHIFT) |
 	     GEN6_VS_STATISTICS_ENABLE |
 	     GEN6_VS_ENABLE);
+   ADVANCE_BATCH();
+
+   /* Based on my reading of the simulator, the VS constants don't get
+    * pulled into the VS FF unit until an appropriate pipeline flush
+    * happens, and instead the 3DSTATE_CONSTANT_VS packet just adds
+    * references to them into a little FIFO.  The flushes are common,
+    * but don't reliably happen between this and a 3DPRIMITIVE, causing
+    * the primitive to use the wrong constants.  Then the FIFO
+    * containing the constant setup gets added to again on the next
+    * constants change, and eventually when a flush does happen the
+    * unit is overwhelmed by constant changes and dies.
+    *
+    * To avoid this, send a PIPE_CONTROL down the line that will
+    * update the unit immediately loading the constants.  The flush
+    * type bits here were those set by the STATE_BASE_ADDRESS whose
+    * move in a82a43e8d99e1715dd11c9c091b5ab734079b6a6 triggered the
+    * bug reports that led to this workaround, and may be more than
+    * what is strictly required to avoid the issue.
+    */
+   BEGIN_BATCH(4);
+   OUT_BATCH(_3DSTATE_PIPE_CONTROL);
+   OUT_BATCH(PIPE_CONTROL_DEPTH_STALL |
+	     PIPE_CONTROL_INSTRUCTION_FLUSH |
+	     PIPE_CONTROL_STATE_CACHE_INVALIDATE);
+   OUT_BATCH(0); /* address */
+   OUT_BATCH(0); /* write data */
    ADVANCE_BATCH();
 }
 

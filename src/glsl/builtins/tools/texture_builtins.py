@@ -44,6 +44,11 @@ def get_extra_dim(sampler_type, use_proj, unused_fields):
         extra_dim += 1
     return extra_dim
 
+def get_txs_dim(sampler_type):
+    if sampler_type.startswith("Cube"):
+        return 2
+    return get_coord_dim(sampler_type)
+
 def generate_sigs(g, tex_inst, sampler_type, variant = 0, unused_fields = 0):
     coord_dim = get_coord_dim(sampler_type)
     extra_dim = get_extra_dim(sampler_type, variant & Proj, unused_fields)
@@ -51,17 +56,20 @@ def generate_sigs(g, tex_inst, sampler_type, variant = 0, unused_fields = 0):
 
     if variant & Single:
         return_type = "float"
+    elif tex_inst == "txs":
+        return_type = vec_type("i", get_txs_dim(sampler_type))
     else:
         return_type = g + "vec4"
 
     # Print parameters
     print "   (signature", return_type
     print "     (parameters"
-    print "       (declare (in) " + g + "sampler" + sampler_type + " sampler)"
-    print "       (declare (in) " + vec_type("i" if tex_inst == "txf" else "", coord_dim + extra_dim) + " P)",
+    print "       (declare (in) " + g + "sampler" + sampler_type + " sampler)",
+    if tex_inst != "txs":
+        print "\n       (declare (in) " + vec_type("i" if tex_inst == "txf" else "", coord_dim + extra_dim) + " P)",
     if tex_inst == "txl":
         print "\n       (declare (in) float lod)",
-    elif tex_inst == "txf":
+    elif tex_inst == "txf" or tex_inst == "txs":
         print "\n       (declare (in) int lod)",
     elif tex_inst == "txd":
         grad_type = vec_type("", coord_dim)
@@ -75,18 +83,19 @@ def generate_sigs(g, tex_inst, sampler_type, variant = 0, unused_fields = 0):
 
     print ")\n     ((return (" + tex_inst, return_type, "(var_ref sampler)",
 
-    # Coordinate
-    if extra_dim > 0:
-        print "(swiz " + "xyzw"[:coord_dim] + " (var_ref P))",
-    else:
-        print "(var_ref P)",
+    if tex_inst != "txs":
+        # Coordinate
+        if extra_dim > 0:
+            print "(swiz " + "xyzw"[:coord_dim] + " (var_ref P))",
+        else:
+            print "(var_ref P)",
 
-    if variant & Offset:
-        print "(var_ref offset)",
-    else:
-        print "0",
+        if variant & Offset:
+            print "(var_ref offset)",
+        else:
+            print "0",
 
-    if tex_inst != "txf":
+    if tex_inst != "txf" and tex_inst != "txs":
         # Projective divisor
         if variant & Proj:
             print "(swiz " + "xyzw"[coord_dim + extra_dim-1] + " (var_ref P))",
@@ -104,7 +113,7 @@ def generate_sigs(g, tex_inst, sampler_type, variant = 0, unused_fields = 0):
     # Bias/explicit LOD/gradient:
     if tex_inst == "txb":
         print "(var_ref bias)",
-    elif tex_inst == "txl" or tex_inst == "txf":
+    elif tex_inst == "txl" or tex_inst == "txf" or tex_inst == "txs":
         print "(var_ref lod)",
     elif tex_inst == "txd":
         print "((var_ref dPdx) (var_ref dPdy))",
@@ -130,6 +139,19 @@ def end_function(fs, name):
 #
 # Takes a dictionary as an argument.
 def generate_texture_functions(fs):
+    start_function("textureSize")
+    generate_fiu_sigs("txs", "1D")
+    generate_fiu_sigs("txs", "2D")
+    generate_fiu_sigs("txs", "3D")
+    generate_fiu_sigs("txs", "Cube")
+    generate_fiu_sigs("txs", "1DArray")
+    generate_fiu_sigs("txs", "2DArray")
+    generate_sigs("", "txs", "1DShadow")
+    generate_sigs("", "txs", "2DShadow")
+    generate_sigs("", "txs", "1DArrayShadow")
+    generate_sigs("", "txs", "2DArrayShadow")
+    end_function(fs, "textureSize")
+
     start_function("texture")
     generate_fiu_sigs("tex", "1D")
     generate_fiu_sigs("tex", "2D")

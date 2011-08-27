@@ -28,6 +28,32 @@
 
 #define R600_TEXEL_PITCH_ALIGNMENT_MASK        0x7
 
+/* evergreen values */
+#define EG_RESOURCE_OFFSET                 0x00030000
+#define EG_RESOURCE_END                    0x00034000
+#define EG_LOOP_CONST_OFFSET               0x0003A200
+#define EG_LOOP_CONST_END                  0x0003A26C
+#define EG_BOOL_CONST_OFFSET               0x0003A500
+#define EG_BOOL_CONST_END                  0x0003A506
+
+#define R600_CONFIG_REG_OFFSET                 0X00008000
+#define R600_CONFIG_REG_END                    0X0000AC00
+#define R600_CONTEXT_REG_OFFSET                0X00028000
+#define R600_CONTEXT_REG_END                   0X00029000
+#define R600_ALU_CONST_OFFSET                  0X00030000
+#define R600_ALU_CONST_END                     0X00032000
+#define R600_RESOURCE_OFFSET                   0X00038000
+#define R600_RESOURCE_END                      0X0003C000
+#define R600_SAMPLER_OFFSET                    0X0003C000
+#define R600_SAMPLER_END                       0X0003CFF0
+#define R600_CTL_CONST_OFFSET                  0X0003CFF0
+#define R600_CTL_CONST_END                     0X0003E200
+#define R600_LOOP_CONST_OFFSET                 0X0003E200
+#define R600_LOOP_CONST_END                    0X0003E380
+#define R600_BOOL_CONST_OFFSET                 0X0003E380
+#define R600_BOOL_CONST_END                    0X00040000
+
+
 #define PKT3_NOP                               0x10
 #define PKT3_INDIRECT_BUFFER_END               0x17
 #define PKT3_SET_PREDICATION                   0x20
@@ -66,10 +92,37 @@
 #define PKT3_SET_SAMPLER                       0x6E
 #define PKT3_SET_CTL_CONST                     0x6F
 #define PKT3_SURFACE_BASE_UPDATE               0x73
+#define		SURFACE_BASE_UPDATE_DEPTH      (1 << 0)
+#define		SURFACE_BASE_UPDATE_COLOR(x)   (2 << (x))
+#define		SURFACE_BASE_UPDATE_STRMOUT(x) (0x200 << (x))
+
+#define EVENT_TYPE_PS_PARTIAL_FLUSH            0x10
+#define EVENT_TYPE_CACHE_FLUSH_AND_INV_TS_EVENT 0x14
+#define EVENT_TYPE_ZPASS_DONE                  0x15
+#define EVENT_TYPE_CACHE_FLUSH_AND_INV_EVENT   0x16
+#define		EVENT_TYPE(x)                           ((x) << 0)
+#define		EVENT_INDEX(x)                          ((x) << 8)
+                /* 0 - any non-TS event
+		 * 1 - ZPASS_DONE
+		 * 2 - SAMPLE_PIPELINESTAT
+		 * 3 - SAMPLE_STREAMOUTSTAT*
+		 * 4 - *S_PARTIAL_FLUSH
+		 * 5 - TS events
+		 */
 
 #define PREDICATION_OP_CLEAR 0x0
 #define PREDICATION_OP_ZPASS 0x1
 #define PREDICATION_OP_PRIMCOUNT 0x2
+
+#define PRED_OP(x) ((x) << 16)
+
+#define PREDICATION_CONTINUE (1 << 31)
+
+#define PREDICATION_HINT_WAIT (0 << 12)
+#define PREDICATION_HINT_NOWAIT_DRAW (1 << 12)
+
+#define PREDICATION_DRAW_NOT_VISIBLE (0 << 8)
+#define PREDICATION_DRAW_VISIBLE (1 << 8)
 
 #define PKT_TYPE_S(x)                   (((x) & 0x3) << 30)
 #define PKT_TYPE_G(x)                   (((x) >> 30) & 0x3)
@@ -83,8 +136,9 @@
 #define PKT3_IT_OPCODE_S(x)             (((x) & 0xFF) << 8)
 #define PKT3_IT_OPCODE_G(x)             (((x) >> 8) & 0xFF)
 #define PKT3_IT_OPCODE_C                0xFFFF00FF
+#define PKT3_PRED_S(x)               (((x) >> 0) & 0x1)
 #define PKT0(index, count) (PKT_TYPE_S(0) | PKT0_BASE_INDEX_S(index) | PKT_COUNT_S(count))
-#define PKT3(op, count) (PKT_TYPE_S(3) | PKT3_IT_OPCODE_S(op) | PKT_COUNT_S(count))
+#define PKT3(op, count, predicate) (PKT_TYPE_S(3) | PKT3_IT_OPCODE_S(op) | PKT_COUNT_S(count) | PKT3_PRED_S(predicate))
 
 /* Registers */
 #define R_008C00_SQ_CONFIG                           0x00008C00
