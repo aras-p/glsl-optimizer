@@ -11,15 +11,6 @@ ifeq ($(RADEON_LDFLAGS),)
 CS_SOURCES = radeon_cs_space_drm.c radeon_bo.c radeon_cs.c
 endif
 
-COMMON_SOURCES = \
-	../../common/driverfuncs.c \
-	../common/drirenderbuffer.c \
-	../common/utils.c \
-	../common/texmem.c \
-	../common/vblank.c \
-	../common/xmlconfig.c \
-	../common/dri_util.c
-
 RADEON_COMMON_SOURCES = \
 	radeon_bo_legacy.c \
 	radeon_buffer_objects.c \
