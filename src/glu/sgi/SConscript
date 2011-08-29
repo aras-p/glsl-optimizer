@@ -11,7 +11,6 @@ env.Prepend(CPPPATH = [
 ])
 
 env.Prepend(CPPDEFINES = [
-    'NDEBUG',
     'LIBRARYBUILD',
     'RESOLVE_3D_TEXTURE_SUPPORT',
 ])
