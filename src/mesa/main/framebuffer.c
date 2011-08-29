@@ -888,7 +888,6 @@ _mesa_source_buffer_exists(struct gl_context *ctx, GLenum format)
    case GL_RGBA:
    case GL_BGRA:
    case GL_ABGR_EXT:
-   case GL_COLOR_INDEX:
    case GL_RED_INTEGER_EXT:
    case GL_GREEN_INTEGER_EXT:
    case GL_BLUE_INTEGER_EXT:
@@ -976,7 +975,6 @@ _mesa_dest_buffer_exists(struct gl_context *ctx, GLenum format)
    case GL_RGBA:
    case GL_BGRA:
    case GL_ABGR_EXT:
-   case GL_COLOR_INDEX:
    case GL_RED_INTEGER_EXT:
    case GL_GREEN_INTEGER_EXT:
    case GL_BLUE_INTEGER_EXT:
