@@ -29,31 +29,8 @@
  */
 
 
-/* We're essentially building part of GDI here, so define this so that
- * we get the right export linkage. */
-#ifdef __MINGW32__
-
-#include <stdarg.h>
-#include <windef.h>
-#include <wincon.h>
-#include <winbase.h>
-
-#  if defined(BUILD_GL32)
-#    define WINGDIAPI __declspec(dllexport)	
-#  else
-#    define __W32API_USE_DLLIMPORT__
-#  endif
-
-#include <wingdi.h>
-#include "GL/mesa_wgl.h"
-#include <stdlib.h>
-
-#else
-
-#define _GDI32_
 #include <windows.h>
 
-#endif
 #include "main/config.h"
 #include "glapi/glapi.h"
 #include "GL/wmesa.h"   /* protos for wmesa* functions */
