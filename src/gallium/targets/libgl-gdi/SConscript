@@ -27,7 +27,9 @@ if env['llvm']:
     env.Append(CPPDEFINES = 'HAVE_LLVMPIPE')
     drivers += [llvmpipe]
 
-if env['gcc']:
+if env['gcc'] and 'w64' not in env['CC'].split('-'):
+    # DEF parser in certain versions of MinGW is busted, as does not behave as
+    # MSVC.  mingw-w64 works fine.
     sources += ['#src/gallium/state_trackers/wgl/opengl32.mingw.def']
 else:
     sources += ['#src/gallium/state_trackers/wgl/opengl32.def']
