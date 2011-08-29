@@ -32,7 +32,6 @@
 #include "mfeatures.h"
 
 struct _glapi_table;
-struct gl_color_table;
 
 #if FEATURE_colortable
 

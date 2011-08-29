@@ -565,25 +565,6 @@ struct gl_config
 
 
 /**
- * Data structure for color tables
- */
-struct gl_color_table
-{
-   GLenum InternalFormat;      /**< The user-specified format */
-   GLenum _BaseFormat;         /**< GL_ALPHA, GL_RGBA, GL_RGB, etc */
-   GLuint Size;                /**< number of entries in table */
-   GLfloat *TableF;            /**< Color table, floating point values */
-   GLubyte *TableUB;           /**< Color table, ubyte values */
-   GLubyte RedSize;
-   GLubyte GreenSize;
-   GLubyte BlueSize;
-   GLubyte AlphaSize;
-   GLubyte LuminanceSize;
-   GLubyte IntensitySize;
-};
-
-
-/**
  * \name Bit flags used for updating material values.
  */
 /*@{*/
