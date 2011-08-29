@@ -59,7 +59,7 @@ wglSetPixelFormat(HDC hdc,
                   int iPixelFormat,
                   CONST PIXELFORMATDESCRIPTOR *ppfd);
 
-#if defined(__MINGW32__) || (WINVER < 0x0500)
+#ifndef WGL_SWAPMULTIPLE_MAX
 
 typedef struct _WGLSWAP
 {
@@ -73,7 +73,7 @@ WINGDIAPI DWORD WINAPI
 wglSwapMultipleBuffers(UINT n,
                        CONST WGLSWAP *ps);
 
-#endif
+#endif /* !WGL_SWAPMULTIPLE_MAX */
 
 
 #endif /* STW_WGL_H_ */
