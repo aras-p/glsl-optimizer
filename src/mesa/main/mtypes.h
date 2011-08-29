@@ -1296,9 +1296,9 @@ struct gl_texture_image
    GLint InternalFormat;	/**< Internal format as given by the user */
    GLenum _BaseFormat;		/**< Either GL_RGB, GL_RGBA, GL_ALPHA,
 				 *   GL_LUMINANCE, GL_LUMINANCE_ALPHA,
-				 *   GL_INTENSITY, GL_COLOR_INDEX,
-				 *   GL_DEPTH_COMPONENT or GL_DEPTH_STENCIL_EXT
-                                 *   only. Used for choosing TexEnv arithmetic.
+				 *   GL_INTENSITY, GL_DEPTH_COMPONENT or
+				 *   GL_DEPTH_STENCIL_EXT only. Used for
+				 *   choosing TexEnv arithmetic.
 				 */
    gl_format TexFormat;         /**< The actual texture memory format */
 
@@ -1395,8 +1395,7 @@ struct gl_sampler_object
 
 /**
  * Texture object state.  Contains the array of mipmap images, border color,
- * wrap modes, filter modes, shadow/texcompare state, and the per-texture
- * color palette.
+ * wrap modes, filter modes, and shadow/texcompare state.
  */
 struct gl_texture_object
 {
@@ -1426,9 +1425,6 @@ struct gl_texture_object
    /** GL_ARB_texture_buffer_object */
    struct gl_buffer_object *BufferObject;
    GLenum BufferObjectFormat;
-
-   /** GL_EXT_paletted_texture */
-   struct gl_color_table Palette;
 
    /**
     * \name For device driver.
@@ -1544,10 +1540,6 @@ struct gl_texture_attrib
 
    /** GL_ARB_seamless_cubemap */
    GLboolean CubeMapSeamless;
-
-   /** GL_EXT_shared_texture_palette */
-   GLboolean SharedPalette;
-   struct gl_color_table Palette;
 
    /** Texture units/samplers used by vertex or fragment texturing */
    GLbitfield _EnabledUnits;
@@ -2893,7 +2885,6 @@ struct gl_extensions
    GLboolean EXT_gpu_program_parameters;
    GLboolean EXT_gpu_shader4;
    GLboolean EXT_multi_draw_arrays;
-   GLboolean EXT_paletted_texture;
    GLboolean EXT_packed_depth_stencil;
    GLboolean EXT_packed_float;
    GLboolean EXT_packed_pixels;
@@ -2906,7 +2897,6 @@ struct gl_extensions
    GLboolean EXT_secondary_color;
    GLboolean EXT_separate_shader_objects;
    GLboolean EXT_separate_specular_color;
-   GLboolean EXT_shared_texture_palette;
    GLboolean EXT_stencil_wrap;
    GLboolean EXT_stencil_two_side;
    GLboolean EXT_subtexture;

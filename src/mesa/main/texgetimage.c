@@ -65,55 +65,6 @@ type_with_negative_values(GLenum type)
 
 
 /**
- * glGetTexImage for color index pixels.
- */
-static void
-get_tex_color_index(struct gl_context *ctx, GLuint dimensions,
-                    GLenum format, GLenum type, GLvoid *pixels,
-                    const struct gl_texture_image *texImage)
-{
-   const GLint width = texImage->Width;
-   const GLint height = texImage->Height;
-   const GLint depth = texImage->Depth;
-   const GLint rowstride = texImage->RowStride;
-   const GLuint indexBits =
-      _mesa_get_format_bits(texImage->TexFormat, GL_TEXTURE_INDEX_SIZE_EXT);
-   const GLbitfield transferOps = 0x0;
-   GLint img, row, col;
-
-   for (img = 0; img < depth; img++) {
-      for (row = 0; row < height; row++) {
-         GLuint indexRow[MAX_WIDTH] = { 0 };
-         void *dest = _mesa_image_address(dimensions, &ctx->Pack, pixels,
-                                          width, height, format, type,
-                                          img, row, 0);
-         assert(dest);
-
-         if (indexBits == 8) {
-            const GLubyte *src = (const GLubyte *) texImage->Data;
-            src += rowstride * (img * height + row);
-            for (col = 0; col < width; col++) {
-               indexRow[col] = src[col];
-            }
-         }
-         else if (indexBits == 16) {
-            const GLushort *src = (const GLushort *) texImage->Data;
-            src += rowstride * (img * height + row);
-            for (col = 0; col < width; col++) {
-               indexRow[col] = src[col];
-            }
-         }
-         else {
-            _mesa_problem(ctx, "Color index problem in _mesa_GetTexImage");
-         }
-         _mesa_pack_index_span(ctx, width, type, dest,
-                               indexRow, &ctx->Pack, transferOps);
-      }
-   }
-}
-
-
-/**
  * glGetTexImage for depth/Z pixels.
  */
 static void
@@ -457,9 +408,6 @@ _mesa_get_teximage(struct gl_context *ctx, GLenum target, GLint level,
    if (get_tex_memcpy(ctx, format, type, pixels, texObj, texImage)) {
       /* all done */
    }
-   else if (format == GL_COLOR_INDEX) {
-      get_tex_color_index(ctx, dimensions, format, type, pixels, texImage);
-   }
    else if (format == GL_DEPTH_COMPONENT) {
       get_tex_depth(ctx, dimensions, format, type, pixels, texImage);
    }
@@ -572,7 +520,7 @@ getteximage_error_check(struct gl_context *ctx, GLenum target, GLint level,
       return GL_TRUE;
    }
 
-   if (!ctx->Extensions.EXT_paletted_texture && _mesa_is_index_format(format)) {
+   if (_mesa_is_index_format(format)) {
       _mesa_error(ctx, GL_INVALID_ENUM, "glGetTexImage(format)");
       return GL_TRUE;
    }
@@ -615,17 +563,10 @@ getteximage_error_check(struct gl_context *ctx, GLenum target, GLint level,
    baseFormat = _mesa_get_format_base_format(texImage->TexFormat);
       
    /* Make sure the requested image format is compatible with the
-    * texture's format.  Note that a color index texture can be converted
-    * to RGBA so that combo is allowed.
+    * texture's format.
     */
    if (_mesa_is_color_format(format)
-       && !_mesa_is_color_format(baseFormat)
-       && !_mesa_is_index_format(baseFormat)) {
-      _mesa_error(ctx, GL_INVALID_OPERATION, "glGetTexImage(format mismatch)");
-      return GL_TRUE;
-   }
-   else if (_mesa_is_index_format(format)
-            && !_mesa_is_index_format(baseFormat)) {
+       && !_mesa_is_color_format(baseFormat)) {
       _mesa_error(ctx, GL_INVALID_OPERATION, "glGetTexImage(format mismatch)");
       return GL_TRUE;
    }

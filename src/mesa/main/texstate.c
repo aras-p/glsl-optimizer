@@ -75,7 +75,6 @@ _mesa_copy_texture_state( const struct gl_context *src, struct gl_context *dst )
    dst->Texture._GenFlags = src->Texture._GenFlags;
    dst->Texture._TexGenEnabled = src->Texture._TexGenEnabled;
    dst->Texture._TexMatEnabled = src->Texture._TexMatEnabled;
-   dst->Texture.SharedPalette = src->Texture.SharedPalette;
 
    /* per-unit state */
    for (u = 0; u < src->Const.MaxCombinedTextureImageUnits; u++) {
@@ -402,11 +401,8 @@ update_tex_combine(struct gl_context *ctx, struct gl_texture_unit *texUnit)
    else {
       const struct gl_texture_object *texObj = texUnit->_Current;
       GLenum format = texObj->Image[0][texObj->BaseLevel]->_BaseFormat;
-      if (format == GL_COLOR_INDEX) {
-         format = GL_RGBA;  /* a bit of a hack */
-      }
-      else if (format == GL_DEPTH_COMPONENT ||
-               format == GL_DEPTH_STENCIL_EXT) {
+
+      if (format == GL_DEPTH_COMPONENT || format == GL_DEPTH_STENCIL_EXT) {
          format = texObj->Sampler.DepthMode;
       }
       calculate_derived_texenv(&texUnit->_EnvMode, texUnit->EnvMode, format);
@@ -778,8 +774,6 @@ _mesa_init_texture(struct gl_context *ctx)
    /* Texture group */
    ctx->Texture.CurrentUnit = 0;      /* multitexture */
    ctx->Texture._EnabledUnits = 0x0;
-   ctx->Texture.SharedPalette = GL_FALSE;
-   _mesa_init_colortable(&ctx->Texture.Palette);
 
    for (u = 0; u < Elements(ctx->Texture.Unit); u++)
       init_texture_unit(ctx, u);

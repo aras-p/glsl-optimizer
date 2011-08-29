@@ -198,8 +198,6 @@ _mesa_delete_texture_object(struct gl_context *ctx,
     */
    texObj->Target = 0x99;
 
-   _mesa_free_colortable_data(&texObj->Palette);
-
    /* free the texture images */
    for (face = 0; face < 6; face++) {
       for (i = 0; i < MAX_TEXTURE_LEVELS; i++) {
@@ -258,7 +256,6 @@ _mesa_copy_texture_object( struct gl_texture_object *dest,
    dest->_MaxLevel = src->_MaxLevel;
    dest->_MaxLambda = src->_MaxLambda;
    dest->GenerateMipmap = src->GenerateMipmap;
-   dest->Palette = src->Palette;
    dest->_Complete = src->_Complete;
    COPY_4V(dest->Swizzle, src->Swizzle);
    dest->_Swizzle = src->_Swizzle;

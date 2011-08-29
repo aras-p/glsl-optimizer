@@ -159,21 +159,6 @@ _mesa_base_tex_format( struct gl_context *ctx, GLint internalFormat )
       }
    }
 
-   if (ctx->Extensions.EXT_paletted_texture) {
-      switch (internalFormat) {
-         case GL_COLOR_INDEX:
-         case GL_COLOR_INDEX1_EXT:
-         case GL_COLOR_INDEX2_EXT:
-         case GL_COLOR_INDEX4_EXT:
-         case GL_COLOR_INDEX8_EXT:
-         case GL_COLOR_INDEX12_EXT:
-         case GL_COLOR_INDEX16_EXT:
-            return GL_COLOR_INDEX;
-         default:
-            ; /* fallthrough */
-      }
-   }
-
    if (ctx->Extensions.ARB_depth_texture) {
       switch (internalFormat) {
          case GL_DEPTH_COMPONENT:
@@ -1554,7 +1539,13 @@ texture_error_check( struct gl_context *ctx,
    const GLenum proxyTarget = get_proxy_target(target);
    const GLboolean isProxy = target == proxyTarget;
    GLboolean sizeOK = GL_TRUE;
-   GLboolean colorFormat, indexFormat;
+   GLboolean colorFormat;
+
+   /* Even though there are no color-index textures, we still have to support
+    * uploading color-index data and remapping it to RGB via the
+    * GL_PIXEL_MAP_I_TO_[RGBA] tables.
+    */
+   const GLboolean indexFormat = (format == GL_COLOR_INDEX);
 
    /* Basic level check (more checking in ctx->Driver.TestProxyTexImage) */
    if (level < 0 || level >= MAX_TEXTURE_LEVELS) {
@@ -1635,9 +1626,7 @@ texture_error_check( struct gl_context *ctx,
 
    /* make sure internal format and format basically agree */
    colorFormat = _mesa_is_color_format(format);
-   indexFormat = _mesa_is_index_format(format);
    if ((_mesa_is_color_format(internalFormat) && !colorFormat && !indexFormat) ||
-       (_mesa_is_index_format(internalFormat) && !indexFormat) ||
        (_mesa_is_depth_format(internalFormat) != _mesa_is_depth_format(format)) ||
        (_mesa_is_ycbcr_format(internalFormat) != _mesa_is_ycbcr_format(format)) ||
        (_mesa_is_depthstencil_format(internalFormat) != _mesa_is_depthstencil_format(format)) ||

@@ -857,7 +857,6 @@ static const struct value_desc values[] = {
    { GL_RENDER_MODE, CONTEXT_ENUM(RenderMode), NO_EXTRA },
    { GL_RGBA_MODE, CONST(1), NO_EXTRA },
    { GL_SELECTION_BUFFER_SIZE, CONTEXT_INT(Select.BufferSize), NO_EXTRA },
-   { GL_SHARED_TEXTURE_PALETTE_EXT, CONTEXT_BOOL(Texture.SharedPalette), NO_EXTRA },
 
    { GL_STEREO, BUFFER_INT(Visual.stereoMode), NO_EXTRA },
 

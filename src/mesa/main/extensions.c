@@ -172,7 +172,6 @@ static const struct extension extension_table[] = {
    { "GL_EXT_packed_depth_stencil",                o(EXT_packed_depth_stencil),                GL,             2005 },
    { "GL_EXT_packed_float",                        o(EXT_packed_float),                        GL,             2004 },
    { "GL_EXT_packed_pixels",                       o(EXT_packed_pixels),                       GL,             1997 },
-   { "GL_EXT_paletted_texture",                    o(EXT_paletted_texture),                    GL,             1995 },
    { "GL_EXT_pixel_buffer_object",                 o(EXT_pixel_buffer_object),                 GL,             2004 },
    { "GL_EXT_point_parameters",                    o(EXT_point_parameters),                    GL,             1997 },
    { "GL_EXT_polygon_offset",                      o(EXT_polygon_offset),                      GL,             1995 },
@@ -182,7 +181,6 @@ static const struct extension extension_table[] = {
    { "GL_EXT_separate_shader_objects",             o(EXT_separate_shader_objects),             GL,             2008 },
    { "GL_EXT_separate_specular_color",             o(EXT_separate_specular_color),             GL,             1997 },
    { "GL_EXT_shadow_funcs",                        o(EXT_shadow_funcs),                        GL,             2002 },
-   { "GL_EXT_shared_texture_palette",              o(EXT_shared_texture_palette),              GL,             2000 },
    { "GL_EXT_stencil_two_side",                    o(EXT_stencil_two_side),                    GL,             2001 },
    { "GL_EXT_stencil_wrap",                        o(EXT_stencil_wrap),                        GL,             2002 },
    { "GL_EXT_subtexture",                          o(EXT_subtexture),                          GL,             1995 },
@@ -488,7 +486,6 @@ _mesa_enable_sw_extensions(struct gl_context *ctx)
 #endif
    /*ctx->Extensions.EXT_multi_draw_arrays = GL_TRUE;*/
    ctx->Extensions.EXT_packed_depth_stencil = GL_TRUE;
-   ctx->Extensions.EXT_paletted_texture = GL_TRUE;
 #if FEATURE_EXT_pixel_buffer_object
    ctx->Extensions.EXT_pixel_buffer_object = GL_TRUE;
 #endif
@@ -496,7 +493,6 @@ _mesa_enable_sw_extensions(struct gl_context *ctx)
    ctx->Extensions.EXT_provoking_vertex = GL_TRUE;
    ctx->Extensions.EXT_shadow_funcs = GL_TRUE;
    ctx->Extensions.EXT_secondary_color = GL_TRUE;
-   ctx->Extensions.EXT_shared_texture_palette = GL_TRUE;
    ctx->Extensions.EXT_stencil_wrap = GL_TRUE;
    ctx->Extensions.EXT_stencil_two_side = GL_TRUE;
    ctx->Extensions.EXT_texture_array = GL_TRUE;

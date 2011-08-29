@@ -1175,7 +1175,6 @@ _mesa_get_format_bits(gl_format format, GLenum pname)
    case GL_TEXTURE_LUMINANCE_SIZE:
       return info->LuminanceBits;
    case GL_INDEX_BITS:
-   case GL_TEXTURE_INDEX_SIZE_EXT:
       return info->IndexBits;
    case GL_DEPTH_BITS:
    case GL_TEXTURE_DEPTH_SIZE_ARB:

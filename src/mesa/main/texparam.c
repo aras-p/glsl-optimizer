@@ -987,12 +987,6 @@ _mesa_GetTexLevelParameteriv( GLenum target, GLint level,
             }
          }
          break;
-      case GL_TEXTURE_INDEX_SIZE_EXT:
-         if (img->_BaseFormat == GL_COLOR_INDEX)
-            *params = _mesa_get_format_bits(texFormat, pname);
-         else
-            *params = 0;
-         break;
       case GL_TEXTURE_DEPTH_SIZE_ARB:
          if (!ctx->Extensions.ARB_depth_texture)
             goto invalid_pname;

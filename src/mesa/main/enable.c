@@ -576,12 +576,6 @@ _mesa_set_enable(struct gl_context *ctx, GLenum cap, GLboolean state)
          FLUSH_VERTICES(ctx, _NEW_SCISSOR);
          ctx->Scissor.Enabled = state;
          break;
-      case GL_SHARED_TEXTURE_PALETTE_EXT:
-         if (ctx->Texture.SharedPalette == state)
-            return;
-         FLUSH_VERTICES(ctx, _NEW_TEXTURE);
-         ctx->Texture.SharedPalette = state;
-         break;
       case GL_STENCIL_TEST:
          if (ctx->Stencil.Enabled == state)
             return;
@@ -1175,8 +1169,6 @@ _mesa_IsEnabled( GLenum cap )
          return ctx->Transform.RescaleNormals;
       case GL_SCISSOR_TEST:
 	 return ctx->Scissor.Enabled;
-      case GL_SHARED_TEXTURE_PALETTE_EXT:
-         return ctx->Texture.SharedPalette;
       case GL_STENCIL_TEST:
 	 return ctx->Stencil.Enabled;
       case GL_TEXTURE_1D:
