@@ -118,11 +118,6 @@ _mesa_init_driver_functions(struct dd_function_table *driver)
    driver->UnmapTexture = NULL;
    driver->TextureMemCpy = memcpy;
    driver->IsTextureResident = NULL;
-   driver->UpdateTexturePalette = NULL;
-
-   /* imaging */
-   driver->CopyColorTable = _mesa_meta_CopyColorTable;
-   driver->CopyColorSubTable = _mesa_meta_CopyColorSubTable;
 
    /* Vertex/fragment programs */
    driver->BindProgram = NULL;

@@ -523,29 +523,6 @@ struct dd_function_table {
     */
    GLboolean (*IsTextureResident)( struct gl_context *ctx,
                                    struct gl_texture_object *t );
-
-   /**
-    * Called when the texture's color lookup table is changed.
-    * 
-    * If \p tObj is NULL then the shared texture palette
-    * gl_texture_object::Palette is to be updated.
-    */
-   void (*UpdateTexturePalette)( struct gl_context *ctx,
-                                 struct gl_texture_object *tObj );
-   /*@}*/
-
-   
-   /**
-    * \name Imaging functionality
-    */
-   /*@{*/
-   void (*CopyColorTable)( struct gl_context *ctx,
-			   GLenum target, GLenum internalformat,
-			   GLint x, GLint y, GLsizei width );
-
-   void (*CopyColorSubTable)( struct gl_context *ctx,
-			      GLenum target, GLsizei start,
-			      GLint x, GLint y, GLsizei width );
    /*@}*/
 
 
