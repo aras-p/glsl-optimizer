@@ -48,6 +48,8 @@ struct drisw_screen
    __GLXDRIscreen vtable;
    const __DRIcoreExtension *core;
    const __DRIswrastExtension *swrast;
+   const __DRItexBufferExtension *texBuffer;
+
    const __DRIconfig **driver_configs;
 
    void *driver;
@@ -294,6 +296,66 @@ drisw_unbind_context(struct glx_context *context, struct glx_context *new)
    (*psc->core->unbindContext) (pcp->driContext);
 }
 
+static void
+drisw_bind_tex_image(Display * dpy,
+		    GLXDrawable drawable,
+		    int buffer, const int *attrib_list)
+{
+   struct glx_context *gc = __glXGetCurrentContext();
+   struct drisw_context *pcp = (struct drisw_context *) gc;
+   __GLXDRIdrawable *base = GetGLXDRIDrawable(dpy, drawable);
+   struct glx_display *dpyPriv = __glXInitialize(dpy);
+   struct drisw_drawable *pdraw = (struct drisw_drawable *) base;
+   struct drisw_screen *psc;
+
+   if (pdraw != NULL) {
+      psc = (struct drisw_screen *) base->psc;
+
+      if (!psc->texBuffer)
+         return;
+
+      if (psc->texBuffer->base.version >= 2 &&
+        psc->texBuffer->setTexBuffer2 != NULL) {
+	      (*psc->texBuffer->setTexBuffer2) (pcp->driContext,
+					   pdraw->base.textureTarget,
+					   pdraw->base.textureFormat,
+					   pdraw->driDrawable);
+      }
+      else {
+	      (*psc->texBuffer->setTexBuffer) (pcp->driContext,
+					  pdraw->base.textureTarget,
+					  pdraw->driDrawable);
+      }
+   }
+}
+
+static void
+drisw_release_tex_image(Display * dpy, GLXDrawable drawable, int buffer)
+{
+#if __DRI_TEX_BUFFER_VERSION >= 3
+   struct glx_context *gc = __glXGetCurrentContext();
+   struct dri2_context *pcp = (struct dri2_context *) gc;
+   __GLXDRIdrawable *base = GetGLXDRIDrawable(dpy, drawable);
+   struct glx_display *dpyPriv = __glXInitialize(dpy);
+   struct dri2_drawable *pdraw = (struct dri2_drawable *) base;
+   struct dri2_screen *psc;
+
+   if (pdraw != NULL) {
+      psc = (struct dri2_screen *) base->psc;
+
+      if (!psc->texBuffer)
+         return;
+
+      if (psc->texBuffer->base.version >= 3 &&
+          psc->texBuffer->releaseTexBuffer != NULL) {
+         (*psc->texBuffer->releaseTexBuffer) (pcp->driContext,
+                                           pdraw->base.textureTarget,
+                                           pdraw->driDrawable);
+      }
+   }
+#endif
+}
+
 static const struct glx_context_vtable drisw_context_vtable = {
    drisw_destroy_context,
    drisw_bind_context,
@@ -301,8 +363,8 @@ static const struct glx_context_vtable drisw_context_vtable = {
    NULL,
    NULL,
    DRI_glXUseXFont,
-   NULL,
-   NULL,
+   drisw_bind_tex_image,
+   drisw_release_tex_image,
    NULL, /* get_proc_address */
 };
 
@@ -439,6 +501,20 @@ static const struct glx_screen_vtable drisw_screen_vtable = {
    drisw_create_context
 };
 
+static void
+driswBindExtensions(struct drisw_screen *psc, const __DRIextension **extensions)
+{
+   int i;
+
+   /* FIXME: Figure out what other extensions can be ported here from dri2. */
+   for (i = 0; extensions[i]; i++) {
+      if ((strcmp(extensions[i]->name, __DRI_TEX_BUFFER) == 0)) {
+	 psc->texBuffer = (__DRItexBufferExtension *) extensions[i];
+	 __glXEnableDirectExtension(&psc->base, "GLX_EXT_texture_from_pixmap");
+      }
+   }
+}
+
 static struct glx_screen *
 driswCreateScreen(int screen, struct glx_display *priv)
 {
@@ -487,6 +563,9 @@ driswCreateScreen(int screen, struct glx_display *priv)
       ErrorMessageF("failed to create dri screen\n");
       goto handle_error;
    }
+
+   extensions = psc->core->getExtensions(psc->driScreen);
+   driswBindExtensions(psc, extensions);
 
    psc->base.configs =
       driConvertConfigs(psc->core, psc->base.configs, driver_configs);
