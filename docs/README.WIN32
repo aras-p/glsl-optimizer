@@ -19,6 +19,8 @@ to build classic mesa Windows GDI drivers; or
 
 to build gallium based GDI driver.
 
+This will work both with MSVS or Mingw.
+
 
 Windows Drivers
 ------- -------
