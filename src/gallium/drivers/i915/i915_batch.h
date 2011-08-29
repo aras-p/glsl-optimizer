@@ -63,8 +63,6 @@ void i915_flush(struct i915_context *i915, struct pipe_fence_handle **fence);
 static INLINE void i915_flush_heuristically(struct i915_context* i915,
                                             int num_vertex)
 {
-   struct i915_winsys *iws = i915->iws;
-
    i915->queued_vertices += num_vertex;
 
    /* fire if we have more than 1/20th of the last frame's vertices */
