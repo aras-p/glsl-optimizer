@@ -3459,8 +3459,7 @@ _mesa_unpack_color_span_chan( struct gl_context *ctx,
           dstFormat == GL_RED ||
           dstFormat == GL_RG ||
           dstFormat == GL_RGB ||
-          dstFormat == GL_RGBA ||
-          dstFormat == GL_COLOR_INDEX);
+          dstFormat == GL_RGBA);
 
    ASSERT(srcFormat == GL_RED ||
           srcFormat == GL_GREEN ||
@@ -3646,24 +3645,11 @@ _mesa_unpack_color_span_chan( struct gl_context *ctx,
          extract_uint_indexes(n, indexes, srcFormat, srcType, source,
                               srcPacking);
 
-         if (dstFormat == GL_COLOR_INDEX) {
-            GLuint i;
-            _mesa_apply_ci_transfer_ops(ctx, transferOps, n, indexes);
-            /* convert to GLchan and return */
-            for (i = 0; i < n; i++) {
-               dest[i] = (GLchan) (indexes[i] & 0xff);
-            }
-            free(indexes);
-            free(rgba);
-            return;
-         }
-         else {
-            /* Convert indexes to RGBA */
-            if (transferOps & IMAGE_SHIFT_OFFSET_BIT) {
-               _mesa_shift_and_offset_ci(ctx, n, indexes);
-            }
-            _mesa_map_ci_to_rgba(ctx, n, indexes, rgba);
-         }
+	 /* Convert indexes to RGBA */
+	 if (transferOps & IMAGE_SHIFT_OFFSET_BIT) {
+	    _mesa_shift_and_offset_ci(ctx, n, indexes);
+	 }
+	 _mesa_map_ci_to_rgba(ctx, n, indexes, rgba);
 
          /* Don't do RGBA scale/bias or RGBA->RGBA mapping if starting
           * with color indexes.
@@ -3773,8 +3759,7 @@ _mesa_unpack_color_span_float( struct gl_context *ctx,
           dstFormat == GL_RED ||
           dstFormat == GL_RG ||
           dstFormat == GL_RGB ||
-          dstFormat == GL_RGBA ||
-          dstFormat == GL_COLOR_INDEX);
+          dstFormat == GL_RGBA);
 
    ASSERT(srcFormat == GL_RED ||
           srcFormat == GL_GREEN ||
@@ -3855,24 +3840,11 @@ _mesa_unpack_color_span_float( struct gl_context *ctx,
          extract_uint_indexes(n, indexes, srcFormat, srcType, source,
                               srcPacking);
 
-         if (dstFormat == GL_COLOR_INDEX) {
-            GLuint i;
-            _mesa_apply_ci_transfer_ops(ctx, transferOps, n, indexes);
-            /* convert to GLchan and return */
-            for (i = 0; i < n; i++) {
-               dest[i] = (GLchan) (indexes[i] & 0xff);
-            }
-            free(indexes);
-            free(rgba);
-            return;
-         }
-         else {
-            /* Convert indexes to RGBA */
-            if (transferOps & IMAGE_SHIFT_OFFSET_BIT) {
-               _mesa_shift_and_offset_ci(ctx, n, indexes);
-            }
-            _mesa_map_ci_to_rgba(ctx, n, indexes, rgba);
-         }
+	 /* Convert indexes to RGBA */
+	 if (transferOps & IMAGE_SHIFT_OFFSET_BIT) {
+	    _mesa_shift_and_offset_ci(ctx, n, indexes);
+	 }
+	 _mesa_map_ci_to_rgba(ctx, n, indexes, rgba);
 
          /* Don't do RGBA scale/bias or RGBA->RGBA mapping if starting
           * with color indexes.
