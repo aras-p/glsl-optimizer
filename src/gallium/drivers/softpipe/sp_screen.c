@@ -131,6 +131,10 @@ softpipe_get_param(struct pipe_screen *screen, enum pipe_cap param)
       return 1;
    case PIPE_CAP_ARRAY_TEXTURES:
       return 1;
+   case PIPE_CAP_MIN_TEXEL_OFFSET:
+      return -8;
+   case PIPE_CAP_MAX_TEXEL_OFFSET:
+      return 7;
    default:
       return 0;
    }

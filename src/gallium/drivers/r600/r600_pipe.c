@@ -407,6 +407,12 @@ static int r600_get_param(struct pipe_screen* pscreen, enum pipe_cap param)
 	case PIPE_CAP_TIMER_QUERY:
 		return r600_get_clock_crystal_freq(rscreen->radeon) != 0;
 
+	case PIPE_CAP_MIN_TEXEL_OFFSET:
+		return -8;
+
+	case PIPE_CAP_MAX_TEXEL_OFFSET:
+		return 7;
+
 	default:
 		R600_ERR("r600: unknown param %d\n", param);
 		return 0;
