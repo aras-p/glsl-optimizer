@@ -41,15 +41,6 @@ extern void
 _mesa_map_rgba(const struct gl_context *ctx, GLuint n, GLfloat rgba[][4]);
 
 extern void
-_mesa_lookup_rgba_float(const struct gl_color_table *table,
-                        GLuint n, GLfloat rgba[][4]);
-
-extern void
-_mesa_lookup_rgba_ubyte(const struct gl_color_table *table,
-                        GLuint n, GLubyte rgba[][4]);
-
-
-extern void
 _mesa_map_ci_to_rgba(const struct gl_context *ctx,
                      GLuint n, const GLuint index[], GLfloat rgba[][4]);
 
