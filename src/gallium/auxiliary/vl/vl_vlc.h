@@ -113,9 +113,10 @@ vl_vlc_init(struct vl_vlc *vlc, const uint8_t *data, unsigned len)
 }
 
 static INLINE unsigned
-vl_vlc_bytes_left(struct vl_vlc *vlc)
+vl_vlc_bits_left(struct vl_vlc *vlc)
 {
-   return ((uint8_t*)vlc->end)-((uint8_t*)vlc->data);
+   signed bytes_left = ((uint8_t*)vlc->end)-((uint8_t*)vlc->data);
+   return bytes_left * 8 + vlc->valid_bits;
 }
 
 static INLINE unsigned

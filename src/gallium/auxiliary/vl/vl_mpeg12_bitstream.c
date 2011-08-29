@@ -806,10 +806,9 @@ decode_slice(struct vl_mpg12_bs *bs)
       while (vl_vlc_get_uimsbf(&bs->vlc, 9) & 1)
          vl_vlc_fillbits(&bs->vlc);
 
+   vl_vlc_fillbits(&bs->vlc);
    do {
       int inc = 0;
-
-      vl_vlc_fillbits(&bs->vlc);
 
       while (vl_vlc_peekbits(&bs->vlc, 11) == 15) {
          vl_vlc_eatbits(&bs->vlc, 11);
@@ -924,7 +923,8 @@ decode_slice(struct vl_mpg12_bs *bs)
       } else
          mb.coded_block_pattern = 0;
 
-   } while (vl_vlc_bytes_left(&bs->vlc) && vl_vlc_peekbits(&bs->vlc, 23));
+      vl_vlc_fillbits(&bs->vlc);
+   } while (vl_vlc_bits_left(&bs->vlc) && vl_vlc_peekbits(&bs->vlc, 23));
 
    mb.num_skipped_macroblocks = 0;
    bs->decoder->decode_macroblock(bs->decoder, &mb.base, 1);
@@ -974,9 +974,7 @@ vl_mpg12_bs_decode(struct vl_mpg12_bs *bs, unsigned num_bytes, const uint8_t *bu
          if (!decode_slice(bs))
             return;
 
-         /* it's possible for the vlc to consume up to eight extra bytes */
-         consumed = num_bytes - vl_vlc_bytes_left(&bs->vlc);
-         consumed = consumed > 8 ? consumed - 8 : 0;
+         consumed = num_bytes - vl_vlc_bits_left(&bs->vlc) / 8;
 
          /* crap, this is a bug we have consumed more bytes than left in the buffer */
          assert(consumed <= num_bytes);
