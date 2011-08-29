@@ -262,7 +262,11 @@ static void r600_setup_miptree(struct pipe_screen *screen,
 		nblocksx = r600_texture_get_nblocksx(screen, rtex, i);
 		nblocksy = r600_texture_get_nblocksy(screen, rtex, i);
 
-		layer_size = nblocksx * nblocksy * blocksize;
+		if (chipc >= EVERGREEN && array_mode == V_038000_ARRAY_LINEAR_GENERAL)
+			layer_size = align(nblocksx, 64) * nblocksy * blocksize;
+		else
+			layer_size = nblocksx * nblocksy * blocksize;
+
 		if (ptex->target == PIPE_TEXTURE_CUBE) {
 			if (chipc >= R700)
 				size = layer_size * 8;
