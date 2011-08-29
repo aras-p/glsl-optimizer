@@ -3014,6 +3014,12 @@ ast_function::hir(exec_list *instructions,
 
    const char *const name = identifier;
 
+   /* New functions are always added to the top-level IR instruction stream,
+    * so this instruction list pointer is ignored.  See also emit_function
+    * (called below).
+    */
+   (void) instructions;
+
    /* From page 21 (page 27 of the PDF) of the GLSL 1.20 spec,
     *
     *   "Function declarations (prototypes) cannot occur inside of functions;

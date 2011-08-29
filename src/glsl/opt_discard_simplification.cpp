@@ -138,6 +138,7 @@ is_only_instruction(ir_discard *discard)
 ir_visitor_status
 discard_simplifier::visit_enter(ir_assignment *ir)
 {
+   (void) ir;
    return visit_continue_with_parent;
 }
 

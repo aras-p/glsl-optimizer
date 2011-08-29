@@ -49,6 +49,7 @@ public:
 ir_visitor_status
 ir_if_simplification_visitor::visit_enter(ir_assignment *ir)
 {
+   (void) ir;
    return visit_continue_with_parent;
 }
 
