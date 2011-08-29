@@ -61,9 +61,6 @@ extern GLboolean
 _mesa_is_color_format(GLenum format);
 
 extern GLboolean
-_mesa_is_index_format(GLenum format);
-
-extern GLboolean
 _mesa_is_depth_format(GLenum format);
 
 extern GLboolean

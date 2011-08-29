@@ -249,12 +249,6 @@ _mesa_components_in_format( GLenum format )
 {
    switch (format) {
       case GL_COLOR_INDEX:
-      case GL_COLOR_INDEX1_EXT:
-      case GL_COLOR_INDEX2_EXT:
-      case GL_COLOR_INDEX4_EXT:
-      case GL_COLOR_INDEX8_EXT:
-      case GL_COLOR_INDEX12_EXT:
-      case GL_COLOR_INDEX16_EXT:
       case GL_STENCIL_INDEX:
       case GL_DEPTH_COMPONENT:
       case GL_RED:
@@ -856,27 +850,6 @@ _mesa_is_color_format(GLenum format)
          return GL_TRUE;
       case GL_YCBCR_MESA:  /* not considered to be RGB */
          /* fall-through */
-      default:
-         return GL_FALSE;
-   }
-}
-
-
-/**
- * Test if the given image format is a color index format.
- */
-GLboolean
-_mesa_is_index_format(GLenum format)
-{
-   switch (format) {
-      case GL_COLOR_INDEX:
-      case GL_COLOR_INDEX1_EXT:
-      case GL_COLOR_INDEX2_EXT:
-      case GL_COLOR_INDEX4_EXT:
-      case GL_COLOR_INDEX8_EXT:
-      case GL_COLOR_INDEX12_EXT:
-      case GL_COLOR_INDEX16_EXT:
-         return GL_TRUE;
       default:
          return GL_FALSE;
    }

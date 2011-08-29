@@ -515,13 +515,9 @@ getteximage_error_check(struct gl_context *ctx, GLenum target, GLint level,
    }
 
    if (_mesa_components_in_format(format) <= 0 ||
-       format == GL_STENCIL_INDEX) {
+       format == GL_STENCIL_INDEX ||
+       format == GL_COLOR_INDEX) {
       _mesa_error( ctx, GL_INVALID_ENUM, "glGetTexImage(format)" );
-      return GL_TRUE;
-   }
-
-   if (_mesa_is_index_format(format)) {
-      _mesa_error(ctx, GL_INVALID_ENUM, "glGetTexImage(format)");
       return GL_TRUE;
    }
 
