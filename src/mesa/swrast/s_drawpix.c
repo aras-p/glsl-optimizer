@@ -335,7 +335,7 @@ draw_stencil_pixels( struct gl_context *ctx, GLint x, GLint y,
                          ? GL_UNSIGNED_BYTE : GL_UNSIGNED_SHORT;
          const GLvoid *source = _mesa_image_address2d(unpack, pixels,
                                                       width, height,
-                                                      GL_COLOR_INDEX, type,
+                                                      GL_STENCIL_INDEX, type,
                                                       row, skipPixels);
          _mesa_unpack_stencil_span(ctx, spanWidth, destType, values,
                                    type, source, unpack,
