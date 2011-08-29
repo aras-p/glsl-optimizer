@@ -340,7 +340,6 @@ _mesa_make_temp_float_image(struct gl_context *ctx, GLuint dims,
           logicalBaseFormat == GL_LUMINANCE ||
           logicalBaseFormat == GL_ALPHA ||
           logicalBaseFormat == GL_INTENSITY ||
-          logicalBaseFormat == GL_COLOR_INDEX ||
           logicalBaseFormat == GL_DEPTH_COMPONENT);
 
    ASSERT(textureBaseFormat == GL_RGBA ||
@@ -351,7 +350,6 @@ _mesa_make_temp_float_image(struct gl_context *ctx, GLuint dims,
           textureBaseFormat == GL_LUMINANCE ||
           textureBaseFormat == GL_ALPHA ||
           textureBaseFormat == GL_INTENSITY ||
-          textureBaseFormat == GL_COLOR_INDEX ||
           textureBaseFormat == GL_DEPTH_COMPONENT);
 
    tempImage = (GLfloat *) malloc(srcWidth * srcHeight * srcDepth
