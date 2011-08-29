@@ -1168,7 +1168,6 @@ sample_2d_linear_repeat(struct gl_context *ctx,
    ASSERT(tObj->Sampler.WrapS == GL_REPEAT);
    ASSERT(tObj->Sampler.WrapT == GL_REPEAT);
    ASSERT(img->Border == 0);
-   ASSERT(img->_BaseFormat != GL_COLOR_INDEX);
    ASSERT(img->_IsPowerOfTwo);
 
    linear_repeat_texel_location(width,  texcoord[0], &i0, &i1, &wi);
@@ -1431,7 +1430,6 @@ sample_lambda_2d(struct gl_context *ctx,
    const GLboolean repeatNoBorderPOT = (tObj->Sampler.WrapS == GL_REPEAT)
       && (tObj->Sampler.WrapT == GL_REPEAT)
       && (tImg->Border == 0 && (tImg->Width == tImg->RowStride))
-      && (tImg->_BaseFormat != GL_COLOR_INDEX)
       && tImg->_IsPowerOfTwo;
 
    ASSERT(lambda != NULL);
@@ -2559,7 +2557,6 @@ sample_nearest_rect(struct gl_context *ctx,
    ASSERT(tObj->Sampler.WrapT == GL_CLAMP ||
           tObj->Sampler.WrapT == GL_CLAMP_TO_EDGE ||
           tObj->Sampler.WrapT == GL_CLAMP_TO_BORDER);
-   ASSERT(img->_BaseFormat != GL_COLOR_INDEX);
 
    for (i = 0; i < n; i++) {
       GLint row, col;
@@ -2593,7 +2590,6 @@ sample_linear_rect(struct gl_context *ctx,
    ASSERT(tObj->Sampler.WrapT == GL_CLAMP ||
           tObj->Sampler.WrapT == GL_CLAMP_TO_EDGE ||
           tObj->Sampler.WrapT == GL_CLAMP_TO_BORDER);
-   ASSERT(img->_BaseFormat != GL_COLOR_INDEX);
 
    for (i = 0; i < n; i++) {
       GLint i0, j0, i1, j1;
