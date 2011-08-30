@@ -289,7 +289,6 @@ static const int extra_ARB_sampler_objects[] = {
 
 
 EXTRA_EXT(ARB_ES2_compatibility);
-EXTRA_EXT(ARB_multitexture);
 EXTRA_EXT(ARB_texture_cube_map);
 EXTRA_EXT(MESA_texture_array);
 EXTRA_EXT2(EXT_secondary_color, ARB_vertex_program);
@@ -432,8 +431,7 @@ static const struct value_desc values[] = {
    { GL_VIEWPORT, LOC_CUSTOM, TYPE_INT_4, 0, NO_EXTRA },
 
    /* GL_ARB_multitexture */
-   { GL_ACTIVE_TEXTURE_ARB,
-     LOC_CUSTOM, TYPE_INT, 0, extra_ARB_multitexture },
+   { GL_ACTIVE_TEXTURE, LOC_CUSTOM, TYPE_INT, 0, NO_EXTRA },
 
    /* Note that all the OES_* extensions require that the Mesa "struct
     * gl_extensions" include a member with the name of the extension.
@@ -612,10 +610,8 @@ static const struct value_desc values[] = {
      extra_ARB_ES2_compatibility },
 
    /* GL_ARB_multitexture */
-   { GL_MAX_TEXTURE_UNITS_ARB,
-     CONTEXT_INT(Const.MaxTextureUnits), extra_ARB_multitexture },
-   { GL_CLIENT_ACTIVE_TEXTURE_ARB,
-     LOC_CUSTOM, TYPE_INT, 0, extra_ARB_multitexture },
+   { GL_MAX_TEXTURE_UNITS, CONTEXT_INT(Const.MaxTextureUnits), NO_EXTRA },
+   { GL_CLIENT_ACTIVE_TEXTURE, LOC_CUSTOM, TYPE_INT, 0, NO_EXTRA },
 
    /* GL_ARB_texture_cube_map */
    { GL_TEXTURE_CUBE_MAP_ARB, LOC_CUSTOM, TYPE_BOOLEAN, 0, NO_EXTRA },

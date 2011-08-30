@@ -85,8 +85,7 @@ compute_version(struct gl_context *ctx)
    GLuint major, minor;
    static const int max = 100;
 
-   const GLboolean ver_1_3 = (ctx->Extensions.ARB_multitexture &&
-                              ctx->Extensions.ARB_texture_border_clamp &&
+   const GLboolean ver_1_3 = (ctx->Extensions.ARB_texture_border_clamp &&
                               ctx->Extensions.ARB_texture_cube_map &&
                               ctx->Extensions.EXT_texture_env_add &&
                               ctx->Extensions.ARB_texture_env_combine &&
@@ -245,8 +244,7 @@ compute_version_es1(struct gl_context *ctx)
    static const int max = 100;
 
    /* OpenGL ES 1.0 is derived from OpenGL 1.3 */
-   const GLboolean ver_1_0 = (ctx->Extensions.ARB_multitexture &&
-                              ctx->Extensions.EXT_texture_env_add &&
+   const GLboolean ver_1_0 = (ctx->Extensions.EXT_texture_env_add &&
                               ctx->Extensions.ARB_texture_env_combine &&
                               ctx->Extensions.ARB_texture_env_dot3);
    /* OpenGL ES 1.1 is derived from OpenGL 1.5 */
@@ -277,8 +275,7 @@ compute_version_es2(struct gl_context *ctx)
    static const int max = 100;
 
    /* OpenGL ES 2.0 is derived from OpenGL 2.0 */
-   const GLboolean ver_2_0 = (ctx->Extensions.ARB_multitexture &&
-                              ctx->Extensions.ARB_texture_cube_map &&
+   const GLboolean ver_2_0 = (ctx->Extensions.ARB_texture_cube_map &&
                               ctx->Extensions.ARB_texture_mirrored_repeat &&
                               ctx->Extensions.EXT_blend_color &&
                               ctx->Extensions.EXT_blend_func_separate &&

@@ -365,7 +365,6 @@ static void r300InitGLExtensions(struct gl_context *ctx)
 
 	ctx->Extensions.ARB_depth_texture = true;
 	ctx->Extensions.ARB_fragment_program = true;
-	ctx->Extensions.ARB_multitexture = true;
 	ctx->Extensions.ARB_shadow = true;
 	ctx->Extensions.ARB_shadow_ambient = true;
 	ctx->Extensions.ARB_texture_border_clamp = true;

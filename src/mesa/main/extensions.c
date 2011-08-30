@@ -101,7 +101,7 @@ static const struct extension extension_table[] = {
    { "GL_ARB_instanced_arrays",                    o(ARB_instanced_arrays),                    GL,             2008 },
    { "GL_ARB_map_buffer_range",                    o(ARB_map_buffer_range),                    GL,             2008 },
    { "GL_ARB_multisample",                         o(dummy_true),                              GL,             1994 },
-   { "GL_ARB_multitexture",                        o(ARB_multitexture),                        GL,             1998 },
+   { "GL_ARB_multitexture",                        o(dummy_true),                              GL,             1998 },
    { "GL_ARB_occlusion_query2",                    o(ARB_occlusion_query2),                    GL,             2003 },
    { "GL_ARB_occlusion_query",                     o(ARB_occlusion_query),                     GL,             2001 },
    { "GL_ARB_pixel_buffer_object",                 o(EXT_pixel_buffer_object),                 GL,             2004 },
@@ -398,7 +398,6 @@ _mesa_enable_sw_extensions(struct gl_context *ctx)
    ctx->Extensions.ARB_half_float_pixel = GL_TRUE;
    ctx->Extensions.ARB_half_float_vertex = GL_TRUE;
    ctx->Extensions.ARB_map_buffer_range = GL_TRUE;
-   ctx->Extensions.ARB_multitexture = GL_TRUE;
 #if FEATURE_queryobj
    ctx->Extensions.ARB_occlusion_query = GL_TRUE;
    ctx->Extensions.ARB_occlusion_query2 = GL_TRUE;
@@ -534,7 +533,6 @@ _mesa_enable_sw_extensions(struct gl_context *ctx)
 void
 _mesa_enable_1_3_extensions(struct gl_context *ctx)
 {
-   ctx->Extensions.ARB_multitexture = GL_TRUE;
    ctx->Extensions.ARB_texture_border_clamp = GL_TRUE;
    ctx->Extensions.ARB_texture_cube_map = GL_TRUE;
    ctx->Extensions.ARB_texture_env_combine = GL_TRUE;

@@ -81,7 +81,6 @@ static const char *es2_extensions[] = {
    /* Required by GLES2 */
    "GL_ARB_fragment_program",
    "GL_ARB_fragment_shader",
-   "GL_ARB_multitexture",
    "GL_ARB_shader_objects",
    "GL_ARB_texture_cube_map",
    "GL_ARB_texture_mirrored_repeat",

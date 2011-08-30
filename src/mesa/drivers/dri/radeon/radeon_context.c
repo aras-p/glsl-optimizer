@@ -313,7 +313,6 @@ r100CreateContext( gl_api api,
       _math_matrix_set_identity( &rmesa->tmpmat[i] );
    }
 
-   ctx->Extensions.ARB_multitexture = true;
    ctx->Extensions.ARB_texture_border_clamp = true;
    ctx->Extensions.ARB_texture_env_combine = true;
    ctx->Extensions.ARB_texture_env_crossbar = true;

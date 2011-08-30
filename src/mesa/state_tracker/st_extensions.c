@@ -344,10 +344,6 @@ void st_init_extensions(struct st_context *st)
       ctx->Extensions.ARB_texture_non_power_of_two = GL_TRUE;
    }
 
-   if (screen->get_param(screen, PIPE_CAP_MAX_TEXTURE_IMAGE_UNITS) > 1) {
-      ctx->Extensions.ARB_multitexture = GL_TRUE;
-   }
-
    if (screen->get_param(screen, PIPE_CAP_TWO_SIDED_STENCIL)) {
       ctx->Extensions.ATI_separate_stencil = GL_TRUE;
       ctx->Extensions.EXT_stencil_two_side = GL_TRUE;
