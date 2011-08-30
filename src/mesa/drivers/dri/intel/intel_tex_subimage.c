@@ -148,27 +148,6 @@ intelTexSubimage(struct gl_context * ctx,
 			     packing, texObj, texImage);
 }
 
-
-static void
-intelTexSubImage3D(struct gl_context * ctx,
-                   GLenum target,
-                   GLint level,
-                   GLint xoffset, GLint yoffset, GLint zoffset,
-                   GLsizei width, GLsizei height, GLsizei depth,
-                   GLenum format, GLenum type,
-                   const GLvoid * pixels,
-                   const struct gl_pixelstore_attrib *packing,
-                   struct gl_texture_object *texObj,
-                   struct gl_texture_image *texImage)
-{
-   intelTexSubimage(ctx, 3,
-                    target, level,
-                    xoffset, yoffset, zoffset,
-                    width, height, depth, 0,
-                    format, type, pixels, packing, texObj, texImage);
-}
-
-
 static void
 intelTexSubImage2D(struct gl_context * ctx,
                    GLenum target,
@@ -189,29 +168,8 @@ intelTexSubImage2D(struct gl_context * ctx,
 }
 
 
-static void
-intelTexSubImage1D(struct gl_context * ctx,
-                   GLenum target,
-                   GLint level,
-                   GLint xoffset,
-                   GLsizei width,
-                   GLenum format, GLenum type,
-                   const GLvoid * pixels,
-                   const struct gl_pixelstore_attrib *packing,
-                   struct gl_texture_object *texObj,
-                   struct gl_texture_image *texImage)
-{
-   intelTexSubimage(ctx, 1,
-                    target, level,
-                    xoffset, 0, 0,
-                    width, 1, 1, 0,
-                    format, type, pixels, packing, texObj, texImage);
-}
-
 void
 intelInitTextureSubImageFuncs(struct dd_function_table *functions)
 {
-   functions->TexSubImage1D = intelTexSubImage1D;
    functions->TexSubImage2D = intelTexSubImage2D;
-   functions->TexSubImage3D = intelTexSubImage3D;
 }
