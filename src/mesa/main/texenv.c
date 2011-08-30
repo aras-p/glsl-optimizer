@@ -60,14 +60,12 @@ set_env_mode(struct gl_context *ctx,
    case GL_BLEND:
    case GL_DECAL:
    case GL_REPLACE:
+   case GL_ADD:
       legal = GL_TRUE;
       break;
    case GL_REPLACE_EXT:
       mode = GL_REPLACE; /* GL_REPLACE_EXT != GL_REPLACE */
       legal = GL_TRUE;
-      break;
-   case GL_ADD:
-      legal = ctx->Extensions.EXT_texture_env_add;
       break;
    case GL_COMBINE:
       legal = (ctx->Extensions.EXT_texture_env_combine ||

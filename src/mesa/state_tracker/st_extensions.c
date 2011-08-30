@@ -278,7 +278,6 @@ void st_init_extensions(struct st_context *st)
    ctx->Extensions.EXT_provoking_vertex = GL_TRUE;
    ctx->Extensions.EXT_secondary_color = GL_TRUE;
    ctx->Extensions.EXT_stencil_wrap = GL_TRUE;
-   ctx->Extensions.EXT_texture_env_add = GL_TRUE;
    ctx->Extensions.EXT_texture_env_combine = GL_TRUE;
    ctx->Extensions.EXT_texture_env_dot3 = GL_TRUE;
    ctx->Extensions.EXT_texture_lod_bias = GL_TRUE;

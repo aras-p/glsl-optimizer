@@ -87,7 +87,6 @@ compute_version(struct gl_context *ctx)
 
    const GLboolean ver_1_3 = (ctx->Extensions.ARB_texture_border_clamp &&
                               ctx->Extensions.ARB_texture_cube_map &&
-                              ctx->Extensions.EXT_texture_env_add &&
                               ctx->Extensions.ARB_texture_env_combine &&
                               ctx->Extensions.ARB_texture_env_dot3);
    const GLboolean ver_1_4 = (ver_1_3 &&
@@ -244,8 +243,7 @@ compute_version_es1(struct gl_context *ctx)
    static const int max = 100;
 
    /* OpenGL ES 1.0 is derived from OpenGL 1.3 */
-   const GLboolean ver_1_0 = (ctx->Extensions.EXT_texture_env_add &&
-                              ctx->Extensions.ARB_texture_env_combine &&
+   const GLboolean ver_1_0 = (ctx->Extensions.ARB_texture_env_combine &&
                               ctx->Extensions.ARB_texture_env_dot3);
    /* OpenGL ES 1.1 is derived from OpenGL 1.5 */
    const GLboolean ver_1_1 = (ver_1_0 &&

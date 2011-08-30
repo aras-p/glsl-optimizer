@@ -123,7 +123,7 @@ static const struct extension extension_table[] = {
    { "GL_ARB_texture_compression",                 o(dummy_true),                              GL,             2000 },
    { "GL_ARB_texture_compression_rgtc",            o(ARB_texture_compression_rgtc),            GL,             2004 },
    { "GL_ARB_texture_cube_map",                    o(ARB_texture_cube_map),                    GL,             1999 },
-   { "GL_ARB_texture_env_add",                     o(EXT_texture_env_add),                     GL,             1999 },
+   { "GL_ARB_texture_env_add",                     o(dummy_true),                              GL,             1999 },
    { "GL_ARB_texture_env_combine",                 o(ARB_texture_env_combine),                 GL,             2001 },
    { "GL_ARB_texture_env_crossbar",                o(ARB_texture_env_crossbar),                GL,             2001 },
    { "GL_ARB_texture_env_dot3",                    o(ARB_texture_env_dot3),                    GL,             2001 },
@@ -191,7 +191,7 @@ static const struct extension extension_table[] = {
    { "GL_EXT_texture_compression_s3tc",            o(EXT_texture_compression_s3tc),            GL,             2000 },
    { "GL_EXT_texture_cube_map",                    o(ARB_texture_cube_map),                    GL,             2001 },
    { "GL_EXT_texture_edge_clamp",                  o(dummy_true),                              GL,             1997 },
-   { "GL_EXT_texture_env_add",                     o(EXT_texture_env_add),                     GL,             1999 },
+   { "GL_EXT_texture_env_add",                     o(dummy_true),                              GL,             1999 },
    { "GL_EXT_texture_env_combine",                 o(EXT_texture_env_combine),                 GL,             2000 },
    { "GL_EXT_texture_env_dot3",                    o(EXT_texture_env_dot3),                    GL,             2000 },
    { "GL_EXT_texture_filter_anisotropic",          o(EXT_texture_filter_anisotropic),          GL | ES1 | ES2, 1999 },
@@ -473,7 +473,6 @@ _mesa_enable_sw_extensions(struct gl_context *ctx)
    ctx->Extensions.EXT_stencil_two_side = GL_TRUE;
    ctx->Extensions.EXT_texture_array = GL_TRUE;
    ctx->Extensions.EXT_texture_compression_latc = GL_TRUE;
-   ctx->Extensions.EXT_texture_env_add = GL_TRUE;
    ctx->Extensions.EXT_texture_env_combine = GL_TRUE;
    ctx->Extensions.EXT_texture_env_dot3 = GL_TRUE;
    ctx->Extensions.EXT_texture_filter_anisotropic = GL_TRUE;
@@ -537,7 +536,6 @@ _mesa_enable_1_3_extensions(struct gl_context *ctx)
    ctx->Extensions.ARB_texture_cube_map = GL_TRUE;
    ctx->Extensions.ARB_texture_env_combine = GL_TRUE;
    ctx->Extensions.ARB_texture_env_dot3 = GL_TRUE;
-   ctx->Extensions.EXT_texture_env_add = GL_TRUE;
    /*ctx->Extensions.ARB_transpose_matrix = GL_TRUE;*/
 }
 

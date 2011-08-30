@@ -127,7 +127,6 @@ nouveau_context_init(struct gl_context *ctx, struct nouveau_screen *screen,
 	ctx->Extensions.EXT_packed_depth_stencil = true;
 	ctx->Extensions.EXT_secondary_color = true;
 	ctx->Extensions.EXT_stencil_wrap = true;
-	ctx->Extensions.EXT_texture_env_add = true;
 	ctx->Extensions.EXT_texture_env_combine = true;
 	ctx->Extensions.EXT_texture_filter_anisotropic = true;
 	ctx->Extensions.EXT_texture_lod_bias = true;
