@@ -50,7 +50,7 @@ nvc0_screen_is_format_supported(struct pipe_screen *pscreen,
    case PIPE_FORMAT_R8G8B8A8_UNORM:
    case PIPE_FORMAT_R8G8B8X8_UNORM:
       /* HACK: GL requires equal formats for MS resolve and window is BGRA */
-      if (sample_count > 1)
+      if (bindings & PIPE_BIND_RENDER_TARGET)
          return FALSE;
    default:
       break;
