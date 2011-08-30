@@ -33,6 +33,7 @@ upload_sbe_state(struct brw_context *brw)
 {
    struct intel_context *intel = &brw->intel;
    struct gl_context *ctx = &intel->ctx;
+   struct brw_vue_map vue_map;
    /* CACHE_NEW_VS_PROG */
    uint32_t num_inputs = brw_count_bits(brw->vs.prog_data->outputs_written);
    /* BRW_NEW_FRAGMENT_PROGRAM */
@@ -41,7 +42,9 @@ upload_sbe_state(struct brw_context *brw)
    int i;
    int attr = 0, input_index = 0;
    /* _NEW_TRANSFORM */
-   int urb_start = ctx->Transform.ClipPlanesEnabled ? 2 : 1;
+   int urb_entry_read_offset = ctx->Transform.ClipPlanesEnabled ? 2 : 1;
+   int nr_userclip = brw_count_bits(ctx->Transform.ClipPlanesEnabled);
+
    /* _NEW_LIGHT */
    int two_side_color = (ctx->Light.Enabled && ctx->Light.Model.TwoSide);
    uint16_t attr_overrides[FRAG_ATTRIB_MAX];
@@ -51,7 +54,7 @@ upload_sbe_state(struct brw_context *brw)
       GEN7_SBE_SWIZZLE_ENABLE |
       num_outputs << GEN7_SBE_NUM_OUTPUTS_SHIFT |
       (num_inputs + 1) / 2 << GEN7_SBE_URB_ENTRY_READ_LENGTH_SHIFT |
-      urb_start << GEN7_SBE_URB_ENTRY_READ_OFFSET_SHIFT;
+      urb_entry_read_offset << GEN7_SBE_URB_ENTRY_READ_OFFSET_SHIFT;
 
    /* _NEW_POINT */
    if (ctx->Point.SpriteOrigin == GL_LOWER_LEFT)
@@ -69,6 +72,8 @@ upload_sbe_state(struct brw_context *brw)
    /* Create the mapping from the FS inputs we produce to the VS outputs
     * they source from.
     */
+   brw_compute_vue_map(&vue_map, intel, nr_userclip, two_side_color,
+                       brw->vs.prog_data->outputs_written);
    for (; attr < FRAG_ATTRIB_MAX; attr++) {
       if (!(brw->fragment_program->Base.InputsRead & BITFIELD64_BIT(attr)))
 	 continue;
@@ -89,8 +94,9 @@ upload_sbe_state(struct brw_context *brw)
        */
       assert(input_index < 16 || attr == input_index);
 
-      attr_overrides[input_index++] = get_attr_override(brw, attr,
-							two_side_color);
+      attr_overrides[input_index++] =
+         get_attr_override(&vue_map, urb_entry_read_offset, attr,
+                           two_side_color);
    }
 
    for (; attr < FRAG_ATTRIB_MAX; attr++)

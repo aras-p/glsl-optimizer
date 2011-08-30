@@ -32,52 +32,70 @@
 #include "main/macros.h"
 #include "intel_batchbuffer.h"
 
+/**
+ * Determine the appropriate attribute override value to store into the
+ * 3DSTATE_SF structure for a given fragment shader attribute.  The attribute
+ * override value contains two pieces of information: the location of the
+ * attribute in the VUE (relative to urb_entry_read_offset, see below), and a
+ * flag indicating whether to "swizzle" the attribute based on the direction
+ * the triangle is facing.
+ *
+ * If an attribute is "swizzled", then the given VUE location is used for
+ * front-facing triangles, and the VUE location that immediately follows is
+ * used for back-facing triangles.  We use this to implement the mapping from
+ * gl_FrontColor/gl_BackColor to gl_Color.
+ *
+ * urb_entry_read_offset is the offset into the VUE at which the SF unit is
+ * being instructed to begin reading attribute data.  It can be set to a
+ * nonzero value to prevent the SF unit from wasting time reading elements of
+ * the VUE that are not needed by the fragment shader.  It is measured in
+ * 256-bit increments.
+ */
 uint32_t
-get_attr_override(struct brw_context *brw, int fs_attr, int two_side_color)
+get_attr_override(struct brw_vue_map *vue_map, int urb_entry_read_offset,
+                  int fs_attr, bool two_side_color)
 {
-   int attr_index = 0, i;
-   int bfc = 0;
+   int attr_override, slot;
    int vs_attr = frag_attrib_to_vert_result(fs_attr);
+   if (vs_attr < 0 || vs_attr == VERT_RESULT_HPOS) {
+      /* These attributes will be overwritten by the fragment shader's
+       * interpolation code (see emit_interp() in brw_wm_fp.c), so just let
+       * them reference the first available attribute.
+       */
+      return 0;
+   }
 
-   if (vs_attr < 0)
-      vs_attr = 0;
+   /* Find the VUE slot for this attribute. */
+   slot = vue_map->vert_result_to_slot[vs_attr];
+   if (slot == -1) {
+      /* This attribute does not exist in the VUE--that means that the vertex
+       * shader did not write to it.  Behavior is undefined in this case, so
+       * just reference the first available attribute.
+       */
+      return 0;
+   }
 
-   /* Find the source index (0 = first attribute after the 4D position)
-    * for this output attribute.  attr is currently a VERT_RESULT_* but should
-    * be FRAG_ATTRIB_*.
+   /* Compute the location of the attribute relative to urb_entry_read_offset.
+    * Each increment of urb_entry_read_offset represents a 256-bit value, so
+    * it counts for two 128-bit VUE slots.
     */
-   for (i = 1; i < vs_attr; i++) {
-      if (i == VERT_RESULT_PSIZ)
-	 continue;
-      if (brw->vs.prog_data->outputs_written & BITFIELD64_BIT(i))
-	 attr_index++;
-   }
+   attr_override = slot - 2 * urb_entry_read_offset;
+   assert (attr_override >= 0 && attr_override < 32);
 
-   assert(attr_index < 32);
-
+   /* If we are doing two-sided color, and the VUE slot following this one
+    * represents a back-facing color, then we need to instruct the SF unit to
+    * do back-facing swizzling.
+    */
    if (two_side_color) {
-       if ((brw->vs.prog_data->outputs_written & BITFIELD64_BIT(VERT_RESULT_COL1)) &&
-           (brw->vs.prog_data->outputs_written & BITFIELD64_BIT(VERT_RESULT_BFC1))) {
-           assert(brw->vs.prog_data->outputs_written & BITFIELD64_BIT(VERT_RESULT_COL0));
-           assert(brw->vs.prog_data->outputs_written & BITFIELD64_BIT(VERT_RESULT_BFC0));
-           bfc = 2;
-       } else if ((brw->vs.prog_data->outputs_written & BITFIELD64_BIT(VERT_RESULT_COL0)) &&
-                (brw->vs.prog_data->outputs_written & BITFIELD64_BIT(VERT_RESULT_BFC0)))
-           bfc = 1;
+      if (vue_map->slot_to_vert_result[slot] == VERT_RESULT_COL0 &&
+          vue_map->slot_to_vert_result[slot+1] == VERT_RESULT_BFC0)
+         attr_override |= (ATTRIBUTE_SWIZZLE_INPUTATTR_FACING << ATTRIBUTE_SWIZZLE_SHIFT);
+      else if (vue_map->slot_to_vert_result[slot] == VERT_RESULT_COL1 &&
+               vue_map->slot_to_vert_result[slot+1] == VERT_RESULT_BFC1)
+         attr_override |= (ATTRIBUTE_SWIZZLE_INPUTATTR_FACING << ATTRIBUTE_SWIZZLE_SHIFT);
    }
 
-   if (bfc && (fs_attr <= FRAG_ATTRIB_TEX7 && fs_attr > FRAG_ATTRIB_WPOS)) {
-       if (fs_attr == FRAG_ATTRIB_COL0)
-           attr_index |= (ATTRIBUTE_SWIZZLE_INPUTATTR_FACING << ATTRIBUTE_SWIZZLE_SHIFT);
-       else if (fs_attr == FRAG_ATTRIB_COL1 && bfc == 2) {
-           attr_index++;
-           attr_index |= (ATTRIBUTE_SWIZZLE_INPUTATTR_FACING << ATTRIBUTE_SWIZZLE_SHIFT);
-       } else {
-           attr_index += bfc;
-       }
-   }
-
-   return attr_index;
+   return attr_override;
 }
 
 static void
@@ -85,6 +103,7 @@ upload_sf_state(struct brw_context *brw)
 {
    struct intel_context *intel = &brw->intel;
    struct gl_context *ctx = &intel->ctx;
+   struct brw_vue_map vue_map;
    /* CACHE_NEW_VS_PROG */
    uint32_t num_inputs = brw_count_bits(brw->vs.prog_data->outputs_written);
    /* BRW_NEW_FRAGMENT_PROGRAM */
@@ -94,22 +113,24 @@ upload_sf_state(struct brw_context *brw)
    /* _NEW_BUFFER */
    GLboolean render_to_fbo = brw->intel.ctx.DrawBuffer->Name != 0;
    int attr = 0, input_index = 0;
-   int urb_start;
+   int urb_entry_read_offset;
    int two_side_color = (ctx->Light.Enabled && ctx->Light.Model.TwoSide);
    float point_size;
    uint16_t attr_overrides[FRAG_ATTRIB_MAX];
+   int nr_userclip;
 
    /* _NEW_TRANSFORM */
    if (ctx->Transform.ClipPlanesEnabled)
-      urb_start = 2;
+      urb_entry_read_offset = 2;
    else
-      urb_start = 1;
+      urb_entry_read_offset = 1;
+   nr_userclip = brw_count_bits(ctx->Transform.ClipPlanesEnabled);
 
    dw1 =
       GEN6_SF_SWIZZLE_ENABLE |
       num_outputs << GEN6_SF_NUM_OUTPUTS_SHIFT |
       (num_inputs + 1) / 2 << GEN6_SF_URB_ENTRY_READ_LENGTH_SHIFT |
-      urb_start << GEN6_SF_URB_ENTRY_READ_OFFSET_SHIFT;
+      urb_entry_read_offset << GEN6_SF_URB_ENTRY_READ_OFFSET_SHIFT;
    dw2 = GEN6_SF_VIEWPORT_TRANSFORM_ENABLE |
       GEN6_SF_STATISTICS_ENABLE;
    dw3 = 0;
@@ -233,6 +254,8 @@ upload_sf_state(struct brw_context *brw)
    /* Create the mapping from the FS inputs we produce to the VS outputs
     * they source from.
     */
+   brw_compute_vue_map(&vue_map, intel, nr_userclip, two_side_color,
+                       brw->vs.prog_data->outputs_written);
    for (; attr < FRAG_ATTRIB_MAX; attr++) {
       if (!(brw->fragment_program->Base.InputsRead & BITFIELD64_BIT(attr)))
 	 continue;
@@ -254,8 +277,9 @@ upload_sf_state(struct brw_context *brw)
        */
       assert(input_index < 16 || attr == input_index);
 
-      attr_overrides[input_index++] = get_attr_override(brw, attr,
-							two_side_color);
+      attr_overrides[input_index++] =
+         get_attr_override(&vue_map, urb_entry_read_offset, attr,
+                           two_side_color);
    }
 
    for (; input_index < FRAG_ATTRIB_MAX; input_index++)
