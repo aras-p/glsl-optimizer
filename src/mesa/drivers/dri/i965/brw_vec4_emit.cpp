@@ -259,7 +259,7 @@ vec4_visitor::generate_math1_gen4(vec4_instruction *inst,
 	    BRW_MATH_SATURATE_NONE,
 	    inst->base_mrf,
 	    src,
-	    BRW_MATH_DATA_SCALAR,
+	    BRW_MATH_DATA_VECTOR,
 	    BRW_MATH_PRECISION_FULL);
 }
 
