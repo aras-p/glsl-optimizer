@@ -695,8 +695,6 @@ dri_create_context(gl_api api,
         _mesa_enable_1_5_extensions(mesaCtx);
         _mesa_enable_2_0_extensions(mesaCtx);
         _mesa_enable_2_1_extensions(mesaCtx);
-
-        driInitExtensions( mesaCtx, NULL, GL_FALSE );
         break;
     case API_OPENGLES:
         _mesa_enable_1_3_extensions(mesaCtx);
