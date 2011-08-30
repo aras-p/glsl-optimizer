@@ -192,7 +192,7 @@ static const struct extension extension_table[] = {
    { "GL_EXT_texture_cube_map",                    o(ARB_texture_cube_map),                    GL,             2001 },
    { "GL_EXT_texture_edge_clamp",                  o(dummy_true),                              GL,             1997 },
    { "GL_EXT_texture_env_add",                     o(EXT_texture_env_add),                     GL,             1999 },
-   { "GL_EXT_texture_env_combine",                 o(EXT_texture_env_combine),                 GL,             2006 },
+   { "GL_EXT_texture_env_combine",                 o(EXT_texture_env_combine),                 GL,             2000 },
    { "GL_EXT_texture_env_dot3",                    o(EXT_texture_env_dot3),                    GL,             2000 },
    { "GL_EXT_texture_filter_anisotropic",          o(EXT_texture_filter_anisotropic),          GL | ES1 | ES2, 1999 },
    { "GL_EXT_texture_format_BGRA8888",             o(EXT_texture_format_BGRA8888),                  ES1 | ES2, 2009 },
