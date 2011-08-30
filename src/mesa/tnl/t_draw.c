@@ -340,7 +340,7 @@ static void bind_indices( struct gl_context *ctx,
    TNLcontext *tnl = TNL_CONTEXT(ctx);
    struct vertex_buffer *VB = &tnl->vb;
    GLuint i;
-   void *ptr;
+   const void *ptr;
 
    if (!ib) {
       VB->Elts = NULL;
