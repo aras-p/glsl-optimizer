@@ -372,7 +372,8 @@ static void bind_indices( struct gl_context *ctx,
 				       GL_MAP_READ_BIT, ib->obj);
       assert(ib->obj->Pointer);
    } else {
-      ptr = ib->ptr;
+      /* user-space elements, or buffer already mapped */
+      ptr = ADD_POINTERS(ib->obj->Pointer, ib->ptr);
    }
 
    if (ib->type == GL_UNSIGNED_INT && VB->Primitive[0].basevertex == 0) {
