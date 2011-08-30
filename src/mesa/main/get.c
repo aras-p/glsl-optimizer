@@ -295,7 +295,6 @@ EXTRA_EXT(EXT_texture_lod_bias);
 EXTRA_EXT(EXT_texture_filter_anisotropic);
 EXTRA_EXT(IBM_rasterpos_clip);
 EXTRA_EXT(NV_point_sprite);
-EXTRA_EXT(SGIS_generate_mipmap);
 EXTRA_EXT(NV_vertex_program);
 EXTRA_EXT(NV_fragment_program);
 EXTRA_EXT(NV_texture_rectangle);
@@ -324,7 +323,6 @@ EXTRA_EXT2(NV_point_sprite, ARB_point_sprite);
 EXTRA_EXT2(ARB_fragment_program, NV_fragment_program);
 EXTRA_EXT2(ARB_vertex_program, NV_vertex_program);
 EXTRA_EXT2(ARB_vertex_program, ARB_fragment_program);
-EXTRA_EXT(ARB_vertex_buffer_object);
 EXTRA_EXT(ARB_geometry_shader4);
 EXTRA_EXT(ARB_copy_buffer);
 EXTRA_EXT(EXT_framebuffer_sRGB);
@@ -473,16 +471,14 @@ static const struct value_desc values[] = {
    { GL_SAMPLES_ARB, BUFFER_INT(Visual.samples), NO_EXTRA },
 
    /* GL_SGIS_generate_mipmap */
-   { GL_GENERATE_MIPMAP_HINT_SGIS, CONTEXT_ENUM(Hint.GenerateMipmap),
-     extra_SGIS_generate_mipmap },
+   { GL_GENERATE_MIPMAP_HINT_SGIS, CONTEXT_ENUM(Hint.GenerateMipmap), NO_EXTRA },
 
    /* GL_ARB_vertex_buffer_object */
    { GL_ARRAY_BUFFER_BINDING_ARB, LOC_CUSTOM, TYPE_INT, 0, NO_EXTRA },
 
    /* GL_ARB_vertex_buffer_object */
    /* GL_WEIGHT_ARRAY_BUFFER_BINDING_ARB - not supported */
-   { GL_ELEMENT_ARRAY_BUFFER_BINDING_ARB, LOC_CUSTOM, TYPE_INT, 0,
-     extra_ARB_vertex_buffer_object },
+   { GL_ELEMENT_ARRAY_BUFFER_BINDING_ARB, LOC_CUSTOM, TYPE_INT, 0, NO_EXTRA },
 
    /* GL_ARB_copy_buffer */
    { GL_COPY_READ_BUFFER, LOC_CUSTOM, TYPE_INT, 0, extra_ARB_copy_buffer },

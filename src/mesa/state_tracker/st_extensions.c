@@ -252,16 +252,13 @@ void st_init_extensions(struct st_context *st)
    ctx->Extensions.ARB_fragment_program = GL_TRUE;
    ctx->Extensions.ARB_half_float_pixel = GL_TRUE;
    ctx->Extensions.ARB_map_buffer_range = GL_TRUE;
-   ctx->Extensions.ARB_multisample = GL_TRUE;
    ctx->Extensions.ARB_sampler_objects = GL_TRUE;
    ctx->Extensions.ARB_texture_border_clamp = GL_TRUE; /* XXX temp */
-   ctx->Extensions.ARB_texture_compression = GL_TRUE;
    ctx->Extensions.ARB_texture_cube_map = GL_TRUE;
    ctx->Extensions.ARB_texture_env_combine = GL_TRUE;
    ctx->Extensions.ARB_texture_env_crossbar = GL_TRUE;
    ctx->Extensions.ARB_texture_env_dot3 = GL_TRUE;
    ctx->Extensions.ARB_vertex_array_object = GL_TRUE;
-   ctx->Extensions.ARB_vertex_buffer_object = GL_TRUE;
    ctx->Extensions.ARB_vertex_program = GL_TRUE;
    ctx->Extensions.ARB_window_pos = GL_TRUE;
 
@@ -274,7 +271,6 @@ void st_init_extensions(struct st_context *st)
    ctx->Extensions.EXT_framebuffer_multisample = GL_TRUE;
    ctx->Extensions.EXT_fog_coord = GL_TRUE;
    ctx->Extensions.EXT_gpu_program_parameters = GL_TRUE;
-   ctx->Extensions.EXT_multi_draw_arrays = GL_TRUE;
    ctx->Extensions.EXT_pixel_buffer_object = GL_TRUE;
    ctx->Extensions.EXT_point_parameters = GL_TRUE;
    ctx->Extensions.EXT_provoking_vertex = GL_TRUE;
@@ -310,8 +306,6 @@ void st_init_extensions(struct st_context *st)
 #if FEATURE_OES_draw_texture
    ctx->Extensions.OES_draw_texture = GL_TRUE;
 #endif
-
-   ctx->Extensions.SGIS_generate_mipmap = GL_TRUE;
 
    /*
     * Extensions that depend on the driver/hardware:

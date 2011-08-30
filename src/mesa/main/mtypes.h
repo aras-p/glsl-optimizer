@@ -2766,7 +2766,6 @@ struct gl_extensions
    GLboolean ARB_half_float_vertex;
    GLboolean ARB_instanced_arrays;
    GLboolean ARB_map_buffer_range;
-   GLboolean ARB_multisample;
    GLboolean ARB_multitexture;
    GLboolean ARB_occlusion_query;
    GLboolean ARB_occlusion_query2;
@@ -2782,7 +2781,6 @@ struct gl_extensions
    GLboolean ARB_sync;
    GLboolean ARB_texture_border_clamp;
    GLboolean ARB_texture_buffer_object;
-   GLboolean ARB_texture_compression;
    GLboolean ARB_texture_compression_rgtc;
    GLboolean ARB_texture_cube_map;
    GLboolean ARB_texture_env_combine;
@@ -2799,7 +2797,6 @@ struct gl_extensions
    GLboolean ARB_transpose_matrix;
    GLboolean ARB_uniform_buffer_object;
    GLboolean ARB_vertex_array_object;
-   GLboolean ARB_vertex_buffer_object;
    GLboolean ARB_vertex_program;
    GLboolean ARB_vertex_shader;
    GLboolean ARB_vertex_type_2_10_10_10_rev;
@@ -2813,7 +2810,6 @@ struct gl_extensions
    GLboolean EXT_blend_subtract;
    GLboolean EXT_clip_volume_hint;
    GLboolean EXT_compiled_vertex_array;
-   GLboolean EXT_copy_texture;
    GLboolean EXT_depth_bounds_test;
    GLboolean EXT_draw_buffers2;
    GLboolean EXT_draw_range_elements;
@@ -2824,13 +2820,11 @@ struct gl_extensions
    GLboolean EXT_framebuffer_sRGB;
    GLboolean EXT_gpu_program_parameters;
    GLboolean EXT_gpu_shader4;
-   GLboolean EXT_multi_draw_arrays;
    GLboolean EXT_packed_depth_stencil;
    GLboolean EXT_packed_float;
    GLboolean EXT_packed_pixels;
    GLboolean EXT_pixel_buffer_object;
    GLboolean EXT_point_parameters;
-   GLboolean EXT_polygon_offset;
    GLboolean EXT_provoking_vertex;
    GLboolean EXT_rescale_normal;
    GLboolean EXT_shadow_funcs;
@@ -2839,9 +2833,6 @@ struct gl_extensions
    GLboolean EXT_separate_specular_color;
    GLboolean EXT_stencil_wrap;
    GLboolean EXT_stencil_two_side;
-   GLboolean EXT_subtexture;
-   GLboolean EXT_texture;
-   GLboolean EXT_texture_object;
    GLboolean EXT_texture3D;
    GLboolean EXT_texture_array;
    GLboolean EXT_texture_compression_latc;
@@ -2860,7 +2851,6 @@ struct gl_extensions
    GLboolean EXT_texture_swizzle;
    GLboolean EXT_transform_feedback;
    GLboolean EXT_timer_query;
-   GLboolean EXT_vertex_array;
    GLboolean EXT_vertex_array_bgra;
    GLboolean EXT_vertex_array_set;
    GLboolean OES_standard_derivatives;
@@ -2896,8 +2886,6 @@ struct gl_extensions
    GLboolean NV_vertex_program;
    GLboolean NV_vertex_program1_1;
    GLboolean OES_read_format;
-   GLboolean SGIS_generate_mipmap;
-   GLboolean SGIS_texture_edge_clamp;
    GLboolean SGIS_texture_lod;
    GLboolean TDFX_texture_compression_FXT1;
    GLboolean S3_s3tc;
