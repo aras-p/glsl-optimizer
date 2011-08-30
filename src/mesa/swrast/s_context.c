@@ -688,6 +688,24 @@ _swrast_allow_pixel_fog( struct gl_context *ctx, GLboolean value )
 }
 
 
+/**
+ * Initialize native program limits by copying the logical limits.
+ * See comments in init_program_limits() in context.c
+ */
+static void
+init_program_native_limits(struct gl_program_constants *prog)
+{
+   prog->MaxNativeInstructions = prog->MaxInstructions;
+   prog->MaxNativeAluInstructions = prog->MaxAluInstructions;
+   prog->MaxNativeTexInstructions = prog->MaxTexInstructions;
+   prog->MaxNativeTexIndirections = prog->MaxTexIndirections;
+   prog->MaxNativeAttribs = prog->MaxAttribs;
+   prog->MaxNativeTemps = prog->MaxTemps;
+   prog->MaxNativeAddressRegs = prog->MaxAddressRegs;
+   prog->MaxNativeParameters = prog->MaxParameters;
+}
+
+
 GLboolean
 _swrast_CreateContext( struct gl_context *ctx )
 {
@@ -768,6 +786,10 @@ _swrast_CreateContext( struct gl_context *ctx )
       FREE(swrast);
       return GL_FALSE;
    }
+
+   init_program_native_limits(&ctx->Const.VertexProgram);
+   init_program_native_limits(&ctx->Const.GeometryProgram);
+   init_program_native_limits(&ctx->Const.FragmentProgram);
 
    ctx->swrast_context = swrast;
 
