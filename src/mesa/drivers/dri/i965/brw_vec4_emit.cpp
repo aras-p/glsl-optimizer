@@ -377,7 +377,7 @@ vec4_visitor::generate_oword_dual_block_offsets(struct brw_reg m1,
 
    brw_set_predicate_inverse(p, true);
    if (index.file == BRW_IMMEDIATE_VALUE) {
-      index_4.dw1.ud++;
+      index_4.dw1.ud += second_vertex_offset;
       brw_MOV(p, m1_4, index_4);
    } else {
       brw_ADD(p, m1_4, index_4, brw_imm_d(second_vertex_offset));
