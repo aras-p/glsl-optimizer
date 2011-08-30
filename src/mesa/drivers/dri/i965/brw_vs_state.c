@@ -157,6 +157,16 @@ brw_prepare_vs_unit(struct brw_context *brw)
     */
    vs->vs6.vs_enable = 1;
 
+   /* Emit scratch space relocation */
+   if (brw->vs.prog_data->total_scratch != 0) {
+      drm_intel_bo_emit_reloc(intel->batch.bo,
+			      brw->vs.state_offset +
+			      offsetof(struct brw_vs_unit_state, thread2),
+			      brw->vs.scratch_bo,
+			      vs->thread2.per_thread_scratch_space,
+			      I915_GEM_DOMAIN_RENDER, I915_GEM_DOMAIN_RENDER);
+   }
+
    brw->state.dirty.cache |= CACHE_NEW_VS_UNIT;
 }
 
