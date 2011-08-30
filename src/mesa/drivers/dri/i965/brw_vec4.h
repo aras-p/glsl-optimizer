@@ -162,6 +162,8 @@ public:
       this->imm.i = i;
    }
 
+   bool equals(src_reg *r);
+
    src_reg(class vec4_visitor *v, const struct glsl_type *type);
 
    explicit src_reg(dst_reg reg);
@@ -396,6 +398,7 @@ public:
    void calculate_live_intervals();
    bool dead_code_eliminate();
    bool virtual_grf_interferes(int a, int b);
+   bool opt_copy_propagation();
 
    vec4_instruction *emit(vec4_instruction *inst);
 

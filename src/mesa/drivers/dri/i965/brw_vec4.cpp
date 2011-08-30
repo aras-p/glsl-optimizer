@@ -31,6 +31,22 @@ extern "C" {
 
 namespace brw {
 
+bool
+src_reg::equals(src_reg *r)
+{
+   return (file == r->file &&
+	   reg == r->reg &&
+	   reg_offset == r->reg_offset &&
+	   type == r->type &&
+	   negate == r->negate &&
+	   abs == r->abs &&
+	   swizzle == r->swizzle &&
+	   !reladdr && !r->reladdr &&
+	   memcmp(&fixed_hw_reg, &r->fixed_hw_reg,
+		  sizeof(fixed_hw_reg)) == 0 &&
+	   imm.u == r->imm.u);
+}
+
 void
 vec4_visitor::calculate_live_intervals()
 {

@@ -1,0 +1,260 @@
+/*
+ * Copyright © 2011 Intel Corporation
+ *
+ * Permission is hereby granted, free of charge, to any person obtaining a
+ * copy of this software and associated documentation files (the "Software"),
+ * to deal in the Software without restriction, including without limitation
+ * the rights to use, copy, modify, merge, publish, distribute, sublicense,
+ * and/or sell copies of the Software, and to permit persons to whom the
+ * Software is furnished to do so, subject to the following conditions:
+ *
+ * The above copyright notice and this permission notice (including the next
+ * paragraph) shall be included in all copies or substantial portions of the
+ * Software.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.  IN NO EVENT SHALL
+ * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
+ * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
+ * IN THE SOFTWARE.
+ */
+
+/**
+ * @file brw_vec4_copy_propagation.cpp
+ *
+ * Implements tracking of values copied between registers, and
+ * optimizations based on that: copy propagation and constant
+ * propagation.
+ */
+
+#include "brw_vec4.h"
+extern "C" {
+#include "main/macros.h"
+}
+
+namespace brw {
+
+static bool
+is_direct_copy(vec4_instruction *inst)
+{
+   return (inst->opcode == BRW_OPCODE_MOV &&
+	   !inst->predicate &&
+	   inst->dst.file == GRF &&
+	   !inst->saturate &&
+	   !inst->dst.reladdr &&
+	   !inst->src[0].reladdr &&
+	   inst->dst.type == inst->src[0].type);
+}
+
+static bool
+is_dominated_by_previous_instruction(vec4_instruction *inst)
+{
+   return (inst->opcode != BRW_OPCODE_DO &&
+	   inst->opcode != BRW_OPCODE_WHILE &&
+	   inst->opcode != BRW_OPCODE_ELSE &&
+	   inst->opcode != BRW_OPCODE_ENDIF);
+}
+
+static bool
+try_constant_propagation(vec4_instruction *inst, int arg, src_reg *values[4])
+{
+   /* For constant propagation, we only handle the same constant
+    * across all 4 channels.  Some day, we should handle the 8-bit
+    * float vector format, which would let us constant propagate
+    * vectors better.
+    */
+   src_reg value = *values[0];
+   for (int i = 1; i < 4; i++) {
+      if (!value.equals(values[i]))
+	 return false;
+   }
+
+   if (value.file != IMM)
+      return false;
+
+   if (inst->src[arg].abs) {
+      if (value.type == BRW_REGISTER_TYPE_F) {
+	 value.imm.f = fabs(value.imm.f);
+      } else if (value.type == BRW_REGISTER_TYPE_D) {
+	 if (value.imm.i < 0)
+	    value.imm.i = -value.imm.i;
+      }
+   }
+
+   if (inst->src[arg].negate) {
+      if (value.type == BRW_REGISTER_TYPE_F)
+	 value.imm.f = -value.imm.f;
+      else
+	 value.imm.u = -value.imm.u;
+   }
+
+   switch (inst->opcode) {
+   case BRW_OPCODE_MOV:
+      inst->src[arg] = value;
+      return true;
+
+   case BRW_OPCODE_MUL:
+   case BRW_OPCODE_ADD:
+      if (arg == 1) {
+	 inst->src[arg] = value;
+	 return true;
+      } else if (arg == 0 && inst->src[1].file != IMM) {
+	 /* Fit this constant in by commuting the operands */
+	 inst->src[0] = inst->src[1];
+	 inst->src[1] = value;
+	 return true;
+      }
+      break;
+
+   case BRW_OPCODE_CMP:
+      if (arg == 1) {
+	 inst->src[arg] = value;
+	 return true;
+      } else if (arg == 0 && inst->src[1].file != IMM) {
+	 uint32_t new_cmod;
+
+	 new_cmod = brw_swap_cmod(inst->conditional_mod);
+	 if (new_cmod != ~0u) {
+	    /* Fit this constant in by swapping the operands and
+	     * flipping the test.
+	     */
+	    inst->src[0] = inst->src[1];
+	    inst->src[1] = value;
+	    inst->conditional_mod = new_cmod;
+	    return true;
+	 }
+      }
+      break;
+
+   case BRW_OPCODE_SEL:
+      if (arg == 1) {
+	 inst->src[arg] = value;
+	 return true;
+      } else if (arg == 0 && inst->src[1].file != IMM) {
+	 inst->src[0] = inst->src[1];
+	 inst->src[1] = value;
+
+	 /* If this was predicated, flipping operands means
+	  * we also need to flip the predicate.
+	  */
+	 if (inst->conditional_mod == BRW_CONDITIONAL_NONE) {
+	    inst->predicate_inverse = !inst->predicate_inverse;
+	 }
+	 return true;
+      }
+      break;
+
+   default:
+      break;
+   }
+
+   return false;
+}
+
+bool
+vec4_visitor::opt_copy_propagation()
+{
+   bool progress = false;
+   src_reg *cur_value[virtual_grf_reg_count][4];
+
+   memset(&cur_value, 0, sizeof(cur_value));
+
+   foreach_list(node, &this->instructions) {
+      vec4_instruction *inst = (vec4_instruction *)node;
+
+      /* This pass only works on basic blocks.  If there's flow
+       * control, throw out all our information and start from
+       * scratch.
+       *
+       * This should really be fixed by using a structure like in
+       * src/glsl/opt_copy_propagation.cpp to track available copies.
+       */
+      if (!is_dominated_by_previous_instruction(inst)) {
+	 memset(cur_value, 0, sizeof(cur_value));
+	 continue;
+      }
+
+      /* For each source arg, see if each component comes from a copy
+       * from the same type file (IMM, GRF, UNIFORM), and try
+       * optimizing out access to the copy result
+       */
+      for (int i = 2; i >= 0; i--) {
+	 int reg = (virtual_grf_reg_map[inst->src[i].reg] +
+		    inst->src[i].reg_offset);
+
+	 /* Copied values end up in GRFs, and we don't track reladdr
+	  * accesses.
+	  */
+	 if (inst->src[i].file != GRF ||
+	     inst->src[i].reladdr)
+	    continue;
+
+	 /* Find the regs that each swizzle component came from.
+	  */
+	 src_reg *values[4];
+	 int c;
+	 for (c = 0; c < 4; c++) {
+	    values[c] = cur_value[reg][BRW_GET_SWZ(inst->src[i].swizzle, c)];
+
+	    /* If there's no available copy for this channel, bail.
+	     * We could be more aggressive here -- some channels might
+	     * not get used based on the destination writemask.
+	     */
+	    if (!values[c])
+	       break;
+
+	    /* We'll only be able to copy propagate if the sources are
+	     * all from the same file -- there's no ability to swizzle
+	     * 0 or 1 constants in with source registers like in i915.
+	     */
+	    if (c > 0 && values[c - 1]->file != values[c]->file)
+	       break;
+	 }
+
+	 if (c != 4)
+	    continue;
+
+	 if (try_constant_propagation(inst, i, values))
+	    progress = true;
+      }
+
+      /* Track available source registers. */
+      if (is_direct_copy(inst)) {
+	 int reg = virtual_grf_reg_map[inst->dst.reg] + inst->dst.reg_offset;
+	 for (int i = 0; i < 4; i++) {
+	    if (inst->dst.writemask & (1 << i)) {
+	       cur_value[reg][i] = &inst->src[0];
+	    }
+	 }
+	 continue;
+      }
+
+      /* For any updated channels, clear tracking of them as a source
+       * or destination.
+       *
+       * FINISHME: Sources aren't handled, which will need to be done
+       * for copy propagation.
+       */
+      if (inst->dst.file == GRF) {
+	 if (inst->dst.reladdr)
+	    memset(cur_value, 0, sizeof(cur_value));
+	 else {
+	    int reg = virtual_grf_reg_map[inst->dst.reg] + inst->dst.reg_offset;
+
+	    for (int i = 0; i < 4; i++) {
+	       if (inst->dst.writemask & (1 << i))
+		  cur_value[reg][i] = NULL;
+	    }
+	 }
+      }
+   }
+
+   if (progress)
+      live_intervals_valid = false;
+
+   return progress;
+}
+
+} /* namespace brw */

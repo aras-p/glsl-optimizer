@@ -614,6 +614,7 @@ vec4_visitor::run()
    do {
       progress = false;
       progress = dead_code_eliminate() || progress;
+      progress = opt_copy_propagation() || progress;
    } while (progress);
 
 
