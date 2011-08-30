@@ -62,17 +62,11 @@ static void compile_gs_prog( struct brw_context *brw,
    memset(&c, 0, sizeof(c));
    
    c.key = *key;
-   /* Need to locate the two positions present in vertex + header.
-    * These are currently hardcoded:
-    */
-   c.nr_attrs = brw_count_bits(c.key.attrs);
-
-   if (intel->gen >= 5)
-       c.nr_regs = (c.nr_attrs + 1) / 2 + 3;  /* are vertices packed, or reg-aligned? */
-   else
-       c.nr_regs = (c.nr_attrs + 1) / 2 + 1;  /* are vertices packed, or reg-aligned? */
-
-   c.nr_bytes = c.nr_regs * REG_SIZE;
+   /* The geometry shader needs to access the entire VUE. */
+   struct brw_vue_map vue_map;
+   brw_compute_vue_map(&vue_map, intel, c.key.nr_userclip,
+                       c.key.do_twoside_color, c.key.attrs);
+   c.nr_regs = (vue_map.num_slots + 1)/2;
 
    mem_ctx = NULL;
    
@@ -158,12 +152,16 @@ static void populate_key( struct brw_context *brw,
 
    /* _NEW_LIGHT */
    key->pv_first = (ctx->Light.ProvokingVertex == GL_FIRST_VERTEX_CONVENTION);
+   key->do_twoside_color = (ctx->Light.Enabled && ctx->Light.Model.TwoSide);
    if (key->primitive == GL_QUADS && ctx->Light.ShadeModel != GL_FLAT) {
       /* Provide consistent primitive order with brw_set_prim's
        * optimization of single quads to trifans.
        */
       key->pv_first = GL_TRUE;
    }
+
+   /* _NEW_TRANSFORM */
+   key->nr_userclip = brw_count_bits(ctx->Transform.ClipPlanesEnabled);
 
    key->need_gs_prog = (intel->gen >= 6)
       ? 0
@@ -198,7 +196,8 @@ static void prepare_gs_prog(struct brw_context *brw)
 
 const struct brw_tracked_state brw_gs_prog = {
    .dirty = {
-      .mesa  = _NEW_LIGHT,
+      .mesa  = (_NEW_LIGHT |
+                _NEW_TRANSFORM),
       .brw   = BRW_NEW_PRIMITIVE,
       .cache = CACHE_NEW_VS_PROG
    },

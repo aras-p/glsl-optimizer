@@ -44,7 +44,9 @@ struct brw_gs_prog_key {
    GLuint primitive:4;
    GLuint pv_first:1;
    GLuint need_gs_prog:1;
-   GLuint pad:26;
+   GLuint nr_userclip:4;
+   GLuint do_twoside_color:1;
+   GLuint pad:21;
 };
 
 struct brw_gs_compile {
@@ -58,11 +60,8 @@ struct brw_gs_compile {
       struct brw_reg temp;
    } reg;
 
-   /* 3 different ways of expressing vertex size:
-    */
-   GLuint nr_attrs;
+   /* Number of registers used to store vertex data */
    GLuint nr_regs;
-   GLuint nr_bytes;
 };
 
 #define ATTR_SIZE  (4*4)
