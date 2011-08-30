@@ -229,13 +229,6 @@ st_bufferobj_data(struct gl_context *ctx,
 
 
 /**
- * Dummy data whose's pointer is used for zero size buffers or ranges.
- */
-static long st_bufferobj_zero_length = 0;
-
-
-
-/**
  * Called via glMapBufferRange().
  */
 static void *
@@ -280,24 +273,15 @@ st_bufferobj_map_range(struct gl_context *ctx,
    assert(offset < obj->Size);
    assert(offset + length <= obj->Size);
 
-   /*
-    * We go out of way here to hide the degenerate yet valid case of zero
-    * length range from the pipe driver.
-    */
-   if (!length) {
-      obj->Pointer = &st_bufferobj_zero_length;
+   obj->Pointer = pipe_buffer_map_range(pipe,
+                                        st_obj->buffer,
+                                        offset, length,
+                                        flags,
+                                        &st_obj->transfer);
+   if (obj->Pointer) {
+      obj->Pointer = (ubyte *) obj->Pointer + offset;
    }
-   else {
-      obj->Pointer = pipe_buffer_map_range(pipe, 
-                                           st_obj->buffer,
-                                           offset, length,
-                                           flags,
-                                           &st_obj->transfer);
-      if (obj->Pointer) {
-         obj->Pointer = (ubyte *) obj->Pointer + offset;
-      }
-   }
-   
+
    if (obj->Pointer) {
       obj->Offset = offset;
       obj->Length = length;

@@ -1004,6 +1004,12 @@ _mesa_MapBufferARB(GLenum target, GLenum access)
       return NULL;
    }
 
+   if (!bufObj->Size) {
+      _mesa_error(ctx, GL_OUT_OF_MEMORY,
+                  "glMapBuffer(buffer size = 0)");
+      return NULL;
+   }
+
    ASSERT(ctx->Driver.MapBufferRange);
    map = ctx->Driver.MapBufferRange(ctx, 0, bufObj->Size, accessFlags, bufObj);
    if (!map) {
@@ -1410,7 +1416,23 @@ _mesa_MapBufferRange(GLenum target, GLintptr offset, GLsizeiptr length,
                   "glMapBufferRange(buffer already mapped)");
       return NULL;
    }
-      
+
+   if (!bufObj->Size) {
+      _mesa_error(ctx, GL_OUT_OF_MEMORY,
+                  "glMapBufferRange(buffer size = 0)");
+      return NULL;
+   }
+
+   /* Mapping zero bytes should return a non-null pointer. */
+   if (!length) {
+      static long dummy = 0;
+      bufObj->Pointer = &dummy;
+      bufObj->Length = length;
+      bufObj->Offset = offset;
+      bufObj->AccessFlags = access;
+      return bufObj->Pointer;
+   }
+
    ASSERT(ctx->Driver.MapBufferRange);
    map = ctx->Driver.MapBufferRange(ctx, offset, length, access, bufObj);
    if (!map) {
