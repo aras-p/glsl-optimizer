@@ -188,31 +188,34 @@ msgstr "HyperZ zur Leistungssteigerung verwenden"
 
 #: t_options.h:196
 msgid "A post-processing filter to cel-shade the output"
-msgstr ""
+msgstr "Nachbearbeitungsfilter für Cell Shading"
 
 #: t_options.h:201
 msgid "A post-processing filter to remove the red channel"
-msgstr ""
+msgstr "Nachbearbeitungsfilter zum Entfernen des Rotkanals"
 
 #: t_options.h:206
 msgid "A post-processing filter to remove the green channel"
-msgstr ""
+msgstr "Nachbearbeitungsfilter zum Entfernen des Grünkanals"
 
 #: t_options.h:211
 msgid "A post-processing filter to remove the blue channel"
-msgstr ""
+msgstr "Nachbearbeitungsfilter zum Entfernen des Blaukanals"
 
 #: t_options.h:216
 msgid ""
 "Morphological anti-aliasing based on Jimenez\\' MLAA. 0 to disable, 8 for "
 "default quality"
-msgstr ""
+msgstr "Morphologische Kantenglättung (Anti-Aliasing) basierend auf "
+"Jimenez\' MLAA. 0 für deaktiviert, 8 für Standardqualität"
 
 #: t_options.h:221
 msgid ""
 "Morphological anti-aliasing based on Jimenez\\' MLAA. 0 to disable, 8 for "
 "default quality. Color version, usable with 2d GL apps"
-msgstr ""
+msgstr "Morphologische Kantenglättung (Anti-Aliasing) basierend auf "
+"Jimenez\' MLAA. 0 für deaktiviert, 8 für Standardqualität. "
+"Farbversion, für 2D-Anwendungen"
 
 #: t_options.h:226
 msgid "Number of texture units used"
@@ -271,8 +274,8 @@ msgstr "Erweiterung GL_NV_vertex_program aktivieren"
 
 #: t_options.h:273
 msgid "Enable flushing batchbuffer after each draw call"
-msgstr ""
+msgstr "Aktiviere sofortige Leerung des Stapelpuffers nach jedem Zeichenaufruf"
 
 #: t_options.h:278
 msgid "Enable flushing GPU caches with each draw call"
-msgstr ""
+msgstr "Aktiviere sofortige Leerung der GPU-Zwischenspeicher mit jedem Zeichenaufruf"
