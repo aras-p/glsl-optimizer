@@ -1748,14 +1748,15 @@ vec4_visitor::emit_psiz_and_flags(struct brw_reg reg)
       emit(MOV(header1, 0u));
 
       if (c->prog_data.outputs_written & BITFIELD64_BIT(VERT_RESULT_PSIZ)) {
-	 assert(!"finishme: psiz");
-	 src_reg psiz;
+	 src_reg psiz = src_reg(output_reg[VERT_RESULT_PSIZ]);
 
+	 current_annotation = "Point size";
 	 header1.writemask = WRITEMASK_W;
-	 emit(MUL(header1, psiz, 1u << 11));
+	 emit(MUL(header1, psiz, src_reg((float)(1 << 11))));
 	 emit(AND(header1, src_reg(header1), 0x7ff << 8));
       }
 
+      current_annotation = "Clipping flags";
       for (i = 0; i < c->key.nr_userclip; i++) {
 	 vec4_instruction *inst;
 
@@ -1792,7 +1793,7 @@ vec4_visitor::emit_psiz_and_flags(struct brw_reg reg)
       }
 
       header1.writemask = WRITEMASK_XYZW;
-      emit(MOV(reg, src_reg(header1)));
+      emit(MOV(retype(reg, BRW_REGISTER_TYPE_UD), src_reg(header1)));
    } else if (intel->gen < 6) {
       emit(MOV(retype(reg, BRW_REGISTER_TYPE_UD), 0u));
    } else {
