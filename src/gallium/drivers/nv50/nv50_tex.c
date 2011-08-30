@@ -51,6 +51,24 @@ nv50_tic_swizzle(uint32_t tc, unsigned swz, boolean tex_int)
    }
 }
 
+static void
+nv50_init_tic_entry_linear(uint32_t *tic, struct pipe_resource *res)
+{
+   if (res->target == PIPE_BUFFER) {
+      tic[2] |= NV50_TIC_2_LINEAR | NV50_TIC_2_TARGET_BUFFER;
+      tic[4] = res->width0;
+   } else {
+      struct nv50_miptree *mt = nv50_miptree(res);
+
+      tic[2] |= NV50_TIC_2_LINEAR | NV50_TIC_2_TARGET_RECT;
+      if (res->target != PIPE_TEXTURE_RECT)
+         tic[2] |= NV50_TIC_2_NORMALIZED_COORDS;
+      tic[3] = mt->level[0].pitch;
+      tic[4] = res->width0;
+      tic[5] = (1 << 16) | res->height0;
+   }
+}
+
 struct pipe_sampler_view *
 nv50_create_sampler_view(struct pipe_context *pipe,
                          struct pipe_resource *texture,
@@ -105,6 +123,11 @@ nv50_create_sampler_view(struct pipe_context *pipe,
    if (desc->colorspace == UTIL_FORMAT_COLORSPACE_SRGB)
       tic[2] |= NV50_TIC_2_COLORSPACE_SRGB;
 
+   if (unlikely(!nouveau_bo_tile_layout(nv04_resource(texture)->bo))) {
+      nv50_init_tic_entry_linear(tic, texture);
+      return &view->pipe;
+   }
+
    if (mt->base.base.target != PIPE_TEXTURE_RECT)
       tic[2] |= NV50_TIC_2_NORMALIZED_COORDS;
 
@@ -147,6 +170,7 @@ nv50_create_sampler_view(struct pipe_context *pipe,
       tic[2] |= NV50_TIC_2_TARGET_2D_ARRAY;
       break;
    case PIPE_BUFFER:
+      assert(0); /* should be linear and handled above ! */
       tic[2] |= NV50_TIC_2_TARGET_BUFFER | NV50_TIC_2_LINEAR;
       break;
    default:
@@ -154,10 +178,7 @@ nv50_create_sampler_view(struct pipe_context *pipe,
       return FALSE;
    }
 
-   if (mt->base.base.target == PIPE_BUFFER)
-      tic[3] = mt->base.base.width0;
-   else
-      tic[3] = 0x00300000;
+   tic[3] = 0x00300000;
 
    tic[4] = (1 << 31) | (mt->base.base.width0 << mt->ms_x);
 

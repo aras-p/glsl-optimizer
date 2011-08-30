@@ -107,6 +107,9 @@ nv50_mt_choose_storage_type(struct nv50_miptree *mt, boolean compressed)
    if (!compressed)
       tile_flags &= ~0x30000;
 
+   if (unlikely(mt->base.base.flags & NOUVEAU_RESOURCE_FLAG_LINEAR))
+      tile_flags &= ~0x3ff00;
+
    return tile_flags;
 }
 

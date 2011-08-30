@@ -31,13 +31,26 @@ nv50_validate_fb(struct nv50_context *nv50)
       OUT_RELOCh(chan, bo, offset, NOUVEAU_BO_VRAM | NOUVEAU_BO_RDWR);
       OUT_RELOCl(chan, bo, offset, NOUVEAU_BO_VRAM | NOUVEAU_BO_RDWR);
       OUT_RING  (chan, nv50_format_table[sf->base.format].rt);
-      OUT_RING  (chan, mt->level[sf->base.u.tex.level].tile_mode << 4);
-      OUT_RING  (chan, mt->layer_stride >> 2);
-      BEGIN_RING(chan, RING_3D(RT_HORIZ(i)), 2);
-      OUT_RING  (chan, sf->width);
-      OUT_RING  (chan, sf->height);
-      BEGIN_RING(chan, RING_3D(RT_ARRAY_MODE), 1);
-      OUT_RING  (chan, sf->depth);
+      if (likely(nouveau_bo_tile_layout(bo))) {
+         OUT_RING  (chan, mt->level[sf->base.u.tex.level].tile_mode << 4);
+         OUT_RING  (chan, mt->layer_stride >> 2);
+         BEGIN_RING(chan, RING_3D(RT_HORIZ(i)), 2);
+         OUT_RING  (chan, sf->width);
+         OUT_RING  (chan, sf->height);
+         BEGIN_RING(chan, RING_3D(RT_ARRAY_MODE), 1);
+         OUT_RING  (chan, sf->depth);
+      } else {
+         OUT_RING  (chan, 0);
+         OUT_RING  (chan, 0);
+         BEGIN_RING(chan, RING_3D(RT_HORIZ(i)), 2);
+         OUT_RING  (chan, NV50_3D_RT_HORIZ_LINEAR | mt->level[0].pitch);
+         OUT_RING  (chan, sf->height);
+         BEGIN_RING(chan, RING_3D(RT_ARRAY_MODE), 1);
+         OUT_RING  (chan, 0);
+
+         assert(!fb->zsbuf);
+         assert(!mt->ms_mode);
+      }
 
       ms_mode = mt->ms_mode;
 

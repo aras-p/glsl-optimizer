@@ -41,7 +41,7 @@
 int nouveau_pushbuf_flush(struct nouveau_channel *, unsigned min);
 
 static inline uint32_t
-nouveau_bo_tile_layout(struct nouveau_bo *bo)
+nouveau_bo_tile_layout(const struct nouveau_bo *bo)
 {
    return bo->tile_flags & NOUVEAU_BO_TILE_LAYOUT_MASK;
 }

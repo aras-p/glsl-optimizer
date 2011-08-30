@@ -290,10 +290,18 @@ nv50_clear_render_target(struct pipe_context *pipe,
    OUT_RING  (chan, mt->level[sf->base.u.tex.level].tile_mode << 4);
    OUT_RING  (chan, 0);
    BEGIN_RING(chan, RING_3D(RT_HORIZ(0)), 2);
-   OUT_RING  (chan, sf->width);
+   if (nouveau_bo_tile_layout(bo))
+      OUT_RING(chan, sf->width);
+   else
+      OUT_RING(chan, NV50_3D_RT_HORIZ_LINEAR | mt->level[0].pitch);
    OUT_RING  (chan, sf->height);
    BEGIN_RING(chan, RING_3D(RT_ARRAY_MODE), 1);
    OUT_RING  (chan, 1);
+
+   if (!nouveau_bo_tile_layout(bo)) {
+      BEGIN_RING(chan, RING_3D(ZETA_ENABLE), 1);
+      OUT_RING  (chan, 0);
+   }
 
    /* NOTE: only works with D3D clear flag (5097/0x143c bit 4) */
 
@@ -323,6 +331,8 @@ nv50_clear_depth_stencil(struct pipe_context *pipe,
    struct nv50_surface *sf = nv50_surface(dst);
    struct nouveau_bo *bo = mt->base.bo;
    uint32_t mode = 0;
+
+   assert(nouveau_bo_tile_layout(bo)); /* ZETA cannot be linear */
 
    if (clear_flags & PIPE_CLEAR_DEPTH) {
       BEGIN_RING(chan, RING_3D(CLEAR_DEPTH), 1);
