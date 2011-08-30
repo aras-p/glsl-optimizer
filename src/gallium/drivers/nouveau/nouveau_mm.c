@@ -1,4 +1,6 @@
 
+#include <inttypes.h>
+
 #include "util/u_inlines.h"
 #include "util/u_memory.h"
 #include "util/u_double_list.h"
@@ -143,7 +145,7 @@ mm_slab_new(struct nouveau_mman *cache, int chunk_order)
 
    cache->allocated += size;
 
-   debug_printf("MM: new slab, total memory = %llu KiB\n",
+   debug_printf("MM: new slab, total memory = %"PRIu64" KiB\n",
                 cache->allocated / 1024);
 
    return PIPE_OK;
