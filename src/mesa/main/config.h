@@ -203,8 +203,8 @@
  * per-program parameters.
  */
 /*@{*/
-#define MAX_PROGRAM_LOCAL_PARAMS       1024
-#define MAX_UNIFORMS                   1024
+#define MAX_PROGRAM_LOCAL_PARAMS       4096
+#define MAX_UNIFORMS                   4096
 /*@}*/
 
 /**
