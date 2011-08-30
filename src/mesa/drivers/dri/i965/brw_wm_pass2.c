@@ -94,14 +94,7 @@ static void init_registers( struct brw_wm_compile *c )
    } else {
       for (j = 0; j < VERT_RESULT_MAX; j++) {
 	 if (c->key.vp_outputs_written & BITFIELD64_BIT(j)) {
-	    int fp_index;
-
-	    if (j >= VERT_RESULT_VAR0)
-	       fp_index = j - (VERT_RESULT_VAR0 - FRAG_ATTRIB_VAR0);
-	    else if (j <= VERT_RESULT_TEX7)
-	       fp_index = j;
-	    else
-	       fp_index = -1;
+	    int fp_index = vert_result_to_frag_attrib(j);
 
 	    nr_interp_regs++;
 	    if (fp_index >= 0)

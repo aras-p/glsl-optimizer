@@ -144,14 +144,10 @@ static void calc_sizes( struct tracker *t )
     * which describes the fragment program input sizes.
     */
    for (vertRes = VERT_RESULT_TEX0; vertRes < VERT_RESULT_MAX; vertRes++) {
-      GLint fragAttrib;
 
       /* map vertex program output index to fragment program input index */
-      if (vertRes <= VERT_RESULT_TEX7)
-         fragAttrib = FRAG_ATTRIB_TEX0 + vertRes - VERT_RESULT_TEX0;
-      else if (vertRes >= VERT_RESULT_VAR0)
-         fragAttrib = FRAG_ATTRIB_VAR0 + vertRes - VERT_RESULT_VAR0;
-      else
+      GLint fragAttrib = vert_result_to_frag_attrib(vertRes);
+      if (fragAttrib < 0)
          continue;
       assert(fragAttrib >= FRAG_ATTRIB_TEX0);
       assert(fragAttrib <= FRAG_ATTRIB_MAX);

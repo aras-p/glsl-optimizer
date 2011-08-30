@@ -35,19 +35,12 @@
 uint32_t
 get_attr_override(struct brw_context *brw, int fs_attr, int two_side_color)
 {
-   int attr_index = 0, i, vs_attr;
+   int attr_index = 0, i;
    int bfc = 0;
+   int vs_attr = frag_attrib_to_vert_result(fs_attr);
 
-   if (fs_attr <= FRAG_ATTRIB_TEX7)
-      vs_attr = fs_attr;
-   else if (fs_attr == FRAG_ATTRIB_FACE)
-      vs_attr = 0; /* XXX */
-   else if (fs_attr == FRAG_ATTRIB_PNTC)
-      vs_attr = 0; /* XXX */
-   else {
-      assert(fs_attr >= FRAG_ATTRIB_VAR0);
-      vs_attr = fs_attr - FRAG_ATTRIB_VAR0 + VERT_RESULT_VAR0;
-   }
+   if (vs_attr < 0)
+      vs_attr = 0;
 
    /* Find the source index (0 = first attribute after the 4D position)
     * for this output attribute.  attr is currently a VERT_RESULT_* but should

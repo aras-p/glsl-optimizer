@@ -672,14 +672,7 @@ fs_visitor::calculate_urb_setup()
       /* FINISHME: The sf doesn't map VS->FS inputs for us very well. */
       for (unsigned int i = 0; i < VERT_RESULT_MAX; i++) {
 	 if (c->key.vp_outputs_written & BITFIELD64_BIT(i)) {
-	    int fp_index;
-
-	    if (i >= VERT_RESULT_VAR0)
-	       fp_index = i - (VERT_RESULT_VAR0 - FRAG_ATTRIB_VAR0);
-	    else if (i <= VERT_RESULT_TEX7)
-	       fp_index = i;
-	    else
-	       fp_index = -1;
+	    int fp_index = vert_result_to_frag_attrib(i);
 
 	    if (fp_index >= 0)
 	       urb_setup[fp_index] = urb_next++;
@@ -1828,17 +1821,12 @@ brw_fs_precompile(struct gl_context *ctx, struct gl_shader_program *prog)
 
    key.vp_outputs_written |= BITFIELD64_BIT(FRAG_ATTRIB_WPOS);
    for (int i = 0; i < FRAG_ATTRIB_MAX; i++) {
-      int vp_index = -1;
-
       if (!(fp->Base.InputsRead & BITFIELD64_BIT(i)))
 	 continue;
 
       key.proj_attrib_mask |= 1 << i;
 
-      if (i <= FRAG_ATTRIB_TEX7)
-	 vp_index = i;
-      else if (i >= FRAG_ATTRIB_VAR0)
-	 vp_index = i - FRAG_ATTRIB_VAR0 + VERT_RESULT_VAR0;
+      int vp_index = vert_result_to_frag_attrib(i);
 
       if (vp_index >= 0)
 	 key.vp_outputs_written |= BITFIELD64_BIT(vp_index);

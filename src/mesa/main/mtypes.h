@@ -215,7 +215,9 @@ typedef enum
 
 
 /**
- * Indexes for vertex program result attributes
+ * Indexes for vertex program result attributes.  Note that
+ * vert_result_to_frag_attrib() and frag_attrib_to_vert_result() make
+ * assumptions about the layout of this enum.
  */
 typedef enum
 {
@@ -313,7 +315,9 @@ typedef enum
 
 
 /**
- * Indexes for fragment program input attributes.
+ * Indexes for fragment program input attributes.  Note that
+ * vert_result_to_frag_attrib() and frag_attrib_to_vert_result() make
+ * assumptions about the layout of this enum.
  */
 typedef enum
 {
@@ -334,6 +338,43 @@ typedef enum
    FRAG_ATTRIB_VAR0 = 14,  /**< shader varying */
    FRAG_ATTRIB_MAX = (FRAG_ATTRIB_VAR0 + MAX_VARYING)
 } gl_frag_attrib;
+
+/**
+ * Convert from a gl_vert_result value to the corresponding gl_frag_attrib.
+ *
+ * VERT_RESULT_HPOS is converted to FRAG_ATTRIB_WPOS.
+ *
+ * gl_vert_result values which have no corresponding gl_frag_attrib
+ * (VERT_RESULT_PSIZ, VERT_RESULT_BFC0, VERT_RESULT_BFC1, and
+ * VERT_RESULT_EDGE) are converted to a value of -1.
+ */
+static inline int vert_result_to_frag_attrib(int vert_result)
+{
+   if (vert_result >= VERT_RESULT_VAR0)
+      return vert_result - VERT_RESULT_VAR0 + FRAG_ATTRIB_VAR0;
+   else if (vert_result <= VERT_RESULT_TEX7)
+      return vert_result;
+   else
+      return -1;
+}
+
+/**
+ * Convert from a gl_frag_attrib value to the corresponding gl_vert_result.
+ *
+ * FRAG_ATTRIB_WPOS is converted to VERT_RESULT_HPOS.
+ *
+ * gl_frag_attrib values which have no corresponding gl_vert_result
+ * (FRAG_ATTRIB_FACE and FRAG_ATTRIB_PNTC) are converted to a value of -1.
+ */
+static inline int frag_attrib_to_vert_result(int frag_attrib)
+{
+   if (frag_attrib <= FRAG_ATTRIB_TEX7)
+      return frag_attrib;
+   else if (frag_attrib >= FRAG_ATTRIB_VAR0)
+      return frag_attrib - FRAG_ATTRIB_VAR0 + VERT_RESULT_VAR0;
+   else
+      return -1;
+}
 
 /**
  * Bitflags for fragment program input attributes.
