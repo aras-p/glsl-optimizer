@@ -117,8 +117,8 @@ vec4_visitor::setup_uniforms(int reg)
 
       for (unsigned int i = 0; i < 4; i++) {
 	 unsigned int slot = this->uniforms * 4 + i;
-
-	 c->prog_data.param[slot] = NULL;
+	 static float zero = 0.0;
+	 c->prog_data.param[slot] = &zero;
       }
 
       this->uniforms++;
