@@ -5078,21 +5078,31 @@ st_link_shader(struct gl_context *ctx, struct gl_shader_program *prog)
                                      (struct gl_vertex_program *)linked_prog);
             ok = ctx->Driver.ProgramStringNotify(ctx, GL_VERTEX_PROGRAM_ARB,
                                                  linked_prog);
+            if (!ok) {
+               _mesa_reference_vertprog(ctx, &prog->VertexProgram, NULL);
+            }
             break;
          case GL_FRAGMENT_SHADER:
             _mesa_reference_fragprog(ctx, &prog->FragmentProgram,
                                      (struct gl_fragment_program *)linked_prog);
             ok = ctx->Driver.ProgramStringNotify(ctx, GL_FRAGMENT_PROGRAM_ARB,
                                                  linked_prog);
+            if (!ok) {
+               _mesa_reference_fragprog(ctx, &prog->FragmentProgram, NULL);
+            }
             break;
          case GL_GEOMETRY_SHADER:
             _mesa_reference_geomprog(ctx, &prog->GeometryProgram,
                                      (struct gl_geometry_program *)linked_prog);
             ok = ctx->Driver.ProgramStringNotify(ctx, GL_GEOMETRY_PROGRAM_NV,
                                                  linked_prog);
+            if (!ok) {
+               _mesa_reference_geomprog(ctx, &prog->GeometryProgram, NULL);
+            }
             break;
          }
          if (!ok) {
+            _mesa_reference_program(ctx, &prog->_LinkedShaders[i]->Program, NULL);
             _mesa_reference_program(ctx, &linked_prog, NULL);
             return GL_FALSE;
          }
