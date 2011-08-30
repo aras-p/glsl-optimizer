@@ -54,8 +54,10 @@ static enum pipe_format XvIDToPipe(int xvimage_id)
          return PIPE_FORMAT_B8G8R8X8_UNORM;
 
       case FOURCC_AI44:
+         return PIPE_FORMAT_A4R4_UNORM;
+
       case FOURCC_IA44:
-         return PIPE_FORMAT_L4A4_UNORM;
+         return PIPE_FORMAT_R4A4_UNORM;
 
       default:
          XVMC_MSG(XVMC_ERR, "[XvMC] Unrecognized Xv image ID 0x%08X.\n", xvimage_id);
@@ -79,36 +81,6 @@ static unsigned NumPaletteEntries4XvID(int xvimage_id)
    }
 }
 
-static void XvIDToSwizzle(int xvimage_id, struct pipe_sampler_view *tmpl)
-{
-   switch (xvimage_id) {
-      default:
-         XVMC_MSG(XVMC_ERR, "[XvMC] Unrecognized Xv image ID 0x%08X.\n", xvimage_id);
-
-      /* fall through */
-      case FOURCC_RGB:
-         tmpl->swizzle_r = PIPE_SWIZZLE_BLUE;
-         tmpl->swizzle_g = PIPE_SWIZZLE_GREEN;
-         tmpl->swizzle_b = PIPE_SWIZZLE_RED;
-         tmpl->swizzle_a = PIPE_SWIZZLE_ONE;
-         break;
-
-      case FOURCC_IA44:
-         tmpl->swizzle_r = PIPE_SWIZZLE_ALPHA;
-         tmpl->swizzle_g = PIPE_SWIZZLE_ZERO;
-         tmpl->swizzle_b = PIPE_SWIZZLE_ZERO;
-         tmpl->swizzle_a = PIPE_SWIZZLE_RED;
-         break;
-
-      case FOURCC_AI44:
-         tmpl->swizzle_r = PIPE_SWIZZLE_RED;
-         tmpl->swizzle_g = PIPE_SWIZZLE_ZERO;
-         tmpl->swizzle_b = PIPE_SWIZZLE_ZERO;
-         tmpl->swizzle_a = PIPE_SWIZZLE_ALPHA;
-         break;
-   }
-}
-
 static int PipeToComponentOrder(enum pipe_format format, char *component_order)
 {
    assert(component_order);
@@ -117,7 +89,8 @@ static int PipeToComponentOrder(enum pipe_format format, char *component_order)
       case PIPE_FORMAT_B8G8R8X8_UNORM:
          return 0;
 
-      case PIPE_FORMAT_L4A4_UNORM:
+      case PIPE_FORMAT_R4A4_UNORM:
+      case PIPE_FORMAT_A4R4_UNORM:
          component_order[0] = 'Y';
          component_order[1] = 'U';
          component_order[2] = 'V';
@@ -277,7 +250,6 @@ Status XvMCCreateSubpicture(Display *dpy, XvMCContext *context, XvMCSubpicture *
 
    memset(&sampler_templ, 0, sizeof(sampler_templ));
    u_sampler_view_default_template(&sampler_templ, tex, tex->format);
-   XvIDToSwizzle(xvimage_id, &sampler_templ);
 
    subpicture_priv->sampler = pipe->create_sampler_view(pipe, tex, &sampler_templ);
    pipe_resource_reference(&tex, NULL);
