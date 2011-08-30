@@ -265,5 +265,7 @@ PIPE_FORMAT_YV16                  , other, 1, 1, x8  , x8  , x8  , x8  , xyzw, y
 PIPE_FORMAT_IYUV                  , other, 1, 1, x8  , x8  , x8  , x8  , xyzw, yuv
 PIPE_FORMAT_NV12                  , other, 1, 1, x8  , x8  , x8  , x8  , xyzw, yuv
 PIPE_FORMAT_NV21                  , other, 1, 1, x8  , x8  , x8  , x8  , xyzw, yuv
-PIPE_FORMAT_IA44                  , other, 1, 1, x8  , x8  , x8  , x8  , xyzw, yuv
-PIPE_FORMAT_AI44                  , other, 1, 1, x8  , x8  , x8  , x8  , xyzw, yuv
+
+# Usually used to implement IA44 and AI44 formats in video decoding
+PIPE_FORMAT_R4A4_UNORM            , plain, 1, 1, un4 , un4 ,     ,     , y00x, rgb
+PIPE_FORMAT_A4R4_UNORM            , plain, 1, 1, un4 , un4 ,     ,     , x00y, rgb
