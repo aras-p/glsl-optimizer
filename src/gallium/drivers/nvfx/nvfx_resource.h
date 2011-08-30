@@ -23,8 +23,7 @@ struct nvfx_resource *nvfx_resource(struct pipe_resource *resource)
 	return (struct nvfx_resource *)resource;
 }
 
-#define NVFX_RESOURCE_FLAG_LINEAR (PIPE_RESOURCE_FLAG_DRV_PRIV << 0)
-#define NVFX_RESOURCE_FLAG_USER (PIPE_RESOURCE_FLAG_DRV_PRIV << 1)
+#define NVFX_RESOURCE_FLAG_USER (NOUVEAU_RESOURCE_FLAG_DRV_PRIV << 0)
 
 /* is resource mapped into the GPU's address space (i.e. VRAM or GART) ? */
 static INLINE boolean

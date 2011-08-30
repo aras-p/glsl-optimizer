@@ -31,7 +31,7 @@ nvfx_buffer_create(struct pipe_screen *pscreen,
 		return NULL;
 
 	buffer->base.base = *template;
-	buffer->base.base.flags |= NVFX_RESOURCE_FLAG_LINEAR;
+	buffer->base.base.flags |= NOUVEAU_RESOURCE_FLAG_LINEAR;
 	pipe_reference_init(&buffer->base.base.reference, 1);
 	buffer->base.base.screen = pscreen;
 	buffer->size = util_format_get_stride(template->format, template->width0);
@@ -56,7 +56,8 @@ nvfx_user_buffer_create(struct pipe_screen *pscreen,
 		return NULL;
 
 	pipe_reference_init(&buffer->base.base.reference, 1);
-	buffer->base.base.flags = NVFX_RESOURCE_FLAG_LINEAR | NVFX_RESOURCE_FLAG_USER;
+	buffer->base.base.flags =
+		NOUVEAU_RESOURCE_FLAG_LINEAR | NVFX_RESOURCE_FLAG_USER;
 	buffer->base.base.screen = pscreen;
 	buffer->base.base.format = PIPE_FORMAT_R8_UNORM;
 	buffer->base.base.usage = PIPE_USAGE_IMMUTABLE;

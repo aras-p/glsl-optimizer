@@ -6,7 +6,7 @@ static inline boolean
 nvfx_surface_linear_renderable(struct pipe_surface* surf)
 {
 	/* TODO: precompute this in nvfx_surface creation */
-	return (surf->texture->flags & NVFX_RESOURCE_FLAG_LINEAR)
+	return (surf->texture->flags & NOUVEAU_RESOURCE_FLAG_LINEAR)
 		&& !(((struct nvfx_surface*)surf)->offset & 63)
 		&& !(((struct nvfx_surface*)surf)->pitch & 63);
 }

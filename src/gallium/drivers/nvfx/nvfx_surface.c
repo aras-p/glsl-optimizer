@@ -102,7 +102,7 @@ nvfx_region_init_for_surface(struct nv04_region* rgn, struct nvfx_surface* surf,
 		rgn->bo = ((struct nvfx_resource*)surf->base.base.texture)->bo;
 		rgn->offset = surf->offset;
 
-		if(surf->base.base.texture->flags & NVFX_RESOURCE_FLAG_LINEAR)
+		if(surf->base.base.texture->flags & NOUVEAU_RESOURCE_FLAG_LINEAR)
 			rgn->pitch = surf->pitch;
 	        else
 	        {
@@ -137,7 +137,7 @@ nvfx_region_init_for_subresource(struct nv04_region* rgn, struct pipe_resource* 
 	rgn->x = x;
 	rgn->y = y;
 
-	if(pt->flags & NVFX_RESOURCE_FLAG_LINEAR)
+	if(pt->flags & NOUVEAU_RESOURCE_FLAG_LINEAR)
 	{
 		rgn->pitch = nvfx_subresource_pitch(pt, level);
 		rgn->z = 0;
@@ -438,7 +438,7 @@ nvfx_surface_create_temp(struct pipe_context* pipe, struct pipe_surface* surf)
 	template.height0 = surf->height;
 	template.depth0 = 1;
 	template.nr_samples = surf->texture->nr_samples;
-	template.flags = NVFX_RESOURCE_FLAG_LINEAR;
+	template.flags = NOUVEAU_RESOURCE_FLAG_LINEAR;
 
 	assert(!ns->temp && !util_dirty_surface_is_dirty(&ns->base));
 

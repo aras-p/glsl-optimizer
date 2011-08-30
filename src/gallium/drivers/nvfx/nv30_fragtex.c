@@ -58,7 +58,7 @@ nv30_sampler_view_init(struct pipe_context *pipe,
 	if(pt->height0 <= 1 || util_format_is_compressed(sv->base.format))
 		sv->u.nv30.rect = -1;
 	else
-		sv->u.nv30.rect = !!(pt->flags & NVFX_RESOURCE_FLAG_LINEAR);
+		sv->u.nv30.rect = !!(pt->flags & NOUVEAU_RESOURCE_FLAG_LINEAR);
 
 	sv->lod_offset = sv->base.u.tex.first_level - level;
 	sv->max_lod_limit = sv->base.u.tex.last_level - level;

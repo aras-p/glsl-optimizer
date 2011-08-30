@@ -33,13 +33,13 @@ nvfx_miptree_choose_format(struct nvfx_miptree *mt)
 		|| util_format_is_compressed(pt->format)
 		|| no_swizzle
 	)
-		mt->base.base.flags |= NVFX_RESOURCE_FLAG_LINEAR;
+		mt->base.base.flags |= NOUVEAU_RESOURCE_FLAG_LINEAR;
 
 	/* non compressed formats with uniform pitch must be linear, and vice versa */
 	if(!util_format_is_s3tc(pt->format)
-		&& (uniform_pitch || mt->base.base.flags & NVFX_RESOURCE_FLAG_LINEAR))
+		&& (uniform_pitch || mt->base.base.flags & NOUVEAU_RESOURCE_FLAG_LINEAR))
 	{
-		mt->base.base.flags |= NVFX_RESOURCE_FLAG_LINEAR;
+		mt->base.base.flags |= NOUVEAU_RESOURCE_FLAG_LINEAR;
 		uniform_pitch = 1;
 	}
 
@@ -175,7 +175,7 @@ nvfx_miptree_from_handle(struct pipe_screen *pscreen, const struct pipe_resource
         unsigned stride;
         if(whandle->stride) {
 		mt->linear_pitch = whandle->stride;
-		mt->base.base.flags |= NVFX_RESOURCE_FLAG_LINEAR;
+		mt->base.base.flags |= NOUVEAU_RESOURCE_FLAG_LINEAR;
         } else
 		nvfx_miptree_choose_format(mt);
 
