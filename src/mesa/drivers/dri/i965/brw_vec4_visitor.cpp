@@ -583,9 +583,11 @@ vec4_visitor::variable_storage(ir_variable *var)
 }
 
 void
-vec4_visitor::emit_bool_to_cond_code(ir_rvalue *ir)
+vec4_visitor::emit_bool_to_cond_code(ir_rvalue *ir, uint32_t *predicate)
 {
    ir_expression *expr = ir->as_expression();
+
+   *predicate = BRW_PREDICATE_NORMAL;
 
    if (expr) {
       src_reg op[2];
@@ -593,8 +595,6 @@ vec4_visitor::emit_bool_to_cond_code(ir_rvalue *ir)
 
       assert(expr->get_num_operands() <= 2);
       for (unsigned int i = 0; i < expr->get_num_operands(); i++) {
-	 assert(expr->operands[i]->type->is_scalar());
-
 	 expr->operands[i]->accept(this);
 	 op[i] = this->result;
       }
@@ -638,14 +638,27 @@ vec4_visitor::emit_bool_to_cond_code(ir_rvalue *ir)
 	 }
 	 break;
 
+      case ir_binop_all_equal:
+	 inst = emit(CMP(dst_null_d(), op[0], op[1], BRW_CONDITIONAL_Z));
+	 *predicate = BRW_PREDICATE_ALIGN16_ALL4H;
+	 break;
+
+      case ir_binop_any_nequal:
+	 inst = emit(CMP(dst_null_d(), op[0], op[1], BRW_CONDITIONAL_NZ));
+	 *predicate = BRW_PREDICATE_ALIGN16_ANY4H;
+	 break;
+
+      case ir_unop_any:
+	 inst = emit(CMP(dst_null_d(), op[0], src_reg(0), BRW_CONDITIONAL_NZ));
+	 *predicate = BRW_PREDICATE_ALIGN16_ANY4H;
+	 break;
+
       case ir_binop_greater:
       case ir_binop_gequal:
       case ir_binop_less:
       case ir_binop_lequal:
       case ir_binop_equal:
-      case ir_binop_all_equal:
       case ir_binop_nequal:
-      case ir_binop_any_nequal:
 	 emit(CMP(dst_null_d(), op[0], op[1],
 		  brw_conditional_for_comparison(expr->operation)));
 	 break;
@@ -1394,18 +1407,18 @@ get_assignment_lhs(ir_dereference *ir, vec4_visitor *v)
 
 void
 vec4_visitor::emit_block_move(dst_reg *dst, src_reg *src,
-			      const struct glsl_type *type, bool predicated)
+			      const struct glsl_type *type, uint32_t predicate)
 {
    if (type->base_type == GLSL_TYPE_STRUCT) {
       for (unsigned int i = 0; i < type->length; i++) {
-	 emit_block_move(dst, src, type->fields.structure[i].type, predicated);
+	 emit_block_move(dst, src, type->fields.structure[i].type, predicate);
       }
       return;
    }
 
    if (type->is_array()) {
       for (unsigned int i = 0; i < type->length; i++) {
-	 emit_block_move(dst, src, type->fields.array, predicated);
+	 emit_block_move(dst, src, type->fields.array, predicate);
       }
       return;
    }
@@ -1417,7 +1430,7 @@ vec4_visitor::emit_block_move(dst_reg *dst, src_reg *src,
 					 type->vector_elements, 1);
 
       for (int i = 0; i < type->matrix_columns; i++) {
-	 emit_block_move(dst, src, vec_type, predicated);
+	 emit_block_move(dst, src, vec_type, predicate);
       }
       return;
    }
@@ -1434,8 +1447,7 @@ vec4_visitor::emit_block_move(dst_reg *dst, src_reg *src,
    src->swizzle = swizzle_for_size(type->vector_elements);
 
    vec4_instruction *inst = emit(MOV(*dst, *src));
-   if (predicated)
-      inst->predicate = BRW_PREDICATE_NORMAL;
+   inst->predicate = predicate;
 
    dst->reg_offset++;
    src->reg_offset++;
@@ -1502,6 +1514,7 @@ void
 vec4_visitor::visit(ir_assignment *ir)
 {
    dst_reg dst = get_assignment_lhs(ir->lhs, this);
+   uint32_t predicate = BRW_PREDICATE_NONE;
 
    if (!ir->lhs->type->is_scalar() &&
        !ir->lhs->type->is_vector()) {
@@ -1509,10 +1522,10 @@ vec4_visitor::visit(ir_assignment *ir)
       src_reg src = this->result;
 
       if (ir->condition) {
-	 emit_bool_to_cond_code(ir->condition);
+	 emit_bool_to_cond_code(ir->condition, &predicate);
       }
 
-      emit_block_move(&dst, &src, ir->rhs->type, ir->condition != NULL);
+      emit_block_move(&dst, &src, ir->rhs->type, predicate);
       return;
    }
 
@@ -1563,14 +1576,12 @@ vec4_visitor::visit(ir_assignment *ir)
    }
 
    if (ir->condition) {
-      emit_bool_to_cond_code(ir->condition);
+      emit_bool_to_cond_code(ir->condition, &predicate);
    }
 
    for (i = 0; i < type_size(ir->lhs->type); i++) {
       vec4_instruction *inst = emit(MOV(dst, src));
-
-      if (ir->condition)
-	 inst->predicate = BRW_PREDICATE_NORMAL;
+      inst->predicate = predicate;
 
       dst.reg_offset++;
       src.reg_offset++;
@@ -1684,8 +1695,9 @@ vec4_visitor::visit(ir_if *ir)
    if (intel->gen == 6) {
       emit_if_gen6(ir);
    } else {
-      emit_bool_to_cond_code(ir->condition);
-      emit(IF(BRW_PREDICATE_NORMAL));
+      uint32_t predicate;
+      emit_bool_to_cond_code(ir->condition, &predicate);
+      emit(IF(predicate));
    }
 
    visit_instructions(&ir->then_instructions);

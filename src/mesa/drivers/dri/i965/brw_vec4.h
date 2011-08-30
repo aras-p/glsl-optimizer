@@ -433,12 +433,12 @@ public:
    /** Walks an exec_list of ir_instruction and sends it through this visitor. */
    void visit_instructions(const exec_list *list);
 
-   void emit_bool_to_cond_code(ir_rvalue *ir);
+   void emit_bool_to_cond_code(ir_rvalue *ir, uint32_t *predicate);
    void emit_bool_comparison(unsigned int op, dst_reg dst, src_reg src0, src_reg src1);
    void emit_if_gen6(ir_if *ir);
 
    void emit_block_move(dst_reg *dst, src_reg *src,
-			const struct glsl_type *type, bool predicated);
+			const struct glsl_type *type, uint32_t predicate);
 
    void emit_constant_values(dst_reg *dst, ir_constant *value);
 
