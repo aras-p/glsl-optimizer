@@ -147,7 +147,7 @@ static const struct extension extension_table[] = {
    { "GL_ARB_window_pos",                          o(ARB_window_pos),                          GL,             2001 },
    /* EXT extensions */
    { "GL_EXT_abgr",                                o(EXT_abgr),                                GL,             1995 },
-   { "GL_EXT_bgra",                                o(EXT_bgra),                                GL,             1995 },
+   { "GL_EXT_bgra",                                o(dummy_true),                              GL,             1995 },
    { "GL_EXT_blend_color",                         o(EXT_blend_color),                         GL,             1995 },
    { "GL_EXT_blend_equation_separate",             o(EXT_blend_equation_separate),             GL,             2003 },
    { "GL_EXT_blend_func_separate",                 o(EXT_blend_func_separate),                 GL,             1999 },
@@ -195,7 +195,7 @@ static const struct extension extension_table[] = {
    { "GL_EXT_texture_env_combine",                 o(EXT_texture_env_combine),                 GL,             2000 },
    { "GL_EXT_texture_env_dot3",                    o(EXT_texture_env_dot3),                    GL,             2000 },
    { "GL_EXT_texture_filter_anisotropic",          o(EXT_texture_filter_anisotropic),          GL | ES1 | ES2, 1999 },
-   { "GL_EXT_texture_format_BGRA8888",             o(EXT_texture_format_BGRA8888),                  ES1 | ES2, 2009 },
+   { "GL_EXT_texture_format_BGRA8888",             o(dummy_true),                                   ES1 | ES2, 2005 },
    { "GL_EXT_texture_integer",                     o(EXT_texture_integer),                     GL,             2006 },
    { "GL_EXT_texture_lod_bias",                    o(EXT_texture_lod_bias),                    GL | ES1,       1999 },
    { "GL_EXT_texture_mirror_clamp",                o(EXT_texture_mirror_clamp),                GL,             2004 },
@@ -346,7 +346,6 @@ static const size_t default_extensions[] = {
    o(ARB_window_pos),
 
    o(EXT_abgr),
-   o(EXT_bgra),
    o(EXT_compiled_vertex_array),
    o(EXT_draw_range_elements),
    o(EXT_packed_pixels),

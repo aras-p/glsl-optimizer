@@ -2802,7 +2802,6 @@ struct gl_extensions
    GLboolean ARB_vertex_type_2_10_10_10_rev;
    GLboolean ARB_window_pos;
    GLboolean EXT_abgr;
-   GLboolean EXT_bgra;
    GLboolean EXT_blend_color;
    GLboolean EXT_blend_equation_separate;
    GLboolean EXT_blend_func_separate;
@@ -2889,7 +2888,6 @@ struct gl_extensions
    GLboolean S3_s3tc;
    GLboolean OES_EGL_image;
    GLboolean OES_draw_texture;
-   GLboolean EXT_texture_format_BGRA8888;
    GLboolean extension_sentinel;
    /** The extension string */
    const GLubyte *String;

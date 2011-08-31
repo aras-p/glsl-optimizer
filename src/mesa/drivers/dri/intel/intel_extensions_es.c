@@ -48,7 +48,6 @@ static const char *common_extensions[] = {
 #endif
    "GL_EXT_texture_filter_anisotropic",
    "GL_EXT_packed_depth_stencil",
-   "GL_EXT_texture_format_BGRA8888",
    "GL_EXT_blend_minmax",
 
    NULL
