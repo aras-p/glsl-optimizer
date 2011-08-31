@@ -132,6 +132,40 @@ clear_current_const(struct brw_vs_compile *c)
    }
 }
 
+/* The message length for all SEND messages is restricted to [1,15].  This
+ * includes 1 for the header, so anything in slots 14 and above needs to be
+ * placed in a general-purpose register and emitted using a second URB write.
+ */
+#define MAX_SLOTS_IN_FIRST_URB_WRITE 14
+
+/**
+ * Determine whether the given vertex output can be written directly to a MRF
+ * or whether it has to be stored in a general-purpose register.
+ */
+static inline bool can_use_direct_mrf(int vert_result,
+                                      int first_reladdr_output, int slot)
+{
+   if (vert_result == VERT_RESULT_HPOS || vert_result == VERT_RESULT_PSIZ) {
+      /* These never go straight into MRF's.  They are placed in the MRF by
+       * epilog code.
+       */
+      return false;
+   }
+   if (first_reladdr_output <= vert_result && vert_result < VERT_RESULT_MAX) {
+      /* Relative addressing might be used to access this vert_result, so it
+       * needs to go into a general-purpose register.
+       */
+      return false;
+   }
+   if (slot >= MAX_SLOTS_IN_FIRST_URB_WRITE) {
+      /* This output won't go out until the second URB write so it must be
+       * stored in a general-purpose register until then.
+       */
+      return false;
+   }
+   return true;
+}
+
 /**
  * Preallocate GRF register before code emit.
  * Do things as simply as possible.  Allocate and populate all regs
@@ -140,13 +174,11 @@ clear_current_const(struct brw_vs_compile *c)
 static void brw_vs_alloc_regs( struct brw_vs_compile *c )
 {
    struct intel_context *intel = &c->func.brw->intel;
-   GLuint i, reg = 0, mrf, j;
+   GLuint i, reg = 0, slot;
    int attributes_in_vue;
    int first_reladdr_output;
    int max_constant;
    int constant = 0;
-   int vert_result_reoder[VERT_RESULT_MAX];
-   int bfc = 0;
    struct brw_vertex_program *vp = c->vp;
    const struct gl_program_parameter_list *params = vp->program.Base.Parameters;
 
@@ -293,88 +325,20 @@ static void brw_vs_alloc_regs( struct brw_vs_compile *c )
 
    /* Allocate outputs.  The non-position outputs go straight into message regs.
     */
-   c->nr_outputs = 0;
+   brw_compute_vue_map(&c->vue_map, intel, c->key.nr_userclip,
+                       c->key.two_side_color, c->prog_data.outputs_written);
    c->first_output = reg;
-   c->first_overflow_output = 0;
-
-   if (intel->gen >= 6) {
-      mrf = 3;
-      if (c->key.nr_userclip)
-	 mrf += 2;
-   } else if (intel->gen == 5)
-      mrf = 8;
-   else
-      mrf = 4;
 
    first_reladdr_output = get_first_reladdr_output(&c->vp->program);
 
-   for (i = 0; i < VERT_RESULT_MAX; i++)
-       vert_result_reoder[i] = i;
-
-   /* adjust attribute order in VUE for BFC0/BFC1 on Gen6+ */
-   if (intel->gen >= 6 && c->key.two_side_color) {
-       if ((c->prog_data.outputs_written & BITFIELD64_BIT(VERT_RESULT_COL1)) &&
-           (c->prog_data.outputs_written & BITFIELD64_BIT(VERT_RESULT_BFC1))) {
-           assert(c->prog_data.outputs_written & BITFIELD64_BIT(VERT_RESULT_COL0));
-           assert(c->prog_data.outputs_written & BITFIELD64_BIT(VERT_RESULT_BFC0));
-           bfc = 2;
-       } else if ((c->prog_data.outputs_written & BITFIELD64_BIT(VERT_RESULT_COL0)) &&
-           (c->prog_data.outputs_written & BITFIELD64_BIT(VERT_RESULT_BFC0)))
-           bfc = 1;
-
-       if (bfc) {
-           for (i = 0; i < bfc; i++) {
-               vert_result_reoder[VERT_RESULT_COL0 + i * 2 + 0] = VERT_RESULT_COL0 + i;
-               vert_result_reoder[VERT_RESULT_COL0 + i * 2 + 1] = VERT_RESULT_BFC0 + i;
-           }
-
-           for (i = VERT_RESULT_COL0 + bfc * 2; i < VERT_RESULT_BFC0 + bfc; i++) {
-               vert_result_reoder[i] = i - bfc;
-           }
-       }
-   }
-
-   for (j = 0; j < VERT_RESULT_MAX; j++) {
-      i = vert_result_reoder[j];
-
-      if (c->prog_data.outputs_written & BITFIELD64_BIT(i)) {
-	 c->nr_outputs++;
-         assert(i < Elements(c->regs[PROGRAM_OUTPUT]));
-	 if (i == VERT_RESULT_HPOS) {
-	    c->regs[PROGRAM_OUTPUT][i] = brw_vec8_grf(reg, 0);
-	    reg++;
-	 }
-	 else if (i == VERT_RESULT_PSIZ) {
-	    c->regs[PROGRAM_OUTPUT][i] = brw_vec8_grf(reg, 0);
-	    reg++;
-	 }
-	 else {
-	    /* Two restrictions on our compute-to-MRF here.  The
-	     * message length for all SEND messages is restricted to
-	     * [1,15], so we can't use mrf 15, as that means a length
-	     * of 16.
-	     *
-	     * Additionally, URB writes are aligned to URB rows, so we
-	     * need to put an even number of registers of URB data in
-	     * each URB write so that the later write is aligned.  A
-	     * message length of 15 means 1 message header reg plus 14
-	     * regs of URB data.
-	     *
-	     * For attributes beyond the compute-to-MRF, we compute to
-	     * GRFs and they will be written in the second URB_WRITE.
-	     */
-            if (first_reladdr_output > i && mrf < 15) {
-               c->regs[PROGRAM_OUTPUT][i] = brw_message_reg(mrf);
-               mrf++;
-            }
-            else {
-               if (mrf >= 15 && !c->first_overflow_output)
-                  c->first_overflow_output = i;
-               c->regs[PROGRAM_OUTPUT][i] = brw_vec8_grf(reg, 0);
-               reg++;
-	       mrf++;
-            }
-	 }
+   for (slot = 0; slot < c->vue_map.num_slots; slot++) {
+      int vert_result = c->vue_map.slot_to_vert_result[slot];
+      assert(vert_result < Elements(c->regs[PROGRAM_OUTPUT]));
+      if (can_use_direct_mrf(vert_result, first_reladdr_output, slot)) {
+         c->regs[PROGRAM_OUTPUT][vert_result] = brw_message_reg(slot + 1);
+      } else {
+         c->regs[PROGRAM_OUTPUT][vert_result] = brw_vec8_grf(reg, 0);
+         reg++;
       }
    }     
 
@@ -1582,8 +1546,9 @@ static void emit_vertex_write( struct brw_vs_compile *c)
    struct brw_reg ndc;
    int eot;
    GLuint len_vertex_header = 2;
-   int next_mrf, i;
+   int i;
    int msg_len;
+   int slot;
 
    if (c->key.copy_edgeflag) {
       brw_MOV(p, 
@@ -1730,31 +1695,26 @@ static void emit_vertex_write( struct brw_vs_compile *c)
    }
 
    /* Move variable-addressed, non-overflow outputs to their MRFs. */
-   next_mrf = 2 + len_vertex_header;
-   for (i = 0; i < VERT_RESULT_MAX; i++) {
-      if (c->first_overflow_output > 0 && i >= c->first_overflow_output)
-	 break;
-      if (!(c->prog_data.outputs_written & BITFIELD64_BIT(i)))
-	 continue;
-      if (i == VERT_RESULT_PSIZ)
-	 continue;
+   for (slot = len_vertex_header; slot < c->vue_map.num_slots; ++slot) {
+      if (slot >= MAX_SLOTS_IN_FIRST_URB_WRITE)
+         break;
 
-      if (i >= VERT_RESULT_TEX0 &&
-	  c->regs[PROGRAM_OUTPUT][i].file == BRW_GENERAL_REGISTER_FILE) {
-	 brw_MOV(p, brw_message_reg(next_mrf), c->regs[PROGRAM_OUTPUT][i]);
-	 next_mrf++;
-      } else if (c->regs[PROGRAM_OUTPUT][i].file == BRW_MESSAGE_REGISTER_FILE) {
-	 next_mrf = c->regs[PROGRAM_OUTPUT][i].nr + 1;
+      int mrf = slot + 1;
+      int vert_result = c->vue_map.slot_to_vert_result[slot];
+      if (c->regs[PROGRAM_OUTPUT][vert_result].file ==
+          BRW_GENERAL_REGISTER_FILE) {
+         brw_MOV(p, brw_message_reg(mrf),
+                 c->regs[PROGRAM_OUTPUT][vert_result]);
       }
    }
 
-   eot = (c->first_overflow_output == 0);
+   eot = (slot >= c->vue_map.num_slots);
 
-   /* Message header, plus VUE header, plus the (first set of) outputs. */
-   msg_len = 1 + len_vertex_header + c->nr_outputs;
+   /* Message header, plus the (first part of the) VUE. */
+   msg_len = 1 + slot;
    msg_len = align_interleaved_urb_mlen(brw, msg_len);
-   /* Any outputs beyond BRW_MAX_MRF should be past first_overflow_output */
-   msg_len = MIN2(msg_len, (BRW_MAX_MRF - 1)),
+   /* Any outputs beyond BRW_MAX_MRF should be in the second URB write */
+   assert (msg_len <= BRW_MAX_MRF - 1);
 
    brw_urb_WRITE(p, 
 		 brw_null_reg(), /* dest */
@@ -1769,18 +1729,18 @@ static void emit_vertex_write( struct brw_vs_compile *c)
 		 0, 		/* urb destination offset */
 		 BRW_URB_SWIZZLE_INTERLEAVE);
 
-   if (c->first_overflow_output > 0) {
+   if (slot < c->vue_map.num_slots) {
       /* Not all of the vertex outputs/results fit into the MRF.
        * Move the overflowed attributes from the GRF to the MRF and
        * issue another brw_urb_WRITE().
        */
-      GLuint i, mrf = 1;
-      for (i = c->first_overflow_output; i < VERT_RESULT_MAX; i++) {
-         if (c->prog_data.outputs_written & BITFIELD64_BIT(i)) {
-            /* move from GRF to MRF */
-            brw_MOV(p, brw_message_reg(mrf), c->regs[PROGRAM_OUTPUT][i]);
-            mrf++;
-         }
+      GLuint mrf = 1;
+      for (; slot < c->vue_map.num_slots; ++slot) {
+         int vert_result = c->vue_map.slot_to_vert_result[slot];
+         /* move from GRF to MRF */
+         brw_MOV(p, brw_message_reg(mrf),
+                 c->regs[PROGRAM_OUTPUT][vert_result]);
+         mrf++;
       }
 
       brw_urb_WRITE(p,
@@ -1793,7 +1753,7 @@ static void emit_vertex_write( struct brw_vs_compile *c)
                     0,              /* response len */
                     1,              /* eot */
                     1,              /* writes complete */
-                    14 / 2,  /* urb destination offset */
+                    MAX_SLOTS_IN_FIRST_URB_WRITE / 2,  /* urb destination offset */
                     BRW_URB_SWIZZLE_INTERLEAVE);
    }
 }

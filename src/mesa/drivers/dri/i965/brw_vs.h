@@ -63,9 +63,9 @@ struct brw_vs_compile {
 
    GLuint nr_inputs;
 
+   struct brw_vue_map vue_map;
    GLuint first_output;
    GLuint nr_outputs;
-   GLuint first_overflow_output; /**< VERT_ATTRIB_x */
    GLuint last_scratch;
 
    GLuint first_tmp;
