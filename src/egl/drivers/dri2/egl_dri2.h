@@ -133,12 +133,6 @@ enum wayland_buffer_type {
 };
 #endif
 
-enum dri2_surface_type {
-   DRI2_WINDOW_SURFACE,
-   DRI2_PIXMAP_SURFACE,
-   DRI2_PBUFFER_SURFACE
-};
-
 struct dri2_egl_surface
 {
    _EGLSurface          base;
@@ -157,7 +151,6 @@ struct dri2_egl_surface
    xcb_gcontext_t       swapgc;
 #endif
 
-   enum dri2_surface_type type;
 #ifdef HAVE_WAYLAND_PLATFORM
    struct wl_egl_window  *wl_win;
    struct wl_egl_pixmap  *wl_pix;
