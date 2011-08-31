@@ -146,7 +146,7 @@ static const struct extension extension_table[] = {
    { "GL_ARB_vertex_type_2_10_10_10_rev",          o(ARB_vertex_type_2_10_10_10_rev),          GL,             2009 },
    { "GL_ARB_window_pos",                          o(ARB_window_pos),                          GL,             2001 },
    /* EXT extensions */
-   { "GL_EXT_abgr",                                o(EXT_abgr),                                GL,             1995 },
+   { "GL_EXT_abgr",                                o(dummy_true),                              GL,             1995 },
    { "GL_EXT_bgra",                                o(dummy_true),                              GL,             1995 },
    { "GL_EXT_blend_color",                         o(EXT_blend_color),                         GL,             1995 },
    { "GL_EXT_blend_equation_separate",             o(EXT_blend_equation_separate),             GL,             2003 },
@@ -345,7 +345,6 @@ static const size_t default_extensions[] = {
    o(ARB_transpose_matrix),
    o(ARB_window_pos),
 
-   o(EXT_abgr),
    o(EXT_compiled_vertex_array),
    o(EXT_draw_range_elements),
    o(EXT_packed_pixels),

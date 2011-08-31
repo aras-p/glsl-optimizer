@@ -2801,7 +2801,6 @@ struct gl_extensions
    GLboolean ARB_vertex_shader;
    GLboolean ARB_vertex_type_2_10_10_10_rev;
    GLboolean ARB_window_pos;
-   GLboolean EXT_abgr;
    GLboolean EXT_blend_color;
    GLboolean EXT_blend_equation_separate;
    GLboolean EXT_blend_func_separate;
