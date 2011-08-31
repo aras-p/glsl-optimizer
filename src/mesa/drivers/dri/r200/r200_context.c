@@ -370,7 +370,6 @@ GLboolean r200CreateContext( gl_api api,
    ctx->Extensions.EXT_packed_depth_stencil = true;
    ctx->Extensions.EXT_secondary_color = true;
    ctx->Extensions.EXT_stencil_wrap = true;
-   ctx->Extensions.EXT_texture_env_combine = true;
    ctx->Extensions.EXT_texture_env_dot3 = true;
    ctx->Extensions.EXT_texture_filter_anisotropic = true;
    ctx->Extensions.EXT_texture_lod_bias = true;

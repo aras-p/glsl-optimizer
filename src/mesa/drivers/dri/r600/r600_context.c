@@ -287,7 +287,6 @@ static void r600InitGLExtensions(struct gl_context *ctx)
 	ctx->Extensions.EXT_shadow_funcs = true;
 	ctx->Extensions.EXT_stencil_two_side = true;
 	ctx->Extensions.EXT_stencil_wrap = true;
-	ctx->Extensions.EXT_texture_env_combine = true;
 	ctx->Extensions.EXT_texture_env_dot3 = true;
 	ctx->Extensions.EXT_texture_filter_anisotropic = true;
 	ctx->Extensions.EXT_texture_lod_bias = true;
