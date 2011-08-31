@@ -259,8 +259,10 @@ dri2_add_config(_EGLDisplay *disp, const __DRIconfig *dri_config, int id,
       return NULL;
    }
 
-   conf->base.SurfaceType |= surface_type & (!double_buffer ? EGL_PIXMAP_BIT:
-         (EGL_WINDOW_BIT | EGL_PBUFFER_BIT | EGL_SWAP_BEHAVIOR_PRESERVED_BIT));
+   if (double_buffer)
+      surface_type &= ~EGL_PIXMAP_BIT;
+
+   conf->base.SurfaceType |= surface_type;
 
    return conf;
 }
