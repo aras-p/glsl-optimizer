@@ -90,7 +90,6 @@ static const char *es2_extensions[] = {
    "GL_EXT_blend_equation_separate",
    "GL_EXT_blend_minmax",
    "GL_EXT_blend_subtract",
-   "GL_EXT_stencil_wrap",
    "GL_NV_blend_square",
 
    /* Optional GLES2 */

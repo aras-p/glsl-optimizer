@@ -181,7 +181,7 @@ static const struct extension extension_table[] = {
    { "GL_EXT_separate_specular_color",             o(EXT_separate_specular_color),             GL,             1997 },
    { "GL_EXT_shadow_funcs",                        o(EXT_shadow_funcs),                        GL,             2002 },
    { "GL_EXT_stencil_two_side",                    o(EXT_stencil_two_side),                    GL,             2001 },
-   { "GL_EXT_stencil_wrap",                        o(EXT_stencil_wrap),                        GL,             2002 },
+   { "GL_EXT_stencil_wrap",                        o(dummy_true),                              GL,             2002 },
    { "GL_EXT_subtexture",                          o(dummy_true),                              GL,             1995 },
    { "GL_EXT_texture3D",                           o(EXT_texture3D),                           GL,             1996 },
    { "GL_EXT_texture_array",                       o(EXT_texture_array),                       GL,             2006 },
@@ -246,7 +246,7 @@ static const struct extension extension_table[] = {
    { "GL_OES_stencil1",                            o(dummy_false),                     DISABLE,                2005 },
    { "GL_OES_stencil4",                            o(dummy_false),                     DISABLE,                2005 },
    { "GL_OES_stencil8",                            o(EXT_framebuffer_object),                       ES1 | ES2, 2005 },
-   { "GL_OES_stencil_wrap",                        o(EXT_stencil_wrap),                             ES1,       2002 },
+   { "GL_OES_stencil_wrap",                        o(dummy_true),                                   ES1,       2002 },
    { "GL_OES_texture_3D",                          o(EXT_texture3D),                                      ES2, 2005 },
    { "GL_OES_texture_cube_map",                    o(ARB_texture_cube_map),                         ES1,       2007 },
    { "GL_OES_texture_env_crossbar",                o(ARB_texture_env_crossbar),                     ES1,       2005 },
@@ -469,7 +469,6 @@ _mesa_enable_sw_extensions(struct gl_context *ctx)
    ctx->Extensions.EXT_provoking_vertex = GL_TRUE;
    ctx->Extensions.EXT_shadow_funcs = GL_TRUE;
    ctx->Extensions.EXT_secondary_color = GL_TRUE;
-   ctx->Extensions.EXT_stencil_wrap = GL_TRUE;
    ctx->Extensions.EXT_stencil_two_side = GL_TRUE;
    ctx->Extensions.EXT_texture_array = GL_TRUE;
    ctx->Extensions.EXT_texture_compression_latc = GL_TRUE;
@@ -558,7 +557,6 @@ _mesa_enable_1_4_extensions(struct gl_context *ctx)
    ctx->Extensions.EXT_fog_coord = GL_TRUE;
    ctx->Extensions.EXT_point_parameters = GL_TRUE;
    ctx->Extensions.EXT_secondary_color = GL_TRUE;
-   ctx->Extensions.EXT_stencil_wrap = GL_TRUE;
 }
 
 

@@ -76,7 +76,6 @@ intelInitExtensions(struct gl_context *ctx)
    ctx->Extensions.EXT_provoking_vertex = true;
    ctx->Extensions.EXT_secondary_color = true;
    ctx->Extensions.EXT_separate_shader_objects = true;
-   ctx->Extensions.EXT_stencil_wrap = true;
    ctx->Extensions.EXT_texture_env_dot3 = true;
    ctx->Extensions.EXT_texture_filter_anisotropic = true;
    ctx->Extensions.APPLE_object_purgeable = true;

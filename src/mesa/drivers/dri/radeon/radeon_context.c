@@ -322,7 +322,6 @@ r100CreateContext( gl_api api,
    ctx->Extensions.EXT_fog_coord = true;
    ctx->Extensions.EXT_packed_depth_stencil = true;
    ctx->Extensions.EXT_secondary_color = true;
-   ctx->Extensions.EXT_stencil_wrap = true;
    ctx->Extensions.EXT_texture_env_dot3 = true;
    ctx->Extensions.EXT_texture_filter_anisotropic = true;
    ctx->Extensions.EXT_texture_mirror_clamp = true;

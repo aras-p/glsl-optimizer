@@ -65,13 +65,9 @@ validate_stencil_op(struct gl_context *ctx, GLenum op)
    case GL_INCR:
    case GL_DECR:
    case GL_INVERT:
+   case GL_INCR_WRAP:
+   case GL_DECR_WRAP:
       return GL_TRUE;
-   case GL_INCR_WRAP_EXT:
-   case GL_DECR_WRAP_EXT:
-      if (ctx->Extensions.EXT_stencil_wrap) {
-         return GL_TRUE;
-      }
-      /* FALL-THROUGH */
    default:
       return GL_FALSE;
    }
