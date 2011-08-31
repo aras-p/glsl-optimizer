@@ -3119,7 +3119,7 @@ get_mesa_program(struct gl_context *ctx,
 
       switch (mesa_inst->Opcode) {
       case OPCODE_IF:
-	 if (options->EmitNoIfs) {
+	 if (options->MaxIfDepth == 0) {
 	    linker_warning(shader_program,
 			   "Couldn't flatten if-statement.  "
 			   "This will likely result in software "
@@ -3241,10 +3241,10 @@ _mesa_ir_link_shader(struct gl_context *ctx, struct gl_shader_program *prog)
 
 	 progress = lower_quadop_vector(ir, true) || progress;
 
-	 if (options->EmitNoIfs) {
+	 if (options->MaxIfDepth == 0)
 	    progress = lower_discard(ir) || progress;
-	    progress = lower_if_to_cond_assign(ir) || progress;
-	 }
+
+	 progress = lower_if_to_cond_assign(ir, options->MaxIfDepth) || progress;
 
 	 if (options->EmitNoNoise)
 	    progress = lower_noise(ir) || progress;

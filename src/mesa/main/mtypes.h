@@ -2266,11 +2266,6 @@ struct gl_shader_compiler_options
    /** Driver-selectable options: */
    GLboolean EmitCondCodes;             /**< Use condition codes? */
    GLboolean EmitNVTempInitialization;  /**< 0-fill NV temp registers */
-   /**
-    * Attempts to flatten all ir_if (OPCODE_IF) for GPUs that can't
-    * support control flow.
-    */
-   GLboolean EmitNoIfs;
    GLboolean EmitNoLoops;
    GLboolean EmitNoFunctions;
    GLboolean EmitNoCont;                  /**< Emit CONT opcode? */
@@ -2288,6 +2283,7 @@ struct gl_shader_compiler_options
    GLboolean EmitNoIndirectUniform; /**< No indirect addressing of constants */
    /*@}*/
 
+   GLuint MaxIfDepth;               /**< Maximum nested IF blocks */
    GLuint MaxUnrollIterations;
 
    struct gl_sl_pragmas DefaultPragmas; /**< Default #pragma settings */

@@ -4991,10 +4991,10 @@ st_link_shader(struct gl_context *ctx, struct gl_shader_program *prog)
 
          progress = lower_quadop_vector(ir, false) || progress;
 
-         if (options->EmitNoIfs) {
+         if (options->MaxIfDepth == 0)
             progress = lower_discard(ir) || progress;
-            progress = lower_if_to_cond_assign(ir) || progress;
-         }
+
+         progress = lower_if_to_cond_assign(ir, options->MaxIfDepth) || progress;
 
          if (options->EmitNoNoise)
             progress = lower_noise(ir) || progress;

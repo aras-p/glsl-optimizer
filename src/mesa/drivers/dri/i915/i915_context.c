@@ -189,7 +189,7 @@ i915CreateContext(int api,
 
    struct gl_shader_compiler_options *const fs_options =
       & ctx->ShaderCompilerOptions[MESA_SHADER_FRAGMENT];
-   fs_options->EmitNoIfs = GL_TRUE;
+   fs_options->MaxIfDepth = 0;
    fs_options->EmitNoNoise = GL_TRUE;
    fs_options->EmitNoPow = GL_TRUE;
    fs_options->EmitNoMainReturn = GL_TRUE;
