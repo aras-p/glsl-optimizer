@@ -431,6 +431,7 @@ vec4_visitor::generate_scratch_write(vec4_instruction *inst,
 				     struct brw_reg index)
 {
    struct brw_reg header = brw_vec8_grf(0, 0);
+   bool write_commit;
 
    /* If the instruction is predicated, we'll predicate the send, not
     * the header setup.
@@ -455,6 +456,25 @@ vec4_visitor::generate_scratch_write(vec4_instruction *inst,
 
    brw_set_predicate_control(p, inst->predicate);
 
+   /* Pre-gen6, we have to specify write commits to ensure ordering
+    * between reads and writes within a thread.  Afterwards, that's
+    * guaranteed and write commits only matter for inter-thread
+    * synchronization.
+    */
+   if (intel->gen >= 6) {
+      write_commit = false;
+   } else {
+      /* The visitor set up our destination register to be g0.  This
+       * means that when the next read comes along, we will end up
+       * reading from g0 and causing a block on the write commit.  For
+       * write-after-read, we are relying on the value of the previous
+       * read being used (and thus blocking on completion) before our
+       * write is executed.  This means we have to be careful in
+       * instruction scheduling to not violate this assumption.
+       */
+      write_commit = true;
+   }
+
    /* Each of the 8 channel enables is considered for whether each
     * dword is written.
     */
@@ -470,9 +490,9 @@ vec4_visitor::generate_scratch_write(vec4_instruction *inst,
 			    3, /* mlen */
 			    true, /* header present */
 			    false, /* pixel scoreboard */
-			    0, /* rlen */
+			    write_commit, /* rlen */
 			    false, /* eot */
-			    false /* commit */);
+			    write_commit);
 }
 
 void
