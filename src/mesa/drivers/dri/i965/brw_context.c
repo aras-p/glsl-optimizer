@@ -71,7 +71,6 @@ brwCreateContext(int api,
       return false;
    }
 
-   brwInitVtbl( brw );
    brwInitDriverFunctions( &functions );
 
    if (!intelInitContext( intel, api, mesaVis, driContextPriv,
@@ -80,6 +79,8 @@ brwCreateContext(int api,
       FREE(brw);
       return false;
    }
+
+   brwInitVtbl( brw );
 
    /* Initialize swrast, tnl driver tables: */
    intelInitSpanFuncs(ctx);
