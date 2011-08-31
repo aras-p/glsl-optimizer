@@ -79,7 +79,7 @@ void brw_clip_tri_alloc_regs( struct brw_clip_compile *c,
        * used.  Fill the second half with zero.
        */
       for (j = 0; j < 3; j++) {
-	 GLuint delta = c->vue_map.num_slots * ATTR_SIZE;
+	 GLuint delta = brw_vue_slot_to_offset(c->vue_map.num_slots);
 
 	 brw_MOV(&c->func, byte_offset(c->reg.vertex[j], delta), brw_imm_f(0));
       }

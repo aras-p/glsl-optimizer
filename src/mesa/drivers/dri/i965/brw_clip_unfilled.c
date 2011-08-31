@@ -159,14 +159,22 @@ static void copy_bfc( struct brw_clip_compile *c )
 	 if (brw_clip_have_vert_result(c, VERT_RESULT_COL0) &&
              brw_clip_have_vert_result(c, VERT_RESULT_BFC0))
 	    brw_MOV(p, 
-		    byte_offset(c->reg.vertex[i], c->offset[VERT_RESULT_COL0]),
-		    byte_offset(c->reg.vertex[i], c->offset[VERT_RESULT_BFC0]));
+		    byte_offset(c->reg.vertex[i],
+                                brw_vert_result_to_offset(&c->vue_map,
+                                                          VERT_RESULT_COL0)),
+		    byte_offset(c->reg.vertex[i],
+                                brw_vert_result_to_offset(&c->vue_map,
+                                                          VERT_RESULT_BFC0)));
 
 	 if (brw_clip_have_vert_result(c, VERT_RESULT_COL1) &&
              brw_clip_have_vert_result(c, VERT_RESULT_BFC1))
 	    brw_MOV(p, 
-		    byte_offset(c->reg.vertex[i], c->offset[VERT_RESULT_COL1]),
-		    byte_offset(c->reg.vertex[i], c->offset[VERT_RESULT_BFC1]));
+		    byte_offset(c->reg.vertex[i],
+                                brw_vert_result_to_offset(&c->vue_map,
+                                                          VERT_RESULT_COL1)),
+		    byte_offset(c->reg.vertex[i],
+                                brw_vert_result_to_offset(&c->vue_map,
+                                                          VERT_RESULT_BFC1)));
       }
    }
    brw_ENDIF(p);
@@ -225,12 +233,18 @@ static void merge_edgeflags( struct brw_clip_compile *c )
    {   
       brw_set_conditionalmod(p, BRW_CONDITIONAL_EQ);
       brw_AND(p, vec1(brw_null_reg()), get_element_ud(c->reg.R0, 2), brw_imm_ud(1<<8));
-      brw_MOV(p, byte_offset(c->reg.vertex[0], c->offset[VERT_RESULT_EDGE]), brw_imm_f(0));
+      brw_MOV(p, byte_offset(c->reg.vertex[0],
+                             brw_vert_result_to_offset(&c->vue_map,
+                                                       VERT_RESULT_EDGE)),
+              brw_imm_f(0));
       brw_set_predicate_control(p, BRW_PREDICATE_NONE);
 
       brw_set_conditionalmod(p, BRW_CONDITIONAL_EQ);
       brw_AND(p, vec1(brw_null_reg()), get_element_ud(c->reg.R0, 2), brw_imm_ud(1<<9));
-      brw_MOV(p, byte_offset(c->reg.vertex[2], c->offset[VERT_RESULT_EDGE]), brw_imm_f(0));
+      brw_MOV(p, byte_offset(c->reg.vertex[2],
+                             brw_vert_result_to_offset(&c->vue_map,
+                                                       VERT_RESULT_EDGE)),
+              brw_imm_f(0));
       brw_set_predicate_control(p, BRW_PREDICATE_NONE);
    }
    brw_ENDIF(p);
@@ -302,7 +316,8 @@ static void emit_lines(struct brw_clip_compile *c,
       /* draw edge if edgeflag != 0 */
       brw_CMP(p, 
 	      vec1(brw_null_reg()), BRW_CONDITIONAL_NZ, 
-	      deref_1f(v0, c->offset[VERT_RESULT_EDGE]),
+	      deref_1f(v0, brw_vert_result_to_offset(&c->vue_map,
+                                                     VERT_RESULT_EDGE)),
 	      brw_imm_f(0));
       brw_IF(p, BRW_EXECUTE_1);
       {
@@ -340,7 +355,8 @@ static void emit_points(struct brw_clip_compile *c,
        */
       brw_CMP(p, 
 	      vec1(brw_null_reg()), BRW_CONDITIONAL_NZ, 
-	      deref_1f(v0, c->offset[VERT_RESULT_EDGE]),
+	      deref_1f(v0, brw_vert_result_to_offset(&c->vue_map,
+                                                     VERT_RESULT_EDGE)),
 	      brw_imm_f(0));
       brw_IF(p, BRW_EXECUTE_1);
       {
