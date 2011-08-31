@@ -212,7 +212,6 @@ static const struct extension extension_table[] = {
    { "GL_EXT_transform_feedback",                  o(EXT_transform_feedback),                  GL,             2011 },
    { "GL_EXT_vertex_array_bgra",                   o(EXT_vertex_array_bgra),                   GL,             2008 },
    { "GL_EXT_vertex_array",                        o(dummy_true),                              GL,             1995 },
-   { "GL_EXT_vertex_array_set",                    o(EXT_vertex_array_set),                    GL,             1997 },
 
    /* OES extensions */
    { "GL_OES_blend_equation_separate",             o(EXT_blend_equation_separate),                  ES1,       2009 },
