@@ -98,7 +98,6 @@ compute_version(struct gl_context *ctx)
                               ctx->Extensions.EXT_blend_color &&
                               ctx->Extensions.EXT_blend_func_separate &&
                               ctx->Extensions.EXT_blend_minmax &&
-                              ctx->Extensions.EXT_blend_subtract &&
                               ctx->Extensions.EXT_fog_coord &&
                               ctx->Extensions.EXT_point_parameters &&
                               ctx->Extensions.EXT_secondary_color);
@@ -276,7 +275,6 @@ compute_version_es2(struct gl_context *ctx)
                               ctx->Extensions.EXT_blend_color &&
                               ctx->Extensions.EXT_blend_func_separate &&
                               ctx->Extensions.EXT_blend_minmax &&
-                              ctx->Extensions.EXT_blend_subtract &&
                               ctx->Extensions.ARB_shader_objects &&
                               ctx->Extensions.ARB_vertex_shader &&
                               ctx->Extensions.ARB_fragment_shader &&

@@ -120,7 +120,6 @@ nouveau_context_init(struct gl_context *ctx, struct nouveau_screen *screen,
 	ctx->Extensions.ARB_texture_mirrored_repeat = true;
 	ctx->Extensions.EXT_blend_color = true;
 	ctx->Extensions.EXT_blend_minmax = true;
-	ctx->Extensions.EXT_blend_subtract = true;
 	ctx->Extensions.EXT_fog_coord = true;
 	ctx->Extensions.EXT_framebuffer_blit = true;
 	ctx->Extensions.EXT_framebuffer_object = true;

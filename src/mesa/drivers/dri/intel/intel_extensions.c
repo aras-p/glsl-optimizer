@@ -64,7 +64,6 @@ intelInitExtensions(struct gl_context *ctx)
    ctx->Extensions.EXT_blend_equation_separate = true;
    ctx->Extensions.EXT_blend_func_separate = true;
    ctx->Extensions.EXT_blend_minmax = true;
-   ctx->Extensions.EXT_blend_subtract = true;
    ctx->Extensions.EXT_framebuffer_blit = true;
    ctx->Extensions.EXT_framebuffer_object = true;
    ctx->Extensions.EXT_framebuffer_multisample = true;

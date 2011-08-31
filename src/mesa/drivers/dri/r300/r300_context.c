@@ -378,7 +378,6 @@ static void r300InitGLExtensions(struct gl_context *ctx)
 	ctx->Extensions.EXT_blend_equation_separate = true;
 	ctx->Extensions.EXT_blend_func_separate = true;
 	ctx->Extensions.EXT_blend_minmax = true;
-	ctx->Extensions.EXT_blend_subtract = true;
 	ctx->Extensions.EXT_fog_coord = true;
 	ctx->Extensions.EXT_gpu_program_parameters = true;
 	ctx->Extensions.EXT_point_parameters = true;

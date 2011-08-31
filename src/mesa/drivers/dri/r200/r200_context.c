@@ -365,7 +365,6 @@ GLboolean r200CreateContext( gl_api api,
    ctx->Extensions.EXT_blend_color =
       rmesa->radeon.radeonScreen->drmSupportsBlendColor;
    ctx->Extensions.EXT_blend_minmax = true;
-   ctx->Extensions.EXT_blend_subtract = true;
    ctx->Extensions.EXT_fog_coord = true;
    ctx->Extensions.EXT_packed_depth_stencil = true;
    ctx->Extensions.EXT_secondary_color = true;
