@@ -47,7 +47,7 @@ struct gl_format_info
    GLenum BaseFormat;
 
    /**
-    * Logical data type: one of  GL_UNSIGNED_NORMALIZED, GL_SIGNED_NORMALED,
+    * Logical data type: one of  GL_UNSIGNED_NORMALIZED, GL_SIGNED_NORMALIZED,
     * GL_UNSIGNED_INT, GL_INT, GL_FLOAT.
     */
    GLenum DataType;
