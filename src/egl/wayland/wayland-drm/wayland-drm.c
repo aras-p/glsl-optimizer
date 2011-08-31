@@ -48,7 +48,8 @@ struct wl_drm {
 struct wl_drm_buffer {
 	struct wl_buffer buffer;
 	struct wl_drm *drm;
-	
+	uint32_t format;
+
 	void *driver_buffer;
 };
 
@@ -83,11 +84,22 @@ const static struct wl_buffer_interface drm_buffer_interface = {
 static void
 drm_create_buffer(struct wl_client *client, struct wl_resource *resource,
 		  uint32_t id, uint32_t name, int32_t width, int32_t height,
-		  uint32_t stride, struct wl_resource *visual_resource)
+		  uint32_t stride, uint32_t format)
 {
 	struct wl_drm *drm = resource->data;
 	struct wl_drm_buffer *buffer;
-	struct wl_visual *visual = visual_resource->data;
+
+	switch (format) {
+	case WL_DRM_FORMAT_ARGB32:
+	case WL_DRM_FORMAT_PREMULTIPLIED_ARGB32:
+	case WL_DRM_FORMAT_XRGB32:
+		break;
+	default:
+		wl_resource_post_error(resource,
+				       WL_DRM_ERROR_INVALID_FORMAT,
+				       "invalid format");
+		return;
+	}
 
 	buffer = calloc(1, sizeof *buffer);
 	if (buffer == NULL) {
@@ -98,20 +110,12 @@ drm_create_buffer(struct wl_client *client, struct wl_resource *resource,
 	buffer->drm = drm;
 	buffer->buffer.width = width;
 	buffer->buffer.height = height;
-	buffer->buffer.visual = visual;
-
-	if (!visual || visual_resource->object.interface != &wl_visual_interface) {
-		wl_resource_post_error(resource,
-				       WL_DRM_ERROR_INVALID_VISUAL,
-				       "invalid visual");
-		free(buffer);
-		return;
-	}
+	buffer->format = format;
 
 	buffer->driver_buffer =
 		drm->callbacks->reference_buffer(drm->user_data, name,
 						 width, height,
-						 stride, visual);
+						 stride, format);
 
 	if (buffer->driver_buffer == NULL) {
 		wl_resource_post_error(resource,
@@ -160,6 +164,10 @@ bind_drm(struct wl_client *client, void *data, uint32_t version, uint32_t id)
 	resource = wl_client_add_object(client, &wl_drm_interface,
 					&drm_interface, id, data);
 	wl_resource_post_event(resource, WL_DRM_DEVICE, drm->device_name);
+	wl_resource_post_event(resource, WL_DRM_FORMAT, WL_DRM_FORMAT_ARGB32);
+	wl_resource_post_event(resource, WL_DRM_FORMAT,
+			       WL_DRM_FORMAT_PREMULTIPLIED_ARGB32);
+	wl_resource_post_event(resource, WL_DRM_FORMAT, WL_DRM_FORMAT_XRGB32);
 }
 
 struct wl_drm *

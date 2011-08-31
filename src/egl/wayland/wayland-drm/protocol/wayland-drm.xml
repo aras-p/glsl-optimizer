@@ -32,8 +32,14 @@
   <interface name="wl_drm" version="1">
     <enum name="error">
       <entry name="authenticate_fail" value="0"/>
-      <entry name="invalid_visual" value="1"/>
+      <entry name="invalid_format" value="1"/>
       <entry name="invalid_name" value="2"/>
+    </enum>
+
+    <enum name="format">
+      <entry name="argb32" value="0"/>
+      <entry name="premultiplied_argb32" value="1"/>
+      <entry name="xrgb32" value="2"/>
     </enum>
 
     <!-- Call this request with the magic received from drmGetMagic().
@@ -52,7 +58,7 @@
       <arg name="width" type="int"/>
       <arg name="height" type="int"/>
       <arg name="stride" type="uint"/>
-      <arg name="visual" type="object" interface="wl_visual"/>
+      <arg name="format" type="uint"/>
     </request>
 
     <!-- Notification of the path of the drm device which is used by
@@ -62,6 +68,10 @@
          create_buffer request. -->
     <event name="device">
       <arg name="name" type="string"/>
+    </event>
+
+    <event name="format">
+      <arg name="format" type="uint"/>
     </event>
 
     <!-- Raised if the authenticate request succeeded -->

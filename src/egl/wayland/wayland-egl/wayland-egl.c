@@ -17,8 +17,7 @@ wl_egl_window_resize(struct wl_egl_window *egl_window,
 
 WL_EGL_EXPORT struct wl_egl_window *
 wl_egl_window_create(struct wl_surface *surface,
-		     int width, int height,
-		     struct wl_visual *visual)
+		     int width, int height)
 {
 	struct wl_egl_window *egl_window;
 
@@ -27,7 +26,6 @@ wl_egl_window_create(struct wl_surface *surface,
 		return NULL;
 
 	egl_window->surface = surface;
-	egl_window->visual  = visual;
 	wl_egl_window_resize(egl_window, width, height, 0, 0);
 	egl_window->attached_width  = 0;
 	egl_window->attached_height = 0;
@@ -52,8 +50,7 @@ wl_egl_window_get_attached_size(struct wl_egl_window *egl_window,
 }
 
 WL_EGL_EXPORT struct wl_egl_pixmap *
-wl_egl_pixmap_create(int width, int height,
-		     struct wl_visual *visual, uint32_t flags)
+wl_egl_pixmap_create(int width, int height, uint32_t flags)
 {
 	struct wl_egl_pixmap *egl_pixmap;
 
@@ -63,7 +60,6 @@ wl_egl_pixmap_create(int width, int height,
 
 	egl_pixmap->width   = width;
 	egl_pixmap->height  = height;
-	egl_pixmap->visual  = visual;
 
 	egl_pixmap->destroy = NULL;
 	egl_pixmap->buffer  = NULL;

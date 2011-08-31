@@ -1249,16 +1249,28 @@ dri2_export_drm_image_mesa(_EGLDriver *drv, _EGLDisplay *disp, _EGLImage *img,
 static void *
 dri2_wl_reference_buffer(void *user_data, uint32_t name,
 			 int32_t width, int32_t height,
-			 uint32_t stride, struct wl_visual *visual)
+			 uint32_t stride, uint32_t format)
 {
    _EGLDisplay *disp = user_data;
    struct dri2_egl_display *dri2_dpy = dri2_egl_display(disp);
    __DRIimage *image;
+   int dri_format;
+
+   switch (format) {
+   case WL_DRM_FORMAT_ARGB32:
+   case WL_DRM_FORMAT_PREMULTIPLIED_ARGB32:
+      dri_format =__DRI_IMAGE_FORMAT_ARGB8888;
+      break;
+   case WL_DRM_FORMAT_XRGB32:
+      dri_format = __DRI_IMAGE_FORMAT_XRGB8888;
+      break;
+   default:
+      return NULL;	   
+   }
 
    image = dri2_dpy->image->createImageFromName(dri2_dpy->dri_screen,
 						width, height, 
-						__DRI_IMAGE_FORMAT_ARGB8888,
-						name, stride / 4,
+						dri_format, name, stride / 4,
 						NULL);
 
    return image;

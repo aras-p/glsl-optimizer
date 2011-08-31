@@ -113,6 +113,7 @@ struct dri2_egl_display
    struct wl_drm            *wl_server_drm;
    struct wl_drm            *wl_drm;
    int			     authenticated;
+   int			     formats;
 #endif
 
    int (*authenticate) (_EGLDisplay *disp, uint32_t id);
@@ -162,6 +163,7 @@ struct dri2_egl_surface
    __DRIbuffer           *third_buffer;
    __DRIbuffer           *pending_buffer;
    EGLBoolean             block_swap_buffers;
+   int			  format;
 #endif
 
 #ifdef HAVE_ANDROID_PLATFORM

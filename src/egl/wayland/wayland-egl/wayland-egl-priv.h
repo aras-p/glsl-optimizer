@@ -16,7 +16,6 @@ extern "C" {
 
 struct wl_egl_window {
 	struct wl_surface *surface;
-	struct wl_visual *visual;
 
 	int width;
 	int height;
@@ -28,7 +27,6 @@ struct wl_egl_window {
 };
 
 struct wl_egl_pixmap {
-	struct wl_visual *visual;
 	struct wl_buffer *buffer;
 
 	int width;
