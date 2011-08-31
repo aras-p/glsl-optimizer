@@ -102,8 +102,7 @@ compute_version(struct gl_context *ctx)
                               ctx->Extensions.EXT_fog_coord &&
                               ctx->Extensions.EXT_point_parameters &&
                               ctx->Extensions.EXT_secondary_color &&
-                              ctx->Extensions.EXT_stencil_wrap &&
-                              ctx->Extensions.EXT_texture_lod_bias);
+                              ctx->Extensions.EXT_stencil_wrap);
    const GLboolean ver_1_5 = (ver_1_4 &&
                               ctx->Extensions.ARB_occlusion_query &&
                               ctx->Extensions.EXT_shadow_funcs);

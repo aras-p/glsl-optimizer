@@ -460,11 +460,6 @@ _mesa_TexEnvfv( GLenum target, GLenum pname, const GLfloat *param )
       }
    }
    else if (target == GL_TEXTURE_FILTER_CONTROL_EXT) {
-      /* GL_EXT_texture_lod_bias */
-      if (!ctx->Extensions.EXT_texture_lod_bias) {
-	 _mesa_error( ctx, GL_INVALID_ENUM, "glTexEnv(target=0x%x)", target );
-	 return;
-      }
       if (pname == GL_TEXTURE_LOD_BIAS_EXT) {
 	 if (texUnit->LodBias == param[0])
 	    return;
@@ -693,11 +688,6 @@ _mesa_GetTexEnvfv( GLenum target, GLenum pname, GLfloat *params )
       }
    }
    else if (target == GL_TEXTURE_FILTER_CONTROL_EXT) {
-      /* GL_EXT_texture_lod_bias */
-      if (!ctx->Extensions.EXT_texture_lod_bias) {
-	 _mesa_error( ctx, GL_INVALID_ENUM, "glGetTexEnvfv(target)" );
-	 return;
-      }
       if (pname == GL_TEXTURE_LOD_BIAS_EXT) {
          *params = texUnit->LodBias;
       }
@@ -760,11 +750,6 @@ _mesa_GetTexEnviv( GLenum target, GLenum pname, GLint *params )
       }
    }
    else if (target == GL_TEXTURE_FILTER_CONTROL_EXT) {
-      /* GL_EXT_texture_lod_bias */
-      if (!ctx->Extensions.EXT_texture_lod_bias) {
-	 _mesa_error( ctx, GL_INVALID_ENUM, "glGetTexEnviv(target)" );
-	 return;
-      }
       if (pname == GL_TEXTURE_LOD_BIAS_EXT) {
          *params = (GLint) texUnit->LodBias;
       }

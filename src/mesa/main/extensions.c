@@ -197,7 +197,7 @@ static const struct extension extension_table[] = {
    { "GL_EXT_texture_filter_anisotropic",          o(EXT_texture_filter_anisotropic),          GL | ES1 | ES2, 1999 },
    { "GL_EXT_texture_format_BGRA8888",             o(dummy_true),                                   ES1 | ES2, 2005 },
    { "GL_EXT_texture_integer",                     o(EXT_texture_integer),                     GL,             2006 },
-   { "GL_EXT_texture_lod_bias",                    o(EXT_texture_lod_bias),                    GL | ES1,       1999 },
+   { "GL_EXT_texture_lod_bias",                    o(dummy_true),                              GL | ES1,       1999 },
    { "GL_EXT_texture_mirror_clamp",                o(EXT_texture_mirror_clamp),                GL,             2004 },
    { "GL_EXT_texture_object",                      o(dummy_true),                              GL,             1995 },
    { "GL_EXT_texture",                             o(dummy_true),                              GL,             1996 },
@@ -476,7 +476,6 @@ _mesa_enable_sw_extensions(struct gl_context *ctx)
    ctx->Extensions.EXT_texture_env_dot3 = GL_TRUE;
    ctx->Extensions.EXT_texture_filter_anisotropic = GL_TRUE;
    ctx->Extensions.EXT_texture_mirror_clamp = GL_TRUE;
-   ctx->Extensions.EXT_texture_lod_bias = GL_TRUE;
    ctx->Extensions.EXT_texture_shared_exponent = GL_TRUE;
 #if FEATURE_EXT_texture_sRGB
    ctx->Extensions.EXT_texture_sRGB = GL_TRUE;
@@ -560,7 +559,6 @@ _mesa_enable_1_4_extensions(struct gl_context *ctx)
    ctx->Extensions.EXT_point_parameters = GL_TRUE;
    ctx->Extensions.EXT_secondary_color = GL_TRUE;
    ctx->Extensions.EXT_stencil_wrap = GL_TRUE;
-   ctx->Extensions.EXT_texture_lod_bias = GL_TRUE;
 }
 
 

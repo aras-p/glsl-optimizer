@@ -325,7 +325,6 @@ r100CreateContext( gl_api api,
    ctx->Extensions.EXT_stencil_wrap = true;
    ctx->Extensions.EXT_texture_env_dot3 = true;
    ctx->Extensions.EXT_texture_filter_anisotropic = true;
-   ctx->Extensions.EXT_texture_lod_bias = true;
    ctx->Extensions.EXT_texture_mirror_clamp = true;
    ctx->Extensions.ATI_texture_env_combine3 = true;
    ctx->Extensions.ATI_texture_mirror_once = true;

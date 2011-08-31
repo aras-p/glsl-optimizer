@@ -79,7 +79,6 @@ intelInitExtensions(struct gl_context *ctx)
    ctx->Extensions.EXT_stencil_wrap = true;
    ctx->Extensions.EXT_texture_env_dot3 = true;
    ctx->Extensions.EXT_texture_filter_anisotropic = true;
-   ctx->Extensions.EXT_texture_lod_bias = true;
    ctx->Extensions.APPLE_object_purgeable = true;
    ctx->Extensions.APPLE_vertex_array_object = true;
    ctx->Extensions.MESA_pack_invert = true;

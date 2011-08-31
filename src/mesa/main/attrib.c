@@ -727,10 +727,8 @@ pop_texture_group(struct gl_context *ctx, struct texture_state *texstate)
                        ((unit->TexGenEnabled & R_BIT) ? GL_TRUE : GL_FALSE));
       _mesa_set_enable(ctx, GL_TEXTURE_GEN_Q,
                        ((unit->TexGenEnabled & Q_BIT) ? GL_TRUE : GL_FALSE));
-      if (ctx->Extensions.EXT_texture_lod_bias) {
-         _mesa_TexEnvf(GL_TEXTURE_FILTER_CONTROL_EXT,
-                       GL_TEXTURE_LOD_BIAS_EXT, unit->LodBias);
-      }
+      _mesa_TexEnvf(GL_TEXTURE_FILTER_CONTROL, GL_TEXTURE_LOD_BIAS,
+		    unit->LodBias);
       _mesa_TexEnvi(GL_TEXTURE_ENV, GL_COMBINE_RGB,
 		    unit->Combine.ModeRGB);
       _mesa_TexEnvi(GL_TEXTURE_ENV, GL_COMBINE_ALPHA,

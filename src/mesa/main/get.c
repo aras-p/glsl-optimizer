@@ -294,7 +294,6 @@ EXTRA_EXT(MESA_texture_array);
 EXTRA_EXT2(EXT_secondary_color, ARB_vertex_program);
 EXTRA_EXT(EXT_secondary_color);
 EXTRA_EXT(EXT_fog_coord);
-EXTRA_EXT(EXT_texture_lod_bias);
 EXTRA_EXT(EXT_texture_filter_anisotropic);
 EXTRA_EXT(IBM_rasterpos_clip);
 EXTRA_EXT(NV_point_sprite);
@@ -651,7 +650,7 @@ static const struct value_desc values[] = {
 
    /* GL_EXT_texture_lod_bias */
    { GL_MAX_TEXTURE_LOD_BIAS_EXT, CONTEXT_FLOAT(Const.MaxTextureLodBias),
-	 extra_EXT_texture_lod_bias },
+     NO_EXTRA },
 
    /* GL_EXT_texture_filter_anisotropic */
    { GL_MAX_TEXTURE_MAX_ANISOTROPY_EXT,
