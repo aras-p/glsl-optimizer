@@ -34,9 +34,9 @@ upload_sbe_state(struct brw_context *brw)
    struct intel_context *intel = &brw->intel;
    struct gl_context *ctx = &intel->ctx;
    struct brw_vue_map vue_map;
+   uint32_t urb_entry_read_length;
    /* CACHE_NEW_VS_PROG */
    GLbitfield64 vs_outputs_written = brw->vs.prog_data->outputs_written;
-   uint32_t num_inputs = brw_count_bits(vs_outputs_written);
    /* BRW_NEW_FRAGMENT_PROGRAM */
    uint32_t num_outputs = brw_count_bits(brw->fragment_program->Base.InputsRead);
    uint32_t dw1, dw10, dw11;
@@ -50,11 +50,21 @@ upload_sbe_state(struct brw_context *brw)
    int two_side_color = (ctx->Light.Enabled && ctx->Light.Model.TwoSide);
    uint16_t attr_overrides[FRAG_ATTRIB_MAX];
 
+   brw_compute_vue_map(&vue_map, intel, nr_userclip, two_side_color,
+                       vs_outputs_written);
+   urb_entry_read_length = (vue_map.num_slots + 1)/2 - urb_entry_read_offset;
+   if (urb_entry_read_length == 0) {
+      /* Setting the URB entry read length to 0 causes undefined behavior, so
+       * if we have no URB data to read, set it to 1.
+       */
+      urb_entry_read_length = 1;
+   }
+
    /* FINISHME: Attribute Swizzle Control Mode? */
    dw1 =
       GEN7_SBE_SWIZZLE_ENABLE |
       num_outputs << GEN7_SBE_NUM_OUTPUTS_SHIFT |
-      (num_inputs + 1) / 2 << GEN7_SBE_URB_ENTRY_READ_LENGTH_SHIFT |
+      urb_entry_read_length << GEN7_SBE_URB_ENTRY_READ_LENGTH_SHIFT |
       urb_entry_read_offset << GEN7_SBE_URB_ENTRY_READ_OFFSET_SHIFT;
 
    /* _NEW_POINT */
@@ -73,8 +83,6 @@ upload_sbe_state(struct brw_context *brw)
    /* Create the mapping from the FS inputs we produce to the VS outputs
     * they source from.
     */
-   brw_compute_vue_map(&vue_map, intel, nr_userclip, two_side_color,
-                       vs_outputs_written);
    for (; attr < FRAG_ATTRIB_MAX; attr++) {
       if (!(brw->fragment_program->Base.InputsRead & BITFIELD64_BIT(attr)))
 	 continue;
