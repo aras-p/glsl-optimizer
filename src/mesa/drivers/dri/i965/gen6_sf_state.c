@@ -105,7 +105,8 @@ upload_sf_state(struct brw_context *brw)
    struct gl_context *ctx = &intel->ctx;
    struct brw_vue_map vue_map;
    /* CACHE_NEW_VS_PROG */
-   uint32_t num_inputs = brw_count_bits(brw->vs.prog_data->outputs_written);
+   GLbitfield64 vs_outputs_written = brw->vs.prog_data->outputs_written;
+   uint32_t num_inputs = brw_count_bits(vs_outputs_written);
    /* BRW_NEW_FRAGMENT_PROGRAM */
    uint32_t num_outputs = brw_count_bits(brw->fragment_program->Base.InputsRead);
    uint32_t dw1, dw2, dw3, dw4, dw16, dw17;
@@ -255,7 +256,7 @@ upload_sf_state(struct brw_context *brw)
     * they source from.
     */
    brw_compute_vue_map(&vue_map, intel, nr_userclip, two_side_color,
-                       brw->vs.prog_data->outputs_written);
+                       vs_outputs_written);
    for (; attr < FRAG_ATTRIB_MAX; attr++) {
       if (!(brw->fragment_program->Base.InputsRead & BITFIELD64_BIT(attr)))
 	 continue;
