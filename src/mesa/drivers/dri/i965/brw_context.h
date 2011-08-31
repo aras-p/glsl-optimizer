@@ -281,6 +281,59 @@ struct brw_wm_prog_data {
    enum param_conversion pull_param_convert[MAX_UNIFORMS * 4];
 };
 
+/**
+ * Enum representing the i965-specific vertex results that don't correspond
+ * exactly to any element of gl_vert_result.  The values of this enum are
+ * assigned such that they don't conflict with gl_vert_result.
+ */
+typedef enum
+{
+   BRW_VERT_RESULT_NDC = VERT_RESULT_MAX,
+   BRW_VERT_RESULT_HPOS_DUPLICATE,
+   BRW_VERT_RESULT_CLIP0,
+   BRW_VERT_RESULT_CLIP1,
+   BRW_VERT_RESULT_PAD,
+   BRW_VERT_RESULT_MAX
+} brw_vert_result;
+
+
+/**
+ * Data structure recording the relationship between the gl_vert_result enum
+ * and "slots" within the vertex URB entry (VUE).  A "slot" is defined as a
+ * single octaword within the VUE (128 bits).
+ *
+ * Note that each BRW register contains 256 bits (2 octawords), so when
+ * accessing the VUE in URB_NOSWIZZLE mode, each register corresponds to two
+ * consecutive VUE slots.  When accessing the VUE in URB_INTERLEAVED mode (as
+ * in a vertex shader), each register corresponds to a single VUE slot, since
+ * it contains data for two separate vertices.
+ */
+struct brw_vue_map {
+   /**
+    * Map from gl_vert_result value to VUE slot.  For gl_vert_results that are
+    * not stored in a slot (because they are not written, or because
+    * additional processing is applied before storing them in the VUE), the
+    * value is -1.
+    */
+   int vert_result_to_slot[BRW_VERT_RESULT_MAX];
+
+   /**
+    * Map from VUE slot to gl_vert_result value.  For slots that do not
+    * directly correspond to a gl_vert_result, the value comes from
+    * brw_vert_result.
+    *
+    * For slots that are not in use, the value is BRW_VERT_RESULT_MAX (this
+    * simplifies code that uses the value stored in slot_to_vert_result to
+    * create a bit mask).
+    */
+   int slot_to_vert_result[BRW_VERT_RESULT_MAX];
+
+   /**
+    * Total number of VUE slots in use
+    */
+   int num_slots;
+};
+
 struct brw_sf_prog_data {
    GLuint urb_read_length;
    GLuint total_grf;
@@ -892,6 +945,11 @@ void brw_upload_cs_urb_state(struct brw_context *brw);
 
 /* brw_disasm.c */
 int brw_disasm (FILE *file, struct brw_instruction *inst, int gen);
+
+/* brw_vs.c */
+void brw_compute_vue_map(struct brw_vue_map *vue_map,
+                         const struct intel_context *intel, int nr_userclip,
+                         bool two_side_color, GLbitfield64 outputs_written);
 
 /*======================================================================
  * Inline conversion functions.  These are better-typed than the

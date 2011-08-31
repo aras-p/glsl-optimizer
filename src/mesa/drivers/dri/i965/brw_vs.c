@@ -40,6 +40,116 @@
 
 #include "glsl/ralloc.h"
 
+static inline void assign_vue_slot(struct brw_vue_map *vue_map,
+                                   int vert_result)
+{
+   /* Make sure this vert_result hasn't been assigned a slot already */
+   assert (vue_map->vert_result_to_slot[vert_result] == -1);
+
+   vue_map->vert_result_to_slot[vert_result] = vue_map->num_slots;
+   vue_map->slot_to_vert_result[vue_map->num_slots++] = vert_result;
+}
+
+/**
+ * Compute the VUE map for vertex shader program.
+ */
+void
+brw_compute_vue_map(struct brw_vue_map *vue_map,
+                    const struct intel_context *intel, int nr_userclip,
+                    bool two_side_color, GLbitfield64 outputs_written)
+{
+   int i;
+
+   vue_map->num_slots = 0;
+   for (i = 0; i < BRW_VERT_RESULT_MAX; ++i) {
+      vue_map->vert_result_to_slot[i] = -1;
+      vue_map->slot_to_vert_result[i] = BRW_VERT_RESULT_MAX;
+   }
+
+   /* VUE header: format depends on chip generation and whether clipping is
+    * enabled.
+    */
+   switch (intel->gen) {
+   case 4:
+      /* There are 8 dwords in VUE header pre-Ironlake:
+       * dword 0-3 is indices, point width, clip flags.
+       * dword 4-7 is ndc position
+       * dword 8-11 is the first vertex data.
+       */
+      assign_vue_slot(vue_map, VERT_RESULT_PSIZ);
+      assign_vue_slot(vue_map, BRW_VERT_RESULT_NDC);
+      assign_vue_slot(vue_map, VERT_RESULT_HPOS);
+      break;
+   case 5:
+      /* There are 20 DWs (D0-D19) in VUE header on Ironlake:
+       * dword 0-3 of the header is indices, point width, clip flags.
+       * dword 4-7 is the ndc position
+       * dword 8-11 of the vertex header is the 4D space position
+       * dword 12-19 of the vertex header is the user clip distance.
+       * dword 20-23 is a pad so that the vertex element data is aligned
+       * dword 24-27 is the first vertex data we fill.
+       *
+       * Note: future pipeline stages expect 4D space position to be
+       * contiguous with the other vert_results, so we make dword 24-27 a
+       * duplicate copy of the 4D space position.
+       */
+      assign_vue_slot(vue_map, VERT_RESULT_PSIZ);
+      assign_vue_slot(vue_map, BRW_VERT_RESULT_NDC);
+      assign_vue_slot(vue_map, BRW_VERT_RESULT_HPOS_DUPLICATE);
+      assign_vue_slot(vue_map, BRW_VERT_RESULT_CLIP0);
+      assign_vue_slot(vue_map, BRW_VERT_RESULT_CLIP1);
+      assign_vue_slot(vue_map, BRW_VERT_RESULT_PAD);
+      assign_vue_slot(vue_map, VERT_RESULT_HPOS);
+      break;
+   case 6:
+   case 7:
+      /* There are 8 or 16 DWs (D0-D15) in VUE header on Sandybridge:
+       * dword 0-3 of the header is indices, point width, clip flags.
+       * dword 4-7 is the 4D space position
+       * dword 8-15 of the vertex header is the user clip distance if
+       * enabled.
+       * dword 8-11 or 16-19 is the first vertex element data we fill.
+       */
+      assign_vue_slot(vue_map, VERT_RESULT_PSIZ);
+      assign_vue_slot(vue_map, VERT_RESULT_HPOS);
+      if (nr_userclip) {
+         assign_vue_slot(vue_map, BRW_VERT_RESULT_CLIP0);
+         assign_vue_slot(vue_map, BRW_VERT_RESULT_CLIP1);
+      }
+      if (two_side_color) {
+         /* front and back colors need to be consecutive */
+         if ((outputs_written & BITFIELD64_BIT(VERT_RESULT_COL1)) &&
+             (outputs_written & BITFIELD64_BIT(VERT_RESULT_BFC1))) {
+            assert(outputs_written & BITFIELD64_BIT(VERT_RESULT_COL0));
+            assert(outputs_written & BITFIELD64_BIT(VERT_RESULT_BFC0));
+            assign_vue_slot(vue_map, VERT_RESULT_COL0);
+            assign_vue_slot(vue_map, VERT_RESULT_BFC0);
+            assign_vue_slot(vue_map, VERT_RESULT_COL1);
+            assign_vue_slot(vue_map, VERT_RESULT_BFC1);
+         } else if ((outputs_written & BITFIELD64_BIT(VERT_RESULT_COL0)) &&
+                    (outputs_written & BITFIELD64_BIT(VERT_RESULT_BFC0))) {
+            assign_vue_slot(vue_map, VERT_RESULT_COL0);
+            assign_vue_slot(vue_map, VERT_RESULT_BFC0);
+         }
+      }
+      break;
+   default:
+      assert (!"VUE map not known for this chip generation");
+      break;
+   }
+
+   /* The hardware doesn't care about the rest of the vertex outputs, so just
+    * assign them contiguously.  Don't reassign outputs that already have a
+    * slot.
+    */
+   for (int i = 0; i < VERT_RESULT_MAX; ++i) {
+      if ((outputs_written & BITFIELD64_BIT(i)) &&
+          vue_map->vert_result_to_slot[i] == -1) {
+         assign_vue_slot(vue_map, i);
+      }
+   }
+}
+
 static bool
 do_vs_prog(struct brw_context *brw,
 	   struct gl_shader_program *prog,
