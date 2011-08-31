@@ -62,8 +62,7 @@ validate_texture_wrap_mode(struct gl_context * ctx, GLenum target, GLenum wrap)
    }
    else if (target != GL_TEXTURE_RECTANGLE_NV &&
 	    (wrap == GL_REPEAT ||
-	     (wrap == GL_MIRRORED_REPEAT &&
-	      e->ARB_texture_mirrored_repeat) ||
+	     wrap == GL_MIRRORED_REPEAT ||
 	     (wrap == GL_MIRROR_CLAMP_EXT &&
 	      (e->ATI_texture_mirror_once || e->EXT_texture_mirror_clamp)) ||
 	     (wrap == GL_MIRROR_CLAMP_TO_EDGE_EXT &&

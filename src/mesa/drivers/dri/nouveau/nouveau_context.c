@@ -117,7 +117,6 @@ nouveau_context_init(struct gl_context *ctx, struct nouveau_screen *screen,
 	nctx->hw.chan->user_private = nctx;
 
 	/* Enable any supported extensions. */
-	ctx->Extensions.ARB_texture_mirrored_repeat = true;
 	ctx->Extensions.EXT_blend_color = true;
 	ctx->Extensions.EXT_blend_minmax = true;
 	ctx->Extensions.EXT_fog_coord = true;

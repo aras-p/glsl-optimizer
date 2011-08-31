@@ -2786,7 +2786,6 @@ struct gl_extensions
    GLboolean ARB_texture_env_crossbar;
    GLboolean ARB_texture_env_dot3;
    GLboolean ARB_texture_float;
-   GLboolean ARB_texture_mirrored_repeat;
    GLboolean ARB_texture_multisample;
    GLboolean ARB_texture_non_power_of_two;
    GLboolean ARB_texture_rg;

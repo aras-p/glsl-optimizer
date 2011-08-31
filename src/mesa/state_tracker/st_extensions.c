@@ -322,10 +322,6 @@ void st_init_extensions(struct st_context *st)
       ctx->Extensions.EXT_separate_shader_objects = GL_TRUE;
    }
 
-   if (screen->get_param(screen, PIPE_CAP_TEXTURE_MIRROR_REPEAT) > 0) {
-      ctx->Extensions.ARB_texture_mirrored_repeat = GL_TRUE;
-   }
-
    if (screen->get_param(screen, PIPE_CAP_BLEND_EQUATION_SEPARATE)) {
       ctx->Extensions.EXT_blend_equation_separate = GL_TRUE;
    }

@@ -83,7 +83,6 @@ static const char *es2_extensions[] = {
    "GL_ARB_fragment_shader",
    "GL_ARB_shader_objects",
    "GL_ARB_texture_cube_map",
-   "GL_ARB_texture_mirrored_repeat",
    "GL_ARB_texture_non_power_of_two",
    "GL_ARB_vertex_shader",
    "GL_EXT_blend_color",

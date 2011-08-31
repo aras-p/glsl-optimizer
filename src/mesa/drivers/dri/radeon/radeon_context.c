@@ -317,7 +317,6 @@ r100CreateContext( gl_api api,
    ctx->Extensions.ARB_texture_env_combine = true;
    ctx->Extensions.ARB_texture_env_crossbar = true;
    ctx->Extensions.ARB_texture_env_dot3 = true;
-   ctx->Extensions.ARB_texture_mirrored_repeat = true;
    ctx->Extensions.EXT_fog_coord = true;
    ctx->Extensions.EXT_packed_depth_stencil = true;
    ctx->Extensions.EXT_secondary_color = true;

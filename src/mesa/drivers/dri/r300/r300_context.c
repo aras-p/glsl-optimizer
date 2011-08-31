@@ -372,7 +372,6 @@ static void r300InitGLExtensions(struct gl_context *ctx)
 	ctx->Extensions.ARB_texture_env_combine = true;
 	ctx->Extensions.ARB_texture_env_crossbar = true;
 	ctx->Extensions.ARB_texture_env_dot3 = true;
-	ctx->Extensions.ARB_texture_mirrored_repeat = true;
 	ctx->Extensions.ARB_vertex_program = true;
 	ctx->Extensions.EXT_blend_color = true;
 	ctx->Extensions.EXT_blend_equation_separate = true;

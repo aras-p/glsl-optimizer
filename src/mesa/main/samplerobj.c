@@ -294,11 +294,10 @@ validate_texture_wrap_mode(struct gl_context *ctx, GLenum wrap)
    case GL_CLAMP:
    case GL_CLAMP_TO_EDGE:
    case GL_REPEAT:
+   case GL_MIRRORED_REPEAT:
       return GL_TRUE;
    case GL_CLAMP_TO_BORDER:
       return e->ARB_texture_border_clamp;
-   case GL_MIRRORED_REPEAT:
-      return e->ARB_texture_mirrored_repeat;
    case GL_MIRROR_CLAMP_EXT:
       return e->ATI_texture_mirror_once || e->EXT_texture_mirror_clamp;
    case GL_MIRROR_CLAMP_TO_EDGE_EXT:

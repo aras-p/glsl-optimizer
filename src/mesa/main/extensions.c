@@ -128,7 +128,7 @@ static const struct extension extension_table[] = {
    { "GL_ARB_texture_env_crossbar",                o(ARB_texture_env_crossbar),                GL,             2001 },
    { "GL_ARB_texture_env_dot3",                    o(ARB_texture_env_dot3),                    GL,             2001 },
    { "GL_ARB_texture_float",                       o(ARB_texture_float),                       GL,             2004 },
-   { "GL_ARB_texture_mirrored_repeat",             o(ARB_texture_mirrored_repeat),             GL,             2001 },
+   { "GL_ARB_texture_mirrored_repeat",             o(dummy_true),                              GL,             2001 },
    { "GL_ARB_texture_multisample",                 o(ARB_texture_multisample),                 GL,             2009 },
    { "GL_ARB_texture_non_power_of_two",            o(ARB_texture_non_power_of_two),            GL,             2003 },
    { "GL_ARB_texture_rectangle",                   o(NV_texture_rectangle),                    GL,             2004 },
@@ -250,7 +250,7 @@ static const struct extension extension_table[] = {
    { "GL_OES_texture_3D",                          o(EXT_texture3D),                                      ES2, 2005 },
    { "GL_OES_texture_cube_map",                    o(ARB_texture_cube_map),                         ES1,       2007 },
    { "GL_OES_texture_env_crossbar",                o(ARB_texture_env_crossbar),                     ES1,       2005 },
-   { "GL_OES_texture_mirrored_repeat",             o(ARB_texture_mirrored_repeat),                  ES1,       2005 },
+   { "GL_OES_texture_mirrored_repeat",             o(dummy_true),                                   ES1,       2005 },
    { "GL_OES_texture_npot",                        o(ARB_texture_non_power_of_two),                       ES2, 2005 },
 
    /* Vendor extensions */
@@ -273,7 +273,7 @@ static const struct extension extension_table[] = {
    { "GL_ATI_texture_mirror_once",                 o(ATI_texture_mirror_once),                 GL,             2006 },
    { "GL_IBM_multimode_draw_arrays",               o(IBM_multimode_draw_arrays),               GL,             1998 },
    { "GL_IBM_rasterpos_clip",                      o(IBM_rasterpos_clip),                      GL,             1996 },
-   { "GL_IBM_texture_mirrored_repeat",             o(ARB_texture_mirrored_repeat),             GL,             1998 },
+   { "GL_IBM_texture_mirrored_repeat",             o(dummy_true),                              GL,             1998 },
    { "GL_INGR_blend_func_separate",                o(EXT_blend_func_separate),                 GL,             1999 },
    { "GL_MESA_pack_invert",                        o(MESA_pack_invert),                        GL,             2002 },
    { "GL_MESA_resize_buffers",                     o(MESA_resize_buffers),                     GL,             1999 },
@@ -418,7 +418,6 @@ _mesa_enable_sw_extensions(struct gl_context *ctx)
    ctx->Extensions.ARB_texture_env_crossbar = GL_TRUE;
    ctx->Extensions.ARB_texture_env_dot3 = GL_TRUE;
    /*ctx->Extensions.ARB_texture_float = GL_TRUE;*/
-   ctx->Extensions.ARB_texture_mirrored_repeat = GL_TRUE;
    ctx->Extensions.ARB_texture_non_power_of_two = GL_TRUE;
    ctx->Extensions.ARB_texture_rg = GL_TRUE;
    ctx->Extensions.ARB_texture_compression_rgtc = GL_TRUE;
@@ -547,7 +546,6 @@ _mesa_enable_1_4_extensions(struct gl_context *ctx)
    ctx->Extensions.ARB_depth_texture = GL_TRUE;
    ctx->Extensions.ARB_shadow = GL_TRUE;
    ctx->Extensions.ARB_texture_env_crossbar = GL_TRUE;
-   ctx->Extensions.ARB_texture_mirrored_repeat = GL_TRUE;
    ctx->Extensions.ARB_window_pos = GL_TRUE;
    ctx->Extensions.EXT_blend_color = GL_TRUE;
    ctx->Extensions.EXT_blend_func_separate = GL_TRUE;
