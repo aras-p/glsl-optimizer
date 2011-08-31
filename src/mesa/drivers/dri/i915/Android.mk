@@ -1,5 +1,7 @@
 #
 # Copyright (C) 2011 Intel Corporation
+# Copyright (C) 2010-2011 Chia-I Wu <olvaffe@gmail.com>
+# Copyright (C) 2010-2011 LunarG
 #
 # Permission is hereby granted, free of charge, to any person obtaining a
 # copy of this software and associated documentation files (the "Software"),
@@ -21,51 +23,37 @@
 #
 
 LOCAL_PATH := $(call my-dir)
+include $(CLEAR_VARS)
 
-# Import mesa_dri_common_INCLUDES.
-include $(LOCAL_PATH)/common/Makefile.sources
+LOCAL_MODULE := i915_dri
+LOCAL_MODULE_PATH := $(MESA_DRI_MODULE_PATH)
+LOCAL_UNSTRIPPED_PATH := $(MESA_DRI_MODULE_UNSTRIPPED_PATH)
 
-#-----------------------------------------------
-# Variables common to all DRI drivers
+# Import variables i915_*.
+include $(LOCAL_PATH)/Makefile.sources
 
-MESA_DRI_MODULE_PATH := $(TARGET_OUT_SHARED_LIBRARIES)/dri
-MESA_DRI_MODULE_UNSTRIPPED_PATH := $(TARGET_OUT_SHARED_LIBRARIES_UNSTRIPPED)/dri
+# Overriding LOCAL_CC below is an ugly workaround.  We cannot place -std=c99
+# in LOCAL_C_FLAGS because Android appends LOCAL_C_FLAGS to LOCAL_CPP_FLAGS.
+LOCAL_CC := $(TARGET_CC) -std=c99
 
-MESA_DRI_CFLAGS := \
-	-DFEATURE_GL=1 \
-	-DFEATURE_ES1=1 \
-	-DFEATURE_ES2=1
+LOCAL_CFLAGS := \
+	$(MESA_DRI_CFLAGS) \
+	-DI915
 
-MESA_DRI_C_INCLUDES := \
-	$(addprefix $(MESA_TOP)/, $(mesa_dri_common_INCLUDES)) \
-	$(DRM_TOP) \
-	$(DRM_TOP)/include/drm \
-	external/expat/lib
+LOCAL_C_INCLUDES := \
+	$(addprefix $(MESA_TOP)/,$(i915_INCLUDES)) \
+	$(MESA_DRI_C_INCLUDES) \
+	$(DRM_TOP)/intel
 
-MESA_DRI_WHOLE_STATIC_LIBRARIES := \
-	libmesa_glsl \
-	libmesa_dri_common \
-	libmesa_dricore
+LOCAL_SRC_FILES := \
+	$(i915_C_SOURCES)
 
-MESA_DRI_SHARED_LIBRARIES := \
-	libcutils \
-	libdl \
-	libdrm \
-	libexpat \
-	libglapi \
-	liblog
+LOCAL_WHOLE_STATIC_LIBRARIES := \
+	$(MESA_DRI_WHOLE_STATIC_LIBRARIES)
 
-#-----------------------------------------------
-# Build drivers and libmesa_dri_common
+LOCAL_SHARED_LIBRARIES := \
+	$(MESA_DRI_SHARED_LIBRARIES) \
+	libdrm_intel
 
-SUBDIRS := common
-
-ifneq ($(filter i915, $(MESA_GPU_DRIVERS)),)
-	SUBDIRS += i915
-endif
-
-ifneq ($(filter i965, $(MESA_GPU_DRIVERS)),)
-	SUBDIRS += i965
-endif
-
-include $(foreach d, $(SUBDIRS), $(LOCAL_PATH)/$(d)/Android.mk)
+include $(MESA_COMMON_MK)
+include $(BUILD_SHARED_LIBRARY)
