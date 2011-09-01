@@ -73,6 +73,8 @@ vdp_imp_device_create_x11(Display *display, int screen, VdpDevice *device,
       goto no_handle;
    }
 
+   vl_compositor_init(&dev->compositor, dev->context->pipe);
+
    *get_proc_address = &vlVdpGetProcAddress;
    VDPAU_MSG(VDPAU_TRACE, "[VDPAU] Device created succesfully\n");
 
@@ -152,6 +154,7 @@ vlVdpDeviceDestroy(VdpDevice device)
    if (!dev)
       return VDP_STATUS_INVALID_HANDLE;
       
+   vl_compositor_cleanup(&dev->compositor);
    vl_video_destroy(dev->context);
    vl_screen_destroy(dev->vscreen);
 

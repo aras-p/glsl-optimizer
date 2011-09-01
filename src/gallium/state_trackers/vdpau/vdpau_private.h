@@ -95,14 +95,14 @@ FormatYCBCRToPipe(VdpYCbCrFormat vdpau_format)
       case VDP_YCBCR_FORMAT_YUYV:
          return PIPE_FORMAT_YUYV;
       case VDP_YCBCR_FORMAT_Y8U8V8A8: /* Not defined in p_format.h */
-         return 0;
+         return PIPE_FORMAT_NONE;
       case VDP_YCBCR_FORMAT_V8U8Y8A8:
 	     return PIPE_FORMAT_VUYA;
       default:
          assert(0);
    }
 
-   return -1;
+   return PIPE_FORMAT_NONE;
 }
 
 static inline VdpYCbCrFormat
@@ -146,7 +146,7 @@ FormatRGBAToPipe(VdpRGBAFormat vdpau_format)
          assert(0);
    }
 
-   return -1;
+   return PIPE_FORMAT_NONE;
 }
 
 static inline VdpRGBAFormat
@@ -169,6 +169,38 @@ PipeToFormatRGBA(enum pipe_format p_format)
 
    return -1;
 }
+
+static inline enum pipe_format
+FormatIndexedToPipe(VdpRGBAFormat vdpau_format)
+{
+   switch (vdpau_format) {
+      case VDP_INDEXED_FORMAT_A4I4:
+         return PIPE_FORMAT_A4R4_UNORM;
+      case VDP_INDEXED_FORMAT_I4A4:
+         return PIPE_FORMAT_R4A4_UNORM;
+      case VDP_INDEXED_FORMAT_A8I8:
+         return PIPE_FORMAT_A8R8_UNORM;
+      case VDP_INDEXED_FORMAT_I8A8:
+         return PIPE_FORMAT_R8A8_UNORM;
+      default:
+         assert(0);
+   }
+
+   return PIPE_FORMAT_NONE;
+}
+
+static inline enum pipe_format
+FormatColorTableToPipe(VdpColorTableFormat vdpau_format)
+{
+   switch(vdpau_format) {
+      case VDP_COLOR_TABLE_FORMAT_B8G8R8X8:
+         return PIPE_FORMAT_B8G8R8X8_UNORM;
+      default:
+         assert(0);
+   }
+   return PIPE_FORMAT_NONE;
+}
+
 
 static inline enum pipe_video_profile
 ProfileToPipe(VdpDecoderProfile vdpau_profile)
@@ -213,10 +245,24 @@ PipeToProfile(enum pipe_video_profile p_profile)
    }
 }
 
+static inline struct pipe_video_rect *
+RectToPipe(const VdpRect *src, struct pipe_video_rect *dst)
+{
+   if (src) {
+      dst->x = MIN2(src->x1, src->x0);
+      dst->y = MIN2(src->y1, src->y0);
+      dst->w = abs(src->x1 - src->x0);
+      dst->h = abs(src->y1 - src->y0);
+      return dst;
+   }
+   return NULL;
+}
+
 typedef struct
 {
    struct vl_screen *vscreen;
    struct vl_context *context;
+   struct vl_compositor compositor;
 } vlVdpDevice;
 
 typedef struct
