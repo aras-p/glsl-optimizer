@@ -309,6 +309,8 @@ dri2_release_pending_buffer(void *data,
    dri2_dpy->dri2->releaseBuffer(dri2_dpy->dri_screen,
                                  dri2_surf->pending_buffer);
    dri2_surf->pending_buffer = NULL;
+
+   wl_callback_destroy(callback);
 }
 
 static const struct wl_callback_listener release_buffer_listener = {
