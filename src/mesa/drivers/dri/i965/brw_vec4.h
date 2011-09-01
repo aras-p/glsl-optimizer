@@ -320,6 +320,15 @@ public:
    int first_non_payload_grf;
    int *virtual_grf_def;
    int *virtual_grf_use;
+
+   /**
+    * This is the size to be used for an array with an element per
+    * reg_offset
+    */
+   int virtual_grf_reg_count;
+   /** Per-virtual-grf indices into an array of size virtual_grf_reg_count */
+   int *virtual_grf_reg_map;
+
    bool live_intervals_valid;
 
    dst_reg *variable_storage(ir_variable *var);

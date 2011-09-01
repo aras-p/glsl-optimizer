@@ -432,7 +432,11 @@ vec4_visitor::virtual_grf_alloc(int size)
 	 virtual_grf_array_size *= 2;
       virtual_grf_sizes = reralloc(mem_ctx, virtual_grf_sizes, int,
 				   virtual_grf_array_size);
+      virtual_grf_reg_map = reralloc(mem_ctx, virtual_grf_reg_map, int,
+				     virtual_grf_array_size);
    }
+   virtual_grf_reg_map[virtual_grf_count] = virtual_grf_reg_count;
+   virtual_grf_reg_count += size;
    virtual_grf_sizes[virtual_grf_count] = size;
    return virtual_grf_count++;
 }
@@ -2272,6 +2276,8 @@ vec4_visitor::vec4_visitor(struct brw_vs_compile *c,
    this->virtual_grf_use = NULL;
    this->virtual_grf_sizes = NULL;
    this->virtual_grf_count = 0;
+   this->virtual_grf_reg_map = NULL;
+   this->virtual_grf_reg_count = 0;
    this->virtual_grf_array_size = 0;
    this->live_intervals_valid = false;
 
