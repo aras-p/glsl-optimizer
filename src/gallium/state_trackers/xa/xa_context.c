@@ -344,7 +344,7 @@ xa_solid_done(struct xa_context *ctx)
 struct xa_fence *
 xa_fence_get(struct xa_context *ctx)
 {
-    struct xa_fence *fence = malloc(sizeof(*fence));
+    struct xa_fence *fence = calloc(1, sizeof(*fence));
     struct pipe_screen *screen = ctx->xa->screen;
 
     if (!fence)
