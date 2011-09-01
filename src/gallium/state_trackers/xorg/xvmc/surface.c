@@ -407,7 +407,7 @@ Status XvMCPutSurface(Display *dpy, XvMCSurface *surface, Drawable drawable,
 
       if (subpicture_priv->palette)
          vl_compositor_set_palette_layer(compositor, 1, subpicture_priv->sampler, subpicture_priv->palette,
-                                         &subpicture_priv->src_rect, &subpicture_priv->dst_rect);
+                                         &subpicture_priv->src_rect, &subpicture_priv->dst_rect, true);
       else
          vl_compositor_set_rgba_layer(compositor, 1, subpicture_priv->sampler,
                                       &subpicture_priv->src_rect, &subpicture_priv->dst_rect);
@@ -419,7 +419,7 @@ Status XvMCPutSurface(Display *dpy, XvMCSurface *surface, Drawable drawable,
    // Workaround for r600g, there seems to be a bug in the fence refcounting code
    pipe->screen->fence_reference(pipe->screen, &surface_priv->fence, NULL);
 
-   vl_compositor_render(compositor, context_priv->drawable_surface, &dst_rect, NULL);
+   vl_compositor_render(compositor, context_priv->drawable_surface, &dst_rect, NULL, true);
                         
    pipe->flush(pipe, &surface_priv->fence);
 

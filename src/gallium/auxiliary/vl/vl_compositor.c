@@ -114,7 +114,7 @@ create_frag_shader_video_buffer(struct vl_compositor *c)
 }
 
 static void *
-create_frag_shader_palette(struct vl_compositor *c)
+create_frag_shader_palette(struct vl_compositor *c, bool include_cc)
 {
    struct ureg_program *shader;
    struct ureg_src csc[3];
@@ -135,6 +135,7 @@ create_frag_shader_palette(struct vl_compositor *c)
    tc = ureg_DECL_fs_input(shader, TGSI_SEMANTIC_GENERIC, 1, TGSI_INTERPOLATE_LINEAR);
    sampler = ureg_DECL_sampler(shader, 0);
    palette = ureg_DECL_sampler(shader, 1);
+
    texel = ureg_DECL_temporary(shader);
    fragment = ureg_DECL_output(shader, TGSI_SEMANTIC_COLOR, 0);
 
@@ -144,13 +145,16 @@ create_frag_shader_palette(struct vl_compositor *c)
     * fragment.a = texel.a
     */
    ureg_TEX(shader, texel, TGSI_TEXTURE_2D, tc, sampler);
-   ureg_MUL(shader, ureg_writemask(texel, TGSI_WRITEMASK_X), ureg_src(texel), ureg_imm1f(shader, 15.0f / 16.0f));
    ureg_MOV(shader, ureg_writemask(fragment, TGSI_WRITEMASK_W), ureg_src(texel));
 
-   ureg_TEX(shader, texel, TGSI_TEXTURE_1D, ureg_src(texel), palette);
-
-   for (i = 0; i < 3; ++i)
-      ureg_DP4(shader, ureg_writemask(fragment, TGSI_WRITEMASK_X << i), csc[i], ureg_src(texel));
+   if (include_cc) {
+      ureg_TEX(shader, texel, TGSI_TEXTURE_1D, ureg_src(texel), palette);
+      for (i = 0; i < 3; ++i)
+         ureg_DP4(shader, ureg_writemask(fragment, TGSI_WRITEMASK_X << i), csc[i], ureg_src(texel));
+   } else {
+      ureg_TEX(shader, ureg_writemask(fragment, TGSI_WRITEMASK_XYZ),
+               TGSI_TEXTURE_1D, ureg_src(texel), palette);
+   }
 
    ureg_release_temporary(shader, texel);
    ureg_END(shader);
@@ -200,9 +204,15 @@ init_shaders(struct vl_compositor *c)
       return false;
    }
 
-   c->fs_palette = create_frag_shader_palette(c);
-   if (!c->fs_palette) {
-      debug_printf("Unable to create Palette-to-RGB fragment shader.\n");
+   c->fs_palette.yuv = create_frag_shader_palette(c, true);
+   if (!c->fs_palette.yuv) {
+      debug_printf("Unable to create YUV-Palette-to-RGB fragment shader.\n");
+      return false;
+   }
+
+   c->fs_palette.rgb = create_frag_shader_palette(c, false);
+   if (!c->fs_palette.rgb) {
+      debug_printf("Unable to create RGB-Palette-to-RGB fragment shader.\n");
       return false;
    }
 
@@ -221,7 +231,8 @@ static void cleanup_shaders(struct vl_compositor *c)
 
    c->pipe->delete_vs_state(c->pipe, c->vs);
    c->pipe->delete_fs_state(c->pipe, c->fs_video_buffer);
-   c->pipe->delete_fs_state(c->pipe, c->fs_palette);
+   c->pipe->delete_fs_state(c->pipe, c->fs_palette.yuv);
+   c->pipe->delete_fs_state(c->pipe, c->fs_palette.rgb);
    c->pipe->delete_fs_state(c->pipe, c->fs_rgba);
 }
 
@@ -263,6 +274,13 @@ init_pipe_state(struct vl_compositor *c)
 
    memset(&blend, 0, sizeof blend);
    blend.independent_blend_enable = 0;
+   blend.rt[0].blend_enable = 0;
+   blend.logicop_enable = 0;
+   blend.logicop_func = PIPE_LOGICOP_CLEAR;
+   blend.rt[0].colormask = PIPE_MASK_RGBA;
+   blend.dither = 0;
+   c->blend_clear = c->pipe->create_blend_state(c->pipe, &blend);
+
    blend.rt[0].blend_enable = 1;
    blend.rt[0].rgb_func = PIPE_BLEND_ADD;
    blend.rt[0].rgb_src_factor = PIPE_BLENDFACTOR_SRC_ALPHA;
@@ -270,11 +288,7 @@ init_pipe_state(struct vl_compositor *c)
    blend.rt[0].alpha_func = PIPE_BLEND_ADD;
    blend.rt[0].alpha_src_factor = PIPE_BLENDFACTOR_ONE;
    blend.rt[0].alpha_dst_factor = PIPE_BLENDFACTOR_ONE;
-   blend.logicop_enable = 0;
-   blend.logicop_func = PIPE_LOGICOP_CLEAR;
-   blend.rt[0].colormask = PIPE_MASK_RGBA;
-   blend.dither = 0;
-   c->blend = c->pipe->create_blend_state(c->pipe, &blend);
+   c->blend_add = c->pipe->create_blend_state(c->pipe, &blend);
 
    memset(&rast, 0, sizeof rast);
    rast.flatshade = 1;
@@ -323,7 +337,8 @@ static void cleanup_pipe_state(struct vl_compositor *c)
    c->pipe->delete_depth_stencil_alpha_state(c->pipe, c->dsa);
    c->pipe->delete_sampler_state(c->pipe, c->sampler_linear);
    c->pipe->delete_sampler_state(c->pipe, c->sampler_nearest);
-   c->pipe->delete_blend_state(c->pipe, c->blend);
+   c->pipe->delete_blend_state(c->pipe, c->blend_clear);
+   c->pipe->delete_blend_state(c->pipe, c->blend_add);
    c->pipe->delete_rasterizer_state(c->pipe, c->rast);
 }
 
@@ -509,6 +524,7 @@ draw_layers(struct vl_compositor *c)
          struct pipe_sampler_view **samplers = &layer->sampler_views[0];
          unsigned num_sampler_views = !samplers[1] ? 1 : !samplers[2] ? 2 : 3;
 
+         c->pipe->bind_blend_state(c->pipe, layer->blend);
          c->pipe->bind_fs_state(c->pipe, layer->fs);
          c->pipe->bind_fragment_sampler_states(c->pipe, num_sampler_views, layer->samplers);
          c->pipe->set_fragment_sampler_views(c->pipe, num_sampler_views, samplers);
@@ -553,6 +569,8 @@ vl_compositor_clear_layers(struct vl_compositor *c)
 
    c->used_layers = 0;
    for ( i = 0; i < VL_COMPOSITOR_MAX_LAYERS; ++i) {
+      c->layers[i].clearing = i ? false : true;
+      c->layers[i].blend = i ? c->blend_add : c->blend_clear;
       c->layers[i].fs = NULL;
       for ( j = 0; j < 3; j++)
          pipe_sampler_view_reference(&c->layers[i].sampler_views[j], NULL);
@@ -591,6 +609,19 @@ vl_compositor_set_csc_matrix(struct vl_compositor *c, const float matrix[16])
 }
 
 void
+vl_compositor_set_layer_blend(struct vl_compositor *c,
+                              unsigned layer, void *blend,
+                              bool is_clearing)
+{
+   assert(c && blend);
+
+   assert(layer < VL_COMPOSITOR_MAX_LAYERS);
+
+   c->layers[layer].clearing = is_clearing;
+   c->layers[layer].blend = blend;
+}
+
+void
 vl_compositor_set_buffer_layer(struct vl_compositor *c,
                                unsigned layer,
                                struct pipe_video_buffer *buffer,
@@ -605,7 +636,6 @@ vl_compositor_set_buffer_layer(struct vl_compositor *c,
    assert(layer < VL_COMPOSITOR_MAX_LAYERS);
 
    c->used_layers |= 1 << layer;
-   c->layers[layer].clearing = true;
    c->layers[layer].fs = c->fs_video_buffer;
 
    sampler_views = buffer->get_sampler_view_components(buffer);
@@ -625,15 +655,18 @@ vl_compositor_set_palette_layer(struct vl_compositor *c,
                                 struct pipe_sampler_view *indexes,
                                 struct pipe_sampler_view *palette,
                                 struct pipe_video_rect *src_rect,
-                                struct pipe_video_rect *dst_rect)
+                                struct pipe_video_rect *dst_rect,
+                                bool include_color_conversion)
 {
    assert(c && indexes && palette);
 
    assert(layer < VL_COMPOSITOR_MAX_LAYERS);
 
    c->used_layers |= 1 << layer;
-   c->layers[layer].clearing = false;
-   c->layers[layer].fs = c->fs_palette;
+
+   c->layers[layer].fs = include_color_conversion ?
+      c->fs_palette.yuv : c->fs_palette.rgb;
+
    c->layers[layer].samplers[0] = c->sampler_linear;
    c->layers[layer].samplers[1] = c->sampler_nearest;
    c->layers[layer].samplers[2] = NULL;
@@ -658,7 +691,6 @@ vl_compositor_set_rgba_layer(struct vl_compositor *c,
    assert(layer < VL_COMPOSITOR_MAX_LAYERS);
 
    c->used_layers |= 1 << layer;
-   c->layers[layer].clearing = rgba->swizzle_a == PIPE_SWIZZLE_ONE;
    c->layers[layer].fs = c->fs_rgba;
    c->layers[layer].samplers[0] = c->sampler_linear;
    c->layers[layer].samplers[1] = NULL;
@@ -675,7 +707,8 @@ void
 vl_compositor_render(struct vl_compositor *c,
                      struct pipe_surface           *dst_surface,
                      struct pipe_video_rect        *dst_area,
-                     struct pipe_video_rect        *dst_clip)
+                     struct pipe_video_rect        *dst_clip,
+                     bool clear_dirty_area)
 {
    struct pipe_scissor_state scissor;
 
@@ -712,8 +745,10 @@ vl_compositor_render(struct vl_compositor *c,
 
    gen_vertex_data(c);
 
-   if (c->dirty_tl.x < c->dirty_br.x || c->dirty_tl.y < c->dirty_br.y) {
-      util_clear_render_target(c->pipe, dst_surface, c->clear_color, 0, 0, dst_surface->width, dst_surface->height);
+   if (clear_dirty_area && (c->dirty_tl.x < c->dirty_br.x ||
+                            c->dirty_tl.y < c->dirty_br.y)) {
+      util_clear_render_target(c->pipe, dst_surface, c->clear_color,
+                               0, 0, dst_surface->width, dst_surface->height);
       c->dirty_tl.x = c->dirty_tl.y = 1.0f;
       c->dirty_br.x = c->dirty_br.y = 0.0f;
    }
@@ -725,7 +760,6 @@ vl_compositor_render(struct vl_compositor *c,
    c->pipe->set_vertex_buffers(c->pipe, 1, &c->vertex_buf);
    c->pipe->bind_vertex_elements_state(c->pipe, c->vertex_elems_state);
    c->pipe->set_constant_buffer(c->pipe, PIPE_SHADER_FRAGMENT, 0, c->csc_matrix);
-   c->pipe->bind_blend_state(c->pipe, c->blend);
    c->pipe->bind_rasterizer_state(c->pipe, c->rast);
 
    draw_layers(c);

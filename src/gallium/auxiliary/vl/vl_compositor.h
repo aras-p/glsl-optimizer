@@ -48,6 +48,7 @@ struct vl_compositor_layer
 
    void *fs;
    void *samplers[3];
+   void *blend;
 
    struct pipe_sampler_view *sampler_views[3];
    struct {
@@ -66,15 +67,19 @@ struct vl_compositor
 
    void *sampler_linear;
    void *sampler_nearest;
-   void *blend;
+   void *blend_clear, *blend_add;
    void *rast;
    void *dsa;
    void *vertex_elems_state;
 
    void *vs;
    void *fs_video_buffer;
-   void *fs_palette;
    void *fs_rgba;
+
+   struct {
+      void *rgb;
+      void *yuv;
+   } fs_palette;
 
    float clear_color[4];
    struct vertex2f dirty_tl, dirty_br;
@@ -119,6 +124,13 @@ void
 vl_compositor_clear_layers(struct vl_compositor *compositor);
 
 /**
+ * set the blender used to render a layer
+ */
+void
+vl_compositor_set_layer_blend(struct vl_compositor *compositor,
+                              unsigned layer, void *blend, bool is_clearing);
+
+/**
  * set a video buffer as a layer to render
  */
 void
@@ -137,7 +149,8 @@ vl_compositor_set_palette_layer(struct vl_compositor *compositor,
                                 struct pipe_sampler_view *indexes,
                                 struct pipe_sampler_view *palette,
                                 struct pipe_video_rect *src_rect,
-                                struct pipe_video_rect *dst_rect);
+                                struct pipe_video_rect *dst_rect,
+                                bool include_color_conversion);
 
 /**
  * set a rgba sampler as a layer to render
@@ -158,7 +171,8 @@ void
 vl_compositor_render(struct vl_compositor          *compositor,
                      struct pipe_surface           *dst_surface,
                      struct pipe_video_rect        *dst_area,
-                     struct pipe_video_rect        *dst_clip);
+                     struct pipe_video_rect        *dst_clip,
+                     bool clear_dirty_area);
 
 /**
 * destroy this compositor
