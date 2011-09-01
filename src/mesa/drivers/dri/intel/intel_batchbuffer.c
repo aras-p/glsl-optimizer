@@ -297,6 +297,45 @@ emit:
 }
 
 /**
+ * Restriction [DevSNB, DevIVB]:
+ *
+ * Prior to changing Depth/Stencil Buffer state (i.e. any combination of
+ * 3DSTATE_DEPTH_BUFFER, 3DSTATE_CLEAR_PARAMS, 3DSTATE_STENCIL_BUFFER,
+ * 3DSTATE_HIER_DEPTH_BUFFER) SW must first issue a pipelined depth stall
+ * (PIPE_CONTROL with Depth Stall bit set), followed by a pipelined depth
+ * cache flush (PIPE_CONTROL with Depth Flush Bit set), followed by
+ * another pipelined depth stall (PIPE_CONTROL with Depth Stall bit set),
+ * unless SW can otherwise guarantee that the pipeline from WM onwards is
+ * already flushed (e.g., via a preceding MI_FLUSH).
+ */
+void
+intel_emit_depth_stall_flushes(struct intel_context *intel)
+{
+   assert(intel->gen >= 6 && intel->gen <= 7);
+
+   BEGIN_BATCH(4);
+   OUT_BATCH(_3DSTATE_PIPE_CONTROL);
+   OUT_BATCH(PIPE_CONTROL_DEPTH_STALL);
+   OUT_BATCH(0); /* address */
+   OUT_BATCH(0); /* write data */
+   ADVANCE_BATCH()
+
+   BEGIN_BATCH(4);
+   OUT_BATCH(_3DSTATE_PIPE_CONTROL);
+   OUT_BATCH(PIPE_CONTROL_DEPTH_CACHE_FLUSH);
+   OUT_BATCH(0); /* address */
+   OUT_BATCH(0); /* write data */
+   ADVANCE_BATCH();
+
+   BEGIN_BATCH(4);
+   OUT_BATCH(_3DSTATE_PIPE_CONTROL);
+   OUT_BATCH(PIPE_CONTROL_DEPTH_STALL);
+   OUT_BATCH(0); /* address */
+   OUT_BATCH(0); /* write data */
+   ADVANCE_BATCH();
+}
+
+/**
  * Emits a PIPE_CONTROL with a non-zero post-sync operation, for
  * implementing two workarounds on gen6.  From section 1.4.7.1
  * "PIPE_CONTROL" of the Sandy Bridge PRM volume 2 part 1:

@@ -226,8 +226,10 @@ static void emit_depthbuffer(struct brw_context *brw)
    /* 3DSTATE_DEPTH_BUFFER, 3DSTATE_STENCIL_BUFFER are both
     * non-pipelined state that will need the PIPE_CONTROL workaround.
     */
-   if (intel->gen == 6)
+   if (intel->gen == 6) {
       intel_emit_post_sync_nonzero_flush(intel);
+      intel_emit_depth_stall_flushes(intel);
+   }
 
    /*
     * If either depth or stencil buffer has packed depth/stencil format,

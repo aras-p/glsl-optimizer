@@ -80,6 +80,8 @@ static void emit_depthbuffer(struct brw_context *brw)
    struct intel_renderbuffer *drb = intel_get_renderbuffer(fb, BUFFER_DEPTH);
    struct intel_renderbuffer *srb = intel_get_renderbuffer(fb, BUFFER_STENCIL);
 
+   intel_emit_depth_stall_flushes(intel);
+
    /* Gen7 doesn't support packed depth/stencil */
    assert(srb == NULL || srb != drb);
 
