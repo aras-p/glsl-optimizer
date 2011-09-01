@@ -32,6 +32,19 @@ extern "C" {
 namespace brw {
 
 bool
+vec4_instruction::is_math()
+{
+   return (opcode == SHADER_OPCODE_RCP ||
+	   opcode == SHADER_OPCODE_RSQ ||
+	   opcode == SHADER_OPCODE_SQRT ||
+	   opcode == SHADER_OPCODE_EXP2 ||
+	   opcode == SHADER_OPCODE_LOG2 ||
+	   opcode == SHADER_OPCODE_SIN ||
+	   opcode == SHADER_OPCODE_COS ||
+	   opcode == SHADER_OPCODE_POW);
+}
+
+bool
 src_reg::equals(src_reg *r)
 {
    return (file == r->file &&

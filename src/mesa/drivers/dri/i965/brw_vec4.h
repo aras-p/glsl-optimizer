@@ -275,6 +275,8 @@ public:
     */
    ir_instruction *ir;
    const char *annotation;
+
+   bool is_math();
 };
 
 class vec4_visitor : public ir_visitor

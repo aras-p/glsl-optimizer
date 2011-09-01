@@ -153,6 +153,61 @@ try_constant_propagation(vec4_instruction *inst, int arg, src_reg *values[4])
    return false;
 }
 
+static bool
+try_copy_propagation(struct intel_context *intel,
+		     vec4_instruction *inst, int arg, src_reg *values[4])
+{
+   /* For constant propagation, we only handle the same constant
+    * across all 4 channels.  Some day, we should handle the 8-bit
+    * float vector format, which would let us constant propagate
+    * vectors better.
+    */
+   src_reg value = *values[0];
+   for (int i = 1; i < 4; i++) {
+      /* This is equals() except we don't care about the swizzle. */
+      if (value.file != values[i]->file ||
+	  value.reg != values[i]->reg ||
+	  value.reg_offset != values[i]->reg_offset ||
+	  value.type != values[i]->type ||
+	  value.negate != values[i]->negate ||
+	  value.abs != values[i]->abs) {
+	 return false;
+      }
+   }
+
+   /* Compute the swizzle of the original register by swizzling the
+    * component loaded from each value according to the swizzle of
+    * operand we're going to change.
+    */
+   int s[4];
+   for (int i = 0; i < 4; i++) {
+      s[i] = BRW_GET_SWZ(values[i]->swizzle,
+			 BRW_GET_SWZ(inst->src[arg].swizzle, i));
+   }
+   value.swizzle = BRW_SWIZZLE4(s[0], s[1], s[2], s[3]);
+
+   if (value.file != UNIFORM &&
+       value.file != ATTR)
+      return false;
+
+   if (inst->src[arg].abs) {
+      value.negate = false;
+      value.abs = true;
+   }
+   if (inst->src[arg].negate)
+      value.negate = true;
+
+   /* FINISHME: We can't copy-propagate things that aren't normal
+    * vec8s into gen6 math instructions, because of the weird src
+    * handling for those instructions.  Just ignore them for now.
+    */
+   if (intel->gen >= 6 && inst->is_math())
+      return false;
+
+   inst->src[arg] = value;
+   return true;
+}
+
 bool
 vec4_visitor::opt_copy_propagation()
 {
@@ -216,7 +271,8 @@ vec4_visitor::opt_copy_propagation()
 	 if (c != 4)
 	    continue;
 
-	 if (try_constant_propagation(inst, i, values))
+	 if (try_constant_propagation(inst, i, values) ||
+	     try_copy_propagation(intel, inst, i, values))
 	    progress = true;
       }
 
