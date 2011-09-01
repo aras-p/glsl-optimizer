@@ -187,6 +187,7 @@ try_copy_propagation(struct intel_context *intel,
    value.swizzle = BRW_SWIZZLE4(s[0], s[1], s[2], s[3]);
 
    if (value.file != UNIFORM &&
+       value.file != GRF &&
        value.file != ATTR)
       return false;
 
@@ -202,6 +203,10 @@ try_copy_propagation(struct intel_context *intel,
     * handling for those instructions.  Just ignore them for now.
     */
    if (intel->gen >= 6 && inst->is_math())
+      return false;
+
+   /* Don't report progress if this is a noop. */
+   if (value.equals(&inst->src[arg]))
       return false;
 
    inst->src[arg] = value;
@@ -307,7 +312,7 @@ vec4_visitor::opt_copy_propagation()
 		      cur_value[i][j] &&
 		      cur_value[i][j]->file == GRF &&
 		      cur_value[i][j]->reg == inst->dst.reg &&
-		      cur_value[i][j]->reg == inst->dst.reg) {
+		      cur_value[i][j]->reg_offset == inst->dst.reg_offset) {
 		     cur_value[i][j] = NULL;
 		  }
 	       }
