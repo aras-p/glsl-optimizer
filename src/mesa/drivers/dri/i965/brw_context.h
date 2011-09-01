@@ -334,6 +334,24 @@ struct brw_vue_map {
    int num_slots;
 };
 
+/**
+ * Convert a VUE slot number into a byte offset within the VUE.
+ */
+static inline GLuint brw_vue_slot_to_offset(GLuint slot)
+{
+   return 16*slot;
+}
+
+/**
+ * Convert a vert_result into a byte offset within the VUE.
+ */
+static inline GLuint brw_vert_result_to_offset(struct brw_vue_map *vue_map,
+                                               GLuint vert_result)
+{
+   return brw_vue_slot_to_offset(vue_map->vert_result_to_slot[vert_result]);
+}
+
+
 struct brw_sf_prog_data {
    GLuint urb_read_length;
    GLuint total_grf;
