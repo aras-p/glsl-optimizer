@@ -95,9 +95,9 @@ drm_create_buffer(struct wl_client *client, struct wl_resource *resource,
 	case WL_DRM_FORMAT_XRGB32:
 		break;
 	default:
-		wl_resource_post_error(resource,
-				       WL_DRM_ERROR_INVALID_FORMAT,
-				       "invalid format");
+		wl_client_post_error(client, &resource->object,
+                                     WL_DRM_ERROR_INVALID_FORMAT,
+                                     "invalid format");
 		return;
 	}
 
@@ -118,9 +118,9 @@ drm_create_buffer(struct wl_client *client, struct wl_resource *resource,
 						 stride, format);
 
 	if (buffer->driver_buffer == NULL) {
-		wl_resource_post_error(resource,
-				       WL_DRM_ERROR_INVALID_NAME,
-				       "invalid name");
+		wl_client_post_error(client, &resource->object,
+                                     WL_DRM_ERROR_INVALID_NAME,
+                                     "invalid name");
 		return;
 	}
 
@@ -143,9 +143,9 @@ drm_authenticate(struct wl_client *client,
 	struct wl_drm *drm = resource->data;
 
 	if (drm->callbacks->authenticate(drm->user_data, id) < 0)
-		wl_resource_post_error(resource,
-				       WL_DRM_ERROR_AUTHENTICATE_FAIL,
-				       "authenicate failed");
+		wl_client_post_error(client, &resource->object,
+                                     WL_DRM_ERROR_AUTHENTICATE_FAIL,
+                                     "authenicate failed");
 	else
 		wl_resource_post_event(resource, WL_DRM_AUTHENTICATED);
 }
