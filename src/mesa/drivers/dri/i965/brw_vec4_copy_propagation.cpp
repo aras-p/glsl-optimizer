@@ -289,9 +289,6 @@ vec4_visitor::opt_copy_propagation()
 
       /* For any updated channels, clear tracking of them as a source
        * or destination.
-       *
-       * FINISHME: Sources aren't handled, which will need to be done
-       * for copy propagation.
        */
       if (inst->dst.file == GRF) {
 	 if (inst->dst.reladdr)
@@ -302,6 +299,18 @@ vec4_visitor::opt_copy_propagation()
 	    for (int i = 0; i < 4; i++) {
 	       if (inst->dst.writemask & (1 << i))
 		  cur_value[reg][i] = NULL;
+	    }
+
+	    for (int i = 0; i < virtual_grf_reg_count; i++) {
+	       for (int j = 0; j < 4; j++) {
+		  if (inst->dst.writemask & (1 << i) &&
+		      cur_value[i][j] &&
+		      cur_value[i][j]->file == GRF &&
+		      cur_value[i][j]->reg == inst->dst.reg &&
+		      cur_value[i][j]->reg == inst->dst.reg) {
+		     cur_value[i][j] = NULL;
+		  }
+	       }
 	    }
 	 }
       }
