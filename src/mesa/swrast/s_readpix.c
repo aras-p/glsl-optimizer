@@ -332,7 +332,7 @@ read_rgba_pixels( struct gl_context *ctx,
    /* width should never be > MAX_WIDTH since we did clipping earlier */
    ASSERT(width <= MAX_WIDTH);
 
-   do {
+   {
       const GLint dstStride
          = _mesa_image_row_stride(packing, width, format, type);
       GLfloat (*rgba)[4] = swrast->SpanArrays->attribs[FRAG_ATTRIB_COL0];
@@ -359,7 +359,7 @@ read_rgba_pixels( struct gl_context *ctx,
 
          dst += dstStride;
       }
-   } while (0);
+   }
 }
 
 
