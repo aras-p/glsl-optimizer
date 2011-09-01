@@ -269,3 +269,5 @@ PIPE_FORMAT_NV21                  , other, 1, 1, x8  , x8  , x8  , x8  , xyzw, y
 # Usually used to implement IA44 and AI44 formats in video decoding
 PIPE_FORMAT_R4A4_UNORM            , plain, 1, 1, un4 , un4 ,     ,     , y00x, rgb
 PIPE_FORMAT_A4R4_UNORM            , plain, 1, 1, un4 , un4 ,     ,     , x00y, rgb
+PIPE_FORMAT_R8A8_UNORM            , plain, 1, 1, un8 , un8 ,     ,     , x00y, rgb
+PIPE_FORMAT_A8R8_UNORM            , plain, 1, 1, un8 , un8 ,     ,     , y00x, rgb
