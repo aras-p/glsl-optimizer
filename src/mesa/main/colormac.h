@@ -81,6 +81,8 @@
 #define UINT_TO_CHAN(i)   ((GLchan) ((i) >> 24))
 
 #define CHAN_TO_UBYTE(c)  (c)
+#define CHAN_TO_USHORT(c) (((c) << 8) | (c))
+#define CHAN_TO_SHORT(c)  (((c) << 7) | ((c) >> 1))
 #define CHAN_TO_FLOAT(c)  UBYTE_TO_FLOAT(c)
 
 #define CLAMPED_FLOAT_TO_CHAN(c, f)    CLAMPED_FLOAT_TO_UBYTE(c, f)
@@ -98,6 +100,8 @@
 #define UINT_TO_CHAN(i)   ((GLchan) ((i) >> 16))
 
 #define CHAN_TO_UBYTE(c)  ((c) >> 8)
+#define CHAN_TO_USHORT(c) (c)
+#define CHAN_TO_SHORT(c)  ((c) >> 1)
 #define CHAN_TO_FLOAT(c)  ((GLfloat) ((c) * (1.0 / CHAN_MAXF)))
 
 #define CLAMPED_FLOAT_TO_CHAN(c, f)    CLAMPED_FLOAT_TO_USHORT(c, f)
@@ -116,6 +120,8 @@
 #define UINT_TO_CHAN(i)   ((GLfloat) ((i) * (1.0F / 4294967295.0F)))
 
 #define CHAN_TO_UBYTE(c)  FLOAT_TO_UBYTE(c)
+#define CHAN_TO_USHORT(c) ((GLushort) (CLAMP((c), 0.0f, 1.0f) * 65535.0))
+#define CHAN_TO_SHORT(c)  ((GLshort) (CLAMP((c), 0.0f, 1.0f) * 32767.0))
 #define CHAN_TO_FLOAT(c)  (c)
 
 #define CLAMPED_FLOAT_TO_CHAN(c, f)  c = (f)
