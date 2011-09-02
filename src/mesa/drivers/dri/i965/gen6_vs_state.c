@@ -42,6 +42,7 @@ gen6_prepare_vs_push_constants(struct brw_context *brw)
    const struct brw_vertex_program *vp =
       brw_vertex_program_const(brw->vertex_program);
    unsigned int nr_params = brw->vs.prog_data->nr_params / 4;
+   bool uses_clip_distance = vp->program.UsesClipDistance;
 
    if (brw->vertex_program->IsNVProgram)
       _mesa_load_tracked_matrices(ctx);
@@ -68,12 +69,14 @@ gen6_prepare_vs_push_constants(struct brw_context *brw)
       /* This should be loaded like any other param, but it's ad-hoc
        * until we redo the VS backend.
        */
-      for (i = 0; i < MAX_CLIP_PLANES; i++) {
-	 if (ctx->Transform.ClipPlanesEnabled & (1 << i)) {
-	    memcpy(param, ctx->Transform._ClipUserPlane[i], 4 * sizeof(float));
-	    param += 4;
-	    params_uploaded++;
-	 }
+      if (!uses_clip_distance) {
+         for (i = 0; i < MAX_CLIP_PLANES; i++) {
+            if (ctx->Transform.ClipPlanesEnabled & (1 << i)) {
+               memcpy(param, ctx->Transform._ClipUserPlane[i], 4 * sizeof(float));
+               param += 4;
+               params_uploaded++;
+            }
+         }
       }
       /* Align to a reg for convenience for brw_vs_emit.c */
       if (params_uploaded & 1) {

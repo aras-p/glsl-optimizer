@@ -49,6 +49,7 @@ struct brw_vs_prog_key {
    GLuint copy_edgeflag:1;
    GLuint point_coord_replace:8;
    GLuint clamp_vertex_color:1;
+   GLuint uses_clip_distance:1;
 };
 
 

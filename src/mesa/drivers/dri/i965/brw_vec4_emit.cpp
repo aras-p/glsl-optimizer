@@ -93,7 +93,7 @@ vec4_visitor::setup_uniforms(int reg)
 {
    /* User clip planes from curbe:
     */
-   if (c->key.nr_userclip) {
+   if (c->key.nr_userclip && !c->key.uses_clip_distance) {
       if (intel->gen >= 6) {
 	 for (int i = 0; i < c->key.nr_userclip; i++) {
 	    c->userplane[i] = stride(brw_vec4_grf(reg + i / 2,
