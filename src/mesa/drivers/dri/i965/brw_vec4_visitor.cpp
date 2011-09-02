@@ -1830,6 +1830,23 @@ vec4_visitor::emit_clip_distances(struct brw_reg reg, int offset)
 }
 
 void
+vec4_visitor::emit_generic_urb_slot(dst_reg reg, int vert_result)
+{
+   assert (vert_result < VERT_RESULT_MAX);
+   current_annotation = output_reg_annotation[vert_result];
+   /* Copy the register, saturating if necessary */
+   vec4_instruction *inst = emit(MOV(reg,
+                                     src_reg(output_reg[vert_result])));
+   if ((vert_result == VERT_RESULT_COL0 ||
+        vert_result == VERT_RESULT_COL1 ||
+        vert_result == VERT_RESULT_BFC0 ||
+        vert_result == VERT_RESULT_BFC1) &&
+       c->key.clamp_vertex_color) {
+      inst->saturate = true;
+   }
+}
+
+void
 vec4_visitor::emit_urb_slot(int mrf, int vert_result)
 {
    struct brw_reg hw_reg = brw_message_reg(mrf);
@@ -1851,31 +1868,20 @@ vec4_visitor::emit_urb_slot(int mrf, int vert_result)
       current_annotation = "gl_Position";
       emit(MOV(reg, src_reg(output_reg[VERT_RESULT_HPOS])));
       break;
-   case BRW_VERT_RESULT_CLIP0:
-      current_annotation = "user clip distances";
-      emit_clip_distances(hw_reg, 0);
-      break;
-   case BRW_VERT_RESULT_CLIP1:
-      current_annotation = "user clip distances";
-      emit_clip_distances(hw_reg, 4);
+   case VERT_RESULT_CLIP_DIST0:
+   case VERT_RESULT_CLIP_DIST1:
+      if (this->c->key.uses_clip_distance) {
+         emit_generic_urb_slot(reg, vert_result);
+      } else {
+         current_annotation = "user clip distances";
+         emit_clip_distances(hw_reg, (vert_result - VERT_RESULT_CLIP_DIST0) * 4);
+      }
       break;
    case BRW_VERT_RESULT_PAD:
       /* No need to write to this slot */
       break;
-   default: {
-      assert (vert_result < VERT_RESULT_MAX);
-      current_annotation = output_reg_annotation[vert_result];
-      /* Copy the register, saturating if necessary */
-      vec4_instruction *inst = emit(MOV(reg,
-                                        src_reg(output_reg[vert_result])));
-      if ((vert_result == VERT_RESULT_COL0 ||
-	   vert_result == VERT_RESULT_COL1 ||
-	   vert_result == VERT_RESULT_BFC0 ||
-	   vert_result == VERT_RESULT_BFC1) &&
-	  c->key.clamp_vertex_color) {
-	 inst->saturate = true;
-      }
-   }
+   default:
+      emit_generic_urb_slot(reg, vert_result);
       break;
    }
 }

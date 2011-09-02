@@ -96,8 +96,8 @@ brw_compute_vue_map(struct brw_vue_map *vue_map,
       assign_vue_slot(vue_map, VERT_RESULT_PSIZ);
       assign_vue_slot(vue_map, BRW_VERT_RESULT_NDC);
       assign_vue_slot(vue_map, BRW_VERT_RESULT_HPOS_DUPLICATE);
-      assign_vue_slot(vue_map, BRW_VERT_RESULT_CLIP0);
-      assign_vue_slot(vue_map, BRW_VERT_RESULT_CLIP1);
+      assign_vue_slot(vue_map, VERT_RESULT_CLIP_DIST0);
+      assign_vue_slot(vue_map, VERT_RESULT_CLIP_DIST1);
       assign_vue_slot(vue_map, BRW_VERT_RESULT_PAD);
       assign_vue_slot(vue_map, VERT_RESULT_HPOS);
       break;
@@ -113,8 +113,8 @@ brw_compute_vue_map(struct brw_vue_map *vue_map,
       assign_vue_slot(vue_map, VERT_RESULT_PSIZ);
       assign_vue_slot(vue_map, VERT_RESULT_HPOS);
       if (nr_userclip) {
-         assign_vue_slot(vue_map, BRW_VERT_RESULT_CLIP0);
-         assign_vue_slot(vue_map, BRW_VERT_RESULT_CLIP1);
+         assign_vue_slot(vue_map, VERT_RESULT_CLIP_DIST0);
+         assign_vue_slot(vue_map, VERT_RESULT_CLIP_DIST1);
       }
       /* front and back colors need to be consecutive so that we can use
        * ATTRIBUTE_SWIZZLE_INPUTATTR_FACING to swizzle them when doing
