@@ -360,6 +360,7 @@ fs_visitor::visit(ir_expression *ir)
       this->result = op[0];
       break;
    case ir_unop_i2f:
+   case ir_unop_u2f:
    case ir_unop_b2f:
    case ir_unop_b2i:
    case ir_unop_f2i:
@@ -443,7 +444,6 @@ fs_visitor::visit(ir_expression *ir)
       inst = emit(BRW_OPCODE_OR, this->result, op[0], op[1]);
       break;
 
-   case ir_unop_u2f:
    case ir_binop_lshift:
    case ir_binop_rshift:
       assert(!"GLSL 1.30 features unsupported");
