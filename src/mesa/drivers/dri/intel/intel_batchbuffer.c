@@ -138,6 +138,7 @@ do_flush_locked(struct intel_context *intel)
    }
 
    if (ret != 0) {
+      fprintf(stderr, "intel_do_flush_locked failed: %s\n", strerr(ret));
       exit(1);
    }
    intel->vtbl.new_batch(intel);
