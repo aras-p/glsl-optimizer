@@ -72,8 +72,8 @@ typedef struct
    void *decode_buffer;
    struct pipe_video_buffer *video_buffer;
 
-   // have we allready told the decoder to start a frame
-   bool frame_started;
+   /* nonzero if this picture is already being decoded */
+   int picture_structure;
 
    XvMCSurface *ref[2];
 

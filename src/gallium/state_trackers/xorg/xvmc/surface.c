@@ -101,10 +101,13 @@ SetDecoderStatus(XvMCSurfacePrivate *surface)
 {
    struct pipe_video_decoder *decoder;
    struct pipe_video_buffer *ref_frames[2];
+   struct pipe_mpeg12_picture_desc desc = { { PIPE_VIDEO_PROFILE_MPEG1} };
 
    XvMCContextPrivate *context_priv;
 
    unsigned i, num_refs = 0;
+
+   desc.picture_structure = surface->picture_structure;
 
    assert(surface);
 
@@ -124,6 +127,7 @@ SetDecoderStatus(XvMCSurfacePrivate *surface)
       }
    }
    decoder->set_reference_frames(decoder, ref_frames, num_refs);
+   decoder->set_picture_parameters(context_priv->decoder, &desc.base);
 }
 
 static void
@@ -148,9 +152,9 @@ RecursiveEndFrame(XvMCSurfacePrivate *surface)
       }
    }
 
-   if (surface->frame_started) {
-      surface->frame_started = 0;
+   if (surface->picture_structure) {
       SetDecoderStatus(surface);
+      surface->picture_structure = 0;
 
       for (i = 0; i < 2; ++i)
          surface->ref[i] = NULL;
@@ -273,7 +277,8 @@ Status XvMCRenderSurface(Display *dpy, XvMCContext *context, unsigned int pictur
    xvmc_mb = macroblocks->macro_blocks + first_macroblock;
 
    /* If the surface we're rendering hasn't changed the ref frames shouldn't change. */
-   if (target_surface_priv->frame_started && (
+   if (target_surface_priv->picture_structure > 0 && (
+       target_surface_priv->picture_structure != picture_structure ||
        target_surface_priv->ref[0] != past_surface ||
        target_surface_priv->ref[1] != future_surface ||
        (xvmc_mb->x == 0 && xvmc_mb->y == 0))) {
@@ -285,10 +290,11 @@ Status XvMCRenderSurface(Display *dpy, XvMCContext *context, unsigned int pictur
    target_surface_priv->ref[0] = past_surface;
    target_surface_priv->ref[1] = future_surface;
 
-   SetDecoderStatus(target_surface_priv);
-
-   if (!target_surface_priv->frame_started) {
-      target_surface_priv->frame_started = 1;
+   if (target_surface_priv->picture_structure)
+      SetDecoderStatus(target_surface_priv);
+   else {
+      target_surface_priv->picture_structure = picture_structure;
+      SetDecoderStatus(target_surface_priv);
       decoder->begin_frame(decoder);
    }
 
@@ -494,7 +500,7 @@ Status XvMCDestroySurface(Display *dpy, XvMCSurface *surface)
    surface_priv = surface->privData;
    context_priv = surface_priv->context->privData;
    
-   if (surface_priv->frame_started) {
+   if (surface_priv->picture_structure) {
       SetDecoderStatus(surface_priv);
       context_priv->decoder->end_frame(context_priv->decoder);
    }
