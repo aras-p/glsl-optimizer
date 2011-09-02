@@ -203,8 +203,11 @@ vec4_visitor::CMP(dst_reg dst, src_reg src0, src_reg src1, uint32_t condition)
     * before before comparison, producing garbage results for floating
     * point comparisons.
     */
-   if (intel->gen == 4)
+   if (intel->gen == 4) {
       dst.type = src0.type;
+      if (dst.file == HW_REG)
+	 dst.fixed_hw_reg.type = dst.type;
+   }
 
    inst = new(mem_ctx) vec4_instruction(this, BRW_OPCODE_CMP, dst, src0, src1);
    inst->conditional_mod = condition;
