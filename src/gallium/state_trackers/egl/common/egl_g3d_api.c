@@ -551,6 +551,7 @@ egl_g3d_swap_buffers(_EGLDriver *drv, _EGLDisplay *dpy, _EGLSurface *surf)
    struct egl_g3d_surface *gsurf = egl_g3d_surface(surf);
    _EGLContext *ctx = _eglGetCurrentContext();
    struct egl_g3d_context *gctx = NULL;
+   struct native_present_control ctrl;
 
    /* no-op for pixmap or pbuffer surface */
    if (gsurf->base.Type == EGL_PIXMAP_BIT ||
@@ -569,10 +570,12 @@ egl_g3d_swap_buffers(_EGLDriver *drv, _EGLDisplay *dpy, _EGLSurface *surf)
       gctx->stctxi->flush(gctx->stctxi, ST_FLUSH_FRONT, NULL);
    }
 
-   return gsurf->native->present(gsurf->native,
-         NATIVE_ATTACHMENT_BACK_LEFT,
-         gsurf->base.SwapBehavior == EGL_BUFFER_PRESERVED,
-         gsurf->base.SwapInterval);
+   memset(&ctrl, 0, sizeof(ctrl));
+   ctrl.natt = NATIVE_ATTACHMENT_BACK_LEFT;
+   ctrl.preserve = (gsurf->base.SwapBehavior == EGL_BUFFER_PRESERVED);
+   ctrl.swap_interval = gsurf->base.SwapInterval;
+
+   return gsurf->native->present(gsurf->native, &ctrl);
 }
 
 static EGLBoolean

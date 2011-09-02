@@ -386,24 +386,22 @@ copy_resources(struct native_display *ndpy,
 
 static boolean
 android_surface_present(struct native_surface *nsurf,
-                        enum native_attachment natt,
-                        boolean preserve,
-                        uint swap_interval)
+                        const native_present_control *ctrl)
 {
    struct android_surface *asurf = android_surface(nsurf);
    struct android_display *adpy = asurf->adpy;
    boolean ret;
 
-   if (swap_interval || natt != NATIVE_ATTACHMENT_BACK_LEFT)
+   if (ctrl->swap_interval || ctrl->natt != NATIVE_ATTACHMENT_BACK_LEFT)
       return FALSE;
 
    /* we always render to color_res first when it exists */
    if (asurf->color_res) {
       copy_resources(&adpy->base, asurf->color_res, asurf->buf_res);
-      if (!preserve)
+      if (!ctrl->preserve)
          pipe_resource_reference(&asurf->color_res, NULL);
    }
-   else if (preserve) {
+   else if (ctrl->preserve) {
       struct pipe_resource templ;
 
       memset(&templ, 0, sizeof(templ));

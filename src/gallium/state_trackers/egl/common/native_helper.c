@@ -393,12 +393,16 @@ native_display_copy_to_pixmap(struct native_display *ndpy,
    dst = tmp[natt];
 
    if (dst && dst->format == src->format) {
+      struct native_present_control ctrl;
       struct pipe_box src_box;
 
       u_box_origin_2d(src->width0, src->height0, &src_box);
       pipe->resource_copy_region(pipe, dst, 0, 0, 0, 0, src, 0, &src_box);
       pipe->flush(pipe, NULL);
-      nsurf->present(nsurf, natt, FALSE, 0);
+
+      memset(&ctrl, 0, sizeof(ctrl));
+      ctrl.natt = natt;
+      nsurf->present(nsurf, &ctrl);
    }
 
    if (dst)

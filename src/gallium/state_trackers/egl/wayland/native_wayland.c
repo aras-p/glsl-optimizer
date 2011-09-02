@@ -294,18 +294,16 @@ wayland_surface_swap_buffers(struct native_surface *nsurf)
 
 static boolean
 wayland_surface_present(struct native_surface *nsurf,
-                        enum native_attachment natt,
-                        boolean preserve,
-                        uint swap_interval)
+                        const struct native_present_control *ctrl)
 {
    struct wayland_surface *surface = wayland_surface(nsurf);
    uint width, height;
    boolean ret;
 
-   if (preserve || swap_interval)
+   if (ctrl->preserve || ctrl->swap_interval)
       return FALSE;
 
-   switch (natt) {
+   switch (ctrl->natt) {
    case NATIVE_ATTACHMENT_FRONT_LEFT:
       ret = TRUE;
       break;

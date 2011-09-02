@@ -73,6 +73,20 @@ enum native_param_type {
    NATIVE_PARAM_MAX_SWAP_INTERVAL
 };
 
+/**
+ * Control how a surface presentation should happen.
+ */
+struct native_present_control {
+   /**< the attachment to present */
+   enum native_attachment natt;
+
+   /**< the contents of the presented attachment should be preserved */
+   boolean preserve;
+
+   /**< wait until the given vsyncs has passed since the last presentation */
+   uint swap_interval;
+};
+
 struct native_surface {
    /**
     * Available for caller's use.
@@ -85,9 +99,7 @@ struct native_surface {
     * Present the given buffer to the native engine.
     */
    boolean (*present)(struct native_surface *nsurf,
-                      enum native_attachment natt,
-                      boolean preserve,
-                      uint swap_interval);
+                      const struct native_present_control *ctrl);
 
    /**
     * Validate the buffers of the surface.  textures, if not NULL, points to an

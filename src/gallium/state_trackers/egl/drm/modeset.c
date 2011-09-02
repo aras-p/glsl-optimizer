@@ -194,21 +194,19 @@ drm_surface_swap_buffers(struct native_surface *nsurf)
 
 static boolean
 drm_surface_present(struct native_surface *nsurf,
-                    enum native_attachment natt,
-                    boolean preserve,
-                    uint swap_interval)
+                    const struct native_present_control *ctrl)
 {
    boolean ret;
 
-   if (swap_interval)
+   if (ctrl->swap_interval)
       return FALSE;
 
-   switch (natt) {
+   switch (ctrl->natt) {
    case NATIVE_ATTACHMENT_FRONT_LEFT:
       ret = drm_surface_flush_frontbuffer(nsurf);
       break;
    case NATIVE_ATTACHMENT_BACK_LEFT:
-      if (preserve)
+      if (ctrl->preserve)
 	 ret = drm_surface_copy_swap(nsurf);
       else
 	 ret = drm_surface_swap_buffers(nsurf);

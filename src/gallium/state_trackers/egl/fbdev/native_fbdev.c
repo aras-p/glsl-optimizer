@@ -183,17 +183,15 @@ fbdev_surface_update_drawable(struct native_surface *nsurf,
 
 static boolean
 fbdev_surface_present(struct native_surface *nsurf,
-                      enum native_attachment natt,
-                      boolean preserve,
-                      uint swap_interval)
+                      const struct native_present_control *ctrl)
 {
    struct fbdev_surface *fbsurf = fbdev_surface(nsurf);
    struct fbdev_display *fbdpy = fbsurf->fbdpy;
    boolean ret = FALSE;
 
-   if (swap_interval)
+   if (ctrl->swap_interval)
       return FALSE;
-   if (natt != NATIVE_ATTACHMENT_BACK_LEFT)
+   if (ctrl->natt != NATIVE_ATTACHMENT_BACK_LEFT)
       return FALSE;
 
    if (!fbdpy->assume_fixed_vinfo) {
@@ -206,7 +204,7 @@ fbdev_surface_present(struct native_surface *nsurf,
       /* present the surface */
       if (fbdev_surface_update_drawable(&fbsurf->base, &vinfo)) {
          ret = resource_surface_present(fbsurf->rsurf,
-               natt, (void *) &fbsurf->drawable);
+               ctrl->natt, (void *) &fbsurf->drawable);
       }
 
       fbsurf->width = vinfo.xres;
@@ -223,7 +221,7 @@ fbdev_surface_present(struct native_surface *nsurf,
    else {
       /* the drawable never changes */
       ret = resource_surface_present(fbsurf->rsurf,
-            natt, (void *) &fbsurf->drawable);
+            ctrl->natt, (void *) &fbsurf->drawable);
    }
 
    return ret;
