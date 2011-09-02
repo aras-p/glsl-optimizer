@@ -319,12 +319,8 @@ vec4_visitor::generate_math2_gen4(vec4_instruction *inst,
 				  struct brw_reg src0,
 				  struct brw_reg src1)
 {
-   /* Can't do writemask because math can't be align16. */
-   assert(dst.dw1.bits.writemask == WRITEMASK_XYZW);
-
    brw_MOV(p, brw_message_reg(inst->base_mrf + 1), src1);
 
-   brw_set_access_mode(p, BRW_ALIGN_1);
    brw_math(p,
 	    dst,
 	    brw_math_function(inst->opcode),
@@ -333,7 +329,6 @@ vec4_visitor::generate_math2_gen4(vec4_instruction *inst,
 	    src0,
 	    BRW_MATH_DATA_VECTOR,
 	    BRW_MATH_PRECISION_FULL);
-   brw_set_access_mode(p, BRW_ALIGN_16);
 }
 
 void
