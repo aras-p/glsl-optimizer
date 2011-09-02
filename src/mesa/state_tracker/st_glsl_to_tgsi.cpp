@@ -519,7 +519,7 @@ glsl_to_tgsi_visitor::emit(ir_instruction *ir, unsigned op,
 
    inst->function = NULL;
    
-   if (op == TGSI_OPCODE_ARL)
+   if (op == TGSI_OPCODE_ARL || op == TGSI_OPCODE_UARL)
       this->num_address_regs = 1;
    
    /* Update indirect addressing status used by TGSI */
@@ -746,16 +746,12 @@ void
 glsl_to_tgsi_visitor::emit_arl(ir_instruction *ir,
         		        st_dst_reg dst, st_src_reg src0)
 {
-   st_src_reg tmp = get_temp(glsl_type::float_type);
+   int op = TGSI_OPCODE_ARL;
 
-   if (src0.type == GLSL_TYPE_INT)
-      emit(NULL, TGSI_OPCODE_I2F, st_dst_reg(tmp), src0);
-   else if (src0.type == GLSL_TYPE_UINT)
-      emit(NULL, TGSI_OPCODE_U2F, st_dst_reg(tmp), src0);
-   else
-      tmp = src0;
-   
-   emit(NULL, TGSI_OPCODE_ARL, dst, tmp);
+   if (src0.type == GLSL_TYPE_INT || src0.type == GLSL_TYPE_UINT)
+      op = TGSI_OPCODE_UARL;
+
+   emit(NULL, op, dst, src0);
 }
 
 /**
