@@ -1097,59 +1097,59 @@ static struct pipe_sampler_view *r600_create_sampler_view(struct pipe_context *c
 	return &view->base;
 }
 
-static void r600_set_vs_sampler_view(struct pipe_context *ctx, unsigned count,
-					struct pipe_sampler_view **views)
+static void r600_set_sampler_views(struct r600_pipe_context *rctx,
+				   struct r600_textures_info *dst,
+				   unsigned count,
+				   struct pipe_sampler_view **views,
+				   void (*set_resource)(struct r600_context*, struct r600_pipe_resource_state*, unsigned))
 {
-	struct r600_pipe_context *rctx = (struct r600_pipe_context *)ctx;
-	struct r600_pipe_sampler_view **resource = (struct r600_pipe_sampler_view **)views;
-
-	for (int i = 0; i < count; i++) {
-		if (resource[i]) {
-			r600_context_pipe_state_set_vs_resource(&rctx->ctx, &resource[i]->state,
-								i + R600_MAX_CONST_BUFFERS);
-		}
-	}
-}
-
-static void r600_set_ps_sampler_view(struct pipe_context *ctx, unsigned count,
-					struct pipe_sampler_view **views)
-{
-	struct r600_pipe_context *rctx = (struct r600_pipe_context *)ctx;
-	struct r600_pipe_sampler_view **resource = (struct r600_pipe_sampler_view **)views;
-	int i;
-	int has_depth = 0;
+	struct r600_pipe_sampler_view **rviews = (struct r600_pipe_sampler_view **)views;
+	unsigned i;
 
 	for (i = 0; i < count; i++) {
-		if (&rctx->ps_samplers.views[i]->base != views[i]) {
-			if (resource[i]) {
-				if (((struct r600_resource_texture *)resource[i]->base.texture)->depth)
-					has_depth = 1;
-				r600_context_pipe_state_set_ps_resource(&rctx->ctx, &resource[i]->state,
-									i + R600_MAX_CONST_BUFFERS);
-			} else
-				r600_context_pipe_state_set_ps_resource(&rctx->ctx, NULL,
-									i + R600_MAX_CONST_BUFFERS);
+		if (rviews[i]) {
+			if (((struct r600_resource_texture *)rviews[i]->base.texture)->depth)
+				rctx->have_depth_texture = true;
 
-			pipe_sampler_view_reference(
-				(struct pipe_sampler_view **)&rctx->ps_samplers.views[i],
-				views[i]);
+			/* Changing from array to non-arrays textures and vice versa requires updating TEX_ARRAY_OVERRIDE. */
+			if ((rviews[i]->base.texture->target == PIPE_TEXTURE_1D_ARRAY ||
+			     rviews[i]->base.texture->target == PIPE_TEXTURE_2D_ARRAY) != dst->is_array_sampler[i])
+				dst->samplers_dirty = true;
 
+			set_resource(&rctx->ctx, &rviews[i]->state, i + R600_MAX_CONST_BUFFERS);
 		} else {
-			if (resource[i]) {
-				if (((struct r600_resource_texture *)resource[i]->base.texture)->depth)
-					has_depth = 1;
-			}
+			set_resource(&rctx->ctx, NULL, i + R600_MAX_CONST_BUFFERS);
+		}
+
+		pipe_sampler_view_reference(
+			(struct pipe_sampler_view **)&dst->views[i],
+			views[i]);
+	}
+
+	for (i = count; i < dst->n_views; i++) {
+		if (dst->views[i]) {
+			set_resource(&rctx->ctx, NULL, i + R600_MAX_CONST_BUFFERS);
+			pipe_sampler_view_reference((struct pipe_sampler_view **)&dst->views[i], NULL);
 		}
 	}
-	for (i = count; i < NUM_TEX_UNITS; i++) {
-		if (rctx->ps_samplers.views[i]) {
-			r600_context_pipe_state_set_ps_resource(&rctx->ctx, NULL,
-								i + R600_MAX_CONST_BUFFERS);
-			pipe_sampler_view_reference((struct pipe_sampler_view **)&rctx->ps_samplers.views[i], NULL);
-		}
-	}
-	rctx->have_depth_texture = has_depth;
-	rctx->ps_samplers.n_views = count;
+
+	dst->n_views = count;
+}
+
+static void r600_set_vs_sampler_views(struct pipe_context *ctx, unsigned count,
+				      struct pipe_sampler_view **views)
+{
+	struct r600_pipe_context *rctx = (struct r600_pipe_context *)ctx;
+	r600_set_sampler_views(rctx, &rctx->vs_samplers, count, views,
+			       r600_context_pipe_state_set_vs_resource);
+}
+
+static void r600_set_ps_sampler_views(struct pipe_context *ctx, unsigned count,
+				      struct pipe_sampler_view **views)
+{
+	struct r600_pipe_context *rctx = (struct r600_pipe_context *)ctx;
+	r600_set_sampler_views(rctx, &rctx->ps_samplers, count, views,
+			       r600_context_pipe_state_set_ps_resource);
 }
 
 static void r600_set_seamless_cubemap(struct r600_pipe_context *rctx, boolean enable)
@@ -1168,41 +1168,72 @@ static void r600_set_seamless_cubemap(struct r600_pipe_context *rctx, boolean en
 	r600_context_pipe_state_set(&rctx->ctx, rstate);
 }
 
-static void r600_bind_ps_sampler(struct pipe_context *ctx, unsigned count, void **states)
+static void r600_bind_samplers(struct r600_pipe_context *rctx,
+			       struct r600_textures_info *dst,
+			       unsigned count, void **states)
 {
-	struct r600_pipe_context *rctx = (struct r600_pipe_context *)ctx;
-	struct r600_pipe_sampler_state **sstates = (struct r600_pipe_sampler_state **)states;
-	int seamless = -1;
-
-	memcpy(rctx->ps_samplers.samplers, states, sizeof(void*) * count);
-	rctx->ps_samplers.n_samplers = count;
-
-	for (int i = 0; i < count; i++) {
-		r600_context_pipe_state_set_ps_sampler(&rctx->ctx, &sstates[i]->rstate, i);
-
-		if (sstates[i])
-			seamless = sstates[i]->seamless_cube_map;
-	}
-
-	if (seamless != -1)
-		r600_set_seamless_cubemap(rctx, seamless);
+	memcpy(dst->samplers, states, sizeof(void*) * count);
+	dst->n_samplers = count;
+	dst->samplers_dirty = true;
 }
 
-static void r600_bind_vs_sampler(struct pipe_context *ctx, unsigned count, void **states)
+static void r600_bind_vs_samplers(struct pipe_context *ctx, unsigned count, void **states)
 {
 	struct r600_pipe_context *rctx = (struct r600_pipe_context *)ctx;
-	struct r600_pipe_sampler_state **sstates = (struct r600_pipe_sampler_state **)states;
-	int seamless = -1;
+	r600_bind_samplers(rctx, &rctx->vs_samplers, count, states);
+}
 
-	for (int i = 0; i < count; i++) {
-		r600_context_pipe_state_set_vs_sampler(&rctx->ctx, &sstates[i]->rstate, i);
+static void r600_bind_ps_samplers(struct pipe_context *ctx, unsigned count, void **states)
+{
+	struct r600_pipe_context *rctx = (struct r600_pipe_context *)ctx;
+	r600_bind_samplers(rctx, &rctx->ps_samplers, count, states);
+}
 
-		if (sstates[i])
-			seamless = sstates[i]->seamless_cube_map;
+static void r600_update_samplers(struct r600_pipe_context *rctx,
+				 struct r600_textures_info *tex,
+				 void (*set_sampler)(struct r600_context*, struct r600_pipe_state*, unsigned))
+{
+	unsigned i;
+
+	if (tex->samplers_dirty) {
+		int seamless = -1;
+		for (i = 0; i < tex->n_samplers; i++) {
+			if (!tex->samplers[i])
+				continue;
+
+			/* TEX_ARRAY_OVERRIDE must be set for array textures to disable
+			 * filtering between layers.
+			 * Don't update TEX_ARRAY_OVERRIDE if we don't have the sampler view. */
+			if (tex->views[i]) {
+				if (tex->views[i]->base.texture->target == PIPE_TEXTURE_1D_ARRAY ||
+				    tex->views[i]->base.texture->target == PIPE_TEXTURE_2D_ARRAY) {
+					tex->samplers[i]->rstate.regs[0].value |= S_03C000_TEX_ARRAY_OVERRIDE(1);
+					tex->is_array_sampler[i] = true;
+				} else {
+					tex->samplers[i]->rstate.regs[0].value &= C_03C000_TEX_ARRAY_OVERRIDE;
+					tex->is_array_sampler[i] = false;
+				}
+			}
+
+			set_sampler(&rctx->ctx, &tex->samplers[i]->rstate, i);
+
+			if (tex->samplers[i])
+				seamless = tex->samplers[i]->seamless_cube_map;
+		}
+
+		if (seamless != -1)
+			r600_set_seamless_cubemap(rctx, seamless);
+
+		tex->samplers_dirty = false;
 	}
+}
 
-	if (seamless != -1)
-		r600_set_seamless_cubemap(rctx, seamless);
+void r600_update_sampler_states(struct r600_pipe_context *rctx)
+{
+	r600_update_samplers(rctx, &rctx->vs_samplers,
+			     r600_context_pipe_state_set_vs_sampler);
+	r600_update_samplers(rctx, &rctx->ps_samplers,
+			     r600_context_pipe_state_set_ps_sampler);
 }
 
 static void r600_set_clip_state(struct pipe_context *ctx,
@@ -1636,11 +1667,11 @@ void r600_init_state_functions(struct r600_pipe_context *rctx)
 	rctx->context.create_vs_state = r600_create_shader_state;
 	rctx->context.bind_blend_state = r600_bind_blend_state;
 	rctx->context.bind_depth_stencil_alpha_state = r600_bind_dsa_state;
-	rctx->context.bind_fragment_sampler_states = r600_bind_ps_sampler;
+	rctx->context.bind_fragment_sampler_states = r600_bind_ps_samplers;
 	rctx->context.bind_fs_state = r600_bind_ps_shader;
 	rctx->context.bind_rasterizer_state = r600_bind_rs_state;
 	rctx->context.bind_vertex_elements_state = r600_bind_vertex_elements;
-	rctx->context.bind_vertex_sampler_states = r600_bind_vs_sampler;
+	rctx->context.bind_vertex_sampler_states = r600_bind_vs_samplers;
 	rctx->context.bind_vs_state = r600_bind_vs_shader;
 	rctx->context.delete_blend_state = r600_delete_state;
 	rctx->context.delete_depth_stencil_alpha_state = r600_delete_state;
@@ -1652,7 +1683,7 @@ void r600_init_state_functions(struct r600_pipe_context *rctx)
 	rctx->context.set_blend_color = r600_set_blend_color;
 	rctx->context.set_clip_state = r600_set_clip_state;
 	rctx->context.set_constant_buffer = r600_set_constant_buffer;
-	rctx->context.set_fragment_sampler_views = r600_set_ps_sampler_view;
+	rctx->context.set_fragment_sampler_views = r600_set_ps_sampler_views;
 	rctx->context.set_framebuffer_state = r600_set_framebuffer_state;
 	rctx->context.set_polygon_stipple = r600_set_polygon_stipple;
 	rctx->context.set_sample_mask = r600_set_sample_mask;
@@ -1660,7 +1691,7 @@ void r600_init_state_functions(struct r600_pipe_context *rctx)
 	rctx->context.set_stencil_ref = r600_set_stencil_ref;
 	rctx->context.set_vertex_buffers = r600_set_vertex_buffers;
 	rctx->context.set_index_buffer = r600_set_index_buffer;
-	rctx->context.set_vertex_sampler_views = r600_set_vs_sampler_view;
+	rctx->context.set_vertex_sampler_views = r600_set_vs_sampler_views;
 	rctx->context.set_viewport_state = r600_set_viewport_state;
 	rctx->context.sampler_view_destroy = r600_sampler_view_destroy;
 	rctx->context.redefine_user_buffer = u_default_redefine_user_buffer;

@@ -143,9 +143,11 @@ struct r600_pipe_sampler_state {
 
 struct r600_textures_info {
 	struct r600_pipe_sampler_view	*views[NUM_TEX_UNITS];
+	struct r600_pipe_sampler_state	*samplers[NUM_TEX_UNITS];
 	unsigned			n_views;
-	void				*samplers[NUM_TEX_UNITS];
 	unsigned			n_samplers;
+	bool				samplers_dirty;
+	bool				is_array_sampler[NUM_TEX_UNITS];
 };
 
 struct r600_fence {
@@ -218,6 +220,7 @@ struct r600_pipe_context {
 	unsigned			alpha_ref;
 	boolean				alpha_ref_dirty;
 	unsigned			nr_cbufs;
+	struct r600_textures_info	vs_samplers;
 	struct r600_textures_info	ps_samplers;
 
 	struct r600_pipe_fences		fences;
@@ -292,6 +295,7 @@ int r600_find_vs_semantic_index(struct r600_shader *vs,
 				struct r600_shader *ps, int id);
 
 /* r600_state.c */
+void r600_update_sampler_states(struct r600_pipe_context *rctx);
 void r600_init_state_functions(struct r600_pipe_context *rctx);
 void r600_init_config(struct r600_pipe_context *rctx);
 void r600_pipe_shader_ps(struct pipe_context *ctx, struct r600_pipe_shader *shader);
