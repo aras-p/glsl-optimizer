@@ -306,6 +306,98 @@ vec4_visitor::pack_uniform_registers()
    }
 }
 
+bool
+src_reg::is_zero() const
+{
+   if (file != IMM)
+      return false;
+
+   if (type == BRW_REGISTER_TYPE_F) {
+      return imm.f == 0.0;
+   } else {
+      return imm.i == 0;
+   }
+}
+
+bool
+src_reg::is_one() const
+{
+   if (file != IMM)
+      return false;
+
+   if (type == BRW_REGISTER_TYPE_F) {
+      return imm.f == 1.0;
+   } else {
+      return imm.i == 1;
+   }
+}
+
+/**
+ * Does algebraic optimizations (0 * a = 0, 1 * a = a, a + 0 = a).
+ *
+ * While GLSL IR also performs this optimization, we end up with it in
+ * our instruction stream for a couple of reasons.  One is that we
+ * sometimes generate silly instructions, for example in array access
+ * where we'll generate "ADD offset, index, base" even if base is 0.
+ * The other is that GLSL IR's constant propagation doesn't track the
+ * components of aggregates, so some VS patterns (initialize matrix to
+ * 0, accumulate in vertex blending factors) end up breaking down to
+ * instructions involving 0.
+ */
+bool
+vec4_visitor::opt_algebraic()
+{
+   bool progress = false;
+
+   foreach_list(node, &this->instructions) {
+      vec4_instruction *inst = (vec4_instruction *)node;
+
+      switch (inst->opcode) {
+      case BRW_OPCODE_ADD:
+	 if (inst->src[1].is_zero()) {
+	    inst->opcode = BRW_OPCODE_MOV;
+	    inst->src[1] = src_reg();
+	    progress = true;
+	 }
+	 break;
+
+      case BRW_OPCODE_MUL:
+	 if (inst->src[1].is_zero()) {
+	    inst->opcode = BRW_OPCODE_MOV;
+	    switch (inst->src[0].type) {
+	    case BRW_REGISTER_TYPE_F:
+	       inst->src[0] = src_reg(0.0f);
+	       break;
+	    case BRW_REGISTER_TYPE_D:
+	       inst->src[0] = src_reg(0);
+	       break;
+	    case BRW_REGISTER_TYPE_UD:
+	       inst->src[0] = src_reg(0u);
+	       break;
+	    default:
+	       assert(!"not reached");
+	       inst->src[0] = src_reg(0.0f);
+	       break;
+	    }
+	    inst->src[1] = src_reg();
+	    progress = true;
+	 } else if (inst->src[1].is_one()) {
+	    inst->opcode = BRW_OPCODE_MOV;
+	    inst->src[1] = src_reg();
+	    progress = true;
+	 }
+	 break;
+      default:
+	 break;
+      }
+   }
+
+   if (progress)
+      this->live_intervals_valid = false;
+
+   return progress;
+}
+
 /**
  * Only a limited number of hardware registers may be used for push
  * constants, so this turns access to the overflowed constants into

@@ -163,6 +163,8 @@ public:
    }
 
    bool equals(src_reg *r);
+   bool is_zero() const;
+   bool is_one() const;
 
    src_reg(class vec4_visitor *v, const struct glsl_type *type);
 
@@ -401,6 +403,7 @@ public:
    bool dead_code_eliminate();
    bool virtual_grf_interferes(int a, int b);
    bool opt_copy_propagation();
+   bool opt_algebraic();
 
    vec4_instruction *emit(vec4_instruction *inst);
 
