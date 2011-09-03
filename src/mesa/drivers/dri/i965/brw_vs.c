@@ -116,22 +116,18 @@ brw_compute_vue_map(struct brw_vue_map *vue_map,
          assign_vue_slot(vue_map, BRW_VERT_RESULT_CLIP0);
          assign_vue_slot(vue_map, BRW_VERT_RESULT_CLIP1);
       }
-      if (two_side_color) {
-         /* front and back colors need to be consecutive */
-         if ((outputs_written & BITFIELD64_BIT(VERT_RESULT_COL1)) &&
-             (outputs_written & BITFIELD64_BIT(VERT_RESULT_BFC1))) {
-            assert(outputs_written & BITFIELD64_BIT(VERT_RESULT_COL0));
-            assert(outputs_written & BITFIELD64_BIT(VERT_RESULT_BFC0));
-            assign_vue_slot(vue_map, VERT_RESULT_COL0);
-            assign_vue_slot(vue_map, VERT_RESULT_BFC0);
-            assign_vue_slot(vue_map, VERT_RESULT_COL1);
-            assign_vue_slot(vue_map, VERT_RESULT_BFC1);
-         } else if ((outputs_written & BITFIELD64_BIT(VERT_RESULT_COL0)) &&
-                    (outputs_written & BITFIELD64_BIT(VERT_RESULT_BFC0))) {
-            assign_vue_slot(vue_map, VERT_RESULT_COL0);
-            assign_vue_slot(vue_map, VERT_RESULT_BFC0);
-         }
-      }
+      /* front and back colors need to be consecutive so that we can use
+       * ATTRIBUTE_SWIZZLE_INPUTATTR_FACING to swizzle them when doing
+       * two-sided color.
+       */
+      if (outputs_written & BITFIELD64_BIT(VERT_RESULT_COL0))
+         assign_vue_slot(vue_map, VERT_RESULT_COL0);
+      if (outputs_written & BITFIELD64_BIT(VERT_RESULT_BFC0))
+         assign_vue_slot(vue_map, VERT_RESULT_BFC0);
+      if (outputs_written & BITFIELD64_BIT(VERT_RESULT_COL1))
+         assign_vue_slot(vue_map, VERT_RESULT_COL1);
+      if (outputs_written & BITFIELD64_BIT(VERT_RESULT_BFC1))
+         assign_vue_slot(vue_map, VERT_RESULT_BFC1);
       break;
    default:
       assert (!"VUE map not known for this chip generation");
