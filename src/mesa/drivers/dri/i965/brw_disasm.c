@@ -350,8 +350,8 @@ char *math_function[16] = {
     [BRW_MATH_FUNCTION_TAN] = "tan",
     [BRW_MATH_FUNCTION_POW] = "pow",
     [BRW_MATH_FUNCTION_INT_DIV_QUOTIENT_AND_REMAINDER] = "intdivmod",
-    [BRW_MATH_FUNCTION_INT_DIV_QUOTIENT] = "intmod",
-    [BRW_MATH_FUNCTION_INT_DIV_REMAINDER] = "intdiv",
+    [BRW_MATH_FUNCTION_INT_DIV_QUOTIENT] = "intdiv",
+    [BRW_MATH_FUNCTION_INT_DIV_REMAINDER] = "intmod",
 };
 
 char *math_saturate[2] = {
