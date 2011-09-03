@@ -63,8 +63,7 @@ static void compile_sf_prog( struct brw_context *brw,
    brw_init_compile(brw, &c.func, mem_ctx);
 
    c.key = *key;
-   brw_compute_vue_map(&c.vue_map, intel, c.key.nr_userclip,
-                       c.key.do_twoside_color, c.key.attrs);
+   brw_compute_vue_map(&c.vue_map, intel, c.key.nr_userclip, c.key.attrs);
    c.urb_entry_read_offset = brw_sf_compute_urb_entry_read_offset(intel);
    c.nr_attr_regs = (c.vue_map.num_slots + 1)/2 - c.urb_entry_read_offset;
    c.nr_setup_regs = c.nr_attr_regs;

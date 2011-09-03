@@ -64,8 +64,7 @@ static void compile_gs_prog( struct brw_context *brw,
    c.key = *key;
    /* The geometry shader needs to access the entire VUE. */
    struct brw_vue_map vue_map;
-   brw_compute_vue_map(&vue_map, intel, c.key.nr_userclip,
-                       c.key.do_twoside_color, c.key.attrs);
+   brw_compute_vue_map(&vue_map, intel, c.key.nr_userclip, c.key.attrs);
    c.nr_regs = (vue_map.num_slots + 1)/2;
 
    mem_ctx = NULL;
@@ -152,7 +151,6 @@ static void populate_key( struct brw_context *brw,
 
    /* _NEW_LIGHT */
    key->pv_first = (ctx->Light.ProvokingVertex == GL_FIRST_VERTEX_CONVENTION);
-   key->do_twoside_color = (ctx->Light.Enabled && ctx->Light.Model.TwoSide);
    if (key->primitive == GL_QUADS && ctx->Light.ShadeModel != GL_FLAT) {
       /* Provide consistent primitive order with brw_set_prim's
        * optimization of single quads to trifans.

@@ -326,7 +326,7 @@ static void brw_vs_alloc_regs( struct brw_vs_compile *c )
    /* Allocate outputs.  The non-position outputs go straight into message regs.
     */
    brw_compute_vue_map(&c->vue_map, intel, c->key.nr_userclip,
-                       c->key.two_side_color, c->prog_data.outputs_written);
+                       c->prog_data.outputs_written);
    c->first_output = reg;
 
    first_reladdr_output = get_first_reladdr_output(&c->vp->program);

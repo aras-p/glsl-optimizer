@@ -56,7 +56,7 @@ static inline void assign_vue_slot(struct brw_vue_map *vue_map,
 void
 brw_compute_vue_map(struct brw_vue_map *vue_map,
                     const struct intel_context *intel, int nr_userclip,
-                    bool two_side_color, GLbitfield64 outputs_written)
+                    GLbitfield64 outputs_written)
 {
    int i;
 
@@ -258,7 +258,6 @@ static void brw_upload_vs_prog(struct brw_context *brw)
    key.nr_userclip = brw_count_bits(ctx->Transform.ClipPlanesEnabled);
    key.copy_edgeflag = (ctx->Polygon.FrontMode != GL_FILL ||
 			ctx->Polygon.BackMode != GL_FILL);
-   key.two_side_color = (ctx->Light.Enabled && ctx->Light.Model.TwoSide);
 
    /* _NEW_LIGHT | _NEW_BUFFERS */
    key.clamp_vertex_color = ctx->Light._ClampVertexColor;

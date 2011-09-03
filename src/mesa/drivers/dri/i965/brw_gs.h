@@ -45,8 +45,7 @@ struct brw_gs_prog_key {
    GLuint pv_first:1;
    GLuint need_gs_prog:1;
    GLuint nr_userclip:4;
-   GLuint do_twoside_color:1;
-   GLuint pad:21;
+   GLuint pad:22;
 };
 
 struct brw_gs_compile {

@@ -55,8 +55,7 @@ struct brw_clip_prog_key {
    GLuint copy_bfc_cw:1;
    GLuint copy_bfc_ccw:1;
    GLuint clip_mode:3;
-   GLuint do_twoside_color:1;
-   GLuint pad0:10;
+   GLuint pad0:11;
 
    GLfloat offset_factor;
    GLfloat offset_units;

@@ -967,7 +967,7 @@ int brw_disasm (FILE *file, struct brw_instruction *inst, int gen);
 /* brw_vs.c */
 void brw_compute_vue_map(struct brw_vue_map *vue_map,
                          const struct intel_context *intel, int nr_userclip,
-                         bool two_side_color, GLbitfield64 outputs_written);
+                         GLbitfield64 outputs_written);
 
 /*======================================================================
  * Inline conversion functions.  These are better-typed than the

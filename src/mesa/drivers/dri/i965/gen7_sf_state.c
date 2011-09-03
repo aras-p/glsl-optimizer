@@ -50,8 +50,7 @@ upload_sbe_state(struct brw_context *brw)
    int two_side_color = (ctx->Light.Enabled && ctx->Light.Model.TwoSide);
    uint16_t attr_overrides[FRAG_ATTRIB_MAX];
 
-   brw_compute_vue_map(&vue_map, intel, nr_userclip, two_side_color,
-                       vs_outputs_written);
+   brw_compute_vue_map(&vue_map, intel, nr_userclip, vs_outputs_written);
    urb_entry_read_length = (vue_map.num_slots + 1)/2 - urb_entry_read_offset;
    if (urb_entry_read_length == 0) {
       /* Setting the URB entry read length to 0 causes undefined behavior, so
