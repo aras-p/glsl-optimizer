@@ -390,6 +390,8 @@ public:
    void emit_scalar(ir_instruction *ir, unsigned op,
         	    st_dst_reg dst, st_src_reg src0, st_src_reg src1);
 
+   void try_emit_float_set(ir_instruction *ir, unsigned op, st_dst_reg dst);
+
    void emit_arl(ir_instruction *ir, st_dst_reg dst, st_src_reg src0);
 
    void emit_scs(ir_instruction *ir, unsigned op,
@@ -567,7 +569,10 @@ glsl_to_tgsi_visitor::emit(ir_instruction *ir, unsigned op,
    }
 
    this->instructions.push_tail(inst);
-   
+
+   if (native_integers)
+      try_emit_float_set(ir, op, dst);
+
    return inst;
 }
 
@@ -593,11 +598,28 @@ glsl_to_tgsi_visitor::emit(ir_instruction *ir, unsigned op)
    return emit(ir, op, undef_dst, undef_src, undef_src, undef_src);
 }
 
+ /**
+ * Emits the code to convert the result of float SET instructions to integers.
+ */
+void
+glsl_to_tgsi_visitor::try_emit_float_set(ir_instruction *ir, unsigned op,
+        		 st_dst_reg dst)
+{
+   if ((op == TGSI_OPCODE_SEQ ||
+        op == TGSI_OPCODE_SNE ||
+        op == TGSI_OPCODE_SGE ||
+        op == TGSI_OPCODE_SLT))
+   {
+      st_src_reg src = st_src_reg(dst);
+      src.negate = ~src.negate;
+      dst.type = GLSL_TYPE_FLOAT;
+      emit(ir, TGSI_OPCODE_F2I, dst, src);
+   }
+}
+
 /**
  * Determines whether to use an integer, unsigned integer, or float opcode 
  * based on the operands and input opcode, then emits the result.
- * 
- * TODO: type checking for remaining TGSI opcodes
  */
 unsigned
 glsl_to_tgsi_visitor::get_opcode(ir_instruction *ir, unsigned op,
@@ -609,7 +631,7 @@ glsl_to_tgsi_visitor::get_opcode(ir_instruction *ir, unsigned op,
    if (src0.type == GLSL_TYPE_FLOAT || src1.type == GLSL_TYPE_FLOAT)
       type = GLSL_TYPE_FLOAT;
    else if (native_integers)
-      type = src0.type;
+      type = src0.type == GLSL_TYPE_BOOL ? GLSL_TYPE_INT : src0.type;
 
 #define case4(c, f, i, u) \
    case TGSI_OPCODE_##c: \
@@ -635,12 +657,7 @@ glsl_to_tgsi_visitor::get_opcode(ir_instruction *ir, unsigned op,
       case3(SGE, ISGE, USGE);
       case3(SLT, ISLT, USLT);
       
-      case2iu(SHL, SHL);
       case2iu(ISHR, USHR);
-      case2iu(NOT, NOT);
-      case2iu(AND, AND);
-      case2iu(OR, OR);
-      case2iu(XOR, XOR);
       
       default: break;
    }
@@ -1394,7 +1411,7 @@ glsl_to_tgsi_visitor::visit(ir_expression *ir)
    switch (ir->operation) {
    case ir_unop_logic_not:
       if (result_dst.type != GLSL_TYPE_FLOAT)
-         emit(ir, TGSI_OPCODE_SEQ, result_dst, op[0], st_src_reg_for_type(result_dst.type, 0));
+         emit(ir, TGSI_OPCODE_NOT, result_dst, op[0]);
       else {
          /* Previously 'SEQ dst, src, 0.0' was used for this.  However, many
           * older GPUs implement SEQ using multiple instructions (i915 uses two
@@ -1494,10 +1511,10 @@ glsl_to_tgsi_visitor::visit(ir_expression *ir)
       emit(ir, TGSI_OPCODE_SLT, result_dst, op[0], op[1]);
       break;
    case ir_binop_greater:
-      emit(ir, TGSI_OPCODE_SGT, result_dst, op[0], op[1]);
+      emit(ir, TGSI_OPCODE_SLT, result_dst, op[1], op[0]);
       break;
    case ir_binop_lequal:
-      emit(ir, TGSI_OPCODE_SLE, result_dst, op[0], op[1]);
+      emit(ir, TGSI_OPCODE_SGE, result_dst, op[1], op[0]);
       break;
    case ir_binop_gequal:
       emit(ir, TGSI_OPCODE_SGE, result_dst, op[0], op[1]);
@@ -1610,41 +1627,52 @@ glsl_to_tgsi_visitor::visit(ir_expression *ir)
    }
 
    case ir_binop_logic_xor:
-      emit(ir, TGSI_OPCODE_SNE, result_dst, op[0], op[1]);
+      if (native_integers)
+         emit(ir, TGSI_OPCODE_XOR, result_dst, op[0], op[1]);
+      else
+         emit(ir, TGSI_OPCODE_SNE, result_dst, op[0], op[1]);
       break;
 
    case ir_binop_logic_or: {
-      /* After the addition, the value will be an integer on the
-       * range [0,2].  Zero stays zero, and positive values become 1.0.
-       */
-      glsl_to_tgsi_instruction *add =
-         emit(ir, TGSI_OPCODE_ADD, result_dst, op[0], op[1]);
-      if (this->prog->Target == GL_FRAGMENT_PROGRAM_ARB &&
-          result_dst.type == GLSL_TYPE_FLOAT) {
-         /* The clamping to [0,1] can be done for free in the fragment
-          * shader with a saturate if floats are being used as boolean values.
+      if (native_integers) {
+         /* If integers are used as booleans, we can use an actual "or" 
+          * instruction.
           */
-         add->saturate = true;
-      } else if (result_dst.type == GLSL_TYPE_FLOAT) {
-         /* Negating the result of the addition gives values on the range
-          * [-2, 0].  Zero stays zero, and negative values become 1.0.  This
-          * is achieved using SLT.
-          */
-         st_src_reg slt_src = result_src;
-         slt_src.negate = ~slt_src.negate;
-         emit(ir, TGSI_OPCODE_SLT, result_dst, slt_src, st_src_reg_for_float(0.0));
+         assert(native_integers);
+         emit(ir, TGSI_OPCODE_OR, result_dst, op[0], op[1]);
       } else {
-         /* Use an SNE on the result of the addition.  Zero stays zero,
-          * 1 stays 1, and 2 becomes 1.
+         /* After the addition, the value will be an integer on the
+          * range [0,2].  Zero stays zero, and positive values become 1.0.
           */
-         emit(ir, TGSI_OPCODE_SNE, result_dst, result_src, st_src_reg_for_int(0));
+         glsl_to_tgsi_instruction *add =
+            emit(ir, TGSI_OPCODE_ADD, result_dst, op[0], op[1]);
+         if (this->prog->Target == GL_FRAGMENT_PROGRAM_ARB) {
+            /* The clamping to [0,1] can be done for free in the fragment
+             * shader with a saturate if floats are being used as boolean values.
+             */
+            add->saturate = true;
+         } else {
+            /* Negating the result of the addition gives values on the range
+             * [-2, 0].  Zero stays zero, and negative values become 1.0.  This
+             * is achieved using SLT.
+             */
+            st_src_reg slt_src = result_src;
+            slt_src.negate = ~slt_src.negate;
+            emit(ir, TGSI_OPCODE_SLT, result_dst, slt_src, st_src_reg_for_float(0.0));
+         }
       }
       break;
    }
 
    case ir_binop_logic_and:
-      /* the bool args are stored as float 0.0 or 1.0, so "mul" gives us "and". */
-      emit(ir, TGSI_OPCODE_MUL, result_dst, op[0], op[1]);
+      /* If native integers are disabled, the bool args are stored as float 0.0
+       * or 1.0, so "mul" gives us "and".  If they're enabled, just use the
+       * actual AND opcode.
+       */
+      if (native_integers)
+         emit(ir, TGSI_OPCODE_AND, result_dst, op[0], op[1]);
+      else
+         emit(ir, TGSI_OPCODE_MUL, result_dst, op[0], op[1]);
       break;
 
    case ir_binop_dot:
@@ -1667,17 +1695,35 @@ glsl_to_tgsi_visitor::visit(ir_expression *ir)
       emit_scalar(ir, TGSI_OPCODE_RSQ, result_dst, op[0]);
       break;
    case ir_unop_i2f:
-   case ir_unop_b2f:
       if (native_integers) {
          emit(ir, TGSI_OPCODE_I2F, result_dst, op[0]);
          break;
       }
+      /* fallthrough to next case otherwise */
+   case ir_unop_b2f:
+      if (native_integers) {
+         emit(ir, TGSI_OPCODE_AND, result_dst, op[0], st_src_reg_for_float(1.0));
+         break;
+      }
+      /* fallthrough to next case otherwise */
    case ir_unop_i2u:
    case ir_unop_u2i:
       /* Converting between signed and unsigned integers is a no-op. */
-   case ir_unop_b2i:
-      /* Booleans are stored as integers (or floats in GLSL 1.20 and lower). */
       result_src = op[0];
+      break;
+   case ir_unop_b2i:
+      if (native_integers) {
+         /* Booleans are stored as integers using ~0 for true and 0 for false.
+          * GLSL requires that int(bool) return 1 for true and 0 for false.
+          * This conversion is done with AND, but it could be done with NEG.
+          */
+         emit(ir, TGSI_OPCODE_AND, result_dst, op[0], st_src_reg_for_int(1));
+      } else {
+         /* Booleans and integers are both stored as floats when native 
+          * integers are disabled.
+          */
+         result_src = op[0];
+      }
       break;
    case ir_unop_f2i:
       if (native_integers)
@@ -1686,9 +1732,13 @@ glsl_to_tgsi_visitor::visit(ir_expression *ir)
          emit(ir, TGSI_OPCODE_TRUNC, result_dst, op[0]);
       break;
    case ir_unop_f2b:
+      emit(ir, TGSI_OPCODE_SNE, result_dst, op[0], st_src_reg_for_float(0.0));
+      break;
    case ir_unop_i2b:
-      emit(ir, TGSI_OPCODE_SNE, result_dst, op[0], 
-            st_src_reg_for_type(result_dst.type, 0));
+      if (native_integers)
+         emit(ir, TGSI_OPCODE_INEG, result_dst, op[0]);
+      else
+         emit(ir, TGSI_OPCODE_SNE, result_dst, op[0], st_src_reg_for_float(0.0));
       break;
    case ir_unop_trunc:
       emit(ir, TGSI_OPCODE_TRUNC, result_dst, op[0]);
@@ -1716,7 +1766,7 @@ glsl_to_tgsi_visitor::visit(ir_expression *ir)
       break;
 
    case ir_unop_bit_not:
-      if (glsl_version >= 130) {
+      if (native_integers) {
          emit(ir, TGSI_OPCODE_NOT, result_dst, op[0]);
          break;
       }
@@ -1726,27 +1776,27 @@ glsl_to_tgsi_visitor::visit(ir_expression *ir)
          break;
       }
    case ir_binop_lshift:
-      if (glsl_version >= 130) {
+      if (native_integers) {
          emit(ir, TGSI_OPCODE_SHL, result_dst, op[0]);
          break;
       }
    case ir_binop_rshift:
-      if (glsl_version >= 130) {
+      if (native_integers) {
          emit(ir, TGSI_OPCODE_ISHR, result_dst, op[0]);
          break;
       }
    case ir_binop_bit_and:
-      if (glsl_version >= 130) {
+      if (native_integers) {
          emit(ir, TGSI_OPCODE_AND, result_dst, op[0]);
          break;
       }
    case ir_binop_bit_xor:
-      if (glsl_version >= 130) {
+      if (native_integers) {
          emit(ir, TGSI_OPCODE_XOR, result_dst, op[0]);
          break;
       }
    case ir_binop_bit_or:
-      if (glsl_version >= 130) {
+      if (native_integers) {
          emit(ir, TGSI_OPCODE_OR, result_dst, op[0]);
          break;
       }
@@ -1903,17 +1953,19 @@ glsl_to_tgsi_visitor::visit(ir_dereference_array *ir)
       if (element_size == 1) {
          index_reg = this->result;
       } else {
-         index_reg = get_temp(glsl_type::float_type);
+         index_reg = get_temp(native_integers ?
+                              glsl_type::int_type : glsl_type::float_type);
 
          emit(ir, TGSI_OPCODE_MUL, st_dst_reg(index_reg),
-              this->result, st_src_reg_for_float(element_size));
+              this->result, st_src_reg_for_type(index_reg.type, element_size));
       }
 
       /* If there was already a relative address register involved, add the
        * new and the old together to get the new offset.
        */
       if (src.reladdr != NULL) {
-         st_src_reg accum_reg = get_temp(glsl_type::float_type);
+         st_src_reg accum_reg = get_temp(native_integers ?
+                                glsl_type::int_type : glsl_type::float_type);
 
          emit(ir, TGSI_OPCODE_ADD, st_dst_reg(accum_reg),
               index_reg, *src.reladdr);
@@ -2134,12 +2186,25 @@ glsl_to_tgsi_visitor::visit(ir_assignment *ir)
 
       for (i = 0; i < type_size(ir->lhs->type); i++) {
          st_src_reg l_src = st_src_reg(l);
+         st_src_reg condition_temp = condition;
          l_src.swizzle = swizzle_for_size(ir->lhs->type->vector_elements);
          
+         if (native_integers) {
+            /* This is necessary because TGSI's CMP instruction expects the
+             * condition to be a float, and we store booleans as integers.
+             * If TGSI had a UCMP instruction or similar, this extra
+             * instruction would not be necessary.
+             */
+            condition_temp = get_temp(glsl_type::vec4_type);
+            condition.negate = 0;
+            emit(ir, TGSI_OPCODE_I2F, st_dst_reg(condition_temp), condition);
+            condition_temp.swizzle = condition.swizzle;
+         }
+         
          if (switch_order) {
-            emit(ir, TGSI_OPCODE_CMP, l, condition, l_src, r);
+            emit(ir, TGSI_OPCODE_CMP, l, condition_temp, l_src, r);
          } else {
-            emit(ir, TGSI_OPCODE_CMP, l, condition, r, l_src);
+            emit(ir, TGSI_OPCODE_CMP, l, condition_temp, r, l_src);
          }
 
          l.index++;
@@ -2159,6 +2224,7 @@ glsl_to_tgsi_visitor::visit(ir_assignment *ir)
       inst = (glsl_to_tgsi_instruction *)this->instructions.get_tail();
       new_inst = emit(ir, inst->op, l, inst->src[0], inst->src[1], inst->src[2]);
       new_inst->saturate = inst->saturate;
+      inst->dead_mask = inst->dst.writemask;
    } else {
       for (i = 0; i < type_size(ir->lhs->type); i++) {
          emit(ir, TGSI_OPCODE_MOV, l, r);
