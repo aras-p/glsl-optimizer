@@ -101,39 +101,62 @@ static void r600_blitter_end(struct pipe_context *ctx)
 	rctx->blit = false;
 }
 
+static unsigned u_num_layers(struct pipe_resource *r, unsigned level)
+{
+	switch (r->target) {
+	case PIPE_TEXTURE_CUBE:
+		return 6;
+	case PIPE_TEXTURE_3D:
+		return u_minify(r->depth0, level);
+	case PIPE_TEXTURE_1D_ARRAY:
+		return r->array_size;
+	case PIPE_TEXTURE_2D_ARRAY:
+		return r->array_size;
+	default:
+		return 1;
+	}
+}
+
 void r600_blit_uncompress_depth(struct pipe_context *ctx, struct r600_resource_texture *texture)
 {
 	struct r600_pipe_context *rctx = (struct r600_pipe_context *)ctx;
-	struct pipe_surface *zsurf, *cbsurf, surf_tmpl;
-	int level = 0;
+	unsigned layer, level;
 	float depth = 1.0f;
 
 	if (!texture->dirty_db)
 		return;
 
-	surf_tmpl.format = texture->real_format;
-	surf_tmpl.u.tex.level = level;
-	surf_tmpl.u.tex.first_layer = 0;
-	surf_tmpl.u.tex.last_layer = 0;
-	surf_tmpl.usage = PIPE_BIND_DEPTH_STENCIL;
-
-	zsurf = ctx->create_surface(ctx, &texture->resource.b.b.b, &surf_tmpl);
-
-	surf_tmpl.format = texture->flushed_depth_texture->real_format;
-	surf_tmpl.usage = PIPE_BIND_RENDER_TARGET;
-	cbsurf = ctx->create_surface(ctx,
-			(struct pipe_resource*)texture->flushed_depth_texture, &surf_tmpl);
-
 	if (rctx->family == CHIP_RV610 || rctx->family == CHIP_RV630 ||
 	    rctx->family == CHIP_RV620 || rctx->family == CHIP_RV635)
 		depth = 0.0f;
 
-	r600_blitter_begin(ctx, R600_DECOMPRESS);
-	util_blitter_custom_depth_stencil(rctx->blitter, zsurf, cbsurf, rctx->custom_dsa_flush, depth);
-	r600_blitter_end(ctx);
+	for (level = 0; level <= texture->resource.b.b.b.last_level; level++) {
+		unsigned num_layers = u_num_layers(&texture->resource.b.b.b, level);
 
-	pipe_surface_reference(&zsurf, NULL);
-	pipe_surface_reference(&cbsurf, NULL);
+		for (layer = 0; layer < num_layers; layer++) {
+			struct pipe_surface *zsurf, *cbsurf, surf_tmpl;
+
+			surf_tmpl.format = texture->real_format;
+			surf_tmpl.u.tex.level = level;
+			surf_tmpl.u.tex.first_layer = layer;
+			surf_tmpl.u.tex.last_layer = layer;
+			surf_tmpl.usage = PIPE_BIND_DEPTH_STENCIL;
+
+			zsurf = ctx->create_surface(ctx, &texture->resource.b.b.b, &surf_tmpl);
+
+			surf_tmpl.format = texture->flushed_depth_texture->real_format;
+			surf_tmpl.usage = PIPE_BIND_RENDER_TARGET;
+			cbsurf = ctx->create_surface(ctx,
+					(struct pipe_resource*)texture->flushed_depth_texture, &surf_tmpl);
+
+			r600_blitter_begin(ctx, R600_DECOMPRESS);
+			util_blitter_custom_depth_stencil(rctx->blitter, zsurf, cbsurf, rctx->custom_dsa_flush, depth);
+			r600_blitter_end(ctx);
+
+			pipe_surface_reference(&zsurf, NULL);
+			pipe_surface_reference(&cbsurf, NULL);
+		}
+	}
 
 	texture->dirty_db = FALSE;
 }

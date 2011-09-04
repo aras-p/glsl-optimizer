@@ -573,19 +573,17 @@ int r600_texture_depth_flush(struct pipe_context *ctx,
 	if (rtex->flushed_depth_texture)
 		goto out;
 
-	resource.target = PIPE_TEXTURE_2D;
+	resource.target = texture->target;
 	resource.format = texture->format;
 	resource.width0 = texture->width0;
 	resource.height0 = texture->height0;
-	resource.depth0 = 1;
-	resource.array_size = 1;
+	resource.depth0 = texture->depth0;
+	resource.array_size = texture->array_size;
 	resource.last_level = texture->last_level;
-	resource.nr_samples = 0;
+	resource.nr_samples = texture->nr_samples;
 	resource.usage = PIPE_USAGE_DYNAMIC;
-	resource.bind = 0;
-	resource.flags = R600_RESOURCE_FLAG_TRANSFER;
-
-	resource.bind |= PIPE_BIND_DEPTH_STENCIL;
+	resource.bind = texture->bind | PIPE_BIND_DEPTH_STENCIL;
+	resource.flags = R600_RESOURCE_FLAG_TRANSFER | texture->flags;
 
 	rtex->flushed_depth_texture = (struct r600_resource_texture *)ctx->screen->resource_create(ctx->screen, &resource);
 	if (rtex->flushed_depth_texture == NULL) {
