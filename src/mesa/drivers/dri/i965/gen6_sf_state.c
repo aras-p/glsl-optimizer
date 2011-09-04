@@ -123,16 +123,12 @@ upload_sf_state(struct brw_context *brw)
    /* _NEW_BUFFER */
    GLboolean render_to_fbo = brw->intel.ctx.DrawBuffer->Name != 0;
    int attr = 0, input_index = 0;
-   int urb_entry_read_offset;
+   int urb_entry_read_offset = 1;
    float point_size;
    uint16_t attr_overrides[FRAG_ATTRIB_MAX];
    int nr_userclip;
 
    /* _NEW_TRANSFORM */
-   if (ctx->Transform.ClipPlanesEnabled)
-      urb_entry_read_offset = 2;
-   else
-      urb_entry_read_offset = 1;
    nr_userclip = brw_count_bits(ctx->Transform.ClipPlanesEnabled);
 
    brw_compute_vue_map(&vue_map, intel, nr_userclip, vs_outputs_written);

@@ -43,7 +43,7 @@ upload_sbe_state(struct brw_context *brw)
    int i;
    int attr = 0, input_index = 0;
    /* _NEW_TRANSFORM */
-   int urb_entry_read_offset = ctx->Transform.ClipPlanesEnabled ? 2 : 1;
+   int urb_entry_read_offset = 1;
    int nr_userclip = brw_count_bits(ctx->Transform.ClipPlanesEnabled);
    uint16_t attr_overrides[FRAG_ATTRIB_MAX];
 
