@@ -83,7 +83,7 @@ GL_ARB_texture_rgb10_a2ui                             not started
 GL_ARB_texture_swizzle                                DONE (same as EXT version)
 GL_ARB_timer_query                                    ~60% done (the EXT variant)
 GL_ARB_instanced_arrays                               DONE (gallium)
-GL_ARB_vertex_type_2_10_10_10_rev                     not started
+GL_ARB_vertex_type_2_10_10_10_rev                     DONE (gallium)
 
 
 GL 4.0:
