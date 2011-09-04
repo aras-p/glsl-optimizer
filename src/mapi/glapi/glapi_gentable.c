@@ -5876,6 +5876,272 @@ _glapi_create_table_from_handle(void *handle, const char *symbol_prefix) {
     }
 
 
+    if(!disp->ColorP3ui) {
+        void ** procp = (void **) &disp->ColorP3ui;
+        snprintf(symboln, sizeof(symboln), "%sColorP3ui", symbol_prefix);
+        *procp = dlsym(handle, symboln);
+    }
+
+
+    if(!disp->ColorP3uiv) {
+        void ** procp = (void **) &disp->ColorP3uiv;
+        snprintf(symboln, sizeof(symboln), "%sColorP3uiv", symbol_prefix);
+        *procp = dlsym(handle, symboln);
+    }
+
+
+    if(!disp->ColorP4ui) {
+        void ** procp = (void **) &disp->ColorP4ui;
+        snprintf(symboln, sizeof(symboln), "%sColorP4ui", symbol_prefix);
+        *procp = dlsym(handle, symboln);
+    }
+
+
+    if(!disp->ColorP4uiv) {
+        void ** procp = (void **) &disp->ColorP4uiv;
+        snprintf(symboln, sizeof(symboln), "%sColorP4uiv", symbol_prefix);
+        *procp = dlsym(handle, symboln);
+    }
+
+
+    if(!disp->MultiTexCoordP1ui) {
+        void ** procp = (void **) &disp->MultiTexCoordP1ui;
+        snprintf(symboln, sizeof(symboln), "%sMultiTexCoordP1ui", symbol_prefix);
+        *procp = dlsym(handle, symboln);
+    }
+
+
+    if(!disp->MultiTexCoordP1uiv) {
+        void ** procp = (void **) &disp->MultiTexCoordP1uiv;
+        snprintf(symboln, sizeof(symboln), "%sMultiTexCoordP1uiv", symbol_prefix);
+        *procp = dlsym(handle, symboln);
+    }
+
+
+    if(!disp->MultiTexCoordP2ui) {
+        void ** procp = (void **) &disp->MultiTexCoordP2ui;
+        snprintf(symboln, sizeof(symboln), "%sMultiTexCoordP2ui", symbol_prefix);
+        *procp = dlsym(handle, symboln);
+    }
+
+
+    if(!disp->MultiTexCoordP2uiv) {
+        void ** procp = (void **) &disp->MultiTexCoordP2uiv;
+        snprintf(symboln, sizeof(symboln), "%sMultiTexCoordP2uiv", symbol_prefix);
+        *procp = dlsym(handle, symboln);
+    }
+
+
+    if(!disp->MultiTexCoordP3ui) {
+        void ** procp = (void **) &disp->MultiTexCoordP3ui;
+        snprintf(symboln, sizeof(symboln), "%sMultiTexCoordP3ui", symbol_prefix);
+        *procp = dlsym(handle, symboln);
+    }
+
+
+    if(!disp->MultiTexCoordP3uiv) {
+        void ** procp = (void **) &disp->MultiTexCoordP3uiv;
+        snprintf(symboln, sizeof(symboln), "%sMultiTexCoordP3uiv", symbol_prefix);
+        *procp = dlsym(handle, symboln);
+    }
+
+
+    if(!disp->MultiTexCoordP4ui) {
+        void ** procp = (void **) &disp->MultiTexCoordP4ui;
+        snprintf(symboln, sizeof(symboln), "%sMultiTexCoordP4ui", symbol_prefix);
+        *procp = dlsym(handle, symboln);
+    }
+
+
+    if(!disp->MultiTexCoordP4uiv) {
+        void ** procp = (void **) &disp->MultiTexCoordP4uiv;
+        snprintf(symboln, sizeof(symboln), "%sMultiTexCoordP4uiv", symbol_prefix);
+        *procp = dlsym(handle, symboln);
+    }
+
+
+    if(!disp->NormalP3ui) {
+        void ** procp = (void **) &disp->NormalP3ui;
+        snprintf(symboln, sizeof(symboln), "%sNormalP3ui", symbol_prefix);
+        *procp = dlsym(handle, symboln);
+    }
+
+
+    if(!disp->NormalP3uiv) {
+        void ** procp = (void **) &disp->NormalP3uiv;
+        snprintf(symboln, sizeof(symboln), "%sNormalP3uiv", symbol_prefix);
+        *procp = dlsym(handle, symboln);
+    }
+
+
+    if(!disp->SecondaryColorP3ui) {
+        void ** procp = (void **) &disp->SecondaryColorP3ui;
+        snprintf(symboln, sizeof(symboln), "%sSecondaryColorP3ui", symbol_prefix);
+        *procp = dlsym(handle, symboln);
+    }
+
+
+    if(!disp->SecondaryColorP3uiv) {
+        void ** procp = (void **) &disp->SecondaryColorP3uiv;
+        snprintf(symboln, sizeof(symboln), "%sSecondaryColorP3uiv", symbol_prefix);
+        *procp = dlsym(handle, symboln);
+    }
+
+
+    if(!disp->TexCoordP1ui) {
+        void ** procp = (void **) &disp->TexCoordP1ui;
+        snprintf(symboln, sizeof(symboln), "%sTexCoordP1ui", symbol_prefix);
+        *procp = dlsym(handle, symboln);
+    }
+
+
+    if(!disp->TexCoordP1uiv) {
+        void ** procp = (void **) &disp->TexCoordP1uiv;
+        snprintf(symboln, sizeof(symboln), "%sTexCoordP1uiv", symbol_prefix);
+        *procp = dlsym(handle, symboln);
+    }
+
+
+    if(!disp->TexCoordP2ui) {
+        void ** procp = (void **) &disp->TexCoordP2ui;
+        snprintf(symboln, sizeof(symboln), "%sTexCoordP2ui", symbol_prefix);
+        *procp = dlsym(handle, symboln);
+    }
+
+
+    if(!disp->TexCoordP2uiv) {
+        void ** procp = (void **) &disp->TexCoordP2uiv;
+        snprintf(symboln, sizeof(symboln), "%sTexCoordP2uiv", symbol_prefix);
+        *procp = dlsym(handle, symboln);
+    }
+
+
+    if(!disp->TexCoordP3ui) {
+        void ** procp = (void **) &disp->TexCoordP3ui;
+        snprintf(symboln, sizeof(symboln), "%sTexCoordP3ui", symbol_prefix);
+        *procp = dlsym(handle, symboln);
+    }
+
+
+    if(!disp->TexCoordP3uiv) {
+        void ** procp = (void **) &disp->TexCoordP3uiv;
+        snprintf(symboln, sizeof(symboln), "%sTexCoordP3uiv", symbol_prefix);
+        *procp = dlsym(handle, symboln);
+    }
+
+
+    if(!disp->TexCoordP4ui) {
+        void ** procp = (void **) &disp->TexCoordP4ui;
+        snprintf(symboln, sizeof(symboln), "%sTexCoordP4ui", symbol_prefix);
+        *procp = dlsym(handle, symboln);
+    }
+
+
+    if(!disp->TexCoordP4uiv) {
+        void ** procp = (void **) &disp->TexCoordP4uiv;
+        snprintf(symboln, sizeof(symboln), "%sTexCoordP4uiv", symbol_prefix);
+        *procp = dlsym(handle, symboln);
+    }
+
+
+    if(!disp->VertexAttribP1ui) {
+        void ** procp = (void **) &disp->VertexAttribP1ui;
+        snprintf(symboln, sizeof(symboln), "%sVertexAttribP1ui", symbol_prefix);
+        *procp = dlsym(handle, symboln);
+    }
+
+
+    if(!disp->VertexAttribP1uiv) {
+        void ** procp = (void **) &disp->VertexAttribP1uiv;
+        snprintf(symboln, sizeof(symboln), "%sVertexAttribP1uiv", symbol_prefix);
+        *procp = dlsym(handle, symboln);
+    }
+
+
+    if(!disp->VertexAttribP2ui) {
+        void ** procp = (void **) &disp->VertexAttribP2ui;
+        snprintf(symboln, sizeof(symboln), "%sVertexAttribP2ui", symbol_prefix);
+        *procp = dlsym(handle, symboln);
+    }
+
+
+    if(!disp->VertexAttribP2uiv) {
+        void ** procp = (void **) &disp->VertexAttribP2uiv;
+        snprintf(symboln, sizeof(symboln), "%sVertexAttribP2uiv", symbol_prefix);
+        *procp = dlsym(handle, symboln);
+    }
+
+
+    if(!disp->VertexAttribP3ui) {
+        void ** procp = (void **) &disp->VertexAttribP3ui;
+        snprintf(symboln, sizeof(symboln), "%sVertexAttribP3ui", symbol_prefix);
+        *procp = dlsym(handle, symboln);
+    }
+
+
+    if(!disp->VertexAttribP3uiv) {
+        void ** procp = (void **) &disp->VertexAttribP3uiv;
+        snprintf(symboln, sizeof(symboln), "%sVertexAttribP3uiv", symbol_prefix);
+        *procp = dlsym(handle, symboln);
+    }
+
+
+    if(!disp->VertexAttribP4ui) {
+        void ** procp = (void **) &disp->VertexAttribP4ui;
+        snprintf(symboln, sizeof(symboln), "%sVertexAttribP4ui", symbol_prefix);
+        *procp = dlsym(handle, symboln);
+    }
+
+
+    if(!disp->VertexAttribP4uiv) {
+        void ** procp = (void **) &disp->VertexAttribP4uiv;
+        snprintf(symboln, sizeof(symboln), "%sVertexAttribP4uiv", symbol_prefix);
+        *procp = dlsym(handle, symboln);
+    }
+
+
+    if(!disp->VertexP2ui) {
+        void ** procp = (void **) &disp->VertexP2ui;
+        snprintf(symboln, sizeof(symboln), "%sVertexP2ui", symbol_prefix);
+        *procp = dlsym(handle, symboln);
+    }
+
+
+    if(!disp->VertexP2uiv) {
+        void ** procp = (void **) &disp->VertexP2uiv;
+        snprintf(symboln, sizeof(symboln), "%sVertexP2uiv", symbol_prefix);
+        *procp = dlsym(handle, symboln);
+    }
+
+
+    if(!disp->VertexP3ui) {
+        void ** procp = (void **) &disp->VertexP3ui;
+        snprintf(symboln, sizeof(symboln), "%sVertexP3ui", symbol_prefix);
+        *procp = dlsym(handle, symboln);
+    }
+
+
+    if(!disp->VertexP3uiv) {
+        void ** procp = (void **) &disp->VertexP3uiv;
+        snprintf(symboln, sizeof(symboln), "%sVertexP3uiv", symbol_prefix);
+        *procp = dlsym(handle, symboln);
+    }
+
+
+    if(!disp->VertexP4ui) {
+        void ** procp = (void **) &disp->VertexP4ui;
+        snprintf(symboln, sizeof(symboln), "%sVertexP4ui", symbol_prefix);
+        *procp = dlsym(handle, symboln);
+    }
+
+
+    if(!disp->VertexP4uiv) {
+        void ** procp = (void **) &disp->VertexP4uiv;
+        snprintf(symboln, sizeof(symboln), "%sVertexP4uiv", symbol_prefix);
+        *procp = dlsym(handle, symboln);
+    }
+
+
     if(!disp->BindTransformFeedback) {
         void ** procp = (void **) &disp->BindTransformFeedback;
         snprintf(symboln, sizeof(symboln), "%sBindTransformFeedback", symbol_prefix);

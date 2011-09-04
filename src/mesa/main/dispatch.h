@@ -59,7 +59,7 @@
     } while(0)
 
 /* total number of offsets below */
-#define _gloffset_COUNT 929
+#define _gloffset_COUNT 967
 
 #define _gloffset_NewList 0
 #define _gloffset_EndList 1
@@ -679,324 +679,362 @@
 #define _gloffset_SamplerParameterfv 612
 #define _gloffset_SamplerParameteri 613
 #define _gloffset_SamplerParameteriv 614
-#define _gloffset_BindTransformFeedback 615
-#define _gloffset_DeleteTransformFeedbacks 616
-#define _gloffset_DrawTransformFeedback 617
-#define _gloffset_GenTransformFeedbacks 618
-#define _gloffset_IsTransformFeedback 619
-#define _gloffset_PauseTransformFeedback 620
-#define _gloffset_ResumeTransformFeedback 621
-#define _gloffset_ClearDepthf 622
-#define _gloffset_DepthRangef 623
-#define _gloffset_GetShaderPrecisionFormat 624
-#define _gloffset_ReleaseShaderCompiler 625
-#define _gloffset_ShaderBinary 626
-#define _gloffset_GetGraphicsResetStatusARB 627
-#define _gloffset_GetnColorTableARB 628
-#define _gloffset_GetnCompressedTexImageARB 629
-#define _gloffset_GetnConvolutionFilterARB 630
-#define _gloffset_GetnHistogramARB 631
-#define _gloffset_GetnMapdvARB 632
-#define _gloffset_GetnMapfvARB 633
-#define _gloffset_GetnMapivARB 634
-#define _gloffset_GetnMinmaxARB 635
-#define _gloffset_GetnPixelMapfvARB 636
-#define _gloffset_GetnPixelMapuivARB 637
-#define _gloffset_GetnPixelMapusvARB 638
-#define _gloffset_GetnPolygonStippleARB 639
-#define _gloffset_GetnSeparableFilterARB 640
-#define _gloffset_GetnTexImageARB 641
-#define _gloffset_GetnUniformdvARB 642
-#define _gloffset_GetnUniformfvARB 643
-#define _gloffset_GetnUniformivARB 644
-#define _gloffset_GetnUniformuivARB 645
-#define _gloffset_ReadnPixelsARB 646
-#define _gloffset_PolygonOffsetEXT 647
-#define _gloffset_GetPixelTexGenParameterfvSGIS 648
-#define _gloffset_GetPixelTexGenParameterivSGIS 649
-#define _gloffset_PixelTexGenParameterfSGIS 650
-#define _gloffset_PixelTexGenParameterfvSGIS 651
-#define _gloffset_PixelTexGenParameteriSGIS 652
-#define _gloffset_PixelTexGenParameterivSGIS 653
-#define _gloffset_SampleMaskSGIS 654
-#define _gloffset_SamplePatternSGIS 655
-#define _gloffset_ColorPointerEXT 656
-#define _gloffset_EdgeFlagPointerEXT 657
-#define _gloffset_IndexPointerEXT 658
-#define _gloffset_NormalPointerEXT 659
-#define _gloffset_TexCoordPointerEXT 660
-#define _gloffset_VertexPointerEXT 661
-#define _gloffset_PointParameterfEXT 662
-#define _gloffset_PointParameterfvEXT 663
-#define _gloffset_LockArraysEXT 664
-#define _gloffset_UnlockArraysEXT 665
-#define _gloffset_SecondaryColor3bEXT 666
-#define _gloffset_SecondaryColor3bvEXT 667
-#define _gloffset_SecondaryColor3dEXT 668
-#define _gloffset_SecondaryColor3dvEXT 669
-#define _gloffset_SecondaryColor3fEXT 670
-#define _gloffset_SecondaryColor3fvEXT 671
-#define _gloffset_SecondaryColor3iEXT 672
-#define _gloffset_SecondaryColor3ivEXT 673
-#define _gloffset_SecondaryColor3sEXT 674
-#define _gloffset_SecondaryColor3svEXT 675
-#define _gloffset_SecondaryColor3ubEXT 676
-#define _gloffset_SecondaryColor3ubvEXT 677
-#define _gloffset_SecondaryColor3uiEXT 678
-#define _gloffset_SecondaryColor3uivEXT 679
-#define _gloffset_SecondaryColor3usEXT 680
-#define _gloffset_SecondaryColor3usvEXT 681
-#define _gloffset_SecondaryColorPointerEXT 682
-#define _gloffset_MultiDrawArraysEXT 683
-#define _gloffset_MultiDrawElementsEXT 684
-#define _gloffset_FogCoordPointerEXT 685
-#define _gloffset_FogCoorddEXT 686
-#define _gloffset_FogCoorddvEXT 687
-#define _gloffset_FogCoordfEXT 688
-#define _gloffset_FogCoordfvEXT 689
-#define _gloffset_PixelTexGenSGIX 690
-#define _gloffset_BlendFuncSeparateEXT 691
-#define _gloffset_FlushVertexArrayRangeNV 692
-#define _gloffset_VertexArrayRangeNV 693
-#define _gloffset_CombinerInputNV 694
-#define _gloffset_CombinerOutputNV 695
-#define _gloffset_CombinerParameterfNV 696
-#define _gloffset_CombinerParameterfvNV 697
-#define _gloffset_CombinerParameteriNV 698
-#define _gloffset_CombinerParameterivNV 699
-#define _gloffset_FinalCombinerInputNV 700
-#define _gloffset_GetCombinerInputParameterfvNV 701
-#define _gloffset_GetCombinerInputParameterivNV 702
-#define _gloffset_GetCombinerOutputParameterfvNV 703
-#define _gloffset_GetCombinerOutputParameterivNV 704
-#define _gloffset_GetFinalCombinerInputParameterfvNV 705
-#define _gloffset_GetFinalCombinerInputParameterivNV 706
-#define _gloffset_ResizeBuffersMESA 707
-#define _gloffset_WindowPos2dMESA 708
-#define _gloffset_WindowPos2dvMESA 709
-#define _gloffset_WindowPos2fMESA 710
-#define _gloffset_WindowPos2fvMESA 711
-#define _gloffset_WindowPos2iMESA 712
-#define _gloffset_WindowPos2ivMESA 713
-#define _gloffset_WindowPos2sMESA 714
-#define _gloffset_WindowPos2svMESA 715
-#define _gloffset_WindowPos3dMESA 716
-#define _gloffset_WindowPos3dvMESA 717
-#define _gloffset_WindowPos3fMESA 718
-#define _gloffset_WindowPos3fvMESA 719
-#define _gloffset_WindowPos3iMESA 720
-#define _gloffset_WindowPos3ivMESA 721
-#define _gloffset_WindowPos3sMESA 722
-#define _gloffset_WindowPos3svMESA 723
-#define _gloffset_WindowPos4dMESA 724
-#define _gloffset_WindowPos4dvMESA 725
-#define _gloffset_WindowPos4fMESA 726
-#define _gloffset_WindowPos4fvMESA 727
-#define _gloffset_WindowPos4iMESA 728
-#define _gloffset_WindowPos4ivMESA 729
-#define _gloffset_WindowPos4sMESA 730
-#define _gloffset_WindowPos4svMESA 731
-#define _gloffset_MultiModeDrawArraysIBM 732
-#define _gloffset_MultiModeDrawElementsIBM 733
-#define _gloffset_DeleteFencesNV 734
-#define _gloffset_FinishFenceNV 735
-#define _gloffset_GenFencesNV 736
-#define _gloffset_GetFenceivNV 737
-#define _gloffset_IsFenceNV 738
-#define _gloffset_SetFenceNV 739
-#define _gloffset_TestFenceNV 740
-#define _gloffset_AreProgramsResidentNV 741
-#define _gloffset_BindProgramNV 742
-#define _gloffset_DeleteProgramsNV 743
-#define _gloffset_ExecuteProgramNV 744
-#define _gloffset_GenProgramsNV 745
-#define _gloffset_GetProgramParameterdvNV 746
-#define _gloffset_GetProgramParameterfvNV 747
-#define _gloffset_GetProgramStringNV 748
-#define _gloffset_GetProgramivNV 749
-#define _gloffset_GetTrackMatrixivNV 750
-#define _gloffset_GetVertexAttribPointervNV 751
-#define _gloffset_GetVertexAttribdvNV 752
-#define _gloffset_GetVertexAttribfvNV 753
-#define _gloffset_GetVertexAttribivNV 754
-#define _gloffset_IsProgramNV 755
-#define _gloffset_LoadProgramNV 756
-#define _gloffset_ProgramParameters4dvNV 757
-#define _gloffset_ProgramParameters4fvNV 758
-#define _gloffset_RequestResidentProgramsNV 759
-#define _gloffset_TrackMatrixNV 760
-#define _gloffset_VertexAttrib1dNV 761
-#define _gloffset_VertexAttrib1dvNV 762
-#define _gloffset_VertexAttrib1fNV 763
-#define _gloffset_VertexAttrib1fvNV 764
-#define _gloffset_VertexAttrib1sNV 765
-#define _gloffset_VertexAttrib1svNV 766
-#define _gloffset_VertexAttrib2dNV 767
-#define _gloffset_VertexAttrib2dvNV 768
-#define _gloffset_VertexAttrib2fNV 769
-#define _gloffset_VertexAttrib2fvNV 770
-#define _gloffset_VertexAttrib2sNV 771
-#define _gloffset_VertexAttrib2svNV 772
-#define _gloffset_VertexAttrib3dNV 773
-#define _gloffset_VertexAttrib3dvNV 774
-#define _gloffset_VertexAttrib3fNV 775
-#define _gloffset_VertexAttrib3fvNV 776
-#define _gloffset_VertexAttrib3sNV 777
-#define _gloffset_VertexAttrib3svNV 778
-#define _gloffset_VertexAttrib4dNV 779
-#define _gloffset_VertexAttrib4dvNV 780
-#define _gloffset_VertexAttrib4fNV 781
-#define _gloffset_VertexAttrib4fvNV 782
-#define _gloffset_VertexAttrib4sNV 783
-#define _gloffset_VertexAttrib4svNV 784
-#define _gloffset_VertexAttrib4ubNV 785
-#define _gloffset_VertexAttrib4ubvNV 786
-#define _gloffset_VertexAttribPointerNV 787
-#define _gloffset_VertexAttribs1dvNV 788
-#define _gloffset_VertexAttribs1fvNV 789
-#define _gloffset_VertexAttribs1svNV 790
-#define _gloffset_VertexAttribs2dvNV 791
-#define _gloffset_VertexAttribs2fvNV 792
-#define _gloffset_VertexAttribs2svNV 793
-#define _gloffset_VertexAttribs3dvNV 794
-#define _gloffset_VertexAttribs3fvNV 795
-#define _gloffset_VertexAttribs3svNV 796
-#define _gloffset_VertexAttribs4dvNV 797
-#define _gloffset_VertexAttribs4fvNV 798
-#define _gloffset_VertexAttribs4svNV 799
-#define _gloffset_VertexAttribs4ubvNV 800
-#define _gloffset_GetTexBumpParameterfvATI 801
-#define _gloffset_GetTexBumpParameterivATI 802
-#define _gloffset_TexBumpParameterfvATI 803
-#define _gloffset_TexBumpParameterivATI 804
-#define _gloffset_AlphaFragmentOp1ATI 805
-#define _gloffset_AlphaFragmentOp2ATI 806
-#define _gloffset_AlphaFragmentOp3ATI 807
-#define _gloffset_BeginFragmentShaderATI 808
-#define _gloffset_BindFragmentShaderATI 809
-#define _gloffset_ColorFragmentOp1ATI 810
-#define _gloffset_ColorFragmentOp2ATI 811
-#define _gloffset_ColorFragmentOp3ATI 812
-#define _gloffset_DeleteFragmentShaderATI 813
-#define _gloffset_EndFragmentShaderATI 814
-#define _gloffset_GenFragmentShadersATI 815
-#define _gloffset_PassTexCoordATI 816
-#define _gloffset_SampleMapATI 817
-#define _gloffset_SetFragmentShaderConstantATI 818
-#define _gloffset_PointParameteriNV 819
-#define _gloffset_PointParameterivNV 820
-#define _gloffset_ActiveStencilFaceEXT 821
-#define _gloffset_BindVertexArrayAPPLE 822
-#define _gloffset_DeleteVertexArraysAPPLE 823
-#define _gloffset_GenVertexArraysAPPLE 824
-#define _gloffset_IsVertexArrayAPPLE 825
-#define _gloffset_GetProgramNamedParameterdvNV 826
-#define _gloffset_GetProgramNamedParameterfvNV 827
-#define _gloffset_ProgramNamedParameter4dNV 828
-#define _gloffset_ProgramNamedParameter4dvNV 829
-#define _gloffset_ProgramNamedParameter4fNV 830
-#define _gloffset_ProgramNamedParameter4fvNV 831
-#define _gloffset_PrimitiveRestartIndexNV 832
-#define _gloffset_PrimitiveRestartNV 833
-#define _gloffset_DepthBoundsEXT 834
-#define _gloffset_BlendEquationSeparateEXT 835
-#define _gloffset_BindFramebufferEXT 836
-#define _gloffset_BindRenderbufferEXT 837
-#define _gloffset_CheckFramebufferStatusEXT 838
-#define _gloffset_DeleteFramebuffersEXT 839
-#define _gloffset_DeleteRenderbuffersEXT 840
-#define _gloffset_FramebufferRenderbufferEXT 841
-#define _gloffset_FramebufferTexture1DEXT 842
-#define _gloffset_FramebufferTexture2DEXT 843
-#define _gloffset_FramebufferTexture3DEXT 844
-#define _gloffset_GenFramebuffersEXT 845
-#define _gloffset_GenRenderbuffersEXT 846
-#define _gloffset_GenerateMipmapEXT 847
-#define _gloffset_GetFramebufferAttachmentParameterivEXT 848
-#define _gloffset_GetRenderbufferParameterivEXT 849
-#define _gloffset_IsFramebufferEXT 850
-#define _gloffset_IsRenderbufferEXT 851
-#define _gloffset_RenderbufferStorageEXT 852
-#define _gloffset_BlitFramebufferEXT 853
-#define _gloffset_BufferParameteriAPPLE 854
-#define _gloffset_FlushMappedBufferRangeAPPLE 855
-#define _gloffset_BindFragDataLocationEXT 856
-#define _gloffset_GetFragDataLocationEXT 857
-#define _gloffset_GetUniformuivEXT 858
-#define _gloffset_GetVertexAttribIivEXT 859
-#define _gloffset_GetVertexAttribIuivEXT 860
-#define _gloffset_Uniform1uiEXT 861
-#define _gloffset_Uniform1uivEXT 862
-#define _gloffset_Uniform2uiEXT 863
-#define _gloffset_Uniform2uivEXT 864
-#define _gloffset_Uniform3uiEXT 865
-#define _gloffset_Uniform3uivEXT 866
-#define _gloffset_Uniform4uiEXT 867
-#define _gloffset_Uniform4uivEXT 868
-#define _gloffset_VertexAttribI1iEXT 869
-#define _gloffset_VertexAttribI1ivEXT 870
-#define _gloffset_VertexAttribI1uiEXT 871
-#define _gloffset_VertexAttribI1uivEXT 872
-#define _gloffset_VertexAttribI2iEXT 873
-#define _gloffset_VertexAttribI2ivEXT 874
-#define _gloffset_VertexAttribI2uiEXT 875
-#define _gloffset_VertexAttribI2uivEXT 876
-#define _gloffset_VertexAttribI3iEXT 877
-#define _gloffset_VertexAttribI3ivEXT 878
-#define _gloffset_VertexAttribI3uiEXT 879
-#define _gloffset_VertexAttribI3uivEXT 880
-#define _gloffset_VertexAttribI4bvEXT 881
-#define _gloffset_VertexAttribI4iEXT 882
-#define _gloffset_VertexAttribI4ivEXT 883
-#define _gloffset_VertexAttribI4svEXT 884
-#define _gloffset_VertexAttribI4ubvEXT 885
-#define _gloffset_VertexAttribI4uiEXT 886
-#define _gloffset_VertexAttribI4uivEXT 887
-#define _gloffset_VertexAttribI4usvEXT 888
-#define _gloffset_VertexAttribIPointerEXT 889
-#define _gloffset_FramebufferTextureLayerEXT 890
-#define _gloffset_ColorMaskIndexedEXT 891
-#define _gloffset_DisableIndexedEXT 892
-#define _gloffset_EnableIndexedEXT 893
-#define _gloffset_GetBooleanIndexedvEXT 894
-#define _gloffset_GetIntegerIndexedvEXT 895
-#define _gloffset_IsEnabledIndexedEXT 896
-#define _gloffset_ClearColorIiEXT 897
-#define _gloffset_ClearColorIuiEXT 898
-#define _gloffset_GetTexParameterIivEXT 899
-#define _gloffset_GetTexParameterIuivEXT 900
-#define _gloffset_TexParameterIivEXT 901
-#define _gloffset_TexParameterIuivEXT 902
-#define _gloffset_BeginConditionalRenderNV 903
-#define _gloffset_EndConditionalRenderNV 904
-#define _gloffset_BeginTransformFeedbackEXT 905
-#define _gloffset_BindBufferBaseEXT 906
-#define _gloffset_BindBufferOffsetEXT 907
-#define _gloffset_BindBufferRangeEXT 908
-#define _gloffset_EndTransformFeedbackEXT 909
-#define _gloffset_GetTransformFeedbackVaryingEXT 910
-#define _gloffset_TransformFeedbackVaryingsEXT 911
-#define _gloffset_ProvokingVertexEXT 912
-#define _gloffset_GetTexParameterPointervAPPLE 913
-#define _gloffset_TextureRangeAPPLE 914
-#define _gloffset_GetObjectParameterivAPPLE 915
-#define _gloffset_ObjectPurgeableAPPLE 916
-#define _gloffset_ObjectUnpurgeableAPPLE 917
-#define _gloffset_ActiveProgramEXT 918
-#define _gloffset_CreateShaderProgramEXT 919
-#define _gloffset_UseShaderProgramEXT 920
-#define _gloffset_TextureBarrierNV 921
-#define _gloffset_StencilFuncSeparateATI 922
-#define _gloffset_ProgramEnvParameters4fvEXT 923
-#define _gloffset_ProgramLocalParameters4fvEXT 924
-#define _gloffset_GetQueryObjecti64vEXT 925
-#define _gloffset_GetQueryObjectui64vEXT 926
-#define _gloffset_EGLImageTargetRenderbufferStorageOES 927
-#define _gloffset_EGLImageTargetTexture2DOES 928
+#define _gloffset_ColorP3ui 615
+#define _gloffset_ColorP3uiv 616
+#define _gloffset_ColorP4ui 617
+#define _gloffset_ColorP4uiv 618
+#define _gloffset_MultiTexCoordP1ui 619
+#define _gloffset_MultiTexCoordP1uiv 620
+#define _gloffset_MultiTexCoordP2ui 621
+#define _gloffset_MultiTexCoordP2uiv 622
+#define _gloffset_MultiTexCoordP3ui 623
+#define _gloffset_MultiTexCoordP3uiv 624
+#define _gloffset_MultiTexCoordP4ui 625
+#define _gloffset_MultiTexCoordP4uiv 626
+#define _gloffset_NormalP3ui 627
+#define _gloffset_NormalP3uiv 628
+#define _gloffset_SecondaryColorP3ui 629
+#define _gloffset_SecondaryColorP3uiv 630
+#define _gloffset_TexCoordP1ui 631
+#define _gloffset_TexCoordP1uiv 632
+#define _gloffset_TexCoordP2ui 633
+#define _gloffset_TexCoordP2uiv 634
+#define _gloffset_TexCoordP3ui 635
+#define _gloffset_TexCoordP3uiv 636
+#define _gloffset_TexCoordP4ui 637
+#define _gloffset_TexCoordP4uiv 638
+#define _gloffset_VertexAttribP1ui 639
+#define _gloffset_VertexAttribP1uiv 640
+#define _gloffset_VertexAttribP2ui 641
+#define _gloffset_VertexAttribP2uiv 642
+#define _gloffset_VertexAttribP3ui 643
+#define _gloffset_VertexAttribP3uiv 644
+#define _gloffset_VertexAttribP4ui 645
+#define _gloffset_VertexAttribP4uiv 646
+#define _gloffset_VertexP2ui 647
+#define _gloffset_VertexP2uiv 648
+#define _gloffset_VertexP3ui 649
+#define _gloffset_VertexP3uiv 650
+#define _gloffset_VertexP4ui 651
+#define _gloffset_VertexP4uiv 652
+#define _gloffset_BindTransformFeedback 653
+#define _gloffset_DeleteTransformFeedbacks 654
+#define _gloffset_DrawTransformFeedback 655
+#define _gloffset_GenTransformFeedbacks 656
+#define _gloffset_IsTransformFeedback 657
+#define _gloffset_PauseTransformFeedback 658
+#define _gloffset_ResumeTransformFeedback 659
+#define _gloffset_ClearDepthf 660
+#define _gloffset_DepthRangef 661
+#define _gloffset_GetShaderPrecisionFormat 662
+#define _gloffset_ReleaseShaderCompiler 663
+#define _gloffset_ShaderBinary 664
+#define _gloffset_GetGraphicsResetStatusARB 665
+#define _gloffset_GetnColorTableARB 666
+#define _gloffset_GetnCompressedTexImageARB 667
+#define _gloffset_GetnConvolutionFilterARB 668
+#define _gloffset_GetnHistogramARB 669
+#define _gloffset_GetnMapdvARB 670
+#define _gloffset_GetnMapfvARB 671
+#define _gloffset_GetnMapivARB 672
+#define _gloffset_GetnMinmaxARB 673
+#define _gloffset_GetnPixelMapfvARB 674
+#define _gloffset_GetnPixelMapuivARB 675
+#define _gloffset_GetnPixelMapusvARB 676
+#define _gloffset_GetnPolygonStippleARB 677
+#define _gloffset_GetnSeparableFilterARB 678
+#define _gloffset_GetnTexImageARB 679
+#define _gloffset_GetnUniformdvARB 680
+#define _gloffset_GetnUniformfvARB 681
+#define _gloffset_GetnUniformivARB 682
+#define _gloffset_GetnUniformuivARB 683
+#define _gloffset_ReadnPixelsARB 684
+#define _gloffset_PolygonOffsetEXT 685
+#define _gloffset_GetPixelTexGenParameterfvSGIS 686
+#define _gloffset_GetPixelTexGenParameterivSGIS 687
+#define _gloffset_PixelTexGenParameterfSGIS 688
+#define _gloffset_PixelTexGenParameterfvSGIS 689
+#define _gloffset_PixelTexGenParameteriSGIS 690
+#define _gloffset_PixelTexGenParameterivSGIS 691
+#define _gloffset_SampleMaskSGIS 692
+#define _gloffset_SamplePatternSGIS 693
+#define _gloffset_ColorPointerEXT 694
+#define _gloffset_EdgeFlagPointerEXT 695
+#define _gloffset_IndexPointerEXT 696
+#define _gloffset_NormalPointerEXT 697
+#define _gloffset_TexCoordPointerEXT 698
+#define _gloffset_VertexPointerEXT 699
+#define _gloffset_PointParameterfEXT 700
+#define _gloffset_PointParameterfvEXT 701
+#define _gloffset_LockArraysEXT 702
+#define _gloffset_UnlockArraysEXT 703
+#define _gloffset_SecondaryColor3bEXT 704
+#define _gloffset_SecondaryColor3bvEXT 705
+#define _gloffset_SecondaryColor3dEXT 706
+#define _gloffset_SecondaryColor3dvEXT 707
+#define _gloffset_SecondaryColor3fEXT 708
+#define _gloffset_SecondaryColor3fvEXT 709
+#define _gloffset_SecondaryColor3iEXT 710
+#define _gloffset_SecondaryColor3ivEXT 711
+#define _gloffset_SecondaryColor3sEXT 712
+#define _gloffset_SecondaryColor3svEXT 713
+#define _gloffset_SecondaryColor3ubEXT 714
+#define _gloffset_SecondaryColor3ubvEXT 715
+#define _gloffset_SecondaryColor3uiEXT 716
+#define _gloffset_SecondaryColor3uivEXT 717
+#define _gloffset_SecondaryColor3usEXT 718
+#define _gloffset_SecondaryColor3usvEXT 719
+#define _gloffset_SecondaryColorPointerEXT 720
+#define _gloffset_MultiDrawArraysEXT 721
+#define _gloffset_MultiDrawElementsEXT 722
+#define _gloffset_FogCoordPointerEXT 723
+#define _gloffset_FogCoorddEXT 724
+#define _gloffset_FogCoorddvEXT 725
+#define _gloffset_FogCoordfEXT 726
+#define _gloffset_FogCoordfvEXT 727
+#define _gloffset_PixelTexGenSGIX 728
+#define _gloffset_BlendFuncSeparateEXT 729
+#define _gloffset_FlushVertexArrayRangeNV 730
+#define _gloffset_VertexArrayRangeNV 731
+#define _gloffset_CombinerInputNV 732
+#define _gloffset_CombinerOutputNV 733
+#define _gloffset_CombinerParameterfNV 734
+#define _gloffset_CombinerParameterfvNV 735
+#define _gloffset_CombinerParameteriNV 736
+#define _gloffset_CombinerParameterivNV 737
+#define _gloffset_FinalCombinerInputNV 738
+#define _gloffset_GetCombinerInputParameterfvNV 739
+#define _gloffset_GetCombinerInputParameterivNV 740
+#define _gloffset_GetCombinerOutputParameterfvNV 741
+#define _gloffset_GetCombinerOutputParameterivNV 742
+#define _gloffset_GetFinalCombinerInputParameterfvNV 743
+#define _gloffset_GetFinalCombinerInputParameterivNV 744
+#define _gloffset_ResizeBuffersMESA 745
+#define _gloffset_WindowPos2dMESA 746
+#define _gloffset_WindowPos2dvMESA 747
+#define _gloffset_WindowPos2fMESA 748
+#define _gloffset_WindowPos2fvMESA 749
+#define _gloffset_WindowPos2iMESA 750
+#define _gloffset_WindowPos2ivMESA 751
+#define _gloffset_WindowPos2sMESA 752
+#define _gloffset_WindowPos2svMESA 753
+#define _gloffset_WindowPos3dMESA 754
+#define _gloffset_WindowPos3dvMESA 755
+#define _gloffset_WindowPos3fMESA 756
+#define _gloffset_WindowPos3fvMESA 757
+#define _gloffset_WindowPos3iMESA 758
+#define _gloffset_WindowPos3ivMESA 759
+#define _gloffset_WindowPos3sMESA 760
+#define _gloffset_WindowPos3svMESA 761
+#define _gloffset_WindowPos4dMESA 762
+#define _gloffset_WindowPos4dvMESA 763
+#define _gloffset_WindowPos4fMESA 764
+#define _gloffset_WindowPos4fvMESA 765
+#define _gloffset_WindowPos4iMESA 766
+#define _gloffset_WindowPos4ivMESA 767
+#define _gloffset_WindowPos4sMESA 768
+#define _gloffset_WindowPos4svMESA 769
+#define _gloffset_MultiModeDrawArraysIBM 770
+#define _gloffset_MultiModeDrawElementsIBM 771
+#define _gloffset_DeleteFencesNV 772
+#define _gloffset_FinishFenceNV 773
+#define _gloffset_GenFencesNV 774
+#define _gloffset_GetFenceivNV 775
+#define _gloffset_IsFenceNV 776
+#define _gloffset_SetFenceNV 777
+#define _gloffset_TestFenceNV 778
+#define _gloffset_AreProgramsResidentNV 779
+#define _gloffset_BindProgramNV 780
+#define _gloffset_DeleteProgramsNV 781
+#define _gloffset_ExecuteProgramNV 782
+#define _gloffset_GenProgramsNV 783
+#define _gloffset_GetProgramParameterdvNV 784
+#define _gloffset_GetProgramParameterfvNV 785
+#define _gloffset_GetProgramStringNV 786
+#define _gloffset_GetProgramivNV 787
+#define _gloffset_GetTrackMatrixivNV 788
+#define _gloffset_GetVertexAttribPointervNV 789
+#define _gloffset_GetVertexAttribdvNV 790
+#define _gloffset_GetVertexAttribfvNV 791
+#define _gloffset_GetVertexAttribivNV 792
+#define _gloffset_IsProgramNV 793
+#define _gloffset_LoadProgramNV 794
+#define _gloffset_ProgramParameters4dvNV 795
+#define _gloffset_ProgramParameters4fvNV 796
+#define _gloffset_RequestResidentProgramsNV 797
+#define _gloffset_TrackMatrixNV 798
+#define _gloffset_VertexAttrib1dNV 799
+#define _gloffset_VertexAttrib1dvNV 800
+#define _gloffset_VertexAttrib1fNV 801
+#define _gloffset_VertexAttrib1fvNV 802
+#define _gloffset_VertexAttrib1sNV 803
+#define _gloffset_VertexAttrib1svNV 804
+#define _gloffset_VertexAttrib2dNV 805
+#define _gloffset_VertexAttrib2dvNV 806
+#define _gloffset_VertexAttrib2fNV 807
+#define _gloffset_VertexAttrib2fvNV 808
+#define _gloffset_VertexAttrib2sNV 809
+#define _gloffset_VertexAttrib2svNV 810
+#define _gloffset_VertexAttrib3dNV 811
+#define _gloffset_VertexAttrib3dvNV 812
+#define _gloffset_VertexAttrib3fNV 813
+#define _gloffset_VertexAttrib3fvNV 814
+#define _gloffset_VertexAttrib3sNV 815
+#define _gloffset_VertexAttrib3svNV 816
+#define _gloffset_VertexAttrib4dNV 817
+#define _gloffset_VertexAttrib4dvNV 818
+#define _gloffset_VertexAttrib4fNV 819
+#define _gloffset_VertexAttrib4fvNV 820
+#define _gloffset_VertexAttrib4sNV 821
+#define _gloffset_VertexAttrib4svNV 822
+#define _gloffset_VertexAttrib4ubNV 823
+#define _gloffset_VertexAttrib4ubvNV 824
+#define _gloffset_VertexAttribPointerNV 825
+#define _gloffset_VertexAttribs1dvNV 826
+#define _gloffset_VertexAttribs1fvNV 827
+#define _gloffset_VertexAttribs1svNV 828
+#define _gloffset_VertexAttribs2dvNV 829
+#define _gloffset_VertexAttribs2fvNV 830
+#define _gloffset_VertexAttribs2svNV 831
+#define _gloffset_VertexAttribs3dvNV 832
+#define _gloffset_VertexAttribs3fvNV 833
+#define _gloffset_VertexAttribs3svNV 834
+#define _gloffset_VertexAttribs4dvNV 835
+#define _gloffset_VertexAttribs4fvNV 836
+#define _gloffset_VertexAttribs4svNV 837
+#define _gloffset_VertexAttribs4ubvNV 838
+#define _gloffset_GetTexBumpParameterfvATI 839
+#define _gloffset_GetTexBumpParameterivATI 840
+#define _gloffset_TexBumpParameterfvATI 841
+#define _gloffset_TexBumpParameterivATI 842
+#define _gloffset_AlphaFragmentOp1ATI 843
+#define _gloffset_AlphaFragmentOp2ATI 844
+#define _gloffset_AlphaFragmentOp3ATI 845
+#define _gloffset_BeginFragmentShaderATI 846
+#define _gloffset_BindFragmentShaderATI 847
+#define _gloffset_ColorFragmentOp1ATI 848
+#define _gloffset_ColorFragmentOp2ATI 849
+#define _gloffset_ColorFragmentOp3ATI 850
+#define _gloffset_DeleteFragmentShaderATI 851
+#define _gloffset_EndFragmentShaderATI 852
+#define _gloffset_GenFragmentShadersATI 853
+#define _gloffset_PassTexCoordATI 854
+#define _gloffset_SampleMapATI 855
+#define _gloffset_SetFragmentShaderConstantATI 856
+#define _gloffset_PointParameteriNV 857
+#define _gloffset_PointParameterivNV 858
+#define _gloffset_ActiveStencilFaceEXT 859
+#define _gloffset_BindVertexArrayAPPLE 860
+#define _gloffset_DeleteVertexArraysAPPLE 861
+#define _gloffset_GenVertexArraysAPPLE 862
+#define _gloffset_IsVertexArrayAPPLE 863
+#define _gloffset_GetProgramNamedParameterdvNV 864
+#define _gloffset_GetProgramNamedParameterfvNV 865
+#define _gloffset_ProgramNamedParameter4dNV 866
+#define _gloffset_ProgramNamedParameter4dvNV 867
+#define _gloffset_ProgramNamedParameter4fNV 868
+#define _gloffset_ProgramNamedParameter4fvNV 869
+#define _gloffset_PrimitiveRestartIndexNV 870
+#define _gloffset_PrimitiveRestartNV 871
+#define _gloffset_DepthBoundsEXT 872
+#define _gloffset_BlendEquationSeparateEXT 873
+#define _gloffset_BindFramebufferEXT 874
+#define _gloffset_BindRenderbufferEXT 875
+#define _gloffset_CheckFramebufferStatusEXT 876
+#define _gloffset_DeleteFramebuffersEXT 877
+#define _gloffset_DeleteRenderbuffersEXT 878
+#define _gloffset_FramebufferRenderbufferEXT 879
+#define _gloffset_FramebufferTexture1DEXT 880
+#define _gloffset_FramebufferTexture2DEXT 881
+#define _gloffset_FramebufferTexture3DEXT 882
+#define _gloffset_GenFramebuffersEXT 883
+#define _gloffset_GenRenderbuffersEXT 884
+#define _gloffset_GenerateMipmapEXT 885
+#define _gloffset_GetFramebufferAttachmentParameterivEXT 886
+#define _gloffset_GetRenderbufferParameterivEXT 887
+#define _gloffset_IsFramebufferEXT 888
+#define _gloffset_IsRenderbufferEXT 889
+#define _gloffset_RenderbufferStorageEXT 890
+#define _gloffset_BlitFramebufferEXT 891
+#define _gloffset_BufferParameteriAPPLE 892
+#define _gloffset_FlushMappedBufferRangeAPPLE 893
+#define _gloffset_BindFragDataLocationEXT 894
+#define _gloffset_GetFragDataLocationEXT 895
+#define _gloffset_GetUniformuivEXT 896
+#define _gloffset_GetVertexAttribIivEXT 897
+#define _gloffset_GetVertexAttribIuivEXT 898
+#define _gloffset_Uniform1uiEXT 899
+#define _gloffset_Uniform1uivEXT 900
+#define _gloffset_Uniform2uiEXT 901
+#define _gloffset_Uniform2uivEXT 902
+#define _gloffset_Uniform3uiEXT 903
+#define _gloffset_Uniform3uivEXT 904
+#define _gloffset_Uniform4uiEXT 905
+#define _gloffset_Uniform4uivEXT 906
+#define _gloffset_VertexAttribI1iEXT 907
+#define _gloffset_VertexAttribI1ivEXT 908
+#define _gloffset_VertexAttribI1uiEXT 909
+#define _gloffset_VertexAttribI1uivEXT 910
+#define _gloffset_VertexAttribI2iEXT 911
+#define _gloffset_VertexAttribI2ivEXT 912
+#define _gloffset_VertexAttribI2uiEXT 913
+#define _gloffset_VertexAttribI2uivEXT 914
+#define _gloffset_VertexAttribI3iEXT 915
+#define _gloffset_VertexAttribI3ivEXT 916
+#define _gloffset_VertexAttribI3uiEXT 917
+#define _gloffset_VertexAttribI3uivEXT 918
+#define _gloffset_VertexAttribI4bvEXT 919
+#define _gloffset_VertexAttribI4iEXT 920
+#define _gloffset_VertexAttribI4ivEXT 921
+#define _gloffset_VertexAttribI4svEXT 922
+#define _gloffset_VertexAttribI4ubvEXT 923
+#define _gloffset_VertexAttribI4uiEXT 924
+#define _gloffset_VertexAttribI4uivEXT 925
+#define _gloffset_VertexAttribI4usvEXT 926
+#define _gloffset_VertexAttribIPointerEXT 927
+#define _gloffset_FramebufferTextureLayerEXT 928
+#define _gloffset_ColorMaskIndexedEXT 929
+#define _gloffset_DisableIndexedEXT 930
+#define _gloffset_EnableIndexedEXT 931
+#define _gloffset_GetBooleanIndexedvEXT 932
+#define _gloffset_GetIntegerIndexedvEXT 933
+#define _gloffset_IsEnabledIndexedEXT 934
+#define _gloffset_ClearColorIiEXT 935
+#define _gloffset_ClearColorIuiEXT 936
+#define _gloffset_GetTexParameterIivEXT 937
+#define _gloffset_GetTexParameterIuivEXT 938
+#define _gloffset_TexParameterIivEXT 939
+#define _gloffset_TexParameterIuivEXT 940
+#define _gloffset_BeginConditionalRenderNV 941
+#define _gloffset_EndConditionalRenderNV 942
+#define _gloffset_BeginTransformFeedbackEXT 943
+#define _gloffset_BindBufferBaseEXT 944
+#define _gloffset_BindBufferOffsetEXT 945
+#define _gloffset_BindBufferRangeEXT 946
+#define _gloffset_EndTransformFeedbackEXT 947
+#define _gloffset_GetTransformFeedbackVaryingEXT 948
+#define _gloffset_TransformFeedbackVaryingsEXT 949
+#define _gloffset_ProvokingVertexEXT 950
+#define _gloffset_GetTexParameterPointervAPPLE 951
+#define _gloffset_TextureRangeAPPLE 952
+#define _gloffset_GetObjectParameterivAPPLE 953
+#define _gloffset_ObjectPurgeableAPPLE 954
+#define _gloffset_ObjectUnpurgeableAPPLE 955
+#define _gloffset_ActiveProgramEXT 956
+#define _gloffset_CreateShaderProgramEXT 957
+#define _gloffset_UseShaderProgramEXT 958
+#define _gloffset_TextureBarrierNV 959
+#define _gloffset_StencilFuncSeparateATI 960
+#define _gloffset_ProgramEnvParameters4fvEXT 961
+#define _gloffset_ProgramLocalParameters4fvEXT 962
+#define _gloffset_GetQueryObjecti64vEXT 963
+#define _gloffset_GetQueryObjectui64vEXT 964
+#define _gloffset_EGLImageTargetRenderbufferStorageOES 965
+#define _gloffset_EGLImageTargetTexture2DOES 966
 
 #else /* !FEATURE_remap_table */
 
-#define driDispatchRemapTable_size 521
+#define driDispatchRemapTable_size 559
 extern int driDispatchRemapTable[ driDispatchRemapTable_size ];
 
 #define AttachShader_remap_index 0
@@ -1206,320 +1244,358 @@ extern int driDispatchRemapTable[ driDispatchRemapTable_size ];
 #define SamplerParameterfv_remap_index 204
 #define SamplerParameteri_remap_index 205
 #define SamplerParameteriv_remap_index 206
-#define BindTransformFeedback_remap_index 207
-#define DeleteTransformFeedbacks_remap_index 208
-#define DrawTransformFeedback_remap_index 209
-#define GenTransformFeedbacks_remap_index 210
-#define IsTransformFeedback_remap_index 211
-#define PauseTransformFeedback_remap_index 212
-#define ResumeTransformFeedback_remap_index 213
-#define ClearDepthf_remap_index 214
-#define DepthRangef_remap_index 215
-#define GetShaderPrecisionFormat_remap_index 216
-#define ReleaseShaderCompiler_remap_index 217
-#define ShaderBinary_remap_index 218
-#define GetGraphicsResetStatusARB_remap_index 219
-#define GetnColorTableARB_remap_index 220
-#define GetnCompressedTexImageARB_remap_index 221
-#define GetnConvolutionFilterARB_remap_index 222
-#define GetnHistogramARB_remap_index 223
-#define GetnMapdvARB_remap_index 224
-#define GetnMapfvARB_remap_index 225
-#define GetnMapivARB_remap_index 226
-#define GetnMinmaxARB_remap_index 227
-#define GetnPixelMapfvARB_remap_index 228
-#define GetnPixelMapuivARB_remap_index 229
-#define GetnPixelMapusvARB_remap_index 230
-#define GetnPolygonStippleARB_remap_index 231
-#define GetnSeparableFilterARB_remap_index 232
-#define GetnTexImageARB_remap_index 233
-#define GetnUniformdvARB_remap_index 234
-#define GetnUniformfvARB_remap_index 235
-#define GetnUniformivARB_remap_index 236
-#define GetnUniformuivARB_remap_index 237
-#define ReadnPixelsARB_remap_index 238
-#define PolygonOffsetEXT_remap_index 239
-#define GetPixelTexGenParameterfvSGIS_remap_index 240
-#define GetPixelTexGenParameterivSGIS_remap_index 241
-#define PixelTexGenParameterfSGIS_remap_index 242
-#define PixelTexGenParameterfvSGIS_remap_index 243
-#define PixelTexGenParameteriSGIS_remap_index 244
-#define PixelTexGenParameterivSGIS_remap_index 245
-#define SampleMaskSGIS_remap_index 246
-#define SamplePatternSGIS_remap_index 247
-#define ColorPointerEXT_remap_index 248
-#define EdgeFlagPointerEXT_remap_index 249
-#define IndexPointerEXT_remap_index 250
-#define NormalPointerEXT_remap_index 251
-#define TexCoordPointerEXT_remap_index 252
-#define VertexPointerEXT_remap_index 253
-#define PointParameterfEXT_remap_index 254
-#define PointParameterfvEXT_remap_index 255
-#define LockArraysEXT_remap_index 256
-#define UnlockArraysEXT_remap_index 257
-#define SecondaryColor3bEXT_remap_index 258
-#define SecondaryColor3bvEXT_remap_index 259
-#define SecondaryColor3dEXT_remap_index 260
-#define SecondaryColor3dvEXT_remap_index 261
-#define SecondaryColor3fEXT_remap_index 262
-#define SecondaryColor3fvEXT_remap_index 263
-#define SecondaryColor3iEXT_remap_index 264
-#define SecondaryColor3ivEXT_remap_index 265
-#define SecondaryColor3sEXT_remap_index 266
-#define SecondaryColor3svEXT_remap_index 267
-#define SecondaryColor3ubEXT_remap_index 268
-#define SecondaryColor3ubvEXT_remap_index 269
-#define SecondaryColor3uiEXT_remap_index 270
-#define SecondaryColor3uivEXT_remap_index 271
-#define SecondaryColor3usEXT_remap_index 272
-#define SecondaryColor3usvEXT_remap_index 273
-#define SecondaryColorPointerEXT_remap_index 274
-#define MultiDrawArraysEXT_remap_index 275
-#define MultiDrawElementsEXT_remap_index 276
-#define FogCoordPointerEXT_remap_index 277
-#define FogCoorddEXT_remap_index 278
-#define FogCoorddvEXT_remap_index 279
-#define FogCoordfEXT_remap_index 280
-#define FogCoordfvEXT_remap_index 281
-#define PixelTexGenSGIX_remap_index 282
-#define BlendFuncSeparateEXT_remap_index 283
-#define FlushVertexArrayRangeNV_remap_index 284
-#define VertexArrayRangeNV_remap_index 285
-#define CombinerInputNV_remap_index 286
-#define CombinerOutputNV_remap_index 287
-#define CombinerParameterfNV_remap_index 288
-#define CombinerParameterfvNV_remap_index 289
-#define CombinerParameteriNV_remap_index 290
-#define CombinerParameterivNV_remap_index 291
-#define FinalCombinerInputNV_remap_index 292
-#define GetCombinerInputParameterfvNV_remap_index 293
-#define GetCombinerInputParameterivNV_remap_index 294
-#define GetCombinerOutputParameterfvNV_remap_index 295
-#define GetCombinerOutputParameterivNV_remap_index 296
-#define GetFinalCombinerInputParameterfvNV_remap_index 297
-#define GetFinalCombinerInputParameterivNV_remap_index 298
-#define ResizeBuffersMESA_remap_index 299
-#define WindowPos2dMESA_remap_index 300
-#define WindowPos2dvMESA_remap_index 301
-#define WindowPos2fMESA_remap_index 302
-#define WindowPos2fvMESA_remap_index 303
-#define WindowPos2iMESA_remap_index 304
-#define WindowPos2ivMESA_remap_index 305
-#define WindowPos2sMESA_remap_index 306
-#define WindowPos2svMESA_remap_index 307
-#define WindowPos3dMESA_remap_index 308
-#define WindowPos3dvMESA_remap_index 309
-#define WindowPos3fMESA_remap_index 310
-#define WindowPos3fvMESA_remap_index 311
-#define WindowPos3iMESA_remap_index 312
-#define WindowPos3ivMESA_remap_index 313
-#define WindowPos3sMESA_remap_index 314
-#define WindowPos3svMESA_remap_index 315
-#define WindowPos4dMESA_remap_index 316
-#define WindowPos4dvMESA_remap_index 317
-#define WindowPos4fMESA_remap_index 318
-#define WindowPos4fvMESA_remap_index 319
-#define WindowPos4iMESA_remap_index 320
-#define WindowPos4ivMESA_remap_index 321
-#define WindowPos4sMESA_remap_index 322
-#define WindowPos4svMESA_remap_index 323
-#define MultiModeDrawArraysIBM_remap_index 324
-#define MultiModeDrawElementsIBM_remap_index 325
-#define DeleteFencesNV_remap_index 326
-#define FinishFenceNV_remap_index 327
-#define GenFencesNV_remap_index 328
-#define GetFenceivNV_remap_index 329
-#define IsFenceNV_remap_index 330
-#define SetFenceNV_remap_index 331
-#define TestFenceNV_remap_index 332
-#define AreProgramsResidentNV_remap_index 333
-#define BindProgramNV_remap_index 334
-#define DeleteProgramsNV_remap_index 335
-#define ExecuteProgramNV_remap_index 336
-#define GenProgramsNV_remap_index 337
-#define GetProgramParameterdvNV_remap_index 338
-#define GetProgramParameterfvNV_remap_index 339
-#define GetProgramStringNV_remap_index 340
-#define GetProgramivNV_remap_index 341
-#define GetTrackMatrixivNV_remap_index 342
-#define GetVertexAttribPointervNV_remap_index 343
-#define GetVertexAttribdvNV_remap_index 344
-#define GetVertexAttribfvNV_remap_index 345
-#define GetVertexAttribivNV_remap_index 346
-#define IsProgramNV_remap_index 347
-#define LoadProgramNV_remap_index 348
-#define ProgramParameters4dvNV_remap_index 349
-#define ProgramParameters4fvNV_remap_index 350
-#define RequestResidentProgramsNV_remap_index 351
-#define TrackMatrixNV_remap_index 352
-#define VertexAttrib1dNV_remap_index 353
-#define VertexAttrib1dvNV_remap_index 354
-#define VertexAttrib1fNV_remap_index 355
-#define VertexAttrib1fvNV_remap_index 356
-#define VertexAttrib1sNV_remap_index 357
-#define VertexAttrib1svNV_remap_index 358
-#define VertexAttrib2dNV_remap_index 359
-#define VertexAttrib2dvNV_remap_index 360
-#define VertexAttrib2fNV_remap_index 361
-#define VertexAttrib2fvNV_remap_index 362
-#define VertexAttrib2sNV_remap_index 363
-#define VertexAttrib2svNV_remap_index 364
-#define VertexAttrib3dNV_remap_index 365
-#define VertexAttrib3dvNV_remap_index 366
-#define VertexAttrib3fNV_remap_index 367
-#define VertexAttrib3fvNV_remap_index 368
-#define VertexAttrib3sNV_remap_index 369
-#define VertexAttrib3svNV_remap_index 370
-#define VertexAttrib4dNV_remap_index 371
-#define VertexAttrib4dvNV_remap_index 372
-#define VertexAttrib4fNV_remap_index 373
-#define VertexAttrib4fvNV_remap_index 374
-#define VertexAttrib4sNV_remap_index 375
-#define VertexAttrib4svNV_remap_index 376
-#define VertexAttrib4ubNV_remap_index 377
-#define VertexAttrib4ubvNV_remap_index 378
-#define VertexAttribPointerNV_remap_index 379
-#define VertexAttribs1dvNV_remap_index 380
-#define VertexAttribs1fvNV_remap_index 381
-#define VertexAttribs1svNV_remap_index 382
-#define VertexAttribs2dvNV_remap_index 383
-#define VertexAttribs2fvNV_remap_index 384
-#define VertexAttribs2svNV_remap_index 385
-#define VertexAttribs3dvNV_remap_index 386
-#define VertexAttribs3fvNV_remap_index 387
-#define VertexAttribs3svNV_remap_index 388
-#define VertexAttribs4dvNV_remap_index 389
-#define VertexAttribs4fvNV_remap_index 390
-#define VertexAttribs4svNV_remap_index 391
-#define VertexAttribs4ubvNV_remap_index 392
-#define GetTexBumpParameterfvATI_remap_index 393
-#define GetTexBumpParameterivATI_remap_index 394
-#define TexBumpParameterfvATI_remap_index 395
-#define TexBumpParameterivATI_remap_index 396
-#define AlphaFragmentOp1ATI_remap_index 397
-#define AlphaFragmentOp2ATI_remap_index 398
-#define AlphaFragmentOp3ATI_remap_index 399
-#define BeginFragmentShaderATI_remap_index 400
-#define BindFragmentShaderATI_remap_index 401
-#define ColorFragmentOp1ATI_remap_index 402
-#define ColorFragmentOp2ATI_remap_index 403
-#define ColorFragmentOp3ATI_remap_index 404
-#define DeleteFragmentShaderATI_remap_index 405
-#define EndFragmentShaderATI_remap_index 406
-#define GenFragmentShadersATI_remap_index 407
-#define PassTexCoordATI_remap_index 408
-#define SampleMapATI_remap_index 409
-#define SetFragmentShaderConstantATI_remap_index 410
-#define PointParameteriNV_remap_index 411
-#define PointParameterivNV_remap_index 412
-#define ActiveStencilFaceEXT_remap_index 413
-#define BindVertexArrayAPPLE_remap_index 414
-#define DeleteVertexArraysAPPLE_remap_index 415
-#define GenVertexArraysAPPLE_remap_index 416
-#define IsVertexArrayAPPLE_remap_index 417
-#define GetProgramNamedParameterdvNV_remap_index 418
-#define GetProgramNamedParameterfvNV_remap_index 419
-#define ProgramNamedParameter4dNV_remap_index 420
-#define ProgramNamedParameter4dvNV_remap_index 421
-#define ProgramNamedParameter4fNV_remap_index 422
-#define ProgramNamedParameter4fvNV_remap_index 423
-#define PrimitiveRestartIndexNV_remap_index 424
-#define PrimitiveRestartNV_remap_index 425
-#define DepthBoundsEXT_remap_index 426
-#define BlendEquationSeparateEXT_remap_index 427
-#define BindFramebufferEXT_remap_index 428
-#define BindRenderbufferEXT_remap_index 429
-#define CheckFramebufferStatusEXT_remap_index 430
-#define DeleteFramebuffersEXT_remap_index 431
-#define DeleteRenderbuffersEXT_remap_index 432
-#define FramebufferRenderbufferEXT_remap_index 433
-#define FramebufferTexture1DEXT_remap_index 434
-#define FramebufferTexture2DEXT_remap_index 435
-#define FramebufferTexture3DEXT_remap_index 436
-#define GenFramebuffersEXT_remap_index 437
-#define GenRenderbuffersEXT_remap_index 438
-#define GenerateMipmapEXT_remap_index 439
-#define GetFramebufferAttachmentParameterivEXT_remap_index 440
-#define GetRenderbufferParameterivEXT_remap_index 441
-#define IsFramebufferEXT_remap_index 442
-#define IsRenderbufferEXT_remap_index 443
-#define RenderbufferStorageEXT_remap_index 444
-#define BlitFramebufferEXT_remap_index 445
-#define BufferParameteriAPPLE_remap_index 446
-#define FlushMappedBufferRangeAPPLE_remap_index 447
-#define BindFragDataLocationEXT_remap_index 448
-#define GetFragDataLocationEXT_remap_index 449
-#define GetUniformuivEXT_remap_index 450
-#define GetVertexAttribIivEXT_remap_index 451
-#define GetVertexAttribIuivEXT_remap_index 452
-#define Uniform1uiEXT_remap_index 453
-#define Uniform1uivEXT_remap_index 454
-#define Uniform2uiEXT_remap_index 455
-#define Uniform2uivEXT_remap_index 456
-#define Uniform3uiEXT_remap_index 457
-#define Uniform3uivEXT_remap_index 458
-#define Uniform4uiEXT_remap_index 459
-#define Uniform4uivEXT_remap_index 460
-#define VertexAttribI1iEXT_remap_index 461
-#define VertexAttribI1ivEXT_remap_index 462
-#define VertexAttribI1uiEXT_remap_index 463
-#define VertexAttribI1uivEXT_remap_index 464
-#define VertexAttribI2iEXT_remap_index 465
-#define VertexAttribI2ivEXT_remap_index 466
-#define VertexAttribI2uiEXT_remap_index 467
-#define VertexAttribI2uivEXT_remap_index 468
-#define VertexAttribI3iEXT_remap_index 469
-#define VertexAttribI3ivEXT_remap_index 470
-#define VertexAttribI3uiEXT_remap_index 471
-#define VertexAttribI3uivEXT_remap_index 472
-#define VertexAttribI4bvEXT_remap_index 473
-#define VertexAttribI4iEXT_remap_index 474
-#define VertexAttribI4ivEXT_remap_index 475
-#define VertexAttribI4svEXT_remap_index 476
-#define VertexAttribI4ubvEXT_remap_index 477
-#define VertexAttribI4uiEXT_remap_index 478
-#define VertexAttribI4uivEXT_remap_index 479
-#define VertexAttribI4usvEXT_remap_index 480
-#define VertexAttribIPointerEXT_remap_index 481
-#define FramebufferTextureLayerEXT_remap_index 482
-#define ColorMaskIndexedEXT_remap_index 483
-#define DisableIndexedEXT_remap_index 484
-#define EnableIndexedEXT_remap_index 485
-#define GetBooleanIndexedvEXT_remap_index 486
-#define GetIntegerIndexedvEXT_remap_index 487
-#define IsEnabledIndexedEXT_remap_index 488
-#define ClearColorIiEXT_remap_index 489
-#define ClearColorIuiEXT_remap_index 490
-#define GetTexParameterIivEXT_remap_index 491
-#define GetTexParameterIuivEXT_remap_index 492
-#define TexParameterIivEXT_remap_index 493
-#define TexParameterIuivEXT_remap_index 494
-#define BeginConditionalRenderNV_remap_index 495
-#define EndConditionalRenderNV_remap_index 496
-#define BeginTransformFeedbackEXT_remap_index 497
-#define BindBufferBaseEXT_remap_index 498
-#define BindBufferOffsetEXT_remap_index 499
-#define BindBufferRangeEXT_remap_index 500
-#define EndTransformFeedbackEXT_remap_index 501
-#define GetTransformFeedbackVaryingEXT_remap_index 502
-#define TransformFeedbackVaryingsEXT_remap_index 503
-#define ProvokingVertexEXT_remap_index 504
-#define GetTexParameterPointervAPPLE_remap_index 505
-#define TextureRangeAPPLE_remap_index 506
-#define GetObjectParameterivAPPLE_remap_index 507
-#define ObjectPurgeableAPPLE_remap_index 508
-#define ObjectUnpurgeableAPPLE_remap_index 509
-#define ActiveProgramEXT_remap_index 510
-#define CreateShaderProgramEXT_remap_index 511
-#define UseShaderProgramEXT_remap_index 512
-#define TextureBarrierNV_remap_index 513
-#define StencilFuncSeparateATI_remap_index 514
-#define ProgramEnvParameters4fvEXT_remap_index 515
-#define ProgramLocalParameters4fvEXT_remap_index 516
-#define GetQueryObjecti64vEXT_remap_index 517
-#define GetQueryObjectui64vEXT_remap_index 518
-#define EGLImageTargetRenderbufferStorageOES_remap_index 519
-#define EGLImageTargetTexture2DOES_remap_index 520
+#define ColorP3ui_remap_index 207
+#define ColorP3uiv_remap_index 208
+#define ColorP4ui_remap_index 209
+#define ColorP4uiv_remap_index 210
+#define MultiTexCoordP1ui_remap_index 211
+#define MultiTexCoordP1uiv_remap_index 212
+#define MultiTexCoordP2ui_remap_index 213
+#define MultiTexCoordP2uiv_remap_index 214
+#define MultiTexCoordP3ui_remap_index 215
+#define MultiTexCoordP3uiv_remap_index 216
+#define MultiTexCoordP4ui_remap_index 217
+#define MultiTexCoordP4uiv_remap_index 218
+#define NormalP3ui_remap_index 219
+#define NormalP3uiv_remap_index 220
+#define SecondaryColorP3ui_remap_index 221
+#define SecondaryColorP3uiv_remap_index 222
+#define TexCoordP1ui_remap_index 223
+#define TexCoordP1uiv_remap_index 224
+#define TexCoordP2ui_remap_index 225
+#define TexCoordP2uiv_remap_index 226
+#define TexCoordP3ui_remap_index 227
+#define TexCoordP3uiv_remap_index 228
+#define TexCoordP4ui_remap_index 229
+#define TexCoordP4uiv_remap_index 230
+#define VertexAttribP1ui_remap_index 231
+#define VertexAttribP1uiv_remap_index 232
+#define VertexAttribP2ui_remap_index 233
+#define VertexAttribP2uiv_remap_index 234
+#define VertexAttribP3ui_remap_index 235
+#define VertexAttribP3uiv_remap_index 236
+#define VertexAttribP4ui_remap_index 237
+#define VertexAttribP4uiv_remap_index 238
+#define VertexP2ui_remap_index 239
+#define VertexP2uiv_remap_index 240
+#define VertexP3ui_remap_index 241
+#define VertexP3uiv_remap_index 242
+#define VertexP4ui_remap_index 243
+#define VertexP4uiv_remap_index 244
+#define BindTransformFeedback_remap_index 245
+#define DeleteTransformFeedbacks_remap_index 246
+#define DrawTransformFeedback_remap_index 247
+#define GenTransformFeedbacks_remap_index 248
+#define IsTransformFeedback_remap_index 249
+#define PauseTransformFeedback_remap_index 250
+#define ResumeTransformFeedback_remap_index 251
+#define ClearDepthf_remap_index 252
+#define DepthRangef_remap_index 253
+#define GetShaderPrecisionFormat_remap_index 254
+#define ReleaseShaderCompiler_remap_index 255
+#define ShaderBinary_remap_index 256
+#define GetGraphicsResetStatusARB_remap_index 257
+#define GetnColorTableARB_remap_index 258
+#define GetnCompressedTexImageARB_remap_index 259
+#define GetnConvolutionFilterARB_remap_index 260
+#define GetnHistogramARB_remap_index 261
+#define GetnMapdvARB_remap_index 262
+#define GetnMapfvARB_remap_index 263
+#define GetnMapivARB_remap_index 264
+#define GetnMinmaxARB_remap_index 265
+#define GetnPixelMapfvARB_remap_index 266
+#define GetnPixelMapuivARB_remap_index 267
+#define GetnPixelMapusvARB_remap_index 268
+#define GetnPolygonStippleARB_remap_index 269
+#define GetnSeparableFilterARB_remap_index 270
+#define GetnTexImageARB_remap_index 271
+#define GetnUniformdvARB_remap_index 272
+#define GetnUniformfvARB_remap_index 273
+#define GetnUniformivARB_remap_index 274
+#define GetnUniformuivARB_remap_index 275
+#define ReadnPixelsARB_remap_index 276
+#define PolygonOffsetEXT_remap_index 277
+#define GetPixelTexGenParameterfvSGIS_remap_index 278
+#define GetPixelTexGenParameterivSGIS_remap_index 279
+#define PixelTexGenParameterfSGIS_remap_index 280
+#define PixelTexGenParameterfvSGIS_remap_index 281
+#define PixelTexGenParameteriSGIS_remap_index 282
+#define PixelTexGenParameterivSGIS_remap_index 283
+#define SampleMaskSGIS_remap_index 284
+#define SamplePatternSGIS_remap_index 285
+#define ColorPointerEXT_remap_index 286
+#define EdgeFlagPointerEXT_remap_index 287
+#define IndexPointerEXT_remap_index 288
+#define NormalPointerEXT_remap_index 289
+#define TexCoordPointerEXT_remap_index 290
+#define VertexPointerEXT_remap_index 291
+#define PointParameterfEXT_remap_index 292
+#define PointParameterfvEXT_remap_index 293
+#define LockArraysEXT_remap_index 294
+#define UnlockArraysEXT_remap_index 295
+#define SecondaryColor3bEXT_remap_index 296
+#define SecondaryColor3bvEXT_remap_index 297
+#define SecondaryColor3dEXT_remap_index 298
+#define SecondaryColor3dvEXT_remap_index 299
+#define SecondaryColor3fEXT_remap_index 300
+#define SecondaryColor3fvEXT_remap_index 301
+#define SecondaryColor3iEXT_remap_index 302
+#define SecondaryColor3ivEXT_remap_index 303
+#define SecondaryColor3sEXT_remap_index 304
+#define SecondaryColor3svEXT_remap_index 305
+#define SecondaryColor3ubEXT_remap_index 306
+#define SecondaryColor3ubvEXT_remap_index 307
+#define SecondaryColor3uiEXT_remap_index 308
+#define SecondaryColor3uivEXT_remap_index 309
+#define SecondaryColor3usEXT_remap_index 310
+#define SecondaryColor3usvEXT_remap_index 311
+#define SecondaryColorPointerEXT_remap_index 312
+#define MultiDrawArraysEXT_remap_index 313
+#define MultiDrawElementsEXT_remap_index 314
+#define FogCoordPointerEXT_remap_index 315
+#define FogCoorddEXT_remap_index 316
+#define FogCoorddvEXT_remap_index 317
+#define FogCoordfEXT_remap_index 318
+#define FogCoordfvEXT_remap_index 319
+#define PixelTexGenSGIX_remap_index 320
+#define BlendFuncSeparateEXT_remap_index 321
+#define FlushVertexArrayRangeNV_remap_index 322
+#define VertexArrayRangeNV_remap_index 323
+#define CombinerInputNV_remap_index 324
+#define CombinerOutputNV_remap_index 325
+#define CombinerParameterfNV_remap_index 326
+#define CombinerParameterfvNV_remap_index 327
+#define CombinerParameteriNV_remap_index 328
+#define CombinerParameterivNV_remap_index 329
+#define FinalCombinerInputNV_remap_index 330
+#define GetCombinerInputParameterfvNV_remap_index 331
+#define GetCombinerInputParameterivNV_remap_index 332
+#define GetCombinerOutputParameterfvNV_remap_index 333
+#define GetCombinerOutputParameterivNV_remap_index 334
+#define GetFinalCombinerInputParameterfvNV_remap_index 335
+#define GetFinalCombinerInputParameterivNV_remap_index 336
+#define ResizeBuffersMESA_remap_index 337
+#define WindowPos2dMESA_remap_index 338
+#define WindowPos2dvMESA_remap_index 339
+#define WindowPos2fMESA_remap_index 340
+#define WindowPos2fvMESA_remap_index 341
+#define WindowPos2iMESA_remap_index 342
+#define WindowPos2ivMESA_remap_index 343
+#define WindowPos2sMESA_remap_index 344
+#define WindowPos2svMESA_remap_index 345
+#define WindowPos3dMESA_remap_index 346
+#define WindowPos3dvMESA_remap_index 347
+#define WindowPos3fMESA_remap_index 348
+#define WindowPos3fvMESA_remap_index 349
+#define WindowPos3iMESA_remap_index 350
+#define WindowPos3ivMESA_remap_index 351
+#define WindowPos3sMESA_remap_index 352
+#define WindowPos3svMESA_remap_index 353
+#define WindowPos4dMESA_remap_index 354
+#define WindowPos4dvMESA_remap_index 355
+#define WindowPos4fMESA_remap_index 356
+#define WindowPos4fvMESA_remap_index 357
+#define WindowPos4iMESA_remap_index 358
+#define WindowPos4ivMESA_remap_index 359
+#define WindowPos4sMESA_remap_index 360
+#define WindowPos4svMESA_remap_index 361
+#define MultiModeDrawArraysIBM_remap_index 362
+#define MultiModeDrawElementsIBM_remap_index 363
+#define DeleteFencesNV_remap_index 364
+#define FinishFenceNV_remap_index 365
+#define GenFencesNV_remap_index 366
+#define GetFenceivNV_remap_index 367
+#define IsFenceNV_remap_index 368
+#define SetFenceNV_remap_index 369
+#define TestFenceNV_remap_index 370
+#define AreProgramsResidentNV_remap_index 371
+#define BindProgramNV_remap_index 372
+#define DeleteProgramsNV_remap_index 373
+#define ExecuteProgramNV_remap_index 374
+#define GenProgramsNV_remap_index 375
+#define GetProgramParameterdvNV_remap_index 376
+#define GetProgramParameterfvNV_remap_index 377
+#define GetProgramStringNV_remap_index 378
+#define GetProgramivNV_remap_index 379
+#define GetTrackMatrixivNV_remap_index 380
+#define GetVertexAttribPointervNV_remap_index 381
+#define GetVertexAttribdvNV_remap_index 382
+#define GetVertexAttribfvNV_remap_index 383
+#define GetVertexAttribivNV_remap_index 384
+#define IsProgramNV_remap_index 385
+#define LoadProgramNV_remap_index 386
+#define ProgramParameters4dvNV_remap_index 387
+#define ProgramParameters4fvNV_remap_index 388
+#define RequestResidentProgramsNV_remap_index 389
+#define TrackMatrixNV_remap_index 390
+#define VertexAttrib1dNV_remap_index 391
+#define VertexAttrib1dvNV_remap_index 392
+#define VertexAttrib1fNV_remap_index 393
+#define VertexAttrib1fvNV_remap_index 394
+#define VertexAttrib1sNV_remap_index 395
+#define VertexAttrib1svNV_remap_index 396
+#define VertexAttrib2dNV_remap_index 397
+#define VertexAttrib2dvNV_remap_index 398
+#define VertexAttrib2fNV_remap_index 399
+#define VertexAttrib2fvNV_remap_index 400
+#define VertexAttrib2sNV_remap_index 401
+#define VertexAttrib2svNV_remap_index 402
+#define VertexAttrib3dNV_remap_index 403
+#define VertexAttrib3dvNV_remap_index 404
+#define VertexAttrib3fNV_remap_index 405
+#define VertexAttrib3fvNV_remap_index 406
+#define VertexAttrib3sNV_remap_index 407
+#define VertexAttrib3svNV_remap_index 408
+#define VertexAttrib4dNV_remap_index 409
+#define VertexAttrib4dvNV_remap_index 410
+#define VertexAttrib4fNV_remap_index 411
+#define VertexAttrib4fvNV_remap_index 412
+#define VertexAttrib4sNV_remap_index 413
+#define VertexAttrib4svNV_remap_index 414
+#define VertexAttrib4ubNV_remap_index 415
+#define VertexAttrib4ubvNV_remap_index 416
+#define VertexAttribPointerNV_remap_index 417
+#define VertexAttribs1dvNV_remap_index 418
+#define VertexAttribs1fvNV_remap_index 419
+#define VertexAttribs1svNV_remap_index 420
+#define VertexAttribs2dvNV_remap_index 421
+#define VertexAttribs2fvNV_remap_index 422
+#define VertexAttribs2svNV_remap_index 423
+#define VertexAttribs3dvNV_remap_index 424
+#define VertexAttribs3fvNV_remap_index 425
+#define VertexAttribs3svNV_remap_index 426
+#define VertexAttribs4dvNV_remap_index 427
+#define VertexAttribs4fvNV_remap_index 428
+#define VertexAttribs4svNV_remap_index 429
+#define VertexAttribs4ubvNV_remap_index 430
+#define GetTexBumpParameterfvATI_remap_index 431
+#define GetTexBumpParameterivATI_remap_index 432
+#define TexBumpParameterfvATI_remap_index 433
+#define TexBumpParameterivATI_remap_index 434
+#define AlphaFragmentOp1ATI_remap_index 435
+#define AlphaFragmentOp2ATI_remap_index 436
+#define AlphaFragmentOp3ATI_remap_index 437
+#define BeginFragmentShaderATI_remap_index 438
+#define BindFragmentShaderATI_remap_index 439
+#define ColorFragmentOp1ATI_remap_index 440
+#define ColorFragmentOp2ATI_remap_index 441
+#define ColorFragmentOp3ATI_remap_index 442
+#define DeleteFragmentShaderATI_remap_index 443
+#define EndFragmentShaderATI_remap_index 444
+#define GenFragmentShadersATI_remap_index 445
+#define PassTexCoordATI_remap_index 446
+#define SampleMapATI_remap_index 447
+#define SetFragmentShaderConstantATI_remap_index 448
+#define PointParameteriNV_remap_index 449
+#define PointParameterivNV_remap_index 450
+#define ActiveStencilFaceEXT_remap_index 451
+#define BindVertexArrayAPPLE_remap_index 452
+#define DeleteVertexArraysAPPLE_remap_index 453
+#define GenVertexArraysAPPLE_remap_index 454
+#define IsVertexArrayAPPLE_remap_index 455
+#define GetProgramNamedParameterdvNV_remap_index 456
+#define GetProgramNamedParameterfvNV_remap_index 457
+#define ProgramNamedParameter4dNV_remap_index 458
+#define ProgramNamedParameter4dvNV_remap_index 459
+#define ProgramNamedParameter4fNV_remap_index 460
+#define ProgramNamedParameter4fvNV_remap_index 461
+#define PrimitiveRestartIndexNV_remap_index 462
+#define PrimitiveRestartNV_remap_index 463
+#define DepthBoundsEXT_remap_index 464
+#define BlendEquationSeparateEXT_remap_index 465
+#define BindFramebufferEXT_remap_index 466
+#define BindRenderbufferEXT_remap_index 467
+#define CheckFramebufferStatusEXT_remap_index 468
+#define DeleteFramebuffersEXT_remap_index 469
+#define DeleteRenderbuffersEXT_remap_index 470
+#define FramebufferRenderbufferEXT_remap_index 471
+#define FramebufferTexture1DEXT_remap_index 472
+#define FramebufferTexture2DEXT_remap_index 473
+#define FramebufferTexture3DEXT_remap_index 474
+#define GenFramebuffersEXT_remap_index 475
+#define GenRenderbuffersEXT_remap_index 476
+#define GenerateMipmapEXT_remap_index 477
+#define GetFramebufferAttachmentParameterivEXT_remap_index 478
+#define GetRenderbufferParameterivEXT_remap_index 479
+#define IsFramebufferEXT_remap_index 480
+#define IsRenderbufferEXT_remap_index 481
+#define RenderbufferStorageEXT_remap_index 482
+#define BlitFramebufferEXT_remap_index 483
+#define BufferParameteriAPPLE_remap_index 484
+#define FlushMappedBufferRangeAPPLE_remap_index 485
+#define BindFragDataLocationEXT_remap_index 486
+#define GetFragDataLocationEXT_remap_index 487
+#define GetUniformuivEXT_remap_index 488
+#define GetVertexAttribIivEXT_remap_index 489
+#define GetVertexAttribIuivEXT_remap_index 490
+#define Uniform1uiEXT_remap_index 491
+#define Uniform1uivEXT_remap_index 492
+#define Uniform2uiEXT_remap_index 493
+#define Uniform2uivEXT_remap_index 494
+#define Uniform3uiEXT_remap_index 495
+#define Uniform3uivEXT_remap_index 496
+#define Uniform4uiEXT_remap_index 497
+#define Uniform4uivEXT_remap_index 498
+#define VertexAttribI1iEXT_remap_index 499
+#define VertexAttribI1ivEXT_remap_index 500
+#define VertexAttribI1uiEXT_remap_index 501
+#define VertexAttribI1uivEXT_remap_index 502
+#define VertexAttribI2iEXT_remap_index 503
+#define VertexAttribI2ivEXT_remap_index 504
+#define VertexAttribI2uiEXT_remap_index 505
+#define VertexAttribI2uivEXT_remap_index 506
+#define VertexAttribI3iEXT_remap_index 507
+#define VertexAttribI3ivEXT_remap_index 508
+#define VertexAttribI3uiEXT_remap_index 509
+#define VertexAttribI3uivEXT_remap_index 510
+#define VertexAttribI4bvEXT_remap_index 511
+#define VertexAttribI4iEXT_remap_index 512
+#define VertexAttribI4ivEXT_remap_index 513
+#define VertexAttribI4svEXT_remap_index 514
+#define VertexAttribI4ubvEXT_remap_index 515
+#define VertexAttribI4uiEXT_remap_index 516
+#define VertexAttribI4uivEXT_remap_index 517
+#define VertexAttribI4usvEXT_remap_index 518
+#define VertexAttribIPointerEXT_remap_index 519
+#define FramebufferTextureLayerEXT_remap_index 520
+#define ColorMaskIndexedEXT_remap_index 521
+#define DisableIndexedEXT_remap_index 522
+#define EnableIndexedEXT_remap_index 523
+#define GetBooleanIndexedvEXT_remap_index 524
+#define GetIntegerIndexedvEXT_remap_index 525
+#define IsEnabledIndexedEXT_remap_index 526
+#define ClearColorIiEXT_remap_index 527
+#define ClearColorIuiEXT_remap_index 528
+#define GetTexParameterIivEXT_remap_index 529
+#define GetTexParameterIuivEXT_remap_index 530
+#define TexParameterIivEXT_remap_index 531
+#define TexParameterIuivEXT_remap_index 532
+#define BeginConditionalRenderNV_remap_index 533
+#define EndConditionalRenderNV_remap_index 534
+#define BeginTransformFeedbackEXT_remap_index 535
+#define BindBufferBaseEXT_remap_index 536
+#define BindBufferOffsetEXT_remap_index 537
+#define BindBufferRangeEXT_remap_index 538
+#define EndTransformFeedbackEXT_remap_index 539
+#define GetTransformFeedbackVaryingEXT_remap_index 540
+#define TransformFeedbackVaryingsEXT_remap_index 541
+#define ProvokingVertexEXT_remap_index 542
+#define GetTexParameterPointervAPPLE_remap_index 543
+#define TextureRangeAPPLE_remap_index 544
+#define GetObjectParameterivAPPLE_remap_index 545
+#define ObjectPurgeableAPPLE_remap_index 546
+#define ObjectUnpurgeableAPPLE_remap_index 547
+#define ActiveProgramEXT_remap_index 548
+#define CreateShaderProgramEXT_remap_index 549
+#define UseShaderProgramEXT_remap_index 550
+#define TextureBarrierNV_remap_index 551
+#define StencilFuncSeparateATI_remap_index 552
+#define ProgramEnvParameters4fvEXT_remap_index 553
+#define ProgramLocalParameters4fvEXT_remap_index 554
+#define GetQueryObjecti64vEXT_remap_index 555
+#define GetQueryObjectui64vEXT_remap_index 556
+#define EGLImageTargetRenderbufferStorageOES_remap_index 557
+#define EGLImageTargetTexture2DOES_remap_index 558
 
 #define _gloffset_AttachShader driDispatchRemapTable[AttachShader_remap_index]
 #define _gloffset_CreateProgram driDispatchRemapTable[CreateProgram_remap_index]
@@ -1728,6 +1804,44 @@ extern int driDispatchRemapTable[ driDispatchRemapTable_size ];
 #define _gloffset_SamplerParameterfv driDispatchRemapTable[SamplerParameterfv_remap_index]
 #define _gloffset_SamplerParameteri driDispatchRemapTable[SamplerParameteri_remap_index]
 #define _gloffset_SamplerParameteriv driDispatchRemapTable[SamplerParameteriv_remap_index]
+#define _gloffset_ColorP3ui driDispatchRemapTable[ColorP3ui_remap_index]
+#define _gloffset_ColorP3uiv driDispatchRemapTable[ColorP3uiv_remap_index]
+#define _gloffset_ColorP4ui driDispatchRemapTable[ColorP4ui_remap_index]
+#define _gloffset_ColorP4uiv driDispatchRemapTable[ColorP4uiv_remap_index]
+#define _gloffset_MultiTexCoordP1ui driDispatchRemapTable[MultiTexCoordP1ui_remap_index]
+#define _gloffset_MultiTexCoordP1uiv driDispatchRemapTable[MultiTexCoordP1uiv_remap_index]
+#define _gloffset_MultiTexCoordP2ui driDispatchRemapTable[MultiTexCoordP2ui_remap_index]
+#define _gloffset_MultiTexCoordP2uiv driDispatchRemapTable[MultiTexCoordP2uiv_remap_index]
+#define _gloffset_MultiTexCoordP3ui driDispatchRemapTable[MultiTexCoordP3ui_remap_index]
+#define _gloffset_MultiTexCoordP3uiv driDispatchRemapTable[MultiTexCoordP3uiv_remap_index]
+#define _gloffset_MultiTexCoordP4ui driDispatchRemapTable[MultiTexCoordP4ui_remap_index]
+#define _gloffset_MultiTexCoordP4uiv driDispatchRemapTable[MultiTexCoordP4uiv_remap_index]
+#define _gloffset_NormalP3ui driDispatchRemapTable[NormalP3ui_remap_index]
+#define _gloffset_NormalP3uiv driDispatchRemapTable[NormalP3uiv_remap_index]
+#define _gloffset_SecondaryColorP3ui driDispatchRemapTable[SecondaryColorP3ui_remap_index]
+#define _gloffset_SecondaryColorP3uiv driDispatchRemapTable[SecondaryColorP3uiv_remap_index]
+#define _gloffset_TexCoordP1ui driDispatchRemapTable[TexCoordP1ui_remap_index]
+#define _gloffset_TexCoordP1uiv driDispatchRemapTable[TexCoordP1uiv_remap_index]
+#define _gloffset_TexCoordP2ui driDispatchRemapTable[TexCoordP2ui_remap_index]
+#define _gloffset_TexCoordP2uiv driDispatchRemapTable[TexCoordP2uiv_remap_index]
+#define _gloffset_TexCoordP3ui driDispatchRemapTable[TexCoordP3ui_remap_index]
+#define _gloffset_TexCoordP3uiv driDispatchRemapTable[TexCoordP3uiv_remap_index]
+#define _gloffset_TexCoordP4ui driDispatchRemapTable[TexCoordP4ui_remap_index]
+#define _gloffset_TexCoordP4uiv driDispatchRemapTable[TexCoordP4uiv_remap_index]
+#define _gloffset_VertexAttribP1ui driDispatchRemapTable[VertexAttribP1ui_remap_index]
+#define _gloffset_VertexAttribP1uiv driDispatchRemapTable[VertexAttribP1uiv_remap_index]
+#define _gloffset_VertexAttribP2ui driDispatchRemapTable[VertexAttribP2ui_remap_index]
+#define _gloffset_VertexAttribP2uiv driDispatchRemapTable[VertexAttribP2uiv_remap_index]
+#define _gloffset_VertexAttribP3ui driDispatchRemapTable[VertexAttribP3ui_remap_index]
+#define _gloffset_VertexAttribP3uiv driDispatchRemapTable[VertexAttribP3uiv_remap_index]
+#define _gloffset_VertexAttribP4ui driDispatchRemapTable[VertexAttribP4ui_remap_index]
+#define _gloffset_VertexAttribP4uiv driDispatchRemapTable[VertexAttribP4uiv_remap_index]
+#define _gloffset_VertexP2ui driDispatchRemapTable[VertexP2ui_remap_index]
+#define _gloffset_VertexP2uiv driDispatchRemapTable[VertexP2uiv_remap_index]
+#define _gloffset_VertexP3ui driDispatchRemapTable[VertexP3ui_remap_index]
+#define _gloffset_VertexP3uiv driDispatchRemapTable[VertexP3uiv_remap_index]
+#define _gloffset_VertexP4ui driDispatchRemapTable[VertexP4ui_remap_index]
+#define _gloffset_VertexP4uiv driDispatchRemapTable[VertexP4uiv_remap_index]
 #define _gloffset_BindTransformFeedback driDispatchRemapTable[BindTransformFeedback_remap_index]
 #define _gloffset_DeleteTransformFeedbacks driDispatchRemapTable[DeleteTransformFeedbacks_remap_index]
 #define _gloffset_DrawTransformFeedback driDispatchRemapTable[DrawTransformFeedback_remap_index]
@@ -8808,6 +8922,424 @@ static INLINE _glptr_SamplerParameteriv GET_SamplerParameteriv(struct _glapi_tab
 
 static INLINE void SET_SamplerParameteriv(struct _glapi_table *disp, void (GLAPIENTRYP fn)(GLuint, GLenum, const GLint *)) {
    SET_by_offset(disp, _gloffset_SamplerParameteriv, fn);
+}
+
+typedef void (GLAPIENTRYP _glptr_ColorP3ui)(GLenum, GLuint);
+#define CALL_ColorP3ui(disp, parameters) \
+    (* GET_ColorP3ui(disp)) parameters
+static INLINE _glptr_ColorP3ui GET_ColorP3ui(struct _glapi_table *disp) {
+   return (_glptr_ColorP3ui) (GET_by_offset(disp, _gloffset_ColorP3ui));
+}
+
+static INLINE void SET_ColorP3ui(struct _glapi_table *disp, void (GLAPIENTRYP fn)(GLenum, GLuint)) {
+   SET_by_offset(disp, _gloffset_ColorP3ui, fn);
+}
+
+typedef void (GLAPIENTRYP _glptr_ColorP3uiv)(GLenum, const GLuint *);
+#define CALL_ColorP3uiv(disp, parameters) \
+    (* GET_ColorP3uiv(disp)) parameters
+static INLINE _glptr_ColorP3uiv GET_ColorP3uiv(struct _glapi_table *disp) {
+   return (_glptr_ColorP3uiv) (GET_by_offset(disp, _gloffset_ColorP3uiv));
+}
+
+static INLINE void SET_ColorP3uiv(struct _glapi_table *disp, void (GLAPIENTRYP fn)(GLenum, const GLuint *)) {
+   SET_by_offset(disp, _gloffset_ColorP3uiv, fn);
+}
+
+typedef void (GLAPIENTRYP _glptr_ColorP4ui)(GLenum, GLuint);
+#define CALL_ColorP4ui(disp, parameters) \
+    (* GET_ColorP4ui(disp)) parameters
+static INLINE _glptr_ColorP4ui GET_ColorP4ui(struct _glapi_table *disp) {
+   return (_glptr_ColorP4ui) (GET_by_offset(disp, _gloffset_ColorP4ui));
+}
+
+static INLINE void SET_ColorP4ui(struct _glapi_table *disp, void (GLAPIENTRYP fn)(GLenum, GLuint)) {
+   SET_by_offset(disp, _gloffset_ColorP4ui, fn);
+}
+
+typedef void (GLAPIENTRYP _glptr_ColorP4uiv)(GLenum, const GLuint *);
+#define CALL_ColorP4uiv(disp, parameters) \
+    (* GET_ColorP4uiv(disp)) parameters
+static INLINE _glptr_ColorP4uiv GET_ColorP4uiv(struct _glapi_table *disp) {
+   return (_glptr_ColorP4uiv) (GET_by_offset(disp, _gloffset_ColorP4uiv));
+}
+
+static INLINE void SET_ColorP4uiv(struct _glapi_table *disp, void (GLAPIENTRYP fn)(GLenum, const GLuint *)) {
+   SET_by_offset(disp, _gloffset_ColorP4uiv, fn);
+}
+
+typedef void (GLAPIENTRYP _glptr_MultiTexCoordP1ui)(GLenum, GLenum, GLuint);
+#define CALL_MultiTexCoordP1ui(disp, parameters) \
+    (* GET_MultiTexCoordP1ui(disp)) parameters
+static INLINE _glptr_MultiTexCoordP1ui GET_MultiTexCoordP1ui(struct _glapi_table *disp) {
+   return (_glptr_MultiTexCoordP1ui) (GET_by_offset(disp, _gloffset_MultiTexCoordP1ui));
+}
+
+static INLINE void SET_MultiTexCoordP1ui(struct _glapi_table *disp, void (GLAPIENTRYP fn)(GLenum, GLenum, GLuint)) {
+   SET_by_offset(disp, _gloffset_MultiTexCoordP1ui, fn);
+}
+
+typedef void (GLAPIENTRYP _glptr_MultiTexCoordP1uiv)(GLenum, GLenum, const GLuint *);
+#define CALL_MultiTexCoordP1uiv(disp, parameters) \
+    (* GET_MultiTexCoordP1uiv(disp)) parameters
+static INLINE _glptr_MultiTexCoordP1uiv GET_MultiTexCoordP1uiv(struct _glapi_table *disp) {
+   return (_glptr_MultiTexCoordP1uiv) (GET_by_offset(disp, _gloffset_MultiTexCoordP1uiv));
+}
+
+static INLINE void SET_MultiTexCoordP1uiv(struct _glapi_table *disp, void (GLAPIENTRYP fn)(GLenum, GLenum, const GLuint *)) {
+   SET_by_offset(disp, _gloffset_MultiTexCoordP1uiv, fn);
+}
+
+typedef void (GLAPIENTRYP _glptr_MultiTexCoordP2ui)(GLenum, GLenum, GLuint);
+#define CALL_MultiTexCoordP2ui(disp, parameters) \
+    (* GET_MultiTexCoordP2ui(disp)) parameters
+static INLINE _glptr_MultiTexCoordP2ui GET_MultiTexCoordP2ui(struct _glapi_table *disp) {
+   return (_glptr_MultiTexCoordP2ui) (GET_by_offset(disp, _gloffset_MultiTexCoordP2ui));
+}
+
+static INLINE void SET_MultiTexCoordP2ui(struct _glapi_table *disp, void (GLAPIENTRYP fn)(GLenum, GLenum, GLuint)) {
+   SET_by_offset(disp, _gloffset_MultiTexCoordP2ui, fn);
+}
+
+typedef void (GLAPIENTRYP _glptr_MultiTexCoordP2uiv)(GLenum, GLenum, const GLuint *);
+#define CALL_MultiTexCoordP2uiv(disp, parameters) \
+    (* GET_MultiTexCoordP2uiv(disp)) parameters
+static INLINE _glptr_MultiTexCoordP2uiv GET_MultiTexCoordP2uiv(struct _glapi_table *disp) {
+   return (_glptr_MultiTexCoordP2uiv) (GET_by_offset(disp, _gloffset_MultiTexCoordP2uiv));
+}
+
+static INLINE void SET_MultiTexCoordP2uiv(struct _glapi_table *disp, void (GLAPIENTRYP fn)(GLenum, GLenum, const GLuint *)) {
+   SET_by_offset(disp, _gloffset_MultiTexCoordP2uiv, fn);
+}
+
+typedef void (GLAPIENTRYP _glptr_MultiTexCoordP3ui)(GLenum, GLenum, GLuint);
+#define CALL_MultiTexCoordP3ui(disp, parameters) \
+    (* GET_MultiTexCoordP3ui(disp)) parameters
+static INLINE _glptr_MultiTexCoordP3ui GET_MultiTexCoordP3ui(struct _glapi_table *disp) {
+   return (_glptr_MultiTexCoordP3ui) (GET_by_offset(disp, _gloffset_MultiTexCoordP3ui));
+}
+
+static INLINE void SET_MultiTexCoordP3ui(struct _glapi_table *disp, void (GLAPIENTRYP fn)(GLenum, GLenum, GLuint)) {
+   SET_by_offset(disp, _gloffset_MultiTexCoordP3ui, fn);
+}
+
+typedef void (GLAPIENTRYP _glptr_MultiTexCoordP3uiv)(GLenum, GLenum, const GLuint *);
+#define CALL_MultiTexCoordP3uiv(disp, parameters) \
+    (* GET_MultiTexCoordP3uiv(disp)) parameters
+static INLINE _glptr_MultiTexCoordP3uiv GET_MultiTexCoordP3uiv(struct _glapi_table *disp) {
+   return (_glptr_MultiTexCoordP3uiv) (GET_by_offset(disp, _gloffset_MultiTexCoordP3uiv));
+}
+
+static INLINE void SET_MultiTexCoordP3uiv(struct _glapi_table *disp, void (GLAPIENTRYP fn)(GLenum, GLenum, const GLuint *)) {
+   SET_by_offset(disp, _gloffset_MultiTexCoordP3uiv, fn);
+}
+
+typedef void (GLAPIENTRYP _glptr_MultiTexCoordP4ui)(GLenum, GLenum, GLuint);
+#define CALL_MultiTexCoordP4ui(disp, parameters) \
+    (* GET_MultiTexCoordP4ui(disp)) parameters
+static INLINE _glptr_MultiTexCoordP4ui GET_MultiTexCoordP4ui(struct _glapi_table *disp) {
+   return (_glptr_MultiTexCoordP4ui) (GET_by_offset(disp, _gloffset_MultiTexCoordP4ui));
+}
+
+static INLINE void SET_MultiTexCoordP4ui(struct _glapi_table *disp, void (GLAPIENTRYP fn)(GLenum, GLenum, GLuint)) {
+   SET_by_offset(disp, _gloffset_MultiTexCoordP4ui, fn);
+}
+
+typedef void (GLAPIENTRYP _glptr_MultiTexCoordP4uiv)(GLenum, GLenum, const GLuint *);
+#define CALL_MultiTexCoordP4uiv(disp, parameters) \
+    (* GET_MultiTexCoordP4uiv(disp)) parameters
+static INLINE _glptr_MultiTexCoordP4uiv GET_MultiTexCoordP4uiv(struct _glapi_table *disp) {
+   return (_glptr_MultiTexCoordP4uiv) (GET_by_offset(disp, _gloffset_MultiTexCoordP4uiv));
+}
+
+static INLINE void SET_MultiTexCoordP4uiv(struct _glapi_table *disp, void (GLAPIENTRYP fn)(GLenum, GLenum, const GLuint *)) {
+   SET_by_offset(disp, _gloffset_MultiTexCoordP4uiv, fn);
+}
+
+typedef void (GLAPIENTRYP _glptr_NormalP3ui)(GLenum, GLuint);
+#define CALL_NormalP3ui(disp, parameters) \
+    (* GET_NormalP3ui(disp)) parameters
+static INLINE _glptr_NormalP3ui GET_NormalP3ui(struct _glapi_table *disp) {
+   return (_glptr_NormalP3ui) (GET_by_offset(disp, _gloffset_NormalP3ui));
+}
+
+static INLINE void SET_NormalP3ui(struct _glapi_table *disp, void (GLAPIENTRYP fn)(GLenum, GLuint)) {
+   SET_by_offset(disp, _gloffset_NormalP3ui, fn);
+}
+
+typedef void (GLAPIENTRYP _glptr_NormalP3uiv)(GLenum, const GLuint *);
+#define CALL_NormalP3uiv(disp, parameters) \
+    (* GET_NormalP3uiv(disp)) parameters
+static INLINE _glptr_NormalP3uiv GET_NormalP3uiv(struct _glapi_table *disp) {
+   return (_glptr_NormalP3uiv) (GET_by_offset(disp, _gloffset_NormalP3uiv));
+}
+
+static INLINE void SET_NormalP3uiv(struct _glapi_table *disp, void (GLAPIENTRYP fn)(GLenum, const GLuint *)) {
+   SET_by_offset(disp, _gloffset_NormalP3uiv, fn);
+}
+
+typedef void (GLAPIENTRYP _glptr_SecondaryColorP3ui)(GLenum, GLuint);
+#define CALL_SecondaryColorP3ui(disp, parameters) \
+    (* GET_SecondaryColorP3ui(disp)) parameters
+static INLINE _glptr_SecondaryColorP3ui GET_SecondaryColorP3ui(struct _glapi_table *disp) {
+   return (_glptr_SecondaryColorP3ui) (GET_by_offset(disp, _gloffset_SecondaryColorP3ui));
+}
+
+static INLINE void SET_SecondaryColorP3ui(struct _glapi_table *disp, void (GLAPIENTRYP fn)(GLenum, GLuint)) {
+   SET_by_offset(disp, _gloffset_SecondaryColorP3ui, fn);
+}
+
+typedef void (GLAPIENTRYP _glptr_SecondaryColorP3uiv)(GLenum, const GLuint *);
+#define CALL_SecondaryColorP3uiv(disp, parameters) \
+    (* GET_SecondaryColorP3uiv(disp)) parameters
+static INLINE _glptr_SecondaryColorP3uiv GET_SecondaryColorP3uiv(struct _glapi_table *disp) {
+   return (_glptr_SecondaryColorP3uiv) (GET_by_offset(disp, _gloffset_SecondaryColorP3uiv));
+}
+
+static INLINE void SET_SecondaryColorP3uiv(struct _glapi_table *disp, void (GLAPIENTRYP fn)(GLenum, const GLuint *)) {
+   SET_by_offset(disp, _gloffset_SecondaryColorP3uiv, fn);
+}
+
+typedef void (GLAPIENTRYP _glptr_TexCoordP1ui)(GLenum, GLuint);
+#define CALL_TexCoordP1ui(disp, parameters) \
+    (* GET_TexCoordP1ui(disp)) parameters
+static INLINE _glptr_TexCoordP1ui GET_TexCoordP1ui(struct _glapi_table *disp) {
+   return (_glptr_TexCoordP1ui) (GET_by_offset(disp, _gloffset_TexCoordP1ui));
+}
+
+static INLINE void SET_TexCoordP1ui(struct _glapi_table *disp, void (GLAPIENTRYP fn)(GLenum, GLuint)) {
+   SET_by_offset(disp, _gloffset_TexCoordP1ui, fn);
+}
+
+typedef void (GLAPIENTRYP _glptr_TexCoordP1uiv)(GLenum, const GLuint *);
+#define CALL_TexCoordP1uiv(disp, parameters) \
+    (* GET_TexCoordP1uiv(disp)) parameters
+static INLINE _glptr_TexCoordP1uiv GET_TexCoordP1uiv(struct _glapi_table *disp) {
+   return (_glptr_TexCoordP1uiv) (GET_by_offset(disp, _gloffset_TexCoordP1uiv));
+}
+
+static INLINE void SET_TexCoordP1uiv(struct _glapi_table *disp, void (GLAPIENTRYP fn)(GLenum, const GLuint *)) {
+   SET_by_offset(disp, _gloffset_TexCoordP1uiv, fn);
+}
+
+typedef void (GLAPIENTRYP _glptr_TexCoordP2ui)(GLenum, GLuint);
+#define CALL_TexCoordP2ui(disp, parameters) \
+    (* GET_TexCoordP2ui(disp)) parameters
+static INLINE _glptr_TexCoordP2ui GET_TexCoordP2ui(struct _glapi_table *disp) {
+   return (_glptr_TexCoordP2ui) (GET_by_offset(disp, _gloffset_TexCoordP2ui));
+}
+
+static INLINE void SET_TexCoordP2ui(struct _glapi_table *disp, void (GLAPIENTRYP fn)(GLenum, GLuint)) {
+   SET_by_offset(disp, _gloffset_TexCoordP2ui, fn);
+}
+
+typedef void (GLAPIENTRYP _glptr_TexCoordP2uiv)(GLenum, const GLuint *);
+#define CALL_TexCoordP2uiv(disp, parameters) \
+    (* GET_TexCoordP2uiv(disp)) parameters
+static INLINE _glptr_TexCoordP2uiv GET_TexCoordP2uiv(struct _glapi_table *disp) {
+   return (_glptr_TexCoordP2uiv) (GET_by_offset(disp, _gloffset_TexCoordP2uiv));
+}
+
+static INLINE void SET_TexCoordP2uiv(struct _glapi_table *disp, void (GLAPIENTRYP fn)(GLenum, const GLuint *)) {
+   SET_by_offset(disp, _gloffset_TexCoordP2uiv, fn);
+}
+
+typedef void (GLAPIENTRYP _glptr_TexCoordP3ui)(GLenum, GLuint);
+#define CALL_TexCoordP3ui(disp, parameters) \
+    (* GET_TexCoordP3ui(disp)) parameters
+static INLINE _glptr_TexCoordP3ui GET_TexCoordP3ui(struct _glapi_table *disp) {
+   return (_glptr_TexCoordP3ui) (GET_by_offset(disp, _gloffset_TexCoordP3ui));
+}
+
+static INLINE void SET_TexCoordP3ui(struct _glapi_table *disp, void (GLAPIENTRYP fn)(GLenum, GLuint)) {
+   SET_by_offset(disp, _gloffset_TexCoordP3ui, fn);
+}
+
+typedef void (GLAPIENTRYP _glptr_TexCoordP3uiv)(GLenum, const GLuint *);
+#define CALL_TexCoordP3uiv(disp, parameters) \
+    (* GET_TexCoordP3uiv(disp)) parameters
+static INLINE _glptr_TexCoordP3uiv GET_TexCoordP3uiv(struct _glapi_table *disp) {
+   return (_glptr_TexCoordP3uiv) (GET_by_offset(disp, _gloffset_TexCoordP3uiv));
+}
+
+static INLINE void SET_TexCoordP3uiv(struct _glapi_table *disp, void (GLAPIENTRYP fn)(GLenum, const GLuint *)) {
+   SET_by_offset(disp, _gloffset_TexCoordP3uiv, fn);
+}
+
+typedef void (GLAPIENTRYP _glptr_TexCoordP4ui)(GLenum, GLuint);
+#define CALL_TexCoordP4ui(disp, parameters) \
+    (* GET_TexCoordP4ui(disp)) parameters
+static INLINE _glptr_TexCoordP4ui GET_TexCoordP4ui(struct _glapi_table *disp) {
+   return (_glptr_TexCoordP4ui) (GET_by_offset(disp, _gloffset_TexCoordP4ui));
+}
+
+static INLINE void SET_TexCoordP4ui(struct _glapi_table *disp, void (GLAPIENTRYP fn)(GLenum, GLuint)) {
+   SET_by_offset(disp, _gloffset_TexCoordP4ui, fn);
+}
+
+typedef void (GLAPIENTRYP _glptr_TexCoordP4uiv)(GLenum, const GLuint *);
+#define CALL_TexCoordP4uiv(disp, parameters) \
+    (* GET_TexCoordP4uiv(disp)) parameters
+static INLINE _glptr_TexCoordP4uiv GET_TexCoordP4uiv(struct _glapi_table *disp) {
+   return (_glptr_TexCoordP4uiv) (GET_by_offset(disp, _gloffset_TexCoordP4uiv));
+}
+
+static INLINE void SET_TexCoordP4uiv(struct _glapi_table *disp, void (GLAPIENTRYP fn)(GLenum, const GLuint *)) {
+   SET_by_offset(disp, _gloffset_TexCoordP4uiv, fn);
+}
+
+typedef void (GLAPIENTRYP _glptr_VertexAttribP1ui)(GLuint, GLenum, GLboolean, GLuint);
+#define CALL_VertexAttribP1ui(disp, parameters) \
+    (* GET_VertexAttribP1ui(disp)) parameters
+static INLINE _glptr_VertexAttribP1ui GET_VertexAttribP1ui(struct _glapi_table *disp) {
+   return (_glptr_VertexAttribP1ui) (GET_by_offset(disp, _gloffset_VertexAttribP1ui));
+}
+
+static INLINE void SET_VertexAttribP1ui(struct _glapi_table *disp, void (GLAPIENTRYP fn)(GLuint, GLenum, GLboolean, GLuint)) {
+   SET_by_offset(disp, _gloffset_VertexAttribP1ui, fn);
+}
+
+typedef void (GLAPIENTRYP _glptr_VertexAttribP1uiv)(GLuint, GLenum, GLboolean, const GLuint *);
+#define CALL_VertexAttribP1uiv(disp, parameters) \
+    (* GET_VertexAttribP1uiv(disp)) parameters
+static INLINE _glptr_VertexAttribP1uiv GET_VertexAttribP1uiv(struct _glapi_table *disp) {
+   return (_glptr_VertexAttribP1uiv) (GET_by_offset(disp, _gloffset_VertexAttribP1uiv));
+}
+
+static INLINE void SET_VertexAttribP1uiv(struct _glapi_table *disp, void (GLAPIENTRYP fn)(GLuint, GLenum, GLboolean, const GLuint *)) {
+   SET_by_offset(disp, _gloffset_VertexAttribP1uiv, fn);
+}
+
+typedef void (GLAPIENTRYP _glptr_VertexAttribP2ui)(GLuint, GLenum, GLboolean, GLuint);
+#define CALL_VertexAttribP2ui(disp, parameters) \
+    (* GET_VertexAttribP2ui(disp)) parameters
+static INLINE _glptr_VertexAttribP2ui GET_VertexAttribP2ui(struct _glapi_table *disp) {
+   return (_glptr_VertexAttribP2ui) (GET_by_offset(disp, _gloffset_VertexAttribP2ui));
+}
+
+static INLINE void SET_VertexAttribP2ui(struct _glapi_table *disp, void (GLAPIENTRYP fn)(GLuint, GLenum, GLboolean, GLuint)) {
+   SET_by_offset(disp, _gloffset_VertexAttribP2ui, fn);
+}
+
+typedef void (GLAPIENTRYP _glptr_VertexAttribP2uiv)(GLuint, GLenum, GLboolean, const GLuint *);
+#define CALL_VertexAttribP2uiv(disp, parameters) \
+    (* GET_VertexAttribP2uiv(disp)) parameters
+static INLINE _glptr_VertexAttribP2uiv GET_VertexAttribP2uiv(struct _glapi_table *disp) {
+   return (_glptr_VertexAttribP2uiv) (GET_by_offset(disp, _gloffset_VertexAttribP2uiv));
+}
+
+static INLINE void SET_VertexAttribP2uiv(struct _glapi_table *disp, void (GLAPIENTRYP fn)(GLuint, GLenum, GLboolean, const GLuint *)) {
+   SET_by_offset(disp, _gloffset_VertexAttribP2uiv, fn);
+}
+
+typedef void (GLAPIENTRYP _glptr_VertexAttribP3ui)(GLuint, GLenum, GLboolean, GLuint);
+#define CALL_VertexAttribP3ui(disp, parameters) \
+    (* GET_VertexAttribP3ui(disp)) parameters
+static INLINE _glptr_VertexAttribP3ui GET_VertexAttribP3ui(struct _glapi_table *disp) {
+   return (_glptr_VertexAttribP3ui) (GET_by_offset(disp, _gloffset_VertexAttribP3ui));
+}
+
+static INLINE void SET_VertexAttribP3ui(struct _glapi_table *disp, void (GLAPIENTRYP fn)(GLuint, GLenum, GLboolean, GLuint)) {
+   SET_by_offset(disp, _gloffset_VertexAttribP3ui, fn);
+}
+
+typedef void (GLAPIENTRYP _glptr_VertexAttribP3uiv)(GLuint, GLenum, GLboolean, const GLuint *);
+#define CALL_VertexAttribP3uiv(disp, parameters) \
+    (* GET_VertexAttribP3uiv(disp)) parameters
+static INLINE _glptr_VertexAttribP3uiv GET_VertexAttribP3uiv(struct _glapi_table *disp) {
+   return (_glptr_VertexAttribP3uiv) (GET_by_offset(disp, _gloffset_VertexAttribP3uiv));
+}
+
+static INLINE void SET_VertexAttribP3uiv(struct _glapi_table *disp, void (GLAPIENTRYP fn)(GLuint, GLenum, GLboolean, const GLuint *)) {
+   SET_by_offset(disp, _gloffset_VertexAttribP3uiv, fn);
+}
+
+typedef void (GLAPIENTRYP _glptr_VertexAttribP4ui)(GLuint, GLenum, GLboolean, GLuint);
+#define CALL_VertexAttribP4ui(disp, parameters) \
+    (* GET_VertexAttribP4ui(disp)) parameters
+static INLINE _glptr_VertexAttribP4ui GET_VertexAttribP4ui(struct _glapi_table *disp) {
+   return (_glptr_VertexAttribP4ui) (GET_by_offset(disp, _gloffset_VertexAttribP4ui));
+}
+
+static INLINE void SET_VertexAttribP4ui(struct _glapi_table *disp, void (GLAPIENTRYP fn)(GLuint, GLenum, GLboolean, GLuint)) {
+   SET_by_offset(disp, _gloffset_VertexAttribP4ui, fn);
+}
+
+typedef void (GLAPIENTRYP _glptr_VertexAttribP4uiv)(GLuint, GLenum, GLboolean, const GLuint *);
+#define CALL_VertexAttribP4uiv(disp, parameters) \
+    (* GET_VertexAttribP4uiv(disp)) parameters
+static INLINE _glptr_VertexAttribP4uiv GET_VertexAttribP4uiv(struct _glapi_table *disp) {
+   return (_glptr_VertexAttribP4uiv) (GET_by_offset(disp, _gloffset_VertexAttribP4uiv));
+}
+
+static INLINE void SET_VertexAttribP4uiv(struct _glapi_table *disp, void (GLAPIENTRYP fn)(GLuint, GLenum, GLboolean, const GLuint *)) {
+   SET_by_offset(disp, _gloffset_VertexAttribP4uiv, fn);
+}
+
+typedef void (GLAPIENTRYP _glptr_VertexP2ui)(GLenum, GLuint);
+#define CALL_VertexP2ui(disp, parameters) \
+    (* GET_VertexP2ui(disp)) parameters
+static INLINE _glptr_VertexP2ui GET_VertexP2ui(struct _glapi_table *disp) {
+   return (_glptr_VertexP2ui) (GET_by_offset(disp, _gloffset_VertexP2ui));
+}
+
+static INLINE void SET_VertexP2ui(struct _glapi_table *disp, void (GLAPIENTRYP fn)(GLenum, GLuint)) {
+   SET_by_offset(disp, _gloffset_VertexP2ui, fn);
+}
+
+typedef void (GLAPIENTRYP _glptr_VertexP2uiv)(GLenum, const GLuint *);
+#define CALL_VertexP2uiv(disp, parameters) \
+    (* GET_VertexP2uiv(disp)) parameters
+static INLINE _glptr_VertexP2uiv GET_VertexP2uiv(struct _glapi_table *disp) {
+   return (_glptr_VertexP2uiv) (GET_by_offset(disp, _gloffset_VertexP2uiv));
+}
+
+static INLINE void SET_VertexP2uiv(struct _glapi_table *disp, void (GLAPIENTRYP fn)(GLenum, const GLuint *)) {
+   SET_by_offset(disp, _gloffset_VertexP2uiv, fn);
+}
+
+typedef void (GLAPIENTRYP _glptr_VertexP3ui)(GLenum, GLuint);
+#define CALL_VertexP3ui(disp, parameters) \
+    (* GET_VertexP3ui(disp)) parameters
+static INLINE _glptr_VertexP3ui GET_VertexP3ui(struct _glapi_table *disp) {
+   return (_glptr_VertexP3ui) (GET_by_offset(disp, _gloffset_VertexP3ui));
+}
+
+static INLINE void SET_VertexP3ui(struct _glapi_table *disp, void (GLAPIENTRYP fn)(GLenum, GLuint)) {
+   SET_by_offset(disp, _gloffset_VertexP3ui, fn);
+}
+
+typedef void (GLAPIENTRYP _glptr_VertexP3uiv)(GLenum, const GLuint *);
+#define CALL_VertexP3uiv(disp, parameters) \
+    (* GET_VertexP3uiv(disp)) parameters
+static INLINE _glptr_VertexP3uiv GET_VertexP3uiv(struct _glapi_table *disp) {
+   return (_glptr_VertexP3uiv) (GET_by_offset(disp, _gloffset_VertexP3uiv));
+}
+
+static INLINE void SET_VertexP3uiv(struct _glapi_table *disp, void (GLAPIENTRYP fn)(GLenum, const GLuint *)) {
+   SET_by_offset(disp, _gloffset_VertexP3uiv, fn);
+}
+
+typedef void (GLAPIENTRYP _glptr_VertexP4ui)(GLenum, GLuint);
+#define CALL_VertexP4ui(disp, parameters) \
+    (* GET_VertexP4ui(disp)) parameters
+static INLINE _glptr_VertexP4ui GET_VertexP4ui(struct _glapi_table *disp) {
+   return (_glptr_VertexP4ui) (GET_by_offset(disp, _gloffset_VertexP4ui));
+}
+
+static INLINE void SET_VertexP4ui(struct _glapi_table *disp, void (GLAPIENTRYP fn)(GLenum, GLuint)) {
+   SET_by_offset(disp, _gloffset_VertexP4ui, fn);
+}
+
+typedef void (GLAPIENTRYP _glptr_VertexP4uiv)(GLenum, const GLuint *);
+#define CALL_VertexP4uiv(disp, parameters) \
+    (* GET_VertexP4uiv(disp)) parameters
+static INLINE _glptr_VertexP4uiv GET_VertexP4uiv(struct _glapi_table *disp) {
+   return (_glptr_VertexP4uiv) (GET_by_offset(disp, _gloffset_VertexP4uiv));
+}
+
+static INLINE void SET_VertexP4uiv(struct _glapi_table *disp, void (GLAPIENTRYP fn)(GLenum, const GLuint *)) {
+   SET_by_offset(disp, _gloffset_VertexP4uiv, fn);
 }
 
 typedef void (GLAPIENTRYP _glptr_BindTransformFeedback)(GLenum, GLuint);
