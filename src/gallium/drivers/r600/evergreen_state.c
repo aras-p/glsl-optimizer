@@ -970,6 +970,7 @@ static struct pipe_sampler_view *evergreen_create_sampler_view(struct pipe_conte
 	uint32_t word4 = 0, yuv_format = 0, pitch = 0;
 	unsigned char swizzle[4], array_mode = 0, tile_type = 0;
 	struct r600_bo *bo[2];
+	unsigned height, depth;
 
 	if (view == NULL)
 		return NULL;
@@ -1011,20 +1012,32 @@ static struct pipe_sampler_view *evergreen_create_sampler_view(struct pipe_conte
 	bo[0] = rbuffer->bo;
 	bo[1] = rbuffer->bo;
 
-	pitch = align(tmp->pitch_in_blocks[0] * util_format_get_blockwidth(state->format), 8);
+	height = texture->height0;
+	depth = texture->depth0;
+
+	pitch = align(tmp->pitch_in_blocks[0] *
+		      util_format_get_blockwidth(state->format), 8);
 	array_mode = tmp->array_mode[0];
 	tile_type = tmp->tile_type;
+
+	if (texture->target == PIPE_TEXTURE_1D_ARRAY) {
+	        height = 1;
+		depth = texture->array_size;
+	} else if (texture->target == PIPE_TEXTURE_2D_ARRAY) {
+		depth = texture->array_size;
+	}
 
 	rstate->bo[0] = bo[0];
 	rstate->bo[1] = bo[1];
 	rstate->bo_usage[0] = RADEON_USAGE_READ;
 	rstate->bo_usage[1] = RADEON_USAGE_READ;
+
 	rstate->val[0] = (S_030000_DIM(r600_tex_dim(texture->target)) |
 			  S_030000_PITCH((pitch / 8) - 1) |
 			  S_030000_NON_DISP_TILING_ORDER(tile_type) |
 			  S_030000_TEX_WIDTH(texture->width0 - 1));
-	rstate->val[1] = (S_030004_TEX_HEIGHT(texture->height0 - 1) |
-			  S_030004_TEX_DEPTH(texture->depth0 - 1) |
+	rstate->val[1] = (S_030004_TEX_HEIGHT(height - 1) |
+			  S_030004_TEX_DEPTH(depth - 1) |
 			  S_030004_ARRAY_MODE(array_mode));
 	rstate->val[2] = tmp->offset[0] >> 8;
 	rstate->val[3] = tmp->offset[1] >> 8;
@@ -1033,8 +1046,8 @@ static struct pipe_sampler_view *evergreen_create_sampler_view(struct pipe_conte
 			  S_030010_ENDIAN_SWAP(endian) |
 			  S_030010_BASE_LEVEL(state->u.tex.first_level));
 	rstate->val[5] = (S_030014_LAST_LEVEL(state->u.tex.last_level) |
-			  S_030014_BASE_ARRAY(0) |
-			  S_030014_LAST_ARRAY(0));
+			  S_030014_BASE_ARRAY(state->u.tex.first_layer) |
+			  S_030014_LAST_ARRAY(state->u.tex.last_layer));
 	rstate->val[6] = (S_030018_MAX_ANISO(4 /* max 16 samples */));
 	rstate->val[7] = (S_03001C_DATA_FORMAT(format) |
 			  S_03001C_TYPE(V_03001C_SQ_TEX_VTX_VALID_TEXTURE));
