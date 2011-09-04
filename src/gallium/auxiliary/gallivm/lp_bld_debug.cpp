@@ -27,17 +27,23 @@
 
 #include <llvm-c/Core.h>
 #include <llvm/Target/TargetMachine.h>
-#include <llvm/Target/TargetRegistry.h>
-#include <llvm/Target/TargetSelect.h>
 #include <llvm/Target/TargetInstrInfo.h>
 #include <llvm/Support/raw_ostream.h>
 #include <llvm/Support/MemoryObject.h>
 
+#if HAVE_LLVM >= 0x0300
+#include <llvm/Support/TargetRegistry.h>
+#include <llvm/Support/TargetSelect.h>
+#else /* HAVE_LLVM < 0x0300 */
+#include <llvm/Target/TargetRegistry.h>
+#include <llvm/Target/TargetSelect.h>
+#endif /* HAVE_LLVM < 0x0300 */
+
 #if HAVE_LLVM >= 0x0209
 #include <llvm/Support/Host.h>
-#else
+#else /* HAVE_LLVM < 0x0209 */
 #include <llvm/System/Host.h>
-#endif
+#endif /* HAVE_LLVM < 0x0209 */
 
 #if HAVE_LLVM >= 0x0207
 #include <llvm/MC/MCDisassembler.h>
