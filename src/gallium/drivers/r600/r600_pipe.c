@@ -380,9 +380,6 @@ static int r600_get_param(struct pipe_screen* pscreen, enum pipe_cap param)
 	case PIPE_CAP_TGSI_FS_COORD_PIXEL_CENTER_INTEGER:
 		return 0;
 
-	case PIPE_CAP_MAX_TEXTURE_ARRAY_LAYERS:
-		return 0; /* will be re-enabled in the following commits. */
-
 	/* Texturing. */
 	case PIPE_CAP_MAX_TEXTURE_2D_LEVELS:
 	case PIPE_CAP_MAX_TEXTURE_3D_LEVELS:
@@ -391,6 +388,9 @@ static int r600_get_param(struct pipe_screen* pscreen, enum pipe_cap param)
 			return 15;
 		else
 			return 14;
+	case PIPE_CAP_MAX_TEXTURE_ARRAY_LAYERS:
+		return r600_get_minor_version(rscreen->radeon) >= 9 ?
+			(family >= CHIP_CEDAR ? 16384 : 8192) : 0;
 	case PIPE_CAP_MAX_VERTEX_TEXTURE_UNITS:
 	case PIPE_CAP_MAX_TEXTURE_IMAGE_UNITS:
 		return 16;
