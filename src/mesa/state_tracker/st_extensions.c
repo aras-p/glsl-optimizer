@@ -207,6 +207,7 @@ void st_init_limits(struct st_context *st)
       c->MaxProgramTexelOffset = screen->get_param(screen, PIPE_CAP_MAX_TEXEL_OFFSET);
 
       c->GLSLVersion = 120;
+      c->UniformBooleanTrue = ~0;
    }
 }
 

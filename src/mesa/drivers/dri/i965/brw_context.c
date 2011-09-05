@@ -253,8 +253,10 @@ GLboolean brwCreateContext( int api,
    /* If we're using the new shader backend, we require integer uniforms
     * stored as actual integers.
     */
-   if (brw->new_vs_backend)
+   if (brw->new_vs_backend) {
       ctx->Const.NativeIntegers = true;
+      ctx->Const.UniformBooleanTrue = 1;
+   }
 
    return GL_TRUE;
 }

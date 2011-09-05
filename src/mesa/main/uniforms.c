@@ -802,7 +802,10 @@ set_program_uniform(struct gl_context *ctx, struct gl_program *program,
                else
                   uniformVal[i].b = uniformVal[i].u ? 1 : 0;
                
-               if (!ctx->Const.NativeIntegers)
+               if (ctx->Const.NativeIntegers)
+                  uniformVal[i].u =
+                        uniformVal[i].b ? ctx->Const.UniformBooleanTrue : 0;
+               else
                   uniformVal[i].f = uniformVal[i].b ? 1.0f : 0.0f;
             }
          }

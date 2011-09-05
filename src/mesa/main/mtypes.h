@@ -2722,6 +2722,12 @@ struct gl_constants
     */
    GLboolean NativeIntegers;
 
+   /**
+    * If the driver supports real 32-bit integers, what integer value should be
+    * used for boolean true in uniform uploads?  (Usually 1 or ~0.)
+    */
+   GLuint UniformBooleanTrue;
+
    /** Which texture units support GL_ATI_envmap_bumpmap as targets */
    GLbitfield SupportedBumpUnits;
 
