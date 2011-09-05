@@ -820,6 +820,11 @@ ir_reader::read_constant(s_expression *expr)
       }
       ++k;
    }
+   if (k != type->components()) {
+      ir_read_error(values, "expected %d constant values, found %d",
+		    type->components(), k);
+      return NULL;
+   }
 
    return new(mem_ctx) ir_constant(type, &data);
 }
