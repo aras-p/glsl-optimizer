@@ -480,15 +480,31 @@ static void blitter_set_texcoords_3d(struct blitter_context_priv *ctx,
                                      unsigned level,
                                      unsigned zslice,
                                      unsigned x1, unsigned y1,
-                                     unsigned x2, unsigned y2)
+                                     unsigned x2, unsigned y2,
+				     boolean normalized)
 {
    int i;
-   float r = zslice / (float)u_minify(src->depth0, level);
+   float r = normalized ? zslice / (float)u_minify(src->depth0, level) : zslice;
 
    blitter_set_texcoords_2d(ctx, src, level, x1, y1, x2, y2);
 
    for (i = 0; i < 4; i++)
       ctx->vertices[i][1][2] = r; /*r*/
+}
+
+static void blitter_set_texcoords_1d_array(struct blitter_context_priv *ctx,
+                                           struct pipe_resource *src,
+                                           unsigned level,
+                                           unsigned zslice,
+                                           unsigned x1, unsigned x2)
+{
+   int i;
+   float r = zslice;
+
+   blitter_set_texcoords_2d(ctx, src, level, x1, 0, x2, 0);
+
+   for (i = 0; i < 4; i++)
+      ctx->vertices[i][1][1] = r; /*r*/
 }
 
 static void blitter_set_texcoords_cube(struct blitter_context_priv *ctx,
@@ -576,6 +592,10 @@ pipe_tex_to_tgsi_tex(enum pipe_texture_target pipe_tex_target)
       return TGSI_TEXTURE_3D;
    case PIPE_TEXTURE_CUBE:
       return TGSI_TEXTURE_CUBE;
+   case PIPE_TEXTURE_1D_ARRAY:
+      return TGSI_TEXTURE_1D_ARRAY;
+   case PIPE_TEXTURE_2D_ARRAY:
+      return TGSI_TEXTURE_2D_ARRAY;
    default:
       assert(0 && "unexpected texture target");
       return TGSI_TEXTURE_UNKNOWN;
@@ -861,17 +881,31 @@ void util_blitter_copy_texture(struct blitter_context *blitter,
          break;
 
       /* Draw the quad with the generic codepath. */
-      case PIPE_TEXTURE_3D:
-      case PIPE_TEXTURE_CUBE:
+      default:
          /* Set texture coordinates. */
-         if (src->target == PIPE_TEXTURE_3D)
+         switch (src->target) {
+         case PIPE_TEXTURE_1D_ARRAY:
+            blitter_set_texcoords_1d_array(ctx, src, srclevel, srcbox->y,
+                                           srcbox->x, srcbox->x + width);
+            break;
+
+         case PIPE_TEXTURE_2D_ARRAY:
+         case PIPE_TEXTURE_3D:
             blitter_set_texcoords_3d(ctx, src, srclevel, srcbox->z,
                                      srcbox->x, srcbox->y,
-                                     srcbox->x + width, srcbox->y + height);
-         else
+                                     srcbox->x + width, srcbox->y + height,
+                                     src->target == PIPE_TEXTURE_3D);
+            break;
+
+         case PIPE_TEXTURE_CUBE:
             blitter_set_texcoords_cube(ctx, src, srclevel, srcbox->z,
                                        srcbox->x, srcbox->y,
                                        srcbox->x + width, srcbox->y + height);
+            break;
+
+         default:
+            assert(0);
+         }
 
          /* Draw. */
          blitter_set_rectangle(ctx, dstx, dsty, dstx+width, dsty+height, 0);
@@ -880,10 +914,6 @@ void util_blitter_copy_texture(struct blitter_context *blitter,
          util_draw_vertex_buffer(ctx->base.pipe, NULL, ctx->vbuf, 0,
                                  PIPE_PRIM_TRIANGLE_FAN, 4, 2);
          break;
-
-      default:
-         assert(0);
-         return;
    }
 
    blitter_restore_CSOs(ctx);
