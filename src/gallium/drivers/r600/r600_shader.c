@@ -2177,7 +2177,10 @@ static int tgsi_tex(struct r600_shader_ctx *ctx)
 	}
 
 	opcode = ctx->inst_info->r600_opcode;
-	if (inst->Texture.Texture == TGSI_TEXTURE_SHADOW1D || inst->Texture.Texture == TGSI_TEXTURE_SHADOW2D) {
+	if (inst->Texture.Texture == TGSI_TEXTURE_SHADOW1D ||
+	    inst->Texture.Texture == TGSI_TEXTURE_SHADOW2D ||
+	    inst->Texture.Texture == TGSI_TEXTURE_SHADOW1D_ARRAY ||
+	    inst->Texture.Texture == TGSI_TEXTURE_SHADOW2D_ARRAY) {
 		switch (opcode) {
 		case SQ_TEX_INST_SAMPLE:
 			opcode = SQ_TEX_INST_SAMPLE_C;
@@ -2232,14 +2235,33 @@ static int tgsi_tex(struct r600_shader_ctx *ctx)
 	tex.offset_x = offset_x;
 	tex.offset_y = offset_y;
 	tex.offset_z = offset_z;
-	if (inst->Texture.Texture == TGSI_TEXTURE_1D_ARRAY) {
-		tex.coord_type_z = 0;
-		tex.src_sel_z = tex.src_sel_y;
-	} else if (inst->Texture.Texture == TGSI_TEXTURE_2D_ARRAY)
-		tex.coord_type_z = 0;
 
-	if (inst->Texture.Texture == TGSI_TEXTURE_SHADOW1D || inst->Texture.Texture == TGSI_TEXTURE_SHADOW2D)
+	/* Put the depth for comparison in W.
+	 * TGSI_TEXTURE_SHADOW2D_ARRAY already has the depth in W.
+	 * Some instructions expect the depth in Z. */
+	if ((inst->Texture.Texture == TGSI_TEXTURE_SHADOW1D ||
+	     inst->Texture.Texture == TGSI_TEXTURE_SHADOW2D ||
+	     inst->Texture.Texture == TGSI_TEXTURE_SHADOW1D_ARRAY) &&
+	    opcode != SQ_TEX_INST_SAMPLE_C_L &&
+	    opcode != SQ_TEX_INST_SAMPLE_C_LB) {
 		tex.src_sel_w = tex.src_sel_z;
+	}
+
+	if (inst->Texture.Texture == TGSI_TEXTURE_1D_ARRAY ||
+	    inst->Texture.Texture == TGSI_TEXTURE_SHADOW1D_ARRAY) {
+		if (opcode == SQ_TEX_INST_SAMPLE_C_L ||
+		    opcode == SQ_TEX_INST_SAMPLE_C_LB) {
+			/* the array index is read from Y */
+			tex.coord_type_y = 0;
+		} else {
+			/* the array index is read from Z */
+			tex.coord_type_z = 0;
+			tex.src_sel_z = tex.src_sel_y;
+		}
+	} else if (inst->Texture.Texture == TGSI_TEXTURE_2D_ARRAY ||
+		   inst->Texture.Texture == TGSI_TEXTURE_SHADOW2D_ARRAY)
+		/* the array index is read from Z */
+		tex.coord_type_z = 0;
 
 	r = r600_bytecode_add_tex(ctx->bc, &tex);
 	if (r)

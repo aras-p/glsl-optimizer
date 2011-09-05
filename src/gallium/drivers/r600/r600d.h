@@ -3519,18 +3519,34 @@
 
 #define R_03E200_SQ_LOOP_CONST_0                     0x3E200
 
-#define SQ_TEX_INST_LD 0x03
-#define SQ_TEX_INST_GET_TEXTURE_RESINFO 0x04
-#define SQ_TEX_INST_GET_GRADIENTS_H 0x7
-#define SQ_TEX_INST_GET_GRADIENTS_V 0x8
-#define SQ_TEX_INST_SET_GRADIENTS_H 0xB
-#define SQ_TEX_INST_SET_GRADIENTS_V 0xC
+#define SQ_TEX_INST_LD			0x03
+#define SQ_TEX_INST_GET_TEXTURE_RESINFO	0x04
+#define SQ_TEX_INST_GET_BORDER_COLOR_FRAC 0x05
+#define SQ_TEX_INST_GET_COMP_TEX_LOD	0x06
+#define SQ_TEX_INST_GET_GRADIENTS_H	0x07
+#define SQ_TEX_INST_GET_GRADIENTS_V	0x08
+#define SQ_TEX_INST_GET_LERP_FACTORS	0x09
+#define SQ_TEX_INST_GET_WEIGHTS		0x0A
+#define SQ_TEX_INST_SET_GRADIENTS_H	0x0B
+#define SQ_TEX_INST_SET_GRADIENTS_V	0x0C
+#define SQ_TEX_INST_PASS		0x0D
+#define SQ_TEX_INST_SET_CUBEMAP_INDEX	0x0E
 
-#define SQ_TEX_INST_SAMPLE 0x10
-#define SQ_TEX_INST_SAMPLE_L 0x11
-#define SQ_TEX_INST_SAMPLE_G 0x14
-#define SQ_TEX_INST_SAMPLE_C 0x18
-#define SQ_TEX_INST_SAMPLE_C_L 0x19
-#define SQ_TEX_INST_SAMPLE_C_G 0x1C
+#define SQ_TEX_INST_SAMPLE		0x10
+#define SQ_TEX_INST_SAMPLE_L		0x11
+#define SQ_TEX_INST_SAMPLE_LB		0x12
+#define SQ_TEX_INST_SAMPLE_LZ		0x13
+#define SQ_TEX_INST_SAMPLE_G		0x14
+#define SQ_TEX_INST_SAMPLE_G_L		0x15
+#define SQ_TEX_INST_SAMPLE_G_LB		0x16
+#define SQ_TEX_INST_SAMPLE_G_LZ		0x17
+#define SQ_TEX_INST_SAMPLE_C		0x18 /* src.xyz = texcoord, src.z = array index (if needed), src.w = depth */
+#define SQ_TEX_INST_SAMPLE_C_L		0x19 /* src.xy  = texcoord, src.y = array index (if needed), src.z = depth, src.w = lod */
+#define SQ_TEX_INST_SAMPLE_C_LB		0x1A /* src.xy  = texcoord, src.y = array index (if needed), src.z = depth, src.w = bias */
+#define SQ_TEX_INST_SAMPLE_C_LZ		0x1B
+#define SQ_TEX_INST_SAMPLE_C_G		0x1C
+#define SQ_TEX_INST_SAMPLE_C_G_L	0x1D
+#define SQ_TEX_INST_SAMPLE_C_G_LB	0x1E
+#define SQ_TEX_INST_SAMPLE_C_G_LZ	0x1F
 
 #endif
