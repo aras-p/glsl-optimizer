@@ -124,7 +124,7 @@ i915_get_param(struct pipe_screen *screen, enum pipe_cap cap)
       return is->debug.lie ? 1 : 0;
 
    /* Unsupported features (boolean caps). */
-   case PIPE_CAP_ARRAY_TEXTURES:
+   case PIPE_CAP_MAX_TEXTURE_ARRAY_LAYERS:
    case PIPE_CAP_DEPTH_CLAMP:
    case PIPE_CAP_INDEP_BLEND_ENABLE:
    case PIPE_CAP_INDEP_BLEND_FUNC:

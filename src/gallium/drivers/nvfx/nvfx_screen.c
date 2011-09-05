@@ -85,7 +85,7 @@ nvfx_screen_get_param(struct pipe_screen *pscreen, enum pipe_cap param)
 		return 0; // TODO: implement depth clamp
 	case PIPE_CAP_PRIMITIVE_RESTART:
 		return 0; // TODO: implement primitive restart
-	case PIPE_CAP_ARRAY_TEXTURES:
+	case PIPE_CAP_MAX_TEXTURE_ARRAY_LAYERS:
 	case PIPE_CAP_TGSI_INSTANCEID:
 	case PIPE_CAP_VERTEX_ELEMENT_INSTANCE_DIVISOR:
 	case PIPE_CAP_FRAGMENT_COLOR_CLAMP_CONTROL:

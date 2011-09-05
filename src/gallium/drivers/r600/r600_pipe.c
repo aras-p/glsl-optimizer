@@ -380,9 +380,8 @@ static int r600_get_param(struct pipe_screen* pscreen, enum pipe_cap param)
 	case PIPE_CAP_TGSI_FS_COORD_PIXEL_CENTER_INTEGER:
 		return 0;
 
-	case PIPE_CAP_ARRAY_TEXTURES:
-		/* fix once the CS checker upstream is fixed */
-		return debug_get_bool_option("R600_ARRAY_TEXTURE", FALSE);
+	case PIPE_CAP_MAX_TEXTURE_ARRAY_LAYERS:
+		return 0; /* will be re-enabled in the following commits. */
 
 	/* Texturing. */
 	case PIPE_CAP_MAX_TEXTURE_2D_LEVELS:
