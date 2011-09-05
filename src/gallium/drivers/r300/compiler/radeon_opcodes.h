@@ -133,6 +133,9 @@ typedef enum {
 	/** scalar instruction: dst = 1 / src0.x */
 	RC_OPCODE_RCP,
 
+	/** vec4 instruction: dst.c = floor(src0.c + 0.5) */
+	RC_OPCODE_ROUND,
+
 	/** scalar instruction: dst = 1 / sqrt(src0.x) */
 	RC_OPCODE_RSQ,
 

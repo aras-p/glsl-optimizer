@@ -104,6 +104,13 @@ static const struct rc_src_register builtin_one = {
 	.Index = 0,
 	.Swizzle = RC_SWIZZLE_1111
 };
+
+static const struct rc_src_register builtin_half = {
+	.File = RC_FILE_NONE,
+	.Index = 0,
+	.Swizzle = RC_SWIZZLE_HHHH
+};
+
 static const struct rc_src_register srcreg_undefined = {
 	.File = RC_FILE_NONE,
 	.Index = 0,
@@ -416,6 +423,43 @@ static void transform_POW(struct radeon_compiler* c,
 	rc_remove_instruction(inst);
 }
 
+/* dst = ROUND(src) :
+ *   add = src + .5
+ *   frac = FRC(add)
+ *   dst = add - frac
+ *
+ * According to the GLSL spec, the implementor can decide which way to round
+ * when the fraction is .5.  We round down for .5.
+ *
+ */
+static void transform_ROUND(struct radeon_compiler* c,
+	struct rc_instruction* inst)
+{
+	unsigned int mask = inst->U.I.DstReg.WriteMask;
+	unsigned int frac_index, add_index;
+	struct rc_dst_register frac_dst, add_dst;
+	struct rc_src_register frac_src, add_src;
+
+	/* add = src + .5 */
+	add_index = rc_find_free_temporary(c);
+	add_dst = dstregtmpmask(add_index, mask);
+	emit2(c, inst->Prev, RC_OPCODE_ADD, 0, add_dst, inst->U.I.SrcReg[0],
+								builtin_half);
+	add_src = srcreg(RC_FILE_TEMPORARY, add_dst.Index);
+
+
+	/* frac = FRC(add) */
+	frac_index = rc_find_free_temporary(c);
+	frac_dst = dstregtmpmask(frac_index, mask);
+	emit1(c, inst->Prev, RC_OPCODE_FRC, 0, frac_dst, add_src);
+	frac_src = srcreg(RC_FILE_TEMPORARY, frac_dst.Index);
+
+	/* dst = add - frac */
+	emit2(c, inst->Prev, RC_OPCODE_ADD, 0, inst->U.I.DstReg,
+						add_src, negate(frac_src));
+	rc_remove_instruction(inst);
+}
+
 static void transform_RSQ(struct radeon_compiler* c,
 	struct rc_instruction* inst)
 {
@@ -599,6 +643,7 @@ int radeonTransformALU(
 	case RC_OPCODE_LIT: transform_LIT(c, inst); return 1;
 	case RC_OPCODE_LRP: transform_LRP(c, inst); return 1;
 	case RC_OPCODE_POW: transform_POW(c, inst); return 1;
+	case RC_OPCODE_ROUND: transform_ROUND(c, inst); return 1;
 	case RC_OPCODE_RSQ: transform_RSQ(c, inst); return 1;
 	case RC_OPCODE_SEQ: transform_SEQ(c, inst); return 1;
 	case RC_OPCODE_SFL: transform_SFL(c, inst); return 1;
