@@ -2156,6 +2156,8 @@ ir_to_mesa_visitor::visit(ir_texture *ir)
       break;
    }
 
+   const glsl_type *sampler_type = ir->sampler->type;
+
    if (ir->projector) {
       if (opcode == OPCODE_TEX) {
 	 /* Slot the projector in as the last component of the coord. */
@@ -2187,6 +2189,9 @@ ir_to_mesa_visitor::visit(ir_texture *ir)
 	    tmp_src = get_temp(glsl_type::vec4_type);
 	    dst_reg tmp_dst = dst_reg(tmp_src);
 
+	    /* Projective division not allowed for array samplers. */
+	    assert(!sampler_type->sampler_array);
+
 	    tmp_dst.writemask = WRITEMASK_Z;
 	    emit(ir, OPCODE_MOV, tmp_dst, this->result);
 
@@ -2211,7 +2216,15 @@ ir_to_mesa_visitor::visit(ir_texture *ir)
        * coord.
        */
       ir->shadow_comparitor->accept(this);
-      coord_dst.writemask = WRITEMASK_Z;
+
+      /* XXX This will need to be updated for cubemap array samplers. */
+      if (sampler_type->sampler_dimensionality == GLSL_SAMPLER_DIM_2D &&
+          sampler_type->sampler_array) {
+         coord_dst.writemask = WRITEMASK_W;
+      } else {
+         coord_dst.writemask = WRITEMASK_Z;
+      }
+
       emit(ir, OPCODE_MOV, coord_dst, this->result);
       coord_dst.writemask = WRITEMASK_XYZW;
    }
@@ -2234,8 +2247,6 @@ ir_to_mesa_visitor::visit(ir_texture *ir)
    inst->sampler = _mesa_get_sampler_uniform_value(ir->sampler,
 						   this->shader_program,
 						   this->prog);
-
-   const glsl_type *sampler_type = ir->sampler->type;
 
    switch (sampler_type->sampler_dimensionality) {
    case GLSL_SAMPLER_DIM_1D:
