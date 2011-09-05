@@ -270,21 +270,21 @@ tgsi_util_get_inst_usage_mask(const struct tgsi_full_instruction *inst,
          case TGSI_TEXTURE_SHADOW1D:
             read_mask = TGSI_WRITEMASK_XZ;
             break;
+         case TGSI_TEXTURE_1D_ARRAY:
          case TGSI_TEXTURE_2D:
          case TGSI_TEXTURE_RECT:
             read_mask = TGSI_WRITEMASK_XY;
             break;
+         case TGSI_TEXTURE_SHADOW1D_ARRAY:
          case TGSI_TEXTURE_SHADOW2D:
          case TGSI_TEXTURE_SHADOWRECT:
+         case TGSI_TEXTURE_2D_ARRAY:
          case TGSI_TEXTURE_3D:
          case TGSI_TEXTURE_CUBE:
             read_mask = TGSI_WRITEMASK_XYZ;
             break;
-         case TGSI_TEXTURE_1D_ARRAY:
-            read_mask = TGSI_WRITEMASK_XY;
-            break;
-         case TGSI_TEXTURE_2D_ARRAY:
-            read_mask = TGSI_WRITEMASK_XYZ;
+         case TGSI_TEXTURE_SHADOW2D_ARRAY:
+            read_mask = TGSI_WRITEMASK_XYZW;
             break;
          default:
             assert(0);

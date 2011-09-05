@@ -826,7 +826,11 @@ static const char *texture_names[TGSI_TEXTURE_COUNT] =
    "RECT",
    "SHADOW1D",
    "SHADOW2D",
-   "SHADOWRECT"
+   "SHADOWRECT",
+   "1DARRAY",
+   "2DARRAY",
+   "SHADOW1DARRAY",
+   "SHADOW2DARRAY"
 };
 
 static const char *type_names[] =

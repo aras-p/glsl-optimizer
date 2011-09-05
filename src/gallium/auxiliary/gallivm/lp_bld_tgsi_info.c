@@ -113,16 +113,22 @@ analyse_tex(struct analysis_context *ctx,
       case TGSI_TEXTURE_1D:
          readmask = TGSI_WRITEMASK_X;
          break;
+      case TGSI_TEXTURE_1D_ARRAY:
       case TGSI_TEXTURE_2D:
       case TGSI_TEXTURE_RECT:
          readmask = TGSI_WRITEMASK_XY;
          break;
       case TGSI_TEXTURE_SHADOW1D:
+      case TGSI_TEXTURE_SHADOW1D_ARRAY:
       case TGSI_TEXTURE_SHADOW2D:
       case TGSI_TEXTURE_SHADOWRECT:
+      case TGSI_TEXTURE_2D_ARRAY:
       case TGSI_TEXTURE_3D:
       case TGSI_TEXTURE_CUBE:
          readmask = TGSI_WRITEMASK_XYZ;
+         break;
+      case TGSI_TEXTURE_SHADOW2D_ARRAY:
+         readmask = TGSI_WRITEMASK_XYZW;
          break;
       default:
          assert(0);

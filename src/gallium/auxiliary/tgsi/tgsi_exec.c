@@ -1791,6 +1791,7 @@ exec_tex(struct tgsi_exec_machine *mach,
       break;
 
    case TGSI_TEXTURE_1D_ARRAY:
+   case TGSI_TEXTURE_SHADOW1D_ARRAY:
       FETCH(&r[0], 0, CHAN_X);
       FETCH(&r[1], 0, CHAN_Y);
 
@@ -1805,6 +1806,7 @@ exec_tex(struct tgsi_exec_machine *mach,
       break;
 
    case TGSI_TEXTURE_2D_ARRAY:
+   case TGSI_TEXTURE_SHADOW2D_ARRAY:
       FETCH(&r[0], 0, CHAN_X);
       FETCH(&r[1], 0, CHAN_Y);
       FETCH(&r[2], 0, CHAN_Z);
@@ -1884,8 +1886,10 @@ exec_txd(struct tgsi_exec_machine *mach,
                   &r[0], &r[1], &r[2], &r[3]);           /* R, G, B, A */
       break;
 
+   case TGSI_TEXTURE_1D_ARRAY:
    case TGSI_TEXTURE_2D:
    case TGSI_TEXTURE_RECT:
+   case TGSI_TEXTURE_SHADOW1D_ARRAY:
    case TGSI_TEXTURE_SHADOW2D:
    case TGSI_TEXTURE_SHADOWRECT:
 
@@ -1899,6 +1903,7 @@ exec_txd(struct tgsi_exec_machine *mach,
                   &r[0], &r[1], &r[2], &r[3]);     /* outputs */
       break;
 
+   case TGSI_TEXTURE_2D_ARRAY:
    case TGSI_TEXTURE_3D:
    case TGSI_TEXTURE_CUBE:
 
@@ -1908,6 +1913,19 @@ exec_txd(struct tgsi_exec_machine *mach,
 
       fetch_texel(mach->Samplers[unit],
                   &r[0], &r[1], &r[2], &ZeroVec,
+                  tgsi_sampler_lod_bias,
+                  &r[0], &r[1], &r[2], &r[3]);
+      break;
+
+   case TGSI_TEXTURE_SHADOW2D_ARRAY:
+
+      FETCH(&r[0], 0, CHAN_X);
+      FETCH(&r[1], 0, CHAN_Y);
+      FETCH(&r[2], 0, CHAN_Z);
+      FETCH(&r[3], 0, CHAN_W);
+
+      fetch_texel(mach->Samplers[unit],
+                  &r[0], &r[1], &r[2], &r[3],
                   tgsi_sampler_lod_bias,
                   &r[0], &r[1], &r[2], &r[3]);
       break;
@@ -1957,10 +1975,12 @@ exec_txf(struct tgsi_exec_machine *mach,
    switch(inst->Texture.Texture) {
    case TGSI_TEXTURE_3D:
    case TGSI_TEXTURE_2D_ARRAY:
+   case TGSI_TEXTURE_SHADOW2D_ARRAY:
       IFETCH(&r[2], 0, CHAN_Z);
       /* fallthrough */
    case TGSI_TEXTURE_2D:
    case TGSI_TEXTURE_RECT:
+   case TGSI_TEXTURE_SHADOW1D_ARRAY:
    case TGSI_TEXTURE_SHADOW2D:
    case TGSI_TEXTURE_SHADOWRECT:
    case TGSI_TEXTURE_1D_ARRAY:
@@ -2067,8 +2087,10 @@ exec_sample(struct tgsi_exec_machine *mach,
                   &r[0], &r[1], &r[2], &r[3]);     /* R, G, B, A */
       break;
 
+   case TGSI_TEXTURE_1D_ARRAY:
    case TGSI_TEXTURE_2D:
    case TGSI_TEXTURE_RECT:
+   case TGSI_TEXTURE_SHADOW1D_ARRAY:
    case TGSI_TEXTURE_SHADOW2D:
    case TGSI_TEXTURE_SHADOWRECT:
       FETCH(&r[0], 0, CHAN_X);
@@ -2087,6 +2109,7 @@ exec_sample(struct tgsi_exec_machine *mach,
                   &r[0], &r[1], &r[2], &r[3]);  /* outputs */
       break;
 
+   case TGSI_TEXTURE_2D_ARRAY:
    case TGSI_TEXTURE_3D:
    case TGSI_TEXTURE_CUBE:
       FETCH(&r[0], 0, CHAN_X);
@@ -2101,6 +2124,20 @@ exec_sample(struct tgsi_exec_machine *mach,
 
       fetch_texel(mach->Samplers[sampler_unit],
                   &r[0], &r[1], &r[2], lod,
+                  control,
+                  &r[0], &r[1], &r[2], &r[3]);
+      break;
+
+   case TGSI_TEXTURE_SHADOW2D_ARRAY:
+      FETCH(&r[0], 0, CHAN_X);
+      FETCH(&r[1], 0, CHAN_Y);
+      FETCH(&r[2], 0, CHAN_Z);
+      FETCH(&r[3], 0, CHAN_W);
+
+      assert(modifier != TEX_MODIFIER_PROJECTED);
+
+      fetch_texel(mach->Samplers[sampler_unit],
+                  &r[0], &r[1], &r[2], &r[3],
                   control,
                   &r[0], &r[1], &r[2], &r[3]);
       break;

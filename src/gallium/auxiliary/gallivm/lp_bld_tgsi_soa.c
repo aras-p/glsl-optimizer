@@ -1080,16 +1080,22 @@ emit_tex( struct lp_build_tgsi_soa_context *bld,
    case TGSI_TEXTURE_1D:
       num_coords = 1;
       break;
+   case TGSI_TEXTURE_1D_ARRAY:
    case TGSI_TEXTURE_2D:
    case TGSI_TEXTURE_RECT:
       num_coords = 2;
       break;
    case TGSI_TEXTURE_SHADOW1D:
+   case TGSI_TEXTURE_SHADOW1D_ARRAY:
    case TGSI_TEXTURE_SHADOW2D:
    case TGSI_TEXTURE_SHADOWRECT:
+   case TGSI_TEXTURE_2D_ARRAY:
    case TGSI_TEXTURE_3D:
    case TGSI_TEXTURE_CUBE:
       num_coords = 3;
+      break;
+   case TGSI_TEXTURE_SHADOW2D_ARRAY:
+      num_coords = 4;
       break;
    default:
       assert(0);
