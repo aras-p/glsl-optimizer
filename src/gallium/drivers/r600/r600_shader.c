@@ -2179,6 +2179,7 @@ static int tgsi_tex(struct r600_shader_ctx *ctx)
 	opcode = ctx->inst_info->r600_opcode;
 	if (inst->Texture.Texture == TGSI_TEXTURE_SHADOW1D ||
 	    inst->Texture.Texture == TGSI_TEXTURE_SHADOW2D ||
+	    inst->Texture.Texture == TGSI_TEXTURE_SHADOWRECT ||
 	    inst->Texture.Texture == TGSI_TEXTURE_SHADOW1D_ARRAY ||
 	    inst->Texture.Texture == TGSI_TEXTURE_SHADOW2D_ARRAY) {
 		switch (opcode) {
@@ -2228,12 +2229,13 @@ static int tgsi_tex(struct r600_shader_ctx *ctx)
 		tex.src_sel_w = 1;
 	}
 
-	if (inst->Texture.Texture != TGSI_TEXTURE_RECT) {
+	if (inst->Texture.Texture != TGSI_TEXTURE_RECT &&
+	    inst->Texture.Texture != TGSI_TEXTURE_SHADOWRECT) {
 		tex.coord_type_x = 1;
 		tex.coord_type_y = 1;
-		tex.coord_type_z = 1;
-		tex.coord_type_w = 1;
 	}
+	tex.coord_type_z = 1;
+	tex.coord_type_w = 1;
 
 	tex.offset_x = offset_x;
 	tex.offset_y = offset_y;
@@ -2244,6 +2246,7 @@ static int tgsi_tex(struct r600_shader_ctx *ctx)
 	 * Some instructions expect the depth in Z. */
 	if ((inst->Texture.Texture == TGSI_TEXTURE_SHADOW1D ||
 	     inst->Texture.Texture == TGSI_TEXTURE_SHADOW2D ||
+	     inst->Texture.Texture == TGSI_TEXTURE_SHADOWRECT ||
 	     inst->Texture.Texture == TGSI_TEXTURE_SHADOW1D_ARRAY) &&
 	    opcode != SQ_TEX_INST_SAMPLE_C_L &&
 	    opcode != SQ_TEX_INST_SAMPLE_C_LB) {
