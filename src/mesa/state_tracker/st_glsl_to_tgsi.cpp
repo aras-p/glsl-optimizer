@@ -2558,6 +2558,8 @@ glsl_to_tgsi_visitor::visit(ir_texture *ir)
       break;
    }
 
+   const glsl_type *sampler_type = ir->sampler->type;
+
    if (ir->projector) {
       if (opcode == TGSI_OPCODE_TEX) {
          /* Slot the projector in as the last component of the coord. */
@@ -2589,6 +2591,9 @@ glsl_to_tgsi_visitor::visit(ir_texture *ir)
             tmp_src = get_temp(glsl_type::vec4_type);
             st_dst_reg tmp_dst = st_dst_reg(tmp_src);
 
+	    /* Projective division not allowed for array samplers. */
+	    assert(!sampler_type->sampler_array);
+
             tmp_dst.writemask = WRITEMASK_Z;
             emit(ir, TGSI_OPCODE_MOV, tmp_dst, this->result);
 
@@ -2613,7 +2618,15 @@ glsl_to_tgsi_visitor::visit(ir_texture *ir)
        * coord.
        */
       ir->shadow_comparitor->accept(this);
-      coord_dst.writemask = WRITEMASK_Z;
+
+      /* XXX This will need to be updated for cubemap array samplers. */
+      if (sampler_type->sampler_dimensionality == GLSL_SAMPLER_DIM_2D &&
+          sampler_type->sampler_array) {
+         coord_dst.writemask = WRITEMASK_W;
+      } else {
+         coord_dst.writemask = WRITEMASK_Z;
+      }
+
       emit(ir, TGSI_OPCODE_MOV, coord_dst, this->result);
       coord_dst.writemask = WRITEMASK_XYZW;
    }
@@ -2650,8 +2663,6 @@ glsl_to_tgsi_visitor::visit(ir_texture *ir)
        inst->tex_offsets[0].SwizzleY = GET_SWZ(offset.swizzle, 1);
        inst->tex_offsets[0].SwizzleZ = GET_SWZ(offset.swizzle, 2);
    }
-
-   const glsl_type *sampler_type = ir->sampler->type;
 
    switch (sampler_type->sampler_dimensionality) {
    case GLSL_SAMPLER_DIM_1D:
