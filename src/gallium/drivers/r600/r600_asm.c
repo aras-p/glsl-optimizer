@@ -2077,6 +2077,12 @@ static void r600_vertex_data_type(enum pipe_format pformat, unsigned *format,
 				break;
 			}
 			break;
+		case 10:
+			if (desc->nr_channels != 4)
+				goto out_unknown;
+
+			*format = FMT_2_10_10_10;
+			break;
 		case 16:
 			switch (desc->nr_channels) {
 			case 1:
