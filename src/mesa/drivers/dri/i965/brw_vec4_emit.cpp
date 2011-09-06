@@ -165,6 +165,12 @@ vec4_instruction::get_dst(void)
       brw_reg.dw1.bits.writemask = dst.writemask;
       break;
 
+   case MRF:
+      brw_reg = brw_message_reg(dst.reg + dst.reg_offset);
+      brw_reg = retype(brw_reg, dst.type);
+      brw_reg.dw1.bits.writemask = dst.writemask;
+      break;
+
    case HW_REG:
       brw_reg = dst.fixed_hw_reg;
       break;
