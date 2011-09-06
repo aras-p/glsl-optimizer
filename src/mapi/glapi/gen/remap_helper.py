@@ -74,7 +74,11 @@ class PrintGlRemap(gl_XML.gl_print_base):
 		pool_indices = {}
 
 		print '/* this is internal to remap.c */'
-		print '#ifdef need_MESA_remap_table'
+		print '#ifndef need_MESA_remap_table'
+		print '#error Only remap.c should include this file!'
+		print '#endif /* need_MESA_remap_table */'
+		print ''
+
 		print ''
 		print 'static const char _mesa_function_pool[] ='
 
@@ -156,43 +160,6 @@ class PrintGlRemap(gl_XML.gl_print_base):
 		print '   {    -1, -1 }'
 		print '};'
 		print ''
-
-		print '#endif /* need_MESA_remap_table */'
-		print ''
-
-		# output remap helpers for DRI drivers
-
-		for ext in extensions:
-			funcs = []
-			remapped = []
-			for f in extension_functions[ext]:
-				if f.assign_offset:
-					# these are handled above
-					remapped.append(f)
-				else:
-					# these functions are either in the
-					# abi, or have offset -1
-					funcs.append(f)
-
-			print '#if defined(need_%s)' % (ext)
-			if remapped:
-				print '/* functions defined in MESA_remap_table_functions are excluded */'
-
-			# output extension functions that need to be mapped
-			print 'static const struct gl_function_remap %s_functions[] = {' % (ext)
-			for f in funcs:
-				if f.offset >= 0:
-					print '   { %5d, _gloffset_%s },' \
-							% (pool_indices[f], f.name)
-				else:
-					print '   { %5d, -1 }, /* %s */' % \
-							(pool_indices[f], f.name)
-			print '   {    -1, -1 }'
-			print '};'
-
-			print '#endif'
-			print ''
-
 		return
 
 
