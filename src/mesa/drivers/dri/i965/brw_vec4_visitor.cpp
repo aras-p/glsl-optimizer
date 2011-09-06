@@ -1831,13 +1831,15 @@ vec4_visitor::emit_clip_distances(struct brw_reg reg, int offset)
 void
 vec4_visitor::emit_urb_slot(int mrf, int vert_result)
 {
-   struct brw_reg reg = brw_message_reg(mrf);
+   struct brw_reg hw_reg = brw_message_reg(mrf);
+   dst_reg reg = dst_reg(MRF, mrf);
+   reg.type = BRW_REGISTER_TYPE_F;
 
    switch (vert_result) {
    case VERT_RESULT_PSIZ:
       /* PSIZ is always in slot 0, and is coupled with other flags. */
       current_annotation = "indices, point width, clip flags";
-      emit_psiz_and_flags(reg);
+      emit_psiz_and_flags(hw_reg);
       break;
    case BRW_VERT_RESULT_NDC:
       current_annotation = "NDC";
@@ -1850,11 +1852,11 @@ vec4_visitor::emit_urb_slot(int mrf, int vert_result)
       break;
    case BRW_VERT_RESULT_CLIP0:
       current_annotation = "user clip distances";
-      emit_clip_distances(reg, 0);
+      emit_clip_distances(hw_reg, 0);
       break;
    case BRW_VERT_RESULT_CLIP1:
       current_annotation = "user clip distances";
-      emit_clip_distances(reg, 4);
+      emit_clip_distances(hw_reg, 4);
       break;
    case BRW_VERT_RESULT_PAD:
       /* No need to write to this slot */
