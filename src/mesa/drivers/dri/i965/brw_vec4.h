@@ -83,9 +83,7 @@ public:
    int reg_offset;
    /** Register type.  BRW_REGISTER_TYPE_* */
    int type;
-   bool sechalf;
    struct brw_reg fixed_hw_reg;
-   int smear; /* -1, or a channel of the reg to smear to all channels. */
 
    /** Value for file == BRW_IMMMEDIATE_FILE */
    union {
