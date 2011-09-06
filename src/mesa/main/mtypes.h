@@ -339,6 +339,7 @@ typedef enum
    FRAG_ATTRIB_MAX = (FRAG_ATTRIB_VAR0 + MAX_VARYING)
 } gl_frag_attrib;
 
+
 /**
  * Convert from a gl_vert_result value to the corresponding gl_frag_attrib.
  *
@@ -348,7 +349,8 @@ typedef enum
  * (VERT_RESULT_PSIZ, VERT_RESULT_BFC0, VERT_RESULT_BFC1, and
  * VERT_RESULT_EDGE) are converted to a value of -1.
  */
-static INLINE int _mesa_vert_result_to_frag_attrib(gl_vert_result vert_result)
+static INLINE int
+_mesa_vert_result_to_frag_attrib(gl_vert_result vert_result)
 {
    if (vert_result >= VERT_RESULT_VAR0)
       return vert_result - VERT_RESULT_VAR0 + FRAG_ATTRIB_VAR0;
@@ -358,6 +360,7 @@ static INLINE int _mesa_vert_result_to_frag_attrib(gl_vert_result vert_result)
       return -1;
 }
 
+
 /**
  * Convert from a gl_frag_attrib value to the corresponding gl_vert_result.
  *
@@ -366,7 +369,8 @@ static INLINE int _mesa_vert_result_to_frag_attrib(gl_vert_result vert_result)
  * gl_frag_attrib values which have no corresponding gl_vert_result
  * (FRAG_ATTRIB_FACE and FRAG_ATTRIB_PNTC) are converted to a value of -1.
  */
-static INLINE int _mesa_frag_attrib_to_vert_result(gl_frag_attrib frag_attrib)
+static INLINE int
+_mesa_frag_attrib_to_vert_result(gl_frag_attrib frag_attrib)
 {
    if (frag_attrib <= FRAG_ATTRIB_TEX7)
       return frag_attrib;
@@ -375,6 +379,7 @@ static INLINE int _mesa_frag_attrib_to_vert_result(gl_frag_attrib frag_attrib)
    else
       return -1;
 }
+
 
 /**
  * Bitflags for fragment program input attributes.
