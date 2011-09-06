@@ -168,6 +168,11 @@ brw_miptree_layout(struct intel_context *intel, struct intel_mipmap_tree *mt)
       break;
    }
 
+   case GL_TEXTURE_2D_ARRAY:
+   case GL_TEXTURE_1D_ARRAY:
+      brw_miptree_layout_texture_array(intel, mt, mt->depth0);
+      break;
+
    default:
       i945_miptree_layout_2d(mt, 1);
       break;

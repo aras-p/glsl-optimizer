@@ -58,6 +58,7 @@ void i945_miptree_layout_2d(struct intel_mipmap_tree *mt, int nr_images)
    GLuint y = 0;
    GLuint width = mt->width0;
    GLuint height = mt->height0;
+   GLuint depth = mt->depth0; /* number of array layers. */
 
    mt->total_width = mt->width0;
    intel_get_texture_alignment_unit(mt->format, &align_w, &align_h);
@@ -93,7 +94,7 @@ void i945_miptree_layout_2d(struct intel_mipmap_tree *mt, int nr_images)
       GLuint img_height;
 
       intel_miptree_set_level_info(mt, level, nr_images, x, y, width,
-				   height, 1);
+				   height, depth);
 
       img_height = ALIGN(height, align_h);
       if (mt->compressed)

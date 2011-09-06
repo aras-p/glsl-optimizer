@@ -138,8 +138,20 @@ intel_tex_map_image_for_swrast(struct intel_context *intel,
 
    mt = intel_image->mt;
 
-   if (mt->target == GL_TEXTURE_3D) {
+   if (mt->target == GL_TEXTURE_3D ||
+       mt->target == GL_TEXTURE_2D_ARRAY ||
+       mt->target == GL_TEXTURE_1D_ARRAY) {
       int i;
+
+      if (mt->target == GL_TEXTURE_2D_ARRAY ||
+          mt->target == GL_TEXTURE_1D_ARRAY) {
+         /* Mesa only allocates one entry for these, but we really do have an
+          * offset per depth.
+          */
+         free(intel_image->base.Base.ImageOffsets);
+         intel_image->base.Base.ImageOffsets = malloc(mt->level[level].depth *
+                                                      sizeof(GLuint));
+      }
 
       /* ImageOffsets[] is only used for swrast's fetch_texel_3d, so we can't
        * share code with the normal path.

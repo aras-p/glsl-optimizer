@@ -93,8 +93,10 @@ static GLuint get_texcoord_mask( GLuint tex_idx )
    case TEXTURE_1D_INDEX:
       return WRITEMASK_X;
    case TEXTURE_2D_INDEX:
+   case TEXTURE_1D_ARRAY_INDEX:
       return WRITEMASK_XY;
    case TEXTURE_3D_INDEX:
+   case TEXTURE_2D_ARRAY_INDEX:
       return WRITEMASK_XYZ;
    case TEXTURE_CUBE_INDEX:
       return WRITEMASK_XYZ;

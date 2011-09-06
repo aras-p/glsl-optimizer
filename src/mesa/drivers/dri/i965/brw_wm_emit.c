@@ -1076,11 +1076,13 @@ void emit_tex(struct brw_wm_compile *c,
       nr_texcoords = 1;
       break;
    case TEXTURE_2D_INDEX:
+   case TEXTURE_1D_ARRAY_INDEX:
    case TEXTURE_RECT_INDEX:
       emit = WRITEMASK_XY;
       nr_texcoords = 2;
       break;
    case TEXTURE_3D_INDEX:
+   case TEXTURE_2D_ARRAY_INDEX:
    case TEXTURE_CUBE_INDEX:
       emit = WRITEMASK_XYZ;
       nr_texcoords = 3;

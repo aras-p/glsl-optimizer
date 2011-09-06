@@ -116,12 +116,14 @@ intelInitExtensions(struct gl_context *ctx)
       ctx->Extensions.ARB_texture_rg = true;
       ctx->Extensions.EXT_draw_buffers2 = true;
       ctx->Extensions.EXT_framebuffer_sRGB = true;
+      ctx->Extensions.EXT_texture_array = true;
       ctx->Extensions.EXT_texture_snorm = true;
       ctx->Extensions.EXT_texture_sRGB = true;
       ctx->Extensions.EXT_texture_sRGB_decode = true;
       ctx->Extensions.EXT_texture_swizzle = true;
       ctx->Extensions.EXT_vertex_array_bgra = true;
       ctx->Extensions.ATI_envmap_bumpmap = true;
+      ctx->Extensions.MESA_texture_array = true;
       ctx->Extensions.NV_conditional_render = true;
    }
 

@@ -50,12 +50,14 @@ translate_tex_target(GLenum target)
 {
    switch (target) {
    case GL_TEXTURE_1D: 
+   case GL_TEXTURE_1D_ARRAY_EXT:
       return BRW_SURFACE_1D;
 
    case GL_TEXTURE_RECTANGLE_NV: 
       return BRW_SURFACE_2D;
 
    case GL_TEXTURE_2D: 
+   case GL_TEXTURE_2D_ARRAY_EXT:
       return BRW_SURFACE_2D;
 
    case GL_TEXTURE_3D: 

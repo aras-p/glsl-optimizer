@@ -319,15 +319,22 @@ intel_miptree_get_image_offset(struct intel_mipmap_tree *mt,
 			       GLuint level, GLuint face, GLuint depth,
 			       GLuint *x, GLuint *y)
 {
-   if (mt->target == GL_TEXTURE_CUBE_MAP_ARB) {
+   switch (mt->target) {
+   case GL_TEXTURE_CUBE_MAP_ARB:
       *x = mt->level[level].x_offset[face];
       *y = mt->level[level].y_offset[face];
-   } else if (mt->target == GL_TEXTURE_3D) {
+      break;
+   case GL_TEXTURE_3D:
+   case GL_TEXTURE_2D_ARRAY_EXT:
+   case GL_TEXTURE_1D_ARRAY_EXT:
+      assert(depth < mt->level[level].nr_images);
       *x = mt->level[level].x_offset[depth];
       *y = mt->level[level].y_offset[depth];
-   } else {
+      break;
+   default:
       *x = mt->level[level].x_offset[0];
       *y = mt->level[level].y_offset[0];
+      break;
    }
 }
 
