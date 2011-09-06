@@ -678,15 +678,23 @@ fs_visitor::emit_texture_gen4(ir_texture *ir, fs_reg dst, fs_reg coordinate,
        * instructions.  We'll need to do SIMD16 here.
        */
       simd16 = true;
-      assert(ir->op == ir_txb || ir->op == ir_txl);
+      assert(ir->op == ir_txb || ir->op == ir_txl || ir->op == ir_txf);
 
       for (int i = 0; i < ir->coordinate->type->vector_elements; i++) {
 	 fs_inst *inst = emit(BRW_OPCODE_MOV, fs_reg(MRF,
-						     base_mrf + mlen + i * 2),
+						     base_mrf + mlen + i * 2,
+						     coordinate.type),
 			      coordinate);
 	 if (i < 3 && c->key.gl_clamp_mask[i] & (1 << sampler))
 	    inst->saturate = true;
 	 coordinate.reg_offset++;
+      }
+
+      /* Initialize the rest of u/v/r with 0.0.  Empirically, this seems to
+       * be necessary for TXF (ld), but seems wise to do for all messages.
+       */
+      for (int i = ir->coordinate->type->vector_elements; i < 3; i++) {
+	 emit(BRW_OPCODE_MOV, fs_reg(MRF, base_mrf + mlen + i * 2), fs_reg(0.0f));
       }
 
       /* lod/bias appears after u/v/r. */
@@ -698,7 +706,8 @@ fs_visitor::emit_texture_gen4(ir_texture *ir, fs_reg dst, fs_reg coordinate,
 	 mlen++;
       } else {
 	 ir->lod_info.lod->accept(this);
-	 emit(BRW_OPCODE_MOV, fs_reg(MRF, base_mrf + mlen), this->result);
+	 emit(BRW_OPCODE_MOV, fs_reg(MRF, base_mrf + mlen, this->result.type),
+			      this->result);
 	 mlen++;
       }
 
@@ -737,7 +746,7 @@ fs_visitor::emit_texture_gen4(ir_texture *ir, fs_reg dst, fs_reg coordinate,
       inst = emit(FS_OPCODE_TXS, dst);
       break;
    case ir_txf:
-      assert(!"GLSL 1.30 features unsupported");
+      inst = emit(FS_OPCODE_TXF, dst);
       break;
    }
    inst->base_mrf = base_mrf;
