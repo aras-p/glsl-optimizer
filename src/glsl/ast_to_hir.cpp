@@ -893,6 +893,29 @@ get_scalar_boolean_operand(exec_list *instructions,
    return new(ctx) ir_constant(true);
 }
 
+/**
+ * If name refers to a builtin array whose maximum allowed size is less than
+ * size, report an error and return true.  Otherwise return false.
+ */
+static bool
+check_builtin_array_max_size(const char *name, unsigned size,
+                             YYLTYPE loc, struct _mesa_glsl_parse_state *state)
+{
+   if ((strcmp("gl_TexCoord", name) == 0)
+       && (size > state->Const.MaxTextureCoords)) {
+      /* From page 54 (page 60 of the PDF) of the GLSL 1.20 spec:
+       *
+       *     "The size [of gl_TexCoord] can be at most
+       *     gl_MaxTextureCoords."
+       */
+      _mesa_glsl_error(&loc, state, "`gl_TexCoord' array size cannot "
+                       "be larger than gl_MaxTextureCoords (%u)\n",
+                       state->Const.MaxTextureCoords);
+      return true;
+   }
+   return false;
+}
+
 ir_rvalue *
 ast_expression::hir(exec_list *instructions,
 		    struct _mesa_glsl_parse_state *state)
@@ -1550,8 +1573,15 @@ ast_expression::hir(exec_list *instructions,
 	     * FINISHME: array access limits be added to ir_dereference?
 	     */
 	    ir_variable *const v = array->whole_variable_referenced();
-	    if ((v != NULL) && (unsigned(idx) > v->max_array_access))
+	    if ((v != NULL) && (unsigned(idx) > v->max_array_access)) {
 	       v->max_array_access = idx;
+
+               /* Check whether this access will, as a side effect, implicitly
+                * cause the size of a built-in array to be too large.
+                */
+               if (check_builtin_array_max_size(v->name, idx+1, loc, state))
+                  error_emitted = true;
+            }
 	 }
       } else if (array->type->array_size() == 0) {
 	 _mesa_glsl_error(&loc, state, "unsized array index must be constant");
@@ -2121,18 +2151,9 @@ get_variable_being_redeclared(ir_variable *var, ast_declaration *decl,
        * FINISHME: required or not.
        */
 
-      /* From page 54 (page 60 of the PDF) of the GLSL 1.20 spec:
-       *
-       *     "The size [of gl_TexCoord] can be at most
-       *     gl_MaxTextureCoords."
-       */
       const unsigned size = unsigned(var->type->array_size());
-      if ((strcmp("gl_TexCoord", var->name) == 0)
-	  && (size > state->Const.MaxTextureCoords)) {
-	 _mesa_glsl_error(& loc, state, "`gl_TexCoord' array size cannot "
-			  "be larger than gl_MaxTextureCoords (%u)\n",
-			  state->Const.MaxTextureCoords);
-      } else if ((size > 0) && (size <= earlier->max_array_access)) {
+      check_builtin_array_max_size(var->name, size, loc, state);
+      if ((size > 0) && (size <= earlier->max_array_access)) {
 	 _mesa_glsl_error(& loc, state, "array size must be > %u due to "
 			  "previous access",
 			  earlier->max_array_access);
