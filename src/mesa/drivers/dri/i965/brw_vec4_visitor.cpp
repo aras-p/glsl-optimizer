@@ -800,6 +800,7 @@ vec4_visitor::visit(ir_variable *ir)
 	 output_reg[ir->location + i] = *reg;
 	 output_reg[ir->location + i].reg_offset = i;
 	 output_reg[ir->location + i].type = BRW_REGISTER_TYPE_F;
+	 output_reg_annotation[ir->location + i] = ir->name;
       }
       break;
 
@@ -1856,7 +1857,7 @@ vec4_visitor::emit_urb_slot(int mrf, int vert_result)
       break;
    default: {
       assert (vert_result < VERT_RESULT_MAX);
-      current_annotation = NULL;
+      current_annotation = output_reg_annotation[vert_result];
       /* Copy the register, saturating if necessary */
       vec4_instruction *inst = emit(MOV(reg,
                                         src_reg(output_reg[vert_result])));
@@ -1947,6 +1948,7 @@ vec4_visitor::emit_urb_writes()
       }
    }
 
+   current_annotation = "URB write";
    vec4_instruction *inst = emit(VS_OPCODE_URB_WRITE);
    inst->base_mrf = base_mrf;
    inst->mlen = align_interleaved_urb_mlen(brw, mrf - base_mrf);
@@ -1962,6 +1964,7 @@ vec4_visitor::emit_urb_writes()
          emit_urb_slot(mrf++, c->vue_map.slot_to_vert_result[slot]);
       }
 
+      current_annotation = "URB write";
       inst = emit(VS_OPCODE_URB_WRITE);
       inst->base_mrf = base_mrf;
       inst->mlen = align_interleaved_urb_mlen(brw, mrf - base_mrf);

@@ -361,6 +361,7 @@ public:
     * for the ir->location's used.
     */
    dst_reg output_reg[BRW_VERT_RESULT_MAX];
+   const char *output_reg_annotation[BRW_VERT_RESULT_MAX];
    int uniform_size[MAX_UNIFORMS];
    int uniform_vector_size[MAX_UNIFORMS];
    int uniforms;
