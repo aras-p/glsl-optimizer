@@ -20,7 +20,6 @@ HEADERS = \
 	glxheader.h \
 	xfonts.h \
 	xmesaP.h \
-	xm_glide.h \
 	xm_image.h
 
 SOURCES = \
@@ -30,7 +29,6 @@ SOURCES = \
 	xm_api.c \
 	xm_buffer.c \
 	xm_dd.c \
-	xm_glide.c \
 	xm_image.c \
 	xm_line.c \
 	xm_span.c \
