@@ -219,5 +219,7 @@ nouveau_fence_next(struct nouveau_screen *screen)
    if (screen->fence.current->state < NOUVEAU_FENCE_STATE_EMITTED)
       nouveau_fence_emit(screen->fence.current);
 
+   nouveau_fence_ref(NULL, &screen->fence.current);
+
    nouveau_fence_new(screen, &screen->fence.current, FALSE);
 }
