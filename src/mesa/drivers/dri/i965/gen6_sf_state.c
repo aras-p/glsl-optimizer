@@ -56,7 +56,7 @@ get_attr_override(struct brw_vue_map *vue_map, int urb_entry_read_offset,
                   int fs_attr, bool two_side_color)
 {
    int attr_override, slot;
-   int vs_attr = frag_attrib_to_vert_result(fs_attr);
+   int vs_attr = _mesa_frag_attrib_to_vert_result(fs_attr);
    if (vs_attr < 0 || vs_attr == VERT_RESULT_HPOS) {
       /* These attributes will be overwritten by the fragment shader's
        * interpolation code (see emit_interp() in brw_wm_fp.c), so just let

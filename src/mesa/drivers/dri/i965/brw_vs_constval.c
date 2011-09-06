@@ -146,7 +146,7 @@ static void calc_sizes( struct tracker *t )
    for (vertRes = VERT_RESULT_TEX0; vertRes < VERT_RESULT_MAX; vertRes++) {
 
       /* map vertex program output index to fragment program input index */
-      GLint fragAttrib = vert_result_to_frag_attrib(vertRes);
+      GLint fragAttrib = _mesa_vert_result_to_frag_attrib(vertRes);
       if (fragAttrib < 0)
          continue;
       assert(fragAttrib >= FRAG_ATTRIB_TEX0);

@@ -672,7 +672,7 @@ fs_visitor::calculate_urb_setup()
       /* FINISHME: The sf doesn't map VS->FS inputs for us very well. */
       for (unsigned int i = 0; i < VERT_RESULT_MAX; i++) {
 	 if (c->key.vp_outputs_written & BITFIELD64_BIT(i)) {
-	    int fp_index = vert_result_to_frag_attrib(i);
+	    int fp_index = _mesa_vert_result_to_frag_attrib(i);
 
 	    if (fp_index >= 0)
 	       urb_setup[fp_index] = urb_next++;
@@ -1826,7 +1826,7 @@ brw_fs_precompile(struct gl_context *ctx, struct gl_shader_program *prog)
 
       key.proj_attrib_mask |= 1 << i;
 
-      int vp_index = vert_result_to_frag_attrib(i);
+      int vp_index = _mesa_vert_result_to_frag_attrib(i);
 
       if (vp_index >= 0)
 	 key.vp_outputs_written |= BITFIELD64_BIT(vp_index);

@@ -94,7 +94,7 @@ static void init_registers( struct brw_wm_compile *c )
    } else {
       for (j = 0; j < VERT_RESULT_MAX; j++) {
 	 if (c->key.vp_outputs_written & BITFIELD64_BIT(j)) {
-	    int fp_index = vert_result_to_frag_attrib(j);
+	    int fp_index = _mesa_vert_result_to_frag_attrib(j);
 
 	    nr_interp_regs++;
 	    if (fp_index >= 0)
