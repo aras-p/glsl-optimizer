@@ -225,14 +225,6 @@ def generate(env):
     # default in recent gcc versions
     env.AppendUnique(CCFLAGS = ['-gstabs'])
 
-    env.AppendUnique(CPPDEFINES = [('__MSVCRT_VERSION__', '0x0700')])
-    #env.AppendUnique(LIBS = ['iberty'])
-    env.AppendUnique(SHLINKFLAGS = ['-Wl,--enable-stdcall-fixup'])
-    #env.AppendUnique(SHLINKFLAGS = ['-Wl,--kill-at'])
-
-    # Avoid depending on gcc runtime DLLs
-    env.AppendUnique(LINKFLAGS = ['-static-libgcc'])
-
     env.AddMethod(compile_without_gstabs, 'compile_without_gstabs')
 
 def exists(env):
