@@ -402,6 +402,7 @@ public:
    bool virtual_grf_interferes(int a, int b);
    bool opt_copy_propagation();
    bool opt_algebraic();
+   bool opt_compute_to_mrf();
 
    vec4_instruction *emit(vec4_instruction *inst);
 

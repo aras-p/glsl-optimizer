@@ -520,4 +520,181 @@ vec4_visitor::move_push_constants_to_pull_constants()
    pack_uniform_registers();
 }
 
+/*
+ * Tries to reduce extra MOV instructions by taking GRFs that get just
+ * written and then MOVed into an MRF and making the original write of
+ * the GRF write directly to the MRF instead.
+ */
+bool
+vec4_visitor::opt_compute_to_mrf()
+{
+   bool progress = false;
+   int next_ip = 0;
+
+   calculate_live_intervals();
+
+   foreach_list_safe(node, &this->instructions) {
+      vec4_instruction *inst = (vec4_instruction *)node;
+
+      int ip = next_ip;
+      next_ip++;
+
+      if (inst->opcode != BRW_OPCODE_MOV ||
+	  inst->predicate ||
+	  inst->dst.file != MRF || inst->src[0].file != GRF ||
+	  inst->dst.type != inst->src[0].type ||
+	  inst->src[0].abs || inst->src[0].negate || inst->src[0].reladdr)
+	 continue;
+
+      int mrf = inst->dst.reg;
+
+      /* Can't compute-to-MRF this GRF if someone else was going to
+       * read it later.
+       */
+      if (this->virtual_grf_use[inst->src[0].reg] > ip)
+	 continue;
+
+      /* We need to check interference with the MRF between this
+       * instruction and the earliest instruction involved in writing
+       * the GRF we're eliminating.  To do that, keep track of which
+       * of our source channels we've seen initialized.
+       */
+      bool chans_needed[4] = {false, false, false, false};
+      int chans_remaining = 0;
+      for (int i = 0; i < 4; i++) {
+	 int chan = BRW_GET_SWZ(inst->src[0].swizzle, i);
+
+	 if (!(inst->dst.writemask & (1 << i)))
+	    continue;
+
+	 /* We don't handle compute-to-MRF across a swizzle.  We would
+	  * need to be able to rewrite instructions above to output
+	  * results to different channels.
+	  */
+	 if (chan != i)
+	    chans_remaining = 5;
+
+	 if (!chans_needed[chan]) {
+	    chans_needed[chan] = true;
+	    chans_remaining++;
+	 }
+      }
+      if (chans_remaining > 4)
+	 continue;
+
+      /* Now walk up the instruction stream trying to see if we can
+       * rewrite everything writing to the GRF into the MRF instead.
+       */
+      vec4_instruction *scan_inst;
+      for (scan_inst = (vec4_instruction *)inst->prev;
+	   scan_inst->prev != NULL;
+	   scan_inst = (vec4_instruction *)scan_inst->prev) {
+	 if (scan_inst->dst.file == GRF &&
+	     scan_inst->dst.reg == inst->src[0].reg &&
+	     scan_inst->dst.reg_offset == inst->src[0].reg_offset) {
+	    /* Found something writing to the reg we want to turn into
+	     * a compute-to-MRF.
+	     */
+
+	    /* SEND instructions can't have MRF as a destination. */
+	    if (scan_inst->mlen)
+	       break;
+
+	    if (intel->gen >= 6) {
+	       /* gen6 math instructions must have the destination be
+		* GRF, so no compute-to-MRF for them.
+		*/
+	       if (scan_inst->is_math()) {
+		  break;
+	       }
+	    }
+
+	    /* Mark which channels we found unconditional writes for. */
+	    if (!scan_inst->predicate) {
+	       for (int i = 0; i < 4; i++) {
+		  if (scan_inst->dst.writemask & (1 << i) &&
+		      chans_needed[i]) {
+		     chans_needed[i] = false;
+		     chans_remaining--;
+		  }
+	       }
+	    }
+
+	    if (chans_remaining == 0)
+	       break;
+	 }
+
+	 /* We don't handle flow control here.  Most computation of
+	  * values that end up in MRFs are shortly before the MRF
+	  * write anyway.
+	  */
+	 if (scan_inst->opcode == BRW_OPCODE_DO ||
+	     scan_inst->opcode == BRW_OPCODE_WHILE ||
+	     scan_inst->opcode == BRW_OPCODE_ELSE ||
+	     scan_inst->opcode == BRW_OPCODE_ENDIF) {
+	    break;
+	 }
+
+	 /* You can't read from an MRF, so if someone else reads our
+	  * MRF's source GRF that we wanted to rewrite, that stops us.
+	  */
+	 bool interfered = false;
+	 for (int i = 0; i < 3; i++) {
+	    if (scan_inst->src[i].file == GRF &&
+		scan_inst->src[i].reg == inst->src[0].reg &&
+		scan_inst->src[i].reg_offset == inst->src[0].reg_offset) {
+	       interfered = true;
+	    }
+	 }
+	 if (interfered)
+	    break;
+
+	 /* If somebody else writes our MRF here, we can't
+	  * compute-to-MRF before that.
+	  */
+	 if (scan_inst->dst.file == MRF && mrf == scan_inst->dst.reg)
+	    break;
+
+	 if (scan_inst->mlen > 0) {
+	    /* Found a SEND instruction, which means that there are
+	     * live values in MRFs from base_mrf to base_mrf +
+	     * scan_inst->mlen - 1.  Don't go pushing our MRF write up
+	     * above it.
+	     */
+	    if (mrf >= scan_inst->base_mrf &&
+		mrf < scan_inst->base_mrf + scan_inst->mlen) {
+	       break;
+	    }
+	 }
+      }
+
+      if (chans_remaining == 0) {
+	 /* If we've made it here, we have an inst we want to
+	  * compute-to-MRF, and a scan_inst pointing to the earliest
+	  * instruction involved in computing the value.  Now go
+	  * rewrite the instruction stream between the two.
+	  */
+
+	 while (scan_inst != inst) {
+	    if (scan_inst->dst.file == GRF &&
+		scan_inst->dst.reg == inst->src[0].reg &&
+		scan_inst->dst.reg_offset == inst->src[0].reg_offset) {
+	       scan_inst->dst.file = MRF;
+	       scan_inst->dst.reg = mrf;
+	       scan_inst->dst.reg_offset = 0;
+	       scan_inst->saturate |= inst->saturate;
+	    }
+	    scan_inst = (vec4_instruction *)scan_inst->next;
+	 }
+	 inst->remove();
+	 progress = true;
+      }
+   }
+
+   if (progress)
+      live_intervals_valid = false;
+
+   return progress;
+}
+
 } /* namespace brw */

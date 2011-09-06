@@ -622,6 +622,7 @@ vec4_visitor::run()
       progress = dead_code_eliminate() || progress;
       progress = opt_copy_propagation() || progress;
       progress = opt_algebraic() || progress;
+      progress = opt_compute_to_mrf() || progress;
    } while (progress);
 
 
