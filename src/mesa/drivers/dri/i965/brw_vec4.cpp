@@ -43,6 +43,43 @@ vec4_instruction::is_math()
 	   opcode == SHADER_OPCODE_COS ||
 	   opcode == SHADER_OPCODE_POW);
 }
+/**
+ * Returns how many MRFs an opcode will write over.
+ *
+ * Note that this is not the 0 or 1 implied writes in an actual gen
+ * instruction -- the generate_* functions generate additional MOVs
+ * for setup.
+ */
+int
+vec4_visitor::implied_mrf_writes(vec4_instruction *inst)
+{
+   if (inst->mlen == 0)
+      return 0;
+
+   switch (inst->opcode) {
+   case SHADER_OPCODE_RCP:
+   case SHADER_OPCODE_RSQ:
+   case SHADER_OPCODE_SQRT:
+   case SHADER_OPCODE_EXP2:
+   case SHADER_OPCODE_LOG2:
+   case SHADER_OPCODE_SIN:
+   case SHADER_OPCODE_COS:
+      return 1;
+   case SHADER_OPCODE_POW:
+      return 2;
+   case VS_OPCODE_URB_WRITE:
+      return 1;
+   case VS_OPCODE_PULL_CONSTANT_LOAD:
+      return 2;
+   case VS_OPCODE_SCRATCH_READ:
+      return 2;
+   case VS_OPCODE_SCRATCH_WRITE:
+      return 3;
+   default:
+      assert(!"not reached");
+      return inst->mlen;
+   }
+}
 
 bool
 src_reg::equals(src_reg *r)

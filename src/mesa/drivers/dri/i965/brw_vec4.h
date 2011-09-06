@@ -441,6 +441,8 @@ public:
    vec4_instruction *SCRATCH_READ(dst_reg dst, src_reg index);
    vec4_instruction *SCRATCH_WRITE(dst_reg dst, src_reg src, src_reg index);
 
+   int implied_mrf_writes(vec4_instruction *inst);
+
    bool try_rewrite_rhs_to_dst(ir_assignment *ir,
 			       dst_reg dst,
 			       src_reg src,
