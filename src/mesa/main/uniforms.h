@@ -191,6 +191,9 @@ _mesa_update_shader_textures_used(struct gl_program *prog);
 extern void
 _mesa_init_shader_uniform_dispatch(struct _glapi_table *exec);
 
+extern const struct gl_program_parameter *
+get_uniform_parameter(struct gl_shader_program *shProg, GLint index);
+
 struct gl_builtin_uniform_element {
    const char *field;
    int tokens[STATE_LENGTH];

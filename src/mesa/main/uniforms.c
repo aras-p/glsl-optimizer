@@ -211,7 +211,7 @@ find_uniform_parameter_pos(struct gl_shader_program *shProg, GLint index,
  * \param index  the uniform index in [0, NumUniforms-1]
  * \return gl_program_parameter point or NULL if index is invalid
  */
-static const struct gl_program_parameter *
+const struct gl_program_parameter *
 get_uniform_parameter(struct gl_shader_program *shProg, GLint index)
 {
    struct gl_program *prog;
@@ -221,54 +221,6 @@ get_uniform_parameter(struct gl_shader_program *shProg, GLint index)
       return &prog->Parameters->Parameters[progPos];
    else
       return NULL;
-}
-
-
-/**
- * Called by glGetActiveUniform().
- */
-static void
-_mesa_get_active_uniform(struct gl_context *ctx, GLuint program, GLuint index,
-                         GLsizei maxLength, GLsizei *length, GLint *size,
-                         GLenum *type, GLchar *nameOut)
-{
-   struct gl_shader_program *shProg =
-      _mesa_lookup_shader_program_err(ctx, program, "glGetActiveUniform");
-   const struct gl_program_parameter *param;
-
-   if (!shProg)
-      return;
-
-   if (!shProg->Uniforms || index >= shProg->Uniforms->NumUniforms) {
-      _mesa_error(ctx, GL_INVALID_VALUE, "glGetActiveUniform(index)");
-      return;
-   }
-
-   param = get_uniform_parameter(shProg, index);
-   if (!param)
-      return;
-
-   if (nameOut) {
-      _mesa_copy_string(nameOut, maxLength, length, param->Name);
-   }
-
-   if (size) {
-      GLint typeSize = _mesa_sizeof_glsl_type(param->DataType);
-      if ((GLint) param->Size > typeSize) {
-         /* This is an array.
-          * Array elements are placed on vector[4] boundaries so they're
-          * a multiple of four floats.  We round typeSize up to next multiple
-          * of four to get the right size below.
-          */
-         typeSize = (typeSize + 3) & ~3;
-      }
-      /* Note that the returned size is in units of the <type>, not bytes */
-      *size = param->Size / typeSize;
-   }
-
-   if (type) {
-      *type = param->DataType;
-   }
 }
 
 
@@ -1476,17 +1428,6 @@ _mesa_GetUniformLocationARB(GLhandleARB programObj, const GLcharARB *name)
       return -1;
 
    return _mesa_get_uniform_location(ctx, shProg, name);
-}
-
-
-void GLAPIENTRY
-_mesa_GetActiveUniformARB(GLhandleARB program, GLuint index,
-                          GLsizei maxLength, GLsizei * length, GLint * size,
-                          GLenum * type, GLcharARB * name)
-{
-   GET_CURRENT_CONTEXT(ctx);
-   _mesa_get_active_uniform(ctx, program, index, maxLength, length, size,
-                            type, name);
 }
 
 
