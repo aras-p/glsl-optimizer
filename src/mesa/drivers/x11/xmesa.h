@@ -77,12 +77,6 @@ extern "C" {
 #include "xmesa_x.h"
 #include "GL/gl.h"
 
-#ifdef AMIWIN
-#include <pragmas/xlib_pragmas.h>
-extern struct Library *XLibBase;
-#endif
-
-
 #define XMESA_MAJOR_VERSION 6
 #define XMESA_MINOR_VERSION 3
 
