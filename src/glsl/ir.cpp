@@ -1353,14 +1353,6 @@ ir_variable::interpolation_string() const
 }
 
 
-unsigned
-ir_variable::component_slots() const
-{
-   /* FINISHME: Sparsely accessed arrays require fewer slots. */
-   return this->type->component_slots();
-}
-
-
 ir_function_signature::ir_function_signature(const glsl_type *return_type)
    : return_type(return_type), is_defined(false), _function(NULL)
 {
