@@ -24,7 +24,7 @@
 #include "pipe/p_config.h"
 #include "util/u_cpu_detect.h"
 
-#if defined(PIPE_ARCH_X86) || defined(PIPE_ARCH_X86_64)
+#if defined(PIPE_ARCH_X86) || (defined(PIPE_ARCH_X86_64) && !defined(__MINGW32__))
 
 #include "pipe/p_compiler.h"
 #include "util/u_debug.h"
