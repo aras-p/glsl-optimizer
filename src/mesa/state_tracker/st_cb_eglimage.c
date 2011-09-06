@@ -28,7 +28,6 @@
 
 #include "main/mfeatures.h"
 #include "main/texobj.h"
-#include "main/texfetch.h"
 #include "main/teximage.h"
 #include "util/u_inlines.h"
 #include "util/u_format.h"
