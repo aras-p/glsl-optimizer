@@ -70,7 +70,13 @@ enum native_param_type {
    /**
     * Return the maximum supported swap interval.
     */
-   NATIVE_PARAM_MAX_SWAP_INTERVAL
+   NATIVE_PARAM_MAX_SWAP_INTERVAL,
+
+   /**
+    * Return TRUE if the display supports premultiplied alpha, regardless of
+    * the surface color format.
+    */
+   NATIVE_PARAM_PREMULTIPLIED_ALPHA
 };
 
 /**
@@ -85,6 +91,9 @@ struct native_present_control {
 
    /**< wait until the given vsyncs has passed since the last presentation */
    uint swap_interval;
+
+   /**< pixels use premultiplied alpha */
+   boolean premultiplied_alpha;
 };
 
 struct native_surface {
