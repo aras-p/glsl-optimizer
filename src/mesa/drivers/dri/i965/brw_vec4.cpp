@@ -277,4 +277,89 @@ vec4_visitor::pack_uniform_registers()
    }
 }
 
+/**
+ * Only a limited number of hardware registers may be used for push
+ * constants, so this turns access to the overflowed constants into
+ * pull constants.
+ */
+void
+vec4_visitor::move_push_constants_to_pull_constants()
+{
+   int pull_constant_loc[this->uniforms];
+
+   /* Only allow 32 registers (256 uniform components) as push constants,
+    * which is the limit on gen6.
+    */
+   int max_uniform_components = 32 * 8;
+   if (this->uniforms * 4 <= max_uniform_components)
+      return;
+
+   /* Make some sort of choice as to which uniforms get sent to pull
+    * constants.  We could potentially do something clever here like
+    * look for the most infrequently used uniform vec4s, but leave
+    * that for later.
+    */
+   for (int i = 0; i < this->uniforms * 4; i += 4) {
+      pull_constant_loc[i / 4] = -1;
+
+      if (i >= max_uniform_components) {
+	 const float **values = &prog_data->param[i];
+
+	 /* Try to find an existing copy of this uniform in the pull
+	  * constants if it was part of an array access already.
+	  */
+	 for (unsigned int j = 0; j < prog_data->nr_pull_params; j += 4) {
+	    int matches;
+
+	    for (matches = 0; matches < 4; matches++) {
+	       if (prog_data->pull_param[j + matches] != values[matches])
+		  break;
+	    }
+
+	    if (matches == 4) {
+	       pull_constant_loc[i / 4] = j / 4;
+	       break;
+	    }
+	 }
+
+	 if (pull_constant_loc[i / 4] == -1) {
+	    assert(prog_data->nr_pull_params % 4 == 0);
+	    pull_constant_loc[i / 4] = prog_data->nr_pull_params / 4;
+
+	    for (int j = 0; j < 4; j++) {
+	       prog_data->pull_param[prog_data->nr_pull_params++] = values[j];
+	    }
+	 }
+      }
+   }
+
+   /* Now actually rewrite usage of the things we've moved to pull
+    * constants.
+    */
+   foreach_list_safe(node, &this->instructions) {
+      vec4_instruction *inst = (vec4_instruction *)node;
+
+      for (int i = 0 ; i < 3; i++) {
+	 if (inst->src[i].file != UNIFORM ||
+	     pull_constant_loc[inst->src[i].reg] == -1)
+	    continue;
+
+	 int uniform = inst->src[i].reg;
+
+	 dst_reg temp = dst_reg(this, glsl_type::vec4_type);
+
+	 emit_pull_constant_load(inst, temp, inst->src[i],
+				 pull_constant_loc[uniform]);
+
+	 inst->src[i].file = temp.file;
+	 inst->src[i].reg = temp.reg;
+	 inst->src[i].reg_offset = temp.reg_offset;
+	 inst->src[i].reladdr = NULL;
+      }
+   }
+
+   /* Repack push constants to remove the now-unused ones. */
+   pack_uniform_registers();
+}
+
 } /* namespace brw */

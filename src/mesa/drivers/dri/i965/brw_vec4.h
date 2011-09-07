@@ -381,6 +381,7 @@ public:
    void reg_allocate();
    void move_grf_array_access_to_scratch();
    void move_uniform_array_access_to_pull_constants();
+   void move_push_constants_to_pull_constants();
    void split_uniform_registers();
    void pack_uniform_registers();
    void calculate_live_intervals();
