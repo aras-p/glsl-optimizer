@@ -2211,7 +2211,7 @@ vec4_visitor::move_uniform_array_access_to_pull_constants()
 	 if (pull_constant_loc[uniform] == -1) {
 	    const float **values = &prog_data->param[uniform * 4];
 
-	    pull_constant_loc[uniform] = prog_data->nr_pull_params;
+	    pull_constant_loc[uniform] = prog_data->nr_pull_params / 4;
 
 	    for (int j = 0; j < uniform_size[uniform] * 4; j++) {
 	       prog_data->pull_param[prog_data->nr_pull_params++] = values[j];
