@@ -75,6 +75,11 @@ enum native_param_type {
    /**
     * Return TRUE if the display supports premultiplied alpha, regardless of
     * the surface color format.
+    *
+    * Note that returning TRUE for this parameter will make
+    * EGL_VG_ALPHA_FORMAT_PRE_BIT to be set for all EGLConfig's with non-zero
+    * EGL_ALPHA_SIZE.  EGL_VG_ALPHA_FORMAT attribute of a surface will affect
+    * how the surface is presented.
     */
    NATIVE_PARAM_PREMULTIPLIED_ALPHA
 };

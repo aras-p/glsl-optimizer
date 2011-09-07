@@ -574,6 +574,7 @@ egl_g3d_swap_buffers(_EGLDriver *drv, _EGLDisplay *dpy, _EGLSurface *surf)
    ctrl.natt = NATIVE_ATTACHMENT_BACK_LEFT;
    ctrl.preserve = (gsurf->base.SwapBehavior == EGL_BUFFER_PRESERVED);
    ctrl.swap_interval = gsurf->base.SwapInterval;
+   ctrl.premultiplied_alpha = (gsurf->base.VGAlphaFormat == EGL_VG_ALPHA_FORMAT_PRE);
 
    return gsurf->native->present(gsurf->native, &ctrl);
 }

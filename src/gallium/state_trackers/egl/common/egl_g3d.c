@@ -220,7 +220,8 @@ egl_g3d_add_screens(_EGLDriver *drv, _EGLDisplay *dpy)
 static EGLBoolean
 init_config_attributes(_EGLConfig *conf, const struct native_config *nconf,
                        EGLint api_mask, enum pipe_format depth_stencil_format,
-                       EGLBoolean preserve_buffer, EGLint max_swap_interval)
+                       EGLint preserve_buffer, EGLint max_swap_interval,
+                       EGLBoolean pre_alpha)
 {
    uint rgba[4], depth_stencil[2], buffer_size;
    EGLint surface_type;
@@ -260,6 +261,15 @@ init_config_attributes(_EGLConfig *conf, const struct native_config *nconf,
          surface_type |= EGL_SCREEN_BIT_MESA;
 #endif
       surface_type |= EGL_PBUFFER_BIT;
+   }
+
+   if (preserve_buffer)
+      surface_type |= EGL_SWAP_BEHAVIOR_PRESERVED_BIT;
+
+   if (pre_alpha && rgba[3]) {
+      surface_type |= EGL_VG_ALPHA_FORMAT_PRE_BIT;
+      /* st/vega does not support premultiplied alpha yet */
+      api_mask &= ~EGL_OPENVG_BIT;
    }
 
    conf->Conformant = api_mask;
@@ -307,8 +317,6 @@ init_config_attributes(_EGLConfig *conf, const struct native_config *nconf,
 
    conf->MinSwapInterval = 0;
    conf->MaxSwapInterval = max_swap_interval;
-   if (preserve_buffer)
-      conf->SurfaceType |= EGL_SWAP_BEHAVIOR_PRESERVED_BIT;
 
    return _eglValidateConfig(conf, EGL_FALSE);
 }
@@ -320,7 +328,8 @@ static EGLBoolean
 egl_g3d_init_config(_EGLDriver *drv, _EGLDisplay *dpy,
                     _EGLConfig *conf, const struct native_config *nconf,
                     enum pipe_format depth_stencil_format,
-                    int preserve_buffer, int max_swap_interval)
+                    int preserve_buffer, int max_swap_interval,
+                    int pre_alpha)
 {
    struct egl_g3d_config *gconf = egl_g3d_config(conf);
    EGLint buffer_mask;
@@ -348,7 +357,7 @@ egl_g3d_init_config(_EGLDriver *drv, _EGLDisplay *dpy,
 
    valid = init_config_attributes(&gconf->base,
          nconf, dpy->ClientAPIs, depth_stencil_format,
-         preserve_buffer, max_swap_interval);
+         preserve_buffer, max_swap_interval, pre_alpha);
    if (!valid) {
       _eglLog(_EGL_DEBUG, "skip invalid config 0x%x", nconf->native_visual_id);
       return EGL_FALSE;
@@ -409,7 +418,7 @@ egl_g3d_add_configs(_EGLDriver *drv, _EGLDisplay *dpy, EGLint id)
    const struct native_config **native_configs;
    enum pipe_format depth_stencil_formats[8];
    int num_formats, num_configs, i, j;
-   int preserve_buffer, max_swap_interval;
+   int preserve_buffer, max_swap_interval, premultiplied_alpha;
 
    native_configs = gdpy->native->get_configs(gdpy->native, &num_configs);
    if (!num_configs) {
@@ -422,6 +431,8 @@ egl_g3d_add_configs(_EGLDriver *drv, _EGLDisplay *dpy, EGLint id)
       gdpy->native->get_param(gdpy->native, NATIVE_PARAM_PRESERVE_BUFFER);
    max_swap_interval =
       gdpy->native->get_param(gdpy->native, NATIVE_PARAM_MAX_SWAP_INTERVAL);
+   premultiplied_alpha =
+      gdpy->native->get_param(gdpy->native, NATIVE_PARAM_PREMULTIPLIED_ALPHA);
 
    num_formats = egl_g3d_fill_depth_stencil_formats(dpy,
          depth_stencil_formats);
@@ -435,7 +446,8 @@ egl_g3d_add_configs(_EGLDriver *drv, _EGLDisplay *dpy, EGLint id)
             _eglInitConfig(&gconf->base, dpy, id);
             if (!egl_g3d_init_config(drv, dpy, &gconf->base,
                      native_configs[i], depth_stencil_formats[j],
-                     preserve_buffer, max_swap_interval)) {
+                     preserve_buffer, max_swap_interval,
+                     premultiplied_alpha)) {
                FREE(gconf);
                break;
             }
