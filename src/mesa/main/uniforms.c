@@ -1443,6 +1443,12 @@ _mesa_GetnUniformdvARB(GLhandleARB program, GLint location,
                         GLsizei bufSize, GLdouble *params)
 {
    GET_CURRENT_CONTEXT(ctx);
+
+   (void) program;
+   (void) location;
+   (void) bufSize;
+   (void) params;
+
    /*
    get_uniform(ctx, program, location, bufSize, GL_DOUBLE, params);
    */
