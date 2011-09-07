@@ -679,14 +679,18 @@ do_assignment(exec_list *instructions, struct _mesa_glsl_parse_state *state,
                           lhs->variable_referenced()->name);
          error_emitted = true;
 
+      } else if (state->language_version <= 110 && lhs->type->is_array()) {
+	 /* From page 32 (page 38 of the PDF) of the GLSL 1.10 spec:
+	  *
+	  *    "Other binary or unary expressions, non-dereferenced
+	  *     arrays, function names, swizzles with repeated fields,
+	  *     and constants cannot be l-values."
+	  */
+	 _mesa_glsl_error(&lhs_loc, state, "whole array assignment is not "
+			  "allowed in GLSL 1.10 or GLSL ES 1.00.");
+	 error_emitted = true;
       } else if (!lhs->is_lvalue()) {
 	 _mesa_glsl_error(& lhs_loc, state, "non-lvalue in assignment");
-	 error_emitted = true;
-      }
-
-      if (state->es_shader && lhs->type->is_array()) {
-	 _mesa_glsl_error(&lhs_loc, state, "whole array assignment is not "
-			  "allowed in GLSL ES 1.00.");
 	 error_emitted = true;
       }
    }
@@ -2117,6 +2121,21 @@ apply_type_qualifier_to_variable(const struct ast_type_qualifier *qual,
    else
        var->depth_layout = ir_depth_layout_none;
 
+   /* From page 46 (page 52 of the PDF) of the GLSL ES specification:
+    *
+    *    "Array variables are l-values and may be passed to parameters
+    *     declared as out or inout. However, they may not be used as
+    *     the target of an assignment."
+    *
+    * From page 32 (page 38 of the PDF) of the GLSL 1.10 spec:
+    *
+    *    "Other binary or unary expressions, non-dereferenced arrays,
+    *     function names, swizzles with repeated fields, and constants
+    *     cannot be l-values."
+    *
+    * So we only mark 1.10 as non-lvalues, and check for array
+    * assignment in 100 specifically in do_assignment.
+    */
    if (var->type->is_array() && state->language_version != 110) {
       var->array_lvalue = true;
    }
