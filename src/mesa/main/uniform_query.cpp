@@ -54,12 +54,14 @@ _mesa_GetActiveUniformARB(GLhandleARB program, GLuint index,
    if (!param)
       return;
 
+   const struct gl_uniform *const uni = &shProg->Uniforms->Uniforms[index];
+
    if (nameOut) {
       _mesa_copy_string(nameOut, maxLength, length, param->Name);
    }
 
    if (size) {
-      GLint typeSize = _mesa_sizeof_glsl_type(param->DataType);
+      GLint typeSize = _mesa_sizeof_glsl_type(uni->Type->gl_type);
       if ((GLint) param->Size > typeSize) {
          /* This is an array.
           * Array elements are placed on vector[4] boundaries so they're
@@ -73,6 +75,6 @@ _mesa_GetActiveUniformARB(GLhandleARB program, GLuint index,
    }
 
    if (type) {
-      *type = param->DataType;
+      *type = uni->Type->gl_type;
    }
 }
