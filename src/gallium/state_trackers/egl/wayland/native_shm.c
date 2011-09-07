@@ -123,7 +123,7 @@ wayland_shm_display_init_screen(struct native_display *ndpy)
    if (id == 0)
       return FALSE;
 
-   shmdpy->wl_shm = wl_shm_create(shmdpy->base.dpy, id, 1);
+   shmdpy->wl_shm = wl_display_bind(shmdpy->base.dpy, id, &wl_shm_interface);
    if (!shmdpy->wl_shm)
       return FALSE;
 

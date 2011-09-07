@@ -169,7 +169,7 @@ wayland_drm_display_init_screen(struct native_display *ndpy)
    if (id == 0)
       return FALSE;
 
-   drmdpy->wl_drm = wl_drm_create(drmdpy->base.dpy, id, 1);
+   drmdpy->wl_drm = wl_display_bind(drmdpy->base.dpy, id, &wl_drm_interface);
    if (!drmdpy->wl_drm)
       return FALSE;
 
