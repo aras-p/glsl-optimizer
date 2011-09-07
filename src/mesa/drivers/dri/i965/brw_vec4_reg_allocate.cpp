@@ -205,6 +205,7 @@ vec4_visitor::reg_allocate()
    if (!ra_allocate_no_spills(g)) {
       ralloc_free(g);
       fail("No register spilling support yet\n");
+      return;
    }
 
    /* Get the chosen virtual registers for each node, and map virtual
