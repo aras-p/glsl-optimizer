@@ -37,25 +37,6 @@
 
 static const struct native_event_handler *wayland_event_handler;
 
-static void
-sync_callback(void *data)
-{
-   int *done = data;
-
-   *done = 1;
-}
-
-static void
-force_roundtrip(struct wl_display *display)
-{
-   int done = 0;
-
-   wl_display_sync_callback(display, sync_callback, &done);
-   wl_display_iterate(display, WL_DISPLAY_WRITABLE);
-   while (!done)
-      wl_display_iterate(display, WL_DISPLAY_READABLE);
-}
-
 static const struct native_config **
 wayland_display_get_configs (struct native_display *ndpy, int *num_configs)
 {
@@ -157,9 +138,13 @@ wayland_pixmap_surface_initialize(struct wayland_surface *surface)
 }
 
 static void
-wayland_release_pending_resource(void *data)
+wayland_release_pending_resource(void *data,
+                                 struct wl_callback *callback,
+                                 uint32_t time)
 {
    struct wayland_surface *surface = data;
+
+   wl_callback_destroy(callback);
 
    /* FIXME: print internal error */
    if (!surface->pending_resource)
@@ -167,6 +152,10 @@ wayland_release_pending_resource(void *data)
 
    pipe_resource_reference(&surface->pending_resource, NULL);
 }
+
+static const struct wl_callback_listener release_buffer_listener = {
+   wayland_release_pending_resource
+};
 
 static void
 wayland_window_surface_handle_resize(struct wayland_surface *surface)
@@ -182,13 +171,16 @@ wayland_window_surface_handle_resize(struct wayland_surface *surface)
                                  surface->win->width, surface->win->height)) {
 
       if (surface->pending_resource)
-         force_roundtrip(display->dpy);
+         wl_display_roundtrip(display->dpy);
 
       if (front_resource) {
+         struct wl_callback *callback;
+
          surface->pending_resource = front_resource;
          front_resource = NULL;
-         wl_display_sync_callback(display->dpy,
-                                  wayland_release_pending_resource, surface);
+
+         callback = wl_display_sync(display->dpy);
+         wl_callback_add_listener(callback, &release_buffer_listener, surface);
       }
 
       for (i = 0; i < WL_BUFFER_COUNT; ++i) {
@@ -232,12 +224,18 @@ wayland_surface_validate(struct native_surface *nsurf, uint attachment_mask,
 }
 
 static void
-wayland_frame_callback(struct wl_surface *surf, void *data, uint32_t time)
+wayland_frame_callback(void *data, struct wl_callback *callback, uint32_t time)
 {
    struct wayland_surface *surface = data;
 
    surface->block_swap_buffers = FALSE;
+
+   wl_callback_destroy(callback);
 }
+
+static const struct wl_callback_listener frame_listener = {
+   wayland_frame_callback
+};
 
 static INLINE void
 wayland_buffers_swap(struct wl_buffer **buffer,
@@ -254,13 +252,15 @@ wayland_surface_swap_buffers(struct native_surface *nsurf)
 {
    struct wayland_surface *surface = wayland_surface(nsurf);
    struct wayland_display *display = surface->display;
+   struct wl_callback *callback;
 
    while (surface->block_swap_buffers)
       wl_display_iterate(display->dpy, WL_DISPLAY_READABLE);
 
    surface->block_swap_buffers = TRUE;
-   wl_display_frame_callback(display->dpy, surface->win->surface,
-                             wayland_frame_callback, surface);
+
+   callback = wl_surface_frame(surface->win->surface);
+   wl_callback_add_listener(callback, &frame_listener, surface);
 
    if (surface->type == WL_WINDOW_SURFACE) {
       resource_surface_swap_buffers(surface->rsurf,

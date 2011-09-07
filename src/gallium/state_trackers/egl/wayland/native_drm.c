@@ -66,25 +66,6 @@ wayland_drm_display(const struct native_display *ndpy)
    return (struct wayland_drm_display *) ndpy;
 }
 
-static void
-sync_callback(void *data)
-{
-   int *done = data;
-
-   *done = 1;
-}
-
-static void
-force_roundtrip(struct wl_display *display)
-{
-   int done = 0;
-
-   wl_display_sync_callback(display, sync_callback, &done);
-   wl_display_iterate(display, WL_DISPLAY_WRITABLE);
-   while (!done)
-      wl_display_iterate(display, WL_DISPLAY_READABLE);
-}
-
 static void 
 wayland_drm_display_destroy(struct native_display *ndpy)
 {
@@ -183,7 +164,7 @@ wayland_drm_display_init_screen(struct native_display *ndpy)
 
    id = wl_display_get_global(drmdpy->base.dpy, "wl_drm", 1);
    if (id == 0)
-      force_roundtrip(drmdpy->base.dpy);
+      wl_display_roundtrip(drmdpy->base.dpy);
    id = wl_display_get_global(drmdpy->base.dpy, "wl_drm", 1);
    if (id == 0)
       return FALSE;
@@ -193,11 +174,11 @@ wayland_drm_display_init_screen(struct native_display *ndpy)
       return FALSE;
 
    wl_drm_add_listener(drmdpy->wl_drm, &drm_listener, drmdpy);
-   force_roundtrip(drmdpy->base.dpy);
+   wl_display_roundtrip(drmdpy->base.dpy);
    if (drmdpy->fd == -1)
       return FALSE;
 
-   force_roundtrip(drmdpy->base.dpy);
+   wl_display_roundtrip(drmdpy->base.dpy);
    if (!drmdpy->authenticated)
       return FALSE;
 
@@ -228,7 +209,7 @@ wayland_drm_display_authenticate(void *user_data, uint32_t magic)
    current_authenticate = drmdpy->authenticated;
 
    wl_drm_authenticate(drmdpy->wl_drm, magic);
-   force_roundtrip(drmdpy->base.dpy);
+   wl_display_roundtrip(drmdpy->base.dpy);
    authenticated = drmdpy->authenticated;
 
    drmdpy->authenticated = current_authenticate;
