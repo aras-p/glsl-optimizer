@@ -112,7 +112,6 @@ st_renderbuffer_alloc_storage(struct gl_context * ctx,
        */
       pipe_surface_reference( &strb->surface, NULL );
       pipe_resource_reference( &strb->texture, NULL );
-      pipe_sampler_view_reference(&strb->sampler_view, NULL);
 
       /* Setup new texture template.
        */
@@ -165,7 +164,6 @@ st_renderbuffer_delete(struct gl_renderbuffer *rb)
    ASSERT(strb);
    pipe_surface_reference(&strb->surface, NULL);
    pipe_resource_reference(&strb->texture, NULL);
-   pipe_sampler_view_reference(&strb->sampler_view, NULL);
    free(strb->data);
    free(strb);
 }
@@ -387,9 +385,6 @@ st_render_texture(struct gl_context *ctx,
    pipe_resource_reference( &strb->texture, pt );
 
    pipe_surface_reference(&strb->surface, NULL);
-
-   pipe_sampler_view_reference(&strb->sampler_view,
-                               st_get_texture_sampler_view(stObj, pipe));
 
    assert(strb->rtt_level <= strb->texture->last_level);
 
@@ -650,14 +645,4 @@ void st_init_fbo_functions(struct dd_function_table *functions)
    functions->ReadBuffer = st_ReadBuffer;
 }
 
-/* XXX unused ? */
-struct pipe_sampler_view *
-st_get_renderbuffer_sampler_view(struct st_renderbuffer *rb,
-                                 struct pipe_context *pipe)
-{
-   if (!rb->sampler_view) {
-      rb->sampler_view = st_create_texture_sampler_view(pipe, rb->texture);
-   }
 
-   return rb->sampler_view;
-}
