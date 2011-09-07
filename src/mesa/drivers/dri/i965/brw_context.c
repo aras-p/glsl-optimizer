@@ -248,7 +248,7 @@ GLboolean brwCreateContext( int api,
 
    brw_draw_init( brw );
 
-   brw->new_vs_backend = (getenv("INTEL_NEW_VS") != NULL);
+   brw->new_vs_backend = (getenv("INTEL_OLD_VS") == NULL);
 
    /* If we're using the new shader backend, we require integer uniforms
     * stored as actual integers.
