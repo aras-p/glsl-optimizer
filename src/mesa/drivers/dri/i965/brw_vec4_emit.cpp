@@ -607,6 +607,7 @@ vec4_visitor::run()
     */
    move_grf_array_access_to_scratch();
    move_uniform_array_access_to_pull_constants();
+   pack_uniform_registers();
 
    bool progress;
    do {
@@ -614,7 +615,6 @@ vec4_visitor::run()
       progress = dead_code_eliminate() || progress;
    } while (progress);
 
-   pack_uniform_registers();
 
    if (failed)
       return false;
