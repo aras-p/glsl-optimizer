@@ -723,6 +723,7 @@ do_assignment(exec_list *instructions, struct _mesa_glsl_parse_state *state,
 						   rhs->type->array_size());
 	 d->type = var->type;
       }
+      mark_whole_array_access(rhs);
       mark_whole_array_access(lhs);
    }
 
