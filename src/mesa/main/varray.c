@@ -160,10 +160,17 @@ update_array(struct gl_context *ctx,
    if (ctx->Extensions.EXT_vertex_array_bgra &&
        sizeMax == BGRA_OR_4 &&
        size == GL_BGRA) {
-      if (type != GL_UNSIGNED_BYTE &&
-         (ctx->Extensions.ARB_vertex_type_2_10_10_10_rev &&
-          (type != GL_UNSIGNED_INT_2_10_10_10_REV &&
-           type != GL_INT_2_10_10_10_REV))) {
+      GLboolean bgra_error = GL_FALSE;
+
+      if (ctx->Extensions.ARB_vertex_type_2_10_10_10_rev) {
+         if (type != GL_UNSIGNED_INT_2_10_10_10_REV &&
+             type != GL_INT_2_10_10_10_REV &&
+             type != GL_UNSIGNED_BYTE)
+            bgra_error = GL_TRUE;
+      } else if (type != GL_UNSIGNED_BYTE)
+         bgra_error = GL_TRUE;
+
+      if (bgra_error) {
          _mesa_error(ctx, GL_INVALID_VALUE, "%s(GL_BGRA/GLubyte)", func);
          return;
       }
