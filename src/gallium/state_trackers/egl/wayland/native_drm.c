@@ -114,8 +114,8 @@ wayland_create_drm_buffer(struct wayland_display *display,
 
    switch (surface->color_format) {
    case PIPE_FORMAT_B8G8R8A8_UNORM:
-      /* assume premultiplied */
-      format = WL_DRM_FORMAT_PREMULTIPLIED_ARGB32;
+      format = (surface->premultiplied_alpha) ?
+         WL_DRM_FORMAT_PREMULTIPLIED_ARGB32 : WL_DRM_FORMAT_ARGB32;
       break;
    case PIPE_FORMAT_B8G8R8X8_UNORM:
       format = WL_DRM_FORMAT_XRGB32;
@@ -254,6 +254,10 @@ wayland_drm_display_init_screen(struct native_display *ndpy)
 
    if (!wayland_drm_display_add_configs(drmdpy))
       return FALSE;
+
+   /* check that premultiplied alpha is supported for all formats with alpha */
+   if (!drmdpy->argb32 || drmdpy->argb32_pre)
+      drmdpy->base.param_premultiplied_alpha = TRUE;
 
    drmdpy->base.base.screen =
       drmdpy->event_handler->new_drm_screen(&drmdpy->base.base,

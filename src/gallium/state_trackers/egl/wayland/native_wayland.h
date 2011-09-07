@@ -44,6 +44,8 @@ struct wayland_display {
 
    struct wayland_config *configs;
    int num_configs;
+   /* true if all formats with alpha support premultiplied alpha */
+   boolean param_premultiplied_alpha;
 
    struct wl_buffer *(*create_buffer)(struct wayland_display *display,
                                       struct wayland_surface *surface,
@@ -79,6 +81,7 @@ struct wayland_surface {
    unsigned int attachment_mask;
 
    boolean block_swap_buffers;
+   boolean premultiplied_alpha;
 };
 
 struct wayland_config {
