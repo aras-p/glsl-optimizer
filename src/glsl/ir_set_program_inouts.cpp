@@ -94,10 +94,8 @@ ir_set_program_inouts_visitor::visit(ir_dereference_variable *ir)
       return visit_continue;
 
    if (ir->type->is_array()) {
-      for (unsigned int i = 0; i < ir->type->length; i++) {
-	 mark(this->prog, ir->var, i,
-	      ir->type->length * ir->type->fields.array->matrix_columns);
-      }
+      mark(this->prog, ir->var, 0,
+	   ir->type->length * ir->type->fields.array->matrix_columns);
    } else {
       mark(this->prog, ir->var, 0, ir->type->matrix_columns);
    }
