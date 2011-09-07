@@ -39,9 +39,11 @@ struct wayland_surface;
 struct wayland_display {
    struct native_display base;
 
-   struct wayland_config *config;
    struct wl_display *dpy;
    boolean own_dpy;
+
+   struct wayland_config *configs;
+   int num_configs;
 
    struct wl_buffer *(*create_buffer)(struct wayland_display *display,
                                       struct wayland_surface *surface,

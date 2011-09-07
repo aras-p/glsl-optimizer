@@ -63,8 +63,8 @@ wayland_shm_display_destroy(struct native_display *ndpy)
 {
    struct wayland_shm_display *shmdpy = wayland_shm_display(ndpy);
 
-   if (shmdpy->base.config)
-      FREE(shmdpy->base.config);
+   if (shmdpy->base.configs)
+      FREE(shmdpy->base.configs);
    if (shmdpy->base.own_dpy)
       wl_display_destroy(shmdpy->base.dpy);
 
@@ -111,6 +111,40 @@ wayland_create_shm_buffer(struct wayland_display *display,
 }
 
 static boolean
+wayland_shm_display_add_configs(struct wayland_shm_display *shmdpy)
+{
+   struct wayland_config *configs;
+   enum pipe_format formats[2];
+   int i, num_formats = 0;
+
+   /* assume all formats are supported */
+   formats[num_formats++] = PIPE_FORMAT_B8G8R8A8_UNORM;
+   formats[num_formats++] = PIPE_FORMAT_B8G8R8X8_UNORM;
+
+   configs = CALLOC(num_formats, sizeof(*configs));
+   if (!configs)
+      return FALSE;
+
+   for (i = 0; i < num_formats; i++) {
+      struct native_config *nconf = &configs[i].base;
+
+      nconf->buffer_mask =
+         (1 << NATIVE_ATTACHMENT_FRONT_LEFT) |
+         (1 << NATIVE_ATTACHMENT_BACK_LEFT);
+
+      nconf->color_format = formats[i];
+
+      nconf->window_bit = TRUE;
+      nconf->pixmap_bit = TRUE;
+   }
+
+   shmdpy->base.configs = configs;
+   shmdpy->base.num_configs = num_formats;
+
+   return TRUE;
+}
+
+static boolean
 wayland_shm_display_init_screen(struct native_display *ndpy)
 {
    struct wayland_shm_display *shmdpy = wayland_shm_display(ndpy);
@@ -126,6 +160,9 @@ wayland_shm_display_init_screen(struct native_display *ndpy)
 
    shmdpy->wl_shm = wl_display_bind(shmdpy->base.dpy, id, &wl_shm_interface);
    if (!shmdpy->wl_shm)
+      return FALSE;
+
+   if (!wayland_shm_display_add_configs(shmdpy))
       return FALSE;
 
    winsys = wayland_create_sw_winsys(shmdpy->base.dpy);
