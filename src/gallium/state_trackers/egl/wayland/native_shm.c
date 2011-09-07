@@ -84,7 +84,7 @@ wayland_create_shm_buffer(struct wayland_display *display,
    struct pipe_resource *resource;
    struct winsys_handle wsh;
    uint width, height;
-   struct wl_visual *visual;
+   uint32_t format;
 
    resource = resource_surface_get_single_resource(surface->rsurf, attachment);
    resource_surface_get_size(surface->rsurf, &width, &height);
@@ -93,20 +93,21 @@ wayland_create_shm_buffer(struct wayland_display *display,
 
    pipe_resource_reference(&resource, NULL);
 
-   switch (surface->type) {
-   case WL_WINDOW_SURFACE:
-      visual = surface->win->visual;
+   switch (surface->color_format) {
+   case PIPE_FORMAT_B8G8R8A8_UNORM:
+      format = WL_SHM_FORMAT_PREMULTIPLIED_ARGB32;
       break;
-   case WL_PIXMAP_SURFACE:
-      visual = surface->pix->visual;
+   case PIPE_FORMAT_B8G8R8X8_UNORM:
+      format = WL_SHM_FORMAT_XRGB32;
       break;
    default:
       return NULL;
+      break;
    }
 
    return wl_shm_create_buffer(shmdpy->wl_shm, wsh.fd,
                                width, height,
-                               wsh.stride, visual);
+                               wsh.stride, format);
 }
 
 static boolean

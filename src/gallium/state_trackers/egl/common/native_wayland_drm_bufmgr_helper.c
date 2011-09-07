@@ -15,17 +15,32 @@
 void *
 egl_g3d_wl_drm_helper_reference_buffer(void *user_data, uint32_t name,
                                        int32_t width, int32_t height,
-                                       uint32_t stride,
-                                       struct wl_visual *visual)
+                                       uint32_t stride, uint32_t format)
 {
    struct native_display *ndpy = user_data;
    struct pipe_resource templ;
    struct winsys_handle wsh;
-   enum pipe_format format = PIPE_FORMAT_B8G8R8A8_UNORM;
+   enum pipe_format pf;
+
+   switch (format) {
+   case WL_DRM_FORMAT_ARGB32:
+   case WL_DRM_FORMAT_PREMULTIPLIED_ARGB32:
+      pf = PIPE_FORMAT_B8G8R8A8_UNORM;
+      break;
+   case WL_DRM_FORMAT_XRGB32:
+      pf = PIPE_FORMAT_B8G8R8X8_UNORM;
+      break;
+   default:
+      pf = PIPE_FORMAT_NONE;
+      break;
+   }
+
+   if (pf == PIPE_FORMAT_NONE)
+      return NULL;
 
    memset(&templ, 0, sizeof(templ));
    templ.target = PIPE_TEXTURE_2D;
-   templ.format = format;
+   templ.format = pf;
    templ.bind = PIPE_BIND_RENDER_TARGET | PIPE_BIND_SAMPLER_VIEW;
    templ.width0 = width;
    templ.height0 = height;

@@ -97,7 +97,7 @@ wayland_create_drm_buffer(struct wayland_display *display,
    struct pipe_resource *resource;
    struct winsys_handle wsh;
    uint width, height;
-   struct wl_visual *visual;
+   uint32_t format;
 
    resource = resource_surface_get_single_resource(surface->rsurf, attachment);
    resource_surface_get_size(surface->rsurf, &width, &height);
@@ -107,19 +107,21 @@ wayland_create_drm_buffer(struct wayland_display *display,
 
    pipe_resource_reference(&resource, NULL);
 
-   switch (surface->type) {
-   case WL_WINDOW_SURFACE:
-      visual = surface->win->visual;
+   switch (surface->color_format) {
+   case PIPE_FORMAT_B8G8R8A8_UNORM:
+      /* assume premultiplied */
+      format = WL_DRM_FORMAT_PREMULTIPLIED_ARGB32;
       break;
-   case WL_PIXMAP_SURFACE:
-      visual = surface->pix->visual;
+   case PIPE_FORMAT_B8G8R8X8_UNORM:
+      format = WL_DRM_FORMAT_XRGB32;
       break;
    default:
       return NULL;
+      break;
    }
 
    return wl_drm_create_buffer(drmdpy->wl_drm, wsh.handle,
-                               width, height, wsh.stride, visual);
+                               width, height, wsh.stride, format);
 }
 
 static void
@@ -144,6 +146,12 @@ drm_handle_device(void *data, struct wl_drm *drm, const char *device)
 }
 
 static void
+drm_handle_format(void *data, struct wl_drm *drm, uint32_t format)
+{
+   /* TODO */
+}
+
+static void
 drm_handle_authenticated(void *data, struct wl_drm *drm)
 {
    struct wayland_drm_display *drmdpy = data;
@@ -153,6 +161,7 @@ drm_handle_authenticated(void *data, struct wl_drm *drm)
 
 static const struct wl_drm_listener drm_listener = {
    drm_handle_device,
+   drm_handle_format,
    drm_handle_authenticated
 };
 
