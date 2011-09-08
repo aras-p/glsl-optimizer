@@ -58,11 +58,6 @@ struct wayland_drm_display {
    int fd;
    char *device_name;
    boolean authenticated;
-
-   /* supported formats */
-   boolean argb32;
-   boolean argb32_pre;
-   boolean xrgb32;
 };
 
 static INLINE struct wayland_drm_display *
@@ -82,8 +77,8 @@ wayland_drm_display_destroy(struct native_display *ndpy)
       wl_drm_destroy(drmdpy->wl_drm);
    if (drmdpy->device_name)
       FREE(drmdpy->device_name);
-   if (drmdpy->base.configs)
-      FREE(drmdpy->base.configs);
+   if (drmdpy->base.config)
+      FREE(drmdpy->base.config);
    if (drmdpy->base.own_dpy)
       wl_display_destroy(drmdpy->base.dpy);
 
@@ -129,50 +124,6 @@ wayland_create_drm_buffer(struct wayland_display *display,
                                width, height, wsh.stride, format);
 }
 
-static boolean
-wayland_drm_display_add_configs(struct wayland_drm_display *drmdpy)
-{
-   struct wayland_config *configs;
-   enum pipe_format formats[2];
-   int i, num_formats = 0;
-
-   /*
-    * Only argb32 counts here.  If we make (!argbb32 && argb32_pre) count, we
-    * will not be able to support the case where
-    * native_present_control::premultiplied_alpha is FALSE.
-    */
-   if (drmdpy->argb32)
-      formats[num_formats++] = PIPE_FORMAT_B8G8R8A8_UNORM;
-
-   if (drmdpy->xrgb32)
-      formats[num_formats++] = PIPE_FORMAT_B8G8R8X8_UNORM;
-
-   if (!num_formats)
-      return FALSE;
-
-   configs = CALLOC(num_formats, sizeof(*configs));
-   if (!configs)
-      return FALSE;
-
-   for (i = 0; i < num_formats; i++) {
-      struct native_config *nconf = &configs[i].base;
-
-      nconf->buffer_mask =
-         (1 << NATIVE_ATTACHMENT_FRONT_LEFT) |
-         (1 << NATIVE_ATTACHMENT_BACK_LEFT);
-
-      nconf->color_format = formats[i];
-
-      nconf->window_bit = TRUE;
-      nconf->pixmap_bit = TRUE;
-   }
-
-   drmdpy->base.configs = configs;
-   drmdpy->base.num_configs = num_formats;
-
-   return TRUE;
-}
-
 static void
 drm_handle_device(void *data, struct wl_drm *drm, const char *device)
 {
@@ -197,19 +148,7 @@ drm_handle_device(void *data, struct wl_drm *drm, const char *device)
 static void
 drm_handle_format(void *data, struct wl_drm *drm, uint32_t format)
 {
-   struct wayland_drm_display *drmdpy = data;
-
-   switch (format) {
-   case WL_DRM_FORMAT_ARGB32:
-      drmdpy->argb32 = TRUE;
-      break;
-   case WL_DRM_FORMAT_PREMULTIPLIED_ARGB32:
-      drmdpy->argb32_pre = TRUE;
-      break;
-   case WL_DRM_FORMAT_XRGB32:
-      drmdpy->xrgb32 = TRUE;
-      break;
-   }
+   /* TODO */
 }
 
 static void
@@ -250,9 +189,6 @@ wayland_drm_display_init_screen(struct native_display *ndpy)
 
    wl_display_roundtrip(drmdpy->base.dpy);
    if (!drmdpy->authenticated)
-      return FALSE;
-
-   if (!wayland_drm_display_add_configs(drmdpy))
       return FALSE;
 
    drmdpy->base.base.screen =
