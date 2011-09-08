@@ -493,7 +493,7 @@ pop_enable_group(struct gl_context *ctx, const struct gl_enable_attrib *enable)
       }
    }
 
-   for (i=0;i<MAX_CLIP_PLANES;i++) {
+   for (i=0;i<ctx->Const.MaxClipPlanes;i++) {
       const GLuint mask = 1 << i;
       if ((ctx->Transform.ClipPlanesEnabled & mask) != (enable->ClipPlanes & mask))
 	  _mesa_set_enable(ctx, (GLenum) (GL_CLIP_PLANE0 + i),
@@ -1247,7 +1247,7 @@ _mesa_PopAttrib(void)
                   _math_matrix_analyse( ctx->ProjectionMatrixStack.Top );
 
                /* restore clip planes */
-               for (i = 0; i < MAX_CLIP_PLANES; i++) {
+               for (i = 0; i < ctx->Const.MaxClipPlanes; i++) {
                   const GLuint mask = 1 << i;
                   const GLfloat *eyePlane = xform->EyeUserPlane[i];
                   COPY_4V(ctx->Transform.EyeUserPlane[i], eyePlane);

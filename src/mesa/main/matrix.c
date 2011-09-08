@@ -776,7 +776,7 @@ void _mesa_init_transform( struct gl_context *ctx )
    ctx->Transform.Normalize = GL_FALSE;
    ctx->Transform.RescaleNormals = GL_FALSE;
    ctx->Transform.RasterPositionUnclipped = GL_FALSE;
-   for (i=0;i<MAX_CLIP_PLANES;i++) {
+   for (i=0;i<ctx->Const.MaxClipPlanes;i++) {
       ASSIGN_4V( ctx->Transform.EyeUserPlane[i], 0.0, 0.0, 0.0, 0.0 );
    }
    ctx->Transform.ClipPlanesEnabled = 0;
