@@ -259,7 +259,6 @@ _mesa_get_compressed_formats(struct gl_context *ctx, GLint *formats)
          n += 4;
       }
    }
-   return n;
 
 #if FEATURE_ES1 || FEATURE_ES2
    if (formats) {
@@ -278,6 +277,8 @@ _mesa_get_compressed_formats(struct gl_context *ctx, GLint *formats)
       n += 10;
    }
 #endif
+
+   return n;
 }
 
 
