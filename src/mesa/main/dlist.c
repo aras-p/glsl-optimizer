@@ -459,6 +459,10 @@ typedef enum
    /* GL_ARB_sync */
    OPCODE_WAIT_SYNC,
 
+   /* GL_NV_conditional_render */
+   OPCODE_BEGIN_CONDITIONAL_RENDER,
+   OPCODE_END_CONDITIONAL_RENDER,
+
    /* The following three are meta instructions */
    OPCODE_ERROR,                /* raise compiled-in error */
    OPCODE_CONTINUE,
@@ -7384,6 +7388,35 @@ save_WaitSync(GLsync sync, GLbitfield flags, GLuint64 timeout)
 }
 
 
+/** GL_NV_conditional_render */
+static void GLAPIENTRY
+save_BeginConditionalRender(GLuint queryId, GLenum mode)
+{
+   GET_CURRENT_CONTEXT(ctx);
+   Node *n;
+   ASSERT_OUTSIDE_SAVE_BEGIN_END_AND_FLUSH(ctx);
+   n = alloc_instruction(ctx, OPCODE_BEGIN_CONDITIONAL_RENDER, 2);
+   if (n) {
+      n[1].i = queryId;
+      n[2].e = mode;
+   }
+   if (ctx->ExecuteFlag) {
+      CALL_BeginConditionalRenderNV(ctx->Exec, (queryId, mode));
+   }
+}
+
+static void GLAPIENTRY
+save_EndConditionalRender()
+{
+   GET_CURRENT_CONTEXT(ctx);
+   ASSERT_OUTSIDE_SAVE_BEGIN_END_AND_FLUSH(ctx);
+   alloc_instruction(ctx, OPCODE_END_CONDITIONAL_RENDER, 0);
+   if (ctx->ExecuteFlag) {
+      CALL_EndConditionalRenderNV(ctx->Exec, ());
+   }
+}
+
+
 /**
  * Save an error-generating command into display list.
  *
@@ -8647,6 +8680,14 @@ execute_list(struct gl_context *ctx, GLuint list)
                p.uint32[1] = n[4].ui;
                CALL_WaitSync(ctx->Exec, (n[1].data, n[2].bf, p.uint64));
             }
+            break;
+
+         /* GL_NV_conditional_render */
+         case OPCODE_BEGIN_CONDITIONAL_RENDER:
+            CALL_BeginConditionalRenderNV(ctx->Exec, (n[1].i, n[2].e));
+            break;
+         case OPCODE_END_CONDITIONAL_RENDER:
+            CALL_EndConditionalRenderNV(ctx->Exec, ());
             break;
 
          case OPCODE_CONTINUE:
@@ -10352,6 +10393,10 @@ _mesa_create_save_table(void)
    SET_ProgramParameteriARB(table, save_ProgramParameteri);
    SET_FramebufferTextureARB(table, save_FramebufferTexture);
    SET_FramebufferTextureFaceARB(table, save_FramebufferTextureFace);
+
+   /* GL_NV_conditional_render */
+   SET_BeginConditionalRenderNV(table, save_BeginConditionalRender);
+   SET_EndConditionalRenderNV(table, save_EndConditionalRender);
 
    /* GL_ARB_sync */
    _mesa_init_sync_dispatch(table);
