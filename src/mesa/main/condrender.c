@@ -44,7 +44,8 @@ _mesa_BeginConditionalRender(GLuint queryId, GLenum mode)
    struct gl_query_object *q;
    GET_CURRENT_CONTEXT(ctx);
 
-   if (!ctx->Extensions.NV_conditional_render || ctx->Query.CondRenderQuery) {
+   if (!ctx->Extensions.NV_conditional_render || ctx->Query.CondRenderQuery ||
+       queryId == 0) {
       _mesa_error(ctx, GL_INVALID_OPERATION, "glBeginConditionalRender()");
       return;
    }
