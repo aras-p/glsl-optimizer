@@ -67,6 +67,15 @@ get_attr_override(struct brw_vue_map *vue_map, int urb_entry_read_offset,
 
    /* Find the VUE slot for this attribute. */
    slot = vue_map->vert_result_to_slot[vs_attr];
+
+   /* If there was only a back color written but not front, use back
+    * as the color instead of undefined
+    */
+   if (slot == -1 && vs_attr == VERT_RESULT_COL0)
+      slot = vue_map->vert_result_to_slot[VERT_RESULT_BFC0];
+   if (slot == -1 && vs_attr == VERT_RESULT_COL1)
+      slot = vue_map->vert_result_to_slot[VERT_RESULT_BFC1];
+
    if (slot == -1) {
       /* This attribute does not exist in the VUE--that means that the vertex
        * shader did not write to it.  Behavior is undefined in this case, so
