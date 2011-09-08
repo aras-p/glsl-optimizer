@@ -49,9 +49,7 @@
 #define DIFFERENT_SIGNS(x, y) ((x) * (y) <= 0.0F && (x) - (y) != 0.0F)
 #endif
 
-#ifndef MAX_CLIPPED_VERTICES
 #define MAX_CLIPPED_VERTICES ((2 * (6 + PIPE_MAX_CLIP_PLANES))+1)
-#endif
 
 
 
