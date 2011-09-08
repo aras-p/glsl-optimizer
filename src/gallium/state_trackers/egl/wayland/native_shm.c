@@ -63,8 +63,8 @@ wayland_shm_display_destroy(struct native_display *ndpy)
 {
    struct wayland_shm_display *shmdpy = wayland_shm_display(ndpy);
 
-   if (shmdpy->base.config)
-      FREE(shmdpy->base.config);
+   if (shmdpy->base.configs)
+      FREE(shmdpy->base.configs);
    if (shmdpy->base.own_dpy)
       wl_display_destroy(shmdpy->base.dpy);
 
@@ -72,7 +72,6 @@ wayland_shm_display_destroy(struct native_display *ndpy)
 
    FREE(shmdpy);
 }
-
 
 static struct wl_buffer *
 wayland_create_shm_buffer(struct wayland_display *display,
@@ -84,7 +83,7 @@ wayland_create_shm_buffer(struct wayland_display *display,
    struct pipe_resource *resource;
    struct winsys_handle wsh;
    uint width, height;
-   uint32_t format;
+   enum wl_shm_format format;
 
    resource = resource_surface_get_single_resource(surface->rsurf, attachment);
    resource_surface_get_size(surface->rsurf, &width, &height);
@@ -95,6 +94,7 @@ wayland_create_shm_buffer(struct wayland_display *display,
 
    switch (surface->color_format) {
    case PIPE_FORMAT_B8G8R8A8_UNORM:
+      /* assume premultiplied */
       format = WL_SHM_FORMAT_PREMULTIPLIED_ARGB32;
       break;
    case PIPE_FORMAT_B8G8R8X8_UNORM:
@@ -109,6 +109,28 @@ wayland_create_shm_buffer(struct wayland_display *display,
                                width, height,
                                wsh.stride, format);
 }
+
+static void
+shm_handle_format(void *data, struct wl_shm *shm, uint32_t format)
+{
+   struct wayland_shm_display *shmdpy = data;
+
+   switch (format) {
+   case WL_SHM_FORMAT_ARGB32:
+      shmdpy->base.formats |= HAS_ARGB32;
+      break;
+   case WL_SHM_FORMAT_PREMULTIPLIED_ARGB32:
+      shmdpy->base.formats |= HAS_PREMUL_ARGB32;
+      break;
+   case WL_SHM_FORMAT_XRGB32:
+      shmdpy->base.formats |= HAS_XRGB32;
+      break;
+   }
+}
+
+static const struct wl_shm_listener shm_listener = {
+   shm_handle_format
+};
 
 static boolean
 wayland_shm_display_init_screen(struct native_display *ndpy)
@@ -126,6 +148,13 @@ wayland_shm_display_init_screen(struct native_display *ndpy)
 
    shmdpy->wl_shm = wl_display_bind(shmdpy->base.dpy, id, &wl_shm_interface);
    if (!shmdpy->wl_shm)
+      return FALSE;
+
+   wl_shm_add_listener(shmdpy->wl_shm, &shm_listener, shmdpy);
+
+   if (shmdpy->base.formats == 0)
+      wl_display_roundtrip(shmdpy->base.dpy);
+   if (shmdpy->base.formats == 0)
       return FALSE;
 
    winsys = wayland_create_sw_winsys(shmdpy->base.dpy);

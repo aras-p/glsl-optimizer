@@ -37,40 +37,59 @@
 
 static const struct native_event_handler *wayland_event_handler;
 
+const static struct {
+   enum pipe_format format;
+   enum wayland_format_flag flag;
+} wayland_formats[] = {
+   /*
+    * HAS_PREMUL_ARGB32 is ignored here.  For the case that HAS_PREMUL_ARGB32
+    * is set but HAS_ARGB32 isn't, we should not claim
+    * PIPE_FORMAT_B8G8R8A8_UNORM support because we will not be able to present
+    * a surface with non-premultiplied alpha.
+    */
+   { PIPE_FORMAT_B8G8R8A8_UNORM, HAS_ARGB32 },
+   { PIPE_FORMAT_B8G8R8X8_UNORM, HAS_XRGB32 },
+};
+
 static const struct native_config **
-wayland_display_get_configs (struct native_display *ndpy, int *num_configs)
+wayland_display_get_configs(struct native_display *ndpy, int *num_configs)
 {
    struct wayland_display *display = wayland_display(ndpy);
    const struct native_config **configs;
    int i;
 
-   if (!display->config) {
+   if (!display->configs) {
       struct native_config *nconf;
-      display->config = CALLOC(2, sizeof(*display->config));
-      if (!display->config)
+
+      display->num_configs = 0;
+      display->configs = CALLOC(Elements(wayland_formats),
+                                sizeof(*display->configs));
+      if (!display->configs)
          return NULL;
 
-      for (i = 0; i < 2; ++i) {
-         nconf = &display->config[i].base;
-         
+      for (i = 0; i < Elements(wayland_formats); ++i) {
+         if (!(display->formats & wayland_formats[i].flag))
+            continue;
+
+         nconf = &display->configs[display->num_configs].base;
          nconf->buffer_mask =
             (1 << NATIVE_ATTACHMENT_FRONT_LEFT) |
             (1 << NATIVE_ATTACHMENT_BACK_LEFT);
          
          nconf->window_bit = TRUE;
          nconf->pixmap_bit = TRUE;
+         
+         nconf->color_format = wayland_formats[i].format;
+         display->num_configs++;
       }
-
-      display->config[0].base.color_format = PIPE_FORMAT_B8G8R8A8_UNORM;
-      display->config[1].base.color_format = PIPE_FORMAT_B8G8R8X8_UNORM;
    }
 
-   configs = MALLOC(2 * sizeof(*configs));
+   configs = MALLOC(display->num_configs * sizeof(*configs));
    if (configs) {
-      configs[0] = &display->config[0].base;
-      configs[1] = &display->config[1].base;
+      for (i = 0; i < display->num_configs; ++i)
+         configs[i] = &display->configs[i].base;
       if (num_configs)
-         *num_configs = 2;
+         *num_configs = display->num_configs;
    }
 
    return configs;

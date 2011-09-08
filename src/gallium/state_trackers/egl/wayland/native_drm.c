@@ -77,8 +77,8 @@ wayland_drm_display_destroy(struct native_display *ndpy)
       wl_drm_destroy(drmdpy->wl_drm);
    if (drmdpy->device_name)
       FREE(drmdpy->device_name);
-   if (drmdpy->base.config)
-      FREE(drmdpy->base.config);
+   if (drmdpy->base.configs)
+      FREE(drmdpy->base.configs);
    if (drmdpy->base.own_dpy)
       wl_display_destroy(drmdpy->base.dpy);
 
@@ -97,7 +97,7 @@ wayland_create_drm_buffer(struct wayland_display *display,
    struct pipe_resource *resource;
    struct winsys_handle wsh;
    uint width, height;
-   uint32_t format;
+   enum wl_drm_format format;
 
    resource = resource_surface_get_single_resource(surface->rsurf, attachment);
    resource_surface_get_size(surface->rsurf, &width, &height);
@@ -148,7 +148,19 @@ drm_handle_device(void *data, struct wl_drm *drm, const char *device)
 static void
 drm_handle_format(void *data, struct wl_drm *drm, uint32_t format)
 {
-   /* TODO */
+   struct wayland_drm_display *drmdpy = data;
+
+   switch (format) {
+   case WL_DRM_FORMAT_ARGB32:
+      drmdpy->base.formats |= HAS_ARGB32;
+      break;
+   case WL_DRM_FORMAT_PREMULTIPLIED_ARGB32:
+      drmdpy->base.formats |= HAS_PREMUL_ARGB32;
+      break;
+   case WL_DRM_FORMAT_XRGB32:
+      drmdpy->base.formats |= HAS_XRGB32;
+      break;
+   }
 }
 
 static void
@@ -189,6 +201,11 @@ wayland_drm_display_init_screen(struct native_display *ndpy)
 
    wl_display_roundtrip(drmdpy->base.dpy);
    if (!drmdpy->authenticated)
+      return FALSE;
+
+   if (drmdpy->base.formats == 0)
+      wl_display_roundtrip(drmdpy->base.dpy);
+   if (drmdpy->base.formats == 0)
       return FALSE;
 
    drmdpy->base.base.screen =
