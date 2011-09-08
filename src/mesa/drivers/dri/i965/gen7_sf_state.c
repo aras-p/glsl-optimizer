@@ -45,9 +45,6 @@ upload_sbe_state(struct brw_context *brw)
    /* _NEW_TRANSFORM */
    int urb_entry_read_offset = ctx->Transform.ClipPlanesEnabled ? 2 : 1;
    int nr_userclip = brw_count_bits(ctx->Transform.ClipPlanesEnabled);
-
-   /* _NEW_LIGHT */
-   int two_side_color = (ctx->Light.Enabled && ctx->Light.Model.TwoSide);
    uint16_t attr_overrides[FRAG_ATTRIB_MAX];
 
    brw_compute_vue_map(&vue_map, intel, nr_userclip, vs_outputs_written);
@@ -104,7 +101,7 @@ upload_sbe_state(struct brw_context *brw)
 
       attr_overrides[input_index++] =
          get_attr_override(&vue_map, urb_entry_read_offset, attr,
-                           two_side_color);
+                           ctx->VertexProgram._TwoSideEnabled);
    }
 
    for (; attr < FRAG_ATTRIB_MAX; attr++)
@@ -276,6 +273,7 @@ upload_sf_state(struct brw_context *brw)
 const struct brw_tracked_state gen7_sf_state = {
    .dirty = {
       .mesa  = (_NEW_LIGHT |
+		_NEW_PROGRAM |
 		_NEW_POLYGON |
 		_NEW_LINE |
 		_NEW_SCISSOR |

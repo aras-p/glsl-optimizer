@@ -197,8 +197,8 @@ static void calc_wm_input_sizes( struct brw_context *brw )
 
    memset(&t, 0, sizeof(t));
 
-   /* _NEW_LIGHT */
-   if (ctx->Light.Model.TwoSide)
+   /* _NEW_LIGHT | _NEW_PROGRAM */
+   if (ctx->VertexProgram._TwoSideEnabled)
       t.twoside = 1;
 
    for (i = 0; i < VERT_ATTRIB_MAX; i++) 
@@ -233,7 +233,7 @@ static void calc_wm_input_sizes( struct brw_context *brw )
 
 const struct brw_tracked_state brw_wm_input_sizes = {
    .dirty = {
-      .mesa  = _NEW_LIGHT,
+      .mesa  = _NEW_LIGHT | _NEW_PROGRAM,
       .brw   = BRW_NEW_VERTEX_PROGRAM | BRW_NEW_INPUT_DIMENSIONS,
       .cache = 0
    },

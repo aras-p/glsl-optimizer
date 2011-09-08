@@ -115,7 +115,6 @@ upload_sf_state(struct brw_context *brw)
    GLboolean render_to_fbo = brw->intel.ctx.DrawBuffer->Name != 0;
    int attr = 0, input_index = 0;
    int urb_entry_read_offset;
-   int two_side_color = (ctx->Light.Enabled && ctx->Light.Model.TwoSide);
    float point_size;
    uint16_t attr_overrides[FRAG_ATTRIB_MAX];
    int nr_userclip;
@@ -285,9 +284,10 @@ upload_sf_state(struct brw_context *brw)
        */
       assert(input_index < 16 || attr == input_index);
 
+      /* _NEW_LIGHT | _NEW_PROGRAM */
       attr_overrides[input_index++] =
          get_attr_override(&vue_map, urb_entry_read_offset, attr,
-                           two_side_color);
+                           ctx->VertexProgram._TwoSideEnabled);
    }
 
    for (; input_index < FRAG_ATTRIB_MAX; input_index++)
@@ -315,6 +315,7 @@ upload_sf_state(struct brw_context *brw)
 const struct brw_tracked_state gen6_sf_state = {
    .dirty = {
       .mesa  = (_NEW_LIGHT |
+		_NEW_PROGRAM |
 		_NEW_POLYGON |
 		_NEW_LINE |
 		_NEW_SCISSOR |
