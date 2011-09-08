@@ -555,20 +555,6 @@ _mesa_enable_sw_extensions(struct gl_context *ctx)
 
 
 /**
- * Enable common EXT extensions in the ARB_imaging subset.
- */
-void
-_mesa_enable_imaging_extensions(struct gl_context *ctx)
-{
-   ctx->Extensions.EXT_blend_color = GL_TRUE;
-   ctx->Extensions.EXT_blend_logic_op = GL_TRUE;
-   ctx->Extensions.EXT_blend_minmax = GL_TRUE;
-   ctx->Extensions.EXT_blend_subtract = GL_TRUE;
-}
-
-
-
-/**
  * Enable all OpenGL 1.3 features and extensions.
  * A convenience function to be called by drivers.
  */
