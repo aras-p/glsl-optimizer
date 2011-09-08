@@ -363,7 +363,7 @@ def generate(env):
             ccflags += ['-O3']
         # Work around aliasing bugs - developers should comment this out
         ccflags += ['-fno-strict-aliasing']
-        ccflags += ['-g3']
+        ccflags += ['-g']
         if env['build'] in ('checked', 'profile'):
             # See http://code.google.com/p/jrfonseca/wiki/Gprof2Dot#Which_options_should_I_pass_to_gcc_when_compiling_for_profiling?
             ccflags += [
