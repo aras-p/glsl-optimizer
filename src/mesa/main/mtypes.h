@@ -1927,6 +1927,8 @@ struct gl_vertex_program_state
    GLboolean _Enabled;           /**< Enabled and _valid_ user program? */
    GLboolean PointSizeEnabled;   /**< GL_VERTEX_PROGRAM_POINT_SIZE_ARB/NV */
    GLboolean TwoSideEnabled;     /**< GL_VERTEX_PROGRAM_TWO_SIDE_ARB/NV */
+   /** Computed two sided lighting for fixed function/programs. */
+   GLboolean _TwoSideEnabled;
    struct gl_vertex_program *Current;  /**< User-bound vertex program */
 
    /** Currently enabled and valid vertex program (including internal

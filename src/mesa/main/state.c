@@ -447,7 +447,20 @@ update_clamp_read_color(struct gl_context *ctx)
       ctx->Color._ClampReadColor = ctx->Color.ClampReadColor;
 }
 
-
+/**
+ * Update the ctx->VertexProgram._TwoSideEnabled flag.
+ */
+static void
+update_twoside(struct gl_context *ctx)
+{
+   if (ctx->Shader.CurrentVertexProgram ||
+       ctx->VertexProgram.Current) {
+      ctx->VertexProgram._TwoSideEnabled = ctx->VertexProgram.TwoSideEnabled;
+   } else {
+      ctx->VertexProgram._TwoSideEnabled = (ctx->Light.Enabled &&
+					    ctx->Light.Model.TwoSide);
+   }
+}
 
 
 /*
@@ -602,6 +615,9 @@ _mesa_update_state_locked( struct gl_context *ctx )
 
    if (new_state & _NEW_LIGHT)
       _mesa_update_lighting( ctx );
+
+   if (new_state & (_NEW_LIGHT | _NEW_PROGRAM))
+      update_twoside( ctx );
 
    if (new_state & (_NEW_LIGHT | _NEW_BUFFERS))
       update_clamp_vertex_color(ctx);
