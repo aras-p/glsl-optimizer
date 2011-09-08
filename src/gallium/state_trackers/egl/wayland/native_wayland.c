@@ -60,13 +60,9 @@ static int
 wayland_display_get_param(struct native_display *ndpy,
                           enum native_param_type param)
 {
-   struct wayland_display *display = wayland_display(ndpy);
    int val;
 
    switch (param) {
-   case NATIVE_PARAM_PREMULTIPLIED_ALPHA:
-      val = display->param_premultiplied_alpha;
-      break;
    case NATIVE_PARAM_USE_NATIVE_BUFFER:
    case NATIVE_PARAM_PRESERVE_BUFFER:
    case NATIVE_PARAM_MAX_SWAP_INTERVAL:
@@ -286,20 +282,6 @@ wayland_surface_present(struct native_surface *nsurf,
 
    if (ctrl->preserve || ctrl->swap_interval)
       return FALSE;
-
-   /* force buffers to be re-created if they will be presented differently */
-   if (surface->premultiplied_alpha != ctrl->premultiplied_alpha) {
-      enum wayland_buffer_type buffer;
-
-      for (buffer = 0; buffer < WL_BUFFER_COUNT; ++buffer) {
-         if (surface->buffer[buffer]) {
-            wl_buffer_destroy(surface->buffer[buffer]);
-            surface->buffer[buffer] = NULL;
-         }
-      }
-
-      surface->premultiplied_alpha = ctrl->premultiplied_alpha;
-   }
 
    switch (ctrl->natt) {
    case NATIVE_ATTACHMENT_FRONT_LEFT:

@@ -95,8 +95,7 @@ wayland_create_shm_buffer(struct wayland_display *display,
 
    switch (surface->color_format) {
    case PIPE_FORMAT_B8G8R8A8_UNORM:
-      format = (surface->premultiplied_alpha) ?
-         WL_SHM_FORMAT_PREMULTIPLIED_ARGB32 : WL_SHM_FORMAT_ARGB32;
+      format = WL_SHM_FORMAT_PREMULTIPLIED_ARGB32;
       break;
    case PIPE_FORMAT_B8G8R8X8_UNORM:
       format = WL_SHM_FORMAT_XRGB32;
@@ -165,9 +164,6 @@ wayland_shm_display_init_screen(struct native_display *ndpy)
 
    if (!wayland_shm_display_add_configs(shmdpy))
       return FALSE;
-
-   /* assume all formats are supported */
-   shmdpy->base.param_premultiplied_alpha = TRUE;
 
    winsys = wayland_create_sw_winsys(shmdpy->base.dpy);
    if (!winsys)
