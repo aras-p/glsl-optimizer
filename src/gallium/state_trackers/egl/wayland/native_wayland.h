@@ -87,6 +87,7 @@ struct wayland_surface {
    unsigned int attachment_mask;
 
    boolean block_swap_buffers;
+   boolean premultiplied_alpha;
 };
 
 struct wayland_config {
