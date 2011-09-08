@@ -161,7 +161,7 @@ gdi_surface_swap_buffers(struct native_surface *nsurf)
 
 static boolean
 gdi_surface_present(struct native_surface *nsurf,
-                    const native_present_control *ctrl)
+                    const struct native_present_control *ctrl)
 {
    boolean ret;
 
