@@ -1675,6 +1675,7 @@ vec4_visitor::visit(ir_texture *ir)
     * programs that do vertex texturing, but after our visitor has
     * run.
     */
+   this->result = src_reg(this, glsl_type::vec4_type);
 }
 
 void
