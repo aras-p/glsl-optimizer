@@ -77,8 +77,9 @@ get_tex_depth(struct gl_context *ctx, GLuint dimensions,
    const GLint width = texImage->Width;
    const GLint height = texImage->Height;
    const GLint depth = texImage->Depth;
-   GLint img, row, col;
+   GLint img, row;
    GLfloat *depthRow = (GLfloat *) malloc(width * sizeof(GLfloat));
+   const GLint texelSize = _mesa_get_format_bytes(texImage->TexFormat);
 
    if (!depthRow) {
       _mesa_error(ctx, GL_OUT_OF_MEMORY, "glGetTexImage");
@@ -90,11 +91,12 @@ get_tex_depth(struct gl_context *ctx, GLuint dimensions,
          void *dest = _mesa_image_address(dimensions, &ctx->Pack, pixels,
                                           width, height, format, type,
                                           img, row, 0);
-         assert(dest);
+         const GLubyte *src = (GLubyte *) texImage->Data +
+            (texImage->ImageOffsets[img] +
+             texImage->RowStride * row) * texelSize;
 
-         for (col = 0; col < width; col++) {
-            texImage->FetchTexelf(texImage, col, row, img, depthRow + col);
-         }
+         _mesa_unpack_float_z_row(texImage->TexFormat, width, src, depthRow);
+
          _mesa_pack_depth_span(ctx, width, dest, type, depthRow, &ctx->Pack);
       }
    }
