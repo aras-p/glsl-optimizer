@@ -1343,6 +1343,70 @@ _mesa_get_srgb_format_linear(gl_format format)
 
 
 /**
+ * If the given format is a compressed format, return a corresponding
+ * uncompressed format.
+ */
+gl_format
+_mesa_get_uncompressed_format(gl_format format)
+{
+   switch (format) {
+   case MESA_FORMAT_RGB_FXT1:
+      return MESA_FORMAT_RGB888;
+   case MESA_FORMAT_RGBA_FXT1:
+      return MESA_FORMAT_RGBA8888;
+   case MESA_FORMAT_RGB_DXT1:
+   case MESA_FORMAT_SRGB_DXT1:
+      return MESA_FORMAT_RGB888;
+   case MESA_FORMAT_RGBA_DXT1:
+   case MESA_FORMAT_SRGBA_DXT1:
+      return MESA_FORMAT_RGBA8888;
+   case MESA_FORMAT_RGBA_DXT3:
+   case MESA_FORMAT_SRGBA_DXT3:
+      return MESA_FORMAT_RGBA8888;
+   case MESA_FORMAT_RGBA_DXT5:
+   case MESA_FORMAT_SRGBA_DXT5:
+      return MESA_FORMAT_RGBA8888;
+   case MESA_FORMAT_RED_RGTC1:
+      return MESA_FORMAT_R8;
+   case MESA_FORMAT_SIGNED_RED_RGTC1:
+      return MESA_FORMAT_SIGNED_R8;
+   case MESA_FORMAT_RG_RGTC2:
+      return MESA_FORMAT_RG88;
+   case MESA_FORMAT_SIGNED_RG_RGTC2:
+      return MESA_FORMAT_SIGNED_RG88_REV;
+   case MESA_FORMAT_L_LATC1:
+      return MESA_FORMAT_L8;
+   case MESA_FORMAT_SIGNED_L_LATC1:
+      return MESA_FORMAT_SIGNED_L8;
+   case MESA_FORMAT_LA_LATC2:
+      return MESA_FORMAT_AL88;
+   case MESA_FORMAT_SIGNED_LA_LATC2:
+      return MESA_FORMAT_SIGNED_AL88;
+   default:
+#ifdef DEBUG
+      assert(!_mesa_is_format_compressed(format));
+#endif
+      return format;
+   }
+}
+
+
+GLuint
+_mesa_format_num_components(gl_format format)
+{
+   const struct gl_format_info *info = _mesa_get_format_info(format);
+   return ((info->RedBits > 0) +
+           (info->GreenBits > 0) +
+           (info->BlueBits > 0) +
+           (info->AlphaBits > 0) +
+           (info->LuminanceBits > 0) +
+           (info->IntensityBits > 0) +
+           (info->DepthBits > 0) +
+           (info->StencilBits > 0));
+}
+
+
+/**
  * Return number of bytes needed to store an image of the given size
  * in the given format.
  */

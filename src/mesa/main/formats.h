@@ -266,4 +266,11 @@ _mesa_test_formats(void);
 extern gl_format
 _mesa_get_srgb_format_linear(gl_format format);
 
+extern gl_format
+_mesa_get_uncompressed_format(gl_format format);
+
+extern GLuint
+_mesa_format_num_components(gl_format format);
+
+
 #endif /* FORMATS_H */
