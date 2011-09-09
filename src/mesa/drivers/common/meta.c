@@ -2477,6 +2477,160 @@ _mesa_meta_check_generate_mipmap_fallback(struct gl_context *ctx, GLenum target,
 
 
 /**
+ * Compute the texture coordinates for the four vertices of a quad for
+ * drawing a 2D texture image or slice of a cube/3D texture.
+ * \param faceTarget  GL_TEXTURE_1D/2D/3D or cube face name
+ * \param slice  slice of a 1D/2D array texture or 3D texture
+ * \param width  width of the texture image
+ * \param height  height of the texture image
+ * \param coords0/1/2/3  returns the computed texcoords
+ */
+static void
+setup_texture_coords(GLenum faceTarget,
+                     GLint slice,
+                     GLint width,
+                     GLint height,
+                     GLfloat coords0[3],
+                     GLfloat coords1[3],
+                     GLfloat coords2[3],
+                     GLfloat coords3[3])
+{
+   static const GLfloat st[4][2] = {
+      {0.0f, 0.0f}, {1.0f, 0.0f}, {1.0f, 1.0f}, {0.0f, 1.0f}
+   };
+   GLuint i;
+   GLfloat r;
+
+   switch (faceTarget) {
+   case GL_TEXTURE_1D:
+   case GL_TEXTURE_2D:
+   case GL_TEXTURE_3D:
+   case GL_TEXTURE_2D_ARRAY:
+      if (faceTarget == GL_TEXTURE_3D)
+         r = 1.0F / slice;
+      else if (faceTarget == GL_TEXTURE_2D_ARRAY)
+         r = slice;
+      else
+         r = 0.0F;
+      coords0[0] = 0.0F; /* s */
+      coords0[1] = 0.0F; /* t */
+      coords0[2] = r; /* r */
+      coords1[0] = 1.0F;
+      coords1[1] = 0.0F;
+      coords1[2] = r;
+      coords2[0] = 1.0F;
+      coords2[1] = 1.0F;
+      coords2[2] = r;
+      coords3[0] = 0.0F;
+      coords3[1] = 1.0F;
+      coords3[2] = r;
+      break;
+   case GL_TEXTURE_RECTANGLE_ARB:
+      coords0[0] = 0.0F; /* s */
+      coords0[1] = 0.0F; /* t */
+      coords0[2] = 0.0F; /* r */
+      coords1[0] = width;
+      coords1[1] = 0.0F;
+      coords1[2] = 0.0F;
+      coords2[0] = width;
+      coords2[1] = height;
+      coords2[2] = 0.0F;
+      coords3[0] = 0.0F;
+      coords3[1] = height;
+      coords3[2] = 0.0F;
+      break;
+   case GL_TEXTURE_1D_ARRAY:
+      coords0[0] = 0.0F; /* s */
+      coords0[1] = slice; /* t */
+      coords0[2] = 0.0F; /* r */
+      coords1[0] = 1.0f;
+      coords1[1] = slice;
+      coords1[2] = 0.0F;
+      coords2[0] = 1.0F;
+      coords2[1] = slice;
+      coords2[2] = 0.0F;
+      coords3[0] = 0.0F;
+      coords3[1] = slice;
+      coords3[2] = 0.0F;
+      break;
+
+   case GL_TEXTURE_CUBE_MAP_POSITIVE_X:
+   case GL_TEXTURE_CUBE_MAP_NEGATIVE_X:
+   case GL_TEXTURE_CUBE_MAP_POSITIVE_Y:
+   case GL_TEXTURE_CUBE_MAP_NEGATIVE_Y:
+   case GL_TEXTURE_CUBE_MAP_POSITIVE_Z:
+   case GL_TEXTURE_CUBE_MAP_NEGATIVE_Z:
+      /* loop over quad verts */
+      for (i = 0; i < 4; i++) {
+         /* Compute sc = +/-scale and tc = +/-scale.
+          * Not +/-1 to avoid cube face selection ambiguity near the edges,
+          * though that can still sometimes happen with this scale factor...
+          */
+         const GLfloat scale = 0.9999f;
+         const GLfloat sc = (2.0f * st[i][0] - 1.0f) * scale;
+         const GLfloat tc = (2.0f * st[i][1] - 1.0f) * scale;
+         GLfloat *coord;
+
+         switch (i) {
+         case 0:
+            coord = coords0;
+            break;
+         case 1:
+            coord = coords1;
+            break;
+         case 2:
+            coord = coords2;
+            break;
+         case 3:
+            coord = coords3;
+            break;
+         default:
+            assert(0);
+         }
+
+         switch (faceTarget) {
+         case GL_TEXTURE_CUBE_MAP_POSITIVE_X:
+            coord[0] = 1.0f;
+            coord[1] = -tc;
+            coord[2] = -sc;
+            break;
+         case GL_TEXTURE_CUBE_MAP_NEGATIVE_X:
+            coord[0] = -1.0f;
+            coord[1] = -tc;
+            coord[2] = sc;
+            break;
+         case GL_TEXTURE_CUBE_MAP_POSITIVE_Y:
+            coord[0] = sc;
+            coord[1] = 1.0f;
+            coord[2] = tc;
+            break;
+         case GL_TEXTURE_CUBE_MAP_NEGATIVE_Y:
+            coord[0] = sc;
+            coord[1] = -1.0f;
+            coord[2] = -tc;
+            break;
+         case GL_TEXTURE_CUBE_MAP_POSITIVE_Z:
+            coord[0] = sc;
+            coord[1] = -tc;
+            coord[2] = 1.0f;
+            break;
+         case GL_TEXTURE_CUBE_MAP_NEGATIVE_Z:
+            coord[0] = -sc;
+            coord[1] = -tc;
+            coord[2] = -1.0f;
+            break;
+         default:
+            assert(0);
+         }
+      }
+      break;
+   default:
+      assert(0 && "unexpected target in meta setup_texture_coords()");
+   }
+}
+
+
+/**
  * Called via ctx->Driver.GenerateMipmap()
  * Note: We don't yet support 3D textures, 1D/2D array textures or texture
  * borders.
@@ -2487,7 +2641,7 @@ _mesa_meta_GenerateMipmap(struct gl_context *ctx, GLenum target,
 {
    struct gen_mipmap_state *mipmap = &ctx->Meta->Mipmap;
    struct vertex {
-      GLfloat x, y, s, t, r;
+      GLfloat x, y, tex[3];
    };
    struct vertex verts[4];
    const GLuint baseLevel = texObj->BaseLevel;
@@ -2503,7 +2657,8 @@ _mesa_meta_GenerateMipmap(struct gl_context *ctx, GLenum target,
    const GLuint original_active_unit = ctx->Texture.CurrentUnit;
    GLenum faceTarget;
    GLuint dstLevel;
-   GLuint border = 0;
+   const GLuint border = 0;
+   const GLint slice = 0;
 
    if (_mesa_meta_check_generate_mipmap_fallback(ctx, target, texObj)) {
       _mesa_generate_mipmap(ctx, target, texObj);
@@ -2539,7 +2694,7 @@ _mesa_meta_GenerateMipmap(struct gl_context *ctx, GLenum target,
 
       /* setup vertex arrays */
       _mesa_VertexPointer(2, GL_FLOAT, sizeof(struct vertex), OFFSET(x));
-      _mesa_TexCoordPointer(3, GL_FLOAT, sizeof(struct vertex), OFFSET(s));
+      _mesa_TexCoordPointer(3, GL_FLOAT, sizeof(struct vertex), OFFSET(tex));
       _mesa_EnableClientState(GL_VERTEX_ARRAY);
       _mesa_EnableClientState(GL_TEXTURE_COORD_ARRAY);
    }
@@ -2562,98 +2717,27 @@ _mesa_meta_GenerateMipmap(struct gl_context *ctx, GLenum target,
 
    _mesa_set_enable(ctx, target, GL_TRUE);
 
-   /* setup texcoords once (XXX what about border?) */
-   switch (faceTarget) {
-   case GL_TEXTURE_1D:
-   case GL_TEXTURE_2D:
-      verts[0].s = 0.0F;
-      verts[0].t = 0.0F;
-      verts[0].r = 0.0F;
-      verts[1].s = 1.0F;
-      verts[1].t = 0.0F;
-      verts[1].r = 0.0F;
-      verts[2].s = 1.0F;
-      verts[2].t = 1.0F;
-      verts[2].r = 0.0F;
-      verts[3].s = 0.0F;
-      verts[3].t = 1.0F;
-      verts[3].r = 0.0F;
-      break;
-   case GL_TEXTURE_3D:
-      abort();
-      break;
-   default:
-      /* cube face */
-      {
-         static const GLfloat st[4][2] = {
-            {0.0f, 0.0f}, {1.0f, 0.0f}, {1.0f, 1.0f}, {0.0f, 1.0f}
-         };
-         GLuint i;
-
-         /* loop over quad verts */
-         for (i = 0; i < 4; i++) {
-            /* Compute sc = +/-scale and tc = +/-scale.
-             * Not +/-1 to avoid cube face selection ambiguity near the edges,
-             * though that can still sometimes happen with this scale factor...
-             */
-            const GLfloat scale = 0.9999f;
-            const GLfloat sc = (2.0f * st[i][0] - 1.0f) * scale;
-            const GLfloat tc = (2.0f * st[i][1] - 1.0f) * scale;
-
-            switch (faceTarget) {
-            case GL_TEXTURE_CUBE_MAP_POSITIVE_X:
-               verts[i].s = 1.0f;
-               verts[i].t = -tc;
-               verts[i].r = -sc;
-               break;
-            case GL_TEXTURE_CUBE_MAP_NEGATIVE_X:
-               verts[i].s = -1.0f;
-               verts[i].t = -tc;
-               verts[i].r = sc;
-               break;
-            case GL_TEXTURE_CUBE_MAP_POSITIVE_Y:
-               verts[i].s = sc;
-               verts[i].t = 1.0f;
-               verts[i].r = tc;
-               break;
-            case GL_TEXTURE_CUBE_MAP_NEGATIVE_Y:
-               verts[i].s = sc;
-               verts[i].t = -1.0f;
-               verts[i].r = -tc;
-               break;
-            case GL_TEXTURE_CUBE_MAP_POSITIVE_Z:
-               verts[i].s = sc;
-               verts[i].t = -tc;
-               verts[i].r = 1.0f;
-               break;
-            case GL_TEXTURE_CUBE_MAP_NEGATIVE_Z:
-               verts[i].s = -sc;
-               verts[i].t = -tc;
-               verts[i].r = -1.0f;
-               break;
-            default:
-               assert(0);
-            }
-         }
-      }
-   }
-
-   _mesa_set_enable(ctx, target, GL_TRUE);
+   /* setup texcoords (XXX what about border?) */
+   setup_texture_coords(faceTarget,
+                        0.0, 0.0, /* width, height never used here */
+                        slice,
+                        verts[0].tex,
+                        verts[1].tex,
+                        verts[2].tex,
+                        verts[3].tex);
 
    /* setup vertex positions */
-   {
-      verts[0].x = 0.0F;
-      verts[0].y = 0.0F;
-      verts[1].x = 1.0F;
-      verts[1].y = 0.0F;
-      verts[2].x = 1.0F;
-      verts[2].y = 1.0F;
-      verts[3].x = 0.0F;
-      verts[3].y = 1.0F;
+   verts[0].x = 0.0F;
+   verts[0].y = 0.0F;
+   verts[1].x = 1.0F;
+   verts[1].y = 0.0F;
+   verts[2].x = 1.0F;
+   verts[2].y = 1.0F;
+   verts[3].x = 0.0F;
+   verts[3].y = 1.0F;
       
-      /* upload new vertex data */
-      _mesa_BufferSubDataARB(GL_ARRAY_BUFFER_ARB, 0, sizeof(verts), verts);
-   }
+   /* upload new vertex data */
+   _mesa_BufferSubDataARB(GL_ARRAY_BUFFER_ARB, 0, sizeof(verts), verts);
 
    /* setup projection matrix */
    _mesa_MatrixMode(GL_PROJECTION);
