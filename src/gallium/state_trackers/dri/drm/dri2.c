@@ -380,6 +380,14 @@ dri2_flush_frontbuffer(struct dri_drawable *drawable,
    }
 }
 
+static void
+dri2_update_tex_buffer(struct dri_drawable *drawable,
+                       struct dri_context *ctx,
+                       struct pipe_resource *res)
+{
+   /* no-op */
+}
+
 static __DRIimage *
 dri2_lookup_egl_image(struct dri_screen *screen, void *handle)
 {
@@ -707,6 +715,7 @@ dri2_create_buffer(__DRIscreen * sPriv,
 
    drawable->allocate_textures = dri2_allocate_textures;
    drawable->flush_frontbuffer = dri2_flush_frontbuffer;
+   drawable->update_tex_buffer = dri2_update_tex_buffer;
 
    return TRUE;
 }

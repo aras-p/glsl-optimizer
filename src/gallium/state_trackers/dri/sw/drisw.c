@@ -28,7 +28,7 @@
 
 /* TODO:
  *
- * xshm / texture_from_pixmap / EGLImage:
+ * xshm / EGLImage:
  *
  * Allow the loaders to use the XSHM extension. It probably requires callbacks
  * for createImage/destroyImage similar to DRI2 getBuffers.
@@ -39,6 +39,7 @@
 #include "util/u_inlines.h"
 #include "pipe/p_context.h"
 #include "state_tracker/drisw_api.h"
+#include "state_tracker/st_context.h"
 
 #include "dri_screen.h"
 #include "dri_context.h"
@@ -48,14 +49,13 @@ DEBUG_GET_ONCE_BOOL_OPTION(swrast_no_present, "SWRAST_NO_PRESENT", FALSE);
 static boolean swrast_no_present = FALSE;
 
 static INLINE void
-get_drawable_info(__DRIdrawable *dPriv, int *w, int *h)
+get_drawable_info(__DRIdrawable *dPriv, int *x, int *y, int *w, int *h)
 {
    __DRIscreen *sPriv = dPriv->driScreenPriv;
    const __DRIswrastLoaderExtension *loader = sPriv->swrast_loader;
-   int x, y;
 
    loader->getDrawableInfo(dPriv,
-                           &x, &y, w, h,
+                           x, y, w, h,
                            dPriv->loaderPrivate);
 }
 
@@ -74,8 +74,9 @@ static void
 drisw_update_drawable_info(struct dri_drawable *drawable)
 {
    __DRIdrawable *dPriv = drawable->dPriv;
+   int x, y;
 
-   get_drawable_info(dPriv, &dPriv->w, &dPriv->h);
+   get_drawable_info(dPriv, &x, &y, &dPriv->w, &dPriv->h);
 }
 
 static void
@@ -228,6 +229,43 @@ drisw_allocate_textures(struct dri_drawable *drawable,
    drawable->old_h = height;
 }
 
+static void
+drisw_update_tex_buffer(struct dri_drawable *drawable,
+                        struct dri_context *ctx,
+                        struct pipe_resource *res)
+{
+   struct pipe_context *pipe = ((struct st_context *) ctx)->st->pipe;
+   __DRIdrawable *dPriv = drawable->dPriv;
+   __DRIscreen *sPriv = dPriv->driScreenPriv;
+   int x, y, w, h;
+   struct pipe_transfer *transfer;
+   char *map;
+   int ximage_stride, line;
+
+   get_drawable_info(dPriv, &x, &y, &w, &h);
+
+   transfer = pipe_get_transfer(pipe, res,
+                                0, 0, // level, layer,
+                                PIPE_TRANSFER_WRITE,
+                                x, y, w, h);
+   map = pipe_transfer_map(pipe, transfer);
+
+   /* Copy the Drawable content to the mapped texture buffer */
+   sPriv->swrast_loader->getImage(dPriv, x, y, w, h, map, dPriv->loaderPrivate);
+
+   /* The pipe transfer has a pitch rounded up to the nearest 64 pixels.
+      We assume 32 bit pixels. */
+   ximage_stride = w * 4;
+   for (line = h-1; line; --line) {
+      memmove(&map[line * transfer->stride],
+              &map[line * ximage_stride],
+              ximage_stride);
+   }
+
+   pipe_transfer_unmap(pipe, transfer);
+   pipe_transfer_destroy(pipe, transfer);
+}
+
 /*
  * Backend function for init_screen.
  */
@@ -289,6 +327,7 @@ drisw_create_buffer(__DRIscreen * sPriv,
    drawable->allocate_textures = drisw_allocate_textures;
    drawable->update_drawable_info = drisw_update_drawable_info;
    drawable->flush_frontbuffer = drisw_flush_frontbuffer;
+   drawable->update_tex_buffer = drisw_update_tex_buffer;
 
    return TRUE;
 }

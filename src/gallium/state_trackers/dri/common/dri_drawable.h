@@ -77,6 +77,10 @@ struct dri_drawable
 
    void (*flush_frontbuffer)(struct dri_drawable *drawable,
                              enum st_attachment_type statt);
+
+   void (*update_tex_buffer)(struct dri_drawable *drawable,
+                             struct dri_context *ctx,
+                             struct pipe_resource *res);
 };
 
 static INLINE struct dri_drawable *

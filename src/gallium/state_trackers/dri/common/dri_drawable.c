@@ -207,6 +207,7 @@ dri_set_tex_buffer2(__DRIcontext *pDRICtx, GLint target,
 
    dri_drawable_validate_att(drawable, ST_ATTACHMENT_FRONT_LEFT);
 
+   /* Use the pipe resource associated with the X drawable */
    pt = drawable->textures[ST_ATTACHMENT_FRONT_LEFT];
 
    if (pt) {
@@ -225,6 +226,8 @@ dri_set_tex_buffer2(__DRIcontext *pDRICtx, GLint target,
             break;
          }
       }
+
+      drawable->update_tex_buffer(drawable, ctx, pt);
 
       ctx->st->teximage(ctx->st,
             (target == GL_TEXTURE_2D) ? ST_TEXTURE_2D : ST_TEXTURE_RECT,
