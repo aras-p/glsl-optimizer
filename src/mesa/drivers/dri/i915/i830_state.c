@@ -235,7 +235,7 @@ i830EvalLogicOpBlendState(struct gl_context * ctx)
 
    I830_STATECHANGE(i830, I830_UPLOAD_CTX);
 
-   if (_mesa_rgba_logicop_enabled(ctx)) {
+   if (ctx->Color.ColorLogicOpEnabled) {
       i830->state.Ctx[I830_CTXREG_ENABLES_1] &= ~(ENABLE_COLOR_BLEND |
                                                   ENABLE_LOGIC_OP_MASK);
       i830->state.Ctx[I830_CTXREG_ENABLES_1] |= (DISABLE_COLOR_BLEND |
