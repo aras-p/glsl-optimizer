@@ -99,6 +99,26 @@ prepare_blend_state(struct brw_context *brw)
 					 eqA != eqRGB);
       }
 
+      /* See section 8.1.6 "Pre-Blend Color Clamping" of the
+       * SandyBridge PRM Volume 2 Part 1 for HW requirements.
+       *
+       * We do our ARB_color_buffer_float CLAMP_FRAGMENT_COLOR
+       * clamping in the fragment shader.  For its clamping of
+       * blending, the spec says:
+       *
+       *     "RESOLVED: For fixed-point color buffers, the inputs and
+       *      the result of the blending equation are clamped.  For
+       *      floating-point color buffers, no clamping occurs."
+       *
+       * So, generally, we want clamping to the render target's range.
+       * And, good news, the hardware tables for both pre- and
+       * post-blend color clamping are either ignored, or any are
+       * allowed, or clamping is required but RT range clamping is a
+       * valid option.
+       */
+      blend[b].blend1.pre_blend_clamp_enable = 1;
+      blend[b].blend1.post_blend_clamp_enable = 1;
+      blend[b].blend1.clamp_range = BRW_RENDERTARGET_CLAMPRANGE_FORMAT;
 
       /* _NEW_COLOR */
       if (ctx->Color.AlphaEnabled) {
