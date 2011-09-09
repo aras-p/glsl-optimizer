@@ -59,6 +59,7 @@
 #include "main/stencil.h"
 #include "main/texobj.h"
 #include "main/texenv.h"
+#include "main/texgetimage.h"
 #include "main/teximage.h"
 #include "main/texparam.h"
 #include "main/texstate.h"
@@ -259,6 +260,18 @@ struct gen_mipmap_state
    GLuint FBO;
 };
 
+
+/**
+ * State for texture decompression
+ */
+struct decompress_state
+{
+   GLuint ArrayObj;
+   GLuint VBO, FBO, RBO;
+   GLint Width, Height;
+};
+
+
 #define MAX_META_OPS_DEPTH      2
 /**
  * All per-context meta state.
@@ -278,6 +291,7 @@ struct gl_meta_state
    struct drawpix_state DrawPix;  /**< For _mesa_meta_DrawPixels() */
    struct bitmap_state Bitmap;    /**< For _mesa_meta_Bitmap() */
    struct gen_mipmap_state Mipmap;    /**< For _mesa_meta_GenerateMipmap() */
+   struct decompress_state Decompress;  /**< For texture decompression */
 };
 
 
@@ -3022,4 +3036,214 @@ _mesa_meta_CopyTexSubImage3D(struct gl_context *ctx, GLenum target, GLint level,
 {
    copy_tex_sub_image(ctx, 3, target, level, xoffset, yoffset, zoffset,
                       x, y, width, height);
+}
+
+
+/**
+ * Decompress a texture image by drawing a quad with the compressed
+ * texture and reading the pixels out of the color buffer.
+ * \param slice  which slice of a 3D texture or layer of a 1D/2D texture
+ * \param destFormat  format, ala glReadPixels
+ * \param destType  type, ala glReadPixels
+ * \param dest  destination buffer
+ * \param destRowLength  dest image rowLength (ala GL_PACK_ROW_LENGTH)
+ */
+static void
+decompress_texture_image(struct gl_context *ctx,
+                         struct gl_texture_image *texImage,
+                         GLuint slice,
+                         GLenum destFormat, GLenum destType,
+                         GLvoid *dest, GLint destRowLength)
+{
+   struct decompress_state *decompress = &ctx->Meta->Decompress;
+   struct gl_texture_object *texObj = texImage->TexObject;
+   const GLint width = texImage->Width;
+   const GLint height = texImage->Height;
+   const GLenum target = texObj->Target;
+   GLenum faceTarget;
+   struct vertex {
+      GLfloat x, y, tex[3];
+   };
+   struct vertex verts[4];
+   GLuint fboDrawSave, fboReadSave;
+
+   if (slice > 0) {
+      assert(target == GL_TEXTURE_3D ||
+             target == GL_TEXTURE_2D_ARRAY);
+   }
+
+   if (target == GL_TEXTURE_CUBE_MAP) {
+      faceTarget = GL_TEXTURE_CUBE_MAP_POSITIVE_X + texImage->Face;
+   }
+   else {
+      faceTarget = target;
+   }
+
+   /* save fbo bindings (not saved by _mesa_meta_begin()) */
+   fboDrawSave = ctx->DrawBuffer->Name;
+   fboReadSave = ctx->ReadBuffer->Name;
+
+   _mesa_meta_begin(ctx, MESA_META_ALL);
+
+   /* Create/bind FBO/renderbuffer */
+   if (decompress->FBO == 0) {
+      _mesa_GenFramebuffersEXT(1, &decompress->FBO);
+      _mesa_GenRenderbuffersEXT(1, &decompress->RBO);
+      _mesa_BindFramebufferEXT(GL_FRAMEBUFFER_EXT, decompress->FBO);
+      _mesa_BindRenderbufferEXT(GL_RENDERBUFFER_EXT, decompress->RBO);
+      _mesa_FramebufferRenderbufferEXT(GL_FRAMEBUFFER_EXT,
+                                       GL_COLOR_ATTACHMENT0_EXT,
+                                       GL_RENDERBUFFER_EXT,
+                                       decompress->RBO);
+   }
+   else {
+      _mesa_BindFramebufferEXT(GL_FRAMEBUFFER_EXT, decompress->FBO);
+   }
+
+   /* alloc dest surface */
+   if (width != decompress->Width || height != decompress->Height) {
+      _mesa_RenderbufferStorageEXT(GL_RENDERBUFFER_EXT, GL_RGBA,
+                                   width, height);
+      decompress->Width = width;
+      decompress->Height = height;
+   }
+
+   /* setup VBO data */
+   if (decompress->ArrayObj == 0) {
+      /* create vertex array object */
+      _mesa_GenVertexArrays(1, &decompress->ArrayObj);
+      _mesa_BindVertexArray(decompress->ArrayObj);
+
+      /* create vertex array buffer */
+      _mesa_GenBuffersARB(1, &decompress->VBO);
+      _mesa_BindBufferARB(GL_ARRAY_BUFFER_ARB, decompress->VBO);
+      _mesa_BufferDataARB(GL_ARRAY_BUFFER_ARB, sizeof(verts),
+                          NULL, GL_DYNAMIC_DRAW_ARB);
+
+      /* setup vertex arrays */
+      _mesa_VertexPointer(2, GL_FLOAT, sizeof(struct vertex), OFFSET(x));
+      _mesa_TexCoordPointer(3, GL_FLOAT, sizeof(struct vertex), OFFSET(tex));
+      _mesa_EnableClientState(GL_VERTEX_ARRAY);
+      _mesa_EnableClientState(GL_TEXTURE_COORD_ARRAY);
+   }
+   else {
+      _mesa_BindVertexArray(decompress->ArrayObj);
+      _mesa_BindBufferARB(GL_ARRAY_BUFFER_ARB, decompress->VBO);
+   }
+
+   setup_texture_coords(faceTarget, slice, width, height,
+                        verts[0].tex,
+                        verts[1].tex,
+                        verts[2].tex,
+                        verts[3].tex);
+
+   /* setup vertex positions */
+   verts[0].x = 0.0F;
+   verts[0].y = 0.0F;
+   verts[1].x = width;
+   verts[1].y = 0.0F;
+   verts[2].x = width;
+   verts[2].y = height;
+   verts[3].x = 0.0F;
+   verts[3].y = height;
+
+   /* upload new vertex data */
+   _mesa_BufferSubDataARB(GL_ARRAY_BUFFER_ARB, 0, sizeof(verts), verts);
+
+   /* setup texture state */
+   _mesa_BindTexture(target, texObj->Name);
+   _mesa_Enable(target);
+
+   {
+      /* save texture object state */
+      const GLenum minFilterSave = texObj->Sampler.MinFilter;
+      const GLenum magFilterSave = texObj->Sampler.MagFilter;
+      const GLint baseLevelSave = texObj->BaseLevel;
+      const GLint maxLevelSave = texObj->MaxLevel;
+      const GLenum wrapSSave = texObj->Sampler.WrapS;
+      const GLenum wrapTSave = texObj->Sampler.WrapT;
+      const GLenum srgbSave = texObj->Sampler.sRGBDecode;
+
+      /* restrict sampling to the texture level of interest */
+      _mesa_TexParameteri(target, GL_TEXTURE_BASE_LEVEL, texImage->Level);
+      _mesa_TexParameteri(target, GL_TEXTURE_MAX_LEVEL, texImage->Level);
+      /* nearest filtering */
+      _mesa_TexParameteri(target, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+      _mesa_TexParameteri(target, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+
+      /* No sRGB decode or encode.*/
+      if (ctx->Extensions.EXT_texture_sRGB_decode) {
+         _mesa_TexParameteri(target, GL_TEXTURE_SRGB_DECODE_EXT,
+                             GL_SKIP_DECODE_EXT);
+      }
+      if (ctx->Extensions.EXT_framebuffer_sRGB) {
+         _mesa_Disable(GL_FRAMEBUFFER_SRGB_EXT);
+      }
+
+      /* render quad w/ texture into renderbuffer */
+      _mesa_DrawArrays(GL_TRIANGLE_FAN, 0, 4);
+      
+      /* Restore texture object state, the texture binding will
+       * be restored by _mesa_meta_end().
+       */
+      _mesa_TexParameteri(target, GL_TEXTURE_MIN_FILTER, minFilterSave);
+      _mesa_TexParameteri(target, GL_TEXTURE_MAG_FILTER, magFilterSave);
+      if (target != GL_TEXTURE_RECTANGLE_ARB) {
+         _mesa_TexParameteri(target, GL_TEXTURE_BASE_LEVEL, baseLevelSave);
+         _mesa_TexParameteri(target, GL_TEXTURE_MAX_LEVEL, maxLevelSave);
+      }
+      _mesa_TexParameteri(target, GL_TEXTURE_WRAP_S, wrapSSave);
+      _mesa_TexParameteri(target, GL_TEXTURE_WRAP_T, wrapTSave);
+      if (ctx->Extensions.EXT_texture_sRGB_decode) {
+         _mesa_TexParameteri(target, GL_TEXTURE_SRGB_DECODE_EXT, srgbSave);
+      }
+   }
+
+   /* read pixels from renderbuffer */
+   ctx->Pack.RowLength = destRowLength;
+   _mesa_ReadPixels(0, 0, width, height, destFormat, destType, dest);
+
+   _mesa_meta_end(ctx);
+
+   /* restore fbo bindings */
+   if (fboDrawSave == fboReadSave) {
+      _mesa_BindFramebufferEXT(GL_FRAMEBUFFER_EXT, fboDrawSave);
+   }
+   else {
+      _mesa_BindFramebufferEXT(GL_DRAW_FRAMEBUFFER_EXT, fboDrawSave);
+      _mesa_BindFramebufferEXT(GL_READ_FRAMEBUFFER_EXT, fboReadSave);
+   }
+}
+
+
+/**
+ * This is just a wrapper around _mesa_get_tex_image() and
+ * decompress_texture_image().  Meta functions should not be directly called
+ * from core Mesa.
+ */
+void
+_mesa_meta_GetTexImage(struct gl_context *ctx, GLenum target, GLint level,
+                       GLenum format, GLenum type, GLvoid *pixels,
+                       struct gl_texture_object *texObj,
+                       struct gl_texture_image *texImage)
+{
+   /* We can only use the decompress-with-blit method here if the texels are
+    * unsigned, normalized values.  We could handle signed and unnormalized 
+    * with floating point renderbuffers...
+    */
+   if (_mesa_is_format_compressed(texImage->TexFormat) &&
+       _mesa_get_format_datatype(texImage->TexFormat)
+       == GL_UNSIGNED_NORMALIZED) {
+      const GLuint slice = 0; /* only 2D compressed textures for now */
+      /* Need to unlock the texture here to prevent deadlock... */
+      _mesa_unlock_texture(ctx, texObj);
+      decompress_texture_image(ctx, texImage, slice, format, type, pixels,
+                               ctx->Pack.RowLength);
+      /* ... and relock it */
+      _mesa_lock_texture(ctx, texObj);
+   }
+   else {
+      _mesa_get_teximage(ctx, target, level, format, type, pixels,
+                          texObj, texImage);
+   }
 }
