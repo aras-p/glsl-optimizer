@@ -42,7 +42,6 @@
 #include "pbo.h"
 #include "texcompress.h"
 #include "texgetimage.h"
-#include "texfetch.h"
 #include "teximage.h"
 
 
