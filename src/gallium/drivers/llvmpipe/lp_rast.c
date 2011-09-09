@@ -339,6 +339,15 @@ lp_rast_shade_tile(struct lp_rasterizer_task *task,
    const unsigned tile_x = task->x, tile_y = task->y;
    unsigned x, y;
 
+   if (!variant) {
+      static boolean warned = FALSE;
+      if (!warned) {
+         debug_warning("null variant pointer");
+         warned = TRUE;
+      }
+      return;
+   }
+
    if (inputs->disable) {
       /* This command was partially binned and has been disabled */
       return;
@@ -390,6 +399,19 @@ lp_rast_shade_tile_opaque(struct lp_rasterizer_task *task,
 {
    const struct lp_scene *scene = task->scene;
    unsigned i;
+
+   if (!task->state) {
+      /* This indicates that some sort of rendering command was queued
+       * before we set up the rasterization state.  Just returning here
+       * allows the piglit fbo-mipmap-copypix test to run/pass.
+       */
+      static boolean warned = FALSE;
+      if (!warned) {
+         debug_warning("null state pointer");
+         warned = TRUE;
+      }
+      return;
+   }
 
    LP_DBG(DEBUG_RAST, "%s\n", __FUNCTION__);
 
@@ -785,6 +807,10 @@ static PIPE_THREAD_ROUTINE( thread_func, init_data )
    boolean debug = false;
 
    while (1) {
+      /* make sure these pointers aren't pointing to old data */
+      task->scene = NULL;
+      task->state = NULL;
+
       /* wait for work */
       if (debug)
          debug_printf("thread %d waiting for work\n", task->thread_index);
