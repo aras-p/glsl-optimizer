@@ -37,8 +37,7 @@
 #include "util/u_format.h"
 #include "util/u_memory.h"
 #include "util/u_inlines.h"
-
-#include "state_tracker/st_context.h" 
+ 
 
 static boolean
 dri_st_framebuffer_validate(struct st_framebuffer_iface *stfbi,
@@ -196,23 +195,14 @@ dri_set_tex_buffer2(__DRIcontext *pDRICtx, GLint target,
 {
    struct dri_context *ctx = dri_context(pDRICtx);
    struct dri_drawable *drawable = dri_drawable(dPriv);
-   struct pipe_resource *res;
-   struct st_context *stctx = (struct st_context *)ctx->st;
-   struct pipe_context *pipe = stctx->pipe;
-   struct pipe_transfer *tex_xfer;
-   char *map;
-   __DRIscreen *sPriv = dPriv->driScreenPriv;
-   int x, y, w, h, line, ximage_stride;
+   struct pipe_resource *pt;
 
-   sPriv->swrast_loader->getDrawableInfo(dPriv, &x, &y, &w, &h, dPriv->loaderPrivate);
-         
    dri_drawable_validate_att(drawable, ST_ATTACHMENT_FRONT_LEFT);
 
-   /* Use the pipe resource associated with the X drawable */
-   res = drawable->textures[ST_ATTACHMENT_FRONT_LEFT];
+   pt = drawable->textures[ST_ATTACHMENT_FRONT_LEFT];
 
-   if (res) {
-      enum pipe_format internal_format = res->format;
+   if (pt) {
+      enum pipe_format internal_format = pt->format;
 
       if (format == __DRI_TEXTURE_FORMAT_RGB)  {
          /* only need to cover the formats recognized by dri_fill_st_visual */
@@ -228,35 +218,9 @@ dri_set_tex_buffer2(__DRIcontext *pDRICtx, GLint target,
          }
       }
 
-
-      tex_xfer = pipe_get_transfer(pipe, res,
-                                    0, 0,    // level, layer
-                                    PIPE_TRANSFER_WRITE,
-                                    x, y,
-                                    w, h);
-
-
-      map = pipe_transfer_map(pipe, tex_xfer);
- 
-      /* Copy the Drawable content to the mapped texture buffer */
-      sPriv->swrast_loader->getImage(dPriv, x, y, w, h, map,
-				   dPriv->loaderPrivate);
-
-      /* The pipe transfer has a pitch rounded up to the nearest 64 pixels.
-         We assume 32 bit pixels. */
-      ximage_stride = w * 4;      
-      for (line = h-1; line; --line) {
-         memmove(&map[line * tex_xfer->stride], &map[line * ximage_stride], ximage_stride);
-      }
-
-      pipe_transfer_unmap(pipe, tex_xfer);
-
-      pipe_transfer_destroy(pipe, tex_xfer);
-
       ctx->st->teximage(ctx->st,
             (target == GL_TEXTURE_2D) ? ST_TEXTURE_2D : ST_TEXTURE_RECT,
-            0, internal_format, res, FALSE);
-
+            0, internal_format, pt, FALSE);
    }
 }
 
