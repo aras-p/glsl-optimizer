@@ -170,6 +170,12 @@ void st_init_limits(struct st_context *st)
       /* raise MaxParameters if native support is higher */
       pc->MaxParameters            = MAX2(pc->MaxParameters, pc->MaxNativeParameters);
 
+      /* Gallium doesn't really care about local vs. env parameters so use the
+       * same limits.
+       */
+      pc->MaxLocalParams = pc->MaxParameters;
+      pc->MaxEnvParams = pc->MaxParameters;
+
       options->EmitNoNoise = TRUE;
 
       /* TODO: make these more fine-grained if anyone needs it */
