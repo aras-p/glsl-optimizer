@@ -50,6 +50,11 @@ _mesa_compressed_image_address(GLint col, GLint row, GLint img,
                                gl_format mesaFormat,
                                GLsizei width, const GLubyte *image);
 
+extern void
+_mesa_decompress_image(gl_format format, GLuint width, GLuint height,
+                       const GLubyte *src, GLint srcRowStride,
+                       GLfloat *dest);
+
 #else /* _HAVE_FULL_GL */
 
 /* no-op macros */
