@@ -34,11 +34,13 @@
 #include "enums.h"
 #include "context.h"
 #include "formats.h"
+#include "format_unpack.h"
 #include "image.h"
 #include "mfeatures.h"
 #include "mtypes.h"
 #include "pack.h"
 #include "pbo.h"
+#include "texcompress.h"
 #include "texgetimage.h"
 #include "texfetch.h"
 #include "teximage.h"
@@ -173,95 +175,141 @@ get_tex_ycbcr(struct gl_context *ctx, GLuint dimensions,
 
 
 /**
- * glGetTexImage for (s)RGBA, Luminance, etc. pixels.
- * This is the slow way since we use texture sampling.
+ * glGetTexImage for color formats (RGBA, RGB, alpha, LA, etc).
+ * Compressed textures are handled here as well.
  */
 static void
 get_tex_rgba(struct gl_context *ctx, GLuint dimensions,
              GLenum format, GLenum type, GLvoid *pixels,
              struct gl_texture_image *texImage)
 {
-   const GLint width = texImage->Width;
-   const GLint height = texImage->Height;
-   const GLint depth = texImage->Depth;
-   const GLenum dataType = _mesa_get_format_datatype(texImage->TexFormat);
+   /* don't want to apply sRGB -> RGB conversion here so override the format */
+   const gl_format texFormat = _mesa_get_srgb_format_linear(texImage->TexFormat);
+   const GLuint width = texImage->Width;
+   const GLuint height = texImage->Height;
+   const GLuint depth = texImage->Depth;
+   const GLenum dataType = _mesa_get_format_datatype(texFormat);
+   const GLenum baseFormat = _mesa_get_format_base_format(texFormat);
    /* Normally, no pixel transfer ops are performed during glGetTexImage.
     * The only possible exception is component clamping to [0,1].
     */
    GLbitfield transferOps = 0x0;
-   GLint img, row;
-   GLfloat (*rgba)[4] = (GLfloat (*)[4]) malloc(4 * width * sizeof(GLfloat));
-   const GLboolean is_sampler_srgb_decode =
-       _mesa_get_format_color_encoding(texImage->TexFormat) == GL_SRGB &&
-       texImage->TexObject->Sampler.sRGBDecode == GL_DECODE_EXT;
 
-   if (!rgba) {
-      _mesa_error(ctx, GL_OUT_OF_MEMORY, "glGetTexImage");
-      return;
-   }
-
-   /* Clamping does not apply to GetTexImage (final conversion)?
-    * Looks like we need clamp though when going from format
-    * containing negative values to unsigned format.
+   /* In general, clamping does not apply to glGetTexImage, except when
+    * the returned type of the image can't hold negative values.
     */
-   if (format == GL_LUMINANCE || format == GL_LUMINANCE_ALPHA) {
-      transferOps |= IMAGE_CLAMP_BIT;
-   }
-   else if (!type_with_negative_values(type) &&
-            (dataType == GL_FLOAT ||
-             dataType == GL_SIGNED_NORMALIZED)) {
-      transferOps |= IMAGE_CLAMP_BIT;
-   }
-
-   /* glGetTexImage always returns sRGB data for sRGB textures. Make sure the
-    * fetch functions return sRGB data without linearizing it.
-    */
-   if (is_sampler_srgb_decode) {
-      texImage->TexObject->Sampler.sRGBDecode = GL_SKIP_DECODE_EXT;
-      _mesa_set_fetch_functions(texImage, dimensions);
-   }
-
-   for (img = 0; img < depth; img++) {
-      for (row = 0; row < height; row++) {
-         void *dest = _mesa_image_address(dimensions, &ctx->Pack, pixels,
-                                          width, height, format, type,
-                                          img, row, 0);
-         GLint col;
-
-         for (col = 0; col < width; col++) {
-            texImage->FetchTexelf(texImage, col, row, img, rgba[col]);
-            if (texImage->_BaseFormat == GL_ALPHA) {
-               rgba[col][RCOMP] = 0.0F;
-               rgba[col][GCOMP] = 0.0F;
-               rgba[col][BCOMP] = 0.0F;
-            }
-            else if (texImage->_BaseFormat == GL_LUMINANCE) {
-               rgba[col][GCOMP] = 0.0F;
-               rgba[col][BCOMP] = 0.0F;
-               rgba[col][ACOMP] = 1.0F;
-            }
-            else if (texImage->_BaseFormat == GL_LUMINANCE_ALPHA) {
-               rgba[col][GCOMP] = 0.0F;
-               rgba[col][BCOMP] = 0.0F;
-            }
-            else if (texImage->_BaseFormat == GL_INTENSITY) {
-               rgba[col][GCOMP] = 0.0F;
-               rgba[col][BCOMP] = 0.0F;
-               rgba[col][ACOMP] = 1.0F;
-            }
-         }
-         _mesa_pack_rgba_span_float(ctx, width, (GLfloat (*)[4]) rgba,
-                                    format, type, dest,
-                                    &ctx->Pack, transferOps);
+   if (!type_with_negative_values(type)) {
+      /* the returned image type can't have negative values */
+      if (dataType == GL_FLOAT ||
+          dataType == GL_SIGNED_NORMALIZED ||
+          format == GL_LUMINANCE ||
+          format == GL_LUMINANCE_ALPHA) {
+         transferOps |= IMAGE_CLAMP_BIT;
       }
    }
 
-   if (is_sampler_srgb_decode) {
-      texImage->TexObject->Sampler.sRGBDecode = GL_DECODE_EXT;
-      _mesa_set_fetch_functions(texImage, dimensions);
-   }
+   if (_mesa_is_format_compressed(texFormat)) {
+      /* Decompress into temp buffer, then pack into user buffer */
+      GLfloat *tempImage, *srcRow;
+      GLuint row;
 
-   free(rgba);
+      tempImage = (GLfloat *) malloc(texImage->Width * texImage->Height *
+                                     texImage->Depth * 4 * sizeof(GLfloat));
+      if (!tempImage) {
+         _mesa_error(ctx, GL_OUT_OF_MEMORY, "glGetTexImage()");
+         return;
+      }
+
+      _mesa_decompress_image(texFormat, texImage->Width, texImage->Height,
+                             texImage->Data, texImage->RowStride, tempImage);
+
+      if (baseFormat == GL_LUMINANCE ||
+          baseFormat == GL_LUMINANCE_ALPHA) {
+         /* Set green and blue to zero since the pack function here will
+          * compute L=R+G+B.
+          */
+         GLuint i;
+         for (i = 0; i < width * height; i++) {
+            tempImage[i * 4 + GCOMP] = tempImage[i * 4 + BCOMP] = 0.0f;
+         }
+      }
+
+      srcRow = tempImage;
+      for (row = 0; row < height; row++) {
+         void *dest = _mesa_image_address(dimensions, &ctx->Pack, pixels,
+                                          width, height, format, type,
+                                          0, row, 0);
+
+         _mesa_pack_rgba_span_float(ctx, width, (GLfloat (*)[4]) srcRow,
+                                    format, type, dest, &ctx->Pack, transferOps);
+         srcRow += width * 4;
+      }
+
+      free(tempImage);
+   }
+   else {
+      /* No decompression needed */
+      const GLint texelSize = _mesa_get_format_bytes(texFormat);
+      GLuint img, row;
+      GLfloat (*rgba)[4];
+
+      rgba = (GLfloat (*)[4]) malloc(4 * width * sizeof(GLfloat));
+      if (!rgba) {
+         _mesa_error(ctx, GL_OUT_OF_MEMORY, "glGetTexImage()");
+         return;
+      }
+
+      for (img = 0; img < depth; img++) {
+         for (row = 0; row < height; row++) {
+            void *dest = _mesa_image_address(dimensions, &ctx->Pack, pixels,
+                                             width, height, format, type,
+                                             img, row, 0);
+            const GLubyte *src = (const GLubyte *) texImage->Data +
+               (texImage->ImageOffsets[img] +
+                texImage->RowStride * row) * texelSize;
+
+            _mesa_unpack_rgba_row(texFormat, width, src, rgba);
+
+            if (texImage->_BaseFormat == GL_ALPHA) {
+               GLint col;
+               for (col = 0; col < width; col++) {
+                  rgba[col][RCOMP] = 0.0F;
+                  rgba[col][GCOMP] = 0.0F;
+                  rgba[col][BCOMP] = 0.0F;
+               }
+            }
+            else if (texImage->_BaseFormat == GL_LUMINANCE) {
+               GLint col;
+               for (col = 0; col < width; col++) {
+                  rgba[col][GCOMP] = 0.0F;
+                  rgba[col][BCOMP] = 0.0F;
+                  rgba[col][ACOMP] = 1.0F;
+               }
+            }
+            else if (texImage->_BaseFormat == GL_LUMINANCE_ALPHA) {
+               GLint col;
+               for (col = 0; col < width; col++) {
+                  rgba[col][GCOMP] = 0.0F;
+                  rgba[col][BCOMP] = 0.0F;
+               }
+            }
+            else if (texImage->_BaseFormat == GL_INTENSITY) {
+               GLint col;
+               for (col = 0; col < width; col++) {
+                  rgba[col][GCOMP] = 0.0F;
+                  rgba[col][BCOMP] = 0.0F;
+                  rgba[col][ACOMP] = 1.0F;
+               }
+            }
+
+            _mesa_pack_rgba_span_float(ctx, width, (GLfloat (*)[4]) rgba,
+                                       format, type, dest,
+                                       &ctx->Pack, transferOps);
+         }
+      }
+
+      free(rgba);
+   }
 }
 
 
