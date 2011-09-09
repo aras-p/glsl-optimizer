@@ -72,7 +72,7 @@ _swrast_update_rasterflags( struct gl_context *ctx )
          break;
       }
    }
-   if (ctx->Color._LogicOpEnabled)     rasterMask |= LOGIC_OP_BIT;
+   if (ctx->Color.ColorLogicOpEnabled) rasterMask |= LOGIC_OP_BIT;
    if (ctx->Texture._EnabledUnits)     rasterMask |= TEXTURE_BIT;
    if (   ctx->Viewport.X < 0
        || ctx->Viewport.X + ctx->Viewport.Width > (GLint) ctx->DrawBuffer->Width

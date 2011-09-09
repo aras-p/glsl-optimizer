@@ -58,7 +58,7 @@ prepare_blend_state(struct brw_context *brw)
 
    for (b = 0; b < nr_draw_buffers; b++) {
       /* _NEW_COLOR */
-      if (ctx->Color._LogicOpEnabled) {
+      if (ctx->Color.ColorLogicOpEnabled) {
 	 struct gl_renderbuffer *rb = ctx->DrawBuffer->_ColorDrawBuffers[b];
 	 /* _NEW_BUFFERS */
 	 /* Floating point RTs should have no effect from LogicOp,

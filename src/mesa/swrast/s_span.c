@@ -1248,7 +1248,7 @@ _swrast_write_rgba_span( struct gl_context *ctx, SWspan *span)
             ASSERT(rb->_BaseFormat == GL_RGBA || rb->_BaseFormat == GL_RGB ||
 		   rb->_BaseFormat == GL_ALPHA);
 
-            if (ctx->Color._LogicOpEnabled) {
+            if (ctx->Color.ColorLogicOpEnabled) {
                _swrast_logicop_rgba_span(ctx, rb, span);
             }
             else if ((ctx->Color.BlendEnabled >> buf) & 1) {

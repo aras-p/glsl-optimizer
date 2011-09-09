@@ -143,7 +143,7 @@ static void upload_cc_unit(struct brw_context *brw)
    }
 
    /* _NEW_COLOR */
-   if (ctx->Color._LogicOpEnabled && ctx->Color.LogicOp != GL_COPY) {
+   if (ctx->Color.ColorLogicOpEnabled && ctx->Color.LogicOp != GL_COPY) {
       cc->cc2.logicop_enable = 1;
       cc->cc5.logicop_func = intel_translate_logic_op(ctx->Color.LogicOp);
    } else if (ctx->Color.BlendEnabled) {

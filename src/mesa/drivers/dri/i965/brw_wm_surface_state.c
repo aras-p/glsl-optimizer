@@ -507,7 +507,7 @@ brw_update_renderbuffer_surface(struct brw_context *brw,
 
    if (intel->gen < 6) {
       /* _NEW_COLOR */
-      if (!ctx->Color._LogicOpEnabled &&
+      if (!ctx->Color.ColorLogicOpEnabled &&
 	  (ctx->Color.BlendEnabled & (1 << unit)))
 	 surf[0] |= BRW_SURFACE_BLEND_ENABLED;
 

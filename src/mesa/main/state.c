@@ -407,19 +407,6 @@ update_multisample(struct gl_context *ctx)
 
 
 /**
- * Update derived color/blend/logicop state.
- */
-static void
-update_color(struct gl_context *ctx)
-{
-   /* This is needed to support 1.1's RGB logic ops AND
-    * 1.0's blending logicops.
-    */
-   ctx->Color._LogicOpEnabled = _mesa_rgba_logicop_enabled(ctx);
-}
-
-
-/**
  * Update the ctx->Color._ClampFragmentColor field
  */
 static void
@@ -633,9 +620,6 @@ _mesa_update_state_locked( struct gl_context *ctx )
 
    if (new_state & (_NEW_MULTISAMPLE | _NEW_BUFFERS))
       update_multisample( ctx );
-
-   if (new_state & _NEW_COLOR)
-      update_color( ctx );
 
    if (new_state & (_NEW_COLOR | _NEW_BUFFERS))
       update_clamp_read_color(ctx);
