@@ -153,7 +153,6 @@ static const struct extension extension_table[] = {
    { "GL_EXT_blend_color",                         o(EXT_blend_color),                         GL,             1995 },
    { "GL_EXT_blend_equation_separate",             o(EXT_blend_equation_separate),             GL,             2003 },
    { "GL_EXT_blend_func_separate",                 o(EXT_blend_func_separate),                 GL,             1999 },
-   { "GL_EXT_blend_logic_op",                      o(EXT_blend_logic_op),                      GL,             1995 },
    { "GL_EXT_blend_minmax",                        o(EXT_blend_minmax),                        GL | ES1 | ES2, 1995 },
    { "GL_EXT_blend_subtract",                      o(EXT_blend_subtract),                      GL,             1995 },
    { "GL_EXT_clip_volume_hint",                    o(EXT_clip_volume_hint),                    GL,             1996 },
@@ -471,7 +470,6 @@ _mesa_enable_sw_extensions(struct gl_context *ctx)
    ctx->Extensions.EXT_blend_color = GL_TRUE;
    ctx->Extensions.EXT_blend_equation_separate = GL_TRUE;
    ctx->Extensions.EXT_blend_func_separate = GL_TRUE;
-   ctx->Extensions.EXT_blend_logic_op = GL_TRUE;
    ctx->Extensions.EXT_blend_minmax = GL_TRUE;
    ctx->Extensions.EXT_blend_subtract = GL_TRUE;
    ctx->Extensions.EXT_depth_bounds_test = GL_TRUE;

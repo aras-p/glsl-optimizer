@@ -79,8 +79,7 @@ _mesa_need_secondary_color(const struct gl_context *ctx)
 static INLINE GLboolean
 _mesa_rgba_logicop_enabled(const struct gl_context *ctx)
 {
-   return ctx->Color.ColorLogicOpEnabled ||
-      (ctx->Color.BlendEnabled && ctx->Color.Blend[0].EquationRGB == GL_LOGIC_OP);
+   return ctx->Color.ColorLogicOpEnabled;
 }
 
 

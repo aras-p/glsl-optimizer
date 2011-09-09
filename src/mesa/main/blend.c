@@ -285,8 +285,7 @@ _mesa_BlendFuncSeparatei(GLuint buf, GLenum sfactorRGB, GLenum dfactorRGB,
  * \return GL_TRUE if legal, GL_FALSE otherwise.
  */
 static GLboolean
-legal_blend_equation(const struct gl_context *ctx,
-                     GLenum mode, GLboolean is_separate)
+legal_blend_equation(const struct gl_context *ctx, GLenum mode)
 {
    switch (mode) {
    case GL_FUNC_ADD:
@@ -294,10 +293,6 @@ legal_blend_equation(const struct gl_context *ctx,
    case GL_MIN:
    case GL_MAX:
       return ctx->Extensions.EXT_blend_minmax;
-   case GL_LOGIC_OP:
-      /* glBlendEquationSeparate cannot take GL_LOGIC_OP as a parameter.
-       */
-      return ctx->Extensions.EXT_blend_logic_op && !is_separate;
    case GL_FUNC_SUBTRACT:
    case GL_FUNC_REVERSE_SUBTRACT:
       return ctx->Extensions.EXT_blend_subtract;
@@ -320,7 +315,7 @@ _mesa_BlendEquation( GLenum mode )
       _mesa_debug(ctx, "glBlendEquation(%s)\n",
                   _mesa_lookup_enum_by_nr(mode));
 
-   if (!legal_blend_equation(ctx, mode, GL_FALSE)) {
+   if (!legal_blend_equation(ctx, mode)) {
       _mesa_error(ctx, GL_INVALID_ENUM, "glBlendEquation");
       return;
    }
@@ -370,7 +365,7 @@ _mesa_BlendEquationi(GLuint buf, GLenum mode)
       return;
    }
 
-   if (!legal_blend_equation(ctx, mode, GL_FALSE)) {
+   if (!legal_blend_equation(ctx, mode)) {
       _mesa_error(ctx, GL_INVALID_ENUM, "glBlendEquationi");
       return;
    }
@@ -408,12 +403,12 @@ _mesa_BlendEquationSeparateEXT( GLenum modeRGB, GLenum modeA )
       return;
    }
 
-   if (!legal_blend_equation(ctx, modeRGB, GL_TRUE)) {
+   if (!legal_blend_equation(ctx, modeRGB)) {
       _mesa_error(ctx, GL_INVALID_ENUM, "glBlendEquationSeparateEXT(modeRGB)");
       return;
    }
 
-   if (!legal_blend_equation(ctx, modeA, GL_TRUE)) {
+   if (!legal_blend_equation(ctx, modeA)) {
       _mesa_error(ctx, GL_INVALID_ENUM, "glBlendEquationSeparateEXT(modeA)");
       return;
    }
@@ -464,12 +459,12 @@ _mesa_BlendEquationSeparatei(GLuint buf, GLenum modeRGB, GLenum modeA)
       return;
    }
 
-   if (!legal_blend_equation(ctx, modeRGB, GL_TRUE)) {
+   if (!legal_blend_equation(ctx, modeRGB)) {
       _mesa_error(ctx, GL_INVALID_ENUM, "glBlendEquationSeparatei(modeRGB)");
       return;
    }
 
-   if (!legal_blend_equation(ctx, modeA, GL_TRUE)) {
+   if (!legal_blend_equation(ctx, modeA)) {
       _mesa_error(ctx, GL_INVALID_ENUM, "glBlendEquationSeparatei(modeA)");
       return;
    }
