@@ -200,15 +200,7 @@ update_blend( struct st_context *st )
       num_state = ctx->Const.MaxDrawBuffers;
       blend->independent_blend_enable = 1;
    }
-   /* Note it is impossible to correctly deal with EXT_blend_logic_op and
-      EXT_draw_buffers2/EXT_blend_equation_separate at the same time.
-      These combinations would require support for per-rt logicop enables
-      and separate alpha/rgb logicop/blend support respectively. Neither
-      possible in gallium nor most hardware. Assume these combinations
-      don't happen. */
-   if (ctx->Color.ColorLogicOpEnabled ||
-       (ctx->Color.BlendEnabled &&
-        ctx->Color.Blend[0].EquationRGB == GL_LOGIC_OP)) {
+   if (ctx->Color.ColorLogicOpEnabled) {
       /* logicop enabled */
       blend->logicop_enable = 1;
       blend->logicop_func = translate_logicop(ctx->Color.LogicOp);
