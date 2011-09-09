@@ -123,7 +123,7 @@ nouveau_bufferobj_get_subdata(struct gl_context *ctx, GLintptrARB offset,
 }
 
 static void *
-nouveau_bufferobj_map_range(struct gl_context *ctx, GLenum target, GLintptr offset,
+nouveau_bufferobj_map_range(struct gl_context *ctx, GLintptr offset,
 			    GLsizeiptr length, GLbitfield access,
 			    struct gl_buffer_object *obj)
 {
