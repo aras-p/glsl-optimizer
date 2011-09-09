@@ -1985,50 +1985,45 @@ generate_mipmap_uncompressed(struct gl_context *ctx, GLenum target,
 static void
 generate_mipmap_compressed(struct gl_context *ctx, GLenum target,
 			   struct gl_texture_object *texObj,
-			   const struct gl_texture_image *srcImage,
+			   struct gl_texture_image *srcImage,
 			   GLuint maxLevel)
 {
    GLint level;
    gl_format temp_format;
-   GLenum datatype;
-   GLuint comps;
-   GLuint row;
    GLint components;
    GLuint temp_src_stride, temp_dst_stride; /* in bytes */
    GLchan *temp_src = NULL, *temp_dst = NULL;
+   GLenum temp_datatype;
+   GLenum temp_base_format;
 
-   /* Choose the format we will do _mesa_generate_mipmap_level() in,
-    * and uncompress the firstImage into a temporary of that format.
-    */
+   /* only two types of compressed textures at this time */
    assert(texObj->Target == GL_TEXTURE_2D ||
 	  texObj->Target == GL_TEXTURE_CUBE_MAP_ARB);
 
-   if (srcImage->_BaseFormat == GL_RGB) {
-      temp_format = MESA_FORMAT_RGB888;
-      components = 3;
-   } else if (srcImage->_BaseFormat == GL_RED) {
-      temp_format = MESA_FORMAT_R8;
-      components = 1;
-   } else if (srcImage->_BaseFormat == GL_RG) {
-      temp_format = MESA_FORMAT_RG88;
-      components = 2;
-   } else if (srcImage->_BaseFormat == GL_RGBA) {
-      temp_format = MESA_FORMAT_RGBA8888;
-      components = 4;
-   } else if (srcImage->_BaseFormat == GL_LUMINANCE) {
-      temp_format = MESA_FORMAT_L8;
-      components = 1;
-   } else if (srcImage->_BaseFormat == GL_LUMINANCE_ALPHA) {
-      temp_format = MESA_FORMAT_AL88;
-      components = 2;
-   } else {
-      _mesa_problem(ctx, "bad srcImage->_BaseFormat in _mesa_generate_mipmaps");
-      return;
+   /*
+    * Choose a format for the temporary, uncompressed base image.
+    * Then, get number of components, choose temporary image datatype,
+    * and get base format.
+    */
+   temp_format = _mesa_get_uncompressed_format(srcImage->TexFormat);
+
+   components = _mesa_format_num_components(temp_format);
+
+   /* Revisit this if we get compressed formats with >8 bits per component */
+   if (_mesa_get_format_datatype(srcImage->TexFormat)
+       == GL_SIGNED_NORMALIZED) {
+      temp_datatype = GL_BYTE;
+   }
+   else {
+      temp_datatype = GL_UNSIGNED_BYTE;
    }
 
-   /* allocate storage for uncompressed GL_RGB or GL_RGBA images */
-   temp_src_stride = _mesa_format_row_stride(temp_format, srcImage->Width);
+   temp_base_format = _mesa_get_format_base_format(temp_format);
+
+
+   /* allocate storage for the temporary, uncompressed image */
    /* 20 extra bytes, just be safe when calling last FetchTexel */
+   temp_src_stride = _mesa_format_row_stride(temp_format, srcImage->Width);
    temp_src = (GLubyte *) malloc(temp_src_stride * srcImage->Height + 20);
    if (!temp_src) {
       _mesa_error(ctx, GL_OUT_OF_MEMORY, "generate mipmaps");
@@ -2036,16 +2031,20 @@ generate_mipmap_compressed(struct gl_context *ctx, GLenum target,
    }
 
    /* decompress base image to the temporary */
-   for (row = 0; row < srcImage->Height; row++) {
-      GLuint col;
-      GLchan *dst = (GLchan *) temp_src + temp_src_stride * row;
-      for (col = 0; col < srcImage->Width; col++) {
-	 srcImage->FetchTexelc(srcImage, col, row, 0, dst);
-	 dst += components;
-      }
+   {
+      /* save pixel packing mode */
+      struct gl_pixelstore_attrib save = ctx->Pack;
+      /* use default/tight packing parameters */
+      ctx->Pack = ctx->DefaultPacking;
+
+      /* Get the uncompressed image */
+      ctx->Driver.GetTexImage(ctx, target, texObj->BaseLevel,
+                              temp_base_format, temp_datatype,
+                              temp_src, texObj, srcImage);
+      /* restore packing mode */
+      ctx->Pack = save;
    }
 
-   _mesa_format_to_type_and_comps(temp_format, &datatype, &comps);
 
    for (level = texObj->BaseLevel; level < maxLevel; level++) {
       /* generate image[level+1] from image[level] */
@@ -2086,7 +2085,10 @@ generate_mipmap_compressed(struct gl_context *ctx, GLenum target,
          return;
       }
 
-      _mesa_generate_mipmap_level(target, datatype, comps, border,
+      /* Free old image data */
+      ctx->Driver.FreeTextureImageBuffer(ctx, dstImage);
+
+      _mesa_generate_mipmap_level(target, temp_datatype, components, border,
                                   srcWidth, srcHeight, srcDepth,
                                   temp_src, temp_src_stride / components,
                                   dstWidth, dstHeight, dstDepth,
@@ -2100,8 +2102,7 @@ generate_mipmap_compressed(struct gl_context *ctx, GLenum target,
       ctx->Driver.TexImage2D(ctx, target, level + 1,
 			     srcImage->InternalFormat,
 			     dstWidth, dstHeight, border,
-			     _mesa_get_format_base_format(temp_format),
-			     GL_UNSIGNED_BYTE,
+			     temp_base_format, temp_datatype,
 			     temp_dst, &ctx->DefaultPacking, texObj, dstImage);
 
       /* swap src and dest pointers */
@@ -2130,7 +2131,7 @@ void
 _mesa_generate_mipmap(struct gl_context *ctx, GLenum target,
                       struct gl_texture_object *texObj)
 {
-   const struct gl_texture_image *srcImage;
+   struct gl_texture_image *srcImage;
    GLint maxLevel;
 
    ASSERT(texObj);
