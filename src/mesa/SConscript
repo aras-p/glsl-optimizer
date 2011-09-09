@@ -72,6 +72,7 @@ main_sources = [
     'main/ffvertex_prog.c',
     'main/fog.c',
     'main/formats.c',
+    'main/format_unpack.c',
     'main/framebuffer.c',
     'main/get.c',
     'main/getstring.c',
