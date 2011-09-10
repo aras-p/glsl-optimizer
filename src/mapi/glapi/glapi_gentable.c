@@ -6261,6 +6261,34 @@ _glapi_create_table_from_handle(void *handle, const char *symbol_prefix) {
     }
 
 
+    if(!disp->DebugMessageCallbackARB) {
+        void ** procp = (void **) &disp->DebugMessageCallbackARB;
+        snprintf(symboln, sizeof(symboln), "%sDebugMessageCallbackARB", symbol_prefix);
+        *procp = dlsym(handle, symboln);
+    }
+
+
+    if(!disp->DebugMessageControlARB) {
+        void ** procp = (void **) &disp->DebugMessageControlARB;
+        snprintf(symboln, sizeof(symboln), "%sDebugMessageControlARB", symbol_prefix);
+        *procp = dlsym(handle, symboln);
+    }
+
+
+    if(!disp->DebugMessageInsertARB) {
+        void ** procp = (void **) &disp->DebugMessageInsertARB;
+        snprintf(symboln, sizeof(symboln), "%sDebugMessageInsertARB", symbol_prefix);
+        *procp = dlsym(handle, symboln);
+    }
+
+
+    if(!disp->GetDebugMessageLogARB) {
+        void ** procp = (void **) &disp->GetDebugMessageLogARB;
+        snprintf(symboln, sizeof(symboln), "%sGetDebugMessageLogARB", symbol_prefix);
+        *procp = dlsym(handle, symboln);
+    }
+
+
     if(!disp->GetGraphicsResetStatusARB) {
         void ** procp = (void **) &disp->GetGraphicsResetStatusARB;
         snprintf(symboln, sizeof(symboln), "%sGetGraphicsResetStatusARB", symbol_prefix);
