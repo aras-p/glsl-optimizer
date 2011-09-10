@@ -769,7 +769,7 @@ get_extension_override( struct gl_context *ctx )
    if (env_const == NULL) {
       /* Return the empty string rather than NULL. This simplifies the logic
        * of client functions. */
-      return calloc(1, sizeof(char));
+      return calloc(4, sizeof(char));
    }
 
    /* extra_exts: List of unrecognized extensions. */
