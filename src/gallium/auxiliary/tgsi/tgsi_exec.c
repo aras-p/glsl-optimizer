@@ -3367,6 +3367,28 @@ micro_usne(union tgsi_exec_channel *dst,
 }
 
 static void
+micro_uarl(union tgsi_exec_channel *dst,
+           const union tgsi_exec_channel *src)
+{
+   dst->i[0] = src->u[0];
+   dst->i[1] = src->u[1];
+   dst->i[2] = src->u[2];
+   dst->i[3] = src->u[3];
+}
+
+static void
+micro_ucmp(union tgsi_exec_channel *dst,
+           const union tgsi_exec_channel *src0,
+           const union tgsi_exec_channel *src1,
+           const union tgsi_exec_channel *src2)
+{
+   dst->u[0] = src0->u[0] ? src1->u[0] : src2->u[0];
+   dst->u[1] = src0->u[1] ? src1->u[1] : src2->u[1];
+   dst->u[2] = src0->u[2] ? src1->u[2] : src2->u[2];
+   dst->u[3] = src0->u[3] ? src1->u[3] : src2->u[3];
+}
+
+static void
 exec_instruction(
    struct tgsi_exec_machine *mach,
    const struct tgsi_full_instruction *inst,
@@ -4124,6 +4146,14 @@ exec_instruction(
 
    case TGSI_OPCODE_SAMPLE_INFO:
       assert(0);
+      break;
+
+   case TGSI_OPCODE_UARL:
+      exec_vector_unary(mach, inst, micro_uarl, TGSI_EXEC_DATA_INT, TGSI_EXEC_DATA_UINT);
+      break;
+
+   case TGSI_OPCODE_UCMP:
+      exec_vector_trinary(mach, inst, micro_ucmp, TGSI_EXEC_DATA_FLOAT, TGSI_EXEC_DATA_UINT);
       break;
 
    default:

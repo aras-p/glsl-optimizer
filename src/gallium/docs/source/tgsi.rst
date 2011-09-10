@@ -1013,6 +1013,25 @@ XXX so let's discuss it, yeah?
   dst.w = src0.w \oplus src1.w
 
 
+.. opcode:: UCMP - Integer Conditional Move
+
+.. math::
+
+  dst.x = src0.x ? src1.x : src2.x
+
+  dst.y = src0.y ? src1.y : src2.y
+
+  dst.z = src0.z ? src1.z : src2.z
+
+  dst.w = src0.w ? src1.w : src2.w
+
+
+.. opcode:: UARL - Integer Address Register Load
+
+  Moves the contents of the source register, assumed to be an integer, into the
+  destination register, which is assumed to be an address (ADDR) register.
+
+
 .. opcode:: SAD - Sum Of Absolute Differences
 
 .. math::
