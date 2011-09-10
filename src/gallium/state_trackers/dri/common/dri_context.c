@@ -39,16 +39,6 @@
 #include "state_tracker/st_context.h"
 
 static void
-dri_init_extensions(struct dri_context *ctx)
-{
-   struct st_context *st = (struct st_context *) ctx->st;
-
-   /* New extensions should be added in mesa/state_tracker/st_extensions.c
-    * and not in this file. */
-   driInitExtensions(st->ctx, NULL, GL_FALSE);
-}
-
-static void
 dri_pp_query(struct dri_context *ctx)
 {
    unsigned int i;
@@ -104,16 +94,6 @@ dri_create_context(gl_api api, const struct gl_config * visual,
       goto fail;
    ctx->st->st_manager_private = (void *) ctx;
    ctx->stapi = stapi;
-
-   /*
-    * libmesagallium.a that this state tracker will be linked to expects
-    * OpenGL's _glapi_table.  That is, it expects libGL.so instead of
-    * libGLESv1_CM.so or libGLESv2.so.  As there is no clean way to know the
-    * shared library the app links to, use the api as a simple check.
-    * It might be as well to simply remove this function call though.
-    */
-   if (api == API_OPENGL)
-      dri_init_extensions(ctx);
 
    // Context successfully created. See if post-processing is requested.
    dri_pp_query(ctx);
