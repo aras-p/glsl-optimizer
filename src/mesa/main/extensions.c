@@ -37,6 +37,8 @@
 #include "mfeatures.h"
 #include "mtypes.h"
 
+#define ALIGN(value, alignment)  (((value) + alignment - 1) & ~(alignment - 1))
+
 enum {
    DISABLE = 0,
    GL  = 1 << API_OPENGL,
@@ -773,7 +775,7 @@ get_extension_override( struct gl_context *ctx )
    }
 
    /* extra_exts: List of unrecognized extensions. */
-   extra_exts = calloc(strlen(env_const), sizeof(char));
+   extra_exts = calloc(ALIGN(strlen(env_const) + 2, 4), sizeof(char));
 
    /* Copy env_const because strtok() is destructive. */
    env = strdup(env_const);
@@ -907,7 +909,7 @@ _mesa_make_extension_string(struct gl_context *ctx)
    if (extra_extensions != NULL)
       length += 1 + strlen(extra_extensions); /* +1 for space */
 
-   exts = (char *) calloc(length + 1, sizeof(char));
+   exts = (char *) calloc(ALIGN(length + 1, 4), sizeof(char));
    if (exts == NULL) {
       free(extra_extensions);
       return NULL;
