@@ -2120,25 +2120,6 @@ apply_type_qualifier_to_variable(const struct ast_type_qualifier *qual,
        var->depth_layout = ir_depth_layout_unchanged;
    else
        var->depth_layout = ir_depth_layout_none;
-
-   /* From page 46 (page 52 of the PDF) of the GLSL ES specification:
-    *
-    *    "Array variables are l-values and may be passed to parameters
-    *     declared as out or inout. However, they may not be used as
-    *     the target of an assignment."
-    *
-    * From page 32 (page 38 of the PDF) of the GLSL 1.10 spec:
-    *
-    *    "Other binary or unary expressions, non-dereferenced arrays,
-    *     function names, swizzles with repeated fields, and constants
-    *     cannot be l-values."
-    *
-    * So we only mark 1.10 as non-lvalues, and check for array
-    * assignment in 100 specifically in do_assignment.
-    */
-   if (var->type->is_array() && state->language_version != 110) {
-      var->array_lvalue = true;
-   }
 }
 
 /**
@@ -2950,6 +2931,26 @@ ast_parameter_declarator::hir(exec_list *instructions,
    if ((var->mode == ir_var_inout || var->mode == ir_var_out)
        && type->contains_sampler()) {
       _mesa_glsl_error(&loc, state, "out and inout parameters cannot contain samplers");
+      type = glsl_type::error_type;
+   }
+
+   /* From page 39 (page 45 of the PDF) of the GLSL 1.10 spec:
+    *
+    *    "When calling a function, expressions that do not evaluate to
+    *     l-values cannot be passed to parameters declared as out or inout."
+    *
+    * From page 32 (page 38 of the PDF) of the GLSL 1.10 spec:
+    *
+    *    "Other binary or unary expressions, non-dereferenced arrays,
+    *     function names, swizzles with repeated fields, and constants
+    *     cannot be l-values."
+    *
+    * So for GLSL 1.10, passing an array as an out or inout parameter is not
+    * allowed.  This restriction is removed in GLSL 1.20, and in GLSL ES.
+    */
+   if ((var->mode == ir_var_inout || var->mode == ir_var_out)
+       && type->is_array() && state->language_version == 110) {
+      _mesa_glsl_error(&loc, state, "Arrays cannot be out or inout parameters in GLSL 1.10");
       type = glsl_type::error_type;
    }
 

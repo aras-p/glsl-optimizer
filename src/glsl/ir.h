@@ -346,14 +346,6 @@ public:
    unsigned interpolation:2;
 
    /**
-    * Flag that the whole array is assignable
-    *
-    * In GLSL 1.20 and later whole arrays are assignable (and comparable for
-    * equality).  This flag enables this behavior.
-    */
-   unsigned array_lvalue:1;
-
-   /**
     * \name ARB_fragment_coord_conventions
     * @{
     */

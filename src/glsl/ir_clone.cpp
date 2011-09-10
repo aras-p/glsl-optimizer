@@ -47,7 +47,6 @@ ir_variable::clone(void *mem_ctx, struct hash_table *ht) const
    var->centroid = this->centroid;
    var->invariant = this->invariant;
    var->interpolation = this->interpolation;
-   var->array_lvalue = this->array_lvalue;
    var->location = this->location;
    var->warn_extension = this->warn_extension;
    var->origin_upper_left = this->origin_upper_left;
