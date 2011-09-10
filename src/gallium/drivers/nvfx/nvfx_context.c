@@ -90,9 +90,6 @@ nvfx_create(struct pipe_screen *pscreen, void *priv)
 	nvfx->pipe.clear = nvfx_clear;
 	nvfx->pipe.flush = nvfx_flush;
 
-	nvfx->pipe.create_video_decoder = vl_create_decoder;
-	nvfx->pipe.create_video_buffer = vl_video_buffer_create;
-
 	nvfx->is_nv4x = screen->is_nv4x;
 	nvfx->use_nv4x = screen->use_nv4x;
 	/* TODO: it seems that nv30 might have fixed function clipping usable with vertex programs
@@ -126,6 +123,7 @@ nvfx_create(struct pipe_screen *pscreen, void *priv)
 	nvfx->relocs_needed = NVFX_RELOCATE_ALL;
 
 	LIST_INITHEAD(&nvfx->render_cache);
+	nvfx_context_init_vdec(nvfx);
 
 	return &nvfx->pipe;
 }
