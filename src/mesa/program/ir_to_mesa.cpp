@@ -2588,121 +2588,83 @@ check_resources(const struct gl_context *ctx,
 }
 
 
-
-struct uniform_sort {
-   struct gl_uniform *u;
-   int pos;
-};
-
-/* The shader_program->Uniforms list is almost sorted in increasing
- * uniform->{Frag,Vert}Pos locations, but not quite when there are
- * uniforms shared between targets.  We need to add parameters in
- * increasing order for the targets.
- */
 static int
-sort_uniforms(const void *a, const void *b)
+add_uniform_to_shader(ir_variable *var,
+		      struct gl_program_parameter_list *params,
+		      unsigned int &next_sampler)
 {
-   struct uniform_sort *u1 = (struct uniform_sort *)a;
-   struct uniform_sort *u2 = (struct uniform_sort *)b;
+   const glsl_type *type = var->type;
+   unsigned int size;
 
-   return u1->pos - u2->pos;
+   if (type->is_vector() || type->is_scalar()) {
+      size = type->vector_elements;
+   } else {
+      size = type_size(type) * 4;
+   }
+
+   gl_register_file file;
+   if (type->is_sampler() ||
+       (type->is_array() && type->fields.array->is_sampler())) {
+      file = PROGRAM_SAMPLER;
+   } else {
+      file = PROGRAM_UNIFORM;
+   }
+
+   int index = _mesa_lookup_parameter_index(params, -1, var->name);
+   if (index < 0) {
+      index = _mesa_add_parameter(params, file,
+				  var->name, size, type->gl_type,
+				  NULL, NULL, 0x0);
+
+      /* Sampler uniform values are stored in prog->SamplerUnits,
+       * and the entry in that array is selected by this index we
+       * store in ParameterValues[].
+       */
+      if (file == PROGRAM_SAMPLER) {
+	 for (unsigned int j = 0; j < size / 4; j++)
+	    params->ParameterValues[index + j][0].f = next_sampler++;
+      }
+   }
+
+   return index;
 }
 
-/* Add the uniforms to the parameters.  The linker chose locations
- * in our parameters lists (which weren't created yet), which the
- * uniforms code will use to poke values into our parameters list
- * when uniforms are updated.
+/**
+ * Generate the program parameters list for the user uniforms in a shader
+ *
+ * \param shader_program Linked shader program.  This is only used to
+ *                       emit possible link errors to the info log.
+ * \param sh             Shader whose uniforms are to be processed.
+ * \param params         Parameter list to be filled in.
  */
-static void
-add_uniforms_to_parameters_list(struct gl_shader_program *shader_program,
-				struct gl_shader *shader,
-				struct gl_program *prog)
+void
+_mesa_generate_parameters_list_for_uniforms(struct gl_shader_program
+					    *shader_program,
+					    struct gl_shader *sh,
+					    struct gl_program_parameter_list
+					    *params)
 {
-   unsigned int i;
-   unsigned int next_sampler = 0, num_uniforms = 0;
-   struct uniform_sort *sorted_uniforms;
+   unsigned int next_sampler = 0;
 
-   sorted_uniforms = ralloc_array(NULL, struct uniform_sort,
-				  shader_program->Uniforms->NumUniforms);
+   foreach_list(node, sh->ir) {
+      ir_variable *var = ((ir_instruction *) node)->as_variable();
 
-   for (i = 0; i < shader_program->Uniforms->NumUniforms; i++) {
-      struct gl_uniform *uniform = shader_program->Uniforms->Uniforms + i;
-      int parameter_index = -1;
+      if ((var == NULL) || (var->mode != ir_var_uniform)
+	  || (strncmp(var->name, "gl_", 3) == 0))
+	 continue;
 
-      switch (shader->Type) {
-      case GL_VERTEX_SHADER:
-	 parameter_index = uniform->VertPos;
-	 break;
-      case GL_FRAGMENT_SHADER:
-	 parameter_index = uniform->FragPos;
-	 break;
-      case GL_GEOMETRY_SHADER:
-	 parameter_index = uniform->GeomPos;
-	 break;
-      }
+      int loc = add_uniform_to_shader(var, params, next_sampler);
 
-      /* Only add uniforms used in our target. */
-      if (parameter_index != -1) {
-	 sorted_uniforms[num_uniforms].pos = parameter_index;
-	 sorted_uniforms[num_uniforms].u = uniform;
-	 num_uniforms++;
+      /* The location chosen in the Parameters list here (returned from
+       * _mesa_add_parameter) has to match what the linker chose.
+       */
+      if (var->location != loc) {
+	 linker_error(shader_program,
+		      "Allocation of uniform `%s' to target failed "
+		      "(%d vs %d)\n",
+		      var->name, loc, var->location);
       }
    }
-
-   qsort(sorted_uniforms, num_uniforms, sizeof(struct uniform_sort),
-	 sort_uniforms);
-
-   for (i = 0; i < num_uniforms; i++) {
-      struct gl_uniform *uniform = sorted_uniforms[i].u;
-      int parameter_index = sorted_uniforms[i].pos;
-      const glsl_type *type = uniform->Type;
-      unsigned int size;
-
-      if (type->is_vector() ||
-	  type->is_scalar()) {
-	 size = type->vector_elements;
-      } else {
-	 size = type_size(type) * 4;
-      }
-
-      gl_register_file file;
-      if (type->is_sampler() ||
-	  (type->is_array() && type->fields.array->is_sampler())) {
-	 file = PROGRAM_SAMPLER;
-      } else {
-	 file = PROGRAM_UNIFORM;
-      }
-
-      GLint index = _mesa_lookup_parameter_index(prog->Parameters, -1,
-						 uniform->Name);
-
-      if (index < 0) {
-	 index = _mesa_add_parameter(prog->Parameters, file,
-				     uniform->Name, size, type->gl_type,
-				     NULL, NULL, 0x0);
-
-	 /* Sampler uniform values are stored in prog->SamplerUnits,
-	  * and the entry in that array is selected by this index we
-	  * store in ParameterValues[].
-	  */
-	 if (file == PROGRAM_SAMPLER) {
-	    for (unsigned int j = 0; j < size / 4; j++)
-	       prog->Parameters->ParameterValues[index + j][0].f = next_sampler++;
-	 }
-
-	 /* The location chosen in the Parameters list here (returned
-	  * from _mesa_add_uniform) has to match what the linker chose.
-	  */
-	 if (index != parameter_index) {
-	    linker_error(shader_program,
-			 "Allocation of uniform `%s' to target failed "
-			 "(%d vs %d)\n",
-			 uniform->Name, index, parameter_index);
-	 }
-      }
-   }
-
-   ralloc_free(sorted_uniforms);
 }
 
 static void
@@ -3046,7 +3008,8 @@ get_mesa_program(struct gl_context *ctx,
    v.shader_program = shader_program;
    v.options = options;
 
-   add_uniforms_to_parameters_list(shader_program, shader, prog);
+   _mesa_generate_parameters_list_for_uniforms(shader_program, shader,
+					       prog->Parameters);
 
    /* Emit Mesa IR for main(). */
    visit_exec_list(shader->ir, &v);
