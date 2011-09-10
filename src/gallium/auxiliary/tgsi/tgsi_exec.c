@@ -4153,7 +4153,7 @@ exec_instruction(
       break;
 
    case TGSI_OPCODE_UCMP:
-      exec_vector_trinary(mach, inst, micro_ucmp, TGSI_EXEC_DATA_FLOAT, TGSI_EXEC_DATA_UINT);
+      exec_vector_trinary(mach, inst, micro_ucmp, TGSI_EXEC_DATA_UINT, TGSI_EXEC_DATA_UINT);
       break;
 
    default:
