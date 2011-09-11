@@ -301,26 +301,26 @@ struct util_format_description
                    unsigned width, unsigned height);
 
    /**
-    * Unpack pixels to S8_USCALED.
+    * Unpack pixels to S8_UINT.
     * Note: strides are in bytes.
     *
     * Only defined for stencil formats.
     */
    void
-   (*unpack_s_8uscaled)(uint8_t *dst, unsigned dst_stride,
-                        const uint8_t *src, unsigned src_stride,
-                        unsigned width, unsigned height);
+   (*unpack_s_8uint)(uint8_t *dst, unsigned dst_stride,
+                     const uint8_t *src, unsigned src_stride,
+                     unsigned width, unsigned height);
 
    /**
-    * Pack pixels from S8_USCALED.
+    * Pack pixels from S8_UINT.
     * Note: strides are in bytes.
     *
     * Only defined for stencil formats.
     */
    void
-   (*pack_s_8uscaled)(uint8_t *dst, unsigned dst_stride,
-                      const uint8_t *src, unsigned src_stride,
-                      unsigned width, unsigned height);
+   (*pack_s_8uint)(uint8_t *dst, unsigned dst_stride,
+                   const uint8_t *src, unsigned src_stride,
+                   unsigned width, unsigned height);
 
   /**
     * Unpack pixel blocks to R32G32B32A32_UINT.

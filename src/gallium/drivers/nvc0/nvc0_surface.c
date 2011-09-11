@@ -478,7 +478,7 @@ nvc0_blitctx_make_fp(struct nvc0_blitctx *blit)
 {
    static const uint32_t code[] = /* use nvc0dis */
    {
-      /* 2 coords RGBA in, RGBA out, also for Z32_FLOAT(_S8X24_USCALED)
+      /* 2 coords RGBA in, RGBA out, also for Z32_FLOAT(_S8X24_UINT)
        * NOTE:
        * NVC0 doesn't like tex 3d on non-3d textures, but there should
        * only be 2d and 2d-array MS resources anyway.
@@ -581,11 +581,11 @@ nvc0_blit_zeta_to_colour_format(enum pipe_format format)
 {
    switch (format) {
    case PIPE_FORMAT_Z16_UNORM:               return PIPE_FORMAT_R16_UNORM;
-   case PIPE_FORMAT_Z24_UNORM_S8_USCALED:
-   case PIPE_FORMAT_S8_USCALED_Z24_UNORM:
+   case PIPE_FORMAT_Z24_UNORM_S8_UINT:
+   case PIPE_FORMAT_S8_UINT_Z24_UNORM:
    case PIPE_FORMAT_Z24X8_UNORM:             return PIPE_FORMAT_R8G8B8A8_UNORM;
    case PIPE_FORMAT_Z32_FLOAT:               return PIPE_FORMAT_R32_FLOAT;
-   case PIPE_FORMAT_Z32_FLOAT_S8X24_USCALED: return PIPE_FORMAT_R32G32_FLOAT;
+   case PIPE_FORMAT_Z32_FLOAT_S8X24_UINT:    return PIPE_FORMAT_R32G32_FLOAT;
    default:
       assert(0);
       return PIPE_FORMAT_NONE;
@@ -600,14 +600,14 @@ nvc0_blitctx_get_color_mask_and_fp(struct nvc0_blitctx *blit,
 
    switch (format) {
    case PIPE_FORMAT_Z24X8_UNORM:
-   case PIPE_FORMAT_Z24_UNORM_S8_USCALED:
+   case PIPE_FORMAT_Z24_UNORM_S8_UINT:
       blit->fp_offset = 0x180;
       if (mask & PIPE_MASK_Z)
          blit->color_mask |= 0x0111;
       if (mask & PIPE_MASK_S)
          blit->color_mask |= 0x1000;
       break;
-   case PIPE_FORMAT_S8_USCALED_Z24_UNORM:
+   case PIPE_FORMAT_S8_UINT_Z24_UNORM:
       blit->fp_offset = 0x80;
       if (mask & PIPE_MASK_Z)
          blit->color_mask |= 0x1110;

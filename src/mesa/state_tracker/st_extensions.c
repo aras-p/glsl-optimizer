@@ -368,18 +368,18 @@ void st_init_extensions(struct st_context *st)
    /* GL_EXT_packed_depth_stencil requires both the ability to render to
     * a depth/stencil buffer and texture from depth/stencil source.
     */
-   if (screen->is_format_supported(screen, PIPE_FORMAT_S8_USCALED_Z24_UNORM,
+   if (screen->is_format_supported(screen, PIPE_FORMAT_S8_UINT_Z24_UNORM,
                                    PIPE_TEXTURE_2D, 0,
                                    PIPE_BIND_DEPTH_STENCIL) &&
-       screen->is_format_supported(screen, PIPE_FORMAT_S8_USCALED_Z24_UNORM,
+       screen->is_format_supported(screen, PIPE_FORMAT_S8_UINT_Z24_UNORM,
                                    PIPE_TEXTURE_2D, 0,
                                    PIPE_BIND_SAMPLER_VIEW)) {
       ctx->Extensions.EXT_packed_depth_stencil = GL_TRUE;
    }
-   else if (screen->is_format_supported(screen, PIPE_FORMAT_Z24_UNORM_S8_USCALED,
+   else if (screen->is_format_supported(screen, PIPE_FORMAT_Z24_UNORM_S8_UINT,
                                         PIPE_TEXTURE_2D, 0,
                                         PIPE_BIND_DEPTH_STENCIL) &&
-            screen->is_format_supported(screen, PIPE_FORMAT_Z24_UNORM_S8_USCALED,
+            screen->is_format_supported(screen, PIPE_FORMAT_Z24_UNORM_S8_UINT,
                                         PIPE_TEXTURE_2D, 0,
                                         PIPE_BIND_SAMPLER_VIEW)) {
       ctx->Extensions.EXT_packed_depth_stencil = GL_TRUE;
@@ -650,7 +650,7 @@ void st_init_extensions(struct st_context *st)
                                    PIPE_TEXTURE_2D, 0,
                                    PIPE_BIND_DEPTH_STENCIL |
                                    PIPE_BIND_SAMPLER_VIEW) &&
-       screen->is_format_supported(screen, PIPE_FORMAT_Z32_FLOAT_S8X24_USCALED,
+       screen->is_format_supported(screen, PIPE_FORMAT_Z32_FLOAT_S8X24_UINT,
                                    PIPE_TEXTURE_2D, 0,
                                    PIPE_BIND_DEPTH_STENCIL |
                                    PIPE_BIND_SAMPLER_VIEW)) {

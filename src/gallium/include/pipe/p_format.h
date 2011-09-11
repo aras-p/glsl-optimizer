@@ -71,11 +71,11 @@ enum pipe_format {
    PIPE_FORMAT_Z16_UNORM               = 16,
    PIPE_FORMAT_Z32_UNORM               = 17,
    PIPE_FORMAT_Z32_FLOAT               = 18,
-   PIPE_FORMAT_Z24_UNORM_S8_USCALED    = 19,
-   PIPE_FORMAT_S8_USCALED_Z24_UNORM    = 20,
+   PIPE_FORMAT_Z24_UNORM_S8_UINT       = 19,
+   PIPE_FORMAT_S8_UINT_Z24_UNORM       = 20,
    PIPE_FORMAT_Z24X8_UNORM             = 21,
    PIPE_FORMAT_X8Z24_UNORM             = 22,
-   PIPE_FORMAT_S8_USCALED              = 23,   /**< ubyte stencil */
+   PIPE_FORMAT_S8_UINT                 = 23,   /**< ubyte stencil */
    PIPE_FORMAT_R64_FLOAT               = 24,
    PIPE_FORMAT_R64G64_FLOAT            = 25,
    PIPE_FORMAT_R64G64B64_FLOAT         = 26,
@@ -185,7 +185,7 @@ enum pipe_format {
    PIPE_FORMAT_R10G10B10A2_USCALED     = 123,
    PIPE_FORMAT_R11G11B10_FLOAT         = 124,
    PIPE_FORMAT_R9G9B9E5_FLOAT          = 125,
-   PIPE_FORMAT_Z32_FLOAT_S8X24_USCALED = 126,
+   PIPE_FORMAT_Z32_FLOAT_S8X24_UINT    = 126,
    PIPE_FORMAT_R1_UNORM                = 127,
    PIPE_FORMAT_R10G10B10X2_USCALED     = 128,
    PIPE_FORMAT_R10G10B10X2_SNORM       = 129,
@@ -197,9 +197,9 @@ enum pipe_format {
    PIPE_FORMAT_B4G4R4X4_UNORM          = 135,
 
    /* some stencil samplers formats */
-   PIPE_FORMAT_X24S8_USCALED           = 136,
-   PIPE_FORMAT_S8X24_USCALED           = 137,
-   PIPE_FORMAT_X32_S8X24_USCALED       = 138,
+   PIPE_FORMAT_X24S8_UINT              = 136,
+   PIPE_FORMAT_S8X24_UINT              = 137,
+   PIPE_FORMAT_X32_S8X24_UINT          = 138,
 
    PIPE_FORMAT_B2G3R3_UNORM            = 139,
    PIPE_FORMAT_L16A16_UNORM            = 140,

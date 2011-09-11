@@ -159,17 +159,17 @@ def write_format_table(formats):
             print "   NULL, /* unpack_z_float */" 
             print "   NULL, /* pack_z_float */" 
         if format.colorspace == ZS and format.swizzles[1] != SWIZZLE_NONE:
-            print "   &util_format_%s_unpack_s_8uscaled," % format.short_name() 
-            print "   &util_format_%s_pack_s_8uscaled," % format.short_name() 
+            print "   &util_format_%s_unpack_s_8uint," % format.short_name() 
+            print "   &util_format_%s_pack_s_8uint," % format.short_name() 
         else:
-            print "   NULL, /* unpack_s_8uscaled */" 
-            print "   NULL, /* pack_s_8uscaled */"
-        if format.channels[0].pure == True and format.channels[0].type == UNSIGNED:   
+            print "   NULL, /* unpack_s_8uint */" 
+            print "   NULL, /* pack_s_8uint */"
+        if format.colorspace != ZS and format.channels[0].pure == True and format.channels[0].type == UNSIGNED:
             print "   &util_format_%s_unpack_unsigned, /* unpack_rgba_uint */" % format.short_name() 
             print "   &util_format_%s_pack_unsigned, /* pack_rgba_uint */" % format.short_name()
             print "   &util_format_%s_unpack_signed, /* unpack_rgba_sint */" % format.short_name()
             print "   &util_format_%s_pack_signed  /* pack_rgba_sint */" % format.short_name()
-        elif format.channels[0].pure == True and format.channels[0].type == SIGNED:   
+        elif format.colorspace != ZS and format.channels[0].pure == True and format.channels[0].type == SIGNED:
             print "   &util_format_%s_unpack_unsigned, /* unpack_rgba_uint */" % format.short_name()
             print "   &util_format_%s_pack_unsigned, /* pack_rgba_uint */" % format.short_name()
             print "   &util_format_%s_unpack_signed, /* unpack_rgba_sint */" % format.short_name()

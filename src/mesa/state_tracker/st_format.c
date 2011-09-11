@@ -89,13 +89,13 @@ st_format_datatype(enum pipe_format format)
                format == PIPE_FORMAT_R9G9B9E5_FLOAT) {
          return GL_FLOAT;
       }
-      else if (format == PIPE_FORMAT_Z24_UNORM_S8_USCALED ||
-               format == PIPE_FORMAT_S8_USCALED_Z24_UNORM ||
+      else if (format == PIPE_FORMAT_Z24_UNORM_S8_UINT ||
+               format == PIPE_FORMAT_S8_UINT_Z24_UNORM ||
                format == PIPE_FORMAT_Z24X8_UNORM ||
                format == PIPE_FORMAT_X8Z24_UNORM) {
          return GL_UNSIGNED_INT_24_8;
       }
-      else if (format == PIPE_FORMAT_Z32_FLOAT_S8X24_USCALED) {
+      else if (format == PIPE_FORMAT_Z32_FLOAT_S8X24_UINT) {
          return GL_FLOAT_32_UNSIGNED_INT_24_8_REV;
       }
       else {
@@ -199,19 +199,19 @@ st_mesa_format_to_pipe_format(gl_format mesaFormat)
    case MESA_FORMAT_Z32:
       return PIPE_FORMAT_Z32_UNORM;
    case MESA_FORMAT_Z24_S8:
-      return PIPE_FORMAT_S8_USCALED_Z24_UNORM;
+      return PIPE_FORMAT_S8_UINT_Z24_UNORM;
    case MESA_FORMAT_S8_Z24:
-      return PIPE_FORMAT_Z24_UNORM_S8_USCALED;
+      return PIPE_FORMAT_Z24_UNORM_S8_UINT;
    case MESA_FORMAT_Z24_X8:
       return PIPE_FORMAT_X8Z24_UNORM;
    case MESA_FORMAT_X8_Z24:
       return PIPE_FORMAT_Z24X8_UNORM;
    case MESA_FORMAT_S8:
-      return PIPE_FORMAT_S8_USCALED;
+      return PIPE_FORMAT_S8_UINT;
    case MESA_FORMAT_Z32_FLOAT:
       return PIPE_FORMAT_Z32_FLOAT;
    case MESA_FORMAT_Z32_FLOAT_X24S8:
-      return PIPE_FORMAT_Z32_FLOAT_S8X24_USCALED;
+      return PIPE_FORMAT_Z32_FLOAT_S8X24_UINT;
    case MESA_FORMAT_YCBCR:
       return PIPE_FORMAT_UYVY;
 #if FEATURE_texture_s3tc
@@ -508,7 +508,7 @@ st_pipe_format_to_mesa_format(enum pipe_format format)
       return MESA_FORMAT_I8;
    case PIPE_FORMAT_I16_UNORM:
       return MESA_FORMAT_I16;
-   case PIPE_FORMAT_S8_USCALED:
+   case PIPE_FORMAT_S8_UINT:
       return MESA_FORMAT_S8;
 
    case PIPE_FORMAT_R16G16B16A16_UNORM:
@@ -518,17 +518,17 @@ st_pipe_format_to_mesa_format(enum pipe_format format)
       return MESA_FORMAT_Z16;
    case PIPE_FORMAT_Z32_UNORM:
       return MESA_FORMAT_Z32;
-   case PIPE_FORMAT_S8_USCALED_Z24_UNORM:
+   case PIPE_FORMAT_S8_UINT_Z24_UNORM:
       return MESA_FORMAT_Z24_S8;
    case PIPE_FORMAT_X8Z24_UNORM:
       return MESA_FORMAT_Z24_X8;
    case PIPE_FORMAT_Z24X8_UNORM:
       return MESA_FORMAT_X8_Z24;
-   case PIPE_FORMAT_Z24_UNORM_S8_USCALED:
+   case PIPE_FORMAT_Z24_UNORM_S8_UINT:
       return MESA_FORMAT_S8_Z24;
    case PIPE_FORMAT_Z32_FLOAT:
       return MESA_FORMAT_Z32_FLOAT;
-   case PIPE_FORMAT_Z32_FLOAT_S8X24_USCALED:
+   case PIPE_FORMAT_Z32_FLOAT_S8X24_UINT:
       return MESA_FORMAT_Z32_FLOAT_X24S8;
 
    case PIPE_FORMAT_UYVY:
@@ -818,8 +818,8 @@ struct format_mapping
       PIPE_FORMAT_Z24X8_UNORM, \
       PIPE_FORMAT_X8Z24_UNORM, \
       PIPE_FORMAT_Z16_UNORM, \
-      PIPE_FORMAT_Z24_UNORM_S8_USCALED, \
-      PIPE_FORMAT_S8_USCALED_Z24_UNORM, \
+      PIPE_FORMAT_Z24_UNORM_S8_UINT, \
+      PIPE_FORMAT_S8_UINT_Z24_UNORM, \
       0
 
 /**
@@ -988,19 +988,19 @@ static const struct format_mapping format_map[] = {
       { GL_STENCIL_INDEX, GL_STENCIL_INDEX1_EXT, GL_STENCIL_INDEX4_EXT,
         GL_STENCIL_INDEX8_EXT, GL_STENCIL_INDEX16_EXT, 0 },
       {
-         PIPE_FORMAT_S8_USCALED, PIPE_FORMAT_Z24_UNORM_S8_USCALED,
-         PIPE_FORMAT_S8_USCALED_Z24_UNORM, 0
+         PIPE_FORMAT_S8_UINT, PIPE_FORMAT_Z24_UNORM_S8_UINT,
+         PIPE_FORMAT_S8_UINT_Z24_UNORM, 0
       }
    },
 
    /* Depth / Stencil formats */
    {
       { GL_DEPTH_STENCIL_EXT, GL_DEPTH24_STENCIL8_EXT, 0 },
-      { PIPE_FORMAT_Z24_UNORM_S8_USCALED, PIPE_FORMAT_S8_USCALED_Z24_UNORM, 0 }
+      { PIPE_FORMAT_Z24_UNORM_S8_UINT, PIPE_FORMAT_S8_UINT_Z24_UNORM, 0 }
    },
    {
       { GL_DEPTH32F_STENCIL8, 0 },
-      { PIPE_FORMAT_Z32_FLOAT_S8X24_USCALED, 0 }
+      { PIPE_FORMAT_Z32_FLOAT_S8X24_UINT, 0 }
    },
 
    /* sRGB formats */

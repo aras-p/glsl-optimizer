@@ -615,7 +615,7 @@ static uint32_t r300_get_border_color(enum pipe_format format,
         case PIPE_FORMAT_Z16_UNORM:
             return util_pack_z(PIPE_FORMAT_Z16_UNORM, border[0]);
         case PIPE_FORMAT_X8Z24_UNORM:
-        case PIPE_FORMAT_S8_USCALED_Z24_UNORM:
+        case PIPE_FORMAT_S8_UINT_Z24_UNORM:
             if (is_r500) {
                 return util_pack_z(PIPE_FORMAT_X8Z24_UNORM, border[0]);
             } else {

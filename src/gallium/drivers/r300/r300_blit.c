@@ -155,7 +155,7 @@ static uint32_t r300_depth_clear_value(enum pipe_format format,
         case PIPE_FORMAT_X8Z24_UNORM:
             return util_pack_z(format, depth);
 
-        case PIPE_FORMAT_S8_USCALED_Z24_UNORM:
+        case PIPE_FORMAT_S8_UINT_Z24_UNORM:
             return util_pack_z_stencil(format, depth, stencil);
 
         default:

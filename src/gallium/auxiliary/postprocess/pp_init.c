@@ -248,12 +248,12 @@ pp_init_fbos(struct pp_queue_t *ppq, const unsigned int w,
    if (!ppq->depth)
       goto error;
 
-   tmp_res.format = p->surf.format = PIPE_FORMAT_S8_USCALED_Z24_UNORM;
+   tmp_res.format = p->surf.format = PIPE_FORMAT_S8_UINT_Z24_UNORM;
 
    if (!p->screen->is_format_supported(p->screen, tmp_res.format,
                                        tmp_res.target, 1, tmp_res.bind)) {
 
-      tmp_res.format = p->surf.format = PIPE_FORMAT_Z24_UNORM_S8_USCALED;
+      tmp_res.format = p->surf.format = PIPE_FORMAT_Z24_UNORM_S8_UINT;
 
       if (!p->screen->is_format_supported(p->screen, tmp_res.format,
                                           tmp_res.target, 1, tmp_res.bind))

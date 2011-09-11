@@ -124,18 +124,18 @@ PIPE_FORMAT_R10SG10SB10SA2U_NORM  , plain, 1, 1, sn10, sn10, sn10, un2 , xyzw, r
 PIPE_FORMAT_R5SG5SB6U_NORM        , plain, 1, 1, sn5 , sn5 , un6 ,     , xyz1, rgb
 
 # Depth-stencil formats
-PIPE_FORMAT_S8_USCALED              , plain, 1, 1, u8  ,     ,     ,     , _x__, zs
+PIPE_FORMAT_S8_UINT                 , plain, 1, 1, up8 ,     ,     ,     , _x__, zs
 PIPE_FORMAT_Z16_UNORM               , plain, 1, 1, un16,     ,     ,     , x___, zs
 PIPE_FORMAT_Z32_UNORM               , plain, 1, 1, un32,     ,     ,     , x___, zs
 PIPE_FORMAT_Z32_FLOAT               , plain, 1, 1, f32 ,     ,     ,     , x___, zs
-PIPE_FORMAT_Z24_UNORM_S8_USCALED    , plain, 1, 1, un24, u8  ,     ,     , xy__, zs
-PIPE_FORMAT_S8_USCALED_Z24_UNORM    , plain, 1, 1, u8 ,  un24,     ,     , yx__, zs
-PIPE_FORMAT_X24S8_USCALED           , plain, 1, 1, x24,  u8  ,     ,     , _y__, zs
-PIPE_FORMAT_S8X24_USCALED           , plain, 1, 1, u8  , x24 ,     ,     , _x__, zs
+PIPE_FORMAT_Z24_UNORM_S8_UINT       , plain, 1, 1, un24, up8 ,     ,     , xy__, zs
+PIPE_FORMAT_S8_UINT_Z24_UNORM       , plain, 1, 1, up8 , un24,     ,     , yx__, zs
+PIPE_FORMAT_X24S8_UINT              , plain, 1, 1, x24 , up8 ,     ,     , _y__, zs
+PIPE_FORMAT_S8X24_UINT              , plain, 1, 1, up8 , x24 ,     ,     , _x__, zs
 PIPE_FORMAT_Z24X8_UNORM             , plain, 1, 1, un24, x8  ,     ,     , x___, zs
 PIPE_FORMAT_X8Z24_UNORM             , plain, 1, 1, x8  , un24,     ,     , y___, zs
-PIPE_FORMAT_Z32_FLOAT_S8X24_USCALED , plain, 1, 1, f32,  u8  , x24 ,     , xy__, zs
-PIPE_FORMAT_X32_S8X24_USCALED       , plain, 1, 1, x32,  u8  , x24 ,     , _y__, zs
+PIPE_FORMAT_Z32_FLOAT_S8X24_UINT    , plain, 1, 1, f32 , up8 ,  x24,     , xy__, zs
+PIPE_FORMAT_X32_S8X24_UINT          , plain, 1, 1, x32 , up8 ,  x24,     , _y__, zs
 
 # YUV formats
 # http://www.fourcc.org/yuv.php#UYVY
@@ -339,3 +339,4 @@ PIPE_FORMAT_A32_SINT                , plain, 1, 1, sp32, , , , 000x, rgb
 PIPE_FORMAT_I32_SINT                , plain, 1, 1, sp32, , , , xxxx, rgb
 PIPE_FORMAT_L32_SINT                , plain, 1, 1, sp32, , , , xxx1, rgb
 PIPE_FORMAT_L32A32_SINT             , plain, 1, 1, sp32, sp32, , , xxxy, rgb
+

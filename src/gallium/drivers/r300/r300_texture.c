@@ -129,7 +129,7 @@ uint32_t r300_translate_texformat(enum pipe_format format,
                 case PIPE_FORMAT_Z16_UNORM:
                     return R300_TX_FORMAT_X16;
                 case PIPE_FORMAT_X8Z24_UNORM:
-                case PIPE_FORMAT_S8_USCALED_Z24_UNORM:
+                case PIPE_FORMAT_S8_UINT_Z24_UNORM:
                     if (is_r500)
                         return R500_TX_FORMAT_Y8X24;
                     else
@@ -374,7 +374,7 @@ uint32_t r500_tx_format_msb_bit(enum pipe_format format)
         case PIPE_FORMAT_LATC1_UNORM:
         case PIPE_FORMAT_LATC1_SNORM:
         case PIPE_FORMAT_X8Z24_UNORM:
-        case PIPE_FORMAT_S8_USCALED_Z24_UNORM:
+        case PIPE_FORMAT_S8_UINT_Z24_UNORM:
             return R500_TXFORMAT_MSB;
         default:
             return 0;
@@ -492,7 +492,7 @@ static uint32_t r300_translate_zsformat(enum pipe_format format)
         /* 24-bit depth, ignored stencil */
         case PIPE_FORMAT_X8Z24_UNORM:
         /* 24-bit depth, 8-bit stencil */
-        case PIPE_FORMAT_S8_USCALED_Z24_UNORM:
+        case PIPE_FORMAT_S8_UINT_Z24_UNORM:
             return R300_DEPTHFORMAT_24BIT_INT_Z_8BIT_STENCIL;
         default:
             return ~0; /* Unsupported. */

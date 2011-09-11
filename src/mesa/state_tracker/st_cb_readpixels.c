@@ -109,13 +109,13 @@ st_read_stencil_pixels(struct gl_context *ctx, GLint x, GLint y,
 
       /* get stencil (and Z) values */
       switch (pt->resource->format) {
-      case PIPE_FORMAT_S8_USCALED:
+      case PIPE_FORMAT_S8_UINT:
          {
             const ubyte *src = stmap + srcY * pt->stride;
             memcpy(sValues, src, width);
          }
          break;
-      case PIPE_FORMAT_Z24_UNORM_S8_USCALED:
+      case PIPE_FORMAT_Z24_UNORM_S8_UINT:
          if (format == GL_DEPTH_STENCIL) {
             const uint *src = (uint *) (stmap + srcY * pt->stride);
             const GLfloat scale = 1.0f / (0xffffff);
@@ -133,7 +133,7 @@ st_read_stencil_pixels(struct gl_context *ctx, GLint x, GLint y,
             }
          }
          break;
-      case PIPE_FORMAT_S8_USCALED_Z24_UNORM:
+      case PIPE_FORMAT_S8_UINT_Z24_UNORM:
          if (format == GL_DEPTH_STENCIL) {
             const uint *src = (uint *) (stmap + srcY * pt->stride);
             const GLfloat scale = 1.0f / (0xffffff);
@@ -151,7 +151,7 @@ st_read_stencil_pixels(struct gl_context *ctx, GLint x, GLint y,
             }
          }
          break;
-      case PIPE_FORMAT_Z32_FLOAT_S8X24_USCALED:
+      case PIPE_FORMAT_Z32_FLOAT_S8X24_UINT:
          if (format == GL_DEPTH_STENCIL) {
             const uint *src = (uint *) (stmap + srcY * pt->stride);
             const GLfloat *srcf = (const GLfloat*)src;
@@ -502,7 +502,7 @@ st_readpixels(struct gl_context *ctx, GLint x, GLint y, GLsizei width, GLsizei h
       const GLint dstStride = _mesa_image_row_stride(&clippedPacking, width,
                                                      format, type);
 
-      if (pformat == PIPE_FORMAT_Z24_UNORM_S8_USCALED ||
+      if (pformat == PIPE_FORMAT_Z24_UNORM_S8_UINT ||
           pformat == PIPE_FORMAT_Z24X8_UNORM) {
          if (format == GL_DEPTH_COMPONENT) {
             for (i = 0; i < height; i++) {
@@ -534,7 +534,7 @@ st_readpixels(struct gl_context *ctx, GLint x, GLint y, GLsizei width, GLsizei h
             }
          }
       }
-      else if (pformat == PIPE_FORMAT_S8_USCALED_Z24_UNORM ||
+      else if (pformat == PIPE_FORMAT_S8_UINT_Z24_UNORM ||
                pformat == PIPE_FORMAT_X8Z24_UNORM) {
          if (format == GL_DEPTH_COMPONENT) {
             for (i = 0; i < height; i++) {
@@ -601,7 +601,7 @@ st_readpixels(struct gl_context *ctx, GLint x, GLint y, GLsizei width, GLsizei h
             dst += dstStride;
          }
       }
-      else if (pformat == PIPE_FORMAT_Z32_FLOAT_S8X24_USCALED) {
+      else if (pformat == PIPE_FORMAT_Z32_FLOAT_S8X24_UINT) {
          assert(format == GL_DEPTH_COMPONENT);
          for (i = 0; i < height; i++) {
             GLfloat zfloat[MAX_WIDTH];    /* Z32 */

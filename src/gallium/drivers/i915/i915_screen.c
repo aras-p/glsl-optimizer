@@ -293,7 +293,7 @@ i915_is_format_supported(struct pipe_screen *screen,
       PIPE_FORMAT_DXT3_RGBA,
       PIPE_FORMAT_DXT5_RGBA,
       PIPE_FORMAT_Z24X8_UNORM,
-      PIPE_FORMAT_Z24_UNORM_S8_USCALED,
+      PIPE_FORMAT_Z24_UNORM_S8_UINT,
       PIPE_FORMAT_NONE  /* list terminator */
    };
    static const enum pipe_format render_supported[] = {
@@ -310,7 +310,7 @@ i915_is_format_supported(struct pipe_screen *screen,
       /* XXX why not?
       PIPE_FORMAT_Z16_UNORM, */
       PIPE_FORMAT_Z24X8_UNORM,
-      PIPE_FORMAT_Z24_UNORM_S8_USCALED,
+      PIPE_FORMAT_Z24_UNORM_S8_UINT,
       PIPE_FORMAT_NONE  /* list terminator */
    };
    const enum pipe_format *list;

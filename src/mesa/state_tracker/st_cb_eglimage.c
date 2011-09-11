@@ -53,7 +53,7 @@ st_pipe_format_to_base_format(enum pipe_format format)
          base_format = GL_DEPTH_STENCIL;
       }
       else {
-         if (format == PIPE_FORMAT_S8_USCALED)
+         if (format == PIPE_FORMAT_S8_UINT)
             base_format = GL_STENCIL_INDEX;
          else
             base_format = GL_DEPTH_COMPONENT;

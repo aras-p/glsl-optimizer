@@ -74,7 +74,7 @@ static int emit_framebuffer( struct svga_context *svga,
          return ret;
 
       if (curr->zsbuf &&
-          curr->zsbuf->format == PIPE_FORMAT_S8_USCALED_Z24_UNORM) {
+          curr->zsbuf->format == PIPE_FORMAT_S8_UINT_Z24_UNORM) {
          ret = SVGA3D_SetRenderTarget(svga->swc, SVGA3D_RT_STENCIL, curr->zsbuf);
          if (ret != PIPE_OK)
             return ret;
@@ -127,7 +127,7 @@ svga_reemit_framebuffer_bindings(struct svga_context *svga)
       }
 
       if (hw->zsbuf &&
-          hw->zsbuf->format == PIPE_FORMAT_S8_USCALED_Z24_UNORM) {
+          hw->zsbuf->format == PIPE_FORMAT_S8_UINT_Z24_UNORM) {
          ret = SVGA3D_SetRenderTarget(svga->swc, SVGA3D_RT_STENCIL, hw->zsbuf);
          if (ret != PIPE_OK) {
             return ret;

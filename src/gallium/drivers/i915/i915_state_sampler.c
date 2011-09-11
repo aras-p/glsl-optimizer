@@ -193,7 +193,7 @@ static uint translate_texture_format(enum pipe_format pipeFormat,
          view->swizzle_g != PIPE_SWIZZLE_GREEN ||
          view->swizzle_b != PIPE_SWIZZLE_BLUE ||
          view->swizzle_a != PIPE_SWIZZLE_ALPHA ) &&
-	 pipeFormat != PIPE_FORMAT_Z24_UNORM_S8_USCALED &&
+	 pipeFormat != PIPE_FORMAT_Z24_UNORM_S8_UINT &&
 	 pipeFormat != PIPE_FORMAT_Z24X8_UNORM )
       debug_printf("i915: unsupported texture swizzle for format %d\n", pipeFormat);
 
@@ -240,7 +240,7 @@ static uint translate_texture_format(enum pipe_format pipeFormat,
       return (MAPSURF_COMPRESSED | MT_COMPRESS_DXT2_3);
    case PIPE_FORMAT_DXT5_RGBA:
       return (MAPSURF_COMPRESSED | MT_COMPRESS_DXT4_5);
-   case PIPE_FORMAT_Z24_UNORM_S8_USCALED:
+   case PIPE_FORMAT_Z24_UNORM_S8_UINT:
    case PIPE_FORMAT_Z24X8_UNORM:
       {
          if ( view->swizzle_r == PIPE_SWIZZLE_RED &&

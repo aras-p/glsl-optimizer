@@ -71,7 +71,7 @@ try_clear(struct svga_context *svga,
       if (buffers & PIPE_CLEAR_DEPTH)
          flags |= SVGA3D_CLEAR_DEPTH;
 
-      if ((svga->curr.framebuffer.zsbuf->format == PIPE_FORMAT_S8_USCALED_Z24_UNORM) &&
+      if ((svga->curr.framebuffer.zsbuf->format == PIPE_FORMAT_S8_UINT_Z24_UNORM) &&
           (buffers & PIPE_CLEAR_STENCIL))
          flags |= SVGA3D_CLEAR_STENCIL;
 

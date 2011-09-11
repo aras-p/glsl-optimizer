@@ -561,8 +561,8 @@ util_format_translate(enum pipe_format dst_format,
          tmp_z = MALLOC(width * sizeof *tmp_z);
       }
 
-      if (src_format_desc->unpack_s_8uscaled &&
-          dst_format_desc->pack_s_8uscaled) {
+      if (src_format_desc->unpack_s_8uint &&
+          dst_format_desc->pack_s_8uint) {
          tmp_s = MALLOC(width * sizeof *tmp_s);
       }
 
@@ -573,8 +573,8 @@ util_format_translate(enum pipe_format dst_format,
          }
 
          if (tmp_s) {
-            src_format_desc->unpack_s_8uscaled(tmp_s, 0, src_row, src_stride, width, 1);
-            dst_format_desc->pack_s_8uscaled(dst_row, dst_stride, tmp_s, 0, width, 1);
+            src_format_desc->unpack_s_8uint(tmp_s, 0, src_row, src_stride, width, 1);
+            dst_format_desc->pack_s_8uint(dst_row, dst_stride, tmp_s, 0, width, 1);
          }
 
          dst_row += dst_step;

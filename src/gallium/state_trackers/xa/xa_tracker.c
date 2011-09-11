@@ -118,10 +118,10 @@ xa_get_pipe_format(enum xa_formats xa_format)
 	fdesc.format = PIPE_FORMAT_X8Z24_UNORM;
 	break;
     case xa_format_s8z24:
-	fdesc.format = PIPE_FORMAT_Z24_UNORM_S8_USCALED;
+	fdesc.format = PIPE_FORMAT_Z24_UNORM_S8_UINT;
 	break;
     case xa_format_z24s8:
-	fdesc.format = PIPE_FORMAT_S8_USCALED_Z24_UNORM;
+	fdesc.format = PIPE_FORMAT_S8_UINT_Z24_UNORM;
 	break;
     case xa_format_yuv8:
 	fdesc.format = PIPE_FORMAT_L8_UNORM;

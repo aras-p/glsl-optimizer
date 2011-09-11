@@ -171,7 +171,7 @@ nvfx_framebuffer_validate(struct nvfx_context *nvfx, unsigned prepare_result)
 		case PIPE_FORMAT_Z16_UNORM:
 			rt_format |= NV30_3D_RT_FORMAT_ZETA_Z16;
 			break;
-		case PIPE_FORMAT_S8_USCALED_Z24_UNORM:
+		case PIPE_FORMAT_S8_UINT_Z24_UNORM:
 		case PIPE_FORMAT_X8Z24_UNORM:
 		case 0:
 			rt_format |= NV30_3D_RT_FORMAT_ZETA_Z24S8;

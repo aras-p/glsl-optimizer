@@ -124,7 +124,7 @@ dri2_do_create_buffer(DrawablePtr pDraw, DRI2BufferPtr buffer, unsigned int form
                }
             } else {
                template.format = ms->ds_depth_bits_last ?
-                                 PIPE_FORMAT_Z24_UNORM_S8_USCALED : PIPE_FORMAT_S8_USCALED_Z24_UNORM;
+                                 PIPE_FORMAT_Z24_UNORM_S8_UINT : PIPE_FORMAT_S8_UINT_Z24_UNORM;
             }
 	    template.width0 = pDraw->width;
 	    template.height0 = pDraw->height;
@@ -456,7 +456,7 @@ xorg_dri2_init(ScreenPtr pScreen)
 					 0,
                                          PIPE_BIND_DEPTH_STENCIL);
     ms->ds_depth_bits_last =
-	 ms->screen->is_format_supported(ms->screen, PIPE_FORMAT_Z24_UNORM_S8_USCALED,
+	 ms->screen->is_format_supported(ms->screen, PIPE_FORMAT_Z24_UNORM_S8_UINT,
 					 PIPE_TEXTURE_2D,
 					 0,
                                          PIPE_BIND_DEPTH_STENCIL);

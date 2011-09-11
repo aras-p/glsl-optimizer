@@ -152,7 +152,7 @@ static void zstencil_clear(struct brw_context *brw,
       value = tmp.ui;
       break;
    case PIPE_FORMAT_Z24X8_UNORM:
-   case PIPE_FORMAT_Z24_UNORM_S8_USCALED:
+   case PIPE_FORMAT_Z24_UNORM_S8_UINT:
       value = ((unsigned)(depth * MASK24) & MASK24);
       break;
    case PIPE_FORMAT_Z16_UNORM:
@@ -171,7 +171,7 @@ static void zstencil_clear(struct brw_context *brw,
       value = value | (stencil << 24);
       mask |= XY_BLT_WRITE_ALPHA;
       break;
-   case PIPE_FORMAT_Z24_UNORM_S8_USCALED:
+   case PIPE_FORMAT_Z24_UNORM_S8_UINT:
       value = value | (stencil << 24);
       if (clear_flags & PIPE_CLEAR_STENCIL)
          mask |= XY_BLT_WRITE_ALPHA;

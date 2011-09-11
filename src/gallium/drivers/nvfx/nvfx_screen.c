@@ -269,7 +269,7 @@ nvfx_screen_is_format_supported(struct pipe_screen *pscreen,
 
 	if (bind & PIPE_BIND_DEPTH_STENCIL) {
 		switch (format) {
-		case PIPE_FORMAT_S8_USCALED_Z24_UNORM:
+		case PIPE_FORMAT_S8_UINT_Z24_UNORM:
 		case PIPE_FORMAT_X8Z24_UNORM:
 		case PIPE_FORMAT_Z16_UNORM:
 			break;

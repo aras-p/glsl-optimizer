@@ -311,7 +311,7 @@ util_clear_depth_stencil(struct pipe_context *pipe,
 
       switch (util_format_get_blocksize(dst->format)) {
       case 1:
-         assert(dst->format == PIPE_FORMAT_S8_USCALED);
+         assert(dst->format == PIPE_FORMAT_S8_UINT);
          if(dst_stride == width)
             memset(dst_map, (ubyte) zstencil, height * width);
          else {
@@ -341,10 +341,10 @@ util_clear_depth_stencil(struct pipe_context *pipe,
          }
          else {
             uint32_t dst_mask;
-            if (dst->format == PIPE_FORMAT_Z24_UNORM_S8_USCALED)
+            if (dst->format == PIPE_FORMAT_Z24_UNORM_S8_UINT)
                dst_mask = 0xffffff00;
             else {
-               assert(dst->format == PIPE_FORMAT_S8_USCALED_Z24_UNORM);
+               assert(dst->format == PIPE_FORMAT_S8_UINT_Z24_UNORM);
                dst_mask = 0xffffff;
             }
             if (clear_flags & PIPE_CLEAR_DEPTH)
@@ -364,7 +364,7 @@ util_clear_depth_stencil(struct pipe_context *pipe,
          uint64_t zstencil = util_pack64_z_stencil(dst->texture->format,
                                                    depth, stencil);
 
-         assert(dst->format == PIPE_FORMAT_Z32_FLOAT_S8X24_USCALED);
+         assert(dst->format == PIPE_FORMAT_Z32_FLOAT_S8X24_UINT);
 
          if (!need_rmw) {
             for (i = 0; i < height; i++) {

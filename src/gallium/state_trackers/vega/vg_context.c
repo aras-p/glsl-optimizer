@@ -61,8 +61,8 @@ choose_depth_stencil_format(struct vg_context *ctx)
 {
    struct pipe_screen *screen = ctx->pipe->screen;
    enum pipe_format formats[] = {
-      PIPE_FORMAT_Z24_UNORM_S8_USCALED,
-      PIPE_FORMAT_S8_USCALED_Z24_UNORM,
+      PIPE_FORMAT_Z24_UNORM_S8_UINT,
+      PIPE_FORMAT_S8_UINT_Z24_UNORM,
       PIPE_FORMAT_NONE
    };
    enum pipe_format *fmt;
