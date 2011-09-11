@@ -148,7 +148,7 @@ struct r600_pipe_resource_state {
 	unsigned			id;
 	u32                             val[8];
 	struct r600_bo			*bo[2];
-	enum radeon_bo_usage		bo_usage[2]; /* XXX set these */
+	enum radeon_bo_usage		bo_usage[2];
 };
 
 #define R600_BLOCK_STATUS_ENABLED	(1 << 0)
