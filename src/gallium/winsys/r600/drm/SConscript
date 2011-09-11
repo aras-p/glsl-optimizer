@@ -4,8 +4,6 @@ env = env.Clone()
 
 r600_sources = env.ParseSourceList('Makefile.sources', 'C_SOURCES')
 
-env.PkgUseModules('DRM_RADEON')
-
 env.Append(CPPPATH = '#/src/gallium/drivers/r600')
 
 r600winsys = env.ConvenienceLibrary(

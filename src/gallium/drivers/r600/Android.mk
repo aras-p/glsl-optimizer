@@ -32,9 +32,7 @@ LOCAL_SRC_FILES := $(C_SOURCES)
 
 LOCAL_CFLAGS := -std=c99
 
-LOCAL_C_INCLUDES := \
-	$(DRM_TOP) \
-	$(DRM_TOP)/include/drm
+LOCAL_C_INCLUDES :=
 
 LOCAL_MODULE := libmesa_pipe_r600
 

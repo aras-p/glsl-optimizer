@@ -33,9 +33,7 @@ LOCAL_SRC_FILES := $(C_SOURCES)
 LOCAL_CFLAGS := -std=c99
 
 LOCAL_C_INCLUDES := \
-	$(GALLIUM_TOP)/drivers/r600 \
-	$(DRM_TOP) \
-	$(DRM_TOP)/include/drm
+	$(GALLIUM_TOP)/drivers/r600
 
 LOCAL_MODULE := libmesa_winsys_r600
 
