@@ -745,7 +745,7 @@ struct pipe_screen *r600_screen_create(struct radeon_winsys *ws)
 	util_format_s3tc_init();
 
 	util_slab_create(&rscreen->pool_buffers,
-			 sizeof(struct r600_resource_buffer), 64,
+			 sizeof(struct r600_resource), 64,
 			 UTIL_SLAB_SINGLETHREADED);
 
 	pipe_mutex_init(rscreen->mutex_num_contexts);

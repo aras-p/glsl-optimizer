@@ -406,7 +406,7 @@ void r600_set_constant_buffer(struct pipe_context *ctx, uint shader, uint index,
 			      struct pipe_resource *buffer)
 {
 	struct r600_pipe_context *rctx = (struct r600_pipe_context *)ctx;
-	struct r600_resource_buffer *rbuffer = r600_buffer(buffer);
+	struct r600_resource *rbuffer = r600_resource(buffer);
 	struct r600_pipe_resource_state *rstate;
 	uint32_t offset;
 
@@ -428,7 +428,7 @@ void r600_set_constant_buffer(struct pipe_context *ctx, uint shader, uint index,
 					0xFFFFFFFF, NULL, 0);
 		r600_pipe_state_add_reg(&rctx->vs_const_buffer,
 					R_028980_ALU_CONST_CACHE_VS_0,
-					offset >> 8, 0xFFFFFFFF, rbuffer->r.bo, RADEON_USAGE_READ);
+					offset >> 8, 0xFFFFFFFF, rbuffer->bo, RADEON_USAGE_READ);
 		r600_context_pipe_state_set(&rctx->ctx, &rctx->vs_const_buffer);
 
 		rstate = &rctx->vs_const_buffer_resource[index];
@@ -441,10 +441,10 @@ void r600_set_constant_buffer(struct pipe_context *ctx, uint shader, uint index,
 		}
 
 		if (rctx->chip_class >= EVERGREEN) {
-			evergreen_pipe_mod_buffer_resource(rstate, &rbuffer->r, offset, 16, RADEON_USAGE_READ);
+			evergreen_pipe_mod_buffer_resource(rstate, rbuffer, offset, 16, RADEON_USAGE_READ);
 			evergreen_context_pipe_state_set_vs_resource(&rctx->ctx, rstate, index);
 		} else {
-			r600_pipe_mod_buffer_resource(rstate, &rbuffer->r, offset, 16, RADEON_USAGE_READ);
+			r600_pipe_mod_buffer_resource(rstate, rbuffer, offset, 16, RADEON_USAGE_READ);
 			r600_context_pipe_state_set_vs_resource(&rctx->ctx, rstate, index);
 		}
 		break;
@@ -456,7 +456,7 @@ void r600_set_constant_buffer(struct pipe_context *ctx, uint shader, uint index,
 					0xFFFFFFFF, NULL, 0);
 		r600_pipe_state_add_reg(&rctx->ps_const_buffer,
 					R_028940_ALU_CONST_CACHE_PS_0,
-					offset >> 8, 0xFFFFFFFF, rbuffer->r.bo, RADEON_USAGE_READ);
+					offset >> 8, 0xFFFFFFFF, rbuffer->bo, RADEON_USAGE_READ);
 		r600_context_pipe_state_set(&rctx->ctx, &rctx->ps_const_buffer);
 
 		rstate = &rctx->ps_const_buffer_resource[index];
@@ -468,10 +468,10 @@ void r600_set_constant_buffer(struct pipe_context *ctx, uint shader, uint index,
 			}
 		}
 		if (rctx->chip_class >= EVERGREEN) {
-			evergreen_pipe_mod_buffer_resource(rstate, &rbuffer->r, offset, 16, RADEON_USAGE_READ);
+			evergreen_pipe_mod_buffer_resource(rstate, rbuffer, offset, 16, RADEON_USAGE_READ);
 			evergreen_context_pipe_state_set_ps_resource(&rctx->ctx, rstate, index);
 		} else {
-			r600_pipe_mod_buffer_resource(rstate, &rbuffer->r, offset, 16, RADEON_USAGE_READ);
+			r600_pipe_mod_buffer_resource(rstate, rbuffer, offset, 16, RADEON_USAGE_READ);
 			r600_context_pipe_state_set_ps_resource(&rctx->ctx, rstate, index);
 		}
 		break;
@@ -480,7 +480,7 @@ void r600_set_constant_buffer(struct pipe_context *ctx, uint shader, uint index,
 		return;
 	}
 
-	if (buffer != &rbuffer->r.b.b.b)
+	if (buffer != &rbuffer->b.b.b)
 		pipe_resource_reference((struct pipe_resource**)&rbuffer, NULL);
 }
 
