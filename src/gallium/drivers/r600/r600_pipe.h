@@ -274,8 +274,6 @@ struct pipe_resource *r600_buffer_create(struct pipe_screen *screen,
 struct pipe_resource *r600_user_buffer_create(struct pipe_screen *screen,
 					      void *ptr, unsigned bytes,
 					      unsigned bind);
-struct pipe_resource *r600_buffer_from_handle(struct pipe_screen *screen,
-					      struct winsys_handle *whandle);
 void r600_upload_index_buffer(struct r600_pipe_context *rctx, struct r600_drawl *draw);
 
 

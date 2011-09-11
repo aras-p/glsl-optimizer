@@ -211,32 +211,6 @@ struct pipe_resource *r600_user_buffer_create(struct pipe_screen *screen,
 	return &rbuffer->b.b.b;
 }
 
-struct pipe_resource *r600_buffer_from_handle(struct pipe_screen *screen,
-					      struct winsys_handle *whandle)
-{
-	struct radeon *rw = ((struct r600_screen*)screen)->radeon;
-	struct r600_resource *rbuffer;
-	struct r600_bo *bo = NULL;
-
-	bo = r600_bo_handle(rw, whandle, NULL, NULL);
-	if (bo == NULL) {
-		return NULL;
-	}
-
-	rbuffer = CALLOC_STRUCT(r600_resource);
-	if (rbuffer == NULL) {
-		r600_bo_reference(&bo, NULL);
-		return NULL;
-	}
-
-	pipe_reference_init(&rbuffer->b.b.b.reference, 1);
-	rbuffer->b.b.b.target = PIPE_BUFFER;
-	rbuffer->b.b.b.screen = screen;
-	rbuffer->b.b.vtbl = &r600_buffer_vtbl;
-	rbuffer->bo = bo;
-	return &rbuffer->b.b.b;
-}
-
 void r600_upload_index_buffer(struct r600_pipe_context *rctx, struct r600_drawl *draw)
 {
 	struct r600_resource *rbuffer = r600_resource(draw->index_buffer);
