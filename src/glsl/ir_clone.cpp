@@ -25,9 +25,7 @@
 #include "main/compiler.h"
 #include "ir.h"
 #include "glsl_types.h"
-extern "C" {
 #include "program/hash_table.h"
-}
 
 /**
  * Duplicate an IR variable

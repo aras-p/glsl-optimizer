@@ -24,10 +24,7 @@
 #include "ir_print_visitor.h"
 #include "glsl_types.h"
 #include "glsl_parser_extras.h"
-
-extern "C" {
 #include "program/hash_table.h"
-}
 
 static void print_type(const glsl_type *t);
 

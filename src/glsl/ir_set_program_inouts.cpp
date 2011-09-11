@@ -34,10 +34,8 @@
  * from the GLSL IR.
  */
 
-extern "C" {
 #include "main/core.h" /* for struct gl_program */
 #include "program/hash_table.h"
-}
 #include "ir.h"
 #include "ir_visitor.h"
 #include "glsl_types.h"

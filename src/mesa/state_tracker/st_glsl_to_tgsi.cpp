@@ -42,12 +42,13 @@
 #include "ir_optimization.h"
 #include "ast.h"
 
-extern "C" {
 #include "main/mtypes.h"
-#include "main/shaderapi.h"
 #include "main/shaderobj.h"
-#include "main/uniforms.h"
 #include "program/hash_table.h"
+
+extern "C" {
+#include "main/shaderapi.h"
+#include "main/uniforms.h"
 #include "program/prog_instruction.h"
 #include "program/prog_optimize.h"
 #include "program/prog_print.h"
