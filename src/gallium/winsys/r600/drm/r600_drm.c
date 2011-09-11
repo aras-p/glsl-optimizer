@@ -64,7 +64,8 @@ struct radeon *radeon_create(struct radeon_winsys *ws)
 	radeon->family = radeon_family_from_device(radeon->info.pci_id);
 	if (radeon->family == CHIP_UNKNOWN) {
 		fprintf(stderr, "Unknown chipset 0x%04X\n", radeon->info.pci_id);
-		return radeon_destroy(radeon);
+		radeon_destroy(radeon);
+		return NULL;
 	}
 
 	/* setup class */
@@ -81,11 +82,7 @@ struct radeon *radeon_create(struct radeon_winsys *ws)
 	return radeon;
 }
 
-struct radeon *radeon_destroy(struct radeon *radeon)
+void radeon_destroy(struct radeon *radeon)
 {
-	if (radeon == NULL)
-		return NULL;
-
 	FREE(radeon);
-	return NULL;
 }
