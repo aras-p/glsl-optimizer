@@ -97,14 +97,10 @@ typedef unsigned pb_size;
  */
 struct pb_buffer 
 {
-   /* This used to be a pipe_buffer struct:
-    */
-   struct {
-      struct pipe_reference  reference;
-      unsigned               size;
-      unsigned               alignment;
-      unsigned               usage;
-   } base;
+   struct pipe_reference  reference;
+   unsigned               size;
+   unsigned               alignment;
+   unsigned               usage;
 
    /**
     * Pointer to the virtual function table.
@@ -169,7 +165,7 @@ pb_map(struct pb_buffer *buf,
    assert(buf);
    if(!buf)
       return NULL;
-   assert(pipe_is_referenced(&buf->base.reference));
+   assert(pipe_is_referenced(&buf->reference));
    return buf->vtbl->map(buf, flags, flush_ctx);
 }
 
@@ -180,7 +176,7 @@ pb_unmap(struct pb_buffer *buf)
    assert(buf);
    if(!buf)
       return;
-   assert(pipe_is_referenced(&buf->base.reference));
+   assert(pipe_is_referenced(&buf->reference));
    buf->vtbl->unmap(buf);
 }
 
@@ -196,11 +192,11 @@ pb_get_base_buffer( struct pb_buffer *buf,
       offset = 0;
       return;
    }
-   assert(pipe_is_referenced(&buf->base.reference));
+   assert(pipe_is_referenced(&buf->reference));
    assert(buf->vtbl->get_base_buffer);
    buf->vtbl->get_base_buffer(buf, base_buf, offset);
    assert(*base_buf);
-   assert(*offset < (*base_buf)->base.size);
+   assert(*offset < (*base_buf)->size);
 }
 
 
@@ -232,7 +228,7 @@ pb_destroy(struct pb_buffer *buf)
    assert(buf);
    if(!buf)
       return;
-   assert(!pipe_is_referenced(&buf->base.reference));
+   assert(!pipe_is_referenced(&buf->reference));
    buf->vtbl->destroy(buf);
 }
 
@@ -242,7 +238,7 @@ pb_reference(struct pb_buffer **dst,
 {
    struct pb_buffer *old = *dst;
 
-   if (pipe_reference(&(*dst)->base.reference, &src->base.reference))
+   if (pipe_reference(&(*dst)->reference, &src->reference))
       pb_destroy( old );
    *dst = src;
 }

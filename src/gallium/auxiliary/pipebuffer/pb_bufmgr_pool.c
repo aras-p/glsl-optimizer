@@ -108,7 +108,7 @@ pool_buffer_destroy(struct pb_buffer *buf)
    struct pool_buffer *pool_buf = pool_buffer(buf);
    struct pool_pb_manager *pool = pool_buf->mgr;
    
-   assert(!pipe_is_referenced(&pool_buf->base.base.reference));
+   assert(!pipe_is_referenced(&pool_buf->base.reference));
 
    pipe_mutex_lock(pool->mutex);
    LIST_ADD(&pool_buf->head, &pool->free);
@@ -218,10 +218,10 @@ pool_bufmgr_create_buffer(struct pb_manager *mgr,
    pipe_mutex_unlock(pool->mutex);
    
    pool_buf = LIST_ENTRY(struct pool_buffer, item, head);
-   assert(!pipe_is_referenced(&pool_buf->base.base.reference));
-   pipe_reference_init(&pool_buf->base.base.reference, 1);
-   pool_buf->base.base.alignment = desc->alignment;
-   pool_buf->base.base.usage = desc->usage;
+   assert(!pipe_is_referenced(&pool_buf->base.reference));
+   pipe_reference_init(&pool_buf->base.reference, 1);
+   pool_buf->base.alignment = desc->alignment;
+   pool_buf->base.usage = desc->usage;
    
    return SUPER(pool_buf);
 }
@@ -297,10 +297,10 @@ pool_bufmgr_create(struct pb_manager *provider,
 
    pool_buf = pool->bufs;
    for (i = 0; i < numBufs; ++i) {
-      pipe_reference_init(&pool_buf->base.base.reference, 0);
-      pool_buf->base.base.alignment = 0;
-      pool_buf->base.base.usage = 0;
-      pool_buf->base.base.size = bufSize;
+      pipe_reference_init(&pool_buf->base.reference, 0);
+      pool_buf->base.alignment = 0;
+      pool_buf->base.usage = 0;
+      pool_buf->base.size = bufSize;
       pool_buf->base.vtbl = &pool_buffer_vtbl;
       pool_buf->mgr = pool;
       pool_buf->start = i * bufSize;

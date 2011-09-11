@@ -201,7 +201,7 @@ pb_slab_buffer_destroy(struct pb_buffer *_buf)
 
    pipe_mutex_lock(mgr->mutex);
    
-   assert(!pipe_is_referenced(&buf->base.base.reference));
+   assert(!pipe_is_referenced(&buf->base.reference));
    
    buf->mapCount = 0;
 
@@ -326,7 +326,7 @@ pb_slab_create(struct pb_slab_manager *mgr)
    }
    pb_unmap(slab->bo);
 
-   numBuffers = slab->bo->base.size / mgr->bufSize;
+   numBuffers = slab->bo->size / mgr->bufSize;
 
    slab->buffers = CALLOC(numBuffers, sizeof(*slab->buffers));
    if (!slab->buffers) {
@@ -342,10 +342,10 @@ pb_slab_create(struct pb_slab_manager *mgr)
 
    buf = slab->buffers;
    for (i=0; i < numBuffers; ++i) {
-      pipe_reference_init(&buf->base.base.reference, 0);
-      buf->base.base.size = mgr->bufSize;
-      buf->base.base.alignment = 0;
-      buf->base.base.usage = 0;
+      pipe_reference_init(&buf->base.reference, 0);
+      buf->base.size = mgr->bufSize;
+      buf->base.alignment = 0;
+      buf->base.usage = 0;
       buf->base.vtbl = &pb_slab_buffer_vtbl;
       buf->slab = slab;
       buf->start = i* mgr->bufSize;
@@ -421,9 +421,9 @@ pb_slab_manager_create_buffer(struct pb_manager *_mgr,
    pipe_mutex_unlock(mgr->mutex);
    buf = LIST_ENTRY(struct pb_slab_buffer, list, head);
    
-   pipe_reference_init(&buf->base.base.reference, 1);
-   buf->base.base.alignment = desc->alignment;
-   buf->base.base.usage = desc->usage;
+   pipe_reference_init(&buf->base.reference, 1);
+   buf->base.alignment = desc->alignment;
+   buf->base.usage = desc->usage;
    
    return &buf->base;
 }

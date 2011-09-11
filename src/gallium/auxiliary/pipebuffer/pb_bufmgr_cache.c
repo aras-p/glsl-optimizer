@@ -112,7 +112,7 @@ _pb_cache_buffer_destroy(struct pb_cache_buffer *buf)
    LIST_DEL(&buf->head);
    assert(mgr->numDelayed);
    --mgr->numDelayed;
-   assert(!pipe_is_referenced(&buf->base.base.reference));
+   assert(!pipe_is_referenced(&buf->base.reference));
    pb_reference(&buf->buffer, NULL);
    FREE(buf);
 }
@@ -153,7 +153,7 @@ pb_cache_buffer_destroy(struct pb_buffer *_buf)
    struct pb_cache_manager *mgr = buf->mgr;
 
    pipe_mutex_lock(mgr->mutex);
-   assert(!pipe_is_referenced(&buf->base.base.reference));
+   assert(!pipe_is_referenced(&buf->base.reference));
    
    _pb_cache_buffer_list_check_free(mgr);
    
@@ -227,17 +227,17 @@ pb_cache_is_buffer_compat(struct pb_cache_buffer *buf,
                           pb_size size,
                           const struct pb_desc *desc)
 {
-   if(buf->base.base.size < size)
+   if(buf->base.size < size)
       return 0;
 
    /* be lenient with size */
-   if(buf->base.base.size >= 2*size)
+   if(buf->base.size >= 2*size)
       return 0;
    
-   if(!pb_check_alignment(desc->alignment, buf->base.base.alignment))
+   if(!pb_check_alignment(desc->alignment, buf->base.alignment))
       return 0;
    
-   if(!pb_check_usage(desc->usage, buf->base.base.usage))
+   if(!pb_check_usage(desc->usage, buf->base.usage))
       return 0;
 
    if (buf->mgr->provider->is_buffer_busy) {
@@ -313,7 +313,7 @@ pb_cache_manager_create_buffer(struct pb_manager *_mgr,
       --mgr->numDelayed;
       pipe_mutex_unlock(mgr->mutex);
       /* Increase refcount */
-      pipe_reference_init(&buf->base.base.reference, 1);
+      pipe_reference_init(&buf->base.reference, 1);
       return &buf->base;
    }
    
@@ -329,15 +329,15 @@ pb_cache_manager_create_buffer(struct pb_manager *_mgr,
       return NULL;
    }
    
-   assert(pipe_is_referenced(&buf->buffer->base.reference));
-   assert(pb_check_alignment(desc->alignment, buf->buffer->base.alignment));
-   assert(pb_check_usage(desc->usage, buf->buffer->base.usage));
-   assert(buf->buffer->base.size >= size);
+   assert(pipe_is_referenced(&buf->buffer->reference));
+   assert(pb_check_alignment(desc->alignment, buf->buffer->alignment));
+   assert(pb_check_usage(desc->usage, buf->buffer->usage));
+   assert(buf->buffer->size >= size);
    
-   pipe_reference_init(&buf->base.base.reference, 1);
-   buf->base.base.alignment = buf->buffer->base.alignment;
-   buf->base.base.usage = buf->buffer->base.usage;
-   buf->base.base.size = buf->buffer->base.size;
+   pipe_reference_init(&buf->base.reference, 1);
+   buf->base.alignment = buf->buffer->alignment;
+   buf->base.usage = buf->buffer->usage;
+   buf->base.size = buf->buffer->size;
    
    buf->base.vtbl = &pb_cache_buffer_vtbl;
    buf->mgr = mgr;

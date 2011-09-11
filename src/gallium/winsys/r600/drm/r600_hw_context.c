@@ -982,7 +982,7 @@ void r600_context_bo_flush(struct r600_context *ctx, unsigned flush_flags,
 	} else {
 		ctx->pm4[ctx->pm4_cdwords++] = PKT3(PKT3_SURFACE_SYNC, 3, ctx->predicate_drawing);
 		ctx->pm4[ctx->pm4_cdwords++] = flush_flags;
-		ctx->pm4[ctx->pm4_cdwords++] = (bo->buf->base.size + 255) >> 8;
+		ctx->pm4[ctx->pm4_cdwords++] = (bo->buf->size + 255) >> 8;
 		ctx->pm4[ctx->pm4_cdwords++] = 0x00000000;
 		ctx->pm4[ctx->pm4_cdwords++] = 0x0000000A;
 		ctx->pm4[ctx->pm4_cdwords++] = PKT3(PKT3_NOP, 0, ctx->predicate_drawing);

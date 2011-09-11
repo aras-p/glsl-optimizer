@@ -97,7 +97,7 @@ mm_buffer_destroy(struct pb_buffer *buf)
    struct mm_buffer *mm_buf = mm_buffer(buf);
    struct mm_pb_manager *mm = mm_buf->mgr;
    
-   assert(!pipe_is_referenced(&mm_buf->base.base.reference));
+   assert(!pipe_is_referenced(&mm_buf->base.reference));
    
    pipe_mutex_lock(mm->mutex);
    u_mmFreeMem(mm_buf->block);
@@ -192,10 +192,10 @@ mm_bufmgr_create_buffer(struct pb_manager *mgr,
       return NULL;
    }
 
-   pipe_reference_init(&mm_buf->base.base.reference, 1);
-   mm_buf->base.base.alignment = desc->alignment;
-   mm_buf->base.base.usage = desc->usage;
-   mm_buf->base.base.size = size;
+   pipe_reference_init(&mm_buf->base.reference, 1);
+   mm_buf->base.alignment = desc->alignment;
+   mm_buf->base.usage = desc->usage;
+   mm_buf->base.size = size;
    
    mm_buf->base.vtbl = &mm_buffer_vtbl;
    

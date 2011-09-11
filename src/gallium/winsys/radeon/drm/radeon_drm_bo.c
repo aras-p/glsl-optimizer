@@ -356,10 +356,10 @@ static struct pb_buffer *radeon_bomgr_create_bo(struct pb_manager *_mgr,
     if (!bo)
 	return NULL;
 
-    pipe_reference_init(&bo->base.base.reference, 1);
-    bo->base.base.alignment = desc->alignment;
-    bo->base.base.usage = desc->usage;
-    bo->base.base.size = size;
+    pipe_reference_init(&bo->base.reference, 1);
+    bo->base.alignment = desc->alignment;
+    bo->base.usage = desc->usage;
+    bo->base.size = size;
     bo->base.vtbl = &radeon_bo_vtbl;
     bo->mgr = mgr;
     bo->rws = mgr->rws;
@@ -592,10 +592,10 @@ static struct pb_buffer *radeon_winsys_bo_from_handle(struct radeon_winsys *rws,
     bo->name = whandle->handle;
 
     /* Initialize it. */
-    pipe_reference_init(&bo->base.base.reference, 1);
-    bo->base.base.alignment = 0;
-    bo->base.base.usage = PB_USAGE_GPU_WRITE | PB_USAGE_GPU_READ;
-    bo->base.base.size = bo->size;
+    pipe_reference_init(&bo->base.reference, 1);
+    bo->base.alignment = 0;
+    bo->base.usage = PB_USAGE_GPU_WRITE | PB_USAGE_GPU_READ;
+    bo->base.size = bo->size;
     bo->base.vtbl = &radeon_bo_vtbl;
     bo->mgr = mgr;
     bo->rws = mgr->rws;
@@ -609,7 +609,7 @@ done:
     if (stride)
         *stride = whandle->stride;
     if (size)
-        *size = bo->base.base.size;
+        *size = bo->base.size;
 
     return (struct pb_buffer*)bo;
 
