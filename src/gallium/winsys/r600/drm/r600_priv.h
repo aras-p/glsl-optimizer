@@ -71,11 +71,6 @@ struct r600_bo {
 };
 
 /*
- * radeon_pciid.c
- */
-unsigned radeon_family_from_device(unsigned device);
-
-/*
  * r600_hw_context.c
  */
 void r600_context_bo_flush(struct r600_context *ctx, unsigned flush_flags,

@@ -183,6 +183,17 @@ static int radeon_drm_get_tiling(struct radeon *radeon)
 	}
 }
 
+static unsigned radeon_family_from_device(unsigned device)
+{
+	switch (device) {
+#define CHIPSET(pciid, name, family) case pciid: return CHIP_##family;
+#include "pci_ids/r600_pci_ids.h"
+#undef CHIPSET
+	default:
+		return CHIP_UNKNOWN;
+	}
+}
+
 struct radeon *radeon_create(struct radeon_winsys *ws)
 {
 	struct radeon *radeon = CALLOC_STRUCT(radeon);
