@@ -92,44 +92,16 @@ struct radeon *radeon_create(struct radeon_winsys *ws)
 		fprintf(stderr, "Unknown chipset 0x%04X\n", radeon->info.pci_id);
 		return radeon_destroy(radeon);
 	}
+
 	/* setup class */
-	switch (radeon->family) {
-	case CHIP_R600:
-	case CHIP_RV610:
-	case CHIP_RV630:
-	case CHIP_RV670:
-	case CHIP_RV620:
-	case CHIP_RV635:
-	case CHIP_RS780:
-	case CHIP_RS880:
-		radeon->chip_class = R600;
-		break;
-	case CHIP_RV770:
-	case CHIP_RV730:
-	case CHIP_RV710:
-	case CHIP_RV740:
-		radeon->chip_class = R700;
-		break;
-	case CHIP_CEDAR:
-	case CHIP_REDWOOD:
-	case CHIP_JUNIPER:
-	case CHIP_CYPRESS:
-	case CHIP_HEMLOCK:
-	case CHIP_PALM:
-	case CHIP_SUMO:
-	case CHIP_SUMO2:
-	case CHIP_BARTS:
-	case CHIP_TURKS:
-	case CHIP_CAICOS:
-		radeon->chip_class = EVERGREEN;
-		break;
-	case CHIP_CAYMAN:
+	if (radeon->family == CHIP_CAYMAN) {
 		radeon->chip_class = CAYMAN;
-		break;
-	default:
-		fprintf(stderr, "%s unknown or unsupported chipset 0x%04X\n",
-			__func__, radeon->info.pci_id);
-		break;
+	} else if (radeon->family >= CHIP_CEDAR) {
+		radeon->chip_class = EVERGREEN;
+	} else if (radeon->family >= CHIP_RV730) {
+		radeon->chip_class = R700;
+	} else {
+		radeon->chip_class = R600;
 	}
 
 	return radeon;
