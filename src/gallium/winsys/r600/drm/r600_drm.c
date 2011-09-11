@@ -31,14 +31,6 @@
 #include "util/u_memory.h"
 #include <errno.h>
 
-#ifndef RADEON_INFO_NUM_TILE_PIPES
-#define RADEON_INFO_NUM_TILE_PIPES 0xb
-#endif
-
-#ifndef RADEON_INFO_BACKEND_MAP
-#define RADEON_INFO_BACKEND_MAP 0xd
-#endif
-
 enum radeon_family r600_get_family(struct radeon *r600)
 {
 	return r600->family;
