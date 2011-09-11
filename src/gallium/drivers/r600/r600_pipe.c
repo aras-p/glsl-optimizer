@@ -389,7 +389,7 @@ static int r600_get_param(struct pipe_screen* pscreen, enum pipe_cap param)
 		else
 			return 14;
 	case PIPE_CAP_MAX_TEXTURE_ARRAY_LAYERS:
-		return r600_get_minor_version(rscreen->radeon) >= 9 ?
+		return rscreen->info.drm_minor >= 9 ?
 			(family >= CHIP_CEDAR ? 16384 : 8192) : 0;
 	case PIPE_CAP_MAX_VERTEX_TEXTURE_UNITS:
 	case PIPE_CAP_MAX_TEXTURE_IMAGE_UNITS:
@@ -404,7 +404,7 @@ static int r600_get_param(struct pipe_screen* pscreen, enum pipe_cap param)
 
 	/* Timer queries, present when the clock frequency is non zero. */
 	case PIPE_CAP_TIMER_QUERY:
-		return r600_get_clock_crystal_freq(rscreen->radeon) != 0;
+		return rscreen->info.r600_clock_crystal_freq != 0;
 
 	case PIPE_CAP_MIN_TEXEL_OFFSET:
 		return -8;

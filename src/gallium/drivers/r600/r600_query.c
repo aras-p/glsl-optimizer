@@ -104,6 +104,6 @@ void r600_init_query_functions(struct r600_pipe_context *rctx)
 	rctx->context.end_query = r600_end_query;
 	rctx->context.get_query_result = r600_get_query_result;
 
-	if (r600_get_num_backends(rctx->screen->radeon) > 0)
+	if (rctx->screen->info.r600_num_backends > 0)
 	    rctx->context.render_condition = r600_render_condition;
 }

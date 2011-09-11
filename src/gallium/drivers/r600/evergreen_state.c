@@ -1979,7 +1979,7 @@ void evergreen_init_config(struct r600_pipe_context *rctx)
 	r600_pipe_state_add_reg(rstate, R_008C00_SQ_CONFIG, tmp, 0xFFFFFFFF, NULL, 0);
 
 	/* enable dynamic GPR resource management */
-	if (r600_get_minor_version(rctx->radeon) >= 7) {
+	if (rctx->screen->info.drm_minor >= 7) {
 		/* always set temp clauses */
 		r600_pipe_state_add_reg(rstate, R_008C04_SQ_GPR_RESOURCE_MGMT_1,
 					S_008C04_NUM_CLAUSE_TEMP_GPRS(num_temp_gprs), 0xFFFFFFFF, NULL, 0);

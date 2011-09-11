@@ -917,7 +917,7 @@ int evergreen_context_init(struct r600_context *ctx, struct radeon *radeon)
 	}
 
 	/* add blocks */
-	if (r600_get_family(radeon) == CHIP_CAYMAN) 
+	if (radeon->family == CHIP_CAYMAN)
 		r = r600_context_add_block(ctx, cayman_config_reg_list,
 					   Elements(cayman_config_reg_list), PKT3_SET_CONFIG_REG, EVERGREEN_CONFIG_REG_OFFSET);
 	else
@@ -925,7 +925,7 @@ int evergreen_context_init(struct r600_context *ctx, struct radeon *radeon)
 					   Elements(evergreen_config_reg_list), PKT3_SET_CONFIG_REG, EVERGREEN_CONFIG_REG_OFFSET);
 	if (r)
 		goto out_err;
-	if (r600_get_family(radeon) == CHIP_CAYMAN) 
+	if (radeon->family == CHIP_CAYMAN)
 		r = r600_context_add_block(ctx, cayman_context_reg_list,
 					   Elements(cayman_context_reg_list), PKT3_SET_CONTEXT_REG, EVERGREEN_CONTEXT_REG_OFFSET);
 	else

@@ -84,11 +84,6 @@ struct r600_tiling_info {
 
 enum radeon_family r600_get_family(struct radeon *rw);
 enum chip_class r600_get_family_class(struct radeon *radeon);
-unsigned r600_get_clock_crystal_freq(struct radeon *radeon);
-unsigned r600_get_minor_version(struct radeon *radeon);
-unsigned r600_get_num_backends(struct radeon *radeon);
-unsigned r600_get_num_tile_pipes(struct radeon *radeon);
-unsigned r600_get_backend_map(struct radeon *radeon);
 
 /* r600_bo.c */
 struct r600_bo;

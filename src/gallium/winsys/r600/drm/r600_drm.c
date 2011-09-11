@@ -41,31 +41,6 @@ enum chip_class r600_get_family_class(struct radeon *radeon)
 	return radeon->chip_class;
 }
 
-unsigned r600_get_clock_crystal_freq(struct radeon *radeon)
-{
-	return radeon->info.r600_clock_crystal_freq;
-}
-
-unsigned r600_get_num_backends(struct radeon *radeon)
-{
-	return radeon->info.r600_num_backends;
-}
-
-unsigned r600_get_num_tile_pipes(struct radeon *radeon)
-{
-	return radeon->info.r600_num_tile_pipes;
-}
-
-unsigned r600_get_backend_map(struct radeon *radeon)
-{
-	return radeon->info.r600_backend_map;
-}
-
-unsigned r600_get_minor_version(struct radeon *radeon)
-{
-	return radeon->info.drm_minor;
-}
-
 static unsigned radeon_family_from_device(unsigned device)
 {
 	switch (device) {

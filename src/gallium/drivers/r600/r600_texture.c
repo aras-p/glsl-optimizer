@@ -484,7 +484,7 @@ DEBUG_GET_ONCE_BOOL_OPTION(tiling_enabled, "R600_TILING", FALSE);
 struct pipe_resource *r600_texture_create(struct pipe_screen *screen,
 						const struct pipe_resource *templ)
 {
-	struct radeon *radeon = ((struct r600_screen*)screen)->radeon;
+	struct r600_screen *rscreen = (struct r600_screen*)screen;
 	unsigned array_mode = 0;
 
 	if (!(templ->flags & R600_RESOURCE_FLAG_TRANSFER) &&
@@ -493,7 +493,7 @@ struct pipe_resource *r600_texture_create(struct pipe_screen *screen,
 			array_mode = V_038000_ARRAY_1D_TILED_THIN1;
 		}
 		else if (debug_get_option_tiling_enabled() &&
-			 r600_get_minor_version(radeon) >= 9 &&
+			 rscreen->info.drm_minor >= 9 &&
 			 permit_hardware_blit(screen, templ)) {
 			array_mode = V_038000_ARRAY_2D_TILED_THIN1;
 		}
@@ -923,7 +923,7 @@ uint32_t r600_translate_texformat(struct pipe_screen *screen,
 
 	if (r600_enable_s3tc == -1) {
 		struct r600_screen *rscreen = (struct r600_screen *)screen;
-		if (r600_get_minor_version(rscreen->radeon) >= 9)
+		if (rscreen->info.drm_minor >= 9)
 			r600_enable_s3tc = 1;
 		else
 			r600_enable_s3tc = debug_get_bool_option("R600_ENABLE_S3TC", FALSE);

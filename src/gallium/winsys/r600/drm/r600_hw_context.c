@@ -35,13 +35,13 @@ void r600_get_backend_mask(struct r600_context *ctx)
 {
 	struct r600_bo * buffer;
 	u32 * results;
-	unsigned num_backends = r600_get_num_backends(ctx->radeon);
+	unsigned num_backends = ctx->radeon->info.r600_num_backends;
 	unsigned i, mask = 0;
 
 	/* if backend_map query is supported by the kernel */
 	if (ctx->radeon->info.r600_backend_map_valid) {
-		unsigned num_tile_pipes = r600_get_num_tile_pipes(ctx->radeon);
-		unsigned backend_map = r600_get_backend_map(ctx->radeon);
+		unsigned num_tile_pipes = ctx->radeon->info.r600_num_tile_pipes;
+		unsigned backend_map = ctx->radeon->info.r600_backend_map;
 		unsigned item_width, item_mask;
 
 		if (ctx->radeon->chip_class >= EVERGREEN) {
@@ -1811,7 +1811,7 @@ boolean r600_context_query_result(struct r600_context *ctx,
 	if (!r600_query_result(ctx, query, wait))
 		return FALSE;
 	if (query->type == PIPE_QUERY_TIME_ELAPSED)
-		*result = (1000000*query->result)/r600_get_clock_crystal_freq(ctx->radeon);
+		*result = (1000000 * query->result) / ctx->radeon->info.r600_clock_crystal_freq;
 	else
 		*result = query->result;
 	query->result = 0;
