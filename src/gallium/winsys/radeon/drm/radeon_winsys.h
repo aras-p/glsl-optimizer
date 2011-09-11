@@ -68,7 +68,15 @@ enum radeon_bo_usage { /* bitfield */
 };
 
 struct winsys_handle;
-struct radeon_winsys_cs_handle;   /* for write_reloc etc. */
+
+struct radeon_winsys_cs_handle {   /* for write_reloc etc. */
+    struct {
+        struct pb_buffer base;
+    } _private;
+
+    unsigned last_flush;
+    unsigned binding;
+};
 
 struct radeon_winsys_cs {
     unsigned cdw;  /* Number of used dwords. */

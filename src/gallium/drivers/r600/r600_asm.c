@@ -2262,17 +2262,19 @@ int r600_vertex_elements_build_fetch_shader(struct r600_pipe_context *rctx, stru
 
 	ve->fs_size = bc.ndw*4;
 
-	/* use PIPE_BIND_VERTEX_BUFFER so we use the cache buffer manager */
-	ve->fetch_shader = r600_bo(rctx->radeon, ve->fs_size, 256, PIPE_BIND_VERTEX_BUFFER, PIPE_USAGE_IMMUTABLE);
+	ve->fetch_shader = (struct r600_resource*)
+			pipe_buffer_create(rctx->context.screen,
+					   PIPE_BIND_CUSTOM,
+					   PIPE_USAGE_IMMUTABLE, ve->fs_size);
 	if (ve->fetch_shader == NULL) {
 		r600_bytecode_clear(&bc);
 		return -ENOMEM;
 	}
 
-	bytecode = r600_bo_map(rctx->radeon, ve->fetch_shader, rctx->ctx.cs, PIPE_TRANSFER_WRITE);
+	bytecode = rctx->ws->buffer_map(ve->fetch_shader->buf, rctx->ctx.cs, PIPE_TRANSFER_WRITE);
 	if (bytecode == NULL) {
 		r600_bytecode_clear(&bc);
-		r600_bo_reference(&ve->fetch_shader, NULL);
+		pipe_resource_reference((struct pipe_resource**)&ve->fetch_shader, NULL);
 		return -ENOMEM;
 	}
 
@@ -2284,7 +2286,7 @@ int r600_vertex_elements_build_fetch_shader(struct r600_pipe_context *rctx, stru
 		memcpy(bytecode, bc.bytecode, ve->fs_size);
 	}
 
-	r600_bo_unmap(rctx->radeon, ve->fetch_shader);
+	rctx->ws->buffer_unmap(ve->fetch_shader->buf);
 	r600_bytecode_clear(&bc);
 
 	if (rctx->chip_class >= EVERGREEN)

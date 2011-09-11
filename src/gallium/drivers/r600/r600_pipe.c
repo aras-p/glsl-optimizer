@@ -53,18 +53,19 @@
  */
 static struct r600_fence *r600_create_fence(struct r600_pipe_context *ctx)
 {
-	struct r600_pipe_context *rctx = (struct r600_pipe_context *)ctx;
 	struct r600_fence *fence = NULL;
 
 	if (!ctx->fences.bo) {
 		/* Create the shared buffer object */
-		ctx->fences.bo = r600_bo(ctx->radeon, 4096, 0, 0, 0);
+		ctx->fences.bo = (struct r600_resource*)
+			pipe_buffer_create(&ctx->screen->screen, PIPE_BIND_CUSTOM,
+					   PIPE_USAGE_STAGING, 4096);
 		if (!ctx->fences.bo) {
 			R600_ERR("r600: failed to create bo for fence objects\n");
 			return NULL;
 		}
-		ctx->fences.data = r600_bo_map(ctx->radeon, ctx->fences.bo, rctx->ctx.cs,
-					       PIPE_TRANSFER_UNSYNCHRONIZED | PIPE_TRANSFER_WRITE);
+		ctx->fences.data = ctx->ws->buffer_map(ctx->fences.bo->buf, ctx->ctx.cs,
+						       PIPE_TRANSFER_WRITE);
 	}
 
 	if (!LIST_IS_EMPTY(&ctx->fences.pool)) {
@@ -184,8 +185,8 @@ static void r600_destroy_context(struct pipe_context *context)
 			FREE(entry);
 		}
 
-		r600_bo_unmap(rctx->radeon, rctx->fences.bo);
-		r600_bo_reference(&rctx->fences.bo, NULL);
+		rctx->ws->buffer_unmap(rctx->fences.bo->buf);
+		pipe_resource_reference((struct pipe_resource**)&rctx->fences.bo, NULL);
 	}
 
 	r600_update_num_contexts(rctx->screen, -1);
@@ -211,6 +212,7 @@ static struct pipe_context *r600_create_context(struct pipe_screen *screen, void
 
 	/* Easy accessing of screen/winsys. */
 	rctx->screen = rscreen;
+	rctx->ws = rscreen->ws;
 	rctx->radeon = rscreen->radeon;
 	rctx->family = r600_get_family(rctx->radeon);
 	rctx->chip_class = r600_get_family_class(rctx->radeon);
@@ -234,7 +236,7 @@ static struct pipe_context *r600_create_context(struct pipe_screen *screen, void
 	case R600:
 	case R700:
 		r600_init_state_functions(rctx);
-		if (r600_context_init(&rctx->ctx, rctx->radeon)) {
+		if (r600_context_init(&rctx->ctx, rctx->screen, rctx->radeon)) {
 			r600_destroy_context(&rctx->context);
 			return NULL;
 		}
@@ -244,7 +246,7 @@ static struct pipe_context *r600_create_context(struct pipe_screen *screen, void
 	case EVERGREEN:
 	case CAYMAN:
 		evergreen_init_state_functions(rctx);
-		if (evergreen_context_init(&rctx->ctx, rctx->radeon)) {
+		if (evergreen_context_init(&rctx->ctx, rctx->screen, rctx->radeon)) {
 			r600_destroy_context(&rctx->context);
 			return NULL;
 		}

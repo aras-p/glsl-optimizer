@@ -24,6 +24,7 @@
  *      Jerome Glisse
  */
 #include "r600_priv.h"
+#include "r600_pipe.h"
 #include "r600d.h"
 #include "util/u_memory.h"
 #include <errno.h>
@@ -33,8 +34,8 @@
 /* Get backends mask */
 void r600_get_backend_mask(struct r600_context *ctx)
 {
-	struct r600_bo * buffer;
-	u32 * results;
+	struct r600_resource *buffer;
+	u32 *results;
 	unsigned num_backends = ctx->radeon->info.r600_num_backends;
 	unsigned i, mask = 0;
 
@@ -66,16 +67,17 @@ void r600_get_backend_mask(struct r600_context *ctx)
 	/* otherwise backup path for older kernels */
 
 	/* create buffer for event data */
-	buffer = r600_bo(ctx->radeon, ctx->max_db*16, 1, 0,
-				PIPE_USAGE_STAGING);
+	buffer = (struct r600_resource*)
+		pipe_buffer_create(&ctx->screen->screen, PIPE_BIND_CUSTOM,
+				   PIPE_USAGE_STAGING, ctx->max_db*16);
 	if (!buffer)
 		goto err;
 
 	/* initialize buffer with zeroes */
-	results = r600_bo_map(ctx->radeon, buffer, ctx->cs, PIPE_TRANSFER_WRITE);
+	results = ctx->screen->ws->buffer_map(buffer->buf, ctx->cs, PIPE_TRANSFER_WRITE);
 	if (results) {
 		memset(results, 0, ctx->max_db * 4 * 4);
-		r600_bo_unmap(ctx->radeon, buffer);
+		ctx->screen->ws->buffer_unmap(buffer->buf);
 
 		/* emit EVENT_WRITE for ZPASS_DONE */
 		ctx->pm4[ctx->pm4_cdwords++] = PKT3(PKT3_EVENT_WRITE, 2, 0);
@@ -90,18 +92,18 @@ void r600_get_backend_mask(struct r600_context *ctx)
 		r600_context_flush(ctx, 0);
 
 		/* analyze results */
-		results = r600_bo_map(ctx->radeon, buffer, ctx->cs, PIPE_TRANSFER_READ);
+		results = ctx->screen->ws->buffer_map(buffer->buf, ctx->cs, PIPE_TRANSFER_READ);
 		if (results) {
 			for(i = 0; i < ctx->max_db; i++) {
 				/* at least highest bit will be set if backend is used */
 				if (results[i*4 + 1])
 					mask |= (1<<i);
 			}
-			r600_bo_unmap(ctx->radeon, buffer);
+			ctx->screen->ws->buffer_unmap(buffer->buf);
 		}
 	}
 
-	r600_bo_reference(&buffer, NULL);
+	pipe_resource_reference((struct pipe_resource**)&buffer, NULL);
 
 	if (mask != 0) {
 		ctx->backend_mask = mask;
@@ -736,7 +738,7 @@ static void r600_free_resource_range(struct r600_context *ctx, struct r600_range
 		block = range->blocks[i];
 		if (block) {
 			for (int k = 1; k <= block->nbo; k++)
-				r600_bo_reference(&block->reloc[k].bo, NULL);
+				pipe_resource_reference((struct pipe_resource**)&block->reloc[k].bo, NULL);
 			free(block);
 		}
 	}
@@ -761,7 +763,7 @@ void r600_context_fini(struct r600_context *ctx)
 					range->blocks[CTX_BLOCK_ID(offset)] = NULL;
 				}
 				for (int k = 1; k <= block->nbo; k++) {
-					r600_bo_reference(&block->reloc[k].bo, NULL);
+					pipe_resource_reference((struct pipe_resource**)&block->reloc[k].bo, NULL);
 				}
 				free(block);
 			}
@@ -826,12 +828,13 @@ int r600_setup_block_table(struct r600_context *ctx)
 	return 0;
 }
 
-int r600_context_init(struct r600_context *ctx, struct radeon *radeon)
+int r600_context_init(struct r600_context *ctx, struct r600_screen *screen, struct radeon *radeon)
 {
 	int r;
 
 	memset(ctx, 0, sizeof(struct r600_context));
 	ctx->radeon = radeon;
+	ctx->screen = screen;
 
 	LIST_INITHEAD(&ctx->query_list);
 
@@ -949,11 +952,11 @@ void r600_context_flush_all(struct r600_context *ctx, unsigned flush_flags)
 }
 
 void r600_context_bo_flush(struct r600_context *ctx, unsigned flush_flags,
-				unsigned flush_mask, struct r600_bo *bo)
+				unsigned flush_mask, struct r600_resource *bo)
 {
 	/* if bo has already been flushed */
-	if (!(~bo->last_flush & flush_flags)) {
-		bo->last_flush &= flush_mask;
+	if (!(~bo->cs_buf->last_flush & flush_flags)) {
+		bo->cs_buf->last_flush &= flush_mask;
 		return;
 	}
 
@@ -962,7 +965,7 @@ void r600_context_bo_flush(struct r600_context *ctx, unsigned flush_flags,
 	     G_0085F0_DB_ACTION_ENA(flush_flags))) {
 		if (ctx->flags & R600_CONTEXT_CHECK_EVENT_FLUSH) {
 			/* the rv670 seems to fail fbo-generatemipmap unless we flush the CB1 dest base ena */
-			if ((bo->binding & BO_BOUND_TEXTURE) &&
+			if ((bo->cs_buf->binding & BO_BOUND_TEXTURE) &&
 			    (flush_flags & S_0085F0_CB_ACTION_ENA(1))) {
 				if ((ctx->radeon->family == CHIP_RV670) ||
 				    (ctx->radeon->family == CHIP_RS780) ||
@@ -988,7 +991,7 @@ void r600_context_bo_flush(struct r600_context *ctx, unsigned flush_flags,
 		ctx->pm4[ctx->pm4_cdwords++] = PKT3(PKT3_NOP, 0, ctx->predicate_drawing);
 		ctx->pm4[ctx->pm4_cdwords++] = r600_context_bo_reloc(ctx, bo, RADEON_USAGE_WRITE);
 	}
-	bo->last_flush = (bo->last_flush | flush_flags) & flush_mask;
+	bo->cs_buf->last_flush = (bo->cs_buf->last_flush | flush_flags) & flush_mask;
 }
 
 void r600_context_reg(struct r600_context *ctx,
@@ -1066,7 +1069,7 @@ void r600_context_pipe_state_set(struct r600_context *ctx, struct r600_pipe_stat
 		if (block->pm4_bo_index[id]) {
 			/* find relocation */
 			reloc_id = block->pm4_bo_index[id];
-			r600_bo_reference(&block->reloc[reloc_id].bo, reg->bo);
+			pipe_resource_reference((struct pipe_resource**)&block->reloc[reloc_id].bo, &reg->bo->b.b.b);
 			block->reloc[reloc_id].bo_usage = reg->bo_usage;
 			/* always force dirty for relocs for now */
 			dirty |= R600_BLOCK_STATUS_DIRTY;
@@ -1103,10 +1106,10 @@ void r600_context_pipe_state_set_resource(struct r600_context *ctx, struct r600_
 	if (state == NULL) {
 		block->status &= ~(R600_BLOCK_STATUS_ENABLED | R600_BLOCK_STATUS_RESOURCE_DIRTY);
 		if (block->reloc[1].bo)
-			block->reloc[1].bo->binding &= ~BO_BOUND_TEXTURE;
+			block->reloc[1].bo->cs_buf->binding &= ~BO_BOUND_TEXTURE;
 
-		r600_bo_reference(&block->reloc[1].bo, NULL);
-		r600_bo_reference(&block->reloc[2].bo, NULL);
+		pipe_resource_reference((struct pipe_resource**)&block->reloc[1].bo, NULL);
+		pipe_resource_reference((struct pipe_resource**)&block->reloc[2].bo, NULL);
 		LIST_DELINIT(&block->list);
 		LIST_DELINIT(&block->enable_list);
 		return;
@@ -1140,16 +1143,16 @@ void r600_context_pipe_state_set_resource(struct r600_context *ctx, struct r600_
 			/* VERTEX RESOURCE, we preted there is 2 bo to relocate so
 			 * we have single case btw VERTEX & TEXTURE resource
 			 */
-			r600_bo_reference(&block->reloc[1].bo, state->bo[0]);
+			pipe_resource_reference((struct pipe_resource**)&block->reloc[1].bo, &state->bo[0]->b.b.b);
 			block->reloc[1].bo_usage = state->bo_usage[0];
-			r600_bo_reference(&block->reloc[2].bo, NULL);
+			pipe_resource_reference((struct pipe_resource**)&block->reloc[2].bo, NULL);
 		} else {
 			/* TEXTURE RESOURCE */
-			r600_bo_reference(&block->reloc[1].bo, state->bo[0]);
+			pipe_resource_reference((struct pipe_resource**)&block->reloc[1].bo, &state->bo[0]->b.b.b);
 			block->reloc[1].bo_usage = state->bo_usage[0];
-			r600_bo_reference(&block->reloc[2].bo, state->bo[1]);
+			pipe_resource_reference((struct pipe_resource**)&block->reloc[2].bo, &state->bo[1]->b.b.b);
 			block->reloc[2].bo_usage = state->bo_usage[1];
-			state->bo[0]->binding |= BO_BOUND_TEXTURE;
+			state->bo[0]->cs_buf->binding |= BO_BOUND_TEXTURE;
 		}
 
 		if (is_vertex)
@@ -1265,7 +1268,7 @@ void r600_context_pipe_state_set_vs_sampler(struct r600_context *ctx, struct r60
 	r600_context_pipe_state_set_sampler_border(ctx, state, offset);
 }
 
-struct r600_bo *r600_context_reg_bo(struct r600_context *ctx, unsigned offset)
+struct r600_resource *r600_context_reg_bo(struct r600_context *ctx, unsigned offset)
 {
 	struct r600_range *range;
 	struct r600_block *block;
@@ -1372,8 +1375,8 @@ void r600_context_block_resource_emit_dirty(struct r600_context *ctx, struct r60
 
 void r600_context_flush_dest_caches(struct r600_context *ctx)
 {
-	struct r600_bo *cb[8];
-	struct r600_bo *db;
+	struct r600_resource *cb[8];
+	struct r600_resource *db;
 	int i;
 
 	if (!(ctx->flags & R600_CONTEXT_DST_CACHES_DIRTY))
@@ -1511,8 +1514,8 @@ void r600_context_flush(struct r600_context *ctx, unsigned flags)
 
 	/* restart */
 	for (int i = 0; i < ctx->creloc; i++) {
-		ctx->bo[i]->last_flush = 0;
-		r600_bo_reference(&ctx->bo[i], NULL);
+		ctx->bo[i]->cs_buf->last_flush = 0;
+		pipe_resource_reference((struct pipe_resource**)&ctx->bo[i], NULL);
 	}
 	ctx->creloc = 0;
 	ctx->pm4_dirty_cdwords = 0;
@@ -1545,7 +1548,7 @@ void r600_context_flush(struct r600_context *ctx, unsigned flags)
 	}
 }
 
-void r600_context_emit_fence(struct r600_context *ctx, struct r600_bo *fence_bo, unsigned offset, unsigned value)
+void r600_context_emit_fence(struct r600_context *ctx, struct r600_resource *fence_bo, unsigned offset, unsigned value)
 {
 	unsigned ndwords = 10;
 
@@ -1573,9 +1576,9 @@ static boolean r600_query_result(struct r600_context *ctx, struct r600_query *qu
 	u32 *results, *current_result;
 
 	if (wait)
-		results = r600_bo_map(ctx->radeon, query->buffer, ctx->cs, PIPE_TRANSFER_READ);
+		results = ctx->screen->ws->buffer_map(query->buffer->buf, ctx->cs, PIPE_TRANSFER_READ);
 	else
-		results = r600_bo_map(ctx->radeon, query->buffer, ctx->cs, PIPE_TRANSFER_DONTBLOCK | PIPE_TRANSFER_READ);
+		results = ctx->screen->ws->buffer_map(query->buffer->buf, ctx->cs, PIPE_TRANSFER_DONTBLOCK | PIPE_TRANSFER_READ);
 	if (!results)
 		return FALSE;
 
@@ -1597,7 +1600,7 @@ static boolean r600_query_result(struct r600_context *ctx, struct r600_query *qu
 	}
 
 	query->results_start = query->results_end;
-	r600_bo_unmap(ctx->radeon, query->buffer);
+	ctx->screen->ws->buffer_unmap(query->buffer->buf);
 	return TRUE;
 }
 
@@ -1649,7 +1652,7 @@ void r600_query_begin(struct r600_context *ctx, struct r600_query *query)
 		u32 *results;
 		int i;
 
-		results = r600_bo_map(ctx->radeon, query->buffer, ctx->cs, PIPE_TRANSFER_WRITE);
+		results = ctx->screen->ws->buffer_map(query->buffer->buf, ctx->cs, PIPE_TRANSFER_WRITE);
 		if (results) {
 			results = (u32*)((char*)results + query->results_end);
 			memset(results, 0, query->result_size);
@@ -1661,7 +1664,7 @@ void r600_query_begin(struct r600_context *ctx, struct r600_query *query)
 					results[(i * 4)+3] = 0x80000000;
 				}
 			}
-			r600_bo_unmap(ctx->radeon, query->buffer);
+			ctx->screen->ws->buffer_unmap(query->buffer->buf);
 		}
 	}
 
@@ -1799,8 +1802,8 @@ struct r600_query *r600_context_query_create(struct r600_context *ctx, unsigned 
 	 * being written by the gpu, hence staging is probably a good
 	 * usage pattern.
 	 */
-	query->buffer = r600_bo(ctx->radeon, query->buffer_size, 1, 0,
-				PIPE_USAGE_STAGING);
+	query->buffer = (struct r600_resource*)
+		pipe_buffer_create(&ctx->screen->screen, PIPE_BIND_CUSTOM, PIPE_USAGE_STAGING, query->buffer_size);
 	if (!query->buffer) {
 		free(query);
 		return NULL;
@@ -1813,7 +1816,7 @@ struct r600_query *r600_context_query_create(struct r600_context *ctx, unsigned 
 
 void r600_context_query_destroy(struct r600_context *ctx, struct r600_query *query)
 {
-	r600_bo_reference(&query->buffer, NULL);
+	pipe_resource_reference((struct pipe_resource**)&query->buffer, NULL);
 	LIST_DELINIT(&query->list);
 	free(query);
 }

@@ -81,12 +81,12 @@ static int r600_pipe_shader(struct pipe_context *ctx, struct r600_pipe_shader *s
 
 	/* copy new shader */
 	if (shader->bo == NULL) {
-		/* use PIPE_BIND_VERTEX_BUFFER so we use the cache buffer manager */
-		shader->bo = r600_bo(rctx->radeon, rshader->bc.ndw * 4, 4096, PIPE_BIND_VERTEX_BUFFER, PIPE_USAGE_IMMUTABLE);
+		shader->bo = (struct r600_resource*)
+			pipe_buffer_create(ctx->screen, PIPE_BIND_CUSTOM, PIPE_USAGE_IMMUTABLE, rshader->bc.ndw * 4);
 		if (shader->bo == NULL) {
 			return -ENOMEM;
 		}
-		ptr = (uint32_t*)r600_bo_map(rctx->radeon, shader->bo, rctx->ctx.cs, PIPE_TRANSFER_WRITE);
+		ptr = (uint32_t*)rctx->ws->buffer_map(shader->bo->buf, rctx->ctx.cs, PIPE_TRANSFER_WRITE);
 		if (R600_BIG_ENDIAN) {
 			for (i = 0; i < rshader->bc.ndw; ++i) {
 				ptr[i] = bswap_32(rshader->bc.bytecode[i]);
@@ -94,7 +94,7 @@ static int r600_pipe_shader(struct pipe_context *ctx, struct r600_pipe_shader *s
 		} else {
 			memcpy(ptr, rshader->bc.bytecode, rshader->bc.ndw * sizeof(*ptr));
 		}
-		r600_bo_unmap(rctx->radeon, shader->bo);
+		rctx->ws->buffer_unmap(shader->bo->buf);
 	}
 	/* build state */
 	switch (rshader->processor_type) {
@@ -154,7 +154,7 @@ int r600_pipe_shader_create(struct pipe_context *ctx, struct r600_pipe_shader *s
 
 void r600_pipe_shader_destroy(struct pipe_context *ctx, struct r600_pipe_shader *shader)
 {
-	r600_bo_reference(&shader->bo, NULL);
+	pipe_resource_reference((struct pipe_resource**)&shader->bo, NULL);
 	r600_bytecode_clear(&shader->shader.bc);
 
 	memset(&shader->shader,0,sizeof(struct r600_shader));

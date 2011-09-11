@@ -338,10 +338,10 @@ static boolean r600_texture_get_handle(struct pipe_screen* screen,
 {
 	struct r600_resource_texture *rtex = (struct r600_resource_texture*)ptex;
 	struct r600_resource *resource = &rtex->resource;
-	struct radeon *radeon = ((struct r600_screen*)screen)->radeon;
+	struct r600_screen *rscreen = (struct r600_screen*)screen;
 
-	return r600_bo_get_winsys_handle(radeon, resource->bo,
-			rtex->pitch_in_bytes[0], whandle);
+	return rscreen->ws->buffer_get_handle(resource->buf,
+					      rtex->pitch_in_bytes[0], whandle);
 }
 
 static void r600_texture_destroy(struct pipe_screen *screen,
@@ -353,9 +353,7 @@ static void r600_texture_destroy(struct pipe_screen *screen,
 	if (rtex->flushed_depth_texture)
 		pipe_resource_reference((struct pipe_resource **)&rtex->flushed_depth_texture, NULL);
 
-	if (resource->bo) {
-		r600_bo_reference(&resource->bo, NULL);
-	}
+	pb_reference(&resource->buf, NULL);
 	FREE(rtex);
 }
 
@@ -377,12 +375,12 @@ r600_texture_create_object(struct pipe_screen *screen,
 			   unsigned array_mode,
 			   unsigned pitch_in_bytes_override,
 			   unsigned max_buffer_size,
-			   struct r600_bo *bo,
+			   struct pb_buffer *buf,
 			   boolean alloc_bo)
 {
 	struct r600_resource_texture *rtex;
 	struct r600_resource *resource;
-	struct radeon *radeon = ((struct r600_screen*)screen)->radeon;
+	struct r600_screen *rscreen = (struct r600_screen*)screen;
 
 	rtex = CALLOC_STRUCT(r600_resource_texture);
 	if (rtex == NULL)
@@ -393,7 +391,6 @@ r600_texture_create_object(struct pipe_screen *screen,
 	resource->b.b.vtbl = &r600_texture_vtbl;
 	pipe_reference_init(&resource->b.b.b.reference, 1);
 	resource->b.b.b.screen = screen;
-	resource->bo = bo;
 	rtex->pitch_override = pitch_in_bytes_override;
 	rtex->real_format = base->format;
 
@@ -459,23 +456,27 @@ r600_texture_create_object(struct pipe_screen *screen,
 		rtex->size = stencil_offset + rtex->stencil->size;
 	}
 
-	resource->size = rtex->size;
-
 	/* Now create the backing buffer. */
-	if (!resource->bo && alloc_bo) {
+	if (!buf && alloc_bo) {
 		struct pipe_resource *ptex = &rtex->resource.b.b.b;
 		unsigned base_align = r600_get_base_alignment(screen, ptex->format, array_mode);
 
-		resource->bo = r600_bo(radeon, rtex->size, base_align, base->bind, base->usage);
-		if (!resource->bo) {
+		if (!r600_init_resource(rscreen, resource, rtex->size, base_align, base->bind, base->usage)) {
 			pipe_resource_reference((struct pipe_resource**)&rtex->stencil, NULL);
 			FREE(rtex);
 			return NULL;
 		}
+	} else if (buf) {
+		resource->buf = buf;
+		resource->cs_buf = rscreen->ws->buffer_get_cs_handle(buf);
+		resource->domains = RADEON_DOMAIN_GTT | RADEON_DOMAIN_VRAM;
 	}
 
-	if (rtex->stencil)
-		rtex->stencil->resource.bo = rtex->resource.bo;
+	if (rtex->stencil) {
+		rtex->stencil->resource.buf = rtex->resource.buf;
+		rtex->stencil->resource.cs_buf = rtex->resource.cs_buf;
+		rtex->stencil->resource.domains = rtex->resource.domains;
+	}
 	return rtex;
 }
 
@@ -540,28 +541,36 @@ static void r600_surface_destroy(struct pipe_context *pipe,
 	FREE(surface);
 }
 
-
 struct pipe_resource *r600_texture_from_handle(struct pipe_screen *screen,
 					       const struct pipe_resource *templ,
 					       struct winsys_handle *whandle)
 {
-	struct radeon *rw = ((struct r600_screen*)screen)->radeon;
-	struct r600_bo *bo = NULL;
+	struct r600_screen *rscreen = (struct r600_screen*)screen;
+	struct pb_buffer *buf = NULL;
 	unsigned stride = 0;
 	unsigned array_mode = 0;
+	enum radeon_bo_layout micro, macro;
 
 	/* Support only 2D textures without mipmaps */
 	if ((templ->target != PIPE_TEXTURE_2D && templ->target != PIPE_TEXTURE_RECT) ||
 	      templ->depth0 != 1 || templ->last_level != 0)
 		return NULL;
 
-	bo = r600_bo_handle(rw, whandle, &stride, &array_mode);
-	if (bo == NULL) {
+	buf = rscreen->ws->buffer_from_handle(rscreen->ws, whandle, &stride, NULL);
+	if (!buf)
 		return NULL;
-	}
+
+	rscreen->ws->buffer_get_tiling(buf, &micro, &macro);
+
+	if (macro == RADEON_LAYOUT_TILED)
+		array_mode = V_0280A0_ARRAY_2D_TILED_THIN1;
+	else if (micro == RADEON_LAYOUT_TILED)
+		array_mode = V_0280A0_ARRAY_1D_TILED_THIN1;
+	else
+		array_mode = 0;
 
 	return (struct pipe_resource *)r600_texture_create_object(screen, templ, array_mode,
-								  stride, 0, bo, FALSE);
+								  stride, 0, buf, FALSE);
 }
 
 int r600_texture_depth_flush(struct pipe_context *ctx,
@@ -748,28 +757,27 @@ void* r600_texture_transfer_map(struct pipe_context *ctx,
 {
 	struct r600_pipe_context *rctx = (struct r600_pipe_context *)ctx;
 	struct r600_transfer *rtransfer = (struct r600_transfer*)transfer;
-	struct r600_bo *bo;
+	struct pb_buffer *buf;
 	enum pipe_format format = transfer->resource->format;
-	struct radeon *radeon = rctx->screen->radeon;
 	unsigned offset = 0;
 	char *map;
 
 	if (rtransfer->staging_texture) {
-		bo = ((struct r600_resource *)rtransfer->staging_texture)->bo;
+		buf = ((struct r600_resource *)rtransfer->staging_texture)->buf;
 	} else {
 		struct r600_resource_texture *rtex = (struct r600_resource_texture*)transfer->resource;
 
 		if (rtex->flushed_depth_texture)
-			bo = ((struct r600_resource *)rtex->flushed_depth_texture)->bo;
+			buf = ((struct r600_resource *)rtex->flushed_depth_texture)->buf;
 		else
-			bo = ((struct r600_resource *)transfer->resource)->bo;
+			buf = ((struct r600_resource *)transfer->resource)->buf;
 
 		offset = rtransfer->offset +
 			transfer->box.y / util_format_get_blockheight(format) * transfer->stride +
 			transfer->box.x / util_format_get_blockwidth(format) * util_format_get_blocksize(format);
 	}
 
-	if (!(map = r600_bo_map(radeon, bo, rctx->ctx.cs, transfer->usage))) {
+	if (!(map = rctx->ws->buffer_map(buf, rctx->ctx.cs, transfer->usage))) {
 		return NULL;
 	}
 
@@ -780,21 +788,21 @@ void r600_texture_transfer_unmap(struct pipe_context *ctx,
 				 struct pipe_transfer* transfer)
 {
 	struct r600_transfer *rtransfer = (struct r600_transfer*)transfer;
-	struct radeon *radeon = ((struct r600_screen*)ctx->screen)->radeon;
-	struct r600_bo *bo;
+	struct r600_pipe_context *rctx = (struct r600_pipe_context*)ctx;
+	struct pb_buffer *buf;
 
 	if (rtransfer->staging_texture) {
-		bo = ((struct r600_resource *)rtransfer->staging_texture)->bo;
+		buf = ((struct r600_resource *)rtransfer->staging_texture)->buf;
 	} else {
 		struct r600_resource_texture *rtex = (struct r600_resource_texture*)transfer->resource;
 
 		if (rtex->flushed_depth_texture) {
-			bo = ((struct r600_resource *)rtex->flushed_depth_texture)->bo;
+			buf = ((struct r600_resource *)rtex->flushed_depth_texture)->buf;
 		} else {
-			bo = ((struct r600_resource *)transfer->resource)->bo;
+			buf = ((struct r600_resource *)transfer->resource)->buf;
 		}
 	}
-	r600_bo_unmap(radeon, bo);
+	rctx->ws->buffer_unmap(buf);
 }
 
 void r600_init_surface_functions(struct r600_pipe_context *r600)

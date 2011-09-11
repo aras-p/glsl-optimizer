@@ -897,12 +897,13 @@ static int evergreen_loop_const_init(struct r600_context *ctx, u32 offset)
 	return r600_context_add_block(ctx, r600_loop_consts, nreg, PKT3_SET_LOOP_CONST, EVERGREEN_LOOP_CONST_OFFSET);
 }
 
-int evergreen_context_init(struct r600_context *ctx, struct radeon *radeon)
+int evergreen_context_init(struct r600_context *ctx, struct r600_screen *screen, struct radeon *radeon)
 {
 	int r;
 
 	memset(ctx, 0, sizeof(struct r600_context));
 	ctx->radeon = radeon;
+	ctx->screen = screen;
 
 	LIST_INITHEAD(&ctx->query_list);
 
@@ -1205,8 +1206,8 @@ void evergreen_context_draw(struct r600_context *ctx, const struct r600_draw *dr
 
 void evergreen_context_flush_dest_caches(struct r600_context *ctx)
 {
-	struct r600_bo *cb[12];
-	struct r600_bo *db;
+	struct r600_resource *cb[12];
+	struct r600_resource *db;
 
 	if (!(ctx->flags & R600_CONTEXT_DST_CACHES_DIRTY))
 		return;

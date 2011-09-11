@@ -1013,11 +1013,9 @@ static struct pipe_sampler_view *r600_create_sampler_view(struct pipe_context *c
 	struct r600_pipe_sampler_view *view = CALLOC_STRUCT(r600_pipe_sampler_view);
 	struct r600_pipe_resource_state *rstate;
 	struct r600_resource_texture *tmp = (struct r600_resource_texture*)texture;
-	struct r600_resource *rbuffer;
 	unsigned format, endian;
 	uint32_t word4 = 0, yuv_format = 0, pitch = 0;
 	unsigned char swizzle[4], array_mode = 0, tile_type = 0;
-	struct r600_bo *bo[2];
 	unsigned width, height, depth, offset_level, last_level;
 
 	if (view == NULL)
@@ -1056,10 +1054,6 @@ static struct pipe_sampler_view *r600_create_sampler_view(struct pipe_context *c
 		word4 |= S_038010_NUM_FORMAT_ALL(V_038010_SQ_NUM_FORMAT_INT);
 	}
 
-	rbuffer = &tmp->resource;
-	bo[0] = rbuffer->bo;
-	bo[1] = rbuffer->bo;
-
 	offset_level = state->u.tex.first_level;
 	last_level = state->u.tex.last_level - offset_level;
 	width = u_minify(texture->width0, offset_level);
@@ -1078,8 +1072,8 @@ static struct pipe_sampler_view *r600_create_sampler_view(struct pipe_context *c
 		depth = texture->array_size;
 	}
 
-	rstate->bo[0] = bo[0];
-	rstate->bo[1] = bo[1];
+	rstate->bo[0] = &tmp->resource;
+	rstate->bo[1] = &tmp->resource;
 	rstate->bo_usage[0] = RADEON_USAGE_READ;
 	rstate->bo_usage[1] = RADEON_USAGE_READ;
 
@@ -1389,7 +1383,6 @@ static void r600_cb(struct r600_pipe_context *rctx, struct r600_pipe_state *rsta
 			const struct pipe_framebuffer_state *state, int cb)
 {
 	struct r600_resource_texture *rtex;
-	struct r600_resource *rbuffer;
 	struct r600_surface *surf;
 	unsigned level = state->cbufs[cb]->u.tex.level;
 	unsigned pitch, slice;
@@ -1397,7 +1390,6 @@ static void r600_cb(struct r600_pipe_context *rctx, struct r600_pipe_state *rsta
 	unsigned format, swap, ntype, endian;
 	unsigned offset;
 	const struct util_format_description *desc;
-	struct r600_bo *bo[3];
 	int i;
 
 	surf = (struct r600_surface *)state->cbufs[cb];
@@ -1410,11 +1402,6 @@ static void r600_cb(struct r600_pipe_context *rctx, struct r600_pipe_state *rsta
 	        r600_texture_depth_flush(&rctx->context, state->cbufs[cb]->texture, TRUE);
 		rtex = rtex->flushed_depth_texture;
 	}
-
-	rbuffer = &rtex->resource;
-	bo[0] = rbuffer->bo;
-	bo[1] = rbuffer->bo;
-	bo[2] = rbuffer->bo;
 
 	/* XXX quite sure for dx10+ hw don't need any offset hacks */
 	offset = r600_texture_get_offset(rtex,
@@ -1436,7 +1423,7 @@ static void r600_cb(struct r600_pipe_context *rctx, struct r600_pipe_state *rsta
 
 	format = r600_translate_colorformat(surf->base.format);
 	swap = r600_translate_colorswap(surf->base.format);
-	if(rbuffer->b.b.b.usage == PIPE_USAGE_STAGING) {
+	if(rtex->resource.b.b.b.usage == PIPE_USAGE_STAGING) {
 		endian = ENDIAN_NONE;
 	} else {
 		endian = r600_colorformat_endian_swap(format);
@@ -1486,10 +1473,10 @@ static void r600_cb(struct r600_pipe_context *rctx, struct r600_pipe_state *rsta
 
 	r600_pipe_state_add_reg(rstate,
 				R_028040_CB_COLOR0_BASE + cb * 4,
-				offset >> 8, 0xFFFFFFFF, bo[0], RADEON_USAGE_READWRITE);
+				offset >> 8, 0xFFFFFFFF, &rtex->resource, RADEON_USAGE_READWRITE);
 	r600_pipe_state_add_reg(rstate,
 				R_0280A0_CB_COLOR0_INFO + cb * 4,
-				color_info, 0xFFFFFFFF, bo[0], RADEON_USAGE_READWRITE);
+				color_info, 0xFFFFFFFF, &rtex->resource, RADEON_USAGE_READWRITE);
 	r600_pipe_state_add_reg(rstate,
 				R_028060_CB_COLOR0_SIZE + cb * 4,
 				S_028060_PITCH_TILE_MAX(pitch) |
@@ -1500,10 +1487,10 @@ static void r600_cb(struct r600_pipe_context *rctx, struct r600_pipe_state *rsta
 				0x00000000, 0xFFFFFFFF, NULL, 0);
 	r600_pipe_state_add_reg(rstate,
 				R_0280E0_CB_COLOR0_FRAG + cb * 4,
-				0, 0xFFFFFFFF, bo[1], RADEON_USAGE_READWRITE);
+				0, 0xFFFFFFFF, &rtex->resource, RADEON_USAGE_READWRITE);
 	r600_pipe_state_add_reg(rstate,
 				R_0280C0_CB_COLOR0_TILE + cb * 4,
-				0, 0xFFFFFFFF, bo[2], RADEON_USAGE_READWRITE);
+				0, 0xFFFFFFFF, &rtex->resource, RADEON_USAGE_READWRITE);
 	r600_pipe_state_add_reg(rstate,
 				R_028100_CB_COLOR0_MASK + cb * 4,
 				0x00000000, 0xFFFFFFFF, NULL, 0);
@@ -1513,7 +1500,6 @@ static void r600_db(struct r600_pipe_context *rctx, struct r600_pipe_state *rsta
 			const struct pipe_framebuffer_state *state)
 {
 	struct r600_resource_texture *rtex;
-	struct r600_resource *rbuffer;
 	struct r600_surface *surf;
 	unsigned level;
 	unsigned pitch, slice, format;
@@ -1527,8 +1513,6 @@ static void r600_db(struct r600_pipe_context *rctx, struct r600_pipe_state *rsta
 	surf = (struct r600_surface *)state->zsbuf;
 	rtex = (struct r600_resource_texture*)state->zsbuf->texture;
 
-	rbuffer = &rtex->resource;
-
 	/* XXX quite sure for dx10+ hw don't need any offset hacks */
 	offset = r600_texture_get_offset((struct r600_resource_texture *)state->zsbuf->texture,
 					 level, state->zsbuf->u.tex.first_layer);
@@ -1537,14 +1521,14 @@ static void r600_db(struct r600_pipe_context *rctx, struct r600_pipe_state *rsta
 	format = r600_translate_dbformat(state->zsbuf->texture->format);
 
 	r600_pipe_state_add_reg(rstate, R_02800C_DB_DEPTH_BASE,
-				offset >> 8, 0xFFFFFFFF, rbuffer->bo, RADEON_USAGE_READWRITE);
+				offset >> 8, 0xFFFFFFFF, &rtex->resource, RADEON_USAGE_READWRITE);
 	r600_pipe_state_add_reg(rstate, R_028000_DB_DEPTH_SIZE,
 				S_028000_PITCH_TILE_MAX(pitch) | S_028000_SLICE_TILE_MAX(slice),
 				0xFFFFFFFF, NULL, 0);
 	r600_pipe_state_add_reg(rstate, R_028004_DB_DEPTH_VIEW, 0x00000000, 0xFFFFFFFF, NULL, 0);
 	r600_pipe_state_add_reg(rstate, R_028010_DB_DEPTH_INFO,
 				S_028010_ARRAY_MODE(rtex->array_mode[level]) | S_028010_FORMAT(format),
-				0xFFFFFFFF, rbuffer->bo, RADEON_USAGE_READWRITE);
+				0xFFFFFFFF, &rtex->resource, RADEON_USAGE_READWRITE);
 	r600_pipe_state_add_reg(rstate, R_028D34_DB_PREFETCH_LIMIT,
 				(surf->aligned_height / 8) - 1, 0xFFFFFFFF, NULL, 0);
 }
@@ -2235,9 +2219,9 @@ void r600_pipe_mod_buffer_resource(struct r600_pipe_resource_state *rstate,
 				   enum radeon_bo_usage usage)
 {
 	rstate->val[0] = offset;
-	rstate->bo[0] = rbuffer->bo;
+	rstate->bo[0] = rbuffer;
 	rstate->bo_usage[0] = usage;
-	rstate->val[1] = rbuffer->bo_size - offset - 1;
+	rstate->val[1] = rbuffer->buf->size - offset - 1;
 	rstate->val[2] = S_038008_ENDIAN_SWAP(r600_endian_swap(32)) |
 	                 S_038008_STRIDE(stride);
 }

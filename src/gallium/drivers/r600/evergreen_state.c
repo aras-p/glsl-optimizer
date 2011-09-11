@@ -975,11 +975,9 @@ static struct pipe_sampler_view *evergreen_create_sampler_view(struct pipe_conte
 	struct r600_pipe_sampler_view *view = CALLOC_STRUCT(r600_pipe_sampler_view);
 	struct r600_pipe_resource_state *rstate;
 	struct r600_resource_texture *tmp = (struct r600_resource_texture*)texture;
-	struct r600_resource *rbuffer;
 	unsigned format, endian;
 	uint32_t word4 = 0, yuv_format = 0, pitch = 0;
 	unsigned char swizzle[4], array_mode = 0, tile_type = 0;
-	struct r600_bo *bo[2];
 	unsigned height, depth;
 
 	if (view == NULL)
@@ -1018,10 +1016,6 @@ static struct pipe_sampler_view *evergreen_create_sampler_view(struct pipe_conte
 		word4 |= S_030010_NUM_FORMAT_ALL(V_030010_SQ_NUM_FORMAT_INT);
 	}
 
-	rbuffer = &tmp->resource;
-	bo[0] = rbuffer->bo;
-	bo[1] = rbuffer->bo;
-
 	height = texture->height0;
 	depth = texture->depth0;
 
@@ -1037,8 +1031,8 @@ static struct pipe_sampler_view *evergreen_create_sampler_view(struct pipe_conte
 		depth = texture->array_size;
 	}
 
-	rstate->bo[0] = bo[0];
-	rstate->bo[1] = bo[1];
+	rstate->bo[0] = &tmp->resource;
+	rstate->bo[1] = &tmp->resource;
 	rstate->bo_usage[0] = RADEON_USAGE_READ;
 	rstate->bo_usage[1] = RADEON_USAGE_READ;
 
@@ -1286,7 +1280,6 @@ static void evergreen_cb(struct r600_pipe_context *rctx, struct r600_pipe_state 
 			const struct pipe_framebuffer_state *state, int cb)
 {
 	struct r600_resource_texture *rtex;
-	struct r600_resource *rbuffer;
 	struct r600_surface *surf;
 	unsigned level = state->cbufs[cb]->u.tex.level;
 	unsigned pitch, slice;
@@ -1295,7 +1288,6 @@ static void evergreen_cb(struct r600_pipe_context *rctx, struct r600_pipe_state 
 	unsigned offset;
 	unsigned tile_type;
 	const struct util_format_description *desc;
-	struct r600_bo *bo[3];
 	int i;
 	unsigned blend_clamp = 0, blend_bypass = 0;
 
@@ -1309,11 +1301,6 @@ static void evergreen_cb(struct r600_pipe_context *rctx, struct r600_pipe_state 
 	        r600_texture_depth_flush(&rctx->context, state->cbufs[cb]->texture, TRUE);
 		rtex = rtex->flushed_depth_texture;
 	}
-
-	rbuffer = &rtex->resource;
-	bo[0] = rbuffer->bo;
-	bo[1] = rbuffer->bo;
-	bo[2] = rbuffer->bo;
 
 	/* XXX quite sure for dx10+ hw don't need any offset hacks */
 	offset = r600_texture_get_offset((struct r600_resource_texture *)state->cbufs[cb]->texture,
@@ -1343,7 +1330,7 @@ static void evergreen_cb(struct r600_pipe_context *rctx, struct r600_pipe_state 
 
 	format = r600_translate_colorformat(surf->base.format);
 	swap = r600_translate_colorswap(surf->base.format);
-	if (rbuffer->b.b.b.usage == PIPE_USAGE_STAGING) {
+	if (rtex->resource.b.b.b.usage == PIPE_USAGE_STAGING) {
 		endian = ENDIAN_NONE;
 	} else {
 		endian = r600_colorformat_endian_swap(format);
@@ -1404,13 +1391,13 @@ static void evergreen_cb(struct r600_pipe_context *rctx, struct r600_pipe_state 
 	/* FIXME handle enabling of CB beyond BASE8 which has different offset */
 	r600_pipe_state_add_reg(rstate,
 				R_028C60_CB_COLOR0_BASE + cb * 0x3C,
-				offset >> 8, 0xFFFFFFFF, bo[0], RADEON_USAGE_READWRITE);
+				offset >> 8, 0xFFFFFFFF, &rtex->resource, RADEON_USAGE_READWRITE);
 	r600_pipe_state_add_reg(rstate,
 				R_028C78_CB_COLOR0_DIM + cb * 0x3C,
 				0x0, 0xFFFFFFFF, NULL, 0);
 	r600_pipe_state_add_reg(rstate,
 				R_028C70_CB_COLOR0_INFO + cb * 0x3C,
-				color_info, 0xFFFFFFFF, bo[0], RADEON_USAGE_READWRITE);
+				color_info, 0xFFFFFFFF, &rtex->resource, RADEON_USAGE_READWRITE);
 	r600_pipe_state_add_reg(rstate,
 				R_028C64_CB_COLOR0_PITCH + cb * 0x3C,
 				S_028C64_PITCH_TILE_MAX(pitch),
@@ -1425,7 +1412,7 @@ static void evergreen_cb(struct r600_pipe_context *rctx, struct r600_pipe_state 
 	r600_pipe_state_add_reg(rstate,
 				R_028C74_CB_COLOR0_ATTRIB + cb * 0x3C,
 				S_028C74_NON_DISP_TILING_ORDER(tile_type),
-				0xFFFFFFFF, bo[0], RADEON_USAGE_READWRITE);
+				0xFFFFFFFF, &rtex->resource, RADEON_USAGE_READWRITE);
 }
 
 static void evergreen_db(struct r600_pipe_context *rctx, struct r600_pipe_state *rstate,
@@ -1451,9 +1438,9 @@ static void evergreen_db(struct r600_pipe_context *rctx, struct r600_pipe_state 
 	format = r600_translate_dbformat(rtex->real_format);
 
 	r600_pipe_state_add_reg(rstate, R_028048_DB_Z_READ_BASE,
-				offset >> 8, 0xFFFFFFFF, rtex->resource.bo, RADEON_USAGE_READWRITE);
+				offset >> 8, 0xFFFFFFFF, &rtex->resource, RADEON_USAGE_READWRITE);
 	r600_pipe_state_add_reg(rstate, R_028050_DB_Z_WRITE_BASE,
-				offset >> 8, 0xFFFFFFFF, rtex->resource.bo, RADEON_USAGE_READWRITE);
+				offset >> 8, 0xFFFFFFFF, &rtex->resource, RADEON_USAGE_READWRITE);
 	r600_pipe_state_add_reg(rstate, R_028008_DB_DEPTH_VIEW, 0x00000000, 0xFFFFFFFF, NULL, 0);
 
 	if (rtex->stencil) {
@@ -1461,11 +1448,11 @@ static void evergreen_db(struct r600_pipe_context *rctx, struct r600_pipe_state 
 			r600_texture_get_offset(rtex->stencil, level, first_layer);
 
 		r600_pipe_state_add_reg(rstate, R_02804C_DB_STENCIL_READ_BASE,
-					stencil_offset >> 8, 0xFFFFFFFF, rtex->stencil->resource.bo, RADEON_USAGE_READWRITE);
+					stencil_offset >> 8, 0xFFFFFFFF, &rtex->stencil->resource, RADEON_USAGE_READWRITE);
 		r600_pipe_state_add_reg(rstate, R_028054_DB_STENCIL_WRITE_BASE,
-					stencil_offset >> 8, 0xFFFFFFFF, rtex->stencil->resource.bo, RADEON_USAGE_READWRITE);
+					stencil_offset >> 8, 0xFFFFFFFF, &rtex->stencil->resource, RADEON_USAGE_READWRITE);
 		r600_pipe_state_add_reg(rstate, R_028044_DB_STENCIL_INFO,
-					1, 0xFFFFFFFF, rtex->stencil->resource.bo, RADEON_USAGE_READWRITE);
+					1, 0xFFFFFFFF, &rtex->stencil->resource, RADEON_USAGE_READWRITE);
 	} else {
 		r600_pipe_state_add_reg(rstate, R_028044_DB_STENCIL_INFO,
 					0, 0xFFFFFFFF, NULL, RADEON_USAGE_READWRITE);
@@ -1473,7 +1460,7 @@ static void evergreen_db(struct r600_pipe_context *rctx, struct r600_pipe_state 
 
 	r600_pipe_state_add_reg(rstate, R_028040_DB_Z_INFO,
 				S_028040_ARRAY_MODE(rtex->array_mode[level]) | S_028040_FORMAT(format),
-				0xFFFFFFFF, rtex->resource.bo, RADEON_USAGE_READWRITE);
+				0xFFFFFFFF, &rtex->resource, RADEON_USAGE_READWRITE);
 	r600_pipe_state_add_reg(rstate, R_028058_DB_DEPTH_SIZE,
 				S_028058_PITCH_TILE_MAX(pitch),
 				0xFFFFFFFF, NULL, 0);
@@ -2457,10 +2444,10 @@ void evergreen_pipe_mod_buffer_resource(struct r600_pipe_resource_state *rstate,
 					unsigned offset, unsigned stride,
 					enum radeon_bo_usage usage)
 {
-	rstate->bo[0] = rbuffer->bo;
+	rstate->bo[0] = rbuffer;
 	rstate->bo_usage[0] = usage;
 	rstate->val[0] = offset;
-	rstate->val[1] = rbuffer->bo_size - offset - 1;
+	rstate->val[1] = rbuffer->buf->size - offset - 1;
 	rstate->val[2] = S_030008_ENDIAN_SWAP(r600_endian_swap(32)) |
 	                 S_030008_STRIDE(stride);
 }

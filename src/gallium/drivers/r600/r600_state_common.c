@@ -150,7 +150,7 @@ void r600_delete_state(struct pipe_context *ctx, void *state)
 		rctx->states[rstate->id] = NULL;
 	}
 	for (int i = 0; i < rstate->nregs; i++) {
-		r600_bo_reference(&rstate->regs[i].bo, NULL);
+		pipe_resource_reference((struct pipe_resource**)&rstate->regs[i].bo, NULL);
 	}
 	free(rstate);
 }
@@ -181,7 +181,7 @@ void r600_delete_vertex_element(struct pipe_context *ctx, void *state)
 	if (rctx->vertex_elements == state)
 		rctx->vertex_elements = NULL;
 
-	r600_bo_reference(&v->fetch_shader, NULL);
+	pipe_resource_reference((struct pipe_resource**)&v->fetch_shader, NULL);
 	u_vbuf_destroy_vertex_elements(rctx->vbuf_mgr, v->vmgr_elements);
 	FREE(state);
 }
@@ -428,7 +428,7 @@ void r600_set_constant_buffer(struct pipe_context *ctx, uint shader, uint index,
 					0xFFFFFFFF, NULL, 0);
 		r600_pipe_state_add_reg(&rctx->vs_const_buffer,
 					R_028980_ALU_CONST_CACHE_VS_0,
-					offset >> 8, 0xFFFFFFFF, rbuffer->bo, RADEON_USAGE_READ);
+					offset >> 8, 0xFFFFFFFF, rbuffer, RADEON_USAGE_READ);
 		r600_context_pipe_state_set(&rctx->ctx, &rctx->vs_const_buffer);
 
 		rstate = &rctx->vs_const_buffer_resource[index];
@@ -456,7 +456,7 @@ void r600_set_constant_buffer(struct pipe_context *ctx, uint shader, uint index,
 					0xFFFFFFFF, NULL, 0);
 		r600_pipe_state_add_reg(&rctx->ps_const_buffer,
 					R_028940_ALU_CONST_CACHE_PS_0,
-					offset >> 8, 0xFFFFFFFF, rbuffer->bo, RADEON_USAGE_READ);
+					offset >> 8, 0xFFFFFFFF, rbuffer, RADEON_USAGE_READ);
 		r600_context_pipe_state_set(&rctx->ctx, &rctx->ps_const_buffer);
 
 		rstate = &rctx->ps_const_buffer_resource[index];
@@ -663,7 +663,7 @@ void r600_draw_vbo(struct pipe_context *ctx, const struct pipe_draw_info *info)
 	rdraw.indices = NULL;
 	if (draw.index_buffer) {
 		rbuffer = (struct r600_resource*)draw.index_buffer;
-		rdraw.indices = rbuffer->bo;
+		rdraw.indices = rbuffer;
 		rdraw.indices_bo_offset = draw.index_buffer_offset;
 	}
 
@@ -688,7 +688,7 @@ void _r600_pipe_state_add_reg(struct r600_context *ctx,
 			      struct r600_pipe_state *state,
 			      u32 offset, u32 value, u32 mask,
 			      u32 range_id, u32 block_id,
-			      struct r600_bo *bo,
+			      struct r600_resource *bo,
 			      enum radeon_bo_usage usage)
 {
 	struct r600_range *range;
@@ -712,7 +712,7 @@ void _r600_pipe_state_add_reg(struct r600_context *ctx,
 
 void r600_pipe_state_add_reg_noblock(struct r600_pipe_state *state,
 				     u32 offset, u32 value, u32 mask,
-				     struct r600_bo *bo,
+				     struct r600_resource *bo,
 				     enum radeon_bo_usage usage)
 {
 	if (bo) assert(usage);

@@ -42,10 +42,7 @@ static void r600_buffer_destroy(struct pipe_screen *screen,
 	struct r600_screen *rscreen = (struct r600_screen*)screen;
 	struct r600_resource *rbuffer = r600_resource(buf);
 
-	if (rbuffer->bo) {
-		r600_bo_reference(&rbuffer->bo, NULL);
-	}
-	rbuffer->bo = NULL;
+	pb_reference(&rbuffer->buf, NULL);
 	util_slab_free(&rscreen->pool_buffers, rbuffer);
 }
 
@@ -82,7 +79,7 @@ static void *r600_buffer_transfer_map(struct pipe_context *pipe,
 	if (rbuffer->b.user_ptr)
 		return (uint8_t*)rbuffer->b.user_ptr + transfer->box.x;
 
-	data = r600_bo_map(rctx->screen->radeon, rbuffer->bo, rctx->ctx.cs, transfer->usage);
+	data = rctx->ws->buffer_map(rbuffer->buf, rctx->ctx.cs, transfer->usage);
 	if (!data)
 		return NULL;
 
@@ -98,8 +95,7 @@ static void r600_buffer_transfer_unmap(struct pipe_context *pipe,
 	if (rbuffer->b.user_ptr)
 		return;
 
-	if (rbuffer->bo)
-		r600_bo_unmap(rctx->screen->radeon, rbuffer->bo);
+	rctx->ws->buffer_unmap(rbuffer->buf);
 }
 
 static void r600_buffer_transfer_flush_region(struct pipe_context *pipe,
@@ -125,19 +121,17 @@ static void r600_buffer_transfer_inline_write(struct pipe_context *pipe,
 						unsigned layer_stride)
 {
 	struct r600_pipe_context *rctx = (struct r600_pipe_context*)pipe;
-	struct radeon *radeon = rctx->screen->radeon;
 	struct r600_resource *rbuffer = r600_resource(resource);
 	uint8_t *map = NULL;
 
 	assert(rbuffer->b.user_ptr == NULL);
 
-	map = r600_bo_map(radeon, rbuffer->bo, rctx->ctx.cs,
-			  PIPE_TRANSFER_WRITE | PIPE_TRANSFER_DISCARD | usage);
+	map = rctx->ws->buffer_map(rbuffer->buf, rctx->ctx.cs,
+				   PIPE_TRANSFER_WRITE | PIPE_TRANSFER_DISCARD | usage);
 
 	memcpy(map + box->x, data, box->width);
 
-	if (rbuffer->bo)
-		r600_bo_unmap(radeon, rbuffer->bo);
+	rctx->ws->buffer_unmap(rbuffer->buf);
 }
 
 static const struct u_resource_vtbl r600_buffer_vtbl =
@@ -152,12 +146,53 @@ static const struct u_resource_vtbl r600_buffer_vtbl =
 	r600_buffer_transfer_inline_write	/* transfer_inline_write */
 };
 
+bool r600_init_resource(struct r600_screen *rscreen,
+			struct r600_resource *res,
+			unsigned size, unsigned alignment,
+			unsigned bind, unsigned usage)
+{
+	uint32_t initial_domain, domains;
+
+	/* Staging resources particpate in transfers and blits only
+	 * and are used for uploads and downloads from regular
+	 * resources.  We generate them internally for some transfers.
+	 */
+	if (usage == PIPE_USAGE_STAGING) {
+		domains = RADEON_DOMAIN_GTT;
+		initial_domain = RADEON_DOMAIN_GTT;
+	} else {
+		domains = RADEON_DOMAIN_GTT | RADEON_DOMAIN_VRAM;
+
+		switch(usage) {
+		case PIPE_USAGE_DYNAMIC:
+		case PIPE_USAGE_STREAM:
+		case PIPE_USAGE_STAGING:
+			initial_domain = RADEON_DOMAIN_GTT;
+			break;
+		case PIPE_USAGE_DEFAULT:
+		case PIPE_USAGE_STATIC:
+		case PIPE_USAGE_IMMUTABLE:
+		default:
+			initial_domain = RADEON_DOMAIN_VRAM;
+			break;
+		}
+	}
+
+	res->buf = rscreen->ws->buffer_create(rscreen->ws, size, alignment, bind, initial_domain);
+	if (!res->buf) {
+		return false;
+	}
+
+	res->cs_buf = rscreen->ws->buffer_get_cs_handle(res->buf);
+	res->domains = domains;
+	return true;
+}
+
 struct pipe_resource *r600_buffer_create(struct pipe_screen *screen,
 					 const struct pipe_resource *templ)
 {
 	struct r600_screen *rscreen = (struct r600_screen*)screen;
 	struct r600_resource *rbuffer;
-	struct r600_bo *bo;
 	/* XXX We probably want a different alignment for buffers and textures. */
 	unsigned alignment = 4096;
 
@@ -168,19 +203,11 @@ struct pipe_resource *r600_buffer_create(struct pipe_screen *screen,
 	rbuffer->b.b.b.screen = screen;
 	rbuffer->b.b.vtbl = &r600_buffer_vtbl;
 	rbuffer->b.user_ptr = NULL;
-	rbuffer->size = rbuffer->b.b.b.width0;
-	rbuffer->bo_size = rbuffer->size;
 
-	bo = r600_bo(rscreen->radeon,
-		     rbuffer->b.b.b.width0,
-		     alignment, rbuffer->b.b.b.bind,
-		     rbuffer->b.b.b.usage);
-
-	if (bo == NULL) {
+	if (!r600_init_resource(rscreen, rbuffer, templ->width0, alignment, templ->bind, templ->usage)) {
 		FREE(rbuffer);
 		return NULL;
 	}
-	rbuffer->bo = bo;
 	return &rbuffer->b.b.b;
 }
 
@@ -206,8 +233,7 @@ struct pipe_resource *r600_user_buffer_create(struct pipe_screen *screen,
 	rbuffer->b.b.b.array_size = 1;
 	rbuffer->b.b.b.flags = 0;
 	rbuffer->b.user_ptr = ptr;
-	rbuffer->bo = NULL;
-	rbuffer->bo_size = 0;
+	rbuffer->buf = NULL;
 	return &rbuffer->b.b.b;
 }
 

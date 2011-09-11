@@ -28,6 +28,7 @@
 
 #include "../../winsys/radeon/drm/radeon_winsys.h"
 #include "util/u_double_list.h"
+#include "util/u_vbuf_mgr.h"
 
 #define R600_ERR(fmt, args...) \
 	fprintf(stderr, "EE %s:%d %s - "fmt, __FILE__, __LINE__, __func__, ##args)
@@ -85,33 +86,16 @@ struct r600_tiling_info {
 enum radeon_family r600_get_family(struct radeon *rw);
 enum chip_class r600_get_family_class(struct radeon *radeon);
 
-/* r600_bo.c */
-struct r600_bo;
-struct radeon_winsys_cs;
+struct r600_resource {
+	struct u_vbuf_resource		b;
 
-struct r600_bo *r600_bo(struct radeon *radeon,
-			unsigned size, unsigned alignment,
-			unsigned binding, unsigned usage);
-struct r600_bo *r600_bo_handle(struct radeon *radeon, struct winsys_handle *whandle,
-				unsigned *stride, unsigned *array_mode);
-void *r600_bo_map(struct radeon *radeon, struct r600_bo *bo, struct radeon_winsys_cs *cs, unsigned usage);
-void r600_bo_unmap(struct radeon *radeon, struct r600_bo *bo);
-boolean r600_bo_get_winsys_handle(struct radeon *radeon, struct r600_bo *pb_bo,
-				  unsigned stride, struct winsys_handle *whandle);
+	/* Winsys objects. */
+	struct pb_buffer		*buf;
+	struct radeon_winsys_cs_handle	*cs_buf;
 
-void r600_bo_destroy(struct r600_bo *bo);
-
-/* this relies on the pipe_reference being the first member of r600_bo */
-static INLINE void r600_bo_reference(struct r600_bo **dst, struct r600_bo *src)
-{
-	struct r600_bo *old = *dst;
-
-	if (pipe_reference((struct pipe_reference *)(*dst), (struct pipe_reference *)src)) {
-		r600_bo_destroy(old);
-	}
-	*dst = src;
-}
-
+	/* Resource state. */
+	unsigned			domains;
+};
 
 /* R600/R700 STATES */
 #define R600_GROUP_MAX			16
@@ -133,7 +117,7 @@ struct r600_pipe_reg {
 	u32				value;
 	u32				mask;
 	struct r600_block 		*block;
-	struct r600_bo			*bo;
+	struct r600_resource		*bo;
 	enum radeon_bo_usage		bo_usage;
 	u32				id;
 };
@@ -147,7 +131,7 @@ struct r600_pipe_state {
 struct r600_pipe_resource_state {
 	unsigned			id;
 	u32                             val[8];
-	struct r600_bo			*bo[2];
+	struct r600_resource		*bo[2];
 	enum radeon_bo_usage		bo_usage[2];
 };
 
@@ -158,7 +142,7 @@ struct r600_pipe_resource_state {
 #define R600_BLOCK_STATUS_RESOURCE_VERTEX	(1 << 3)
 
 struct r600_block_reloc {
-	struct r600_bo		*bo;
+	struct r600_resource	*bo;
 	enum radeon_bo_usage	bo_usage;
 	unsigned		flush_flags;
 	unsigned		flush_mask;
@@ -206,7 +190,7 @@ struct r600_query {
 	/* The buffer where query results are stored. It's used as a ring,
 	 * data blocks for current query are stored sequentially from
 	 * results_start to results_end, with wrapping on the buffer end */
-	struct r600_bo			*buffer;
+	struct r600_resource			*buffer;
 	unsigned				buffer_size;
 	/* linked list of queries */
 	struct list_head			list;
@@ -223,6 +207,7 @@ struct r600_query {
 
 struct r600_context {
 	struct radeon		*radeon;
+	struct r600_screen	*screen;
 	struct radeon_winsys_cs	*cs;
 
 	struct r600_range	*range;
@@ -237,7 +222,7 @@ struct r600_context {
 	unsigned		init_dwords;
 
 	unsigned		creloc;
-	struct r600_bo		**bo;
+	struct r600_resource	**bo;
 
 	u32			*pm4;
 	unsigned		pm4_cdwords;
@@ -262,11 +247,11 @@ struct r600_draw {
 	u32			vgt_index_type;
 	u32			vgt_draw_initiator;
 	u32			indices_bo_offset;
-	struct r600_bo		*indices;
+	struct r600_resource	*indices;
 };
 
 void r600_get_backend_mask(struct r600_context *ctx);
-int r600_context_init(struct r600_context *ctx, struct radeon *radeon);
+int r600_context_init(struct r600_context *ctx, struct r600_screen *screen, struct radeon *radeon);
 void r600_context_fini(struct r600_context *ctx);
 void r600_context_pipe_state_set(struct r600_context *ctx, struct r600_pipe_state *state);
 void r600_context_pipe_state_set_ps_resource(struct r600_context *ctx, struct r600_pipe_resource_state *state, unsigned rid);
@@ -288,12 +273,12 @@ void r600_context_queries_suspend(struct r600_context *ctx);
 void r600_context_queries_resume(struct r600_context *ctx, boolean flushed);
 void r600_query_predication(struct r600_context *ctx, struct r600_query *query, int operation,
 			    int flag_wait);
-void r600_context_emit_fence(struct r600_context *ctx, struct r600_bo *fence,
+void r600_context_emit_fence(struct r600_context *ctx, struct r600_resource *fence,
                              unsigned offset, unsigned value);
 void r600_context_flush_all(struct r600_context *ctx, unsigned flush_flags);
 void r600_context_flush_dest_caches(struct r600_context *ctx);
 
-int evergreen_context_init(struct r600_context *ctx, struct radeon *radeon);
+int evergreen_context_init(struct r600_context *ctx, struct r600_screen *screen, struct radeon *radeon);
 void evergreen_context_draw(struct r600_context *ctx, const struct r600_draw *draw);
 void evergreen_context_flush_dest_caches(struct r600_context *ctx);
 void evergreen_context_pipe_state_set_ps_resource(struct r600_context *ctx, struct r600_pipe_resource_state *state, unsigned rid);
@@ -309,12 +294,12 @@ void _r600_pipe_state_add_reg(struct r600_context *ctx,
 			      struct r600_pipe_state *state,
 			      u32 offset, u32 value, u32 mask,
 			      u32 range_id, u32 block_id,
-			      struct r600_bo *bo,
+			      struct r600_resource *bo,
 			      enum radeon_bo_usage usage);
 
 void r600_pipe_state_add_reg_noblock(struct r600_pipe_state *state,
 				     u32 offset, u32 value, u32 mask,
-				     struct r600_bo *bo,
+				     struct r600_resource *bo,
 				     enum radeon_bo_usage usage);
 
 #define r600_pipe_state_add_reg(state, offset, value, mask, bo, usage) _r600_pipe_state_add_reg(&rctx->ctx, state, offset, value, mask, CTX_RANGE_ID(offset), CTX_BLOCK_ID(offset), bo, usage)
@@ -327,7 +312,7 @@ static inline void r600_pipe_state_mod_reg(struct r600_pipe_state *state,
 }
 
 static inline void r600_pipe_state_mod_reg_bo(struct r600_pipe_state *state,
-					      u32 value, struct r600_bo *bo,
+					      u32 value, struct r600_resource *bo,
 					      enum radeon_bo_usage usage)
 {
 	state->regs[state->nregs].value = value;

@@ -39,17 +39,6 @@ struct r600_transfer {
 	struct pipe_resource		*staging_texture;
 };
 
-/* This gets further specialized into either buffer or texture
- * structures. Use the vtbl struct to choose between the two
- * underlying implementations.
- */
-struct r600_resource {
-	struct u_vbuf_resource		b;
-	struct r600_bo			*bo;
-	u32				size;
-	unsigned			bo_size;
-};
-
 struct r600_resource_texture {
 	struct r600_resource		resource;
 

@@ -59,22 +59,12 @@ struct r600_reg {
 
 #define BO_BOUND_TEXTURE 1
 
-struct r600_bo {
-	struct pipe_reference		reference; /* this must be the first member for the r600_bo_reference inline to work */
-	/* DO NOT MOVE THIS ^ */
-	struct pb_buffer		*buf;
-	struct radeon_winsys_cs_handle	*cs_buf;
-	unsigned			domains;
-	unsigned			last_flush;
-	unsigned                        binding;
-};
-
 /*
  * r600_hw_context.c
  */
 void r600_context_bo_flush(struct r600_context *ctx, unsigned flush_flags,
-				unsigned flush_mask, struct r600_bo *rbo);
-struct r600_bo *r600_context_reg_bo(struct r600_context *ctx, unsigned offset);
+				unsigned flush_mask, struct r600_resource *rbo);
+struct r600_resource *r600_context_reg_bo(struct r600_context *ctx, unsigned offset);
 int r600_context_add_block(struct r600_context *ctx, const struct r600_reg *reg, unsigned nreg,
 			   unsigned opcode, unsigned offset_base);
 void r600_context_pipe_state_set_resource(struct r600_context *ctx, struct r600_pipe_resource_state *state, struct r600_block *block);
@@ -89,7 +79,7 @@ void r600_context_reg(struct r600_context *ctx,
 void r600_init_cs(struct r600_context *ctx);
 int r600_resource_init(struct r600_context *ctx, struct r600_range *range, unsigned offset, unsigned nblocks, unsigned stride, struct r600_reg *reg, int nreg, unsigned offset_base);
 
-static INLINE unsigned r600_context_bo_reloc(struct r600_context *ctx, struct r600_bo *rbo,
+static INLINE unsigned r600_context_bo_reloc(struct r600_context *ctx, struct r600_resource *rbo,
 					     enum radeon_bo_usage usage)
 {
 	enum radeon_bo_domain rd = usage & RADEON_USAGE_READ ? rbo->domains : 0;
@@ -104,7 +94,7 @@ static INLINE unsigned r600_context_bo_reloc(struct r600_context *ctx, struct r6
 	if (reloc_index >= ctx->creloc)
 		ctx->creloc = reloc_index+1;
 
-	r600_bo_reference(&ctx->bo[reloc_index], rbo);
+	pipe_resource_reference((struct pipe_resource**)&ctx->bo[reloc_index], &rbo->b.b.b);
 	return reloc_index * 4;
 }
 

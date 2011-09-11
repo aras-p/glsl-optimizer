@@ -114,8 +114,8 @@ struct r600_vertex_element
 {
 	unsigned			count;
 	struct pipe_vertex_element	elements[PIPE_MAX_ATTRIBS];
-	struct u_vbuf_elements	*vmgr_elements;
-	struct r600_bo			*fetch_shader;
+	struct u_vbuf_elements		*vmgr_elements;
+	struct r600_resource		*fetch_shader;
 	unsigned			fs_size;
 	struct r600_pipe_state		rstate;
 	/* if offset is to big for fetch instructio we need to alterate
@@ -128,8 +128,8 @@ struct r600_vertex_element
 struct r600_pipe_shader {
 	struct r600_shader		shader;
 	struct r600_pipe_state		rstate;
-	struct r600_bo			*bo;
-	struct r600_bo			*bo_fetch;
+	struct r600_resource		*bo;
+	struct r600_resource		*bo_fetch;
 	struct r600_vertex_element	vertex_elements;
 	struct tgsi_token		*tokens;
 };
@@ -166,7 +166,7 @@ struct r600_fence_block {
 };
 
 struct r600_pipe_fences {
-	struct r600_bo			*bo;
+	struct r600_resource		*bo;
 	unsigned			*data;
 	unsigned			next_index;
 	/* linked list of preallocated blocks */
@@ -185,6 +185,7 @@ struct r600_pipe_context {
 	enum chip_class			chip_class;
 	void				*custom_dsa_flush;
 	struct r600_screen		*screen;
+	struct radeon_winsys		*ws;
 	struct radeon			*radeon;
 	struct r600_pipe_state		*states[R600_PIPE_NSTATES];
 	struct r600_context		ctx;
@@ -269,6 +270,10 @@ void r600_blit_push_depth(struct pipe_context *ctx, struct r600_resource_texture
 void r600_flush_depth_textures(struct r600_pipe_context *rctx);
 
 /* r600_buffer.c */
+bool r600_init_resource(struct r600_screen *rscreen,
+			struct r600_resource *res,
+			unsigned size, unsigned alignment,
+			unsigned bind, unsigned usage);
 struct pipe_resource *r600_buffer_create(struct pipe_screen *screen,
 					 const struct pipe_resource *templ);
 struct pipe_resource *r600_user_buffer_create(struct pipe_screen *screen,
