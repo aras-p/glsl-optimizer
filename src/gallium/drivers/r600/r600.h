@@ -302,6 +302,7 @@ void evergreen_context_pipe_state_set_fs_resource(struct r600_context *ctx, stru
 void evergreen_context_pipe_state_set_ps_sampler(struct r600_context *ctx, struct r600_pipe_state *state, unsigned id);
 void evergreen_context_pipe_state_set_vs_sampler(struct r600_context *ctx, struct r600_pipe_state *state, unsigned id);
 
+struct radeon *radeon_create(struct radeon_winsys *ws);
 struct radeon *radeon_destroy(struct radeon *radeon);
 
 void _r600_pipe_state_add_reg(struct r600_context *ctx,

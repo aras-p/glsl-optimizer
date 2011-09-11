@@ -27,7 +27,6 @@
  */
 
 #include "r600_priv.h"
-#include "r600_drm_public.h"
 #include "util/u_memory.h"
 #include <errno.h>
 

@@ -47,7 +47,6 @@
 #include "r600_resource.h"
 #include "r600_shader.h"
 #include "r600_pipe.h"
-#include "../../winsys/r600/drm/r600_drm_public.h"
 
 /*
  * pipe_context
