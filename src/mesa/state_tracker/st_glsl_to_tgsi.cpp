@@ -2914,122 +2914,6 @@ check_resources(const struct gl_context *ctx,
 }
 
 
-
-struct uniform_sort {
-   struct gl_uniform *u;
-   int pos;
-};
-
-/* The shader_program->Uniforms list is almost sorted in increasing
- * uniform->{Frag,Vert}Pos locations, but not quite when there are
- * uniforms shared between targets.  We need to add parameters in
- * increasing order for the targets.
- */
-static int
-sort_uniforms(const void *a, const void *b)
-{
-   struct uniform_sort *u1 = (struct uniform_sort *)a;
-   struct uniform_sort *u2 = (struct uniform_sort *)b;
-
-   return u1->pos - u2->pos;
-}
-
-/* Add the uniforms to the parameters.  The linker chose locations
- * in our parameters lists (which weren't created yet), which the
- * uniforms code will use to poke values into our parameters list
- * when uniforms are updated.
- */
-static void
-add_uniforms_to_parameters_list(struct gl_shader_program *shader_program,
-        			struct gl_shader *shader,
-        			struct gl_program *prog)
-{
-   unsigned int i;
-   unsigned int next_sampler = 0, num_uniforms = 0;
-   struct uniform_sort *sorted_uniforms;
-
-   sorted_uniforms = ralloc_array(NULL, struct uniform_sort,
-        			  shader_program->Uniforms->NumUniforms);
-
-   for (i = 0; i < shader_program->Uniforms->NumUniforms; i++) {
-      struct gl_uniform *uniform = shader_program->Uniforms->Uniforms + i;
-      int parameter_index = -1;
-
-      switch (shader->Type) {
-      case GL_VERTEX_SHADER:
-         parameter_index = uniform->VertPos;
-         break;
-      case GL_FRAGMENT_SHADER:
-         parameter_index = uniform->FragPos;
-         break;
-      case GL_GEOMETRY_SHADER:
-         parameter_index = uniform->GeomPos;
-         break;
-      }
-
-      /* Only add uniforms used in our target. */
-      if (parameter_index != -1) {
-         sorted_uniforms[num_uniforms].pos = parameter_index;
-         sorted_uniforms[num_uniforms].u = uniform;
-         num_uniforms++;
-      }
-   }
-
-   qsort(sorted_uniforms, num_uniforms, sizeof(struct uniform_sort),
-         sort_uniforms);
-
-   for (i = 0; i < num_uniforms; i++) {
-      struct gl_uniform *uniform = sorted_uniforms[i].u;
-      int parameter_index = sorted_uniforms[i].pos;
-      const glsl_type *type = uniform->Type;
-      unsigned int size;
-
-      if (type->is_vector() ||
-          type->is_scalar()) {
-         size = type->vector_elements;
-      } else {
-         size = type_size(type) * 4;
-      }
-
-      gl_register_file file;
-      if (type->is_sampler() ||
-          (type->is_array() && type->fields.array->is_sampler())) {
-         file = PROGRAM_SAMPLER;
-      } else {
-         file = PROGRAM_UNIFORM;
-      }
-
-      GLint index = _mesa_lookup_parameter_index(prog->Parameters, -1,
-        					 uniform->Name);
-
-      if (index < 0) {
-         index = _mesa_add_parameter(prog->Parameters, file,
-        			     uniform->Name, size, type->gl_type,
-        			     NULL, NULL, 0x0);
-
-         /* Sampler uniform values are stored in prog->SamplerUnits,
-          * and the entry in that array is selected by this index we
-          * store in ParameterValues[].
-          */
-         if (file == PROGRAM_SAMPLER) {
-            for (unsigned int j = 0; j < size / 4; j++)
-               prog->Parameters->ParameterValues[index + j][0].f = next_sampler++;
-         }
-
-         /* The location chosen in the Parameters list here (returned
-          * from _mesa_add_uniform) has to match what the linker chose.
-          */
-         if (index != parameter_index) {
-            fail_link(shader_program, "Allocation of uniform `%s' to target "
-        	      "failed (%d vs %d)\n",
-        	      uniform->Name, index, parameter_index);
-         }
-      }
-   }
-
-   ralloc_free(sorted_uniforms);
-}
-
 static void
 set_uniform_initializer(struct gl_context *ctx, void *mem_ctx,
         		struct gl_shader_program *shader_program,
@@ -4965,7 +4849,8 @@ get_mesa_program(struct gl_context *ctx,
    v->glsl_version = ctx->Const.GLSLVersion;
    v->native_integers = ctx->Const.NativeIntegers;
 
-   add_uniforms_to_parameters_list(shader_program, shader, prog);
+   _mesa_generate_parameters_list_for_uniforms(shader_program, shader,
+					       prog->Parameters);
 
    /* Emit intermediate IR for main(). */
    visit_exec_list(shader->ir, v);
