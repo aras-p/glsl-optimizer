@@ -41,11 +41,6 @@ enum chip_class r600_get_family_class(struct radeon *radeon)
 	return radeon->chip_class;
 }
 
-struct r600_tiling_info *r600_get_tiling_info(struct radeon *radeon)
-{
-	return &radeon->tiling_info;
-}
-
 unsigned r600_get_clock_crystal_freq(struct radeon *radeon)
 {
 	return radeon->info.r600_clock_crystal_freq;
@@ -69,110 +64,6 @@ unsigned r600_get_backend_map(struct radeon *radeon)
 unsigned r600_get_minor_version(struct radeon *radeon)
 {
 	return radeon->info.drm_minor;
-}
-
-static int r600_interpret_tiling(struct radeon *radeon, uint32_t tiling_config)
-{
-	switch ((tiling_config & 0xe) >> 1) {
-	case 0:
-		radeon->tiling_info.num_channels = 1;
-		break;
-	case 1:
-		radeon->tiling_info.num_channels = 2;
-		break;
-	case 2:
-		radeon->tiling_info.num_channels = 4;
-		break;
-	case 3:
-		radeon->tiling_info.num_channels = 8;
-		break;
-	default:
-		return -EINVAL;
-	}
-
-	switch ((tiling_config & 0x30) >> 4) {
-	case 0:
-		radeon->tiling_info.num_banks = 4;
-		break;
-	case 1:
-		radeon->tiling_info.num_banks = 8;
-		break;
-	default:
-		return -EINVAL;
-
-	}
-	switch ((tiling_config & 0xc0) >> 6) {
-	case 0:
-		radeon->tiling_info.group_bytes = 256;
-		break;
-	case 1:
-		radeon->tiling_info.group_bytes = 512;
-		break;
-	default:
-		return -EINVAL;
-	}
-	return 0;
-}
-
-static int eg_interpret_tiling(struct radeon *radeon, uint32_t tiling_config)
-{
-	switch (tiling_config & 0xf) {
-	case 0:
-		radeon->tiling_info.num_channels = 1;
-		break;
-	case 1:
-		radeon->tiling_info.num_channels = 2;
-		break;
-	case 2:
-		radeon->tiling_info.num_channels = 4;
-		break;
-	case 3:
-		radeon->tiling_info.num_channels = 8;
-		break;
-	default:
-		return -EINVAL;
-	}
-
-	switch ((tiling_config & 0xf0) >> 4) {
-	case 0:
-		radeon->tiling_info.num_banks = 4;
-		break;
-	case 1:
-		radeon->tiling_info.num_banks = 8;
-		break;
-	case 2:
-		radeon->tiling_info.num_banks = 16;
-		break;
-	default:
-		return -EINVAL;
-
-	}
-
-	switch ((tiling_config & 0xf00) >> 8) {
-	case 0:
-		radeon->tiling_info.group_bytes = 256;
-		break;
-	case 1:
-		radeon->tiling_info.group_bytes = 512;
-		break;
-	default:
-		return -EINVAL;
-	}
-	return 0;
-}
-
-static int radeon_drm_get_tiling(struct radeon *radeon)
-{
-	uint32_t tiling_config = radeon->info.r600_tiling_config;
-
-	if (!tiling_config)
-		return 0;
-
-	if (radeon->chip_class == R600 || radeon->chip_class == R700) {
-		return r600_interpret_tiling(radeon, tiling_config);
-	} else {
-		return eg_interpret_tiling(radeon, tiling_config);
-	}
 }
 
 static unsigned radeon_family_from_device(unsigned device)
@@ -212,16 +103,12 @@ struct radeon *radeon_create(struct radeon_winsys *ws)
 	case CHIP_RS780:
 	case CHIP_RS880:
 		radeon->chip_class = R600;
-		/* set default group bytes, overridden by tiling info ioctl */
-		radeon->tiling_info.group_bytes = 256;
 		break;
 	case CHIP_RV770:
 	case CHIP_RV730:
 	case CHIP_RV710:
 	case CHIP_RV740:
 		radeon->chip_class = R700;
-		/* set default group bytes, overridden by tiling info ioctl */
-		radeon->tiling_info.group_bytes = 256;
 		break;
 	case CHIP_CEDAR:
 	case CHIP_REDWOOD:
@@ -235,22 +122,15 @@ struct radeon *radeon_create(struct radeon_winsys *ws)
 	case CHIP_TURKS:
 	case CHIP_CAICOS:
 		radeon->chip_class = EVERGREEN;
-		/* set default group bytes, overridden by tiling info ioctl */
-		radeon->tiling_info.group_bytes = 512;
 		break;
 	case CHIP_CAYMAN:
 		radeon->chip_class = CAYMAN;
-		/* set default group bytes, overridden by tiling info ioctl */
-		radeon->tiling_info.group_bytes = 512;
 		break;
 	default:
 		fprintf(stderr, "%s unknown or unsupported chipset 0x%04X\n",
 			__func__, radeon->info.pci_id);
 		break;
 	}
-
-	if (radeon_drm_get_tiling(radeon))
-		return NULL;
 
 	return radeon;
 }

@@ -39,7 +39,6 @@ struct radeon {
 	struct radeon_info		info;
 	unsigned			family;
 	enum chip_class			chip_class;
-	struct r600_tiling_info		tiling_info;
 };
 
 /* these flags are used in register flags and added into block flags */

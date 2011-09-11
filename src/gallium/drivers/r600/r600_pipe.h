@@ -76,7 +76,8 @@ struct r600_screen {
 	struct pipe_screen		screen;
 	struct radeon_winsys		*ws;
 	struct radeon			*radeon;
-	struct r600_tiling_info		*tiling_info;
+	struct radeon_info		info;
+	struct r600_tiling_info		tiling_info;
 	struct util_slab_mempool	pool_buffers;
 	unsigned			num_contexts;
 

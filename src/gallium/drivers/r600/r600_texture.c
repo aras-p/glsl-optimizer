@@ -93,19 +93,19 @@ static unsigned r600_get_block_alignment(struct pipe_screen *screen,
 	switch(array_mode) {
 	case V_038000_ARRAY_1D_TILED_THIN1:
 		p_align = MAX2(8,
-			       ((rscreen->tiling_info->group_bytes / 8 / pixsize)));
+			       ((rscreen->tiling_info.group_bytes / 8 / pixsize)));
 		break;
 	case V_038000_ARRAY_2D_TILED_THIN1:
-		p_align = MAX2(rscreen->tiling_info->num_banks,
-			       (((rscreen->tiling_info->group_bytes / 8 / pixsize)) *
-				rscreen->tiling_info->num_banks)) * 8;
+		p_align = MAX2(rscreen->tiling_info.num_banks,
+			       (((rscreen->tiling_info.group_bytes / 8 / pixsize)) *
+				rscreen->tiling_info.num_banks)) * 8;
 		break;
 	case V_038000_ARRAY_LINEAR_ALIGNED:
-		p_align = MAX2(64, rscreen->tiling_info->group_bytes / pixsize);
+		p_align = MAX2(64, rscreen->tiling_info.group_bytes / pixsize);
 		break;
 	case V_038000_ARRAY_LINEAR_GENERAL:
 	default:
-		p_align = rscreen->tiling_info->group_bytes / pixsize;
+		p_align = rscreen->tiling_info.group_bytes / pixsize;
 		break;
 	}
 	return p_align;
@@ -119,7 +119,7 @@ static unsigned r600_get_height_alignment(struct pipe_screen *screen,
 
 	switch (array_mode) {
 	case V_038000_ARRAY_2D_TILED_THIN1:
-		h_align = rscreen->tiling_info->num_channels * 8;
+		h_align = rscreen->tiling_info.num_channels * 8;
 		break;
 	case V_038000_ARRAY_1D_TILED_THIN1:
 	case V_038000_ARRAY_LINEAR_ALIGNED:
@@ -145,14 +145,14 @@ static unsigned r600_get_base_alignment(struct pipe_screen *screen,
 
 	switch (array_mode) {
 	case V_038000_ARRAY_2D_TILED_THIN1:
-		b_align = MAX2(rscreen->tiling_info->num_banks * rscreen->tiling_info->num_channels * 8 * 8 * pixsize,
+		b_align = MAX2(rscreen->tiling_info.num_banks * rscreen->tiling_info.num_channels * 8 * 8 * pixsize,
 			       p_align * pixsize * h_align);
 		break;
 	case V_038000_ARRAY_1D_TILED_THIN1:
 	case V_038000_ARRAY_LINEAR_ALIGNED:
 	case V_038000_ARRAY_LINEAR_GENERAL:
 	default:
-		b_align = rscreen->tiling_info->group_bytes;
+		b_align = rscreen->tiling_info.group_bytes;
 		break;
 	}
 	return b_align;
