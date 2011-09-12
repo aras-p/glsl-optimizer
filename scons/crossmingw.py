@@ -221,9 +221,11 @@ def generate(env):
     env['LIBPREFIXES']    = [ 'lib', '' ]
     env['LIBSUFFIXES']    = [ '.a', '.lib' ]
 
-    # MinGW port of gdb does not handle well dwarf debug info which is the
-    # default in recent gcc versions
-    env.AppendUnique(CCFLAGS = ['-gstabs'])
+    # MinGW x86 port of gdb does not handle well dwarf debug info which is the
+    # default in recent gcc versions.  The x64 port gdb from mingw-w64 seems to
+    # handle it fine though, so stick with the default there.
+    if env['machine'] != 'x86_64':
+        env.AppendUnique(CCFLAGS = ['-gstabs'])
 
     env.AddMethod(compile_without_gstabs, 'compile_without_gstabs')
 
