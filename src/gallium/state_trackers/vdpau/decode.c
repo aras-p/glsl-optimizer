@@ -167,11 +167,11 @@ vlVdpDecoderGetParameters(VdpDecoder decoder,
    vldecoder = (vlVdpDecoder *)vlGetDataHTAB(decoder);
    if (!vldecoder)
       return VDP_STATUS_INVALID_HANDLE;
-      
+
    *profile = PipeToProfile(vldecoder->decoder->profile);
    *width = vldecoder->decoder->width;
    *height = vldecoder->decoder->height;
-   
+
    return VDP_STATUS_OK;
 }
 
@@ -273,7 +273,7 @@ vlVdpDecoderRender(VdpDecoder decoder,
       return VDP_STATUS_INVALID_CHROMA_TYPE;
 
    // TODO: Right now only mpeg 1 & 2 is supported.
-   switch (vldecoder->decoder->profile)   {
+   switch (vldecoder->decoder->profile) {
    case PIPE_VIDEO_PROFILE_MPEG1:
    case PIPE_VIDEO_PROFILE_MPEG2_SIMPLE:
    case PIPE_VIDEO_PROFILE_MPEG2_MAIN:

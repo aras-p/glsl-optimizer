@@ -318,7 +318,7 @@ vlVdpOutputSurfacePutBitsYCbCr(VdpOutputSurface surface,
 static unsigned
 BlendFactorToPipe(VdpOutputSurfaceRenderBlendFactor factor)
 {
-   switch(factor) {
+   switch (factor) {
    case VDP_OUTPUT_SURFACE_RENDER_BLEND_FACTOR_ZERO:
       return PIPE_BLENDFACTOR_ZERO;
    case VDP_OUTPUT_SURFACE_RENDER_BLEND_FACTOR_ONE:
@@ -358,7 +358,7 @@ BlendFactorToPipe(VdpOutputSurfaceRenderBlendFactor factor)
 static unsigned
 BlendEquationToPipe(VdpOutputSurfaceRenderBlendEquation equation)
 {
-   switch(equation) {
+   switch (equation) {
    case VDP_OUTPUT_SURFACE_RENDER_BLEND_EQUATION_SUBTRACT:
       return PIPE_BLEND_SUBTRACT;
    case VDP_OUTPUT_SURFACE_RENDER_BLEND_EQUATION_REVERSE_SUBTRACT:

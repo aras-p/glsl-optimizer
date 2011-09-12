@@ -25,15 +25,16 @@
  *
  **************************************************************************/
 
- #include <vdpau/vdpau.h>
+#include <vdpau/vdpau.h>
 
- void vlVdpPreemptionCallback(VdpDevice device, void *context)
- {
+void vlVdpPreemptionCallback(VdpDevice device, void *context)
+{
    /* TODO: Implement preemption */
- }
+}
 
- VdpStatus vlVdpPreemptionCallbackRegister(VdpDevice device, VdpPreemptionCallback callback,
-                                           void *context)
- {
+VdpStatus vlVdpPreemptionCallbackRegister(VdpDevice device,
+                                          VdpPreemptionCallback callback,
+                                          void *context)
+{
    return VDP_STATUS_OK;
- }
+}

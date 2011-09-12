@@ -77,6 +77,7 @@ vlVdpPresentationQueueCreate(VdpDevice device,
    }
 
    return VDP_STATUS_OK;
+
 no_handle:
 no_compositor:
    FREE(pq);
@@ -179,11 +180,11 @@ vlVdpPresentationQueueDisplay(VdpPresentationQueue presentation_queue,
       vl_contextprivate_get(pq->device->context, drawable_surface)
    );
 
-   if(dump_window == -1) {
+   if (dump_window == -1) {
       dump_window = debug_get_num_option("VDPAU_DUMP", 0);
    }
 
-   if(dump_window) {
+   if (dump_window) {
       static unsigned int framenum = 0;
       char cmd[256];
 
@@ -191,7 +192,7 @@ vlVdpPresentationQueueDisplay(VdpPresentationQueue presentation_queue,
       if (system(cmd) != 0)
          VDPAU_MSG(VDPAU_TRACE, "[VDPAU] Dumping surface %d failed.\n", surface);
    }
-   
+
    pipe_surface_reference(&drawable_surface, NULL);
 
    return VDP_STATUS_OK;

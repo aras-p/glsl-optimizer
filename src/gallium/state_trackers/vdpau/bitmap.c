@@ -65,10 +65,10 @@ VdpStatus
 vlVdpBitmapSurfacePutBitsNative(VdpBitmapSurface surface,
                                 void const *const *source_data,
                                 uint32_t const *source_pitches,
-                                VdpRect const *destination_rect )
+                                VdpRect const *destination_rect)
 {
    if (!(source_data && source_pitches && destination_rect))
-       return VDP_STATUS_INVALID_POINTER;
+      return VDP_STATUS_INVALID_POINTER;
 
    return VDP_STATUS_NO_IMPLEMENTATION;
 }

@@ -115,7 +115,7 @@ boolean vlGetFuncFTAB(VdpFuncId function_id, void **func)
    else {
       function_id -= VDP_FUNC_ID_BASE_WINSYS;
       if (function_id > 0)
-        return FALSE;
+         return FALSE;
       *func = ftab_winsys[function_id];
    }
    return *func != NULL;

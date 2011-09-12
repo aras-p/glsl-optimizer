@@ -70,7 +70,7 @@ vlVdpVideoMixerCreate(VdpDevice device,
 
    /*
     * TODO: Handle features and parameters
-    * */
+    */
 
    *mixer = vlAddDataHTAB(vmixer);
    if (*mixer == 0) {
@@ -79,6 +79,7 @@ vlVdpVideoMixerCreate(VdpDevice device,
    }
 
    return VDP_STATUS_OK;
+
 no_handle:
    return ret;
 }
@@ -118,7 +119,7 @@ vlVdpVideoMixerSetFeatureEnables(VdpVideoMixer mixer,
 
    /*
     * TODO: Set features
-    * */
+    */
 
    return VDP_STATUS_OK;
 }
@@ -180,8 +181,7 @@ vlVdpVideoMixerSetAttributeValues(VdpVideoMixer mixer,
 
    /*
     * TODO: Implement the function
-    *
-    * */
+    */
 
    return VDP_STATUS_OK;
 }

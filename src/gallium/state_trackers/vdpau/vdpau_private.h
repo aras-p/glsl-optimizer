@@ -81,7 +81,6 @@ PipeToChroma(enum pipe_video_chroma_format pipe_type)
    return -1;
 }
 
-
 static inline enum pipe_format
 FormatYCBCRToPipe(VdpYCbCrFormat vdpau_format)
 {
@@ -198,9 +197,9 @@ FormatColorTableToPipe(VdpColorTableFormat vdpau_format)
       default:
          assert(0);
    }
+
    return PIPE_FORMAT_NONE;
 }
-
 
 static inline enum pipe_video_profile
 ProfileToPipe(VdpDecoderProfile vdpau_profile)
@@ -214,10 +213,10 @@ ProfileToPipe(VdpDecoderProfile vdpau_profile)
          return PIPE_VIDEO_PROFILE_MPEG2_MAIN;
       case VDP_DECODER_PROFILE_H264_BASELINE:
          return PIPE_VIDEO_PROFILE_MPEG4_AVC_BASELINE;
-      case VDP_DECODER_PROFILE_H264_MAIN: /* Not defined in p_format.h */
+      case VDP_DECODER_PROFILE_H264_MAIN:
          return PIPE_VIDEO_PROFILE_MPEG4_AVC_MAIN;
       case VDP_DECODER_PROFILE_H264_HIGH:
-	     return PIPE_VIDEO_PROFILE_MPEG4_AVC_HIGH;
+         return PIPE_VIDEO_PROFILE_MPEG4_AVC_HIGH;
       default:
          return PIPE_VIDEO_PROFILE_UNKNOWN;
    }
@@ -235,10 +234,10 @@ PipeToProfile(enum pipe_video_profile p_profile)
          return VDP_DECODER_PROFILE_MPEG2_MAIN;
       case PIPE_VIDEO_PROFILE_MPEG4_AVC_BASELINE:
          return VDP_DECODER_PROFILE_H264_BASELINE;
-      case PIPE_VIDEO_PROFILE_MPEG4_AVC_MAIN: /* Not defined in p_format.h */
+      case PIPE_VIDEO_PROFILE_MPEG4_AVC_MAIN:
          return VDP_DECODER_PROFILE_H264_MAIN;
       case PIPE_VIDEO_PROFILE_MPEG4_AVC_HIGH:
-	     return VDP_DECODER_PROFILE_H264_HIGH;
+         return VDP_DECODER_PROFILE_H264_HIGH;
       default:
          assert(0);
          return -1;
@@ -404,4 +403,4 @@ static inline void VDPAU_MSG(unsigned int level, const char *fmt, ...)
    }
 }
 
-#endif // VDPAU_PRIVATE_H
+#endif /* VDPAU_PRIVATE_H */
