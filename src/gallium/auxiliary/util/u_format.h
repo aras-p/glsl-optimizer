@@ -119,9 +119,9 @@ enum util_format_colorspace {
 
 struct util_format_channel_description
 {
-   unsigned type:6;
+   unsigned type:6;        /**< UTIL_FORMAT_TYPE_x */
    unsigned normalized:1;
-   unsigned size:9;
+   unsigned size:9;        /**< bits per channel */
 };
 
 
