@@ -127,31 +127,6 @@ _mesa_cpal_compressed_size(int level, GLenum internalFormat,
    return expect_size;
 }
 
-static const struct cpal_format_info *
-cpal_get_info(GLint level, GLenum internalFormat,
-              GLsizei width, GLsizei height, GLsizei imageSize)
-{
-   const struct cpal_format_info *info;
-
-   info = &formats[internalFormat - GL_PALETTE4_RGB8_OES];
-   ASSERT(info->cpal_format == internalFormat);
-
-   if (level > 0) {
-      _mesa_error(_mesa_get_current_context(), GL_INVALID_VALUE,
-            "glCompressedTexImage2D(level=%d)", level);
-      return NULL;
-   }
-
-   expect_size = _mesa_cpal_compressed_size(level, internalFormat,
-					    width, height);
-   if (expect_size > imageSize) {
-      _mesa_error(_mesa_get_current_context(), GL_INVALID_VALUE,
-            "glCompressedTexImage2D(imageSize=%d)", imageSize);
-      return NULL;
-   }
-   return info;
-}
-
 void
 _mesa_cpal_compressed_format_type(GLenum internalFormat, GLenum *format,
 				  GLenum *type)
@@ -184,12 +159,13 @@ _mesa_cpal_compressed_teximage2d(GLenum target, GLint level,
    GLint saved_align, align;
    GET_CURRENT_CONTEXT(ctx);
 
-   info = cpal_get_info(level, internalFormat, width, height, imageSize);
-   if (!info)
-      return;
+   /* By this point, the internalFormat should have been validated.
+    */
+   assert(internalFormat >= GL_PALETTE4_RGB8_OES
+	  && internalFormat <= GL_PALETTE8_RGB5_A1_OES);
 
    info = &formats[internalFormat - GL_PALETTE4_RGB8_OES];
-   ASSERT(info->cpal_format == internalFormat);
+
    num_levels = -level + 1;
 
    /* first image follows the palette */
