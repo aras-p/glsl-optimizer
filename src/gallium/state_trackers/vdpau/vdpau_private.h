@@ -292,11 +292,15 @@ typedef struct
    struct pipe_video_buffer *video_buffer;
 } vlVdpSurface;
 
+typedef uint64_t vlVdpTime;
+
 typedef struct
 {
+   vlVdpTime timestamp;
    vlVdpDevice *device;
    struct pipe_surface *surface;
    struct pipe_sampler_view *sampler_view;
+   struct pipe_fence_handle *fence;
 } vlVdpOutputSurface;
 
 typedef struct

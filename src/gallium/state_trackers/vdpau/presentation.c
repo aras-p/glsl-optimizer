@@ -26,6 +26,8 @@
  **************************************************************************/
 
 #include <stdio.h>
+#include <time.h>
+#include <sys/timeb.h>
 
 #include <vdpau/vdpau.h>
 
@@ -67,7 +69,7 @@ vlVdpPresentationQueueCreate(VdpDevice device,
 
    pq->device = dev;
    pq->drawable = pqt->drawable;
-   
+
    if (!vl_compositor_init(&pq->compositor, dev->context->pipe)) {
       ret = VDP_STATUS_ERROR;
       goto no_compositor;
@@ -162,12 +164,22 @@ VdpStatus
 vlVdpPresentationQueueGetTime(VdpPresentationQueue presentation_queue,
                               VdpTime *current_time)
 {
+   vlVdpPresentationQueue *pq;
+   struct timespec ts;
+
    VDPAU_MSG(VDPAU_TRACE, "[VDPAU] Getting queue time\n");
 
    if (!current_time)
       return VDP_STATUS_INVALID_POINTER;
 
-   return VDP_STATUS_NO_IMPLEMENTATION;
+   pq = vlGetDataHTAB(presentation_queue);
+   if (!pq)
+      return VDP_STATUS_INVALID_HANDLE;
+
+   clock_gettime(CLOCK_REALTIME, &ts);
+   *current_time = (uint64_t)ts.tv_sec * 1000000000LL + (uint64_t)ts.tv_nsec;
+
+   return VDP_STATUS_OK;
 }
 
 /**
@@ -184,6 +196,8 @@ vlVdpPresentationQueueDisplay(VdpPresentationQueue presentation_queue,
 
    vlVdpPresentationQueue *pq;
    vlVdpOutputSurface *surf;
+
+   struct pipe_context *pipe;
    struct pipe_surface *drawable_surface;
    struct pipe_video_rect vo_rect;
 
@@ -199,6 +213,8 @@ vlVdpPresentationQueueDisplay(VdpPresentationQueue presentation_queue,
    if (!surf)
       return VDP_STATUS_INVALID_HANDLE;
 
+   surf->timestamp = (vlVdpTime)earliest_presentation_time;
+
    vo_rect.x = 0;
    vo_rect.y = 0;
    vo_rect.w = clip_width;
@@ -208,13 +224,18 @@ vlVdpPresentationQueueDisplay(VdpPresentationQueue presentation_queue,
    vl_compositor_set_rgba_layer(&pq->compositor, 0, surf->sampler_view, NULL, NULL);
    vl_compositor_render(&pq->compositor, drawable_surface, NULL, &vo_rect, true);
 
-   pq->device->context->pipe->screen->flush_frontbuffer
+   pipe = pq->device->context->pipe;
+
+   pipe->screen->flush_frontbuffer
    (
-      pq->device->context->pipe->screen,
+      pipe->screen,
       drawable_surface->texture,
       0, 0,
       vl_contextprivate_get(pq->device->context, drawable_surface)
    );
+
+   pipe->screen->fence_reference(pipe->screen, &surf->fence, NULL);
+   pipe->flush(pipe, &surf->fence);
 
    if (dump_window == -1) {
       dump_window = debug_get_num_option("VDPAU_DUMP", 0);
@@ -242,10 +263,29 @@ vlVdpPresentationQueueBlockUntilSurfaceIdle(VdpPresentationQueue presentation_qu
                                             VdpOutputSurface surface,
                                             VdpTime *first_presentation_time)
 {
+   vlVdpPresentationQueue *pq;
+   vlVdpOutputSurface *surf;
+   struct pipe_screen *screen;
+
    if (!first_presentation_time)
       return VDP_STATUS_INVALID_POINTER;
 
-   //return VDP_STATUS_NO_IMPLEMENTATION;
+   pq = vlGetDataHTAB(presentation_queue);
+   if (!pq)
+      return VDP_STATUS_INVALID_HANDLE;
+
+   surf = vlGetDataHTAB(surface);
+   if (!surf)
+      return VDP_STATUS_INVALID_HANDLE;
+
+   if (surf->fence) {
+      screen = pq->device->context->pipe->screen;
+      screen->fence_finish(screen, surf->fence, 0);
+   }
+
+   // We actually need to query the timestamp of the last VSYNC event from the hardware
+   vlVdpPresentationQueueGetTime(presentation_queue, first_presentation_time);
+
    return VDP_STATUS_OK;
 }
 
@@ -258,8 +298,38 @@ vlVdpPresentationQueueQuerySurfaceStatus(VdpPresentationQueue presentation_queue
                                          VdpPresentationQueueStatus *status,
                                          VdpTime *first_presentation_time)
 {
+   vlVdpPresentationQueue *pq;
+   vlVdpOutputSurface *surf;
+   struct pipe_screen *screen;
+
    if (!(status && first_presentation_time))
       return VDP_STATUS_INVALID_POINTER;
 
-   return VDP_STATUS_NO_IMPLEMENTATION;
+   pq = vlGetDataHTAB(presentation_queue);
+   if (!pq)
+      return VDP_STATUS_INVALID_HANDLE;
+
+   surf = vlGetDataHTAB(surface);
+   if (!surf)
+      return VDP_STATUS_INVALID_HANDLE;
+
+   *first_presentation_time = 0;
+
+   if (!surf->fence) {
+      *status = VDP_PRESENTATION_QUEUE_STATUS_IDLE;
+   } else {
+      screen = pq->device->context->pipe->screen;
+      if (screen->fence_signalled(screen, surf->fence)) {
+         screen->fence_reference(screen, &surf->fence, NULL);
+         *status = VDP_PRESENTATION_QUEUE_STATUS_VISIBLE;
+
+         // We actually need to query the timestamp of the last VSYNC event from the hardware
+         vlVdpPresentationQueueGetTime(presentation_queue, first_presentation_time);
+         *first_presentation_time += 1;
+      } else {
+         *status = VDP_PRESENTATION_QUEUE_STATUS_QUEUED;
+      }
+   }
+
+   return VDP_STATUS_OK;
 }
