@@ -185,6 +185,7 @@ vlVdpPresentationQueueDisplay(VdpPresentationQueue presentation_queue,
    vlVdpPresentationQueue *pq;
    vlVdpOutputSurface *surf;
    struct pipe_surface *drawable_surface;
+   struct pipe_video_rect vo_rect;
 
    pq = vlGetDataHTAB(presentation_queue);
    if (!pq)
@@ -198,9 +199,14 @@ vlVdpPresentationQueueDisplay(VdpPresentationQueue presentation_queue,
    if (!surf)
       return VDP_STATUS_INVALID_HANDLE;
 
+   vo_rect.x = 0;
+   vo_rect.y = 0;
+   vo_rect.w = clip_width;
+   vo_rect.h = clip_height;
+
    vl_compositor_clear_layers(&pq->compositor);
    vl_compositor_set_rgba_layer(&pq->compositor, 0, surf->sampler_view, NULL, NULL);
-   vl_compositor_render(&pq->compositor, drawable_surface, NULL, NULL, true);
+   vl_compositor_render(&pq->compositor, drawable_surface, NULL, &vo_rect, true);
 
    pq->device->context->pipe->screen->flush_frontbuffer
    (
