@@ -506,6 +506,13 @@ _mesa_pack_rgba_span_float(struct gl_context *ctx, GLuint n, GLfloat rgba[][4],
       luminance = NULL;
    }
 
+   /* EXT_texture_integer specifies no transfer ops on integer
+    * types in the resolved issues section. Just set them to 0
+    * for integer surfaces.
+    */
+   if (intDstFormat)
+      transferOps = 0;
+
    if (transferOps) {
       _mesa_apply_rgba_transfer_ops(ctx, transferOps, n, rgba);
    }
@@ -3452,6 +3459,7 @@ _mesa_unpack_color_span_chan( struct gl_context *ctx,
                               const struct gl_pixelstore_attrib *srcPacking,
                               GLbitfield transferOps )
 {
+   GLboolean intFormat = _mesa_is_integer_format(srcFormat);
    ASSERT(dstFormat == GL_ALPHA ||
           dstFormat == GL_LUMINANCE ||
           dstFormat == GL_LUMINANCE_ALPHA ||
@@ -3499,6 +3507,13 @@ _mesa_unpack_color_span_chan( struct gl_context *ctx,
           srcType == GL_UNSIGNED_INT_2_10_10_10_REV ||
           srcType == GL_UNSIGNED_INT_5_9_9_9_REV ||
           srcType == GL_UNSIGNED_INT_10F_11F_11F_REV);
+
+   /* EXT_texture_integer specifies no transfer ops on integer
+    * types in the resolved issues section. Just set them to 0
+    * for integer surfaces.
+    */
+   if (intFormat)
+      transferOps = 0;
 
    /* Try simple cases first */
    if (transferOps == 0) {
@@ -3815,6 +3830,7 @@ _mesa_unpack_color_span_float( struct gl_context *ctx,
       GLint dstComponents;
       GLint rDst, gDst, bDst, aDst, lDst, iDst;
       GLfloat (*rgba)[4] = (GLfloat (*)[4]) malloc(4 * n * sizeof(GLfloat));
+      GLboolean intFormat = _mesa_is_integer_format(srcFormat);
 
       if (!rgba) {
          _mesa_error(ctx, GL_OUT_OF_MEMORY, "pixel unpacking");
@@ -3824,6 +3840,13 @@ _mesa_unpack_color_span_float( struct gl_context *ctx,
       dstComponents = _mesa_components_in_format( dstFormat );
       /* source & dest image formats should have been error checked by now */
       assert(dstComponents > 0);
+
+      /* EXT_texture_integer specifies no transfer ops on integer
+       * types in the resolved issues section. Just set them to 0
+       * for integer surfaces.
+       */
+      if (intFormat)
+         transferOps = 0;
 
       /*
        * Extract image data and convert to RGBA floats
