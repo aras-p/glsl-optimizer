@@ -51,6 +51,6 @@ vl_create_decoder(struct pipe_context *pipe,
                   enum pipe_video_profile profile,
                   enum pipe_video_entrypoint entrypoint,
                   enum pipe_video_chroma_format chroma_format,
-                  unsigned width, unsigned height);
+                  unsigned width, unsigned height, unsigned max_references);
 
 #endif /* vl_decoder_h */

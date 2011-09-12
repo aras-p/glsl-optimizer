@@ -1035,7 +1035,7 @@ vl_create_mpeg12_decoder(struct pipe_context *context,
                          enum pipe_video_profile profile,
                          enum pipe_video_entrypoint entrypoint,
                          enum pipe_video_chroma_format chroma_format,
-                         unsigned width, unsigned height)
+                         unsigned width, unsigned height, unsigned max_references)
 {
    const unsigned block_size_pixels = BLOCK_WIDTH * BLOCK_HEIGHT;
    const struct format_config *format_config;
@@ -1054,6 +1054,7 @@ vl_create_mpeg12_decoder(struct pipe_context *context,
    dec->base.chroma_format = chroma_format;
    dec->base.width = width;
    dec->base.height = height;
+   dec->base.max_references = max_references;
 
    dec->base.destroy = vl_mpeg12_destroy;
    dec->base.create_buffer = vl_mpeg12_create_buffer;

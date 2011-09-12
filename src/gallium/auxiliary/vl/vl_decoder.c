@@ -62,7 +62,7 @@ vl_create_decoder(struct pipe_context *pipe,
                   enum pipe_video_profile profile,
                   enum pipe_video_entrypoint entrypoint,
                   enum pipe_video_chroma_format chroma_format,
-                  unsigned width, unsigned height)
+                  unsigned width, unsigned height, unsigned max_references)
 {
    unsigned buffer_width, buffer_height;
    bool pot_buffers;
@@ -82,7 +82,7 @@ vl_create_decoder(struct pipe_context *pipe,
 
    switch (u_reduce_video_profile(profile)) {
       case PIPE_VIDEO_CODEC_MPEG12:
-         return vl_create_mpeg12_decoder(pipe, profile, entrypoint, chroma_format, buffer_width, buffer_height);
+         return vl_create_mpeg12_decoder(pipe, profile, entrypoint, chroma_format, buffer_width, buffer_height, max_references);
       default:
          return NULL;
    }

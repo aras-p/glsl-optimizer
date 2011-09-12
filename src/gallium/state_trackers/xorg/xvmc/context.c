@@ -250,7 +250,7 @@ Status XvMCCreateContext(Display *dpy, XvPortID port, int surface_type_id,
       ProfileToPipe(mc_type),
       (mc_type & XVMC_IDCT) ? PIPE_VIDEO_ENTRYPOINT_IDCT : PIPE_VIDEO_ENTRYPOINT_MC,
       FormatToPipe(chroma_format),
-      width, height
+      width, height, 2
    );
 
    if (!context_priv->decoder) {

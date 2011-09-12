@@ -52,6 +52,7 @@ struct pipe_video_decoder
    enum pipe_video_chroma_format chroma_format;
    unsigned width;
    unsigned height;
+   unsigned max_references;
 
    /**
     * destroy this video decoder
