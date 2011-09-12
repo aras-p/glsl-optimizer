@@ -511,6 +511,25 @@ _mesa_base_tex_format( struct gl_context *ctx, GLint internalFormat )
       }
    }
 
+   if (ctx->API == API_OPENGLES) {
+      switch (internalFormat) {
+      case GL_PALETTE4_RGB8_OES:
+      case GL_PALETTE4_R5_G6_B5_OES:
+      case GL_PALETTE8_RGB8_OES:
+      case GL_PALETTE8_R5_G6_B5_OES:
+	 return GL_RGB;
+      case GL_PALETTE4_RGBA8_OES:
+      case GL_PALETTE8_RGB5_A1_OES:
+      case GL_PALETTE4_RGBA4_OES:
+      case GL_PALETTE4_RGB5_A1_OES:
+      case GL_PALETTE8_RGBA8_OES:
+      case GL_PALETTE8_RGBA4_OES:
+	 return GL_RGBA;
+      default:
+         ; /* fallthrough */
+      }
+   }
+
    return -1; /* error */
 }
 
