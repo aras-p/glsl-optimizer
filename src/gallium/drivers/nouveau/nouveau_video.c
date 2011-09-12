@@ -527,7 +527,7 @@ nouveau_create_decoder(struct pipe_context *context,
                        enum pipe_video_profile profile,
                        enum pipe_video_entrypoint entrypoint,
                        enum pipe_video_chroma_format chroma_format,
-                       unsigned width, unsigned height)
+                       unsigned width, unsigned height, unsigned max_references)
 {
    struct nouveau_channel *chan = screen->channel;
    struct nouveau_grobj *mpeg = NULL;
@@ -569,6 +569,7 @@ nouveau_create_decoder(struct pipe_context *context,
    dec->base.chroma_format = chroma_format;
    dec->base.width = width;
    dec->base.height = height;
+   dec->base.max_references = max_references;
    dec->base.destroy = nouveau_decoder_destroy;
    dec->base.begin_frame = nouveau_decoder_begin_frame;
    dec->base.end_frame = nouveau_decoder_end_frame;
@@ -645,7 +646,7 @@ fail:
 vl:
    debug_printf("Using g3dvl renderer\n");
    return vl_create_decoder(context, profile, entrypoint,
-                            chroma_format, width, height);
+                            chroma_format, width, height, max_references);
 }
 
 static struct pipe_sampler_view **
@@ -871,11 +872,11 @@ nvfx_context_create_decoder(struct pipe_context *context,
                             enum pipe_video_profile profile,
                             enum pipe_video_entrypoint entrypoint,
                             enum pipe_video_chroma_format chroma_format,
-                            unsigned width, unsigned height)
+                            unsigned width, unsigned height, unsigned max_references)
 {
    struct nouveau_screen *screen = &nvfx_context(context)->screen->base;
    return nouveau_create_decoder(context, screen, profile, entrypoint,
-                                 chroma_format, width, height);
+                                 chroma_format, width, height, max_references);
 }
 
 static struct pipe_video_buffer *
@@ -900,11 +901,11 @@ nouveau_context_create_decoder(struct pipe_context *context,
                                enum pipe_video_profile profile,
                                enum pipe_video_entrypoint entrypoint,
                                enum pipe_video_chroma_format chroma_format,
-                               unsigned width, unsigned height)
+                               unsigned width, unsigned height, unsigned max_references)
 {
    struct nouveau_screen *screen = nouveau_context(context)->screen;
    return nouveau_create_decoder(context, screen, profile, entrypoint,
-                                 chroma_format, width, height);
+                                 chroma_format, width, height, max_references);
 }
 
 static struct pipe_video_buffer *
