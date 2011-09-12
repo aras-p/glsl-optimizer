@@ -113,6 +113,12 @@ void
 vl_compositor_set_clear_color(struct vl_compositor *compositor, float color[4]);
 
 /**
+ * get the clear color
+ */
+void
+vl_compositor_get_clear_color(struct vl_compositor *compositor, float color[4]);
+
+/**
  * set overlay samplers
  */
 /*@{*/

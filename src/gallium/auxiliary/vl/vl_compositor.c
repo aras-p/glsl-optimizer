@@ -563,6 +563,18 @@ vl_compositor_set_clear_color(struct vl_compositor *c, float color[4])
 }
 
 void
+vl_compositor_get_clear_color(struct vl_compositor *c, float color[4])
+{
+   unsigned i;
+
+   assert(c);
+   assert(color);
+
+   for (i = 0; i < 4; ++i)
+      color[i] = c->clear_color[i];
+}
+
+void
 vl_compositor_clear_layers(struct vl_compositor *c)
 {
    unsigned i, j;
