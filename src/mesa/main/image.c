@@ -1068,6 +1068,19 @@ _mesa_is_compressed_format(struct gl_context *ctx, GLenum format)
       return ctx->Extensions.EXT_texture_compression_latc;
    case GL_COMPRESSED_LUMINANCE_ALPHA_3DC_ATI:
       return ctx->Extensions.ATI_texture_compression_3dc;
+#if FEATURE_ES
+   case GL_PALETTE4_RGB8_OES:
+   case GL_PALETTE4_RGBA8_OES:
+   case GL_PALETTE4_R5_G6_B5_OES:
+   case GL_PALETTE4_RGBA4_OES:
+   case GL_PALETTE4_RGB5_A1_OES:
+   case GL_PALETTE8_RGB8_OES:
+   case GL_PALETTE8_RGBA8_OES:
+   case GL_PALETTE8_R5_G6_B5_OES:
+   case GL_PALETTE8_RGBA4_OES:
+   case GL_PALETTE8_RGB5_A1_OES:
+      return ctx->API == API_OPENGLES;
+#endif
    default:
       return GL_FALSE;
    }
