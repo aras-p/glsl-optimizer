@@ -25,8 +25,8 @@
  *
  **************************************************************************/
 
-#ifndef vl_ycbcr_buffer_h
-#define vl_ycbcr_buffer_h
+#ifndef vl_video_buffer_h
+#define vl_video_buffer_h
 
 #include "pipe/p_context.h"
 #include "pipe/p_video_decoder.h"
@@ -68,7 +68,7 @@ boolean
 vl_video_buffer_is_format_supported(struct pipe_screen *screen,
                                     enum pipe_format format,
                                     enum pipe_video_profile profile);
-                                    
+
 /**
  * creates a video buffer, can be used as a standard implementation for pipe->create_video_buffer
  */
@@ -88,4 +88,4 @@ vl_video_buffer_create_ex(struct pipe_context *pipe,
                           const enum pipe_format resource_formats[VL_MAX_PLANES],
                           unsigned usage);
 
-#endif /* vl_ycbcr_buffer_h */
+#endif /* vl_video_buffer_h */

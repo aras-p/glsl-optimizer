@@ -323,6 +323,7 @@ init_pipe_state(struct vl_compositor *c)
    dsa.alpha.ref_value = 0;
    c->dsa = c->pipe->create_depth_stencil_alpha_state(c->pipe, &dsa);
    c->pipe->bind_depth_stencil_alpha_state(c->pipe, c->dsa);
+
    return true;
 }
 
@@ -355,6 +356,7 @@ create_vertex_buffer(struct vl_compositor *c)
       PIPE_USAGE_STREAM,
       sizeof(struct vertex4f) * VL_COMPOSITOR_MAX_LAYERS * 4
    );
+
    return c->vertex_buf.buffer != NULL;
 }
 
@@ -601,8 +603,8 @@ vl_compositor_set_csc_matrix(struct vl_compositor *c, const float matrix[16])
       pipe_buffer_map(c->pipe, c->csc_matrix,
                       PIPE_TRANSFER_WRITE | PIPE_TRANSFER_DISCARD,
                       &buf_transfer),
-		matrix,
-		sizeof(csc_matrix)
+      matrix,
+      sizeof(csc_matrix)
    );
 
    pipe_buffer_unmap(c->pipe, buf_transfer);
@@ -676,7 +678,6 @@ vl_compositor_set_palette_layer(struct vl_compositor *c,
    calc_src_and_dst(&c->layers[layer], indexes->texture->width0, indexes->texture->height0,
                     src_rect ? *src_rect : default_rect(&c->layers[layer]),
                     dst_rect ? *dst_rect : default_rect(&c->layers[layer]));
-
 }
 
 void
@@ -704,10 +705,10 @@ vl_compositor_set_rgba_layer(struct vl_compositor *c,
 }
 
 void
-vl_compositor_render(struct vl_compositor *c,
-                     struct pipe_surface           *dst_surface,
-                     struct pipe_video_rect        *dst_area,
-                     struct pipe_video_rect        *dst_clip,
+vl_compositor_render(struct vl_compositor   *c,
+                     struct pipe_surface    *dst_surface,
+                     struct pipe_video_rect *dst_area,
+                     struct pipe_video_rect *dst_clip,
                      bool clear_dirty_area)
 {
    struct pipe_scissor_state scissor;
@@ -779,6 +780,7 @@ vl_compositor_init(struct vl_compositor *c, struct pipe_context *pipe)
       cleanup_pipe_state(c);
       return false;
    }
+
    if (!init_buffers(c)) {
       cleanup_shaders(c);
       cleanup_pipe_state(c);

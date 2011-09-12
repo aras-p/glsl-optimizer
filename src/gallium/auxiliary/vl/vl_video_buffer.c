@@ -77,7 +77,7 @@ vl_video_buffer_is_format_supported(struct pipe_screen *screen,
    if (!resource_formats)
       return false;
 
-   for(i = 0; i < VL_MAX_PLANES; ++i) {
+   for (i = 0; i < VL_MAX_PLANES; ++i) {
       if (!resource_formats[i])
          continue;
 
