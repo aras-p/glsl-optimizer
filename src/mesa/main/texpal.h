@@ -34,5 +34,8 @@ _mesa_cpal_compressed_teximage2d(GLenum target, GLint level,
 				 GLsizei width, GLsizei height,
 				 GLsizei imageSize, const void *palette);
 
+extern unsigned
+_mesa_cpal_compressed_size(int level, GLenum internalFormat,
+			   unsigned width, unsigned height);
 
 #endif /* TEXPAL_H */

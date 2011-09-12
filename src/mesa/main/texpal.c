@@ -92,25 +92,23 @@ paletted_to_color(const struct cpal_format_info *info, const GLubyte *palette,
    }
 }
 
-
-static const struct cpal_format_info *
-cpal_get_info(GLint level, GLenum internalFormat,
-              GLsizei width, GLsizei height, GLsizei imageSize)
+unsigned
+_mesa_cpal_compressed_size(int level, GLenum internalFormat,
+			   unsigned width, unsigned height)
 {
    const struct cpal_format_info *info;
-   GLint lvl, num_levels;
-   GLsizei w, h, expect_size;
+   const int num_levels = -level + 1;
+   int lvl;
+   unsigned w, h, expect_size;
+
+   if (internalFormat < GL_PALETTE4_RGB8_OES
+       || internalFormat > GL_PALETTE8_RGB5_A1_OES) {
+      return 0;
+   }
 
    info = &formats[internalFormat - GL_PALETTE4_RGB8_OES];
    ASSERT(info->cpal_format == internalFormat);
 
-   if (level > 0) {
-      _mesa_error(_mesa_get_current_context(), GL_INVALID_VALUE,
-            "glCompressedTexImage2D(level=%d)", level);
-      return NULL;
-   }
-
-   num_levels = -level + 1;
    expect_size = info->palette_size * info->size;
    for (lvl = 0; lvl < num_levels; lvl++) {
       w = width >> lvl;
@@ -125,6 +123,27 @@ cpal_get_info(GLint level, GLenum internalFormat,
       else
          expect_size += w * h;
    }
+
+   return expect_size;
+}
+
+static const struct cpal_format_info *
+cpal_get_info(GLint level, GLenum internalFormat,
+              GLsizei width, GLsizei height, GLsizei imageSize)
+{
+   const struct cpal_format_info *info;
+
+   info = &formats[internalFormat - GL_PALETTE4_RGB8_OES];
+   ASSERT(info->cpal_format == internalFormat);
+
+   if (level > 0) {
+      _mesa_error(_mesa_get_current_context(), GL_INVALID_VALUE,
+            "glCompressedTexImage2D(level=%d)", level);
+      return NULL;
+   }
+
+   expect_size = _mesa_cpal_compressed_size(level, internalFormat,
+					    width, height);
    if (expect_size > imageSize) {
       _mesa_error(_mesa_get_current_context(), GL_INVALID_VALUE,
             "glCompressedTexImage2D(imageSize=%d)", imageSize);
