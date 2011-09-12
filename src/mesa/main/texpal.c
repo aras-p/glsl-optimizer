@@ -152,6 +152,22 @@ cpal_get_info(GLint level, GLenum internalFormat,
    return info;
 }
 
+void
+_mesa_cpal_compressed_format_type(GLenum internalFormat, GLenum *format,
+				  GLenum *type)
+{
+   const struct cpal_format_info *info;
+
+   if (internalFormat < GL_PALETTE4_RGB8_OES
+       || internalFormat > GL_PALETTE8_RGB5_A1_OES) {
+      return;
+   }
+
+   info = &formats[internalFormat - GL_PALETTE4_RGB8_OES];
+   *format = info->format;
+   *type = info->type;
+}
+
 /**
  * Convert a call to glCompressedTexImage2D() where internalFormat is a
  *  compressed palette format into a regular GLubyte/RGBA glTexImage2D() call.

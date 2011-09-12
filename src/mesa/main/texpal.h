@@ -38,4 +38,8 @@ extern unsigned
 _mesa_cpal_compressed_size(int level, GLenum internalFormat,
 			   unsigned width, unsigned height);
 
+extern void
+_mesa_cpal_compressed_format_type(GLenum internalFormat, GLenum *format,
+				  GLenum *type);
+
 #endif /* TEXPAL_H */
