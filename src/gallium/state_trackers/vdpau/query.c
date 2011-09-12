@@ -34,7 +34,9 @@
 #include "pipe/p_defines.h"
 #include "util/u_debug.h"
 
-
+/**
+ * Retrieve the VDPAU version implemented by the backend.
+ */
 VdpStatus
 vlVdpGetApiVersion(uint32_t *api_version)
 {
@@ -45,6 +47,10 @@ vlVdpGetApiVersion(uint32_t *api_version)
    return VDP_STATUS_OK;
 }
 
+/**
+ * Retrieve an implementation-specific string description of the implementation.
+ * This typically includes detailed version information.
+ */
 VdpStatus
 vlVdpGetInformationString(char const **information_string)
 {
@@ -55,6 +61,9 @@ vlVdpGetInformationString(char const **information_string)
    return VDP_STATUS_OK;
 }
 
+/**
+ * Query the implementation's VdpVideoSurface capabilities.
+ */
 VdpStatus
 vlVdpVideoSurfaceQueryCapabilities(VdpDevice device, VdpChromaType surface_chroma_type,
                                    VdpBool *is_supported, uint32_t *max_width, uint32_t *max_height)
@@ -63,7 +72,7 @@ vlVdpVideoSurfaceQueryCapabilities(VdpDevice device, VdpChromaType surface_chrom
    struct pipe_screen *pscreen;
    uint32_t max_2d_texture_level;
 
-   VDPAU_MSG(VDPAU_TRACE, "[VDPAU] Querying video surfaces\n");
+   VDPAU_MSG(VDPAU_TRACE, "[VDPAU] Querying VdpVideoSurface capabilities\n");
 
    if (!(is_supported && max_width && max_height))
       return VDP_STATUS_INVALID_POINTER;
@@ -91,6 +100,9 @@ vlVdpVideoSurfaceQueryCapabilities(VdpDevice device, VdpChromaType surface_chrom
    return VDP_STATUS_OK;
 }
 
+/**
+ * Query the implementation's VdpVideoSurface GetBits/PutBits capabilities.
+ */
 VdpStatus
 vlVdpVideoSurfaceQueryGetPutBitsYCbCrCapabilities(VdpDevice device, VdpChromaType surface_chroma_type,
                                                   VdpYCbCrFormat bits_ycbcr_format,
@@ -99,7 +111,7 @@ vlVdpVideoSurfaceQueryGetPutBitsYCbCrCapabilities(VdpDevice device, VdpChromaTyp
    vlVdpDevice *dev;
    struct pipe_screen *pscreen;
 
-   VDPAU_MSG(VDPAU_TRACE, "[VDPAU] Querying get put video surfaces\n");
+   VDPAU_MSG(VDPAU_TRACE, "[VDPAU] Querying VdpVideoSurface get/put bits YCbCr capabilities\n");
 
    if (!is_supported)
       return VDP_STATUS_INVALID_POINTER;
@@ -122,6 +134,9 @@ vlVdpVideoSurfaceQueryGetPutBitsYCbCrCapabilities(VdpDevice device, VdpChromaTyp
    return VDP_STATUS_OK;
 }
 
+/**
+ * Query the implementation's VdpDecoder capabilities.
+ */
 VdpStatus
 vlVdpDecoderQueryCapabilities(VdpDevice device, VdpDecoderProfile profile,
                               VdpBool *is_supported, uint32_t *max_level, uint32_t *max_macroblocks,
@@ -131,7 +146,7 @@ vlVdpDecoderQueryCapabilities(VdpDevice device, VdpDecoderProfile profile,
    struct pipe_screen *pscreen;
    enum pipe_video_profile p_profile;
 
-   VDPAU_MSG(VDPAU_TRACE, "[VDPAU] Querying decoder\n");
+   VDPAU_MSG(VDPAU_TRACE, "[VDPAU] Querying VdpDecoder capabilities\n");
 
    if (!(is_supported && max_level && max_macroblocks && max_width && max_height))
       return VDP_STATUS_INVALID_POINTER;
@@ -166,6 +181,9 @@ vlVdpDecoderQueryCapabilities(VdpDevice device, VdpDecoderProfile profile,
    return VDP_STATUS_OK;
 }
 
+/**
+ * Query the implementation's VdpOutputSurface capabilities.
+ */
 VdpStatus
 vlVdpOutputSurfaceQueryCapabilities(VdpDevice device, VdpRGBAFormat surface_rgba_format,
                                     VdpBool *is_supported, uint32_t *max_width, uint32_t *max_height)
@@ -173,16 +191,20 @@ vlVdpOutputSurfaceQueryCapabilities(VdpDevice device, VdpRGBAFormat surface_rgba
    if (!(is_supported && max_width && max_height))
       return VDP_STATUS_INVALID_POINTER;
 
-   VDPAU_MSG(VDPAU_TRACE, "[VDPAU] Querying ouput surfaces\n");
+   VDPAU_MSG(VDPAU_TRACE, "[VDPAU] Querying VdpOutputSurface capabilities\n");
 
    return VDP_STATUS_NO_IMPLEMENTATION;
 }
 
+/**
+ * Query the implementation's capability to perform a PutBits operation using
+ * application data matching the surface's format.
+ */
 VdpStatus
 vlVdpOutputSurfaceQueryGetPutBitsNativeCapabilities(VdpDevice device, VdpRGBAFormat surface_rgba_format,
                                                     VdpBool *is_supported)
 {
-   VDPAU_MSG(VDPAU_TRACE, "[VDPAU] Querying output surfaces get put native cap\n");
+   VDPAU_MSG(VDPAU_TRACE, "[VDPAU] Querying VdpOutputSurface get/put bits native capabilities\n");
 
    if (!is_supported)
       return VDP_STATUS_INVALID_POINTER;
@@ -190,6 +212,10 @@ vlVdpOutputSurfaceQueryGetPutBitsNativeCapabilities(VdpDevice device, VdpRGBAFor
    return VDP_STATUS_NO_IMPLEMENTATION;
 }
 
+/**
+ * Query the implementation's capability to perform a PutBits operation using
+ * application data in a specific indexed format.
+ */
 VdpStatus
 vlVdpOutputSurfaceQueryPutBitsIndexedCapabilities(VdpDevice device,
                                                   VdpRGBAFormat surface_rgba_format,
@@ -197,7 +223,7 @@ vlVdpOutputSurfaceQueryPutBitsIndexedCapabilities(VdpDevice device,
                                                   VdpColorTableFormat color_table_format,
                                                   VdpBool *is_supported)
 {
-   VDPAU_MSG(VDPAU_TRACE, "[VDPAU] Querying output surfaces get put indexed cap\n");
+   VDPAU_MSG(VDPAU_TRACE, "[VDPAU] Querying VdpOutputSurface put bits indexed capabilities\n");
 
    if (!is_supported)
       return VDP_STATUS_INVALID_POINTER;
@@ -205,40 +231,56 @@ vlVdpOutputSurfaceQueryPutBitsIndexedCapabilities(VdpDevice device,
    return VDP_STATUS_NO_IMPLEMENTATION;
 }
 
+/**
+ * Query the implementation's capability to perform a PutBits operation using
+ * application data in a specific YCbCr/YUB format.
+ */
 VdpStatus
 vlVdpOutputSurfaceQueryPutBitsYCbCrCapabilities(VdpDevice device, VdpRGBAFormat surface_rgba_format,
                                                 VdpYCbCrFormat bits_ycbcr_format,
                                                 VdpBool *is_supported)
 {
-   VDPAU_MSG(VDPAU_TRACE, "[VDPAU] Querying output surfaces put ycrcb cap\n");
+   VDPAU_MSG(VDPAU_TRACE, "[VDPAU] Querying VdpOutputSurface put bits YCbCr capabilities\n");
+
    if (!is_supported)
       return VDP_STATUS_INVALID_POINTER;
 
    return VDP_STATUS_NO_IMPLEMENTATION;
 }
 
+/**
+ * Query the implementation's VdpBitmapSurface capabilities.
+ */
 VdpStatus
 vlVdpBitmapSurfaceQueryCapabilities(VdpDevice device, VdpRGBAFormat surface_rgba_format,
                                     VdpBool *is_supported, uint32_t *max_width, uint32_t *max_height)
 {
-   VDPAU_MSG(VDPAU_TRACE, "[VDPAU] Querying bitmap surfaces\n");
+   VDPAU_MSG(VDPAU_TRACE, "[VDPAU] Querying VdpBitmapSurface capabilities\n");
+
    if (!(is_supported && max_width && max_height))
       return VDP_STATUS_INVALID_POINTER;
 
    return VDP_STATUS_NO_IMPLEMENTATION;
 }
 
+/**
+ * Query the implementation's support for a specific feature.
+ */
 VdpStatus
 vlVdpVideoMixerQueryFeatureSupport(VdpDevice device, VdpVideoMixerFeature feature,
                                    VdpBool *is_supported)
 {
-   VDPAU_MSG(VDPAU_TRACE, "[VDPAU] Querying mixer feature support\n");
+   VDPAU_MSG(VDPAU_TRACE, "[VDPAU] Querying VdpVideoMixer feature support\n");
+
    if (!is_supported)
       return VDP_STATUS_INVALID_POINTER;
 
    return VDP_STATUS_NO_IMPLEMENTATION;
 }
 
+/**
+ * Query the implementation's support for a specific parameter.
+ */
 VdpStatus
 vlVdpVideoMixerQueryParameterSupport(VdpDevice device, VdpVideoMixerParameter parameter,
                                      VdpBool *is_supported)
@@ -249,6 +291,9 @@ vlVdpVideoMixerQueryParameterSupport(VdpDevice device, VdpVideoMixerParameter pa
    return VDP_STATUS_NO_IMPLEMENTATION;
 }
 
+/**
+ * Query the implementation's supported for a specific parameter.
+ */
 VdpStatus
 vlVdpVideoMixerQueryParameterValueRange(VdpDevice device, VdpVideoMixerParameter parameter,
                                         void *min_value, void *max_value)
@@ -259,6 +304,9 @@ vlVdpVideoMixerQueryParameterValueRange(VdpDevice device, VdpVideoMixerParameter
    return VDP_STATUS_NO_IMPLEMENTATION;
 }
 
+/**
+ * Query the implementation's support for a specific attribute.
+ */
 VdpStatus
 vlVdpVideoMixerQueryAttributeSupport(VdpDevice device, VdpVideoMixerAttribute attribute,
                                      VdpBool *is_supported)
@@ -269,6 +317,9 @@ vlVdpVideoMixerQueryAttributeSupport(VdpDevice device, VdpVideoMixerAttribute at
    return VDP_STATUS_NO_IMPLEMENTATION;
 }
 
+/**
+ * Query the implementation's supported for a specific attribute.
+ */
 VdpStatus
 vlVdpVideoMixerQueryAttributeValueRange(VdpDevice device, VdpVideoMixerAttribute attribute,
                                         void *min_value, void *max_value)

@@ -35,6 +35,9 @@
 
 #include "vdpau_private.h"
 
+/**
+ * Create a VdpOutputSurface.
+ */
 VdpStatus
 vlVdpOutputSurfaceCreate(VdpDevice device,
                          VdpRGBAFormat rgba_format,
@@ -114,6 +117,9 @@ vlVdpOutputSurfaceCreate(VdpDevice device,
    return VDP_STATUS_OK;
 }
 
+/**
+ * Destroy a VdpOutputSurface.
+ */
 VdpStatus
 vlVdpOutputSurfaceDestroy(VdpOutputSurface surface)
 {
@@ -134,6 +140,9 @@ vlVdpOutputSurfaceDestroy(VdpOutputSurface surface)
    return VDP_STATUS_OK;
 }
 
+/**
+ * Retrieve the parameters used to create a VdpOutputSurface.
+ */
 VdpStatus
 vlVdpOutputSurfaceGetParameters(VdpOutputSurface surface,
                                 VdpRGBAFormat *rgba_format,
@@ -141,7 +150,7 @@ vlVdpOutputSurfaceGetParameters(VdpOutputSurface surface,
 {
    vlVdpOutputSurface *vlsurface;
 
-   VDPAU_MSG(VDPAU_TRACE, "[VDPAU] getting surface parameters\n");
+   VDPAU_MSG(VDPAU_TRACE, "[VDPAU] Getting output surface parameters\n");
         
    vlsurface = vlGetDataHTAB(surface);
    if (!vlsurface)
@@ -154,6 +163,10 @@ vlVdpOutputSurfaceGetParameters(VdpOutputSurface surface,
    return VDP_STATUS_OK;
 }
 
+/**
+ * Copy image data from a VdpOutputSurface to application memory in the
+ * surface's native format.
+ */
 VdpStatus
 vlVdpOutputSurfaceGetBitsNative(VdpOutputSurface surface,
                                 VdpRect const *source_rect,
@@ -163,6 +176,10 @@ vlVdpOutputSurfaceGetBitsNative(VdpOutputSurface surface,
    return VDP_STATUS_NO_IMPLEMENTATION;
 }
 
+/**
+ * Copy image data from application memory in the surface's native format to
+ * a VdpOutputSurface.
+ */
 VdpStatus
 vlVdpOutputSurfacePutBitsNative(VdpOutputSurface surface,
                                 void const *const *source_data,
@@ -172,6 +189,10 @@ vlVdpOutputSurfacePutBitsNative(VdpOutputSurface surface,
    return VDP_STATUS_NO_IMPLEMENTATION;
 }
 
+/**
+ * Copy image data from application memory in a specific indexed format to
+ * a VdpOutputSurface.
+ */
 VdpStatus
 vlVdpOutputSurfacePutBitsIndexed(VdpOutputSurface surface,
                                  VdpIndexedFormat source_indexed_format,
@@ -195,7 +216,7 @@ vlVdpOutputSurfacePutBitsIndexed(VdpOutputSurface surface,
    struct pipe_box box;
    struct pipe_video_rect dst_rect;
 
-   VDPAU_MSG(VDPAU_TRACE, "[VDPAU] uploading indexed output surface\n");
+   VDPAU_MSG(VDPAU_TRACE, "[VDPAU] Uploading indexed output surface\n");
 
    vlsurface = vlGetDataHTAB(surface);
    if (!vlsurface)
@@ -304,6 +325,10 @@ error_resource:
    return VDP_STATUS_RESOURCES;
 }
 
+/**
+ * Copy image data from application memory in a specific YCbCr format to
+ * a VdpOutputSurface.
+ */
 VdpStatus
 vlVdpOutputSurfacePutBitsYCbCr(VdpOutputSurface surface,
                                VdpYCbCrFormat source_ycbcr_format,
@@ -404,6 +429,10 @@ BlenderToPipe(struct pipe_context *context,
    return context->create_blend_state(context, &blend);
 }
 
+/**
+ * Composite a sub-rectangle of a VdpOutputSurface into a sub-rectangle of
+ * another VdpOutputSurface; Output Surface object VdpOutputSurface.
+ */
 VdpStatus
 vlVdpOutputSurfaceRenderOutputSurface(VdpOutputSurface destination_surface,
                                       VdpRect const *destination_rect,
@@ -424,7 +453,7 @@ vlVdpOutputSurfaceRenderOutputSurface(VdpOutputSurface destination_surface,
 
    void *blend;
 
-   VDPAU_MSG(VDPAU_TRACE, "[VDPAU] composing output surfaces\n");
+   VDPAU_MSG(VDPAU_TRACE, "[VDPAU] Composing output surfaces\n");
 
    dst_vlsurface = vlGetDataHTAB(destination_surface);
    if (!dst_vlsurface)
@@ -454,6 +483,10 @@ vlVdpOutputSurfaceRenderOutputSurface(VdpOutputSurface destination_surface,
    return VDP_STATUS_OK;
 }
 
+/**
+ * Composite a sub-rectangle of a VdpBitmapSurface into a sub-rectangle of
+ * a VdpOutputSurface; Output Surface object VdpOutputSurface.
+ */
 VdpStatus
 vlVdpOutputSurfaceRenderBitmapSurface(VdpOutputSurface destination_surface,
                                       VdpRect const *destination_rect,

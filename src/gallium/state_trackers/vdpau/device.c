@@ -34,6 +34,9 @@
 
 #include "vdpau_private.h"
 
+/**
+ * Create a VdpDevice object for use with X11.
+ */
 PUBLIC VdpStatus
 vdp_imp_device_create_x11(Display *display, int screen, VdpDevice *device,
                           VdpGetProcAddress **get_proc_address)
@@ -92,6 +95,9 @@ no_htab:
    return ret;
 }
 
+/**
+ * Create a VdpPresentationQueueTarget for use with X11.
+ */
 PUBLIC VdpStatus
 vlVdpPresentationQueueTargetCreateX11(VdpDevice device, Drawable drawable,
                                       VdpPresentationQueueTarget *target)
@@ -128,6 +134,9 @@ no_handle:
    return ret;
 }
 
+/**
+ * Destroy a VdpPresentationQueueTarget.
+ */
 VdpStatus
 vlVdpPresentationQueueTargetDestroy(VdpPresentationQueueTarget presentation_queue_target)
 {
@@ -145,10 +154,13 @@ vlVdpPresentationQueueTargetDestroy(VdpPresentationQueueTarget presentation_queu
    return VDP_STATUS_OK;
 }
 
+/**
+ * Destroy a VdpDevice.
+ */
 VdpStatus
 vlVdpDeviceDestroy(VdpDevice device)
 {
-   VDPAU_MSG(VDPAU_TRACE, "[VDPAU] Destroying destroy\n");
+   VDPAU_MSG(VDPAU_TRACE, "[VDPAU] Destroying device\n");
 
    vlVdpDevice *dev = vlGetDataHTAB(device);
    if (!dev)
@@ -161,11 +173,14 @@ vlVdpDeviceDestroy(VdpDevice device)
    FREE(dev);
    vlDestroyHTAB();
 
-   VDPAU_MSG(VDPAU_TRACE, "[VDPAU] Device destroyed succesfully\n");
+   VDPAU_MSG(VDPAU_TRACE, "[VDPAU] Device destroyed successfully\n");
 
    return VDP_STATUS_OK;
 }
 
+/**
+ * Retrieve a VDPAU function pointer.
+ */
 VdpStatus
 vlVdpGetProcAddress(VdpDevice device, VdpFuncId function_id, void **function_pointer)
 {
@@ -186,6 +201,9 @@ vlVdpGetProcAddress(VdpDevice device, VdpFuncId function_id, void **function_poi
 
 #define _ERROR_TYPE(TYPE,STRING) case TYPE: return STRING;
 
+/**
+ * Retrieve a string describing an error code.
+ */
 char const *
 vlVdpGetErrorString (VdpStatus status)
 {

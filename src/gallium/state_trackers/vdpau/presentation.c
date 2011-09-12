@@ -34,6 +34,9 @@
 
 #include "vdpau_private.h"
 
+/**
+ * Create a VdpPresentationQueue.
+ */
 VdpStatus
 vlVdpPresentationQueueCreate(VdpDevice device,
                              VdpPresentationQueueTarget presentation_queue_target,
@@ -84,6 +87,9 @@ no_compositor:
    return ret;
 }
 
+/**
+ * Destroy a VdpPresentationQueue.
+ */
 VdpStatus
 vlVdpPresentationQueueDestroy(VdpPresentationQueue presentation_queue)
 {
@@ -103,13 +109,16 @@ vlVdpPresentationQueueDestroy(VdpPresentationQueue presentation_queue)
    return VDP_STATUS_OK;
 }
 
+/**
+ * Configure the background color setting.
+ */
 VdpStatus
 vlVdpPresentationQueueSetBackgroundColor(VdpPresentationQueue presentation_queue,
                                          VdpColor *const background_color)
 {
    vlVdpPresentationQueue *pq;
 
-   VDPAU_MSG(VDPAU_TRACE, "[VDPAU] Setting Background Color\n");
+   VDPAU_MSG(VDPAU_TRACE, "[VDPAU] Setting background color\n");
 
    if (!background_color)
       return VDP_STATUS_INVALID_POINTER;
@@ -123,26 +132,39 @@ vlVdpPresentationQueueSetBackgroundColor(VdpPresentationQueue presentation_queue
    return VDP_STATUS_OK;
 }
 
+/**
+ * Retrieve the current background color setting.
+ */
 VdpStatus
 vlVdpPresentationQueueGetBackgroundColor(VdpPresentationQueue presentation_queue,
                                          VdpColor *const background_color)
 {
+   VDPAU_MSG(VDPAU_TRACE, "[VDPAU] Getting background color\n");
+
    if (!background_color)
       return VDP_STATUS_INVALID_POINTER;
 
    return VDP_STATUS_NO_IMPLEMENTATION;
 }
 
+/**
+ * Retrieve the presentation queue's "current" time.
+ */
 VdpStatus
 vlVdpPresentationQueueGetTime(VdpPresentationQueue presentation_queue,
                               VdpTime *current_time)
 {
+   VDPAU_MSG(VDPAU_TRACE, "[VDPAU] Getting queue time\n");
+
    if (!current_time)
       return VDP_STATUS_INVALID_POINTER;
 
    return VDP_STATUS_NO_IMPLEMENTATION;
 }
 
+/**
+ * Enter a surface into the presentation queue.
+ */
 VdpStatus
 vlVdpPresentationQueueDisplay(VdpPresentationQueue presentation_queue,
                               VdpOutputSurface surface,
@@ -198,6 +220,9 @@ vlVdpPresentationQueueDisplay(VdpPresentationQueue presentation_queue,
    return VDP_STATUS_OK;
 }
 
+/**
+ * Wait for a surface to finish being displayed.
+ */
 VdpStatus
 vlVdpPresentationQueueBlockUntilSurfaceIdle(VdpPresentationQueue presentation_queue,
                                             VdpOutputSurface surface,
@@ -210,6 +235,9 @@ vlVdpPresentationQueueBlockUntilSurfaceIdle(VdpPresentationQueue presentation_qu
    return VDP_STATUS_OK;
 }
 
+/**
+ * Poll the current queue status of a surface.
+ */
 VdpStatus
 vlVdpPresentationQueueQuerySurfaceStatus(VdpPresentationQueue presentation_queue,
                                          VdpOutputSurface surface,

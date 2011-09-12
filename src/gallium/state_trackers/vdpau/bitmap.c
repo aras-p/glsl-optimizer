@@ -29,6 +29,9 @@
 
 #include "vdpau_private.h"
 
+/**
+ * Create a VdpBitmapSurface.
+ */
 VdpStatus
 vlVdpBitmapSurfaceCreate(VdpDevice device,
                          VdpRGBAFormat rgba_format,
@@ -43,12 +46,18 @@ vlVdpBitmapSurfaceCreate(VdpDevice device,
    return VDP_STATUS_NO_IMPLEMENTATION;
 }
 
+/**
+ * Destroy a VdpBitmapSurface.
+ */
 VdpStatus
 vlVdpBitmapSurfaceDestroy(VdpBitmapSurface surface)
 {
    return VDP_STATUS_NO_IMPLEMENTATION;
 }
 
+/**
+ * Retrieve the parameters used to create a VdpBitmapSurface.
+ */
 VdpStatus
 vlVdpBitmapSurfaceGetParameters(VdpBitmapSurface surface,
                                 VdpRGBAFormat *rgba_format,
@@ -61,6 +70,10 @@ vlVdpBitmapSurfaceGetParameters(VdpBitmapSurface surface,
    return VDP_STATUS_NO_IMPLEMENTATION;
 }
 
+/**
+ * Copy image data from application memory in the surface's native format to
+ * a VdpBitmapSurface.
+ */
 VdpStatus
 vlVdpBitmapSurfacePutBitsNative(VdpBitmapSurface surface,
                                 void const *const *source_data,

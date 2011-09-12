@@ -31,6 +31,9 @@
 
 #include "vdpau_private.h"
 
+/**
+ * Create a VdpDecoder.
+ */
 VdpStatus
 vlVdpDecoderCreate(VdpDevice device,
                    VdpDecoderProfile profile,
@@ -129,6 +132,9 @@ error_decoder:
    return ret;
 }
 
+/**
+ * Destroy a VdpDecoder.
+ */
 VdpStatus
 vlVdpDecoderDestroy(VdpDecoder decoder)
 {
@@ -154,6 +160,9 @@ vlVdpDecoderDestroy(VdpDecoder decoder)
    return VDP_STATUS_OK;
 }
 
+/**
+ * Retrieve the parameters used to create a VdpBitmapSurface.
+ */
 VdpStatus
 vlVdpDecoderGetParameters(VdpDecoder decoder,
                           VdpDecoderProfile *profile,
@@ -162,7 +171,7 @@ vlVdpDecoderGetParameters(VdpDecoder decoder,
 {
    vlVdpDecoder *vldecoder;
 
-   VDPAU_MSG(VDPAU_TRACE, "[VDPAU] decoder get parameters called\n");
+   VDPAU_MSG(VDPAU_TRACE, "[VDPAU] Decoder get parameters called\n");
 
    vldecoder = (vlVdpDecoder *)vlGetDataHTAB(decoder);
    if (!vldecoder)
@@ -175,6 +184,9 @@ vlVdpDecoderGetParameters(VdpDecoder decoder,
    return VDP_STATUS_OK;
 }
 
+/**
+ * Decode a mpeg 1/2 video.
+ */
 static VdpStatus
 vlVdpDecoderRenderMpeg12(struct pipe_video_decoder *decoder,
                          VdpPictureInfoMPEG1Or2 *picture_info,
@@ -186,7 +198,7 @@ vlVdpDecoderRenderMpeg12(struct pipe_video_decoder *decoder,
    struct pipe_video_buffer *ref_frames[2];
    unsigned i;
 
-   VDPAU_MSG(VDPAU_TRACE, "[VDPAU] Decoding MPEG2\n");
+   VDPAU_MSG(VDPAU_TRACE, "[VDPAU] Decoding MPEG12\n");
 
    i = 0;
 
@@ -242,6 +254,9 @@ vlVdpDecoderRenderMpeg12(struct pipe_video_decoder *decoder,
    return VDP_STATUS_OK;
 }
 
+/**
+ * Decode a compressed field/frame and render the result into a VdpVideoSurface.
+ */
 VdpStatus
 vlVdpDecoderRender(VdpDecoder decoder,
                    VdpVideoSurface target,
@@ -272,7 +287,7 @@ vlVdpDecoderRender(VdpDecoder decoder,
       // TODO: Recreate decoder with correct chroma
       return VDP_STATUS_INVALID_CHROMA_TYPE;
 
-   // TODO: Right now only mpeg 1 & 2 is supported.
+   // TODO: Right now only mpeg 1 & 2 videos are supported.
    switch (vldecoder->decoder->profile) {
    case PIPE_VIDEO_PROFILE_MPEG1:
    case PIPE_VIDEO_PROFILE_MPEG2_SIMPLE:

@@ -27,11 +27,18 @@
 
 #include <vdpau/vdpau.h>
 
+/**
+ * A callback to notify the client application that a device's display has
+ * been preempted.
+ */
 void vlVdpPreemptionCallback(VdpDevice device, void *context)
 {
    /* TODO: Implement preemption */
 }
 
+/**
+ * Configure the display preemption callback.
+ */
 VdpStatus vlVdpPreemptionCallbackRegister(VdpDevice device,
                                           VdpPreemptionCallback callback,
                                           void *context)

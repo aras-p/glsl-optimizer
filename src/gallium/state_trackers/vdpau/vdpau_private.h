@@ -41,6 +41,9 @@
 
 #include "vl_winsys.h"
 
+/* Full VDPAU API documentation available at :
+ * ftp://download.nvidia.com/XFree86/vdpau/doxygen/html/index.html */
+
 #define INFORMATION G3DVL VDPAU Driver Shared Library version VER_MAJOR.VER_MINOR
 #define QUOTEME(x) #x
 #define TOSTRING(x) QUOTEME(x)
@@ -119,7 +122,7 @@ PipeToFormatYCBCR(enum pipe_format p_format)
       //case PIPE_FORMAT_YUVA:
         // return VDP_YCBCR_FORMAT_Y8U8V8A8;
       case PIPE_FORMAT_VUYA:
-	 return VDP_YCBCR_FORMAT_V8U8Y8A8;
+         return VDP_YCBCR_FORMAT_V8U8Y8A8;
       default:
          assert(0);
    }

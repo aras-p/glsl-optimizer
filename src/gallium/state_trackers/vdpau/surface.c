@@ -36,6 +36,9 @@
 
 #include "vdpau_private.h"
 
+/**
+ * Create a VdpVideoSurface.
+ */
 VdpStatus
 vlVdpVideoSurfaceCreate(VdpDevice device, VdpChromaType chroma_type,
                         uint32_t width, uint32_t height,
@@ -97,6 +100,9 @@ inv_size:
    return ret;
 }
 
+/**
+ * Destroy a VdpVideoSurface.
+ */
 VdpStatus
 vlVdpVideoSurfaceDestroy(VdpVideoSurface surface)
 {
@@ -113,6 +119,9 @@ vlVdpVideoSurfaceDestroy(VdpVideoSurface surface)
    return VDP_STATUS_OK;
 }
 
+/**
+ * Retrieve the parameters used to create a VdpVideoSurface.
+ */
 VdpStatus
 vlVdpVideoSurfaceGetParameters(VdpVideoSurface surface,
                                VdpChromaType *chroma_type,
@@ -132,6 +141,10 @@ vlVdpVideoSurfaceGetParameters(VdpVideoSurface surface,
    return VDP_STATUS_OK;
 }
 
+/**
+ * Copy image data from a VdpVideoSurface to application memory in a specified
+ * YCbCr format.
+ */
 VdpStatus
 vlVdpVideoSurfaceGetBitsYCbCr(VdpVideoSurface surface,
                               VdpYCbCrFormat destination_ycbcr_format,
@@ -152,6 +165,10 @@ vlVdpVideoSurfaceGetBitsYCbCr(VdpVideoSurface surface,
    return VDP_STATUS_NO_IMPLEMENTATION;
 }
 
+/**
+ * Copy image data from application memory in a specific YCbCr format to
+ * a VdpVideoSurface.
+ */
 VdpStatus
 vlVdpVideoSurfacePutBitsYCbCr(VdpVideoSurface surface,
                               VdpYCbCrFormat source_ycbcr_format,
