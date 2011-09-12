@@ -176,8 +176,8 @@ void st_init_limits(struct st_context *st)
       /* Gallium doesn't really care about local vs. env parameters so use the
        * same limits.
        */
-      pc->MaxLocalParams = pc->MaxParameters;
-      pc->MaxEnvParams = pc->MaxParameters;
+      pc->MaxLocalParams = MIN2(pc->MaxParameters, MAX_PROGRAM_LOCAL_PARAMS);
+      pc->MaxEnvParams = MIN2(pc->MaxParameters, MAX_PROGRAM_ENV_PARAMS);
 
       options->EmitNoNoise = TRUE;
 
