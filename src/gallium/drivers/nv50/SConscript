@@ -4,7 +4,7 @@ env = env.Clone()
 
 nv50 = env.ConvenienceLibrary(
     target = 'nv50',
-    source = env.ParserSourceList('Makefile.sources', 'C_SOURCES')
+    source = env.ParseSourceList('Makefile.sources', 'C_SOURCES')
     )
 
 Export('nv50')

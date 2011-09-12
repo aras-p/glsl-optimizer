@@ -8,7 +8,7 @@ env.PrependUnique(delete_existing=1, CPPPATH = [
 
 nvfx = env.ConvenienceLibrary(
     target = 'nvfx',
-    source = env.ParserSourceList('Makefile.sources', 'C_SOURCES')
+    source = env.ParseSourceList('Makefile.sources', 'C_SOURCES')
     )
 
 Export('nvfx')
