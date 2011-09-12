@@ -3031,14 +3031,11 @@ compressed_texture_error_check(struct gl_context *ctx, GLint dimensions,
    const GLenum proxyTarget = get_proxy_target(target);
    const GLint maxLevels = _mesa_max_texture_levels(ctx, target);
    GLint expectedSize;
+   GLenum choose_format;
+   GLenum choose_type;
+   GLenum proxy_format;
 
    *reason = ""; /* no error */
-
-   /* check level */
-   if (level < 0 || level >= maxLevels) {
-      *reason = "level";
-      return GL_INVALID_VALUE;
-   }
 
    if (!target_can_be_compressed(ctx, target, internalFormat)) {
       *reason = "target";
@@ -3049,6 +3046,68 @@ compressed_texture_error_check(struct gl_context *ctx, GLint dimensions,
    if (!_mesa_is_compressed_format(ctx, internalFormat)) {
       *reason = "internalFormat";
       return GL_INVALID_ENUM;
+   }
+
+   switch (internalFormat) {
+#if FEATURE_ES
+   case GL_PALETTE4_RGB8_OES:
+   case GL_PALETTE4_RGBA8_OES:
+   case GL_PALETTE4_R5_G6_B5_OES:
+   case GL_PALETTE4_RGBA4_OES:
+   case GL_PALETTE4_RGB5_A1_OES:
+   case GL_PALETTE8_RGB8_OES:
+   case GL_PALETTE8_RGBA8_OES:
+   case GL_PALETTE8_R5_G6_B5_OES:
+   case GL_PALETTE8_RGBA4_OES:
+   case GL_PALETTE8_RGB5_A1_OES:
+      _mesa_cpal_compressed_format_type(internalFormat, &choose_format,
+					&choose_type);
+      proxy_format = choose_format;
+
+      /* check level */
+      if (level > 0 || level < -maxLevels) {
+	 *reason = "level";
+	 return GL_INVALID_VALUE;
+      }
+
+      if (dimensions != 2) {
+	 *reason = "compressed paletted textures must be 2D";
+	 return GL_INVALID_OPERATION;
+      }
+
+      /* Figure out the expected texture size (in bytes).  This will be
+       * checked against the actual size later.
+       */
+      expectedSize = _mesa_cpal_compressed_size(level, internalFormat,
+						width, height);
+
+      /* This is for the benefit of the TestProxyTexImage below.  It expects
+       * level to be non-negative.  OES_compressed_paletted_texture uses a
+       * weird mechanism where the level specified to glCompressedTexImage2D
+       * is -(n-1) number of levels in the texture, and the data specifies the
+       * complete mipmap stack.  This is done to ensure the palette is the
+       * same for all levels.
+       */
+      level = -level;
+      break;
+#endif
+
+   default:
+      choose_format = GL_NONE;
+      choose_type = GL_NONE;
+      proxy_format = internalFormat;
+
+      /* check level */
+      if (level < 0 || level >= maxLevels) {
+	 *reason = "level";
+	 return GL_INVALID_VALUE;
+      }
+
+      /* Figure out the expected texture size (in bytes).  This will be
+       * checked against the actual size later.
+       */
+      expectedSize = compressed_tex_size(width, height, depth, internalFormat);
+      break;
    }
 
    /* This should really never fail */
@@ -3073,8 +3132,8 @@ compressed_texture_error_check(struct gl_context *ctx, GLint dimensions,
    /* check image size against compression block size */
    {
       gl_format texFormat =
-         ctx->Driver.ChooseTextureFormat(ctx, internalFormat,
-                                         GL_NONE, GL_NONE);
+         ctx->Driver.ChooseTextureFormat(ctx, proxy_format,
+					 choose_format, choose_type);
       GLuint bw, bh;
 
       _mesa_get_format_block_size(texFormat, &bw, &bh);
@@ -3092,15 +3151,15 @@ compressed_texture_error_check(struct gl_context *ctx, GLint dimensions,
 
    /* check image sizes */
    if (!ctx->Driver.TestProxyTexImage(ctx, proxyTarget, level,
-                                      internalFormat, GL_NONE, GL_NONE,
-                                      width, height, depth, border)) {
+				      proxy_format, choose_format,
+				      choose_type,
+				      width, height, depth, border)) {
       /* See error comment above */
       *reason = "invalid width, height or format";
       return GL_INVALID_OPERATION;
    }
 
    /* check image size in bytes */
-   expectedSize = compressed_tex_size(width, height, depth, internalFormat);
    if (expectedSize != imageSize) {
       /* Per GL_ARB_texture_compression:  GL_INVALID_VALUE is generated [...]
        * if <imageSize> is not consistent with the format, dimensions, and
