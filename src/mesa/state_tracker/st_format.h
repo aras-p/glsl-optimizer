@@ -83,5 +83,4 @@ extern void
 st_translate_color(const GLfloat colorIn[4], GLenum baseFormat,
                    GLfloat colorOut[4]);
 
-
 #endif /* ST_FORMAT_H */

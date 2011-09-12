@@ -1569,10 +1569,10 @@ _mesa_meta_Clear(struct gl_context *ctx, GLbitfield buffers)
 
       /* vertex colors */
       for (i = 0; i < 4; i++) {
-         verts[i].r = ctx->Color.ClearColorUnclamped[0];
-         verts[i].g = ctx->Color.ClearColorUnclamped[1];
-         verts[i].b = ctx->Color.ClearColorUnclamped[2];
-         verts[i].a = ctx->Color.ClearColorUnclamped[3];
+         verts[i].r = ctx->Color.ClearColor.f[0];
+         verts[i].g = ctx->Color.ClearColor.f[1];
+         verts[i].b = ctx->Color.ClearColor.f[2];
+         verts[i].a = ctx->Color.ClearColor.f[3];
       }
 
       /* upload new vertex data */
@@ -1679,7 +1679,7 @@ _mesa_meta_glsl_Clear(struct gl_context *ctx, GLbitfield buffers)
 
    _mesa_UseProgramObjectARB(clear->ShaderProg);
    _mesa_Uniform4fvARB(clear->ColorLocation, 1,
-		       ctx->Color.ClearColorUnclamped);
+		       ctx->Color.ClearColor.f);
 
    _mesa_BindVertexArray(clear->ArrayObj);
    _mesa_BindBufferARB(GL_ARRAY_BUFFER_ARB, clear->VBO);

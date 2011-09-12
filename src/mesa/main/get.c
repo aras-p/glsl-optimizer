@@ -1673,10 +1673,13 @@ find_custom_value(struct gl_context *ctx, const struct value_desc *d, union valu
          COPY_4FV(v->value_float_4, ctx->Fog.ColorUnclamped);
       break;
    case GL_COLOR_CLEAR_VALUE:
-      if(ctx->Color._ClampFragmentColor)
-         COPY_4FV(v->value_float_4, ctx->Color.ClearColor);
-      else
-         COPY_4FV(v->value_float_4, ctx->Color.ClearColorUnclamped);
+      if(ctx->Color._ClampFragmentColor) {
+         v->value_float_4[0] = CLAMP(ctx->Color.ClearColor.f[0], 0.0F, 1.0F);
+         v->value_float_4[1] = CLAMP(ctx->Color.ClearColor.f[1], 0.0F, 1.0F);
+         v->value_float_4[2] = CLAMP(ctx->Color.ClearColor.f[2], 0.0F, 1.0F);
+         v->value_float_4[3] = CLAMP(ctx->Color.ClearColor.f[3], 0.0F, 1.0F);
+      } else
+         COPY_4FV(v->value_float_4, ctx->Color.ClearColor.f);
       break;
    case GL_BLEND_COLOR_EXT:
       if(ctx->Color._ClampFragmentColor)

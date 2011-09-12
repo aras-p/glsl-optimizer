@@ -1724,7 +1724,8 @@ void r200UpdateViewportOffset( struct gl_context *ctx )
  * Miscellaneous
  */
 
-static void r200ClearColor( struct gl_context *ctx, const GLfloat c[4] )
+static void r200ClearColor( struct gl_context *ctx,
+                            const union gl_color_union c )
 {
    r200ContextPtr rmesa = R200_CONTEXT(ctx);
    GLubyte color[4];
@@ -1733,10 +1734,10 @@ static void r200ClearColor( struct gl_context *ctx, const GLfloat c[4] )
    rrb = radeon_get_colorbuffer(&rmesa->radeon);
    if (!rrb)
      return;
-   CLAMPED_FLOAT_TO_UBYTE(color[0], c[0]);
-   CLAMPED_FLOAT_TO_UBYTE(color[1], c[1]);
-   CLAMPED_FLOAT_TO_UBYTE(color[2], c[2]);
-   CLAMPED_FLOAT_TO_UBYTE(color[3], c[3]);
+   UNCLAMPED_FLOAT_TO_UBYTE(color[0], c.f[0]);
+   UNCLAMPED_FLOAT_TO_UBYTE(color[1], c.f[1]);
+   UNCLAMPED_FLOAT_TO_UBYTE(color[2], c.f[2]);
+   UNCLAMPED_FLOAT_TO_UBYTE(color[3], c.f[3]);
    rmesa->radeon.state.color.clear = radeonPackColor( rrb->cpp,
                                              color[0], color[1],
                                              color[2], color[3] );

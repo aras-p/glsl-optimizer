@@ -589,7 +589,8 @@ struct dd_function_table {
                               GLenum sfactorRGB, GLenum dfactorRGB,
                               GLenum sfactorA, GLenum dfactorA);
    /** Specify clear values for the color buffers */
-   void (*ClearColor)(struct gl_context *ctx, const GLfloat color[4]);
+   void (*ClearColor)(struct gl_context *ctx,
+                      const union gl_color_union color);
    /** Specify the clear value for the depth buffer */
    void (*ClearDepth)(struct gl_context *ctx, GLclampd d);
    /** Specify the clear value for the stencil buffer */

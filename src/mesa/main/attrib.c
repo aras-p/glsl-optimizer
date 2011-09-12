@@ -884,10 +884,10 @@ _mesa_PopAttrib(void)
 
                color = (const struct gl_colorbuffer_attrib *) attr->data;
                _mesa_ClearIndex((GLfloat) color->ClearIndex);
-               _mesa_ClearColor(color->ClearColorUnclamped[0],
-                                color->ClearColorUnclamped[1],
-                                color->ClearColorUnclamped[2],
-                                color->ClearColorUnclamped[3]);
+               _mesa_ClearColor(color->ClearColor.f[0],
+                                color->ClearColor.f[1],
+                                color->ClearColor.f[2],
+                                color->ClearColor.f[3]);
                _mesa_IndexMask(color->IndexMask);
                if (!ctx->Extensions.EXT_draw_buffers2) {
                   _mesa_ColorMask((GLboolean) (color->ColorMask[0][0] != 0),

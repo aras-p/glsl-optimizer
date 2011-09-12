@@ -320,12 +320,12 @@ intelClearWithBlit(struct gl_context *ctx, GLbitfield mask)
 	 clear_val = clear_depth_value;
       } else {
 	 uint8_t clear[4];
-	 GLclampf *color = ctx->Color.ClearColor;
+	 GLfloat *color = ctx->Color.ClearColor.f;
 
-	 CLAMPED_FLOAT_TO_UBYTE(clear[0], color[0]);
-	 CLAMPED_FLOAT_TO_UBYTE(clear[1], color[1]);
-	 CLAMPED_FLOAT_TO_UBYTE(clear[2], color[2]);
-	 CLAMPED_FLOAT_TO_UBYTE(clear[3], color[3]);
+	 UNCLAMPED_FLOAT_TO_UBYTE(clear[0], color[0]);
+	 UNCLAMPED_FLOAT_TO_UBYTE(clear[1], color[1]);
+	 UNCLAMPED_FLOAT_TO_UBYTE(clear[2], color[2]);
+	 UNCLAMPED_FLOAT_TO_UBYTE(clear[3], color[3]);
 
 	 switch (irb->Base.Format) {
 	 case MESA_FORMAT_ARGB8888:

@@ -60,20 +60,20 @@ clear_rgba_buffer_with_masking(struct gl_context *ctx, struct gl_renderbuffer *r
    span.array->ChanType = rb->DataType;
    if (span.array->ChanType == GL_UNSIGNED_BYTE) {
       GLubyte clearColor[4];
-      UNCLAMPED_FLOAT_TO_UBYTE(clearColor[RCOMP], ctx->Color.ClearColor[0]);
-      UNCLAMPED_FLOAT_TO_UBYTE(clearColor[GCOMP], ctx->Color.ClearColor[1]);
-      UNCLAMPED_FLOAT_TO_UBYTE(clearColor[BCOMP], ctx->Color.ClearColor[2]);
-      UNCLAMPED_FLOAT_TO_UBYTE(clearColor[ACOMP], ctx->Color.ClearColor[3]);
+      UNCLAMPED_FLOAT_TO_UBYTE(clearColor[RCOMP], ctx->Color.ClearColor.f[0]);
+      UNCLAMPED_FLOAT_TO_UBYTE(clearColor[GCOMP], ctx->Color.ClearColor.f[1]);
+      UNCLAMPED_FLOAT_TO_UBYTE(clearColor[BCOMP], ctx->Color.ClearColor.f[2]);
+      UNCLAMPED_FLOAT_TO_UBYTE(clearColor[ACOMP], ctx->Color.ClearColor.f[3]);
       for (i = 0; i < width; i++) {
          COPY_4UBV(span.array->rgba[i], clearColor);
       }
    }
    else if (span.array->ChanType == GL_UNSIGNED_SHORT) {
       GLushort clearColor[4];
-      UNCLAMPED_FLOAT_TO_USHORT(clearColor[RCOMP], ctx->Color.ClearColor[0]);
-      UNCLAMPED_FLOAT_TO_USHORT(clearColor[GCOMP], ctx->Color.ClearColor[1]);
-      UNCLAMPED_FLOAT_TO_USHORT(clearColor[BCOMP], ctx->Color.ClearColor[2]);
-      UNCLAMPED_FLOAT_TO_USHORT(clearColor[ACOMP], ctx->Color.ClearColor[3]);
+      UNCLAMPED_FLOAT_TO_USHORT(clearColor[RCOMP], ctx->Color.ClearColor.f[0]);
+      UNCLAMPED_FLOAT_TO_USHORT(clearColor[GCOMP], ctx->Color.ClearColor.f[1]);
+      UNCLAMPED_FLOAT_TO_USHORT(clearColor[BCOMP], ctx->Color.ClearColor.f[2]);
+      UNCLAMPED_FLOAT_TO_USHORT(clearColor[ACOMP], ctx->Color.ClearColor.f[3]);
       for (i = 0; i < width; i++) {
          COPY_4V_CAST(span.array->rgba[i], clearColor, GLchan);
       }
@@ -81,10 +81,10 @@ clear_rgba_buffer_with_masking(struct gl_context *ctx, struct gl_renderbuffer *r
    else {
       ASSERT(span.array->ChanType == GL_FLOAT);
       for (i = 0; i < width; i++) {
-         CLAMPED_FLOAT_TO_CHAN(span.array->rgba[i][0], ctx->Color.ClearColor[0]);
-         CLAMPED_FLOAT_TO_CHAN(span.array->rgba[i][1], ctx->Color.ClearColor[1]);
-         CLAMPED_FLOAT_TO_CHAN(span.array->rgba[i][2], ctx->Color.ClearColor[2]);
-         CLAMPED_FLOAT_TO_CHAN(span.array->rgba[i][3], ctx->Color.ClearColor[3]);
+         UNCLAMPED_FLOAT_TO_CHAN(span.array->rgba[i][0], ctx->Color.ClearColor.f[0]);
+         UNCLAMPED_FLOAT_TO_CHAN(span.array->rgba[i][1], ctx->Color.ClearColor.f[1]);
+         UNCLAMPED_FLOAT_TO_CHAN(span.array->rgba[i][2], ctx->Color.ClearColor.f[2]);
+         UNCLAMPED_FLOAT_TO_CHAN(span.array->rgba[i][3], ctx->Color.ClearColor.f[3]);
       }
    }
 
@@ -115,6 +115,7 @@ clear_rgba_buffer(struct gl_context *ctx, struct gl_renderbuffer *rb, GLuint buf
    GLubyte clear8[4];
    GLushort clear16[4];
    GLvoid *clearVal;
+   GLfloat clearFloat[4];
    GLint i;
 
    ASSERT(ctx->Color.ColorMask[buf][0] &&
@@ -126,21 +127,25 @@ clear_rgba_buffer(struct gl_context *ctx, struct gl_renderbuffer *rb, GLuint buf
 
    switch (rb->DataType) {
       case GL_UNSIGNED_BYTE:
-         UNCLAMPED_FLOAT_TO_UBYTE(clear8[0], ctx->Color.ClearColor[0]);
-         UNCLAMPED_FLOAT_TO_UBYTE(clear8[1], ctx->Color.ClearColor[1]);
-         UNCLAMPED_FLOAT_TO_UBYTE(clear8[2], ctx->Color.ClearColor[2]);
-         UNCLAMPED_FLOAT_TO_UBYTE(clear8[3], ctx->Color.ClearColor[3]);
+         UNCLAMPED_FLOAT_TO_UBYTE(clear8[0], ctx->Color.ClearColor.f[0]);
+         UNCLAMPED_FLOAT_TO_UBYTE(clear8[1], ctx->Color.ClearColor.f[1]);
+         UNCLAMPED_FLOAT_TO_UBYTE(clear8[2], ctx->Color.ClearColor.f[2]);
+         UNCLAMPED_FLOAT_TO_UBYTE(clear8[3], ctx->Color.ClearColor.f[3]);
          clearVal = clear8;
          break;
       case GL_UNSIGNED_SHORT:
-         UNCLAMPED_FLOAT_TO_USHORT(clear16[0], ctx->Color.ClearColor[0]);
-         UNCLAMPED_FLOAT_TO_USHORT(clear16[1], ctx->Color.ClearColor[1]);
-         UNCLAMPED_FLOAT_TO_USHORT(clear16[2], ctx->Color.ClearColor[2]);
-         UNCLAMPED_FLOAT_TO_USHORT(clear16[3], ctx->Color.ClearColor[3]);
+         UNCLAMPED_FLOAT_TO_USHORT(clear16[0], ctx->Color.ClearColor.f[0]);
+         UNCLAMPED_FLOAT_TO_USHORT(clear16[1], ctx->Color.ClearColor.f[1]);
+         UNCLAMPED_FLOAT_TO_USHORT(clear16[2], ctx->Color.ClearColor.f[2]);
+         UNCLAMPED_FLOAT_TO_USHORT(clear16[3], ctx->Color.ClearColor.f[3]);
          clearVal = clear16;
          break;
       case GL_FLOAT:
-         clearVal = ctx->Color.ClearColor;
+         clearFloat[0] = CLAMP(ctx->Color.ClearColor.f[0], 0.0F, 1.0F);
+         clearFloat[1] = CLAMP(ctx->Color.ClearColor.f[1], 0.0F, 1.0F);
+         clearFloat[2] = CLAMP(ctx->Color.ClearColor.f[2], 0.0F, 1.0F);
+         clearFloat[3] = CLAMP(ctx->Color.ClearColor.f[3], 0.0F, 1.0F);
+         clearVal = clearFloat;
          break;
       default:
          _mesa_problem(ctx, "Bad rb DataType in clear_color_buffer");

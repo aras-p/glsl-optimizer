@@ -249,14 +249,15 @@ static void wmesa_flush(struct gl_context *ctx)
 /*
  * Set the color used to clear the color buffer.
  */
-static void clear_color(struct gl_context *ctx, const GLfloat color[4])
+static void clear_color(struct gl_context *ctx,
+                        const union gl_color_union color)
 {
     WMesaContext pwc = wmesa_context(ctx);
     GLubyte col[3];
 
-    CLAMPED_FLOAT_TO_UBYTE(col[0], color[0]);
-    CLAMPED_FLOAT_TO_UBYTE(col[1], color[1]);
-    CLAMPED_FLOAT_TO_UBYTE(col[2], color[2]);
+    UNCLAMPED_FLOAT_TO_UBYTE(col[0], color.f[0]);
+    UNCLAMPED_FLOAT_TO_UBYTE(col[1], color.f[1]);
+    UNCLAMPED_FLOAT_TO_UBYTE(col[2], color.f[2]);
     pwc->clearColorRef = RGB(col[0], col[1], col[2]);
     DeleteObject(pwc->clearPen);
     DeleteObject(pwc->clearBrush);

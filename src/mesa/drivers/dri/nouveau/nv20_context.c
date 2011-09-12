@@ -59,7 +59,7 @@ nv20_clear(struct gl_context *ctx, GLbitfield buffers)
 			clear |= NV20_3D_CLEAR_BUFFERS_COLOR_A;
 
 		BEGIN_RING(chan, kelvin, NV20_3D_CLEAR_VALUE, 1);
-		OUT_RING(chan, pack_rgba_f(s->format, ctx->Color.ClearColor));
+		OUT_RING(chan, pack_rgba_clamp_f(s->format, ctx->Color.ClearColor.f));
 
 		buffers &= ~BUFFER_BITS_COLOR;
 	}

@@ -100,7 +100,7 @@ nouveau_clear(struct gl_context *ctx, GLbitfield buffers)
 
 		if (buf & BUFFER_BITS_COLOR) {
 			mask = pack_rgba_i(s->format, ctx->Color.ColorMask[0]);
-			value = pack_rgba_f(s->format, ctx->Color.ClearColor);
+			value = pack_rgba_clamp_f(s->format, ctx->Color.ClearColor.f);
 
 			if (mask)
 				context_drv(ctx)->surface_fill(

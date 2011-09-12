@@ -83,16 +83,11 @@ _mesa_ClearColor( GLclampf red, GLclampf green, GLclampf blue, GLclampf alpha )
    tmp[2] = blue;
    tmp[3] = alpha;
 
-   if (TEST_EQ_4V(tmp, ctx->Color.ClearColorUnclamped))
+   if (TEST_EQ_4V(tmp, ctx->Color.ClearColor.f))
       return; /* no change */
 
    FLUSH_VERTICES(ctx, _NEW_COLOR);
-   COPY_4V(ctx->Color.ClearColorUnclamped, tmp);
-
-   ctx->Color.ClearColor[0] = CLAMP(tmp[0], 0.0F, 1.0F);
-   ctx->Color.ClearColor[1] = CLAMP(tmp[1], 0.0F, 1.0F);
-   ctx->Color.ClearColor[2] = CLAMP(tmp[2], 0.0F, 1.0F);
-   ctx->Color.ClearColor[3] = CLAMP(tmp[3], 0.0F, 1.0F);
+   COPY_4V(ctx->Color.ClearColor.f, tmp);
 
    if (ctx->Driver.ClearColor) {
       /* it's OK to call glClearColor in CI mode but it should be a NOP */
@@ -110,25 +105,22 @@ _mesa_ClearColor( GLclampf red, GLclampf green, GLclampf blue, GLclampf alpha )
 void GLAPIENTRY
 _mesa_ClearColorIiEXT(GLint r, GLint g, GLint b, GLint a)
 {
-   GLfloat tmp[4];
+   GLint tmp[4];
    GET_CURRENT_CONTEXT(ctx);
    ASSERT_OUTSIDE_BEGIN_END(ctx);
 
-   tmp[0] = (GLfloat) r;
-   tmp[1] = (GLfloat) g;
-   tmp[2] = (GLfloat) b;
-   tmp[3] = (GLfloat) a;
+   tmp[0] = r;
+   tmp[1] = g;
+   tmp[2] = b;
+   tmp[3] = a;
 
-   if (TEST_EQ_4V(tmp, ctx->Color.ClearColor))
+   if (TEST_EQ_4V(tmp, ctx->Color.ClearColor.i))
       return; /* no change */
 
    FLUSH_VERTICES(ctx, _NEW_COLOR);
+   COPY_4V(ctx->Color.ClearColor.i, tmp);
 
-   /* XXX we should eventually have a float/int/uint union for
-    * the ctx->Color.ClearColor state.
-    */
-   COPY_4V(ctx->Color.ClearColor, tmp);
-
+   /* these should be NOP calls for drivers supporting EXT_texture_integer */
    if (ctx->Driver.ClearColor) {
       ctx->Driver.ClearColor(ctx, ctx->Color.ClearColor);
    }
@@ -141,25 +133,22 @@ _mesa_ClearColorIiEXT(GLint r, GLint g, GLint b, GLint a)
 void GLAPIENTRY
 _mesa_ClearColorIuiEXT(GLuint r, GLuint g, GLuint b, GLuint a)
 {
-   GLfloat tmp[4];
+   GLuint tmp[4];
    GET_CURRENT_CONTEXT(ctx);
    ASSERT_OUTSIDE_BEGIN_END(ctx);
 
-   tmp[0] = (GLfloat) r;
-   tmp[1] = (GLfloat) g;
-   tmp[2] = (GLfloat) b;
-   tmp[3] = (GLfloat) a;
+   tmp[0] = r;
+   tmp[1] = g;
+   tmp[2] = b;
+   tmp[3] = a;
 
-   if (TEST_EQ_4V(tmp, ctx->Color.ClearColor))
+   if (TEST_EQ_4V(tmp, ctx->Color.ClearColor.ui))
       return; /* no change */
 
    FLUSH_VERTICES(ctx, _NEW_COLOR);
+   COPY_4V(ctx->Color.ClearColor.ui, tmp);
 
-   /* XXX we should eventually have a float/int/uint union for
-    * the ctx->Color.ClearColor state.
-    */
-   COPY_4V(ctx->Color.ClearColor, tmp);
-
+   /* these should be NOP calls for drivers supporting EXT_texture_integer */
    if (ctx->Driver.ClearColor) {
       ctx->Driver.ClearColor(ctx, ctx->Color.ClearColor);
    }
@@ -364,21 +353,18 @@ _mesa_ClearBufferiv(GLenum buffer, GLint drawbuffer, const GLint *value)
             return;
          }
          else if (mask) {
-            /* XXX note: we're putting the integer clear values into the
-             * floating point state var.  This will not always work.  We'll
-             * need a new ctx->Driver.ClearBuffer() hook....
-             */
-            GLclampf clearSave[4];
+            union gl_color_union clearSave;
+
             /* save color */
-            COPY_4V(clearSave, ctx->Color.ClearColor);
+            clearSave = ctx->Color.ClearColor;
             /* set color */
-            COPY_4V_CAST(ctx->Color.ClearColor, value, GLclampf);
+            COPY_4V(ctx->Color.ClearColor.i, value);
             if (ctx->Driver.ClearColor)
                ctx->Driver.ClearColor(ctx, ctx->Color.ClearColor);
             /* clear buffer(s) */
             ctx->Driver.Clear(ctx, mask);
             /* restore color */
-            COPY_4V(ctx->Color.ClearColor, clearSave);
+            ctx->Color.ClearColor = clearSave;
             if (ctx->Driver.ClearColor)
                ctx->Driver.ClearColor(ctx, clearSave);
          }
@@ -418,21 +404,18 @@ _mesa_ClearBufferuiv(GLenum buffer, GLint drawbuffer, const GLuint *value)
             return;
          }
          else if (mask) {
-            /* XXX note: we're putting the uint clear values into the
-             * floating point state var.  This will not always work.  We'll
-             * need a new ctx->Driver.ClearBuffer() hook....
-             */
-            GLclampf clearSave[4];
+            union gl_color_union clearSave;
+
             /* save color */
-            COPY_4V(clearSave, ctx->Color.ClearColor);
+            clearSave = ctx->Color.ClearColor;
             /* set color */
-            COPY_4V_CAST(ctx->Color.ClearColor, value, GLclampf);
+            COPY_4V(ctx->Color.ClearColor.ui, value);
             if (ctx->Driver.ClearColor)
                ctx->Driver.ClearColor(ctx, ctx->Color.ClearColor);
             /* clear buffer(s) */
             ctx->Driver.Clear(ctx, mask);
             /* restore color */
-            COPY_4V(ctx->Color.ClearColor, clearSave);
+            ctx->Color.ClearColor = clearSave;
             if (ctx->Driver.ClearColor)
                ctx->Driver.ClearColor(ctx, clearSave);
          }
@@ -495,17 +478,18 @@ _mesa_ClearBufferfv(GLenum buffer, GLint drawbuffer, const GLfloat *value)
             return;
          }
          else if (mask) {
-            GLclampf clearSave[4];
+            union gl_color_union clearSave;
+
             /* save color */
-            COPY_4V(clearSave, ctx->Color.ClearColor);
+            clearSave = ctx->Color.ClearColor;
             /* set color */
-            COPY_4V_CAST(ctx->Color.ClearColor, value, GLclampf);
+            COPY_4V_CAST(ctx->Color.ClearColor.f, value, GLclampf);
             if (ctx->Driver.ClearColor)
                ctx->Driver.ClearColor(ctx, ctx->Color.ClearColor);
             /* clear buffer(s) */
             ctx->Driver.Clear(ctx, mask);
             /* restore color */
-            COPY_4V(ctx->Color.ClearColor, clearSave);
+            ctx->Color.ClearColor = clearSave;
             if (ctx->Driver.ClearColor)
                ctx->Driver.ClearColor(ctx, clearSave);
          }

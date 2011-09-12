@@ -795,8 +795,7 @@ void _mesa_init_color( struct gl_context * ctx )
    ctx->Color.IndexMask = ~0u;
    memset(ctx->Color.ColorMask, 0xff, sizeof(ctx->Color.ColorMask));
    ctx->Color.ClearIndex = 0;
-   ASSIGN_4V( ctx->Color.ClearColor, 0, 0, 0, 0 );
-   ASSIGN_4V( ctx->Color.ClearColorUnclamped, 0, 0, 0, 0 );
+   ASSIGN_4V( ctx->Color.ClearColor.f, 0, 0, 0, 0 );
    ctx->Color.AlphaEnabled = GL_FALSE;
    ctx->Color.AlphaFunc = GL_ALWAYS;
    ctx->Color.AlphaRef = 0;

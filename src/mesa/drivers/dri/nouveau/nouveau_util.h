@@ -79,6 +79,16 @@ pack_rgba_f(gl_format f, float c[])
 }
 
 static inline unsigned
+pack_rgba_clamp_f(gl_format f, float c[])
+{
+	return pack_rgba_i(f, (uint8_t []) {
+			   UNCLAMPED_FLOAT_TO_UBYTE(c[RCOMP]),
+			   UNCLAMPED_FLOAT_TO_UBYTE(c[GCOMP]),
+			   UNCLAMPED_FLOAT_TO_UBYTE(c[BCOMP]),
+			   UNCLAMPED_FLOAT_TO_UBYTE(c[ACOMP]) });
+}
+
+static inline unsigned
 pack_zs_f(gl_format f, float z, uint8_t s)
 {
 	return pack_zs_i(f, FLOAT_TO_UINT(z), s);
