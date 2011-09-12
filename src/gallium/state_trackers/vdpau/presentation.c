@@ -139,12 +139,20 @@ VdpStatus
 vlVdpPresentationQueueGetBackgroundColor(VdpPresentationQueue presentation_queue,
                                          VdpColor *const background_color)
 {
+   vlVdpPresentationQueue *pq;
+
    VDPAU_MSG(VDPAU_TRACE, "[VDPAU] Getting background color\n");
 
    if (!background_color)
       return VDP_STATUS_INVALID_POINTER;
 
-   return VDP_STATUS_NO_IMPLEMENTATION;
+   pq = vlGetDataHTAB(presentation_queue);
+   if (!pq)
+      return VDP_STATUS_INVALID_HANDLE;
+
+   vl_compositor_get_clear_color(&pq->compositor, (float*)background_color);
+
+   return VDP_STATUS_OK;
 }
 
 /**
