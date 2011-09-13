@@ -73,7 +73,7 @@ struct radeon *radeon_create(struct radeon_winsys *ws)
 		radeon->chip_class = CAYMAN;
 	} else if (radeon->family >= CHIP_CEDAR) {
 		radeon->chip_class = EVERGREEN;
-	} else if (radeon->family >= CHIP_RV730) {
+	} else if (radeon->family >= CHIP_RV770) {
 		radeon->chip_class = R700;
 	} else {
 		radeon->chip_class = R600;
