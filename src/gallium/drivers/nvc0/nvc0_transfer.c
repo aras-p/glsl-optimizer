@@ -111,33 +111,31 @@ nvc0_m2mf_push_linear(struct nouveau_context *nv,
    uint32_t *src = (uint32_t *)data;
    unsigned count = (size + 3) / 4;
 
-   MARK_RING (chan, 8, 2);
-
-   BEGIN_RING(chan, RING_MF(OFFSET_OUT_HIGH), 2);
-   OUT_RELOCh(chan, dst, offset, domain | NOUVEAU_BO_WR);
-   OUT_RELOCl(chan, dst, offset, domain | NOUVEAU_BO_WR);
-   BEGIN_RING(chan, RING_MF(LINE_LENGTH_IN), 2);
-   OUT_RING  (chan, size);
-   OUT_RING  (chan, 1);
-   BEGIN_RING(chan, RING_MF(EXEC), 1);
-   OUT_RING  (chan, 0x100111);
-
    while (count) {
-      unsigned nr = AVAIL_RING(chan);
+      unsigned nr;
 
-      if (nr < 9) {
-         FIRE_RING(chan);
-         nouveau_bo_validate(chan, dst, NOUVEAU_BO_WR);
-         continue;
-      }
-      nr = MIN2(count, nr - 1);
+      MARK_RING (chan, 16, 2);
+
+      nr = AVAIL_RING(chan) - 9;
+      nr = MIN2(count, nr);
       nr = MIN2(nr, NV04_PFIFO_MAX_PACKET_LEN);
-   
+
+      BEGIN_RING(chan, RING_MF(OFFSET_OUT_HIGH), 2);
+      OUT_RELOCh(chan, dst, offset, domain | NOUVEAU_BO_WR);
+      OUT_RELOCl(chan, dst, offset, domain | NOUVEAU_BO_WR);
+      BEGIN_RING(chan, RING_MF(LINE_LENGTH_IN), 2);
+      OUT_RING  (chan, nr * 4);
+      OUT_RING  (chan, 1);
+      BEGIN_RING(chan, RING_MF(EXEC), 1);
+      OUT_RING  (chan, 0x100111);
+
+      /* must not be interrupted (trap on QUERY fence, 0x50 works however) */
       BEGIN_RING_NI(chan, RING_MF(DATA), nr);
       OUT_RINGp (chan, src, nr);
 
-      src += nr;
       count -= nr;
+      src += nr;
+      offset += nr * 4;
    }
 }
 
