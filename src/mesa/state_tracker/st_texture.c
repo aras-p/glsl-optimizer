@@ -72,9 +72,8 @@ st_texture_create(struct st_context *st,
    if (target == PIPE_TEXTURE_CUBE)
       assert(layers == 6);
 
-   DBG("%s target %s format %s last_level %d\n", __FUNCTION__,
-       _mesa_lookup_enum_by_nr(target),
-       _mesa_lookup_enum_by_nr(format), last_level);
+   DBG("%s target %d format %s last_level %d\n", __FUNCTION__,
+       (int) target, util_format_name(format), last_level);
 
    assert(format);
    assert(screen->is_format_supported(screen, format, target, 0,
