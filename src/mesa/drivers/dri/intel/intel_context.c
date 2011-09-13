@@ -794,6 +794,9 @@ intelInitContext(struct intel_context *intel,
 
    ctx->Const.MaxSamples = 1.0;
 
+   if (intel->gen >= 6)
+      ctx->Const.MaxClipPlanes = 8;
+
    /* reinitialize the context point state.
     * It depend on constants in __struct gl_contextRec::Const
     */
