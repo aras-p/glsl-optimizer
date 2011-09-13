@@ -227,7 +227,6 @@ static void prepare_constant_buffer(struct brw_context *brw)
       /* Clip planes: _NEW_TRANSFORM plus _NEW_PROJECTION to get to
        * clip-space:
        */
-      assert(MAX_CLIP_PLANES == 6);
       for (j = 0; j < MAX_CLIP_PLANES; j++) {
 	 if (ctx->Transform.ClipPlanesEnabled & (1<<j)) {
 	    buf[offset + i * 4 + 0] = ctx->Transform._ClipUserPlane[j][0];
