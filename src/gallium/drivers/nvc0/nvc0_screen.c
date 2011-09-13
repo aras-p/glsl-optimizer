@@ -155,7 +155,7 @@ nvc0_screen_get_shader_param(struct pipe_screen *pscreen, unsigned shader,
    case PIPE_SHADER_CAP_MAX_TEX_INDIRECTIONS:
       return 16384;
    case PIPE_SHADER_CAP_MAX_CONTROL_FLOW_DEPTH:
-      return 4;
+      return 16;
    case PIPE_SHADER_CAP_MAX_INPUTS:
       if (shader == PIPE_SHADER_VERTEX)
          return 32;
@@ -179,9 +179,9 @@ nvc0_screen_get_shader_param(struct pipe_screen *pscreen, unsigned shader,
    case PIPE_SHADER_CAP_TGSI_CONT_SUPPORTED:
       return 1;
    case PIPE_SHADER_CAP_SUBROUTINES:
-      return 0; /* please inline, or provide function declarations */
+      return 1; /* but inlining everything, we need function declarations */
    case PIPE_SHADER_CAP_INTEGERS:
-      return 0;
+      return 1;
    default:
       NOUVEAU_ERR("unknown PIPE_SHADER_CAP %d\n", param);
       return 0;
@@ -225,6 +225,7 @@ nvc0_screen_destroy(struct pipe_screen *pscreen)
    nouveau_bo_ref(NULL, &screen->fence.bo);
    nouveau_bo_ref(NULL, &screen->vfetch_cache);
 
+   nouveau_resource_destroy(&screen->lib_code);
    nouveau_resource_destroy(&screen->text_heap);
 
    if (screen->tic.entries)

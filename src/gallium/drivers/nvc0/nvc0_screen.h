@@ -34,6 +34,7 @@ struct nvc0_screen {
    uint64_t tls_size;
 
    struct nouveau_resource *text_heap;
+   struct nouveau_resource *lib_code; /* allocated from text_heap */
 
    struct {
       struct nouveau_bo *bo[NVC0_SCRATCH_NR_BUFFERS];

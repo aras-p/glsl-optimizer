@@ -13,12 +13,6 @@ C_SOURCES := \
 	nvc0_vbo.c \
 	nvc0_program.c \
 	nvc0_shader_state.c \
-	nvc0_pc.c \
-	nvc0_pc_print.c \
-	nvc0_pc_emit.c \
-	nvc0_tgsi_to_nc.c \
-	nvc0_pc_optimize.c \
-	nvc0_pc_regalloc.c \
 	nvc0_push.c \
 	nvc0_push2.c \
 	nvc0_query.c

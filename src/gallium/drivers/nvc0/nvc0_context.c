@@ -152,6 +152,9 @@ nvc0_create(struct pipe_screen *pscreen, void *priv)
 
    nouveau_context_init_vdec(&nvc0->base);
 
+   /* shader builtin library is per-screen, but we need a context for m2mf */
+   nvc0_program_library_upload(nvc0);
+
    return pipe;
 }
 

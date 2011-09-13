@@ -29,6 +29,8 @@
 #include "tgsi/tgsi_util.h"
 #include "tgsi/tgsi_dump.h"
 
+#include "codegen/nv50_ir_driver.h"
+
 static INLINE unsigned
 bitcount4(const uint32_t val)
 {
@@ -623,6 +625,17 @@ nv50_prog_scan(struct nv50_translation_info *ti)
 
    assert(!ret);
    return ret;
+}
+
+/* Temporary, need a reference to nv50_ir_generate_code in libnv50 or
+ * it "gets disappeared" and cannot be used in libnvc0 ...
+ */
+boolean
+nv50_program_translate_new(struct nv50_program *p)
+{
+   struct nv50_ir_prog_info info;
+
+   return nv50_ir_generate_code(&info);
 }
 
 boolean

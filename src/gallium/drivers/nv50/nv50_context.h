@@ -153,6 +153,7 @@ extern struct draw_stage *nv50_draw_render_stage(struct nv50_context *);
 
 /* nv50_program.c */
 boolean nv50_program_translate(struct nv50_program *);
+boolean nv50_program_translate_new(struct nv50_program *);
 void nv50_program_destroy(struct nv50_context *, struct nv50_program *);
 
 /* nv50_query.c */
