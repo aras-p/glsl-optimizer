@@ -1343,9 +1343,9 @@ static void FETCH(f_l16)( const struct swrast_texture_image *texImage,
 static void store_texel_l16(struct swrast_texture_image *texImage,
                             GLint i, GLint j, GLint k, const void *texel)
 {
-   const GLushort *rgba = (const GLushort *) texel;
+   const GLchan *rgba = (const GLchan *) texel;
    GLushort *dst = TEXEL_ADDR(GLushort, texImage, i, j, k, 1);
-   *dst = rgba[RCOMP];
+   *dst = CHAN_TO_USHORT(rgba[RCOMP]);
 }
 #endif
 
@@ -1391,9 +1391,9 @@ static void FETCH(f_i16)( const struct swrast_texture_image *texImage,
 static void store_texel_i16(struct swrast_texture_image *texImage,
                             GLint i, GLint j, GLint k, const void *texel)
 {
-   const GLushort *rgba = (const GLushort *) texel;
+   const GLchan *rgba = (const GLchan *) texel;
    GLushort *dst = TEXEL_ADDR(GLushort, texImage, i, j, k, 1);
-   *dst = rgba[RCOMP];
+   *dst = CHAN_TO_USHORT(rgba[RCOMP]);
 }
 #endif
 
