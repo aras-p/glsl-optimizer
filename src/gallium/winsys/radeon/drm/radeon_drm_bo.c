@@ -536,7 +536,7 @@ radeon_winsys_bo_create(struct radeon_winsys *rws,
 
     /* Assign a buffer manager. */
     if (bind & (PIPE_BIND_VERTEX_BUFFER | PIPE_BIND_INDEX_BUFFER |
-                PIPE_BIND_CONSTANT_BUFFER))
+                PIPE_BIND_CONSTANT_BUFFER | PIPE_BIND_CUSTOM))
 	provider = ws->cman;
     else
         provider = ws->kman;
