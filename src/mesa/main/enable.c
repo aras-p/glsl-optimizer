@@ -295,12 +295,14 @@ _mesa_set_enable(struct gl_context *ctx, GLenum cap, GLboolean state)
          }
          break;
 #if FEATURE_userclip
-      case GL_CLIP_PLANE0:
-      case GL_CLIP_PLANE1:
-      case GL_CLIP_PLANE2:
-      case GL_CLIP_PLANE3:
-      case GL_CLIP_PLANE4:
-      case GL_CLIP_PLANE5:
+      case GL_CLIP_DISTANCE0:
+      case GL_CLIP_DISTANCE1:
+      case GL_CLIP_DISTANCE2:
+      case GL_CLIP_DISTANCE3:
+      case GL_CLIP_DISTANCE4:
+      case GL_CLIP_DISTANCE5:
+      case GL_CLIP_DISTANCE6:
+      case GL_CLIP_DISTANCE7:
          {
             const GLuint p = cap - GL_CLIP_PLANE0;
 
