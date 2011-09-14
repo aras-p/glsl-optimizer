@@ -835,6 +835,7 @@ dri2CreateScreen(int screen, struct glx_display * priv)
 		    &driverName, &deviceName)) {
       glx_screen_cleanup(&psc->base);
       XFree(psc);
+      InfoMessageF("screen %d does not appear to be DRI2 capable\n", screen);
       return NULL;
    }
 
