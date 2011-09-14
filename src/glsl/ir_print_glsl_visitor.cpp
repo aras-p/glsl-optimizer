@@ -689,7 +689,11 @@ void ir_print_glsl_visitor::visit(ir_constant *ir)
 
    if (ir->type->is_array()) {
       for (unsigned i = 0; i < ir->type->length; i++)
+      {
+	 if (i != 0)
+	    ralloc_asprintf_append (&buffer, ", ");
 	 ir->get_array_element(i)->accept(this);
+      }
    } else {
       bool first = true;
       for (unsigned i = 0; i < ir->type->components(); i++) {
