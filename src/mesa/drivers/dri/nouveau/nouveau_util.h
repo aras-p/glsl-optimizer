@@ -81,11 +81,9 @@ pack_rgba_f(gl_format f, float c[])
 static inline unsigned
 pack_rgba_clamp_f(gl_format f, float c[])
 {
-	return pack_rgba_i(f, (uint8_t []) {
-			   UNCLAMPED_FLOAT_TO_UBYTE(c[RCOMP]),
-			   UNCLAMPED_FLOAT_TO_UBYTE(c[GCOMP]),
-			   UNCLAMPED_FLOAT_TO_UBYTE(c[BCOMP]),
-			   UNCLAMPED_FLOAT_TO_UBYTE(c[ACOMP]) });
+	GLubyte bytes[4];
+	_mesa_unclamped_float_rgba_to_ubyte(bytes, c);
+	return pack_rgba_i(f, bytes);
 }
 
 static inline unsigned

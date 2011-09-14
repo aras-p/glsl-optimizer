@@ -111,10 +111,7 @@ clear_color( struct gl_context *ctx,
       const XMesaContext xmesa = XMESA_CONTEXT(ctx);
       XMesaBuffer xmbuf = XMESA_BUFFER(ctx->DrawBuffer);
 
-      UNCLAMPED_FLOAT_TO_UBYTE(xmesa->clearcolor[0], color.f[0]);
-      UNCLAMPED_FLOAT_TO_UBYTE(xmesa->clearcolor[1], color.f[1]);
-      UNCLAMPED_FLOAT_TO_UBYTE(xmesa->clearcolor[2], color.f[2]);
-      UNCLAMPED_FLOAT_TO_UBYTE(xmesa->clearcolor[3], color.f[3]);
+      _mesa_unclamped_float_rgba_to_ubyte(xmesa->clearcolor, color.f);
       xmesa->clearpixel = xmesa_color_to_pixel( ctx,
                                                 xmesa->clearcolor[0],
                                                 xmesa->clearcolor[1],
@@ -777,10 +774,7 @@ clear_color_HPCR_ximage( struct gl_context *ctx,
    int i;
    const XMesaContext xmesa = XMESA_CONTEXT(ctx);
 
-   UNCLAMPED_FLOAT_TO_UBYTE(xmesa->clearcolor[0], color.f[0]);
-   UNCLAMPED_FLOAT_TO_UBYTE(xmesa->clearcolor[1], color.f[1]);
-   UNCLAMPED_FLOAT_TO_UBYTE(xmesa->clearcolor[2], color.f[2]);
-   UNCLAMPED_FLOAT_TO_UBYTE(xmesa->clearcolor[3], color.f[3]);
+   _mesa_unclamped_float_rgba_to_ubyte(xmesa->clearcolor, color.f);
 
    if (color.f[0] == 0.0 && color.f[1] == 0.0 && color.f[2] == 0.0) {
       /* black is black */
@@ -812,10 +806,7 @@ clear_color_HPCR_pixmap( struct gl_context *ctx,
    int i;
    const XMesaContext xmesa = XMESA_CONTEXT(ctx);
 
-   UNCLAMPED_FLOAT_TO_UBYTE(xmesa->clearcolor[0], color.f[0]);
-   UNCLAMPED_FLOAT_TO_UBYTE(xmesa->clearcolor[1], color.f[1]);
-   UNCLAMPED_FLOAT_TO_UBYTE(xmesa->clearcolor[2], color.f[2]);
-   UNCLAMPED_FLOAT_TO_UBYTE(xmesa->clearcolor[3], color.f[3]);
+   _mesa_unclamped_float_rgba_to_ubyte(xmesa->clearcolor, color.f);
 
    if (color.f[0] == 0.0 && color.f[1] == 0.0 && color.f[2] == 0.0) {
       /* black is black */

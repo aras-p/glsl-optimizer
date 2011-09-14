@@ -1513,12 +1513,8 @@ _mesa_convert_colors(GLenum srcType, const GLvoid *src,
          GLubyte (*dst1)[4] = (GLubyte (*)[4]) (useTemp ? tempBuffer : dst);
          GLuint i;
          for (i = 0; i < count; i++) {
-            if (!mask || mask[i]) {
-               UNCLAMPED_FLOAT_TO_UBYTE(dst1[i][RCOMP], src4[i][RCOMP]);
-               UNCLAMPED_FLOAT_TO_UBYTE(dst1[i][GCOMP], src4[i][GCOMP]);
-               UNCLAMPED_FLOAT_TO_UBYTE(dst1[i][BCOMP], src4[i][BCOMP]);
-               UNCLAMPED_FLOAT_TO_UBYTE(dst1[i][ACOMP], src4[i][ACOMP]);
-            }
+            if (!mask || mask[i])
+               _mesa_unclamped_float_rgba_to_ubyte(dst1[i], src4[i]);
          }
          if (useTemp)
             memcpy(dst, tempBuffer, count * 4 * sizeof(GLubyte));

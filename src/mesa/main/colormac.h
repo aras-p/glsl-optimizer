@@ -168,7 +168,12 @@ do {						\
    UNCLAMPED_FLOAT_TO_CHAN((dst)[3], (f)[3]);	\
 } while (0)
 
-
+static inline void _mesa_unclamped_float_rgba_to_ubyte(GLubyte dst[4], const GLfloat src[4])
+{
+   int i;
+   for (i = 0; i < 4; i++)
+      UNCLAMPED_FLOAT_TO_UBYTE(dst[i], src[i]);
+}
 
 /**
  * \name Generic color packing macros.  All inputs should be GLubytes.

@@ -1734,10 +1734,7 @@ static void r200ClearColor( struct gl_context *ctx,
    rrb = radeon_get_colorbuffer(&rmesa->radeon);
    if (!rrb)
      return;
-   UNCLAMPED_FLOAT_TO_UBYTE(color[0], c.f[0]);
-   UNCLAMPED_FLOAT_TO_UBYTE(color[1], c.f[1]);
-   UNCLAMPED_FLOAT_TO_UBYTE(color[2], c.f[2]);
-   UNCLAMPED_FLOAT_TO_UBYTE(color[3], c.f[3]);
+   _mesa_unclamped_float_rgba_to_ubyte(color, c.f);
    rmesa->radeon.state.color.clear = radeonPackColor( rrb->cpp,
                                              color[0], color[1],
                                              color[2], color[3] );

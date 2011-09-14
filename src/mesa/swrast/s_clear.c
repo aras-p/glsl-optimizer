@@ -60,10 +60,7 @@ clear_rgba_buffer_with_masking(struct gl_context *ctx, struct gl_renderbuffer *r
    span.array->ChanType = rb->DataType;
    if (span.array->ChanType == GL_UNSIGNED_BYTE) {
       GLubyte clearColor[4];
-      UNCLAMPED_FLOAT_TO_UBYTE(clearColor[RCOMP], ctx->Color.ClearColor.f[0]);
-      UNCLAMPED_FLOAT_TO_UBYTE(clearColor[GCOMP], ctx->Color.ClearColor.f[1]);
-      UNCLAMPED_FLOAT_TO_UBYTE(clearColor[BCOMP], ctx->Color.ClearColor.f[2]);
-      UNCLAMPED_FLOAT_TO_UBYTE(clearColor[ACOMP], ctx->Color.ClearColor.f[3]);
+      _mesa_unclamped_float_rgba_to_ubyte(clearColor, ctx->Color.ClearColor.f);
       for (i = 0; i < width; i++) {
          COPY_4UBV(span.array->rgba[i], clearColor);
       }
@@ -127,10 +124,7 @@ clear_rgba_buffer(struct gl_context *ctx, struct gl_renderbuffer *rb, GLuint buf
 
    switch (rb->DataType) {
       case GL_UNSIGNED_BYTE:
-         UNCLAMPED_FLOAT_TO_UBYTE(clear8[0], ctx->Color.ClearColor.f[0]);
-         UNCLAMPED_FLOAT_TO_UBYTE(clear8[1], ctx->Color.ClearColor.f[1]);
-         UNCLAMPED_FLOAT_TO_UBYTE(clear8[2], ctx->Color.ClearColor.f[2]);
-         UNCLAMPED_FLOAT_TO_UBYTE(clear8[3], ctx->Color.ClearColor.f[3]);
+         _mesa_unclamped_float_rgba_to_ubyte(clear8, ctx->Color.ClearColor.f);
          clearVal = clear8;
          break;
       case GL_UNSIGNED_SHORT:

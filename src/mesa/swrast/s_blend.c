@@ -851,12 +851,8 @@ blend_general(struct gl_context *ctx, GLuint n, const GLubyte mask[],
       blend_general_float(ctx, n, mask, rgbaF, destF, chanType);
       /* convert back to ubytes */
       for (i = 0; i < n; i++) {
-         if (mask[i]) {
-            UNCLAMPED_FLOAT_TO_UBYTE(rgba[i][RCOMP], rgbaF[i][RCOMP]);
-            UNCLAMPED_FLOAT_TO_UBYTE(rgba[i][GCOMP], rgbaF[i][GCOMP]);
-            UNCLAMPED_FLOAT_TO_UBYTE(rgba[i][BCOMP], rgbaF[i][BCOMP]);
-            UNCLAMPED_FLOAT_TO_UBYTE(rgba[i][ACOMP], rgbaF[i][ACOMP]);
-         }
+         if (mask[i])
+	   _mesa_unclamped_float_rgba_to_ubyte(rgba[i], rgbaF[i]);
       }
    }
    else if (chanType == GL_UNSIGNED_SHORT) {
