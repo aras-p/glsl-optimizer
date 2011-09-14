@@ -543,6 +543,10 @@ dri2SwapBuffers(__GLXDRIdrawable *pdraw, int64_t target_msc, int64_t divisor,
 	(struct dri2_display *)dpyPriv->dri2Display;
     CARD64 ret = 0;
 
+    /* Check we have the right attachments */
+    if (!priv->have_back)
+	return ret;
+
     /* Old servers can't handle swapbuffers */
     if (!pdp->swapAvailable) {
        dri2CopySubBuffer(pdraw, 0, 0, priv->width, priv->height);
