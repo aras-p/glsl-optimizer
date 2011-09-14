@@ -62,12 +62,14 @@ nvc0_program_update_context_state(struct nvc0_context *nvc0,
 static INLINE boolean
 nvc0_program_validate(struct nvc0_context *nvc0, struct nvc0_program *prog)
 {
-   if (prog->translated)
+   if (prog->res)
       return TRUE;
 
-   prog->translated = nvc0_program_translate(prog);
-   if (!prog->translated)
-      return FALSE;
+   if (!prog->translated) {
+      prog->translated = nvc0_program_translate(prog);
+      if (!prog->translated)
+         return FALSE;
+   }
 
    return nvc0_program_upload_code(nvc0, prog);
 }

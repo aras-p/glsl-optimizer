@@ -223,6 +223,9 @@ nvc0_screen_destroy(struct pipe_screen *pscreen)
    }
    screen->base.channel->user_private = NULL;
 
+   if (screen->blitctx)
+      FREE(screen->blitctx);
+
    nouveau_bo_ref(NULL, &screen->text);
    nouveau_bo_ref(NULL, &screen->tls);
    nouveau_bo_ref(NULL, &screen->txc);
@@ -632,6 +635,9 @@ nvc0_screen_create(struct pipe_winsys *ws, struct nouveau_device *dev)
    screen->tsc.entries = screen->tic.entries + 2048;
 
    screen->mm_VRAM_fe0 = nouveau_mm_create(dev, NOUVEAU_BO_VRAM, 0xfe0);
+
+   if (!nvc0_blitctx_create(screen))
+      goto fail;
 
    nouveau_fence_new(&screen->base, &screen->base.fence.current, FALSE);
 
