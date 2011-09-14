@@ -3,7 +3,7 @@ include $(TOP)/configs/current
 
 LIBNAME = nvc0
 
-# get C_SOURCES
+# get C/CPP_SOURCES
 include Makefile.sources
 
 LIBRARY_INCLUDES = \

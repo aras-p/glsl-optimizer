@@ -1,0 +1,207 @@
+
+#ifndef __NV50_IR_GRAPH_H__
+#define __NV50_IR_GRAPH_H__
+
+#include "nv50_ir_util.h"
+
+namespace nv50_ir {
+
+#define ITER_NODE(x) reinterpret_cast<Graph::Node *>((x).get())
+#define ITER_EDGE(x) reinterpret_cast<Graph::Edge *>((x).get())
+
+// A connected graph.
+class Graph
+{
+public:
+   class Node;
+
+   class GraphIterator : public Iterator
+   {
+   public:
+      virtual ~GraphIterator() { };
+   };
+
+   class Edge
+   {
+   public:
+      enum Type
+      {
+         UNKNOWN,
+         TREE,
+         FORWARD,
+         BACK,
+         CROSS, // e.g. loop break
+         DUMMY
+      };
+
+      Edge(Node *dst, Node *src, Type kind);
+      ~Edge() { unlink(); }
+
+      inline Node *getOrigin() const { return origin; }
+      inline Node *getTarget() const { return target; }
+
+      inline Type getType() const { return type; }
+      const char *typeStr() const;
+
+   private:
+      Node *origin;
+      Node *target;
+
+      Type type;
+      Edge *next[2]; // next edge outgoing/incident from/to origin/target
+      Edge *prev[2];
+
+      void unlink();
+
+      friend class Graph;
+   };
+
+   class EdgeIterator : public Iterator
+   {
+   public:
+      EdgeIterator() : e(0), t(0), d(0) { }
+      EdgeIterator(Graph::Edge *first, int dir) : e(first), t(first), d(dir) { }
+
+      virtual void next() { e = (e->next[d] == t) ? 0 : e->next[d]; }
+      virtual bool end() const { return !e; }
+      virtual void *get() const { return e; }
+
+      inline Node *getNode() const { assert(e); return d ?
+                                                   e->origin : e->target; }
+      inline Edge *getEdge() const { return e; }
+      inline Edge::Type getType() { return e ? e->getType() : Edge::UNKNOWN; }
+
+   private:
+      Graph::Edge *e;
+      Graph::Edge *t;
+      int d;
+   };
+
+   class Node
+   {
+   public:
+      Node(void *);
+      ~Node() { cut(); }
+
+      void attach(Node *, Edge::Type);
+      bool detach(Node *);
+      void cut();
+
+      inline EdgeIterator outgoing() const;
+      inline EdgeIterator incident() const;
+
+      inline Node *parent() const; // returns NULL if count(incident edges) != 1
+
+      bool reachableBy(Node *node, Node *term);
+
+      inline bool visit(int);
+      inline int  getSequence() const;
+
+      inline int incidentCountFwd() const; // count of incident non-back edges
+      inline int incidentCount() const { return inCount; }
+      inline int outgoingCount() const { return outCount; }
+
+      Graph *getGraph() const { return graph; }
+
+      void *data;
+
+   private:
+      Edge *in;
+      Edge *out;
+      Graph *graph;
+
+      int visited;
+
+      int16_t inCount;
+      int16_t outCount;
+   public:
+      int tag; // for temporary use
+
+      friend class Graph;
+   };
+
+public:
+   Graph();
+   ~Graph(); // does *not* free the nodes (make it an option ?)
+
+   inline Node *getRoot() const { return root; }
+
+   inline unsigned int getSize() const { return size; }
+
+   inline int nextSequence();
+
+   void insert(Node *node); // attach to or set as root
+
+   GraphIterator *iteratorDFS(bool preorder = true);
+   GraphIterator *iteratorCFG();
+
+   // safe iterators are unaffected by changes to the *edges* of the graph
+   GraphIterator *safeIteratorDFS(bool preorder = true);
+   GraphIterator *safeIteratorCFG();
+
+   inline void putIterator(Iterator *); // should be GraphIterator *
+
+   void classifyEdges();
+
+private:
+   void classifyDFS(Node *, int&);
+
+private:
+   Node *root;
+   unsigned int size;
+   int sequence;
+};
+
+int Graph::nextSequence()
+{
+   return ++sequence;
+}
+
+Graph::Node *Graph::Node::parent() const
+{
+   if (inCount != 1)
+      return NULL;
+   assert(in);
+   return in->origin;
+}
+
+bool Graph::Node::visit(int v)
+{
+   if (visited == v)
+      return false;
+   visited = v;
+   return true;
+}
+
+int Graph::Node::getSequence() const
+{
+   return visited;
+}
+
+void Graph::putIterator(Iterator *iter)
+{
+   delete reinterpret_cast<GraphIterator *>(iter);
+}
+
+Graph::EdgeIterator Graph::Node::outgoing() const
+{
+   return EdgeIterator(out, 0);
+}
+
+Graph::EdgeIterator Graph::Node::incident() const
+{
+   return EdgeIterator(in, 1);
+}
+
+int Graph::Node::incidentCountFwd() const
+{
+   int n = 0;
+   for (EdgeIterator ei = incident(); !ei.end(); ei.next())
+      if (ei.getType() != Edge::BACK)
+         ++n;
+   return n;
+}
+
+} // namespace nv50_ir
+
+#endif // __NV50_IR_GRAPH_H__

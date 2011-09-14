@@ -118,6 +118,7 @@ pipe_SOURCES += pipe_i965.c
 endif
 
 ifneq ($(findstring nouveau/drm,$(GALLIUM_WINSYS_DIRS)),)
+LDFLAGS += -lstdc++
 pipe_TARGETS += $(PIPE_PREFIX)nouveau.so
 pipe_SOURCES += pipe_nouveau.c
 endif
