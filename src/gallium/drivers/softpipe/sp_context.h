@@ -75,6 +75,7 @@ struct softpipe_context {
 
    /** Other rendering state */
    struct pipe_blend_color blend_color;
+   struct pipe_blend_color blend_color_clamped;
    struct pipe_stencil_ref stencil_ref;
    struct pipe_clip_state clip;
    struct pipe_resource *constants[PIPE_SHADER_TYPES][PIPE_MAX_CONSTANT_BUFFERS];

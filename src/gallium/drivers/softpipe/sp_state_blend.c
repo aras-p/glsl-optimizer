@@ -28,6 +28,7 @@
 /* Authors:  Keith Whitwell <keith@tungstengraphics.com>
  */
 
+#include "util/u_math.h"
 #include "util/u_memory.h"
 #include "draw/draw_context.h"
 #include "sp_context.h"
@@ -69,10 +70,16 @@ softpipe_set_blend_color(struct pipe_context *pipe,
                          const struct pipe_blend_color *blend_color)
 {
    struct softpipe_context *softpipe = softpipe_context(pipe);
+   unsigned i;
 
    draw_flush(softpipe->draw);
 
    softpipe->blend_color = *blend_color;
+
+   /* save clamped color too */
+   for (i = 0; i < 4; i++)
+      softpipe->blend_color_clamped.color[i] =
+         CLAMP(blend_color->color[i], 0.0f, 1.0f);
 
    softpipe->dirty |= SP_NEW_BLEND;
 }
