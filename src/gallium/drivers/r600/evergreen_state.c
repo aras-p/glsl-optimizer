@@ -1647,6 +1647,7 @@ static void cayman_init_config(struct r600_pipe_context *rctx)
 	r600_pipe_state_add_reg(rstate, R_028A40_VGT_GS_MODE, 0x0, 0xFFFFFFFF, NULL, 0);
 	r600_pipe_state_add_reg(rstate, R_028B94_VGT_STRMOUT_CONFIG, 0x0, 0xFFFFFFFF, NULL, 0);
 	r600_pipe_state_add_reg(rstate, R_028B98_VGT_STRMOUT_BUFFER_CONFIG, 0x0, 0xFFFFFFFF, NULL, 0);
+	r600_pipe_state_add_reg(rstate, R_028AA8_IA_MULTI_VGT_PARAM, S_028AA8_SWITCH_ON_EOP(1) | S_028AA8_PARTIAL_VS_WAVE_ON(1) | S_028AA8_PRIMGROUP_SIZE(63), 0xFFFFFFFF, NULL, 0);
 	r600_pipe_state_add_reg(rstate, R_028AB4_VGT_REUSE_OFF, 0x00000000, 0xFFFFFFFF, NULL, 0);
 	r600_pipe_state_add_reg(rstate, R_028AB8_VGT_VTX_CNT_EN, 0x0, 0xFFFFFFFF, NULL, 0);
 	r600_pipe_state_add_reg(rstate, R_008A14_PA_CL_ENHANCE, (3 << 1) | 1, 0xFFFFFFFF, NULL, 0);

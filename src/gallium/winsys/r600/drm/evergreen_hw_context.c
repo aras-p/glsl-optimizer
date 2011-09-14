@@ -675,6 +675,7 @@ static const struct r600_reg cayman_context_reg_list[] = {
 	{R_028A40_VGT_GS_MODE, 0, 0, 0},
 	{R_028A48_PA_SC_MODE_CNTL_0, 0, 0, 0},
 	{R_028A4C_PA_SC_MODE_CNTL_1, 0, 0, 0},
+	{R_028AA8_IA_MULTI_VGT_PARAM, 0, 0, 0},
 	{R_028AB4_VGT_REUSE_OFF, 0, 0, 0},
 	{R_028AB8_VGT_VTX_CNT_EN, 0, 0, 0},
 	{R_028ABC_DB_HTILE_SURFACE, 0, 0, 0},
