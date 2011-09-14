@@ -816,8 +816,10 @@ driCreateNewScreen(int scrn,
 
     (void) loaderPrivate;
 
-    if (driDriverAPI.InitScreen == NULL)
+    if (driDriverAPI.InitScreen == NULL) {
+	__driUtilMessage("driver does not support DRI1");
 	return NULL;
+    }
 
     psp = calloc(1, sizeof *psp);
     if (!psp)
