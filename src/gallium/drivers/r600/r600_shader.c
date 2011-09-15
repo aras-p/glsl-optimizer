@@ -299,6 +299,32 @@ static int evergreen_interp_alu(struct r600_shader_ctx *ctx, int input)
 	return 0;
 }
 
+static int evergreen_interp_flat(struct r600_shader_ctx *ctx, int input)
+{
+	int i, r;
+	struct r600_bytecode_alu alu;
+
+	for (i = 0; i < 4; i++) {
+		memset(&alu, 0, sizeof(struct r600_bytecode_alu));
+
+		alu.inst = EG_V_SQ_ALU_WORD1_OP2_SQ_OP2_INTERP_LOAD_P0;
+
+		alu.dst.sel = ctx->shader->input[input].gpr;
+		alu.dst.write = 1;
+
+		alu.dst.chan = i;
+
+		alu.src[0].sel = V_SQ_ALU_SRC_PARAM_BASE + ctx->shader->input[input].lds_pos;
+		alu.src[0].chan = i;
+
+		if (i == 3)
+			alu.last = 1;
+		r = r600_bytecode_add_alu(ctx->bc, &alu);
+		if (r)
+			return r;
+	}
+	return 0;
+}
 
 static int tgsi_declaration(struct r600_shader_ctx *ctx)
 {
@@ -316,10 +342,13 @@ static int tgsi_declaration(struct r600_shader_ctx *ctx)
 		ctx->shader->input[i].gpr = ctx->file_offset[TGSI_FILE_INPUT] + i;
 		if (ctx->type == TGSI_PROCESSOR_FRAGMENT && ctx->bc->chip_class >= EVERGREEN) {
 			/* turn input into interpolate on EG */
-			if (ctx->shader->input[i].name != TGSI_SEMANTIC_POSITION) {
+			if (ctx->shader->input[i].name != TGSI_SEMANTIC_POSITION &&
+			    ctx->shader->input[i].name != TGSI_SEMANTIC_FACE) {
+				ctx->shader->input[i].lds_pos = ctx->shader->nlds++;
 				if (ctx->shader->input[i].interpolate > 0) {
-					ctx->shader->input[i].lds_pos = ctx->shader->nlds++;
 					evergreen_interp_alu(ctx, i);
+				} else {
+					evergreen_interp_flat(ctx, i);
 				}
 			}
 		}

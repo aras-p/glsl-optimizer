@@ -162,6 +162,7 @@ static inline unsigned int r600_bytecode_get_num_operands(struct r600_bytecode *
 		case EG_V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_COS:
 		case EG_V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_RNDNE:
 		case EG_V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_NOT_INT:
+		case EG_V_SQ_ALU_WORD1_OP2_SQ_OP2_INTERP_LOAD_P0:
 			return 1;
 		default: R600_ERR(
 			"Need instruction operand number for 0x%x.\n", alu->inst);

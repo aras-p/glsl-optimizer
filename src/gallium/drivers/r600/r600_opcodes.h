@@ -364,7 +364,7 @@
 #define     EG_V_SQ_ALU_WORD1_OP2_SQ_OP2_INTERP_ZW                      0x000000D7
 #define     EG_V_SQ_ALU_WORD1_OP2_SQ_OP2_INTERP_X                       0x000000D8
 #define     EG_V_SQ_ALU_WORD1_OP2_SQ_OP2_INTERP_Z                       0x000000D9
-
+#define     EG_V_SQ_ALU_WORD1_OP2_SQ_OP2_INTERP_LOAD_P0                 0x000000E0
 
 /* TODO ADD OTHER OP3 */
 #define     EG_V_SQ_ALU_WORD1_OP3_SQ_OP3_INST_MULADD                    0x00000014
