@@ -105,7 +105,8 @@ enum util_format_swizzle {
    UTIL_FORMAT_SWIZZLE_W = 3,
    UTIL_FORMAT_SWIZZLE_0 = 4,
    UTIL_FORMAT_SWIZZLE_1 = 5,
-   UTIL_FORMAT_SWIZZLE_NONE = 6
+   UTIL_FORMAT_SWIZZLE_NONE = 6,
+   UTIL_FORMAT_SWIZZLE_MAX = 7  /**< Number of enums counter (must be last) */
 };
 
 
@@ -475,6 +476,22 @@ util_format_colormask(const struct util_format_description *desc)
 
 boolean
 util_format_is_float(enum pipe_format format);
+
+
+boolean
+util_format_is_rgb_no_alpha(enum pipe_format format);
+
+
+boolean
+util_format_is_luminance(enum pipe_format format);
+
+
+boolean
+util_format_is_luminance_alpha(enum pipe_format format);
+
+
+boolean
+util_format_is_intensity(enum pipe_format format);
 
 
 /**
