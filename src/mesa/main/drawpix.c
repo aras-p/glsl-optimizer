@@ -62,7 +62,7 @@ _mesa_DrawPixels( GLsizei width, GLsizei height,
 
 
    if (width < 0 || height < 0) {
-      _mesa_error( ctx, GL_INVALID_VALUE, "glDrawPixels(width or height < 0" );
+      _mesa_error( ctx, GL_INVALID_VALUE, "glDrawPixels(width or height < 0)" );
       return;
    }
 
