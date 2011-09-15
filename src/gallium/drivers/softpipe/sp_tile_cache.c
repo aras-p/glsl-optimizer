@@ -180,13 +180,7 @@ sp_tile_cache_set_surface(struct softpipe_tile_cache *tc,
                                        PIPE_TRANSFER_UNSYNCHRONIZED,
                                        0, 0, ps->width, ps->height);
 
-      tc->depth_stencil = (ps->format == PIPE_FORMAT_Z24_UNORM_S8_USCALED ||
-                           ps->format == PIPE_FORMAT_Z24X8_UNORM ||
-                           ps->format == PIPE_FORMAT_S8_USCALED_Z24_UNORM ||
-                           ps->format == PIPE_FORMAT_X8Z24_UNORM ||
-                           ps->format == PIPE_FORMAT_Z16_UNORM ||
-                           ps->format == PIPE_FORMAT_Z32_UNORM ||
-                           ps->format == PIPE_FORMAT_S8_USCALED);
+      tc->depth_stencil = util_format_is_depth_or_stencil(ps->format);
    }
 }
 
