@@ -196,7 +196,7 @@ try_copy_propagation(struct intel_context *intel,
       value.abs = true;
    }
    if (inst->src[arg].negate)
-      value.negate = true;
+      value.negate = !value.negate;
 
    /* FINISHME: We can't copy-propagate things that aren't normal
     * vec8s into gen6 math instructions, because of the weird src
