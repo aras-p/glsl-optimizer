@@ -1297,6 +1297,7 @@ static void evergreen_cb(struct r600_pipe_context *rctx, struct r600_pipe_state 
 	const struct util_format_description *desc;
 	struct r600_bo *bo[3];
 	int i;
+	unsigned blend_clamp = 0, blend_bypass = 0;
 
 	surf = (struct r600_surface *)state->cbufs[cb];
 	rtex = (struct r600_resource_texture*)state->cbufs[cb]->texture;
@@ -1325,11 +1326,20 @@ static void evergreen_cb(struct r600_pipe_context *rctx, struct r600_pipe_state 
 			break;
 		}
 	}
-	ntype = V_028C70_NUMBER_UNORM;
 	if (desc->colorspace == UTIL_FORMAT_COLORSPACE_SRGB)
 		ntype = V_028C70_NUMBER_SRGB;
-	else if (desc->channel[i].type == UTIL_FORMAT_TYPE_SIGNED)
-		ntype = V_028C70_NUMBER_SNORM;
+	else if (desc->channel[i].type == UTIL_FORMAT_TYPE_SIGNED) {
+		if (desc->channel[i].normalized)
+			ntype = V_028C70_NUMBER_SNORM;
+		else
+			ntype = V_028C70_NUMBER_SINT;
+	} else if (desc->channel[i].type == UTIL_FORMAT_TYPE_UNSIGNED) {
+		if (desc->channel[i].normalized)
+			ntype = V_028C70_NUMBER_UNORM;
+		else
+			ntype = V_028C70_NUMBER_UINT;
+	} else
+		ntype = V_028C70_NUMBER_UNORM;
 
 	format = r600_translate_colorformat(surf->base.format);
 	swap = r600_translate_colorswap(surf->base.format);
@@ -1343,13 +1353,27 @@ static void evergreen_cb(struct r600_pipe_context *rctx, struct r600_pipe_state 
 	if ((format == FMT_32_32_32_32 || format == FMT_16_16_16_16) && rtex->force_int_type)
 		ntype = V_028C70_NUMBER_UINT;
 
+	/* blend clamp should be set for all NORM/SRGB types */
+	if (ntype == V_028C70_NUMBER_UNORM || ntype == V_028C70_NUMBER_SNORM ||
+	    ntype == V_028C70_NUMBER_SRGB)
+		blend_clamp = 1;
+
+	/* set blend bypass according to docs if SINT/UINT or
+	   8/24 COLOR variants */
+	if (ntype == V_028C70_NUMBER_UINT || ntype == V_028C70_NUMBER_SINT ||
+	    format == V_028C70_COLOR_8_24 || format == V_028C70_COLOR_24_8 ||
+	    format == V_028C70_COLOR_X24_8_32_FLOAT) {
+		blend_clamp = 0;
+		blend_bypass = 1;
+	}
+
 	color_info = S_028C70_FORMAT(format) |
 		S_028C70_COMP_SWAP(swap) |
 		S_028C70_ARRAY_MODE(rtex->array_mode[level]) |
-		S_028C70_BLEND_CLAMP(1) |
+		S_028C70_BLEND_CLAMP(blend_clamp) |
+		S_028C70_BLEND_BYPASS(blend_bypass) |
 		S_028C70_NUMBER_TYPE(ntype) |
 		S_028C70_ENDIAN(endian);
-
 
 	/* EXPORT_NORM is an optimzation that can be enabled for better
 	 * performance in certain cases.
