@@ -494,11 +494,12 @@ sp_find_cached_tile(struct softpipe_tile_cache *tc,
                               tile->data.depth32, 0/*STRIDE*/);
          }
          else {
-            pipe_get_tile_rgba(tc->pipe, pt,
-                               tc->tile_addrs[pos].bits.x * TILE_SIZE,
-                               tc->tile_addrs[pos].bits.y * TILE_SIZE,
-                               TILE_SIZE, TILE_SIZE,
-                               (float *) tile->data.color);
+            pipe_get_tile_rgba_format(tc->pipe, pt,
+                                      tc->tile_addrs[pos].bits.x * TILE_SIZE,
+                                      tc->tile_addrs[pos].bits.y * TILE_SIZE,
+                                      TILE_SIZE, TILE_SIZE,
+                                      tc->surface->format,
+                                      (float *) tile->data.color);
          }
       }
    }
