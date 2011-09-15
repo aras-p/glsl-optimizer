@@ -871,7 +871,11 @@ translate_id(GLsizei n, GLenum type, const GLvoid * list)
 
 /**
  * Wrapper for _mesa_unpack_image() that handles pixel buffer objects.
- * If we run out of memory, GL_OUT_OF_MEMORY will be recorded.
+ * If width < 0 or height < 0 or format or type are invalid we'll just
+ * return NULL.  We will not generate an error since OpenGL command
+ * arguments aren't error-checked until the command is actually executed
+ * (not when they're compiled).
+ * But if we run out of memory, GL_OUT_OF_MEMORY will be recorded.
  */
 static GLvoid *
 unpack_image(struct gl_context *ctx, GLuint dimensions,
@@ -879,6 +883,15 @@ unpack_image(struct gl_context *ctx, GLuint dimensions,
              GLenum format, GLenum type, const GLvoid * pixels,
              const struct gl_pixelstore_attrib *unpack)
 {
+   if (width <= 0 || height <= 0) {
+      return NULL;
+   }
+
+   if (_mesa_bytes_per_pixel(format, type) <= 0) {
+      /* bad format and/or type */
+      return NULL;
+   }
+
    if (!_mesa_is_bufferobj(unpack->BufferObj)) {
       /* no PBO */
       GLvoid *image = _mesa_unpack_image(dimensions, width, height, depth,
