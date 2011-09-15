@@ -574,8 +574,11 @@ dri2_swap_buffers(_EGLDriver *drv, _EGLDisplay *disp, _EGLSurface *draw)
    struct dri2_egl_driver *dri2_drv = dri2_egl_driver(drv);
    struct wl_callback *callback;
 
-   while (dri2_surf->block_swap_buffers)
-      wl_display_iterate(dri2_dpy->wl_dpy, WL_DISPLAY_READABLE);
+   if (dri2_surf->block_swap_buffers) {
+      wl_display_flush(dri2_dpy->wl_dpy);
+      while (dri2_surf->block_swap_buffers)
+         wl_display_iterate(dri2_dpy->wl_dpy, WL_DISPLAY_READABLE);
+   }
 
    dri2_surf->block_swap_buffers = EGL_TRUE;
    callback = wl_surface_frame(dri2_surf->wl_win->surface);
