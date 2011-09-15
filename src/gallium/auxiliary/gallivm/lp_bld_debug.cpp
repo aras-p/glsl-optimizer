@@ -210,7 +210,12 @@ lp_disassemble(const void* func)
       return;
    }
 
+#if HAVE_LLVM >= 0x0300
+   const MCSubtargetInfo *STI = T->createMCSubtargetInfo(Triple, sys::getHostCPUName(), "");
+   OwningPtr<const MCDisassembler> DisAsm(T->createMCDisassembler(*STI));
+#else 
    OwningPtr<const MCDisassembler> DisAsm(T->createMCDisassembler());
+#endif 
    if (!DisAsm) {
       debug_printf("error: no disassembler for target %s\n", Triple.c_str());
       return;
@@ -223,7 +228,11 @@ lp_disassemble(const void* func)
 #else
    int AsmPrinterVariant = AsmInfo->getAssemblerDialect();
 #endif
-#if HAVE_LLVM >= 0x0208
+
+#if HAVE_LLVM >= 0x0300
+   OwningPtr<MCInstPrinter> Printer(
+         T->createMCInstPrinter(AsmPrinterVariant, *AsmInfo, *STI));
+#elif HAVE_LLVM >= 0x0208
    OwningPtr<MCInstPrinter> Printer(
          T->createMCInstPrinter(AsmPrinterVariant, *AsmInfo));
 #else
