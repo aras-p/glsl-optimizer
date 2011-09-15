@@ -2230,9 +2230,7 @@ void evergreen_pipe_shader_ps(struct pipe_context *ctx, struct r600_pipe_shader 
 		else if (rshader->input[i].name == TGSI_SEMANTIC_FACE)
 			face_index = i;
 		else {
-			if (rshader->input[i].interpolate == TGSI_INTERPOLATE_LINEAR ||
-			    rshader->input[i].interpolate == TGSI_INTERPOLATE_PERSPECTIVE)
-				ninterp++;
+			ninterp++;
 			if (rshader->input[i].interpolate == TGSI_INTERPOLATE_LINEAR)
 				have_linear = TRUE;
 			if (rshader->input[i].interpolate == TGSI_INTERPOLATE_PERSPECTIVE)
@@ -2273,6 +2271,9 @@ void evergreen_pipe_shader_ps(struct pipe_context *ctx, struct r600_pipe_shader 
 		ninterp = 1;
 		have_perspective = TRUE;
 	}
+
+	if (!have_perspective && !have_linear)
+		have_perspective = TRUE;
 
 	spi_ps_in_control_0 = S_0286CC_NUM_INTERP(ninterp) |
 		              S_0286CC_PERSP_GRADIENT_ENA(have_perspective) |
