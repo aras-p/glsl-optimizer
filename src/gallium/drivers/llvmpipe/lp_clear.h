@@ -36,7 +36,8 @@
 struct pipe_context;
 
 extern void
-llvmpipe_clear(struct pipe_context *pipe, unsigned buffers, const float *rgba,
+llvmpipe_clear(struct pipe_context *pipe, unsigned buffers,
+               const union pipe_color_union *color,
                double depth, unsigned stencil);
 
 

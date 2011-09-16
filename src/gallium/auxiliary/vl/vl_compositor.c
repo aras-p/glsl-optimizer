@@ -552,26 +552,20 @@ vl_compositor_reset_dirty_area(struct vl_compositor *c)
 }
 
 void
-vl_compositor_set_clear_color(struct vl_compositor *c, float color[4])
+vl_compositor_set_clear_color(struct vl_compositor *c, union pipe_color_union *color)
 {
-   unsigned i;
-
    assert(c);
 
-   for (i = 0; i < 4; ++i)
-      c->clear_color[i] = color[i];
+   c->clear_color = *color;
 }
 
 void
-vl_compositor_get_clear_color(struct vl_compositor *c, float color[4])
+vl_compositor_get_clear_color(struct vl_compositor *c, union pipe_color_union *color)
 {
-   unsigned i;
-
    assert(c);
    assert(color);
 
-   for (i = 0; i < 4; ++i)
-      color[i] = c->clear_color[i];
+   *color = c->clear_color;
 }
 
 void
@@ -760,7 +754,7 @@ vl_compositor_render(struct vl_compositor   *c,
 
    if (clear_dirty_area && (c->dirty_tl.x < c->dirty_br.x ||
                             c->dirty_tl.y < c->dirty_br.y)) {
-      util_clear_render_target(c->pipe, dst_surface, c->clear_color,
+      util_clear_render_target(c->pipe, dst_surface, &c->clear_color,
                                0, 0, dst_surface->width, dst_surface->height);
       c->dirty_tl.x = c->dirty_tl.y = 1.0f;
       c->dirty_br.x = c->dirty_br.y = 0.0f;
@@ -804,8 +798,8 @@ vl_compositor_init(struct vl_compositor *c, struct pipe_context *pipe)
    vl_csc_get_matrix(VL_CSC_COLOR_STANDARD_IDENTITY, NULL, true, csc_matrix);
    vl_compositor_set_csc_matrix(c, csc_matrix);
 
-   c->clear_color[0] = c->clear_color[1] = 0.0f;
-   c->clear_color[2] = c->clear_color[3] = 0.0f;
+   c->clear_color.f[0] = c->clear_color.f[1] = 0.0f;
+   c->clear_color.f[2] = c->clear_color.f[3] = 0.0f;
    vl_compositor_reset_dirty_area(c);
 
    return true;

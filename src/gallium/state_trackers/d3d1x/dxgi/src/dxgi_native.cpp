@@ -1162,7 +1162,7 @@ struct GalliumDXGISwapChain : public GalliumDXGIObject<IDXGISwapChain, GalliumDX
 		if(1)
 		{
 			unsigned blit_x, blit_y, blit_w, blit_h;
-			float black[4] = {0, 0, 0, 0};
+			static const union pipe_color_union black;
 
 			if(!formats_compatible || src->width0 != dst_w || src->height0 != dst_h) {
 				struct pipe_surface templat;
@@ -1205,9 +1205,9 @@ struct GalliumDXGISwapChain : public GalliumDXGIObject<IDXGISwapChain, GalliumDX
 			}
 
 			if(blit_x)
-				pipe->clear_render_target(pipe, dst_surface, black, rect.left, rect.top, blit_x, dst_h);
+				pipe->clear_render_target(pipe, dst_surface, &black, rect.left, rect.top, blit_x, dst_h);
 			if(blit_y)
-				pipe->clear_render_target(pipe, dst_surface, black, rect.left, rect.top, dst_w, blit_y);
+				pipe->clear_render_target(pipe, dst_surface, &black, rect.left, rect.top, dst_w, blit_y);
 
 			if(formats_compatible && blit_w == src->width0 && blit_h == src->height0)
 			{
@@ -1226,9 +1226,9 @@ struct GalliumDXGISwapChain : public GalliumDXGIObject<IDXGISwapChain, GalliumDX
 			}
 
 			if(blit_w != dst_w)
-				pipe->clear_render_target(pipe, dst_surface, black, rect.left + blit_x + blit_w, rect.top, dst_w - blit_x - blit_w, dst_h);
+				pipe->clear_render_target(pipe, dst_surface, &black, rect.left + blit_x + blit_w, rect.top, dst_w - blit_x - blit_w, dst_h);
 			if(blit_h != dst_h)
-				pipe->clear_render_target(pipe, dst_surface, black, rect.left, rect.top + blit_y + blit_h, dst_w, dst_h - blit_y - blit_h);
+				pipe->clear_render_target(pipe, dst_surface, &black, rect.left, rect.top + blit_y + blit_h, dst_w, dst_h - blit_y - blit_h);
 		}
 
 		if(dst_surface)

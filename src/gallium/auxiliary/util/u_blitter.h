@@ -77,7 +77,7 @@ struct blitter_context
                           unsigned x1, unsigned y1, unsigned x2, unsigned y2,
                           float depth,
                           enum blitter_attrib_type type,
-                          const float attrib[4]);
+                          const union pipe_color_union *color);
 
    /* Whether the blitter is running. */
    boolean running;
@@ -144,7 +144,7 @@ void util_blitter_clear(struct blitter_context *blitter,
                         unsigned width, unsigned height,
                         unsigned num_cbufs,
                         unsigned clear_buffers,
-                        const float *rgba,
+                        const union pipe_color_union *color,
                         double depth, unsigned stencil);
 
 void util_blitter_clear_depth_custom(struct blitter_context *blitter,
@@ -190,7 +190,7 @@ void util_blitter_copy_texture(struct blitter_context *blitter,
  */
 void util_blitter_clear_render_target(struct blitter_context *blitter,
                                       struct pipe_surface *dst,
-                                      const float *rgba,
+                                      const union pipe_color_union *color,
                                       unsigned dstx, unsigned dsty,
                                       unsigned width, unsigned height);
 

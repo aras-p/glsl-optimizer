@@ -87,7 +87,7 @@ i915_surface_copy_render(struct pipe_context *pipe,
 static void
 i915_clear_render_target_render(struct pipe_context *pipe,
                                 struct pipe_surface *dst,
-                                const float *rgba,
+                                const union pipe_color_union *color,
                                 unsigned dstx, unsigned dsty,
                                 unsigned width, unsigned height)
 {
@@ -106,7 +106,7 @@ i915_clear_render_target_render(struct pipe_context *pipe,
    if (i915->dirty)
       i915_update_derived(i915);
 
-   i915_clear_emit(pipe, PIPE_CLEAR_COLOR, rgba, 0.0, 0x0,
+   i915_clear_emit(pipe, PIPE_CLEAR_COLOR, color, 0.0, 0x0,
                    dstx, dsty, width, height);
 
    pipe->set_framebuffer_state(pipe, &i915->blitter->saved_fb_state);
@@ -202,7 +202,7 @@ i915_surface_copy_blitter(struct pipe_context *pipe,
 static void
 i915_clear_render_target_blitter(struct pipe_context *pipe,
                                  struct pipe_surface *dst,
-                                 const float *rgba,
+                                 const union pipe_color_union *color,
                                  unsigned dstx, unsigned dsty,
                                  unsigned width, unsigned height)
 {
@@ -214,7 +214,7 @@ i915_clear_render_target_blitter(struct pipe_context *pipe,
    assert(util_format_get_blockwidth(pt->format) == 1);
    assert(util_format_get_blockheight(pt->format) == 1);
 
-   util_pack_color(rgba, dst->format, &uc);
+   util_pack_color(color->f, dst->format, &uc);
    i915_fill_blit( i915_context(pipe),
                    util_format_get_blocksize(pt->format),
                    XY_COLOR_BLT_WRITE_ALPHA | XY_COLOR_BLT_WRITE_RGB,

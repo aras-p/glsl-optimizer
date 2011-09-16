@@ -119,6 +119,7 @@ vlVdpPresentationQueueSetBackgroundColor(VdpPresentationQueue presentation_queue
                                          VdpColor *const background_color)
 {
    vlVdpPresentationQueue *pq;
+   union pipe_color_union color;
 
    VDPAU_MSG(VDPAU_TRACE, "[VDPAU] Setting background color\n");
 
@@ -129,7 +130,12 @@ vlVdpPresentationQueueSetBackgroundColor(VdpPresentationQueue presentation_queue
    if (!pq)
       return VDP_STATUS_INVALID_HANDLE;
 
-   vl_compositor_set_clear_color(&pq->compositor, (float*)background_color);
+   color.f[0] = background_color->red;
+   color.f[1] = background_color->green;
+   color.f[2] = background_color->blue;
+   color.f[3] = background_color->alpha;
+
+   vl_compositor_set_clear_color(&pq->compositor, &color);
 
    return VDP_STATUS_OK;
 }
@@ -142,6 +148,7 @@ vlVdpPresentationQueueGetBackgroundColor(VdpPresentationQueue presentation_queue
                                          VdpColor *const background_color)
 {
    vlVdpPresentationQueue *pq;
+   union pipe_color_union color;
 
    VDPAU_MSG(VDPAU_TRACE, "[VDPAU] Getting background color\n");
 
@@ -152,7 +159,12 @@ vlVdpPresentationQueueGetBackgroundColor(VdpPresentationQueue presentation_queue
    if (!pq)
       return VDP_STATUS_INVALID_HANDLE;
 
-   vl_compositor_get_clear_color(&pq->compositor, (float*)background_color);
+   vl_compositor_get_clear_color(&pq->compositor, &color);
+
+   background_color->red = color.f[0];
+   background_color->green = color.f[1];
+   background_color->blue = color.f[2];
+   background_color->alpha = color.f[3];
 
    return VDP_STATUS_OK;
 }

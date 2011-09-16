@@ -178,7 +178,8 @@ extern boolean nv50_state_validate(struct nv50_context *, uint32_t state_mask,
 
 /* nv50_surface.c */
 extern void nv50_clear(struct pipe_context *, unsigned buffers,
-                       const float *rgba, double depth, unsigned stencil);
+                       const union pipe_color_union *color,
+                       double depth, unsigned stencil);
 extern void nv50_init_surface_functions(struct nv50_context *);
 
 /* nv50_tex.c */

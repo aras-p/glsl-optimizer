@@ -261,7 +261,7 @@ nv50_resource_copy_region(struct pipe_context *pipe,
 static void
 nv50_clear_render_target(struct pipe_context *pipe,
                          struct pipe_surface *dst,
-                         const float *rgba,
+			 const union pipe_color_union *color,
                          unsigned dstx, unsigned dsty,
                          unsigned width, unsigned height)
 {
@@ -273,10 +273,10 @@ nv50_clear_render_target(struct pipe_context *pipe,
    struct nouveau_bo *bo = mt->base.bo;
 
    BEGIN_RING(chan, RING_3D(CLEAR_COLOR(0)), 4);
-   OUT_RINGf (chan, rgba[0]);
-   OUT_RINGf (chan, rgba[1]);
-   OUT_RINGf (chan, rgba[2]);
-   OUT_RINGf (chan, rgba[3]);
+   OUT_RINGf (chan, color->f[0]);
+   OUT_RINGf (chan, color->f[1]);
+   OUT_RINGf (chan, color->f[2]);
+   OUT_RINGf (chan, color->f[3]);
 
    if (MARK_RING(chan, 18, 2))
       return;
@@ -374,7 +374,8 @@ nv50_clear_depth_stencil(struct pipe_context *pipe,
 
 void
 nv50_clear(struct pipe_context *pipe, unsigned buffers,
-           const float *rgba, double depth, unsigned stencil)
+           const union pipe_color_union *color,
+           double depth, unsigned stencil)
 {
    struct nv50_context *nv50 = nv50_context(pipe);
    struct nouveau_channel *chan = nv50->screen->base.channel;
@@ -388,10 +389,10 @@ nv50_clear(struct pipe_context *pipe, unsigned buffers,
 
    if (buffers & PIPE_CLEAR_COLOR && fb->nr_cbufs) {
       BEGIN_RING(chan, RING_3D(CLEAR_COLOR(0)), 4);
-      OUT_RINGf (chan, rgba[0]);
-      OUT_RINGf (chan, rgba[1]);
-      OUT_RINGf (chan, rgba[2]);
-      OUT_RINGf (chan, rgba[3]);
+      OUT_RINGf (chan, color->f[0]);
+      OUT_RINGf (chan, color->f[1]);
+      OUT_RINGf (chan, color->f[2]);
+      OUT_RINGf (chan, color->f[3]);
       mode =
          NV50_3D_CLEAR_BUFFERS_R | NV50_3D_CLEAR_BUFFERS_G |
          NV50_3D_CLEAR_BUFFERS_B | NV50_3D_CLEAR_BUFFERS_A;

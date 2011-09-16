@@ -63,7 +63,7 @@ struct pipe_vertex_element;
 struct pipe_video_buffer;
 struct pipe_video_decoder;
 struct pipe_viewport_state;
-
+union pipe_color_union;
 
 /**
  * Gallium rendering context.  Basically:
@@ -281,23 +281,23 @@ struct pipe_context {
     * The entire buffers are cleared (no scissor, no colormask, etc).
     *
     * \param buffers  bitfield of PIPE_CLEAR_* values.
-    * \param rgba  pointer to an array of one float for each of r, g, b, a.
+    * \param color  pointer to a union of fiu array for each of r, g, b, a.
     * \param depth  depth clear value in [0,1].
     * \param stencil  stencil clear value
     */
    void (*clear)(struct pipe_context *pipe,
                  unsigned buffers,
-                 const float *rgba,
+                 const union pipe_color_union *color,
                  double depth,
                  unsigned stencil);
 
    /**
     * Clear a color rendertarget surface.
-    * \param rgba  pointer to an array of one float for each of r, g, b, a.
+    * \param color  pointer to an union of fiu array for each of r, g, b, a.
     */
    void (*clear_render_target)(struct pipe_context *pipe,
                                struct pipe_surface *dst,
-                               const float *rgba,
+                               const union pipe_color_union *color,
                                unsigned dstx, unsigned dsty,
                                unsigned width, unsigned height);
 

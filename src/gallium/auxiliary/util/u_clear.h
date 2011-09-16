@@ -40,13 +40,13 @@
 static INLINE void
 util_clear(struct pipe_context *pipe,
            struct pipe_framebuffer_state *framebuffer, unsigned buffers,
-           const float *rgba, double depth, unsigned stencil)
+           const union pipe_color_union *color, double depth, unsigned stencil)
 {
    if (buffers & PIPE_CLEAR_COLOR) {
       unsigned i;
       for (i = 0; i < framebuffer->nr_cbufs; i++) {
          struct pipe_surface *ps = framebuffer->cbufs[i];
-         pipe->clear_render_target(pipe, ps, rgba, 0, 0, ps->width, ps->height);
+         pipe->clear_render_target(pipe, ps, color, 0, 0, ps->width, ps->height);
       }
    }
 

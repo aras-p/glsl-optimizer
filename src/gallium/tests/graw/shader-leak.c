@@ -137,7 +137,7 @@ set_fragment_shader( void )
 
 static void draw( void )
 {
-   float clear_color[4] = {0, 0, 0, 1};
+   union pipe_color_union clear_color = { .f = {0,0,0,1} };
    int i;
 
    printf("Creating %d shaders\n", num_iters);
@@ -147,7 +147,7 @@ static void draw( void )
 
       ctx->bind_fs_state(ctx, fs);
 
-      ctx->clear(ctx, PIPE_CLEAR_COLOR, clear_color, 0, 0);
+      ctx->clear(ctx, PIPE_CLEAR_COLOR, &clear_color, 0, 0);
       util_draw_arrays(ctx, PIPE_PRIM_POINTS, 0, 1);
       ctx->flush(ctx, NULL);
 

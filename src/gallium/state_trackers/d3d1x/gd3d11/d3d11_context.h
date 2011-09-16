@@ -1594,7 +1594,12 @@ changed:
 	{
 		SYNCHRONIZED;
 		GalliumD3D11RenderTargetView* view = ((GalliumD3D11RenderTargetView*)render_target_view);
-		pipe->clear_render_target(pipe, view->object, color, 0, 0, view->object->width, view->object->height);
+		union pipe_color_union cc;
+		cc.f[0] = color[0];
+		cc.f[1] = color[1];
+		cc.f[2] = color[2];
+		cc.f[3] = color[3];
+		pipe->clear_render_target(pipe, view->object, &cc, 0, 0, view->object->width, view->object->height);
 	}
 
 	virtual void STDMETHODCALLTYPE ClearDepthStencilView(

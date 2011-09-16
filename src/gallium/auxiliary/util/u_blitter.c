@@ -111,7 +111,7 @@ static void blitter_draw_rectangle(struct blitter_context *blitter,
                                    unsigned width, unsigned height,
                                    float depth,
                                    enum blitter_attrib_type type,
-                                   const float attrib[4]);
+                                   const union pipe_color_union *attrib);
 
 
 struct blitter_context *util_blitter_create(struct pipe_context *pipe)
@@ -398,16 +398,16 @@ static void blitter_set_rectangle(struct blitter_context_priv *ctx,
 }
 
 static void blitter_set_clear_color(struct blitter_context_priv *ctx,
-                                    const float *rgba)
+                                    const union pipe_color_union *color)
 {
    int i;
 
-   if (rgba) {
+   if (color) {
       for (i = 0; i < 4; i++) {
-         ctx->vertices[i][1][0] = rgba[0];
-         ctx->vertices[i][1][1] = rgba[1];
-         ctx->vertices[i][1][2] = rgba[2];
-         ctx->vertices[i][1][3] = rgba[3];
+         ctx->vertices[i][1][0] = color->f[0];
+         ctx->vertices[i][1][1] = color->f[1];
+         ctx->vertices[i][1][2] = color->f[2];
+         ctx->vertices[i][1][3] = color->f[3];
       }
    } else {
       for (i = 0; i < 4; i++) {
@@ -647,7 +647,7 @@ static void blitter_draw_rectangle(struct blitter_context *blitter,
                                    unsigned x2, unsigned y2,
                                    float depth,
                                    enum blitter_attrib_type type,
-                                   const float attrib[4])
+                                   const union pipe_color_union *attrib)
 {
    struct blitter_context_priv *ctx = (struct blitter_context_priv*)blitter;
 
@@ -657,7 +657,7 @@ static void blitter_draw_rectangle(struct blitter_context *blitter,
          break;
 
       case UTIL_BLITTER_ATTRIB_TEXCOORD:
-         set_texcoords_in_vertices(attrib, &ctx->vertices[0][1][0], 8);
+         set_texcoords_in_vertices(attrib->f, &ctx->vertices[0][1][0], 8);
          break;
 
       default:;
@@ -674,7 +674,7 @@ static void util_blitter_clear_custom(struct blitter_context *blitter,
                                       unsigned width, unsigned height,
                                       unsigned num_cbufs,
                                       unsigned clear_buffers,
-                                      const float *rgba,
+                                      const union pipe_color_union *color,
                                       double depth, unsigned stencil,
                                       void *custom_blend, void *custom_dsa)
 {
@@ -717,7 +717,7 @@ static void util_blitter_clear_custom(struct blitter_context *blitter,
 
    blitter_set_dst_dimensions(ctx, width, height);
    blitter->draw_rectangle(blitter, 0, 0, width, height, depth,
-                           UTIL_BLITTER_ATTRIB_COLOR, rgba);
+                           UTIL_BLITTER_ATTRIB_COLOR, color);
    blitter_restore_CSOs(ctx);
 }
 
@@ -725,11 +725,11 @@ void util_blitter_clear(struct blitter_context *blitter,
                         unsigned width, unsigned height,
                         unsigned num_cbufs,
                         unsigned clear_buffers,
-                        const float *rgba,
+                        const union pipe_color_union *color,
                         double depth, unsigned stencil)
 {
    util_blitter_clear_custom(blitter, width, height, num_cbufs,
-                             clear_buffers, rgba, depth, stencil,
+                             clear_buffers, color, depth, stencil,
                              NULL, NULL);
 }
 
@@ -737,9 +737,9 @@ void util_blitter_clear_depth_custom(struct blitter_context *blitter,
                                      unsigned width, unsigned height,
                                      double depth, void *custom_dsa)
 {
-    const float rgba[4] = {0, 0, 0, 0};
+    static const union pipe_color_union color;
     util_blitter_clear_custom(blitter, width, height, 0,
-                              0, rgba, depth, 0, NULL, custom_dsa);
+                              0, &color, depth, 0, NULL, custom_dsa);
 }
 
 static
@@ -869,14 +869,16 @@ void util_blitter_copy_texture(struct blitter_context *blitter,
       case PIPE_TEXTURE_2D:
       case PIPE_TEXTURE_RECT:
          {
-            /* Set texture coordinates. */
-            float coord[4];
+            /* Set texture coordinates. - use a pipe color union
+             * for interface purposes
+             */
+            union pipe_color_union coord;
             get_texcoords(src, srclevel, srcbox->x, srcbox->y,
-                          srcbox->x+width, srcbox->y+height, normalized, coord);
+                          srcbox->x+width, srcbox->y+height, normalized, coord.f);
 
             /* Draw. */
             blitter->draw_rectangle(blitter, dstx, dsty, dstx+width, dsty+height, 0,
-                                    UTIL_BLITTER_ATTRIB_TEXCOORD, coord);
+                                    UTIL_BLITTER_ATTRIB_TEXCOORD, &coord);
          }
          break;
 
@@ -925,7 +927,7 @@ void util_blitter_copy_texture(struct blitter_context *blitter,
 /* Clear a region of a color surface to a constant value. */
 void util_blitter_clear_render_target(struct blitter_context *blitter,
                                       struct pipe_surface *dstsurf,
-                                      const float *rgba,
+                                      const union pipe_color_union *color,
                                       unsigned dstx, unsigned dsty,
                                       unsigned width, unsigned height)
 {
@@ -959,7 +961,7 @@ void util_blitter_clear_render_target(struct blitter_context *blitter,
 
    blitter_set_dst_dimensions(ctx, dstsurf->width, dstsurf->height);
    blitter->draw_rectangle(blitter, dstx, dsty, dstx+width, dsty+height, 0,
-                           UTIL_BLITTER_ATTRIB_COLOR, rgba);
+                           UTIL_BLITTER_ATTRIB_COLOR, color);
    blitter_restore_CSOs(ctx);
 }
 

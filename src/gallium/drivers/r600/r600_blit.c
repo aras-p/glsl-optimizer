@@ -200,28 +200,29 @@ void r600_flush_depth_textures(struct r600_pipe_context *rctx)
 }
 
 static void r600_clear(struct pipe_context *ctx, unsigned buffers,
-			const float *rgba, double depth, unsigned stencil)
+		       const union pipe_color_union *color,
+		       double depth, unsigned stencil)
 {
 	struct r600_pipe_context *rctx = (struct r600_pipe_context *)ctx;
 	struct pipe_framebuffer_state *fb = &rctx->framebuffer;
 
 	r600_blitter_begin(ctx, R600_CLEAR);
 	util_blitter_clear(rctx->blitter, fb->width, fb->height,
-				fb->nr_cbufs, buffers, rgba, depth,
-				stencil);
+			   fb->nr_cbufs, buffers, color, depth,
+			   stencil);
 	r600_blitter_end(ctx);
 }
 
 static void r600_clear_render_target(struct pipe_context *ctx,
 				     struct pipe_surface *dst,
-				     const float *rgba,
+				     const union pipe_color_union *color,
 				     unsigned dstx, unsigned dsty,
 				     unsigned width, unsigned height)
 {
 	struct r600_pipe_context *rctx = (struct r600_pipe_context *)ctx;
 
 	r600_blitter_begin(ctx, R600_CLEAR_SURFACE);
-	util_blitter_clear_render_target(rctx->blitter, dst, rgba,
+	util_blitter_clear_render_target(rctx->blitter, dst, color,
 					 dstx, dsty, width, height);
 	r600_blitter_end(ctx);
 }

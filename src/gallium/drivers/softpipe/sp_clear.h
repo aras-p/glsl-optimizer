@@ -35,7 +35,8 @@
 struct pipe_context;
 
 extern void
-softpipe_clear(struct pipe_context *pipe, unsigned buffers, const float *rgba,
+softpipe_clear(struct pipe_context *pipe, unsigned buffers,
+               const union pipe_color_union *color,
                double depth, unsigned stencil);
 
 

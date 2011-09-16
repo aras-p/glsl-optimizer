@@ -82,7 +82,7 @@ struct program
 	void *vs;
 	void *fs;
 
-	float clear_color[4];
+	union pipe_color_union clear_color;
 
 	struct pipe_resource *vbuf;
 	struct pipe_resource *target;
@@ -103,10 +103,10 @@ static void init_prog(struct program *p)
 	p->cso = cso_create_context(p->pipe);
 
 	/* set clear color */
-	p->clear_color[0] = 0.3;
-	p->clear_color[1] = 0.1;
-	p->clear_color[2] = 0.3;
-	p->clear_color[3] = 1.0;
+	p->clear_color.f[0] = 0.3;
+	p->clear_color.f[1] = 0.1;
+	p->clear_color.f[2] = 0.3;
+	p->clear_color.f[3] = 1.0;
 
 	/* vertex buffer */
 	{
@@ -307,7 +307,7 @@ static void draw(struct program *p)
 	cso_set_framebuffer(p->cso, &p->framebuffer);
 
 	/* clear the render target */
-	p->pipe->clear(p->pipe, PIPE_CLEAR_COLOR, p->clear_color, 0, 0);
+	p->pipe->clear(p->pipe, PIPE_CLEAR_COLOR, &p->clear_color, 0, 0);
 
 	/* set misc state we care about */
 	cso_set_blend(p->cso, &p->blend);

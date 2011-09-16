@@ -174,7 +174,7 @@ static uint32_t r300_hiz_clear_value(double depth)
 /* Clear currently bound buffers. */
 static void r300_clear(struct pipe_context* pipe,
                        unsigned buffers,
-                       const float* rgba,
+                       const union pipe_color_union *color,
                        double depth,
                        unsigned stencil)
 {
@@ -281,7 +281,7 @@ static void r300_clear(struct pipe_context* pipe,
         struct r300_surface *surf = r300_surface(fb->cbufs[0]);
 
         hyperz->zb_depthclearvalue =
-                r300_depth_clear_cb_value(surf->base.format, rgba);
+                r300_depth_clear_cb_value(surf->base.format, color->f);
 
         width = surf->cbzb_width;
         height = surf->cbzb_height;
@@ -298,7 +298,7 @@ static void r300_clear(struct pipe_context* pipe,
                            width,
                            height,
                            fb->nr_cbufs,
-                           buffers, rgba, depth, stencil);
+                           buffers, color, depth, stencil);
         r300_blitter_end(r300);
     } else if (r300->zmask_clear.dirty || r300->hiz_clear.dirty) {
         /* Just clear zmask and hiz now, this does not use the standard draw
@@ -348,14 +348,14 @@ static void r300_clear(struct pipe_context* pipe,
 /* Clear a region of a color surface to a constant value. */
 static void r300_clear_render_target(struct pipe_context *pipe,
                                      struct pipe_surface *dst,
-                                     const float *rgba,
+                                     const union pipe_color_union *color,
                                      unsigned dstx, unsigned dsty,
                                      unsigned width, unsigned height)
 {
     struct r300_context *r300 = r300_context(pipe);
 
     r300_blitter_begin(r300, R300_CLEAR_SURFACE);
-    util_blitter_clear_render_target(r300->blitter, dst, rgba,
+    util_blitter_clear_render_target(r300->blitter, dst, color,
                                      dstx, dsty, width, height);
     r300_blitter_end(r300);
 }

@@ -201,7 +201,7 @@ static void zstencil_clear(struct brw_context *brw,
  */
 static void brw_clear(struct pipe_context *pipe, 
                       unsigned buffers,
-                      const float *rgba,
+                      const union pipe_color_union *color,
                       double depth,
                       unsigned stencil)
 {
@@ -212,7 +212,7 @@ static void brw_clear(struct pipe_context *pipe,
       for (i = 0; i < brw->curr.fb.nr_cbufs; i++) {
          color_clear( brw, 
                       brw_surface(brw->curr.fb.cbufs[i]),
-                      rgba );
+                      color->f );
       }
    }
 
@@ -229,7 +229,7 @@ static void brw_clear(struct pipe_context *pipe,
 /* XXX should respect region */
 static void brw_clear_render_target(struct pipe_context *pipe,
                                     struct pipe_surface *dst,
-                                    const float *rgba,
+                                    const union pipe_color_union *color,
                                     unsigned dstx, unsigned dsty,
                                     unsigned width, unsigned height)
 {
@@ -237,7 +237,7 @@ static void brw_clear_render_target(struct pipe_context *pipe,
 
    color_clear( brw,
                 brw_surface(dst),
-                rgba );
+                color->f );
 }
 
 /* XXX should respect region */

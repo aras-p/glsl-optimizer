@@ -34,7 +34,8 @@ struct pipe_context;
 
 
 extern void
-cell_clear(struct pipe_context *pipe, unsigned buffers, const float *rgba,
+cell_clear(struct pipe_context *pipe, unsigned buffers,
+           const union pipe_color_union *color,
            double depth, unsigned stencil);
 
 

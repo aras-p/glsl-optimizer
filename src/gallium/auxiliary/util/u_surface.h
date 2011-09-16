@@ -68,7 +68,7 @@ util_resource_copy_region(struct pipe_context *pipe,
 extern void
 util_clear_render_target(struct pipe_context *pipe,
                          struct pipe_surface *dst,
-                         const float *rgba,
+                         const union pipe_color_union *color,
                          unsigned dstx, unsigned dsty,
                          unsigned width, unsigned height);
 

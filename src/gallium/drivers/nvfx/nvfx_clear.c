@@ -7,8 +7,8 @@
 
 void
 nvfx_clear(struct pipe_context *pipe, unsigned buffers,
-           const float *rgba, double depth, unsigned stencil)
+           const union pipe_color_union *color, double depth, unsigned stencil)
 {
-	util_clear(pipe, &nvfx_context(pipe)->framebuffer, buffers, rgba, depth,
+	util_clear(pipe, &nvfx_context(pipe)->framebuffer, buffers, color, depth,
 		   stencil);
 }

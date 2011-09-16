@@ -478,19 +478,19 @@ nvfx_surface_flush(struct pipe_context* pipe, struct pipe_surface* surf)
 static void
 nvfx_clear_render_target(struct pipe_context *pipe,
 			 struct pipe_surface *dst,
-			 const float *rgba,
+			 const union pipe_color_union *color,
 			 unsigned dstx, unsigned dsty,
 			 unsigned width, unsigned height)
 {
 	union util_color uc;
-	util_pack_color(rgba, dst->format, &uc);
+	util_pack_color(color->f, dst->format, &uc);
 
 	if(util_format_get_blocksizebits(dst->format) > 32
 		|| nvfx_surface_fill(pipe, dst, dstx, dsty, width, height, uc.ui))
 	{
 		// TODO: probably should use hardware clear here instead if possible
 		struct blitter_context* blitter = nvfx_get_blitter(pipe, 0);
-		util_blitter_clear_render_target(blitter, dst, rgba, dstx, dsty, width, height);
+		util_blitter_clear_render_target(blitter, dst, color, dstx, dsty, width, height);
 		nvfx_put_blitter(pipe, blitter);
 	}
 }

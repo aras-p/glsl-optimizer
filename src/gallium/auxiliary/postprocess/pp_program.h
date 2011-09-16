@@ -49,7 +49,7 @@ struct program
    struct pipe_framebuffer_state framebuffer;
    struct pipe_vertex_element velem[2];
 
-   float clear_color[4];
+   union pipe_color_union clear_color;
 
    void *passvs;
 

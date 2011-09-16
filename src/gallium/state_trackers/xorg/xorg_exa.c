@@ -386,7 +386,12 @@ ExaSolid(PixmapPtr pPixmap, int x0, int y0, int x1, int y1)
 
     if (x0 == 0 && y0 == 0 &&
         x1 == pPixmap->drawable.width && y1 == pPixmap->drawable.height) {
-       exa->pipe->clear(exa->pipe, PIPE_CLEAR_COLOR, exa->solid_color, 0.0, 0);
+       union pipe_color_union solid_color;
+       solid_color.f[0] = exa->solid_color[0];
+       solid_color.f[1] = exa->solid_color[1];
+       solid_color.f[2] = exa->solid_color[2];
+       solid_color.f[3] = exa->solid_color[3];
+       exa->pipe->clear(exa->pipe, PIPE_CLEAR_COLOR, &solid_color, 0.0, 0);
        return;
     }
 

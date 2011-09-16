@@ -187,7 +187,8 @@ extern boolean nvc0_state_validate(struct nvc0_context *, uint32_t state_mask,
 
 /* nvc0_surface.c */
 extern void nvc0_clear(struct pipe_context *, unsigned buffers,
-                       const float *rgba, double depth, unsigned stencil);
+                       const union pipe_color_union *color,
+                       double depth, unsigned stencil);
 extern void nvc0_init_surface_functions(struct nvc0_context *);
 
 /* nvc0_tex.c */

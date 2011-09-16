@@ -515,6 +515,12 @@ struct pipe_query_data_timestamp_disjoint
    boolean  disjoint;
 };
 
+union pipe_color_union
+{
+   float f[4];
+   int i[4];
+   unsigned int ui[4];
+};
 
 #ifdef __cplusplus
 }

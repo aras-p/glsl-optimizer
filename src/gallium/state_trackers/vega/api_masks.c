@@ -92,8 +92,13 @@ void vegaClear(VGint x, VGint y,
    /* check for a whole surface clear */
    if (!ctx->state.vg.scissoring &&
        (x == 0 && y == 0 && width == stfb->width && height == stfb->height)) {
+      union pipe_color_union clear_color;
+      clear_color.f[0] = ctx->state.vg.clear_color[0];
+      clear_color.f[1] = ctx->state.vg.clear_color[1];
+      clear_color.f[2] = ctx->state.vg.clear_color[2];
+      clear_color.f[3] = ctx->state.vg.clear_color[3];
       ctx->pipe->clear(ctx->pipe, PIPE_CLEAR_COLOR | PIPE_CLEAR_DEPTHSTENCIL,
-                       ctx->state.vg.clear_color, 1., 0);
+                       &clear_color, 1., 0);
    } else if (renderer_clear_begin(ctx->renderer)) {
       /* XXX verify coord round-off */
       renderer_clear(ctx->renderer, x, y, width, height, ctx->state.vg.clear_color);

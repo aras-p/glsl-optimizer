@@ -41,7 +41,8 @@
 #include "i915_state.h"
 
 void
-i915_clear_emit(struct pipe_context *pipe, unsigned buffers, const float *rgba,
+i915_clear_emit(struct pipe_context *pipe, unsigned buffers,
+                const union pipe_color_union *color,
                 double depth, unsigned stencil,
                 unsigned destx, unsigned desty, unsigned width, unsigned height)
 {
@@ -60,13 +61,13 @@ i915_clear_emit(struct pipe_context *pipe, unsigned buffers, const float *rgba,
 
       clear_params |= CLEARPARAM_WRITE_COLOR;
       cbuf_tex = i915_texture(cbuf->texture);
-      util_pack_color(rgba, cbuf->format, &u_color);
+      util_pack_color(color->f, cbuf->format, &u_color);
       if (util_format_get_blocksize(cbuf_tex->b.b.format) == 4)
          clear_color = u_color.ui;
       else
          clear_color = (u_color.ui & 0xffff) | (u_color.ui << 16);
 
-      util_pack_color(rgba, cbuf->format, &u_color);
+      util_pack_color(color->f, cbuf->format, &u_color);
       clear_color8888 = u_color.ui;
    } else
       clear_color = clear_color8888 = 0;
@@ -135,15 +136,17 @@ i915_clear_emit(struct pipe_context *pipe, unsigned buffers, const float *rgba,
  * No masking, no scissor (clear entire buffer).
  */
 void
-i915_clear_blitter(struct pipe_context *pipe, unsigned buffers, const float *rgba,
+i915_clear_blitter(struct pipe_context *pipe, unsigned buffers,
+                   const union pipe_color_union *color,
                    double depth, unsigned stencil)
 {
-   util_clear(pipe, &i915_context(pipe)->framebuffer, buffers, rgba, depth,
+   util_clear(pipe, &i915_context(pipe)->framebuffer, buffers, color, depth,
               stencil);
 }
 
 void
-i915_clear_render(struct pipe_context *pipe, unsigned buffers, const float *rgba,
+i915_clear_render(struct pipe_context *pipe, unsigned buffers,
+                  const union pipe_color_union *color,
                   double depth, unsigned stencil)
 {
    struct i915_context *i915 = i915_context(pipe);
@@ -151,6 +154,6 @@ i915_clear_render(struct pipe_context *pipe, unsigned buffers, const float *rgba
    if (i915->dirty)
       i915_update_derived(i915);
 
-   i915_clear_emit(pipe, buffers, rgba, depth, stencil,
+   i915_clear_emit(pipe, buffers, color, depth, stencil,
                    0, 0, i915->framebuffer.width, i915->framebuffer.height);
 }

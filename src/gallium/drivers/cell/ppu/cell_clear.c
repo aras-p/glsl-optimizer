@@ -49,7 +49,8 @@
  * Called via pipe->clear()
  */
 void
-cell_clear(struct pipe_context *pipe, unsigned buffers, const float *rgba,
+cell_clear(struct pipe_context *pipe, unsigned buffers,
+           const pipe_color_union *color,
            double depth, unsigned stencil)
 {
    struct cell_context *cell = cell_context(pipe);
@@ -61,7 +62,7 @@ cell_clear(struct pipe_context *pipe, unsigned buffers, const float *rgba,
       uint surfIndex = 0;
       union util_color uc;
 
-      util_pack_color(rgba, cell->framebuffer.cbufs[0]->format, &uc);
+      util_pack_color(color->f, cell->framebuffer.cbufs[0]->format, &uc);
 
       /* Build a CLEAR command and place it in the current batch buffer */
       STATIC_ASSERT(sizeof(struct cell_command_clear_surface) % 16 == 0);

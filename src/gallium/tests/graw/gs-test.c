@@ -331,9 +331,9 @@ static void set_geometry_shader( void )
 
 static void draw( void )
 {
-   float clear_color[4] = {.1,.3,.5,0};
+   union pipe_color_union clear_color = { .f = {.1,.3,.5,0} };
 
-   ctx->clear(ctx, PIPE_CLEAR_COLOR, clear_color, 0, 0);
+   ctx->clear(ctx, PIPE_CLEAR_COLOR, &clear_color, 0, 0);
    if (draw_strip)
       util_draw_arrays(ctx, PIPE_PRIM_TRIANGLE_STRIP, 0, 4);
    else

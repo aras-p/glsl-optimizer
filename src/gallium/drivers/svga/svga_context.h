@@ -414,7 +414,7 @@ struct svga_context
  */
 void svga_clear(struct pipe_context *pipe, 
                 unsigned buffers,
-                const float *rgba,
+                const union pipe_color_union *color,
                 double depth,
                 unsigned stencil);
 

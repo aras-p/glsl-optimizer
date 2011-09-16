@@ -224,13 +224,13 @@ static void noop_transfer_inline_write(struct pipe_context *pipe,
  * clear/copy
  */
 static void noop_clear(struct pipe_context *ctx, unsigned buffers,
-			const float *rgba, double depth, unsigned stencil)
+		       const union pipe_color_union *color, double depth, unsigned stencil)
 {
 }
 
 static void noop_clear_render_target(struct pipe_context *ctx,
 				     struct pipe_surface *dst,
-				     const float *rgba,
+				     const union pipe_color_union *color,
 				     unsigned dstx, unsigned dsty,
 				     unsigned width, unsigned height)
 {

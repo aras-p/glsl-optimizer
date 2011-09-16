@@ -81,7 +81,7 @@ struct vl_compositor
       void *yuv;
    } fs_palette;
 
-   float clear_color[4];
+   union pipe_color_union clear_color;
    struct vertex2f dirty_tl, dirty_br;
 
    unsigned used_layers:VL_COMPOSITOR_MAX_LAYERS;
@@ -110,13 +110,13 @@ vl_compositor_reset_dirty_area(struct vl_compositor *compositor);
  * set the clear color
  */
 void
-vl_compositor_set_clear_color(struct vl_compositor *compositor, float color[4]);
+vl_compositor_set_clear_color(struct vl_compositor *compositor, union pipe_color_union *color);
 
 /**
  * get the clear color
  */
 void
-vl_compositor_get_clear_color(struct vl_compositor *compositor, float color[4]);
+vl_compositor_get_clear_color(struct vl_compositor *compositor, union pipe_color_union *color);
 
 /**
  * set overlay samplers

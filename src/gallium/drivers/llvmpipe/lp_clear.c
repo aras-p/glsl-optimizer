@@ -46,7 +46,7 @@
 void
 llvmpipe_clear(struct pipe_context *pipe, 
                unsigned buffers,
-               const float *rgba,
+               const union pipe_color_union *color,
                double depth,
                unsigned stencil)
 {
@@ -58,5 +58,5 @@ llvmpipe_clear(struct pipe_context *pipe,
    if (LP_PERF & PERF_NO_DEPTH)
       buffers &= ~PIPE_CLEAR_DEPTHSTENCIL;
 
-   lp_setup_clear( llvmpipe->setup, rgba, depth, stencil, buffers );
+   lp_setup_clear( llvmpipe->setup, color->f, depth, stencil, buffers );
 }

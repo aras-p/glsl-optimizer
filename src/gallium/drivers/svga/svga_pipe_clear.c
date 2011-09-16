@@ -37,7 +37,7 @@
 static enum pipe_error
 try_clear(struct svga_context *svga, 
           unsigned buffers,
-          const float *rgba,
+          const union pipe_color_union *color,
           double depth,
           unsigned stencil)
 {
@@ -61,7 +61,7 @@ try_clear(struct svga_context *svga,
 
    if ((buffers & PIPE_CLEAR_COLOR) && fb->cbufs[0]) {
       flags |= SVGA3D_CLEAR_COLOR;
-      util_pack_color(rgba, PIPE_FORMAT_B8G8R8A8_UNORM, &uc);
+      util_pack_color(color->f, PIPE_FORMAT_B8G8R8A8_UNORM, &uc);
 
       rect.w = fb->cbufs[0]->width;
       rect.h = fb->cbufs[0]->height;
@@ -104,7 +104,8 @@ try_clear(struct svga_context *svga,
  * No masking, no scissor (clear entire buffer).
  */
 void
-svga_clear(struct pipe_context *pipe, unsigned buffers, const float *rgba,
+svga_clear(struct pipe_context *pipe, unsigned buffers,
+           const union pipe_color_union *color,
 	   double depth, unsigned stencil)
 {
    struct svga_context *svga = svga_context( pipe );
@@ -114,14 +115,14 @@ svga_clear(struct pipe_context *pipe, unsigned buffers, const float *rgba,
       SVGA_DBG(DEBUG_DMA, "clear sid %p\n",
                svga_surface(svga->curr.framebuffer.cbufs[0])->handle);
 
-   ret = try_clear( svga, buffers, rgba, depth, stencil );
+   ret = try_clear( svga, buffers, color, depth, stencil );
 
    if (ret == PIPE_ERROR_OUT_OF_MEMORY) {
       /* Flush command buffer and retry:
        */
       svga_context_flush( svga, NULL );
 
-      ret = try_clear( svga, buffers, rgba, depth, stencil );
+      ret = try_clear( svga, buffers, color, depth, stencil );
    }
 
    /*

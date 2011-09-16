@@ -238,7 +238,8 @@ nvfx_create(struct pipe_screen *pscreen, void *priv);
 
 /* nvfx_clear.c */
 extern void nvfx_clear(struct pipe_context *pipe, unsigned buffers,
-		       const float *rgba, double depth, unsigned stencil);
+                       const union pipe_color_union *color,
+                       double depth, unsigned stencil);
 
 /* nvfx_draw.c */
 extern struct draw_stage *nvfx_draw_render_stage(struct nvfx_context *nvfx);

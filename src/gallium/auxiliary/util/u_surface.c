@@ -228,7 +228,7 @@ util_resource_copy_region(struct pipe_context *pipe,
 void
 util_clear_render_target(struct pipe_context *pipe,
                          struct pipe_surface *dst,
-                         const float *rgba,
+                         const union pipe_color_union *color,
                          unsigned dstx, unsigned dsty,
                          unsigned width, unsigned height)
 {
@@ -254,7 +254,7 @@ util_clear_render_target(struct pipe_context *pipe,
    if (dst_map) {
       assert(dst_trans->stride > 0);
 
-      util_pack_color(rgba, dst->texture->format, &uc);
+      util_pack_color(color->f, dst->texture->format, &uc);
       util_fill_rect(dst_map, dst->texture->format,
                      dst_trans->stride,
                      0, 0, width, height, &uc);

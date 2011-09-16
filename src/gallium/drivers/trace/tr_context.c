@@ -1105,7 +1105,7 @@ trace_context_resource_copy_region(struct pipe_context *_pipe,
 static INLINE void
 trace_context_clear(struct pipe_context *_pipe,
                     unsigned buffers,
-                    const float *rgba,
+                    const union pipe_color_union *color,
                     double depth,
                     unsigned stencil)
 {
@@ -1116,14 +1116,14 @@ trace_context_clear(struct pipe_context *_pipe,
 
    trace_dump_arg(ptr, pipe);
    trace_dump_arg(uint, buffers);
-   if (rgba)
-      trace_dump_arg_array(float, rgba, 4);
+   if (color)
+      trace_dump_arg_array(float, color->f, 4);
    else
       trace_dump_null();
    trace_dump_arg(float, depth);
    trace_dump_arg(uint, stencil);
 
-   pipe->clear(pipe, buffers, rgba, depth, stencil);
+   pipe->clear(pipe, buffers, color, depth, stencil);
 
    trace_dump_call_end();
 }
@@ -1132,7 +1132,7 @@ trace_context_clear(struct pipe_context *_pipe,
 static INLINE void
 trace_context_clear_render_target(struct pipe_context *_pipe,
                                   struct pipe_surface *dst,
-                                  const float *rgba,
+                                  const union pipe_color_union *color,
                                   unsigned dstx, unsigned dsty,
                                   unsigned width, unsigned height)
 {
@@ -1145,13 +1145,13 @@ trace_context_clear_render_target(struct pipe_context *_pipe,
 
    trace_dump_arg(ptr, pipe);
    trace_dump_arg(ptr, dst);
-   trace_dump_arg_array(float, rgba, 4);
+   trace_dump_arg_array(float, color->f, 4);
    trace_dump_arg(uint, dstx);
    trace_dump_arg(uint, dsty);
    trace_dump_arg(uint, width);
    trace_dump_arg(uint, height);
 
-   pipe->clear_render_target(pipe, dst, rgba, dstx, dsty, width, height);
+   pipe->clear_render_target(pipe, dst, color, dstx, dsty, width, height);
 
    trace_dump_call_end();
 }

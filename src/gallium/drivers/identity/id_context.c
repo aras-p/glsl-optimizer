@@ -606,7 +606,7 @@ identity_resource_copy_region(struct pipe_context *_pipe,
 static void
 identity_clear(struct pipe_context *_pipe,
                unsigned buffers,
-               const float *rgba,
+               const union pipe_color_union *color,
                double depth,
                unsigned stencil)
 {
@@ -615,7 +615,7 @@ identity_clear(struct pipe_context *_pipe,
 
    pipe->clear(pipe,
                buffers,
-               rgba,
+               color,
                depth,
                stencil);
 }
@@ -623,7 +623,7 @@ identity_clear(struct pipe_context *_pipe,
 static void
 identity_clear_render_target(struct pipe_context *_pipe,
                              struct pipe_surface *_dst,
-                             const float *rgba,
+                             const union pipe_color_union *color,
                              unsigned dstx, unsigned dsty,
                              unsigned width, unsigned height)
 {
@@ -634,7 +634,7 @@ identity_clear_render_target(struct pipe_context *_pipe,
 
    pipe->clear_render_target(pipe,
                              dst,
-                             rgba,
+                             color,
                              dstx,
                              dsty,
                              width,

@@ -45,7 +45,8 @@
  * No masking, no scissor (clear entire buffer).
  */
 void
-softpipe_clear(struct pipe_context *pipe, unsigned buffers, const float *rgba,
+softpipe_clear(struct pipe_context *pipe, unsigned buffers,
+               const union pipe_color_union *color,
                double depth, unsigned stencil)
 {
    struct softpipe_context *softpipe = softpipe_context(pipe);
@@ -67,8 +68,8 @@ softpipe_clear(struct pipe_context *pipe, unsigned buffers, const float *rgba,
       for (i = 0; i < softpipe->framebuffer.nr_cbufs; i++) {
          struct pipe_surface *ps = softpipe->framebuffer.cbufs[i];
 
-         util_pack_color(rgba, ps->format, &uc);
-         sp_tile_cache_clear(softpipe->cbuf_cache[i], rgba, uc.ui);
+         util_pack_color(color->f, ps->format, &uc);
+         sp_tile_cache_clear(softpipe->cbuf_cache[i], color->f, uc.ui);
       }
    }
 
