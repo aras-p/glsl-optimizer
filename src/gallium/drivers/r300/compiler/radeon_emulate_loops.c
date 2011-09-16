@@ -51,6 +51,7 @@ struct count_inst {
 	rc_swizzle Swz;
 	float Amount;
 	int Unknown;
+	unsigned BranchDepth;
 };
 
 static float get_constant_value(struct radeon_compiler * c,
@@ -141,6 +142,14 @@ static void get_incr_amount(void * data, struct rc_instruction * inst,
 	   (1 << GET_SWZ(count_inst->Swz,0) != mask)){
 		return;
 	}
+
+	/* XXX: Give up if the counter is modified within an IF block.  We
+	 * could handle this case with better analysis. */
+	if (count_inst->BranchDepth > 0) {
+		count_inst->Unknown = 1;
+		return;
+	}
+
 	/* Find the index of the counter register. */
 	opcode = rc_get_opcode_info(inst->U.I.Opcode);
 	if(opcode->NumSrcRegs != 2){
@@ -236,6 +245,7 @@ static int try_unroll_loop(struct radeon_compiler * c, struct loop_info * loop)
 	count_inst.Swz = counter->Swizzle;
 	count_inst.Amount = 0.0f;
 	count_inst.Unknown = 0;
+	count_inst.BranchDepth = 0;
 	end_loops = 1;
 	for(inst = loop->BeginLoop->Next; end_loops > 0; inst = inst->Next){
 		switch(inst->U.I.Opcode){
@@ -258,9 +268,11 @@ static int try_unroll_loop(struct radeon_compiler * c, struct loop_info * loop)
 				return 0;
 			}
 			break;
-		/* XXX Check if the counter is modified within an if statement.
-		 */
 		case RC_OPCODE_IF:
+			count_inst.BranchDepth++;
+			break;
+		case RC_OPCODE_ENDIF:
+			count_inst.BranchDepth--;
 			break;
 		default:
 			rc_for_all_writes_mask(inst, get_incr_amount, &count_inst);
