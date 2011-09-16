@@ -21,7 +21,7 @@ SConscript('mesa/SConscript')
 
 SConscript('mapi/vgapi/SConscript')
 
-if env['platform'] != 'embedded':
+if not env['embedded']:
     SConscript('glx/SConscript')
     SConscript('egl/main/SConscript')
     SConscript('glu/sgi/SConscript')
