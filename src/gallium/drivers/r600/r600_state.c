@@ -377,6 +377,8 @@ static uint32_t r600_translate_colorswap(enum pipe_format format)
 	case PIPE_FORMAT_R32G32B32A32_FLOAT:
 	case PIPE_FORMAT_R32G32B32A32_SNORM:
 	case PIPE_FORMAT_R32G32B32A32_UNORM:
+	case PIPE_FORMAT_R32G32B32A32_USCALED:
+	case PIPE_FORMAT_R32G32B32A32_SSCALED:
 		return V_0280A0_SWAP_STD;
 	default:
 		R600_ERR("unsupported colorswap format %d\n", format);
@@ -506,6 +508,8 @@ static uint32_t r600_translate_colorformat(enum pipe_format format)
 		return V_0280A0_COLOR_32_32_32_32_FLOAT;
 	case PIPE_FORMAT_R32G32B32A32_SNORM:
 	case PIPE_FORMAT_R32G32B32A32_UNORM:
+	case PIPE_FORMAT_R32G32B32A32_SSCALED:
+	case PIPE_FORMAT_R32G32B32A32_USCALED:
 		return V_0280A0_COLOR_32_32_32_32;
 
 	/* YUV buffers. */
