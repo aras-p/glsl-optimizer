@@ -338,14 +338,13 @@ MESA_GALLIUM_SOURCES = \
 	x86/common_x86.c
 
 MESA_GALLIUM_CXX_SOURCES = \
-	$(MAIN_CXX_SOURCES) \
-	$(SHADER_CXX_SOURCES) \
+	$(MESA_CXX_SOURCES) \
 	state_tracker/st_glsl_to_tgsi.cpp
 
 # All the core C sources, for dependency checking
 ALL_SOURCES = \
 	$(MESA_SOURCES)		\
-	$(MESA_CXX_SOURCES)	\
+	$(MESA_GALLIUM_CXX_SOURCES) \
 	$(MESA_ASM_SOURCES)	\
 	$(STATETRACKER_SOURCES)
 
