@@ -1222,7 +1222,9 @@ blitframebuffer_texture(struct gl_context *ctx,
 	    _mesa_TexParameteri(target, GL_TEXTURE_SRGB_DECODE_EXT,
 				GL_SKIP_DECODE_EXT);
 	 }
-	 _mesa_Disable(GL_FRAMEBUFFER_SRGB_EXT);
+         if (ctx->Extensions.EXT_framebuffer_sRGB) {
+            _mesa_Disable(GL_FRAMEBUFFER_SRGB_EXT);
+         }
 
          _mesa_TexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_REPLACE);
          _mesa_set_enable(ctx, target, GL_TRUE);
@@ -1288,7 +1290,7 @@ blitframebuffer_texture(struct gl_context *ctx,
 	 if (ctx->Extensions.EXT_texture_sRGB_decode) {
 	    _mesa_TexParameteri(target, GL_TEXTURE_SRGB_DECODE_EXT, srgbSave);
 	 }
-	 if (ctx->Extensions.EXT_texture_sRGB_decode && fbo_srgb_save) {
+	 if (ctx->Extensions.EXT_framebuffer_sRGB && fbo_srgb_save) {
 	    _mesa_Enable(GL_FRAMEBUFFER_SRGB_EXT);
 	 }
 
