@@ -73,7 +73,7 @@ static void TAG(write_rgtc_encoded_channel)(TYPE *blkaddr,
    *blkaddr++ = (alphaenc[13] >> 1) | (alphaenc[14] << 2) | (alphaenc[15] << 5);
 }
 
-static void TAG(encode_rgtc_chan)(TYPE *blkaddr, TYPE srccolors[4][4],
+static void TAG(encode_rgtc_ubyte)(TYPE *blkaddr, TYPE srccolors[4][4],
 			     int numxpixels, int numypixels)
 {
    TYPE alphabase[2], alphause[2];

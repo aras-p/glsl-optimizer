@@ -27,13 +27,13 @@
 #include "u_format_rgtc.h"
 #include "u_format_latc.h"
 
-static void u_format_unsigned_encode_rgtc_chan(uint8_t *blkaddr, uint8_t srccolors[4][4],
+static void u_format_unsigned_encode_rgtc_ubyte(uint8_t *blkaddr, uint8_t srccolors[4][4],
 					       int numxpixels, int numypixels);
 
 static void u_format_unsigned_fetch_texel_rgtc(unsigned srcRowStride, const uint8_t *pixdata,
 					       unsigned i, unsigned j, uint8_t *value, unsigned comps);
 
-static void u_format_signed_encode_rgtc_chan(int8_t *blkaddr, int8_t srccolors[4][4],
+static void u_format_signed_encode_rgtc_ubyte(int8_t *blkaddr, int8_t srccolors[4][4],
 					     int numxpixels, int numypixels);
 
 static void u_format_signed_fetch_texel_rgtc(unsigned srcRowStride, const int8_t *pixdata,
@@ -43,8 +43,8 @@ void
 util_format_latc1_unorm_fetch_rgba_8unorm(uint8_t *dst, const uint8_t *src, unsigned i, unsigned j)
 {
    /* Fix warnings here: */
-   (void) u_format_unsigned_encode_rgtc_chan;
-   (void) u_format_signed_encode_rgtc_chan;
+   (void) u_format_unsigned_encode_rgtc_ubyte;
+   (void) u_format_signed_encode_rgtc_ubyte;
 
    u_format_unsigned_fetch_texel_rgtc(0, src, i, j, dst, 1);
 }
