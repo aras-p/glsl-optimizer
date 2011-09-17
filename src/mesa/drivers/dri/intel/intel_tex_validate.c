@@ -41,26 +41,26 @@ copy_image_data_to_tree(struct intel_context *intel,
        */
       intel_miptree_image_copy(intel,
                                intelObj->mt,
-                               intelImage->base.Face,
-                               intelImage->base.Level, intelImage->mt);
+                               intelImage->base.Base.Face,
+                               intelImage->base.Base.Level, intelImage->mt);
 
       intel_miptree_release(intel, &intelImage->mt);
    }
    else {
-      assert(intelImage->base.Data != NULL);
+      assert(intelImage->base.Base.Data != NULL);
 
       /* More straightforward upload.  
        */
       intel_miptree_image_data(intel,
                                intelObj->mt,
-                               intelImage->base.Face,
-                               intelImage->base.Level,
-                               intelImage->base.Data,
-                               intelImage->base.RowStride,
-                               intelImage->base.RowStride *
-                               intelImage->base.Height);
-      _mesa_align_free(intelImage->base.Data);
-      intelImage->base.Data = NULL;
+                               intelImage->base.Base.Face,
+                               intelImage->base.Base.Level,
+                               intelImage->base.Base.Data,
+                               intelImage->base.Base.RowStride,
+                               intelImage->base.Base.RowStride *
+                               intelImage->base.Base.Height);
+      _mesa_align_free(intelImage->base.Base.Data);
+      intelImage->base.Base.Data = NULL;
    }
 
    intel_miptree_reference(&intelImage->mt, intelObj->mt);
@@ -91,7 +91,7 @@ intel_finalize_mipmap_tree(struct intel_context *intel, GLuint unit)
 
    /* Fallback case:
     */
-   if (firstImage->base.Border) {
+   if (firstImage->base.Base.Border) {
       if (intelObj->mt) {
          intel_miptree_release(intel, &intelObj->mt);
       }
@@ -108,12 +108,12 @@ intel_finalize_mipmap_tree(struct intel_context *intel, GLuint unit)
     */
    if (intelObj->mt &&
        (intelObj->mt->target != intelObj->base.Target ||
-	intelObj->mt->format != firstImage->base.TexFormat ||
+	intelObj->mt->format != firstImage->base.Base.TexFormat ||
 	intelObj->mt->first_level != tObj->BaseLevel ||
 	intelObj->mt->last_level < intelObj->_MaxLevel ||
-	intelObj->mt->width0 != firstImage->base.Width ||
-	intelObj->mt->height0 != firstImage->base.Height ||
-	intelObj->mt->depth0 != firstImage->base.Depth)) {
+	intelObj->mt->width0 != firstImage->base.Base.Width ||
+	intelObj->mt->height0 != firstImage->base.Base.Height ||
+	intelObj->mt->depth0 != firstImage->base.Base.Depth)) {
       intel_miptree_release(intel, &intelObj->mt);
    }
 
@@ -123,12 +123,12 @@ intel_finalize_mipmap_tree(struct intel_context *intel, GLuint unit)
    if (!intelObj->mt) {
       intelObj->mt = intel_miptree_create(intel,
                                           intelObj->base.Target,
-					  firstImage->base.TexFormat,
+					  firstImage->base.Base.TexFormat,
                                           tObj->BaseLevel,
                                           intelObj->_MaxLevel,
-                                          firstImage->base.Width,
-                                          firstImage->base.Height,
-                                          firstImage->base.Depth,
+                                          firstImage->base.Base.Width,
+                                          firstImage->base.Base.Height,
+                                          firstImage->base.Base.Depth,
 					  GL_TRUE);
       if (!intelObj->mt)
          return GL_FALSE;
@@ -173,15 +173,15 @@ intel_tex_map_level_images(struct intel_context *intel,
 	 intel_texture_image(intelObj->base.Image[face][level]);
 
       if (intelImage && intelImage->mt) {
-	 intelImage->base.Data =
+	 intelImage->base.Base.Data =
 	    intel_miptree_image_map(intel,
 				    intelImage->mt,
-				    intelImage->base.Face,
-				    intelImage->base.Level,
-				    &intelImage->base.RowStride,
-				    intelImage->base.ImageOffsets);
+				    intelImage->base.Base.Face,
+				    intelImage->base.Base.Level,
+				    &intelImage->base.Base.RowStride,
+				    intelImage->base.Base.ImageOffsets);
 	 /* convert stride to texels, not bytes */
-	 intelImage->base.RowStride /= intelImage->mt->cpp;
+	 intelImage->base.Base.RowStride /= intelImage->mt->cpp;
 	 /* intelImage->base.ImageStride /= intelImage->mt->cpp; */
       }
    }
@@ -201,7 +201,7 @@ intel_tex_unmap_level_images(struct intel_context *intel,
 
       if (intelImage && intelImage->mt) {
 	 intel_miptree_image_unmap(intel, intelImage->mt);
-	 intelImage->base.Data = NULL;
+	 intelImage->base.Base.Data = NULL;
       }
    }
 }

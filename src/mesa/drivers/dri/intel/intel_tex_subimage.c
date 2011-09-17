@@ -116,7 +116,7 @@ intel_blit_texsubimage(struct gl_context * ctx,
    dstRowStride = pitch;
 
    intel_miptree_get_image_offset(intelImage->mt, level,
-				  intelImage->base.Face, 0,
+				  intelImage->base.Base.Face, 0,
 				  &blit_x, &blit_y);
    blit_x += xoffset;
    blit_y += yoffset;

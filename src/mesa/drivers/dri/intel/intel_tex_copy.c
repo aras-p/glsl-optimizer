@@ -71,7 +71,7 @@ intel_copy_texsubimage(struct intel_context *intel,
 {
    struct gl_context *ctx = &intel->ctx;
    struct intel_renderbuffer *irb;
-   const GLenum internalFormat = intelImage->base.InternalFormat;
+   const GLenum internalFormat = intelImage->base.Base.InternalFormat;
    bool copy_supported = false;
    bool copy_supported_with_alpha_override = false;
 
@@ -85,17 +85,17 @@ intel_copy_texsubimage(struct intel_context *intel,
       return GL_FALSE;
    }
 
-   copy_supported = intelImage->base.TexFormat == irb->Base.Format;
+   copy_supported = intelImage->base.Base.TexFormat == irb->Base.Format;
 
    /* Converting ARGB8888 to XRGB8888 is trivial: ignore the alpha bits */
    if (irb->Base.Format == MESA_FORMAT_ARGB8888 &&
-       intelImage->base.TexFormat == MESA_FORMAT_XRGB8888) {
+       intelImage->base.Base.TexFormat == MESA_FORMAT_XRGB8888) {
       copy_supported = true;
    }
 
    /* Converting XRGB8888 to ARGB8888 requires setting the alpha bits to 1.0 */
    if (irb->Base.Format == MESA_FORMAT_XRGB8888 &&
-       intelImage->base.TexFormat == MESA_FORMAT_ARGB8888) {
+       intelImage->base.Base.TexFormat == MESA_FORMAT_ARGB8888) {
       copy_supported_with_alpha_override = true;
    }
 
@@ -103,7 +103,7 @@ intel_copy_texsubimage(struct intel_context *intel,
       if (unlikely(INTEL_DEBUG & DEBUG_FALLBACKS))
 	 fprintf(stderr, "%s mismatched formats %s, %s\n",
 		 __FUNCTION__,
-		 _mesa_get_format_name(intelImage->base.TexFormat),
+		 _mesa_get_format_name(intelImage->base.Base.TexFormat),
 		 _mesa_get_format_name(irb->Base.Format));
       return GL_FALSE;
    }
@@ -117,8 +117,8 @@ intel_copy_texsubimage(struct intel_context *intel,
 
       /* get dest x/y in destination texture */
       intel_miptree_get_image_offset(intelImage->mt,
-				     intelImage->base.Level,
-				     intelImage->base.Face,
+				     intelImage->base.Base.Level,
+				     intelImage->base.Base.Face,
 				     0,
 				     &image_x, &image_y);
 
