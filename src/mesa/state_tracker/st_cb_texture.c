@@ -849,6 +849,9 @@ decompress_with_blit(struct gl_context * ctx, GLenum target, GLint level,
       pipe->render_condition(pipe, NULL, 0);
    }
 
+   /* Choose the source mipmap level */
+   src_view->u.tex.first_level = src_view->u.tex.last_level = level;
+
    /* blit/render/decompress */
    util_blit_pixels_tex(st->blit,
                         src_view,      /* pipe_resource (src) */
