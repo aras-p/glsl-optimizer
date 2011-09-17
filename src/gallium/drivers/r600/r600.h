@@ -38,7 +38,6 @@ typedef uint32_t		u32;
 typedef uint16_t		u16;
 typedef uint8_t			u8;
 
-struct radeon;
 struct winsys_handle;
 
 enum radeon_family {
@@ -203,7 +202,6 @@ struct r600_query {
 #define R600_CONTEXT_CHECK_EVENT_FLUSH	(1 << 2)
 
 struct r600_context {
-	struct radeon		*radeon;
 	struct r600_screen	*screen;
 	struct radeon_winsys_cs	*cs;
 
@@ -248,7 +246,7 @@ struct r600_draw {
 };
 
 void r600_get_backend_mask(struct r600_context *ctx);
-int r600_context_init(struct r600_context *ctx, struct r600_screen *screen, struct radeon *radeon);
+int r600_context_init(struct r600_context *ctx, struct r600_screen *screen);
 void r600_context_fini(struct r600_context *ctx);
 void r600_context_pipe_state_set(struct r600_context *ctx, struct r600_pipe_state *state);
 void r600_context_pipe_state_set_ps_resource(struct r600_context *ctx, struct r600_pipe_resource_state *state, unsigned rid);
@@ -275,7 +273,7 @@ void r600_context_emit_fence(struct r600_context *ctx, struct r600_resource *fen
 void r600_context_flush_all(struct r600_context *ctx, unsigned flush_flags);
 void r600_context_flush_dest_caches(struct r600_context *ctx);
 
-int evergreen_context_init(struct r600_context *ctx, struct r600_screen *screen, struct radeon *radeon);
+int evergreen_context_init(struct r600_context *ctx, struct r600_screen *screen);
 void evergreen_context_draw(struct r600_context *ctx, const struct r600_draw *draw);
 void evergreen_context_flush_dest_caches(struct r600_context *ctx);
 void evergreen_context_pipe_state_set_ps_resource(struct r600_context *ctx, struct r600_pipe_resource_state *state, unsigned rid);
@@ -283,9 +281,6 @@ void evergreen_context_pipe_state_set_vs_resource(struct r600_context *ctx, stru
 void evergreen_context_pipe_state_set_fs_resource(struct r600_context *ctx, struct r600_pipe_resource_state *state, unsigned rid);
 void evergreen_context_pipe_state_set_ps_sampler(struct r600_context *ctx, struct r600_pipe_state *state, unsigned id);
 void evergreen_context_pipe_state_set_vs_sampler(struct r600_context *ctx, struct r600_pipe_state *state, unsigned id);
-
-struct radeon *radeon_create(struct radeon_winsys *ws);
-void radeon_destroy(struct radeon *radeon);
 
 void _r600_pipe_state_add_reg(struct r600_context *ctx,
 			      struct r600_pipe_state *state,

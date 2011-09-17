@@ -36,13 +36,13 @@ void r600_get_backend_mask(struct r600_context *ctx)
 {
 	struct r600_resource *buffer;
 	u32 *results;
-	unsigned num_backends = ctx->radeon->info.r600_num_backends;
+	unsigned num_backends = ctx->screen->info.r600_num_backends;
 	unsigned i, mask = 0;
 
 	/* if backend_map query is supported by the kernel */
-	if (ctx->radeon->info.r600_backend_map_valid) {
-		unsigned num_tile_pipes = ctx->radeon->info.r600_num_tile_pipes;
-		unsigned backend_map = ctx->radeon->info.r600_backend_map;
+	if (ctx->screen->info.r600_backend_map_valid) {
+		unsigned num_tile_pipes = ctx->screen->info.r600_num_tile_pipes;
+		unsigned backend_map = ctx->screen->info.r600_backend_map;
 		unsigned item_width, item_mask;
 
 		if (ctx->screen->chip_class >= EVERGREEN) {
@@ -776,7 +776,7 @@ void r600_context_fini(struct r600_context *ctx)
 	free(ctx->range);
 	free(ctx->blocks);
 	free(ctx->bo);
-	ctx->radeon->ws->cs_destroy(ctx->cs);
+	ctx->screen->ws->cs_destroy(ctx->cs);
 
 	memset(ctx, 0, sizeof(struct r600_context));
 }
@@ -828,12 +828,11 @@ int r600_setup_block_table(struct r600_context *ctx)
 	return 0;
 }
 
-int r600_context_init(struct r600_context *ctx, struct r600_screen *screen, struct radeon *radeon)
+int r600_context_init(struct r600_context *ctx, struct r600_screen *screen)
 {
 	int r;
 
 	memset(ctx, 0, sizeof(struct r600_context));
-	ctx->radeon = radeon;
 	ctx->screen = screen;
 
 	LIST_INITHEAD(&ctx->query_list);
@@ -911,7 +910,7 @@ int r600_context_init(struct r600_context *ctx, struct r600_screen *screen, stru
 	if (r)
 		goto out_err;
 
-	ctx->cs = radeon->ws->cs_create(radeon->ws);
+	ctx->cs = screen->ws->cs_create(screen->ws);
 
 	/* allocate cs variables */
 	ctx->bo = calloc(RADEON_MAX_CMDBUF_DWORDS, sizeof(void *));
@@ -1506,7 +1505,7 @@ void r600_context_flush(struct r600_context *ctx, unsigned flags)
 
 	/* Flush the CS. */
 	ctx->cs->cdw = ctx->pm4_cdwords;
-	ctx->radeon->ws->cs_flush(ctx->cs, flags);
+	ctx->screen->ws->cs_flush(ctx->cs, flags);
 
 	/* We need to get the pointer to the other CS,
 	 * the command streams are double-buffered. */
@@ -1833,13 +1832,12 @@ boolean r600_context_query_result(struct r600_context *ctx,
 	if (!r600_query_result(ctx, query, wait))
 		return FALSE;
 
-
 	switch (query->type) {
 	case PIPE_QUERY_OCCLUSION_COUNTER:
 		*result = query->result;
 		break;
 	case PIPE_QUERY_TIME_ELAPSED:
-		*result = (1000000 * query->result) / ctx->radeon->info.r600_clock_crystal_freq;
+		*result = (1000000 * query->result) / ctx->screen->info.r600_clock_crystal_freq;
 		break;
 	default:
 		assert(0);

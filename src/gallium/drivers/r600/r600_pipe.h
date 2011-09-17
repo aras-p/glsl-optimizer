@@ -75,7 +75,6 @@ enum r600_pipe_state_id {
 struct r600_screen {
 	struct pipe_screen		screen;
 	struct radeon_winsys		*ws;
-	struct radeon			*radeon;
 	unsigned			family;
 	enum chip_class			chip_class;
 	struct radeon_info		info;
@@ -188,7 +187,6 @@ struct r600_pipe_context {
 	void				*custom_dsa_flush;
 	struct r600_screen		*screen;
 	struct radeon_winsys		*ws;
-	struct radeon			*radeon;
 	struct r600_pipe_state		*states[R600_PIPE_NSTATES];
 	struct r600_context		ctx;
 	struct r600_vertex_element	*vertex_elements;

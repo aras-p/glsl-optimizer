@@ -26,18 +26,12 @@
 #ifndef R600_PRIV_H
 #define R600_PRIV_H
 
-#include "r600.h"
-#include "../../radeon/drm/radeon_winsys.h"
+#include "r600_pipe.h"
 #include "util/u_hash_table.h"
 #include "os/os_thread.h"
 
 #define PKT_COUNT_C                     0xC000FFFF
 #define PKT_COUNT_S(x)                  (((x) & 0x3FFF) << 16)
-
-struct radeon {
-	struct radeon_winsys		*ws;
-	struct radeon_info		info;
-};
 
 /* these flags are used in register flags and added into block flags */
 #define REG_FLAG_NEED_BO 1
@@ -86,7 +80,7 @@ static INLINE unsigned r600_context_bo_reloc(struct r600_context *ctx, struct r6
 	assert(usage);
 
 	unsigned reloc_index =
-		ctx->radeon->ws->cs_add_reloc(ctx->cs, rbo->cs_buf,
+		ctx->screen->ws->cs_add_reloc(ctx->cs, rbo->cs_buf,
 					      rd, wd);
 
 	if (reloc_index >= ctx->creloc)

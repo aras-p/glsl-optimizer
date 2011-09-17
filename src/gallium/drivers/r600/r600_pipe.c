@@ -213,7 +213,6 @@ static struct pipe_context *r600_create_context(struct pipe_screen *screen, void
 	/* Easy accessing of screen/winsys. */
 	rctx->screen = rscreen;
 	rctx->ws = rscreen->ws;
-	rctx->radeon = rscreen->radeon;
 	rctx->family = rscreen->family;
 	rctx->chip_class = rscreen->chip_class;
 
@@ -236,7 +235,7 @@ static struct pipe_context *r600_create_context(struct pipe_screen *screen, void
 	case R600:
 	case R700:
 		r600_init_state_functions(rctx);
-		if (r600_context_init(&rctx->ctx, rctx->screen, rctx->radeon)) {
+		if (r600_context_init(&rctx->ctx, rctx->screen)) {
 			r600_destroy_context(&rctx->context);
 			return NULL;
 		}
@@ -246,7 +245,7 @@ static struct pipe_context *r600_create_context(struct pipe_screen *screen, void
 	case EVERGREEN:
 	case CAYMAN:
 		evergreen_init_state_functions(rctx);
-		if (evergreen_context_init(&rctx->ctx, rctx->screen, rctx->radeon)) {
+		if (evergreen_context_init(&rctx->ctx, rctx->screen)) {
 			r600_destroy_context(&rctx->context);
 			return NULL;
 		}
@@ -524,7 +523,6 @@ static void r600_destroy_screen(struct pipe_screen* pscreen)
 	if (rscreen == NULL)
 		return;
 
-	radeon_destroy(rscreen->radeon);
 	rscreen->ws->destroy(rscreen->ws);
 
 	util_slab_destroy(&rscreen->pool_buffers);
@@ -712,26 +710,17 @@ static unsigned radeon_family_from_device(unsigned device)
 
 struct pipe_screen *r600_screen_create(struct radeon_winsys *ws)
 {
-	struct r600_screen *rscreen;
-	struct radeon *radeon = radeon_create(ws);
-	if (!radeon) {
-		return NULL;
-	}
-
-	rscreen = CALLOC_STRUCT(r600_screen);
+	struct r600_screen *rscreen = CALLOC_STRUCT(r600_screen);
 	if (rscreen == NULL) {
-		radeon_destroy(radeon);
 		return NULL;
 	}
 
 	rscreen->ws = ws;
-	rscreen->radeon = radeon;
 	ws->query_info(ws, &rscreen->info);
 
 	rscreen->family = radeon_family_from_device(rscreen->info.pci_id);
 	if (rscreen->family == CHIP_UNKNOWN) {
 		fprintf(stderr, "r600: Unknown chipset 0x%04X\n", rscreen->info.pci_id);
-		radeon_destroy(radeon);
 		FREE(rscreen);
 		return NULL;
 	}
@@ -748,7 +737,6 @@ struct pipe_screen *r600_screen_create(struct radeon_winsys *ws)
 	}
 
 	if (r600_init_tiling(rscreen)) {
-		radeon_destroy(radeon);
 		FREE(rscreen);
 		return NULL;
 	}

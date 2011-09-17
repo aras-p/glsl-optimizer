@@ -898,12 +898,11 @@ static int evergreen_loop_const_init(struct r600_context *ctx, u32 offset)
 	return r600_context_add_block(ctx, r600_loop_consts, nreg, PKT3_SET_LOOP_CONST, EVERGREEN_LOOP_CONST_OFFSET);
 }
 
-int evergreen_context_init(struct r600_context *ctx, struct r600_screen *screen, struct radeon *radeon)
+int evergreen_context_init(struct r600_context *ctx, struct r600_screen *screen)
 {
 	int r;
 
 	memset(ctx, 0, sizeof(struct r600_context));
-	ctx->radeon = radeon;
 	ctx->screen = screen;
 
 	LIST_INITHEAD(&ctx->query_list);
@@ -989,7 +988,7 @@ int evergreen_context_init(struct r600_context *ctx, struct r600_screen *screen,
 	if (r)
 		goto out_err;
 
-	ctx->cs = radeon->ws->cs_create(radeon->ws);
+	ctx->cs = screen->ws->cs_create(screen->ws);
 
 	/* allocate cs variables */
 	ctx->bo = calloc(RADEON_MAX_CMDBUF_DWORDS, sizeof(void *));
