@@ -604,9 +604,9 @@ _mesa_make_temp_ubyte_image(struct gl_context *ctx, GLuint dims,
                                                srcFormat, srcType,
                                                img, 0, 0);
       for (row = 0; row < srcHeight; row++) {
-         _mesa_unpack_color_span_chan(ctx, srcWidth, logicalBaseFormat, dst,
-                                      srcFormat, srcType, src, srcPacking,
-                                      transferOps);
+         _mesa_unpack_color_span_ubyte(ctx, srcWidth, logicalBaseFormat, dst,
+                                       srcFormat, srcType, src, srcPacking,
+                                       transferOps);
          dst += srcWidth * components;
          src += srcStride;
       }

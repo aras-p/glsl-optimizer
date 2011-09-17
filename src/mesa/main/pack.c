@@ -3437,7 +3437,7 @@ extract_uint_rgba(GLuint n, GLuint rgba[][4],
 /*
  * Unpack a row of color image data from a client buffer according to
  * the pixel unpacking parameters.
- * Return GLchan values in the specified dest image format.
+ * Return GLubyte values in the specified dest image format.
  * This is used by glDrawPixels and glTexImage?D().
  * \param ctx - the context
  *         n - number of pixels in the span
@@ -3452,8 +3452,8 @@ extract_uint_rgba(GLuint n, GLuint rgba[][4],
  * XXX perhaps expand this to process whole images someday.
  */
 void
-_mesa_unpack_color_span_chan( struct gl_context *ctx,
-                              GLuint n, GLenum dstFormat, GLchan dest[],
+_mesa_unpack_color_span_ubyte(struct gl_context *ctx,
+                              GLuint n, GLenum dstFormat, GLubyte dest[],
                               GLenum srcFormat, GLenum srcType,
                               const GLvoid *source,
                               const struct gl_pixelstore_attrib *srcPacking,
@@ -3517,21 +3517,21 @@ _mesa_unpack_color_span_chan( struct gl_context *ctx,
 
    /* Try simple cases first */
    if (transferOps == 0) {
-      if (srcType == CHAN_TYPE) {
+      if (srcType == GL_UNSIGNED_BYTE) {
          if (dstFormat == GL_RGBA) {
             if (srcFormat == GL_RGBA) {
-               memcpy( dest, source, n * 4 * sizeof(GLchan) );
+               memcpy( dest, source, n * 4 * sizeof(GLubyte) );
                return;
             }
             else if (srcFormat == GL_RGB) {
                GLuint i;
-               const GLchan *src = (const GLchan *) source;
-               GLchan *dst = dest;
+               const GLubyte *src = (const GLubyte *) source;
+               GLubyte *dst = dest;
                for (i = 0; i < n; i++) {
                   dst[0] = src[0];
                   dst[1] = src[1];
                   dst[2] = src[2];
-                  dst[3] = CHAN_MAX;
+                  dst[3] = 255;
                   src += 3;
                   dst += 4;
                }
@@ -3540,13 +3540,13 @@ _mesa_unpack_color_span_chan( struct gl_context *ctx,
          }
          else if (dstFormat == GL_RGB) {
             if (srcFormat == GL_RGB) {
-               memcpy( dest, source, n * 3 * sizeof(GLchan) );
+               memcpy( dest, source, n * 3 * sizeof(GLubyte) );
                return;
             }
             else if (srcFormat == GL_RGBA) {
                GLuint i;
-               const GLchan *src = (const GLchan *) source;
-               GLchan *dst = dest;
+               const GLubyte *src = (const GLubyte *) source;
+               GLubyte *dst = dest;
                for (i = 0; i < n; i++) {
                   dst[0] = src[0];
                   dst[1] = src[1];
@@ -3560,7 +3560,7 @@ _mesa_unpack_color_span_chan( struct gl_context *ctx,
          else if (dstFormat == srcFormat) {
             GLint comps = _mesa_components_in_format(srcFormat);
             assert(comps > 0);
-            memcpy( dest, source, n * comps * sizeof(GLchan) );
+            memcpy( dest, source, n * comps * sizeof(GLubyte) );
             return;
          }
       }
@@ -3573,12 +3573,12 @@ _mesa_unpack_color_span_chan( struct gl_context *ctx,
             if (srcFormat == GL_RGB) {
                GLuint i;
                const GLubyte *src = (const GLubyte *) source;
-               GLchan *dst = dest;
+               GLubyte *dst = dest;
                for (i = 0; i < n; i++) {
-                  dst[0] = UBYTE_TO_CHAN(src[0]);
-                  dst[1] = UBYTE_TO_CHAN(src[1]);
-                  dst[2] = UBYTE_TO_CHAN(src[2]);
-                  dst[3] = CHAN_MAX;
+                  dst[0] = src[0];
+                  dst[1] = src[1];
+                  dst[2] = src[2];
+                  dst[3] = 255;
                   src += 3;
                   dst += 4;
                }
@@ -3587,12 +3587,12 @@ _mesa_unpack_color_span_chan( struct gl_context *ctx,
             else if (srcFormat == GL_RGBA) {
                GLuint i;
                const GLubyte *src = (const GLubyte *) source;
-               GLchan *dst = dest;
+               GLubyte *dst = dest;
                for (i = 0; i < n; i++) {
-                  dst[0] = UBYTE_TO_CHAN(src[0]);
-                  dst[1] = UBYTE_TO_CHAN(src[1]);
-                  dst[2] = UBYTE_TO_CHAN(src[2]);
-                  dst[3] = UBYTE_TO_CHAN(src[3]);
+                  dst[0] = src[0];
+                  dst[1] = src[1];
+                  dst[2] = src[2];
+                  dst[3] = src[3];
                   src += 4;
                   dst += 4;
                }
@@ -3603,11 +3603,11 @@ _mesa_unpack_color_span_chan( struct gl_context *ctx,
             if (srcFormat == GL_RGB) {
                GLuint i;
                const GLubyte *src = (const GLubyte *) source;
-               GLchan *dst = dest;
+               GLubyte *dst = dest;
                for (i = 0; i < n; i++) {
-                  dst[0] = UBYTE_TO_CHAN(src[0]);
-                  dst[1] = UBYTE_TO_CHAN(src[1]);
-                  dst[2] = UBYTE_TO_CHAN(src[2]);
+                  dst[0] = src[0];
+                  dst[1] = src[1];
+                  dst[2] = src[2];
                   src += 3;
                   dst += 3;
                }
@@ -3616,11 +3616,11 @@ _mesa_unpack_color_span_chan( struct gl_context *ctx,
             else if (srcFormat == GL_RGBA) {
                GLuint i;
                const GLubyte *src = (const GLubyte *) source;
-               GLchan *dst = dest;
+               GLubyte *dst = dest;
                for (i = 0; i < n; i++) {
-                  dst[0] = UBYTE_TO_CHAN(src[0]);
-                  dst[1] = UBYTE_TO_CHAN(src[1]);
-                  dst[2] = UBYTE_TO_CHAN(src[2]);
+                  dst[0] = src[0];
+                  dst[1] = src[1];
+                  dst[2] = src[2];
                   src += 4;
                   dst += 3;
                }
@@ -3679,10 +3679,8 @@ _mesa_unpack_color_span_chan( struct gl_context *ctx,
                             srcPacking->SwapBytes);
       }
 
-      /* Need to clamp if returning GLubytes or GLushorts */
-#if CHAN_TYPE != GL_FLOAT
+      /* Need to clamp if returning GLubytes */
       transferOps |= IMAGE_CLAMP_BIT;
-#endif
 
       if (transferOps) {
          _mesa_apply_rgba_transfer_ops(ctx, transferOps, n, rgba);
@@ -3691,61 +3689,61 @@ _mesa_unpack_color_span_chan( struct gl_context *ctx,
       get_component_indexes(dstFormat,
                             &rDst, &gDst, &bDst, &aDst, &lDst, &iDst);
 
-      /* Now return the GLchan data in the requested dstFormat */
+      /* Now return the GLubyte data in the requested dstFormat */
       if (rDst >= 0) {
-         GLchan *dst = dest;
+         GLubyte *dst = dest;
          GLuint i;
          for (i = 0; i < n; i++) {
-            CLAMPED_FLOAT_TO_CHAN(dst[rDst], rgba[i][RCOMP]);
+            CLAMPED_FLOAT_TO_UBYTE(dst[rDst], rgba[i][RCOMP]);
             dst += dstComponents;
          }
       }
 
       if (gDst >= 0) {
-         GLchan *dst = dest;
+         GLubyte *dst = dest;
          GLuint i;
          for (i = 0; i < n; i++) {
-            CLAMPED_FLOAT_TO_CHAN(dst[gDst], rgba[i][GCOMP]);
+            CLAMPED_FLOAT_TO_UBYTE(dst[gDst], rgba[i][GCOMP]);
             dst += dstComponents;
          }
       }
 
       if (bDst >= 0) {
-         GLchan *dst = dest;
+         GLubyte *dst = dest;
          GLuint i;
          for (i = 0; i < n; i++) {
-            CLAMPED_FLOAT_TO_CHAN(dst[bDst], rgba[i][BCOMP]);
+            CLAMPED_FLOAT_TO_UBYTE(dst[bDst], rgba[i][BCOMP]);
             dst += dstComponents;
          }
       }
 
       if (aDst >= 0) {
-         GLchan *dst = dest;
+         GLubyte *dst = dest;
          GLuint i;
          for (i = 0; i < n; i++) {
-            CLAMPED_FLOAT_TO_CHAN(dst[aDst], rgba[i][ACOMP]);
+            CLAMPED_FLOAT_TO_UBYTE(dst[aDst], rgba[i][ACOMP]);
             dst += dstComponents;
          }
       }
 
       if (iDst >= 0) {
-         GLchan *dst = dest;
+         GLubyte *dst = dest;
          GLuint i;
          assert(iDst == 0);
          assert(dstComponents == 1);
          for (i = 0; i < n; i++) {
             /* Intensity comes from red channel */
-            CLAMPED_FLOAT_TO_CHAN(dst[i], rgba[i][RCOMP]);
+            CLAMPED_FLOAT_TO_UBYTE(dst[i], rgba[i][RCOMP]);
          }
       }
 
       if (lDst >= 0) {
-         GLchan *dst = dest;
+         GLubyte *dst = dest;
          GLuint i;
          assert(lDst == 0);
          for (i = 0; i < n; i++) {
             /* Luminance comes from red channel */
-            CLAMPED_FLOAT_TO_CHAN(dst[0], rgba[i][RCOMP]);
+            CLAMPED_FLOAT_TO_UBYTE(dst[0], rgba[i][RCOMP]);
             dst += dstComponents;
          }
       }
@@ -3756,8 +3754,8 @@ _mesa_unpack_color_span_chan( struct gl_context *ctx,
 
 
 /**
- * Same as _mesa_unpack_color_span_chan(), but return GLfloat data
- * instead of GLchan.
+ * Same as _mesa_unpack_color_span_ubyte(), but return GLfloat data
+ * instead of GLubyte.
  */
 void
 _mesa_unpack_color_span_float( struct gl_context *ctx,
@@ -3954,8 +3952,8 @@ _mesa_unpack_color_span_float( struct gl_context *ctx,
 
 
 /**
- * Same as _mesa_unpack_color_span_chan(), but return GLuint data
- * instead of GLchan.
+ * Same as _mesa_unpack_color_span_ubyte(), but return GLuint data
+ * instead of GLubyte.
  * No pixel transfer ops are applied.
  */
 void
