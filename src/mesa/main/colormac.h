@@ -38,24 +38,6 @@
 #include "mtypes.h"
 
 
-/** \def BYTE_TO_CHAN
- * Convert from GLbyte to GLchan */
-
-/** \def UBYTE_TO_CHAN
- * Convert from GLubyte to GLchan */
-
-/** \def SHORT_TO_CHAN
- * Convert from GLshort to GLchan */
-
-/** \def USHORT_TO_CHAN
- * Convert from GLushort to GLchan */
-
-/** \def INT_TO_CHAN
- * Convert from GLint to GLchan */
-
-/** \def UINT_TO_CHAN
- * Convert from GLuint to GLchan */
-
 /** \def CHAN_TO_UBYTE
  * Convert from GLchan to GLubyte */
 
@@ -73,13 +55,6 @@
 
 #if CHAN_BITS == 8
 
-#define BYTE_TO_CHAN(b)   ((b) < 0 ? 0 : (GLchan) (b))
-#define UBYTE_TO_CHAN(b)  (b)
-#define SHORT_TO_CHAN(s)  ((s) < 0 ? 0 : (GLchan) ((s) >> 7))
-#define USHORT_TO_CHAN(s) ((GLchan) ((s) >> 8))
-#define INT_TO_CHAN(i)    ((i) < 0 ? 0 : (GLchan) ((i) >> 23))
-#define UINT_TO_CHAN(i)   ((GLchan) ((i) >> 24))
-
 #define CHAN_TO_UBYTE(c)  (c)
 #define CHAN_TO_USHORT(c) (((c) << 8) | (c))
 #define CHAN_TO_SHORT(c)  (((c) << 7) | ((c) >> 1))
@@ -92,13 +67,6 @@
 
 #elif CHAN_BITS == 16
 
-#define BYTE_TO_CHAN(b)   ((b) < 0 ? 0 : (((GLchan) (b)) * 516))
-#define UBYTE_TO_CHAN(b)  ((((GLchan) (b)) << 8) | ((GLchan) (b)))
-#define SHORT_TO_CHAN(s)  ((s) < 0 ? 0 : (GLchan) (s))
-#define USHORT_TO_CHAN(s) (s)
-#define INT_TO_CHAN(i)    ((i) < 0 ? 0 : (GLchan) ((i) >> 15))
-#define UINT_TO_CHAN(i)   ((GLchan) ((i) >> 16))
-
 #define CHAN_TO_UBYTE(c)  ((c) >> 8)
 #define CHAN_TO_USHORT(c) (c)
 #define CHAN_TO_SHORT(c)  ((c) >> 1)
@@ -110,14 +78,6 @@
 #define COPY_CHAN4(DST, SRC)  COPY_4V(DST, SRC)
 
 #elif CHAN_BITS == 32
-
-/* XXX floating-point color channels not fully thought-out */
-#define BYTE_TO_CHAN(b)   ((GLfloat) ((b) * (1.0F / 127.0F)))
-#define UBYTE_TO_CHAN(b)  ((GLfloat) ((b) * (1.0F / 255.0F)))
-#define SHORT_TO_CHAN(s)  ((GLfloat) ((s) * (1.0F / 32767.0F)))
-#define USHORT_TO_CHAN(s) ((GLfloat) ((s) * (1.0F / 65535.0F)))
-#define INT_TO_CHAN(i)    ((GLfloat) ((i) * (1.0F / 2147483647.0F)))
-#define UINT_TO_CHAN(i)   ((GLfloat) ((i) * (1.0F / 4294967295.0F)))
 
 #define CHAN_TO_UBYTE(c)  FLOAT_TO_UBYTE(c)
 #define CHAN_TO_USHORT(c) ((GLushort) (CLAMP((c), 0.0f, 1.0f) * 65535.0))
