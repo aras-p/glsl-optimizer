@@ -1955,8 +1955,6 @@ generate_mipmap_uncompressed(struct gl_context *ctx, GLenum target,
                                  dstDepth, border, srcImage->InternalFormat,
                                  srcImage->TexFormat);
       dstImage->DriverData = NULL;
-      dstImage->FetchTexelc = srcImage->FetchTexelc;
-      dstImage->FetchTexelf = srcImage->FetchTexelf;
 
       /* Alloc new teximage data buffer */
       {
@@ -1970,8 +1968,6 @@ generate_mipmap_uncompressed(struct gl_context *ctx, GLenum target,
       }
 
       ASSERT(dstImage->TexFormat);
-      ASSERT(dstImage->FetchTexelc);
-      ASSERT(dstImage->FetchTexelf);
 
       _mesa_generate_mipmap_level(target, datatype, comps, border,
                                   srcWidth, srcHeight, srcDepth,

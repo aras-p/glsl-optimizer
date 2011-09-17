@@ -38,7 +38,6 @@
 #include "main/pbo.h"
 #include "main/pixeltransfer.h"
 #include "main/texcompress.h"
-#include "main/texfetch.h"
 #include "main/texgetimage.h"
 #include "main/teximage.h"
 #include "main/texobj.h"
@@ -552,8 +551,6 @@ st_TexImage(struct gl_context * ctx,
    stImage->base.Face = _mesa_tex_target_to_face(target);
    stImage->base.Level = level;
 
-   _mesa_set_fetch_functions(texImage, dims);
-
    /* Release the reference to a potentially orphaned buffer.   
     * Release any old malloced memory.
     */
@@ -974,8 +971,6 @@ st_get_tex_image(struct gl_context * ctx, GLenum target, GLint level,
    texImage->Depth = 1;
 
    dest = (GLubyte *) pixels;
-
-   _mesa_set_fetch_functions(texImage, get_texture_dims(target));
 
    for (i = 0; i < depth; i++) {
       if (compressed_dst) {

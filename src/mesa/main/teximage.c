@@ -42,7 +42,6 @@
 #include "mfeatures.h"
 #include "state.h"
 #include "texcompress.h"
-#include "texfetch.h"
 #include "teximage.h"
 #include "texstate.h"
 #include "texpal.h"
@@ -1104,7 +1103,7 @@ _mesa_init_teximage_fields(struct gl_context *ctx, GLenum target,
                            GLint border, GLenum internalFormat,
                            gl_format format)
 {
-   GLint i, dims;
+   GLint i;
 
    ASSERT(img);
    ASSERT(width >= 0);
@@ -1176,10 +1175,6 @@ _mesa_init_teximage_fields(struct gl_context *ctx, GLenum target,
    }
 
    img->TexFormat = format;
-
-   dims = _mesa_get_texture_dimensions(target);
-
-   _mesa_set_fetch_functions(img, dims);
 }
 
 
