@@ -15,4 +15,6 @@ MAKEFLAGS=""
 
 autoreconf -v --install || exit 1
 
-"$srcdir"/configure "$@"
+if test -z "$NOCONFIGURE"; then
+    "$srcdir"/configure "$@"
+fi
