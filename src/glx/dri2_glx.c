@@ -34,7 +34,6 @@
 
 #include <X11/Xlib.h>
 #include <X11/extensions/Xfixes.h>
-#include <X11/extensions/Xdamage.h>
 #include "glapi.h"
 #include "glxclient.h"
 #include <X11/extensions/dri2proto.h>
