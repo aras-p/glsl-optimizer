@@ -189,6 +189,16 @@ extern void
 _swrast_delete_texture_image(struct gl_context *ctx,
                              struct gl_texture_image *texImage);
 
+extern GLboolean
+_swrast_alloc_texture_image_buffer(struct gl_context *ctx,
+                                   struct gl_texture_image *texImage,
+                                   gl_format format, GLsizei width,
+                                   GLsizei height, GLsizei depth);
+
+extern void
+_swrast_free_texture_image_buffer(struct gl_context *ctx,
+                                  struct gl_texture_image *texImage);
+
 extern void
 _swrast_map_teximage(struct gl_context *ctx,
 		     struct gl_texture_image *texImage,

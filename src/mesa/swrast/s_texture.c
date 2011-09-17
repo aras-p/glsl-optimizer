@@ -59,6 +59,44 @@ _swrast_delete_texture_image(struct gl_context *ctx,
 
 
 /**
+ * Called via ctx->Driver.AllocTextureImageBuffer()
+ */
+GLboolean
+_swrast_alloc_texture_image_buffer(struct gl_context *ctx,
+                                   struct gl_texture_image *texImage,
+                                   gl_format format, GLsizei width,
+                                   GLsizei height, GLsizei depth)
+{
+   GLuint bytes = _mesa_format_image_size(format, width, height, depth);
+
+   /* This _should_ be true (revisit if these ever fail) */
+   assert(texImage->Width == width);
+   assert(texImage->Height == height);
+   assert(texImage->Depth == depth);
+
+   assert(!texImage->Data);
+   texImage->Data = _mesa_align_malloc(bytes, 512);
+
+   return texImage->Data != NULL;
+}
+
+
+/**
+ * Called via ctx->Driver.FreeTextureImageBuffer()
+ */
+void
+_swrast_free_texture_image_buffer(struct gl_context *ctx,
+                                  struct gl_texture_image *texImage)
+{
+   if (texImage->Data && !texImage->IsClientData) {
+      _mesa_align_free(texImage->Data);
+   }
+
+   texImage->Data = NULL;
+}
+
+
+/**
  * Error checking for debugging only.
  */
 static void
