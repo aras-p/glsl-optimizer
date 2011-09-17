@@ -65,7 +65,7 @@ _mesa_texstore_rgb_fxt1(TEXSTORE_PARAMS)
    GLint srcRowStride;
    GLubyte *dst;
    const GLint texWidth = dstRowStride * 8 / 16; /* a bit of a hack */
-   const GLchan *tempImage = NULL;
+   const GLubyte *tempImage = NULL;
 
    ASSERT(dstFormat == MESA_FORMAT_RGB_FXT1);
    ASSERT(dstXoffset % 8 == 0);
@@ -79,7 +79,7 @@ _mesa_texstore_rgb_fxt1(TEXSTORE_PARAMS)
        ctx->_ImageTransferState ||
        srcPacking->SwapBytes) {
       /* convert image to RGB/GLchan */
-      tempImage = _mesa_make_temp_chan_image(ctx, dims,
+      tempImage = _mesa_make_temp_ubyte_image(ctx, dims,
                                              baseInternalFormat,
                                              _mesa_get_format_base_format(dstFormat),
                                              srcWidth, srcHeight, srcDepth,
@@ -121,7 +121,7 @@ _mesa_texstore_rgba_fxt1(TEXSTORE_PARAMS)
    GLint srcRowStride;
    GLubyte *dst;
    GLint texWidth = dstRowStride * 8 / 16; /* a bit of a hack */
-   const GLchan *tempImage = NULL;
+   const GLubyte *tempImage = NULL;
 
    ASSERT(dstFormat == MESA_FORMAT_RGBA_FXT1);
    ASSERT(dstXoffset % 8 == 0);
@@ -135,7 +135,7 @@ _mesa_texstore_rgba_fxt1(TEXSTORE_PARAMS)
        ctx->_ImageTransferState ||
        srcPacking->SwapBytes) {
       /* convert image to RGBA/GLchan */
-      tempImage = _mesa_make_temp_chan_image(ctx, dims,
+      tempImage = _mesa_make_temp_ubyte_image(ctx, dims,
                                              baseInternalFormat,
                                              _mesa_get_format_base_format(dstFormat),
                                              srcWidth, srcHeight, srcDepth,

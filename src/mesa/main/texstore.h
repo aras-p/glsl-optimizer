@@ -72,8 +72,8 @@ extern GLboolean
 _mesa_texstore(TEXSTORE_PARAMS);
 
 
-extern GLchan *
-_mesa_make_temp_chan_image(struct gl_context *ctx, GLuint dims,
+extern GLubyte *
+_mesa_make_temp_ubyte_image(struct gl_context *ctx, GLuint dims,
                            GLenum logicalBaseFormat,
                            GLenum textureBaseFormat,
                            GLint srcWidth, GLint srcHeight, GLint srcDepth,
