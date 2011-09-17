@@ -200,6 +200,8 @@ struct GalliumD3D10Device : public GalliumD3D10ScreenImpl<threadsafe>
 		memset(&rasterizerd, 0, sizeof(rasterizerd));
 		rasterizerd.gl_rasterization_rules = 1;
 		rasterizerd.cull_face = PIPE_FACE_BACK;
+		rasterizerd.line_width = 1.0f;
+		rasterizerd.point_size = 1.0f;
 		default_rasterizer = pipe->create_rasterizer_state(pipe, &rasterizerd);
 
 		struct pipe_depth_stencil_alpha_state depth_stencild;
