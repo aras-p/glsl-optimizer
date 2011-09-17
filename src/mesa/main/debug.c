@@ -567,9 +567,6 @@ _mesa_dump_image(const char *filename, const void *image, GLuint w, GLuint h,
 void
 _mesa_print_texture(struct gl_context *ctx, struct gl_texture_image *img)
 {
-#if CHAN_TYPE != GL_UNSIGNED_BYTE
-   _mesa_problem(NULL, "PrintTexture not supported");
-#else
    const GLint slice = 0;
    GLint srcRowStride;
    GLuint i, j, c;
@@ -626,5 +623,4 @@ _mesa_print_texture(struct gl_context *ctx, struct gl_texture_image *img)
    }
 
    ctx->Driver.UnmapTextureImage(ctx, img, slice);
-#endif
 }
