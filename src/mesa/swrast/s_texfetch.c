@@ -40,6 +40,7 @@
 #include "main/texcompress_s3tc.h"
 #include "main/texcompress_rgtc.h"
 #include "main/teximage.h"
+#include "s_context.h"
 #include "s_texfetch.h"
 #include "../../gallium/auxiliary/util/u_format_rgb9e5.h"
 #include "../../gallium/auxiliary/util/u_format_r11g11b10f.h"
@@ -90,7 +91,7 @@ nonlinear_to_linear(GLubyte cs8)
  *
  * Have to have this so the FetchTexel function pointer is never NULL.
  */
-static void fetch_null_texelf( const struct gl_texture_image *texImage,
+static void fetch_null_texelf( const struct swrast_texture_image *texImage,
                                GLint i, GLint j, GLint k, GLfloat *texel )
 {
    (void) texImage; (void) i; (void) j; (void) k;
@@ -101,7 +102,7 @@ static void fetch_null_texelf( const struct gl_texture_image *texImage,
    _mesa_warning(NULL, "fetch_null_texelf() called!");
 }
 
-static void store_null_texel(struct gl_texture_image *texImage,
+static void store_null_texel(struct swrast_texture_image *texImage,
                              GLint i, GLint j, GLint k, const void *texel)
 {
    (void) texImage;
@@ -964,11 +965,11 @@ _mesa_get_texel_store_func(gl_format format)
  * Adaptor for fetching a GLchan texel from a float-valued texture.
  */
 static void
-fetch_texel_float_to_chan(const struct gl_texture_image *texImage,
+fetch_texel_float_to_chan(const struct swrast_texture_image *texImage,
                           GLint i, GLint j, GLint k, GLchan *texelOut)
 {
    GLfloat temp[4];
-   GLenum baseFormat = _mesa_get_format_base_format(texImage->TexFormat);
+   GLenum baseFormat = _mesa_get_format_base_format(texImage->Base.TexFormat);
 
    ASSERT(texImage->FetchTexelf);
    texImage->FetchTexelf(texImage, i, j, k, temp);
@@ -992,7 +993,7 @@ fetch_texel_float_to_chan(const struct gl_texture_image *texImage,
  * Adaptor for fetching a float texel from a GLchan-valued texture.
  */
 static void
-fetch_texel_chan_to_float(const struct gl_texture_image *texImage,
+fetch_texel_chan_to_float(const struct swrast_texture_image *texImage,
                           GLint i, GLint j, GLint k, GLfloat *texelOut)
 {
    GLchan temp[4];
@@ -1019,14 +1020,14 @@ fetch_texel_chan_to_float(const struct gl_texture_image *texImage,
 /**
  * Initialize the texture image's FetchTexelc and FetchTexelf methods.
  */
-void
-_mesa_set_fetch_functions(struct gl_texture_image *texImage, GLuint dims)
+static void
+set_fetch_functions(struct swrast_texture_image *texImage, GLuint dims)
 {
-   gl_format format = texImage->TexFormat;
+   gl_format format = texImage->Base.TexFormat;
 
    ASSERT(dims == 1 || dims == 2 || dims == 3);
 
-   if (texImage->TexObject->Sampler.sRGBDecode == GL_SKIP_DECODE_EXT &&
+   if (texImage->Base.TexObject->Sampler.sRGBDecode == GL_SKIP_DECODE_EXT &&
        _mesa_get_format_color_encoding(format) == GL_SRGB) {
       format = _mesa_get_srgb_format_linear(format);
    }
@@ -1050,7 +1051,8 @@ _mesa_update_fetch_functions(struct gl_texture_object *texObj)
    for (face = 0; face < 6; face++) {
       for (i = 0; i < MAX_TEXTURE_LEVELS; i++) {
          if (texObj->Image[face][i]) {
-	    _mesa_set_fetch_functions(texObj->Image[face][i], dims);
+	    set_fetch_functions(swrast_texture_image(texObj->Image[face][i]),
+                                dims);
          }
       }
    }

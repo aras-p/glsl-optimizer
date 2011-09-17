@@ -31,7 +31,7 @@
 #include "texstore.h"
 
 struct gl_context;
-struct gl_texture_image;
+struct swrast_texture_image;
 
 #if FEATURE_texture_s3tc
 
@@ -48,35 +48,35 @@ extern GLboolean
 _mesa_texstore_rgba_dxt5(TEXSTORE_PARAMS);
 
 extern void
-_mesa_fetch_texel_2d_f_rgb_dxt1(const struct gl_texture_image *texImage,
+_mesa_fetch_texel_2d_f_rgb_dxt1(const struct swrast_texture_image *texImage,
                                 GLint i, GLint j, GLint k, GLfloat *texel);
 
 extern void
-_mesa_fetch_texel_2d_f_rgba_dxt1(const struct gl_texture_image *texImage,
+_mesa_fetch_texel_2d_f_rgba_dxt1(const struct swrast_texture_image *texImage,
                                  GLint i, GLint j, GLint k, GLfloat *texel);
 
 extern void
-_mesa_fetch_texel_2d_f_rgba_dxt3(const struct gl_texture_image *texImage,
+_mesa_fetch_texel_2d_f_rgba_dxt3(const struct swrast_texture_image *texImage,
                                  GLint i, GLint j, GLint k, GLfloat *texel);
 
 extern void
-_mesa_fetch_texel_2d_f_rgba_dxt5(const struct gl_texture_image *texImage,
+_mesa_fetch_texel_2d_f_rgba_dxt5(const struct swrast_texture_image *texImage,
                                  GLint i, GLint j, GLint k, GLfloat *texel);
 
 extern void
-_mesa_fetch_texel_2d_f_srgb_dxt1(const struct gl_texture_image *texImage,
+_mesa_fetch_texel_2d_f_srgb_dxt1(const struct swrast_texture_image *texImage,
                                  GLint i, GLint j, GLint k, GLfloat *texel);
 
 extern void
-_mesa_fetch_texel_2d_f_srgba_dxt1(const struct gl_texture_image *texImage,
+_mesa_fetch_texel_2d_f_srgba_dxt1(const struct swrast_texture_image *texImage,
                                   GLint i, GLint j, GLint k, GLfloat *texel);
 
 extern void
-_mesa_fetch_texel_2d_f_srgba_dxt3(const struct gl_texture_image *texImage,
+_mesa_fetch_texel_2d_f_srgba_dxt3(const struct swrast_texture_image *texImage,
                                   GLint i, GLint j, GLint k, GLfloat *texel);
 
 extern void
-_mesa_fetch_texel_2d_f_srgba_dxt5(const struct gl_texture_image *texImage,
+_mesa_fetch_texel_2d_f_srgba_dxt5(const struct swrast_texture_image *texImage,
                                   GLint i, GLint j, GLint k, GLfloat *texel);
 
 extern void

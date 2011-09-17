@@ -6,6 +6,7 @@
 #include "main/teximage.h"
 #include "main/renderbuffer.h"
 #include "swrast/swrast.h"
+#include "swrast/s_context.h"
 #include "swrast/s_texfetch.h"
 
 
@@ -20,7 +21,7 @@
 struct texture_renderbuffer
 {
    struct gl_renderbuffer Base;   /**< Base class object */
-   struct gl_texture_image *TexImage;
+   struct swrast_texture_image *TexImage;
    StoreTexelFunc Store;
    FetchTexelFuncF Fetchf;
    GLint Yoffset;                 /**< Layer for 1D array textures. */
@@ -42,8 +43,8 @@ texture_get_row(struct gl_context *ctx, struct gl_renderbuffer *rb, GLuint count
    const GLint z = trb->Zoffset;
    GLuint i;
 
-   ASSERT(trb->TexImage->Width == rb->Width);
-   ASSERT(trb->TexImage->Height == rb->Height);
+   ASSERT(trb->TexImage->Base.Width == rb->Width);
+   ASSERT(trb->TexImage->Base.Height == rb->Height);
 
    y += trb->Yoffset;
 
@@ -468,7 +469,7 @@ texture_put_mono_values(struct gl_context *ctx, struct gl_renderbuffer *rb,
 
 
 static void
-store_nop(struct gl_texture_image *texImage,
+store_nop(struct swrast_texture_image *texImage,
           GLint col, GLint row, GLint img,
           const void *texel)
 {
@@ -534,17 +535,17 @@ update_wrapper(struct gl_context *ctx, struct gl_renderbuffer_attachment *att)
    (void) ctx;
    ASSERT(trb);
 
-   trb->TexImage = _mesa_get_attachment_teximage(att);
+   trb->TexImage = swrast_texture_image(_mesa_get_attachment_teximage(att));
    ASSERT(trb->TexImage);
 
-   trb->Store = _mesa_get_texel_store_func(trb->TexImage->TexFormat);
+   trb->Store = _mesa_get_texel_store_func(trb->TexImage->Base.TexFormat);
    if (!trb->Store) {
       /* we'll never draw into some textures (compressed formats) */
       trb->Store = store_nop;
    }
 
    if (!trb->TexImage->FetchTexelf) {
-      _mesa_update_fetch_functions(trb->TexImage->TexObject);
+      _mesa_update_fetch_functions(trb->TexImage->Base.TexObject);
    }
    trb->Fetchf = trb->TexImage->FetchTexelf;
    assert(trb->Fetchf);
@@ -558,13 +559,13 @@ update_wrapper(struct gl_context *ctx, struct gl_renderbuffer_attachment *att)
       trb->Zoffset = att->Zoffset;
    }
 
-   trb->Base.Width = trb->TexImage->Width;
-   trb->Base.Height = trb->TexImage->Height;
-   trb->Base.InternalFormat = trb->TexImage->InternalFormat;
-   trb->Base.Format = trb->TexImage->TexFormat;
+   trb->Base.Width = trb->TexImage->Base.Width;
+   trb->Base.Height = trb->TexImage->Base.Height;
+   trb->Base.InternalFormat = trb->TexImage->Base.InternalFormat;
+   trb->Base.Format = trb->TexImage->Base.TexFormat;
 
    /* XXX may need more special cases here */
-   switch (trb->TexImage->TexFormat) {
+   switch (trb->TexImage->Base.TexFormat) {
    case MESA_FORMAT_Z24_S8:
       trb->Base.DataType = GL_UNSIGNED_INT_24_8_EXT;
       trb->Base._BaseFormat = GL_DEPTH_STENCIL;
@@ -609,7 +610,7 @@ update_wrapper(struct gl_context *ctx, struct gl_renderbuffer_attachment *att)
       trb->Base.DataType = CHAN_TYPE;
       trb->Base._BaseFormat = GL_RGBA;
    }
-   trb->Base.Data = trb->TexImage->Data;
+   trb->Base.Data = trb->TexImage->Base.Data;
 }
 
 

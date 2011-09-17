@@ -40,6 +40,7 @@
 #include "texcompress_fxt1.h"
 #include "texcompress_rgtc.h"
 #include "texcompress_s3tc.h"
+#include "swrast/s_context.h"
 
 
 /**
@@ -451,15 +452,15 @@ _mesa_decompress_image(gl_format format, GLuint width, GLuint height,
                        const GLubyte *src, GLint srcRowStride,
                        GLfloat *dest)
 {
-   void (*fetch)(const struct gl_texture_image *texImage,
+   void (*fetch)(const struct swrast_texture_image *texImage,
                  GLint i, GLint j, GLint k, GLfloat *texel);
-   struct gl_texture_image texImage;  /* dummy teximage */
+   struct swrast_texture_image texImage;  /* dummy teximage */
    GLuint i, j;
 
    /* setup dummy texture image info */
    memset(&texImage, 0, sizeof(texImage));
-   texImage.Data = (void *) src;
-   texImage.RowStride = srcRowStride;
+   texImage.Base.Data = (void *) src;
+   texImage.Base.RowStride = srcRowStride;
 
    switch (format) {
    /* DXT formats */

@@ -1076,8 +1076,6 @@ clear_teximage_fields(struct gl_texture_image *img)
    img->DepthLog2 = 0;
    img->Data = NULL;
    img->TexFormat = MESA_FORMAT_NONE;
-   img->FetchTexelc = NULL;
-   img->FetchTexelf = NULL;
 }
 
 

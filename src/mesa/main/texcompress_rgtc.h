@@ -28,7 +28,7 @@
 #include "mfeatures.h"
 #include "texstore.h"
 
-struct gl_texture_image;
+struct swrast_texture_image;
 
 extern GLboolean
 _mesa_texstore_red_rgtc1(TEXSTORE_PARAMS);
@@ -43,35 +43,35 @@ extern GLboolean
 _mesa_texstore_signed_rg_rgtc2(TEXSTORE_PARAMS);
 
 extern void
-_mesa_fetch_texel_2d_f_red_rgtc1(const struct gl_texture_image *texImage,
+_mesa_fetch_texel_2d_f_red_rgtc1(const struct swrast_texture_image *texImage,
 				 GLint i, GLint j, GLint k, GLfloat *texel);
 
 extern void
-_mesa_fetch_texel_2d_f_signed_red_rgtc1(const struct gl_texture_image *texImage,
+_mesa_fetch_texel_2d_f_signed_red_rgtc1(const struct swrast_texture_image *texImage,
 					GLint i, GLint j, GLint k, GLfloat *texel);
 
 extern void
-_mesa_fetch_texel_2d_f_rg_rgtc2(const struct gl_texture_image *texImage,
+_mesa_fetch_texel_2d_f_rg_rgtc2(const struct swrast_texture_image *texImage,
 				 GLint i, GLint j, GLint k, GLfloat *texel);
 
 extern void
-_mesa_fetch_texel_2d_f_signed_rg_rgtc2(const struct gl_texture_image *texImage,
+_mesa_fetch_texel_2d_f_signed_rg_rgtc2(const struct swrast_texture_image *texImage,
 				       GLint i, GLint j, GLint k, GLfloat *texel);
 
 extern void
-_mesa_fetch_texel_2d_f_l_latc1(const struct gl_texture_image *texImage,
+_mesa_fetch_texel_2d_f_l_latc1(const struct swrast_texture_image *texImage,
                                  GLint i, GLint j, GLint k, GLfloat *texel);
 
 extern void
-_mesa_fetch_texel_2d_f_signed_l_latc1(const struct gl_texture_image *texImage,
+_mesa_fetch_texel_2d_f_signed_l_latc1(const struct swrast_texture_image *texImage,
                                         GLint i, GLint j, GLint k, GLfloat *texel);
 
 extern void
-_mesa_fetch_texel_2d_f_la_latc2(const struct gl_texture_image *texImage,
+_mesa_fetch_texel_2d_f_la_latc2(const struct swrast_texture_image *texImage,
                                  GLint i, GLint j, GLint k, GLfloat *texel);
 
 extern void
-_mesa_fetch_texel_2d_f_signed_la_latc2(const struct gl_texture_image *texImage,
+_mesa_fetch_texel_2d_f_signed_la_latc2(const struct swrast_texture_image *texImage,
                                        GLint i, GLint j, GLint k, GLfloat *texel);
 
 #endif
