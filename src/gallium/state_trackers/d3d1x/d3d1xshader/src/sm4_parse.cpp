@@ -157,7 +157,7 @@ struct sm4_parser
 			case SM4_OPERAND_INDEX_REPR_REG:
 relative:
 				op.indices[i].reg.reset(new sm4_op());
-				read_op(&*op.indices[0].reg);
+				read_op(&*op.indices[i].reg);
 				break;
 			case SM4_OPERAND_INDEX_REPR_REG_IMM32:
 				op.indices[i].disp = (int32_t)read32();
