@@ -4508,16 +4508,6 @@ _mesa_texstore(TEXSTORE_PARAMS)
 }
 
 
-/** Return texture size in bytes */
-static GLuint
-texture_size(const struct gl_texture_image *texImage)
-{
-   GLuint sz = _mesa_format_image_size(texImage->TexFormat, texImage->Width,
-                                       texImage->Height, texImage->Depth);
-   return sz;
-}
-
-
 /**
  * Normally, we'll only _write_ texel data to a texture when we map it.
  * But if the user is providing depth or stencil values and the texture
@@ -4549,7 +4539,6 @@ _mesa_store_teximage1d(struct gl_context *ctx, GLenum target, GLint level,
                        struct gl_texture_object *texObj,
                        struct gl_texture_image *texImage)
 {
-   GLuint sizeInBytes;
    const GLbitfield rwMode = get_read_write_mode(format, texImage->TexFormat);
    const GLuint zeroImageOffset = 0;
    GLubyte *dstMap;
@@ -4558,10 +4547,9 @@ _mesa_store_teximage1d(struct gl_context *ctx, GLenum target, GLint level,
 
    (void) border;
 
-   /* allocate memory */
-   sizeInBytes = texture_size(texImage);
-   texImage->Data = _mesa_alloc_texmemory(sizeInBytes);
-   if (!texImage->Data) {
+   /* allocate storage for texture data */
+   if (!ctx->Driver.AllocTextureImageBuffer(ctx, texImage, texImage->TexFormat,
+                                            width, 1, 1)) {
       _mesa_error(ctx, GL_OUT_OF_MEMORY, "glTexImage1D");
       return;
    }
@@ -4614,7 +4602,6 @@ _mesa_store_teximage2d(struct gl_context *ctx, GLenum target, GLint level,
                        struct gl_texture_object *texObj,
                        struct gl_texture_image *texImage)
 {
-   GLuint sizeInBytes;
    const GLbitfield rwMode = get_read_write_mode(format, texImage->TexFormat);
    const GLuint zeroImageOffset = 0;
    GLubyte *dstMap;
@@ -4623,10 +4610,9 @@ _mesa_store_teximage2d(struct gl_context *ctx, GLenum target, GLint level,
 
    (void) border;
 
-   /* allocate memory */
-   sizeInBytes = texture_size(texImage);
-   texImage->Data = _mesa_alloc_texmemory(sizeInBytes);
-   if (!texImage->Data) {
+   /* allocate storage for texture data */
+   if (!ctx->Driver.AllocTextureImageBuffer(ctx, texImage, texImage->TexFormat,
+                                            width, height, 1)) {
       _mesa_error(ctx, GL_OUT_OF_MEMORY, "glTexImage2D");
       return;
    }
@@ -4678,7 +4664,6 @@ _mesa_store_teximage3d(struct gl_context *ctx, GLenum target, GLint level,
                        struct gl_texture_object *texObj,
                        struct gl_texture_image *texImage)
 {
-   GLuint sizeInBytes;
    const GLbitfield rwMode = get_read_write_mode(format, texImage->TexFormat);
    GLboolean success;
    GLint slice;
@@ -4689,13 +4674,10 @@ _mesa_store_teximage3d(struct gl_context *ctx, GLenum target, GLint level,
 
    (void) border;
 
-   /* allocate memory */
-   sizeInBytes = texture_size(texImage);
-   texImage->Data = _mesa_alloc_texmemory(sizeInBytes);
-   if (!texImage->Data) {
-      /* Note: we check for a NULL image pointer here, _after_ we allocated
-       * memory for the texture.  That's what the GL spec calls for.
-       */
+   /* allocate storage for texture data */
+   if (!ctx->Driver.AllocTextureImageBuffer(ctx, texImage, texImage->TexFormat,
+                                            width, height, depth)) {
+      _mesa_error(ctx, GL_OUT_OF_MEMORY, "glTexImage3D");
       return;
    }
 
@@ -4966,10 +4948,10 @@ _mesa_store_compressed_teximage2d(struct gl_context *ctx,
    ASSERT(texImage->Depth == 1);
    ASSERT(texImage->Data == NULL); /* was freed in glCompressedTexImage2DARB */
 
-   /* allocate storage */
-   texImage->Data = _mesa_alloc_texmemory(imageSize);
-   if (!texImage->Data) {
-      _mesa_error(ctx, GL_OUT_OF_MEMORY, "glCompressedTexImage2DARB");
+   /* allocate storage for texture data */
+   if (!ctx->Driver.AllocTextureImageBuffer(ctx, texImage, texImage->TexFormat,
+                                            width, height, 1)) {
+      _mesa_error(ctx, GL_OUT_OF_MEMORY, "glCompressedTexImage2D");
       return;
    }
 
