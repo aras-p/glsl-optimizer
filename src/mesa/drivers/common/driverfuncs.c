@@ -110,8 +110,8 @@ _mesa_init_driver_functions(struct dd_function_table *driver)
    driver->BindTexture = NULL;
    driver->NewTextureObject = _mesa_new_texture_object;
    driver->DeleteTexture = _mesa_delete_texture_object;
-   driver->NewTextureImage = _mesa_new_texture_image;
-   driver->DeleteTextureImage = _mesa_delete_texture_image;
+   driver->NewTextureImage = _swrast_new_texture_image;
+   driver->DeleteTextureImage = _swrast_delete_texture_image;
    driver->FreeTextureImageBuffer = _mesa_free_texture_image_data;
    driver->MapTextureImage = _swrast_map_teximage;
    driver->UnmapTextureImage = _swrast_unmap_teximage;
