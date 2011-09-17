@@ -175,10 +175,6 @@ extern GLfloat _mesa_ubyte_to_float_color_tab[256];
 #define STRIDE_4UB(p, i)  (p = (GLubyte (*)[4])((GLubyte *)p + i))
 /** Stepping a GLfloat[4] pointer by a byte stride */
 #define STRIDE_4F(p, i)  (p = (GLfloat (*)[4])((GLubyte *)p + i))
-/** Stepping a GLchan[4] pointer by a byte stride */
-#define STRIDE_4CHAN(p, i)  (p = (GLchan (*)[4])((GLubyte *)p + i))
-/** Stepping a GLchan pointer by a byte stride */
-#define STRIDE_CHAN(p, i)  (p = (GLchan *)((GLubyte *)p + i))
 /** Stepping a \p t pointer by a byte stride */
 #define STRIDE_T(p, t, i)  (p = (t)((GLubyte *)p + i))
 
@@ -602,14 +598,6 @@ do {                        \
    UNCLAMPED_FLOAT_TO_UBYTE( dstub, dstf ); \
 } while (0)
 
-#define INTERP_CHAN( t, dstc, outc, inc )   \
-do {                        \
-   GLfloat inf = CHAN_TO_FLOAT( inc );      \
-   GLfloat outf = CHAN_TO_FLOAT( outc );    \
-   GLfloat dstf = LINTERP( t, outf, inf );  \
-   UNCLAMPED_FLOAT_TO_CHAN( dstc, dstf );   \
-} while (0)
-
 #define INTERP_UI( t, dstui, outui, inui )  \
    dstui = (GLuint) (GLint) LINTERP( (t), (GLfloat) (outui), (GLfloat) (inui) )
 
@@ -629,21 +617,6 @@ do {                        \
    dst[0] = LINTERP( (t), (out)[0], (in)[0] );  \
    dst[1] = LINTERP( (t), (out)[1], (in)[1] );  \
    dst[2] = LINTERP( (t), (out)[2], (in)[2] );  \
-} while (0)
-
-#define INTERP_4CHAN( t, dst, out, in )         \
-do {                            \
-   INTERP_CHAN( (t), (dst)[0], (out)[0], (in)[0] ); \
-   INTERP_CHAN( (t), (dst)[1], (out)[1], (in)[1] ); \
-   INTERP_CHAN( (t), (dst)[2], (out)[2], (in)[2] ); \
-   INTERP_CHAN( (t), (dst)[3], (out)[3], (in)[3] ); \
-} while (0)
-
-#define INTERP_3CHAN( t, dst, out, in )         \
-do {                            \
-   INTERP_CHAN( (t), (dst)[0], (out)[0], (in)[0] ); \
-   INTERP_CHAN( (t), (dst)[1], (out)[1], (in)[1] ); \
-   INTERP_CHAN( (t), (dst)[2], (out)[2], (in)[2] ); \
 } while (0)
 
 #define INTERP_SZ( t, vec, to, out, in, sz )                \
