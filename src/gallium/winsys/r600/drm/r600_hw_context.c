@@ -45,7 +45,7 @@ void r600_get_backend_mask(struct r600_context *ctx)
 		unsigned backend_map = ctx->radeon->info.r600_backend_map;
 		unsigned item_width, item_mask;
 
-		if (ctx->radeon->chip_class >= EVERGREEN) {
+		if (ctx->screen->chip_class >= EVERGREEN) {
 			item_width = 4;
 			item_mask = 0x7;
 		} else {
@@ -130,7 +130,7 @@ static inline void r600_context_ps_partial_flush(struct r600_context *ctx)
 void r600_init_cs(struct r600_context *ctx)
 {
 	/* R6xx requires this packet at the start of each command buffer */
-	if (ctx->radeon->family < CHIP_RV770) {
+	if (ctx->screen->family < CHIP_RV770) {
 		ctx->pm4[ctx->pm4_cdwords++] = PKT3(PKT3_START_3D_CMDBUF, 0, 0);
 		ctx->pm4[ctx->pm4_cdwords++] = 0x00000000;
 	}
@@ -198,8 +198,8 @@ static void r600_init_block(struct r600_context *ctx,
 			}
 			block->reloc[block->nbo].bo_pm4_index = block->pm4_ndwords - 1;
 		}
-		if ((ctx->radeon->family > CHIP_R600) &&
-		    (ctx->radeon->family < CHIP_RV770) && reg[i+j].flags & REG_FLAG_RV6XX_SBU) {
+		if ((ctx->screen->family > CHIP_R600) &&
+		    (ctx->screen->family < CHIP_RV770) && reg[i+j].flags & REG_FLAG_RV6XX_SBU) {
 			block->pm4[block->pm4_ndwords++] = PKT3(PKT3_SURFACE_BASE_UPDATE, 0, 0);
 			block->pm4[block->pm4_ndwords++] = reg[i+j].flush_flags;
 		}
@@ -228,7 +228,7 @@ int r600_context_add_block(struct r600_context *ctx, const struct r600_reg *reg,
 		}
 
 		/* ignore regs not on R600 on R600 */
-		if ((reg[i].flags & REG_FLAG_NOT_R600) && ctx->radeon->family == CHIP_R600) {
+		if ((reg[i].flags & REG_FLAG_NOT_R600) && ctx->screen->family == CHIP_R600) {
 			n = 1;
 			continue;
 		}
@@ -960,16 +960,16 @@ void r600_context_bo_flush(struct r600_context *ctx, unsigned flush_flags,
 		return;
 	}
 
-	if ((ctx->radeon->family < CHIP_RV770) &&
+	if ((ctx->screen->family < CHIP_RV770) &&
 	    (G_0085F0_CB_ACTION_ENA(flush_flags) ||
 	     G_0085F0_DB_ACTION_ENA(flush_flags))) {
 		if (ctx->flags & R600_CONTEXT_CHECK_EVENT_FLUSH) {
 			/* the rv670 seems to fail fbo-generatemipmap unless we flush the CB1 dest base ena */
 			if ((bo->cs_buf->binding & BO_BOUND_TEXTURE) &&
 			    (flush_flags & S_0085F0_CB_ACTION_ENA(1))) {
-				if ((ctx->radeon->family == CHIP_RV670) ||
-				    (ctx->radeon->family == CHIP_RS780) ||
-				    (ctx->radeon->family == CHIP_RS880)) {
+				if ((ctx->screen->family == CHIP_RV670) ||
+				    (ctx->screen->family == CHIP_RS780) ||
+				    (ctx->screen->family == CHIP_RS880)) {
 					ctx->pm4[ctx->pm4_cdwords++] = PKT3(PKT3_SURFACE_SYNC, 3, ctx->predicate_drawing);
 					ctx->pm4[ctx->pm4_cdwords++] = S_0085F0_CB1_DEST_BASE_ENA(1);     /* CP_COHER_CNTL */
 					ctx->pm4[ctx->pm4_cdwords++] = 0xffffffff;      /* CP_COHER_SIZE */
@@ -1100,7 +1100,7 @@ static void r600_context_dirty_resource_block(struct r600_context *ctx,
 void r600_context_pipe_state_set_resource(struct r600_context *ctx, struct r600_pipe_resource_state *state, struct r600_block *block)
 {
 	int dirty;
-	int num_regs = ctx->radeon->chip_class >= EVERGREEN ? 8 : 7;
+	int num_regs = ctx->screen->chip_class >= EVERGREEN ? 8 : 7;
 	boolean is_vertex;
 
 	if (state == NULL) {
@@ -1423,7 +1423,7 @@ void r600_context_draw(struct r600_context *ctx, const struct r600_draw *draw)
 
 	/* queries need some special values */
 	if (ctx->num_query_running) {
-		if (ctx->radeon->family >= CHIP_RV770) {
+		if (ctx->screen->family >= CHIP_RV770) {
 			r600_context_reg(ctx,
 					R_028D0C_DB_RENDER_CONTROL,
 					S_028D0C_R700_PERFECT_ZPASS_COUNTS(1),
@@ -1495,7 +1495,7 @@ void r600_context_flush(struct r600_context *ctx, unsigned flags)
 	/* suspend queries */
 	r600_context_queries_suspend(ctx);
 
-	if (ctx->radeon->chip_class >= EVERGREEN)
+	if (ctx->screen->chip_class >= EVERGREEN)
 		evergreen_context_flush_dest_caches(ctx);
 	else
 		r600_context_flush_dest_caches(ctx);

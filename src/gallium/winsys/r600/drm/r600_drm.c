@@ -30,27 +30,6 @@
 #include "util/u_memory.h"
 #include <errno.h>
 
-enum radeon_family r600_get_family(struct radeon *r600)
-{
-	return r600->family;
-}
-
-enum chip_class r600_get_family_class(struct radeon *radeon)
-{
-	return radeon->chip_class;
-}
-
-static unsigned radeon_family_from_device(unsigned device)
-{
-	switch (device) {
-#define CHIPSET(pciid, name, family) case pciid: return CHIP_##family;
-#include "pci_ids/r600_pci_ids.h"
-#undef CHIPSET
-	default:
-		return CHIP_UNKNOWN;
-	}
-}
-
 struct radeon *radeon_create(struct radeon_winsys *ws)
 {
 	struct radeon *radeon = CALLOC_STRUCT(radeon);
@@ -60,24 +39,6 @@ struct radeon *radeon_create(struct radeon_winsys *ws)
 
 	radeon->ws = ws;
 	ws->query_info(ws, &radeon->info);
-
-	radeon->family = radeon_family_from_device(radeon->info.pci_id);
-	if (radeon->family == CHIP_UNKNOWN) {
-		fprintf(stderr, "Unknown chipset 0x%04X\n", radeon->info.pci_id);
-		radeon_destroy(radeon);
-		return NULL;
-	}
-
-	/* setup class */
-	if (radeon->family == CHIP_CAYMAN) {
-		radeon->chip_class = CAYMAN;
-	} else if (radeon->family >= CHIP_CEDAR) {
-		radeon->chip_class = EVERGREEN;
-	} else if (radeon->family >= CHIP_RV770) {
-		radeon->chip_class = R700;
-	} else {
-		radeon->chip_class = R600;
-	}
 
 	return radeon;
 }

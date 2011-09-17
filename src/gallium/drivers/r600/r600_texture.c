@@ -248,8 +248,7 @@ static void r600_setup_miptree(struct pipe_screen *screen,
 			       unsigned array_mode)
 {
 	struct pipe_resource *ptex = &rtex->resource.b.b.b;
-	struct radeon *radeon = ((struct r600_screen*)screen)->radeon;
-	enum chip_class chipc = r600_get_family_class(radeon);
+	enum chip_class chipc = ((struct r600_screen*)screen)->chip_class;
 	unsigned size, layer_size, i, offset;
 	unsigned nblocksx, nblocksy;
 
@@ -396,7 +395,7 @@ r600_texture_create_object(struct pipe_screen *screen,
 
 	/* We must split depth and stencil into two separate buffers on Evergreen. */
 	if (!(base->flags & R600_RESOURCE_FLAG_TRANSFER) &&
-	    r600_get_family_class(((struct r600_screen*)screen)->radeon) >= EVERGREEN &&
+	    ((struct r600_screen*)screen)->chip_class >= EVERGREEN &&
 	    util_format_is_depth_and_stencil(base->format)) {
 		struct pipe_resource stencil;
 		unsigned stencil_pitch_override = 0;

@@ -37,8 +37,6 @@
 struct radeon {
 	struct radeon_winsys		*ws;
 	struct radeon_info		info;
-	unsigned			family;
-	enum chip_class			chip_class;
 };
 
 /* these flags are used in register flags and added into block flags */

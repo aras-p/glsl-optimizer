@@ -83,9 +83,6 @@ struct r600_tiling_info {
 	unsigned group_bytes;
 };
 
-enum radeon_family r600_get_family(struct radeon *rw);
-enum chip_class r600_get_family_class(struct radeon *radeon);
-
 struct r600_resource {
 	struct u_vbuf_resource		b;
 

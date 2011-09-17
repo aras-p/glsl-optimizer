@@ -214,8 +214,8 @@ static struct pipe_context *r600_create_context(struct pipe_screen *screen, void
 	rctx->screen = rscreen;
 	rctx->ws = rscreen->ws;
 	rctx->radeon = rscreen->radeon;
-	rctx->family = r600_get_family(rctx->radeon);
-	rctx->chip_class = r600_get_family_class(rctx->radeon);
+	rctx->family = rscreen->family;
+	rctx->chip_class = rscreen->chip_class;
 
 	rctx->fences.bo = NULL;
 	rctx->fences.data = NULL;
@@ -327,15 +327,14 @@ static const char *r600_get_family_name(enum radeon_family family)
 static const char* r600_get_name(struct pipe_screen* pscreen)
 {
 	struct r600_screen *rscreen = (struct r600_screen *)pscreen;
-	enum radeon_family family = r600_get_family(rscreen->radeon);
 
-	return r600_get_family_name(family);
+	return r600_get_family_name(rscreen->family);
 }
 
 static int r600_get_param(struct pipe_screen* pscreen, enum pipe_cap param)
 {
 	struct r600_screen *rscreen = (struct r600_screen *)pscreen;
-	enum radeon_family family = r600_get_family(rscreen->radeon);
+	enum radeon_family family = rscreen->family;
 
 	switch (param) {
 	/* Supported features (boolean caps). */
@@ -420,7 +419,7 @@ static int r600_get_param(struct pipe_screen* pscreen, enum pipe_cap param)
 static float r600_get_paramf(struct pipe_screen* pscreen, enum pipe_cap param)
 {
 	struct r600_screen *rscreen = (struct r600_screen *)pscreen;
-	enum radeon_family family = r600_get_family(rscreen->radeon);
+	enum radeon_family family = rscreen->family;
 
 	switch (param) {
 	case PIPE_CAP_MAX_LINE_WIDTH:
@@ -684,7 +683,7 @@ static int r600_init_tiling(struct r600_screen *rscreen)
 	uint32_t tiling_config = rscreen->info.r600_tiling_config;
 
 	/* set default group bytes, overridden by tiling info ioctl */
-	if (r600_get_family_class(rscreen->radeon) <= R700) {
+	if (rscreen->chip_class <= R700) {
 		rscreen->tiling_info.group_bytes = 256;
 	} else {
 		rscreen->tiling_info.group_bytes = 512;
@@ -693,10 +692,21 @@ static int r600_init_tiling(struct r600_screen *rscreen)
 	if (!tiling_config)
 		return 0;
 
-	if (r600_get_family_class(rscreen->radeon) <= R700) {
+	if (rscreen->chip_class <= R700) {
 		return r600_interpret_tiling(rscreen, tiling_config);
 	} else {
 		return evergreen_interpret_tiling(rscreen, tiling_config);
+	}
+}
+
+static unsigned radeon_family_from_device(unsigned device)
+{
+	switch (device) {
+#define CHIPSET(pciid, name, family) case pciid: return CHIP_##family;
+#include "pci_ids/r600_pci_ids.h"
+#undef CHIPSET
+	default:
+		return CHIP_UNKNOWN;
 	}
 }
 
@@ -718,6 +728,25 @@ struct pipe_screen *r600_screen_create(struct radeon_winsys *ws)
 	rscreen->radeon = radeon;
 	ws->query_info(ws, &rscreen->info);
 
+	rscreen->family = radeon_family_from_device(rscreen->info.pci_id);
+	if (rscreen->family == CHIP_UNKNOWN) {
+		fprintf(stderr, "r600: Unknown chipset 0x%04X\n", rscreen->info.pci_id);
+		radeon_destroy(radeon);
+		FREE(rscreen);
+		return NULL;
+	}
+
+	/* setup class */
+	if (rscreen->family == CHIP_CAYMAN) {
+		rscreen->chip_class = CAYMAN;
+	} else if (rscreen->family >= CHIP_CEDAR) {
+		rscreen->chip_class = EVERGREEN;
+	} else if (rscreen->family >= CHIP_RV770) {
+		rscreen->chip_class = R700;
+	} else {
+		rscreen->chip_class = R600;
+	}
+
 	if (r600_init_tiling(rscreen)) {
 		radeon_destroy(radeon);
 		FREE(rscreen);
@@ -732,7 +761,7 @@ struct pipe_screen *r600_screen_create(struct radeon_winsys *ws)
 	rscreen->screen.get_shader_param = r600_get_shader_param;
 	rscreen->screen.get_paramf = r600_get_paramf;
 	rscreen->screen.get_video_param = r600_get_video_param;
-	if (r600_get_family_class(radeon) >= EVERGREEN) {
+	if (rscreen->chip_class >= EVERGREEN) {
 		rscreen->screen.is_format_supported = evergreen_is_format_supported;
 	} else {
 		rscreen->screen.is_format_supported = r600_is_format_supported;
