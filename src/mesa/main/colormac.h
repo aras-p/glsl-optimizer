@@ -97,22 +97,6 @@
 
 
 /**
- * Convert 3 channels at once.
- *
- * \param dst pointer to destination GLchan[3] array.
- * \param f pointer to source GLfloat[3] array.
- *
- * \sa #UNCLAMPED_FLOAT_TO_CHAN.
- */
-#define UNCLAMPED_FLOAT_TO_RGB_CHAN(dst, f)	\
-do {						\
-   UNCLAMPED_FLOAT_TO_CHAN((dst)[0], (f)[0]);	\
-   UNCLAMPED_FLOAT_TO_CHAN((dst)[1], (f)[1]);	\
-   UNCLAMPED_FLOAT_TO_CHAN((dst)[2], (f)[2]);	\
-} while (0)
-
-
-/**
  * Convert 4 channels at once.
  *
  * \param dst pointer to destination GLchan[4] array.
