@@ -947,7 +947,7 @@ unpack_SIGNED_RGBA_16(const void *src, GLfloat dst[4])
 static void
 unpack_RGBA_16(const void *src, GLfloat dst[4])
 {
-   const GLshort *s = (const GLshort *) src;
+   const GLushort *s = (const GLushort *) src;
    dst[RCOMP] = USHORT_TO_FLOAT( s[0] );
    dst[GCOMP] = USHORT_TO_FLOAT( s[1] );
    dst[BCOMP] = USHORT_TO_FLOAT( s[2] );
