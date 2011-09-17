@@ -512,6 +512,7 @@ struct GalliumD3D11ScreenImpl : public GalliumD3D11Screen
 		state.scissor = !!rasterizer_desc->ScissorEnable;
 		state.multisample = !!rasterizer_desc->MultisampleEnable;
 		state.line_smooth = !!rasterizer_desc->AntialiasedLineEnable;
+		state.flatshade_first = 1;
 		state.line_width = 1.0f;
 		state.point_size = 1.0f;
 
