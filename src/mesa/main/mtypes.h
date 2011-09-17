@@ -1876,6 +1876,7 @@ struct gl_vertex_program
    struct gl_program Base;   /**< base class */
    GLboolean IsNVProgram;    /**< is this a GL_NV_vertex_program program? */
    GLboolean IsPositionInvariant;
+   GLboolean UsesClipDistance;
 };
 
 
@@ -2160,6 +2161,11 @@ struct gl_shader_program
                               GL_TRIANGLES, or GL_TRIANGLES_ADJACENCY_ARB */
       GLenum OutputType; /**< GL_POINTS, GL_LINE_STRIP or GL_TRIANGLE_STRIP */
    } Geom;
+
+   /** Vertex shader state - copied into gl_vertex_program at link time */
+   struct {
+      GLboolean UsesClipDistance; /**< True if gl_ClipDistance is written to. */
+   } Vert;
 
    /* post-link info: */
    struct gl_vertex_program *VertexProgram;     /**< Linked vertex program */

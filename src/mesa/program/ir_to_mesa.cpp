@@ -3291,6 +3291,8 @@ _mesa_ir_link_shader(struct gl_context *ctx, struct gl_shader_program *prog)
 
          switch (prog->_LinkedShaders[i]->Type) {
          case GL_VERTEX_SHADER:
+            ((struct gl_vertex_program *)linked_prog)->UsesClipDistance
+               = prog->Vert.UsesClipDistance;
             _mesa_reference_vertprog(ctx, &prog->VertexProgram,
                                      (struct gl_vertex_program *)linked_prog);
             ok = ctx->Driver.ProgramStringNotify(ctx, GL_VERTEX_PROGRAM_ARB,

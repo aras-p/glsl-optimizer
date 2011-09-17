@@ -244,7 +244,9 @@ count_attribute_slots(const glsl_type *t)
 
 
 /**
- * Verify that a vertex shader executable meets all semantic requirements
+ * Verify that a vertex shader executable meets all semantic requirements.
+ *
+ * Also sets prog->Vert.UsesClipDistance as a side effect.
  *
  * \param shader  Vertex shader executable to be verified
  */
@@ -279,6 +281,7 @@ validate_vertex_shader_executable(struct gl_shader_program *prog,
                       "and `gl_ClipDistance'\n");
          return false;
       }
+      prog->Vert.UsesClipDistance = clip_distance.variable_found();
    }
 
    return true;
