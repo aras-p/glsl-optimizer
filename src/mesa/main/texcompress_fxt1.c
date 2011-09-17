@@ -1289,6 +1289,41 @@ fxt1_quantize (GLuint *cc, const GLubyte *lines[], GLint comps)
 }
 
 
+
+/**
+ * Upscale an image by replication, not (typical) stretching.
+ * We use this when the image width or height is less than a
+ * certain size (4, 8) and we need to upscale an image.
+ */
+static void
+upscale_teximage2d(GLsizei inWidth, GLsizei inHeight,
+                   GLsizei outWidth, GLsizei outHeight,
+                   GLint comps, const GLchan *src, GLint srcRowStride,
+                   GLchan *dest )
+{
+   GLint i, j, k;
+
+   ASSERT(outWidth >= inWidth);
+   ASSERT(outHeight >= inHeight);
+#if 0
+   ASSERT(inWidth == 1 || inWidth == 2 || inHeight == 1 || inHeight == 2);
+   ASSERT((outWidth & 3) == 0);
+   ASSERT((outHeight & 3) == 0);
+#endif
+
+   for (i = 0; i < outHeight; i++) {
+      const GLint ii = i % inHeight;
+      for (j = 0; j < outWidth; j++) {
+         const GLint jj = j % inWidth;
+         for (k = 0; k < comps; k++) {
+            dest[(i * outWidth + j) * comps + k]
+               = src[ii * srcRowStride + jj * comps + k];
+         }
+      }
+   }
+}
+
+
 static void
 fxt1_encode (GLuint width, GLuint height, GLint comps,
              const void *source, GLint srcRowStride,
@@ -1311,9 +1346,9 @@ fxt1_encode (GLuint width, GLuint height, GLint comps,
          _mesa_error(ctx, GL_OUT_OF_MEMORY, "texture compression");
          goto cleanUp;
       }
-      _mesa_upscale_teximage2d(width, height, newWidth, newHeight,
-                               comps, (const GLchan *) source,
-                               srcRowStride, (GLchan *) newSource);
+      upscale_teximage2d(width, height, newWidth, newHeight,
+                         comps, (const GLchan *) source,
+                         srcRowStride, (GLchan *) newSource);
       source = newSource;
       width = newWidth;
       height = newHeight;

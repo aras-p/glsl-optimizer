@@ -2218,37 +2218,3 @@ do {									\
    }
 }
 
-
-/**
- * Upscale an image by replication, not (typical) stretching.
- * We use this when the image width or height is less than a
- * certain size (4, 8) and we need to upscale an image.
- */
-void
-_mesa_upscale_teximage2d(GLsizei inWidth, GLsizei inHeight,
-                         GLsizei outWidth, GLsizei outHeight,
-                         GLint comps, const GLchan *src, GLint srcRowStride,
-                         GLchan *dest )
-{
-   GLint i, j, k;
-
-   ASSERT(outWidth >= inWidth);
-   ASSERT(outHeight >= inHeight);
-#if 0
-   ASSERT(inWidth == 1 || inWidth == 2 || inHeight == 1 || inHeight == 2);
-   ASSERT((outWidth & 3) == 0);
-   ASSERT((outHeight & 3) == 0);
-#endif
-
-   for (i = 0; i < outHeight; i++) {
-      const GLint ii = i % inHeight;
-      for (j = 0; j < outWidth; j++) {
-         const GLint jj = j % inWidth;
-         for (k = 0; k < comps; k++) {
-            dest[(i * outWidth + j) * comps + k]
-               = src[ii * srcRowStride + jj * comps + k];
-         }
-      }
-   }
-}
-
