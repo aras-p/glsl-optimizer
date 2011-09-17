@@ -31,7 +31,6 @@
 #include "main/colormac.h"
 #include "main/mtypes.h"
 #include "main/teximage.h"
-#include "main/texfetch.h"
 #include "program/prog_parameter.h"
 #include "program/prog_statevars.h"
 #include "swrast.h"
@@ -40,6 +39,7 @@
 #include "s_lines.h"
 #include "s_points.h"
 #include "s_span.h"
+#include "s_texfetch.h"
 #include "s_triangle.h"
 #include "s_texfilter.h"
 

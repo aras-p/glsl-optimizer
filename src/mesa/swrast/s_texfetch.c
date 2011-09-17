@@ -25,7 +25,7 @@
 
 
 /**
- * \file texfetch.c
+ * \file s_texfetch.c
  *
  * Texel fetch/store functions
  *
@@ -33,14 +33,14 @@
  */
 
 
-#include "colormac.h"
-#include "macros.h"
-#include "texcompress.h"
-#include "texcompress_fxt1.h"
-#include "texcompress_s3tc.h"
-#include "texcompress_rgtc.h"
-#include "texfetch.h"
-#include "teximage.h"
+#include "main/colormac.h"
+#include "main/macros.h"
+#include "main/texcompress.h"
+#include "main/texcompress_fxt1.h"
+#include "main/texcompress_s3tc.h"
+#include "main/texcompress_rgtc.h"
+#include "main/teximage.h"
+#include "s_texfetch.h"
 #include "../../gallium/auxiliary/util/u_format_rgb9e5.h"
 #include "../../gallium/auxiliary/util/u_format_r11g11b10f.h"
 
@@ -77,13 +77,13 @@ nonlinear_to_linear(GLubyte cs8)
 /* Texel fetch routines for all supported formats
  */
 #define DIM 1
-#include "texfetch_tmp.h"
+#include "s_texfetch_tmp.h"
 
 #define DIM 2
-#include "texfetch_tmp.h"
+#include "s_texfetch_tmp.h"
 
 #define DIM 3
-#include "texfetch_tmp.h"
+#include "s_texfetch_tmp.h"
 
 /**
  * Null texel fetch function.

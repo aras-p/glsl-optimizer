@@ -3,10 +3,10 @@
 #include "main/colormac.h"
 #include "main/fbobject.h"
 #include "main/macros.h"
-#include "main/texfetch.h"
 #include "main/teximage.h"
 #include "main/renderbuffer.h"
 #include "swrast/swrast.h"
+#include "swrast/s_texfetch.h"
 
 
 /*
@@ -543,7 +543,11 @@ update_wrapper(struct gl_context *ctx, struct gl_renderbuffer_attachment *att)
       trb->Store = store_nop;
    }
 
+   if (!trb->TexImage->FetchTexelf) {
+      _mesa_update_fetch_functions(trb->TexImage->TexObject);
+   }
    trb->Fetchf = trb->TexImage->FetchTexelf;
+   assert(trb->Fetchf);
 
    if (att->Texture->Target == GL_TEXTURE_1D_ARRAY_EXT) {
       trb->Yoffset = att->Zoffset;

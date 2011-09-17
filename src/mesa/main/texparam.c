@@ -43,7 +43,6 @@
 #include "main/texparam.h"
 #include "main/teximage.h"
 #include "main/texstate.h"
-#include "main/texfetch.h"
 #include "program/prog_instruction.h"
 
 

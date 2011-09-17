@@ -37,9 +37,9 @@
 #include "main/texcompress.h"
 #include "main/texgetimage.h"
 #include "main/mipmap.h"
-#include "main/texfetch.h"
 #include "main/teximage.h"
 #include "drivers/common/meta.h"
+#include "swrast/s_texfetch.h"
 
 static struct gl_texture_object *
 nouveau_texture_new(struct gl_context *ctx, GLuint name, GLenum target)
