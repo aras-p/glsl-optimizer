@@ -1986,7 +1986,7 @@ generate_mipmap_compressed(struct gl_context *ctx, GLenum target,
    gl_format temp_format;
    GLint components;
    GLuint temp_src_stride, temp_dst_stride; /* in bytes */
-   GLchan *temp_src = NULL, *temp_dst = NULL;
+   GLubyte *temp_src = NULL, *temp_dst = NULL;
    GLenum temp_datatype;
    GLenum temp_base_format;
 
@@ -2101,7 +2101,7 @@ generate_mipmap_compressed(struct gl_context *ctx, GLenum target,
 
       /* swap src and dest pointers */
       {
-	 GLchan *temp = temp_src;
+	 GLubyte *temp = temp_src;
 	 temp_src = temp_dst;
 	 temp_dst = temp;
 
@@ -2109,7 +2109,7 @@ generate_mipmap_compressed(struct gl_context *ctx, GLenum target,
       }
    } /* loop over mipmap levels */
 
-   free((void *) temp_src);
+   free(temp_src);
    free(temp_dst);
 }
 
