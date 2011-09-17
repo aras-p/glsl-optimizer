@@ -601,7 +601,8 @@ _mesa_free_texture_image_data(struct gl_context *ctx,
 
 
 /**
- * Free texture image.
+ * Free a gl_texture_image and associated data.
+ * This function is a fallback called via ctx->Driver.DeleteTextureImage().
  *
  * \param texImage texture image.
  *

@@ -202,7 +202,7 @@ _mesa_delete_texture_object(struct gl_context *ctx,
    for (face = 0; face < 6; face++) {
       for (i = 0; i < MAX_TEXTURE_LEVELS; i++) {
          if (texObj->Image[face][i]) {
-            _mesa_delete_texture_image( ctx, texObj->Image[face][i] );
+            ctx->Driver.DeleteTextureImage(ctx, texObj->Image[face][i]);
          }
       }
    }

@@ -18,6 +18,13 @@ intelNewTextureImage(struct gl_context * ctx)
    return (struct gl_texture_image *) CALLOC_STRUCT(intel_texture_image);
 }
 
+static void
+intelDeleteTextureImage(struct gl_context * ctx, struct gl_texture_image *img)
+{
+   /* nothing special (yet) for intel_texture_image */
+   _mesa_delete_texture_image(ctx, img);
+}
+
 
 static struct gl_texture_object *
 intelNewTextureObject(struct gl_context * ctx, GLuint name, GLenum target)
@@ -207,6 +214,7 @@ intelInitTextureFuncs(struct dd_function_table *functions)
 
    functions->NewTextureObject = intelNewTextureObject;
    functions->NewTextureImage = intelNewTextureImage;
+   functions->DeleteTextureImage = intelDeleteTextureImage;
    functions->DeleteTexture = intelDeleteTextureObject;
    functions->FreeTextureImageBuffer = intel_free_texture_image_buffer;
    functions->MapTextureImage = intel_map_texture_image;

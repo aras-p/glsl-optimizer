@@ -83,6 +83,13 @@ struct gl_texture_image *radeonNewTextureImage(struct gl_context *ctx)
 	return CALLOC(sizeof(radeon_texture_image));
 }
 
+static void
+radeonDeleteTextureImage(struct gl_context * ctx, struct gl_texture_image *img)
+{
+   /* nothing special (yet) for radeon_texture_image */
+   _mesa_delete_texture_image(ctx, img);
+}
+
 /**
  * Free memory associated with this texture image.
  */
@@ -1162,6 +1169,7 @@ radeon_init_common_texture_funcs(radeonContextPtr radeon,
 				 struct dd_function_table *functions)
 {
 	functions->NewTextureImage = radeonNewTextureImage;
+	functions->DeleteTextureImage = radeonDeleteTextureImage;
 	functions->FreeTextureImageBuffer = radeonFreeTextureImageBuffer;
 	functions->MapTexture = radeonMapTexture;
 	functions->UnmapTexture = radeonUnmapTexture;
