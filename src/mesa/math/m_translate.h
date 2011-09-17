@@ -29,7 +29,7 @@
 #include "main/compiler.h"
 #include "main/glheader.h"
 #include "main/mtypes.h"		/* hack for GLchan */
-
+#include "swrast/s_chan.h"
 
 /**
  * Array translation.

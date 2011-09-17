@@ -45,7 +45,7 @@ static const GLubyte kernel[16] = {
 #if DITHER
 #define DITHER_COMP(X, Y) kernel[((X) & 0x3) | (((Y) & 0x3) << 2)]
 
-#define DITHER_CLAMP(X) (((X) < CHAN_MAX) ? (X) : CHAN_MAX)
+#define DITHER_CLAMP(X) (((X) < 255) ? (X) : 255)
 #else
 #define DITHER_COMP(X, Y) 0
 

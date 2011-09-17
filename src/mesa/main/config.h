@@ -332,7 +332,7 @@
 
 
 /**
- * Bits per color channel:  8, 16 or 32
+ * For swrast, bits per color channel:  8, 16 or 32
  */
 #ifndef CHAN_BITS
 #define CHAN_BITS 8

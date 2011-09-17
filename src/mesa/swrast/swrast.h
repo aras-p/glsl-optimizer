@@ -33,6 +33,7 @@
 #define SWRAST_H
 
 #include "main/mtypes.h"
+#include "swrast/s_chan.h"
 
 /**
  * \struct SWvertex
