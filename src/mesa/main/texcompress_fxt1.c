@@ -52,7 +52,7 @@ fxt1_encode (GLuint width, GLuint height, GLint comps,
 
 void
 fxt1_decode_1 (const void *texture, GLint stride,
-               GLint i, GLint j, GLchan *rgba);
+               GLint i, GLint j, GLubyte *rgba);
 
 
 /**
@@ -61,7 +61,7 @@ fxt1_decode_1 (const void *texture, GLint stride,
 GLboolean
 _mesa_texstore_rgb_fxt1(TEXSTORE_PARAMS)
 {
-   const GLchan *pixels;
+   const GLubyte *pixels;
    GLint srcRowStride;
    GLubyte *dst;
    const GLint texWidth = dstRowStride * 8 / 16; /* a bit of a hack */
@@ -75,10 +75,10 @@ _mesa_texstore_rgb_fxt1(TEXSTORE_PARAMS)
    (void) dstImageOffsets;
 
    if (srcFormat != GL_RGB ||
-       srcType != CHAN_TYPE ||
+       srcType != GL_UNSIGNED_BYTE ||
        ctx->_ImageTransferState ||
        srcPacking->SwapBytes) {
-      /* convert image to RGB/GLchan */
+      /* convert image to RGB/GLubyte */
       tempImage = _mesa_make_temp_ubyte_image(ctx, dims,
                                              baseInternalFormat,
                                              _mesa_get_format_base_format(dstFormat),
@@ -92,9 +92,9 @@ _mesa_texstore_rgb_fxt1(TEXSTORE_PARAMS)
       srcFormat = GL_RGB;
    }
    else {
-      pixels = (const GLchan *) srcAddr;
+      pixels = (const GLubyte *) srcAddr;
       srcRowStride = _mesa_image_row_stride(srcPacking, srcWidth, srcFormat,
-                                            srcType) / sizeof(GLchan);
+                                            srcType) / sizeof(GLubyte);
    }
 
    dst = _mesa_compressed_image_address(dstXoffset, dstYoffset, 0,
@@ -117,7 +117,7 @@ _mesa_texstore_rgb_fxt1(TEXSTORE_PARAMS)
 GLboolean
 _mesa_texstore_rgba_fxt1(TEXSTORE_PARAMS)
 {
-   const GLchan *pixels;
+   const GLubyte *pixels;
    GLint srcRowStride;
    GLubyte *dst;
    GLint texWidth = dstRowStride * 8 / 16; /* a bit of a hack */
@@ -131,10 +131,10 @@ _mesa_texstore_rgba_fxt1(TEXSTORE_PARAMS)
    (void) dstImageOffsets;
 
    if (srcFormat != GL_RGBA ||
-       srcType != CHAN_TYPE ||
+       srcType != GL_UNSIGNED_BYTE ||
        ctx->_ImageTransferState ||
        srcPacking->SwapBytes) {
-      /* convert image to RGBA/GLchan */
+      /* convert image to RGBA/GLubyte */
       tempImage = _mesa_make_temp_ubyte_image(ctx, dims,
                                              baseInternalFormat,
                                              _mesa_get_format_base_format(dstFormat),
@@ -148,9 +148,9 @@ _mesa_texstore_rgba_fxt1(TEXSTORE_PARAMS)
       srcFormat = GL_RGBA;
    }
    else {
-      pixels = (const GLchan *) srcAddr;
+      pixels = (const GLubyte *) srcAddr;
       srcRowStride = _mesa_image_row_stride(srcPacking, srcWidth, srcFormat,
-                                            srcType) / sizeof(GLchan);
+                                            srcType) / sizeof(GLubyte);
    }
 
    dst = _mesa_compressed_image_address(dstXoffset, dstYoffset, 0,
@@ -171,14 +171,14 @@ void
 _mesa_fetch_texel_2d_f_rgba_fxt1( const struct swrast_texture_image *texImage,
                                   GLint i, GLint j, GLint k, GLfloat *texel )
 {
-   /* just sample as GLchan and convert to float here */
-   GLchan rgba[4];
+   /* just sample as GLubyte and convert to float here */
+   GLubyte rgba[4];
    (void) k;
    fxt1_decode_1(texImage->Base.Data, texImage->Base.RowStride, i, j, rgba);
-   texel[RCOMP] = CHAN_TO_FLOAT(rgba[RCOMP]);
-   texel[GCOMP] = CHAN_TO_FLOAT(rgba[GCOMP]);
-   texel[BCOMP] = CHAN_TO_FLOAT(rgba[BCOMP]);
-   texel[ACOMP] = CHAN_TO_FLOAT(rgba[ACOMP]);
+   texel[RCOMP] = UBYTE_TO_FLOAT(rgba[RCOMP]);
+   texel[GCOMP] = UBYTE_TO_FLOAT(rgba[GCOMP]);
+   texel[BCOMP] = UBYTE_TO_FLOAT(rgba[BCOMP]);
+   texel[ACOMP] = UBYTE_TO_FLOAT(rgba[ACOMP]);
 }
 
 
@@ -186,13 +186,13 @@ void
 _mesa_fetch_texel_2d_f_rgb_fxt1( const struct swrast_texture_image *texImage,
                                  GLint i, GLint j, GLint k, GLfloat *texel )
 {
-   /* just sample as GLchan and convert to float here */
-   GLchan rgba[4];
+   /* just sample as GLubyte and convert to float here */
+   GLubyte rgba[4];
    (void) k;
    fxt1_decode_1(texImage->Base.Data, texImage->Base.RowStride, i, j, rgba);
-   texel[RCOMP] = CHAN_TO_FLOAT(rgba[RCOMP]);
-   texel[GCOMP] = CHAN_TO_FLOAT(rgba[GCOMP]);
-   texel[BCOMP] = CHAN_TO_FLOAT(rgba[BCOMP]);
+   texel[RCOMP] = UBYTE_TO_FLOAT(rgba[RCOMP]);
+   texel[GCOMP] = UBYTE_TO_FLOAT(rgba[GCOMP]);
+   texel[BCOMP] = UBYTE_TO_FLOAT(rgba[BCOMP]);
    texel[ACOMP] = 1.0F;
 }
 
@@ -1298,8 +1298,8 @@ fxt1_quantize (GLuint *cc, const GLubyte *lines[], GLint comps)
 static void
 upscale_teximage2d(GLsizei inWidth, GLsizei inHeight,
                    GLsizei outWidth, GLsizei outHeight,
-                   GLint comps, const GLchan *src, GLint srcRowStride,
-                   GLchan *dest )
+                   GLint comps, const GLubyte *src, GLint srcRowStride,
+                   GLubyte *dest )
 {
    GLint i, j, k;
 
@@ -1340,40 +1340,19 @@ fxt1_encode (GLuint width, GLuint height, GLint comps,
    if ((width & 7) | (height & 3)) {
       GLint newWidth = (width + 7) & ~7;
       GLint newHeight = (height + 3) & ~3;
-      newSource = malloc(comps * newWidth * newHeight * sizeof(GLchan));
+      newSource = malloc(comps * newWidth * newHeight * sizeof(GLubyte));
       if (!newSource) {
          GET_CURRENT_CONTEXT(ctx);
          _mesa_error(ctx, GL_OUT_OF_MEMORY, "texture compression");
          goto cleanUp;
       }
       upscale_teximage2d(width, height, newWidth, newHeight,
-                         comps, (const GLchan *) source,
-                         srcRowStride, (GLchan *) newSource);
+                         comps, (const GLubyte *) source,
+                         srcRowStride, (GLubyte *) newSource);
       source = newSource;
       width = newWidth;
       height = newHeight;
       srcRowStride = comps * newWidth;
-   }
-
-   /* convert from 16/32-bit channels to GLubyte if needed */
-   if (CHAN_TYPE != GL_UNSIGNED_BYTE) {
-      const GLuint n = width * height * comps;
-      const GLchan *src = (const GLchan *) source;
-      GLubyte *dest = (GLubyte *) malloc(n * sizeof(GLubyte));
-      GLuint i;
-      if (!dest) {
-         GET_CURRENT_CONTEXT(ctx);
-         _mesa_error(ctx, GL_OUT_OF_MEMORY, "texture compression");
-         goto cleanUp;
-      }
-      for (i = 0; i < n; i++) {
-         dest[i] = CHAN_TO_UBYTE(src[i]);
-      }
-      if (newSource != NULL) {
-         free(newSource);
-      }
-      newSource = dest;  /* we'll free this buffer before returning */
-      source = dest;  /* the new, GLubyte incoming image */
    }
 
    data = (const GLubyte *) source;
@@ -1437,7 +1416,7 @@ static const GLubyte _rgb_scale_6[] = {
 
 
 static void
-fxt1_decode_1HI (const GLubyte *code, GLint t, GLchan *rgba)
+fxt1_decode_1HI (const GLubyte *code, GLint t, GLubyte *rgba)
 {
    const GLuint *cc;
 
@@ -1463,16 +1442,16 @@ fxt1_decode_1HI (const GLubyte *code, GLint t, GLchan *rgba)
          g = LERP(6, t, UP5(CC_SEL(cc, 5)), UP5(CC_SEL(cc, 20)));
          r = LERP(6, t, UP5(CC_SEL(cc, 10)), UP5(CC_SEL(cc, 25)));
       }
-      rgba[RCOMP] = UBYTE_TO_CHAN(r);
-      rgba[GCOMP] = UBYTE_TO_CHAN(g);
-      rgba[BCOMP] = UBYTE_TO_CHAN(b);
-      rgba[ACOMP] = CHAN_MAX;
+      rgba[RCOMP] = r;
+      rgba[GCOMP] = g;
+      rgba[BCOMP] = b;
+      rgba[ACOMP] = 255;
    }
 }
 
 
 static void
-fxt1_decode_1CHROMA (const GLubyte *code, GLint t, GLchan *rgba)
+fxt1_decode_1CHROMA (const GLubyte *code, GLint t, GLubyte *rgba)
 {
    const GLuint *cc;
    GLuint kk;
@@ -1487,15 +1466,15 @@ fxt1_decode_1CHROMA (const GLubyte *code, GLint t, GLchan *rgba)
    t *= 15;
    cc = (const GLuint *)(code + 8 + t / 8);
    kk = cc[0] >> (t & 7);
-   rgba[BCOMP] = UBYTE_TO_CHAN( UP5(kk) );
-   rgba[GCOMP] = UBYTE_TO_CHAN( UP5(kk >> 5) );
-   rgba[RCOMP] = UBYTE_TO_CHAN( UP5(kk >> 10) );
-   rgba[ACOMP] = CHAN_MAX;
+   rgba[BCOMP] = UP5(kk);
+   rgba[GCOMP] = UP5(kk >> 5);
+   rgba[RCOMP] = UP5(kk >> 10);
+   rgba[ACOMP] = 255;
 }
 
 
 static void
-fxt1_decode_1MIXED (const GLubyte *code, GLint t, GLchan *rgba)
+fxt1_decode_1MIXED (const GLubyte *code, GLint t, GLubyte *rgba)
 {
    const GLuint *cc;
    GLuint col[2][3];
@@ -1550,10 +1529,10 @@ fxt1_decode_1MIXED (const GLubyte *code, GLint t, GLchan *rgba)
             g = (UP5(col[0][GCOMP]) + UP6(col[1][GCOMP], glsb)) / 2;
             r = (UP5(col[0][RCOMP]) + UP5(col[1][RCOMP])) / 2;
          }
-         rgba[RCOMP] = UBYTE_TO_CHAN(r);
-         rgba[GCOMP] = UBYTE_TO_CHAN(g);
-         rgba[BCOMP] = UBYTE_TO_CHAN(b);
-         rgba[ACOMP] = CHAN_MAX;
+         rgba[RCOMP] = r;
+         rgba[GCOMP] = g;
+         rgba[BCOMP] = b;
+         rgba[ACOMP] = 255;
       }
    } else {
       /* alpha[0] == 0 */
@@ -1572,16 +1551,16 @@ fxt1_decode_1MIXED (const GLubyte *code, GLint t, GLchan *rgba)
                         UP6(col[1][GCOMP], glsb));
          r = LERP(3, t, UP5(col[0][RCOMP]), UP5(col[1][RCOMP]));
       }
-      rgba[RCOMP] = UBYTE_TO_CHAN(r);
-      rgba[GCOMP] = UBYTE_TO_CHAN(g);
-      rgba[BCOMP] = UBYTE_TO_CHAN(b);
-      rgba[ACOMP] = CHAN_MAX;
+      rgba[RCOMP] = r;
+      rgba[GCOMP] = g;
+      rgba[BCOMP] = b;
+      rgba[ACOMP] = 255;
    }
 }
 
 
 static void
-fxt1_decode_1ALPHA (const GLubyte *code, GLint t, GLchan *rgba)
+fxt1_decode_1ALPHA (const GLubyte *code, GLint t, GLubyte *rgba)
 {
    const GLuint *cc;
    GLubyte r, g, b, a;
@@ -1648,18 +1627,18 @@ fxt1_decode_1ALPHA (const GLubyte *code, GLint t, GLchan *rgba)
          r = UP5(kk >> 10);
       }
    }
-   rgba[RCOMP] = UBYTE_TO_CHAN(r);
-   rgba[GCOMP] = UBYTE_TO_CHAN(g);
-   rgba[BCOMP] = UBYTE_TO_CHAN(b);
-   rgba[ACOMP] = UBYTE_TO_CHAN(a);
+   rgba[RCOMP] = r;
+   rgba[GCOMP] = g;
+   rgba[BCOMP] = b;
+   rgba[ACOMP] = a;
 }
 
 
 void
 fxt1_decode_1 (const void *texture, GLint stride, /* in pixels */
-               GLint i, GLint j, GLchan *rgba)
+               GLint i, GLint j, GLubyte *rgba)
 {
-   static void (*decode_1[]) (const GLubyte *, GLint, GLchan *) = {
+   static void (*decode_1[]) (const GLubyte *, GLint, GLubyte *) = {
       fxt1_decode_1HI,     /* cc-high   = "00?" */
       fxt1_decode_1HI,     /* cc-high   = "00?" */
       fxt1_decode_1CHROMA, /* cc-chroma = "010" */
