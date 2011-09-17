@@ -83,12 +83,17 @@ struct gl_texture_image *radeonNewTextureImage(struct gl_context *ctx)
 	return CALLOC(sizeof(radeon_texture_image));
 }
 
+
+/**
+ * Delete a texture image object.
+ */
 static void
-radeonDeleteTextureImage(struct gl_context * ctx, struct gl_texture_image *img)
+radeonDeleteTextureImage(struct gl_context *ctx, struct gl_texture_image *img)
 {
-   /* nothing special (yet) for radeon_texture_image */
-   _mesa_delete_texture_image(ctx, img);
+	/* nothing special (yet) for radeon_texture_image */
+	_mesa_delete_texture_image(ctx, img);
 }
+
 
 /**
  * Free memory associated with this texture image.
@@ -99,7 +104,7 @@ void radeonFreeTextureImageBuffer(struct gl_context *ctx, struct gl_texture_imag
 
 	if (image->mt) {
 		radeon_miptree_unreference(&image->mt);
-		assert(!image->base.Data);
+		assert(!image->base.Base.Data);
 	} else {
 		_mesa_free_texture_image_data(ctx, timage);
 	}
@@ -127,8 +132,8 @@ static void teximage_set_map_data(radeon_texture_image *image)
 
 	lvl = &image->mt->levels[image->mtlevel];
 
-	image->base.Data = image->mt->bo->ptr + lvl->faces[image->mtface].offset;
-	image->base.RowStride = lvl->rowstride / _mesa_get_format_bytes(image->base.TexFormat);
+	image->base.Base.Data = image->mt->bo->ptr + lvl->faces[image->mtface].offset;
+	image->base.Base.RowStride = lvl->rowstride / _mesa_get_format_bytes(image->base.Base.TexFormat);
 }
 
 
@@ -142,7 +147,7 @@ void radeon_teximage_map(radeon_texture_image *image, GLboolean write_enable)
 			__func__, image,
 			write_enable ? "true": "false");
 	if (image->mt) {
-		assert(!image->base.Data);
+		assert(!image->base.Base.Data);
 
 		radeon_bo_map(image->mt->bo, write_enable);
 		teximage_set_map_data(image);
@@ -156,9 +161,9 @@ void radeon_teximage_unmap(radeon_texture_image *image)
 			"%s(img %p)\n",
 			__func__, image);
 	if (image->mt) {
-		assert(image->base.Data);
+		assert(image->base.Base.Data);
 
-		image->base.Data = 0;
+		image->base.Base.Data = 0;
 		radeon_bo_unmap(image->mt->bo);
 	}
 }
@@ -169,7 +174,7 @@ static void map_override(struct gl_context *ctx, radeonTexObj *t)
 
 	radeon_bo_map(t->bo, GL_FALSE);
 
-	img->base.Data = t->bo->ptr;
+	img->base.Base.Data = t->bo->ptr;
 }
 
 static void unmap_override(struct gl_context *ctx, radeonTexObj *t)
@@ -178,7 +183,7 @@ static void unmap_override(struct gl_context *ctx, radeonTexObj *t)
 
 	radeon_bo_unmap(t->bo);
 
-	img->base.Data = NULL;
+	img->base.Base.Data = NULL;
 }
 
 /**
@@ -1158,7 +1163,7 @@ void radeon_image_target_texture_2d(struct gl_context *ctx, GLenum target,
 	radeon_bo_ref(image->bo);
 	t->mt->bo = image->bo;
 
-	if (!radeon_miptree_matches_image(t->mt, &radeonImage->base,
+	if (!radeon_miptree_matches_image(t->mt, &radeonImage->base.Base,
 					  radeonImage->mtface, 0))
 		fprintf(stderr, "miptree doesn't match image\n");
 }

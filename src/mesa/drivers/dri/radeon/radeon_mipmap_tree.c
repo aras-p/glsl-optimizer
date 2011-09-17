@@ -448,9 +448,9 @@ static void migrate_image_to_miptree(radeon_mipmap_tree *mt,
 
 	assert(image->mt != mt);
 	assert(dstlvl->valid);
-	assert(dstlvl->width == image->base.Width);
-	assert(dstlvl->height == image->base.Height);
-	assert(dstlvl->depth == image->base.Depth);
+	assert(dstlvl->width == image->base.Base.Width);
+	assert(dstlvl->height == image->base.Base.Height);
+	assert(dstlvl->depth == image->base.Base.Depth);
 
 	radeon_print(RADEON_TEXTURE, RADEON_VERBOSE,
 			"%s miptree %p, image %p, face %d, level %d.\n",
@@ -464,7 +464,7 @@ static void migrate_image_to_miptree(radeon_mipmap_tree *mt,
 		 * In fact, that memcpy() could be done by the hardware in many
 		 * cases, provided that we have a proper memory manager.
 		 */
-		assert(mt->mesaFormat == image->base.TexFormat);
+		assert(mt->mesaFormat == image->base.Base.TexFormat);
 
 		radeon_mipmap_level *srclvl = &image->mt->levels[image->mtlevel];
 
@@ -480,27 +480,27 @@ static void migrate_image_to_miptree(radeon_mipmap_tree *mt,
 		radeon_bo_unmap(image->mt->bo);
 
 		radeon_miptree_unreference(&image->mt);
-	} else if (image->base.Data) {
+	} else if (image->base.Base.Data) {
 		/* This condition should be removed, it's here to workaround
 		 * a segfault when mapping textures during software fallbacks.
 		 */
 		radeon_print(RADEON_FALLBACKS, RADEON_IMPORTANT,
 				"%s Trying to map texture in sowftware fallback.\n",
 				__func__);
-		const uint32_t srcrowstride = _mesa_format_row_stride(image->base.TexFormat, image->base.Width);
-		uint32_t rows = image->base.Height * image->base.Depth;
+		const uint32_t srcrowstride = _mesa_format_row_stride(image->base.Base.TexFormat, image->base.Base.Width);
+		uint32_t rows = image->base.Base.Height * image->base.Base.Depth;
 
-		if (_mesa_is_format_compressed(image->base.TexFormat)) {
+		if (_mesa_is_format_compressed(image->base.Base.TexFormat)) {
 			uint32_t blockWidth, blockHeight;
-			_mesa_get_format_block_size(image->base.TexFormat, &blockWidth, &blockHeight);
+			_mesa_get_format_block_size(image->base.Base.TexFormat, &blockWidth, &blockHeight);
 			rows = (rows + blockHeight - 1) / blockHeight;
 		}
 
-		copy_rows(dest, dstlvl->rowstride, image->base.Data, srcrowstride,
+		copy_rows(dest, dstlvl->rowstride, image->base.Base.Data, srcrowstride,
 				  rows, srcrowstride);
 
-		_mesa_free_texmemory(image->base.Data);
-		image->base.Data = 0;
+		_mesa_free_texmemory(image->base.Base.Data);
+		image->base.Base.Data = 0;
 	}
 
 	radeon_bo_unmap(mt->bo);

@@ -64,7 +64,7 @@ radeon_get_tex_image(struct gl_context * ctx, GLenum target, GLint level,
         radeon_teximage_map(image, GL_FALSE);
     } else {
         /* Image hasn't been uploaded to a miptree yet */
-        assert(image->base.Data);
+        assert(image->base.Base.Data);
     }
 
     if (compressed) {

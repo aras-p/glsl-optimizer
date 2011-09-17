@@ -13,6 +13,7 @@
 #include "radeon_drm.h"
 #include "dri_util.h"
 #include "tnl/t_vertex.h"
+#include "swrast/s_context.h"
 
 struct radeon_context;
 
@@ -174,8 +175,13 @@ struct radeon_hw_state {
 /* Texture related */
 typedef struct _radeon_texture_image radeon_texture_image;
 
+
+/**
+ * This is a subclass of swrast_texture_image since we use swrast
+ * for software fallback rendering.
+ */
 struct _radeon_texture_image {
-	struct gl_texture_image base;
+	struct swrast_texture_image base;
 
 	/**
 	 * If mt != 0, the image is stored in hardware format in the

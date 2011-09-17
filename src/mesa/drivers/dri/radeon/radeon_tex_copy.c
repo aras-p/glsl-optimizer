@@ -59,7 +59,7 @@ do_copy_texsubimage(struct gl_context *ctx,
         return GL_FALSE;
     }
 
-    if (_mesa_get_format_bits(timg->base.TexFormat, GL_DEPTH_BITS) > 0) {
+    if (_mesa_get_format_bits(timg->base.Base.TexFormat, GL_DEPTH_BITS) > 0) {
         if (ctx->ReadBuffer->_DepthBuffer && ctx->ReadBuffer->_DepthBuffer->Wrapped) {
             rrb = radeon_renderbuffer(ctx->ReadBuffer->_DepthBuffer->Wrapped);
         } else {
@@ -83,8 +83,8 @@ do_copy_texsubimage(struct gl_context *ctx,
     assert(rrb->bo);
     assert(timg->mt);
     assert(timg->mt->bo);
-    assert(timg->base.Width >= dstx + width);
-    assert(timg->base.Height >= dsty + height);
+    assert(timg->base.Base.Width >= dstx + width);
+    assert(timg->base.Base.Height >= dsty + height);
 
     intptr_t src_offset = rrb->draw_offset;
     intptr_t dst_offset = radeon_miptree_image_offset(timg->mt, _mesa_tex_target_to_face(target), level);
@@ -100,9 +100,9 @@ do_copy_texsubimage(struct gl_context *ctx,
     }
 
     src_mesaformat = rrb->base.Format;
-    dst_mesaformat = timg->base.TexFormat;
+    dst_mesaformat = timg->base.Base.TexFormat;
     src_width = rrb->base.Width;
-    dst_width = timg->base.Width;
+    dst_width = timg->base.Base.Width;
     src_bpp = _mesa_get_format_bytes(src_mesaformat);
     dst_bpp = _mesa_get_format_bytes(dst_mesaformat);
     if (!radeon->vtbl.check_blit(dst_mesaformat)) {
@@ -136,7 +136,7 @@ do_copy_texsubimage(struct gl_context *ctx,
                              src_width, rrb->base.Height, x, y,
                              timg->mt->bo, dst_offset, dst_mesaformat,
                              timg->mt->levels[level].rowstride / dst_bpp,
-                             dst_width, timg->base.Height,
+                             dst_width, timg->base.Base.Height,
                              dstx, dsty, width, height, flip_y);
 }
 
