@@ -28,8 +28,35 @@
 
 #include "main/context.h"
 #include "main/fbobject.h"
+#include "main/teximage.h"
 #include "swrast/swrast.h"
 #include "swrast/s_context.h"
+
+
+/**
+ * Allocate a new swrast_texture_image (a subclass of gl_texture_image).
+ * Called via ctx->Driver.NewTextureImage().
+ */
+struct gl_texture_image *
+_swrast_new_texture_image( struct gl_context *ctx )
+{
+   (void) ctx;
+   return (struct gl_texture_image *) CALLOC_STRUCT(swrast_texture_image);
+}
+
+
+/**
+ * Free a swrast_texture_image (a subclass of gl_texture_image).
+ * Called via ctx->Driver.DeleteTextureImage().
+ */
+void
+_swrast_delete_texture_image(struct gl_context *ctx,
+                             struct gl_texture_image *texImage)
+{
+   /* Nothing special for the subclass yet */
+   _mesa_delete_texture_image(ctx, texImage);
+}
+
 
 /**
  * Error checking for debugging only.

@@ -110,6 +110,35 @@ typedef void (*validate_texture_image_func)(struct gl_context *ctx,
 
 
 /**
+ * Subclass of gl_texture_image.
+ * We need extra fields/info to keep tracking of mapped texture buffers,
+ * strides and Fetch/Store functions.
+ */
+struct swrast_texture_image
+{
+   struct gl_texture_image Base;
+
+   /* XXX new members coming soon */
+};
+
+
+/** cast wrapper */
+static INLINE struct swrast_texture_image *
+swrast_texture_image(struct gl_texture_image *img)
+{
+   return (struct swrast_texture_image *) img;
+}
+
+/** cast wrapper */
+static INLINE const struct swrast_texture_image *
+swrast_texture_image_const(const struct gl_texture_image *img)
+{
+   return (const struct swrast_texture_image *) img;
+}
+
+
+
+/**
  * \struct SWcontext
  * \brief  Per-context state that's private to the software rasterizer module.
  */
