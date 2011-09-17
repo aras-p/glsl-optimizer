@@ -414,7 +414,7 @@ static void r200Fogfv( struct gl_context *ctx, GLenum pname, const GLfloat *para
 {
    r200ContextPtr rmesa = R200_CONTEXT(ctx);
    union { int i; float f; } c, d;
-   GLchan col[4];
+   GLubyte col[4];
    GLuint i;
 
    c.i = rmesa->hw.fog.cmd[FOG_C];
@@ -480,7 +480,7 @@ static void r200Fogfv( struct gl_context *ctx, GLenum pname, const GLfloat *para
       break;
    case GL_FOG_COLOR:
       R200_STATECHANGE( rmesa, ctx );
-      UNCLAMPED_FLOAT_TO_RGB_CHAN( col, ctx->Fog.Color );
+      _mesa_unclamped_float_rgba_to_ubyte(col, ctx->Fog.Color );
       i = radeonPackColor( 4, col[0], col[1], col[2], 0 );
       rmesa->hw.ctx.cmd[CTX_PP_FOG_COLOR] &= ~R200_FOG_COLOR_MASK;
       rmesa->hw.ctx.cmd[CTX_PP_FOG_COLOR] |= i;

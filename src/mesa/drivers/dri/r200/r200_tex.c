@@ -313,7 +313,7 @@ static void r200TexEnv( struct gl_context *ctx, GLenum target,
    case GL_TEXTURE_ENV_COLOR: {
       GLubyte c[4];
       GLuint envColor;
-      UNCLAMPED_FLOAT_TO_RGBA_CHAN( c, texUnit->EnvColor );
+      _mesa_unclamped_float_rgba_to_ubyte(c, texUnit->EnvColor);
       envColor = radeonPackColor( 4, c[0], c[1], c[2], c[3] );
       if ( rmesa->hw.tf.cmd[TF_TFACTOR_0 + unit] != envColor ) {
 	 R200_STATECHANGE( rmesa, tf );
