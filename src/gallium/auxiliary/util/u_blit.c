@@ -660,8 +660,8 @@ void util_blit_flush( struct blit_state *ctx )
 
 /**
  * Copy pixel block from src texture to dst surface.
- *
- * XXX Should support selection of level.
+ * The sampler view's first_level field indicates the source
+ * mipmap level to use.
  * XXX need some control over blitting Z and/or stencil.
  */
 void
@@ -694,10 +694,14 @@ util_blit_pixels_tex(struct blit_state *ctx,
 
    if(normalized)
    {
-      s0 /= (float)tex->width0;
-      s1 /= (float)tex->width0;
-      t0 /= (float)tex->height0;
-      t1 /= (float)tex->height0;
+      /* normalize according to the mipmap level's size */
+      int level = src_sampler_view->u.tex.first_level;
+      float w = (float) u_minify(tex->width0, level);
+      float h = (float) u_minify(tex->height0, level);
+      s0 /= w;
+      s1 /= w;
+      t0 /= h;
+      t1 /= h;
    }
 
    assert(ctx->pipe->screen->is_format_supported(ctx->pipe->screen, dst->format,
