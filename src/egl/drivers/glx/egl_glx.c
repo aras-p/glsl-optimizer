@@ -808,7 +808,7 @@ GLX_eglMakeCurrent(_EGLDriver *drv, _EGLDisplay *disp, _EGLSurface *dsurf,
 
 /** Get size of given window */
 static Status
-get_drawable_size(Display *dpy, Drawable d, uint *width, uint *height)
+get_drawable_size(Display *dpy, Drawable d, unsigned *width, unsigned *height)
 {
    Window root;
    Status stat;
@@ -831,7 +831,7 @@ GLX_eglCreateWindowSurface(_EGLDriver *drv, _EGLDisplay *disp,
    struct GLX_egl_driver *GLX_drv = GLX_egl_driver(drv);
    struct GLX_egl_display *GLX_dpy = GLX_egl_display(disp);
    struct GLX_egl_surface *GLX_surf;
-   uint width, height;
+   unsigned width, height;
 
    GLX_surf = CALLOC_STRUCT(GLX_egl_surface);
    if (!GLX_surf) {
@@ -879,7 +879,7 @@ GLX_eglCreatePixmapSurface(_EGLDriver *drv, _EGLDisplay *disp,
    struct GLX_egl_driver *GLX_drv = GLX_egl_driver(drv);
    struct GLX_egl_display *GLX_dpy = GLX_egl_display(disp);
    struct GLX_egl_surface *GLX_surf;
-   uint width, height;
+   unsigned width, height;
 
    GLX_surf = CALLOC_STRUCT(GLX_egl_surface);
    if (!GLX_surf) {
