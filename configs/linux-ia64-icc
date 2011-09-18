@@ -14,6 +14,5 @@ MKLIB_OPTIONS = -arch icc-istatic
 GL_LIB_DEPS = -L/usr/X11R6/lib -lX11 -lXext -lpthread
 GLU_LIB_DEPS = -L$(TOP)/$(LIB_DIR) -l$(GL_LIB) 
 GLW_LIB_DEPS = -L$(TOP)/$(LIB_DIR) -l$(GL_LIB) $(GL_LIB_DEPS)
-APP_LIB_DEPS = -L$(TOP)/$(LIB_DIR) -l$(GLUT_LIB) -l$(GLU_LIB) -l$(GL_LIB)
 
 

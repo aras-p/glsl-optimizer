@@ -18,7 +18,6 @@ GLW_LIB_NAME = libGLw.a
 OSMESA_LIB_NAME = libOSMesa.a
 
 GL_LIB_DEPS =
-APP_LIB_DEPS = -L$(TOP)/$(LIB_DIR) -l$(GLUT_LIB) -l$(GLU_LIB) -l$(GL_LIB) -L/usr/X11R6/lib -lX11 -lXmu -lXt -lXi -lm -lpthread -lcxa -lunwind
 
 MESA_ASM_SOURCES = $(X86_SOURCES)
 GLAPI_ASM_SOURCES = $(X86_API)

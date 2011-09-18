@@ -13,4 +13,3 @@ MKLIB_OPTIONS = -static
 
 GL_LIB_DEPS =
 GLU_LIB_DEPS =
-APP_LIB_DEPS = -noso -L$(TOP)/$(LIB_DIR) -l$(GLUT_LIB) -l$(GLU_LIB) -l$(GL_LIB) -so_archive -lX11 -lXext -lXmu -lXi -lpthread -lm -lcxx

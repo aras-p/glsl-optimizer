@@ -17,5 +17,4 @@ CXXFLAGS += -fno-strict-aliasing
 GL_LIB_DEPS = -L/usr/X11R6/lib -lX11 -lXext -lm
 OSMESA_LIB_DEPS = -lm
 GLU_LIB_DEPS = -L$(TOP)/$(LIB_DIR) -l$(GL_LIB)
-APP_LIB_DEPS = -L$(TOP)/$(LIB_DIR) -L/usr/X11R6/lib -l$(GLUT_LIB) -l$(GLU_LIB) -l$(GL_LIB) -lm
 

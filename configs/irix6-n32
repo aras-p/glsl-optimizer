@@ -14,4 +14,3 @@ GLW_SOURCES = GLwDrawA.c GLwMDrawA.c
 
 LIB_DIR = lib32
 
-APP_LIB_DEPS = -L$(TOP)/$(LIB_DIR) -n32 -rpath $(TOP)/$(LIB_DIR) -l$(GLUT_LIB) -l$(GLU_LIB) -l$(GL_LIB) -lX11 -lXmu -lXi -lfpe -lpthread -lm

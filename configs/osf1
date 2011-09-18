@@ -12,4 +12,3 @@ CXXFLAGS = -O2 -std ansi -ieee -DPTHREADS -D_REENTRANT
 
 GL_LIB_DEPS = -lX11 -lXext -lm -lpthread
 GLU_LIB_DEPS = -L$(TOP)/$(LIB_DIR) -l$(GL_LIB) -lm
-APP_LIB_DEPS = -L$(TOP)/$(LIB_DIR) -L$(TOP)/$(LIB_DIR) -l$(GLUT_LIB) -l$(GLU_LIB) -l$(GL_LIB) -lX11 -lXext -lXmu -lXi -lpthread -lm

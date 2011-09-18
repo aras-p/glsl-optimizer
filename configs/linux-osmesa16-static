@@ -28,4 +28,3 @@ DRIVER_DIRS = osmesa
 
 # Dependencies
 OSMESA_LIB_DEPS = -lm -lpthread
-APP_LIB_DEPS = -lm -lpthread

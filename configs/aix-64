@@ -21,5 +21,4 @@ OSMESA_LIB_NAME = libOSMesa.a
 GL_LIB_DEPS = -lX11 -lXext -lm -lpthread
 GLU_LIB_DEPS = -L$(TOP)/$(LIB_DIR) -l$(GL_LIB) -lm -lC
 GLW_LIB_DEPS = -L$(TOP)/$(LIB_DIR) -l$(GL_LIB) -lXm -lXt -lX11
-APP_LIB_DEPS = -L$(TOP)/lib64 -l$(GLUT_LIB) -l$(GLU_LIB) -l$(GL_LIB) -lX11 -lXext -lXmu -lXi -lm -lpthread -lC
 

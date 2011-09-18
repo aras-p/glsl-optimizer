@@ -12,4 +12,3 @@ CXX = CC
 CFLAGS = -xarch=v8 -KPIC -O -I/usr/openwin/include -I/usr/dt/include -DUSE_XSHM -DPTHREADS
 CXXFLAGS = -xarch=v8 -KPIC -O -I/usr/openwin/include -I/usr/dt/include -DPTHREADS
 
-APP_LIB_DEPS = -L$(TOP)/$(LIB_DIR) -l$(GLUT_LIB) -l$(GLU_LIB) -l$(GL_LIB) -L/usr/openwin/lib -lXt -lX11 -lXext -lXmu -lXi -lpthread -lm -lCstd -lCrun

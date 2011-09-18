@@ -949,13 +949,6 @@ xyesyes)
     fi
     GL_LIB_DEPS="$GL_LIB_DEPS $SELINUX_LIBS -lm -lpthread $DLOPEN_LIBS"
     GL_PC_LIB_PRIV="$GL_PC_LIB_PRIV $SELINUX_LIBS -lm -lpthread"
-
-    # if static, move the external libraries to the programs
-    # and empty the libraries for libGL
-    if test "$enable_static" = yes; then
-        APP_LIB_DEPS="$APP_LIB_DEPS $GL_LIB_DEPS"
-        GL_LIB_DEPS=""
-    fi
     ;;
 xyesno)
     # DRI-based GLX
@@ -1578,7 +1571,6 @@ if test "x$enable_glu" = xyes; then
         else
             GLU_LIB_DEPS=""
             GLU_MESA_DEPS=""
-            APP_LIB_DEPS="$APP_LIB_DEPS -lstdc++"
         fi
     fi
 fi
@@ -1593,25 +1585,6 @@ AC_SUBST([GLU_PC_REQ_PRIV])
 AC_SUBST([GLU_PC_LIB_PRIV])
 AC_SUBST([GLU_PC_CFLAGS])
 
-dnl
-dnl Program library dependencies
-dnl    Only libm is added here if necessary as the libraries should
-dnl    be pulled in by the linker
-dnl
-if test "x$APP_LIB_DEPS" = x; then
-    case "$host_os" in
-    solaris*)
-        APP_LIB_DEPS="-lX11 -lsocket -lnsl -lm"
-        ;;
-    cygwin*)
-        APP_LIB_DEPS="-lX11"
-        ;;
-    *)
-        APP_LIB_DEPS="-lm"
-        ;;
-    esac
-fi
-AC_SUBST([APP_LIB_DEPS])
 AC_SUBST([PROGRAM_DIRS])
 
 dnl

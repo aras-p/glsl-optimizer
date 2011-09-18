@@ -24,4 +24,3 @@ DRIVER_DIRS = osmesa
 # Dependencies
 OSMESA_LIB_DEPS = -lm -lpthread -ldl
 GLU_LIB_DEPS = -L$(TOP)/$(LIB_DIR) -l$(OSMESA_LIB)
-APP_LIB_DEPS = -lm -lpthread

@@ -24,5 +24,4 @@ GL_LIB_DEPS = -lX11 -lXext -lpthread -lm
 GLU_LIB_DEPS = -L$(TOP)/lib -l$(GL_LIB) -lm -lC
 GLW_LIB_DEPS = -L$(TOP)/lib -l$(GL_LIB) -lXm -lXt -lX11
 OSMESA_LIB_DEPS = -L$(TOP)/lib -l$(GL_LIB)
-APP_LIB_DEPS = -L$(TOP)/lib -l$(GLUT_LIB) -l$(GLU_LIB) -l$(GL_LIB) -lX11 -lXext -lXmu -lXi -lpthread -lm -lC
 

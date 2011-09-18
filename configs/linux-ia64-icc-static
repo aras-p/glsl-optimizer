@@ -20,5 +20,4 @@ OSMESA_LIB_NAME = libOSMesa.a
 GL_LIB_DEPS =
 GLU_LIB_DEPS =
 GLW_LIB_DEPS =
-APP_LIB_DEPS = -i-static -cxxlib-icc -L$(TOP)/$(LIB_DIR) -l$(GLUT_LIB) -l$(GLU_LIB) -l$(GL_LIB) -L/usr/X11R6/lib -lX11 -lXmu -lXt -lXi -lpthread -lm -lcxa -lunwind
 

@@ -12,7 +12,6 @@ CXXFLAGS = -O3
 MKLIB_OPTIONS = -arch icc
 
 GL_LIB_DEPS = -L/usr/X11R6/lib -lX11 -lXext -lm -lpthread
-APP_LIB_DEPS = -L$(TOP)/$(LIB_DIR) -l$(GLUT_LIB) -l$(GLU_LIB) -l$(GL_LIB) -lm
 
 MESA_ASM_SOURCES = $(X86_SOURCES)
 GLAPI_ASM_SOURCES = $(X86_API)
