@@ -1376,6 +1376,17 @@ _mesa_MapBufferRange(GLenum target, GLintptr offset, GLsizeiptr length,
       return NULL;
    }
 
+   if (access & ~(GL_MAP_READ_BIT |
+                  GL_MAP_WRITE_BIT |
+                  GL_MAP_INVALIDATE_RANGE_BIT |
+                  GL_MAP_INVALIDATE_BUFFER_BIT |
+                  GL_MAP_FLUSH_EXPLICIT_BIT |
+                  GL_MAP_UNSYNCHRONIZED_BIT)) {
+      /* generate an error if any undefind bit is set */
+      _mesa_error(ctx, GL_INVALID_VALUE, "glMapBufferRange(access)");
+      return NULL;
+   }
+
    if ((access & (GL_MAP_READ_BIT | GL_MAP_WRITE_BIT)) == 0) {
       _mesa_error(ctx, GL_INVALID_OPERATION,
                   "glMapBufferRange(access indicates neither read or write)");
