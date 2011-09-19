@@ -42,6 +42,7 @@
 #     - 'h': fixed
 #     - 'f': FLOAT
 #   - optionally followed by 'n' if it is normalized
+#   - optionally followed by 'p' if it is pure
 #   - number of bits
 # - channel swizzle 
 # - color space: rgb, yub, sz
@@ -278,3 +279,63 @@ PIPE_FORMAT_R10G10B10A2_SNORM       , plain, 1, 1, sn10, sn10, sn10, sn2, xyzw, 
 PIPE_FORMAT_B10G10R10A2_USCALED     , plain, 1, 1, u10, u10, u10, u2, zyxw, rgb
 PIPE_FORMAT_B10G10R10A2_SSCALED     , plain, 1, 1, s10, s10, s10, s2, zyxw, rgb
 PIPE_FORMAT_B10G10R10A2_SNORM       , plain, 1, 1, sn10, sn10, sn10, sn2, zyxw, rgb
+
+PIPE_FORMAT_R8_UINT                 , plain, 1, 1, up8, , , , x001, rgb
+PIPE_FORMAT_R8G8_UINT               , plain, 1, 1, up8, up8, , , xy01, rgb
+PIPE_FORMAT_R8G8B8_UINT             , plain, 1, 1, up8, up8, up8, , xyz1, rgb
+PIPE_FORMAT_R8G8B8A8_UINT           , plain, 1, 1, up8, up8, up8, up8, xyzw, rgb
+
+PIPE_FORMAT_R8_SINT                 , plain, 1, 1, sp8, , , , x001, rgb
+PIPE_FORMAT_R8G8_SINT               , plain, 1, 1, sp8, sp8, , , xy01, rgb
+PIPE_FORMAT_R8G8B8_SINT             , plain, 1, 1, sp8, sp8, sp8, , xyz1, rgb
+PIPE_FORMAT_R8G8B8A8_SINT           , plain, 1, 1, sp8, sp8, sp8, sp8, xyzw, rgb
+
+PIPE_FORMAT_R16_UINT                , plain, 1, 1, up16, , , , x001, rgb
+PIPE_FORMAT_R16G16_UINT             , plain, 1, 1, up16, up16, , , xy01, rgb
+PIPE_FORMAT_R16G16B16_UINT          , plain, 1, 1, up16, up16, up16, , xyz1, rgb
+PIPE_FORMAT_R16G16B16A16_UINT       , plain, 1, 1, up16, up16, up16, up16, xyzw, rgb
+
+PIPE_FORMAT_R16_SINT                , plain, 1, 1, sp16, , , , x001, rgb
+PIPE_FORMAT_R16G16_SINT             , plain, 1, 1, sp16, sp16, , , xy01, rgb
+PIPE_FORMAT_R16G16B16_SINT          , plain, 1, 1, sp16, sp16, sp16, , xyz1, rgb
+PIPE_FORMAT_R16G16B16A16_SINT       , plain, 1, 1, sp16, sp16, sp16, sp16, xyzw, rgb
+
+PIPE_FORMAT_R32_UINT                , plain, 1, 1, up32, , , , x001, rgb
+PIPE_FORMAT_R32G32_UINT             , plain, 1, 1, up32, up32, , , xy01, rgb
+PIPE_FORMAT_R32G32B32_UINT          , plain, 1, 1, up32, up32, up32, , xyz1, rgb
+PIPE_FORMAT_R32G32B32A32_UINT       , plain, 1, 1, up32, up32, up32, up32, xyzw, rgb
+
+PIPE_FORMAT_R32_SINT                , plain, 1, 1, sp32, , , , x001, rgb
+PIPE_FORMAT_R32G32_SINT             , plain, 1, 1, sp32, sp32, , , xy01, rgb
+PIPE_FORMAT_R32G32B32_SINT          , plain, 1, 1, sp32, sp32, sp32, , xyz1, rgb
+PIPE_FORMAT_R32G32B32A32_SINT       , plain, 1, 1, sp32, sp32, sp32, sp32, xyzw, rgb
+
+PIPE_FORMAT_A8_UINT                 , plain, 1, 1, up8, , , , 000x, rgb
+PIPE_FORMAT_I8_UINT                 , plain, 1, 1, up8, , , , xxxx, rgb
+PIPE_FORMAT_L8_UINT                 , plain, 1, 1, up8, , , , xxx1, rgb
+PIPE_FORMAT_L8A8_UINT               , plain, 1, 1, up8, up8, , , xxxy, rgb
+
+PIPE_FORMAT_A8_SINT                 , plain, 1, 1, sp8, , , , 000x, rgb
+PIPE_FORMAT_I8_SINT                 , plain, 1, 1, sp8, , , , xxxx, rgb
+PIPE_FORMAT_L8_SINT                 , plain, 1, 1, sp8, , , , xxx1, rgb
+PIPE_FORMAT_L8A8_SINT               , plain, 1, 1, sp8, sp8, , , xxxy, rgb
+
+PIPE_FORMAT_A16_UINT                , plain, 1, 1, up16, , , , 000x, rgb
+PIPE_FORMAT_I16_UINT                , plain, 1, 1, up16, , , , xxxx, rgb
+PIPE_FORMAT_L16_UINT                , plain, 1, 1, up16, , , , xxx1, rgb
+PIPE_FORMAT_L16A16_UINT             , plain, 1, 1, up16, up16, , , xxxy, rgb
+
+PIPE_FORMAT_A16_SINT                , plain, 1, 1, sp16, , , , 000x, rgb
+PIPE_FORMAT_I16_SINT                , plain, 1, 1, sp16, , , , xxxx, rgb
+PIPE_FORMAT_L16_SINT                , plain, 1, 1, sp16, , , , xxx1, rgb
+PIPE_FORMAT_L16A16_SINT             , plain, 1, 1, sp16, sp16, , , xxxy, rgb
+
+PIPE_FORMAT_A32_UINT                , plain, 1, 1, up32, , , , 000x, rgb
+PIPE_FORMAT_I32_UINT                , plain, 1, 1, up32, , , , xxxx, rgb
+PIPE_FORMAT_L32_UINT                , plain, 1, 1, up32, , , , xxx1, rgb
+PIPE_FORMAT_L32A32_UINT             , plain, 1, 1, up32, up32, , , xxxy, rgb
+
+PIPE_FORMAT_A32_SINT                , plain, 1, 1, sp32, , , , 000x, rgb
+PIPE_FORMAT_I32_SINT                , plain, 1, 1, sp32, , , , xxxx, rgb
+PIPE_FORMAT_L32_SINT                , plain, 1, 1, sp32, , , , xxx1, rgb
+PIPE_FORMAT_L32A32_SINT             , plain, 1, 1, sp32, sp32, , , xxxy, rgb

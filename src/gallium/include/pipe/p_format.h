@@ -251,6 +251,66 @@ enum pipe_format {
    PIPE_FORMAT_B10G10R10A2_SSCALED     = 175,
    PIPE_FORMAT_B10G10R10A2_SNORM       = 176,
 
+   PIPE_FORMAT_R8_UINT                 = 177,
+   PIPE_FORMAT_R8G8_UINT               = 178,
+   PIPE_FORMAT_R8G8B8_UINT             = 179,
+   PIPE_FORMAT_R8G8B8A8_UINT           = 180,
+
+   PIPE_FORMAT_R8_SINT                 = 181,
+   PIPE_FORMAT_R8G8_SINT               = 182,
+   PIPE_FORMAT_R8G8B8_SINT             = 183,
+   PIPE_FORMAT_R8G8B8A8_SINT           = 184,
+
+   PIPE_FORMAT_R16_UINT                = 185,
+   PIPE_FORMAT_R16G16_UINT             = 186,
+   PIPE_FORMAT_R16G16B16_UINT          = 187,
+   PIPE_FORMAT_R16G16B16A16_UINT       = 188,
+
+   PIPE_FORMAT_R16_SINT                = 189,
+   PIPE_FORMAT_R16G16_SINT             = 190,
+   PIPE_FORMAT_R16G16B16_SINT          = 191,
+   PIPE_FORMAT_R16G16B16A16_SINT       = 192,
+
+   PIPE_FORMAT_R32_UINT                = 193,
+   PIPE_FORMAT_R32G32_UINT             = 194,
+   PIPE_FORMAT_R32G32B32_UINT          = 195,
+   PIPE_FORMAT_R32G32B32A32_UINT       = 196,
+
+   PIPE_FORMAT_R32_SINT                = 197,
+   PIPE_FORMAT_R32G32_SINT             = 198,
+   PIPE_FORMAT_R32G32B32_SINT          = 199,
+   PIPE_FORMAT_R32G32B32A32_SINT       = 200,
+
+   PIPE_FORMAT_A8_UINT                 = 201,
+   PIPE_FORMAT_I8_UINT                 = 202,
+   PIPE_FORMAT_L8_UINT                 = 203,
+   PIPE_FORMAT_L8A8_UINT               = 204,
+
+   PIPE_FORMAT_A8_SINT                 = 205,
+   PIPE_FORMAT_I8_SINT                 = 206,
+   PIPE_FORMAT_L8_SINT                 = 207,
+   PIPE_FORMAT_L8A8_SINT               = 208,
+
+   PIPE_FORMAT_A16_UINT                = 209,
+   PIPE_FORMAT_I16_UINT                = 210,
+   PIPE_FORMAT_L16_UINT                = 211,
+   PIPE_FORMAT_L16A16_UINT             = 212,
+
+   PIPE_FORMAT_A16_SINT                = 213,
+   PIPE_FORMAT_I16_SINT                = 214,
+   PIPE_FORMAT_L16_SINT                = 215,
+   PIPE_FORMAT_L16A16_SINT             = 216,
+
+   PIPE_FORMAT_A32_UINT                = 217,
+   PIPE_FORMAT_I32_UINT                = 218,
+   PIPE_FORMAT_L32_UINT                = 219,
+   PIPE_FORMAT_L32A32_UINT             = 220,
+
+   PIPE_FORMAT_A32_SINT                = 221,
+   PIPE_FORMAT_I32_SINT                = 222,
+   PIPE_FORMAT_L32_SINT                = 223,
+   PIPE_FORMAT_L32A32_SINT             = 224,
+
    PIPE_FORMAT_COUNT
 };
 

@@ -612,7 +612,7 @@ def main():
 
     generate_sse2()
 
-    channel = Channel(UNSIGNED, True, 8)
+    channel = Channel(UNSIGNED, True, False, 8)
     native_type = 'uint8_t'
     suffix = '4ub'
 

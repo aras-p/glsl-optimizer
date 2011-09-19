@@ -389,6 +389,29 @@ pipe_tile_raw_to_rgba(enum pipe_format format,
    }
 }
 
+void
+pipe_tile_raw_to_unsigned(enum pipe_format format,
+                          void *src,
+                          uint w, uint h,
+                          unsigned *dst, unsigned dst_stride)
+{
+  util_format_read_4ui(format,
+                       dst, dst_stride * sizeof(float),
+                       src, util_format_get_stride(format, w),
+                       0, 0, w, h);
+}
+
+void
+pipe_tile_raw_to_signed(enum pipe_format format,
+                          void *src,
+                          uint w, uint h,
+                          int *dst, unsigned dst_stride)
+{
+  util_format_read_4i(format,
+                      dst, dst_stride * sizeof(float),
+                      src, util_format_get_stride(format, w),
+                      0, 0, w, h);
+}
 
 void
 pipe_get_tile_rgba(struct pipe_context *pipe,
@@ -492,6 +515,61 @@ pipe_put_tile_rgba_format(struct pipe_context *pipe,
    FREE(packed);
 }
 
+void
+pipe_put_tile_i_format(struct pipe_context *pipe,
+                       struct pipe_transfer *pt,
+                       uint x, uint y, uint w, uint h,
+                       enum pipe_format format,
+                       const int *p)
+{
+   unsigned src_stride = w * 4;
+   void *packed;
+
+   if (u_clip_tile(x, y, &w, &h, &pt->box))
+      return;
+
+   packed = MALLOC(util_format_get_nblocks(format, w, h) * util_format_get_blocksize(format));
+
+   if (!packed)
+      return;
+
+   util_format_write_4i(format,
+                        p, src_stride * sizeof(float),
+                        packed, util_format_get_stride(format, w),
+                        0, 0, w, h);
+
+   pipe_put_tile_raw(pipe, pt, x, y, w, h, packed, 0);
+
+   FREE(packed);
+}
+
+void
+pipe_put_tile_ui_format(struct pipe_context *pipe,
+                        struct pipe_transfer *pt,
+                        uint x, uint y, uint w, uint h,
+                        enum pipe_format format,
+                        const unsigned int *p)
+{
+   unsigned src_stride = w * 4;
+   void *packed;
+
+   if (u_clip_tile(x, y, &w, &h, &pt->box))
+      return;
+
+   packed = MALLOC(util_format_get_nblocks(format, w, h) * util_format_get_blocksize(format));
+
+   if (!packed)
+      return;
+
+   util_format_write_4ui(format,
+                         p, src_stride * sizeof(float),
+                         packed, util_format_get_stride(format, w),
+                         0, 0, w, h);
+
+   pipe_put_tile_raw(pipe, pt, x, y, w, h, packed, 0);
+
+   FREE(packed);
+}
 
 /**
  * Get a block of Z values, converted to 32-bit range.
@@ -688,3 +766,63 @@ pipe_put_tile_z(struct pipe_context *pipe,
 }
 
 
+void
+pipe_get_tile_ui_format(struct pipe_context *pipe,
+                        struct pipe_transfer *pt,
+                        uint x, uint y, uint w, uint h,
+                        enum pipe_format format,
+                        unsigned int *p)
+{
+   unsigned dst_stride = w * 4;
+   void *packed;
+
+   if (u_clip_tile(x, y, &w, &h, &pt->box)) {
+      return;
+   }
+
+   packed = MALLOC(util_format_get_nblocks(format, w, h) * util_format_get_blocksize(format));
+   if (!packed) {
+      return;
+   }
+
+   if (format == PIPE_FORMAT_UYVY || format == PIPE_FORMAT_YUYV) {
+      assert((x & 1) == 0);
+   }
+
+   pipe_get_tile_raw(pipe, pt, x, y, w, h, packed, 0);
+
+   pipe_tile_raw_to_unsigned(format, packed, w, h, p, dst_stride);
+
+   FREE(packed);
+}
+
+
+void
+pipe_get_tile_i_format(struct pipe_context *pipe,
+                       struct pipe_transfer *pt,
+                       uint x, uint y, uint w, uint h,
+                       enum pipe_format format,
+                       int *p)
+{
+   unsigned dst_stride = w * 4;
+   void *packed;
+
+   if (u_clip_tile(x, y, &w, &h, &pt->box)) {
+      return;
+   }
+
+   packed = MALLOC(util_format_get_nblocks(format, w, h) * util_format_get_blocksize(format));
+   if (!packed) {
+      return;
+   }
+
+   if (format == PIPE_FORMAT_UYVY || format == PIPE_FORMAT_YUYV) {
+      assert((x & 1) == 0);
+   }
+
+   pipe_get_tile_raw(pipe, pt, x, y, w, h, packed, 0);
+
+   pipe_tile_raw_to_signed(format, packed, w, h, p, dst_stride);
+
+   FREE(packed);
+}

@@ -118,6 +118,45 @@ util_format_is_luminance(enum pipe_format format)
    return FALSE;
 }
 
+boolean
+util_format_is_pure_integer(enum pipe_format format)
+{
+   const struct util_format_description *desc = util_format_description(format);
+   int i;
+
+   /* Find the first non-void channel. */
+   i = util_format_get_first_non_void_channel(format);
+   if (i == -1)
+      return FALSE;
+
+   return desc->channel[i].pure_integer ? TRUE : FALSE;
+}
+
+boolean
+util_format_is_pure_sint(enum pipe_format format)
+{
+   const struct util_format_description *desc = util_format_description(format);
+   int i;
+
+   i = util_format_get_first_non_void_channel(format);
+   if (i == -1)
+      return FALSE;
+
+   return (desc->channel[i].type == UTIL_FORMAT_TYPE_SIGNED && desc->channel[i].pure_integer) ? TRUE : FALSE;
+}
+
+boolean
+util_format_is_pure_uint(enum pipe_format format)
+{
+   const struct util_format_description *desc = util_format_description(format);
+   int i;
+
+   i = util_format_get_first_non_void_channel(format);
+   if (i == -1)
+      return FALSE;
+
+   return (desc->channel[i].type == UTIL_FORMAT_TYPE_UNSIGNED && desc->channel[i].pure_integer) ? TRUE : FALSE;
+}
 
 boolean
 util_format_is_luminance_alpha(enum pipe_format format)
@@ -256,6 +295,89 @@ util_format_write_4ub(enum pipe_format format, const uint8_t *src, unsigned src_
    format_desc->pack_rgba_8unorm(dst_row, dst_stride, src_row, src_stride, w, h);
 }
 
+void
+util_format_read_4ui(enum pipe_format format,
+                     unsigned *dst, unsigned dst_stride,
+                     const void *src, unsigned src_stride,
+                     unsigned x, unsigned y, unsigned w, unsigned h)
+{
+   const struct util_format_description *format_desc;
+   const uint8_t *src_row;
+   unsigned *dst_row;
+
+   format_desc = util_format_description(format);
+
+   assert(x % format_desc->block.width == 0);
+   assert(y % format_desc->block.height == 0);
+
+   src_row = (const uint8_t *)src + y*src_stride + x*(format_desc->block.bits/8);
+   dst_row = dst;
+
+   format_desc->unpack_rgba_uint(dst_row, dst_stride, src_row, src_stride, w, h);
+}
+
+void
+util_format_write_4ui(enum pipe_format format,
+                      const unsigned int *src, unsigned src_stride,
+                      void *dst, unsigned dst_stride,
+                      unsigned x, unsigned y, unsigned w, unsigned h)
+{
+   const struct util_format_description *format_desc;
+   uint8_t *dst_row;
+   const unsigned *src_row;
+
+   format_desc = util_format_description(format);
+
+   assert(x % format_desc->block.width == 0);
+   assert(y % format_desc->block.height == 0);
+
+   dst_row = (uint8_t *)dst + y*dst_stride + x*(format_desc->block.bits/8);
+   src_row = src;
+
+   format_desc->pack_rgba_uint(dst_row, dst_stride, src_row, src_stride, w, h);
+}
+
+void
+util_format_read_4i(enum pipe_format format,
+                    int *dst, unsigned dst_stride,
+                    const void *src, unsigned src_stride,
+                    unsigned x, unsigned y, unsigned w, unsigned h)
+{
+   const struct util_format_description *format_desc;
+   const uint8_t *src_row;
+   int *dst_row;
+
+   format_desc = util_format_description(format);
+
+   assert(x % format_desc->block.width == 0);
+   assert(y % format_desc->block.height == 0);
+
+   src_row = (const uint8_t *)src + y*src_stride + x*(format_desc->block.bits/8);
+   dst_row = dst;
+
+   format_desc->unpack_rgba_sint(dst_row, dst_stride, src_row, src_stride, w, h);
+}
+
+void
+util_format_write_4i(enum pipe_format format,
+                      const int *src, unsigned src_stride,
+                      void *dst, unsigned dst_stride,
+                      unsigned x, unsigned y, unsigned w, unsigned h)
+{
+   const struct util_format_description *format_desc;
+   uint8_t *dst_row;
+   const int *src_row;
+
+   format_desc = util_format_description(format);
+
+   assert(x % format_desc->block.width == 0);
+   assert(y % format_desc->block.height == 0);
+
+   dst_row = (uint8_t *)dst + y*dst_stride + x*(format_desc->block.bits/8);
+   src_row = src;
+
+   format_desc->pack_rgba_sint(dst_row, dst_stride, src_row, src_stride, w, h);
+}
 
 boolean
 util_is_format_compatible(const struct util_format_description *src_desc,

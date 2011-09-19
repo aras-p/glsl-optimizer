@@ -126,6 +126,26 @@ def is_format_supported(format):
 
     return True
 
+def is_format_pure_unsigned(format):
+    for i in range(4):
+        channel = format.channels[i]
+        if channel.type not in (VOID, UNSIGNED):
+            return False
+        if channel.type == UNSIGNED and channel.pure == False:
+            return False
+
+    return True
+
+
+def is_format_pure_signed(format):
+    for i in range(4):
+        channel = format.channels[i]
+        if channel.type not in (VOID, SIGNED):
+            return False
+        if channel.type == SIGNED and channel.pure == False:
+            return False
+
+    return True
 
 def native_type(format):
     '''Get the native appropriate for a format.'''
@@ -290,6 +310,7 @@ def conversion_expr(src_channel,
     src_type = src_channel.type
     src_size = src_channel.size
     src_norm = src_channel.norm
+    src_pure = src_channel.pure
 
     # Promote half to float
     if src_type == FLOAT and src_size == 16:
@@ -653,18 +674,45 @@ def generate(formats):
             if is_format_supported(format):
                 generate_format_type(format)
 
-            channel = Channel(FLOAT, False, 32)
-            native_type = 'float'
-            suffix = 'rgba_float'
+            if is_format_pure_unsigned(format):
+                native_type = 'unsigned'
+                suffix = 'unsigned'
+                channel = Channel(UNSIGNED, False, True, 32)
 
-            generate_format_unpack(format, channel, native_type, suffix)
-            generate_format_pack(format, channel, native_type, suffix)
-            generate_format_fetch(format, channel, native_type, suffix)
+                generate_format_unpack(format, channel, native_type, suffix)
+                generate_format_pack(format, channel, native_type, suffix)
 
-            channel = Channel(UNSIGNED, True, 8)
-            native_type = 'uint8_t'
-            suffix = 'rgba_8unorm'
+                channel = Channel(SIGNED, False, True, 32)
+                native_type = 'int'
+                suffix = 'signed'
+                generate_format_unpack(format, channel, native_type, suffix)
+                generate_format_pack(format, channel, native_type, suffix)   
+            elif is_format_pure_signed(format):
+                native_type = 'int'
+                suffix = 'signed'
+                channel = Channel(SIGNED, False, True, 32)
 
-            generate_format_unpack(format, channel, native_type, suffix)
-            generate_format_pack(format, channel, native_type, suffix)
+                generate_format_unpack(format, channel, native_type, suffix)
+                generate_format_pack(format, channel, native_type, suffix)   
+
+                native_type = 'unsigned'
+                suffix = 'unsigned'
+                channel = Channel(UNSIGNED, False, True, 32)
+                generate_format_unpack(format, channel, native_type, suffix)
+                generate_format_pack(format, channel, native_type, suffix)   
+            else:
+                channel = Channel(FLOAT, False, False, 32)
+                native_type = 'float'
+                suffix = 'rgba_float'
+
+                generate_format_unpack(format, channel, native_type, suffix)
+                generate_format_pack(format, channel, native_type, suffix)
+                generate_format_fetch(format, channel, native_type, suffix)
+
+                channel = Channel(UNSIGNED, True, False, 8)
+                native_type = 'uint8_t'
+                suffix = 'rgba_8unorm'
+
+                generate_format_unpack(format, channel, native_type, suffix)
+                generate_format_pack(format, channel, native_type, suffix)
 

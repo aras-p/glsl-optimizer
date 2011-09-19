@@ -118,6 +118,45 @@ pipe_tile_raw_to_rgba(enum pipe_format format,
                       uint w, uint h,
                       float *dst, unsigned dst_stride);
 
+void
+pipe_tile_raw_to_unsigned(enum pipe_format format,
+                          void *src,
+                          uint w, uint h,
+                          unsigned *dst, unsigned dst_stride);
+
+void
+pipe_tile_raw_to_signed(enum pipe_format format,
+                        void *src,
+                        uint w, uint h,
+                        int *dst, unsigned dst_stride);
+
+void
+pipe_get_tile_ui_format(struct pipe_context *pipe,
+                        struct pipe_transfer *pt,
+                        uint x, uint y, uint w, uint h,
+                        enum pipe_format format,
+                        unsigned int *p);
+
+void
+pipe_get_tile_i_format(struct pipe_context *pipe,
+                       struct pipe_transfer *pt,
+                       uint x, uint y, uint w, uint h,
+                       enum pipe_format format,
+                       int *p);
+
+void
+pipe_put_tile_ui_format(struct pipe_context *pipe,
+                        struct pipe_transfer *pt,
+                        uint x, uint y, uint w, uint h,
+                        enum pipe_format format,
+                        const unsigned *p);
+
+void
+pipe_put_tile_i_format(struct pipe_context *pipe,
+                       struct pipe_transfer *pt,
+                       uint x, uint y, uint w, uint h,
+                       enum pipe_format format,
+                       const int *p);
 
 #ifdef __cplusplus
 }

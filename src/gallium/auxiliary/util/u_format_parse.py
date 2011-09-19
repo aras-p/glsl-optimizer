@@ -52,9 +52,10 @@ VERY_LARGE = 99999999999999999999999
 class Channel:
     '''Describe the channel of a color channel.'''
     
-    def __init__(self, type, norm, size, name = ''):
+    def __init__(self, type, norm, pure, size, name = ''):
         self.type = type
         self.norm = norm
+        self.pure = pure
         self.size = size
         self.sign = type in (SIGNED, FIXED, FLOAT)
         self.name = name
@@ -63,11 +64,13 @@ class Channel:
         s = str(self.type)
         if self.norm:
             s += 'n'
+        if self.pure:
+            s += 'p'
         s += str(self.size)
         return s
 
     def __eq__(self, other):
-        return self.type == other.type and self.norm == other.norm and self.size == other.size
+        return self.type == other.type and self.norm == other.norm and self.pure == other.pure and self.size == other.size
 
     def max(self):
         '''Maximum representable number.'''
@@ -157,6 +160,8 @@ class Format:
                 if channel.type != ref_channel.type:
                     return True
                 if channel.norm != ref_channel.norm:
+                    return True
+                if channel.pure != ref_channel.pure:
                     return True
         return False
 
@@ -274,15 +279,22 @@ def parse(filename):
                 type = _type_parse_map[field[0]]
                 if field[1] == 'n':
                     norm = True
+                    pure = False
+                    size = int(field[2:])
+                elif field[1] == 'p':
+                    pure = True
+                    norm = False
                     size = int(field[2:])
                 else:
                     norm = False
+                    pure = False
                     size = int(field[1:])
             else:
                 type = VOID
                 norm = False
+                pure = False
                 size = 0
-            channel = Channel(type, norm, size, names[i])
+            channel = Channel(type, norm, pure, size, names[i])
             channels.append(channel)
 
         format = Format(name, layout, block_width, block_height, channels, swizzles, colorspace)

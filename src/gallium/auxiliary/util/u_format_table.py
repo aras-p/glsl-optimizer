@@ -113,7 +113,7 @@ def write_format_table(formats):
             else:
                 sep = ""
             if channel.size:
-                print "      {%s, %s, %u}%s\t/* %s = %s */" % (type_map[channel.type], bool_map(channel.norm), channel.size, sep, "xyzw"[i], channel.name)
+                print "      {%s, %s, %s, %u}%s\t/* %s = %s */" % (type_map[channel.type], bool_map(channel.norm), bool_map(channel.pure), channel.size, sep, "xyzw"[i], channel.name)
             else:
                 print "      {0, 0, 0}%s" % (sep,)
         print "   },"
@@ -131,7 +131,7 @@ def write_format_table(formats):
             print "      %s%s\t/* %s */" % (swizzle_map[swizzle], sep, comment)
         print "   },"
         print "   %s," % (colorspace_map(format.colorspace),)
-        if format.colorspace != ZS:
+        if format.colorspace != ZS and format.channels[0].pure == False:
             print "   &util_format_%s_unpack_rgba_8unorm," % format.short_name() 
             print "   &util_format_%s_pack_rgba_8unorm," % format.short_name() 
             if format.layout == 's3tc' or format.layout == 'rgtc':
@@ -160,10 +160,25 @@ def write_format_table(formats):
             print "   NULL, /* pack_z_float */" 
         if format.colorspace == ZS and format.swizzles[1] != SWIZZLE_NONE:
             print "   &util_format_%s_unpack_s_8uscaled," % format.short_name() 
-            print "   &util_format_%s_pack_s_8uscaled" % format.short_name() 
+            print "   &util_format_%s_pack_s_8uscaled," % format.short_name() 
         else:
             print "   NULL, /* unpack_s_8uscaled */" 
-            print "   NULL /* pack_s_8uscaled */" 
+            print "   NULL, /* pack_s_8uscaled */"
+        if format.channels[0].pure == True and format.channels[0].type == UNSIGNED:   
+            print "   &util_format_%s_unpack_unsigned, /* unpack_rgba_uint */" % format.short_name() 
+            print "   &util_format_%s_pack_unsigned, /* pack_rgba_uint */" % format.short_name()
+            print "   &util_format_%s_unpack_signed, /* unpack_rgba_sint */" % format.short_name()
+            print "   &util_format_%s_pack_signed  /* pack_rgba_sint */" % format.short_name()
+        elif format.channels[0].pure == True and format.channels[0].type == SIGNED:   
+            print "   &util_format_%s_unpack_unsigned, /* unpack_rgba_uint */" % format.short_name()
+            print "   &util_format_%s_pack_unsigned, /* pack_rgba_uint */" % format.short_name()
+            print "   &util_format_%s_unpack_signed, /* unpack_rgba_sint */" % format.short_name()
+            print "   &util_format_%s_pack_signed  /* pack_rgba_sint */" % format.short_name()
+        else:
+            print "   NULL, /* unpack_rgba_uint */" 
+            print "   NULL, /* pack_rgba_uint */" 
+            print "   NULL, /* unpack_rgba_sint */" 
+            print "   NULL  /* pack_rgba_sint */" 
         print "};"
         print
         
