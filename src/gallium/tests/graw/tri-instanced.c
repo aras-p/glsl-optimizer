@@ -196,7 +196,7 @@ static void set_fragment_shader( void )
 
 static void draw( void )
 {
-   union pipe_color_union clear_color = { .f = {1,0,1,1} };
+   union pipe_color_union clear_color = { {1,0,1,1} };
    struct pipe_draw_info info;
 
    ctx->clear(ctx, PIPE_CLEAR_COLOR, &clear_color, 0, 0);

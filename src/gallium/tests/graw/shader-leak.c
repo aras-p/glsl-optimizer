@@ -137,7 +137,7 @@ set_fragment_shader( void )
 
 static void draw( void )
 {
-   union pipe_color_union clear_color = { .f = {0,0,0,1} };
+   union pipe_color_union clear_color = { {0,0,0,1} };
    int i;
 
    printf("Creating %d shaders\n", num_iters);

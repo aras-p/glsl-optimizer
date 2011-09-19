@@ -331,7 +331,7 @@ static void set_geometry_shader( void )
 
 static void draw( void )
 {
-   union pipe_color_union clear_color = { .f = {.1,.3,.5,0} };
+   union pipe_color_union clear_color = { {.1,.3,.5,0} };
 
    ctx->clear(ctx, PIPE_CLEAR_COLOR, &clear_color, 0, 0);
    if (draw_strip)
