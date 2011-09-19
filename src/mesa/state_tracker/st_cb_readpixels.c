@@ -387,6 +387,8 @@ st_readpixels(struct gl_context *ctx, GLint x, GLint y, GLsizei width, GLsizei h
    GLsizei i, j;
    GLint yStep, dfStride;
    GLfloat *df;
+   GLuint *dui;
+   GLint *di;
    struct st_renderbuffer *strb;
    struct gl_pixelstore_attrib clippedPacking = *pack;
    struct pipe_transfer *trans;
@@ -454,9 +456,12 @@ st_readpixels(struct gl_context *ctx, GLint x, GLint y, GLsizei width, GLsizei h
    }
    else {
       /* write tile(row) into temp row buffer */
-      df = (GLfloat *) temp;
+      df = (GLfloat *)temp;
       dfStride = 0;
    }
+
+   dui = (GLuint *)df;
+   di = (GLint *)df;
 
    if (st_fb_orientation(ctx->ReadBuffer) == Y_0_TOP) {
       /* convert GL Y to Gallium Y */
@@ -611,7 +616,38 @@ st_readpixels(struct gl_context *ctx, GLint x, GLint y, GLsizei width, GLsizei h
             dst += dstStride;
          }
       }
-      else {
+      else if (util_format_is_pure_sint(pformat)) {
+         for (i = 0; i < height; i++) {
+            if (type == GL_UNSIGNED_INT)
+               pipe_get_tile_ui_format(pipe, trans, 0, y, width, 1,
+                                       pformat, dui);
+            else
+               pipe_get_tile_i_format(pipe, trans, 0, y, width, 1,
+                                      pformat, di);
+            y += yStep;
+            if (!dfStride) {
+               _mesa_pack_rgba_span_int(ctx, width, (GLuint (*)[4])temp,
+                                        format, type, dst);
+               dst += dstStride;
+            }
+        }
+      } else if (util_format_is_pure_uint(pformat)) {
+         for (i = 0; i < height; i++) {
+            if (type == GL_UNSIGNED_INT)
+               pipe_get_tile_ui_format(pipe, trans, 0, y, width, 1,
+                                       pformat, dui);
+            else
+               pipe_get_tile_i_format(pipe, trans, 0, y, width, 1,
+                                      pformat, di);
+            y += yStep;
+            df += dfStride;
+            if (!dfStride) {
+               _mesa_pack_rgba_span_int(ctx, width, (GLuint (*)[4])temp,
+                                        format, type, dst);
+               dst += dstStride;
+            }
+         }
+      } else {
          /* RGBA format */
          /* Do a row at a time to flip image data vertically */
          for (i = 0; i < height; i++) {
