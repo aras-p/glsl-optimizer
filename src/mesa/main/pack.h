@@ -144,4 +144,9 @@ _mesa_unpack_image(GLuint dimensions,
                    const struct gl_pixelstore_attrib *unpack);
 
 
+void
+_mesa_pack_rgba_span_int(struct gl_context *ctx, GLuint n, GLuint rgba[][4],
+                         GLenum dstFormat, GLenum dstType,
+                         GLvoid *dstAddr);
+
 #endif
