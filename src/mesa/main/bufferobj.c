@@ -1172,17 +1172,17 @@ _mesa_GetBufferParameterivARB(GLenum target, GLenum pname, GLint *params)
       *params = _mesa_bufferobj_mapped(bufObj);
       return;
    case GL_BUFFER_ACCESS_FLAGS:
-      if (ctx->VersionMajor < 3)
+      if (!ctx->Extensions.ARB_map_buffer_range)
          goto invalid_pname;
       *params = bufObj->AccessFlags;
       return;
    case GL_BUFFER_MAP_OFFSET:
-      if (ctx->VersionMajor < 3)
+      if (!ctx->Extensions.ARB_map_buffer_range)
          goto invalid_pname;
       *params = (GLint) bufObj->Offset;
       return;
    case GL_BUFFER_MAP_LENGTH:
-      if (ctx->VersionMajor < 3)
+      if (!ctx->Extensions.ARB_map_buffer_range)
          goto invalid_pname;
       *params = (GLint) bufObj->Length;
       return;
@@ -1223,7 +1223,7 @@ _mesa_GetBufferParameteri64v(GLenum target, GLenum pname, GLint64 *params)
       *params = simplified_access_mode(bufObj->AccessFlags);
       return;
    case GL_BUFFER_ACCESS_FLAGS:
-      if (ctx->VersionMajor < 3)
+      if (!ctx->Extensions.ARB_map_buffer_range)
          goto invalid_pname;
       *params = bufObj->AccessFlags;
       return;
@@ -1231,12 +1231,12 @@ _mesa_GetBufferParameteri64v(GLenum target, GLenum pname, GLint64 *params)
       *params = _mesa_bufferobj_mapped(bufObj);
       return;
    case GL_BUFFER_MAP_OFFSET:
-      if (ctx->VersionMajor < 3)
+      if (!ctx->Extensions.ARB_map_buffer_range)
          goto invalid_pname;
       *params = bufObj->Offset;
       return;
    case GL_BUFFER_MAP_LENGTH:
-      if (ctx->VersionMajor < 3)
+      if (!ctx->Extensions.ARB_map_buffer_range)
          goto invalid_pname;
       *params = bufObj->Length;
       return;
