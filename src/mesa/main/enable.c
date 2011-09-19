@@ -1016,6 +1016,7 @@ GLboolean GLAPIENTRY
 _mesa_IsEnabledIndexed( GLenum cap, GLuint index )
 {
    GET_CURRENT_CONTEXT(ctx);
+   ASSERT_OUTSIDE_BEGIN_END_WITH_RETVAL(ctx, 0);
    switch (cap) {
    case GL_BLEND:
       if (index >= ctx->Const.MaxDrawBuffers) {
