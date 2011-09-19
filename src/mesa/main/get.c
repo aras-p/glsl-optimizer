@@ -1924,6 +1924,9 @@ _mesa_GetBooleanv(GLenum pname, GLboolean *params)
    GLmatrix *m;
    int shift, i;
    void *p;
+   GET_CURRENT_CONTEXT(ctx);
+
+   ASSERT_OUTSIDE_BEGIN_END(ctx);
 
    d = find_value("glGetBooleanv", pname, &p, &v);
    switch (d->type) {
@@ -2008,6 +2011,9 @@ _mesa_GetFloatv(GLenum pname, GLfloat *params)
    GLmatrix *m;
    int shift, i;
    void *p;
+   GET_CURRENT_CONTEXT(ctx);
+
+   ASSERT_OUTSIDE_BEGIN_END(ctx);
 
    d = find_value("glGetFloatv", pname, &p, &v);
    switch (d->type) {
@@ -2092,6 +2098,9 @@ _mesa_GetIntegerv(GLenum pname, GLint *params)
    GLmatrix *m;
    int shift, i;
    void *p;
+   GET_CURRENT_CONTEXT(ctx);
+
+   ASSERT_OUTSIDE_BEGIN_END(ctx);
 
    d = find_value("glGetIntegerv", pname, &p, &v);
    switch (d->type) {
@@ -2183,6 +2192,9 @@ _mesa_GetInteger64v(GLenum pname, GLint64 *params)
    GLmatrix *m;
    int shift, i;
    void *p;
+   GET_CURRENT_CONTEXT(ctx);
+
+   ASSERT_OUTSIDE_BEGIN_END(ctx);
 
    d = find_value("glGetInteger64v", pname, &p, &v);
    switch (d->type) {
@@ -2274,6 +2286,9 @@ _mesa_GetDoublev(GLenum pname, GLdouble *params)
    GLmatrix *m;
    int shift, i;
    void *p;
+   GET_CURRENT_CONTEXT(ctx);
+
+   ASSERT_OUTSIDE_BEGIN_END(ctx);
 
    d = find_value("glGetDoublev", pname, &p, &v);
    switch (d->type) {
