@@ -168,6 +168,11 @@ _mesa_SelectBuffer( GLsizei size, GLuint *buffer )
    GET_CURRENT_CONTEXT(ctx);
    ASSERT_OUTSIDE_BEGIN_END(ctx);
 
+   if (size < 0) {
+      _mesa_error(ctx, GL_INVALID_VALUE, "glSelectBuffer(size)");
+      return;
+   }
+
    if (ctx->RenderMode==GL_SELECT) {
       _mesa_error( ctx, GL_INVALID_OPERATION, "glSelectBuffer" );
       return;			/* KW: added return */
