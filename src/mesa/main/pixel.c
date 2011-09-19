@@ -52,6 +52,8 @@ _mesa_PixelZoom( GLfloat xfactor, GLfloat yfactor )
 {
    GET_CURRENT_CONTEXT(ctx);
 
+   ASSERT_OUTSIDE_BEGIN_END(ctx);
+
    if (ctx->Pixel.ZoomX == xfactor &&
        ctx->Pixel.ZoomY == yfactor)
       return;
