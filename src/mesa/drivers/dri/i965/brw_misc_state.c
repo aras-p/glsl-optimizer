@@ -450,6 +450,7 @@ static void upload_polygon_stipple(struct brw_context *brw)
    struct gl_context *ctx = &brw->intel.ctx;
    GLuint i;
 
+   /* _NEW_POLYGON */
    if (!ctx->Polygon.StippleFlag)
       return;
 
@@ -479,7 +480,8 @@ static void upload_polygon_stipple(struct brw_context *brw)
 
 const struct brw_tracked_state brw_polygon_stipple = {
    .dirty = {
-      .mesa = _NEW_POLYGONSTIPPLE,
+      .mesa = (_NEW_POLYGONSTIPPLE |
+	       _NEW_POLYGON),
       .brw = BRW_NEW_CONTEXT,
       .cache = 0
    },
