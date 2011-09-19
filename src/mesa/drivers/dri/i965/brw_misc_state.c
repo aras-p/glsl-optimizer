@@ -498,6 +498,7 @@ static void upload_polygon_stipple_offset(struct brw_context *brw)
    struct intel_context *intel = &brw->intel;
    struct gl_context *ctx = &brw->intel.ctx;
 
+   /* _NEW_POLYGON */
    if (!ctx->Polygon.StippleFlag)
       return;
 
@@ -507,7 +508,9 @@ static void upload_polygon_stipple_offset(struct brw_context *brw)
    BEGIN_BATCH(2);
    OUT_BATCH(_3DSTATE_POLY_STIPPLE_OFFSET << 16 | (2-2));
 
-   /* If we're drawing to a system window (ctx->DrawBuffer->Name == 0),
+   /* _NEW_BUFFERS
+    *
+    * If we're drawing to a system window (ctx->DrawBuffer->Name == 0),
     * we have to invert the Y axis in order to match the OpenGL
     * pixel coordinate system, and our offset must be matched
     * to the window position.  If we're drawing to a FBO
@@ -522,11 +525,10 @@ static void upload_polygon_stipple_offset(struct brw_context *brw)
    CACHED_BATCH();
 }
 
-#define _NEW_WINDOW_POS 0x40000000
-
 const struct brw_tracked_state brw_polygon_stipple_offset = {
    .dirty = {
-      .mesa = _NEW_WINDOW_POS | _NEW_POLYGONSTIPPLE,
+      .mesa = (_NEW_BUFFERS |
+	       _NEW_POLYGON),
       .brw = BRW_NEW_CONTEXT,
       .cache = 0
    },
