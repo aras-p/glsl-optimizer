@@ -731,7 +731,8 @@ get_texenvi(struct gl_context *ctx, const struct gl_texture_unit *texUnit,
       break;
 
    default:
-      ;
+      _mesa_error(ctx, GL_INVALID_ENUM, "glGetTexEnvfv(pname)");
+      break;
    }
 
    return -1; /* error */
