@@ -68,6 +68,8 @@ struct softpipe_tex_cached_tile
    union tex_tile_address addr;
    union {
       float color[TILE_SIZE][TILE_SIZE][4];
+      unsigned int colorui[TILE_SIZE][TILE_SIZE][4];
+      int colori[TILE_SIZE][TILE_SIZE][4];
    } data;
 };
 
