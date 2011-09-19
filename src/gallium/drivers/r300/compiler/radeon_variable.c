@@ -297,9 +297,12 @@ static void get_variable_helper(
 {
 	struct rc_list * list_ptr;
 	for (list_ptr = *variable_list; list_ptr; list_ptr = list_ptr->Next) {
-		if (readers_intersect(variable, list_ptr->Item)) {
-			rc_variable_add_friend(list_ptr->Item, variable);
-			return;
+		struct rc_variable * var;
+		for (var = list_ptr->Item; var; var = var->Friend) {
+			if (readers_intersect(var, variable)) {
+				rc_variable_add_friend(var, variable);
+				return;
+			}
 		}
 	}
 	rc_list_add(variable_list, rc_list(&variable->C->Pool, variable));
