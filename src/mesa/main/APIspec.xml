@@ -3138,11 +3138,6 @@
 		<param name="target" type="GLenum"/>
 		<param name="renderbuffer" type="GLuint"/>
 	</proto>
-
-	<desc name="target">
-		<value name="GL_RENDERBUFFER_OES" category="OES_framebuffer_object"/>
-		<value name="GL_RENDERBUFFER" category="GLES2.0"/>
-	</desc>
 </template>
 
 <template name="DeleteRenderbuffers">
@@ -3169,11 +3164,6 @@
 		<param name="width" type="GLsizei"/>
 		<param name="height" type="GLsizei"/>
 	</proto>
-
-	<desc name="target">
-		<value name="GL_RENDERBUFFER_OES" category="OES_framebuffer_object"/>
-		<value name="GL_RENDERBUFFER" category="GLES2.0"/>
-	</desc>
 
 	<desc name="internalFormat">
 		<value name="GL_DEPTH_COMPONENT16_OES" category="OES_framebuffer_object"/>
@@ -3206,11 +3196,6 @@
 		<param name="renderbuffertarget" type="GLenum"/>
 		<param name="renderbuffer" type="GLuint"/>
 	</proto>
-
-	<desc name="renderbuffertarget">
-		<value name="GL_RENDERBUFFER_OES" category="OES_framebuffer_object"/>
-		<value name="GL_RENDERBUFFER" category="GLES2.0"/>
-	</desc>
 </template>
 
 <template name="FramebufferTexture2D">
@@ -3298,11 +3283,6 @@
 		<param name="pname" type="GLenum"/>
 		<vector name="params" type="GLtype *" size="dynamic"/>
 	</proto>
-
-	<desc name="target">
-		<value name="GL_RENDERBUFFER_OES" category="OES_framebuffer_object"/>
-		<value name="GL_RENDERBUFFER" category="GLES2.0"/>
-	</desc>
 
 	<desc name="pname" category="OES_framebuffer_object">
 		<value name="GL_RENDERBUFFER_WIDTH_OES"/>
@@ -3530,11 +3510,6 @@
 		<param name="target" type="GLenum"/>
 		<param name="image" type="GLeglImageOES"/>
 	</proto>
-
-	<desc name="target">
-		<value name="GL_RENDERBUFFER_OES" category="OES_framebuffer_object"/>
-		<value name="GL_RENDERBUFFER" category="GLES2.0"/>
-	</desc>
 </template>
 
 <api name="mesa" implementation="true">
