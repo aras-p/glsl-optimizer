@@ -263,17 +263,7 @@ _es_GetLightxv(GLenum light, GLenum pname, GLfixed *params)
    unsigned int n_params = 4;
    GLfloat converted_params[4];
 
-   switch(light) {
-   case GL_LIGHT0:
-   case GL_LIGHT1:
-   case GL_LIGHT2:
-   case GL_LIGHT3:
-   case GL_LIGHT4:
-   case GL_LIGHT5:
-   case GL_LIGHT6:
-   case GL_LIGHT7:
-      break;
-   default:
+   if (light < GL_LIGHT0 || light > GL_LIGHT7) {
       _mesa_error(_mesa_get_current_context(), GL_INVALID_ENUM,
                   "glGetLightxv(light=0x%x)", light);
       return;
@@ -605,34 +595,6 @@ _es_LightModelxv(GLenum pname, const GLfixed *params)
 void GL_APIENTRY
 _es_Lightx(GLenum light, GLenum pname, GLfixed param)
 {
-   switch(light) {
-   case GL_LIGHT0:
-   case GL_LIGHT1:
-   case GL_LIGHT2:
-   case GL_LIGHT3:
-   case GL_LIGHT4:
-   case GL_LIGHT5:
-   case GL_LIGHT6:
-   case GL_LIGHT7:
-      break;
-   default:
-      _mesa_error(_mesa_get_current_context(), GL_INVALID_ENUM,
-                  "glLightx(light=0x%x)", light);
-      return;
-   }
-   switch(pname) {
-   case GL_SPOT_EXPONENT:
-   case GL_SPOT_CUTOFF:
-   case GL_CONSTANT_ATTENUATION:
-   case GL_LINEAR_ATTENUATION:
-   case GL_QUADRATIC_ATTENUATION:
-      break;
-   default:
-      _mesa_error(_mesa_get_current_context(), GL_INVALID_ENUM,
-                  "glLightx(pname=0x%x)", pname);
-      return;
-   }
-
    _mesa_Lightf(light, pname, (GLfloat) (param / 65536.0f));
 }
 
@@ -643,17 +605,7 @@ _es_Lightxv(GLenum light, GLenum pname, const GLfixed *params)
    unsigned int n_params = 4;
    GLfloat converted_params[4];
 
-   switch(light) {
-   case GL_LIGHT0:
-   case GL_LIGHT1:
-   case GL_LIGHT2:
-   case GL_LIGHT3:
-   case GL_LIGHT4:
-   case GL_LIGHT5:
-   case GL_LIGHT6:
-   case GL_LIGHT7:
-      break;
-   default:
+   if (light < GL_LIGHT0 || light > GL_LIGHT7) {
       _mesa_error(_mesa_get_current_context(), GL_INVALID_ENUM,
                   "glLightxv(light=0x%x)", light);
       return;

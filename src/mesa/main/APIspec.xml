@@ -120,35 +120,6 @@
 			<param name="param" type="GLtype"/>
 		</vector>
 	</proto>
-
-	<desc name="light">
-		<range base="GL_LIGHT" from="0" to="7"/>
-	</desc>
-
-	<desc name="pname">
-		<value name="GL_AMBIENT"/>
-		<value name="GL_DIFFUSE"/>
-		<value name="GL_SPECULAR"/>
-		<value name="GL_POSITION"/>
-
-		<desc name="params" vector_size="4"/>
-	</desc>
-
-	<desc name="pname">
-		<value name="GL_SPOT_DIRECTION"/>
-
-		<desc name="params" vector_size="3"/>
-	</desc>
-
-	<desc name="pname">
-		<value name="GL_SPOT_EXPONENT"/>
-		<value name="GL_SPOT_CUTOFF"/>
-		<value name="GL_CONSTANT_ATTENUATION"/>
-		<value name="GL_LINEAR_ATTENUATION"/>
-		<value name="GL_QUADRATIC_ATTENUATION"/>
-
-		<desc name="params" vector_size="1"/>
-	</desc>
 </template>
 
 <template name="LightModel">
@@ -1190,35 +1161,6 @@
 		<param name="pname" type="GLenum"/>
 		<vector name="params" type="GLtype *" size="dynamic"/>
 	</proto>
-
-	<desc name="light">
-		<range base="GL_LIGHT" from="0" to="7"/>
-	</desc>
-
-	<desc name="pname">
-		<value name="GL_AMBIENT"/>
-		<value name="GL_DIFFUSE"/>
-		<value name="GL_SPECULAR"/>
-		<value name="GL_POSITION"/>
-
-		<desc name="params" vector_size="4"/>
-	</desc>
-
-	<desc name="pname">
-		<value name="GL_SPOT_DIRECTION"/>
-
-		<desc name="params" vector_size="3"/>
-	</desc>
-
-	<desc name="pname">
-		<value name="GL_SPOT_EXPONENT"/>
-		<value name="GL_SPOT_CUTOFF"/>
-		<value name="GL_CONSTANT_ATTENUATION"/>
-		<value name="GL_LINEAR_ATTENUATION"/>
-		<value name="GL_QUADRATIC_ATTENUATION"/>
-
-		<desc name="params" vector_size="1"/>
-	</desc>
 </template>
 
 <template name="GetMaterial" direction="get">
