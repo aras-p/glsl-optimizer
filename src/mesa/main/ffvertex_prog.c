@@ -61,6 +61,7 @@ struct state_key {
    unsigned rescale_normals:1;
 
    unsigned fog_source_is_depth:1;
+   unsigned fog_distance_mode:2;
    unsigned separate_specular:1;
    unsigned point_attenuated:1;
    unsigned point_array:1;
@@ -108,7 +109,22 @@ static GLuint translate_texgen( GLboolean enabled, GLenum mode )
    }
 }
 
+#define FDM_EYE_RADIAL    0
+#define FDM_EYE_PLANE     1
+#define FDM_EYE_PLANE_ABS 2
 
+static GLuint translate_fog_distance_mode( GLenum mode )
+{
+   switch (mode) {
+   case GL_EYE_RADIAL_NV:
+      return FDM_EYE_RADIAL;
+   case GL_EYE_PLANE:
+      return FDM_EYE_PLANE;
+   default: /* shouldn't happen; fall through to a sensible default */
+   case GL_EYE_PLANE_ABSOLUTE_NV:
+      return FDM_EYE_PLANE_ABS;
+   }
+}
 
 static GLboolean check_active_shininess( struct gl_context *ctx,
                                          const struct state_key *key,
@@ -205,8 +221,10 @@ static void make_state_key( struct gl_context *ctx, struct state_key *key )
    if (ctx->Transform.RescaleNormals)
       key->rescale_normals = 1;
 
-   if (ctx->Fog.FogCoordinateSource == GL_FRAGMENT_DEPTH_EXT)
+   if (ctx->Fog.FogCoordinateSource == GL_FRAGMENT_DEPTH_EXT) {
       key->fog_source_is_depth = 1;
+      key->fog_distance_mode = translate_fog_distance_mode(ctx->Fog.FogDistanceMode);
+   }
 
    if (ctx->Point._Attenuated)
       key->point_attenuated = 1;
@@ -1308,14 +1326,31 @@ static void build_fog( struct tnl_program *p )
    struct ureg input;
 
    if (p->state->fog_source_is_depth) {
-      input = get_eye_position_z(p);
+
+      switch (p->state->fog_distance_mode) {
+      case FDM_EYE_RADIAL: /* Z = sqrt(Xe*Xe + Ye*Ye + Ze*Ze) */
+	input = get_eye_position(p);
+	emit_op2(p, OPCODE_DP3, fog, WRITEMASK_X, input, input);
+	emit_op1(p, OPCODE_RSQ, fog, WRITEMASK_X, fog);
+	emit_op1(p, OPCODE_RCP, fog, WRITEMASK_X, fog);
+	break;
+      case FDM_EYE_PLANE: /* Z = Ze */
+	input = get_eye_position_z(p);
+	emit_op1(p, OPCODE_MOV, fog, WRITEMASK_X, input);
+	break;
+      case FDM_EYE_PLANE_ABS: /* Z = abs(Ze) */
+	input = get_eye_position_z(p);
+	emit_op1(p, OPCODE_ABS, fog, WRITEMASK_X, input);
+	break;
+      default: assert(0); break; /* can't happen */
+      }
+
    }
    else {
       input = swizzle1(register_input(p, VERT_ATTRIB_FOG), X);
+      emit_op1(p, OPCODE_ABS, fog, WRITEMASK_X, input);
    }
 
-   /* result.fog = {abs(f),0,0,1}; */
-   emit_op1(p, OPCODE_ABS, fog, WRITEMASK_X, input);
    emit_op1(p, OPCODE_MOV, fog, WRITEMASK_YZW, get_identity_param(p));
 }
 
