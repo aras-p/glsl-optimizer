@@ -167,6 +167,15 @@ _mesa_Clear( GLbitfield mask )
       return;
    }
 
+   /* Accumulation buffers were removed in core contexts, and they never
+    * existed in OpenGL ES.
+    */
+   if ((mask & GL_ACCUM_BUFFER_BIT) != 0
+       && (ctx->API == API_OPENGL_CORE || _mesa_is_gles(ctx))) {
+      _mesa_error( ctx, GL_INVALID_VALUE, "glClear(GL_ACCUM_BUFFER_BIT)");
+      return;
+   }
+
    if (ctx->NewState) {
       _mesa_update_state( ctx );	/* update _Xmin, etc */
    }

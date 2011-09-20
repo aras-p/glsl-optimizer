@@ -432,17 +432,6 @@
 		<return type="void"/>
 		<param name="mask" type="GLbitfield"/>
 	</proto>
-
-	<desc name="mask" error="GL_INVALID_VALUE">
-		<value name="0"/>
-		<value name="(GL_COLOR_BUFFER_BIT)"/>
-		<value name="(GL_DEPTH_BUFFER_BIT)"/>
-		<value name="(GL_STENCIL_BUFFER_BIT)"/>
-		<value name="(GL_COLOR_BUFFER_BIT|GL_DEPTH_BUFFER_BIT)"/>
-		<value name="(GL_COLOR_BUFFER_BIT|GL_STENCIL_BUFFER_BIT)"/>
-		<value name="(GL_DEPTH_BUFFER_BIT|GL_STENCIL_BUFFER_BIT)"/>
-		<value name="(GL_COLOR_BUFFER_BIT|GL_DEPTH_BUFFER_BIT|GL_STENCIL_BUFFER_BIT)"/>
-	</desc>
 </template>
 
 <template name="ClearColor">
