@@ -24,6 +24,7 @@ SConscript('mapi/vgapi/SConscript')
 if not env['embedded']:
     if env['platform'] not in ['windows', 'darwin']:
         SConscript('glx/SConscript')
+    if env['platform'] not in ['darwin']:
         SConscript('egl/main/SConscript')
         SConscript('glu/sgi/SConscript')
 
