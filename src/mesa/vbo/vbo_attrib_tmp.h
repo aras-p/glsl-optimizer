@@ -809,6 +809,12 @@ TAG(Materialfv)(GLenum face, GLenum pname,
                  const GLfloat * params)
 {
    GET_CURRENT_CONTEXT(ctx);
+
+   if (face != GL_FRONT && face != GL_BACK && face != GL_FRONT_AND_BACK) {
+      _mesa_error(ctx, GL_INVALID_ENUM, "glMaterial(invalid face)");
+      return;
+   }
+
    switch (pname) {
    case GL_EMISSION:
       MAT(VBO_ATTRIB_MAT_FRONT_EMISSION, 4, face, params);
@@ -823,7 +829,12 @@ TAG(Materialfv)(GLenum face, GLenum pname,
       MAT(VBO_ATTRIB_MAT_FRONT_SPECULAR, 4, face, params);
       break;
    case GL_SHININESS:
-      MAT(VBO_ATTRIB_MAT_FRONT_SHININESS, 1, face, params);
+      if (*params < 0 || *params > ctx->Const.MaxShininess)
+         _mesa_error(ctx, GL_INVALID_VALUE,
+                     "glMaterial(invalid shininess: %f out range [0, %f])",
+		     *params, ctx->Const.MaxShininess);
+      else
+         MAT(VBO_ATTRIB_MAT_FRONT_SHININESS, 1, face, params);
       break;
    case GL_COLOR_INDEXES:
       MAT(VBO_ATTRIB_MAT_FRONT_INDEXES, 3, face, params);
