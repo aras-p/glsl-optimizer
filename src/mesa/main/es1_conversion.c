@@ -38,22 +38,6 @@
 void GL_APIENTRY
 _es_AlphaFuncx(GLenum func, GLclampx ref)
 {
-   switch(func) {
-   case GL_NEVER:
-   case GL_LESS:
-   case GL_EQUAL:
-   case GL_LEQUAL:
-   case GL_GREATER:
-   case GL_NOTEQUAL:
-   case GL_GEQUAL:
-   case GL_ALWAYS:
-      break;
-   default:
-      _mesa_error(_mesa_get_current_context(), GL_INVALID_ENUM,
-                  "glAlphaFuncx(func=0x%x)", func);
-      return;
-   }
-
    _mesa_AlphaFunc(func, (GLclampf) (ref / 65536.0f));
 }
 

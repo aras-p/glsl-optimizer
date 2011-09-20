@@ -882,16 +882,6 @@
 		<param name="func" type="GLenum"/>
 		<param name="ref" type="GLtype"/>
 	</proto>
-	<desc name="func">
-		<value name="GL_NEVER"/>
-		<value name="GL_LESS"/>
-		<value name="GL_EQUAL"/>
-		<value name="GL_LEQUAL"/>
-		<value name="GL_GREATER"/>
-		<value name="GL_NOTEQUAL"/>
-		<value name="GL_GEQUAL"/>
-		<value name="GL_ALWAYS"/>
-	</desc>
 </template>
 
 <template name="BlendFunc">
