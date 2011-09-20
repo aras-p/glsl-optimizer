@@ -228,12 +228,14 @@ _mesa_read_profile(struct _mesa_glsl_parse_state *state,
 void
 _mesa_glsl_initialize_functions(struct _mesa_glsl_parse_state *state)
 {
+   /* If we've already initialized the built-ins, bail early. */
+   if (state->num_builtins_to_link > 0)
+      return;
+
    if (builtin_mem_ctx == NULL) {
       builtin_mem_ctx = ralloc_context(NULL); // "GLSL built-in functions"
       memset(&builtin_profiles, 0, sizeof(builtin_profiles));
    }
-
-   state->num_builtins_to_link = 0;
 """
 
     i = 0

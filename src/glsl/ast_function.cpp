@@ -117,6 +117,7 @@ match_function_by_name(exec_list *instructions, const char *name,
       /* The current shader doesn't contain a matching function or signature.
        * Before giving up, look for the prototype in the built-in functions.
        */
+      _mesa_glsl_initialize_functions(state);
       for (unsigned i = 0; i < state->num_builtins_to_link; i++) {
 	 ir_function *builtin;
 	 builtin = state->builtins_to_link[i]->symbols->get_function(name);
