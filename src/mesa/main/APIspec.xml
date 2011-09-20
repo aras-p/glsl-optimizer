@@ -109,12 +109,6 @@
 	<desc name="target">
 		<value name="GL_GENERATE_MIPMAP_HINT"/>
 	</desc>
-
-	<desc name="mode">
-		<value name="GL_FASTEST"/>
-		<value name="GL_NICEST"/>
-		<value name="GL_DONT_CARE"/>
-	</desc>
 </template>
 
 <template name="Light">
