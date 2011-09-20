@@ -967,9 +967,8 @@ fs_visitor::emit_texture_gen7(ir_texture *ir, fs_reg dst, fs_reg coordinate,
       break;
    case ir_txf:
       /* Unfortunately, the parameters for LD are intermixed: u, lod, v, r. */
-      fs_inst *inst = emit(BRW_OPCODE_MOV,
-			   fs_reg(MRF, base_mrf + mlen, BRW_REGISTER_TYPE_D),
-			   coordinate);
+      emit(BRW_OPCODE_MOV,
+	   fs_reg(MRF, base_mrf + mlen, BRW_REGISTER_TYPE_D), coordinate);
       coordinate.reg_offset++;
       mlen += reg_width;
 
@@ -978,9 +977,8 @@ fs_visitor::emit_texture_gen7(ir_texture *ir, fs_reg dst, fs_reg coordinate,
       mlen += reg_width;
 
       for (int i = 1; i < ir->coordinate->type->vector_elements; i++) {
-	 fs_inst *inst = emit(BRW_OPCODE_MOV,
-			      fs_reg(MRF, base_mrf + mlen, BRW_REGISTER_TYPE_D),
-			      coordinate);
+	 emit(BRW_OPCODE_MOV,
+	      fs_reg(MRF, base_mrf + mlen, BRW_REGISTER_TYPE_D), coordinate);
 	 coordinate.reg_offset++;
 	 mlen += reg_width;
       }
