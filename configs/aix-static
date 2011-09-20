@@ -18,6 +18,3 @@ GLU_LIB_NAME = libGLU.a
 GLW_LIB_NAME = libGLw.a
 OSMESA_LIB_NAME = libOSMesa.a
 
-               -lX11 -lXext -lXmu -lXi -lm -lpthread -lC
-
-

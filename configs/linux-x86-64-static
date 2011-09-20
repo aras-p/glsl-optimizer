@@ -19,6 +19,3 @@ OSMESA_LIB_DEPS =
 GLU_LIB_DEPS = 
 GLW_LIB_DEPS = 
 
-# Need to specify all libraries we may need
-               -l$(GL_LIB) $(TOP)/src/mesa/pipe/softpipe/libsoftpipe.a -Wl,--end-group \
-               $(EXTRA_LIB_PATH) -lX11 -lXext -lXmu -lXt -lXi -lpthread -lstdc++ -lm
