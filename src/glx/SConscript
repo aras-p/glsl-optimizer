@@ -1,8 +1,5 @@
 Import('*')
 
-if env['platform'] == 'windows':
-    Return()
-
 env = env.Clone()
 
 env.Prepend(CPPPATH = [

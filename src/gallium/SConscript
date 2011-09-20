@@ -55,7 +55,8 @@ SConscript('winsys/sw/null/SConscript')
 
 if not env['embedded']:
     SConscript('state_trackers/vega/SConscript')
-    SConscript('state_trackers/egl/SConscript')
+    if env['platform'] not in ['darwin']:
+        SConscript('state_trackers/egl/SConscript')
 
     if env['x11']:
         SConscript('state_trackers/glx/xlib/SConscript')
@@ -84,9 +85,10 @@ SConscript([
 ])
 
 if not env['embedded']:
-    SConscript([
-        'targets/egl-static/SConscript'
-    ])
+    if env['platform'] not in ['darwin']:
+        SConscript([
+            'targets/egl-static/SConscript'
+        ])
 
     if env['x11']:
         SConscript([

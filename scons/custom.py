@@ -208,12 +208,10 @@ def pkg_use_modules(env, names):
         prefix = name + '_'
 
         if not 'HAVE_' + name in env:
-            print 'Attempt to use unknown module %s' % name
-            env.Exit(1)
+            raise Exception('Attempt to use unknown module %s' % name)
 
         if not env['HAVE_' + name]:
-            print 'Attempt to use unavailable module %s' % name
-            env.Exit(1)
+            raise Exception('Attempt to use unavailable module %s' % name)
 
         flags = {}
         for flag_name, flag_value in env.Dictionary().iteritems():
