@@ -478,6 +478,12 @@ public:
    virtual ir_visitor_status accept(ir_hierarchical_visitor *);
 
    /**
+    * Attempt to evaluate this function as a constant expression, given
+    * a list of the actual parameters.  Returns NULL for non-built-ins.
+    */
+   ir_constant *constant_expression_value(exec_list *actual_parameters);
+
+   /**
     * Get the name of the function for which this is a signature
     */
    const char *function_name() const;

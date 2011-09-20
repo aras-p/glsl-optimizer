@@ -1027,18 +1027,29 @@ ir_call::constant_expression_value()
    if (this->type == glsl_type::error_type)
       return NULL;
 
+   return this->callee->constant_expression_value(&this->actual_parameters);
+}
+
+
+ir_constant *
+ir_function_signature::constant_expression_value(exec_list *actual_parameters)
+{
+   const glsl_type *type = this->return_type;
+   if (type == glsl_type::void_type)
+      return NULL;
+
    /* From the GLSL 1.20 spec, page 23:
     * "Function calls to user-defined functions (non-built-in functions)
     *  cannot be used to form constant expressions."
     */
-   if (!this->callee->is_builtin)
+   if (!this->is_builtin)
       return NULL;
 
    unsigned num_parameters = 0;
 
    /* Check if all parameters are constant */
    ir_constant *op[3];
-   foreach_list(n, &this->actual_parameters) {
+   foreach_list(n, actual_parameters) {
       ir_constant *constant = ((ir_rvalue *) n)->constant_expression_value();
       if (constant == NULL)
 	 return NULL;
@@ -1060,7 +1071,7 @@ ir_call::constant_expression_value()
    ir_constant_data data;
    memset(&data, 0, sizeof(data));
 
-   const char *callee = this->callee_name();
+   const char *callee = this->function_name();
    if (strcmp(callee, "abs") == 0) {
       expr = new(mem_ctx) ir_expression(ir_unop_abs, type, op[0], NULL);
    } else if (strcmp(callee, "all") == 0) {
@@ -1108,7 +1119,7 @@ ir_call::constant_expression_value()
       for (unsigned c = 0; c < op[0]->type->components(); c++)
 	 data.f[c] = atanhf(op[0]->value.f[c]);
    } else if (strcmp(callee, "dFdx") == 0 || strcmp(callee, "dFdy") == 0) {
-      return ir_constant::zero(mem_ctx, this->type);
+      return ir_constant::zero(mem_ctx, type);
    } else if (strcmp(callee, "ceil") == 0) {
       expr = new(mem_ctx) ir_expression(ir_unop_ceil, type, op[0], NULL);
    } else if (strcmp(callee, "clamp") == 0) {
@@ -1199,7 +1210,7 @@ ir_call::constant_expression_value()
    } else if (strcmp(callee, "fract") == 0) {
       expr = new(mem_ctx) ir_expression(ir_unop_fract, type, op[0], NULL);
    } else if (strcmp(callee, "fwidth") == 0) {
-      return ir_constant::zero(mem_ctx, this->type);
+      return ir_constant::zero(mem_ctx, type);
    } else if (strcmp(callee, "greaterThan") == 0) {
       assert(op[0]->type->is_vector() && op[1] && op[1]->type->is_vector());
       for (unsigned c = 0; c < op[0]->type->components(); c++) {
@@ -1305,7 +1316,7 @@ ir_call::constant_expression_value()
       float length = sqrtf(dot(op[0], op[0]));
 
       if (length == 0)
-	 return ir_constant::zero(mem_ctx, this->type);
+	 return ir_constant::zero(mem_ctx, type);
 
       for (unsigned c = 0; c < op[0]->type->components(); c++)
 	 data.f[c] = op[0]->value.f[c] / length;
@@ -1356,7 +1367,7 @@ ir_call::constant_expression_value()
       const float dot_NI = dot(op[1], op[0]);
       const float k = 1.0F - eta * eta * (1.0F - dot_NI * dot_NI);
       if (k < 0.0) {
-	 return ir_constant::zero(mem_ctx, this->type);
+	 return ir_constant::zero(mem_ctx, type);
       } else {
 	 for (unsigned c = 0; c < type->components(); c++) {
 	    data.f[c] = eta * op[0]->value.f[c] - (eta * dot_NI + sqrtf(k))
@@ -1425,5 +1436,5 @@ ir_call::constant_expression_value()
    if (expr != NULL)
       return expr->constant_expression_value();
 
-   return new(mem_ctx) ir_constant(this->type, &data);
+   return new(mem_ctx) ir_constant(type, &data);
 }
