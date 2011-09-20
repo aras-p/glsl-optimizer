@@ -884,6 +884,7 @@ struct gl_fog_attrib
    GLboolean ColorSumEnabled;
    GLenum FogCoordinateSource;  /**< GL_EXT_fog_coord */
    GLfloat _Scale;		/**< (End == Start) ? 1.0 : 1.0 / (End - Start) */
+   GLenum FogDistanceMode;     /**< GL_NV_fog_distance */
 };
 
 
@@ -2902,6 +2903,7 @@ struct gl_extensions
    GLboolean MESA_texture_array;
    GLboolean NV_blend_square;
    GLboolean NV_conditional_render;
+   GLboolean NV_fog_distance;
    GLboolean NV_fragment_program;
    GLboolean NV_fragment_program_option;
    GLboolean NV_light_max_exponent;

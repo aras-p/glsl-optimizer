@@ -172,6 +172,19 @@ _mesa_Fogfv( GLenum pname, const GLfloat *params )
 	 ctx->Fog.FogCoordinateSource = p;
 	 break;
       }
+      case GL_FOG_DISTANCE_MODE_NV: {
+	 GLenum p = (GLenum) (GLint) *params;
+         if (!ctx->Extensions.NV_fog_distance ||
+             (p != GL_EYE_RADIAL_NV && p != GL_EYE_PLANE && p != GL_EYE_PLANE_ABSOLUTE_NV)) {
+	    _mesa_error(ctx, GL_INVALID_ENUM, "glFog");
+	    return;
+	 }
+	 if (ctx->Fog.FogDistanceMode == p)
+	    return;
+	 FLUSH_VERTICES(ctx, _NEW_FOG);
+	 ctx->Fog.FogDistanceMode = p;
+	 break;
+      }
       default:
          _mesa_error( ctx, GL_INVALID_ENUM, "glFog" );
          return;
@@ -201,4 +214,5 @@ void _mesa_init_fog( struct gl_context * ctx )
    ctx->Fog.ColorSumEnabled = GL_FALSE;
    ctx->Fog.FogCoordinateSource = GL_FRAGMENT_DEPTH_EXT;
    ctx->Fog._Scale = 1.0f;
+   ctx->Fog.FogDistanceMode = GL_EYE_PLANE_ABSOLUTE_NV;
 }

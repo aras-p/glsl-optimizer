@@ -287,6 +287,7 @@ static const struct extension extension_table[] = {
    { "GL_NV_depth_clamp",                          o(ARB_depth_clamp),                         GL,             2001 },
    { "GL_NV_draw_buffers",                         o(dummy_true),                                         ES2, 2011 },
    { "GL_NV_fbo_color_attachments",                o(EXT_framebuffer_object),                             ES2, 2010 },
+   { "GL_NV_fog_distance",                         o(NV_fog_distance),                         GL,             2001 },
    { "GL_NV_fragment_program",                     o(NV_fragment_program),                     GL,             2001 },
    { "GL_NV_fragment_program_option",              o(NV_fragment_program_option),              GL,             2005 },
    { "GL_NV_light_max_exponent",                   o(NV_light_max_exponent),                   GL,             1999 },

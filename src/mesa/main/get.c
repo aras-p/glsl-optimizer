@@ -295,6 +295,7 @@ EXTRA_EXT(MESA_texture_array);
 EXTRA_EXT2(EXT_secondary_color, ARB_vertex_program);
 EXTRA_EXT(EXT_secondary_color);
 EXTRA_EXT(EXT_fog_coord);
+EXTRA_EXT(NV_fog_distance);
 EXTRA_EXT(EXT_texture_filter_anisotropic);
 EXTRA_EXT(IBM_rasterpos_clip);
 EXTRA_EXT(NV_point_sprite);
@@ -971,6 +972,10 @@ static const struct value_desc values[] = {
      extra_EXT_fog_coord },
    { GL_FOG_COORDINATE_SOURCE_EXT, CONTEXT_ENUM(Fog.FogCoordinateSource),
      extra_EXT_fog_coord },
+
+   /* GL_NV_fog_distance */
+   { GL_FOG_DISTANCE_MODE_NV, CONTEXT_ENUM(Fog.FogDistanceMode),
+     extra_NV_fog_distance },
 
    /* GL_IBM_rasterpos_clip */
    { GL_RASTER_POSITION_UNCLIPPED_IBM,
