@@ -449,4 +449,6 @@ es2_api = es2_core + (
         # GL_OES_get_program_binary
         'GetProgramBinaryOES',
         'ProgramBinaryOES',
+        # GL_NV_draw_buffers
+        'DrawBuffersNV',
 )
