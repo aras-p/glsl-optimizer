@@ -733,6 +733,9 @@ intelInitContext(struct intel_context *intel,
 
    /* GL_EXT_texture_shared_exponent */
    ctx->TextureFormatSupported[MESA_FORMAT_RGB9_E5_FLOAT] = GL_TRUE;
+
+   /* GL_EXT_packed_float */
+   ctx->TextureFormatSupported[MESA_FORMAT_R11_G11_B10_FLOAT] = GL_TRUE;
 #endif
 
 #endif /* !I915 */
