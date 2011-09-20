@@ -1223,7 +1223,7 @@ blitframebuffer_texture(struct gl_context *ctx,
 				GL_SKIP_DECODE_EXT);
 	 }
          if (ctx->Extensions.EXT_framebuffer_sRGB) {
-            _mesa_Disable(GL_FRAMEBUFFER_SRGB_EXT);
+            _mesa_set_enable(ctx, GL_FRAMEBUFFER_SRGB_EXT, GL_FALSE);
          }
 
          _mesa_TexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_REPLACE);
@@ -1291,7 +1291,7 @@ blitframebuffer_texture(struct gl_context *ctx,
 	    _mesa_TexParameteri(target, GL_TEXTURE_SRGB_DECODE_EXT, srgbSave);
 	 }
 	 if (ctx->Extensions.EXT_framebuffer_sRGB && fbo_srgb_save) {
-	    _mesa_Enable(GL_FRAMEBUFFER_SRGB_EXT);
+	    _mesa_set_enable(ctx, GL_FRAMEBUFFER_SRGB_EXT, GL_TRUE);
 	 }
 
          /* Done with color buffer */
@@ -2748,7 +2748,7 @@ _mesa_meta_GenerateMipmap(struct gl_context *ctx, GLenum target,
                           GL_SKIP_DECODE_EXT);
    }
    if (ctx->Extensions.EXT_framebuffer_sRGB) {
-      _mesa_Disable(GL_FRAMEBUFFER_SRGB_EXT);
+      _mesa_set_enable(ctx, GL_FRAMEBUFFER_SRGB_EXT, GL_FALSE);
    }
 
    _mesa_set_enable(ctx, target, GL_TRUE);
@@ -2900,7 +2900,7 @@ _mesa_meta_GenerateMipmap(struct gl_context *ctx, GLenum target,
                           srgbDecodeSave);
    }
    if (ctx->Extensions.EXT_framebuffer_sRGB && srgbBufferSave) {
-      _mesa_Enable(GL_FRAMEBUFFER_SRGB_EXT);
+      _mesa_set_enable(ctx, GL_FRAMEBUFFER_SRGB_EXT, GL_TRUE);
    }
 
    _mesa_lock_texture(ctx, texObj); /* relock */
@@ -3207,7 +3207,7 @@ decompress_texture_image(struct gl_context *ctx,
                              GL_SKIP_DECODE_EXT);
       }
       if (ctx->Extensions.EXT_framebuffer_sRGB) {
-         _mesa_Disable(GL_FRAMEBUFFER_SRGB_EXT);
+         _mesa_set_enable(ctx, GL_FRAMEBUFFER_SRGB_EXT, GL_FALSE);
       }
 
       /* render quad w/ texture into renderbuffer */
