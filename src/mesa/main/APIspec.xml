@@ -922,45 +922,6 @@
 		<param name="zfail" type="GLenum"/>
 		<param name="zpass" type="GLenum"/>
 	</proto>
-
-	<desc name="fail">
-		<value name="GL_KEEP"/>
-		<value name="GL_ZERO"/>
-		<value name="GL_REPLACE"/>
-		<value name="GL_INCR"/>
-		<value name="GL_DECR"/>
-		<value name="GL_INVERT"/>
-		<value name="GL_INCR_WRAP" category="GLES2.0"/>
-		<value name="GL_DECR_WRAP" category="GLES2.0"/>
-		<value name="GL_INCR_WRAP_OES" category="OES_stencil_wrap"/>
-		<value name="GL_DECR_WRAP_OES" category="OES_stencil_wrap"/>
-	</desc>
-
-	<desc name="zfail">
-		<value name="GL_KEEP"/>
-		<value name="GL_ZERO"/>
-		<value name="GL_REPLACE"/>
-		<value name="GL_INCR"/>
-		<value name="GL_DECR"/>
-		<value name="GL_INVERT"/>
-		<value name="GL_INCR_WRAP" category="GLES2.0"/>
-		<value name="GL_DECR_WRAP" category="GLES2.0"/>
-		<value name="GL_INCR_WRAP_OES" category="OES_stencil_wrap"/>
-		<value name="GL_DECR_WRAP_OES" category="OES_stencil_wrap"/>
-	</desc>
-
-	<desc name="zpass">
-		<value name="GL_KEEP"/>
-		<value name="GL_ZERO"/>
-		<value name="GL_REPLACE"/>
-		<value name="GL_INCR"/>
-		<value name="GL_DECR"/>
-		<value name="GL_INVERT"/>
-		<value name="GL_INCR_WRAP" category="GLES2.0"/>
-		<value name="GL_DECR_WRAP" category="GLES2.0"/>
-		<value name="GL_INCR_WRAP_OES" category="OES_stencil_wrap"/>
-		<value name="GL_DECR_WRAP_OES" category="OES_stencil_wrap"/>
-	</desc>
 </template>
 
 <template name="StencilOpSeparate">
@@ -971,39 +932,6 @@
 		<param name="zfail" type="GLenum"/>
 		<param name="zpass" type="GLenum"/>
 	</proto>
-
-	<desc name="fail">
-		<value name="GL_KEEP"/>
-		<value name="GL_ZERO"/>
-		<value name="GL_REPLACE"/>
-		<value name="GL_INCR"/>
-		<value name="GL_DECR"/>
-		<value name="GL_INVERT"/>
-		<value name="GL_INCR_WRAP"/>
-		<value name="GL_DECR_WRAP"/>
-	</desc>
-
-	<desc name="zfail">
-		<value name="GL_KEEP"/>
-		<value name="GL_ZERO"/>
-		<value name="GL_REPLACE"/>
-		<value name="GL_INCR"/>
-		<value name="GL_DECR"/>
-		<value name="GL_INVERT"/>
-		<value name="GL_INCR_WRAP"/>
-		<value name="GL_DECR_WRAP"/>
-	</desc>
-
-	<desc name="zpass">
-		<value name="GL_KEEP"/>
-		<value name="GL_ZERO"/>
-		<value name="GL_REPLACE"/>
-		<value name="GL_INCR"/>
-		<value name="GL_DECR"/>
-		<value name="GL_INVERT"/>
-		<value name="GL_INCR_WRAP"/>
-		<value name="GL_DECR_WRAP"/>
-	</desc>
 </template>
 
 <template name="DepthFunc">
