@@ -132,6 +132,12 @@ egl_g3d_get_platform(_EGLDriver *drv, _EGLPlatformType plat)
          nplat = native_get_fbdev_platform(&egl_g3d_native_event_handler);
 #endif
          break;
+      case _EGL_PLATFORM_NULL:
+         plat_name = "NULL";
+#ifdef HAVE_NULL_BACKEND
+         nplat = native_get_null_platform(&egl_g3d_native_event_handler);
+#endif
+         break;
       case _EGL_PLATFORM_ANDROID:
          plat_name = "Android";
 #ifdef HAVE_ANDROID_BACKEND

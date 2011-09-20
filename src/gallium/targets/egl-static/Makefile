@@ -63,6 +63,9 @@ endif
 ifneq ($(findstring fbdev, $(EGL_PLATFORMS)),)
 egl_LIBS += $(TOP)/src/gallium/winsys/sw/fbdev/libfbdev.a
 endif
+ifneq ($(findstring null, $(EGL_PLATFORMS)),)
+egl_LIBS += $(TOP)/src/gallium/winsys/sw/null/libws_null.a
+endif
 
 # st/mesa
 ifneq ($(filter $(GL_LIB), $(EGL_CLIENT_APIS)),)

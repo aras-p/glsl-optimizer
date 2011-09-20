@@ -44,8 +44,13 @@ fbdev_SOURCES = $(wildcard fbdev/*.c)
 fbdev_OBJECTS = $(fbdev_SOURCES:.c=.o)
 
 
-ALL_INCLUDES = $(common_INCLUDES) $(x11_INCLUDES) $(drm_INCLUDES) $(fbdev_INCLUDES)
-ALL_SOURCES = $(common_SOURCES) $(x11_SOURCES) $(drm_SOURCES) $(fbdev_SOURCES)
+null_INCLUDES = -I$(TOP)/src/gallium/winsys/sw
+null_SOURCES = $(wildcard null/*.c)
+null_OBJECTS = $(null_SOURCES:.c=.o)
+
+
+ALL_INCLUDES = $(common_INCLUDES) $(x11_INCLUDES) $(drm_INCLUDES) $(fbdev_INCLUDES) $(null_INCLUDES)
+ALL_SOURCES = $(common_SOURCES) $(x11_SOURCES) $(drm_SOURCES) $(fbdev_SOURCES) $(null_SOURCES)
 
 EGL_OBJECTS = $(common_OBJECTS)
 EGL_CPPFLAGS = $(common_INCLUDES)
@@ -67,6 +72,10 @@ endif
 ifneq ($(findstring fbdev, $(EGL_PLATFORMS)),)
 EGL_OBJECTS += $(fbdev_OBJECTS)
 EGL_CPPFLAGS += -DHAVE_FBDEV_BACKEND
+endif
+ifneq ($(findstring null, $(EGL_PLATFORMS)),)
+EGL_OBJECTS += $(null_OBJECTS)
+EGL_CPPFLAGS += -DHAVE_NULL_BACKEND
 endif
 
 ##### TARGETS #####
@@ -110,5 +119,8 @@ $(drm_OBJECTS): %.o: %.c
 
 $(fbdev_OBJECTS): %.o: %.c
 	$(call egl-cc,fbdev)
+
+$(null_OBJECTS): %.o: %.c
+	$(call egl-cc,null)
 
 sinclude depend

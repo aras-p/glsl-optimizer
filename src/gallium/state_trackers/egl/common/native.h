@@ -320,6 +320,9 @@ const struct native_platform *
 native_get_fbdev_platform(const struct native_event_handler *event_handler);
 
 const struct native_platform *
+native_get_null_platform(const struct native_event_handler *event_handler);
+
+const struct native_platform *
 native_get_android_platform(const struct native_event_handler *event_handler);
 
 #ifdef __cplusplus
