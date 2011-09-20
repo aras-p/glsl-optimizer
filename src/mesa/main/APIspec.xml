@@ -730,12 +730,6 @@
 		<param name="face" type="GLenum"/>
 		<param name="mask" type="GLuint"/>
 	</proto>
-
-	<desc name="face">
-		<value name="GL_FRONT"/>
-		<value name="GL_BACK"/>
-		<value name="GL_FRONT_AND_BACK"/>
-	</desc>
 </template>
 
 <template name="ColorMask">
