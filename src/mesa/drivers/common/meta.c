@@ -740,6 +740,11 @@ _mesa_meta_end(struct gl_context *ctx)
 
       _mesa_reference_shader_program(ctx, &ctx->Shader.ActiveProgram,
 				     save->ActiveShader);
+
+      _mesa_reference_shader_program(ctx, &save->VertexShader, NULL);
+      _mesa_reference_shader_program(ctx, &save->GeometryShader, NULL);
+      _mesa_reference_shader_program(ctx, &save->FragmentShader, NULL);
+      _mesa_reference_shader_program(ctx, &save->ActiveShader, NULL);
    }
 
    if (state & MESA_META_STENCIL_TEST) {
