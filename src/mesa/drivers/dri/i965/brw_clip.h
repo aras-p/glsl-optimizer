@@ -44,7 +44,7 @@
 struct brw_clip_prog_key {
    GLbitfield64 attrs;
    GLuint primitive:4;
-   GLuint nr_userclip:3;
+   GLuint nr_userclip:4;
    GLuint do_flat_shading:1;
    GLuint pv_first:1;
    GLuint do_unfilled:1;
@@ -55,7 +55,6 @@ struct brw_clip_prog_key {
    GLuint copy_bfc_cw:1;
    GLuint copy_bfc_ccw:1;
    GLuint clip_mode:3;
-   GLuint pad0:11;
 
    GLfloat offset_factor;
    GLfloat offset_units;
