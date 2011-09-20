@@ -3512,6 +3512,14 @@
 	</proto>
 </template>
 
+<template name="DrawBuffers">
+	<proto>
+		<return type="void"/>
+		<param name="n" type="GLsizei"/>
+		<param name="bufs" type="const GLenum *"/>
+	</proto>
+</template>
+
 <api name="mesa" implementation="true">
 	<category name="MESA"/>
 
@@ -3786,6 +3794,8 @@
         <!-- OES_EGL_image -->
         <function name="EGLImageTargetTexture2DOES" template="EGLImageTargetTexture2D"/>
         <function name="EGLImageTargetRenderbufferStorageOES" template="EGLImageTargetRenderbufferStorage"/>
+
+	<function name="DrawBuffersARB" template="DrawBuffers"/>
 </api>
 
 <api name="GLES1.1">
@@ -4116,6 +4126,9 @@
 	<category name="EXT_blend_minmax"/>
 	<category name="EXT_multi_draw_arrays"/>
 	<category name="OES_EGL_image"/>
+
+	<category name="NV_draw_buffers"/>
+	<function name="DrawBuffersNV" template="DrawBuffers"/>
 
 	<function name="CullFace" template="CullFace"/>
 
