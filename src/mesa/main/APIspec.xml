@@ -220,11 +220,6 @@
 		<return type="void"/>
 		<param name="mode" type="GLenum"/>
 	</proto>
-
-	<desc name="mode">
-		<value name="GL_FLAT"/>
-		<value name="GL_SMOOTH"/>
-	</desc>
 </template>
 
 <template name="TexParameter">
