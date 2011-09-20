@@ -2112,18 +2112,6 @@
 		<return type="void"/>
 		<param name="mode" type="GLenum"/>
 	</proto>
-
-	<desc name="mode">
-		<value name="GL_FUNC_ADD" category="GLES2.0"/>
-		<value name="GL_FUNC_SUBTRACT" category="GLES2.0"/>
-		<value name="GL_FUNC_REVERSE_SUBTRACT" category="GLES2.0"/>
-		<value name="GL_FUNC_ADD_OES" category="OES_blend_subtract"/>
-		<value name="GL_FUNC_SUBTRACT_OES" category="OES_blend_subtract"/>
-		<value name="GL_FUNC_REVERSE_SUBTRACT_OES" category="OES_blend_subtract"/>
-
-		<value name="GL_MIN_EXT" category="EXT_blend_minmax"/>
-		<value name="GL_MAX_EXT" category="EXT_blend_minmax"/>
-	</desc>
 </template>
 
 <template name="BlendEquationSeparate">
@@ -2132,30 +2120,6 @@
 		<param name="modeRGB" type="GLenum"/>
 		<param name="modeAlpha" type="GLenum"/>
 	</proto>
-
-	<desc name="modeRGB">
-		<value name="GL_FUNC_ADD" category="GLES2.0"/>
-		<value name="GL_FUNC_SUBTRACT" category="GLES2.0"/>
-		<value name="GL_FUNC_REVERSE_SUBTRACT" category="GLES2.0"/>
-		<value name="GL_FUNC_ADD_OES" category="OES_blend_subtract"/>
-		<value name="GL_FUNC_SUBTRACT_OES" category="OES_blend_subtract"/>
-		<value name="GL_FUNC_REVERSE_SUBTRACT_OES" category="OES_blend_subtract"/>
-
-		<value name="GL_MIN_EXT" category="EXT_blend_minmax"/>
-		<value name="GL_MAX_EXT" category="EXT_blend_minmax"/>
-	</desc>
-
-	<desc name="modeAlpha">
-		<value name="GL_FUNC_ADD" category="GLES2.0"/>
-		<value name="GL_FUNC_SUBTRACT" category="GLES2.0"/>
-		<value name="GL_FUNC_REVERSE_SUBTRACT" category="GLES2.0"/>
-		<value name="GL_FUNC_ADD_OES" category="OES_blend_subtract"/>
-		<value name="GL_FUNC_SUBTRACT_OES" category="OES_blend_subtract"/>
-		<value name="GL_FUNC_REVERSE_SUBTRACT_OES" category="OES_blend_subtract"/>
-
-		<value name="GL_MIN_EXT" category="EXT_blend_minmax"/>
-		<value name="GL_MAX_EXT" category="EXT_blend_minmax"/>
-	</desc>
 </template>
 
 <template name="TexImage3D">
