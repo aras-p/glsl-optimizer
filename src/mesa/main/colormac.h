@@ -74,11 +74,11 @@ _mesa_unclamped_float_rgba_to_ubyte(GLubyte dst[4], const GLfloat src[4])
 
 #define PACK_COLOR_5551( R, G, B, A )					\
    ((((R) & 0xf8) << 8) | (((G) & 0xf8) << 3) | (((B) & 0xf8) >> 2) |	\
-    ((A) ? 1 : 0))
+    ((A) >> 7))
 
 #define PACK_COLOR_1555( A, B, G, R )					\
    ((((B) & 0xf8) << 7) | (((G) & 0xf8) << 2) | (((R) & 0xf8) >> 3) |	\
-    ((A) ? 0x8000 : 0))
+    (((A) & 0x80) << 8))
 
 #define PACK_COLOR_1555_REV( A, B, G, R )					\
    ((((B) & 0xf8) >> 1) | (((G) & 0xc0) >> 6) | (((G) & 0x38) << 10) | (((R) & 0xf8) << 5) |	\
