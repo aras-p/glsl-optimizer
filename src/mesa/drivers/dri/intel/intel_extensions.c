@@ -132,6 +132,7 @@ intelInitExtensions(struct gl_context *ctx)
       ctx->Extensions.ARB_shader_texture_lod = true;
 #ifdef TEXTURE_FLOAT_ENABLED
       ctx->Extensions.ARB_texture_float = true;
+      ctx->Extensions.EXT_texture_shared_exponent = true;
 #endif
       ctx->Extensions.ARB_texture_compression_rgtc = true;
       ctx->Extensions.ARB_texture_rg = true;

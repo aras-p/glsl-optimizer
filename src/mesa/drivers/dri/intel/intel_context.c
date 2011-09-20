@@ -730,6 +730,9 @@ intelInitContext(struct intel_context *intel,
    ctx->TextureFormatSupported[MESA_FORMAT_LUMINANCE_FLOAT32] = GL_TRUE;
    ctx->TextureFormatSupported[MESA_FORMAT_ALPHA_FLOAT32] = GL_TRUE;
    ctx->TextureFormatSupported[MESA_FORMAT_LUMINANCE_ALPHA_FLOAT32] = GL_TRUE;
+
+   /* GL_EXT_texture_shared_exponent */
+   ctx->TextureFormatSupported[MESA_FORMAT_RGB9_E5_FLOAT] = GL_TRUE;
 #endif
 
 #endif /* !I915 */
