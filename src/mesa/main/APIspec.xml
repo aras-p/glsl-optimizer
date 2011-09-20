@@ -88,11 +88,6 @@
 		<return type="void"/>
 		<param name="mode" type="GLenum"/>
 	</proto>
-
-	<desc name="mode">
-		<value name="GL_CW"/>
-		<value name="GL_CCW"/>
-	</desc>
 </template>
 
 <template name="Hint">
