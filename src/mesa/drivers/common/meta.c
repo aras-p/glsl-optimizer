@@ -3182,7 +3182,7 @@ decompress_texture_image(struct gl_context *ctx,
 
    /* setup texture state */
    _mesa_BindTexture(target, texObj->Name);
-   _mesa_Enable(target);
+   _mesa_set_enable(ctx, target, GL_TRUE);
 
    {
       /* save texture object state */
@@ -3232,6 +3232,9 @@ decompress_texture_image(struct gl_context *ctx,
    /* read pixels from renderbuffer */
    ctx->Pack.RowLength = destRowLength;
    _mesa_ReadPixels(0, 0, width, height, destFormat, destType, dest);
+
+   /* disable texture unit */
+   _mesa_set_enable(ctx, target, GL_FALSE);
 
    _mesa_meta_end(ctx);
 
