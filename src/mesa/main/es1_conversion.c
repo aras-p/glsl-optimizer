@@ -801,47 +801,6 @@ _es_MultMatrixx(const GLfixed *m)
 void GL_APIENTRY
 _es_MultiTexCoord4x(GLenum texture, GLfixed s, GLfixed t, GLfixed r, GLfixed q)
 {
-   switch(texture) {
-   case GL_TEXTURE0:
-   case GL_TEXTURE1:
-   case GL_TEXTURE2:
-   case GL_TEXTURE3:
-   case GL_TEXTURE4:
-   case GL_TEXTURE5:
-   case GL_TEXTURE6:
-   case GL_TEXTURE7:
-   case GL_TEXTURE8:
-   case GL_TEXTURE9:
-   case GL_TEXTURE10:
-   case GL_TEXTURE11:
-   case GL_TEXTURE12:
-   case GL_TEXTURE13:
-   case GL_TEXTURE14:
-   case GL_TEXTURE15:
-   case GL_TEXTURE16:
-   case GL_TEXTURE17:
-   case GL_TEXTURE18:
-   case GL_TEXTURE19:
-   case GL_TEXTURE20:
-   case GL_TEXTURE21:
-   case GL_TEXTURE22:
-   case GL_TEXTURE23:
-   case GL_TEXTURE24:
-   case GL_TEXTURE25:
-   case GL_TEXTURE26:
-   case GL_TEXTURE27:
-   case GL_TEXTURE28:
-   case GL_TEXTURE29:
-   case GL_TEXTURE30:
-   case GL_TEXTURE31:
-      break;
-   default:
-      _mesa_error(_mesa_get_current_context(), GL_INVALID_ENUM,
-                  "glMultiTexCoord4x(texture=0x%x)", texture);
-      return;
-   }
-
-
    _es_MultiTexCoord4f(texture,
                        (GLfloat) (s / 65536.0f),
                        (GLfloat) (t / 65536.0f),
@@ -1041,11 +1000,6 @@ _es_TexEnvx(GLenum target, GLenum pname, GLfixed param)
    case GL_SRC0_ALPHA:
    case GL_SRC1_ALPHA:
    case GL_SRC2_ALPHA:
-      if (param != GL_TEXTURE && param != GL_CONSTANT && param != GL_PRIMARY_COLOR && param != GL_PREVIOUS && param != GL_TEXTURE0 && param != GL_TEXTURE1 && param != GL_TEXTURE2 && param != GL_TEXTURE3 && param != GL_TEXTURE4 && param != GL_TEXTURE5 && param != GL_TEXTURE6 && param != GL_TEXTURE7 && param != GL_TEXTURE8 && param != GL_TEXTURE9 && param != GL_TEXTURE10 && param != GL_TEXTURE11 && param != GL_TEXTURE12 && param != GL_TEXTURE13 && param != GL_TEXTURE14 && param != GL_TEXTURE15 && param != GL_TEXTURE16 && param != GL_TEXTURE17 && param != GL_TEXTURE18 && param != GL_TEXTURE19 && param != GL_TEXTURE20 && param != GL_TEXTURE21 && param != GL_TEXTURE22 && param != GL_TEXTURE23 && param != GL_TEXTURE24 && param != GL_TEXTURE25 && param != GL_TEXTURE26 && param != GL_TEXTURE27 && param != GL_TEXTURE28 && param != GL_TEXTURE29 && param != GL_TEXTURE30 && param != GL_TEXTURE31) {
-         _mesa_error(_mesa_get_current_context(), GL_INVALID_ENUM,
-                     "glTexEnvx(pname=0x%x)", pname);
-         return;
-      }
       convert_param_value = false;
       break;
    case GL_OPERAND0_RGB:
@@ -1167,11 +1121,6 @@ _es_TexEnvxv(GLenum target, GLenum pname, const GLfixed *params)
    case GL_SRC0_ALPHA:
    case GL_SRC1_ALPHA:
    case GL_SRC2_ALPHA:
-      if (params[0] != GL_TEXTURE && params[0] != GL_CONSTANT && params[0] != GL_PRIMARY_COLOR && params[0] != GL_PREVIOUS && params[0] != GL_TEXTURE0 && params[0] != GL_TEXTURE1 && params[0] != GL_TEXTURE2 && params[0] != GL_TEXTURE3 && params[0] != GL_TEXTURE4 && params[0] != GL_TEXTURE5 && params[0] != GL_TEXTURE6 && params[0] != GL_TEXTURE7 && params[0] != GL_TEXTURE8 && params[0] != GL_TEXTURE9 && params[0] != GL_TEXTURE10 && params[0] != GL_TEXTURE11 && params[0] != GL_TEXTURE12 && params[0] != GL_TEXTURE13 && params[0] != GL_TEXTURE14 && params[0] != GL_TEXTURE15 && params[0] != GL_TEXTURE16 && params[0] != GL_TEXTURE17 && params[0] != GL_TEXTURE18 && params[0] != GL_TEXTURE19 && params[0] != GL_TEXTURE20 && params[0] != GL_TEXTURE21 && params[0] != GL_TEXTURE22 && params[0] != GL_TEXTURE23 && params[0] != GL_TEXTURE24 && params[0] != GL_TEXTURE25 && params[0] != GL_TEXTURE26 && params[0] != GL_TEXTURE27 && params[0] != GL_TEXTURE28 && params[0] != GL_TEXTURE29 && params[0] != GL_TEXTURE30 && params[0] != GL_TEXTURE31) {
-         _mesa_error(_mesa_get_current_context(), GL_INVALID_ENUM,
-                     "glTexEnvxv(pname=0x%x)", pname);
-         return;
-      }
       convert_params_value = false;
       n_params = 1;
       break;

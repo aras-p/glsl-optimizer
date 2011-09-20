@@ -2345,10 +2345,6 @@
 			<param name="q" type="GLtype"/>
 		</vector>
 	</proto>
-
-	<desc name="texture">
-		<range base="GL_TEXTURE" from="0" to="31"/>
-	</desc>
 </template>
 
 <template name="CompressedTexImage3D">
@@ -2404,10 +2400,6 @@
 		<return type="void"/>
 		<param name="texture" type="GLenum"/>
 	</proto>
-
-	<desc name="texture">
-		<range base="GL_TEXTURE" from="0" to="31"/>
-	</desc>
 </template>
 
 <template name="ClientActiveTexture">
@@ -2415,10 +2407,6 @@
 		<return type="void"/>
 		<param name="texture" type="GLenum"/>
 	</proto>
-
-	<desc name="texture">
-		<range base="GL_TEXTURE" from="0" to="31"/>
-	</desc>
 </template>
 
 <template name="SampleCoverage">
