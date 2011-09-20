@@ -953,12 +953,6 @@
 		<param name="ref" type="GLint"/>
 		<param name="mask" type="GLuint"/>
 	</proto>
-
-	<desc name="face">
-		<value name="GL_FRONT"/>
-		<value name="GL_BACK"/>
-		<value name="GL_FRONT_AND_BACK"/>
-	</desc>
 </template>
 
 <template name="StencilOp">
@@ -1017,12 +1011,6 @@
 		<param name="zfail" type="GLenum"/>
 		<param name="zpass" type="GLenum"/>
 	</proto>
-
-	<desc name="face">
-		<value name="GL_FRONT"/>
-		<value name="GL_BACK"/>
-		<value name="GL_FRONT_AND_BACK"/>
-	</desc>
 
 	<desc name="fail">
 		<value name="GL_KEEP"/>
