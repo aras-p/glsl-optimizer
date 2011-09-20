@@ -80,13 +80,22 @@ get_fog_mode(unsigned mode)
 }
 
 static unsigned
-get_fog_source(unsigned source)
+get_fog_source(unsigned source, unsigned distance_mode)
 {
 	switch (source) {
 	case GL_FOG_COORDINATE_EXT:
 		return NV10_3D_FOG_COORD_FOG;
 	case GL_FRAGMENT_DEPTH_EXT:
-		return NV10_3D_FOG_COORD_DIST_ORTHOGONAL_ABS;
+		switch (distance_mode) {
+		case GL_EYE_PLANE_ABSOLUTE_NV:
+			return NV10_3D_FOG_COORD_DIST_ORTHOGONAL_ABS;
+		case GL_EYE_PLANE:
+			return NV10_3D_FOG_COORD_DIST_ORTHOGONAL;
+		case GL_EYE_RADIAL_NV:
+			return NV10_3D_FOG_COORD_DIST_RADIAL;
+		default:
+			assert(0);
+		}
 	default:
 		assert(0);
 	}
@@ -135,7 +144,7 @@ nv10_emit_fog(struct gl_context *ctx, int emit)
 
 	BEGIN_RING(chan, celsius, NV10_3D_FOG_MODE, 4);
 	OUT_RING(chan, get_fog_mode(f->Mode));
-	OUT_RING(chan, get_fog_source(source));
+	OUT_RING(chan, get_fog_source(source, f->FogDistanceMode));
 	OUT_RINGb(chan, f->Enabled);
 	OUT_RING(chan, pack_rgba_f(MESA_FORMAT_RGBA8888_REV, f->Color));
 

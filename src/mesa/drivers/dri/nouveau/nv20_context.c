@@ -449,6 +449,7 @@ nv20_context_create(struct nouveau_screen *screen, const struct gl_config *visua
 	ctx->Extensions.ARB_texture_env_crossbar = true;
 	ctx->Extensions.ARB_texture_env_combine = true;
 	ctx->Extensions.ARB_texture_env_dot3 = true;
+	ctx->Extensions.NV_fog_distance = true;
 	ctx->Extensions.NV_texture_rectangle = true;
 
 	/* GL constants. */
