@@ -3114,11 +3114,6 @@
 		<param name="target" type="GLenum"/>
 		<param name="framebuffer" type="GLuint"/>
 	</proto>
-
-	<desc name="target">
-		<value name="GL_FRAMEBUFFER_OES" category="OES_framebuffer_object"/>
-		<value name="GL_FRAMEBUFFER" category="GLES2.0"/>
-	</desc>
 </template>
 
 <template name="DeleteFramebuffers">
@@ -3212,11 +3207,6 @@
 		<param name="renderbuffer" type="GLuint"/>
 	</proto>
 
-	<desc name="target">
-		<value name="GL_FRAMEBUFFER_OES" category="OES_framebuffer_object"/>
-		<value name="GL_FRAMEBUFFER" category="GLES2.0"/>
-	</desc>
-
 	<desc name="renderbuffertarget">
 		<value name="GL_RENDERBUFFER_OES" category="OES_framebuffer_object"/>
 		<value name="GL_RENDERBUFFER" category="GLES2.0"/>
@@ -3232,11 +3222,6 @@
 		<param name="texture" type="GLuint"/>
 		<param name="level" type="GLint"/>
 	</proto>
-
-	<desc name="target">
-		<value name="GL_FRAMEBUFFER_OES" category="OES_framebuffer_object"/>
-		<value name="GL_FRAMEBUFFER" category="GLES2.0"/>
-	</desc>
 
 	<desc name="textarget" error="GL_INVALID_OPERATION">
 		<value name="GL_TEXTURE_2D"/>
@@ -3269,11 +3254,6 @@
 		<param name="zoffset" type="GLint"/>
 	</proto>
 
-	<desc name="target">
-		<value name="GL_FRAMEBUFFER_OES" category="OES_framebuffer_object"/>
-		<value name="GL_FRAMEBUFFER" category="GLES2.0"/>
-	</desc>
-
 	<desc name="textarget" error="GL_INVALID_OPERATION">
 		<value name="GL_TEXTURE_3D_OES" category="OES_texture_3D"/>
 	</desc>
@@ -3284,11 +3264,6 @@
 		<return type="GLenum"/>
 		<param name="target" type="GLenum"/>
 	</proto>
-
-	<desc name="target">
-		<value name="GL_FRAMEBUFFER_OES" category="OES_framebuffer_object"/>
-		<value name="GL_FRAMEBUFFER" category="GLES2.0"/>
-	</desc>
 </template>
 
 <template name="GetFramebufferAttachmentParameter" direction="get">
@@ -3299,11 +3274,6 @@
 		<param name="pname" type="GLenum"/>
 		<vector name="params" type="GLtype *" size="dynamic"/>
 	</proto>
-
-	<desc name="target">
-		<value name="GL_FRAMEBUFFER_OES" category="OES_framebuffer_object"/>
-		<value name="GL_FRAMEBUFFER" category="GLES2.0"/>
-	</desc>
 
 	<desc name="pname">
 		<value name="GL_FRAMEBUFFER_ATTACHMENT_OBJECT_TYPE_OES" category="OES_framebuffer_object"/>

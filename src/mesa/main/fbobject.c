@@ -194,9 +194,11 @@ get_framebuffer_target(struct gl_context *ctx, GLenum target)
 {
    switch (target) {
    case GL_DRAW_FRAMEBUFFER:
-      return ctx->Extensions.EXT_framebuffer_blit ? ctx->DrawBuffer : NULL;
+      return ctx->Extensions.EXT_framebuffer_blit && ctx->API == API_OPENGL
+	 ? ctx->DrawBuffer : NULL;
    case GL_READ_FRAMEBUFFER:
-      return ctx->Extensions.EXT_framebuffer_blit ? ctx->ReadBuffer : NULL;
+      return ctx->Extensions.EXT_framebuffer_blit && ctx->API == API_OPENGL
+	 ? ctx->ReadBuffer : NULL;
    case GL_FRAMEBUFFER_EXT:
       return ctx->DrawBuffer;
    default:
