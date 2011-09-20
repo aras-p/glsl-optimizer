@@ -1336,6 +1336,7 @@ GLNAME(gl_dispatch_functions_start):
 	GL_STUB_ALIAS(GetAttribLocation, 570, GetAttribLocation@8, GetAttribLocationARB, GetAttribLocationARB@8)
 	GL_STUB_ALIAS(DrawBuffers, 571, DrawBuffers@8, DrawBuffersARB, DrawBuffersARB@8)
 	GL_STUB_ALIAS(DrawBuffersATI, 571, DrawBuffersATI@8, DrawBuffersARB, DrawBuffersARB@8)
+	GL_STUB_ALIAS(DrawBuffersNV, 571, DrawBuffersNV@8, DrawBuffersARB, DrawBuffersARB@8)
 	GL_STUB_ALIAS(DrawArraysInstancedEXT, 573, DrawArraysInstancedEXT@16, DrawArraysInstancedARB, DrawArraysInstancedARB@16)
 	GL_STUB_ALIAS(DrawArraysInstanced, 573, DrawArraysInstanced@16, DrawArraysInstancedARB, DrawArraysInstancedARB@16)
 	GL_STUB_ALIAS(DrawElementsInstancedEXT, 574, DrawElementsInstancedEXT@20, DrawElementsInstancedARB, DrawElementsInstancedARB@20)

@@ -774,6 +774,7 @@ GLAPI GLint APIENTRY GLAPI_PREFIX(GetAttribLocation)(GLuint program, const GLcha
 GLAPI void APIENTRY GLAPI_PREFIX(DrawBuffersARB)(GLsizei n, const GLenum *bufs);
 GLAPI void APIENTRY GLAPI_PREFIX(DrawBuffers)(GLsizei n, const GLenum *bufs);
 GLAPI void APIENTRY GLAPI_PREFIX(DrawBuffersATI)(GLsizei n, const GLenum *bufs);
+GLAPI void APIENTRY GLAPI_PREFIX(DrawBuffersNV)(GLsizei n, const GLenum *bufs);
 GLAPI void APIENTRY GLAPI_PREFIX(ClampColorARB)(GLenum target, GLenum clamp);
 GLAPI void APIENTRY GLAPI_PREFIX(DrawArraysInstancedARB)(GLenum mode, GLint first, GLsizei count, GLsizei primcount);
 GLAPI void APIENTRY GLAPI_PREFIX(DrawArraysInstanced)(GLenum mode, GLint first, GLsizei count, GLsizei primcount);
@@ -6589,6 +6590,13 @@ GLAPI void APIENTRY GLAPI_PREFIX(DrawBuffers)(GLsizei n, const GLenum *bufs)
 }
 
 GLAPI void APIENTRY GLAPI_PREFIX(DrawBuffersATI)(GLsizei n, const GLenum *bufs)
+{
+   const struct mapi_table *_tbl = entry_current_get();
+   mapi_func _func = ((const mapi_func *) _tbl)[571];
+   ((void (APIENTRY *)(GLsizei n, const GLenum *bufs)) _func)(n, bufs);
+}
+
+GLAPI void APIENTRY GLAPI_PREFIX(DrawBuffersNV)(GLsizei n, const GLenum *bufs)
 {
    const struct mapi_table *_tbl = entry_current_get();
    mapi_func _func = ((const mapi_func *) _tbl)[571];
@@ -12445,6 +12453,9 @@ STUB_ASM_ENTRY(GLAPI_PREFIX_STR(DrawBuffersARB))"\n"
 
 ".globl "GLAPI_PREFIX_STR(DrawBuffersATI)"\n"
 ".set "GLAPI_PREFIX_STR(DrawBuffersATI)", "GLAPI_PREFIX_STR(DrawBuffersARB)"\n"
+
+".globl "GLAPI_PREFIX_STR(DrawBuffersNV)"\n"
+".set "GLAPI_PREFIX_STR(DrawBuffersNV)", "GLAPI_PREFIX_STR(DrawBuffersARB)"\n"
 
 STUB_ASM_ENTRY(GLAPI_PREFIX_STR(ClampColorARB))"\n"
 "\t"STUB_ASM_CODE("572")"\n"

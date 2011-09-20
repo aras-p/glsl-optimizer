@@ -5512,6 +5512,13 @@ _glapi_create_table_from_handle(void *handle, const char *symbol_prefix) {
     }
 
 
+    if(!disp->DrawBuffersARB) {
+        void ** procp = (void **) &disp->DrawBuffersARB;
+        snprintf(symboln, sizeof(symboln), "%sDrawBuffersNV", symbol_prefix);
+        *procp = dlsym(handle, symboln);
+    }
+
+
     if(!disp->ClampColorARB) {
         void ** procp = (void **) &disp->ClampColorARB;
         snprintf(symboln, sizeof(symboln), "%sClampColorARB", symbol_prefix);

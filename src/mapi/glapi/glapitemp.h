@@ -4638,6 +4638,12 @@ KEYWORD1 void KEYWORD2 NAME(DrawBuffersATI)(GLsizei n, const GLenum * bufs)
    DISPATCH(DrawBuffersARB, (n, bufs), (F, "glDrawBuffersATI(%d, %p);\n", n, (const void *) bufs));
 }
 
+KEYWORD1 void KEYWORD2 NAME(DrawBuffersNV)(GLsizei n, const GLenum * bufs)
+{
+    (void) n; (void) bufs;
+   DISPATCH(DrawBuffersARB, (n, bufs), (F, "glDrawBuffersNV(%d, %p);\n", n, (const void *) bufs));
+}
+
 KEYWORD1 void KEYWORD2 NAME(ClampColorARB)(GLenum target, GLenum clamp)
 {
     (void) target; (void) clamp;
@@ -9454,6 +9460,7 @@ _glapi_proc UNUSED_TABLE_NAME[] = {
    TABLE_ENTRY(GetAttribLocation),
    TABLE_ENTRY(DrawBuffers),
    TABLE_ENTRY(DrawBuffersATI),
+   TABLE_ENTRY(DrawBuffersNV),
    TABLE_ENTRY(DrawArraysInstancedEXT),
    TABLE_ENTRY(DrawArraysInstanced),
    TABLE_ENTRY(DrawElementsInstancedEXT),

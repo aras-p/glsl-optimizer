@@ -1440,6 +1440,7 @@ gl_dispatch_functions_start:
 	GL_STUB_ALIAS(glGetAttribLocation, glGetAttribLocationARB)
 	GL_STUB_ALIAS(glDrawBuffers, glDrawBuffersARB)
 	GL_STUB_ALIAS(glDrawBuffersATI, glDrawBuffersARB)
+	GL_STUB_ALIAS(glDrawBuffersNV, glDrawBuffersARB)
 	GL_STUB_ALIAS(glDrawArraysInstancedEXT, glDrawArraysInstancedARB)
 	GL_STUB_ALIAS(glDrawArraysInstanced, glDrawArraysInstancedARB)
 	GL_STUB_ALIAS(glDrawElementsInstancedEXT, glDrawElementsInstancedARB)

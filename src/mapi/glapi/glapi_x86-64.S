@@ -36997,6 +36997,7 @@ GL_PREFIX(EGLImageTargetTexture2DOES):
 	.globl GL_PREFIX(GetAttribLocation) ; .set GL_PREFIX(GetAttribLocation), GL_PREFIX(GetAttribLocationARB)
 	.globl GL_PREFIX(DrawBuffers) ; .set GL_PREFIX(DrawBuffers), GL_PREFIX(DrawBuffersARB)
 	.globl GL_PREFIX(DrawBuffersATI) ; .set GL_PREFIX(DrawBuffersATI), GL_PREFIX(DrawBuffersARB)
+	.globl GL_PREFIX(DrawBuffersNV) ; .set GL_PREFIX(DrawBuffersNV), GL_PREFIX(DrawBuffersARB)
 	.globl GL_PREFIX(DrawArraysInstancedEXT) ; .set GL_PREFIX(DrawArraysInstancedEXT), GL_PREFIX(DrawArraysInstancedARB)
 	.globl GL_PREFIX(DrawArraysInstanced) ; .set GL_PREFIX(DrawArraysInstanced), GL_PREFIX(DrawArraysInstancedARB)
 	.globl GL_PREFIX(DrawElementsInstancedEXT) ; .set GL_PREFIX(DrawElementsInstancedEXT), GL_PREFIX(DrawElementsInstancedARB)
