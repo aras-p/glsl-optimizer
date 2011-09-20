@@ -154,6 +154,22 @@ struct intel_context
       /** Can HiZ be enabled on a depthbuffer of the given format? */
       bool (*is_hiz_depth_format)(struct intel_context *intel,
 	                          gl_format format);
+
+      /**
+       * \name HiZ operations
+       *
+       * See the following sections of the Sandy Bridge PRM, Volume 1, Part2:
+       *   - 7.5.3.1 Depth Buffer Clear
+       *   - 7.5.3.2 Depth Buffer Resolve
+       *   - 7.5.3.3 Hierarchical Depth Buffer Resolve
+       * \{
+       */
+      void (*hiz_resolve_depthbuffer)(struct intel_context *intel,
+				      struct intel_region *depth_region);
+      void (*hiz_resolve_hizbuffer)(struct intel_context *intel,
+				    struct intel_region *depth_region);
+      /** \} */
+
    } vtbl;
 
    GLbitfield Fallback;  /**< mask of INTEL_FALLBACK_x bits */

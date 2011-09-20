@@ -852,6 +852,13 @@ i915_is_hiz_depth_format(struct intel_context *intel,
    return false;
 }
 
+void
+i915_hiz_resolve_noop(struct intel_context *intel,
+		      struct intel_region *region)
+{
+   /* empty */
+}
+
 static void
 i915_invalidate_state(struct intel_context *intel, GLuint new_state)
 {
@@ -880,4 +887,6 @@ i915InitVtbl(struct i915_context *i915)
    i915->intel.vtbl.invalidate_state = i915_invalidate_state;
    i915->intel.vtbl.render_target_supported = i915_render_target_supported;
    i915->intel.vtbl.is_hiz_depth_format = i915_is_hiz_depth_format;
+   i915->intel.vtbl.hiz_resolve_depthbuffer = i915_hiz_resolve_noop;
+   i915->intel.vtbl.hiz_resolve_hizbuffer = i915_hiz_resolve_noop;
 }
