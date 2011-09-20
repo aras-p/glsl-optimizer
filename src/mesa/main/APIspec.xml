@@ -934,25 +934,6 @@
 		<return type="void"/>
 		<param name="opcode" type="GLenum"/>
 	</proto>
-
-	<desc name="opcode">
-		<value name="GL_CLEAR"/>
-		<value name="GL_SET"/>
-		<value name="GL_COPY"/>
-		<value name="GL_COPY_INVERTED"/>
-		<value name="GL_NOOP"/>
-		<value name="GL_INVERT"/>
-		<value name="GL_AND"/>
-		<value name="GL_NAND"/>
-		<value name="GL_OR"/>
-		<value name="GL_NOR"/>
-		<value name="GL_XOR"/>
-		<value name="GL_EQUIV"/>
-		<value name="GL_AND_REVERSE"/>
-		<value name="GL_AND_INVERTED"/>
-		<value name="GL_OR_REVERSE"/>
-		<value name="GL_OR_INVERTED"/>
-	</desc>
 </template>
 
 <template name="StencilFunc">
