@@ -94,6 +94,9 @@ endif
 ifeq ($(firstword $(EGL_PLATFORMS)),fbdev)
 EGL_NATIVE_PLATFORM=_EGL_PLATFORM_FBDEV
 endif
+ifeq ($(firstword $(EGL_PLATFORMS)),null)
+EGL_NATIVE_PLATFORM=_EGL_PLATFORM_NULL
+endif
 
 ifneq ($(findstring x11, $(EGL_PLATFORMS)),)
 LOCAL_CFLAGS += -DHAVE_X11_PLATFORM
@@ -106,6 +109,9 @@ LOCAL_CFLAGS += -DHAVE_DRM_PLATFORM
 endif
 ifneq ($(findstring fbdev, $(EGL_PLATFORMS)),)
 LOCAL_CFLAGS += -DHAVE_FBDEV_PLATFORM
+endif
+ifneq ($(findstring null, $(EGL_PLATFORMS)),)
+LOCAL_CFLAGS += -DHAVE_NULL_PLATFORM
 endif
 
 LOCAL_CFLAGS += \
