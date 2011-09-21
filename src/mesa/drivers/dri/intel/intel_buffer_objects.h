@@ -84,14 +84,7 @@ void intel_upload_finish(struct intel_context *intel);
  */
 void intelInitBufferObjectFuncs(struct dd_function_table *functions);
 
-
-
-/* Are the obj->Name tests necessary?  Unfortunately yes, mesa
- * allocates a couple of gl_buffer_object structs statically, and
- * the Name == 0 test is the only way to identify them and avoid
- * casting them erroneously to our structs.
- */
-static INLINE struct intel_buffer_object *
+static inline struct intel_buffer_object *
 intel_buffer_object(struct gl_buffer_object *obj)
 {
    return (struct intel_buffer_object *) obj;
