@@ -664,6 +664,50 @@ intelGetCompressedTexImage(struct gl_context *ctx, GLenum target, GLint level,
 		       texObj, texImage, GL_TRUE);
 }
 
+/**
+ * Binds a region to a texture image, like it was uploaded by glTexImage2D().
+ *
+ * Used for GLX_EXT_texture_from_pixmap and EGL image extensions,
+ */
+static void
+intel_set_texture_image_region(struct gl_context *ctx,
+			       struct gl_texture_image *image,
+			       struct intel_region *region,
+			       GLenum target,
+			       GLenum internalFormat,
+			       gl_format format)
+{
+   struct intel_context *intel = intel_context(ctx);
+   struct intel_texture_image *intel_image = intel_texture_image(image);
+   struct gl_texture_object *texobj = image->TexObject;
+   struct intel_texture_object *intel_texobj = intel_texture_object(texobj);
+
+   _mesa_init_teximage_fields(&intel->ctx, target, image,
+			      region->width, region->height, 1,
+			      0, internalFormat, format);
+
+   if (intel_image->mt) {
+      intel_miptree_release(intel, &intel_image->mt);
+      assert(!image->Data);
+   }
+
+   intel_image->mt = intel_miptree_create_for_region(intel, target,
+						     image->TexFormat,
+						     region);
+   if (intel_image->mt == NULL)
+       return;
+
+   image->RowStride = region->pitch;
+
+   /* Immediately validate the image to the object. */
+   if (intel_texobj->mt)
+      intel_miptree_release(intel, &intel_texobj->mt);
+   intel_miptree_reference(&intel_texobj->mt, intel_image->mt);
+
+   if (!intel_miptree_match_image(intel_texobj->mt, &intel_image->base.Base))
+      fprintf(stderr, "miptree doesn't match image\n");
+}
+
 void
 intelSetTexBuffer2(__DRIcontext *pDRICtx, GLint target,
 		   GLint texture_format,
@@ -673,8 +717,6 @@ intelSetTexBuffer2(__DRIcontext *pDRICtx, GLint target,
    struct intel_context *intel = pDRICtx->driverPrivate;
    struct gl_context *ctx = &intel->ctx;
    struct intel_texture_object *intelObj;
-   struct intel_texture_image *intelImage;
-   struct intel_mipmap_tree *mt;
    struct intel_renderbuffer *rb;
    struct gl_texture_object *texObj;
    struct gl_texture_image *texImage;
@@ -707,35 +749,10 @@ intelSetTexBuffer2(__DRIcontext *pDRICtx, GLint target,
       texFormat = MESA_FORMAT_ARGB8888;
    }
 
-   mt = intel_miptree_create_for_region(intel, target, texFormat, rb->region);
-   if (mt == NULL)
-       return;
-
    _mesa_lock_texture(&intel->ctx, texObj);
-
-   texImage = _mesa_get_tex_image(&intel->ctx, texObj, target, level);
-   intelImage = intel_texture_image(texImage);
-
-   if (intelImage->mt) {
-      intel_miptree_release(intel, &intelImage->mt);
-      assert(!texImage->Data);
-   }
-   if (intelObj->mt)
-      intel_miptree_release(intel, &intelObj->mt);
-
-   intelObj->mt = mt;
-
-   _mesa_init_teximage_fields(&intel->ctx, target, texImage,
-			      rb->region->width, rb->region->height, 1,
-			      0, internalFormat, texFormat);
-
-   texImage->RowStride = rb->region->pitch;
-   intel_miptree_reference(&intelImage->mt, intelObj->mt);
-
-   if (!intel_miptree_match_image(intelObj->mt, &intelImage->base.Base)) {
-	   fprintf(stderr, "miptree doesn't match image\n");
-   }
-
+   texImage = _mesa_get_tex_image(ctx, texObj, target, level);
+   intel_set_texture_image_region(ctx, texImage, rb->region, target,
+				  internalFormat, texFormat);
    _mesa_unlock_texture(&intel->ctx, texObj);
 }
 
@@ -756,9 +773,6 @@ intel_image_target_texture_2d(struct gl_context *ctx, GLenum target,
 			      GLeglImageOES image_handle)
 {
    struct intel_context *intel = intel_context(ctx);
-   struct intel_texture_object *intelObj = intel_texture_object(texObj);
-   struct intel_texture_image *intelImage = intel_texture_image(texImage);
-   struct intel_mipmap_tree *mt;
    __DRIscreen *screen;
    __DRIimage *image;
 
@@ -768,28 +782,8 @@ intel_image_target_texture_2d(struct gl_context *ctx, GLenum target,
    if (image == NULL)
       return;
 
-   mt = intel_miptree_create_for_region(intel, target, image->format,
-					image->region);
-   if (mt == NULL)
-       return;
-
-   if (intelImage->mt) {
-      intel_miptree_release(intel, &intelImage->mt);
-      assert(!texImage->Data);
-   }
-   if (intelObj->mt)
-      intel_miptree_release(intel, &intelObj->mt);
-
-   intelObj->mt = mt;
-   _mesa_init_teximage_fields(&intel->ctx, target, texImage,
-			      image->region->width, image->region->height, 1,
-			      0, image->internal_format, image->format);
-
-   texImage->RowStride = image->region->pitch;
-   intel_miptree_reference(&intelImage->mt, intelObj->mt);
-
-   if (!intel_miptree_match_image(intelObj->mt, &intelImage->base.Base))
-      fprintf(stderr, "miptree doesn't match image\n");
+   intel_set_texture_image_region(ctx, texImage, image->region,
+				  target, image->internal_format, image->format);
 }
 #endif
 
