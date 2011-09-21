@@ -686,10 +686,7 @@ intel_set_texture_image_region(struct gl_context *ctx,
 			      region->width, region->height, 1,
 			      0, internalFormat, format);
 
-   if (intel_image->mt) {
-      intel_miptree_release(intel, &intel_image->mt);
-      assert(!image->Data);
-   }
+   ctx->Driver.FreeTextureImageBuffer(ctx, image);
 
    intel_image->mt = intel_miptree_create_for_region(intel, target,
 						     image->TexFormat,
