@@ -658,9 +658,6 @@ svga_redefine_user_buffer(struct pipe_context *pipe,
    assert(!sbuf->handle);
    assert(!sbuf->hwbuf);
 
-   /*
-    * We always treat the contents of user-buffers as volatile,
-    * so no particular action needed here.
-    */
-
+   /* use the default action of simply resizing the user buffer's size */
+   u_default_redefine_user_buffer(pipe, resource, offset, size);
 }
