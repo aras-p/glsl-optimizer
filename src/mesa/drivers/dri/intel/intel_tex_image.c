@@ -352,7 +352,7 @@ intelTexImage(struct gl_context * ctx,
    struct intel_context *intel = intel_context(ctx);
    struct intel_texture_object *intelObj = intel_texture_object(texObj);
    struct intel_texture_image *intelImage = intel_texture_image(texImage);
-   GLint texelBytes, sizeInBytes;
+   GLint texelBytes;
    GLuint dstRowStride = 0;
 
    DBG("%s target %s level %d %dx%dx%d border %d\n", __FUNCTION__,
@@ -389,6 +389,10 @@ intelTexImage(struct gl_context * ctx,
        * before, and any lower levels would fit into our miptree.
        */
       intel_miptree_reference(&intelObj->mt, intelImage->mt);
+   } else {
+      /* Allocate fallback texImage->Data storage through swrast. */
+      ctx->Driver.AllocTextureImageBuffer(ctx, texImage, texImage->TexFormat,
+					  width, height, depth);
    }
 
    /* Attempt to use the blitter for PBO image uploads.
@@ -423,24 +427,6 @@ intelTexImage(struct gl_context * ctx,
       }
 
       texImage->RowStride = dstRowStride / intelImage->mt->cpp;
-   }
-   else {
-      /* Allocate regular memory and store the image there temporarily.   */
-      if (_mesa_is_format_compressed(texImage->TexFormat)) {
-         sizeInBytes = _mesa_format_image_size(texImage->TexFormat,
-                                               texImage->Width,
-                                               texImage->Height,
-                                               texImage->Depth);
-         dstRowStride =
-            _mesa_format_row_stride(texImage->TexFormat, width);
-         assert(dims != 3);
-      }
-      else {
-         dstRowStride = width * texelBytes;
-         sizeInBytes = depth * dstRowStride * height;
-      }
-
-      texImage->Data = _mesa_alloc_texmemory(sizeInBytes);
    }
 
    DBG("Upload image %dx%dx%d row_len %d pitch %d pixels %d\n",
