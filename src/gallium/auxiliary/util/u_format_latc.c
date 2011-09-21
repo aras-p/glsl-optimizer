@@ -172,8 +172,6 @@ util_format_latc1_snorm_fetch_rgba_float(float *dst, const uint8_t *src, unsigne
 void
 util_format_latc2_unorm_fetch_rgba_8unorm(uint8_t *dst, const uint8_t *src, unsigned i, unsigned j)
 {
-   puts(__func__);
-
    u_format_unsigned_fetch_texel_rgtc(0, src, i, j, dst, 2);
    u_format_unsigned_fetch_texel_rgtc(0, src + 8, i, j, dst + 1, 2);
 }
