@@ -127,17 +127,12 @@ static VGint setup_constant_buffer(struct shader *shader)
    return param_bytes;
 }
 
-static VGboolean blend_use_shader(struct vg_context *ctx)
+static VGboolean blend_use_shader(struct shader *shader)
 {
+   struct vg_context *ctx = shader->context;
    VGboolean advanced_blending;
 
    switch (ctx->state.vg.blend_mode) {
-   case VG_BLEND_SRC_OVER:
-      advanced_blending =
-         (!paint_is_opaque(ctx->state.vg.fill_paint) ||
-          !paint_is_opaque(ctx->state.vg.stroke_paint)) &&
-         util_format_has_alpha(ctx->draw_buffer->strb->format);
-      break;
    case VG_BLEND_DST_OVER:
    case VG_BLEND_MULTIPLY:
    case VG_BLEND_SCREEN:
@@ -146,6 +141,18 @@ static VGboolean blend_use_shader(struct vg_context *ctx)
    case VG_BLEND_ADDITIVE:
       advanced_blending = VG_TRUE;
       break;
+   case VG_BLEND_SRC_OVER:
+      if (util_format_has_alpha(ctx->draw_buffer->strb->format)) {
+         /* no blending is required if the paints and the image are opaque */
+         advanced_blending = !paint_is_opaque(ctx->state.vg.fill_paint) ||
+                             !paint_is_opaque(ctx->state.vg.stroke_paint);
+         if (!advanced_blending && shader->drawing_image) {
+            advanced_blending =
+               util_format_has_alpha(shader->image->sampler_view->format);
+         }
+         break;
+      }
+      /* fall through */
    default:
       advanced_blending = VG_FALSE;
       break;
@@ -154,11 +161,13 @@ static VGboolean blend_use_shader(struct vg_context *ctx)
    return advanced_blending;
 }
 
-static VGint blend_bind_samplers(struct vg_context *ctx,
+static VGint blend_bind_samplers(struct shader *shader,
                                  struct pipe_sampler_state **samplers,
                                  struct pipe_sampler_view **sampler_views)
 {
-   if (blend_use_shader(ctx)) {
+   if (blend_use_shader(shader)) {
+      struct vg_context *ctx = shader->context;
+
       samplers[2] = &ctx->blend_sampler;
       sampler_views[2] = vg_prepare_blend_surface(ctx);
 
@@ -180,7 +189,6 @@ static VGint setup_samplers(struct shader *shader,
                             struct pipe_sampler_state **samplers,
                             struct pipe_sampler_view **sampler_views)
 {
-   struct vg_context *ctx = shader->context;
    /* a little wonky: we use the num as a boolean that just says
     * whether any sampler/textures have been set. the actual numbering
     * for samplers is always the same:
@@ -202,7 +210,7 @@ static VGint setup_samplers(struct shader *shader,
 
    num += paint_bind_samplers(shader->paint, samplers, sampler_views);
    num += mask_bind_samplers(samplers, sampler_views);
-   num += blend_bind_samplers(ctx, samplers, sampler_views);
+   num += blend_bind_samplers(shader, samplers, sampler_views);
    if (shader->drawing_image && shader->image)
       num += image_bind_samplers(shader->image, samplers, sampler_views);
 
@@ -276,7 +284,7 @@ static void setup_shader_program(struct shader *shader)
    if (shader->color_transform)
       shader_id |= VEGA_COLOR_TRANSFORM_SHADER;
 
-   if (blend_use_shader(ctx)) {
+   if (blend_use_shader(shader)) {
       if (shader->drawing_image && shader->image_mode == VG_DRAW_IMAGE_STENCIL)
          shader_id |= VEGA_ALPHA_PER_CHANNEL_SHADER;
       else
