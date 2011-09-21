@@ -97,11 +97,12 @@ util_fill_rect(ubyte * dst,
                unsigned height,
                union util_color *uc)
 {
+   const struct util_format_description *desc = util_format_description(format);
    unsigned i, j;
    unsigned width_size;
-   int blocksize = util_format_get_blocksize(format);
-   int blockwidth = util_format_get_blockwidth(format);
-   int blockheight = util_format_get_blockheight(format);
+   int blocksize = desc->block.bits / 8;
+   int blockwidth = desc->block.width;
+   int blockheight = desc->block.height;
 
    assert(blocksize > 0);
    assert(blockwidth > 0);
