@@ -976,7 +976,7 @@ static void FETCH(f_rg88)( const struct swrast_texture_image *texImage,
 static void store_texel_rg88(struct swrast_texture_image *texImage,
                              GLint i, GLint j, GLint k, const void *texel)
 {
-   const GLchan *rgba = (const GLubyte *) texel;
+   const GLchan *rgba = (const GLchan *) texel;
    GLushort *dst = TEXEL_ADDR(GLushort, texImage, i, j, k, 1);
    GLubyte r = CHAN_TO_UBYTE(rgba[RCOMP]);
    GLubyte g = CHAN_TO_UBYTE(rgba[GCOMP]);
