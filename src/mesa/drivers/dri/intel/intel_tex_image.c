@@ -195,9 +195,6 @@ try_pbo_upload(struct intel_context *intel,
 
    dst_stride = intelImage->mt->region->pitch;
 
-   if (drm_intel_bo_references(intel->batch.bo, dst_buffer))
-      intel_flush(&intel->ctx);
-
    {
       GLuint offset;
       drm_intel_bo *src_buffer =
