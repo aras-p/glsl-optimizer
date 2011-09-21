@@ -2,13 +2,6 @@
 #include "lp_rast_priv.h"
 #include "lp_state_fs.h"
 
-static INLINE int u_bit_scan(unsigned *mask)
-{
-   int i = ffs(*mask) - 1;
-   *mask &= ~(1 << i);
-   return i;
-}
-
 struct tile {
    int coverage;
    int overdraw;

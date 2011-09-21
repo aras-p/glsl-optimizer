@@ -424,6 +424,22 @@ unsigned ffs( unsigned u )
 #endif
 
 
+/* Destructively loop over all of the bits in a mask as in:
+ *
+ * while (mymask) {
+ *   int i = u_bit_scan(&mymask);
+ *   ... process element i
+ * }
+ * 
+ */
+static INLINE int u_bit_scan(unsigned *mask)
+{
+   int i = ffs(*mask) - 1;
+   *mask &= ~(1 << i);
+   return i;
+}
+
+
 /**
  * Return float bits.
  */
