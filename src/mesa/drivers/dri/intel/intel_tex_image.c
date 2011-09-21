@@ -181,8 +181,9 @@ try_pbo_upload(struct intel_context *intel,
    }
 
    dst_buffer = intel_region_buffer(intel, intelImage->mt->region, INTEL_WRITE_FULL);
+   src_buffer = intel_bufferobj_source(intel, pbo, 64, &src_offset);
    /* note: potential 64-bit ptr to 32-bit int cast */
-   src_offset = (GLuint) (unsigned long) pixels;
+   src_offset += (GLuint) (unsigned long) pixels;
 
    if (unpack->RowLength > 0)
       src_stride = unpack->RowLength;
@@ -195,22 +196,16 @@ try_pbo_upload(struct intel_context *intel,
 
    dst_stride = intelImage->mt->region->pitch;
 
-   {
-      GLuint offset;
-      drm_intel_bo *src_buffer =
-	      intel_bufferobj_source(intel, pbo, 64, &offset);
-
-      if (!intelEmitCopyBlit(intel,
-			     intelImage->mt->cpp,
-			     src_stride, src_buffer,
-			     src_offset + offset, GL_FALSE,
-			     dst_stride, dst_buffer, 0,
-			     intelImage->mt->region->tiling,
-			     0, 0, dst_x, dst_y, width, height,
-			     GL_COPY)) {
-	 DBG("%s: blit failed\n", __FUNCTION__);
-	 return false;
-      }
+   if (!intelEmitCopyBlit(intel,
+			  intelImage->mt->cpp,
+			  src_stride, src_buffer,
+			  src_offset, GL_FALSE,
+			  dst_stride, dst_buffer, 0,
+			  intelImage->mt->region->tiling,
+			  0, 0, dst_x, dst_y, width, height,
+			  GL_COPY)) {
+      DBG("%s: blit failed\n", __FUNCTION__);
+      return false;
    }
 
    DBG("%s: success\n", __FUNCTION__);
