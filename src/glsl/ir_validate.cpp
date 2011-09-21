@@ -541,7 +541,7 @@ ir_validate::visit_enter(ir_assignment *ir)
 ir_visitor_status
 ir_validate::visit_enter(ir_call *ir)
 {
-   ir_function_signature *const callee = ir->get_callee();
+   ir_function_signature *const callee = ir->callee;
 
    if (callee->ir_type != ir_type_function_signature) {
       printf("IR called by ir_call is not ir_function_signature!\n");

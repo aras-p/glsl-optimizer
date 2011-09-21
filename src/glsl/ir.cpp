@@ -1467,11 +1467,6 @@ ir_rvalue::error_value(void *mem_ctx)
    return v;
 }
 
-void
-ir_call::set_callee(ir_function_signature *sig)
-{
-   this->callee = sig;
-}
 
 void
 visit_exec_list(exec_list *list, ir_visitor *visitor)

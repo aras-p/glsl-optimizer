@@ -128,7 +128,7 @@ ir_visitor_status
 ir_constant_variable_visitor::visit_enter(ir_call *ir)
 {
    /* Mark any out parameters as assigned to */
-   exec_list_iterator sig_iter = ir->get_callee()->parameters.iterator();
+   exec_list_iterator sig_iter = ir->callee->parameters.iterator();
    foreach_iter(exec_list_iterator, iter, *ir) {
       ir_rvalue *param_rval = (ir_rvalue *)iter.get();
       ir_variable *param = (ir_variable *)sig_iter.get();

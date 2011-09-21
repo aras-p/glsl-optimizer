@@ -276,7 +276,7 @@ lower_clip_distance_visitor::visit_leave(ir_call *ir)
 {
    void *ctx = ralloc_parent(ir);
 
-   const exec_node *formal_param_node = ir->get_callee()->parameters.head;
+   const exec_node *formal_param_node = ir->callee->parameters.head;
    const exec_node *actual_param_node = ir->actual_parameters.head;
    while (!actual_param_node->is_tail_sentinel()) {
       ir_variable *formal_param = (ir_variable *) formal_param_node;

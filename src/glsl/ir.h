@@ -1072,19 +1072,6 @@ public:
    }
 
    /**
-    * Get the function signature bound to this function call
-    */
-   ir_function_signature *get_callee()
-   {
-      return callee;
-   }
-
-   /**
-    * Set the function call target
-    */
-   void set_callee(ir_function_signature *sig);
-
-   /**
     * Generates an inline version of the function before @ir,
     * storing the return value in return_deref.
     */
@@ -1096,14 +1083,16 @@ public:
     */
    ir_dereference_variable *return_deref;
 
+   /**
+    * The specific function signature being called.
+    */
+   ir_function_signature *callee;
+
    /* List of ir_rvalue of paramaters passed in this call. */
    exec_list actual_parameters;
 
    /** Should this call only bind to a built-in function? */
    bool use_builtin;
-
-private:
-   ir_function_signature *callee;
 };
 
 

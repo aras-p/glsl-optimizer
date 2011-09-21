@@ -398,9 +398,9 @@ public:
        * table.  If it is found, replace it with the value from the table.
        */
       ir_function_signature *sig =
-	 (ir_function_signature *) hash_table_find(this->ht, ir->get_callee());
+	 (ir_function_signature *) hash_table_find(this->ht, ir->callee);
       if (sig != NULL)
-	 ir->set_callee(sig);
+	 ir->callee = sig;
 
       /* Since this may be used before function call parameters are flattened,
        * the children also need to be processed.

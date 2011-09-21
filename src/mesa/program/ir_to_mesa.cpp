@@ -2002,7 +2002,7 @@ void
 ir_to_mesa_visitor::visit(ir_call *ir)
 {
    ir_to_mesa_instruction *call_inst;
-   ir_function_signature *sig = ir->get_callee();
+   ir_function_signature *sig = ir->callee;
    function_entry *entry = get_function_signature(sig);
    int i;
 

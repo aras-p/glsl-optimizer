@@ -101,7 +101,7 @@ public:
 
    virtual ir_visitor_status visit_enter(ir_call *ir)
    {
-      exec_list_iterator sig_iter = ir->get_callee()->parameters.iterator();
+      exec_list_iterator sig_iter = ir->callee->parameters.iterator();
       foreach_iter(exec_list_iterator, iter, *ir) {
 	 ir_rvalue *param_rval = (ir_rvalue *)iter.get();
 	 ir_variable *sig_param = (ir_variable *)sig_iter.get();

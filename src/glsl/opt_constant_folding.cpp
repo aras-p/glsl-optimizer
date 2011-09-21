@@ -118,7 +118,7 @@ ir_visitor_status
 ir_constant_folding_visitor::visit_enter(ir_call *ir)
 {
    /* Attempt to constant fold parameters */
-   exec_list_iterator sig_iter = ir->get_callee()->parameters.iterator();
+   exec_list_iterator sig_iter = ir->callee->parameters.iterator();
    foreach_iter(exec_list_iterator, iter, *ir) {
       ir_rvalue *param_rval = (ir_rvalue *)iter.get();
       ir_variable *sig_param = (ir_variable *)sig_iter.get();

@@ -259,7 +259,7 @@ ir_visitor_status
 ir_constant_propagation_visitor::visit_enter(ir_call *ir)
 {
    /* Do constant propagation on call parameters, but skip any out params */
-   exec_list_iterator sig_param_iter = ir->get_callee()->parameters.iterator();
+   exec_list_iterator sig_param_iter = ir->callee->parameters.iterator();
    foreach_iter(exec_list_iterator, iter, ir->actual_parameters) {
       ir_variable *sig_param = (ir_variable *)sig_param_iter.get();
       ir_rvalue *param = (ir_rvalue *)iter.get();

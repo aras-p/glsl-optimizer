@@ -2439,7 +2439,7 @@ void
 glsl_to_tgsi_visitor::visit(ir_call *ir)
 {
    glsl_to_tgsi_instruction *call_inst;
-   ir_function_signature *sig = ir->get_callee();
+   ir_function_signature *sig = ir->callee;
    function_entry *entry = get_function_signature(sig);
    int i;
 

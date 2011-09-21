@@ -217,7 +217,7 @@ public:
       if (this->current == NULL)
 	 return visit_continue;
 
-      function *const target = this->get_function(call->get_callee());
+      function *const target = this->get_function(call->callee);
 
       /* Create a link from the caller to the callee.
        */
