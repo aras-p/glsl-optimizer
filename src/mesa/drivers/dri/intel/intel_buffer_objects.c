@@ -79,30 +79,6 @@ intel_bufferobj_alloc(struct gl_context * ctx, GLuint name, GLenum target)
    return &obj->Base;
 }
 
-/* Break the COW tie to the region.  The region gets to keep the data.
- */
-void
-intel_bufferobj_release_region(struct intel_buffer_object *intel_obj)
-{
-   assert(intel_obj->region->buffer == intel_obj->buffer);
-   intel_obj->region->pbo = NULL;
-   intel_obj->region = NULL;
-
-   release_buffer(intel_obj);
-}
-
-/* Break the COW tie to the region.  Both the pbo and the region end
- * up with a copy of the data.
- */
-void
-intel_bufferobj_cow(struct intel_context *intel,
-                    struct intel_buffer_object *intel_obj)
-{
-   assert(intel_obj->region);
-   intel_region_cow(intel, intel_obj->region);
-}
-
-
 /**
  * Deallocate/free a vertex/pixel buffer object.
  * Called via glDeleteBuffersARB().
@@ -122,9 +98,6 @@ intel_bufferobj_free(struct gl_context * ctx, struct gl_buffer_object *obj)
       intel_bufferobj_unmap(ctx, obj);
 
    free(intel_obj->sys_buffer);
-   if (intel_obj->region) {
-      intel_bufferobj_release_region(intel_obj);
-   }
 
    drm_intel_bo_unreference(intel_obj->buffer);
    free(intel_obj);
@@ -159,9 +132,6 @@ intel_bufferobj_data(struct gl_context * ctx,
    intel_obj->Base.Usage = usage;
 
    assert(!obj->Pointer); /* Mesa should have unmapped it */
-
-   if (intel_obj->region)
-      intel_bufferobj_release_region(intel_obj);
 
    if (intel_obj->buffer != NULL)
       release_buffer(intel_obj);
@@ -218,9 +188,6 @@ intel_bufferobj_subdata(struct gl_context * ctx,
       return;
 
    assert(intel_obj);
-
-   if (intel_obj->region)
-      intel_bufferobj_cow(intel, intel_obj);
 
    /* If we have a single copy in system memory, update that */
    if (intel_obj->sys_buffer) {
@@ -346,9 +313,6 @@ intel_bufferobj_map_range(struct gl_context * ctx,
       free(intel_obj->sys_buffer);
       intel_obj->sys_buffer = NULL;
    }
-
-   if (intel_obj->region)
-      intel_bufferobj_cow(intel, intel_obj);
 
    /* If the mapping is synchronized with other GL operations, flush
     * the batchbuffer so that GEM knows about the buffer access for later
@@ -510,15 +474,6 @@ intel_bufferobj_buffer(struct intel_context *intel,
                        struct intel_buffer_object *intel_obj,
 		       GLuint flag)
 {
-   if (intel_obj->region) {
-      if (flag == INTEL_WRITE_PART)
-         intel_bufferobj_cow(intel, intel_obj);
-      else if (flag == INTEL_WRITE_FULL) {
-         intel_bufferobj_release_region(intel_obj);
-	 intel_bufferobj_alloc_buffer(intel, intel_obj);
-      }
-   }
-
    if (intel_obj->source)
       release_buffer(intel_obj);
 

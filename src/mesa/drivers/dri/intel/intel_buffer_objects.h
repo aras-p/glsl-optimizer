@@ -31,7 +31,6 @@
 #include "main/mtypes.h"
 
 struct intel_context;
-struct intel_region;
 struct gl_buffer_object;
 
 
@@ -46,10 +45,6 @@ struct intel_buffer_object
 
    /** System memory buffer data, if not using a BO to store the data. */
    void *sys_buffer;
-
-   struct intel_region *region; /* Is there a zero-copy texture
-                                   associated with this (pixel)
-                                   buffer object? */
 
    drm_intel_bo *range_map_bo;
    void *range_map_buffer;
@@ -101,12 +96,5 @@ intel_buffer_object(struct gl_buffer_object *obj)
 {
    return (struct intel_buffer_object *) obj;
 }
-
-/* Helpers for zerocopy image uploads.  See also intel_regions.h:
- */
-void intel_bufferobj_cow(struct intel_context *intel,
-                         struct intel_buffer_object *intel_obj);
-void intel_bufferobj_release_region(struct intel_buffer_object *intel_obj);
-
 
 #endif

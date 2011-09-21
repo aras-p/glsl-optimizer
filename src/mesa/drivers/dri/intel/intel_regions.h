@@ -63,7 +63,6 @@ struct intel_region
    GLuint map_refcount;  /**< Reference count for mapping */
 
    uint32_t tiling; /**< Which tiling mode the region is in */
-   struct intel_buffer_object *pbo;     /* zero-copy uploads */
 
    uint32_t name; /**< Global name for the bo */
    struct intel_screen *screen;
@@ -124,16 +123,6 @@ intel_region_copy(struct intel_context *intel,
 		  GLuint srcx, GLuint srcy, GLuint width, GLuint height,
 		  GLboolean flip,
 		  GLenum logicop);
-
-/* Helpers for zerocopy uploads, particularly texture image uploads:
- */
-void intel_region_attach_pbo(struct intel_context *intel,
-                             struct intel_region *region,
-                             struct intel_buffer_object *pbo);
-void intel_region_release_pbo(struct intel_context *intel,
-                              struct intel_region *region);
-void intel_region_cow(struct intel_context *intel,
-                      struct intel_region *region);
 
 drm_intel_bo *intel_region_buffer(struct intel_context *intel,
 				  struct intel_region *region,

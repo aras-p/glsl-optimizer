@@ -213,49 +213,6 @@ try_pbo_upload(struct intel_context *intel,
    return GL_TRUE;
 }
 
-
-static GLboolean
-try_pbo_zcopy(struct intel_context *intel,
-              struct intel_texture_image *intelImage,
-              const struct gl_pixelstore_attrib *unpack,
-              GLint width, const void *pixels)
-{
-   struct intel_buffer_object *pbo = intel_buffer_object(unpack->BufferObj);
-   GLuint src_offset, src_stride;
-   GLuint dst_x, dst_y, dst_stride;
-
-   if (!_mesa_is_bufferobj(unpack->BufferObj) ||
-       intel->ctx._ImageTransferState ||
-       unpack->SkipPixels || unpack->SkipRows) {
-      DBG("%s: failure 1\n", __FUNCTION__);
-      return GL_FALSE;
-   }
-
-   /* note: potential 64-bit ptr to 32-bit int cast */
-   src_offset = (GLuint) (unsigned long) pixels;
-
-   if (unpack->RowLength > 0)
-      src_stride = unpack->RowLength;
-   else
-      src_stride = width;
-
-   intel_miptree_get_image_offset(intelImage->mt, intelImage->base.Base.Level,
-				  intelImage->base.Base.Face, 0,
-				  &dst_x, &dst_y);
-
-   dst_stride = intelImage->mt->region->pitch;
-
-   if (src_stride != dst_stride || dst_x != 0 || dst_y != 0 ||
-       src_offset != 0) {
-      DBG("%s: failure 2\n", __FUNCTION__);
-      return GL_FALSE;
-   }
-
-   intel_region_attach_pbo(intel, intelImage->mt->region, pbo);
-
-   return GL_TRUE;
-}
-
 /**
  * \param scatter Scatter if true. Gather if false.
  *
@@ -450,23 +407,6 @@ intelTexImage(struct gl_context * ctx,
                         type, intelImage->base.Base.TexFormat)) {
 
       DBG("trying pbo upload\n");
-
-      /* Attempt to texture directly from PBO data (zero copy upload).
-       *
-       * Currently disable as it can lead to worse as well as better
-       * performance (in particular when intel_region_cow() is
-       * required).
-       */
-      if (intelObj->mt == intelImage->mt &&
-          intelObj->mt->first_level == level &&
-          intelObj->mt->last_level == level) {
-
-         if (try_pbo_zcopy(intel, intelImage, unpack, width, pixels)) {
-            DBG("pbo zcopy upload succeeded\n");
-            return;
-         }
-      }
-
 
       /* Otherwise, attempt to use the blitter for PBO image uploads.
        */
