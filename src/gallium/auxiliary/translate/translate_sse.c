@@ -35,7 +35,7 @@
 #include "translate.h"
 
 
-#if defined(PIPE_ARCH_X86) || (defined(PIPE_ARCH_X86_64) && !defined(__MINGW32__))
+#if (defined(PIPE_ARCH_X86) || (defined(PIPE_ARCH_X86_64) && !defined(__MINGW32__))) && !defined(PIPE_SUBSYSTEM_EMBEDDED)
 
 #include "rtasm/rtasm_cpu.h"
 #include "rtasm/rtasm_x86sse.h"
