@@ -365,7 +365,7 @@ struct vg_mask_layer * mask_layer_create(VGint width, VGint height)
       mask->sampler_view = view;
    }
 
-   vg_context_add_object(ctx, VG_OBJECT_MASK, mask);
+   vg_context_add_object(ctx, &mask->base);
 
    return mask;
 }
@@ -374,7 +374,7 @@ void mask_layer_destroy(struct vg_mask_layer *layer)
 {
    struct vg_context *ctx = vg_current_context();
 
-   vg_context_remove_object(ctx, VG_OBJECT_MASK, layer);
+   vg_context_remove_object(ctx, &layer->base);
    pipe_sampler_view_reference(&layer->sampler_view, NULL);
    FREE(layer);
 }

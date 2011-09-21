@@ -138,7 +138,7 @@ struct vg_font *font_create(VGint glyphCapacityHint)
    vg_init_object(&font->base, ctx, VG_OBJECT_FONT);
    font->glyphs = cso_hash_create();
 
-   vg_context_add_object(ctx, VG_OBJECT_FONT, font);
+   vg_context_add_object(ctx, &font->base);
 
    return font;
 }
@@ -148,7 +148,7 @@ void font_destroy(struct vg_font *font)
    struct vg_context *ctx = vg_current_context();
    struct cso_hash_iter iter;
 
-   vg_context_remove_object(ctx, VG_OBJECT_FONT, font);
+   vg_context_remove_object(ctx, &font->base);
 
    iter = cso_hash_first_node(font->glyphs);
    while (!cso_hash_iter_is_null(iter)) {

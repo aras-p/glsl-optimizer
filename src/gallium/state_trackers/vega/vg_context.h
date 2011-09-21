@@ -161,11 +161,9 @@ VGboolean vg_context_is_object_valid(struct vg_context *ctx,
                                      enum vg_object_type type,
                                      VGHandle object);
 void vg_context_add_object(struct vg_context *ctx,
-                           enum vg_object_type type,
-                           void *ptr);
+                           struct vg_object *obj);
 void vg_context_remove_object(struct vg_context *ctx,
-                              enum vg_object_type type,
-                              void *ptr);
+                              struct vg_object *obj);
 
 void vg_validate_state(struct vg_context *ctx);
 

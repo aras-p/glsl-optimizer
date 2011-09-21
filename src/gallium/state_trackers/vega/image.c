@@ -287,7 +287,7 @@ struct vg_image * image_create(VGImageFormat format,
 
    image->sampler_view = view;
 
-   vg_context_add_object(ctx, VG_OBJECT_IMAGE, image);
+   vg_context_add_object(ctx, &image->base);
 
    image_cleari(image, 0, 0, 0, image->width, image->height);
    return image;
@@ -296,7 +296,7 @@ struct vg_image * image_create(VGImageFormat format,
 void image_destroy(struct vg_image *img)
 {
    struct vg_context *ctx = vg_current_context();
-   vg_context_remove_object(ctx, VG_OBJECT_IMAGE, img);
+   vg_context_remove_object(ctx, &img->base);
 
 
    if (img->parent) {
@@ -502,7 +502,7 @@ struct vg_image * image_child_image(struct vg_image *parent,
    array_append_data(parent->children_array,
                      &image, 1);
 
-   vg_context_add_object(ctx, VG_OBJECT_IMAGE, image);
+   vg_context_add_object(ctx, &image->base);
 
    return image;
 }

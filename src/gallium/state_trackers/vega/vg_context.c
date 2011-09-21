@@ -196,38 +196,36 @@ void vg_free_object(struct vg_object *obj)
 
 VGboolean vg_context_is_object_valid(struct vg_context *ctx,
                                 enum vg_object_type type,
-                                VGHandle object)
+                                VGHandle handle)
 {
     if (ctx) {
        struct cso_hash *hash = ctx->owned_objects[type];
        if (!hash)
           return VG_FALSE;
-       return cso_hash_contains(hash, (unsigned)(long)object);
+       return cso_hash_contains(hash, (unsigned) handle);
     }
     return VG_FALSE;
 }
 
 void vg_context_add_object(struct vg_context *ctx,
-                           enum vg_object_type type,
-                           void *ptr)
+                           struct vg_object *obj)
 {
     if (ctx) {
-       struct cso_hash *hash = ctx->owned_objects[type];
+       struct cso_hash *hash = ctx->owned_objects[obj->type];
        if (!hash)
           return;
-       cso_hash_insert(hash, (unsigned)(long)ptr, ptr);
+       cso_hash_insert(hash, (unsigned) obj->handle, obj);
     }
 }
 
 void vg_context_remove_object(struct vg_context *ctx,
-                              enum vg_object_type type,
-                              void *ptr)
+                              struct vg_object *obj)
 {
    if (ctx) {
-      struct cso_hash *hash = ctx->owned_objects[type];
+      struct cso_hash *hash = ctx->owned_objects[obj->type];
       if (!hash)
          return;
-      cso_hash_take(hash, (unsigned)(long)ptr);
+      cso_hash_take(hash, (unsigned) obj->handle);
    }
 }
 
