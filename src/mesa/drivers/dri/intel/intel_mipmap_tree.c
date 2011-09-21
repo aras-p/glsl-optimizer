@@ -173,9 +173,17 @@ void
 intel_miptree_reference(struct intel_mipmap_tree **dst,
                         struct intel_mipmap_tree *src)
 {
-   src->refcount++;
+   if (*dst == src)
+      return;
+
+   intel_miptree_release(dst);
+
+   if (src) {
+      src->refcount++;
+      DBG("%s %p refcount now %d\n", __FUNCTION__, src, src->refcount);
+   }
+
    *dst = src;
-   DBG("%s %p refcount now %d\n", __FUNCTION__, src, src->refcount);
 }
 
 

@@ -370,8 +370,6 @@ intelTexImage(struct gl_context * ctx,
       }
    }
 
-   assert(!intelImage->mt);
-
    if (intelObj->mt &&
        intel_miptree_match_image(intelObj->mt, &intelImage->base.Base)) {
       /* Use an existing miptree when possible */
@@ -391,10 +389,7 @@ intelTexImage(struct gl_context * ctx,
        * whole object since our level didn't fit what was there
        * before, and any lower levels would fit into our miptree.
        */
-      if (intelImage->mt) {
-	 intel_miptree_release(&intelObj->mt);
-	 intel_miptree_reference(&intelObj->mt, intelImage->mt);
-      }
+      intel_miptree_reference(&intelObj->mt, intelImage->mt);
    }
 
    /* Attempt to use the blitter for PBO image uploads.

@@ -43,8 +43,6 @@ copy_image_data_to_tree(struct intel_context *intel,
                                intelObj->mt,
                                intelImage->base.Base.Face,
                                intelImage->base.Base.Level, intelImage->mt);
-
-      intel_miptree_release(&intelImage->mt);
    }
    else {
       assert(intelImage->base.Base.Data != NULL);
