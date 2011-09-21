@@ -556,7 +556,7 @@ finalize_function(struct gallivm_state *gallivm,
 
    lp_func_delete_body(function);
 
-   return f;
+   return (lp_jit_setup_triangle) pointer_to_func(f);
 }
 
 /* XXX: Generic code:
