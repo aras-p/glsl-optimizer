@@ -58,6 +58,7 @@ struct rc_dst_register {
 	unsigned int File:3;
 	unsigned int Index:RC_REGISTER_INDEX_BITS;
 	unsigned int WriteMask:4;
+	unsigned int Pred:2;
 };
 
 struct rc_presub_instruction {

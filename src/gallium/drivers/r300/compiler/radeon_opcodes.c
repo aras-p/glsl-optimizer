@@ -437,6 +437,78 @@ struct rc_opcode_info rc_opcodes[MAX_RC_OPCODE] = {
 	{
 		.Opcode = RC_OPCODE_KILP,
 		.Name = "KILP",
+	},
+	{
+		.Opcode = RC_ME_PRED_SEQ,
+		.Name = "ME_PRED_SEQ",
+		.NumSrcRegs = 1,
+		.HasDstReg = 1
+	},
+	{
+		.Opcode = RC_ME_PRED_SGT,
+		.Name = "ME_PRED_SGT",
+		.NumSrcRegs = 1,
+		.HasDstReg = 1
+	},
+	{
+		.Opcode = RC_ME_PRED_SGE,
+		.Name = "ME_PRED_SGE",
+		.NumSrcRegs = 1,
+		.HasDstReg = 1
+	},
+	{
+		.Opcode = RC_ME_PRED_SNEQ,
+		.Name = "ME_PRED_SNEQ",
+		.NumSrcRegs = 1,
+		.HasDstReg = 1
+	},
+	{
+		.Opcode = RC_ME_PRED_SET_CLR,
+		.Name = "ME_PRED_SET_CLEAR",
+		.NumSrcRegs = 1,
+		.HasDstReg = 1
+	},
+	{
+		.Opcode = RC_ME_PRED_SET_INV,
+		.Name = "ME_PRED_SET_INV",
+		.NumSrcRegs = 1,
+		.HasDstReg = 1
+	},
+	{
+		.Opcode = RC_ME_PRED_SET_POP,
+		.Name = "ME_PRED_SET_POP",
+		.NumSrcRegs = 1,
+		.HasDstReg = 1
+	},
+	{
+		.Opcode = RC_ME_PRED_SET_RESTORE,
+		.Name = "ME_PRED_SET_RESTORE",
+		.NumSrcRegs = 1,
+		.HasDstReg = 1
+	},
+	{
+		.Opcode = RC_VE_PRED_SEQ_PUSH,
+		.Name = "VE_PRED_SEQ_PUSH",
+		.NumSrcRegs = 2,
+		.HasDstReg = 1
+	},
+	{
+		.Opcode = RC_VE_PRED_SGT_PUSH,
+		.Name = "VE_PRED_SGT_PUSH",
+		.NumSrcRegs = 2,
+		.HasDstReg = 1
+	},
+	{
+		.Opcode = RC_VE_PRED_SGE_PUSH,
+		.Name = "VE_PRED_SGE_PUSH",
+		.NumSrcRegs = 2,
+		.HasDstReg = 1
+	},
+	{
+		.Opcode = RC_VE_PRED_SNEQ_PUSH,
+		.Name = "VE_PRED_SNEQ_PUSH",
+		.NumSrcRegs = 2,
+		.HasDstReg = 1
 	}
 };
 

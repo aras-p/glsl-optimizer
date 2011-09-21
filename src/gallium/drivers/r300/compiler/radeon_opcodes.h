@@ -217,6 +217,21 @@ typedef enum {
 	/** Stop execution of the shader (GLSL discard) */
 	RC_OPCODE_KILP,
 
+	/* Vertex shader CF Instructions */
+	RC_ME_PRED_SEQ,
+	RC_ME_PRED_SGT,
+	RC_ME_PRED_SGE,
+	RC_ME_PRED_SNEQ,
+	RC_ME_PRED_SET_CLR,
+	RC_ME_PRED_SET_INV,
+	RC_ME_PRED_SET_POP,
+	RC_ME_PRED_SET_RESTORE,
+
+	RC_VE_PRED_SEQ_PUSH,
+	RC_VE_PRED_SGT_PUSH,
+	RC_VE_PRED_SGE_PUSH,
+	RC_VE_PRED_SNEQ_PUSH,
+
 	MAX_RC_OPCODE
 } rc_opcode;
 

@@ -46,6 +46,7 @@ C_SOURCES := \
 	compiler/radeon_optimize.c \
 	compiler/radeon_remove_constants.c \
 	compiler/radeon_rename_regs.c \
+	compiler/radeon_vert_fc.c \
 	compiler/radeon_variable.c \
 	compiler/r3xx_fragprog.c \
 	compiler/r300_fragprog.c \

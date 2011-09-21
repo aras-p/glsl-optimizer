@@ -329,6 +329,12 @@ static void rc_print_normal_instruction(FILE * f, struct rc_instruction * inst, 
 		fprintf(f, ")]");
 	}
 
+	if (inst->U.I.DstReg.Pred == RC_PRED_SET) {
+		fprintf(f, " PRED_SET");
+	} else if (inst->U.I.DstReg.Pred == RC_PRED_INV) {
+		fprintf(f, " PRED_INV");
+	}
+
 	fprintf(f, "\n");
 }
 

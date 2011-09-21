@@ -40,6 +40,9 @@
 #define R500_PFS_MAX_BRANCH_DEPTH_FULL 32
 #define R500_PFS_MAX_BRANCH_DEPTH_PARTIAL 4
 
+/* The r500 maximum depth is not just for loops, but any combination of loops
+ * and subroutine jumps. */
+#define R500_PVS_MAX_LOOP_DEPTH 8
 
 #define STATE_R300_WINDOW_DIMENSION (STATE_INTERNAL_DRIVER+0)
 
@@ -262,9 +265,6 @@ struct rX00_fragment_program_code {
 #define R300_VS_MAX_TEMPS	32
 /* This is the max for all chipsets (r300-r500) */
 #define R300_VS_MAX_FC_OPS 16
-/* The r500 maximum depth is not just for loops, but any combination of loops
- * and subroutine jumps. */
-#define R500_VS_MAX_FC_DEPTH 8
 #define R300_VS_MAX_LOOP_DEPTH 1
 
 #define VSF_MAX_INPUTS 32
