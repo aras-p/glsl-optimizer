@@ -679,8 +679,6 @@ intel_set_texture_image_region(struct gl_context *ctx,
 {
    struct intel_context *intel = intel_context(ctx);
    struct intel_texture_image *intel_image = intel_texture_image(image);
-   struct gl_texture_object *texobj = image->TexObject;
-   struct intel_texture_object *intel_texobj = intel_texture_object(texobj);
 
    _mesa_init_teximage_fields(&intel->ctx, target, image,
 			      region->width, region->height, 1,
@@ -695,14 +693,6 @@ intel_set_texture_image_region(struct gl_context *ctx,
        return;
 
    image->RowStride = region->pitch;
-
-   /* Immediately validate the image to the object. */
-   if (intel_texobj->mt)
-      intel_miptree_release(intel, &intel_texobj->mt);
-   intel_miptree_reference(&intel_texobj->mt, intel_image->mt);
-
-   if (!intel_miptree_match_image(intel_texobj->mt, &intel_image->base.Base))
-      fprintf(stderr, "miptree doesn't match image\n");
 }
 
 void
