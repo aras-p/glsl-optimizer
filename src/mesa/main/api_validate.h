@@ -39,6 +39,11 @@ _mesa_max_buffer_index(struct gl_context *ctx, GLuint count, GLenum type,
                        const void *indices,
                        struct gl_buffer_object *elementBuf);
 
+
+extern GLboolean
+_mesa_valid_prim_mode(const struct gl_context *ctx, GLenum mode);
+
+
 extern GLboolean
 _mesa_validate_DrawArrays(struct gl_context *ctx,
 			  GLenum mode, GLint start, GLsizei count);

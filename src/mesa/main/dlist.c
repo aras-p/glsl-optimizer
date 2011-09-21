@@ -34,6 +34,7 @@
 #include "api_arrayelt.h"
 #include "api_exec.h"
 #include "api_loopback.h"
+#include "api_validate.h"
 #if FEATURE_ATI_fragment_shader
 #include "atifragshader.h"
 #endif
@@ -5762,8 +5763,8 @@ save_Begin(GLenum mode)
    Node *n;
    GLboolean error = GL_FALSE;
 
-   if ( /*mode < GL_POINTS || */ mode > GL_POLYGON) {
-      _mesa_compile_error(ctx, GL_INVALID_ENUM, "Begin (mode)");
+   if (!_mesa_valid_prim_mode(ctx, mode)) {
+      _mesa_compile_error(ctx, GL_INVALID_ENUM, "glBegin(mode)");
       error = GL_TRUE;
    }
    else if (ctx->Driver.CurrentSavePrimitive == PRIM_UNKNOWN) {

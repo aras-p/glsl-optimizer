@@ -199,6 +199,27 @@ check_index_bounds(struct gl_context *ctx, GLsizei count, GLenum type,
 
 
 /**
+ * Is 'mode' a valid value for glBegin(), glDrawArrays(), glDrawElements(),
+ * etc?  The set of legal values depends on whether geometry shaders/programs
+ * are supported.
+ */
+GLboolean
+_mesa_valid_prim_mode(const struct gl_context *ctx, GLenum mode)
+{
+   if (ctx->Extensions.ARB_geometry_shader4 &&
+       mode > GL_TRIANGLE_STRIP_ADJACENCY_ARB) {
+      return GL_FALSE;
+   }
+   else if (mode > GL_POLYGON) {
+      return GL_FALSE;
+   }
+   else {
+      return GL_TRUE;
+   }
+}
+
+
+/**
  * Error checking for glDrawElements().  Includes parameter checking
  * and VBO bounds checking.
  * \return GL_TRUE if OK to render, GL_FALSE if error found
@@ -216,7 +237,7 @@ _mesa_validate_DrawElements(struct gl_context *ctx,
       return GL_FALSE;
    }
 
-   if (mode > GL_TRIANGLE_STRIP_ADJACENCY_ARB) {
+   if (!_mesa_valid_prim_mode(ctx, mode)) {
       _mesa_error(ctx, GL_INVALID_ENUM, "glDrawElements(mode)" );
       return GL_FALSE;
    }
@@ -273,7 +294,7 @@ _mesa_validate_DrawRangeElements(struct gl_context *ctx, GLenum mode,
       return GL_FALSE;
    }
 
-   if (mode > GL_TRIANGLE_STRIP_ADJACENCY_ARB) {
+   if (!_mesa_valid_prim_mode(ctx, mode)) {
       _mesa_error(ctx, GL_INVALID_ENUM, "glDrawRangeElements(mode)" );
       return GL_FALSE;
    }
@@ -332,7 +353,7 @@ _mesa_validate_DrawArrays(struct gl_context *ctx,
       return GL_FALSE;
    }
 
-   if (mode > GL_TRIANGLE_STRIP_ADJACENCY_ARB) {
+   if (!_mesa_valid_prim_mode(ctx, mode)) {
       _mesa_error(ctx, GL_INVALID_ENUM, "glDrawArrays(mode)" );
       return GL_FALSE;
    }
@@ -362,7 +383,7 @@ _mesa_validate_DrawArraysInstanced(struct gl_context *ctx, GLenum mode, GLint fi
       return GL_FALSE;
    }
 
-   if (mode > GL_TRIANGLE_STRIP_ADJACENCY_ARB) {
+   if (!_mesa_valid_prim_mode(ctx, mode)) {
       _mesa_error(ctx, GL_INVALID_ENUM,
                   "glDrawArraysInstanced(mode=0x%x)", mode);
       return GL_FALSE;
@@ -408,7 +429,7 @@ _mesa_validate_DrawElementsInstanced(struct gl_context *ctx,
       return GL_FALSE;
    }
 
-   if (mode > GL_TRIANGLE_STRIP_ADJACENCY_ARB) {
+   if (!_mesa_valid_prim_mode(ctx, mode)) {
       _mesa_error(ctx, GL_INVALID_ENUM,
                   "glDrawElementsInstanced(mode = 0x%x)", mode);
       return GL_FALSE;
