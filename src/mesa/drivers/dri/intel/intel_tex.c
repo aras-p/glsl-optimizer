@@ -46,9 +46,7 @@ intelDeleteTextureObject(struct gl_context *ctx,
    struct intel_context *intel = intel_context(ctx);
    struct intel_texture_object *intelObj = intel_texture_object(texObj);
 
-   if (intelObj->mt)
-      intel_miptree_release(intel, &intelObj->mt);
-
+   intel_miptree_release(intel, &intelObj->mt);
    _mesa_delete_texture_object(ctx, texObj);
 }
 
@@ -62,22 +60,15 @@ intel_free_texture_image_buffer(struct gl_context * ctx,
 
    DBG("%s\n", __FUNCTION__);
 
-   if (intelImage->mt) {
-      intel_miptree_release(intel, &intelImage->mt);
-   }
+   intel_miptree_release(intel, &intelImage->mt);
 
    if (texImage->Data) {
       _mesa_free_texmemory(texImage->Data);
       texImage->Data = NULL;
    }
 
-   if (intelImage->depth_rb) {
-      _mesa_reference_renderbuffer(&intelImage->depth_rb, NULL);
-   }
-
-   if (intelImage->stencil_rb) {
-      _mesa_reference_renderbuffer(&intelImage->stencil_rb, NULL);
-   }
+   _mesa_reference_renderbuffer(&intelImage->depth_rb, NULL);
+   _mesa_reference_renderbuffer(&intelImage->stencil_rb, NULL);
 }
 
 /**

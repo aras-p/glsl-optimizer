@@ -518,17 +518,12 @@ intel_update_wrapper(struct gl_context *ctx, struct intel_renderbuffer *irb,
 
       /* The tex image shares its embedded depth and stencil renderbuffers with
        * the renderbuffer wrapper. */
-      if (irb->wrapped_depth != intel_image->depth_rb) {
-	 _mesa_reference_renderbuffer(&irb->wrapped_depth,
-				      intel_image->depth_rb);
-      }
-      if (irb->wrapped_stencil != intel_image->stencil_rb) {
-	 _mesa_reference_renderbuffer(&irb->wrapped_stencil,
-				      intel_image->stencil_rb);
-      }
+      _mesa_reference_renderbuffer(&irb->wrapped_depth,
+				   intel_image->depth_rb);
+      _mesa_reference_renderbuffer(&irb->wrapped_stencil,
+				   intel_image->stencil_rb);
 
       return true;
-
    } else {
       return intel_update_tex_wrapper_regions(intel, irb, intel_image);
    }
