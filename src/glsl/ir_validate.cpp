@@ -622,7 +622,9 @@ check_node_type(ir_instruction *ir, void *data)
       printf("Instruction node with unset type\n");
       ir->print(); printf("\n");
    }
-   assert(ir->type != glsl_type::error_type);
+   ir_rvalue *value = ir->as_rvalue();
+   if (value != NULL)
+      assert(value->type != glsl_type::error_type);
 }
 
 void

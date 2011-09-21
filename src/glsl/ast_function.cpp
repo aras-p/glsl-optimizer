@@ -83,7 +83,7 @@ prototype_string(const glsl_type *return_type, const char *name,
 
    const char *comma = "";
    foreach_list(node, parameters) {
-      const ir_instruction *const param = (ir_instruction *) node;
+      const ir_variable *const param = (ir_variable *) node;
 
       ralloc_asprintf_append(&str, "%s%s", comma, param->type->name);
       comma = ", ";

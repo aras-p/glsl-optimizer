@@ -88,7 +88,6 @@ enum ir_node_type {
 class ir_instruction : public exec_node {
 public:
    enum ir_node_type ir_type;
-   const struct glsl_type *type;
 
    /** ir_print_visitor helper for debugging. */
    void print(void) const;
@@ -127,7 +126,6 @@ protected:
    ir_instruction()
    {
       ir_type = ir_type_unset;
-      type = NULL;
    }
 };
 
@@ -137,6 +135,8 @@ protected:
  */
 class ir_rvalue : public ir_instruction {
 public:
+   const struct glsl_type *type;
+
    virtual ir_rvalue *clone(void *mem_ctx, struct hash_table *) const;
 
    virtual void accept(ir_visitor *v)
@@ -319,6 +319,11 @@ public:
     * INTERP_QUALIFIER_NOPERSPECTIVE, or INTERP_QUALIFIER_FLAT.
     */
    glsl_interp_qualifier determine_interpolation_mode(bool flat_shade);
+
+   /**
+    * Declared type of the variable
+    */
+   const struct glsl_type *type;
 
    /**
     * Delcared name of the variable

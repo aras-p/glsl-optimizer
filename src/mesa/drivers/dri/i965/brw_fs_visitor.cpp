@@ -1415,7 +1415,7 @@ fs_visitor::visit(ir_constant *ir)
       }
    } else if (ir->type->is_record()) {
       foreach_list(node, &ir->components) {
-	 ir_instruction *const field = (ir_instruction *) node;
+	 ir_constant *const field = (ir_constant *) node;
 	 const unsigned size = type_size(field->type);
 
 	 field->accept(this);

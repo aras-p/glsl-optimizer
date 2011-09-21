@@ -59,7 +59,7 @@ parameter_lists_match(const exec_list *list_a, const exec_list *list_b)
 
 
       const ir_variable *const param = (ir_variable *) node_a;
-      const ir_instruction *const actual = (ir_instruction *) node_b;
+      const ir_rvalue *const actual = (ir_rvalue *) node_b;
 
       if (param->type == actual->type)
 	 continue;
