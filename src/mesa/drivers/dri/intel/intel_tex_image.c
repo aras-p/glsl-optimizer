@@ -156,26 +156,43 @@ check_pbo_format(GLint internalFormat,
 
 /* XXX: Do this for TexSubImage also:
  */
-static GLboolean
+static bool
 try_pbo_upload(struct intel_context *intel,
                struct intel_texture_image *intelImage,
                const struct gl_pixelstore_attrib *unpack,
+	       GLenum format, GLenum type,
                GLint width, GLint height, const void *pixels)
 {
    struct intel_buffer_object *pbo = intel_buffer_object(unpack->BufferObj);
    GLuint src_offset, src_stride;
    GLuint dst_x, dst_y, dst_stride;
-   drm_intel_bo *dst_buffer = intel_region_buffer(intel,
-						  intelImage->mt->region,
-						  INTEL_WRITE_FULL);
+   drm_intel_bo *dst_buffer, *src_buffer;
 
-   if (!_mesa_is_bufferobj(unpack->BufferObj) ||
-       intel->ctx._ImageTransferState ||
-       unpack->SkipPixels || unpack->SkipRows) {
-      DBG("%s: failure 1\n", __FUNCTION__);
-      return GL_FALSE;
+   if (!_mesa_is_bufferobj(unpack->BufferObj))
+      return false;
+
+   DBG("trying pbo upload\n");
+
+   if (!intelImage->mt) {
+      DBG("%s: no miptree\n", __FUNCTION__);
+      return false;
    }
 
+   if (intel->ctx._ImageTransferState ||
+       unpack->SkipPixels || unpack->SkipRows) {
+      DBG("%s: image transfer\n", __FUNCTION__);
+      return false;
+   }
+
+   if (!check_pbo_format(intelImage->base.Base.InternalFormat, format,
+			 type, intelImage->base.Base.TexFormat)) {
+      DBG("%s: format mismatch (upload to %s with format 0x%x, type 0x%x)\n",
+	  __FUNCTION__, _mesa_get_format_name(intelImage->base.Base.TexFormat),
+	  format, type);
+      return false;
+   }
+
+   dst_buffer = intel_region_buffer(intel, intelImage->mt->region, INTEL_WRITE_FULL);
    /* note: potential 64-bit ptr to 32-bit int cast */
    src_offset = (GLuint) (unsigned long) pixels;
 
@@ -206,11 +223,13 @@ try_pbo_upload(struct intel_context *intel,
 			     intelImage->mt->region->tiling,
 			     0, 0, dst_x, dst_y, width, height,
 			     GL_COPY)) {
-	 return GL_FALSE;
+	 DBG("%s: blit failed\n", __FUNCTION__);
+	 return false;
       }
    }
 
-   return GL_TRUE;
+   DBG("%s: success\n", __FUNCTION__);
+   return true;
 }
 
 /**
@@ -398,24 +417,12 @@ intelTexImage(struct gl_context * ctx,
       }
    }
 
-   /* PBO fastpaths:
+   /* Attempt to use the blitter for PBO image uploads.
     */
    if (dims <= 2 &&
-       intelImage->mt &&
-       _mesa_is_bufferobj(unpack->BufferObj) &&
-       check_pbo_format(internalFormat, format,
-                        type, intelImage->base.Base.TexFormat)) {
-
-      DBG("trying pbo upload\n");
-
-      /* Otherwise, attempt to use the blitter for PBO image uploads.
-       */
-      if (try_pbo_upload(intel, intelImage, unpack, width, height, pixels)) {
-         DBG("pbo upload succeeded\n");
-         return;
-      }
-
-      DBG("pbo upload failed\n");
+       try_pbo_upload(intel, intelImage, unpack, format, type,
+		      width, height, pixels)) {
+      return;
    }
 
    /* intelCopyTexImage calls this function with pixels == NULL, with
