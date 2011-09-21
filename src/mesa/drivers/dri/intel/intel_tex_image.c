@@ -414,7 +414,6 @@ intelTexImage(struct gl_context * ctx,
       }
    }
 
-   ctx->Driver.FreeTextureImageBuffer(ctx, texImage);
    assert(!intelImage->mt);
 
    if (intelObj->mt &&
