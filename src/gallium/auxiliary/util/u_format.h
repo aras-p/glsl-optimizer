@@ -410,7 +410,21 @@ util_format_is_s3tc(enum pipe_format format)
    return desc->layout == UTIL_FORMAT_LAYOUT_S3TC ? TRUE : FALSE;
 }
 
-static INLINE boolean 
+static INLINE boolean
+util_format_has_depth(const struct util_format_description *desc)
+{
+   return desc->colorspace == UTIL_FORMAT_COLORSPACE_ZS &&
+          desc->swizzle[0] != UTIL_FORMAT_SWIZZLE_NONE;
+}
+
+static INLINE boolean
+util_format_has_stencil(const struct util_format_description *desc)
+{
+   return desc->colorspace == UTIL_FORMAT_COLORSPACE_ZS &&
+          desc->swizzle[1] != UTIL_FORMAT_SWIZZLE_NONE;
+}
+
+static INLINE boolean
 util_format_is_depth_or_stencil(enum pipe_format format)
 {
    const struct util_format_description *desc = util_format_description(format);
@@ -420,10 +434,11 @@ util_format_is_depth_or_stencil(enum pipe_format format)
       return FALSE;
    }
 
-   return desc->colorspace == UTIL_FORMAT_COLORSPACE_ZS ? TRUE : FALSE;
+   return util_format_has_depth(desc) ||
+          util_format_has_stencil(desc);
 }
 
-static INLINE boolean 
+static INLINE boolean
 util_format_is_depth_and_stencil(enum pipe_format format)
 {
    const struct util_format_description *desc = util_format_description(format);
@@ -433,12 +448,8 @@ util_format_is_depth_and_stencil(enum pipe_format format)
       return FALSE;
    }
 
-   if (desc->colorspace != UTIL_FORMAT_COLORSPACE_ZS) {
-      return FALSE;
-   }
-
-   return (desc->swizzle[0] != UTIL_FORMAT_SWIZZLE_NONE &&
-           desc->swizzle[1] != UTIL_FORMAT_SWIZZLE_NONE) ? TRUE : FALSE;
+   return util_format_has_depth(desc) &&
+          util_format_has_stencil(desc);
 }
 
 
