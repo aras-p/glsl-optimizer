@@ -49,6 +49,48 @@ intelDeleteTextureObject(struct gl_context *ctx,
    _mesa_delete_texture_object(ctx, texObj);
 }
 
+static GLboolean
+intel_alloc_texture_image_buffer(struct gl_context *ctx,
+				 struct gl_texture_image *image,
+				 gl_format format, GLsizei width,
+				 GLsizei height, GLsizei depth)
+{
+   struct intel_context *intel = intel_context(ctx);
+   struct intel_texture_image *intel_image = intel_texture_image(image);
+   struct gl_texture_object *texobj = image->TexObject;
+   struct intel_texture_object *intel_texobj = intel_texture_object(texobj);
+
+   if (intel_texobj->mt &&
+       intel_miptree_match_image(intel_texobj->mt, image)) {
+      intel_miptree_reference(&intel_image->mt, intel_texobj->mt);
+      DBG("%s: alloc obj %p level %d %dx%dx%d using object's miptree %p\n",
+          __FUNCTION__, texobj, image->Level,
+          width, height, depth, intel_texobj->mt);
+      return true;
+   } else if (image->Border == 0) {
+      intel_image->mt = intel_miptree_create_for_teximage(intel, intel_texobj,
+                                                          intel_image,
+                                                          false);
+
+      /* Even if the object currently has a mipmap tree associated
+       * with it, this one is a more likely candidate to represent the
+       * whole object since our level didn't fit what was there
+       * before, and any lower levels would fit into our miptree.
+       */
+      intel_miptree_reference(&intel_texobj->mt, intel_image->mt);
+
+      DBG("%s: alloc obj %p level %d %dx%dx%d using new miptree %p\n",
+          __FUNCTION__, texobj, image->Level,
+          width, height, depth, intel_image->mt);
+      return true;
+   }
+
+   DBG("%s: alloc obj %p level %d %dx%dx%d using swrast\n",
+       __FUNCTION__, texobj, image->Level, width, height, depth);
+
+   return _swrast_alloc_texture_image_buffer(ctx, image, format,
+					     width, height, depth);
+}
 
 static void
 intel_free_texture_image_buffer(struct gl_context * ctx,
@@ -182,6 +224,7 @@ intelInitTextureFuncs(struct dd_function_table *functions)
    functions->NewTextureImage = intelNewTextureImage;
    functions->DeleteTextureImage = intelDeleteTextureImage;
    functions->DeleteTexture = intelDeleteTextureObject;
+   functions->AllocTextureImageBuffer = intel_alloc_texture_image_buffer;
    functions->FreeTextureImageBuffer = intel_free_texture_image_buffer;
    functions->MapTextureImage = intel_map_texture_image;
    functions->UnmapTextureImage = intel_unmap_texture_image;

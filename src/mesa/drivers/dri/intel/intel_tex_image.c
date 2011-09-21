@@ -45,7 +45,7 @@
  * 0)..(1x1).  Consider pruning this tree at a validation if the
  * saving is worth it.
  */
-static struct intel_mipmap_tree *
+struct intel_mipmap_tree *
 intel_miptree_create_for_teximage(struct intel_context *intel,
 				  struct intel_texture_object *intelObj,
 				  struct intel_texture_image *intelImage,
