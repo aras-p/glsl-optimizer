@@ -272,7 +272,11 @@ lp_disassemble(const void* func)
 
       if (!DisAsm->getInstruction(Inst, Size, memoryObject,
                                  pc,
-                                 nulls())) {
+#if HAVE_LLVM >= 0x0300
+				  nulls(), nulls())) {
+#else
+				  nulls())) {
+#endif
          debug_printf("invalid\n");
          pc += 1;
       }
@@ -295,7 +299,9 @@ lp_disassemble(const void* func)
        * Print the instruction.
        */
 
-#if HAVE_LLVM >= 0x208
+#if HAVE_LLVM >= 0x0300
+      Printer->printInst(&Inst, Out, "");
+#elif HAVE_LLVM >= 0x208
       Printer->printInst(&Inst, Out);
 #else
       Printer->printInst(&Inst);
