@@ -189,6 +189,7 @@ struct draw_context
    struct {
       boolean bypass_clip_xy;
       boolean bypass_clip_z;
+      boolean guard_band_xy;
    } driver;
 
    boolean flushing;         /**< debugging/sanity */
@@ -200,6 +201,7 @@ struct draw_context
    boolean clip_xy;
    boolean clip_z;
    boolean clip_user;
+   boolean guard_band_xy;
 
    boolean force_passthrough; /**< never clip or shade */
 

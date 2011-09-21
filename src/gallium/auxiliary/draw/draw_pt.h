@@ -224,6 +224,7 @@ void draw_pt_post_vs_prepare( struct pt_post_vs *pvs,
 			      boolean clip_xy,
 			      boolean clip_z,
 			      boolean clip_user,
+                              boolean guard_band,
 			      boolean bypass_viewport,
 			      boolean opengl,
 			      boolean need_edgeflags );

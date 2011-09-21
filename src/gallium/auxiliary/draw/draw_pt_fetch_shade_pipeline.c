@@ -103,6 +103,7 @@ static void fetch_pipeline_prepare( struct draw_pt_middle_end *middle,
 			    draw->clip_xy,
 			    draw->clip_z,
 			    draw->clip_user,
+                            draw->guard_band_xy,
 			    draw->identity_viewport,
 			    (boolean)draw->rasterizer->gl_rasterization_rules,
 			    (draw->vs.edgeflag_output ? TRUE : FALSE) );

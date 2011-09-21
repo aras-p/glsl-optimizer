@@ -220,6 +220,8 @@ void draw_set_mrd(struct draw_context *draw, double mrd)
 static void update_clip_flags( struct draw_context *draw )
 {
    draw->clip_xy = !draw->driver.bypass_clip_xy;
+   draw->guard_band_xy = (!draw->driver.bypass_clip_xy &&
+                          draw->driver.guard_band_xy);
    draw->clip_z = (!draw->driver.bypass_clip_z &&
                    !draw->depth_clamp);
    draw->clip_user = (draw->nr_planes > 6);
@@ -251,12 +253,14 @@ void draw_set_rasterizer_state( struct draw_context *draw,
  */
 void draw_set_driver_clipping( struct draw_context *draw,
                                boolean bypass_clip_xy,
-                               boolean bypass_clip_z )
+                               boolean bypass_clip_z,
+                               boolean guard_band_xy)
 {
    draw_do_flush( draw, DRAW_FLUSH_STATE_CHANGE );
 
    draw->driver.bypass_clip_xy = bypass_clip_xy;
    draw->driver.bypass_clip_z = bypass_clip_z;
+   draw->driver.guard_band_xy = guard_band_xy;
    update_clip_flags(draw);
 }
 

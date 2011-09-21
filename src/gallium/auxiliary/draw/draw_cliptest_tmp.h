@@ -47,7 +47,8 @@ static boolean TAG(do_cliptest)( struct pt_post_vs *pvs,
   
       initialize_vertex_header(out);
 
-      if (flags & (DO_CLIP_XY | DO_CLIP_FULL_Z | DO_CLIP_HALF_Z | DO_CLIP_USER)) {
+      if (flags & (DO_CLIP_XY | DO_CLIP_XY_GUARD_BAND |
+                   DO_CLIP_FULL_Z | DO_CLIP_HALF_Z | DO_CLIP_USER)) {
          out->clip[0] = position[0];
          out->clip[1] = position[1];
          out->clip[2] = position[2];
@@ -55,7 +56,13 @@ static boolean TAG(do_cliptest)( struct pt_post_vs *pvs,
 
          /* Do the hardwired planes first:
           */
-         if (flags & DO_CLIP_XY) {
+         if (flags & DO_CLIP_XY_GUARD_BAND) {
+            if (-0.50 * position[0] + position[3] < 0) mask |= (1<<0);
+            if ( 0.50 * position[0] + position[3] < 0) mask |= (1<<1);
+            if (-0.50 * position[1] + position[3] < 0) mask |= (1<<2);
+            if ( 0.50 * position[1] + position[3] < 0) mask |= (1<<3);
+         }
+         else if (flags & DO_CLIP_XY) {
             if (-position[0] + position[3] < 0) mask |= (1<<0);
             if ( position[0] + position[3] < 0) mask |= (1<<1);
             if (-position[1] + position[3] < 0) mask |= (1<<2);

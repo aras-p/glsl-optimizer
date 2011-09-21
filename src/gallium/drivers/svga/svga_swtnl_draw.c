@@ -156,7 +156,7 @@ boolean svga_init_swtnl( struct svga_context *svga )
    draw_install_pstipple_stage(svga->swtnl.draw, &svga->pipe);
 
    if (debug_get_bool_option("SVGA_SWTNL_FSE", FALSE))
-      draw_set_driver_clipping(svga->swtnl.draw, TRUE, TRUE);
+      draw_set_driver_clipping(svga->swtnl.draw, TRUE, TRUE, TRUE);
 
    return TRUE;
 

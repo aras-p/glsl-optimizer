@@ -39,6 +39,7 @@
 #define DO_CLIP_USER         0x8
 #define DO_VIEWPORT          0x10
 #define DO_EDGEFLAG          0x20
+#define DO_CLIP_XY_GUARD_BAND 0x40
 
 
 struct pt_post_vs {
@@ -78,6 +79,10 @@ dot4(const float *a, const float *b)
 
 #define FLAGS (DO_CLIP_XY | DO_CLIP_HALF_Z | DO_VIEWPORT)
 #define TAG(x) x##_xy_halfz_viewport
+#include "draw_cliptest_tmp.h"
+
+#define FLAGS (DO_CLIP_XY_GUARD_BAND | DO_CLIP_HALF_Z | DO_VIEWPORT)
+#define TAG(x) x##_xy_gb_halfz_viewport
 #include "draw_cliptest_tmp.h"
 
 #define FLAGS (DO_CLIP_FULL_Z | DO_VIEWPORT)
@@ -120,15 +125,33 @@ void draw_pt_post_vs_prepare( struct pt_post_vs *pvs,
 			      boolean clip_xy,
 			      boolean clip_z,
                               boolean clip_user,
+                              boolean guard_band,
 			      boolean bypass_viewport,
 			      boolean opengl,
 			      boolean need_edgeflags )
 {
    pvs->flags = 0;
 
-   if (clip_xy)
+   /* This combination not currently tested/in use:
+    */
+   if (opengl)
+      guard_band = FALSE;
+
+   if (clip_xy && !guard_band) {
       pvs->flags |= DO_CLIP_XY;
-   
+      ASSIGN_4V( pvs->draw->plane[0], -1,  0,  0, 1 );
+      ASSIGN_4V( pvs->draw->plane[1],  1,  0,  0, 1 );
+      ASSIGN_4V( pvs->draw->plane[2],  0, -1,  0, 1 );
+      ASSIGN_4V( pvs->draw->plane[3],  0,  1,  0, 1 );
+   }
+   else if (clip_xy && guard_band) {
+      pvs->flags |= DO_CLIP_XY_GUARD_BAND;
+      ASSIGN_4V( pvs->draw->plane[0], -0.5,  0,  0, 1 );
+      ASSIGN_4V( pvs->draw->plane[1],  0.5,  0,  0, 1 );
+      ASSIGN_4V( pvs->draw->plane[2],  0, -0.5,  0, 1 );
+      ASSIGN_4V( pvs->draw->plane[3],  0,  0.5,  0, 1 );
+   }
+
    if (clip_z && opengl) {
       pvs->flags |= DO_CLIP_FULL_Z;
       ASSIGN_4V( pvs->draw->plane[4],  0,  0,  1, 1 );
@@ -161,6 +184,10 @@ void draw_pt_post_vs_prepare( struct pt_post_vs *pvs,
 
    case DO_CLIP_XY | DO_CLIP_HALF_Z | DO_VIEWPORT:
       pvs->run = do_cliptest_xy_halfz_viewport;
+      break;
+
+   case DO_CLIP_XY_GUARD_BAND | DO_CLIP_HALF_Z | DO_VIEWPORT:
+      pvs->run = do_cliptest_xy_gb_halfz_viewport;
       break;
 
    case DO_CLIP_FULL_Z | DO_VIEWPORT:
