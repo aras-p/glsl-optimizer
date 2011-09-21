@@ -43,10 +43,9 @@ static void
 intelDeleteTextureObject(struct gl_context *ctx,
 			 struct gl_texture_object *texObj)
 {
-   struct intel_context *intel = intel_context(ctx);
    struct intel_texture_object *intelObj = intel_texture_object(texObj);
 
-   intel_miptree_release(intel, &intelObj->mt);
+   intel_miptree_release(&intelObj->mt);
    _mesa_delete_texture_object(ctx, texObj);
 }
 
@@ -55,12 +54,11 @@ static void
 intel_free_texture_image_buffer(struct gl_context * ctx,
 				struct gl_texture_image *texImage)
 {
-   struct intel_context *intel = intel_context(ctx);
    struct intel_texture_image *intelImage = intel_texture_image(texImage);
 
    DBG("%s\n", __FUNCTION__);
 
-   intel_miptree_release(intel, &intelImage->mt);
+   intel_miptree_release(&intelImage->mt);
 
    if (texImage->Data) {
       _mesa_free_texmemory(texImage->Data);
@@ -188,7 +186,7 @@ intelGenerateMipmap(struct gl_context *ctx, GLenum target,
                /* Unreference the miptree to signal that the new Data is a
                 * bare pointer from mesa.
                 */
-               intel_miptree_release(intel, &intelImage->mt);
+               intel_miptree_release(&intelImage->mt);
             }
          }
       }

@@ -392,7 +392,7 @@ intelTexImage(struct gl_context * ctx,
        * before, and any lower levels would fit into our miptree.
        */
       if (intelImage->mt) {
-	 intel_miptree_release(intel, &intelObj->mt);
+	 intel_miptree_release(&intelObj->mt);
 	 intel_miptree_reference(&intelObj->mt, intelImage->mt);
       }
    }

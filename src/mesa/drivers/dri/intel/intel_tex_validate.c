@@ -44,7 +44,7 @@ copy_image_data_to_tree(struct intel_context *intel,
                                intelImage->base.Base.Face,
                                intelImage->base.Base.Level, intelImage->mt);
 
-      intel_miptree_release(intel, &intelImage->mt);
+      intel_miptree_release(&intelImage->mt);
    }
    else {
       assert(intelImage->base.Base.Data != NULL);
@@ -92,9 +92,7 @@ intel_finalize_mipmap_tree(struct intel_context *intel, GLuint unit)
    /* Fallback case:
     */
    if (firstImage->base.Base.Border) {
-      if (intelObj->mt) {
-         intel_miptree_release(intel, &intelObj->mt);
-      }
+      intel_miptree_release(&intelObj->mt);
       return GL_FALSE;
    }
 
@@ -114,7 +112,7 @@ intel_finalize_mipmap_tree(struct intel_context *intel, GLuint unit)
 	intelObj->mt->width0 != firstImage->base.Base.Width ||
 	intelObj->mt->height0 != firstImage->base.Base.Height ||
 	intelObj->mt->depth0 != firstImage->base.Base.Depth)) {
-      intel_miptree_release(intel, &intelObj->mt);
+      intel_miptree_release(&intelObj->mt);
    }
 
 

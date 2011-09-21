@@ -158,8 +158,7 @@ int intel_miptree_pitch_align (struct intel_context *intel,
 void intel_miptree_reference(struct intel_mipmap_tree **dst,
                              struct intel_mipmap_tree *src);
 
-void intel_miptree_release(struct intel_context *intel,
-                           struct intel_mipmap_tree **mt);
+void intel_miptree_release(struct intel_mipmap_tree **mt);
 
 /* Check if an image fits an existing mipmap tree layout
  */

@@ -180,8 +180,7 @@ intel_miptree_reference(struct intel_mipmap_tree **dst,
 
 
 void
-intel_miptree_release(struct intel_context *intel,
-                      struct intel_mipmap_tree **mt)
+intel_miptree_release(struct intel_mipmap_tree **mt)
 {
    if (!*mt)
       return;

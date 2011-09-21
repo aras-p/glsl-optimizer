@@ -747,7 +747,7 @@ intel_render_texture(struct gl_context * ctx,
 			       intel_image->base.Base.Level,
 			       old_mt);
 
-      intel_miptree_release(intel, &intel_image->mt);
+      intel_miptree_release(&intel_image->mt);
       intel_image->mt = new_mt;
       intel_renderbuffer_set_draw_offset(irb, intel_image, att->Zoffset);
 
