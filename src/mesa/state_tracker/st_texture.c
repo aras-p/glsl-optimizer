@@ -366,9 +366,15 @@ st_texture_image_copy(struct pipe_context *pipe,
    struct pipe_box src_box;
    GLuint i;
 
-   assert(u_minify(src->width0, srcLevel) == width);
-   assert(u_minify(src->height0, srcLevel) == height);
-   assert(u_minify(src->depth0, srcLevel) == depth);
+   if (u_minify(src->width0, srcLevel) != width ||
+       u_minify(src->height0, srcLevel) != height ||
+       u_minify(src->depth0, srcLevel) != depth) {
+      /* The source image size doesn't match the destination image size.
+       * This can happen in some degenerate situations such as rendering to a
+       * cube map face which was set up with mismatched texture sizes.
+       */
+      return;
+   }
 
    src_box.x = 0;
    src_box.y = 0;
