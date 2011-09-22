@@ -212,8 +212,11 @@ static enum pipe_error emit_const_range( struct svga_context *svga,
 }
 
 
+/**
+ * Emit all the constants in a constant buffer for a shader stage.
+ */
 static enum pipe_error
-emit_consts(struct svga_context *svga, unsigned offset, unsigned shader)
+emit_consts(struct svga_context *svga, unsigned shader)
 {
    struct svga_screen *ss = svga_screen(svga->pipe.screen);
    struct pipe_transfer *transfer = NULL;
@@ -221,6 +224,7 @@ emit_consts(struct svga_context *svga, unsigned offset, unsigned shader)
    const float (*data)[4] = NULL;
    unsigned i;
    enum pipe_error ret = PIPE_OK;
+   const unsigned offset = 0;
 
    assert(shader < PIPE_SHADER_TYPES);
 
@@ -267,7 +271,7 @@ emit_fs_consts(struct svga_context *svga, unsigned dirty)
    const struct svga_fs_compile_key *key = &result->key.fkey;
    enum pipe_error ret = PIPE_OK;
 
-   ret = emit_consts( svga, 0, PIPE_SHADER_FRAGMENT );
+   ret = emit_consts( svga, PIPE_SHADER_FRAGMENT );
    if (ret != PIPE_OK)
       return ret;
 
@@ -334,7 +338,7 @@ emit_vs_consts(struct svga_context *svga, unsigned dirty)
 
    /* SVGA_NEW_VS_CONST_BUFFER 
     */
-   ret = emit_consts( svga, 0, PIPE_SHADER_VERTEX );
+   ret = emit_consts( svga, PIPE_SHADER_VERTEX );
    if (ret != PIPE_OK)
       return ret;
 
