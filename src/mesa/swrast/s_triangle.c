@@ -1038,11 +1038,14 @@ _swrast_choose_triangle( struct gl_context *ctx )
          /* Ugh, we do a _lot_ of tests to pick the best textured tri func */
          const struct gl_texture_object *texObj2D;
          const struct gl_texture_image *texImg;
+         const struct swrast_texture_image *swImg;
          GLenum minFilter, magFilter, envMode;
          gl_format format;
          texObj2D = ctx->Texture.Unit[0].CurrentTex[TEXTURE_2D_INDEX];
 
          texImg = texObj2D ? texObj2D->Image[0][texObj2D->BaseLevel] : NULL;
+         swImg = swrast_texture_image_const(texImg);
+
          format = texImg ? texImg->TexFormat : MESA_FORMAT_NONE;
          minFilter = texObj2D ? texObj2D->Sampler.MinFilter : GL_NONE;
          magFilter = texObj2D ? texObj2D->Sampler.MagFilter : GL_NONE;
@@ -1057,7 +1060,7 @@ _swrast_choose_triangle( struct gl_context *ctx )
              && texObj2D->Sampler.WrapS == GL_REPEAT
              && texObj2D->Sampler.WrapT == GL_REPEAT
              && texObj2D->_Swizzle == SWIZZLE_NOOP
-             && texImg->_IsPowerOfTwo
+             && swImg->_IsPowerOfTwo
              && texImg->Border == 0
              && texImg->Width == texImg->RowStride
              && (format == MESA_FORMAT_RGB888 || format == MESA_FORMAT_RGBA8888)

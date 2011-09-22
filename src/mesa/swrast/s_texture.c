@@ -67,6 +67,7 @@ _swrast_alloc_texture_image_buffer(struct gl_context *ctx,
                                    gl_format format, GLsizei width,
                                    GLsizei height, GLsizei depth)
 {
+   struct swrast_texture_image *swImg = swrast_texture_image(texImage);
    GLuint bytes = _mesa_format_image_size(format, width, height, depth);
 
    /* This _should_ be true (revisit if these ever fail) */
@@ -76,6 +77,13 @@ _swrast_alloc_texture_image_buffer(struct gl_context *ctx,
 
    assert(!texImage->Data);
    texImage->Data = _mesa_align_malloc(bytes, 512);
+
+   if ((width == 1 || _mesa_is_pow_two(texImage->Width2)) &&
+       (height == 1 || _mesa_is_pow_two(texImage->Height2)) &&
+       (depth == 1 || _mesa_is_pow_two(texImage->Depth2)))
+      swImg->_IsPowerOfTwo = GL_TRUE;
+   else
+      swImg->_IsPowerOfTwo = GL_FALSE;
 
    return texImage->Data != NULL;
 }

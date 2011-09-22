@@ -1258,7 +1258,6 @@ struct gl_texture_image
    GLfloat HeightScale;		/**< used for mipmap LOD computation */
    GLfloat DepthScale;		/**< used for mipmap LOD computation */
    GLboolean IsClientData;	/**< Data owned by client? */
-   GLboolean _IsPowerOfTwo;	/**< Are all dimensions powers of two? */
 
    struct gl_texture_object *TexObject;  /**< Pointer back to parent object */
    GLuint Level;                /**< Which mipmap level am I? */
