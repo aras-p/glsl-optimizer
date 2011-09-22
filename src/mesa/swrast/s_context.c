@@ -780,17 +780,6 @@ _swrast_CreateContext( struct gl_context *ctx )
    swrast->PointSpan.facing = 0;
    swrast->PointSpan.array = swrast->SpanArrays;
 
-   /* TexelBuffer is also global and normally shared by all SWspan instances;
-    * when running with multiple threads, create one per thread.
-    */
-   swrast->TexelBuffer = (GLfloat *) MALLOC(ctx->Const.MaxTextureImageUnits * maxThreads *
-                                           MAX_WIDTH * 4 * sizeof(GLfloat));
-   if (!swrast->TexelBuffer) {
-      FREE(swrast->SpanArrays);
-      FREE(swrast);
-      return GL_FALSE;
-   }
-
    init_program_native_limits(&ctx->Const.VertexProgram);
    init_program_native_limits(&ctx->Const.GeometryProgram);
    init_program_native_limits(&ctx->Const.FragmentProgram);

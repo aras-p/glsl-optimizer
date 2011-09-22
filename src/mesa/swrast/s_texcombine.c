@@ -93,6 +93,26 @@ texture_combine( struct gl_context *ctx, GLuint unit, GLuint n,
    float4_array ccolor[4], rgba;
    GLuint i, term;
 
+   if (!swrast->TexelBuffer) {
+#ifdef _OPENMP
+      const GLint maxThreads = omp_get_max_threads();
+#else
+      const GLint maxThreads = 1;
+#endif
+
+      /* TexelBuffer is also global and normally shared by all SWspan
+       * instances; when running with multiple threads, create one per
+       * thread.
+       */
+      swrast->TexelBuffer =
+	 (GLfloat *) MALLOC(ctx->Const.MaxTextureImageUnits * maxThreads *
+			    MAX_WIDTH * 4 * sizeof(GLfloat));
+      if (!swrast->TexelBuffer) {
+	 _mesa_error(ctx, GL_OUT_OF_MEMORY, "texture_combine");
+	 return;
+      }
+   }
+
    /* alloc temp pixel buffers */
    rgba = (float4_array) malloc(4 * n * sizeof(GLfloat));
    if (!rgba) {
