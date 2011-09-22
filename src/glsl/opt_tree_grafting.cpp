@@ -76,6 +76,8 @@ public:
    virtual ir_visitor_status visit_enter(class ir_swizzle *);
    virtual ir_visitor_status visit_enter(class ir_texture *);
 
+   ir_visitor_status check_graft(ir_instruction *ir, ir_variable *var);
+
    bool do_graft(ir_rvalue **rvalue);
 
    bool progress;
@@ -148,6 +150,28 @@ ir_tree_grafting_visitor::visit_enter(ir_loop *ir)
    return visit_stop;
 }
 
+/**
+ * Check if we can continue grafting after writing to a variable.  If the
+ * expression we're trying to graft references the variable, we must stop.
+ *
+ * \param ir   An instruction that writes to a variable.
+ * \param var  The variable being updated.
+ */
+ir_visitor_status
+ir_tree_grafting_visitor::check_graft(ir_instruction *ir, ir_variable *var)
+{
+   if (dereferences_variable(this->graft_assign->rhs, var)) {
+      if (debug) {
+	 printf("graft killed by: ");
+	 ir->print();
+	 printf("\n");
+      }
+      return visit_stop;
+   }
+
+   return visit_continue;
+}
+
 ir_visitor_status
 ir_tree_grafting_visitor::visit_leave(ir_assignment *ir)
 {
@@ -158,17 +182,7 @@ ir_tree_grafting_visitor::visit_leave(ir_assignment *ir)
    /* If this assignment updates a variable used in the assignment
     * we're trying to graft, then we're done.
     */
-   if (dereferences_variable(this->graft_assign->rhs,
-			     ir->lhs->variable_referenced())) {
-      if (debug) {
-	 printf("graft killed by: ");
-	 ir->print();
-	 printf("\n");
-      }
-      return visit_stop;
-   }
-
-   return visit_continue;
+   return check_graft(ir, ir->lhs->variable_referenced());
 }
 
 ir_visitor_status
@@ -195,8 +209,11 @@ ir_tree_grafting_visitor::visit_enter(ir_call *ir)
       ir_rvalue *ir = (ir_rvalue *)iter.get();
       ir_rvalue *new_ir = ir;
 
-      if (sig_param->mode != ir_var_in && sig_param->mode != ir_var_const_in)
+      if (sig_param->mode != ir_var_in && sig_param->mode != ir_var_const_in) {
+	 if (check_graft(ir, sig_param) == visit_stop)
+	    return visit_stop;
 	 continue;
+      }
 
       if (do_graft(&new_ir)) {
 	 ir->replace_with(new_ir);
