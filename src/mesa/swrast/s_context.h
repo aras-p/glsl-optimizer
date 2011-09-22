@@ -141,10 +141,10 @@ struct swrast_texture_image
 
    GLboolean _IsPowerOfTwo;  /**< Are all dimensions powers of two? */
 
-#if 0
    /** used for mipmap LOD computation */
    GLfloat WidthScale, HeightScale, DepthScale;
 
+#if 0
    GLubyte *Data;    /**< The actual texture data in malloc'd memory */
 
    GLint TexelSize;  /**< bytes per texel block */

@@ -1585,8 +1585,10 @@ sample_2d_ewa(struct gl_context *ctx,
    const struct gl_texture_image *img =	tObj->Image[0][level];
    const struct gl_texture_image *mostDetailedImage =
       tObj->Image[0][tObj->BaseLevel];
-   GLfloat tex_u=-0.5 + texcoord[0] * mostDetailedImage->WidthScale * scaling;
-   GLfloat tex_v=-0.5 + texcoord[1] * mostDetailedImage->HeightScale * scaling;
+   const struct swrast_texture_image *swImg =
+      swrast_texture_image_const(mostDetailedImage);
+   GLfloat tex_u=-0.5 + texcoord[0] * swImg->WidthScale * scaling;
+   GLfloat tex_v=-0.5 + texcoord[1] * swImg->HeightScale * scaling;
 
    GLfloat ux = dudx * scaling;
    GLfloat vx = dvdx * scaling;
@@ -1793,6 +1795,7 @@ sample_lambda_2d_aniso(struct gl_context *ctx,
                        const GLfloat lambda_iso[], GLfloat rgba[][4])
 {
    const struct gl_texture_image *tImg = tObj->Image[0][tObj->BaseLevel];
+   const struct swrast_texture_image *swImg = swrast_texture_image_const(tImg);
    const GLfloat maxEccentricity =
       tObj->Sampler.MaxAnisotropy * tObj->Sampler.MaxAnisotropy;
    
@@ -1835,8 +1838,8 @@ sample_lambda_2d_aniso(struct gl_context *ctx,
       create_filter_table();
    }
 
-   texW = tImg->WidthScale;
-   texH = tImg->HeightScale;
+   texW = swImg->WidthScale;
+   texH = swImg->HeightScale;
 
    for (i = 0; i < n; i++) {
       const GLfloat invQ = (q == 0.0F) ? 1.0F : (1.0F / q);
