@@ -115,13 +115,8 @@ i915_get_param(struct pipe_screen *screen, enum pipe_cap cap)
    case PIPE_CAP_TEXTURE_SHADOW_MAP:
    case PIPE_CAP_TWO_SIDED_STENCIL:
    case PIPE_CAP_VERTEX_ELEMENT_INSTANCE_DIVISOR:
-      return 1;
-
-   /* Features that should be supported (boolean caps). */
-   /* XXX: Just test the code */
    case PIPE_CAP_BLEND_EQUATION_SEPARATE:
-      /* Also lie about these when asked to (needed for GLSL / GL 2.0) */
-      return is->debug.lie ? 1 : 0;
+      return 1;
 
    /* Unsupported features (boolean caps). */
    case PIPE_CAP_MAX_TEXTURE_ARRAY_LAYERS:
