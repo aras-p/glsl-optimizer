@@ -61,6 +61,7 @@ private:
    ir_texture *read_texture(s_expression *);
 
    ir_dereference *read_dereference(s_expression *);
+   ir_dereference_variable *read_var_ref(s_expression *);
 };
 
 ir_reader::ir_reader(_mesa_glsl_parse_state *state) : state(state)
@@ -828,17 +829,11 @@ ir_reader::read_constant(s_expression *expr)
    return new(mem_ctx) ir_constant(type, &data);
 }
 
-ir_dereference *
-ir_reader::read_dereference(s_expression *expr)
+ir_dereference_variable *
+ir_reader::read_var_ref(s_expression *expr)
 {
    s_symbol *s_var;
-   s_expression *s_subject;
-   s_expression *s_index;
-   s_symbol *s_field;
-
    s_pattern var_pat[] = { "var_ref", s_var };
-   s_pattern array_pat[] = { "array_ref", s_subject, s_index };
-   s_pattern record_pat[] = { "record_ref", s_subject, s_field };
 
    if (MATCH(expr, var_pat)) {
       ir_variable *var = state->symbols->get_variable(s_var->value());
@@ -847,6 +842,23 @@ ir_reader::read_dereference(s_expression *expr)
 	 return NULL;
       }
       return new(mem_ctx) ir_dereference_variable(var);
+   }
+   return NULL;
+}
+
+ir_dereference *
+ir_reader::read_dereference(s_expression *expr)
+{
+   s_expression *s_subject;
+   s_expression *s_index;
+   s_symbol *s_field;
+
+   s_pattern array_pat[] = { "array_ref", s_subject, s_index };
+   s_pattern record_pat[] = { "record_ref", s_subject, s_field };
+
+   ir_dereference_variable *var_ref = read_var_ref(expr);
+   if (var_ref != NULL) {
+      return var_ref;
    } else if (MATCH(expr, array_pat)) {
       ir_rvalue *subject = read_rvalue(s_subject);
       if (subject == NULL) {
