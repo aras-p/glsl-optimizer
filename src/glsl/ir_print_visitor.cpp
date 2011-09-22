@@ -135,6 +135,10 @@ print_type(const glsl_type *t)
    }
 }
 
+void ir_print_visitor::visit(ir_rvalue *ir)
+{
+   printf("error");
+}
 
 void ir_print_visitor::visit(ir_variable *ir)
 {

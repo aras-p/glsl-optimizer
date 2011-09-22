@@ -71,6 +71,13 @@ dot(ir_constant *op0, ir_constant *op1)
 }
 
 ir_constant *
+ir_rvalue::constant_expression_value()
+{
+   assert(this->type->is_error());
+   return NULL;
+}
+
+ir_constant *
 ir_expression::constant_expression_value()
 {
    if (this->type->is_error())

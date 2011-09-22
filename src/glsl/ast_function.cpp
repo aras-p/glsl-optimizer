@@ -602,7 +602,7 @@ process_array_constructor(exec_list *instructions,
 		       "parameter%s",
 		       (constructor_type->length != 0) ? "at least" : "exactly",
 		       min_param, (min_param <= 1) ? "" : "s");
-      return ir_call::get_error_instruction(ctx);
+      return ir_rvalue::error_value(ctx);
    }
 
    if (constructor_type->length == 0) {
@@ -1239,7 +1239,7 @@ ast_function_expression::hir(exec_list *instructions,
 	 _mesa_glsl_error(& loc, state, "unknown type `%s' (structure name "
 			  "may be shadowed by a variable with the same name)",
 			  type->type_name);
-	 return ir_call::get_error_instruction(ctx);
+	 return ir_rvalue::error_value(ctx);
       }
 
 
@@ -1248,14 +1248,14 @@ ast_function_expression::hir(exec_list *instructions,
       if (constructor_type->is_sampler()) {
 	 _mesa_glsl_error(& loc, state, "cannot construct sampler type `%s'",
 			  constructor_type->name);
-	 return ir_call::get_error_instruction(ctx);
+	 return ir_rvalue::error_value(ctx);
       }
 
       if (constructor_type->is_array()) {
 	 if (state->language_version <= 110) {
 	    _mesa_glsl_error(& loc, state,
 			     "array constructors forbidden in GLSL 1.10");
-	    return ir_call::get_error_instruction(ctx);
+	    return ir_rvalue::error_value(ctx);
 	 }
 
 	 return process_array_constructor(instructions, constructor_type,
@@ -1286,7 +1286,7 @@ ast_function_expression::hir(exec_list *instructions,
 				"insufficient parameters to constructor "
 				"for `%s'",
 				constructor_type->name);
-	       return ir_call::get_error_instruction(ctx);
+	       return ir_rvalue::error_value(ctx);
 	    }
 
 	    if (apply_implicit_conversion(constructor_type->fields.structure[i].type,
@@ -1300,7 +1300,7 @@ ast_function_expression::hir(exec_list *instructions,
 				constructor_type->fields.structure[i].name,
 				ir->type->name,
 				constructor_type->fields.structure[i].type->name);
-	       return ir_call::get_error_instruction(ctx);;
+	       return ir_rvalue::error_value(ctx);;
 	    }
 
 	    node = node->next;
@@ -1309,7 +1309,7 @@ ast_function_expression::hir(exec_list *instructions,
 	 if (!node->is_tail_sentinel()) {
 	    _mesa_glsl_error(&loc, state, "too many parameters in constructor "
 			     "for `%s'", constructor_type->name);
-	    return ir_call::get_error_instruction(ctx);
+	    return ir_rvalue::error_value(ctx);
 	 }
 
 	 ir_rvalue *const constant =
@@ -1323,7 +1323,7 @@ ast_function_expression::hir(exec_list *instructions,
       }
 
       if (!constructor_type->is_numeric() && !constructor_type->is_boolean())
-	 return ir_call::get_error_instruction(ctx);
+	 return ir_rvalue::error_value(ctx);
 
       /* Total number of components of the type being constructed. */
       const unsigned type_components = constructor_type->components();
@@ -1350,14 +1350,14 @@ ast_function_expression::hir(exec_list *instructions,
 	    _mesa_glsl_error(& loc, state, "too many parameters to `%s' "
 			     "constructor",
 			     constructor_type->name);
-	    return ir_call::get_error_instruction(ctx);
+	    return ir_rvalue::error_value(ctx);
 	 }
 
 	 if (!result->type->is_numeric() && !result->type->is_boolean()) {
 	    _mesa_glsl_error(& loc, state, "cannot construct `%s' from a "
 			     "non-numeric data type",
 			     constructor_type->name);
-	    return ir_call::get_error_instruction(ctx);
+	    return ir_rvalue::error_value(ctx);
 	 }
 
 	 /* Count the number of matrix and nonmatrix parameters.  This
@@ -1382,7 +1382,7 @@ ast_function_expression::hir(exec_list *instructions,
 	 _mesa_glsl_error(& loc, state, "cannot construct `%s' from a "
 			  "matrix in GLSL 1.10",
 			  constructor_type->name);
-	 return ir_call::get_error_instruction(ctx);
+	 return ir_rvalue::error_value(ctx);
       }
 
       /* From page 50 (page 56 of the PDF) of the GLSL 1.50 spec:
@@ -1396,7 +1396,7 @@ ast_function_expression::hir(exec_list *instructions,
 	 _mesa_glsl_error(& loc, state, "for matrix `%s' constructor, "
 			  "matrix must be only parameter",
 			  constructor_type->name);
-	 return ir_call::get_error_instruction(ctx);
+	 return ir_rvalue::error_value(ctx);
       }
 
       /* From page 28 (page 34 of the PDF) of the GLSL 1.10 spec:
@@ -1410,7 +1410,7 @@ ast_function_expression::hir(exec_list *instructions,
 	 _mesa_glsl_error(& loc, state, "too few components to construct "
 			  "`%s'",
 			  constructor_type->name);
-	 return ir_call::get_error_instruction(ctx);
+	 return ir_rvalue::error_value(ctx);
       }
 
       /* Later, we cast each parameter to the same base type as the
@@ -1505,10 +1505,10 @@ ast_function_expression::hir(exec_list *instructions,
       ir_rvalue *value = NULL;
       if (sig == NULL) {
 	 no_matching_function_error(func_name, &loc, &actual_parameters, state);
-	 value = ir_call::get_error_instruction(ctx);
+	 value = ir_rvalue::error_value(ctx);
       } else if (!verify_parameter_modes(state, sig, actual_parameters, this->expressions)) {
 	 /* an error has already been emitted */
-	 value = ir_call::get_error_instruction(ctx);
+	 value = ir_rvalue::error_value(ctx);
       } else {
 	 value = generate_call(instructions, sig, &loc, &actual_parameters,
 			       &call, state);
@@ -1517,5 +1517,5 @@ ast_function_expression::hir(exec_list *instructions,
       return value;
    }
 
-   return ir_call::get_error_instruction(ctx);
+   return ir_rvalue::error_value(ctx);
 }

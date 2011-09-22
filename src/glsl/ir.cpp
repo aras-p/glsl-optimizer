@@ -1458,13 +1458,13 @@ ir_function::has_user_signature()
 }
 
 
-ir_call *
-ir_call::get_error_instruction(void *ctx)
+ir_rvalue *
+ir_rvalue::error_value(void *mem_ctx)
 {
-   ir_call *call = new(ctx) ir_call;
+   ir_rvalue *v = new(mem_ctx) ir_rvalue;
 
-   call->type = glsl_type::error_type;
-   return call;
+   v->type = glsl_type::error_type;
+   return v;
 }
 
 void

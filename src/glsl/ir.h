@@ -132,11 +132,21 @@ protected:
 };
 
 
+/**
+ * The base class for all "values"/expression trees.
+ */
 class ir_rvalue : public ir_instruction {
 public:
-   virtual ir_rvalue *clone(void *mem_ctx, struct hash_table *) const = 0;
+   virtual ir_rvalue *clone(void *mem_ctx, struct hash_table *) const;
 
-   virtual ir_constant *constant_expression_value() = 0;
+   virtual void accept(ir_visitor *v)
+   {
+      v->visit(this);
+   }
+
+   virtual ir_visitor_status accept(ir_hierarchical_visitor *);
+
+   virtual ir_constant *constant_expression_value();
 
    virtual ir_rvalue * as_rvalue()
    {
@@ -208,6 +218,14 @@ public:
     * \sa ir_constant::has_value, ir_rvalue::is_zero, ir_rvalue::is_one
     */
    virtual bool is_negative_one() const;
+
+
+   /**
+    * Return a generic value of error_type.
+    *
+    * Allocation will be performed with 'mem_ctx' as ralloc owner.
+    */
+   static ir_rvalue *error_value(void *mem_ctx);
 
 protected:
    ir_rvalue();
@@ -1030,13 +1048,6 @@ public:
    virtual ir_visitor_status accept(ir_hierarchical_visitor *);
 
    /**
-    * Get a generic ir_call object when an error occurs
-    *
-    * Any allocation will be performed with 'ctx' as ralloc owner.
-    */
-   static ir_call *get_error_instruction(void *ctx);
-
-   /**
     * Get an iterator for the set of acutal parameters
     */
    exec_list_iterator iterator()
@@ -1078,12 +1089,6 @@ public:
    bool use_builtin;
 
 private:
-   ir_call()
-      : callee(NULL)
-   {
-      this->ir_type = ir_type_call;
-   }
-
    ir_function_signature *callee;
 };
 

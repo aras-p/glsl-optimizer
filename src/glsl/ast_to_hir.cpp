@@ -1699,7 +1699,7 @@ ast_expression::hir(exec_list *instructions,
 	 _mesa_glsl_error(& loc, state, "`%s' undeclared",
 			  this->primary_expression.identifier);
 
-	 result = ir_call::get_error_instruction(ctx);
+	 result = ir_rvalue::error_value(ctx);
 	 error_emitted = true;
       }
       break;

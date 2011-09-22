@@ -66,6 +66,13 @@ visit_list_elements(ir_hierarchical_visitor *v, exec_list *l,
 
 
 ir_visitor_status
+ir_rvalue::accept(ir_hierarchical_visitor *v)
+{
+   return v->visit(this);
+}
+
+
+ir_visitor_status
 ir_variable::accept(ir_hierarchical_visitor *v)
 {
    return v->visit(this);
