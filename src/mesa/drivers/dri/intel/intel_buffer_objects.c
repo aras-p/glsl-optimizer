@@ -752,7 +752,7 @@ intel_texture_object_purgeable(struct gl_context * ctx,
    if (intel->mt == NULL || intel->mt->region == NULL)
       return GL_RELEASED_APPLE;
 
-   return intel_buffer_purgeable(intel->mt->region->buffer);
+   return intel_buffer_purgeable(intel->mt->region->bo);
 }
 
 static GLenum
@@ -769,7 +769,7 @@ intel_render_object_purgeable(struct gl_context * ctx,
    if (intel->region == NULL)
       return GL_RELEASED_APPLE;
 
-   return intel_buffer_purgeable(intel->region->buffer);
+   return intel_buffer_purgeable(intel->region->bo);
 }
 
 static GLenum
@@ -809,7 +809,7 @@ intel_texture_object_unpurgeable(struct gl_context * ctx,
    if (intel->mt == NULL || intel->mt->region == NULL)
       return GL_UNDEFINED_APPLE;
 
-   return intel_buffer_unpurgeable(intel->mt->region->buffer);
+   return intel_buffer_unpurgeable(intel->mt->region->bo);
 }
 
 static GLenum
@@ -826,7 +826,7 @@ intel_render_object_unpurgeable(struct gl_context * ctx,
    if (intel->region == NULL)
       return GL_UNDEFINED_APPLE;
 
-   return intel_buffer_unpurgeable(intel->region->buffer);
+   return intel_buffer_unpurgeable(intel->region->bo);
 }
 #endif
 

@@ -283,7 +283,7 @@ intel_query_image(__DRIimage *image, int attrib, int *value)
       *value = image->region->pitch * image->region->cpp;
       return GL_TRUE;
    case __DRI_IMAGE_ATTRIB_HANDLE:
-      *value = image->region->buffer->handle;
+      *value = image->region->bo->handle;
       return GL_TRUE;
    case __DRI_IMAGE_ATTRIB_NAME:
       return intel_region_flink(image->region, (uint32_t *) value);

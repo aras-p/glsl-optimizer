@@ -443,9 +443,9 @@ i830_emit_state(struct intel_context *intel)
 
    aper_array[aper_count++] = intel->batch.bo;
    if (dirty & I830_UPLOAD_BUFFERS) {
-      aper_array[aper_count++] = state->draw_region->buffer;
+      aper_array[aper_count++] = state->draw_region->bo;
       if (state->depth_region)
-         aper_array[aper_count++] = state->depth_region->buffer;
+         aper_array[aper_count++] = state->depth_region->bo;
    }
 
    for (i = 0; i < I830_TEX_UNITS; i++)
@@ -501,13 +501,13 @@ i830_emit_state(struct intel_context *intel)
       BEGIN_BATCH(count);
       OUT_BATCH(state->Buffer[I830_DESTREG_CBUFADDR0]);
       OUT_BATCH(state->Buffer[I830_DESTREG_CBUFADDR1]);
-      OUT_RELOC(state->draw_region->buffer,
+      OUT_RELOC(state->draw_region->bo,
 		I915_GEM_DOMAIN_RENDER, I915_GEM_DOMAIN_RENDER, 0);
 
       if (state->depth_region) {
          OUT_BATCH(state->Buffer[I830_DESTREG_DBUFADDR0]);
          OUT_BATCH(state->Buffer[I830_DESTREG_DBUFADDR1]);
-         OUT_RELOC(state->depth_region->buffer,
+         OUT_RELOC(state->depth_region->bo,
 		   I915_GEM_DOMAIN_RENDER, I915_GEM_DOMAIN_RENDER, 0);
       }
 

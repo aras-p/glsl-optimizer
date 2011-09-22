@@ -205,11 +205,11 @@ static void prepare_depthbuffer(struct brw_context *brw)
    struct intel_renderbuffer *srb = intel_get_renderbuffer(fb, BUFFER_STENCIL);
 
    if (drb)
-      brw_add_validated_bo(brw, drb->region->buffer);
+      brw_add_validated_bo(brw, drb->region->bo);
    if (drb && drb->hiz_region)
-      brw_add_validated_bo(brw, drb->hiz_region->buffer);
+      brw_add_validated_bo(brw, drb->hiz_region->bo);
    if (srb)
-      brw_add_validated_bo(brw, srb->region->buffer);
+      brw_add_validated_bo(brw, srb->region->bo);
 }
 
 static void emit_depthbuffer(struct brw_context *brw)
@@ -348,7 +348,7 @@ static void emit_depthbuffer(struct brw_context *brw)
 		(BRW_TILEWALK_YMAJOR << 26) |
 		((region->tiling != I915_TILING_NONE) << 27) |
 		(BRW_SURFACE_2D << 29));
-      OUT_RELOC(region->buffer,
+      OUT_RELOC(region->bo,
 		I915_GEM_DOMAIN_RENDER, I915_GEM_DOMAIN_RENDER,
 		offset);
       OUT_BATCH((BRW_SURFACE_MIPMAPLAYOUT_BELOW << 1) |
@@ -381,7 +381,7 @@ static void emit_depthbuffer(struct brw_context *brw)
 	 BEGIN_BATCH(3);
 	 OUT_BATCH((_3DSTATE_HIER_DEPTH_BUFFER << 16) | (3 - 2));
 	 OUT_BATCH(hiz_region->pitch * hiz_region->cpp - 1);
-	 OUT_RELOC(hiz_region->buffer,
+	 OUT_RELOC(hiz_region->bo,
 		   I915_GEM_DOMAIN_RENDER, I915_GEM_DOMAIN_RENDER,
 		   0);
 	 ADVANCE_BATCH();
@@ -398,7 +398,7 @@ static void emit_depthbuffer(struct brw_context *brw)
 	 BEGIN_BATCH(3);
 	 OUT_BATCH((_3DSTATE_STENCIL_BUFFER << 16) | (3 - 2));
 	 OUT_BATCH(stencil_irb->region->pitch * stencil_irb->region->cpp - 1);
-	 OUT_RELOC(stencil_irb->region->buffer,
+	 OUT_RELOC(stencil_irb->region->bo,
 		   I915_GEM_DOMAIN_RENDER, I915_GEM_DOMAIN_RENDER,
 		   0);
 	 ADVANCE_BATCH();

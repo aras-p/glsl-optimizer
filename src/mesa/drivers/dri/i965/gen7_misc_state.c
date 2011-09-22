@@ -65,9 +65,9 @@ static void prepare_depthbuffer(struct brw_context *brw)
    struct intel_renderbuffer *srb = intel_get_renderbuffer(fb, BUFFER_STENCIL);
 
    if (drb)
-      brw_add_validated_bo(brw, drb->region->buffer);
+      brw_add_validated_bo(brw, drb->region->bo);
    if (srb)
-      brw_add_validated_bo(brw, srb->region->buffer);
+      brw_add_validated_bo(brw, srb->region->bo);
 }
 
 static void emit_depthbuffer(struct brw_context *brw)
@@ -128,7 +128,7 @@ static void emit_depthbuffer(struct brw_context *brw)
 		((srb != NULL && ctx->Stencil.WriteMask != 0) << 27) |
 		((ctx->Depth.Mask != 0) << 28) |
 		(BRW_SURFACE_2D << 29));
-      OUT_RELOC(region->buffer,
+      OUT_RELOC(region->bo,
 	        I915_GEM_DOMAIN_RENDER, I915_GEM_DOMAIN_RENDER,
 		offset);
       OUT_BATCH(((region->width - 1) << 4) | ((region->height - 1) << 18));
@@ -155,7 +155,7 @@ static void emit_depthbuffer(struct brw_context *brw)
       BEGIN_BATCH(3);
       OUT_BATCH(GEN7_3DSTATE_STENCIL_BUFFER << 16 | (3 - 2));
       OUT_BATCH(srb->region->pitch * srb->region->cpp - 1);
-      OUT_RELOC(srb->region->buffer,
+      OUT_RELOC(srb->region->bo,
 	        I915_GEM_DOMAIN_RENDER, I915_GEM_DOMAIN_RENDER,
 		0);
       ADVANCE_BATCH();

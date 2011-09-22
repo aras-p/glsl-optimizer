@@ -244,7 +244,7 @@ brw_update_texture_surface( struct gl_context *ctx, GLuint unit )
 				    sampler->sRGBDecode) <<
 	       BRW_SURFACE_FORMAT_SHIFT));
 
-   surf[1] = intelObj->mt->region->buffer->offset; /* reloc */
+   surf[1] = intelObj->mt->region->bo->offset; /* reloc */
 
    surf[2] = ((intelObj->_MaxLevel - tObj->BaseLevel) << BRW_SURFACE_LOD_SHIFT |
 	      (firstImage->Width - 1) << BRW_SURFACE_WIDTH_SHIFT |
@@ -261,7 +261,7 @@ brw_update_texture_surface( struct gl_context *ctx, GLuint unit )
    /* Emit relocation to surface contents */
    drm_intel_bo_emit_reloc(brw->intel.batch.bo,
 			   brw->wm.surf_offset[surf_index] + 4,
-			   intelObj->mt->region->buffer, 0,
+			   intelObj->mt->region->bo, 0,
 			   I915_GEM_DOMAIN_SAMPLER, 0);
 }
 
@@ -488,7 +488,7 @@ brw_update_renderbuffer_surface(struct brw_context *brw,
 
    /* reloc */
    surf[1] = (intel_renderbuffer_tile_offsets(irb, &tile_x, &tile_y) +
-	      region->buffer->offset);
+	      region->bo->offset);
 
    surf[2] = ((rb->Width - 1) << BRW_SURFACE_WIDTH_SHIFT |
 	      (rb->Height - 1) << BRW_SURFACE_HEIGHT_SHIFT);
@@ -531,8 +531,8 @@ brw_update_renderbuffer_surface(struct brw_context *brw,
 
    drm_intel_bo_emit_reloc(brw->intel.batch.bo,
 			   brw->wm.surf_offset[unit] + 4,
-			   region->buffer,
-			   surf[1] - region->buffer->offset,
+			   region->bo,
+			   surf[1] - region->bo->offset,
 			   I915_GEM_DOMAIN_RENDER,
 			   I915_GEM_DOMAIN_RENDER);
 }
@@ -550,7 +550,7 @@ prepare_wm_surfaces(struct brw_context *brw)
       struct intel_region *region = irb ? irb->region : NULL;
 
       if (region)
-	 brw_add_validated_bo(brw, region->buffer);
+	 brw_add_validated_bo(brw, region->bo);
       nr_surfaces = SURF_INDEX_DRAW(i) + 1;
    }
 
@@ -566,7 +566,7 @@ prepare_wm_surfaces(struct brw_context *brw)
 	 struct gl_texture_object *tObj = texUnit->_Current;
 	 struct intel_texture_object *intelObj = intel_texture_object(tObj);
 
-	 brw_add_validated_bo(brw, intelObj->mt->region->buffer);
+	 brw_add_validated_bo(brw, intelObj->mt->region->bo);
 	 nr_surfaces = SURF_INDEX_TEXTURE(i) + 1;
       }
    }

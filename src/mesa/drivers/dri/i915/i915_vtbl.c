@@ -319,9 +319,9 @@ i915_emit_state(struct intel_context *intel)
    aper_array[aper_count++] = intel->batch.bo;
    if (dirty & I915_UPLOAD_BUFFERS) {
       if (state->draw_region)
-	 aper_array[aper_count++] = state->draw_region->buffer;
+	 aper_array[aper_count++] = state->draw_region->bo;
       if (state->depth_region)
-	 aper_array[aper_count++] = state->depth_region->buffer;
+	 aper_array[aper_count++] = state->depth_region->bo;
    }
 
    if (dirty & I915_UPLOAD_TEX_ALL) {
@@ -397,7 +397,7 @@ i915_emit_state(struct intel_context *intel)
       OUT_BATCH(state->Buffer[I915_DESTREG_CBUFADDR0]);
       OUT_BATCH(state->Buffer[I915_DESTREG_CBUFADDR1]);
       if (state->draw_region) {
-	 OUT_RELOC(state->draw_region->buffer,
+	 OUT_RELOC(state->draw_region->bo,
 		   I915_GEM_DOMAIN_RENDER, I915_GEM_DOMAIN_RENDER, 0);
       } else {
 	 OUT_BATCH(0);
@@ -406,7 +406,7 @@ i915_emit_state(struct intel_context *intel)
       OUT_BATCH(state->Buffer[I915_DESTREG_DBUFADDR0]);
       OUT_BATCH(state->Buffer[I915_DESTREG_DBUFADDR1]);
       if (state->depth_region) {
-         OUT_RELOC(state->depth_region->buffer,
+         OUT_RELOC(state->depth_region->bo,
 		   I915_GEM_DOMAIN_RENDER, I915_GEM_DOMAIN_RENDER, 0);
       } else {
 	 OUT_BATCH(0);

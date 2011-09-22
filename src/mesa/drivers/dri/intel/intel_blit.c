@@ -223,7 +223,6 @@ intelClearWithBlit(struct gl_context *ctx, GLbitfield mask)
    struct intel_context *intel = intel_context(ctx);
    struct gl_framebuffer *fb = ctx->DrawBuffer;
    GLuint clear_depth_value, clear_depth_mask;
-   GLboolean all;
    GLint cx, cy, cw, ch;
    GLbitfield fail_mask = 0;
    BATCH_LOCALS;
@@ -253,15 +252,12 @@ intelClearWithBlit(struct gl_context *ctx, GLbitfield mask)
    if (cw == 0 || ch == 0)
       return 0;
 
-   all = (cw == fb->Width && ch == fb->Height);
-
    /* Loop over all renderbuffers */
    mask &= (1 << BUFFER_COUNT) - 1;
    while (mask) {
       GLuint buf = _mesa_ffs(mask) - 1;
       GLboolean is_depth_stencil = buf == BUFFER_DEPTH || buf == BUFFER_STENCIL;
       struct intel_renderbuffer *irb;
-      drm_intel_bo *write_buffer;
       int x1, y1, x2, y2;
       uint32_t clear_val;
       uint32_t BR13, CMD;
@@ -271,15 +267,12 @@ intelClearWithBlit(struct gl_context *ctx, GLbitfield mask)
       mask &= ~(1 << buf);
 
       irb = intel_get_renderbuffer(fb, buf);
-      if (irb == NULL || irb->region == NULL || irb->region->buffer == NULL) {
+      if (irb == NULL || irb->region == NULL || irb->region->bo == NULL) {
          fail_mask |= 1 << buf;
          continue;
       }
 
       /* OK, clear this renderbuffer */
-      write_buffer = intel_region_buffer(intel, irb->region,
-					 all ? INTEL_WRITE_FULL :
-					 INTEL_WRITE_PART);
       x1 = cx + irb->draw_x;
       y1 = cy + irb->draw_y;
       x2 = cx + cw + irb->draw_x;
@@ -290,7 +283,7 @@ intelClearWithBlit(struct gl_context *ctx, GLbitfield mask)
 
       DBG("%s dst:buf(%p)/%d %d,%d sz:%dx%d\n",
 	  __FUNCTION__,
-	  irb->region->buffer, (pitch * cpp),
+	  irb->region->bo, (pitch * cpp),
 	  x1, y1, x2 - x1, y2 - y1);
 
       BR13 = 0xf0 << 16;
@@ -358,7 +351,7 @@ intelClearWithBlit(struct gl_context *ctx, GLbitfield mask)
 
       /* do space check before going any further */
       aper_array[0] = intel->batch.bo;
-      aper_array[1] = write_buffer;
+      aper_array[1] = irb->region->bo;
 
       if (drm_intel_bufmgr_check_aperture_space(aper_array,
 						ARRAY_SIZE(aper_array)) != 0) {
@@ -370,7 +363,7 @@ intelClearWithBlit(struct gl_context *ctx, GLbitfield mask)
       OUT_BATCH(BR13);
       OUT_BATCH((y1 << 16) | x1);
       OUT_BATCH((y2 << 16) | x2);
-      OUT_RELOC_FENCED(write_buffer,
+      OUT_RELOC_FENCED(irb->region->bo,
 		       I915_GEM_DOMAIN_RENDER, I915_GEM_DOMAIN_RENDER,
 		       0);
       OUT_BATCH(clear_val);
@@ -553,7 +546,7 @@ intel_set_teximage_alpha_to_one(struct gl_context *ctx,
 
    DBG("%s dst:buf(%p)/%d %d,%d sz:%dx%d\n",
        __FUNCTION__,
-       intel_image->mt->region->buffer, (pitch * cpp),
+       intel_image->mt->region->bo, (pitch * cpp),
        x1, y1, x2 - x1, y2 - y1);
 
    BR13 = br13_for_cpp(cpp) | 0xf0 << 16;
@@ -572,7 +565,7 @@ intel_set_teximage_alpha_to_one(struct gl_context *ctx,
 
    /* do space check before going any further */
    aper_array[0] = intel->batch.bo;
-   aper_array[1] = region->buffer;
+   aper_array[1] = region->bo;
 
    if (drm_intel_bufmgr_check_aperture_space(aper_array,
 					     ARRAY_SIZE(aper_array)) != 0) {
@@ -584,7 +577,7 @@ intel_set_teximage_alpha_to_one(struct gl_context *ctx,
    OUT_BATCH(BR13);
    OUT_BATCH((y1 << 16) | x1);
    OUT_BATCH((y2 << 16) | x2);
-   OUT_RELOC_FENCED(region->buffer,
+   OUT_RELOC_FENCED(region->bo,
 		    I915_GEM_DOMAIN_RENDER, I915_GEM_DOMAIN_RENDER,
 		    0);
    OUT_BATCH(0xffffffff); /* white, but only alpha gets written */

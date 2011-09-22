@@ -109,9 +109,6 @@ intel_copy_texsubimage(struct intel_context *intel,
    }
 
    {
-      drm_intel_bo *dst_bo = intel_region_buffer(intel,
-						 intelImage->mt->region,
-						 INTEL_WRITE_PART);
       GLuint image_x, image_y;
       GLshort src_pitch;
 
@@ -140,11 +137,11 @@ intel_copy_texsubimage(struct intel_context *intel,
       if (!intelEmitCopyBlit(intel,
 			     intelImage->mt->cpp,
 			     src_pitch,
-			     irb->region->buffer,
+			     irb->region->bo,
 			     0,
 			     irb->region->tiling,
 			     intelImage->mt->region->pitch,
-			     dst_bo,
+			     intelImage->mt->region->bo,
 			     0,
 			     intelImage->mt->region->tiling,
 			     irb->draw_x + x, irb->draw_y + y,

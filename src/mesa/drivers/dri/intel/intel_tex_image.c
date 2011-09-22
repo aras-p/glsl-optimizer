@@ -180,7 +180,7 @@ try_pbo_upload(struct intel_context *intel,
       return false;
    }
 
-   dst_buffer = intel_region_buffer(intel, intelImage->mt->region, INTEL_WRITE_FULL);
+   dst_buffer = intelImage->mt->region->bo;
    src_buffer = intel_bufferobj_source(intel, pbo, 64, &src_offset);
    /* note: potential 64-bit ptr to 32-bit int cast */
    src_offset += (GLuint) (unsigned long) pixels;
@@ -411,7 +411,7 @@ intelTexImage(struct gl_context * ctx,
       if (pixels != NULL) {
 	 /* Flush any queued rendering with the texture before mapping. */
 	 if (drm_intel_bo_references(intel->batch.bo,
-				     intelImage->mt->region->buffer)) {
+				     intelImage->mt->region->bo)) {
 	    intel_flush(ctx);
 	 }
          texImage->Data = intel_miptree_image_map(intel,

@@ -139,7 +139,7 @@ intel_set_span_functions(struct intel_context *intel,
     * required.								\
     */									\
    struct intel_renderbuffer *irb = intel_renderbuffer(rb);		\
-   uint8_t *buf = irb->region->buffer->virtual;				\
+   uint8_t *buf = irb->region->bo->virtual;				\
    unsigned stride = irb->region->pitch;				\
    unsigned height = 2 * irb->region->height;				\
    bool flip = rb->Name == 0;						\
@@ -234,9 +234,9 @@ intel_renderbuffer_map(struct intel_context *intel, struct gl_renderbuffer *rb)
    if (!irb->region)
       return;
 
-   drm_intel_gem_bo_map_gtt(irb->region->buffer);
+   drm_intel_gem_bo_map_gtt(irb->region->bo);
 
-   rb->Data = irb->region->buffer->virtual;
+   rb->Data = irb->region->bo->virtual;
    rb->RowStride = irb->region->pitch;
 
    if (!rb->Name) {
@@ -271,7 +271,7 @@ intel_renderbuffer_unmap(struct intel_context *intel,
    if (!irb->region)
       return;
 
-   drm_intel_gem_bo_unmap_gtt(irb->region->buffer);
+   drm_intel_gem_bo_unmap_gtt(irb->region->bo);
 
    rb->GetRow = NULL;
    rb->PutRow = NULL;

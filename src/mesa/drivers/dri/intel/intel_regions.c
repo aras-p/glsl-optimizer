@@ -116,10 +116,10 @@ intel_region_map(struct intel_context *intel, struct intel_region *region)
    _DBG("%s %p\n", __FUNCTION__, region);
    if (!region->map_refcount++) {
       if (region->tiling != I915_TILING_NONE)
-	 drm_intel_gem_bo_map_gtt(region->buffer);
+	 drm_intel_gem_bo_map_gtt(region->bo);
       else
-	 drm_intel_bo_map(region->buffer, GL_TRUE);
-      region->map = region->buffer->virtual;
+	 drm_intel_bo_map(region->bo, GL_TRUE);
+      region->map = region->bo->virtual;
    }
 
    return region->map;
@@ -131,9 +131,9 @@ intel_region_unmap(struct intel_context *intel, struct intel_region *region)
    _DBG("%s %p\n", __FUNCTION__, region);
    if (!--region->map_refcount) {
       if (region->tiling != I915_TILING_NONE)
-	 drm_intel_gem_bo_unmap_gtt(region->buffer);
+	 drm_intel_gem_bo_unmap_gtt(region->bo);
       else
-	 drm_intel_bo_unmap(region->buffer);
+	 drm_intel_bo_unmap(region->bo);
       region->map = NULL;
    }
 }
@@ -155,7 +155,7 @@ intel_region_alloc_internal(struct intel_screen *screen,
    region->height = height;
    region->pitch = pitch;
    region->refcount = 1;
-   region->buffer = buffer;
+   region->bo = buffer;
    region->tiling = tiling;
    region->screen = screen;
 
@@ -197,7 +197,7 @@ GLboolean
 intel_region_flink(struct intel_region *region, uint32_t *name)
 {
    if (region->name == 0) {
-      if (drm_intel_bo_flink(region->buffer, &region->name))
+      if (drm_intel_bo_flink(region->bo, &region->name))
 	 return GL_FALSE;
       
       _mesa_HashInsert(region->screen->named_regions,
@@ -292,7 +292,7 @@ intel_region_release(struct intel_region **region_handle)
    if (region->refcount == 0) {
       assert(region->map_refcount == 0);
 
-      drm_intel_bo_unreference(region->buffer);
+      drm_intel_bo_unreference(region->bo);
 
       if (region->name > 0)
 	 _mesa_HashRemove(region->screen->named_regions, region->name);
@@ -396,15 +396,8 @@ intel_region_copy(struct intel_context *intel,
 
    return intelEmitCopyBlit(intel,
 			    dst->cpp,
-			    src_pitch, src->buffer, src_offset, src->tiling,
-			    dst->pitch, dst->buffer, dst_offset, dst->tiling,
+			    src_pitch, src->bo, src_offset, src->tiling,
+			    dst->pitch, dst->bo, dst_offset, dst->tiling,
 			    srcx, srcy, dstx, dsty, width, height,
 			    logicop);
-}
-
-drm_intel_bo *
-intel_region_buffer(struct intel_context *intel,
-                    struct intel_region *region, GLuint flag)
-{
-   return region->buffer;
 }

@@ -53,7 +53,7 @@ struct intel_buffer_object;
  */
 struct intel_region
 {
-   drm_intel_bo *buffer;  /**< buffer manager's buffer */
+   drm_intel_bo *bo;  /**< buffer manager's buffer */
    GLuint refcount; /**< Reference count for region */
    GLuint cpp;      /**< bytes per pixel */
    GLuint width;    /**< in pixels */
@@ -123,10 +123,6 @@ intel_region_copy(struct intel_context *intel,
 		  GLuint srcx, GLuint srcy, GLuint width, GLuint height,
 		  GLboolean flip,
 		  GLenum logicop);
-
-drm_intel_bo *intel_region_buffer(struct intel_context *intel,
-				  struct intel_region *region,
-				  GLuint flag);
 
 void _mesa_copy_rect(GLubyte * dst,
                 GLuint cpp,

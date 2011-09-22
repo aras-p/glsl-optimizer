@@ -53,7 +53,7 @@ intel_blit_texsubimage(struct gl_context * ctx,
    struct intel_context *intel = intel_context(ctx);
    struct intel_texture_image *intelImage = intel_texture_image(texImage);
    GLuint dstRowStride = 0;
-   drm_intel_bo *temp_bo = NULL, *dst_bo = NULL;
+   drm_intel_bo *temp_bo = NULL;
    unsigned int blit_x = 0, blit_y = 0;
    unsigned long pitch;
    uint32_t tiling_mode = I915_TILING_NONE;
@@ -77,10 +77,7 @@ intel_blit_texsubimage(struct gl_context * ctx,
    if (intel->gen >= 6)
       return false;
 
-   dst_bo = intel_region_buffer(intel, intelImage->mt->region,
-				INTEL_WRITE_PART);
-
-   if (!drm_intel_bo_busy(dst_bo))
+   if (!drm_intel_bo_busy(intelImage->mt->region->bo))
       return false;
 
    DBG("BLT subimage %s target %s level %d offset %d,%d %dx%d\n",
@@ -145,7 +142,8 @@ intel_blit_texsubimage(struct gl_context * ctx,
 			   intelImage->mt->cpp,
 			   dstRowStride / intelImage->mt->cpp,
 			   temp_bo, 0, GL_FALSE,
-			   dst_pitch / intelImage->mt->cpp, dst_bo, 0,
+			   dst_pitch / intelImage->mt->cpp,
+			   intelImage->mt->region->bo, 0,
 			   intelImage->mt->region->tiling,
 			   0, 0, blit_x, blit_y, width, height,
 			   GL_COPY);

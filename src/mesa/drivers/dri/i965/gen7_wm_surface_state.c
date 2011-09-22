@@ -95,7 +95,7 @@ gen7_update_texture_surface(struct gl_context *ctx, GLuint unit)
     * - render_cache_read_write (exists on gen6 but ignored here)
     */
 
-   surf->ss1.base_addr = intelObj->mt->region->buffer->offset; /* reloc */
+   surf->ss1.base_addr = intelObj->mt->region->bo->offset; /* reloc */
 
    surf->ss2.width = firstImage->Width - 1;
    surf->ss2.height = firstImage->Height - 1;
@@ -118,7 +118,7 @@ gen7_update_texture_surface(struct gl_context *ctx, GLuint unit)
    drm_intel_bo_emit_reloc(brw->intel.batch.bo,
 			   brw->wm.surf_offset[surf_index] +
 			   offsetof(struct gen7_surface_state, ss1),
-			   intelObj->mt->region->buffer, 0,
+			   intelObj->mt->region->bo, 0,
 			   I915_GEM_DOMAIN_SAMPLER, 0);
 }
 
@@ -275,7 +275,7 @@ gen7_update_renderbuffer_surface(struct brw_context *brw,
    surf->ss0.surface_type = BRW_SURFACE_2D;
    /* reloc */
    surf->ss1.base_addr = intel_renderbuffer_tile_offsets(irb, &tile_x, &tile_y);
-   surf->ss1.base_addr += region->buffer->offset; /* reloc */
+   surf->ss1.base_addr += region->bo->offset; /* reloc */
 
    assert(brw->has_surface_tile_offset);
    /* Note that the low bits of these fields are missing, so
@@ -294,8 +294,8 @@ gen7_update_renderbuffer_surface(struct brw_context *brw,
    drm_intel_bo_emit_reloc(brw->intel.batch.bo,
 			   brw->wm.surf_offset[unit] +
 			   offsetof(struct gen7_surface_state, ss1),
-			   region->buffer,
-			   surf->ss1.base_addr - region->buffer->offset,
+			   region->bo,
+			   surf->ss1.base_addr - region->bo->offset,
 			   I915_GEM_DOMAIN_RENDER,
 			   I915_GEM_DOMAIN_RENDER);
 }
@@ -314,7 +314,7 @@ prepare_wm_surfaces(struct brw_context *brw)
 	 struct intel_region *region = irb ? irb->region : NULL;
 
 	 if (region)
-	    brw_add_validated_bo(brw, region->buffer);
+	    brw_add_validated_bo(brw, region->bo);
 	 nr_surfaces = SURF_INDEX_DRAW(i) + 1;
       }
    }
@@ -330,7 +330,7 @@ prepare_wm_surfaces(struct brw_context *brw)
       struct intel_texture_object *intelObj = intel_texture_object(tObj);
 
       if (texUnit->_ReallyEnabled) {
-	 brw_add_validated_bo(brw, intelObj->mt->region->buffer);
+	 brw_add_validated_bo(brw, intelObj->mt->region->bo);
 	 nr_surfaces = SURF_INDEX_TEXTURE(i) + 1;
       }
    }
