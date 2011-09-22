@@ -577,8 +577,7 @@ st_TexImage(struct gl_context * ctx,
     */
    if (stObj->pt) {
       if (level > (GLint) stObj->pt->last_level ||
-          !st_texture_match_image(stObj->pt, &stImage->base,
-                                  stImage->base.Face, stImage->base.Level)) {
+          !st_texture_match_image(stObj->pt, &stImage->base)) {
          DBG("release it\n");
          pipe_resource_reference(&stObj->pt, NULL);
          assert(!stObj->pt);
@@ -611,8 +610,7 @@ st_TexImage(struct gl_context * ctx,
     * in its own buffer.
     */
    if (stObj->pt &&
-       st_texture_match_image(stObj->pt, &stImage->base,
-                              stImage->base.Face, stImage->base.Level)) {
+       st_texture_match_image(stObj->pt, &stImage->base)) {
 
       pipe_resource_reference(&stImage->pt, stObj->pt);
       assert(stImage->pt);

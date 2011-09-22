@@ -184,8 +184,7 @@ st_gl_texture_dims_to_pipe_dims(GLenum texture,
  */
 extern GLboolean
 st_texture_match_image(const struct pipe_resource *pt,
-                       const struct gl_texture_image *image,
-                       GLuint face, GLuint level);
+                       const struct gl_texture_image *image);
 
 /* Return a pointer to an image within a texture.  Return image stride as
  * well.

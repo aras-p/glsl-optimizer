@@ -170,8 +170,7 @@ st_gl_texture_dims_to_pipe_dims(GLenum texture,
  */
 GLboolean
 st_texture_match_image(const struct pipe_resource *pt,
-                       const struct gl_texture_image *image,
-                       GLuint face, GLuint level)
+                       const struct gl_texture_image *image)
 {
    GLuint ptWidth, ptHeight, ptDepth, ptLayers;
 
@@ -192,9 +191,9 @@ st_texture_match_image(const struct pipe_resource *pt,
    /* Test if this image's size matches what's expected in the
     * established texture.
     */
-   if (ptWidth != u_minify(pt->width0, level) ||
-       ptHeight != u_minify(pt->height0, level) ||
-       ptDepth != u_minify(pt->depth0, level) ||
+   if (ptWidth != u_minify(pt->width0, image->Level) ||
+       ptHeight != u_minify(pt->height0, image->Level) ||
+       ptDepth != u_minify(pt->depth0, image->Level) ||
        ptLayers != pt->array_size)
       return GL_FALSE;
 
