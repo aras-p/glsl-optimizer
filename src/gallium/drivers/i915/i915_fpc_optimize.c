@@ -62,6 +62,13 @@ static boolean same_src_reg(struct i915_full_src_register* d1, struct i915_full_
            d1->Register.Negate == d2->Register.Negate);
 }
 
+static boolean has_destination(unsigned opcode)
+{
+   return (opcode != TGSI_OPCODE_NOP &&
+           opcode != TGSI_OPCODE_KIL &&
+           opcode != TGSI_OPCODE_RET);
+}
+
 static boolean is_unswizzled(struct i915_full_src_register* r,
                              unsigned write_mask)
 {
@@ -192,6 +199,7 @@ static void i915_fpc_optimize_useless_mov(union i915_full_token* current, union 
    if ( current->Token.Type == TGSI_TOKEN_TYPE_INSTRUCTION  &&
         next->Token.Type == TGSI_TOKEN_TYPE_INSTRUCTION  &&
         next->FullInstruction.Instruction.Opcode == TGSI_OPCODE_MOV &&
+        has_destination(current->FullInstruction.Instruction.Opcode) &&
         next->FullInstruction.Instruction.Saturate == TGSI_SAT_NONE &&
         next->FullInstruction.Src[0].Register.Absolute == 0 &&
         next->FullInstruction.Src[0].Register.Negate == 0 &&
