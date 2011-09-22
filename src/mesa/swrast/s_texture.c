@@ -109,7 +109,7 @@ void
 _swrast_free_texture_image_buffer(struct gl_context *ctx,
                                   struct gl_texture_image *texImage)
 {
-   if (texImage->Data && !texImage->IsClientData) {
+   if (texImage->Data) {
       _mesa_align_free(texImage->Data);
    }
 

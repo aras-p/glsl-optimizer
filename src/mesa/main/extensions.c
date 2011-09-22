@@ -260,7 +260,6 @@ static const struct extension extension_table[] = {
    { "GL_AMD_draw_buffers_blend",                  o(ARB_draw_buffers_blend),                  GL,             2009 },
    { "GL_AMD_seamless_cubemap_per_texture",        o(AMD_seamless_cubemap_per_texture),        GL,             2009 },
    { "GL_AMD_shader_stencil_export",               o(ARB_shader_stencil_export),               GL,             2009 },
-   { "GL_APPLE_client_storage",                    o(APPLE_client_storage),                    GL,             2002 },
    { "GL_APPLE_object_purgeable",                  o(APPLE_object_purgeable),                  GL,             2006 },
    { "GL_APPLE_packed_pixels",                     o(APPLE_packed_pixels),                     GL,             2002 },
    { "GL_APPLE_vertex_array_object",               o(APPLE_vertex_array_object),               GL,             2002 },

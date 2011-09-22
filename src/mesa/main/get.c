@@ -888,7 +888,6 @@ static const struct value_desc values[] = {
    { GL_UNPACK_SWAP_BYTES, CONTEXT_BOOL(Unpack.SwapBytes), NO_EXTRA },
    { GL_UNPACK_SKIP_IMAGES_EXT, CONTEXT_INT(Unpack.SkipImages), NO_EXTRA },
    { GL_UNPACK_IMAGE_HEIGHT_EXT, CONTEXT_INT(Unpack.ImageHeight), NO_EXTRA },
-   { GL_UNPACK_CLIENT_STORAGE_APPLE, CONTEXT_BOOL(Unpack.ClientStorage), NO_EXTRA },
    { GL_ZOOM_X, CONTEXT_FLOAT(Pixel.ZoomX), NO_EXTRA },
    { GL_ZOOM_Y, CONTEXT_FLOAT(Pixel.ZoomY), NO_EXTRA },
 

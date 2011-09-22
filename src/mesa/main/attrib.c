@@ -1352,7 +1352,6 @@ copy_pixelstore(struct gl_context *ctx,
    dst->SkipImages = src->SkipImages;
    dst->SwapBytes = src->SwapBytes;
    dst->LsbFirst = src->LsbFirst;
-   dst->ClientStorage = src->ClientStorage;
    dst->Invert = src->Invert;
    _mesa_reference_buffer_object(ctx, &dst->BufferObj, src->BufferObj);
 }

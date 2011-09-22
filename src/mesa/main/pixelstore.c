@@ -204,12 +204,6 @@ _mesa_PixelStorei( GLenum pname, GLint param )
 	 FLUSH_VERTICES(ctx, _NEW_PACKUNPACK);
 	 ctx->Unpack.Alignment = param;
 	 break;
-      case GL_UNPACK_CLIENT_STORAGE_APPLE:
-         if (param == (GLint)ctx->Unpack.ClientStorage)
-            return;
-         FLUSH_VERTICES(ctx, _NEW_PACKUNPACK);
-         ctx->Unpack.ClientStorage = param ? GL_TRUE : GL_FALSE;
-         break;
       default:
 	 _mesa_error( ctx, GL_INVALID_ENUM, "glPixelStore" );
 	 return;
@@ -240,7 +234,6 @@ _mesa_init_pixelstore( struct gl_context *ctx )
    ctx->Pack.SkipImages = 0;
    ctx->Pack.SwapBytes = GL_FALSE;
    ctx->Pack.LsbFirst = GL_FALSE;
-   ctx->Pack.ClientStorage = GL_FALSE;
    ctx->Pack.Invert = GL_FALSE;
 #if FEATURE_EXT_pixel_buffer_object
    _mesa_reference_buffer_object(ctx, &ctx->Pack.BufferObj,
@@ -254,7 +247,6 @@ _mesa_init_pixelstore( struct gl_context *ctx )
    ctx->Unpack.SkipImages = 0;
    ctx->Unpack.SwapBytes = GL_FALSE;
    ctx->Unpack.LsbFirst = GL_FALSE;
-   ctx->Unpack.ClientStorage = GL_FALSE;
    ctx->Unpack.Invert = GL_FALSE;
 #if FEATURE_EXT_pixel_buffer_object
    _mesa_reference_buffer_object(ctx, &ctx->Unpack.BufferObj,
@@ -275,7 +267,6 @@ _mesa_init_pixelstore( struct gl_context *ctx )
    ctx->DefaultPacking.SkipImages = 0;
    ctx->DefaultPacking.SwapBytes = GL_FALSE;
    ctx->DefaultPacking.LsbFirst = GL_FALSE;
-   ctx->DefaultPacking.ClientStorage = GL_FALSE;
    ctx->DefaultPacking.Invert = GL_FALSE;
 #if FEATURE_EXT_pixel_buffer_object
    _mesa_reference_buffer_object(ctx, &ctx->DefaultPacking.BufferObj,

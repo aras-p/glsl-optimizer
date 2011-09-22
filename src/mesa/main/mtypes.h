@@ -1254,7 +1254,6 @@ struct gl_texture_image
    GLuint HeightLog2;		/**< = log2(Height2) */
    GLuint DepthLog2;		/**< = log2(Depth2) */
    GLuint MaxLog2;		/**< = MAX(WidthLog2, HeightLog2) */
-   GLboolean IsClientData;	/**< Data owned by client? */
 
    struct gl_texture_object *TexObject;  /**< Pointer back to parent object */
    GLuint Level;                /**< Which mipmap level am I? */
@@ -1555,7 +1554,6 @@ struct gl_pixelstore_attrib
    GLint SkipImages;
    GLboolean SwapBytes;
    GLboolean LsbFirst;
-   GLboolean ClientStorage; /**< GL_APPLE_client_storage */
    GLboolean Invert;        /**< GL_MESA_pack_invert */
    struct gl_buffer_object *BufferObj; /**< GL_ARB_pixel_buffer_object */
 };
@@ -2858,7 +2856,6 @@ struct gl_extensions
    /* vendor extensions */
    GLboolean AMD_conservative_depth;
    GLboolean AMD_seamless_cubemap_per_texture;
-   GLboolean APPLE_client_storage;
    GLboolean APPLE_packed_pixels;
    GLboolean APPLE_vertex_array_object;
    GLboolean APPLE_object_purgeable;
