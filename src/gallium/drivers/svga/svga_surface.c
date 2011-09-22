@@ -87,7 +87,7 @@ svga_texture_copy_handle(struct svga_context *svga,
                                  &src.base,
                                  &dst.base,
                                  &boxes, 1);
-   if(ret != PIPE_OK) {
+   if (ret != PIPE_OK) {
       svga_context_flush(svga, NULL);
       ret = SVGA3D_BeginSurfaceCopy(svga->swc,
                                     &src.base,
@@ -129,14 +129,14 @@ svga_texture_view_surface(struct svga_context *svga,
    key->cachable = 1;
    assert(key->size.depth == 1);
    
-   if(tex->b.b.target == PIPE_TEXTURE_CUBE && face_pick < 0) {
+   if (tex->b.b.target == PIPE_TEXTURE_CUBE && face_pick < 0) {
       key->flags |= SVGA3D_SURFACE_CUBEMAP;
       key->numFaces = 6;
    } else {
       key->numFaces = 1;
    }
 
-   if(key->format == SVGA3D_FORMAT_INVALID) {
+   if (key->format == SVGA3D_FORMAT_INVALID) {
       key->cachable = 0;
       return NULL;
    }
@@ -154,11 +154,11 @@ svga_texture_view_surface(struct svga_context *svga,
       face_pick = 0;
 
    if (zslice_pick >= 0)
-       z_offset = zslice_pick;
+      z_offset = zslice_pick;
 
    for (i = 0; i < key->numMipLevels; i++) {
       for (j = 0; j < key->numFaces; j++) {
-         if(tex->defined[j + face_pick][i + start_mip]) {
+         if (tex->defined[j + face_pick][i + start_mip]) {
             unsigned depth = (zslice_pick < 0 ?
                               u_minify(tex->b.b.depth0, i + start_mip) :
                               1);
@@ -205,8 +205,8 @@ svga_create_surface(struct pipe_context *pipe,
       return NULL;
 
    if (pt->target == PIPE_TEXTURE_CUBE) {
-         face = surf_tmpl->u.tex.first_layer;
-         zslice = 0;
+      face = surf_tmpl->u.tex.first_layer;
+      zslice = 0;
    }
    else {
       face = 0;
@@ -263,7 +263,7 @@ svga_create_surface(struct pipe_context *pipe,
 
       s->handle = svga_texture_view_surface(svga, tex, flags, format,
                                             surf_tmpl->u.tex.level,
-	                                    1, face, zslice, &s->key);
+                                            1, face, zslice, &s->key);
       s->real_face = 0;
       s->real_level = 0;
       s->real_zslice = 0;
@@ -290,7 +290,7 @@ svga_surface_destroy(struct pipe_context *pipe,
    struct svga_texture *t = svga_texture(surf->texture);
    struct svga_screen *ss = svga_screen(surf->texture->screen);
 
-   if(s->handle != t->handle) {
+   if (s->handle != t->handle) {
       SVGA_DBG(DEBUG_DMA, "unref sid %p (tex surface)\n", s->handle);
       svga_screen_surface_destroy(ss, &s->key, &s->handle);
    }
@@ -305,7 +305,7 @@ svga_mark_surface_dirty(struct pipe_surface *surf)
 {
    struct svga_surface *s = svga_surface(surf);
 
-   if(!s->dirty) {
+   if (!s->dirty) {
       struct svga_texture *tex = svga_texture(surf->texture);
 
       s->dirty = TRUE;
@@ -324,7 +324,8 @@ svga_mark_surface_dirty(struct pipe_surface *surf)
 }
 
 
-void svga_mark_surfaces_dirty(struct svga_context *svga)
+void
+svga_mark_surfaces_dirty(struct svga_context *svga)
 {
    unsigned i;
 
@@ -366,7 +367,9 @@ svga_propagate_surface(struct svga_context *svga, struct pipe_surface *surf)
    tex->view_age[surf->u.tex.level] = ++(tex->age);
 
    if (s->handle != tex->handle) {
-      SVGA_DBG(DEBUG_VIEWS, "svga: Surface propagate: tex %p, level %u, from %p\n", tex, surf->u.tex.level, surf);
+      SVGA_DBG(DEBUG_VIEWS,
+               "svga: Surface propagate: tex %p, level %u, from %p\n",
+               tex, surf->u.tex.level, surf);
       svga_texture_copy_handle(svga,
                                s->handle, 0, 0, 0, s->real_level, s->real_face,
                                tex->handle, 0, 0, zslice, surf->u.tex.level, face,
@@ -375,6 +378,7 @@ svga_propagate_surface(struct svga_context *svga, struct pipe_surface *surf)
       tex->defined[face][surf->u.tex.level] = TRUE;
    }
 }
+
 
 /**
  * Check if we should call svga_propagate_surface on the surface.
@@ -390,13 +394,9 @@ svga_surface_needs_propagation(struct pipe_surface *surf)
 
 
 
-
-
-
 void
 svga_init_surface_functions(struct svga_context *svga)
 {
    svga->pipe.create_surface = svga_create_surface;
    svga->pipe.surface_destroy = svga_surface_destroy;
 }
-
