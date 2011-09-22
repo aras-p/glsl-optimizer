@@ -49,24 +49,24 @@
  * Simple pass-through fragment shader to use when we don't have
  * a real shader (or it fails to compile for some reason).
  */
-static unsigned passthrough[] = 
+static unsigned passthrough[] =
 {
    _3DSTATE_PIXEL_SHADER_PROGRAM | ((2*3)-1),
 
    /* declare input color:
     */
-   (D0_DCL | 
-    (REG_TYPE_T << D0_TYPE_SHIFT) | 
-    (T_DIFFUSE << D0_NR_SHIFT) | 
+   (D0_DCL |
+    (REG_TYPE_T << D0_TYPE_SHIFT) |
+    (T_DIFFUSE << D0_NR_SHIFT) |
     D0_CHANNEL_ALL),
    0,
    0,
 
    /* move to output color:
     */
-   (A0_MOV | 
-    (REG_TYPE_OC << A0_DEST_TYPE_SHIFT) | 
-    A0_DEST_CHANNEL_ALL | 
+   (A0_MOV |
+    (REG_TYPE_OC << A0_DEST_TYPE_SHIFT) |
+    A0_DEST_CHANNEL_ALL |
     (REG_TYPE_T << A0_SRC0_TYPE_SHIFT) |
     (T_DIFFUSE << A0_SRC0_NR_SHIFT)),
    0x01230000,			/* .xyzw */
@@ -454,7 +454,7 @@ emit_simple_arith_swap2(struct i915_fp_compile *p,
  * SIN, COS -- could use another taylor step?
  * LIT      -- results seem a little different to sw mesa
  * LOG      -- different to mesa on negative numbers, but this is conformant.
- */ 
+ */
 static void
 i915_translate_instruction(struct i915_fp_compile *p,
                            const struct i915_full_instruction *inst,
@@ -751,11 +751,11 @@ i915_translate_instruction(struct i915_fp_compile *p,
                       get_result_vector(p, &inst->Dst[0]),
                       flags, 0, swizzle(tmp, X, X, X, X), 0, 0);
       break;
-      
+
    case TGSI_OPCODE_RET:
       /* XXX: no-op? */
       break;
-      
+
    case TGSI_OPCODE_RCP:
       src0 = src_vector(p, &inst->Src[0], fs);
 
@@ -1244,11 +1244,11 @@ i915_fini_compile(struct i915_context *i915, struct i915_fp_compile *p)
          ifs->program_len = program_size + decl_size;
 
          memcpy(ifs->program,
-                p->declarations, 
+                p->declarations,
                 decl_size * sizeof(uint));
 
-         memcpy(ifs->program + decl_size, 
-                p->program, 
+         memcpy(ifs->program + decl_size,
+                p->program,
                 program_size * sizeof(uint));
       }
    }
