@@ -336,6 +336,11 @@ run_vp( struct gl_context *ctx, struct tnl_pipeline_stage *stage )
    for (i = 0; i < VERT_RESULT_MAX; i++) {
       if (program->Base.OutputsWritten & BITFIELD64_BIT(i)) {
          outputs[numOutputs++] = i;
+
+	 if (!store->results[i].data) {
+	    _mesa_vector4f_alloc( &store->results[i], 0, VB->Size, 32 );
+	    store->results[i].size = 4;
+	 }
       }
    }
 
@@ -504,18 +509,11 @@ init_vp(struct gl_context *ctx, struct tnl_pipeline_stage *stage)
    struct vertex_buffer *VB = &(tnl->vb);
    struct vp_stage_data *store;
    const GLuint size = VB->Size;
-   GLuint i;
 
    stage->privatePtr = CALLOC(sizeof(*store));
    store = VP_STAGE_DATA(stage);
    if (!store)
       return GL_FALSE;
-
-   /* Allocate arrays of vertex output values */
-   for (i = 0; i < VERT_RESULT_MAX; i++) {
-      _mesa_vector4f_alloc( &store->results[i], 0, size, 32 );
-      store->results[i].size = 4;
-   }
 
    /* a few other misc allocations */
    _mesa_vector4f_alloc( &store->ndcCoords, 0, size, 32 );
