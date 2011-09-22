@@ -36,6 +36,14 @@
 #include "tgsi/tgsi_parse.h"
 #include "tgsi/tgsi_dump.h"
 
+static boolean same_src_dst_reg(struct i915_full_src_register* s1, struct i915_full_dst_register* d1)
+{
+   return (s1->Register.File == d1->Register.File &&
+           s1->Register.Indirect == d1->Register.Indirect &&
+           s1->Register.Dimension == d1->Register.Dimension &&
+           s1->Register.Index == d1->Register.Index);
+}
+
 static boolean same_dst_reg(struct i915_full_dst_register* d1, struct i915_full_dst_register* d2)
 {
    return (d1->Register.File == d2->Register.File &&
@@ -119,7 +127,7 @@ static void set_neutral_element_swizzle(struct i915_full_src_register* r,
  * Optimize away things like:
  *    MUL OUT[0].xyz, TEMP[1], TEMP[2]
  *    MOV OUT[0].w, TEMP[2]
- * into: 
+ * into:
  *    MUL OUT[0].xyzw, TEMP[1].xyz1, TEMP[2]
  * This is useful for optimizing texenv.
  */
@@ -168,6 +176,32 @@ static void i915_fpc_optimize_mov_after_alu(union i915_full_token* current, unio
 
       current->FullInstruction.Dst[0].Register.WriteMask = current->FullInstruction.Dst[0].Register.WriteMask |
                                                            next->FullInstruction.Dst[0].Register.WriteMask;
+      return;
+   }
+}
+
+/*
+ * Optimize away things like:
+ *    *** TEMP[0], TEMP[1], TEMP[2]
+ *    MOV OUT[0] TEMP[0]
+ * into:
+ *    *** OUT[0], TEMP[1], TEMP[2]
+ */
+static void i915_fpc_optimize_useless_mov(union i915_full_token* current, union i915_full_token* next)
+{
+   if ( current->Token.Type == TGSI_TOKEN_TYPE_INSTRUCTION  &&
+        next->Token.Type == TGSI_TOKEN_TYPE_INSTRUCTION  &&
+        next->FullInstruction.Instruction.Opcode == TGSI_OPCODE_MOV &&
+        next->FullInstruction.Instruction.Saturate == TGSI_SAT_NONE &&
+        next->FullInstruction.Src[0].Register.Absolute == 0 &&
+        next->FullInstruction.Src[0].Register.Negate == 0 &&
+        is_unswizzled(&next->FullInstruction.Src[0], next->FullInstruction.Dst[0].Register.WriteMask) &&
+        current->FullInstruction.Dst[0].Register.WriteMask == next->FullInstruction.Dst[0].Register.WriteMask &&
+        same_src_dst_reg(&next->FullInstruction.Src[0], &current->FullInstruction.Dst[0]) )
+   {
+      next->FullInstruction.Instruction.Opcode = TGSI_OPCODE_NOP;
+
+      current->FullInstruction.Dst[0] = next->FullInstruction.Dst[0];
       return;
    }
 }
@@ -240,9 +274,10 @@ struct i915_token_list* i915_optimize(const struct tgsi_token *tokens)
       tgsi_parse_token( &parse );
       copy_token(&out_tokens->Tokens[i] , &parse.FullToken);
 
-      if (i > 0)
+      if (i > 0) {
+         i915_fpc_optimize_useless_mov(&out_tokens->Tokens[i-1], &out_tokens->Tokens[i]);
          i915_fpc_optimize_mov_after_alu(&out_tokens->Tokens[i-1], &out_tokens->Tokens[i]);
-
+      }
       i++;
    }
    tgsi_parse_free (&parse);
