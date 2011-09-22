@@ -26,23 +26,12 @@
 #include "ir.h"
 #include "glsl_types.h"
 #include "ir_visitor.h"
+#include "../glsl/program.h"
 
 extern "C" {
 #include "main/compiler.h"
 #include "main/mtypes.h"
 #include "program/prog_parameter.h"
-}
-
-static void fail_link(struct gl_shader_program *prog, const char *fmt, ...) PRINTFLIKE(2, 3);
-
-static void fail_link(struct gl_shader_program *prog, const char *fmt, ...)
-{
-   va_list args;
-   va_start(args, fmt);
-   ralloc_vasprintf_append(&prog->InfoLog, fmt, args);
-   va_end(args);
-
-   prog->LinkStatus = GL_FALSE;
 }
 
 class get_sampler_name : public ir_hierarchical_visitor
@@ -125,8 +114,8 @@ _mesa_get_sampler_uniform_value(class ir_dereference *sampler,
 					      getname.name);
 
    if (index < 0) {
-      fail_link(shader_program,
-		"failed to find sampler named %s.\n", getname.name);
+      linker_error(shader_program,
+		   "failed to find sampler named %s.\n", getname.name);
       return 0;
    }
 
