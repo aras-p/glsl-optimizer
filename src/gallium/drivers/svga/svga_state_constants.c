@@ -48,7 +48,7 @@
 
 /* Convert from PIPE_SHADER_* to SVGA3D_SHADERTYPE_*
  */
-static int svga_shader_type( int shader )
+static int svga_shader_type( unsigned shader )
 {
    assert(PIPE_SHADER_VERTEX + 1 == SVGA3D_SHADERTYPE_VS);
    assert(PIPE_SHADER_FRAGMENT + 1 == SVGA3D_SHADERTYPE_PS);
@@ -60,17 +60,19 @@ static int svga_shader_type( int shader )
  * Check and emit one shader constant register.
  */
 static enum pipe_error
-emit_const(struct svga_context *svga, int unit, int i, const float *value)
+emit_const(struct svga_context *svga, unsigned shader, int i, const float *value)
 {
    enum pipe_error ret = PIPE_OK;
 
    assert(i < CB_MAX);
 
-   if (memcmp(svga->state.hw_draw.cb[unit][i], value, 4 * sizeof(float)) != 0) {
+   assert(shader < PIPE_SHADER_TYPES);
+
+   if (memcmp(svga->state.hw_draw.cb[shader][i], value, 4 * sizeof(float)) != 0) {
       if (SVGA_DEBUG & DEBUG_CONSTS)
          debug_printf("%s %s %d: %f %f %f %f\n",
                       __FUNCTION__,
-                      unit == PIPE_SHADER_VERTEX ? "VERT" : "FRAG",
+                      shader == PIPE_SHADER_VERTEX ? "VERT" : "FRAG",
                       i,
                       value[0],
                       value[1],
@@ -79,13 +81,13 @@ emit_const(struct svga_context *svga, int unit, int i, const float *value)
 
       ret = SVGA3D_SetShaderConst( svga->swc, 
                                    i,
-                                   svga_shader_type(unit),
+                                   svga_shader_type(shader),
                                    SVGA3D_CONST_TYPE_FLOAT,
                                    value );
       if (ret != PIPE_OK)
          return ret;
 
-      memcpy(svga->state.hw_draw.cb[unit][i], value, 4 * sizeof(float));
+      memcpy(svga->state.hw_draw.cb[shader][i], value, 4 * sizeof(float));
    }
    
    return ret;
@@ -97,7 +99,7 @@ emit_const(struct svga_context *svga, int unit, int i, const float *value)
  * space on the command buffer.  This is a HWv8 feature.
  */
 static enum pipe_error emit_const_range( struct svga_context *svga,
-                                         unsigned unit,
+                                         unsigned shader,
                                          unsigned offset,
                                          unsigned count,
                                          const float (*values)[4] )
@@ -131,7 +133,7 @@ static enum pipe_error emit_const_range( struct svga_context *svga,
 
    i = 0;
    while (i < count) {
-      if (memcmp(svga->state.hw_draw.cb[unit][offset + i],
+      if (memcmp(svga->state.hw_draw.cb[shader][offset + i],
                  values[i],
                  4 * sizeof(float)) != 0) {
 
@@ -142,7 +144,7 @@ static enum pipe_error emit_const_range( struct svga_context *svga,
          if (SVGA_DEBUG & DEBUG_CONSTS)
             debug_printf("%s %s %d: %f %f %f %f\n",
                          __FUNCTION__,
-                         unit == PIPE_SHADER_VERTEX ? "VERT" : "FRAG",
+                         shader == PIPE_SHADER_VERTEX ? "VERT" : "FRAG",
                          offset + i,
                          values[i][0],
                          values[i][1],
@@ -156,14 +158,14 @@ static enum pipe_error emit_const_range( struct svga_context *svga,
          j = i + 1;
          while (j < count &&
                 j < i + MAX_CONST_REG_COUNT &&
-                memcmp(svga->state.hw_draw.cb[unit][offset + j],
+                memcmp(svga->state.hw_draw.cb[shader][offset + j],
                        values[j],
                        4 * sizeof(float)) != 0) {
 
             if (SVGA_DEBUG & DEBUG_CONSTS)
                debug_printf("%s %s %d: %f %f %f %f\n",
                             __FUNCTION__,
-                            unit == PIPE_SHADER_VERTEX ? "VERT" : "FRAG",
+                            shader == PIPE_SHADER_VERTEX ? "VERT" : "FRAG",
                             offset + j,
                             values[j][0],
                             values[j][1],
@@ -181,7 +183,7 @@ static enum pipe_error emit_const_range( struct svga_context *svga,
 
          ret = SVGA3D_SetShaderConsts(svga->swc,
                                       offset + i, j - i,
-                                      svga_shader_type(unit),
+                                      svga_shader_type(shader),
                                       SVGA3D_CONST_TYPE_FLOAT,
                                       values + i);
          if (ret != PIPE_OK) {
@@ -192,7 +194,7 @@ static enum pipe_error emit_const_range( struct svga_context *svga,
           * Local copy of the hardware state.
           */
 
-         memcpy(svga->state.hw_draw.cb[unit][offset + i],
+         memcpy(svga->state.hw_draw.cb[shader][offset + i],
                 values[i],
                 (j - i) * 4 * sizeof(float));
 
@@ -207,7 +209,7 @@ static enum pipe_error emit_const_range( struct svga_context *svga,
 
 
 static enum pipe_error
-emit_consts(struct svga_context *svga, int offset, int unit)
+emit_consts(struct svga_context *svga, int offset, unsigned shader)
 {
    struct svga_screen *ss = svga_screen(svga->pipe.screen);
    struct pipe_transfer *transfer = NULL;
@@ -216,13 +218,15 @@ emit_consts(struct svga_context *svga, int offset, int unit)
    unsigned i;
    enum pipe_error ret = PIPE_OK;
 
-   if (svga->curr.cb[unit] == NULL)
+   assert(shader < PIPE_SHADER_TYPES);
+
+   if (svga->curr.cb[shader] == NULL)
       goto done;
 
-   count = svga->curr.cb[unit]->width0 / (4 * sizeof(float));
+   count = svga->curr.cb[shader]->width0 / (4 * sizeof(float));
 
    data = (const float (*)[4])pipe_buffer_map(&svga->pipe,
-                                              svga->curr.cb[unit],
+                                              svga->curr.cb[shader],
                                               PIPE_TRANSFER_READ,
 					      &transfer);
    if (data == NULL) {
@@ -231,13 +235,13 @@ emit_consts(struct svga_context *svga, int offset, int unit)
    }
 
    if (ss->hw_version >= SVGA3D_HWVERSION_WS8_B1) {
-      ret = emit_const_range( svga, unit, offset, count, data );
+      ret = emit_const_range( svga, shader, offset, count, data );
       if (ret != PIPE_OK) {
          goto done;
       }
    } else {
       for (i = 0; i < count; i++) {
-         ret = emit_const( svga, unit, offset + i, data[i] );
+         ret = emit_const( svga, shader, offset + i, data[i] );
          if (ret != PIPE_OK) {
             goto done;
          }
