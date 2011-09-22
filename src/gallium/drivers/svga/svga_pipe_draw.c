@@ -226,7 +226,7 @@ retry_draw_range_elements( struct svga_context *svga,
                            unsigned instance_count,
                            boolean do_retry )
 {
-   enum pipe_error ret = 0;
+   enum pipe_error ret = PIPE_OK;
 
    svga_hwtnl_set_unfilled( svga->hwtnl,
                             svga->curr.rast->hw_unfilled );
@@ -241,14 +241,14 @@ retry_draw_range_elements( struct svga_context *svga,
       goto retry;
 
    ret = svga_update_state( svga, SVGA_STATE_HW_DRAW );
-   if (ret)
+   if (ret != PIPE_OK)
       goto retry;
 
    ret = svga_hwtnl_draw_range_elements( svga->hwtnl,
                                          index_buffer, index_size, index_bias,
                                          min_index, max_index,
                                          prim, start, count );
-   if (ret)
+   if (ret != PIPE_OK)
       goto retry;
 
    return PIPE_OK;
@@ -292,12 +292,12 @@ retry_draw_arrays( struct svga_context *svga,
       goto retry;
 
    ret = svga_update_state( svga, SVGA_STATE_HW_DRAW );
-   if (ret)
+   if (ret != PIPE_OK)
       goto retry;
 
    ret = svga_hwtnl_draw_arrays( svga->hwtnl, prim,
                                  start, count );
-   if (ret)
+   if (ret != PIPE_OK)
       goto retry;
 
    return 0;

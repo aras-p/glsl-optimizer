@@ -176,7 +176,7 @@ svga_vbuf_submit_state( struct svga_vbuf_render *svga_render )
 
    /* flush the hw state */
    ret = svga_hwtnl_flush(svga->hwtnl);
-   if (ret) {
+   if (ret != PIPE_OK) {
       svga_context_flush(svga, NULL);
       ret = svga_hwtnl_flush(svga->hwtnl);
       /* if we hit this path we might become synced with hw */
@@ -222,7 +222,7 @@ svga_vbuf_render_draw_arrays( struct vbuf_render *render,
    struct svga_vbuf_render *svga_render = svga_vbuf_render(render);
    struct svga_context *svga = svga_render->svga;
    unsigned bias = (svga_render->vbuf_offset - svga_render->vdecl_offset) / svga_render->vertex_size;
-   enum pipe_error ret = 0;
+   enum pipe_error ret = PIPE_OK;
 
    /* off to hardware */
    svga_vbuf_submit_state(svga_render);

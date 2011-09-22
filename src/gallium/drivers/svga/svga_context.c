@@ -159,7 +159,7 @@ struct pipe_context *svga_context_create( struct pipe_screen *screen,
       goto no_swtnl;
 
    ret = svga_emit_initial_state( svga );
-   if (ret)
+   if (ret != PIPE_OK)
       goto no_state;
    
    /* Avoid shortcircuiting state with initial value of zero.

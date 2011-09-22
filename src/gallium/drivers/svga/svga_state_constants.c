@@ -59,12 +59,10 @@ static int svga_shader_type( int shader )
 /*
  * Check and emit one shader constant register.
  */
-static int emit_const( struct svga_context *svga,
-                       int unit,
-                       int i,
-                       const float *value )
+static enum pipe_error
+emit_const(struct svga_context *svga, int unit, int i, const float *value)
 {
-   int ret = PIPE_OK;
+   enum pipe_error ret = PIPE_OK;
 
    assert(i < CB_MAX);
 
@@ -84,7 +82,7 @@ static int emit_const( struct svga_context *svga,
                                    svga_shader_type(unit),
                                    SVGA3D_CONST_TYPE_FLOAT,
                                    value );
-      if (ret)
+      if (ret != PIPE_OK)
          return ret;
 
       memcpy(svga->state.hw_draw.cb[unit][i], value, 4 * sizeof(float));
@@ -207,16 +205,16 @@ static enum pipe_error emit_const_range( struct svga_context *svga,
    return PIPE_OK;
 }
 
-static int emit_consts( struct svga_context *svga,
-                        int offset,
-                        int unit )
+
+static enum pipe_error
+emit_consts(struct svga_context *svga, int offset, int unit)
 {
    struct svga_screen *ss = svga_screen(svga->pipe.screen);
    struct pipe_transfer *transfer = NULL;
    unsigned count;
    const float (*data)[4] = NULL;
    unsigned i;
-   int ret = PIPE_OK;
+   enum pipe_error ret = PIPE_OK;
 
    if (svga->curr.cb[unit] == NULL)
       goto done;
@@ -252,16 +250,17 @@ done:
 
    return ret;
 }
-   
-static int emit_fs_consts( struct svga_context *svga,
-                           unsigned dirty )
+
+
+static enum pipe_error
+emit_fs_consts(struct svga_context *svga, unsigned dirty)
 {
    const struct svga_shader_result *result = svga->state.hw_draw.fs;
    const struct svga_fs_compile_key *key = &result->key.fkey;
-   int ret = 0;
+   enum pipe_error ret = PIPE_OK;
 
    ret = emit_consts( svga, 0, PIPE_SHADER_FRAGMENT );
-   if (ret)
+   if (ret != PIPE_OK)
       return ret;
 
    /* The internally generated fragment shader for xor blending
@@ -288,7 +287,7 @@ static int emit_fs_consts( struct svga_context *svga,
                               PIPE_SHADER_FRAGMENT,
                               key->tex[i].width_height_idx + offset,
                               data );
-            if (ret)
+            if (ret != PIPE_OK)
                return ret;
          }
       }
@@ -312,23 +311,23 @@ struct svga_tracked_state svga_hw_fs_parameters =
 /***********************************************************************
  */
 
-static int emit_vs_consts( struct svga_context *svga,
-                           unsigned dirty )
+static enum pipe_error
+emit_vs_consts(struct svga_context *svga, unsigned dirty)
 {
    const struct svga_shader_result *result = svga->state.hw_draw.vs;
    const struct svga_vs_compile_key *key = &result->key.vkey;
-   int ret = 0;
+   enum pipe_error ret = PIPE_OK;
    unsigned offset;
 
    /* SVGA_NEW_VS_RESULT
     */
    if (result == NULL) 
-      return 0;
+      return PIPE_OK;
 
    /* SVGA_NEW_VS_CONST_BUFFER 
     */
    ret = emit_consts( svga, 0, PIPE_SHADER_VERTEX );
-   if (ret)
+   if (ret != PIPE_OK)
       return ret;
 
    offset = result->shader->info.file_max[TGSI_FILE_CONSTANT] + 1;
@@ -338,12 +337,12 @@ static int emit_vs_consts( struct svga_context *svga,
    if (key->need_prescale) {
       ret = emit_const( svga, PIPE_SHADER_VERTEX, offset++,
                         svga->state.hw_clear.prescale.scale );
-      if (ret)
+      if (ret != PIPE_OK)
          return ret;
 
       ret = emit_const( svga, PIPE_SHADER_VERTEX, offset++,
                         svga->state.hw_clear.prescale.translate );
-      if (ret)
+      if (ret != PIPE_OK)
          return ret;
    }
 
@@ -356,14 +355,14 @@ static int emit_vs_consts( struct svga_context *svga,
             ret = emit_const( svga, PIPE_SHADER_VERTEX, offset++,
                               svga->curr.zero_stride_constants +
                               4 * curr_zero_stride );
-            if (ret)
+            if (ret != PIPE_OK)
                return ret;
             ++curr_zero_stride;
          }
       }
    }
 
-   return 0;
+   return PIPE_OK;
 }
 
 

@@ -90,7 +90,7 @@ static enum pipe_error compile_vs( struct svga_context *svga,
                              SVGA3D_SHADERTYPE_VS,
                              result->tokens, 
                              result->nr_tokens * sizeof result->tokens[0]);
-   if (ret)
+   if (ret != PIPE_OK)
       goto fail;
 
    *out_result = result;
@@ -109,8 +109,8 @@ fail:
 
 /* SVGA_NEW_PRESCALE, SVGA_NEW_RAST, SVGA_NEW_ZERO_STRIDE
  */
-static int make_vs_key( struct svga_context *svga,
-                        struct svga_vs_compile_key *key )
+static void
+make_vs_key(struct svga_context *svga, struct svga_vs_compile_key *key)
 {
    memset(key, 0, sizeof *key);
    key->need_prescale = svga->state.hw_clear.prescale.enabled;
@@ -119,31 +119,28 @@ static int make_vs_key( struct svga_context *svga,
       svga->curr.zero_stride_vertex_elements;
    key->num_zero_stride_vertex_elements =
       svga->curr.num_zero_stride_vertex_elements;
-   return 0;
 }
 
 
 
-static int emit_hw_vs( struct svga_context *svga,
-                       unsigned dirty )
+static enum pipe_error
+emit_hw_vs(struct svga_context *svga, unsigned dirty)
 {
    struct svga_shader_result *result = NULL;
    unsigned id = SVGA3D_INVALID_ID;
-   int ret = 0;
+   enum pipe_error ret = PIPE_OK;
 
    /* SVGA_NEW_NEED_SWTNL */
    if (!svga->state.sw.need_swtnl) {
       struct svga_vertex_shader *vs = svga->curr.vs;
       struct svga_vs_compile_key key;
 
-      ret = make_vs_key( svga, &key );
-      if (ret)
-         return ret;
+      make_vs_key( svga, &key );
 
       result = search_vs_key( vs, &key );
       if (!result) {
          ret = compile_vs( svga, vs, &key, &result );
-         if (ret)
+         if (ret != PIPE_OK)
             return ret;
       }
 
@@ -155,14 +152,14 @@ static int emit_hw_vs( struct svga_context *svga,
       ret = SVGA3D_SetShader(svga->swc,
                              SVGA3D_SHADERTYPE_VS,
                              id );
-      if (ret)
+      if (ret != PIPE_OK)
          return ret;
 
       svga->dirty |= SVGA_NEW_VS_RESULT;
       svga->state.hw_draw.vs = result;      
    }
 
-   return 0;
+   return PIPE_OK;
 }
 
 struct svga_tracked_state svga_hw_vs = 

@@ -40,7 +40,7 @@ void svga_destroy_state( struct svga_context *svga );
 struct svga_tracked_state {
    const char *name;
    unsigned dirty;
-   int (*update)( struct svga_context *svga, unsigned dirty );
+   enum pipe_error (*update)( struct svga_context *svga, unsigned dirty );
 };
 
 /* NEED_SWTNL

@@ -55,7 +55,7 @@ svga_swtnl_draw_vbo(struct svga_context *svga,
    svga->state.sw.in_swtnl_draw = TRUE;
 
    ret = svga_update_state(svga, SVGA_STATE_SWTNL_DRAW);
-   if (ret) {
+   if (ret != PIPE_OK) {
       svga_context_flush(svga, NULL);
       ret = svga_update_state(svga, SVGA_STATE_SWTNL_DRAW);
       svga->swtnl.new_vbuf = TRUE;

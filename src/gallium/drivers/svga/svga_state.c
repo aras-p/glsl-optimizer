@@ -119,16 +119,17 @@ static void xor_states( unsigned *result,
 
 
 
-static int update_state( struct svga_context *svga,
-                         const struct svga_tracked_state *atoms[],
-                         unsigned *state )
+static enum pipe_error
+update_state(struct svga_context *svga,
+             const struct svga_tracked_state *atoms[],
+             unsigned *state)
 {
    boolean debug = TRUE;
-   enum pipe_error ret = 0;
+   enum pipe_error ret = PIPE_OK;
    unsigned i;
 
    ret = svga_hwtnl_flush( svga->hwtnl );
-   if (ret != 0)
+   if (ret != PIPE_OK)
       return ret;
 
    if (debug) {
@@ -151,7 +152,7 @@ static int update_state( struct svga_context *svga,
 	    if (0)
                debug_printf("update: %s\n", atoms[i]->name);
 	    ret = atoms[i]->update( svga, *state );
-            if (ret != 0)
+            if (ret != PIPE_OK)
                return ret;
 	 }
 
@@ -174,22 +175,22 @@ static int update_state( struct svga_context *svga,
       for (i = 0; atoms[i] != NULL; i++) {	 
 	 if (check_state(*state, atoms[i]->dirty)) {
 	    ret = atoms[i]->update( svga, *state );
-            if (ret != 0)
+            if (ret != PIPE_OK)
                return ret;
          }
       }
    }
 
-   return 0;
+   return PIPE_OK;
 }
 
 
 
-int svga_update_state( struct svga_context *svga,
-                       unsigned max_level )
+enum pipe_error
+svga_update_state(struct svga_context *svga, unsigned max_level)
 {
    struct svga_screen *screen = svga_screen(svga->pipe.screen);
-   int ret = 0;
+   enum pipe_error ret = PIPE_OK;
    int i;
 
    /* Check for updates to bound textures.  This can't be done in an
@@ -208,7 +209,7 @@ int svga_update_state( struct svga_context *svga,
          ret = update_state( svga, 
                              state_levels[i], 
                              &svga->dirty );
-         if (ret != 0)
+         if (ret != PIPE_OK)
             return ret;
 
          svga->state.dirty[i] = 0;
@@ -219,7 +220,7 @@ int svga_update_state( struct svga_context *svga,
       svga->state.dirty[i] |= svga->dirty;
 
    svga->dirty = 0;
-   return 0;
+   return PIPE_OK;
 }
 
 
@@ -228,7 +229,7 @@ int svga_update_state( struct svga_context *svga,
 void svga_update_state_retry( struct svga_context *svga,
                               unsigned max_level )
 {
-   int ret;
+   enum pipe_error ret;
 
    ret = svga_update_state( svga, max_level );
 
@@ -237,7 +238,7 @@ void svga_update_state_retry( struct svga_context *svga,
       ret = svga_update_state( svga, max_level );
    }
 
-   assert( ret == 0 );
+   assert( ret == PIPE_OK );
 }
 
 
@@ -261,7 +262,7 @@ enum pipe_error svga_emit_initial_state( struct svga_context *svga )
    enum pipe_error ret;
 
    ret = SVGA3D_BeginSetRenderState( svga->swc, &rs, COUNT );
-   if (ret)
+   if (ret != PIPE_OK)
       return ret;
 
    /* Always use D3D style coordinate space as this is the only one
@@ -273,6 +274,5 @@ enum pipe_error svga_emit_initial_state( struct svga_context *svga )
    assert( COUNT == count );
    SVGA_FIFOCommitAll( svga->swc );
 
-   return 0;
-
+   return PIPE_OK;
 }

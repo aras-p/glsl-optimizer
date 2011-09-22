@@ -260,7 +260,7 @@ enum pipe_error svga_hwtnl_prim( struct svga_hwtnl *hwtnl,
                                  unsigned max_index,
                                  struct pipe_resource *ib )
 {
-   int ret = PIPE_OK;
+   enum pipe_error ret = PIPE_OK;
 
 #ifdef DEBUG
    {

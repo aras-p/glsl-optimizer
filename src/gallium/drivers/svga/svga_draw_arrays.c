@@ -272,7 +272,7 @@ svga_hwtnl_draw_arrays( struct svga_hwtnl *hwtnl,
                                           gen_size,
                                           gen_func,
                                           &gen_buf );
-      if (ret)
+      if (ret != PIPE_OK)
          goto done;
 
       ret = svga_hwtnl_simple_draw_range_elements( hwtnl,
@@ -285,7 +285,7 @@ svga_hwtnl_draw_arrays( struct svga_hwtnl *hwtnl,
                                                    0,
                                                    gen_nr );
 
-      if (ret)
+      if (ret != PIPE_OK)
          goto done;
 
    done:

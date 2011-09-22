@@ -41,7 +41,7 @@ try_clear(struct svga_context *svga,
           double depth,
           unsigned stencil)
 {
-   int ret = PIPE_OK;
+   enum pipe_error ret = PIPE_OK;
    SVGA3dRect rect = { 0, 0, 0, 0 };
    boolean restore_viewport = FALSE;
    SVGA3dClearFlag flags = 0;
@@ -49,7 +49,7 @@ try_clear(struct svga_context *svga,
    union util_color uc = {0};
 
    ret = svga_update_state(svga, SVGA_STATE_HW_CLEAR);
-   if (ret)
+   if (ret != PIPE_OK)
       return ret;
 
    if (svga->rebind.rendertargets) {
@@ -82,7 +82,7 @@ try_clear(struct svga_context *svga,
    if (memcmp(&rect, &svga->state.hw_clear.viewport, sizeof(rect)) != 0) {
       restore_viewport = TRUE;
       ret = SVGA3D_SetViewport(svga->swc, &rect);
-      if (ret)
+      if (ret != PIPE_OK)
          return ret;
    }
 
@@ -109,7 +109,7 @@ svga_clear(struct pipe_context *pipe, unsigned buffers,
 	   double depth, unsigned stencil)
 {
    struct svga_context *svga = svga_context( pipe );
-   int ret;
+   enum pipe_error ret;
 
    if (buffers & PIPE_CLEAR_COLOR)
       SVGA_DBG(DEBUG_DMA, "clear sid %p\n",

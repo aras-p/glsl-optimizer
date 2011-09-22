@@ -175,7 +175,6 @@ svga_tgsi_translate( const struct svga_shader *shader,
 {
    struct svga_shader_result *result = NULL;
    struct svga_shader_emitter emit;
-   int ret = 0;
 
    memset(&emit, 0, sizeof(emit));
 
@@ -183,7 +182,6 @@ svga_tgsi_translate( const struct svga_shader *shader,
    emit.size = 1024;
    emit.buf = MALLOC(emit.size);
    if (emit.buf == NULL) {
-      ret = PIPE_ERROR_OUT_OF_MEMORY;
       goto fail;
    }
 
