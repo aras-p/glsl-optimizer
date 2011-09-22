@@ -26,6 +26,8 @@
 #ifndef META_H
 #define META_H
 
+#include "main/mtypes.h"
+
 /**
  * \name Flags for meta operations
  * \{
