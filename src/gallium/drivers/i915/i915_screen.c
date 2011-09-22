@@ -152,6 +152,9 @@ i915_get_param(struct pipe_screen *screen, enum pipe_cap cap)
       return I915_MAX_TEXTURE_3D_LEVELS;
    case PIPE_CAP_MAX_TEXTURE_CUBE_LEVELS:
       return I915_MAX_TEXTURE_2D_LEVELS;
+   case PIPE_CAP_MIN_TEXEL_OFFSET:
+   case PIPE_CAP_MAX_TEXEL_OFFSET:
+      return 0;
 
    /* Render targets. */
    case PIPE_CAP_MAX_RENDER_TARGETS:
