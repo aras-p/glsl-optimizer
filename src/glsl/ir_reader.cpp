@@ -79,7 +79,8 @@ _mesa_glsl_read_ir(_mesa_glsl_parse_state *state, exec_list *instructions,
 void
 ir_reader::read(exec_list *instructions, const char *src, bool scan_for_protos)
 {
-   s_expression *expr = s_expression::read_expression(mem_ctx, src);
+   void *sx_mem_ctx = ralloc_context(NULL);
+   s_expression *expr = s_expression::read_expression(sx_mem_ctx, src);
    if (expr == NULL) {
       ir_read_error(NULL, "couldn't parse S-Expression.");
       return;
@@ -92,7 +93,7 @@ ir_reader::read(exec_list *instructions, const char *src, bool scan_for_protos)
    }
 
    read_instructions(instructions, expr, NULL);
-   ralloc_free(expr);
+   ralloc_free(sx_mem_ctx);
 
    if (debug)
       validate_ir_tree(instructions);
