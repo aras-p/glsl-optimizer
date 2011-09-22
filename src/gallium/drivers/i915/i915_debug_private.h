@@ -31,7 +31,7 @@
 #ifndef I915_DEBUG_PRIVATE_H
 #define I915_DEBUG_PRIVATE_H
 
-struct debug_stream 
+struct debug_stream
 {
    unsigned offset;		/* current gtt offset */
    char *ptr;		/* pointer to gtt offset zero */
@@ -39,7 +39,7 @@ struct debug_stream
    unsigned print_addresses;
 };
 
-void i915_disassemble_program(struct debug_stream *stream, 
+void i915_disassemble_program(struct debug_stream *stream,
 			      const unsigned *program, unsigned sz);
 
 #endif

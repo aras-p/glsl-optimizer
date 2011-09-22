@@ -50,18 +50,18 @@ struct i915_winsys_batchbuffer;
 
 #define I915_DYNAMIC_MODES4       0
 #define I915_DYNAMIC_DEPTHSCALE_0 1 /* just the header */
-#define I915_DYNAMIC_DEPTHSCALE_1 2 
+#define I915_DYNAMIC_DEPTHSCALE_1 2
 #define I915_DYNAMIC_IAB          3
 #define I915_DYNAMIC_BC_0         4 /* just the header */
 #define I915_DYNAMIC_BC_1         5
-#define I915_DYNAMIC_BFO_0        6 
+#define I915_DYNAMIC_BFO_0        6
 #define I915_DYNAMIC_BFO_1        7
-#define I915_DYNAMIC_STP_0        8 
-#define I915_DYNAMIC_STP_1        9 
-#define I915_DYNAMIC_SC_ENA_0     10 
-#define I915_DYNAMIC_SC_RECT_0    11 
-#define I915_DYNAMIC_SC_RECT_1    12 
-#define I915_DYNAMIC_SC_RECT_2    13 
+#define I915_DYNAMIC_STP_0        8
+#define I915_DYNAMIC_STP_1        9
+#define I915_DYNAMIC_SC_ENA_0     10
+#define I915_DYNAMIC_SC_RECT_0    11
+#define I915_DYNAMIC_SC_RECT_1    12
+#define I915_DYNAMIC_SC_RECT_2    13
 #define I915_MAX_DYNAMIC          14
 
 
@@ -78,7 +78,7 @@ struct i915_winsys_batchbuffer;
 /* These must mach the order of LI0_STATE_* bits, as they will be used
  * to generate hardware packets:
  */
-#define I915_CACHE_STATIC         0 
+#define I915_CACHE_STATIC         0
 #define I915_CACHE_DYNAMIC        1 /* handled specially */
 #define I915_CACHE_SAMPLER        2
 #define I915_CACHE_MAP            3
@@ -140,7 +140,7 @@ struct i915_cache_context;
 /* Use to calculate differences between state emitted to hardware and
  * current driver-calculated state.  
  */
-struct i915_state 
+struct i915_state
 {
    unsigned immediate[I915_MAX_IMMEDIATE];
    unsigned dynamic[I915_MAX_DYNAMIC];
