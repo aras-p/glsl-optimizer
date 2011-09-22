@@ -196,12 +196,6 @@ extern uint i915_emit_const4f(struct i915_fp_compile *p,
 
 
 /*======================================================================
- * i915_fpc_debug.c
- */
-extern void i915_disassemble_program(const uint * program, uint sz);
-
-
-/*======================================================================
  * i915_fpc_translate.c
  */
 
