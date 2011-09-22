@@ -47,6 +47,7 @@
 #include "st_context.h"
 #include "st_cb_fbo.h"
 #include "st_cb_flush.h"
+#include "st_cb_texture.h"
 #include "st_format.h"
 #include "st_texture.h"
 #include "st_manager.h"
@@ -340,14 +341,16 @@ st_render_texture(struct gl_context *ctx,
    struct pipe_context *pipe = st->pipe;
    struct st_renderbuffer *strb;
    struct gl_renderbuffer *rb;
-   struct pipe_resource *pt = st_get_texobj_resource(att->Texture);
+   struct pipe_resource *pt;
    struct st_texture_object *stObj;
    const struct gl_texture_image *texImage;
    struct pipe_surface surf_tmpl;
 
-   /* When would this fail?  Perhaps assert? */
-   if (!pt) 
+   if (!st_finalize_texture(ctx, pipe, att->Texture))
       return;
+
+   pt = st_get_texobj_resource(att->Texture);
+   assert(pt);
 
    /* get pointer to texture image we're rendeing to */
    texImage = _mesa_get_attachment_teximage(att);
