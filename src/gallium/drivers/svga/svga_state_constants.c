@@ -58,9 +58,13 @@ static int svga_shader_type( unsigned shader )
 
 /*
  * Check and emit one shader constant register.
+ * \param shader  PIPE_SHADER_FRAGMENT or PIPE_SHADER_VERTEX
+ * \param i  which float[4] constant to change
+ * \param value  the new float[4] value
  */
 static enum pipe_error
-emit_const(struct svga_context *svga, unsigned shader, int i, const float *value)
+emit_const(struct svga_context *svga, unsigned shader, unsigned i,
+           const float *value)
 {
    enum pipe_error ret = PIPE_OK;
 
@@ -70,7 +74,7 @@ emit_const(struct svga_context *svga, unsigned shader, int i, const float *value
 
    if (memcmp(svga->state.hw_draw.cb[shader][i], value, 4 * sizeof(float)) != 0) {
       if (SVGA_DEBUG & DEBUG_CONSTS)
-         debug_printf("%s %s %d: %f %f %f %f\n",
+         debug_printf("%s %s %u: %f %f %f %f\n",
                       __FUNCTION__,
                       shader == PIPE_SHADER_VERTEX ? "VERT" : "FRAG",
                       i,
@@ -209,7 +213,7 @@ static enum pipe_error emit_const_range( struct svga_context *svga,
 
 
 static enum pipe_error
-emit_consts(struct svga_context *svga, int offset, unsigned shader)
+emit_consts(struct svga_context *svga, unsigned offset, unsigned shader)
 {
    struct svga_screen *ss = svga_screen(svga->pipe.screen);
    struct pipe_transfer *transfer = NULL;
