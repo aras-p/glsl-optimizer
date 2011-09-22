@@ -321,7 +321,8 @@ intelSpanRenderStart(struct gl_context * ctx)
          struct gl_texture_object *texObj = ctx->Texture.Unit[i]._Current;
 
          intel_finalize_mipmap_tree(intel, i);
-         intel_tex_map_images(intel, intel_texture_object(texObj));
+         intel_tex_map_images(intel, intel_texture_object(texObj),
+                              GL_MAP_READ_BIT | GL_MAP_WRITE_BIT);
       }
    }
 
@@ -379,7 +380,8 @@ intel_map_vertex_shader_textures(struct gl_context *ctx)
 	  ctx->VertexProgram._Current->Base.TexturesUsed[i] != 0) {
          struct gl_texture_object *texObj = ctx->Texture.Unit[i]._Current;
 
-         intel_tex_map_images(intel, intel_texture_object(texObj));
+         intel_tex_map_images(intel, intel_texture_object(texObj),
+                              GL_MAP_READ_BIT | GL_MAP_WRITE_BIT);
       }
    }
 }

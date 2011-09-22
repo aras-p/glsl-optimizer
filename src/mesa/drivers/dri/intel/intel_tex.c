@@ -125,6 +125,7 @@ intel_free_texture_image_buffer(struct gl_context * ctx,
 /**
  * Map texture memory/buffer into user space.
  * Note: the region of interest parameters are ignored here.
+ * \param mode  bitmask of GL_MAP_READ_BIT, GL_MAP_WRITE_BIT
  * \param mapOut  returns start of mapping of region of interest
  * \param rowStrideOut  returns row stride in bytes
  */
@@ -164,7 +165,7 @@ intel_map_texture_image(struct gl_context *ctx,
    y /= bh;
 
    if (likely(mt)) {
-      void *base = intel_region_map(intel, mt->region);
+      void *base = intel_region_map(intel, mt->region, mode);
       unsigned int image_x, image_y;
 
       intel_miptree_get_image_offset(mt, tex_image->Level, tex_image->Face,

@@ -124,9 +124,13 @@ intel_finalize_mipmap_tree(struct intel_context *intel, GLuint unit)
    return true;
 }
 
+/**
+ * \param mode  bitmask of GL_MAP_READ_BIT, GL_MAP_WRITE_BIT
+ */
 static void
 intel_tex_map_image_for_swrast(struct intel_context *intel,
-			       struct intel_texture_image *intel_image)
+			       struct intel_texture_image *intel_image,
+			       GLbitfield mode)
 {
    int level = intel_image->base.Base.Level;
    int face = intel_image->base.Base.Face;
@@ -163,7 +167,7 @@ intel_tex_map_image_for_swrast(struct intel_context *intel,
 
       DBG("%s \n", __FUNCTION__);
 
-      intel_image->base.Base.Data = intel_region_map(intel, mt->region);
+      intel_image->base.Base.Data = intel_region_map(intel, mt->region, mode);
    } else {
       assert(mt->level[level].depth == 1);
       intel_miptree_get_image_offset(mt, level, face, 0, &x, &y);
@@ -172,7 +176,7 @@ intel_tex_map_image_for_swrast(struct intel_context *intel,
       DBG("%s: (%d,%d) -> (%d, %d)/%d\n",
 	  __FUNCTION__, face, level, x, y, mt->region->pitch * mt->cpp);
 
-      intel_image->base.Base.Data = intel_region_map(intel, mt->region) +
+      intel_image->base.Base.Data = intel_region_map(intel, mt->region, mode) +
 	 (x + y * mt->region->pitch) * mt->cpp;
    }
 
@@ -189,9 +193,13 @@ intel_tex_unmap_image_for_swrast(struct intel_context *intel,
    }
 }
 
+/**
+ * \param mode  bitmask of GL_MAP_READ_BIT, GL_MAP_WRITE_BIT
+ */
 void
 intel_tex_map_images(struct intel_context *intel,
-		     struct intel_texture_object *intelObj)
+		     struct intel_texture_object *intelObj,
+		     GLbitfield mode)
 {
    GLuint nr_faces = (intelObj->base.Target == GL_TEXTURE_CUBE_MAP) ? 6 : 1;
    int i, face;
@@ -203,7 +211,7 @@ intel_tex_map_images(struct intel_context *intel,
 	 struct intel_texture_image *intel_image =
 	    intel_texture_image(intelObj->base.Image[face][i]);
 
-	 intel_tex_map_image_for_swrast(intel, intel_image);
+	 intel_tex_map_image_for_swrast(intel, intel_image, mode);
       }
    }
 }

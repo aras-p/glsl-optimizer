@@ -109,7 +109,8 @@ debug_backtrace(void)
 /* XXX: Thread safety?
  */
 GLubyte *
-intel_region_map(struct intel_context *intel, struct intel_region *region)
+intel_region_map(struct intel_context *intel, struct intel_region *region,
+                 GLbitfield mode)
 {
    /* We have the region->map_refcount controlling mapping of the BO because
     * in software fallbacks we may end up mapping the same buffer multiple

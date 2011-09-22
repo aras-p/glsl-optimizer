@@ -395,8 +395,8 @@ intel_miptree_copy_teximage(struct intel_context *intel,
 
 	    fallback_debug("miptree validate blit for %s failed\n",
 			   _mesa_get_format_name(intelImage->base.Base.TexFormat));
-	    dst = intel_region_map(intel, dst_mt->region);
-	    src = intel_region_map(intel, src_mt->region);
+	    dst = intel_region_map(intel, dst_mt->region, GL_MAP_WRITE_BIT);
+	    src = intel_region_map(intel, src_mt->region, GL_MAP_READ_BIT);
 
 	    _mesa_copy_rect(dst,
 			    dst_mt->cpp,
@@ -410,7 +410,7 @@ intel_miptree_copy_teximage(struct intel_context *intel,
 	    intel_region_unmap(intel, src_mt->region);
 	 }
       } else {
-	 dst = intel_region_map(intel, dst_mt->region);
+	 dst = intel_region_map(intel, dst_mt->region, GL_MAP_WRITE_BIT);
 
 	 DBG("validate upload mt %p -> mt %p %d,%d/%d (%dx%d)\n",
 	     src,
