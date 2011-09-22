@@ -130,7 +130,7 @@ static void i915_fpc_optimize_mov_after_alu(union i915_full_token* current, unio
         op_commutes(current->FullInstruction.Instruction.Opcode) &&
         current->FullInstruction.Instruction.Saturate == next->FullInstruction.Instruction.Saturate &&
         next->FullInstruction.Instruction.Opcode == TGSI_OPCODE_MOV &&
-        same_dst_reg(&next->FullInstruction.Dst[0], &next->FullInstruction.Dst[0]) &&
+        same_dst_reg(&next->FullInstruction.Dst[0], &current->FullInstruction.Dst[0]) &&
         same_src_reg(&next->FullInstruction.Src[0], &current->FullInstruction.Src[1]) &&
         is_unswizzled(&current->FullInstruction.Src[0], current->FullInstruction.Dst[0].Register.WriteMask) &&
         is_unswizzled(&current->FullInstruction.Src[1], current->FullInstruction.Dst[0].Register.WriteMask) &&
@@ -153,7 +153,7 @@ static void i915_fpc_optimize_mov_after_alu(union i915_full_token* current, unio
         op_commutes(current->FullInstruction.Instruction.Opcode) &&
         current->FullInstruction.Instruction.Saturate == next->FullInstruction.Instruction.Saturate &&
         next->FullInstruction.Instruction.Opcode == TGSI_OPCODE_MOV &&
-        same_dst_reg(&next->FullInstruction.Dst[0], &next->FullInstruction.Dst[0]) &&
+        same_dst_reg(&next->FullInstruction.Dst[0], &current->FullInstruction.Dst[0]) &&
         same_src_reg(&next->FullInstruction.Src[0], &current->FullInstruction.Src[0]) &&
         is_unswizzled(&current->FullInstruction.Src[0], current->FullInstruction.Dst[0].Register.WriteMask) &&
         is_unswizzled(&current->FullInstruction.Src[1], current->FullInstruction.Dst[0].Register.WriteMask) &&
