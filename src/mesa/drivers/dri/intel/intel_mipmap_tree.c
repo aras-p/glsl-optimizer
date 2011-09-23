@@ -136,7 +136,7 @@ intel_miptree_create(struct intel_context *intel,
    /*
     * pitch == 0 || height == 0  indicates the null texture
     */
-   if (!mt || !mt->total_height) {
+   if (!mt || !mt->total_width || !mt->total_height) {
       free(mt);
       return NULL;
    }
