@@ -216,16 +216,36 @@ i915_emit_arith(struct i915_fp_compile * p,
  * \param opcode  the instruction opcode
  */
 uint i915_emit_texld( struct i915_fp_compile *p,
-			uint dest,
-			uint destmask,
-			uint sampler,
-			uint coord,
-			uint opcode )
+                      uint dest,
+                      uint destmask,
+                      uint sampler,
+                      uint coord,
+                      uint opcode,
+                      uint num_coord )
 {
    const uint k = UREG(GET_UREG_TYPE(coord), GET_UREG_NR(coord));
-   int temp = -1;
 
-   if (coord != k) {
+   int temp = -1;
+   uint ignore = 0;
+
+   /* Eliminate the useless texture coordinates. Otherwise we end up generating
+    * a swizzle for no reason below. */
+   switch(num_coord) {
+      case 0:
+         /* Ignore x */
+         ignore |= (0xf << UREG_CHANNEL_X_SHIFT);
+      case 1:
+         /* Ignore y */
+         ignore |= (0xf << UREG_CHANNEL_Y_SHIFT);
+      case 2:
+         /* Ignore z */
+         ignore |= (0xf << UREG_CHANNEL_Z_SHIFT);
+      case 3:
+         /* Ignore w */
+         ignore |= (0xf << UREG_CHANNEL_W_SHIFT);
+   }
+
+   if ( (coord &~ignore ) != (k & ~ignore) ) {
       /* texcoord is swizzled or negated.  Need to allocate a new temporary
        * register (a utemp / unpreserved temp) won't do.
        */
@@ -248,7 +268,7 @@ uint i915_emit_texld( struct i915_fp_compile *p,
    if (destmask != A0_DEST_CHANNEL_ALL) {
       /* if not writing to XYZW... */
       uint tmp = i915_get_utemp(p);
-      i915_emit_texld( p, tmp, A0_DEST_CHANNEL_ALL, sampler, coord, opcode );
+      i915_emit_texld( p, tmp, A0_DEST_CHANNEL_ALL, sampler, coord, opcode, num_coord );
       i915_emit_arith( p, A0_MOV, dest, destmask, 0, tmp, 0, 0 );
       /* XXX release utemp here? */
    }

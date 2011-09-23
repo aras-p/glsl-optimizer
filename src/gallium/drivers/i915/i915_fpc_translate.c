@@ -372,6 +372,33 @@ translate_tex_src_target(struct i915_fp_compile *p, uint tex)
    }
 }
 
+/**
+ * Convert TGSI_TEXTURE_x token to DO_SAMPLE_TYPE_x token
+ */
+static uint
+texture_num_coords(struct i915_fp_compile *p, uint tex)
+{
+   switch (tex) {
+   case TGSI_TEXTURE_SHADOW1D:
+   case TGSI_TEXTURE_1D:
+      return 1;
+
+   case TGSI_TEXTURE_SHADOW2D:
+   case TGSI_TEXTURE_2D:
+   case TGSI_TEXTURE_SHADOWRECT:
+   case TGSI_TEXTURE_RECT:
+      return 2;
+
+   case TGSI_TEXTURE_3D:
+   case TGSI_TEXTURE_CUBE:
+      return 3;
+
+   default:
+      i915_program_error(p, "Num coords");
+      return 2;
+   }
+}
+
 
 /**
  * Generate texel lookup instruction.
@@ -393,7 +420,8 @@ emit_tex(struct i915_fp_compile *p,
                     get_result_flags( inst ),
                     sampler,
                     coord,
-                    opcode);
+                    opcode,
+                    texture_num_coords(p, texture) );
 }
 
 
@@ -622,7 +650,8 @@ i915_translate_instruction(struct i915_fp_compile *p,
                       A0_DEST_CHANNEL_ALL,   /* dest writemask */
                       0,                     /* sampler */
                       src0,                  /* coord*/
-                      T0_TEXKILL);           /* opcode */
+                      T0_TEXKILL,            /* opcode */
+                      1);                    /* num_coord */
       break;
 
    case TGSI_OPCODE_KILP:

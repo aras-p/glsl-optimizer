@@ -169,7 +169,10 @@ extern void i915_release_utemps(struct i915_fp_compile *p);
 extern uint i915_emit_texld(struct i915_fp_compile *p,
                               uint dest,
                               uint destmask,
-                              uint sampler, uint coord, uint op);
+                              uint sampler,
+                              uint coord,
+                              uint op,
+                              uint num_coord);
 
 extern uint i915_emit_arith(struct i915_fp_compile *p,
                               uint op,
