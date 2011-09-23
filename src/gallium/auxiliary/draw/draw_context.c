@@ -450,7 +450,9 @@ draw_set_force_passthrough( struct draw_context *draw, boolean enable )
 
 
 /**
- * Allocate an extra vertex/geometry shader vertex attribute.
+ * Allocate an extra vertex/geometry shader vertex attribute, if it doesn't
+ * exist already.
+ *
  * This is used by some of the optional draw module stages such
  * as wide_point which may need to allocate additional generic/texcoord
  * attributes.
@@ -459,8 +461,17 @@ int
 draw_alloc_extra_vertex_attrib(struct draw_context *draw,
                                uint semantic_name, uint semantic_index)
 {
-   const int num_outputs = draw_current_shader_outputs(draw);
-   const int n = draw->extra_shader_outputs.num;
+   int slot;
+   uint num_outputs;
+   uint n;
+
+   slot = draw_find_shader_output(draw, semantic_name, semantic_index);
+   if (slot > 0) {
+      return slot;
+   }
+
+   num_outputs = draw_current_shader_outputs(draw);
+   n = draw->extra_shader_outputs.num;
 
    assert(n < Elements(draw->extra_shader_outputs.semantic_name));
 
@@ -485,6 +496,22 @@ draw_remove_extra_vertex_attribs(struct draw_context *draw)
 
 
 /**
+ * If a geometry shader is present, return its info, else the vertex shader's
+ * info.
+ */
+struct tgsi_shader_info *
+draw_get_shader_info(const struct draw_context *draw)
+{
+
+   if (draw->gs.geometry_shader) {
+      return &draw->gs.geometry_shader->info;
+   } else {
+      return &draw->vs.vertex_shader->info;
+   }
+}
+
+
+/**
  * Ask the draw module for the location/slot of the given vertex attribute in
  * a post-transformed vertex.
  *
@@ -503,13 +530,8 @@ int
 draw_find_shader_output(const struct draw_context *draw,
                         uint semantic_name, uint semantic_index)
 {
-   const struct draw_vertex_shader *vs = draw->vs.vertex_shader;
-   const struct draw_geometry_shader *gs = draw->gs.geometry_shader;
+   const struct tgsi_shader_info *info = draw_get_shader_info(draw);
    uint i;
-   const struct tgsi_shader_info *info = &vs->info;
-
-   if (gs)
-      info = &gs->info;
 
    for (i = 0; i < info->num_outputs; i++) {
       if (info->output_semantic_name[i] == semantic_name &&
@@ -541,16 +563,10 @@ draw_find_shader_output(const struct draw_context *draw,
 uint
 draw_num_shader_outputs(const struct draw_context *draw)
 {
+   const struct tgsi_shader_info *info = draw_get_shader_info(draw);
    uint count;
 
-   /* If a geometry shader is present, its outputs go to the
-    * driver, else the vertex shader's outputs.
-    */
-   if (draw->gs.geometry_shader)
-      count = draw->gs.geometry_shader->info.num_outputs;
-   else
-      count = draw->vs.vertex_shader->info.num_outputs;
-
+   count = info->num_outputs;
    count += draw->extra_shader_outputs.num;
 
    return count;

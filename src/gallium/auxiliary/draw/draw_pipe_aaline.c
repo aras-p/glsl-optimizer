@@ -374,7 +374,9 @@ generate_aaline_fs(struct aaline_stage *aaline)
                          newLen, &transform.base);
 
 #if 0 /* DEBUG */
+   debug_printf("draw_aaline, orig shader:\n");
    tgsi_dump(orig_fs->tokens, 0);
+   debug_printf("draw_aaline, new shader:\n");
    tgsi_dump(aaline_fs.tokens, 0);
 #endif
 
@@ -692,12 +694,12 @@ aaline_first_line(struct draw_stage *stage, struct prim_header *header)
    }
 
    /* update vertex attrib info */
-   aaline->tex_slot = draw_current_shader_outputs(draw);
    aaline->pos_slot = draw_current_shader_position_output(draw);;
 
    /* allocate the extra post-transformed vertex attribute */
-   (void) draw_alloc_extra_vertex_attrib(draw, TGSI_SEMANTIC_GENERIC,
-                                         aaline->fs->generic_attrib);
+   aaline->tex_slot = draw_alloc_extra_vertex_attrib(draw,
+                                                     TGSI_SEMANTIC_GENERIC,
+                                                     aaline->fs->generic_attrib);
 
    /* how many samplers? */
    /* we'll use sampler/texture[pstip->sampler_unit] for the stipple */

@@ -245,21 +245,9 @@ widepoint_first_point(struct draw_stage *stage,
                /* OK, this generic attribute needs to be replaced with a
                 * texcoord (see above).
                 */
-               int slot = draw_find_shader_output(draw,
-                                                  TGSI_SEMANTIC_GENERIC,
-                                                  generic_index);
-
-               if (slot > 0) {
-                  /* there's already a post-vertex shader attribute
-                   * for this fragment shader input attribute.
-                   */
-               }
-               else {
-                  /* need to allocate a new post-vertex shader attribute */
-                  slot = draw_alloc_extra_vertex_attrib(draw,
-                                                        TGSI_SEMANTIC_GENERIC,
-                                                        generic_index);
-               }
+               int slot = draw_alloc_extra_vertex_attrib(draw,
+                                                         TGSI_SEMANTIC_GENERIC,
+                                                         generic_index);
 
                /* add this slot to the texcoord-gen list */
                wide->texcoord_gen_slot[wide->num_texcoord_gen++] = slot;

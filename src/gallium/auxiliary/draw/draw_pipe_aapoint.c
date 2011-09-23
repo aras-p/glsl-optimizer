@@ -519,9 +519,9 @@ generate_aapoint_fs(struct aapoint_stage *aapoint)
                          newLen, &transform.base);
 
 #if 0 /* DEBUG */
-   printf("draw_aapoint, orig shader:\n");
+   debug_printf("draw_aapoint, orig shader:\n");
    tgsi_dump(orig_fs->tokens, 0);
-   printf("draw_aapoint, new shader:\n");
+   debug_printf("draw_aapoint, new shader:\n");
    tgsi_dump(aapoint_fs.tokens, 0);
 #endif
 
@@ -696,23 +696,22 @@ aapoint_first_point(struct draw_stage *stage, struct prim_header *header)
    bind_aapoint_fragment_shader(aapoint);
 
    /* update vertex attrib info */
-   aapoint->tex_slot = draw_current_shader_outputs(draw);
-   assert(aapoint->tex_slot > 0); /* output[0] is vertex pos */
-
    aapoint->pos_slot = draw_current_shader_position_output(draw);
 
    /* allocate the extra post-transformed vertex attribute */
-   (void) draw_alloc_extra_vertex_attrib(draw, TGSI_SEMANTIC_GENERIC,
-                                         aapoint->fs->generic_attrib);
+   aapoint->tex_slot = draw_alloc_extra_vertex_attrib(draw,
+                                                      TGSI_SEMANTIC_GENERIC,
+                                                      aapoint->fs->generic_attrib);
+   assert(aapoint->tex_slot > 0); /* output[0] is vertex pos */
 
    /* find psize slot in post-transform vertex */
    aapoint->psize_slot = -1;
    if (draw->rasterizer->point_size_per_vertex) {
-      /* find PSIZ vertex output */
-      const struct draw_vertex_shader *vs = draw->vs.vertex_shader;
+      const struct tgsi_shader_info *info = draw_get_shader_info(draw);
       uint i;
-      for (i = 0; i < vs->info.num_outputs; i++) {
-         if (vs->info.output_semantic_name[i] == TGSI_SEMANTIC_PSIZE) {
+      /* find PSIZ vertex output */
+      for (i = 0; i < info->num_outputs; i++) {
+         if (info->output_semantic_name[i] == TGSI_SEMANTIC_PSIZE) {
             aapoint->psize_slot = i;
             break;
          }
