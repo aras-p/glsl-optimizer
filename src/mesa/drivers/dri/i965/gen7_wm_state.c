@@ -98,6 +98,8 @@ upload_ps_state(struct brw_context *brw)
 {
    struct intel_context *intel = &brw->intel;
    uint32_t dw2, dw4, dw5;
+   const int max_threads_shift = brw->intel.is_haswell ?
+      HSW_PS_MAX_THREADS_SHIFT : IVB_PS_MAX_THREADS_SHIFT;
 
    /* BRW_NEW_PS_BINDING_TABLE */
    BEGIN_BATCH(2);
@@ -153,7 +155,7 @@ upload_ps_state(struct brw_context *brw)
    if (intel->ctx.Shader.CurrentFragmentProgram == NULL)
       dw2 |= GEN7_PS_FLOATING_POINT_MODE_ALT;
 
-   dw4 |= (brw->max_wm_threads - 1) << GEN7_PS_MAX_THREADS_SHIFT;
+   dw4 |= (brw->max_wm_threads - 1) << max_threads_shift;
 
    /* CACHE_NEW_WM_PROG */
    if (brw->wm.prog_data->nr_params > 0)

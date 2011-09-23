@@ -34,6 +34,8 @@ upload_vs_state(struct brw_context *brw)
 {
    struct intel_context *intel = &brw->intel;
    uint32_t floating_point_mode = 0;
+   const int max_threads_shift = brw->intel.is_haswell ?
+      HSW_VS_MAX_THREADS_SHIFT : GEN6_VS_MAX_THREADS_SHIFT;
 
    gen7_emit_vs_workaround_flush(intel);
 
@@ -99,7 +101,7 @@ upload_vs_state(struct brw_context *brw)
 	     (brw->vs.prog_data->urb_read_length << GEN6_VS_URB_READ_LENGTH_SHIFT) |
 	     (0 << GEN6_VS_URB_ENTRY_READ_OFFSET_SHIFT));
 
-   OUT_BATCH(((brw->max_vs_threads - 1) << GEN6_VS_MAX_THREADS_SHIFT) |
+   OUT_BATCH(((brw->max_vs_threads - 1) << max_threads_shift) |
 	     GEN6_VS_STATISTICS_ENABLE |
 	     GEN6_VS_ENABLE);
    ADVANCE_BATCH();

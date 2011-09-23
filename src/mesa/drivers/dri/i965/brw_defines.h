@@ -1047,6 +1047,7 @@ enum brw_message_target {
 # define GEN6_VS_URB_ENTRY_READ_OFFSET_SHIFT		4
 /* DW5 */
 # define GEN6_VS_MAX_THREADS_SHIFT			25
+# define HSW_VS_MAX_THREADS_SHIFT			23
 # define GEN6_VS_STATISTICS_ENABLE			(1 << 10)
 # define GEN6_VS_CACHE_DISABLE				(1 << 1)
 # define GEN6_VS_ENABLE					(1 << 0)
@@ -1390,7 +1391,8 @@ enum brw_wm_barycentric_interp_mode {
 # define GEN7_PS_FLOATING_POINT_MODE_ALT		(1 << 16)
 /* DW3: scratch space */
 /* DW4 */
-# define GEN7_PS_MAX_THREADS_SHIFT			24
+# define IVB_PS_MAX_THREADS_SHIFT			24
+# define HSW_PS_MAX_THREADS_SHIFT			23
 # define GEN7_PS_PUSH_CONSTANT_ENABLE		        (1 << 11)
 # define GEN7_PS_ATTRIBUTE_ENABLE		        (1 << 10)
 # define GEN7_PS_OMASK_TO_RENDER_TARGET			(1 << 9)
