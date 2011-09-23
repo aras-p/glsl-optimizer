@@ -2108,8 +2108,8 @@ void r600_pipe_shader_ps(struct pipe_context *ctx, struct r600_pipe_shader *shad
 				0, 0xFFFFFFFF, shader->bo, RADEON_USAGE_READ);
 	r600_pipe_state_add_reg(rstate,
 				R_028850_SQ_PGM_RESOURCES_PS,
-				S_028868_NUM_GPRS(rshader->bc.ngpr) |
-				S_028868_STACK_SIZE(rshader->bc.nstack),
+				S_028850_NUM_GPRS(rshader->bc.ngpr) |
+				S_028850_STACK_SIZE(rshader->bc.nstack),
 				0xFFFFFFFF, NULL, 0);
 	r600_pipe_state_add_reg(rstate,
 				R_028854_SQ_PGM_EXPORTS_PS,
