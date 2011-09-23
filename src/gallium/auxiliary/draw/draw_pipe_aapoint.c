@@ -834,7 +834,7 @@ aapoint_create_fs_state(struct pipe_context *pipe,
    if (aafs == NULL) 
       return NULL;
 
-   aafs->state = *fs;
+   aafs->state.tokens = tgsi_dup_tokens(fs->tokens);
 
    /* pass-through */
    aafs->driver_fs = aapoint->driver_create_fs_state(pipe, fs);
@@ -867,6 +867,8 @@ aapoint_delete_fs_state(struct pipe_context *pipe, void *fs)
 
    if (aafs->aapoint_fs)
       aapoint->driver_delete_fs_state(pipe, aafs->aapoint_fs);
+
+   FREE((void*)aafs->state.tokens);
 
    FREE(aafs);
 }
