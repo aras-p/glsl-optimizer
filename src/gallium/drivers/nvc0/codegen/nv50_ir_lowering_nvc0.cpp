@@ -524,6 +524,7 @@ NVC0LoweringPass::handleDIV(Instruction *i)
 {
    if (!isFloatType(i->dType))
       return true;
+   bld.setPosition(i, false);
    Instruction *rcp = bld.mkOp1(OP_RCP, i->dType, bld.getSSA(), i->getSrc(1));
    i->op = OP_MUL;
    i->setSrc(1, rcp->getDef(0));
