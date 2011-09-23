@@ -129,7 +129,7 @@ lp_rast_triangle_4_16(struct lp_rasterizer_task *task,
    union lp_rast_cmd_arg arg2;
    arg2.triangle.tri = arg.triangle.tri;
    arg2.triangle.plane_mask = (1<<4)-1;
-   lp_rast_triangle_3(task, arg2);
+   lp_rast_triangle_4(task, arg2);
 }
 
 void
