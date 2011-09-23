@@ -241,15 +241,15 @@ vec4_visitor::opt_copy_propagation()
        * optimizing out access to the copy result
        */
       for (int i = 2; i >= 0; i--) {
-	 int reg = (virtual_grf_reg_map[inst->src[i].reg] +
-		    inst->src[i].reg_offset);
-
 	 /* Copied values end up in GRFs, and we don't track reladdr
 	  * accesses.
 	  */
 	 if (inst->src[i].file != GRF ||
 	     inst->src[i].reladdr)
 	    continue;
+
+	 int reg = (virtual_grf_reg_map[inst->src[i].reg] +
+		    inst->src[i].reg_offset);
 
 	 /* Find the regs that each swizzle component came from.
 	  */
