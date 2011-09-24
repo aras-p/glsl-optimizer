@@ -66,24 +66,6 @@ gen6_prepare_vs_push_constants(struct brw_context *brw)
 			      4 * sizeof(float),
 			      32, &brw->vs.push_const_offset);
 
-      /* This should be loaded like any other param, but it's ad-hoc
-       * until we redo the VS backend.
-       */
-      if (!uses_clip_distance) {
-         for (i = 0; i < MAX_CLIP_PLANES; i++) {
-            if (ctx->Transform.ClipPlanesEnabled & (1 << i)) {
-               memcpy(param, ctx->Transform._ClipUserPlane[i], 4 * sizeof(float));
-               param += 4;
-               params_uploaded++;
-            }
-         }
-      }
-      /* Align to a reg for convenience for brw_vs_emit.c */
-      if (params_uploaded & 1) {
-	 param += 4;
-	 params_uploaded++;
-      }
-
       if (brw->vs.prog_data->uses_new_param_layout) {
 	 for (i = 0; i < brw->vs.prog_data->nr_params; i++) {
 	    *param = *brw->vs.prog_data->param[i];
@@ -91,6 +73,25 @@ gen6_prepare_vs_push_constants(struct brw_context *brw)
 	 }
 	 params_uploaded += brw->vs.prog_data->nr_params / 4;
       } else {
+         /* This should be loaded like any other param, but it's ad-hoc
+          * until we redo the VS backend.
+          */
+         if (!uses_clip_distance) {
+            for (i = 0; i < MAX_CLIP_PLANES; i++) {
+               if (ctx->Transform.ClipPlanesEnabled & (1 << i)) {
+                  memcpy(param, ctx->Transform._ClipUserPlane[i], 4 * sizeof(float));
+                  param += 4;
+                  params_uploaded++;
+               }
+            }
+         }
+
+         /* Align to a reg for convenience for brw_vs_emit.c */
+         if (params_uploaded & 1) {
+            param += 4;
+            params_uploaded++;
+         }
+
 	 for (i = 0; i < vp->program.Base.Parameters->NumParameters; i++) {
 	    if (brw->vs.constant_map[i] != -1) {
 	       memcpy(param + brw->vs.constant_map[i] * 4,

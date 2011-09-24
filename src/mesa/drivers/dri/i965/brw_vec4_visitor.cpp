@@ -543,6 +543,24 @@ vec4_visitor::setup_uniform_values(int loc, const glsl_type *type)
    }
 }
 
+void
+vec4_visitor::setup_uniform_clipplane_values()
+{
+   int compacted_clipplane_index = 0;
+   for (int i = 0; i < MAX_CLIP_PLANES; ++i) {
+      if (ctx->Transform.ClipPlanesEnabled & (1 << i)) {
+         this->uniform_vector_size[this->uniforms] = 4;
+         this->userplane[compacted_clipplane_index] = dst_reg(UNIFORM, this->uniforms);
+         this->userplane[compacted_clipplane_index].type = BRW_REGISTER_TYPE_F;
+         for (int j = 0; j < 4; ++j) {
+            c->prog_data.param[this->uniforms * 4 + j] = &ctx->Transform._ClipUserPlane[i][j];
+         }
+         ++compacted_clipplane_index;
+         ++this->uniforms;
+      }
+   }
+}
+
 /* Our support for builtin uniforms is even scarier than non-builtin.
  * It sits on top of the PROG_STATE_VAR parameters that are
  * automatically updated from GL context state.
@@ -1767,7 +1785,7 @@ vec4_visitor::emit_psiz_and_flags(struct brw_reg reg)
 	 vec4_instruction *inst;
 
 	 inst = emit(DP4(dst_null_f(), src_reg(output_reg[VERT_RESULT_HPOS]),
-                         src_reg(c->userplane[i])));
+                         src_reg(this->userplane[i])));
 	 inst->conditional_mod = BRW_CONDITIONAL_L;
 
 	 emit(OR(header1, src_reg(header1), 1u << i));
@@ -1825,7 +1843,7 @@ vec4_visitor::emit_clip_distances(struct brw_reg reg, int offset)
    for (int i = 0; i + offset < c->key.nr_userclip && i < 4; ++i) {
       emit(DP4(dst_reg(brw_writemask(reg, 1 << i)),
                src_reg(output_reg[VERT_RESULT_HPOS]),
-               src_reg(c->userplane[i + offset])));
+               src_reg(this->userplane[i + offset])));
    }
 }
 

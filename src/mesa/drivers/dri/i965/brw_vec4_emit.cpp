@@ -91,24 +91,6 @@ vec4_visitor::setup_attributes(int payload_reg)
 int
 vec4_visitor::setup_uniforms(int reg)
 {
-   /* User clip planes from curbe:
-    */
-   if (c->key.nr_userclip && !c->key.uses_clip_distance) {
-      if (intel->gen >= 6) {
-	 for (int i = 0; i < c->key.nr_userclip; i++) {
-	    c->userplane[i] = stride(brw_vec4_grf(reg + i / 2,
-						  (i % 2) * 4), 0, 4, 1);
-	 }
-	 reg += ALIGN(c->key.nr_userclip, 2) / 2;
-      } else {
-	 for (int i = 0; i < c->key.nr_userclip; i++) {
-	    c->userplane[i] = stride(brw_vec4_grf(reg + (6 + i) / 2,
-						  (i % 2) * 4), 0, 4, 1);
-	 }
-	 reg += (ALIGN(6 + c->key.nr_userclip, 4) / 4) * 2;
-      }
-   }
-
    /* The pre-gen6 VS requires that some push constants get loaded no
     * matter what, or the GPU would hang.
     */
@@ -598,6 +580,9 @@ vec4_visitor::generate_vs_instruction(vec4_instruction *instruction,
 bool
 vec4_visitor::run()
 {
+   if (c->key.nr_userclip && !c->key.uses_clip_distance)
+      setup_uniform_clipplane_values();
+
    /* Generate VS IR for main().  (the visitor only descends into
     * functions called "main").
     */

@@ -92,8 +92,8 @@ brw_prepare_vs_unit(struct brw_context *brw)
    vs->thread3.dispatch_grf_start_reg = 1;
    vs->thread3.urb_entry_read_offset = 0;
 
-   /* BRW_NEW_CURBE_OFFSETS, _NEW_TRANSFORM */
-   if (ctx->Transform.ClipPlanesEnabled) {
+   /* BRW_NEW_CURBE_OFFSETS, _NEW_TRANSFORM, BRW_NEW_VERTEX_PROGRAM */
+   if (ctx->Transform.ClipPlanesEnabled && !brw->vs.prog_data->uses_new_param_layout) {
       /* Note that we read in the userclip planes as well, hence
        * clip_start:
        */
@@ -177,7 +177,8 @@ const struct brw_tracked_state brw_vs_unit = {
 		BRW_NEW_PROGRAM_CACHE |
 		BRW_NEW_CURBE_OFFSETS |
                 BRW_NEW_NR_VS_SURFACES |
-		BRW_NEW_URB_FENCE),
+		BRW_NEW_URB_FENCE |
+                BRW_NEW_VERTEX_PROGRAM),
       .cache = CACHE_NEW_VS_PROG
    },
    .prepare = brw_prepare_vs_unit,

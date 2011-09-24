@@ -208,8 +208,13 @@ static void prepare_constant_buffer(struct brw_context *brw)
    }
 
 
-   /* The clipplanes are actually delivered to both CLIP and VS units.
-    * VS uses them to calculate the outcode bitmasks.
+   /* When using the old VS backend, the clipplanes are actually delivered to
+    * both CLIP and VS units.  VS uses them to calculate the outcode bitmasks.
+    *
+    * When using the new VS backend, it is responsible for setting up its own
+    * clipplane constants if it needs them.  This results in a slight waste of
+    * of curbe space, but the advantage is that the new VS backend can use its
+    * general-purpose uniform layout code to store the clipplanes.
     */
    if (brw->curbe.clip_size) {
       GLuint offset = brw->curbe.clip_start * 16;

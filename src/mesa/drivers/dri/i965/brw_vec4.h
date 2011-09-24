@@ -324,6 +324,7 @@ public:
    int first_non_payload_grf;
    int *virtual_grf_def;
    int *virtual_grf_use;
+   dst_reg userplane[MAX_CLIP_PLANES];
 
    /**
     * This is the size to be used for an array with an element per
@@ -385,6 +386,7 @@ public:
    void fail(const char *msg, ...);
 
    int virtual_grf_alloc(int size);
+   void setup_uniform_clipplane_values();
    int setup_uniform_values(int loc, const glsl_type *type);
    void setup_builtin_uniform_values(ir_variable *ir);
    int setup_attributes(int payload_reg);
