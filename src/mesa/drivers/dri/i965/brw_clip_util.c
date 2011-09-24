@@ -160,8 +160,14 @@ void brw_clip_interp_vertex( struct brw_clip_compile *c,
 	    brw_MOV(p, deref_4f(dest_ptr, delta), brw_imm_f(1));
 	 else
 	    brw_MOV(p, deref_4f(dest_ptr, delta), deref_4f(v0_ptr, delta));
-      } else if (vert_result == VERT_RESULT_PSIZ) {
-	 /* PSIZ doesn't need interpolation */
+      } else if (vert_result == VERT_RESULT_PSIZ ||
+                 vert_result == VERT_RESULT_CLIP_DIST0 ||
+                 vert_result == VERT_RESULT_CLIP_DIST1) {
+	 /* PSIZ doesn't need interpolation because it isn't used by the
+          * fragment shader.  CLIP_DIST0 and CLIP_DIST1 don't need
+          * intepolation because on pre-GEN6, these are just placeholder VUE
+          * slots that don't perform any action.
+          */
       } else if (vert_result < VERT_RESULT_MAX) {
 	 /* This is a true vertex result (and not a special value for the VUE
 	  * header), so interpolate:
