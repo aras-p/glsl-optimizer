@@ -1445,6 +1445,7 @@ enum brw_wm_barycentric_interp_mode {
 #define GEN7_3DSTATE_CLEAR_PARAMS		0x7804
 #define GEN7_3DSTATE_DEPTH_BUFFER		0x7805
 #define GEN7_3DSTATE_STENCIL_BUFFER		0x7806
+# define HSW_STENCIL_ENABLED                            (1 << 31)
 #define GEN7_3DSTATE_HIER_DEPTH_BUFFER		0x7807
 
 #define _3DSTATE_CLEAR_PARAMS			0x7910 /* ILK, SNB */

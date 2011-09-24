@@ -139,9 +139,12 @@ static void emit_depthbuffer(struct brw_context *brw)
       OUT_BATCH(0);
       ADVANCE_BATCH();
    } else {
+      const int enabled = intel->is_haswell ? HSW_STENCIL_ENABLED : 0;
+
       BEGIN_BATCH(3);
       OUT_BATCH(GEN7_3DSTATE_STENCIL_BUFFER << 16 | (3 - 2));
-      OUT_BATCH(stencil_mt->region->pitch * stencil_mt->region->cpp - 1);
+      OUT_BATCH(enabled |
+	        (stencil_mt->region->pitch * stencil_mt->region->cpp - 1));
       OUT_RELOC(stencil_mt->region->bo,
 	        I915_GEM_DOMAIN_RENDER, I915_GEM_DOMAIN_RENDER,
 		0);
