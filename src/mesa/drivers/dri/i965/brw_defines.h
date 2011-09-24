@@ -1210,6 +1210,8 @@ enum brw_message_target {
  */
 /* GEN7/DW1: */
 # define GEN7_SF_DEPTH_BUFFER_SURFACE_FORMAT_SHIFT	12
+/* GEN7/DW2: */
+# define HSW_SF_LINE_STIPPLE_ENABLE			14
 
 #define _3DSTATE_SBE				0x781F /* GEN7+ */
 /* DW1 */

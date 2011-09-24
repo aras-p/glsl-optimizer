@@ -249,6 +249,9 @@ upload_sf_state(struct brw_context *brw)
       dw2 |= GEN6_SF_LINE_AA_MODE_TRUE;
       dw2 |= GEN6_SF_LINE_END_CAP_WIDTH_1_0;
    }
+   if (ctx->Line.StippleFlag && intel->is_haswell) {
+      dw2 |= HSW_SF_LINE_STIPPLE_ENABLE;
+   }
 
    /* FINISHME: Last Pixel Enable?  Vertex Sub Pixel Precision Select?
     * FINISHME: AA Line Distance Mode?
