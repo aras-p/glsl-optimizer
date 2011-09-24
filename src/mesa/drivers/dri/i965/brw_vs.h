@@ -81,7 +81,7 @@ struct brw_vs_compile {
        struct brw_reg reg;
    } output_regs[128];
 
-   struct brw_reg userplane[6];
+   struct brw_reg userplane[MAX_CLIP_PLANES];
 
    /** we may need up to 3 constants per instruction (if use_const_buffer) */
    struct {
