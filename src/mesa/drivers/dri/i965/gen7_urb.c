@@ -39,29 +39,37 @@
  * +-------------------------------------------------------------+
  *
  * Notably, push constants must be stored at the beginning of the URB
- * space, while entries can be stored anywhere.  Ivybridge has a maximum
- * constant buffer size of 16kB.
+ * space, while entries can be stored anywhere.  Ivybridge and Haswell
+ * GT1/GT2 have a maximum constant buffer size of 16kB, while Haswell GT3
+ * doubles this (32kB).
  *
  * Currently we split the constant buffer space evenly between VS and FS.
  * This is probably not ideal, but simple.
  *
- * Ivybridge GT1 has 128kB of URB space.
- * Ivybridge GT2 has 256kB of URB space.
+ * Ivybridge GT1 and Haswell GT1 have 128kB of URB space.
+ * Ivybridge GT2 and Haswell GT2 have 256kB of URB space.
+ * Haswell GT3 has 512kB of URB space.
  *
- * See "Volume 2a: 3D Pipeline," section 1.8.
+ * See "Volume 2a: 3D Pipeline," section 1.8, "Volume 1b: Configurations",
+ * and the documentation for 3DSTATE_PUSH_CONSTANT_ALLOC_xS.
  */
 void
 gen7_allocate_push_constants(struct brw_context *brw)
 {
    struct intel_context *intel = &brw->intel;
+
+   unsigned size = 8;
+   if (intel->is_haswell && intel->gt == 3)
+      size = 16;
+
    BEGIN_BATCH(2);
    OUT_BATCH(_3DSTATE_PUSH_CONSTANT_ALLOC_VS << 16 | (2 - 2));
-   OUT_BATCH(8);
+   OUT_BATCH(size);
    ADVANCE_BATCH();
 
    BEGIN_BATCH(2);
    OUT_BATCH(_3DSTATE_PUSH_CONSTANT_ALLOC_PS << 16 | (2 - 2));
-   OUT_BATCH(8 | 8 << GEN7_PUSH_CONSTANT_BUFFER_OFFSET_SHIFT);
+   OUT_BATCH(size | size << GEN7_PUSH_CONSTANT_BUFFER_OFFSET_SHIFT);
    ADVANCE_BATCH();
 }
 
@@ -78,7 +86,8 @@ static void
 gen7_upload_urb(struct brw_context *brw)
 {
    struct intel_context *intel = &brw->intel;
-   const int push_size_kB = 16;
+   const int push_size_kB = intel->is_haswell && intel->gt == 3 ? 32 : 16;
+
    /* Total space for entries is URB size - 16kB for push constants */
    int handle_region_size = (brw->urb.size - push_size_kB) * 1024; /* bytes */
 
