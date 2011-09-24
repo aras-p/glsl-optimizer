@@ -1304,7 +1304,7 @@ enum opcode {
 # define GEN7_PS_FLOATING_POINT_MODE_ALT		(1 << 16)
 /* DW3: scratch space */
 /* DW4 */
-# define GEN7_PS_MAX_THREADS_SHIFT			23
+# define GEN7_PS_MAX_THREADS_SHIFT			24
 # define GEN7_PS_PUSH_CONSTANT_ENABLE		        (1 << 11)
 # define GEN7_PS_ATTRIBUTE_ENABLE		        (1 << 10)
 # define GEN7_PS_OMASK_TO_RENDER_TARGET			(1 << 9)
