@@ -1767,6 +1767,8 @@ vec4_visitor::emit_psiz_and_flags(struct brw_reg reg)
        ((c->prog_data.outputs_written & BITFIELD64_BIT(VERT_RESULT_PSIZ)) ||
         c->key.nr_userclip || brw->has_negative_rhw_bug)) {
       dst_reg header1 = dst_reg(this, glsl_type::uvec4_type);
+      dst_reg header1_w = header1;
+      header1_w.writemask = WRITEMASK_W;
       GLuint i;
 
       emit(MOV(header1, 0u));
@@ -1775,9 +1777,8 @@ vec4_visitor::emit_psiz_and_flags(struct brw_reg reg)
 	 src_reg psiz = src_reg(output_reg[VERT_RESULT_PSIZ]);
 
 	 current_annotation = "Point size";
-	 header1.writemask = WRITEMASK_W;
-	 emit(MUL(header1, psiz, src_reg((float)(1 << 11))));
-	 emit(AND(header1, src_reg(header1), 0x7ff << 8));
+	 emit(MUL(header1_w, psiz, src_reg((float)(1 << 11))));
+	 emit(AND(header1_w, src_reg(header1_w), 0x7ff << 8));
       }
 
       current_annotation = "Clipping flags";
@@ -1788,7 +1789,7 @@ vec4_visitor::emit_psiz_and_flags(struct brw_reg reg)
                          src_reg(this->userplane[i])));
 	 inst->conditional_mod = BRW_CONDITIONAL_L;
 
-	 emit(OR(header1, src_reg(header1), 1u << i));
+	 inst = emit(OR(header1_w, src_reg(header1_w), 1u << i));
 	 inst->predicate = BRW_PREDICATE_NORMAL;
       }
 
@@ -1816,7 +1817,6 @@ vec4_visitor::emit_psiz_and_flags(struct brw_reg reg)
 #endif
       }
 
-      header1.writemask = WRITEMASK_XYZW;
       emit(MOV(retype(reg, BRW_REGISTER_TYPE_UD), src_reg(header1)));
    } else if (intel->gen < 6) {
       emit(MOV(retype(reg, BRW_REGISTER_TYPE_UD), 0u));
