@@ -169,8 +169,6 @@ struct intel_context
    GLboolean needs_ff_sync;
    GLboolean is_g4x;
    GLboolean is_945;
-   GLboolean has_luminance_srgb;
-   GLboolean has_xrgb_textures;
    GLboolean has_separate_stencil;
    GLboolean must_use_separate_stencil;
    GLboolean has_hiz;

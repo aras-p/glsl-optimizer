@@ -613,31 +613,18 @@ intelInitContext(struct intel_context *intel,
    intel->driContext = driContextPriv;
    intel->driFd = sPriv->fd;
 
-   intel->has_xrgb_textures = GL_TRUE;
    intel->gen = intelScreen->gen;
-   if (IS_GEN7(intel->intelScreen->deviceID)) {
-      intel->needs_ff_sync = GL_TRUE;
-      intel->has_luminance_srgb = GL_TRUE;
-   } else if (IS_GEN6(intel->intelScreen->deviceID)) {
-      intel->needs_ff_sync = GL_TRUE;
-      intel->has_luminance_srgb = GL_TRUE;
-   } else if (IS_GEN5(intel->intelScreen->deviceID)) {
-      intel->needs_ff_sync = GL_TRUE;
-      intel->has_luminance_srgb = GL_TRUE;
-   } else if (IS_965(intel->intelScreen->deviceID)) {
-      if (IS_G4X(intel->intelScreen->deviceID)) {
-	  intel->has_luminance_srgb = GL_TRUE;
-	  intel->is_g4x = GL_TRUE;
-      }
-   } else if (IS_9XX(intel->intelScreen->deviceID)) {
-      if (IS_945(intel->intelScreen->deviceID)) {
-	 intel->is_945 = GL_TRUE;
-      }
-   } else {
-      if (intel->intelScreen->deviceID == PCI_CHIP_I830_M ||
-	  intel->intelScreen->deviceID == PCI_CHIP_845_G) {
-	 intel->has_xrgb_textures = GL_FALSE;
-      }
+
+   const int devID = intelScreen->deviceID;
+
+   if (IS_G4X(devID)) {
+      intel->is_g4x = true;
+   } else if (IS_945(devID)) {
+      intel->is_945 = true;
+   }
+
+   if (intel->gen >= 5) {
+      intel->needs_ff_sync = true;
    }
 
    intel->has_separate_stencil = intel->intelScreen->hw_has_separate_stencil;
@@ -647,7 +634,7 @@ intelInitContext(struct intel_context *intel,
    memset(&ctx->TextureFormatSupported, 0,
 	  sizeof(ctx->TextureFormatSupported));
    ctx->TextureFormatSupported[MESA_FORMAT_ARGB8888] = GL_TRUE;
-   if (intel->has_xrgb_textures)
+   if (devID != PCI_CHIP_I830_M && devID != PCI_CHIP_845_G)
       ctx->TextureFormatSupported[MESA_FORMAT_XRGB8888] = GL_TRUE;
    ctx->TextureFormatSupported[MESA_FORMAT_ARGB4444] = GL_TRUE;
    ctx->TextureFormatSupported[MESA_FORMAT_ARGB1555] = GL_TRUE;
@@ -717,7 +704,7 @@ intelInitContext(struct intel_context *intel,
    ctx->TextureFormatSupported[MESA_FORMAT_SRGBA_DXT1] = GL_TRUE;
    ctx->TextureFormatSupported[MESA_FORMAT_SRGBA_DXT3] = GL_TRUE;
    ctx->TextureFormatSupported[MESA_FORMAT_SRGBA_DXT5] = GL_TRUE;
-   if (intel->has_luminance_srgb) {
+   if (intel->gen >= 5 || intel->is_g4x) {
       ctx->TextureFormatSupported[MESA_FORMAT_SL8] = GL_TRUE;
       ctx->TextureFormatSupported[MESA_FORMAT_SLA8] = GL_TRUE;
    }
