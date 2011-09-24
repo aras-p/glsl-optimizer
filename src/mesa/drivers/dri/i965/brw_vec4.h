@@ -148,7 +148,7 @@ public:
 
       this->file = IMM;
       this->type = BRW_REGISTER_TYPE_UD;
-      this->imm.f = u;
+      this->imm.u = u;
    }
 
    src_reg(int32_t i)
