@@ -181,13 +181,13 @@ GLboolean brwCreateContext( int api,
 
    /* WM maximum threads is number of EUs times number of threads per EU. */
    if (intel->gen >= 7) {
-      if (IS_IVB_GT1(intel->intelScreen->deviceID)) {
+      if (intel->gt == 1) {
 	 brw->wm_max_threads = 86;
 	 brw->vs_max_threads = 36;
 	 brw->urb.size = 128;
 	 brw->urb.max_vs_entries = 512;
 	 brw->urb.max_gs_entries = 192;
-      } else if (IS_IVB_GT2(intel->intelScreen->deviceID)) {
+      } else if (intel->gt == 2) {
 	 brw->wm_max_threads = 86;
 	 brw->vs_max_threads = 128;
 	 brw->urb.size = 256;
@@ -197,7 +197,7 @@ GLboolean brwCreateContext( int api,
 	 assert(!"Unknown gen7 device.");
       }
    } else if (intel->gen == 6) {
-      if (IS_SNB_GT2(intel->intelScreen->deviceID)) {
+      if (intel->gt == 2) {
 	 /* This could possibly be 80, but is supposed to require
 	  * disabling of WIZ hashing (bit 6 of GT_MODE, 0x20d0) and a
 	  * GPU reset to change.
