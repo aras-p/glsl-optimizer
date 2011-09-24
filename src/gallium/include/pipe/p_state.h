@@ -130,6 +130,7 @@ struct pipe_rasterizer_state
    float point_size;           /**< used when no per-vertex size */
    float offset_units;
    float offset_scale;
+   float offset_clamp;
 };
 
 

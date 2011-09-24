@@ -119,6 +119,8 @@ offset_units
     Specifies the polygon offset bias
 offset_scale
     Specifies the polygon offset scale
+offset_clamp
+    Upper (if > 0) or lower (if < 0) bound on the polygon offset result
 
 
 

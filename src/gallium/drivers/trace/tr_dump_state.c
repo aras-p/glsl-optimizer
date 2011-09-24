@@ -149,6 +149,7 @@ void trace_dump_rasterizer_state(const struct pipe_rasterizer_state *state)
    trace_dump_member(float, state, point_size);
    trace_dump_member(float, state, offset_units);
    trace_dump_member(float, state, offset_scale);
+   trace_dump_member(float, state, offset_clamp);
 
    trace_dump_struct_end();
 }

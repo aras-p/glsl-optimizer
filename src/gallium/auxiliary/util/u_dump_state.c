@@ -332,6 +332,7 @@ util_dump_rasterizer_state(struct os_stream *stream, const struct pipe_rasterize
    util_dump_member(stream, float, state, point_size);
    util_dump_member(stream, float, state, offset_units);
    util_dump_member(stream, float, state, offset_scale);
+   util_dump_member(stream, float, state, offset_clamp);
 
    util_dump_struct_end(stream);
 }

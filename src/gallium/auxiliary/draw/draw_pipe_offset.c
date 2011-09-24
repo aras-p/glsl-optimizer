@@ -43,6 +43,7 @@ struct offset_stage {
 
    float scale;
    float units;
+   float clamp;
 };
 
 
@@ -90,6 +91,10 @@ static void do_offset_tri( struct draw_stage *stage,
 
    float zoffset = offset->units + MAX2(dzdx, dzdy) * offset->scale;
 
+   if (offset->clamp)
+      zoffset = (offset->clamp < 0.0f) ? MAX2(zoffset, offset->clamp) :
+                                         MIN2(zoffset, offset->clamp);
+
    /*
     * Note: we're applying the offset and clamping per-vertex.
     * Ideally, the offset is applied per-fragment prior to fragment shading.
@@ -125,6 +130,7 @@ static void offset_first_tri( struct draw_stage *stage,
 
    offset->units = (float) (stage->draw->rasterizer->offset_units * stage->draw->mrd);
    offset->scale = stage->draw->rasterizer->offset_scale;
+   offset->clamp = stage->draw->rasterizer->offset_clamp;
 
    stage->tri = offset_tri;
    stage->tri( stage, header );
