@@ -1162,7 +1162,7 @@ struct GalliumDXGISwapChain : public GalliumDXGIObject<IDXGISwapChain, GalliumDX
 		if(1)
 		{
 			unsigned blit_x, blit_y, blit_w, blit_h;
-			static const union pipe_color_union black;
+			static const union pipe_color_union black = { { 0, 0, 0, 0 } };
 
 			if(!formats_compatible || src->width0 != dst_w || src->height0 != dst_h) {
 				struct pipe_surface templat;
