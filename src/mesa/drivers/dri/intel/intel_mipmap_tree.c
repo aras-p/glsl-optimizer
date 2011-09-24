@@ -63,7 +63,6 @@ intel_miptree_create_internal(struct intel_context *intel,
 			      GLuint height0,
 			      GLuint depth0)
 {
-   GLboolean ok;
    struct intel_mipmap_tree *mt = calloc(sizeof(*mt), 1);
    int compress_byte = 0;
 
@@ -89,18 +88,12 @@ intel_miptree_create_internal(struct intel_context *intel,
 #ifdef I915
    (void) intel;
    if (intel->is_945)
-      ok = i945_miptree_layout(mt);
+      i945_miptree_layout(mt);
    else
-      ok = i915_miptree_layout(mt);
+      i915_miptree_layout(mt);
 #else
-   ok = brw_miptree_layout(intel, mt);
+   brw_miptree_layout(intel, mt);
 #endif
-
-   if (!ok) {
-      free(mt);
-      DBG("%s not okay - returning NULL\n", __FUNCTION__);
-      return NULL;
-   }
 
    return mt;
 }

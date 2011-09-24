@@ -224,7 +224,7 @@ i915_miptree_layout_2d(struct intel_mipmap_tree * mt)
    }
 }
 
-GLboolean
+void
 i915_miptree_layout(struct intel_mipmap_tree * mt)
 {
    switch (mt->target) {
@@ -246,8 +246,6 @@ i915_miptree_layout(struct intel_mipmap_tree * mt)
 
    DBG("%s: %dx%dx%d\n", __FUNCTION__,
        mt->total_width, mt->total_height, mt->cpp);
-
-   return GL_TRUE;
 }
 
 
@@ -455,7 +453,7 @@ i945_miptree_layout_3d(struct intel_mipmap_tree * mt)
    }
 }
 
-GLboolean
+void
 i945_miptree_layout(struct intel_mipmap_tree * mt)
 {
    switch (mt->target) {
@@ -480,6 +478,4 @@ i945_miptree_layout(struct intel_mipmap_tree * mt)
 
    DBG("%s: %dx%dx%d\n", __FUNCTION__,
        mt->total_width, mt->total_height, mt->cpp);
-
-   return GL_TRUE;
 }

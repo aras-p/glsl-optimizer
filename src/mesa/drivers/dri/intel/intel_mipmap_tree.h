@@ -211,9 +211,9 @@ void intel_miptree_image_copy(struct intel_context *intel,
 
 /* i915_mipmap_tree.c:
  */
-GLboolean i915_miptree_layout(struct intel_mipmap_tree *mt);
-GLboolean i945_miptree_layout(struct intel_mipmap_tree *mt);
-GLboolean brw_miptree_layout(struct intel_context *intel,
-			     struct intel_mipmap_tree *mt);
+void i915_miptree_layout(struct intel_mipmap_tree *mt);
+void i945_miptree_layout(struct intel_mipmap_tree *mt);
+void brw_miptree_layout(struct intel_context *intel,
+			struct intel_mipmap_tree *mt);
 
 #endif

@@ -39,8 +39,8 @@
 
 #define FILE_DEBUG_FLAG DEBUG_MIPTREE
 
-GLboolean brw_miptree_layout(struct intel_context *intel,
-			     struct intel_mipmap_tree *mt)
+void
+brw_miptree_layout(struct intel_context *intel, struct intel_mipmap_tree *mt)
 {
    /* XXX: these vary depending on image format: */
    /* GLint align_w = 4; */
@@ -166,7 +166,5 @@ GLboolean brw_miptree_layout(struct intel_context *intel,
    }
    DBG("%s: %dx%dx%d\n", __FUNCTION__,
        mt->total_width, mt->total_height, mt->cpp);
-
-   return GL_TRUE;
 }
 
