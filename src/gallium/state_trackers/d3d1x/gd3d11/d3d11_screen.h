@@ -504,11 +504,10 @@ struct GalliumD3D11ScreenImpl : public GalliumD3D11Screen
 		else
 			state.cull_face = PIPE_FACE_NONE;
 		state.front_ccw = !!rasterizer_desc->FrontCounterClockwise;
-		/* TODO: is this correct? */
-		/* TODO: we are ignoring depthBiasClamp! */
 		state.offset_tri = state.offset_line = state.offset_point = rasterizer_desc->SlopeScaledDepthBias || rasterizer_desc->DepthBias;
 		state.offset_scale = rasterizer_desc->SlopeScaledDepthBias;
 		state.offset_units = rasterizer_desc->DepthBias;
+		state.offset_clamp = rasterizer_desc->DepthBiasClamp;
 		state.scissor = !!rasterizer_desc->ScissorEnable;
 		state.multisample = !!rasterizer_desc->MultisampleEnable;
 		state.line_smooth = !!rasterizer_desc->AntialiasedLineEnable;
