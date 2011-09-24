@@ -373,7 +373,7 @@ translate_tex_src_target(struct i915_fp_compile *p, uint tex)
 }
 
 /**
- * Convert TGSI_TEXTURE_x token to DO_SAMPLE_TYPE_x token
+ * Return the number of coords needed to access a given TGSI_TEXTURE_*
  */
 static uint
 texture_num_coords(struct i915_fp_compile *p, uint tex)
