@@ -575,7 +575,8 @@ static void u_vbuf_mgr_compute_max_index(struct u_vbuf_mgr_priv *mgr)
 
       if (!vb->buffer ||
           !vb->stride ||
-          u_vbuf_resource(vb->buffer)->user_ptr) {
+          u_vbuf_resource(vb->buffer)->user_ptr ||
+          mgr->ve->ve[i].instance_divisor) {
          continue;
       }
 
