@@ -38,8 +38,8 @@
  * policies, either expressed or implied, of the copyright holders.
  */
 
-#include <stdio.h>
-#include <string.h>
+#include "pipe/p_compiler.h"
+
 #include "postprocess/postprocess.h"
 #include "postprocess/pp_mlaa.h"
 #include "postprocess/pp_filters.h"
@@ -47,6 +47,8 @@
 #include "util/u_box.h"
 #include "util/u_sampler.h"
 #include "util/u_inlines.h"
+#include "util/u_memory.h"
+#include "util/u_string.h"
 #include "pipe/p_screen.h"
 
 #define IMM_SPACE 80
@@ -211,7 +213,7 @@ pp_jimenezmlaa_init_run(struct pp_queue_t *ppq, unsigned int n,
    struct pipe_box box;
    struct pipe_resource res;
 
-   char *tmp_text = calloc(sizeof(blend2fs_1) + sizeof(blend2fs_2) +
+   char *tmp_text = CALLOC(sizeof(blend2fs_1) + sizeof(blend2fs_2) +
                            IMM_SPACE, sizeof(char));
 
    constbuf = pipe_buffer_create(ppq->p->screen, PIPE_BIND_CONSTANT_BUFFER,
@@ -228,9 +230,9 @@ pp_jimenezmlaa_init_run(struct pp_queue_t *ppq, unsigned int n,
       pp_debug("Failed to allocate shader space\n");
       return;
    }
-   sprintf(tmp_text, "%s"
-           "IMM FLT32 {    %.8f,     0.0000,     0.0000,     0.0000}\n"
-           "%s\n", blend2fs_1, (float) val, blend2fs_2);
+   util_sprintf(tmp_text, "%s"
+                "IMM FLT32 {    %.8f,     0.0000,     0.0000,     0.0000}\n"
+                "%s\n", blend2fs_1, (float) val, blend2fs_2);
 
    memset(&res, 0, sizeof(res));
 
@@ -267,7 +269,7 @@ pp_jimenezmlaa_init_run(struct pp_queue_t *ppq, unsigned int n,
    ppq->shaders[n][4] = pp_tgsi_to_state(ppq->p->pipe, neigh3fs, false,
                                          "neigh3fs");
 
-   free(tmp_text);
+   FREE(tmp_text);
 }
 
 /** Short wrapper to init the depth version. */

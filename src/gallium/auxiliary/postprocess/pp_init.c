@@ -25,9 +25,7 @@
  *
  **************************************************************************/
 
-#include <stdio.h>
-#include <stdlib.h>
-#include <stdarg.h>
+#include "pipe/p_compiler.h"
 
 #include "postprocess/filters.h"
 
@@ -35,6 +33,8 @@
 #include "util/u_inlines.h"
 #include "util/u_blit.h"
 #include "util/u_math.h"
+#include "util/u_debug.h"
+#include "util/u_memory.h"
 #include "cso_cache/cso_context.h"
 
 /** Initialize the post-processing queue. */
@@ -56,10 +56,10 @@ pp_init(struct pipe_screen *pscreen, const unsigned int *enabled)
    if (!curpos)
       return NULL;
 
-   ppq = calloc(1, sizeof(struct pp_queue_t));
-   tmp_q = calloc(curpos, sizeof(pp_func));
-   ppq->shaders = calloc(curpos, sizeof(void *));
-   ppq->verts = calloc(curpos, sizeof(unsigned int));
+   ppq = CALLOC(1, sizeof(struct pp_queue_t));
+   tmp_q = CALLOC(curpos, sizeof(pp_func));
+   ppq->shaders = CALLOC(curpos, sizeof(void *));
+   ppq->verts = CALLOC(curpos, sizeof(unsigned int));
 
    if (!tmp_q || !ppq || !ppq->shaders || !ppq->verts)
       goto error;
@@ -78,7 +78,7 @@ pp_init(struct pipe_screen *pscreen, const unsigned int *enabled)
 
          if (pp_filters[i].shaders) {
             ppq->shaders[curpos] =
-               calloc(pp_filters[i].shaders + 1, sizeof(void *));
+               CALLOC(pp_filters[i].shaders + 1, sizeof(void *));
             ppq->verts[curpos] = pp_filters[i].verts;
             if (!ppq->shaders[curpos])
                goto error;
@@ -110,9 +110,9 @@ pp_init(struct pipe_screen *pscreen, const unsigned int *enabled)
    pp_debug("Error setting up pp\n");
 
    if (ppq)
-      free(ppq->p);
-   free(ppq);
-   free(tmp_q);
+      FREE(ppq->p);
+   FREE(ppq);
+   FREE(tmp_q);
 
    return NULL;
 }
@@ -171,9 +171,9 @@ pp_free(struct pp_queue_t *ppq)
    cso_destroy_context(ppq->p->cso);
    ppq->p->pipe->destroy(ppq->p->pipe);
 
-   free(ppq->p);
-   free(ppq->pp_queue);
-   free(ppq);
+   FREE(ppq->p);
+   FREE(ppq->pp_queue);
+   FREE(ppq);
 
    pp_debug("Queue taken down.\n");
 }
@@ -184,11 +184,11 @@ pp_debug(const char *fmt, ...)
 {
    va_list ap;
 
-   if (!getenv("PP_DEBUG"))
+   if (!debug_get_bool_option("PP_DEBUG", FALSE))
       return;
 
    va_start(ap, fmt);
-   vfprintf(stderr, fmt, ap);
+   _debug_vprintf(fmt, ap);
    va_end(ap);
 }
 

@@ -34,13 +34,14 @@
 #include "pipe/p_shader_tokens.h"
 #include "util/u_inlines.h"
 #include "util/u_simple_shaders.h"
+#include "util/u_memory.h"
 
 /** Initialize the internal details */
 struct program *
 pp_init_prog(struct pp_queue_t *ppq, struct pipe_screen *pscreen)
 {
 
-   struct program *p = calloc(1, sizeof(struct program));
+   struct program *p = CALLOC(1, sizeof(struct program));
 
    pp_debug("Initializing program\n");
    if (!pscreen)
