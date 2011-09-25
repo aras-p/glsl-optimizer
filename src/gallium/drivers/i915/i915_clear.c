@@ -102,7 +102,7 @@ i915_clear_emit(struct pipe_context *pipe, unsigned buffers,
 
          depth_clear_bbp = 32;
       } else {
-         clear_depth = (clear_depth & 0xffff) | (clear_depth << 16);
+         clear_depth = (packed_z_stencil & 0xffff) | (packed_z_stencil << 16);
          depth_clear_bbp = 16;
       }
    }
