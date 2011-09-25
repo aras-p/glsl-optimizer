@@ -779,7 +779,7 @@ static void r300_draw_vbo(struct pipe_context* pipe,
     r300_update_derived_state(r300);
 
     /* Start the vbuf manager and update buffers if needed. */
-    if (u_vbuf_mgr_draw_begin(r300->vbuf_mgr, &info) & U_VBUF_BUFFERS_UPDATED) {
+    if (u_vbuf_draw_begin(r300->vbuf_mgr, &info) & U_VBUF_BUFFERS_UPDATED) {
         r300->vertex_arrays_dirty = TRUE;
     }
 
@@ -810,7 +810,7 @@ static void r300_draw_vbo(struct pipe_context* pipe,
         }
     }
 
-    u_vbuf_mgr_draw_end(r300->vbuf_mgr);
+    u_vbuf_draw_end(r300->vbuf_mgr);
 }
 
 /****************************************************************************

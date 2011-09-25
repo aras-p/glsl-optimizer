@@ -88,7 +88,7 @@ struct u_vbuf_resource {
 };
 
 /* Opaque type containing information about vertex elements for the manager. */
-struct u_vbuf_mgr_elements;
+struct u_vbuf_elements;
 
 enum u_fetch_alignment {
    U_VERTEX_FETCH_BYTE_ALIGNED,
@@ -102,36 +102,35 @@ enum u_vbuf_return_flags {
 
 
 struct u_vbuf_mgr *
-u_vbuf_mgr_create(struct pipe_context *pipe,
-                  unsigned upload_buffer_size,
-                  unsigned upload_buffer_alignment,
-                  unsigned upload_buffer_bind,
-                  enum u_fetch_alignment fetch_alignment);
+u_vbuf_create(struct pipe_context *pipe,
+              unsigned upload_buffer_size,
+              unsigned upload_buffer_alignment,
+              unsigned upload_buffer_bind,
+              enum u_fetch_alignment fetch_alignment);
 
-void u_vbuf_mgr_destroy(struct u_vbuf_mgr *mgr);
+void u_vbuf_destroy(struct u_vbuf_mgr *mgr);
 
-struct u_vbuf_mgr_elements *
-u_vbuf_mgr_create_vertex_elements(struct u_vbuf_mgr *mgr,
-                                  unsigned count,
-                                  const struct pipe_vertex_element *attrs,
-                                  struct pipe_vertex_element *native_attrs);
+struct u_vbuf_elements *
+u_vbuf_create_vertex_elements(struct u_vbuf_mgr *mgr,
+                              unsigned count,
+                              const struct pipe_vertex_element *attrs,
+                              struct pipe_vertex_element *native_attrs);
 
-void u_vbuf_mgr_bind_vertex_elements(struct u_vbuf_mgr *mgr,
-                                     void *cso,
-                                     struct u_vbuf_mgr_elements *ve);
+void u_vbuf_bind_vertex_elements(struct u_vbuf_mgr *mgr,
+                                 void *cso,
+                                 struct u_vbuf_elements *ve);
 
-void u_vbuf_mgr_destroy_vertex_elements(struct u_vbuf_mgr *mgr,
-                                        struct u_vbuf_mgr_elements *ve);
+void u_vbuf_destroy_vertex_elements(struct u_vbuf_mgr *mgr,
+                                    struct u_vbuf_elements *ve);
 
-void u_vbuf_mgr_set_vertex_buffers(struct u_vbuf_mgr *mgr,
-                                   unsigned count,
-                                   const struct pipe_vertex_buffer *bufs);
+void u_vbuf_set_vertex_buffers(struct u_vbuf_mgr *mgr,
+                               unsigned count,
+                               const struct pipe_vertex_buffer *bufs);
 
-enum u_vbuf_return_flags
-u_vbuf_mgr_draw_begin(struct u_vbuf_mgr *mgr,
-                      const struct pipe_draw_info *info);
+enum u_vbuf_return_flags u_vbuf_draw_begin(struct u_vbuf_mgr *mgr,
+                                           const struct pipe_draw_info *info);
 
-void u_vbuf_mgr_draw_end(struct u_vbuf_mgr *mgr);
+void u_vbuf_draw_end(struct u_vbuf_mgr *mgr);
 
 
 static INLINE struct u_vbuf_resource *u_vbuf_resource(struct pipe_resource *r)

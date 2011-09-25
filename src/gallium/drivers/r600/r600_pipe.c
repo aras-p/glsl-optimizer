@@ -173,7 +173,7 @@ static void r600_destroy_context(struct pipe_context *context)
 		free(rctx->states[i]);
 	}
 
-	u_vbuf_mgr_destroy(rctx->vbuf_mgr);
+	u_vbuf_destroy(rctx->vbuf_mgr);
 	util_slab_destroy(&rctx->pool_transfers);
 
 	if (rctx->fences.bo) {
@@ -263,7 +263,7 @@ static struct pipe_context *r600_create_context(struct pipe_screen *screen, void
 			 sizeof(struct pipe_transfer), 64,
 			 UTIL_SLAB_SINGLETHREADED);
 
-	rctx->vbuf_mgr = u_vbuf_mgr_create(&rctx->context, 1024 * 1024, 256,
+	rctx->vbuf_mgr = u_vbuf_create(&rctx->context, 1024 * 1024, 256,
 					   PIPE_BIND_VERTEX_BUFFER |
 					   PIPE_BIND_INDEX_BUFFER |
 					   PIPE_BIND_CONSTANT_BUFFER,

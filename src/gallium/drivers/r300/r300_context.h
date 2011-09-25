@@ -425,7 +425,7 @@ struct r300_vertex_element_state {
     struct pipe_vertex_element velem[PIPE_MAX_ATTRIBS];
     unsigned format_size[PIPE_MAX_ATTRIBS];
 
-    struct u_vbuf_mgr_elements *vmgr_elements;
+    struct u_vbuf_elements *vmgr_elements;
 
     /* The size of the vertex, in dwords. */
     unsigned vertex_size_dwords;

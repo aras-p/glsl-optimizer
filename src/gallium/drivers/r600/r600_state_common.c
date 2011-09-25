@@ -162,7 +162,7 @@ void r600_bind_vertex_elements(struct pipe_context *ctx, void *state)
 
 	rctx->vertex_elements = v;
 	if (v) {
-		u_vbuf_mgr_bind_vertex_elements(rctx->vbuf_mgr, state,
+		u_vbuf_bind_vertex_elements(rctx->vbuf_mgr, state,
 						v->vmgr_elements);
 
 		rctx->states[v->rstate.id] = &v->rstate;
@@ -182,7 +182,7 @@ void r600_delete_vertex_element(struct pipe_context *ctx, void *state)
 		rctx->vertex_elements = NULL;
 
 	r600_bo_reference(&v->fetch_shader, NULL);
-	u_vbuf_mgr_destroy_vertex_elements(rctx->vbuf_mgr, v->vmgr_elements);
+	u_vbuf_destroy_vertex_elements(rctx->vbuf_mgr, v->vmgr_elements);
 	FREE(state);
 }
 
@@ -227,7 +227,7 @@ void r600_set_vertex_buffers(struct pipe_context *ctx, unsigned count,
 		}
 	}
 
-	u_vbuf_mgr_set_vertex_buffers(rctx->vbuf_mgr, count, buffers);
+	u_vbuf_set_vertex_buffers(rctx->vbuf_mgr, count, buffers);
 }
 
 void *r600_create_vertex_elements(struct pipe_context *ctx,
@@ -243,7 +243,7 @@ void *r600_create_vertex_elements(struct pipe_context *ctx,
 
 	v->count = count;
 	v->vmgr_elements =
-		u_vbuf_mgr_create_vertex_elements(rctx->vbuf_mgr, count,
+		u_vbuf_create_vertex_elements(rctx->vbuf_mgr, count,
 						  elements, v->elements);
 
 	if (r600_vertex_elements_build_fetch_shader(rctx, v)) {
@@ -568,7 +568,7 @@ void r600_draw_vbo(struct pipe_context *ctx, const struct pipe_draw_info *info)
 	if (rctx->chip_class < EVERGREEN)
 		r600_update_sampler_states(rctx);
 
-	u_vbuf_mgr_draw_begin(rctx->vbuf_mgr, info);
+	u_vbuf_draw_begin(rctx->vbuf_mgr, info);
 	r600_vertex_buffer_update(rctx);
 
 	draw.info = *info;
@@ -676,7 +676,7 @@ void r600_draw_vbo(struct pipe_context *ctx, const struct pipe_draw_info *info)
 
 	pipe_resource_reference(&draw.index_buffer, NULL);
 
-	u_vbuf_mgr_draw_end(rctx->vbuf_mgr);
+	u_vbuf_draw_end(rctx->vbuf_mgr);
 }
 
 void _r600_pipe_state_add_reg(struct r600_context *ctx,

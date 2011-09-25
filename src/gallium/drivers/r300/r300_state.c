@@ -1583,7 +1583,7 @@ static void r300_set_vertex_buffers(struct pipe_context* pipe,
         count = 1;
     }
 
-    u_vbuf_mgr_set_vertex_buffers(r300->vbuf_mgr, count, buffers);
+    u_vbuf_set_vertex_buffers(r300->vbuf_mgr, count, buffers);
 
     if (r300->screen->caps.has_tcl) {
         /* HW TCL. */
@@ -1691,7 +1691,7 @@ static void* r300_create_vertex_elements_state(struct pipe_context* pipe,
 
     velems->count = count;
     velems->vmgr_elements =
-        u_vbuf_mgr_create_vertex_elements(r300->vbuf_mgr, count, attribs,
+        u_vbuf_create_vertex_elements(r300->vbuf_mgr, count, attribs,
                                           velems->velem);
 
     if (r300_screen(pipe->screen)->caps.has_tcl) {
@@ -1721,7 +1721,7 @@ static void r300_bind_vertex_elements_state(struct pipe_context *pipe,
 
     r300->velems = velems;
 
-    u_vbuf_mgr_bind_vertex_elements(r300->vbuf_mgr, state, velems->vmgr_elements);
+    u_vbuf_bind_vertex_elements(r300->vbuf_mgr, state, velems->vmgr_elements);
 
     if (r300->draw) {
         draw_set_vertex_elements(r300->draw, velems->count, velems->velem);
@@ -1738,7 +1738,7 @@ static void r300_delete_vertex_elements_state(struct pipe_context *pipe, void *s
     struct r300_context *r300 = r300_context(pipe);
     struct r300_vertex_element_state *velems = state;
 
-    u_vbuf_mgr_destroy_vertex_elements(r300->vbuf_mgr, velems->vmgr_elements);
+    u_vbuf_destroy_vertex_elements(r300->vbuf_mgr, velems->vmgr_elements);
     FREE(state);
 }
 
