@@ -101,7 +101,7 @@ static struct pipe_resource *noop_resource_create(struct pipe_screen *screen,
 	nresource->base = *templ;
 	nresource->base.screen = screen;
 	nresource->size = stride * templ->height0 * templ->depth0;
-	nresource->data = malloc(nresource->size);
+	nresource->data = MALLOC(nresource->size);
 	pipe_reference_init(&nresource->base.reference, 1);
 	if (nresource->data == NULL) {
 		FREE(nresource);
@@ -137,7 +137,7 @@ static void noop_resource_destroy(struct pipe_screen *screen,
 {
 	struct noop_resource *nresource = (struct noop_resource *)resource;
 
-	free(nresource->data);
+	FREE(nresource->data);
 	FREE(resource);
 }
 
