@@ -720,9 +720,11 @@
 #define    MAPSURF_4BIT_INDEXED		   (7<<7)
 #define MS3_MT_FORMAT_MASK         (0x7 << 3)
 #define MS3_MT_FORMAT_SHIFT        3
-#define    MT_4BIT_IDX_ARGB8888	           (7<<3)       /* SURFACE_4BIT_INDEXED */
+#define    MT_4BIT_P4		           (7<<3)       /* SURFACE_4BIT_INDEXED */
 #define    MT_8BIT_I8		           (0<<3)       /* SURFACE_8BIT */
 #define    MT_8BIT_L8		           (1<<3)
+#define    MT_8BIT_A4P4		           (2<<3)
+#define    MT_8BIT_P4A4		           (3<<3)
 #define    MT_8BIT_A8		           (4<<3)
 #define    MT_8BIT_MONO8	           (5<<3)
 #define    MT_16BIT_RGB565 		   (0<<3)       /* SURFACE_16BIT */
