@@ -146,7 +146,7 @@ static void r300_emit_draw_init(struct r300_context *r300, unsigned mode,
 static void r300_split_index_bias(struct r300_context *r300, int index_bias,
                                   int *buffer_offset, int *index_offset)
 {
-    struct pipe_vertex_buffer *vb, *vbufs = r300->vbuf_mgr->vertex_buffer;
+    struct pipe_vertex_buffer *vb, *vbufs = r300->vbuf_mgr->real_vertex_buffer;
     struct pipe_vertex_element *velem = r300->velems->velem;
     unsigned i, size;
     int max_neg_bias;
@@ -338,7 +338,7 @@ static boolean immd_is_good_idea(struct r300_context *r300,
         vbi = velem->vertex_buffer_index;
 
         if (!checked[vbi]) {
-            buf = r300->vbuf_mgr->real_vertex_buffer[vbi];
+            buf = r300->vbuf_mgr->real_vertex_buffer[vbi].buffer;
 
             if ((r300_resource(buf)->domain != RADEON_DOMAIN_GTT)) {
                 return FALSE;
@@ -389,13 +389,13 @@ static void r300_draw_arrays_immediate(struct r300_context *r300,
         velem = &r300->velems->velem[i];
         size[i] = r300->velems->format_size[i] / 4;
         vbi = velem->vertex_buffer_index;
-        vbuf = &r300->vbuf_mgr->vertex_buffer[vbi];
+        vbuf = &r300->vbuf_mgr->real_vertex_buffer[vbi];
         stride[i] = vbuf->stride / 4;
 
         /* Map the buffer. */
         if (!map[vbi]) {
             map[vbi] = (uint32_t*)r300->rws->buffer_map(
-                r300_resource(r300->vbuf_mgr->real_vertex_buffer[vbi])->buf,
+                r300_resource(vbuf->buffer)->buf,
                 r300->cs, PIPE_TRANSFER_READ | PIPE_TRANSFER_UNSYNCHRONIZED);
             map[vbi] += (vbuf->buffer_offset / 4) + stride[i] * info->start;
         }
@@ -423,7 +423,7 @@ static void r300_draw_arrays_immediate(struct r300_context *r300,
         vbi = r300->velems->velem[i].vertex_buffer_index;
 
         if (map[vbi]) {
-            r300->rws->buffer_unmap(r300_resource(r300->vbuf_mgr->real_vertex_buffer[vbi])->buf);
+            r300->rws->buffer_unmap(r300_resource(r300->vbuf_mgr->real_vertex_buffer[vbi].buffer)->buf);
             map[vbi] = NULL;
         }
     }

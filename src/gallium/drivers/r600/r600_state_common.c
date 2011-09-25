@@ -506,13 +506,13 @@ static void r600_vertex_buffer_update(struct r600_pipe_context *rctx)
 			/* one resource per vertex elements */
 			unsigned vbuffer_index;
 			vbuffer_index = rctx->vertex_elements->elements[i].vertex_buffer_index;
-			vertex_buffer = &rctx->vbuf_mgr->vertex_buffer[vbuffer_index];
-			rbuffer = (struct r600_resource*)rctx->vbuf_mgr->real_vertex_buffer[vbuffer_index];
+			vertex_buffer = &rctx->vbuf_mgr->real_vertex_buffer[vbuffer_index];
+			rbuffer = (struct r600_resource*)vertex_buffer->buffer;
 			offset = rctx->vertex_elements->vbuffer_offset[i];
 		} else {
 			/* bind vertex buffer once */
-			vertex_buffer = &rctx->vbuf_mgr->vertex_buffer[i];
-			rbuffer = (struct r600_resource*)rctx->vbuf_mgr->real_vertex_buffer[i];
+			vertex_buffer = &rctx->vbuf_mgr->real_vertex_buffer[i];
+			rbuffer = (struct r600_resource*)vertex_buffer->buffer;
 			offset = 0;
 		}
 		if (vertex_buffer == NULL || rbuffer == NULL)

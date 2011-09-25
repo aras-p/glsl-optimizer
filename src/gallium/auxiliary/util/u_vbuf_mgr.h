@@ -64,7 +64,7 @@ struct u_vbuf_mgr {
    /* Contains only real vertex buffers.
     * Hardware drivers should use real_vertex_buffers[i]
     * instead of vertex_buffers[i].buffer. */
-   struct pipe_resource *real_vertex_buffer[PIPE_MAX_ATTRIBS];
+   struct pipe_vertex_buffer real_vertex_buffer[PIPE_MAX_ATTRIBS];
    int nr_real_vertex_buffers;
 
    /* Precomputed max_index for hardware vertex buffers. */

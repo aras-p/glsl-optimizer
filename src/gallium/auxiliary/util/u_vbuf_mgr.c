@@ -63,8 +63,6 @@ struct u_vbuf_mgr_priv {
    void *saved_ve, *fallback_ve;
    boolean ve_binding_lock;
 
-   unsigned saved_buffer_offset[PIPE_MAX_ATTRIBS];
-
    boolean any_user_vbs;
    boolean incompatible_vb_layout;
 };
@@ -127,9 +125,11 @@ void u_vbuf_mgr_destroy(struct u_vbuf_mgr *mgrb)
    struct u_vbuf_mgr_priv *mgr = (struct u_vbuf_mgr_priv*)mgrb;
    unsigned i;
 
-   for (i = 0; i < mgr->b.nr_real_vertex_buffers; i++) {
+   for (i = 0; i < mgr->b.nr_vertex_buffers; i++) {
       pipe_resource_reference(&mgr->b.vertex_buffer[i].buffer, NULL);
-      pipe_resource_reference(&mgr->b.real_vertex_buffer[i], NULL);
+   }
+   for (i = 0; i < mgr->b.nr_real_vertex_buffers; i++) {
+      pipe_resource_reference(&mgr->b.real_vertex_buffer[i].buffer, NULL);
    }
 
    translate_cache_destroy(mgr->translate_cache);
@@ -266,9 +266,9 @@ u_vbuf_translate_begin(struct u_vbuf_mgr_priv *mgr,
    if (mgr->translate_vb_slot != ~0) {
       /* Setup the new vertex buffer. */
       pipe_resource_reference(
-            &mgr->b.real_vertex_buffer[mgr->translate_vb_slot], out_buffer);
-      mgr->b.vertex_buffer[mgr->translate_vb_slot].buffer_offset = out_offset;
-      mgr->b.vertex_buffer[mgr->translate_vb_slot].stride = key.output_stride;
+            &mgr->b.real_vertex_buffer[mgr->translate_vb_slot].buffer, out_buffer);
+      mgr->b.real_vertex_buffer[mgr->translate_vb_slot].buffer_offset = out_offset;
+      mgr->b.real_vertex_buffer[mgr->translate_vb_slot].stride = key.output_stride;
 
       /* Setup new vertex elements. */
       for (i = 0; i < mgr->ve->count; i++) {
@@ -312,7 +312,7 @@ static void u_vbuf_translate_end(struct u_vbuf_mgr_priv *mgr)
    mgr->fallback_ve = NULL;
 
    /* Delete the now-unused VBO. */
-   pipe_resource_reference(&mgr->b.real_vertex_buffer[mgr->translate_vb_slot],
+   pipe_resource_reference(&mgr->b.real_vertex_buffer[mgr->translate_vb_slot].buffer,
                            NULL);
    mgr->b.nr_real_vertex_buffers = mgr->b.nr_vertex_buffers;
 }
@@ -473,8 +473,13 @@ void u_vbuf_mgr_set_vertex_buffers(struct u_vbuf_mgr *mgrb,
       const struct pipe_vertex_buffer *vb = &bufs[i];
 
       pipe_resource_reference(&mgr->b.vertex_buffer[i].buffer, vb->buffer);
-      pipe_resource_reference(&mgr->b.real_vertex_buffer[i], NULL);
-      mgr->saved_buffer_offset[i] = vb->buffer_offset;
+      pipe_resource_reference(&mgr->b.real_vertex_buffer[i].buffer, NULL);
+
+      mgr->b.real_vertex_buffer[i].buffer_offset =
+      mgr->b.vertex_buffer[i].buffer_offset = vb->buffer_offset;
+
+      mgr->b.real_vertex_buffer[i].stride =
+      mgr->b.vertex_buffer[i].stride = vb->stride;
 
       if (!vb->buffer) {
          continue;
@@ -485,16 +490,15 @@ void u_vbuf_mgr_set_vertex_buffers(struct u_vbuf_mgr *mgrb,
          continue;
       }
 
-      pipe_resource_reference(&mgr->b.real_vertex_buffer[i], vb->buffer);
+      pipe_resource_reference(&mgr->b.real_vertex_buffer[i].buffer, vb->buffer);
    }
 
-   for (; i < mgr->b.nr_real_vertex_buffers; i++) {
+   for (i = count; i < mgr->b.nr_vertex_buffers; i++) {
       pipe_resource_reference(&mgr->b.vertex_buffer[i].buffer, NULL);
-      pipe_resource_reference(&mgr->b.real_vertex_buffer[i], NULL);
    }
-
-   memcpy(mgr->b.vertex_buffer, bufs,
-          sizeof(struct pipe_vertex_buffer) * count);
+   for (i = count; i < mgr->b.nr_real_vertex_buffers; i++) {
+      pipe_resource_reference(&mgr->b.real_vertex_buffer[i].buffer, NULL);
+   }
 
    mgr->b.nr_vertex_buffers = count;
    mgr->b.nr_real_vertex_buffers = count;
@@ -540,17 +544,17 @@ u_vbuf_upload_buffers(struct u_vbuf_mgr_priv *mgr,
 
          u_upload_data(mgr->b.uploader, first, size,
                        u_vbuf_resource(vb->buffer)->user_ptr + first,
-                       &vb->buffer_offset,
-                       &mgr->b.real_vertex_buffer[index],
+                       &mgr->b.real_vertex_buffer[index].buffer_offset,
+                       &mgr->b.real_vertex_buffer[index].buffer,
                        &flushed);
 
-         vb->buffer_offset -= first;
+         mgr->b.real_vertex_buffer[index].buffer_offset -= first;
 
          uploaded[index] = TRUE;
          if (flushed)
             retval |= U_VBUF_UPLOAD_FLUSHED;
       } else {
-         assert(mgr->b.real_vertex_buffer[index]);
+         assert(mgr->b.real_vertex_buffer[index].buffer);
       }
    }
 
@@ -634,13 +638,6 @@ u_vbuf_mgr_draw_begin(struct u_vbuf_mgr *mgrb,
 void u_vbuf_mgr_draw_end(struct u_vbuf_mgr *mgrb)
 {
    struct u_vbuf_mgr_priv *mgr = (struct u_vbuf_mgr_priv*)mgrb;
-   unsigned i;
-
-   /* buffer offsets were modified in u_vbuf_upload_buffers */
-   if (mgr->any_user_vbs) {
-      for (i = 0; i < mgr->b.nr_vertex_buffers; i++)
-         mgr->b.vertex_buffer[i].buffer_offset = mgr->saved_buffer_offset[i];
-   }
 
    if (mgr->fallback_ve) {
       u_vbuf_translate_end(mgr);

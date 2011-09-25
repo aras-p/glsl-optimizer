@@ -823,8 +823,7 @@ void r300_emit_textures_state(struct r300_context *r300,
 void r300_emit_vertex_arrays(struct r300_context* r300, int offset,
                              boolean indexed, int instance_id)
 {
-    struct pipe_vertex_buffer *vbuf = r300->vbuf_mgr->vertex_buffer;
-    struct pipe_resource **valid_vbuf = r300->vbuf_mgr->real_vertex_buffer;
+    struct pipe_vertex_buffer *vbuf = r300->vbuf_mgr->real_vertex_buffer;
     struct pipe_vertex_element *velem = r300->velems->velem;
     struct r300_resource *buf;
     int i;
@@ -862,7 +861,7 @@ void r300_emit_vertex_arrays(struct r300_context* r300, int offset,
         }
 
         for (i = 0; i < vertex_array_count; i++) {
-            buf = r300_resource(valid_vbuf[velem[i].vertex_buffer_index]);
+            buf = r300_resource(vbuf[velem[i].vertex_buffer_index].buffer);
             OUT_CS_RELOC(buf);
         }
     } else {
@@ -914,7 +913,7 @@ void r300_emit_vertex_arrays(struct r300_context* r300, int offset,
         }
 
         for (i = 0; i < vertex_array_count; i++) {
-            buf = r300_resource(valid_vbuf[velem[i].vertex_buffer_index]);
+            buf = r300_resource(vbuf[velem[i].vertex_buffer_index].buffer);
             OUT_CS_RELOC(buf);
         }
     }
@@ -1222,15 +1221,17 @@ validate:
                                 r300_resource(r300->vbo)->domain, 0);
     /* ...vertex buffers for HWTCL path... */
     if (do_validate_vertex_buffers && r300->vertex_arrays_dirty) {
-        struct pipe_resource **buf = r300->vbuf_mgr->real_vertex_buffer;
-        struct pipe_resource **last = r300->vbuf_mgr->real_vertex_buffer +
+        struct pipe_vertex_buffer *vbuf = r300->vbuf_mgr->real_vertex_buffer;
+        struct pipe_vertex_buffer *last = r300->vbuf_mgr->real_vertex_buffer +
                                       r300->vbuf_mgr->nr_real_vertex_buffers;
-        for (; buf != last; buf++) {
-            if (!*buf)
+        struct pipe_resource *buf;
+        for (; vbuf != last; vbuf++) {
+            buf = vbuf->buffer;
+            if (!buf)
                 continue;
 
-            r300->rws->cs_add_reloc(r300->cs, r300_resource(*buf)->cs_buf,
-                                    r300_resource(*buf)->domain, 0);
+            r300->rws->cs_add_reloc(r300->cs, r300_resource(buf)->cs_buf,
+                                    r300_resource(buf)->domain, 0);
         }
     }
     /* ...and index buffer for HWTCL path. */
