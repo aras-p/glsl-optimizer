@@ -594,7 +594,7 @@ struct GalliumD3D11ScreenImpl : public GalliumD3D11Screen
 		if(sampler_desc->Filter & 0x80)
 		{
 			state.compare_mode = PIPE_TEX_COMPARE_R_TO_TEXTURE;
-			state.compare_func = sampler_desc->ComparisonFunc;
+			state.compare_func = sampler_desc->ComparisonFunc - 1;
 		}
 		state.wrap_s = d3d11_to_pipe_wrap[sampler_desc->AddressU];
 		state.wrap_t = d3d11_to_pipe_wrap[sampler_desc->AddressV];
