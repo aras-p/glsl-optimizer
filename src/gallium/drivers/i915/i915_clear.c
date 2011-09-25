@@ -105,6 +105,16 @@ i915_clear_emit(struct pipe_context *pipe, unsigned buffers,
          clear_depth = (packed_z_stencil & 0xffff) | (packed_z_stencil << 16);
          depth_clear_bbp = 16;
       }
+   } else if (buffers & PIPE_CLEAR_DEPTH) {
+      struct pipe_surface *zbuf = i915->framebuffer.zsbuf;
+
+      clear_params |= CLEARPARAM_WRITE_STENCIL;
+      depth_tex = i915_texture(zbuf->texture);
+      assert(depth_tex->b.b.format == PIPE_FORMAT_Z24_UNORM_S8_USCALED);
+
+      packed_z_stencil = util_pack_z_stencil(depth_tex->b.b.format, depth, stencil);
+      depth_clear_bbp = 32;
+      clear_stencil = packed_z_stencil & 0xff;
    }
 
    /* hw can't fastclear both depth and color if their bbp mismatch. */
