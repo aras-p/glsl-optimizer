@@ -96,8 +96,7 @@ enum u_fetch_alignment {
 };
 
 enum u_vbuf_return_flags {
-   U_VBUF_BUFFERS_UPDATED = 1,
-   U_VBUF_UPLOAD_FLUSHED = 2
+   U_VBUF_BUFFERS_UPDATED = 1
 };
 
 

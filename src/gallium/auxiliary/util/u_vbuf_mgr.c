@@ -138,7 +138,7 @@ void u_vbuf_destroy(struct u_vbuf_mgr *mgrb)
 }
 
 
-static enum u_vbuf_return_flags
+static void
 u_vbuf_translate_begin(struct u_vbuf_priv *mgr,
                        int min_index, int max_index)
 {
@@ -295,8 +295,6 @@ u_vbuf_translate_begin(struct u_vbuf_priv *mgr,
    }
 
    pipe_resource_reference(&out_buffer, NULL);
-
-   return upload_flushed ? U_VBUF_UPLOAD_FLUSHED : 0;
 }
 
 static void u_vbuf_translate_end(struct u_vbuf_priv *mgr)
@@ -504,7 +502,7 @@ void u_vbuf_set_vertex_buffers(struct u_vbuf_mgr *mgrb,
    mgr->b.nr_real_vertex_buffers = count;
 }
 
-static enum u_vbuf_return_flags
+static void
 u_vbuf_upload_buffers(struct u_vbuf_priv *mgr,
                       int min_index, int max_index,
                       unsigned instance_count)
@@ -512,7 +510,6 @@ u_vbuf_upload_buffers(struct u_vbuf_priv *mgr,
    unsigned i, nr = mgr->ve->count;
    unsigned count = max_index + 1 - min_index;
    boolean uploaded[PIPE_MAX_ATTRIBS] = {0};
-   enum u_vbuf_return_flags retval = 0;
 
    for (i = 0; i < nr; i++) {
       unsigned index = mgr->ve->ve[i].vertex_buffer_index;
@@ -551,14 +548,10 @@ u_vbuf_upload_buffers(struct u_vbuf_priv *mgr,
          mgr->b.real_vertex_buffer[index].buffer_offset -= first;
 
          uploaded[index] = TRUE;
-         if (flushed)
-            retval |= U_VBUF_UPLOAD_FLUSHED;
       } else {
          assert(mgr->b.real_vertex_buffer[index].buffer);
       }
    }
-
-   return retval;
 }
 
 static void u_vbuf_compute_max_index(struct u_vbuf_priv *mgr)
@@ -607,7 +600,6 @@ u_vbuf_draw_begin(struct u_vbuf_mgr *mgrb,
 {
    struct u_vbuf_priv *mgr = (struct u_vbuf_priv*)mgrb;
    int min_index, max_index;
-   enum u_vbuf_return_flags retval = 0;
 
    u_vbuf_compute_max_index(mgr);
 
@@ -620,20 +612,14 @@ u_vbuf_draw_begin(struct u_vbuf_mgr *mgrb,
 
    /* Translate vertices with non-native layouts or formats. */
    if (mgr->incompatible_vb_layout || mgr->ve->incompatible_layout) {
-      retval |= u_vbuf_translate_begin(mgr, min_index, max_index);
-
-      if (mgr->fallback_ve) {
-         retval |= U_VBUF_BUFFERS_UPDATED;
-      }
+      u_vbuf_translate_begin(mgr, min_index, max_index);
    }
 
    /* Upload user buffers. */
    if (mgr->any_user_vbs) {
-      retval |= u_vbuf_upload_buffers(mgr, min_index, max_index,
-                                      info->instance_count);
-      retval |= U_VBUF_BUFFERS_UPDATED;
+      u_vbuf_upload_buffers(mgr, min_index, max_index, info->instance_count);
    }
-   return retval;
+   return mgr->any_user_vbs || mgr->fallback_ve ? U_VBUF_BUFFERS_UPDATED : 0;
 }
 
 void u_vbuf_draw_end(struct u_vbuf_mgr *mgrb)
