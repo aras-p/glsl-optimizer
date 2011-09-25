@@ -102,6 +102,8 @@ enum value_type {
    TYPE_BIT_3,
    TYPE_BIT_4,
    TYPE_BIT_5,
+   TYPE_BIT_6,
+   TYPE_BIT_7,
    TYPE_FLOAT,
    TYPE_FLOAT_2,
    TYPE_FLOAT_3,
@@ -134,6 +136,7 @@ enum value_extra {
    EXTRA_NEW_FRAG_CLAMP,
    EXTRA_VALID_DRAW_BUFFER,
    EXTRA_VALID_TEXTURE_UNIT,
+   EXTRA_VALID_CLIP_DISTANCE,
    EXTRA_FLUSH_CURRENT,
 };
 
@@ -189,6 +192,8 @@ union value {
 #define CONTEXT_BIT3(field) CONTEXT_FIELD(field, TYPE_BIT_3)
 #define CONTEXT_BIT4(field) CONTEXT_FIELD(field, TYPE_BIT_4)
 #define CONTEXT_BIT5(field) CONTEXT_FIELD(field, TYPE_BIT_5)
+#define CONTEXT_BIT6(field) CONTEXT_FIELD(field, TYPE_BIT_6)
+#define CONTEXT_BIT7(field) CONTEXT_FIELD(field, TYPE_BIT_7)
 #define CONTEXT_FLOAT(field) CONTEXT_FIELD(field, TYPE_FLOAT)
 #define CONTEXT_FLOAT2(field) CONTEXT_FIELD(field, TYPE_FLOAT_2)
 #define CONTEXT_FLOAT3(field) CONTEXT_FIELD(field, TYPE_FLOAT_3)
@@ -236,6 +241,11 @@ static const int extra_valid_draw_buffer[] = {
 
 static const int extra_valid_texture_unit[] = {
    EXTRA_VALID_TEXTURE_UNIT,
+   EXTRA_END
+};
+
+static const int extra_valid_clip_distance[] = {
+   EXTRA_VALID_CLIP_DISTANCE,
    EXTRA_END
 };
 
@@ -515,12 +525,14 @@ static const struct value_desc values[] = {
    { GL_ALPHA_TEST_FUNC, CONTEXT_ENUM(Color.AlphaFunc), NO_EXTRA },
    { GL_ALPHA_TEST_REF, LOC_CUSTOM, TYPE_FLOATN, 0, extra_new_frag_clamp },
    { GL_BLEND_DST, CONTEXT_ENUM(Color.Blend[0].DstRGB), NO_EXTRA },
-   { GL_CLIP_PLANE0, CONTEXT_BIT0(Transform.ClipPlanesEnabled), NO_EXTRA },
-   { GL_CLIP_PLANE1, CONTEXT_BIT1(Transform.ClipPlanesEnabled), NO_EXTRA },
-   { GL_CLIP_PLANE2, CONTEXT_BIT2(Transform.ClipPlanesEnabled), NO_EXTRA },
-   { GL_CLIP_PLANE3, CONTEXT_BIT3(Transform.ClipPlanesEnabled), NO_EXTRA },
-   { GL_CLIP_PLANE4, CONTEXT_BIT4(Transform.ClipPlanesEnabled), NO_EXTRA },
-   { GL_CLIP_PLANE5, CONTEXT_BIT5(Transform.ClipPlanesEnabled), NO_EXTRA },
+   { GL_CLIP_DISTANCE0, CONTEXT_BIT0(Transform.ClipPlanesEnabled), extra_valid_clip_distance },
+   { GL_CLIP_DISTANCE1, CONTEXT_BIT1(Transform.ClipPlanesEnabled), extra_valid_clip_distance },
+   { GL_CLIP_DISTANCE2, CONTEXT_BIT2(Transform.ClipPlanesEnabled), extra_valid_clip_distance },
+   { GL_CLIP_DISTANCE3, CONTEXT_BIT3(Transform.ClipPlanesEnabled), extra_valid_clip_distance },
+   { GL_CLIP_DISTANCE4, CONTEXT_BIT4(Transform.ClipPlanesEnabled), extra_valid_clip_distance },
+   { GL_CLIP_DISTANCE5, CONTEXT_BIT5(Transform.ClipPlanesEnabled), extra_valid_clip_distance },
+   { GL_CLIP_DISTANCE6, CONTEXT_BIT6(Transform.ClipPlanesEnabled), extra_valid_clip_distance },
+   { GL_CLIP_DISTANCE7, CONTEXT_BIT7(Transform.ClipPlanesEnabled), extra_valid_clip_distance },
    { GL_COLOR_MATERIAL, CONTEXT_BOOL(Light.ColorMaterialEnabled), NO_EXTRA },
    { GL_CURRENT_COLOR,
      CONTEXT_FIELD(Current.Attrib[VERT_ATTRIB_COLOR0][0], TYPE_FLOATN_4),
@@ -1798,6 +1810,13 @@ check_extra(struct gl_context *ctx, const char *func, const struct value_desc *d
 	    return GL_FALSE;
 	 }
 	 break;
+      case EXTRA_VALID_CLIP_DISTANCE:
+	 if (d->pname - GL_CLIP_DISTANCE0 >= ctx->Const.MaxClipPlanes) {
+	    _mesa_error(ctx, GL_INVALID_ENUM, "%s(clip distance %u)",
+			func, d->pname - GL_CLIP_DISTANCE0);
+	    return GL_FALSE;
+	 }
+	 break;
       case EXTRA_END:
 	 break;
       default: /* *e is a offset into the extension struct */
@@ -1986,6 +2005,8 @@ _mesa_GetBooleanv(GLenum pname, GLboolean *params)
    case TYPE_BIT_3:
    case TYPE_BIT_4:
    case TYPE_BIT_5:
+   case TYPE_BIT_6:
+   case TYPE_BIT_7:
       shift = d->type - TYPE_BIT_0;
       params[0] = (*(GLbitfield *) p >> shift) & 1;
       break;
@@ -2073,6 +2094,8 @@ _mesa_GetFloatv(GLenum pname, GLfloat *params)
    case TYPE_BIT_3:
    case TYPE_BIT_4:
    case TYPE_BIT_5:
+   case TYPE_BIT_6:
+   case TYPE_BIT_7:
       shift = d->type - TYPE_BIT_0;
       params[0] = BOOLEAN_TO_FLOAT((*(GLbitfield *) p >> shift) & 1);
       break;
@@ -2166,6 +2189,8 @@ _mesa_GetIntegerv(GLenum pname, GLint *params)
    case TYPE_BIT_3:
    case TYPE_BIT_4:
    case TYPE_BIT_5:
+   case TYPE_BIT_6:
+   case TYPE_BIT_7:
       shift = d->type - TYPE_BIT_0;
       params[0] = (*(GLbitfield *) p >> shift) & 1;
       break;
@@ -2260,6 +2285,8 @@ _mesa_GetInteger64v(GLenum pname, GLint64 *params)
    case TYPE_BIT_3:
    case TYPE_BIT_4:
    case TYPE_BIT_5:
+   case TYPE_BIT_6:
+   case TYPE_BIT_7:
       shift = d->type - TYPE_BIT_0;
       params[0] = (*(GLbitfield *) p >> shift) & 1;
       break;
@@ -2348,6 +2375,8 @@ _mesa_GetDoublev(GLenum pname, GLdouble *params)
    case TYPE_BIT_3:
    case TYPE_BIT_4:
    case TYPE_BIT_5:
+   case TYPE_BIT_6:
+   case TYPE_BIT_7:
       shift = d->type - TYPE_BIT_0;
       params[0] = (*(GLbitfield *) p >> shift) & 1;
       break;
@@ -2618,6 +2647,8 @@ _mesa_GetFixedv(GLenum pname, GLfixed *params)
    case TYPE_BIT_3:
    case TYPE_BIT_4:
    case TYPE_BIT_5:
+   case TYPE_BIT_6:
+   case TYPE_BIT_7:
       shift = d->type - TYPE_BIT_0;
       params[0] = BOOLEAN_TO_FIXED((*(GLbitfield *) p >> shift) & 1);
       break;

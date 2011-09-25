@@ -304,7 +304,10 @@ _mesa_set_enable(struct gl_context *ctx, GLenum cap, GLboolean state)
       case GL_CLIP_DISTANCE6:
       case GL_CLIP_DISTANCE7:
          {
-            const GLuint p = cap - GL_CLIP_PLANE0;
+            const GLuint p = cap - GL_CLIP_DISTANCE0;
+
+            if (p >= ctx->Const.MaxClipPlanes)
+               goto invalid_enum_error;
 
             if ((ctx->Transform.ClipPlanesEnabled & (1 << p))
                 == ((GLuint) state << p))
@@ -1084,13 +1087,21 @@ _mesa_IsEnabled( GLenum cap )
 	 return ctx->Eval.AutoNormal;
       case GL_BLEND:
          return ctx->Color.BlendEnabled & 1;  /* return state for buffer[0] */
-      case GL_CLIP_PLANE0:
-      case GL_CLIP_PLANE1:
-      case GL_CLIP_PLANE2:
-      case GL_CLIP_PLANE3:
-      case GL_CLIP_PLANE4:
-      case GL_CLIP_PLANE5:
-	 return (ctx->Transform.ClipPlanesEnabled >> (cap - GL_CLIP_PLANE0)) & 1;
+      case GL_CLIP_DISTANCE0:
+      case GL_CLIP_DISTANCE1:
+      case GL_CLIP_DISTANCE2:
+      case GL_CLIP_DISTANCE3:
+      case GL_CLIP_DISTANCE4:
+      case GL_CLIP_DISTANCE5:
+      case GL_CLIP_DISTANCE6:
+      case GL_CLIP_DISTANCE7: {
+         const GLuint p = cap - GL_CLIP_DISTANCE0;
+
+         if (p >= ctx->Const.MaxClipPlanes)
+            goto invalid_enum_error;
+
+	 return (ctx->Transform.ClipPlanesEnabled >> p) & 1;
+      }
       case GL_COLOR_MATERIAL:
 	 return ctx->Light.ColorMaterialEnabled;
       case GL_CULL_FACE:
