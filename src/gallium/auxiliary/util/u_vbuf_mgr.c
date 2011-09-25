@@ -507,50 +507,72 @@ u_vbuf_upload_buffers(struct u_vbuf_priv *mgr,
                       int min_index, int max_index,
                       unsigned instance_count)
 {
-   unsigned i, nr = mgr->ve->count;
+   unsigned i;
    unsigned count = max_index + 1 - min_index;
-   boolean uploaded[PIPE_MAX_ATTRIBS] = {0};
+   unsigned nr_velems = mgr->ve->count;
+   unsigned nr_vbufs = mgr->b.nr_vertex_buffers;
+   unsigned start_offset[PIPE_MAX_ATTRIBS];
+   unsigned end_offset[PIPE_MAX_ATTRIBS] = {0};
 
-   for (i = 0; i < nr; i++) {
-      unsigned index = mgr->ve->ve[i].vertex_buffer_index;
+   /* Determine how much data needs to be uploaded. */
+   for (i = 0; i < nr_velems; i++) {
+      struct pipe_vertex_element *velem = &mgr->ve->ve[i];
+      unsigned index = velem->vertex_buffer_index;
+      unsigned instance_div = velem->instance_divisor;
       struct pipe_vertex_buffer *vb = &mgr->b.vertex_buffer[index];
+      unsigned first, size;
 
-      if (vb->buffer &&
-          u_vbuf_resource(vb->buffer)->user_ptr &&
-          !uploaded[index]) {
-         unsigned first, size;
-         boolean flushed;
-         unsigned instance_div = mgr->ve->ve[i].instance_divisor;
+      assert(vb->buffer);
 
-         if (instance_div) {
-            first = 0;
-            size = vb->stride *
-                   ((instance_count + instance_div - 1) / instance_div);
-         } else if (vb->stride) {
-            first = vb->stride * min_index;
-            size = vb->stride * count;
-
-            /* Unusual case when stride is smaller than the format size.
-             * XXX This won't work with interleaved arrays. */
-            if (mgr->ve->native_format_size[i] > vb->stride)
-               size += mgr->ve->native_format_size[i] - vb->stride;
-         } else {
-            first = 0;
-            size = mgr->ve->native_format_size[i];
-         }
-
-         u_upload_data(mgr->b.uploader, first, size,
-                       u_vbuf_resource(vb->buffer)->user_ptr + first,
-                       &mgr->b.real_vertex_buffer[index].buffer_offset,
-                       &mgr->b.real_vertex_buffer[index].buffer,
-                       &flushed);
-
-         mgr->b.real_vertex_buffer[index].buffer_offset -= first;
-
-         uploaded[index] = TRUE;
-      } else {
-         assert(mgr->b.real_vertex_buffer[index].buffer);
+      if (!u_vbuf_resource(vb->buffer)->user_ptr) {
+         continue;
       }
+
+      first = vb->buffer_offset + velem->src_offset;
+
+      if (!vb->stride) {
+         /* Constant attrib. */
+         size = mgr->ve->src_format_size[i];
+      } else if (instance_div) {
+         /* Per-instance attrib. */
+         unsigned count = (instance_count + instance_div - 1) / instance_div;
+         size = vb->stride * (count - 1) + mgr->ve->src_format_size[i];
+      } else {
+         /* Per-vertex attrib. */
+         first += vb->stride * min_index;
+         size = vb->stride * (count - 1) + mgr->ve->src_format_size[i];
+      }
+
+      /* Update offsets. */
+      if (!end_offset[index]) {
+         start_offset[index] = first;
+         end_offset[index] = first + size;
+      } else {
+         if (first < start_offset[index])
+            start_offset[index] = first;
+         if (first + size > end_offset[index])
+            end_offset[index] = first + size;
+      }
+   }
+
+   /* Upload buffers. */
+   for (i = 0; i < nr_vbufs; i++) {
+      unsigned start = start_offset[i];
+      unsigned end = end_offset[i];
+      boolean flushed;
+
+      if (!end) {
+         continue;
+      }
+      assert(start < end);
+
+      u_upload_data(mgr->b.uploader, start, end - start,
+                    u_vbuf_resource(mgr->b.vertex_buffer[i].buffer)->user_ptr + start,
+                    &mgr->b.real_vertex_buffer[i].buffer_offset,
+                    &mgr->b.real_vertex_buffer[i].buffer,
+                    &flushed);
+
+      mgr->b.real_vertex_buffer[i].buffer_offset -= start;
    }
 }
 
