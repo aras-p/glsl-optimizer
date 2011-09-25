@@ -577,7 +577,7 @@ nvc0_program_upload_code(struct nvc0_context *nvc0, struct nvc0_program *prog)
    }
    prog->code_base = prog->res->start;
    prog->immd_base = align(prog->res->start + prog->immd_base, 0x100);
-   assert((prog->immd_size == 0) || (prog->immd_base + prog->immd_size <
+   assert((prog->immd_size == 0) || (prog->immd_base + prog->immd_size <=
                                      prog->res->start + prog->res->size));
 
    code_pos = prog->code_base + NVC0_SHADER_HEADER_SIZE;
