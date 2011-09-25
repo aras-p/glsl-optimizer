@@ -102,14 +102,16 @@ i915_clear_emit(struct pipe_context *pipe, unsigned buffers,
    if (i915->hardware_dirty)
       i915_emit_hardware_state(i915);
 
-   if (!BEGIN_BATCH(7 + 7)) {
+   if (!BEGIN_BATCH(1 + 7 + 7)) {
       FLUSH_BATCH(NULL);
 
       i915_emit_hardware_state(i915);
       i915->vbo_flushed = 1;
 
-      assert(BEGIN_BATCH(7 + 7));
+      assert(BEGIN_BATCH(1 + 7 + 7));
    }
+
+   OUT_BATCH(_3DSTATE_SCISSOR_ENABLE_CMD | DISABLE_SCISSOR_RECT);
 
    OUT_BATCH(_3DSTATE_CLEAR_PARAMETERS);
    OUT_BATCH(clear_params | CLEARPARAM_CLEAR_RECT);
@@ -130,8 +132,8 @@ i915_clear_emit(struct pipe_context *pipe, unsigned buffers,
    OUT_BATCH_F(desty);
 
    /* Flush after clear, its expected to be a costly operation.
-    * This is not required, just a heuristic
-    */
+    * This is not required, just a heuristic, but without the flush we'd need to
+    * clobber the SCISSOR_ENABLE dynamic state. */
    FLUSH_BATCH(NULL);
 
    i915->last_fired_vertices = i915->fired_vertices;
