@@ -267,8 +267,8 @@ st_pipe_vertex_format(GLenum type, GLuint size, GLenum format,
 
 
 /**
- * This is very similar to vbo_all_varyings_in_vbos() but we test
- * the stride.  See bug 38626.
+ * This is very similar to vbo_all_varyings_in_vbos() but we are
+ * only interested in per-vertex data.  See bug 38626.
  */
 static GLboolean
 all_varyings_in_vbos(const struct gl_client_array *arrays[])
@@ -276,7 +276,9 @@ all_varyings_in_vbos(const struct gl_client_array *arrays[])
    GLuint i;
    
    for (i = 0; i < VERT_ATTRIB_MAX; i++)
-      if (arrays[i]->StrideB && !_mesa_is_bufferobj(arrays[i]->BufferObj))
+      if (arrays[i]->StrideB &&
+          !arrays[i]->InstanceDivisor &&
+          !_mesa_is_bufferobj(arrays[i]->BufferObj))
 	 return GL_FALSE;
 
    return GL_TRUE;
