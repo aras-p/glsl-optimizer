@@ -33,6 +33,7 @@
 
 
 #include "util/u_format.h"
+#include "util/u_memory.h"
 #include "lp_tile_soa.h"
 #include "lp_tile_image.h"
 
@@ -313,7 +314,7 @@ test_tiled_linear_conversion(void *data,
    unsigned wt = (width + TILE_SIZE - 1) / TILE_SIZE;
    unsigned ht = (height + TILE_SIZE - 1) / TILE_SIZE;
 
-   uint8_t *tiled = malloc(wt * ht * TILE_SIZE * TILE_SIZE * 4);
+   uint8_t *tiled = MALLOC(wt * ht * TILE_SIZE * TILE_SIZE * 4);
 
    /*unsigned tiled_stride = wt * TILE_SIZE * TILE_SIZE * 4;*/
 
@@ -323,6 +324,6 @@ test_tiled_linear_conversion(void *data,
    lp_tiled_to_linear(tiled, data, 0, 0, width, height, format,
                       stride, wt);
 
-   free(tiled);
+   FREE(tiled);
 }
 
