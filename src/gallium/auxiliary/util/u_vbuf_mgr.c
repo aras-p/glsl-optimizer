@@ -570,8 +570,7 @@ static void u_vbuf_mgr_compute_max_index(struct u_vbuf_mgr_priv *mgr)
    for (i = 0; i < nr; i++) {
       struct pipe_vertex_buffer *vb =
             &mgr->b.vertex_buffer[mgr->ve->ve[i].vertex_buffer_index];
-      int unused;
-      unsigned max_index;
+      unsigned max_index, src_size, unused;
 
       if (!vb->buffer ||
           !vb->stride ||
@@ -580,16 +579,17 @@ static void u_vbuf_mgr_compute_max_index(struct u_vbuf_mgr_priv *mgr)
          continue;
       }
 
-      /* How many bytes is unused after the last vertex.
-       * width0 may be "count*stride - unused" and we have to compensate
-       * for that when dividing by stride. */
-      unused = vb->stride -
-               (mgr->ve->ve[i].src_offset + mgr->ve->src_format_size[i]);
+      src_size = mgr->ve->ve[i].src_offset + mgr->ve->src_format_size[i];
 
       /* If src_offset is greater than stride (which means it's a buffer
        * offset rather than a vertex offset)... */
-      if (unused < 0) {
+      if (src_size >= vb->stride) {
          unused = 0;
+      } else {
+         /* How many bytes is unused after the last vertex.
+          * width0 may be "count*stride - unused" and we have to compensate
+          * for that when dividing by stride. */
+         unused = vb->stride - src_size;
       }
 
       /* Compute the maximum index for this vertex element. */
