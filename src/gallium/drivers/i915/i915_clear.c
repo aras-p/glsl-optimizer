@@ -61,13 +61,18 @@ i915_clear_emit(struct pipe_context *pipe, unsigned buffers,
 
       clear_params |= CLEARPARAM_WRITE_COLOR;
       cbuf_tex = i915_texture(cbuf->texture);
+
       util_pack_color(color->f, cbuf->format, &u_color);
       if (util_format_get_blocksize(cbuf_tex->b.b.format) == 4)
          clear_color = u_color.ui;
       else
          clear_color = (u_color.ui & 0xffff) | (u_color.ui << 16);
 
-      util_pack_color(color->f, cbuf->format, &u_color);
+      /* correctly swizzle clear value */
+      if (i915->current.need_target_fixup)
+         util_pack_color(color->f, cbuf->format, &u_color);
+      else
+         util_pack_color(color->f, PIPE_FORMAT_B8G8R8A8_UNORM, &u_color);
       clear_color8888 = u_color.ui;
    } else
       clear_color = clear_color8888 = 0;
@@ -108,8 +113,10 @@ i915_clear_emit(struct pipe_context *pipe, unsigned buffers,
 
    OUT_BATCH(_3DSTATE_CLEAR_PARAMETERS);
    OUT_BATCH(clear_params | CLEARPARAM_CLEAR_RECT);
+   /* Used for zone init prim */
    OUT_BATCH(clear_color);
    OUT_BATCH(clear_depth);
+   /* Used for clear rect prim */
    OUT_BATCH(clear_color8888);
    OUT_BATCH_F(f_depth);
    OUT_BATCH(clear_stencil);
