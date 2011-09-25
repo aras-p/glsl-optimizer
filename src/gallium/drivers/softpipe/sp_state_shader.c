@@ -93,8 +93,8 @@ create_fs_variant(struct softpipe_context *softpipe,
    }
 
    if (stipple_fs) {
-      free((void *) stipple_fs->tokens);
-      free(stipple_fs);
+      FREE((void *) stipple_fs->tokens);
+      FREE(stipple_fs);
    }
 
    return var;

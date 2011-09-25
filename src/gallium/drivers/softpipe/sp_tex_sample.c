@@ -1722,7 +1722,7 @@ create_filter_table(void)
 {
    unsigned i;
    if (!weightLut) {
-      weightLut = (float *) malloc(WEIGHT_LUT_SIZE * sizeof(float));
+      weightLut = (float *) MALLOC(WEIGHT_LUT_SIZE * sizeof(float));
 
       for (i = 0; i < WEIGHT_LUT_SIZE; ++i) {
          float alpha = 2;
