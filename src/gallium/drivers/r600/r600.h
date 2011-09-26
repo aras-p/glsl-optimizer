@@ -88,9 +88,6 @@ struct r600_resource {
 	/* Winsys objects. */
 	struct pb_buffer		*buf;
 	struct radeon_winsys_cs_handle	*cs_buf;
-
-	/* Resource state. */
-	unsigned			domains;
 };
 
 /* R600/R700 STATES */

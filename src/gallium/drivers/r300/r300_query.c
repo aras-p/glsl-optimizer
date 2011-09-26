@@ -45,7 +45,6 @@ static struct pipe_query *r300_create_query(struct pipe_context *pipe,
         return NULL;
 
     q->type = query_type;
-    q->domain = RADEON_DOMAIN_GTT;
     q->buffer_size = 4096;
 
     if (r300screen->caps.family == CHIP_FAMILY_RV530)
@@ -57,7 +56,7 @@ static struct pipe_query *r300_create_query(struct pipe_context *pipe,
 
     /* Open up the occlusion query buffer. */
     q->buf = r300->rws->buffer_create(r300->rws, q->buffer_size, 4096,
-                                         PIPE_BIND_CUSTOM, q->domain);
+                                         PIPE_BIND_CUSTOM, PIPE_USAGE_STAGING);
     q->cs_buf = r300->rws->buffer_get_cs_handle(q->buf);
 
     return (struct pipe_query*)q;

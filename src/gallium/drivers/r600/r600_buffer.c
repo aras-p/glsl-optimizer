@@ -151,40 +151,12 @@ bool r600_init_resource(struct r600_screen *rscreen,
 			unsigned size, unsigned alignment,
 			unsigned bind, unsigned usage)
 {
-	uint32_t initial_domain, domains;
-
-	/* Staging resources particpate in transfers and blits only
-	 * and are used for uploads and downloads from regular
-	 * resources.  We generate them internally for some transfers.
-	 */
-	if (usage == PIPE_USAGE_STAGING) {
-		domains = RADEON_DOMAIN_GTT;
-		initial_domain = RADEON_DOMAIN_GTT;
-	} else {
-		domains = RADEON_DOMAIN_GTT | RADEON_DOMAIN_VRAM;
-
-		switch(usage) {
-		case PIPE_USAGE_DYNAMIC:
-		case PIPE_USAGE_STREAM:
-		case PIPE_USAGE_STAGING:
-			initial_domain = RADEON_DOMAIN_GTT;
-			break;
-		case PIPE_USAGE_DEFAULT:
-		case PIPE_USAGE_STATIC:
-		case PIPE_USAGE_IMMUTABLE:
-		default:
-			initial_domain = RADEON_DOMAIN_VRAM;
-			break;
-		}
-	}
-
-	res->buf = rscreen->ws->buffer_create(rscreen->ws, size, alignment, bind, initial_domain);
+	res->buf = rscreen->ws->buffer_create(rscreen->ws, size, alignment, bind, usage);
 	if (!res->buf) {
 		return false;
 	}
 
 	res->cs_buf = rscreen->ws->buffer_get_cs_handle(res->buf);
-	res->domains = domains;
 	return true;
 }
 

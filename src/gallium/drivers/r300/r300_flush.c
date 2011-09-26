@@ -76,11 +76,11 @@ void r300_flush(struct pipe_context *pipe,
         /* Create a fence, which is a dummy BO. */
         *rfence = r300->rws->buffer_create(r300->rws, 1, 1,
                                            PIPE_BIND_CUSTOM,
-                                           RADEON_DOMAIN_GTT);
+                                           PIPE_USAGE_IMMUTABLE);
         /* Add the fence as a dummy relocation. */
         r300->rws->cs_add_reloc(r300->cs,
                                 r300->rws->buffer_get_cs_handle(*rfence),
-                                RADEON_DOMAIN_GTT, RADEON_DOMAIN_GTT);
+                                RADEON_USAGE_READWRITE);
     }
 
     if (r300->dirty_hw) {

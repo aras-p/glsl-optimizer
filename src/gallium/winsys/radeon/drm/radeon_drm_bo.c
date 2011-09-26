@@ -336,6 +336,12 @@ static struct pb_buffer *radeon_bomgr_create_bo(struct pb_manager *_mgr,
     struct drm_radeon_gem_create args = {};
     struct radeon_bo_desc *rdesc = (struct radeon_bo_desc*)desc;
 
+    assert(rdesc->initial_domains && rdesc->reloc_domains);
+    assert((rdesc->initial_domains &
+            ~(RADEON_GEM_DOMAIN_GTT | RADEON_GEM_DOMAIN_VRAM)) == 0);
+    assert((rdesc->reloc_domains &
+            ~(RADEON_GEM_DOMAIN_GTT | RADEON_GEM_DOMAIN_VRAM)) == 0);
+
     args.size = size;
     args.alignment = desc->alignment;
     args.initial_domain = rdesc->initial_domains;
@@ -361,6 +367,7 @@ static struct pb_buffer *radeon_bomgr_create_bo(struct pb_manager *_mgr,
     bo->mgr = mgr;
     bo->rws = mgr->rws;
     bo->handle = args.handle;
+    bo->reloc_domains = rdesc->reloc_domains;
     pipe_mutex_init(bo->map_mutex);
 
     return &bo->base;
@@ -505,8 +512,7 @@ static struct pb_buffer *
 radeon_winsys_bo_create(struct radeon_winsys *rws,
                         unsigned size,
                         unsigned alignment,
-                        unsigned bind,
-                        enum radeon_bo_domain domain)
+                        unsigned bind, unsigned usage)
 {
     struct radeon_drm_winsys *ws = radeon_drm_winsys(rws);
     struct radeon_bo_desc desc;
@@ -515,8 +521,27 @@ radeon_winsys_bo_create(struct radeon_winsys *rws,
 
     memset(&desc, 0, sizeof(desc));
     desc.base.alignment = alignment;
-    desc.base.usage = domain;
-    desc.initial_domains = domain;
+
+    /* Determine the memory domains. */
+    switch (usage) {
+    case PIPE_USAGE_STAGING:
+    case PIPE_USAGE_STREAM:
+    case PIPE_USAGE_DYNAMIC:
+            desc.initial_domains = RADEON_GEM_DOMAIN_GTT;
+            desc.reloc_domains = RADEON_GEM_DOMAIN_GTT;
+            break;
+    default:
+            if (bind & (PIPE_BIND_VERTEX_BUFFER | PIPE_BIND_INDEX_BUFFER |
+                        PIPE_BIND_CONSTANT_BUFFER)) {
+                desc.initial_domains = RADEON_GEM_DOMAIN_GTT;
+            } else {
+                desc.initial_domains = RADEON_GEM_DOMAIN_VRAM;
+            }
+            desc.reloc_domains = RADEON_GEM_DOMAIN_GTT | RADEON_GEM_DOMAIN_VRAM;
+    }
+
+    /* Additional criteria for the cache manager. */
+    desc.base.usage = desc.initial_domains;
 
     /* Assign a buffer manager. */
     if (bind & (PIPE_BIND_VERTEX_BUFFER | PIPE_BIND_INDEX_BUFFER |
@@ -572,6 +597,7 @@ static struct pb_buffer *radeon_winsys_bo_from_handle(struct radeon_winsys *rws,
     }
     bo->handle = open_arg.handle;
     bo->name = whandle->handle;
+    bo->reloc_domains = RADEON_GEM_DOMAIN_GTT | RADEON_GEM_DOMAIN_VRAM;
 
     /* Initialize it. */
     pipe_reference_init(&bo->base.reference, 1);

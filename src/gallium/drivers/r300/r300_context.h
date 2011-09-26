@@ -295,8 +295,6 @@ struct r300_query {
     struct radeon_winsys_cs_handle *cs_buf;
     /* The size of the buffer. */
     unsigned buffer_size;
-    /* The domain of the buffer. */
-    enum radeon_bo_domain domain;
 
     /* Linked list members. */
     struct r300_query* prev;
@@ -309,8 +307,6 @@ struct r300_surface {
     /* Winsys buffer backing the texture. */
     struct pb_buffer *buf;
     struct radeon_winsys_cs_handle *cs_buf;
-
-    enum radeon_bo_domain domain;
 
     uint32_t offset;    /* COLOROFFSET or DEPTHOFFSET. */
     uint32_t pitch;     /* COLORPITCH or DEPTHPITCH. */
@@ -395,7 +391,6 @@ struct r300_resource
     /* Winsys buffer backing this resource. */
     struct pb_buffer *buf;
     struct radeon_winsys_cs_handle *cs_buf;
-    enum radeon_bo_domain domain;
 
     /* Constant buffers are in user memory. */
     uint8_t *constant_buffer;

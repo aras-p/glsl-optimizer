@@ -468,13 +468,11 @@ r600_texture_create_object(struct pipe_screen *screen,
 	} else if (buf) {
 		resource->buf = buf;
 		resource->cs_buf = rscreen->ws->buffer_get_cs_handle(buf);
-		resource->domains = RADEON_DOMAIN_GTT | RADEON_DOMAIN_VRAM;
 	}
 
 	if (rtex->stencil) {
 		rtex->stencil->resource.buf = rtex->resource.buf;
 		rtex->stencil->resource.cs_buf = rtex->resource.cs_buf;
-		rtex->stencil->resource.domains = rtex->resource.domains;
 	}
 	return rtex;
 }

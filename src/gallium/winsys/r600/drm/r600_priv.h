@@ -74,15 +74,11 @@ int r600_resource_init(struct r600_context *ctx, struct r600_range *range, unsig
 static INLINE unsigned r600_context_bo_reloc(struct r600_context *ctx, struct r600_resource *rbo,
 					     enum radeon_bo_usage usage)
 {
-	enum radeon_bo_domain rd = usage & RADEON_USAGE_READ ? rbo->domains : 0;
-	enum radeon_bo_domain wd = usage & RADEON_USAGE_WRITE ? rbo->domains : 0;
+	unsigned reloc_index;
 
 	assert(usage);
 
-	unsigned reloc_index =
-		ctx->screen->ws->cs_add_reloc(ctx->cs, rbo->cs_buf,
-					      rd, wd);
-
+	reloc_index = ctx->screen->ws->cs_add_reloc(ctx->cs, rbo->cs_buf, usage);
 	if (reloc_index >= ctx->creloc)
 		ctx->creloc = reloc_index+1;
 

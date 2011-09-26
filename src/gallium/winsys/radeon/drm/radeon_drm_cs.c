@@ -170,15 +170,14 @@ static struct radeon_winsys_cs *radeon_drm_cs_create(struct radeon_winsys *rws)
 
 #define OUT_CS(cs, value) (cs)->buf[(cs)->cdw++] = (value)
 
-static INLINE void update_domains(struct drm_radeon_cs_reloc *reloc,
-                                  enum radeon_bo_domain rd,
-                                  enum radeon_bo_domain wd,
-                                  enum radeon_bo_domain *added_domains)
+static INLINE void update_reloc_domains(struct drm_radeon_cs_reloc *reloc,
+                                        enum radeon_bo_usage usage,
+                                        unsigned domains)
 {
-    *added_domains = (rd | wd) & ~(reloc->read_domains | reloc->write_domain);
-
-    reloc->read_domains |= rd;
-    reloc->write_domain |= wd;
+    if (usage & RADEON_USAGE_READ)
+        reloc->read_domains |= domains;
+    if (usage & RADEON_USAGE_WRITE)
+        reloc->write_domain |= domains;
 }
 
 int radeon_get_reloc(struct radeon_cs_context *csc, struct radeon_bo *bo)
@@ -220,9 +219,8 @@ int radeon_get_reloc(struct radeon_cs_context *csc, struct radeon_bo *bo)
 
 static unsigned radeon_add_reloc(struct radeon_cs_context *csc,
                                  struct radeon_bo *bo,
-                                 enum radeon_bo_domain rd,
-                                 enum radeon_bo_domain wd,
-                                 enum radeon_bo_domain *added_domains)
+                                 enum radeon_bo_usage usage,
+                                 unsigned *added_domains)
 {
     struct drm_radeon_cs_reloc *reloc;
     unsigned i;
@@ -231,7 +229,7 @@ static unsigned radeon_add_reloc(struct radeon_cs_context *csc,
     if (csc->is_handle_added[hash]) {
         reloc = csc->relocs_hashlist[hash];
         if (reloc->handle == bo->handle) {
-            update_domains(reloc, rd, wd, added_domains);
+            update_reloc_domains(reloc, usage, bo->reloc_domains);
             return csc->reloc_indices_hashlist[hash];
         }
 
@@ -240,7 +238,7 @@ static unsigned radeon_add_reloc(struct radeon_cs_context *csc,
             --i;
             reloc = &csc->relocs[i];
             if (reloc->handle == bo->handle) {
-                update_domains(reloc, rd, wd, added_domains);
+                update_reloc_domains(reloc, usage, bo->reloc_domains);
 
                 csc->relocs_hashlist[hash] = reloc;
                 csc->reloc_indices_hashlist[hash] = i;
@@ -270,8 +268,10 @@ static unsigned radeon_add_reloc(struct radeon_cs_context *csc,
     p_atomic_inc(&bo->num_cs_references);
     reloc = &csc->relocs[csc->crelocs];
     reloc->handle = bo->handle;
-    reloc->read_domains = rd;
-    reloc->write_domain = wd;
+    if (usage & RADEON_USAGE_READ)
+        reloc->read_domains = bo->reloc_domains;
+    if (usage & RADEON_USAGE_WRITE)
+        reloc->write_domain = bo->reloc_domains;
     reloc->flags = 0;
 
     csc->is_handle_added[hash] = TRUE;
@@ -280,24 +280,23 @@ static unsigned radeon_add_reloc(struct radeon_cs_context *csc,
 
     csc->chunks[1].length_dw += RELOC_DWORDS;
 
-    *added_domains = rd | wd;
+    *added_domains = bo->reloc_domains;
     return csc->crelocs++;
 }
 
 static unsigned radeon_drm_cs_add_reloc(struct radeon_winsys_cs *rcs,
                                         struct radeon_winsys_cs_handle *buf,
-                                        enum radeon_bo_domain rd,
-                                        enum radeon_bo_domain wd)
+                                        enum radeon_bo_usage usage)
 {
     struct radeon_drm_cs *cs = radeon_drm_cs(rcs);
     struct radeon_bo *bo = (struct radeon_bo*)buf;
-    enum radeon_bo_domain added_domains;
+    unsigned added_domains = 0;
 
-    unsigned index = radeon_add_reloc(cs->csc, bo, rd, wd, &added_domains);
+    unsigned index = radeon_add_reloc(cs->csc, bo, usage, &added_domains);
 
-    if (added_domains & RADEON_DOMAIN_GTT)
+    if (added_domains & RADEON_GEM_DOMAIN_GTT)
         cs->csc->used_gart += bo->base.size;
-    if (added_domains & RADEON_DOMAIN_VRAM)
+    if (added_domains & RADEON_GEM_DOMAIN_VRAM)
         cs->csc->used_vram += bo->base.size;
 
     return index;
