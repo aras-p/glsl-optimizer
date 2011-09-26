@@ -628,11 +628,18 @@ u_vbuf_draw_begin(struct u_vbuf_mgr *mgrb,
 
    u_vbuf_compute_max_index(mgr);
 
-   min_index = info->min_index - info->index_bias;
-   if (info->max_index == ~0) {
-      max_index = mgr->b.max_index;
+   if (info->indexed) {
+      min_index = info->min_index;
+      if (info->max_index == ~0) {
+         max_index = mgr->b.max_index;
+      } else {
+         max_index = MIN2(info->max_index, mgr->b.max_index);
+      }
+      min_index += info->index_bias;
+      max_index += info->index_bias;
    } else {
-      max_index = MIN2(info->max_index - info->index_bias, mgr->b.max_index);
+      min_index = info->start;
+      max_index = info->start + info->count - 1;
    }
 
    /* Translate vertices with non-native layouts or formats. */
