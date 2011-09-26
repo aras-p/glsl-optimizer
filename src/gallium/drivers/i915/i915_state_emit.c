@@ -343,47 +343,10 @@ emit_constants(struct i915_context *i915)
    }
 }
 
-static const struct
-{
-   enum pipe_format format;
-   uint hw_swizzle;
-} fixup_formats[] = {
-   { PIPE_FORMAT_R8G8B8A8_UNORM, 0x21030000 /* BGRA */},
-   { PIPE_FORMAT_L8_UNORM,       0x00030000 /* RRRA */},
-   { PIPE_FORMAT_I8_UNORM,       0x00030000 /* RRRA */},
-   { PIPE_FORMAT_A8_UNORM,       0x33330000 /* AAAA */},
-   { PIPE_FORMAT_NONE,           0x00000000},
-};
-
-static uint need_target_fixup(struct pipe_surface* p)
-{
-   enum pipe_format f;
-   /* if we don't have a surface bound yet, we don't need to fixup the shader */
-   if (!p)
-      return 0;
-
-   f = p->format;
-   for(int i=0; fixup_formats[i].format != PIPE_FORMAT_NONE; i++)
-      if (fixup_formats[i].format == f)
-         return 1;
-
-   return 0;
-}
-
-static uint fixup_swizzle(enum pipe_format f)
-{
-   for(int i=0; fixup_formats[i].format != PIPE_FORMAT_NONE; i++)
-      if (fixup_formats[i].format == f)
-         return fixup_formats[i].hw_swizzle;
-
-   return 0;
-}
-
 static void
 validate_program(struct i915_context *i915, unsigned *batch_space)
 {
-   struct pipe_surface *cbuf_surface = i915->framebuffer.cbufs[0];
-   uint additional_size = need_target_fixup(cbuf_surface);
+   uint additional_size = i915->current.need_target_fixup;
 
    /* we need more batch space if we want to emulate rgba framebuffers */
    *batch_space = i915->fs->program_len + 3 * additional_size;
@@ -392,8 +355,7 @@ validate_program(struct i915_context *i915, unsigned *batch_space)
 static void
 emit_program(struct i915_context *i915)
 {
-   struct pipe_surface *cbuf_surface = i915->framebuffer.cbufs[0];
-   uint target_fixup = need_target_fixup(cbuf_surface);
+   uint target_fixup = i915->current.need_target_fixup;
    uint i;
 
    /* we should always have, at least, a pass-through program */
@@ -418,7 +380,7 @@ emit_program(struct i915_context *i915)
                 A0_DEST_CHANNEL_ALL |
                 (REG_TYPE_OC << A0_SRC0_TYPE_SHIFT) |
                 (T_DIFFUSE << A0_SRC0_NR_SHIFT));
-      OUT_BATCH(fixup_swizzle(cbuf_surface->format));
+      OUT_BATCH(i915->current.fixup_swizzle);
       OUT_BATCH(0);
    }
 }

@@ -167,6 +167,8 @@ struct i915_state
    unsigned dst_buf_vars;
    uint32_t draw_offset;
    uint32_t draw_size;
+   unsigned need_target_fixup;
+   uint32_t fixup_swizzle;
 
    unsigned id;			/* track lost context events */
 };

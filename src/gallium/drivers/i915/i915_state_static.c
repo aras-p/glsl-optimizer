@@ -162,12 +162,44 @@ struct i915_tracked_state i915_hw_framebuffer = {
    I915_NEW_FRAMEBUFFER
 };
 
+static const struct
+{
+   enum pipe_format format;
+   uint hw_swizzle;
+} fixup_formats[] = {
+   { PIPE_FORMAT_R8G8B8A8_UNORM, 0x21030000 /* BGRA */},
+   { PIPE_FORMAT_L8_UNORM,       0x00030000 /* RRRA */},
+   { PIPE_FORMAT_I8_UNORM,       0x00030000 /* RRRA */},
+   { PIPE_FORMAT_A8_UNORM,       0x33330000 /* AAAA */},
+   { PIPE_FORMAT_NONE,           0x00000000},
+};
+
+static uint need_target_fixup(struct pipe_surface* p, uint32_t *fixup)
+{
+   enum pipe_format f;
+   /* if we don't have a surface bound yet, we don't need to fixup the shader */
+   if (!p)
+      return 0;
+
+   f = p->format;
+   for(int i=0; fixup_formats[i].format != PIPE_FORMAT_NONE; i++)
+      if (fixup_formats[i].format == f) {
+         *fixup = fixup_formats[i].hw_swizzle;
+         return 1;
+      }
+
+   *fixup = 0;
+   return 0;
+}
+
 static void update_dst_buf_vars(struct i915_context *i915)
 {
    struct pipe_surface *cbuf_surface = i915->framebuffer.cbufs[0];
    struct pipe_surface *depth_surface = i915->framebuffer.zsbuf;
    uint32_t dst_buf_vars, cformat, zformat;
    uint32_t early_z = 0;
+   uint32_t fixup;
+   int need_fixup;
 
    if (cbuf_surface)
       cformat = cbuf_surface->format;
@@ -202,6 +234,14 @@ static void update_dst_buf_vars(struct i915_context *i915)
       i915->current.dst_buf_vars = dst_buf_vars;
       i915->static_dirty |= I915_DST_VARS;
       i915->hardware_dirty |= I915_HW_STATIC;
+   }
+
+   need_fixup = need_target_fixup(cbuf_surface, &fixup);
+   if (i915->current.need_target_fixup != need_fixup ||
+         i915->current.fixup_swizzle != fixup) {
+      i915->current.need_target_fixup = need_fixup;
+      i915->current.fixup_swizzle = fixup;
+      i915->hardware_dirty |= I915_HW_PROGRAM;
    }
 }
 
