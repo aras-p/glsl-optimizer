@@ -476,8 +476,8 @@ _swrast_update_texture_samplers(struct gl_context *ctx)
        */
       if (tObj) {
          _mesa_update_fetch_functions(tObj);
-         swrast->TextureSample[u] = _swrast_choose_texture_sample_func(ctx, tObj);
       }
+      swrast->TextureSample[u] = _swrast_choose_texture_sample_func(ctx, tObj);
    }
 }
 
