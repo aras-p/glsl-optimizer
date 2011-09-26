@@ -27,7 +27,29 @@
 #include "version.h"
 #include "git_sha1.h"
 
+/**
+ * Override the context's GL version if the environment variable
+ * MESA_GL_VERSION_OVERRIDE is set. Valid values of MESA_GL_VERSION_OVERRIDE
+ * are point-separated version numbers, such as "3.0".
+ */
+static void
+override_version(struct gl_context *ctx, GLuint *major, GLuint *minor)
+{
+   const char *env_var = "MESA_GL_VERSION_OVERRIDE";
+   const char *version;
+   int n;
 
+   version = getenv(env_var);
+   if (!version) {
+      return;
+   }
+
+   n = sscanf(version, "%d.%d", major, minor);
+   if (n != 2) {
+      fprintf(stderr, "error: invalid value for %s: %s\n", env_var, version);
+      return;
+   }
+}
 
 /**
  * Examine enabled GL extensions to determine GL version.
@@ -178,6 +200,9 @@ compute_version(struct gl_context *ctx)
 
    ctx->VersionMajor = major;
    ctx->VersionMinor = minor;
+
+   override_version(ctx, &ctx->VersionMajor, &ctx->VersionMinor);
+
    ctx->VersionString = (char *) malloc(max);
    if (ctx->VersionString) {
       _mesa_snprintf(ctx->VersionString, max,
