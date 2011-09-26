@@ -572,6 +572,11 @@ void r600_draw_vbo(struct pipe_context *ctx, const struct pipe_draw_info *info)
 	r600_vertex_buffer_update(rctx);
 
 	draw.info = *info;
+	if (draw.info.max_index != ~0) {
+		draw.info.min_index += info->index_bias;
+		draw.info.max_index += info->index_bias;
+	}
+
 	draw.ctx = ctx;
 	draw.index_buffer = NULL;
 	if (info->indexed && rctx->index_buffer.buffer) {
