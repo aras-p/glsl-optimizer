@@ -1493,13 +1493,20 @@ struct gl_texture_attrib
 
 
 /**
+ * Data structure representing a single clip plane (e.g. one of the elements
+ * of the ctx->Transform.EyeUserPlane or ctx->Transform._ClipUserPlane array).
+ */
+typedef GLfloat gl_clip_plane[4];
+
+
+/**
  * Transformation attribute group (GL_TRANSFORM_BIT).
  */
 struct gl_transform_attrib
 {
    GLenum MatrixMode;				/**< Matrix mode */
-   GLfloat EyeUserPlane[MAX_CLIP_PLANES][4];	/**< User clip planes */
-   GLfloat _ClipUserPlane[MAX_CLIP_PLANES][4];	/**< derived */
+   gl_clip_plane EyeUserPlane[MAX_CLIP_PLANES];	/**< User clip planes */
+   gl_clip_plane _ClipUserPlane[MAX_CLIP_PLANES]; /**< derived */
    GLbitfield ClipPlanesEnabled;                /**< on/off bitmask */
    GLboolean Normalize;				/**< Normalize all normals? */
    GLboolean RescaleNormals;			/**< GL_EXT_rescale_normal */

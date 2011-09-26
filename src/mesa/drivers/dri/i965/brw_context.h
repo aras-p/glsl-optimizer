@@ -899,6 +899,7 @@ struct brw_context
 };
 
 
+
 #define BRW_PACKCOLOR8888(r,g,b,a)  ((r<<24) | (g<<16) | (b<<8) | a)
 
 struct brw_instruction_info {
@@ -966,6 +967,8 @@ int brw_disasm (FILE *file, struct brw_instruction *inst, int gen);
 void brw_compute_vue_map(struct brw_vue_map *vue_map,
                          const struct intel_context *intel, int nr_userclip,
                          GLbitfield64 outputs_written);
+gl_clip_plane *brw_select_clip_planes(struct gl_context *ctx);
+
 
 /*======================================================================
  * Inline conversion functions.  These are better-typed than the

@@ -77,9 +77,10 @@ gen6_prepare_vs_push_constants(struct brw_context *brw)
           * until we redo the VS backend.
           */
          if (!uses_clip_distance) {
+            gl_clip_plane *clip_planes = brw_select_clip_planes(ctx);
             for (i = 0; i < MAX_CLIP_PLANES; i++) {
                if (ctx->Transform.ClipPlanesEnabled & (1 << i)) {
-                  memcpy(param, ctx->Transform._ClipUserPlane[i], 4 * sizeof(float));
+                  memcpy(param, clip_planes[i], 4 * sizeof(float));
                   param += 4;
                   params_uploaded++;
                }

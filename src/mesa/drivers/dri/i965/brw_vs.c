@@ -137,14 +137,46 @@ brw_compute_vue_map(struct brw_vue_map *vue_map,
    /* The hardware doesn't care about the rest of the vertex outputs, so just
     * assign them contiguously.  Don't reassign outputs that already have a
     * slot.
+    *
+    * Also, don't assign a slot for VERT_RESULT_CLIP_VERTEX, since it is
+    * unsupported in pre-GEN6, and in GEN6+ the vertex shader converts it into
+    * clip distances.
     */
    for (int i = 0; i < VERT_RESULT_MAX; ++i) {
       if ((outputs_written & BITFIELD64_BIT(i)) &&
-          vue_map->vert_result_to_slot[i] == -1) {
+          vue_map->vert_result_to_slot[i] == -1 &&
+          i != VERT_RESULT_CLIP_VERTEX) {
          assign_vue_slot(vue_map, i);
       }
    }
 }
+
+
+/**
+ * Decide which set of clip planes should be used when clipping via
+ * gl_Position or gl_ClipVertex.
+ */
+gl_clip_plane *brw_select_clip_planes(struct gl_context *ctx)
+{
+   if (ctx->Shader.CurrentVertexProgram) {
+      /* There is currently a GLSL vertex shader, so clip according to GLSL
+       * rules, which means compare gl_ClipVertex (or gl_Position, if
+       * gl_ClipVertex wasn't assigned) against the eye-coordinate clip planes
+       * that were stored in EyeUserPlane at the time the clip planes were
+       * specified.
+       */
+      return ctx->Transform.EyeUserPlane;
+   } else {
+      /* Either we are using fixed function or an ARB vertex program.  In
+       * either case the clip planes are going to be compared against
+       * gl_Position (which is in clip coordinates) so we have to clip using
+       * _ClipUserPlane, which was transformed into clip coordinates by Mesa
+       * core.
+       */
+      return ctx->Transform._ClipUserPlane;
+   }
+}
+
 
 static bool
 do_vs_prog(struct brw_context *brw,

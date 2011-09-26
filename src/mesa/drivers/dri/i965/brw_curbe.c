@@ -188,6 +188,7 @@ static void prepare_constant_buffer(struct brw_context *brw)
    const GLuint bufsz = sz * 16 * sizeof(GLfloat);
    GLfloat *buf;
    GLuint i;
+   gl_clip_plane *clip_planes;
 
    if (sz == 0) {
       brw->curbe.last_bufsz  = 0;
@@ -232,12 +233,13 @@ static void prepare_constant_buffer(struct brw_context *brw)
       /* Clip planes: _NEW_TRANSFORM plus _NEW_PROJECTION to get to
        * clip-space:
        */
+      clip_planes = brw_select_clip_planes(ctx);
       for (j = 0; j < MAX_CLIP_PLANES; j++) {
 	 if (ctx->Transform.ClipPlanesEnabled & (1<<j)) {
-	    buf[offset + i * 4 + 0] = ctx->Transform._ClipUserPlane[j][0];
-	    buf[offset + i * 4 + 1] = ctx->Transform._ClipUserPlane[j][1];
-	    buf[offset + i * 4 + 2] = ctx->Transform._ClipUserPlane[j][2];
-	    buf[offset + i * 4 + 3] = ctx->Transform._ClipUserPlane[j][3];
+	    buf[offset + i * 4 + 0] = clip_planes[j][0];
+	    buf[offset + i * 4 + 1] = clip_planes[j][1];
+	    buf[offset + i * 4 + 2] = clip_planes[j][2];
+	    buf[offset + i * 4 + 3] = clip_planes[j][3];
 	    i++;
 	 }
       }
