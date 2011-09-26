@@ -113,7 +113,7 @@ intel_map_texture_image(struct gl_context *ctx,
     * row of blocks.  intel_miptree_get_image_offset() already does
     * the divide.
     */
-   _mesa_get_format_block_size(mt->format, &bw, &bh);
+   _mesa_get_format_block_size(tex_image->TexFormat, &bw, &bh);
    assert(y % bh == 0);
    y /= bh;
 
@@ -150,7 +150,8 @@ intel_unmap_texture_image(struct gl_context *ctx,
    struct intel_context *intel = intel_context(ctx);
    struct intel_texture_image *intel_image = intel_texture_image(tex_image);
 
-   intel_region_unmap(intel, intel_image->mt->region);
+   if (intel_image->mt)
+      intel_region_unmap(intel, intel_image->mt->region);
 
    if (intel_image->stencil_rb) {
       /*
