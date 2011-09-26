@@ -31,6 +31,7 @@
 #include "main/bufferobj.h"
 #include "main/context.h"
 #include "main/enums.h"
+#include "main/macros.h"
 
 #include "brw_draw.h"
 #include "brw_defines.h"
@@ -251,6 +252,22 @@ copy_array_to_vbo_array(struct brw_context *brw,
 			struct brw_vertex_buffer *buffer,
 			GLuint dst_stride)
 {
+   if (min == -1) {
+      /* If we don't have computed min/max bounds, then this must be a use of
+       * the current attribute, which has a 0 stride.  Otherwise, we wouldn't
+       * know what data to upload.
+       */
+      assert(element->glarray->StrideB == 0);
+
+      intel_upload_data(&brw->intel, element->glarray->Ptr,
+                        element->element_size,
+                        element->element_size,
+			&buffer->bo, &buffer->offset);
+
+      buffer->stride = 0;
+      return;
+   }
+
    int src_stride = element->glarray->StrideB;
    const unsigned char *src = element->glarray->Ptr + min * src_stride;
    int count = max - min + 1;
@@ -442,7 +459,7 @@ static void brw_prepare_vertices(struct brw_context *brw)
       else if (total_size < 2048) {
 	 /* Upload non-interleaved arrays into a single interleaved array */
 	 struct brw_vertex_buffer *buffer;
-	 int count = max_index - min_index + 1;
+	 int count = MAX2(max_index - min_index + 1, 1);
 	 int offset;
 	 char *map;
 
