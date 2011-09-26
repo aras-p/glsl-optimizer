@@ -253,7 +253,7 @@ struct intel_context
    GLuint RenderIndex;
    GLmatrix ViewportMatrix;
    GLenum render_primitive;
-   GLenum reduced_primitive;
+   GLenum reduced_primitive; /*< Only gen < 6 */
    GLuint vertex_size;
    GLubyte *verts;              /* points to tnl->clipspace.vertex_buf */
 

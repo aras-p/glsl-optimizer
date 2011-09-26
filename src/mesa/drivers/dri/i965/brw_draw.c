@@ -115,6 +115,19 @@ static GLuint brw_set_prim(struct brw_context *brw,
    return prim_to_hw_prim[mode];
 }
 
+static GLuint gen6_set_prim(struct brw_context *brw,
+                            const struct _mesa_prim *prim)
+{
+   DBG("PRIM: %s\n", _mesa_lookup_enum_by_nr(prim->mode));
+
+   if (prim->mode != brw->primitive) {
+      brw->primitive = prim->mode;
+      brw->state.dirty.brw |= BRW_NEW_PRIMITIVE;
+   }
+
+   return prim_to_hw_prim[mode];
+}
+
 
 static GLuint trim(GLenum prim, GLuint length)
 {
@@ -335,7 +348,11 @@ static GLboolean brw_try_draw_prims( struct gl_context *ctx,
        */
       intel_batchbuffer_require_space(intel, estimated_max_prim_size, false);
 
-      hw_prim = brw_set_prim(brw, &prim[i]);
+      if (intel->gen < 6)
+	 hw_prim = brw_set_prim(brw, &prim[i]);
+      else
+	 hw_prim = gen6_set_prim(brw, &prim[i]);
+
       if (brw->state.dirty.brw) {
 	 brw_validate_state(brw);
 
