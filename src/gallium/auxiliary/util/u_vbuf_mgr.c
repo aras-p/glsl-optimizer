@@ -518,9 +518,8 @@ u_vbuf_upload_buffers(struct u_vbuf_priv *mgr,
    for (i = 0; i < nr_velems; i++) {
       struct pipe_vertex_element *velem = &mgr->ve->ve[i];
       unsigned index = velem->vertex_buffer_index;
-      unsigned instance_div = velem->instance_divisor;
       struct pipe_vertex_buffer *vb = &mgr->b.vertex_buffer[index];
-      unsigned first, size;
+      unsigned instance_div, first, size;
 
       assert(vb->buffer);
 
@@ -528,6 +527,7 @@ u_vbuf_upload_buffers(struct u_vbuf_priv *mgr,
          continue;
       }
 
+      instance_div = velem->instance_divisor;
       first = vb->buffer_offset + velem->src_offset;
 
       if (!vb->stride) {
@@ -557,22 +557,25 @@ u_vbuf_upload_buffers(struct u_vbuf_priv *mgr,
 
    /* Upload buffers. */
    for (i = 0; i < nr_vbufs; i++) {
-      unsigned start = start_offset[i];
-      unsigned end = end_offset[i];
+      unsigned start, end = end_offset[i];
       boolean flushed;
+      struct pipe_vertex_buffer *real_vb;
+      uint8_t *ptr;
 
       if (!end) {
          continue;
       }
+
+      start = start_offset[i];
       assert(start < end);
 
-      u_upload_data(mgr->b.uploader, start, end - start,
-                    u_vbuf_resource(mgr->b.vertex_buffer[i].buffer)->user_ptr + start,
-                    &mgr->b.real_vertex_buffer[i].buffer_offset,
-                    &mgr->b.real_vertex_buffer[i].buffer,
-                    &flushed);
+      real_vb = &mgr->b.real_vertex_buffer[i];
+      ptr = u_vbuf_resource(mgr->b.vertex_buffer[i].buffer)->user_ptr;
 
-      mgr->b.real_vertex_buffer[i].buffer_offset -= start;
+      u_upload_data(mgr->b.uploader, start, end - start, ptr + start,
+                    &real_vb->buffer_offset, &real_vb->buffer, &flushed);
+
+      real_vb->buffer_offset -= start;
    }
 }
 
