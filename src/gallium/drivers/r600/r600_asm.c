@@ -2017,8 +2017,9 @@ void r600_bytecode_dump(struct r600_bytecode *bc)
 	fprintf(stderr, "--------------------------------------\n");
 }
 
-static void r600_vertex_data_type(enum pipe_format pformat, unsigned *format,
-				unsigned *num_format, unsigned *format_comp, unsigned *endian)
+static void r600_vertex_data_type(enum pipe_format pformat,
+				  unsigned *format,
+				  unsigned *num_format, unsigned *format_comp, unsigned *endian)
 {
 	const struct util_format_description *desc;
 	unsigned i;
@@ -2146,10 +2147,16 @@ static void r600_vertex_data_type(enum pipe_format pformat, unsigned *format,
 	if (desc->channel[i].type == UTIL_FORMAT_TYPE_SIGNED) {
 		*format_comp = 1;
 	}
-	if (desc->channel[i].normalized) {
-		*num_format = 0;
-	} else {
-		*num_format = 2;
+
+	*num_format = 0;
+	if (desc->channel[i].type == UTIL_FORMAT_TYPE_UNSIGNED ||
+	    desc->channel[i].type == UTIL_FORMAT_TYPE_SIGNED) {
+		if (!desc->channel[i].normalized) {
+			if (desc->channel[i].pure_integer)
+				*num_format = 1;
+			else
+				*num_format = 2;
+		}
 	}
 	return;
 out_unknown:
@@ -2210,7 +2217,8 @@ int r600_vertex_elements_build_fetch_shader(struct r600_pipe_context *rctx, stru
 
 	for (i = 0; i < ve->count; i++) {
 		unsigned vbuffer_index;
-		r600_vertex_data_type(ve->elements[i].src_format, &format, &num_format, &format_comp, &endian);
+		r600_vertex_data_type(ve->elements[i].src_format,
+				      &format, &num_format, &format_comp, &endian);
 		desc = util_format_description(ve->elements[i].src_format);
 		if (desc == NULL) {
 			r600_bytecode_clear(&bc);
