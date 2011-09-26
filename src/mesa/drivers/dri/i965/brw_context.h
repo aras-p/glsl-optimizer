@@ -583,7 +583,7 @@ struct brw_query_object {
 struct brw_context 
 {
    struct intel_context intel;  /**< base class, must be first field */
-   GLuint primitive;
+   GLuint primitive; /**< Hardware primitive, such as _3DPRIM_TRILIST. */
 
    GLboolean emit_state_always;
    GLboolean has_surface_tile_offset;

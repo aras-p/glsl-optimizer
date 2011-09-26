@@ -79,53 +79,51 @@ static const GLenum reduced_prim[GL_POLYGON+1] = {
  * programs be immune to the active primitive (ie. cope with all
  * possibilities).  That may not be realistic however.
  */
-static GLuint brw_set_prim(struct brw_context *brw,
-			   const struct _mesa_prim *prim)
+static void brw_set_prim(struct brw_context *brw,
+                         const struct _mesa_prim *prim)
 {
    struct gl_context *ctx = &brw->intel.ctx;
-   GLenum mode = prim->mode;
+   uint32_t hw_prim = prim_to_hw_prim[prim->mode];
 
    DBG("PRIM: %s\n", _mesa_lookup_enum_by_nr(prim->mode));
 
    /* Slight optimization to avoid the GS program when not needed:
     */
-   if (mode == GL_QUAD_STRIP &&
+   if (prim->mode == GL_QUAD_STRIP &&
        ctx->Light.ShadeModel != GL_FLAT &&
        ctx->Polygon.FrontMode == GL_FILL &&
        ctx->Polygon.BackMode == GL_FILL)
-      mode = GL_TRIANGLE_STRIP;
+      hw_prim = _3DPRIM_TRISTRIP;
 
    if (prim->mode == GL_QUADS && prim->count == 4 &&
        ctx->Light.ShadeModel != GL_FLAT &&
        ctx->Polygon.FrontMode == GL_FILL &&
        ctx->Polygon.BackMode == GL_FILL) {
-      mode = GL_TRIANGLE_FAN;
+      hw_prim = _3DPRIM_TRIFAN;
    }
 
-   if (mode != brw->primitive) {
-      brw->primitive = mode;
+   if (hw_prim != brw->primitive) {
+      brw->primitive = hw_prim;
       brw->state.dirty.brw |= BRW_NEW_PRIMITIVE;
 
-      if (reduced_prim[mode] != brw->intel.reduced_primitive) {
-	 brw->intel.reduced_primitive = reduced_prim[mode];
+      if (reduced_prim[prim->mode] != brw->intel.reduced_primitive) {
+	 brw->intel.reduced_primitive = reduced_prim[prim->mode];
 	 brw->state.dirty.brw |= BRW_NEW_REDUCED_PRIMITIVE;
       }
    }
-
-   return prim_to_hw_prim[mode];
 }
 
-static GLuint gen6_set_prim(struct brw_context *brw,
-                            const struct _mesa_prim *prim)
+static void gen6_set_prim(struct brw_context *brw,
+                          const struct _mesa_prim *prim)
 {
+   uint32_t hw_prim = prim_to_hw_prim[prim->mode];
+
    DBG("PRIM: %s\n", _mesa_lookup_enum_by_nr(prim->mode));
 
-   if (prim->mode != brw->primitive) {
-      brw->primitive = prim->mode;
+   if (hw_prim != brw->primitive) {
+      brw->primitive = hw_prim;
       brw->state.dirty.brw |= BRW_NEW_PRIMITIVE;
    }
-
-   return prim_to_hw_prim[mode];
 }
 
 
@@ -331,7 +329,6 @@ static GLboolean brw_try_draw_prims( struct gl_context *ctx,
    intel_prepare_render(intel);
 
    for (i = 0; i < nr_prims; i++) {
-      uint32_t hw_prim;
       int estimated_max_prim_size;
 
       estimated_max_prim_size = 512; /* batchbuffer commands */
@@ -349,9 +346,9 @@ static GLboolean brw_try_draw_prims( struct gl_context *ctx,
       intel_batchbuffer_require_space(intel, estimated_max_prim_size, false);
 
       if (intel->gen < 6)
-	 hw_prim = brw_set_prim(brw, &prim[i]);
+	 brw_set_prim(brw, &prim[i]);
       else
-	 hw_prim = gen6_set_prim(brw, &prim[i]);
+	 gen6_set_prim(brw, &prim[i]);
 
       if (brw->state.dirty.brw) {
 	 brw_validate_state(brw);
@@ -388,9 +385,9 @@ static GLboolean brw_try_draw_prims( struct gl_context *ctx,
       }
 
       if (intel->gen >= 7)
-	 gen7_emit_prim(brw, &prim[i], hw_prim);
+	 gen7_emit_prim(brw, &prim[i], brw->primitive);
       else
-	 brw_emit_prim(brw, &prim[i], hw_prim);
+	 brw_emit_prim(brw, &prim[i], brw->primitive);
 
       intel->no_batch_wrap = GL_FALSE;
 

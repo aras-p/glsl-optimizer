@@ -86,13 +86,13 @@ static void compile_gs_prog( struct brw_context *brw,
     */
 
    switch (key->primitive) {
-   case GL_QUADS:
+   case _3DPRIM_QUADLIST:
       brw_gs_quads( &c, key );
       break;
-   case GL_QUAD_STRIP:
+   case _3DPRIM_QUADSTRIP:
       brw_gs_quad_strip( &c, key );
       break;
-   case GL_LINE_LOOP:
+   case _3DPRIM_LINELOOP:
       brw_gs_lines( &c );
       break;
    default:
@@ -122,17 +122,18 @@ static void compile_gs_prog( struct brw_context *brw,
    ralloc_free(mem_ctx);
 }
 
-static const GLenum gs_prim[GL_POLYGON+1] = {  
-   GL_POINTS,
-   GL_LINES,
-   GL_LINE_LOOP,
-   GL_LINES,
-   GL_TRIANGLES,
-   GL_TRIANGLES,
-   GL_TRIANGLES,
-   GL_QUADS,
-   GL_QUAD_STRIP,
-   GL_TRIANGLES
+static const GLenum gs_prim[] = {
+   [_3DPRIM_POINTLIST]  = _3DPRIM_POINTLIST,
+   [_3DPRIM_LINELIST]   = _3DPRIM_LINELIST,
+   [_3DPRIM_LINELOOP]   = _3DPRIM_LINELOOP,
+   [_3DPRIM_LINESTRIP]  = _3DPRIM_LINELIST,
+   [_3DPRIM_TRILIST]    = _3DPRIM_TRILIST,
+   [_3DPRIM_TRISTRIP]   = _3DPRIM_TRILIST,
+   [_3DPRIM_TRIFAN]     = _3DPRIM_TRILIST,
+   [_3DPRIM_QUADLIST]   = _3DPRIM_QUADLIST,
+   [_3DPRIM_QUADSTRIP]  = _3DPRIM_QUADSTRIP,
+   [_3DPRIM_POLYGON]    = _3DPRIM_TRILIST,
+   [_3DPRIM_RECTLIST]   = _3DPRIM_RECTLIST,
 };
 
 static void populate_key( struct brw_context *brw,
@@ -151,7 +152,7 @@ static void populate_key( struct brw_context *brw,
 
    /* _NEW_LIGHT */
    key->pv_first = (ctx->Light.ProvokingVertex == GL_FIRST_VERTEX_CONVENTION);
-   if (key->primitive == GL_QUADS && ctx->Light.ShadeModel != GL_FLAT) {
+   if (key->primitive == _3DPRIM_QUADLIST && ctx->Light.ShadeModel != GL_FLAT) {
       /* Provide consistent primitive order with brw_set_prim's
        * optimization of single quads to trifans.
        */
@@ -163,9 +164,9 @@ static void populate_key( struct brw_context *brw,
 
    key->need_gs_prog = (intel->gen >= 6)
       ? 0
-      : (brw->primitive == GL_QUADS ||
-	 brw->primitive == GL_QUAD_STRIP ||
-	 brw->primitive == GL_LINE_LOOP);
+      : (brw->primitive == _3DPRIM_QUADLIST ||
+	 brw->primitive == _3DPRIM_QUADSTRIP ||
+	 brw->primitive == _3DPRIM_LINELOOP);
 }
 
 /* Calculate interpolants for triangle and line rasterization.
