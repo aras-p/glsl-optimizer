@@ -110,7 +110,6 @@ static int r300_get_param(struct pipe_screen* pscreen, enum pipe_cap param)
         case PIPE_CAP_OCCLUSION_QUERY:
         case PIPE_CAP_TEXTURE_SHADOW_MAP:
         case PIPE_CAP_TEXTURE_MIRROR_CLAMP:
-        case PIPE_CAP_TEXTURE_MIRROR_REPEAT:
         case PIPE_CAP_BLEND_EQUATION_SEPARATE:
         case PIPE_CAP_VERTEX_ELEMENT_INSTANCE_DIVISOR:
         case PIPE_CAP_TGSI_FS_COORD_ORIGIN_UPPER_LEFT:

@@ -60,8 +60,6 @@ nvfx_screen_get_param(struct pipe_screen *pscreen, enum pipe_cap param)
 		return 13;
 	case PIPE_CAP_TEXTURE_MIRROR_CLAMP:
 		return !!screen->use_nv4x;
-	case PIPE_CAP_TEXTURE_MIRROR_REPEAT:
-		return 1;
 	case PIPE_CAP_MAX_VERTEX_TEXTURE_UNITS:
 		return 0; /* We have 4 on nv40 - but unsupported currently */
 	case PIPE_CAP_BLEND_EQUATION_SEPARATE:

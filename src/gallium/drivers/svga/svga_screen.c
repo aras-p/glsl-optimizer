@@ -178,9 +178,6 @@ svga_get_paramf(struct pipe_screen *screen, enum pipe_cap param)
       return MIN2(screen->get_paramf(screen, PIPE_CAP_MAX_TEXTURE_2D_LEVELS),
                   12.0 /* 2048x2048 */);
 
-   case PIPE_CAP_TEXTURE_MIRROR_REPEAT: /* req. for GL 1.4 */
-      return 1;
-
    case PIPE_CAP_BLEND_EQUATION_SEPARATE: /* req. for GL 1.5 */
       return 1;
 

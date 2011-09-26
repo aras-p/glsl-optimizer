@@ -86,8 +86,6 @@ cell_get_param(struct pipe_screen *screen, enum pipe_cap param)
       return 8;  /* max 128x128x128 */
    case PIPE_CAP_MAX_TEXTURE_CUBE_LEVELS:
       return CELL_MAX_TEXTURE_LEVELS;
-   case PIPE_CAP_TEXTURE_MIRROR_REPEAT:
-      return 1; /* XXX not really true */
    case PIPE_CAP_TEXTURE_MIRROR_CLAMP:
       return 0; /* XXX to do */
    case PIPE_CAP_TGSI_FS_COORD_ORIGIN_UPPER_LEFT:
