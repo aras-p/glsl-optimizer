@@ -313,17 +313,7 @@ static boolean r300_prepare_for_rendering(struct r300_context *r300,
 static boolean immd_is_good_idea(struct r300_context *r300,
                                  unsigned count)
 {
-    struct pipe_vertex_element* velem;
-    struct pipe_resource *buf;
-    boolean checked[PIPE_MAX_ATTRIBS] = {0};
-    unsigned vertex_element_count = r300->velems->count;
-    unsigned i, vbi;
-
     if (DBG_ON(r300, DBG_NO_IMMD)) {
-        return FALSE;
-    }
-
-    if (r300->draw) {
         return FALSE;
     }
 
@@ -331,22 +321,8 @@ static boolean immd_is_good_idea(struct r300_context *r300,
         return FALSE;
     }
 
-    /* We shouldn't map buffers referenced by CS, busy buffers,
-     * and ones placed in VRAM. */
-    for (i = 0; i < vertex_element_count; i++) {
-        velem = &r300->velems->velem[i];
-        vbi = velem->vertex_buffer_index;
-
-        if (!checked[vbi]) {
-            buf = r300->vbuf_mgr->real_vertex_buffer[vbi].buffer;
-
-            if ((r300_resource(buf)->domain != RADEON_DOMAIN_GTT)) {
-                return FALSE;
-            }
-
-            checked[vbi] = TRUE;
-        }
-    }
+    /* Buffers can only be used for read by r300 (except query buffers, but
+     * those can't be bound by a state tracker as vertex buffers). */
     return TRUE;
 }
 
