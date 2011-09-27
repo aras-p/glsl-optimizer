@@ -137,6 +137,7 @@ _mesa_sizeof_glsl_type(GLenum type)
    switch (type) {
    case GL_FLOAT:
    case GL_INT:
+   case GL_UNSIGNED_INT:
    case GL_BOOL:
    case GL_SAMPLER_1D:
    case GL_SAMPLER_2D:
