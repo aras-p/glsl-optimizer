@@ -36,7 +36,7 @@ d3dumddi.h contains the DirectX 9 DDI interface
 BC1: DXT1
 BC2: DXT3
 BC3: DXT5
-BC5: RGTC
+BC5: RGTC1
 BC6H: BPTC float
 BC7: BPTC
 CS = compute shader: OpenCL-like shader
@@ -122,8 +122,8 @@ CommandListExecute (D3D11 only)
 CopyStructureCount (D3D11 only)
 	- Gallium does not support unordered access views (views that can be written to arbitrarily from compute shaders)
 
-ClearDepthStencilView -> clear
-ClearRenderTargetView -> clear
+ClearDepthStencilView -> clear_depth_stencil
+ClearRenderTargetView -> clear_render_target
 	# D3D11 is not totally clear about whether this applies to any view or only a "currently-bound view"
 	+ Gallium allows to clear both depth/stencil and render target(s) in a single operation
 	+ Gallium supports double-precision depth values (but not rgba values!)
@@ -164,8 +164,7 @@ CreateDepthStencilState -> create_depth_stencil_alpha_state
 
 CreateDepthStencilView -> create_surface
 CreateRenderTargetView -> create_surface
-	! Gallium merges depthstencil and rendertarget views into pipe_surface, which also doubles as a 2D surface abstraction
-	- lack of texture array support
+	! Gallium merges depthstencil and rendertarget views into pipe_surface
 	- lack of render-to-buffer support
 	+ Gallium supports using 3D texture zslices as a depth/stencil buffer (in theory)
 
@@ -184,15 +183,10 @@ CreateVertexShader -> create_vs_state
 CheckCounter
 CheckCounterInfo
 CreateQuery -> create_query
-	- Gallium only supports occlusion, primitives generated and primitives emitted queries
 	! D3D11 implements fences with "event" queries
-	* TIMESTAMP could be implemented as an additional fields for other queries: some cards have hardware support for exactly this
-	* OCCLUSIONPREDICATE is required for the OpenGL v2 occlusion query functionality
 	* others are performance counters, we may want them but they are not critical
 
 CreateRasterizerState
-	- Gallium lacks clamping of polygon offset depth biases
-	- Gallium lacks support to disable depth clipping
 	+ Gallium, like OpenGL, supports PIPE_POLYGON_MODE_POINT
 	+ Gallium, like OpenGL, supports per-face polygon fill modes
 	+ Gallium, like OpenGL, supports culling everything
@@ -222,7 +216,6 @@ CreateResource -> texture_create or buffer_create
 	- D3D11 supports odd things in the D3D10_DDI_RESOURCE_MISC_FLAG enum (D3D10_DDI_RESOURCE_MISC_DISCARD_ON_PRESENT, D3D11_DDI_RESOURCE_MISC_BUFFER_ALLOW_RAW_VIEWS, D3D11_DDI_RESOURCE_MISC_BUFFER_STRUCTURED)
 	- Gallium does not support indirect draw call parameter buffers
 	! D3D11 supports specifying hardware modes and other stuff here for scanout resources
-	+ Gallium allows specifying minimum buffer alignment
 	! D3D11 implements cube maps as 2D array textures
 
 CreateSampler
@@ -232,8 +225,6 @@ CreateSampler
 	+ Gallium supports setting min/max/mip filters and anisotropy independently
 
 CreateShaderResourceView (extended in D3D10.1) -> create_sampler_view
-	- Gallium lacks sampler views over buffers
-	- Gallium lacks texture arrays, and cube map views over texture arrays
 	+ Gallium supports specifying a swizzle
 	! D3D11 implements "cube views" as views into a 2D array texture
 
@@ -298,7 +289,7 @@ DsSetShaderWithIfaces (D3D11 only)
 	- Gallium does not support domain shaders
 
 Flush -> flush
-	! Gallium supports fencing and several kinds of flushing here, D3D11 just has a dumb glFlush-like function
+	! Gallium supports fencing, D3D11 just has a dumb glFlush-like function
 
 GenMips
 	- Gallium lacks a mipmap generation interface, and does this manually with the 3D engine
@@ -385,14 +376,13 @@ ResourceCopyRegion
 ResourceConvert (D3D10.1+ only)
 ResourceConvertRegion (D3D10.1+ only)
 	-> resource_copy_region
-	- Gallium does not support hardware buffer copies
-	- Gallium does not support copying 3D texture subregions in a single call
 
-ResourceIsStagingBusy -> is_texture_referenced, is_buffer_referenced
-	- Gallium does not support checking reference for a whole texture, but only a specific surface
+ResourceIsStagingBusy ->
+	- Gallium lacks this
+	+ Gallium can use fences
 
 ResourceReadAfterWriteHazard
-	! Gallium specifies hides this, except for the render and texture caches
+	- Gallium lacks this
 
 ResourceResolveSubresource -> resource_resolve
 
@@ -407,7 +397,6 @@ DynamicResourceMapDiscard
 DynamicResourceUnmap
 StagingResourceMap
 StagingResourceUnmap
-	-> buffer_map / buffer_unmap
 	-> transfer functions
 	! Gallium and D3D have different semantics for transfers
 	* D3D separates vertex/index buffers from constant buffers
@@ -437,8 +426,7 @@ SetRenderTargets (extended in D3D11) -> set_framebuffer_state
 	- Gallium does not support unordered access views
 	- Gallium does not support geometry shader selection of texture array image / 3D texture zslice
 
-SetResourceMinLOD (D3D11 only)
-	- Gallium does not support min lod directly on textures
+SetResourceMinLOD (D3D11 only) -> pipe_sampler_view::tex::first_level
 
 SetScissorRects
 	- Gallium lacks support for multiple geometry-shader-selectable scissor rectangles D3D11 has
@@ -455,6 +443,7 @@ SetViewports
 
 ShaderResourceViewReadAfterWriteHazard
 	- Gallium lacks support for this
+	+ Gallium has texture_barrier
 
 SoSetTargets -> set_stream_output_buffers
 
