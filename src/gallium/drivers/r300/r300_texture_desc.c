@@ -507,28 +507,22 @@ boolean r300_texture_desc_init(struct r300_screen *rscreen,
 
     /* Setup the miptree description. */
     r300_setup_miptree(rscreen, tex, TRUE);
-    /* If the required buffer size is larger the given max size,
+    /* If the required buffer size is larger than the given max size,
      * try again without the alignment for the CBZB clear. */
-    if (tex->buf_size && tex->tex.size_in_bytes > tex->buf_size) {
+    if (tex->buf && tex->tex.size_in_bytes > tex->buf->size) {
         r300_setup_miptree(rscreen, tex, FALSE);
-    }
 
-    r300_setup_hyperz_properties(rscreen, tex);
-
-    if (tex->buf_size) {
         /* Make sure the buffer we got is large enough. */
-        if (tex->tex.size_in_bytes > tex->buf_size) {
+        if (tex->tex.size_in_bytes > tex->buf->size) {
             fprintf(stderr, "r300: texture_desc_init: The buffer is not "
                             "large enough. Got: %i, Need: %i, Info:\n",
-                            tex->buf_size, tex->tex.size_in_bytes);
+                            tex->buf->size, tex->tex.size_in_bytes);
             r300_tex_print_info(tex, "texture_desc_init");
             return FALSE;
         }
-
-        tex->tex.buffer_size_in_bytes = tex->buf_size;
-    } else {
-        tex->tex.buffer_size_in_bytes = tex->tex.size_in_bytes;
     }
+
+    r300_setup_hyperz_properties(rscreen, tex);
 
     if (SCREEN_DBG_ON(rscreen, DBG_TEX))
         r300_tex_print_info(tex, "texture_desc_init");

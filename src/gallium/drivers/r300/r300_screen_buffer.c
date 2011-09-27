@@ -189,7 +189,6 @@ struct pipe_resource *r300_buffer_create(struct pipe_screen *screen,
     rbuf->b.user_ptr = NULL;
     rbuf->domain = RADEON_DOMAIN_GTT;
     rbuf->buf = NULL;
-    rbuf->buf_size = templ->width0;
     rbuf->constant_buffer = NULL;
 
     /* Alloc constant buffers in RAM. */
@@ -237,7 +236,6 @@ struct pipe_resource *r300_user_buffer_create(struct pipe_screen *screen,
     rbuf->b.user_ptr = ptr;
     rbuf->domain = RADEON_DOMAIN_GTT;
     rbuf->buf = NULL;
-    rbuf->buf_size = size;
     rbuf->constant_buffer = NULL;
     return &rbuf->b.b.b;
 }
