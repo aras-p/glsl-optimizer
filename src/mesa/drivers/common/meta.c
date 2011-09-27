@@ -279,7 +279,7 @@ struct decompress_state
 };
 
 
-#define MAX_META_OPS_DEPTH      2
+#define MAX_META_OPS_DEPTH      8
 /**
  * All per-context meta state.
  */
