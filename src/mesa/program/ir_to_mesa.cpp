@@ -1456,14 +1456,22 @@ ir_to_mesa_visitor::visit(ir_expression *ir)
       emit_scalar(ir, OPCODE_POW, result_dst, op[0], op[1]);
       break;
 
-   case ir_unop_bit_not:
+      /* GLSL 1.30 integer ops are unsupported in Mesa IR, but since
+       * hardware backends have no way to avoid Mesa IR generation
+       * even if they don't use it, we need to emit "something" and
+       * continue.
+       */
    case ir_binop_lshift:
    case ir_binop_rshift:
    case ir_binop_bit_and:
    case ir_binop_bit_xor:
    case ir_binop_bit_or:
+      emit(ir, OPCODE_ADD, result_dst, op[0], op[1]);
+      break;
+
+   case ir_unop_bit_not:
    case ir_unop_round_even:
-      assert(!"GLSL 1.30 features unsupported");
+      emit(ir, OPCODE_MOV, result_dst, op[0]);
       break;
 
    case ir_quadop_vector:
