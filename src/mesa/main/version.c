@@ -52,6 +52,30 @@ override_version(struct gl_context *ctx, GLuint *major, GLuint *minor)
 }
 
 /**
+ * Override the context's GLSL version if the environment variable
+ * MESA_GLSL_VERSION_OVERRIDE is set. Valid values for
+ * MESA_GLSL_VERSION_OVERRIDE are integers, such as "130".
+ */
+void
+_mesa_override_glsl_version(struct gl_context *ctx)
+{
+   const char *env_var = "MESA_GLSL_VERSION_OVERRIDE";
+   const char *version;
+   int n;
+
+   version = getenv(env_var);
+   if (!version) {
+      return;
+   }
+
+   n = sscanf(version, "%d", &ctx->Const.GLSLVersion);
+   if (n != 1) {
+      fprintf(stderr, "error: invalid value for %s: %s\n", env_var, version);
+      return;
+   }
+}
+
+/**
  * Examine enabled GL extensions to determine GL version.
  * Return major and minor version numbers.
  */

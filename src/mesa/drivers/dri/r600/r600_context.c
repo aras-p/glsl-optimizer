@@ -173,6 +173,7 @@ static void r600InitConstValues(struct gl_context *ctx, radeonScreenPtr screen)
     }
 
         ctx->Const.GLSLVersion = 120;
+        _mesa_override_glsl_version(ctx);
 
 	ctx->Const.MaxTextureImageUnits = 16;
 	/* 8 per clause on r6xx, 16 on r7xx

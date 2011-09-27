@@ -112,7 +112,8 @@ intelInitExtensions(struct gl_context *ctx)
    ctx->Extensions.OES_EGL_image = true;
 #endif
 
-   ctx->Const.GLSLVersion = get_glsl_version();
+   ctx->Const.GLSLVersion = 120;
+   _mesa_override_glsl_version(ctx);
 
    if (intel->gen >= 5)
       ctx->Extensions.EXT_timer_query = true;

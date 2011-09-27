@@ -62,6 +62,10 @@ This is a work-around for that.
 glGetString(GL_VERSION). Valid values are point-separated version numbers,
 such as "3.0". Mesa will not really implement all the features of the given
 version if it's higher than what's normally reported.
+<li>MESA_GLSL_VERSION_OVERRIDE - changes the value returned by
+glGetString(GL_SHADING_LANGUAGE_VERSION). Valid values are integers, such as
+"130".  Mesa will not really implement all the features of the given language version
+if it's higher than what's normally reported. (for developers only)
 <li>MESA_GLSL - <a href="shading.html#envvars">shading language compiler options</a>
 </ul>
 
