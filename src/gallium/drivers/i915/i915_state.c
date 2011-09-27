@@ -279,10 +279,10 @@ i915_create_sampler_state(struct pipe_context *pipe,
    }
 
    {
-      ubyte r = float_to_ubyte(sampler->border_color[0]);
-      ubyte g = float_to_ubyte(sampler->border_color[1]);
-      ubyte b = float_to_ubyte(sampler->border_color[2]);
-      ubyte a = float_to_ubyte(sampler->border_color[3]);
+      ubyte r = float_to_ubyte(sampler->border_color.f[0]);
+      ubyte g = float_to_ubyte(sampler->border_color.f[1]);
+      ubyte b = float_to_ubyte(sampler->border_color.f[2]);
+      ubyte a = float_to_ubyte(sampler->border_color.f[3]);
       cso->state[2] = I915PACKCOLOR8888(r, g, b, a);
    }
    return cso;

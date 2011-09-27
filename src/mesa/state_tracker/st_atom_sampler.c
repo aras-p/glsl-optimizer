@@ -176,7 +176,7 @@ convert_sampler(struct st_context *st,
 
       st_translate_color(msamp->BorderColor.f,
                          teximg ? teximg->_BaseFormat : GL_RGBA,
-                         sampler->border_color);
+                         sampler->border_color.f);
    }
 
    sampler->max_anisotropy = (msamp->MaxAnisotropy == 1.0 ?

@@ -729,7 +729,7 @@ lp_setup_set_fragment_sampler_state(struct lp_setup_context *setup,
          jit_tex->min_lod = sampler->min_lod;
          jit_tex->max_lod = sampler->max_lod;
          jit_tex->lod_bias = sampler->lod_bias;
-         COPY_4V(jit_tex->border_color, sampler->border_color);
+         COPY_4V(jit_tex->border_color, sampler->border_color.f);
       }
    }
 

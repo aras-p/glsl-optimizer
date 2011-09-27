@@ -25,7 +25,7 @@ nvfx_sampler_state_create(struct pipe_context *pipe,
 		ps->wrap |= nvfx_tex_wrap_compare_mode(cso->compare_func);
 		ps->compare = TRUE;
 	}
-	ps->bcol = nvfx_tex_border_color(cso->border_color);
+	ps->bcol = nvfx_tex_border_color(cso->border_color.f);
 
 	if(nvfx->is_nv4x)
 		nv40_sampler_state_init(pipe, ps, cso);

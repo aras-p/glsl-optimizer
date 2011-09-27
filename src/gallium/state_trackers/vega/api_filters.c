@@ -194,7 +194,7 @@ static void execute_filter(struct vg_context *ctx,
    case VG_TILE_FILL:
       tex_wrap = PIPE_TEX_WRAP_CLAMP_TO_BORDER;
       /* copy border color */
-      memcpy(sampler.border_color, ctx->state.vg.tile_fill_color,
+      memcpy(sampler.border_color.f, ctx->state.vg.tile_fill_color,
             sizeof(sampler.border_color));
       break;
    case VG_TILE_PAD:

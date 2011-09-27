@@ -113,10 +113,10 @@ svga_create_sampler_state(struct pipe_context *pipe,
    cso->compare_func = sampler->compare_func;
 
    {
-      uint32 r = float_to_ubyte(sampler->border_color[0]);
-      uint32 g = float_to_ubyte(sampler->border_color[1]);
-      uint32 b = float_to_ubyte(sampler->border_color[2]);
-      uint32 a = float_to_ubyte(sampler->border_color[3]);
+      uint32 r = float_to_ubyte(sampler->border_color.f[0]);
+      uint32 g = float_to_ubyte(sampler->border_color.f[1]);
+      uint32 b = float_to_ubyte(sampler->border_color.f[2]);
+      uint32 a = float_to_ubyte(sampler->border_color.f[3]);
 
       cso->bordercolor = (a << 24) | (r << 16) | (g << 8) | b;
    }

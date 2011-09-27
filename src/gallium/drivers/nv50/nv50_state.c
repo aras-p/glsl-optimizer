@@ -508,10 +508,10 @@ nv50_sampler_state_create(struct pipe_context *pipe,
    so->tsc[2] |=
       (((int)(f[1] * 256.0f) & 0xfff) << 12) | ((int)(f[0] * 256.0f) & 0xfff);
 
-   so->tsc[4] = fui(cso->border_color[0]);
-   so->tsc[5] = fui(cso->border_color[1]);
-   so->tsc[6] = fui(cso->border_color[2]);
-   so->tsc[7] = fui(cso->border_color[3]);
+   so->tsc[4] = fui(cso->border_color.f[0]);
+   so->tsc[5] = fui(cso->border_color.f[1]);
+   so->tsc[6] = fui(cso->border_color.f[2]);
+   so->tsc[7] = fui(cso->border_color.f[3]);
 
    return (void *)so;
 }

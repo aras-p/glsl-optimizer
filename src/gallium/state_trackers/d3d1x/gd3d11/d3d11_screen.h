@@ -553,7 +553,7 @@ struct GalliumD3D11ScreenImpl : public GalliumD3D11Screen
 		state.wrap_t = d3d11_to_pipe_wrap[sampler_desc->AddressV];
 		state.wrap_r = d3d11_to_pipe_wrap[sampler_desc->AddressW];
 		state.lod_bias = sampler_desc->MipLODBias;
-		memcpy(state.border_color, sampler_desc->BorderColor, sizeof(state.border_color));
+		memcpy(state.border_color.f, sampler_desc->BorderColor, sizeof(state.border_color));
 		state.min_lod = sampler_desc->MinLOD;
 		state.max_lod = sampler_desc->MaxLOD;
 

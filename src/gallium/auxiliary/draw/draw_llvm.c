@@ -1509,7 +1509,7 @@ draw_llvm_set_sampler_state(struct draw_context *draw)
          jit_tex->min_lod = draw->samplers[i]->min_lod;
          jit_tex->max_lod = draw->samplers[i]->max_lod;
          jit_tex->lod_bias = draw->samplers[i]->lod_bias;
-         COPY_4V(jit_tex->border_color, draw->samplers[i]->border_color);
+         COPY_4V(jit_tex->border_color, draw->samplers[i]->border_color.f);
       }
    }
 }

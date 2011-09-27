@@ -652,7 +652,7 @@ VGint paint_bind_samplers(struct vg_paint *paint, struct pipe_sampler_state **sa
    }
       break;
    case VG_PAINT_TYPE_PATTERN: {
-      memcpy(paint->pattern.sampler.border_color,
+      memcpy(paint->pattern.sampler.border_color.f,
              ctx->state.vg.tile_fill_color,
              sizeof(VGfloat) * 4);
       paint->pattern.sampler.min_img_filter = image_sampler_filter(ctx);

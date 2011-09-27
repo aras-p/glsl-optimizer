@@ -762,7 +762,7 @@ static void r300_merge_textures_and_samplers(struct r300_context* r300)
             /* Set the border color. */
             texstate->border_color =
                 r300_get_border_color(view->base.format,
-                                      sampler->state.border_color,
+                                      sampler->state.border_color.f,
                                       r300->screen->caps.is_r500);
 
             /* determine min/max levels */

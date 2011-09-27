@@ -228,10 +228,10 @@ struct GalliumD3D10Device : public GalliumD3D10ScreenImpl<threadsafe>
 		samplerd.wrap_r = PIPE_TEX_WRAP_CLAMP_TO_EDGE;
 		samplerd.wrap_s = PIPE_TEX_WRAP_CLAMP_TO_EDGE;
 		samplerd.wrap_t = PIPE_TEX_WRAP_CLAMP_TO_EDGE;
-		samplerd.border_color[0] = 1.0f;
-		samplerd.border_color[1] = 1.0f;
-		samplerd.border_color[2] = 1.0f;
-		samplerd.border_color[3] = 1.0f;
+		samplerd.border_color.f[0] = 1.0f;
+		samplerd.border_color.f[1] = 1.0f;
+		samplerd.border_color.f[2] = 1.0f;
+		samplerd.border_color.f[3] = 1.0f;
 		samplerd.min_lod = -FLT_MAX;
 		samplerd.max_lod = FLT_MAX;
 		samplerd.max_anisotropy = 1;

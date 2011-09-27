@@ -272,7 +272,7 @@ struct pipe_sampler_state
    unsigned seamless_cube_map:1;
    float lod_bias;               /**< LOD/lambda bias */
    float min_lod, max_lod;       /**< LOD clamp range, after bias */
-   float border_color[4];
+   union pipe_color_union border_color;
 };
 
 
