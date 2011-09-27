@@ -1373,6 +1373,8 @@ ir_call::constant_expression_value()
 	    data.f[m*i+j] += op[0]->value.f[i+n*j];
 	 }
       }
+   } else if (strcmp(callee, "trunc") == 0) {
+      expr = new(mem_ctx) ir_expression(ir_unop_trunc, op[0]);
    } else {
       /* Unsupported builtin - some are not allowed in constant expressions. */
       return NULL;
