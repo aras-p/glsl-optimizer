@@ -36,10 +36,13 @@
 #include "pipebuffer/pb_bufmgr.h"
 #include "os/os_thread.h"
 
-#define RADEON_PB_USAGE_DOMAIN_GTT  (1 << 29)
-#define RADEON_PB_USAGE_DOMAIN_VRAM (1 << 30)
-
 struct radeon_bomgr;
+
+struct radeon_bo_desc {
+    struct pb_desc base;
+
+    unsigned initial_domains;
+};
 
 struct radeon_bo {
     struct pb_buffer base;

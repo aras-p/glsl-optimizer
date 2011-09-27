@@ -334,14 +334,11 @@ static struct pb_buffer *radeon_bomgr_create_bo(struct pb_manager *_mgr,
     struct radeon_drm_winsys *rws = mgr->rws;
     struct radeon_bo *bo;
     struct drm_radeon_gem_create args = {};
+    struct radeon_bo_desc *rdesc = (struct radeon_bo_desc*)desc;
 
     args.size = size;
     args.alignment = desc->alignment;
-    args.initial_domain =
-        (desc->usage & RADEON_PB_USAGE_DOMAIN_GTT  ?
-         RADEON_GEM_DOMAIN_GTT  : 0) |
-        (desc->usage & RADEON_PB_USAGE_DOMAIN_VRAM ?
-         RADEON_GEM_DOMAIN_VRAM : 0);
+    args.initial_domain = rdesc->initial_domains;
 
     if (drmCommandWriteRead(rws->fd, DRM_RADEON_GEM_CREATE,
                             &args, sizeof(args))) {
@@ -505,19 +502,6 @@ static struct radeon_winsys_cs_handle *radeon_drm_get_cs_handle(
     return (struct radeon_winsys_cs_handle*)get_radeon_bo(_buf);
 }
 
-static unsigned get_pb_usage_from_create_flags(enum radeon_bo_domain domain)
-{
-    unsigned res = 0;
-
-    if (domain & RADEON_DOMAIN_GTT)
-        res |= RADEON_PB_USAGE_DOMAIN_GTT;
-
-    if (domain & RADEON_DOMAIN_VRAM)
-        res |= RADEON_PB_USAGE_DOMAIN_VRAM;
-
-    return res;
-}
-
 static struct pb_buffer *
 radeon_winsys_bo_create(struct radeon_winsys *rws,
                         unsigned size,
@@ -526,13 +510,14 @@ radeon_winsys_bo_create(struct radeon_winsys *rws,
                         enum radeon_bo_domain domain)
 {
     struct radeon_drm_winsys *ws = radeon_drm_winsys(rws);
-    struct pb_desc desc;
+    struct radeon_bo_desc desc;
     struct pb_manager *provider;
     struct pb_buffer *buffer;
 
     memset(&desc, 0, sizeof(desc));
-    desc.alignment = alignment;
-    desc.usage = get_pb_usage_from_create_flags(domain);
+    desc.base.alignment = alignment;
+    desc.base.usage = domain;
+    desc.initial_domains = domain;
 
     /* Assign a buffer manager. */
     if (bind & (PIPE_BIND_VERTEX_BUFFER | PIPE_BIND_INDEX_BUFFER |
@@ -541,7 +526,7 @@ radeon_winsys_bo_create(struct radeon_winsys *rws,
     else
         provider = ws->kman;
 
-    buffer = provider->create_buffer(provider, size, &desc);
+    buffer = provider->create_buffer(provider, size, &desc.base);
     if (!buffer)
 	return NULL;
 
