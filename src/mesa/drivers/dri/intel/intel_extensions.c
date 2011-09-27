@@ -33,22 +33,6 @@
 #include "utils.h"
 
 /**
- * \brief Get GLSL version from the environment.
- *
- * If the environment variable INTEL_GLSL_VERSION is set, convert its value
- * to an integer and return it. Otherwise, return the default version, 120.
- */
-static GLuint
-get_glsl_version()
-{
-    const char * s = getenv("INTEL_GLSL_VERSION");
-    if (s == NULL)
-        return 120;
-    else
-        return (GLuint) atoi(s);
-}
-
-/**
  * Initializes potential list of extensions if ctx == NULL, or actually enables
  * extensions for a context.
  */
