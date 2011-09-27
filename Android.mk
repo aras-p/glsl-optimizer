@@ -149,7 +149,7 @@ ifneq ($(filter r300g, $(MESA_GPU_DRIVERS)),)
 gallium_DRIVERS += libmesa_pipe_r300
 endif
 ifneq ($(filter r600g, $(MESA_GPU_DRIVERS)),)
-gallium_DRIVERS += libmesa_pipe_r600 libmesa_winsys_r600
+gallium_DRIVERS += libmesa_pipe_r600
 endif
 endif
 

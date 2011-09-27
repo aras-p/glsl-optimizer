@@ -104,7 +104,6 @@ if env['HAVE_DRM']:
         env.Prepend(LIBS = [
             radeonwinsys,
             r300,
-            r600winsys,
             r600,
         ])
 

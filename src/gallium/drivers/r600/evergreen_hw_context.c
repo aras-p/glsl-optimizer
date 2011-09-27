@@ -24,7 +24,7 @@
  *      Jerome Glisse
  */
 #include "r600.h"
-#include "r600_priv.h"
+#include "r600_hw_context_priv.h"
 #include "r600_pipe.h"
 #include "evergreend.h"
 #include "util/u_memory.h"

@@ -37,7 +37,3 @@ if env['dri']:
     SConscript([
         'radeon/drm/SConscript',
     ])
-
-    SConscript([
-        'r600/drm/SConscript',
-    ])

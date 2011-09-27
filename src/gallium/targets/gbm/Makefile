@@ -82,7 +82,6 @@ r300_LIBS = \
 
 # r600 pipe driver
 r600_LIBS = \
-	$(TOP)/src/gallium/winsys/r600/drm/libr600winsys.a \
 	$(TOP)/src/gallium/winsys/radeon/drm/libradeonwinsys.a \
 	$(TOP)/src/gallium/drivers/r600/libr600.a
 
@@ -130,9 +129,11 @@ pipe_SOURCES += pipe_r300.c
 endif
 endif
 
-ifneq ($(findstring r600/drm,$(GALLIUM_WINSYS_DIRS)),)
+ifneq ($(findstring radeon/drm,$(GALLIUM_WINSYS_DIRS)),)
+ifneq ($(findstring r600,$(GALLIUM_DRIVERS_DIRS)),)
 pipe_TARGETS += $(PIPE_PREFIX)r600.so
 pipe_SOURCES += pipe_r600.c
+endif
 endif
 
 ifneq ($(findstring svga/drm,$(GALLIUM_WINSYS_DIRS)),)

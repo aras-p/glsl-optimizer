@@ -129,12 +129,13 @@ endif
 endif
 
 # r600
-ifneq ($(findstring r600/drm,$(GALLIUM_WINSYS_DIRS)),)
+ifneq ($(findstring radeon/drm,$(GALLIUM_WINSYS_DIRS)),)
+ifneq ($(findstring r600,$(GALLIUM_DRIVERS_DIRS)),)
 egl_CPPFLAGS += -D_EGL_PIPE_R600=1
 egl_LIBS += \
-	$(TOP)/src/gallium/winsys/r600/drm/libr600winsys.a \
 	$(TOP)/src/gallium/winsys/radeon/drm/libradeonwinsys.a \
 	$(TOP)/src/gallium/drivers/r600/libr600.a
+endif
 endif
 
 # vmwgfx
