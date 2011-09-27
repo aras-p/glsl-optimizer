@@ -360,6 +360,7 @@ static int r600_get_param(struct pipe_screen* pscreen, enum pipe_cap param)
 	case PIPE_CAP_FRAGMENT_COLOR_CLAMP_CONTROL:
 	case PIPE_CAP_PRIMITIVE_RESTART:
 	case PIPE_CAP_CONDITIONAL_RENDER:
+	case PIPE_CAP_TEXTURE_BARRIER:
 		return 1;
 
 	/* Supported except the original R600. */

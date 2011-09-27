@@ -611,7 +611,7 @@ void st_init_extensions(struct st_context *st)
       ctx->Extensions.ARB_sync = GL_TRUE;
    }
 
-   if (st->pipe->texture_barrier) {
+   if (screen->get_param(screen, PIPE_CAP_TEXTURE_BARRIER)) {
       ctx->Extensions.NV_texture_barrier = GL_TRUE;
    }
 

@@ -125,6 +125,7 @@ nvc0_screen_get_param(struct pipe_screen *pscreen, enum pipe_cap param)
    case PIPE_CAP_VERTEX_ELEMENT_INSTANCE_DIVISOR:
    case PIPE_CAP_MIXED_COLORBUFFER_FORMATS:
    case PIPE_CAP_CONDITIONAL_RENDER:
+   case PIPE_CAP_TEXTURE_BARRIER:
       return 1;
    default:
       NOUVEAU_ERR("unknown PIPE_CAP %d\n", param);
