@@ -1803,7 +1803,7 @@ fs_visitor::emit_color_write(int index, int first_color_mrf, fs_reg color)
    int reg_width = c->dispatch_width / 8;
    fs_inst *inst;
 
-   if (c->dispatch_width == 8 || intel->gen == 6) {
+   if (c->dispatch_width == 8 || intel->gen >= 6) {
       /* SIMD8 write looks like:
        * m + 0: r0
        * m + 1: r1
