@@ -47,9 +47,9 @@ bytes_per_pixel(GLenum datatype, GLuint comps)
    assert(b >= 0);
 
    if (_mesa_type_is_packed(datatype))
-       return b;
+      return b;
    else
-       return b * comps;
+      return b * comps;
 }
 
 
