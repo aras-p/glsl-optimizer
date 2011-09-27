@@ -445,8 +445,14 @@ fs_visitor::visit(ir_expression *ir)
       break;
 
    case ir_binop_lshift:
+      inst = emit(BRW_OPCODE_SHL, this->result, op[0], op[1]);
+      break;
+
    case ir_binop_rshift:
-      assert(!"GLSL 1.30 features unsupported");
+      if (ir->type->base_type == GLSL_TYPE_INT)
+	 inst = emit(BRW_OPCODE_ASR, this->result, op[0], op[1]);
+      else
+	 inst = emit(BRW_OPCODE_SHR, this->result, op[0], op[1]);
       break;
    }
 }
