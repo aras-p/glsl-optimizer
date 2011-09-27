@@ -39,6 +39,25 @@
 #include "ir_visitor.h"
 #include "glsl_types.h"
 
+/* Using C99 rounding functions for roundToEven() implementation is
+ * difficult, because round(), rint, and nearbyint() are affected by
+ * fesetenv(), which the application may have done for its own
+ * purposes.  Mesa's IROUND macro is close to what we want, but it
+ * rounds away from 0 on n + 0.5.
+ */
+static int
+round_to_even(float val)
+{
+   int rounded = IROUND(val);
+
+   if (val - floor(val) == 0.5) {
+      if (rounded % 2 != 0)
+	 rounded += val > 0 ? -1 : 1;
+   }
+
+   return rounded;
+}
+
 static float
 dot(ir_constant *op0, ir_constant *op1)
 {
@@ -193,6 +212,13 @@ ir_expression::constant_expression_value()
       assert(op[0]->type->base_type == GLSL_TYPE_FLOAT);
       for (unsigned c = 0; c < op[0]->type->components(); c++) {
 	 data.f[c] = truncf(op[0]->value.f[c]);
+      }
+      break;
+
+   case ir_unop_round_even:
+      assert(op[0]->type->base_type == GLSL_TYPE_FLOAT);
+      for (unsigned c = 0; c < op[0]->type->components(); c++) {
+	 data.f[c] = round_to_even(op[0]->value.f[c]);
       }
       break;
 
@@ -1324,6 +1350,9 @@ ir_call::constant_expression_value()
 			    * op[1]->value.f[c];
 	 }
       }
+   } else if (strcmp(callee, "round") == 0 ||
+	      strcmp(callee, "roundEven") == 0) {
+      expr = new(mem_ctx) ir_expression(ir_unop_round_even, op[0]);
    } else if (strcmp(callee, "sign") == 0) {
       expr = new(mem_ctx) ir_expression(ir_unop_sign, type, op[0], NULL);
    } else if (strcmp(callee, "sin") == 0) {
