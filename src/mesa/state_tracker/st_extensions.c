@@ -501,7 +501,7 @@ void st_init_extensions(struct st_context *st)
       ctx->Extensions.ARB_framebuffer_object = GL_TRUE;
    }
 
-   if (st->pipe->render_condition) {
+   if (screen->get_param(screen, PIPE_CAP_CONDITIONAL_RENDER)) {
       ctx->Extensions.NV_conditional_render = GL_TRUE;
    }
 

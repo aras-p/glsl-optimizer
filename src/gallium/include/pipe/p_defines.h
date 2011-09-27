@@ -470,7 +470,8 @@ enum pipe_cap {
    PIPE_CAP_SEAMLESS_CUBE_MAP_PER_TEXTURE = 48,
    PIPE_CAP_SCALED_RESOLVE = 49,
    PIPE_CAP_MIN_TEXEL_OFFSET = 50,
-   PIPE_CAP_MAX_TEXEL_OFFSET = 51
+   PIPE_CAP_MAX_TEXEL_OFFSET = 51,
+   PIPE_CAP_CONDITIONAL_RENDER = 52
 };
 
 /* Shader caps not specific to any single stage */
