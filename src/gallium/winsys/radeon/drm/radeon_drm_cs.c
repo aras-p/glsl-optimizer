@@ -177,16 +177,8 @@ static INLINE void update_domains(struct drm_radeon_cs_reloc *reloc,
 {
     *added_domains = (rd | wd) & ~(reloc->read_domains | reloc->write_domain);
 
-    if (reloc->read_domains & wd) {
-        reloc->read_domains = rd;
-        reloc->write_domain = wd;
-    } else if (rd & reloc->write_domain) {
-        reloc->read_domains = rd;
-        reloc->write_domain |= wd;
-    } else {
-        reloc->read_domains |= rd;
-        reloc->write_domain |= wd;
-    }
+    reloc->read_domains |= rd;
+    reloc->write_domain |= wd;
 }
 
 int radeon_get_reloc(struct radeon_cs_context *csc, struct radeon_bo *bo)
