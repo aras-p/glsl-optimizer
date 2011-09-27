@@ -230,12 +230,10 @@ struct radeon_winsys {
      * \param whandle   A winsys handle pointer as was received from a state
      *                  tracker.
      * \param stride    The returned buffer stride in bytes.
-     * \param size      The returned buffer size.
      */
     struct pb_buffer *(*buffer_from_handle)(struct radeon_winsys *ws,
                                             struct winsys_handle *whandle,
-                                            unsigned *stride,
-                                            unsigned *size);
+                                            unsigned *stride);
 
     /**
      * Get a winsys handle from a winsys buffer. The internal structure

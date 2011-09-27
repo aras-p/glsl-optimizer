@@ -533,9 +533,8 @@ radeon_winsys_bo_create(struct radeon_winsys *rws,
 }
 
 static struct pb_buffer *radeon_winsys_bo_from_handle(struct radeon_winsys *rws,
-                                                           struct winsys_handle *whandle,
-                                                           unsigned *stride,
-                                                           unsigned *size)
+                                                      struct winsys_handle *whandle,
+                                                      unsigned *stride)
 {
     struct radeon_drm_winsys *ws = radeon_drm_winsys(rws);
     struct radeon_bo *bo;
@@ -591,8 +590,6 @@ done:
 
     if (stride)
         *stride = whandle->stride;
-    if (size)
-        *size = bo->base.size;
 
     return (struct pb_buffer*)bo;
 
