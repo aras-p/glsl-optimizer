@@ -90,11 +90,13 @@ void st_init_limits(struct st_context *st)
       = screen->get_param(screen, PIPE_CAP_MAX_TEXTURE_ARRAY_LAYERS);
 
    c->MaxTextureImageUnits
-      = _min(screen->get_param(screen, PIPE_CAP_MAX_TEXTURE_IMAGE_UNITS),
+      = _min(screen->get_shader_param(screen, PIPE_SHADER_FRAGMENT,
+                                      PIPE_SHADER_CAP_MAX_TEXTURE_SAMPLERS),
             MAX_TEXTURE_IMAGE_UNITS);
 
    c->MaxVertexTextureImageUnits
-      = _min(screen->get_param(screen, PIPE_CAP_MAX_VERTEX_TEXTURE_UNITS),
+      = _min(screen->get_shader_param(screen, PIPE_SHADER_VERTEX,
+                                      PIPE_SHADER_CAP_MAX_TEXTURE_SAMPLERS),
              MAX_VERTEX_TEXTURE_IMAGE_UNITS);
 
    c->MaxCombinedTextureImageUnits

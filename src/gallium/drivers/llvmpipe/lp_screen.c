@@ -104,17 +104,6 @@ static int
 llvmpipe_get_param(struct pipe_screen *screen, enum pipe_cap param)
 {
    switch (param) {
-   case PIPE_CAP_MAX_TEXTURE_IMAGE_UNITS:
-      return PIPE_MAX_SAMPLERS;
-   case PIPE_CAP_MAX_VERTEX_TEXTURE_UNITS:
-      /* At this time, the draw module and llvmpipe driver only
-       * support vertex shader texture lookups when LLVM is enabled in
-       * the draw module.
-       */
-      if (debug_get_bool_option("DRAW_USE_LLVM", TRUE))
-         return PIPE_MAX_VERTEX_SAMPLERS;
-      else
-         return 0;
    case PIPE_CAP_MAX_COMBINED_SAMPLERS:
       return PIPE_MAX_SAMPLERS + PIPE_MAX_VERTEX_SAMPLERS;
    case PIPE_CAP_NPOT_TEXTURES:
@@ -183,7 +172,19 @@ llvmpipe_get_shader_param(struct pipe_screen *screen, unsigned shader, enum pipe
       return tgsi_exec_get_shader_param(param);
    case PIPE_SHADER_VERTEX:
    case PIPE_SHADER_GEOMETRY:
-      return draw_get_shader_param(shader, param);
+      switch (param) {
+      case PIPE_SHADER_CAP_MAX_TEXTURE_SAMPLERS:
+         /* At this time, the draw module and llvmpipe driver only
+          * support vertex shader texture lookups when LLVM is enabled in
+          * the draw module.
+          */
+         if (debug_get_bool_option("DRAW_USE_LLVM", TRUE))
+            return PIPE_MAX_VERTEX_SAMPLERS;
+         else
+            return 0;
+      default:
+         return draw_get_shader_param(shader, param);
+      }
    default:
       return 0;
    }

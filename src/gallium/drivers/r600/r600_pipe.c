@@ -389,9 +389,6 @@ static int r600_get_param(struct pipe_screen* pscreen, enum pipe_cap param)
 	case PIPE_CAP_MAX_TEXTURE_ARRAY_LAYERS:
 		return rscreen->info.drm_minor >= 9 ?
 			(family >= CHIP_CEDAR ? 16384 : 8192) : 0;
-	case PIPE_CAP_MAX_VERTEX_TEXTURE_UNITS:
-	case PIPE_CAP_MAX_TEXTURE_IMAGE_UNITS:
-		return 16;
 	case PIPE_CAP_MAX_COMBINED_SAMPLERS:
 		return 32;
 
@@ -491,6 +488,8 @@ static int r600_get_shader_param(struct pipe_screen* pscreen, unsigned shader, e
 		return 0;
 	case PIPE_SHADER_CAP_INTEGERS:
 		return 0;
+	case PIPE_SHADER_CAP_MAX_TEXTURE_SAMPLERS:
+		return 16;
 	default:
 		return 0;
 	}

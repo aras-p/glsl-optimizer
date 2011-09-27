@@ -68,9 +68,6 @@ static int
 nvc0_screen_get_param(struct pipe_screen *pscreen, enum pipe_cap param)
 {
    switch (param) {
-   case PIPE_CAP_MAX_TEXTURE_IMAGE_UNITS:
-   case PIPE_CAP_MAX_VERTEX_TEXTURE_UNITS:
-      return 32;
    case PIPE_CAP_MAX_COMBINED_SAMPLERS:
       return 64;
    case PIPE_CAP_MAX_TEXTURE_2D_LEVELS:
@@ -185,6 +182,8 @@ nvc0_screen_get_shader_param(struct pipe_screen *pscreen, unsigned shader,
       return 1; /* but inlining everything, we need function declarations */
    case PIPE_SHADER_CAP_INTEGERS:
       return 1;
+   case PIPE_SHADER_CAP_MAX_TEXTURE_SAMPLERS:
+      return 32;
    default:
       NOUVEAU_ERR("unknown PIPE_SHADER_CAP %d\n", param);
       return 0;

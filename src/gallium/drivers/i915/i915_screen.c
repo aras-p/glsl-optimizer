@@ -140,11 +140,8 @@ i915_get_param(struct pipe_screen *screen, enum pipe_cap cap)
       return is->debug.lie ? 1 : 0;
 
    /* Texturing. */
-   case PIPE_CAP_MAX_TEXTURE_IMAGE_UNITS:
    case PIPE_CAP_MAX_COMBINED_SAMPLERS:
       return 8;
-   case PIPE_CAP_MAX_VERTEX_TEXTURE_UNITS:
-      return 0;
    case PIPE_CAP_MAX_TEXTURE_2D_LEVELS:
       return I915_MAX_TEXTURE_2D_LEVELS;
    case PIPE_CAP_MAX_TEXTURE_3D_LEVELS:
@@ -178,7 +175,12 @@ i915_get_shader_param(struct pipe_screen *screen, unsigned shader, enum pipe_sha
 {
    switch(shader) {
    case PIPE_SHADER_VERTEX:
-      return draw_get_shader_param(shader, cap);
+      switch (cap) {
+      case PIPE_SHADER_CAP_MAX_TEXTURE_SAMPLERS:
+         return 0;
+      default:
+         return draw_get_shader_param(shader, cap);
+      }
    case PIPE_SHADER_FRAGMENT:
       break;
    default:
@@ -220,6 +222,8 @@ i915_get_shader_param(struct pipe_screen *screen, unsigned shader, enum pipe_sha
          return 0;
       case PIPE_SHADER_CAP_INTEGERS:
          return 0;
+      case PIPE_SHADER_CAP_MAX_TEXTURE_SAMPLERS:
+         return 8;
       default:
          debug_printf("%s: Unknown cap %u.\n", __FUNCTION__, cap);
          return 0;

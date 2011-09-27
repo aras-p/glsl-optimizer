@@ -138,7 +138,6 @@ static int r300_get_param(struct pipe_screen* pscreen, enum pipe_cap param)
         case PIPE_CAP_TGSI_INSTANCEID:
         case PIPE_CAP_TGSI_FS_COORD_ORIGIN_LOWER_LEFT:
         case PIPE_CAP_TGSI_FS_COORD_PIXEL_CENTER_INTEGER:
-        case PIPE_CAP_MAX_VERTEX_TEXTURE_UNITS:
         case PIPE_CAP_SEAMLESS_CUBE_MAP:
         case PIPE_CAP_SEAMLESS_CUBE_MAP_PER_TEXTURE:
         case PIPE_CAP_SCALED_RESOLVE:
@@ -152,7 +151,6 @@ static int r300_get_param(struct pipe_screen* pscreen, enum pipe_cap param)
             return !r300screen->caps.has_tcl;
 
         /* Texturing. */
-        case PIPE_CAP_MAX_TEXTURE_IMAGE_UNITS:
         case PIPE_CAP_MAX_COMBINED_SAMPLERS:
             return r300screen->caps.num_tex_units;
         case PIPE_CAP_MAX_TEXTURE_2D_LEVELS:
@@ -220,6 +218,8 @@ static int r300_get_shader_param(struct pipe_screen *pscreen, unsigned shader, e
         case PIPE_SHADER_CAP_SUBROUTINES:
         case PIPE_SHADER_CAP_INTEGERS:
             return 0;
+        case PIPE_SHADER_CAP_MAX_TEXTURE_SAMPLERS:
+           return r300screen->caps.num_tex_units;
         }
         break;
     case PIPE_SHADER_VERTEX:
@@ -257,6 +257,7 @@ static int r300_get_shader_param(struct pipe_screen *pscreen, unsigned shader, e
         case PIPE_SHADER_CAP_INDIRECT_TEMP_ADDR:
         case PIPE_SHADER_CAP_SUBROUTINES:
         case PIPE_SHADER_CAP_INTEGERS:
+        case PIPE_SHADER_CAP_MAX_TEXTURE_SAMPLERS:
             return 0;
         }
         break;

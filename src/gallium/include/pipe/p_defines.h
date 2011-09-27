@@ -418,7 +418,6 @@ enum pipe_transfer_usage {
  * pipe_screen::get_param() and pipe_screen::get_paramf().
  */
 enum pipe_cap {
-   PIPE_CAP_MAX_TEXTURE_IMAGE_UNITS = 0,
    PIPE_CAP_NPOT_TEXTURES = 1,
    PIPE_CAP_TWO_SIDED_STENCIL = 2,
    PIPE_CAP_GLSL = 3,  /* XXX need something better */
@@ -444,7 +443,6 @@ enum pipe_cap {
    PIPE_CAP_GUARD_BAND_RIGHT = 23,  /*< float */
    PIPE_CAP_GUARD_BAND_BOTTOM = 24,  /*< float */
    PIPE_CAP_TEXTURE_MIRROR_CLAMP = 25,
-   PIPE_CAP_MAX_VERTEX_TEXTURE_UNITS = 27,
    PIPE_CAP_BLEND_EQUATION_SEPARATE = 28,
    PIPE_CAP_SM3 = 29,  /*< Shader Model, supported */
    PIPE_CAP_STREAM_OUTPUT = 30,
@@ -496,7 +494,8 @@ enum pipe_shader_cap
    PIPE_SHADER_CAP_INDIRECT_TEMP_ADDR = 14,
    PIPE_SHADER_CAP_INDIRECT_CONST_ADDR = 15,
    PIPE_SHADER_CAP_SUBROUTINES = 16, /* BGNSUB, ENDSUB, CAL, RET */
-   PIPE_SHADER_CAP_INTEGERS = 17
+   PIPE_SHADER_CAP_INTEGERS = 17,
+   PIPE_SHADER_CAP_MAX_TEXTURE_SAMPLERS = 18
 };
 
 
