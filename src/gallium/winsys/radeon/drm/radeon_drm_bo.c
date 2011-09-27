@@ -160,7 +160,7 @@ static void radeon_bo_destroy(struct pb_buffer *_buf)
     }
 
     if (bo->ptr)
-        os_munmap(bo->ptr, bo->size);
+        os_munmap(bo->ptr, bo->base.size);
 
     /* Close object. */
     args.handle = bo->handle;
@@ -267,7 +267,7 @@ static void *radeon_bo_map_internal(struct pb_buffer *_buf,
     }
     args.handle = bo->handle;
     args.offset = 0;
-    args.size = (uint64_t)bo->size;
+    args.size = (uint64_t)bo->base.size;
     if (drmCommandWriteRead(bo->rws->fd,
                             DRM_RADEON_GEM_MMAP,
                             &args,
@@ -361,7 +361,6 @@ static struct pb_buffer *radeon_bomgr_create_bo(struct pb_manager *_mgr,
     bo->mgr = mgr;
     bo->rws = mgr->rws;
     bo->handle = args.handle;
-    bo->size = size;
     pipe_mutex_init(bo->map_mutex);
 
     return &bo->base;
@@ -573,14 +572,13 @@ static struct pb_buffer *radeon_winsys_bo_from_handle(struct radeon_winsys *rws,
         goto fail;
     }
     bo->handle = open_arg.handle;
-    bo->size = open_arg.size;
     bo->name = whandle->handle;
 
     /* Initialize it. */
     pipe_reference_init(&bo->base.reference, 1);
     bo->base.alignment = 0;
     bo->base.usage = PB_USAGE_GPU_WRITE | PB_USAGE_GPU_READ;
-    bo->base.size = bo->size;
+    bo->base.size = open_arg.size;
     bo->base.vtbl = &radeon_bo_vtbl;
     bo->mgr = mgr;
     bo->rws = mgr->rws;

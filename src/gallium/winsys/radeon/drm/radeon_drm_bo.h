@@ -52,7 +52,6 @@ struct radeon_bo {
     void *ptr;
     pipe_mutex map_mutex;
 
-    uint32_t size;
     uint32_t handle;
     uint32_t name;
 
