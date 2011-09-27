@@ -276,7 +276,8 @@ do_vs_prog(struct brw_context *brw,
 
 static void brw_upload_vs_prog(struct brw_context *brw)
 {
-   struct gl_context *ctx = &brw->intel.ctx;
+   struct intel_context *intel = &brw->intel;
+   struct gl_context *ctx = &intel->ctx;
    struct brw_vs_prog_key key;
    struct brw_vertex_program *vp = 
       (struct brw_vertex_program *)brw->vertex_program;
@@ -290,10 +291,16 @@ static void brw_upload_vs_prog(struct brw_context *brw)
    key.program_string_id = vp->id;
    key.userclip_active = (ctx->Transform.ClipPlanesEnabled != 0);
    key.uses_clip_distance = vp->program.UsesClipDistance;
-   if (!key.uses_clip_distance) {
-      key.userclip_planes_enabled = ctx->Transform.ClipPlanesEnabled;
-      key.nr_userclip_planes
-         = _mesa_bitcount_64(ctx->Transform.ClipPlanesEnabled);
+   if (key.userclip_active && !key.uses_clip_distance) {
+      if (intel->gen < 6) {
+         key.nr_userclip_plane_consts
+            = _mesa_bitcount_64(ctx->Transform.ClipPlanesEnabled);
+         key.userclip_planes_enabled_gen_4_5
+            = ctx->Transform.ClipPlanesEnabled;
+      } else {
+         key.nr_userclip_plane_consts
+            = _mesa_logbase2(ctx->Transform.ClipPlanesEnabled) + 1;
+      }
    }
    key.copy_edgeflag = (ctx->Polygon.FrontMode != GL_FILL ||
 			ctx->Polygon.BackMode != GL_FILL);

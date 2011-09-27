@@ -31,25 +31,6 @@
 #include "brw_util.h"
 #include "intel_batchbuffer.h"
 
-uint32_t
-brw_compute_userclip_flags(bool uses_clip_distance,
-                           GLbitfield clip_planes_enabled)
-{
-   if (uses_clip_distance) {
-      /* When using gl_ClipDistance, it is up to the shader to decide which
-       * clip distance values to use.
-       */
-      return clip_planes_enabled;
-   } else {
-      /* When using clipping planes, we compact the ones that are in use so
-       * that they are always numbered consecutively from zero, so we need to
-       * enable clipping planes 0 through n-1 in the hardware regardless of
-       * which planes the user has selected.
-       */
-      return (1 << _mesa_bitcount_64(clip_planes_enabled)) - 1;
-   }
-}
-
 static void
 upload_clip_state(struct brw_context *brw)
 {
@@ -57,10 +38,6 @@ upload_clip_state(struct brw_context *brw)
    struct gl_context *ctx = &intel->ctx;
    uint32_t depth_clamp = 0;
    uint32_t provoking, userclip;
-
-   /* BRW_NEW_VERTEX_PROGRAM */
-   struct brw_vertex_program *vp =
-      (struct brw_vertex_program *)brw->vertex_program;
 
    if (!ctx->Transform.DepthClamp)
       depth_clamp = GEN6_CLIP_Z_TEST;
@@ -79,8 +56,7 @@ upload_clip_state(struct brw_context *brw)
    }
 
    /* _NEW_TRANSFORM */
-   userclip = brw_compute_userclip_flags(vp->program.UsesClipDistance,
-                                         ctx->Transform.ClipPlanesEnabled);
+   userclip = ctx->Transform.ClipPlanesEnabled;
 
    BEGIN_BATCH(4);
    OUT_BATCH(_3DSTATE_CLIP << 16 | (4 - 2));
@@ -101,7 +77,7 @@ upload_clip_state(struct brw_context *brw)
 const struct brw_tracked_state gen6_clip_state = {
    .dirty = {
       .mesa  = _NEW_TRANSFORM | _NEW_LIGHT,
-      .brw   = BRW_NEW_CONTEXT | BRW_NEW_VERTEX_PROGRAM,
+      .brw   = BRW_NEW_CONTEXT,
       .cache = 0
    },
    .emit = upload_clip_state,

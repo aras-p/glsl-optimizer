@@ -39,10 +39,6 @@ upload_clip_state(struct brw_context *brw)
    /* _NEW_BUFFERS */
    GLboolean render_to_fbo = brw->intel.ctx.DrawBuffer->Name != 0;
 
-   /* BRW_NEW_VERTEX_PROGRAM */
-   struct brw_vertex_program *vp =
-      (struct brw_vertex_program *)brw->vertex_program;
-
    dw1 |= GEN7_CLIP_EARLY_CULL;
 
    /* _NEW_POLYGON */
@@ -86,8 +82,7 @@ upload_clip_state(struct brw_context *brw)
    }
 
    /* _NEW_TRANSFORM */
-   userclip = brw_compute_userclip_flags(vp->program.UsesClipDistance,
-                                         ctx->Transform.ClipPlanesEnabled);
+   userclip = ctx->Transform.ClipPlanesEnabled;
 
    BEGIN_BATCH(4);
    OUT_BATCH(_3DSTATE_CLIP << 16 | (4 - 2));
@@ -111,7 +106,7 @@ const struct brw_tracked_state gen7_clip_state = {
                 _NEW_POLYGON |
                 _NEW_LIGHT |
                 _NEW_TRANSFORM),
-      .brw   = BRW_NEW_CONTEXT | BRW_NEW_VERTEX_PROGRAM,
+      .brw   = BRW_NEW_CONTEXT,
       .cache = 0
    },
    .emit = upload_clip_state,

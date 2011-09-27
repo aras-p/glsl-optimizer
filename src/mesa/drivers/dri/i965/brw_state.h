@@ -213,9 +213,4 @@ get_attr_override(struct brw_vue_map *vue_map, int urb_entry_read_offset,
 unsigned int
 gen7_depth_format(struct brw_context *brw);
 
-/* gen6_clip_state.c */
-uint32_t
-brw_compute_userclip_flags(bool uses_clip_distance,
-                           GLbitfield clip_planes_enabled);
-
 #endif

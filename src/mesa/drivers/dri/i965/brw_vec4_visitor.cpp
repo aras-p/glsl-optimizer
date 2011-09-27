@@ -559,18 +559,29 @@ vec4_visitor::setup_uniform_clipplane_values()
 {
    gl_clip_plane *clip_planes = brw_select_clip_planes(ctx);
 
+   /* Pre-Gen6, we compact clip planes.  For example, if the user
+    * enables just clip planes 0, 1, and 3, we will enable clip planes
+    * 0, 1, and 2 in the hardware, and we'll move clip plane 3 to clip
+    * plane 2.  This simplifies the implementation of the Gen6 clip
+    * thread.
+    *
+    * In Gen6 and later, we don't compact clip planes, because this
+    * simplifies the implementation of gl_ClipDistance.
+    */
    int compacted_clipplane_index = 0;
-   for (int i = 0; i < MAX_CLIP_PLANES; ++i) {
-      if (c->key.userclip_planes_enabled & (1 << i)) {
-         this->uniform_vector_size[this->uniforms] = 4;
-         this->userplane[compacted_clipplane_index] = dst_reg(UNIFORM, this->uniforms);
-         this->userplane[compacted_clipplane_index].type = BRW_REGISTER_TYPE_F;
-         for (int j = 0; j < 4; ++j) {
-            c->prog_data.param[this->uniforms * 4 + j] = &clip_planes[i][j];
-         }
-         ++compacted_clipplane_index;
-         ++this->uniforms;
+   for (int i = 0; i < c->key.nr_userclip_plane_consts; ++i) {
+      if (intel->gen < 6 &&
+          !(c->key.userclip_planes_enabled_gen_4_5 & (1 << i))) {
+         continue;
       }
+      this->uniform_vector_size[this->uniforms] = 4;
+      this->userplane[compacted_clipplane_index] = dst_reg(UNIFORM, this->uniforms);
+      this->userplane[compacted_clipplane_index].type = BRW_REGISTER_TYPE_F;
+      for (int j = 0; j < 4; ++j) {
+         c->prog_data.param[this->uniforms * 4 + j] = &clip_planes[i][j];
+      }
+      ++compacted_clipplane_index;
+      ++this->uniforms;
    }
 }
 
@@ -1807,7 +1818,7 @@ vec4_visitor::emit_psiz_and_flags(struct brw_reg reg)
       }
 
       current_annotation = "Clipping flags";
-      for (i = 0; i < c->key.nr_userclip_planes; i++) {
+      for (i = 0; i < c->key.nr_userclip_plane_consts; i++) {
 	 vec4_instruction *inst;
 
 	 inst = emit(DP4(dst_null_f(), src_reg(output_reg[VERT_RESULT_HPOS]),
@@ -1883,7 +1894,8 @@ vec4_visitor::emit_clip_distances(struct brw_reg reg, int offset)
       clip_vertex = VERT_RESULT_HPOS;
    }
 
-   for (int i = 0; i + offset < c->key.nr_userclip_planes && i < 4; ++i) {
+   for (int i = 0; i + offset < c->key.nr_userclip_plane_consts && i < 4;
+        ++i) {
       emit(DP4(dst_reg(brw_writemask(reg, 1 << i)),
                src_reg(output_reg[clip_vertex]),
                src_reg(this->userplane[i + offset])));

@@ -53,10 +53,10 @@ struct brw_vs_prog_key {
    GLuint userclip_active:1;
 
    /**
-    * Number of user clip planes active.  Zero if the shader uses
-    * gl_ClipDistance.
+    * How many user clipping planes are being uploaded to the vertex shader as
+    * push constants.
     */
-   GLuint nr_userclip_planes:4;
+   GLuint nr_userclip_plane_consts:4;
 
    /**
     * True if the shader uses gl_ClipDistance, regardless of whether any clip
@@ -65,10 +65,13 @@ struct brw_vs_prog_key {
    GLuint uses_clip_distance:1;
 
    /**
-    * Which user clip planes are active.  Zero if the shader uses
-    * gl_ClipDistance.
+    * For pre-Gen6 hardware, a bitfield indicating which clipping planes are
+    * enabled.  This is used to compact clip planes.
+    *
+    * For Gen6 and later hardware, clip planes are not compacted, so this
+    * value is zero to avoid provoking unnecessary shader recompiles.
     */
-   GLuint userclip_planes_enabled:MAX_CLIP_PLANES;
+   GLuint userclip_planes_enabled_gen_4_5:MAX_CLIP_PLANES;
 
    GLuint copy_edgeflag:1;
    GLuint point_coord_replace:8;
