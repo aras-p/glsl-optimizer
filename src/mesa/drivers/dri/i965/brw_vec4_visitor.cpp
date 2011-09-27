@@ -1254,8 +1254,14 @@ vec4_visitor::visit(ir_expression *ir)
       break;
 
    case ir_binop_lshift:
+      inst = emit(BRW_OPCODE_SHL, result_dst, op[0], op[1]);
+      break;
+
    case ir_binop_rshift:
-      assert(!"GLSL 1.30 features unsupported");
+      if (ir->type->base_type == GLSL_TYPE_INT)
+	 inst = emit(BRW_OPCODE_ASR, result_dst, op[0], op[1]);
+      else
+	 inst = emit(BRW_OPCODE_SHR, result_dst, op[0], op[1]);
       break;
 
    case ir_quadop_vector:
