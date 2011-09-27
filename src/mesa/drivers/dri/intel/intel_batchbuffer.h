@@ -40,6 +40,7 @@ GLboolean intel_batchbuffer_emit_reloc_fenced(struct intel_context *intel,
 					      uint32_t offset);
 void intel_batchbuffer_emit_mi_flush(struct intel_context *intel);
 void intel_emit_post_sync_nonzero_flush(struct intel_context *intel);
+void intel_emit_depth_stall_flushes(struct intel_context *intel);
 
 static INLINE uint32_t float_as_int(float f)
 {
