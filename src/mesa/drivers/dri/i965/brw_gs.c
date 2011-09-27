@@ -64,7 +64,7 @@ static void compile_gs_prog( struct brw_context *brw,
    c.key = *key;
    /* The geometry shader needs to access the entire VUE. */
    struct brw_vue_map vue_map;
-   brw_compute_vue_map(&vue_map, intel, c.key.nr_userclip, c.key.attrs);
+   brw_compute_vue_map(&vue_map, intel, c.key.userclip_active, c.key.attrs);
    c.nr_regs = (vue_map.num_slots + 1)/2;
 
    mem_ctx = NULL;
@@ -159,7 +159,7 @@ static void populate_key( struct brw_context *brw,
    }
 
    /* _NEW_TRANSFORM */
-   key->nr_userclip = _mesa_bitcount_64(ctx->Transform.ClipPlanesEnabled);
+   key->userclip_active = (ctx->Transform.ClipPlanesEnabled != 0);
 
    key->need_gs_prog = (intel->gen >= 6)
       ? 0

@@ -595,7 +595,7 @@ vec4_visitor::generate_vs_instruction(vec4_instruction *instruction,
 bool
 vec4_visitor::run()
 {
-   if (c->key.nr_userclip && !c->key.uses_clip_distance)
+   if (c->key.userclip_active && !c->key.uses_clip_distance)
       setup_uniform_clipplane_values();
 
    /* Generate VS IR for main().  (the visitor only descends into

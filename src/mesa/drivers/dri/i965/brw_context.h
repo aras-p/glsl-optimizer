@@ -965,7 +965,8 @@ int brw_disasm (FILE *file, struct brw_instruction *inst, int gen);
 
 /* brw_vs.c */
 void brw_compute_vue_map(struct brw_vue_map *vue_map,
-                         const struct intel_context *intel, int nr_userclip,
+                         const struct intel_context *intel,
+                         bool userclip_active,
                          GLbitfield64 outputs_written);
 gl_clip_plane *brw_select_clip_planes(struct gl_context *ctx);
 

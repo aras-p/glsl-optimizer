@@ -47,6 +47,12 @@ struct brw_vs_prog_key {
    uint8_t gl_fixed_input_size[VERT_ATTRIB_MAX];
 
    /**
+    * True if at least one clip flag is enabled, regardless of whether the
+    * shader uses clip planes or gl_ClipDistance.
+    */
+   GLuint userclip_active:1;
+
+   /**
     * Number of user clip planes (or clip distances) that are active.
     */
    GLuint nr_userclip:4;

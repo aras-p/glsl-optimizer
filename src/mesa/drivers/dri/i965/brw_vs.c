@@ -55,7 +55,8 @@ static inline void assign_vue_slot(struct brw_vue_map *vue_map,
  */
 void
 brw_compute_vue_map(struct brw_vue_map *vue_map,
-                    const struct intel_context *intel, int nr_userclip,
+                    const struct intel_context *intel,
+                    bool userclip_active,
                     GLbitfield64 outputs_written)
 {
    int i;
@@ -112,7 +113,7 @@ brw_compute_vue_map(struct brw_vue_map *vue_map,
        */
       assign_vue_slot(vue_map, VERT_RESULT_PSIZ);
       assign_vue_slot(vue_map, VERT_RESULT_HPOS);
-      if (nr_userclip) {
+      if (userclip_active) {
          assign_vue_slot(vue_map, VERT_RESULT_CLIP_DIST0);
          assign_vue_slot(vue_map, VERT_RESULT_CLIP_DIST1);
       }
@@ -287,6 +288,7 @@ static void brw_upload_vs_prog(struct brw_context *brw)
     * the inputs it asks for, whether they are varying or not.
     */
    key.program_string_id = vp->id;
+   key.userclip_active = (ctx->Transform.ClipPlanesEnabled != 0);
    key.nr_userclip = _mesa_bitcount_64(ctx->Transform.ClipPlanesEnabled);
    key.uses_clip_distance = vp->program.UsesClipDistance;
    if (!key.uses_clip_distance)

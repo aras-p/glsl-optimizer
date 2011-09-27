@@ -44,8 +44,7 @@ struct brw_gs_prog_key {
    GLuint primitive:4;
    GLuint pv_first:1;
    GLuint need_gs_prog:1;
-   GLuint nr_userclip:4;
-   GLuint pad:22;
+   GLuint userclip_active:1;
 };
 
 struct brw_gs_compile {

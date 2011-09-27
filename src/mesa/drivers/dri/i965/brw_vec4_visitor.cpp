@@ -1790,7 +1790,7 @@ vec4_visitor::emit_psiz_and_flags(struct brw_reg reg)
 {
    if (intel->gen < 6 &&
        ((c->prog_data.outputs_written & BITFIELD64_BIT(VERT_RESULT_PSIZ)) ||
-        c->key.nr_userclip || brw->has_negative_rhw_bug)) {
+        c->key.userclip_active || brw->has_negative_rhw_bug)) {
       dst_reg header1 = dst_reg(this, glsl_type::uvec4_type);
       dst_reg header1_w = header1;
       header1_w.writemask = WRITEMASK_W;
@@ -1996,7 +1996,7 @@ vec4_visitor::emit_urb_writes()
 
    /* FINISHME: edgeflag */
 
-   brw_compute_vue_map(&c->vue_map, intel, c->key.nr_userclip,
+   brw_compute_vue_map(&c->vue_map, intel, c->key.userclip_active,
                        c->prog_data.outputs_written);
 
    /* First mrf is the g0-based message header containing URB handles and such,

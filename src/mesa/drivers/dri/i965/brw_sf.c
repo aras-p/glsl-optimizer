@@ -63,7 +63,7 @@ static void compile_sf_prog( struct brw_context *brw,
    brw_init_compile(brw, &c.func, mem_ctx);
 
    c.key = *key;
-   brw_compute_vue_map(&c.vue_map, intel, c.key.nr_userclip, c.key.attrs);
+   brw_compute_vue_map(&c.vue_map, intel, c.key.userclip_active, c.key.attrs);
    c.urb_entry_read_offset = brw_sf_compute_urb_entry_read_offset(intel);
    c.nr_attr_regs = (c.vue_map.num_slots + 1)/2 - c.urb_entry_read_offset;
    c.nr_setup_regs = c.nr_attr_regs;
@@ -154,7 +154,7 @@ static void upload_sf_prog(struct brw_context *brw)
    }
 
    /* _NEW_TRANSFORM */
-   key.nr_userclip = _mesa_bitcount_64(ctx->Transform.ClipPlanesEnabled);
+   key.userclip_active = (ctx->Transform.ClipPlanesEnabled != 0);
 
    /* _NEW_POINT */
    key.do_point_sprite = ctx->Point.PointSprite;

@@ -202,7 +202,7 @@ static void brw_vs_alloc_regs( struct brw_vs_compile *c )
 
    /* User clip planes from curbe: 
     */
-   if (c->key.nr_userclip) {
+   if (c->key.userclip_active) {
       if (intel->gen >= 6) {
 	 for (i = 0; i < c->key.nr_userclip; i++) {
 	    c->userplane[i] = stride(brw_vec4_grf(reg + i / 2,
@@ -325,7 +325,7 @@ static void brw_vs_alloc_regs( struct brw_vs_compile *c )
 
    /* Allocate outputs.  The non-position outputs go straight into message regs.
     */
-   brw_compute_vue_map(&c->vue_map, intel, c->key.nr_userclip,
+   brw_compute_vue_map(&c->vue_map, intel, c->key.userclip_active,
                        c->prog_data.outputs_written);
    c->first_output = reg;
 
@@ -1564,7 +1564,7 @@ static void emit_vertex_write( struct brw_vs_compile *c)
       }
 
       /* Set the user clip distances in dword 8-15. (m3-4)*/
-      if (c->key.nr_userclip) {
+      if (c->key.userclip_active) {
 	 for (i = 0; i < c->key.nr_userclip; i++) {
 	    struct brw_reg m;
 	    if (i < 4)
@@ -1577,7 +1577,7 @@ static void emit_vertex_write( struct brw_vs_compile *c)
       }
    } else if ((c->prog_data.outputs_written &
 	       BITFIELD64_BIT(VERT_RESULT_PSIZ)) ||
-	      c->key.nr_userclip || brw->has_negative_rhw_bug) {
+	      c->key.userclip_active || brw->has_negative_rhw_bug) {
       struct brw_reg header1 = retype(get_tmp(c), BRW_REGISTER_TYPE_UD);
       GLuint i;
 
@@ -1649,7 +1649,7 @@ static void emit_vertex_write( struct brw_vs_compile *c)
        */
       brw_MOV(p, brw_message_reg(2), pos);
       len_vertex_header = 1;
-      if (c->key.nr_userclip > 0)
+      if (c->key.userclip_active)
 	 len_vertex_header += 2;
    } else if (intel->gen == 5) {
       /* There are 20 DWs (D0-D19) in VUE header on Ironlake:

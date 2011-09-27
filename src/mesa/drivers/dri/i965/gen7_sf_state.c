@@ -44,10 +44,10 @@ upload_sbe_state(struct brw_context *brw)
    int attr = 0, input_index = 0;
    /* _NEW_TRANSFORM */
    int urb_entry_read_offset = 1;
-   int nr_userclip = _mesa_bitcount_64(ctx->Transform.ClipPlanesEnabled);
+   bool userclip_active = (ctx->Transform.ClipPlanesEnabled != 0);
    uint16_t attr_overrides[FRAG_ATTRIB_MAX];
 
-   brw_compute_vue_map(&vue_map, intel, nr_userclip, vs_outputs_written);
+   brw_compute_vue_map(&vue_map, intel, userclip_active, vs_outputs_written);
    urb_entry_read_length = (vue_map.num_slots + 1)/2 - urb_entry_read_offset;
    if (urb_entry_read_length == 0) {
       /* Setting the URB entry read length to 0 causes undefined behavior, so

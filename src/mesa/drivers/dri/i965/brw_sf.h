@@ -53,8 +53,7 @@ struct brw_sf_prog_key {
    GLuint frontface_ccw:1;
    GLuint do_point_sprite:1;
    GLuint sprite_origin_lower_left:1;
-   GLuint nr_userclip:4;
-   GLuint pad:20;
+   GLuint userclip_active:1;
 };
 
 struct brw_sf_compile {
