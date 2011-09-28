@@ -578,9 +578,12 @@ _mesa_init_sqrt_table(void);
 
 #if ((_GNUC__ == 3 && __GNUC_MINOR__ >= 4) || __GNUC__ >= 4)
 #define _mesa_bitcount(i) __builtin_popcount(i)
+#define _mesa_bitcount_64(i) __builtin_popcountll(i)
 #else
 extern unsigned int
 _mesa_bitcount(unsigned int n);
+extern unsigned int
+_mesa_bitcount_64(uint64_t n);
 #endif
 
 #else

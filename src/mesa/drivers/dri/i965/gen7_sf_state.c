@@ -38,13 +38,13 @@ upload_sbe_state(struct brw_context *brw)
    /* CACHE_NEW_VS_PROG */
    GLbitfield64 vs_outputs_written = brw->vs.prog_data->outputs_written;
    /* BRW_NEW_FRAGMENT_PROGRAM */
-   uint32_t num_outputs = brw_count_bits(brw->fragment_program->Base.InputsRead);
+   uint32_t num_outputs = _mesa_bitcount_64(brw->fragment_program->Base.InputsRead);
    uint32_t dw1, dw10, dw11;
    int i;
    int attr = 0, input_index = 0;
    /* _NEW_TRANSFORM */
    int urb_entry_read_offset = 1;
-   int nr_userclip = brw_count_bits(ctx->Transform.ClipPlanesEnabled);
+   int nr_userclip = _mesa_bitcount_64(ctx->Transform.ClipPlanesEnabled);
    uint16_t attr_overrides[FRAG_ATTRIB_MAX];
 
    brw_compute_vue_map(&vue_map, intel, nr_userclip, vs_outputs_written);

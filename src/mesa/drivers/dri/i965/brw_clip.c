@@ -150,7 +150,7 @@ static void upload_clip_prog(struct brw_context *brw)
    key.do_flat_shading = (ctx->Light.ShadeModel == GL_FLAT);
    key.pv_first = (ctx->Light.ProvokingVertex == GL_FIRST_VERTEX_CONVENTION);
    /* _NEW_TRANSFORM */
-   key.nr_userclip = brw_count_bits(ctx->Transform.ClipPlanesEnabled);
+   key.nr_userclip = _mesa_bitcount_64(ctx->Transform.ClipPlanesEnabled);
 
    if (intel->gen == 5)
        key.clip_mode = BRW_CLIPMODE_KERNEL_CLIP;

@@ -180,7 +180,7 @@ upload_wm_state(struct brw_context *brw)
 
    dw6 |= GEN6_WM_PERSPECTIVE_PIXEL_BARYCENTRIC;
 
-   dw6 |= brw_count_bits(brw->fragment_program->Base.InputsRead) <<
+   dw6 |= _mesa_bitcount_64(brw->fragment_program->Base.InputsRead) <<
       GEN6_WM_NUM_SF_OUTPUTS_SHIFT;
 
    BEGIN_BATCH(9);

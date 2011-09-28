@@ -66,7 +66,7 @@ static void calculate_curbe_offsets( struct brw_context *brw )
 
    /* _NEW_TRANSFORM */
    if (ctx->Transform.ClipPlanesEnabled) {
-      GLuint nr_planes = 6 + brw_count_bits(ctx->Transform.ClipPlanesEnabled);
+      GLuint nr_planes = 6 + _mesa_bitcount_64(ctx->Transform.ClipPlanesEnabled);
       nr_clip_regs = (nr_planes * 4 + 15) / 16;
    }
 

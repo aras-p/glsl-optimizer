@@ -527,6 +527,19 @@ _mesa_bitcount(unsigned int n)
    }
    return bits;
 }
+
+/**
+ * Return number of bits set in given 64-bit uint.
+ */
+unsigned int
+_mesa_bitcount_64(uint64_t n)
+{
+   unsigned int bits;
+   for (bits = 0; n > 0; n = n >> 1) {
+      bits += (n & 1);
+   }
+   return bits;
+}
 #endif
 
 

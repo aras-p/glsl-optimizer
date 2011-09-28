@@ -159,7 +159,7 @@ static void populate_key( struct brw_context *brw,
    }
 
    /* _NEW_TRANSFORM */
-   key->nr_userclip = brw_count_bits(ctx->Transform.ClipPlanesEnabled);
+   key->nr_userclip = _mesa_bitcount_64(ctx->Transform.ClipPlanesEnabled);
 
    key->need_gs_prog = (intel->gen >= 6)
       ? 0

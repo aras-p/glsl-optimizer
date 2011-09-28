@@ -154,7 +154,7 @@ static void upload_sf_prog(struct brw_context *brw)
    }
 
    /* _NEW_TRANSFORM */
-   key.nr_userclip = brw_count_bits(ctx->Transform.ClipPlanesEnabled);
+   key.nr_userclip = _mesa_bitcount_64(ctx->Transform.ClipPlanesEnabled);
 
    /* _NEW_POINT */
    key.do_point_sprite = ctx->Point.PointSprite;

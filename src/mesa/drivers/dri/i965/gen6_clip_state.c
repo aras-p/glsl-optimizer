@@ -46,7 +46,7 @@ brw_compute_userclip_flags(bool uses_clip_distance,
        * enable clipping planes 0 through n-1 in the hardware regardless of
        * which planes the user has selected.
        */
-      return (1 << brw_count_bits(clip_planes_enabled)) - 1;
+      return (1 << _mesa_bitcount_64(clip_planes_enabled)) - 1;
    }
 }
 

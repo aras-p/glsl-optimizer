@@ -117,7 +117,7 @@ upload_sf_state(struct brw_context *brw)
    /* CACHE_NEW_VS_PROG */
    GLbitfield64 vs_outputs_written = brw->vs.prog_data->outputs_written;
    /* BRW_NEW_FRAGMENT_PROGRAM */
-   uint32_t num_outputs = brw_count_bits(brw->fragment_program->Base.InputsRead);
+   uint32_t num_outputs = _mesa_bitcount_64(brw->fragment_program->Base.InputsRead);
    uint32_t dw1, dw2, dw3, dw4, dw16, dw17;
    int i;
    /* _NEW_BUFFER */
@@ -129,7 +129,7 @@ upload_sf_state(struct brw_context *brw)
    int nr_userclip;
 
    /* _NEW_TRANSFORM */
-   nr_userclip = brw_count_bits(ctx->Transform.ClipPlanesEnabled);
+   nr_userclip = _mesa_bitcount_64(ctx->Transform.ClipPlanesEnabled);
 
    brw_compute_vue_map(&vue_map, intel, nr_userclip, vs_outputs_written);
    urb_entry_read_length = (vue_map.num_slots + 1)/2 - urb_entry_read_offset;
