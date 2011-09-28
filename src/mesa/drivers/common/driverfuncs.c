@@ -200,8 +200,6 @@ _mesa_init_driver_functions(struct dd_function_table *driver)
    _mesa_init_sampler_object_functions(driver);
 
    /* T&L stuff */
-   driver->NeedValidate = GL_FALSE;
-   driver->ValidateTnlModule = NULL;
    driver->CurrentExecPrimitive = 0;
    driver->CurrentSavePrimitive = 0;
    driver->NeedFlush = 0;
