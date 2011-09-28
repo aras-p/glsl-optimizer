@@ -44,7 +44,7 @@ override_version(struct gl_context *ctx, GLuint *major, GLuint *minor)
       return;
    }
 
-   n = sscanf(version, "%d.%d", major, minor);
+   n = sscanf(version, "%u.%u", major, minor);
    if (n != 2) {
       fprintf(stderr, "error: invalid value for %s: %s\n", env_var, version);
       return;
