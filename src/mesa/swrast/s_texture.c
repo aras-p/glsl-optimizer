@@ -177,6 +177,13 @@ _swrast_map_teximage(struct gl_context *ctx,
                                                  1);
       assert(slice < texImage->Depth);
       map += slice * sliceSize;
+   } else if (texImage->TexObject->Target == GL_TEXTURE_1D_ARRAY) {
+      GLuint sliceSize = _mesa_format_image_size(texImage->TexFormat,
+                                                 texImage->Width,
+                                                 1,
+                                                 1);
+      assert(slice < texImage->Height);
+      map += slice * sliceSize;
    }
 
    /* apply x/y offset to map address */
