@@ -30,6 +30,7 @@
 #include "main/context.h"
 #include "main/macros.h"
 #include "main/mfeatures.h"
+#include "main/version.h"
 
 #include "pipe/p_context.h"
 #include "pipe/p_defines.h"
@@ -216,7 +217,7 @@ void st_init_limits(struct st_context *st)
       c->MaxProgramTexelOffset = screen->get_param(screen, PIPE_CAP_MAX_TEXEL_OFFSET);
 
       c->GLSLVersion = 120;
-      _mesa_override_glsl_version(c);
+      _mesa_override_glsl_version(st->ctx);
       c->UniformBooleanTrue = ~0;
    }
 }
