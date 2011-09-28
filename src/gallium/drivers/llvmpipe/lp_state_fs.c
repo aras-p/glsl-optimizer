@@ -1366,10 +1366,21 @@ llvmpipe_update_fs(struct llvmpipe_context *lp)
           */
          llvmpipe_finish(pipe, __FUNCTION__);
 
-         for (i = 0; i < LP_MAX_SHADER_VARIANTS / 4; i++) {
-            struct lp_fs_variant_list_item *item;
-            item = last_elem(&lp->fs_variants_list);
-            llvmpipe_remove_shader_variant(lp, item->base);
+         /*
+          * We need to re-check lp->nr_fs_variants because an arbitrarliy large
+          * number of shader variants (potentially all of them) could be
+          * pending for destruction on flush.
+          */
+
+         if (lp->nr_fs_variants >= LP_MAX_SHADER_VARIANTS) {
+            for (i = 0; i < LP_MAX_SHADER_VARIANTS / 4; i++) {
+               struct lp_fs_variant_list_item *item;
+               item = last_elem(&lp->fs_variants_list);
+               if (!item) {
+                  break;
+               }
+               llvmpipe_remove_shader_variant(lp, item->base);
+            }
          }
       }
 
