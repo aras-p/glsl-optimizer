@@ -146,12 +146,14 @@ check_pbo_format(GLenum format, GLenum type,
 /* XXX: Do this for TexSubImage also:
  */
 static bool
-try_pbo_upload(struct intel_context *intel,
-               struct intel_texture_image *intelImage,
+try_pbo_upload(struct gl_context *ctx,
+               struct gl_texture_image *image,
                const struct gl_pixelstore_attrib *unpack,
 	       GLenum format, GLenum type,
                GLint width, GLint height, const void *pixels)
 {
+   struct intel_texture_image *intelImage = intel_texture_image(image);
+   struct intel_context *intel = intel_context(ctx);
    struct intel_buffer_object *pbo = intel_buffer_object(unpack->BufferObj);
    GLuint src_offset, src_stride;
    GLuint dst_x, dst_y, dst_stride;
@@ -161,11 +163,6 @@ try_pbo_upload(struct intel_context *intel,
       return false;
 
    DBG("trying pbo upload\n");
-
-   if (!intelImage->mt) {
-      DBG("%s: no miptree\n", __FUNCTION__);
-      return false;
-   }
 
    if (intel->ctx._ImageTransferState ||
        unpack->SkipPixels || unpack->SkipRows) {
@@ -177,6 +174,14 @@ try_pbo_upload(struct intel_context *intel,
       DBG("%s: format mismatch (upload to %s with format 0x%x, type 0x%x)\n",
 	  __FUNCTION__, _mesa_get_format_name(intelImage->base.Base.TexFormat),
 	  format, type);
+      return false;
+   }
+
+   ctx->Driver.AllocTextureImageBuffer(ctx, image, image->TexFormat,
+                                       width, height, 1);
+
+   if (!intelImage->mt) {
+      DBG("%s: no miptree\n", __FUNCTION__);
       return false;
    }
 
@@ -349,63 +354,19 @@ intelTexImage(struct gl_context * ctx,
               struct gl_texture_object *texObj,
               struct gl_texture_image *texImage, GLsizei imageSize)
 {
-   struct intel_context *intel = intel_context(ctx);
-   struct intel_texture_object *intelObj = intel_texture_object(texObj);
-   struct intel_texture_image *intelImage = intel_texture_image(texImage);
-   GLint texelBytes;
-   GLuint dstRowStride = 0;
-
    DBG("%s target %s level %d %dx%dx%d border %d\n", __FUNCTION__,
        _mesa_lookup_enum_by_nr(target), level, width, height, depth, border);
-
-   if (_mesa_is_format_compressed(texImage->TexFormat)) {
-      texelBytes = 0;
-   }
-   else {
-      texelBytes = _mesa_get_format_bytes(texImage->TexFormat);
-
-      if (!intelImage->mt) {      
-	  assert(texImage->RowStride == width);
-      }
-   }
-
-   if (intelObj->mt &&
-       intel_miptree_match_image(intelObj->mt, &intelImage->base.Base)) {
-      /* Use an existing miptree when possible */
-      intel_miptree_reference(&intelImage->mt, intelObj->mt);
-      assert(intelImage->mt);
-   } else if (intelImage->base.Base.Border == 0) {
-      /* Didn't fit in the object miptree, but it's suitable for inclusion in
-       * a miptree, so create one just for our level and store it in the image.
-       * It'll get moved into the object miptree at validate time.
-       */
-      intelImage->mt = intel_miptree_create_for_teximage(intel, intelObj,
-							 intelImage,
-							 pixels == NULL);
-
-      /* Even if the object currently has a mipmap tree associated
-       * with it, this one is a more likely candidate to represent the
-       * whole object since our level didn't fit what was there
-       * before, and any lower levels would fit into our miptree.
-       */
-      intel_miptree_reference(&intelObj->mt, intelImage->mt);
-   } else {
-      /* Allocate fallback texImage->Data storage through swrast. */
-      ctx->Driver.AllocTextureImageBuffer(ctx, texImage, texImage->TexFormat,
-					  width, height, depth);
-   }
 
    /* Attempt to use the blitter for PBO image uploads.
     */
    if (dims <= 2 &&
-       try_pbo_upload(intel, intelImage, unpack, format, type,
+       try_pbo_upload(ctx, texImage, unpack, format, type,
 		      width, height, pixels)) {
       return;
    }
 
-   DBG("Upload image %dx%dx%d row_len %d pitch %d pixels %d\n",
-       width, height, depth, width * texelBytes, dstRowStride,
-       pixels ? 1 : 0);
+   DBG("%s: upload image %dx%dx%d pixels %p\n",
+       __FUNCTION__, width, height, depth, pixels);
 
    _mesa_store_teximage3d(ctx, target, level, internalFormat,
 			  width, height, depth, border,

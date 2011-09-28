@@ -60,6 +60,12 @@ intel_alloc_texture_image_buffer(struct gl_context *ctx,
    struct gl_texture_object *texobj = image->TexObject;
    struct intel_texture_object *intel_texobj = intel_texture_object(texobj);
 
+   /* Because the driver uses AllocTextureImageBuffer() internally, it may end
+    * up mismatched with FreeTextureImageBuffer(), but that is safe to call
+    * multiple times.
+    */
+   ctx->Driver.FreeTextureImageBuffer(ctx, image);
+
    if (intel->must_use_separate_stencil
        && image->TexFormat == MESA_FORMAT_S8_Z24) {
       intel_tex_image_s8z24_create_renderbuffers(intel, intel_image);
