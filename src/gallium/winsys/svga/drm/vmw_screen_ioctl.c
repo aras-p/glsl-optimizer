@@ -39,8 +39,10 @@
 #include "svgadump/svga_dump.h"
 #include "vmw_screen.h"
 #include "vmw_context.h"
+#include "vmw_fence.h"
 #include "xf86drm.h"
 #include "vmwgfx_drm.h"
+#include "svga3d_caps.h"
 
 #include "os/os_mman.h"
 
@@ -64,62 +66,6 @@ struct vmw_region
  */
 #define SVGA3D_SURFACE_HINT_SCANOUT (1 << 9)
 
-static void
-vmw_check_last_cmd(struct vmw_winsys_screen *vws)
-{
-   static uint32_t buffer[16384];
-   struct drm_vmw_fifo_debug_arg arg;
-   int ret;
-
-   return;
-   memset(&arg, 0, sizeof(arg));
-   arg.debug_buffer = (unsigned long)buffer;
-   arg.debug_buffer_size = 65536;
-
-   ret = drmCommandWriteRead(vws->ioctl.drm_fd, DRM_VMW_FIFO_DEBUG,
-			     &arg, sizeof(arg));
-
-   if (ret) {
-      debug_printf("%s Ioctl error: \"%s\".\n", __FUNCTION__, strerror(-ret));
-      return;
-   }
-
-   if (arg.did_not_fit) {
-      debug_printf("%s Command did not fit completely.\n", __FUNCTION__);
-   }
-
-   svga_dump_commands(buffer, arg.used_size);
-}
-
-static void
-vmw_ioctl_fifo_unmap(struct vmw_winsys_screen *vws, void *mapping)
-{
-   VMW_FUNC;
-   (void)os_munmap(mapping, getpagesize());
-}
-
-
-static void *
-vmw_ioctl_fifo_map(struct vmw_winsys_screen *vws,
-                   uint32_t fifo_offset )
-{
-   void *map;
-
-   VMW_FUNC;
-
-   map = os_mmap(NULL, getpagesize(), PROT_READ, MAP_SHARED,
-	      vws->ioctl.drm_fd, fifo_offset);
-
-   if (map == MAP_FAILED) {
-      debug_printf("Map failed %s\n", strerror(errno));
-      return NULL;
-   }
-
-   vmw_printf("Fifo (min) is 0x%08x\n", ((uint32_t *) map)[SVGA_FIFO_MIN]);
-
-   return map;
-}
-
 uint32
 vmw_ioctl_context_create(struct vmw_winsys_screen *vws)
 {
@@ -134,7 +80,6 @@ vmw_ioctl_context_create(struct vmw_winsys_screen *vws)
    if (ret)
       return -1;
 
-   vmw_check_last_cmd(vws);
    vmw_printf("Context id is %d\n", c_arg.cid);
 
    return c_arg.cid;
@@ -153,7 +98,6 @@ vmw_ioctl_context_destroy(struct vmw_winsys_screen *vws, uint32 cid)
    (void)drmCommandWrite(vws->ioctl.drm_fd, DRM_VMW_UNREF_CONTEXT,
 			 &c_arg, sizeof(c_arg));
 
-   vmw_check_last_cmd(vws);
 }
 
 uint32
@@ -220,7 +164,6 @@ vmw_ioctl_surface_create(struct vmw_winsys_screen *vws,
       return -1;
 
    vmw_printf("Surface id is %d\n", rep->sid);
-   vmw_check_last_cmd(vws);
 
    return rep->sid;
 }
@@ -237,14 +180,12 @@ vmw_ioctl_surface_destroy(struct vmw_winsys_screen *vws, uint32 sid)
 
    (void)drmCommandWrite(vws->ioctl.drm_fd, DRM_VMW_UNREF_SURFACE,
 			 &s_arg, sizeof(s_arg));
-   vmw_check_last_cmd(vws);
-
 }
 
 void
 vmw_ioctl_command(struct vmw_winsys_screen *vws, int32_t cid,
 		  uint32_t throttle_us, void *commands, uint32_t size,
-		  uint32_t *pfence)
+		  struct pipe_fence_handle **pfence)
 {
    struct drm_vmw_execbuf_arg arg;
    struct drm_vmw_fence_rep rep;
@@ -274,10 +215,12 @@ vmw_ioctl_command(struct vmw_winsys_screen *vws, int32_t cid,
    memset(&rep, 0, sizeof(rep));
 
    rep.error = -EFAULT;
-   arg.fence_rep = (unsigned long)&rep;
+   if (pfence)
+      arg.fence_rep = (unsigned long)&rep;
    arg.commands = (unsigned long)commands;
    arg.command_size = size;
    arg.throttle_us = throttle_us;
+   arg.version = DRM_VMW_EXECBUF_VERSION;
 
    do {
        ret = drmCommandWrite(vws->ioctl.drm_fd, DRM_VMW_EXECBUF, &arg, sizeof(arg));
@@ -285,26 +228,27 @@ vmw_ioctl_command(struct vmw_winsys_screen *vws, int32_t cid,
    if (ret) {
       debug_printf("%s error %s.\n", __FUNCTION__, strerror(-ret));
    }
+
    if (rep.error) {
 
       /*
-       * Kernel has synced and put the last fence sequence in the FIFO
-       * register.
+       * Kernel has already synced, or caller requested no fence.
        */
+      if (pfence)
+	 *pfence = NULL;
+   } else {
+      if (pfence) {
+	 *pfence = vmw_fence_create(rep.handle, rep.mask);
 
-      if (rep.error == -EFAULT)
-	 rep.fence_seq = vws->ioctl.fifo_map[SVGA_FIFO_FENCE];
-
-      debug_printf("%s Fence error %s.\n", __FUNCTION__,
-		   strerror(-rep.error));
+	 if (*pfence == NULL) {
+	    /*
+	     * Fence creation failed. Need to sync.
+	     */
+	    (void) vmw_ioctl_fence_finish(vws, rep.handle, rep.mask);
+	    vmw_ioctl_fence_unref(vws, rep.handle);
+	 }
+      }
    }
-
-   vws->ioctl.last_fence = rep.fence_seq;
-
-   if (pfence)
-      *pfence = rep.fence_seq;
-   vmw_check_last_cmd(vws);
-
 }
 
 
@@ -412,67 +356,81 @@ vmw_ioctl_region_unmap(struct vmw_region *region)
    --region->map_count;
 }
 
+void
+vmw_ioctl_fence_unref(struct vmw_winsys_screen *vws,
+		      uint32_t handle)
+{
+   struct drm_vmw_fence_arg arg;
+   int ret;
+   
+   memset(&arg, 0, sizeof(arg));
+   arg.handle = handle;
+
+   ret = drmCommandWrite(vws->ioctl.drm_fd, DRM_VMW_FENCE_UNREF,
+			 &arg, sizeof(arg));
+   if (ret != 0)
+      debug_printf("%s Failed\n", __FUNCTION__);
+}
+
+static INLINE uint32_t
+vmw_drm_fence_flags(uint32_t flags)
+{
+    uint32_t dflags = 0;
+
+    if (flags & SVGA_FENCE_FLAG_EXEC)
+	dflags |= DRM_VMW_FENCE_FLAG_EXEC;
+    if (flags & SVGA_FENCE_FLAG_QUERY)
+	dflags |= DRM_VMW_FENCE_FLAG_QUERY;
+
+    return dflags;
+}
+
 
 int
 vmw_ioctl_fence_signalled(struct vmw_winsys_screen *vws,
-                          uint32_t fence)
+			  uint32_t handle,
+			  uint32_t flags)
 {
-   uint32_t expected;
-   uint32_t current;
-   
-   assert(fence);
-   if(!fence)
-      return 0;
-   
-   expected = fence;
-   current = vws->ioctl.fifo_map[SVGA_FIFO_FENCE];
-   
-   if ((int32)(current - expected) >= 0)
-      return 0; /* fence passed */
-   else
-      return -1;
-}
-
-
-static void
-vmw_ioctl_sync(struct vmw_winsys_screen *vws, 
-		    uint32_t fence)
-{
-   uint32_t cur_fence;
-   struct drm_vmw_fence_wait_arg arg;
+   struct drm_vmw_fence_signaled_arg arg;
+   uint32_t vflags = vmw_drm_fence_flags(flags);
    int ret;
 
-   vmw_printf("%s: fence = %lu\n", __FUNCTION__,
-              (unsigned long)fence);
-
-   cur_fence = vws->ioctl.fifo_map[SVGA_FIFO_FENCE];
-   vmw_printf("%s: Fence id read is 0x%08x\n", __FUNCTION__,
-              (unsigned int)cur_fence);
-
-   if ((cur_fence - fence) < (1 << 24))
-      return;
-
    memset(&arg, 0, sizeof(arg));
-   arg.sequence = fence;
+   arg.handle = handle;
+   arg.flags = vflags;
 
-   do {
-       ret = drmCommandWriteRead(vws->ioctl.drm_fd, DRM_VMW_FENCE_WAIT, &arg,
-				 sizeof(arg));
-   } while (ret == -ERESTART);
+   ret = drmCommandWriteRead(vws->ioctl.drm_fd, DRM_VMW_FENCE_SIGNALED,
+			     &arg, sizeof(arg));
+
+   if (ret != 0)
+      return ret;
+
+   return (arg.signaled) ? 0 : -1;
 }
+
 
 
 int
 vmw_ioctl_fence_finish(struct vmw_winsys_screen *vws,
-                       uint32_t fence)
+                       uint32_t handle,
+		       uint32_t flags)
 {
-   assert(fence);
-   
-   if(fence) {
-      if(vmw_ioctl_fence_signalled(vws, fence) != 0) {
-         vmw_ioctl_sync(vws, fence);
-      }
-   }
+   struct drm_vmw_fence_wait_arg arg;
+   uint32_t vflags = vmw_drm_fence_flags(flags);
+   int ret;
+
+   memset(&arg, 0, sizeof(arg));
+
+   arg.handle = handle;
+   arg.timeout_us = 10*1000000;
+   arg.lazy = 0;
+   arg.flags = vflags;
+
+   ret = drmCommandWriteRead(vws->ioctl.drm_fd, DRM_VMW_FENCE_WAIT,
+			     &arg, sizeof(arg));
+
+   if (ret != 0)
+      debug_printf("%s Failed\n", __FUNCTION__);
    
    return 0;
 }
@@ -482,6 +440,8 @@ boolean
 vmw_ioctl_init(struct vmw_winsys_screen *vws)
 {
    struct drm_vmw_getparam_arg gp_arg;
+   struct drm_vmw_get_3d_cap_arg cap_arg;
+   unsigned int size;
    int ret;
 
    VMW_FUNC;
@@ -491,32 +451,46 @@ vmw_ioctl_init(struct vmw_winsys_screen *vws)
    ret = drmCommandWriteRead(vws->ioctl.drm_fd, DRM_VMW_GET_PARAM,
 			     &gp_arg, sizeof(gp_arg));
    if (ret || gp_arg.value == 0) {
-      debug_printf("No 3D enabled (%i, %s)\n", ret, strerror(-ret));
-      goto out_err1;
+      debug_printf("No 3D enabled (%i, %s).\n", ret, strerror(-ret));
+      goto out_no_3d;
    }
 
    memset(&gp_arg, 0, sizeof(gp_arg));
-   gp_arg.param = DRM_VMW_PARAM_FIFO_OFFSET;
+   gp_arg.param = DRM_VMW_PARAM_FIFO_HW_VERSION;
    ret = drmCommandWriteRead(vws->ioctl.drm_fd, DRM_VMW_GET_PARAM,
 			     &gp_arg, sizeof(gp_arg));
-
    if (ret) {
-      debug_printf("GET_PARAM on %d returned %d: %s\n",
-		   vws->ioctl.drm_fd, ret, strerror(-ret));
-      goto out_err1;
+      debug_printf("Failed to get fifo hw version"
+		   " (%i, %s).\n", ret, strerror(-ret));
+      goto out_no_3d;
+   }
+   vws->ioctl.hwversion = gp_arg.value;
+
+   size = SVGA_FIFO_3D_CAPS_SIZE * sizeof(uint32_t);
+   vws->ioctl.buffer = calloc(1, size);
+   if (!vws->ioctl.buffer) {
+      debug_printf("Failed alloc fifo 3D caps buffer.\n");
+      goto out_no_3d;
    }
 
-   vmw_printf("Offset to map is 0x%08llx\n",
-              (unsigned long long)gp_arg.value);
+   memset(&cap_arg, 0, sizeof(cap_arg));
+   cap_arg.buffer = (uint64_t) (unsigned long) (vws->ioctl.buffer);
+   cap_arg.max_size = size;
 
-   vws->ioctl.fifo_map = vmw_ioctl_fifo_map(vws, gp_arg.value);
-   if (vws->ioctl.fifo_map == NULL)
-      goto out_err1;
+   ret = drmCommandWrite(vws->ioctl.drm_fd, DRM_VMW_GET_3D_CAP,
+			 &cap_arg, sizeof(cap_arg));
+
+   if (ret) {
+      debug_printf("Failed to get 3D capabilities"
+		   " (%i, %s).\n", ret, strerror(-ret));
+      goto out_no_caps;
+   }
 
    vmw_printf("%s OK\n", __FUNCTION__);
    return TRUE;
-
- out_err1:
+  out_no_caps:
+   free(vws->ioctl.buffer);
+  out_no_3d:
    debug_printf("%s Failed\n", __FUNCTION__);
    return FALSE;
 }
@@ -527,6 +501,4 @@ void
 vmw_ioctl_cleanup(struct vmw_winsys_screen *vws)
 {
    VMW_FUNC;
-
-   vmw_ioctl_fifo_unmap(vws, (void *)vws->ioctl.fifo_map);
 }

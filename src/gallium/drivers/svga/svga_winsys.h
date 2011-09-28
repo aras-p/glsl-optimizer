@@ -61,7 +61,8 @@ struct winsys_handle;
 #define SVGA_RELOC_WRITE 0x1
 #define SVGA_RELOC_READ  0x2
 
-
+#define SVGA_FENCE_FLAG_EXEC      (1 << 0)
+#define SVGA_FENCE_FLAG_QUERY     (1 << 1)
 
 /** Opaque surface handle */
 struct svga_winsys_surface;

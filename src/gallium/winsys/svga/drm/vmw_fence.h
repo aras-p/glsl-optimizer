@@ -36,24 +36,25 @@ struct pb_fence_ops;
 struct vmw_winsys_screen;
 
 
-/** Cast from a pipe_fence_handle pointer into a SVGA fence */
-static INLINE uint32_t
-vmw_fence( struct pipe_fence_handle *fence )
-{
-   return (uint32_t)(uintptr_t)fence;
-}
+struct pipe_fence_handle *
+vmw_fence_create(uint32_t handle, uint32_t mask);
 
-
-/** Cast from a SVGA fence number to pipe_fence_handle pointer */
-static INLINE struct pipe_fence_handle *
-vmw_pipe_fence( uint32_t fence )
-{
-   return (struct pipe_fence_handle *)(uintptr_t)fence;
-}
-
+int
+vmw_fence_finish(struct vmw_winsys_screen *vws,
+		 struct pipe_fence_handle *fence,
+		 unsigned flag);
+int
+vmw_fence_signalled(struct vmw_winsys_screen *vws,
+		    struct pipe_fence_handle *fence,
+		    unsigned flag);
+void
+vmw_fence_reference(struct vmw_winsys_screen *vws,
+		    struct pipe_fence_handle **ptr,
+		    struct pipe_fence_handle *fence);
 
 struct pb_fence_ops *
 vmw_fence_ops_create(struct vmw_winsys_screen *vws); 
+
 
 
 #endif /* VMW_FENCE_H_ */

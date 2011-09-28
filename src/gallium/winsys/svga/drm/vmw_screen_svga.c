@@ -64,7 +64,12 @@ vmw_svga_winsys_buffer_create(struct svga_winsys_screen *sws,
    desc.alignment = alignment;
    desc.usage = usage;
 
-   provider = vws->pools.gmr_fenced;
+   if (usage == SVGA_BUFFER_USAGE_PINNED) {
+      if (vws->pools.query_fenced == NULL && !vmw_query_pools_init(vws))
+	 return NULL;
+      provider = vws->pools.query_fenced;
+   } else
+      provider = vws->pools.gmr_fenced;
 
    assert(provider);
    buffer = provider->create_buffer(provider, size, &desc);
@@ -109,8 +114,9 @@ vmw_svga_winsys_fence_reference(struct svga_winsys_screen *sws,
                                 struct pipe_fence_handle **pdst,
                                 struct pipe_fence_handle *src)
 {
-   (void)sws;
-   *pdst = src;
+    struct vmw_winsys_screen *vws = vmw_winsys_screen(sws);
+
+    vmw_fence_reference(vws, pdst, src);
 }
 
 
@@ -120,8 +126,8 @@ vmw_svga_winsys_fence_signalled(struct svga_winsys_screen *sws,
                                 unsigned flag)
 {
    struct vmw_winsys_screen *vws = vmw_winsys_screen(sws);
-   (void)flag;
-   return vmw_ioctl_fence_signalled(vws, vmw_fence(fence));
+
+   return vmw_fence_signalled(vws, fence, flag);
 }
 
 
@@ -131,8 +137,8 @@ vmw_svga_winsys_fence_finish(struct svga_winsys_screen *sws,
                              unsigned flag)
 {
    struct vmw_winsys_screen *vws = vmw_winsys_screen(sws);
-   (void)flag;
-   return vmw_ioctl_fence_finish(vws, vmw_fence(fence));
+
+   return vmw_fence_finish(vws, fence, flag);
 }
 
 
@@ -206,11 +212,7 @@ vmw_svga_winsys_get_hw_version(struct svga_winsys_screen *sws)
 {
    struct vmw_winsys_screen *vws = vmw_winsys_screen(sws);
 
-   if (!vws->ioctl.fifo_map) {
-      return 0;
-   }
-
-   return vws->ioctl.fifo_map[SVGA_FIFO_3D_HWVERSION];
+   return (SVGA3dHardwareVersion) vws->ioctl.hwversion;
 }
 
 
@@ -226,16 +228,13 @@ vmw_svga_winsys_get_cap(struct svga_winsys_screen *sws,
    const SVGA3dCapPair *capArray;
    int numCaps, first, last;
 
-   if(!vws->ioctl.fifo_map)
-      return FALSE;
-
-   if(vws->ioctl.fifo_map[SVGA_FIFO_3D_HWVERSION] < SVGA3D_HWVERSION_WS6_B1)
+   if(vws->ioctl.hwversion < SVGA3D_HWVERSION_WS6_B1)
       return FALSE;
 
    /*
     * Search linearly through the caps block records for the specified type.
     */
-   capsBlock = (const uint32 *)&vws->ioctl.fifo_map[SVGA_FIFO_3D_CAPS];
+   capsBlock = (const uint32 *)vws->ioctl.buffer;
    for (offset = 0; capsBlock[offset] != 0; offset += capsBlock[offset]) {
       const SVGA3dCapsRecord *record;
       assert(offset < SVGA_FIFO_3D_CAPS_SIZE);

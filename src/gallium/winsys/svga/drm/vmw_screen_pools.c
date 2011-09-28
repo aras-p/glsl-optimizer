@@ -32,19 +32,81 @@
 #include "pipebuffer/pb_buffer.h"
 #include "pipebuffer/pb_bufmgr.h"
 
+/*
+ * TODO: Have the query pool always ask the fence manager for
+ * SVGA_FENCE_FLAG_QUERY signaled. Unfortunately, pb_fenced doesn't
+ * support that currently, so we'd have to create a separate
+ * pb_fence_ops wrapper that does this implicitly.
+ */
+
+/**
+ * vmw_pools_cleanup - Destroy the buffer pools.
+ *
+ * @vws: pointer to a struct vmw_winsys_screen.
+ */
 void
 vmw_pools_cleanup(struct vmw_winsys_screen *vws)
 {
    if(vws->pools.gmr_fenced)
       vws->pools.gmr_fenced->destroy(vws->pools.gmr_fenced);
+   if (vws->pools.query_fenced)
+      vws->pools.query_fenced->destroy(vws->pools.query_fenced);
 
    /* gmr_mm pool is already destroyed above */
 
    if(vws->pools.gmr)
       vws->pools.gmr->destroy(vws->pools.gmr);
+   if(vws->pools.query)
+      vws->pools.query->destroy(vws->pools.query);
 }
 
 
+/**
+ * vmw_query_pools_init - Create a pool of query buffers.
+ *
+ * @vws: Pointer to a struct vmw_winsys_screen.
+ *
+ * Typically this pool should be created on demand when we
+ * detect that the app will be using queries. There's nothing
+ * special with this pool other than the backing kernel buffer size,
+ * which is limited to 8192.
+ */
+boolean
+vmw_query_pools_init(struct vmw_winsys_screen *vws)
+{
+   vws->pools.query = vmw_gmr_bufmgr_create(vws);
+   if(!vws->pools.query)
+      return FALSE;
+
+   vws->pools.query_mm = mm_bufmgr_create(vws->pools.query,
+					  VMW_QUERY_POOL_SIZE,
+					  3 /* 8 alignment */);
+   if(!vws->pools.query_mm)
+      goto out_no_query_mm;
+
+   vws->pools.query_fenced = fenced_bufmgr_create(
+      vws->pools.query_mm,
+      vmw_fence_ops_create(vws),
+      VMW_QUERY_POOL_SIZE,
+      ~0);
+
+   if(!vws->pools.query_fenced)
+      goto out_no_query_fenced;
+
+   return TRUE;
+
+  out_no_query_fenced:
+   vws->pools.query_mm->destroy(vws->pools.query_mm);
+  out_no_query_mm:
+   vws->pools.query->destroy(vws->pools.query);
+   return FALSE;
+}
+
+/**
+ * vmw_pools_init - Create a pool of GMR buffers.
+ *
+ * @vws: Pointer to a struct vmw_winsys_screen.
+ */
 boolean
 vmw_pools_init(struct vmw_winsys_screen *vws)
 {
@@ -87,6 +149,10 @@ vmw_pools_init(struct vmw_winsys_screen *vws)
 #endif
    if(!vws->pools.gmr_fenced)
       goto error;
+
+   vws->pools.query_fenced = NULL;
+   vws->pools.query_mm = NULL;
+   vws->pools.query = NULL;
 
    return TRUE;
 

@@ -56,9 +56,8 @@ vmw_drm_surface_get_handle(struct svga_winsys_screen *sws,
 			   unsigned stride,
 			   struct winsys_handle *whandle);
 
-static struct dri1_api_version drm_required = { 1, 0, 0 };
-static struct dri1_api_version drm_compat = { 1, 0, 0 };
-static struct dri1_api_version drm_scanout = { 0, 9, 0 };
+static struct dri1_api_version drm_required = { 2, 1, 0 };
+static struct dri1_api_version drm_compat = { 2, 0, 0 };
 
 static boolean
 vmw_dri1_check_version(const struct dri1_api_version *cur,
@@ -88,8 +87,6 @@ struct svga_winsys_screen *
 svga_drm_winsys_screen_create(int fd)
 {
    struct vmw_winsys_screen *vws;
-   boolean use_old_scanout_flag = FALSE;
-
    struct dri1_api_version drm_ver;
    drmVersionPtr ver;
 
@@ -106,11 +103,7 @@ svga_drm_winsys_screen_create(int fd)
 			       &drm_compat, "vmwgfx drm driver"))
       return NULL;
 
-   if (!vmw_dri1_check_version(&drm_ver, &drm_scanout,
-			       &drm_compat, "use old scanout field (not a error)"))
-      use_old_scanout_flag = TRUE;
-
-   vws = vmw_winsys_create( fd, use_old_scanout_flag );
+   vws = vmw_winsys_create( fd, FALSE );
    if (!vws)
       goto out_no_vws;
 

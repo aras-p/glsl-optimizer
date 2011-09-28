@@ -241,7 +241,7 @@ static boolean svga_get_query_result(struct pipe_context *pipe,
       if(!wait)
          return FALSE;
    
-      sws->fence_finish(sws, sq->fence, 0);
+      sws->fence_finish(sws, sq->fence, SVGA_FENCE_FLAG_QUERY);
       
       state = sq->queryResult->state;
    }
