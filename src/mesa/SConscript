@@ -488,6 +488,8 @@ def write_git_sha1_h_file(filename):
     if not os.path.exists(filename) or not filecmp.cmp(tempfile, filename):
         # The filename does not exist or it's different from the new file,
         # so replace old file with new.
+        if os.path.exists(filename):
+            os.remove(filename)
         os.rename(tempfile, filename)
     return
 
