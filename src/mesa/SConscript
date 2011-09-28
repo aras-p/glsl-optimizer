@@ -3,6 +3,9 @@
 
 
 Import('*')
+import filecmp
+import os
+import subprocess
 
 env = env.Clone()
 
@@ -458,13 +461,39 @@ if env['gcc'] and env['platform'] != 'windows':
         env.Append(CPPPATH = [matypes[0].dir])
 
 
-# Create the git_sha1.h file if it doesn't exist already
-try:
-    f = open('main/git_sha1.h', 'r')
+
+
+def write_git_sha1_h_file(filename):
+    """Mesa looks for a git_sha1.h file at compile time in order to display
+    the current git hash id in the GL_VERSION string.  This function tries
+    to retrieve the git hashid and write the header file.  An empty file
+    will be created if anything goes wrong."""
+
+    args = [ 'git', 'log', '-n', '1', '--oneline' ]
+    try:
+        (commit, foo) = subprocess.Popen(args, stdout=subprocess.PIPE).communicate()
+    except:
+        # git log command didn't work
+        if not os.path.exists(filename):
+            # create an empty file if none already exists
+            f = open(filename, "w")
+            f.close()
+        return
+
+    commit = '#define MESA_GIT_SHA1 "%s"\n' % commit[0:7]
+    tempfile = "git_sha1.h.tmp"
+    f = open(tempfile, "w")
+    f.write(commit)
     f.close()
-except IOError:
-    f = open('main/git_sha1.h', 'w')
-    f.close()
+    if not os.path.exists(filename) or not filecmp.cmp(tempfile, filename):
+        # The filename does not exist or it's different from the new file,
+        # so replace old file with new.
+        os.rename(tempfile, filename)
+    return
+
+
+# Create the git_sha1.h header file
+write_git_sha1_h_file("main/git_sha1.h")
 # and update CPPPATH so the git_sha1.h header can be found
 env.Append(CPPPATH = ["#" + env['build_dir'] + "/mesa/main"])
 
