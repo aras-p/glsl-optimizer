@@ -4626,22 +4626,53 @@ _mesa_store_teximage2d(struct gl_context *ctx, GLenum target, GLint level,
       return;
    }
 
-   /* Map dest texture buffer (write to whole region) */
-   ctx->Driver.MapTextureImage(ctx, texImage, 0,
-                               0, 0, width, height,
-                               rwMode,
-                               &dstMap, &dstRowStride);
-   assert(dstMap);
-   success = _mesa_texstore(ctx, 2, texImage->_BaseFormat,
-                            texImage->TexFormat,
-                            dstMap,
-                            0, 0, 0,  /* dstX/Y/Zoffset */
-                            dstRowStride,
-                            &zeroImageOffset,
-                            width, height, 1,
-                            format, type, pixels, packing);
+   if (target == GL_TEXTURE_1D_ARRAY) {
+      const GLint srcStride =
+         _mesa_image_row_stride(packing, width, format, type);
+      int y;
 
-   ctx->Driver.UnmapTextureImage(ctx, texImage, 0);
+      success = GL_TRUE;
+
+      for (y = 0; y < height; y++) {
+         /* Map dest texture buffer (write to whole region) */
+         ctx->Driver.MapTextureImage(ctx, texImage, y,
+                                     0, 0, width, 1,
+                                     rwMode,
+                                     &dstMap, &dstRowStride);
+         assert(dstMap);
+         success = _mesa_texstore(ctx, 2, texImage->_BaseFormat,
+                                  texImage->TexFormat,
+                                  dstMap,
+                                  0, 0, 0,  /* dstX/Y/Zoffset */
+                                  dstRowStride,
+                                  &zeroImageOffset,
+                                  width, 1, 1,
+                                  format, type, pixels, packing);
+         ctx->Driver.UnmapTextureImage(ctx, texImage, y);
+
+         if (!success)
+            break;
+
+         pixels += srcStride;
+      }
+   } else {
+      /* Map dest texture buffer (write to whole region) */
+      ctx->Driver.MapTextureImage(ctx, texImage, 0,
+                                  0, 0, width, height,
+                                  rwMode,
+                                  &dstMap, &dstRowStride);
+      assert(dstMap);
+      success = _mesa_texstore(ctx, 2, texImage->_BaseFormat,
+                               texImage->TexFormat,
+                               dstMap,
+                               0, 0, 0,  /* dstX/Y/Zoffset */
+                               dstRowStride,
+                               &zeroImageOffset,
+                               width, height, 1,
+                               format, type, pixels, packing);
+
+      ctx->Driver.UnmapTextureImage(ctx, texImage, 0);
+   }
 
    if (!success)
       _mesa_error(ctx, GL_OUT_OF_MEMORY, "glTexImage2D");
@@ -4689,6 +4720,11 @@ _mesa_store_teximage3d(struct gl_context *ctx, GLenum target, GLint level,
        * memory for the texture.  That's what the GL spec calls for.
        */
       return;
+   }
+
+   if (target == GL_TEXTURE_1D_ARRAY) {
+      depth = height;
+      height = 1;
    }
 
    sliceMaps = (GLubyte **) malloc(depth * sizeof(GLubyte *));
