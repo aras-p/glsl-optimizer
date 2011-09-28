@@ -68,7 +68,7 @@ _mesa_override_glsl_version(struct gl_context *ctx)
       return;
    }
 
-   n = sscanf(version, "%d", &ctx->Const.GLSLVersion);
+   n = sscanf(version, "%u", &ctx->Const.GLSLVersion);
    if (n != 1) {
       fprintf(stderr, "error: invalid value for %s: %s\n", env_var, version);
       return;
