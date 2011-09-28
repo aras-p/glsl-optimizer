@@ -4,7 +4,9 @@
 
 #include "intel_context.h"
 #include "intel_mipmap_tree.h"
+#include "intel_blit.h"
 #include "intel_tex.h"
+#include "intel_tex_layout.h"
 
 #define FILE_DEBUG_FLAG DEBUG_TEXTURE
 
@@ -26,44 +28,6 @@ intel_update_max_level(struct intel_texture_object *intelObj,
       intelObj->_MaxLevel = tObj->_MaxLevel;
    }
 }
-
-/**
- * Copies the image's contents at its level into the object's miptree,
- * and updates the image to point at the object's miptree.
- */
-static void
-copy_image_data_to_tree(struct intel_context *intel,
-                        struct intel_texture_object *intelObj,
-                        struct intel_texture_image *intelImage)
-{
-   if (intelImage->mt) {
-      /* Copy potentially with the blitter:
-       */
-      intel_miptree_image_copy(intel,
-                               intelObj->mt,
-                               intelImage->base.Base.Face,
-                               intelImage->base.Base.Level, intelImage->mt);
-   }
-   else {
-      assert(intelImage->base.Base.Data != NULL);
-
-      /* More straightforward upload.  
-       */
-      intel_miptree_image_data(intel,
-                               intelObj->mt,
-                               intelImage->base.Base.Face,
-                               intelImage->base.Base.Level,
-                               intelImage->base.Base.Data,
-                               intelImage->base.Base.RowStride,
-                               intelImage->base.Base.RowStride *
-                               intelImage->base.Base.Height);
-      _mesa_align_free(intelImage->base.Base.Data);
-      intelImage->base.Base.Data = NULL;
-   }
-
-   intel_miptree_reference(&intelImage->mt, intelObj->mt);
-}
-
 
 /*  
  */
@@ -148,7 +112,7 @@ intel_finalize_mipmap_tree(struct intel_context *intel, GLuint unit)
           */
          if (intelObj->mt != intelImage->mt &&
 	     !intelImage->used_as_render_target) {
-            copy_image_data_to_tree(intel, intelObj, intelImage);
+            intel_miptree_copy_teximage(intel, intelImage, intelObj->mt);
          }
       }
    }

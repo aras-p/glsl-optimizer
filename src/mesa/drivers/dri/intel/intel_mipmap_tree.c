@@ -30,8 +30,10 @@
 #include "intel_regions.h"
 #include "intel_tex_layout.h"
 #include "intel_tex.h"
+#include "intel_blit.h"
 #include "main/enums.h"
 #include "main/formats.h"
+#include "main/teximage.h"
 
 #define FILE_DEBUG_FLAG DEBUG_MIPTREE
 
@@ -310,102 +312,107 @@ intel_miptree_get_image_offset(struct intel_mipmap_tree *mt,
 }
 
 /**
- * Upload data for a particular image.
+ * Copies the image's current data to the given miptree, and associates that
+ * miptree with the image.
  */
 void
-intel_miptree_image_data(struct intel_context *intel,
-			 struct intel_mipmap_tree *dst,
-			 GLuint face,
-			 GLuint level,
-			 void *src,
-			 GLuint src_row_pitch,
-			 GLuint src_image_pitch)
+intel_miptree_copy_teximage(struct intel_context *intel,
+			    struct intel_texture_image *intelImage,
+			    struct intel_mipmap_tree *dst_mt)
 {
-   const GLuint depth = dst->level[level].depth;
-   GLuint i;
+   struct intel_mipmap_tree *src_mt = intelImage->mt;
+   int level = intelImage->base.Base.Level;
+   int face = intelImage->base.Base.Face;
+   GLuint width = src_mt->level[level].width;
+   GLuint height = src_mt->level[level].height;
+   GLuint depth = src_mt->level[level].depth;
+   int slice;
+   void *src, *dst;
 
-   for (i = 0; i < depth; i++) {
-      GLuint dst_x, dst_y, height, width;
+   if (dst_mt->compressed) {
+      unsigned int align_w, align_h;
 
-      intel_miptree_get_image_offset(dst, level, face, i, &dst_x, &dst_y);
-
-      height = dst->level[level].height;
-      width = dst->level[level].width;
-      if (dst->compressed) {
-	 unsigned int align_w, align_h;
-
-	 intel_get_texture_alignment_unit(dst->format, &align_w, &align_h);
-	 height = (height + align_h - 1) / align_h;
-	 width = ALIGN(width, align_w);
-      }
-
-      DBG("%s: %d/%d %p/%d -> (%d, %d)/%d (%d, %d)\n",
-	  __FUNCTION__, face, level,
-	  src, src_row_pitch * dst->cpp,
-	  dst_x, dst_y, dst->region->pitch * dst->cpp,
-	  width, height);
-
-      intel_region_data(intel,
-			dst->region, 0, dst_x, dst_y,
-			src,
-			src_row_pitch,
-			0, 0,                             /* source x, y */
-			width, height);
-
-      src = (char *)src + src_image_pitch * dst->cpp;
-   }
-}
-
-
-/**
- * Copy mipmap image between trees
- */
-void
-intel_miptree_image_copy(struct intel_context *intel,
-                         struct intel_mipmap_tree *dst,
-                         GLuint face, GLuint level,
-                         struct intel_mipmap_tree *src)
-{
-   GLuint width = src->level[level].width;
-   GLuint height = src->level[level].height;
-   GLuint depth = src->level[level].depth;
-   GLuint src_x, src_y, dst_x, dst_y;
-   GLuint i;
-   GLboolean success;
-
-   if (dst->compressed) {
-       GLuint align_w, align_h;
-
-       intel_get_texture_alignment_unit(dst->format, &align_w, &align_h);
-       height = (height + 3) / 4;
-       width = ALIGN(width, align_w);
+      intel_get_texture_alignment_unit(intelImage->base.Base.TexFormat,
+				       &align_w, &align_h);
+      height = ALIGN(height, align_h) / align_h;
+      width = ALIGN(width, align_w);
    }
 
-   intel_prepare_render(intel);
+   for (slice = 0; slice < depth; slice++) {
+      unsigned int dst_x, dst_y, src_x, src_y;
 
-   for (i = 0; i < depth; i++) {
-      intel_miptree_get_image_offset(src, level, face, i, &src_x, &src_y);
-      intel_miptree_get_image_offset(dst, level, face, i, &dst_x, &dst_y);
-      success = intel_region_copy(intel,
-				  dst->region, 0, dst_x, dst_y,
-				  src->region, 0, src_x, src_y,
-				  width, height, GL_FALSE,
-				  GL_COPY);
-      if (!success) {
-	 GLubyte *src_ptr, *dst_ptr;
+      intel_miptree_get_image_offset(dst_mt, level, face, slice,
+				     &dst_x, &dst_y);
 
-	 src_ptr = intel_region_map(intel, src->region);
-	 dst_ptr = intel_region_map(intel, dst->region);
+      if (src_mt) {
+	 /* Copy potentially with the blitter:
+	  */
+	 intel_miptree_get_image_offset(src_mt, level, face, slice,
+					&src_x, &src_y);
 
-	 _mesa_copy_rect(dst_ptr,
-			 dst->cpp,
-			 dst->region->pitch,
-			 dst_x, dst_y, width, height,
-			 src_ptr,
-			 src->region->pitch,
-			 src_x, src_y);
-	 intel_region_unmap(intel, src->region);
-	 intel_region_unmap(intel, dst->region);
+	 DBG("validate blit mt %p %d,%d/%d -> mt %p %d,%d/%d (%dx%d)\n",
+	     src_mt, src_x, src_y, src_mt->region->pitch * src_mt->region->cpp,
+	     dst_mt, dst_x, dst_y, dst_mt->region->pitch * dst_mt->region->cpp,
+	     width, height);
+
+	 if (!intelEmitCopyBlit(intel,
+				dst_mt->region->cpp,
+				src_mt->region->pitch, src_mt->region->bo,
+				0, src_mt->region->tiling,
+				dst_mt->region->pitch, dst_mt->region->bo,
+				0, dst_mt->region->tiling,
+				src_x, src_y,
+				dst_x, dst_y,
+				width, height,
+				GL_COPY)) {
+
+	    fallback_debug("miptree validate blit for %s failed\n",
+			   _mesa_get_format_name(intelImage->base.Base.TexFormat));
+	    dst = intel_region_map(intel, dst_mt->region);
+	    src = intel_region_map(intel, src_mt->region);
+
+	    _mesa_copy_rect(dst,
+			    dst_mt->cpp,
+			    dst_mt->region->pitch,
+			    dst_x, dst_y,
+			    width, height,
+			    src, src_mt->region->pitch,
+			    src_x, src_y);
+
+	    intel_region_unmap(intel, dst_mt->region);
+	    intel_region_unmap(intel, src_mt->region);
+	 }
+      } else {
+	 dst = intel_region_map(intel, dst_mt->region);
+
+	 DBG("validate upload mt %p -> mt %p %d,%d/%d (%dx%d)\n",
+	     src,
+	     dst_mt, dst_x, dst_y, dst_mt->region->pitch * dst_mt->region->cpp,
+	     width, height);
+
+	 src = intelImage->base.Base.Data;
+	 src += (intelImage->base.Base.RowStride *
+		 intelImage->base.Base.Height *
+		 dst_mt->region->cpp *
+		 slice);
+
+	 _mesa_copy_rect(dst,
+			 dst_mt->region->cpp,
+			 dst_mt->region->pitch,
+			 dst_x, dst_y,
+			 width, height,
+			 src,
+			 intelImage->base.Base.RowStride,
+			 0, 0);
+
+	 intel_region_unmap(intel, dst_mt->region);
       }
    }
+
+   if (!src_mt) {
+      _mesa_free_texmemory(intelImage->base.Base.Data);
+      intelImage->base.Base.Data = NULL;
+   }
+
+   intel_miptree_reference(&intelImage->mt, dst_mt);
 }

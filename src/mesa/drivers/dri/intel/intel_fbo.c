@@ -729,7 +729,6 @@ intel_render_texture(struct gl_context * ctx,
        * into that.
        */
       struct intel_context *intel = intel_context(ctx);
-      struct intel_mipmap_tree *old_mt = intel_image->mt;
       struct intel_mipmap_tree *new_mt;
 
       new_mt = intel_miptree_create(intel, image->TexObject->Target,
@@ -741,17 +740,11 @@ intel_render_texture(struct gl_context * ctx,
 				    intel_image->base.Base.Depth,
 				    GL_TRUE);
 
-      intel_miptree_image_copy(intel,
-                               new_mt,
-			       intel_image->base.Base.Face,
-			       intel_image->base.Base.Level,
-			       old_mt);
-
-      intel_miptree_release(&intel_image->mt);
-      intel_image->mt = new_mt;
+      intel_miptree_copy_teximage(intel, intel_image, new_mt);
       intel_renderbuffer_set_draw_offset(irb, intel_image, att->Zoffset);
 
       intel_region_reference(&irb->region, intel_image->mt->region);
+      intel_miptree_release(&new_mt);
    }
 #endif
    /* update drawing region, etc */

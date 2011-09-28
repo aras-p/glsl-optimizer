@@ -337,37 +337,6 @@ _mesa_copy_rect(GLubyte * dst,
    }
 }
 
-
-/* Upload data to a rectangular sub-region.  Lots of choices how to do this:
- *
- * - memcpy by span to current destination
- * - upload data as new buffer and blit
- *
- * Currently always memcpy.
- */
-void
-intel_region_data(struct intel_context *intel,
-                  struct intel_region *dst,
-                  GLuint dst_offset,
-                  GLuint dstx, GLuint dsty,
-                  const void *src, GLuint src_pitch,
-                  GLuint srcx, GLuint srcy, GLuint width, GLuint height)
-{
-   _DBG("%s\n", __FUNCTION__);
-
-   if (intel == NULL)
-      return;
-
-   intel_prepare_render(intel);
-
-   _mesa_copy_rect(intel_region_map(intel, dst) + dst_offset,
-                   dst->cpp,
-                   dst->pitch,
-                   dstx, dsty, width, height, src, src_pitch, srcx, srcy);
-
-   intel_region_unmap(intel, dst);
-}
-
 /* Copy rectangular sub-regions. Need better logic about when to
  * push buffers into AGP - will currently do so whenever possible.
  */

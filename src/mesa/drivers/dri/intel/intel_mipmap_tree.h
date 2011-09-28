@@ -56,6 +56,7 @@
  * temporary system buffers.
  */
 
+struct intel_texture_image;
 
 /**
  * Describes the location of each texture image within a texture region.
@@ -180,21 +181,10 @@ void intel_miptree_set_image_offset(struct intel_mipmap_tree *mt,
                                     GLuint level,
                                     GLuint img, GLuint x, GLuint y);
 
-/* Upload an image into a tree
- */
-void intel_miptree_image_data(struct intel_context *intel,
-                              struct intel_mipmap_tree *dst,
-                              GLuint face,
-                              GLuint level,
-                              void *src,
-                              GLuint src_row_pitch, GLuint src_image_pitch);
-
-/* Copy an image between two trees
- */
-void intel_miptree_image_copy(struct intel_context *intel,
-                              struct intel_mipmap_tree *dst,
-                              GLuint face, GLuint level,
-                              struct intel_mipmap_tree *src);
+void
+intel_miptree_copy_teximage(struct intel_context *intel,
+                            struct intel_texture_image *intelImage,
+                            struct intel_mipmap_tree *dst_mt);
 
 /* i915_mipmap_tree.c:
  */
