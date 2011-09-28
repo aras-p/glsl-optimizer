@@ -310,63 +310,6 @@ intel_miptree_get_image_offset(struct intel_mipmap_tree *mt,
 }
 
 /**
- * Map a teximage in a mipmap tree.
- * \param row_stride  returns row stride in bytes
- * \param image_stride  returns image stride in bytes (for 3D textures).
- * \param image_offsets pointer to array of pixel offsets from the returned
- *	  pointer to each depth image
- * \return address of mapping
- */
-GLubyte *
-intel_miptree_image_map(struct intel_context * intel,
-                        struct intel_mipmap_tree * mt,
-                        GLuint face,
-                        GLuint level,
-                        GLuint * row_stride, GLuint * image_offsets)
-{
-   GLuint x, y;
-
-   if (row_stride)
-      *row_stride = mt->region->pitch * mt->cpp;
-
-   if (mt->target == GL_TEXTURE_3D) {
-      int i;
-
-      for (i = 0; i < mt->level[level].depth; i++) {
-
-	 intel_miptree_get_image_offset(mt, level, face, i,
-					&x, &y);
-	 image_offsets[i] = x + y * mt->region->pitch;
-      }
-
-      DBG("%s \n", __FUNCTION__);
-
-      return intel_region_map(intel, mt->region);
-   } else {
-      assert(mt->level[level].depth == 1);
-      intel_miptree_get_image_offset(mt, level, face, 0,
-				     &x, &y);
-      image_offsets[0] = 0;
-
-      DBG("%s: (%d,%d) -> (%d, %d)/%d\n",
-	  __FUNCTION__, face, level, x, y, mt->region->pitch * mt->cpp);
-
-      return intel_region_map(intel, mt->region) +
-	 (x + y * mt->region->pitch) * mt->cpp;
-   }
-}
-
-
-void
-intel_miptree_image_unmap(struct intel_context *intel,
-                          struct intel_mipmap_tree *mt)
-{
-   DBG("%s\n", __FUNCTION__);
-   intel_region_unmap(intel, mt->region);
-}
-
-
-/**
  * Upload data for a particular image.
  */
 void

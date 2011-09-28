@@ -165,18 +165,6 @@ void intel_miptree_release(struct intel_mipmap_tree **mt);
 GLboolean intel_miptree_match_image(struct intel_mipmap_tree *mt,
                                     struct gl_texture_image *image);
 
-/* Return a pointer to an image within a tree.  Return image stride as
- * well.
- */
-GLubyte *intel_miptree_image_map(struct intel_context *intel,
-                                 struct intel_mipmap_tree *mt,
-                                 GLuint face,
-                                 GLuint level,
-                                 GLuint * row_stride, GLuint * image_stride);
-
-void intel_miptree_image_unmap(struct intel_context *intel,
-                               struct intel_mipmap_tree *mt);
-
 void
 intel_miptree_get_image_offset(struct intel_mipmap_tree *mt,
 			       GLuint level, GLuint face, GLuint depth,
