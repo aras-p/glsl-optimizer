@@ -561,7 +561,7 @@ vec4_visitor::setup_uniform_clipplane_values()
 
    int compacted_clipplane_index = 0;
    for (int i = 0; i < MAX_CLIP_PLANES; ++i) {
-      if (ctx->Transform.ClipPlanesEnabled & (1 << i)) {
+      if (c->key.userclip_planes_enabled & (1 << i)) {
          this->uniform_vector_size[this->uniforms] = 4;
          this->userplane[compacted_clipplane_index] = dst_reg(UNIFORM, this->uniforms);
          this->userplane[compacted_clipplane_index].type = BRW_REGISTER_TYPE_F;

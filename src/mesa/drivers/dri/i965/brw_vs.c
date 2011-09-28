@@ -289,6 +289,8 @@ static void brw_upload_vs_prog(struct brw_context *brw)
    key.program_string_id = vp->id;
    key.nr_userclip = _mesa_bitcount_64(ctx->Transform.ClipPlanesEnabled);
    key.uses_clip_distance = vp->program.UsesClipDistance;
+   if (!key.uses_clip_distance)
+      key.userclip_planes_enabled = ctx->Transform.ClipPlanesEnabled;
    key.copy_edgeflag = (ctx->Polygon.FrontMode != GL_FILL ||
 			ctx->Polygon.BackMode != GL_FILL);
 
