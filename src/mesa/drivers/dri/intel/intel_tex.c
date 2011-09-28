@@ -60,6 +60,11 @@ intel_alloc_texture_image_buffer(struct gl_context *ctx,
    struct gl_texture_object *texobj = image->TexObject;
    struct intel_texture_object *intel_texobj = intel_texture_object(texobj);
 
+   if (intel->must_use_separate_stencil
+       && image->TexFormat == MESA_FORMAT_S8_Z24) {
+      intel_tex_image_s8z24_create_renderbuffers(intel, intel_image);
+   }
+
    if (intel_texobj->mt &&
        intel_miptree_match_image(intel_texobj->mt, image)) {
       intel_miptree_reference(&intel_image->mt, intel_texobj->mt);

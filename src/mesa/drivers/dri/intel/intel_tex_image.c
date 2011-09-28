@@ -282,7 +282,7 @@ intel_tex_image_s8z24_gather(struct intel_context *intel,
    intel_tex_image_s8z24_scattergather(intel, intel_image, false);
 }
 
-static bool
+bool
 intel_tex_image_s8z24_create_renderbuffers(struct intel_context *intel,
 					   struct intel_texture_image *image)
 {

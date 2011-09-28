@@ -68,6 +68,9 @@ void intel_tex_map_images(struct intel_context *intel,
 
 void intel_tex_unmap_images(struct intel_context *intel,
                             struct intel_texture_object *intelObj);
+bool
+intel_tex_image_s8z24_create_renderbuffers(struct intel_context *intel,
+					   struct intel_texture_image *image);
 
 void intel_tex_image_s8z24_scatter(struct intel_context *intel,
 				   struct intel_texture_image *intel_image);
