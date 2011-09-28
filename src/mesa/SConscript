@@ -480,7 +480,7 @@ def write_git_sha1_h_file(filename):
             f.close()
         return
 
-    commit = '#define MESA_GIT_SHA1 "%s"\n' % commit[0:7]
+    commit = '#define MESA_GIT_SHA1 "git-%s"\n' % commit[0:7]
     tempfile = "git_sha1.h.tmp"
     f = open(tempfile, "w")
     f.write(commit)
