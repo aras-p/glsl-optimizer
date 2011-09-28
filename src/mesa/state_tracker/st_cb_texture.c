@@ -1707,7 +1707,7 @@ st_finalize_texture(struct gl_context *ctx,
                                  firstImage->base.Width2,
                                  firstImage->base.Height2,
                                  firstImage->base.Depth2,
-                                 stObj->base.BaseLevel,
+                                 firstImage->base.Level,
                                  &width, &height, &depth)) {
          width = stObj->width0;
          height = stObj->height0;
