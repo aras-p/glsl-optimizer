@@ -1652,100 +1652,6 @@ make_3d_mipmap(GLenum datatype, GLuint comps, GLint border,
    }
 }
 
-/**
- * \bug
- * There is quite a bit of refactoring that could be done with this function
- * and \c make_2d_mipmap.
- */
-static void
-make_2d_stack_mipmap(GLenum datatype, GLuint comps, GLint border,
-                     GLint srcWidth, GLint srcHeight,
-		     const GLubyte **srcPtr, GLint srcRowStride,
-                     GLint dstWidth, GLint dstHeight, GLint dstDepth,
-                     GLubyte **dstPtr, GLint dstRowStride)
-{
-   const GLint bpt = bytes_per_pixel(datatype, comps);
-   const GLint srcWidthNB = srcWidth - 2 * border;  /* sizes w/out border */
-   const GLint dstWidthNB = dstWidth - 2 * border;
-   const GLint dstHeightNB = dstHeight - 2 * border;
-   const GLint dstDepthNB = dstDepth - 2 * border;
-   const GLubyte *srcA, *srcB;
-   GLubyte *dst;
-   GLint layer;
-   GLint row;
-
-   for (layer = 0; layer < dstDepthNB; layer++) {
-
-      /* Compute src and dst pointers, skipping any border */
-      srcA = srcPtr[layer] + border * (srcWidth + 1) * bpt;
-      if (srcHeight > 1)
-         srcB = srcA + srcRowStride;
-      else
-         srcB = srcA;
-      dst = dstPtr[layer] + border * (dstWidth + 1) * bpt;
-
-      for (row = 0; row < dstHeightNB; row++) {
-         do_row(datatype, comps, srcWidthNB, srcA, srcB,
-                dstWidthNB, dst);
-         srcA += 2 * srcRowStride;
-         srcB += 2 * srcRowStride;
-         dst += dstRowStride;
-      }
-
-      /* This is ugly but probably won't be used much */
-      if (border > 0) {
-         /* fill in dest border */
-         /* lower-left border pixel */
-         assert(dstPtr[layer]);
-         assert(srcPtr[layer]);
-         memcpy(dstPtr[layer], srcPtr[0], bpt);
-         /* lower-right border pixel */
-         memcpy(dstPtr[layer] + (dstWidth - 1) * bpt,
-                srcPtr[layer] + (srcWidth - 1) * bpt, bpt);
-         /* upper-left border pixel */
-         memcpy(dstPtr[layer] + dstWidth * (dstHeight - 1) * bpt,
-                srcPtr[layer] + srcWidth * (srcHeight - 1) * bpt, bpt);
-         /* upper-right border pixel */
-         memcpy(dstPtr[layer] + (dstWidth * dstHeight - 1) * bpt,
-                srcPtr[layer] + (srcWidth * srcHeight - 1) * bpt, bpt);
-         /* lower border */
-         do_row(datatype, comps, srcWidthNB,
-                srcPtr[layer] + bpt,
-                srcPtr[layer] + bpt,
-                dstWidthNB, dstPtr[layer] + bpt);
-         /* upper border */
-         do_row(datatype, comps, srcWidthNB,
-                srcPtr[layer] + (srcWidth * (srcHeight - 1) + 1) * bpt,
-                srcPtr[layer] + (srcWidth * (srcHeight - 1) + 1) * bpt,
-                dstWidthNB,
-                dstPtr[layer] + (dstWidth * (dstHeight - 1) + 1) * bpt);
-         /* left and right borders */
-         if (srcHeight == dstHeight) {
-            /* copy border pixel from src to dst */
-            for (row = 1; row < srcHeight; row++) {
-               memcpy(dstPtr[layer] + dstWidth * row * bpt,
-                      srcPtr[layer] + srcWidth * row * bpt, bpt);
-               memcpy(dstPtr[layer] + (dstWidth * row + dstWidth - 1) * bpt,
-                      srcPtr[layer] + (srcWidth * row + srcWidth - 1) * bpt, bpt);
-            }
-         }
-         else {
-            /* average two src pixels each dest pixel */
-            for (row = 0; row < dstHeightNB; row += 2) {
-               do_row(datatype, comps, 1,
-                      srcPtr[layer] + (srcWidth * (row * 2 + 1)) * bpt,
-                      srcPtr[layer] + (srcWidth * (row * 2 + 2)) * bpt,
-                      1, dstPtr[layer] + (dstWidth * row + 1) * bpt);
-               do_row(datatype, comps, 1,
-                      srcPtr[layer] + (srcWidth * (row * 2 + 1) + srcWidth - 1) * bpt,
-                      srcPtr[layer] + (srcWidth * (row * 2 + 2) + srcWidth - 1) * bpt,
-                      1, dstPtr[layer] + (dstWidth * row + 1 + dstWidth - 1) * bpt);
-            }
-         }
-      }
-   }
-}
-
 
 /**
  * Down-sample a texture image to produce the next lower mipmap level.
@@ -1802,11 +1708,11 @@ _mesa_generate_mipmap_level(GLenum target,
       }
       break;
    case GL_TEXTURE_2D_ARRAY_EXT:
-      make_2d_stack_mipmap(datatype, comps, border,
-                           srcWidth, srcHeight,
-                           srcData, srcRowStride,
-                           dstWidth, dstHeight,
-                           dstDepth, dstData, dstRowStride);
+      for (i = 0; i < dstDepth; i++) {
+	 make_2d_mipmap(datatype, comps, border,
+			srcWidth, srcHeight, srcData[i], srcRowStride,
+			dstWidth, dstHeight, dstData[i], dstRowStride);
+      }
       break;
    case GL_TEXTURE_RECTANGLE_NV:
       /* no mipmaps, do nothing */
