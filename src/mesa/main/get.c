@@ -326,6 +326,7 @@ EXTRA_EXT2(ARB_fragment_program, NV_fragment_program);
 EXTRA_EXT2(ARB_vertex_program, NV_vertex_program);
 EXTRA_EXT2(ARB_vertex_program, ARB_fragment_program);
 EXTRA_EXT(ARB_geometry_shader4);
+EXTRA_EXT(ARB_color_buffer_float);
 EXTRA_EXT(ARB_copy_buffer);
 EXTRA_EXT(EXT_framebuffer_sRGB);
 EXTRA_EXT(ARB_texture_buffer_object);
@@ -480,6 +481,11 @@ static const struct value_desc values[] = {
    /* GL_ARB_vertex_buffer_object */
    /* GL_WEIGHT_ARRAY_BUFFER_BINDING_ARB - not supported */
    { GL_ELEMENT_ARRAY_BUFFER_BINDING_ARB, LOC_CUSTOM, TYPE_INT, 0, NO_EXTRA },
+
+   /* GL_ARB_color_buffer_float */
+   { GL_CLAMP_VERTEX_COLOR, CONTEXT_ENUM(Light.ClampVertexColor), extra_ARB_color_buffer_float },
+   { GL_CLAMP_FRAGMENT_COLOR, CONTEXT_ENUM(Color.ClampFragmentColor), extra_ARB_color_buffer_float },
+   { GL_CLAMP_READ_COLOR, CONTEXT_ENUM(Color.ClampReadColor), extra_ARB_color_buffer_float },
 
    /* GL_ARB_copy_buffer */
    { GL_COPY_READ_BUFFER, LOC_CUSTOM, TYPE_INT, 0, extra_ARB_copy_buffer },
