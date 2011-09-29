@@ -41,6 +41,8 @@ vec4_instruction::is_math()
 	   opcode == SHADER_OPCODE_LOG2 ||
 	   opcode == SHADER_OPCODE_SIN ||
 	   opcode == SHADER_OPCODE_COS ||
+	   opcode == SHADER_OPCODE_INT_QUOTIENT ||
+	   opcode == SHADER_OPCODE_INT_REMAINDER ||
 	   opcode == SHADER_OPCODE_POW);
 }
 /**

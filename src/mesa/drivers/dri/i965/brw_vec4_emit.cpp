@@ -307,7 +307,7 @@ vec4_visitor::generate_math2_gen4(vec4_instruction *inst,
 				  struct brw_reg src0,
 				  struct brw_reg src1)
 {
-   brw_MOV(p, brw_message_reg(inst->base_mrf + 1), src1);
+   brw_MOV(p, retype(brw_message_reg(inst->base_mrf + 1), src1.type), src1);
 
    brw_math(p,
 	    dst,
@@ -544,6 +544,8 @@ vec4_visitor::generate_vs_instruction(vec4_instruction *instruction,
       break;
 
    case SHADER_OPCODE_POW:
+   case SHADER_OPCODE_INT_QUOTIENT:
+   case SHADER_OPCODE_INT_REMAINDER:
       if (intel->gen >= 6) {
 	 generate_math2_gen6(inst, dst, src[0], src[1]);
       } else {

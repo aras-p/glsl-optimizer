@@ -326,10 +326,12 @@ vec4_visitor::emit_math2_gen6(enum opcode opcode,
     */
 
    expanded = src_reg(this, glsl_type::vec4_type);
+   expanded.type = src0.type;
    emit(MOV(dst_reg(expanded), src0));
    src0 = expanded;
 
    expanded = src_reg(this, glsl_type::vec4_type);
+   expanded.type = src1.type;
    emit(MOV(dst_reg(expanded), src1));
    src1 = expanded;
 
@@ -338,6 +340,7 @@ vec4_visitor::emit_math2_gen6(enum opcode opcode,
        * writemasks.
        */
       dst_reg temp_dst = dst_reg(this, glsl_type::vec4_type);
+      temp_dst.type = dst.type;
 
       emit(opcode, temp_dst, src0, src1);
 
@@ -360,7 +363,15 @@ void
 vec4_visitor::emit_math(enum opcode opcode,
 			dst_reg dst, src_reg src0, src_reg src1)
 {
-   assert(opcode == SHADER_OPCODE_POW);
+   switch (opcode) {
+   case SHADER_OPCODE_POW:
+   case SHADER_OPCODE_INT_QUOTIENT:
+   case SHADER_OPCODE_INT_REMAINDER:
+      break;
+   default:
+      assert(!"not reached: unsupported binary math opcode");
+      return;
+   }
 
    if (intel->gen >= 6) {
       return emit_math2_gen6(opcode, dst, src0, src1);
@@ -1112,9 +1123,14 @@ vec4_visitor::visit(ir_expression *ir)
       }
       break;
    case ir_binop_div:
-      assert(!"not reached: should be handled by ir_div_to_mul_rcp");
+      /* Floating point should be lowered by DIV_TO_MUL_RCP in the compiler. */
+      assert(ir->type->is_integer());
+      emit_math(SHADER_OPCODE_INT_QUOTIENT, result_dst, op[0], op[1]);
+      break;
    case ir_binop_mod:
-      assert(!"ir_binop_mod should have been converted to b * fract(a/b)");
+      /* Floating point should be lowered by MOD_TO_FRACT in the compiler. */
+      assert(ir->type->is_integer());
+      emit_math(SHADER_OPCODE_INT_REMAINDER, result_dst, op[0], op[1]);
       break;
 
    case ir_binop_less:
