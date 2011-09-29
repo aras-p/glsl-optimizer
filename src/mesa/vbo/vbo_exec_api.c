@@ -570,6 +570,9 @@ static void GLAPIENTRY vbo_exec_Begin( GLenum mode )
          return;
       }
 
+      if (ctx->Driver.PrepareExecBegin)
+	 ctx->Driver.PrepareExecBegin(ctx);
+
       if (ctx->NewState) {
 	 _mesa_update_state( ctx );
 

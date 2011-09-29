@@ -861,6 +861,14 @@ struct dd_function_table {
    void (*SaveFlushVertices)( struct gl_context *ctx );
 
    /**
+    * \brief Hook for drivers to prepare for a glBegin/glEnd block
+    *
+    * This hook is called in vbo_exec_Begin() before any action, including
+    * state updates, occurs.
+    */
+   void (*PrepareExecBegin)( struct gl_context *ctx );
+
+   /**
     * Give the driver the opportunity to hook in its own vtxfmt for
     * compiling optimized display lists.  This is called on each valid
     * glBegin() during list compilation.
