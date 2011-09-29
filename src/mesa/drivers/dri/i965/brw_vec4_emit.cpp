@@ -307,14 +307,27 @@ vec4_visitor::generate_math2_gen4(vec4_instruction *inst,
 				  struct brw_reg src0,
 				  struct brw_reg src1)
 {
-   brw_MOV(p, retype(brw_message_reg(inst->base_mrf + 1), src1.type), src1);
+   /* From the Ironlake PRM, Volume 4, Part 1, Section 6.1.13
+    * "Message Payload":
+    *
+    * "Operand0[7].  For the INT DIV functions, this operand is the
+    *  denominator."
+    *  ...
+    * "Operand1[7].  For the INT DIV functions, this operand is the
+    *  numerator."
+    */
+   bool is_int_div = inst->opcode != SHADER_OPCODE_POW;
+   struct brw_reg &op0 = is_int_div ? src1 : src0;
+   struct brw_reg &op1 = is_int_div ? src0 : src1;
+
+   brw_MOV(p, retype(brw_message_reg(inst->base_mrf + 1), op1.type), op1);
 
    brw_math(p,
 	    dst,
 	    brw_math_function(inst->opcode),
 	    BRW_MATH_SATURATE_NONE,
 	    inst->base_mrf,
-	    src0,
+	    op0,
 	    BRW_MATH_DATA_VECTOR,
 	    BRW_MATH_PRECISION_FULL);
 }

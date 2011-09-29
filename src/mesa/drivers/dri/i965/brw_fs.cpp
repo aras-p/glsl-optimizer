@@ -610,8 +610,21 @@ fs_visitor::emit_math(enum opcode opcode, fs_reg dst, fs_reg src0, fs_reg src1)
 
       inst = emit(opcode, dst, src0, src1);
    } else {
-      emit(BRW_OPCODE_MOV, fs_reg(MRF, base_mrf + 1, src1.type), src1);
-      inst = emit(opcode, dst, src0, reg_null_f);
+      /* From the Ironlake PRM, Volume 4, Part 1, Section 6.1.13
+       * "Message Payload":
+       *
+       * "Operand0[7].  For the INT DIV functions, this operand is the
+       *  denominator."
+       *  ...
+       * "Operand1[7].  For the INT DIV functions, this operand is the
+       *  numerator."
+       */
+      bool is_int_div = opcode != SHADER_OPCODE_POW;
+      fs_reg &op0 = is_int_div ? src1 : src0;
+      fs_reg &op1 = is_int_div ? src0 : src1;
+
+      emit(BRW_OPCODE_MOV, fs_reg(MRF, base_mrf + 1, op1.type), op1);
+      inst = emit(opcode, dst, op0, reg_null_f);
 
       inst->base_mrf = base_mrf;
       inst->mlen = 2 * c->dispatch_width / 8;
