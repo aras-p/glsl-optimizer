@@ -170,6 +170,10 @@ intel_map_texture_image(struct gl_context *ctx,
 
       *stride = mt->region->pitch * mt->cpp;
       *map = base + y * *stride + x * mt->cpp;
+
+      DBG("%s: %d,%d %dx%d from mt %p %d,%d = %p/%d\n", __FUNCTION__,
+	  x - image_x, y - image_y, w, h,
+	  mt, x, y, *map, *stride);
    } else {
       /* texture data is in malloc'd memory */
       GLuint width = tex_image->Width;
@@ -181,7 +185,9 @@ intel_map_texture_image(struct gl_context *ctx,
       *stride = _mesa_format_row_stride(tex_image->TexFormat, width);
       *map = tex_image->Data + (slice * height + y) * *stride + x * texelSize;
 
-      return;
+      DBG("%s: %d,%d %dx%d from data %p = %p/%d\n", __FUNCTION__,
+	  x, y, w, h,
+	  tex_image->Data, *map, *stride);
    }
 }
 
