@@ -1652,45 +1652,6 @@ make_3d_mipmap(GLenum datatype, GLuint comps, GLint border,
    }
 }
 
-
-static void
-make_1d_stack_mipmap(GLenum datatype, GLuint comps, GLint border,
-                     GLint srcWidth, const GLubyte *srcPtr, GLuint srcRowStride,
-                     GLint dstWidth, GLint dstHeight,
-		     GLubyte *dstPtr, GLuint dstRowStride )
-{
-   const GLint bpt = bytes_per_pixel(datatype, comps);
-   const GLint srcWidthNB = srcWidth - 2 * border;  /* sizes w/out border */
-   const GLint dstWidthNB = dstWidth - 2 * border;
-   const GLint dstHeightNB = dstHeight - 2 * border;
-   const GLubyte *src;
-   GLubyte *dst;
-   GLint row;
-
-   /* Compute src and dst pointers, skipping any border */
-   src = srcPtr + border * ((srcWidth + 1) * bpt);
-   dst = dstPtr + border * ((dstWidth + 1) * bpt);
-
-   for (row = 0; row < dstHeightNB; row++) {
-      do_row(datatype, comps, srcWidthNB, src, src,
-             dstWidthNB, dst);
-      src += srcRowStride;
-      dst += dstRowStride;
-   }
-
-   if (border) {
-      /* copy left-most pixel from source */
-      assert(dstPtr);
-      assert(srcPtr);
-      memcpy(dstPtr, srcPtr, bpt);
-      /* copy right-most pixel from source */
-      memcpy(dstPtr + (dstWidth - 1) * bpt,
-             srcPtr + (srcWidth - 1) * bpt,
-             bpt);
-   }
-}
-
-
 /**
  * \bug
  * There is quite a bit of refactoring that could be done with this function
@@ -1805,6 +1766,8 @@ _mesa_generate_mipmap_level(GLenum target,
                             GLubyte **dstData,
                             GLint dstRowStride)
 {
+   int i;
+
    switch (target) {
    case GL_TEXTURE_1D:
       make_1d_mipmap(datatype, comps, border,
@@ -1830,10 +1793,13 @@ _mesa_generate_mipmap_level(GLenum target,
                      dstData, dstRowStride);
       break;
    case GL_TEXTURE_1D_ARRAY_EXT:
-      make_1d_stack_mipmap(datatype, comps, border,
-                           srcWidth, srcData[0], srcRowStride,
-                           dstWidth, dstHeight,
-                           dstData[0], dstRowStride);
+      assert(srcHeight == 1);
+      assert(dstHeight == 1);
+      for (i = 0; i < dstDepth; i++) {
+	 make_1d_mipmap(datatype, comps, border,
+			srcWidth, srcData[i],
+			dstWidth, dstData[i]);
+      }
       break;
    case GL_TEXTURE_2D_ARRAY_EXT:
       make_2d_stack_mipmap(datatype, comps, border,
@@ -1957,6 +1923,13 @@ generate_mipmap_uncompressed(struct gl_context *ctx, GLenum target,
 
       ASSERT(dstImage->TexFormat);
 
+      if (target == GL_TEXTURE_1D_ARRAY) {
+	 srcDepth = srcHeight;
+	 dstDepth = dstHeight;
+	 srcHeight = 1;
+	 dstHeight = 1;
+      }
+
       /* Map src texture image slices */
       srcMaps = (GLubyte **) malloc(srcDepth * sizeof(GLubyte *));
       for (slice = 0; slice < srcDepth; slice++) {
@@ -1988,7 +1961,7 @@ generate_mipmap_uncompressed(struct gl_context *ctx, GLenum target,
       }
       free(srcMaps);
 
-      /* Unmap src image slices */
+      /* Unmap dst image slices */
       for (slice = 0; slice < dstDepth; slice++) {
          ctx->Driver.UnmapTextureImage(ctx, dstImage, slice);
       }
