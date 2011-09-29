@@ -142,6 +142,10 @@ intel_map_texture_image(struct gl_context *ctx,
    struct intel_mipmap_tree *mt = intel_image->mt;
    unsigned int bw, bh;
 
+   /* Check that our caller wasn't confused about how to map a 1D texture. */
+   assert(tex_image->TexObject->Target != GL_TEXTURE_1D_ARRAY ||
+	  h == 1);
+
    if (intel_image->stencil_rb) {
       /*
        * The texture has packed depth/stencil format, but uses separate
