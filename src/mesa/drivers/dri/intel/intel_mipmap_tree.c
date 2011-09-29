@@ -214,6 +214,23 @@ intel_miptree_release(struct intel_mipmap_tree **mt)
    *mt = NULL;
 }
 
+void
+intel_miptree_get_dimensions_for_image(struct gl_texture_image *image,
+                                       int *width, int *height, int *depth)
+{
+   switch (image->TexObject->Target) {
+   case GL_TEXTURE_1D_ARRAY:
+      *width = image->Width;
+      *height = 1;
+      *depth = image->Height;
+      break;
+   default:
+      *width = image->Width;
+      *height = image->Height;
+      *depth = image->Depth;
+      break;
+   }
+}
 
 /**
  * Can the image be pulled into a unified mipmap tree?  This mirrors
@@ -227,6 +244,7 @@ intel_miptree_match_image(struct intel_mipmap_tree *mt,
 {
    struct intel_texture_image *intelImage = intel_texture_image(image);
    GLuint level = intelImage->base.Base.Level;
+   int width, height, depth;
 
    /* Images with borders are never pulled into mipmap trees. */
    if (image->Border)
@@ -235,13 +253,15 @@ intel_miptree_match_image(struct intel_mipmap_tree *mt,
    if (image->TexFormat != mt->format)
       return GL_FALSE;
 
+   intel_miptree_get_dimensions_for_image(image, &width, &height, &depth);
+
    /* Test image dimensions against the base level image adjusted for
     * minification.  This will also catch images not present in the
     * tree, changed targets, etc.
     */
-   if (image->Width != mt->level[level].width ||
-       image->Height != mt->level[level].height ||
-       image->Depth != mt->level[level].depth)
+   if (width != mt->level[level].width ||
+       height != mt->level[level].height ||
+       depth != mt->level[level].depth)
       return GL_FALSE;
 
    return GL_TRUE;

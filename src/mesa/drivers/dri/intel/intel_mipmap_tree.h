@@ -171,6 +171,10 @@ intel_miptree_get_image_offset(struct intel_mipmap_tree *mt,
 			       GLuint level, GLuint face, GLuint depth,
 			       GLuint *x, GLuint *y);
 
+void
+intel_miptree_get_dimensions_for_image(struct gl_texture_image *image,
+                                       int *width, int *height, int *depth);
+
 void intel_miptree_set_level_info(struct intel_mipmap_tree *mt,
                                   GLuint level,
                                   GLuint nr_images,

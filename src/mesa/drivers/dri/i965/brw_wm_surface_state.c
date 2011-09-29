@@ -231,6 +231,9 @@ brw_update_texture_surface( struct gl_context *ctx, GLuint unit )
    struct gl_sampler_object *sampler = _mesa_get_samplerobj(ctx, unit);
    const GLuint surf_index = SURF_INDEX_TEXTURE(unit);
    uint32_t *surf;
+   int width, height, depth;
+
+   intel_miptree_get_dimensions_for_image(firstImage, &width, &height, &depth);
 
    surf = brw_state_batch(brw, AUB_TRACE_SURFACE_STATE,
 			  6 * 4, 32, &brw->wm.surf_offset[surf_index]);
@@ -247,11 +250,11 @@ brw_update_texture_surface( struct gl_context *ctx, GLuint unit )
    surf[1] = intelObj->mt->region->bo->offset; /* reloc */
 
    surf[2] = ((intelObj->_MaxLevel - tObj->BaseLevel) << BRW_SURFACE_LOD_SHIFT |
-	      (firstImage->Width - 1) << BRW_SURFACE_WIDTH_SHIFT |
-	      (firstImage->Height - 1) << BRW_SURFACE_HEIGHT_SHIFT);
+	      (width - 1) << BRW_SURFACE_WIDTH_SHIFT |
+	      (height - 1) << BRW_SURFACE_HEIGHT_SHIFT);
 
    surf[3] = (brw_get_surface_tiling_bits(intelObj->mt->region->tiling) |
-	      (firstImage->Depth - 1) << BRW_SURFACE_DEPTH_SHIFT |
+	      (depth - 1) << BRW_SURFACE_DEPTH_SHIFT |
 	      ((intelObj->mt->region->pitch * intelObj->mt->cpp) - 1) <<
 	      BRW_SURFACE_PITCH_SHIFT);
 

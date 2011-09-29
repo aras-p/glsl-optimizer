@@ -64,6 +64,9 @@ gen7_update_texture_surface(struct gl_context *ctx, GLuint unit)
    struct gl_sampler_object *sampler = _mesa_get_samplerobj(ctx, unit);
    const GLuint surf_index = SURF_INDEX_TEXTURE(unit);
    struct gen7_surface_state *surf;
+   int width, height, depth;
+
+   intel_miptree_get_dimensions_for_image(firstImage, &width, &height, &depth);
 
    surf = brw_state_batch(brw, AUB_TRACE_SURFACE_STATE,
 			  sizeof(*surf), 32, &brw->wm.surf_offset[surf_index]);
@@ -97,11 +100,11 @@ gen7_update_texture_surface(struct gl_context *ctx, GLuint unit)
 
    surf->ss1.base_addr = intelObj->mt->region->bo->offset; /* reloc */
 
-   surf->ss2.width = firstImage->Width - 1;
-   surf->ss2.height = firstImage->Height - 1;
+   surf->ss2.width = width - 1;
+   surf->ss2.height = height - 1;
 
    surf->ss3.pitch = (intelObj->mt->region->pitch * intelObj->mt->cpp) - 1;
-   surf->ss3.depth = firstImage->Depth - 1;
+   surf->ss3.depth = depth - 1;
 
    /* ss4: ignored? */
 

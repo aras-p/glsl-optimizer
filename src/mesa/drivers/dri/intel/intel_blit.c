@@ -525,7 +525,12 @@ intel_set_teximage_alpha_to_one(struct gl_context *ctx,
    int pitch, cpp;
    drm_intel_bo *aper_array[2];
    struct intel_region *region = intel_image->mt->region;
+   int width, height, depth;
    BATCH_LOCALS;
+
+   intel_miptree_get_dimensions_for_image(&intel_image->base.Base,
+                                          &width, &height, &depth);
+   assert(depth == 1);
 
    assert(intel_image->base.Base.TexFormat == MESA_FORMAT_ARGB8888);
 
@@ -538,8 +543,8 @@ intel_set_teximage_alpha_to_one(struct gl_context *ctx,
 
    x1 = image_x;
    y1 = image_y;
-   x2 = image_x + intel_image->base.Base.Width;
-   y2 = image_y + intel_image->base.Base.Height;
+   x2 = image_x + width;
+   y2 = image_y + height;
 
    pitch = region->pitch;
    cpp = region->cpp;

@@ -41,6 +41,7 @@ intel_finalize_mipmap_tree(struct intel_context *intel, GLuint unit)
    GLuint face, i;
    GLuint nr_faces = 0;
    struct intel_texture_image *firstImage;
+   int width, height, depth;
 
    /* We know/require this is true by now: 
     */
@@ -58,6 +59,9 @@ intel_finalize_mipmap_tree(struct intel_context *intel, GLuint unit)
       return GL_FALSE;
    }
 
+   intel_miptree_get_dimensions_for_image(&firstImage->base.Base,
+                                          &width, &height, &depth);
+
    /* Check tree can hold all active levels.  Check tree matches
     * target, imageFormat, etc.
     *
@@ -71,9 +75,9 @@ intel_finalize_mipmap_tree(struct intel_context *intel, GLuint unit)
 	intelObj->mt->format != firstImage->base.Base.TexFormat ||
 	intelObj->mt->first_level != tObj->BaseLevel ||
 	intelObj->mt->last_level < intelObj->_MaxLevel ||
-	intelObj->mt->width0 != firstImage->base.Base.Width ||
-	intelObj->mt->height0 != firstImage->base.Base.Height ||
-	intelObj->mt->depth0 != firstImage->base.Base.Depth)) {
+	intelObj->mt->width0 != width ||
+	intelObj->mt->height0 != height ||
+	intelObj->mt->depth0 != depth)) {
       intel_miptree_release(&intelObj->mt);
    }
 
@@ -86,9 +90,9 @@ intel_finalize_mipmap_tree(struct intel_context *intel, GLuint unit)
 					  firstImage->base.Base.TexFormat,
                                           tObj->BaseLevel,
                                           intelObj->_MaxLevel,
-                                          firstImage->base.Base.Width,
-                                          firstImage->base.Base.Height,
-                                          firstImage->base.Base.Depth,
+                                          width,
+                                          height,
+                                          depth,
 					  GL_TRUE);
       if (!intelObj->mt)
          return GL_FALSE;

@@ -53,10 +53,11 @@ intel_miptree_create_for_teximage(struct intel_context *intel,
 {
    GLuint firstLevel;
    GLuint lastLevel;
-   GLuint width = intelImage->base.Base.Width;
-   GLuint height = intelImage->base.Base.Height;
-   GLuint depth = intelImage->base.Base.Depth;
+   int width, height, depth;
    GLuint i;
+
+   intel_miptree_get_dimensions_for_image(&intelImage->base.Base,
+                                          &width, &height, &depth);
 
    DBG("%s\n", __FUNCTION__);
 
@@ -64,11 +65,9 @@ intel_miptree_create_for_teximage(struct intel_context *intel,
       return NULL;
 
    if (intelImage->base.Base.Level > intelObj->base.BaseLevel &&
-       (intelImage->base.Base.Width == 1 ||
-        (intelObj->base.Target != GL_TEXTURE_1D &&
-         intelImage->base.Base.Height == 1) ||
-        (intelObj->base.Target == GL_TEXTURE_3D &&
-         intelImage->base.Base.Depth == 1))) {
+       (width == 1 ||
+        (intelObj->base.Target != GL_TEXTURE_1D && height == 1) ||
+        (intelObj->base.Target == GL_TEXTURE_3D && depth == 1))) {
       /* For this combination, we're at some lower mipmap level and
        * some important dimension is 1.  We can't extrapolate up to a
        * likely base level width/height/depth for a full mipmap stack
@@ -231,9 +230,10 @@ intel_tex_image_s8z24_scattergather(struct intel_context *intel,
    struct gl_context *ctx = &intel->ctx;
    struct gl_renderbuffer *depth_rb = intel_image->depth_rb;
    struct gl_renderbuffer *stencil_rb = intel_image->stencil_rb;
+   int w, h, d;
 
-   int w = intel_image->base.Base.Width;
-   int h = intel_image->base.Base.Height;
+   intel_miptree_get_dimensions_for_image(&intel_image->base.Base, &w, &h, &d);
+   assert(d == 1); /* FINISHME */
 
    uint32_t depth_row[w];
    uint8_t stencil_row[w];
@@ -292,14 +292,16 @@ intel_tex_image_s8z24_create_renderbuffers(struct intel_context *intel,
 					   struct intel_texture_image *image)
 {
    struct gl_context *ctx = &intel->ctx;
-
    bool ok = true;
-   int width = image->base.Base.Width;
-   int height = image->base.Base.Height;
+   int width, height, depth;
    struct gl_renderbuffer *drb;
    struct gl_renderbuffer *srb;
    struct intel_renderbuffer *idrb;
    struct intel_renderbuffer *isrb;
+
+   intel_miptree_get_dimensions_for_image(&image->base.Base,
+                                          &width, &height, &depth);
+   assert(depth == 1); /* FINISHME */
 
    assert(intel->has_separate_stencil);
    assert(image->base.Base.TexFormat == MESA_FORMAT_S8_Z24);

@@ -483,6 +483,7 @@ intel_update_wrapper(struct gl_context *ctx, struct intel_renderbuffer *irb,
 {
    struct intel_context *intel = intel_context(ctx);
    struct intel_texture_image *intel_image = intel_texture_image(texImage);
+   int width, height, depth;
 
    if (!intel_span_supports_format(texImage->TexFormat)) {
       DBG("Render to texture BAD FORMAT %s\n",
@@ -492,12 +493,14 @@ intel_update_wrapper(struct gl_context *ctx, struct intel_renderbuffer *irb,
       DBG("Render to texture %s\n", _mesa_get_format_name(texImage->TexFormat));
    }
 
+   intel_miptree_get_dimensions_for_image(texImage, &width, &height, &depth);
+
    irb->Base.Format = texImage->TexFormat;
    irb->Base.DataType = intel_mesa_format_to_rb_datatype(texImage->TexFormat);
    irb->Base.InternalFormat = texImage->InternalFormat;
    irb->Base._BaseFormat = _mesa_base_tex_format(ctx, irb->Base.InternalFormat);
-   irb->Base.Width = texImage->Width;
-   irb->Base.Height = texImage->Height;
+   irb->Base.Width = width;
+   irb->Base.Height = height;
 
    irb->Base.Delete = intel_delete_renderbuffer;
    irb->Base.AllocStorage = intel_nop_alloc_storage;
@@ -730,14 +733,15 @@ intel_render_texture(struct gl_context * ctx,
        */
       struct intel_context *intel = intel_context(ctx);
       struct intel_mipmap_tree *new_mt;
+      int width, height, depth;
+
+      intel_miptree_get_dimensions_for_image(image, &width, &height, &depth);
 
       new_mt = intel_miptree_create(intel, image->TexObject->Target,
 				    intel_image->base.Base.TexFormat,
 				    intel_image->base.Base.Level,
 				    intel_image->base.Base.Level,
-				    intel_image->base.Base.Width,
-				    intel_image->base.Base.Height,
-				    intel_image->base.Base.Depth,
+                                    width, height, depth,
 				    GL_TRUE);
 
       intel_miptree_copy_teximage(intel, intel_image, new_mt);
