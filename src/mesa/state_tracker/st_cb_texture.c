@@ -922,8 +922,7 @@ decompress_with_blit(struct gl_context * ctx, GLenum target, GLint level,
 
 
 /**
- * Need to map texture image into memory before copying image data,
- * then unmap it.
+ * Called via ctx->Driver.GetTexImage()
  */
 static void
 st_GetTexImage(struct gl_context * ctx, GLenum target, GLint level,
@@ -931,46 +930,21 @@ st_GetTexImage(struct gl_context * ctx, GLenum target, GLint level,
                struct gl_texture_object *texObj,
                struct gl_texture_image *texImage)
 {
-   struct st_context *st = st_context(ctx);
    struct st_texture_image *stImage = st_texture_image(texImage);
-   const GLuint dstImageStride =
-      _mesa_image_image_stride(&ctx->Pack, texImage->Width, texImage->Height,
-                               format, type);
-   GLuint depth, i;
-   GLubyte *dest;
 
    if (stImage->pt && util_format_is_s3tc(stImage->pt->format)) {
       /* Need to decompress the texture.
-       * We'll do this by rendering a textured quad.
+       * We'll do this by rendering a textured quad (which is hopefully
+       * faster than using the fallback code in texcompress.c.
        * Note that we only expect RGBA formats (no Z/depth formats).
        */
       decompress_with_blit(ctx, target, level, format, type, pixels,
                            texObj, texImage);
-      return;
    }
-
-   depth = texImage->Depth;
-   texImage->Depth = 1;
-
-   dest = (GLubyte *) pixels;
-
-   for (i = 0; i < depth; i++) {
-      _mesa_get_teximage(ctx, target, level, format, type, dest,
+   else {
+      _mesa_get_teximage(ctx, target, level, format, type, pixels,
 			 texObj, texImage);
-
-      if (stImage->pt && i + 1 < depth) {
-         /* unmap this slice */
-	 st_texture_image_unmap(st, stImage);
-         /* map next slice of 3D texture */
-	 texImage->Data = st_texture_image_map(st, stImage, i + 1,
-                                               PIPE_TRANSFER_READ, 0, 0,
-                                               stImage->base.Width,
-                                               stImage->base.Height);
-	 dest += dstImageStride;
-      }
    }
-
-   texImage->Depth = depth;
 }
 
 
