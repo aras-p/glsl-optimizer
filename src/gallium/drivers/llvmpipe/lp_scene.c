@@ -122,6 +122,7 @@ lp_scene_bin_reset(struct lp_scene *scene, unsigned x, unsigned y)
 {
    struct cmd_bin *bin = lp_scene_get_bin(scene, x, y);
 
+   bin->last_state = NULL;
    bin->head = bin->tail;
    if (bin->tail) {
       bin->tail->next = NULL;
