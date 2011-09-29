@@ -1261,8 +1261,11 @@ ir_to_mesa_visitor::visit(ir_expression *ir)
       break;
    case ir_binop_div:
       assert(!"not reached: should be handled by ir_div_to_mul_rcp");
+      break;
    case ir_binop_mod:
-      assert(!"ir_binop_mod should have been converted to b * fract(a/b)");
+      /* Floating point should be lowered by MOD_TO_FRACT in the compiler. */
+      assert(ir->type->is_integer());
+      emit(ir, OPCODE_MUL, result_dst, op[0], op[1]);
       break;
 
    case ir_binop_less:
