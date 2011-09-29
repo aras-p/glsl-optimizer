@@ -45,11 +45,21 @@ struct brw_vs_prog_key {
     * Number of channels of the vertex attribute that need GL_FIXED rescaling
     */
    uint8_t gl_fixed_input_size[VERT_ATTRIB_MAX];
+
+   /**
+    * Number of user clip planes (or clip distances) that are active.
+    */
    GLuint nr_userclip:4;
+
+   /**
+    * True if the shader uses gl_ClipDistance, regardless of whether any clip
+    * flags are enabled.
+    */
+   GLuint uses_clip_distance:1;
+
    GLuint copy_edgeflag:1;
    GLuint point_coord_replace:8;
    GLuint clamp_vertex_color:1;
-   GLuint uses_clip_distance:1;
 };
 
 
