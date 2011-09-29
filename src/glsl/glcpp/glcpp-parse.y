@@ -1418,8 +1418,6 @@ _glcpp_parser_expand_function (glcpp_parser_t *parser,
 		node->next = next_non_space->next;
 		if (next_non_space == substituted->tail)
 			substituted->tail = node;
-
-		node = node->next;
 	}
 
 	substituted->non_space_tail = substituted->tail;
