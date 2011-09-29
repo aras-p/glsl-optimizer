@@ -39,6 +39,35 @@
 
 #define FILE_DEBUG_FLAG DEBUG_MIPTREE
 
+static void
+brw_miptree_layout_texture_array(struct intel_context *intel,
+				 struct intel_mipmap_tree *mt,
+				 int slices)
+{
+   GLuint align_w;
+   GLuint align_h;
+   GLuint level;
+   GLuint qpitch = 0;
+   int h0, h1, q;
+
+   intel_get_texture_alignment_unit(mt->format, &align_w, &align_h);
+
+   h0 = ALIGN(mt->height0, align_h);
+   h1 = ALIGN(minify(mt->height0), align_h);
+   qpitch = (h0 + h1 + (intel->gen >= 7 ? 12 : 11) * align_h);
+   if (mt->compressed)
+      qpitch /= 4;
+
+   i945_miptree_layout_2d(mt, slices);
+
+   for (level = mt->first_level; level <= mt->last_level; level++) {
+      for (q = 0; q < slices; q++) {
+	 intel_miptree_set_image_offset(mt, level, q, 0, q * qpitch);
+      }
+   }
+   mt->total_height = qpitch * slices;
+}
+
 void
 brw_miptree_layout(struct intel_context *intel, struct intel_mipmap_tree *mt)
 {
@@ -48,36 +77,15 @@ brw_miptree_layout(struct intel_context *intel, struct intel_mipmap_tree *mt)
    switch (mt->target) {
    case GL_TEXTURE_CUBE_MAP:
       if (intel->gen >= 5) {
-          GLuint align_w;
-          GLuint align_h;
-          GLuint level;
-          GLuint qpitch = 0;
-	  int h0, h1, q;
-
-	  intel_get_texture_alignment_unit(mt->format, &align_w, &align_h);
-
-	  /* On Ironlake, cube maps are finally represented as just a series
-	   * of MIPLAYOUT_BELOW 2D textures (like 2D texture arrays), separated
-	   * by a pitch of qpitch rows, where qpitch is defined by the equation
-	   * given in Volume 1 of the BSpec.
-	   */
-	  h0 = ALIGN(mt->height0, align_h);
-	  h1 = ALIGN(minify(mt->height0), align_h);
-	  qpitch = (h0 + h1 + (intel->gen >= 7 ? 12 : 11) * align_h);
-          if (mt->compressed)
-	     qpitch /= 4;
-
-	  i945_miptree_layout_2d(mt, 6);
-
-          for (level = mt->first_level; level <= mt->last_level; level++) {
-	     for (q = 0; q < 6; q++) {
-		intel_miptree_set_image_offset(mt, level, q, 0, q * qpitch);
-	     }
-          }
-	  mt->total_height = qpitch * 6;
-
-          break;
+	 /* On Ironlake, cube maps are finally represented as just a series of
+	  * MIPLAYOUT_BELOW 2D textures (like 2D texture arrays), separated by a
+	  * pitch of qpitch rows, where qpitch is defined by the equation given
+	  * in Volume 1 of the BSpec.
+	  */
+	 brw_miptree_layout_texture_array(intel, mt, 6);
+	 break;
       }
+      /* FALLTHROUGH */
 
    case GL_TEXTURE_3D: {
       GLuint width  = mt->width0;
