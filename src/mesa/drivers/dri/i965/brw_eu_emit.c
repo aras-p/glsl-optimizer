@@ -1478,8 +1478,11 @@ void brw_math( struct brw_compile *p,
       assert(!src.negate);
       assert(!src.abs);
 
-      if (function != BRW_MATH_FUNCTION_INT_DIV_QUOTIENT &&
-	  function != BRW_MATH_FUNCTION_INT_DIV_QUOTIENT_AND_REMAINDER) {
+      if (function == BRW_MATH_FUNCTION_INT_DIV_QUOTIENT ||
+	  function == BRW_MATH_FUNCTION_INT_DIV_REMAINDER ||
+	  function == BRW_MATH_FUNCTION_INT_DIV_QUOTIENT_AND_REMAINDER) {
+	 assert(src.type != BRW_REGISTER_TYPE_F);
+      } else {
 	 assert(src.type == BRW_REGISTER_TYPE_F);
       }
 
@@ -1538,8 +1541,12 @@ void brw_math2(struct brw_compile *p,
    assert(src0.hstride == BRW_HORIZONTAL_STRIDE_1);
    assert(src1.hstride == BRW_HORIZONTAL_STRIDE_1);
 
-   if (function != BRW_MATH_FUNCTION_INT_DIV_QUOTIENT &&
-       function != BRW_MATH_FUNCTION_INT_DIV_QUOTIENT_AND_REMAINDER) {
+   if (function == BRW_MATH_FUNCTION_INT_DIV_QUOTIENT ||
+       function == BRW_MATH_FUNCTION_INT_DIV_REMAINDER ||
+       function == BRW_MATH_FUNCTION_INT_DIV_QUOTIENT_AND_REMAINDER) {
+      assert(src0.type != BRW_REGISTER_TYPE_F);
+      assert(src1.type != BRW_REGISTER_TYPE_F);
+   } else {
       assert(src0.type == BRW_REGISTER_TYPE_F);
       assert(src1.type == BRW_REGISTER_TYPE_F);
    }
