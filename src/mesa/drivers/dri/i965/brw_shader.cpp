@@ -227,6 +227,10 @@ brw_math_function(enum opcode op)
       return BRW_MATH_FUNCTION_SIN;
    case SHADER_OPCODE_COS:
       return BRW_MATH_FUNCTION_COS;
+   case SHADER_OPCODE_INT_QUOTIENT:
+      return BRW_MATH_FUNCTION_INT_DIV_QUOTIENT;
+   case SHADER_OPCODE_INT_REMAINDER:
+      return BRW_MATH_FUNCTION_INT_DIV_REMAINDER;
    default:
       assert(!"not reached: unknown math function");
       return 0;

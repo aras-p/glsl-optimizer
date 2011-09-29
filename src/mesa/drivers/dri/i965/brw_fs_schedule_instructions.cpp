@@ -75,11 +75,13 @@ public:
       case SHADER_OPCODE_RSQ:
 	 this->latency = 2 * chans * math_latency;
 	 break;
+      case SHADER_OPCODE_INT_QUOTIENT:
       case SHADER_OPCODE_SQRT:
       case SHADER_OPCODE_LOG2:
 	 /* full precision log.  partial is 2. */
 	 this->latency = 3 * chans * math_latency;
 	 break;
+      case SHADER_OPCODE_INT_REMAINDER:
       case SHADER_OPCODE_EXP2:
 	 /* full precision.  partial is 3, same throughput. */
 	 this->latency = 4 * chans * math_latency;

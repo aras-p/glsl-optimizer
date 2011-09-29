@@ -152,6 +152,8 @@ fs_visitor::implied_mrf_writes(fs_inst *inst)
    case SHADER_OPCODE_COS:
       return 1 * c->dispatch_width / 8;
    case SHADER_OPCODE_POW:
+   case SHADER_OPCODE_INT_QUOTIENT:
+   case SHADER_OPCODE_INT_REMAINDER:
       return 2 * c->dispatch_width / 8;
    case FS_OPCODE_TEX:
    case FS_OPCODE_TXB:
@@ -576,7 +578,15 @@ fs_visitor::emit_math(enum opcode opcode, fs_reg dst, fs_reg src0, fs_reg src1)
    int base_mrf = 2;
    fs_inst *inst;
 
-   assert(opcode == SHADER_OPCODE_POW);
+   switch (opcode) {
+   case SHADER_OPCODE_POW:
+   case SHADER_OPCODE_INT_QUOTIENT:
+   case SHADER_OPCODE_INT_REMAINDER:
+      break;
+   default:
+      assert(!"not reached: unsupported binary math opcode.");
+      return NULL;
+   }
 
    if (intel->gen >= 6) {
       /* Can't do hstride == 0 args to gen6 math, so expand it out.
@@ -586,19 +596,21 @@ fs_visitor::emit_math(enum opcode opcode, fs_reg dst, fs_reg src0, fs_reg src1)
        */
       if (src0.file == UNIFORM || src0.abs || src0.negate) {
 	 fs_reg expanded = fs_reg(this, glsl_type::float_type);
+	 expanded.type = src0.type;
 	 emit(BRW_OPCODE_MOV, expanded, src0);
 	 src0 = expanded;
       }
 
       if (src1.file == UNIFORM || src1.abs || src1.negate) {
 	 fs_reg expanded = fs_reg(this, glsl_type::float_type);
+	 expanded.type = src1.type;
 	 emit(BRW_OPCODE_MOV, expanded, src1);
 	 src1 = expanded;
       }
 
       inst = emit(opcode, dst, src0, src1);
    } else {
-      emit(BRW_OPCODE_MOV, fs_reg(MRF, base_mrf + 1), src1);
+      emit(BRW_OPCODE_MOV, fs_reg(MRF, base_mrf + 1, src1.type), src1);
       inst = emit(opcode, dst, src0, reg_null_f);
 
       inst->base_mrf = base_mrf;

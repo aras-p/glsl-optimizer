@@ -794,6 +794,8 @@ fs_visitor::generate_code()
 	    generate_math_gen4(inst, dst, src[0]);
 	 }
 	 break;
+      case SHADER_OPCODE_INT_QUOTIENT:
+      case SHADER_OPCODE_INT_REMAINDER:
       case SHADER_OPCODE_POW:
 	 if (intel->gen >= 6) {
 	    generate_math2_gen6(inst, dst, src[0], src[1]);
