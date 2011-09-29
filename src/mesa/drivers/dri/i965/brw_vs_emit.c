@@ -204,17 +204,17 @@ static void brw_vs_alloc_regs( struct brw_vs_compile *c )
     */
    if (c->key.userclip_active) {
       if (intel->gen >= 6) {
-	 for (i = 0; i < c->key.nr_userclip; i++) {
+	 for (i = 0; i < c->key.nr_userclip_planes; i++) {
 	    c->userplane[i] = stride(brw_vec4_grf(reg + i / 2,
 						  (i % 2) * 4), 0, 4, 1);
 	 }
-	 reg += ALIGN(c->key.nr_userclip, 2) / 2;
+	 reg += ALIGN(c->key.nr_userclip_planes, 2) / 2;
       } else {
-	 for (i = 0; i < c->key.nr_userclip; i++) {
+	 for (i = 0; i < c->key.nr_userclip_planes; i++) {
 	    c->userplane[i] = stride(brw_vec4_grf(reg + (6 + i) / 2,
 						  (i % 2) * 4), 0, 4, 1);
 	 }
-	 reg += (ALIGN(6 + c->key.nr_userclip, 4) / 4) * 2;
+	 reg += (ALIGN(6 + c->key.nr_userclip_planes, 4) / 4) * 2;
       }
 
    }
@@ -239,7 +239,7 @@ static void brw_vs_alloc_regs( struct brw_vs_compile *c )
     */
    if (intel->gen >= 6) {
       /* We can only load 32 regs of push constants. */
-      max_constant = 32 * 2 - c->key.nr_userclip;
+      max_constant = 32 * 2 - c->key.nr_userclip_planes;
    } else {
       max_constant = BRW_MAX_GRF - 20 - c->vp->program.Base.NumTemporaries;
    }
@@ -1565,7 +1565,7 @@ static void emit_vertex_write( struct brw_vs_compile *c)
 
       /* Set the user clip distances in dword 8-15. (m3-4)*/
       if (c->key.userclip_active) {
-	 for (i = 0; i < c->key.nr_userclip; i++) {
+	 for (i = 0; i < c->key.nr_userclip_planes; i++) {
 	    struct brw_reg m;
 	    if (i < 4)
 	       m = brw_message_reg(3);
@@ -1593,7 +1593,7 @@ static void emit_vertex_write( struct brw_vs_compile *c)
 		 header1, brw_imm_ud(0x7ff<<8));
       }
 
-      for (i = 0; i < c->key.nr_userclip; i++) {
+      for (i = 0; i < c->key.nr_userclip_planes; i++) {
 	 brw_set_conditionalmod(p, BRW_CONDITIONAL_L);
 	 brw_DP4(p, brw_null_reg(), pos, c->userplane[i]);
 	 brw_OR(p, brw_writemask(header1, WRITEMASK_W), header1, brw_imm_ud(1<<i));

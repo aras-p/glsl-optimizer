@@ -53,9 +53,10 @@ struct brw_vs_prog_key {
    GLuint userclip_active:1;
 
    /**
-    * Number of user clip planes (or clip distances) that are active.
+    * Number of user clip planes active.  Zero if the shader uses
+    * gl_ClipDistance.
     */
-   GLuint nr_userclip:4;
+   GLuint nr_userclip_planes:4;
 
    /**
     * True if the shader uses gl_ClipDistance, regardless of whether any clip

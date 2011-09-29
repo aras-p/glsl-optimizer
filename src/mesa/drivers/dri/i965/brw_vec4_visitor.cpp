@@ -1807,7 +1807,7 @@ vec4_visitor::emit_psiz_and_flags(struct brw_reg reg)
       }
 
       current_annotation = "Clipping flags";
-      for (i = 0; i < c->key.nr_userclip; i++) {
+      for (i = 0; i < c->key.nr_userclip_planes; i++) {
 	 vec4_instruction *inst;
 
 	 inst = emit(DP4(dst_null_f(), src_reg(output_reg[VERT_RESULT_HPOS]),
@@ -1883,7 +1883,7 @@ vec4_visitor::emit_clip_distances(struct brw_reg reg, int offset)
       clip_vertex = VERT_RESULT_HPOS;
    }
 
-   for (int i = 0; i + offset < c->key.nr_userclip && i < 4; ++i) {
+   for (int i = 0; i + offset < c->key.nr_userclip_planes && i < 4; ++i) {
       emit(DP4(dst_reg(brw_writemask(reg, 1 << i)),
                src_reg(output_reg[clip_vertex]),
                src_reg(this->userplane[i + offset])));
