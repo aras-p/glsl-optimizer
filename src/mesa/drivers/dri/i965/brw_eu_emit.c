@@ -374,8 +374,6 @@ void brw_set_src1(struct brw_compile *p,
 
 static void brw_set_math_message( struct brw_compile *p,
 				  struct brw_instruction *insn,
-				  GLuint msg_length,
-				  GLuint response_length,
 				  GLuint function,
 				  GLuint integer_type,
 				  GLboolean low_precision,
@@ -384,8 +382,34 @@ static void brw_set_math_message( struct brw_compile *p,
 {
    struct brw_context *brw = p->brw;
    struct intel_context *intel = &brw->intel;
-   brw_set_src1(p, insn, brw_imm_d(0));
+   unsigned msg_length;
+   unsigned response_length;
 
+   /* Infer message length from the function */
+   switch (function) {
+   case BRW_MATH_FUNCTION_POW:
+   case BRW_MATH_FUNCTION_INT_DIV_QUOTIENT:
+   case BRW_MATH_FUNCTION_INT_DIV_REMAINDER:
+   case BRW_MATH_FUNCTION_INT_DIV_QUOTIENT_AND_REMAINDER:
+      msg_length = 2;
+      break;
+   default:
+      msg_length = 1;
+      break;
+   }
+
+   /* Infer response length from the function */
+   switch (function) {
+   case BRW_MATH_FUNCTION_SINCOS:
+   case BRW_MATH_FUNCTION_INT_DIV_QUOTIENT_AND_REMAINDER:
+      response_length = 2;
+      break;
+   default:
+      response_length = 1;
+      break;
+   }
+
+   brw_set_src1(p, insn, brw_imm_d(0));
    if (intel->gen == 5) {
        insn->bits3.math_gen5.function = function;
        insn->bits3.math_gen5.int_type = integer_type;
@@ -1497,8 +1521,7 @@ void brw_math( struct brw_compile *p,
       brw_set_src1(p, insn, brw_null_reg());
    } else {
       struct brw_instruction *insn = next_insn(p, BRW_OPCODE_SEND);
-      GLuint msg_length = (function == BRW_MATH_FUNCTION_POW) ? 2 : 1;
-      GLuint response_length = (function == BRW_MATH_FUNCTION_SINCOS) ? 2 : 1;
+
       /* Example code doesn't set predicate_control for send
        * instructions.
        */
@@ -1509,7 +1532,6 @@ void brw_math( struct brw_compile *p,
       brw_set_src0(p, insn, src);
       brw_set_math_message(p,
 			   insn,
-			   msg_length, response_length,
 			   function,
 			   BRW_MATH_INTEGER_UNSIGNED,
 			   precision,
@@ -1581,8 +1603,6 @@ void brw_math_16( struct brw_compile *p,
 {
    struct intel_context *intel = &p->brw->intel;
    struct brw_instruction *insn;
-   GLuint msg_length = (function == BRW_MATH_FUNCTION_POW) ? 2 : 1; 
-   GLuint response_length = (function == BRW_MATH_FUNCTION_SINCOS) ? 2 : 1; 
 
    if (intel->gen >= 6) {
       insn = next_insn(p, BRW_OPCODE_MATH);
@@ -1616,7 +1636,6 @@ void brw_math_16( struct brw_compile *p,
    brw_set_src0(p, insn, src);
    brw_set_math_message(p,
 			insn, 
-			msg_length, response_length, 
 			function,
 			BRW_MATH_INTEGER_UNSIGNED,
 			precision,
@@ -1633,7 +1652,6 @@ void brw_math_16( struct brw_compile *p,
    brw_set_src0(p, insn, src);
    brw_set_math_message(p, 
 			insn, 
-			msg_length, response_length, 
 			function,
 			BRW_MATH_INTEGER_UNSIGNED,
 			precision,
