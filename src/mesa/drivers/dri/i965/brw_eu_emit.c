@@ -1533,7 +1533,7 @@ void brw_math( struct brw_compile *p,
       brw_set_math_message(p,
 			   insn,
 			   function,
-			   BRW_MATH_INTEGER_UNSIGNED,
+			   src.type == BRW_REGISTER_TYPE_D,
 			   precision,
 			   saturate,
 			   data_type);
