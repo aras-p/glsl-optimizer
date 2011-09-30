@@ -1472,7 +1472,8 @@ vec4_visitor::emit_block_move(dst_reg *dst, src_reg *src,
    dst->writemask = (1 << type->vector_elements) - 1;
 
    /* Do we need to worry about swizzling a swizzle? */
-   assert(src->swizzle == BRW_SWIZZLE_NOOP);
+   assert(src->swizzle == BRW_SWIZZLE_NOOP
+	  || src->swizzle == swizzle_for_size(type->vector_elements));
    src->swizzle = swizzle_for_size(type->vector_elements);
 
    vec4_instruction *inst = emit(MOV(*dst, *src));
