@@ -267,7 +267,8 @@ PROGRAM_SOURCES = \
 
 SHADER_CXX_SOURCES = \
 	program/ir_to_mesa.cpp \
-	program/sampler.cpp
+	program/sampler.cpp \
+	program/string_to_uint_map.cpp
 
 ASM_C_SOURCES =	\
 	x86/common_x86.c \

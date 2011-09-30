@@ -31,7 +31,13 @@
 #ifndef HASH_TABLE_H
 #define HASH_TABLE_H
 
+#include <string.h>
+#include <stdint.h>
+#include <limits.h>
+#include <assert.h>
+
 struct hash_table;
+struct string_to_uint_map;
 
 typedef unsigned (*hash_func_t)(const void *key);
 typedef int (*hash_compare_func_t)(const void *key1, const void *key2);
@@ -171,7 +177,78 @@ hash_table_call_foreach(struct hash_table *ht,
 					 void *closure),
 			void *closure);
 
+struct string_to_uint_map *
+string_to_uint_map_ctor();
+
+void
+string_to_uint_map_dtor(struct string_to_uint_map *);
+
+
 #ifdef __cplusplus
 }
-#endif
+
+/**
+ * Map from a string (name) to an unsigned integer value
+ *
+ * \note
+ * Because of the way this class interacts with the \c hash_table
+ * implementation, values of \c UINT_MAX cannot be stored in the map.
+ */
+struct string_to_uint_map {
+public:
+   string_to_uint_map()
+   {
+      this->ht = hash_table_ctor(0, hash_table_string_hash,
+				 hash_table_string_compare);
+   }
+
+   ~string_to_uint_map()
+   {
+      hash_table_dtor(this->ht);
+   }
+
+   /**
+    * Get the value associated with a particular key
+    *
+    * \return
+    * If \c key is found in the map, \c true is returned.  Otherwise \c false
+    * is returned.
+    *
+    * \note
+    * If \c key is not found in the table, \c value is not modified.
+    */
+   bool get(unsigned &value, const char *key)
+   {
+      const intptr_t v =
+	 (intptr_t) hash_table_find(this->ht, (const void *) key);
+
+      if (v == 0)
+	 return false;
+
+      value = (unsigned)(v - 1);
+      return true;
+   }
+
+   void put(unsigned value, const char *key)
+   {
+      /* The low-level hash table structure returns NULL if key is not in the
+       * hash table.  However, users of this map might want to store zero as a
+       * valid value in the table.  Bias the value by +1 so that a
+       * user-specified zero is stored as 1.  This enables ::get to tell the
+       * difference between a user-specified zero (returned as 1 by
+       * hash_table_find) and the key not in the table (returned as 0 by
+       * hash_table_find).
+       *
+       * The net effect is that we can't store UINT_MAX in the table.  This is
+       * because UINT_MAX+1 = 0.
+       */
+      assert(value != UINT_MAX);
+      hash_table_replace(ht, (void *) (intptr_t) (value + 1), key);
+   }
+
+private:
+   struct hash_table *ht;
+};
+
+#endif /* __cplusplus */
 #endif /* HASH_TABLE_H */
