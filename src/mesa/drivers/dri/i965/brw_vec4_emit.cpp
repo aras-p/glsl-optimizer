@@ -257,7 +257,7 @@ check_gen6_math_src_arg(struct brw_reg src)
    /* Source swizzles are ignored. */
    assert(!src.abs);
    assert(!src.negate);
-   assert(src.dw1.bits.swizzle = BRW_SWIZZLE_XYZW);
+   assert(src.dw1.bits.swizzle == BRW_SWIZZLE_XYZW);
 }
 
 void
