@@ -1831,6 +1831,14 @@ done:
 
       /* Retain any live IR, but trash the rest. */
       reparent_ir(prog->_LinkedShaders[i]->ir, prog->_LinkedShaders[i]->ir);
+
+      /* The symbol table in the linked shaders may contain references to
+       * variables that were removed (e.g., unused uniforms).  Since it may
+       * contain junk, there is no possible valid use.  Delete it and set the
+       * pointer to NULL.
+       */
+      delete prog->_LinkedShaders[i]->symbols;
+      prog->_LinkedShaders[i]->symbols = NULL;
    }
 
    ralloc_free(mem_ctx);
