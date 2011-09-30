@@ -1663,8 +1663,8 @@ _check_for_reserved_macro_name (glcpp_parser_t *parser, YYLTYPE *loc,
 	/* According to the GLSL specification, macro names starting with "__"
 	 * or "GL_" are reserved for future use.  So, don't allow them.
 	 */
-	if (strncmp(identifier, "__", 2) == 0) {
-		glcpp_error (loc, parser, "Macro names starting with \"__\" are reserved.\n");
+	if (strstr(identifier, "__")) {
+		glcpp_error (loc, parser, "Macro names containing \"__\" are reserved.\n");
 	}
 	if (strncmp(identifier, "GL_", 3) == 0) {
 		glcpp_error (loc, parser, "Macro names starting with \"GL_\" are reserved.\n");
