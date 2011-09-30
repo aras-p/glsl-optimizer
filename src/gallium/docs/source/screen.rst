@@ -22,75 +22,49 @@ or integer values, use :ref:`get_param`.
 
 The integer capabilities:
 
-* ``MAX_TEXTURE_IMAGE_UNITS``: The maximum number of samplers available.
-* ``NPOT_TEXTURES``: Whether :term:`NPOT` textures may have repeat modes,
+* ``PIPE_CAP_NPOT_TEXTURES``: Whether :term:`NPOT` textures may have repeat modes,
   normalized coordinates, and mipmaps.
-* ``TWO_SIDED_STENCIL``: Whether the stencil test can also affect back-facing
+* ``PIPE_CAP_TWO_SIDED_STENCIL``: Whether the stencil test can also affect back-facing
   polygons.
-* ``GLSL``: Deprecated.
-* ``DUAL_SOURCE_BLEND``: Whether dual-source blend factors are supported. See
+* ``PIPE_CAP_GLSL``: Deprecated.
+* ``PIPE_CAP_DUAL_SOURCE_BLEND``: Whether dual-source blend factors are supported. See
   :ref:`Blend` for more information.
-* ``ANISOTROPIC_FILTER``: Whether textures can be filtered anisotropically.
-* ``POINT_SPRITE``: Whether point sprites are available.
-* ``MAX_RENDER_TARGETS``: The maximum number of render targets that may be
+* ``PIPE_CAP_ANISOTROPIC_FILTER``: Whether textures can be filtered anisotropically.
+* ``PIPE_CAP_POINT_SPRITE``: Whether point sprites are available.
+* ``PIPE_CAP_MAX_RENDER_TARGETS``: The maximum number of render targets that may be
   bound.
-* ``OCCLUSION_QUERY``: Whether occlusion queries are available.
-* ``TIMER_QUERY``: Whether timer queries are available.
-* ``INSTANCED_DRAWING``: indicates support for instanced drawing.
-* ``TEXTURE_SHADOW_MAP``: indicates whether the fragment shader hardware
+* ``PIPE_CAP_OCCLUSION_QUERY``: Whether occlusion queries are available.
+* ``PIPE_CAP_TIMER_QUERY``: Whether timer queries are available.
+* ``PIPE_CAP_TEXTURE_SHADOW_MAP``: indicates whether the fragment shader hardware
   can do the depth texture / Z comparison operation in TEX instructions
   for shadow testing.
-* ``MAX_TEXTURE_2D_LEVELS``: The maximum number of mipmap levels available
+* ``PIPE_CAP_TEXTURE_SWIZZLE``: Whether swizzling through sampler views is
+  supported.
+* ``PIPE_CAP_MAX_TEXTURE_2D_LEVELS``: The maximum number of mipmap levels available
   for a 2D texture.
-* ``MAX_TEXTURE_3D_LEVELS``: The maximum number of mipmap levels available
+* ``PIPE_CAP_MAX_TEXTURE_3D_LEVELS``: The maximum number of mipmap levels available
   for a 3D texture.
-* ``MAX_TEXTURE_CUBE_LEVELS``: The maximum number of mipmap levels available
+* ``PIPE_CAP_MAX_TEXTURE_CUBE_LEVELS``: The maximum number of mipmap levels available
   for a cubemap.
-* ``TEXTURE_MIRROR_CLAMP``: Whether mirrored texture coordinates with clamp
+* ``PIPE_CAP_TEXTURE_MIRROR_CLAMP``: Whether mirrored texture coordinates with clamp
   are supported.
-* ``TEXTURE_MIRROR_REPEAT``: Whether mirrored repeating texture coordinates
-  are supported.
-* ``MAX_VERTEX_TEXTURE_UNITS``: The maximum number of samplers addressable
-  inside the vertex shader. If this is 0, then the vertex shader cannot
-  sample textures.
-* ``TGSI_CONT_SUPPORTED``: Whether the TGSI CONT opcode is supported.
-* ``BLEND_EQUATION_SEPARATE``: Whether alpha blend equations may be different
+* ``PIPE_CAP_BLEND_EQUATION_SEPARATE``: Whether alpha blend equations may be different
   from color blend equations, in :ref:`Blend` state.
-* ``SM3``: Whether the vertex shader and fragment shader support equivalent
+* ``PIPE_CAP_SM3``: Whether the vertex shader and fragment shader support equivalent
   opcodes to the Shader Model 3 specification. XXX oh god this is horrible
-* ``MAX_PREDICATE_REGISTERS``: indicates the number of predicate registers
-  available.  Predicate register may be set as a side-effect of ALU
-  instructions to indicate less than, greater than or equal to zero.
-  Later instructions can use a predicate register to control writing to
-  each channel of destination registers.  NOTE: predicate registers have
-  not been fully implemented in Gallium at this time.  See the
-  GL_NV_fragment_program extension for more info (look for "condition codes").
-* ``MAX_COMBINED_SAMPLERS``: The total number of samplers accessible from
+* ``PIPE_CAP_MAX_COMBINED_SAMPLERS``: The total number of samplers accessible from
   the vertex and fragment shader, inclusive.
-* ``MAX_CONST_BUFFERS``: Maximum number of constant buffers that can be bound
-  to any shader stage using ``set_constant_buffer``. If 0 or 1, the pipe will
-  only permit binding one constant buffer per shader, and the shaders will
-  not permit two-dimensional access to constants.
-
-If a value greater than 0 is returned, the driver can have multiple
-constant buffers bound to shader stages. The CONST register file can
-be accessed with two-dimensional indices, like in the example below.
-
-DCL CONST[0][0..7]       # declare first 8 vectors of constbuf 0
-DCL CONST[3][0]          # declare first vector of constbuf 3
-MOV OUT[0], CONST[0][3]  # copy vector 3 of constbuf 0
-
-For backwards compatibility, one-dimensional access to CONST register
-file is still supported. In that case, the constbuf index is assumed
-to be 0.
-
-* ``MAX_CONST_BUFFER_SIZE``: Maximum byte size of a single constant buffer.
-* ``INDEP_BLEND_ENABLE``: Whether per-rendertarget blend enabling and channel
+* ``PIPE_CAP_INDEP_BLEND_ENABLE``: Whether per-rendertarget blend enabling and channel
   masks are supported. If 0, then the first rendertarget's blend mask is
   replicated across all MRTs.
-* ``INDEP_BLEND_FUNC``: Whether per-rendertarget blend functions are
+* ``PIPE_CAP_INDEP_BLEND_FUNC``: Whether per-rendertarget blend functions are
   available. If 0, then the first rendertarget's blend functions affect all
   MRTs.
+* ``PIPE_CAP_DEPTHSTENCIL_CLEAR_SEPARATE``: Whether clearing only depth or only
+  stencil in a combined depth-stencil buffer is supported.
+* ``PIPE_CAP_MAX_TEXTURE_ARRAY_LAYERS``: The maximum number of texture array
+  layers supported. If 0, the array textures are not supported at all and
+  the ARRAY texture targets are invalid.
 * ``PIPE_CAP_TGSI_FS_COORD_ORIGIN_UPPER_LEFT``: Whether the TGSI property
   FS_COORD_ORIGIN with value UPPER_LEFT is supported.
 * ``PIPE_CAP_TGSI_FS_COORD_ORIGIN_LOWER_LEFT``: Whether the TGSI property
@@ -102,33 +76,70 @@ to be 0.
 
 The floating-point capabilities:
 
-* ``MAX_LINE_WIDTH``: The maximum width of a regular line.
-* ``MAX_LINE_WIDTH_AA``: The maximum width of a smoothed line.
-* ``MAX_POINT_WIDTH``: The maximum width and height of a point.
-* ``MAX_POINT_WIDTH_AA``: The maximum width and height of a smoothed point.
-* ``MAX_TEXTURE_ANISOTROPY``: The maximum level of anisotropy that can be
+* ``PIPE_CAP_MAX_LINE_WIDTH``: The maximum width of a regular line.
+* ``PIPE_CAP_MAX_LINE_WIDTH_AA``: The maximum width of a smoothed line.
+* ``PIPE_CAP_MAX_POINT_WIDTH``: The maximum width and height of a point.
+* ``PIPE_CAP_MAX_POINT_WIDTH_AA``: The maximum width and height of a smoothed point.
+* ``PIPE_CAP_MAX_TEXTURE_ANISOTROPY``: The maximum level of anisotropy that can be
   applied to anisotropically filtered textures.
-* ``MAX_TEXTURE_LOD_BIAS``: The maximum :term:`LOD` bias that may be applied
+* ``PIPE_CAP_MAX_TEXTURE_LOD_BIAS``: The maximum :term:`LOD` bias that may be applied
   to filtered textures.
-* ``GUARD_BAND_LEFT``, ``GUARD_BAND_TOP``, ``GUARD_BAND_RIGHT``,
-  ``GUARD_BAND_BOTTOM``: XXX
+* ``PIPE_CAP_GUARD_BAND_LEFT``,
+  ``PIPE_CAP_GUARD_BAND_TOP``,
+  ``PIPE_CAP_GUARD_BAND_RIGHT``,
+  ``PIPE_CAP_GUARD_BAND_BOTTOM``: TODO
 
-Fragment shader limits:
 
-* ``PIPE_CAP_MAX_FS_INSTRUCTIONS``: The maximum number of instructions.
-* ``PIPE_CAP_MAX_FS_ALU_INSTRUCTIONS``: The maximum number of arithmetic instructions.
-* ``PIPE_CAP_MAX_FS_TEX_INSTRUCTIONS``: The maximum number of texture instructions.
-* ``PIPE_CAP_MAX_FS_TEX_INDIRECTIONS``: The maximum number of texture indirections.
-* ``PIPE_CAP_MAX_FS_CONTROL_FLOW_DEPTH``: The maximum nested control flow depth.
-* ``PIPE_CAP_MAX_FS_INPUTS``: The maximum number of input registers.
-* ``PIPE_CAP_MAX_FS_CONSTS``: The maximum number of constants.
-* ``PIPE_CAP_MAX_FS_TEMPS``: The maximum number of temporary registers.
-* ``PIPE_CAP_MAX_FS_ADDRS``: The maximum number of address registers.
-* ``PIPE_CAP_MAX_FS_PREDS``: The maximum number of predicate registers.
+.. _pipe_shader_cap:
 
-Vertex shader limits:
+PIPE_SHADER_CAP_*
+^^^^^^^^^^^^^^^^^
 
-* ``PIPE_CAP_MAX_VS_*``: Identical to ``PIPE_CAP_MAX_FS_*``.
+These are per-shader-stage capabitity queries. Different shader stages may
+support different features.
+
+* ``PIPE_SHADER_CAP_MAX_INSTRUCTIONS``: The maximum number of instructions.
+* ``PIPE_SHADER_CAP_MAX_ALU_INSTRUCTIONS``: The maximum number of arithmetic instructions.
+* ``PIPE_SHADER_CAP_MAX_TEX_INSTRUCTIONS``: The maximum number of texture instructions.
+* ``PIPE_SHADER_CAP_MAX_TEX_INDIRECTIONS``: The maximum number of texture indirections.
+* ``PIPE_SHADER_CAP_MAX_CONTROL_FLOW_DEPTH``: The maximum nested control flow depth.
+* ``PIPE_SHADER_CAP_MAX_INPUTS``: The maximum number of input registers.
+* ``PIPE_SHADER_CAP_MAX_CONSTS``: The maximum number of constants.
+* ``PIPE_SHADER_CAP_MAX_CONST_BUFFERS``: Maximum number of constant buffers that can be bound
+  to any shader stage using ``set_constant_buffer``. If 0 or 1, the pipe will
+  only permit binding one constant buffer per shader, and the shaders will
+  not permit two-dimensional access to constants.
+  
+If a value greater than 0 is returned, the driver can have multiple
+constant buffers bound to shader stages. The CONST register file can
+be accessed with two-dimensional indices, like in the example below.
+
+DCL CONST[0][0..7]       # declare first 8 vectors of constbuf 0
+DCL CONST[3][0]          # declare first vector of constbuf 3
+MOV OUT[0], CONST[0][3]  # copy vector 3 of constbuf 0
+
+For backwards compatibility, one-dimensional access to CONST register
+file is still supported. In that case, the constbuf index is assumed
+to be 0.
+  
+* ``PIPE_SHADER_CAP_MAX_TEMPS``: The maximum number of temporary registers.
+* ``PIPE_SHADER_CAP_MAX_ADDRS``: The maximum number of address registers.
+* ``PIPE_SHADER_CAP_MAX_PREDS``: The maximum number of predicate registers.
+* ``PIPE_SHADER_CAP_TGSI_CONT_SUPPORTED``: Whether the continue opcode is supported.
+* ``PIPE_SHADER_CAP_INDIRECT_INPUT_ADDR``: Whether indirect addressing
+  of the input file is supported.
+* ``PIPE_SHADER_CAP_INDIRECT_OUTPUT_ADDR``: Whether indirect addressing
+  of the output file is supported.
+* ``PIPE_SHADER_CAP_INDIRECT_TEMP_ADDR``: Whether indirect addressing
+  of the temporary file is supported.
+* ``PIPE_SHADER_CAP_INDIRECT_CONST_ADDR``: Whether indirect addressing
+  of the constant file is supported.
+* ``PIPE_SHADER_CAP_SUBROUTINES``: Whether subroutines are supported, i.e.
+  BGNSUB, ENDSUB, CAL, and RET, including RET in the main block.
+* ``PIPE_SHADER_CAP_INTEGERS``: Whether integer opcodes are supported.
+  If unsupported, only float opcodes are supported.
+* ``PIPE_SHADER_CAP_MAX_TEXTURE_SAMPLERS``: THe maximum number of texture
+  samplers.
 
 
 .. _pipe_bind:
