@@ -815,15 +815,14 @@ st_CompressedTexImage2D(struct gl_context *ctx, GLenum target, GLint level,
  * a textured quad.  Store the results in the user's buffer.
  */
 static void
-decompress_with_blit(struct gl_context * ctx, GLenum target, GLint level,
+decompress_with_blit(struct gl_context * ctx,
                      GLenum format, GLenum type, GLvoid *pixels,
-                     struct gl_texture_object *texObj,
                      struct gl_texture_image *texImage)
 {
    struct st_context *st = st_context(ctx);
    struct pipe_context *pipe = st->pipe;
    struct st_texture_image *stImage = st_texture_image(texImage);
-   struct st_texture_object *stObj = st_texture_object(texObj);
+   struct st_texture_object *stObj = st_texture_object(texImage->TexObject);
    struct pipe_sampler_view *src_view =
       st_get_texture_sampler_view(stObj, pipe);
    const GLuint width = texImage->Width;
@@ -848,7 +847,7 @@ decompress_with_blit(struct gl_context * ctx, GLenum target, GLint level,
    }
 
    /* Choose the source mipmap level */
-   src_view->u.tex.first_level = src_view->u.tex.last_level = level;
+   src_view->u.tex.first_level = src_view->u.tex.last_level = texImage->Level;
 
    /* blit/render/decompress */
    util_blit_pixels_tex(st->blit,
@@ -925,9 +924,8 @@ decompress_with_blit(struct gl_context * ctx, GLenum target, GLint level,
  * Called via ctx->Driver.GetTexImage()
  */
 static void
-st_GetTexImage(struct gl_context * ctx, GLenum target, GLint level,
+st_GetTexImage(struct gl_context * ctx,
                GLenum format, GLenum type, GLvoid * pixels,
-               struct gl_texture_object *texObj,
                struct gl_texture_image *texImage)
 {
    struct st_texture_image *stImage = st_texture_image(texImage);
@@ -938,12 +936,10 @@ st_GetTexImage(struct gl_context * ctx, GLenum target, GLint level,
        * faster than using the fallback code in texcompress.c.
        * Note that we only expect RGBA formats (no Z/depth formats).
        */
-      decompress_with_blit(ctx, target, level, format, type, pixels,
-                           texObj, texImage);
+      decompress_with_blit(ctx, format, type, pixels, texImage);
    }
    else {
-      _mesa_get_teximage(ctx, target, level, format, type, pixels,
-			 texObj, texImage);
+      _mesa_get_teximage(ctx, format, type, pixels, texImage);
    }
 }
 

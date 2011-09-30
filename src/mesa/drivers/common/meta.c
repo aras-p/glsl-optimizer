@@ -3260,9 +3260,8 @@ decompress_texture_image(struct gl_context *ctx,
  * from core Mesa.
  */
 void
-_mesa_meta_GetTexImage(struct gl_context *ctx, GLenum target, GLint level,
+_mesa_meta_GetTexImage(struct gl_context *ctx,
                        GLenum format, GLenum type, GLvoid *pixels,
-                       struct gl_texture_object *texObj,
                        struct gl_texture_image *texImage)
 {
    /* We can only use the decompress-with-blit method here if the texels are
@@ -3272,6 +3271,7 @@ _mesa_meta_GetTexImage(struct gl_context *ctx, GLenum target, GLint level,
    if (_mesa_is_format_compressed(texImage->TexFormat) &&
        _mesa_get_format_datatype(texImage->TexFormat)
        == GL_UNSIGNED_NORMALIZED) {
+      struct gl_texture_object *texObj = texImage->TexObject;
       const GLuint slice = 0; /* only 2D compressed textures for now */
       /* Need to unlock the texture here to prevent deadlock... */
       _mesa_unlock_texture(ctx, texObj);
@@ -3281,7 +3281,6 @@ _mesa_meta_GetTexImage(struct gl_context *ctx, GLenum target, GLint level,
       _mesa_lock_texture(ctx, texObj);
    }
    else {
-      _mesa_get_teximage(ctx, target, level, format, type, pixels,
-                          texObj, texImage);
+      _mesa_get_teximage(ctx, format, type, pixels, texImage);
    }
 }

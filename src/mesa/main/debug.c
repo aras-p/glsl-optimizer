@@ -268,9 +268,7 @@ write_texture_image(struct gl_texture_object *texObj,
       store = ctx->Pack; /* save */
       ctx->Pack = ctx->DefaultPacking;
 
-      ctx->Driver.GetTexImage(ctx, texObj->Target, level,
-                              GL_RGBA, GL_UNSIGNED_BYTE,
-                              buffer, texObj, img);
+      ctx->Driver.GetTexImage(ctx, GL_RGBA, GL_UNSIGNED_BYTE, buffer, img);
 
       /* make filename */
       _mesa_snprintf(s, sizeof(s), "/tmp/tex%u.l%u.f%u.ppm", texObj->Name, level, face);

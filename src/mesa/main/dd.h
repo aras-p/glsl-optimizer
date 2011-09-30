@@ -284,9 +284,8 @@ struct dd_function_table {
    /**
     * Called by glGetTexImage().
     */
-   void (*GetTexImage)( struct gl_context *ctx, GLenum target, GLint level,
+   void (*GetTexImage)( struct gl_context *ctx,
                         GLenum format, GLenum type, GLvoid *pixels,
-                        struct gl_texture_object *texObj,
                         struct gl_texture_image *texImage );
 
    /**

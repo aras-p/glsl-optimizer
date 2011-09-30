@@ -373,9 +373,9 @@ get_tex_rgba(struct gl_context *ctx, GLuint dimensions,
 static GLboolean
 get_tex_memcpy(struct gl_context *ctx, GLenum format, GLenum type,
                GLvoid *pixels,
-               struct gl_texture_object *texObj,
                struct gl_texture_image *texImage)
 {
+   const GLenum target = texImage->TexObject->Target;
    GLboolean memCopy = GL_FALSE;
 
    /*
@@ -384,11 +384,11 @@ get_tex_memcpy(struct gl_context *ctx, GLenum format, GLenum type,
     * so we don't have to worry about those.
     * XXX more format combinations could be supported here.
     */
-   if ((texObj->Target == GL_TEXTURE_1D ||
-        texObj->Target == GL_TEXTURE_2D ||
-        texObj->Target == GL_TEXTURE_RECTANGLE ||
-        (texObj->Target >= GL_TEXTURE_CUBE_MAP_POSITIVE_X &&
-         texObj->Target <= GL_TEXTURE_CUBE_MAP_NEGATIVE_Z))) {
+   if ((target == GL_TEXTURE_1D ||
+        target == GL_TEXTURE_2D ||
+        target == GL_TEXTURE_RECTANGLE ||
+        (target >= GL_TEXTURE_CUBE_MAP_POSITIVE_X &&
+         target <= GL_TEXTURE_CUBE_MAP_NEGATIVE_Z))) {
       if ((texImage->TexFormat == MESA_FORMAT_ARGB8888 ||
              texImage->TexFormat == MESA_FORMAT_SARGB8) &&
           format == GL_BGRA &&
@@ -471,14 +471,13 @@ get_tex_memcpy(struct gl_context *ctx, GLenum format, GLenum type,
  * unmap with ctx->Driver.UnmapTextureImage().
  */
 void
-_mesa_get_teximage(struct gl_context *ctx, GLenum target, GLint level,
+_mesa_get_teximage(struct gl_context *ctx,
                    GLenum format, GLenum type, GLvoid *pixels,
-                   struct gl_texture_object *texObj,
                    struct gl_texture_image *texImage)
 {
    GLuint dimensions;
 
-   switch (target) {
+   switch (texImage->TexObject->Target) {
    case GL_TEXTURE_1D:
       dimensions = 1;
       break;
@@ -511,7 +510,7 @@ _mesa_get_teximage(struct gl_context *ctx, GLenum target, GLint level,
       pixels = ADD_POINTERS(buf, pixels);
    }
 
-   if (get_tex_memcpy(ctx, format, type, pixels, texObj, texImage)) {
+   if (get_tex_memcpy(ctx, format, type, pixels, texImage)) {
       /* all done */
    }
    else if (format == GL_DEPTH_COMPONENT) {
@@ -772,8 +771,7 @@ _mesa_GetnTexImageARB( GLenum target, GLint level, GLenum format,
 
    _mesa_lock_texture(ctx, texObj);
    {
-      ctx->Driver.GetTexImage(ctx, target, level, format, type, pixels,
-                              texObj, texImage);
+      ctx->Driver.GetTexImage(ctx, format, type, pixels, texImage);
    }
    _mesa_unlock_texture(ctx, texObj);
 }

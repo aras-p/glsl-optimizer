@@ -124,9 +124,8 @@ _mesa_meta_CopyTexSubImage3D(struct gl_context *ctx, GLenum target, GLint level,
                              GLsizei width, GLsizei height);
 
 extern void
-_mesa_meta_GetTexImage(struct gl_context *ctx, GLenum target, GLint level,
+_mesa_meta_GetTexImage(struct gl_context *ctx,
                        GLenum format, GLenum type, GLvoid *pixels,
-                       struct gl_texture_object *texObj,
                        struct gl_texture_image *texImage);
 
 

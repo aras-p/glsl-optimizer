@@ -2032,9 +2032,10 @@ generate_mipmap_compressed(struct gl_context *ctx, GLenum target,
       ctx->Pack = ctx->DefaultPacking;
 
       /* Get the uncompressed image */
-      ctx->Driver.GetTexImage(ctx, target, texObj->BaseLevel,
+      assert(srcImage->Level == texObj->BaseLevel);
+      ctx->Driver.GetTexImage(ctx,
                               temp_base_format, temp_datatype,
-                              temp_src, texObj, srcImage);
+                              temp_src, srcImage);
       /* restore packing mode */
       ctx->Pack = save;
    }
