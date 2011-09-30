@@ -200,6 +200,9 @@ _mesa_Clear( GLbitfield mask )
        ctx->DrawBuffer->_Ymin >= ctx->DrawBuffer->_Ymax)
       return;
 
+   if (ctx->TransformFeedback.RasterDiscard)
+      return;
+
    if (ctx->RenderMode == GL_RENDER) {
       GLbitfield bufferMask;
 
@@ -328,7 +331,7 @@ _mesa_ClearBufferiv(GLenum buffer, GLint drawbuffer, const GLint *value)
                      drawbuffer);
          return;
       }
-      else {
+      else if (!ctx->TransformFeedback.RasterDiscard) {
          /* Save current stencil clear value, set to 'value', do the
           * stencil clear and restore the clear value.
           * XXX in the future we may have a new ctx->Driver.ClearBuffer()
@@ -352,7 +355,7 @@ _mesa_ClearBufferiv(GLenum buffer, GLint drawbuffer, const GLint *value)
                         drawbuffer);
             return;
          }
-         else if (mask) {
+         else if (mask && !ctx->TransformFeedback.RasterDiscard) {
             union gl_color_union clearSave;
 
             /* save color */
@@ -403,7 +406,7 @@ _mesa_ClearBufferuiv(GLenum buffer, GLint drawbuffer, const GLuint *value)
                         drawbuffer);
             return;
          }
-         else if (mask) {
+         else if (mask && !ctx->TransformFeedback.RasterDiscard) {
             union gl_color_union clearSave;
 
             /* save color */
@@ -452,7 +455,7 @@ _mesa_ClearBufferfv(GLenum buffer, GLint drawbuffer, const GLfloat *value)
                      drawbuffer);
          return;
       }
-      else {
+      else if (!ctx->TransformFeedback.RasterDiscard) {
          /* Save current depth clear value, set to 'value', do the
           * depth clear and restore the clear value.
           * XXX in the future we may have a new ctx->Driver.ClearBuffer()
@@ -477,7 +480,7 @@ _mesa_ClearBufferfv(GLenum buffer, GLint drawbuffer, const GLfloat *value)
                         drawbuffer);
             return;
          }
-         else if (mask) {
+         else if (mask && !ctx->TransformFeedback.RasterDiscard) {
             union gl_color_union clearSave;
 
             /* save color */
@@ -527,6 +530,9 @@ _mesa_ClearBufferfi(GLenum buffer, GLint drawbuffer,
                   drawbuffer);
       return;
    }
+
+   if (ctx->TransformFeedback.RasterDiscard)
+      return;
 
    if (ctx->NewState) {
       _mesa_update_state( ctx );

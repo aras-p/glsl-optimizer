@@ -97,6 +97,9 @@ _mesa_Accum( GLenum op, GLfloat value )
       return;
    }
 
+   if (ctx->TransformFeedback.RasterDiscard)
+      return;
+
    if (ctx->RenderMode == GL_RENDER) {
       ctx->Driver.Accum(ctx, op, value);
    }

@@ -80,6 +80,10 @@ _mesa_DrawPixels( GLsizei width, GLsizei height,
       goto end;      /* the error code was recorded */
    }
 
+   if (ctx->TransformFeedback.RasterDiscard) {
+      goto end;
+   }
+
    if (!ctx->Current.RasterPosValid) {
       goto end;  /* no-op, not an error */
    }
@@ -188,6 +192,10 @@ _mesa_CopyPixels( GLint srcx, GLint srcy, GLsizei width, GLsizei height,
       goto end;
    }
 
+   if (ctx->TransformFeedback.RasterDiscard) {
+      goto end;
+   }
+
    if (!ctx->Current.RasterPosValid || width == 0 || height == 0) {
       goto end; /* no-op, not an error */
    }
@@ -241,6 +249,9 @@ _mesa_Bitmap( GLsizei width, GLsizei height,
       /* the error code was recorded */
       return;
    }
+
+   if (ctx->TransformFeedback.RasterDiscard)
+      return;
 
    if (ctx->RenderMode == GL_RENDER) {
       /* Truncate, to satisfy conformance tests (matches SGI's OpenGL). */
