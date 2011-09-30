@@ -664,10 +664,13 @@ _mesa_program_state_flags(const gl_state_index state[STATE_LENGTH])
 {
    switch (state[0]) {
    case STATE_MATERIAL:
+   case STATE_LIGHTPROD:
+   case STATE_LIGHTMODEL_SCENECOLOR:
+      /* these can be effected by glColor when colormaterial mode is used */
+      return _NEW_LIGHT | _NEW_CURRENT_ATTRIB;
+
    case STATE_LIGHT:
    case STATE_LIGHTMODEL_AMBIENT:
-   case STATE_LIGHTMODEL_SCENECOLOR:
-   case STATE_LIGHTPROD:
       return _NEW_LIGHT;
 
    case STATE_TEXGEN:
