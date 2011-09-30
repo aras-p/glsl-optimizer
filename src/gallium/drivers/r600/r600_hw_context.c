@@ -1617,6 +1617,7 @@ void r600_query_begin(struct r600_context *ctx, struct r600_query *query)
 		break;
 	default:
 		assert(0);
+		return;
 	}
 
 	if ((required_space + ctx->pm4_cdwords) > ctx->pm4_ndwords) {
