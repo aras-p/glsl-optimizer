@@ -460,6 +460,91 @@ guess_and_alloc_texture(struct st_context *st,
 
 
 /**
+ * Called via ctx->Driver.AllocTextureImageBuffer().
+ * If the texture object/buffer already has space for the indicated image,
+ * we're done.  Otherwise, allocate memory for the new texture image.
+ * XXX This function and st_TexImage() have some duplicated code.  That
+ * can be cleaned up in the future.
+ */
+static GLboolean
+st_AllocTextureImageBuffer(struct gl_context *ctx,
+                           struct gl_texture_image *texImage,
+                           gl_format format, GLsizei width,
+                           GLsizei height, GLsizei depth)
+{
+   struct st_context *st = st_context(ctx);
+   struct st_texture_image *stImage = st_texture_image(texImage);
+   struct st_texture_object *stObj = st_texture_object(texImage->TexObject);
+   const GLuint level = texImage->Level;
+
+   DBG("%s\n", __FUNCTION__);
+
+   assert(width > 0);
+   assert(height > 0);
+   assert(depth > 0);
+   assert(!texImage->Data);
+   assert(!stImage->pt); /* xxx this might be wrong */
+
+   /* Look if the parent texture object has space for this image */
+   if (stObj->pt &&
+       level <= stObj->pt->last_level &&
+       st_texture_match_image(stObj->pt, texImage)) {
+      /* this image will fit in the existing texture object's memory */
+      pipe_resource_reference(&stImage->pt, stObj->pt);
+      return GL_TRUE;
+   }
+
+   /* The parent texture object does not have space for this image */
+
+   pipe_resource_reference(&stObj->pt, NULL);
+   pipe_sampler_view_reference(&stObj->sampler_view, NULL);
+
+   if (!guess_and_alloc_texture(st, stObj, stImage)) {
+      /* Probably out of memory.
+       * Try flushing any pending rendering, then retry.
+       */
+      st_finish(st);
+      if (!guess_and_alloc_texture(st, stObj, stImage)) {
+         _mesa_error(ctx, GL_OUT_OF_MEMORY, "glTexImage");
+         return GL_FALSE;
+      }
+   }
+
+   if (stObj->pt &&
+       st_texture_match_image(stObj->pt, texImage)) {
+      /* The image will live in the object's mipmap memory */
+      pipe_resource_reference(&stImage->pt, stObj->pt);
+      assert(stImage->pt);
+      return GL_TRUE;
+   }
+   else {
+      /* Create a new, temporary texture/resource/buffer to hold this
+       * one texture image.
+       */
+      enum pipe_format format =
+         st_mesa_format_to_pipe_format(texImage->TexFormat);
+      GLuint bindings = default_bindings(st, format);
+      GLuint ptWidth, ptHeight, ptDepth, ptLayers;
+
+      st_gl_texture_dims_to_pipe_dims(stObj->base.Target,
+                                      width, height, depth,
+                                      &ptWidth, &ptHeight, &ptDepth, &ptLayers);
+
+      stImage->pt = st_texture_create(st,
+                                      gl_target_to_pipe(stObj->base.Target),
+                                      format,
+                                      0, /* lastLevel */
+                                      ptWidth,
+                                      ptHeight,
+                                      ptDepth,
+                                      ptLayers,
+                                      bindings);
+      return stImage->pt != NULL;
+   }
+}
+
+
+/**
  * Adjust pixel unpack params and image dimensions to strip off the
  * texture border.
  * Gallium doesn't support texture borders.  They've seldem been used
@@ -1837,6 +1922,7 @@ st_init_texture_functions(struct dd_function_table *functions)
    functions->NewTextureImage = st_NewTextureImage;
    functions->DeleteTextureImage = st_DeleteTextureImage;
    functions->DeleteTexture = st_DeleteTextureObject;
+   functions->AllocTextureImageBuffer = st_AllocTextureImageBuffer;
    functions->FreeTextureImageBuffer = st_FreeTextureImageBuffer;
    functions->MapTextureImage = st_MapTextureImage;
    functions->UnmapTextureImage = st_UnmapTextureImage;
