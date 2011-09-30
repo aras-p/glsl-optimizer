@@ -304,8 +304,8 @@ do {									\
 static bool calc_live_regs( struct i915_fragment_program *p )
 {
     const struct gl_fragment_program *program = &p->FragProg;
-    GLuint regsUsed = 0xffff0000;
-    uint8_t live_components[16] = { 0, };
+    GLuint regsUsed = ~((1 << I915_MAX_TEMPORARY) - 1);
+    uint8_t live_components[I915_MAX_TEMPORARY] = { 0, };
     GLint i;
    
     for (i = program->Base.NumInstructions - 1; i >= 0; i--) {
@@ -315,7 +315,7 @@ static bool calc_live_regs( struct i915_fragment_program *p )
 
         /* Register is written to: unmark as live for this and preceeding ops */ 
         if (inst->DstReg.File == PROGRAM_TEMPORARY) {
-	    if (inst->DstReg.Index > 16)
+	    if (inst->DstReg.Index >= I915_MAX_TEMPORARY)
 	       return false;
 
             live_components[inst->DstReg.Index] &= ~inst->DstReg.WriteMask;
@@ -328,7 +328,7 @@ static bool calc_live_regs( struct i915_fragment_program *p )
             if (inst->SrcReg[a].File == PROGRAM_TEMPORARY) {
                 unsigned c;
 
-		if (inst->SrcReg[a].Index > 16)
+		if (inst->SrcReg[a].Index >= I915_MAX_TEMPORARY)
 		   return false;
 
                 regsUsed |= 1 << inst->SrcReg[a].Index;
