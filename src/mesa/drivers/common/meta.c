@@ -49,6 +49,7 @@
 #include "main/macros.h"
 #include "main/matrix.h"
 #include "main/mipmap.h"
+#include "main/pixel.h"
 #include "main/pbo.h"
 #include "main/polygon.h"
 #include "main/readpix.h"
@@ -3235,8 +3236,27 @@ decompress_texture_image(struct gl_context *ctx,
    }
 
    /* read pixels from renderbuffer */
-   ctx->Pack.RowLength = destRowLength;
-   _mesa_ReadPixels(0, 0, width, height, destFormat, destType, dest);
+   {
+      GLenum baseTexFormat = texImage->_BaseFormat;
+
+      /* The pixel transfer state will be set to default values at this point
+       * (see MESA_META_PIXEL_TRANSFER) so pixel transfer ops are effectively
+       * turned off (as required by glGetTexImage) but we need to handle some
+       * special cases.  In particular, single-channel texture values are
+       * returned as red and two-channel texture values are returned as
+       * red/alpha.
+       */
+      if (baseTexFormat == GL_LUMINANCE ||
+          baseTexFormat == GL_LUMINANCE_ALPHA ||
+          baseTexFormat == GL_INTENSITY) {
+         /* Green and blue must be zero */
+         _mesa_PixelTransferf(GL_GREEN_SCALE, 0.0f);
+         _mesa_PixelTransferf(GL_BLUE_SCALE, 0.0f);
+      }
+
+      ctx->Pack.RowLength = destRowLength;
+      _mesa_ReadPixels(0, 0, width, height, destFormat, destType, dest);
+   }
 
    /* disable texture unit */
    _mesa_set_enable(ctx, target, GL_FALSE);

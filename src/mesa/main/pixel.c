@@ -506,7 +506,7 @@ _mesa_GetPixelMapusv( GLenum map, GLushort *values )
  * Implements glPixelTransfer[fi] whether called immediately or from a
  * display list.
  */
-static void GLAPIENTRY
+void GLAPIENTRY
 _mesa_PixelTransferf( GLenum pname, GLfloat param )
 {
    GET_CURRENT_CONTEXT(ctx);
