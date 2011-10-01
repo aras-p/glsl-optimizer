@@ -211,8 +211,8 @@ static void normal_rewrite_writemask_cb(
 	struct rc_instruction * inst,
 	struct rc_src_register * src)
 {
-	unsigned int * new_mask = (unsigned int *)userdata;
-	src->Swizzle = rc_adjust_channels(src->Swizzle, *new_mask);
+	unsigned int * conversion_swizzle = (unsigned int *)userdata;
+	src->Swizzle = rc_adjust_channels(src->Swizzle, *conversion_swizzle);
 }
 
 /**
@@ -223,7 +223,6 @@ void rc_normal_rewrite_writemask(
 	struct rc_instruction * inst,
 	unsigned int conversion_swizzle)
 {
-	unsigned int new_mask;
 	struct rc_sub_instruction * sub = &inst->U.I;
 	const struct rc_opcode_info * info = rc_get_opcode_info(sub->Opcode);
 	sub->DstReg.WriteMask =
@@ -244,8 +243,8 @@ void rc_normal_rewrite_writemask(
 		return;
 	}
 
-	new_mask = sub->DstReg.WriteMask;
-	rc_for_all_reads_src(inst, normal_rewrite_writemask_cb, &new_mask);
+	rc_for_all_reads_src(inst, normal_rewrite_writemask_cb,
+							&conversion_swizzle);
 }
 
 /**
