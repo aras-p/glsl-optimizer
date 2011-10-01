@@ -681,6 +681,20 @@ static void omod_filter_reader_cb(
 	}
 }
 
+static void omod_filter_writer_cb(
+	void * userdata,
+	struct rc_instruction * inst,
+	rc_register_file file,
+	unsigned int index,
+	unsigned int mask)
+{
+	struct peephole_mul_cb_data * d = userdata;
+	if (file == d->Writer->File && index == d->Writer->Index &&
+					(mask & d->Writer->WriteMask)) {
+		d->Clobbered = 1;
+	}
+}
+
 static int peephole_mul_omod(
 	struct radeon_compiler * c,
 	struct rc_instruction * inst_mul,
@@ -787,6 +801,8 @@ static int peephole_mul_omod(
 		for (inst = inst_mul->Prev; inst != var->Inst;
 							inst = inst->Prev) {
 			rc_for_all_reads_mask(inst, omod_filter_reader_cb,
+								&cb_data);
+			rc_for_all_writes_mask(inst, omod_filter_writer_cb,
 								&cb_data);
 			if (cb_data.Clobbered) {
 				break;
