@@ -733,30 +733,19 @@ pop_texture_group(struct gl_context *ctx, struct texture_state *texstate)
 		    unit->Combine.ModeRGB);
       _mesa_TexEnvi(GL_TEXTURE_ENV, GL_COMBINE_ALPHA,
 		    unit->Combine.ModeA);
-      _mesa_TexEnvi(GL_TEXTURE_ENV, GL_SOURCE0_RGB,
-		    unit->Combine.SourceRGB[0]);
-      _mesa_TexEnvi(GL_TEXTURE_ENV, GL_SOURCE1_RGB,
-		    unit->Combine.SourceRGB[1]);
-      _mesa_TexEnvi(GL_TEXTURE_ENV, GL_SOURCE2_RGB,
-		    unit->Combine.SourceRGB[2]);
-      _mesa_TexEnvi(GL_TEXTURE_ENV, GL_SOURCE0_ALPHA,
-		    unit->Combine.SourceA[0]);
-      _mesa_TexEnvi(GL_TEXTURE_ENV, GL_SOURCE1_ALPHA,
-		    unit->Combine.SourceA[1]);
-      _mesa_TexEnvi(GL_TEXTURE_ENV, GL_SOURCE2_ALPHA,
-		    unit->Combine.SourceA[2]);
-      _mesa_TexEnvi(GL_TEXTURE_ENV, GL_OPERAND0_RGB,
-		    unit->Combine.OperandRGB[0]);
-      _mesa_TexEnvi(GL_TEXTURE_ENV, GL_OPERAND1_RGB,
-		    unit->Combine.OperandRGB[1]);
-      _mesa_TexEnvi(GL_TEXTURE_ENV, GL_OPERAND2_RGB,
-		    unit->Combine.OperandRGB[2]);
-      _mesa_TexEnvi(GL_TEXTURE_ENV, GL_OPERAND0_ALPHA,
-		    unit->Combine.OperandA[0]);
-      _mesa_TexEnvi(GL_TEXTURE_ENV, GL_OPERAND1_ALPHA,
-		    unit->Combine.OperandA[1]);
-      _mesa_TexEnvi(GL_TEXTURE_ENV, GL_OPERAND2_ALPHA,
-		    unit->Combine.OperandA[2]);
+      {
+         GLuint i;
+         for (i = 0; i < MAX_COMBINER_TERMS; i++) {
+            _mesa_TexEnvi(GL_TEXTURE_ENV, GL_SOURCE0_RGB + i,
+                          unit->Combine.SourceRGB[i]);
+            _mesa_TexEnvi(GL_TEXTURE_ENV, GL_SOURCE0_ALPHA + i,
+                          unit->Combine.SourceA[i]);
+            _mesa_TexEnvi(GL_TEXTURE_ENV, GL_OPERAND0_RGB + i,
+                          unit->Combine.OperandRGB[i]);
+            _mesa_TexEnvi(GL_TEXTURE_ENV, GL_OPERAND0_ALPHA + i,
+                          unit->Combine.OperandA[i]);
+         }
+      }
       _mesa_TexEnvi(GL_TEXTURE_ENV, GL_RGB_SCALE,
 		    1 << unit->Combine.ScaleShiftRGB);
       _mesa_TexEnvi(GL_TEXTURE_ENV, GL_ALPHA_SCALE,
