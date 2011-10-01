@@ -497,7 +497,7 @@ pop_enable_group(struct gl_context *ctx, const struct gl_enable_attrib *enable)
       const GLuint mask = 1 << i;
       if ((ctx->Transform.ClipPlanesEnabled & mask) != (enable->ClipPlanes & mask))
 	  _mesa_set_enable(ctx, (GLenum) (GL_CLIP_PLANE0 + i),
-			   (GLboolean) ((enable->ClipPlanes & mask) ? GL_TRUE : GL_FALSE));
+			   !!(enable->ClipPlanes & mask));
    }
 
    TEST_AND_UPDATE(ctx->Light.ColorMaterialEnabled, enable->ColorMaterial,
@@ -620,38 +620,31 @@ pop_enable_group(struct gl_context *ctx, const struct gl_enable_attrib *enable)
       if (ctx->Texture.Unit[i].Enabled != enabled) {
          _mesa_ActiveTextureARB(GL_TEXTURE0 + i);
 
-         _mesa_set_enable(ctx, GL_TEXTURE_1D,
-                          (enabled & TEXTURE_1D_BIT) ? GL_TRUE : GL_FALSE);
-         _mesa_set_enable(ctx, GL_TEXTURE_2D,
-                          (enabled & TEXTURE_2D_BIT) ? GL_TRUE : GL_FALSE);
-         _mesa_set_enable(ctx, GL_TEXTURE_3D,
-                          (enabled & TEXTURE_3D_BIT) ? GL_TRUE : GL_FALSE);
+         _mesa_set_enable(ctx, GL_TEXTURE_1D, !!(enabled & TEXTURE_1D_BIT));
+         _mesa_set_enable(ctx, GL_TEXTURE_2D, !!(enabled & TEXTURE_2D_BIT));
+         _mesa_set_enable(ctx, GL_TEXTURE_3D, !!(enabled & TEXTURE_3D_BIT));
          if (ctx->Extensions.NV_texture_rectangle) {
             _mesa_set_enable(ctx, GL_TEXTURE_RECTANGLE_ARB,
-                             (enabled & TEXTURE_RECT_BIT) ? GL_TRUE : GL_FALSE);
+                             !!(enabled & TEXTURE_RECT_BIT));
          }
          if (ctx->Extensions.ARB_texture_cube_map) {
             _mesa_set_enable(ctx, GL_TEXTURE_CUBE_MAP,
-                             (enabled & TEXTURE_CUBE_BIT) ? GL_TRUE : GL_FALSE);
+                             !!(enabled & TEXTURE_CUBE_BIT));
          }
          if (ctx->Extensions.MESA_texture_array) {
             _mesa_set_enable(ctx, GL_TEXTURE_1D_ARRAY_EXT,
-                           (enabled & TEXTURE_1D_ARRAY_BIT) ? GL_TRUE : GL_FALSE);
+                             !!(enabled & TEXTURE_1D_ARRAY_BIT));
             _mesa_set_enable(ctx, GL_TEXTURE_2D_ARRAY_EXT,
-                           (enabled & TEXTURE_2D_ARRAY_BIT) ? GL_TRUE : GL_FALSE);
+                             !!(enabled & TEXTURE_2D_ARRAY_BIT));
          }
       }
 
       if (ctx->Texture.Unit[i].TexGenEnabled != genEnabled) {
          _mesa_ActiveTextureARB(GL_TEXTURE0 + i);
-         _mesa_set_enable(ctx, GL_TEXTURE_GEN_S,
-                          (genEnabled & S_BIT) ? GL_TRUE : GL_FALSE);
-         _mesa_set_enable(ctx, GL_TEXTURE_GEN_T,
-                          (genEnabled & T_BIT) ? GL_TRUE : GL_FALSE);
-         _mesa_set_enable(ctx, GL_TEXTURE_GEN_R,
-                          (genEnabled & R_BIT) ? GL_TRUE : GL_FALSE);
-         _mesa_set_enable(ctx, GL_TEXTURE_GEN_Q,
-                          (genEnabled & Q_BIT) ? GL_TRUE : GL_FALSE);
+         _mesa_set_enable(ctx, GL_TEXTURE_GEN_S, !!(genEnabled & S_BIT));
+         _mesa_set_enable(ctx, GL_TEXTURE_GEN_T, !!(genEnabled & T_BIT));
+         _mesa_set_enable(ctx, GL_TEXTURE_GEN_R, !!(genEnabled & R_BIT));
+         _mesa_set_enable(ctx, GL_TEXTURE_GEN_Q, !!(genEnabled & Q_BIT));
       }
    }
 
@@ -674,25 +667,22 @@ pop_texture_group(struct gl_context *ctx, struct texture_state *texstate)
       GLuint tgt;
 
       _mesa_ActiveTextureARB(GL_TEXTURE0_ARB + u);
-      _mesa_set_enable(ctx, GL_TEXTURE_1D,
-                       (unit->Enabled & TEXTURE_1D_BIT) ? GL_TRUE : GL_FALSE);
-      _mesa_set_enable(ctx, GL_TEXTURE_2D,
-                       (unit->Enabled & TEXTURE_2D_BIT) ? GL_TRUE : GL_FALSE);
-      _mesa_set_enable(ctx, GL_TEXTURE_3D,
-                       (unit->Enabled & TEXTURE_3D_BIT) ? GL_TRUE : GL_FALSE);
+      _mesa_set_enable(ctx, GL_TEXTURE_1D, !!(unit->Enabled & TEXTURE_1D_BIT));
+      _mesa_set_enable(ctx, GL_TEXTURE_2D, !!(unit->Enabled & TEXTURE_2D_BIT));
+      _mesa_set_enable(ctx, GL_TEXTURE_3D, !!(unit->Enabled & TEXTURE_3D_BIT));
       if (ctx->Extensions.ARB_texture_cube_map) {
          _mesa_set_enable(ctx, GL_TEXTURE_CUBE_MAP_ARB,
-                     (unit->Enabled & TEXTURE_CUBE_BIT) ? GL_TRUE : GL_FALSE);
+                          !!(unit->Enabled & TEXTURE_CUBE_BIT));
       }
       if (ctx->Extensions.NV_texture_rectangle) {
          _mesa_set_enable(ctx, GL_TEXTURE_RECTANGLE_NV,
-                     (unit->Enabled & TEXTURE_RECT_BIT) ? GL_TRUE : GL_FALSE);
+                          !!(unit->Enabled & TEXTURE_RECT_BIT));
       }
       if (ctx->Extensions.MESA_texture_array) {
          _mesa_set_enable(ctx, GL_TEXTURE_1D_ARRAY_EXT,
-                 (unit->Enabled & TEXTURE_1D_ARRAY_BIT) ? GL_TRUE : GL_FALSE);
+                          !!(unit->Enabled & TEXTURE_1D_ARRAY_BIT));
          _mesa_set_enable(ctx, GL_TEXTURE_2D_ARRAY_EXT,
-                 (unit->Enabled & TEXTURE_2D_ARRAY_BIT) ? GL_TRUE : GL_FALSE);
+                          !!(unit->Enabled & TEXTURE_2D_ARRAY_BIT));
       }
 
       _mesa_TexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, unit->EnvMode);
@@ -719,14 +709,10 @@ pop_texture_group(struct gl_context *ctx, struct texture_state *texstate)
             ctx->Driver.TexGen(ctx, GL_Q, GL_EYE_PLANE, unit->GenQ.EyePlane);
          }
       }
-      _mesa_set_enable(ctx, GL_TEXTURE_GEN_S,
-                       ((unit->TexGenEnabled & S_BIT) ? GL_TRUE : GL_FALSE));
-      _mesa_set_enable(ctx, GL_TEXTURE_GEN_T,
-                       ((unit->TexGenEnabled & T_BIT) ? GL_TRUE : GL_FALSE));
-      _mesa_set_enable(ctx, GL_TEXTURE_GEN_R,
-                       ((unit->TexGenEnabled & R_BIT) ? GL_TRUE : GL_FALSE));
-      _mesa_set_enable(ctx, GL_TEXTURE_GEN_Q,
-                       ((unit->TexGenEnabled & Q_BIT) ? GL_TRUE : GL_FALSE));
+      _mesa_set_enable(ctx, GL_TEXTURE_GEN_S, !!(unit->TexGenEnabled & S_BIT));
+      _mesa_set_enable(ctx, GL_TEXTURE_GEN_T, !!(unit->TexGenEnabled & T_BIT));
+      _mesa_set_enable(ctx, GL_TEXTURE_GEN_R, !!(unit->TexGenEnabled & R_BIT));
+      _mesa_set_enable(ctx, GL_TEXTURE_GEN_Q, !!(unit->TexGenEnabled & Q_BIT));
       _mesa_TexEnvf(GL_TEXTURE_FILTER_CONTROL, GL_TEXTURE_LOD_BIAS,
 		    unit->LodBias);
       _mesa_TexEnvi(GL_TEXTURE_ENV, GL_COMBINE_RGB,
@@ -1235,12 +1221,8 @@ _mesa_PopAttrib(void)
                   const GLuint mask = 1 << i;
                   const GLfloat *eyePlane = xform->EyeUserPlane[i];
                   COPY_4V(ctx->Transform.EyeUserPlane[i], eyePlane);
-                  if (xform->ClipPlanesEnabled & mask) {
-                     _mesa_set_enable(ctx, GL_CLIP_PLANE0 + i, GL_TRUE);
-                  }
-                  else {
-                     _mesa_set_enable(ctx, GL_CLIP_PLANE0 + i, GL_FALSE);
-                  }
+                  _mesa_set_enable(ctx, GL_CLIP_PLANE0 + i,
+                                   !!(xform->ClipPlanesEnabled & mask));
                   if (ctx->Driver.ClipPlane)
                      ctx->Driver.ClipPlane( ctx, GL_CLIP_PLANE0 + i, eyePlane );
                }
