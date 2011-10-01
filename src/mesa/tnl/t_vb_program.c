@@ -48,7 +48,7 @@
 
 #ifdef NAN_CHECK
 /** Check for NaNs and very large values */
-static INLINE void
+static inline void
 check_float(float x)
 {
    assert(!IS_INF_OR_NAN(x));

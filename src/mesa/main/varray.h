@@ -41,7 +41,7 @@ struct gl_context;
  * The array->_MaxElement field will be updated.
  * Later in glDrawArrays/Elements/etc we can do some bounds checking.
  */
-static INLINE void
+static inline void
 _mesa_update_array_max_element(struct gl_client_array *array)
 {
    assert(array->Enabled);

@@ -51,7 +51,7 @@
  * linear RGB value in [0, 1].
  * Implemented with a 256-entry lookup table.
  */
-static INLINE GLfloat
+static inline GLfloat
 nonlinear_to_linear(GLubyte cs8)
 {
    static GLfloat table[256];

@@ -105,7 +105,7 @@ compute_zoomed_bounds(struct gl_context *ctx, GLint imageX, GLint imageY,
  * return corresponding x coord in the original, unzoomed image.
  * This can use this for unzooming X or Y values.
  */
-static INLINE GLint
+static inline GLint
 unzoom_x(GLfloat zoomX, GLint imageX, GLint zx)
 {
    /*

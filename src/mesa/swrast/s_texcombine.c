@@ -45,7 +45,7 @@ typedef float (*float4_array)[4];
 /**
  * Return array of texels for given unit.
  */
-static INLINE float4_array
+static inline float4_array
 get_texel_array(SWcontext *swrast, GLuint unit)
 {
 #ifdef _OPENMP

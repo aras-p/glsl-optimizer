@@ -49,7 +49,7 @@ _mesa_set_vp_override(struct gl_context *ctx, GLboolean flag);
 /**
  * Is the secondary color needed?
  */
-static INLINE GLboolean
+static inline GLboolean
 _mesa_need_secondary_color(const struct gl_context *ctx)
 {
    if (ctx->Light.Enabled &&

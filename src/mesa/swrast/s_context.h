@@ -163,14 +163,14 @@ struct swrast_texture_image
 
 
 /** cast wrapper */
-static INLINE struct swrast_texture_image *
+static inline struct swrast_texture_image *
 swrast_texture_image(struct gl_texture_image *img)
 {
    return (struct swrast_texture_image *) img;
 }
 
 /** cast wrapper */
-static INLINE const struct swrast_texture_image *
+static inline const struct swrast_texture_image *
 swrast_texture_image_const(const struct gl_texture_image *img)
 {
    return (const struct swrast_texture_image *) img;
@@ -308,14 +308,14 @@ _swrast_update_texture_samplers(struct gl_context *ctx);
 
 
 /** Return SWcontext for the given struct gl_context */
-static INLINE SWcontext *
+static inline SWcontext *
 SWRAST_CONTEXT(struct gl_context *ctx)
 {
    return (SWcontext *) ctx->swrast_context;
 }
 
 /** const version of above */
-static INLINE const SWcontext *
+static inline const SWcontext *
 CONST_SWRAST_CONTEXT(const struct gl_context *ctx)
 {
    return (const SWcontext *) ctx->swrast_context;
@@ -327,7 +327,7 @@ CONST_SWRAST_CONTEXT(const struct gl_context *ctx)
  * For drivers that rely on swrast for fallback rendering, this is the
  * driver's opportunity to map renderbuffers and textures.
  */
-static INLINE void
+static inline void
 swrast_render_start(struct gl_context *ctx)
 {
    SWcontext *swrast = SWRAST_CONTEXT(ctx);
@@ -337,7 +337,7 @@ swrast_render_start(struct gl_context *ctx)
 
 
 /** Called after framebuffer reading/writing */
-static INLINE void
+static inline void
 swrast_render_finish(struct gl_context *ctx)
 {
    SWcontext *swrast = SWRAST_CONTEXT(ctx);

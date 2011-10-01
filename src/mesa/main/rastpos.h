@@ -45,7 +45,7 @@ _mesa_init_rastpos_dispatch(struct _glapi_table *disp);
 
 #else /* FEATURE_rastpos */
 
-static INLINE void
+static inline void
 _mesa_init_rastpos_dispatch(struct _glapi_table *disp)
 {
 }

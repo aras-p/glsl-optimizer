@@ -76,20 +76,20 @@ extern void _mesa_init_dlist_dispatch(struct _glapi_table *disp);
 
 #define _MESA_INIT_DLIST_VTXFMT(vfmt, impl) do { } while (0)
 
-static INLINE void
+static inline void
 _mesa_delete_list(struct gl_context *ctx, struct gl_display_list *dlist)
 {
    /* there should be no list to delete */
    ASSERT_NO_FEATURE();
 }
 
-static INLINE void
+static inline void
 _mesa_install_dlist_vtxfmt(struct _glapi_table *disp,
                            const GLvertexformat *vfmt)
 {
 }
 
-static INLINE void
+static inline void
 _mesa_init_dlist_dispatch(struct _glapi_table *disp)
 {
 }

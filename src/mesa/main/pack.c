@@ -2910,35 +2910,35 @@ extract_float_rgba(GLuint n, GLfloat rgba[][4],
 }
 
 
-static INLINE GLuint
+static inline GLuint
 clamp_byte_to_uint(GLbyte b)
 {
    return b < 0 ? 0 : b;
 }
 
 
-static INLINE GLuint
+static inline GLuint
 clamp_short_to_uint(GLshort s)
 {
    return s < 0 ? 0 : s;
 }
 
 
-static INLINE GLuint
+static inline GLuint
 clamp_int_to_uint(GLint i)
 {
    return i < 0 ? 0 : i;
 }
 
 
-static INLINE GLuint
+static inline GLuint
 clamp_float_to_uint(GLfloat f)
 {
    return f < 0.0F ? 0 : IROUND(f);
 }
 
 
-static INLINE GLuint
+static inline GLuint
 clamp_half_to_uint(GLhalfARB h)
 {
    GLfloat f = _mesa_half_to_float(h);

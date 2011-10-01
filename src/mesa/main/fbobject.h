@@ -50,7 +50,7 @@ _mesa_get_attachment(struct gl_context *ctx, struct gl_framebuffer *fb,
 
 
 /** Return the texture image for a renderbuffer attachment */
-static INLINE struct gl_texture_image *
+static inline struct gl_texture_image *
 _mesa_get_attachment_teximage(struct gl_renderbuffer_attachment *att)
 {
    assert(att->Type == GL_TEXTURE);
@@ -59,7 +59,7 @@ _mesa_get_attachment_teximage(struct gl_renderbuffer_attachment *att)
 
 
 /** Return the (const) texture image for a renderbuffer attachment */
-static INLINE const struct gl_texture_image *
+static inline const struct gl_texture_image *
 _mesa_get_attachment_teximage_const(const struct gl_renderbuffer_attachment *att)
 {
    assert(att->Type == GL_TEXTURE);

@@ -179,12 +179,12 @@ void vbo_exec_vtx_map( struct vbo_exec_context *exec );
 
 #else /* FEATURE_beginend */
 
-static INLINE void
+static inline void
 vbo_exec_vtx_flush( struct vbo_exec_context *exec, GLboolean unmap )
 {
 }
 
-static INLINE void
+static inline void
 vbo_exec_vtx_map( struct vbo_exec_context *exec )
 {
 }

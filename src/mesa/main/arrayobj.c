@@ -64,7 +64,7 @@
  * non-existent.
  */
 
-static INLINE struct gl_array_object *
+static inline struct gl_array_object *
 lookup_arrayobj(struct gl_context *ctx, GLuint id)
 {
    if (id == 0)

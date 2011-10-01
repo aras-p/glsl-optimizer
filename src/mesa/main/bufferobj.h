@@ -39,7 +39,7 @@
 
 
 /** Is the given buffer object currently mapped? */
-static INLINE GLboolean
+static inline GLboolean
 _mesa_bufferobj_mapped(const struct gl_buffer_object *obj)
 {
    return obj->Pointer != NULL;
@@ -50,7 +50,7 @@ _mesa_bufferobj_mapped(const struct gl_buffer_object *obj)
  * Mesa uses default buffer objects in several places.  Default buffers
  * always have Name==0.  User created buffers have Name!=0.
  */
-static INLINE GLboolean
+static inline GLboolean
 _mesa_is_bufferobj(const struct gl_buffer_object *obj)
 {
    return obj->Name != 0;
@@ -79,7 +79,7 @@ _mesa_reference_buffer_object_(struct gl_context *ctx,
                                struct gl_buffer_object **ptr,
                                struct gl_buffer_object *bufObj);
 
-static INLINE void
+static inline void
 _mesa_reference_buffer_object(struct gl_context *ctx,
                               struct gl_buffer_object **ptr,
                               struct gl_buffer_object *bufObj)

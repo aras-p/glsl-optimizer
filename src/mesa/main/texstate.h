@@ -40,7 +40,7 @@
  * Return pointer to current texture unit.
  * This the texture unit set by glActiveTexture(), not glClientActiveTexture().
  */
-static INLINE struct gl_texture_unit *
+static inline struct gl_texture_unit *
 _mesa_get_current_tex_unit(struct gl_context *ctx)
 {
    ASSERT(ctx->Texture.CurrentUnit < Elements(ctx->Texture.Unit));

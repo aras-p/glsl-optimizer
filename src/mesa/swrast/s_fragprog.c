@@ -35,7 +35,7 @@
  * Apply texture object's swizzle (X/Y/Z/W/0/1) to incoming 'texel'
  * and return results in 'colorOut'.
  */
-static INLINE void
+static inline void
 swizzle_texel(const GLfloat texel[4], GLfloat colorOut[4], GLuint swizzle)
 {
    if (swizzle == SWIZZLE_NOOP) {

@@ -78,7 +78,7 @@ static struct gl_renderbuffer DummyRenderbuffer;
 static struct gl_framebuffer IncompleteFramebuffer;
 
 
-static INLINE GLboolean
+static inline GLboolean
 is_cube_face(GLenum target)
 {
    return (target >= GL_TEXTURE_CUBE_MAP_POSITIVE_X &&
@@ -89,7 +89,7 @@ is_cube_face(GLenum target)
 /**
  * Is the given FBO a user-created FBO?
  */
-static INLINE GLboolean
+static inline GLboolean
 is_user_fbo(const struct gl_framebuffer *fb)
 {
    return fb->Name != 0;
@@ -99,7 +99,7 @@ is_user_fbo(const struct gl_framebuffer *fb)
 /**
  * Is the given FBO a window system FBO (like an X window)?
  */
-static INLINE GLboolean
+static inline GLboolean
 is_winsys_fbo(const struct gl_framebuffer *fb)
 {
    return fb->Name == 0;

@@ -51,7 +51,7 @@
  * or just the glPointSize value.
  * Must also clamp to user-defined range and implmentation limits.
  */
-static INLINE GLfloat
+static inline GLfloat
 get_size(const struct gl_context *ctx, const SWvertex *vert, GLboolean smoothed)
 {
    GLfloat size;

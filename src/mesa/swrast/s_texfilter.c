@@ -57,7 +57,7 @@
  * optimization!  If we find that's not true on some systems, convert
  * to a macro.
  */
-static INLINE GLfloat
+static inline GLfloat
 lerp_2d(GLfloat a, GLfloat b,
         GLfloat v00, GLfloat v10, GLfloat v01, GLfloat v11)
 {
@@ -71,7 +71,7 @@ lerp_2d(GLfloat a, GLfloat b,
  * Do 3D/trilinear interpolation of float values.
  * \sa lerp_2d
  */
-static INLINE GLfloat
+static inline GLfloat
 lerp_3d(GLfloat a, GLfloat b, GLfloat c,
         GLfloat v000, GLfloat v100, GLfloat v010, GLfloat v110,
         GLfloat v001, GLfloat v101, GLfloat v011, GLfloat v111)
@@ -89,7 +89,7 @@ lerp_3d(GLfloat a, GLfloat b, GLfloat c,
 /**
  * Do linear interpolation of colors.
  */
-static INLINE void
+static inline void
 lerp_rgba(GLfloat result[4], GLfloat t, const GLfloat a[4], const GLfloat b[4])
 {
    result[0] = LERP(t, a[0], b[0]);
@@ -102,7 +102,7 @@ lerp_rgba(GLfloat result[4], GLfloat t, const GLfloat a[4], const GLfloat b[4])
 /**
  * Do bilinear interpolation of colors.
  */
-static INLINE void
+static inline void
 lerp_rgba_2d(GLfloat result[4], GLfloat a, GLfloat b,
              const GLfloat t00[4], const GLfloat t10[4],
              const GLfloat t01[4], const GLfloat t11[4])
@@ -117,7 +117,7 @@ lerp_rgba_2d(GLfloat result[4], GLfloat a, GLfloat b,
 /**
  * Do trilinear interpolation of colors.
  */
-static INLINE void
+static inline void
 lerp_rgba_3d(GLfloat result[4], GLfloat a, GLfloat b, GLfloat c,
              const GLfloat t000[4], const GLfloat t100[4],
              const GLfloat t010[4], const GLfloat t110[4],
@@ -153,7 +153,7 @@ lerp_rgba_3d(GLfloat result[4], GLfloat a, GLfloat b, GLfloat c,
  *    i0, i1 = returns two nearest texel indexes
  *    weight = returns blend factor between texels
  */
-static INLINE void
+static inline void
 linear_texel_locations(GLenum wrapMode,
                        const struct gl_texture_image *img,
                        GLint size, GLfloat s,
@@ -281,7 +281,7 @@ linear_texel_locations(GLenum wrapMode,
 /**
  * Used to compute texel location for nearest sampling.
  */
-static INLINE GLint
+static inline GLint
 nearest_texel_location(GLenum wrapMode,
                        const struct gl_texture_image *img,
                        GLint size, GLfloat s)
@@ -406,7 +406,7 @@ nearest_texel_location(GLenum wrapMode,
 
 
 /* Power of two image sizes only */
-static INLINE void
+static inline void
 linear_repeat_texel_location(GLuint size, GLfloat s,
                              GLint *i0, GLint *i1, GLfloat *weight)
 {
@@ -420,7 +420,7 @@ linear_repeat_texel_location(GLuint size, GLfloat s,
 /**
  * Do clamp/wrap for a texture rectangle coord, GL_NEAREST filter mode.
  */
-static INLINE GLint
+static inline GLint
 clamp_rect_coord_nearest(GLenum wrapMode, GLfloat coord, GLint max)
 {
    switch (wrapMode) {
@@ -440,7 +440,7 @@ clamp_rect_coord_nearest(GLenum wrapMode, GLfloat coord, GLint max)
 /**
  * As above, but GL_LINEAR filtering.
  */
-static INLINE void
+static inline void
 clamp_rect_coord_linear(GLenum wrapMode, GLfloat coord, GLint max,
                         GLint *i0out, GLint *i1out, GLfloat *weight)
 {
@@ -481,7 +481,7 @@ clamp_rect_coord_linear(GLenum wrapMode, GLfloat coord, GLint max,
 /**
  * Compute slice/image to use for 1D or 2D array texture.
  */
-static INLINE GLint
+static inline GLint
 tex_array_slice(GLfloat coord, GLsizei size)
 {
    GLint slice = IFLOOR(coord + 0.5f);
@@ -494,7 +494,7 @@ tex_array_slice(GLfloat coord, GLsizei size)
  * Compute nearest integer texcoords for given texobj and coordinate.
  * NOTE: only used for depth texture sampling.
  */
-static INLINE void
+static inline void
 nearest_texcoord(const struct gl_texture_object *texObj,
                  GLuint level,
                  const GLfloat texcoord[4],
@@ -541,7 +541,7 @@ nearest_texcoord(const struct gl_texture_object *texObj,
  * Compute linear integer texcoords for given texobj and coordinate.
  * NOTE: only used for depth texture sampling.
  */
-static INLINE void
+static inline void
 linear_texcoord(const struct gl_texture_object *texObj,
                 GLuint level,
                 const GLfloat texcoord[4],
@@ -598,7 +598,7 @@ linear_texcoord(const struct gl_texture_object *texObj,
  * For linear interpolation between mipmap levels N and N+1, this function
  * computes N.
  */
-static INLINE GLint
+static inline GLint
 linear_mipmap_level(const struct gl_texture_object *tObj, GLfloat lambda)
 {
    if (lambda < 0.0F)
@@ -613,7 +613,7 @@ linear_mipmap_level(const struct gl_texture_object *tObj, GLfloat lambda)
 /**
  * Compute the nearest mipmap level to take texels from.
  */
-static INLINE GLint
+static inline GLint
 nearest_mipmap_level(const struct gl_texture_object *tObj, GLfloat lambda)
 {
    GLfloat l;
@@ -649,7 +649,7 @@ nearest_mipmap_level(const struct gl_texture_object *tObj, GLfloat lambda)
  * will be minified, magnified, or split between the two.  This function
  * determines the subranges in [0, n-1] that are to be minified or magnified.
  */
-static INLINE void
+static inline void
 compute_min_mag_ranges(const struct gl_texture_object *tObj,
                        GLuint n, const GLfloat lambda[],
                        GLuint *minStart, GLuint *minEnd,
@@ -758,7 +758,7 @@ compute_min_mag_ranges(const struct gl_texture_object *tObj,
  * the base texture format.  Ex: if the texture base format it GL_ALPHA,
  * we return (0,0,0,BorderAlpha).
  */
-static INLINE void
+static inline void
 get_border_color(const struct gl_texture_object *tObj,
                  const struct gl_texture_image *img,
                  GLfloat rgba[4])
@@ -798,7 +798,7 @@ get_border_color(const struct gl_texture_object *tObj,
 /**
  * Return the texture sample for coordinate (s) using GL_NEAREST filter.
  */
-static INLINE void
+static inline void
 sample_1d_nearest(struct gl_context *ctx,
                   const struct gl_texture_object *tObj,
                   const struct gl_texture_image *img,
@@ -823,7 +823,7 @@ sample_1d_nearest(struct gl_context *ctx,
 /**
  * Return the texture sample for coordinate (s) using GL_LINEAR filter.
  */
-static INLINE void
+static inline void
 sample_1d_linear(struct gl_context *ctx,
                  const struct gl_texture_object *tObj,
                  const struct gl_texture_image *img,
@@ -1057,7 +1057,7 @@ sample_lambda_1d( struct gl_context *ctx,
 /**
  * Return the texture sample for coordinate (s,t) using GL_NEAREST filter.
  */
-static INLINE void
+static inline void
 sample_2d_nearest(struct gl_context *ctx,
                   const struct gl_texture_object *tObj,
                   const struct gl_texture_image *img,
@@ -1091,7 +1091,7 @@ sample_2d_nearest(struct gl_context *ctx,
  * Return the texture sample for coordinate (s,t) using GL_LINEAR filter.
  * New sampling code contributed by Lynn Quam <quam@ai.sri.com>.
  */
-static INLINE void
+static inline void
 sample_2d_linear(struct gl_context *ctx,
                  const struct gl_texture_object *tObj,
                  const struct gl_texture_image *img,
@@ -1156,7 +1156,7 @@ sample_2d_linear(struct gl_context *ctx,
  * As above, but we know WRAP_S == REPEAT and WRAP_T == REPEAT.
  * We don't have to worry about the texture border.
  */
-static INLINE void
+static inline void
 sample_2d_linear_repeat(struct gl_context *ctx,
                         const struct gl_texture_object *tObj,
                         const struct gl_texture_image *img,
@@ -1760,7 +1760,7 @@ sample_2d_footprint(struct gl_context *ctx,
  * Returns the index of the specified texture object in the
  * gl_context texture unit array.
  */
-static INLINE GLuint
+static inline GLuint
 texture_unit_index(const struct gl_context *ctx,
                    const struct gl_texture_object *tObj)
 {
@@ -1941,7 +1941,7 @@ sample_lambda_2d_aniso(struct gl_context *ctx,
 /**
  * Return the texture sample for coordinate (s,t,r) using GL_NEAREST filter.
  */
-static INLINE void
+static inline void
 sample_3d_nearest(struct gl_context *ctx,
                   const struct gl_texture_object *tObj,
                   const struct gl_texture_image *img,
@@ -3282,7 +3282,7 @@ sample_lambda_1d_array(struct gl_context *ctx,
 /**
  * Compare texcoord against depth sample.  Return 1.0 or the ambient value.
  */
-static INLINE GLfloat
+static inline GLfloat
 shadow_compare(GLenum function, GLfloat coord, GLfloat depthSample,
                GLfloat ambient)
 {
@@ -3315,7 +3315,7 @@ shadow_compare(GLenum function, GLfloat coord, GLfloat depthSample,
 /**
  * Compare texcoord against four depth samples.
  */
-static INLINE GLfloat
+static inline GLfloat
 shadow_compare4(GLenum function, GLfloat coord,
                 GLfloat depth00, GLfloat depth01,
                 GLfloat depth10, GLfloat depth11,

@@ -136,7 +136,7 @@ _mesa_get_texture_dimensions(GLenum target);
 /**
  * Lock a texture for updating.  See also _mesa_lock_context_textures().
  */
-static INLINE void
+static inline void
 _mesa_lock_texture(struct gl_context *ctx, struct gl_texture_object *texObj)
 {
    _glthread_LOCK_MUTEX(ctx->Shared->TexMutex);
@@ -144,7 +144,7 @@ _mesa_lock_texture(struct gl_context *ctx, struct gl_texture_object *texObj)
    (void) texObj;
 }
 
-static INLINE void
+static inline void
 _mesa_unlock_texture(struct gl_context *ctx, struct gl_texture_object *texObj)
 {
    (void) texObj;

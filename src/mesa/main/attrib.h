@@ -52,19 +52,19 @@ _mesa_init_attrib_dispatch(struct _glapi_table *disp);
 
 #else /* FEATURE_attrib_stack */
 
-static INLINE void
+static inline void
 _mesa_PushClientAttrib( GLbitfield mask )
 {
    ASSERT_NO_FEATURE();
 }
 
-static INLINE void
+static inline void
 _mesa_PopClientAttrib( void )
 {
    ASSERT_NO_FEATURE();
 }
 
-static INLINE void
+static inline void
 _mesa_init_attrib_dispatch(struct _glapi_table *disp)
 {
 }

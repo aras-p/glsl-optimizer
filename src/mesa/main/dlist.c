@@ -560,7 +560,7 @@ make_list(GLuint name, GLuint count)
 /**
  * Lookup function to just encapsulate casting.
  */
-static INLINE struct gl_display_list *
+static inline struct gl_display_list *
 lookup_list(struct gl_context *ctx, GLuint list)
 {
    return (struct gl_display_list *)
@@ -569,7 +569,7 @@ lookup_list(struct gl_context *ctx, GLuint list)
 
 
 /** Is the given opcode an extension code? */
-static INLINE GLboolean
+static inline GLboolean
 is_ext_opcode(OpCode opcode)
 {
    return (opcode >= OPCODE_EXT_0);
@@ -1043,7 +1043,7 @@ _mesa_dlist_alloc_opcode(struct gl_context *ctx,
  * \param nparams  number of function parameters
  * \return  pointer to start of instruction space
  */
-static INLINE Node *
+static inline Node *
 alloc_instruction(struct gl_context *ctx, OpCode opcode, GLuint nparams)
 {
    return dlist_alloc(ctx, opcode, nparams * sizeof(Node));
@@ -5672,7 +5672,7 @@ save_EdgeFlag(GLboolean x)
    save_Attr1fNV(VERT_ATTRIB_EDGEFLAG, x ? (GLfloat)1.0 : (GLfloat)0.0);
 }
 
-static INLINE GLboolean compare4fv( const GLfloat *a,
+static inline GLboolean compare4fv( const GLfloat *a,
                                     const GLfloat *b,
                                     GLuint count )
 {

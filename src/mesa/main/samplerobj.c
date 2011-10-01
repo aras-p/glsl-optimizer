@@ -313,7 +313,7 @@ validate_texture_wrap_mode(struct gl_context *ctx, GLenum wrap)
 /**
  * This is called just prior to changing any sampler object state.
  */
-static INLINE void
+static inline void
 flush(struct gl_context *ctx)
 {
    FLUSH_VERTICES(ctx, _NEW_TEXTURE);

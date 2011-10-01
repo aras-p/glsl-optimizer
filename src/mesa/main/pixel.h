@@ -60,12 +60,12 @@ _mesa_PixelTransferf(GLenum pname, GLfloat param)
 }
 
 
-static INLINE void
+static inline void
 _mesa_update_pixel(struct gl_context *ctx, GLuint newstate)
 {
 }
 
-static INLINE void
+static inline void
 _mesa_init_pixel_dispatch(struct _glapi_table *disp)
 {
 }

@@ -54,7 +54,7 @@ extern void
 _mesa_reference_framebuffer_(struct gl_framebuffer **ptr,
                              struct gl_framebuffer *fb);
 
-static INLINE void
+static inline void
 _mesa_reference_framebuffer(struct gl_framebuffer **ptr,
                             struct gl_framebuffer *fb)
 {

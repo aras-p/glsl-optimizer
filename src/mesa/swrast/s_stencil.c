@@ -391,7 +391,7 @@ do_stencil_test( struct gl_context *ctx, GLuint face, GLuint n, GLstencil stenci
  * Compute the zpass/zfail masks by comparing the pre- and post-depth test
  * masks.
  */
-static INLINE void
+static inline void
 compute_pass_fail_masks(GLuint n, const GLubyte origMask[],
                         const GLubyte newMask[],
                         GLubyte passMask[], GLubyte failMask[])

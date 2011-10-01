@@ -55,14 +55,14 @@ _mesa_init_accum_dispatch(struct _glapi_table *disp);
 
 #include "main/compiler.h"
 
-static INLINE void
+static inline void
 _mesa_ClearAccum( GLfloat red, GLfloat green, GLfloat blue, GLfloat alpha )
 {
    /* this is used in _mesa_PopAttrib */
    ASSERT_NO_FEATURE();
 }
 
-static INLINE void
+static inline void
 _mesa_init_accum_dispatch(struct _glapi_table *disp)
 {
 }

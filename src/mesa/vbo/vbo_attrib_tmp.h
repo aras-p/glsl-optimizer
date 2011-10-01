@@ -59,12 +59,12 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 #define MAT_ATTR( A, N, V ) ATTR( A, N, (V)[0], (V)[1], (V)[2], (V)[3] )
 
-static INLINE float conv_ui10_to_norm_float(unsigned ui10)
+static inline float conv_ui10_to_norm_float(unsigned ui10)
 {
    return (float)(ui10) / 1023.0;
 }
 
-static INLINE float conv_ui2_to_norm_float(unsigned ui2)
+static inline float conv_ui2_to_norm_float(unsigned ui2)
 {
    return (float)(ui2) / 3.0;
 }
@@ -91,28 +91,28 @@ static INLINE float conv_ui2_to_norm_float(unsigned ui2)
 struct attr_bits_10 {signed int x:10;};
 struct attr_bits_2 {signed int x:2;};
 
-static INLINE float conv_i10_to_i(int i10)
+static inline float conv_i10_to_i(int i10)
 {
    struct attr_bits_10 val;
    val.x = i10;
    return (float)val.x;
 }
 
-static INLINE float conv_i2_to_i(int i2)
+static inline float conv_i2_to_i(int i2)
 {
    struct attr_bits_2 val;
    val.x = i2;
    return (float)val.x;
 }
 
-static INLINE float conv_i10_to_norm_float(int i10)
+static inline float conv_i10_to_norm_float(int i10)
 {
    struct attr_bits_10 val;
    val.x = i10;
    return (2.0F * (float)val.x + 1.0F) * (1.0F  / 511.0F);
 }
 
-static INLINE float conv_i2_to_norm_float(int i2)
+static inline float conv_i2_to_norm_float(int i2)
 {
    struct attr_bits_2 val;
    val.x = i2;

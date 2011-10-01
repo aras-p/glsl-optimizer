@@ -187,12 +187,12 @@ void vbo_save_api_init( struct vbo_save_context *save );
 
 #else /* FEATURE_dlist */
 
-static INLINE void
+static inline void
 vbo_save_init( struct gl_context *ctx )
 {
 }
 
-static INLINE void
+static inline void
 vbo_save_destroy( struct gl_context *ctx )
 {
 }

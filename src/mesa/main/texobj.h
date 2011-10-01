@@ -68,7 +68,7 @@ extern void
 _mesa_reference_texobj_(struct gl_texture_object **ptr,
                         struct gl_texture_object *tex);
 
-static INLINE void
+static inline void
 _mesa_reference_texobj(struct gl_texture_object **ptr,
                        struct gl_texture_object *tex)
 {

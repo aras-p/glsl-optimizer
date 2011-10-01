@@ -70,7 +70,7 @@ static struct gl_buffer_object DummyBufferObject;
  * \return   pointer to pointer to the buffer object bound to \c target in the
  *           specified context or \c NULL if \c target is invalid.
  */
-static INLINE struct gl_buffer_object **
+static inline struct gl_buffer_object **
 get_buffer_target(struct gl_context *ctx, GLenum target)
 {
    switch (target) {
@@ -112,7 +112,7 @@ get_buffer_target(struct gl_context *ctx, GLenum target)
  * \return   pointer to the buffer object bound to \c target in the
  *           specified context or \c NULL if \c target is invalid.
  */
-static INLINE struct gl_buffer_object *
+static inline struct gl_buffer_object *
 get_buffer(struct gl_context *ctx, GLenum target)
 {
    struct gl_buffer_object **bufObj = get_buffer_target(ctx, target);

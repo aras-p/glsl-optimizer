@@ -100,7 +100,7 @@ _mesa_init_texture_s3tc(struct gl_context *ctx);
 #define _mesa_fetch_texel_2d_f_srgba_dxt3 NULL
 #define _mesa_fetch_texel_2d_f_srgba_dxt5 NULL
 
-static INLINE void
+static inline void
 _mesa_init_texture_s3tc(struct gl_context *ctx)
 {
 }

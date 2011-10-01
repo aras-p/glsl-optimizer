@@ -123,7 +123,7 @@ _mesa_DeleteHashTable(struct _mesa_HashTable *table)
  * Lookup an entry in the hash table, without locking.
  * \sa _mesa_HashLookup
  */
-static INLINE void *
+static inline void *
 _mesa_HashLookup_unlocked(struct _mesa_HashTable *table, GLuint key)
 {
    GLuint pos;

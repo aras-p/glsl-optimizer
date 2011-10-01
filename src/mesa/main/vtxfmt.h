@@ -44,12 +44,12 @@ extern void _mesa_install_save_vtxfmt( struct gl_context *ctx, const GLvertexfor
 
 #else /* FEATURE_beginend */
 
-static INLINE void
+static inline void
 _mesa_install_exec_vtxfmt( struct gl_context *ctx, const GLvertexformat *vfmt )
 {
 }
 
-static INLINE void
+static inline void
 _mesa_install_save_vtxfmt( struct gl_context *ctx, const GLvertexformat *vfmt )
 {
 }

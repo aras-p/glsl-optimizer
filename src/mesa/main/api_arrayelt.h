@@ -56,23 +56,23 @@ _mesa_install_arrayelt_vtxfmt(struct _glapi_table *disp,
 
 #define _MESA_INIT_ARRAYELT_VTXFMT(vfmt, impl) do { } while (0)
 
-static INLINE GLboolean
+static inline GLboolean
 _ae_create_context( struct gl_context *ctx )
 {
    return GL_TRUE;
 }
 
-static INLINE void
+static inline void
 _ae_destroy_context( struct gl_context *ctx )
 {
 }
 
-static INLINE void
+static inline void
 _ae_invalidate_state( struct gl_context *ctx, GLuint new_state )
 {
 }
 
-static INLINE void
+static inline void
 _mesa_install_arrayelt_vtxfmt(struct _glapi_table *disp,
                               const GLvertexformat *vfmt)
 {

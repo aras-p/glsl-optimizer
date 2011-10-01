@@ -84,7 +84,7 @@ static const GLfloat ZeroVec[4] = { 0.0F, 0.0F, 0.0F, 0.0F };
  * Return TRUE for +0 and other positive values, FALSE otherwise.
  * Used for RCC opcode.
  */
-static INLINE GLboolean
+static inline GLboolean
 positive(float x)
 {
    fi_type fi;
@@ -100,7 +100,7 @@ positive(float x)
  * Return a pointer to the 4-element float vector specified by the given
  * source register.
  */
-static INLINE const GLfloat *
+static inline const GLfloat *
 get_src_register_pointer(const struct prog_src_register *source,
                          const struct gl_program_machine *machine)
 {
@@ -176,7 +176,7 @@ get_src_register_pointer(const struct prog_src_register *source,
  * Return a pointer to the 4-element float vector specified by the given
  * destination register.
  */
-static INLINE GLfloat *
+static inline GLfloat *
 get_dst_register_pointer(const struct prog_dst_register *dest,
                          struct gl_program_machine *machine)
 {
@@ -383,7 +383,7 @@ fetch_vector1ui(const struct prog_src_register *source,
 /**
  * Fetch texel from texture.  Use partial derivatives when possible.
  */
-static INLINE void
+static inline void
 fetch_texel(struct gl_context *ctx,
             const struct gl_program_machine *machine,
             const struct prog_instruction *inst,
@@ -413,7 +413,7 @@ fetch_texel(struct gl_context *ctx,
 /**
  * Test value against zero and return GT, LT, EQ or UN if NaN.
  */
-static INLINE GLuint
+static inline GLuint
 generate_cc(float value)
 {
    if (value != value)
@@ -430,7 +430,7 @@ generate_cc(float value)
  * Test if the ccMaskRule is satisfied by the given condition code.
  * Used to mask destination writes according to the current condition code.
  */
-static INLINE GLboolean
+static inline GLboolean
 test_cc(GLuint condCode, GLuint ccMaskRule)
 {
    switch (ccMaskRule) {
@@ -451,7 +451,7 @@ test_cc(GLuint condCode, GLuint ccMaskRule)
  * Evaluate the 4 condition codes against a predicate and return GL_TRUE
  * or GL_FALSE to indicate result.
  */
-static INLINE GLboolean
+static inline GLboolean
 eval_condition(const struct gl_program_machine *machine,
                const struct prog_instruction *inst)
 {

@@ -197,7 +197,7 @@ _mesa_SelectBuffer( GLsizei size, GLuint *buffer )
  * Verifies there is free space in the buffer to write the value and
  * increments the pointer.
  */
-static INLINE void
+static inline void
 write_record(struct gl_context *ctx, GLuint value)
 {
    if (ctx->Select.BufferCount < ctx->Select.BufferSize) {

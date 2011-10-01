@@ -28,7 +28,7 @@
 
 struct dd_function_table;
 
-static INLINE struct gl_sampler_object *
+static inline struct gl_sampler_object *
 _mesa_get_samplerobj(struct gl_context *ctx, GLuint unit)
 {
    if (ctx->Texture.Unit[unit].Sampler)

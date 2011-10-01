@@ -69,12 +69,12 @@ _mesa_TexGenfv( GLenum coord, GLenum pname, const GLfloat *params )
 {
 }
 
-static void INLINE
+static void inline
 _mesa_TexGeni( GLenum coord, GLenum pname, GLint param )
 {
 }
 
-static INLINE void
+static inline void
 _mesa_init_texgen_dispatch(struct _glapi_table *disp)
 {
 }

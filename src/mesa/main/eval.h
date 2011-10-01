@@ -91,13 +91,13 @@ _mesa_init_eval_dispatch(struct _glapi_table *disp);
 
 #define _MESA_INIT_EVAL_VTXFMT(vfmt, impl) do { } while (0)
 
-static INLINE void
+static inline void
 _mesa_install_eval_vtxfmt(struct _glapi_table *disp,
                           const GLvertexformat *vfmt)
 {
 }
 
-static INLINE void
+static inline void
 _mesa_init_eval_dispatch(struct _glapi_table *disp)
 {
 }

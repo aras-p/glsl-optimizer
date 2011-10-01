@@ -157,7 +157,7 @@ do {						\
 
 
 
-static INLINE void
+static inline void
 logicop_uint1(struct gl_context *ctx, GLuint n, GLuint src[], const GLuint dest[],
               const GLubyte mask[])
 {
@@ -165,7 +165,7 @@ logicop_uint1(struct gl_context *ctx, GLuint n, GLuint src[], const GLuint dest[
 }
 
 
-static INLINE void
+static inline void
 logicop_uint2(struct gl_context *ctx, GLuint n, GLuint src[], const GLuint dest[],
               const GLubyte mask[])
 {
@@ -173,7 +173,7 @@ logicop_uint2(struct gl_context *ctx, GLuint n, GLuint src[], const GLuint dest[
 }
 
 
-static INLINE void
+static inline void
 logicop_uint4(struct gl_context *ctx, GLuint n, GLuint src[], const GLuint dest[],
               const GLubyte mask[])
 {

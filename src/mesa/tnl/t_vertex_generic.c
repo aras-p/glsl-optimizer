@@ -47,7 +47,7 @@
  * NDC->Viewport mapping and store the results at 'v'.
  */
 
-static INLINE void insert_4f_viewport_4( const struct tnl_clipspace_attr *a, GLubyte *v,
+static inline void insert_4f_viewport_4( const struct tnl_clipspace_attr *a, GLubyte *v,
                       const GLfloat *in )
 {
    GLfloat *out = (GLfloat *)v;
@@ -59,7 +59,7 @@ static INLINE void insert_4f_viewport_4( const struct tnl_clipspace_attr *a, GLu
    out[3] = in[3];
 }
 
-static INLINE void insert_4f_viewport_3( const struct tnl_clipspace_attr *a, GLubyte *v,
+static inline void insert_4f_viewport_3( const struct tnl_clipspace_attr *a, GLubyte *v,
 				const GLfloat *in )
 {
    GLfloat *out = (GLfloat *)v;
@@ -71,7 +71,7 @@ static INLINE void insert_4f_viewport_3( const struct tnl_clipspace_attr *a, GLu
    out[3] = 1;
 }
 
-static INLINE void insert_4f_viewport_2( const struct tnl_clipspace_attr *a, GLubyte *v,
+static inline void insert_4f_viewport_2( const struct tnl_clipspace_attr *a, GLubyte *v,
 				const GLfloat *in )
 {
    GLfloat *out = (GLfloat *)v;
@@ -83,7 +83,7 @@ static INLINE void insert_4f_viewport_2( const struct tnl_clipspace_attr *a, GLu
    out[3] = 1;
 }
 
-static INLINE void insert_4f_viewport_1( const struct tnl_clipspace_attr *a, GLubyte *v,
+static inline void insert_4f_viewport_1( const struct tnl_clipspace_attr *a, GLubyte *v,
 				const GLfloat *in )
 {
    GLfloat *out = (GLfloat *)v;
@@ -95,7 +95,7 @@ static INLINE void insert_4f_viewport_1( const struct tnl_clipspace_attr *a, GLu
    out[3] = 1;
 }
 
-static INLINE void insert_3f_viewport_3( const struct tnl_clipspace_attr *a, GLubyte *v,
+static inline void insert_3f_viewport_3( const struct tnl_clipspace_attr *a, GLubyte *v,
 				const GLfloat *in )
 {
    GLfloat *out = (GLfloat *)v;
@@ -106,7 +106,7 @@ static INLINE void insert_3f_viewport_3( const struct tnl_clipspace_attr *a, GLu
    out[2] = vp[10] * in[2] + vp[14];
 }
 
-static INLINE void insert_3f_viewport_2( const struct tnl_clipspace_attr *a, GLubyte *v,
+static inline void insert_3f_viewport_2( const struct tnl_clipspace_attr *a, GLubyte *v,
 				const GLfloat *in )
 {
    GLfloat *out = (GLfloat *)v;
@@ -117,7 +117,7 @@ static INLINE void insert_3f_viewport_2( const struct tnl_clipspace_attr *a, GLu
    out[2] = vp[14];
 }
 
-static INLINE void insert_3f_viewport_1( const struct tnl_clipspace_attr *a, GLubyte *v,
+static inline void insert_3f_viewport_1( const struct tnl_clipspace_attr *a, GLubyte *v,
 				const GLfloat *in )
 {
    GLfloat *out = (GLfloat *)v;
@@ -128,7 +128,7 @@ static INLINE void insert_3f_viewport_1( const struct tnl_clipspace_attr *a, GLu
    out[2] = vp[14];
 }
 
-static INLINE void insert_2f_viewport_2( const struct tnl_clipspace_attr *a, GLubyte *v,
+static inline void insert_2f_viewport_2( const struct tnl_clipspace_attr *a, GLubyte *v,
 				const GLfloat *in )
 {
    GLfloat *out = (GLfloat *)v;
@@ -138,7 +138,7 @@ static INLINE void insert_2f_viewport_2( const struct tnl_clipspace_attr *a, GLu
    out[1] = vp[5] * in[1] + vp[13];
 }
 
-static INLINE void insert_2f_viewport_1( const struct tnl_clipspace_attr *a, GLubyte *v,
+static inline void insert_2f_viewport_1( const struct tnl_clipspace_attr *a, GLubyte *v,
 				const GLfloat *in )
 {
    GLfloat *out = (GLfloat *)v;
@@ -153,7 +153,7 @@ static INLINE void insert_2f_viewport_1( const struct tnl_clipspace_attr *a, GLu
  * These functions do the same as above, except for the viewport mapping.
  */
 
-static INLINE void insert_4f_4( const struct tnl_clipspace_attr *a, GLubyte *v, const GLfloat *in )
+static inline void insert_4f_4( const struct tnl_clipspace_attr *a, GLubyte *v, const GLfloat *in )
 {
    GLfloat *out = (GLfloat *)(v);
    (void) a;
@@ -164,7 +164,7 @@ static INLINE void insert_4f_4( const struct tnl_clipspace_attr *a, GLubyte *v, 
    out[3] = in[3];
 }
 
-static INLINE void insert_4f_3( const struct tnl_clipspace_attr *a, GLubyte *v, const GLfloat *in )
+static inline void insert_4f_3( const struct tnl_clipspace_attr *a, GLubyte *v, const GLfloat *in )
 {
    GLfloat *out = (GLfloat *)(v);
    (void) a;
@@ -175,7 +175,7 @@ static INLINE void insert_4f_3( const struct tnl_clipspace_attr *a, GLubyte *v, 
    out[3] = 1;
 }
 
-static INLINE void insert_4f_2( const struct tnl_clipspace_attr *a, GLubyte *v, const GLfloat *in )
+static inline void insert_4f_2( const struct tnl_clipspace_attr *a, GLubyte *v, const GLfloat *in )
 {
    GLfloat *out = (GLfloat *)(v);
    (void) a;
@@ -186,7 +186,7 @@ static INLINE void insert_4f_2( const struct tnl_clipspace_attr *a, GLubyte *v, 
    out[3] = 1;
 }
 
-static INLINE void insert_4f_1( const struct tnl_clipspace_attr *a, GLubyte *v, const GLfloat *in )
+static inline void insert_4f_1( const struct tnl_clipspace_attr *a, GLubyte *v, const GLfloat *in )
 {
    GLfloat *out = (GLfloat *)(v);
    (void) a;
@@ -197,7 +197,7 @@ static INLINE void insert_4f_1( const struct tnl_clipspace_attr *a, GLubyte *v, 
    out[3] = 1;
 }
 
-static INLINE void insert_3f_xyw_4( const struct tnl_clipspace_attr *a, GLubyte *v, const GLfloat *in )
+static inline void insert_3f_xyw_4( const struct tnl_clipspace_attr *a, GLubyte *v, const GLfloat *in )
 {
    GLfloat *out = (GLfloat *)(v);
    (void) a;
@@ -207,14 +207,14 @@ static INLINE void insert_3f_xyw_4( const struct tnl_clipspace_attr *a, GLubyte 
    out[2] = in[3];
 }
 
-static INLINE void insert_3f_xyw_err( const struct tnl_clipspace_attr *a, GLubyte *v, const GLfloat *in )
+static inline void insert_3f_xyw_err( const struct tnl_clipspace_attr *a, GLubyte *v, const GLfloat *in )
 {
    (void) a; (void) v; (void) in;
    DEBUG_INSERT;
    exit(1);
 }
 
-static INLINE void insert_3f_3( const struct tnl_clipspace_attr *a, GLubyte *v, const GLfloat *in )
+static inline void insert_3f_3( const struct tnl_clipspace_attr *a, GLubyte *v, const GLfloat *in )
 {
    GLfloat *out = (GLfloat *)(v);
    (void) a;
@@ -224,7 +224,7 @@ static INLINE void insert_3f_3( const struct tnl_clipspace_attr *a, GLubyte *v, 
    out[2] = in[2];
 }
 
-static INLINE void insert_3f_2( const struct tnl_clipspace_attr *a, GLubyte *v, const GLfloat *in )
+static inline void insert_3f_2( const struct tnl_clipspace_attr *a, GLubyte *v, const GLfloat *in )
 {
    GLfloat *out = (GLfloat *)(v);
    (void) a;
@@ -234,7 +234,7 @@ static INLINE void insert_3f_2( const struct tnl_clipspace_attr *a, GLubyte *v, 
    out[2] = 0;
 }
 
-static INLINE void insert_3f_1( const struct tnl_clipspace_attr *a, GLubyte *v, const GLfloat *in )
+static inline void insert_3f_1( const struct tnl_clipspace_attr *a, GLubyte *v, const GLfloat *in )
 {
    GLfloat *out = (GLfloat *)(v);
    (void) a;
@@ -245,7 +245,7 @@ static INLINE void insert_3f_1( const struct tnl_clipspace_attr *a, GLubyte *v, 
 }
 
 
-static INLINE void insert_2f_2( const struct tnl_clipspace_attr *a, GLubyte *v, const GLfloat *in )
+static inline void insert_2f_2( const struct tnl_clipspace_attr *a, GLubyte *v, const GLfloat *in )
 {
    GLfloat *out = (GLfloat *)(v);
    (void) a;
@@ -254,7 +254,7 @@ static INLINE void insert_2f_2( const struct tnl_clipspace_attr *a, GLubyte *v, 
    out[1] = in[1];
 }
 
-static INLINE void insert_2f_1( const struct tnl_clipspace_attr *a, GLubyte *v, const GLfloat *in )
+static inline void insert_2f_1( const struct tnl_clipspace_attr *a, GLubyte *v, const GLfloat *in )
 {
    GLfloat *out = (GLfloat *)(v);
    (void) a;
@@ -263,7 +263,7 @@ static INLINE void insert_2f_1( const struct tnl_clipspace_attr *a, GLubyte *v, 
    out[1] = 0;
 }
 
-static INLINE void insert_1f_1( const struct tnl_clipspace_attr *a, GLubyte *v, const GLfloat *in )
+static inline void insert_1f_1( const struct tnl_clipspace_attr *a, GLubyte *v, const GLfloat *in )
 {
    GLfloat *out = (GLfloat *)(v);
    (void) a;
@@ -271,13 +271,13 @@ static INLINE void insert_1f_1( const struct tnl_clipspace_attr *a, GLubyte *v, 
    out[0] = in[0];
 }
 
-static INLINE void insert_null( const struct tnl_clipspace_attr *a, GLubyte *v, const GLfloat *in )
+static inline void insert_null( const struct tnl_clipspace_attr *a, GLubyte *v, const GLfloat *in )
 {
    DEBUG_INSERT;
    (void) a; (void) v; (void) in;
 }
 
-static INLINE void insert_4chan_4f_rgba_4( const struct tnl_clipspace_attr *a, GLubyte *v, 
+static inline void insert_4chan_4f_rgba_4( const struct tnl_clipspace_attr *a, GLubyte *v, 
 				  const GLfloat *in )
 {
    GLchan *c = (GLchan *)v;
@@ -289,7 +289,7 @@ static INLINE void insert_4chan_4f_rgba_4( const struct tnl_clipspace_attr *a, G
    UNCLAMPED_FLOAT_TO_CHAN(c[3], in[3]);
 }
 
-static INLINE void insert_4chan_4f_rgba_3( const struct tnl_clipspace_attr *a, GLubyte *v, 
+static inline void insert_4chan_4f_rgba_3( const struct tnl_clipspace_attr *a, GLubyte *v, 
 				  const GLfloat *in )
 {
    GLchan *c = (GLchan *)v;
@@ -301,7 +301,7 @@ static INLINE void insert_4chan_4f_rgba_3( const struct tnl_clipspace_attr *a, G
    c[3] = CHAN_MAX;
 }
 
-static INLINE void insert_4chan_4f_rgba_2( const struct tnl_clipspace_attr *a, GLubyte *v, 
+static inline void insert_4chan_4f_rgba_2( const struct tnl_clipspace_attr *a, GLubyte *v, 
 				  const GLfloat *in )
 {
    GLchan *c = (GLchan *)v;
@@ -313,7 +313,7 @@ static INLINE void insert_4chan_4f_rgba_2( const struct tnl_clipspace_attr *a, G
    c[3] = CHAN_MAX;
 }
 
-static INLINE void insert_4chan_4f_rgba_1( const struct tnl_clipspace_attr *a, GLubyte *v, 
+static inline void insert_4chan_4f_rgba_1( const struct tnl_clipspace_attr *a, GLubyte *v, 
 				  const GLfloat *in )
 {
    GLchan *c = (GLchan *)v;
@@ -325,7 +325,7 @@ static INLINE void insert_4chan_4f_rgba_1( const struct tnl_clipspace_attr *a, G
    c[3] = CHAN_MAX;
 }
 
-static INLINE void insert_4ub_4f_rgba_4( const struct tnl_clipspace_attr *a, GLubyte *v, 
+static inline void insert_4ub_4f_rgba_4( const struct tnl_clipspace_attr *a, GLubyte *v, 
 				const GLfloat *in )
 {
    DEBUG_INSERT;
@@ -336,7 +336,7 @@ static INLINE void insert_4ub_4f_rgba_4( const struct tnl_clipspace_attr *a, GLu
    UNCLAMPED_FLOAT_TO_UBYTE(v[3], in[3]);
 }
 
-static INLINE void insert_4ub_4f_rgba_3( const struct tnl_clipspace_attr *a, GLubyte *v, 
+static inline void insert_4ub_4f_rgba_3( const struct tnl_clipspace_attr *a, GLubyte *v, 
 				const GLfloat *in )
 {
    DEBUG_INSERT;
@@ -347,7 +347,7 @@ static INLINE void insert_4ub_4f_rgba_3( const struct tnl_clipspace_attr *a, GLu
    v[3] = 0xff;
 }
 
-static INLINE void insert_4ub_4f_rgba_2( const struct tnl_clipspace_attr *a, GLubyte *v, 
+static inline void insert_4ub_4f_rgba_2( const struct tnl_clipspace_attr *a, GLubyte *v, 
 				const GLfloat *in )
 {
    DEBUG_INSERT;
@@ -358,7 +358,7 @@ static INLINE void insert_4ub_4f_rgba_2( const struct tnl_clipspace_attr *a, GLu
    v[3] = 0xff;
 }
 
-static INLINE void insert_4ub_4f_rgba_1( const struct tnl_clipspace_attr *a, GLubyte *v, 
+static inline void insert_4ub_4f_rgba_1( const struct tnl_clipspace_attr *a, GLubyte *v, 
 				const GLfloat *in )
 {
    DEBUG_INSERT;
@@ -369,7 +369,7 @@ static INLINE void insert_4ub_4f_rgba_1( const struct tnl_clipspace_attr *a, GLu
    v[3] = 0xff;
 }
 
-static INLINE void insert_4ub_4f_bgra_4( const struct tnl_clipspace_attr *a, GLubyte *v, 
+static inline void insert_4ub_4f_bgra_4( const struct tnl_clipspace_attr *a, GLubyte *v, 
 				const GLfloat *in )
 {
    DEBUG_INSERT;
@@ -380,7 +380,7 @@ static INLINE void insert_4ub_4f_bgra_4( const struct tnl_clipspace_attr *a, GLu
    UNCLAMPED_FLOAT_TO_UBYTE(v[3], in[3]);
 }
 
-static INLINE void insert_4ub_4f_bgra_3( const struct tnl_clipspace_attr *a, GLubyte *v, 
+static inline void insert_4ub_4f_bgra_3( const struct tnl_clipspace_attr *a, GLubyte *v, 
 				const GLfloat *in )
 {
    DEBUG_INSERT;
@@ -391,7 +391,7 @@ static INLINE void insert_4ub_4f_bgra_3( const struct tnl_clipspace_attr *a, GLu
    v[3] = 0xff;
 }
 
-static INLINE void insert_4ub_4f_bgra_2( const struct tnl_clipspace_attr *a, GLubyte *v, 
+static inline void insert_4ub_4f_bgra_2( const struct tnl_clipspace_attr *a, GLubyte *v, 
 				const GLfloat *in )
 {
    DEBUG_INSERT;
@@ -402,7 +402,7 @@ static INLINE void insert_4ub_4f_bgra_2( const struct tnl_clipspace_attr *a, GLu
    v[3] = 0xff;
 }
 
-static INLINE void insert_4ub_4f_bgra_1( const struct tnl_clipspace_attr *a, GLubyte *v, 
+static inline void insert_4ub_4f_bgra_1( const struct tnl_clipspace_attr *a, GLubyte *v, 
 				const GLfloat *in )
 {
    DEBUG_INSERT;
@@ -413,7 +413,7 @@ static INLINE void insert_4ub_4f_bgra_1( const struct tnl_clipspace_attr *a, GLu
    v[3] = 0xff;
 }
 
-static INLINE void insert_4ub_4f_argb_4( const struct tnl_clipspace_attr *a, GLubyte *v, 
+static inline void insert_4ub_4f_argb_4( const struct tnl_clipspace_attr *a, GLubyte *v, 
 				const GLfloat *in )
 {
    DEBUG_INSERT;
@@ -424,7 +424,7 @@ static INLINE void insert_4ub_4f_argb_4( const struct tnl_clipspace_attr *a, GLu
    UNCLAMPED_FLOAT_TO_UBYTE(v[0], in[3]);
 }
 
-static INLINE void insert_4ub_4f_argb_3( const struct tnl_clipspace_attr *a, GLubyte *v, 
+static inline void insert_4ub_4f_argb_3( const struct tnl_clipspace_attr *a, GLubyte *v, 
 				const GLfloat *in )
 {
    DEBUG_INSERT;
@@ -435,7 +435,7 @@ static INLINE void insert_4ub_4f_argb_3( const struct tnl_clipspace_attr *a, GLu
    v[0] = 0xff;
 }
 
-static INLINE void insert_4ub_4f_argb_2( const struct tnl_clipspace_attr *a, GLubyte *v, 
+static inline void insert_4ub_4f_argb_2( const struct tnl_clipspace_attr *a, GLubyte *v, 
 				const GLfloat *in )
 {
    DEBUG_INSERT;
@@ -446,7 +446,7 @@ static INLINE void insert_4ub_4f_argb_2( const struct tnl_clipspace_attr *a, GLu
    v[0] = 0xff;
 }
 
-static INLINE void insert_4ub_4f_argb_1( const struct tnl_clipspace_attr *a, GLubyte *v, 
+static inline void insert_4ub_4f_argb_1( const struct tnl_clipspace_attr *a, GLubyte *v, 
 				const GLfloat *in )
 {
    DEBUG_INSERT;
@@ -457,7 +457,7 @@ static INLINE void insert_4ub_4f_argb_1( const struct tnl_clipspace_attr *a, GLu
    v[0] = 0xff;
 }
 
-static INLINE void insert_4ub_4f_abgr_4( const struct tnl_clipspace_attr *a, GLubyte *v, 
+static inline void insert_4ub_4f_abgr_4( const struct tnl_clipspace_attr *a, GLubyte *v, 
 				const GLfloat *in )
 {
    DEBUG_INSERT;
@@ -468,7 +468,7 @@ static INLINE void insert_4ub_4f_abgr_4( const struct tnl_clipspace_attr *a, GLu
    UNCLAMPED_FLOAT_TO_UBYTE(v[0], in[3]);
 }
 
-static INLINE void insert_4ub_4f_abgr_3( const struct tnl_clipspace_attr *a, GLubyte *v, 
+static inline void insert_4ub_4f_abgr_3( const struct tnl_clipspace_attr *a, GLubyte *v, 
 				const GLfloat *in )
 {
    DEBUG_INSERT;
@@ -479,7 +479,7 @@ static INLINE void insert_4ub_4f_abgr_3( const struct tnl_clipspace_attr *a, GLu
    v[0] = 0xff;
 }
 
-static INLINE void insert_4ub_4f_abgr_2( const struct tnl_clipspace_attr *a, GLubyte *v, 
+static inline void insert_4ub_4f_abgr_2( const struct tnl_clipspace_attr *a, GLubyte *v, 
 				const GLfloat *in )
 {
    DEBUG_INSERT;
@@ -490,7 +490,7 @@ static INLINE void insert_4ub_4f_abgr_2( const struct tnl_clipspace_attr *a, GLu
    v[0] = 0xff;
 }
 
-static INLINE void insert_4ub_4f_abgr_1( const struct tnl_clipspace_attr *a, GLubyte *v, 
+static inline void insert_4ub_4f_abgr_1( const struct tnl_clipspace_attr *a, GLubyte *v, 
 				const GLfloat *in )
 {
    DEBUG_INSERT;
@@ -501,7 +501,7 @@ static INLINE void insert_4ub_4f_abgr_1( const struct tnl_clipspace_attr *a, GLu
    v[0] = 0xff;
 }
 
-static INLINE void insert_3ub_3f_rgb_3( const struct tnl_clipspace_attr *a, GLubyte *v, 
+static inline void insert_3ub_3f_rgb_3( const struct tnl_clipspace_attr *a, GLubyte *v, 
 			       const GLfloat *in )
 {
    DEBUG_INSERT;
@@ -511,7 +511,7 @@ static INLINE void insert_3ub_3f_rgb_3( const struct tnl_clipspace_attr *a, GLub
    UNCLAMPED_FLOAT_TO_UBYTE(v[2], in[2]);
 }
 
-static INLINE void insert_3ub_3f_rgb_2( const struct tnl_clipspace_attr *a, GLubyte *v, 
+static inline void insert_3ub_3f_rgb_2( const struct tnl_clipspace_attr *a, GLubyte *v, 
 			       const GLfloat *in )
 {
    DEBUG_INSERT;
@@ -521,7 +521,7 @@ static INLINE void insert_3ub_3f_rgb_2( const struct tnl_clipspace_attr *a, GLub
    v[2] = 0;
 }
 
-static INLINE void insert_3ub_3f_rgb_1( const struct tnl_clipspace_attr *a, GLubyte *v, 
+static inline void insert_3ub_3f_rgb_1( const struct tnl_clipspace_attr *a, GLubyte *v, 
 			       const GLfloat *in )
 {
    DEBUG_INSERT;
@@ -531,7 +531,7 @@ static INLINE void insert_3ub_3f_rgb_1( const struct tnl_clipspace_attr *a, GLub
    v[2] = 0;
 }
 
-static INLINE void insert_3ub_3f_bgr_3( const struct tnl_clipspace_attr *a, GLubyte *v, 
+static inline void insert_3ub_3f_bgr_3( const struct tnl_clipspace_attr *a, GLubyte *v, 
 				 const GLfloat *in )
 {
    DEBUG_INSERT;
@@ -541,7 +541,7 @@ static INLINE void insert_3ub_3f_bgr_3( const struct tnl_clipspace_attr *a, GLub
    UNCLAMPED_FLOAT_TO_UBYTE(v[0], in[2]);
 }
 
-static INLINE void insert_3ub_3f_bgr_2( const struct tnl_clipspace_attr *a, GLubyte *v, 
+static inline void insert_3ub_3f_bgr_2( const struct tnl_clipspace_attr *a, GLubyte *v, 
 				 const GLfloat *in )
 {
    DEBUG_INSERT;
@@ -551,7 +551,7 @@ static INLINE void insert_3ub_3f_bgr_2( const struct tnl_clipspace_attr *a, GLub
    v[0] = 0;
 }
 
-static INLINE void insert_3ub_3f_bgr_1( const struct tnl_clipspace_attr *a, GLubyte *v, 
+static inline void insert_3ub_3f_bgr_1( const struct tnl_clipspace_attr *a, GLubyte *v, 
 				 const GLfloat *in )
 {
    DEBUG_INSERT;
@@ -562,7 +562,7 @@ static INLINE void insert_3ub_3f_bgr_1( const struct tnl_clipspace_attr *a, GLub
 }
 
 
-static INLINE void insert_1ub_1f_1( const struct tnl_clipspace_attr *a, GLubyte *v, 
+static inline void insert_1ub_1f_1( const struct tnl_clipspace_attr *a, GLubyte *v, 
 			   const GLfloat *in )
 {
    DEBUG_INSERT;

@@ -162,7 +162,7 @@ _swrast_span_default_attribs(struct gl_context *ctx, SWspan *span)
  * Perspective correction will be done.  The point/line/triangle function
  * should have computed attrStart/Step values for FRAG_ATTRIB_WPOS[3]!
  */
-static INLINE void
+static inline void
 interpolate_active_attribs(struct gl_context *ctx, SWspan *span, GLbitfield attrMask)
 {
    const SWcontext *swrast = SWRAST_CONTEXT(ctx);
@@ -209,7 +209,7 @@ interpolate_active_attribs(struct gl_context *ctx, SWspan *span, GLbitfield attr
  * Interpolate primary colors to fill in the span->array->rgba8 (or rgb16)
  * color array.
  */
-static INLINE void
+static inline void
 interpolate_int_colors(struct gl_context *ctx, SWspan *span)
 {
 #if CHAN_BITS != 32
@@ -309,7 +309,7 @@ interpolate_int_colors(struct gl_context *ctx, SWspan *span)
 /**
  * Populate the FRAG_ATTRIB_COL0 array.
  */
-static INLINE void
+static inline void
 interpolate_float_colors(SWspan *span)
 {
    GLfloat (*col0)[4] = span->array->attribs[FRAG_ATTRIB_COL0];
@@ -611,7 +611,7 @@ interpolate_texcoords(struct gl_context *ctx, SWspan *span)
 /**
  * Fill in the arrays->attribs[FRAG_ATTRIB_WPOS] array.
  */
-static INLINE void
+static inline void
 interpolate_wpos(struct gl_context *ctx, SWspan *span)
 {
    GLfloat (*wpos)[4] = span->array->attribs[FRAG_ATTRIB_WPOS];
@@ -645,7 +645,7 @@ interpolate_wpos(struct gl_context *ctx, SWspan *span)
 /**
  * Apply the current polygon stipple pattern to a span of pixels.
  */
-static INLINE void
+static inline void
 stipple_polygon_span(struct gl_context *ctx, SWspan *span)
 {
    GLubyte *mask = span->array->mask;
@@ -690,7 +690,7 @@ stipple_polygon_span(struct gl_context *ctx, SWspan *span)
  * Return:   GL_TRUE   some pixels still visible
  *           GL_FALSE  nothing visible
  */
-static INLINE GLuint
+static inline GLuint
 clip_span( struct gl_context *ctx, SWspan *span )
 {
    const GLint xmin = ctx->DrawBuffer->_Xmin;
@@ -817,7 +817,7 @@ clip_span( struct gl_context *ctx, SWspan *span )
  * Only called during fixed-function operation.
  * Result is float color array (FRAG_ATTRIB_COL0).
  */
-static INLINE void
+static inline void
 add_specular(struct gl_context *ctx, SWspan *span)
 {
    const SWcontext *swrast = SWRAST_CONTEXT(ctx);
@@ -866,7 +866,7 @@ add_specular(struct gl_context *ctx, SWspan *span)
 /**
  * Apply antialiasing coverage value to alpha values.
  */
-static INLINE void
+static inline void
 apply_aa_coverage(SWspan *span)
 {
    const GLfloat *coverage = span->array->coverage;
@@ -900,7 +900,7 @@ apply_aa_coverage(SWspan *span)
 /**
  * Clamp span's float colors to [0,1]
  */
-static INLINE void
+static inline void
 clamp_colors(SWspan *span)
 {
    GLfloat (*rgba)[4] = span->array->attribs[FRAG_ATTRIB_COL0];
@@ -921,7 +921,7 @@ clamp_colors(SWspan *span)
  * program that writes to gl_FragData[1] or higher.
  * \param output  which fragment program color output is being processed
  */
-static INLINE void
+static inline void
 convert_color_type(SWspan *span, GLenum newType, GLuint output)
 {
    GLvoid *src, *dst;
@@ -961,7 +961,7 @@ convert_color_type(SWspan *span, GLenum newType, GLuint output)
 /**
  * Apply fragment shader, fragment program or normal texturing to span.
  */
-static INLINE void
+static inline void
 shade_texture_span(struct gl_context *ctx, SWspan *span)
 {
    if (ctx->FragmentProgram._Current ||

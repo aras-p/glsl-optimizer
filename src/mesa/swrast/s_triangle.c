@@ -237,13 +237,13 @@ struct affine_info
 };
 
 
-static INLINE GLint
+static inline GLint
 ilerp(GLint t, GLint a, GLint b)
 {
    return a + ((t * (b - a)) >> FIXED_SHIFT);
 }
 
-static INLINE GLint
+static inline GLint
 ilerp_2d(GLint ia, GLint ib, GLint v00, GLint v10, GLint v01, GLint v11)
 {
    const GLint temp0 = ilerp(ia, v00, v10);
@@ -256,7 +256,7 @@ ilerp_2d(GLint ia, GLint ib, GLint v00, GLint v10, GLint v01, GLint v11)
  * textures with GL_REPLACE, GL_MODULATE, GL_BLEND, GL_DECAL or GL_ADD
  * texture env modes.
  */
-static INLINE void
+static inline void
 affine_span(struct gl_context *ctx, SWspan *span,
             struct affine_info *info)
 {
@@ -591,7 +591,7 @@ struct persp_info
 };
 
 
-static INLINE void
+static inline void
 fast_persp_span(struct gl_context *ctx, SWspan *span,
 		struct persp_info *info)
 {

@@ -81,7 +81,7 @@
 
 /* Get first bit set in a bitset.
  */
-static INLINE int
+static inline int
 __bitset_ffs(const BITSET_WORD *x, int n)
 {
    int i;

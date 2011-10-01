@@ -130,7 +130,7 @@ compute_plane(GLfloat x0, GLfloat y0, GLfloat x1, GLfloat y1,
 }
 
 
-static INLINE void
+static inline void
 constant_plane(GLfloat value, GLfloat plane[4])
 {
    plane[0] = 0.0;
@@ -140,7 +140,7 @@ constant_plane(GLfloat value, GLfloat plane[4])
 }
 
 
-static INLINE GLfloat
+static inline GLfloat
 solve_plane(GLfloat x, GLfloat y, const GLfloat plane[4])
 {
    const GLfloat z = (plane[3] + plane[0] * x + plane[1] * y) / -plane[2];
@@ -154,7 +154,7 @@ solve_plane(GLfloat x, GLfloat y, const GLfloat plane[4])
 /*
  * Return 1 / solve_plane().
  */
-static INLINE GLfloat
+static inline GLfloat
 solve_plane_recip(GLfloat x, GLfloat y, const GLfloat plane[4])
 {
    const GLfloat denom = plane[3] + plane[0] * x + plane[1] * y;
@@ -168,7 +168,7 @@ solve_plane_recip(GLfloat x, GLfloat y, const GLfloat plane[4])
 /*
  * Solve plane and return clamped GLchan value.
  */
-static INLINE GLchan
+static inline GLchan
 solve_plane_chan(GLfloat x, GLfloat y, const GLfloat plane[4])
 {
    const GLfloat z = (plane[3] + plane[0] * x + plane[1] * y) / -plane[2];
@@ -187,7 +187,7 @@ solve_plane_chan(GLfloat x, GLfloat y, const GLfloat plane[4])
 /*
  * Compute mipmap level of detail.
  */
-static INLINE GLfloat
+static inline GLfloat
 compute_lambda(const GLfloat sPlane[4], const GLfloat tPlane[4],
                GLfloat invQ, GLfloat width, GLfloat height)
 {

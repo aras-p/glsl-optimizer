@@ -38,7 +38,7 @@ extern void _mesa_loopback_init_api_table( struct _glapi_table *dest );
 
 #else /* FEATURE_beginend */
 
-static INLINE void
+static inline void
 _mesa_loopback_init_api_table( struct _glapi_table *dest )
 {
 }

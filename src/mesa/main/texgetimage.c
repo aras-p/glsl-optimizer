@@ -49,7 +49,7 @@
 /**
  * Can the given type represent negative values?
  */
-static INLINE GLboolean
+static inline GLboolean
 type_with_negative_values(GLenum type)
 {
    switch (type) {

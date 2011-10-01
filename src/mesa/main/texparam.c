@@ -180,7 +180,7 @@ set_swizzle_component(GLuint *swizzle, GLuint comp, GLuint swz)
  * This is called just prior to changing any texture object state which
  * will not effect texture completeness.
  */
-static INLINE void
+static inline void
 flush(struct gl_context *ctx)
 {
    FLUSH_VERTICES(ctx, _NEW_TEXTURE);
@@ -195,7 +195,7 @@ flush(struct gl_context *ctx)
  * state flag and then mark the texture object as 'incomplete' so that any
  * per-texture derived state gets recomputed.
  */
-static INLINE void
+static inline void
 incomplete(struct gl_context *ctx, struct gl_texture_object *texObj)
 {
    FLUSH_VERTICES(ctx, _NEW_TEXTURE);

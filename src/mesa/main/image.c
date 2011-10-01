@@ -1756,7 +1756,7 @@ _mesa_clip_to_region(GLint xmin, GLint ymin,
 /**
  * Clip dst coords against Xmax (or Ymax).
  */
-static INLINE void
+static inline void
 clip_right_or_top(GLint *srcX0, GLint *srcX1,
                   GLint *dstX0, GLint *dstX1,
                   GLint maxValue)
@@ -1789,7 +1789,7 @@ clip_right_or_top(GLint *srcX0, GLint *srcX1,
 /**
  * Clip dst coords against Xmin (or Ymin).
  */
-static INLINE void
+static inline void
 clip_left_or_bottom(GLint *srcX0, GLint *srcX1,
                     GLint *dstX0, GLint *dstX1,
                     GLint minValue)

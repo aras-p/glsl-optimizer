@@ -153,13 +153,13 @@ typedef union { GLfloat f; GLint i; } fi_type;
 #endif
 
 #if defined(_MSC_VER)
-static INLINE float truncf(float x) { return x < 0.0f ? ceilf(x) : floorf(x); }
-static INLINE float exp2f(float x) { return powf(2.0f, x); }
-static INLINE float log2f(float x) { return logf(x) * 1.442695041f; }
-static INLINE float asinhf(float x) { return logf(x + sqrtf(x * x + 1.0f)); }
-static INLINE float acoshf(float x) { return logf(x + sqrtf(x * x - 1.0f)); }
-static INLINE float atanhf(float x) { return (logf(1.0f + x) - logf(1.0f - x)) / 2.0f; }
-static INLINE int isblank(int ch) { return ch == ' ' || ch == '\t'; }
+static inline float truncf(float x) { return x < 0.0f ? ceilf(x) : floorf(x); }
+static inline float exp2f(float x) { return powf(2.0f, x); }
+static inline float log2f(float x) { return logf(x) * 1.442695041f; }
+static inline float asinhf(float x) { return logf(x + sqrtf(x * x + 1.0f)); }
+static inline float acoshf(float x) { return logf(x + sqrtf(x * x - 1.0f)); }
+static inline float atanhf(float x) { return (logf(1.0f + x) - logf(1.0f - x)) / 2.0f; }
+static inline int isblank(int ch) { return ch == ' ' || ch == '\t'; }
 #define strtoll(p, e, b) _strtoi64(p, e, b)
 #endif
 /*@}*/
@@ -172,7 +172,7 @@ static INLINE int isblank(int ch) { return ch == ' ' || ch == '\t'; }
 /* This is pretty fast, but not accurate enough (only 2 fractional bits).
  * Based on code from http://www.stereopsis.com/log2.html
  */
-static INLINE GLfloat LOG2(GLfloat x)
+static inline GLfloat LOG2(GLfloat x)
 {
    const GLfloat y = x * x * x * x;
    const GLuint ix = *((GLuint *) &y);
@@ -184,7 +184,7 @@ static INLINE GLfloat LOG2(GLfloat x)
 /* Pretty fast, and accurate.
  * Based on code from http://www.flipcode.com/totd/
  */
-static INLINE GLfloat LOG2(GLfloat val)
+static inline GLfloat LOG2(GLfloat val)
 {
    fi_type num;
    GLint log_2;
@@ -208,7 +208,7 @@ static INLINE GLfloat LOG2(GLfloat val)
  *** IS_INF_OR_NAN: test if float is infinite or NaN
  ***/
 #ifdef USE_IEEE
-static INLINE int IS_INF_OR_NAN( float x )
+static inline int IS_INF_OR_NAN( float x )
 {
    fi_type tmp;
    tmp.f = x;
@@ -231,7 +231,7 @@ static INLINE int IS_INF_OR_NAN( float x )
  *** IS_NEGATIVE: test if float is negative
  ***/
 #if defined(USE_IEEE)
-static INLINE int GET_FLOAT_BITS( float x )
+static inline int GET_FLOAT_BITS( float x )
 {
    fi_type fi;
    fi.f = x;
@@ -289,7 +289,7 @@ static INLINE int GET_FLOAT_BITS( float x )
  *** IROUND: return (as an integer) float rounded to nearest integer
  ***/
 #if defined(USE_X86_ASM) && defined(__GNUC__) && defined(__i386__)
-static INLINE int iround(float f)
+static inline int iround(float f)
 {
    int r;
    __asm__ ("fistpl %0" : "=m" (r) : "t" (f) : "st");
@@ -297,7 +297,7 @@ static INLINE int iround(float f)
 }
 #define IROUND(x)  iround(x)
 #elif defined(USE_X86_ASM) && defined(_MSC_VER)
-static INLINE int iround(float f)
+static inline int iround(float f)
 {
    int r;
    _asm {
@@ -344,7 +344,7 @@ long iround(float f);
  * but uses some IEEE specific tricks for better speed.
  * Contributed by Josh Vanderhoof
  */
-static INLINE int ifloor(float f)
+static inline int ifloor(float f)
 {
    int ai, bi;
    double af, bf;
@@ -357,7 +357,7 @@ static INLINE int ifloor(float f)
 }
 #define IFLOOR(x)  ifloor(x)
 #elif defined(USE_IEEE)
-static INLINE int ifloor(float f)
+static inline int ifloor(float f)
 {
    int ai, bi;
    double af, bf;
@@ -371,7 +371,7 @@ static INLINE int ifloor(float f)
 }
 #define IFLOOR(x)  ifloor(x)
 #else
-static INLINE int ifloor(float f)
+static inline int ifloor(float f)
 {
    int i = IROUND(f);
    return (i > f) ? i - 1 : i;
@@ -391,7 +391,7 @@ static INLINE int ifloor(float f)
  * but uses some IEEE specific tricks for better speed.
  * Contributed by Josh Vanderhoof
  */
-static INLINE int iceil(float f)
+static inline int iceil(float f)
 {
    int ai, bi;
    double af, bf;
@@ -404,7 +404,7 @@ static INLINE int iceil(float f)
 }
 #define ICEIL(x)  iceil(x)
 #elif defined(USE_IEEE)
-static INLINE int iceil(float f)
+static inline int iceil(float f)
 {
    int ai, bi;
    double af, bf;
@@ -417,7 +417,7 @@ static INLINE int iceil(float f)
 }
 #define ICEIL(x)  iceil(x)
 #else
-static INLINE int iceil(float f)
+static inline int iceil(float f)
 {
    int i = IROUND(f);
    return (i < f) ? i + 1 : i;
@@ -429,7 +429,7 @@ static INLINE int iceil(float f)
 /**
  * Is x a power of two?
  */
-static INLINE int
+static inline int
 _mesa_is_pow_two(int x)
 {
    return !(x & (x - 1));
@@ -449,7 +449,7 @@ _mesa_is_pow_two(int x)
  * results would be different depending on optimization
  * level used for build.
  */
-static INLINE int32_t
+static inline int32_t
 _mesa_next_pow_two_32(uint32_t x)
 {
 #if defined(__GNUC__) && \
@@ -468,7 +468,7 @@ _mesa_next_pow_two_32(uint32_t x)
 #endif
 }
 
-static INLINE int64_t
+static inline int64_t
 _mesa_next_pow_two_64(uint64_t x)
 {
 #if defined(__GNUC__) && \
@@ -495,7 +495,7 @@ _mesa_next_pow_two_64(uint64_t x)
 /*
  * Returns the floor form of binary logarithm for a 32-bit integer.
  */
-static INLINE GLuint
+static inline GLuint
 _mesa_logbase2(GLuint n)
 {
 #if defined(__GNUC__) && \
@@ -516,7 +516,7 @@ _mesa_logbase2(GLuint n)
 /**
  * Return 1 if this is a little endian machine, 0 if big endian.
  */
-static INLINE GLboolean
+static inline GLboolean
 _mesa_little_endian(void)
 {
    const GLuint ui = 1; /* intentionally not static */

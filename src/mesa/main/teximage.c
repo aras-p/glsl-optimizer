@@ -2253,7 +2253,7 @@ update_fbo_texture(struct gl_context *ctx, struct gl_texture_object *texObj,
  * changed the texture base level image, regenerate the rest of the
  * mipmap levels now.
  */
-static INLINE void
+static inline void
 check_gen_mipmap(struct gl_context *ctx, GLenum target,
                  struct gl_texture_object *texObj, GLint level)
 {

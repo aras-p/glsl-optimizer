@@ -86,7 +86,7 @@ struct vbo_context {
 };
 
 
-static INLINE struct vbo_context *vbo_context(struct gl_context *ctx) 
+static inline struct vbo_context *vbo_context(struct gl_context *ctx) 
 {
    return (struct vbo_context *)(ctx->swtnl_im);
 }
@@ -96,7 +96,7 @@ static INLINE struct vbo_context *vbo_context(struct gl_context *ctx)
  * Return VP_x token to indicate whether we're running fixed-function
  * vertex transformation, an NV vertex program or ARB vertex program/shader.
  */
-static INLINE enum vp_mode
+static inline enum vp_mode
 get_program_mode( struct gl_context *ctx )
 {
    if (!ctx->VertexProgram._Current)

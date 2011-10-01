@@ -34,7 +34,7 @@
 
 #if FEATURE_queryobj
 
-static INLINE struct gl_query_object *
+static inline struct gl_query_object *
 _mesa_lookup_query_object(struct gl_context *ctx, GLuint id)
 {
    return (struct gl_query_object *)
@@ -50,18 +50,18 @@ _mesa_init_queryobj_dispatch(struct _glapi_table *disp);
 
 #else /* FEATURE_queryobj */
 
-static INLINE struct gl_query_object *
+static inline struct gl_query_object *
 _mesa_lookup_query_object(struct gl_context *ctx, GLuint id)
 {
    return NULL;
 }
 
-static INLINE void
+static inline void
 _mesa_init_query_object_functions(struct dd_function_table *driver)
 {
 }
 
-static INLINE void
+static inline void
 _mesa_init_queryobj_dispatch(struct _glapi_table *disp)
 {
 }

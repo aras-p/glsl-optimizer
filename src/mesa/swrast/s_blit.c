@@ -243,7 +243,7 @@ blit_nearest(struct gl_context *ctx,
 
 #define LERP(T, A, B)  ( (A) + (T) * ((B) - (A)) )
 
-static INLINE GLfloat
+static inline GLfloat
 lerp_2d(GLfloat a, GLfloat b,
         GLfloat v00, GLfloat v10, GLfloat v01, GLfloat v11)
 {

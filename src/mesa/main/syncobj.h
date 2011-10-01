@@ -82,33 +82,33 @@ _mesa_GetSynciv(GLsync sync, GLenum pname, GLsizei bufSize, GLsizei *length,
 
 #include "main/compiler.h"
 
-static INLINE void
+static inline void
 _mesa_init_sync_object_functions(struct dd_function_table *driver)
 {
 }
 
-static INLINE void
+static inline void
 _mesa_init_sync_dispatch(struct _glapi_table *disp)
 {
 }
 
-static INLINE void
+static inline void
 _mesa_init_sync(struct gl_context *ctx)
 {
 }
 
-static INLINE void
+static inline void
 _mesa_free_sync_data(struct gl_context *ctx)
 {
 }
 
-static INLINE void
+static inline void
 _mesa_ref_sync_object(struct gl_context *ctx, struct gl_sync_object *syncObj)
 {
    ASSERT_NO_FEATURE();
 }
 
-static INLINE void
+static inline void
 _mesa_unref_sync_object(struct gl_context *ctx, struct gl_sync_object *syncObj)
 {
    ASSERT_NO_FEATURE();

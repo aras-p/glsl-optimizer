@@ -330,7 +330,7 @@ typedef enum
  * (VERT_RESULT_PSIZ, VERT_RESULT_BFC0, VERT_RESULT_BFC1, and
  * VERT_RESULT_EDGE) are converted to a value of -1.
  */
-static INLINE int
+static inline int
 _mesa_vert_result_to_frag_attrib(gl_vert_result vert_result)
 {
    if (vert_result >= VERT_RESULT_CLIP_DIST0)
@@ -350,7 +350,7 @@ _mesa_vert_result_to_frag_attrib(gl_vert_result vert_result)
  * gl_frag_attrib values which have no corresponding gl_vert_result
  * (FRAG_ATTRIB_FACE and FRAG_ATTRIB_PNTC) are converted to a value of -1.
  */
-static INLINE int
+static inline int
 _mesa_frag_attrib_to_vert_result(gl_frag_attrib frag_attrib)
 {
    if (frag_attrib <= FRAG_ATTRIB_TEX7)

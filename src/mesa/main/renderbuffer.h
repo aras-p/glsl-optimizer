@@ -108,7 +108,7 @@ extern void
 _mesa_reference_renderbuffer_(struct gl_renderbuffer **ptr,
                               struct gl_renderbuffer *rb);
 
-static INLINE void
+static inline void
 _mesa_reference_renderbuffer(struct gl_renderbuffer **ptr,
                              struct gl_renderbuffer *rb)
 {
