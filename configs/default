@@ -40,6 +40,7 @@ MKDEP_OPTIONS = -fdepend
 MAKE = make
 FLEX = flex
 BISON = bison
+PKG_CONFIG = pkg-config
 
 # Use MINSTALL for installing libraries, INSTALL for everything else
 MINSTALL = $(SHELL) $(TOP)/bin/minstall

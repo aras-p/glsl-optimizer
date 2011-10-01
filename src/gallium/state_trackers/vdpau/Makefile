@@ -8,7 +8,7 @@ VDPAU_MINOR = 0
 LIBRARY_DEFINES = -DVER_MAJOR=$(VDPAU_MAJOR) -DVER_MINOR=$(VDPAU_MINOR) $(STATE_TRACKER_DEFINES)
 
 LIBRARY_INCLUDES = \
-	$(shell pkg-config --cflags-only-I vdpau) \
+	$(shell $(PKG_CONFIG) --cflags-only-I vdpau) \
 	-I$(TOP)/src/gallium/winsys/g3dvl
 
 C_SOURCES = htab.c \

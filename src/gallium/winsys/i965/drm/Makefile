@@ -7,8 +7,8 @@ C_SOURCES = \
 	i965_drm_buffer.c \
 	i965_drm_winsys.c
 
-LIBRARY_INCLUDES = $(shell pkg-config libdrm --cflags-only-I)
+LIBRARY_INCLUDES = $(shell $(PKG_CONFIG) libdrm --cflags-only-I)
 
-LIBRARY_DEFINES = $(shell pkg-config libdrm --cflags-only-other)
+LIBRARY_DEFINES = $(shell $(PKG_CONFIG) --cflags-only-other)
 
 include ../../../Makefile.template

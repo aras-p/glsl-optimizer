@@ -16,7 +16,7 @@ C_SOURCES = \
 ASM_SOURCES = 
 
 DRIVER_DEFINES = $(addprefix -I$(TOP)/, $(i915_INCLUDES)) -DI915 \
-	$(shell pkg-config libdrm --atleast-version=2.3.1 \
+	$(shell $(PKG_CONFIG) libdrm --atleast-version=2.3.1 \
 				&& echo "-DDRM_VBLANK_FLIP=DRM_VBLANK_FLIP")
 
 INCLUDES += $(INTEL_CFLAGS)

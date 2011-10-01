@@ -16,8 +16,8 @@ wayland_drm_INCLUDES = \
 		-I$(TOP)/include
 
 # Generate protocol sources
-prefix=$(shell pkg-config --variable=prefix wayland-server)
-exec_prefx=$(shell pkg-config --variable=exec_prefix wayland-server)
+prefix=$(shell $(PKG_CONFIG) --variable=prefix wayland-server)
+exec_prefx=$(shell $(PKG_CONFIG) --variable=exec_prefix wayland-server)
 wayland_protocoldir = $(PWD)/protocol
 wayland_scanner=$(exec_prefix)/bin/wayland-scanner
 

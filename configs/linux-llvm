@@ -44,4 +44,4 @@ LD = g++
 GL_LIB_DEPS = $(LLVM_LDFLAGS) $(LLVM_LIBS) $(EXTRA_LIB_PATH) -lX11 -lXext -lm -lpthread -lstdc++
 
 # to allow the NV drivers to compile
-LIBDRM_CFLAGS = $(shell pkg-config --cflags libdrm)
+LIBDRM_CFLAGS = $(shell $(PKG_CONFIG) --cflags libdrm)

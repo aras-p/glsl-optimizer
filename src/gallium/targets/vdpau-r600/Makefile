@@ -15,7 +15,7 @@ C_SOURCES = \
 	$(COMMON_GALLIUM_SOURCES) \
 	$(DRIVER_SOURCES)
 
-DRIVER_LIBS = $(shell pkg-config libdrm --libs) -lXfixes
+DRIVER_LIBS = $(shell $(PKG_CONFIG) libdrm --libs) -lXfixes
 
 include ../Makefile.vdpau
 

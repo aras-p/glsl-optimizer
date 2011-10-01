@@ -5,12 +5,12 @@ LIBNAME = xorgtracker
 
 LIBRARY_INCLUDES = \
 	-DHAVE_CONFIG_H \
-	$(shell pkg-config xextproto --atleast-version=7.0.99.1 \
+	$(shell $(PKG_CONFIG) xextproto --atleast-version=7.0.99.1 \
 				&& echo "-DHAVE_XEXTPROTO_71") \
-	$(shell pkg-config libkms --atleast-version=1.0 \
+	$(shell $(PKG_CONFIG) libkms --atleast-version=1.0 \
 				&& echo "-DHAVE_LIBKMS") \
-	$(shell pkg-config libkms --silence-errors --cflags-only-I) \
-	$(shell pkg-config --cflags-only-I pixman-1 xorg-server libdrm xproto dri2proto) \
+	$(shell $(PKG_CONFIG) libkms --silence-errors --cflags-only-I) \
+	$(shell $(PKG_CONFIG) --cflags-only-I pixman-1 xorg-server libdrm xproto dri2proto) \
 	-I$(TOP)/src/gallium/include \
 	-I$(TOP)/src/gallium/auxiliary \
 	-I$(TOP)/include \

@@ -25,7 +25,7 @@ DEFINES = -D_POSIX_SOURCE -D_POSIX_C_SOURCE=199309L -D_SVID_SOURCE \
 	-DGLX_DIRECT_RENDERING -DGLX_INDIRECT_RENDERING \
         -DHAVE_ALIAS -DUSE_XCB -DHAVE_POSIX_MEMALIGN
 
-X11_INCLUDES = $(shell pkg-config --cflags-only-I x11) $(shell pkg-config --cflags-only-I xcb) $(shell pkg-config --cflags-only-I x11-xcb) $(shell pkg-config --cflags-only-I xcb-glx)
+X11_INCLUDES = $(shell $(PKG_CONFIG) --cflags-only-I x11) $(shell $(PKG_CONFIG) --cflags-only-I xcb) $(shell $(PKG_CONFIG) --cflags-only-I x11-xcb) $(shell $(PKG_CONFIG) --cflags-only-I xcb-glx)
 
 CFLAGS = -Wall -Wmissing-prototypes $(OPT_FLAGS) $(PIC_FLAGS) $(ARCH_FLAGS) \
 	$(DEFINES) $(ASM_FLAGS) -std=c99 -ffast-math 
@@ -39,15 +39,15 @@ CXXFLAGS += -fno-strict-aliasing
 MESA_ASM_SOURCES = 
 
 # Library/program dependencies
-EXTRA_LIB_PATH=$(shell pkg-config --libs-only-L x11)
+EXTRA_LIB_PATH=$(shell $(PKG_CONFIG) --libs-only-L x11)
 
 MESA_MODULES  = $(TOP)/src/mesa/libmesa.a
 
-LIBDRM_CFLAGS = $(shell pkg-config --cflags libdrm)
-LIBDRM_LIB = $(shell pkg-config --libs libdrm)
+LIBDRM_CFLAGS = $(shell $(PKG_CONFIG) --cflags libdrm)
+LIBDRM_LIB = $(shell $(PKG_CONFIG) --libs libdrm)
 DRI_LIB_DEPS  = $(MESA_MODULES) $(EXTRA_LIB_PATH) -lm -lpthread -lexpat -ldl $(LIBDRM_LIB)
 GL_LIB_DEPS   = $(EXTRA_LIB_PATH) -lX11 -lXext -lXxf86vm -lm -lpthread -ldl \
-                $(LIBDRM_LIB) $(shell pkg-config --libs xcb) $(shell pkg-config --libs x11-xcb) $(shell pkg-config --libs xcb-glx)
+                $(LIBDRM_LIB) $(shell $(PKG_CONFIG) --libs xcb) $(shell $(PKG_CONFIG) --libs x11-xcb) $(shell $(PKG_CONFIG) --libs xcb-glx)
 
 SRC_DIRS = glx gallium mesa glu
 

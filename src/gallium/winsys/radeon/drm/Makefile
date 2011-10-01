@@ -8,7 +8,7 @@ LIBNAME = radeonwinsys
 include Makefile.sources
 
 LIBRARY_INCLUDES = -I$(TOP)/include \
-		   $(shell pkg-config libdrm --cflags-only-I)
+		   $(shell $(PKG_CONFIG) libdrm --cflags-only-I)
 
 include ../../../Makefile.template
 

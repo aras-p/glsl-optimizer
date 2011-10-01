@@ -19,7 +19,7 @@ C_SOURCES = \
 	$(COMMON_GALLIUM_SOURCES) \
 	$(DRIVER_SOURCES)
 
-DRIVER_LIBS = $(shell pkg-config libdrm_nouveau --libs) -lXfixes
+DRIVER_LIBS = $(shell $(PKG_CONFIG) libdrm_nouveau --libs) -lXfixes
 
 include ../Makefile.xvmc
 

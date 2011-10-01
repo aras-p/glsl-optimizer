@@ -44,8 +44,8 @@ EXTRA_LIB_PATH=-L/usr/X11R6/lib
 
 MESA_MODULES  = $(TOP)/src/mesa/libmesa.a
 
-LIBDRM_CFLAGS = $(shell pkg-config --cflags libdrm)
-LIBDRM_LIB = $(shell pkg-config --libs libdrm)
+LIBDRM_CFLAGS = $(shell $(PKG_CONFIG) --cflags libdrm)
+LIBDRM_LIB = $(shell $(PKG_CONFIG) --libs libdrm)
 DRI_LIB_DEPS  = $(MESA_MODULES) $(EXTRA_LIB_PATH) -lm -lpthread -lexpat -ldl $(LIBDRM_LIB)
 GL_LIB_DEPS   = $(EXTRA_LIB_PATH) -lX11 -lXext -lXxf86vm -lXdamage -lXfixes \
 		-lm -lpthread -ldl $(LIBDRM_LIB)
@@ -64,13 +64,13 @@ GALLIUM_STATE_TRACKERS_DIRS = egl
 
 DRI_DIRS = i915 i965 nouveau r200 r300 r600 radeon swrast
 
-INTEL_LIBS = $(shell pkg-config --libs libdrm_intel)
-INTEL_CFLAGS = $(shell pkg-config --cflags libdrm_intel)
+INTEL_LIBS = $(shell $(PKG_CONFIG) --libs libdrm_intel)
+INTEL_CFLAGS = $(shell $(PKG_CONFIG) --cflags libdrm_intel)
 
-NOUVEAU_LIBS = $(shell pkg-config --libs libdrm_nouveau)
-NOUVEAU_CFLAGS = $(shell pkg-config --cflags libdrm_nouveau)
+NOUVEAU_LIBS = $(shell $(PKG_CONFIG) --libs libdrm_nouveau)
+NOUVEAU_CFLAGS = $(shell $(PKG_CONFIG) --cflags libdrm_nouveau)
 
-LIBDRM_RADEON_LIBS = $(shell pkg-config --libs libdrm_radeon)
-LIBDRM_RADEON_CFLAGS = $(shell pkg-config --cflags libdrm_radeon)
+LIBDRM_RADEON_LIBS = $(shell $(PKG_CONFIG) --libs libdrm_radeon)
+LIBDRM_RADEON_CFLAGS = $(shell $(PKG_CONFIG) --cflags libdrm_radeon)
 RADEON_CFLAGS = "-DHAVE_LIBDRM_RADEON=1 $(LIBDRM_RADEON_CFLAGS)"
 RADEON_LDFLAGS = $(LIBDRM_RADEON_LIBS)

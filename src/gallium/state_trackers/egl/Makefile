@@ -18,7 +18,7 @@ x11_INCLUDES = \
 	-I$(TOP)/src/mapi \
 	-I$(TOP)/src/mesa \
 	$(X11_CFLAGS) \
-	$(shell pkg-config --cflags-only-I libdrm dri2proto)
+	$(shell $(PKG_CONFIG) --cflags-only-I libdrm dri2proto)
 
 x11_SOURCES = $(wildcard x11/*.c) \
 	      $(TOP)/src/glx/dri2.c
@@ -28,12 +28,12 @@ wayland_INCLUDES = \
 	-I$(TOP)/src/gallium/winsys \
 	-I$(TOP)/src/egl/wayland/wayland-egl \
 	-I$(TOP)/src/egl/wayland/wayland-drm \
-	$(shell pkg-config --cflags-only-I libdrm wayland-client)
+	$(shell $(PKG_CONFIG) --cflags-only-I libdrm wayland-client)
 
 wayland_SOURCES = $(wildcard wayland/*.c)
 wayland_OBJECTS = $(wayland_SOURCES:.c=.o)
 
-drm_INCLUDES = -I$(TOP)/src/gallium/winsys $(shell pkg-config --cflags-only-I libdrm) \
+drm_INCLUDES = -I$(TOP)/src/gallium/winsys $(shell $(PKG_CONFIG) --cflags-only-I libdrm)
 	       -I$(TOP)/src/gbm/main -I$(TOP)/src/gallium/state_trackers/gbm
 drm_SOURCES = $(wildcard drm/*.c)
 drm_OBJECTS = $(drm_SOURCES:.c=.o)

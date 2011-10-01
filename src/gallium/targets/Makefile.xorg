@@ -19,7 +19,7 @@ OBJECTS = $(C_SOURCES:.c=.o) \
 	$(ASM_SOURCES:.S=.o)
 
 INCLUDES = \
-	$(shell pkg-config --cflags-only-I pixman-1 xorg-server libdrm xproto) \
+	$(shell $(PKG_CONFIG) --cflags-only-I pixman-1 xorg-server libdrm xproto) \
 	-I$(TOP)/src/gallium/include \
 	-I$(TOP)/src/gallium/drivers \
 	-I$(TOP)/src/gallium/auxiliary \
