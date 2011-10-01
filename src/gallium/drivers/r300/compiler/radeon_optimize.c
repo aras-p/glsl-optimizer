@@ -801,8 +801,13 @@ static int peephole_mul_omod(
 	/* Rewrite the instructions */
 	for (var = writer_list->Item; var; var = var->Friend) {
 		struct rc_variable * writer = writer_list->Item;
+		unsigned conversion_swizzle = rc_make_conversion_swizzle(
+					writer->Inst->U.I.DstReg.WriteMask,
+					inst_mul->U.I.DstReg.WriteMask);
 		writer->Inst->U.I.Omod = omod_op;
-		writer->Inst->U.I.DstReg = inst_mul->U.I.DstReg;
+		writer->Inst->U.I.DstReg.File = inst_mul->U.I.DstReg.File;
+		writer->Inst->U.I.DstReg.Index = inst_mul->U.I.DstReg.Index;
+		rc_normal_rewrite_writemask(writer->Inst, conversion_swizzle);
 		writer->Inst->U.I.SaturateMode = inst_mul->U.I.SaturateMode;
 	}
 
