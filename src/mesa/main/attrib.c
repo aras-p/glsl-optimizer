@@ -720,8 +720,9 @@ pop_texture_group(struct gl_context *ctx, struct texture_state *texstate)
       _mesa_TexEnvi(GL_TEXTURE_ENV, GL_COMBINE_ALPHA,
 		    unit->Combine.ModeA);
       {
+         const GLuint n = ctx->Extensions.NV_texture_env_combine4 ? 4 : 3;
          GLuint i;
-         for (i = 0; i < MAX_COMBINER_TERMS; i++) {
+         for (i = 0; i < n; i++) {
             _mesa_TexEnvi(GL_TEXTURE_ENV, GL_SOURCE0_RGB + i,
                           unit->Combine.SourceRGB[i]);
             _mesa_TexEnvi(GL_TEXTURE_ENV, GL_SOURCE0_ALPHA + i,
