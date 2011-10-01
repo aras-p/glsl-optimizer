@@ -339,7 +339,7 @@ static int tgsi_declaration(struct r600_shader_ctx *ctx)
 		ctx->shader->input[i].sid = d->Semantic.Index;
 		ctx->shader->input[i].interpolate = d->Declaration.Interpolate;
 		ctx->shader->input[i].centroid = d->Declaration.Centroid;
-		ctx->shader->input[i].gpr = ctx->file_offset[TGSI_FILE_INPUT] + i;
+		ctx->shader->input[i].gpr = ctx->file_offset[TGSI_FILE_INPUT] + d->Range.First;
 		if (ctx->type == TGSI_PROCESSOR_FRAGMENT && ctx->bc->chip_class >= EVERGREEN) {
 			/* turn input into interpolate on EG */
 			if (ctx->shader->input[i].name != TGSI_SEMANTIC_POSITION &&
@@ -357,7 +357,7 @@ static int tgsi_declaration(struct r600_shader_ctx *ctx)
 		i = ctx->shader->noutput++;
 		ctx->shader->output[i].name = d->Semantic.Name;
 		ctx->shader->output[i].sid = d->Semantic.Index;
-		ctx->shader->output[i].gpr = ctx->file_offset[TGSI_FILE_OUTPUT] + i;
+		ctx->shader->output[i].gpr = ctx->file_offset[TGSI_FILE_OUTPUT] + d->Range.First;
 		ctx->shader->output[i].interpolate = d->Declaration.Interpolate;
 		if (ctx->type == TGSI_PROCESSOR_VERTEX) {
 			/* these don't count as vertex param exports */
