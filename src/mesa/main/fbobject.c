@@ -240,9 +240,13 @@ _mesa_get_attachment(struct gl_context *ctx, struct gl_framebuffer *fb,
    case GL_COLOR_ATTACHMENT13_EXT:
    case GL_COLOR_ATTACHMENT14_EXT:
    case GL_COLOR_ATTACHMENT15_EXT:
+      /* Only OpenGL ES 1.x forbids color attachments other than
+       * GL_COLOR_ATTACHMENT0.  For all other APIs the limit set by the
+       * hardware is used.
+       */
       i = attachment - GL_COLOR_ATTACHMENT0_EXT;
       if (i >= ctx->Const.MaxColorAttachments
-	  || (i > 0 && ctx->API != API_OPENGL)) {
+	  || (i > 0 && ctx->API == API_OPENGLES)) {
 	 return NULL;
       }
       return &fb->Attachment[BUFFER_COLOR0 + i];
