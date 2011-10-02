@@ -734,3 +734,21 @@ float rc_get_constant_value(
 	return base *
 		c->Program.Constants.Constants[index].u.Immediate[swz];
 }
+
+/**
+ * This function returns the component value (RC_SWIZZLE_*) of the first used
+ * channel in the swizzle.  This is only useful for scalar instructions that are
+ * known to use only one channel of the swizzle.
+ */
+unsigned int rc_get_scalar_src_swz(unsigned int swizzle)
+{
+	unsigned int swz, chan;
+	for (chan = 0; chan < 4; chan++) {
+		swz = GET_SWZ(swizzle, chan);
+		if (swz != RC_SWIZZLE_UNUSED) {
+			break;
+		}
+	}
+	assert(swz != RC_SWIZZLE_UNUSED);
+	return swz;
+}

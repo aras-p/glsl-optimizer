@@ -463,7 +463,7 @@ void rc_compute_sources_for_writemask(
 			srcmasks[src] |= writemask;
 	} else if (opcode->IsStandardScalar) {
 		for(unsigned int src = 0; src < opcode->NumSrcRegs; ++src)
-			srcmasks[src] |= RC_MASK_X;
+			srcmasks[src] |= writemask;
 	} else {
 		switch(opcode->Opcode) {
 		case RC_OPCODE_ARL:

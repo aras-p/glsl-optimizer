@@ -247,7 +247,13 @@ static void set_pair_instruction(struct r300_fragment_program_compiler *c,
 		if (needalpha) {
 			unsigned int srcrgb = 0;
 			unsigned int srcalpha = 0;
-			unsigned int swz = GET_SWZ(inst->SrcReg[i].Swizzle, istranscendent ? 0 : 3);
+			unsigned int swz;
+			if (istranscendent) {
+				swz = rc_get_scalar_src_swz(inst->SrcReg[i].Swizzle);
+			} else {
+				swz = GET_SWZ(inst->SrcReg[i].Swizzle, 3);
+			}
+
 			if (swz < 3)
 				srcrgb = 1;
 			else if (swz < 4)

@@ -163,11 +163,13 @@ static unsigned long t_src_scalar(struct r300_vertex_program_code *vp,
 	/* src->Negate uses the RC_MASK_ flags from program_instruction.h,
 	 * which equal our VSF_FLAGS_ values, so it's safe to just pass it here.
 	 */
+	unsigned int swz = rc_get_scalar_src_swz(src->Swizzle);
+
 	return PVS_SRC_OPERAND(t_src_index(vp, src),
-			       t_swizzle(GET_SWZ(src->Swizzle, 0)),
-			       t_swizzle(GET_SWZ(src->Swizzle, 0)),
-			       t_swizzle(GET_SWZ(src->Swizzle, 0)),
-			       t_swizzle(GET_SWZ(src->Swizzle, 0)),
+			       t_swizzle(swz),
+			       t_swizzle(swz),
+			       t_swizzle(swz),
+			       t_swizzle(swz),
 			       t_src_class(src->File),
 			       src->Negate ? RC_MASK_XYZW : RC_MASK_NONE) |
 	       (src->RelAddr << 4) | (src->Abs << 3);

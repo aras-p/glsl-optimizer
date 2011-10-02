@@ -98,5 +98,6 @@ float rc_get_constant_value(
 	unsigned int negate,
 	unsigned int chan);
 
+unsigned int rc_get_scalar_src_swz(unsigned int swizzle);
 
 #endif /* RADEON_PROGRAM_UTIL_H */
