@@ -689,6 +689,10 @@ static const struct value_desc values[] = {
    /* GL_ARB_draw_buffers */
    { GL_MAX_DRAW_BUFFERS_ARB, CONTEXT_INT(Const.MaxDrawBuffers), NO_EXTRA },
 
+   /* GL_EXT_framebuffer_object / GL_NV_fbo_color_attachments */
+   { GL_MAX_COLOR_ATTACHMENTS, CONTEXT_INT(Const.MaxColorAttachments),
+     extra_EXT_framebuffer_object },
+
    { GL_BLEND_COLOR_EXT, LOC_CUSTOM, TYPE_FLOATN_4, 0, extra_new_frag_clamp },
    /* GL_ARB_fragment_program */
    { GL_MAX_TEXTURE_IMAGE_UNITS_ARB, /* == GL_MAX_TEXTURE_IMAGE_UNITS_NV */
@@ -1153,10 +1157,6 @@ static const struct value_desc values[] = {
    { GL_NUM_INPUT_INTERPOLATOR_COMPONENTS_ATI,
      CONST(3), extra_ATI_fragment_shader },
 
-   /* GL_EXT_framebuffer_object */
-   { GL_MAX_COLOR_ATTACHMENTS_EXT, CONTEXT_INT(Const.MaxColorAttachments),
-     extra_EXT_framebuffer_object },
-   
    /* GL_EXT_framebuffer_blit
     * NOTE: GL_DRAW_FRAMEBUFFER_BINDING_EXT == GL_FRAMEBUFFER_BINDING_EXT */
    { GL_READ_FRAMEBUFFER_BINDING_EXT, LOC_CUSTOM, TYPE_INT, 0,
