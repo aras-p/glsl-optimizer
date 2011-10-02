@@ -693,6 +693,23 @@ static const struct value_desc values[] = {
    { GL_MAX_COLOR_ATTACHMENTS, CONTEXT_INT(Const.MaxColorAttachments),
      extra_EXT_framebuffer_object },
 
+   /* GL_ARB_draw_buffers / GL_NV_draw_buffers (for ES 2.0) */
+   { GL_DRAW_BUFFER0_ARB, BUFFER_ENUM(ColorDrawBuffer[0]), NO_EXTRA },
+   { GL_DRAW_BUFFER1_ARB, BUFFER_ENUM(ColorDrawBuffer[1]),
+     extra_valid_draw_buffer },
+   { GL_DRAW_BUFFER2_ARB, BUFFER_ENUM(ColorDrawBuffer[2]),
+     extra_valid_draw_buffer },
+   { GL_DRAW_BUFFER3_ARB, BUFFER_ENUM(ColorDrawBuffer[3]),
+     extra_valid_draw_buffer },
+   { GL_DRAW_BUFFER4_ARB, BUFFER_ENUM(ColorDrawBuffer[4]),
+     extra_valid_draw_buffer },
+   { GL_DRAW_BUFFER5_ARB, BUFFER_ENUM(ColorDrawBuffer[5]),
+     extra_valid_draw_buffer },
+   { GL_DRAW_BUFFER6_ARB, BUFFER_ENUM(ColorDrawBuffer[6]),
+     extra_valid_draw_buffer },
+   { GL_DRAW_BUFFER7_ARB, BUFFER_ENUM(ColorDrawBuffer[7]),
+     extra_valid_draw_buffer },
+
    { GL_BLEND_COLOR_EXT, LOC_CUSTOM, TYPE_FLOATN_4, 0, extra_new_frag_clamp },
    /* GL_ARB_fragment_program */
    { GL_MAX_TEXTURE_IMAGE_UNITS_ARB, /* == GL_MAX_TEXTURE_IMAGE_UNITS_NV */
@@ -1128,23 +1145,6 @@ static const struct value_desc values[] = {
    /* GL_ARB_depth_clamp*/
    { GL_DEPTH_CLAMP, CONTEXT_BOOL(Transform.DepthClamp),
      extra_ARB_depth_clamp },
-
-   /* GL_ARB_draw_buffers */
-   { GL_DRAW_BUFFER0_ARB, BUFFER_ENUM(ColorDrawBuffer[0]), NO_EXTRA },
-   { GL_DRAW_BUFFER1_ARB, BUFFER_ENUM(ColorDrawBuffer[1]),
-     extra_valid_draw_buffer },
-   { GL_DRAW_BUFFER2_ARB, BUFFER_ENUM(ColorDrawBuffer[2]),
-     extra_valid_draw_buffer },
-   { GL_DRAW_BUFFER3_ARB, BUFFER_ENUM(ColorDrawBuffer[3]),
-     extra_valid_draw_buffer },
-   { GL_DRAW_BUFFER4_ARB, BUFFER_ENUM(ColorDrawBuffer[4]),
-     extra_valid_draw_buffer },
-   { GL_DRAW_BUFFER5_ARB, BUFFER_ENUM(ColorDrawBuffer[5]),
-     extra_valid_draw_buffer },
-   { GL_DRAW_BUFFER6_ARB, BUFFER_ENUM(ColorDrawBuffer[6]),
-     extra_valid_draw_buffer },
-   { GL_DRAW_BUFFER7_ARB, BUFFER_ENUM(ColorDrawBuffer[7]),
-     extra_valid_draw_buffer },
 
    /* GL_ATI_fragment_shader */
    { GL_NUM_FRAGMENT_REGISTERS_ATI, CONST(6), extra_ATI_fragment_shader },
