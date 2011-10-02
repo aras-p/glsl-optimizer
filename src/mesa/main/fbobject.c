@@ -239,17 +239,22 @@ _mesa_get_attachment(struct gl_context *ctx, struct gl_framebuffer *fb,
    case GL_COLOR_ATTACHMENT14_EXT:
    case GL_COLOR_ATTACHMENT15_EXT:
       i = attachment - GL_COLOR_ATTACHMENT0_EXT;
-      if (i >= ctx->Const.MaxColorAttachments) {
+      if (i >= ctx->Const.MaxColorAttachments
+	  || (i > 0 && ctx->API != API_OPENGL)) {
 	 return NULL;
       }
       return &fb->Attachment[BUFFER_COLOR0 + i];
    case GL_DEPTH_STENCIL_ATTACHMENT:
+      if (ctx->API != API_OPENGL)
+	 return NULL;
       /* fall-through */
    case GL_DEPTH_BUFFER:
       /* fall-through / new in GL 3.0 */
    case GL_DEPTH_ATTACHMENT_EXT:
       return &fb->Attachment[BUFFER_DEPTH];
    case GL_STENCIL_BUFFER:
+      if (ctx->API != API_OPENGL)
+	 return NULL;
       /* fall-through / new in GL 3.0 */
    case GL_STENCIL_ATTACHMENT_EXT:
       return &fb->Attachment[BUFFER_STENCIL];

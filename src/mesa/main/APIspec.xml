@@ -3217,15 +3217,6 @@
 		<value name="GL_FRAMEBUFFER" category="GLES2.0"/>
 	</desc>
 
-	<desc name="attachment">
-		<value name="GL_COLOR_ATTACHMENT0_OES" category="OES_framebuffer_object"/>
-		<value name="GL_DEPTH_ATTACHMENT_OES" category="OES_framebuffer_object"/>
-		<value name="GL_STENCIL_ATTACHMENT_OES" category="OES_framebuffer_object"/>
-		<value name="GL_COLOR_ATTACHMENT0" category="GLES2.0"/>
-		<value name="GL_DEPTH_ATTACHMENT" category="GLES2.0"/>
-		<value name="GL_STENCIL_ATTACHMENT" category="GLES2.0"/>
-	</desc>
-
 	<desc name="renderbuffertarget">
 		<value name="GL_RENDERBUFFER_OES" category="OES_framebuffer_object"/>
 		<value name="GL_RENDERBUFFER" category="GLES2.0"/>
@@ -3245,15 +3236,6 @@
 	<desc name="target">
 		<value name="GL_FRAMEBUFFER_OES" category="OES_framebuffer_object"/>
 		<value name="GL_FRAMEBUFFER" category="GLES2.0"/>
-	</desc>
-
-	<desc name="attachment">
-		<value name="GL_COLOR_ATTACHMENT0_OES" category="OES_framebuffer_object"/>
-		<value name="GL_DEPTH_ATTACHMENT_OES" category="OES_framebuffer_object"/>
-		<value name="GL_STENCIL_ATTACHMENT_OES" category="OES_framebuffer_object"/>
-		<value name="GL_COLOR_ATTACHMENT0" category="GLES2.0"/>
-		<value name="GL_DEPTH_ATTACHMENT" category="GLES2.0"/>
-		<value name="GL_STENCIL_ATTACHMENT" category="GLES2.0"/>
 	</desc>
 
 	<desc name="textarget" error="GL_INVALID_OPERATION">
@@ -3290,15 +3272,6 @@
 	<desc name="target">
 		<value name="GL_FRAMEBUFFER_OES" category="OES_framebuffer_object"/>
 		<value name="GL_FRAMEBUFFER" category="GLES2.0"/>
-	</desc>
-
-	<desc name="attachment">
-		<value name="GL_COLOR_ATTACHMENT0_OES" category="OES_framebuffer_object"/>
-		<value name="GL_DEPTH_ATTACHMENT_OES" category="OES_framebuffer_object"/>
-		<value name="GL_STENCIL_ATTACHMENT_OES" category="OES_framebuffer_object"/>
-		<value name="GL_COLOR_ATTACHMENT0" category="GLES2.0"/>
-		<value name="GL_DEPTH_ATTACHMENT" category="GLES2.0"/>
-		<value name="GL_STENCIL_ATTACHMENT" category="GLES2.0"/>
 	</desc>
 
 	<desc name="textarget" error="GL_INVALID_OPERATION">
