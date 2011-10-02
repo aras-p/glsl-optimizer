@@ -577,7 +577,6 @@ swrast_init_driver_functions(struct dd_function_table *driver)
 
 static const char *es2_extensions[] = {
    /* Used by mesa internally (cf all_mesa_extensions in ../common/utils.c) */
-   "GL_ARB_draw_buffers",
    "GL_ARB_transpose_matrix",
    "GL_ARB_window_pos",
    "GL_EXT_blend_func_separate",

@@ -307,10 +307,6 @@ void st_init_extensions(struct st_context *st)
    /*
     * Extensions that depend on the driver/hardware:
     */
-   if (screen->get_param(screen, PIPE_CAP_MAX_RENDER_TARGETS) > 0) {
-      ctx->Extensions.ARB_draw_buffers = GL_TRUE;
-   }
-
    if (screen->get_param(screen, PIPE_CAP_TEXTURE_SWIZZLE) > 0) {
       ctx->Extensions.EXT_texture_swizzle = GL_TRUE;
    }

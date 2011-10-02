@@ -104,7 +104,6 @@ compute_version(struct gl_context *ctx)
                               ctx->Extensions.ARB_occlusion_query &&
                               ctx->Extensions.EXT_shadow_funcs);
    const GLboolean ver_2_0 = (ver_1_5 &&
-                              ctx->Extensions.ARB_draw_buffers &&
                               ctx->Extensions.ARB_point_sprite &&
                               ctx->Extensions.ARB_shader_objects &&
                               ctx->Extensions.ARB_vertex_shader &&
