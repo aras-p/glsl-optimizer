@@ -2276,6 +2276,21 @@ _mesa_GetFramebufferAttachmentParameterivEXT(GLenum target, GLenum attachment,
    }
 
    if (is_winsys_fbo(buffer)) {
+      /* Page 126 (page 136 of the PDF) of the OpenGL ES 2.0.25 spec
+       * says:
+       *
+       *     "If the framebuffer currently bound to target is zero, then
+       *     INVALID_OPERATION is generated."
+       *
+       * The EXT_framebuffer_object spec has the same wording, and the
+       * OES_framebuffer_object spec refers to the EXT_framebuffer_object
+       * spec.
+       */
+      if (ctx->API != API_OPENGL || !ctx->Extensions.ARB_framebuffer_object) {
+	 _mesa_error(ctx, GL_INVALID_OPERATION,
+		     "glGetFramebufferAttachmentParameteriv(bound FBO = 0)");
+	 return;
+      }
       /* the default / window-system FBO */
       att = _mesa_get_fb0_attachment(ctx, buffer, attachment);
    }
