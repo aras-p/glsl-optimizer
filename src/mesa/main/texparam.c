@@ -56,11 +56,16 @@ static GLboolean
 validate_texture_wrap_mode(struct gl_context * ctx, GLenum target, GLenum wrap)
 {
    const struct gl_extensions * const e = & ctx->Extensions;
+   const bool is_desktop_gl = _mesa_is_desktop_gl(ctx);
    bool supported;
 
    switch (wrap) {
    case GL_CLAMP:
-      supported = (target != GL_TEXTURE_EXTERNAL_OES);
+      /* GL_CLAMP was removed in the core profile, and it has never existed in
+       * OpenGL ES.
+       */
+      supported = (ctx->API == API_OPENGL)
+         && (target != GL_TEXTURE_EXTERNAL_OES);
       break;
 
    case GL_CLAMP_TO_EDGE:
@@ -68,7 +73,7 @@ validate_texture_wrap_mode(struct gl_context * ctx, GLenum target, GLenum wrap)
       break;
 
    case GL_CLAMP_TO_BORDER:
-      supported = e->ARB_texture_border_clamp
+      supported = is_desktop_gl && e->ARB_texture_border_clamp
          && (target != GL_TEXTURE_EXTERNAL_OES);
       break;
 
@@ -80,13 +85,14 @@ validate_texture_wrap_mode(struct gl_context * ctx, GLenum target, GLenum wrap)
 
    case GL_MIRROR_CLAMP_EXT:
    case GL_MIRROR_CLAMP_TO_EDGE_EXT:
-      supported = (e->ATI_texture_mirror_once || e->EXT_texture_mirror_clamp)
+      supported = is_desktop_gl 
+         && (e->ATI_texture_mirror_once || e->EXT_texture_mirror_clamp)
 	 && (target != GL_TEXTURE_RECTANGLE_NV)
          && (target != GL_TEXTURE_EXTERNAL_OES);
       break;
 
    case GL_MIRROR_CLAMP_TO_BORDER_EXT:
-      supported = e->EXT_texture_mirror_clamp
+      supported = is_desktop_gl && e->EXT_texture_mirror_clamp
 	 && (target != GL_TEXTURE_RECTANGLE_NV)
          && (target != GL_TEXTURE_EXTERNAL_OES);
       break;

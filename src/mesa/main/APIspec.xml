@@ -239,18 +239,8 @@
 		<value name="GL_TEXTURE_WRAP_S"/>
 		<value name="GL_TEXTURE_WRAP_T"/>
 		<value name="GL_TEXTURE_WRAP_R_OES" category="OES_texture_3D"/>
-
-		<desc name="param">
-			<value name="GL_CLAMP_TO_EDGE"/>
-			<value name="GL_REPEAT"/>
-			<value name="GL_MIRRORED_REPEAT" category="GLES2.0"/>
-			<value name="GL_MIRRORED_REPEAT_OES" category="OES_texture_mirrored_repeat"/>
-		</desc>
-	</desc>
-
-        <desc name="pname">
-               <value name="GL_TEXTURE_MIN_FILTER"/>
-               <value name="GL_TEXTURE_MAG_FILTER"/>
+		<value name="GL_TEXTURE_MIN_FILTER"/>
+		<value name="GL_TEXTURE_MAG_FILTER"/>
 		<value name="GL_TEXTURE_MAX_ANISOTROPY_EXT" category="EXT_texture_filter_anisotropic"/>
         </desc>
 
