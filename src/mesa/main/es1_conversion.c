@@ -1376,19 +1376,7 @@ _es_TexParameterx(GLenum target, GLenum pname, GLfixed param)
       convert_param_value = false;
       break;
    case GL_TEXTURE_MIN_FILTER:
-      if (param != GL_NEAREST && param != GL_LINEAR && param != GL_NEAREST_MIPMAP_NEAREST && param != GL_NEAREST_MIPMAP_LINEAR && param != GL_LINEAR_MIPMAP_NEAREST && param != GL_LINEAR_MIPMAP_LINEAR) {
-         _mesa_error(_mesa_get_current_context(), GL_INVALID_ENUM,
-                     "glTexParameterx(pname=0x%x)", pname);
-         return;
-      }
-      convert_param_value = false;
-      break;
    case GL_TEXTURE_MAG_FILTER:
-      if (param != GL_NEAREST && param != GL_LINEAR) {
-         _mesa_error(_mesa_get_current_context(), GL_INVALID_ENUM,
-                     "glTexParameterx(pname=0x%x)", pname);
-         return;
-      }
       convert_param_value = false;
       break;
    case GL_GENERATE_MIPMAP:
@@ -1446,20 +1434,7 @@ _es_TexParameterxv(GLenum target, GLenum pname, const GLfixed *params)
       n_params = 1;
       break;
    case GL_TEXTURE_MIN_FILTER:
-      if (params[0] != GL_NEAREST && params[0] != GL_LINEAR && params[0] != GL_NEAREST_MIPMAP_NEAREST && params[0] != GL_NEAREST_MIPMAP_LINEAR && params[0] != GL_LINEAR_MIPMAP_NEAREST && params[0] != GL_LINEAR_MIPMAP_LINEAR) {
-         _mesa_error(_mesa_get_current_context(), GL_INVALID_ENUM,
-                     "glTexParameterxv(pname=0x%x)", pname);
-         return;
-      }
-      convert_params_value = false;
-      n_params = 1;
-      break;
    case GL_TEXTURE_MAG_FILTER:
-      if (params[0] != GL_NEAREST && params[0] != GL_LINEAR) {
-         _mesa_error(_mesa_get_current_context(), GL_INVALID_ENUM,
-                     "glTexParameterxv(pname=0x%x)", pname);
-         return;
-      }
       convert_params_value = false;
       n_params = 1;
       break;
