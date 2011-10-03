@@ -4653,7 +4653,7 @@ _mesa_store_teximage2d(struct gl_context *ctx, GLenum target, GLint level,
          if (!success)
             break;
 
-         pixels += srcStride;
+         pixels = (const GLubyte *) pixels + srcStride;
       }
    } else {
       /* Map dest texture buffer (write to whole region) */
