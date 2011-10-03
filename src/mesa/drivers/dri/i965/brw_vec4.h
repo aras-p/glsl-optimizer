@@ -510,6 +510,7 @@ public:
 				int base_offset);
 
    bool try_emit_sat(ir_expression *ir);
+   void resolve_ud_negate(src_reg *reg);
 
    bool process_move_condition(ir_rvalue *ir);
 

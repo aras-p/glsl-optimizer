@@ -182,6 +182,9 @@ vec4_visitor::IF(src_reg src0, src_reg src1, uint32_t condition)
 
    vec4_instruction *inst;
 
+   resolve_ud_negate(&src0);
+   resolve_ud_negate(&src1);
+
    inst = new(mem_ctx) vec4_instruction(this, BRW_OPCODE_IF, dst_null_d(),
 					src0, src1);
    inst->conditional_mod = condition;
@@ -208,6 +211,9 @@ vec4_visitor::CMP(dst_reg dst, src_reg src0, src_reg src1, uint32_t condition)
       if (dst.file == HW_REG)
 	 dst.fixed_hw_reg.type = dst.type;
    }
+
+   resolve_ud_negate(&src0);
+   resolve_ud_negate(&src1);
 
    inst = new(mem_ctx) vec4_instruction(this, BRW_OPCODE_CMP, dst, src0, src1);
    inst->conditional_mod = condition;
@@ -643,6 +649,8 @@ vec4_visitor::emit_bool_to_cond_code(ir_rvalue *ir, uint32_t *predicate)
       for (unsigned int i = 0; i < expr->get_num_operands(); i++) {
 	 expr->operands[i]->accept(this);
 	 op[i] = this->result;
+
+	 resolve_ud_negate(&op[i]);
       }
 
       switch (expr->operation) {
@@ -717,6 +725,8 @@ vec4_visitor::emit_bool_to_cond_code(ir_rvalue *ir, uint32_t *predicate)
    }
 
    ir->accept(this);
+
+   resolve_ud_negate(&this->result);
 
    if (intel->gen >= 6) {
       vec4_instruction *inst = emit(AND(dst_null_d(),
@@ -2327,6 +2337,18 @@ vec4_visitor::move_uniform_array_access_to_pull_constants()
     * constants.
     */
    split_uniform_registers();
+}
+
+void
+vec4_visitor::resolve_ud_negate(src_reg *reg)
+{
+   if (reg->type != BRW_REGISTER_TYPE_UD ||
+       !reg->negate)
+      return;
+
+   src_reg temp = src_reg(this, glsl_type::uvec4_type);
+   emit(BRW_OPCODE_MOV, dst_reg(temp), *reg);
+   *reg = temp;
 }
 
 vec4_visitor::vec4_visitor(struct brw_vs_compile *c,

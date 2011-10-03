@@ -205,6 +205,15 @@ try_copy_propagation(struct intel_context *intel,
    if (intel->gen >= 6 && inst->is_math())
       return false;
 
+   /* We can't copy-propagate a UD negation into a condmod
+    * instruction, because the condmod ends up looking at the 33-bit
+    * signed accumulator value instead of the 32-bit value we wanted
+    */
+   if (inst->conditional_mod &&
+       value.negate &&
+       value.type == BRW_REGISTER_TYPE_UD)
+      return false;
+
    /* Don't report progress if this is a noop. */
    if (value.equals(&inst->src[arg]))
       return false;
