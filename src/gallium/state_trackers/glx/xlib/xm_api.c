@@ -448,7 +448,7 @@ create_xmesa_buffer(Drawable d, BufferType type,
    if (!b)
       return NULL;
 
-   b->ws.drawable = d;
+   b->ws.drawable = b->drawable = d;
    b->ws.visual = vis->visinfo->visual;
    b->ws.depth = vis->visinfo->depth;
 
