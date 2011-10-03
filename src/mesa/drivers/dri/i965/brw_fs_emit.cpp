@@ -635,6 +635,16 @@ fs_visitor::generate_code()
 
       for (unsigned int i = 0; i < 3; i++) {
 	 src[i] = brw_reg_from_fs_reg(&inst->src[i]);
+
+	 /* The accumulator result appears to get used for the
+	  * conditional modifier generation.  When negating a UD
+	  * value, there is a 33rd bit generated for the sign in the
+	  * accumulator value, so now you can't check, for example,
+	  * equality with a 32-bit value.  See piglit fs-op-neg-uvec4.
+	  */
+	 assert(!inst->conditional_mod ||
+		inst->src[i].type != BRW_REGISTER_TYPE_UD ||
+		!inst->src[i].negate);
       }
       dst = brw_reg_from_fs_reg(&inst->dst);
 

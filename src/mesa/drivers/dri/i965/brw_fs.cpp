@@ -1347,6 +1347,19 @@ fs_visitor::register_coalesce()
 	    interfered = true;
 	    break;
 	 }
+
+	 /* The accumulator result appears to get used for the
+	  * conditional modifier generation.  When negating a UD
+	  * value, there is a 33rd bit generated for the sign in the
+	  * accumulator value, so now you can't check, for example,
+	  * equality with a 32-bit value.  See piglit fs-op-neg-uint.
+	  */
+	 if (scan_inst->conditional_mod &&
+	     inst->src[0].negate &&
+	     inst->src[0].type == BRW_REGISTER_TYPE_UD) {
+	    interfered = true;
+	    break;
+	 }
       }
       if (interfered) {
 	 continue;

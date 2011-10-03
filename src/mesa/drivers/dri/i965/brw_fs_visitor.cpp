@@ -317,6 +317,9 @@ fs_visitor::visit(ir_expression *ir)
       if (intel->gen < 5)
 	 temp.type = op[0].type;
 
+      resolve_ud_negate(&op[0]);
+      resolve_ud_negate(&op[1]);
+
       inst = emit(BRW_OPCODE_CMP, temp, op[0], op[1]);
       inst->conditional_mod = brw_conditional_for_comparison(ir->operation);
       emit(BRW_OPCODE_AND, this->result, this->result, fs_reg(0x1));
@@ -377,6 +380,8 @@ fs_visitor::visit(ir_expression *ir)
       if (intel->gen < 5)
 	 temp.type = op[0].type;
 
+      resolve_ud_negate(&op[0]);
+
       inst = emit(BRW_OPCODE_CMP, temp, op[0], fs_reg(0.0f));
       inst->conditional_mod = BRW_CONDITIONAL_NZ;
       inst = emit(BRW_OPCODE_AND, this->result, this->result, fs_reg(1));
@@ -401,6 +406,9 @@ fs_visitor::visit(ir_expression *ir)
       break;
 
    case ir_binop_min:
+      resolve_ud_negate(&op[0]);
+      resolve_ud_negate(&op[1]);
+
       if (intel->gen >= 6) {
 	 inst = emit(BRW_OPCODE_SEL, this->result, op[0], op[1]);
 	 inst->conditional_mod = BRW_CONDITIONAL_L;
@@ -416,6 +424,9 @@ fs_visitor::visit(ir_expression *ir)
       }
       break;
    case ir_binop_max:
+      resolve_ud_negate(&op[0]);
+      resolve_ud_negate(&op[1]);
+
       if (intel->gen >= 6) {
 	 inst = emit(BRW_OPCODE_SEL, this->result, op[0], op[1]);
 	 inst->conditional_mod = BRW_CONDITIONAL_GE;
@@ -1369,6 +1380,8 @@ fs_visitor::emit_bool_to_cond_code(ir_rvalue *ir)
 
 	 expr->operands[i]->accept(this);
 	 op[i] = this->result;
+
+	 resolve_ud_negate(&op[i]);
       }
 
       switch (expr->operation) {
@@ -1983,4 +1996,16 @@ fs_visitor::emit_fb_writes()
    }
 
    this->current_annotation = NULL;
+}
+
+void
+fs_visitor::resolve_ud_negate(fs_reg *reg)
+{
+   if (reg->type != BRW_REGISTER_TYPE_UD ||
+       !reg->negate)
+      return;
+
+   fs_reg temp = fs_reg(this, glsl_type::uint_type);
+   emit(BRW_OPCODE_MOV, temp, *reg);
+   *reg = temp;
 }
