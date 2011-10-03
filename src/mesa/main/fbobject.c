@@ -254,14 +254,8 @@ _mesa_get_attachment(struct gl_context *ctx, struct gl_framebuffer *fb,
       if (ctx->API != API_OPENGL)
 	 return NULL;
       /* fall-through */
-   case GL_DEPTH_BUFFER:
-      /* fall-through / new in GL 3.0 */
    case GL_DEPTH_ATTACHMENT_EXT:
       return &fb->Attachment[BUFFER_DEPTH];
-   case GL_STENCIL_BUFFER:
-      if (ctx->API != API_OPENGL)
-	 return NULL;
-      /* fall-through / new in GL 3.0 */
    case GL_STENCIL_ATTACHMENT_EXT:
       return &fb->Attachment[BUFFER_STENCIL];
    default:
@@ -294,13 +288,34 @@ _mesa_get_fb0_attachment(struct gl_context *ctx, struct gl_framebuffer *fb,
          return &fb->Attachment[BUFFER_AUX0];
       }
       return NULL;
-   case GL_DEPTH_BUFFER:
-      /* fall-through / new in GL 3.0 */
-   case GL_DEPTH_ATTACHMENT_EXT:
+
+   /* Page 336 (page 352 of the PDF) of the OpenGL 3.0 spec says:
+    *
+    *     "If the default framebuffer is bound to target, then attachment must
+    *     be one of FRONT LEFT, FRONT RIGHT, BACK LEFT, BACK RIGHT, or AUXi,
+    *     identifying a color buffer; DEPTH, identifying the depth buffer; or
+    *     STENCIL, identifying the stencil buffer."
+    *
+    * Revision #34 of the ARB_framebuffer_object spec has essentially the same
+    * language.  However, revision #33 of the ARB_framebuffer_object spec
+    * says:
+    *
+    *     "If the default framebuffer is bound to <target>, then <attachment>
+    *     must be one of FRONT_LEFT, FRONT_RIGHT, BACK_LEFT, BACK_RIGHT, AUXi,
+    *     DEPTH_BUFFER, or STENCIL_BUFFER, identifying a color buffer, the
+    *     depth buffer, or the stencil buffer, and <pname> may be
+    *     FRAMEBUFFER_ATTACHMENT_OBJECT_TYPE or
+    *     FRAMEBUFFER_ATTACHMENT_OBJECT_NAME."
+    *
+    * The enum values for DEPTH_BUFFER and STENCIL_BUFFER have been removed
+    * from glext.h, so shipping apps should not use those values.
+    *
+    * Note that neither EXT_framebuffer_object nor OES_framebuffer_object
+    * support queries of the window system FBO.
+    */
+   case GL_DEPTH:
       return &fb->Attachment[BUFFER_DEPTH];
-   case GL_STENCIL_BUFFER:
-      /* fall-through / new in GL 3.0 */
-   case GL_STENCIL_ATTACHMENT_EXT:
+   case GL_STENCIL:
       return &fb->Attachment[BUFFER_STENCIL];
    default:
       return NULL;
