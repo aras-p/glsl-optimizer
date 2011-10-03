@@ -2803,6 +2803,19 @@ ast_declarator_list::hir(exec_list *instructions,
 	    _mesa_glsl_error(& loc, state,
 			     "identifier `%s' uses reserved `gl_' prefix",
 			     decl->identifier);
+	 else if (state->language_version >= 130 &&
+		  strstr(decl->identifier, "__")) {
+	    /* From page 14 (page 20 of the PDF) of the GLSL 1.10
+	     * spec:
+	     *
+	     *     "In addition, all identifiers containing two
+	     *      consecutive underscores (__) are reserved as
+	     *      possible future keywords."
+	     */
+	    _mesa_glsl_error(& loc, state,
+			     "identifier `%s' uses reserved `__' string",
+			     decl->identifier);
+	 }
 
 	 /* Add the variable to the symbol table.  Note that the initializer's
 	  * IR was already processed earlier (though it hasn't been emitted
