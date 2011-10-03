@@ -22,6 +22,7 @@
  * DEALINGS IN THE SOFTWARE.
  */
 #include <ctype.h>
+#include <limits.h>
 #include "strtod.h"
 #include "ast.h"
 #include "glsl_parser_extras.h"
@@ -42,8 +43,6 @@ static int classify_identifier(struct _mesa_glsl_parse_state *, const char *);
    } while(0);
 
 #define YY_USER_INIT yylineno = 0; yycolumn = 0;
-
-#define IS_UINT (yytext[yyleng - 1] == 'u' || yytext[yyleng - 1] == 'U')
 
 /* A macro for handling reserved words and keywords across language versions.
  *
@@ -81,6 +80,47 @@ static int classify_identifier(struct _mesa_glsl_parse_state *, const char *);
  * ...means the word is a legal keyword in GLSL ES 1.00.
  */
 #define ES yyextra->es_shader
+
+static int
+literal_integer(char *text, int len, struct _mesa_glsl_parse_state *state,
+		YYSTYPE *lval, YYLTYPE *lloc, int base)
+{
+   bool is_uint = (text[len - 1] == 'u' ||
+		   text[len - 1] == 'U');
+   const char *digits = text;
+
+   /* Skip "0x" */
+   if (base == 16)
+      digits += 2;
+
+   unsigned long long value = strtoull(digits, NULL, base);
+
+   lval->n = (int)value;
+
+   if (value > UINT_MAX) {
+      /* Note that signed 0xffffffff is valid, not out of range! */
+      if (state->language_version >= 130) {
+	 _mesa_glsl_error(lloc, state,
+			  "Literal value `%s' out of range", text);
+      } else {
+	 _mesa_glsl_warning(lloc, state,
+			    "Literal value `%s' out of range", text);
+      }
+   } else if (base == 10 && !is_uint && (unsigned)value > (unsigned)INT_MAX + 1) {
+      /* Tries to catch unintentionally providing a negative value.
+       * Note that -2147483648 is parsed as -(2147483648), so we don't
+       * want to warn for INT_MAX.
+       */
+      _mesa_glsl_warning(lloc, state,
+			 "Signed literal value `%s' is interpreted as %d",
+			 text, lval->n);
+   }
+   return is_uint ? UINTCONSTANT : INTCONSTANT;
+}
+
+#define LITERAL_INTEGER(base) \
+   literal_integer(yytext, yyleng, yyextra, yylval, yylloc, base)
+
 %}
 
 %option bison-bridge bison-locations reentrant noyywrap
@@ -292,16 +332,13 @@ layout		{
 -=		return SUB_ASSIGN;
 
 [1-9][0-9]*[uU]?	{
-			    yylval->n = strtol(yytext, NULL, 10);
-			    return IS_UINT ? UINTCONSTANT : INTCONSTANT;
+			    return LITERAL_INTEGER(10);
 			}
 0[xX][0-9a-fA-F]+[uU]?	{
-			    yylval->n = strtol(yytext + 2, NULL, 16);
-			    return IS_UINT ? UINTCONSTANT : INTCONSTANT;
+			    return LITERAL_INTEGER(16);
 			}
 0[0-7]*[uU]?		{
-			    yylval->n = strtol(yytext, NULL, 8);
-			    return IS_UINT ? UINTCONSTANT : INTCONSTANT;
+			    return LITERAL_INTEGER(8);
 			}
 
 [0-9]+\.[0-9]+([eE][+-]?[0-9]+)?[fF]?	{
