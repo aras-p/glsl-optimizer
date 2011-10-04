@@ -249,13 +249,6 @@ struct xmesa_buffer {
    int num_alloced;
    unsigned long alloced_colors[256];
 
-#if defined( FX )
-   /* For 3Dfx Glide only */
-   GLboolean FXisHackUsable;	/* Can we render into window? */
-   GLboolean FXwindowHack;	/* Are we rendering into a window? */
-   fxMesaContext FXctx;
-#endif
-
    /* GLX_EXT_texture_from_pixmap */
    GLint TextureTarget; /** GLX_TEXTURE_1D_EXT, for example */
    GLint TextureFormat; /** GLX_TEXTURE_FORMAT_RGB_EXT, for example */
