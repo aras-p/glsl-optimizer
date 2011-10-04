@@ -1833,8 +1833,6 @@ _mesa_valid_to_render(struct gl_context *ctx, const char *where)
       shProg[MESA_SHADER_FRAGMENT] = ctx->Shader.CurrentFragmentProgram;
 
       for (i = 0; i < MESA_SHADER_TYPES; i++) {
-	 struct gl_shader *sh;
-
 	 if (shProg[i] == NULL || shProg[i]->_Used
 	     || shProg[i]->_LinkedShaders[i] == NULL)
 	    continue;
@@ -1842,27 +1840,13 @@ _mesa_valid_to_render(struct gl_context *ctx, const char *where)
 	 /* This is the first time this shader is being used.
 	  * Append shader's constants/uniforms to log file.
 	  *
-	  * The logic is a little odd here.  We only want to log data for each
-	  * shader target that will actually be used, and we only want to log
-	  * it once.  It's possible to have a program bound to the vertex
+	  * Only log data for the program target that matches the shader
+	  * target.  It's possible to have a program bound to the vertex
 	  * shader target that also supplied a fragment shader.  If that
 	  * program isn't also bound to the fragment shader target we don't
 	  * want to log its fragment data.
 	  */
-	 sh = shProg[i]->_LinkedShaders[i];
-	 switch (sh->Type) {
-	 case GL_VERTEX_SHADER:
-	    _mesa_append_uniforms_to_file(sh, sh->Program);
-	    break;
-
-	 case GL_GEOMETRY_SHADER_ARB:
-	    _mesa_append_uniforms_to_file(sh, sh->Program);
-	    break;
-
-	 case GL_FRAGMENT_SHADER:
-	    _mesa_append_uniforms_to_file(sh, sh->Program);
-	    break;
-	 }
+	 _mesa_append_uniforms_to_file(shProg[i]->_LinkedShaders[i]);
       }
 
       for (i = 0; i < MESA_SHADER_TYPES; i++) {

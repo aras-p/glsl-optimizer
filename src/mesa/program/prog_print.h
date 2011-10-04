@@ -113,8 +113,7 @@ extern void
 _mesa_write_shader_to_file(const struct gl_shader *shader);
 
 extern void
-_mesa_append_uniforms_to_file(const struct gl_shader *shader,
-                              const struct gl_program *prog);
+_mesa_append_uniforms_to_file(const struct gl_shader *shader);
 
 
 #endif /* PROG_PRINT_H */
