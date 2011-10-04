@@ -390,10 +390,12 @@ delete_shader_program(struct gl_context *ctx, GLuint name)
    if (!shProg)
       return;
 
-   shProg->DeletePending = GL_TRUE;
+   if (!shProg->DeletePending) {
+      shProg->DeletePending = GL_TRUE;
 
-   /* effectively, decr shProg's refcount */
-   _mesa_reference_shader_program(ctx, &shProg, NULL);
+      /* effectively, decr shProg's refcount */
+      _mesa_reference_shader_program(ctx, &shProg, NULL);
+   }
 }
 
 
