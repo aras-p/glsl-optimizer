@@ -706,39 +706,10 @@ nouveau_texture_unmap(struct gl_context *ctx, struct gl_texture_object *t)
 }
 
 static void
-store_mipmap(struct gl_context *ctx, GLenum target, int first, int last,
-	     struct gl_texture_object *t)
-{
-	struct gl_pixelstore_attrib packing = {
-		.BufferObj = ctx->Shared->NullBufferObj,
-		.Alignment = 1
-	};
-	GLenum format = t->Image[0][t->BaseLevel]->TexFormat;
-	unsigned base_format, type, comps;
-	int i;
-
-	base_format = _mesa_get_format_base_format(format);
-	_mesa_format_to_type_and_comps(format, &type, &comps);
-
-	for (i = first; i <= last; i++) {
-		struct gl_texture_image *ti = t->Image[0][i];
-		void *data = ti->Data;
-
-		nouveau_teximage(ctx, 3, target, i, ti->InternalFormat,
-				 ti->Width, ti->Height, ti->Depth,
-				 ti->Border, base_format, type, data,
-				 &packing, t, ti);
-
-		_mesa_free_texmemory(data);
-	}
-}
-
-static void
 nouveau_generate_mipmap(struct gl_context *ctx, GLenum target,
 			struct gl_texture_object *t)
 {
 	if (_mesa_meta_check_generate_mipmap_fallback(ctx, target, t)) {
-		struct gl_texture_image *base = t->Image[0][t->BaseLevel];
 		_mesa_generate_mipmap(ctx, target, t);
 	} else {
 		_mesa_meta_GenerateMipmap(ctx, target, t);
