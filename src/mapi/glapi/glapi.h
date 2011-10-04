@@ -44,6 +44,9 @@
 #ifndef _GLAPI_H
 #define _GLAPI_H
 
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 #ifdef _GLAPI_NO_EXPORTS
 #  define _GLAPI_EXPORT
@@ -177,5 +180,8 @@ _glapi_noop_enable_warnings(unsigned char enable);
 _GLAPI_EXPORT void
 _glapi_set_warning_func(_glapi_proc func);
 
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* _GLAPI_H */
