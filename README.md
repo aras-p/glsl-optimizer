@@ -16,6 +16,8 @@ compiler; all this library does is spits out optimized GLSL back.
 This GLSL optimizer is made for [Unity's](http://unity3d.com/) purposes and is built-in
 in [Unity 3.0](http://unity3d.com/unity/whats-new/unity-3).
 
+GLSL Optimizer is licensed according to the terms of the MIT license.
+
 
 Usage
 -----
