@@ -10,6 +10,7 @@
 *.pyc
 *.pyo
 *.so
+*.so.*
 *.sw[a-z]
 *.tar
 *.tar.bz2
