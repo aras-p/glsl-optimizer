@@ -41,10 +41,6 @@
 		<param name="plane" type="GLenum"/>
 		<vector name="equation" type="const GLtype *" size="4"/>
 	</proto>
-
-	<desc name="plane">
-		<range base="GL_CLIP_PLANE" from="0" to="5"/>
-	</desc>
 </template>
 
 <template name="CullFace">
@@ -807,6 +803,8 @@
 		<value name="GL_RESCALE_NORMAL"/>
 
 		<range base="GL_CLIP_PLANE" from="0" to="5"/>
+		<value name="GL_CLIP_PLANE0+6"/>
+		<value name="GL_CLIP_PLANE0+7"/>
 
 		<value name="GL_FOG"/>
 		<value name="GL_LIGHTING"/>
@@ -862,6 +860,8 @@
 		<value name="GL_RESCALE_NORMAL"/>
 
 		<range base="GL_CLIP_PLANE" from="0" to="5"/>
+		<value name="GL_CLIP_PLANE0+6"/>
+		<value name="GL_CLIP_PLANE0+7"/>
 
 		<value name="GL_FOG"/>
 		<value name="GL_LIGHTING"/>
@@ -1260,10 +1260,6 @@
 		<param name="plane" type="GLenum"/>
 		<vector name="equation" type="GLtype *" size="4"/>
 	</proto>
-
-	<desc name="plane">
-		<range base="GL_CLIP_PLANE" from="0" to="5"/>
-	</desc>
 </template>
 
 <template name="GetError" direction="get">
@@ -1517,6 +1513,8 @@
 		<value name="GL_RESCALE_NORMAL"/>
 
 		<range base="GL_CLIP_PLANE" from="0" to="5"/>
+		<value name="GL_CLIP_PLANE0+6"/>
+		<value name="GL_CLIP_PLANE0+7"/>
 
 		<value name="GL_FOG"/>
 		<value name="GL_LIGHTING"/>
