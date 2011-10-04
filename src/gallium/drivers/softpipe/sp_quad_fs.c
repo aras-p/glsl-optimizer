@@ -118,7 +118,16 @@ shade_quads(struct quad_stage *qs,
    machine->InterpCoefs = quads[0]->coef;
 
    for (i = 0; i < nr; i++) {
-      if (!shade_quad(qs, quads[i]))
+      /* Only omit this quad from the output list if all the fragments
+       * are killed _AND_ it's not the first quad in the list.
+       * The first quad is special in the (optimized) depth-testing code:
+       * the quads' Z coordinates are step-wise interpolated with respect
+       * to the first quad in the list.
+       * For multi-pass algorithms we need to produce exactly the same
+       * Z values in each pass.  If interpolation starts with different quads
+       * we can get different Z values for the same (x,y).
+       */
+      if (!shade_quad(qs, quads[i]) && i > 0)
          continue; /* quad totally culled/killed */
 
       if (/*do_coverage*/ 0)
