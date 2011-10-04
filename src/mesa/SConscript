@@ -108,6 +108,7 @@ main_sources = [
     'main/scissor.c',
     'main/shaderapi.c',
     'main/shaderobj.c',
+    'main/shader_query.cpp',
     'main/shared.c',
     'main/state.c',
     'main/stencil.c',
@@ -307,6 +308,7 @@ program_sources = [
     'program/programopt.c',
     'program/sampler.cpp',
     'program/symbol_table.c',
+    'program/string_to_uint_map.cpp',
     program_lex,
     program_parse[0],
 ]
