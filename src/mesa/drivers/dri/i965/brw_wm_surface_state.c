@@ -32,7 +32,6 @@
 
 #include "main/mtypes.h"
 #include "main/samplerobj.h"
-#include "main/texstore.h"
 #include "program/prog_parameter.h"
 
 #include "intel_mipmap_tree.h"

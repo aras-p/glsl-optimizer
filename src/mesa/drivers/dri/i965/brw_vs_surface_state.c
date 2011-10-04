@@ -30,7 +30,6 @@
   */
 
 #include "main/mtypes.h"
-#include "main/texstore.h"
 #include "program/prog_parameter.h"
 
 #include "brw_context.h"
