@@ -183,6 +183,22 @@ lp_rast_arg_triangle( const struct lp_rast_triangle *triangle,
    return arg;
 }
 
+/**
+ * Build argument for a contained triangle.
+ *
+ * All planes are enabled, so instead of the plane mask we pass the upper
+ * left coordinates of the a block that fully encloses the triangle.
+ */
+static INLINE union lp_rast_cmd_arg
+lp_rast_arg_triangle_contained( const struct lp_rast_triangle *triangle,
+                                unsigned x, unsigned y)
+{
+   union lp_rast_cmd_arg arg;
+   arg.triangle.tri = triangle;
+   arg.triangle.plane_mask = x | (y << 8);
+   return arg;
+}
+
 static INLINE union lp_rast_cmd_arg
 lp_rast_arg_state( const struct lp_rast_state *state )
 {
