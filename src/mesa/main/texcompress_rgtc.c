@@ -106,7 +106,6 @@ _mesa_texstore_red_rgtc1(TEXSTORE_PARAMS)
    ASSERT(dstYoffset % 4 == 0);
    ASSERT(dstZoffset % 4 == 0);
    (void) dstZoffset;
-   (void) dstImageOffsets;
 
 
    tempImage = _mesa_make_temp_ubyte_image(ctx, dims,
@@ -120,7 +119,7 @@ _mesa_texstore_red_rgtc1(TEXSTORE_PARAMS)
 
    dst = _mesa_compressed_image_address(dstXoffset, dstYoffset, 0,
                                         dstFormat,
-                                        texWidth, (GLubyte *) dstAddr);
+                                        texWidth, dstSlices[0]);
 
    blkaddr = dst;
    dstRowDiff = dstRowStride >= (srcWidth * 2) ? dstRowStride - (((srcWidth + 3) & ~3) * 2) : 0;
@@ -162,7 +161,6 @@ _mesa_texstore_signed_red_rgtc1(TEXSTORE_PARAMS)
    ASSERT(dstYoffset % 4 == 0);
    ASSERT(dstZoffset % 4 == 0);
    (void) dstZoffset;
-   (void) dstImageOffsets;
 
    tempImage = _mesa_make_temp_float_image(ctx, dims,
 					   baseInternalFormat,
@@ -175,7 +173,7 @@ _mesa_texstore_signed_red_rgtc1(TEXSTORE_PARAMS)
 
    dst = (GLbyte *)_mesa_compressed_image_address(dstXoffset, dstYoffset, 0,
 						  dstFormat,
-						  texWidth, (GLubyte *) dstAddr);
+						  texWidth, dstSlices[0]);
 
    blkaddr = dst;
    dstRowDiff = dstRowStride >= (srcWidth * 2) ? dstRowStride - (((srcWidth + 3) & ~3) * 2) : 0;
@@ -218,7 +216,6 @@ _mesa_texstore_rg_rgtc2(TEXSTORE_PARAMS)
    ASSERT(dstYoffset % 4 == 0);
    ASSERT(dstZoffset % 4 == 0);
    (void) dstZoffset;
-   (void) dstImageOffsets;
 
    tempImage = _mesa_make_temp_ubyte_image(ctx, dims,
 					  baseInternalFormat,
@@ -231,7 +228,7 @@ _mesa_texstore_rg_rgtc2(TEXSTORE_PARAMS)
 
    dst = _mesa_compressed_image_address(dstXoffset, dstYoffset, 0,
                                         dstFormat,
-                                        texWidth, (GLubyte *) dstAddr);
+                                        texWidth, dstSlices[0]);
 
    blkaddr = dst;
    dstRowDiff = dstRowStride >= (srcWidth * 4) ? dstRowStride - (((srcWidth + 3) & ~3) * 4) : 0;
@@ -280,7 +277,6 @@ _mesa_texstore_signed_rg_rgtc2(TEXSTORE_PARAMS)
    ASSERT(dstYoffset % 4 == 0);
    ASSERT(dstZoffset % 4 == 0);
    (void) dstZoffset;
-   (void) dstImageOffsets;
 
    tempImage = _mesa_make_temp_float_image(ctx, dims,
 					   baseInternalFormat,
@@ -293,7 +289,7 @@ _mesa_texstore_signed_rg_rgtc2(TEXSTORE_PARAMS)
 
    dst = (GLbyte *)_mesa_compressed_image_address(dstXoffset, dstYoffset, 0,
 						  dstFormat,
-						  texWidth, (GLubyte *) dstAddr);
+						  texWidth, dstSlices[0]);
 
    blkaddr = dst;
    dstRowDiff = dstRowStride >= (srcWidth * 4) ? dstRowStride - (((srcWidth + 3) & ~3) * 4) : 0;

@@ -45,10 +45,9 @@
  * \param dims  either 1 or 2 or 3
  * \param baseInternalFormat  user-specified base internal format
  * \param dstFormat  destination Mesa texture format
- * \param dstAddr  destination image address
  * \param dstX/Y/Zoffset  destination x/y/z offset (ala TexSubImage), in texels
  * \param dstRowStride  destination image row stride, in bytes
- * \param dstImageOffsets  offset of each 2D slice within 3D texture, in texels
+ * \param dstSlices  array of addresses of image slices (for 3D, array texture)
  * \param srcWidth/Height/Depth  source image size, in pixels
  * \param srcFormat  incoming image format
  * \param srcType  incoming image data type
@@ -59,9 +58,9 @@
 	struct gl_context *ctx, GLuint dims, \
 	GLenum baseInternalFormat, \
 	gl_format dstFormat, \
-	GLvoid *dstAddr, \
 	GLint dstXoffset, GLint dstYoffset, GLint dstZoffset, \
-	GLint dstRowStride, const GLuint *dstImageOffsets, \
+        GLint dstRowStride, \
+        GLubyte **dstSlices, \
 	GLint srcWidth, GLint srcHeight, GLint srcDepth, \
 	GLenum srcFormat, GLenum srcType, \
 	const GLvoid *srcAddr, \

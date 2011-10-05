@@ -803,10 +803,9 @@ st_TexImage(struct gl_context * ctx,
 	 if (!_mesa_texstore(ctx, dims, 
                              texImage->_BaseFormat, 
                              texImage->TexFormat, 
-                             texImage->Data,
                              0, 0, 0, /* dstX/Y/Zoffset */
                              dstRowStride,
-                             texImage->ImageOffsets,
+                             (GLubyte **) &texImage->Data, /* dstSlice */
                              width, height, 1,
                              format, type, src, unpack)) {
 	    _mesa_error(ctx, GL_OUT_OF_MEMORY, "glTexImage");
@@ -1091,10 +1090,9 @@ st_TexSubimage(struct gl_context *ctx, GLint dims, GLenum target, GLint level,
    for (i = 0; i < depth; i++) {
       if (!_mesa_texstore(ctx, dims, texImage->_BaseFormat,
                           texImage->TexFormat,
-                          texImage->Data,
                           0, 0, 0,
                           dstRowStride,
-                          texImage->ImageOffsets,
+                          (GLubyte **) &texImage->Data,
                           width, height, 1,
                           format, type, src, packing)) {
 	 _mesa_error(ctx, GL_OUT_OF_MEMORY, "glTexSubImage");
@@ -1356,10 +1354,9 @@ fallback_copy_texsubimage(struct gl_context *ctx, GLenum target, GLint level,
          _mesa_texstore(ctx, dims,
                         texImage->_BaseFormat, 
                         texImage->TexFormat, 
-                        texDest,
                         0, 0, 0,
                         dstRowStride,
-                        texImage->ImageOffsets,
+                        (GLubyte **) &texDest,
                         width, height, 1,
                         GL_RGBA, GL_FLOAT, tempSrc, /* src */
                         &unpack);

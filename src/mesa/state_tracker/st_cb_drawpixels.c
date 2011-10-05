@@ -494,7 +494,6 @@ make_texture(struct st_context *st,
 
    {
       struct pipe_transfer *transfer;
-      static const GLuint dstImageOffsets = 0;
       GLboolean success;
       GLubyte *dest;
       const GLbitfield imageTransferStateSave = ctx->_ImageTransferState;
@@ -517,10 +516,9 @@ make_texture(struct st_context *st,
       success = _mesa_texstore(ctx, 2,           /* dims */
                                baseInternalFormat, /* baseInternalFormat */
                                mformat,          /* gl_format */
-                               dest,             /* dest */
                                0, 0, 0,          /* dstX/Y/Zoffset */
                                transfer->stride, /* dstRowStride, bytes */
-                               &dstImageOffsets, /* dstImageOffsets */
+                               &dest,            /* destSlices */
                                width, height, 1, /* size */
                                format, type,     /* src format/type */
                                pixels,           /* data source */

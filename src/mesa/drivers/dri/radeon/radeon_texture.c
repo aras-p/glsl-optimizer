@@ -785,11 +785,19 @@ static void radeon_store_teximage(struct gl_context* ctx, int dims,
 		copy_rows(img_start, dstRowStride, pixels, srcRowStride, rows, bytesPerRow);
 	}
 	else {
+		GLubyte *slices[512];
+		GLuint texelBytes = _mesa_get_format_bytes(texImage->TexFormat);
+		GLuint i;
+		assert(depth <= 512);
+		for (i = 0; i < depth; i++) {
+			slices[i] = (GLubyte *) texImage->Data
+				+ dstImageOffsets[i] * texelBytes;
+		}
 		if (!_mesa_texstore(ctx, dims, texImage->_BaseFormat,
-					texImage->TexFormat, texImage->Data,
+					texImage->TexFormat,
 					xoffset, yoffset, zoffset,
 					dstRowStride,
-					dstImageOffsets,
+					slices,
 					width, height, depth,
 					format, type, pixels, packing)) {
 			_mesa_error(ctx, GL_OUT_OF_MEMORY, "glTexSubImage");
