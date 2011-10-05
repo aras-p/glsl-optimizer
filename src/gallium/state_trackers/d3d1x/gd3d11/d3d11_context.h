@@ -599,7 +599,7 @@ struct GalliumD3D10Device : public GalliumD3D10ScreenImpl<threadsafe>
 			ID3D11Buffer* buffer = new_vertex_buffers[i];
 			if(buffer != input_buffers[start + i].p
 				|| vertex_buffers[start + i].buffer_offset != new_offsets[i]
-				|| vertex_buffers[start + i].stride != new_offsets[i]
+				|| vertex_buffers[start + i].stride != new_strides[i]
 			)
 			{
 				input_buffers[start + i] = buffer;
