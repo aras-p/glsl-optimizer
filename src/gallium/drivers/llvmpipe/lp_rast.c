@@ -436,6 +436,8 @@ lp_rast_shade_quads_mask(struct lp_rasterizer_task *task,
    assert(state);
 
    /* Sanity checks */
+   assert(x < scene->tiles_x * TILE_SIZE);
+   assert(y < scene->tiles_y * TILE_SIZE);
    assert(x % TILE_VECTOR_WIDTH == 0);
    assert(y % TILE_VECTOR_HEIGHT == 0);
 

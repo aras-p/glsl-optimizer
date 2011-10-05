@@ -151,6 +151,8 @@ lp_rast_get_depth_block_pointer(struct lp_rasterizer_task *task,
    const struct lp_scene *scene = task->scene;
    void *depth;
 
+   assert(x < scene->tiles_x * TILE_SIZE);
+   assert(y < scene->tiles_y * TILE_SIZE);
    assert((x % TILE_VECTOR_WIDTH) == 0);
    assert((y % TILE_VECTOR_HEIGHT) == 0);
 
@@ -181,6 +183,8 @@ lp_rast_get_color_tile_pointer(struct lp_rasterizer_task *task,
 {
    const struct lp_scene *scene = task->scene;
 
+   assert(task->x < scene->tiles_x * TILE_SIZE);
+   assert(task->y < scene->tiles_y * TILE_SIZE);
    assert(task->x % TILE_SIZE == 0);
    assert(task->y % TILE_SIZE == 0);
    assert(buf < scene->fb.nr_cbufs);
@@ -219,6 +223,8 @@ lp_rast_get_color_block_pointer(struct lp_rasterizer_task *task,
    unsigned px, py, pixel_offset;
    uint8_t *color;
 
+   assert(x < task->scene->tiles_x * TILE_SIZE);
+   assert(y < task->scene->tiles_y * TILE_SIZE);
    assert((x % TILE_VECTOR_WIDTH) == 0);
    assert((y % TILE_VECTOR_HEIGHT) == 0);
 

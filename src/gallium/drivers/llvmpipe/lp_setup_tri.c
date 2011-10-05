@@ -593,18 +593,32 @@ lp_setup_bin_triangle( struct lp_setup_context *setup,
    {
       int ix0 = bbox->x0 / TILE_SIZE;
       int iy0 = bbox->y0 / TILE_SIZE;
-      int px = bbox->x0 & 63 & ~3;
-      int py = bbox->y0 & 63 & ~3;
-      int mask = px | (py << 8);
+      unsigned px = bbox->x0 & 63 & ~3;
+      unsigned py = bbox->y0 & 63 & ~3;
+      unsigned mask;
 
       assert(iy0 == bbox->y1 / TILE_SIZE &&
 	     ix0 == bbox->x1 / TILE_SIZE);
+
+      if (4 <= sz && sz < 16) {
+         /*
+          * 16x16 block is only 4x4 aligned, and can exceed the tile dimensions
+          * if the triangle is 16 pixels in one dimension but 4 in the other.
+          * So budge the 16x16 back inside the tile.
+          */
+         px = MIN2(px, TILE_SIZE - 16);
+         py = MIN2(py, TILE_SIZE - 16);
+      }
+
+      mask = px | (py << 8);
 
       if (nr_planes == 3) {
          if (sz < 4)
          {
             /* Triangle is contained in a single 4x4 stamp:
              */
+            assert(px + 4 <= TILE_SIZE);
+            assert(py + 4 <= TILE_SIZE);
             return lp_scene_bin_cmd_with_state( scene, ix0, iy0,
                                                 setup->fs.stored,
                                                 LP_RAST_OP_TRIANGLE_3_4,
@@ -615,6 +629,8 @@ lp_setup_bin_triangle( struct lp_setup_context *setup,
          {
             /* Triangle is contained in a single 16x16 block:
              */
+            assert(px + 16 <= TILE_SIZE);
+            assert(py + 16 <= TILE_SIZE);
             return lp_scene_bin_cmd_with_state( scene, ix0, iy0,
                                                 setup->fs.stored,
                                                 LP_RAST_OP_TRIANGLE_3_16,
@@ -623,6 +639,8 @@ lp_setup_bin_triangle( struct lp_setup_context *setup,
       }
       else if (nr_planes == 4 && sz < 16) 
       {
+         assert(px + 16 <= TILE_SIZE);
+         assert(py + 16 <= TILE_SIZE);
          return lp_scene_bin_cmd_with_state(scene, ix0, iy0,
                                             setup->fs.stored,
                                             LP_RAST_OP_TRIANGLE_4_16,

@@ -364,8 +364,8 @@ lp_rast_triangle_3_4(struct lp_rasterizer_task *task,
 {
    const struct lp_rast_triangle *tri = arg.triangle.tri;
    const struct lp_rast_plane *plane = GET_PLANES(tri);
-   int x = (arg.triangle.plane_mask & 0xff) + task->x;
-   int y = (arg.triangle.plane_mask >> 8) + task->y;
+   unsigned x = (arg.triangle.plane_mask & 0xff) + task->x;
+   unsigned y = (arg.triangle.plane_mask >> 8) + task->y;
 
    __m128i p0 = _mm_load_si128((__m128i *)&plane[0]); /* c, dcdx, dcdy, eo */
    __m128i p1 = _mm_load_si128((__m128i *)&plane[1]); /* c, dcdx, dcdy, eo */
