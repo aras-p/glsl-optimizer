@@ -656,6 +656,226 @@ texfetch_funcs[MESA_FORMAT_COUNT] =
       store_texel_rg_f16
    },
 
+   {
+      MESA_FORMAT_ALPHA_UINT8,
+      NULL,
+      NULL,
+      NULL,
+      NULL
+   },
+
+   {
+      MESA_FORMAT_ALPHA_UINT16,
+      NULL,
+      NULL,
+      NULL,
+      NULL
+   },
+
+   {
+      MESA_FORMAT_ALPHA_UINT32,
+      NULL,
+      NULL,
+      NULL,
+      NULL
+   },
+
+   {
+      MESA_FORMAT_ALPHA_INT8,
+      NULL,
+      NULL,
+      NULL,
+      NULL
+   },
+
+   {
+      MESA_FORMAT_ALPHA_INT16,
+      NULL,
+      NULL,
+      NULL,
+      NULL
+   },
+
+   {
+      MESA_FORMAT_ALPHA_INT32,
+      NULL,
+      NULL,
+      NULL,
+      NULL
+   },
+
+
+   {
+      MESA_FORMAT_INTENSITY_UINT8,
+      NULL,
+      NULL,
+      NULL,
+      NULL
+   },
+
+   {
+      MESA_FORMAT_INTENSITY_UINT16,
+      NULL,
+      NULL,
+      NULL,
+      NULL
+   },
+
+   {
+      MESA_FORMAT_INTENSITY_UINT32,
+      NULL,
+      NULL,
+      NULL,
+      NULL
+   },
+
+   {
+      MESA_FORMAT_INTENSITY_INT8,
+      NULL,
+      NULL,
+      NULL,
+      NULL
+   },
+
+   {
+      MESA_FORMAT_INTENSITY_INT16,
+      NULL,
+      NULL,
+      NULL,
+      NULL
+   },
+
+   {
+      MESA_FORMAT_INTENSITY_INT32,
+      NULL,
+      NULL,
+      NULL,
+      NULL
+   },
+
+
+   {
+      MESA_FORMAT_LUMINANCE_UINT8,
+      NULL,
+      NULL,
+      NULL,
+      NULL
+   },
+
+   {
+      MESA_FORMAT_LUMINANCE_UINT16,
+      NULL,
+      NULL,
+      NULL,
+      NULL
+   },
+
+   {
+      MESA_FORMAT_LUMINANCE_UINT32,
+      NULL,
+      NULL,
+      NULL,
+      NULL
+   },
+
+   {
+      MESA_FORMAT_LUMINANCE_INT8,
+      NULL,
+      NULL,
+      NULL,
+      NULL
+   },
+
+   {
+      MESA_FORMAT_LUMINANCE_INT16,
+      NULL,
+      NULL,
+      NULL,
+      NULL
+   },
+
+   {
+      MESA_FORMAT_LUMINANCE_INT32,
+      NULL,
+      NULL,
+      NULL,
+      NULL
+   },
+
+
+   {
+      MESA_FORMAT_LUMINANCE_ALPHA_UINT8,
+      NULL,
+      NULL,
+      NULL,
+      NULL
+   },
+
+   {
+      MESA_FORMAT_LUMINANCE_ALPHA_UINT16,
+      NULL,
+      NULL,
+      NULL,
+      NULL
+   },
+
+   {
+      MESA_FORMAT_LUMINANCE_ALPHA_UINT32,
+      NULL,
+      NULL,
+      NULL,
+      NULL
+   },
+
+   {
+      MESA_FORMAT_LUMINANCE_ALPHA_INT8,
+      NULL,
+      NULL,
+      NULL,
+      NULL
+   },
+
+   {
+      MESA_FORMAT_LUMINANCE_ALPHA_INT16,
+      NULL,
+      NULL,
+      NULL,
+      NULL
+   },
+
+   {
+      MESA_FORMAT_LUMINANCE_ALPHA_INT32,
+      NULL,
+      NULL,
+      NULL,
+      NULL
+   },
+
+
+   {
+      MESA_FORMAT_R_INT8,
+      NULL,
+      NULL,
+      NULL,
+      NULL
+   },
+
+   {
+      MESA_FORMAT_RG_INT8,
+      NULL,
+      NULL,
+      NULL,
+      NULL
+   },
+
+   {
+      MESA_FORMAT_RGB_INT8,
+      NULL,
+      NULL,
+      NULL,
+      NULL
+   },
+
    /* non-normalized, signed int */
    {
       MESA_FORMAT_RGBA_INT8,
@@ -665,11 +885,53 @@ texfetch_funcs[MESA_FORMAT_COUNT] =
       store_texel_rgba_int8
    },
    {
+      MESA_FORMAT_R_INT16,
+      NULL,
+      NULL,
+      NULL,
+      NULL
+   },
+   {
+      MESA_FORMAT_RG_INT16,
+      NULL,
+      NULL,
+      NULL,
+      NULL
+   },
+   {
+      MESA_FORMAT_RGB_INT16,
+      NULL,
+      NULL,
+      NULL,
+      NULL
+   },
+   {
       MESA_FORMAT_RGBA_INT16,
       fetch_texel_1d_rgba_int16,
       fetch_texel_2d_rgba_int16,
       fetch_texel_3d_rgba_int16,
       store_texel_rgba_int16
+   },
+   {
+      MESA_FORMAT_R_INT32,
+      NULL,
+      NULL,
+      NULL,
+      NULL
+   },
+   {
+      MESA_FORMAT_RG_INT32,
+      NULL,
+      NULL,
+      NULL,
+      NULL
+   },
+   {
+      MESA_FORMAT_RGB_INT32,
+      NULL,
+      NULL,
+      NULL,
+      NULL
    },
    {
       MESA_FORMAT_RGBA_INT32,
@@ -681,6 +943,27 @@ texfetch_funcs[MESA_FORMAT_COUNT] =
 
    /* non-normalized, unsigned int */
    {
+      MESA_FORMAT_R_UINT8,
+      NULL,
+      NULL,
+      NULL,
+      NULL
+   },
+   {
+      MESA_FORMAT_RG_UINT8,
+      NULL,
+      NULL,
+      NULL,
+      NULL
+   },
+   {
+      MESA_FORMAT_RGB_UINT8,
+      NULL,
+      NULL,
+      NULL,
+      NULL
+   },
+   {
       MESA_FORMAT_RGBA_UINT8,
       fetch_texel_1d_rgba_uint8,
       fetch_texel_2d_rgba_uint8,
@@ -688,11 +971,53 @@ texfetch_funcs[MESA_FORMAT_COUNT] =
       store_texel_rgba_uint8
    },
    {
+      MESA_FORMAT_R_UINT16,
+      NULL,
+      NULL,
+      NULL,
+      NULL
+   },
+   {
+      MESA_FORMAT_RG_UINT16,
+      NULL,
+      NULL,
+      NULL,
+      NULL
+   },
+   {
+      MESA_FORMAT_RGB_UINT16,
+      NULL,
+      NULL,
+      NULL,
+      NULL
+   },
+   {
       MESA_FORMAT_RGBA_UINT16,
       fetch_texel_1d_rgba_uint16,
       fetch_texel_2d_rgba_uint16,
       fetch_texel_3d_rgba_uint16,
       store_texel_rgba_uint16
+   },
+   {
+      MESA_FORMAT_R_UINT32,
+      NULL,
+      NULL,
+      NULL,
+      NULL
+   },
+   {
+      MESA_FORMAT_RG_UINT32,
+      NULL,
+      NULL,
+      NULL,
+      NULL
+   },
+   {
+      MESA_FORMAT_RGB_UINT32,
+      NULL,
+      NULL,
+      NULL,
+      NULL
    },
    {
       MESA_FORMAT_RGBA_UINT32,
