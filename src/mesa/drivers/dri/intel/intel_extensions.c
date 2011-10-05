@@ -41,6 +41,14 @@ void
 intelInitExtensions(struct gl_context *ctx)
 {
    struct intel_context *intel = intel_context(ctx);
+   char *override = getenv("MESA_GL_VERSION_OVERRIDE");
+   int override_major, override_minor;
+   int override_version = 0;
+
+   if (override &&
+       sscanf(override, "%u.%u", &override_major, &override_minor) == 2) {
+      override_version = override_major * 10 + override_minor;
+   }
 
    ctx->Extensions.ARB_draw_elements_base_vertex = true;
    ctx->Extensions.ARB_explicit_attrib_location = true;
@@ -117,6 +125,8 @@ intelInitExtensions(struct gl_context *ctx)
       ctx->Extensions.EXT_draw_buffers2 = true;
       ctx->Extensions.EXT_framebuffer_sRGB = true;
       ctx->Extensions.EXT_texture_array = true;
+      if (override_version >= 30)
+	 ctx->Extensions.EXT_texture_integer = true;
       ctx->Extensions.EXT_texture_snorm = true;
       ctx->Extensions.EXT_texture_sRGB = true;
       ctx->Extensions.EXT_texture_sRGB_decode = true;
