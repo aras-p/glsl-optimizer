@@ -27,7 +27,6 @@
  * Replaces calls to functions with the body of the function.
  */
 
-#include <inttypes.h>
 #include "ir.h"
 #include "ir_visitor.h"
 #include "ir_function_inlining.h"
