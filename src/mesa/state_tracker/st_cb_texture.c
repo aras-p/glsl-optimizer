@@ -162,9 +162,9 @@ st_FreeTextureImageBuffer(struct gl_context * ctx, struct gl_texture_image *texI
       pipe_resource_reference(&stImage->pt, NULL);
    }
 
-   if (texImage->Data) {
-      _mesa_align_free(texImage->Data);
-      texImage->Data = NULL;
+   if (stImage->TexData) {
+      _mesa_align_free(stImage->TexData);
+      stImage->TexData = NULL;
    }
 }
 
@@ -482,7 +482,7 @@ st_AllocTextureImageBuffer(struct gl_context *ctx,
    assert(width > 0);
    assert(height > 0);
    assert(depth > 0);
-   assert(!texImage->Data);
+   assert(!stImage->TexData);
    assert(!stImage->pt); /* xxx this might be wrong */
 
    /* Look if the parent texture object has space for this image */
@@ -651,10 +651,10 @@ st_TexImage(struct gl_context * ctx,
     */
    if (stImage->pt) {
       pipe_resource_reference(&stImage->pt, NULL);
-      assert(!texImage->Data);
+      assert(!stImage->TexData);
    }
-   else if (texImage->Data) {
-      _mesa_align_free(texImage->Data);
+   else if (stImage->TexData) {
+      _mesa_align_free(stImage->TexData);
    }
 
    /*
@@ -756,8 +756,8 @@ st_TexImage(struct gl_context * ctx,
                                                  width, height, depth);
       dstRowStride = _mesa_format_row_stride(texImage->TexFormat, width);
 
-      texImage->Data = _mesa_align_malloc(imageSize, 16);
-      dstMap = texImage->Data;
+      stImage->TexData = _mesa_align_malloc(imageSize, 16);
+      dstMap = stImage->TexData;
    }
 
    if (!dstMap) {
@@ -1684,19 +1684,19 @@ copy_image_data_to_texture(struct st_context *st,
 
       pipe_resource_reference(&stImage->pt, NULL);
    }
-   else if (stImage->base.Data) {
+   else if (stImage->TexData) {
       st_texture_image_data(st,
                             stObj->pt,
                             stImage->base.Face,
                             dstLevel,
-                            stImage->base.Data,
+                            stImage->TexData,
                             stImage->base.RowStride * 
                             util_format_get_blocksize(stObj->pt->format),
                             stImage->base.RowStride *
                             stImage->base.Height *
                             util_format_get_blocksize(stObj->pt->format));
-      _mesa_align_free(stImage->base.Data);
-      stImage->base.Data = NULL;
+      _mesa_align_free(stImage->TexData);
+      stImage->TexData = NULL;
    }
 
    pipe_resource_reference(&stImage->pt, stObj->pt);
