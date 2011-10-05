@@ -241,6 +241,7 @@ st_texture_image_unmap(struct st_context *st,
    pipe_transfer_unmap(pipe, stImage->transfer);
 
    pipe->transfer_destroy(pipe, stImage->transfer);
+   stImage->transfer = NULL;
 }
 
 
