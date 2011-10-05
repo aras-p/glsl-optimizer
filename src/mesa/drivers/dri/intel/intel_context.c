@@ -710,6 +710,36 @@ intelInitContext(struct intel_context *intel,
       ctx->TextureFormatSupported[MESA_FORMAT_SLA8] = true;
    }
 
+   if (intel->gen >= 4) {
+      /* Each combination of 32-bit ints are supported, but the RGB 32-bit ints
+       * don't support use as a render target (GPU hangs).
+       */
+      ctx->TextureFormatSupported[MESA_FORMAT_R_INT32] = true;
+      ctx->TextureFormatSupported[MESA_FORMAT_RG_INT32] = true;
+      ctx->TextureFormatSupported[MESA_FORMAT_RGB_INT32] = true;
+      ctx->TextureFormatSupported[MESA_FORMAT_RGBA_INT32] = true;
+
+      ctx->TextureFormatSupported[MESA_FORMAT_R_UINT32] = true;
+      ctx->TextureFormatSupported[MESA_FORMAT_RG_UINT32] = true;
+      ctx->TextureFormatSupported[MESA_FORMAT_RGB_UINT32] = true;
+      ctx->TextureFormatSupported[MESA_FORMAT_RGBA_UINT32] = true;
+
+      /* For 16 and 8 bits, RGB is unsupported entirely. */
+      ctx->TextureFormatSupported[MESA_FORMAT_R_UINT16] = true;
+      ctx->TextureFormatSupported[MESA_FORMAT_RG_UINT16] = true;
+      ctx->TextureFormatSupported[MESA_FORMAT_RGBA_UINT16] = true;
+      ctx->TextureFormatSupported[MESA_FORMAT_R_INT16] = true;
+      ctx->TextureFormatSupported[MESA_FORMAT_RG_INT16] = true;
+      ctx->TextureFormatSupported[MESA_FORMAT_RGBA_INT16] = true;
+
+      ctx->TextureFormatSupported[MESA_FORMAT_R_UINT8] = true;
+      ctx->TextureFormatSupported[MESA_FORMAT_RG_UINT8] = true;
+      ctx->TextureFormatSupported[MESA_FORMAT_RGBA_UINT8] = true;
+      ctx->TextureFormatSupported[MESA_FORMAT_R_INT8] = true;
+      ctx->TextureFormatSupported[MESA_FORMAT_RG_INT8] = true;
+      ctx->TextureFormatSupported[MESA_FORMAT_RGBA_INT8] = true;
+   }
+
 #ifdef TEXTURE_FLOAT_ENABLED
    ctx->TextureFormatSupported[MESA_FORMAT_RGBA_FLOAT32] = true;
    ctx->TextureFormatSupported[MESA_FORMAT_RG_FLOAT32] = true;
