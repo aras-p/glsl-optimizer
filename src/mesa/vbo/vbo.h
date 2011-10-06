@@ -133,6 +133,7 @@ void vbo_set_draw_func(struct gl_context *ctx, vbo_draw_func func);
 
 void vbo_check_buffers_are_unmapped(struct gl_context *ctx);
 
+void vbo_bind_arrays(struct gl_context *ctx);
 
 void GLAPIENTRY
 _es_Color4f(GLfloat r, GLfloat g, GLfloat b, GLfloat a);
