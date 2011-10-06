@@ -1685,16 +1685,18 @@ copy_image_data_to_texture(struct st_context *st,
       pipe_resource_reference(&stImage->pt, NULL);
    }
    else if (stImage->TexData) {
+      /* Copy from malloc'd memory */
+      /* XXX this should be re-examined/tested with a compressed format */
+      GLuint blockSize = util_format_get_blocksize(stObj->pt->format);
+      GLuint srcRowStride = stImage->base.Width * blockSize;
+      GLuint srcSliceStride = stImage->base.Height * srcRowStride;
       st_texture_image_data(st,
                             stObj->pt,
                             stImage->base.Face,
                             dstLevel,
                             stImage->TexData,
-                            stImage->base.RowStride * 
-                            util_format_get_blocksize(stObj->pt->format),
-                            stImage->base.RowStride *
-                            stImage->base.Height *
-                            util_format_get_blocksize(stObj->pt->format));
+                            srcRowStride,
+                            srcSliceStride);
       _mesa_align_free(stImage->TexData);
       stImage->TexData = NULL;
    }
