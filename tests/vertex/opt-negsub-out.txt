@@ -1,0 +1,16 @@
+uniform vec4 v3c;
+uniform vec4 v3b;
+uniform vec4 v3a;
+uniform mat3 m3c;
+uniform mat3 m3b;
+uniform mat3 m3a;
+uniform mat4 mvp;
+void main ()
+{
+  gl_Position = (mvp * gl_Vertex);
+  vec4 tmpvar_1;
+  tmpvar_1.w = 1.0;
+  tmpvar_1.xyz = (((m3a * -((v3a.xyz - gl_Vertex.xyz))) + (m3b * -(((mvp * v3b).xyz - gl_Vertex.xyz)))) + (m3c * -((v3c.xyz - gl_Vertex.xyz))));
+  gl_FrontColor = tmpvar_1;
+}
+
