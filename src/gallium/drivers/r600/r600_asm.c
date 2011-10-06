@@ -1045,7 +1045,7 @@ static int merge_inst_groups(struct r600_bytecode *bc, struct r600_bytecode_alu 
 				continue;
 
 			for (j = 0; j < max_slots; ++j) {
-				if (!prev[j] || !prev[j]->dst.write)
+				if (!prev[j] || !(prev[j]->dst.write || prev[j]->is_op3))
 					continue;
 
 				/* If it's relative then we can't determin which gpr is really used. */
