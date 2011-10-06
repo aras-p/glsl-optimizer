@@ -288,7 +288,6 @@ vec2  smoothstep(float edge0, float edge1, vec2  x);
 vec3  smoothstep(float edge0, float edge1, vec3  x);
 vec4  smoothstep(float edge0, float edge1, vec4  x);
 
-#if 0
 bool  isnan(float x);
 bvec2 isnan(vec2  x);
 bvec3 isnan(vec3  x);
@@ -298,7 +297,6 @@ bool  isinf(float x);
 bvec2 isinf(vec2  x);
 bvec3 isinf(vec3  x);
 bvec4 isinf(vec4  x);
-#endif
 
 /*
  * 8.4 - Geometric Functions
