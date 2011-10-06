@@ -111,15 +111,28 @@ debug_backtrace(void)
 GLubyte *
 intel_region_map(struct intel_context *intel, struct intel_region *region)
 {
-   intel_flush(&intel->ctx);
+   /* We have the region->map_refcount controlling mapping of the BO because
+    * in software fallbacks we may end up mapping the same buffer multiple
+    * times on Mesa's behalf, so we refcount our mappings to make sure that
+    * the pointer stays valid until the end of the unmap chain.  However, we
+    * must not emit any batchbuffers between the start of mapping and the end
+    * of unmapping, or further use of the map will be incoherent with the GPU
+    * rendering done by that batchbuffer. Hence we assert in
+    * intel_batchbuffer_flush() that that doesn't happen, which means that the
+    * flush is only needed on first map of the buffer.
+    */
 
    _DBG("%s %p\n", __FUNCTION__, region);
    if (!region->map_refcount++) {
+      intel_flush(&intel->ctx);
+
       if (region->tiling != I915_TILING_NONE)
 	 drm_intel_gem_bo_map_gtt(region->bo);
       else
 	 drm_intel_bo_map(region->bo, GL_TRUE);
+
       region->map = region->bo->virtual;
+      ++intel->num_mapped_regions;
    }
 
    return region->map;
@@ -134,7 +147,10 @@ intel_region_unmap(struct intel_context *intel, struct intel_region *region)
 	 drm_intel_gem_bo_unmap_gtt(region->bo);
       else
 	 drm_intel_bo_unmap(region->bo);
+
       region->map = NULL;
+      --intel->num_mapped_regions;
+      assert(intel->num_mapped_regions >= 0);
    }
 }
 
