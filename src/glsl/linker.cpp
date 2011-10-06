@@ -1342,7 +1342,10 @@ assign_attribute_or_color_locations(gl_shader_program *prog,
 	 }
       }
 
-      /* The location was explicitly assigned, nothing to do here.
+      /* If the variable is not a built-in and has a location statically
+       * assigned in the shader (presumably via a layout qualifier), make sure
+       * that it doesn't collide with other assigned locations.  Otherwise,
+       * add it to the list of variables that need linker-assigned locations.
        */
       const unsigned slots = count_attribute_slots(var->type);
       if (var->location != -1) {
