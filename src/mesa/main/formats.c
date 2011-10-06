@@ -2075,13 +2075,13 @@ _mesa_format_to_type_and_comps(gl_format format,
       return;
 
    case MESA_FORMAT_Z24_S8:
-      *datatype = GL_UNSIGNED_INT;
-      *comps = 1; /* XXX OK? */
+      *datatype = GL_UNSIGNED_INT_24_8_MESA;
+      *comps = 2;
       return;
 
    case MESA_FORMAT_S8_Z24:
-      *datatype = GL_UNSIGNED_INT;
-      *comps = 1; /* XXX OK? */
+      *datatype = GL_UNSIGNED_INT_8_24_REV_MESA;
+      *comps = 2;
       return;
 
    case MESA_FORMAT_Z16:

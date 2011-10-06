@@ -43,7 +43,13 @@
 static GLint
 bytes_per_pixel(GLenum datatype, GLuint comps)
 {
-   GLint b = _mesa_sizeof_packed_type(datatype);
+   GLint b;
+
+   if (datatype == GL_UNSIGNED_INT_8_24_REV_MESA ||
+       datatype == GL_UNSIGNED_INT_24_8_MESA)
+      return 4;
+
+   b = _mesa_sizeof_packed_type(datatype);
    assert(b >= 0);
 
    if (_mesa_type_is_packed(datatype))
@@ -714,6 +720,36 @@ do_row(GLenum datatype, GLuint comps, GLint srcWidth,
       for (i = j = 0, k = k0; i < (GLuint) dstWidth;
            i++, j += colStride, k += colStride) {
          dst[i*2] = (rowA[j*2] + rowA[k*2] + rowB[j*2] + rowB[k*2]) * 0.25F;
+      }
+   }
+
+   else if (datatype == GL_UNSIGNED_INT_24_8_MESA && comps == 2) {
+      GLuint i, j, k;
+      const GLuint *rowA = (const GLuint *) srcRowA;
+      const GLuint *rowB = (const GLuint *) srcRowB;
+      GLuint *dst = (GLuint *) dstRow;
+      /* note: averaging stencil values seems weird, but what else? */
+      for (i = j = 0, k = k0; i < (GLuint) dstWidth;
+           i++, j += colStride, k += colStride) {
+         GLuint z = (((rowA[j] >> 8) + (rowA[k] >> 8) +
+                      (rowB[j] >> 8) + (rowB[k] >> 8)) / 4) << 8;
+         GLuint s = ((rowA[j] & 0xff) + (rowA[k] & 0xff) +
+                     (rowB[j] & 0xff) + (rowB[k] & 0xff)) / 4;
+         dst[i] = z | s;
+      }
+   }
+   else if (datatype == GL_UNSIGNED_INT_8_24_REV_MESA && comps == 2) {
+      GLuint i, j, k;
+      const GLuint *rowA = (const GLuint *) srcRowA;
+      const GLuint *rowB = (const GLuint *) srcRowB;
+      GLuint *dst = (GLuint *) dstRow;
+      for (i = j = 0, k = k0; i < (GLuint) dstWidth;
+           i++, j += colStride, k += colStride) {
+         GLuint z = ((rowA[j] & 0xffffff) + (rowA[k] & 0xffffff) +
+                     (rowB[j] & 0xffffff) + (rowB[k] & 0xffffff)) / 4;
+         GLuint s = (((rowA[j] >> 24) + (rowA[k] >> 24) +
+                      (rowB[j] >> 24) + (rowB[k] >> 24)) / 4) << 24;
+         dst[i] = z | s;
       }
    }
 
