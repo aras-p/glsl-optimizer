@@ -24,9 +24,10 @@ compiler = argv[1]
 
 # Read the files in builtins/ir/*...add them to the supplied dictionary.
 def read_ir_files(fs):
-    for filename in glob(path.join(path.join(builtins_dir, 'ir'), '*')):
+    for filename in glob(path.join(path.join(builtins_dir, 'ir'), '*.ir')):
+        function_name = path.basename(filename).split('.')[0]
         with open(filename) as f:
-            fs[path.basename(filename)] = f.read()
+            fs[function_name] = f.read()
 
 # Return a dictionary containing all builtin definitions (even generated)
 def get_builtin_definitions():
@@ -103,8 +104,13 @@ def write_profiles():
         write_profile(filename, profile)
 
 def get_profile_list():
+    profile_files = []
+    for extension in ['frag', 'vert']:
+        path_glob = path.join(
+            path.join(builtins_dir, 'profiles'), '*.' + extension)
+        profile_files.extend(glob(path_glob))
     profiles = []
-    for pfile in sorted(glob(path.join(path.join(builtins_dir, 'profiles'), '*'))):
+    for pfile in sorted(profile_files):
         profiles.append((pfile, path.basename(pfile).replace('.', '_')))
     return profiles
 
