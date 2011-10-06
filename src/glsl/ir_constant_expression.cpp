@@ -719,7 +719,7 @@ ir_expression::constant_expression_value()
       }
       break;
    case ir_binop_nequal:
-      assert(op[0]->type != op[1]->type);
+      assert(op[0]->type == op[1]->type);
       for (unsigned c = 0; c < components; c++) {
 	 switch (op[0]->type->base_type) {
 	 case GLSL_TYPE_UINT:
