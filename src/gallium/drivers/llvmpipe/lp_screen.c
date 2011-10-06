@@ -249,7 +249,8 @@ llvmpipe_is_format_supported( struct pipe_screen *_screen,
       return FALSE;
 
    if (bind & PIPE_BIND_RENDER_TARGET) {
-      if (format_desc->colorspace == UTIL_FORMAT_COLORSPACE_ZS)
+      if (format_desc->colorspace == UTIL_FORMAT_COLORSPACE_ZS ||
+          format_desc->colorspace == UTIL_FORMAT_COLORSPACE_SRGB)
          return FALSE;
 
       if (format_desc->layout != UTIL_FORMAT_LAYOUT_PLAIN)
