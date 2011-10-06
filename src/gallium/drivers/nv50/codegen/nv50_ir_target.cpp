@@ -258,6 +258,8 @@ CodeEmitter::addReloc(RelocEntry::Type ty, int w, uint32_t data, uint32_t m,
                  size + RELOC_ALLOC_INCREMENT * sizeof(RelocEntry)));
       if (!relocInfo)
          return false;
+      if (n == 0)
+         memset(relocInfo, 0, sizeof(RelocInfo));
    }
    ++relocInfo->count;
 
