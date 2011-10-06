@@ -785,8 +785,9 @@ CodeEmitterNVC0::emitCVT(Instruction *i)
 
       roundMode_C(i);
 
-      code[0] |= util_logbase2(i->def[0].getSize()) << 20;
-      code[0] |= util_logbase2(i->src[0].getSize()) << 23;
+      // cvt u16 f32 sets high bits to 0, so we don't have to use Value::Size()
+      code[0] |= util_logbase2(typeSizeof(i->dType)) << 20;
+      code[0] |= util_logbase2(typeSizeof(i->sType)) << 23;
 
       if (sat)
          code[0] |= 0x20;
