@@ -22,7 +22,7 @@ void main ()
   tmpvar_4[1] = _Object2World[1].xyz;
   tmpvar_4[2] = _Object2World[2].xyz;
   vec3 tmpvar_5;
-  tmpvar_5 = (tmpvar_4 * -((((_World2Object * tmpvar_3).xyz * unity_Scale.w) - gl_Vertex.xyz)));
+  tmpvar_5 = (tmpvar_4 * (gl_Vertex.xyz - ((_World2Object * tmpvar_3).xyz * unity_Scale.w)));
   vec3 tmpvar_6;
   tmpvar_6 = (cross (gl_Normal, TANGENT.xyz) * TANGENT.w);
   mat3 tmpvar_7;

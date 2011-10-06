@@ -36,7 +36,7 @@ void main ()
   gl_TexCoord[1] = tmpvar_6;
   vec4 tmpvar_7;
   tmpvar_7.w = 0.0;
-  tmpvar_7.xyz = -((_WorldSpaceCameraPos - (_Object2World * gl_Vertex).xyz));
+  tmpvar_7.xyz = ((_Object2World * gl_Vertex).xyz - _WorldSpaceCameraPos);
   gl_TexCoord[2] = tmpvar_7;
   vec4 tmpvar_8;
   tmpvar_8.w = 0.0;

@@ -36,7 +36,7 @@ void main ()
   gl_TexCoord[0] = tmpvar_7;
   vec4 tmpvar_8;
   tmpvar_8.w = 0.0;
-  tmpvar_8.xyz = (tmpvar_3 * reflect (-((((_World2Object * tmpvar_2).xyz * unity_Scale.w) - gl_Vertex.xyz)), gl_Normal));
+  tmpvar_8.xyz = (tmpvar_3 * reflect ((gl_Vertex.xyz - ((_World2Object * tmpvar_2).xyz * unity_Scale.w)), gl_Normal));
   gl_TexCoord[1] = tmpvar_8;
   gl_TexCoord[2] = o_i0;
 }

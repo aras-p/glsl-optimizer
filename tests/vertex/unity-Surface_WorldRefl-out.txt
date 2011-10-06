@@ -26,7 +26,7 @@ void main ()
   xlv_FOG = tmpvar_5;
   vec4 tmpvar_6;
   tmpvar_6.w = 0.0;
-  tmpvar_6.xyz = (tmpvar_3 * reflect (-((((_World2Object * tmpvar_2).xyz * unity_Scale.w) - gl_Vertex.xyz)), gl_Normal));
+  tmpvar_6.xyz = (tmpvar_3 * reflect ((gl_Vertex.xyz - ((_World2Object * tmpvar_2).xyz * unity_Scale.w)), gl_Normal));
   gl_TexCoord[0] = tmpvar_6;
   vec4 tmpvar_7;
   tmpvar_7.w = 0.0;
