@@ -1816,7 +1816,6 @@ generate_mipmap_uncompressed(struct gl_context *ctx, GLenum target,
       _mesa_init_teximage_fields(ctx, target, dstImage, dstWidth, dstHeight,
                                  dstDepth, border, srcImage->InternalFormat,
                                  srcImage->TexFormat);
-      dstImage->DriverData = NULL;
 
       /* Alloc storage for new texture image */
       if (!ctx->Driver.AllocTextureImageBuffer(ctx, dstImage,
