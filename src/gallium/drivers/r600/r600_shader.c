@@ -935,10 +935,10 @@ static int r600_shader_from_tgsi(struct r600_pipe_context * rctx, struct r600_pi
 			memset(&output[i], 0, sizeof(struct r600_bytecode_output));
 			output[i].gpr = 0;
 			output[i].elem_size = 3;
-			output[i].swizzle_x = 0;
-			output[i].swizzle_y = 1;
-			output[i].swizzle_z = 2;
-			output[i].swizzle_w = 3;
+			output[i].swizzle_x = 7;
+			output[i].swizzle_y = 7;
+			output[i].swizzle_z = 7;
+			output[i].swizzle_w = 7;
 			output[i].burst_count = 1;
 			output[i].barrier = 1;
 			output[i].type = V_SQ_CF_ALLOC_EXPORT_WORD0_SQ_EXPORT_PARAM;
