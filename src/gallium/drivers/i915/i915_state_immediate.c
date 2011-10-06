@@ -189,13 +189,13 @@ const struct i915_tracked_state i915_upload_S6 = {
  */
 static void upload_S7(struct i915_context *i915)
 {
+#if 0
    unsigned LIS7;
 
    /* I915_NEW_RASTERIZER
     */
    LIS7 = i915->rasterizer->LIS7;
 
-#if 0
    set_immediate(i915, I915_IMMEDIATE_S7, LIS7);
 #endif
 }
