@@ -1259,7 +1259,7 @@ glXCreateGLXPixmap( Display *dpy, XVisualInfo *visinfo, Pixmap pixmap )
    if (!b) {
       return 0;
    }
-   return b->drawable;
+   return b->ws.drawable;
 }
 
 
@@ -1285,7 +1285,7 @@ glXCreateGLXPixmapMESA( Display *dpy, XVisualInfo *visinfo,
    if (!b) {
       return 0;
    }
-   return b->drawable;
+   return b->ws.drawable;
 }
 
 
@@ -2036,7 +2036,7 @@ glXCreatePbuffer(Display *dpy, GLXFBConfig config, const int *attribList)
    if (xmbuf) {
       xmbuf->largestPbuffer = useLargest;
       xmbuf->preservedContents = preserveContents;
-      return (GLXPbuffer) xmbuf->drawable;
+      return (GLXPbuffer) xmbuf->ws.drawable;
    }
    else {
       return 0;
@@ -2310,7 +2310,7 @@ glXCreateGLXPixmapWithConfigSGIX(Display *dpy, GLXFBConfigSGIX config,
 {
    XMesaVisual xmvis = (XMesaVisual) config;
    XMesaBuffer xmbuf = XMesaCreatePixmapBuffer(xmvis, pixmap, 0);
-   return xmbuf->drawable; /* need to return an X ID */
+   return xmbuf->ws.drawable; /* need to return an X ID */
 }
 
 
@@ -2390,7 +2390,7 @@ glXCreateGLXPbufferSGIX(Display *dpy, GLXFBConfigSGIX config,
    /* A GLXPbuffer handle must be an X Drawable because that's what
     * glXMakeCurrent takes.
     */
-   return (GLXPbuffer) xmbuf->drawable;
+   return (GLXPbuffer) xmbuf->ws.drawable;
 }
 
 

@@ -329,7 +329,6 @@ struct xmesa_buffer {
 
    GLboolean wasCurrent;	/* was ever the current buffer? */
    XMesaVisual xm_visual;	/* the X/Mesa visual */
-   Drawable drawable;	/* Usually the X window ID */
    Colormap cmap;		/* the X colormap */
    BufferType type;             /* window, pixmap, pbuffer or glxwindow */
 
