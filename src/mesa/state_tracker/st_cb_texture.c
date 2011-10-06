@@ -1018,7 +1018,7 @@ st_GetTexImage(struct gl_context * ctx,
    if (stImage->pt && util_format_is_s3tc(stImage->pt->format)) {
       /* Need to decompress the texture.
        * We'll do this by rendering a textured quad (which is hopefully
-       * faster than using the fallback code in texcompress.c.
+       * faster than using the fallback code in texcompress.c).
        * Note that we only expect RGBA formats (no Z/depth formats).
        */
       decompress_with_blit(ctx, format, type, pixels, texImage);
