@@ -145,10 +145,10 @@ static int r300_get_param(struct pipe_screen* pscreen, enum pipe_cap param)
         case PIPE_CAP_SCALED_RESOLVE:
         case PIPE_CAP_MIN_TEXEL_OFFSET:
         case PIPE_CAP_MAX_TEXEL_OFFSET:
+        case PIPE_CAP_STREAM_OUTPUT:
             return 0;
 
         /* SWTCL-only features. */
-        case PIPE_CAP_STREAM_OUTPUT:
         case PIPE_CAP_PRIMITIVE_RESTART:
             return !r300screen->caps.has_tcl;
 
