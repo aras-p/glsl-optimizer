@@ -115,9 +115,9 @@ struct swrast_texture_image;
 /**
  * Fetch a texel from texture image at given position.
  */
-typedef void (*FetchTexelFuncF)(const struct swrast_texture_image *texImage,
-                                GLint col, GLint row, GLint img,
-                                GLfloat *texelOut);
+typedef void (*FetchTexelFunc)(const struct swrast_texture_image *texImage,
+                               GLint col, GLint row, GLint img,
+                               GLfloat *texelOut);
 
 
 typedef void (*StoreTexelFunc)(struct swrast_texture_image *texImage,
@@ -144,7 +144,7 @@ struct swrast_texture_image
    GLint TexelSize;  /**< bytes per texel block */
 #endif
 
-   FetchTexelFuncF FetchTexelf;
+   FetchTexelFunc FetchTexel;
    StoreTexelFunc Store;
 
 #if 0

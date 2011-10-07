@@ -32,7 +32,7 @@
 extern StoreTexelFunc
 _mesa_get_texel_store_func(gl_format format);
 
-extern FetchTexelFuncF
+extern FetchTexelFunc
 _mesa_get_texel_fetch_func(gl_format format, GLuint dims);
 
 void

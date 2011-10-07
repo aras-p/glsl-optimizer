@@ -815,7 +815,7 @@ sample_1d_nearest(struct gl_context *ctx,
       get_border_color(tObj, img, rgba);
    }
    else {
-      swImg->FetchTexelf(swImg, i, 0, 0, rgba);
+      swImg->FetchTexel(swImg, i, 0, 0, rgba);
    }
 }
 
@@ -852,13 +852,13 @@ sample_1d_linear(struct gl_context *ctx,
       get_border_color(tObj, img, t0);
    }
    else {
-      swImg->FetchTexelf(swImg, i0, 0, 0, t0);
+      swImg->FetchTexel(swImg, i0, 0, 0, t0);
    }
    if (useBorderColor & I1BIT) {
       get_border_color(tObj, img, t1);
    }
    else {
-      swImg->FetchTexelf(swImg, i1, 0, 0, t1);
+      swImg->FetchTexel(swImg, i1, 0, 0, t1);
    }
 
    lerp_rgba(rgba, a, t0, t1);
@@ -1082,7 +1082,7 @@ sample_2d_nearest(struct gl_context *ctx,
       get_border_color(tObj, img, rgba);
    }
    else {
-      swImg->FetchTexelf(swImg, i, j, 0, rgba);
+      swImg->FetchTexel(swImg, i, j, 0, rgba);
    }
 }
 
@@ -1127,25 +1127,25 @@ sample_2d_linear(struct gl_context *ctx,
       get_border_color(tObj, img, t00);
    }
    else {
-      swImg->FetchTexelf(swImg, i0, j0, 0, t00);
+      swImg->FetchTexel(swImg, i0, j0, 0, t00);
    }
    if (useBorderColor & (I1BIT | J0BIT)) {
       get_border_color(tObj, img, t10);
    }
    else {
-      swImg->FetchTexelf(swImg, i1, j0, 0, t10);
+      swImg->FetchTexel(swImg, i1, j0, 0, t10);
    }
    if (useBorderColor & (I0BIT | J1BIT)) {
       get_border_color(tObj, img, t01);
    }
    else {
-      swImg->FetchTexelf(swImg, i0, j1, 0, t01);
+      swImg->FetchTexel(swImg, i0, j1, 0, t01);
    }
    if (useBorderColor & (I1BIT | J1BIT)) {
       get_border_color(tObj, img, t11);
    }
    else {
-      swImg->FetchTexelf(swImg, i1, j1, 0, t11);
+      swImg->FetchTexel(swImg, i1, j1, 0, t11);
    }
 
    lerp_rgba_2d(rgba, a, b, t00, t10, t01, t11);
@@ -1180,10 +1180,10 @@ sample_2d_linear_repeat(struct gl_context *ctx,
    linear_repeat_texel_location(width,  texcoord[0], &i0, &i1, &wi);
    linear_repeat_texel_location(height, texcoord[1], &j0, &j1, &wj);
 
-   swImg->FetchTexelf(swImg, i0, j0, 0, t00);
-   swImg->FetchTexelf(swImg, i1, j0, 0, t10);
-   swImg->FetchTexelf(swImg, i0, j1, 0, t01);
-   swImg->FetchTexelf(swImg, i1, j1, 0, t11);
+   swImg->FetchTexel(swImg, i0, j0, 0, t00);
+   swImg->FetchTexel(swImg, i1, j0, 0, t10);
+   swImg->FetchTexel(swImg, i0, j1, 0, t01);
+   swImg->FetchTexel(swImg, i1, j1, 0, t11);
 
    lerp_rgba_2d(rgba, wi, wj, t00, t10, t01, t11);
 }
@@ -1968,7 +1968,7 @@ sample_3d_nearest(struct gl_context *ctx,
       get_border_color(tObj, img, rgba);
    }
    else {
-      swImg->FetchTexelf(swImg, i, j, k, rgba);
+      swImg->FetchTexel(swImg, i, j, k, rgba);
    }
 }
 
@@ -2020,50 +2020,50 @@ sample_3d_linear(struct gl_context *ctx,
       get_border_color(tObj, img, t000);
    }
    else {
-      swImg->FetchTexelf(swImg, i0, j0, k0, t000);
+      swImg->FetchTexel(swImg, i0, j0, k0, t000);
    }
    if (useBorderColor & (I1BIT | J0BIT | K0BIT)) {
       get_border_color(tObj, img, t100);
    }
    else {
-      swImg->FetchTexelf(swImg, i1, j0, k0, t100);
+      swImg->FetchTexel(swImg, i1, j0, k0, t100);
    }
    if (useBorderColor & (I0BIT | J1BIT | K0BIT)) {
       get_border_color(tObj, img, t010);
    }
    else {
-      swImg->FetchTexelf(swImg, i0, j1, k0, t010);
+      swImg->FetchTexel(swImg, i0, j1, k0, t010);
    }
    if (useBorderColor & (I1BIT | J1BIT | K0BIT)) {
       get_border_color(tObj, img, t110);
    }
    else {
-      swImg->FetchTexelf(swImg, i1, j1, k0, t110);
+      swImg->FetchTexel(swImg, i1, j1, k0, t110);
    }
 
    if (useBorderColor & (I0BIT | J0BIT | K1BIT)) {
       get_border_color(tObj, img, t001);
    }
    else {
-      swImg->FetchTexelf(swImg, i0, j0, k1, t001);
+      swImg->FetchTexel(swImg, i0, j0, k1, t001);
    }
    if (useBorderColor & (I1BIT | J0BIT | K1BIT)) {
       get_border_color(tObj, img, t101);
    }
    else {
-      swImg->FetchTexelf(swImg, i1, j0, k1, t101);
+      swImg->FetchTexel(swImg, i1, j0, k1, t101);
    }
    if (useBorderColor & (I0BIT | J1BIT | K1BIT)) {
       get_border_color(tObj, img, t011);
    }
    else {
-      swImg->FetchTexelf(swImg, i0, j1, k1, t011);
+      swImg->FetchTexel(swImg, i0, j1, k1, t011);
    }
    if (useBorderColor & (I1BIT | J1BIT | K1BIT)) {
       get_border_color(tObj, img, t111);
    }
    else {
-      swImg->FetchTexelf(swImg, i1, j1, k1, t111);
+      swImg->FetchTexel(swImg, i1, j1, k1, t111);
    }
 
    /* trilinear interpolation of samples */
@@ -2584,7 +2584,7 @@ sample_nearest_rect(struct gl_context *ctx,
       if (col < 0 || col >= width || row < 0 || row >= height)
          get_border_color(tObj, img, rgba[i]);
       else
-         swImg->FetchTexelf(swImg, col, row, 0, rgba[i]);
+         swImg->FetchTexel(swImg, col, row, 0, rgba[i]);
    }
 }
 
@@ -2632,22 +2632,22 @@ sample_linear_rect(struct gl_context *ctx,
       if (useBorderColor & (I0BIT | J0BIT))
          get_border_color(tObj, img, t00);
       else
-         swImg->FetchTexelf(swImg, i0, j0, 0, t00);
+         swImg->FetchTexel(swImg, i0, j0, 0, t00);
 
       if (useBorderColor & (I1BIT | J0BIT))
          get_border_color(tObj, img, t10);
       else
-         swImg->FetchTexelf(swImg, i1, j0, 0, t10);
+         swImg->FetchTexel(swImg, i1, j0, 0, t10);
 
       if (useBorderColor & (I0BIT | J1BIT))
          get_border_color(tObj, img, t01);
       else
-         swImg->FetchTexelf(swImg, i0, j1, 0, t01);
+         swImg->FetchTexel(swImg, i0, j1, 0, t01);
 
       if (useBorderColor & (I1BIT | J1BIT))
          get_border_color(tObj, img, t11);
       else
-         swImg->FetchTexelf(swImg, i1, j1, 0, t11);
+         swImg->FetchTexel(swImg, i1, j1, 0, t11);
 
       lerp_rgba_2d(rgba[i], a, b, t00, t10, t01, t11);
    }
@@ -2725,7 +2725,7 @@ sample_2d_array_nearest(struct gl_context *ctx,
       get_border_color(tObj, img, rgba);
    }
    else {
-      swImg->FetchTexelf(swImg, i, j, array, rgba);
+      swImg->FetchTexel(swImg, i, j, array, rgba);
    }
 }
 
@@ -2777,25 +2777,25 @@ sample_2d_array_linear(struct gl_context *ctx,
          get_border_color(tObj, img, t00);
       }
       else {
-	 swImg->FetchTexelf(swImg, i0, j0, array, t00);
+	 swImg->FetchTexel(swImg, i0, j0, array, t00);
       }
       if (useBorderColor & (I1BIT | J0BIT)) {
          get_border_color(tObj, img, t10);
       }
       else {
-	 swImg->FetchTexelf(swImg, i1, j0, array, t10);
+	 swImg->FetchTexel(swImg, i1, j0, array, t10);
       }
       if (useBorderColor & (I0BIT | J1BIT)) {
          get_border_color(tObj, img, t01);
       }
       else {
-	 swImg->FetchTexelf(swImg, i0, j1, array, t01);
+	 swImg->FetchTexel(swImg, i0, j1, array, t01);
       }
       if (useBorderColor & (I1BIT | J1BIT)) {
          get_border_color(tObj, img, t11);
       }
       else {
-	 swImg->FetchTexelf(swImg, i1, j1, array, t11);
+	 swImg->FetchTexel(swImg, i1, j1, array, t11);
       }
       
       /* trilinear interpolation of samples */
@@ -3034,7 +3034,7 @@ sample_1d_array_nearest(struct gl_context *ctx,
       get_border_color(tObj, img, rgba);
    }
    else {
-      swImg->FetchTexelf(swImg, i, array, 0, rgba);
+      swImg->FetchTexel(swImg, i, array, 0, rgba);
    }
 }
 
@@ -3078,13 +3078,13 @@ sample_1d_array_linear(struct gl_context *ctx,
       get_border_color(tObj, img, t0);
    }
    else {
-      swImg->FetchTexelf(swImg, i0, array, 0, t0);
+      swImg->FetchTexel(swImg, i0, array, 0, t0);
    }
    if (useBorderColor & (I1BIT | K0BIT)) {
       get_border_color(tObj, img, t1);
    }
    else {
-      swImg->FetchTexelf(swImg, i1, array, 0, t1);
+      swImg->FetchTexel(swImg, i1, array, 0, t1);
    }
 
    /* bilinear interpolation of samples */
@@ -3448,7 +3448,7 @@ sample_depth_texture( struct gl_context *ctx,
 
          if (col >= 0 && row >= 0 && col < width && row < height && 
              slice >= 0 && slice < depth) {
-            swImg->FetchTexelf(swImg, col, row, slice, &depthSample);
+            swImg->FetchTexel(swImg, col, row, slice, &depthSample);
          }
          else {
             depthSample = tObj->Sampler.BorderColor.f[0];
@@ -3517,13 +3517,13 @@ sample_depth_texture( struct gl_context *ctx,
                depth00 = tObj->Sampler.BorderColor.f[0];
             }
             else {
-               swImg->FetchTexelf(swImg, i0, j0, slice, &depth00);
+               swImg->FetchTexel(swImg, i0, j0, slice, &depth00);
             }
             if (useBorderTexel & (I1BIT | J0BIT)) {
                depth10 = tObj->Sampler.BorderColor.f[0];
             }
             else {
-               swImg->FetchTexelf(swImg, i1, j0, slice, &depth10);
+               swImg->FetchTexel(swImg, i1, j0, slice, &depth10);
             }
 
             if (tObj->Target != GL_TEXTURE_1D_ARRAY_EXT) {
@@ -3531,13 +3531,13 @@ sample_depth_texture( struct gl_context *ctx,
                   depth01 = tObj->Sampler.BorderColor.f[0];
                }
                else {
-                  swImg->FetchTexelf(swImg, i0, j1, slice, &depth01);
+                  swImg->FetchTexel(swImg, i0, j1, slice, &depth01);
                }
                if (useBorderTexel & (I1BIT | J1BIT)) {
                   depth11 = tObj->Sampler.BorderColor.f[0];
                }
                else {
-                  swImg->FetchTexelf(swImg, i1, j1, slice, &depth11);
+                  swImg->FetchTexel(swImg, i1, j1, slice, &depth11);
                }
             }
             else {

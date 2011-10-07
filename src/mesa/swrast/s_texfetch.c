@@ -121,9 +121,9 @@ static void store_null_texel(struct swrast_texture_image *texImage,
  */
 static struct {
    gl_format Name;
-   FetchTexelFuncF Fetch1D;
-   FetchTexelFuncF Fetch2D;
-   FetchTexelFuncF Fetch3D;
+   FetchTexelFunc Fetch1D;
+   FetchTexelFunc Fetch2D;
+   FetchTexelFunc Fetch3D;
    StoreTexelFunc StoreTexel;
 }
 texfetch_funcs[MESA_FORMAT_COUNT] =
@@ -1250,7 +1250,7 @@ texfetch_funcs[MESA_FORMAT_COUNT] =
 };
 
 
-FetchTexelFuncF
+FetchTexelFunc
 _mesa_get_texel_fetch_func(gl_format format, GLuint dims)
 {
 #ifdef DEBUG
@@ -1287,7 +1287,7 @@ _mesa_get_texel_store_func(gl_format format)
 
 
 /**
- * Initialize the texture image's FetchTexelf methods.
+ * Initialize the texture image's FetchTexel methods.
  */
 static void
 set_fetch_functions(struct swrast_texture_image *texImage, GLuint dims)
@@ -1301,8 +1301,8 @@ set_fetch_functions(struct swrast_texture_image *texImage, GLuint dims)
       format = _mesa_get_srgb_format_linear(format);
    }
 
-   texImage->FetchTexelf = _mesa_get_texel_fetch_func(format, dims);
-   ASSERT(texImage->FetchTexelf);
+   texImage->FetchTexel = _mesa_get_texel_fetch_func(format, dims);
+   ASSERT(texImage->FetchTexel);
 }
 
 void
