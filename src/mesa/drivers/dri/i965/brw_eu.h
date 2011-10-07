@@ -698,6 +698,7 @@ static INLINE struct brw_reg negate( struct brw_reg reg )
 static INLINE struct brw_reg brw_abs( struct brw_reg reg )
 {
    reg.abs = 1;
+   reg.negate = 0;
    return reg;
 }
 
