@@ -336,11 +336,17 @@ run_vp( struct gl_context *ctx, struct tnl_pipeline_stage *stage )
    for (i = 0; i < VERT_RESULT_MAX; i++) {
       if (program->Base.OutputsWritten & BITFIELD64_BIT(i)) {
          outputs[numOutputs++] = i;
+      }
+   }
 
-	 if (!store->results[i].data) {
-	    _mesa_vector4f_alloc( &store->results[i], 0, VB->Size, 32 );
-	    store->results[i].size = 4;
-	 }
+   /* Allocate result vectors.  We delay this until now to avoid allocating
+    * memory that would never be used if we don't run the software tnl pipeline.
+    */
+   if (!store->results[0].storage) {
+      for (i = 0; i < VERT_RESULT_MAX; i++) {
+         assert(!store->results[i].storage);
+         _mesa_vector4f_alloc( &store->results[i], 0, VB->Size, 32 );
+         store->results[i].size = 4;
       }
    }
 
