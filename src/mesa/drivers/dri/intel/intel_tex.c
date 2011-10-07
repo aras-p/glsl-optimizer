@@ -66,11 +66,6 @@ intel_alloc_texture_image_buffer(struct gl_context *ctx,
     */
    ctx->Driver.FreeTextureImageBuffer(ctx, image);
 
-   if (intel->must_use_separate_stencil
-       && image->TexFormat == MESA_FORMAT_S8_Z24) {
-      intel_tex_image_s8z24_create_renderbuffers(intel, intel_image);
-   }
-
    if (intel_texobj->mt &&
        intel_miptree_match_image(intel_texobj->mt, image)) {
       intel_miptree_reference(&intel_image->mt, intel_texobj->mt);
@@ -89,6 +84,11 @@ intel_alloc_texture_image_buffer(struct gl_context *ctx,
        * before, and any lower levels would fit into our miptree.
        */
       intel_miptree_reference(&intel_texobj->mt, intel_image->mt);
+
+      if (intel->must_use_separate_stencil
+          && image->TexFormat == MESA_FORMAT_S8_Z24) {
+         intel_tex_image_s8z24_create_renderbuffers(intel, intel_image);
+      }
 
       DBG("%s: alloc obj %p level %d %dx%dx%d using new miptree %p\n",
           __FUNCTION__, texobj, image->Level,
