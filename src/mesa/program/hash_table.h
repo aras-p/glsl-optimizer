@@ -32,6 +32,7 @@
 #define HASH_TABLE_H
 
 #include <string.h>
+#include <stdlib.h>
 #include <stdint.h>
 #include <limits.h>
 #include <assert.h>
@@ -99,6 +100,10 @@ extern void *hash_table_find(struct hash_table *ht, const void *key);
  * If \c key is already in the hash table, it will be added again.  Future
  * calls to \c hash_table_find and \c hash_table_remove will return or remove,
  * repsectively, the most recently added instance of \c key.
+ *
+ * \warning
+ * The value passed by \c key is kept in the hash table and is used by later
+ * calls to \c hash_table_find.
  *
  * \sa hash_table_replace
  */
@@ -204,6 +209,7 @@ public:
 
    ~string_to_uint_map()
    {
+      hash_table_call_foreach(this->ht, delete_key, NULL);
       hash_table_dtor(this->ht);
    }
 
@@ -243,10 +249,20 @@ public:
        * because UINT_MAX+1 = 0.
        */
       assert(value != UINT_MAX);
-      hash_table_replace(ht, (void *) (intptr_t) (value + 1), key);
+      hash_table_replace(this->ht,
+			 (void *) (intptr_t) (value + 1),
+			 strdup(key));
    }
 
 private:
+   static void delete_key(const void *key, void *data, void *closure)
+   {
+      (void) data;
+      (void) closure;
+
+      free((char *)key);
+   }
+
    struct hash_table *ht;
 };
 
