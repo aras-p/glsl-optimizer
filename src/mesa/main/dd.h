@@ -901,6 +901,7 @@ struct dd_function_table {
     */
    void (*EndCallList)( struct gl_context *ctx );
 
+   /**@}*/
 
    /**
     * \name GL_ARB_sync interfaces
