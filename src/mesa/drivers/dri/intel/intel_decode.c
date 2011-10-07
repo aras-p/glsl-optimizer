@@ -881,7 +881,7 @@ decode_3d_1d(uint32_t *data, int count,
 	     int *failures)
 {
     unsigned int len, i, c, idx, word, map, sampler, instr;
-    char *format, *zformat, *type;
+    char *format = "", *zformat, *type;
     uint32_t opcode;
 
     struct {
