@@ -782,17 +782,13 @@ static void r300_merge_textures_and_samplers(struct r300_context* r300)
                      * an i-th mipmap level as the zero level. */
                     base_level += min_level;
                 }
-                offset = tex->tex_offset +
-                         tex->tex.offset_in_bytes[base_level];
+                offset = tex->tex.offset_in_bytes[base_level];
 
                 r300_texture_setup_format_state(r300->screen, tex,
                                                 base_level,
                                                 &texstate->format);
                 texstate->format.tile_config |= offset & 0xffffffe0;
                 assert((offset & 0x1f) == 0);
-            } else {
-                texstate->format.tile_config |= tex->tex_offset & 0xffffffe0;
-                assert((tex->tex_offset & 0x1f) == 0);
             }
 
             /* Assign a texture cache region. */

@@ -545,17 +545,17 @@ static void r300_resource_copy_region(struct pipe_context *pipe,
     }
 
     if (old_src.format != new_src.format)
-        r300_resource_set_properties(pipe->screen, src, 0, &new_src);
+        r300_resource_set_properties(pipe->screen, src, &new_src);
     if (old_dst.format != new_dst.format)
-        r300_resource_set_properties(pipe->screen, dst, 0, &new_dst);
+        r300_resource_set_properties(pipe->screen, dst, &new_dst);
 
     r300_hw_copy_region(pipe, dst, dst_level, dstx, dsty, dstz,
                         src, src_level, src_box);
 
     if (old_src.format != new_src.format)
-        r300_resource_set_properties(pipe->screen, src, 0, &old_src);
+        r300_resource_set_properties(pipe->screen, src, &old_src);
     if (old_dst.format != new_dst.format)
-        r300_resource_set_properties(pipe->screen, dst, 0, &old_dst);
+        r300_resource_set_properties(pipe->screen, dst, &old_dst);
 }
 
 void r300_init_blit_functions(struct r300_context *r300)

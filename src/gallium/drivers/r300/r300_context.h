@@ -402,9 +402,6 @@ struct r300_resource
     /* Only format-independent bits should be filled in. */
     struct r300_texture_format_state tx_format;
 
-    /* Where the texture starts in the buffer. */
-    unsigned tex_offset;
-
     /* This is the level tiling flags were last time set for.
      * It's used to prevent redundant tiling-flags changes from happening.*/
     unsigned surface_level;
