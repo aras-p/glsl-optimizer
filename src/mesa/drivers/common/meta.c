@@ -44,6 +44,7 @@
 #include "main/depth.h"
 #include "main/enable.h"
 #include "main/fbobject.h"
+#include "main/feedback.h"
 #include "main/formats.h"
 #include "main/image.h"
 #include "main/macros.h"
@@ -171,6 +172,11 @@ struct save_state
    /** MESA_META_CONDITIONAL_RENDER */
    struct gl_query_object *CondRenderQuery;
    GLenum CondRenderMode;
+
+   /** MESA_META_SELECT_FEEDBACK */
+   GLenum RenderMode;
+   struct gl_selection Select;
+   struct gl_feedback Feedback;
 
    /** Miscellaneous (always disabled) */
    GLboolean Lighting;
@@ -608,6 +614,17 @@ _mesa_meta_begin(struct gl_context *ctx, GLbitfield state)
 	 _mesa_EndConditionalRender();
    }
 
+   if (state & MESA_META_SELECT_FEEDBACK) {
+      save->RenderMode = ctx->RenderMode;
+      if (ctx->RenderMode == GL_SELECT) {
+	 save->Select = ctx->Select; /* struct copy */
+	 _mesa_RenderMode(GL_RENDER);
+      } else if (ctx->RenderMode == GL_FEEDBACK) {
+	 save->Feedback = ctx->Feedback; /* struct copy */
+	 _mesa_RenderMode(GL_RENDER);
+      }
+   }
+
    /* misc */
    {
       save->Lighting = ctx->Light.Enabled;
@@ -891,6 +908,16 @@ _mesa_meta_end(struct gl_context *ctx)
       if (save->CondRenderQuery)
 	 _mesa_BeginConditionalRender(save->CondRenderQuery->Id,
 				      save->CondRenderMode);
+   }
+
+   if (state & MESA_META_SELECT_FEEDBACK) {
+      if (save->RenderMode == GL_SELECT) {
+	 _mesa_RenderMode(GL_SELECT);
+	 ctx->Select = save->Select;
+      } else if (save->RenderMode == GL_FEEDBACK) {
+	 _mesa_RenderMode(GL_FEEDBACK);
+	 ctx->Feedback = save->Feedback;
+      }
    }
 
    /* misc */
