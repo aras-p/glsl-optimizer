@@ -33,6 +33,9 @@
 
 #if FEATURE_feedback
 
+extern GLint GLAPIENTRY
+_mesa_RenderMode( GLenum mode );
+
 extern void
 _mesa_feedback_vertex( struct gl_context *ctx,
                        const GLfloat win[4],
