@@ -112,14 +112,8 @@ typedef void (*validate_texture_image_func)(struct gl_context *ctx,
 struct swrast_texture_image;
 
 
-typedef void (*FetchTexelFuncC)(const struct swrast_texture_image *texImage,
-                                GLint col, GLint row, GLint img,
-                                GLchan *texelOut);
-
 /**
- * As above, but returns floats.
- * Used for depth component images and for upcoming signed/float
- * texture images.
+ * Fetch a texel from texture image at given position.
  */
 typedef void (*FetchTexelFuncF)(const struct swrast_texture_image *texImage,
                                 GLint col, GLint row, GLint img,
@@ -150,7 +144,6 @@ struct swrast_texture_image
    GLint TexelSize;  /**< bytes per texel block */
 #endif
 
-   FetchTexelFuncC FetchTexelc;
    FetchTexelFuncF FetchTexelf;
    StoreTexelFunc Store;
 
