@@ -324,6 +324,13 @@ pb_cache_manager_create_buffer(struct pb_manager *_mgr,
       return NULL;
    
    buf->buffer = mgr->provider->create_buffer(mgr->provider, size, desc);
+
+   /* Empty the cache and try again. */
+   if (!buf->buffer) {
+      mgr->base.flush(&mgr->base);
+      buf->buffer = mgr->provider->create_buffer(mgr->provider, size, desc);
+   }
+
    if(!buf->buffer) {
       FREE(buf);
       return NULL;
