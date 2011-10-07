@@ -124,7 +124,7 @@ void brw_wm_lookup_iz(struct intel_context *intel,
 		      struct brw_wm_compile *c)
 {
    GLuint reg = 2;
-   GLboolean kill_stats_promoted_workaround = GL_FALSE;
+   bool kill_stats_promoted_workaround = false;
    int lookup = c->key.iz_lookup;
    bool uses_depth = (c->fp->program.Base.InputsRead &
 		      (1 << FRAG_ATTRIB_WPOS)) != 0;
@@ -139,7 +139,7 @@ void brw_wm_lookup_iz(struct intel_context *intel,
    if (c->key.stats_wm &&
        (lookup & IZ_PS_KILL_ALPHATEST_BIT) &&
        wm_iz_table[lookup].mode == P) {
-      kill_stats_promoted_workaround = GL_TRUE;
+      kill_stats_promoted_workaround = true;
    }
 
    if (lookup & IZ_PS_COMPUTES_DEPTH_BIT)

@@ -65,7 +65,7 @@ struct intel_texture_image
     * Else there is no image data.
     */
    struct intel_mipmap_tree *mt;
-   GLboolean used_as_render_target;
+   bool used_as_render_target;
 
    /**
     * \name Renderbuffers for faking packed depth/stencil

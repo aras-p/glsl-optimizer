@@ -166,7 +166,7 @@ do {						\
 
 /* Heuristic to choose between the two render paths:  
  */
-static GLboolean
+static bool
 choose_render(struct intel_context *intel, struct vertex_buffer *VB)
 {
    int vertsz = intel->vertex_size;
@@ -209,9 +209,9 @@ choose_render(struct intel_context *intel, struct vertex_buffer *VB)
               cost_render, cost_fallback);
 
    if (cost_render > cost_fallback)
-      return GL_FALSE;
+      return false;
 
-   return GL_TRUE;
+   return true;
 }
 
 
@@ -229,7 +229,7 @@ intel_run_render(struct gl_context * ctx, struct tnl_pipeline_stage *stage)
     */
    if (intel->RenderIndex != 0 ||
        !intel_validate_render(ctx, VB) || !choose_render(intel, VB)) {
-      return GL_TRUE;
+      return true;
    }
 
    tnl->clipspace.new_inputs |= VERT_BIT_POS;
@@ -252,7 +252,7 @@ intel_run_render(struct gl_context * ctx, struct tnl_pipeline_stage *stage)
 
    INTEL_FIREVERTICES(intel);
 
-   return GL_FALSE;             /* finished the pipe */
+   return false;             /* finished the pipe */
 }
 
 static const struct tnl_pipeline_stage _intel_render_stage = {

@@ -49,7 +49,7 @@ struct intel_mipmap_tree *
 intel_miptree_create_for_teximage(struct intel_context *intel,
 				  struct intel_texture_object *intelObj,
 				  struct intel_texture_image *intelImage,
-				  GLboolean expect_accelerated_upload)
+				  bool expect_accelerated_upload)
 {
    GLuint firstLevel;
    GLuint lastLevel;
@@ -203,7 +203,7 @@ try_pbo_upload(struct gl_context *ctx,
    if (!intelEmitCopyBlit(intel,
 			  intelImage->mt->cpp,
 			  src_stride, src_buffer,
-			  src_offset, GL_FALSE,
+			  src_offset, false,
 			  dst_stride, dst_buffer, 0,
 			  intelImage->mt->region->tiling,
 			  0, 0, dst_x, dst_y, width, height,

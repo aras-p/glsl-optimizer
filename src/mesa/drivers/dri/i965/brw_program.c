@@ -100,11 +100,12 @@ static void brwDeleteProgram( struct gl_context *ctx,
 }
 
 
-static GLboolean brwIsProgramNative( struct gl_context *ctx,
-				     GLenum target, 
-				     struct gl_program *prog )
+static GLboolean
+brwIsProgramNative(struct gl_context *ctx,
+		   GLenum target,
+		   struct gl_program *prog)
 {
-   return GL_TRUE;
+   return true;
 }
 
 static void
@@ -116,13 +117,14 @@ shader_error(struct gl_context *ctx, struct gl_program *prog, const char *msg)
 
    if (shader) {
       ralloc_strcat(&shader->InfoLog, msg);
-      shader->LinkStatus = GL_FALSE;
+      shader->LinkStatus = false;
    }
 }
 
-static GLboolean brwProgramStringNotify( struct gl_context *ctx,
-                                         GLenum target,
-                                         struct gl_program *prog )
+static GLboolean
+brwProgramStringNotify(struct gl_context *ctx,
+		       GLenum target,
+		       struct gl_program *prog)
 {
    struct brw_context *brw = brw_context(ctx);
    int i;
@@ -144,7 +146,7 @@ static GLboolean brwProgramStringNotify( struct gl_context *ctx,
       shader_program = _mesa_lookup_shader_program(ctx, prog->Id);
       if (shader_program
 	  && shader_program->_LinkedShaders[MESA_SHADER_FRAGMENT]) {
-	 return GL_TRUE;
+	 return true;
       }
    }
    else if (target == GL_VERTEX_PROGRAM_ARB) {
@@ -180,14 +182,14 @@ static GLboolean brwProgramStringNotify( struct gl_context *ctx,
 		      "i965 driver doesn't yet support uninlined function "
 		      "calls.  Move to using a single return statement at "
 		      "the end of the function to work around it.\n");
-	 return GL_FALSE;
+	 return false;
       }
 
       if (prog->Instructions[i].Opcode == OPCODE_RET) {
 	 shader_error(ctx, prog,
 		      "i965 driver doesn't yet support \"return\" "
 		      "from main().\n");
-	 return GL_FALSE;
+	 return false;
       }
 
       for (r = 0; r < _mesa_num_inst_src_regs(inst->Opcode); r++) {
@@ -195,7 +197,7 @@ static GLboolean brwProgramStringNotify( struct gl_context *ctx,
 	     prog->Instructions[i].SrcReg[r].File == PROGRAM_INPUT) {
 	    shader_error(ctx, prog,
 			 "Variable indexing of shader inputs unsupported\n");
-	    return GL_FALSE;
+	    return false;
 	 }
       }
 
@@ -204,7 +206,7 @@ static GLboolean brwProgramStringNotify( struct gl_context *ctx,
 	  prog->Instructions[i].DstReg.File == PROGRAM_OUTPUT) {
 	 shader_error(ctx, prog,
 		      "Variable indexing of FS outputs unsupported\n");
-	 return GL_FALSE;
+	 return false;
       }
       if (target == GL_FRAGMENT_PROGRAM_ARB) {
 	 if ((prog->Instructions[i].DstReg.RelAddr &&
@@ -218,12 +220,12 @@ static GLboolean brwProgramStringNotify( struct gl_context *ctx,
 	    shader_error(ctx, prog,
 			 "Variable indexing of variable arrays in the FS "
 			 "unsupported\n");
-	    return GL_FALSE;
+	    return false;
 	 }
       }
    }
 
-   return GL_TRUE;
+   return true;
 }
 
 /* Per-thread scratch space is a power-of-two multiple of 1KB. */

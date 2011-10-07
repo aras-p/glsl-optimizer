@@ -110,7 +110,7 @@ intel_bufferobj_free(struct gl_context * ctx, struct gl_buffer_object *obj)
  * previously stored in the buffer object is lost.  If data is NULL,
  * memory will be allocated, but no copy will occur.
  * Called via ctx->Driver.BufferData().
- * \return GL_TRUE for success, GL_FALSE if out of memory
+ * \return true for success, false if out of memory
  */
 static GLboolean
 intel_bufferobj_data(struct gl_context * ctx,
@@ -153,18 +153,18 @@ intel_bufferobj_data(struct gl_context * ctx,
 	 if (intel_obj->sys_buffer != NULL) {
 	    if (data != NULL)
 	       memcpy(intel_obj->sys_buffer, data, size);
-	    return GL_TRUE;
+	    return true;
 	 }
       }
       intel_bufferobj_alloc_buffer(intel, intel_obj);
       if (!intel_obj->buffer)
-         return GL_FALSE;
+         return false;
 
       if (data != NULL)
 	 drm_intel_bo_subdata(intel_obj->buffer, 0, size, data);
    }
 
-   return GL_TRUE;
+   return true;
 }
 
 
@@ -353,11 +353,11 @@ intel_bufferobj_map_range(struct gl_context * ctx,
 						      length, 64);
 	 if (!(access & GL_MAP_READ_BIT)) {
 	    drm_intel_gem_bo_map_gtt(intel_obj->range_map_bo);
-	    intel_obj->mapped_gtt = GL_TRUE;
+	    intel_obj->mapped_gtt = true;
 	 } else {
 	    drm_intel_bo_map(intel_obj->range_map_bo,
 			     (access & GL_MAP_WRITE_BIT) != 0);
-	    intel_obj->mapped_gtt = GL_FALSE;
+	    intel_obj->mapped_gtt = false;
 	 }
 	 obj->Pointer = intel_obj->range_map_bo->virtual;
       }
@@ -366,10 +366,10 @@ intel_bufferobj_map_range(struct gl_context * ctx,
 
    if (!(access & GL_MAP_READ_BIT)) {
       drm_intel_gem_bo_map_gtt(intel_obj->buffer);
-      intel_obj->mapped_gtt = GL_TRUE;
+      intel_obj->mapped_gtt = true;
    } else {
       drm_intel_bo_map(intel_obj->buffer, (access & GL_MAP_WRITE_BIT) != 0);
-      intel_obj->mapped_gtt = GL_FALSE;
+      intel_obj->mapped_gtt = false;
    }
 
    obj->Pointer = intel_obj->buffer->virtual + offset;
@@ -466,7 +466,7 @@ intel_bufferobj_unmap(struct gl_context * ctx, struct gl_buffer_object *obj)
    obj->Offset = 0;
    obj->Length = 0;
 
-   return GL_TRUE;
+   return true;
 }
 
 drm_intel_bo *

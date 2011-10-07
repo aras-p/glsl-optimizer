@@ -34,27 +34,27 @@
 #include "brw_context.h"
 #include "brw_wm.h"
 
-static GLboolean can_do_pln(struct intel_context *intel,
-			    const struct brw_reg *deltas)
+static bool
+can_do_pln(struct intel_context *intel, const struct brw_reg *deltas)
 {
    struct brw_context *brw = brw_context(&intel->ctx);
 
    if (!brw->has_pln)
-      return GL_FALSE;
+      return false;
 
    if (deltas[1].nr != deltas[0].nr + 1)
-      return GL_FALSE;
+      return false;
 
    if (intel->gen < 6 && ((deltas[0].nr & 1) != 0))
-      return GL_FALSE;
+      return false;
 
-   return GL_TRUE;
+   return true;
 }
 
 /* Return the SrcReg index of the channels that can be immediate float operands
  * instead of usage of PROGRAM_CONSTANT values through push/pull.
  */
-GLboolean
+bool
 brw_wm_arg_can_be_immediate(enum prog_opcode opcode, int arg)
 {
    int opcode_array[] = {
@@ -82,11 +82,11 @@ brw_wm_arg_can_be_immediate(enum prog_opcode opcode, int arg)
     */
    if (opcode == OPCODE_MAD || opcode == OPCODE_LRP) {
       if (arg == 1 || arg == 2)
-	 return GL_TRUE;
+	 return true;
    }
 
    if (opcode > ARRAY_SIZE(opcode_array))
-      return GL_FALSE;
+      return false;
 
    return arg == opcode_array[opcode] - 1;
 }
@@ -461,7 +461,7 @@ void emit_frontfacing(struct brw_compile *p,
 void emit_ddxy(struct brw_compile *p,
 	       const struct brw_reg *dst,
 	       GLuint mask,
-	       GLboolean is_ddx,
+	       bool is_ddx,
 	       const struct brw_reg *arg0)
 {
    int i;
@@ -1044,7 +1044,7 @@ void emit_tex(struct brw_wm_compile *c,
 	      struct brw_reg depth_payload,
 	      GLuint tex_idx,
 	      GLuint sampler,
-	      GLboolean shadow)
+	      bool shadow)
 {
    struct brw_compile *p = &c->func;
    struct intel_context *intel = &p->brw->intel;
@@ -1356,7 +1356,7 @@ static void fire_fb_write( struct brw_wm_compile *c,
 		nr,
 		0, 
 		eot,
-		GL_TRUE);
+		true);
 }
 
 
@@ -1737,11 +1737,11 @@ void brw_wm_emit( struct brw_wm_compile *c )
 	 break;
 
       case OPCODE_DDX:
-	 emit_ddxy(p, dst, dst_flags, GL_TRUE, args[0]);
+	 emit_ddxy(p, dst, dst_flags, true, args[0]);
 	 break;
 
       case OPCODE_DDY:
-	 emit_ddxy(p, dst, dst_flags, GL_FALSE, args[0]);
+	 emit_ddxy(p, dst, dst_flags, false, args[0]);
 	 break;
 
       case OPCODE_DP2:

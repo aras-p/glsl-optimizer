@@ -509,7 +509,7 @@ public:
 				src_reg orig_src,
 				int base_offset);
 
-   GLboolean try_emit_sat(ir_expression *ir);
+   bool try_emit_sat(ir_expression *ir);
 
    bool process_move_condition(ir_rvalue *ir);
 

@@ -63,7 +63,7 @@ get_teximage_readbuffer(struct intel_context *intel, GLenum internalFormat)
 }
 
 
-GLboolean
+bool
 intel_copy_texsubimage(struct intel_context *intel,
                        struct intel_texture_image *intelImage,
                        GLint dstx, GLint dsty,
@@ -82,7 +82,7 @@ intel_copy_texsubimage(struct intel_context *intel,
       if (unlikely(INTEL_DEBUG & DEBUG_FALLBACKS))
 	 fprintf(stderr, "%s fail %p %p (0x%08x)\n",
 		 __FUNCTION__, intelImage->mt, irb, internalFormat);
-      return GL_FALSE;
+      return false;
    }
 
    copy_supported = intelImage->base.Base.TexFormat == irb->Base.Format;
@@ -105,7 +105,7 @@ intel_copy_texsubimage(struct intel_context *intel,
 		 __FUNCTION__,
 		 _mesa_get_format_name(intelImage->base.Base.TexFormat),
 		 _mesa_get_format_name(irb->Base.Format));
-      return GL_FALSE;
+      return false;
    }
 
    {
@@ -121,7 +121,7 @@ intel_copy_texsubimage(struct intel_context *intel,
 
       /* The blitter can't handle Y-tiled buffers. */
       if (intelImage->mt->region->tiling == I915_TILING_Y) {
-	 return GL_FALSE;
+	 return false;
       }
 
       if (ctx->ReadBuffer->Name == 0) {
@@ -148,14 +148,14 @@ intel_copy_texsubimage(struct intel_context *intel,
 			     image_x + dstx, image_y + dsty,
 			     width, height,
 			     GL_COPY)) {
-	 return GL_FALSE;
+	 return false;
       }
    }
 
    if (copy_supported_with_alpha_override)
       intel_set_teximage_alpha_to_one(ctx, intelImage);
 
-   return GL_TRUE;
+   return true;
 }
 
 

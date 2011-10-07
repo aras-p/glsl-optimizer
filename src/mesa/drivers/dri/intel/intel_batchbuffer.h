@@ -28,12 +28,12 @@ void _intel_batchbuffer_flush(struct intel_context *intel,
 void intel_batchbuffer_data(struct intel_context *intel,
                             const void *data, GLuint bytes, bool is_blit);
 
-GLboolean intel_batchbuffer_emit_reloc(struct intel_context *intel,
+bool intel_batchbuffer_emit_reloc(struct intel_context *intel,
                                        drm_intel_bo *buffer,
 				       uint32_t read_domains,
 				       uint32_t write_domain,
 				       uint32_t offset);
-GLboolean intel_batchbuffer_emit_reloc_fenced(struct intel_context *intel,
+bool intel_batchbuffer_emit_reloc_fenced(struct intel_context *intel,
 					      drm_intel_bo *buffer,
 					      uint32_t read_domains,
 					      uint32_t write_domain,

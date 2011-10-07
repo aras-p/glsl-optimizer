@@ -376,8 +376,8 @@ static void brw_set_math_message( struct brw_compile *p,
 				  struct brw_instruction *insn,
 				  GLuint function,
 				  GLuint integer_type,
-				  GLboolean low_precision,
-				  GLboolean saturate,
+				  bool low_precision,
+				  bool saturate,
 				  GLuint dataType )
 {
    struct brw_context *brw = p->brw;
@@ -439,9 +439,9 @@ static void brw_set_math_message( struct brw_compile *p,
 
 static void brw_set_ff_sync_message(struct brw_compile *p,
 				    struct brw_instruction *insn,
-				    GLboolean allocate,
+				    bool allocate,
 				    GLuint response_length,
-				    GLboolean end_of_thread)
+				    bool end_of_thread)
 {
    struct brw_context *brw = p->brw;
    struct intel_context *intel = &brw->intel;
@@ -467,12 +467,12 @@ static void brw_set_ff_sync_message(struct brw_compile *p,
 
 static void brw_set_urb_message( struct brw_compile *p,
 				 struct brw_instruction *insn,
-				 GLboolean allocate,
-				 GLboolean used,
+				 bool allocate,
+				 bool used,
 				 GLuint msg_length,
 				 GLuint response_length,
-				 GLboolean end_of_thread,
-				 GLboolean complete,
+				 bool end_of_thread,
+				 bool complete,
 				 GLuint offset,
 				 GLuint swizzle_control )
 {
@@ -535,7 +535,7 @@ brw_set_dp_write_message(struct brw_compile *p,
 			 GLuint msg_control,
 			 GLuint msg_type,
 			 GLuint msg_length,
-			 GLboolean header_present,
+			 bool header_present,
 			 GLuint pixel_scoreboard_clear,
 			 GLuint response_length,
 			 GLuint end_of_thread,
@@ -679,7 +679,7 @@ static void brw_set_sampler_message(struct brw_compile *p,
                                     GLuint msg_type,
                                     GLuint response_length,
                                     GLuint msg_length,
-                                    GLboolean eot,
+                                    bool eot,
                                     GLuint header_present,
                                     GLuint simd_mode)
 {
@@ -1763,7 +1763,7 @@ void brw_oword_block_write_scratch(struct brw_compile *p,
 			       msg_control,
 			       msg_type,
 			       mlen,
-			       GL_TRUE, /* header_present */
+			       true, /* header_present */
 			       0, /* pixel scoreboard */
 			       send_commit_msg, /* response_length */
 			       0, /* eot */
@@ -2062,8 +2062,8 @@ void brw_fb_WRITE(struct brw_compile *p,
                   GLuint binding_table_index,
                   GLuint msg_length,
                   GLuint response_length,
-                  GLboolean eot,
-                  GLboolean header_present)
+                  bool eot,
+                  bool header_present)
 {
    struct intel_context *intel = &p->brw->intel;
    struct brw_instruction *insn;
@@ -2131,12 +2131,12 @@ void brw_SAMPLE(struct brw_compile *p,
 		GLuint msg_type,
 		GLuint response_length,
 		GLuint msg_length,
-		GLboolean eot,
+		bool eot,
 		GLuint header_present,
 		GLuint simd_mode)
 {
    struct intel_context *intel = &p->brw->intel;
-   GLboolean need_stall = 0;
+   bool need_stall = 0;
 
    if (writemask == 0) {
       /*printf("%s: zero writemask??\n", __FUNCTION__); */
@@ -2174,13 +2174,13 @@ void brw_SAMPLE(struct brw_compile *p,
          /* printf("need stall %x %x\n", newmask , writemask); */
       }
       else {
-	 GLboolean dispatch_16 = GL_FALSE;
+	 bool dispatch_16 = false;
 
 	 struct brw_reg m1 = brw_message_reg(msg_reg_nr);
 
 	 guess_execution_size(p, p->current, dest);
 	 if (p->current->header.execution_size == BRW_EXECUTE_16)
-	    dispatch_16 = GL_TRUE;
+	    dispatch_16 = true;
 
 	 newmask = ~newmask & WRITEMASK_XYZW;
 
@@ -2253,12 +2253,12 @@ void brw_urb_WRITE(struct brw_compile *p,
 		   struct brw_reg dest,
 		   GLuint msg_reg_nr,
 		   struct brw_reg src0,
-		   GLboolean allocate,
-		   GLboolean used,
+		   bool allocate,
+		   bool used,
 		   GLuint msg_length,
 		   GLuint response_length,
-		   GLboolean eot,
-		   GLboolean writes_complete,
+		   bool eot,
+		   bool writes_complete,
 		   GLuint offset,
 		   GLuint swizzle)
 {
@@ -2383,9 +2383,9 @@ void brw_ff_sync(struct brw_compile *p,
 		   struct brw_reg dest,
 		   GLuint msg_reg_nr,
 		   struct brw_reg src0,
-		   GLboolean allocate,
+		   bool allocate,
 		   GLuint response_length,
-		   GLboolean eot)
+		   bool eot)
 {
    struct intel_context *intel = &p->brw->intel;
    struct brw_instruction *insn;

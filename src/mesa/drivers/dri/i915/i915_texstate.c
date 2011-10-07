@@ -131,7 +131,7 @@ translate_wrap_mode(GLenum wrap)
  * efficient, but this has gotten complex enough that we need
  * something which is understandable and reliable.
  */
-static GLboolean
+static bool
 i915_update_tex_unit(struct intel_context *intel, GLuint unit, GLuint ss3)
 {
    struct gl_context *ctx = &intel->ctx;
@@ -156,7 +156,7 @@ i915_update_tex_unit(struct intel_context *intel, GLuint unit, GLuint ss3)
    }
 
    if (!intel_finalize_mipmap_tree(intel, unit))
-      return GL_FALSE;
+      return false;
 
    /* Get first image here, since intelObj->firstLevel will get set in
     * the intel_finalize_mipmap_tree() call above.
@@ -222,7 +222,7 @@ i915_update_tex_unit(struct intel_context *intel, GLuint unit, GLuint ss3)
          mipFilt = MIPFILTER_LINEAR;
          break;
       default:
-         return GL_FALSE;
+         return false;
       }
 
       if (sampler->MaxAnisotropy > 1.0) {
@@ -242,7 +242,7 @@ i915_update_tex_unit(struct intel_context *intel, GLuint unit, GLuint ss3)
             magFilt = FILTER_LINEAR;
             break;
          default:
-            return GL_FALSE;
+            return false;
          }
       }
 
@@ -265,7 +265,7 @@ i915_update_tex_unit(struct intel_context *intel, GLuint unit, GLuint ss3)
       if (sampler->CompareMode == GL_COMPARE_R_TO_TEXTURE_ARB &&
           tObj->Target != GL_TEXTURE_3D) {
          if (tObj->Target == GL_TEXTURE_1D) 
-            return GL_FALSE;
+            return false;
 
          state[I915_TEXREG_SS2] |=
             (SS2_SHADOW_ENABLE |
@@ -309,7 +309,7 @@ i915_update_tex_unit(struct intel_context *intel, GLuint unit, GLuint ss3)
            wr == GL_CLAMP ||
            ws == GL_CLAMP_TO_BORDER ||
            wt == GL_CLAMP_TO_BORDER || wr == GL_CLAMP_TO_BORDER))
-         return GL_FALSE;
+         return false;
 
       /* Only support TEXCOORDMODE_CLAMP_EDGE and TEXCOORDMODE_CUBE (not 
        * used) when using cube map texture coordinates
@@ -317,7 +317,7 @@ i915_update_tex_unit(struct intel_context *intel, GLuint unit, GLuint ss3)
       if (tObj->Target == GL_TEXTURE_CUBE_MAP_ARB &&
           (((ws != GL_CLAMP) && (ws != GL_CLAMP_TO_EDGE)) ||
            ((wt != GL_CLAMP) && (wt != GL_CLAMP_TO_EDGE))))
-          return GL_FALSE;
+          return false;
 
       state[I915_TEXREG_SS3] = ss3;     /* SS3_NORMALIZED_COORDS */
 
@@ -356,7 +356,7 @@ i915_update_tex_unit(struct intel_context *intel, GLuint unit, GLuint ss3)
    }
 
 
-   I915_ACTIVESTATE(i915, I915_UPLOAD_TEX(unit), GL_TRUE);
+   I915_ACTIVESTATE(i915, I915_UPLOAD_TEX(unit), true);
    /* memcmp was already disabled, but definitely won't work as the
     * region might now change and that wouldn't be detected:
     */
@@ -372,7 +372,7 @@ i915_update_tex_unit(struct intel_context *intel, GLuint unit, GLuint ss3)
    DBG(TEXTURE, "state[I915_TEXREG_MS4] = 0x%x\n", state[I915_TEXREG_MS4]);
 #endif
 
-   return GL_TRUE;
+   return true;
 }
 
 
@@ -381,7 +381,7 @@ i915_update_tex_unit(struct intel_context *intel, GLuint unit, GLuint ss3)
 void
 i915UpdateTextureState(struct intel_context *intel)
 {
-   GLboolean ok = GL_TRUE;
+   bool ok = true;
    GLuint i;
 
    for (i = 0; i < I915_TEX_UNITS && ok; i++) {
@@ -398,7 +398,7 @@ i915UpdateTextureState(struct intel_context *intel)
       case 0:{
             struct i915_context *i915 = i915_context(&intel->ctx);
             if (i915->state.active & I915_UPLOAD_TEX(i))
-               I915_ACTIVESTATE(i915, I915_UPLOAD_TEX(i), GL_FALSE);
+               I915_ACTIVESTATE(i915, I915_UPLOAD_TEX(i), false);
 
 	    if (i915->state.tex_buffer[i] != NULL) {
 	       drm_intel_bo_unreference(i915->state.tex_buffer[i]);
@@ -408,7 +408,7 @@ i915UpdateTextureState(struct intel_context *intel)
             break;
          }
       default:
-         ok = GL_FALSE;
+         ok = false;
          break;
       }
    }

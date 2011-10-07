@@ -1877,7 +1877,7 @@ void
 fs_visitor::emit_fb_writes()
 {
    this->current_annotation = "FB write header";
-   GLboolean header_present = GL_TRUE;
+   bool header_present = true;
    int base_mrf = 2;
    int nr = base_mrf;
    int reg_width = c->dispatch_width / 8;

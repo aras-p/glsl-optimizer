@@ -110,7 +110,7 @@ intel_miptree_create(struct intel_context *intel,
 		     GLuint width0,
 		     GLuint height0,
 		     GLuint depth0,
-		     GLboolean expect_accelerated_upload)
+		     bool expect_accelerated_upload)
 {
    struct intel_mipmap_tree *mt;
    uint32_t tiling = I915_TILING_NONE;
@@ -238,7 +238,7 @@ intel_miptree_get_dimensions_for_image(struct gl_texture_image *image,
  *
  * Not sure whether I want to pass gl_texture_image here.
  */
-GLboolean
+bool
 intel_miptree_match_image(struct intel_mipmap_tree *mt,
                           struct gl_texture_image *image)
 {
@@ -248,10 +248,10 @@ intel_miptree_match_image(struct intel_mipmap_tree *mt,
 
    /* Images with borders are never pulled into mipmap trees. */
    if (image->Border)
-      return GL_FALSE;
+      return false;
 
    if (image->TexFormat != mt->format)
-      return GL_FALSE;
+      return false;
 
    intel_miptree_get_dimensions_for_image(image, &width, &height, &depth);
 
@@ -262,9 +262,9 @@ intel_miptree_match_image(struct intel_mipmap_tree *mt,
    if (width != mt->level[level].width ||
        height != mt->level[level].height ||
        depth != mt->level[level].depth)
-      return GL_FALSE;
+      return false;
 
-   return GL_TRUE;
+   return true;
 }
 
 

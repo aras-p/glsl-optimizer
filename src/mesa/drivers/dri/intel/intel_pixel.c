@@ -38,7 +38,7 @@
 #define FILE_DEBUG_FLAG DEBUG_PIXEL
 
 static GLenum
-effective_func(GLenum func, GLboolean src_alpha_is_one)
+effective_func(GLenum func, bool src_alpha_is_one)
 {
    if (src_alpha_is_one) {
       if (func == GL_SRC_ALPHA)
@@ -54,15 +54,15 @@ effective_func(GLenum func, GLboolean src_alpha_is_one)
  * Check if any fragment operations are in effect which might effect
  * glDraw/CopyPixels.
  */
-GLboolean
-intel_check_blit_fragment_ops(struct gl_context * ctx, GLboolean src_alpha_is_one)
+bool
+intel_check_blit_fragment_ops(struct gl_context * ctx, bool src_alpha_is_one)
 {
    if (ctx->NewState)
       _mesa_update_state(ctx);
 
    if (ctx->FragmentProgram._Enabled) {
       DBG("fallback due to fragment program\n");
-      return GL_FALSE;
+      return false;
    }
 
    if (ctx->Color.BlendEnabled &&
@@ -73,12 +73,12 @@ intel_check_blit_fragment_ops(struct gl_context * ctx, GLboolean src_alpha_is_on
 	effective_func(ctx->Color.Blend[0].DstA, src_alpha_is_one) != GL_ZERO ||
 	ctx->Color.Blend[0].EquationA != GL_FUNC_ADD)) {
       DBG("fallback due to blend\n");
-      return GL_FALSE;
+      return false;
    }
 
    if (ctx->Texture._EnabledUnits) {
       DBG("fallback due to texturing\n");
-      return GL_FALSE;
+      return false;
    }
 
    if (!(ctx->Color.ColorMask[0][0] &&
@@ -86,40 +86,40 @@ intel_check_blit_fragment_ops(struct gl_context * ctx, GLboolean src_alpha_is_on
 	 ctx->Color.ColorMask[0][2] &&
 	 ctx->Color.ColorMask[0][3])) {
       DBG("fallback due to color masking\n");
-      return GL_FALSE;
+      return false;
    }
 
    if (ctx->Color.AlphaEnabled) {
       DBG("fallback due to alpha\n");
-      return GL_FALSE;
+      return false;
    }
 
    if (ctx->Depth.Test) {
       DBG("fallback due to depth test\n");
-      return GL_FALSE;
+      return false;
    }
 
    if (ctx->Fog.Enabled) {
       DBG("fallback due to fog\n");
-      return GL_FALSE;
+      return false;
    }
 
    if (ctx->_ImageTransferState) {
       DBG("fallback due to image transfer\n");
-      return GL_FALSE;
+      return false;
    }
 
    if (ctx->Stencil._Enabled) {
       DBG("fallback due to image stencil\n");
-      return GL_FALSE;
+      return false;
    }
 
    if (ctx->RenderMode != GL_RENDER) {
       DBG("fallback due to render mode\n");
-      return GL_FALSE;
+      return false;
    }
 
-   return GL_TRUE;
+   return true;
 }
 
 /* The intel_region struct doesn't really do enough to capture the
@@ -132,26 +132,26 @@ intel_check_blit_fragment_ops(struct gl_context * ctx, GLboolean src_alpha_is_on
  * \param format  as given to glDraw/ReadPixels
  * \param type  as given to glDraw/ReadPixels
  */
-GLboolean
+bool
 intel_check_blit_format(struct intel_region * region,
                         GLenum format, GLenum type)
 {
    if (region->cpp == 4 &&
        (type == GL_UNSIGNED_INT_8_8_8_8_REV ||
         type == GL_UNSIGNED_BYTE) && format == GL_BGRA) {
-      return GL_TRUE;
+      return true;
    }
 
    if (region->cpp == 2 &&
        type == GL_UNSIGNED_SHORT_5_6_5_REV && format == GL_BGR) {
-      return GL_TRUE;
+      return true;
    }
 
    DBG("%s: bad format for blit (cpp %d, type %s format %s)\n",
        __FUNCTION__, region->cpp,
        _mesa_lookup_enum_by_nr(type), _mesa_lookup_enum_by_nr(format));
 
-   return GL_FALSE;
+   return false;
 }
 
 void

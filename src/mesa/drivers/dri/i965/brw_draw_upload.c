@@ -168,7 +168,7 @@ static GLuint byte_types_scale[5] = {
  * Format will be GL_RGBA or possibly GL_BGRA for GLubyte[4] color arrays.
  */
 static GLuint get_surface_type( GLenum type, GLuint size,
-                                GLenum format, GLboolean normalized )
+                                GLenum format, bool normalized )
 {
    if (unlikely(INTEL_DEBUG & DEBUG_VERTS))
       printf("type %s size %d normalized %d\n", 
@@ -335,7 +335,7 @@ static void brw_prepare_vertices(struct brw_context *brw)
     * isn't an issue at this point.
     */
    if (brw->vb.nr_enabled >= BRW_VEP_MAX) {
-      intel->Fallback = GL_TRUE; /* boolean, not bitfield */
+      intel->Fallback = true; /* boolean, not bitfield */
       return;
    }
 
@@ -398,7 +398,7 @@ static void brw_prepare_vertices(struct brw_context *brw)
 	    /* Position array not properly enabled:
 	     */
 	    if (input->attrib == VERT_ATTRIB_POS && glarray->StrideB == 0) {
-               intel->Fallback = GL_TRUE; /* boolean, not bitfield */
+               intel->Fallback = true; /* boolean, not bitfield */
                return;
             }
 

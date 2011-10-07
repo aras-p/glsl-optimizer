@@ -217,7 +217,7 @@ intel_flush_front(struct gl_context *ctx)
 	 /* We set the dirty bit in intel_prepare_render() if we're
 	  * front buffer rendering once we get there.
 	  */
-	 intel->front_buffer_dirty = GL_FALSE;
+	 intel->front_buffer_dirty = false;
       }
    }
 }
@@ -425,7 +425,7 @@ intel_prepare_render(struct intel_context *intel)
     * mark it as dirty here.
     */
    if (intel->is_front_buffer_rendering)
-      intel->front_buffer_dirty = GL_TRUE;
+      intel->front_buffer_dirty = true;
 
    /* Wait for the swapbuffers before the one we just emitted, so we
     * don't get too many swaps outstanding for apps that are GPU-heavy
@@ -446,7 +446,7 @@ intel_prepare_render(struct intel_context *intel)
       drm_intel_bo_wait_rendering(intel->first_post_swapbuffers_batch);
       drm_intel_bo_unreference(intel->first_post_swapbuffers_batch);
       intel->first_post_swapbuffers_batch = NULL;
-      intel->need_throttle = GL_FALSE;
+      intel->need_throttle = false;
    }
 }
 
@@ -535,7 +535,7 @@ intel_glFlush(struct gl_context *ctx)
    intel_flush(ctx);
    intel_flush_front(ctx);
    if (intel->is_front_buffer_rendering)
-      intel->need_throttle = GL_TRUE;
+      intel->need_throttle = true;
 }
 
 void
@@ -572,7 +572,7 @@ intelInitDriverFunctions(struct dd_function_table *functions)
    intel_init_syncobj_functions(functions);
 }
 
-GLboolean
+bool
 intelInitContext(struct intel_context *intel,
 		 int api,
                  const struct gl_config * mesaVis,
@@ -589,7 +589,7 @@ intelInitContext(struct intel_context *intel,
 
    /* we can't do anything without a connection to the device */
    if (intelScreen->bufmgr == NULL)
-      return GL_FALSE;
+      return false;
 
    /* Can't rely on invalidate events, fall back to glViewport hack */
    if (!driContextPriv->driScreenPriv->dri2.useInvalidate) {
@@ -605,7 +605,7 @@ intelInitContext(struct intel_context *intel,
    if (!_mesa_initialize_context(&intel->ctx, api, mesaVis, shareCtx,
                                  functions, (void *) intel)) {
       printf("%s: failed to init mesa context\n", __FUNCTION__);
-      return GL_FALSE;
+      return false;
    }
 
    driContextPriv->driverPrivate = intel;
@@ -640,22 +640,22 @@ intelInitContext(struct intel_context *intel,
 
    memset(&ctx->TextureFormatSupported, 0,
 	  sizeof(ctx->TextureFormatSupported));
-   ctx->TextureFormatSupported[MESA_FORMAT_ARGB8888] = GL_TRUE;
+   ctx->TextureFormatSupported[MESA_FORMAT_ARGB8888] = true;
    if (devID != PCI_CHIP_I830_M && devID != PCI_CHIP_845_G)
-      ctx->TextureFormatSupported[MESA_FORMAT_XRGB8888] = GL_TRUE;
-   ctx->TextureFormatSupported[MESA_FORMAT_ARGB4444] = GL_TRUE;
-   ctx->TextureFormatSupported[MESA_FORMAT_ARGB1555] = GL_TRUE;
-   ctx->TextureFormatSupported[MESA_FORMAT_RGB565] = GL_TRUE;
-   ctx->TextureFormatSupported[MESA_FORMAT_L8] = GL_TRUE;
-   ctx->TextureFormatSupported[MESA_FORMAT_A8] = GL_TRUE;
-   ctx->TextureFormatSupported[MESA_FORMAT_I8] = GL_TRUE;
-   ctx->TextureFormatSupported[MESA_FORMAT_AL88] = GL_TRUE;
+      ctx->TextureFormatSupported[MESA_FORMAT_XRGB8888] = true;
+   ctx->TextureFormatSupported[MESA_FORMAT_ARGB4444] = true;
+   ctx->TextureFormatSupported[MESA_FORMAT_ARGB1555] = true;
+   ctx->TextureFormatSupported[MESA_FORMAT_RGB565] = true;
+   ctx->TextureFormatSupported[MESA_FORMAT_L8] = true;
+   ctx->TextureFormatSupported[MESA_FORMAT_A8] = true;
+   ctx->TextureFormatSupported[MESA_FORMAT_I8] = true;
+   ctx->TextureFormatSupported[MESA_FORMAT_AL88] = true;
    if (intel->gen >= 4)
-      ctx->TextureFormatSupported[MESA_FORMAT_AL1616] = GL_TRUE;
+      ctx->TextureFormatSupported[MESA_FORMAT_AL1616] = true;
 
    /* Depth and stencil */
-   ctx->TextureFormatSupported[MESA_FORMAT_S8_Z24] = GL_TRUE;
-   ctx->TextureFormatSupported[MESA_FORMAT_X8_Z24] = GL_TRUE;
+   ctx->TextureFormatSupported[MESA_FORMAT_S8_Z24] = true;
+   ctx->TextureFormatSupported[MESA_FORMAT_X8_Z24] = true;
    ctx->TextureFormatSupported[MESA_FORMAT_S8] = intel->has_separate_stencil;
 
    /*
@@ -665,71 +665,71 @@ intelInitContext(struct intel_context *intel,
     * combo that actually works, so this can probably be re-enabled.
     */
    /*
-   ctx->TextureFormatSupported[MESA_FORMAT_Z16] = GL_TRUE;
-   ctx->TextureFormatSupported[MESA_FORMAT_Z24] = GL_TRUE;
+   ctx->TextureFormatSupported[MESA_FORMAT_Z16] = true;
+   ctx->TextureFormatSupported[MESA_FORMAT_Z24] = true;
    */
 
    /* ctx->Extensions.MESA_ycbcr_texture */
-   ctx->TextureFormatSupported[MESA_FORMAT_YCBCR] = GL_TRUE;
-   ctx->TextureFormatSupported[MESA_FORMAT_YCBCR_REV] = GL_TRUE;
+   ctx->TextureFormatSupported[MESA_FORMAT_YCBCR] = true;
+   ctx->TextureFormatSupported[MESA_FORMAT_YCBCR_REV] = true;
 
    /* GL_3DFX_texture_compression_FXT1 */
-   ctx->TextureFormatSupported[MESA_FORMAT_RGB_FXT1] = GL_TRUE;
-   ctx->TextureFormatSupported[MESA_FORMAT_RGBA_FXT1] = GL_TRUE;
+   ctx->TextureFormatSupported[MESA_FORMAT_RGB_FXT1] = true;
+   ctx->TextureFormatSupported[MESA_FORMAT_RGBA_FXT1] = true;
 
    /* GL_EXT_texture_compression_s3tc */
-   ctx->TextureFormatSupported[MESA_FORMAT_RGB_DXT1] = GL_TRUE;
-   ctx->TextureFormatSupported[MESA_FORMAT_RGBA_DXT1] = GL_TRUE;
-   ctx->TextureFormatSupported[MESA_FORMAT_RGBA_DXT3] = GL_TRUE;
-   ctx->TextureFormatSupported[MESA_FORMAT_RGBA_DXT5] = GL_TRUE;
+   ctx->TextureFormatSupported[MESA_FORMAT_RGB_DXT1] = true;
+   ctx->TextureFormatSupported[MESA_FORMAT_RGBA_DXT1] = true;
+   ctx->TextureFormatSupported[MESA_FORMAT_RGBA_DXT3] = true;
+   ctx->TextureFormatSupported[MESA_FORMAT_RGBA_DXT5] = true;
 
 #ifndef I915
    /* GL_ARB_texture_compression_rgtc */
-   ctx->TextureFormatSupported[MESA_FORMAT_RED_RGTC1] = GL_TRUE;
-   ctx->TextureFormatSupported[MESA_FORMAT_SIGNED_RED_RGTC1] = GL_TRUE;
-   ctx->TextureFormatSupported[MESA_FORMAT_RG_RGTC2] = GL_TRUE;
-   ctx->TextureFormatSupported[MESA_FORMAT_SIGNED_RG_RGTC2] = GL_TRUE;
+   ctx->TextureFormatSupported[MESA_FORMAT_RED_RGTC1] = true;
+   ctx->TextureFormatSupported[MESA_FORMAT_SIGNED_RED_RGTC1] = true;
+   ctx->TextureFormatSupported[MESA_FORMAT_RG_RGTC2] = true;
+   ctx->TextureFormatSupported[MESA_FORMAT_SIGNED_RG_RGTC2] = true;
 
    /* GL_ARB_texture_rg */
-   ctx->TextureFormatSupported[MESA_FORMAT_R8] = GL_TRUE;
-   ctx->TextureFormatSupported[MESA_FORMAT_R16] = GL_TRUE;
-   ctx->TextureFormatSupported[MESA_FORMAT_RG88] = GL_TRUE;
-   ctx->TextureFormatSupported[MESA_FORMAT_RG1616] = GL_TRUE;
+   ctx->TextureFormatSupported[MESA_FORMAT_R8] = true;
+   ctx->TextureFormatSupported[MESA_FORMAT_R16] = true;
+   ctx->TextureFormatSupported[MESA_FORMAT_RG88] = true;
+   ctx->TextureFormatSupported[MESA_FORMAT_RG1616] = true;
 
    /* GL_MESA_texture_signed_rgba / GL_EXT_texture_snorm */
-   ctx->TextureFormatSupported[MESA_FORMAT_DUDV8] = GL_TRUE;
-   ctx->TextureFormatSupported[MESA_FORMAT_SIGNED_RGBA8888_REV] = GL_TRUE;
-   ctx->TextureFormatSupported[MESA_FORMAT_SIGNED_R8] = GL_TRUE;
-   ctx->TextureFormatSupported[MESA_FORMAT_SIGNED_RG88_REV] = GL_TRUE;
-   ctx->TextureFormatSupported[MESA_FORMAT_SIGNED_R16] = GL_TRUE;
-   ctx->TextureFormatSupported[MESA_FORMAT_SIGNED_GR1616] = GL_TRUE;
+   ctx->TextureFormatSupported[MESA_FORMAT_DUDV8] = true;
+   ctx->TextureFormatSupported[MESA_FORMAT_SIGNED_RGBA8888_REV] = true;
+   ctx->TextureFormatSupported[MESA_FORMAT_SIGNED_R8] = true;
+   ctx->TextureFormatSupported[MESA_FORMAT_SIGNED_RG88_REV] = true;
+   ctx->TextureFormatSupported[MESA_FORMAT_SIGNED_R16] = true;
+   ctx->TextureFormatSupported[MESA_FORMAT_SIGNED_GR1616] = true;
 
    /* GL_EXT_texture_sRGB */
-   ctx->TextureFormatSupported[MESA_FORMAT_SARGB8] = GL_TRUE;
+   ctx->TextureFormatSupported[MESA_FORMAT_SARGB8] = true;
    if (intel->gen >= 5 || intel->is_g4x)
-      ctx->TextureFormatSupported[MESA_FORMAT_SRGB_DXT1] = GL_TRUE;
-   ctx->TextureFormatSupported[MESA_FORMAT_SRGBA_DXT1] = GL_TRUE;
-   ctx->TextureFormatSupported[MESA_FORMAT_SRGBA_DXT3] = GL_TRUE;
-   ctx->TextureFormatSupported[MESA_FORMAT_SRGBA_DXT5] = GL_TRUE;
+      ctx->TextureFormatSupported[MESA_FORMAT_SRGB_DXT1] = true;
+   ctx->TextureFormatSupported[MESA_FORMAT_SRGBA_DXT1] = true;
+   ctx->TextureFormatSupported[MESA_FORMAT_SRGBA_DXT3] = true;
+   ctx->TextureFormatSupported[MESA_FORMAT_SRGBA_DXT5] = true;
    if (intel->gen >= 5 || intel->is_g4x) {
-      ctx->TextureFormatSupported[MESA_FORMAT_SL8] = GL_TRUE;
-      ctx->TextureFormatSupported[MESA_FORMAT_SLA8] = GL_TRUE;
+      ctx->TextureFormatSupported[MESA_FORMAT_SL8] = true;
+      ctx->TextureFormatSupported[MESA_FORMAT_SLA8] = true;
    }
 
 #ifdef TEXTURE_FLOAT_ENABLED
-   ctx->TextureFormatSupported[MESA_FORMAT_RGBA_FLOAT32] = GL_TRUE;
-   ctx->TextureFormatSupported[MESA_FORMAT_RG_FLOAT32] = GL_TRUE;
-   ctx->TextureFormatSupported[MESA_FORMAT_R_FLOAT32] = GL_TRUE;
-   ctx->TextureFormatSupported[MESA_FORMAT_INTENSITY_FLOAT32] = GL_TRUE;
-   ctx->TextureFormatSupported[MESA_FORMAT_LUMINANCE_FLOAT32] = GL_TRUE;
-   ctx->TextureFormatSupported[MESA_FORMAT_ALPHA_FLOAT32] = GL_TRUE;
-   ctx->TextureFormatSupported[MESA_FORMAT_LUMINANCE_ALPHA_FLOAT32] = GL_TRUE;
+   ctx->TextureFormatSupported[MESA_FORMAT_RGBA_FLOAT32] = true;
+   ctx->TextureFormatSupported[MESA_FORMAT_RG_FLOAT32] = true;
+   ctx->TextureFormatSupported[MESA_FORMAT_R_FLOAT32] = true;
+   ctx->TextureFormatSupported[MESA_FORMAT_INTENSITY_FLOAT32] = true;
+   ctx->TextureFormatSupported[MESA_FORMAT_LUMINANCE_FLOAT32] = true;
+   ctx->TextureFormatSupported[MESA_FORMAT_ALPHA_FLOAT32] = true;
+   ctx->TextureFormatSupported[MESA_FORMAT_LUMINANCE_ALPHA_FLOAT32] = true;
 
    /* GL_EXT_texture_shared_exponent */
-   ctx->TextureFormatSupported[MESA_FORMAT_RGB9_E5_FLOAT] = GL_TRUE;
+   ctx->TextureFormatSupported[MESA_FORMAT_RGB9_E5_FLOAT] = true;
 
    /* GL_EXT_packed_float */
-   ctx->TextureFormatSupported[MESA_FORMAT_R11_G11_B10_FLOAT] = GL_TRUE;
+   ctx->TextureFormatSupported[MESA_FORMAT_R11_G11_B10_FLOAT] = true;
 #endif
 
 #endif /* !I915 */
@@ -797,7 +797,7 @@ intelInitContext(struct intel_context *intel,
    _mesa_init_point(ctx);
 
    if (intel->gen >= 4) {
-      ctx->Const.sRGBCapable = GL_TRUE;
+      ctx->Const.sRGBCapable = true;
       if (MAX_WIDTH > 8192)
 	 ctx->Const.MaxRenderbufferSize = 8192;
    } else {
@@ -812,8 +812,8 @@ intelInitContext(struct intel_context *intel,
    _swsetup_CreateContext(ctx);
  
    /* Configure swrast to match hardware characteristics: */
-   _swrast_allow_pixel_fog(ctx, GL_FALSE);
-   _swrast_allow_vertex_fog(ctx, GL_TRUE);
+   _swrast_allow_pixel_fog(ctx, false);
+   _swrast_allow_vertex_fog(ctx, true);
 
    _mesa_meta_init(ctx);
 
@@ -853,7 +853,7 @@ intelInitContext(struct intel_context *intel,
 
    INTEL_DEBUG = driParseDebugString(getenv("INTEL_DEBUG"), debug_control);
    if (INTEL_DEBUG & DEBUG_BUFMGR)
-      dri_bufmgr_set_debug(intel->bufmgr, GL_TRUE);
+      dri_bufmgr_set_debug(intel->bufmgr, true);
 
    intel_batchbuffer_init(intel);
 
@@ -881,7 +881,7 @@ intelInitContext(struct intel_context *intel,
       intel->always_flush_cache = 1;
    }
 
-   return GL_TRUE;
+   return true;
 }
 
 void
@@ -932,7 +932,7 @@ intelUnbindContext(__DRIcontext * driContextPriv)
    /* Unset current context and dispath table */
    _mesa_make_current(NULL, NULL, NULL);
 
-   return GL_TRUE;
+   return true;
 }
 
 GLboolean
@@ -982,7 +982,7 @@ intelMakeCurrent(__DRIcontext * driContextPriv,
       _mesa_make_current(NULL, NULL, NULL);
    }
 
-   return GL_TRUE;
+   return true;
 }
 
 /**

@@ -38,7 +38,7 @@
  * are promoted to [0,0,0,1] for the purposes of this analysis.
  */
 struct tracker {
-   GLboolean twoside;
+   bool twoside;
    GLubyte active[PROGRAM_OUTPUT+1][MAX_PROGRAM_TEMPS];
    GLbitfield size_masks[4];  /**< one bit per fragment program input attrib */
 };

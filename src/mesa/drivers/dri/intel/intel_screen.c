@@ -111,7 +111,7 @@ intelDRI2Flush(__DRIdrawable *drawable)
    if (intel->gen < 4)
       INTEL_FIREVERTICES(intel);
 
-   intel->need_throttle = GL_TRUE;
+   intel->need_throttle = true;
 
    if (intel->batch.used)
       intel_batchbuffer_flush(intel);
@@ -266,7 +266,7 @@ intel_create_image(__DRIscreen *screen,
 
    image->region =
       intel_region_alloc(intelScreen, tiling,
-			 cpp, width, height, GL_TRUE);
+			 cpp, width, height, true);
    if (image->region == NULL) {
       FREE(image);
       return NULL;
@@ -281,14 +281,14 @@ intel_query_image(__DRIimage *image, int attrib, int *value)
    switch (attrib) {
    case __DRI_IMAGE_ATTRIB_STRIDE:
       *value = image->region->pitch * image->region->cpp;
-      return GL_TRUE;
+      return true;
    case __DRI_IMAGE_ATTRIB_HANDLE:
       *value = image->region->bo->handle;
-      return GL_TRUE;
+      return true;
    case __DRI_IMAGE_ATTRIB_NAME:
       return intel_region_flink(image->region, (uint32_t *) value);
    default:
-      return GL_FALSE;
+      return false;
    }
 }
 
@@ -334,7 +334,7 @@ static const __DRIextension *intelScreenExtensions[] = {
     NULL
 };
 
-static GLboolean
+static bool
 intel_get_param(__DRIscreen *psp, int param, int *value)
 {
    int ret;
@@ -347,13 +347,13 @@ intel_get_param(__DRIscreen *psp, int param, int *value)
    if (ret) {
       if (ret != -EINVAL)
 	 _mesa_warning(NULL, "drm_i915_getparam: %d", ret);
-      return GL_FALSE;
+      return false;
    }
 
-   return GL_TRUE;
+   return true;
 }
 
-static GLboolean
+static bool
 intel_get_boolean(__DRIscreen *psp, int param)
 {
    int value = 0;
@@ -396,7 +396,7 @@ intelCreateBuffer(__DRIscreen * driScrnPriv,
    struct intel_screen *screen = (struct intel_screen*) driScrnPriv->private;
 
    if (isPixmap) {
-      return GL_FALSE;          /* not implemented */
+      return false;          /* not implemented */
    }
    else {
       gl_format rgbFormat;
@@ -404,7 +404,7 @@ intelCreateBuffer(__DRIscreen * driScrnPriv,
       struct gl_framebuffer *fb = CALLOC_STRUCT(gl_framebuffer);
 
       if (!fb)
-	 return GL_FALSE;
+	 return false;
 
       _mesa_initialize_window_framebuffer(fb, mesaVis);
 
@@ -467,15 +467,15 @@ intelCreateBuffer(__DRIscreen * driScrnPriv,
 
       /* now add any/all software-based renderbuffers we may need */
       _mesa_add_soft_renderbuffers(fb,
-                                   GL_FALSE, /* never sw color */
-                                   GL_FALSE, /* never sw depth */
-                                   GL_FALSE, /* never sw stencil */
+                                   false, /* never sw color */
+                                   false, /* never sw depth */
+                                   false, /* never sw stencil */
                                    mesaVis->accumRedBits > 0,
-                                   GL_FALSE, /* never sw alpha */
-                                   GL_FALSE  /* never sw aux */ );
+                                   false, /* never sw alpha */
+                                   false  /* never sw aux */ );
       driDrawPriv->driverPrivate = fb;
 
-      return GL_TRUE;
+      return true;
    }
 }
 
@@ -491,18 +491,21 @@ intelDestroyBuffer(__DRIdrawable * driDrawPriv)
  * init-designated function to register chipids and createcontext
  * functions.
  */
-extern GLboolean i830CreateContext(const struct gl_config * mesaVis,
-                                   __DRIcontext * driContextPriv,
-                                   void *sharedContextPrivate);
+extern bool
+i830CreateContext(const struct gl_config *mesaVis,
+		  __DRIcontext *driContextPriv,
+		  void *sharedContextPrivate);
 
-extern GLboolean i915CreateContext(int api,
-				   const struct gl_config * mesaVis,
-                                   __DRIcontext * driContextPriv,
-                                   void *sharedContextPrivate);
-extern GLboolean brwCreateContext(int api,
-				  const struct gl_config * mesaVis,
-				  __DRIcontext * driContextPriv,
-				  void *sharedContextPrivate);
+extern bool
+i915CreateContext(int api,
+		  const struct gl_config *mesaVis,
+		  __DRIcontext *driContextPriv,
+		  void *sharedContextPrivate);
+extern bool
+brwCreateContext(int api,
+	         const struct gl_config *mesaVis,
+	         __DRIcontext *driContextPriv,
+		 void *sharedContextPrivate);
 
 static GLboolean
 intelCreateContext(gl_api api,
@@ -520,7 +523,7 @@ intelCreateContext(gl_api api,
 				  sharedContextPrivate);
       }
    } else {
-      intelScreen->no_vbo = GL_TRUE;
+      intelScreen->no_vbo = true;
       return i830CreateContext(mesaVis, driContextPriv, sharedContextPrivate);
    }
 #else
@@ -529,10 +532,10 @@ intelCreateContext(gl_api api,
 			      driContextPriv, sharedContextPrivate);
 #endif
    fprintf(stderr, "Unrecognized deviceID 0x%x\n", intelScreen->deviceID);
-   return GL_FALSE;
+   return false;
 }
 
-static GLboolean
+static bool
 intel_init_bufmgr(struct intel_screen *intelScreen)
 {
    __DRIscreen *spriv = intelScreen->driScrnPriv;
@@ -545,13 +548,13 @@ intel_init_bufmgr(struct intel_screen *intelScreen)
    if (intelScreen->bufmgr == NULL) {
       fprintf(stderr, "[%s:%u] Error initializing buffer manager.\n",
 	      __func__, __LINE__);
-      return GL_FALSE;
+      return false;
    }
 
    if (!intel_get_param(spriv, I915_PARAM_NUM_FENCES_AVAIL, &num_fences) ||
        num_fences == 0) {
       fprintf(stderr, "[%s: %u] Kernel 2.6.29 required.\n", __func__, __LINE__);
-      return GL_FALSE;
+      return false;
    }
 
    drm_intel_bufmgr_gem_enable_fenced_relocs(intelScreen->bufmgr);
@@ -562,7 +565,7 @@ intel_init_bufmgr(struct intel_screen *intelScreen)
    intelScreen->relaxed_relocations |=
       intel_get_boolean(spriv, I915_PARAM_HAS_RELAXED_DELTA) << 0;
 
-   return GL_TRUE;
+   return true;
 }
 
 /**
@@ -639,7 +642,7 @@ __DRIconfig **intelInitScreen2(__DRIscreen *psp)
    intelScreen = CALLOC(sizeof *intelScreen);
    if (!intelScreen) {
       fprintf(stderr, "\nERROR!  Allocating private area failed\n");
-      return GL_FALSE;
+      return false;
    }
    /* parse information in __driConfigOptions */
    driParseOptionInfo(&intelScreen->optionCache,
@@ -651,7 +654,7 @@ __DRIconfig **intelInitScreen2(__DRIscreen *psp)
    /* Determine chipset ID */
    if (!intel_get_param(psp, I915_PARAM_CHIPSET_ID,
 			&intelScreen->deviceID))
-      return GL_FALSE;
+      return false;
 
    /* Allow an override of the device ID for the purpose of making the
     * driver produce dumps for debugging of new chipset enablement.
@@ -701,7 +704,7 @@ __DRIconfig **intelInitScreen2(__DRIscreen *psp)
       psp->api_mask = api_mask;
 
    if (!intel_init_bufmgr(intelScreen))
-       return GL_FALSE;
+       return false;
 
    psp->extensions = intelScreenExtensions;
 
@@ -748,7 +751,7 @@ __DRIconfig **intelInitScreen2(__DRIscreen *psp)
 				     ARRAY_SIZE(back_buffer_modes),
 				     msaa_samples_array,
 				     ARRAY_SIZE(msaa_samples_array),
-				     GL_FALSE);
+				     false);
       if (configs == NULL)
 	 configs = new_configs;
       else
@@ -773,7 +776,7 @@ __DRIconfig **intelInitScreen2(__DRIscreen *psp)
 				     depth_bits, stencil_bits, 1,
 				     back_buffer_modes + 1, 1,
 				     msaa_samples_array, 1,
-				     GL_TRUE);
+				     true);
       if (configs == NULL)
 	 configs = new_configs;
       else
@@ -816,7 +819,7 @@ intelAllocateBuffer(__DRIscreen *screen,
       tiling = I915_TILING_X;
 
    intelBuffer->region = intel_region_alloc(intelScreen, tiling,
-					    format / 8, width, height, GL_TRUE);
+					    format / 8, width, height, true);
    
    if (intelBuffer->region == NULL) {
 	   FREE(intelBuffer);

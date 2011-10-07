@@ -31,10 +31,10 @@
 #include "main/mtypes.h"
 
 void intelInitPixelFuncs(struct dd_function_table *functions);
-GLboolean intel_check_blit_fragment_ops(struct gl_context * ctx,
-					GLboolean src_alpha_is_one);
+bool intel_check_blit_fragment_ops(struct gl_context * ctx,
+					bool src_alpha_is_one);
 
-GLboolean intel_check_blit_format(struct intel_region *region,
+bool intel_check_blit_format(struct intel_region *region,
                                   GLenum format, GLenum type);
 
 

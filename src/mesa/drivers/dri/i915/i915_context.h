@@ -139,10 +139,10 @@ struct i915_fragment_program
 {
    struct gl_fragment_program FragProg;
 
-   GLboolean translated;
-   GLboolean params_uptodate;
-   GLboolean on_hardware;
-   GLboolean error;             /* If program is malformed for any reason. */
+   bool translated;
+   bool params_uptodate;
+   bool on_hardware;
+   bool error;             /* If program is malformed for any reason. */
 
    /** Record of which phases R registers were last written in. */
    GLuint register_phases[16];
@@ -194,7 +194,7 @@ struct i915_fragment_program
    /* Helpers for i915_fragprog.c:
     */
    GLuint wpos_tex;
-   GLboolean depth_written;
+   bool depth_written;
 
    struct
    {
@@ -318,10 +318,10 @@ do {									\
 /*======================================================================
  * i915_context.c
  */
-extern GLboolean i915CreateContext(int api,
-				   const struct gl_config * mesaVis,
-                                   __DRIcontext * driContextPriv,
-                                   void *sharedContextPrivate);
+extern bool i915CreateContext(int api,
+			      const struct gl_config * mesaVis,
+			      __DRIcontext * driContextPriv,
+			      void *sharedContextPrivate);
 
 
 /*======================================================================

@@ -223,7 +223,7 @@ do_vs_prog(struct brw_context *brw,
 
    if (0) {
       _mesa_fprint_program_opt(stdout, &c.vp->program.Base, PROG_PRINT_DEBUG,
-			       GL_TRUE);
+			       true);
    }
 
    /* Emit GEN4 code.

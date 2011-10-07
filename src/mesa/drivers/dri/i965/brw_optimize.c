@@ -87,7 +87,7 @@ const struct brw_instruction_info brw_opcodes[128] = {
 };
 
 static INLINE
-GLboolean brw_is_arithmetic_inst(const struct brw_instruction *inst)
+bool brw_is_arithmetic_inst(const struct brw_instruction *inst)
 {
    return brw_opcodes[inst->header.opcode].is_arith;
 }
@@ -112,20 +112,20 @@ static const GLuint inst_type_size[8] = {
     [BRW_REGISTER_TYPE_F] = 4
 };
 
-static INLINE GLboolean
+static INLINE bool
 brw_is_grf_written(const struct brw_instruction *inst,
                    int reg_index, int size,
                    int gen)
 {
    if (brw_opcodes[inst->header.opcode].ndst == 0)
-      return GL_FALSE;
+      return false;
 
    if (inst->bits1.da1.dest_address_mode != BRW_ADDRESS_DIRECT)
       if (inst->bits1.ia1.dest_reg_file == BRW_GENERAL_REGISTER_FILE)
-         return GL_TRUE;
+         return true;
 
    if (inst->bits1.da1.dest_reg_file != BRW_GENERAL_REGISTER_FILE)
-      return GL_FALSE;
+      return false;
 
    const int reg_start = reg_index * REG_SIZE;
    const int reg_end = reg_start + size;
@@ -156,18 +156,18 @@ brw_is_grf_written(const struct brw_instruction *inst,
    return left < right;
 }
 
-static GLboolean
+static bool
 brw_is_mrf_written_alu(const struct brw_instruction *inst,
 		       int reg_index, int size)
 {
    if (brw_opcodes[inst->header.opcode].ndst == 0)
-      return GL_FALSE;
+      return false;
 
    if (inst->bits1.da1.dest_reg_file != BRW_MESSAGE_REGISTER_FILE)
-      return GL_FALSE;
+      return false;
 
    if (inst->bits1.da1.dest_address_mode != BRW_ADDRESS_DIRECT)
-      return GL_TRUE;
+      return true;
 
    const int reg_start = reg_index * REG_SIZE;
    const int reg_end = reg_start + size;
@@ -180,7 +180,7 @@ brw_is_mrf_written_alu(const struct brw_instruction *inst,
     * consider that we are writing the register.
     */
    if (is_compr4 && inst->header.execution_size != BRW_EXECUTE_16)
-      return GL_TRUE;
+      return true;
 
    /* Here we write mrf_{i} and mrf_{i+4}. So we read two times 8 elements */
    if (is_compr4) {
@@ -203,7 +203,7 @@ brw_is_mrf_written_alu(const struct brw_instruction *inst,
       const int right1 = MIN2(write_end1, reg_end);
 
       if (left0 < right0 || left1 < right1)
-	 return GL_TRUE;
+	 return true;
    }
    else {
       int length;
@@ -219,15 +219,16 @@ brw_is_mrf_written_alu(const struct brw_instruction *inst,
       const int right = MIN2(write_end, reg_end);
 
       if (left < right)
-	 return GL_TRUE;
+	 return true;
    }
 
-   return GL_FALSE;
+   return false;
 }
 
 /* SEND may perform an implicit mov to a mrf register */
-static GLboolean brw_is_mrf_written_send(const struct brw_instruction *inst,
-					 int reg_index, int size)
+static bool
+brw_is_mrf_written_send(const struct brw_instruction *inst,
+			int reg_index, int size)
 {
 
    const int reg_start = reg_index * REG_SIZE;
@@ -240,27 +241,27 @@ static GLboolean brw_is_mrf_written_send(const struct brw_instruction *inst,
 
    if (inst->header.opcode != BRW_OPCODE_SEND ||
        inst->bits1.da1.src0_reg_file == 0)
-      return GL_FALSE;
+      return false;
 
    return left < right;
 }
 
 /* Specific path for message register since we need to handle the compr4 case */
-static INLINE GLboolean
+static INLINE bool
 brw_is_mrf_written(const struct brw_instruction *inst, int reg_index, int size)
 {
    return (brw_is_mrf_written_alu(inst, reg_index, size) ||
 	   brw_is_mrf_written_send(inst, reg_index, size));
 }
 
-static INLINE GLboolean
+static INLINE bool
 brw_is_mrf_read(const struct brw_instruction *inst,
                 int reg_index, int size, int gen)
 {
    if (inst->header.opcode != BRW_OPCODE_SEND)
-      return GL_FALSE;
+      return false;
    if (inst->bits2.da1.src0_address_mode != BRW_ADDRESS_DIRECT)
-      return GL_TRUE;
+      return true;
 
    const int reg_start = reg_index*REG_SIZE;
    const int reg_end = reg_start + size;
@@ -289,12 +290,12 @@ brw_is_mrf_read(const struct brw_instruction *inst,
    return left < right;
 }
 
-static INLINE GLboolean
+static INLINE bool
 brw_is_grf_read(const struct brw_instruction *inst, int reg_index, int size)
 {
    int i, j;
    if (brw_opcodes[inst->header.opcode].nsrc == 0)
-      return GL_FALSE;
+      return false;
 
    /* Look at first source. We must take into account register regions to
     * monitor carefully the read. Note that we are a bit too conservative here
@@ -305,9 +306,9 @@ brw_is_grf_read(const struct brw_instruction *inst, int reg_index, int size)
 
       if (inst->bits2.da1.src0_address_mode != BRW_ADDRESS_DIRECT)
          if (inst->bits1.ia1.src0_reg_file == BRW_GENERAL_REGISTER_FILE)
-            return GL_TRUE;
+            return true;
       if (inst->bits1.da1.src0_reg_file != BRW_GENERAL_REGISTER_FILE)
-         return GL_FALSE;
+         return false;
 
       const int reg_start = reg_index*REG_SIZE;
       const int reg_end = reg_start + size;
@@ -328,7 +329,7 @@ brw_is_grf_read(const struct brw_instruction *inst, int reg_index, int size)
             const int left = write_start > reg_start ? write_start : reg_start;
             const int right = write_end < reg_end ? write_end : reg_end;
             if (left < right)
-               return GL_TRUE;
+               return true;
             write_start += hs;
          }
          row_start += vs;
@@ -340,9 +341,9 @@ brw_is_grf_read(const struct brw_instruction *inst, int reg_index, int size)
 
       if (inst->bits3.da1.src1_address_mode != BRW_ADDRESS_DIRECT)
          if (inst->bits1.ia1.src1_reg_file == BRW_GENERAL_REGISTER_FILE)
-            return GL_TRUE;
+            return true;
       if (inst->bits1.da1.src1_reg_file != BRW_GENERAL_REGISTER_FILE)
-         return GL_FALSE;
+         return false;
 
       const int reg_start = reg_index*REG_SIZE;
       const int reg_end = reg_start + size;
@@ -363,17 +364,17 @@ brw_is_grf_read(const struct brw_instruction *inst, int reg_index, int size)
             const int left = write_start > reg_start ? write_start : reg_start;
             const int right = write_end < reg_end ? write_end : reg_end;
             if (left < right)
-               return GL_TRUE;
+               return true;
             write_start += hs;
          }
          row_start += vs;
       }
    }
 
-   return GL_FALSE;
+   return false;
 }
 
-static INLINE GLboolean
+static INLINE bool
 brw_is_control_done(const struct brw_instruction *mov) {
    return
        mov->header.dependency_control != 0 ||
@@ -383,28 +384,28 @@ brw_is_control_done(const struct brw_instruction *mov) {
        mov->header.debug_control != 0;
 }
 
-static INLINE GLboolean
+static INLINE bool
 brw_is_predicated(const struct brw_instruction *mov) {
    return mov->header.predicate_control != 0;
 }
 
-static INLINE GLboolean
+static INLINE bool
 brw_is_grf_to_mrf_mov(const struct brw_instruction *mov,
                       int *mrf_index,
                       int *grf_index,
-                      GLboolean *is_compr4)
+                      bool *is_compr4)
 {
    if (brw_is_predicated(mov) ||
        brw_is_control_done(mov) ||
        mov->header.debug_control != 0)
-      return GL_FALSE;
+      return false;
 
    if (mov->bits1.da1.dest_address_mode != BRW_ADDRESS_DIRECT ||
        mov->bits1.da1.dest_reg_file != BRW_MESSAGE_REGISTER_FILE ||
        mov->bits1.da1.dest_reg_type != BRW_REGISTER_TYPE_F ||
        mov->bits1.da1.dest_horiz_stride != BRW_HORIZONTAL_STRIDE_1 ||
        mov->bits1.da1.dest_subreg_nr != 0)
-      return GL_FALSE;
+      return false;
 
    if (mov->bits2.da1.src0_address_mode != BRW_ADDRESS_DIRECT ||
        mov->bits1.da1.src0_reg_file != BRW_GENERAL_REGISTER_FILE ||
@@ -415,20 +416,20 @@ brw_is_grf_to_mrf_mov(const struct brw_instruction *mov,
        mov->bits2.da1.src0_subreg_nr != 0 ||
        mov->bits2.da1.src0_abs != 0 ||
        mov->bits2.da1.src0_negate != 0)
-      return GL_FALSE;
+      return false;
 
    *grf_index = mov->bits2.da1.src0_reg_nr;
    *mrf_index = mov->bits1.da1.dest_reg_nr & 0x0f;
    *is_compr4 = (mov->bits1.da1.dest_reg_nr & BRW_MRF_COMPR4) != 0;
-   return GL_TRUE;
+   return true;
 }
 
-static INLINE GLboolean
+static INLINE bool
 brw_is_grf_straight_write(const struct brw_instruction *inst, int grf_index)
 {
    /* remark: no problem to predicate a SEL instruction */
    if ((!brw_is_predicated(inst) || inst->header.opcode == BRW_OPCODE_SEL) &&
-       brw_is_control_done(inst) == GL_FALSE &&
+       brw_is_control_done(inst) == false &&
        inst->header.execution_size == 4 &&
        inst->header.access_mode == BRW_ALIGN_1 &&
        inst->bits1.da1.dest_address_mode == BRW_ADDRESS_DIRECT &&
@@ -438,12 +439,12 @@ brw_is_grf_straight_write(const struct brw_instruction *inst, int grf_index)
        inst->bits1.da1.dest_reg_nr == grf_index &&
        inst->bits1.da1.dest_subreg_nr == 0 &&
        brw_is_arithmetic_inst(inst))
-      return GL_TRUE;
+      return true;
 
-   return GL_FALSE;
+   return false;
 }
 
-static INLINE GLboolean
+static INLINE bool
 brw_inst_are_equal(const struct brw_instruction *src0,
                    const struct brw_instruction *src1)
 {
@@ -467,7 +468,7 @@ brw_inst_copy(struct brw_instruction *dst,
    field_dst[3] = field_src[3];
 }
 
-static void brw_remove_inst(struct brw_compile *p, const GLboolean *removeInst)
+static void brw_remove_inst(struct brw_compile *p, const bool *removeInst)
 {
    int i, nr_insn = 0, to = 0, from = 0;
 
@@ -480,7 +481,7 @@ static void brw_remove_inst(struct brw_compile *p, const GLboolean *removeInst)
    }
 
    for (i = 0; i < p->nr_insn; ++i)
-      if (removeInst[i] == GL_FALSE)
+      if (removeInst[i] == false)
          nr_insn++;
    p->nr_insn = nr_insn;
 }
@@ -496,14 +497,14 @@ void brw_remove_duplicate_mrf_moves(struct brw_compile *p)
    const int gen = p->brw->intel.gen;
    int i, j;
 
-   GLboolean *removeInst = calloc(sizeof(GLboolean), p->nr_insn);
+   bool *removeInst = calloc(sizeof(bool), p->nr_insn);
    for (i = 0; i < p->nr_insn; i++) {
       if (removeInst[i])
          continue;
 
       const struct brw_instruction *mov = p->store + i;
       int mrf_index, grf_index;
-      GLboolean is_compr4;
+      bool is_compr4;
 
       /* Only consider _straight_ grf-to-mrf moves */
       if (!brw_is_grf_to_mrf_mov(mov, &mrf_index, &grf_index, &is_compr4))
@@ -517,7 +518,7 @@ void brw_remove_duplicate_mrf_moves(struct brw_compile *p)
          const struct brw_instruction *inst = p->store + j;
 
          if (brw_inst_are_equal(mov, inst)) {
-            removeInst[j] = GL_TRUE;
+            removeInst[j] = true;
             continue;
          }
 
@@ -542,7 +543,7 @@ void brw_remove_grf_to_mrf_moves(struct brw_compile *p)
    const int gen = brw->intel.gen;
    const int simd16_size = 2*REG_SIZE;
 
-   GLboolean *removeInst = calloc(sizeof(GLboolean), p->nr_insn);
+   bool *removeInst = calloc(sizeof(bool), p->nr_insn);
    assert(removeInst);
 
    for (i = 0; i < p->nr_insn; i++) {
@@ -552,7 +553,7 @@ void brw_remove_grf_to_mrf_moves(struct brw_compile *p)
       struct brw_instruction *grf_inst = NULL;
       const struct brw_instruction *mov = p->store + i;
       int mrf_index, grf_index;
-      GLboolean is_compr4;
+      bool is_compr4;
 
       /* Only consider _straight_ grf-to-mrf moves */
       if (!brw_is_grf_to_mrf_mov(mov, &mrf_index, &grf_index, &is_compr4))
@@ -564,22 +565,22 @@ void brw_remove_grf_to_mrf_moves(struct brw_compile *p)
 
       /* Look where the register has been set */
       prev = i;
-      GLboolean potential_remove = GL_FALSE;
+      bool potential_remove = false;
       while (prev--) {
 
          /* If _one_ instruction writes the grf, we try to remove the mov */
          struct brw_instruction *inst = p->store + prev;
          if (brw_is_grf_straight_write(inst, grf_index)) {
-            potential_remove = GL_TRUE;
+            potential_remove = true;
             grf_inst = inst;
             break;
          }
 
       }
 
-      if (potential_remove == GL_FALSE)
+      if (potential_remove == false)
          continue;
-      removeInst[i] = GL_TRUE;
+      removeInst[i] = true;
 
       /* Monitor first the section of code between the grf computation and the
        * mov. Here we cannot read or write both mrf and grf register
@@ -594,7 +595,7 @@ void brw_remove_grf_to_mrf_moves(struct brw_compile *p)
              brw_is_mrf_written(inst, mrf_index1, REG_SIZE)   ||
              brw_is_mrf_read(inst, mrf_index0, REG_SIZE, gen) ||
              brw_is_mrf_read(inst, mrf_index1, REG_SIZE, gen)) {
-            removeInst[i] = GL_FALSE;
+            removeInst[i] = false;
             break;
          }
       }
@@ -608,7 +609,7 @@ void brw_remove_grf_to_mrf_moves(struct brw_compile *p)
             continue;
 
          if (brw_is_grf_read(inst, grf_index, simd16_size)) {
-            removeInst[i] = GL_FALSE;
+            removeInst[i] = false;
             break;
          }
 
@@ -629,19 +630,19 @@ void brw_remove_grf_to_mrf_moves(struct brw_compile *p)
    free(removeInst);
 }
 
-static GLboolean
+static bool
 is_single_channel_dp4(struct brw_instruction *insn)
 {
    if (insn->header.opcode != BRW_OPCODE_DP4 ||
        insn->header.execution_size != BRW_EXECUTE_8 ||
        insn->header.access_mode != BRW_ALIGN_16 ||
        insn->bits1.da1.dest_reg_file != BRW_GENERAL_REGISTER_FILE)
-      return GL_FALSE;
+      return false;
 
    if (!is_power_of_two(insn->bits1.da16.dest_writemask))
-      return GL_FALSE;
+      return false;
 
-   return GL_TRUE;
+   return true;
 }
 
 /**

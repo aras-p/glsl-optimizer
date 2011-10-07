@@ -67,12 +67,12 @@ static void brw_gs_alloc_regs( struct brw_gs_compile *c,
 
 static void brw_gs_emit_vue(struct brw_gs_compile *c, 
 			    struct brw_reg vert,
-			    GLboolean last,
+			    bool last,
 			    GLuint header)
 {
    struct brw_compile *p = &c->func;
    struct intel_context *intel = &c->func.brw->intel;
-   GLboolean allocate = !last;
+   bool allocate = !last;
    struct brw_reg temp;
 
    if (intel->gen < 6)

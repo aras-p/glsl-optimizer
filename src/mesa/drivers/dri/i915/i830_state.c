@@ -846,7 +846,7 @@ i830Enable(struct gl_context * ctx, GLenum cap, GLboolean state)
 
    case GL_STENCIL_TEST:
       {
-         GLboolean hw_stencil = GL_FALSE;
+         bool hw_stencil = false;
          if (ctx->DrawBuffer) {
             struct intel_renderbuffer *irbStencil
                = intel_get_renderbuffer(ctx->DrawBuffer, BUFFER_STENCIL);

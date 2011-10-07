@@ -97,7 +97,7 @@ brw_cubemap_normalize_visitor::visit_leave(ir_texture *ir)
 
 extern "C" {
 
-GLboolean
+bool
 brw_do_cubemap_normalize(exec_list *instructions)
 {
    brw_cubemap_normalize_visitor v;

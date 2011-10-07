@@ -177,7 +177,7 @@ i830_state_draw_region(struct intel_context *intel,
                        struct intel_region *depth_region);
 /* i830_context.c
  */
-extern GLboolean
+extern bool
 i830CreateContext(const struct gl_config * mesaVis,
                   __DRIcontext * driContextPriv,
                   void *sharedContextPrivate);

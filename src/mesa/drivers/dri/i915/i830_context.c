@@ -48,7 +48,7 @@ i830InitDriverFunctions(struct dd_function_table *functions)
 
 extern const struct tnl_pipeline_stage *intel_pipeline[];
 
-GLboolean
+bool
 i830CreateContext(const struct gl_config * mesaVis,
                   __DRIcontext * driContextPriv,
                   void *sharedContextPrivate)
@@ -58,7 +58,7 @@ i830CreateContext(const struct gl_config * mesaVis,
    struct intel_context *intel = &i830->intel;
    struct gl_context *ctx = &intel->ctx;
    if (!i830)
-      return GL_FALSE;
+      return false;
 
    i830InitVtbl(i830);
    i830InitDriverFunctions(&functions);
@@ -66,7 +66,7 @@ i830CreateContext(const struct gl_config * mesaVis,
    if (!intelInitContext(intel, __DRI_API_OPENGL, mesaVis, driContextPriv,
                          sharedContextPrivate, &functions)) {
       FREE(i830);
-      return GL_FALSE;
+      return false;
    }
 
    _math_matrix_ctr(&intel->ViewportMatrix);
@@ -109,5 +109,5 @@ i830CreateContext(const struct gl_config * mesaVis,
    _tnl_allow_vertex_fog(ctx, 1);
    _tnl_allow_pixel_fog(ctx, 0);
 
-   return GL_TRUE;
+   return true;
 }

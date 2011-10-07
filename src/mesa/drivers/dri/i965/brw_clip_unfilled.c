@@ -270,7 +270,7 @@ static void apply_one_offset( struct brw_clip_compile *c,
  * Output clipped polygon as an unfilled primitive:
  */
 static void emit_lines(struct brw_clip_compile *c,
-		       GLboolean do_offset)
+		       bool do_offset)
 {
    struct brw_compile *p = &c->func;
    struct brw_instruction *loop;
@@ -335,7 +335,7 @@ static void emit_lines(struct brw_clip_compile *c,
 
 
 static void emit_points(struct brw_clip_compile *c,
-			GLboolean do_offset )
+			bool do_offset )
 {
    struct brw_compile *p = &c->func;
    struct brw_instruction *loop;
@@ -381,7 +381,7 @@ static void emit_points(struct brw_clip_compile *c,
 
 static void emit_primitives( struct brw_clip_compile *c,
 			     GLuint mode, 
-			     GLboolean do_offset )
+			     bool do_offset )
 {
    switch (mode) {
    case CLIP_FILL:

@@ -603,6 +603,6 @@ public:
    int force_sechalf_stack;
 };
 
-GLboolean brw_do_channel_expressions(struct exec_list *instructions);
-GLboolean brw_do_vector_splitting(struct exec_list *instructions);
+bool brw_do_channel_expressions(struct exec_list *instructions);
+bool brw_do_vector_splitting(struct exec_list *instructions);
 bool brw_fs_precompile(struct gl_context *ctx, struct gl_shader_program *prog);

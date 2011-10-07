@@ -148,12 +148,12 @@ brw_link_shader(struct gl_context *ctx, struct gl_shader_program *prog)
    }
 
    if (!_mesa_ir_link_shader(ctx, prog))
-      return GL_FALSE;
+      return false;
 
    if (!brw_shader_precompile(ctx, prog))
-      return GL_FALSE;
+      return false;
 
-   return GL_TRUE;
+   return true;
 }
 
 

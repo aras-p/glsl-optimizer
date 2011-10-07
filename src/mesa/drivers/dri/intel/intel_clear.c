@@ -93,7 +93,7 @@ intelClear(struct gl_context *ctx, GLbitfield mask)
       return;
 
    if (mask & (BUFFER_BIT_FRONT_LEFT | BUFFER_BIT_FRONT_RIGHT)) {
-      intel->front_buffer_dirty = GL_TRUE;
+      intel->front_buffer_dirty = true;
    }
 
    if (0)

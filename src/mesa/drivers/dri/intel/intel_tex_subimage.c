@@ -130,7 +130,7 @@ intel_blit_texsubimage(struct gl_context * ctx,
       _mesa_error(ctx, GL_OUT_OF_MEMORY, "intelTexSubImage");
    }
 
-   GLboolean ret;
+   bool ret;
    unsigned int dst_pitch = intelImage->mt->region->pitch *
       intelImage->mt->cpp;
 
@@ -139,7 +139,7 @@ intel_blit_texsubimage(struct gl_context * ctx,
    ret = intelEmitCopyBlit(intel,
 			   intelImage->mt->cpp,
 			   dstRowStride / intelImage->mt->cpp,
-			   temp_bo, 0, GL_FALSE,
+			   temp_bo, 0, false,
 			   dst_pitch / intelImage->mt->cpp,
 			   intelImage->mt->region->bo, 0,
 			   intelImage->mt->region->tiling,

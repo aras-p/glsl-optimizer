@@ -35,7 +35,7 @@ extern void intelCopyBuffer(const __DRIdrawable * dpriv,
 
 extern GLbitfield intelClearWithBlit(struct gl_context * ctx, GLbitfield mask);
 
-GLboolean
+bool
 intelEmitCopyBlit(struct intel_context *intel,
                               GLuint cpp,
                               GLshort src_pitch,
@@ -51,7 +51,7 @@ intelEmitCopyBlit(struct intel_context *intel,
                               GLshort w, GLshort h,
 			      GLenum logicop );
 
-GLboolean
+bool
 intelEmitImmediateColorExpandBlit(struct intel_context *intel,
 				  GLuint cpp,
 				  GLubyte *src_bits, GLuint src_size,

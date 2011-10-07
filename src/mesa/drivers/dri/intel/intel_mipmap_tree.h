@@ -99,7 +99,7 @@ struct intel_mipmap_tree
 
    GLuint width0, height0, depth0; /**< Level zero image dimensions */
    GLuint cpp;
-   GLboolean compressed;
+   bool compressed;
 
    /* Derived from the above:
     */
@@ -143,7 +143,7 @@ struct intel_mipmap_tree *intel_miptree_create(struct intel_context *intel,
                                                GLuint width0,
                                                GLuint height0,
                                                GLuint depth0,
-					       GLboolean expect_accelerated_upload);
+					       bool expect_accelerated_upload);
 
 struct intel_mipmap_tree *
 intel_miptree_create_for_region(struct intel_context *intel,
@@ -163,7 +163,7 @@ void intel_miptree_release(struct intel_mipmap_tree **mt);
 
 /* Check if an image fits an existing mipmap tree layout
  */
-GLboolean intel_miptree_match_image(struct intel_mipmap_tree *mt,
+bool intel_miptree_match_image(struct intel_mipmap_tree *mt,
                                     struct gl_texture_image *image);
 
 void

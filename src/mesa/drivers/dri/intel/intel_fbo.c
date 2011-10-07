@@ -190,7 +190,7 @@ intel_alloc_renderbuffer_storage(struct gl_context * ctx, struct gl_renderbuffer
 				       cpp * 2,
 				       ALIGN(width, 64),
 				       ALIGN((height + 1) / 2, 64),
-				       GL_TRUE);
+				       true);
       if (!irb->region)
 	return false;
 
@@ -230,7 +230,7 @@ intel_alloc_renderbuffer_storage(struct gl_context * ctx, struct gl_renderbuffer
 
    } else {
       irb->region = intel_region_alloc(intel->intelScreen, tiling, cpp,
-				       width, height, GL_TRUE);
+				       width, height, true);
       if (!irb->region)
 	 return false;
 
@@ -240,7 +240,7 @@ intel_alloc_renderbuffer_storage(struct gl_context * ctx, struct gl_renderbuffer
 					      irb->region->cpp,
 					      irb->region->width,
 					      irb->region->height,
-					      GL_TRUE);
+					      true);
 	 if (!irb->hiz_region) {
 	    intel_region_release(&irb->region);
 	    return false;
@@ -248,7 +248,7 @@ intel_alloc_renderbuffer_storage(struct gl_context * ctx, struct gl_renderbuffer
       }
    }
 
-   return GL_TRUE;
+   return true;
 }
 
 
@@ -307,7 +307,7 @@ intel_alloc_window_storage(struct gl_context * ctx, struct gl_renderbuffer *rb,
    rb->Height = height;
    rb->InternalFormat = internalFormat;
 
-   return GL_TRUE;
+   return true;
 }
 
 
@@ -319,7 +319,7 @@ intel_resize_buffers(struct gl_context *ctx, struct gl_framebuffer *fb,
 
    _mesa_resize_framebuffer(ctx, fb, width, height);
 
-   fb->Initialized = GL_TRUE; /* XXX remove someday */
+   fb->Initialized = true; /* XXX remove someday */
 
    if (fb->Name != 0) {
       return;
@@ -344,7 +344,7 @@ intel_nop_alloc_storage(struct gl_context * ctx, struct gl_renderbuffer *rb,
                         GLenum internalFormat, GLuint width, GLuint height)
 {
    _mesa_problem(ctx, "intel_op_alloc_storage should never be called.");
-   return GL_FALSE;
+   return false;
 }
 
 /**
@@ -477,7 +477,7 @@ intel_update_tex_wrapper_regions(struct intel_context *intel,
 				 struct intel_renderbuffer *irb,
 				 struct intel_texture_image *intel_image);
 
-static GLboolean
+static bool
 intel_update_wrapper(struct gl_context *ctx, struct intel_renderbuffer *irb, 
 		     struct gl_texture_image *texImage)
 {
@@ -488,7 +488,7 @@ intel_update_wrapper(struct gl_context *ctx, struct intel_renderbuffer *irb,
    if (!intel_span_supports_format(texImage->TexFormat)) {
       DBG("Render to texture BAD FORMAT %s\n",
 	  _mesa_get_format_name(texImage->TexFormat));
-      return GL_FALSE;
+      return false;
    } else {
       DBG("Render to texture %s\n", _mesa_get_format_name(texImage->TexFormat));
    }
@@ -557,9 +557,9 @@ intel_update_tex_wrapper_regions(struct intel_context *intel,
                             _mesa_get_format_bytes(rb->Format),
                             rb->Width,
                             rb->Height,
-                            GL_TRUE);
+                            true);
       if (!intel_image->mt->hiz_region)
-         return GL_FALSE;
+         return false;
    }
 
    /* Point the renderbuffer's hiz region to the texture's hiz region. */
@@ -567,7 +567,7 @@ intel_update_tex_wrapper_regions(struct intel_context *intel,
       intel_region_reference(&irb->hiz_region, intel_image->mt->hiz_region);
    }
 
-   return GL_TRUE;
+   return true;
 }
 
 
@@ -720,7 +720,7 @@ intel_render_texture(struct gl_context * ctx,
        irb->Base.RefCount);
 
    intel_renderbuffer_set_draw_offset(irb, intel_image, att->Zoffset);
-   intel_image->used_as_render_target = GL_TRUE;
+   intel_image->used_as_render_target = true;
 
 #ifndef I915
    if (need_tile_offset_workaround(brw_context(ctx), irb)) {
@@ -742,7 +742,7 @@ intel_render_texture(struct gl_context * ctx,
 				    intel_image->base.Base.Level,
 				    intel_image->base.Base.Level,
                                     width, height, depth,
-				    GL_TRUE);
+				    true);
 
       intel_miptree_copy_teximage(intel, intel_image, new_mt);
       intel_renderbuffer_set_draw_offset(irb, intel_image, att->Zoffset);
@@ -774,7 +774,7 @@ intel_finish_render_texture(struct gl_context * ctx,
 
    /* Flag that this image may now be validated into the object's miptree. */
    if (intel_image)
-      intel_image->used_as_render_target = GL_FALSE;
+      intel_image->used_as_render_target = false;
 
    /* Since we've (probably) rendered to the texture and will (likely) use
     * it in the texture domain later on in this batchbuffer, flush the

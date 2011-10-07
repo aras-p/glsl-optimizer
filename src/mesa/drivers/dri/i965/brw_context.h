@@ -219,7 +219,7 @@ enum state_struct_type {
 struct brw_vertex_program {
    struct gl_vertex_program program;
    GLuint id;
-   GLboolean use_const_buffer;
+   bool use_const_buffer;
 };
 
 
@@ -268,7 +268,7 @@ struct brw_wm_prog_data {
 
    GLuint nr_params;       /**< number of float params/constants */
    GLuint nr_pull_params;
-   GLboolean error;
+   bool error;
    int dispatch_width;
    uint32_t prog_offset_16;
 
@@ -585,13 +585,13 @@ struct brw_context
    struct intel_context intel;  /**< base class, must be first field */
    GLuint primitive; /**< Hardware primitive, such as _3DPRIM_TRILIST. */
 
-   GLboolean emit_state_always;
-   GLboolean has_surface_tile_offset;
-   GLboolean has_compr4;
-   GLboolean has_negative_rhw_bug;
-   GLboolean has_aa_line_parameters;
-   GLboolean has_pln;
-   GLboolean new_vs_backend;
+   bool emit_state_always;
+   bool has_surface_tile_offset;
+   bool has_compr4;
+   bool has_negative_rhw_bug;
+   bool has_aa_line_parameters;
+   bool has_pln;
+   bool new_vs_backend;
 
    struct {
       struct brw_state_flags dirty;
@@ -676,7 +676,7 @@ struct brw_context
       GLuint csize;		/* constant buffer size in urb registers */
       GLuint sfsize;		/* setup data size in urb registers */
 
-      GLboolean constrained;
+      bool constrained;
 
       GLuint max_vs_entries;	/* Maximum number of VS entries */
       GLuint max_gs_entries;	/* Maximum number of GS entries */
@@ -776,7 +776,7 @@ struct brw_context
    struct {
       struct brw_gs_prog_data *prog_data;
 
-      GLboolean prog_active;
+      bool prog_active;
       /** Offset in the program cache to the CLIP program pre-gen6 */
       uint32_t prog_offset;
       uint32_t state_offset;
@@ -880,7 +880,7 @@ struct brw_context
       struct brw_query_object *obj;
       drm_intel_bo *bo;
       int index;
-      GLboolean active;
+      bool active;
    } query;
    /* Used to give every program string a unique id
     */
@@ -906,7 +906,7 @@ struct brw_instruction_info {
     char    *name;
     int	    nsrc;
     int	    ndst;
-    GLboolean is_arith;
+    bool is_arith;
 };
 extern const struct brw_instruction_info brw_opcodes[128];
 
@@ -918,10 +918,10 @@ void brwInitVtbl( struct brw_context *brw );
 /*======================================================================
  * brw_context.c
  */
-GLboolean brwCreateContext( int api,
-			    const struct gl_config *mesaVis,
-			    __DRIcontext *driContextPriv,
-			    void *sharedContextPrivate);
+bool brwCreateContext(int api,
+		      const struct gl_config *mesaVis,
+		      __DRIcontext *driContextPriv,
+		      void *sharedContextPrivate);
 
 /*======================================================================
  * brw_queryobj.c
@@ -1067,6 +1067,6 @@ brw_program_reloc(struct brw_context *brw, uint32_t state_offset,
    return brw->cache.bo->offset + prog_offset;
 }
 
-GLboolean brw_do_cubemap_normalize(struct exec_list *instructions);
+bool brw_do_cubemap_normalize(struct exec_list *instructions);
 
 #endif

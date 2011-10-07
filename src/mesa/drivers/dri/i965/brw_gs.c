@@ -156,7 +156,7 @@ static void populate_key( struct brw_context *brw,
       /* Provide consistent primitive order with brw_set_prim's
        * optimization of single quads to trifans.
        */
-      key->pv_first = GL_TRUE;
+      key->pv_first = true;
    }
 
    /* _NEW_TRANSFORM */

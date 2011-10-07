@@ -39,7 +39,7 @@ extern "C" {
 void
 fs_visitor::generate_fb_write(fs_inst *inst)
 {
-   GLboolean eot = inst->eot;
+   bool eot = inst->eot;
    struct brw_reg implied_header;
 
    /* Header is 2 regs, g0 and g1 are the contents. g0 will be implied

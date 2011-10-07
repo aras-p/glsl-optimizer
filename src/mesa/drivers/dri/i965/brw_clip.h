@@ -108,7 +108,7 @@ struct brw_clip_compile {
    GLuint first_tmp;
    GLuint last_tmp;
 
-   GLboolean need_direction;
+   bool need_direction;
 
    struct brw_vue_map vue_map;
 };
@@ -150,14 +150,14 @@ void brw_clip_interp_vertex( struct brw_clip_compile *c,
 			     struct brw_indirect v0_ptr, /* from */
 			     struct brw_indirect v1_ptr, /* to */
 			     struct brw_reg t0,
-			     GLboolean force_edgeflag );
+			     bool force_edgeflag );
 
 void brw_clip_init_planes( struct brw_clip_compile *c );
 
 void brw_clip_emit_vue(struct brw_clip_compile *c, 
 		       struct brw_indirect vert,
-		       GLboolean allocate,
-		       GLboolean eot,
+		       bool allocate,
+		       bool eot,
 		       GLuint header);
 
 void brw_clip_kill_thread(struct brw_clip_compile *c);

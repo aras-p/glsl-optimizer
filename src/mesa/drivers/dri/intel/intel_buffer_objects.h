@@ -51,8 +51,8 @@ struct intel_buffer_object
    unsigned int range_map_offset;
    GLsizei range_map_size;
 
-   GLboolean mapped_gtt;
-   GLboolean source;
+   bool mapped_gtt;
+   bool source;
 };
 
 

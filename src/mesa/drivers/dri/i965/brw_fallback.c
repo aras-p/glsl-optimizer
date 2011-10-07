@@ -39,21 +39,21 @@
 
 #define FILE_DEBUG_FLAG DEBUG_FALLBACKS
 
-static GLboolean do_check_fallback(struct brw_context *brw)
+static bool do_check_fallback(struct brw_context *brw)
 {
    struct gl_context *ctx = &brw->intel.ctx;
    GLuint i;
 
    if (brw->intel.no_rast) {
       DBG("FALLBACK: rasterization disabled\n");
-      return GL_TRUE;
+      return true;
    }
 
    /* _NEW_RENDERMODE
     */
    if (ctx->RenderMode != GL_RENDER) {
       DBG("FALLBACK: render mode\n");
-      return GL_TRUE;
+      return true;
    }
 
    /* _NEW_TEXTURE:
@@ -65,12 +65,12 @@ static GLboolean do_check_fallback(struct brw_context *brw)
 	 struct gl_texture_image *texImage = tex_obj->Image[0][tex_obj->BaseLevel];
 	 if (texImage->Border) {
 	    DBG("FALLBACK: texture border\n");
-	    return GL_TRUE;
+	    return true;
 	 }
       }
    }
 
-   return GL_FALSE;
+   return false;
 }
 
 static void check_fallback(struct brw_context *brw)
@@ -96,7 +96,7 @@ const struct brw_tracked_state brw_check_fallback = {
  * field is treated as a boolean, not a bitmask.  It's only set in a
  * couple of places.
  */
-void intelFallback( struct intel_context *intel, GLuint bit, GLboolean mode )
+void intelFallback( struct intel_context *intel, GLuint bit, bool mode )
 {
 }
 

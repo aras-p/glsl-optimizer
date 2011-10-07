@@ -58,7 +58,7 @@ brw_queryobj_get_results(struct gl_context *ctx,
    if (query->bo == NULL)
       return;
 
-   drm_intel_bo_map(query->bo, GL_FALSE);
+   drm_intel_bo_map(query->bo, false);
    results = query->bo->virtual;
    if (query->Base.Target == GL_TIME_ELAPSED_EXT) {
       if (intel->gen >= 6)
@@ -86,8 +86,8 @@ brw_new_query_object(struct gl_context *ctx, GLuint id)
 
    query->Base.Id = id;
    query->Base.Result = 0;
-   query->Base.Active = GL_FALSE;
-   query->Base.Ready = GL_TRUE;
+   query->Base.Active = false;
+   query->Base.Ready = true;
 
    return &query->Base;
 }
@@ -208,7 +208,7 @@ static void brw_wait_query(struct gl_context *ctx, struct gl_query_object *q)
    struct brw_query_object *query = (struct brw_query_object *)q;
 
    brw_queryobj_get_results(ctx, query);
-   query->Base.Ready = GL_TRUE;
+   query->Base.Ready = true;
 }
 
 static void brw_check_query(struct gl_context *ctx, struct gl_query_object *q)
@@ -217,7 +217,7 @@ static void brw_check_query(struct gl_context *ctx, struct gl_query_object *q)
 
    if (query->bo == NULL || !drm_intel_bo_busy(query->bo)) {
       brw_queryobj_get_results(ctx, query);
-      query->Base.Ready = GL_TRUE;
+      query->Base.Ready = true;
    }
 }
 
@@ -240,7 +240,7 @@ brw_prepare_query_begin(struct brw_context *brw)
       brw->query.bo = drm_intel_bo_alloc(intel->bufmgr, "query", 4096, 1);
 
       /* clear target buffer */
-      drm_intel_bo_map(brw->query.bo, GL_TRUE);
+      drm_intel_bo_map(brw->query.bo, true);
       memset((char *)brw->query.bo->virtual, 0, 4096);
       drm_intel_bo_unmap(brw->query.bo);
 
@@ -308,7 +308,7 @@ brw_emit_query_begin(struct brw_context *brw)
       query->first_index = brw->query.index;
    }
    query->last_index = brw->query.index;
-   brw->query.active = GL_TRUE;
+   brw->query.active = true;
 }
 
 /** Called at batchbuffer flush to get an ending PS_DEPTH_COUNT */
@@ -352,7 +352,7 @@ brw_emit_query_end(struct brw_context *brw)
        ADVANCE_BATCH();
    }
 
-   brw->query.active = GL_FALSE;
+   brw->query.active = false;
    brw->query.index++;
 }
 

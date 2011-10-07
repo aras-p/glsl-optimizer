@@ -98,7 +98,7 @@ i915_reduced_primitive_state(struct intel_context *intel, GLenum rprim)
 /* Pull apart the vertex format registers and figure out how large a
  * vertex is supposed to be. 
  */
-static GLboolean
+static bool
 i915_check_vertex_size(struct intel_context *intel, GLuint expected)
 {
    struct i915_context *i915 = i915_context(&intel->ctx);
@@ -159,7 +159,7 @@ i915_check_vertex_size(struct intel_context *intel, GLuint expected)
          break;
       default:
          fprintf(stderr, "bad texcoord fmt %d\n", i);
-         return GL_FALSE;
+         return false;
       }
       lis2 >>= S2_TEXCOORD_FMT1_SHIFT;
    }
@@ -761,26 +761,26 @@ i915_update_draw_buffer(struct intel_context *intel)
 
    /* Check for depth fallback. */
    if (irbDepth && irbDepth->region) {
-      FALLBACK(intel, INTEL_FALLBACK_DEPTH_BUFFER, GL_FALSE);
+      FALLBACK(intel, INTEL_FALLBACK_DEPTH_BUFFER, false);
       depthRegion = irbDepth->region;
    } else if (irbDepth && !irbDepth->region) {
-      FALLBACK(intel, INTEL_FALLBACK_DEPTH_BUFFER, GL_TRUE);
+      FALLBACK(intel, INTEL_FALLBACK_DEPTH_BUFFER, true);
       depthRegion = NULL;
    } else { /* !irbDepth */
       /* No fallback is needed because there is no depth buffer. */
-      FALLBACK(intel, INTEL_FALLBACK_DEPTH_BUFFER, GL_FALSE);
+      FALLBACK(intel, INTEL_FALLBACK_DEPTH_BUFFER, false);
       depthRegion = NULL;
    }
 
    /* Check for stencil fallback. */
    if (irbStencil && irbStencil->region) {
       assert(irbStencil->Base.Format == MESA_FORMAT_S8_Z24);
-      FALLBACK(intel, INTEL_FALLBACK_STENCIL_BUFFER, GL_FALSE);
+      FALLBACK(intel, INTEL_FALLBACK_STENCIL_BUFFER, false);
    } else if (irbStencil && !irbStencil->region) {
-      FALLBACK(intel, INTEL_FALLBACK_STENCIL_BUFFER, GL_TRUE);
+      FALLBACK(intel, INTEL_FALLBACK_STENCIL_BUFFER, true);
    } else { /* !irbStencil */
       /* No fallback is needed because there is no stencil buffer. */
-      FALLBACK(intel, INTEL_FALLBACK_STENCIL_BUFFER, GL_FALSE);
+      FALLBACK(intel, INTEL_FALLBACK_STENCIL_BUFFER, false);
    }
 
    /* If we have a (packed) stencil buffer attached but no depth buffer,

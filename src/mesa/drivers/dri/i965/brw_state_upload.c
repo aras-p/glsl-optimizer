@@ -470,7 +470,7 @@ void brw_validate_state( struct brw_context *brw )
    if ((state->mesa | state->cache | state->brw) == 0)
       return;
 
-   brw->intel.Fallback = GL_FALSE; /* boolean, not bitfield */
+   brw->intel.Fallback = false; /* boolean, not bitfield */
 
    /* do prepare stage for all atoms */
    for (i = 0; i < num_atoms; i++) {

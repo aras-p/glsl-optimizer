@@ -28,6 +28,7 @@
 #ifndef _INTEL_INIT_H_
 #define _INTEL_INIT_H_
 
+#include <stdbool.h>
 #include <sys/time.h>
 #include "dri_util.h"
 #include "intel_bufmgr.h"
@@ -100,7 +101,7 @@ struct intel_screen
 
    __DRIscreen *driScrnPriv;
 
-   GLboolean no_hw;
+   bool no_hw;
    GLuint relaxed_relocations;
 
    /*
@@ -108,12 +109,12 @@ struct intel_screen
     * rather than solely in intel_context, because glXCreatePbuffer and
     * glXCreatePixmap are not passed a GLXContext.
     */
-   GLboolean hw_has_separate_stencil;
-   GLboolean hw_must_use_separate_stencil;
-   GLboolean hw_has_hiz;
+   bool hw_has_separate_stencil;
+   bool hw_must_use_separate_stencil;
+   bool hw_has_hiz;
    enum intel_dri2_has_hiz dri2_has_hiz;
 
-   GLboolean no_vbo;
+   bool no_vbo;
    dri_bufmgr *bufmgr;
    struct _mesa_HashTable *named_regions;
 
@@ -123,7 +124,7 @@ struct intel_screen
    driOptionCache optionCache;
 };
 
-extern GLboolean intelMapScreenRegions(__DRIscreen * sPriv);
+extern bool intelMapScreenRegions(__DRIscreen * sPriv);
 
 extern void intelDestroyContext(__DRIcontext * driContextPriv);
 

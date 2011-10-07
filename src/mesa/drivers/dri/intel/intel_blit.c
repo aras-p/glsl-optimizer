@@ -86,7 +86,7 @@ br13_for_cpp(int cpp)
 
 /* Copy BitBlt
  */
-GLboolean
+bool
 intelEmitCopyBlit(struct intel_context *intel,
 		  GLuint cpp,
 		  GLshort src_pitch,
@@ -110,15 +110,15 @@ intelEmitCopyBlit(struct intel_context *intel,
 
    if (dst_tiling != I915_TILING_NONE) {
       if (dst_offset & 4095)
-	 return GL_FALSE;
+	 return false;
       if (dst_tiling == I915_TILING_Y)
-	 return GL_FALSE;
+	 return false;
    }
    if (src_tiling != I915_TILING_NONE) {
       if (src_offset & 4095)
-	 return GL_FALSE;
+	 return false;
       if (src_tiling == I915_TILING_Y)
-	 return GL_FALSE;
+	 return false;
    }
 
    /* do space check before going any further */
@@ -135,7 +135,7 @@ intelEmitCopyBlit(struct intel_context *intel,
    } while (pass < 2);
 
    if (pass >= 2)
-      return GL_FALSE;
+      return false;
 
    intel_batchbuffer_require_space(intel, 8 * 4, true);
    DBG("%s src:buf(%p)/%d+%d %d,%d dst:buf(%p)/%d+%d %d,%d sz:%dx%d\n",
@@ -168,7 +168,7 @@ intelEmitCopyBlit(struct intel_context *intel,
       CMD = XY_SRC_COPY_BLT_CMD | XY_BLT_WRITE_ALPHA | XY_BLT_WRITE_RGB;
       break;
    default:
-      return GL_FALSE;
+      return false;
    }
 
 #ifndef I915
@@ -183,7 +183,7 @@ intelEmitCopyBlit(struct intel_context *intel,
 #endif
 
    if (dst_y2 <= dst_y || dst_x2 <= dst_x) {
-      return GL_TRUE;
+      return true;
    }
 
    assert(dst_x < dst_x2);
@@ -206,7 +206,7 @@ intelEmitCopyBlit(struct intel_context *intel,
 
    intel_batchbuffer_emit_mi_flush(intel);
 
-   return GL_TRUE;
+   return true;
 }
 
 
@@ -256,7 +256,7 @@ intelClearWithBlit(struct gl_context *ctx, GLbitfield mask)
    mask &= (1 << BUFFER_COUNT) - 1;
    while (mask) {
       GLuint buf = _mesa_ffs(mask) - 1;
-      GLboolean is_depth_stencil = buf == BUFFER_DEPTH || buf == BUFFER_STENCIL;
+      bool is_depth_stencil = buf == BUFFER_DEPTH || buf == BUFFER_STENCIL;
       struct intel_renderbuffer *irb;
       int x1, y1, x2, y2;
       uint32_t clear_val;
@@ -379,7 +379,7 @@ intelClearWithBlit(struct gl_context *ctx, GLbitfield mask)
    return fail_mask;
 }
 
-GLboolean
+bool
 intelEmitImmediateColorExpandBlit(struct intel_context *intel,
 				  GLuint cpp,
 				  GLubyte *src_bits, GLuint src_size,
@@ -397,9 +397,9 @@ intelEmitImmediateColorExpandBlit(struct intel_context *intel,
 
    if (dst_tiling != I915_TILING_NONE) {
       if (dst_offset & 4095)
-	 return GL_FALSE;
+	 return false;
       if (dst_tiling == I915_TILING_Y)
-	 return GL_FALSE;
+	 return false;
    }
 
    assert( logic_op - GL_CLEAR >= 0 );
@@ -407,7 +407,7 @@ intelEmitImmediateColorExpandBlit(struct intel_context *intel,
    assert(dst_pitch > 0);
 
    if (w < 0 || h < 0)
-      return GL_TRUE;
+      return true;
 
    dst_pitch *= cpp;
 
@@ -458,7 +458,7 @@ intelEmitImmediateColorExpandBlit(struct intel_context *intel,
 
    intel_batchbuffer_emit_mi_flush(intel);
 
-   return GL_TRUE;
+   return true;
 }
 
 /* We don't have a memmove-type blit like some other hardware, so we'll do a
@@ -474,7 +474,7 @@ intel_emit_linear_blit(struct intel_context *intel,
 		       unsigned int size)
 {
    GLuint pitch, height;
-   GLboolean ok;
+   bool ok;
 
    /* The pitch given to the GPU must be DWORD aligned, and
     * we want width to match pitch. Max width is (1 << 15 - 1),

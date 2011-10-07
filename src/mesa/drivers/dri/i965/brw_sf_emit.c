@@ -70,8 +70,8 @@ static struct brw_reg get_vert_result(struct brw_sf_compile *c,
    return brw_vec4_grf(vert.nr + off, sub * 4);
 }
 
-static GLboolean have_attr(struct brw_sf_compile *c,
-			   GLuint attr)
+static bool
+have_attr(struct brw_sf_compile *c, GLuint attr)
 {
    return (c->key.attrs & BITFIELD64_BIT(attr)) ? 1 : 0;
 }
@@ -323,13 +323,14 @@ static void invert_det( struct brw_sf_compile *c)
 }
 
 
-static GLboolean calculate_masks( struct brw_sf_compile *c,
-				  GLuint reg,
-				  GLushort *pc,
-				  GLushort *pc_persp,
-				  GLushort *pc_linear)
+static bool
+calculate_masks(struct brw_sf_compile *c,
+	        GLuint reg,
+		GLushort *pc,
+		GLushort *pc_persp,
+		GLushort *pc_linear)
 {
-   GLboolean is_last_attr = (reg == c->nr_setup_regs - 1);
+   bool is_last_attr = (reg == c->nr_setup_regs - 1);
    GLbitfield64 persp_mask;
    GLbitfield64 linear_mask;
 
@@ -398,7 +399,7 @@ calculate_point_sprite_mask(struct brw_sf_compile *c, GLuint reg)
 
 
 
-void brw_emit_tri_setup( struct brw_sf_compile *c, GLboolean allocate)
+void brw_emit_tri_setup(struct brw_sf_compile *c, bool allocate)
 {
    struct brw_compile *p = &c->func;
    GLuint i;
@@ -426,7 +427,7 @@ void brw_emit_tri_setup( struct brw_sf_compile *c, GLboolean allocate)
       struct brw_reg a1 = offset(c->vert[1], i);
       struct brw_reg a2 = offset(c->vert[2], i);
       GLushort pc, pc_persp, pc_linear;
-      GLboolean last = calculate_masks(c, i, &pc, &pc_persp, &pc_linear);
+      bool last = calculate_masks(c, i, &pc, &pc_persp, &pc_linear);
 
       if (pc_persp)
       {
@@ -486,7 +487,7 @@ void brw_emit_tri_setup( struct brw_sf_compile *c, GLboolean allocate)
 
 
 
-void brw_emit_line_setup( struct brw_sf_compile *c, GLboolean allocate)
+void brw_emit_line_setup(struct brw_sf_compile *c, bool allocate)
 {
    struct brw_compile *p = &c->func;
    GLuint i;
@@ -510,7 +511,7 @@ void brw_emit_line_setup( struct brw_sf_compile *c, GLboolean allocate)
       struct brw_reg a0 = offset(c->vert[0], i);
       struct brw_reg a1 = offset(c->vert[1], i);
       GLushort pc, pc_persp, pc_linear;
-      GLboolean last = calculate_masks(c, i, &pc, &pc_persp, &pc_linear);
+      bool last = calculate_masks(c, i, &pc, &pc_persp, &pc_linear);
 
       if (pc_persp)
       {
@@ -558,7 +559,7 @@ void brw_emit_line_setup( struct brw_sf_compile *c, GLboolean allocate)
    } 
 }
 
-void brw_emit_point_sprite_setup( struct brw_sf_compile *c, GLboolean allocate)
+void brw_emit_point_sprite_setup(struct brw_sf_compile *c, bool allocate)
 {
    struct brw_compile *p = &c->func;
    GLuint i;
@@ -573,7 +574,7 @@ void brw_emit_point_sprite_setup( struct brw_sf_compile *c, GLboolean allocate)
    {
       struct brw_reg a0 = offset(c->vert[0], i);
       GLushort pc, pc_persp, pc_linear, pc_coord_replace;
-      GLboolean last = calculate_masks(c, i, &pc, &pc_persp, &pc_linear);
+      bool last = calculate_masks(c, i, &pc, &pc_persp, &pc_linear);
 
       pc_coord_replace = calculate_point_sprite_mask(c, i);
       pc_persp &= ~pc_coord_replace;
@@ -651,7 +652,7 @@ void brw_emit_point_sprite_setup( struct brw_sf_compile *c, GLboolean allocate)
 /* Points setup - several simplifications as all attributes are
  * constant across the face of the point (point sprites excluded!)
  */
-void brw_emit_point_setup( struct brw_sf_compile *c, GLboolean allocate)
+void brw_emit_point_setup(struct brw_sf_compile *c, bool allocate)
 {
    struct brw_compile *p = &c->func;
    GLuint i;
@@ -670,7 +671,7 @@ void brw_emit_point_setup( struct brw_sf_compile *c, GLboolean allocate)
    {
       struct brw_reg a0 = offset(c->vert[0], i);
       GLushort pc, pc_persp, pc_linear;
-      GLboolean last = calculate_masks(c, i, &pc, &pc_persp, &pc_linear);
+      bool last = calculate_masks(c, i, &pc, &pc_persp, &pc_linear);
             
       if (pc_persp)
       {				
@@ -741,7 +742,7 @@ void brw_emit_anyprim_setup( struct brw_sf_compile *c )
    {
       saveflag = p->flag_value;
       brw_push_insn_state(p); 
-      brw_emit_tri_setup( c, GL_FALSE );
+      brw_emit_tri_setup( c, false );
       brw_pop_insn_state(p);
       p->flag_value = saveflag;
       /* note - thread killed in subroutine, so must
@@ -762,7 +763,7 @@ void brw_emit_anyprim_setup( struct brw_sf_compile *c )
    {
       saveflag = p->flag_value;
       brw_push_insn_state(p); 
-      brw_emit_line_setup( c, GL_FALSE );
+      brw_emit_line_setup( c, false );
       brw_pop_insn_state(p);
       p->flag_value = saveflag;
       /* note - thread killed in subroutine */
@@ -775,13 +776,13 @@ void brw_emit_anyprim_setup( struct brw_sf_compile *c )
    {
       saveflag = p->flag_value;
       brw_push_insn_state(p); 
-      brw_emit_point_sprite_setup( c, GL_FALSE );
+      brw_emit_point_sprite_setup( c, false );
       brw_pop_insn_state(p);
       p->flag_value = saveflag;
    }
    brw_land_fwd_jump(p, jmp); 
 
-   brw_emit_point_setup( c, GL_FALSE );
+   brw_emit_point_setup( c, false );
 }
 
 

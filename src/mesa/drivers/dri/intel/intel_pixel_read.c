@@ -66,7 +66,7 @@
  * any case.
  */
 
-static GLboolean
+static bool
 do_blit_readpixels(struct gl_context * ctx,
                    GLint x, GLint y, GLsizei width, GLsizei height,
                    GLenum format, GLenum type,
@@ -78,32 +78,32 @@ do_blit_readpixels(struct gl_context * ctx,
    GLuint dst_offset;
    GLuint rowLength;
    drm_intel_bo *dst_buffer;
-   GLboolean all;
+   bool all;
    GLint dst_x, dst_y;
    GLuint dirty;
 
    DBG("%s\n", __FUNCTION__);
 
    if (!src)
-      return GL_FALSE;
+      return false;
 
    if (!_mesa_is_bufferobj(pack->BufferObj)) {
       /* PBO only for now:
        */
       DBG("%s - not PBO\n", __FUNCTION__);
-      return GL_FALSE;
+      return false;
    }
 
 
    if (ctx->_ImageTransferState ||
        !intel_check_blit_format(src, format, type)) {
       DBG("%s - bad format for blit\n", __FUNCTION__);
-      return GL_FALSE;
+      return false;
    }
 
    if (pack->Alignment != 1 || pack->SwapBytes || pack->LsbFirst) {
       DBG("%s: bad packing params\n", __FUNCTION__);
-      return GL_FALSE;
+      return false;
    }
 
    if (pack->RowLength > 0)
@@ -113,7 +113,7 @@ do_blit_readpixels(struct gl_context * ctx,
 
    if (pack->Invert) {
       DBG("%s: MESA_PACK_INVERT not done yet\n", __FUNCTION__);
-      return GL_FALSE;
+      return false;
    }
    else {
       if (ctx->ReadBuffer->Name == 0)
@@ -127,7 +127,7 @@ do_blit_readpixels(struct gl_context * ctx,
 				   &dst_x, &dst_y,
 				   &x, &y,
 				   &width, &height)) {
-      return GL_TRUE;
+      return true;
    }
 
    dirty = intel->front_buffer_dirty;
@@ -150,17 +150,17 @@ do_blit_readpixels(struct gl_context * ctx,
    if (!intelEmitCopyBlit(intel,
 			  src->cpp,
 			  src->pitch, src->bo, 0, src->tiling,
-			  rowLength, dst_buffer, dst_offset, GL_FALSE,
+			  rowLength, dst_buffer, dst_offset, false,
 			  x, y,
 			  dst_x, dst_y,
 			  width, height,
 			  GL_COPY)) {
-      return GL_FALSE;
+      return false;
    }
 
    DBG("%s - DONE\n", __FUNCTION__);
 
-   return GL_TRUE;
+   return true;
 }
 
 void
@@ -170,7 +170,7 @@ intelReadPixels(struct gl_context * ctx,
                 const struct gl_pixelstore_attrib *pack, GLvoid * pixels)
 {
    struct intel_context *intel = intel_context(ctx);
-   GLboolean dirty;
+   bool dirty;
 
    DBG("%s\n", __FUNCTION__);
 

@@ -268,15 +268,15 @@ struct brw_wm_compile {
 
    GLuint cur_inst;  /**< index of current instruction */
 
-   GLboolean out_of_regs;  /**< ran out of GRF registers? */
+   bool out_of_regs;  /**< ran out of GRF registers? */
 
    /** Mapping from Mesa registers to hardware registers */
    struct {
-      GLboolean inited;
+      bool inited;
       struct brw_reg reg;
    } wm_regs[NUM_FILES][256][4];
 
-   GLboolean used_grf[BRW_WM_MAX_GRF];
+   bool used_grf[BRW_WM_MAX_GRF];
    GLuint first_free_grf;
    struct brw_reg stack;
    struct brw_reg emit_mask_reg;
@@ -308,7 +308,7 @@ void brw_wm_pass0( struct brw_wm_compile *c );
 void brw_wm_pass1( struct brw_wm_compile *c );
 void brw_wm_pass2( struct brw_wm_compile *c );
 void brw_wm_emit( struct brw_wm_compile *c );
-GLboolean brw_wm_arg_can_be_immediate(enum prog_opcode, int arg);
+bool brw_wm_arg_can_be_immediate(enum prog_opcode, int arg);
 void brw_wm_print_value( struct brw_wm_compile *c,
 			 struct brw_wm_value *value );
 
@@ -357,7 +357,7 @@ void emit_cmp(struct brw_compile *p,
 void emit_ddxy(struct brw_compile *p,
 	       const struct brw_reg *dst,
 	       GLuint mask,
-	       GLboolean is_ddx,
+	       bool is_ddx,
 	       const struct brw_reg *arg0);
 void emit_delta_xy(struct brw_compile *p,
 		   const struct brw_reg *dst,
@@ -461,7 +461,7 @@ void emit_tex(struct brw_wm_compile *c,
 	      struct brw_reg depth_payload,
 	      GLuint tex_idx,
 	      GLuint sampler,
-	      GLboolean shadow);
+	      bool shadow);
 void emit_txb(struct brw_wm_compile *c,
 	      struct brw_reg *dst,
 	      GLuint dst_flags,

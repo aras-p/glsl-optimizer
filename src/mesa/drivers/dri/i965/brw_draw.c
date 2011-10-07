@@ -282,7 +282,7 @@ static void brw_merge_inputs( struct brw_context *brw,
 /* May fail if out of video memory for texture or vbo upload, or on
  * fallback conditions.
  */
-static GLboolean brw_try_draw_prims( struct gl_context *ctx,
+static bool brw_try_draw_prims( struct gl_context *ctx,
 				     const struct gl_client_array *arrays[],
 				     const struct _mesa_prim *prim,
 				     GLuint nr_prims,
@@ -292,8 +292,8 @@ static GLboolean brw_try_draw_prims( struct gl_context *ctx,
 {
    struct intel_context *intel = intel_context(ctx);
    struct brw_context *brw = brw_context(ctx);
-   GLboolean retval = GL_FALSE;
-   GLboolean warn = GL_FALSE;
+   bool retval = false;
+   bool warn = false;
    GLuint i;
 
    if (ctx->NewState)
@@ -362,7 +362,7 @@ static GLboolean brw_try_draw_prims( struct gl_context *ctx,
 	  */
 	 if (dri_bufmgr_check_aperture_space(brw->state.validated_bos,
 					     brw->state.validated_bo_count)) {
-	    static GLboolean warned;
+	    static bool warned;
 	    intel_batchbuffer_flush(intel);
 
 	    /* Validate the state after we flushed the batch (which would have
@@ -375,12 +375,12 @@ static GLboolean brw_try_draw_prims( struct gl_context *ctx,
 	    if (!warned &&
 		dri_bufmgr_check_aperture_space(brw->state.validated_bos,
 						brw->state.validated_bo_count)) {
-	       warn = GL_TRUE;
-	       warned = GL_TRUE;
+	       warn = true;
+	       warned = true;
 	    }
 	 }
 
-	 intel->no_batch_wrap = GL_TRUE;
+	 intel->no_batch_wrap = true;
 	 brw_upload_state(brw);
       }
 
@@ -389,9 +389,9 @@ static GLboolean brw_try_draw_prims( struct gl_context *ctx,
       else
 	 brw_emit_prim(brw, &prim[i], brw->primitive);
 
-      intel->no_batch_wrap = GL_FALSE;
+      intel->no_batch_wrap = false;
 
-      retval = GL_TRUE;
+      retval = true;
    }
 
    if (intel->always_flush_batch)
@@ -419,7 +419,7 @@ void brw_draw_prims( struct gl_context *ctx,
 		     GLuint min_index,
 		     GLuint max_index )
 {
-   GLboolean retval;
+   bool retval;
 
    if (!_mesa_check_conditional_render(ctx))
       return;

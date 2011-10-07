@@ -37,7 +37,7 @@ upload_clip_state(struct brw_context *brw)
    uint32_t dw1 = GEN6_CLIP_STATISTICS_ENABLE;
 
    /* _NEW_BUFFERS */
-   GLboolean render_to_fbo = brw->intel.ctx.DrawBuffer->Name != 0;
+   bool render_to_fbo = brw->intel.ctx.DrawBuffer->Name != 0;
 
    dw1 |= GEN7_CLIP_EARLY_CULL;
 

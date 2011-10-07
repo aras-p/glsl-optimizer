@@ -965,7 +965,7 @@ vec4_visitor::visit(ir_function *ir)
    }
 }
 
-GLboolean
+bool
 vec4_visitor::try_emit_sat(ir_expression *ir)
 {
    ir_rvalue *sat_src = ir->as_rvalue_to_saturate();

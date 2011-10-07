@@ -118,7 +118,7 @@ GetTexelOp(GLint unit)
  * environments are treated identically.
  *
  * \todo
- * This function should return \c GLboolean.  When \c GL_FALSE is returned,
+ * This function should return \c bool.  When \c false is returned,
  * it means that an environment is selected that the hardware cannot do.  This
  * is the way the Radeon and R200 drivers work.
  * 
@@ -144,7 +144,7 @@ i830SetTexEnvCombine(struct i830_context * i830,
    GLuint args_A[3];
    GLuint rgb_shift;
    GLuint alpha_shift;
-   GLboolean need_factor = 0;
+   bool need_factor = 0;
    int i;
    unsigned used;
    static const GLuint tex_blend_rgb[3] = {
@@ -387,7 +387,7 @@ i830SetTexEnvCombine(struct i830_context * i830,
 
 static void
 emit_texblend(struct i830_context *i830, GLuint unit, GLuint blendUnit,
-              GLboolean last_stage)
+              bool last_stage)
 {
    struct gl_texture_unit *texUnit = &i830->intel.ctx.Texture.Unit[unit];
    GLuint tmp[I830_TEXBLEND_SIZE], tmp_sz;
@@ -413,7 +413,7 @@ emit_texblend(struct i830_context *i830, GLuint unit, GLuint blendUnit,
       i830->state.TexBlendWordsUsed[blendUnit] = tmp_sz;
    }
 
-   I830_ACTIVESTATE(i830, I830_UPLOAD_TEXBLEND(blendUnit), GL_TRUE);
+   I830_ACTIVESTATE(i830, I830_UPLOAD_TEXBLEND(blendUnit), true);
 }
 
 static void
@@ -433,7 +433,7 @@ emit_passthrough(struct i830_context *i830)
       i830->state.TexBlendWordsUsed[unit] = tmp_sz;
    }
 
-   I830_ACTIVESTATE(i830, I830_UPLOAD_TEXBLEND(unit), GL_TRUE);
+   I830_ACTIVESTATE(i830, I830_UPLOAD_TEXBLEND(unit), true);
 }
 
 void
@@ -442,7 +442,7 @@ i830EmitTextureBlend(struct i830_context *i830)
    struct gl_context *ctx = &i830->intel.ctx;
    GLuint unit, last_stage = 0, blendunit = 0;
 
-   I830_ACTIVESTATE(i830, I830_UPLOAD_TEXBLEND_ALL, GL_FALSE);
+   I830_ACTIVESTATE(i830, I830_UPLOAD_TEXBLEND_ALL, false);
 
    if (ctx->Texture._EnabledUnits) {
       for (unit = 0; unit < ctx->Const.MaxTextureUnits; unit++)

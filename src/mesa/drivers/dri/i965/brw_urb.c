@@ -97,7 +97,7 @@ static const struct {
 };
 
 
-static GLboolean check_urb_layout( struct brw_context *brw )
+static bool check_urb_layout(struct brw_context *brw)
 {
    brw->urb.vs_start = 0;
    brw->urb.gs_start = brw->urb.nr_vs_entries * brw->urb.vsize;

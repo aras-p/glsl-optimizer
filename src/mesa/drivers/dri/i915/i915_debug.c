@@ -31,7 +31,8 @@
 #include "i915_context.h"
 #include "i915_debug.h"
 
-static GLboolean debug( struct debug_stream *stream, const char *name, GLuint len )
+static bool
+debug(struct debug_stream *stream, const char *name, GLuint len)
 {
    GLuint i;
    GLuint *ptr = (GLuint *)(stream->ptr + stream->offset);
@@ -39,7 +40,7 @@ static GLboolean debug( struct debug_stream *stream, const char *name, GLuint le
    if (len == 0) {
       printf("Error - zero length packet (0x%08x)\n", stream->ptr[0]);
       assert(0);
-      return GL_FALSE;
+      return false;
    }
 
    if (stream->print_addresses)
@@ -53,7 +54,7 @@ static GLboolean debug( struct debug_stream *stream, const char *name, GLuint le
 
    stream->offset += len * sizeof(GLuint);
    
-   return GL_TRUE;
+   return true;
 }
 
 
@@ -76,9 +77,9 @@ static const char *get_prim_name( GLuint val )
    }
 }
 
-static GLboolean debug_prim( struct debug_stream *stream, const char *name, 
-			     GLboolean dump_floats,
-			     GLuint len )
+static bool
+debug_prim(struct debug_stream *stream, const char *name,
+	   bool dump_floats, GLuint len)
 {
    GLuint *ptr = (GLuint *)(stream->ptr + stream->offset);
    const char *prim = get_prim_name( ptr[0] );
@@ -100,20 +101,21 @@ static GLboolean debug_prim( struct debug_stream *stream, const char *name,
 
    stream->offset += len * sizeof(GLuint);
    
-   return GL_TRUE;
+   return true;
 }
    
 
 
 
-static GLboolean debug_program( struct debug_stream *stream, const char *name, GLuint len )
+static bool
+debug_program(struct debug_stream *stream, const char *name, GLuint len)
 {
    GLuint *ptr = (GLuint *)(stream->ptr + stream->offset);
 
    if (len == 0) {
       printf("Error - zero length packet (0x%08x)\n", stream->ptr[0]);
       assert(0);
-      return GL_FALSE;
+      return false;
    }
 
    if (stream->print_addresses)
@@ -123,11 +125,12 @@ static GLboolean debug_program( struct debug_stream *stream, const char *name, G
    i915_disassemble_program( ptr, len );
 
    stream->offset += len * sizeof(GLuint);
-   return GL_TRUE;
+   return true;
 }
 
 
-static GLboolean debug_chain( struct debug_stream *stream, const char *name, GLuint len )
+static bool
+debug_chain(struct debug_stream *stream, const char *name, GLuint len)
 {
    GLuint *ptr = (GLuint *)(stream->ptr + stream->offset);
    GLuint old_offset = stream->offset + len * sizeof(GLuint);
@@ -147,11 +150,12 @@ static GLboolean debug_chain( struct debug_stream *stream, const char *name, GLu
 		   old_offset, stream->offset );
 
 
-   return GL_TRUE;
+   return true;
 }
 
 
-static GLboolean debug_variable_length_prim( struct debug_stream *stream )
+static bool
+debug_variable_length_prim(struct debug_stream *stream)
 {
    GLuint *ptr = (GLuint *)(stream->ptr + stream->offset);
    const char *prim = get_prim_name( ptr[0] );
@@ -169,7 +173,7 @@ static GLboolean debug_variable_length_prim( struct debug_stream *stream )
    printf("\n");
 
    stream->offset += len * sizeof(GLuint);
-   return GL_TRUE;
+   return true;
 }
 
 
@@ -198,9 +202,8 @@ do {							\
    }							\
 } while (0)
 
-static GLboolean debug_load_immediate( struct debug_stream *stream,
-				       const char *name,
-				       GLuint len )
+static bool
+debug_load_immediate(struct debug_stream *stream, const char *name, GLuint len)
 {
    GLuint *ptr = (GLuint *)(stream->ptr + stream->offset);
    GLuint bits = (ptr[0] >> 4) & 0xff;
@@ -300,14 +303,13 @@ static GLboolean debug_load_immediate( struct debug_stream *stream,
 
    stream->offset += len * sizeof(GLuint);
    
-   return GL_TRUE;
+   return true;
 }
  
 
 
-static GLboolean debug_load_indirect( struct debug_stream *stream,
-				      const char *name,
-				      GLuint len )
+static bool
+debug_load_indirect(struct debug_stream *stream, const char *name, GLuint len)
 {
    GLuint *ptr = (GLuint *)(stream->ptr + stream->offset);
    GLuint bits = (ptr[0] >> 8) & 0x3f;
@@ -360,7 +362,7 @@ static GLboolean debug_load_indirect( struct debug_stream *stream,
 
    stream->offset += len * sizeof(GLuint);
    
-   return GL_TRUE;
+   return true;
 }
  	
 static void BR13( struct debug_stream *stream,
@@ -428,9 +430,8 @@ static void BR16( struct debug_stream *stream,
    printf("\t0x%08x -- color\n",  val);
 }
    
-static GLboolean debug_copy_blit( struct debug_stream *stream,
-				  const char *name,
-				  GLuint len )
+static bool
+debug_copy_blit(struct debug_stream *stream, const char *name, GLuint len)
 {
    GLuint *ptr = (GLuint *)(stream->ptr + stream->offset);
    int j = 0;
@@ -448,12 +449,11 @@ static GLboolean debug_copy_blit( struct debug_stream *stream,
 
    stream->offset += len * sizeof(GLuint);
    assert(j == len);
-   return GL_TRUE;
+   return true;
 }
 
-static GLboolean debug_color_blit( struct debug_stream *stream,
-				  const char *name,
-				  GLuint len )
+static bool
+debug_color_blit(struct debug_stream *stream, const char *name, GLuint len)
 {
    GLuint *ptr = (GLuint *)(stream->ptr + stream->offset);
    int j = 0;
@@ -469,12 +469,11 @@ static GLboolean debug_color_blit( struct debug_stream *stream,
 
    stream->offset += len * sizeof(GLuint);
    assert(j == len);
-   return GL_TRUE;
+   return true;
 }
 
-static GLboolean debug_modes4( struct debug_stream *stream,
-				  const char *name,
-				  GLuint len )
+static bool
+debug_modes4(struct debug_stream *stream, const char *name, GLuint len)
 {
    GLuint *ptr = (GLuint *)(stream->ptr + stream->offset);
    int j = 0;
@@ -490,12 +489,11 @@ static GLboolean debug_modes4( struct debug_stream *stream,
 
    stream->offset += len * sizeof(GLuint);
    assert(j == len);
-   return GL_TRUE;
+   return true;
 }
 
-static GLboolean debug_map_state( struct debug_stream *stream,
-				  const char *name,
-				  GLuint len )
+static bool
+debug_map_state(struct debug_stream *stream, const char *name, GLuint len)
 {
    GLuint *ptr = (GLuint *)(stream->ptr + stream->offset);
    int j = 0;
@@ -542,12 +540,11 @@ static GLboolean debug_map_state( struct debug_stream *stream,
 
    stream->offset += len * sizeof(GLuint);
    assert(j == len);
-   return GL_TRUE;
+   return true;
 }
 
-static GLboolean debug_sampler_state( struct debug_stream *stream,
-				  const char *name,
-				  GLuint len )
+static bool
+debug_sampler_state(struct debug_stream *stream, const char *name, GLuint len)
 {
    GLuint *ptr = (GLuint *)(stream->ptr + stream->offset);
    int j = 0;
@@ -602,12 +599,11 @@ static GLboolean debug_sampler_state( struct debug_stream *stream,
 
    stream->offset += len * sizeof(GLuint);
    assert(j == len);
-   return GL_TRUE;
+   return true;
 }
 
-static GLboolean debug_dest_vars( struct debug_stream *stream,
-				  const char *name,
-				  GLuint len )
+static bool
+debug_dest_vars(struct debug_stream *stream, const char *name, GLuint len)
 {
    GLuint *ptr = (GLuint *)(stream->ptr + stream->offset);
    int j = 0;
@@ -637,12 +633,11 @@ static GLboolean debug_dest_vars( struct debug_stream *stream,
    
    stream->offset += len * sizeof(GLuint);
    assert(j == len);
-   return GL_TRUE;
+   return true;
 }
 
-static GLboolean debug_buf_info( struct debug_stream *stream,
-				  const char *name,
-				  GLuint len )
+static bool
+debug_buf_info(struct debug_stream *stream, const char *name, GLuint len)
 {
    GLuint *ptr = (GLuint *)(stream->ptr + stream->offset);
    int j = 0;
@@ -667,10 +662,11 @@ static GLboolean debug_buf_info( struct debug_stream *stream,
 
    stream->offset += len * sizeof(GLuint);
    assert(j == len);
-   return GL_TRUE;
+   return true;
 }
 
-static GLboolean i915_debug_packet( struct debug_stream *stream )
+static bool
+i915_debug_packet(struct debug_stream *stream)
 {
    GLuint *ptr = (GLuint *)(stream->ptr + stream->offset);
    GLuint cmd = *ptr;
@@ -686,7 +682,7 @@ static GLboolean i915_debug_packet( struct debug_stream *stream )
 	 return debug(stream, "MI_FLUSH", 1);
       case 0xA:
 	 debug(stream, "MI_BATCH_BUFFER_END", 1);
-	 return GL_FALSE;
+	 return false;
       case 0x22:
 	 return debug(stream, "MI_LOAD_REGISTER_IMM", 3);
       case 0x31:
@@ -822,7 +818,7 @@ i915_dump_batchbuffer( GLuint *start,
 {
    struct debug_stream stream;
    GLuint bytes = (end - start) * 4;
-   GLboolean done = GL_FALSE;
+   bool done = false;
 
    printf("\n\nBATCH: (%d)\n", bytes / 4);
 

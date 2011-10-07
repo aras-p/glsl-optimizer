@@ -92,7 +92,7 @@ static void intel_start_inline(struct intel_context *intel, uint32_t prim)
 
    intel->vtbl.emit_state(intel);
 
-   intel->no_batch_wrap = GL_TRUE;
+   intel->no_batch_wrap = true;
 
    /*printf("%s *", __progname);*/
 
@@ -108,7 +108,7 @@ static void intel_start_inline(struct intel_context *intel, uint32_t prim)
    OUT_BATCH(0);
    ADVANCE_BATCH();
 
-   intel->no_batch_wrap = GL_FALSE;
+   intel->no_batch_wrap = false;
 /*    printf(">"); */
 }
 
@@ -232,7 +232,7 @@ void intel_flush_prim(struct intel_context *intel)
     * depends on the state just emitted. emit_state should be making sure we
     * have the space for this.
     */
-   intel->no_batch_wrap = GL_TRUE;
+   intel->no_batch_wrap = true;
 
 #if 0
    printf("emitting %d..%d=%d vertices size %d\n", offset,
@@ -306,7 +306,7 @@ void intel_flush_prim(struct intel_context *intel)
       ADVANCE_BATCH();
    }
 
-   intel->no_batch_wrap = GL_FALSE;
+   intel->no_batch_wrap = false;
 
    drm_intel_bo_unreference(vb_bo);
 }
@@ -655,7 +655,7 @@ do {							\
    struct intel_context *intel = intel_context(ctx);			\
    GLuint color[n] = { 0, }, spec[n] = { 0, };				\
    GLuint coloroffset = intel->coloroffset;				\
-   GLboolean specoffset = intel->specoffset;				\
+   bool specoffset = intel->specoffset;				\
    (void) color; (void) spec; (void) coloroffset; (void) specoffset;
 
 
@@ -946,7 +946,7 @@ intelChooseRenderState(struct gl_context * ctx)
    struct intel_context *intel = intel_context(ctx);
    GLuint flags = ctx->_TriangleCaps;
    const struct gl_fragment_program *fprog = ctx->FragmentProgram._Current;
-   GLboolean have_wpos = (fprog && (fprog->Base.InputsRead & FRAG_BIT_WPOS));
+   bool have_wpos = (fprog && (fprog->Base.InputsRead & FRAG_BIT_WPOS));
    GLuint index = 0;
 
    if (INTEL_DEBUG & DEBUG_STATE)
@@ -1211,7 +1211,7 @@ getFallbackString(GLuint bit)
  * \param bit  one of INTEL_FALLBACK_x flags.
  */
 void
-intelFallback(struct intel_context *intel, GLbitfield bit, GLboolean mode)
+intelFallback(struct intel_context *intel, GLbitfield bit, bool mode)
 {
    struct gl_context *ctx = &intel->ctx;
    TNLcontext *tnl = TNL_CONTEXT(ctx);

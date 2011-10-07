@@ -56,7 +56,7 @@ intel_finalize_mipmap_tree(struct intel_context *intel, GLuint unit)
     */
    if (firstImage->base.Base.Border) {
       intel_miptree_release(&intelObj->mt);
-      return GL_FALSE;
+      return false;
    }
 
    intel_miptree_get_dimensions_for_image(&firstImage->base.Base,
@@ -93,9 +93,9 @@ intel_finalize_mipmap_tree(struct intel_context *intel, GLuint unit)
                                           width,
                                           height,
                                           depth,
-					  GL_TRUE);
+					  true);
       if (!intelObj->mt)
-         return GL_FALSE;
+         return false;
    }
 
    /* Pull in any images not in the object's tree:
@@ -121,7 +121,7 @@ intel_finalize_mipmap_tree(struct intel_context *intel, GLuint unit)
       }
    }
 
-   return GL_TRUE;
+   return true;
 }
 
 static void

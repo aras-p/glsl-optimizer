@@ -85,7 +85,7 @@ static const GLubyte *map_pbo( struct gl_context *ctx,
    return ADD_POINTERS(buf, bitmap);
 }
 
-static GLboolean test_bit( const GLubyte *src, GLuint bit )
+static bool test_bit( const GLubyte *src, GLuint bit )
 {
    return (src[bit/8] & (1<<(bit % 8))) ? 1 : 0;
 }
@@ -105,7 +105,7 @@ static GLuint get_bitmap_rect(GLsizei width, GLsizei height,
 			      GLuint w, GLuint h,
 			      GLubyte *dest,
 			      GLuint row_align,
-			      GLboolean invert)
+			      bool invert)
 {
    GLuint src_offset = (x + unpack->SkipPixels) & 0x7;
    GLuint mask = unpack->LsbFirst ? 0 : 7;
@@ -167,7 +167,7 @@ y_flip(struct gl_framebuffer *fb, int y, int height)
 /*
  * Render a bitmap.
  */
-static GLboolean
+static bool
 do_blit_bitmap( struct gl_context *ctx, 
 		GLint dstx, GLint dsty,
 		GLsizei width, GLsizei height,
@@ -195,19 +195,19 @@ do_blit_bitmap( struct gl_context *ctx,
        * It seems the blit Z coord is always 1.0 (the far plane) so fragments
        * will likely be obscured by other, closer geometry.
        */
-      return GL_FALSE;
+      return false;
    }
 
    intel_prepare_render(intel);
    dst = intel_drawbuf_region(intel);
 
    if (!dst)
-       return GL_FALSE;
+       return false;
 
    if (_mesa_is_bufferobj(unpack->BufferObj)) {
       bitmap = map_pbo(ctx, width, height, unpack, bitmap);
       if (bitmap == NULL)
-	 return GL_TRUE;	/* even though this is an error, we're done */
+	 return true;	/* even though this is an error, we're done */
    }
 
    COPY_4V(tmpColor, ctx->Current.RasterColor);
@@ -227,7 +227,7 @@ do_blit_bitmap( struct gl_context *ctx,
       color = PACK_COLOR_8888(ubcolor[3], ubcolor[0], ubcolor[1], ubcolor[2]);
 
    if (!intel_check_blit_fragment_ops(ctx, tmpColor[3] == 1.0F))
-      return GL_FALSE;
+      return false;
 
    /* Clip to buffer bounds and scissor. */
    if (!_mesa_clip_to_region(fb->_Xmin, fb->_Ymin,
@@ -265,7 +265,7 @@ do_blit_bitmap( struct gl_context *ctx,
 			     w, h,
 			     (GLubyte *)stipple,
 			     8,
-			     fb->Name == 0 ? GL_TRUE : GL_FALSE) == 0)
+			     fb->Name == 0 ? true : false) == 0)
 	    continue;
 
 	 if (!intelEmitImmediateColorExpandBlit(intel,
@@ -281,7 +281,7 @@ do_blit_bitmap( struct gl_context *ctx,
 						dsty + py,
 						w, h,
 						logic_op)) {
-	    return GL_FALSE;
+	    return false;
 	 }
       }
    }
@@ -297,7 +297,7 @@ out:
 
    intel_check_front_buffer_rendering(intel);
 
-   return GL_TRUE;
+   return true;
 }
 
 

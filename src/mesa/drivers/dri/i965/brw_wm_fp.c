@@ -104,7 +104,7 @@ static struct prog_src_register src_undef( void )
    return src_reg(PROGRAM_UNDEFINED, 0);
 }
 
-static GLboolean src_is_undef(struct prog_src_register src)
+static bool src_is_undef(struct prog_src_register src)
 {
    return src.File == PROGRAM_UNDEFINED;
 }
@@ -766,7 +766,7 @@ static void precalc_tex( struct brw_wm_compile *c,
     */
    if (c->key.yuvtex_mask & (1 << unit)) {
       /* convert ycbcr to RGBA */
-      GLboolean  swap_uv = c->key.yuvtex_swap_mask & (1<<unit);
+      bool  swap_uv = c->key.yuvtex_swap_mask & (1<<unit);
 
       /* 
 	 CONST C0 = { -.5, -.0625,  -.5, 1.164 }
@@ -882,11 +882,11 @@ static void precalc_tex( struct brw_wm_compile *c,
 /**
  * Check if the given TXP instruction really needs the divide-by-W step.
  */
-static GLboolean projtex( struct brw_wm_compile *c,
-			  const struct prog_instruction *inst )
+static bool
+projtex(struct brw_wm_compile *c, const struct prog_instruction *inst)
 {
    const struct prog_src_register src = inst->SrcReg[0];
-   GLboolean retVal;
+   bool retVal;
 
    assert(inst->Opcode == OPCODE_TXP);
 
@@ -898,13 +898,13 @@ static GLboolean projtex( struct brw_wm_compile *c,
     * user-provided fragment programs anyway:
     */
    if (inst->TexSrcTarget == TEXTURE_CUBE_INDEX)
-      retVal = GL_FALSE;  /* ut2004 gun rendering !?! */
+      retVal = false;  /* ut2004 gun rendering !?! */
    else if (src.File == PROGRAM_INPUT && 
 	    GET_SWZ(src.Swizzle, W) == W &&
             (c->key.proj_attrib_mask & (1 << src.Index)) == 0)
-      retVal = GL_FALSE;
+      retVal = false;
    else
-      retVal = GL_TRUE;
+      retVal = true;
 
    return retVal;
 }
@@ -1051,7 +1051,7 @@ void brw_wm_pass_fp( struct brw_wm_compile *c )
    if (unlikely(INTEL_DEBUG & DEBUG_WM)) {
       printf("pre-fp:\n");
       _mesa_fprint_program_opt(stdout, &fp->program.Base, PROG_PRINT_DEBUG,
-			       GL_TRUE);
+			       true);
       printf("\n");
    }
 
@@ -1124,7 +1124,7 @@ void brw_wm_pass_fp( struct brw_wm_compile *c )
 
       case OPCODE_RSQ:
 	 out = emit_scalar_insn(c, inst);
-	 out->SrcReg[0].Abs = GL_TRUE;
+	 out->SrcReg[0].Abs = true;
 	 break;
 
       case OPCODE_TEX:

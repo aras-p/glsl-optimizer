@@ -54,10 +54,11 @@ static void brwInitDriverFunctions( struct dd_function_table *functions )
    brw_init_queryobj_functions(functions);
 }
 
-GLboolean brwCreateContext( int api,
-			    const struct gl_config *mesaVis,
-			    __DRIcontext *driContextPriv,
-			    void *sharedContextPrivate)
+bool
+brwCreateContext(int api,
+	         const struct gl_config *mesaVis,
+		 __DRIcontext *driContextPriv,
+	         void *sharedContextPrivate)
 {
    struct dd_function_table functions;
    struct brw_context *brw = rzalloc(NULL, struct brw_context);
@@ -67,7 +68,7 @@ GLboolean brwCreateContext( int api,
 
    if (!brw) {
       printf("%s: failed to alloc context\n", __FUNCTION__);
-      return GL_FALSE;
+      return false;
    }
 
    brwInitVtbl( brw );
@@ -77,7 +78,7 @@ GLboolean brwCreateContext( int api,
 			  sharedContextPrivate, &functions )) {
       printf("%s: failed to init intel context\n", __FUNCTION__);
       FREE(brw);
-      return GL_FALSE;
+      return false;
    }
 
    /* Initialize swrast, tnl driver tables: */
@@ -114,18 +115,18 @@ GLboolean brwCreateContext( int api,
 
    /* We want the GLSL compiler to emit code that uses condition codes */
    for (i = 0; i <= MESA_SHADER_FRAGMENT; i++) {
-      ctx->ShaderCompilerOptions[i].EmitCondCodes = GL_TRUE;
-      ctx->ShaderCompilerOptions[i].EmitNVTempInitialization = GL_TRUE;
-      ctx->ShaderCompilerOptions[i].EmitNoNoise = GL_TRUE;
-      ctx->ShaderCompilerOptions[i].EmitNoMainReturn = GL_TRUE;
-      ctx->ShaderCompilerOptions[i].EmitNoIndirectInput = GL_TRUE;
-      ctx->ShaderCompilerOptions[i].EmitNoIndirectOutput = GL_TRUE;
+      ctx->ShaderCompilerOptions[i].EmitCondCodes = true;
+      ctx->ShaderCompilerOptions[i].EmitNVTempInitialization = true;
+      ctx->ShaderCompilerOptions[i].EmitNoNoise = true;
+      ctx->ShaderCompilerOptions[i].EmitNoMainReturn = true;
+      ctx->ShaderCompilerOptions[i].EmitNoIndirectInput = true;
+      ctx->ShaderCompilerOptions[i].EmitNoIndirectOutput = true;
 
       ctx->ShaderCompilerOptions[i].EmitNoIndirectUniform =
 	 (i == MESA_SHADER_FRAGMENT);
       ctx->ShaderCompilerOptions[i].EmitNoIndirectTemp =
 	 (i == MESA_SHADER_FRAGMENT);
-      ctx->ShaderCompilerOptions[i].LowerClipDistance = GL_TRUE;
+      ctx->ShaderCompilerOptions[i].LowerClipDistance = true;
    }
 
    ctx->Const.VertexProgram.MaxNativeInstructions = (16 * 1024);
@@ -169,16 +170,16 @@ GLboolean brwCreateContext( int api,
       that affect provoking vertex decision. Always use last vertex
       convention for quad primitive which works as expected for now. */
    if (intel->gen >= 6)
-       ctx->Const.QuadsFollowProvokingVertexConvention = GL_FALSE;
+       ctx->Const.QuadsFollowProvokingVertexConvention = false;
 
    if (intel->is_g4x || intel->gen >= 5) {
       brw->CMD_VF_STATISTICS = GM45_3DSTATE_VF_STATISTICS;
       brw->CMD_PIPELINE_SELECT = CMD_PIPELINE_SELECT_GM45;
-      brw->has_surface_tile_offset = GL_TRUE;
+      brw->has_surface_tile_offset = true;
       if (intel->gen < 6)
-	  brw->has_compr4 = GL_TRUE;
-      brw->has_aa_line_parameters = GL_TRUE;
-      brw->has_pln = GL_TRUE;
+	  brw->has_compr4 = true;
+      brw->has_aa_line_parameters = true;
+      brw->has_pln = true;
   } else {
       brw->CMD_VF_STATISTICS = GEN4_3DSTATE_VF_STATISTICS;
       brw->CMD_PIPELINE_SELECT = CMD_PIPELINE_SELECT_965;
@@ -229,7 +230,7 @@ GLboolean brwCreateContext( int api,
       brw->urb.size = 256;
       brw->vs_max_threads = 16;
       brw->wm_max_threads = 8 * 4;
-      brw->has_negative_rhw_bug = GL_TRUE;
+      brw->has_negative_rhw_bug = true;
    }
 
    if (INTEL_DEBUG & DEBUG_SINGLE_THREAD) {
@@ -249,8 +250,8 @@ GLboolean brwCreateContext( int api,
 
    intel->batch.need_workaround_flush = true;
 
-   ctx->VertexProgram._MaintainTnlProgram = GL_TRUE;
-   ctx->FragmentProgram._MaintainTexEnvProgram = GL_TRUE;
+   ctx->VertexProgram._MaintainTnlProgram = true;
+   ctx->FragmentProgram._MaintainTexEnvProgram = true;
 
    brw_draw_init( brw );
 
@@ -264,6 +265,6 @@ GLboolean brwCreateContext( int api,
       ctx->Const.UniformBooleanTrue = 1;
    }
 
-   return GL_TRUE;
+   return true;
 }
 

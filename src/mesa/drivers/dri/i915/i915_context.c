@@ -91,7 +91,7 @@ i915InitDriverFunctions(struct dd_function_table *functions)
 
 extern const struct tnl_pipeline_stage *intel_pipeline[];
 
-GLboolean
+bool
 i915CreateContext(int api,
 		  const struct gl_config * mesaVis,
                   __DRIcontext * driContextPriv,
@@ -103,7 +103,7 @@ i915CreateContext(int api,
    struct gl_context *ctx = &intel->ctx;
 
    if (!i915)
-      return GL_FALSE;
+      return false;
 
    i915InitVtbl(i915);
 
@@ -112,7 +112,7 @@ i915CreateContext(int api,
    if (!intelInitContext(intel, api, mesaVis, driContextPriv,
                          sharedContextPrivate, &functions)) {
       FREE(i915);
-      return GL_FALSE;
+      return false;
    }
 
    _math_matrix_ctr(&intel->ViewportMatrix);
@@ -180,23 +180,23 @@ i915CreateContext(int api,
    ctx->Const.FragmentProgram.LowInt = ctx->Const.FragmentProgram.HighInt =
       ctx->Const.FragmentProgram.MediumInt;
 
-   ctx->FragmentProgram._MaintainTexEnvProgram = GL_TRUE;
+   ctx->FragmentProgram._MaintainTexEnvProgram = true;
 
    /* FINISHME: Are there other options that should be enabled for software
     * FINISHME: vertex shaders?
     */
-   ctx->ShaderCompilerOptions[MESA_SHADER_VERTEX].EmitCondCodes = GL_TRUE;
+   ctx->ShaderCompilerOptions[MESA_SHADER_VERTEX].EmitCondCodes = true;
 
    struct gl_shader_compiler_options *const fs_options =
       & ctx->ShaderCompilerOptions[MESA_SHADER_FRAGMENT];
    fs_options->MaxIfDepth = 0;
-   fs_options->EmitNoNoise = GL_TRUE;
-   fs_options->EmitNoPow = GL_TRUE;
-   fs_options->EmitNoMainReturn = GL_TRUE;
-   fs_options->EmitNoIndirectInput = GL_TRUE;
-   fs_options->EmitNoIndirectOutput = GL_TRUE;
-   fs_options->EmitNoIndirectUniform = GL_TRUE;
-   fs_options->EmitNoIndirectTemp = GL_TRUE;
+   fs_options->EmitNoNoise = true;
+   fs_options->EmitNoPow = true;
+   fs_options->EmitNoMainReturn = true;
+   fs_options->EmitNoIndirectInput = true;
+   fs_options->EmitNoIndirectOutput = true;
+   fs_options->EmitNoIndirectUniform = true;
+   fs_options->EmitNoIndirectTemp = true;
 
    ctx->Const.MaxDrawBuffers = 1;
 
@@ -213,5 +213,5 @@ i915CreateContext(int api,
    _tnl_allow_vertex_fog(ctx, 0);
    _tnl_allow_pixel_fog(ctx, 1);
 
-   return GL_TRUE;
+   return true;
 }

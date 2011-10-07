@@ -76,18 +76,18 @@ static void compile_sf_prog( struct brw_context *brw,
    switch (key->primitive) {
    case SF_TRIANGLES:
       c.nr_verts = 3;
-      brw_emit_tri_setup( &c, GL_TRUE );
+      brw_emit_tri_setup( &c, true );
       break;
    case SF_LINES:
       c.nr_verts = 2;
-      brw_emit_line_setup( &c, GL_TRUE );
+      brw_emit_line_setup( &c, true );
       break;
    case SF_POINTS:
       c.nr_verts = 1;
       if (key->do_point_sprite)
-	  brw_emit_point_sprite_setup( &c, GL_TRUE );
+	  brw_emit_point_sprite_setup( &c, true );
       else
-	  brw_emit_point_setup( &c, GL_TRUE );
+	  brw_emit_point_setup( &c, true );
       break;
    case SF_UNFILLED_TRIS:
       c.nr_verts = 3;

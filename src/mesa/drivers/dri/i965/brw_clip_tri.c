@@ -296,7 +296,7 @@ void brw_clip_tri( struct brw_clip_compile *c )
 		  brw_MOV(p, get_addr_reg(vtxOut), get_addr_reg(vtxPrev) );
 		  brw_set_predicate_control(p, BRW_PREDICATE_NONE);
 
-		  brw_clip_interp_vertex(c, vtxOut, vtxPrev, vtx, c->reg.t, GL_FALSE);
+		  brw_clip_interp_vertex(c, vtxOut, vtxPrev, vtx, c->reg.t, false);
 
 		  /* *outlist_ptr++ = vtxOut;
 		   * nr_verts++; 
@@ -338,7 +338,7 @@ void brw_clip_tri( struct brw_clip_compile *c )
 		  brw_MOV(p, get_addr_reg(vtxOut), get_addr_reg(vtx) );
 		  brw_set_predicate_control(p, BRW_PREDICATE_NONE);
 
-		  brw_clip_interp_vertex(c, vtxOut, vtx, vtxPrev, c->reg.t, GL_TRUE);		  
+		  brw_clip_interp_vertex(c, vtxOut, vtx, vtxPrev, c->reg.t, true);
 
 		  /* *outlist_ptr++ = vtxOut;
 		   * nr_verts++; 

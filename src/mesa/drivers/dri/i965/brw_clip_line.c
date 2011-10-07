@@ -251,8 +251,8 @@ static void clip_and_emit_line( struct brw_clip_compile *c )
    brw_CMP(p, vec1(brw_null_reg()), BRW_CONDITIONAL_L, c->reg.t, brw_imm_f(1.0));
    brw_IF(p, BRW_EXECUTE_1);
    {
-      brw_clip_interp_vertex(c, newvtx0, vtx0, vtx1, c->reg.t0, GL_FALSE);
-      brw_clip_interp_vertex(c, newvtx1, vtx1, vtx0, c->reg.t1, GL_FALSE);
+      brw_clip_interp_vertex(c, newvtx0, vtx0, vtx1, c->reg.t0, false);
+      brw_clip_interp_vertex(c, newvtx1, vtx1, vtx0, c->reg.t1, false);
 
       brw_clip_emit_vue(c, newvtx0, 1, 0, (_3DPRIM_LINESTRIP << 2) | R02_PRIM_START);
       brw_clip_emit_vue(c, newvtx1, 0, 1, (_3DPRIM_LINESTRIP << 2) | R02_PRIM_END); 

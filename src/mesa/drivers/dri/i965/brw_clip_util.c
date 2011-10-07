@@ -135,7 +135,7 @@ void brw_clip_interp_vertex( struct brw_clip_compile *c,
 			     struct brw_indirect v0_ptr, /* from */
 			     struct brw_indirect v1_ptr, /* to */
 			     struct brw_reg t0,
-			     GLboolean force_edgeflag)
+			     bool force_edgeflag)
 {
    struct brw_compile *p = &c->func;
    struct brw_reg tmp = get_tmp(c);
@@ -207,8 +207,8 @@ void brw_clip_interp_vertex( struct brw_clip_compile *c,
 
 void brw_clip_emit_vue(struct brw_clip_compile *c, 
 		       struct brw_indirect vert,
-		       GLboolean allocate,
-		       GLboolean eot,
+		       bool allocate,
+		       bool eot,
 		       GLuint header)
 {
    struct brw_compile *p = &c->func;

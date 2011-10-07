@@ -130,7 +130,7 @@ do_flush_locked(struct intel_context *intel)
       drm_intel_bo_map(batch->bo, false);
       intel_decode(batch->bo->virtual, batch->used,
 		   batch->bo->offset,
-		   intel->intelScreen->deviceID, GL_TRUE);
+		   intel->intelScreen->deviceID, true);
       drm_intel_bo_unmap(batch->bo);
 
       if (intel->vtbl.debug_batch != NULL)
@@ -203,7 +203,7 @@ _intel_batchbuffer_flush(struct intel_context *intel,
 
 /*  This is the only way buffers get added to the validate list.
  */
-GLboolean
+bool
 intel_batchbuffer_emit_reloc(struct intel_context *intel,
                              drm_intel_bo *buffer,
                              uint32_t read_domains, uint32_t write_domain,
@@ -224,10 +224,10 @@ intel_batchbuffer_emit_reloc(struct intel_context *intel,
     */
    intel_batchbuffer_emit_dword(intel, buffer->offset + delta);
 
-   return GL_TRUE;
+   return true;
 }
 
-GLboolean
+bool
 intel_batchbuffer_emit_reloc_fenced(struct intel_context *intel,
 				    drm_intel_bo *buffer,
 				    uint32_t read_domains,
@@ -249,7 +249,7 @@ intel_batchbuffer_emit_reloc_fenced(struct intel_context *intel,
     */
    intel_batchbuffer_emit_dword(intel, buffer->offset + delta);
 
-   return GL_TRUE;
+   return true;
 }
 
 void

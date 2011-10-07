@@ -83,7 +83,7 @@ channel_expressions_predicate(ir_instruction *ir)
    return false;
 }
 
-GLboolean
+bool
 brw_do_channel_expressions(exec_list *instructions)
 {
    ir_channel_expressions_visitor v;

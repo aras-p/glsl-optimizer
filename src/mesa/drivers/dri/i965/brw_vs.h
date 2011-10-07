@@ -103,7 +103,7 @@ struct brw_vs_compile {
    struct brw_reg stack;
 
    struct {	
-       GLboolean used_in_src;
+       bool used_in_src;
        struct brw_reg reg;
    } output_regs[128];
 
@@ -115,7 +115,7 @@ struct brw_vs_compile {
       struct brw_reg reg;
    } current_const[3];
 
-   GLboolean needs_stack;
+   bool needs_stack;
 };
 
 bool brw_vs_emit(struct gl_shader_program *prog, struct brw_vs_compile *c);

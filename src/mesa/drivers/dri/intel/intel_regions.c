@@ -129,7 +129,7 @@ intel_region_map(struct intel_context *intel, struct intel_region *region)
       if (region->tiling != I915_TILING_NONE)
 	 drm_intel_gem_bo_map_gtt(region->bo);
       else
-	 drm_intel_bo_map(region->bo, GL_TRUE);
+	 drm_intel_bo_map(region->bo, true);
 
       region->map = region->bo->virtual;
       ++intel->num_mapped_regions;
@@ -183,7 +183,7 @@ struct intel_region *
 intel_region_alloc(struct intel_screen *screen,
 		   uint32_t tiling,
                    GLuint cpp, GLuint width, GLuint height,
-		   GLboolean expect_accelerated_upload)
+		   bool expect_accelerated_upload)
 {
    drm_intel_bo *buffer;
    unsigned long flags = 0;
@@ -209,12 +209,12 @@ intel_region_alloc(struct intel_screen *screen,
    return region;
 }
 
-GLboolean
+bool
 intel_region_flink(struct intel_region *region, uint32_t *name)
 {
    if (region->name == 0) {
       if (drm_intel_bo_flink(region->bo, &region->name))
-	 return GL_FALSE;
+	 return false;
       
       _mesa_HashInsert(region->screen->named_regions,
 		       region->name, region);
@@ -222,7 +222,7 @@ intel_region_flink(struct intel_region *region, uint32_t *name)
 
    *name = region->name;
 
-   return GL_TRUE;
+   return true;
 }
 
 struct intel_region *
@@ -356,7 +356,7 @@ _mesa_copy_rect(GLubyte * dst,
 /* Copy rectangular sub-regions. Need better logic about when to
  * push buffers into AGP - will currently do so whenever possible.
  */
-GLboolean
+bool
 intel_region_copy(struct intel_context *intel,
                   struct intel_region *dst,
                   GLuint dst_offset,
@@ -364,7 +364,7 @@ intel_region_copy(struct intel_context *intel,
                   struct intel_region *src,
                   GLuint src_offset,
                   GLuint srcx, GLuint srcy, GLuint width, GLuint height,
-		  GLboolean flip,
+		  bool flip,
 		  GLenum logicop)
 {
    uint32_t src_pitch = src->pitch;
@@ -372,7 +372,7 @@ intel_region_copy(struct intel_context *intel,
    _DBG("%s\n", __FUNCTION__);
 
    if (intel == NULL)
-      return GL_FALSE;
+      return false;
 
    assert(src->cpp == dst->cpp);
 
