@@ -89,7 +89,7 @@ struct blitter_context
    void *saved_dsa_state;     /**< depth stencil alpha state */
    void *saved_velem_state;   /**< vertex elements state */
    void *saved_rs_state;      /**< rasterizer state */
-   void *saved_fs, *saved_vs; /**< fragment shader, vertex shader */
+   void *saved_fs, *saved_vs, *saved_gs; /**< shaders */
 
    struct pipe_framebuffer_state saved_fb_state;  /**< framebuffer state */
    struct pipe_stencil_ref saved_stencil_ref;     /**< stencil ref */
@@ -130,6 +130,7 @@ struct pipe_context *util_blitter_get_pipe(struct blitter_context *blitter)
  * - vertex buffers
  * - vertex elements
  * - vertex shader
+ * - geometry shader (if supported)
  * - rasterizer state
  */
 
@@ -281,6 +282,13 @@ void util_blitter_save_vertex_shader(struct blitter_context *blitter,
                                      void *vs)
 {
    blitter->saved_vs = vs;
+}
+
+static INLINE
+void util_blitter_save_geometry_shader(struct blitter_context *blitter,
+                                       void *gs)
+{
+   blitter->saved_gs = gs;
 }
 
 static INLINE

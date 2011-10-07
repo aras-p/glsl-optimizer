@@ -104,6 +104,8 @@ struct blitter_context_priv
    /* Destination surface dimensions. */
    unsigned dst_width;
    unsigned dst_height;
+
+   boolean has_geometry_shader;
 };
 
 static void blitter_draw_rectangle(struct blitter_context *blitter,
@@ -137,11 +139,16 @@ struct blitter_context *util_blitter_create(struct pipe_context *pipe)
    ctx->base.saved_rs_state = INVALID_PTR;
    ctx->base.saved_fs = INVALID_PTR;
    ctx->base.saved_vs = INVALID_PTR;
+   ctx->base.saved_gs = INVALID_PTR;
    ctx->base.saved_velem_state = INVALID_PTR;
    ctx->base.saved_fb_state.nr_cbufs = ~0;
    ctx->base.saved_num_sampler_views = ~0;
    ctx->base.saved_num_sampler_states = ~0;
    ctx->base.saved_num_vertex_buffers = ~0;
+
+   ctx->has_geometry_shader =
+      pipe->screen->get_shader_param(pipe->screen, PIPE_SHADER_GEOMETRY,
+                                     PIPE_SHADER_CAP_MAX_INSTRUCTIONS) > 0;
 
    /* blend state objects */
    memset(&blend, 0, sizeof(blend));
@@ -286,6 +293,7 @@ static void blitter_check_saved_vertex_states(struct blitter_context_priv *ctx)
    assert(ctx->base.saved_num_vertex_buffers != ~0 &&
           ctx->base.saved_velem_state != INVALID_PTR &&
           ctx->base.saved_vs != INVALID_PTR &&
+          (!ctx->has_geometry_shader || ctx->base.saved_gs != INVALID_PTR) &&
           ctx->base.saved_rs_state != INVALID_PTR);
 }
 
@@ -315,6 +323,11 @@ static void blitter_restore_vertex_states(struct blitter_context_priv *ctx)
    pipe->bind_vs_state(pipe, ctx->base.saved_vs);
    ctx->base.saved_vs = INVALID_PTR;
 
+   /* Geometry shader. */
+   if (ctx->has_geometry_shader) {
+      pipe->bind_gs_state(pipe, ctx->base.saved_gs);
+      ctx->base.saved_gs = INVALID_PTR;
+   }
 
    /* Rasterizer. */
    pipe->bind_rasterizer_state(pipe, ctx->base.saved_rs_state);
@@ -750,6 +763,8 @@ static void util_blitter_clear_custom(struct blitter_context *blitter,
    pipe->bind_vertex_elements_state(pipe, ctx->velem_state);
    pipe->bind_fs_state(pipe, blitter_get_fs_col(ctx, num_cbufs));
    pipe->bind_vs_state(pipe, ctx->vs);
+   if (ctx->has_geometry_shader)
+      pipe->bind_gs_state(pipe, NULL);
 
    blitter_set_dst_dimensions(ctx, width, height);
    blitter->draw_rectangle(blitter, 0, 0, width, height, depth,
@@ -895,6 +910,8 @@ void util_blitter_copy_texture(struct blitter_context *blitter,
    /* Set rasterizer state, shaders, and textures. */
    pipe->bind_rasterizer_state(pipe, ctx->rs_state);
    pipe->bind_vs_state(pipe, ctx->vs);
+   if (ctx->has_geometry_shader)
+      pipe->bind_gs_state(pipe, NULL);
    pipe->bind_fragment_sampler_states(pipe, 1,
                                       blitter_get_sampler_state(ctx, srclevel, normalized));
    pipe->bind_vertex_elements_state(pipe, ctx->velem_state);
@@ -995,6 +1012,8 @@ void util_blitter_clear_render_target(struct blitter_context *blitter,
    pipe->bind_rasterizer_state(pipe, ctx->rs_state);
    pipe->bind_fs_state(pipe, blitter_get_fs_col(ctx, 1));
    pipe->bind_vs_state(pipe, ctx->vs);
+   if (ctx->has_geometry_shader)
+      pipe->bind_gs_state(pipe, NULL);
    pipe->bind_vertex_elements_state(pipe, ctx->velem_state);
 
    /* set a framebuffer state */
@@ -1061,6 +1080,8 @@ void util_blitter_clear_depth_stencil(struct blitter_context *blitter,
    pipe->bind_rasterizer_state(pipe, ctx->rs_state);
    pipe->bind_fs_state(pipe, blitter_get_fs_col(ctx, 0));
    pipe->bind_vs_state(pipe, ctx->vs);
+   if (ctx->has_geometry_shader)
+      pipe->bind_gs_state(pipe, NULL);
    pipe->bind_vertex_elements_state(pipe, ctx->velem_state);
 
    /* set a framebuffer state */
@@ -1108,6 +1129,8 @@ void util_blitter_custom_depth_stencil(struct blitter_context *blitter,
    pipe->bind_rasterizer_state(pipe, ctx->rs_state);
    pipe->bind_fs_state(pipe, blitter_get_fs_col(ctx, 0));
    pipe->bind_vs_state(pipe, ctx->vs);
+   if (ctx->has_geometry_shader)
+      pipe->bind_gs_state(pipe, NULL);
    pipe->bind_vertex_elements_state(pipe, ctx->velem_state);
 
    /* set a framebuffer state */
