@@ -394,6 +394,8 @@ read_depth_stencil_pixels(struct gl_context *ctx,
        depthRb->Format == MESA_FORMAT_Z24_S8 &&
        type == GL_UNSIGNED_INT_24_8 &&
        depthRb == stencilRb &&
+       depthRb->GetRow &&  /* May be null if depthRb is a wrapper around
+			    * separate depth and stencil buffers. */
        !scaleOrBias &&
        !stencilTransfer) {
       /* This is the ideal case.
