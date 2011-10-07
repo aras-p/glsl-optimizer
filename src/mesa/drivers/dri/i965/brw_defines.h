@@ -486,9 +486,11 @@
 #define BRW_CHANNEL_Z     2
 #define BRW_CHANNEL_W     3
 
-#define BRW_COMPRESSION_NONE          0
-#define BRW_COMPRESSION_2NDHALF       1
-#define BRW_COMPRESSION_COMPRESSED    2
+enum brw_compression {
+   BRW_COMPRESSION_NONE       = 0,
+   BRW_COMPRESSION_2NDHALF    = 1,
+   BRW_COMPRESSION_COMPRESSED = 2,
+};
 
 #define GEN6_COMPRESSION_1Q		0
 #define GEN6_COMPRESSION_2Q		1

@@ -99,7 +99,9 @@ void brw_set_access_mode( struct brw_compile *p, GLuint access_mode )
    p->current->header.access_mode = access_mode;
 }
 
-void brw_set_compression_control( struct brw_compile *p, GLboolean compression_control )
+void
+brw_set_compression_control(struct brw_compile *p,
+			    enum brw_compression compression_control)
 {
    p->compressed = (compression_control == BRW_COMPRESSION_COMPRESSED);
 
