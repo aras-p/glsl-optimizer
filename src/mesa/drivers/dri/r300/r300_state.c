@@ -2001,7 +2001,7 @@ static const GLfloat *get_fragmentprogram_constant(struct gl_context *ctx, GLuin
 
 	switch(rcc->Type) {
 	case RC_CONSTANT_EXTERNAL:
-		return ctx->FragmentProgram._Current->Base.Parameters->ParameterValues[rcc->u.External];
+		return &ctx->FragmentProgram._Current->Base.Parameters->ParameterValues[rcc->u.External][0].f;
 	case RC_CONSTANT_IMMEDIATE:
 		return rcc->u.Immediate;
 	case RC_CONSTANT_STATE:

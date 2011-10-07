@@ -70,7 +70,7 @@ static int r300VertexProgUpdateParams(struct gl_context * ctx, struct r300_verte
 			if (vp->Base->IsNVProgram) {
 				src = ctx->VertexProgram.Parameters[constant->u.External];
 			} else {
-				src = vp->Base->Base.Parameters->ParameterValues[constant->u.External];
+				src = &vp->Base->Base.Parameters->ParameterValues[constant->u.External][0].f;
 			}
 			break;
 
