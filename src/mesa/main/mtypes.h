@@ -1231,8 +1231,8 @@ typedef enum
 
 
 /**
- * Texture image state.  Describes the dimensions of a texture image,
- * the texel format and pointers to Texel Fetch functions.
+ * Texture image state.  Drivers will typically create a subclass of this
+ * with extra fields for memory buffers, etc.
  */
 struct gl_texture_image
 {
