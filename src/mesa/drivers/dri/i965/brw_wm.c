@@ -467,6 +467,7 @@ static void brw_prepare_wm_prog(struct brw_context *brw)
 			 &brw->wm.prog_offset, &brw->wm.prog_data)) {
       bool success = do_wm_prog(brw, ctx->Shader.CurrentFragmentProgram, fp,
 				&key);
+      (void) success;
       assert(success);
    }
 }

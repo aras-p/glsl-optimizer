@@ -1773,6 +1773,7 @@ fs_visitor::run()
 
       /* Make sure we didn't try to sneak in an extra uniform */
       assert(orig_nr_params == c->prog_data.nr_params);
+      (void) orig_nr_params;
    }
 
    return !failed;
