@@ -1369,6 +1369,7 @@ opt_sample_rgb_2d(struct gl_context *ctx,
    ASSERT(img->Border==0);
    ASSERT(img->TexFormat == MESA_FORMAT_RGB888);
    ASSERT(swImg->_IsPowerOfTwo);
+   (void) swImg;
 
    for (k=0; k<n; k++) {
       GLint i = IFLOOR(texcoords[k][0] * width) & colMask;
@@ -1412,6 +1413,7 @@ opt_sample_rgba_2d(struct gl_context *ctx,
    ASSERT(img->Border==0);
    ASSERT(img->TexFormat == MESA_FORMAT_RGBA8888);
    ASSERT(swImg->_IsPowerOfTwo);
+   (void) swImg;
 
    for (i = 0; i < n; i++) {
       const GLint col = IFLOOR(texcoords[i][0] * width) & colMask;
