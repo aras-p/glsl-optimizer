@@ -2803,8 +2803,7 @@ ast_declarator_list::hir(exec_list *instructions,
 	    _mesa_glsl_error(& loc, state,
 			     "identifier `%s' uses reserved `gl_' prefix",
 			     decl->identifier);
-	 else if (state->language_version >= 130 &&
-		  strstr(decl->identifier, "__")) {
+	 else if (strstr(decl->identifier, "__")) {
 	    /* From page 14 (page 20 of the PDF) of the GLSL 1.10
 	     * spec:
 	     *
