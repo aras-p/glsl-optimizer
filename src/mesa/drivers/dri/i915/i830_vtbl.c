@@ -715,7 +715,6 @@ i830_update_draw_buffer(struct intel_context *intel)
    struct gl_framebuffer *fb = ctx->DrawBuffer;
    struct intel_region *colorRegions[MAX_DRAW_BUFFERS], *depthRegion = NULL;
    struct intel_renderbuffer *irbDepth = NULL, *irbStencil = NULL;
-   bool fb_has_hiz = intel_framebuffer_has_hiz(fb);
 
    if (!fb) {
       /* this can happen during the initial context initialization */
@@ -792,7 +791,6 @@ i830_update_draw_buffer(struct intel_context *intel)
 
    /* Check for depth fallback. */
    if (irbDepth && irbDepth->region) {
-      assert(!fb_has_hiz || irbDepth->Base.Format != MESA_FORMAT_S8_Z24);
       FALLBACK(intel, INTEL_FALLBACK_DEPTH_BUFFER, GL_FALSE);
       depthRegion = irbDepth->region;
    } else if (irbDepth && !irbDepth->region) {
