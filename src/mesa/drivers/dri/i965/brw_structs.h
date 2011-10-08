@@ -1165,6 +1165,50 @@ struct brw_instruction
 	 int uip:16;
       } break_cont;
 
+      /**
+       * \defgroup SEND instructions / Message Descriptors
+       *
+       * @{
+       */
+
+      /**
+       * Generic Message Descriptor for Gen4 SEND instructions.  The structs
+       * below expand function_control to something specific for their
+       * message.  Due to struct packing issues, they duplicate these bits.
+       *
+       * See the G45 PRM, Volume 4, Table 14-15.
+       */
+      struct {
+	 GLuint function_control:16;
+	 GLuint response_length:4;
+	 GLuint msg_length:4;
+	 GLuint msg_target:4;
+	 GLuint pad1:3;
+	 GLuint end_of_thread:1;
+      } generic;
+
+      /**
+       * Generic Message Descriptor for Gen5-7 SEND instructions.
+       *
+       * See the Sandybridge PRM, Volume 2 Part 2, Table 8-15.  (Sadly, most
+       * of the information on the SEND instruction is missing from the public
+       * Ironlake PRM.)
+       *
+       * The table claims that bit 31 is reserved/MBZ on Gen6+, but it lies.
+       * According to the SEND instruction description:
+       * "The MSb of the message description, the EOT field, always comes from
+       *  bit 127 of the instruction word"...which is bit 31 of this field.
+       */
+      struct {
+	 GLuint function_control:19;
+	 GLuint header_present:1;
+	 GLuint response_length:5;
+	 GLuint msg_length:4;
+	 GLuint pad1:2;
+	 GLuint end_of_thread:1;
+      } generic_gen5;
+
+      /** G45 PRM, Volume 4, Section 6.1.1.1 */
       struct {
 	 GLuint function:4;
 	 GLuint int_type:1;
@@ -1179,6 +1223,7 @@ struct brw_instruction
 	 GLuint end_of_thread:1;
       } math;
 
+      /** Ironlake PRM, Volume 4 Part 1, Section 6.1.1.1 */
       struct {
 	 GLuint function:4;
 	 GLuint int_type:1;
@@ -1194,6 +1239,7 @@ struct brw_instruction
 	 GLuint end_of_thread:1;
       } math_gen5;
 
+      /** G45 PRM, Volume 4, Section 4.8.1.1.1 [DevBW] and [DevCL] */
       struct {
 	 GLuint binding_table_index:8;
 	 GLuint sampler:4;
@@ -1206,6 +1252,7 @@ struct brw_instruction
 	 GLuint end_of_thread:1;
       } sampler;
 
+      /** G45 PRM, Volume 4, Section 4.8.1.1.2 [DevCTG] */
       struct {
          GLuint binding_table_index:8;
          GLuint sampler:4;
@@ -1217,6 +1264,7 @@ struct brw_instruction
          GLuint end_of_thread:1;
       } sampler_g4x;
 
+      /** Ironlake PRM, Volume 4 Part 1, Section 4.11.1.1.3 */
       struct {
 	 GLuint binding_table_index:8;
 	 GLuint sampler:4;
@@ -1274,6 +1322,7 @@ struct brw_instruction
 	 GLuint end_of_thread:1;
       } urb_gen7;
 
+      /** 965 PRM, Volume 4, Section 5.10.1.1: Message Descriptor */
       struct {
 	 GLuint binding_table_index:8;
 	 GLuint msg_control:4;  
@@ -1286,6 +1335,7 @@ struct brw_instruction
 	 GLuint end_of_thread:1;
       } dp_read;
 
+      /** G45 PRM, Volume 4, Section 5.10.1.1.2 */
       struct {
 	 GLuint binding_table_index:8;
 	 GLuint msg_control:3;
@@ -1298,6 +1348,7 @@ struct brw_instruction
 	 GLuint end_of_thread:1;
       } dp_read_g4x;
 
+      /** Ironlake PRM, Volume 4 Part 1, Section 5.10.2.1.2. */
       struct {
 	 GLuint binding_table_index:8;
 	 GLuint msg_control:3;  
@@ -1311,6 +1362,7 @@ struct brw_instruction
 	 GLuint end_of_thread:1;
       } dp_read_gen5;
 
+      /** G45 PRM, Volume 4, Section 5.10.1.1.2.  For both Gen4 and G45. */
       struct {
 	 GLuint binding_table_index:8;
 	 GLuint msg_control:3;
@@ -1324,6 +1376,7 @@ struct brw_instruction
 	 GLuint end_of_thread:1;
       } dp_write;
 
+      /** Ironlake PRM, Volume 4 Part 1, Section 5.10.2.1.2. */
       struct {
 	 GLuint binding_table_index:8;
 	 GLuint msg_control:3;
@@ -1338,7 +1391,11 @@ struct brw_instruction
 	 GLuint end_of_thread:1;
       } dp_write_gen5;
 
-      /* Sandybridge DP for sample cache, constant cache, render cache */
+      /**
+       * Message for the Sandybridge Sampler Cache or Constant Cache Data Port.
+       *
+       * See the Sandybridge PRM, Volume 4 Part 1, Section 3.9.2.1.1.
+       **/
       struct {
 	 GLuint binding_table_index:8;
 	 GLuint msg_control:5;
@@ -1349,8 +1406,18 @@ struct brw_instruction
 	 GLuint msg_length:4;
 	 GLuint pad1:2;
 	 GLuint end_of_thread:1;
-      } dp_sampler_const_cache;
+      } gen6_dp_sampler_const_cache;
 
+      /**
+       * Message for the Sandybridge Render Cache Data Port.
+       *
+       * Most fields are defined in the Sandybridge PRM, Volume 4 Part 1,
+       * Section 3.9.2.1.1: Message Descriptor.
+       *
+       * "Slot Group Select" and "Last Render Target" are part of the
+       * 5-bit message control for Render Target Write messages.  See
+       * Section 3.9.9.2.1 of the same volume.
+       */
       struct {
 	 GLuint binding_table_index:8;
 	 GLuint msg_control:3;
@@ -1366,13 +1433,20 @@ struct brw_instruction
 	 GLuint end_of_thread:1;
       } gen6_dp;
 
-      /* See volume vol5c.2 sections 2.11.2.1.5 and 2.11.21.2.2. */
+      /**
+       * Message for any of the Gen7 Data Port caches.
+       *
+       * Most fields are defined in BSpec volume 5c.2 Data Port / Messages /
+       * Data Port Messages / Message Descriptor.  Once again, "Slot Group
+       * Select" and "Last Render Target" are part of the 6-bit message
+       * control for Render Target Writes.
+       */
       struct {
 	 GLuint binding_table_index:8;
 	 GLuint msg_control:3;
 	 GLuint slot_group_select:1;
 	 GLuint last_render_target:1;
-	 GLuint pad0:1;
+	 GLuint msg_control_pad:1;
 	 GLuint msg_type:4;
 	 GLuint pad1:1;
 	 GLuint header_present:1;
@@ -1381,41 +1455,7 @@ struct brw_instruction
 	 GLuint pad2:2;
 	 GLuint end_of_thread:1;
       } gen7_dp;
-
-      /**
-       * Message Descriptor for Gen4 SEND instructions (no particular message).
-       *
-       * See the G45 PRM, Volume 4, Table 14-15.
-       */
-      struct {
-	 GLuint function_control:16;
-	 GLuint response_length:4;
-	 GLuint msg_length:4;
-	 GLuint msg_target:4;
-	 GLuint pad1:3;
-	 GLuint end_of_thread:1;
-      } generic;
-
-      /**
-       * Message Descriptor for Gen5-7 SEND instructions.
-       *
-       * See the Sandybridge PRM, Volume 2 Part 2, Table 8-15.  (Sadly, most
-       * of the information on the SEND instruction is missing from the public
-       * Ironlake PRM.)
-       *
-       * The table claims that bit 31 is reserved/MBZ on Gen6+, but it lies.
-       * According to the SEND instruction description:
-       * "The MSb of the message description, the EOT field, always comes from
-       *  bit 127 of the instruction word"...which is bit 31 of this field.
-       */
-      struct {
-	 GLuint function_control:19;
-	 GLuint header_present:1;
-	 GLuint response_length:5;
-	 GLuint msg_length:4;
-	 GLuint pad1:2;
-	 GLuint end_of_thread:1;
-      } generic_gen5;
+      /** @} */
 
       GLint d;
       GLuint ud;
