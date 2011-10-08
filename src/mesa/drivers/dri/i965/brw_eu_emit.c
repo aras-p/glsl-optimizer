@@ -421,7 +421,7 @@ static void brw_set_math_message( struct brw_compile *p,
       insn->bits3.math_gen5.response_length = response_length;
       insn->bits3.math_gen5.msg_length = msg_length;
       insn->bits3.math_gen5.end_of_thread = 0;
-      insn->bits2.send_gen5.sfid = BRW_MESSAGE_TARGET_MATH;
+      insn->bits2.send_gen5.sfid = BRW_SFID_MATH;
       insn->bits2.send_gen5.end_of_thread = 0;
    } else {
       insn->bits3.math.function = function;
@@ -431,7 +431,7 @@ static void brw_set_math_message( struct brw_compile *p,
       insn->bits3.math.data_type = dataType;
       insn->bits3.math.response_length = response_length;
       insn->bits3.math.msg_length = msg_length;
-      insn->bits3.math.msg_target = BRW_MESSAGE_TARGET_MATH;
+      insn->bits3.math.msg_target = BRW_SFID_MATH;
       insn->bits3.math.end_of_thread = 0;
    }
 }
@@ -458,9 +458,9 @@ static void brw_set_ff_sync_message(struct brw_compile *p,
    insn->bits3.urb_gen5.msg_length = 1;
    insn->bits3.urb_gen5.end_of_thread = end_of_thread;
    if (intel->gen >= 6) {
-      insn->header.destreg__conditionalmod = BRW_MESSAGE_TARGET_URB;
+      insn->header.destreg__conditionalmod = BRW_SFID_URB;
    } else {
-      insn->bits2.send_gen5.sfid = BRW_MESSAGE_TARGET_URB;
+      insn->bits2.send_gen5.sfid = BRW_SFID_URB;
       insn->bits2.send_gen5.end_of_thread = end_of_thread;
    }
 }
@@ -492,7 +492,7 @@ static void brw_set_urb_message( struct brw_compile *p,
       insn->bits3.urb_gen7.response_length = response_length;
       insn->bits3.urb_gen7.msg_length = msg_length;
       insn->bits3.urb_gen7.end_of_thread = end_of_thread;
-      insn->header.destreg__conditionalmod = BRW_MESSAGE_TARGET_URB;
+      insn->header.destreg__conditionalmod = BRW_SFID_URB;
    } else if (intel->gen >= 5) {
       insn->bits3.urb_gen5.opcode = 0;	/* URB_WRITE */
       insn->bits3.urb_gen5.offset = offset;
@@ -509,9 +509,9 @@ static void brw_set_urb_message( struct brw_compile *p,
 	  * EOT stayed in bits3 above.  Does the EOT bit setting
 	  * below on Ironlake even do anything?
 	  */
-	 insn->header.destreg__conditionalmod = BRW_MESSAGE_TARGET_URB;
+	 insn->header.destreg__conditionalmod = BRW_SFID_URB;
       } else {
-	 insn->bits2.send_gen5.sfid = BRW_MESSAGE_TARGET_URB;
+	 insn->bits2.send_gen5.sfid = BRW_SFID_URB;
 	 insn->bits2.send_gen5.end_of_thread = end_of_thread;
       }
    } else {
@@ -523,7 +523,7 @@ static void brw_set_urb_message( struct brw_compile *p,
       insn->bits3.urb.complete = complete;
       insn->bits3.urb.response_length = response_length;
       insn->bits3.urb.msg_length = msg_length;
-      insn->bits3.urb.msg_target = BRW_MESSAGE_TARGET_URB;
+      insn->bits3.urb.msg_target = BRW_SFID_URB;
       insn->bits3.urb.end_of_thread = end_of_thread;
    }
 }
@@ -547,9 +547,9 @@ brw_set_dp_write_message(struct brw_compile *p,
 
    if (intel->gen >= 7) {
       /* Use the Render Cache for RT writes; otherwise use the Data Cache */
-      unsigned sfid = GEN7_MESSAGE_TARGET_DP_DATA_CACHE;
+      unsigned sfid = GEN7_SFID_DATAPORT_DATA_CACHE;
       if (msg_type == GEN6_DATAPORT_WRITE_MESSAGE_RENDER_TARGET_WRITE)
-	 sfid = GEN6_MESSAGE_TARGET_DP_RENDER_CACHE;
+	 sfid = GEN6_SFID_DATAPORT_RENDER_CACHE;
 
       insn->header.destreg__conditionalmod = sfid;
 
@@ -573,7 +573,7 @@ brw_set_dp_write_message(struct brw_compile *p,
       insn->bits3.gen6_dp.end_of_thread = end_of_thread;
 
       /* We always use the render cache for write messages */
-      insn->header.destreg__conditionalmod = GEN6_MESSAGE_TARGET_DP_RENDER_CACHE;
+      insn->header.destreg__conditionalmod = GEN6_SFID_DATAPORT_RENDER_CACHE;
    } else if (intel->gen == 5) {
       insn->bits3.dp_write_gen5.binding_table_index = binding_table_index;
       insn->bits3.dp_write_gen5.msg_control = msg_control;
@@ -584,7 +584,7 @@ brw_set_dp_write_message(struct brw_compile *p,
       insn->bits3.dp_write_gen5.response_length = response_length;
       insn->bits3.dp_write_gen5.msg_length = msg_length;
       insn->bits3.dp_write_gen5.end_of_thread = end_of_thread;
-      insn->bits2.send_gen5.sfid = BRW_MESSAGE_TARGET_DATAPORT_WRITE;
+      insn->bits2.send_gen5.sfid = BRW_SFID_DATAPORT_WRITE;
       insn->bits2.send_gen5.end_of_thread = end_of_thread;
    } else {
       insn->bits3.dp_write.binding_table_index = binding_table_index;
@@ -594,7 +594,7 @@ brw_set_dp_write_message(struct brw_compile *p,
       insn->bits3.dp_write.send_commit_msg = send_commit_msg;
       insn->bits3.dp_write.response_length = response_length;
       insn->bits3.dp_write.msg_length = msg_length;
-      insn->bits3.dp_write.msg_target = BRW_MESSAGE_TARGET_DATAPORT_WRITE;
+      insn->bits3.dp_write.msg_target = BRW_SFID_DATAPORT_WRITE;
       insn->bits3.dp_write.end_of_thread = end_of_thread;
    }
 }
@@ -622,14 +622,14 @@ brw_set_dp_read_message(struct brw_compile *p,
       insn->bits3.gen7_dp.response_length = response_length;
       insn->bits3.gen7_dp.msg_length = msg_length;
       insn->bits3.gen7_dp.end_of_thread = 0;
-      insn->header.destreg__conditionalmod = GEN7_MESSAGE_TARGET_DP_DATA_CACHE;
+      insn->header.destreg__conditionalmod = GEN7_SFID_DATAPORT_DATA_CACHE;
    } else if (intel->gen == 6) {
       uint32_t target_function;
 
       if (target_cache == BRW_DATAPORT_READ_TARGET_RENDER_CACHE)
-	 target_function = GEN6_MESSAGE_TARGET_DP_RENDER_CACHE;
+	 target_function = GEN6_SFID_DATAPORT_RENDER_CACHE;
       else
-	 target_function = GEN6_MESSAGE_TARGET_DP_SAMPLER_CACHE;
+	 target_function = GEN6_SFID_DATAPORT_SAMPLER_CACHE;
 
       insn->bits3.gen6_dp.binding_table_index = binding_table_index;
       insn->bits3.gen6_dp.msg_control = msg_control;
@@ -651,7 +651,7 @@ brw_set_dp_read_message(struct brw_compile *p,
       insn->bits3.dp_read_gen5.msg_length = msg_length;
       insn->bits3.dp_read_gen5.pad1 = 0;
       insn->bits3.dp_read_gen5.end_of_thread = 0;
-      insn->bits2.send_gen5.sfid = BRW_MESSAGE_TARGET_DATAPORT_READ;
+      insn->bits2.send_gen5.sfid = BRW_SFID_DATAPORT_READ;
       insn->bits2.send_gen5.end_of_thread = 0;
    } else if (intel->is_g4x) {
       insn->bits3.dp_read_g4x.binding_table_index = binding_table_index; /*0:7*/
@@ -660,7 +660,7 @@ brw_set_dp_read_message(struct brw_compile *p,
       insn->bits3.dp_read_g4x.target_cache = target_cache;  /*14:15*/
       insn->bits3.dp_read_g4x.response_length = response_length;  /*16:19*/
       insn->bits3.dp_read_g4x.msg_length = msg_length;  /*20:23*/
-      insn->bits3.dp_read_g4x.msg_target = BRW_MESSAGE_TARGET_DATAPORT_READ; /*24:27*/
+      insn->bits3.dp_read_g4x.msg_target = BRW_SFID_DATAPORT_READ; /*24:27*/
       insn->bits3.dp_read_g4x.pad1 = 0;
       insn->bits3.dp_read_g4x.end_of_thread = 0;
    } else {
@@ -670,7 +670,7 @@ brw_set_dp_read_message(struct brw_compile *p,
       insn->bits3.dp_read.target_cache = target_cache;  /*14:15*/
       insn->bits3.dp_read.response_length = response_length;  /*16:19*/
       insn->bits3.dp_read.msg_length = msg_length;  /*20:23*/
-      insn->bits3.dp_read.msg_target = BRW_MESSAGE_TARGET_DATAPORT_READ; /*24:27*/
+      insn->bits3.dp_read.msg_target = BRW_SFID_DATAPORT_READ; /*24:27*/
       insn->bits3.dp_read.pad1 = 0;  /*28:30*/
       insn->bits3.dp_read.end_of_thread = 0;  /*31*/
    }
@@ -701,7 +701,7 @@ static void brw_set_sampler_message(struct brw_compile *p,
       insn->bits3.sampler_gen7.response_length = response_length;
       insn->bits3.sampler_gen7.msg_length = msg_length;
       insn->bits3.sampler_gen7.end_of_thread = eot;
-      insn->header.destreg__conditionalmod = BRW_MESSAGE_TARGET_SAMPLER;
+      insn->header.destreg__conditionalmod = BRW_SFID_SAMPLER;
    } else if (intel->gen >= 5) {
       insn->bits3.sampler_gen5.binding_table_index = binding_table_index;
       insn->bits3.sampler_gen5.sampler = sampler;
@@ -712,9 +712,9 @@ static void brw_set_sampler_message(struct brw_compile *p,
       insn->bits3.sampler_gen5.msg_length = msg_length;
       insn->bits3.sampler_gen5.end_of_thread = eot;
       if (intel->gen >= 6)
-	  insn->header.destreg__conditionalmod = BRW_MESSAGE_TARGET_SAMPLER;
+	  insn->header.destreg__conditionalmod = BRW_SFID_SAMPLER;
       else {
-	  insn->bits2.send_gen5.sfid = BRW_MESSAGE_TARGET_SAMPLER;
+	  insn->bits2.send_gen5.sfid = BRW_SFID_SAMPLER;
 	  insn->bits2.send_gen5.end_of_thread = eot;
       }
    } else if (intel->is_g4x) {
@@ -724,7 +724,7 @@ static void brw_set_sampler_message(struct brw_compile *p,
       insn->bits3.sampler_g4x.response_length = response_length;
       insn->bits3.sampler_g4x.msg_length = msg_length;
       insn->bits3.sampler_g4x.end_of_thread = eot;
-      insn->bits3.sampler_g4x.msg_target = BRW_MESSAGE_TARGET_SAMPLER;
+      insn->bits3.sampler_g4x.msg_target = BRW_SFID_SAMPLER;
    } else {
       insn->bits3.sampler.binding_table_index = binding_table_index;
       insn->bits3.sampler.sampler = sampler;
@@ -733,7 +733,7 @@ static void brw_set_sampler_message(struct brw_compile *p,
       insn->bits3.sampler.response_length = response_length;
       insn->bits3.sampler.msg_length = msg_length;
       insn->bits3.sampler.end_of_thread = eot;
-      insn->bits3.sampler.msg_target = BRW_MESSAGE_TARGET_SAMPLER;
+      insn->bits3.sampler.msg_target = BRW_SFID_SAMPLER;
    }
 }
 

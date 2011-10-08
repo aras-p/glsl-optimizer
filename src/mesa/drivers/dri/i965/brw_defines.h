@@ -745,18 +745,32 @@ enum opcode {
 #define BRW_POLYGON_FACING_FRONT      0
 #define BRW_POLYGON_FACING_BACK       1
 
-#define BRW_MESSAGE_TARGET_NULL               0
-#define BRW_MESSAGE_TARGET_MATH               1 /* reserved on GEN6 */
-#define BRW_MESSAGE_TARGET_SAMPLER            2
-#define BRW_MESSAGE_TARGET_GATEWAY            3
-#define BRW_MESSAGE_TARGET_DATAPORT_READ      4
-#define BRW_MESSAGE_TARGET_DATAPORT_WRITE     5
-#define BRW_MESSAGE_TARGET_URB                6
-#define BRW_MESSAGE_TARGET_THREAD_SPAWNER     7
+/**
+ * Message target: Shared Function ID for where to SEND a message.
+ *
+ * These are enumerated in the ISA reference under "send - Send Message".
+ * In particular, see the following tables:
+ * - G45 PRM, Volume 4, Table 14-15 "Message Descriptor Definition"
+ * - Sandybridge PRM, Volume 4 Part 2, Table 8-16 "Extended Message Descriptor"
+ * - BSpec, Volume 1a (GPU Overview) / Graphics Processing Engine (GPE) /
+ *   Overview / GPE Function IDs
+ */
+enum brw_message_target {
+   BRW_SFID_NULL                     = 0,
+   BRW_SFID_MATH                     = 1, /* Only valid on Gen4-5 */
+   BRW_SFID_SAMPLER                  = 2,
+   BRW_SFID_MESSAGE_GATEWAY          = 3,
+   BRW_SFID_DATAPORT_READ            = 4,
+   BRW_SFID_DATAPORT_WRITE           = 5,
+   BRW_SFID_URB                      = 6,
+   BRW_SFID_THREAD_SPAWNER           = 7,
 
-#define GEN6_MESSAGE_TARGET_DP_SAMPLER_CACHE  4
-#define GEN6_MESSAGE_TARGET_DP_RENDER_CACHE   5
-#define GEN6_MESSAGE_TARGET_DP_CONST_CACHE    9
+   GEN6_SFID_DATAPORT_SAMPLER_CACHE  = 4,
+   GEN6_SFID_DATAPORT_RENDER_CACHE   = 5,
+   GEN6_SFID_DATAPORT_CONSTANT_CACHE = 9,
+
+   GEN7_SFID_DATAPORT_DATA_CACHE     = 10,
+};
 
 #define GEN7_MESSAGE_TARGET_DP_DATA_CACHE     10
 
