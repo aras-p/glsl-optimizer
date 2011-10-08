@@ -626,10 +626,10 @@ brw_set_dp_read_message(struct brw_compile *p,
    } else if (intel->gen == 6) {
       uint32_t target_function;
 
-      if (target_cache == BRW_DATAPORT_READ_TARGET_DATA_CACHE)
-	 target_function = GEN6_MESSAGE_TARGET_DP_SAMPLER_CACHE;
-      else
+      if (target_cache == BRW_DATAPORT_READ_TARGET_RENDER_CACHE)
 	 target_function = GEN6_MESSAGE_TARGET_DP_RENDER_CACHE;
+      else
+	 target_function = GEN6_MESSAGE_TARGET_DP_SAMPLER_CACHE;
 
       insn->bits3.gen6_dp.binding_table_index = binding_table_index;
       insn->bits3.gen6_dp.msg_control = msg_control;
