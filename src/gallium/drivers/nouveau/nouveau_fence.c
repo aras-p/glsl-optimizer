@@ -86,12 +86,10 @@ nouveau_fence_emit(struct nouveau_fence *fence)
 {
    struct nouveau_screen *screen = fence->screen;
 
-   fence->sequence = ++screen->fence.sequence;
-
    assert(fence->state == NOUVEAU_FENCE_STATE_AVAILABLE);
 
    /* set this now, so that if fence.emit triggers a flush we don't recurse */
-   fence->state = NOUVEAU_FENCE_STATE_EMITTED;
+   fence->state = NOUVEAU_FENCE_STATE_EMITTING;
 
    ++fence->ref;
 
@@ -102,7 +100,10 @@ nouveau_fence_emit(struct nouveau_fence *fence)
 
    screen->fence.tail = fence;
 
-   screen->fence.emit(&screen->base, fence->sequence);
+   screen->fence.emit(&screen->base, &fence->sequence);
+
+   assert(fence->state == NOUVEAU_FENCE_STATE_EMITTING);
+   fence->state = NOUVEAU_FENCE_STATE_EMITTED;
 }
 
 void
@@ -162,7 +163,8 @@ nouveau_fence_update(struct nouveau_screen *screen, boolean flushed)
 
    if (flushed) {
       for (fence = next; fence; fence = fence->next)
-         fence->state = NOUVEAU_FENCE_STATE_FLUSHED;
+         if (fence->state == NOUVEAU_FENCE_STATE_EMITTED)
+            fence->state = NOUVEAU_FENCE_STATE_FLUSHED;
    }
 }
 
@@ -184,6 +186,9 @@ nouveau_fence_wait(struct nouveau_fence *fence)
 {
    struct nouveau_screen *screen = fence->screen;
    uint32_t spins = 0;
+
+   /* wtf, someone is waiting on a fence in flush_notify handler? */
+   assert(fence->state != NOUVEAU_FENCE_STATE_EMITTING);
 
    if (fence->state < NOUVEAU_FENCE_STATE_EMITTED) {
       nouveau_fence_emit(fence);
@@ -216,7 +221,7 @@ nouveau_fence_wait(struct nouveau_fence *fence)
 void
 nouveau_fence_next(struct nouveau_screen *screen)
 {
-   if (screen->fence.current->state < NOUVEAU_FENCE_STATE_EMITTED)
+   if (screen->fence.current->state < NOUVEAU_FENCE_STATE_EMITTING)
       nouveau_fence_emit(screen->fence.current);
 
    nouveau_fence_ref(NULL, &screen->fence.current);

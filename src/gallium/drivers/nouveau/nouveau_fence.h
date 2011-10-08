@@ -6,9 +6,10 @@
 #include "util/u_double_list.h"
 
 #define NOUVEAU_FENCE_STATE_AVAILABLE 0
-#define NOUVEAU_FENCE_STATE_EMITTED   1
-#define NOUVEAU_FENCE_STATE_FLUSHED   2
-#define NOUVEAU_FENCE_STATE_SIGNALLED 3
+#define NOUVEAU_FENCE_STATE_EMITTING  1
+#define NOUVEAU_FENCE_STATE_EMITTED   2
+#define NOUVEAU_FENCE_STATE_FLUSHED   3
+#define NOUVEAU_FENCE_STATE_SIGNALLED 4
 
 struct nouveau_fence_work {
    struct list_head list;

@@ -24,7 +24,7 @@ struct nouveau_screen {
 		struct nouveau_fence *current;
 		u32 sequence;
 		u32 sequence_ack;
-		void (*emit)(struct pipe_screen *, u32 sequence);
+		void (*emit)(struct pipe_screen *, u32 *sequence);
 		u32  (*update)(struct pipe_screen *);
 	} fence;
 

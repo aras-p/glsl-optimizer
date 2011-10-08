@@ -334,16 +334,20 @@ nvc0_magic_3d_init(struct nouveau_channel *chan)
 }
 
 static void
-nvc0_screen_fence_emit(struct pipe_screen *pscreen, u32 sequence)
+nvc0_screen_fence_emit(struct pipe_screen *pscreen, u32 *sequence)
 {
    struct nvc0_screen *screen = nvc0_screen(pscreen);
    struct nouveau_channel *chan = screen->base.channel;
 
    MARK_RING (chan, 5, 2);
+
+   /* we need to do it after possible flush in MARK_RING */
+   *sequence = ++screen->base.fence.sequence;
+
    BEGIN_RING(chan, RING_3D(QUERY_ADDRESS_HIGH), 4);
    OUT_RELOCh(chan, screen->fence.bo, 0, NOUVEAU_BO_WR);
    OUT_RELOCl(chan, screen->fence.bo, 0, NOUVEAU_BO_WR);
-   OUT_RING  (chan, sequence);
+   OUT_RING  (chan, *sequence);
    OUT_RING  (chan, NVC0_3D_QUERY_GET_FENCE | NVC0_3D_QUERY_GET_SHORT |
               (0xf << NVC0_3D_QUERY_GET_UNIT__SHIFT));
 }
