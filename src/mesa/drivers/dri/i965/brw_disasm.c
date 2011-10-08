@@ -1002,13 +1002,11 @@ int brw_disasm (FILE *file, struct brw_instruction *inst, int gen)
 	    break;
 	case BRW_SFID_DATAPORT_READ:
 	    if (gen >= 6) {
-		format (file, " (%d, %d, %d, %d, %d, %d)",
+		format (file, " (%d, %d, %d, %d)",
 			inst->bits3.gen6_dp.binding_table_index,
 			inst->bits3.gen6_dp.msg_control,
 			inst->bits3.gen6_dp.msg_type,
-			inst->bits3.gen6_dp.send_commit_msg,
-			inst->bits3.gen6_dp.msg_length,
-			inst->bits3.gen6_dp.response_length);
+			inst->bits3.gen6_dp.send_commit_msg);
 	    } else if (gen >= 5 /* FINISHME: || is_g4x */) {
 		format (file, " (%d, %d, %d)",
 			inst->bits3.dp_read_gen5.binding_table_index,
@@ -1030,13 +1028,11 @@ int brw_disasm (FILE *file, struct brw_instruction *inst, int gen)
 				dp_rc_msg_type_gen6,
 				inst->bits3.gen6_dp.msg_type, &space);
 
-		format (file, ", %d, %d, %d, %d, %d, %d)",
+		format (file, ", %d, %d, %d, %d)",
 			inst->bits3.gen6_dp.binding_table_index,
 			inst->bits3.gen6_dp.msg_control,
 			inst->bits3.gen6_dp.msg_type,
-			inst->bits3.gen6_dp.send_commit_msg,
-			inst->bits3.gen6_dp.msg_length,
-			inst->bits3.gen6_dp.response_length);
+			inst->bits3.gen6_dp.send_commit_msg);
 	    } else {
 		format (file, " (%d, %d, %d, %d)",
 			inst->bits3.dp_write.binding_table_index,
@@ -1067,11 +1063,6 @@ int brw_disasm (FILE *file, struct brw_instruction *inst, int gen)
 			    inst->bits3.urb.used, &space);
 	    err |= control (file, "urb complete", urb_complete,
 			    inst->bits3.urb.complete, &space);
-	    if (gen >= 5) {
-		format (file, " mlen %d, rlen %d\n",
-			inst->bits3.urb_gen5.msg_length,
-			inst->bits3.urb_gen5.response_length);
-	    }
 	    break;
 	case BRW_SFID_THREAD_SPAWNER:
 	    break;
