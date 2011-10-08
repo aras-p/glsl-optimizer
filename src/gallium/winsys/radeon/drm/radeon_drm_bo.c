@@ -530,6 +530,11 @@ radeon_winsys_bo_create(struct radeon_winsys *rws,
             desc.initial_domains = RADEON_GEM_DOMAIN_GTT;
             desc.reloc_domains = RADEON_GEM_DOMAIN_GTT;
             break;
+    case PIPE_USAGE_IMMUTABLE:
+    case PIPE_USAGE_STATIC:
+            desc.initial_domains = RADEON_GEM_DOMAIN_VRAM;
+            desc.reloc_domains = RADEON_GEM_DOMAIN_VRAM;
+            break;
     default:
             if (bind & (PIPE_BIND_VERTEX_BUFFER | PIPE_BIND_INDEX_BUFFER |
                         PIPE_BIND_CONSTANT_BUFFER)) {
