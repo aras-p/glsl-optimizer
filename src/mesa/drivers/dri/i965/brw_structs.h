@@ -915,7 +915,11 @@ struct brw_instruction
       GLuint predicate_control:4;
       GLuint predicate_inverse:1;
       GLuint execution_size:3;
-      GLuint destreg__conditionalmod:4; /* destreg - send, conditionalmod - others */
+      /**
+       * Conditional Modifier for most instructions.  On Gen6+, this is also
+       * used for the SEND instruction's Message Target/SFID.
+       */
+      GLuint destreg__conditionalmod:4;
       GLuint acc_wr_control:1;
       GLuint cmpt_control:1;
       GLuint debug_control:1;
@@ -1060,6 +1064,11 @@ struct brw_instruction
 	 GLuint pad1:6;
       } ia16;
 
+      /* Extended Message Descriptor for Ironlake (Gen5) SEND instruction.
+       *
+       * Does not apply to Gen6+.  The SFID/message target moved to bits
+       * 27:24 of the header (destreg__conditionalmod); EOT is in bits3.
+       */
        struct 
        {
            GLuint pad:26;
@@ -1373,6 +1382,11 @@ struct brw_instruction
 	 GLuint end_of_thread:1;
       } gen7_dp;
 
+      /**
+       * Message Descriptor for Gen4 SEND instructions (no particular message).
+       *
+       * See the G45 PRM, Volume 4, Table 14-15.
+       */
       struct {
 	 GLuint function_control:16;
 	 GLuint response_length:4;
@@ -1382,7 +1396,18 @@ struct brw_instruction
 	 GLuint end_of_thread:1;
       } generic;
 
-      /* Of this struct, only end_of_thread is not present for gen6. */
+      /**
+       * Message Descriptor for Gen5-7 SEND instructions.
+       *
+       * See the Sandybridge PRM, Volume 2 Part 2, Table 8-15.  (Sadly, most
+       * of the information on the SEND instruction is missing from the public
+       * Ironlake PRM.)
+       *
+       * The table claims that bit 31 is reserved/MBZ on Gen6+, but it lies.
+       * According to the SEND instruction description:
+       * "The MSb of the message description, the EOT field, always comes from
+       *  bit 127 of the instruction word"...which is bit 31 of this field.
+       */
       struct {
 	 GLuint function_control:19;
 	 GLuint header_present:1;
