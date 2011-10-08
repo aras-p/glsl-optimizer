@@ -145,8 +145,9 @@ mm_slab_new(struct nouveau_mman *cache, int chunk_order)
 
    cache->allocated += size;
 
-   debug_printf("MM: new slab, total memory = %"PRIu64" KiB\n",
-                cache->allocated / 1024);
+   if (nouveau_mesa_debug)
+      debug_printf("MM: new slab, total memory = %"PRIu64" KiB\n",
+                   cache->allocated / 1024);
 
    return PIPE_OK;
 }

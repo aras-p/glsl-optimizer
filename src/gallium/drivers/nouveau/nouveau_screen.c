@@ -10,6 +10,7 @@
 
 #include <stdio.h>
 #include <errno.h>
+#include <stdlib.h>
 
 #include "nouveau/nouveau_bo.h"
 #include "nouveau/nouveau_mm.h"
@@ -20,6 +21,8 @@
 /* XXX this should go away */
 #include "state_tracker/drm_driver.h"
 #include "util/u_simple_screen.h"
+
+int nouveau_mesa_debug = 0;
 
 static const char *
 nouveau_screen_get_name(struct pipe_screen *pscreen)
@@ -201,6 +204,10 @@ nouveau_screen_init(struct nouveau_screen *screen, struct nouveau_device *dev)
 {
 	struct pipe_screen *pscreen = &screen->base;
 	int ret;
+
+	char *nv_dbg = getenv("NOUVEAU_MESA_DEBUG");
+	if (nv_dbg)
+	   nouveau_mesa_debug = atoi(nv_dbg);
 
 	ret = nouveau_channel_alloc(dev, 0xbeef0201, 0xbeef0202,
 				    512*1024, &screen->channel);

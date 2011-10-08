@@ -431,7 +431,8 @@ nouveau_buffer_migrate(struct nouveau_context *nv,
          /* keep a system memory copy of our data in case we hit a fallback */
          if (!nouveau_buffer_data_fetch(buf, buf->bo, buf->offset, size))
             return FALSE;
-         debug_printf("migrating %u KiB to VRAM\n", size / 1024);
+         if (nouveau_mesa_debug)
+            debug_printf("migrating %u KiB to VRAM\n", size / 1024);
       }
 
       offset = buf->offset;

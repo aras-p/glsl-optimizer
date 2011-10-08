@@ -5,6 +5,8 @@
 #include "util/u_memory.h"
 typedef uint32_t u32;
 
+extern int nouveau_mesa_debug;
+
 struct nouveau_bo;
 
 struct nouveau_screen {
