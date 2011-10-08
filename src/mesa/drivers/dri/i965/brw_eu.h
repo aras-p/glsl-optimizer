@@ -881,7 +881,7 @@ void brw_set_dp_write_message(struct brw_compile *p,
 			      GLuint msg_type,
 			      GLuint msg_length,
 			      bool header_present,
-			      GLuint pixel_scoreboard_clear,
+			      GLuint last_render_target,
 			      GLuint response_length,
 			      GLuint end_of_thread,
 			      GLuint send_commit_msg);

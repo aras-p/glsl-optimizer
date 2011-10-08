@@ -492,7 +492,7 @@ vec4_visitor::generate_scratch_write(vec4_instruction *inst,
 			    msg_type,
 			    3, /* mlen */
 			    true, /* header present */
-			    false, /* pixel scoreboard */
+			    false, /* not a render target write */
 			    write_commit, /* rlen */
 			    false, /* eot */
 			    write_commit);

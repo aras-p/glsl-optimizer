@@ -1036,7 +1036,7 @@ int brw_disasm (FILE *file, struct brw_instruction *inst, int gen)
 	    } else {
 		format (file, " (%d, %d, %d, %d)",
 			inst->bits3.dp_write.binding_table_index,
-			(inst->bits3.dp_write.pixel_scoreboard_clear << 3) |
+			(inst->bits3.dp_write.last_render_target << 3) |
 			inst->bits3.dp_write.msg_control,
 			inst->bits3.dp_write.msg_type,
 			inst->bits3.dp_write.send_commit_msg);

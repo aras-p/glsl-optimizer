@@ -537,7 +537,7 @@ brw_set_dp_write_message(struct brw_compile *p,
 			 GLuint msg_type,
 			 GLuint msg_length,
 			 bool header_present,
-			 GLuint pixel_scoreboard_clear,
+			 GLuint last_render_target,
 			 GLuint response_length,
 			 GLuint end_of_thread,
 			 GLuint send_commit_msg)
@@ -565,24 +565,24 @@ brw_set_dp_write_message(struct brw_compile *p,
    if (intel->gen >= 7) {
       insn->bits3.gen7_dp.binding_table_index = binding_table_index;
       insn->bits3.gen7_dp.msg_control = msg_control;
-      insn->bits3.gen7_dp.pixel_scoreboard_clear = pixel_scoreboard_clear;
+      insn->bits3.gen7_dp.last_render_target = last_render_target;
       insn->bits3.gen7_dp.msg_type = msg_type;
    } else if (intel->gen == 6) {
       insn->bits3.gen6_dp.binding_table_index = binding_table_index;
       insn->bits3.gen6_dp.msg_control = msg_control;
-      insn->bits3.gen6_dp.pixel_scoreboard_clear = pixel_scoreboard_clear;
+      insn->bits3.gen6_dp.last_render_target = last_render_target;
       insn->bits3.gen6_dp.msg_type = msg_type;
       insn->bits3.gen6_dp.send_commit_msg = send_commit_msg;
    } else if (intel->gen == 5) {
       insn->bits3.dp_write_gen5.binding_table_index = binding_table_index;
       insn->bits3.dp_write_gen5.msg_control = msg_control;
-      insn->bits3.dp_write_gen5.pixel_scoreboard_clear = pixel_scoreboard_clear;
+      insn->bits3.dp_write_gen5.last_render_target = last_render_target;
       insn->bits3.dp_write_gen5.msg_type = msg_type;
       insn->bits3.dp_write_gen5.send_commit_msg = send_commit_msg;
    } else {
       insn->bits3.dp_write.binding_table_index = binding_table_index;
       insn->bits3.dp_write.msg_control = msg_control;
-      insn->bits3.dp_write.pixel_scoreboard_clear = pixel_scoreboard_clear;
+      insn->bits3.dp_write.last_render_target = last_render_target;
       insn->bits3.dp_write.msg_type = msg_type;
       insn->bits3.dp_write.send_commit_msg = send_commit_msg;
    }
@@ -619,12 +619,12 @@ brw_set_dp_read_message(struct brw_compile *p,
    if (intel->gen >= 7) {
       insn->bits3.gen7_dp.binding_table_index = binding_table_index;
       insn->bits3.gen7_dp.msg_control = msg_control;
-      insn->bits3.gen7_dp.pixel_scoreboard_clear = 0;
+      insn->bits3.gen7_dp.last_render_target = 0;
       insn->bits3.gen7_dp.msg_type = msg_type;
    } else if (intel->gen == 6) {
       insn->bits3.gen6_dp.binding_table_index = binding_table_index;
       insn->bits3.gen6_dp.msg_control = msg_control;
-      insn->bits3.gen6_dp.pixel_scoreboard_clear = 0;
+      insn->bits3.gen6_dp.last_render_target = 0;
       insn->bits3.gen6_dp.msg_type = msg_type;
       insn->bits3.gen6_dp.send_commit_msg = 0;
    } else if (intel->gen == 5) {
@@ -1714,7 +1714,7 @@ void brw_oword_block_write_scratch(struct brw_compile *p,
 			       msg_type,
 			       mlen,
 			       true, /* header_present */
-			       0, /* pixel scoreboard */
+			       0, /* not a render target */
 			       send_commit_msg, /* response_length */
 			       0, /* eot */
 			       send_commit_msg);
@@ -2059,7 +2059,7 @@ void brw_fb_WRITE(struct brw_compile *p,
 			    msg_type,
 			    msg_length,
 			    header_present,
-			    1,	/* pixel scoreboard */
+			    1, /* last render target write */
 			    response_length,
 			    eot,
 			    0 /* send_commit_msg */);
