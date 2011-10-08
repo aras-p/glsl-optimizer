@@ -1066,6 +1066,14 @@ int brw_disasm (FILE *file, struct brw_instruction *inst, int gen)
 	    break;
 	case BRW_SFID_THREAD_SPAWNER:
 	    break;
+	case GEN7_SFID_DATAPORT_DATA_CACHE:
+	    format (file, " (%d, %d, %d)",
+		    inst->bits3.gen7_dp.binding_table_index,
+		    inst->bits3.gen7_dp.msg_control,
+		    inst->bits3.gen7_dp.msg_type);
+	    break;
+
+
 	default:
 	    format (file, "unsupported target %d", target);
 	    break;
