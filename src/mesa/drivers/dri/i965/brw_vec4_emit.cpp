@@ -450,7 +450,9 @@ vec4_visitor::generate_scratch_write(vec4_instruction *inst,
 
    uint32_t msg_type;
 
-   if (intel->gen >= 6)
+   if (intel->gen >= 7)
+      msg_type = GEN7_DATAPORT_WRITE_MESSAGE_OWORD_DUAL_BLOCK_WRITE;
+   else if (intel->gen == 6)
       msg_type = GEN6_DATAPORT_WRITE_MESSAGE_OWORD_DUAL_BLOCK_WRITE;
    else
       msg_type = BRW_DATAPORT_WRITE_MESSAGE_OWORD_DUAL_BLOCK_WRITE;

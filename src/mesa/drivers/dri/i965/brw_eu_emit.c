@@ -546,6 +546,13 @@ brw_set_dp_write_message(struct brw_compile *p,
    brw_set_src1(p, insn, brw_imm_ud(0));
 
    if (intel->gen >= 7) {
+      /* Use the Render Cache for RT writes; otherwise use the Data Cache */
+      unsigned sfid = GEN7_MESSAGE_TARGET_DP_DATA_CACHE;
+      if (msg_type == GEN6_DATAPORT_WRITE_MESSAGE_RENDER_TARGET_WRITE)
+	 sfid = GEN6_MESSAGE_TARGET_DP_RENDER_CACHE;
+
+      insn->header.destreg__conditionalmod = sfid;
+
       insn->bits3.gen7_dp.binding_table_index = binding_table_index;
       insn->bits3.gen7_dp.msg_control = msg_control;
       insn->bits3.gen7_dp.pixel_scoreboard_clear = pixel_scoreboard_clear;
@@ -554,9 +561,6 @@ brw_set_dp_write_message(struct brw_compile *p,
       insn->bits3.gen7_dp.response_length = response_length;
       insn->bits3.gen7_dp.msg_length = msg_length;
       insn->bits3.gen7_dp.end_of_thread = end_of_thread;
-
-      /* We always use the render cache for write messages */
-      insn->header.destreg__conditionalmod = GEN6_MESSAGE_TARGET_DP_RENDER_CACHE;
    } else if (intel->gen == 6) {
       insn->bits3.gen6_dp.binding_table_index = binding_table_index;
       insn->bits3.gen6_dp.msg_control = msg_control;
@@ -618,7 +622,7 @@ brw_set_dp_read_message(struct brw_compile *p,
       insn->bits3.gen7_dp.response_length = response_length;
       insn->bits3.gen7_dp.msg_length = msg_length;
       insn->bits3.gen7_dp.end_of_thread = 0;
-      insn->header.destreg__conditionalmod = GEN6_MESSAGE_TARGET_DP_CONST_CACHE;
+      insn->header.destreg__conditionalmod = GEN7_MESSAGE_TARGET_DP_DATA_CACHE;
    } else if (intel->gen == 6) {
       uint32_t target_function;
 
