@@ -683,13 +683,11 @@ static void brw_set_sampler_message(struct brw_compile *p,
                                     GLuint msg_type,
                                     GLuint response_length,
                                     GLuint msg_length,
-                                    bool eot,
                                     GLuint header_present,
                                     GLuint simd_mode)
 {
    struct brw_context *brw = p->brw;
    struct intel_context *intel = &brw->intel;
-   assert(eot == 0);
    brw_set_src1(p, insn, brw_imm_d(0));
 
    if (intel->gen >= 7) {
@@ -700,7 +698,7 @@ static void brw_set_sampler_message(struct brw_compile *p,
       insn->bits3.sampler_gen7.header_present = header_present;
       insn->bits3.sampler_gen7.response_length = response_length;
       insn->bits3.sampler_gen7.msg_length = msg_length;
-      insn->bits3.sampler_gen7.end_of_thread = eot;
+      insn->bits3.sampler_gen7.end_of_thread = 0;
       insn->header.destreg__conditionalmod = BRW_SFID_SAMPLER;
    } else if (intel->gen >= 5) {
       insn->bits3.sampler_gen5.binding_table_index = binding_table_index;
@@ -710,12 +708,12 @@ static void brw_set_sampler_message(struct brw_compile *p,
       insn->bits3.sampler_gen5.header_present = header_present;
       insn->bits3.sampler_gen5.response_length = response_length;
       insn->bits3.sampler_gen5.msg_length = msg_length;
-      insn->bits3.sampler_gen5.end_of_thread = eot;
+      insn->bits3.sampler_gen5.end_of_thread = 0;
       if (intel->gen >= 6)
 	  insn->header.destreg__conditionalmod = BRW_SFID_SAMPLER;
       else {
 	  insn->bits2.send_gen5.sfid = BRW_SFID_SAMPLER;
-	  insn->bits2.send_gen5.end_of_thread = eot;
+	  insn->bits2.send_gen5.end_of_thread = 0;
       }
    } else if (intel->is_g4x) {
       insn->bits3.sampler_g4x.binding_table_index = binding_table_index;
@@ -723,7 +721,7 @@ static void brw_set_sampler_message(struct brw_compile *p,
       insn->bits3.sampler_g4x.msg_type = msg_type;
       insn->bits3.sampler_g4x.response_length = response_length;
       insn->bits3.sampler_g4x.msg_length = msg_length;
-      insn->bits3.sampler_g4x.end_of_thread = eot;
+      insn->bits3.sampler_g4x.end_of_thread = 0;
       insn->bits3.sampler_g4x.msg_target = BRW_SFID_SAMPLER;
    } else {
       insn->bits3.sampler.binding_table_index = binding_table_index;
@@ -732,7 +730,7 @@ static void brw_set_sampler_message(struct brw_compile *p,
       insn->bits3.sampler.return_format = BRW_SAMPLER_RETURN_FORMAT_FLOAT32;
       insn->bits3.sampler.response_length = response_length;
       insn->bits3.sampler.msg_length = msg_length;
-      insn->bits3.sampler.end_of_thread = eot;
+      insn->bits3.sampler.end_of_thread = 0;
       insn->bits3.sampler.msg_target = BRW_SFID_SAMPLER;
    }
 }
@@ -2135,7 +2133,6 @@ void brw_SAMPLE(struct brw_compile *p,
 		GLuint msg_type,
 		GLuint response_length,
 		GLuint msg_length,
-		bool eot,
 		GLuint header_present,
 		GLuint simd_mode)
 {
@@ -2230,7 +2227,6 @@ void brw_SAMPLE(struct brw_compile *p,
 			      msg_type,
 			      response_length, 
 			      msg_length,
-			      eot,
 			      header_present,
 			      simd_mode);
    }

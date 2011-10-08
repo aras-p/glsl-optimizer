@@ -343,7 +343,6 @@ fs_visitor::generate_tex(fs_inst *inst, struct brw_reg dst, struct brw_reg src)
 	      msg_type,
 	      rlen,
 	      inst->mlen,
-	      0,
 	      inst->header_present,
 	      simd_mode);
 }

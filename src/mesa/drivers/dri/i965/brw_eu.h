@@ -927,7 +927,6 @@ void brw_SAMPLE(struct brw_compile *p,
 		GLuint msg_type,
 		GLuint response_length,
 		GLuint msg_length,
-		bool eot,
 		GLuint header_present,
 		GLuint simd_mode);
 
