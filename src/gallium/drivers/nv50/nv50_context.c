@@ -205,7 +205,7 @@ nv50_bufctx_emit_relocs(struct nv50_context *nv50)
    n  = nv50->residents_size / sizeof(struct resident);
    n += NV50_SCREEN_RESIDENT_BO_COUNT;
 
-   MARK_RING(nv50->screen->base.channel, n, n);
+   MARK_RING(nv50->screen->base.channel, 0, n);
 
    for (ctx = 0; ctx < NV50_BUFCTX_COUNT; ++ctx) {
       array = &nv50->residents[ctx];

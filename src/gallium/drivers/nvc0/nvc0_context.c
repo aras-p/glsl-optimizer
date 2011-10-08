@@ -209,7 +209,7 @@ nvc0_bufctx_emit_relocs(struct nvc0_context *nvc0)
    n  = nvc0->residents_size / sizeof(struct resident);
    n += NVC0_SCREEN_RESIDENT_BO_COUNT;
 
-   MARK_RING(nvc0->screen->base.channel, n, n);
+   MARK_RING(nvc0->screen->base.channel, 0, n);
 
    for (ctx = 0; ctx < NVC0_BUFCTX_COUNT; ++ctx) {
       array = &nvc0->residents[ctx];

@@ -641,7 +641,7 @@ nv50_screen_make_buffers_resident(struct nv50_screen *screen)
 
    const unsigned flags = NOUVEAU_BO_VRAM | NOUVEAU_BO_RD;
 
-   MARK_RING(chan, 5, 5);
+   MARK_RING(chan, 0, 5);
    nouveau_bo_validate(chan, screen->code, flags);
    nouveau_bo_validate(chan, screen->uniforms, flags);
    nouveau_bo_validate(chan, screen->txc, flags);
