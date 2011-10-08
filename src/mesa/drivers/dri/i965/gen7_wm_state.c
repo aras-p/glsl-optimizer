@@ -149,8 +149,11 @@ upload_ps_state(struct brw_context *brw)
    /* BRW_NEW_NR_WM_SURFACES */
    dw2 |= brw->wm.nr_surfaces << GEN7_PS_BINDING_TABLE_ENTRY_COUNT_SHIFT;
 
-   /* OpenGL non-ieee floating point mode */
-   dw2 |= GEN7_PS_FLOATING_POINT_MODE_ALT;
+   /* Use ALT floating point mode for ARB fragment programs, because they
+    * require 0^0 == 1.
+    */
+   if (intel->ctx.Shader.CurrentFragmentProgram == NULL)
+      dw2 |= GEN7_PS_FLOATING_POINT_MODE_ALT;
 
    /* CACHE_NEW_SAMPLER */
    dw4 |= (brw->max_wm_threads - 1) << GEN7_PS_MAX_THREADS_SHIFT;

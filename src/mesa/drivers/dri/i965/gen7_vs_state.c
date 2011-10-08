@@ -33,6 +33,7 @@ static void
 upload_vs_state(struct brw_context *brw)
 {
    struct intel_context *intel = &brw->intel;
+   uint32_t floating_point_mode = 0;
 
    BEGIN_BATCH(2);
    OUT_BATCH(_3DSTATE_BINDING_TABLE_POINTERS_VS << 16 | (2 - 2));
@@ -65,11 +66,17 @@ upload_vs_state(struct brw_context *brw)
       ADVANCE_BATCH();
    }
 
+   /* Use ALT floating point mode for ARB vertex programs, because they
+    * require 0^0 == 1.
+    */
+   if (intel->ctx.Shader.CurrentVertexProgram == NULL)
+      floating_point_mode = GEN6_VS_FLOATING_POINT_MODE_ALT;
+
    BEGIN_BATCH(6);
    OUT_BATCH(_3DSTATE_VS << 16 | (6 - 2));
    OUT_BATCH(brw->vs.prog_offset);
    OUT_BATCH((0 << GEN6_VS_SAMPLER_COUNT_SHIFT) |
-	     GEN6_VS_FLOATING_POINT_MODE_ALT |
+             floating_point_mode |
 	     (brw->vs.nr_surfaces << GEN6_VS_BINDING_TABLE_ENTRY_COUNT_SHIFT));
 
    if (brw->vs.prog_data->total_scratch) {
