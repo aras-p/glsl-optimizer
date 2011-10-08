@@ -52,14 +52,8 @@ util_format_is_float(enum pipe_format format)
       return FALSE;
    }
 
-   /* Find the first non-void channel. */
-   for (i = 0; i < 4; i++) {
-      if (desc->channel[i].type != UTIL_FORMAT_TYPE_VOID) {
-         break;
-      }
-   }
-
-   if (i == 4) {
+   i = util_format_get_first_non_void_channel(format);
+   if (i == -1) {
       return FALSE;
    }
 

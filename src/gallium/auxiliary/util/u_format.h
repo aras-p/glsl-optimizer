@@ -806,6 +806,26 @@ util_format_get_nr_components(enum pipe_format format)
    return desc->nr_channels;
 }
 
+/**
+ * Return the index of the first non-void channel
+ * -1 if no non-void channels
+ */
+static INLINE int
+util_format_get_first_non_void_channel(enum pipe_format format)
+{
+   const struct util_format_description *desc = util_format_description(format);
+   int i;
+
+   for (i = 0; i < 4; i++)
+      if (desc->channel[i].type != UTIL_FORMAT_TYPE_VOID)
+         break;
+
+   if (i == 4)
+       return -1;
+
+   return i;
+}
+
 /*
  * Format access functions.
  */
