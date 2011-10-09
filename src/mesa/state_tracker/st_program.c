@@ -1154,7 +1154,8 @@ destroy_shader_program_variants_cb(GLuint key, void *data, void *userData)
          }
 
 	 for (i = 0; i < Elements(shProg->_LinkedShaders); i++) {
-	    destroy_program_variants(st, shProg->_LinkedShaders[i]->Program);
+	    if (shProg->_LinkedShaders[i])
+               destroy_program_variants(st, shProg->_LinkedShaders[i]->Program);
 	 }
       }
       break;
