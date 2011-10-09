@@ -184,13 +184,8 @@ i915_get_shader_param(struct pipe_screen *screen, unsigned shader, enum pipe_sha
          return draw_get_shader_param(shader, cap);
       }
    case PIPE_SHADER_FRAGMENT:
-      break;
-   default:
-      return 0;
-   }
-
-   /* XXX: these are just shader model 2.0 values, fix this! */
-   switch(cap) {
+      /* XXX: these are just shader model 2.0 values, fix this! */
+      switch(cap) {
       case PIPE_SHADER_CAP_MAX_INSTRUCTIONS:
          return 96;
       case PIPE_SHADER_CAP_MAX_ALU_INSTRUCTIONS:
@@ -229,7 +224,11 @@ i915_get_shader_param(struct pipe_screen *screen, unsigned shader, enum pipe_sha
       default:
          debug_printf("%s: Unknown cap %u.\n", __FUNCTION__, cap);
          return 0;
+      }
+   default:
+      return 0;
    }
+
 }
 
 static float
