@@ -154,7 +154,7 @@ struct blitter_context *util_blitter_create(struct pipe_context *pipe)
       pipe->screen->get_shader_param(pipe->screen, PIPE_SHADER_GEOMETRY,
                                      PIPE_SHADER_CAP_MAX_INSTRUCTIONS) > 0;
    ctx->vertex_has_integers =
-      pipe->screen->get_shader_param(pipe->screen, PIPE_SHADER_GEOMETRY,
+      pipe->screen->get_shader_param(pipe->screen, PIPE_SHADER_VERTEX,
                                      PIPE_SHADER_CAP_INTEGERS);
 
    /* blend state objects */
