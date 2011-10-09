@@ -361,7 +361,7 @@ static void i915_delete_sampler_state(struct pipe_context *pipe,
 
 
 /**
- * Called during state validation when LP_NEW_SAMPLER_VIEW is set.
+ * Called before drawing VBO to map vertex samplers and hand them to draw
  */
 void
 i915_prepare_vertex_sampling(struct i915_context *i915,
