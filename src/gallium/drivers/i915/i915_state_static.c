@@ -198,7 +198,7 @@ static void update_dst_buf_vars(struct i915_context *i915)
    struct pipe_surface *depth_surface = i915->framebuffer.zsbuf;
    uint32_t dst_buf_vars, cformat, zformat;
    uint32_t early_z = 0;
-   uint32_t fixup;
+   uint32_t fixup = 0;
    int need_fixup;
 
    if (cbuf_surface)
