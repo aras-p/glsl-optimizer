@@ -109,6 +109,7 @@ struct blitter_context_priv
    unsigned dst_height;
 
    boolean has_geometry_shader;
+   boolean vertex_has_integers;
 };
 
 static void blitter_draw_rectangle(struct blitter_context *blitter,
@@ -152,6 +153,9 @@ struct blitter_context *util_blitter_create(struct pipe_context *pipe)
    ctx->has_geometry_shader =
       pipe->screen->get_shader_param(pipe->screen, PIPE_SHADER_GEOMETRY,
                                      PIPE_SHADER_CAP_MAX_INSTRUCTIONS) > 0;
+   ctx->vertex_has_integers =
+      pipe->screen->get_shader_param(pipe->screen, PIPE_SHADER_GEOMETRY,
+                                     PIPE_SHADER_CAP_INTEGERS);
 
    /* blend state objects */
    memset(&blend, 0, sizeof(blend));
@@ -211,27 +215,30 @@ struct blitter_context *util_blitter_create(struct pipe_context *pipe)
    }
    ctx->velem_state = pipe->create_vertex_elements_state(pipe, 2, &velem[0]);
 
-   memset(&velem[0], 0, sizeof(velem[0]) * 2);
-   for (i = 0; i < 2; i++) {
-      velem[i].src_offset = i * 4 * sizeof(float);
-      if (i == 0) {
-         velem[i].src_format = PIPE_FORMAT_R32G32B32A32_FLOAT;
-      } else {
-         velem[i].src_format = PIPE_FORMAT_R32G32B32A32_SINT;
+   if (ctx->vertex_has_integers) {
+      memset(&velem[0], 0, sizeof(velem[0]) * 2);
+      for (i = 0; i < 2; i++) {
+         velem[i].src_offset = i * 4 * sizeof(float);
+         if (i == 0) {
+            velem[i].src_format = PIPE_FORMAT_R32G32B32A32_FLOAT;
+         } else {
+            velem[i].src_format = PIPE_FORMAT_R32G32B32A32_SINT;
+         }
       }
-   }
-   ctx->velem_sint_state = pipe->create_vertex_elements_state(pipe, 2, &velem[0]);
+      ctx->velem_sint_state = pipe->create_vertex_elements_state(pipe, 2, &velem[0]);
 
-   memset(&velem[0], 0, sizeof(velem[0]) * 2);
-   for (i = 0; i < 2; i++) {
-      velem[i].src_offset = i * 4 * sizeof(float);
-      if (i == 0) {
-         velem[i].src_format = PIPE_FORMAT_R32G32B32A32_FLOAT;
-      } else {
-         velem[i].src_format = PIPE_FORMAT_R32G32B32A32_UINT;
+      memset(&velem[0], 0, sizeof(velem[0]) * 2);
+      for (i = 0; i < 2; i++) {
+         velem[i].src_offset = i * 4 * sizeof(float);
+         if (i == 0) {
+            velem[i].src_format = PIPE_FORMAT_R32G32B32A32_FLOAT;
+         } else {
+            velem[i].src_format = PIPE_FORMAT_R32G32B32A32_UINT;
+         }
       }
+      ctx->velem_uint_state = pipe->create_vertex_elements_state(pipe, 2, &velem[0]);
    }
-   ctx->velem_uint_state = pipe->create_vertex_elements_state(pipe, 2, &velem[0]);
+
    /* fragment shaders are created on-demand */
 
    /* vertex shader */
@@ -274,8 +281,10 @@ void util_blitter_destroy(struct blitter_context *blitter)
    pipe->delete_rasterizer_state(pipe, ctx->rs_state);
    pipe->delete_vs_state(pipe, ctx->vs);
    pipe->delete_vertex_elements_state(pipe, ctx->velem_state);
-   pipe->delete_vertex_elements_state(pipe, ctx->velem_sint_state);
-   pipe->delete_vertex_elements_state(pipe, ctx->velem_uint_state);
+   if (ctx->vertex_has_integers) {
+      pipe->delete_vertex_elements_state(pipe, ctx->velem_sint_state);
+      pipe->delete_vertex_elements_state(pipe, ctx->velem_uint_state);
+   }
 
    for (i = 0; i < PIPE_MAX_TEXTURE_TYPES; i++) {
       if (ctx->fs_texfetch_col[i])
