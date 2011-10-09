@@ -53,6 +53,8 @@
    "GLX_MESA_copy_sub_buffer " \
    "GLX_MESA_pixmap_colormap " \
    "GLX_MESA_release_buffers " \
+   "GLX_ARB_create_context " \
+   "GLX_ARB_create_context_profile " \
    "GLX_ARB_get_proc_address " \
    "GLX_EXT_texture_from_pixmap " \
    "GLX_EXT_visual_info " \
