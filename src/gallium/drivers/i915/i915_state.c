@@ -299,7 +299,38 @@ static void i915_fixup_bind_sampler_states(struct pipe_context *pipe,
    i915->saved_bind_sampler_states(pipe, num, sampler);
 }
 
-static void i915_bind_sampler_states(struct pipe_context *pipe,
+static void
+i915_bind_vertex_sampler_states(struct pipe_context *pipe,
+                                unsigned num_samplers,
+                                void **samplers)
+{
+   struct i915_context *i915 = i915_context(pipe);
+   unsigned i;
+
+   assert(num_samplers <= PIPE_MAX_VERTEX_SAMPLERS);
+
+   /* Check for no-op */
+   if (num_samplers == i915->num_vertex_samplers &&
+       !memcmp(i915->vertex_samplers, samplers, num_samplers * sizeof(void *)))
+      return;
+
+   draw_flush(i915->draw);
+
+   for (i = 0; i < num_samplers; ++i)
+      i915->vertex_samplers[i] = samplers[i];
+   for (i = num_samplers; i < PIPE_MAX_VERTEX_SAMPLERS; ++i)
+      i915->vertex_samplers[i] = NULL;
+
+   i915->num_vertex_samplers = num_samplers;
+
+   draw_set_samplers(i915->draw,
+                     i915->vertex_samplers,
+                     i915->num_vertex_samplers);
+}
+
+
+
+static void i915_bind_fragment_sampler_states(struct pipe_context *pipe,
                                      unsigned num, void **sampler)
 {
    struct i915_context *i915 = i915_context(pipe);
@@ -327,6 +358,76 @@ static void i915_delete_sampler_state(struct pipe_context *pipe,
 {
    FREE(sampler);
 }
+
+
+/**
+ * Called during state validation when LP_NEW_SAMPLER_VIEW is set.
+ */
+void
+i915_prepare_vertex_sampling(struct i915_context *i915,
+                             unsigned num,
+                             struct pipe_sampler_view **views)
+{
+   struct i915_winsys *iws = i915->iws;
+   unsigned i,j;
+   uint32_t row_stride[PIPE_MAX_TEXTURE_LEVELS];
+   uint32_t img_stride[PIPE_MAX_TEXTURE_LEVELS];
+   const void* data[PIPE_MAX_TEXTURE_LEVELS];
+
+   assert(num <= PIPE_MAX_VERTEX_SAMPLERS);
+   if (!num)
+      return;
+
+   for (i = 0; i < PIPE_MAX_VERTEX_SAMPLERS; i++) {
+      struct pipe_sampler_view *view = i < num ? views[i] : NULL;
+
+      if (view) {
+         struct pipe_resource *tex = view->texture;
+         struct i915_texture *i915_tex = i915_texture(tex);
+         void* addr;
+
+         /* We're referencing the texture's internal data, so save a
+          * reference to it.
+          */
+         pipe_resource_reference(&i915->mapped_vs_tex[i], tex);
+
+	 i915->mapped_vs_tex_buffer[i] = i915_tex->buffer;
+         addr = iws->buffer_map(iws,
+                                i915_tex->buffer,
+                                FALSE /* read only */);
+
+         /* Setup array of mipmap level pointers */
+	 /* FIXME: handle 3D textures? */
+         for (j = view->u.tex.first_level; j <= tex->last_level; j++) {
+            unsigned offset = i915_texture_offset(i915_tex, j , 0 /* FIXME depth */);
+            data[j] = addr + offset;
+            row_stride[j] = i915_tex->stride;
+            img_stride[j] = 0; /* FIXME */;
+         }
+
+         draw_set_mapped_texture(i915->draw,
+                                 i,
+                                 tex->width0, tex->height0, tex->depth0,
+                                 view->u.tex.first_level, tex->last_level,
+                                 row_stride, img_stride, data);
+      } else
+         i915->mapped_vs_tex[i] = NULL;
+   }
+}
+
+void
+i915_cleanup_vertex_sampling(struct i915_context *i915)
+{
+   struct i915_winsys *iws = i915->iws;
+   unsigned i;
+   for (i = 0; i < Elements(i915->mapped_vs_tex); i++) {
+      if (i915->mapped_vs_tex_buffer[i]) { 
+         iws->buffer_unmap(iws, i915->mapped_vs_tex_buffer[i]);
+         pipe_resource_reference(&i915->mapped_vs_tex[i], NULL);
+      }
+   }
+}
+
 
 
 /** XXX move someday?  Or consolidate all these simple state setters
@@ -652,6 +753,37 @@ static void i915_set_fragment_sampler_views(struct pipe_context *pipe,
    i915->dirty |= I915_NEW_SAMPLER_VIEW;
 }
 
+static void
+i915_set_vertex_sampler_views(struct pipe_context *pipe,
+                              unsigned num,
+                              struct pipe_sampler_view **views)
+{
+   struct i915_context *i915 = i915_context(pipe);
+   uint i;
+
+   assert(num <= PIPE_MAX_VERTEX_SAMPLERS);
+
+   /* Check for no-op */
+   if (num == i915->num_vertex_sampler_views &&
+       !memcmp(i915->vertex_sampler_views, views, num * sizeof(struct pipe_sampler_view *))) {
+      return;
+   }
+
+   draw_flush(i915->draw);
+
+   for (i = 0; i < PIPE_MAX_VERTEX_SAMPLERS; i++) {
+      struct pipe_sampler_view *view = i < num ? views[i] : NULL;
+
+      pipe_sampler_view_reference(&i915->vertex_sampler_views[i], view);
+   }
+
+   i915->num_vertex_sampler_views = num;
+
+   draw_set_sampler_views(i915->draw,
+                          i915->vertex_sampler_views,
+                          i915->num_vertex_sampler_views);
+}
+
 
 static struct pipe_sampler_view *
 i915_create_sampler_view(struct pipe_context *pipe,
@@ -918,7 +1050,8 @@ i915_init_state_functions( struct i915_context *i915 )
    i915->base.delete_blend_state = i915_delete_blend_state;
 
    i915->base.create_sampler_state = i915_create_sampler_state;
-   i915->base.bind_fragment_sampler_states = i915_bind_sampler_states;
+   i915->base.bind_fragment_sampler_states = i915_bind_fragment_sampler_states;
+   i915->base.bind_vertex_sampler_states = i915_bind_vertex_sampler_states;
    i915->base.delete_sampler_state = i915_delete_sampler_state;
 
    i915->base.create_depth_stencil_alpha_state = i915_create_depth_stencil_state;
@@ -948,6 +1081,7 @@ i915_init_state_functions( struct i915_context *i915 )
    i915->base.set_polygon_stipple = i915_set_polygon_stipple;
    i915->base.set_scissor_state = i915_set_scissor_state;
    i915->base.set_fragment_sampler_views = i915_set_fragment_sampler_views;
+   i915->base.set_vertex_sampler_views = i915_set_vertex_sampler_views;
    i915->base.create_sampler_view = i915_create_sampler_view;
    i915->base.sampler_view_destroy = i915_sampler_view_destroy;
    i915->base.set_viewport_state = i915_set_viewport_state;
