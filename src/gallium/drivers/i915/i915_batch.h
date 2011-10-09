@@ -55,24 +55,4 @@
  */
 void i915_flush(struct i915_context *i915, struct pipe_fence_handle **fence);
 
-/*
- * Flush if the current color buf is idle and we have more than 256 vertices
- * queued, or if the current color buf is busy and we have more than 4096
- * vertices queued.
- */
-static INLINE void i915_flush_heuristically(struct i915_context* i915,
-                                            int num_vertex)
-{
-   i915->queued_vertices += num_vertex;
-
-   /* fire if we have more than 1/20th of the last frame's vertices */
-   if (i915->queued_vertices > i915->last_fired_vertices / 20) {
-      FLUSH_BATCH(NULL);
-      i915->fired_vertices += i915->queued_vertices;
-      i915->queued_vertices = 0;
-      return;
-   }
-}
-
-
 #endif
