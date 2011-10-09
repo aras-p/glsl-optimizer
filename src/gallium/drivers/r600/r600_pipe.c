@@ -441,6 +441,7 @@ static float r600_get_paramf(struct pipe_screen* pscreen, enum pipe_cap param)
 
 static int r600_get_shader_param(struct pipe_screen* pscreen, unsigned shader, enum pipe_shader_cap param)
 {
+	struct r600_screen *rscreen = (struct r600_screen *)pscreen;
 	switch(shader)
 	{
 	case PIPE_SHADER_FRAGMENT:
@@ -489,6 +490,8 @@ static int r600_get_shader_param(struct pipe_screen* pscreen, unsigned shader, e
 	case PIPE_SHADER_CAP_SUBROUTINES:
 		return 0;
 	case PIPE_SHADER_CAP_INTEGERS:
+		if (rscreen->chip_class == EVERGREEN)
+			return 1;
 		return 0;
 	case PIPE_SHADER_CAP_MAX_TEXTURE_SAMPLERS:
 		return 16;
