@@ -64,7 +64,7 @@ prepare_blend_state(struct brw_context *brw)
 	 /* Floating point RTs should have no effect from LogicOp,
 	  * except for disabling of blending
 	  */
-	 if (_mesa_get_format_datatype(rb->Format) != GL_FLOAT) {
+	 if (rb && _mesa_get_format_datatype(rb->Format) != GL_FLOAT) {
 	    blend[b].blend1.logic_op_enable = 1;
 	    blend[b].blend1.logic_op_func =
 	       intel_translate_logic_op(ctx->Color.LogicOp);
