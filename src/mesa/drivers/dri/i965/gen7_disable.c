@@ -122,13 +122,6 @@ disable_stages(struct brw_context *brw)
    OUT_BATCH(_3DSTATE_BINDING_TABLE_POINTERS_DS << 16 | (2 - 2));
    OUT_BATCH(0);
    ADVANCE_BATCH();
-
-   /* Disable the SOL stage */
-   BEGIN_BATCH(3);
-   OUT_BATCH(_3DSTATE_STREAMOUT << 16 | (3 - 2));
-   OUT_BATCH(0);
-   OUT_BATCH(0);
-   ADVANCE_BATCH();
 }
 
 const struct brw_tracked_state gen7_disable_stages = {
