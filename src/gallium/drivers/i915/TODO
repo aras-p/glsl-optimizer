@@ -33,6 +33,8 @@ Random list of problems with i915g:
 
 - Finish front/back face. We need to add face support to lp_build_system_values_array and use it in draw_llvm.c.
 
+- More optimizations, like replacing ADD + MUL with MAD.
+
 - Replace constants and immediates which are 0,1,-1 or a combination of those with a swizzle.
 
 - i915_delete_fs_state doesn't call draw_delete_fragment_shader. Why?
