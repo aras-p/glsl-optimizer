@@ -76,15 +76,14 @@ gen6_prepare_vs_push_constants(struct brw_context *brw)
          /* This should be loaded like any other param, but it's ad-hoc
           * until we redo the VS backend.
           */
-         if (!uses_clip_distance) {
+         if (ctx->Transform.ClipPlanesEnabled != 0 && !uses_clip_distance) {
             gl_clip_plane *clip_planes = brw_select_clip_planes(ctx);
-            for (i = 0; i < MAX_CLIP_PLANES; i++) {
-               if (ctx->Transform.ClipPlanesEnabled & (1 << i)) {
-                  memcpy(param, clip_planes[i], 4 * sizeof(float));
-                  param += 4;
-                  params_uploaded++;
-               }
-            }
+            int num_userclip_plane_consts
+               = _mesa_logbase2(ctx->Transform.ClipPlanesEnabled) + 1;
+            int num_floats = 4 * num_userclip_plane_consts;
+            memcpy(param, clip_planes, num_floats * sizeof(float));
+            param += num_floats;
+            params_uploaded += num_userclip_plane_consts;
          }
 
          /* Align to a reg for convenience for brw_vs_emit.c */
