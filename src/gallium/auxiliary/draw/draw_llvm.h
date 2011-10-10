@@ -98,7 +98,7 @@ struct draw_jit_context
 {
    const float *vs_constants;
    const float *gs_constants;
-   float (*planes) [12][4];
+   float (*planes) [DRAW_TOTAL_CLIP_PLANES][4];
    float *viewport;
 
    struct draw_jit_texture textures[PIPE_MAX_VERTEX_SAMPLERS];

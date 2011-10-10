@@ -191,7 +191,8 @@ create_jit_context_type(struct gallivm_state *gallivm,
 
    elem_types[0] = LLVMPointerType(float_type, 0); /* vs_constants */
    elem_types[1] = LLVMPointerType(float_type, 0); /* gs_constants */
-   elem_types[2] = LLVMPointerType(LLVMArrayType(LLVMArrayType(float_type, 4), 12), 0); /* planes */
+   elem_types[2] = LLVMPointerType(LLVMArrayType(LLVMArrayType(float_type, 4),
+                                                 DRAW_TOTAL_CLIP_PLANES), 0);
    elem_types[3] = LLVMPointerType(float_type, 0); /* viewport */
    elem_types[4] = LLVMArrayType(texture_type,
                                  PIPE_MAX_VERTEX_SAMPLERS); /* textures */
@@ -708,17 +709,21 @@ store_aos(struct gallivm_state *gallivm,
    LLVMValueRef id_ptr = draw_jit_header_id(gallivm, io_ptr);
    LLVMValueRef data_ptr = draw_jit_header_data(gallivm, io_ptr);
    LLVMValueRef indices[3];
-   LLVMValueRef val, shift;
+   LLVMValueRef val;
+   int vertex_id_pad_edgeflag;
 
    indices[0] = lp_build_const_int32(gallivm, 0);
    indices[1] = index;
    indices[2] = lp_build_const_int32(gallivm, 0);
 
-   /* initialize vertex id:16 = 0xffff, pad:3 = 0, edgeflag:1 = 1 */
-   val = lp_build_const_int32(gallivm, 0xffff1);
-   shift = lp_build_const_int32(gallivm, 12);
-   val = LLVMBuildShl(builder, val, shift, "");
-   /* add clipmask:12 */   
+   /* If this assertion fails, it means we need to update the bit twidding
+    * code here.  See struct vertex_header in draw_private.h.
+    */
+   assert(DRAW_TOTAL_CLIP_PLANES==14);
+   /* initialize vertex id:16 = 0xffff, pad:1 = 0, edgeflag:1 = 1 */
+   vertex_id_pad_edgeflag = (0xffff << 16) | (1 << DRAW_TOTAL_CLIP_PLANES);
+   val = lp_build_const_int32(gallivm, vertex_id_pad_edgeflag);
+   /* OR with the clipmask */
    val = LLVMBuildOr(builder, val, clipmask, "");               
 
    /* store vertex header */

@@ -52,6 +52,10 @@ struct draw_llvm;
 #endif
 
 
+/** Sum of frustum planes and user-defined planes */
+#define DRAW_TOTAL_CLIP_PLANES (6 + PIPE_MAX_CLIP_PLANES)
+
+
 struct pipe_context;
 struct draw_vertex_shader;
 struct draw_context;
@@ -66,9 +70,9 @@ struct tgsi_sampler;
  * Carry some useful information around with the vertices in the prim pipe.  
  */
 struct vertex_header {
-   unsigned clipmask:12;
+   unsigned clipmask:DRAW_TOTAL_CLIP_PLANES;
    unsigned edgeflag:1;
-   unsigned pad:3;
+   unsigned pad:1;
    unsigned vertex_id:16;
 
    float clip[4];
@@ -179,7 +183,7 @@ struct draw_context
          unsigned gs_constants_size[PIPE_MAX_CONSTANT_BUFFERS];
          
          /* pointer to planes */
-         float (*planes)[12][4]; 
+         float (*planes)[DRAW_TOTAL_CLIP_PLANES][4]; 
       } user;
 
       boolean test_fse;         /* enable FSE even though its not correct (eg for softpipe) */
@@ -277,7 +281,7 @@ struct draw_context
 
    /* Clip derived state:
     */
-   float plane[12][4];
+   float plane[DRAW_TOTAL_CLIP_PLANES][4];
    unsigned nr_planes;
    boolean depth_clamp;
 
