@@ -85,6 +85,7 @@ struct dri2_screen {
    const __DRI2flushExtension *f;
    const __DRI2configQueryExtension *config;
    const __DRItexBufferExtension *texBuffer;
+   const __DRI2throttleExtension *throttle;
    const __DRIconfig **driver_configs;
 
    void *driver;
@@ -368,8 +369,32 @@ dri2WaitForSBC(__GLXDRIdrawable *pdraw, int64_t target_sbc, int64_t *ust,
 
 #endif /* X_DRI2WaitMSC */
 
+/**
+ * dri2Throttle - Request driver throttling
+ *
+ * This function uses the DRI2 throttle extension to give the
+ * driver the opportunity to throttle on flush front, copysubbuffer
+ * and swapbuffers.
+ */
 static void
-dri2CopySubBuffer(__GLXDRIdrawable *pdraw, int x, int y, int width, int height)
+dri2Throttle(struct dri2_screen *psc,
+	     struct dri2_drawable *draw,
+	     enum __DRI2throttleReason reason)
+{
+   if (psc->throttle) {
+      struct glx_context *gc = __glXGetCurrentContext();
+      struct dri2_context *dri2Ctx = (struct dri2_context *)gc;
+      __DRIcontext *ctx =
+	 (dri2Ctx) ? dri2Ctx->driContext : NULL;
+
+      psc->throttle->throttle(ctx, draw->driDrawable, reason);
+   }
+}
+
+static void
+__dri2CopySubBuffer(__GLXDRIdrawable *pdraw, int x, int y,
+		    int width, int height,
+		    enum __DRI2throttleReason reason)
 {
    struct dri2_drawable *priv = (struct dri2_drawable *) pdraw;
    struct dri2_screen *psc = (struct dri2_screen *) pdraw->psc;
@@ -390,6 +415,8 @@ dri2CopySubBuffer(__GLXDRIdrawable *pdraw, int x, int y, int width, int height)
       (*psc->f->flush) (priv->driDrawable);
 #endif
 
+   dri2Throttle(psc, priv, reason);
+
    region = XFixesCreateRegion(psc->base.dpy, &xrect, 1);
    DRI2CopyRegion(psc->base.dpy, pdraw->xDrawable, region,
                   DRI2BufferFrontLeft, DRI2BufferBackLeft);
@@ -403,6 +430,15 @@ dri2CopySubBuffer(__GLXDRIdrawable *pdraw, int x, int y, int width, int height)
 
    XFixesDestroyRegion(psc->base.dpy, region);
 }
+
+static void
+dri2CopySubBuffer(__GLXDRIdrawable *pdraw, int x, int y,
+		  int width, int height)
+{
+   __dri2CopySubBuffer(pdraw, x, y, width, height,
+		       __DRI2_THROTTLE_COPYSUBBUFFER);
+}
+
 
 static void
 dri2_copy_drawable(struct dri2_drawable *priv, int dest, int src)
@@ -458,6 +494,7 @@ dri2FlushFrontBuffer(__DRIdrawable *driDrawable, void *loaderPrivate)
    struct dri2_display *pdp;
    struct glx_context *gc;
    struct dri2_drawable *pdraw = loaderPrivate;
+   struct dri2_screen *psc;
 
    if (!pdraw)
       return;
@@ -465,9 +502,13 @@ dri2FlushFrontBuffer(__DRIdrawable *driDrawable, void *loaderPrivate)
    if (!pdraw->base.psc)
       return;
 
-   priv = __glXInitialize(pdraw->base.psc->dpy);
+   psc = (struct dri2_screen *) pdraw->base.psc;
+
+   priv = __glXInitialize(psc->base.dpy);
    pdp = (struct dri2_display *) priv->dri2Display;
    gc = __glXGetCurrentContext();
+
+   dri2Throttle(psc, pdraw, __DRI2_THROTTLE_FLUSHFRONT);
 
    /* Old servers don't send invalidate events */
    if (!pdp->invalidateAvailable)
@@ -548,7 +589,8 @@ dri2SwapBuffers(__GLXDRIdrawable *pdraw, int64_t target_msc, int64_t divisor,
 
     /* Old servers can't handle swapbuffers */
     if (!pdp->swapAvailable) {
-       dri2CopySubBuffer(pdraw, 0, 0, priv->width, priv->height);
+       __dri2CopySubBuffer(pdraw, 0, 0, priv->width, priv->height,
+			   __DRI2_THROTTLE_SWAPBUFFER);
     } else {
 #ifdef X_DRI2SwapBuffers
 #ifdef __DRI2_FLUSH
@@ -560,6 +602,8 @@ dri2SwapBuffers(__GLXDRIdrawable *pdraw, int64_t target_msc, int64_t divisor,
        }
     }
 #endif
+
+       dri2Throttle(psc, priv, __DRI2_THROTTLE_SWAPBUFFER);
 
        DRI2SwapBuffers(psc->base.dpy, pdraw->xDrawable,
 		       target_msc, divisor, remainder, &ret);
@@ -802,6 +846,9 @@ dri2BindExtensions(struct dri2_screen *psc, const __DRIextension **extensions)
 
       if ((strcmp(extensions[i]->name, __DRI2_CONFIG_QUERY) == 0))
 	 psc->config = (__DRI2configQueryExtension *) extensions[i];
+
+      if (((strcmp(extensions[i]->name, __DRI2_THROTTLE) == 0)))
+	 psc->throttle = (__DRI2throttleExtension *) extensions[i];
    }
 }
 
