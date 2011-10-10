@@ -847,6 +847,7 @@ translate_opcode(uint opcode)
    case TGSI_OPCODE_TXP: return NV_OP_TEX;
    case TGSI_OPCODE_TXB: return NV_OP_TXB;
    case TGSI_OPCODE_TXL: return NV_OP_TXL;
+   case TGSI_OPCODE_TXD: return NV_OP_TEX;
    case TGSI_OPCODE_XOR: return NV_OP_XOR;
    default:
       return NV_OP_NOP;
@@ -1960,6 +1961,7 @@ bld_instruction(struct bld_context *bld,
    case TGSI_OPCODE_TXB:
    case TGSI_OPCODE_TXL:
    case TGSI_OPCODE_TXP:
+   case TGSI_OPCODE_TXD: // fake
       bld_tex(bld, dst0, insn);
       break;
    case TGSI_OPCODE_XPD:
