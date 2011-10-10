@@ -1097,11 +1097,6 @@ static struct pipe_sampler_view *r600_create_sampler_view(struct pipe_context *c
 
 	endian = r600_colorformat_endian_swap(format);
 
-	if (tmp->force_int_type) {
-		word4 &= C_038010_NUM_FORMAT_ALL;
-		word4 |= S_038010_NUM_FORMAT_ALL(V_038010_SQ_NUM_FORMAT_INT);
-	}
-
 	offset_level = state->u.tex.first_level;
 	last_level = state->u.tex.last_level - offset_level;
 	width = u_minify(texture->width0, offset_level);
@@ -1486,10 +1481,6 @@ static void r600_cb(struct r600_pipe_context *rctx, struct r600_pipe_state *rsta
 	} else {
 		endian = r600_colorformat_endian_swap(format);
 	}
-
-	/* disable when gallium grows int textures */
-	if ((format == FMT_32_32_32_32 || format == FMT_16_16_16_16) && rtex->force_int_type)
-		ntype = V_0280A0_NUMBER_UINT;
 
 	color_info = S_0280A0_FORMAT(format) |
 		S_0280A0_COMP_SWAP(swap) |

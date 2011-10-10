@@ -1059,11 +1059,6 @@ static struct pipe_sampler_view *evergreen_create_sampler_view(struct pipe_conte
 
 	endian = r600_colorformat_endian_swap(format);
 
-	if (tmp->force_int_type) {
-		word4 &= C_030010_NUM_FORMAT_ALL;
-		word4 |= S_030010_NUM_FORMAT_ALL(V_030010_SQ_NUM_FORMAT_INT);
-	}
-
 	height = texture->height0;
 	depth = texture->depth0;
 
@@ -1361,6 +1356,8 @@ static void evergreen_cb(struct r600_pipe_context *rctx, struct r600_pipe_state 
 			break;
 		}
 	}
+
+	ntype = V_028C70_NUMBER_UNORM;
 	if (desc->colorspace == UTIL_FORMAT_COLORSPACE_SRGB)
 		ntype = V_028C70_NUMBER_SRGB;
 	else if (desc->channel[i].type == UTIL_FORMAT_TYPE_SIGNED) {
@@ -1373,8 +1370,7 @@ static void evergreen_cb(struct r600_pipe_context *rctx, struct r600_pipe_state 
 			ntype = V_028C70_NUMBER_UNORM;
 		else if (desc->channel[i].pure_integer)
 			ntype = V_028C70_NUMBER_UINT;
-	} else
-		ntype = V_028C70_NUMBER_UNORM;
+	}
 
 	format = r600_translate_colorformat(surf->base.format);
 	swap = r600_translate_colorswap(surf->base.format);
@@ -1383,10 +1379,6 @@ static void evergreen_cb(struct r600_pipe_context *rctx, struct r600_pipe_state 
 	} else {
 		endian = r600_colorformat_endian_swap(format);
 	}
-
-	/* disable when gallium grows int textures */
-	if ((format == FMT_32_32_32_32 || format == FMT_16_16_16_16) && rtex->force_int_type)
-		ntype = V_028C70_NUMBER_UINT;
 
 	/* blend clamp should be set for all NORM/SRGB types */
 	if (ntype == V_028C70_NUMBER_UNORM || ntype == V_028C70_NUMBER_SNORM ||
