@@ -350,6 +350,28 @@ else
 fi
 
 dnl
+dnl Mangled Mesa support
+dnl
+AC_ARG_ENABLE([mangling],
+  [AS_HELP_STRING([--enable-mangling],
+    [enable mangled symbols and library name @<:@default=disabled@:>@])],
+  [enable_mangling="${enableval}"],
+  [enable_mangling=no]
+)
+GL_LIB="GL"
+GLU_LIB="GLU"
+OSMESA_LIB="OSMesa"
+if test "x${enable_mangling}" = "xyes" ; then
+  DEFINES="${DEFINES} -DUSE_MGL_NAMESPACE"
+  GL_LIB="MangledGL"
+  GLU_LIB="MangledGLU"
+  OSMESA_LIB="MangledOSMesa"
+fi
+AC_SUBST([GL_LIB])
+AC_SUBST([GLU_LIB])
+AC_SUBST([OSMESA_LIB])
+
+dnl
 dnl potentially-infringing-but-nobody-knows-for-sure stuff
 dnl
 AC_ARG_ENABLE([texture-float],
@@ -1288,17 +1310,16 @@ if test "x$osmesa_bits" != x8; then
 fi
 case "x$osmesa_bits" in
 x8)
-    OSMESA_LIB=OSMesa
+    OSMESA_LIB="${OSMESA_LIB}"
     ;;
 x16|x32)
-    OSMESA_LIB="OSMesa$osmesa_bits"
+    OSMESA_LIB="${OSMESA_LIB}$osmesa_bits"
     DEFINES="$DEFINES -DCHAN_BITS=$osmesa_bits -DDEFAULT_SOFTWARE_DEPTH_BITS=31"
     ;;
 *)
     AC_MSG_ERROR([OSMesa bits '$osmesa_bits' is not a valid option])
     ;;
 esac
-AC_SUBST([OSMESA_LIB])
 
 if test "x$enable_osmesa" = xyes; then
     # only link libraries with osmesa if shared

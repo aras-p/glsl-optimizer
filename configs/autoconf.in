@@ -64,8 +64,8 @@ FLEX = @FLEX@
 BISON = @BISON@
 
 # Library names (base name)
-GL_LIB = GL
-GLU_LIB = GLU
+GL_LIB = @GL_LIB@
+GLU_LIB = @GLU_LIB@
 GLW_LIB = GLw
 OSMESA_LIB = @OSMESA_LIB@
 GLESv1_CM_LIB = GLESv1_CM
