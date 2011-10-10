@@ -384,7 +384,7 @@ i915_prepare_vertex_sampling(struct i915_context *i915,
       if (view) {
          struct pipe_resource *tex = view->texture;
          struct i915_texture *i915_tex = i915_texture(tex);
-         void* addr;
+         ubyte *addr;
 
          /* We're referencing the texture's internal data, so save a
           * reference to it.
