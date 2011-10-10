@@ -217,25 +217,17 @@ struct blitter_context *util_blitter_create(struct pipe_context *pipe)
 
    if (ctx->vertex_has_integers) {
       memset(&velem[0], 0, sizeof(velem[0]) * 2);
-      for (i = 0; i < 2; i++) {
-         velem[i].src_offset = i * 4 * sizeof(float);
-         if (i == 0) {
-            velem[i].src_format = PIPE_FORMAT_R32G32B32A32_FLOAT;
-         } else {
-            velem[i].src_format = PIPE_FORMAT_R32G32B32A32_SINT;
-         }
-      }
+      velem[0].src_offset = 0;
+      velem[0].src_format = PIPE_FORMAT_R32G32B32A32_FLOAT;
+      velem[1].src_offset = 4 * sizeof(float);
+      velem[1].src_format = PIPE_FORMAT_R32G32B32A32_SINT;
       ctx->velem_sint_state = pipe->create_vertex_elements_state(pipe, 2, &velem[0]);
 
       memset(&velem[0], 0, sizeof(velem[0]) * 2);
-      for (i = 0; i < 2; i++) {
-         velem[i].src_offset = i * 4 * sizeof(float);
-         if (i == 0) {
-            velem[i].src_format = PIPE_FORMAT_R32G32B32A32_FLOAT;
-         } else {
-            velem[i].src_format = PIPE_FORMAT_R32G32B32A32_UINT;
-         }
-      }
+      velem[0].src_offset = 0;
+      velem[0].src_format = PIPE_FORMAT_R32G32B32A32_FLOAT;
+      velem[1].src_offset = 4 * sizeof(float);
+      velem[1].src_format = PIPE_FORMAT_R32G32B32A32_UINT;
       ctx->velem_uint_state = pipe->create_vertex_elements_state(pipe, 2, &velem[0]);
    }
 
