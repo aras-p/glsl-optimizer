@@ -292,6 +292,8 @@ void draw_set_clip_state( struct draw_context *draw,
    draw->nr_planes = 6 + clip->nr;
    draw->depth_clamp = clip->depth_clamp;
 
+   draw->pt.user.planes = (float (*) [DRAW_TOTAL_CLIP_PLANES][4]) &(draw->plane[0]);
+
    update_clip_flags(draw);
 }
 
@@ -369,7 +371,6 @@ draw_set_mapped_constant_buffer(struct draw_context *draw,
    case PIPE_SHADER_VERTEX:
       draw->pt.user.vs_constants[slot] = buffer;
       draw->pt.user.vs_constants_size[slot] = size;
-      draw->pt.user.planes = (float (*) [DRAW_TOTAL_CLIP_PLANES][4]) &(draw->plane[0]);
       draw_vs_set_constants(draw, slot, buffer, size);
       break;
    case PIPE_SHADER_GEOMETRY:
