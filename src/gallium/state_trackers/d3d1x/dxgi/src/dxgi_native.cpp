@@ -1212,10 +1212,10 @@ struct GalliumDXGISwapChain : public GalliumDXGIObject<IDXGISwapChain, GalliumDX
 			if(formats_compatible && blit_w == src->width0 && blit_h == src->height0)
 			{
 				pipe_box box;
-				box.x = box.y = box.z;
+				box.x = box.y = box.z = 0;
 				box.width = blit_w;
 				box.height = blit_h;
-				box.z = 1;
+				box.depth = 1;
 				pipe->resource_copy_region(pipe, dst, 0, rect.left, rect.top, 0, src, 0, &box);
 			}
 			else
