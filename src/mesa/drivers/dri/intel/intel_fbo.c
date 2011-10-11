@@ -84,6 +84,129 @@ intel_delete_renderbuffer(struct gl_renderbuffer *rb)
    free(irb);
 }
 
+static void
+intel_map_renderbuffer(struct gl_context *ctx,
+		       struct gl_renderbuffer *rb,
+		       GLuint x, GLuint y, GLuint w, GLuint h,
+		       GLbitfield mode,
+		       GLubyte **out_map,
+		       GLint *out_stride)
+{
+   struct intel_context *intel = intel_context(ctx);
+   struct intel_renderbuffer *irb = intel_renderbuffer(rb);
+   GLubyte *map;
+   int stride;
+
+   /* We sometimes get called with this by our intel_span.c usage. */
+   if (!irb->region) {
+      *out_map = NULL;
+      *out_stride = 0;
+      return;
+   }
+
+   irb->map_mode = mode;
+   irb->map_x = x;
+   irb->map_y = y;
+   irb->map_w = w;
+   irb->map_h = h;
+
+   stride = irb->region->pitch * irb->region->cpp;
+
+   if (rb->Format == MESA_FORMAT_S8) {
+      GLuint pix_x, pix_y;
+      uint8_t *tiled_s8_map, *untiled_s8_map;
+
+      /* Flip the Y axis for the default framebuffer. */
+      int y_flip = (rb->Name == 0) ? -1 : 1;
+      int y_bias = (rb->Name == 0) ? (2 * irb->region->height - 1) : 0;
+
+      /* Perform W-tile deswizzling for stencil buffers into a temporary. */
+      stride = w;
+      irb->map_buffer = malloc(stride * h);
+      untiled_s8_map = irb->map_buffer;
+
+      tiled_s8_map = intel_region_map(intel, irb->region, mode);
+
+      for (pix_y = 0; pix_y < h; pix_y++) {
+	 for (pix_x = 0; pix_x < w; pix_x++) {
+	    GLuint flipped_y = y_flip * (y + pix_y) + y_bias;
+	    intptr_t offset = intel_offset_S8(irb->region->pitch,
+					      x + pix_x,
+					      flipped_y);
+
+	    untiled_s8_map[pix_y * stride + pix_x] = tiled_s8_map[offset];
+	 }
+      }
+      *out_map = untiled_s8_map;
+      *out_stride = stride;
+
+      DBG("%s: rb %d (%s) s8 detiled mapped: (%d, %d) (%dx%d) -> %p/%d\n",
+	  __FUNCTION__, rb->Name, _mesa_get_format_name(rb->Format),
+	  x, y, w, h, *out_map, *out_stride);
+
+      return;
+   }
+
+   map = intel_region_map(intel, irb->region, mode);
+   stride = irb->region->pitch * irb->region->cpp;
+
+   if (rb->Name == 0) {
+      map += stride * (irb->region->height - 1);
+      stride = -stride;
+   } else {
+      map += irb->draw_x * irb->region->cpp;
+      map += (int)irb->draw_y * stride;
+   }
+
+   map += x * irb->region->cpp;
+   map += (int)y * stride;
+
+   *out_map = map;
+   *out_stride = stride;
+}
+
+static void
+intel_unmap_renderbuffer(struct gl_context *ctx,
+			 struct gl_renderbuffer *rb)
+{
+   struct intel_context *intel = intel_context(ctx);
+   struct intel_renderbuffer *irb = intel_renderbuffer(rb);
+
+   DBG("%s: rb %d (%s)\n", __FUNCTION__,
+       rb->Name, _mesa_get_format_name(rb->Format));
+
+   if (irb->map_buffer) {
+      if (irb->map_mode & GL_MAP_WRITE_BIT) {
+	 GLuint pix_x, pix_y;
+	 uint8_t *tiled_s8_map = irb->map_buffer;
+	 uint8_t *untiled_s8_map = irb->region->bo->virtual;
+
+	 /* Flip the Y axis for the default framebuffer. */
+	 int y_flip = (rb->Name == 0) ? -1 : 1;
+	 int y_bias = (rb->Name == 0) ? (2 * irb->region->height - 1) : 0;
+
+	 /* Perform W-tile swizzling back out of the temporary. */
+	 for (pix_y = 0; pix_y < irb->map_h; pix_y++) {
+	    for (pix_x = 0; pix_x < irb->map_w; pix_x++) {
+	       GLuint flipped_y = y_flip * (pix_y + irb->map_y) + y_bias;
+	       intptr_t offset = intel_offset_S8(irb->region->pitch,
+						 pix_x + irb->map_x,
+					         flipped_y);
+
+	       tiled_s8_map[offset] =
+		  untiled_s8_map[pix_y * irb->map_w + pix_x];
+	    }
+	 }
+      }
+
+      intel_region_unmap(intel, irb->region);
+      free(irb->map_buffer);
+      irb->map_buffer = NULL;
+   } else {
+      if (irb->region)
+	 intel_region_unmap(intel, irb->region);
+   }
+}
 
 /**
  * Return a pointer to a specific pixel in a renderbuffer.
@@ -938,6 +1061,8 @@ intel_fbo_init(struct intel_context *intel)
 {
    intel->ctx.Driver.NewFramebuffer = intel_new_framebuffer;
    intel->ctx.Driver.NewRenderbuffer = intel_new_renderbuffer;
+   intel->ctx.Driver.MapRenderbuffer = intel_map_renderbuffer;
+   intel->ctx.Driver.UnmapRenderbuffer = intel_unmap_renderbuffer;
    intel->ctx.Driver.BindFramebuffer = intel_bind_framebuffer;
    intel->ctx.Driver.FramebufferRenderbuffer = intel_framebuffer_renderbuffer;
    intel->ctx.Driver.RenderTexture = intel_render_texture;

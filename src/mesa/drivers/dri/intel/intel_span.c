@@ -165,7 +165,7 @@ intel_set_span_functions(struct intel_context *intel,
  *    commit e8b1c6d6f55f5be3bef25084fdd8b6127517e137
  *    mesa: Fix return type of  _mesa_get_format_bytes() (#37351)
  */
-static inline intptr_t
+intptr_t
 intel_offset_S8(uint32_t stride, uint32_t x, uint32_t y)
 {
    uint32_t tile_size = 4096;

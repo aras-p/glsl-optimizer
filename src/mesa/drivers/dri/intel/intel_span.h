@@ -42,5 +42,6 @@ void intel_renderbuffer_unmap(struct intel_context *intel,
 void intel_map_vertex_shader_textures(struct gl_context *ctx);
 void intel_unmap_vertex_shader_textures(struct gl_context *ctx);
 bool intel_span_supports_format(gl_format format);
+intptr_t intel_offset_S8(uint32_t stride, uint32_t x, uint32_t y);
 
 #endif
