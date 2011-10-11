@@ -29,20 +29,22 @@
 #include <string.h>
 #include <assert.h>
 
-extern "C" {
-#include "GL/gl.h"
-}
-
-#include "ralloc.h"
-
 struct _mesa_glsl_parse_state;
 struct glsl_symbol_table;
 
-extern "C" void
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+extern void
 _mesa_glsl_initialize_types(struct _mesa_glsl_parse_state *state);
 
-extern "C" void
+extern void
 _mesa_glsl_release_types(void);
+
+#ifdef __cplusplus
+}
+#endif
 
 enum glsl_base_type {
    GLSL_TYPE_UINT = 0,
@@ -66,6 +68,9 @@ enum glsl_sampler_dim {
    GLSL_SAMPLER_DIM_EXTERNAL
 };
 
+#ifdef __cplusplus
+#include "GL/gl.h"
+#include "ralloc.h"
 
 struct glsl_type {
    GLenum gl_type;
@@ -529,5 +534,7 @@ struct glsl_struct_field {
    const struct glsl_type *type;
    const char *name;
 };
+
+#endif /* __cplusplus */
 
 #endif /* GLSL_TYPES_H */
