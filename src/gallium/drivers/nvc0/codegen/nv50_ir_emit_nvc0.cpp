@@ -968,6 +968,9 @@ CodeEmitterNVC0::emitTEX(const TexInstruction *i)
       code[1] |= 0x02000000;
    }
 
+   if (i->tex.derivAll)
+      code[1] |= 1 << 13;
+
    defId(i->def[0], 14);
    srcId(i->src[0], 20);
 
@@ -992,6 +995,8 @@ CodeEmitterNVC0::emitTEX(const TexInstruction *i)
       code[1] |= 1 << 24;
 
    int src1 = i->tex.target.getArgCount();
+   if (i->op == OP_TXD && i->tex.useOffsets)
+      ++src1;
 
    if (i->src[src1].getFile() == FILE_IMMEDIATE) { // lzero
       if (i->op == OP_TXL)
@@ -1051,6 +1056,9 @@ CodeEmitterNVC0::emitQUADOP(const Instruction *i, uint8_t qOp, uint8_t laneMask)
    defId(i->def[0], 14);
    srcId(i->src[0], 20);
    srcId(i->srcExists(1) ? i->src[1] : i->src[0], 26);
+
+   if (i->op == OP_QUADOP && progType != Program::TYPE_FRAGMENT)
+      code[0] |= 1 << 9; // dall
 
    emitPredicate(i);
 }

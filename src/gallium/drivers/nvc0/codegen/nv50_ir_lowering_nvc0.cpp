@@ -418,14 +418,14 @@ NVC0LoweringPass::handleTXD(TexInstruction *txd)
    int arg = txd->tex.target.getDim() + txd->tex.target.isArray();
 
    handleTEX(txd);
-   if (txd->src[arg].exists())
+   while (txd->src[arg].exists())
       ++arg;
 
+   txd->tex.derivAll = true;
    if (dim > 2 || txd->tex.target.isShadow())
       return handleManualTXD(txd);
 
-   // at most s/t/array, x, y, offset
-   assert(arg <= 4 && !txd->src[arg].exists());
+   assert(arg <= 4); // at most s/t/array, x, y, offset
 
    for (int c = 0; c < dim; ++c) {
       txd->src[arg + c * 2 + 0].set(txd->dPdx[c]);

@@ -933,6 +933,8 @@ RegAlloc::InsertConstraintsPass::visit(BasicBlock *bb)
             if (!tex->tex.target.isArray() &&
                 (tex->tex.rIndirectSrc >= 0 || tex->tex.sIndirectSrc >= 0))
                ++s;
+	    if (tex->op == OP_TXD && tex->tex.useOffsets)
+               ++s;
             n = tex->srcCount(0xff) - s;
             assert(n <= 4);
          }
