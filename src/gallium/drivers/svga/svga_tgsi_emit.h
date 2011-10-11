@@ -89,9 +89,6 @@ struct svga_shader_emitter
    boolean created_loop_const;
    int loop_const_idx;
 
-   boolean created_sincos_consts;
-   int sincos_consts_idx;
-
    unsigned inverted_texcoords;  /**< bitmask of which texcoords are flipped */
    struct src_register ps_true_texcoord[PIPE_MAX_ATTRIBS];
    struct src_register ps_inverted_texcoord[PIPE_MAX_ATTRIBS];

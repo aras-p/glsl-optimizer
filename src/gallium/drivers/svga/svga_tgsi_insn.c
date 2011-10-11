@@ -657,33 +657,6 @@ create_loop_const( struct svga_shader_emitter *emit )
 }
 
 static INLINE boolean
-create_sincos_consts( struct svga_shader_emitter *emit )
-{
-   unsigned idx = emit->nr_hw_float_const++;
-
-   if (!emit_def_const( emit, SVGA3D_CONST_TYPE_FLOAT, idx,
-                        -1.5500992e-006f,
-                        -2.1701389e-005f,
-                        0.0026041667f,
-                        0.00026041668f ))
-      return FALSE;
-
-   emit->sincos_consts_idx = idx;
-   idx = emit->nr_hw_float_const++;
-
-   if (!emit_def_const( emit, SVGA3D_CONST_TYPE_FLOAT, idx,
-                        -0.020833334f,
-                        -0.12500000f,
-                        1.0f,
-                        0.50000000f ))
-      return FALSE;
-
-   emit->created_sincos_consts = TRUE;
-
-   return TRUE;
-}
-
-static INLINE boolean
 create_arl_consts( struct svga_shader_emitter *emit )
 {
    int i;
@@ -760,18 +733,6 @@ get_loop_const( struct svga_shader_emitter *emit )
    assert(emit->loop_const_idx >= 0);
    return src_register( SVGA3DREG_CONSTINT,
                         emit->loop_const_idx );
-}
-
-/* returns a sincos const */
-static INLINE struct src_register
-get_sincos_const( struct svga_shader_emitter *emit,
-                  unsigned index )
-{
-   assert(emit->created_sincos_consts);
-   assert(emit->sincos_consts_idx >= 0);
-   assert(index == 0 || index == 1);
-   return src_register( SVGA3DREG_CONST,
-                        emit->sincos_consts_idx + index );
 }
 
 static INLINE struct src_register
@@ -3071,12 +3032,6 @@ needs_to_create_loop_const( struct svga_shader_emitter *emit )
 }
 
 static INLINE boolean
-needs_to_create_sincos_consts( struct svga_shader_emitter *emit )
-{
-   return FALSE;
-}
-
-static INLINE boolean
 needs_to_create_arl_consts( struct svga_shader_emitter *emit )
 {
    return (emit->num_arl_consts > 0);
@@ -3176,9 +3131,6 @@ static boolean svga_shader_emit_helpers( struct svga_shader_emitter *emit )
    }
    if (needs_to_create_loop_const( emit )) {
       create_loop_const( emit );
-   }
-   if (needs_to_create_sincos_consts( emit )) {
-      create_sincos_consts( emit );
    }
    if (needs_to_create_arl_consts( emit )) {
       create_arl_consts( emit );
