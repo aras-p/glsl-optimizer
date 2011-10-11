@@ -156,7 +156,6 @@ i915_clear_emit(struct pipe_context *pipe, unsigned buffers,
       OUT_BATCH((clear_params & ~CLEARPARAM_WRITE_COLOR) |
                 CLEARPARAM_CLEAR_RECT);
       /* Used for zone init prim */
-      /* Used for zone init prim */
       OUT_BATCH(clear_color);
       OUT_BATCH(clear_depth);
       /* Used for clear rect prim */
