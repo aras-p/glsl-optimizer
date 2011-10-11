@@ -221,7 +221,10 @@ intel_offset_S8(uint32_t stride, uint32_t x, uint32_t y)
 void
 intel_renderbuffer_map(struct intel_context *intel, struct gl_renderbuffer *rb)
 {
+   struct gl_context *ctx = &intel->ctx;
    struct intel_renderbuffer *irb = intel_renderbuffer(rb);
+   GLubyte *map;
+   int stride;
 
    if (!irb)
       return;
@@ -231,25 +234,11 @@ intel_renderbuffer_map(struct intel_context *intel, struct gl_renderbuffer *rb)
    if (irb->wrapped_stencil)
       intel_renderbuffer_map(intel, irb->wrapped_stencil);
 
-   if (!irb->region)
-      return;
-
-   drm_intel_gem_bo_map_gtt(irb->region->bo);
-
-   rb->Data = irb->region->bo->virtual;
-   rb->RowStride = irb->region->pitch;
-
-   if (!rb->Name) {
-      /* Flip orientation of the window system buffer */
-      rb->Data += rb->RowStride * (irb->region->height - 1) * irb->region->cpp;
-      rb->RowStride = -rb->RowStride;
-   } else {
-      /* Adjust the base pointer of a texture image drawbuffer to the image
-       * within the miptree region (all else has draw_x/y = 0).
-       */
-      rb->Data += irb->draw_x * irb->region->cpp;
-      rb->Data += irb->draw_y * rb->RowStride * irb->region->cpp;
-   }
+   ctx->Driver.MapRenderbuffer(ctx, rb, 0, 0, rb->Width, rb->Height,
+			       GL_MAP_READ_BIT | GL_MAP_WRITE_BIT,
+			       &map, &stride);
+   rb->Data = map;
+   rb->RowStride = stride / _mesa_get_format_bytes(rb->Format);
 
    intel_set_span_functions(intel, rb);
 }
@@ -258,6 +247,7 @@ void
 intel_renderbuffer_unmap(struct intel_context *intel,
 			 struct gl_renderbuffer *rb)
 {
+   struct gl_context *ctx = &intel->ctx;
    struct intel_renderbuffer *irb = intel_renderbuffer(rb);
 
    if (!irb)
@@ -268,10 +258,7 @@ intel_renderbuffer_unmap(struct intel_context *intel,
    if (irb->wrapped_stencil)
       intel_renderbuffer_unmap(intel, irb->wrapped_stencil);
 
-   if (!irb->region)
-      return;
-
-   drm_intel_gem_bo_unmap_gtt(irb->region->bo);
+   ctx->Driver.UnmapRenderbuffer(ctx, rb);
 
    rb->GetRow = NULL;
    rb->PutRow = NULL;
