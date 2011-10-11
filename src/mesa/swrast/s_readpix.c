@@ -27,6 +27,7 @@
 #include "main/colormac.h"
 #include "main/feedback.h"
 #include "main/formats.h"
+#include "main/format_unpack.h"
 #include "main/image.h"
 #include "main/imports.h"
 #include "main/macros.h"
@@ -39,6 +40,57 @@
 #include "s_span.h"
 #include "s_stencil.h"
 
+/**
+ * Tries to implement glReadPixels() of GL_DEPTH_COMPONENT using memcpy of the
+ * mapping.
+ */
+static GLboolean
+fast_read_depth_pixels( struct gl_context *ctx,
+			GLint x, GLint y,
+			GLsizei width, GLsizei height,
+			GLenum type, GLvoid *pixels,
+			const struct gl_pixelstore_attrib *packing )
+{
+   struct gl_framebuffer *fb = ctx->ReadBuffer;
+   struct gl_renderbuffer *rb = fb->Attachment[BUFFER_DEPTH].Renderbuffer;
+   GLubyte *map, *dst;
+   int stride, dstStride, j;
+
+   if (ctx->Pixel.DepthScale != 1.0 || ctx->Pixel.DepthBias != 0.0)
+      return GL_FALSE;
+
+   if (packing->SwapBytes)
+      return GL_FALSE;
+
+   if (_mesa_get_format_datatype(rb->Format) != GL_UNSIGNED_INT)
+      return GL_FALSE;
+
+   if (!((type == GL_UNSIGNED_SHORT && rb->Format == MESA_FORMAT_Z16) ||
+	 type == GL_UNSIGNED_INT))
+      return GL_FALSE;
+
+   ctx->Driver.MapRenderbuffer(ctx, rb, x, y, width, height, GL_MAP_READ_BIT,
+			       &map, &stride);
+
+   dstStride = _mesa_image_row_stride(packing, width, GL_DEPTH_COMPONENT, type);
+   dst = (GLubyte *) _mesa_image_address2d(packing, pixels, width, height,
+					   GL_DEPTH_COMPONENT, type, 0, 0);
+
+   for (j = 0; j < height; j++) {
+      if (type == GL_UNSIGNED_INT) {
+	 _mesa_unpack_uint_z_row(rb->Format, width, map, (GLuint *)dst);
+      } else {
+	 ASSERT(type == GL_UNSIGNED_SHORT && rb->Format == MESA_FORMAT_Z16);
+	 memcpy(dst, map, width * 2);
+      }
+
+      map += stride;
+      dst += dstStride;
+   }
+   ctx->Driver.UnmapRenderbuffer(ctx, rb);
+
+   return GL_TRUE;
+}
 
 /**
  * Read pixels for format=GL_DEPTH_COMPONENT.
@@ -52,8 +104,7 @@ read_depth_pixels( struct gl_context *ctx,
 {
    struct gl_framebuffer *fb = ctx->ReadBuffer;
    struct gl_renderbuffer *rb = fb->_DepthBuffer;
-   const GLboolean biasOrScale
-      = ctx->Pixel.DepthScale != 1.0 || ctx->Pixel.DepthBias != 0.0;
+   GLint j;
 
    if (!rb)
       return;
@@ -66,72 +117,16 @@ read_depth_pixels( struct gl_context *ctx,
    /* width should never be > MAX_WIDTH since we did clipping earlier */
    ASSERT(width <= MAX_WIDTH);
 
-   if (type == GL_UNSIGNED_SHORT && fb->Visual.depthBits == 16
-       && !biasOrScale && !packing->SwapBytes) {
-      /* Special case: directly read 16-bit unsigned depth values. */
-      GLint j;
-      ASSERT(rb->Format == MESA_FORMAT_Z16);
-      ASSERT(rb->DataType == GL_UNSIGNED_SHORT);
-      for (j = 0; j < height; j++, y++) {
-         void *dest =_mesa_image_address2d(packing, pixels, width, height,
-                                           GL_DEPTH_COMPONENT, type, j, 0);
-         rb->GetRow(ctx, rb, width, x, y, dest);
-      }
-   }
-   else if (type == GL_UNSIGNED_INT && fb->Visual.depthBits == 24
-            && !biasOrScale && !packing->SwapBytes) {
-      /* Special case: directly read 24-bit unsigned depth values. */
-      GLint j;
-      ASSERT(rb->Format == MESA_FORMAT_X8_Z24 ||
-             rb->Format == MESA_FORMAT_S8_Z24 ||
-             rb->Format == MESA_FORMAT_Z24_X8 ||
-             rb->Format == MESA_FORMAT_Z24_S8);
-      ASSERT(rb->DataType == GL_UNSIGNED_INT ||
-             rb->DataType == GL_UNSIGNED_INT_24_8);
-      for (j = 0; j < height; j++, y++) {
-         GLuint *dest = (GLuint *)
-            _mesa_image_address2d(packing, pixels, width, height,
-                                  GL_DEPTH_COMPONENT, type, j, 0);
-         GLint k;
-         rb->GetRow(ctx, rb, width, x, y, dest);
-         /* convert range from 24-bit to 32-bit */
-         if (rb->Format == MESA_FORMAT_X8_Z24 ||
-             rb->Format == MESA_FORMAT_S8_Z24) {
-            for (k = 0; k < width; k++) {
-               /* Note: put MSByte of 24-bit value into LSByte */
-               dest[k] = (dest[k] << 8) | ((dest[k] >> 16) & 0xff);
-            }
-         }
-         else {
-            for (k = 0; k < width; k++) {
-               /* Note: fill in LSByte by replication */
-               dest[k] = dest[k] | ((dest[k] >> 8) & 0xff);
-            }
-         }
-      }
-   }
-   else if (type == GL_UNSIGNED_INT && fb->Visual.depthBits == 32
-            && !biasOrScale && !packing->SwapBytes) {
-      /* Special case: directly read 32-bit unsigned depth values. */
-      GLint j;
-      ASSERT(rb->Format == MESA_FORMAT_Z32);
-      ASSERT(rb->DataType == GL_UNSIGNED_INT);
-      for (j = 0; j < height; j++, y++) {
-         void *dest = _mesa_image_address2d(packing, pixels, width, height,
-                                            GL_DEPTH_COMPONENT, type, j, 0);
-         rb->GetRow(ctx, rb, width, x, y, dest);
-      }
-   }
-   else {
-      /* General case (slower) */
-      GLint j;
-      for (j = 0; j < height; j++, y++) {
-         GLfloat depthValues[MAX_WIDTH];
-         GLvoid *dest = _mesa_image_address2d(packing, pixels, width, height,
-                                              GL_DEPTH_COMPONENT, type, j, 0);
-         _swrast_read_depth_span_float(ctx, rb, width, x, y, depthValues);
-         _mesa_pack_depth_span(ctx, width, dest, type, depthValues, packing);
-      }
+   if (fast_read_depth_pixels(ctx, x, y, width, height, type, pixels, packing))
+      return;
+
+   /* General case (slower) */
+   for (j = 0; j < height; j++, y++) {
+      GLfloat depthValues[MAX_WIDTH];
+      GLvoid *dest = _mesa_image_address2d(packing, pixels, width, height,
+					   GL_DEPTH_COMPONENT, type, j, 0);
+      _swrast_read_depth_span_float(ctx, rb, width, x, y, depthValues);
+      _mesa_pack_depth_span(ctx, width, dest, type, depthValues, packing);
    }
 }
 
