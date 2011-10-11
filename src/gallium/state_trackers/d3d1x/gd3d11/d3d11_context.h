@@ -150,8 +150,6 @@ struct GalliumD3D10Device : public GalliumD3D10ScreenImpl<threadsafe>
 	{
 		if(!pipe->begin_query)
 			caps.queries = false;
-		if(!pipe->render_condition || !screen->get_param(screen, PIPE_CAP_CONDITIONAL_RENDER))
-			caps.render_condition = false;
 		if(!pipe->bind_gs_state)
 		{
 			caps.gs = false;

@@ -90,7 +90,7 @@ struct GalliumD3D11ScreenImpl : public GalliumD3D11Screen
 		screen_caps.gs = screen->get_shader_param(screen, PIPE_SHADER_GEOMETRY, PIPE_SHADER_CAP_MAX_INSTRUCTIONS) > 0;
 		screen_caps.so = !!screen->get_param(screen, PIPE_CAP_STREAM_OUTPUT);
 		screen_caps.queries = screen->get_param(screen, PIPE_CAP_OCCLUSION_QUERY);
-		screen_caps.render_condition = screen_caps.queries;
+		screen_caps.render_condition = screen->get_param(screen, PIPE_CAP_CONDITIONAL_RENDER);
 		for(unsigned i = 0; i < PIPE_SHADER_TYPES; ++i)
 			screen_caps.constant_buffers[i] = screen->get_shader_param(screen, i, PIPE_SHADER_CAP_MAX_CONST_BUFFERS);
 		screen_caps.stages = 0;
