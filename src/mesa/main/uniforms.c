@@ -491,11 +491,6 @@ _mesa_get_uniform_location(struct gl_context *ctx,
 {
    GLint offset = 0, location = -1;
 
-   if (shProg->LinkStatus == GL_FALSE) {
-      _mesa_error(ctx, GL_INVALID_OPERATION, "glGetUniformfv(program)");
-      return -1;
-   }
-
    /* XXX we should return -1 if the uniform was declared, but not
     * actually used.
     */
@@ -1427,6 +1422,17 @@ _mesa_GetUniformLocationARB(GLhandleARB programObj, const GLcharARB *name)
 					    "glGetUniformLocation");
    if (!shProg)
       return -1;
+
+   /* Page 80 (page 94 of the PDF) of the OpenGL 2.1 spec says:
+    *
+    *     "If program has not been successfully linked, the error
+    *     INVALID_OPERATION is generated."
+    */
+   if (shProg->LinkStatus == GL_FALSE) {
+      _mesa_error(ctx, GL_INVALID_OPERATION,
+		  "glGetUniformLocation(program not linked)");
+      return -1;
+   }
 
    return _mesa_get_uniform_location(ctx, shProg, name);
 }
