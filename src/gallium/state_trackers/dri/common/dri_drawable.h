@@ -36,6 +36,10 @@ struct pipe_surface;
 struct st_framebuffer;
 struct dri_context;
 
+#define DRI_SWAP_FENCES_MAX 4
+#define DRI_SWAP_FENCES_MASK 3
+#define DRI_SWAP_FENCES_DEFAULT 1
+
 struct dri_drawable
 {
    struct st_framebuffer_iface base;
@@ -54,6 +58,12 @@ struct dri_drawable
 
    struct pipe_resource *textures[ST_ATTACHMENT_COUNT];
    unsigned int texture_mask, texture_stamp;
+
+   struct pipe_fence_handle *swap_fences[DRI_SWAP_FENCES_MAX];
+   unsigned int cur_fences;
+   unsigned int head;
+   unsigned int tail;
+   unsigned int desired_fences;
 
    /* used only by DRISW */
    struct pipe_surface *drisw_surface;
@@ -93,7 +103,7 @@ dri_drawable_get_format(struct dri_drawable *drawable,
                         unsigned *bind);
 
 extern const __DRItexBufferExtension driTexBufferExtension;
-
+extern const __DRI2throttleExtension dri2ThrottleExtension;
 #endif
 
 /* vim: set sw=3 ts=8 sts=3 expandtab: */
