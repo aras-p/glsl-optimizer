@@ -191,8 +191,8 @@ linker_warning(gl_shader_program *prog, const char *fmt, ...)
 
 
 void
-invalidate_variable_locations(gl_shader *sh, enum ir_variable_mode mode,
-			      int generic_base)
+link_invalidate_variable_locations(gl_shader *sh, enum ir_variable_mode mode,
+				   int generic_base)
 {
    foreach_list(node, sh->ir) {
       ir_variable *const var = ((ir_instruction *) node)->as_variable();
@@ -1337,7 +1337,7 @@ assign_attribute_or_color_locations(gl_shader_program *prog,
       (target_index == MESA_SHADER_VERTEX) ? ir_var_in : ir_var_out;
 
 
-   invalidate_variable_locations(sh, direction, generic_base);
+   link_invalidate_variable_locations(sh, direction, generic_base);
 
    /* Temporary storage for the set of attributes that need locations assigned.
     */
@@ -1539,8 +1539,8 @@ assign_varying_locations(struct gl_context *ctx,
     *    not being inputs.  This lets the optimizer eliminate them.
     */
 
-   invalidate_variable_locations(producer, ir_var_out, VERT_RESULT_VAR0);
-   invalidate_variable_locations(consumer, ir_var_in, FRAG_ATTRIB_VAR0);
+   link_invalidate_variable_locations(producer, ir_var_out, VERT_RESULT_VAR0);
+   link_invalidate_variable_locations(consumer, ir_var_in, FRAG_ATTRIB_VAR0);
 
    foreach_list(node, producer->ir) {
       ir_variable *const output_var = ((ir_instruction *) node)->as_variable();
