@@ -523,6 +523,15 @@ struct dd_function_table {
                                     GLsizei levels, GLsizei width,
                                     GLsizei height, GLsizei depth);
 
+   void (*MapRenderbuffer)(struct gl_context *ctx,
+			   struct gl_renderbuffer *rb,
+			   GLuint x, GLuint y, GLuint w, GLuint h,
+			   GLbitfield mode,
+			   GLubyte **mapOut, GLint *rowStrideOut);
+
+   void (*UnmapRenderbuffer)(struct gl_context *ctx,
+			     struct gl_renderbuffer *rb);
+
    /**
     * Note: no context argument.  This function doesn't initially look
     * like it belongs here, except that the driver is the only entity
