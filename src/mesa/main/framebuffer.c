@@ -608,19 +608,12 @@ _mesa_update_framebuffer_visual(struct gl_context *ctx,
  * create and install a depth wrapper/adaptor.
  *
  * \param fb  the framebuffer whose _DepthBuffer field to update
- * \param attIndex  indicates the renderbuffer to possibly wrap
  */
-void
-_mesa_update_depth_buffer(struct gl_context *ctx,
-                          struct gl_framebuffer *fb,
-                          GLuint attIndex)
+static void
+update_depth_buffer(struct gl_context *ctx, struct gl_framebuffer *fb)
 {
-   struct gl_renderbuffer *depthRb;
-
-   /* only one possiblity for now */
-   ASSERT(attIndex == BUFFER_DEPTH);
-
-   depthRb = fb->Attachment[attIndex].Renderbuffer;
+   struct gl_renderbuffer *depthRb =
+      fb->Attachment[BUFFER_DEPTH].Renderbuffer;
 
    if (depthRb && _mesa_is_format_packed_depth_stencil(depthRb->Format)) {
       /* The attached depth buffer is a GL_DEPTH_STENCIL renderbuffer */
@@ -655,19 +648,12 @@ _mesa_update_depth_buffer(struct gl_context *ctx,
  * create and install a stencil wrapper/adaptor.
  *
  * \param fb  the framebuffer whose _StencilBuffer field to update
- * \param attIndex  indicates the renderbuffer to possibly wrap
  */
-void
-_mesa_update_stencil_buffer(struct gl_context *ctx,
-                            struct gl_framebuffer *fb,
-                            GLuint attIndex)
+static void
+update_stencil_buffer(struct gl_context *ctx, struct gl_framebuffer *fb)
 {
-   struct gl_renderbuffer *stencilRb;
-
-   ASSERT(attIndex == BUFFER_DEPTH ||
-          attIndex == BUFFER_STENCIL);
-
-   stencilRb = fb->Attachment[attIndex].Renderbuffer;
+   struct gl_renderbuffer *stencilRb =
+      fb->Attachment[BUFFER_STENCIL].Renderbuffer;
 
    if (stencilRb && _mesa_is_format_packed_depth_stencil(stencilRb->Format)) {
       /* The attached stencil buffer is a GL_DEPTH_STENCIL renderbuffer */
@@ -826,8 +812,8 @@ update_framebuffer(struct gl_context *ctx, struct gl_framebuffer *fb)
     */
    update_color_draw_buffers(ctx, fb);
    update_color_read_buffer(ctx, fb);
-   _mesa_update_depth_buffer(ctx, fb, BUFFER_DEPTH);
-   _mesa_update_stencil_buffer(ctx, fb, BUFFER_STENCIL);
+   update_depth_buffer(ctx, fb);
+   update_stencil_buffer(ctx, fb);
 
    compute_depth_max(fb);
 }

@@ -82,14 +82,6 @@ _mesa_update_framebuffer_visual(struct gl_context *ctx,
 				struct gl_framebuffer *fb);
 
 extern void
-_mesa_update_depth_buffer(struct gl_context *ctx, struct gl_framebuffer *fb,
-                            GLuint attIndex);
-
-extern void
-_mesa_update_stencil_buffer(struct gl_context *ctx, struct gl_framebuffer *fb,
-                            GLuint attIndex);
-
-extern void
 _mesa_update_framebuffer(struct gl_context *ctx);
 
 extern GLboolean
