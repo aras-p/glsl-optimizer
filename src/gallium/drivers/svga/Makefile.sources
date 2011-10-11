@@ -37,7 +37,6 @@ C_SOURCES := \
 	svga_swtnl_draw.c \
 	svga_swtnl_state.c \
 	svga_tgsi.c \
-	svga_tgsi_decl_sm20.c \
 	svga_tgsi_decl_sm30.c \
 	svga_tgsi_insn.c \
 	svga_sampler_view.c \

@@ -129,7 +129,7 @@ svga_get_paramf(struct pipe_screen *screen, enum pipe_cap param)
    case PIPE_CAP_TWO_SIDED_STENCIL:
       return 1;
    case PIPE_CAP_GLSL:
-      return svgascreen->use_ps30 && svgascreen->use_vs30;
+      return 1;
    case PIPE_CAP_ANISOTROPIC_FILTER:
       return 1;
    case PIPE_CAP_POINT_SPRITE:
@@ -220,18 +220,18 @@ static int svga_get_shader_param(struct pipe_screen *screen, unsigned shader, en
       case PIPE_SHADER_CAP_MAX_ALU_INSTRUCTIONS:
       case PIPE_SHADER_CAP_MAX_TEX_INSTRUCTIONS:
       case PIPE_SHADER_CAP_MAX_TEX_INDIRECTIONS:
-         return svgascreen->use_ps30 ? 512 : 96;
+         return 512;
       case PIPE_SHADER_CAP_MAX_CONTROL_FLOW_DEPTH:
          return SVGA3D_MAX_NESTING_LEVEL;
       case PIPE_SHADER_CAP_MAX_INPUTS:
          return 10;
       case PIPE_SHADER_CAP_MAX_CONSTS:
-         return svgascreen->use_ps30 ? 224 : 16;
+         return 224;
       case PIPE_SHADER_CAP_MAX_CONST_BUFFERS:
          return 1;
       case PIPE_SHADER_CAP_MAX_TEMPS:
          if (!sws->get_cap(sws, SVGA3D_DEVCAP_MAX_FRAGMENT_SHADER_TEMPS, &result))
-            return svgascreen->use_ps30 ? 32 : 12;
+            return 32;
          return result.u;
       case PIPE_SHADER_CAP_MAX_ADDRS:
       case PIPE_SHADER_CAP_INDIRECT_INPUT_ADDR:
@@ -243,7 +243,7 @@ static int svga_get_shader_param(struct pipe_screen *screen, unsigned shader, en
 	  */
          return 0;
       case PIPE_SHADER_CAP_MAX_PREDS:
-         return svgascreen->use_ps30 ? 1 : 0;
+         return 1;
       case PIPE_SHADER_CAP_TGSI_CONT_SUPPORTED:
          return 1;
       case PIPE_SHADER_CAP_INDIRECT_OUTPUT_ADDR:
@@ -264,7 +264,7 @@ static int svga_get_shader_param(struct pipe_screen *screen, unsigned shader, en
       case PIPE_SHADER_CAP_MAX_INSTRUCTIONS:
       case PIPE_SHADER_CAP_MAX_ALU_INSTRUCTIONS:
          if (!sws->get_cap(sws, SVGA3D_DEVCAP_MAX_VERTEX_SHADER_INSTRUCTIONS, &result))
-            return svgascreen->use_vs30 ? 512 : 256;
+            return 512;
          return result.u;
       case PIPE_SHADER_CAP_MAX_TEX_INSTRUCTIONS:
       case PIPE_SHADER_CAP_MAX_TEX_INDIRECTIONS:
@@ -280,17 +280,17 @@ static int svga_get_shader_param(struct pipe_screen *screen, unsigned shader, en
          return 1;
       case PIPE_SHADER_CAP_MAX_TEMPS:
          if (!sws->get_cap(sws, SVGA3D_DEVCAP_MAX_VERTEX_SHADER_TEMPS, &result))
-            return svgascreen->use_vs30 ? 32 : 12;
+            return 32;
          return result.u;
       case PIPE_SHADER_CAP_MAX_ADDRS:
-         return svgascreen->use_vs30 ? 1 : 0;
+         return 1;
       case PIPE_SHADER_CAP_MAX_PREDS:
-         return svgascreen->use_vs30 ? 1 : 0;
+         return 1;
       case PIPE_SHADER_CAP_TGSI_CONT_SUPPORTED:
          return 1;
       case PIPE_SHADER_CAP_INDIRECT_INPUT_ADDR:
       case PIPE_SHADER_CAP_INDIRECT_OUTPUT_ADDR:
-         return svgascreen->use_vs30 ? 1 : 0;
+         return 1;
       case PIPE_SHADER_CAP_INDIRECT_TEMP_ADDR:
          return 0;
       case PIPE_SHADER_CAP_INDIRECT_CONST_ADDR:
@@ -436,6 +436,7 @@ svga_screen_create(struct svga_winsys_screen *sws)
    struct svga_screen *svgascreen;
    struct pipe_screen *screen;
    SVGA3dDevCapResult result;
+   boolean use_vs30, use_ps30;
 
 #ifdef DEBUG
    SVGA_DEBUG = debug_get_flags_option("SVGA_DEBUG", svga_debug_flags, 0 );
@@ -479,13 +480,17 @@ svga_screen_create(struct svga_winsys_screen *sws)
       svgascreen->hw_version = SVGA3D_HWVERSION_WS65_B1;
    }
 
-   svgascreen->use_ps30 =
+   use_ps30 =
       sws->get_cap(sws, SVGA3D_DEVCAP_FRAGMENT_SHADER_VERSION, &result) &&
       result.u >= SVGA3DPSVERSION_30 ? TRUE : FALSE;
 
-   svgascreen->use_vs30 =
+   use_vs30 =
       sws->get_cap(sws, SVGA3D_DEVCAP_VERTEX_SHADER_VERSION, &result) &&
       result.u >= SVGA3DVSVERSION_30 ? TRUE : FALSE;
+
+   /* we require Shader model 3.0 or later */
+   if (!use_ps30 || !use_vs30)
+      goto error2;
 
    /*
     * The D16, D24X8, and D24S8 formats always do an implicit shadow compare
@@ -531,15 +536,6 @@ svga_screen_create(struct svga_winsys_screen *sws)
          svgascreen->depth.s8z24 = SVGA3D_Z_D24S8_INT;
       }
    }
-
-#if 1
-   /* Shader model 2.0 is unsupported at the moment. */
-   if(!svgascreen->use_ps30 || !svgascreen->use_vs30)
-      goto error2;
-#else
-   if(debug_get_bool_option("SVGA_NO_SM30", FALSE))
-      svgascreen->use_vs30 = svgascreen->use_ps30 = FALSE;
-#endif
 
    pipe_mutex_init(svgascreen->tex_mutex);
    pipe_mutex_init(svgascreen->swc_mutex);

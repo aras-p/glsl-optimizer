@@ -1083,16 +1083,8 @@ static boolean do_emit_sincos(struct svga_shader_emitter *emit,
 {
    src0 = scalar(src0, TGSI_SWIZZLE_X);
 
-   if (emit->use_sm30) {
-      return submit_op1( emit, inst_token( SVGA3DOP_SINCOS ),
-                         dst, src0 );
-   } else {
-      struct src_register const1 = get_sincos_const( emit, 0 );
-      struct src_register const2 = get_sincos_const( emit, 1 );
-
-      return submit_op3( emit, inst_token( SVGA3DOP_SINCOS ),
-                         dst, src0, const1, const2 );
-   }
+   return submit_op1( emit, inst_token( SVGA3DOP_SINCOS ),
+                      dst, src0 );
 }
 
 static boolean emit_sincos(struct svga_shader_emitter *emit,
@@ -1646,9 +1638,7 @@ static boolean emit_tex(struct svga_shader_emitter *emit,
    /* If doing compare processing or tex swizzle, need to put fetched color into
     * a temporary so it can be used as a source later on.
     */
-   if (compare ||
-       swizzle ||
-       (!emit->use_sm30 && dst.mask != TGSI_WRITEMASK_XYZW) ) {
+   if (compare || swizzle) {
       tex_result = get_temp( emit );
    }
    else {
@@ -1735,17 +1725,6 @@ static boolean emit_tex(struct svga_shader_emitter *emit,
                        emit->key.fkey.tex[unit].swizzle_g,
                        emit->key.fkey.tex[unit].swizzle_b,
                        emit->key.fkey.tex[unit].swizzle_a);
-   }
-
-   if (!emit->use_sm30 &&
-       dst.mask != TGSI_WRITEMASK_XYZW &&
-       !compare &&
-       !swizzle) {
-      /* pre SM3.0 a TEX instruction can't have a writemask.  Do it as a
-       * separate step here.
-       */
-      if (!emit_op1( emit, inst_token( SVGA3DOP_MOV ), dst, src(tex_result) ))
-         return FALSE;
    }
 
    return TRUE;
@@ -2683,25 +2662,7 @@ static boolean emit_vs_preamble( struct svga_shader_emitter *emit )
 
 static boolean emit_ps_preamble( struct svga_shader_emitter *emit )
 {
-   unsigned i;
-
-   /* For SM20, need to initialize the temporaries we're using to hold
-    * color outputs to some value.  Shaders which don't set all of
-    * these values are likely to be rejected by the DX9 runtime.
-    */
-   if (!emit->use_sm30) {
-      struct src_register zero = get_zero_immediate( emit );
-      for (i = 0; i < PIPE_MAX_COLOR_BUFS; i++) {
-         if (SVGA3dShaderGetRegType(emit->true_col[i].value) != 0) {
-            
-            if (!submit_op1( emit,
-                             inst_token(SVGA3DOP_MOV),
-                             emit->temp_col[i],
-                             zero ))
-               return FALSE;
-         }
-      }
-   } else if (emit->ps_reads_pos && emit->info.reads_z) {
+   if (emit->ps_reads_pos && emit->info.reads_z) {
       /*
        * Assemble the position from various bits of inputs. Depth and W are
        * passed in a texcoord this is due to D3D's vPos not hold Z or W.
@@ -2752,9 +2713,6 @@ static boolean emit_ps_postamble( struct svga_shader_emitter *emit )
          return FALSE;
    }
 
-   /* Similarly for SM20 color outputs...  Luckily SM30 isn't so
-    * fragile.
-    */
    for (i = 0; i < PIPE_MAX_COLOR_BUFS; i++) {
       if (SVGA3dShaderGetRegType(emit->true_col[i].value) != 0) {
 
@@ -3050,9 +3008,6 @@ needs_to_create_zero( struct svga_shader_emitter *emit )
    int i;
 
    if (emit->unit == PIPE_SHADER_FRAGMENT) {
-      if (!emit->use_sm30)
-         return TRUE;
-
       if (emit->key.fkey.light_twoside)
          return TRUE;
 
@@ -3118,9 +3073,7 @@ needs_to_create_loop_const( struct svga_shader_emitter *emit )
 static INLINE boolean
 needs_to_create_sincos_consts( struct svga_shader_emitter *emit )
 {
-   return !emit->use_sm30 && (emit->info.opcode_count[TGSI_OPCODE_SIN] >= 1 ||
-                              emit->info.opcode_count[TGSI_OPCODE_COS] >= 1 ||
-                              emit->info.opcode_count[TGSI_OPCODE_SCS] >= 1);
+   return FALSE;
 }
 
 static INLINE boolean
@@ -3282,10 +3235,7 @@ boolean svga_shader_emit_instructions( struct svga_shader_emitter *emit,
          break;
 
       case TGSI_TOKEN_TYPE_DECLARATION:
-         if (emit->use_sm30)
-            ret = svga_translate_decl_sm30( emit, &parse.FullToken.FullDeclaration );
-         else
-            ret = svga_translate_decl_sm20( emit, &parse.FullToken.FullDeclaration );
+         ret = svga_translate_decl_sm30( emit, &parse.FullToken.FullDeclaration );
          if (!ret)
             goto done;
          break;

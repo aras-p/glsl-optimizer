@@ -50,8 +50,6 @@ struct svga_arl_consts {
 
 struct svga_shader_emitter
 {
-   boolean use_sm30;
-   
    unsigned size;
    char *buf;
    char *ptr;
@@ -146,9 +144,6 @@ boolean svga_shader_emit_opcode( struct svga_shader_emitter *emit,
 
 boolean svga_shader_emit_instructions( struct svga_shader_emitter *emit,
                                        const struct tgsi_token *tokens );
-
-boolean svga_translate_decl_sm20( struct svga_shader_emitter *emit,
-                               const struct tgsi_full_declaration *decl );
 
 boolean svga_translate_decl_sm30( struct svga_shader_emitter *emit,
                                const struct tgsi_full_declaration *decl );

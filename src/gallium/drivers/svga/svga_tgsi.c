@@ -136,8 +136,6 @@ boolean svga_shader_emit_opcode( struct svga_shader_emitter *emit,
    return TRUE;
 }
 
-#define SVGA3D_PS_2X (SVGA3D_PS_20 | 1)
-#define SVGA3D_VS_2X (SVGA3D_VS_20 | 1)
 
 static boolean svga_shader_emit_header( struct svga_shader_emitter *emit )
 {
@@ -147,10 +145,10 @@ static boolean svga_shader_emit_header( struct svga_shader_emitter *emit )
 
    switch (emit->unit) {
    case PIPE_SHADER_FRAGMENT:
-      header.value = emit->use_sm30 ? SVGA3D_PS_30 : SVGA3D_PS_2X;
+      header.value = SVGA3D_PS_30;
       break;
    case PIPE_SHADER_VERTEX:
-      header.value = emit->use_sm30 ? SVGA3D_VS_30 : SVGA3D_VS_2X;
+      header.value = SVGA3D_VS_30;
       break;
    }
  
@@ -178,7 +176,6 @@ svga_tgsi_translate( const struct svga_shader *shader,
 
    memset(&emit, 0, sizeof(emit));
 
-   emit.use_sm30 = shader->use_sm30;
    emit.size = 1024;
    emit.buf = MALLOC(emit.size);
    if (emit.buf == NULL) {

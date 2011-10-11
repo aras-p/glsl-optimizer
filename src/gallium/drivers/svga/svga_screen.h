@@ -49,9 +49,6 @@ struct svga_screen
 
    SVGA3dHardwareVersion hw_version;
 
-   unsigned use_ps30;
-   unsigned use_vs30;
-   
    struct {
       boolean force_level_surface_view;
       boolean force_surface_view;

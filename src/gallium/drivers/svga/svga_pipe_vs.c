@@ -31,7 +31,6 @@
 #include "tgsi/tgsi_parse.h"
 #include "tgsi/tgsi_text.h"
 
-#include "svga_screen.h"
 #include "svga_context.h"
 #include "svga_tgsi.h"
 #include "svga_hw_reg.h"
@@ -101,7 +100,6 @@ svga_create_vs_state(struct pipe_context *pipe,
                      const struct pipe_shader_state *templ)
 {
    struct svga_context *svga = svga_context(pipe);
-   struct svga_screen *svgascreen = svga_screen(pipe->screen);
    struct svga_vertex_shader *vs = CALLOC_STRUCT(svga_vertex_shader);
    if (!vs)
       return NULL;
@@ -126,7 +124,6 @@ svga_create_vs_state(struct pipe_context *pipe,
    }
 
    vs->base.id = svga->debug.shader_id++;
-   vs->base.use_sm30 = svgascreen->use_vs30;
 
    if (SVGA_DEBUG & DEBUG_TGSI || 0) {
       debug_printf("%s id: %u, inputs: %u, outputs: %u\n",
