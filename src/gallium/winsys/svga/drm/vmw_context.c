@@ -158,7 +158,7 @@ vmw_swc_flush(struct svga_winsys_context *swc,
       throttle_us = vswc->throttle_set ?
 	 vswc->throttle_us : vswc->vws->default_throttle_us;
 
-      if (vswc->command.used)
+      if (vswc->command.used || pfence != NULL)
          vmw_ioctl_command(vswc->vws,
 			   vswc->base.cid,
 			   throttle_us,
