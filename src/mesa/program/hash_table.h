@@ -214,6 +214,14 @@ public:
    }
 
    /**
+    * Remove all mappings from this map.
+    */
+   void clear()
+   {
+      hash_table_clear(this->ht);
+   }
+
+   /**
     * Get the value associated with a particular key
     *
     * \return
