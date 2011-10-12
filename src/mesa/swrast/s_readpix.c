@@ -373,14 +373,13 @@ static GLboolean
 fast_read_depth_stencil_pixels(struct gl_context *ctx,
 			       GLint x, GLint y,
 			       GLsizei width, GLsizei height,
-			       GLenum type, GLvoid *pixels,
-			       const struct gl_pixelstore_attrib *packing)
+			       GLenum type, GLvoid *dst, int dstStride)
 {
    struct gl_framebuffer *fb = ctx->ReadBuffer;
    struct gl_renderbuffer *rb = fb->Attachment[BUFFER_DEPTH].Renderbuffer;
    struct gl_renderbuffer *stencilRb = fb->Attachment[BUFFER_STENCIL].Renderbuffer;
-   GLubyte *dst, *map;
-   int stride, dstStride, i;
+   GLubyte *map;
+   int stride, i;
 
    if (rb != stencilRb)
       return GL_FALSE;
@@ -394,13 +393,6 @@ fast_read_depth_stencil_pixels(struct gl_context *ctx,
 
    ctx->Driver.MapRenderbuffer(ctx, rb, x, y, width, height, GL_MAP_READ_BIT,
 			       &map, &stride);
-
-   dstStride = _mesa_image_row_stride(packing, width,
-				      GL_DEPTH_STENCIL_EXT, type);
-   dst = (GLubyte *) _mesa_image_address2d(packing, pixels,
-					   width, height,
-					   GL_DEPTH_STENCIL_EXT,
-					   type, 0, 0);
 
    for (i = 0; i < height; i++) {
       _mesa_unpack_uint_24_8_depth_stencil_row(rb->Format, width,
@@ -432,6 +424,8 @@ read_depth_stencil_pixels(struct gl_context *ctx,
    const GLboolean stencilTransfer = ctx->Pixel.IndexShift
       || ctx->Pixel.IndexOffset || ctx->Pixel.MapStencilFlag;
    struct gl_renderbuffer *depthRb, *stencilRb;
+   GLubyte *dst;
+   int dstStride;
 
    depthRb = ctx->ReadBuffer->_DepthBuffer;
    stencilRb = ctx->ReadBuffer->_StencilBuffer;
@@ -439,9 +433,16 @@ read_depth_stencil_pixels(struct gl_context *ctx,
    if (!depthRb || !stencilRb)
       return;
 
+   dst = (GLubyte *) _mesa_image_address2d(packing, pixels,
+					   width, height,
+					   GL_DEPTH_STENCIL_EXT,
+					   type, 0, 0);
+   dstStride = _mesa_image_row_stride(packing, width,
+				      GL_DEPTH_STENCIL_EXT, type);
+
    if (!scaleOrBias && !stencilTransfer && !packing->SwapBytes) {
       if (fast_read_depth_stencil_pixels(ctx, x, y, width, height, type,
-					 pixels, packing))
+					 dst, dstStride))
 	 return;
    }
 
@@ -453,10 +454,7 @@ read_depth_stencil_pixels(struct gl_context *ctx,
 
       for (i = 0; i < height; i++) {
          GLstencil stencilVals[MAX_WIDTH];
-
-         GLuint *depthStencilDst = (GLuint *)
-            _mesa_image_address2d(packing, pixels, width, height,
-                                  GL_DEPTH_STENCIL_EXT, type, i, 0);
+         GLuint *depthStencilDst = (GLuint *) (dst + dstStride * i);
 
          _swrast_read_stencil_span(ctx, stencilRb, width,
                                    x, y + i, stencilVals);
