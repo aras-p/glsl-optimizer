@@ -50,6 +50,8 @@ static inline unsigned int r600_bytecode_get_num_operands(struct r600_bytecode *
 		case V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_ADD:
 		case V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_ADD_INT:
 		case V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_SUB_INT:
+		case V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_AND_INT:
+		case V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_OR_INT:
 		case V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_KILLE:
 		case V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_KILLGT:
 		case V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_KILLGE:
@@ -61,10 +63,20 @@ static inline unsigned int r600_bytecode_get_num_operands(struct r600_bytecode *
 		case V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_MULLO_UINT:
 		case V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_MAX:
 		case V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_MIN:
+		case V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_MAX_UINT:
+		case V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_MIN_UINT:
+		case V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_MAX_INT:
+		case V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_MIN_INT:
 		case V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_SETE:
+		case V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_SETE_INT:
 		case V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_SETNE:
+		case V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_SETNE_INT:
 		case V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_SETGT:
+		case V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_SETGT_INT:
+		case V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_SETGT_UINT:
 		case V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_SETGE:
+		case V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_SETGE_INT:
+		case V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_SETGE_UINT:
 		case V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_PRED_SETE:
 		case V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_PRED_SETGT:
 		case V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_PRED_SETGE:
@@ -95,6 +107,7 @@ static inline unsigned int r600_bytecode_get_num_operands(struct r600_bytecode *
 		case V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_SIN:
 		case V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_COS:
 		case V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_RNDNE:
+		case V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_NOT_INT:
 			return 1;
 		default: R600_ERR(
 			"Need instruction operand number for 0x%x.\n", alu->inst);
@@ -441,8 +454,9 @@ static int is_alu_trans_unit_inst(struct r600_bytecode *bc, struct r600_bytecode
 	case R700:
 		if (!alu->is_op3)
 			return alu->inst == V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_ASHR_INT ||
-				alu->inst == V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_FLT_TO_INT ||
 				alu->inst == V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_INT_TO_FLT ||
+			        alu->inst == V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_FLT_TO_UINT ||
+				alu->inst == V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_FLT_TO_INT ||
 				alu->inst == V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_LSHL_INT ||
 				alu->inst == V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_LSHR_INT ||
 				alu->inst == V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_MULHI_INT ||
