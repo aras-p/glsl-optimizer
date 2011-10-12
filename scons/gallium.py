@@ -361,6 +361,9 @@ def generate(env):
             ccflags += ['-O0']
         else:
             ccflags += ['-O3']
+        # gcc's builtin memcmp is slower than glibc's
+        # http://gcc.gnu.org/bugzilla/show_bug.cgi?id=43052
+        ccflags += ['-fno-builtin-memcmp']
         # Work around aliasing bugs - developers should comment this out
         ccflags += ['-fno-strict-aliasing']
         ccflags += ['-g']
