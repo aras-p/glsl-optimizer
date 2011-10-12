@@ -1480,4 +1480,62 @@ _mesa_unpack_uint_z_row(gl_format format, GLuint n,
    }
 }
 
+static void
+unpack_ubyte_s_S8(const void *src, GLubyte *dst, GLuint n)
+{
+   memcpy(dst, src, n);
+}
 
+static void
+unpack_ubyte_s_Z24_S8(const void *src, GLubyte *dst, GLuint n)
+{
+   GLuint i;
+   const GLuint *src32 = src;
+
+   for (i = 0; i < n; i++)
+      dst[i] = src32[i] & 0xff;
+}
+
+static void
+unpack_ubyte_s_S8_Z24(const void *src, GLubyte *dst, GLuint n)
+{
+   GLuint i;
+   const GLuint *src32 = src;
+
+   for (i = 0; i < n; i++)
+      dst[i] = src32[i] >> 24;
+}
+
+static void
+unpack_ubyte_s_Z32_FLOAT_X24S8(const void *src, GLubyte *dst, GLuint n)
+{
+   GLuint i;
+   const GLuint *src32 = src;
+
+   for (i = 0; i < n; i++)
+      dst[i] = src32[i * 2 + 1] & 0xff;
+}
+
+void
+_mesa_unpack_ubyte_stencil_row(gl_format format, GLuint n,
+			       const void *src, GLubyte *dst)
+{
+   switch (format) {
+   case MESA_FORMAT_S8:
+      unpack_ubyte_s_S8(src, dst, n);
+      break;
+   case MESA_FORMAT_Z24_S8:
+      unpack_ubyte_s_Z24_S8(src, dst, n);
+      break;
+   case MESA_FORMAT_S8_Z24:
+      unpack_ubyte_s_S8_Z24(src, dst, n);
+      break;
+   case MESA_FORMAT_Z32_FLOAT_X24S8:
+      unpack_ubyte_s_Z32_FLOAT_X24S8(src, dst, n);
+      break;
+   default:
+      _mesa_problem(NULL, "bad format %s in _mesa_unpack_ubyte_s_row",
+                    _mesa_get_format_name(format));
+      return;
+   }
+}

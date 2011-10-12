@@ -142,8 +142,10 @@ read_stencil_pixels( struct gl_context *ctx,
                      const struct gl_pixelstore_attrib *packing )
 {
    struct gl_framebuffer *fb = ctx->ReadBuffer;
-   struct gl_renderbuffer *rb = fb->_StencilBuffer;
+   struct gl_renderbuffer *rb = fb->Attachment[BUFFER_STENCIL].Renderbuffer;
    GLint j;
+   GLubyte *map;
+   GLint stride;
 
    if (!rb)
       return;
@@ -151,18 +153,24 @@ read_stencil_pixels( struct gl_context *ctx,
    /* width should never be > MAX_WIDTH since we did clipping earlier */
    ASSERT(width <= MAX_WIDTH);
 
+   ctx->Driver.MapRenderbuffer(ctx, rb, x, y, width, height, GL_MAP_READ_BIT,
+			       &map, &stride);
+
    /* process image row by row */
-   for (j=0;j<height;j++,y++) {
+   for (j = 0; j < height; j++) {
       GLvoid *dest;
       GLstencil stencil[MAX_WIDTH];
 
-      _swrast_read_stencil_span(ctx, rb, width, x, y, stencil);
-
+      _mesa_unpack_ubyte_stencil_row(rb->Format, width, map, stencil);
       dest = _mesa_image_address2d(packing, pixels, width, height,
                                    GL_STENCIL_INDEX, type, j, 0);
 
       _mesa_pack_stencil_span(ctx, width, type, dest, stencil, packing);
+
+      map += stride;
    }
+
+   ctx->Driver.UnmapRenderbuffer(ctx, rb);
 }
 
 
