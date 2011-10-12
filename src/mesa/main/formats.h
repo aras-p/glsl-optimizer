@@ -318,5 +318,8 @@ _mesa_get_uncompressed_format(gl_format format);
 extern GLuint
 _mesa_format_num_components(gl_format format);
 
+GLboolean
+_mesa_format_matches_format_and_type(gl_format gl_format,
+				     GLenum format, GLenum type);
 
 #endif /* FORMATS_H */
