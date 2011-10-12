@@ -197,7 +197,18 @@ relative:
 
 			if(opcode == SM4_OPCODE_CUSTOMDATA)
 			{
+				// immediate constant buffer data
 				unsigned customlen = read32() - 2;
+
+				sm4_dcl& dcl = *new sm4_dcl;
+				program.dcls.push_back(&dcl);
+
+				dcl.opcode = SM4_OPCODE_CUSTOMDATA;
+				dcl.num = customlen;
+				dcl.data = malloc(customlen * sizeof(tokens[0]));
+
+				memcpy(dcl.data, &tokens[0], customlen * sizeof(tokens[0]));
+
 				skip(customlen);
 				continue;
 			}
