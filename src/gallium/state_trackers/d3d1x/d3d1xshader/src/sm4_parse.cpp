@@ -202,6 +202,15 @@ relative:
 				continue;
 			}
 
+			if(opcode == SM4_OPCODE_HS_FORK_PHASE || opcode == SM4_OPCODE_HS_JOIN_PHASE)
+			{
+				// need to interleave these with the declarations or we cannot
+				// assign fork/join phase instance counts to phases
+				sm4_dcl& dcl = *new sm4_dcl;
+				program.dcls.push_back(&dcl);
+				dcl.opcode = opcode;
+			}
+
 			if((opcode >= SM4_OPCODE_DCL_RESOURCE && opcode <= SM4_OPCODE_DCL_GLOBAL_FLAGS)
 				|| (opcode >= SM4_OPCODE_DCL_STREAM && opcode <= SM4_OPCODE_DCL_RESOURCE_STRUCTURED))
 			{
