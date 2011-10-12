@@ -17,4 +17,4 @@ create_screen(int fd)
    return screen;
 }
 
-DRM_DRIVER_DESCRIPTOR("nouveau", "nouveau", create_screen)
+DRM_DRIVER_DESCRIPTOR("nouveau", "nouveau", create_screen, NULL)

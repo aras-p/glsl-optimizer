@@ -26,4 +26,4 @@ create_screen(int fd)
    return screen;
 }
 
-DRM_DRIVER_DESCRIPTOR("i915", "i915", create_screen)
+DRM_DRIVER_DESCRIPTOR("i915", "i915", create_screen, NULL)

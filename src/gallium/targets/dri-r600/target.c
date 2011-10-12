@@ -21,4 +21,4 @@ static struct pipe_screen *create_screen(int fd)
    return screen;
 }
 
-DRM_DRIVER_DESCRIPTOR("r600", "radeon", create_screen)
+DRM_DRIVER_DESCRIPTOR("r600", "radeon", create_screen, NULL)

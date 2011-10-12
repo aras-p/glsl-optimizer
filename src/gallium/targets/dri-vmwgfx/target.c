@@ -27,4 +27,4 @@ create_screen(int fd)
    return screen;
 }
 
-DRM_DRIVER_DESCRIPTOR("vmwgfx", "vmwgfx", create_screen)
+DRM_DRIVER_DESCRIPTOR("vmwgfx", "vmwgfx", create_screen, NULL)

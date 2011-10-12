@@ -24,4 +24,4 @@ create_screen(int fd)
 }
 
 PUBLIC
-DRM_DRIVER_DESCRIPTOR("vmwgfx", "vmwgfx", create_screen)
+DRM_DRIVER_DESCRIPTOR("vmwgfx", "vmwgfx", create_screen, NULL)

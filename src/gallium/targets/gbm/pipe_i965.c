@@ -27,4 +27,4 @@ create_screen(int fd)
 }
 
 PUBLIC
-DRM_DRIVER_DESCRIPTOR("i965", "i965", create_screen)
+DRM_DRIVER_DESCRIPTOR("i965", "i965", create_screen, NULL)
