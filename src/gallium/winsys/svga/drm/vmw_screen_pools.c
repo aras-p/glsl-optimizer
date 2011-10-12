@@ -54,6 +54,9 @@ vmw_pools_cleanup(struct vmw_winsys_screen *vws)
 
    /* gmr_mm pool is already destroyed above */
 
+   if (vws->pools.gmr_slab_fenced)
+      vws->pools.gmr_slab_fenced->destroy(vws->pools.gmr_slab_fenced);
+
    if(vws->pools.gmr)
       vws->pools.gmr->destroy(vws->pools.gmr);
    if(vws->pools.query)
@@ -110,6 +113,8 @@ vmw_query_pools_init(struct vmw_winsys_screen *vws)
 boolean
 vmw_pools_init(struct vmw_winsys_screen *vws)
 {
+   struct pb_desc desc;
+
    vws->pools.gmr = vmw_gmr_bufmgr_create(vws);
    if(!vws->pools.gmr)
       goto error;
@@ -121,26 +126,18 @@ vmw_pools_init(struct vmw_winsys_screen *vws)
       goto error;
 
    /*
-    * GMR buffers are typically shortlived, but it's possible that at a given
-    * instance a buffer is mapped. So to avoid stalling we tell pipebuffer to
-    * forbid creation of buffers beyond half the GMR pool size,
-    *
-    * XXX: It is unclear weather we want to limit the total amount of temporary
-    * malloc memory used to backup unvalidated GMR buffers. On one hand it is
-    * preferrable to fail an allocation than exhausting the guest memory with
-    * temporary data, but on the other hand it is possible that a stupid
-    * application creates large vertex buffers and does not use them for a long
-    * time -- since the svga pipe driver only emits the DMA uploads when a
-    * buffer is used for drawing this would effectively disabling swapping GMR
-    * buffers to memory. So far, the preemptively flush already seems to keep
-    * total allocated memory within relatively small numbers, so we don't
-    * limit.
+    * We disallow "CPU" buffers to be created by the fenced_bufmgr_create,
+    * because that defers "GPU" buffer creation to buffer validation,
+    * and at buffer validation we have no means of handling failures
+    * due to pools space shortage or fragmentation. Effectively this
+    * makes sure all failures are reported immediately on buffer allocation,
+    * and we can revert to allocating directly from the kernel.
     */
    vws->pools.gmr_fenced = fenced_bufmgr_create(
       vws->pools.gmr_mm,
       vmw_fence_ops_create(vws),
-      VMW_GMR_POOL_SIZE/2,
-      ~0);
+      VMW_GMR_POOL_SIZE,
+      0);
 
 #ifdef DEBUG
    vws->pools.gmr_fenced = pb_debug_manager_create(vws->pools.gmr_fenced,
@@ -149,6 +146,33 @@ vmw_pools_init(struct vmw_winsys_screen *vws)
 #endif
    if(!vws->pools.gmr_fenced)
       goto error;
+
+   /*
+    * The slab pool allocates buffers directly from the kernel except
+    * for very small buffers which are allocated from a slab in order
+    * not to waste memory, since a kernel buffer is a minimum 4096 bytes.
+    *
+    * Here we use it only for emergency in the case our pre-allocated
+    * buffer pool runs out of memory.
+    */
+   desc.alignment = 64;
+   desc.usage = ~0;
+   vws->pools.gmr_slab = pb_slab_range_manager_create(vws->pools.gmr,
+						      64,
+						      8192,
+						      16384,
+						      &desc);
+   if (!vws->pools.gmr_slab)
+       goto error;
+
+   vws->pools.gmr_slab_fenced =
+       fenced_bufmgr_create(vws->pools.gmr_slab,
+			    vmw_fence_ops_create(vws),
+			    VMW_MAX_BUFFER_SIZE,
+			    0);
+
+   if (!vws->pools.gmr_slab_fenced)
+       goto error;
 
    vws->pools.query_fenced = NULL;
    vws->pools.query_mm = NULL;

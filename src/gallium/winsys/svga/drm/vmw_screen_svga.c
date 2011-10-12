@@ -73,7 +73,15 @@ vmw_svga_winsys_buffer_create(struct svga_winsys_screen *sws,
 
    assert(provider);
    buffer = provider->create_buffer(provider, size, &desc);
-   if(!buffer)
+
+   if(!buffer && provider == vws->pools.gmr_fenced) {
+
+      assert(provider);
+      provider = vws->pools.gmr_slab_fenced;
+      buffer = provider->create_buffer(provider, size, &desc);
+   }
+
+   if (!buffer)
       return NULL;
 
    return vmw_svga_winsys_buffer(buffer);

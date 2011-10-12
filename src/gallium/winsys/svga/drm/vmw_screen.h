@@ -43,6 +43,12 @@
 
 #define VMW_GMR_POOL_SIZE (16*1024*1024)
 #define VMW_QUERY_POOL_SIZE (8192)
+/*
+ * Something big, but arbitrary. The kernel reports an error if it can't
+ * handle this, and the svga driver will resort to multiple partial
+ * uploads.
+ */
+#define VMW_MAX_BUFFER_SIZE (512*1024*1024)
 
 struct pb_manager;
 struct vmw_region;
@@ -65,6 +71,8 @@ struct vmw_winsys_screen
       struct pb_manager *gmr;
       struct pb_manager *gmr_mm;
       struct pb_manager *gmr_fenced;
+      struct pb_manager *gmr_slab;
+      struct pb_manager *gmr_slab_fenced;
       struct pb_manager *query;
       struct pb_manager *query_mm;
       struct pb_manager *query_fenced;
