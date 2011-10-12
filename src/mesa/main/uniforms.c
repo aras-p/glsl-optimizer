@@ -370,9 +370,9 @@ split_location_offset(GLint *location, GLint *offset)
 /**
  * Called via glGetUniform[fiui]v() to get the current value of a uniform.
  */
-static void
-get_uniform(struct gl_context *ctx, GLuint program, GLint location,
-            GLsizei bufSize, GLenum returnType, GLvoid *paramsOut)
+void
+_mesa_get_uniform(struct gl_context *ctx, GLuint program, GLint location,
+		  GLsizei bufSize, GLenum returnType, GLvoid *paramsOut)
 {
    struct gl_shader_program *shProg =
       _mesa_lookup_shader_program_err(ctx, program, "glGetUniformfv");
@@ -1344,7 +1344,7 @@ _mesa_GetnUniformfvARB(GLhandleARB program, GLint location,
                        GLsizei bufSize, GLfloat *params)
 {
    GET_CURRENT_CONTEXT(ctx);
-   get_uniform(ctx, program, location, bufSize, GL_FLOAT, params);
+   _mesa_get_uniform(ctx, program, location, bufSize, GL_FLOAT, params);
 }
 
 void GLAPIENTRY
@@ -1359,7 +1359,7 @@ _mesa_GetnUniformivARB(GLhandleARB program, GLint location,
                        GLsizei bufSize, GLint *params)
 {
    GET_CURRENT_CONTEXT(ctx);
-   get_uniform(ctx, program, location, bufSize, GL_INT, params);
+   _mesa_get_uniform(ctx, program, location, bufSize, GL_INT, params);
 }
 
 void GLAPIENTRY
@@ -1375,7 +1375,7 @@ _mesa_GetnUniformuivARB(GLhandleARB program, GLint location,
                         GLsizei bufSize, GLuint *params)
 {
    GET_CURRENT_CONTEXT(ctx);
-   get_uniform(ctx, program, location, bufSize, GL_UNSIGNED_INT, params);
+   _mesa_get_uniform(ctx, program, location, bufSize, GL_UNSIGNED_INT, params);
 }
 
 void GLAPIENTRY
@@ -1398,7 +1398,7 @@ _mesa_GetnUniformdvARB(GLhandleARB program, GLint location,
    (void) params;
 
    /*
-   get_uniform(ctx, program, location, bufSize, GL_DOUBLE, params);
+   _mesa_get_uniform(ctx, program, location, bufSize, GL_DOUBLE, params);
    */
    _mesa_error(ctx, GL_INVALID_OPERATION, "glGetUniformdvARB"
                "(GL_ARB_gpu_shader_fp64 not implemented)");

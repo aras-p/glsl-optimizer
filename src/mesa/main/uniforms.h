@@ -184,6 +184,10 @@ _mesa_uniform_matrix(struct gl_context *ctx, struct gl_shader_program *shProg,
                      GLint location, GLsizei count,
                      GLboolean transpose, const GLfloat *values);
 
+void
+_mesa_get_uniform(struct gl_context *ctx, GLuint program, GLint location,
+		  GLsizei bufSize, GLenum returnType, GLvoid *paramsOut);
+
 extern void
 _mesa_update_shader_textures_used(struct gl_program *prog);
 
