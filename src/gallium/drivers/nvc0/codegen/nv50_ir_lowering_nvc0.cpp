@@ -475,7 +475,7 @@ NVC0LoweringPass::readTessCoord(LValue *dst, int c)
    if (x)
       bld.mkFetch(x, TYPE_F32, FILE_SHADER_OUTPUT, 0x2f0, NULL, laneid);
    if (y)
-      bld.mkFetch(x, TYPE_F32, FILE_SHADER_OUTPUT, 0x2f4, NULL, laneid);
+      bld.mkFetch(y, TYPE_F32, FILE_SHADER_OUTPUT, 0x2f4, NULL, laneid);
 
    if (c == 2) {
       bld.mkOp2(OP_ADD, TYPE_F32, dst, x, y);
