@@ -270,6 +270,47 @@ fast_read_rgba_pixels( struct gl_context *ctx,
    return GL_FALSE;
 }
 
+static GLboolean
+fast_read_rgba_pixels_memcpy( struct gl_context *ctx,
+			      GLint x, GLint y,
+			      GLsizei width, GLsizei height,
+			      GLenum format, GLenum type,
+			      GLvoid *pixels,
+			      const struct gl_pixelstore_attrib *packing,
+			      GLbitfield transferOps )
+{
+   struct gl_renderbuffer *rb = ctx->ReadBuffer->_ColorReadBuffer;
+   GLubyte *dst, *map;
+   int dstStride, stride, j, texelBytes;
+
+   if (!_mesa_format_matches_format_and_type(rb->Format, format, type))
+      return GL_FALSE;
+
+   /* check for things we can't handle here */
+   if (packing->SwapBytes ||
+       packing->LsbFirst) {
+      return GL_FALSE;
+   }
+
+   dstStride = _mesa_image_row_stride(packing, width, format, type);
+   dst = (GLubyte *) _mesa_image_address2d(packing, pixels, width, height,
+					   format, type, 0, 0);
+
+   ctx->Driver.MapRenderbuffer(ctx, rb, x, y, width, height, GL_MAP_READ_BIT,
+			       &map, &stride);
+
+   texelBytes = _mesa_get_format_bytes(rb->Format);
+   for (j = 0; j < height; j++) {
+      memcpy(dst, map, width * texelBytes);
+      dst += dstStride;
+      map += stride;
+   }
+
+   ctx->Driver.UnmapRenderbuffer(ctx, rb);
+
+   return GL_TRUE;
+}
+
 
 /**
  * When we're using a low-precision color buffer (like 16-bit 5/6/5)
@@ -338,10 +379,18 @@ read_rgba_pixels( struct gl_context *ctx,
       transferOps |= IMAGE_CLAMP_BIT;
    }
 
-   /* Try the optimized path first. */
-   if (fast_read_rgba_pixels(ctx, x, y, width, height,
-                             format, type, pixels, packing, transferOps)) {
-      return; /* done! */
+   if (!transferOps) {
+      /* Try the optimized paths first. */
+      if (fast_read_rgba_pixels_memcpy(ctx, x, y, width, height,
+				       format, type, pixels, packing,
+				       transferOps)) {
+	 return;
+      }
+
+      if (fast_read_rgba_pixels(ctx, x, y, width, height,
+				format, type, pixels, packing, transferOps)) {
+	 return;
+      }
    }
 
    /* width should never be > MAX_WIDTH since we did clipping earlier */
