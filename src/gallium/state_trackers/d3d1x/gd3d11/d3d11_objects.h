@@ -42,6 +42,12 @@ struct GalliumD3D11DeviceChild : public GalliumPrivateDataComObject<Base, dual_r
 		device->AddRef();
 	}
 
+	virtual ~GalliumD3D11DeviceChild()
+	{
+		if(device)
+			device->Release();
+	}
+
 	/* The purpose of this is to avoid cyclic garbage, since this won't hold
 	 * a pointer to the device if it is only held by a pipeline binding in the immediate context
 	 *
@@ -50,13 +56,11 @@ struct GalliumD3D11DeviceChild : public GalliumPrivateDataComObject<Base, dual_r
 	 */
 	inline ULONG add_ref()
 	{
-		device->AddRef();
 		return GalliumPrivateDataComObject<Base, dual_refcnt_t>::add_ref();
 	}
 
 	inline ULONG release()
 	{
-		device->Release();
 		return GalliumPrivateDataComObject<Base, dual_refcnt_t>::release();
 	}
 
