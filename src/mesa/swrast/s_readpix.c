@@ -366,14 +366,14 @@ read_rgba_pixels( struct gl_context *ctx,
 }
 
 /**
- * For a packed depth/stencil buffer being read as depth/stencil, memcpy the
+ * For a packed depth/stencil buffer being read as depth/stencil, just memcpy the
  * data (possibly swapping 8/24 vs 24/8 as we go).
  */
 static GLboolean
 fast_read_depth_stencil_pixels(struct gl_context *ctx,
 			       GLint x, GLint y,
 			       GLsizei width, GLsizei height,
-			       GLenum type, GLvoid *dst, int dstStride)
+			       GLvoid *dst, int dstStride)
 {
    struct gl_framebuffer *fb = ctx->ReadBuffer;
    struct gl_renderbuffer *rb = fb->Attachment[BUFFER_DEPTH].Renderbuffer;
@@ -382,9 +382,6 @@ fast_read_depth_stencil_pixels(struct gl_context *ctx,
    int stride, i;
 
    if (rb != stencilRb)
-      return GL_FALSE;
-
-   if (type != GL_UNSIGNED_INT_24_8)
       return GL_FALSE;
 
    if (rb->Format != MESA_FORMAT_Z24_S8 &&
@@ -402,6 +399,54 @@ fast_read_depth_stencil_pixels(struct gl_context *ctx,
    }
 
    ctx->Driver.UnmapRenderbuffer(ctx, rb);
+
+   return GL_TRUE;
+}
+
+
+/**
+ * For non-float-depth and stencil buffers being read as 24/8 depth/stencil,
+ * copy the integer data directly instead of converting depth to float and
+ * re-packing.
+ */
+static GLboolean
+fast_read_depth_stencil_pixels_separate(struct gl_context *ctx,
+					GLint x, GLint y,
+					GLsizei width, GLsizei height,
+					uint32_t *dst, int dstStride)
+{
+   struct gl_framebuffer *fb = ctx->ReadBuffer;
+   struct gl_renderbuffer *depthRb = fb->Attachment[BUFFER_DEPTH].Renderbuffer;
+   struct gl_renderbuffer *stencilRb = fb->Attachment[BUFFER_STENCIL].Renderbuffer;
+   GLubyte *depthMap, *stencilMap;
+   int depthStride, stencilStride, i, j;
+
+   if (_mesa_get_format_datatype(depthRb->Format) != GL_UNSIGNED_INT)
+      return GL_FALSE;
+
+   ctx->Driver.MapRenderbuffer(ctx, depthRb, x, y, width, height,
+			       GL_MAP_READ_BIT, &depthMap, &depthStride);
+   ctx->Driver.MapRenderbuffer(ctx, stencilRb, x, y, width, height,
+			       GL_MAP_READ_BIT, &stencilMap, &stencilStride);
+
+   for (j = 0; j < height; j++) {
+      GLstencil stencilVals[MAX_WIDTH];
+
+      _mesa_unpack_uint_z_row(depthRb->Format, width, depthMap, dst);
+      _mesa_unpack_ubyte_stencil_row(stencilRb->Format, width,
+				     stencilMap, stencilVals);
+
+      for (i = 0; i < width; i++) {
+	 dst[i] = (dst[i] & 0xffffff00) | stencilVals[i];
+      }
+
+      depthMap += depthStride;
+      stencilMap += stencilStride;
+      dst += dstStride / 4;
+   }
+
+   ctx->Driver.UnmapRenderbuffer(ctx, depthRb);
+   ctx->Driver.UnmapRenderbuffer(ctx, stencilRb);
 
    return GL_TRUE;
 }
@@ -440,9 +485,15 @@ read_depth_stencil_pixels(struct gl_context *ctx,
    dstStride = _mesa_image_row_stride(packing, width,
 				      GL_DEPTH_STENCIL_EXT, type);
 
-   if (!scaleOrBias && !stencilTransfer && !packing->SwapBytes) {
-      if (fast_read_depth_stencil_pixels(ctx, x, y, width, height, type,
+   /* Fast 24/8 reads. */
+   if (type == GL_UNSIGNED_INT_24_8 &&
+       !scaleOrBias && !stencilTransfer && !packing->SwapBytes) {
+      if (fast_read_depth_stencil_pixels(ctx, x, y, width, height,
 					 dst, dstStride))
+	 return;
+
+      if (fast_read_depth_stencil_pixels_separate(ctx, x, y, width, height,
+						  (uint32_t *)dst, dstStride))
 	 return;
    }
 
@@ -459,19 +510,7 @@ read_depth_stencil_pixels(struct gl_context *ctx,
          _swrast_read_stencil_span(ctx, stencilRb, width,
                                    x, y + i, stencilVals);
 
-         if (!scaleOrBias && !stencilTransfer
-             && ctx->ReadBuffer->Visual.depthBits == 24) {
-            /* ideal case */
-            GLuint zVals[MAX_WIDTH]; /* 24-bit values! */
-            GLint j;
-            ASSERT(depthRb->DataType == GL_UNSIGNED_INT);
-            /* note, we've already been clipped */
-            depthRb->GetRow(ctx, depthRb, width, x, y + i, zVals);
-            for (j = 0; j < width; j++) {
-               depthStencilDst[j] = (zVals[j] << 8) | (stencilVals[j] & 0xff);
-            }
-         }
-         else {
+	 {
             /* general case */
             GLfloat depthVals[MAX_WIDTH];
             _swrast_read_depth_span_float(ctx, depthRb, width, x, y + i,
