@@ -1539,3 +1539,38 @@ _mesa_unpack_ubyte_stencil_row(gl_format format, GLuint n,
       return;
    }
 }
+
+static void
+unpack_uint_24_8_depth_stencil_S8_Z24(const GLuint *src, GLuint *dst, GLuint n)
+{
+   GLuint i;
+
+   for (i = 0; i < n; i++) {
+      GLuint val = src[i];
+      dst[i] = val >> 24 | val << 8;
+   }
+}
+
+static void
+unpack_uint_24_8_depth_stencil_Z24_S8(const GLuint *src, GLuint *dst, GLuint n)
+{
+   memcpy(dst, src, n * 4);
+}
+
+void
+_mesa_unpack_uint_24_8_depth_stencil_row(gl_format format, GLuint n,
+					 const void *src, GLuint *dst)
+{
+   switch (format) {
+   case MESA_FORMAT_Z24_S8:
+      unpack_uint_24_8_depth_stencil_Z24_S8(src, dst, n);
+      break;
+   case MESA_FORMAT_S8_Z24:
+      unpack_uint_24_8_depth_stencil_S8_Z24(src, dst, n);
+      break;
+   default:
+      _mesa_problem(NULL, "bad format %s in _mesa_unpack_ubyte_s_row",
+                    _mesa_get_format_name(format));
+      return;
+   }
+}

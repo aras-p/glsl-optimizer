@@ -365,6 +365,55 @@ read_rgba_pixels( struct gl_context *ctx,
    }
 }
 
+/**
+ * For a packed depth/stencil buffer being read as depth/stencil, memcpy the
+ * data (possibly swapping 8/24 vs 24/8 as we go).
+ */
+static GLboolean
+fast_read_depth_stencil_pixels(struct gl_context *ctx,
+			       GLint x, GLint y,
+			       GLsizei width, GLsizei height,
+			       GLenum type, GLvoid *pixels,
+			       const struct gl_pixelstore_attrib *packing)
+{
+   struct gl_framebuffer *fb = ctx->ReadBuffer;
+   struct gl_renderbuffer *rb = fb->Attachment[BUFFER_DEPTH].Renderbuffer;
+   struct gl_renderbuffer *stencilRb = fb->Attachment[BUFFER_STENCIL].Renderbuffer;
+   GLubyte *dst, *map;
+   int stride, dstStride, i;
+
+   if (rb != stencilRb)
+      return GL_FALSE;
+
+   if (type != GL_UNSIGNED_INT_24_8)
+      return GL_FALSE;
+
+   if (rb->Format != MESA_FORMAT_Z24_S8 &&
+       rb->Format != MESA_FORMAT_S8_Z24)
+      return GL_FALSE;
+
+   ctx->Driver.MapRenderbuffer(ctx, rb, x, y, width, height, GL_MAP_READ_BIT,
+			       &map, &stride);
+
+   dstStride = _mesa_image_row_stride(packing, width,
+				      GL_DEPTH_STENCIL_EXT, type);
+   dst = (GLubyte *) _mesa_image_address2d(packing, pixels,
+					   width, height,
+					   GL_DEPTH_STENCIL_EXT,
+					   type, 0, 0);
+
+   for (i = 0; i < height; i++) {
+      _mesa_unpack_uint_24_8_depth_stencil_row(rb->Format, width,
+					       map, (GLuint *)dst);
+      map += stride;
+      dst += dstStride;
+   }
+
+   ctx->Driver.UnmapRenderbuffer(ctx, rb);
+
+   return GL_TRUE;
+}
+
 
 /**
  * Read combined depth/stencil values.
@@ -390,40 +439,17 @@ read_depth_stencil_pixels(struct gl_context *ctx,
    if (!depthRb || !stencilRb)
       return;
 
-   depthRb = ctx->ReadBuffer->Attachment[BUFFER_DEPTH].Renderbuffer;
-   stencilRb = ctx->ReadBuffer->Attachment[BUFFER_STENCIL].Renderbuffer;
-
-   if (depthRb->_BaseFormat == GL_DEPTH_STENCIL_EXT &&
-       depthRb->Format == MESA_FORMAT_Z24_S8 &&
-       type == GL_UNSIGNED_INT_24_8 &&
-       depthRb == stencilRb &&
-       depthRb->GetRow &&  /* May be null if depthRb is a wrapper around
-			    * separate depth and stencil buffers. */
-       !scaleOrBias &&
-       !stencilTransfer) {
-      /* This is the ideal case.
-       * Reading GL_DEPTH_STENCIL pixels from combined depth/stencil buffer.
-       * Plus, no pixel transfer ops to worry about!
-       */
-      GLint i;
-      GLint dstStride = _mesa_image_row_stride(packing, width,
-                                               GL_DEPTH_STENCIL_EXT, type);
-      GLubyte *dst = (GLubyte *) _mesa_image_address2d(packing, pixels,
-                                                       width, height,
-                                                       GL_DEPTH_STENCIL_EXT,
-                                                       type, 0, 0);
-      for (i = 0; i < height; i++) {
-         depthRb->GetRow(ctx, depthRb, width, x, y + i, dst);
-         dst += dstStride;
-      }
+   if (!scaleOrBias && !stencilTransfer && !packing->SwapBytes) {
+      if (fast_read_depth_stencil_pixels(ctx, x, y, width, height, type,
+					 pixels, packing))
+	 return;
    }
-   else {
+
       /* Reading GL_DEPTH_STENCIL pixels from separate depth/stencil buffers,
        * or we need pixel transfer.
        */
+   {
       GLint i;
-      depthRb = ctx->ReadBuffer->_DepthBuffer;
-      stencilRb = ctx->ReadBuffer->_StencilBuffer;
 
       for (i = 0; i < height; i++) {
          GLstencil stencilVals[MAX_WIDTH];
