@@ -103,8 +103,10 @@ read_depth_pixels( struct gl_context *ctx,
                    const struct gl_pixelstore_attrib *packing )
 {
    struct gl_framebuffer *fb = ctx->ReadBuffer;
-   struct gl_renderbuffer *rb = fb->_DepthBuffer;
+   struct gl_renderbuffer *rb = fb->Attachment[BUFFER_DEPTH].Renderbuffer;
    GLint j;
+   GLubyte *dst, *map;
+   int dstStride, stride;
 
    if (!rb)
       return;
@@ -120,14 +122,24 @@ read_depth_pixels( struct gl_context *ctx,
    if (fast_read_depth_pixels(ctx, x, y, width, height, type, pixels, packing))
       return;
 
+   dstStride = _mesa_image_row_stride(packing, width, GL_DEPTH_COMPONENT, type);
+   dst = (GLubyte *) _mesa_image_address2d(packing, pixels, width, height,
+					   GL_DEPTH_COMPONENT, type, 0, 0);
+
+   ctx->Driver.MapRenderbuffer(ctx, rb, x, y, width, height, GL_MAP_READ_BIT,
+			       &map, &stride);
+
    /* General case (slower) */
    for (j = 0; j < height; j++, y++) {
       GLfloat depthValues[MAX_WIDTH];
-      GLvoid *dest = _mesa_image_address2d(packing, pixels, width, height,
-					   GL_DEPTH_COMPONENT, type, j, 0);
-      _swrast_read_depth_span_float(ctx, rb, width, x, y, depthValues);
-      _mesa_pack_depth_span(ctx, width, dest, type, depthValues, packing);
+      _mesa_unpack_float_z_row(rb->Format, width, map, depthValues);
+      _mesa_pack_depth_span(ctx, width, dst, type, depthValues, packing);
+
+      dst += dstStride;
+      map += stride;
    }
+
+   ctx->Driver.UnmapRenderbuffer(ctx, rb);
 }
 
 
