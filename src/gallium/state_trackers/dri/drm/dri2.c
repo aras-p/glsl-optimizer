@@ -623,6 +623,19 @@ static const __DRIextension *dri_screen_extensions[] = {
    NULL
 };
 
+static const __DRIextension *dri_screen_extensions_throttle[] = {
+   &driReadDrawableExtension,
+   &driCopySubBufferExtension.base,
+   &driSwapControlExtension.base,
+   &driMediaStreamCounterExtension.base,
+   &driTexBufferExtension.base,
+   &dri2FlushExtension.base,
+   &dri2ImageExtension.base,
+   &dri2ConfigQueryExtension.base,
+   &dri2ThrottleExtension.base,
+   NULL
+};
+
 /**
  * This is the driver specific part of the createNewScreen entry point.
  *
@@ -634,6 +647,7 @@ dri2_init_screen(__DRIscreen * sPriv)
    const __DRIconfig **configs;
    struct dri_screen *screen;
    struct pipe_screen *pscreen;
+   const struct drm_conf_ret *throttle_ret = NULL;
 
    screen = CALLOC_STRUCT(dri_screen);
    if (!screen)
@@ -643,9 +657,17 @@ dri2_init_screen(__DRIscreen * sPriv)
    screen->fd = sPriv->fd;
 
    sPriv->private = (void *)screen;
-   sPriv->extensions = dri_screen_extensions;
 
    pscreen = driver_descriptor.create_screen(screen->fd);
+   if (driver_descriptor.configuration)
+      throttle_ret = driver_descriptor.configuration(DRM_CONF_THROTTLE);
+
+   if (throttle_ret && throttle_ret->val.val_int != -1) {
+      sPriv->extensions = dri_screen_extensions_throttle;
+      screen->default_throttle_frames = throttle_ret->val.val_int;
+   } else
+      sPriv->extensions = dri_screen_extensions;
+
    /* dri_init_screen_helper checks pscreen for us */
 
    configs = dri_init_screen_helper(screen, pscreen, 32);

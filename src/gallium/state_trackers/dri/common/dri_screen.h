@@ -54,6 +54,7 @@ struct dri_screen
 
    /* dri */
    __DRIscreen *sPriv;
+   int default_throttle_frames;
 
    /**
     * Configuration cache with default values for all contexts

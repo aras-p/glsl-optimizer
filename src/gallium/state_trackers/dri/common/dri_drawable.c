@@ -137,7 +137,9 @@ dri_create_buffer(__DRIscreen * sPriv,
    drawable->screen = screen;
    drawable->sPriv = sPriv;
    drawable->dPriv = dPriv;
-   drawable->desired_fences = 2;
+   drawable->desired_fences = screen->default_throttle_frames;
+   if (drawable->desired_fences > DRI_SWAP_FENCES_MAX)
+      drawable->desired_fences = DRI_SWAP_FENCES_MAX;
 
    dPriv->driverPrivate = (void *)drawable;
    p_atomic_set(&drawable->base.stamp, 1);
