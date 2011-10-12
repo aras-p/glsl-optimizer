@@ -608,7 +608,6 @@ _swrast_ReadPixels( struct gl_context *ctx,
 		    const struct gl_pixelstore_attrib *packing,
 		    GLvoid *pixels )
 {
-   SWcontext *swrast = SWRAST_CONTEXT(ctx);
    struct gl_pixelstore_attrib clippedPacking = *packing;
 
    if (ctx->NewState)
@@ -619,9 +618,6 @@ _swrast_ReadPixels( struct gl_context *ctx,
     * window size.
     */
    swrast_render_start(ctx);
-
-   if (swrast->NewState)
-      _swrast_validate_derived( ctx );
 
    /* Do all needed clipping here, so that we can forget about it later */
    if (_mesa_clip_readpixels(ctx, &x, &y, &width, &height, &clippedPacking)) {
