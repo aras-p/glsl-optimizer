@@ -58,12 +58,32 @@ static unsigned caps_dx_9_3[] = {
 	UTIL_CHECK_CAP(TEXTURE_MIRROR_CLAMP),
 	UTIL_CHECK_CAP(BLEND_EQUATION_SEPARATE),
 	UTIL_CHECK_CAP(SM3),
-	//UTIL_CHECK_CAP(INSTANCING),
+	UTIL_CHECK_CAP(VERTEX_ELEMENT_INSTANCE_DIVISOR),
 	UTIL_CHECK_CAP(OCCLUSION_QUERY),
 	UTIL_CHECK_INT(MAX_RENDER_TARGETS, 4),
 	UTIL_CHECK_INT(MAX_TEXTURE_2D_LEVELS, 13),	/* 4096 */
 	UTIL_CHECK_INT(MAX_TEXTURE_3D_LEVELS, 9),	 /* 256 */
 	UTIL_CHECK_INT(MAX_TEXTURE_CUBE_LEVELS, 10), /* 512 */
+	UTIL_CHECK_TERMINATE
+};
+
+static unsigned caps_dx_10_0[] = {
+	UTIL_CHECK_CAP(INDEP_BLEND_ENABLE),
+	UTIL_CHECK_CAP(ANISOTROPIC_FILTER),
+	UTIL_CHECK_CAP(MIXED_COLORBUFFER_FORMATS),
+	UTIL_CHECK_CAP(FRAGMENT_COLOR_CLAMP_CONTROL),
+	UTIL_CHECK_CAP(STREAM_OUTPUT),
+	UTIL_CHECK_CAP(CONDITIONAL_RENDER),
+	UTIL_CHECK_CAP(PRIMITIVE_RESTART),
+	UTIL_CHECK_CAP(TGSI_INSTANCEID),
+	UTIL_CHECK_INT(MAX_RENDER_TARGETS, 8),
+	UTIL_CHECK_INT(MAX_TEXTURE_2D_LEVELS, 13),
+	UTIL_CHECK_INT(MAX_TEXTURE_ARRAY_LAYERS, 512),
+	UTIL_CHECK_SHADER(VERTEX, MAX_INPUTS, 16),
+	UTIL_CHECK_SHADER(GEOMETRY, MAX_CONST_BUFFERS, 14),
+	UTIL_CHECK_SHADER(GEOMETRY, MAX_TEXTURE_SAMPLERS, 16),
+	UTIL_CHECK_SHADER(GEOMETRY, SUBROUTINES, 1),
+	UTIL_CHECK_SHADER(FRAGMENT, INTEGERS, 1),
 	UTIL_CHECK_TERMINATE
 };
 
@@ -107,19 +127,17 @@ struct GalliumD3D11ScreenImpl : public GalliumD3D11Screen
 
 		memset(format_support, 0xff, sizeof(format_support));
 
-		float default_level;
-		/* don't even attempt to autodetect D3D10 level support, since it's just not fully implemented yet */
-		if(util_check_caps(screen, caps_dx_9_3))
-			default_level = 9.3;
-		else if(util_check_caps(screen, caps_dx_9_2))
-			default_level = 9.2;
-		else if(util_check_caps(screen, caps_dx_9_1))
-			default_level = 9.1;
-		else
-		{
+		float default_level = 9.1f;
+		if(!util_check_caps(screen, caps_dx_9_1))
 			_debug_printf("Warning: driver does not even meet D3D_FEATURE_LEVEL_9_1 features, advertising it anyway!\n");
-			default_level = 9.1;
-		}
+		else if(!util_check_caps(screen, caps_dx_9_2))
+			default_level = 9.1f;
+		else if(!util_check_caps(screen, caps_dx_9_3))
+			default_level = 9.2f;
+		else if(!util_check_caps(screen, caps_dx_10_0))
+			default_level = 9.3f;
+		else
+			default_level = 10.0f;
 
 		char default_level_name[64];
 		sprintf(default_level_name, "%.1f", default_level);
