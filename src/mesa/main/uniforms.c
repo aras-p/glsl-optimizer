@@ -318,55 +318,6 @@ get_uniform_rows_cols(const struct gl_program_parameter *p,
    }
 }
 
-
-/**
- * GLSL uniform arrays and structs require special handling.
- *
- * The GL_ARB_shader_objects spec says that if you use
- * glGetUniformLocation to get the location of an array, you CANNOT
- * access other elements of the array by adding an offset to the
- * returned location.  For example, you must call
- * glGetUniformLocation("foo[16]") if you want to set the 16th element
- * of the array with glUniform().
- *
- * HOWEVER, some other OpenGL drivers allow accessing array elements
- * by adding an offset to the returned array location.  And some apps
- * seem to depend on that behaviour.
- *
- * Mesa's gl_uniform_list doesn't directly support this since each
- * entry in the list describes one uniform variable, not one uniform
- * element.  We could insert dummy entries in the list for each array
- * element after [0] but that causes complications elsewhere.
- *
- * We solve this problem by encoding two values in the location that's
- * returned by glGetUniformLocation():
- *  a) index into gl_uniform_list::Uniforms[] for the uniform
- *  b) an array/field offset (0 for simple types)
- *
- * These two values are encoded in the high and low halves of a GLint.
- * By putting the uniform number in the high part and the offset in the
- * low part, we can support the unofficial ability to index into arrays
- * by adding offsets to the location value.
- */
-static void
-merge_location_offset(GLint *location, GLint offset)
-{
-   *location = (*location << 16) | offset;
-}
-
-
-/**
- * Separate the uniform location and parameter offset.  See above.
- */
-static void
-split_location_offset(GLint *location, GLint *offset)
-{
-   *offset = *location & 0xffff;
-   *location = *location >> 16;
-}
-
-
-
 /**
  * Called via glGetUniform[fiui]v() to get the current value of a uniform.
  */
@@ -382,7 +333,7 @@ _mesa_get_uniform(struct gl_context *ctx, GLuint program, GLint location,
    if (!shProg)
       return;
 
-   split_location_offset(&location, &offset);
+   _mesa_uniform_split_location_offset(location, &location, &offset);
 
    if (!find_uniform_parameter_pos(shProg, location, &prog, &paramPos)) {
       _mesa_error(ctx, GL_INVALID_OPERATION,  "glGetUniformfv(location)");
@@ -538,11 +489,11 @@ _mesa_get_uniform_location(struct gl_context *ctx,
       location = _mesa_lookup_uniform(shProg->Uniforms, name);
    }
 
-   if (location >= 0) {
-      merge_location_offset(&location, offset);
+   if (location < 0) {
+      return -1;
    }
 
-   return location;
+   return _mesa_uniform_merge_location_offset(location, offset);
 }
 
 
@@ -811,7 +762,7 @@ _mesa_uniform(struct gl_context *ctx, struct gl_shader_program *shProg,
       return;
    }
 
-   split_location_offset(&location, &offset);
+   _mesa_uniform_split_location_offset(location, &location, &offset);
 
    if (location < 0 || location >= (GLint) shProg->Uniforms->NumUniforms) {
       _mesa_error(ctx, GL_INVALID_VALUE, "glUniform(location=%d)", location);
@@ -992,7 +943,7 @@ _mesa_uniform_matrix(struct gl_context *ctx, struct gl_shader_program *shProg,
       return;
    }
 
-   split_location_offset(&location, &offset);
+   _mesa_uniform_split_location_offset(location, &location, &offset);
 
    if (location < 0 || location >= (GLint) shProg->Uniforms->NumUniforms) {
       _mesa_error(ctx, GL_INVALID_VALUE, "glUniformMatrix(location)");
