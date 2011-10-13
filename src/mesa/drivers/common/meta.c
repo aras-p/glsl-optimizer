@@ -2942,7 +2942,7 @@ get_temp_image_type(struct gl_context *ctx, GLenum baseFormat)
    case GL_INTENSITY:
       if (ctx->DrawBuffer->Visual.redBits <= 8)
          return GL_UNSIGNED_BYTE;
-      else if (ctx->DrawBuffer->Visual.redBits <= 8)
+      else if (ctx->DrawBuffer->Visual.redBits <= 16)
          return GL_UNSIGNED_SHORT;
       else
          return GL_FLOAT;
