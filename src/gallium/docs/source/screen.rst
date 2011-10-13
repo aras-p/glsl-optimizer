@@ -160,6 +160,11 @@ resources might be created and handled quite differently.
 * ``PIPE_BIND_DEPTH_STENCIL``: A depth (Z) buffer and/or stencil buffer. Any
   depth/stencil surface/resource attached to pipe_framebuffer_state::zsbuf must
   have this flag set.
+* ``PIPE_BIND_BLENDABLE``: Used in conjunction with PIPE_BIND_RENDER_TARGET to
+  query whether a device supports blending for a given format.
+  If this flag is set, surface creation may fail if blending is not supported
+  for the specified format. If it is not set, a driver may choose to ignore
+  blending on surfaces with formats that would require emulation.
 * ``PIPE_BIND_DISPLAY_TARGET``: A surface that can be presented to screen. Arguments to
   pipe_screen::flush_front_buffer must have this flag set.
 * ``PIPE_BIND_SAMPLER_VIEW``: A texture that may be sampled from in a fragment

@@ -295,10 +295,11 @@ enum pipe_transfer_usage {
  */
 #define PIPE_BIND_DEPTH_STENCIL        (1 << 0) /* create_surface */
 #define PIPE_BIND_RENDER_TARGET        (1 << 1) /* create_surface */
-#define PIPE_BIND_SAMPLER_VIEW         (1 << 2) /* create_sampler_view */
-#define PIPE_BIND_VERTEX_BUFFER        (1 << 3) /* set_vertex_buffers */
-#define PIPE_BIND_INDEX_BUFFER         (1 << 4) /* draw_elements */
-#define PIPE_BIND_CONSTANT_BUFFER      (1 << 5) /* set_constant_buffer */
+#define PIPE_BIND_BLENDABLE            (1 << 2) /* create_surface */
+#define PIPE_BIND_SAMPLER_VIEW         (1 << 3) /* create_sampler_view */
+#define PIPE_BIND_VERTEX_BUFFER        (1 << 4) /* set_vertex_buffers */
+#define PIPE_BIND_INDEX_BUFFER         (1 << 5) /* draw_elements */
+#define PIPE_BIND_CONSTANT_BUFFER      (1 << 6) /* set_constant_buffer */
 #define PIPE_BIND_DISPLAY_TARGET       (1 << 8) /* flush_front_buffer */
 #define PIPE_BIND_TRANSFER_WRITE       (1 << 9) /* get_transfer */
 #define PIPE_BIND_TRANSFER_READ        (1 << 10) /* get_transfer */
