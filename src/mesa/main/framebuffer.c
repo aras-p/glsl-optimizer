@@ -907,27 +907,21 @@ renderbuffer_exists(struct gl_context *ctx,
       break;
    case GL_DEPTH:
    case GL_DEPTH_COMPONENT:
-      if (!att[BUFFER_DEPTH].Renderbuffer) {
+      if (att[BUFFER_DEPTH].Type == GL_NONE) {
          return GL_FALSE;
       }
-      /*ASSERT(att[BUFFER_DEPTH].Renderbuffer->DepthBits > 0);*/
       break;
    case GL_STENCIL:
    case GL_STENCIL_INDEX:
-      if (!att[BUFFER_STENCIL].Renderbuffer) {
+      if (att[BUFFER_STENCIL].Type == GL_NONE) {
          return GL_FALSE;
       }
-      /*ASSERT(att[BUFFER_STENCIL].Renderbuffer->StencilBits > 0);*/
       break;
    case GL_DEPTH_STENCIL_EXT:
-      if (!att[BUFFER_DEPTH].Renderbuffer ||
-          !att[BUFFER_STENCIL].Renderbuffer) {
+      if (att[BUFFER_DEPTH].Type == GL_NONE ||
+          att[BUFFER_STENCIL].Type == GL_NONE) {
          return GL_FALSE;
       }
-      /*
-      ASSERT(att[BUFFER_DEPTH].Renderbuffer->DepthBits > 0);
-      ASSERT(att[BUFFER_STENCIL].Renderbuffer->StencilBits > 0);
-      */
       break;
    default:
       _mesa_problem(ctx,
