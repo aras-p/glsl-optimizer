@@ -1975,22 +1975,6 @@ copytexture_error_check( struct gl_context *ctx, GLuint dimensions,
          return GL_TRUE;
       }
    }
-   else if (_mesa_is_depth_format(internalFormat)) {
-      /* make sure we have depth/stencil buffers */
-      if (!ctx->ReadBuffer->_DepthBuffer) {
-         _mesa_error(ctx, GL_INVALID_OPERATION,
-                     "glCopyTexImage%dD(no depth)", dimensions);
-         return GL_TRUE;
-      }
-   }
-   else if (_mesa_is_depthstencil_format(internalFormat)) {
-      /* make sure we have depth/stencil buffers */
-      if (!ctx->ReadBuffer->_DepthBuffer || !ctx->ReadBuffer->_StencilBuffer) {
-         _mesa_error(ctx, GL_INVALID_OPERATION,
-                     "glCopyTexImage%dD(no depth/stencil buffer)", dimensions);
-         return GL_TRUE;
-      }
-   }
 
    /* if we get here, the parameters are OK */
    return GL_FALSE;
