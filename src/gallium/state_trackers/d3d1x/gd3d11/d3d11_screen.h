@@ -746,7 +746,7 @@ struct GalliumD3D11ScreenImpl : public GalliumD3D11Screen
 					box.z = slice;
 					box.width = u_minify(width, level);
 					box.height = u_minify(height, level);
-					box.depth = 1;
+					box.depth = u_minify(depth, level);
 					immediate_pipe->transfer_inline_write(immediate_pipe, resource, level, PIPE_TRANSFER_WRITE | PIPE_TRANSFER_DISCARD | PIPE_TRANSFER_UNSYNCHRONIZED, &box, initial_data->pSysMem, initial_data->SysMemPitch, initial_data->SysMemSlicePitch);
 					++initial_data;
 				}
