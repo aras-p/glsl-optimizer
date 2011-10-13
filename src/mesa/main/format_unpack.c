@@ -1415,37 +1415,26 @@ _mesa_unpack_float_z_row(gl_format format, GLuint n,
 typedef void (*unpack_uint_z_func)(const void *src, GLuint *dst);
 
 static void
-unpack_uint_z_Z24_S8(const void *src, GLuint *dst)
+unpack_uint_z_Z24_X8(const void *src, GLuint *dst)
 {
    /* only return Z, not stencil data */
    const GLuint s = *((const GLuint *) src);
-   *dst = (s >> 8);
-}
-
-static void
-unpack_uint_z_S8_Z24(const void *src, GLuint *dst)
-{
-   /* only return Z, not stencil data */
-   const GLuint s = *((const GLuint *) src);
-   *dst = s & 0x00ffffff;
-}
-
-static void
-unpack_uint_z_Z16(const void *src, GLuint *dst)
-{
-   *dst = *((const GLushort *) src);
+   *dst = (s & 0xffffff00) | (s >> 24);
 }
 
 static void
 unpack_uint_z_X8_Z24(const void *src, GLuint *dst)
 {
-   unpack_uint_z_S8_Z24(src, dst);
+   /* only return Z, not stencil data */
+   const GLuint s = *((const GLuint *) src);
+   *dst = (s << 8) | ((s >> 16) & 0xff);
 }
 
 static void
-unpack_uint_z_Z24_X8(const void *src, GLuint *dst)
+unpack_uint_z_Z16(const void *src, GLuint *dst)
 {
-   unpack_uint_z_Z24_S8(src, dst);
+   const GLushort s = *((const GLushort *)src);
+   *dst = (s << 16) | s;
 }
 
 static void
@@ -1466,19 +1455,15 @@ _mesa_unpack_uint_z_row(gl_format format, GLuint n,
 
    switch (format) {
    case MESA_FORMAT_Z24_S8:
-      unpack = unpack_uint_z_Z24_S8;
+   case MESA_FORMAT_Z24_X8:
+      unpack = unpack_uint_z_Z24_X8;
       break;
    case MESA_FORMAT_S8_Z24:
-      unpack = unpack_uint_z_S8_Z24;
-      break;
-   case MESA_FORMAT_Z16:
-      unpack = unpack_uint_z_Z16;
-      break;
    case MESA_FORMAT_X8_Z24:
       unpack = unpack_uint_z_X8_Z24;
       break;
-   case MESA_FORMAT_Z24_X8:
-      unpack = unpack_uint_z_Z24_X8;
+   case MESA_FORMAT_Z16:
+      unpack = unpack_uint_z_Z16;
       break;
    case MESA_FORMAT_Z32:
       unpack = unpack_uint_z_Z32;
