@@ -1311,9 +1311,6 @@ struct gl_sampler_object
 
    /* deprecated sampler state */
    GLenum DepthMode;		/**< GL_ARB_depth_texture */
-
-   /** Is the texture object complete with respect to this sampler? */
-   GLboolean _CompleteTexture;
 };
 
 
