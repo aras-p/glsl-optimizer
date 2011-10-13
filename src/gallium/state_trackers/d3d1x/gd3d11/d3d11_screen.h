@@ -1027,7 +1027,11 @@ struct GalliumD3D11ScreenImpl : public GalliumD3D11Screen
 		case D3D11_SRV_DIMENSION_TEXTURECUBE:
 			// yes, this works for all of these types
 			templat.u.tex.first_level = desc->Texture1D.MostDetailedMip;
-			templat.u.tex.last_level = templat.u.tex.first_level + desc->Texture1D.MipLevels - 1;
+			if(desc->Texture1D.MipLevels == (unsigned)-1)
+				templat.u.tex.last_level = templat.texture->last_level;
+			else
+				templat.u.tex.last_level = templat.u.tex.first_level + desc->Texture1D.MipLevels - 1;
+			assert(templat.u.tex.last_level >= templat.u.tex.first_level);
 			break;
 		case D3D11_SRV_DIMENSION_BUFFER:
 		case D3D11_SRV_DIMENSION_TEXTURE2DMS:
