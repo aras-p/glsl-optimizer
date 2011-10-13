@@ -33,6 +33,8 @@ LD = $(CXX)
 LDFLAGS += $(LLVM_LDFLAGS)
 USE_CXX=1
 DRIVER_LINKS += $(LLVM_LIBS) -lm -ldl
+else
+LDFLAGS += -lstdc++
 endif
 
 
