@@ -707,11 +707,13 @@ clip_span( struct gl_context *ctx, SWspan *span )
       const GLint n = span->end;
       GLubyte *mask = span->array->mask;
       GLint i;
+      GLuint passed = 0;
       if (span->arrayMask & SPAN_MASK) {
          /* note: using & intead of && to reduce branches */
          for (i = 0; i < n; i++) {
             mask[i] &= (x[i] >= xmin) & (x[i] < xmax)
                      & (y[i] >= ymin) & (y[i] < ymax);
+            passed += mask[i];
          }
       }
       else {
@@ -719,9 +721,10 @@ clip_span( struct gl_context *ctx, SWspan *span )
          for (i = 0; i < n; i++) {
             mask[i] = (x[i] >= xmin) & (x[i] < xmax)
                     & (y[i] >= ymin) & (y[i] < ymax);
+            passed += mask[i];
          }
       }
-      return GL_TRUE;  /* some pixels visible */
+      return passed > 0;
    }
    else {
       /* horizontal span of pixels */
