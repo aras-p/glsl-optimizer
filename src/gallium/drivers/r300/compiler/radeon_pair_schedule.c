@@ -511,6 +511,13 @@ static int merge_instructions(struct rc_pair_instruction * rgb, struct rc_pair_i
 		return 0;
 	}
 
+	/* Writing output registers in the middle of shaders is slow, so
+	 * we don't want to pair output writes with temp writes. */
+	if ((rgb->RGB.OutputWriteMask && !alpha->Alpha.OutputWriteMask)
+		|| (!rgb->RGB.OutputWriteMask && alpha->Alpha.OutputWriteMask)) {
+		return 0;
+	}
+
 	memcpy(&backup, rgb, sizeof(struct rc_pair_instruction));
 
 	if (destructive_merge_instructions(rgb, alpha))
