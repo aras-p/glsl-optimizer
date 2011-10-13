@@ -744,6 +744,16 @@ struct GalliumD3D11ScreenImpl : public GalliumD3D11Screen
 		else
 			templat.last_level = MAX2(MAX2(util_logbase2(templat.width0), util_logbase2(templat.height0)), util_logbase2(templat.depth0));
 		templat.format = dxgi_to_pipe_format[format];
+		if(bind_flags & D3D11_BIND_DEPTH_STENCIL) {
+			// colour formats are not depth-renderable, but depth/stencil-formats may be colour-renderable
+			switch(format)
+			{
+			case DXGI_FORMAT_R32_TYPELESS: templat.format = PIPE_FORMAT_Z32_FLOAT; break;
+			case DXGI_FORMAT_R16_TYPELESS: templat.format = PIPE_FORMAT_Z16_UNORM; break;
+			default:
+				break;
+			}
+		}
 		templat.bind = d3d11_to_pipe_bind_flags(bind_flags);
 		if(c_p_u_access_flags & D3D11_CPU_ACCESS_READ)
 			templat.bind |= PIPE_BIND_TRANSFER_READ;
