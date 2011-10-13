@@ -102,6 +102,11 @@ swrast_drawable(struct gl_framebuffer *fb)
 
 struct swrast_renderbuffer {
     struct gl_renderbuffer Base;
+    __DRIdrawable *dPriv;
+
+    /* GL_MAP_*_BIT, used for mapping of front buffer. */
+    GLbitfield map_mode;
+   int map_x, map_y, map_w, map_h;
 
     /* renderbuffer pitch (in bytes) */
     GLuint pitch;

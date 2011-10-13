@@ -291,7 +291,7 @@ swrast_alloc_front_storage(struct gl_context *ctx, struct gl_renderbuffer *rb,
     rb->Data = NULL;
     rb->Width = width;
     rb->Height = height;
-
+    rb->RowStride = width;
     xrb->pitch = bytes_per_line(width * xrb->bpp, 32);
 
     return GL_TRUE;
@@ -315,7 +315,8 @@ swrast_alloc_back_storage(struct gl_context *ctx, struct gl_renderbuffer *rb,
 }
 
 static struct swrast_renderbuffer *
-swrast_new_renderbuffer(const struct gl_config *visual, GLboolean front)
+swrast_new_renderbuffer(const struct gl_config *visual, __DRIdrawable *dPriv,
+			GLboolean front)
 {
     struct swrast_renderbuffer *xrb = calloc(1, sizeof *xrb);
     GLuint pixel_format;
@@ -329,6 +330,7 @@ swrast_new_renderbuffer(const struct gl_config *visual, GLboolean front)
 
     pixel_format = choose_pixel_format(visual);
 
+    xrb->dPriv = dPriv;
     xrb->Base.Delete = swrast_delete_renderbuffer;
     if (front) {
 	xrb->Base.AllocStorage = swrast_alloc_front_storage;
@@ -375,6 +377,78 @@ swrast_new_renderbuffer(const struct gl_config *visual, GLboolean front)
     return xrb;
 }
 
+static void
+swrast_map_renderbuffer(struct gl_context *ctx,
+			struct gl_renderbuffer *rb,
+			GLuint x, GLuint y, GLuint w, GLuint h,
+			GLbitfield mode,
+			GLubyte **out_map,
+			GLint *out_stride)
+{
+   struct swrast_renderbuffer *xrb = swrast_renderbuffer(rb);
+   GLubyte *map = rb->Data;
+   int cpp = _mesa_get_format_bytes(rb->Format);
+   int stride = rb->RowStride * cpp;
+
+   if (rb->AllocStorage == swrast_alloc_front_storage) {
+      __DRIdrawable *dPriv = xrb->dPriv;
+      __DRIscreen *sPriv = dPriv->driScreenPriv;
+
+      xrb->map_mode = mode;
+      xrb->map_x = x;
+      xrb->map_y = y;
+      xrb->map_w = w;
+      xrb->map_h = h;
+
+      stride = w * cpp;
+      rb->Data = malloc(h * stride);
+
+      sPriv->swrast_loader->getImage(dPriv, x, y, w, h,
+				     (char *)rb->Data,
+				     dPriv->loaderPrivate);
+
+      *out_map = rb->Data;
+      *out_stride = stride;
+      return;
+   }
+
+   ASSERT(rb->Data);
+
+   if (rb->AllocStorage == swrast_alloc_back_storage) {
+      map += (rb->Height - 1) * stride;
+      stride = -stride;
+   }
+
+   map += y * stride;
+   map += x * cpp;
+
+   *out_map = map;
+   *out_stride = stride;
+}
+
+static void
+swrast_unmap_renderbuffer(struct gl_context *ctx,
+			  struct gl_renderbuffer *rb)
+{
+   struct swrast_renderbuffer *xrb = swrast_renderbuffer(rb);
+
+   if (rb->AllocStorage == swrast_alloc_front_storage) {
+      __DRIdrawable *dPriv = xrb->dPriv;
+      __DRIscreen *sPriv = dPriv->driScreenPriv;
+
+      if (xrb->map_mode & GL_MAP_WRITE_BIT) {
+	 sPriv->swrast_loader->putImage(dPriv, __DRI_SWRAST_IMAGE_OP_DRAW,
+					xrb->map_x, xrb->map_y,
+					xrb->map_w, xrb->map_h,
+					rb->Data,
+					dPriv->loaderPrivate);
+      }
+
+      free(rb->Data);
+      rb->Data = NULL;
+   }
+}
+
 static GLboolean
 dri_create_buffer(__DRIscreen * sPriv,
 		  __DRIdrawable * dPriv,
@@ -406,12 +480,12 @@ dri_create_buffer(__DRIscreen * sPriv,
     _mesa_initialize_window_framebuffer(fb, visual);
 
     /* add front renderbuffer */
-    frontrb = swrast_new_renderbuffer(visual, GL_TRUE);
+    frontrb = swrast_new_renderbuffer(visual, dPriv, GL_TRUE);
     _mesa_add_renderbuffer(fb, BUFFER_FRONT_LEFT, &frontrb->Base);
 
     /* add back renderbuffer */
     if (visual->doubleBufferMode) {
-	backrb = swrast_new_renderbuffer(visual, GL_FALSE);
+	backrb = swrast_new_renderbuffer(visual, dPriv, GL_FALSE);
 	_mesa_add_renderbuffer(fb, BUFFER_BACK_LEFT, &backrb->Base);
     }
 
@@ -576,6 +650,8 @@ swrast_init_driver_functions(struct dd_function_table *driver)
     driver->GetBufferSize = NULL;
     driver->Viewport = viewport;
     driver->ChooseTextureFormat = swrastChooseTextureFormat;
+    driver->MapRenderbuffer = swrast_map_renderbuffer;
+    driver->UnmapRenderbuffer = swrast_unmap_renderbuffer;
 }
 
 static const char *es2_extensions[] = {
