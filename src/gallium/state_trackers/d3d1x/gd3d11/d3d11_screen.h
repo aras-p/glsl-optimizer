@@ -641,23 +641,60 @@ struct GalliumD3D11ScreenImpl : public GalliumD3D11Screen
 
 		struct pipe_vertex_element elements[D3D11_IA_VERTEX_INPUT_STRUCTURE_ELEMENT_COUNT];
 
-		unsigned num_params_to_use = std::min(num_params, (unsigned)D3D11_IA_VERTEX_INPUT_STRUCTURE_ELEMENT_COUNT);
-		for(unsigned i = 0; i < num_params_to_use; ++i)
-		{
-			int idx = -1;
-			semantic_to_idx_map_t::iterator iter = semantic_to_idx_map.find(std::make_pair(c_string(params[i].SemanticName), params[i].SemanticIndex));
-			if(iter != semantic_to_idx_map.end())
-				idx = iter->second;
+		enum pipe_format formats[D3D11_IA_VERTEX_INPUT_STRUCTURE_ELEMENT_COUNT];
+		unsigned offsets[D3D11_IA_VERTEX_INPUT_STRUCTURE_ELEMENT_COUNT];
 
-			// TODO: I kind of doubt Gallium drivers will like null elements; should we do something about it, either here, in the interface, or in the drivers?
-			// TODO: also, in which cases should we return errors? (i.e. duplicate semantics in vs, duplicate semantics in layout, unmatched semantic in vs, unmatched semantic in layout)
-			memset(&elements[i], 0, sizeof(elements[i]));
-			if(idx >= 0)
+		offsets[0] = 0;
+		for(unsigned i = 0; i < count; ++i)
+		{
+			formats[i] = dxgi_to_pipe_format[input_element_descs[i].Format];
+
+			if(likely(input_element_descs[i].AlignedByteOffset != D3D11_APPEND_ALIGNED_ELEMENT))
 			{
-				elements[i].src_format = dxgi_to_pipe_format[input_element_descs[idx].Format];
-				elements[i].src_offset = input_element_descs[idx].AlignedByteOffset;
-				elements[i].vertex_buffer_index = input_element_descs[idx].InputSlot;
-				elements[i].instance_divisor = input_element_descs[idx].InstanceDataStepRate;
+				offsets[i] = input_element_descs[i].AlignedByteOffset;
+			}
+			else if(i > 0)
+			{
+				unsigned align_mask = util_format_description(formats[i])->channel[0].size;
+				if(align_mask & 7) // e.g. R10G10B10A2
+					align_mask = 32;
+				align_mask = (align_mask / 8) - 1;
+
+				offsets[i] = (offsets[i - 1] + util_format_get_blocksize(formats[i - 1]) + align_mask) & ~align_mask;
+			}
+		}
+
+		// TODO: check for & report errors (e.g. ambiguous layouts, unmatched semantics)
+
+		unsigned num_params_to_use = 0;
+		for(unsigned i = 0; i < num_params && num_params_to_use < D3D11_IA_VERTEX_INPUT_STRUCTURE_ELEMENT_COUNT; ++i)
+		{
+			if(!strcasecmp(params[i].SemanticName, "SV_INSTANCEID") ||
+			   !strcasecmp(params[i].SemanticName, "SV_VERTEXID"))
+				continue;
+			const unsigned n = num_params_to_use++;
+
+			semantic_to_idx_map_t::iterator iter = semantic_to_idx_map.find(std::make_pair(c_string(params[i].SemanticName), params[i].SemanticIndex));
+
+			if(iter != semantic_to_idx_map.end())
+			{
+				unsigned idx = iter->second;
+
+				elements[n].src_format = formats[idx];
+				elements[n].src_offset = offsets[idx];
+				elements[n].vertex_buffer_index = input_element_descs[idx].InputSlot;
+				elements[n].instance_divisor = input_element_descs[idx].InstanceDataStepRate;
+				if (input_element_descs[idx].InputSlotClass == D3D11_INPUT_PER_INSTANCE_DATA)
+					if (elements[n].instance_divisor == 0)
+						elements[n].instance_divisor = ~0; // XXX: can't specify 'never' to gallium
+			}
+			else
+			{
+				// XXX: undefined input, is this valid or should we return an error ?
+				elements[n].src_format = PIPE_FORMAT_NONE;
+				elements[n].src_offset = 0;
+				elements[n].vertex_buffer_index = 0;
+				elements[n].instance_divisor = 0;
 			}
 		}
 
