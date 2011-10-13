@@ -185,91 +185,6 @@ read_stencil_pixels( struct gl_context *ctx,
    ctx->Driver.UnmapRenderbuffer(ctx, rb);
 }
 
-
-
-/**
- * Optimized glReadPixels for particular pixel formats when pixel
- * scaling, biasing, mapping, etc. are disabled.
- * \return GL_TRUE if success, GL_FALSE if unable to do the readpixels
- */
-static GLboolean
-fast_read_rgba_pixels( struct gl_context *ctx,
-                       GLint x, GLint y,
-                       GLsizei width, GLsizei height,
-                       GLenum format, GLenum type,
-                       GLvoid *pixels,
-                       const struct gl_pixelstore_attrib *packing,
-                       GLbitfield transferOps)
-{
-   struct gl_renderbuffer *rb = ctx->ReadBuffer->_ColorReadBuffer;
-
-   if (!rb)
-      return GL_FALSE;
-
-   ASSERT(rb->_BaseFormat == GL_RGBA ||
-	  rb->_BaseFormat == GL_RGB ||
-	  rb->_BaseFormat == GL_RG ||
-	  rb->_BaseFormat == GL_RED ||
-	  rb->_BaseFormat == GL_LUMINANCE ||
-	  rb->_BaseFormat == GL_INTENSITY ||
-	  rb->_BaseFormat == GL_LUMINANCE_ALPHA ||
-	  rb->_BaseFormat == GL_ALPHA);
-
-   /* clipping should have already been done */
-   ASSERT(x + width <= (GLint) rb->Width);
-   ASSERT(y + height <= (GLint) rb->Height);
-
-   /* check for things we can't handle here */
-   if (transferOps ||
-       packing->SwapBytes ||
-       packing->LsbFirst) {
-      return GL_FALSE;
-   }
-
-   if (format == GL_RGBA && rb->DataType == type) {
-      const GLint dstStride = _mesa_image_row_stride(packing, width,
-                                                     format, type);
-      GLubyte *dest
-         = (GLubyte *) _mesa_image_address2d(packing, pixels, width, height,
-                                             format, type, 0, 0);
-      GLint row;
-      ASSERT(rb->GetRow);
-      for (row = 0; row < height; row++) {
-         rb->GetRow(ctx, rb, width, x, y + row, dest);
-         dest += dstStride;
-      }
-      return GL_TRUE;
-   }
-
-   if (format == GL_RGB &&
-       rb->DataType == GL_UNSIGNED_BYTE &&
-       type == GL_UNSIGNED_BYTE) {
-      const GLint dstStride = _mesa_image_row_stride(packing, width,
-                                                     format, type);
-      GLubyte *dest
-         = (GLubyte *) _mesa_image_address2d(packing, pixels, width, height,
-                                             format, type, 0, 0);
-      GLint row;
-      ASSERT(rb->GetRow);
-      for (row = 0; row < height; row++) {
-         GLubyte tempRow[MAX_WIDTH][4];
-         GLint col;
-         rb->GetRow(ctx, rb, width, x, y + row, tempRow);
-         /* convert RGBA to RGB */
-         for (col = 0; col < width; col++) {
-            dest[col * 3 + 0] = tempRow[col][0];
-            dest[col * 3 + 1] = tempRow[col][1];
-            dest[col * 3 + 2] = tempRow[col][2];
-         }
-         dest += dstStride;
-      }
-      return GL_TRUE;
-   }
-
-   /* not handled */
-   return GL_FALSE;
-}
-
 static GLboolean
 fast_read_rgba_pixels_memcpy( struct gl_context *ctx,
 			      GLint x, GLint y,
@@ -374,11 +289,6 @@ read_rgba_pixels( struct gl_context *ctx,
       if (fast_read_rgba_pixels_memcpy(ctx, x, y, width, height,
 				       format, type, pixels, packing,
 				       transferOps)) {
-	 return;
-      }
-
-      if (fast_read_rgba_pixels(ctx, x, y, width, height,
-				format, type, pixels, packing, transferOps)) {
 	 return;
       }
    }
