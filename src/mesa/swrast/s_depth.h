@@ -48,11 +48,6 @@ extern void
 _swrast_read_depth_span_float( struct gl_context *ctx, struct gl_renderbuffer *rb,
                                GLint n, GLint x, GLint y, GLfloat depth[] );
 
-
-extern void
-_swrast_read_depth_span_uint( struct gl_context *ctx, struct gl_renderbuffer *rb,
-                              GLint n, GLint x, GLint y, GLuint depth[] );
-
 extern void
 _swrast_clear_depth_buffer( struct gl_context *ctx, struct gl_renderbuffer *rb );
 
