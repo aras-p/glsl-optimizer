@@ -952,13 +952,21 @@ CodeEmitterNVC0::emitTEX(const TexInstruction *i)
    case OP_TEX: code[1] = 0x80000000; break;
    case OP_TXB: code[1] = 0x84000000; break;
    case OP_TXL: code[1] = 0x86000000; break;
-   case OP_TXF: code[1] = 0x92000000; break;
+   case OP_TXF: code[1] = 0x90000000; break;
    case OP_TXG: code[1] = 0xa0000000; break;
    case OP_TXD: code[1] = 0xe0000000; break;
    default:
       assert(!"invalid texture op");
       break;
    }
+   if (i->op == OP_TXF) {
+      if (!i->tex.levelZero)
+         code[1] |= 0x02000000;
+   } else
+   if (i->tex.levelZero) {
+      code[1] |= 0x02000000;
+   }
+
    defId(i->def[0], 14);
    srcId(i->src[0], 20);
 
