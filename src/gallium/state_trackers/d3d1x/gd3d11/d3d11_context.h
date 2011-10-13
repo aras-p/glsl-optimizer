@@ -1667,7 +1667,8 @@ changed:
 			pipe->bind_stream_output_state(pipe, 0);
 		if(pipe->render_condition)
 			pipe->render_condition(pipe, 0, 0);
-		util_gen_mipmap(gen_mipmap, view->object, 0, 0, view->object->texture->last_level, PIPE_TEX_FILTER_LINEAR);
+		for(unsigned layer = view->object->u.tex.first_layer; layer <= view->object->u.tex.last_layer; ++layer)
+			util_gen_mipmap(gen_mipmap, view->object, layer, view->object->u.tex.first_level, view->object->u.tex.last_level, PIPE_TEX_FILTER_LINEAR);
 		restore_gallium_state_blit_only();
 	}
 

@@ -689,15 +689,17 @@ struct GalliumD3D11ScreenImpl : public GalliumD3D11Screen
 			if(target != PIPE_TEXTURE_2D)
 				return E_INVALIDARG;
 			target = PIPE_TEXTURE_CUBE;
-
-			if(array_size != 6)
-				return E_NOTIMPL;
+			if(array_size % 6)
+				return E_INVALIDARG;
 		}
-		else
+		else if(array_size > 1)
 		{
-			if(array_size > 1)
-				return E_NOTIMPL;
-			array_size = 1;
+			switch (target) {
+			case PIPE_TEXTURE_1D: target = PIPE_TEXTURE_1D_ARRAY; break;
+			case PIPE_TEXTURE_2D: target = PIPE_TEXTURE_2D_ARRAY; break;
+			default:
+				return E_INVALIDARG;
+			}
 		}
 		/* TODO: msaa */
 		struct pipe_resource templat;
@@ -706,6 +708,7 @@ struct GalliumD3D11ScreenImpl : public GalliumD3D11Screen
 		templat.width0 = width;
 		templat.height0 = height;
 		templat.depth0 = depth;
+		templat.array_size = array_size;
 		if(mip_levels)
 			templat.last_level = mip_levels - 1;
 		else
@@ -956,17 +959,35 @@ struct GalliumD3D11ScreenImpl : public GalliumD3D11Screen
 				def_desc.ViewDimension = D3D11_SRV_DIMENSION_TEXTURE1D;
 				def_desc.Texture1D.MipLevels = resource->last_level + 1;
 				break;
+			case PIPE_TEXTURE_1D_ARRAY:
+				def_desc.ViewDimension = D3D11_SRV_DIMENSION_TEXTURE1DARRAY;
+				def_desc.Texture1DArray.MipLevels = resource->last_level + 1;
+				def_desc.Texture1DArray.ArraySize = resource->array_size;
+				break;
 			case PIPE_TEXTURE_2D:
 			case PIPE_TEXTURE_RECT:
 				def_desc.ViewDimension = D3D11_SRV_DIMENSION_TEXTURE2D;
 				def_desc.Texture2D.MipLevels = resource->last_level + 1;
+				break;
+			case PIPE_TEXTURE_2D_ARRAY:
+				def_desc.ViewDimension = D3D11_SRV_DIMENSION_TEXTURE2DARRAY;
+				def_desc.Texture2DArray.MipLevels = resource->last_level + 1;
+				def_desc.Texture2DArray.ArraySize = resource->array_size;
 				break;
 			case PIPE_TEXTURE_3D:
 				def_desc.ViewDimension = D3D11_SRV_DIMENSION_TEXTURE3D;
 				def_desc.Texture3D.MipLevels = resource->last_level + 1;
 				break;
 			case PIPE_TEXTURE_CUBE:
-				def_desc.ViewDimension = D3D11_SRV_DIMENSION_TEXTURECUBE;
+				if(resource->array_size > 6)
+				{
+					def_desc.ViewDimension = D3D11_SRV_DIMENSION_TEXTURECUBEARRAY;
+					def_desc.TextureCubeArray.NumCubes = resource->array_size / 6;
+				}
+				else
+				{
+					def_desc.ViewDimension = D3D11_SRV_DIMENSION_TEXTURECUBE;
+				}
 				def_desc.TextureCube.MipLevels = resource->last_level + 1;
 				break;
 			default:
@@ -990,12 +1011,21 @@ struct GalliumD3D11ScreenImpl : public GalliumD3D11Screen
 		templat.texture = ((GalliumD3D11Resource<>*)iresource)->resource;
 		switch(desc->ViewDimension)
 		{
+		case D3D11_SRV_DIMENSION_TEXTURE1DARRAY:
+		case D3D11_SRV_DIMENSION_TEXTURE2DARRAY:
+		case D3D11_SRV_DIMENSION_TEXTURECUBEARRAY:
+			templat.u.tex.first_layer = desc->Texture1DArray.FirstArraySlice;
+			templat.u.tex.last_layer = desc->Texture1DArray.FirstArraySlice + desc->Texture1DArray.ArraySize - 1;
+			if (desc->ViewDimension == D3D11_SRV_DIMENSION_TEXTURECUBEARRAY) {
+				templat.u.tex.first_layer *= 6;
+				templat.u.tex.last_layer *= 6;
+			}
+			// fall through
 		case D3D11_SRV_DIMENSION_TEXTURE1D:
 		case D3D11_SRV_DIMENSION_TEXTURE2D:
 		case D3D11_SRV_DIMENSION_TEXTURE3D:
-		case D3D11_SRV_DIMENSION_TEXTURE1DARRAY:
-		case D3D11_SRV_DIMENSION_TEXTURE2DARRAY:
-			/* yes, this works for all of these types (but TODO: texture arrays) */
+		case D3D11_SRV_DIMENSION_TEXTURECUBE:
+			// yes, this works for all of these types
 			templat.u.tex.first_level = desc->Texture1D.MostDetailedMip;
 			templat.u.tex.last_level = templat.u.tex.first_level + desc->Texture1D.MipLevels - 1;
 			break;
@@ -1054,9 +1084,17 @@ struct GalliumD3D11ScreenImpl : public GalliumD3D11Screen
 			case PIPE_TEXTURE_1D:
 				def_desc.ViewDimension = D3D11_RTV_DIMENSION_TEXTURE1D;
 				break;
+			case PIPE_TEXTURE_1D_ARRAY:
+				def_desc.ViewDimension = D3D11_RTV_DIMENSION_TEXTURE1DARRAY;
+				def_desc.Texture1DArray.ArraySize = resource->array_size;
+				break;
 			case PIPE_TEXTURE_2D:
 			case PIPE_TEXTURE_RECT:
 				def_desc.ViewDimension = D3D11_RTV_DIMENSION_TEXTURE2D;
+				break;
+			case PIPE_TEXTURE_2D_ARRAY:
+				def_desc.ViewDimension = D3D11_RTV_DIMENSION_TEXTURE2DARRAY;
+				def_desc.Texture2DArray.ArraySize = resource->array_size;
 				break;
 			case PIPE_TEXTURE_3D:
 				def_desc.ViewDimension = D3D11_RTV_DIMENSION_TEXTURE3D;
@@ -1091,15 +1129,13 @@ struct GalliumD3D11ScreenImpl : public GalliumD3D11Screen
 		case D3D11_RTV_DIMENSION_TEXTURE3D:
 			templat.u.tex.level = desc->Texture3D.MipSlice;
 			templat.u.tex.first_layer = desc->Texture3D.FirstWSlice;
-			/* XXX FIXME */
-			templat.u.tex.last_layer = desc->Texture3D.FirstWSlice;
+			templat.u.tex.last_layer = desc->Texture3D.FirstWSlice + desc->Texture3D.WSize - 1;
 			break;
 		case D3D11_RTV_DIMENSION_TEXTURE1DARRAY:
 		case D3D11_RTV_DIMENSION_TEXTURE2DARRAY:
 			templat.u.tex.level = desc->Texture1DArray.MipSlice;
 			templat.u.tex.first_layer = desc->Texture1DArray.FirstArraySlice;
-			/* XXX FIXME */
-			templat.u.tex.last_layer = desc->Texture1DArray.FirstArraySlice;
+			templat.u.tex.last_layer = desc->Texture1DArray.FirstArraySlice + desc->Texture1DArray.ArraySize - 1;
 			break;
 		case D3D11_RTV_DIMENSION_BUFFER:
 		case D3D11_RTV_DIMENSION_TEXTURE2DMS:
@@ -1138,9 +1174,17 @@ struct GalliumD3D11ScreenImpl : public GalliumD3D11Screen
 			case PIPE_TEXTURE_1D:
 				def_desc.ViewDimension = D3D11_DSV_DIMENSION_TEXTURE1D;
 				break;
+			case PIPE_TEXTURE_1D_ARRAY:
+				def_desc.ViewDimension = D3D11_DSV_DIMENSION_TEXTURE1DARRAY;
+				def_desc.Texture1DArray.ArraySize = resource->array_size;
+				break;
 			case PIPE_TEXTURE_2D:
 			case PIPE_TEXTURE_RECT:
 				def_desc.ViewDimension = D3D11_DSV_DIMENSION_TEXTURE2D;
+				break;
+			case PIPE_TEXTURE_2D_ARRAY:
+				def_desc.ViewDimension = D3D11_DSV_DIMENSION_TEXTURE2DARRAY;
+				def_desc.Texture2DArray.ArraySize = resource->array_size;
 				break;
 			case PIPE_TEXTURE_CUBE:
 				def_desc.ViewDimension = D3D11_DSV_DIMENSION_TEXTURE2DARRAY;
@@ -1172,8 +1216,7 @@ struct GalliumD3D11ScreenImpl : public GalliumD3D11Screen
 		case D3D11_DSV_DIMENSION_TEXTURE2DARRAY:
 			templat.u.tex.level = desc->Texture1DArray.MipSlice;
 			templat.u.tex.first_layer = desc->Texture1DArray.FirstArraySlice;
-			/* XXX FIXME */
-			templat.u.tex.last_layer = desc->Texture1DArray.FirstArraySlice;
+			templat.u.tex.last_layer = desc->Texture1DArray.FirstArraySlice + desc->Texture1DArray.ArraySize - 1;
 			break;
 		case D3D11_DSV_DIMENSION_TEXTURE2DMS:
 		case D3D11_DSV_DIMENSION_TEXTURE2DMSARRAY:

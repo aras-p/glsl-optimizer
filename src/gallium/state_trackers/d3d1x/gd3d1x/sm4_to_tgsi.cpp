@@ -720,9 +720,17 @@ next:;
 					targets[idx].first = TGSI_TEXTURE_1D;
 					targets[idx].second = TGSI_TEXTURE_SHADOW1D;
 					break;
+				case SM4_TARGET_TEXTURE1DARRAY:
+					targets[idx].first = TGSI_TEXTURE_1D_ARRAY;
+					targets[idx].second = TGSI_TEXTURE_SHADOW1D_ARRAY;
+					break;
 				case SM4_TARGET_TEXTURE2D:
 					targets[idx].first = TGSI_TEXTURE_2D;
 					targets[idx].second = TGSI_TEXTURE_SHADOW2D;
+					break;
+				case SM4_TARGET_TEXTURE2DARRAY:
+					targets[idx].first = TGSI_TEXTURE_2D_ARRAY;
+					targets[idx].second = TGSI_TEXTURE_SHADOW2D_ARRAY;
 					break;
 				case SM4_TARGET_TEXTURE3D:
 					targets[idx].first = TGSI_TEXTURE_3D;
