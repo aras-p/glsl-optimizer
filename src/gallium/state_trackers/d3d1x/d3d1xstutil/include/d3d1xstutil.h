@@ -982,7 +982,7 @@ struct GalliumMultiPrivateDataComObject : public GalliumMultiComObject<BaseClass
 	}
 };
 
-#define DXGI_FORMAT_COUNT 100
+#define DXGI_FORMAT_COUNT 116
 extern pipe_format dxgi_to_pipe_format[DXGI_FORMAT_COUNT];
 extern DXGI_FORMAT pipe_to_dxgi_format[PIPE_FORMAT_COUNT];
 
