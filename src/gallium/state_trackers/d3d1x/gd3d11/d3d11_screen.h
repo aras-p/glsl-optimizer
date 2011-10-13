@@ -391,27 +391,29 @@ struct GalliumD3D11ScreenImpl : public GalliumD3D11Screen
 	template<typename T, typename U>
 	bool convert_blend_state(T& to, const U& from, unsigned BlendEnable, unsigned RenderTargetWriteMask)
 	{
-		if(invalid(0
-			|| from.SrcBlend >= D3D11_BLEND_COUNT
-			|| from.SrcBlendAlpha >= D3D11_BLEND_COUNT
-			|| from.DestBlend >= D3D11_BLEND_COUNT
-			|| from.DestBlendAlpha >= D3D11_BLEND_COUNT
-			|| from.BlendOp >= 6
-			|| from.BlendOpAlpha >= 6
-			|| !from.BlendOp
-			|| !from.BlendOpAlpha
-		))
+		if(unlikely(BlendEnable &&
+			    (from.SrcBlend >= D3D11_BLEND_COUNT ||
+			     from.SrcBlendAlpha >= D3D11_BLEND_COUNT ||
+			     from.DestBlend >= D3D11_BLEND_COUNT ||
+			     from.DestBlendAlpha >= D3D11_BLEND_COUNT ||
+			     from.BlendOp >= 6 ||
+			     from.BlendOp == 0 ||
+			     from.BlendOpAlpha >= 6 ||
+			     from.BlendOpAlpha == 0)))
 			return false;
 
 		to.blend_enable = BlendEnable;
 
-		to.rgb_func = from.BlendOp - 1;
-		to.alpha_func = from.BlendOpAlpha - 1;
+		if(BlendEnable)
+		{
+			to.rgb_func = from.BlendOp - 1;
+			to.alpha_func = from.BlendOpAlpha - 1;
 
-		to.rgb_src_factor = d3d11_to_pipe_blend[from.SrcBlend];
-		to.alpha_src_factor = d3d11_to_pipe_blend[from.SrcBlendAlpha];
-		to.rgb_dst_factor = d3d11_to_pipe_blend[from.DestBlend];
-		to.alpha_dst_factor = d3d11_to_pipe_blend[from.DestBlendAlpha];
+			to.rgb_src_factor = d3d11_to_pipe_blend[from.SrcBlend];
+			to.alpha_src_factor = d3d11_to_pipe_blend[from.SrcBlendAlpha];
+			to.rgb_dst_factor = d3d11_to_pipe_blend[from.DestBlend];
+			to.alpha_dst_factor = d3d11_to_pipe_blend[from.DestBlendAlpha];
+		}
 
 		to.colormask = RenderTargetWriteMask & 0xf;
 		return true;
@@ -435,8 +437,10 @@ struct GalliumD3D11ScreenImpl : public GalliumD3D11Screen
 		memset(&state, 0, sizeof(state));
 		state.alpha_to_coverage = !!blend_state_desc->AlphaToCoverageEnable;
 		state.independent_blend_enable = !!blend_state_desc->IndependentBlendEnable;
+
 		assert(PIPE_MAX_COLOR_BUFS >= 8);
-		for(unsigned i = 0; i < 8; ++i)
+		const unsigned n = blend_state_desc->IndependentBlendEnable ? 8 : 1;
+		for(unsigned i = 0; i < n; ++i)
 		{
 			 if(!convert_blend_state(
 					 state.rt[i],
@@ -506,23 +510,41 @@ struct GalliumD3D11ScreenImpl : public GalliumD3D11Screen
 
 		pipe_depth_stencil_alpha_state state;
 		memset(&state, 0, sizeof(state));
+
 		state.depth.enabled = !!depth_stencil_state_desc->DepthEnable;
-		state.depth.writemask = depth_stencil_state_desc->DepthWriteMask;
-		state.depth.func = depth_stencil_state_desc->DepthFunc - 1;
+		if(depth_stencil_state_desc->DepthEnable)
+		{
+			if(depth_stencil_state_desc->DepthFunc == 0 ||
+			   depth_stencil_state_desc->DepthFunc >= 9)
+				return E_INVALIDARG;
+			state.depth.writemask = depth_stencil_state_desc->DepthWriteMask;
+			state.depth.func = depth_stencil_state_desc->DepthFunc - 1;
+		}
+
 		state.stencil[0].enabled = !!depth_stencil_state_desc->StencilEnable;
-		state.stencil[0].writemask = depth_stencil_state_desc->StencilWriteMask;
-		state.stencil[0].valuemask = depth_stencil_state_desc->StencilReadMask;
-		state.stencil[0].zpass_op = d3d11_to_pipe_stencil_op[depth_stencil_state_desc->FrontFace.StencilPassOp];
-		state.stencil[0].fail_op = d3d11_to_pipe_stencil_op[depth_stencil_state_desc->FrontFace.StencilFailOp];
-		state.stencil[0].zfail_op = d3d11_to_pipe_stencil_op[depth_stencil_state_desc->FrontFace.StencilDepthFailOp];
-		state.stencil[0].func = depth_stencil_state_desc->FrontFace.StencilFunc - 1;
-		state.stencil[1].enabled = !!depth_stencil_state_desc->StencilEnable;
-		state.stencil[1].writemask = depth_stencil_state_desc->StencilWriteMask;
-		state.stencil[1].valuemask = depth_stencil_state_desc->StencilReadMask;
-		state.stencil[1].zpass_op = d3d11_to_pipe_stencil_op[depth_stencil_state_desc->BackFace.StencilPassOp];
-		state.stencil[1].fail_op = d3d11_to_pipe_stencil_op[depth_stencil_state_desc->BackFace.StencilFailOp];
-		state.stencil[1].zfail_op = d3d11_to_pipe_stencil_op[depth_stencil_state_desc->BackFace.StencilDepthFailOp];
-		state.stencil[1].func = depth_stencil_state_desc->BackFace.StencilFunc - 1;
+		if(depth_stencil_state_desc->StencilEnable)
+		{
+			if(depth_stencil_state_desc->FrontFace.StencilPassOp >= D3D11_STENCIL_OP_COUNT ||
+			   depth_stencil_state_desc->FrontFace.StencilFailOp >= D3D11_STENCIL_OP_COUNT ||
+			   depth_stencil_state_desc->FrontFace.StencilDepthFailOp >= D3D11_STENCIL_OP_COUNT ||
+			   depth_stencil_state_desc->BackFace.StencilPassOp >= D3D11_STENCIL_OP_COUNT ||
+			   depth_stencil_state_desc->BackFace.StencilFailOp >= D3D11_STENCIL_OP_COUNT ||
+			   depth_stencil_state_desc->BackFace.StencilDepthFailOp >= D3D11_STENCIL_OP_COUNT)
+				return E_INVALIDARG;
+			state.stencil[0].writemask = depth_stencil_state_desc->StencilWriteMask;
+			state.stencil[0].valuemask = depth_stencil_state_desc->StencilReadMask;
+			state.stencil[0].zpass_op = d3d11_to_pipe_stencil_op[depth_stencil_state_desc->FrontFace.StencilPassOp];
+			state.stencil[0].fail_op = d3d11_to_pipe_stencil_op[depth_stencil_state_desc->FrontFace.StencilFailOp];
+			state.stencil[0].zfail_op = d3d11_to_pipe_stencil_op[depth_stencil_state_desc->FrontFace.StencilDepthFailOp];
+			state.stencil[0].func = depth_stencil_state_desc->FrontFace.StencilFunc - 1;
+			state.stencil[1].enabled = !!depth_stencil_state_desc->StencilEnable;
+			state.stencil[1].writemask = depth_stencil_state_desc->StencilWriteMask;
+			state.stencil[1].valuemask = depth_stencil_state_desc->StencilReadMask;
+			state.stencil[1].zpass_op = d3d11_to_pipe_stencil_op[depth_stencil_state_desc->BackFace.StencilPassOp];
+			state.stencil[1].fail_op = d3d11_to_pipe_stencil_op[depth_stencil_state_desc->BackFace.StencilFailOp];
+			state.stencil[1].zfail_op = d3d11_to_pipe_stencil_op[depth_stencil_state_desc->BackFace.StencilDepthFailOp];
+			state.stencil[1].func = depth_stencil_state_desc->BackFace.StencilFunc - 1;
+		}
 
 		if(!depth_stencil_state)
 			return S_FALSE;
