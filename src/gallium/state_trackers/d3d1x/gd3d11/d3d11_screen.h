@@ -1112,6 +1112,9 @@ struct GalliumD3D11ScreenImpl : public GalliumD3D11Screen
 			assert(templat.u.tex.last_level >= templat.u.tex.first_level);
 			break;
 		case D3D11_SRV_DIMENSION_BUFFER:
+			templat.u.buf.first_element = desc->Buffer.ElementOffset;
+			templat.u.buf.last_element = desc->Buffer.ElementOffset + desc->Buffer.ElementWidth - 1;
+			break;
 		case D3D11_SRV_DIMENSION_TEXTURE2DMS:
 		case D3D11_SRV_DIMENSION_TEXTURE2DMSARRAY:
 			return E_NOTIMPL;
@@ -1221,6 +1224,9 @@ struct GalliumD3D11ScreenImpl : public GalliumD3D11Screen
 			templat.u.tex.last_layer = desc->Texture1DArray.FirstArraySlice + desc->Texture1DArray.ArraySize - 1;
 			break;
 		case D3D11_RTV_DIMENSION_BUFFER:
+			templat.u.buf.first_element = desc->Buffer.ElementOffset;
+			templat.u.buf.last_element = desc->Buffer.ElementOffset + desc->Buffer.ElementWidth - 1;
+			break;
 		case D3D11_RTV_DIMENSION_TEXTURE2DMS:
 		case D3D11_RTV_DIMENSION_TEXTURE2DMSARRAY:
 			return E_NOTIMPL;
