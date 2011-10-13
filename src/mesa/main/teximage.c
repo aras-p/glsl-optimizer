@@ -1893,7 +1893,7 @@ copytexture_error_check( struct gl_context *ctx, GLuint dimensions,
    const GLenum proxyTarget = get_proxy_target(target);
    const GLenum type = GL_FLOAT;
    GLboolean sizeOK;
-   GLint format;
+   GLint baseFormat;
 
    /* check target */
    if (!legal_texsubimage_target(ctx, dimensions, target)) {
@@ -1928,14 +1928,14 @@ copytexture_error_check( struct gl_context *ctx, GLuint dimensions,
       return GL_TRUE;
    }
 
-   format = _mesa_base_tex_format(ctx, internalFormat);
-   if (format < 0) {
+   baseFormat = _mesa_base_tex_format(ctx, internalFormat);
+   if (baseFormat < 0) {
       _mesa_error(ctx, GL_INVALID_VALUE,
                   "glCopyTexImage%dD(internalFormat)", dimensions);
       return GL_TRUE;
    }
 
-   if (!_mesa_source_buffer_exists(ctx, format)) {
+   if (!_mesa_source_buffer_exists(ctx, baseFormat)) {
       _mesa_error(ctx, GL_INVALID_OPERATION,
                   "glCopyTexImage%dD(missing readbuffer)", dimensions);
       return GL_TRUE;
@@ -1946,7 +1946,7 @@ copytexture_error_check( struct gl_context *ctx, GLuint dimensions,
       ? (width == height) : 1;
 
    sizeOK = sizeOK && ctx->Driver.TestProxyTexImage(ctx, proxyTarget, level,
-                                                    internalFormat, format,
+                                                    internalFormat, baseFormat,
                                                     type, width, height,
                                                     1, border);
 
