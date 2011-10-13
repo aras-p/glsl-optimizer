@@ -103,48 +103,55 @@ pipe_LIBS += $(TOP)/src/gallium/drivers/llvmpipe/libllvmpipe.a
 endif
 
 # determine the targets/sources
-pipe_TARGETS =
+_pipe_TARGETS_CC =
+_pipe_TARGETS_CXX =
 pipe_SOURCES =
 
 ifneq ($(findstring i915/drm,$(GALLIUM_WINSYS_DIRS)),)
-pipe_TARGETS += $(PIPE_PREFIX)i915.so
+_pipe_TARGETS_CC += $(PIPE_PREFIX)i915.so
 pipe_SOURCES += pipe_i915.c
 endif
 
 ifneq ($(findstring i965/drm,$(GALLIUM_WINSYS_DIRS)),)
-pipe_TARGETS += $(PIPE_PREFIX)i965.so
+_pipe_TARGETS_CC += $(PIPE_PREFIX)i965.so
 pipe_SOURCES += pipe_i965.c
 endif
 
 ifneq ($(findstring nouveau/drm,$(GALLIUM_WINSYS_DIRS)),)
-LDFLAGS += -lstdc++
-pipe_TARGETS += $(PIPE_PREFIX)nouveau.so
+_pipe_TARGETS_CXX += $(PIPE_PREFIX)nouveau.so
 pipe_SOURCES += pipe_nouveau.c
 endif
 
 ifneq ($(findstring radeon/drm,$(GALLIUM_WINSYS_DIRS)),)
 ifneq ($(findstring r300,$(GALLIUM_DRIVERS_DIRS)),)
-pipe_TARGETS += $(PIPE_PREFIX)r300.so
+_pipe_TARGETS_CC += $(PIPE_PREFIX)r300.so
 pipe_SOURCES += pipe_r300.c
 endif
 endif
 
 ifneq ($(findstring radeon/drm,$(GALLIUM_WINSYS_DIRS)),)
 ifneq ($(findstring r600,$(GALLIUM_DRIVERS_DIRS)),)
-pipe_TARGETS += $(PIPE_PREFIX)r600.so
+_pipe_TARGETS_CC += $(PIPE_PREFIX)r600.so
 pipe_SOURCES += pipe_r600.c
 endif
 endif
 
 ifneq ($(findstring svga/drm,$(GALLIUM_WINSYS_DIRS)),)
-pipe_TARGETS += $(PIPE_PREFIX)vmwgfx.so
+_pipe_TARGETS_CC += $(PIPE_PREFIX)vmwgfx.so
 pipe_SOURCES += pipe_vmwgfx.c
 endif
 
 pipe_OBJECTS = $(pipe_SOURCES:.c=.o)
 
+ifeq ($(MESA_LLVM),1)
+pipe_TARGETS_CXX = $(_pipe_TARGETS_CXX) $(_pipe_TARGETS_CC)
+pipe_TARGETS_CC =
+else
+pipe_TARGETS_CXX = $(_pipe_TARGETS_CXX)
+pipe_TARGETS_CC = $(_pipe_TARGETS_CC)
+endif
 
-GBM_EXTRA_TARGETS = $(addprefix $(TOP)/$(LIB_DIR)/gbm/, $(pipe_TARGETS))
+GBM_EXTRA_TARGETS = $(addprefix $(TOP)/$(LIB_DIR)/gbm/, $(pipe_TARGETS_CC)) $(addprefix $(TOP)/$(LIB_DIR)/gbm/, $(pipe_TARGETS_CXX))
 GBM_EXTRA_INSTALL = install-pipes
 GBM_EXTRA_CLEAN = clean-pipes
 GBM_EXTRA_SOURCES = $(pipe_SOURCES)
@@ -156,8 +163,15 @@ $(GBM_EXTRA_TARGETS): $(TOP)/$(LIB_DIR)/gbm/%: %
 	@$(INSTALL) -d $(dir $@)
 	$(INSTALL) $< $(dir $@)
 
-$(pipe_TARGETS): $(PIPE_PREFIX)%.so: pipe_%.o $(pipe_LIBS) $($*_LIBS)
+$(pipe_TARGETS_CC): $(PIPE_PREFIX)%.so: pipe_%.o $(pipe_LIBS) $($*_LIBS)
 	$(MKLIB) -o $@ -noprefix -linker '$(CC)' \
+		-ldflags '-L$(TOP)/$(LIB_DIR) $(pipe_LDFLAGS) $(LDFLAGS)' \
+		$(MKLIB_OPTIONS) $< \
+		-Wl,--start-group $(pipe_LIBS) $($*_LIBS) -Wl,--end-group \
+		$(pipe_SYS) $($*_SYS)
+
+$(pipe_TARGETS_CXX): $(PIPE_PREFIX)%.so: pipe_%.o $(pipe_LIBS) $($*_LIBS)
+	$(MKLIB) -o $@ -noprefix -linker '$(CXX)' \
 		-ldflags '-L$(TOP)/$(LIB_DIR) $(pipe_LDFLAGS) $(LDFLAGS)' \
 		$(MKLIB_OPTIONS) $< \
 		-Wl,--start-group $(pipe_LIBS) $($*_LIBS) -Wl,--end-group \

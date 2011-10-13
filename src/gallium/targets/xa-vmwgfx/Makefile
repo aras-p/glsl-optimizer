@@ -33,8 +33,13 @@ OBJECTS = $(SOURCES:.c=.o)
 ifeq ($(MESA_LLVM),1)
 LDFLAGS += $(LLVM_LDFLAGS)
 GALLIUM_AUXILIARIES += $(LLVM_LIBS)
+LD=$(CXX)
 else
-LDFLAGS += -lstdc++
+  ifeq ($(LINK_WITH_CXX),1)
+    LD=$(CXX)
+  else
+    LD=$(CC)
+  endif
 endif
 
 ##### RULES #####
@@ -50,7 +55,7 @@ default: $(TOP)/$(LIB_DIR)/gallium/$(XA_LIB_NAME)
 
 # Make the library
 $(TOP)/$(LIB_DIR)/gallium/$(XA_LIB_NAME): depend $(OBJECTS) $(XA_LIB_DEPS)
-	$(MKLIB) -o $(XA_LIB) -linker $(CC) -ldflags '$(LDFLAGS)' \
+	$(MKLIB) -o $(XA_LIB) -linker $(LD) -ldflags '$(LDFLAGS)' \
 		-major $(XA_MAJOR) -minor $(XA_MINOR) -patch $(XA_TINY) \
 		$(MKLIB_OPTIONS) \
 		-exports $(TOP)/src/gallium/state_trackers/xa/xa_symbols\

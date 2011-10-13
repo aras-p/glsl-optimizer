@@ -4,8 +4,6 @@
 ifeq ($(MESA_LLVM),1)
 LDFLAGS += $(LLVM_LDFLAGS)
 DRIVER_EXTRAS = $(LLVM_LIBS)
-else
-LDFLAGS += -lstdc++
 endif
 
 MESA_MODULES = \

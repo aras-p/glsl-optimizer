@@ -17,8 +17,13 @@ STATE_TRACKER_LIB = $(TOP)/src/gallium/state_trackers/va/libvatracker.a
 ifeq ($(MESA_LLVM),1)
 LDFLAGS += $(LLVM_LDFLAGS)
 DRIVER_EXTRAS = $(LLVM_LIBS)
+LD=$(CXX)
 else
-LDFLAGS += -lstdc++
+  ifeq ($(LINK_WITH_CXX),1)
+    LD=$(CXX)
+  else
+    LD=$(CC)
+  endif
 endif
 
 # XXX: Hack, VA public funcs aren't exported
@@ -39,7 +44,7 @@ OBJECTS = $(C_SOURCES:.c=.o) \
 default: depend symlinks $(TOP)/$(LIB_DIR)/gallium/$(LIBNAME)
 
 $(TOP)/$(LIB_DIR)/gallium/$(LIBNAME): $(OBJECTS) $(PIPE_DRIVERS) $(STATE_TRACKER_LIB) $(TOP)/$(LIB_DIR)/gallium Makefile
-	$(MKLIB) -o $(LIBBASENAME) -linker '$(CC)' -ldflags '$(LDFLAGS)' \
+	$(MKLIB) -o $(LIBBASENAME) -linker '$(LD)' -ldflags '$(LDFLAGS)' \
 		-major $(VA_MAJOR) -minor $(VA_MINOR) $(MKLIB_OPTIONS) \
 		-install $(TOP)/$(LIB_DIR)/gallium \
 		$(OBJECTS) $(STATE_TRACKER_LIB) $(PIPE_DRIVERS) $(LIBS) $(DRIVER_EXTRAS)

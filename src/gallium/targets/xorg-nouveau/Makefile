@@ -26,4 +26,6 @@ DRIVER_LINKS = \
 DRIVER_INCLUDES = \
 	$(shell $(PKG_CONFIG) --cflags-only-I libdrm libdrm_nouveau xf86driproto)
 
+LINK_WITH_CXX=1
+
 include ../Makefile.xorg
