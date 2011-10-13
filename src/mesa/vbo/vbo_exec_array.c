@@ -538,7 +538,7 @@ recalculate_input_bindings(struct gl_context *ctx)
          }
       }
 
-      for (i = 0; i < MAX_VERTEX_GENERIC_ATTRIBS; i++) {
+      for (i = 1; i < MAX_VERTEX_GENERIC_ATTRIBS; i++) {
 	 if (exec->array.generic_array[i]->Enabled)
 	    inputs[VERT_ATTRIB_GENERIC0 + i] = exec->array.generic_array[i];
 	 else {
@@ -547,6 +547,7 @@ recalculate_input_bindings(struct gl_context *ctx)
          }
       }
 
+      inputs[VERT_ATTRIB_GENERIC0] = inputs[0];
       ctx->NewState |= _NEW_ARRAY;
       break;
    }
