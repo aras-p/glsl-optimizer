@@ -209,6 +209,8 @@ wglCreatePbufferARB(HDC _hDC,
    fb = stw_framebuffer_create(hDC, iPixelFormat);
    if (!fb) {
       SetLastError(ERROR_NO_SYSTEM_RESOURCES);
+   } else {
+      stw_framebuffer_release(fb);
    }
 
    return (HPBUFFERARB)fb;
