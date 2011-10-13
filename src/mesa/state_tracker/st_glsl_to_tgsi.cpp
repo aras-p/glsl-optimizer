@@ -3772,7 +3772,7 @@ glsl_to_tgsi_visitor::eliminate_dead_code_advanced(void)
       
       if (!inst->dead_mask || !inst->dst.writemask)
          continue;
-      else if (inst->dead_mask == inst->dst.writemask) {
+      else if ((inst->dst.writemask & ~inst->dead_mask) == 0) {
          iter.remove();
          delete inst;
          removed++;
