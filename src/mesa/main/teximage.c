@@ -2133,23 +2133,6 @@ copytexsubimage_error_check2( struct gl_context *ctx, GLuint dimensions,
       return GL_TRUE;
    }
 
-   if (teximage->_BaseFormat == GL_DEPTH_COMPONENT) {
-      if (!ctx->ReadBuffer->_DepthBuffer) {
-         _mesa_error(ctx, GL_INVALID_OPERATION,
-                     "glCopyTexSubImage%dD(no depth buffer)",
-                     dimensions);
-         return GL_TRUE;
-      }
-   }
-   else if (teximage->_BaseFormat == GL_DEPTH_STENCIL_EXT) {
-      if (!ctx->ReadBuffer->_DepthBuffer || !ctx->ReadBuffer->_StencilBuffer) {
-         _mesa_error(ctx, GL_INVALID_OPERATION,
-                     "glCopyTexSubImage%dD(no depth/stencil buffer)",
-                     dimensions);
-         return GL_TRUE;
-      }
-   }
-
    /* If copying into an integer texture, the source buffer must also be
     * integer-valued.
     */
