@@ -103,7 +103,7 @@ nv50_create_sampler_view(struct pipe_context *pipe,
 
    tic[0] = nv50_format_table[view->pipe.format].tic;
 
-   tex_int = FALSE; /* XXX: integer textures */
+   tex_int = util_format_is_pure_integer(view->pipe.format);
 
    swz[0] = nv50_tic_swizzle(tic[0], view->pipe.swizzle_r, tex_int);
    swz[1] = nv50_tic_swizzle(tic[0], view->pipe.swizzle_g, tex_int);
