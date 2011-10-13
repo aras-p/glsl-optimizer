@@ -311,50 +311,41 @@ fast_read_rgba_pixels_memcpy( struct gl_context *ctx,
    return GL_TRUE;
 }
 
-
-/**
- * When we're using a low-precision color buffer (like 16-bit 5/6/5)
- * we have to adjust our color values a bit to pass conformance.
- * The problem is when a 5 or 6-bit color value is converted to an 8-bit
- * value and then a floating point value, the floating point values don't
- * increment uniformly as the 5 or 6-bit value is incremented.
- *
- * This function adjusts floating point values to compensate.
- */
-static void
-adjust_colors(const struct gl_framebuffer *fb, GLuint n, GLfloat rgba[][4])
+static GLboolean
+slow_read_rgba_pixels( struct gl_context *ctx,
+		       GLint x, GLint y,
+		       GLsizei width, GLsizei height,
+		       GLenum format, GLenum type,
+		       GLvoid *pixels,
+		       const struct gl_pixelstore_attrib *packing,
+		       GLbitfield transferOps )
 {
-   const GLuint rShift = 8 - fb->Visual.redBits;
-   const GLuint gShift = 8 - fb->Visual.greenBits;
-   const GLuint bShift = 8 - fb->Visual.blueBits;
-   GLfloat rScale = 1.0F / (GLfloat) ((1 << fb->Visual.redBits  ) - 1);
-   GLfloat gScale = 1.0F / (GLfloat) ((1 << fb->Visual.greenBits) - 1);
-   GLfloat bScale = 1.0F / (GLfloat) ((1 << fb->Visual.blueBits ) - 1);
-   GLuint i;
+   struct gl_renderbuffer *rb = ctx->ReadBuffer->_ColorReadBuffer;
+   GLfloat rgba[MAX_WIDTH][4];
+   GLubyte *dst, *map;
+   int dstStride, stride, j;
 
-   if (fb->Visual.redBits == 0)
-      rScale = 0;
-   if (fb->Visual.greenBits == 0)
-      gScale = 0;
-   if (fb->Visual.blueBits == 0)
-      bScale = 0;
+   dstStride = _mesa_image_row_stride(packing, width, format, type);
+   dst = (GLubyte *) _mesa_image_address2d(packing, pixels, width, height,
+					   format, type, 0, 0);
 
-   for (i = 0; i < n; i++) {
-      GLint r, g, b;
-      /* convert float back to ubyte */
-      CLAMPED_FLOAT_TO_UBYTE(r, rgba[i][RCOMP]);
-      CLAMPED_FLOAT_TO_UBYTE(g, rgba[i][GCOMP]);
-      CLAMPED_FLOAT_TO_UBYTE(b, rgba[i][BCOMP]);
-      /* using only the N most significant bits of the ubyte value, convert to
-       * float in [0,1].
-       */
-      rgba[i][RCOMP] = (GLfloat) (r >> rShift) * rScale;
-      rgba[i][GCOMP] = (GLfloat) (g >> gShift) * gScale;
-      rgba[i][BCOMP] = (GLfloat) (b >> bShift) * bScale;
+   ctx->Driver.MapRenderbuffer(ctx, rb, x, y, width, height, GL_MAP_READ_BIT,
+			       &map, &stride);
+
+   for (j = 0; j < height; j++) {
+      _mesa_unpack_rgba_row(_mesa_get_srgb_format_linear(rb->Format),
+			    width, map, rgba);
+      _mesa_pack_rgba_span_float(ctx, width, rgba, format, type, dst,
+				 packing, transferOps);
+
+      dst += dstStride;
+      map += stride;
    }
+
+   ctx->Driver.UnmapRenderbuffer(ctx, rb);
+
+   return GL_TRUE;
 }
-
-
 
 /*
  * Read R, G, B, A, RGB, L, or LA pixels.
@@ -366,7 +357,6 @@ read_rgba_pixels( struct gl_context *ctx,
                   GLenum format, GLenum type, GLvoid *pixels,
                   const struct gl_pixelstore_attrib *packing )
 {
-   SWcontext *swrast = SWRAST_CONTEXT(ctx);
    GLbitfield transferOps = ctx->_ImageTransferState;
    struct gl_framebuffer *fb = ctx->ReadBuffer;
    struct gl_renderbuffer *rb = fb->_ColorReadBuffer;
@@ -393,37 +383,8 @@ read_rgba_pixels( struct gl_context *ctx,
       }
    }
 
-   /* width should never be > MAX_WIDTH since we did clipping earlier */
-   ASSERT(width <= MAX_WIDTH);
-
-   {
-      const GLint dstStride
-         = _mesa_image_row_stride(packing, width, format, type);
-      GLfloat (*rgba)[4] = swrast->SpanArrays->attribs[FRAG_ATTRIB_COL0];
-      GLint row;
-      GLubyte *dst
-         = (GLubyte *) _mesa_image_address2d(packing, pixels, width, height,
-                                             format, type, 0, 0);
-
-      for (row = 0; row < height; row++, y++) {
-
-         /* Get float rgba pixels */
-         _swrast_read_rgba_span(ctx, rb, width, x, y, GL_FLOAT, rgba);
-
-         /* apply fudge factor for shallow color buffers */
-         if ((fb->Visual.redBits < 8 && fb->Visual.redBits != 0) ||
-             (fb->Visual.greenBits < 8 && fb->Visual.greenBits != 0) ||
-	     (fb->Visual.blueBits < 8 && fb->Visual.blueBits != 0)) {
-            adjust_colors(fb, width, rgba);
-         }
-
-         /* pack the row of RGBA pixels into user's buffer */
-         _mesa_pack_rgba_span_float(ctx, width, rgba, format, type, dst,
-                                    packing, transferOps);
-
-         dst += dstStride;
-      }
-   }
+   slow_read_rgba_pixels(ctx, x, y, width, height,
+			 format, type, pixels, packing, transferOps);
 }
 
 /**
