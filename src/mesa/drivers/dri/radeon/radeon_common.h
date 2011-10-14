@@ -13,11 +13,6 @@ void radeonScissor(struct gl_context* ctx, GLint x, GLint y, GLsizei w, GLsizei 
 
 void radeonWaitForIdleLocked(radeonContextPtr radeon);
 extern uint32_t radeonGetAge(radeonContextPtr radeon);
-void radeonCopyBuffer( __DRIdrawable *dPriv,
-		       const drm_clip_rect_t	  *rect);
-void radeonSwapBuffers(__DRIdrawable * dPriv);
-void radeonCopySubBuffer(__DRIdrawable * dPriv,
-			 int x, int y, int w, int h );
 
 void radeonUpdatePageFlipping(radeonContextPtr rmesa);
 

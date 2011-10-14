@@ -1585,7 +1585,6 @@ const struct __DriverAPIRec driDriverAPI = {
 #endif
    .CreateBuffer    = radeonCreateBuffer,
    .DestroyBuffer   = radeonDestroyBuffer,
-   .SwapBuffers     = radeonSwapBuffers,
    .MakeCurrent     = radeonMakeCurrent,
    .UnbindContext   = radeonUnbindContext,
    .GetSwapInfo     = getSwapInfo,
@@ -1593,7 +1592,6 @@ const struct __DriverAPIRec driDriverAPI = {
    .WaitForMSC      = driWaitForMSC32,
    .WaitForSBC      = NULL,
    .SwapBuffersMSC  = NULL,
-   .CopySubBuffer   = radeonCopySubBuffer,
     /* DRI2 */
    .InitScreen2     = radeonInitScreen2,
 };
