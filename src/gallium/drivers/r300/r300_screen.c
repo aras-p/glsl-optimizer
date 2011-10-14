@@ -225,6 +225,13 @@ static int r300_get_shader_param(struct pipe_screen *pscreen, unsigned shader, e
         }
         break;
     case PIPE_SHADER_VERTEX:
+        switch (param)
+        {
+        case PIPE_SHADER_CAP_MAX_TEXTURE_SAMPLERS:
+            return 0;
+        default:;
+        }
+
         if (!r300screen->caps.has_tcl) {
             return draw_get_shader_param(shader, param);
         }
@@ -259,11 +266,9 @@ static int r300_get_shader_param(struct pipe_screen *pscreen, unsigned shader, e
         case PIPE_SHADER_CAP_INDIRECT_TEMP_ADDR:
         case PIPE_SHADER_CAP_SUBROUTINES:
         case PIPE_SHADER_CAP_INTEGERS:
-        case PIPE_SHADER_CAP_MAX_TEXTURE_SAMPLERS:
             return 0;
+        default:;
         }
-        break;
-    default:
         break;
     }
     return 0;
