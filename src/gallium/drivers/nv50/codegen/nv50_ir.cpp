@@ -508,7 +508,7 @@ ImmediateValue::equals(const Value *that, bool strict) const
 bool
 Symbol::equals(const Value *that, bool strict) const
 {
-   if (this->reg.file != that->reg.file)
+   if (reg.file != that->reg.file || reg.fileIndex != that->reg.fileIndex)
       return false;
    assert(that->asSym());
 
