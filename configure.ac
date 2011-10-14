@@ -172,6 +172,10 @@ if test "x$GCC" = xyes; then
 
     # Work around aliasing bugs - developers should comment this out
     CFLAGS="$CFLAGS -fno-strict-aliasing"
+
+    # gcc's builtin memcmp is slower than glibc's
+    # http://gcc.gnu.org/bugzilla/show_bug.cgi?id=43052
+    CFLAGS="$CFLAGS -fno-builtin-memcmp"
 fi
 if test "x$GXX" = xyes; then
     CXXFLAGS="$CXXFLAGS -Wall"
@@ -191,6 +195,10 @@ if test "x$GXX" = xyes; then
 
     # Work around aliasing bugs - developers should comment this out
     CXXFLAGS="$CXXFLAGS -fno-strict-aliasing"
+
+    # gcc's builtin memcmp is slower than glibc's
+    # http://gcc.gnu.org/bugzilla/show_bug.cgi?id=43052
+    CXXFLAGS="$CXXFLAGS -fno-builtin-memcmp"
 fi
 
 dnl even if the compiler appears to support it, using visibility attributes isn't
