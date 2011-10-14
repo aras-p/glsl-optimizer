@@ -277,6 +277,7 @@ nvc0_clear_render_target(struct pipe_context *pipe,
 	struct nv50_miptree *mt = nv50_miptree(dst->texture);
 	struct nv50_surface *sf = nv50_surface(dst);
 	struct nouveau_bo *bo = mt->base.bo;
+	unsigned z;
 
 	BEGIN_RING(chan, RING_3D(CLEAR_COLOR(0)), 4);
 	OUT_RINGf (chan, color->f[0]);
@@ -286,6 +287,10 @@ nvc0_clear_render_target(struct pipe_context *pipe,
 
 	if (MARK_RING(chan, 18, 2))
 		return;
+
+	BEGIN_RING(chan, RING_3D(SCREEN_SCISSOR_HORIZ), 2);
+	OUT_RING  (chan, ( width << 16) | dstx);
+	OUT_RING  (chan, (height << 16) | dsty);
 
 	BEGIN_RING(chan, RING_3D(RT_CONTROL), 1);
 	OUT_RING  (chan, 1);
@@ -301,15 +306,11 @@ nvc0_clear_render_target(struct pipe_context *pipe,
 	OUT_RING  (chan, mt->layer_stride >> 2);
 	OUT_RING  (chan, dst->u.tex.first_layer);
 
-	BEGIN_RING(chan, RING_3D(CLIP_RECT_HORIZ(0)), 2);
-	OUT_RING  (chan, ((dstx + width) << 16) | dstx);
-	OUT_RING  (chan, ((dsty + height) << 16) | dsty);
-	IMMED_RING(chan, RING_3D(CLIP_RECTS_EN), 1);
-
-	BEGIN_RING(chan, RING_3D(CLEAR_BUFFERS), 1);
-	OUT_RING  (chan, 0x3c);
-
-	IMMED_RING(chan, RING_3D(CLIP_RECTS_EN), 0);
+	for (z = 0; z < sf->depth; ++z) {
+		BEGIN_RING(chan, RING_3D(CLEAR_BUFFERS), 1);
+		OUT_RING  (chan, 0x3c |
+			   (z << NVC0_3D_CLEAR_BUFFERS_LAYER__SHIFT));
+	}
 
 	nv50->dirty |= NVC0_NEW_FRAMEBUFFER;
 }
@@ -331,6 +332,7 @@ nvc0_clear_depth_stencil(struct pipe_context *pipe,
 	struct nouveau_bo *bo = mt->base.bo;
 	uint32_t mode = 0;
 	int unk = mt->base.base.target == PIPE_TEXTURE_2D;
+	unsigned z;
 
 	if (clear_flags & PIPE_CLEAR_DEPTH) {
 		BEGIN_RING(chan, RING_3D(CLEAR_DEPTH), 1);
@@ -344,8 +346,12 @@ nvc0_clear_depth_stencil(struct pipe_context *pipe,
 		mode |= NVC0_3D_CLEAR_BUFFERS_S;
 	}
 
-	if (MARK_RING(chan, 17, 2))
+	if (MARK_RING(chan, 20, 2))
 		return;
+
+	BEGIN_RING(chan, RING_3D(SCREEN_SCISSOR_HORIZ), 2);
+	OUT_RING  (chan, ( width << 16) | dstx);
+	OUT_RING  (chan, (height << 16) | dsty);
 
 	BEGIN_RING(chan, RING_3D(ZETA_ADDRESS_HIGH), 5);
 	OUT_RELOCh(chan, bo, sf->offset, NOUVEAU_BO_VRAM | NOUVEAU_BO_WR);
@@ -362,15 +368,11 @@ nvc0_clear_depth_stencil(struct pipe_context *pipe,
 	BEGIN_RING(chan, RING_3D(ZETA_BASE_LAYER), 1);
 	OUT_RING  (chan, dst->u.tex.first_layer);
 
-	BEGIN_RING(chan, RING_3D(CLIP_RECT_HORIZ(0)), 2);
-	OUT_RING  (chan, ((dstx + width) << 16) | dstx);
-	OUT_RING  (chan, ((dsty + height) << 16) | dsty);
-	IMMED_RING(chan, RING_3D(CLIP_RECTS_EN), 1);
-
-	BEGIN_RING(chan, RING_3D(CLEAR_BUFFERS), 1);
-	OUT_RING  (chan, mode);
-
-	IMMED_RING(chan, RING_3D(CLIP_RECTS_EN), 0);
+	for (z = 0; z < sf->depth; ++z) {
+		BEGIN_RING(chan, RING_3D(CLEAR_BUFFERS), 1);
+		OUT_RING  (chan, mode |
+			   (z << NVC0_3D_CLEAR_BUFFERS_LAYER__SHIFT));
+	}
 
 	nv50->dirty |= NVC0_NEW_FRAMEBUFFER;
 }
