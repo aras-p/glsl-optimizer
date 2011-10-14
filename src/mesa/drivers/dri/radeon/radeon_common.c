@@ -90,24 +90,18 @@ static GLboolean intersect_rect(drm_clip_rect_t * out,
 
 void radeonRecalcScissorRects(radeonContextPtr radeon)
 {
-	drm_clip_rect_t *out;
-	int i;
+	struct gl_context *ctx = radeon->glCtx;
+	drm_clip_rect_t bounds;
 
-	/* Grow cliprect store?
-	 */
-	if (radeon->state.scissor.numAllocedClipRects < radeon->numClipRects) {
-		while (radeon->state.scissor.numAllocedClipRects <
-		       radeon->numClipRects) {
-			radeon->state.scissor.numAllocedClipRects += 1;	/* zero case */
-			radeon->state.scissor.numAllocedClipRects *= 2;
-		}
+	bounds.x1 = 0;
+	bounds.y1 = 0;
+	bounds.x2 = ctx->DrawBuffer->Width;
+	bounds.x2 = ctx->DrawBuffer->Height;
 
-		if (radeon->state.scissor.pClipRects)
-			FREE(radeon->state.scissor.pClipRects);
-
+	if (!radeon->state.scissor.numAllocedClipRects) {
+		radeon->state.scissor.numAllocedClipRects = 1;
 		radeon->state.scissor.pClipRects =
-			MALLOC(radeon->state.scissor.numAllocedClipRects *
-			       sizeof(drm_clip_rect_t));
+			MALLOC(sizeof(drm_clip_rect_t));
 
 		if (radeon->state.scissor.pClipRects == NULL) {
 			radeon->state.scissor.numAllocedClipRects = 0;
@@ -115,52 +109,15 @@ void radeonRecalcScissorRects(radeonContextPtr radeon)
 		}
 	}
 
-	out = radeon->state.scissor.pClipRects;
 	radeon->state.scissor.numClipRects = 0;
-
-	for (i = 0; i < radeon->numClipRects; i++) {
-		if (intersect_rect(out,
-				   &radeon->pClipRects[i],
-				   &radeon->state.scissor.rect)) {
-			radeon->state.scissor.numClipRects++;
-			out++;
-		}
+	if (intersect_rect(radeon->state.scissor.pClipRects,
+			   &bounds,
+			   &radeon->state.scissor.rect)) {
+		radeon->state.scissor.numClipRects = 1;
 	}
 
 	if (radeon->vtbl.update_scissor)
 	   radeon->vtbl.update_scissor(radeon->glCtx);
-}
-
-void radeon_get_cliprects(radeonContextPtr radeon,
-			  struct drm_clip_rect **cliprects,
-			  unsigned int *num_cliprects,
-			  int *x_off, int *y_off)
-{
-	__DRIdrawable *dPriv = radeon_get_drawable(radeon);
-	struct radeon_framebuffer *rfb = dPriv->driverPrivate;
-
-	if (radeon->constant_cliprect) {
-		radeon->fboRect.x1 = 0;
-		radeon->fboRect.y1 = 0;
-		radeon->fboRect.x2 = radeon->glCtx->DrawBuffer->Width;
-		radeon->fboRect.y2 = radeon->glCtx->DrawBuffer->Height;
-
-		*cliprects = &radeon->fboRect;
-		*num_cliprects = 1;
-		*x_off = 0;
-		*y_off = 0;
-	} else if (radeon->front_cliprects ||
-		   rfb->pf_active || dPriv->numBackClipRects == 0) {
-		*cliprects = dPriv->pClipRects;
-		*num_cliprects = dPriv->numClipRects;
-		*x_off = dPriv->x;
-		*y_off = dPriv->y;
-	} else {
-		*num_cliprects = dPriv->numBackClipRects;
-		*cliprects = dPriv->pBackClipRects;
-		*x_off = dPriv->backX;
-		*y_off = dPriv->backY;
-	}
 }
 
 /**
@@ -176,10 +133,6 @@ void radeonSetCliprects(radeonContextPtr radeon)
 
 	struct radeon_framebuffer *const draw_rfb = drawable->driverPrivate;
 	struct radeon_framebuffer *const read_rfb = readable->driverPrivate;
-	int x_off, y_off;
-
-	radeon_get_cliprects(radeon, &radeon->pClipRects,
-			     &radeon->numClipRects, &x_off, &y_off);
 
 	if ((draw_rfb->base.Width != drawable->w) ||
 	    (draw_rfb->base.Height != drawable->h)) {
@@ -766,8 +719,7 @@ int rcommonFlushCmdBufLocked(radeonContextPtr rmesa, const char *caller)
 	rmesa->cmdbuf.flushing = 1;
 
 	if (RADEON_DEBUG & RADEON_IOCTL) {
-		fprintf(stderr, "%s from %s - %i cliprects\n",
-			__FUNCTION__, caller, rmesa->numClipRects);
+		fprintf(stderr, "%s from %s\n", __FUNCTION__, caller);
 	}
 
 	radeonEmitQueryEnd(rmesa->glCtx);

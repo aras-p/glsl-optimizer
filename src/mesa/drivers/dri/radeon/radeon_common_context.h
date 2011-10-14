@@ -457,9 +457,7 @@ struct radeon_context {
    GLuint NewGLState;
    DECLARE_RENDERINPUTS(tnl_index_bitset);	/* index of bits for last tnl_install_attrs */
 
-   /* Drawable, cliprect and scissor information */
-   GLuint numClipRects;	/* Cliprects for the draw buffer */
-   drm_clip_rect_t *pClipRects;
+   /* Drawable information */
    unsigned int lastStamp;
    drm_radeon_sarea_t *sarea;	/* Private SAREA data */
 
