@@ -1878,9 +1878,9 @@ if test "x$with_gallium_drivers" != x; then
             if test "x$HAVE_ST_VA" = xyes; then
                 GALLIUM_TARGET_DIRS="$GALLIUM_TARGET_DIRS va-softpipe"
             fi
-            if test "x$HAVE_ST_VDPAU" == xyes ||
-               test "x$HAVE_ST_XVMC" == xyes ||
-               test "x$HAVE_ST_VA" == xyes; then
+            if test "x$HAVE_ST_VDPAU" = xyes ||
+               test "x$HAVE_ST_XVMC" = xyes ||
+               test "x$HAVE_ST_VA" = xyes; then
                if test "x$HAVE_WINSYS_XLIB" != xyes; then
                   GALLIUM_WINSYS_DIRS="$GALLIUM_WINSYS_DIRS sw/xlib"
                fi
