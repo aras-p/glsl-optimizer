@@ -13,7 +13,6 @@ CS_SOURCES = radeon_cs_space_drm.c radeon_bo.c radeon_cs.c
 endif
 
 RADEON_COMMON_SOURCES = \
-	radeon_bo_legacy.c \
 	radeon_buffer_objects.c \
 	radeon_common_context.c \
 	radeon_common.c \
