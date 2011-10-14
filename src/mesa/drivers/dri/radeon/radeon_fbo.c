@@ -324,48 +324,38 @@ radeon_create_renderbuffer(gl_format format, __DRIdrawable *driDrawPriv)
         case MESA_FORMAT_RGB565:
 	    assert(_mesa_little_endian());
 	    rrb->base.DataType = GL_UNSIGNED_BYTE;
-            rrb->base._BaseFormat = GL_RGB;
 	    break;
         case MESA_FORMAT_RGB565_REV:
 	    assert(!_mesa_little_endian());
 	    rrb->base.DataType = GL_UNSIGNED_BYTE;
-            rrb->base._BaseFormat = GL_RGB;
 	    break;
         case MESA_FORMAT_XRGB8888:
 	    assert(_mesa_little_endian());
 	    rrb->base.DataType = GL_UNSIGNED_BYTE;
-            rrb->base._BaseFormat = GL_RGB;
 	    break;
         case MESA_FORMAT_XRGB8888_REV:
 	    assert(!_mesa_little_endian());
 	    rrb->base.DataType = GL_UNSIGNED_BYTE;
-            rrb->base._BaseFormat = GL_RGB;
 	    break;
 	case MESA_FORMAT_ARGB8888:
 	    assert(_mesa_little_endian());
 	    rrb->base.DataType = GL_UNSIGNED_BYTE;
-            rrb->base._BaseFormat = GL_RGBA;
 	    break;
 	case MESA_FORMAT_ARGB8888_REV:
 	    assert(!_mesa_little_endian());
 	    rrb->base.DataType = GL_UNSIGNED_BYTE;
-            rrb->base._BaseFormat = GL_RGBA;
 	    break;
 	case MESA_FORMAT_S8:
 	    rrb->base.DataType = GL_UNSIGNED_BYTE;
-            rrb->base._BaseFormat = GL_STENCIL_INDEX;
 	    break;
 	case MESA_FORMAT_Z16:
 	    rrb->base.DataType = GL_UNSIGNED_SHORT;
-            rrb->base._BaseFormat = GL_DEPTH_COMPONENT;
 	    break;
 	case MESA_FORMAT_X8_Z24:
 	    rrb->base.DataType = GL_UNSIGNED_INT;
-            rrb->base._BaseFormat = GL_DEPTH_COMPONENT;
 	    break;
 	case MESA_FORMAT_S8_Z24:
 	    rrb->base.DataType = GL_UNSIGNED_INT_24_8_EXT;
-            rrb->base._BaseFormat = GL_DEPTH_STENCIL;
 	    break;
 	default:
 	    fprintf(stderr, "%s: Unknown format %s\n",
@@ -373,6 +363,7 @@ radeon_create_renderbuffer(gl_format format, __DRIdrawable *driDrawPriv)
 	    _mesa_delete_renderbuffer(&rrb->base);
 	    return NULL;
     }
+    rrb->base._BaseFormat = _mesa_get_format_base_format(format);
 
     rrb->dPriv = driDrawPriv;
     rrb->base.InternalFormat = _mesa_get_format_base_format(format);
