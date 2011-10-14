@@ -382,6 +382,11 @@ nvc0_draw_arrays(struct nvc0_context *nvc0,
    struct nouveau_channel *chan = nvc0->screen->base.channel;
    unsigned prim;
 
+   if (nvc0->state.index_bias) {
+      IMMED_RING(chan, RING_3D(VB_ELEMENT_BASE), 0);
+      nvc0->state.index_bias = 0;
+   }
+
    prim = nvc0_prim_gl(mode);
 
    while (instance_count--) {

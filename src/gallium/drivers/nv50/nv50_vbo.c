@@ -404,6 +404,12 @@ nv50_draw_arrays(struct nv50_context *nv50,
    struct nouveau_channel *chan = nv50->screen->base.channel;
    unsigned prim;
 
+   if (nv50->state.index_bias) {
+      BEGIN_RING(chan, RING_3D(VB_ELEMENT_BASE), 1);
+      OUT_RING  (chan, 0);
+      nv50->state.index_bias = 0;
+   }
+
    prim = nv50_prim_gl(mode);
 
    while (instance_count--) {
