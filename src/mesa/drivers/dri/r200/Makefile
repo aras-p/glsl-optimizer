@@ -7,10 +7,6 @@ LIBNAME = r200_dri.so
 
 include ../Makefile.defines
 
-ifeq ($(RADEON_LDFLAGS),)
-CS_SOURCES = radeon_cs_space_drm.c radeon_bo.c radeon_cs.c
-endif
-
 RADEON_COMMON_SOURCES = \
 	radeon_buffer_objects.c \
 	radeon_common_context.c \
@@ -42,8 +38,7 @@ DRIVER_SOURCES = r200_context.c \
 		 r200_blit.c \
 		 radeon_screen.c \
 		 $(EGL_SOURCES) \
-		 $(RADEON_COMMON_SOURCES) \
-		 $(CS_SOURCES)
+		 $(RADEON_COMMON_SOURCES)
 
 C_SOURCES = $(COMMON_SOURCES) $(DRIVER_SOURCES)
 

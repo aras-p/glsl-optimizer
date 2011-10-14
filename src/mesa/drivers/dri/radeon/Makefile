@@ -8,10 +8,6 @@ LIBNAME = radeon_dri.so
 
 include ../Makefile.defines
 
-ifeq ($(RADEON_LIBS),)
-CS_SOURCES = radeon_cs_space_drm.c radeon_bo.c radeon_cs.c
-endif
-
 RADEON_COMMON_SOURCES = \
 	radeon_buffer_objects.c \
 	radeon_common_context.c \
@@ -44,8 +40,7 @@ DRIVER_SOURCES = \
 
 C_SOURCES = \
 	$(COMMON_SOURCES) \
-	$(DRIVER_SOURCES) \
-	$(CS_SOURCES)
+	$(DRIVER_SOURCES)
 
 DRIVER_DEFINES = -DRADEON_R100
 
