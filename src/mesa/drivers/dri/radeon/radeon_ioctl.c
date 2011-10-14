@@ -383,7 +383,6 @@ void radeonEmitAOS( r100ContextPtr rmesa,
 static void radeonClear( struct gl_context *ctx, GLbitfield mask )
 {
    r100ContextPtr rmesa = R100_CONTEXT(ctx);
-   __DRIdrawable *dPriv = radeon_get_drawable(&rmesa->radeon);
    GLuint flags = 0;
    GLuint orig_mask = mask;
 
@@ -393,13 +392,6 @@ static void radeonClear( struct gl_context *ctx, GLbitfield mask )
 
    if ( RADEON_DEBUG & RADEON_IOCTL ) {
       fprintf( stderr, "radeonClear\n");
-   }
-
-   {
-      LOCK_HARDWARE( &rmesa->radeon );
-      UNLOCK_HARDWARE( &rmesa->radeon );
-      if ( dPriv->numClipRects == 0 )
-	 return;
    }
 
    radeon_firevertices(&rmesa->radeon);

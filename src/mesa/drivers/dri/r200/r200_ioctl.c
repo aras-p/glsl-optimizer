@@ -44,7 +44,6 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 
 #include "radeon_common.h"
-#include "radeon_lock.h"
 #include "r200_context.h"
 #include "r200_ioctl.h"
 #include "radeon_reg.h"
@@ -60,7 +59,6 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 static void r200Clear( struct gl_context *ctx, GLbitfield mask )
 {
    r200ContextPtr rmesa = R200_CONTEXT(ctx);
-   __DRIdrawable *dPriv = radeon_get_drawable(&rmesa->radeon);
    GLuint flags = 0;
    GLuint orig_mask = mask;
 
@@ -69,13 +67,6 @@ static void r200Clear( struct gl_context *ctx, GLbitfield mask )
 	       fprintf( stderr, "r200Clear %x %d\n", mask, rmesa->radeon.sarea->pfCurrentPage);
 	   else
 	       fprintf( stderr, "r200Clear %x radeon->sarea is NULL\n", mask);
-   }
-
-   {
-      LOCK_HARDWARE( &rmesa->radeon );
-      UNLOCK_HARDWARE( &rmesa->radeon );
-      if ( dPriv->numClipRects == 0 )
-	 return;
    }
 
    radeonFlush( ctx );

@@ -328,11 +328,6 @@ void radeonReleaseDmaRegions(radeonContextPtr rmesa)
 		      __FUNCTION__, free, wait, reserved, rmesa->dma.minimum_size);
 	}
 
-	if (!rmesa->radeonScreen->driScreen->dri2.enabled) {
-		/* request updated cs processing information from kernel */
-		legacy_track_pending(rmesa->radeonScreen->bom, 0);
-	}
-
 	/* move waiting bos to free list.
 	   wait list provides gpu time to handle data before reuse */
 	foreach_s(dma_bo, temp, &rmesa->dma.wait) {

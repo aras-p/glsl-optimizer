@@ -60,8 +60,6 @@ struct r100_context;
 typedef struct r100_context r100ContextRec;
 typedef struct r100_context *r100ContextPtr;
 
-#include "radeon_lock.h"
-
 
 
 #define R100_TEX_ALL 0x7

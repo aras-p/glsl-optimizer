@@ -851,8 +851,6 @@ r200PointsBitmap( struct gl_context *ctx, GLint px, GLint py,
 
    /* Update window height
     */
-   LOCK_HARDWARE( &rmesa->radeon );
-   UNLOCK_HARDWARE( &rmesa->radeon );
    h = radeon_get_drawable(&rmesa->radeon)->h + radeon_get_drawable(&rmesa->radeon)->y;
    px += radeon_get_drawable(&rmesa->radeon)->x;
 

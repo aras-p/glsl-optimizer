@@ -11,10 +11,7 @@ void radeonSetCliprects(radeonContextPtr radeon);
 void radeonUpdateScissor( struct gl_context *ctx );
 void radeonScissor(struct gl_context* ctx, GLint x, GLint y, GLsizei w, GLsizei h);
 
-void radeonWaitForIdleLocked(radeonContextPtr radeon);
 extern uint32_t radeonGetAge(radeonContextPtr radeon);
-
-void radeonUpdatePageFlipping(radeonContextPtr rmesa);
 
 void radeonFlush(struct gl_context *ctx);
 void radeonFinish(struct gl_context * ctx);

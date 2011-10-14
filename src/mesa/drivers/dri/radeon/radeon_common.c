@@ -54,7 +54,6 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 #include "radeon_common.h"
 #include "radeon_bocs_wrapper.h"
-#include "radeon_lock.h"
 #include "radeon_drm.h"
 #include "radeon_queryobj.h"
 
@@ -275,58 +274,6 @@ uint32_t radeonGetAge(radeonContextPtr radeon)
 	}
 
 	return age;
-}
-
-
-/* wait for idle */
-void radeonWaitForIdleLocked(radeonContextPtr radeon)
-{
-	int ret;
-	int i = 0;
-
-	do {
-		ret = drmCommandNone(radeon->dri.fd, DRM_RADEON_CP_IDLE);
-		if (ret)
-			DO_USLEEP(1);
-	} while (ret && ++i < 100);
-
-	if (ret < 0) {
-		UNLOCK_HARDWARE(radeon);
-		fprintf(stderr, "Error: R300 timed out... exiting\n");
-		exit(-1);
-	}
-}
-
-static void radeon_flip_renderbuffers(struct radeon_framebuffer *rfb)
-{
-	int current_page = rfb->pf_current_page;
-	int next_page = (current_page + 1) % rfb->pf_num_pages;
-	struct gl_renderbuffer *tmp_rb;
-
-	/* Exchange renderbuffers if necessary but make sure their
-	 * reference counts are preserved.
-	 */
-	if (rfb->color_rb[current_page] &&
-	    rfb->base.Attachment[BUFFER_FRONT_LEFT].Renderbuffer !=
-	    &rfb->color_rb[current_page]->base) {
-		tmp_rb = NULL;
-		_mesa_reference_renderbuffer(&tmp_rb,
-					     rfb->base.Attachment[BUFFER_FRONT_LEFT].Renderbuffer);
-		tmp_rb = &rfb->color_rb[current_page]->base;
-		_mesa_reference_renderbuffer(&rfb->base.Attachment[BUFFER_FRONT_LEFT].Renderbuffer, tmp_rb);
-		_mesa_reference_renderbuffer(&tmp_rb, NULL);
-	}
-
-	if (rfb->color_rb[next_page] &&
-	    rfb->base.Attachment[BUFFER_BACK_LEFT].Renderbuffer !=
-	    &rfb->color_rb[next_page]->base) {
-		tmp_rb = NULL;
-		_mesa_reference_renderbuffer(&tmp_rb,
-					     rfb->base.Attachment[BUFFER_BACK_LEFT].Renderbuffer);
-		tmp_rb = &rfb->color_rb[next_page]->base;
-		_mesa_reference_renderbuffer(&rfb->base.Attachment[BUFFER_BACK_LEFT].Renderbuffer, tmp_rb);
-		_mesa_reference_renderbuffer(&tmp_rb, NULL);
-	}
 }
 
 /**
@@ -556,27 +503,10 @@ void radeonReadBuffer( struct gl_context *ctx, GLenum mode )
 	}
 }
 
-
-/* Turn on/off page flipping according to the flags in the sarea:
- */
-void radeonUpdatePageFlipping(radeonContextPtr radeon)
-{
-	struct radeon_framebuffer *rfb = radeon_get_drawable(radeon)->driverPrivate;
-
-	rfb->pf_active = radeon->sarea->pfState;
-	rfb->pf_current_page = radeon->sarea->pfCurrentPage;
-	rfb->pf_num_pages = 2;
-	radeon_flip_renderbuffers(rfb);
-	radeon_draw_buffer(radeon->glCtx, radeon->glCtx->DrawBuffer);
-}
-
 void radeon_window_moved(radeonContextPtr radeon)
 {
 	/* Cliprects has to be updated before doing anything else */
 	radeonSetCliprects(radeon);
-	if (!radeon->radeonScreen->driScreen->dri2.enabled) {
-		radeonUpdatePageFlipping(radeon);
-	}
 }
 
 void radeon_viewport(struct gl_context *ctx, GLint x, GLint y, GLsizei width, GLsizei height)
@@ -862,9 +792,7 @@ int rcommonFlushCmdBuf(radeonContextPtr rmesa, const char *caller)
 
 	radeonReleaseDmaRegions(rmesa);
 
-	LOCK_HARDWARE(rmesa);
 	ret = rcommonFlushCmdBufLocked(rmesa, caller);
-	UNLOCK_HARDWARE(rmesa);
 
 	if (ret) {
 		fprintf(stderr, "drmRadeonCmdBuffer: %d. Kernel failed to "

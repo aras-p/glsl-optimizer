@@ -45,7 +45,6 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #include "swrast/swrast.h"
 
 #include "radeon_common.h"
-#include "radeon_lock.h"
 #include "radeon_span.h"
 
 #define DBG 0
@@ -608,16 +607,6 @@ static void radeonSpanRenderStart(struct gl_context * ctx)
 
 	radeon_firevertices(rmesa);
 
-	/* The locking and wait for idle should really only be needed in classic mode.
-	 * In a future memory manager based implementation, this should become
-	 * unnecessary due to the fact that mapping our buffers, textures, etc.
-	 * should implicitly wait for any previous rendering commands that must
-	 * be waited on. */
-	if (!rmesa->radeonScreen->driScreen->dri2.enabled) {
-		LOCK_HARDWARE(rmesa);
-		radeonWaitForIdleLocked(rmesa);
-	}
-
 	for (i = 0; i < ctx->Const.MaxTextureImageUnits; i++) {
 		if (ctx->Texture.Unit[i]._ReallyEnabled)
 			ctx->Driver.MapTexture(ctx, ctx->Texture.Unit[i]._Current);
@@ -630,7 +619,6 @@ static void radeonSpanRenderStart(struct gl_context * ctx)
 
 static void radeonSpanRenderFinish(struct gl_context * ctx)
 {
-	radeonContextPtr rmesa = RADEON_CONTEXT(ctx);
 	int i;
 
 	_swrast_flush(ctx);
@@ -643,10 +631,6 @@ static void radeonSpanRenderFinish(struct gl_context * ctx)
 	radeon_map_unmap_framebuffer(ctx, ctx->DrawBuffer, GL_FALSE);
 	if (ctx->ReadBuffer != ctx->DrawBuffer)
 		radeon_map_unmap_framebuffer(ctx, ctx->ReadBuffer, GL_FALSE);
-
-	if (!rmesa->radeonScreen->driScreen->dri2.enabled) {
-		UNLOCK_HARDWARE(rmesa);
-	}
 }
 
 void radeonInitSpanFuncs(struct gl_context * ctx)

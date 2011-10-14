@@ -20,7 +20,6 @@ RADEON_COMMON_SOURCES = \
 	radeon_dma.c \
 	radeon_debug.c \
 	radeon_fbo.c \
-	radeon_lock.c \
 	radeon_mipmap_tree.c \
 	radeon_pixel_read.c \
 	radeon_queryobj.c \
