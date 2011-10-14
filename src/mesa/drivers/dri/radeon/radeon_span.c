@@ -215,47 +215,31 @@ static GLubyte *radeon_ptr_2byte_8x2(const struct radeon_renderbuffer * rrb,
  * information.
  */
 #define LOCAL_VARS						\
-   struct radeon_context *radeon = RADEON_CONTEXT(ctx);			\
    struct radeon_renderbuffer *rrb = (void *) rb;		\
    const GLint yScale = ctx->DrawBuffer->Name ? 1 : -1;			\
    const GLint yBias = ctx->DrawBuffer->Name ? 0 : rrb->base.Height - 1;\
-   unsigned int num_cliprects;						\
-   struct drm_clip_rect *cliprects;					\
-   int x_off, y_off;							\
+   int minx = 0, miny = 0;						\
+   int maxx = rb->Width;						\
+   int maxy = rb->Height;						\
    GLuint p;						\
-   (void)p;						\
-   radeon_get_cliprects(radeon, &cliprects, &num_cliprects, &x_off, &y_off);
+   (void)p;
 
 #define LOCAL_DEPTH_VARS				\
-   struct radeon_context *radeon = RADEON_CONTEXT(ctx);			\
    struct radeon_renderbuffer *rrb = (void *) rb;	\
    const GLint yScale = ctx->DrawBuffer->Name ? 1 : -1;			\
    const GLint yBias = ctx->DrawBuffer->Name ? 0 : rrb->base.Height - 1;\
-   unsigned int num_cliprects;						\
-   struct drm_clip_rect *cliprects;					\
-   int x_off, y_off;							\
-  radeon_get_cliprects(radeon, &cliprects, &num_cliprects, &x_off, &y_off);
+   int minx = 0, miny = 0;						\
+   int maxx = rb->Width;						\
+   int maxy = rb->Height;
 
 #define LOCAL_STENCIL_VARS LOCAL_DEPTH_VARS
 
 #define Y_FLIP(_y) ((_y) * yScale + yBias)
 
 #define HW_LOCK()
-
 #define HW_UNLOCK()
-
-/* XXX FBO: this is identical to the macro in spantmp2.h except we get
- * the cliprect info from the context, not the driDrawable.
- * Move this into spantmp2.h someday.
- */
-#define HW_CLIPLOOP()							\
-   do {									\
-      int _nc = num_cliprects;						\
-      while ( _nc-- ) {							\
-	 int minx = cliprects[_nc].x1 - x_off;				\
-	 int miny = cliprects[_nc].y1 - y_off;				\
-	 int maxx = cliprects[_nc].x2 - x_off;				\
-	 int maxy = cliprects[_nc].y2 - y_off;
+#define HW_CLIPLOOP()
+#define HW_ENDCLIPLOOP()
 
 /* ================================================================
  * Color buffer
@@ -268,7 +252,7 @@ static GLubyte *radeon_ptr_2byte_8x2(const struct radeon_renderbuffer * rrb,
 
 #define TAG(x)    radeon##x##_RGB565
 #define TAG2(x,y) radeon##x##_RGB565##y
-#define GET_PTR(X,Y) radeon_ptr_2byte_8x2(rrb, (X) + x_off, (Y) + y_off)
+#define GET_PTR(X,Y) radeon_ptr_2byte_8x2(rrb, (X), (Y))
 #include "spantmp2.h"
 
 #define SPANTMP_PIXEL_FMT GL_RGB
@@ -276,7 +260,7 @@ static GLubyte *radeon_ptr_2byte_8x2(const struct radeon_renderbuffer * rrb,
 
 #define TAG(x)    radeon##x##_RGB565_REV
 #define TAG2(x,y) radeon##x##_RGB565_REV##y
-#define GET_PTR(X,Y) radeon_ptr_2byte_8x2(rrb, (X) + x_off, (Y) + y_off)
+#define GET_PTR(X,Y) radeon_ptr_2byte_8x2(rrb, (X), (Y))
 #include "spantmp2.h"
 
 /* 16 bit, ARGB1555 color spanline and pixel functions
@@ -286,7 +270,7 @@ static GLubyte *radeon_ptr_2byte_8x2(const struct radeon_renderbuffer * rrb,
 
 #define TAG(x)    radeon##x##_ARGB1555
 #define TAG2(x,y) radeon##x##_ARGB1555##y
-#define GET_PTR(X,Y) radeon_ptr_2byte_8x2(rrb, (X) + x_off, (Y) + y_off)
+#define GET_PTR(X,Y) radeon_ptr_2byte_8x2(rrb, (X), (Y))
 #include "spantmp2.h"
 
 #define SPANTMP_PIXEL_FMT GL_BGRA
@@ -294,7 +278,7 @@ static GLubyte *radeon_ptr_2byte_8x2(const struct radeon_renderbuffer * rrb,
 
 #define TAG(x)    radeon##x##_ARGB1555_REV
 #define TAG2(x,y) radeon##x##_ARGB1555_REV##y
-#define GET_PTR(X,Y) radeon_ptr_2byte_8x2(rrb, (X) + x_off, (Y) + y_off)
+#define GET_PTR(X,Y) radeon_ptr_2byte_8x2(rrb, (X), (Y))
 #include "spantmp2.h"
 
 /* 16 bit, RGBA4 color spanline and pixel functions
@@ -304,7 +288,7 @@ static GLubyte *radeon_ptr_2byte_8x2(const struct radeon_renderbuffer * rrb,
 
 #define TAG(x)    radeon##x##_ARGB4444
 #define TAG2(x,y) radeon##x##_ARGB4444##y
-#define GET_PTR(X,Y) radeon_ptr_2byte_8x2(rrb, (X) + x_off, (Y) + y_off)
+#define GET_PTR(X,Y) radeon_ptr_2byte_8x2(rrb, (X), (Y))
 #include "spantmp2.h"
 
 #define SPANTMP_PIXEL_FMT GL_BGRA
@@ -312,7 +296,7 @@ static GLubyte *radeon_ptr_2byte_8x2(const struct radeon_renderbuffer * rrb,
 
 #define TAG(x)    radeon##x##_ARGB4444_REV
 #define TAG2(x,y) radeon##x##_ARGB4444_REV##y
-#define GET_PTR(X,Y) radeon_ptr_2byte_8x2(rrb, (X) + x_off, (Y) + y_off)
+#define GET_PTR(X,Y) radeon_ptr_2byte_8x2(rrb, (X), (Y))
 #include "spantmp2.h"
 
 /* 32 bit, xRGB8888 color spanline and pixel functions
@@ -322,9 +306,9 @@ static GLubyte *radeon_ptr_2byte_8x2(const struct radeon_renderbuffer * rrb,
 
 #define TAG(x)    radeon##x##_xRGB8888
 #define TAG2(x,y) radeon##x##_xRGB8888##y
-#define GET_VALUE(_x, _y) ((*(GLuint*)(radeon_ptr_4byte(rrb, _x + x_off, _y + y_off)) | 0xff000000))
+#define GET_VALUE(_x, _y) ((*(GLuint*)(radeon_ptr_4byte(rrb, _x, _y)) | 0xff000000))
 #define PUT_VALUE(_x, _y, d) { \
-   GLuint *_ptr = (GLuint*)radeon_ptr_4byte( rrb, _x + x_off, _y + y_off );		\
+   GLuint *_ptr = (GLuint*)radeon_ptr_4byte( rrb, _x, _y );		\
    *_ptr = d;								\
 } while (0)
 #include "spantmp2.h"
@@ -336,9 +320,9 @@ static GLubyte *radeon_ptr_2byte_8x2(const struct radeon_renderbuffer * rrb,
 
 #define TAG(x)    radeon##x##_ARGB8888
 #define TAG2(x,y) radeon##x##_ARGB8888##y
-#define GET_VALUE(_x, _y) (*(GLuint*)(radeon_ptr_4byte(rrb, _x + x_off, _y + y_off)))
+#define GET_VALUE(_x, _y) (*(GLuint*)(radeon_ptr_4byte(rrb, _x, _y)))
 #define PUT_VALUE(_x, _y, d) { \
-   GLuint *_ptr = (GLuint*)radeon_ptr_4byte( rrb, _x + x_off, _y + y_off );		\
+   GLuint *_ptr = (GLuint*)radeon_ptr_4byte( rrb, _x, _y );		\
    *_ptr = d;								\
 } while (0)
 #include "spantmp2.h"
@@ -350,9 +334,9 @@ static GLubyte *radeon_ptr_2byte_8x2(const struct radeon_renderbuffer * rrb,
 
 #define TAG(x)    radeon##x##_BGRx8888
 #define TAG2(x,y) radeon##x##_BGRx8888##y
-#define GET_VALUE(_x, _y) ((*(GLuint*)(radeon_ptr_4byte(rrb, _x + x_off, _y + y_off)) | 0x000000ff))
+#define GET_VALUE(_x, _y) ((*(GLuint*)(radeon_ptr_4byte(rrb, _x, _y)) | 0x000000ff))
 #define PUT_VALUE(_x, _y, d) { \
-   GLuint *_ptr = (GLuint*)radeon_ptr_4byte( rrb, _x + x_off, _y + y_off );		\
+   GLuint *_ptr = (GLuint*)radeon_ptr_4byte( rrb, _x, _y );		\
    *_ptr = d;								\
 } while (0)
 #include "spantmp2.h"
@@ -364,7 +348,7 @@ static GLubyte *radeon_ptr_2byte_8x2(const struct radeon_renderbuffer * rrb,
 
 #define TAG(x)    radeon##x##_BGRA8888
 #define TAG2(x,y) radeon##x##_BGRA8888##y
-#define GET_PTR(X,Y) radeon_ptr_4byte(rrb, (X) + x_off, (Y) + y_off)
+#define GET_PTR(X,Y) radeon_ptr_4byte(rrb, (X), (Y))
 #include "spantmp2.h"
 
 /* ================================================================
@@ -387,18 +371,18 @@ static GLubyte *radeon_ptr_2byte_8x2(const struct radeon_renderbuffer * rrb,
 
 #if defined(RADEON_R200)
 #define WRITE_DEPTH( _x, _y, d )					\
-   *(GLushort *)r200_depth_2byte(rrb, _x + x_off, _y + y_off) = d
+   *(GLushort *)r200_depth_2byte(rrb, _x, _y) = d
 #else
 #define WRITE_DEPTH( _x, _y, d )					\
-   *(GLushort *)radeon_ptr_2byte_8x2(rrb, _x + x_off, _y + y_off) = d
+   *(GLushort *)radeon_ptr_2byte_8x2(rrb, _x, _y) = d
 #endif
 
 #if defined(RADEON_R200)
 #define READ_DEPTH( d, _x, _y )						\
-   d = *(GLushort *)r200_depth_2byte(rrb, _x + x_off, _y + y_off)
+   d = *(GLushort *)r200_depth_2byte(rrb, _x, _y)
 #else
 #define READ_DEPTH( d, _x, _y )						\
-   d = *(GLushort *)radeon_ptr_2byte_8x2(rrb, _x + x_off, _y + y_off)
+   d = *(GLushort *)radeon_ptr_2byte_8x2(rrb, _x, _y)
 #endif
 
 #define TAG(x) radeon##x##_z16
@@ -414,7 +398,7 @@ static GLubyte *radeon_ptr_2byte_8x2(const struct radeon_renderbuffer * rrb,
 #if defined(RADEON_R200)
 #define WRITE_DEPTH( _x, _y, d )					\
 do {									\
-   GLuint *_ptr = (GLuint*)r200_depth_4byte( rrb, _x + x_off, _y + y_off );		\
+   GLuint *_ptr = (GLuint*)r200_depth_4byte( rrb, _x, _y );		\
    GLuint tmp = LE32_TO_CPU(*_ptr);                                     \
    tmp &= 0xff000000;							\
    tmp |= ((d) & 0x00ffffff);						\
@@ -423,7 +407,7 @@ do {									\
 #else
 #define WRITE_DEPTH( _x, _y, d )					\
 do {									\
-   GLuint *_ptr = (GLuint*)radeon_ptr_4byte( rrb, _x + x_off, _y + y_off );	\
+   GLuint *_ptr = (GLuint*)radeon_ptr_4byte( rrb, _x, _y );	\
    GLuint tmp = LE32_TO_CPU(*_ptr);                                     \
    tmp &= 0xff000000;							\
    tmp |= ((d) & 0x00ffffff);						\
@@ -434,11 +418,11 @@ do {									\
 #if defined(RADEON_R200)
 #define READ_DEPTH( d, _x, _y )						\
   do {									\
-    d = LE32_TO_CPU(*(GLuint*)(r200_depth_4byte(rrb, _x + x_off, _y + y_off))) & 0x00ffffff; \
+    d = LE32_TO_CPU(*(GLuint*)(r200_depth_4byte(rrb, _x, _y))) & 0x00ffffff; \
   }while(0)
 #else
 #define READ_DEPTH( d, _x, _y )	\
-  d = LE32_TO_CPU(*(GLuint*)(radeon_ptr_4byte(rrb, _x + x_off,	_y + y_off))) & 0x00ffffff;
+  d = LE32_TO_CPU(*(GLuint*)(radeon_ptr_4byte(rrb, _x,	_y))) & 0x00ffffff;
 #endif
 
 #define TAG(x) radeon##x##_z24
@@ -455,13 +439,13 @@ do {									\
 #if defined(RADEON_R200)
 #define WRITE_DEPTH( _x, _y, d )					\
 do {									\
-   GLuint *_ptr = (GLuint*)r200_depth_4byte( rrb, _x + x_off, _y + y_off );		\
+   GLuint *_ptr = (GLuint*)r200_depth_4byte( rrb, _x, _y );		\
    *_ptr = CPU_TO_LE32(d);						\
 } while (0)
 #else
 #define WRITE_DEPTH( _x, _y, d )					\
 do {									\
-   GLuint *_ptr = (GLuint*)radeon_ptr_4byte( rrb, _x + x_off, _y + y_off );	\
+   GLuint *_ptr = (GLuint*)radeon_ptr_4byte( rrb, _x, _y );	\
    *_ptr = CPU_TO_LE32(d);						\
 } while (0)
 #endif
@@ -469,11 +453,11 @@ do {									\
 #if defined(RADEON_R200)
 #define READ_DEPTH( d, _x, _y )						\
   do { \
-    d = LE32_TO_CPU(*(GLuint*)(r200_depth_4byte(rrb, _x + x_off, _y + y_off))); \
+    d = LE32_TO_CPU(*(GLuint*)(r200_depth_4byte(rrb, _x, _y))); \
   }while(0)
 #else
 #define READ_DEPTH( d, _x, _y )	do {					\
-    d = LE32_TO_CPU(*(GLuint*)(radeon_ptr_4byte(rrb, _x + x_off, _y + y_off))); \
+    d = LE32_TO_CPU(*(GLuint*)(radeon_ptr_4byte(rrb, _x, _y))); \
   } while (0)
 #endif
 
@@ -489,7 +473,7 @@ do {									\
 #if defined(RADEON_R200)
 #define WRITE_STENCIL( _x, _y, d )					\
 do {									\
-   GLuint *_ptr = (GLuint*)r200_depth_4byte(rrb, _x + x_off, _y + y_off);		\
+   GLuint *_ptr = (GLuint*)r200_depth_4byte(rrb, _x, _y);		\
    GLuint tmp = LE32_TO_CPU(*_ptr);                                     \
    tmp &= 0x00ffffff;							\
    tmp |= (((d) & 0xff) << 24);						\
@@ -498,7 +482,7 @@ do {									\
 #else
 #define WRITE_STENCIL( _x, _y, d )					\
 do {									\
-   GLuint *_ptr = (GLuint*)radeon_ptr_4byte(rrb, _x + x_off, _y + y_off);		\
+   GLuint *_ptr = (GLuint*)radeon_ptr_4byte(rrb, _x, _y);		\
    GLuint tmp = LE32_TO_CPU(*_ptr);                                     \
    tmp &= 0x00ffffff;							\
    tmp |= (((d) & 0xff) << 24);						\
@@ -509,14 +493,14 @@ do {									\
 #if defined(RADEON_R200)
 #define READ_STENCIL( d, _x, _y )					\
 do {									\
-   GLuint *_ptr = (GLuint*)r200_depth_4byte( rrb, _x + x_off, _y + y_off );		\
+   GLuint *_ptr = (GLuint*)r200_depth_4byte( rrb, _x, _y );		\
    GLuint tmp = LE32_TO_CPU(*_ptr);                                     \
    d = (tmp & 0xff000000) >> 24;					\
 } while (0)
 #else
 #define READ_STENCIL( d, _x, _y )					\
 do {									\
-   GLuint *_ptr = (GLuint*)radeon_ptr_4byte( rrb, _x + x_off, _y + y_off );		\
+   GLuint *_ptr = (GLuint*)radeon_ptr_4byte( rrb, _x, _y );		\
    GLuint tmp = LE32_TO_CPU(*_ptr);                                     \
    d = (tmp & 0xff000000) >> 24;					\
 } while (0)
