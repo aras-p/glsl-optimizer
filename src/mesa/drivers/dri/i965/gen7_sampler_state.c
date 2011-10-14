@@ -167,6 +167,15 @@ gen7_update_sampler_state(struct brw_context *brw, int unit,
    upload_default_color(brw, gl_sampler, unit);
 
    sampler->ss2.default_color_pointer = brw->wm.sdc_offset[unit] >> 5;
+
+   if (sampler->ss0.min_filter != BRW_MAPFILTER_NEAREST)
+      sampler->ss3.address_round |= BRW_ADDRESS_ROUNDING_ENABLE_U_MIN |
+                                    BRW_ADDRESS_ROUNDING_ENABLE_V_MIN |
+                                    BRW_ADDRESS_ROUNDING_ENABLE_R_MIN;
+   if (sampler->ss0.mag_filter != BRW_MAPFILTER_NEAREST)
+      sampler->ss3.address_round |= BRW_ADDRESS_ROUNDING_ENABLE_U_MAG |
+                                    BRW_ADDRESS_ROUNDING_ENABLE_V_MAG |
+                                    BRW_ADDRESS_ROUNDING_ENABLE_R_MAG;
 }
 
 

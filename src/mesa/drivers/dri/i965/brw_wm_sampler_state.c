@@ -312,6 +312,15 @@ static void brw_update_sampler_state(struct brw_context *brw,
 			      intel->batch.bo, brw->wm.sdc_offset[unit],
 			      I915_GEM_DOMAIN_SAMPLER, 0);
    }
+
+   if (sampler->ss0.min_filter != BRW_MAPFILTER_NEAREST)
+      sampler->ss3.address_round |= BRW_ADDRESS_ROUNDING_ENABLE_U_MIN |
+                                    BRW_ADDRESS_ROUNDING_ENABLE_V_MIN |
+                                    BRW_ADDRESS_ROUNDING_ENABLE_R_MIN;
+   if (sampler->ss0.mag_filter != BRW_MAPFILTER_NEAREST)
+      sampler->ss3.address_round |= BRW_ADDRESS_ROUNDING_ENABLE_U_MAG |
+                                    BRW_ADDRESS_ROUNDING_ENABLE_V_MAG |
+                                    BRW_ADDRESS_ROUNDING_ENABLE_R_MAG;
 }
 
 
