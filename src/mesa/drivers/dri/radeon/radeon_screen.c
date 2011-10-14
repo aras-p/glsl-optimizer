@@ -177,11 +177,6 @@ radeonGetParam(__DRIscreen *sPriv, int param, void *value)
 }
 
 #if defined(RADEON_R100)
-static const __DRItexOffsetExtension radeonTexOffsetExtension = {
-    { __DRI_TEX_OFFSET, __DRI_TEX_OFFSET_VERSION },
-    radeonSetTexOffset,
-};
-
 static const __DRItexBufferExtension radeonTexBufferExtension = {
     { __DRI_TEX_BUFFER, __DRI_TEX_BUFFER_VERSION },
    radeonSetTexBuffer,
@@ -190,12 +185,6 @@ static const __DRItexBufferExtension radeonTexBufferExtension = {
 #endif
 
 #if defined(RADEON_R200)
-
-static const __DRItexOffsetExtension r200texOffsetExtension = {
-    { __DRI_TEX_OFFSET, __DRI_TEX_OFFSET_VERSION },
-   r200SetTexOffset,
-};
-
 static const __DRItexBufferExtension r200TexBufferExtension = {
     { __DRI_TEX_BUFFER, __DRI_TEX_BUFFER_VERSION },
    r200SetTexBuffer,

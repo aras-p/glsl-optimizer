@@ -725,43 +725,6 @@ static GLboolean r200UpdateTextureEnv( struct gl_context *ctx, int unit, int slo
    return GL_TRUE;
 }
 
-void r200SetTexOffset(__DRIcontext * pDRICtx, GLint texname,
-		      unsigned long long offset, GLint depth, GLuint pitch)
-{
-	r200ContextPtr rmesa = pDRICtx->driverPrivate;
-	struct gl_texture_object *tObj =
-	    _mesa_lookup_texture(rmesa->radeon.glCtx, texname);
-	radeonTexObjPtr t = radeon_tex_obj(tObj);
-
-	if (!tObj)
-		return;
-
-	t->image_override = GL_TRUE;
-
-	if (!offset)
-		return;
-
-	t->bo = NULL;
-	t->override_offset = offset;
-	t->pp_txpitch = pitch - 32;
-
-	switch (depth) {
-	case 32:
-		t->pp_txformat = tx_table_le[MESA_FORMAT_ARGB8888].format;
-		t->pp_txfilter |= tx_table_le[MESA_FORMAT_ARGB8888].filter;
-		break;
-	case 24:
-	default:
-		t->pp_txformat = tx_table_le[MESA_FORMAT_RGB888].format;
-		t->pp_txfilter |= tx_table_le[MESA_FORMAT_RGB888].filter;
-		break;
-	case 16:
-		t->pp_txformat = tx_table_le[MESA_FORMAT_RGB565].format;
-		t->pp_txfilter |= tx_table_le[MESA_FORMAT_RGB565].filter;
-		break;
-	}
-}
-
 void r200SetTexBuffer2(__DRIcontext *pDRICtx, GLint target, GLint texture_format,
 		       __DRIdrawable *dPriv)
 {
