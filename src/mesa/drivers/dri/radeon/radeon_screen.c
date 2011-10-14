@@ -135,8 +135,6 @@ static const GLuint __driNConfigOptions = 17;
 
 #endif
 
-static int getSwapInfo( __DRIdrawable *dPriv, __DRIswapInfo * sInfo );
-
 #ifndef RADEON_INFO_TILE_CONFIG
 #define RADEON_INFO_TILE_CONFIG 0x6
 #endif
@@ -1537,32 +1535,6 @@ __DRIconfig **radeonInitScreen2(__DRIscreen *psp)
    return (const __DRIconfig **)configs;
 }
 
-/**
- * Get information about previous buffer swaps.
- */
-static int
-getSwapInfo( __DRIdrawable *dPriv, __DRIswapInfo * sInfo )
-{
-    struct radeon_framebuffer *rfb;
-
-    if ( (dPriv == NULL) || (dPriv->driContextPriv == NULL)
-	 || (dPriv->driContextPriv->driverPrivate == NULL)
-	 || (sInfo == NULL) ) {
-	return -1;
-   }
-
-    rfb = dPriv->driverPrivate;
-    sInfo->swap_count = rfb->swap_count;
-    sInfo->swap_ust = rfb->swap_ust;
-    sInfo->swap_missed_count = rfb->swap_missed_count;
-
-   sInfo->swap_missed_usage = (sInfo->swap_missed_count != 0)
-       ? driCalculateSwapUsage( dPriv, 0, rfb->swap_missed_ust )
-       : 0.0;
-
-   return 0;
-}
-
 const struct __DriverAPIRec driDriverAPI = {
    .DestroyScreen   = radeonDestroyScreen,
 #if defined(RADEON_R200)
@@ -1576,11 +1548,6 @@ const struct __DriverAPIRec driDriverAPI = {
    .DestroyBuffer   = radeonDestroyBuffer,
    .MakeCurrent     = radeonMakeCurrent,
    .UnbindContext   = radeonUnbindContext,
-   .GetSwapInfo     = getSwapInfo,
-   .GetDrawableMSC  = driDrawableGetMSC32,
-   .WaitForMSC      = driWaitForMSC32,
-   .WaitForSBC      = NULL,
-   .SwapBuffersMSC  = NULL,
     /* DRI2 */
    .InitScreen2     = radeonInitScreen2,
 };

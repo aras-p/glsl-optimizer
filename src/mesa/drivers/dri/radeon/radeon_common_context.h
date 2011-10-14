@@ -91,7 +91,6 @@ struct radeon_renderbuffer
 	int has_surface;
 
 	GLuint pf_pending;  /**< sequence number of pending flip */
-	GLuint vbl_pending;   /**< vblank sequence number of pending flip */
 	__DRIdrawable *dPriv;
 
 	/* r6xx+ tiling */
@@ -107,21 +106,6 @@ struct radeon_framebuffer
 	struct gl_framebuffer base;
 
 	struct radeon_renderbuffer *color_rb[2];
-
-	GLuint vbl_waited;
-
-	/* buffer swap */
-	int64_t swap_ust;
-	int64_t swap_missed_ust;
-
-	GLuint swap_count;
-	GLuint swap_missed_count;
-
-	/* Drawable page flipping state */
-	GLboolean pf_active;
-	GLint pf_current_page;
-	GLint pf_num_pages;
-
 };
 
 

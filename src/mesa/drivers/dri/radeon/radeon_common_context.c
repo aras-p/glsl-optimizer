@@ -716,7 +716,6 @@ GLboolean radeonMakeCurrent(__DRIcontext * driContextPriv,
 			    __DRIdrawable * driReadPriv)
 {
 	radeonContextPtr radeon;
-	struct radeon_framebuffer *rdrfb;
 	struct gl_framebuffer *drfb, *readfb;
 
 	if (!driContextPriv) {
@@ -766,9 +765,7 @@ GLboolean radeonMakeCurrent(__DRIcontext * driContextPriv,
 
 	if (radeon->glCtx->DrawBuffer == drfb) {
 		if(driDrawPriv != NULL) {
-			rdrfb = (struct radeon_framebuffer *)drfb;
 			if (driDrawPriv->swap_interval == (unsigned)-1) {
-				int i;
 				driDrawPriv->vblFlags =
 					(radeon->radeonScreen->irq != 0)
 					? driGetDefaultVBlankFlags(&radeon->
@@ -776,12 +773,6 @@ GLboolean radeonMakeCurrent(__DRIcontext * driContextPriv,
 					: VBLANK_FLAG_NO_IRQ;
 
 				driDrawableInitVBlank(driDrawPriv);
-				rdrfb->vbl_waited = driDrawPriv->vblSeq;
-
-				for (i = 0; i < 2; i++) {
-					if (rdrfb->color_rb[i])
-						rdrfb->color_rb[i]->vbl_pending = driDrawPriv->vblSeq;
-				}
 			}
 			radeon_window_moved(radeon);
 		}
