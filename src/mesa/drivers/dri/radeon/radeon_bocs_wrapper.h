@@ -106,6 +106,5 @@ static inline void radeon_tracker_print(void *ptr, int io)
 #endif
 
 #include "radeon_bo_legacy.h"
-#include "radeon_cs_legacy.h"
 
 #endif
