@@ -710,17 +710,6 @@ nouveau_texture_unmap(struct gl_context *ctx, struct gl_texture_object *t)
 	}
 }
 
-static void
-nouveau_generate_mipmap(struct gl_context *ctx, GLenum target,
-			struct gl_texture_object *t)
-{
-	if (_mesa_meta_check_generate_mipmap_fallback(ctx, target, t)) {
-		_mesa_generate_mipmap(ctx, target, t);
-	} else {
-		_mesa_meta_GenerateMipmap(ctx, target, t);
-	}
-}
-
 void
 nouveau_texture_functions_init(struct dd_function_table *functions)
 {
@@ -740,5 +729,4 @@ nouveau_texture_functions_init(struct dd_function_table *functions)
 	functions->UnmapTexture = nouveau_texture_unmap;
 	functions->MapTextureImage = nouveau_map_texture_image;
 	functions->UnmapTextureImage = nouveau_unmap_texture_image;
-	functions->GenerateMipmap = nouveau_generate_mipmap;
 }

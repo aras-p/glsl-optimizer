@@ -224,32 +224,9 @@ intel_unmap_texture_image(struct gl_context *ctx,
    }
 }
 
-/**
- * Called via ctx->Driver.GenerateMipmap()
- * This is basically a wrapper for _mesa_meta_GenerateMipmap() which checks
- * if we'll be using software mipmap generation.  In that case, we need to
- * map/unmap the base level texture image.
- */
-static void
-intelGenerateMipmap(struct gl_context *ctx, GLenum target,
-                    struct gl_texture_object *texObj)
-{
-   if (_mesa_meta_check_generate_mipmap_fallback(ctx, target, texObj)) {
-      fallback_debug("%s - fallback to swrast\n", __FUNCTION__);
-
-      _mesa_generate_mipmap(ctx, target, texObj);
-   }
-   else {
-      _mesa_meta_GenerateMipmap(ctx, target, texObj);
-   }
-}
-
-
 void
 intelInitTextureFuncs(struct dd_function_table *functions)
 {
-   functions->GenerateMipmap = intelGenerateMipmap;
-
    functions->NewTextureObject = intelNewTextureObject;
    functions->NewTextureImage = intelNewTextureImage;
    functions->DeleteTextureImage = intelDeleteTextureImage;

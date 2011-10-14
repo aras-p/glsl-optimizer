@@ -332,35 +332,6 @@ radeon_unmap_texture_image(struct gl_context *ctx,
 		radeon_bo_unmap(image->mt->bo);
 }
 
-void radeonGenerateMipmap(struct gl_context* ctx, GLenum target, struct gl_texture_object *texObj)
-{
-	radeonContextPtr rmesa = RADEON_CONTEXT(ctx);
-	struct radeon_bo *bo;
-	GLuint face = _mesa_tex_target_to_face(target);
-	radeon_texture_image *baseimage = get_radeon_texture_image(texObj->Image[face][texObj->BaseLevel]);
-	bo = !baseimage->mt ? baseimage->bo : baseimage->mt->bo;
-
-	radeon_print(RADEON_TEXTURE, RADEON_TRACE,
-		"%s(%p, target %s, tex %p)\n",
-		__func__, ctx, _mesa_lookup_enum_by_nr(target),
-		texObj);
-
-	if (bo && radeon_bo_is_referenced_by_cs(bo, rmesa->cmdbuf.cs)) {
-		radeon_print(RADEON_TEXTURE, RADEON_NORMAL,
-			"%s(%p, tex %p) Trying to generate mipmap for texture "
-			"in processing by GPU.\n",
-			__func__, ctx, texObj);
-		radeon_firevertices(rmesa);
-	}
-
-	if (_mesa_meta_check_generate_mipmap_fallback(ctx, target, texObj)) {
-		_mesa_generate_mipmap(ctx, target, texObj);
-	} else {
-		_mesa_meta_GenerateMipmap(ctx, target, texObj);
-	}
-}
-
-
 /* try to find a format which will only need a memcopy */
 static gl_format radeonChoose8888TexFormat(radeonContextPtr rmesa,
 					   GLenum srcFormat,
@@ -1123,8 +1094,6 @@ radeon_init_common_texture_funcs(radeonContextPtr radeon,
 	functions->TexSubImage3D = radeonTexSubImage3D;
 	functions->CompressedTexImage2D = radeonCompressedTexImage2D;
 	functions->CompressedTexSubImage2D = radeonCompressedTexSubImage2D;
-
-	functions->GenerateMipmap = radeonGenerateMipmap;
 
 	functions->CopyTexSubImage2D = radeonCopyTexSubImage2D;
 
