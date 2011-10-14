@@ -8,7 +8,7 @@ LIBNAME = radeon_dri.so
 
 include ../Makefile.defines
 
-ifeq ($(RADEON_LDFLAGS),)
+ifeq ($(RADEON_LIBS),)
 CS_SOURCES = radeon_cs_space_drm.c radeon_bo.c radeon_cs.c
 endif
 
@@ -50,7 +50,7 @@ C_SOURCES = \
 DRIVER_DEFINES = -DRADEON_R100
 
 INCLUDES += $(RADEON_CFLAGS)
-DRI_LIB_DEPS += $(RADEON_LDFLAGS)
+DRI_LIB_DEPS += $(RADEON_LIBS)
 
 X86_SOURCES = 
 
