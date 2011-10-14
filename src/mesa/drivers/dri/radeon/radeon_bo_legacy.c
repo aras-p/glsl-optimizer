@@ -893,12 +893,6 @@ struct radeon_bo_manager *radeon_bo_manager_legacy_ctor(struct radeon_screen *sc
     return (struct radeon_bo_manager*)bom;
 }
 
-void radeon_bo_legacy_texture_age(struct radeon_bo_manager *bom)
-{
-    struct bo_manager_legacy *boml = (struct bo_manager_legacy *)bom;
-    DRI_AGE_TEXTURES(boml->texture_heap);
-}
-
 unsigned radeon_bo_legacy_relocs_size(struct radeon_bo *bo)
 {
     struct radeon_bo_int *boi = (struct radeon_bo_int *)bo;

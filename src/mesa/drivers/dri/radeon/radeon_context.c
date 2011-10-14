@@ -105,9 +105,6 @@ static void r100_get_lock(radeonContextPtr radeon)
    
    if (sarea->ctx_owner != rmesa->radeon.dri.hwContext) {
       sarea->ctx_owner = rmesa->radeon.dri.hwContext;
-      
-      if (!radeon->radeonScreen->kernel_mm)
-         radeon_bo_legacy_texture_age(radeon->radeonScreen->bom);
    }
 }
 
@@ -331,8 +328,7 @@ r100CreateContext( gl_api api,
    ctx->Extensions.OES_EGL_image = true;
 #endif
 
-   ctx->Extensions.EXT_framebuffer_object =
-      rmesa->radeon.radeonScreen->kernel_mm;
+   ctx->Extensions.EXT_framebuffer_object = true;
 
    ctx->Extensions.ARB_texture_cube_map =
       rmesa->radeon.radeonScreen->drmSupportsCubeMapsR100;
@@ -345,16 +341,14 @@ r100CreateContext( gl_api api,
       ctx->Extensions.EXT_texture_compression_s3tc = true;
    }
 
-   ctx->Extensions.NV_texture_rectangle = rmesa->radeon.radeonScreen->kernel_mm
-      || rmesa->radeon.dri.drmMinor >= 9;
-
-   ctx->Extensions.ARB_occlusion_query = rmesa->radeon.radeonScreen->kernel_mm;
+   ctx->Extensions.NV_texture_rectangle = true;
+   ctx->Extensions.ARB_occlusion_query = true;
 
    /* XXX these should really go right after _mesa_init_driver_functions() */
    radeon_fbo_init(&rmesa->radeon);
    radeonInitSpanFuncs( ctx );
    radeonInitIoctlFuncs( ctx );
-   radeonInitStateFuncs( ctx , rmesa->radeon.radeonScreen->kernel_mm );
+   radeonInitStateFuncs( ctx );
    radeonInitState( rmesa );
    radeonInitSwtcl( ctx );
 

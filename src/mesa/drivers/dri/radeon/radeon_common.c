@@ -231,18 +231,6 @@ void radeonUpdateScissor( struct gl_context *ctx )
 		y2 = y + h - 1;
 
 	}
-	if (!rmesa->radeonScreen->kernel_mm) {
-	   /* Fix scissors for dri 1 */
-	   __DRIdrawable *dPriv = radeon_get_drawable(rmesa);
-	   x1 += dPriv->x;
-	   x2 += dPriv->x + 1;
-	   min_x += dPriv->x;
-	   max_x += dPriv->x + 1;
-	   y1 += dPriv->y;
-	   y2 += dPriv->y + 1;
-	   min_y += dPriv->y;
-	   max_y += dPriv->y + 1;
-	}
 
 	rmesa->state.scissor.rect.x1 = CLAMP(x1,  min_x, max_x);
 	rmesa->state.scissor.rect.y1 = CLAMP(y1,  min_y, max_y);
@@ -387,15 +375,6 @@ void radeonWaitForIdleLocked(radeonContextPtr radeon)
 		fprintf(stderr, "Error: R300 timed out... exiting\n");
 		exit(-1);
 	}
-}
-
-static void radeonWaitForIdle(radeonContextPtr radeon)
-{
-	if (!radeon->radeonScreen->driScreen->dri2.enabled) {
-        LOCK_HARDWARE(radeon);
-	    radeonWaitForIdleLocked(radeon);
-	    UNLOCK_HARDWARE(radeon);
-    }
 }
 
 static void radeon_flip_renderbuffers(struct radeon_framebuffer *rfb)
@@ -913,34 +892,6 @@ void radeon_viewport(struct gl_context *ctx, GLint x, GLint y, GLsizei width, GL
 	ctx->Driver.Viewport = old_viewport;
 }
 
-static void radeon_print_state_atom_prekmm(radeonContextPtr radeon, struct radeon_state_atom *state)
-{
-	int i, j, reg;
-	int dwords = (*state->check) (radeon->glCtx, state);
-	drm_r300_cmd_header_t cmd;
-
-	fprintf(stderr, "  emit %s %d/%d\n", state->name, dwords, state->cmd_size);
-
-	if (radeon_is_debug_enabled(RADEON_STATE, RADEON_TRACE)) {
-		if (dwords > state->cmd_size)
-			dwords = state->cmd_size;
-
-		for (i = 0; i < dwords;) {
-			cmd = *((drm_r300_cmd_header_t *) &state->cmd[i]);
-			reg = (cmd.packet0.reghi << 8) | cmd.packet0.reglo;
-			fprintf(stderr, "      %s[%d]: cmdpacket0 (first reg=0x%04x, count=%d)\n",
-					state->name, i, reg, cmd.packet0.count);
-			++i;
-			for (j = 0; j < cmd.packet0.count && i < dwords; j++) {
-				fprintf(stderr, "      %s[%d]: 0x%04x = %08x\n",
-						state->name, i, reg, state->cmd[i]);
-				reg += 4;
-				++i;
-			}
-		}
-	}
-}
-
 static void radeon_print_state_atom(radeonContextPtr radeon, struct radeon_state_atom *state)
 {
 	int i, j, reg, count;
@@ -948,11 +899,6 @@ static void radeon_print_state_atom(radeonContextPtr radeon, struct radeon_state
 	uint32_t packet0;
 	if (!radeon_is_debug_enabled(RADEON_STATE, RADEON_VERBOSE) )
 		return;
-
-	if (!radeon->radeonScreen->kernel_mm) {
-		radeon_print_state_atom_prekmm(radeon, state);
-		return;
-	}
 
 	dwords = (*state->check) (radeon->glCtx, state);
 
@@ -1145,32 +1091,21 @@ void radeonFinish(struct gl_context * ctx)
 {
 	radeonContextPtr radeon = RADEON_CONTEXT(ctx);
 	struct gl_framebuffer *fb = ctx->DrawBuffer;
+	struct radeon_renderbuffer *rrb;
 	int i;
 
 	if (ctx->Driver.Flush)
 		ctx->Driver.Flush(ctx); /* +r6/r7 */
 
-	if (radeon->radeonScreen->kernel_mm) {
-		for (i = 0; i < fb->_NumColorDrawBuffers; i++) {
-			struct radeon_renderbuffer *rrb;
-			rrb = radeon_renderbuffer(fb->_ColorDrawBuffers[i]);
-			if (rrb && rrb->bo)
-				radeon_bo_wait(rrb->bo);
-		}
-		{
-			struct radeon_renderbuffer *rrb;
-			rrb = radeon_get_depthbuffer(radeon);
-			if (rrb && rrb->bo)
-				radeon_bo_wait(rrb->bo);
-		}
-	} else if (radeon->do_irqs) {
-		LOCK_HARDWARE(radeon);
-		radeonEmitIrqLocked(radeon);
-		UNLOCK_HARDWARE(radeon);
-		radeonWaitIrq(radeon);
-	} else {
-		radeonWaitForIdle(radeon);
+	for (i = 0; i < fb->_NumColorDrawBuffers; i++) {
+		struct radeon_renderbuffer *rrb;
+		rrb = radeon_renderbuffer(fb->_ColorDrawBuffers[i]);
+		if (rrb && rrb->bo)
+			radeon_bo_wait(rrb->bo);
 	}
+	rrb = radeon_get_depthbuffer(radeon);
+	if (rrb && rrb->bo)
+		radeon_bo_wait(rrb->bo);
 }
 
 /* cmdbuffer */
@@ -1249,6 +1184,8 @@ GLboolean rcommonEnsureCmdBufSpace(radeonContextPtr rmesa, int dwords, const cha
 void rcommonInitCmdBuf(radeonContextPtr rmesa)
 {
 	GLuint size;
+	struct drm_radeon_gem_info mminfo = { 0 };
+
 	/* Initialize command buffer */
 	size = 256 * driQueryOptioni(&rmesa->optionCache,
 				     "command_buffer_size");
@@ -1266,12 +1203,8 @@ void rcommonInitCmdBuf(radeonContextPtr rmesa)
 			"Allocating %d bytes command buffer (max state is %d bytes)\n",
 			size * 4, rmesa->hw.max_state_size * 4);
 
-	if (rmesa->radeonScreen->kernel_mm) {
-		int fd = rmesa->radeonScreen->driScreen->fd;
-		rmesa->cmdbuf.csm = radeon_cs_manager_gem_ctor(fd);
-	} else {
-		rmesa->cmdbuf.csm = radeon_cs_manager_legacy_ctor(rmesa);
-	}
+	rmesa->cmdbuf.csm =
+		radeon_cs_manager_gem_ctor(rmesa->radeonScreen->driScreen->fd);
 	if (rmesa->cmdbuf.csm == NULL) {
 		/* FIXME: fatal error */
 		return;
@@ -1283,31 +1216,23 @@ void rcommonInitCmdBuf(radeonContextPtr rmesa)
 	radeon_cs_space_set_flush(rmesa->cmdbuf.cs,
 				  (void (*)(void *))rmesa->glCtx->Driver.Flush, rmesa->glCtx);
 
-	if (!rmesa->radeonScreen->kernel_mm) {
-		radeon_cs_set_limit(rmesa->cmdbuf.cs, RADEON_GEM_DOMAIN_VRAM, rmesa->radeonScreen->texSize[0]);
-		radeon_cs_set_limit(rmesa->cmdbuf.cs, RADEON_GEM_DOMAIN_GTT, rmesa->radeonScreen->gartTextures.size);
-	} else {
-		struct drm_radeon_gem_info mminfo = { 0 };
 
-		if (!drmCommandWriteRead(rmesa->dri.fd, DRM_RADEON_GEM_INFO, &mminfo, sizeof(mminfo)))
-		{
-			radeon_cs_set_limit(rmesa->cmdbuf.cs, RADEON_GEM_DOMAIN_VRAM, mminfo.vram_visible);
-			radeon_cs_set_limit(rmesa->cmdbuf.cs, RADEON_GEM_DOMAIN_GTT, mminfo.gart_size);
-		}
+	if (!drmCommandWriteRead(rmesa->dri.fd, DRM_RADEON_GEM_INFO,
+				 &mminfo, sizeof(mminfo))) {
+		radeon_cs_set_limit(rmesa->cmdbuf.cs, RADEON_GEM_DOMAIN_VRAM,
+				    mminfo.vram_visible);
+		radeon_cs_set_limit(rmesa->cmdbuf.cs, RADEON_GEM_DOMAIN_GTT,
+				    mminfo.gart_size);
 	}
-
 }
+
 /**
  * Destroy the command buffer
  */
 void rcommonDestroyCmdBuf(radeonContextPtr rmesa)
 {
 	radeon_cs_destroy(rmesa->cmdbuf.cs);
-	if (rmesa->radeonScreen->driScreen->dri2.enabled || rmesa->radeonScreen->kernel_mm) {
-		radeon_cs_manager_gem_dtor(rmesa->cmdbuf.csm);
-	} else {
-		radeon_cs_manager_legacy_dtor(rmesa->cmdbuf.csm);
-	}
+	radeon_cs_manager_gem_dtor(rmesa->cmdbuf.csm);
 }
 
 void rcommonBeginBatch(radeonContextPtr rmesa, int n,

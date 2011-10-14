@@ -62,8 +62,6 @@ void rcommonBeginBatch(radeonContextPtr rmesa,
         radeon_cs_write_dword(b_l_rmesa->cmdbuf.cs, __offset);	\
         radeon_cs_write_reloc(b_l_rmesa->cmdbuf.cs, 		\
                               bo, rd, wd, flags);		\
-	if (!b_l_rmesa->radeonScreen->kernel_mm) 		\
-		b_l_rmesa->cmdbuf.cs->section_cdw += 2;		\
 	} while(0)
 
 

@@ -550,31 +550,6 @@ static void radeonPolygonOffset( struct gl_context *ctx,
    rmesa->hw.zbs.cmd[ZBS_SE_ZBIAS_CONSTANT] = constant.ui32;
 }
 
-static void radeonPolygonStipplePreKMS( struct gl_context *ctx, const GLubyte *mask )
-{
-   r100ContextPtr rmesa = R100_CONTEXT(ctx);
-   GLuint i;
-   drm_radeon_stipple_t stipple;
-
-   /* Must flip pattern upside down.
-    */
-   for ( i = 0 ; i < 32 ; i++ ) {
-      rmesa->state.stipple.mask[31 - i] = ((GLuint *) mask)[i];
-   }
-
-   /* TODO: push this into cmd mechanism
-    */
-   radeon_firevertices(&rmesa->radeon);
-   LOCK_HARDWARE( &rmesa->radeon );
-
-   /* FIXME: Use window x,y offsets into stipple RAM.
-    */
-   stipple.mask = rmesa->state.stipple.mask;
-   drmCommandWrite( rmesa->radeon.dri.fd, DRM_RADEON_STIPPLE,
-		    &stipple, sizeof(drm_radeon_stipple_t) );
-   UNLOCK_HARDWARE( &rmesa->radeon );
-}
-
 static void radeonPolygonMode( struct gl_context *ctx, GLenum face, GLenum mode )
 {
    r100ContextPtr rmesa = R100_CONTEXT(ctx);
@@ -2244,7 +2219,7 @@ static void radeonPolygonStipple( struct gl_context *ctx, const GLubyte *mask )
  * Many of the ctx->Driver functions might have been initialized to
  * software defaults in the earlier _mesa_init_driver_functions() call.
  */
-void radeonInitStateFuncs( struct gl_context *ctx , GLboolean dri2 )
+void radeonInitStateFuncs( struct gl_context *ctx )
 {
    ctx->Driver.UpdateState		= radeonInvalidateState;
    ctx->Driver.LightingSpaceChange      = radeonLightingSpaceChange;
@@ -2253,8 +2228,7 @@ void radeonInitStateFuncs( struct gl_context *ctx , GLboolean dri2 )
    ctx->Driver.ReadBuffer		= radeonReadBuffer;
    ctx->Driver.CopyPixels               = _mesa_meta_CopyPixels;
    ctx->Driver.DrawPixels               = _mesa_meta_DrawPixels;
-   if (dri2)
-	   ctx->Driver.ReadPixels               = radeonReadPixels;
+   ctx->Driver.ReadPixels               = radeonReadPixels;
 
    ctx->Driver.AlphaFunc		= radeonAlphaFunc;
    ctx->Driver.BlendEquationSeparate	= radeonBlendEquationSeparate;
@@ -2279,10 +2253,7 @@ void radeonInitStateFuncs( struct gl_context *ctx , GLboolean dri2 )
    ctx->Driver.LogicOpcode		= radeonLogicOpCode;
    ctx->Driver.PolygonMode		= radeonPolygonMode;
    ctx->Driver.PolygonOffset		= radeonPolygonOffset;
-   if (dri2)
-      ctx->Driver.PolygonStipple		= radeonPolygonStipple;
-   else
-      ctx->Driver.PolygonStipple		= radeonPolygonStipplePreKMS;
+   ctx->Driver.PolygonStipple		= radeonPolygonStipple;
    ctx->Driver.RenderMode		= radeonRenderMode;
    ctx->Driver.Scissor			= radeonScissor;
    ctx->Driver.ShadeModel		= radeonShadeModel;

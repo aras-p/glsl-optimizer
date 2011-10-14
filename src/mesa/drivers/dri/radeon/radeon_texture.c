@@ -1126,9 +1126,7 @@ radeon_init_common_texture_funcs(radeonContextPtr radeon,
 
 	functions->GenerateMipmap = radeonGenerateMipmap;
 
-	if (radeon->radeonScreen->kernel_mm) {
-		functions->CopyTexSubImage2D = radeonCopyTexSubImage2D;
-	}
+	functions->CopyTexSubImage2D = radeonCopyTexSubImage2D;
 
 #if FEATURE_OES_EGL_image
 	functions->EGLImageTargetTexture2D = radeon_image_target_texture_2d;
