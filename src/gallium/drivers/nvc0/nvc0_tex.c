@@ -252,6 +252,7 @@ void nvc0_validate_textures(struct nvc0_context *nvc0)
    boolean need_flush;
 
    need_flush  = nvc0_validate_tic(nvc0, 0);
+   need_flush |= nvc0_validate_tic(nvc0, 3);
    need_flush |= nvc0_validate_tic(nvc0, 4);
 
    if (need_flush) {
@@ -302,6 +303,7 @@ void nvc0_validate_samplers(struct nvc0_context *nvc0)
    boolean need_flush;
 
    need_flush  = nvc0_validate_tsc(nvc0, 0);
+   need_flush |= nvc0_validate_tsc(nvc0, 3);
    need_flush |= nvc0_validate_tsc(nvc0, 4);
 
    if (need_flush) {
