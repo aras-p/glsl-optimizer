@@ -21,4 +21,20 @@ static struct pipe_screen *create_screen(int fd)
    return screen;
 }
 
-DRM_DRIVER_DESCRIPTOR("r600", "radeon", create_screen, NULL)
+static const struct drm_conf_ret throttle_ret = {
+   .type = DRM_CONF_INT,
+   .val.val_int = 2,
+};
+
+static const struct drm_conf_ret *drm_configuration(enum drm_conf conf)
+{
+   switch (conf) {
+   case DRM_CONF_THROTTLE:
+      return &throttle_ret;
+   default:
+      break;
+   }
+   return NULL;
+}
+
+DRM_DRIVER_DESCRIPTOR("r600", "radeon", create_screen, drm_configuration)
