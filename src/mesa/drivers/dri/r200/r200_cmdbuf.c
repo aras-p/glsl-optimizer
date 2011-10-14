@@ -145,24 +145,14 @@ static void r200FireEB(r200ContextPtr rmesa, int vertex_count, int type)
 			  R200_VF_COLOR_ORDER_RGBA | 
 			  ((vertex_count + 0) << 16) |
 			  type);
-		
-		if (!rmesa->radeon.radeonScreen->kernel_mm) {
-			OUT_BATCH_PACKET3(R200_CP_CMD_INDX_BUFFER, 2);
-			OUT_BATCH((0x80 << 24) | (0 << 16) | 0x810);
-			OUT_BATCH_RELOC(rmesa->radeon.tcl.elt_dma_offset,
-					rmesa->radeon.tcl.elt_dma_bo,
-					rmesa->radeon.tcl.elt_dma_offset,
-					RADEON_GEM_DOMAIN_GTT, 0, 0);
-			OUT_BATCH((vertex_count + 1)/2);
-		} else {
-			OUT_BATCH_PACKET3(R200_CP_CMD_INDX_BUFFER, 2);
-			OUT_BATCH((0x80 << 24) | (0 << 16) | 0x810);
-			OUT_BATCH(rmesa->radeon.tcl.elt_dma_offset);
-			OUT_BATCH((vertex_count + 1)/2);
-			radeon_cs_write_reloc(rmesa->radeon.cmdbuf.cs,
-					      rmesa->radeon.tcl.elt_dma_bo,
-					      RADEON_GEM_DOMAIN_GTT, 0, 0);
-		}
+
+		OUT_BATCH_PACKET3(R200_CP_CMD_INDX_BUFFER, 2);
+		OUT_BATCH((0x80 << 24) | (0 << 16) | 0x810);
+		OUT_BATCH(rmesa->radeon.tcl.elt_dma_offset);
+		OUT_BATCH((vertex_count + 1)/2);
+		radeon_cs_write_reloc(rmesa->radeon.cmdbuf.cs,
+				      rmesa->radeon.tcl.elt_dma_bo,
+				      RADEON_GEM_DOMAIN_GTT, 0, 0);
 		END_BATCH();
 	}
 }
@@ -188,12 +178,6 @@ void r200FlushElts(struct gl_context *ctx)
 
    if (R200_ELT_BUF_SZ > elt_used)
      radeonReturnDmaRegion(&rmesa->radeon, R200_ELT_BUF_SZ - elt_used);
-
-   if (radeon_is_debug_enabled(RADEON_SYNC, RADEON_CRITICAL)
-         && !rmesa->radeon.radeonScreen->kernel_mm) {
-      radeon_print(RADEON_SYNC, RADEON_NORMAL, "%s: Syncing\n", __FUNCTION__);
-      radeonFinish( rmesa->radeon.glCtx );
-   }
 }
 
 
@@ -227,12 +211,10 @@ void r200EmitMaxVtxIndex(r200ContextPtr rmesa, int count)
 {
    BATCH_LOCALS(&rmesa->radeon);
 
-   if (rmesa->radeon.radeonScreen->kernel_mm) {
-	   BEGIN_BATCH_NO_AUTOSTATE(2);
-	   OUT_BATCH(CP_PACKET0(R200_SE_VF_MAX_VTX_INDX, 0));
-	   OUT_BATCH(count);
-	   END_BATCH();
-   }
+   BEGIN_BATCH_NO_AUTOSTATE(2);
+   OUT_BATCH(CP_PACKET0(R200_SE_VF_MAX_VTX_INDX, 0));
+   OUT_BATCH(count);
+   END_BATCH();
 }
 
 void r200EmitVertexAOS( r200ContextPtr rmesa,
@@ -269,42 +251,7 @@ void r200EmitAOS(r200ContextPtr rmesa, GLuint nr, GLuint offset)
    OUT_BATCH_PACKET3(R200_CP_CMD_3D_LOAD_VBPNTR, sz - 1);
    OUT_BATCH(nr);
 
-    
-   if (!rmesa->radeon.radeonScreen->kernel_mm) {
-      for (i = 0; i + 1 < nr; i += 2) {
-	 OUT_BATCH((rmesa->radeon.tcl.aos[i].components << 0) |
-		   (rmesa->radeon.tcl.aos[i].stride << 8) |
-		   (rmesa->radeon.tcl.aos[i + 1].components << 16) |
-		   (rmesa->radeon.tcl.aos[i + 1].stride << 24));
-			
-	 voffset =  rmesa->radeon.tcl.aos[i + 0].offset +
-	    offset * 4 * rmesa->radeon.tcl.aos[i + 0].stride;
-	 OUT_BATCH_RELOC(voffset,
-			 rmesa->radeon.tcl.aos[i].bo,
-			 voffset,
-			 RADEON_GEM_DOMAIN_GTT,
-			 0, 0);
-	 voffset =  rmesa->radeon.tcl.aos[i + 1].offset +
-	    offset * 4 * rmesa->radeon.tcl.aos[i + 1].stride;
-	 OUT_BATCH_RELOC(voffset,
-			 rmesa->radeon.tcl.aos[i+1].bo,
-			 voffset,
-			 RADEON_GEM_DOMAIN_GTT,
-			 0, 0);
-      }
-      
-      if (nr & 1) {
-	 OUT_BATCH((rmesa->radeon.tcl.aos[nr - 1].components << 0) |
-		   (rmesa->radeon.tcl.aos[nr - 1].stride << 8));
-	 voffset =  rmesa->radeon.tcl.aos[nr - 1].offset +
-	    offset * 4 * rmesa->radeon.tcl.aos[nr - 1].stride;
-	 OUT_BATCH_RELOC(voffset,
-			 rmesa->radeon.tcl.aos[nr - 1].bo,
-			 voffset,
-			 RADEON_GEM_DOMAIN_GTT,
-			 0, 0);
-      }
-   } else {
+   {
       for (i = 0; i + 1 < nr; i += 2) {
 	 OUT_BATCH((rmesa->radeon.tcl.aos[i].components << 0) |
 		   (rmesa->radeon.tcl.aos[i].stride << 8) |

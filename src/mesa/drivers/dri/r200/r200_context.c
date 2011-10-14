@@ -154,8 +154,6 @@ static void r200_get_lock(radeonContextPtr radeon)
 
    if ( sarea->ctx_owner != rmesa->radeon.dri.hwContext ) {
       sarea->ctx_owner = rmesa->radeon.dri.hwContext;
-      if (!radeon->radeonScreen->kernel_mm)
-         radeon_bo_legacy_texture_age(radeon->radeonScreen->bom);
    }
 
 }
@@ -380,10 +378,8 @@ GLboolean r200CreateContext( gl_api api,
    ctx->Extensions.OES_EGL_image = true;
 #endif
 
-   ctx->Extensions.EXT_framebuffer_object =
-      rmesa->radeon.radeonScreen->kernel_mm;
-   ctx->Extensions.ARB_occlusion_query =
-      rmesa->radeon.radeonScreen->kernel_mm;
+   ctx->Extensions.EXT_framebuffer_object = true;
+   ctx->Extensions.ARB_occlusion_query = true;
 
    if (!(rmesa->radeon.radeonScreen->chip_flags & R200_CHIPSET_YCBCR_BROKEN)) {
      /* yuv textures don't work with some chips - R200 / rv280 okay so far

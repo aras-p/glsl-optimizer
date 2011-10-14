@@ -54,129 +54,6 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #define R200_TIMEOUT             512
 #define R200_IDLE_RETRY           16
 
-static void r200KernelClear(struct gl_context *ctx, GLuint flags)
-{
-   r200ContextPtr rmesa = R200_CONTEXT(ctx);
-   __DRIdrawable *dPriv = radeon_get_drawable(&rmesa->radeon);
-   GLint cx, cy, cw, ch, ret;
-   GLuint i;
-
-   radeonEmitState(&rmesa->radeon);
-
-   LOCK_HARDWARE( &rmesa->radeon );
-
-   /* Throttle the number of clear ioctls we do.
-    */
-   while ( 1 ) {
-      drm_radeon_getparam_t gp;
-      int ret;
-      int clear;
-
-      gp.param = RADEON_PARAM_LAST_CLEAR;
-      gp.value = (int *)&clear;
-      ret = drmCommandWriteRead( rmesa->radeon.dri.fd,
-		      DRM_RADEON_GETPARAM, &gp, sizeof(gp) );
-
-      if ( ret ) {
-	 fprintf( stderr, "%s: drmRadeonGetParam: %d\n", __FUNCTION__, ret );
-	 exit(1);
-      }
-
-      /* Clear throttling needs more thought.
-       */
-      if ( rmesa->radeon.sarea->last_clear - clear <= 25 ) {
-	 break;
-      }
-
-      if (rmesa->radeon.do_usleeps) {
-	 UNLOCK_HARDWARE( &rmesa->radeon );
-	 DO_USLEEP( 1 );
-	 LOCK_HARDWARE( &rmesa->radeon );
-      }
-   }
-
-   /* Send current state to the hardware */
-   rcommonFlushCmdBufLocked( &rmesa->radeon, __FUNCTION__ );
-
-
-  /* compute region after locking: */
-   cx = ctx->DrawBuffer->_Xmin;
-   cy = ctx->DrawBuffer->_Ymin;
-   cw = ctx->DrawBuffer->_Xmax - cx;
-   ch = ctx->DrawBuffer->_Ymax - cy;
-
-   /* Flip top to bottom */
-   cx += dPriv->x;
-   cy  = dPriv->y + dPriv->h - cy - ch;
-   for ( i = 0 ; i < dPriv->numClipRects ; ) {
-      GLint nr = MIN2( i + RADEON_NR_SAREA_CLIPRECTS, dPriv->numClipRects );
-      drm_clip_rect_t *box = dPriv->pClipRects;
-      drm_clip_rect_t *b = rmesa->radeon.sarea->boxes;
-      drm_radeon_clear_t clear;
-      drm_radeon_clear_rect_t depth_boxes[RADEON_NR_SAREA_CLIPRECTS];
-      GLint n = 0;
-
-      if (cw != dPriv->w || ch != dPriv->h) {
-         /* clear subregion */
-	 for ( ; i < nr ; i++ ) {
-	    GLint x = box[i].x1;
-	    GLint y = box[i].y1;
-	    GLint w = box[i].x2 - x;
-	    GLint h = box[i].y2 - y;
-
-	    if ( x < cx ) w -= cx - x, x = cx;
-	    if ( y < cy ) h -= cy - y, y = cy;
-	    if ( x + w > cx + cw ) w = cx + cw - x;
-	    if ( y + h > cy + ch ) h = cy + ch - y;
-	    if ( w <= 0 ) continue;
-	    if ( h <= 0 ) continue;
-
-	    b->x1 = x;
-	    b->y1 = y;
-	    b->x2 = x + w;
-	    b->y2 = y + h;
-	    b++;
-	    n++;
-	 }
-      } else {
-         /* clear whole window */
-	 for ( ; i < nr ; i++ ) {
-	    *b++ = box[i];
-	    n++;
-	 }
-      }
-
-      rmesa->radeon.sarea->nbox = n;
-
-      clear.flags       = flags;
-      clear.clear_color = rmesa->radeon.state.color.clear;
-      clear.clear_depth = rmesa->radeon.state.depth.clear;	/* needed for hyperz */
-      clear.color_mask  = rmesa->hw.msk.cmd[MSK_RB3D_PLANEMASK];
-      clear.depth_mask  = rmesa->radeon.state.stencil.clear;
-      clear.depth_boxes = depth_boxes;
-
-      n--;
-      b = rmesa->radeon.sarea->boxes;
-      for ( ; n >= 0 ; n-- ) {
-	 depth_boxes[n].f[CLEAR_X1] = (float)b[n].x1;
-	 depth_boxes[n].f[CLEAR_Y1] = (float)b[n].y1;
-	 depth_boxes[n].f[CLEAR_X2] = (float)b[n].x2;
-	 depth_boxes[n].f[CLEAR_Y2] = (float)b[n].y2;
-	 depth_boxes[n].f[CLEAR_DEPTH] = ctx->Depth.Clear;
-      }
-
-      ret = drmCommandWrite( rmesa->radeon.dri.fd, DRM_RADEON_CLEAR,
-			     &clear, sizeof(clear));
-
-
-      if ( ret ) {
-	 UNLOCK_HARDWARE( &rmesa->radeon );
-	 fprintf( stderr, "DRM_RADEON_CLEAR: return = %d\n", ret );
-	 exit( 1 );
-      }
-   }
-   UNLOCK_HARDWARE( &rmesa->radeon );
-}
 /* ================================================================
  * Buffer clear
  */
@@ -242,12 +119,7 @@ static void r200Clear( struct gl_context *ctx, GLbitfield mask )
       }
    }
 
-   if (rmesa->radeon.radeonScreen->kernel_mm)
-      radeonUserClear(ctx, orig_mask);
-   else {
-      r200KernelClear(ctx, flags);
-      rmesa->radeon.hw.all_dirty = GL_TRUE;
-   }
+   radeonUserClear(ctx, orig_mask);
 }
 
 GLboolean r200IsGartMemory( r200ContextPtr rmesa, const GLvoid *pointer,

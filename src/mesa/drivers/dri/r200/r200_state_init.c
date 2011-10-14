@@ -165,16 +165,7 @@ static struct {
  */
 static int cmdpkt( r200ContextPtr rmesa, int id ) 
 {
-   drm_radeon_cmd_header_t h;
-
-   if (rmesa->radeon.radeonScreen->kernel_mm) {
-     return CP_PACKET0(packet[id].start, packet[id].len - 1);
-   } else {
-     h.i = 0;
-     h.packet.cmd_type = RADEON_CMD_PACKET;
-     h.packet.packet_id = id;
-   }
-   return h.i;
+   return CP_PACKET0(packet[id].start, packet[id].len - 1);
 }
 
 static int cmdvec( int offset, int stride, int count ) 
@@ -268,26 +259,19 @@ CHECK( afs_pass1, (ctx->ATIFragmentShader._Enabled && (ctx->ATIFragmentShader.Cu
 CHECK( afs, ctx->ATIFragmentShader._Enabled, 0 )
 CHECK( tex_cube, rmesa->state.texture.unit[atom->idx].unitneeded & TEXTURE_CUBE_BIT, 3 + 3*5 - CUBE_STATE_SIZE )
 CHECK( tex_cube_cs, rmesa->state.texture.unit[atom->idx].unitneeded & TEXTURE_CUBE_BIT, 2 + 4*5 - CUBE_STATE_SIZE )
-TCL_CHECK( tcl_fog, ctx->Fog.Enabled, 0 )
 TCL_CHECK( tcl_fog_add4, ctx->Fog.Enabled, 4 )
 TCL_CHECK( tcl, GL_TRUE, 0 )
 TCL_CHECK( tcl_add8, GL_TRUE, 8 )
 TCL_CHECK( tcl_add4, GL_TRUE, 4 )
-TCL_CHECK( tcl_tex, rmesa->state.texture.unit[atom->idx].unitneeded, 0 )
-TCL_CHECK( tcl_lighting, ctx->Light.Enabled, 0 )
-TCL_CHECK( tcl_light, ctx->Light.Enabled && ctx->Light.Light[atom->idx].Enabled, 0 )
 TCL_CHECK( tcl_tex_add4, rmesa->state.texture.unit[atom->idx].unitneeded, 4 )
 TCL_CHECK( tcl_lighting_add4, ctx->Light.Enabled, 4 )
 TCL_CHECK( tcl_lighting_add6, ctx->Light.Enabled, 6 )
 TCL_CHECK( tcl_light_add8, ctx->Light.Enabled && ctx->Light.Light[atom->idx].Enabled, 8 )
-TCL_OR_VP_CHECK( tcl_ucp, (ctx->Transform.ClipPlanesEnabled & (1 << (atom->idx))), 0 )
 TCL_OR_VP_CHECK( tcl_ucp_add4, (ctx->Transform.ClipPlanesEnabled & (1 << (atom->idx))), 4 )
 TCL_OR_VP_CHECK( tcl_or_vp, GL_TRUE, 0 )
 TCL_OR_VP_CHECK( tcl_or_vp_add2, GL_TRUE, 2 )
 VP_CHECK( tcl_vp, GL_TRUE, 0 )
 VP_CHECK( tcl_vp_add4, GL_TRUE, 4 )
-VP_CHECK( tcl_vp_size, ctx->VertexProgram.Current->Base.NumNativeInstructions > 64, 0 )
-VP_CHECK( tcl_vpp_size, ctx->VertexProgram.Current->Base.NumNativeParameters > 96, 0 )
 VP_CHECK( tcl_vp_size_add4, ctx->VertexProgram.Current->Base.NumNativeInstructions > 64, 4 )
 VP_CHECK( tcl_vpp_size_add4, ctx->VertexProgram.Current->Base.NumNativeParameters > 96, 4 )
 
@@ -308,7 +292,7 @@ VP_CHECK( tcl_vpp_size_add4, ctx->VertexProgram.Current->Base.NumNativeParameter
     h.i = hdr;								\
     _start = h.veclinear.addr_lo | (h.veclinear.addr_hi << 8);		\
     _sz = h.veclinear.count * 4;					\
-    if (r200->radeon.radeonScreen->kernel_mm && _sz) { \
+    if (_sz) {								\
     BEGIN_BATCH_NO_AUTOSTATE(dwords); \
     OUT_BATCH(CP_PACKET0(RADEON_SE_TCL_STATE_FLUSH, 0));		\
     OUT_BATCH(0);							\
@@ -424,73 +408,6 @@ static void vec_emit(struct gl_context *ctx, struct radeon_state_atom *atom)
    END_BATCH();
 }
 
-static void ctx_emit(struct gl_context *ctx, struct radeon_state_atom *atom)
-{
-   r200ContextPtr r200 = R200_CONTEXT(ctx);
-   BATCH_LOCALS(&r200->radeon);
-   struct radeon_renderbuffer *rrb;
-   uint32_t cbpitch;
-   uint32_t zbpitch, depth_fmt;
-   uint32_t dwords = atom->check(ctx, atom);
-
-   /* output the first 7 bytes of context */
-   BEGIN_BATCH_NO_AUTOSTATE(dwords);
-   OUT_BATCH_TABLE(atom->cmd, 5);
-
-   rrb = radeon_get_depthbuffer(&r200->radeon);
-   if (!rrb) {
-     OUT_BATCH(0);
-     OUT_BATCH(0);
-   } else {
-     zbpitch = (rrb->pitch / rrb->cpp);
-     if (r200->using_hyperz)
-       zbpitch |= RADEON_DEPTH_HYPERZ;
-     OUT_BATCH_RELOC(0, rrb->bo, 0, 0, RADEON_GEM_DOMAIN_VRAM, 0);
-     OUT_BATCH(zbpitch);
-     if (rrb->cpp == 4) 
-       depth_fmt = RADEON_DEPTH_FORMAT_24BIT_INT_Z; 
-     else 
-       depth_fmt = RADEON_DEPTH_FORMAT_16BIT_INT_Z; 
-     atom->cmd[CTX_RB3D_ZSTENCILCNTL] &= ~RADEON_DEPTH_FORMAT_MASK; 
-     atom->cmd[CTX_RB3D_ZSTENCILCNTL] |= depth_fmt; 
-   }
-     
-   OUT_BATCH(atom->cmd[CTX_RB3D_ZSTENCILCNTL]);
-   OUT_BATCH(atom->cmd[CTX_CMD_1]);
-   OUT_BATCH(atom->cmd[CTX_PP_CNTL]);
-
-   rrb = radeon_get_colorbuffer(&r200->radeon);
-   if (!rrb || !rrb->bo) {
-     OUT_BATCH(atom->cmd[CTX_RB3D_CNTL]);
-     OUT_BATCH(atom->cmd[CTX_RB3D_COLOROFFSET]);
-   } else {
-     atom->cmd[CTX_RB3D_CNTL] &= ~(0xf << 10); 
-     if (rrb->cpp == 4) 
-       atom->cmd[CTX_RB3D_CNTL] |= RADEON_COLOR_FORMAT_ARGB8888; 
-     else 
-       atom->cmd[CTX_RB3D_CNTL] |= RADEON_COLOR_FORMAT_RGB565; 
- 
-     OUT_BATCH(atom->cmd[CTX_RB3D_CNTL]); 
-     OUT_BATCH_RELOC(0, rrb->bo, 0, 0, RADEON_GEM_DOMAIN_VRAM, 0);
-   }
-
-   OUT_BATCH(atom->cmd[CTX_CMD_2]);
-
-   if (!rrb || !rrb->bo) {
-     OUT_BATCH(atom->cmd[CTX_RB3D_COLORPITCH]);
-   } else {
-     cbpitch = (rrb->pitch / rrb->cpp);
-     if (rrb->bo->flags & RADEON_BO_FLAGS_MACRO_TILE)
-       cbpitch |= R200_COLOR_TILE_ENABLE;
-     OUT_BATCH(cbpitch);
-   }
-
-   if (atom->cmd_size == CTX_STATE_SIZE_NEWDRM)
-     OUT_BATCH_TABLE((atom->cmd + 14), 4);
-
-   END_BATCH();
-}
-
 static int check_always_ctx( struct gl_context *ctx, struct radeon_state_atom *atom)
 {
    r200ContextPtr r200 = R200_CONTEXT(ctx);
@@ -600,63 +517,6 @@ static void ctx_emit_cs(struct gl_context *ctx, struct radeon_state_atom *atom)
    END_BATCH();
 }
 
-static int get_tex_size(struct gl_context* ctx, struct radeon_state_atom *atom)
-{
-   r200ContextPtr r200 = R200_CONTEXT(ctx);
-   uint32_t dwords = atom->cmd_size + 2;
-   int i = atom->idx;
-   radeonTexObj *t = r200->state.texture.unit[i].texobj;
-   if (!(t && t->mt && !t->image_override))
-     dwords -= 2;
-
-   return dwords;
-}
-
-static int check_tex_pair(struct gl_context* ctx, struct radeon_state_atom *atom)
-{
-   r200ContextPtr r200 = R200_CONTEXT(ctx);
-   /** XOR is bit flip operation so use it for finding pair */
-   if (!(r200->state.texture.unit[atom->idx].unitneeded | r200->state.texture.unit[atom->idx ^ 1].unitneeded))
-     return 0;
-
-   return get_tex_size(ctx, atom);
-}
-
-static int check_tex(struct gl_context* ctx, struct radeon_state_atom *atom)
-{
-   r200ContextPtr r200 = R200_CONTEXT(ctx);
-   if (!(r200->state.texture.unit[atom->idx].unitneeded))
-     return 0;
-
-   return get_tex_size(ctx, atom);
-}
-
-
-static void tex_emit(struct gl_context *ctx, struct radeon_state_atom *atom)
-{
-   r200ContextPtr r200 = R200_CONTEXT(ctx);
-   BATCH_LOCALS(&r200->radeon);
-   uint32_t dwords = atom->check(ctx, atom);
-   int i = atom->idx;
-   radeonTexObj *t = r200->state.texture.unit[i].texobj;
-
-   BEGIN_BATCH_NO_AUTOSTATE(dwords);
-   /* is this ok even with drm older than 1.18? */
-   OUT_BATCH_TABLE(atom->cmd, 10);
-
-   if (t && t->mt && !t->image_override) {
-     OUT_BATCH_RELOC(t->tile_bits, t->mt->bo, get_base_teximage_offset(t),
-		  RADEON_GEM_DOMAIN_GTT|RADEON_GEM_DOMAIN_VRAM, 0, 0);
-   } else if (!t) {
-     /* workaround for old CS mechanism */
-     OUT_BATCH(r200->radeon.radeonScreen->texOffset[RADEON_LOCAL_TEX_HEAP]);
-   } else {
-     OUT_BATCH(t->override_offset);
-   }
-
-   END_BATCH();
-}
-
 static int get_tex_mm_size(struct gl_context* ctx, struct radeon_state_atom *atom)
 {
    r200ContextPtr r200 = R200_CONTEXT(ctx);
@@ -721,34 +581,6 @@ static void tex_emit_mm(struct gl_context *ctx, struct radeon_state_atom *atom)
             OUT_BATCH_RELOC(t->tile_bits, t->bo, 0,
                             RADEON_GEM_DOMAIN_GTT|RADEON_GEM_DOMAIN_VRAM, 0, 0);
       }
-   }
-   END_BATCH();
-}
-
-
-static void cube_emit(struct gl_context *ctx, struct radeon_state_atom *atom)
-{
-   r200ContextPtr r200 = R200_CONTEXT(ctx);
-   BATCH_LOCALS(&r200->radeon);
-   uint32_t dwords = atom->check(ctx, atom);
-   int i = atom->idx, j;
-   radeonTexObj *t = r200->state.texture.unit[i].texobj;
-   radeon_mipmap_level *lvl;
-
-   if (!(t && !t->image_override))
-     dwords = 2;
-
-   BEGIN_BATCH_NO_AUTOSTATE(dwords);
-   /* XXX that size won't really match with image_override... */
-   OUT_BATCH_TABLE(atom->cmd, 2);
-
-   if (t && !t->image_override) {
-     lvl = &t->mt->levels[0];
-     OUT_BATCH_TABLE((atom->cmd + 2), 1);
-     for (j = 1; j <= 5; j++) {
-       OUT_BATCH_RELOC(lvl->faces[j].offset, t->mt->bo, lvl->faces[j].offset,
-			RADEON_GEM_DOMAIN_VRAM, 0, 0);
-     }
    }
    END_BATCH();
 }
@@ -827,15 +659,8 @@ void r200InitState( r200ContextPtr rmesa )
    else
       ALLOC_STATE( ctx, always_add4, CTX_STATE_SIZE_OLDDRM, "CTX/context", 0 );
 
-   if (rmesa->radeon.radeonScreen->kernel_mm)
-   {
-     rmesa->hw.ctx.emit = ctx_emit_cs;
-     rmesa->hw.ctx.check = check_always_ctx;
-   }
-   else
-   {
-     rmesa->hw.ctx.emit = ctx_emit;
-   }
+   rmesa->hw.ctx.emit = ctx_emit_cs;
+   rmesa->hw.ctx.check = check_always_ctx;
    ALLOC_STATE( set, always, SET_STATE_SIZE, "SET/setup", 0 );
    ALLOC_STATE( lin, always, LIN_STATE_SIZE, "LIN/line", 0 );
    ALLOC_STATE( msk, always, MSK_STATE_SIZE, "MSK/mask", 0 );
@@ -868,20 +693,6 @@ void r200InitState( r200ContextPtr rmesa )
          ALLOC_STATE( tex[3], tex_mm, state_size, "TEX/tex-3", 3 );
          ALLOC_STATE( tex[4], tex_mm, state_size, "TEX/tex-4", 4 );
          ALLOC_STATE( tex[5], tex_mm, state_size, "TEX/tex-5", 5 );
-         if (!rmesa->radeon.radeonScreen->kernel_mm)
-         {
-            if (rmesa->radeon.radeonScreen->chip_family == CHIP_FAMILY_R200) {
-               rmesa->hw.tex[0].check = check_tex_pair;
-               rmesa->hw.tex[1].check = check_tex_pair;
-            } else {
-               rmesa->hw.tex[0].check = check_tex;
-               rmesa->hw.tex[1].check = check_tex;
-            }
-            rmesa->hw.tex[2].check = check_tex;
-            rmesa->hw.tex[3].check = check_tex;
-            rmesa->hw.tex[4].check = check_tex;
-            rmesa->hw.tex[5].check = check_tex;
-         }
          if (rmesa->radeon.radeonScreen->drmSupportsFragShader) {
             ALLOC_STATE( atf, afs, ATF_STATE_SIZE, "ATF/tfactor", 0 );
             ALLOC_STATE( afs[0], afs_pass1, AFS_STATE_SIZE, "AFS/afsinst-0", 0 );
@@ -894,16 +705,10 @@ void r200InitState( r200ContextPtr rmesa )
       }
    }
 
-   if (rmesa->radeon.radeonScreen->kernel_mm)
-	   ALLOC_STATE( stp, polygon_stipple, STP_STATE_SIZE, "STP/stp", 0 );
-   else
-	   ALLOC_STATE( stp, never, STP_STATE_SIZE, "STP/stp", 0 );
+   ALLOC_STATE( stp, polygon_stipple, STP_STATE_SIZE, "STP/stp", 0 );
 
    for (i = 0; i < 6; i++)
-      if (rmesa->radeon.radeonScreen->kernel_mm)
-          rmesa->hw.tex[i].emit = tex_emit_mm;
-      else
-          rmesa->hw.tex[i].emit = tex_emit;
+      rmesa->hw.tex[i].emit = tex_emit_mm;
    if (rmesa->radeon.radeonScreen->drmSupportsCubeMapsR200) {
       ALLOC_STATE( cube[0], tex_cube, CUBE_STATE_SIZE, "CUBE/tex-0", 0 );
       ALLOC_STATE( cube[1], tex_cube, CUBE_STATE_SIZE, "CUBE/tex-1", 1 );
@@ -911,12 +716,10 @@ void r200InitState( r200ContextPtr rmesa )
       ALLOC_STATE( cube[3], tex_cube, CUBE_STATE_SIZE, "CUBE/tex-3", 3 );
       ALLOC_STATE( cube[4], tex_cube, CUBE_STATE_SIZE, "CUBE/tex-4", 4 );
       ALLOC_STATE( cube[5], tex_cube, CUBE_STATE_SIZE, "CUBE/tex-5", 5 );
-      for (i = 0; i < 6; i++)
-          if (rmesa->radeon.radeonScreen->kernel_mm) {
-              rmesa->hw.cube[i].emit = cube_emit_cs;
-              rmesa->hw.cube[i].check = check_tex_cube_cs;
-          } else
-              rmesa->hw.cube[i].emit = cube_emit;
+      for (i = 0; i < 6; i++) {
+	 rmesa->hw.cube[i].emit = cube_emit_cs;
+	 rmesa->hw.cube[i].check = check_tex_cube_cs;
+      }
    }
    else {
       ALLOC_STATE( cube[0], never, CUBE_STATE_SIZE, "CUBE/tex-0", 0 );
@@ -929,17 +732,10 @@ void r200InitState( r200ContextPtr rmesa )
 
    if (rmesa->radeon.radeonScreen->drmSupportsVertexProgram) {
       ALLOC_STATE( pvs, tcl_vp, PVS_STATE_SIZE, "PVS/pvscntl", 0 );
-      if (rmesa->radeon.radeonScreen->kernel_mm) {
-         ALLOC_STATE( vpi[0], tcl_vp_add4, VPI_STATE_SIZE, "VP/vertexprog-0", 0 );
-         ALLOC_STATE( vpi[1], tcl_vp_size_add4, VPI_STATE_SIZE, "VP/vertexprog-1", 1 );
-         ALLOC_STATE( vpp[0], tcl_vp_add4, VPP_STATE_SIZE, "VPP/vertexparam-0", 0 );
-         ALLOC_STATE( vpp[1], tcl_vpp_size_add4, VPP_STATE_SIZE, "VPP/vertexparam-1", 1 );
-      } else {
-         ALLOC_STATE( vpi[0], tcl_vp, VPI_STATE_SIZE, "VP/vertexprog-0", 0 );
-         ALLOC_STATE( vpi[1], tcl_vp_size, VPI_STATE_SIZE, "VP/vertexprog-1", 1 );
-         ALLOC_STATE( vpp[0], tcl_vp, VPP_STATE_SIZE, "VPP/vertexparam-0", 0 );
-         ALLOC_STATE( vpp[1], tcl_vpp_size, VPP_STATE_SIZE, "VPP/vertexparam-1", 1 );
-      }
+      ALLOC_STATE( vpi[0], tcl_vp_add4, VPI_STATE_SIZE, "VP/vertexprog-0", 0 );
+      ALLOC_STATE( vpi[1], tcl_vp_size_add4, VPI_STATE_SIZE, "VP/vertexprog-1", 1 );
+      ALLOC_STATE( vpp[0], tcl_vp_add4, VPP_STATE_SIZE, "VPP/vertexparam-0", 0 );
+      ALLOC_STATE( vpp[1], tcl_vpp_size_add4, VPP_STATE_SIZE, "VPP/vertexparam-1", 1 );
    }
    else {
       ALLOC_STATE( pvs, never, PVS_STATE_SIZE, "PVS/pvscntl", 0 );
@@ -952,69 +748,36 @@ void r200InitState( r200ContextPtr rmesa )
    ALLOC_STATE( tcl, tcl_or_vp, TCL_STATE_SIZE, "TCL/tcl", 0 );
    ALLOC_STATE( msl, tcl, MSL_STATE_SIZE, "MSL/matrix-select", 0 );
    ALLOC_STATE( tcg, tcl, TCG_STATE_SIZE, "TCG/texcoordgen", 0 );
-   if (rmesa->radeon.radeonScreen->kernel_mm) {
-      ALLOC_STATE( mtl[0], tcl_lighting_add6, MTL_STATE_SIZE, "MTL0/material0", 0 );
-      ALLOC_STATE( mtl[1], tcl_lighting_add6, MTL_STATE_SIZE, "MTL1/material1", 1 );
-      ALLOC_STATE( grd, tcl_or_vp_add2, GRD_STATE_SIZE, "GRD/guard-band", 0 );
-      ALLOC_STATE( fog, tcl_fog_add4, FOG_STATE_SIZE, "FOG/fog", 0 );
-      ALLOC_STATE( glt, tcl_lighting_add4, GLT_STATE_SIZE, "GLT/light-global", 0 );
-      ALLOC_STATE( eye, tcl_lighting_add4, EYE_STATE_SIZE, "EYE/eye-vector", 0 );
-      ALLOC_STATE( mat[R200_MTX_MV], tcl_add4, MAT_STATE_SIZE, "MAT/modelview", 0 );
-      ALLOC_STATE( mat[R200_MTX_IMV], tcl_add4, MAT_STATE_SIZE, "MAT/it-modelview", 0 );
-      ALLOC_STATE( mat[R200_MTX_MVP], tcl_add4, MAT_STATE_SIZE, "MAT/modelproject", 0 );
-      ALLOC_STATE( mat[R200_MTX_TEX0], tcl_tex_add4, MAT_STATE_SIZE, "MAT/texmat0", 0 );
-      ALLOC_STATE( mat[R200_MTX_TEX1], tcl_tex_add4, MAT_STATE_SIZE, "MAT/texmat1", 1 );
-      ALLOC_STATE( mat[R200_MTX_TEX2], tcl_tex_add4, MAT_STATE_SIZE, "MAT/texmat2", 2 );
-      ALLOC_STATE( mat[R200_MTX_TEX3], tcl_tex_add4, MAT_STATE_SIZE, "MAT/texmat3", 3 );
-      ALLOC_STATE( mat[R200_MTX_TEX4], tcl_tex_add4, MAT_STATE_SIZE, "MAT/texmat4", 4 );
-      ALLOC_STATE( mat[R200_MTX_TEX5], tcl_tex_add4, MAT_STATE_SIZE, "MAT/texmat5", 5 );
-      ALLOC_STATE( ucp[0], tcl_ucp_add4, UCP_STATE_SIZE, "UCP/userclip-0", 0 );
-      ALLOC_STATE( ucp[1], tcl_ucp_add4, UCP_STATE_SIZE, "UCP/userclip-1", 1 );
-      ALLOC_STATE( ucp[2], tcl_ucp_add4, UCP_STATE_SIZE, "UCP/userclip-2", 2 );
-      ALLOC_STATE( ucp[3], tcl_ucp_add4, UCP_STATE_SIZE, "UCP/userclip-3", 3 );
-      ALLOC_STATE( ucp[4], tcl_ucp_add4, UCP_STATE_SIZE, "UCP/userclip-4", 4 );
-      ALLOC_STATE( ucp[5], tcl_ucp_add4, UCP_STATE_SIZE, "UCP/userclip-5", 5 );
-      ALLOC_STATE( lit[0], tcl_light_add8, LIT_STATE_SIZE, "LIT/light-0", 0 );
-      ALLOC_STATE( lit[1], tcl_light_add8, LIT_STATE_SIZE, "LIT/light-1", 1 );
-      ALLOC_STATE( lit[2], tcl_light_add8, LIT_STATE_SIZE, "LIT/light-2", 2 );
-      ALLOC_STATE( lit[3], tcl_light_add8, LIT_STATE_SIZE, "LIT/light-3", 3 );
-      ALLOC_STATE( lit[4], tcl_light_add8, LIT_STATE_SIZE, "LIT/light-4", 4 );
-      ALLOC_STATE( lit[5], tcl_light_add8, LIT_STATE_SIZE, "LIT/light-5", 5 );
-      ALLOC_STATE( lit[6], tcl_light_add8, LIT_STATE_SIZE, "LIT/light-6", 6 );
-      ALLOC_STATE( lit[7], tcl_light_add8, LIT_STATE_SIZE, "LIT/light-7", 7 );
-      ALLOC_STATE( sci, rrb, SCI_STATE_SIZE, "SCI/scissor", 0 );
-   } else {
-      ALLOC_STATE( mtl[0], tcl_lighting, MTL_STATE_SIZE, "MTL0/material0", 0 );
-      ALLOC_STATE( mtl[1], tcl_lighting, MTL_STATE_SIZE, "MTL1/material1", 1 );
-      ALLOC_STATE( grd, tcl_or_vp, GRD_STATE_SIZE, "GRD/guard-band", 0 );
-      ALLOC_STATE( fog, tcl_fog, FOG_STATE_SIZE, "FOG/fog", 0 );
-      ALLOC_STATE( glt, tcl_lighting, GLT_STATE_SIZE, "GLT/light-global", 0 );
-      ALLOC_STATE( eye, tcl_lighting, EYE_STATE_SIZE, "EYE/eye-vector", 0 );
-      ALLOC_STATE( mat[R200_MTX_MV], tcl, MAT_STATE_SIZE, "MAT/modelview", 0 );
-      ALLOC_STATE( mat[R200_MTX_IMV], tcl, MAT_STATE_SIZE, "MAT/it-modelview", 0 );
-      ALLOC_STATE( mat[R200_MTX_MVP], tcl, MAT_STATE_SIZE, "MAT/modelproject", 0 );
-      ALLOC_STATE( mat[R200_MTX_TEX0], tcl_tex, MAT_STATE_SIZE, "MAT/texmat0", 0 );
-      ALLOC_STATE( mat[R200_MTX_TEX1], tcl_tex, MAT_STATE_SIZE, "MAT/texmat1", 1 );
-      ALLOC_STATE( mat[R200_MTX_TEX2], tcl_tex, MAT_STATE_SIZE, "MAT/texmat2", 2 );
-      ALLOC_STATE( mat[R200_MTX_TEX3], tcl_tex, MAT_STATE_SIZE, "MAT/texmat3", 3 );
-      ALLOC_STATE( mat[R200_MTX_TEX4], tcl_tex, MAT_STATE_SIZE, "MAT/texmat4", 4 );
-      ALLOC_STATE( mat[R200_MTX_TEX5], tcl_tex, MAT_STATE_SIZE, "MAT/texmat5", 5 );
-      ALLOC_STATE( ucp[0], tcl_ucp, UCP_STATE_SIZE, "UCP/userclip-0", 0 );
-      ALLOC_STATE( ucp[1], tcl_ucp, UCP_STATE_SIZE, "UCP/userclip-1", 1 );
-      ALLOC_STATE( ucp[2], tcl_ucp, UCP_STATE_SIZE, "UCP/userclip-2", 2 );
-      ALLOC_STATE( ucp[3], tcl_ucp, UCP_STATE_SIZE, "UCP/userclip-3", 3 );
-      ALLOC_STATE( ucp[4], tcl_ucp, UCP_STATE_SIZE, "UCP/userclip-4", 4 );
-      ALLOC_STATE( ucp[5], tcl_ucp, UCP_STATE_SIZE, "UCP/userclip-5", 5 );
-      ALLOC_STATE( lit[0], tcl_light, LIT_STATE_SIZE, "LIT/light-0", 0 );
-      ALLOC_STATE( lit[1], tcl_light, LIT_STATE_SIZE, "LIT/light-1", 1 );
-      ALLOC_STATE( lit[2], tcl_light, LIT_STATE_SIZE, "LIT/light-2", 2 );
-      ALLOC_STATE( lit[3], tcl_light, LIT_STATE_SIZE, "LIT/light-3", 3 );
-      ALLOC_STATE( lit[4], tcl_light, LIT_STATE_SIZE, "LIT/light-4", 4 );
-      ALLOC_STATE( lit[5], tcl_light, LIT_STATE_SIZE, "LIT/light-5", 5 );
-      ALLOC_STATE( lit[6], tcl_light, LIT_STATE_SIZE, "LIT/light-6", 6 );
-      ALLOC_STATE( lit[7], tcl_light, LIT_STATE_SIZE, "LIT/light-7", 7 );
-      ALLOC_STATE( sci, never, SCI_STATE_SIZE, "SCI/scissor", 0 );
-   }
+   ALLOC_STATE( mtl[0], tcl_lighting_add6, MTL_STATE_SIZE, "MTL0/material0", 0 );
+   ALLOC_STATE( mtl[1], tcl_lighting_add6, MTL_STATE_SIZE, "MTL1/material1", 1 );
+   ALLOC_STATE( grd, tcl_or_vp_add2, GRD_STATE_SIZE, "GRD/guard-band", 0 );
+   ALLOC_STATE( fog, tcl_fog_add4, FOG_STATE_SIZE, "FOG/fog", 0 );
+   ALLOC_STATE( glt, tcl_lighting_add4, GLT_STATE_SIZE, "GLT/light-global", 0 );
+   ALLOC_STATE( eye, tcl_lighting_add4, EYE_STATE_SIZE, "EYE/eye-vector", 0 );
+   ALLOC_STATE( mat[R200_MTX_MV], tcl_add4, MAT_STATE_SIZE, "MAT/modelview", 0 );
+   ALLOC_STATE( mat[R200_MTX_IMV], tcl_add4, MAT_STATE_SIZE, "MAT/it-modelview", 0 );
+   ALLOC_STATE( mat[R200_MTX_MVP], tcl_add4, MAT_STATE_SIZE, "MAT/modelproject", 0 );
+   ALLOC_STATE( mat[R200_MTX_TEX0], tcl_tex_add4, MAT_STATE_SIZE, "MAT/texmat0", 0 );
+   ALLOC_STATE( mat[R200_MTX_TEX1], tcl_tex_add4, MAT_STATE_SIZE, "MAT/texmat1", 1 );
+   ALLOC_STATE( mat[R200_MTX_TEX2], tcl_tex_add4, MAT_STATE_SIZE, "MAT/texmat2", 2 );
+   ALLOC_STATE( mat[R200_MTX_TEX3], tcl_tex_add4, MAT_STATE_SIZE, "MAT/texmat3", 3 );
+   ALLOC_STATE( mat[R200_MTX_TEX4], tcl_tex_add4, MAT_STATE_SIZE, "MAT/texmat4", 4 );
+   ALLOC_STATE( mat[R200_MTX_TEX5], tcl_tex_add4, MAT_STATE_SIZE, "MAT/texmat5", 5 );
+   ALLOC_STATE( ucp[0], tcl_ucp_add4, UCP_STATE_SIZE, "UCP/userclip-0", 0 );
+   ALLOC_STATE( ucp[1], tcl_ucp_add4, UCP_STATE_SIZE, "UCP/userclip-1", 1 );
+   ALLOC_STATE( ucp[2], tcl_ucp_add4, UCP_STATE_SIZE, "UCP/userclip-2", 2 );
+   ALLOC_STATE( ucp[3], tcl_ucp_add4, UCP_STATE_SIZE, "UCP/userclip-3", 3 );
+   ALLOC_STATE( ucp[4], tcl_ucp_add4, UCP_STATE_SIZE, "UCP/userclip-4", 4 );
+   ALLOC_STATE( ucp[5], tcl_ucp_add4, UCP_STATE_SIZE, "UCP/userclip-5", 5 );
+   ALLOC_STATE( lit[0], tcl_light_add8, LIT_STATE_SIZE, "LIT/light-0", 0 );
+   ALLOC_STATE( lit[1], tcl_light_add8, LIT_STATE_SIZE, "LIT/light-1", 1 );
+   ALLOC_STATE( lit[2], tcl_light_add8, LIT_STATE_SIZE, "LIT/light-2", 2 );
+   ALLOC_STATE( lit[3], tcl_light_add8, LIT_STATE_SIZE, "LIT/light-3", 3 );
+   ALLOC_STATE( lit[4], tcl_light_add8, LIT_STATE_SIZE, "LIT/light-4", 4 );
+   ALLOC_STATE( lit[5], tcl_light_add8, LIT_STATE_SIZE, "LIT/light-5", 5 );
+   ALLOC_STATE( lit[6], tcl_light_add8, LIT_STATE_SIZE, "LIT/light-6", 6 );
+   ALLOC_STATE( lit[7], tcl_light_add8, LIT_STATE_SIZE, "LIT/light-7", 7 );
+   ALLOC_STATE( sci, rrb, SCI_STATE_SIZE, "SCI/scissor", 0 );
    ALLOC_STATE( pix[0], pix_zero, PIX_STATE_SIZE, "PIX/pixstage-0", 0 );
    ALLOC_STATE( pix[1], texenv, PIX_STATE_SIZE, "PIX/pixstage-1", 1 );
    ALLOC_STATE( pix[2], texenv, PIX_STATE_SIZE, "PIX/pixstage-2", 2 );
@@ -1029,10 +792,7 @@ void r200InitState( r200ContextPtr rmesa )
    }
    if (rmesa->radeon.radeonScreen->drmSupportsPointSprites) {
       ALLOC_STATE( spr, always, SPR_STATE_SIZE, "SPR/pointsprite", 0 );
-      if (rmesa->radeon.radeonScreen->kernel_mm)
-         ALLOC_STATE( ptp, tcl_add8, PTP_STATE_SIZE, "PTP/pointparams", 0 );
-      else
-         ALLOC_STATE( ptp, tcl, PTP_STATE_SIZE, "PTP/pointparams", 0 );
+      ALLOC_STATE( ptp, tcl_add8, PTP_STATE_SIZE, "PTP/pointparams", 0 );
    }
    else {
       ALLOC_STATE (spr, never, SPR_STATE_SIZE, "SPR/pointsprite", 0 );
@@ -1133,34 +893,30 @@ void r200InitState( r200ContextPtr rmesa )
    rmesa->hw.stp.cmd[STP_DATA_0] = 0;
    rmesa->hw.stp.cmd[STP_CMD_1] = CP_PACKET0_ONE(RADEON_RE_STIPPLE_DATA, 31);
 
-   if (rmesa->radeon.radeonScreen->kernel_mm) {
-        rmesa->hw.mtl[0].emit = mtl_emit;
-        rmesa->hw.mtl[1].emit = mtl_emit;
+   rmesa->hw.mtl[0].emit = mtl_emit;
+   rmesa->hw.mtl[1].emit = mtl_emit;
 
-        rmesa->hw.vpi[0].emit = veclinear_emit;
-        rmesa->hw.vpi[1].emit = veclinear_emit;
-        rmesa->hw.vpp[0].emit = veclinear_emit;
-        rmesa->hw.vpp[1].emit = veclinear_emit;
+   rmesa->hw.vpi[0].emit = veclinear_emit;
+   rmesa->hw.vpi[1].emit = veclinear_emit;
+   rmesa->hw.vpp[0].emit = veclinear_emit;
+   rmesa->hw.vpp[1].emit = veclinear_emit;
 
-        rmesa->hw.grd.emit = scl_emit;
-        rmesa->hw.fog.emit = vec_emit;
-        rmesa->hw.glt.emit = vec_emit;
-        rmesa->hw.eye.emit = vec_emit;
+   rmesa->hw.grd.emit = scl_emit;
+   rmesa->hw.fog.emit = vec_emit;
+   rmesa->hw.glt.emit = vec_emit;
+   rmesa->hw.eye.emit = vec_emit;
 
-	for (i = R200_MTX_MV; i <= R200_MTX_TEX5; i++)
-	  rmesa->hw.mat[i].emit = vec_emit;
+   for (i = R200_MTX_MV; i <= R200_MTX_TEX5; i++)
+      rmesa->hw.mat[i].emit = vec_emit;
 
-	for (i = 0; i < 8; i++)
-	  rmesa->hw.lit[i].emit = lit_emit;
+   for (i = 0; i < 8; i++)
+      rmesa->hw.lit[i].emit = lit_emit;
 
-	for (i = 0; i < 6; i++)
-	  rmesa->hw.ucp[i].emit = vec_emit;
+   for (i = 0; i < 6; i++)
+      rmesa->hw.ucp[i].emit = vec_emit;
 
-	rmesa->hw.ptp.emit = ptp_emit;
-   }
+   rmesa->hw.ptp.emit = ptp_emit;
 
-
-   
    rmesa->hw.mtl[0].cmd[MTL_CMD_0] = 
       cmdvec( R200_VS_MAT_0_EMISS, 1, 16 );
    rmesa->hw.mtl[0].cmd[MTL_CMD_1] = 
@@ -1614,11 +1370,9 @@ void r200InitState( r200ContextPtr rmesa )
 
    r200LightingSpaceChange( ctx );
 
-   if (rmesa->radeon.radeonScreen->kernel_mm) {
-      radeon_init_query_stateobj(&rmesa->radeon, R200_QUERYOBJ_CMDSIZE);
-      rmesa->radeon.query.queryobj.cmd[R200_QUERYOBJ_CMD_0] = CP_PACKET0(RADEON_RB3D_ZPASS_DATA, 0);
-      rmesa->radeon.query.queryobj.cmd[R200_QUERYOBJ_DATA_0] = 0;
-   }
+   radeon_init_query_stateobj(&rmesa->radeon, R200_QUERYOBJ_CMDSIZE);
+   rmesa->radeon.query.queryobj.cmd[R200_QUERYOBJ_CMD_0] = CP_PACKET0(RADEON_RB3D_ZPASS_DATA, 0);
+   rmesa->radeon.query.queryobj.cmd[R200_QUERYOBJ_DATA_0] = 0;
 
    rmesa->radeon.hw.all_dirty = GL_TRUE;
 
