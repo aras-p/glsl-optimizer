@@ -51,11 +51,6 @@ intel_draw_buffer(struct gl_context * ctx)
 }
 
 extern void intelInitBufferFuncs(struct dd_function_table *functions);
-
-void intel_get_cliprects(struct intel_context *intel,
-			 struct drm_clip_rect **cliprects,
-			 unsigned int *num_cliprects,
-			 int *x_off, int *y_off);
 #ifdef I915
 void intelCalcViewport(struct gl_context * ctx);
 #endif
