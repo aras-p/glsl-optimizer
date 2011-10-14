@@ -501,7 +501,7 @@ gl_format radeonChooseTextureFormat(struct gl_context * ctx,
 		if (IS_R200_CLASS(rmesa->radeonScreen))
 			return _dri_texformat_al88;
 		else
-			return _dri_texformat_a8;
+			return MESA_FORMAT_A8;
 	case 1:
 	case GL_LUMINANCE:
 	case GL_LUMINANCE4:
@@ -509,7 +509,7 @@ gl_format radeonChooseTextureFormat(struct gl_context * ctx,
 	case GL_LUMINANCE12:
 	case GL_LUMINANCE16:
 	case GL_COMPRESSED_LUMINANCE:
-		return _dri_texformat_l8;
+		return MESA_FORMAT_L8;
 
 	case 2:
 	case GL_LUMINANCE_ALPHA:
@@ -528,7 +528,7 @@ gl_format radeonChooseTextureFormat(struct gl_context * ctx,
 	case GL_INTENSITY12:
 	case GL_INTENSITY16:
 	case GL_COMPRESSED_INTENSITY:
-		return _dri_texformat_i8;
+		return MESA_FORMAT_I8;
 
 	case GL_YCBCR_MESA:
 		if (type == GL_UNSIGNED_SHORT_8_8_APPLE ||

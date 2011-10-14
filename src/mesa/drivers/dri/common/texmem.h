@@ -324,10 +324,6 @@ extern gl_format _dri_texformat_rgb565;
 extern gl_format _dri_texformat_argb4444;
 extern gl_format _dri_texformat_argb1555;
 extern gl_format _dri_texformat_al88;
-extern gl_format _dri_texformat_a8;
-extern gl_format _dri_texformat_ci8;
-extern gl_format _dri_texformat_i8;
-extern gl_format _dri_texformat_l8;
 
 extern void driInitTextureFormats( void );
 
