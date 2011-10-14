@@ -819,7 +819,7 @@ const struct TexInstruction::Target::Desc TexInstruction::Target::descTable[] =
    { "1D_ARRAY",          1, 2, true,  false, false },
    { "2D_ARRAY",          2, 3, true,  false, false },
    { "2D_MS_ARRAY",       2, 3, true,  false, false },
-   { "CUBE_ARRAY",        2, 3, true,  true,  false },
+   { "CUBE_ARRAY",        2, 4, true,  true,  false },
    { "1D_ARRAY_SHADOW",   1, 2, true,  false, true  },
    { "2D_ARRAY_SHADOW",   2, 3, true,  false, true  },
    { "RECT",              2, 2, false, false, false },

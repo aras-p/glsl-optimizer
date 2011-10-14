@@ -307,14 +307,14 @@ NVC0LoweringPass::visit(BasicBlock *bb)
 bool
 NVC0LoweringPass::handleTEX(TexInstruction *i)
 {
-   const int dim = i->tex.target.getDim();
-   const int arg = i->tex.target.getDim() + i->tex.target.isArray();
+   const int dim = i->tex.target.getDim() + i->tex.target.isCube();
+   const int arg = i->tex.target.getArgCount();
 
    // generate and move the tsc/tic/array source to the front
    if (dim != arg || i->tex.rIndirectSrc >= 0 || i->tex.sIndirectSrc >= 0) {
       LValue *src = new_LValue(func, FILE_GPR); // 0xttxsaaaa
 
-      Value *arrayIndex = i->tex.target.isArray() ? i->getSrc(dim) : NULL;
+      Value *arrayIndex = i->tex.target.isArray() ? i->getSrc(arg - 1) : NULL;
       for (int s = dim; s >= 1; --s)
          i->setSrc(s, i->getSrc(s - 1));
       i->setSrc(0, arrayIndex);
