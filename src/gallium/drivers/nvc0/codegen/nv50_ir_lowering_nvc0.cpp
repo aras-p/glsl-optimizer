@@ -261,6 +261,7 @@ private:
    bool handlePOW(Instruction *);
    bool handleTEX(TexInstruction *);
    bool handleTXD(TexInstruction *);
+   bool handleTXQ(TexInstruction *);
    bool handleManualTXD(TexInstruction *);
 
    void checkPredicate(Instruction *);
@@ -428,6 +429,13 @@ NVC0LoweringPass::handleTXD(TexInstruction *txd)
       txd->dPdx[c] = NULL;
       txd->dPdy[c] = NULL;
    }
+   return true;
+}
+
+bool
+NVC0LoweringPass::handleTXQ(TexInstruction *txq)
+{
+   // TODO: indirect resource/sampler index
    return true;
 }
 
@@ -655,11 +663,12 @@ NVC0LoweringPass::visit(Instruction *i)
    case OP_TXB:
    case OP_TXL:
    case OP_TXF:
-   case OP_TXQ:
    case OP_TXG:
       return handleTEX(i->asTex());
    case OP_TXD:
       return handleTXD(i->asTex());
+   case OP_TXQ:
+     return handleTXQ(i->asTex());
    case OP_EX2:
       bld.mkOp1(OP_PREEX2, TYPE_F32, i->getDef(0), i->getSrc(0));
       i->setSrc(0, i->getDef(0));
