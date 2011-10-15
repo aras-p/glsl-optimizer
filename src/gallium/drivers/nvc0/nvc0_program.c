@@ -78,7 +78,7 @@ nvc0_shader_output_address(unsigned sn, unsigned si, unsigned ubase)
 {
    switch (sn) {
    case NV50_SEMANTIC_TESSFACTOR:    return 0x000 + si * 0x4;
-   case TGSI_SEMANTIC_PRIMID:        return 0x040;
+   case TGSI_SEMANTIC_PRIMID:        return 0x060;
    case NV50_SEMANTIC_LAYER:         return 0x064;
    case NV50_SEMANTIC_VIEWPORTINDEX: return 0x068;
    case TGSI_SEMANTIC_PSIZE:         return 0x06c;
@@ -441,8 +441,10 @@ nvc0_fp_gen_header(struct nvc0_program *fp, struct nv50_ir_prog_info *info)
       for (c = 0; c < 4; ++c) {
          if (!(info->in[i].mask & (1 << c)))
             continue;
-         if (info->in[i].slot[0] == (0x070 / 4)) {
-            fp->hdr[5] |= 1 << (28 + c);
+	 a = info->in[i].slot[c];
+         if (info->in[i].slot[0] >= (0x060 / 4) &&
+             info->in[i].slot[0] <= (0x07c / 4)) {
+            fp->hdr[5] |= 1 << (24 + (a - 0x060 / 4));
          } else
          if (info->in[i].slot[0] == (0x2e0 / 4)) {
             if (c <= 1)
@@ -451,7 +453,7 @@ nvc0_fp_gen_header(struct nvc0_program *fp, struct nv50_ir_prog_info *info)
             if (info->in[i].slot[c] < (0x040 / 4) ||
                 info->in[i].slot[c] > (0x380 / 4))
                continue;
-            a = info->in[i].slot[c] * 2;
+            a *= 2;
             if (info->in[i].slot[0] >= (0x2c0 / 4))
                a -= 32;
             fp->hdr[4 + a / 32] |= m << (a % 32);
