@@ -1367,9 +1367,9 @@ static unsigned r600_bytecode_num_tex_and_vtx_instructions(const struct r600_byt
 		return 8;
 
 	case R700:
+	case EVERGREEN:
 		return 16;
 
-	case EVERGREEN:
 	case CAYMAN:
 		return 64;
 
