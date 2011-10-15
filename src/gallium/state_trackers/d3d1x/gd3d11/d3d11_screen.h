@@ -1327,10 +1327,10 @@ struct GalliumD3D11ScreenImpl : public GalliumD3D11Screen
 		if(invalid(query_desc->Query >= D3D11_QUERY_COUNT))
 			return E_INVALIDARG;
 		unsigned query_type = d3d11_to_pipe_query[query_desc->Query];
-		if(!query_type)
+		if(query_type >= PIPE_QUERY_TYPES)
 			return E_NOTIMPL;
 
-		if(out_query)
+		if(!out_query)
 			return S_FALSE;
 
 		struct pipe_query* query = immediate_pipe->create_query(immediate_pipe, query_type);
@@ -1351,9 +1351,10 @@ struct GalliumD3D11ScreenImpl : public GalliumD3D11Screen
 		switch(predicate_desc->Query)
 		{
 		case D3D11_QUERY_SO_OVERFLOW_PREDICATE:
-			return E_NOTIMPL;
+			query_type = PIPE_QUERY_SO_OVERFLOW_PREDICATE;
+			break;
 		case D3D11_QUERY_OCCLUSION_PREDICATE:
-			query_type = PIPE_QUERY_OCCLUSION_COUNTER;
+			query_type = PIPE_QUERY_OCCLUSION_PREDICATE;
 			break;
 		default:
 			return E_INVALIDARG;
