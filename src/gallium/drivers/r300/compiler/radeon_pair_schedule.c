@@ -781,7 +781,7 @@ static void is_rgb_to_alpha_possible(
 	struct rc_pair_instruction_arg * arg,
 	struct rc_pair_instruction_source * src)
 {
-	unsigned int chan_count = 0;
+	unsigned int read_chan = RC_SWIZZLE_UNUSED;
 	unsigned int alpha_sources = 0;
 	unsigned int i;
 	struct rc_reader_data * reader_data = userdata;
@@ -803,8 +803,9 @@ static void is_rgb_to_alpha_possible(
 		return;
 	}
 
-	/* Make sure the source only reads from one component.
-	 * XXX We should allow the source to read from the same component twice.
+	/* Make sure the source only reads the register component that we
+	 * are going to be convering from.  It is OK if the instruction uses
+	 * this component more than once.
 	 * XXX If the index we will be converting to is the same as the
 	 * current index, then it is OK to read from more than one component.
 	 */
@@ -815,15 +816,16 @@ static void is_rgb_to_alpha_possible(
 		case RC_SWIZZLE_Y:
 		case RC_SWIZZLE_Z:
 		case RC_SWIZZLE_W:
-			chan_count++;
+			if (read_chan == RC_SWIZZLE_UNUSED) {
+				read_chan = swz;
+			} else if (read_chan != swz) {
+				reader_data->Abort = 1;
+				return;
+			}
 			break;
 		default:
 			break;
 		}
-	}
-	if (chan_count > 1) {
-		reader_data->Abort = 1;
-		return;
 	}
 
 	/* Make sure there are enough alpha sources.
