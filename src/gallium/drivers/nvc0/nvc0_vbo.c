@@ -327,6 +327,8 @@ nvc0_vertex_arrays_validate(struct nvc0_context *nvc0)
    for (; i < nvc0->state.num_vtxelts; ++i) {
       BEGIN_RING(chan, RING_3D(VERTEX_ATTRIB_FORMAT(i)), 1);
       OUT_RING  (chan, NVC0_3D_VERTEX_ATTRIB_INACTIVE);
+      if (unlikely(nvc0->state.instance_elts & (1 << i)))
+         IMMED_RING(chan, RING_3D(VERTEX_ARRAY_PER_INSTANCE(i)), 0);
       BEGIN_RING(chan, RING_3D(VERTEX_ARRAY_FETCH(i)), 1);
       OUT_RING  (chan, 0);
    }
