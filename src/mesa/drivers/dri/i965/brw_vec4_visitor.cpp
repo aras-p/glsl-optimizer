@@ -1549,7 +1549,8 @@ vec4_visitor::try_rewrite_rhs_to_dst(ir_assignment *ir,
     * potentially reswizzle the operands of many instructions so that
     * we could handle out of order channels, but don't yet.
     */
-   for (int i = 0; i < 4; i++) {
+
+   for (unsigned i = 0; i < 4; i++) {
       if (dst.writemask & (1 << i)) {
 	 if (!(last_rhs_inst->dst.writemask & (1 << i)))
 	    return false;
