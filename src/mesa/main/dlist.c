@@ -875,7 +875,7 @@ translate_id(GLsizei n, GLenum type, const GLvoid * list)
 /**********************************************************************/
 
 /**
- * Wrapper for _mesa_unpack_image() that handles pixel buffer objects.
+ * Wrapper for _mesa_unpack_image/bitmap() that handles pixel buffer objects.
  * If width < 0 or height < 0 or format or type are invalid we'll just
  * return NULL.  We will not generate an error since OpenGL command
  * arguments aren't error-checked until the command is actually executed
@@ -899,8 +899,13 @@ unpack_image(struct gl_context *ctx, GLuint dimensions,
 
    if (!_mesa_is_bufferobj(unpack->BufferObj)) {
       /* no PBO */
-      GLvoid *image = _mesa_unpack_image(dimensions, width, height, depth,
-                                         format, type, pixels, unpack);
+      GLvoid *image;
+
+      if (type == GL_BITMAP)
+         image = _mesa_unpack_bitmap(width, height, pixels, unpack);
+      else
+         image = _mesa_unpack_image(dimensions, width, height, depth,
+                                    format, type, pixels, unpack);
       if (pixels && !image) {
          _mesa_error(ctx, GL_OUT_OF_MEMORY, "display list construction");
       }
@@ -921,8 +926,11 @@ unpack_image(struct gl_context *ctx, GLuint dimensions,
       }
 
       src = ADD_POINTERS(map, pixels);
-      image = _mesa_unpack_image(dimensions, width, height, depth,
-                                 format, type, src, unpack);
+      if (type == GL_BITMAP)
+         image = _mesa_unpack_bitmap(width, height, src, unpack);
+      else
+         image = _mesa_unpack_image(dimensions, width, height, depth,
+                                    format, type, src, unpack);
 
       ctx->Driver.UnmapBuffer(ctx, unpack->BufferObj);
 
@@ -934,7 +942,6 @@ unpack_image(struct gl_context *ctx, GLuint dimensions,
    /* bad access! */
    return NULL;
 }
-
 
 /**
  * Allocate space for a display list instruction (opcode + payload space).
@@ -1121,7 +1128,8 @@ save_Bitmap(GLsizei width, GLsizei height,
       n[4].f = yorig;
       n[5].f = xmove;
       n[6].f = ymove;
-      n[7].data = _mesa_unpack_bitmap(width, height, pixels, &ctx->Unpack);
+      n[7].data = unpack_image(ctx, 2, width, height, 1, GL_COLOR_INDEX,
+                               GL_BITMAP, pixels, &ctx->Unpack);
    }
    if (ctx->ExecuteFlag) {
       CALL_Bitmap(ctx->Exec, (width, height,
