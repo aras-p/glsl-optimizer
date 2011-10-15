@@ -138,6 +138,7 @@ enum value_extra {
    EXTRA_VALID_TEXTURE_UNIT,
    EXTRA_VALID_CLIP_DISTANCE,
    EXTRA_FLUSH_CURRENT,
+   EXTRA_GLSL_130,
 };
 
 #define NO_EXTRA NULL
@@ -277,8 +278,8 @@ static const int extra_EXT_texture_integer[] = {
    EXTRA_END
 };
 
-static const int extra_EXT_gpu_shader4[] = {
-   EXT(EXT_gpu_shader4),
+static const int extra_GLSL_130[] = {
+   EXTRA_GLSL_130,
    EXTRA_END
 };
 
@@ -1234,13 +1235,13 @@ static const struct value_desc values[] = {
    /* GL_ARB_color_buffer_float */
    { GL_RGBA_FLOAT_MODE_ARB, BUFFER_FIELD(Visual.floatMode, TYPE_BOOLEAN), 0 },
 
-   /* GL_EXT_gpu_shader4 / GL 3.0 */
+   /* GL_EXT_gpu_shader4 / GLSL 1.30 */
    { GL_MIN_PROGRAM_TEXEL_OFFSET,
      CONTEXT_INT(Const.MinProgramTexelOffset),
-     extra_EXT_gpu_shader4 },
+     extra_GLSL_130 },
    { GL_MAX_PROGRAM_TEXEL_OFFSET,
      CONTEXT_INT(Const.MaxProgramTexelOffset),
-     extra_EXT_gpu_shader4 },
+     extra_GLSL_130 },
 
    /* GL_ARB_texture_buffer_object */
    { GL_MAX_TEXTURE_BUFFER_SIZE_ARB, CONTEXT_INT(Const.MaxTextureBufferSize),
@@ -1815,6 +1816,12 @@ check_extra(struct gl_context *ctx, const char *func, const struct value_desc *d
 	    _mesa_error(ctx, GL_INVALID_ENUM, "%s(clip distance %u)",
 			func, d->pname - GL_CLIP_DISTANCE0);
 	    return GL_FALSE;
+	 }
+	 break;
+      case EXTRA_GLSL_130:
+	 if (ctx->Const.GLSLVersion >= 130) {
+	    total++;
+	    enabled++;
 	 }
 	 break;
       case EXTRA_END:
