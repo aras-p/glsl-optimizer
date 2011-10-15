@@ -896,7 +896,16 @@ static int convert_rgb_to_alpha(
 		return 0;
 	}
 
-	pair_inst->Alpha.Opcode = pair_inst->RGB.Opcode;
+	/* If we are converting a full instruction with RC_OPCODE_REPL_ALPHA
+	 * as the RGB opcode, then the Alpha instruction will already contain
+	 * the correct opcode and instruction args, so we do not want to
+	 * overwrite them.
+	 */
+	if (pair_inst->RGB.Opcode != RC_OPCODE_REPL_ALPHA) {
+		pair_inst->Alpha.Opcode = pair_inst->RGB.Opcode;
+		memcpy(pair_inst->Alpha.Arg, pair_inst->RGB.Arg,
+						sizeof(pair_inst->Alpha.Arg));
+	}
 	pair_inst->Alpha.DestIndex = new_index;
 	pair_inst->Alpha.WriteMask = RC_MASK_W;
 	pair_inst->Alpha.Target = pair_inst->RGB.Target;
@@ -904,8 +913,6 @@ static int convert_rgb_to_alpha(
 	pair_inst->Alpha.DepthWriteMask = pair_inst->RGB.DepthWriteMask;
 	pair_inst->Alpha.Saturate = pair_inst->RGB.Saturate;
 	pair_inst->Alpha.Omod = pair_inst->RGB.Omod;
-	memcpy(pair_inst->Alpha.Arg, pair_inst->RGB.Arg,
-						sizeof(pair_inst->Alpha.Arg));
 	/* Move the swizzles into the first chan */
 	for (i = 0; i < info->NumSrcRegs; i++) {
 		unsigned int j;
@@ -933,6 +940,48 @@ static int convert_rgb_to_alpha(
 					RC_FILE_TEMPORARY, old_swz, new_index);
 	}
 	return 1;
+}
+
+static void try_convert_and_pair(
+	struct schedule_state *s,
+	struct schedule_instruction ** inst_list)
+{
+	struct schedule_instruction * list_ptr = *inst_list;
+	while (list_ptr && *inst_list && (*inst_list)->NextReady) {
+		int paired = 0;
+		if (list_ptr->Instruction->U.P.Alpha.Opcode != RC_OPCODE_NOP
+			&& list_ptr->Instruction->U.P.RGB.Opcode
+						!= RC_OPCODE_REPL_ALPHA) {
+				goto next;
+		}
+		if (list_ptr->NumWriteValues == 1
+					&& convert_rgb_to_alpha(s, list_ptr)) {
+
+			struct schedule_instruction * pair_ptr;
+			remove_inst_from_list(inst_list, list_ptr);
+			add_inst_to_list_score(&s->ReadyAlpha, list_ptr);
+
+			for (pair_ptr = s->ReadyRGB; pair_ptr;
+					pair_ptr = pair_ptr->NextReady) {
+				if (merge_instructions(&pair_ptr->Instruction->U.P,
+						&list_ptr->Instruction->U.P)) {
+					remove_inst_from_list(&s->ReadyAlpha, list_ptr);
+					remove_inst_from_list(&s->ReadyRGB, pair_ptr);
+					pair_ptr->PairedInst = list_ptr;
+
+					add_inst_to_list(&s->ReadyFullALU, pair_ptr);
+					list_ptr = *inst_list;
+					paired = 1;
+					break;
+				}
+
+			}
+		}
+		if (!paired) {
+next:
+			list_ptr = list_ptr->NextReady;
+		}
+	}
 }
 
 /**
@@ -969,38 +1018,13 @@ static void pair_instructions(struct schedule_state * s)
 		return;
 	}
 
+	/* Full instructions that have RC_OPCODE_REPL_ALPHA in the RGB
+	 * slot can be converted into Alpha instructions. */
+	try_convert_and_pair(s, &s->ReadyFullALU);
+
 	/* Try to convert some of the RGB instructions to Alpha and
 	 * try to pair it with another RGB. */
-	rgb_ptr = s->ReadyRGB;
-	while (rgb_ptr && s->ReadyRGB && s->ReadyRGB->NextReady) {
-		int paired = 0;
-		if (rgb_ptr->NumWriteValues == 1
-					&& convert_rgb_to_alpha(s, rgb_ptr)) {
-
-			struct schedule_instruction * pair_ptr;
-			remove_inst_from_list(&s->ReadyRGB, rgb_ptr);
-			add_inst_to_list_score(&s->ReadyAlpha, rgb_ptr);
-
-			for (pair_ptr = s->ReadyRGB; pair_ptr;
-					pair_ptr = pair_ptr->NextReady) {
-				if (merge_instructions(&pair_ptr->Instruction->U.P,
-						&rgb_ptr->Instruction->U.P)) {
-					remove_inst_from_list(&s->ReadyAlpha, rgb_ptr);
-					remove_inst_from_list(&s->ReadyRGB, pair_ptr);
-					pair_ptr->PairedInst = rgb_ptr;
-
-					add_inst_to_list(&s->ReadyFullALU, pair_ptr);
-					rgb_ptr = s->ReadyRGB;
-					paired = 1;
-					break;
-				}
-
-			}
-		}
-		if (!paired) {
-			rgb_ptr = rgb_ptr->NextReady;
-		}
-	}
+	try_convert_and_pair(s, &s->ReadyRGB);
 }
 
 static void update_max_score(
