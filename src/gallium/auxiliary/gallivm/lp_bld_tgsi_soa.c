@@ -783,20 +783,12 @@ emit_fetch(
       return bld->base.undef;
    }
 
-   switch( tgsi_util_get_full_src_register_sign_mode( reg, chan_index ) ) {
-   case TGSI_UTIL_SIGN_CLEAR:
+   if (reg->Register.Absolute) {
       res = lp_build_abs( &bld->base, res );
-      break;
+   }
 
-   case TGSI_UTIL_SIGN_SET:
-      res = lp_build_abs( &bld->base, res );
-      /* fall through */
-   case TGSI_UTIL_SIGN_TOGGLE:
+   if (reg->Register.Negate) {
       res = lp_build_negate( &bld->base, res );
-      break;
-
-   case TGSI_UTIL_SIGN_KEEP:
-      break;
    }
 
    return res;
