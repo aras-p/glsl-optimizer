@@ -521,9 +521,7 @@ static void r300_draw_elements_immediate(struct r300_context *r300,
             PREP_INDEXED, NULL, 2+count_dwords, 0, info->index_bias, -1))
         return;
 
-    r300_emit_draw_init(r300, info->mode,
-                        info->min_index + info->index_bias,
-                        info->max_index + info->index_bias);
+    r300_emit_draw_init(r300, info->mode, info->min_index, info->max_index);
 
     BEGIN_CS(2 + count_dwords);
     OUT_CS_PKT3(R300_PACKET3_3D_DRAW_INDX_2, count_dwords);
