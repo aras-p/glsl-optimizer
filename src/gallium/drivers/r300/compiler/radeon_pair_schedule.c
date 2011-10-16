@@ -151,6 +151,7 @@ struct schedule_state {
 	long max_tex_group;
 	unsigned PrevBlockHasTex:1;
 	unsigned TEXCount;
+	unsigned Opt:1;
 };
 
 static struct reg_value ** get_reg_valuep(struct schedule_state * s,
@@ -962,6 +963,10 @@ static void pair_instructions(struct schedule_state * s)
 		rgb_ptr = rgb_next;
 	}
 
+	if (!s->Opt) {
+		return;
+	}
+
 	/* Try to convert some of the RGB instructions to Alpha and
 	 * try to pair it with another RGB. */
 	rgb_ptr = s->ReadyRGB;
@@ -1283,8 +1288,10 @@ void rc_pair_schedule(struct radeon_compiler *cc, void *user)
 	struct r300_fragment_program_compiler *c = (struct r300_fragment_program_compiler*)cc;
 	struct schedule_state s;
 	struct rc_instruction * inst = c->Base.Program.Instructions.Next;
+	unsigned int * opt = user;
 
 	memset(&s, 0, sizeof(s));
+	s.Opt = *opt;
 	s.C = &c->Base;
 	s.CalcScore = calc_score_readers;
 	s.max_tex_group = debug_get_num_option("RADEON_TEX_GROUP", 8);

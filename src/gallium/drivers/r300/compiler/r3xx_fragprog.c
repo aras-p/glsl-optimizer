@@ -149,7 +149,7 @@ void r3xx_compile_fragment_program(struct r300_fragment_program_compiler* c)
 		{"dataflow swizzles",		1, 1,		rc_dataflow_swizzles,		NULL},
 		{"dead constants",		1, 1,		rc_remove_unused_constants,	&c->code->constants_remap_table},
 		{"pair translate",		1, 1,		rc_pair_translate,		NULL},
-		{"pair scheduling",		1, 1,		rc_pair_schedule,		NULL},
+		{"pair scheduling",		1, 1,		rc_pair_schedule,		&opt},
 		{"dead sources",		1, 1,		rc_pair_remove_dead_sources, NULL},
 		{"register allocation",		1, 1,		rc_pair_regalloc,		&opt},
 		{"final code validation",	0, 1,		rc_validate_final_shader,	NULL},
