@@ -60,7 +60,7 @@ $(TOP)/$(LIB_DIR)/gallium:
 	mkdir -p $@
 
 clean:
-	rm -f $(OBJECTS) $(GENERATED_SOURCES) $(LIBNAME).a depend depend.bak
+	rm -f $(OBJECTS) $(GENERATED_SOURCES) $(LIBNAME) depend depend.bak
 
 install:
 	$(INSTALL) -d $(DESTDIR)/$(XORG_DRIVER_INSTALL_DIR)
