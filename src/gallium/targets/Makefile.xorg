@@ -26,7 +26,7 @@ INCLUDES = \
 	-I$(TOP)/src/gallium/winsys \
 	$(DRIVER_INCLUDES)
 
-LIBNAME_STAGING = $(TOP)/$(LIB_DIR)/gallium/$(TARGET)
+LIBNAME_STAGING = $(TOP)/$(LIB_DIR)/gallium/$(LIBNAME)
 
 ifeq ($(MESA_LLVM),1)
 LDFLAGS += $(LLVM_LDFLAGS)
