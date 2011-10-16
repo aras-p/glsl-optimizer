@@ -884,7 +884,7 @@ _mesa_GetnCompressedTexImageARB(GLenum target, GLint level, GLsizei bufSize,
       return;
    }
 
-   if (_mesa_is_bufferobj(ctx->Pack.BufferObj) && !img) {
+   if (!_mesa_is_bufferobj(ctx->Pack.BufferObj) && !img) {
       /* not an error, do nothing */
       return;
    }
