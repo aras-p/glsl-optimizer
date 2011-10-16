@@ -2255,7 +2255,6 @@ lp_build_exp2_approx(struct lp_build_context *bld,
    LLVMBuilderRef builder = bld->gallivm->builder;
    const struct lp_type type = bld->type;
    LLVMTypeRef vec_type = lp_build_vec_type(bld->gallivm, type);
-   LLVMTypeRef int_vec_type = lp_build_int_vec_type(bld->gallivm, type);
    LLVMValueRef ipart = NULL;
    LLVMValueRef fpart = NULL;
    LLVMValueRef expipart = NULL;
@@ -2278,15 +2277,12 @@ lp_build_exp2_approx(struct lp_build_context *bld,
       x = lp_build_max(bld, x, lp_build_const_vec(bld->gallivm, type, -126.99999));
 
       /* ipart = floor(x) */
-      ipart = lp_build_floor(bld, x);
-
       /* fpart = x - ipart */
-      fpart = LLVMBuildFSub(builder, x, ipart, "");
+      lp_build_ifloor_fract(bld, x, &ipart, &fpart);
    }
 
    if(p_exp2_int_part || p_exp2) {
       /* expipart = (float) (1 << ipart) */
-      ipart = LLVMBuildFPToSI(builder, ipart, int_vec_type, "");
       expipart = LLVMBuildAdd(builder, ipart,
                               lp_build_const_int_vec(bld->gallivm, type, 127), "");
       expipart = LLVMBuildShl(builder, expipart,
