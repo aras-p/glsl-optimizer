@@ -1220,15 +1220,8 @@ _mesa_image_address( GLuint dimensions,
    if (type == GL_BITMAP) {
       /* BITMAP data */
       GLint comp_per_pixel;   /* components per pixel */
-      GLint bytes_per_comp;   /* bytes per component */
       GLint bytes_per_row;
       GLint bytes_per_image;
-
-      /* Compute bytes per component */
-      bytes_per_comp = _mesa_sizeof_packed_type( type );
-      if (bytes_per_comp < 0) {
-         return NULL;
-      }
 
       /* Compute number of components per pixel */
       comp_per_pixel = _mesa_components_in_format( format );
