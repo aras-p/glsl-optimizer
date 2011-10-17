@@ -87,6 +87,10 @@ struct radeon_renderbuffer
 	/* unsigned int offset; */
 	unsigned int pitch;
 
+	struct radeon_bo *map_bo;
+	GLbitfield map_mode;
+	int map_x, map_y, map_w, map_h;
+
 	uint32_t draw_offset; /* FBO */
 	/* boo Xorg 6.8.2 compat */
 	int has_surface;

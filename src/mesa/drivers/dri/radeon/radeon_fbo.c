@@ -70,6 +70,98 @@ radeon_delete_renderbuffer(struct gl_renderbuffer *rb)
   free(rrb);
 }
 
+static void
+radeon_map_renderbuffer(struct gl_context *ctx,
+		       struct gl_renderbuffer *rb,
+		       GLuint x, GLuint y, GLuint w, GLuint h,
+		       GLbitfield mode,
+		       GLubyte **out_map,
+		       GLint *out_stride)
+{
+   struct radeon_context *const rmesa = RADEON_CONTEXT(ctx);
+   struct radeon_renderbuffer *rrb = radeon_renderbuffer(rb);
+   GLubyte *map;
+   GLboolean ok;
+   int stride, ret;
+
+   assert(rrb && rrb->bo);
+
+   /* Make a temporary buffer and blit the current contents of the renderbuffer
+    * out to it.  This gives us linear access to the buffer, instead of having
+    * to do detiling in software.
+    */
+   assert(!rrb->map_bo);
+   rrb->map_bo = radeon_bo_open(rmesa->radeonScreen->bom, 0,
+				rrb->pitch * h, 4,
+				RADEON_GEM_DOMAIN_GTT, 0);
+   rrb->map_mode = mode;
+   rrb->map_x = x;
+   rrb->map_y = y;
+   rrb->map_w = w;
+   rrb->map_h = h;
+
+   ok = rmesa->vtbl.check_blit(rb->Format);
+   assert(ok);
+
+   ok = rmesa->vtbl.blit(ctx, rrb->bo, rrb->draw_offset,
+			 rb->Format, rrb->pitch / rrb->cpp,
+			 rb->Width, rb->Height,
+			 x, y,
+			 rrb->map_bo, 0,
+			 rb->Format, rrb->pitch / rrb->cpp,
+			 w, h,
+			 0, 0,
+			 w, h,
+			 GL_FALSE);
+   assert(ok);
+
+   radeon_bo_wait(rrb->map_bo);
+   ret = radeon_bo_map(rrb->map_bo, !!(mode & GL_MAP_WRITE_BIT));
+   assert(!ret);
+
+   map = rrb->map_bo->ptr;
+   stride = rrb->pitch;
+
+   if (rb->Name == 0) {
+      map += stride * (rb->Height - 1);
+      stride = -stride;
+   }
+
+   map += x * _mesa_get_format_bytes(rb->Format);
+   map += (int)y * stride;
+
+   *out_map = map;
+   *out_stride = stride;
+}
+
+static void
+radeon_unmap_renderbuffer(struct gl_context *ctx,
+			  struct gl_renderbuffer *rb)
+{
+   struct radeon_context *const rmesa = RADEON_CONTEXT(ctx);
+   struct radeon_renderbuffer *rrb = radeon_renderbuffer(rb);
+   GLboolean ok;
+
+   radeon_bo_unmap(rrb->map_bo);
+
+   if (rrb->map_mode & GL_MAP_WRITE_BIT) {
+      ok = rmesa->vtbl.blit(ctx, rrb->map_bo, 0,
+			    rb->Format, rrb->pitch / rrb->cpp,
+			    rrb->map_w, rrb->map_h,
+			    0, 0,
+			    rrb->bo, rrb->draw_offset,
+			    rb->Format, rrb->pitch / rrb->cpp,
+			    rb->Width, rb->Height,
+			    rrb->map_x, rrb->map_y,
+			    rrb->map_w, rrb->map_h,
+			    GL_FALSE);
+      assert(ok);
+   }
+
+   radeon_bo_unref(rrb->map_bo);
+   rrb->map_bo = NULL;
+}
+
 static void *
 radeon_get_pointer(struct gl_context *ctx, struct gl_renderbuffer *rb,
 		   GLint x, GLint y)
@@ -639,6 +731,8 @@ void radeon_fbo_init(struct radeon_context *radeon)
 #if FEATURE_EXT_framebuffer_object
   radeon->glCtx->Driver.NewFramebuffer = radeon_new_framebuffer;
   radeon->glCtx->Driver.NewRenderbuffer = radeon_new_renderbuffer;
+  radeon->glCtx->Driver.MapRenderbuffer = radeon_map_renderbuffer;
+  radeon->glCtx->Driver.UnmapRenderbuffer = radeon_unmap_renderbuffer;
   radeon->glCtx->Driver.BindFramebuffer = radeon_bind_framebuffer;
   radeon->glCtx->Driver.FramebufferRenderbuffer = radeon_framebuffer_renderbuffer;
   radeon->glCtx->Driver.RenderTexture = radeon_render_texture;
