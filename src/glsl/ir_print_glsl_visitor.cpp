@@ -208,7 +208,7 @@ void ir_print_glsl_visitor::print_precision (ir_instruction* ir)
 {
 	if (!this->use_precision)
 		return;
-	if (ir->type && !ir->type->is_float())
+	if (ir->type && !ir->type->is_float() && (!ir->type->is_array() || !ir->type->element_type()->is_float()))
 		return;
 	glsl_precision prec = precision_from_ir(ir);
 	if (prec == glsl_precision_high || prec == glsl_precision_undefined)
