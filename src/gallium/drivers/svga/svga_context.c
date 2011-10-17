@@ -239,9 +239,9 @@ void svga_context_flush( struct svga_context *svga,
    }
 
    if(pfence)
-      *pfence = fence;
-   else
-      svgascreen->sws->fence_reference(svgascreen->sws, &fence, NULL);
+      svgascreen->sws->fence_reference(svgascreen->sws, pfence, fence);
+
+   svgascreen->sws->fence_reference(svgascreen->sws, &fence, NULL);
 }
 
 
