@@ -1165,17 +1165,17 @@ _mesa_base_format_has_channel(GLenum base_format, GLenum pname)
  * Pixel unpacking/packing parameters are observed according to \p packing.
  *
  * \param dimensions either 1, 2 or 3 to indicate dimensionality of image
+ * \param packing  the pixelstore attributes
  * \param image  starting address of image data
  * \param width  the image width
- * \param height  theimage height
- * \param format  the pixel format
- * \param type  the pixel data type
- * \param packing  the pixelstore attributes
+ * \param height  the image height
+ * \param format  the pixel format (must be validated beforehand)
+ * \param type  the pixel data type (must be validated beforehand)
  * \param img  which image in the volume (0 for 1D or 2D images)
  * \param row  row of pixel in the image (0 for 1D images)
  * \param column column of pixel in the image
  * 
- * \return address of pixel on success, or NULL on error.
+ * \return address of pixel.
  *
  * \sa gl_pixelstore_attrib.
  */
@@ -1219,15 +1219,13 @@ _mesa_image_address( GLuint dimensions,
 
    if (type == GL_BITMAP) {
       /* BITMAP data */
-      GLint comp_per_pixel;   /* components per pixel */
       GLint bytes_per_row;
       GLint bytes_per_image;
+      /* components per pixel for color or stencil index: */
+      const GLint comp_per_pixel = 1;
 
-      /* Compute number of components per pixel */
-      comp_per_pixel = _mesa_components_in_format( format );
-      if (comp_per_pixel < 0) {
-         return NULL;
-      }
+      /* The pixel type and format should have been error checked earlier */
+      assert(format == GL_COLOR_INDEX || format == GL_STENCIL_INDEX);
 
       bytes_per_row = alignment
                     * CEILING( comp_per_pixel*pixels_per_row, 8*alignment );
