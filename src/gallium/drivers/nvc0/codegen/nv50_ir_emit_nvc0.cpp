@@ -665,8 +665,8 @@ CodeEmitterNVC0::emitShift(const Instruction *i)
       emitForm_A(i, HEX64(60000000, 00000003));
    }
 
-   if (0)
-      code[0] |= 1 << 9; // clamp shift amount
+   if (i->subOp == NV50_IR_SUBOP_SHIFT_WRAP)
+      code[0] |= 1 << 9;
 }
 
 void

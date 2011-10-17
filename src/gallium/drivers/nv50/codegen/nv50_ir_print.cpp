@@ -437,6 +437,8 @@ void Instruction::print() const
          PRINT(" %sBB:%i", colour[TXT_BRA], asFlow()->target.bb->getId());
    } else {
       PRINT("%s ", operationStr[op]);
+      if (subOp)
+         PRINT("(SUBOP:%u) ", subOp);
       if (perPatch)
          PRINT("patch ");
       if (asTex())
