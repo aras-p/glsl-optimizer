@@ -63,6 +63,7 @@ public:
    Instruction *mkMovToReg(int id, Value *);
    Instruction *mkMovFromReg(Value *, int id);
 
+   Instruction *mkInterp(unsigned mode, Value *, int32_t offset, Value *rel);
    Instruction *mkFetch(Value *, DataType, DataFile, int32_t offset,
                         Value *attrRel, Value *primRel);
 

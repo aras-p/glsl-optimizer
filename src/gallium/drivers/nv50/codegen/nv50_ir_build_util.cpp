@@ -137,6 +137,25 @@ BuildUtil::mkFetch(Value *dst, DataType ty, DataFile file, int32_t offset,
 }
 
 Instruction *
+BuildUtil::mkInterp(unsigned mode, Value *dst, int32_t offset, Value *rel)
+{
+   operation op = OP_LINTERP;
+   DataType ty = TYPE_F32;
+
+   if ((mode & NV50_IR_INTERP_MODE_MASK) == NV50_IR_INTERP_FLAT)
+      ty = TYPE_U32;
+   else
+   if ((mode & NV50_IR_INTERP_MODE_MASK) == NV50_IR_INTERP_PERSPECTIVE)
+      op = OP_PINTERP;
+
+   Symbol *sym = mkSymbol(FILE_SHADER_INPUT, 0, ty, offset);
+
+   Instruction *insn = mkOp1(op, ty, dst, sym);
+   insn->setIndirect(0, 0, rel);
+   return insn;
+}
+
+Instruction *
 BuildUtil::mkMov(Value *dst, Value *src, DataType ty)
 {
    Instruction *insn = new_Instruction(func, OP_MOV, ty);

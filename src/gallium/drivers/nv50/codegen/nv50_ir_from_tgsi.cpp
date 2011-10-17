@@ -1246,6 +1246,8 @@ Converter::fetchSrc(tgsi::Instruction::SrcRegister src, int c, Value *ptr)
          // don't load masked inputs, won't be assigned a slot
          if (!ptr && !(info->in[idx].mask & (1 << swz)))
             return loadImm(NULL, swz == TGSI_SWIZZLE_W ? 1.0f : 0.0f);
+	 if (!ptr && info->in[idx].sn == TGSI_SEMANTIC_FACE)
+            return mkOp1v(OP_RDSV, TYPE_F32, getSSA(), mkSysVal(SV_FACE, 0));
          return interpolate(src, c, ptr);
       }
       return mkLoad(TYPE_U32, srcToSym(src, c), ptr);
