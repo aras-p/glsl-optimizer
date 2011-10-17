@@ -543,45 +543,6 @@ st_AllocTextureImageBuffer(struct gl_context *ctx,
    }
 }
 
-
-/**
- * Adjust pixel unpack params and image dimensions to strip off the
- * texture border.
- * Gallium doesn't support texture borders.  They've seldem been used
- * and seldom been implemented correctly anyway.
- * \param unpackNew  returns the new pixel unpack parameters
- */
-static void
-strip_texture_border(GLint border,
-                     GLint *width, GLint *height, GLint *depth,
-                     const struct gl_pixelstore_attrib *unpack,
-                     struct gl_pixelstore_attrib *unpackNew)
-{
-   assert(border > 0);  /* sanity check */
-
-   *unpackNew = *unpack;
-
-   if (unpackNew->RowLength == 0)
-      unpackNew->RowLength = *width;
-
-   if (depth && unpackNew->ImageHeight == 0)
-      unpackNew->ImageHeight = *height;
-
-   unpackNew->SkipPixels += border;
-   if (height)
-      unpackNew->SkipRows += border;
-   if (depth)
-      unpackNew->SkipImages += border;
-
-   assert(*width >= 3);
-   *width = *width - 2 * border;
-   if (height && *height >= 3)
-      *height = *height - 2 * border;
-   if (depth && *depth >= 3)
-      *depth = *depth - 2 * border;
-}
-
-
 /**
  * Do glTexImage1/2/3D().
  */
@@ -602,7 +563,6 @@ st_TexImage(struct gl_context * ctx,
    struct st_texture_object *stObj = st_texture_object(texObj);
    struct st_texture_image *stImage = st_texture_image(texImage);
    GLuint dstRowStride = 0;
-   struct gl_pixelstore_attrib unpackNB;
    enum pipe_transfer_usage transfer_usage = 0;
    GLubyte *dstMap;
 
@@ -627,21 +587,9 @@ st_TexImage(struct gl_context * ctx,
       stObj->surface_based = GL_FALSE;
    }
 
-   /* gallium does not support texture borders, strip it off */
-   if (border) {
-      strip_texture_border(border, &width, &height, &depth, unpack, &unpackNB);
-      unpack = &unpackNB;
-      texImage->Width = width;
-      texImage->Height = height;
-      texImage->Depth = depth;
-      texImage->Border = 0;
-      border = 0;
-   }
-   else {
-      assert(texImage->Width == width);
-      assert(texImage->Height == height);
-      assert(texImage->Depth == depth);
-   }
+   assert(texImage->Width == width);
+   assert(texImage->Height == height);
+   assert(texImage->Depth == depth);
 
    stImage->base.Face = _mesa_tex_target_to_face(target);
    stImage->base.Level = level;

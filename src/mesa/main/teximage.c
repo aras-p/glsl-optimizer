@@ -2246,6 +2246,45 @@ _mesa_choose_texture_format(struct gl_context *ctx,
    return f;
 }
 
+/**
+ * Adjust pixel unpack params and image dimensions to strip off the
+ * texture border.
+ *
+ * Gallium and intel don't support texture borders.  They've seldem been used
+ * and seldom been implemented correctly anyway.
+ *
+ * \param unpackNew returns the new pixel unpack parameters
+ */
+static void
+strip_texture_border(GLint *border,
+                     GLint *width, GLint *height, GLint *depth,
+                     const struct gl_pixelstore_attrib *unpack,
+                     struct gl_pixelstore_attrib *unpackNew)
+{
+   assert(*border > 0);  /* sanity check */
+
+   *unpackNew = *unpack;
+
+   if (unpackNew->RowLength == 0)
+      unpackNew->RowLength = *width;
+
+   if (depth && unpackNew->ImageHeight == 0)
+      unpackNew->ImageHeight = *height;
+
+   unpackNew->SkipPixels += *border;
+   if (height)
+      unpackNew->SkipRows += *border;
+   if (depth)
+      unpackNew->SkipImages += *border;
+
+   assert(*width >= 3);
+   *width = *width - 2 * *border;
+   if (height && *height >= 3)
+      *height = *height - 2 * *border;
+   if (depth && *depth >= 3)
+      *depth = *depth - 2 * *border;
+   *border = 0;
+}
 
 /**
  * Common code to implement all the glTexImage1D/2D/3D functions.
@@ -2258,6 +2297,8 @@ teximage(struct gl_context *ctx, GLuint dims,
          const GLvoid *pixels)
 {
    GLboolean error;
+   struct gl_pixelstore_attrib unpack_no_border;
+   const struct gl_pixelstore_attrib *unpack = &ctx->Unpack;
 
    ASSERT_OUTSIDE_BEGIN_END_AND_FLUSH(ctx);
 
@@ -2322,6 +2363,16 @@ teximage(struct gl_context *ctx, GLuint dims,
          return;   /* error was recorded */
       }
 
+      /* Allow a hardware driver to just strip out the border, to provide
+       * reliable but slightly incorrect hardware rendering instead of
+       * rarely-tested software fallback rendering.
+       */
+      if (border && ctx->Const.StripTextureBorder) {
+	 strip_texture_border(&border, &width, &height, &depth, unpack,
+			      &unpack_no_border);
+	 unpack = &unpack_no_border;
+      }
+
       if (ctx->NewState & _NEW_PIXEL)
 	 _mesa_update_state(ctx);
 
@@ -2354,19 +2405,19 @@ teximage(struct gl_context *ctx, GLuint dims,
                case 1:
                   ctx->Driver.TexImage1D(ctx, target, level, internalFormat,
                                          width, border, format,
-                                         type, pixels, &ctx->Unpack, texObj,
+                                         type, pixels, unpack, texObj,
                                          texImage);
                   break;
                case 2:
                   ctx->Driver.TexImage2D(ctx, target, level, internalFormat,
                                          width, height, border, format,
-                                         type, pixels, &ctx->Unpack, texObj,
+                                         type, pixels, unpack, texObj,
                                          texImage);
                   break;
                case 3:
                   ctx->Driver.TexImage3D(ctx, target, level, internalFormat,
                                          width, height, depth, border, format,
-                                         type, pixels, &ctx->Unpack, texObj,
+                                         type, pixels, unpack, texObj,
                                          texImage);
                   break;
                default:

@@ -222,6 +222,8 @@ void st_init_limits(struct st_context *st)
       _mesa_override_glsl_version(st->ctx);
       c->UniformBooleanTrue = ~0;
    }
+
+   c->StripTextureBorder = GL_TRUE;
 }
 
 

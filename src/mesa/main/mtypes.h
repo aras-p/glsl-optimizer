@@ -2732,6 +2732,20 @@ struct gl_constants
 
    /* GL_ARB_robustness */
    GLenum ResetStrategy;
+
+   /**
+    * Whether the implementation strips out and ignores texture borders.
+    *
+    * Many GPU hardware implementations don't support rendering with texture
+    * borders and mipmapped textures.  (Note: not static border color, but the
+    * old 1-pixel border around each edge).  Implementations then have to do
+    * slow fallbacks to be correct, or just ignore the border and be fast but
+    * wrong.  Setting the flag stripts the border off of TexImage calls,
+    * providing "fast but wrong" at significantly reduced driver complexity.
+    *
+    * Texture borders are deprecated in GL 3.0.
+    **/
+   GLboolean StripTextureBorder;
 };
 
 
