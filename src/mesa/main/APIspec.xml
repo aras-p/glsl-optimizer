@@ -631,12 +631,6 @@
 	<desc name="pname">
 		<value name="GL_RGB_SCALE"/>
 		<value name="GL_ALPHA_SCALE"/>
-
-		<desc name="param" convert="true" error="GL_INVALID_VALUE">
-			<value name="1.0"/>
-			<value name="2.0"/>
-			<value name="4.0"/>
-		</desc>
 	</desc>
 
 	<desc name="pname">
