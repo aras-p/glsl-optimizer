@@ -51,8 +51,6 @@ do_copy_texsubimage(struct gl_context *ctx,
     unsigned dst_bpp;
     gl_format src_mesaformat;
     gl_format dst_mesaformat;
-    unsigned src_width;
-    unsigned dst_width;
     unsigned flip_y;
 
     if (!radeon->vtbl.blit) {
@@ -101,8 +99,6 @@ do_copy_texsubimage(struct gl_context *ctx,
 
     src_mesaformat = rrb->base.Format;
     dst_mesaformat = timg->base.Base.TexFormat;
-    src_width = rrb->base.Width;
-    dst_width = timg->base.Base.Width;
     src_bpp = _mesa_get_format_bytes(src_mesaformat);
     dst_bpp = _mesa_get_format_bytes(dst_mesaformat);
     if (!radeon->vtbl.check_blit(dst_mesaformat)) {
@@ -133,10 +129,10 @@ do_copy_texsubimage(struct gl_context *ctx,
 
     /* blit from src buffer to texture */
     return radeon->vtbl.blit(ctx, rrb->bo, src_offset, src_mesaformat, rrb->pitch/rrb->cpp,
-                             src_width, rrb->base.Height, x, y,
+                             rrb->base.Width, rrb->base.Height, x, y,
                              timg->mt->bo, dst_offset, dst_mesaformat,
                              timg->mt->levels[level].rowstride / dst_bpp,
-                             dst_width, timg->base.Base.Height,
+                             timg->base.Base.Width, timg->base.Base.Height,
                              dstx, dsty, width, height, flip_y);
 }
 
