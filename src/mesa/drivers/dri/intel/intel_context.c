@@ -789,6 +789,8 @@ intelInitContext(struct intel_context *intel,
    if (intel->gen >= 6)
       ctx->Const.MaxClipPlanes = 8;
 
+   ctx->Const.StripTextureBorder = GL_TRUE;
+
    /* reinitialize the context point state.
     * It depend on constants in __struct gl_contextRec::Const
     */
