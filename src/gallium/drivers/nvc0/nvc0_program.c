@@ -99,11 +99,23 @@ nvc0_shader_output_address(unsigned sn, unsigned si, unsigned ubase)
 static int
 nvc0_vp_assign_input_slots(struct nv50_ir_prog_info *info)
 {
-   unsigned i, c;
+   unsigned i, c, n;
 
-   for (i = 0; i < info->numInputs; ++i)
+   for (n = 0, i = 0; i < info->numInputs; ++i) {
+      switch (info->in[i].sn) {
+      case TGSI_SEMANTIC_INSTANCEID:
+      case NV50_SEMANTIC_VERTEXID:
+         info->in[i].mask = 0x1;
+         info->in[i].slot[0] =
+            nvc0_shader_input_address(info->in[i].sn, 0, 0) / 4;
+         continue;
+      default:
+         break;
+      }
       for (c = 0; c < 4; ++c)
-         info->in[i].slot[c] = (0x80 + i * 0x10 + c * 0x4) / 4;
+         info->in[i].slot[c] = (0x80 + n * 0x10 + c * 0x4) / 4;
+      ++n;
+   }
 
    return 0;
 }
