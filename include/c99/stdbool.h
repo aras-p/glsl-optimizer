@@ -35,7 +35,7 @@
 #define bool    _Bool
 
 /* For compilers that don't have the builtin _Bool type. */
-#if defined(_MSC_VER) || (__STDC_VERSION__ < 199901L && __GNUC__ < 3)
+#if (defined(_MSC_VER) || (__STDC_VERSION__ < 199901L && __GNUC__ < 3)) && !defined(_lint)
 typedef unsigned char _Bool;
 #endif
 
