@@ -52,13 +52,6 @@ intel_finalize_mipmap_tree(struct intel_context *intel, GLuint unit)
    intel_update_max_level(intelObj, sampler);
    firstImage = intel_texture_image(tObj->Image[0][tObj->BaseLevel]);
 
-   /* Fallback case:
-    */
-   if (firstImage->base.Base.Border) {
-      intel_miptree_release(&intelObj->mt);
-      return false;
-   }
-
    intel_miptree_get_dimensions_for_image(&firstImage->base.Base,
                                           &width, &height, &depth);
 

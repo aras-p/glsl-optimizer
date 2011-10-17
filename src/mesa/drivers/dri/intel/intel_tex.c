@@ -61,6 +61,8 @@ intel_alloc_texture_image_buffer(struct gl_context *ctx,
    struct intel_texture_object *intel_texobj = intel_texture_object(texobj);
    GLuint slices;
 
+   assert(image->Border == 0);
+
    /* Because the driver uses AllocTextureImageBuffer() internally, it may end
     * up mismatched with FreeTextureImageBuffer(), but that is safe to call
     * multiple times.
@@ -93,8 +95,7 @@ intel_alloc_texture_image_buffer(struct gl_context *ctx,
       DBG("%s: alloc obj %p level %d %dx%dx%d using object's miptree %p\n",
           __FUNCTION__, texobj, image->Level,
           width, height, depth, intel_texobj->mt);
-      return true;
-   } else if (image->Border == 0) {
+   } else {
       intel_image->mt = intel_miptree_create_for_teximage(intel, intel_texobj,
                                                           intel_image,
                                                           false);
@@ -114,14 +115,9 @@ intel_alloc_texture_image_buffer(struct gl_context *ctx,
       DBG("%s: alloc obj %p level %d %dx%dx%d using new miptree %p\n",
           __FUNCTION__, texobj, image->Level,
           width, height, depth, intel_image->mt);
-      return true;
    }
 
-   DBG("%s: alloc obj %p level %d %dx%dx%d using swrast\n",
-       __FUNCTION__, texobj, image->Level, width, height, depth);
-
-   return _swrast_alloc_texture_image_buffer(ctx, image, format,
-					     width, height, depth);
+   return true;
 }
 
 static void
@@ -168,6 +164,11 @@ intel_map_texture_image(struct gl_context *ctx,
    struct intel_texture_image *intel_image = intel_texture_image(tex_image);
    struct intel_mipmap_tree *mt = intel_image->mt;
    unsigned int bw, bh;
+   void *base;
+   unsigned int image_x, image_y;
+
+   /* Our texture data is always stored in a miptree. */
+   assert(mt);
 
    /* Check that our caller wasn't confused about how to map a 1D texture. */
    assert(tex_image->TexObject->Target != GL_TEXTURE_1D_ARRAY ||
@@ -190,36 +191,18 @@ intel_map_texture_image(struct gl_context *ctx,
    assert(y % bh == 0);
    y /= bh;
 
-   if (likely(mt)) {
-      void *base = intel_region_map(intel, mt->region, mode);
-      unsigned int image_x, image_y;
+   base = intel_region_map(intel, mt->region, mode);
+   intel_miptree_get_image_offset(mt, tex_image->Level, tex_image->Face,
+				  slice, &image_x, &image_y);
+   x += image_x;
+   y += image_y;
 
-      intel_miptree_get_image_offset(mt, tex_image->Level, tex_image->Face,
-				     slice, &image_x, &image_y);
-      x += image_x;
-      y += image_y;
+   *stride = mt->region->pitch * mt->cpp;
+   *map = base + y * *stride + x * mt->cpp;
 
-      *stride = mt->region->pitch * mt->cpp;
-      *map = base + y * *stride + x * mt->cpp;
-
-      DBG("%s: %d,%d %dx%d from mt %p %d,%d = %p/%d\n", __FUNCTION__,
-	  x - image_x, y - image_y, w, h,
-	  mt, x, y, *map, *stride);
-   } else {
-      /* texture data is in malloc'd memory */
-      GLuint width = tex_image->Width;
-      GLuint height = ALIGN(tex_image->Height, bh) / bh;
-      GLuint texelSize = _mesa_get_format_bytes(tex_image->TexFormat);
-
-      assert(map);
-
-      *stride = _mesa_format_row_stride(tex_image->TexFormat, width);
-      *map = intel_image->base.Buffer + (slice * height + y) * *stride + x * texelSize;
-
-      DBG("%s: %d,%d %dx%d from data %p = %p/%d\n", __FUNCTION__,
-	  x, y, w, h,
-	  intel_image->base.Buffer, *map, *stride);
-   }
+   DBG("%s: %d,%d %dx%d from mt %p %d,%d = %p/%d\n", __FUNCTION__,
+       x - image_x, y - image_y, w, h,
+       mt, x, y, *map, *stride);
 }
 
 static void
@@ -229,8 +212,7 @@ intel_unmap_texture_image(struct gl_context *ctx,
    struct intel_context *intel = intel_context(ctx);
    struct intel_texture_image *intel_image = intel_texture_image(tex_image);
 
-   if (intel_image->mt)
-      intel_region_unmap(intel, intel_image->mt->region);
+   intel_region_unmap(intel, intel_image->mt->region);
 
    if (intel_image->stencil_rb) {
       /*

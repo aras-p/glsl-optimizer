@@ -246,10 +246,6 @@ intel_miptree_match_image(struct intel_mipmap_tree *mt,
    GLuint level = intelImage->base.Base.Level;
    int width, height, depth;
 
-   /* Images with borders are never pulled into mipmap trees. */
-   if (image->Border)
-      return false;
-
    if (image->TexFormat != mt->format)
       return false;
 

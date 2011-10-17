@@ -42,7 +42,6 @@
 static bool do_check_fallback(struct brw_context *brw)
 {
    struct gl_context *ctx = &brw->intel.ctx;
-   GLuint i;
 
    if (brw->intel.no_rast) {
       DBG("FALLBACK: rasterization disabled\n");
@@ -56,20 +55,6 @@ static bool do_check_fallback(struct brw_context *brw)
       return true;
    }
 
-   /* _NEW_TEXTURE:
-    */
-   for (i = 0; i < BRW_MAX_TEX_UNIT; i++) {
-      struct gl_texture_unit *texUnit = &ctx->Texture.Unit[i];
-      if (texUnit->_ReallyEnabled) {
-	 struct gl_texture_object *tex_obj = texUnit->_Current;
-	 struct gl_texture_image *texImage = tex_obj->Image[0][tex_obj->BaseLevel];
-	 if (texImage->Border) {
-	    DBG("FALLBACK: texture border\n");
-	    return true;
-	 }
-      }
-   }
-
    return false;
 }
 
@@ -80,7 +65,7 @@ static void check_fallback(struct brw_context *brw)
 
 const struct brw_tracked_state brw_check_fallback = {
    .dirty = {
-      .mesa = _NEW_RENDERMODE | _NEW_TEXTURE | _NEW_STENCIL,
+      .mesa = _NEW_RENDERMODE | _NEW_STENCIL,
       .brw  = 0,
       .cache = 0
    },

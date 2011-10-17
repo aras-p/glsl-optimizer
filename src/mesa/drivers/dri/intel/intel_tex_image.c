@@ -26,24 +26,8 @@
 
 #define FILE_DEBUG_FLAG DEBUG_TEXTURE
 
-/* Functions to store texture images.  Where possible, mipmap_tree's
- * will be created or further instantiated with image data, otherwise
- * images will be stored in malloc'd memory.  A validation step is
- * required to pull those images into a mipmap tree, or otherwise
- * decide a fallback is required.
- */
-
-
-
-/* Otherwise, store it in memory if (Border != 0) or (any dimension ==
- * 1).
- *    
- * Otherwise, if max_level >= level >= min_level, create tree with
- * space for textures from min_level down to max_level.
- *
- * Otherwise, create tree with space for textures from (level
- * 0)..(1x1).  Consider pruning this tree at a validation if the
- * saving is worth it.
+/* Work back from the specified level of the image to the baselevel and create a
+ * miptree of that size.
  */
 struct intel_mipmap_tree *
 intel_miptree_create_for_teximage(struct intel_context *intel,
@@ -60,9 +44,6 @@ intel_miptree_create_for_teximage(struct intel_context *intel,
                                           &width, &height, &depth);
 
    DBG("%s\n", __FUNCTION__);
-
-   if (intelImage->base.Base.Border)
-      return NULL;
 
    if (intelImage->base.Base.Level > intelObj->base.BaseLevel &&
        (width == 1 ||
@@ -350,14 +331,13 @@ intelTexImage(struct gl_context * ctx,
               GLenum target, GLint level,
               GLint internalFormat,
               GLint width, GLint height, GLint depth,
-              GLint border,
               GLenum format, GLenum type, const void *pixels,
               const struct gl_pixelstore_attrib *unpack,
               struct gl_texture_object *texObj,
               struct gl_texture_image *texImage, GLsizei imageSize)
 {
-   DBG("%s target %s level %d %dx%dx%d border %d\n", __FUNCTION__,
-       _mesa_lookup_enum_by_nr(target), level, width, height, depth, border);
+   DBG("%s target %s level %d %dx%dx%d\n", __FUNCTION__,
+       _mesa_lookup_enum_by_nr(target), level, width, height, depth);
 
    /* Attempt to use the blitter for PBO image uploads.
     */
@@ -371,7 +351,7 @@ intelTexImage(struct gl_context * ctx,
        __FUNCTION__, width, height, depth, pixels);
 
    _mesa_store_teximage3d(ctx, target, level, internalFormat,
-			  width, height, depth, border,
+			  width, height, depth, 0,
 			  format, type, pixels,
 			  unpack, texObj, texImage);
 }
@@ -389,7 +369,7 @@ intelTexImage3D(struct gl_context * ctx,
                 struct gl_texture_image *texImage)
 {
    intelTexImage(ctx, 3, target, level,
-                 internalFormat, width, height, depth, border,
+                 internalFormat, width, height, depth,
                  format, type, pixels, unpack, texObj, texImage, 0);
 }
 
@@ -405,7 +385,7 @@ intelTexImage2D(struct gl_context * ctx,
                 struct gl_texture_image *texImage)
 {
    intelTexImage(ctx, 2, target, level,
-                 internalFormat, width, height, 1, border,
+                 internalFormat, width, height, 1,
                  format, type, pixels, unpack, texObj, texImage, 0);
 }
 
@@ -421,7 +401,7 @@ intelTexImage1D(struct gl_context * ctx,
                 struct gl_texture_image *texImage)
 {
    intelTexImage(ctx, 1, target, level,
-                 internalFormat, width, 1, 1, border,
+                 internalFormat, width, 1, 1,
                  format, type, pixels, unpack, texObj, texImage, 0);
 }
 
