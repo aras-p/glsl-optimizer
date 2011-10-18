@@ -237,3 +237,98 @@ private:
 public:
    union gl_constant_value *values;
 };
+
+void
+link_assign_uniform_locations(struct gl_shader_program *prog)
+{
+   ralloc_free(prog->UniformStorage);
+   prog->UniformStorage = NULL;
+   prog->NumUserUniformStorage = 0;
+
+   if (prog->UniformHash != NULL) {
+      prog->UniformHash->clear();
+   } else {
+      prog->UniformHash = new string_to_uint_map;
+   }
+
+   for (unsigned i = 0; i < Elements(prog->SamplerUnits); i++) {
+      prog->SamplerUnits[i] = i;
+   }
+
+   /* First pass: Count the uniform resources used by the user-defined
+    * uniforms.  While this happens, each active uniform will have an index
+    * assigned to it.
+    *
+    * Note: this is *NOT* the index that is returned to the application by
+    * glGetUniformLocation.
+    */
+   count_uniform_size uniform_size(prog->UniformHash);
+   for (unsigned i = 0; i < MESA_SHADER_TYPES; i++) {
+      if (prog->_LinkedShaders[i] == NULL)
+	 continue;
+
+      foreach_list(node, prog->_LinkedShaders[i]->ir) {
+	 ir_variable *const var = ((ir_instruction *) node)->as_variable();
+
+	 if ((var == NULL) || (var->mode != ir_var_uniform))
+	    continue;
+
+	 /* FINISHME: Update code to process built-in uniforms!
+	  */
+	 if (strncmp("gl_", var->name, 3) == 0)
+	    continue;
+
+	 uniform_size.process(var);
+      }
+   }
+
+   const unsigned num_user_uniforms = uniform_size.num_active_uniforms;
+   const unsigned num_data_slots = uniform_size.num_values;
+
+   /* On the outside chance that there were no uniforms, bail out.
+    */
+   if (num_user_uniforms == 0)
+      return;
+
+   struct gl_uniform_storage *uniforms =
+      rzalloc_array(prog, struct gl_uniform_storage, num_user_uniforms);
+   union gl_constant_value *data =
+      rzalloc_array(uniforms, union gl_constant_value, num_data_slots);
+#ifndef NDEBUG
+   union gl_constant_value *data_end = &data[num_data_slots];
+#endif
+
+   parcel_out_uniform_storage parcel(prog->UniformHash, uniforms, data);
+
+   for (unsigned i = 0; i < MESA_SHADER_TYPES; i++) {
+      if (prog->_LinkedShaders[i] == NULL)
+	 continue;
+
+      foreach_list(node, prog->_LinkedShaders[i]->ir) {
+	 ir_variable *const var = ((ir_instruction *) node)->as_variable();
+
+	 if ((var == NULL) || (var->mode != ir_var_uniform))
+	    continue;
+
+	 /* FINISHME: Update code to process built-in uniforms!
+	  */
+	 if (strncmp("gl_", var->name, 3) == 0)
+	    continue;
+
+	 parcel.process(var);
+      }
+   }
+
+#ifndef NDEBUG
+   for (unsigned i = 0; i < num_user_uniforms; i++) {
+      assert(uniforms[i].storage != NULL);
+   }
+#endif
+
+   assert(parcel.values == data_end);
+
+   prog->NumUserUniformStorage = num_user_uniforms;
+   prog->UniformStorage = uniforms;
+
+   return;
+}
