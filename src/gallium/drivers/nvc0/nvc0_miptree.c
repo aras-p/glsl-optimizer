@@ -149,6 +149,9 @@ nvc0_mt_choose_storage_type(struct nv50_miptree *mt, boolean compressed)
    if (mt->base.base.bind & PIPE_BIND_SCANOUT)
       tile_flags |= NOUVEAU_BO_TILE_SCANOUT;
 
+   if (unlikely(mt->base.base.flags & NOUVEAU_RESOURCE_FLAG_LINEAR))
+      tile_flags &= ~0xff00;
+
    return tile_flags;
 }
 

@@ -129,7 +129,12 @@ struct nv50_surface *
 nv50_surface_from_miptree(struct nv50_miptree *mt,
                           const struct pipe_surface *templ);
 
+struct pipe_surface *
+nv50_surface_from_buffer(struct pipe_context *pipe,
+                         struct pipe_resource *pt,
+                         const struct pipe_surface *templ);
+
 void
-nv50_miptree_surface_del(struct pipe_context *, struct pipe_surface *);
+nv50_surface_destroy(struct pipe_context *, struct pipe_surface *);
 
 #endif /* __NV50_RESOURCE_H__ */

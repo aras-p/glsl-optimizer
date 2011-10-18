@@ -271,48 +271,69 @@ nvc0_clear_render_target(struct pipe_context *pipe,
                          unsigned dstx, unsigned dsty,
                          unsigned width, unsigned height)
 {
-	struct nvc0_context *nv50 = nvc0_context(pipe);
-	struct nvc0_screen *screen = nv50->screen;
-	struct nouveau_channel *chan = screen->base.channel;
-	struct nv50_miptree *mt = nv50_miptree(dst->texture);
-	struct nv50_surface *sf = nv50_surface(dst);
-	struct nouveau_bo *bo = mt->base.bo;
-	unsigned z;
+   struct nvc0_context *nv50 = nvc0_context(pipe);
+   struct nvc0_screen *screen = nv50->screen;
+   struct nouveau_channel *chan = screen->base.channel;
+   struct nv50_surface *sf = nv50_surface(dst);
+   struct nv04_resource *res = nv04_resource(sf->base.texture);
+   unsigned z;
 
-	BEGIN_RING(chan, RING_3D(CLEAR_COLOR(0)), 4);
-	OUT_RINGf (chan, color->f[0]);
-	OUT_RINGf (chan, color->f[1]);
-	OUT_RINGf (chan, color->f[2]);
-	OUT_RINGf (chan, color->f[3]);
+   BEGIN_RING(chan, RING_3D(CLEAR_COLOR(0)), 4);
+   OUT_RINGf (chan, color->f[0]);
+   OUT_RINGf (chan, color->f[1]);
+   OUT_RINGf (chan, color->f[2]);
+   OUT_RINGf (chan, color->f[3]);
 
-	if (MARK_RING(chan, 18, 2))
-		return;
+   if (MARK_RING(chan, 18, 2))
+      return;
 
-	BEGIN_RING(chan, RING_3D(SCREEN_SCISSOR_HORIZ), 2);
-	OUT_RING  (chan, ( width << 16) | dstx);
-	OUT_RING  (chan, (height << 16) | dsty);
+   BEGIN_RING(chan, RING_3D(SCREEN_SCISSOR_HORIZ), 2);
+   OUT_RING  (chan, ( width << 16) | dstx);
+   OUT_RING  (chan, (height << 16) | dsty);
 
-	BEGIN_RING(chan, RING_3D(RT_CONTROL), 1);
-	OUT_RING  (chan, 1);
-	BEGIN_RING(chan, RING_3D(RT_ADDRESS_HIGH(0)), 9);
-	OUT_RELOCh(chan, bo, sf->offset, NOUVEAU_BO_VRAM | NOUVEAU_BO_WR);
-	OUT_RELOCl(chan, bo, sf->offset, NOUVEAU_BO_VRAM | NOUVEAU_BO_WR);
-	OUT_RING  (chan, sf->width);
-	OUT_RING  (chan, sf->height);
-	OUT_RING  (chan, nvc0_format_table[dst->format].rt);
-	OUT_RING  (chan, (mt->layout_3d << 16) |
-              mt->level[sf->base.u.tex.level].tile_mode);
-	OUT_RING  (chan, dst->u.tex.first_layer + sf->depth);
-	OUT_RING  (chan, mt->layer_stride >> 2);
-	OUT_RING  (chan, dst->u.tex.first_layer);
+   BEGIN_RING(chan, RING_3D(RT_CONTROL), 1);
+   OUT_RING  (chan, 1);
+   BEGIN_RING(chan, RING_3D(RT_ADDRESS_HIGH(0)), 9);
+   OUT_RESRCh(chan, res, sf->offset, NOUVEAU_BO_WR);
+   OUT_RESRCl(chan, res, sf->offset, NOUVEAU_BO_WR);
+   if (likely(nouveau_bo_tile_layout(res->bo))) {
+      struct nv50_miptree *mt = nv50_miptree(dst->texture);
 
-	for (z = 0; z < sf->depth; ++z) {
-		BEGIN_RING(chan, RING_3D(CLEAR_BUFFERS), 1);
-		OUT_RING  (chan, 0x3c |
-			   (z << NVC0_3D_CLEAR_BUFFERS_LAYER__SHIFT));
-	}
+      OUT_RING(chan, sf->width);
+      OUT_RING(chan, sf->height);
+      OUT_RING(chan, nvc0_format_table[dst->format].rt);
+      OUT_RING(chan, (mt->layout_3d << 16) |
+               mt->level[sf->base.u.tex.level].tile_mode);
+      OUT_RING(chan, dst->u.tex.first_layer + sf->depth);
+      OUT_RING(chan, mt->layer_stride >> 2);
+      OUT_RING(chan, dst->u.tex.first_layer);
+   } else {
+      if (res->base.target == PIPE_BUFFER) {
+         OUT_RING(chan, 262144);
+         OUT_RING(chan, 1);
+      } else {
+         OUT_RING(chan, nv50_miptree(&res->base)->level[0].pitch);
+         OUT_RING(chan, sf->height);
+      }
+      OUT_RING(chan, nvc0_format_table[sf->base.format].rt);
+      OUT_RING(chan, 1 << 12);
+      OUT_RING(chan, 1);
+      OUT_RING(chan, 0);
+      OUT_RING(chan, 0);
 
-	nv50->dirty |= NVC0_NEW_FRAMEBUFFER;
+      IMMED_RING(chan, RING_3D(ZETA_ENABLE), 0);
+
+      /* tiled textures don't have to be fenced, they're not mapped directly */
+      nvc0_resource_fence(res, NOUVEAU_BO_WR);
+   }
+
+   for (z = 0; z < sf->depth; ++z) {
+      BEGIN_RING(chan, RING_3D(CLEAR_BUFFERS), 1);
+      OUT_RING  (chan, 0x3c |
+                 (z << NVC0_3D_CLEAR_BUFFERS_LAYER__SHIFT));
+   }
+
+   nv50->dirty |= NVC0_NEW_FRAMEBUFFER;
 }
 
 static void

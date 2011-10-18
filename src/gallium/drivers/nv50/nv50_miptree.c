@@ -424,13 +424,3 @@ nv50_miptree_surface_new(struct pipe_context *pipe,
 
    return &ns->base;
 }
-
-void
-nv50_miptree_surface_del(struct pipe_context *pipe, struct pipe_surface *ps)
-{
-   struct nv50_surface *s = nv50_surface(ps);
-
-   pipe_resource_reference(&ps->texture, NULL);
-
-   FREE(s);
-}
