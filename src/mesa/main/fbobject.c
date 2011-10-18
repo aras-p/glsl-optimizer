@@ -2486,6 +2486,7 @@ _mesa_GetFramebufferAttachmentParameterivEXT(GLenum target, GLenum attachment,
 void GLAPIENTRY
 _mesa_GenerateMipmapEXT(GLenum target)
 {
+   struct gl_texture_image *srcImage;
    struct gl_texture_object *texObj;
    GLboolean error;
 
@@ -2532,6 +2533,13 @@ _mesa_GenerateMipmapEXT(GLenum target)
    }
 
    _mesa_lock_texture(ctx, texObj);
+
+   srcImage = _mesa_select_tex_image(ctx, texObj, target, texObj->BaseLevel);
+   if (!srcImage) {
+      _mesa_unlock_texture(ctx, texObj);
+      return;
+   }
+
    if (target == GL_TEXTURE_CUBE_MAP) {
       GLuint face;
       for (face = 0; face < 6; face++)

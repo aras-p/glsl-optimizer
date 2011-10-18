@@ -214,7 +214,7 @@ _mesa_PixelStorei( GLenum pname, GLint param )
 void GLAPIENTRY
 _mesa_PixelStoref( GLenum pname, GLfloat param )
 {
-   _mesa_PixelStorei( pname, (GLint) param );
+   _mesa_PixelStorei( pname, IROUND(param) );
 }
 
 
