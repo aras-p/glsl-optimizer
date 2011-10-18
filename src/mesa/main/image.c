@@ -1160,13 +1160,12 @@ _mesa_base_format_has_channel(GLenum base_format, GLenum pname)
 
 
 /**
- * Return the address of a specific pixel in an image (1D, 2D or 3D).
+ * Return the byte offset of a specific pixel in an image (1D, 2D or 3D).
  *
  * Pixel unpacking/packing parameters are observed according to \p packing.
  *
  * \param dimensions either 1, 2 or 3 to indicate dimensionality of image
  * \param packing  the pixelstore attributes
- * \param image  starting address of image data
  * \param width  the image width
  * \param height  the image height
  * \param format  the pixel format (must be validated beforehand)
@@ -1174,18 +1173,17 @@ _mesa_base_format_has_channel(GLenum base_format, GLenum pname)
  * \param img  which image in the volume (0 for 1D or 2D images)
  * \param row  row of pixel in the image (0 for 1D images)
  * \param column column of pixel in the image
- * 
- * \return address of pixel.
+ *
+ * \return offset of pixel.
  *
  * \sa gl_pixelstore_attrib.
  */
-GLvoid *
-_mesa_image_address( GLuint dimensions,
-                     const struct gl_pixelstore_attrib *packing,
-                     const GLvoid *image,
-                     GLsizei width, GLsizei height,
-                     GLenum format, GLenum type,
-                     GLint img, GLint row, GLint column )
+GLintptr
+_mesa_image_offset( GLuint dimensions,
+                    const struct gl_pixelstore_attrib *packing,
+                    GLsizei width, GLsizei height,
+                    GLenum format, GLenum type,
+                    GLint img, GLint row, GLint column )
 {
    GLint alignment;        /* 1, 2 or 4 */
    GLint pixels_per_row;
@@ -1193,7 +1191,7 @@ _mesa_image_address( GLuint dimensions,
    GLint skiprows;
    GLint skippixels;
    GLint skipimages;       /* for 3-D volume images */
-   GLubyte *pixel_addr;
+   GLintptr offset;
 
    ASSERT(dimensions >= 1 && dimensions <= 3);
 
@@ -1232,8 +1230,7 @@ _mesa_image_address( GLuint dimensions,
 
       bytes_per_image = bytes_per_row * rows_per_image;
 
-      pixel_addr = (GLubyte *) image
-                 + (skipimages + img) * bytes_per_image
+      offset = (skipimages + img) * bytes_per_image
                  + (skiprows + row) * bytes_per_row
                  + (skippixels + column) / 8;
    }
@@ -1266,14 +1263,50 @@ _mesa_image_address( GLuint dimensions,
       }
 
       /* compute final pixel address */
-      pixel_addr = (GLubyte *) image
-                 + (skipimages + img) * bytes_per_image
+      offset = (skipimages + img) * bytes_per_image
                  + topOfImage
                  + (skiprows + row) * bytes_per_row
                  + (skippixels + column) * bytes_per_pixel;
    }
 
-   return (GLvoid *) pixel_addr;
+   return offset;
+}
+
+
+/**
+ * Return the address of a specific pixel in an image (1D, 2D or 3D).
+ *
+ * Pixel unpacking/packing parameters are observed according to \p packing.
+ *
+ * \param dimensions either 1, 2 or 3 to indicate dimensionality of image
+ * \param packing  the pixelstore attributes
+ * \param image  starting address of image data
+ * \param width  the image width
+ * \param height  the image height
+ * \param format  the pixel format (must be validated beforehand)
+ * \param type  the pixel data type (must be validated beforehand)
+ * \param img  which image in the volume (0 for 1D or 2D images)
+ * \param row  row of pixel in the image (0 for 1D images)
+ * \param column column of pixel in the image
+ *
+ * \return address of pixel.
+ *
+ * \sa gl_pixelstore_attrib.
+ */
+GLvoid *
+_mesa_image_address( GLuint dimensions,
+                     const struct gl_pixelstore_attrib *packing,
+                     const GLvoid *image,
+                     GLsizei width, GLsizei height,
+                     GLenum format, GLenum type,
+                     GLint img, GLint row, GLint column )
+{
+   const GLubyte *addr = (const GLubyte *) image;
+
+   addr += _mesa_image_offset(dimensions, packing, width, height,
+                              format, type, img, row, column);
+
+   return (GLvoid *) addr;
 }
 
 
