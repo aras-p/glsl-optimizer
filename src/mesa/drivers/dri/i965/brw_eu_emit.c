@@ -1443,11 +1443,14 @@ void brw_math( struct brw_compile *p,
       assert(src.file == BRW_GENERAL_REGISTER_FILE);
 
       assert(dest.hstride == BRW_HORIZONTAL_STRIDE_1);
-      assert(src.hstride == BRW_HORIZONTAL_STRIDE_1);
+      if (intel->gen == 6)
+	 assert(src.hstride == BRW_HORIZONTAL_STRIDE_1);
 
-      /* Source modifiers are ignored for extended math instructions. */
-      assert(!src.negate);
-      assert(!src.abs);
+      /* Source modifiers are ignored for extended math instructions on Gen6. */
+      if (intel->gen == 6) {
+	 assert(!src.negate);
+	 assert(!src.abs);
+      }
 
       if (function == BRW_MATH_FUNCTION_INT_DIV_QUOTIENT ||
 	  function == BRW_MATH_FUNCTION_INT_DIV_REMAINDER ||
@@ -1507,8 +1510,10 @@ void brw_math2(struct brw_compile *p,
    assert(src1.file == BRW_GENERAL_REGISTER_FILE);
 
    assert(dest.hstride == BRW_HORIZONTAL_STRIDE_1);
-   assert(src0.hstride == BRW_HORIZONTAL_STRIDE_1);
-   assert(src1.hstride == BRW_HORIZONTAL_STRIDE_1);
+   if (intel->gen == 6) {
+      assert(src0.hstride == BRW_HORIZONTAL_STRIDE_1);
+      assert(src1.hstride == BRW_HORIZONTAL_STRIDE_1);
+   }
 
    if (function == BRW_MATH_FUNCTION_INT_DIV_QUOTIENT ||
        function == BRW_MATH_FUNCTION_INT_DIV_REMAINDER ||
@@ -1520,11 +1525,13 @@ void brw_math2(struct brw_compile *p,
       assert(src1.type == BRW_REGISTER_TYPE_F);
    }
 
-   /* Source modifiers are ignored for extended math instructions. */
-   assert(!src0.negate);
-   assert(!src0.abs);
-   assert(!src1.negate);
-   assert(!src1.abs);
+   /* Source modifiers are ignored for extended math instructions on Gen6. */
+   if (intel->gen == 6) {
+      assert(!src0.negate);
+      assert(!src0.abs);
+      assert(!src1.negate);
+      assert(!src1.abs);
+   }
 
    /* Math is the same ISA format as other opcodes, except that CondModifier
     * becomes FC[3:0] and ThreadCtrl becomes FC[5:4].

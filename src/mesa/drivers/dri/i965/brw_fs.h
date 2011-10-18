@@ -490,6 +490,13 @@ public:
    void generate_linterp(fs_inst *inst, struct brw_reg dst,
 			 struct brw_reg *src);
    void generate_tex(fs_inst *inst, struct brw_reg dst, struct brw_reg src);
+   void generate_math1_gen7(fs_inst *inst,
+			    struct brw_reg dst,
+			    struct brw_reg src);
+   void generate_math2_gen7(fs_inst *inst,
+			    struct brw_reg dst,
+			    struct brw_reg src0,
+			    struct brw_reg src1);
    void generate_math1_gen6(fs_inst *inst,
 			    struct brw_reg dst,
 			    struct brw_reg src);

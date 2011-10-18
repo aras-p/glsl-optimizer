@@ -143,6 +143,31 @@ fs_visitor::generate_linterp(fs_inst *inst,
 }
 
 void
+fs_visitor::generate_math1_gen7(fs_inst *inst,
+			        struct brw_reg dst,
+			        struct brw_reg src0)
+{
+   assert(inst->mlen == 0);
+   brw_math(p, dst,
+	    brw_math_function(inst->opcode),
+	    inst->saturate ? BRW_MATH_SATURATE_SATURATE
+			   : BRW_MATH_SATURATE_NONE,
+	    0, src0,
+	    BRW_MATH_DATA_VECTOR,
+	    BRW_MATH_PRECISION_FULL);
+}
+
+void
+fs_visitor::generate_math2_gen7(fs_inst *inst,
+			        struct brw_reg dst,
+			        struct brw_reg src0,
+			        struct brw_reg src1)
+{
+   assert(inst->mlen == 0);
+   brw_math2(p, dst, brw_math_function(inst->opcode), src0, src1);
+}
+
+void
 fs_visitor::generate_math1_gen6(fs_inst *inst,
 			        struct brw_reg dst,
 			        struct brw_reg src0)
@@ -797,7 +822,9 @@ fs_visitor::generate_code()
       case SHADER_OPCODE_LOG2:
       case SHADER_OPCODE_SIN:
       case SHADER_OPCODE_COS:
-	 if (intel->gen >= 6) {
+	 if (intel->gen >= 7) {
+	    generate_math1_gen7(inst, dst, src[0]);
+	 } else if (intel->gen == 6) {
 	    generate_math1_gen6(inst, dst, src[0]);
 	 } else {
 	    generate_math_gen4(inst, dst, src[0]);
@@ -807,6 +834,8 @@ fs_visitor::generate_code()
       case SHADER_OPCODE_INT_REMAINDER:
       case SHADER_OPCODE_POW:
 	 if (intel->gen >= 6) {
+	    generate_math2_gen7(inst, dst, src[0], src[1]);
+	 } else if (intel->gen == 6) {
 	    generate_math2_gen6(inst, dst, src[0], src[1]);
 	 } else {
 	    generate_math_gen4(inst, dst, src[0]);
