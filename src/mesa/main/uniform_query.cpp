@@ -538,6 +538,78 @@ _mesa_get_uniform(struct gl_context *ctx, GLuint program, GLint location,
    }
 }
 
+static void
+log_uniform(const void *values, enum glsl_base_type basicType,
+	    unsigned rows, unsigned cols, unsigned count,
+	    bool transpose,
+	    const struct gl_shader_program *shProg,
+	    GLint location,
+	    const struct gl_uniform_storage *uni)
+{
+
+   const union gl_constant_value *v = (const union gl_constant_value *) values;
+   const unsigned elems = rows * cols * count;
+   const char *const extra = (cols == 1) ? "uniform" : "uniform matrix";
+
+   printf("Mesa: set program %u %s \"%s\" (loc %d, type \"%s\", "
+	  "transpose = %s) to: ",
+	  shProg->Name, extra, uni->name, location, uni->type->name,
+	  transpose ? "true" : "false");
+   for (unsigned i = 0; i < elems; i++) {
+      if (i != 0 && ((i % rows) == 0))
+	 printf(", ");
+
+      switch (basicType) {
+      case GLSL_TYPE_UINT:
+	 printf("%u ", v[i].u);
+	 break;
+      case GLSL_TYPE_INT:
+	 printf("%d ", v[i].i);
+	 break;
+      case GLSL_TYPE_FLOAT:
+	 printf("%g ", v[i].f);
+	 break;
+      default:
+	 assert(!"Should not get here.");
+	 break;
+      }
+   }
+   printf("\n");
+   fflush(stdout);
+}
+
+#if 0
+static void
+log_program_parameters(const struct gl_shader_program *shProg)
+{
+   static const char *stages[] = {
+      "vertex", "fragment", "geometry"
+   };
+
+   assert(Elements(stages) == MESA_SHADER_TYPES);
+
+   for (unsigned i = 0; i < MESA_SHADER_TYPES; i++) {
+      if (shProg->_LinkedShaders[i] == NULL)
+	 continue;
+
+      const struct gl_program *const prog = shProg->_LinkedShaders[i]->Program;
+
+      printf("Program %d %s shader parameters:\n",
+	     shProg->Name, stages[i]);
+      for (unsigned j = 0; j < prog->Parameters->NumParameters; j++) {
+	 printf("%s: %p %f %f %f %f\n",
+		prog->Parameters->Parameters[j].Name,
+		prog->Parameters->ParameterValues[j],
+		prog->Parameters->ParameterValues[j][0].f,
+		prog->Parameters->ParameterValues[j][1].f,
+		prog->Parameters->ParameterValues[j][2].f,
+		prog->Parameters->ParameterValues[j][3].f);
+      }
+   }
+   fflush(stdout);
+}
+#endif
+
 /**
  * Check if the type given by userType is allowed to set a uniform of the
  * target type.  Generally, equivalence is required, but setting Boolean
