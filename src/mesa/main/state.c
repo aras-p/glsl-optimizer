@@ -461,7 +461,7 @@ static void
 update_twoside(struct gl_context *ctx)
 {
    if (ctx->Shader.CurrentVertexProgram ||
-       ctx->VertexProgram.Current) {
+       ctx->VertexProgram._Enabled) {
       ctx->VertexProgram._TwoSideEnabled = ctx->VertexProgram.TwoSideEnabled;
    } else {
       ctx->VertexProgram._TwoSideEnabled = (ctx->Light.Enabled &&
