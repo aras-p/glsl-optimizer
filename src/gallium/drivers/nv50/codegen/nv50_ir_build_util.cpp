@@ -207,7 +207,7 @@ BuildUtil::mkCvt(operation op,
    return insn;
 }
 
-Instruction *
+CmpInstruction *
 BuildUtil::mkCmp(operation op, CondCode cc, DataType ty, Value *dst,
                  Value *src0, Value *src1, Value *src2)
 {

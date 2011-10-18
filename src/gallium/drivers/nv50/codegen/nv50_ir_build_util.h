@@ -68,9 +68,9 @@ public:
                         Value *attrRel, Value *primRel);
 
    Instruction *mkCvt(operation, DataType, Value *, DataType, Value *);
-   Instruction *mkCmp(operation, CondCode, DataType,
-                      Value *,
-                      Value *, Value *, Value * = NULL);
+   CmpInstruction *mkCmp(operation, CondCode, DataType,
+			 Value *,
+			 Value *, Value *, Value * = NULL);
    Instruction *mkTex(operation, TexTarget, uint8_t tic, uint8_t tsc,
                       Value **def, Value **src);
    Instruction *mkQuadop(uint8_t qop, Value *, uint8_t l, Value *, Value *);
