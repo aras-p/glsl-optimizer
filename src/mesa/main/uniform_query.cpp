@@ -399,6 +399,8 @@ validate_uniform_parameters(struct gl_context *ctx,
     *
     *         - if no variable with a location of location exists in the
     *           program object currently in use and location is not -1,
+    *         - if count is greater than one, and the uniform declared in the
+    *           shader is not an array variable,
     */
    if (location < -1) {
       _mesa_error(ctx, GL_INVALID_OPERATION, "%s(location=%d)",
@@ -410,6 +412,13 @@ validate_uniform_parameters(struct gl_context *ctx,
 
    if (*loc >= shProg->NumUserUniformStorage) {
       _mesa_error(ctx, GL_INVALID_OPERATION, "%s(location=%d)",
+		  caller, location);
+      return false;
+   }
+
+   if (shProg->UniformStorage[*loc].array_elements == 0 && count > 1) {
+      _mesa_error(ctx, GL_INVALID_OPERATION,
+		  "%s(count > 1 for non-array, location=%d)",
 		  caller, location);
       return false;
    }
