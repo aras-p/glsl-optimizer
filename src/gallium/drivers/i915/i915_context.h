@@ -370,9 +370,7 @@ struct draw_stage *i915_draw_vbuf_stage( struct i915_context *i915 );
 /***********************************************************************
  * i915_state.c:
  */
-void i915_prepare_vertex_sampling(struct i915_context *i915,
-                                  unsigned num,
-                                  struct pipe_sampler_view **views);
+void i915_prepare_vertex_sampling(struct i915_context *i915);
 void i915_cleanup_vertex_sampling(struct i915_context *i915);
 
 

@@ -80,9 +80,7 @@ i915_draw_vbo(struct pipe_context *pipe, const struct pipe_draw_info *info)
       draw_set_mapped_constant_buffer(draw, PIPE_SHADER_VERTEX, 0, NULL, 0);
 
    if (i915->num_vertex_sampler_views > 0)
-      i915_prepare_vertex_sampling(i915,
-                                   i915->num_vertex_sampler_views,
-                                   i915->vertex_sampler_views);
+      i915_prepare_vertex_sampling(i915);
 
    /*
     * Do the drawing

@@ -364,15 +364,15 @@ static void i915_delete_sampler_state(struct pipe_context *pipe,
  * Called before drawing VBO to map vertex samplers and hand them to draw
  */
 void
-i915_prepare_vertex_sampling(struct i915_context *i915,
-                             unsigned num,
-                             struct pipe_sampler_view **views)
+i915_prepare_vertex_sampling(struct i915_context *i915)
 {
    struct i915_winsys *iws = i915->iws;
    unsigned i,j;
    uint32_t row_stride[PIPE_MAX_TEXTURE_LEVELS];
    uint32_t img_stride[PIPE_MAX_TEXTURE_LEVELS];
    const void* data[PIPE_MAX_TEXTURE_LEVELS];
+   unsigned num = i915->num_vertex_sampler_views;
+   struct pipe_sampler_view **views = i915->vertex_sampler_views;
 
    assert(num <= PIPE_MAX_VERTEX_SAMPLERS);
    if (!num)
