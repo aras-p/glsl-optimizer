@@ -117,11 +117,11 @@ i915_get_shader_param(struct pipe_screen *screen, unsigned shader, enum pipe_sha
       /* XXX: these are just shader model 2.0 values, fix this! */
       switch(cap) {
       case PIPE_SHADER_CAP_MAX_INSTRUCTIONS:
-         return 96;
+         return I915_MAX_ALU_INSN + I915_MAX_TEX_INSN;
       case PIPE_SHADER_CAP_MAX_ALU_INSTRUCTIONS:
-         return 64;
+         return I915_MAX_ALU_INSN;
       case PIPE_SHADER_CAP_MAX_TEX_INSTRUCTIONS:
-         return 32;
+         return I915_MAX_TEX_INSN;
       case PIPE_SHADER_CAP_MAX_TEX_INDIRECTIONS:
          return 8;
       case PIPE_SHADER_CAP_MAX_CONTROL_FLOW_DEPTH:
@@ -150,7 +150,7 @@ i915_get_shader_param(struct pipe_screen *screen, unsigned shader, enum pipe_sha
       case PIPE_SHADER_CAP_INTEGERS:
          return 0;
       case PIPE_SHADER_CAP_MAX_TEXTURE_SAMPLERS:
-         return 8;
+         return I915_TEX_UNITS;
       default:
          debug_printf("%s: Unknown cap %u.\n", __FUNCTION__, cap);
          return 0;

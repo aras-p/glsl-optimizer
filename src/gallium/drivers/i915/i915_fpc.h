@@ -37,7 +37,7 @@
 
 #include "tgsi/tgsi_parse.h"
 
-#define I915_PROGRAM_SIZE 192
+#define I915_PROGRAM_SIZE (3 * I915_MAX_INSN)
 
 /* Use those indices for pos/face routing, must be >= num of inputs */
 #define I915_SEMANTIC_POS  100
