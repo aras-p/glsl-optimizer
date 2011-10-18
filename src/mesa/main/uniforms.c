@@ -41,6 +41,8 @@
 #include "main/shaderapi.h"
 #include "main/shaderobj.h"
 #include "main/uniforms.h"
+#include "ir_uniform.h"
+#include "glsl_types.h"
 
 /**
  * Update the vertex/fragment program's TexturesUsed array.
@@ -422,7 +424,7 @@ _mesa_GetnUniformfvARB(GLhandleARB program, GLint location,
                        GLsizei bufSize, GLfloat *params)
 {
    GET_CURRENT_CONTEXT(ctx);
-   _mesa_get_uniform(ctx, program, location, bufSize, GL_FLOAT, params);
+   _mesa_get_uniform(ctx, program, location, bufSize, GLSL_TYPE_FLOAT, params);
 }
 
 void GLAPIENTRY
@@ -437,7 +439,7 @@ _mesa_GetnUniformivARB(GLhandleARB program, GLint location,
                        GLsizei bufSize, GLint *params)
 {
    GET_CURRENT_CONTEXT(ctx);
-   _mesa_get_uniform(ctx, program, location, bufSize, GL_INT, params);
+   _mesa_get_uniform(ctx, program, location, bufSize, GLSL_TYPE_INT, params);
 }
 
 void GLAPIENTRY
@@ -453,7 +455,7 @@ _mesa_GetnUniformuivARB(GLhandleARB program, GLint location,
                         GLsizei bufSize, GLuint *params)
 {
    GET_CURRENT_CONTEXT(ctx);
-   _mesa_get_uniform(ctx, program, location, bufSize, GL_UNSIGNED_INT, params);
+   _mesa_get_uniform(ctx, program, location, bufSize, GLSL_TYPE_UINT, params);
 }
 
 void GLAPIENTRY

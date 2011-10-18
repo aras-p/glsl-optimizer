@@ -2984,12 +2984,12 @@ set_uniform_initializer(struct gl_context *ctx, void *mem_ctx,
         		      element_type->matrix_columns,
         		      element_type->vector_elements,
         		      loc, 1, GL_FALSE, (GLfloat *)values);
-         loc += element_type->matrix_columns;
       } else {
          _mesa_uniform(ctx, shader_program, loc, element_type->matrix_columns,
         	       values, element_type->gl_type);
-         loc += type_size(element_type);
       }
+
+      loc++;
    }
 }
 
@@ -5004,6 +5004,15 @@ get_mesa_program(struct gl_context *ctx,
 
    _mesa_reference_program(ctx, &shader->Program, prog);
    
+   /* This has to be done last.  Any operation the can cause
+    * prog->ParameterValues to get reallocated (e.g., anything that adds a
+    * program constant) has to happen before creating this linkage.
+    */
+   _mesa_associate_uniform_storage(ctx, shader_program, prog->Parameters);
+   if (!shader_program->LinkStatus) {
+      return NULL;
+   }
+
    struct st_vertex_program *stvp;
    struct st_fragment_program *stfp;
    struct st_geometry_program *stgp;

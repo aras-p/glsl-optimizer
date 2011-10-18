@@ -51,6 +51,7 @@
 #include "ralloc.h"
 #include <stdbool.h>
 #include "../glsl/glsl_parser_extras.h"
+#include "../glsl/ir_uniform.h"
 
 /** Define this to enable shader substitution (see below) */
 #define SHADER_SUBST 0
@@ -572,13 +573,24 @@ get_programiv(struct gl_context *ctx, GLuint program, GLenum pname, GLint *param
       *params = _mesa_longest_attribute_name_length(shProg);
       break;
    case GL_ACTIVE_UNIFORMS:
-      *params = shProg->Uniforms ? shProg->Uniforms->NumUniforms : 0;
+      *params = shProg->NumUserUniformStorage;
       break;
-   case GL_ACTIVE_UNIFORM_MAX_LENGTH:
-      *params = _mesa_longest_uniform_name(shProg->Uniforms);
-      if (*params > 0)
-         (*params)++;  /* add one for terminating zero */
+   case GL_ACTIVE_UNIFORM_MAX_LENGTH: {
+      unsigned i;
+      GLint max_len = 0;
+
+      for (i = 0; i < shProg->NumUserUniformStorage; i++) {
+	 /* Add one for the terminating NUL character.
+	  */
+	 const GLint len = strlen(shProg->UniformStorage[i].name) + 1;
+
+	 if (len > max_len)
+	    max_len = len;
+      }
+
+      *params = max_len;
       break;
+   }
    case GL_PROGRAM_BINARY_LENGTH_OES:
       *params = 0;
       break;

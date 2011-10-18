@@ -22,15 +22,16 @@
  * AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
+#include <stdlib.h>
 #include "main/core.h"
 #include "main/context.h"
 #include "ir.h"
 #include "ir_uniform.h"
+#include "program/hash_table.h"
 #include "../glsl/program.h"
 #include "../glsl/ir_uniform.h"
 
 extern "C" {
-#include "main/image.h"
 #include "main/shaderapi.h"
 #include "main/shaderobj.h"
 #include "uniforms.h"
@@ -44,42 +45,30 @@ _mesa_GetActiveUniformARB(GLhandleARB program, GLuint index,
    GET_CURRENT_CONTEXT(ctx);
    struct gl_shader_program *shProg =
       _mesa_lookup_shader_program_err(ctx, program, "glGetActiveUniform");
-   const struct gl_program_parameter *param;
 
    if (!shProg)
       return;
 
-   if (!shProg->Uniforms || index >= shProg->Uniforms->NumUniforms) {
+   if (index >= shProg->NumUserUniformStorage) {
       _mesa_error(ctx, GL_INVALID_VALUE, "glGetActiveUniform(index)");
       return;
    }
 
-   param = get_uniform_parameter(shProg, index);
-   if (!param)
-      return;
-
-   const struct gl_uniform *const uni = &shProg->Uniforms->Uniforms[index];
+   const struct gl_uniform_storage *const uni = &shProg->UniformStorage[index];
 
    if (nameOut) {
-      _mesa_copy_string(nameOut, maxLength, length, param->Name);
+      _mesa_copy_string(nameOut, maxLength, length, uni->name);
    }
 
    if (size) {
-      GLint typeSize = _mesa_sizeof_glsl_type(uni->Type->gl_type);
-      if ((GLint) param->Size > typeSize) {
-         /* This is an array.
-          * Array elements are placed on vector[4] boundaries so they're
-          * a multiple of four floats.  We round typeSize up to next multiple
-          * of four to get the right size below.
-          */
-         typeSize = (typeSize + 3) & ~3;
-      }
-      /* Note that the returned size is in units of the <type>, not bytes */
-      *size = param->Size / typeSize;
+      /* array_elements is zero for non-arrays, but the API requires that 1 be
+       * returned.
+       */
+      *size = MAX2(1, uni->array_elements);
    }
 
    if (type) {
-      *type = uni->Type->gl_type;
+      *type = uni->type->gl_type;
    }
 }
 
@@ -419,12 +408,21 @@ validate_uniform_parameters(struct gl_context *ctx,
 
    _mesa_uniform_split_location_offset(location, loc, array_index);
 
-   if (*loc >= shProg->Uniforms->NumUniforms) {
+   if (*loc >= shProg->NumUserUniformStorage) {
       _mesa_error(ctx, GL_INVALID_OPERATION, "%s(location=%d)",
 		  caller, location);
       return false;
    }
 
+   /* This case should be impossible.  The implication is that a call like
+    * glGetUniformLocation(prog, "foo[8]") was successful but "foo" is not an
+    * array.
+    */
+   if (*array_index != 0 && shProg->UniformStorage[*loc].array_elements == 0) {
+      _mesa_error(ctx, GL_INVALID_OPERATION, "%s(location=%d)",
+		  caller, location);
+      return false;
+   }
    return true;
 }
 
@@ -433,72 +431,81 @@ validate_uniform_parameters(struct gl_context *ctx,
  */
 extern "C" void
 _mesa_get_uniform(struct gl_context *ctx, GLuint program, GLint location,
-		  GLsizei bufSize, GLenum returnType, GLvoid *paramsOut)
+		  GLsizei bufSize, enum glsl_base_type returnType,
+		  GLvoid *paramsOut)
 {
    struct gl_shader_program *shProg =
       _mesa_lookup_shader_program_err(ctx, program, "glGetUniformfv");
-   struct gl_program *prog;
-   GLint paramPos;
+   struct gl_uniform_storage *uni;
    unsigned loc, offset;
 
    if (!validate_uniform_parameters(ctx, shProg, location, 1,
 				    &loc, &offset, "glGetUniform", true))
       return;
 
-   if (!find_uniform_parameter_pos(shProg, loc, &prog, &paramPos)) {
-      _mesa_error(ctx, GL_INVALID_OPERATION,  "glGetUniformfv(location)");
-   }
-   else {
-      const struct gl_program_parameter *p =
-         &prog->Parameters->Parameters[paramPos];
-      gl_constant_value (*values)[4];
-      GLint rows, cols, i, j, k;
-      GLsizei numBytes;
-      GLenum storage_type;
+   uni = &shProg->UniformStorage[loc];
 
-      values = prog->Parameters->ParameterValues + paramPos + offset;
+   {
+      unsigned elements = (uni->type->is_sampler())
+	 ? 1 : uni->type->components();
 
-      get_uniform_rows_cols(p, &rows, &cols);
+      /* Calculate the source base address *BEFORE* modifying elements to
+       * account for the size of the user's buffer.
+       */
+      const union gl_constant_value *const src =
+	 &uni->storage[offset * elements];
 
-      numBytes = rows * cols * _mesa_sizeof_type(returnType);
-      if (bufSize < numBytes) {
-         _mesa_error( ctx, GL_INVALID_OPERATION,
-                     "glGetnUniformfvARB(out of bounds: bufSize is %d,"
-                     " but %d bytes are required)", bufSize, numBytes );
-         return;
+      unsigned bytes = sizeof(uni->storage[0]) * elements;
+      if (bytes > bufSize) {
+	 elements = bufSize / sizeof(uni->storage[0]);
+	 bytes = bufSize;
       }
 
-      if (ctx->Const.NativeIntegers) {
-	 storage_type = base_uniform_type(p->DataType);
+      /* If the return type and the uniform's native type are "compatible,"
+       * just memcpy the data.  If the types are not compatible, perform a
+       * slower convert-and-copy process.
+       */
+      if (returnType == uni->type->base_type
+	  || ((returnType == GLSL_TYPE_INT
+	       || returnType == GLSL_TYPE_UINT
+	       || returnType == GLSL_TYPE_SAMPLER)
+	      &&
+	      (uni->type->base_type == GLSL_TYPE_INT
+	       || uni->type->base_type == GLSL_TYPE_UINT
+	       || uni->type->base_type == GLSL_TYPE_SAMPLER))) {
+	 memcpy(paramsOut, src, bytes);
       } else {
-	 storage_type = GL_FLOAT;
-      }
+	 union gl_constant_value *const dst =
+	    (union gl_constant_value *) paramsOut;
 
-      k = 0;
-      for (i = 0; i < rows; i++) {
-	 for (j = 0; j < cols; j++ ) {
-	    void *out = (char *)paramsOut + 4 * k;
-
+	 /* This code could be optimized by putting the loop inside the switch
+	  * statements.  However, this is not expected to be
+	  * performance-critical code.
+	  */
+	 for (unsigned i = 0; i < elements; i++) {
 	    switch (returnType) {
-	    case GL_FLOAT:
-	       switch (storage_type) {
-	       case GL_FLOAT:
-		  *(float *)out = values[i][j].f;
+	    case GLSL_TYPE_FLOAT:
+	       switch (uni->type->base_type) {
+	       case GLSL_TYPE_UINT:
+		  dst[i].f = (float) src[i].u;
 		  break;
-	       case GL_INT:
-	       case GL_BOOL: /* boolean is just an integer 1 or 0. */
-		  *(float *)out = values[i][j].i;
+	       case GLSL_TYPE_INT:
+	       case GLSL_TYPE_SAMPLER:
+		  dst[i].f = (float) src[i].i;
 		  break;
-	       case GL_UNSIGNED_INT:
-		  *(float *)out = values[i][j].u;
+	       case GLSL_TYPE_BOOL:
+		  dst[i].f = src[i].i ? 1.0f : 0.0f;
+		  break;
+	       default:
+		  assert(!"Should not get here.");
 		  break;
 	       }
 	       break;
 
-	    case GL_INT:
-	    case GL_UNSIGNED_INT:
-	       switch (storage_type) {
-	       case GL_FLOAT:
+	    case GLSL_TYPE_INT:
+	    case GLSL_TYPE_UINT:
+	       switch (uni->type->base_type) {
+	       case GLSL_TYPE_FLOAT:
 		  /* While the GL 3.2 core spec doesn't explicitly
 		   * state how conversion of float uniforms to integer
 		   * values works, in section 6.2 "State Tables" on
@@ -516,23 +523,21 @@ _mesa_get_uniform(struct gl_context *ctx, GLuint program, GLint location,
 		   *      a floating-point value is rounded to the
 		   *      nearest integer..."
 		   */
-		  *(int *)out = IROUND(values[i][j].f);
+		  dst[i].i = IROUND(src[i].f);
 		  break;
-
-	       case GL_INT:
-	       case GL_UNSIGNED_INT:
-	       case GL_BOOL:
-		  /* type conversions for these to int/uint are just
-		   * copying the data.
-		   */
-		  *(int *)out = values[i][j].i;
+	       case GLSL_TYPE_BOOL:
+		  dst[i].i = src[i].i ? 1 : 0;
 		  break;
+	       default:
+		  assert(!"Should not get here.");
 		  break;
 	       }
 	       break;
-	    }
 
-	    k++;
+	    default:
+	       assert(!"Should not get here.");
+	       break;
+	    }
 	 }
       }
    }
@@ -935,9 +940,12 @@ _mesa_uniform(struct gl_context *ctx, struct gl_shader_program *shProg,
 	      GLint location, GLsizei count,
               const GLvoid *values, GLenum type)
 {
-   struct gl_uniform *uniform;
-   GLint elems;
    unsigned loc, offset;
+   unsigned components;
+   unsigned src_components;
+   unsigned i;
+   enum glsl_base_type basicType;
+   struct gl_uniform_storage *uni;
 
    ASSERT_OUTSIDE_BEGIN_END(ctx);
 
@@ -945,73 +953,219 @@ _mesa_uniform(struct gl_context *ctx, struct gl_shader_program *shProg,
 				    &loc, &offset, "glUniform", false))
       return;
 
-   elems = _mesa_sizeof_glsl_type(type);
+   uni = &shProg->UniformStorage[loc];
+
+   /* Verify that the types are compatible.
+    */
+   switch (type) {
+   case GL_FLOAT:
+      basicType = GLSL_TYPE_FLOAT;
+      src_components = 1;
+      break;
+   case GL_FLOAT_VEC2:
+      basicType = GLSL_TYPE_FLOAT;
+      src_components = 2;
+      break;
+   case GL_FLOAT_VEC3:
+      basicType = GLSL_TYPE_FLOAT;
+      src_components = 3;
+      break;
+   case GL_FLOAT_VEC4:
+      basicType = GLSL_TYPE_FLOAT;
+      src_components = 4;
+      break;
+   case GL_UNSIGNED_INT:
+      basicType = GLSL_TYPE_UINT;
+      src_components = 1;
+      break;
+   case GL_UNSIGNED_INT_VEC2:
+      basicType = GLSL_TYPE_UINT;
+      src_components = 2;
+      break;
+   case GL_UNSIGNED_INT_VEC3:
+      basicType = GLSL_TYPE_UINT;
+      src_components = 3;
+      break;
+   case GL_UNSIGNED_INT_VEC4:
+      basicType = GLSL_TYPE_UINT;
+      src_components = 4;
+      break;
+   case GL_INT:
+      basicType = GLSL_TYPE_INT;
+      src_components = 1;
+      break;
+   case GL_INT_VEC2:
+      basicType = GLSL_TYPE_INT;
+      src_components = 2;
+      break;
+   case GL_INT_VEC3:
+      basicType = GLSL_TYPE_INT;
+      src_components = 3;
+      break;
+   case GL_INT_VEC4:
+      basicType = GLSL_TYPE_INT;
+      src_components = 4;
+      break;
+   case GL_BOOL:
+   case GL_BOOL_VEC2:
+   case GL_BOOL_VEC3:
+   case GL_BOOL_VEC4:
+   case GL_FLOAT_MAT2:
+   case GL_FLOAT_MAT2x3:
+   case GL_FLOAT_MAT2x4:
+   case GL_FLOAT_MAT3x2:
+   case GL_FLOAT_MAT3:
+   case GL_FLOAT_MAT3x4:
+   case GL_FLOAT_MAT4x2:
+   case GL_FLOAT_MAT4x3:
+   case GL_FLOAT_MAT4:
+   default:
+      _mesa_problem(NULL, "Invalid type in %s", __func__);
+      return;
+   }
+
+   if (uni->type->is_sampler()) {
+      components = 1;
+   } else {
+      components = uni->type->vector_elements;
+   }
+
+   bool match;
+   switch (uni->type->base_type) {
+   case GLSL_TYPE_BOOL:
+      match = true;
+      break;
+   case GLSL_TYPE_SAMPLER:
+      match = (basicType == GLSL_TYPE_INT);
+      break;
+   default:
+      match = (basicType == uni->type->base_type);
+      break;
+   }
+
+   if (uni->type->is_matrix() || components != src_components || !match) {
+      _mesa_error(ctx, GL_INVALID_OPERATION, "glUniform(type mismatch)");
+      return;
+   }
+
+   if (ctx->Shader.Flags & GLSL_UNIFORMS) {
+      log_uniform(values, basicType, components, 1, count,
+		  false, shProg, location, uni);
+   }
+
+   /* Page 100 (page 116 of the PDF) of the OpenGL 3.0 spec says:
+    *
+    *     "Setting a sampler's value to i selects texture image unit number
+    *     i. The values of i range from zero to the implementation- dependent
+    *     maximum supported number of texture image units."
+    *
+    * In addition, table 2.3, "Summary of GL errors," on page 17 (page 33 of
+    * the PDF) says:
+    *
+    *     "Error         Description                    Offending command
+    *                                                   ignored?
+    *     ...
+    *     INVALID_VALUE  Numeric argument out of range  Yes"
+    *
+    * Based on that, when an invalid sampler is specified, we generate a
+    * GL_INVALID_VALUE error and ignore the command.
+    */
+   if (uni->type->is_sampler()) {
+      for (i = 0; i < count; i++) {
+	 const unsigned texUnit = ((unsigned *) values)[i];
+
+         /* check that the sampler (tex unit index) is legal */
+         if (texUnit >= ctx->Const.MaxCombinedTextureImageUnits) {
+            _mesa_error(ctx, GL_INVALID_VALUE,
+                        "glUniform1i(invalid sampler/tex unit index for "
+			"uniform %d)",
+                        location);
+            return;
+         }
+      }
+   }
+
+   /* Page 82 (page 96 of the PDF) of the OpenGL 2.1 spec says:
+    *
+    *     "When loading N elements starting at an arbitrary position k in a
+    *     uniform declared as an array, elements k through k + N - 1 in the
+    *     array will be replaced with the new values. Values for any array
+    *     element that exceeds the highest array element index used, as
+    *     reported by GetActiveUniform, will be ignored by the GL."
+    *
+    * Clamp 'count' to a valid value.  Note that for non-arrays a count > 1
+    * will have already generated an error.
+    */
+   if (uni->array_elements != 0) {
+      if (offset >= uni->array_elements)
+	 return;
+
+      count = MIN2(count, (uni->array_elements - offset));
+   }
 
    FLUSH_VERTICES(ctx, _NEW_PROGRAM_CONSTANTS);
 
-   uniform = &shProg->Uniforms->Uniforms[loc];
-
-   if (ctx->Shader.Flags & GLSL_UNIFORMS) {
-      const GLenum basicType = base_uniform_type(type);
-      GLint i;
-      printf("Mesa: set program %u uniform %s (loc %d) to: ",
-	     shProg->Name, uniform->Name, location);
-      if (basicType == GL_INT) {
-         const GLint *v = (const GLint *) values;
-         for (i = 0; i < count * elems; i++) {
-            printf("%d ", v[i]);
-         }
-      }
-      else if (basicType == GL_UNSIGNED_INT) {
-         const GLuint *v = (const GLuint *) values;
-         for (i = 0; i < count * elems; i++) {
-            printf("%u ", v[i]);
-         }
-      }
-      else {
-         const GLfloat *v = (const GLfloat *) values;
-         assert(basicType == GL_FLOAT);
-         for (i = 0; i < count * elems; i++) {
-            printf("%g ", v[i]);
-         }
-      }
-      printf("\n");
-   }
-
-   /* A uniform var may be used by both a vertex shader and a fragment
-    * shader.  We may need to update one or both shader's uniform here:
+   /* Store the data in the "actual type" backing storage for the uniform.
     */
-   if (shProg->_LinkedShaders[MESA_SHADER_VERTEX]) {
-      /* convert uniform location to program parameter index */
-      GLint index = uniform->VertPos;
-      if (index >= 0) {
-         set_program_uniform(ctx,
-                             shProg->_LinkedShaders[MESA_SHADER_VERTEX]->Program,
-                             index, offset, type, count, elems, values);
+   if (!uni->type->is_boolean()) {
+      memcpy(&uni->storage[components * offset], values,
+	     sizeof(uni->storage[0]) * components * count);
+   } else {
+      const union gl_constant_value *src =
+	 (const union gl_constant_value *) values;
+      union gl_constant_value *dst = &uni->storage[components * offset];
+      const unsigned elems = components * count;
+
+      for (i = 0; i < elems; i++) {
+	 if (basicType == GLSL_TYPE_FLOAT) {
+	    dst[i].i = src[i].f != 0.0f ? 1 : 0;
+	 } else {
+	    dst[i].i = src[i].i != 0    ? 1 : 0;
+	 }
       }
    }
 
-   if (shProg->_LinkedShaders[MESA_SHADER_FRAGMENT]) {
-      /* convert uniform location to program parameter index */
-      GLint index = uniform->FragPos;
-      if (index >= 0) {
-         set_program_uniform(ctx,
-			     shProg->_LinkedShaders[MESA_SHADER_FRAGMENT]->Program,
-                             index, offset, type, count, elems, values);
+   uni->initialized = true;
+
+   _mesa_propagate_uniforms_to_driver_storage(uni, offset, count);
+
+   /* If the uniform is a sampler, do the extra magic necessary to propagate
+    * the changes through.
+    */
+   if (uni->type->is_sampler()) {
+      for (i = 0; i < count; i++) {
+	 shProg->SamplerUnits[uni->sampler + offset + i] =
+	    ((unsigned *) values)[i];
+      }
+
+      bool flushed = false;
+      for (i = 0; i < MESA_SHADER_TYPES; i++) {
+	 struct gl_program *prog;
+
+	 if (shProg->_LinkedShaders[i] == NULL)
+	    continue;
+
+	 prog = shProg->_LinkedShaders[i]->Program;
+
+	 assert(sizeof(prog->SamplerUnits) == sizeof(shProg->SamplerUnits));
+
+	 if (memcmp(prog->SamplerUnits,
+		    shProg->SamplerUnits,
+		    sizeof(shProg->SamplerUnits)) != 0) {
+	    if (!flushed) {
+	       FLUSH_VERTICES(ctx, _NEW_TEXTURE | _NEW_PROGRAM);
+	       flushed = true;
+	    }
+
+	    memcpy(prog->SamplerUnits,
+		   shProg->SamplerUnits,
+		   sizeof(shProg->SamplerUnits));
+
+	    _mesa_update_shader_textures_used(prog);
+	    (void) ctx->Driver.ProgramStringNotify(ctx, prog->Target, prog);
+	 }
       }
    }
-
-   if (shProg->_LinkedShaders[MESA_SHADER_GEOMETRY]) {
-      /* convert uniform location to program parameter index */
-      GLint index = uniform->GeomPos;
-      if (index >= 0) {
-         set_program_uniform(ctx,
-			     shProg->_LinkedShaders[MESA_SHADER_GEOMETRY]->Program,
-                             index, offset, type, count, elems, values);
-      }
-   }
-
-   uniform->Initialized = GL_TRUE;
 }
 
 /**
@@ -1093,8 +1247,11 @@ _mesa_uniform_matrix(struct gl_context *ctx, struct gl_shader_program *shProg,
                      GLint location, GLsizei count,
                      GLboolean transpose, const GLfloat *values)
 {
-   struct gl_uniform *uniform;
    unsigned loc, offset;
+   unsigned vectors;
+   unsigned components;
+   unsigned elements;
+   struct gl_uniform_storage *uni;
 
    ASSERT_OUTSIDE_BEGIN_END(ctx);
 
@@ -1102,49 +1259,79 @@ _mesa_uniform_matrix(struct gl_context *ctx, struct gl_shader_program *shProg,
 				    &loc, &offset, "glUniformMatrix", false))
       return;
 
-   if (values == NULL) {
-      _mesa_error(ctx, GL_INVALID_VALUE, "glUniformMatrix");
+   uni = &shProg->UniformStorage[loc];
+   if (!uni->type->is_matrix()) {
+      _mesa_error(ctx, GL_INVALID_OPERATION,
+		  "glUniformMatrix(non-matrix uniform)");
       return;
+   }
+
+   assert(!uni->type->is_sampler());
+   vectors = uni->type->matrix_columns;
+   components = uni->type->vector_elements;
+
+   /* Verify that the types are compatible.  This is greatly simplified for
+    * matrices because they can only have a float base type.
+    */
+   if (vectors != cols || components != rows) {
+      _mesa_error(ctx, GL_INVALID_OPERATION,
+		  "glUniformMatrix(matrix size mismatch)");
+      return;
+   }
+
+   if (ctx->Shader.Flags & GLSL_UNIFORMS) {
+      log_uniform(values, GLSL_TYPE_FLOAT, components, vectors, count,
+		  bool(transpose), shProg, location, uni);
+   }
+
+   /* Page 82 (page 96 of the PDF) of the OpenGL 2.1 spec says:
+    *
+    *     "When loading N elements starting at an arbitrary position k in a
+    *     uniform declared as an array, elements k through k + N - 1 in the
+    *     array will be replaced with the new values. Values for any array
+    *     element that exceeds the highest array element index used, as
+    *     reported by GetActiveUniform, will be ignored by the GL."
+    *
+    * Clamp 'count' to a valid value.  Note that for non-arrays a count > 1
+    * will have already generated an error.
+    */
+   if (uni->array_elements != 0) {
+      if (offset >= uni->array_elements)
+	 return;
+
+      count = MIN2(count, (uni->array_elements - offset));
    }
 
    FLUSH_VERTICES(ctx, _NEW_PROGRAM_CONSTANTS);
 
-   uniform = &shProg->Uniforms->Uniforms[loc];
+   /* Store the data in the "actual type" backing storage for the uniform.
+    */
+   elements = components * vectors;
 
-   if (shProg->_LinkedShaders[MESA_SHADER_VERTEX]) {
-      /* convert uniform location to program parameter index */
-      GLint index = uniform->VertPos;
-      if (index >= 0) {
-         set_program_uniform_matrix(ctx,
-				    shProg->_LinkedShaders[MESA_SHADER_VERTEX]->Program,
-                                    index, offset,
-                                    count, rows, cols, transpose, values);
+   if (!transpose) {
+      memcpy(&uni->storage[elements * offset], values,
+	     sizeof(uni->storage[0]) * elements * count);
+   } else {
+      /* Copy and transpose the matrix.
+       */
+      const float *src = values;
+      float *dst = &uni->storage[elements * offset].f;
+
+      for (unsigned i = 0; i < count; i++) {
+	 for (unsigned r = 0; r < rows; r++) {
+	    for (unsigned c = 0; c < cols; c++) {
+	       dst[(c * components) + r] = src[c + (r * vectors)];
+	    }
+	 }
+
+	 dst += elements;
+	 src += elements;
       }
    }
 
-   if (shProg->_LinkedShaders[MESA_SHADER_FRAGMENT]) {
-      /* convert uniform location to program parameter index */
-      GLint index = uniform->FragPos;
-      if (index >= 0) {
-         set_program_uniform_matrix(ctx,
-				    shProg->_LinkedShaders[MESA_SHADER_FRAGMENT]->Program,
-                                    index, offset,
-                                    count, rows, cols, transpose, values);
-      }
-   }
+   uni->initialized = true;
 
-   if (shProg->_LinkedShaders[MESA_SHADER_GEOMETRY]) {
-      /* convert uniform location to program parameter index */
-      GLint index = uniform->GeomPos;
-      if (index >= 0) {
-         set_program_uniform_matrix(ctx,
-                                    shProg->_LinkedShaders[MESA_SHADER_GEOMETRY]->Program,
-                                    index, offset,
-                                    count, rows, cols, transpose, values);
-      }
-   }
-
-   uniform->Initialized = GL_TRUE;
+   _mesa_propagate_uniforms_to_driver_storage(uni, offset, count);
 }
 
 /**
@@ -1158,56 +1345,91 @@ _mesa_get_uniform_location(struct gl_context *ctx,
                            struct gl_shader_program *shProg,
 			   const GLchar *name)
 {
-   GLint offset = 0, location = -1;
+   const size_t len = strlen(name);
+   long offset;
+   bool array_lookup;
+   char *name_copy;
 
-   /* XXX we should return -1 if the uniform was declared, but not
-    * actually used.
+   /* If the name ends with a ']', assume that it refers to some element of an
+    * array.  Malformed array references will fail the hash table look up
+    * below, so it doesn't matter that they are not caught here.  This code
+    * only wants to catch the "leaf" array references so that arrays of
+    * structures containing arrays will be handled correctly.
     */
+   if (name[len-1] == ']') {
+      unsigned i;
 
-   /* XXX we need to be able to parse uniform names for structs and arrays
-    * such as:
-    *   mymatrix[1]
-    *   mystruct.field1
-    */
+      /* Walk backwards over the string looking for a non-digit character.
+       * This had better be the opening bracket for an array index.
+       *
+       * Initially, i specifies the location of the ']'.  Since the string may
+       * contain only the ']' charcater, walk backwards very carefully.
+       */
+      for (i = len - 1; (i > 0) && isdigit(name[i-1]); --i)
+	 /* empty */ ;
 
-   {
-      /* handle 1-dimension arrays here... */
-      char *c = strchr((char *)name, '[');
-      if (c) {
-         /* truncate name at [ */
-         const GLint len = c - name;
-         GLchar *newName = (GLchar *) malloc(len + 1);
-         if (!newName)
-            return -1; /* out of mem */
-         memcpy(newName, name, len);
-         newName[len] = 0;
+      /* Page 80 (page 94 of the PDF) of the OpenGL 2.1 spec says:
+       *
+       *     "The first element of a uniform array is identified using the
+       *     name of the uniform array appended with "[0]". Except if the last
+       *     part of the string name indicates a uniform array, then the
+       *     location of the first element of that array can be retrieved by
+       *     either using the name of the uniform array, or the name of the
+       *     uniform array appended with "[0]"."
+       *
+       * Page 79 (page 93 of the PDF) of the OpenGL 2.1 spec says:
+       *
+       *     "name must be a null terminated string, without white space."
+       *
+       * Return an error if there is no opening '[' to match the closing ']'.
+       * An error will also be returned if there is intervening white space
+       * (or other non-digit characters) before the opening '['.
+       */
+      if ((i == 0) || name[i-1] != '[')
+	 return -1;
 
-         location = _mesa_lookup_uniform(shProg->Uniforms, newName);
-         if (location >= 0) {
-            const GLint element = atoi(c + 1);
-            if (element > 0) {
-               /* get type of the uniform array element */
-               const struct gl_program_parameter *p =
-                  get_uniform_parameter(shProg, location);
-               if (p) {
-                  GLint rows, cols;
-                  get_matrix_dims(p->DataType, &rows, &cols);
-                  if (rows < 1)
-                     rows = 1;
-                  offset = element * rows;
-               }
-            }
-         }
+      /* Return an error if there are no digits between the opening '[' to
+       * match the closing ']'.
+       */
+      if (i == (len - 1))
+	 return -1;
 
-         free(newName);
-      }
+      /* Make a new string that is a copy of the old string up to (but not
+       * including) the '[' character.
+       */
+      name_copy = (char *) malloc(i);
+      memcpy(name_copy, name, i - 1);
+      name_copy[i-1] = '\0';
+
+      offset = strtol(&name[i], NULL, 10);
+      if (offset < 0)
+	 return -1;
+
+      array_lookup = true;
+   } else {
+      name_copy = (char *) name;
+      offset = 0;
+      array_lookup = false;
    }
 
-   if (location < 0) {
-      location = _mesa_lookup_uniform(shProg->Uniforms, name);
-   }
+   unsigned location;
+   const bool found = shProg->UniformHash->get(location, name_copy);
 
-   if (location < 0) {
+   assert(!found
+	  || strcmp(name_copy, shProg->UniformStorage[location].name) == 0);
+
+   /* Free the temporary buffer *before* possibly returning an error.
+    */
+   if (name_copy != name)
+      free(name_copy);
+
+   if (!found)
+      return -1;
+
+   /* Since array_elements is 0 for non-arrays, this causes look-ups of 'a[0]'
+    * to (correctly) fail if 'a' is not an array.
+    */
+   if (array_lookup && shProg->UniformStorage[location].array_elements == 0) {
       return -1;
    }
 

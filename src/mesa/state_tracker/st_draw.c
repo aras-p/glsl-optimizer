@@ -64,6 +64,8 @@
 #include "draw/draw_context.h"
 #include "cso_cache/cso_context.h"
 
+#include "../glsl/ir_uniform.h"
+
 
 static GLuint double_types[4] = {
    PIPE_FORMAT_R64_FLOAT,
@@ -636,12 +638,12 @@ check_uniforms(struct gl_context *ctx)
       if (shProg[j] == NULL || !shProg[j]->LinkStatus)
 	 continue;
 
-      for (i = 0; i < shProg[j]->Uniforms->NumUniforms; i++) {
-         const struct gl_uniform *u = &shProg[j]->Uniforms->Uniforms[i];
-         if (!u->Initialized) {
+      for (i = 0; i < shProg[j]->NumUserUniformStorage; i++) {
+         const struct gl_uniform_storage *u = &shProg[j]->UniformStorage[i];
+         if (!u->initialized) {
             _mesa_warning(ctx,
                           "Using shader with uninitialized uniform: %s",
-                          u->Name);
+                          u->name);
          }
       }
    }

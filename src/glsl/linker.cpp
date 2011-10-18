@@ -1858,7 +1858,7 @@ link_shaders(struct gl_context *ctx, struct gl_shader_program *prog)
    }
 
    update_array_sizes(prog);
-   assign_uniform_locations(prog);
+   link_assign_uniform_locations(prog);
 
    /* OpenGL ES requires that a vertex shader and a fragment shader both be
     * present in a linked program.  By checking for use of shading language

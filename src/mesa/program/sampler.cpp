@@ -27,6 +27,8 @@
 #include "glsl_types.h"
 #include "ir_visitor.h"
 #include "../glsl/program.h"
+#include "program/hash_table.h"
+#include "ir_uniform.h"
 
 extern "C" {
 #include "main/compiler.h"
@@ -110,17 +112,13 @@ _mesa_get_sampler_uniform_value(class ir_dereference *sampler,
 
    sampler->accept(&getname);
 
-   GLint index = _mesa_lookup_parameter_index(prog->Parameters, -1,
-					      getname.name);
-
-   if (index < 0) {
+   unsigned location;
+   if (!shader_program->UniformHash->get(location, getname.name)) {
       linker_error(shader_program,
 		   "failed to find sampler named %s.\n", getname.name);
       return 0;
    }
 
-   index += getname.offset;
-
-   return prog->Parameters->ParameterValues[index][0].f;
+   return shader_program->UniformStorage[location].sampler + getname.offset;
 }
 }
