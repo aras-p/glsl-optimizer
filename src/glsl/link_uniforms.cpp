@@ -34,6 +34,21 @@
  * \author Ian Romanick <ian.d.romanick@intel.com>
  */
 
+/**
+ * Count the backing storage requirements for a type
+ */
+static unsigned
+values_for_type(const glsl_type *type)
+{
+   if (type->is_sampler()) {
+      return 1;
+   } else if (type->is_array() && type->fields.array->is_sampler()) {
+      return type->array_size();
+   } else {
+      return type->component_slots();
+   }
+}
+
 void
 uniform_field_visitor::process(ir_variable *var)
 {
@@ -83,3 +98,56 @@ uniform_field_visitor::recursion(const glsl_type *t, char **name,
       this->visit_field(t, *name);
    }
 }
+
+/**
+ * Class to help calculate the storage requirements for a set of uniforms
+ *
+ * As uniforms are added to the active set the number of active uniforms and
+ * the storage requirements for those uniforms are accumulated.  The active
+ * uniforms are added the the hash table supplied to the constructor.
+ *
+ * If the same uniform is added multiple times (i.e., once for each shader
+ * target), it will only be accounted once.
+ */
+class count_uniform_size : public uniform_field_visitor {
+public:
+   count_uniform_size(struct string_to_uint_map *map)
+      : num_active_uniforms(0), num_values(0), map(map)
+   {
+      /* empty */
+   }
+
+   /**
+    * Total number of active uniforms counted
+    */
+   unsigned num_active_uniforms;
+
+   /**
+    * Number of data values required to back the storage for the active uniforms
+    */
+   unsigned num_values;
+
+private:
+   virtual void visit_field(const glsl_type *type, const char *name)
+   {
+      assert(!type->is_record());
+      assert(!(type->is_array() && type->fields.array->is_record()));
+
+      /* If the uniform is already in the map, there's nothing more to do.
+       */
+      unsigned id;
+      if (this->map->get(id, name))
+	 return;
+
+      char *key = strdup(name);
+      this->map->put(this->num_active_uniforms, key);
+
+      /* Each leaf uniform occupies one entry in the list of active
+       * uniforms.
+       */
+      this->num_active_uniforms++;
+      this->num_values += values_for_type(type);
+   }
+
+   struct string_to_uint_map *map;
+};
