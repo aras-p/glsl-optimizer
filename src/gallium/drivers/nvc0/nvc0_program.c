@@ -268,6 +268,11 @@ nvc0_vtgp_gen_header(struct nvc0_program *vp, struct nv50_ir_prog_info *info)
       }
    }
 
+   vp->vp.clip_enable = (1 << info->io.clipDistanceCount) - 1;
+   for (i = 0; i < 8; ++i)
+      if (info->io.cullDistanceMask & (1 << i))
+         vp->vp.clip_mode |= 1 << (i * 4);
+
    return 0;
 }
 

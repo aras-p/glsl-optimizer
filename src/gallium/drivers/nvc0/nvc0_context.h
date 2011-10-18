@@ -74,13 +74,15 @@ struct nvc0_context {
       int32_t index_bias;
       boolean prim_restart;
       boolean early_z;
+      uint16_t scissor;
       uint8_t num_vtxbufs;
       uint8_t num_vtxelts;
       uint8_t num_textures[5];
       uint8_t num_samplers[5];
       uint8_t tls_required; /* bitmask of shader types using l[] */
       uint8_t c14_bound; /* whether immediate array constbuf is bound */
-      uint16_t scissor;
+      uint8_t clip_enable;
+      uint32_t clip_mode;
       uint32_t uniform_buffer_bound[5];
    } state;
 

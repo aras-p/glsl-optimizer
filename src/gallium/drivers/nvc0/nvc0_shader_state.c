@@ -59,6 +59,25 @@ nvc0_program_update_context_state(struct nvc0_context *nvc0,
    }
 }
 
+static void
+nvc0_program_validate_clip(struct nvc0_context *nvc0, struct nvc0_program *vp)
+{
+   struct nouveau_channel *chan = nvc0->screen->base.channel;
+
+   if (nvc0->vertprog->vp.num_ucps)
+      return;
+
+   if (nvc0->state.clip_enable != vp->vp.clip_enable) {
+      nvc0->state.clip_enable = vp->vp.clip_enable;
+      IMMED_RING(chan, RING_3D(CLIP_DISTANCE_ENABLE), vp->vp.clip_enable);
+   }
+   if (nvc0->state.clip_mode != vp->vp.clip_mode) {
+      nvc0->state.clip_mode = vp->vp.clip_mode;
+      BEGIN_RING(chan, RING_3D(CLIP_DISTANCE_MODE), 1);
+      OUT_RING  (chan, vp->vp.clip_mode);
+   }
+}
+
 static INLINE boolean
 nvc0_program_validate(struct nvc0_context *nvc0, struct nvc0_program *prog)
 {
@@ -97,6 +116,9 @@ nvc0_vertprog_validate(struct nvc0_context *nvc0)
    OUT_RING  (chan, vp->code_base);
    BEGIN_RING(chan, RING_3D(SP_GPR_ALLOC(1)), 1);
    OUT_RING  (chan, vp->max_gpr);
+
+   if (!nvc0->gmtyprog && !nvc0->tevlprog)
+      nvc0_program_validate_clip(nvc0, vp);
 
    // BEGIN_RING(chan, RING_3D_(0x163c), 1);
    // OUT_RING  (chan, 0);
@@ -178,7 +200,10 @@ nvc0_tevlprog_validate(struct nvc0_context *nvc0)
    BEGIN_RING(chan, RING_3D(SP_START_ID(3)), 1);
    OUT_RING  (chan, tp->code_base);
    BEGIN_RING(chan, RING_3D(SP_GPR_ALLOC(3)), 1);
-   OUT_RING  (chan, tp->max_gpr);   
+   OUT_RING  (chan, tp->max_gpr);
+
+   if (!nvc0->gmtyprog)
+      nvc0_program_validate_clip(nvc0, tp);
 }
 
 void
@@ -205,6 +230,8 @@ nvc0_gmtyprog_validate(struct nvc0_context *nvc0)
    OUT_RING  (chan, gp->max_gpr);
    BEGIN_RING(chan, RING_3D(LAYER), 1);
    OUT_RING  (chan, (gp->hdr[13] & (1 << 9)) ? NVC0_3D_LAYER_USE_GP : 0);
+
+   nvc0_program_validate_clip(nvc0, gp);
 }
 
 /* It's *is* kind of shader related. We need to inspect the program

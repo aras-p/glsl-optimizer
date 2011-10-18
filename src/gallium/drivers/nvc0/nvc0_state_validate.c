@@ -267,11 +267,13 @@ nvc0_validate_clip(struct nvc0_context *nvc0)
       BEGIN_RING_1I(chan, RING_3D(CB_POS), nvc0->clip.nr * 4 + 1);
       OUT_RING  (chan, 0);
       OUT_RINGp (chan, &nvc0->clip.ucp[0][0], nvc0->clip.nr * 4);
+   }
 
-      BEGIN_RING(chan, RING_3D(VP_CLIP_DISTANCE_ENABLE), 1);
-      OUT_RING  (chan, (1 << nvc0->clip.nr) - 1);
-   } else {
-      IMMED_RING(chan, RING_3D(VP_CLIP_DISTANCE_ENABLE), 0);
+   if (nvc0->vertprog->vp.num_ucps) {
+      nvc0->state.clip_mode = 0;
+      nvc0->state.clip_enable = (1 << nvc0->clip.nr) - 1;
+      IMMED_RING(chan, RING_3D(CLIP_DISTANCE_ENABLE), nvc0->state.clip_enable);
+      IMMED_RING(chan, RING_3D(CLIP_DISTANCE_MODE), 0);
    }
 }
 
@@ -474,13 +476,13 @@ static struct state_validate {
     { nvc0_validate_stipple,       NVC0_NEW_STIPPLE },
     { nvc0_validate_scissor,       NVC0_NEW_SCISSOR | NVC0_NEW_RASTERIZER },
     { nvc0_validate_viewport,      NVC0_NEW_VIEWPORT },
-    { nvc0_validate_clip,          NVC0_NEW_CLIP },
     { nvc0_vertprog_validate,      NVC0_NEW_VERTPROG },
     { nvc0_tctlprog_validate,      NVC0_NEW_TCTLPROG },
     { nvc0_tevlprog_validate,      NVC0_NEW_TEVLPROG },
     { nvc0_gmtyprog_validate,      NVC0_NEW_GMTYPROG },
     { nvc0_fragprog_validate,      NVC0_NEW_FRAGPROG },
     { nvc0_validate_derived_1,     NVC0_NEW_FRAGPROG | NVC0_NEW_ZSA },
+    { nvc0_validate_clip,          NVC0_NEW_CLIP },
     { nvc0_constbufs_validate,     NVC0_NEW_CONSTBUF },
     { nvc0_validate_textures,      NVC0_NEW_TEXTURES },
     { nvc0_validate_samplers,      NVC0_NEW_SAMPLERS },

@@ -27,6 +27,8 @@ struct nvc0_program {
    uint32_t flags[2];
 
    struct {
+      uint32_t clip_mode; /* clip/cull selection */
+      uint8_t clip_enable; /* only applies if num_ucps == 0 */
       uint8_t edgeflag;
       uint8_t num_ucps;
       uint8_t out_pos[PIPE_MAX_SHADER_OUTPUTS];
