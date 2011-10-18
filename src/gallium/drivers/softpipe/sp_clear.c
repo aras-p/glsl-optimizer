@@ -50,7 +50,6 @@ softpipe_clear(struct pipe_context *pipe, unsigned buffers,
                double depth, unsigned stencil)
 {
    struct softpipe_context *softpipe = softpipe_context(pipe);
-   union util_color uc;
    unsigned cv;
    uint i;
 
@@ -66,8 +65,6 @@ softpipe_clear(struct pipe_context *pipe, unsigned buffers,
 
    if (buffers & PIPE_CLEAR_COLOR) {
       for (i = 0; i < softpipe->framebuffer.nr_cbufs; i++) {
-         struct pipe_surface *ps = softpipe->framebuffer.cbufs[i];
-
          sp_tile_cache_clear(softpipe->cbuf_cache[i], color, 0);
       }
    }
