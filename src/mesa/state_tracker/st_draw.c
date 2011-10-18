@@ -45,7 +45,6 @@
 #include "main/bufferobj.h"
 #include "main/macros.h"
 #include "main/mfeatures.h"
-#include "program/prog_uniform.h"
 
 #include "vbo/vbo.h"
 

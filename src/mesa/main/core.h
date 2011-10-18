@@ -54,7 +54,6 @@ extern "C" {
 
 /* for GLSL */
 #include "program/prog_parameter.h"
-#include "program/prog_uniform.h"
 
 #ifdef __cplusplus
 }

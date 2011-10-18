@@ -261,7 +261,6 @@ PROGRAM_SOURCES = \
 	program/prog_parameter_layout.c \
 	program/prog_print.c \
 	program/prog_statevars.c \
-	program/prog_uniform.c \
 	program/programopt.c \
 	program/register_allocate.c \
 	program/symbol_table.c

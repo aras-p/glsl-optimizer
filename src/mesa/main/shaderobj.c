@@ -37,7 +37,6 @@
 #include "main/shaderobj.h"
 #include "program/program.h"
 #include "program/prog_parameter.h"
-#include "program/prog_uniform.h"
 #include "program/hash_table.h"
 #include "ralloc.h"
 
