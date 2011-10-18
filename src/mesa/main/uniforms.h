@@ -189,6 +189,11 @@ _mesa_get_uniform(struct gl_context *ctx, GLuint program, GLint location,
 		  GLsizei bufSize, GLenum returnType, GLvoid *paramsOut);
 
 extern void
+_mesa_propagate_uniforms_to_driver_storage(struct gl_uniform_storage *uni,
+					   unsigned array_index,
+					   unsigned count);
+
+extern void
 _mesa_update_shader_textures_used(struct gl_program *prog);
 
 
