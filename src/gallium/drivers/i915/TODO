@@ -36,7 +36,9 @@ Random list of problems with i915g:
 
 - i915_delete_fs_state doesn't call draw_delete_fragment_shader. Why?
 
-- Schedule instructions to minimize the number of phases.
+- Schedule instructions to minimize the number of phases. One way is to replace
+  R registers responsible for a boundary with U registers to avoid phase
+  boundaries.
 
 Other bugs can be found here:
 https://bugs.freedesktop.org/buglist.cgi?bug_status=NEW&bug_status=ASSIGNED&bug_status=REOPENED&component=Drivers/Gallium/i915g
