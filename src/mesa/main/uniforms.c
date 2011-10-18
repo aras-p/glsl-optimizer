@@ -75,6 +75,53 @@ _mesa_update_shader_textures_used(struct gl_program *prog)
    }
 }
 
+/**
+ * Connect a piece of driver storage with a part of a uniform
+ *
+ * \param uni            The uniform with which the storage will be associated
+ * \param element_stride Byte-stride between array elements.
+ *                       \sa gl_uniform_driver_storage::element_stride.
+ * \param vector_stride  Byte-stride between vectors (in a matrix).
+ *                       \sa gl_uniform_driver_storage::vector_stride.
+ * \param format         Conversion from native format to driver format
+ *                       required by the driver.
+ * \param data           Location to dump the data.
+ */
+void
+_mesa_uniform_attach_driver_storage(struct gl_uniform_storage *uni,
+				    unsigned element_stride,
+				    unsigned vector_stride,
+				    enum gl_uniform_driver_format format,
+				    void *data)
+{
+   uni->driver_storage = (struct gl_uniform_driver_storage*)
+      realloc(uni->driver_storage,
+	      sizeof(struct gl_uniform_driver_storage)
+	      * (uni->num_driver_storage + 1));
+
+   uni->driver_storage[uni->num_driver_storage].element_stride = element_stride;
+   uni->driver_storage[uni->num_driver_storage].vector_stride = vector_stride;
+   uni->driver_storage[uni->num_driver_storage].format = (uint8_t) format;
+   uni->driver_storage[uni->num_driver_storage].data = data;
+
+   uni->num_driver_storage++;
+}
+
+/**
+ * Sever all connections with all pieces of driver storage for all uniforms
+ *
+ * \warning
+ * This function does \b not release any of the \c data pointers
+ * previously passed in to \c _mesa_uniform_attach_driver_stoarge.
+ */
+void
+_mesa_uniform_detach_all_driver_storage(struct gl_uniform_storage *uni)
+{
+   free(uni->driver_storage);
+   uni->driver_storage = NULL;
+   uni->num_driver_storage = 0;
+}
+
 void GLAPIENTRY
 _mesa_Uniform1fARB(GLint location, GLfloat v0)
 {

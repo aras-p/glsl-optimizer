@@ -25,6 +25,7 @@
 #include "main/core.h"
 #include "main/context.h"
 #include "ir.h"
+#include "ir_uniform.h"
 #include "../glsl/program.h"
 #include "../glsl/ir_uniform.h"
 

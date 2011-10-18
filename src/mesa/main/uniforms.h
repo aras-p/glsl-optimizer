@@ -27,6 +27,7 @@
 
 #include "glheader.h"
 #include "program/prog_parameter.h"
+#include "../glsl/ir_uniform.h"
 
 struct gl_program;
 struct _glapi_table;
@@ -187,6 +188,16 @@ _mesa_uniform_matrix(struct gl_context *ctx, struct gl_shader_program *shProg,
 void
 _mesa_get_uniform(struct gl_context *ctx, GLuint program, GLint location,
 		  GLsizei bufSize, GLenum returnType, GLvoid *paramsOut);
+
+extern void
+_mesa_uniform_attach_driver_storage(struct gl_uniform_storage *,
+				    unsigned element_stride,
+				    unsigned vector_stride,
+				    enum gl_uniform_driver_format format,
+				    void *data);
+
+extern void
+_mesa_uniform_detach_all_driver_storage(struct gl_uniform_storage *uni);
 
 extern void
 _mesa_propagate_uniforms_to_driver_storage(struct gl_uniform_storage *uni,
