@@ -24,6 +24,7 @@
 #include "main/core.h"
 #include "ir.h"
 #include "linker.h"
+#include "ir_uniform.h"
 #include "glsl_symbol_table.h"
 #include "program/hash_table.h"
 
@@ -150,4 +151,89 @@ private:
    }
 
    struct string_to_uint_map *map;
+};
+
+/**
+ * Class to help parcel out pieces of backing storage to uniforms
+ *
+ * Each uniform processed has some range of the \c gl_constant_value
+ * structures associated with it.  The association is done by finding
+ * the uniform in the \c string_to_uint_map and using the value from
+ * the map to connect that slot in the \c gl_uniform_storage table
+ * with the next available slot in the \c gl_constant_value array.
+ *
+ * \warning
+ * This class assumes that every uniform that will be processed is
+ * already in the \c string_to_uint_map.  In addition, it assumes that
+ * the \c gl_uniform_storage and \c gl_constant_value arrays are "big
+ * enough."
+ */
+class parcel_out_uniform_storage : public uniform_field_visitor {
+public:
+   parcel_out_uniform_storage(struct string_to_uint_map *map,
+			      struct gl_uniform_storage *uniforms,
+			      union gl_constant_value *values)
+      : map(map), uniforms(uniforms), next_sampler(0), values(values)
+   {
+      /* empty */
+   }
+
+private:
+   virtual void visit_field(const glsl_type *type, const char *name)
+   {
+      assert(!type->is_record());
+      assert(!(type->is_array() && type->fields.array->is_record()));
+
+      unsigned id;
+      bool found = this->map->get(id, name);
+      assert(found);
+
+      if (!found)
+	 return;
+
+      /* If there is already storage associated with this uniform, it means
+       * that it was set while processing an earlier shader stage.  For
+       * example, we may be processing the uniform in the fragment shader, but
+       * the uniform was already processed in the vertex shader.
+       */
+      if (this->uniforms[id].storage != NULL)
+	 return;
+
+      const glsl_type *base_type;
+      if (type->is_array()) {
+	 this->uniforms[id].array_elements = type->length;
+	 base_type = type->fields.array;
+      } else {
+	 this->uniforms[id].array_elements = 0;
+	 base_type = type;
+      }
+
+      if (base_type->is_sampler()) {
+	 this->uniforms[id].sampler = this->next_sampler;
+
+	 /* Increment the sampler by 1 for non-arrays and by the number of
+	  * array elements for arrays.
+	  */
+	 this->next_sampler += MAX2(1, this->uniforms[id].array_elements);
+      } else {
+	 this->uniforms[id].sampler = ~0;
+      }
+
+      this->uniforms[id].name = strdup(name);
+      this->uniforms[id].type = base_type;
+      this->uniforms[id].initialized = 0;
+      this->uniforms[id].num_driver_storage = 0;
+      this->uniforms[id].driver_storage = NULL;
+      this->uniforms[id].storage = this->values;
+
+      this->values += values_for_type(type);
+   }
+
+   struct string_to_uint_map *map;
+
+   struct gl_uniform_storage *uniforms;
+   unsigned next_sampler;
+
+public:
+   union gl_constant_value *values;
 };
