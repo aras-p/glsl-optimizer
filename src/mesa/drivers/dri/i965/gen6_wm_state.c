@@ -49,7 +49,7 @@ gen6_prepare_wm_push_constants(struct brw_context *brw)
    /* XXX: Should this happen somewhere before to get our state flag set? */
    _mesa_load_state_parameters(ctx, fp->program.Base.Parameters);
 
-   /* CACHE_NEW_VS_PROG */
+   /* CACHE_NEW_WM_PROG */
    if (brw->wm.prog_data->nr_params != 0) {
       float *constants;
       unsigned int i;
@@ -85,7 +85,7 @@ const struct brw_tracked_state gen6_wm_constants = {
       .mesa  = _NEW_PROGRAM_CONSTANTS,
       .brw   = (BRW_NEW_BATCH |
 		BRW_NEW_FRAGMENT_PROGRAM),
-      .cache = CACHE_NEW_VS_PROG,
+      .cache = CACHE_NEW_WM_PROG,
    },
    .prepare = gen6_prepare_wm_push_constants,
 };
