@@ -852,7 +852,7 @@ i915_is_hiz_depth_format(struct intel_context *intel,
    return false;
 }
 
-void
+static void
 i915_hiz_resolve_noop(struct intel_context *intel,
 		      struct intel_region *region)
 {

@@ -885,7 +885,7 @@ i830_is_hiz_depth_format(struct intel_context *intel, gl_format format)
    return false;
 }
 
-void
+static void
 i830_hiz_resolve_noop(struct intel_context *intel,
 		      struct intel_region *region)
 {
