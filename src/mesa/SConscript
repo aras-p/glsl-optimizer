@@ -129,6 +129,7 @@ main_sources = [
     'main/texstore.c',
     'main/texturebarrier.c',
     'main/transformfeedback.c',
+    'main/uniform_query.cpp',
     'main/uniforms.c',
     'main/varray.c',
     'main/version.c',
