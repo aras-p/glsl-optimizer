@@ -63,10 +63,6 @@ struct vmw_gmr_buffer
    
    struct vmw_region *region;
    void *map;
-   
-#ifdef DEBUG
-   struct pipe_fence_handle *last_fence;
-#endif
 };
 
 
@@ -102,13 +98,6 @@ static void
 vmw_gmr_buffer_destroy(struct pb_buffer *_buf)
 {
    struct vmw_gmr_buffer *buf = vmw_gmr_buffer(_buf);
-
-#ifdef DEBUG
-   if(buf->last_fence) {
-      struct svga_winsys_screen *sws = &buf->mgr->vws->base;
-      assert(sws->fence_signalled(sws, buf->last_fence, 0) == 0);
-   }
-#endif
 
    vmw_ioctl_region_unmap(buf->region);
    
@@ -162,11 +151,6 @@ vmw_gmr_buffer_fence( struct pb_buffer *_buf,
 {
    /* We don't need to do anything, as the pipebuffer library
     * will take care of delaying the destruction of fenced buffers */  
-#ifdef DEBUG
-   struct vmw_gmr_buffer *buf = vmw_gmr_buffer(_buf);
-   if(fence)
-      buf->last_fence = fence;
-#endif
 }
 
 
