@@ -172,13 +172,13 @@ intelReadPixels(struct gl_context * ctx,
    struct intel_context *intel = intel_context(ctx);
    bool dirty;
 
+   intel_flush_rendering_to_batch(ctx);
+
    DBG("%s\n", __FUNCTION__);
 
    if (do_blit_readpixels
        (ctx, x, y, width, height, format, type, pack, pixels))
       return;
-
-   intel_flush(ctx);
 
    /* glReadPixels() wont dirty the front buffer, so reset the dirty
     * flag after calling intel_prepare_render(). */

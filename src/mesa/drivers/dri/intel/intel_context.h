@@ -483,6 +483,7 @@ extern bool intelInitContext(struct intel_context *intel,
                                   struct dd_function_table *functions);
 
 extern void intelFinish(struct gl_context * ctx);
+extern void intel_flush_rendering_to_batch(struct gl_context *ctx);
 extern void intel_flush(struct gl_context * ctx);
 
 extern void intelInitDriverFunctions(struct dd_function_table *functions);

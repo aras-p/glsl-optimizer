@@ -495,7 +495,7 @@ intelInvalidateState(struct gl_context * ctx, GLuint new_state)
 }
 
 void
-intel_flush(struct gl_context *ctx)
+intel_flush_rendering_to_batch(struct gl_context *ctx)
 {
    struct intel_context *intel = intel_context(ctx);
 
@@ -504,6 +504,14 @@ intel_flush(struct gl_context *ctx)
 
    if (intel->gen < 4)
       INTEL_FIREVERTICES(intel);
+}
+
+void
+intel_flush(struct gl_context *ctx)
+{
+   struct intel_context *intel = intel_context(ctx);
+
+   intel_flush_rendering_to_batch(ctx);
 
    if (intel->batch.used)
       intel_batchbuffer_flush(intel);
