@@ -120,8 +120,9 @@ do_blit_readpixels(struct gl_context * ctx,
 	 rowLength = -rowLength;
    }
 
-   dst_offset = (GLintptr) _mesa_image_address(2, pack, pixels, width, height,
-					       format, type, 0, 0, 0);
+   dst_offset = (GLintptr)pixels;
+   dst_offset += _mesa_image_offset(2, pack, width, height,
+				    format, type, 0, 0, 0);
 
    if (!_mesa_clip_copytexsubimage(ctx,
 				   &dst_x, &dst_y,
