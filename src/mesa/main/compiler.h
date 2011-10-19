@@ -150,7 +150,7 @@ extern "C" {
  * inline a static function that we later use in an alias. - ajax
  */
 #ifndef PUBLIC
-#  if defined(__GNUC__) || (defined(__SUNPRO_C) && (__SUNPRO_C >= 0x590))
+#  if (defined(__GNUC__) && __GNUC__ >= 4) || (defined(__SUNPRO_C) && (__SUNPRO_C >= 0x590))
 #    define PUBLIC __attribute__((visibility("default")))
 #    define USED __attribute__((used))
 #  else
