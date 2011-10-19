@@ -939,7 +939,9 @@ unpack_image(struct gl_context *ctx, GLuint dimensions,
       }
       return image;
    }
+
    /* bad access! */
+   _mesa_error(ctx, GL_INVALID_OPERATION, "invalid PBO access");
    return NULL;
 }
 
