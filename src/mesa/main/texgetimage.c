@@ -851,6 +851,7 @@ getcompressedteximage_error_check(struct gl_context *ctx, GLenum target,
          _mesa_error(ctx, GL_INVALID_OPERATION,
                      "glGetnCompressedTexImageARB(out of bounds access:"
                      " bufSize (%d) is too small)", clientMemSize);
+         return GL_TRUE;
       }
    } else {
       /* do bounds checking on PBO write */
