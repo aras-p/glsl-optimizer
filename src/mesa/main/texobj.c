@@ -543,12 +543,13 @@ _mesa_test_texobj_completeness( const struct gl_context *ctx,
                width /= 2;
             }
             if (i >= minLevel && i <= maxLevel) {
-               if (!t->Image[0][i]) {
-                  incomplete(t, "1D Image[0][i] == NULL");
+               const struct gl_texture_image *img = t->Image[0][i];
+               if (!img) {
+                  incomplete(t, "1D Image[%d] is missing", i);
                   return;
                }
-               if (t->Image[0][i]->Width2 != width ) {
-                  incomplete(t, "1D Image[0][i] bad width");
+               if (img->Width2 != width ) {
+                  incomplete(t, "1D Image[%d] bad width %u", i, img->Width2);
                   return;
                }
             }
@@ -570,16 +571,17 @@ _mesa_test_texobj_completeness( const struct gl_context *ctx,
                height /= 2;
             }
             if (i >= minLevel && i <= maxLevel) {
-               if (!t->Image[0][i]) {
-                  incomplete(t, "2D Image[0][i] == NULL");
+               const struct gl_texture_image *img = t->Image[0][i];
+               if (!img) {
+                  incomplete(t, "2D Image[%d of %d] is missing", i, maxLevel);
                   return;
                }
-               if (t->Image[0][i]->Width2 != width) {
-                  incomplete(t, "2D Image[0][i] bad width");
+               if (img->Width2 != width) {
+                  incomplete(t, "2D Image[%d] bad width %u", i, img->Width2);
                   return;
                }
-               if (t->Image[0][i]->Height2 != height) {
-                  incomplete(t, "2D Image[0][i] bad height");
+               if (img->Height2 != height) {
+                  incomplete(t, "2D Image[i] bad height %u", i, img->Height2);
                   return;
                }
                if (width==1 && height==1) {
@@ -604,24 +606,25 @@ _mesa_test_texobj_completeness( const struct gl_context *ctx,
                depth /= 2;
             }
             if (i >= minLevel && i <= maxLevel) {
-               if (!t->Image[0][i]) {
-                  incomplete(t, "3D Image[0][i] == NULL");
+               const struct gl_texture_image *img = t->Image[0][i];
+               if (!img) {
+                  incomplete(t, "3D Image[%d] is missing", i);
                   return;
                }
-               if (t->Image[0][i]->_BaseFormat == GL_DEPTH_COMPONENT) {
+               if (img->_BaseFormat == GL_DEPTH_COMPONENT) {
                   incomplete(t, "GL_DEPTH_COMPONENT only works with 1/2D tex");
                   return;
                }
-               if (t->Image[0][i]->Width2 != width) {
-                  incomplete(t, "3D Image[0][i] bad width");
+               if (img->Width2 != width) {
+                  incomplete(t, "3D Image[%d] bad width %u", i, img->Width2);
                   return;
                }
-               if (t->Image[0][i]->Height2 != height) {
-                  incomplete(t, "3D Image[0][i] bad height");
+               if (img->Height2 != height) {
+                  incomplete(t, "3D Image[%d] bad height %u", i, img->Height2);
                   return;
                }
-               if (t->Image[0][i]->Depth2 != depth) {
-                  incomplete(t, "3D Image[0][i] bad depth");
+               if (img->Depth2 != depth) {
+                  incomplete(t, "3D Image[%d] bad depth %u", i, img->Depth2);
                   return;
                }
             }
