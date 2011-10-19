@@ -32,61 +32,6 @@
 #include "intel_batchbuffer.h"
 
 static void
-gen7_prepare_wm_constants(struct brw_context *brw)
-{
-   struct intel_context *intel = &brw->intel;
-   struct gl_context *ctx = &intel->ctx;
-   /* BRW_NEW_FRAGMENT_PROGRAM */
-   const struct brw_fragment_program *fp =
-      brw_fragment_program_const(brw->fragment_program);
-
-   /* Updates the ParameterValues[i] pointers for all parameters of the
-    * basic type of PROGRAM_STATE_VAR.
-    */
-   /* XXX: Should this happen somewhere before to get our state flag set? */
-   _mesa_load_state_parameters(ctx, fp->program.Base.Parameters);
-
-   /* CACHE_NEW_WM_PROG */
-   if (brw->wm.prog_data->nr_params != 0) {
-      float *constants;
-      unsigned int i;
-
-      constants = brw_state_batch(brw, AUB_TRACE_WM_CONSTANTS,
-				  brw->wm.prog_data->nr_params *
-				  sizeof(float),
-				  32, &brw->wm.push_const_offset);
-
-      for (i = 0; i < brw->wm.prog_data->nr_params; i++) {
-	 constants[i] = convert_param(brw->wm.prog_data->param_convert[i],
-				      brw->wm.prog_data->param[i]);
-      }
-
-      if (0) {
-	 printf("WM constants:\n");
-	 for (i = 0; i < brw->wm.prog_data->nr_params; i++) {
-	    if ((i & 7) == 0)
-	       printf("g%d: ", brw->wm.prog_data->first_curbe_grf + i / 8);
-	    printf("%8f ", constants[i]);
-	    if ((i & 7) == 7)
-	       printf("\n");
-	 }
-	 if ((i & 7) != 0)
-	    printf("\n");
-	 printf("\n");
-      }
-   }
-}
-
-const struct brw_tracked_state gen7_wm_constants = {
-   .dirty = {
-      .mesa  = _NEW_PROGRAM_CONSTANTS,
-      .brw   = (BRW_NEW_BATCH | BRW_NEW_FRAGMENT_PROGRAM),
-      .cache = CACHE_NEW_WM_PROG,
-   },
-   .prepare = gen7_prepare_wm_constants,
-};
-
-static void
 upload_wm_state(struct brw_context *brw)
 {
    struct intel_context *intel = &brw->intel;
