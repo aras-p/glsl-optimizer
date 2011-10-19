@@ -1279,30 +1279,6 @@ _mesa_PopAttrib(void)
 
 
 /**
- * Helper for incrementing/decrementing vertex buffer object reference
- * counts when pushing/popping the GL_CLIENT_VERTEX_ARRAY_BIT attribute group.
- */
-static void
-adjust_buffer_object_ref_counts(struct gl_array_object *arrayObj, GLint step)
-{
-   GLuint i;
-
-   arrayObj->Vertex.BufferObj->RefCount += step;
-   arrayObj->Weight.BufferObj->RefCount += step;
-   arrayObj->Normal.BufferObj->RefCount += step;
-   arrayObj->Color.BufferObj->RefCount += step;
-   arrayObj->SecondaryColor.BufferObj->RefCount += step;
-   arrayObj->FogCoord.BufferObj->RefCount += step;
-   arrayObj->Index.BufferObj->RefCount += step;
-   arrayObj->EdgeFlag.BufferObj->RefCount += step;
-   for (i = 0; i < Elements(arrayObj->TexCoord); i++)
-      arrayObj->TexCoord[i].BufferObj->RefCount += step;
-   for (i = 0; i < Elements(arrayObj->VertexAttrib); i++)
-      arrayObj->VertexAttrib[i].BufferObj->RefCount += step;
-}
-
-
-/**
  * Copy gl_pixelstore_attrib from src to dst, updating buffer
  * object refcounts.
  */
@@ -1326,6 +1302,151 @@ copy_pixelstore(struct gl_context *ctx,
 
 #define GL_CLIENT_PACK_BIT (1<<20)
 #define GL_CLIENT_UNPACK_BIT (1<<21)
+
+/**
+ * Copy gl_array_object from src to dest.
+ * 'dest' must be in an initialized state.
+ */
+static void
+copy_array_object(struct gl_context *ctx,
+                  struct gl_array_object *dest,
+                  struct gl_array_object *src)
+{
+   GLuint i;
+
+   /* skip Name */
+   /* skip RefCount */
+
+   /* In theory must be the same anyway, but on recreate make sure it matches */
+   dest->VBOonly = src->VBOonly;
+
+   _mesa_copy_client_array(ctx, &dest->Vertex, &src->Vertex);
+   _mesa_copy_client_array(ctx, &dest->Weight, &src->Weight);
+   _mesa_copy_client_array(ctx, &dest->Normal, &src->Normal);
+   _mesa_copy_client_array(ctx, &dest->Color, &src->Color);
+   _mesa_copy_client_array(ctx, &dest->SecondaryColor, &src->SecondaryColor);
+   _mesa_copy_client_array(ctx, &dest->FogCoord, &src->FogCoord);
+   _mesa_copy_client_array(ctx, &dest->Index, &src->Index);
+   _mesa_copy_client_array(ctx, &dest->EdgeFlag, &src->EdgeFlag);
+#if FEATURE_point_size_array
+   _mesa_copy_client_array(ctx, &dest->PointSize, &src->PointSize);
+#endif
+   for (i = 0; i < Elements(src->TexCoord); i++)
+      _mesa_copy_client_array(ctx, &dest->TexCoord[i], &src->TexCoord[i]);
+   for (i = 0; i < Elements(src->VertexAttrib); i++)
+      _mesa_copy_client_array(ctx, &dest->VertexAttrib[i], &src->VertexAttrib[i]);
+
+   /* _Enabled must be the same than on push */
+   dest->_Enabled = src->_Enabled;
+   dest->_MaxElement = src->_MaxElement;
+}
+
+/**
+ * Copy gl_array_attrib from src to dest.
+ * 'dest' must be in an initialized state.
+ */
+static void
+copy_array_attrib(struct gl_context *ctx,
+                  struct gl_array_attrib *dest,
+                  struct gl_array_attrib *src)
+{
+   /* skip ArrayObj */
+   /* skip DefaultArrayObj, Objects */
+   dest->ActiveTexture = src->ActiveTexture;
+   dest->LockFirst = src->LockFirst;
+   dest->LockCount = src->LockCount;
+   dest->PrimitiveRestart = src->PrimitiveRestart;
+   dest->RestartIndex = src->RestartIndex;
+   /* skip NewState */
+   /* skip RebindArrays */
+
+   copy_array_object(ctx, dest->ArrayObj, src->ArrayObj);
+
+   /* skip ArrayBufferObj */
+   /* skip ElementArrayBufferObj */
+}
+
+/**
+ * Save the content of src to dest.
+ */
+static void
+save_array_attrib(struct gl_context *ctx,
+                  struct gl_array_attrib *dest,
+                  struct gl_array_attrib *src)
+{
+   /* Set the Name, needed for restore, but do never overwrite.
+    * Needs to match value in the object hash. */
+   dest->ArrayObj->Name = src->ArrayObj->Name;
+   /* And copy all of the rest. */
+   copy_array_attrib(ctx, dest, src);
+
+   /* Just reference them here */
+   _mesa_reference_buffer_object(ctx, &dest->ArrayBufferObj,
+                                 src->ArrayBufferObj);
+   _mesa_reference_buffer_object(ctx, &dest->ElementArrayBufferObj,
+                                 src->ElementArrayBufferObj);
+}
+
+/**
+ * Restore the content of src to dest.
+ */
+static void
+restore_array_attrib(struct gl_context *ctx,
+                     struct gl_array_attrib *dest,
+                     struct gl_array_attrib *src)
+{
+   /* Restore or recreate the array object by its name ... */
+   _mesa_BindVertexArrayAPPLE(src->ArrayObj->Name);
+
+   /* ... and restore its content */
+   copy_array_attrib(ctx, dest, src);
+
+   /* Restore or recreate the buffer objects by the names ... */
+   _mesa_BindBufferARB(GL_ARRAY_BUFFER_ARB,
+                       src->ArrayBufferObj->Name);
+   _mesa_BindBufferARB(GL_ELEMENT_ARRAY_BUFFER_ARB,
+                       src->ElementArrayBufferObj->Name);
+
+   /* Better safe than sorry?! */
+   dest->RebindArrays = GL_TRUE;
+
+   /* FIXME: Should some bits in ctx->Array->NewState also be set
+    * FIXME: here?  It seems like it should be set to inclusive-or
+    * FIXME: of the old ArrayObj->_Enabled and the new _Enabled.
+    * ... just do it.
+    */
+   dest->NewState |= src->ArrayObj->_Enabled | dest->ArrayObj->_Enabled;
+}
+
+/**
+ * init/alloc the fields of 'attrib'.
+ * Needs to the init part matching free_array_attrib_data below.
+ */
+static void
+init_array_attrib_data(struct gl_context *ctx,
+                       struct gl_array_attrib *attrib)
+{
+   /* Get a non driver gl_array_object. */
+   attrib->ArrayObj = CALLOC_STRUCT( gl_array_object );
+   _mesa_initialize_array_object(ctx, attrib->ArrayObj, 0);
+}
+
+/**
+ * Free/unreference the fields of 'attrib' but don't delete it (that's
+ * done later in the calling code).
+ * Needs to the cleanup part matching init_array_attrib_data above.
+ */
+static void
+free_array_attrib_data(struct gl_context *ctx,
+                       struct gl_array_attrib *attrib)
+{
+   /* We use a non driver array object, so don't just unref since we would
+    * end up using the drivers DeleteArrayObject function for deletion. */
+   _mesa_delete_array_object(ctx, attrib->ArrayObj);
+   attrib->ArrayObj = 0;
+   _mesa_reference_buffer_object(ctx, &attrib->ArrayBufferObj, NULL);
+   _mesa_reference_buffer_object(ctx, &attrib->ElementArrayBufferObj, NULL);
+}
 
 
 void GLAPIENTRY
@@ -1360,26 +1481,10 @@ _mesa_PushClientAttrib(GLbitfield mask)
 
    if (mask & GL_CLIENT_VERTEX_ARRAY_BIT) {
       struct gl_array_attrib *attr;
-      struct gl_array_object *obj;
-
-      attr = MALLOC_STRUCT( gl_array_attrib );
-      obj = MALLOC_STRUCT( gl_array_object );
-
-#if FEATURE_ARB_vertex_buffer_object
-      /* increment ref counts since we're copying pointers to these objects */
-      ctx->Array.ArrayBufferObj->RefCount++;
-      ctx->Array.ElementArrayBufferObj->RefCount++;
-#endif
-
-      memcpy( attr, &ctx->Array, sizeof(struct gl_array_attrib) );
-      memcpy( obj, ctx->Array.ArrayObj, sizeof(struct gl_array_object) );
-
-      attr->ArrayObj = obj;
-
+      attr = CALLOC_STRUCT( gl_array_attrib );
+      init_array_attrib_data(ctx, attr);
+      save_array_attrib(ctx, attr, &ctx->Array);
       save_attrib_data(&head, GL_CLIENT_VERTEX_ARRAY_BIT, attr);
-
-      /* bump reference counts on buffer objects */
-      adjust_buffer_object_ref_counts(ctx->Array.ArrayObj, 1);
    }
 
    ctx->ClientAttribStack[ctx->ClientAttribStackDepth] = head;
@@ -1426,36 +1531,10 @@ _mesa_PopClientAttrib(void)
 	    ctx->NewState |= _NEW_PACKUNPACK;
             break;
          case GL_CLIENT_VERTEX_ARRAY_BIT: {
-	    struct gl_array_attrib * data =
+	    struct gl_array_attrib * attr =
 	      (struct gl_array_attrib *) node->data;
-
-            adjust_buffer_object_ref_counts(ctx->Array.ArrayObj, -1);
-	 
-            ctx->Array.ActiveTexture = data->ActiveTexture;
-	    if (data->LockCount != 0)
-	       _mesa_LockArraysEXT(data->LockFirst, data->LockCount);
-	    else if (ctx->Array.LockCount)
-	       _mesa_UnlockArraysEXT();
-
-	    _mesa_BindVertexArrayAPPLE( data->ArrayObj->Name );
-	    
-#if FEATURE_ARB_vertex_buffer_object
-            _mesa_BindBufferARB(GL_ARRAY_BUFFER_ARB,
-                                data->ArrayBufferObj->Name);
-            _mesa_BindBufferARB(GL_ELEMENT_ARRAY_BUFFER_ARB,
-                                data->ElementArrayBufferObj->Name);
-#endif
-
-	    memcpy( ctx->Array.ArrayObj, data->ArrayObj,
-		    sizeof( struct gl_array_object ) );
-
-	    FREE( data->ArrayObj );
-	    
-	    /* FIXME: Should some bits in ctx->Array->NewState also be set
-	     * FIXME: here?  It seems like it should be set to inclusive-or
-	     * FIXME: of the old ArrayObj->_Enabled and the new _Enabled.
-	     */
-
+            restore_array_attrib(ctx, &ctx->Array, attr);
+            free_array_attrib_data(ctx, attr);
 	    ctx->NewState |= _NEW_ARRAY;
             break;
 	 }
