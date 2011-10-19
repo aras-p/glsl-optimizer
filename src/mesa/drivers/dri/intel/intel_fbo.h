@@ -44,6 +44,7 @@ struct intel_renderbuffer
 {
    struct gl_renderbuffer Base;
    struct intel_region *region;
+   drm_intel_bo *map_bo;
    void *map_buffer;
    GLuint map_x, map_y, map_w, map_h;
    GLbitfield map_mode;
@@ -60,7 +61,6 @@ struct intel_renderbuffer
     */
    struct gl_renderbuffer *wrapped_depth;
    struct gl_renderbuffer *wrapped_stencil;
-
    /** \} */
 
    GLuint draw_x, draw_y; /**< Offset of drawing within the region */

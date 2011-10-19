@@ -42,6 +42,7 @@
 #include "intel_context.h"
 #include "intel_batchbuffer.h"
 #include "intel_buffers.h"
+#include "intel_blit.h"
 #include "intel_fbo.h"
 #include "intel_mipmap_tree.h"
 #include "intel_regions.h"
@@ -95,7 +96,7 @@ intel_map_renderbuffer(struct gl_context *ctx,
    struct intel_context *intel = intel_context(ctx);
    struct intel_renderbuffer *irb = intel_renderbuffer(rb);
    GLubyte *map;
-   int stride;
+   int stride, flip_stride;
 
    /* We sometimes get called with this by our intel_span.c usage. */
    if (!irb->region) {
@@ -145,24 +146,92 @@ intel_map_renderbuffer(struct gl_context *ctx,
 	  x, y, w, h, *out_map, *out_stride);
 
       return;
+   } else if (intel->gen >= 6 &&
+       !(mode & GL_MAP_WRITE_BIT) &&
+       irb->region->tiling == I915_TILING_X) {
+      int dst_stride = ALIGN(w * irb->region->cpp, 4);
+      int src_x, src_y;
+
+      /* On gen6+, we have LLC sharing, which means we can get high-performance
+       * access to linear-mapped buffers.  So, blit out a tiled buffer (if
+       * possible, which it isn't really for Y tiling) to a temporary BO and
+       * return a map of that.
+       */
+
+      if (rb->Name) {
+	 src_x = x + irb->draw_x;
+	 src_y = y + irb->draw_y;
+      } else {
+	 src_x = x;
+	 src_y = irb->region->height - y - h;
+      }
+
+      irb->map_bo = drm_intel_bo_alloc(intel->bufmgr, "MapRenderbuffer() temp",
+				       dst_stride * h, 4096);
+
+      /* We don't do the flip in the blit, because it's always so tricky to get
+       * right.
+       */
+      if (irb->map_bo &&
+	  intelEmitCopyBlit(intel,
+			    irb->region->cpp,
+			    irb->region->pitch, irb->region->bo,
+			    0, irb->region->tiling,
+			    dst_stride / irb->region->cpp, irb->map_bo,
+			    0, I915_TILING_NONE,
+			    src_x, src_y,
+			    0, 0,
+			    w, h,
+			    GL_COPY)) {
+	 intel_batchbuffer_flush(intel);
+	 drm_intel_bo_map(irb->map_bo, false);
+
+	 if (rb->Name) {
+	    *out_map = irb->map_bo->virtual;
+	    *out_stride = dst_stride;
+	 } else {
+	    *out_map = irb->map_bo->virtual + (h - 1) * dst_stride;
+	    *out_stride = -dst_stride;
+	 }
+
+	 DBG("%s: rb %d (%s) blit mapped: (%d, %d) (%dx%d) -> %p/%d\n",
+	     __FUNCTION__, rb->Name, _mesa_get_format_name(rb->Format),
+	     src_x, src_y, w, h, *out_map, *out_stride);
+
+	 return;
+      } else {
+	 drm_intel_bo_unreference(irb->map_bo);
+	 irb->map_bo = NULL;
+      }
    }
 
    map = intel_region_map(intel, irb->region, mode);
-   stride = irb->region->pitch * irb->region->cpp;
 
    if (rb->Name == 0) {
-      map += stride * (irb->region->height - 1);
-      stride = -stride;
+      y = irb->region->height - 1 - y;
+      flip_stride = -stride;
    } else {
-      map += irb->draw_x * irb->region->cpp;
-      map += (int)irb->draw_y * stride;
+      x += irb->draw_x;
+      y += irb->draw_y;
+      flip_stride = stride;
    }
 
+   if (drm_intel_bo_references(intel->batch.bo, irb->region->bo)) {
+      intel_batchbuffer_flush(intel);
+   }
+
+   drm_intel_gem_bo_map_gtt(irb->region->bo);
+
+   map = irb->region->bo->virtual;
    map += x * irb->region->cpp;
    map += (int)y * stride;
 
    *out_map = map;
-   *out_stride = stride;
+   *out_stride = flip_stride;
+
+   DBG("%s: rb %d (%s) gtt mapped: (%d, %d) (%dx%d) -> %p/%d\n",
+       __FUNCTION__, rb->Name, _mesa_get_format_name(rb->Format),
+       x, y, w, h, *out_map, *out_stride);
 }
 
 static void
@@ -202,6 +271,10 @@ intel_unmap_renderbuffer(struct gl_context *ctx,
       intel_region_unmap(intel, irb->region);
       free(irb->map_buffer);
       irb->map_buffer = NULL;
+   } else if (irb->map_bo) {
+      drm_intel_bo_unmap(irb->map_bo);
+      drm_intel_bo_unreference(irb->map_bo);
+      irb->map_bo = 0;
    } else {
       if (irb->region)
 	 intel_region_unmap(intel, irb->region);
