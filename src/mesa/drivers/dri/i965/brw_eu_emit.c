@@ -475,9 +475,6 @@ static void brw_set_ff_sync_message(struct brw_compile *p,
 				    GLuint response_length,
 				    bool end_of_thread)
 {
-   struct brw_context *brw = p->brw;
-   struct intel_context *intel = &brw->intel;
-
    brw_set_message_descriptor(p, insn, BRW_SFID_URB,
 			      1, response_length, true, end_of_thread);
    insn->bits3.urb_gen5.opcode = 1; /* FF_SYNC */
