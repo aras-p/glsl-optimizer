@@ -4519,7 +4519,7 @@ static GLvoid *copy_data(const GLvoid *data, GLsizei size, const char *func)
 
    image = malloc(size);
    if (!image) {
-      _mesa_error(ctx, GL_OUT_OF_MEMORY, func);
+      _mesa_error(ctx, GL_OUT_OF_MEMORY, "%s", func);
       return NULL;
    }
    memcpy(image, data, size);
