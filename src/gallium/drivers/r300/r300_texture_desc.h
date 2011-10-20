@@ -43,9 +43,9 @@ unsigned r300_get_pixel_alignment(enum pipe_format format,
                                   enum radeon_bo_layout macrotile,
                                   enum r300_dim dim, boolean is_rs690);
 
-boolean r300_texture_desc_init(struct r300_screen *rscreen,
-                               struct r300_resource *tex,
-                               const struct pipe_resource *base);
+void r300_texture_desc_init(struct r300_screen *rscreen,
+                            struct r300_resource *tex,
+                            const struct pipe_resource *base);
 
 unsigned r300_texture_get_offset(struct r300_resource *tex,
                                  unsigned level, unsigned layer);

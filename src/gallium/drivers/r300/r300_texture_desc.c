@@ -473,9 +473,9 @@ static void r300_tex_print_info(struct r300_resource *tex,
             util_format_short_name(tex->b.b.b.format));
 }
 
-boolean r300_texture_desc_init(struct r300_screen *rscreen,
-                               struct r300_resource *tex,
-                               const struct pipe_resource *base)
+void r300_texture_desc_init(struct r300_screen *rscreen,
+                            struct r300_resource *tex,
+                            const struct pipe_resource *base)
 {
     tex->b.b.b.target = base->target;
     tex->b.b.b.format = base->format;
@@ -514,11 +514,15 @@ boolean r300_texture_desc_init(struct r300_screen *rscreen,
 
         /* Make sure the buffer we got is large enough. */
         if (tex->tex.size_in_bytes > tex->buf->size) {
-            fprintf(stderr, "r300: texture_desc_init: The buffer is not "
-                            "large enough. Got: %i, Need: %i, Info:\n",
-                            tex->buf->size, tex->tex.size_in_bytes);
+            fprintf(stderr,
+                "r300: I got a pre-allocated buffer to use it as a texture "
+                "storage, but the buffer is too small. I'll use the buffer "
+                "anyway, because I can't crash here, but it's dangerous. "
+                "This can be a DDX bug. Got: %iB, Need: %iB, Info:\n",
+                tex->buf->size, tex->tex.size_in_bytes);
             r300_tex_print_info(tex, "texture_desc_init");
-            return FALSE;
+            /* Ooops, what now. Apps will break if we fail this,
+             * so just pretend everything's okay. */
         }
     }
 
@@ -526,8 +530,6 @@ boolean r300_texture_desc_init(struct r300_screen *rscreen,
 
     if (SCREEN_DBG_ON(rscreen, DBG_TEX))
         r300_tex_print_info(tex, "texture_desc_init");
-
-    return TRUE;
 }
 
 unsigned r300_texture_get_offset(struct r300_resource *tex,
