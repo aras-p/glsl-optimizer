@@ -216,9 +216,6 @@ struct GalliumD3D11RasterizerState : public GalliumD3D11RasterizerStateBase
 template<typename Base = ID3D11DeviceChild>
 struct GalliumD3D11Shader : public GalliumD3D11Object<Base>
 {
-	std::vector<int> slot_to_resource;
-	std::vector<int> slot_to_sampler;
-
 	GalliumD3D11Shader(GalliumD3D11Screen* device, void* object)
 	: GalliumD3D11Object<Base>(device, object)
 	{}

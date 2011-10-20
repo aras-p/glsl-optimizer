@@ -366,15 +366,6 @@ struct sm4_program
 	 */
 	std::vector<int> cf_insn_linked;
 
-	/* NOTE: sampler 0 is the unnormalized nearest sampler for LD/LD_MS, while
-	 * sampler 1 is user-specified sampler 0
-	 */
-	bool resource_sampler_slots_assigned;
-	std::vector<int> slot_to_resource;
-	std::vector<int> slot_to_sampler;
-	std::map<std::pair<int, int>, int> resource_sampler_to_slot;
-	std::map<int, int> resource_to_slot;
-
 	bool labels_found;
 	std::vector<int> label_to_insn_num;
 
@@ -382,7 +373,6 @@ struct sm4_program
 	{
 		memset(&version, 0, sizeof(version));
 		labels_found = false;
-		resource_sampler_slots_assigned = false;
 	}
 
 	~sm4_program()
@@ -404,7 +394,6 @@ sm4_program* sm4_parse(void* tokens, int size);
 
 bool sm4_link_cf_insns(sm4_program& program);
 bool sm4_find_labels(sm4_program& program);
-bool sm4_allocate_resource_sampler_pairs(sm4_program& program);
 
 #endif /* SM4_H_ */
 

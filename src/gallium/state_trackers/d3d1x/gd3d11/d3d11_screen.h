@@ -1225,12 +1225,6 @@ struct GalliumD3D11ScreenImpl : public GalliumD3D11Screen
 			break;
 		}
 
-		if(shader)
-		{
-			shader->slot_to_resource = sm4->slot_to_resource;
-			shader->slot_to_sampler = sm4->slot_to_sampler;
-		}
-
 		free((void*)tgsi_shader.tokens);
 		return shader;
 	}

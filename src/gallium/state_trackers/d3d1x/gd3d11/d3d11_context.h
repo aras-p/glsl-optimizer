@@ -83,20 +83,15 @@ struct GalliumD3D10Device : public GalliumD3D10ScreenImpl<threadsafe>
 	void* default_depth_stencil;
 	void* default_blend;
 	void* default_sampler;
-	void* ld_sampler;
-	void * default_shaders[D3D11_STAGES];
+	void* default_shaders[D3D11_STAGES];
 
 	// derived state
 	int primitive_mode;
 	struct pipe_vertex_buffer vertex_buffers[D3D11_IA_VERTEX_INPUT_RESOURCE_SLOT_COUNT];
 	struct pipe_resource* so_buffers[D3D11_SO_BUFFER_SLOT_COUNT];
 	struct pipe_sampler_view* sampler_views[D3D11_STAGES][D3D11_COMMONSHADER_INPUT_RESOURCE_SLOT_COUNT];
-	struct
-	{
-		void* ld; // accessed with a -1 index from v
-		void* v[D3D11_COMMONSHADER_SAMPLER_SLOT_COUNT];
-	} sampler_csos[D3D11_STAGES];
-	struct pipe_resource * buffers[D3D11_SO_BUFFER_SLOT_COUNT];
+	void* sampler_csos[D3D11_STAGES][D3D11_COMMONSHADER_SAMPLER_SLOT_COUNT];
+	struct pipe_resource* buffers[D3D11_SO_BUFFER_SLOT_COUNT];
 	unsigned num_shader_resource_views[D3D11_STAGES];
 	unsigned num_samplers[D3D11_STAGES];
 	unsigned num_vertex_buffers;
@@ -246,14 +241,10 @@ struct GalliumD3D10Device : public GalliumD3D10ScreenImpl<threadsafe>
 		samplerd.min_lod = -FLT_MAX;
 		samplerd.max_lod = FLT_MAX;
 		samplerd.max_anisotropy = 1;
-		ld_sampler = pipe->create_sampler_state(pipe, &samplerd);
 
 		for(unsigned s = 0; s < D3D11_STAGES; ++s)
-		{
-			sampler_csos[s].ld = ld_sampler;
 			for(unsigned i = 0; i < D3D11_COMMONSHADER_SAMPLER_SLOT_COUNT; ++i)
-				sampler_csos[s].v[i] = default_sampler;
-		}
+				sampler_csos[s][i] = default_sampler;
 
 		// TODO: should this really be empty shaders, or should they be all-passthrough?
 		memset(default_shaders, 0, sizeof(default_shaders));
@@ -294,7 +285,6 @@ struct GalliumD3D10Device : public GalliumD3D10ScreenImpl<threadsafe>
 		if(pipe->bind_geometry_sampler_states)
 			pipe->bind_geometry_sampler_states(pipe, 0, 0);
 		pipe->delete_sampler_state(pipe, default_sampler);
-		pipe->delete_sampler_state(pipe, ld_sampler);
 
 		pipe->bind_fs_state(pipe, 0);
 		pipe->delete_fs_state(pipe, default_shaders[PIPE_SHADER_FRAGMENT]);
@@ -393,14 +383,14 @@ struct GalliumD3D10Device : public GalliumD3D10ScreenImpl<threadsafe>
 			if(samplers[s][start + i].p != samps[i])
 			{
 				samplers[s][start + i] = samps[i];
-				sampler_csos[s].v[start + i] = samps[i] ? samps[i]->object : default_sampler;
+				sampler_csos[s][start + i] = samps[i] ? samps[i]->object : default_sampler;
 				last_different = i;
 			}
-			if(last_different >= 0)
-			{
-				num_samplers[s] = std::max(num_samplers[s], start + last_different + 1);
-				update_flags |= 1 << (UPDATE_SAMPLERS_SHIFT + s);
-			}
+		}
+		if(last_different >= 0)
+		{
+			num_samplers[s] = std::max(num_samplers[s], start + last_different + 1);
+			update_flags |= 1 << (UPDATE_SAMPLERS_SHIFT + s);
 		}
 	}
 
@@ -517,22 +507,17 @@ struct GalliumD3D10Device : public GalliumD3D10ScreenImpl<threadsafe>
 				--num_shader_resource_views[s];
 			if((1 << s) & caps.stages_with_sampling)
 			{
-				struct pipe_sampler_view* views_to_bind[PIPE_MAX_SAMPLERS];
-				unsigned num_views_to_bind = shaders[s] ? shaders[s]->slot_to_resource.size() : 0;
-				for(unsigned i = 0; i < num_views_to_bind; ++i)
-				{
-					views_to_bind[i] = sampler_views[s][shaders[s]->slot_to_resource[i]];
-				}
+				const unsigned num_views_to_bind = num_shader_resource_views[s];
 				switch(s)
 				{
 				case PIPE_SHADER_VERTEX:
-					pipe->set_vertex_sampler_views(pipe, num_views_to_bind, views_to_bind);
+					pipe->set_vertex_sampler_views(pipe, num_views_to_bind, sampler_views[s]);
 					break;
 				case PIPE_SHADER_FRAGMENT:
-					pipe->set_fragment_sampler_views(pipe, num_views_to_bind, views_to_bind);
+					pipe->set_fragment_sampler_views(pipe, num_views_to_bind, sampler_views[s]);
 					break;
 				case PIPE_SHADER_GEOMETRY:
-					pipe->set_geometry_sampler_views(pipe, num_views_to_bind, views_to_bind);
+					pipe->set_geometry_sampler_views(pipe, num_views_to_bind, sampler_views[s]);
 					break;
 				}
 			}
@@ -540,27 +525,21 @@ struct GalliumD3D10Device : public GalliumD3D10ScreenImpl<threadsafe>
 
 		if(update_flags & (1 << (UPDATE_SAMPLERS_SHIFT + s)))
 		{
-			while(num_samplers[s] && !sampler_csos[s].v[num_samplers[s] - 1])
+			while(num_samplers[s] && !sampler_csos[s][num_samplers[s] - 1])
 				--num_samplers[s];
 			if((1 << s) & caps.stages_with_sampling)
 			{
-				void* samplers_to_bind[PIPE_MAX_SAMPLERS];
-				unsigned num_samplers_to_bind = shaders[s] ? shaders[s]->slot_to_sampler.size() : 0;
-				for(unsigned i = 0; i < num_samplers_to_bind; ++i)
-				{
-					// index can be -1 to access sampler_csos[s].ld
-					samplers_to_bind[i] = *(sampler_csos[s].v + shaders[s]->slot_to_sampler[i]);
-				}
+				const unsigned num_samplers_to_bind = num_samplers[s];
 				switch(s)
 				{
 				case PIPE_SHADER_VERTEX:
-					pipe->bind_vertex_sampler_states(pipe, num_samplers_to_bind, samplers_to_bind);
+					pipe->bind_vertex_sampler_states(pipe, num_samplers_to_bind, sampler_csos[s]);
 					break;
 				case PIPE_SHADER_FRAGMENT:
-					pipe->bind_fragment_sampler_states(pipe, num_samplers_to_bind, samplers_to_bind);
+					pipe->bind_fragment_sampler_states(pipe, num_samplers_to_bind, sampler_csos[s]);
 					break;
 				case PIPE_SHADER_GEOMETRY:
-					pipe->bind_geometry_sampler_states(pipe, num_samplers_to_bind, samplers_to_bind);
+					pipe->bind_geometry_sampler_states(pipe, num_samplers_to_bind, sampler_csos[s]);
 					break;
 				}
 			}
@@ -1918,7 +1897,7 @@ changed:
 				if(samplers[s][i] == state)
 				{
 					samplers[s][i].p = NULL;
-					sampler_csos[s].v[i] = NULL;
+					sampler_csos[s][i] = NULL;
 					update_flags |= (1 << (UPDATE_SAMPLERS_SHIFT + s));
 				}
 			}

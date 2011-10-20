@@ -78,6 +78,7 @@ struct sm4_to_tgsi_converter
 	std::vector<struct ureg_dst> temps;
 	std::vector<struct ureg_dst> outputs;
 	std::vector<struct ureg_src> inputs;
+	std::vector<struct ureg_src> resources;
 	std::vector<struct ureg_src> samplers;
 	std::vector<std::pair<unsigned, unsigned> > targets; // first is normal, second shadow/comparison
 	std::vector<unsigned> sampler_modes; // 0 = normal, 1 = shadow/comparison
@@ -191,24 +192,27 @@ struct sm4_to_tgsi_converter
 		return (int)op.indices[0].disp;
 	}
 
-	int _texslot(bool have_sampler = true)
+	unsigned tex_target(unsigned resource, unsigned sampler)
 	{
-		std::map<std::pair<int, int>, int>::iterator i;
-		i = program.resource_sampler_to_slot.find(std::make_pair(_idx(SM4_FILE_RESOURCE, 2), have_sampler ? _idx(SM4_FILE_SAMPLER, 3) : -1));
-		check(i != program.resource_sampler_to_slot.end());
-		return i->second;
-	}
-
-	unsigned tex_target(unsigned texslot)
-	{
-		unsigned mode = sampler_modes[program.slot_to_sampler[texslot]];
-		unsigned target;
-		if(mode)
-			target = targets[program.slot_to_resource[texslot]].second;
-		else
-			target = targets[program.slot_to_resource[texslot]].first;
+		unsigned shadow = sampler_modes[sampler];
+		unsigned target = shadow ? targets[resource].second : targets[resource].first;
 		check(target);
 		return target;
+	}
+
+	enum pipe_type res_return_type(unsigned type)
+	{
+		switch(type)
+		{
+		case D3D_RETURN_TYPE_UNORM: return PIPE_TYPE_UNORM;
+		case D3D_RETURN_TYPE_SNORM: return PIPE_TYPE_SNORM;
+		case D3D_RETURN_TYPE_SINT:  return PIPE_TYPE_SINT;
+		case D3D_RETURN_TYPE_UINT:  return PIPE_TYPE_UINT;
+		case D3D_RETURN_TYPE_FLOAT: return PIPE_TYPE_FLOAT;
+		default:
+			fail("invalid resource return type");
+			return PIPE_TYPE_FLOAT;
+		}
 	}
 
 	std::vector<struct ureg_dst> insn_tmps;
@@ -440,102 +444,37 @@ struct sm4_to_tgsi_converter
 				}
 				break;
 			case SM4_OPCODE_RESINFO:
-			{
-				std::map<int, int>::iterator i;
-				i = program.resource_to_slot.find(_idx(SM4_FILE_RESOURCE, 2));
-				check(i != program.resource_to_slot.end());
-				unsigned texslot = i->second;
-
-				// no driver actually provides this, unfortunately
-				ureg_TXQ(ureg, _dst(), tex_target(texslot), _src(1), samplers[texslot]);
+				// TODO: return type
+				ureg_RESINFO(ureg, _dst(), _src(1), resources[_idx(SM4_FILE_RESOURCE, 2)]);
 				break;
-			};
-			// TODO: sample offset, sample index
-			case SM4_OPCODE_LD: // dst, coord_int, res; mipmap level in last coord_int arg (ouch)
+			// TODO: sample index, texture offset
+			case SM4_OPCODE_LD: // dst, coord_int, res; mipmap level in last coord_int arg
+				ureg_LOAD(ureg, _dst(), _src(1), resources[_idx(SM4_FILE_RESOURCE, 2)]);
+				break;
 			case SM4_OPCODE_LD_MS:
-			{
-				unsigned texslot = _texslot(false);
-				unsigned dim = 0;
-				switch(targets[texslot].first)
-				{
-				case TGSI_TEXTURE_1D:
-					dim = 1;
-					break;
-				case TGSI_TEXTURE_2D:
-				case TGSI_TEXTURE_RECT:
-					dim = 2;
-					break;
-				case TGSI_TEXTURE_3D:
-					dim = 3;
-					break;
-				default:
-					check(0);
-				}
-				struct ureg_dst tmp = _tmp();
-				if(avoid_txf)
-				{
-					struct ureg_src texcoord;
-					if(!avoid_int)
-					{
-						ureg_I2F(ureg, tmp, _src(1));
-						texcoord = ureg_src(tmp);
-					}
-					else
-						texcoord = _src(1);
-
-					ureg_TXL(ureg, _dst(), tex_target(texslot), ureg_swizzle(texcoord, 0, 1, 2, dim), samplers[texslot]);
-				}
-				else
-					ureg_TXF(ureg, _dst(), tex_target(texslot), ureg_swizzle(_src(1), 0, 1, 2, dim), samplers[texslot]);
+				ureg_LOAD_MS(ureg, _dst(), _src(1), resources[_idx(SM4_FILE_RESOURCE, 2)]);
 				break;
-			}
 			case SM4_OPCODE_SAMPLE: // dst, coord, res, samp
-			{
-				unsigned texslot = _texslot();
-				ureg_TEX(ureg, _dst(), tex_target(texslot), _src(1), samplers[texslot]);
+				ureg_SAMPLE(ureg, _dst(), _src(1), resources[_idx(SM4_FILE_RESOURCE, 2)], samplers[_idx(SM4_FILE_SAMPLER, 3)]);
 				break;
-			}
 			case SM4_OPCODE_SAMPLE_B: // dst, coord, res, samp, bias.x
-			{
-				unsigned texslot = _texslot();
-				struct ureg_dst tmp = _tmp();
-				ureg_MOV(ureg, ureg_writemask(tmp, TGSI_WRITEMASK_XYZ), _src(1));
-				ureg_MOV(ureg, ureg_writemask(tmp, TGSI_WRITEMASK_W), ureg_swizzle(_src(4), 0, 0, 0, 0));
-				ureg_TXB(ureg, _dst(), tex_target(texslot), ureg_src(tmp), samplers[texslot]);
+				ureg_SAMPLE_B(ureg, _dst(), _src(1), resources[_idx(SM4_FILE_RESOURCE, 2)], samplers[_idx(SM4_FILE_SAMPLER, 3)], _src(4));
 				break;
-			}
 			case SM4_OPCODE_SAMPLE_C: // dst, coord, res, samp, comp.x
-			{
-				unsigned texslot = _texslot();
-				struct ureg_dst tmp = _tmp();
-				ureg_MOV(ureg, ureg_writemask(tmp, TGSI_WRITEMASK_XY), _src(1));
-				ureg_MOV(ureg, ureg_writemask(tmp, TGSI_WRITEMASK_Z), ureg_swizzle(_src(4), 0, 0, 0, 0));
-				ureg_TEX(ureg, _dst(), tex_target(texslot), ureg_src(tmp), samplers[texslot]);
+				ureg_SAMPLE_C(ureg, _dst(), _src(1), resources[_idx(SM4_FILE_RESOURCE, 2)], samplers[_idx(SM4_FILE_SAMPLER, 3)], _src(4));
 				break;
-			}
 			case SM4_OPCODE_SAMPLE_C_LZ: // dst, coord, res, samp, comp.x
-			{
-				unsigned texslot = _texslot();
-				struct ureg_dst tmp = _tmp();
-				ureg_MOV(ureg, ureg_writemask(tmp, TGSI_WRITEMASK_XY), _src(1));
-				ureg_MOV(ureg, ureg_writemask(tmp, TGSI_WRITEMASK_Z), ureg_swizzle(_src(4), 0, 0, 0, 0));
-				ureg_MOV(ureg, ureg_writemask(tmp, TGSI_WRITEMASK_W), ureg_imm1f(ureg, 0.0));
-				ureg_TXL(ureg, _dst(), tex_target(texslot), ureg_src(tmp), samplers[texslot]);
+				ureg_SAMPLE_C_LZ(ureg, _dst(), _src(1), resources[_idx(SM4_FILE_RESOURCE, 2)], samplers[_idx(SM4_FILE_SAMPLER, 3)], _src(4));
 				break;
-			}
 			case SM4_OPCODE_SAMPLE_D: // dst, coord, res, samp, ddx, ddy
-			{
-				unsigned texslot = _texslot();
-				ureg_TXD(ureg, _dst(), tex_target(texslot), _src(1), samplers[texslot], _src(4), _src(5));
+				ureg_SAMPLE_D(ureg, _dst(), _src(1), resources[_idx(SM4_FILE_RESOURCE, 2)], samplers[_idx(SM4_FILE_SAMPLER, 3)], _src(4), _src(5));
 				break;
-			}
 			case SM4_OPCODE_SAMPLE_L: // dst, coord, res, samp, bias.x
 			{
-				unsigned texslot = _texslot();
 				struct ureg_dst tmp = _tmp();
 				ureg_MOV(ureg, ureg_writemask(tmp, TGSI_WRITEMASK_XYZ), _src(1));
 				ureg_MOV(ureg, ureg_writemask(tmp, TGSI_WRITEMASK_W), ureg_swizzle(_src(4), 0, 0, 0, 0));
-				ureg_TXL(ureg, _dst(), tex_target(texslot), ureg_src(tmp), samplers[texslot]);
+				ureg_SAMPLE_L(ureg, _dst(), ureg_src(tmp), resources[_idx(SM4_FILE_RESOURCE, 2)], samplers[_idx(SM4_FILE_SAMPLER, 3)]);
 				break;
 			}
 			default:
@@ -699,15 +638,10 @@ next:;
 			fail("Malformed control flow");
 		if(!sm4_find_labels(program))
 			fail("Failed to locate labels");
-		if(!sm4_allocate_resource_sampler_pairs(program))
-			fail("Unsupported (indirect?) accesses to resources and/or samplers");
 
 		ureg = ureg_create(processor);
 
 		in_sub = false;
-
-		for(unsigned i = 0; i < program.slot_to_resource.size(); ++i)
-			samplers.push_back(ureg_DECL_sampler(ureg, i));
 
 		sm4_to_tgsi_insn_num.resize(program.insns.size());
 		for(unsigned insn_num = 0; insn_num < program.dcls.size(); ++insn_num)
@@ -805,6 +739,13 @@ next:;
 					targets[idx].second = TGSI_TEXTURE_SHADOW2D;
 					break;
 				}
+				if(resources.size() <= (unsigned)idx)
+					resources.resize(idx + 1);
+				resources[idx] = ureg_DECL_resource(ureg, idx, targets[idx].first,
+								    res_return_type(dcl.rrt.x),
+								    res_return_type(dcl.rrt.y),
+								    res_return_type(dcl.rrt.z),
+								    res_return_type(dcl.rrt.w));
 				break;
 			case SM4_OPCODE_DCL_SAMPLER:
 				check(idx >= 0);
@@ -812,6 +753,9 @@ next:;
 					sampler_modes.resize(idx + 1);
 				check(!dcl.dcl_sampler.mono);
 				sampler_modes[idx] = dcl.dcl_sampler.shadow;
+				if(samplers.size() <= (unsigned)idx)
+					samplers.resize(idx + 1);
+				samplers[idx] = ureg_DECL_sampler(ureg, idx);
 				break;
 			case SM4_OPCODE_DCL_CONSTANT_BUFFER:
 				check(dcl.op->num_indices == 2);
