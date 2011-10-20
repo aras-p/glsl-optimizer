@@ -121,6 +121,13 @@ gen7_update_texture_surface(struct gl_context *ctx, GLuint unit)
     * - cache_control
     */
 
+   if (brw->intel.is_haswell) {
+      surf->ss7.shader_chanel_select_r = HSW_SCS_RED;
+      surf->ss7.shader_chanel_select_g = HSW_SCS_GREEN;
+      surf->ss7.shader_chanel_select_b = HSW_SCS_BLUE;
+      surf->ss7.shader_chanel_select_a = HSW_SCS_ALPHA;
+   }
+
    /* Emit relocation to surface contents */
    drm_intel_bo_emit_reloc(brw->intel.batch.bo,
 			   brw->wm.surf_offset[surf_index] +
@@ -159,6 +166,13 @@ gen7_create_constant_surface(struct brw_context *brw,
    surf->ss3.depth = (w >> 20) & 0x7f;    /* bits 26:20 of size or width */
    surf->ss3.pitch = (16 - 1); /* ignored */
    gen7_set_surface_tiling(surf, I915_TILING_NONE); /* tiling now allowed */
+
+   if (brw->intel.is_haswell) {
+      surf->ss7.shader_chanel_select_r = HSW_SCS_RED;
+      surf->ss7.shader_chanel_select_g = HSW_SCS_GREEN;
+      surf->ss7.shader_chanel_select_b = HSW_SCS_BLUE;
+      surf->ss7.shader_chanel_select_a = HSW_SCS_ALPHA;
+   }
 
    /* Emit relocation to surface contents.  Section 5.1.1 of the gen4
     * bspec ("Data Cache") says that the data cache does not exist as
@@ -248,6 +262,13 @@ gen7_update_renderbuffer_surface(struct brw_context *brw,
    surf->ss2.height = rb->Height - 1;
    gen7_set_surface_tiling(surf, region->tiling);
    surf->ss3.pitch = (region->pitch * region->cpp) - 1;
+
+   if (intel->is_haswell) {
+      surf->ss7.shader_chanel_select_r = HSW_SCS_RED;
+      surf->ss7.shader_chanel_select_g = HSW_SCS_GREEN;
+      surf->ss7.shader_chanel_select_b = HSW_SCS_BLUE;
+      surf->ss7.shader_chanel_select_a = HSW_SCS_ALPHA;
+   }
 
    drm_intel_bo_emit_reloc(brw->intel.batch.bo,
 			   brw->wm.surf_offset[unit] +
