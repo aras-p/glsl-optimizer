@@ -1188,31 +1188,38 @@ struct GalliumD3D10Device : public GalliumD3D10ScreenImpl<threadsafe>
 		ID3D11DepthStencilView  *new_depth_stencil_view)
 	{
 		SYNCHRONIZED;
+
+		bool update = false;
+		unsigned i, num;
+
+		if(depth_stencil_view.p != new_depth_stencil_view) {
+			update = true;
+			depth_stencil_view = new_depth_stencil_view;
+		}
+
 		if(!new_render_target_views)
 			count = 0;
-		if(count == num_render_target_views)
-		{
-			for(unsigned i = 0; i < count; ++i)
-			{
-				if(new_render_target_views[i] != render_target_views[i].p)
-					goto changed;
-			}
-			return;
-		}
-changed:
-		depth_stencil_view = new_depth_stencil_view;
-		unsigned i;
-		for(i = 0; i < count; ++i)
-		{
-			render_target_views[i] = new_render_target_views[i];
+
+		for(num = 0, i = 0; i < count; ++i) {
 #if API >= 11
+			// XXX: is unbinding the UAVs here correct ?
 			om_unordered_access_views[i] = (ID3D11UnorderedAccessView*)NULL;
 #endif
+			if(new_render_target_views[i] != render_target_views[i].p) {
+				update = true;
+				render_target_views[i] = new_render_target_views[i];
+			}
+			if(new_render_target_views[i])
+				num = i + 1;
 		}
-		for(; i < num_render_target_views; ++i)
-			render_target_views[i] = (ID3D11RenderTargetView*)NULL;
-		num_render_target_views = count;
-		set_framebuffer();
+		if(num != num_render_target_views) {
+			update = true;
+			for(; i < num_render_target_views; ++i)
+				render_target_views[i] = (ID3D11RenderTargetView*)NULL;
+		}
+		num_render_target_views = num;
+		if(update)
+			set_framebuffer();
 	}
 
 	virtual void STDMETHODCALLTYPE OMGetRenderTargets(
