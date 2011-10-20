@@ -742,7 +742,8 @@ struct GalliumD3D10Device : public GalliumD3D10ScreenImpl<threadsafe>
 		info.max_index = ~0;
 		info.start_instance = 0;
 		info.instance_count = 1;
-		info.primitive_restart = FALSE;
+		info.primitive_restart = TRUE;
+		info.restart_index = strip_cut_index;
 
 		pipe->draw_vbo(pipe, &info);
 	}
@@ -765,8 +766,7 @@ struct GalliumD3D10Device : public GalliumD3D10ScreenImpl<threadsafe>
 		info.max_index = ~0;
 		info.start_instance = 0;
 		info.instance_count = 1;
-		info.primitive_restart = TRUE;
-		info.restart_index = strip_cut_index;
+		info.primitive_restart = FALSE;
 
 		pipe->draw_vbo(pipe, &info);
 	}
@@ -792,7 +792,8 @@ struct GalliumD3D10Device : public GalliumD3D10ScreenImpl<threadsafe>
 		info.max_index = ~0;
 		info.start_instance = start_instance_location;
 		info.instance_count = instance_count;
-		info.primitive_restart = FALSE;
+		info.primitive_restart = TRUE;
+		info.restart_index = strip_cut_index;
 
 		pipe->draw_vbo(pipe, &info);
 	}
@@ -817,8 +818,7 @@ struct GalliumD3D10Device : public GalliumD3D10ScreenImpl<threadsafe>
 		info.max_index = ~0;
 		info.start_instance = start_instance_location;
 		info.instance_count = instance_count;
-		info.primitive_restart = TRUE;
-		info.restart_index = strip_cut_index;
+		info.primitive_restart = FALSE;
 
 		pipe->draw_vbo(pipe, &info);
 	}
@@ -862,7 +862,8 @@ struct GalliumD3D10Device : public GalliumD3D10ScreenImpl<threadsafe>
 		info.max_index = ~0;
 		info.start_instance = 0;
 		info.instance_count = data.instance_count;
-		info.primitive_restart = FALSE;
+		info.primitive_restart = TRUE;
+		info.restart_index = strip_cut_index;
 
 		pipe->draw_vbo(pipe, &info);
 	}
@@ -893,8 +894,7 @@ struct GalliumD3D10Device : public GalliumD3D10ScreenImpl<threadsafe>
 		info.max_index = ~0;
 		info.start_instance = 0;
 		info.instance_count = data.instance_count;
-		info.primitive_restart = TRUE;
-		info.restart_index = strip_cut_index;
+		info.primitive_restart = FALSE;
 
 		pipe->draw_vbo(pipe, &info);
 	}
