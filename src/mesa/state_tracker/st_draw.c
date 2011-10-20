@@ -657,6 +657,8 @@ handle_fallback_primitive_restart(struct pipe_context *pipe,
       else {
          ptr = ib->ptr;
       }
+   } else {
+      ptr = NULL;
    }
 
    if (!ptr)
