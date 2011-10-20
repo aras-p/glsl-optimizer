@@ -53,6 +53,7 @@
 #define NV50_BUFCTX_TEXTURES 3
 #define NV50_BUFCTX_COUNT    4
 
+#define NV50_CB_TMP 123
 /* fixed constant buffer binding points - low indices for user's constbufs */
 #define NV50_CB_PVP 124
 #define NV50_CB_PGP 126
@@ -206,6 +207,11 @@ nv50_m2mf_copy_linear(struct nouveau_context *pipe,
                       struct nouveau_bo *dst, unsigned dstoff, unsigned dstdom,
                       struct nouveau_bo *src, unsigned srcoff, unsigned srcdom,
                       unsigned size);
+void
+nv50_cb_push(struct nouveau_context *nv,
+             struct nouveau_bo *bo, unsigned domain,
+             unsigned base, unsigned size,
+             unsigned offset, unsigned words, const uint32_t *data);
 
 /* nv50_vbo.c */
 void nv50_draw_vbo(struct pipe_context *, const struct pipe_draw_info *);

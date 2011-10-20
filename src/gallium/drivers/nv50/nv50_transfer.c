@@ -364,3 +364,36 @@ nv50_miptree_transfer_unmap(struct pipe_context *pctx,
    nouveau_bo_unmap(tx->rect[1].bo);
 }
 
+void
+nv50_cb_push(struct nouveau_context *nv,
+             struct nouveau_bo *bo, unsigned domain,
+             unsigned base, unsigned size,
+             unsigned offset, unsigned words, const uint32_t *data)
+{
+   struct nouveau_channel *chan = nv->screen->channel;
+
+   assert(!(offset & 3));
+   size = align(size, 0x100);
+
+   while (words) {
+      unsigned nr;
+
+      MARK_RING(chan, 24, 2);
+      nr = AVAIL_RING(chan);
+      nr = MIN2(nr - 7, words);
+      nr = MIN2(nr, NV04_PFIFO_MAX_PACKET_LEN - 1);
+
+      BEGIN_RING(chan, RING_3D(CB_DEF_ADDRESS_HIGH), 3);
+      OUT_RELOCh(chan, bo, base, domain | NOUVEAU_BO_WR);
+      OUT_RELOCl(chan, bo, base, domain | NOUVEAU_BO_WR);
+      OUT_RING  (chan, (NV50_CB_TMP << 16) | (size & 0xffff));
+      BEGIN_RING(chan, RING_3D(CB_ADDR), 1);
+      OUT_RING  (chan, (offset << 6) | NV50_CB_TMP);
+      BEGIN_RING_NI(chan, RING_3D(CB_DATA(0)), nr);
+      OUT_RINGp (chan, data, nr);
+
+      words -= nr;
+      data += nr;
+      offset += nr * 4;
+   }
+}

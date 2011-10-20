@@ -8,6 +8,7 @@ struct nouveau_context {
    struct nouveau_screen *screen;
 
    boolean vbo_dirty;
+   boolean cb_dirty;
 
    void (*copy_data)(struct nouveau_context *,
                      struct nouveau_bo *dst, unsigned, unsigned,
@@ -15,6 +16,11 @@ struct nouveau_context {
    void (*push_data)(struct nouveau_context *,
                      struct nouveau_bo *dst, unsigned, unsigned,
                      unsigned, const void *);
+   /* base, size refer to the whole constant buffer */
+   void (*push_cb)(struct nouveau_context *,
+                   struct nouveau_bo *, unsigned domain,
+                   unsigned base, unsigned size,
+                   unsigned offset, unsigned words, const uint32_t *);
 };
 
 static INLINE struct nouveau_context *

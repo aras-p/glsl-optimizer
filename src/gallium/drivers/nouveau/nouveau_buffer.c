@@ -24,14 +24,19 @@ static INLINE boolean
 nouveau_buffer_allocate(struct nouveau_screen *screen,
                         struct nv04_resource *buf, unsigned domain)
 {
+   uint32_t size = buf->base.width0;
+
+   if (buf->base.bind & PIPE_BIND_CONSTANT_BUFFER)
+      size = align(size, 0x100);
+
    if (domain == NOUVEAU_BO_VRAM) {
-      buf->mm = nouveau_mm_allocate(screen->mm_VRAM, buf->base.width0,
+      buf->mm = nouveau_mm_allocate(screen->mm_VRAM, size,
                                     &buf->bo, &buf->offset);
       if (!buf->bo)
          return nouveau_buffer_allocate(screen, buf, NOUVEAU_BO_GART);
    } else
    if (domain == NOUVEAU_BO_GART) {
-      buf->mm = nouveau_mm_allocate(screen->mm_GART, buf->base.width0,
+      buf->mm = nouveau_mm_allocate(screen->mm_GART, size,
                                     &buf->bo, &buf->offset);
       if (!buf->bo)
          return FALSE;
@@ -129,8 +134,12 @@ nouveau_buffer_upload(struct nouveau_context *nv, struct nv04_resource *buf,
    uint32_t offset;
 
    if (size <= 192) {
-      nv->push_data(nv, buf->bo, buf->offset + start, buf->domain,
-                    size, buf->data + start);
+      if (buf->base.bind & PIPE_BIND_CONSTANT_BUFFER)
+         nv->push_cb(nv, buf->bo, buf->domain, buf->offset, buf->base.width0,
+                     start, size / 4, (const uint32_t *)(buf->data + start));
+      else
+         nv->push_data(nv, buf->bo, buf->offset + start, buf->domain,
+                       size, buf->data + start);
       return TRUE;
    }
 

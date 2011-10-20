@@ -340,7 +340,7 @@ nvc0_constbufs_validate(struct nvc0_context *nvc0)
 
       while (nvc0->constbuf_dirty[s]) {
          unsigned base = 0;
-         unsigned offset = 0, words = 0;
+         unsigned words = 0;
          boolean rebind = TRUE;
 
          i = ffs(nvc0->constbuf_dirty[s]) - 1;
@@ -356,7 +356,7 @@ nvc0_constbufs_validate(struct nvc0_context *nvc0)
          }
 
          if (!nouveau_resource_mapped_by_gpu(&res->base)) {
-            if (i == 0) {
+            if (i == 0 && (res->status & NOUVEAU_BUFFER_STATUS_USER_MEMORY)) {
                base = s << 16;
                bo = nvc0->screen->uniforms;
 
@@ -365,19 +365,16 @@ nvc0_constbufs_validate(struct nvc0_context *nvc0)
                else
                   nvc0->state.uniform_buffer_bound[s] =
                      align(res->base.width0, 0x100);
+
+               words = res->base.width0 / 4;
             } else {
+               nouveau_buffer_migrate(&nvc0->base, res, NOUVEAU_BO_VRAM);
                bo = res->bo;
+               base = res->offset;
             }
-#if 0
-            nvc0_m2mf_push_linear(nvc0, bo, NOUVEAU_BO_VRAM,
-                                  base, res->base.width0, res->data);
-            BEGIN_RING(chan, RING_3D_(0x021c), 1);
-            OUT_RING  (chan, 0x1111);
-#else
-            words = res->base.width0 / 4;
-#endif
          } else {
             bo = res->bo;
+            base = res->offset;
             if (i == 0)
                nvc0->state.uniform_buffer_bound[s] = 0;
          }
@@ -396,27 +393,10 @@ nvc0_constbufs_validate(struct nvc0_context *nvc0)
             OUT_RING  (chan, (i << 4) | 1);
          }
 
-         while (words) {
-            unsigned nr = AVAIL_RING(chan);
-
-            if (nr < 16) {
-               FIRE_RING(chan);
-               continue;
-            }
-            nr = MIN2(MIN2(nr - 6, words), NV04_PFIFO_MAX_PACKET_LEN - 1);
-
-            MARK_RING (chan, nr + 5, 2);
-            BEGIN_RING(chan, RING_3D(CB_SIZE), 3);
-            OUT_RING  (chan, align(res->base.width0, 0x100));
-            OUT_RELOCh(chan, bo, base, NOUVEAU_BO_VRAM | NOUVEAU_BO_RD);
-            OUT_RELOCl(chan, bo, base, NOUVEAU_BO_VRAM | NOUVEAU_BO_RD);
-            BEGIN_RING_1I(chan, RING_3D(CB_POS), nr + 1);
-            OUT_RING  (chan, offset);
-            OUT_RINGp (chan, &res->data[offset], nr);
-
-            offset += nr * 4;
-            words -= nr;
-         }
+         if (words)
+            nvc0_cb_push(&nvc0->base,
+                         bo, NOUVEAU_BO_VRAM, base, res->base.width0,
+                         0, words, (const uint32_t *)res->data);
       }
    }
 }

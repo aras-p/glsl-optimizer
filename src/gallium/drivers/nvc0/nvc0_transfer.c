@@ -365,3 +365,39 @@ nvc0_miptree_transfer_unmap(struct pipe_context *pctx,
    nouveau_bo_unmap(tx->rect[1].bo);
 }
 
+void
+nvc0_cb_push(struct nouveau_context *nv,
+             struct nouveau_bo *bo, unsigned domain,
+             unsigned base, unsigned size,
+             unsigned offset, unsigned words, const uint32_t *data)
+{
+   struct nouveau_channel *chan = nv->screen->channel;
+
+   assert(!(offset & 3));
+   size = align(size, 0x100);
+
+   MARK_RING (chan, 16, 2);
+   BEGIN_RING(chan, RING_3D(CB_SIZE), 3);
+   OUT_RING  (chan, size);
+   OUT_RELOCh(chan, bo, base, domain | NOUVEAU_BO_WR);
+   OUT_RELOCl(chan, bo, base, domain | NOUVEAU_BO_WR);
+
+   while (words) {
+      unsigned nr = AVAIL_RING(chan);
+      nr = MIN2(nr, words);
+      nr = MIN2(nr, NV04_PFIFO_MAX_PACKET_LEN - 1);
+
+      BEGIN_RING_1I(chan, RING_3D(CB_POS), nr + 1);
+      OUT_RING  (chan, offset);
+      OUT_RINGp (chan, data, nr);
+
+      words -= nr;
+      data += nr;
+      offset += nr * 4;
+
+      if (words) {
+         MARK_RING(chan, 6, 1);
+         nouveau_bo_validate(chan, bo, domain | NOUVEAU_BO_WR);
+      }
+   }
+}

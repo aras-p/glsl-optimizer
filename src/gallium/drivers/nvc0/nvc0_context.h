@@ -221,6 +221,11 @@ nvc0_m2mf_copy_linear(struct nouveau_context *nv,
 		      struct nouveau_bo *dst, unsigned dstoff, unsigned dstdom,
 		      struct nouveau_bo *src, unsigned srcoff, unsigned srcdom,
 		      unsigned size);
+void
+nvc0_cb_push(struct nouveau_context *,
+             struct nouveau_bo *bo, unsigned domain,
+             unsigned base, unsigned size,
+             unsigned offset, unsigned words, const uint32_t *data);
 
 /* nvc0_vbo.c */
 void nvc0_draw_vbo(struct pipe_context *, const struct pipe_draw_info *);
