@@ -1,0 +1,134 @@
+<HTML>
+
+<TITLE>Viewperf Issues</TITLE>
+
+<link rel="stylesheet" type="text/css" href="mesa.css"></head>
+
+<BODY>
+
+<h1>Viewperf Issues</h1>
+
+<p>
+This page lists known issues with
+<a href="http://www.spec.org/gwpg/gpc.static/vp11info.html" target="_main">SPEC Viewperf 11</a>
+when running on Mesa-based drivers.
+</p>
+
+<p>
+The Viewperf data sets are basically GL API traces that are recorded from
+CAD applications, then replayed in the Viewperf framework.
+</p>
+
+<p>
+The primary problem with these traces is they blindly use features and
+OpenGL extensions that were supported by the OpenGL driver when the trace
+was recorded,
+but there's no checks to see if those features are supported by the driver
+when playing back the traces with Viewperf.
+</p>
+
+<p>
+These issues have been reported to the SPEC organization in the hope that
+they'll be fixed in the future.
+</p>
+
+
+
+<h2>Catia-03 tests 3, 4, 8</h2>
+
+<p>
+These tests use features of the
+<a href="http://www.opengl.org/registry/specs/NV/fragment_program2.txt"
+target="_main">
+GL_NV_fragment_program2</a> and
+<a href="http://www.opengl.org/registry/specs/NV/vertex_program3.txt"
+target="_main">
+GL_NV_vertex_program3</a> extensions without checking if the driver supports
+them.
+</p>
+<p>
+When Mesa tries to compile the vertex/fragment programs it generates errors
+(which Viewperf ignores).
+Subsequent drawing calls become no-ops and the rendering is incorrect.
+</p>
+
+
+
+<h2>sw-02 tests 1, 2, 4</h2>
+
+<p>
+These tests depend on the
+<a href="http://www.opengl.org/registry/specs/NV/primitive_restart.txt"
+target="_main">GL_NV_primitive_restart</a> extension.
+</p>
+
+<p>
+If the Mesa driver doesn't support this extension the rendering will
+be incorrect and the test will fail.
+</p>
+
+
+<h2>Lightwave-01 test 3</h2>
+
+<p>
+This test uses a number of mipmapped textures, but the textures are
+incomplete because the last/smallest mipmap level (1 x 1 pixel) is
+never specified.
+</p>
+
+<p>
+A trace captured with
+<a href="https://github.com/apitrace/apitrace" target="_main">API trace</a>
+shows this sequences of calls like this:
+
+<pre>
+2504 glBindTexture(target = GL_TEXTURE_2D, texture = 55)
+2505 glTexImage2D(target = GL_TEXTURE_2D, level = 0, internalformat = GL_RGBA, width = 512, height = 512, border = 0, format = GL_RGB, type = GL_UNSIGNED_SHORT, pixels = blob(1572864))
+2506 glTexImage2D(target = GL_TEXTURE_2D, level = 1, internalformat = GL_RGBA, width = 256, height = 256, border = 0, format = GL_RGB, type = GL_UNSIGNED_SHORT, pixels = blob(393216))
+2507 glTexImage2D(target = GL_TEXTURE_2D, level = 2, internalformat = GL_RGBA, width = 128, height = 128, border = 0, format = GL_RGB, type = GL_UNSIGNED_SHORT, pixels = blob(98304))
+[...]
+2512 glTexImage2D(target = GL_TEXTURE_2D, level = 7, internalformat = GL_RGBA, width = 4, height = 4, border = 0, format = GL_RGB, type = GL_UNSIGNED_SHORT, pixels = blob(96))
+2513 glTexImage2D(target = GL_TEXTURE_2D, level = 8, internalformat = GL_RGBA, width = 2, height = 2, border = 0, format = GL_RGB, type = GL_UNSIGNED_SHORT, pixels = blob(24))
+2514 glTexParameteri(target = GL_TEXTURE_2D, pname = GL_TEXTURE_MIN_FILTER, param = GL_LINEAR_MIPMAP_LINEAR)
+2515 glTexParameteri(target = GL_TEXTURE_2D, pname = GL_TEXTURE_WRAP_S, param = GL_REPEAT)
+2516 glTexParameteri(target = GL_TEXTURE_2D, pname = GL_TEXTURE_WRAP_T, param = GL_REPEAT)
+2517 glTexParameteri(target = GL_TEXTURE_2D, pname = GL_TEXTURE_MAG_FILTER, param = GL_NEAREST)
+</pre>
+
+<p>
+Note that one would expect call 2514 to be glTexImage(level=9, width=1,
+height=1) but it's not there.
+</p>
+
+<p>
+The minification filter is GL_LINEAR_MIPMAP_LINEAR and the texture's
+GL_TEXTURE_MAX_LEVEL is 1000 (the default) so a full mipmap is expected.
+</p>
+
+<p>
+Later, these incomplete textures are bound before drawing calls.
+According to the GL specification, if a fragment program or fragment shader
+is being used, the sampler should return (0,0,0,1) ("black") when sampling
+from an incomplete texture.
+This is what Mesa does and the resulting rendering is darker than it should
+be.
+</p>
+
+<p>
+It appears that NVIDIA's driver (and possibly AMD's driver) detects this case
+and returns (1,1,1,1) (white) which causes the rendering to appear brighter
+and match the reference image (however, AMD's rendering is <em>much</em>
+brighter than NVIDIA's).
+</p>
+
+<p>
+If the fallback texture created in _mesa_get_fallback_texture() is
+initialized to be full white instead of full black the rendering appears
+correct.
+However, we have no plans to implement this work-around in Mesa.
+
+</p>
+
+
+</BODY>
+</HTML>
