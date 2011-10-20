@@ -55,13 +55,6 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #elif defined(RADEON_R200)
 #include "r200_context.h"
 #include "r200_tex.h"
-#elif defined(RADEON_R300)
-#include "r300_context.h"
-#include "r300_tex.h"
-#elif defined(RADEON_R600)
-#include "r600_context.h"
-#include "r700_driconf.h" /* +r6/r7 */
-#include "r600_tex.h"     /* +r6/r7 */
 #endif
 
 #include "utils.h"
@@ -140,77 +133,6 @@ DRI_CONF_BEGIN
 DRI_CONF_END;
 static const GLuint __driNConfigOptions = 17;
 
-#elif defined(RADEON_R300) || defined(RADEON_R600)
-
-#define DRI_CONF_FP_OPTIMIZATION_SPEED   0
-#define DRI_CONF_FP_OPTIMIZATION_QUALITY 1
-
-/* TODO: integrate these into xmlpool.h! */
-#define DRI_CONF_MAX_TEXTURE_IMAGE_UNITS(def,min,max) \
-DRI_CONF_OPT_BEGIN_V(texture_image_units,int,def, # min ":" # max ) \
-        DRI_CONF_DESC(en,"Number of texture image units") \
-        DRI_CONF_DESC(de,"Anzahl der Textureinheiten") \
-DRI_CONF_OPT_END
-
-#define DRI_CONF_MAX_TEXTURE_COORD_UNITS(def,min,max) \
-DRI_CONF_OPT_BEGIN_V(texture_coord_units,int,def, # min ":" # max ) \
-        DRI_CONF_DESC(en,"Number of texture coordinate units") \
-        DRI_CONF_DESC(de,"Anzahl der Texturkoordinateneinheiten") \
-DRI_CONF_OPT_END
-
-
-
-#define DRI_CONF_DISABLE_S3TC(def) \
-DRI_CONF_OPT_BEGIN(disable_s3tc,bool,def) \
-        DRI_CONF_DESC(en,"Disable S3TC compression") \
-DRI_CONF_OPT_END
-
-#define DRI_CONF_DISABLE_FALLBACK(def) \
-DRI_CONF_OPT_BEGIN(disable_lowimpact_fallback,bool,def) \
-        DRI_CONF_DESC(en,"Disable Low-impact fallback") \
-DRI_CONF_OPT_END
-
-#define DRI_CONF_DISABLE_DOUBLE_SIDE_STENCIL(def) \
-DRI_CONF_OPT_BEGIN(disable_stencil_two_side,bool,def) \
-        DRI_CONF_DESC(en,"Disable GL_EXT_stencil_two_side") \
-DRI_CONF_OPT_END
-
-#define DRI_CONF_FP_OPTIMIZATION(def) \
-DRI_CONF_OPT_BEGIN_V(fp_optimization,enum,def,"0:1") \
-	DRI_CONF_DESC_BEGIN(en,"Fragment Program optimization") \
-                DRI_CONF_ENUM(0,"Optimize for Speed") \
-                DRI_CONF_ENUM(1,"Optimize for Quality") \
-        DRI_CONF_DESC_END \
-DRI_CONF_OPT_END
-
-PUBLIC const char __driConfigOptions[] =
-DRI_CONF_BEGIN
-	DRI_CONF_SECTION_PERFORMANCE
-		DRI_CONF_TCL_MODE(DRI_CONF_TCL_CODEGEN)
-		DRI_CONF_FTHROTTLE_MODE(DRI_CONF_FTHROTTLE_IRQS)
-		DRI_CONF_VBLANK_MODE(DRI_CONF_VBLANK_DEF_INTERVAL_0)
-		DRI_CONF_MAX_TEXTURE_IMAGE_UNITS(8, 2, 8)
-		DRI_CONF_MAX_TEXTURE_COORD_UNITS(8, 2, 8)
-		DRI_CONF_COMMAND_BUFFER_SIZE(8, 8, 32)
-		DRI_CONF_DISABLE_FALLBACK(true)
-		DRI_CONF_DISABLE_DOUBLE_SIDE_STENCIL(false)
-	DRI_CONF_SECTION_END
-	DRI_CONF_SECTION_QUALITY
-		DRI_CONF_TEXTURE_DEPTH(DRI_CONF_TEXTURE_DEPTH_FB)
-		DRI_CONF_DEF_MAX_ANISOTROPY(1.0, "1.0,2.0,4.0,8.0,16.0")
-		DRI_CONF_FORCE_S3TC_ENABLE(false)
-		DRI_CONF_DISABLE_S3TC(false)
-		DRI_CONF_COLOR_REDUCTION(DRI_CONF_COLOR_REDUCTION_DITHER)
-		DRI_CONF_ROUND_MODE(DRI_CONF_ROUND_TRUNC)
-		DRI_CONF_DITHER_MODE(DRI_CONF_DITHER_XERRORDIFF)
-		DRI_CONF_FP_OPTIMIZATION(DRI_CONF_FP_OPTIMIZATION_SPEED)
-	DRI_CONF_SECTION_END
-	DRI_CONF_SECTION_DEBUG
-		DRI_CONF_NO_RAST(false)
-	DRI_CONF_SECTION_END
-DRI_CONF_END;
-static const GLuint __driNConfigOptions = 17;
-
 #endif
 
 static int getSwapInfo( __DRIdrawable *dPriv, __DRIswapInfo * sInfo );
@@ -278,32 +200,6 @@ static const __DRItexBufferExtension r200TexBufferExtension = {
     { __DRI_TEX_BUFFER, __DRI_TEX_BUFFER_VERSION },
    r200SetTexBuffer,
    r200SetTexBuffer2,
-};
-#endif
-
-#if defined(RADEON_R300)
-static const __DRItexOffsetExtension r300texOffsetExtension = {
-    { __DRI_TEX_OFFSET, __DRI_TEX_OFFSET_VERSION },
-   r300SetTexOffset,
-};
-
-static const __DRItexBufferExtension r300TexBufferExtension = {
-    { __DRI_TEX_BUFFER, __DRI_TEX_BUFFER_VERSION },
-   r300SetTexBuffer,
-   r300SetTexBuffer2,
-};
-#endif
-
-#if defined(RADEON_R600)
-static const __DRItexOffsetExtension r600texOffsetExtension = {
-    { __DRI_TEX_OFFSET, __DRI_TEX_OFFSET_VERSION },
-   r600SetTexOffset, /* +r6/r7 */
-};
-
-static const __DRItexBufferExtension r600TexBufferExtension = {
-    { __DRI_TEX_BUFFER, __DRI_TEX_BUFFER_VERSION },
-   r600SetTexBuffer,  /* +r6/r7 */
-   r600SetTexBuffer2, /* +r6/r7 */
 };
 #endif
 
@@ -1403,14 +1299,6 @@ radeonCreateScreen2(__DRIscreen *sPriv)
    screen->extensions[i++] = &r200TexBufferExtension.base;
 #endif
 
-#if defined(RADEON_R300)
-   screen->extensions[i++] = &r300TexBufferExtension.base;
-#endif
-
-#if defined(RADEON_R600)
-   screen->extensions[i++] = &r600TexBufferExtension.base;
-#endif
-
    screen->extensions[i++] = &radeonFlushExtension.base;
    screen->extensions[i++] = &radeonImageExtension.base;
 
@@ -1691,12 +1579,6 @@ const struct __DriverAPIRec driDriverAPI = {
 #if defined(RADEON_R200)
    .CreateContext   = r200CreateContext,
    .DestroyContext  = r200DestroyContext,
-#elif defined(RADEON_R600)
-   .CreateContext   = r600CreateContext,
-   .DestroyContext  = radeonDestroyContext,
-#elif defined(RADEON_R300)
-   .CreateContext   = r300CreateContext,
-   .DestroyContext  = radeonDestroyContext,
 #else
    .CreateContext   = r100CreateContext,
    .DestroyContext  = radeonDestroyContext,
