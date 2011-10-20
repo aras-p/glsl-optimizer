@@ -78,6 +78,7 @@ int dxbc_parse_signature(dxbc_chunk_signature* sig, D3D11_SIGNATURE_PARAMETER_DE
 		param.SemanticIndex = bswap_le32(sig->elements[i].semantic_index);
 		param.SystemValueType = (D3D_NAME)bswap_le32(sig->elements[i].system_value_type);
 		param.ComponentType = (D3D_REGISTER_COMPONENT_TYPE)bswap_le32(sig->elements[i].component_type);
+		param.Register = bswap_le32(sig->elements[i].register_num);
 		param.Mask = sig->elements[i].mask;
 		param.ReadWriteMask = sig->elements[i].read_write_mask;
 		param.Stream = sig->elements[i].stream;

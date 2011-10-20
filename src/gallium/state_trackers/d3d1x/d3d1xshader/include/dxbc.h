@@ -41,6 +41,7 @@
 #define FOURCC_SHDR FOURCC('S', 'H', 'D', 'R')
 #define FOURCC_SHEX FOURCC('S', 'H', 'E', 'X')
 #define FOURCC_STAT FOURCC('S', 'T', 'A', 'T')
+#define FOURCC_PCSG FOURCC('P', 'C', 'S', 'G')
 
 /* this is always little-endian! */
 struct dxbc_chunk_header
@@ -98,9 +99,21 @@ static inline dxbc_chunk_header* dxbc_find_shader_bytecode(const void* data, int
 	return chunk;
 }
 
-static inline dxbc_chunk_signature* dxbc_find_signature(const void* data, int size, bool output)
+#define DXBC_FIND_INPUT_SIGNATURE    0
+#define DXBC_FIND_OUTPUT_SIGNATURE   1
+#define DXBC_FIND_PATCH_SIGNATURE    2
+
+static inline dxbc_chunk_signature* dxbc_find_signature(const void* data, int size, unsigned kind)
 {
-	return (dxbc_chunk_signature*)dxbc_find_chunk(data, size, output ? FOURCC_OSGN : FOURCC_ISGN);
+	unsigned fourcc;
+	switch(kind) {
+	case DXBC_FIND_INPUT_SIGNATURE:  fourcc = FOURCC_ISGN; break;
+	case DXBC_FIND_OUTPUT_SIGNATURE: fourcc = FOURCC_OSGN; break;
+	case DXBC_FIND_PATCH_SIGNATURE:  fourcc = FOURCC_PCSG; break;
+	default:
+		return NULL;
+	}
+	return (dxbc_chunk_signature*)dxbc_find_chunk(data, size, fourcc);
 }
 
 struct _D3D11_SIGNATURE_PARAMETER_DESC;
