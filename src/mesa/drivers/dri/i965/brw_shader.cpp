@@ -138,7 +138,8 @@ brw_link_shader(struct gl_context *ctx, struct gl_shader_program *prog)
 				   false /* loops */
 				   ) || progress;
 
-	 progress = do_common_optimization(shader->ir, true, 32) || progress;
+	 progress = do_common_optimization(shader->ir, true, true, 32)
+	   || progress;
       } while (progress);
 
       validate_ir_tree(shader->ir);

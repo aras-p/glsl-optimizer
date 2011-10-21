@@ -37,7 +37,9 @@
 #define MOD_TO_FRACT       0x20
 #define INT_DIV_TO_MUL_RCP 0x40
 
-bool do_common_optimization(exec_list *ir, bool linked, unsigned max_unroll_iterations);
+bool do_common_optimization(exec_list *ir, bool linked,
+			    bool uniform_locations_assigned,
+			    unsigned max_unroll_iterations);
 
 bool do_algebraic(exec_list *instructions);
 bool do_constant_folding(exec_list *instructions);
@@ -46,7 +48,7 @@ bool do_constant_variable_unlinked(exec_list *instructions);
 bool do_copy_propagation(exec_list *instructions);
 bool do_copy_propagation_elements(exec_list *instructions);
 bool do_constant_propagation(exec_list *instructions);
-bool do_dead_code(exec_list *instructions);
+bool do_dead_code(exec_list *instructions, bool uniform_locations_assigned);
 bool do_dead_code_local(exec_list *instructions);
 bool do_dead_code_unlinked(exec_list *instructions);
 bool do_dead_functions(exec_list *instructions);

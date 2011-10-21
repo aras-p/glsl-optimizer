@@ -883,8 +883,27 @@ ast_struct_specifier::ast_struct_specifier(char *identifier,
    this->declarations.push_degenerate_list_at_head(&declarator_list->link);
 }
 
+/**
+ * Do the set of common optimizations passes
+ *
+ * \param ir                          List of instructions to be optimized
+ * \param linked                      Is the shader linked?  This enables
+ *                                    optimizations passes that remove code at
+ *                                    global scope and could cause linking to
+ *                                    fail.
+ * \param uniform_locations_assigned  Have locations already been assigned for
+ *                                    uniforms?  This prevents the declarations
+ *                                    of unused uniforms from being removed.
+ *                                    The setting of this flag only matters if
+ *                                    \c linked is \c true.
+ * \param max_unroll_iterations       Maximum number of loop iterations to be
+ *                                    unrolled.  Setting to 0 forces all loops
+ *                                    to be unrolled.
+ */
 bool
-do_common_optimization(exec_list *ir, bool linked, unsigned max_unroll_iterations)
+do_common_optimization(exec_list *ir, bool linked,
+		       bool uniform_locations_assigned,
+		       unsigned max_unroll_iterations)
 {
    GLboolean progress = GL_FALSE;
 
@@ -900,7 +919,7 @@ do_common_optimization(exec_list *ir, bool linked, unsigned max_unroll_iteration
    progress = do_copy_propagation(ir) || progress;
    progress = do_copy_propagation_elements(ir) || progress;
    if (linked)
-      progress = do_dead_code(ir) || progress;
+      progress = do_dead_code(ir, uniform_locations_assigned) || progress;
    else
       progress = do_dead_code_unlinked(ir) || progress;
    progress = do_dead_code_local(ir) || progress;

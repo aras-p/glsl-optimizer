@@ -64,7 +64,7 @@ do_optimization(struct exec_list *ir, const char *optimization)
 
    if (sscanf(optimization, "do_common_optimization ( %d , %d ) ",
               &int_0, &int_1) == 2) {
-      return do_common_optimization(ir, int_0 != 0, int_1);
+      return do_common_optimization(ir, int_0 != 0, false, int_1);
    } else if (strcmp(optimization, "do_algebraic") == 0) {
       return do_algebraic(ir);
    } else if (strcmp(optimization, "do_constant_folding") == 0) {
@@ -80,7 +80,7 @@ do_optimization(struct exec_list *ir, const char *optimization)
    } else if (strcmp(optimization, "do_constant_propagation") == 0) {
       return do_constant_propagation(ir);
    } else if (strcmp(optimization, "do_dead_code") == 0) {
-      return do_dead_code(ir);
+      return do_dead_code(ir, false);
    } else if (strcmp(optimization, "do_dead_code_local") == 0) {
       return do_dead_code_local(ir);
    } else if (strcmp(optimization, "do_dead_code_unlinked") == 0) {

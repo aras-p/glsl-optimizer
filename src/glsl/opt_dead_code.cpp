@@ -42,7 +42,7 @@ static bool debug = false;
  * for usage on an unlinked instruction stream.
  */
 bool
-do_dead_code(exec_list *instructions)
+do_dead_code(exec_list *instructions, bool uniform_locations_assigned)
 {
    ir_variable_refcount_visitor v;
    bool progress = false;
@@ -94,10 +94,11 @@ do_dead_code(exec_list *instructions)
 	  */
 
 	 /* uniform initializers are precious, and could get used by another
-	  * stage.
+	  * stage.  Also, once uniform locations have been assigned, the
+	  * declaration cannot be deleted.
 	  */
 	 if (entry->var->mode == ir_var_uniform &&
-	     entry->var->constant_value)
+	     (uniform_locations_assigned || entry->var->constant_value))
 	    continue;
 
 	 entry->var->remove();
@@ -132,7 +133,12 @@ do_dead_code_unlinked(exec_list *instructions)
 	 foreach_iter(exec_list_iterator, sigiter, *f) {
 	    ir_function_signature *sig =
 	       (ir_function_signature *) sigiter.get();
-	    if (do_dead_code(&sig->body))
+	    /* The setting of the uniform_locations_assigned flag here is
+	     * irrelevent.  If there is a uniform declaration encountered
+	     * inside the body of the function, something has already gone
+	     * terribly, terribly wrong.
+	     */
+	    if (do_dead_code(&sig->body, false))
 	       progress = true;
 	 }
       }

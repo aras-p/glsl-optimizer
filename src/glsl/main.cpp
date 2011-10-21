@@ -166,7 +166,7 @@ compile_shader(struct gl_context *ctx, struct gl_shader *shader)
    if (!state->error && !shader->ir->is_empty()) {
       bool progress;
       do {
-	 progress = do_common_optimization(shader->ir, false, 32);
+	 progress = do_common_optimization(shader->ir, false, false, 32);
       } while (progress);
 
       validate_ir_tree(shader->ir);
