@@ -234,6 +234,10 @@ void intel_flush_prim(struct intel_context *intel)
     */
    intel->no_batch_wrap = true;
 
+   if (intel->always_flush_cache) {
+      intel_batchbuffer_emit_mi_flush(intel);
+   }
+
 #if 0
    printf("emitting %d..%d=%d vertices size %d\n", offset,
 	  intel->prim.current_offset, count,
@@ -304,6 +308,10 @@ void intel_flush_prim(struct intel_context *intel)
 		count);
       OUT_BATCH(0); /* Beginning vertex index */
       ADVANCE_BATCH();
+   }
+
+   if (intel->always_flush_cache) {
+      intel_batchbuffer_emit_mi_flush(intel);
    }
 
    intel->no_batch_wrap = false;

@@ -169,10 +169,6 @@ _intel_batchbuffer_flush(struct intel_context *intel,
 
    intel->batch.reserved_space = 0;
 
-   if (intel->always_flush_cache) {
-      intel_batchbuffer_emit_mi_flush(intel);
-   }
-
    /* Mark the end of the buffer. */
    intel_batchbuffer_emit_dword(intel, MI_BATCH_BUFFER_END);
    if (intel->batch.used & 1) {
