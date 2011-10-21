@@ -453,7 +453,7 @@ static inline int32_t
 _mesa_next_pow_two_32(uint32_t x)
 {
 #if defined(__GNUC__) && \
-	((__GNUC__ == 3 && __GNUC_MINOR__ >= 4) || __GNUC__ >= 4)
+	((__GNUC__ * 100 + __GNUC_MINOR__) >= 304) /* gcc 3.4 or later */
 	uint32_t y = (x != 1);
 	return (1 + y) << ((__builtin_clz(x - y) ^ 31) );
 #else
@@ -472,7 +472,7 @@ static inline int64_t
 _mesa_next_pow_two_64(uint64_t x)
 {
 #if defined(__GNUC__) && \
-	((__GNUC__ == 3 && __GNUC_MINOR__ >= 4) || __GNUC__ >= 4)
+	((__GNUC__ * 100 + __GNUC_MINOR__) >= 304) /* gcc 3.4 or later */
 	uint64_t y = (x != 1);
 	if (sizeof(x) == sizeof(long))
 		return (1 + y) << ((__builtin_clzl(x - y) ^ 63));
@@ -499,7 +499,7 @@ static inline GLuint
 _mesa_logbase2(GLuint n)
 {
 #if defined(__GNUC__) && \
-   ((__GNUC__ == 3 && __GNUC_MINOR__ >= 4) || __GNUC__ >= 4)
+   ((__GNUC__ * 100 + __GNUC_MINOR__) >= 304) /* gcc 3.4 or later */
    return (31 - __builtin_clz(n | 1));
 #else
    GLuint pos = 0;
