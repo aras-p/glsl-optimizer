@@ -576,7 +576,7 @@ _mesa_init_sqrt_table(void);
 #define _mesa_ffs(i)  ffs(i)
 #define _mesa_ffsll(i)  ffsll(i)
 
-#if ((_GNUC__ == 3 && __GNUC_MINOR__ >= 4) || __GNUC__ >= 4)
+#if ((__GNUC__ * 100 + __GNUC_MINOR__) >= 304) /* gcc 3.4 or later */
 #define _mesa_bitcount(i) __builtin_popcount(i)
 #define _mesa_bitcount_64(i) __builtin_popcountll(i)
 #else
