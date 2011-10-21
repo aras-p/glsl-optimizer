@@ -768,7 +768,7 @@ fs_visitor::split_virtual_grfs()
 	 split_grf[i] = false;
    }
 
-   if (brw->has_pln) {
+   if (brw->has_pln && this->delta_x.file == GRF) {
       /* PLN opcodes rely on the delta_xy being contiguous. */
       split_grf[this->delta_x.reg] = false;
    }
