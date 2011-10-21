@@ -27,6 +27,8 @@ struct nvc0_screen {
 
    struct nvc0_context *cur_ctx;
 
+   int num_occlusion_queries_active;
+
    struct nouveau_bo *text;
    struct nouveau_bo *uniforms;
    struct nouveau_bo *tls;

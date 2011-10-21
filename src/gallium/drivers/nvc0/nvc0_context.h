@@ -168,6 +168,10 @@ void nvc0_program_library_upload(struct nvc0_context *);
 
 /* nvc0_query.c */
 void nvc0_init_query_functions(struct nvc0_context *);
+void nvc0_query_pushbuf_submit(struct nvc0_context *nvc0,
+                               struct pipe_query *pq, unsigned result_offset);
+
+#define NVC0_QUERY_TFB_BUFFER_OFFSETS (PIPE_QUERY_TYPES + 0)
 
 /* nvc0_shader_state.c */
 void nvc0_vertprog_validate(struct nvc0_context *);
