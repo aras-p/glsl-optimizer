@@ -6,7 +6,8 @@
 #if defined(PIPE_SUBSYSTEM_WINDOWS_USER)
 #  include <winsock2.h>
 #  include <windows.h>
-#elif defined(PIPE_OS_LINUX) || defined(PIPE_OS_HAIKU) || defined(PIPE_OS_APPLE) || defined(PIPE_OS_CYGWIN)
+#elif defined(PIPE_OS_LINUX) || defined(PIPE_OS_HAIKU) || \
+   defined(PIPE_OS_APPLE) || defined(PIPE_OS_CYGWIN) || defined(PIPE_OS_SOLARIS)
 #  include <sys/socket.h>
 #  include <netinet/in.h>
 #  include <unistd.h>
@@ -54,7 +55,8 @@ u_socket_close(int s)
    if (s < 0)
       return;
 
-#if defined(PIPE_OS_LINUX) || defined(PIPE_OS_HAIKU) || defined(PIPE_OS_APPLE)
+#if defined(PIPE_OS_LINUX) || defined(PIPE_OS_HAIKU) \
+    || defined(PIPE_OS_APPLE) || defined(PIPE_OS_SOLARIS)
    shutdown(s, SHUT_RDWR);
    close(s);
 #elif defined(PIPE_SUBSYSTEM_WINDOWS_USER)
@@ -169,7 +171,8 @@ u_socket_listen_on_port(uint16_t portnum)
 void
 u_socket_block(int s, boolean block)
 {
-#if defined(PIPE_OS_LINUX) || defined(PIPE_OS_HAIKU) || defined(PIPE_OS_APPLE)
+#if defined(PIPE_OS_LINUX) || defined(PIPE_OS_HAIKU) \
+    || defined(PIPE_OS_APPLE) || defined(PIPE_OS_SOLARIS)
    int old = fcntl(s, F_GETFL, 0);
    if (old == -1)
       return;
