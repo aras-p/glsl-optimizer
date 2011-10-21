@@ -295,11 +295,8 @@ static void r600_compressed_to_blittable(struct pipe_resource *tex,
 }
 
 static void r600_reset_blittable_to_compressed(struct pipe_resource *tex,
-					 unsigned level,
-					 struct texture_orig_info *orig)
+					       struct texture_orig_info *orig)
 {
-	struct r600_resource_texture *rtex = (struct r600_resource_texture*)tex;
-
 	tex->format = orig->format;
 	tex->width0 = orig->width0;
 	tex->height0 = orig->height0;
@@ -356,10 +353,10 @@ static void r600_resource_copy_region(struct pipe_context *ctx,
 			    src, src_level, psbox);
 
 	if (restore_orig[0])
-		r600_reset_blittable_to_compressed(src, src_level, &orig_info[0]);
+		r600_reset_blittable_to_compressed(src, &orig_info[0]);
 
 	if (restore_orig[1])
-		r600_reset_blittable_to_compressed(dst, dst_level, &orig_info[1]);
+		r600_reset_blittable_to_compressed(dst, &orig_info[1]);
 }
 
 void r600_init_blit_functions(struct r600_pipe_context *rctx)
