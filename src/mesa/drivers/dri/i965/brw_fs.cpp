@@ -442,6 +442,9 @@ fs_visitor::emit_general_interpolation(ir_variable *ir)
       type = ir->type;
    }
 
+   glsl_interp_qualifier interpolation_mode =
+      ir->determine_interpolation_mode(c->key.flat_shade);
+
    int location = ir->location;
    for (unsigned int i = 0; i < array_elements; i++) {
       for (unsigned int j = 0; j < type->matrix_columns; j++) {
@@ -454,10 +457,7 @@ fs_visitor::emit_general_interpolation(ir_variable *ir)
 	    continue;
 	 }
 
-	 bool is_gl_Color =
-	    location == FRAG_ATTRIB_COL0 || location == FRAG_ATTRIB_COL1;
-
-	 if (c->key.flat_shade && is_gl_Color) {
+	 if (interpolation_mode == INTERP_QUALIFIER_FLAT) {
 	    /* Constant interpolation (flat shading) case. The SF has
 	     * handed us defined values in only the constant offset
 	     * field of the setup reg.
