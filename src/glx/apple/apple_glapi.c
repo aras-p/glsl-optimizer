@@ -49,11 +49,9 @@
 struct _glapi_table * __ogl_framework_api = NULL;
 struct _glapi_table * __applegl_api = NULL;
 
-void apple_glapi_set_dispatch(void) {
-    if(__applegl_api)  {
-        _glapi_set_dispatch(__applegl_api);
+static void _apple_glapi_create_table(void) {
+    if (__applegl_api)
         return;
-    }
 
     __ogl_framework_api = _glapi_create_table_from_handle(apple_cgl_get_dl_handle(), "gl");
     assert(__ogl_framework_api);
@@ -68,6 +66,15 @@ void apple_glapi_set_dispatch(void) {
     SET_DrawBuffer(__applegl_api, __applegl_glDrawBuffer);
     SET_DrawBuffersARB(__applegl_api, __applegl_glDrawBuffersARB);
     SET_Viewport(__applegl_api, __applegl_glViewport);
+}
 
+void apple_glapi_set_dispatch(void) {
+    _apple_glapi_create_table();
     _glapi_set_dispatch(__applegl_api);
+}
+
+void apple_glapi_oglfw_viewport_scissor(GLint x, GLint y, GLsizei width, GLsizei height) {
+    _apple_glapi_create_table();
+    __ogl_framework_api->Viewport(x, y, width, height);
+    __ogl_framework_api->Scissor(x, y, width, height);
 }

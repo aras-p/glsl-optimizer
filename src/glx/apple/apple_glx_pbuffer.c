@@ -84,8 +84,7 @@ pbuffer_make_current(struct apple_glx_context *ac,
    }
 
    if (!ac->made_current) {
-      glViewport(0, 0, pbuf->width, pbuf->height);
-      glScissor(0, 0, pbuf->width, pbuf->height);
+      apple_glapi_oglfw_viewport_scissor(0, 0, pbuf->width, pbuf->height);
       ac->made_current = true;
    }
 

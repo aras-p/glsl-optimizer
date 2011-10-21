@@ -53,8 +53,7 @@ update_viewport_and_scissor(Display * dpy, GLXDrawable drawable)
 
    XGetGeometry(dpy, drawable, &root, &x, &y, &width, &height, &bd, &depth);
 
-   glViewport(0, 0, width, height);
-   glScissor(0, 0, width, height);
+   apple_glapi_oglfw_viewport_scissor(0, 0, width, height);
 }
 
 static bool
