@@ -1137,8 +1137,8 @@ load_texunit_bumpmap( struct texenv_fragment_program *p, GLuint unit )
    ir_variable *rot_mat_0_var, *rot_mat_1_var;
    ir_dereference_variable *rot_mat_0, *rot_mat_1;
 
-   rot_mat_0_var = p->shader->symbols->get_variable("gl_MESABumpRotMatrix0");
-   rot_mat_1_var = p->shader->symbols->get_variable("gl_MESABumpRotMatrix1");
+   rot_mat_0_var = p->shader->symbols->get_variable("gl_BumpRotMatrix0MESA");
+   rot_mat_1_var = p->shader->symbols->get_variable("gl_BumpRotMatrix1MESA");
    rot_mat_0 = new(p->mem_ctx) ir_dereference_variable(rot_mat_0_var);
    rot_mat_1 = new(p->mem_ctx) ir_dereference_variable(rot_mat_1_var);
 
@@ -1229,7 +1229,7 @@ emit_fog_instructions(struct texenv_fragment_program *p,
    temp = new(p->mem_ctx) ir_dereference_variable(fog_result);
    fragcolor = new(p->mem_ctx) ir_swizzle(temp, 0, 1, 2, 3, 3);
 
-   oparams = p->shader->symbols->get_variable("gl_MESAFogParamsOptimized");
+   oparams = p->shader->symbols->get_variable("gl_FogParamsOptimizedMESA");
    fogcoord = p->shader->symbols->get_variable("gl_FogFragCoord");
    params = p->shader->symbols->get_variable("gl_Fog");
    f = new(p->mem_ctx) ir_dereference_variable(fogcoord);
