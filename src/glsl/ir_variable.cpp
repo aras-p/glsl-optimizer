@@ -615,6 +615,8 @@ generate_130_uniforms(exec_list *instructions,
 
    add_builtin_constant(instructions, symtab, "gl_MaxClipDistances",
                         state->Const.MaxClipPlanes);
+   add_builtin_constant(instructions, symtab, "gl_MaxVaryingComponents",
+			state->Const.MaxVaryingFloats);
 }
 
 
