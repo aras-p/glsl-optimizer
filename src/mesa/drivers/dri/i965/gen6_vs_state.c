@@ -198,6 +198,8 @@ upload_vs_state(struct brw_context *brw)
     * bug reports that led to this workaround, and may be more than
     * what is strictly required to avoid the issue.
     */
+   intel_emit_post_sync_nonzero_flush(intel);
+
    BEGIN_BATCH(4);
    OUT_BATCH(_3DSTATE_PIPE_CONTROL);
    OUT_BATCH(PIPE_CONTROL_DEPTH_STALL |
