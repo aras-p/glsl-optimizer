@@ -332,12 +332,12 @@ XAppleDRICreateSharedBuffer(Display * dpy, int screen, Drawable drawable,
       return False;
    }
 
-   printf("rep.stringLength %d\n", (int) rep.stringLength);
+   /* printf("rep.stringLength %d\n", (int) rep.stringLength); */
 
    if (rep.stringLength > 0 && rep.stringLength <= pathlen) {
       _XReadPad(dpy, path, rep.stringLength);
 
-      printf("path: %s\n", path);
+      /* printf("path: %s\n", path); */
 
       *width = rep.width;
       *height = rep.height;
@@ -404,7 +404,7 @@ XAppleDRICreatePixmap(Display * dpy, int screen, Drawable drawable,
    if (rep.stringLength > 0 && rep.stringLength <= bufnamesize) {
       _XReadPad(dpy, bufname, rep.stringLength);
 
-      printf("path: %s\n", bufname);
+      /* printf("path: %s\n", bufname); */
 
       *width = rep.width;
       *height = rep.height;
