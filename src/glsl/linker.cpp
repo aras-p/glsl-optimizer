@@ -1746,10 +1746,6 @@ link_shaders(struct gl_context *ctx, struct gl_shader_program *prog)
 	 ;
    }
 
-   update_array_sizes(prog);
-
-   assign_uniform_locations(prog);
-
    /* FINISHME: The value of the max_attribute_index parameter is
     * FINISHME: implementation dependent based on the value of
     * FINISHME: GL_MAX_VERTEX_ATTRIBS.  GL_MAX_VERTEX_ATTRIBS must be
@@ -1785,6 +1781,12 @@ link_shaders(struct gl_context *ctx, struct gl_shader_program *prog)
    if (prog->_LinkedShaders[MESA_SHADER_VERTEX] != NULL) {
       demote_shader_inputs_and_outputs(prog->_LinkedShaders[MESA_SHADER_VERTEX],
 				       ir_var_out);
+
+      /* Eliminate code that is now dead due to unused vertex outputs being
+       * demoted.
+       */
+      while (do_dead_code(prog->_LinkedShaders[MESA_SHADER_VERTEX]->ir, false))
+	 ;
    }
 
    if (prog->_LinkedShaders[MESA_SHADER_GEOMETRY] != NULL) {
@@ -1793,13 +1795,29 @@ link_shaders(struct gl_context *ctx, struct gl_shader_program *prog)
       demote_shader_inputs_and_outputs(sh, ir_var_in);
       demote_shader_inputs_and_outputs(sh, ir_var_inout);
       demote_shader_inputs_and_outputs(sh, ir_var_out);
+
+      /* Eliminate code that is now dead due to unused geometry outputs being
+       * demoted.
+       */
+      while (do_dead_code(prog->_LinkedShaders[MESA_SHADER_GEOMETRY]->ir, false))
+	 ;
    }
 
    if (prog->_LinkedShaders[MESA_SHADER_FRAGMENT] != NULL) {
       gl_shader *const sh = prog->_LinkedShaders[MESA_SHADER_FRAGMENT];
 
       demote_shader_inputs_and_outputs(sh, ir_var_in);
+
+      /* Eliminate code that is now dead due to unused fragment inputs being
+       * demoted.  This shouldn't actually do anything other than remove
+       * declarations of the (now unused) global variables.
+       */
+      while (do_dead_code(prog->_LinkedShaders[MESA_SHADER_FRAGMENT]->ir, false))
+	 ;
    }
+
+   update_array_sizes(prog);
+   assign_uniform_locations(prog);
 
    /* OpenGL ES requires that a vertex shader and a fragment shader both be
     * present in a linked program.  By checking for use of shading language
