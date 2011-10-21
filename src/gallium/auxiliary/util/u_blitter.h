@@ -190,6 +190,24 @@ void util_blitter_copy_texture(struct blitter_context *blitter,
                                boolean ignore_stencil);
 
 /**
+ * Same as util_blitter_copy_texture, but dst and src are pipe_surface and
+ * pipe_sampler_view, respectively. The mipmap level and dstz are part of
+ * the views.
+ *
+ * Drivers can use this to change resource properties (like format, width,
+ * height) by changing how the views can interpret them, instead of changing
+ * pipe_resource directly. This is usually needed to accelerate copying of
+ * compressed formats.
+ *
+ * NOTE: There are no checks whether the blit is actually supported.
+ */
+void util_blitter_copy_texture_view(struct blitter_context *blitter,
+                                    struct pipe_surface *dst,
+                                    unsigned dstx, unsigned dsty,
+                                    struct pipe_sampler_view *src,
+                                    const struct pipe_box *srcbox);
+
+/**
  * Clear a region of a (color) surface to a constant value.
  *
  * These states must be saved in the blitter in addition to the state objects
