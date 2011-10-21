@@ -283,6 +283,10 @@ public:
     * \return The string that would be used in a shader to specify \c
     * mode will be returned.
     *
+    * This function is used to generate error messages of the form "shader
+    * uses %s interpolation qualifier", so in the case where there is no
+    * interpolation qualifier, it returns "no".
+    *
     * This function should only be used on a shader input or output variable.
     */
    const char *interpolation_string() const;

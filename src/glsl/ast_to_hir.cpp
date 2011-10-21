@@ -1965,8 +1965,10 @@ apply_type_qualifier_to_variable(const struct ast_type_qualifier *qual,
       var->interpolation = INTERP_QUALIFIER_FLAT;
    else if (qual->flags.q.noperspective)
       var->interpolation = INTERP_QUALIFIER_NOPERSPECTIVE;
-   else
+   else if (qual->flags.q.smooth)
       var->interpolation = INTERP_QUALIFIER_SMOOTH;
+   else
+      var->interpolation = INTERP_QUALIFIER_NONE;
 
    var->pixel_center_integer = qual->flags.q.pixel_center_integer;
    var->origin_upper_left = qual->flags.q.origin_upper_left;
