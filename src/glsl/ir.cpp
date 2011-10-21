@@ -1354,6 +1354,21 @@ ir_variable::interpolation_string() const
 }
 
 
+glsl_interp_qualifier
+ir_variable::determine_interpolation_mode(bool flat_shade)
+{
+   if (this->interpolation != INTERP_QUALIFIER_NONE)
+      return (glsl_interp_qualifier) this->interpolation;
+   int location = this->location;
+   bool is_gl_Color =
+      location == FRAG_ATTRIB_COL0 || location == FRAG_ATTRIB_COL1;
+   if (flat_shade && is_gl_Color)
+      return INTERP_QUALIFIER_FLAT;
+   else
+      return INTERP_QUALIFIER_SMOOTH;
+}
+
+
 ir_function_signature::ir_function_signature(const glsl_type *return_type)
    : return_type(return_type), is_defined(false), _function(NULL)
 {
