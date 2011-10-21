@@ -195,9 +195,14 @@ void util_blitter_copy_texture(struct blitter_context *blitter,
  * the views.
  *
  * Drivers can use this to change resource properties (like format, width,
- * height) by changing how the views can interpret them, instead of changing
+ * height) by changing how the views interpret them, instead of changing
  * pipe_resource directly. This is usually needed to accelerate copying of
  * compressed formats.
+ *
+ * src_width0 and src_height0 are sampler_view-private properties that
+ * override pipe_resource. The blitter uses them for computation of texture
+ * coordinates. The dst dimensions are supplied through pipe_surface::width
+ * and height.
  *
  * NOTE: There are no checks whether the blit is actually supported.
  */
@@ -205,7 +210,8 @@ void util_blitter_copy_texture_view(struct blitter_context *blitter,
                                     struct pipe_surface *dst,
                                     unsigned dstx, unsigned dsty,
                                     struct pipe_sampler_view *src,
-                                    const struct pipe_box *srcbox);
+                                    const struct pipe_box *srcbox,
+                                    unsigned src_width0, unsigned src_height0);
 
 /**
  * Clear a region of a (color) surface to a constant value.
