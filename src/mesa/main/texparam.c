@@ -394,12 +394,11 @@ set_tex_parameteri(struct gl_context *ctx,
             return GL_FALSE;
          }
          ASSERT(comp < 4);
-         if (swz >= 0) {
-            flush(ctx);
-            texObj->Swizzle[comp] = params[0];
-            set_swizzle_component(&texObj->_Swizzle, comp, swz);
-            return GL_TRUE;
-         }
+
+         flush(ctx);
+         texObj->Swizzle[comp] = params[0];
+         set_swizzle_component(&texObj->_Swizzle, comp, swz);
+         return GL_TRUE;
       }
       goto invalid_pname;
 
