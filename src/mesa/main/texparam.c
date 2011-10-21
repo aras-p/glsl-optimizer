@@ -596,6 +596,17 @@ _mesa_TexParameterf(GLenum target, GLenum pname, GLfloat param)
          need_update = set_tex_parameteri(ctx, texObj, pname, p);
       }
       break;
+   case GL_TEXTURE_SWIZZLE_R_EXT:
+   case GL_TEXTURE_SWIZZLE_G_EXT:
+   case GL_TEXTURE_SWIZZLE_B_EXT:
+   case GL_TEXTURE_SWIZZLE_A_EXT:
+      {
+         GLint p[4];
+         p[0] = (GLint) param;
+         p[1] = p[2] = p[3] = 0;
+         need_update = set_tex_parameteri(ctx, texObj, pname, p);
+      }
+      break;
    default:
       {
          /* this will generate an error if pname is illegal */
@@ -661,6 +672,22 @@ _mesa_TexParameterfv(GLenum target, GLenum pname, const GLfloat *params)
       break;
 #endif
 
+   case GL_TEXTURE_SWIZZLE_R_EXT:
+   case GL_TEXTURE_SWIZZLE_G_EXT:
+   case GL_TEXTURE_SWIZZLE_B_EXT:
+   case GL_TEXTURE_SWIZZLE_A_EXT:
+   case GL_TEXTURE_SWIZZLE_RGBA_EXT:
+      {
+         GLint p[4] = {0, 0, 0, 0};
+         p[0] = (GLint) params[0];
+         if (pname == GL_TEXTURE_SWIZZLE_RGBA_EXT) {
+            p[1] = (GLint) params[1];
+            p[2] = (GLint) params[2];
+            p[3] = (GLint) params[3];
+         }
+         need_update = set_tex_parameteri(ctx, texObj, pname, p);
+      }
+      break;
    default:
       /* this will generate an error if pname is illegal */
       need_update = set_tex_parameterf(ctx, texObj, pname, params);
