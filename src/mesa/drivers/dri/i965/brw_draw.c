@@ -350,6 +350,11 @@ static bool brw_try_draw_prims( struct gl_context *ctx,
       else
 	 gen6_set_prim(brw, &prim[i]);
 
+      /* Note that before the loop, brw->state.dirty.brw was set to != 0, and
+       * that the state updated in the loop outside of this block is that in
+       * *_set_prim or intel_batchbuffer_flush(), which only impacts
+       * brw->state.dirty.brw.
+       */
       if (brw->state.dirty.brw) {
 	 brw_validate_state(brw);
 
