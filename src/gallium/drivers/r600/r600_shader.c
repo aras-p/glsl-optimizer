@@ -1010,32 +1010,6 @@ static int tgsi_last_instruction(unsigned writemask)
 	return lasti;
 }
 
-static int tgsi_int_to_flt(struct r600_shader_ctx *ctx)
-{
-	struct tgsi_full_instruction *inst = &ctx->parse.FullToken.FullInstruction;
-	struct r600_bytecode_alu alu;
-	int i, j, r;
-	int lasti = tgsi_last_instruction(inst->Dst[0].Register.WriteMask);
-
-	for (i = 0; i < lasti + 1; i++) {
-		if (!(inst->Dst[0].Register.WriteMask & (1 << i)))
-			continue;
-
-		memset(&alu, 0, sizeof(struct r600_bytecode_alu));
-		tgsi_dst(ctx, &inst->Dst[0], i, &alu.dst);
-
-		alu.inst = ctx->inst_info->r600_opcode;
-		for (j = 0; j < inst->Instruction.NumSrcRegs; j++) {
-			r600_bytecode_src(&alu.src[j], &ctx->src[j], i);
-		}
-		alu.last = 1;
-		r = r600_bytecode_add_alu(ctx->bc, &alu);
-		if (r)
-			return r;
-	}
-	return 0;
-}
-
 static int tgsi_op2_s(struct r600_shader_ctx *ctx, int swap, int trans_only)
 {
 	struct tgsi_full_instruction *inst = &ctx->parse.FullToken.FullInstruction;
@@ -3671,7 +3645,7 @@ static struct r600_shader_tgsi_instruction eg_shader_tgsi_instruction[] = {
 	{TGSI_OPCODE_PUSHA,	0, EG_V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_NOP, tgsi_unsupported},
 	{TGSI_OPCODE_POPA,	0, EG_V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_NOP, tgsi_unsupported},
 	{TGSI_OPCODE_CEIL,	0, EG_V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_NOP, tgsi_unsupported},
-	{TGSI_OPCODE_I2F,	0, EG_V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_INT_TO_FLT, tgsi_int_to_flt},
+	{TGSI_OPCODE_I2F,	0, EG_V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_INT_TO_FLT, tgsi_op2_trans},
 	{TGSI_OPCODE_NOT,	0, EG_V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_NOT_INT, tgsi_op2},
 	{TGSI_OPCODE_TRUNC,	0, EG_V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_TRUNC, tgsi_op2},
 	{TGSI_OPCODE_SHL,	0, EG_V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_NOP, tgsi_unsupported},
