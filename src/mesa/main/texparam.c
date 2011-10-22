@@ -55,22 +55,34 @@ validate_texture_wrap_mode(struct gl_context * ctx, GLenum target, GLenum wrap)
 {
    const struct gl_extensions * const e = & ctx->Extensions;
 
-   if (wrap == GL_CLAMP || wrap == GL_CLAMP_TO_EDGE ||
-       (wrap == GL_CLAMP_TO_BORDER && e->ARB_texture_border_clamp)) {
-      /* any texture target */
-      return GL_TRUE;
+   if (target == GL_TEXTURE_RECTANGLE_NV) {
+      if (wrap == GL_CLAMP || wrap == GL_CLAMP_TO_EDGE ||
+          (wrap == GL_CLAMP_TO_BORDER && e->ARB_texture_border_clamp))
+         return GL_TRUE;
    }
-   else if (target != GL_TEXTURE_RECTANGLE_NV &&
-	    (wrap == GL_REPEAT ||
-	     wrap == GL_MIRRORED_REPEAT ||
-	     (wrap == GL_MIRROR_CLAMP_EXT &&
-	      (e->ATI_texture_mirror_once || e->EXT_texture_mirror_clamp)) ||
-	     (wrap == GL_MIRROR_CLAMP_TO_EDGE_EXT &&
-	      (e->ATI_texture_mirror_once || e->EXT_texture_mirror_clamp)) ||
-	     (wrap == GL_MIRROR_CLAMP_TO_BORDER_EXT &&
-	      (e->EXT_texture_mirror_clamp)))) {
-      /* non-rectangle texture */
-      return GL_TRUE;
+   else {
+      switch (wrap) {
+      case GL_CLAMP:
+      case GL_REPEAT:
+      case GL_CLAMP_TO_EDGE:
+      case GL_MIRRORED_REPEAT:
+         return GL_TRUE;
+      case GL_CLAMP_TO_BORDER:
+         if (e->ARB_texture_border_clamp)
+            return GL_TRUE;
+         break;
+      case GL_MIRROR_CLAMP_EXT:
+      case GL_MIRROR_CLAMP_TO_EDGE_EXT:
+         if (e->ATI_texture_mirror_once || e->EXT_texture_mirror_clamp)
+            return GL_TRUE;
+         break;
+      case GL_MIRROR_CLAMP_TO_BORDER_EXT:
+         if (e->EXT_texture_mirror_clamp)
+            return GL_TRUE;
+         break;
+      default:
+         break;
+      }
    }
 
    _mesa_error( ctx, GL_INVALID_ENUM, "glTexParameter(param=0x%x)", wrap );
