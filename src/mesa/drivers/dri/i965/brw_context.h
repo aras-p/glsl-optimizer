@@ -498,7 +498,6 @@ struct brw_cache {
  */
 struct brw_tracked_state {
    struct brw_state_flags dirty;
-   void (*prepare)( struct brw_context *brw );
    void (*emit)( struct brw_context *brw );
 };
 
