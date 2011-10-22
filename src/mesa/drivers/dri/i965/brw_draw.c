@@ -361,7 +361,6 @@ retry:
       if (brw->state.dirty.brw) {
 	 brw_validate_state(brw);
 
-	 /* Various fallback checks:  */
 	 if (brw->intel.Fallback) {
 	    retval = false;
 	    goto out;
@@ -369,6 +368,12 @@ retry:
 
 	 intel->no_batch_wrap = true;
 	 brw_upload_state(brw);
+
+	 if (unlikely(brw->intel.Fallback)) {
+	    intel->no_batch_wrap = false;
+	    retval = false;
+	    goto out;
+	 }
       }
 
       if (intel->gen >= 7)
