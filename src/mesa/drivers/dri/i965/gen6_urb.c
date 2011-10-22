@@ -32,8 +32,9 @@
 #include "brw_defines.h"
 
 static void
-prepare_urb( struct brw_context *brw )
+gen6_upload_urb( struct brw_context *brw )
 {
+   struct intel_context *intel = &brw->intel;
    int nr_vs_entries;
 
    /* CACHE_NEW_VS_PROG */
@@ -53,12 +54,6 @@ prepare_urb( struct brw_context *brw )
     */
    brw->urb.nr_gs_entries = 0;
    brw->urb.gs_size = 1; /* Incorrect, but with 0 GS entries it doesn't matter. */
-}
-
-static void
-upload_urb(struct brw_context *brw)
-{
-   struct intel_context *intel = &brw->intel;
 
    assert(brw->urb.nr_vs_entries >= 24);
    assert(brw->urb.nr_vs_entries % 4 == 0);
@@ -81,6 +76,5 @@ const struct brw_tracked_state gen6_urb = {
       .brw = BRW_NEW_CONTEXT,
       .cache = (CACHE_NEW_VS_PROG | CACHE_NEW_GS_PROG),
    },
-   .prepare = prepare_urb,
-   .emit = upload_urb,
+   .emit = gen6_upload_urb,
 };

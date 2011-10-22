@@ -51,8 +51,9 @@
  * See "Volume 2a: 3D Pipeline," section 1.8.
  */
 static void
-prepare_urb(struct brw_context *brw)
+gen7_upload_urb(struct brw_context *brw)
 {
+   struct intel_context *intel = &brw->intel;
    /* Total space for entries is URB size - 16kB for push constants */
    int handle_region_size = (brw->urb.size - 16) * 1024; /* bytes */
 
@@ -68,12 +69,6 @@ prepare_urb(struct brw_context *brw)
 
    /* URB Starting Addresses are specified in multiples of 8kB. */
    brw->urb.vs_start = 2; /* skip over push constants */
-}
-
-static void
-upload_urb(struct brw_context *brw)
-{
-   struct intel_context *intel = &brw->intel;
 
    assert(brw->urb.nr_vs_entries % 8 == 0);
    assert(brw->urb.nr_gs_entries % 8 == 0);
@@ -123,6 +118,5 @@ const struct brw_tracked_state gen7_urb = {
       .brw = BRW_NEW_CONTEXT,
       .cache = (CACHE_NEW_VS_PROG | CACHE_NEW_GS_PROG),
    },
-   .prepare = prepare_urb,
-   .emit = upload_urb,
+   .emit = gen7_upload_urb,
 };
