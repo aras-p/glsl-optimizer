@@ -29,7 +29,7 @@
 #include "brw_state.h"
 
 static void
-gen6_prepare_depth_stencil_state(struct brw_context *brw)
+gen6_upload_depth_stencil_state(struct brw_context *brw)
 {
    struct gl_context *ctx = &brw->intel.ctx;
    struct gen6_depth_stencil_state *ds;
@@ -92,5 +92,5 @@ const struct brw_tracked_state gen6_depth_stencil_state = {
       .brw = BRW_NEW_BATCH,
       .cache = 0,
    },
-   .prepare = gen6_prepare_depth_stencil_state,
+   .emit = gen6_upload_depth_stencil_state,
 };

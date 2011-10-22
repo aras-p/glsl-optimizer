@@ -33,7 +33,7 @@
 #include "main/macros.h"
 
 static void
-prepare_blend_state(struct brw_context *brw)
+gen6_upload_blend_state(struct brw_context *brw)
 {
    struct gl_context *ctx = &brw->intel.ctx;
    struct gen6_blend_state *blend;
@@ -151,11 +151,11 @@ const struct brw_tracked_state gen6_blend_state = {
       .brw = BRW_NEW_BATCH,
       .cache = 0,
    },
-   .prepare = prepare_blend_state,
+   .emit = gen6_upload_blend_state,
 };
 
 static void
-gen6_prepare_color_calc_state(struct brw_context *brw)
+gen6_upload_color_calc_state(struct brw_context *brw)
 {
    struct gl_context *ctx = &brw->intel.ctx;
    struct gen6_color_calc_state *cc;
@@ -187,7 +187,7 @@ const struct brw_tracked_state gen6_color_calc_state = {
       .brw = BRW_NEW_BATCH,
       .cache = 0,
    },
-   .prepare = gen6_prepare_color_calc_state,
+   .emit = gen6_upload_color_calc_state,
 };
 
 static void upload_cc_state_pointers(struct brw_context *brw)
