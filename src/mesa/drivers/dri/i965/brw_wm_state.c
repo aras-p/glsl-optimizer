@@ -71,7 +71,7 @@ brw_color_buffer_write_enabled(struct brw_context *brw)
  * Setup wm hardware state.  See page 225 of Volume 2
  */
 static void
-brw_prepare_wm_unit(struct brw_context *brw)
+brw_upload_wm_unit(struct brw_context *brw)
 {
    struct intel_context *intel = &brw->intel;
    struct gl_context *ctx = &intel->ctx;
@@ -269,6 +269,6 @@ const struct brw_tracked_state brw_wm_unit = {
       .cache = (CACHE_NEW_WM_PROG |
 		CACHE_NEW_SAMPLER)
    },
-   .prepare = brw_prepare_wm_unit,
+   .emit = brw_upload_wm_unit,
 };
 

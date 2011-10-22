@@ -36,7 +36,7 @@
 #include "brw_defines.h"
 
 static void
-brw_prepare_gs_unit(struct brw_context *brw)
+brw_upload_gs_unit(struct brw_context *brw)
 {
    struct intel_context *intel = &brw->intel;
    struct brw_gs_unit_state *gs;
@@ -95,5 +95,5 @@ const struct brw_tracked_state brw_gs_unit = {
 		BRW_NEW_URB_FENCE),
       .cache = CACHE_NEW_GS_PROG
    },
-   .prepare = brw_prepare_gs_unit,
+   .emit = brw_upload_gs_unit,
 };

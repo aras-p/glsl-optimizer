@@ -119,7 +119,7 @@ const struct brw_tracked_state brw_sf_vp = {
       .brw   = BRW_NEW_BATCH,
       .cache = 0
    },
-   .prepare = upload_sf_vp
+   .emit = upload_sf_vp
 };
 
 /**
@@ -324,5 +324,5 @@ const struct brw_tracked_state brw_sf_unit = {
       .cache = (CACHE_NEW_SF_VP |
 		CACHE_NEW_SF_PROG)
    },
-   .prepare = upload_sf_unit,
+   .emit = upload_sf_unit,
 };

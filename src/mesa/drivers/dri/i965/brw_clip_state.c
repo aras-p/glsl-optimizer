@@ -34,7 +34,7 @@
 #include "brw_defines.h"
 
 static void
-brw_prepare_clip_unit(struct brw_context *brw)
+brw_upload_clip_unit(struct brw_context *brw)
 {
    struct intel_context *intel = &brw->intel;
    struct gl_context *ctx = &intel->ctx;
@@ -124,5 +124,5 @@ const struct brw_tracked_state brw_clip_unit = {
 		BRW_NEW_URB_FENCE),
       .cache = CACHE_NEW_CLIP_PROG
    },
-   .prepare = brw_prepare_clip_unit,
+   .emit = brw_upload_clip_unit,
 };

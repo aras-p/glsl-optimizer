@@ -72,6 +72,7 @@ static const struct brw_tracked_state *gen4_atoms[] =
    &brw_wm_binding_table,
    &brw_wm_samplers,
 
+   /* These set up state for brw_psp_urb_cbs */
    &brw_wm_unit,
    &brw_sf_vp,
    &brw_sf_unit,
