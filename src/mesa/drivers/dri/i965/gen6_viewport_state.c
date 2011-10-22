@@ -39,7 +39,7 @@
  * up in the guardband or not.
  */
 static void
-prepare_clip_vp(struct brw_context *brw)
+gen6_upload_clip_vp(struct brw_context *brw)
 {
    struct brw_clipper_viewport *vp;
 
@@ -60,11 +60,11 @@ const struct brw_tracked_state gen6_clip_vp = {
       .brw = BRW_NEW_BATCH,
       .cache = 0,
    },
-   .prepare = prepare_clip_vp,
+   .emit = gen6_upload_clip_vp,
 };
 
 static void
-prepare_sf_vp(struct brw_context *brw)
+gen6_upload_sf_vp(struct brw_context *brw)
 {
    struct gl_context *ctx = &brw->intel.ctx;
    const GLfloat depth_scale = 1.0F / ctx->DrawBuffer->_DepthMaxF;
@@ -103,7 +103,7 @@ const struct brw_tracked_state gen6_sf_vp = {
       .brw = BRW_NEW_BATCH,
       .cache = 0,
    },
-   .prepare = prepare_sf_vp,
+   .emit = gen6_upload_sf_vp,
 };
 
 static void upload_viewport_state_pointers(struct brw_context *brw)
