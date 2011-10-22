@@ -133,7 +133,7 @@ const struct brw_tracked_state brw_curbe_offsets = {
       .brw  = BRW_NEW_VERTEX_PROGRAM | BRW_NEW_CONTEXT,
       .cache = CACHE_NEW_WM_PROG
    },
-   .prepare = calculate_curbe_offsets
+   .emit = calculate_curbe_offsets
 };
 
 
