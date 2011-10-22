@@ -502,9 +502,7 @@ vec4_visitor::setup_uniform_values(int loc, const glsl_type *type)
    float *values = &this->vp->Base.Parameters->ParameterValues[loc][0].f;
 
    if (type->is_matrix()) {
-      const glsl_type *column = glsl_type::get_instance(GLSL_TYPE_FLOAT,
-							type->vector_elements,
-							1);
+      const glsl_type *column = type->column_type();
 
       for (unsigned int i = 0; i < type->matrix_columns; i++) {
 	 offset += setup_uniform_values(loc + offset, column);
