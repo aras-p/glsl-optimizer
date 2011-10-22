@@ -421,11 +421,15 @@ brw_print_dirty_count(struct dirty_bit_map *bit_map, int32_t bits)
 /***********************************************************************
  * Emit all state:
  */
-void brw_validate_state( struct brw_context *brw )
+void brw_upload_state(struct brw_context *brw)
 {
    struct gl_context *ctx = &brw->intel.ctx;
    struct intel_context *intel = &brw->intel;
    struct brw_state_flags *state = &brw->state.dirty;
+   const struct brw_tracked_state *atoms = brw->emit_atoms;
+   int num_atoms = brw->num_emit_atoms;
+   int i;
+   static int dirty_count = 0;
 
    state->mesa |= brw->intel.NewGLState;
    brw->intel.NewGLState = 0;
@@ -452,16 +456,6 @@ void brw_validate_state( struct brw_context *brw )
    brw->intel.Fallback = false; /* boolean, not bitfield */
 
    intel_check_front_buffer_rendering(intel);
-}
-
-
-void brw_upload_state(struct brw_context *brw)
-{
-   struct brw_state_flags *state = &brw->state.dirty;
-   const struct brw_tracked_state *atoms = brw->emit_atoms;
-   int num_atoms = brw->num_emit_atoms;
-   int i;
-   static int dirty_count = 0;
 
    if (unlikely(INTEL_DEBUG)) {
       /* Debug version which enforces various sanity checks on the

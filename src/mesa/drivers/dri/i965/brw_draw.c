@@ -359,13 +359,6 @@ retry:
        * brw->state.dirty.brw.
        */
       if (brw->state.dirty.brw) {
-	 brw_validate_state(brw);
-
-	 if (brw->intel.Fallback) {
-	    retval = false;
-	    goto out;
-	 }
-
 	 intel->no_batch_wrap = true;
 	 brw_upload_state(brw);
 

@@ -124,7 +124,6 @@ extern const struct brw_tracked_state gen7_wm_surfaces;
 /***********************************************************************
  * brw_state.c
  */
-void brw_validate_state(struct brw_context *brw);
 void brw_upload_state(struct brw_context *brw);
 void brw_init_state(struct brw_context *brw);
 void brw_destroy_state(struct brw_context *brw);
