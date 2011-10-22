@@ -246,8 +246,6 @@ brw_prepare_query_begin(struct brw_context *brw)
 
       brw->query.index = 0;
    }
-
-   brw_add_validated_bo(brw, brw->query.bo);
 }
 
 /** Called just before primitive drawing to get a beginning PS_DEPTH_COUNT. */

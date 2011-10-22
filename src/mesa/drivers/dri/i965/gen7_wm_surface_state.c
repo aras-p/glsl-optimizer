@@ -311,28 +311,18 @@ prepare_wm_surfaces(struct brw_context *brw)
 
    if (ctx->DrawBuffer->_NumColorDrawBuffers >= 1) {
       for (i = 0; i < ctx->DrawBuffer->_NumColorDrawBuffers; i++) {
-	 struct gl_renderbuffer *rb = ctx->DrawBuffer->_ColorDrawBuffers[i];
-	 struct intel_renderbuffer *irb = intel_renderbuffer(rb);
-	 struct intel_region *region = irb ? irb->region : NULL;
-
-	 if (region)
-	    brw_add_validated_bo(brw, region->bo);
 	 nr_surfaces = SURF_INDEX_DRAW(i) + 1;
       }
    }
 
    if (brw->wm.const_bo) {
-      brw_add_validated_bo(brw, brw->wm.const_bo);
       nr_surfaces = SURF_INDEX_FRAG_CONST_BUFFER + 1;
    }
 
    for (i = 0; i < BRW_MAX_TEX_UNIT; i++) {
       const struct gl_texture_unit *texUnit = &ctx->Texture.Unit[i];
-      struct gl_texture_object *tObj = texUnit->_Current;
-      struct intel_texture_object *intelObj = intel_texture_object(tObj);
 
       if (texUnit->_ReallyEnabled) {
-	 brw_add_validated_bo(brw, intelObj->mt->region->bo);
 	 nr_surfaces = SURF_INDEX_TEXTURE(i) + 1;
       }
    }

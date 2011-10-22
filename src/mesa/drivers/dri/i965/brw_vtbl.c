@@ -70,7 +70,6 @@ static void brw_destroy_context( struct intel_context *intel )
 
    brw_destroy_state(brw);
    brw_draw_destroy( brw );
-   brw_clear_validated_bos(brw);
    ralloc_free(brw->wm.compile_data);
 
    dri_bo_release(&brw->curbe.curbe_bo);

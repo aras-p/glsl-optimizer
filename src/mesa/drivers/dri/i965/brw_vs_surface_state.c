@@ -145,7 +145,6 @@ prepare_vs_surfaces(struct brw_context *brw)
    int nr_surfaces = 0;
 
    if (brw->vs.const_bo) {
-      brw_add_validated_bo(brw, brw->vs.const_bo);
       nr_surfaces = 1;
    }
 

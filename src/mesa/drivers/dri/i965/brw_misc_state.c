@@ -196,22 +196,6 @@ const struct brw_tracked_state brw_psp_urb_cbs = {
    .emit = upload_psp_urb_cbs,
 };
 
-static void prepare_depthbuffer(struct brw_context *brw)
-{
-   struct intel_context *intel = &brw->intel;
-   struct gl_context *ctx = &intel->ctx;
-   struct gl_framebuffer *fb = ctx->DrawBuffer;
-   struct intel_renderbuffer *drb = intel_get_renderbuffer(fb, BUFFER_DEPTH);
-   struct intel_renderbuffer *srb = intel_get_renderbuffer(fb, BUFFER_STENCIL);
-
-   if (drb)
-      brw_add_validated_bo(brw, drb->region->bo);
-   if (drb && drb->hiz_region)
-      brw_add_validated_bo(brw, drb->hiz_region->bo);
-   if (srb)
-      brw_add_validated_bo(brw, srb->region->bo);
-}
-
 static void emit_depthbuffer(struct brw_context *brw)
 {
    struct intel_context *intel = &brw->intel;
@@ -436,7 +420,6 @@ const struct brw_tracked_state brw_depthbuffer = {
       .brw = BRW_NEW_BATCH,
       .cache = 0,
    },
-   .prepare = prepare_depthbuffer,
    .emit = emit_depthbuffer,
 };
 

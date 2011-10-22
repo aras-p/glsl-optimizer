@@ -303,19 +303,6 @@ static void xor_states( struct brw_state_flags *result,
    result->cache = a->cache ^ b->cache;
 }
 
-void
-brw_clear_validated_bos(struct brw_context *brw)
-{
-   int i;
-
-   /* Clear the last round of validated bos */
-   for (i = 0; i < brw->state.validated_bo_count; i++) {
-      drm_intel_bo_unreference(brw->state.validated_bos[i]);
-      brw->state.validated_bos[i] = NULL;
-   }
-   brw->state.validated_bo_count = 0;
-}
-
 struct dirty_bit_map {
    uint32_t bit;
    char *name;
@@ -444,12 +431,8 @@ void brw_validate_state( struct brw_context *brw )
    int num_atoms = brw->num_prepare_atoms;
    GLuint i;
 
-   brw_clear_validated_bos(brw);
-
    state->mesa |= brw->intel.NewGLState;
    brw->intel.NewGLState = 0;
-
-   brw_add_validated_bo(brw, intel->batch.bo);
 
    if (brw->emit_state_always) {
       state->mesa |= ~0;
@@ -508,8 +491,6 @@ void brw_upload_state(struct brw_context *brw)
    int num_atoms = brw->num_emit_atoms;
    int i;
    static int dirty_count = 0;
-
-   brw_clear_validated_bos(brw);
 
    if (unlikely(INTEL_DEBUG)) {
       /* Debug version which enforces various sanity checks on the

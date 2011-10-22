@@ -35,17 +35,6 @@
 
 #include "brw_context.h"
 
-static INLINE void
-brw_add_validated_bo(struct brw_context *brw, drm_intel_bo *bo)
-{
-   assert(brw->state.validated_bo_count < ARRAY_SIZE(brw->state.validated_bos));
-
-   if (bo != NULL) {
-      drm_intel_bo_reference(bo);
-      brw->state.validated_bos[brw->state.validated_bo_count++] = bo;
-   }
-};
-
 extern const struct brw_tracked_state brw_blend_constant_color;
 extern const struct brw_tracked_state brw_cc_vp;
 extern const struct brw_tracked_state brw_cc_unit;
@@ -139,7 +128,6 @@ void brw_validate_state(struct brw_context *brw);
 void brw_upload_state(struct brw_context *brw);
 void brw_init_state(struct brw_context *brw);
 void brw_destroy_state(struct brw_context *brw);
-void brw_clear_validated_bos(struct brw_context *brw);
 
 /***********************************************************************
  * brw_state_cache.c

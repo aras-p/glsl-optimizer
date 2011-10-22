@@ -322,8 +322,6 @@ static void prepare_constant_buffer(struct brw_context *brw)
 	     bufsz);
    }
 
-   brw_add_validated_bo(brw, brw->curbe.curbe_bo);
-
    /* Because this provokes an action (ie copy the constants into the
     * URB), it shouldn't be shortcircuited if identical to the
     * previous time - because eg. the urb destination may have

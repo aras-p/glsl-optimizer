@@ -326,7 +326,7 @@ static void brw_prepare_vertices(struct brw_context *brw)
       return;
 
    if (brw->vb.nr_buffers)
-      goto validate;
+      goto prepare;
 
    /* XXX: In the rare cases where this happens we fallback all
     * the way to software rasterization, although a tnl fallback
@@ -535,11 +535,8 @@ static void brw_prepare_vertices(struct brw_context *brw)
 
    brw->vb.nr_buffers = j;
 
-validate:
+prepare:
    brw_prepare_query_begin(brw);
-   for (i = 0; i < brw->vb.nr_buffers; i++) {
-      brw_add_validated_bo(brw, brw->vb.buffers[i].bo);
-   }
 }
 
 static void brw_emit_vertices(struct brw_context *brw)
@@ -738,7 +735,6 @@ static void brw_prepare_indices(struct brw_context *brw)
       drm_intel_bo_unreference(brw->ib.bo);
       brw->ib.bo = bo;
 
-      brw_add_validated_bo(brw, brw->ib.bo);
       brw->state.dirty.brw |= BRW_NEW_INDEX_BUFFER;
    } else {
       drm_intel_bo_unreference(bo);
