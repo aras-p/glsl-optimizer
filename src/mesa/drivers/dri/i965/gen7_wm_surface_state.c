@@ -302,49 +302,16 @@ gen7_update_renderbuffer_surface(struct brw_context *brw,
 			   I915_GEM_DOMAIN_RENDER);
 }
 
-static void
-prepare_wm_surfaces(struct brw_context *brw)
-{
-   struct gl_context *ctx = &brw->intel.ctx;
-   int i;
-   int nr_surfaces = 0;
-
-   if (ctx->DrawBuffer->_NumColorDrawBuffers >= 1) {
-      for (i = 0; i < ctx->DrawBuffer->_NumColorDrawBuffers; i++) {
-	 nr_surfaces = SURF_INDEX_DRAW(i) + 1;
-      }
-   }
-
-   if (brw->wm.const_bo) {
-      nr_surfaces = SURF_INDEX_FRAG_CONST_BUFFER + 1;
-   }
-
-   for (i = 0; i < BRW_MAX_TEX_UNIT; i++) {
-      const struct gl_texture_unit *texUnit = &ctx->Texture.Unit[i];
-
-      if (texUnit->_ReallyEnabled) {
-	 nr_surfaces = SURF_INDEX_TEXTURE(i) + 1;
-      }
-   }
-
-   /* Have to update this in our prepare, since the unit's prepare
-    * relies on it.
-    */
-   if (brw->wm.nr_surfaces != nr_surfaces) {
-      brw->wm.nr_surfaces = nr_surfaces;
-      brw->state.dirty.brw |= BRW_NEW_NR_WM_SURFACES;
-   }
-}
-
 /**
  * Constructs the set of surface state objects pointed to by the
  * binding table.
  */
 static void
-upload_wm_surfaces(struct brw_context *brw)
+gen7_upload_wm_surfaces(struct brw_context *brw)
 {
    struct gl_context *ctx = &brw->intel.ctx;
    GLuint i;
+   int nr_surfaces = 0;
 
    /* _NEW_BUFFERS | _NEW_COLOR */
    /* Update surfaces for drawing buffers */
@@ -357,8 +324,15 @@ upload_wm_surfaces(struct brw_context *brw)
 	    gen7_update_null_renderbuffer_surface(brw, i);
 	 }
       }
+      nr_surfaces = SURF_INDEX_DRAW(ctx->DrawBuffer->_NumColorDrawBuffers);
    } else {
       gen7_update_null_renderbuffer_surface(brw, 0);
+      nr_surfaces = SURF_INDEX_DRAW(0) + 1;
+   }
+
+   /* BRW_NEW_WM_CONSTBUF */
+   if (brw->wm.const_bo) {
+      nr_surfaces = SURF_INDEX_FRAG_CONST_BUFFER + 1;
    }
 
    /* Update surfaces for textures */
@@ -369,9 +343,15 @@ upload_wm_surfaces(struct brw_context *brw)
       /* _NEW_TEXTURE */
       if (texUnit->_ReallyEnabled) {
 	 gen7_update_texture_surface(ctx, i);
+	 nr_surfaces = SURF_INDEX_TEXTURE(i) + 1;
       } else {
          brw->wm.surf_offset[surf] = 0;
       }
+   }
+
+   if (brw->wm.nr_surfaces != nr_surfaces) {
+      brw->wm.nr_surfaces = nr_surfaces;
+      brw->state.dirty.brw |= BRW_NEW_NR_WM_SURFACES;
    }
 
    brw->state.dirty.brw |= BRW_NEW_WM_SURFACES;
@@ -382,9 +362,9 @@ const struct brw_tracked_state gen7_wm_surfaces = {
       .mesa = (_NEW_COLOR |
                _NEW_TEXTURE |
                _NEW_BUFFERS),
-      .brw = BRW_NEW_BATCH,
+      .brw = (BRW_NEW_BATCH |
+	      BRW_NEW_WM_CONSTBUF),
       .cache = 0
    },
-   .prepare = prepare_wm_surfaces,
-   .emit = upload_wm_surfaces,
+   .emit = gen7_upload_wm_surfaces,
 };
