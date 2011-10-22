@@ -259,14 +259,12 @@ void brw_init_state( struct brw_context *brw )
 	     (*atoms)->dirty.brw |
 	     (*atoms)->dirty.cache);
 
-      if ((*atoms)->prepare)
-	 brw->prepare_atoms[brw->num_prepare_atoms++] = **atoms;
-      if ((*atoms)->emit)
-	 brw->emit_atoms[brw->num_emit_atoms++] = **atoms;
+      assert(!(*atoms)->prepare);
+      assert((*atoms)->emit);
+      brw->emit_atoms[brw->num_emit_atoms++] = **atoms;
       atoms++;
    }
    assert(brw->num_emit_atoms <= ARRAY_SIZE(brw->emit_atoms));
-   assert(brw->num_prepare_atoms <= ARRAY_SIZE(brw->prepare_atoms));
 }
 
 
@@ -428,9 +426,6 @@ void brw_validate_state( struct brw_context *brw )
    struct gl_context *ctx = &brw->intel.ctx;
    struct intel_context *intel = &brw->intel;
    struct brw_state_flags *state = &brw->state.dirty;
-   const struct brw_tracked_state *atoms = brw->prepare_atoms;
-   int num_atoms = brw->num_prepare_atoms;
-   GLuint i;
 
    state->mesa |= brw->intel.NewGLState;
    brw->intel.NewGLState = 0;
@@ -455,18 +450,6 @@ void brw_validate_state( struct brw_context *brw )
       return;
 
    brw->intel.Fallback = false; /* boolean, not bitfield */
-
-   /* do prepare stage for all atoms */
-   for (i = 0; i < num_atoms; i++) {
-      const struct brw_tracked_state *atom = &atoms[i];
-
-      if (check_state(state, &atom->dirty)) {
-	 atom->prepare(brw);
-
-	 if (brw->intel.Fallback)
-	    break;
-      }
-   }
 
    intel_check_front_buffer_rendering(intel);
 }
