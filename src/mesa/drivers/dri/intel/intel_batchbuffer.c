@@ -120,7 +120,7 @@ intel_batchbuffer_free(struct intel_context *intel)
 
 /* TODO: Push this whole function into bufmgr.
  */
-static void
+static int
 do_flush_locked(struct intel_context *intel)
 {
    struct intel_batchbuffer *batch = &intel->batch;
@@ -163,12 +163,16 @@ do_flush_locked(struct intel_context *intel)
       exit(1);
    }
    intel->vtbl.new_batch(intel);
+
+   return ret;
 }
 
-void
+int
 _intel_batchbuffer_flush(struct intel_context *intel,
 			 const char *file, int line)
 {
+   int ret;
+
    /* No batch should be emitted that uses a mapped region, because that would
     * cause the map to be incoherent with GPU rendering done by the
     * batchbuffer. To ensure that condition, we assert a condition that is
@@ -177,7 +181,7 @@ _intel_batchbuffer_flush(struct intel_context *intel,
    assert(intel->num_mapped_regions == 0);
 
    if (intel->batch.used == 0)
-      return;
+      return 0;
 
    if (intel->first_post_swapbuffers_batch == NULL) {
       intel->first_post_swapbuffers_batch = intel->batch.bo;
@@ -205,7 +209,7 @@ _intel_batchbuffer_flush(struct intel_context *intel,
    /* Check that we didn't just wrap our batchbuffer at a bad time. */
    assert(!intel->no_batch_wrap);
 
-   do_flush_locked(intel);
+   ret = do_flush_locked(intel);
 
    if (unlikely(INTEL_DEBUG & DEBUG_SYNC)) {
       fprintf(stderr, "waiting for idle\n");
@@ -215,6 +219,8 @@ _intel_batchbuffer_flush(struct intel_context *intel,
    /* Reset the buffer:
     */
    intel_batchbuffer_reset(intel);
+
+   return ret;
 }
 
 
