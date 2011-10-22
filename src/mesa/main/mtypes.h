@@ -1530,6 +1530,7 @@ struct gl_buffer_object
    GLintptr Offset;     /**< Mapped offset */
    GLsizeiptr Length;   /**< Mapped length */
    /*@}*/
+   GLboolean DeletePending;   /**< true if buffer object is removed from the hash */
    GLboolean Written;   /**< Ever written to? (for debugging) */
    GLboolean Purgeable; /**< Is the buffer purgeable under memory pressure? */
 };
