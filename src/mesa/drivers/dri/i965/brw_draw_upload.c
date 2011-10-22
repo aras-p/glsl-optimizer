@@ -545,6 +545,8 @@ static void brw_emit_vertices(struct brw_context *brw)
    struct intel_context *intel = intel_context(ctx);
    GLuint i;
 
+   brw_prepare_vertices(brw);
+
    brw_emit_query_begin(brw);
 
    /* If the VS doesn't read any inputs (calculating vertex position from
@@ -665,7 +667,6 @@ const struct brw_tracked_state brw_vertices = {
       .brw = BRW_NEW_BATCH | BRW_NEW_VERTICES,
       .cache = CACHE_NEW_VS_PROG,
    },
-   .prepare = brw_prepare_vertices,
    .emit = brw_emit_vertices,
 };
 
