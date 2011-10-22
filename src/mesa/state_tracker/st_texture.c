@@ -133,6 +133,7 @@ st_gl_texture_dims_to_pipe_dims(GLenum texture,
       break;
    case GL_TEXTURE_2D:
    case GL_TEXTURE_RECTANGLE:
+   case GL_TEXTURE_EXTERNAL_OES:
       assert(depthIn == 1);
       *widthOut = widthIn;
       *heightOut = heightIn;

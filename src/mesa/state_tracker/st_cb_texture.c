@@ -75,6 +75,7 @@ gl_target_to_pipe(GLenum target)
    case GL_TEXTURE_1D:
       return PIPE_TEXTURE_1D;
    case GL_TEXTURE_2D:
+   case GL_TEXTURE_EXTERNAL_OES:
       return PIPE_TEXTURE_2D;
    case GL_TEXTURE_RECTANGLE_NV:
       return PIPE_TEXTURE_RECT;
@@ -310,6 +311,7 @@ get_texture_dims(GLenum target)
    case GL_TEXTURE_CUBE_MAP_NEGATIVE_Z_ARB:
    case GL_TEXTURE_RECTANGLE_NV:
    case GL_TEXTURE_2D_ARRAY_EXT:
+   case GL_TEXTURE_EXTERNAL_OES:
       return 2;
    case GL_TEXTURE_3D:
       return 3;

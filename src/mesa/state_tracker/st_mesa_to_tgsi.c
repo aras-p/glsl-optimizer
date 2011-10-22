@@ -290,6 +290,7 @@ translate_texture_target( GLuint textarget,
    case TEXTURE_RECT_INDEX: return TGSI_TEXTURE_RECT;
    case TEXTURE_1D_ARRAY_INDEX:   return TGSI_TEXTURE_1D_ARRAY;
    case TEXTURE_2D_ARRAY_INDEX:   return TGSI_TEXTURE_2D_ARRAY;
+   case TEXTURE_EXTERNAL_INDEX:   return TGSI_TEXTURE_2D;
    default:
       debug_assert( 0 );
       return TGSI_TEXTURE_1D;
