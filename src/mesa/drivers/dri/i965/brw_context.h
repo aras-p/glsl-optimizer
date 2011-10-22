@@ -227,9 +227,6 @@ struct brw_vertex_program {
 struct brw_fragment_program {
    struct gl_fragment_program program;
    GLuint id;  /**< serial no. to identify frag progs, never re-used */
-
-   /** for debugging, which texture units are referenced */
-   GLbitfield tex_units_used;
 };
 
 struct brw_shader {

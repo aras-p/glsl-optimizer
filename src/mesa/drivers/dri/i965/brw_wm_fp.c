@@ -215,10 +215,6 @@ static struct prog_instruction * emit_tex_op(struct brw_wm_compile *c,
    assert(tex_src_target < NUM_TEXTURE_TARGETS ||
           tex_src_target == TEX_TARGET_NONE);
 
-   /* update mask of which texture units are referenced by this program */
-   if (tex_src_unit != TEX_UNIT_NONE)
-      c->fp->tex_units_used |= (1 << tex_src_unit);
-
    memset(inst, 0, sizeof(*inst));
 
    inst->Opcode = op;
@@ -1066,7 +1062,6 @@ void brw_wm_pass_fp( struct brw_wm_compile *c )
    }
    c->pixel_w = src_undef();
    c->nr_fp_insns = 0;
-   c->fp->tex_units_used = 0x0;
 
    /* Emit preamble instructions.  This is where special instructions such as
     * WM_CINTERP, WM_LINTERP, WM_PINTERP and WM_WPOSXY are emitted to

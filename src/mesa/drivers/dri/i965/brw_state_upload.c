@@ -469,19 +469,6 @@ void brw_validate_state( struct brw_context *brw )
    }
 
    intel_check_front_buffer_rendering(intel);
-
-   /* Make sure that the textures which are referenced by the current
-    * brw fragment program are actually present/valid.
-    * If this fails, we can experience GPU lock-ups.
-    */
-   {
-      const struct brw_fragment_program *fp;
-      fp = brw_fragment_program_const(brw->fragment_program);
-      if (fp) {
-         assert((fp->tex_units_used & ctx->Texture._EnabledUnits)
-                == fp->tex_units_used);
-      }
-   }
 }
 
 
