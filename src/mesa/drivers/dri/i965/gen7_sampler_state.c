@@ -184,7 +184,7 @@ gen7_update_sampler_state(struct brw_context *brw, int unit,
  * FIXME: simplify all the different new texture state flags.
  */
 static void
-gen7_prepare_samplers(struct brw_context *brw)
+gen7_upload_samplers(struct brw_context *brw)
 {
    struct gl_context *ctx = &brw->intel.ctx;
    struct gen7_sampler_state *samplers;
@@ -218,5 +218,5 @@ const struct brw_tracked_state gen7_samplers = {
       .brw = BRW_NEW_BATCH,
       .cache = 0
    },
-   .prepare = gen7_prepare_samplers,
+   .emit = gen7_upload_samplers,
 };
