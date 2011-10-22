@@ -670,7 +670,7 @@ const struct brw_tracked_state brw_vertices = {
    .emit = brw_emit_vertices,
 };
 
-static void brw_prepare_indices(struct brw_context *brw)
+static void brw_upload_indices(struct brw_context *brw)
 {
    struct gl_context *ctx = &brw->intel.ctx;
    struct intel_context *intel = &brw->intel;
@@ -753,7 +753,7 @@ const struct brw_tracked_state brw_indices = {
       .brw = BRW_NEW_INDICES,
       .cache = 0,
    },
-   .prepare = brw_prepare_indices,
+   .emit = brw_upload_indices,
 };
 
 static void brw_emit_index_buffer(struct brw_context *brw)
