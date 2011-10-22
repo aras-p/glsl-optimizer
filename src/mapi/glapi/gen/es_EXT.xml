@@ -615,4 +615,12 @@
 
 <!-- 69. GL_EXT_multi_draw_arrays -->
 
+<!-- 87. GL_OES_EGL_image_external -->
+<category name="GL_OES_EGL_image_external" number="87">
+    <enum name="TEXTURE_EXTERNAL_OES"                     value="0x8D65"/>
+    <enum name="SAMPLER_EXTERNAL_OES"                     value="0x8D66"/>
+    <enum name="TEXTURE_BINDING_EXTERNAL_OES"             value="0x8D67"/>
+    <enum name="REQUIRED_TEXTURE_IMAGE_UNITS_OES"         value="0x8D68"/>
+</category>
+
 </OpenGLAPI>
