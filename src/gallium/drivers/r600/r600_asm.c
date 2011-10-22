@@ -1844,7 +1844,7 @@ void r600_bytecode_dump(struct r600_bytecode *bc)
 			fprintf(stderr, "KCACHE_BANK1:%X\n", cf->kcache[1].bank);
 			id++;
 			fprintf(stderr, "%04d %08X ALU ", id, bc->bytecode[id]);
-			fprintf(stderr, "INST:%d ", cf->inst);
+			fprintf(stderr, "INST:0x%x ", cf->inst);
 			fprintf(stderr, "KCACHE_MODE1:%X ", cf->kcache[1].mode);
 			fprintf(stderr, "KCACHE_ADDR0:%X ", cf->kcache[0].addr);
 			fprintf(stderr, "KCACHE_ADDR1:%X ", cf->kcache[1].addr);
@@ -1857,7 +1857,7 @@ void r600_bytecode_dump(struct r600_bytecode *bc)
 			fprintf(stderr, "ADDR:%d\n", cf->addr);
 			id++;
 			fprintf(stderr, "%04d %08X TEX/VTX ", id, bc->bytecode[id]);
-			fprintf(stderr, "INST:%d ", cf->inst);
+			fprintf(stderr, "INST:0x%x ", cf->inst);
 			fprintf(stderr, "COUNT:%d\n", cf->ndw / 4);
 			break;
 		case V_SQ_CF_ALLOC_EXPORT_WORD1_SQ_CF_INST_EXPORT:
@@ -1876,7 +1876,7 @@ void r600_bytecode_dump(struct r600_bytecode *bc)
 			fprintf(stderr, "SWIZ_Z:%X ", cf->output.swizzle_z);
 			fprintf(stderr, "SWIZ_W:%X ", cf->output.swizzle_w);
 			fprintf(stderr, "BARRIER:%X ", cf->output.barrier);
-			fprintf(stderr, "INST:%d ", cf->output.inst);
+			fprintf(stderr, "INST:0x%x ", cf->output.inst);
 			fprintf(stderr, "BURST_COUNT:%d ", cf->output.burst_count);
 			fprintf(stderr, "EOP:%X\n", cf->output.end_of_program);
 			break;
@@ -1894,7 +1894,7 @@ void r600_bytecode_dump(struct r600_bytecode *bc)
 			fprintf(stderr, "ADDR:%d\n", cf->cf_addr);
 			id++;
 			fprintf(stderr, "%04d %08X CF ", id, bc->bytecode[id]);
-			fprintf(stderr, "INST:%d ", cf->inst);
+			fprintf(stderr, "INST:0x%x ", cf->inst);
 			fprintf(stderr, "COND:%X ", cf->cond);
 			fprintf(stderr, "POP_COUNT:%X\n", cf->pop_count);
 			break;
@@ -1917,7 +1917,7 @@ void r600_bytecode_dump(struct r600_bytecode *bc)
 			fprintf(stderr, "LAST:%d)\n", alu->last);
 			id++;
 			fprintf(stderr, "%04d %08X %c ", id, bc->bytecode[id], alu->last ? '*' : ' ');
-			fprintf(stderr, "INST:%d ", alu->inst);
+			fprintf(stderr, "INST:0x%x ", alu->inst);
 			fprintf(stderr, "DST(SEL:%d ", alu->dst.sel);
 			fprintf(stderr, "CHAN:%d ", alu->dst.chan);
 			fprintf(stderr, "REL:%d ", alu->dst.rel);
@@ -1950,7 +1950,7 @@ void r600_bytecode_dump(struct r600_bytecode *bc)
 
 		LIST_FOR_EACH_ENTRY(tex, &cf->tex, list) {
 			fprintf(stderr, "%04d %08X   ", id, bc->bytecode[id]);
-			fprintf(stderr, "INST:%d ", tex->inst);
+			fprintf(stderr, "INST:0x%x ", tex->inst);
 			fprintf(stderr, "RESOURCE_ID:%d ", tex->resource_id);
 			fprintf(stderr, "SRC(GPR:%d ", tex->src_gpr);
 			fprintf(stderr, "REL:%d)\n", tex->src_rel);
