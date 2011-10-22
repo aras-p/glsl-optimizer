@@ -216,7 +216,7 @@ const struct brw_tracked_state brw_recalculate_urb_fence = {
       .cache = (CACHE_NEW_VS_PROG |
 		CACHE_NEW_SF_PROG)
    },
-   .prepare = recalculate_urb_fence
+   .emit = recalculate_urb_fence
 };
 
 
