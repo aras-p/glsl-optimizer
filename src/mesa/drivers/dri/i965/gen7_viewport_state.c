@@ -27,9 +27,10 @@
 #include "intel_batchbuffer.h"
 
 static void
-prepare_sf_clip_viewport(struct brw_context *brw)
+gen7_upload_sf_clip_viewport(struct brw_context *brw)
 {
-   struct gl_context *ctx = &brw->intel.ctx;
+   struct intel_context *intel = &brw->intel;
+   struct gl_context *ctx = &intel->ctx;
    const GLfloat depth_scale = 1.0F / ctx->DrawBuffer->_DepthMaxF;
    GLfloat y_scale, y_bias;
    const bool render_to_fbo = (ctx->DrawBuffer->Name != 0);
@@ -63,11 +64,6 @@ prepare_sf_clip_viewport(struct brw_context *brw)
    vp->viewport.m30 = v[MAT_TX];
    vp->viewport.m31 = v[MAT_TY] * y_scale + y_bias;
    vp->viewport.m32 = v[MAT_TZ] * depth_scale;
-}
-
-static void upload_sf_clip_viewport_state_pointer(struct brw_context *brw)
-{
-   struct intel_context *intel = &brw->intel;
 
    BEGIN_BATCH(2);
    OUT_BATCH(_3DSTATE_VIEWPORT_STATE_POINTERS_SF_CL << 16 | (2 - 2));
@@ -81,8 +77,7 @@ const struct brw_tracked_state gen7_sf_clip_viewport = {
       .brw = BRW_NEW_BATCH,
       .cache = 0,
    },
-   .prepare = prepare_sf_clip_viewport,
-   .emit = upload_sf_clip_viewport_state_pointer,
+   .emit = gen7_upload_sf_clip_viewport,
 };
 
 /* ----------------------------------------------------- */
