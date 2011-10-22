@@ -1,7 +1,7 @@
 #ifndef __glext_h_
 #define __glext_h_
 
-/* $Revision: 10965 $ on $Date:: 2010-04-09 02:11:29 -0700 #$ */
+/* $Revision: 13240 $ on $Date:: 2010-12-17 15:16:00 -0800 #$ */
 
 #ifdef __cplusplus
 extern "C" {
@@ -66,6 +66,14 @@ extern "C" {
 /* GL_OES_EGL_image */
 #ifndef GL_OES_EGL_image
 typedef void* GLeglImageOES;
+#endif
+
+/* GL_OES_EGL_image_external */
+#ifndef GL_OES_EGL_image_external
+/* GLeglImageOES defined in GL_OES_EGL_image already. */
+#define GL_TEXTURE_EXTERNAL_OES                                 0x8D65
+#define GL_TEXTURE_BINDING_EXTERNAL_OES                         0x8D67
+#define GL_REQUIRED_TEXTURE_IMAGE_UNITS_OES                     0x8D68
 #endif
 
 /* GL_OES_element_index_uint */
@@ -233,6 +241,34 @@ typedef void* GLeglImageOES;
  *------------------------------------------------------------------------*/
 
 /* GL_APPLE_texture_2D_limited_npot */
+/* No new tokens introduced by this extension. */
+
+/* GL_APPLE_framebuffer_multisample */
+#ifndef GL_APPLE_framebuffer_multisample
+#define GL_RENDERBUFFER_SAMPLES_APPLE                           0x8CAB
+#define GL_FRAMEBUFFER_INCOMPLETE_MULTISAMPLE_APPLE             0x8D56
+#define GL_MAX_SAMPLES_APPLE                                    0x8D57
+#define GL_READ_FRAMEBUFFER_APPLE                               0x8CA8
+#define GL_DRAW_FRAMEBUFFER_APPLE                               0x8CA9
+#define GL_DRAW_FRAMEBUFFER_BINDING_APPLE                       0x8CA6
+#define GL_READ_FRAMEBUFFER_BINDING_APPLE                       0x8CAA
+#endif
+
+/* GL_APPLE_texture_format_BGRA8888 */
+#ifndef GL_APPLE_texture_format_BGRA8888
+#define GL_BGRA_EXT                                             0x80E1
+#endif
+
+/* GL_APPLE_texture_max_level */
+#ifndef GL_APPLE_texture_max_level
+#define GL_TEXTURE_MAX_LEVEL_APPLE                              0x813D
+#endif
+
+/*------------------------------------------------------------------------*
+ * ARM extension tokens
+ *------------------------------------------------------------------------*/
+
+/* GL_ARM_rgba8 */
 /* No new tokens introduced by this extension. */
 
 /*------------------------------------------------------------------------*
@@ -497,6 +533,12 @@ GL_API void GL_APIENTRY glEGLImageTargetRenderbufferStorageOES (GLenum target, G
 #endif
 typedef void (GL_APIENTRYP PFNGLEGLIMAGETARGETTEXTURE2DOESPROC) (GLenum target, GLeglImageOES image);
 typedef void (GL_APIENTRYP PFNGLEGLIMAGETARGETRENDERBUFFERSTORAGEOESPROC) (GLenum target, GLeglImageOES image);
+#endif
+
+/* GL_OES_EGL_image_external */
+#ifndef GL_OES_EGL_image_external
+#define GL_OES_EGL_image_external 1
+/* glEGLImageTargetTexture2DOES defined in GL_OES_EGL_image already. */
 #endif
 
 /* GL_OES_element_index_uint */
@@ -800,6 +842,36 @@ typedef GLboolean (GL_APIENTRYP PFNGLISVERTEXARRAYOESPROC) (GLuint array);
 #define GL_APPLE_texture_2D_limited_npot 1
 #endif
 
+/* GL_APPLE_framebuffer_multisample */
+#ifndef GL_APPLE_framebuffer_multisample
+#define GL_APPLE_framebuffer_multisample 1
+#ifdef GL_GLEXT_PROTOTYPES
+GL_API void GL_APIENTRY glRenderbufferStorageMultisampleAPPLE (GLenum, GLsizei, GLenum, GLsizei, GLsizei);
+GL_API void GL_APIENTRY glResolveMultisampleFramebufferAPPLE (void);
+#endif /* GL_GLEXT_PROTOTYPES */
+typedef void (GL_APIENTRYP PFNGLRENDERBUFFERSTORAGEMULTISAMPLEAPPLEPROC) (GLenum target, GLsizei samples, GLenum internalformat, GLsizei width, GLsizei height);
+typedef void (GL_APIENTRYP PFNGLRESOLVEMULTISAMPLEFRAMEBUFFERAPPLEPROC) (void);
+#endif
+
+/* GL_APPLE_texture_format_BGRA8888 */
+#ifndef GL_APPLE_texture_format_BGRA8888
+#define GL_APPLE_texture_format_BGRA8888 1
+#endif
+
+/* GL_APPLE_texture_max_level */
+#ifndef GL_APPLE_texture_max_level
+#define GL_APPLE_texture_max_level 1
+#endif
+
+/*------------------------------------------------------------------------*
+ * ARM extension functions
+ *------------------------------------------------------------------------*/
+
+/* GL_ARM_rgba8 */
+#ifndef GL_ARM_rgba8
+#define GL_ARM_rgba8 1
+#endif
+
 /*------------------------------------------------------------------------*
  * EXT extension functions
  *------------------------------------------------------------------------*/
@@ -887,7 +959,7 @@ GL_API void GL_APIENTRY glRenderbufferStorageMultisampleIMG (GLenum, GLsizei, GL
 GL_API void GL_APIENTRY glFramebufferTexture2DMultisampleIMG (GLenum, GLenum, GLenum, GLuint, GLint, GLsizei);
 #endif
 typedef void (GL_APIENTRYP PFNGLRENDERBUFFERSTORAGEMULTISAMPLEIMG) (GLenum target, GLsizei samples, GLenum internalformat, GLsizei width, GLsizei height);
-typedef void (GL_APIENTRYP PFNGLCLIPPLANEXIMG) (GLenum target, GLenum attachment, GLenum textarget, GLuint texture, GLint level, GLsizei samples);
+typedef void (GL_APIENTRYP PFNGLFRAMEBUFFERTEXTURE2DMULTISAMPLEIMG) (GLenum target, GLenum attachment, GLenum textarget, GLuint texture, GLint level, GLsizei samples);
 #endif
 
 /*------------------------------------------------------------------------*
