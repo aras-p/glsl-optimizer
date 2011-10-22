@@ -132,7 +132,8 @@ static void compile_clip_prog( struct brw_context *brw,
 
 /* Calculate interpolants for triangle and line rasterization.
  */
-static void upload_clip_prog(struct brw_context *brw)
+static void
+brw_upload_clip_prog(struct brw_context *brw)
 {
    struct intel_context *intel = &brw->intel;
    struct gl_context *ctx = &intel->ctx;
@@ -260,5 +261,5 @@ const struct brw_tracked_state brw_clip_prog = {
       .brw   = (BRW_NEW_REDUCED_PRIMITIVE),
       .cache = CACHE_NEW_VS_PROG
    },
-   .prepare = upload_clip_prog
+   .emit = brw_upload_clip_prog
 };

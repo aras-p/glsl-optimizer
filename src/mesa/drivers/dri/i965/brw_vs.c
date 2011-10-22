@@ -346,7 +346,7 @@ const struct brw_tracked_state brw_vs_prog = {
 		BRW_NEW_VERTICES),
       .cache = 0
    },
-   .prepare = brw_upload_vs_prog
+   .emit = brw_upload_vs_prog
 };
 
 bool

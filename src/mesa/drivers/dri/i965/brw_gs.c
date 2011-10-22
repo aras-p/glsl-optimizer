@@ -171,7 +171,8 @@ static void populate_key( struct brw_context *brw,
 
 /* Calculate interpolants for triangle and line rasterization.
  */
-static void prepare_gs_prog(struct brw_context *brw)
+static void
+brw_upload_gs_prog(struct brw_context *brw)
 {
    struct brw_gs_prog_key key;
    /* Populate the key:
@@ -200,5 +201,5 @@ const struct brw_tracked_state brw_gs_prog = {
       .brw   = BRW_NEW_PRIMITIVE,
       .cache = CACHE_NEW_VS_PROG
    },
-   .prepare = prepare_gs_prog
+   .emit = brw_upload_gs_prog
 };

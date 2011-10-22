@@ -120,7 +120,8 @@ static void compile_sf_prog( struct brw_context *brw,
 
 /* Calculate interpolants for triangle and line rasterization.
  */
-static void upload_sf_prog(struct brw_context *brw)
+static void
+brw_upload_sf_prog(struct brw_context *brw)
 {
    struct gl_context *ctx = &brw->intel.ctx;
    struct brw_sf_prog_key key;
@@ -195,6 +196,6 @@ const struct brw_tracked_state brw_sf_prog = {
       .brw   = (BRW_NEW_REDUCED_PRIMITIVE),
       .cache = CACHE_NEW_VS_PROG
    },
-   .prepare = upload_sf_prog
+   .emit = brw_upload_sf_prog
 };
 

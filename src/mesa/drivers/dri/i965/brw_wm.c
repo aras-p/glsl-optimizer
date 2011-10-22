@@ -506,7 +506,8 @@ static void brw_wm_populate_key( struct brw_context *brw,
 }
 
 
-static void brw_prepare_wm_prog(struct brw_context *brw)
+static void
+brw_upload_wm_prog(struct brw_context *brw)
 {
    struct intel_context *intel = &brw->intel;
    struct gl_context *ctx = &intel->ctx;
@@ -543,6 +544,6 @@ const struct brw_tracked_state brw_wm_prog = {
 		BRW_NEW_REDUCED_PRIMITIVE),
       .cache = CACHE_NEW_VS_PROG,
    },
-   .prepare = brw_prepare_wm_prog
+   .emit = brw_upload_wm_prog
 };
 
