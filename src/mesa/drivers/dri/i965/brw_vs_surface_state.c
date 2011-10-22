@@ -138,22 +138,6 @@ brw_update_vs_constant_surface( struct gl_context *ctx,
    }
 }
 
-
-static void
-prepare_vs_surfaces(struct brw_context *brw)
-{
-   int nr_surfaces = 0;
-
-   if (brw->vs.const_bo) {
-      nr_surfaces = 1;
-   }
-
-   if (brw->vs.nr_surfaces != nr_surfaces) {
-      brw->state.dirty.brw |= BRW_NEW_NR_VS_SURFACES;
-      brw->vs.nr_surfaces = nr_surfaces;
-   }
-}
-
 /**
  * Vertex shader surfaces (constant buffer).
  *
@@ -161,36 +145,41 @@ prepare_vs_surfaces(struct brw_context *brw)
  * to be updated, and produces BRW_NEW_NR_VS_SURFACES for the VS unit and
  * CACHE_NEW_SURF_BIND for the binding table upload.
  */
-static void upload_vs_surfaces(struct brw_context *brw)
+static void
+brw_upload_vs_surfaces(struct brw_context *brw)
 {
    struct gl_context *ctx = &brw->intel.ctx;
    uint32_t *bind;
    int i;
+   int nr_surfaces = 0;
 
-   /* BRW_NEW_NR_VS_SURFACES */
-   if (brw->vs.nr_surfaces == 0) {
+   /* BRW_NEW_VS_CONSTBUF */
+   if (brw->vs.const_bo) {
+      nr_surfaces = 1;
+      brw_update_vs_constant_surface(ctx, SURF_INDEX_VERT_CONST_BUFFER);
+   }
+
+   if (nr_surfaces != 0) {
+      bind = brw_state_batch(brw, AUB_TRACE_SURFACE_STATE,
+			     sizeof(uint32_t) * nr_surfaces,
+			     32, &brw->vs.bind_bo_offset);
+
+      for (i = 0; i < nr_surfaces; i++) {
+	 /* BRW_NEW_VS_CONSTBUF */
+	 bind[i] = brw->vs.surf_offset[i];
+      }
+      brw->state.dirty.brw |= BRW_NEW_VS_BINDING_TABLE;
+   } else {
       if (brw->vs.bind_bo_offset) {
 	 brw->state.dirty.brw |= BRW_NEW_VS_BINDING_TABLE;
+	 brw->vs.bind_bo_offset = 0;
       }
-      brw->vs.bind_bo_offset = 0;
-      return;
    }
 
-   brw_update_vs_constant_surface(ctx, SURF_INDEX_VERT_CONST_BUFFER);
-
-   /* Might want to calculate nr_surfaces first, to avoid taking up so much
-    * space for the binding table. (once we have vs samplers)
-    */
-   bind = brw_state_batch(brw, AUB_TRACE_SURFACE_STATE,
-			  sizeof(uint32_t) * BRW_VS_MAX_SURF,
-			  32, &brw->vs.bind_bo_offset);
-
-   for (i = 0; i < BRW_VS_MAX_SURF; i++) {
-      /* BRW_NEW_VS_CONSTBUF */
-      bind[i] = brw->vs.surf_offset[i];
+   if (brw->vs.nr_surfaces != nr_surfaces) {
+      brw->state.dirty.brw |= BRW_NEW_NR_VS_SURFACES;
+      brw->vs.nr_surfaces = nr_surfaces;
    }
-
-   brw->state.dirty.brw |= BRW_NEW_VS_BINDING_TABLE;
 }
 
 const struct brw_tracked_state brw_vs_surfaces = {
@@ -201,6 +190,5 @@ const struct brw_tracked_state brw_vs_surfaces = {
 	      BRW_NEW_BATCH),
       .cache = 0
    },
-   .prepare = prepare_vs_surfaces,
-   .emit = upload_vs_surfaces,
+   .emit = brw_upload_vs_surfaces,
 };
