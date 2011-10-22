@@ -3219,7 +3219,7 @@ static void break_loop_on_flag(struct r600_shader_ctx *ctx, unsigned fc_sp)
 
 static int tgsi_if(struct r600_shader_ctx *ctx)
 {
-	emit_logic_pred(ctx, CTX_INST(V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_PRED_SETNE));
+	emit_logic_pred(ctx, CTX_INST(V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_PRED_SETNE_INT));
 
 	r600_bytecode_add_cfinst(ctx->bc, CTX_INST(V_SQ_CF_WORD1_SQ_CF_INST_JUMP));
 
