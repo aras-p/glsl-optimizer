@@ -35,7 +35,7 @@
 #include "intel_batchbuffer.h"
 
 static void
-gen6_prepare_wm_push_constants(struct brw_context *brw)
+gen6_upload_wm_push_constants(struct brw_context *brw)
 {
    struct intel_context *intel = &brw->intel;
    struct gl_context *ctx = &intel->ctx;
@@ -87,7 +87,7 @@ const struct brw_tracked_state gen6_wm_constants = {
 		BRW_NEW_FRAGMENT_PROGRAM),
       .cache = CACHE_NEW_WM_PROG,
    },
-   .prepare = gen6_prepare_wm_push_constants,
+   .emit = gen6_upload_wm_push_constants,
 };
 
 static void
@@ -118,7 +118,7 @@ upload_wm_state(struct brw_context *brw)
 		GEN6_CONSTANT_BUFFER_0_ENABLE |
 		(5 - 2));
       /* Pointer to the WM constant buffer.  Covered by the set of
-       * state flags from gen6_prepare_wm_constants
+       * state flags from gen6_upload_wm_constants
        */
       OUT_BATCH(brw->wm.push_const_offset +
 		ALIGN(brw->wm.prog_data->nr_params,

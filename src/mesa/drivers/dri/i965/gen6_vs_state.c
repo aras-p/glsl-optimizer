@@ -34,7 +34,7 @@
 #include "intel_batchbuffer.h"
 
 static void
-gen6_prepare_vs_push_constants(struct brw_context *brw)
+gen6_upload_vs_push_constants(struct brw_context *brw)
 {
    struct intel_context *intel = &brw->intel;
    struct gl_context *ctx = &intel->ctx;
@@ -124,7 +124,7 @@ const struct brw_tracked_state gen6_vs_constants = {
 		BRW_NEW_VERTEX_PROGRAM),
       .cache = CACHE_NEW_VS_PROG,
    },
-   .prepare = gen6_prepare_vs_push_constants,
+   .emit = gen6_upload_vs_push_constants,
 };
 
 static void
@@ -147,7 +147,7 @@ upload_vs_state(struct brw_context *brw)
 		GEN6_CONSTANT_BUFFER_0_ENABLE |
 		(5 - 2));
       /* Pointer to the VS constant buffer.  Covered by the set of
-       * state flags from gen6_prepare_wm_constants
+       * state flags from gen6_upload_vs_constants
        */
       OUT_BATCH(brw->vs.push_const_offset +
 		brw->vs.push_const_size - 1);
