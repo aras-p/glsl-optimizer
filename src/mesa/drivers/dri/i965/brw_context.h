@@ -876,8 +876,8 @@ struct brw_context
     */
    GLuint program_id;
 
-   int num_prepare_atoms, num_emit_atoms;
-   struct brw_tracked_state prepare_atoms[64], emit_atoms[64];
+   int num_atoms;
+   const struct brw_tracked_state **atoms;
 
    /* If (INTEL_DEBUG & DEBUG_BATCH) */
    struct {

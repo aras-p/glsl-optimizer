@@ -254,17 +254,16 @@ void brw_init_state( struct brw_context *brw )
       num_atoms = ARRAY_SIZE(gen4_atoms);
    }
 
+   brw->atoms = atoms;
+   brw->num_atoms = num_atoms;
+
    while (num_atoms--) {
       assert((*atoms)->dirty.mesa |
 	     (*atoms)->dirty.brw |
 	     (*atoms)->dirty.cache);
-
-      assert(!(*atoms)->prepare);
       assert((*atoms)->emit);
-      brw->emit_atoms[brw->num_emit_atoms++] = **atoms;
       atoms++;
    }
-   assert(brw->num_emit_atoms <= ARRAY_SIZE(brw->emit_atoms));
 }
 
 
@@ -426,8 +425,6 @@ void brw_upload_state(struct brw_context *brw)
    struct gl_context *ctx = &brw->intel.ctx;
    struct intel_context *intel = &brw->intel;
    struct brw_state_flags *state = &brw->state.dirty;
-   const struct brw_tracked_state *atoms = brw->emit_atoms;
-   int num_atoms = brw->num_emit_atoms;
    int i;
    static int dirty_count = 0;
 
@@ -466,8 +463,8 @@ void brw_upload_state(struct brw_context *brw)
       memset(&examined, 0, sizeof(examined));
       prev = *state;
 
-      for (i = 0; i < num_atoms; i++) {
-	 const struct brw_tracked_state *atom = &atoms[i];
+      for (i = 0; i < brw->num_atoms; i++) {
+	 const struct brw_tracked_state *atom = brw->atoms[i];
 	 struct brw_state_flags generated;
 
 	 if (brw->intel.Fallback)
@@ -489,8 +486,8 @@ void brw_upload_state(struct brw_context *brw)
       }
    }
    else {
-      for (i = 0; i < num_atoms; i++) {
-	 const struct brw_tracked_state *atom = &atoms[i];
+      for (i = 0; i < brw->num_atoms; i++) {
+	 const struct brw_tracked_state *atom = brw->atoms[i];
 
 	 if (brw->intel.Fallback)
 	    break;
