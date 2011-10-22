@@ -69,7 +69,7 @@ const struct brw_tracked_state brw_check_fallback = {
       .brw  = 0,
       .cache = 0
    },
-   .prepare = check_fallback
+   .emit = check_fallback
 };
 
 
