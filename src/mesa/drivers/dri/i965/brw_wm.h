@@ -215,6 +215,7 @@ struct brw_wm_compile {
    uint8_t source_w_reg;
    uint8_t aa_dest_stencil_reg;
    uint8_t dest_depth_reg;
+   uint8_t barycentric_coord_reg[BRW_WM_BARYCENTRIC_INTERP_MODE_COUNT];
    uint8_t nr_payload_regs;
    GLuint computes_depth:1;	/* could be derived from program string */
    GLuint source_depth_to_render_target:1;

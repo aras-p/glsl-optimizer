@@ -1754,16 +1754,20 @@ fs_visitor::emit_interpolation_setup_gen4()
 
    this->current_annotation = "compute pixel deltas from v0";
    if (brw->has_pln) {
-      this->delta_x = fs_reg(this, glsl_type::vec2_type);
-      this->delta_y = this->delta_x;
-      this->delta_y.reg_offset++;
+      this->delta_x[BRW_WM_PERSPECTIVE_PIXEL_BARYCENTRIC] =
+         fs_reg(this, glsl_type::vec2_type);
+      this->delta_y[BRW_WM_PERSPECTIVE_PIXEL_BARYCENTRIC] =
+         this->delta_x[BRW_WM_PERSPECTIVE_PIXEL_BARYCENTRIC];
+      this->delta_y[BRW_WM_PERSPECTIVE_PIXEL_BARYCENTRIC].reg_offset++;
    } else {
-      this->delta_x = fs_reg(this, glsl_type::float_type);
-      this->delta_y = fs_reg(this, glsl_type::float_type);
+      this->delta_x[BRW_WM_PERSPECTIVE_PIXEL_BARYCENTRIC] =
+         fs_reg(this, glsl_type::float_type);
+      this->delta_y[BRW_WM_PERSPECTIVE_PIXEL_BARYCENTRIC] =
+         fs_reg(this, glsl_type::float_type);
    }
-   emit(BRW_OPCODE_ADD, this->delta_x,
+   emit(BRW_OPCODE_ADD, this->delta_x[BRW_WM_PERSPECTIVE_PIXEL_BARYCENTRIC],
 	this->pixel_x, fs_reg(negate(brw_vec1_grf(1, 0))));
-   emit(BRW_OPCODE_ADD, this->delta_y,
+   emit(BRW_OPCODE_ADD, this->delta_y[BRW_WM_PERSPECTIVE_PIXEL_BARYCENTRIC],
 	this->pixel_y, fs_reg(negate(brw_vec1_grf(1, 1))));
 
    this->current_annotation = "compute pos.w and 1/pos.w";
@@ -1771,7 +1775,9 @@ fs_visitor::emit_interpolation_setup_gen4()
     * interpolate the other attributes.
     */
    this->wpos_w = fs_reg(this, glsl_type::float_type);
-   emit(FS_OPCODE_LINTERP, wpos_w, this->delta_x, this->delta_y,
+   emit(FS_OPCODE_LINTERP, wpos_w,
+        this->delta_x[BRW_WM_PERSPECTIVE_PIXEL_BARYCENTRIC],
+        this->delta_y[BRW_WM_PERSPECTIVE_PIXEL_BARYCENTRIC],
 	interp_reg(FRAG_ATTRIB_WPOS, 3));
    /* Compute the pixel 1/W value from wpos.w. */
    this->pixel_w = fs_reg(this, glsl_type::float_type);
@@ -1814,8 +1820,11 @@ fs_visitor::emit_interpolation_setup_gen6()
    this->wpos_w = fs_reg(this, glsl_type::float_type);
    emit_math(SHADER_OPCODE_RCP, this->wpos_w, this->pixel_w);
 
-   this->delta_x = fs_reg(brw_vec8_grf(2, 0));
-   this->delta_y = fs_reg(brw_vec8_grf(3, 0));
+   for (int i = 0; i < BRW_WM_BARYCENTRIC_INTERP_MODE_COUNT; ++i) {
+      uint8_t reg = c->barycentric_coord_reg[i];
+      this->delta_x[i] = fs_reg(brw_vec8_grf(reg, 0));
+      this->delta_y[i] = fs_reg(brw_vec8_grf(reg + 1, 0));
+   }
 
    this->current_annotation = NULL;
 }

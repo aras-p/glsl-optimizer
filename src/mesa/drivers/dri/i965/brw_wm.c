@@ -123,6 +123,19 @@ brw_wm_non_glsl_emit(struct brw_context *brw, struct brw_wm_compile *c)
    brw_wm_emit(c);
 }
 
+
+/**
+ * Return a bitfield where bit n is set if barycentric interpolation mode n
+ * (see enum brw_wm_barycentric_interp_mode) is needed by the fragment shader.
+ */
+unsigned
+brw_compute_barycentric_interp_modes(void)
+{
+   /* At the moment the only interpolation mode we support is perspective. */
+   return (1 << BRW_WM_PERSPECTIVE_PIXEL_BARYCENTRIC);
+}
+
+
 void
 brw_wm_payload_setup(struct brw_context *brw,
 		     struct brw_wm_compile *c)
@@ -130,22 +143,31 @@ brw_wm_payload_setup(struct brw_context *brw,
    struct intel_context *intel = &brw->intel;
    bool uses_depth = (c->fp->program.Base.InputsRead &
 		      (1 << FRAG_ATTRIB_WPOS)) != 0;
+   unsigned barycentric_interp_modes =
+      brw_compute_barycentric_interp_modes();
+   int i;
 
    if (intel->gen >= 6) {
       /* R0-1: masks, pixel X/Y coordinates. */
       c->nr_payload_regs = 2;
       /* R2: only for 32-pixel dispatch.*/
-      /* R3-4: perspective pixel location barycentric */
-      c->nr_payload_regs += 2;
-      /* R5-6: perspective pixel location bary for dispatch width != 8 */
-      if (c->dispatch_width == 16) {
-	 c->nr_payload_regs += 2;
+
+      /* R3-26: barycentric interpolation coordinates.  These appear in the
+       * same order that they appear in the brw_wm_barycentric_interp_mode
+       * enum.  Each set of coordinates occupies 2 registers if dispatch width
+       * == 8 and 4 registers if dispatch width == 16.  Coordinates only
+       * appear if they were enabled using the "Barycentric Interpolation
+       * Mode" bits in WM_STATE.
+       */
+      for (i = 0; i < BRW_WM_BARYCENTRIC_INTERP_MODE_COUNT; ++i) {
+         if (barycentric_interp_modes & (1 << i)) {
+            c->barycentric_coord_reg[i] = c->nr_payload_regs;
+            c->nr_payload_regs += 2;
+            if (c->dispatch_width == 16) {
+               c->nr_payload_regs += 2;
+            }
+         }
       }
-      /* R7-10: perspective centroid barycentric */
-      /* R11-14: perspective sample barycentric */
-      /* R15-18: linear pixel location barycentric */
-      /* R19-22: linear centroid barycentric */
-      /* R23-26: linear sample barycentric */
 
       /* R27: interpolated depth if uses source depth */
       if (uses_depth) {

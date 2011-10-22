@@ -72,7 +72,8 @@ upload_wm_state(struct brw_context *brw)
       dw1 |= GEN7_WM_DISPATCH_ENABLE;
    }
 
-   dw1 |= GEN7_WM_PERSPECTIVE_PIXEL_BARYCENTRIC;
+   dw1 |= brw_compute_barycentric_interp_modes() <<
+      GEN7_WM_BARYCENTRIC_INTERPOLATION_MODE_SHIFT;
 
    BEGIN_BATCH(3);
    OUT_BATCH(_3DSTATE_WM << 16 | (3 - 2));

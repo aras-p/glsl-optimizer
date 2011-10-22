@@ -202,8 +202,17 @@ fs_visitor::assign_regs()
    for (int i = 0; i < this->virtual_grf_next; i++) {
       for (int c = 0; c < class_count; c++) {
 	 if (class_sizes[c] == this->virtual_grf_sizes[i]) {
+            /* Special case: on pre-GEN6 hardware that supports PLN, the
+             * second operand of a PLN instruction needs to be an
+             * even-numbered register, so we have a special register class
+             * wm_aligned_pairs_class to handle this case.  pre-GEN6 always
+             * uses this->delta_x[BRW_WM_PERSPECTIVE_PIXEL_BARYCENTRIC] as the
+             * second operand of a PLN instruction (since it doesn't support
+             * any other interpolation modes).  So all we need to do is find
+             * that register and set it to the appropriate class.
+             */
 	    if (brw->wm.aligned_pairs_class >= 0 &&
-		this->delta_x.reg == i) {
+		this->delta_x[BRW_WM_PERSPECTIVE_PIXEL_BARYCENTRIC].reg == i) {
 	       ra_set_node_class(g, i, brw->wm.aligned_pairs_class);
 	    } else {
 	       ra_set_node_class(g, i, brw->wm.classes[c]);

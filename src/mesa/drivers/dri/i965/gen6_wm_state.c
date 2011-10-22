@@ -178,7 +178,8 @@ upload_wm_state(struct brw_context *brw)
       dw5 |= GEN6_WM_DISPATCH_ENABLE;
    }
 
-   dw6 |= GEN6_WM_PERSPECTIVE_PIXEL_BARYCENTRIC;
+   dw6 |= brw_compute_barycentric_interp_modes() <<
+      GEN6_WM_BARYCENTRIC_INTERPOLATION_MODE_SHIFT;
 
    dw6 |= _mesa_bitcount_64(brw->fragment_program->Base.InputsRead) <<
       GEN6_WM_NUM_SF_OUTPUTS_SHIFT;

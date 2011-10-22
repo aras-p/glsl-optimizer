@@ -976,6 +976,11 @@ void brw_compute_vue_map(struct brw_vue_map *vue_map,
                          GLbitfield64 outputs_written);
 gl_clip_plane *brw_select_clip_planes(struct gl_context *ctx);
 
+/* brw_wm.c */
+unsigned
+brw_compute_barycentric_interp_modes(void);
+
+
 
 /*======================================================================
  * Inline conversion functions.  These are better-typed than the

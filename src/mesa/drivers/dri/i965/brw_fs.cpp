@@ -407,8 +407,10 @@ fs_visitor::emit_fragcoord_interpolation(ir_variable *ir)
       emit(BRW_OPCODE_MOV, wpos,
 	   fs_reg(brw_vec8_grf(c->source_depth_reg, 0)));
    } else {
-      emit(FS_OPCODE_LINTERP, wpos, this->delta_x, this->delta_y,
-	   interp_reg(FRAG_ATTRIB_WPOS, 2));
+      emit(FS_OPCODE_LINTERP, wpos,
+           this->delta_x[BRW_WM_PERSPECTIVE_PIXEL_BARYCENTRIC],
+           this->delta_y[BRW_WM_PERSPECTIVE_PIXEL_BARYCENTRIC],
+           interp_reg(FRAG_ATTRIB_WPOS, 2));
    }
    wpos.reg_offset++;
 
@@ -481,8 +483,11 @@ fs_visitor::emit_general_interpolation(ir_variable *ir)
 		  emit(BRW_OPCODE_MOV, attr, fs_reg(1.0f));
 	       } else {
 		  struct brw_reg interp = interp_reg(location, k);
-		  emit(FS_OPCODE_LINTERP, attr,
-		       this->delta_x, this->delta_y, fs_reg(interp));
+                  brw_wm_barycentric_interp_mode barycoord_mode =
+                     BRW_WM_PERSPECTIVE_PIXEL_BARYCENTRIC;
+                  emit(FS_OPCODE_LINTERP, attr,
+                       this->delta_x[barycoord_mode],
+                       this->delta_y[barycoord_mode], fs_reg(interp));
 	       }
 	       attr.reg_offset++;
 	    }
@@ -768,9 +773,15 @@ fs_visitor::split_virtual_grfs()
 	 split_grf[i] = false;
    }
 
-   if (brw->has_pln && this->delta_x.file == GRF) {
-      /* PLN opcodes rely on the delta_xy being contiguous. */
-      split_grf[this->delta_x.reg] = false;
+   if (brw->has_pln &&
+       this->delta_x[BRW_WM_PERSPECTIVE_PIXEL_BARYCENTRIC].file == GRF) {
+      /* PLN opcodes rely on the delta_xy being contiguous.  We only have to
+       * check this for BRW_WM_PERSPECTIVE_PIXEL_BARYCENTRIC, because prior to
+       * Gen6, that was the only supported interpolation mode, and since Gen6,
+       * delta_x and delta_y are in fixed hardware registers.
+       */
+      split_grf[this->delta_x[BRW_WM_PERSPECTIVE_PIXEL_BARYCENTRIC].reg] =
+         false;
    }
 
    foreach_list(node, &this->instructions) {
