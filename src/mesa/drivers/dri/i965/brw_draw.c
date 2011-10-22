@@ -25,6 +25,7 @@
  * 
  **************************************************************************/
 
+#include <sys/errno.h>
 
 #include "main/glheader.h"
 #include "main/context.h"
@@ -292,9 +293,9 @@ static bool brw_try_draw_prims( struct gl_context *ctx,
 {
    struct intel_context *intel = intel_context(ctx);
    struct brw_context *brw = brw_context(ctx);
-   bool retval = false;
-   bool warn = false;
+   bool retval = true;
    GLuint i;
+   bool fail_next = false;
 
    if (ctx->NewState)
       _mesa_update_state( ctx );
@@ -344,12 +345,14 @@ static bool brw_try_draw_prims( struct gl_context *ctx,
        * primitives.
        */
       intel_batchbuffer_require_space(intel, estimated_max_prim_size, false);
+      intel_batchbuffer_save_state(intel);
 
       if (intel->gen < 6)
 	 brw_set_prim(brw, &prim[i]);
       else
 	 gen6_set_prim(brw, &prim[i]);
 
+retry:
       /* Note that before the loop, brw->state.dirty.brw was set to != 0, and
        * that the state updated in the loop outside of this block is that in
        * *_set_prim or intel_batchbuffer_flush(), which only impacts
@@ -359,30 +362,9 @@ static bool brw_try_draw_prims( struct gl_context *ctx,
 	 brw_validate_state(brw);
 
 	 /* Various fallback checks:  */
-	 if (brw->intel.Fallback)
+	 if (brw->intel.Fallback) {
+	    retval = false;
 	    goto out;
-
-	 /* Check that we can fit our state in with our existing batchbuffer, or
-	  * flush otherwise.
-	  */
-	 if (dri_bufmgr_check_aperture_space(brw->state.validated_bos,
-					     brw->state.validated_bo_count)) {
-	    static bool warned;
-	    intel_batchbuffer_flush(intel);
-
-	    /* Validate the state after we flushed the batch (which would have
-	     * changed the set of dirty state).  If we still fail to
-	     * check_aperture, warn of what's happening, but attempt to continue
-	     * on since it may succeed anyway, and the user would probably rather
-	     * see a failure and a warning than a fallback.
-	     */
-	    brw_validate_state(brw);
-	    if (!warned &&
-		dri_bufmgr_check_aperture_space(brw->state.validated_bos,
-						brw->state.validated_bo_count)) {
-	       warn = true;
-	       warned = true;
-	    }
 	 }
 
 	 intel->no_batch_wrap = true;
@@ -396,7 +378,26 @@ static bool brw_try_draw_prims( struct gl_context *ctx,
 
       intel->no_batch_wrap = false;
 
-      retval = true;
+      if (dri_bufmgr_check_aperture_space(&intel->batch.bo, 1)) {
+	 if (!fail_next) {
+	    intel_batchbuffer_reset_to_saved(intel);
+	    intel_batchbuffer_flush(intel);
+	    fail_next = true;
+	    goto retry;
+	 } else {
+	    if (intel_batchbuffer_flush(intel) == -ENOSPC) {
+	       static bool warned = false;
+
+	       if (!warned) {
+		  fprintf(stderr, "i965: Single primitive emit exceeded"
+			  "available aperture space\n");
+		  warned = true;
+	       }
+
+	       retval = false;
+	    }
+	 }
+      }
    }
 
    if (intel->always_flush_batch)
@@ -404,13 +405,6 @@ static bool brw_try_draw_prims( struct gl_context *ctx,
  out:
 
    brw_state_cache_check_size(brw);
-
-   if (warn)
-      fprintf(stderr, "i965: Single primitive emit potentially exceeded "
-	      "available aperture space\n");
-
-   if (!retval)
-      DBG("%s failed\n", __FUNCTION__);
 
    return retval;
 }
