@@ -2125,7 +2125,7 @@ _mesa_FramebufferTexture2DEXT(GLenum target, GLenum attachment,
          error = !ctx->Extensions.EXT_texture_array;
          break;
       default:
-         error = GL_FALSE;
+         error = GL_TRUE;
       }
 
       if (error) {
