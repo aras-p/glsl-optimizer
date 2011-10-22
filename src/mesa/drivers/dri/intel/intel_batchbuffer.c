@@ -88,6 +88,27 @@ intel_batchbuffer_reset(struct intel_context *intel)
 }
 
 void
+intel_batchbuffer_save_state(struct intel_context *intel)
+{
+   intel->batch.saved.used = intel->batch.used;
+   intel->batch.saved.reloc_count =
+      drm_intel_gem_bo_get_reloc_count(intel->batch.bo);
+}
+
+void
+intel_batchbuffer_reset_to_saved(struct intel_context *intel)
+{
+   drm_intel_gem_bo_clear_relocs(intel->batch.bo, intel->batch.saved.reloc_count);
+
+   intel->batch.used = intel->batch.saved.used;
+
+   /* Cached batch state is dead, since we just cleared some unknown part of the
+    * batchbuffer.  Assume that the caller resets any other state necessary.
+    */
+   clear_cache(intel);
+}
+
+void
 intel_batchbuffer_free(struct intel_context *intel)
 {
    drm_intel_bo_unreference(intel->batch.last_bo);

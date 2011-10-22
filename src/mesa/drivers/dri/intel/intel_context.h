@@ -210,6 +210,11 @@ struct intel_context
 
       uint32_t state_batch_offset;
       bool is_blit;
+
+      struct {
+	 uint16_t used;
+	 int reloc_count;
+      } saved;
    } batch;
 
    drm_intel_bo *first_post_swapbuffers_batch;
