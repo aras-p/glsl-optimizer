@@ -179,9 +179,11 @@ static GLfloat fixed_plane[6][4] = {
  * cache mechanism, but maybe would benefit from a comparison against
  * the current uploaded set of constants.
  */
-static void prepare_constant_buffer(struct brw_context *brw)
+static void
+brw_upload_constant_buffer(struct brw_context *brw)
 {
-   struct gl_context *ctx = &brw->intel.ctx;
+   struct intel_context *intel = &brw->intel;
+   struct gl_context *ctx = &intel->ctx;
    const struct brw_vertex_program *vp =
       brw_vertex_program_const(brw->vertex_program);
    const GLuint sz = brw->curbe.total_size;
@@ -192,7 +194,7 @@ static void prepare_constant_buffer(struct brw_context *brw)
 
    if (sz == 0) {
       brw->curbe.last_bufsz  = 0;
-      return;
+      goto emit;
    }
 
    buf = brw->curbe.next_buf;
@@ -335,22 +337,17 @@ static void prepare_constant_buffer(struct brw_context *brw)
     * flushes as necessary when doublebuffering of CURBEs isn't
     * possible.
     */
-}
 
-static void emit_constant_buffer(struct brw_context *brw)
-{
-   struct intel_context *intel = &brw->intel;
-   GLuint sz = brw->curbe.total_size;
-
+emit:
    BEGIN_BATCH(2);
-   if (sz == 0) {
+   if (brw->curbe.total_size == 0) {
       OUT_BATCH((CMD_CONST_BUFFER << 16) | (2 - 2));
       OUT_BATCH(0);
    } else {
       OUT_BATCH((CMD_CONST_BUFFER << 16) | (1 << 8) | (2 - 2));
       OUT_RELOC(brw->curbe.curbe_bo,
 		I915_GEM_DOMAIN_INSTRUCTION, 0,
-		(sz - 1) + brw->curbe.curbe_offset);
+		(brw->curbe.total_size - 1) + brw->curbe.curbe_offset);
    }
    ADVANCE_BATCH();
 }
@@ -372,7 +369,6 @@ const struct brw_tracked_state brw_constant_buffer = {
 	       BRW_NEW_BATCH),
       .cache = (CACHE_NEW_WM_PROG) 
    },
-   .prepare = prepare_constant_buffer,
-   .emit = emit_constant_buffer,
+   .emit = brw_upload_constant_buffer,
 };
 
