@@ -38,7 +38,7 @@
 #include "intel_batchbuffer.h"
 
 static void
-prepare_cc_vp(struct brw_context *brw)
+brw_upload_cc_vp(struct brw_context *brw)
 {
    struct gl_context *ctx = &brw->intel.ctx;
    struct brw_cc_viewport *ccv;
@@ -65,7 +65,7 @@ const struct brw_tracked_state brw_cc_vp = {
       .brw = BRW_NEW_BATCH,
       .cache = 0
    },
-   .prepare = prepare_cc_vp
+   .emit = brw_upload_cc_vp
 };
 
 /**
