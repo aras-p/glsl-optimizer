@@ -42,7 +42,7 @@
  * state atom.
  */
 static void
-prepare_vs_constants(struct brw_context *brw)
+brw_upload_vs_pull_constants(struct brw_context *brw)
 {
    struct gl_context *ctx = &brw->intel.ctx;
    struct intel_context *intel = &brw->intel;
@@ -101,7 +101,7 @@ const struct brw_tracked_state brw_vs_constants = {
       .brw = (BRW_NEW_VERTEX_PROGRAM),
       .cache = CACHE_NEW_VS_PROG,
    },
-   .prepare = prepare_vs_constants,
+   .emit = brw_upload_vs_pull_constants,
 };
 
 /**
