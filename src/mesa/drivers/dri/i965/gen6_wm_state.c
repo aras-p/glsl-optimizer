@@ -99,6 +99,9 @@ upload_wm_state(struct brw_context *brw)
       brw_fragment_program_const(brw->fragment_program);
    uint32_t dw2, dw4, dw5, dw6;
 
+   /* _NEW_LIGHT */
+   bool flat_shade = (ctx->Light.ShadeModel == GL_FLAT);
+
     /* CACHE_NEW_WM_PROG */
    if (brw->wm.prog_data->nr_params == 0) {
       /* Disable the push constant buffers. */
@@ -168,6 +171,8 @@ upload_wm_state(struct brw_context *brw)
       dw5 |= GEN6_WM_USES_SOURCE_DEPTH | GEN6_WM_USES_SOURCE_W;
    if (fp->program.Base.OutputsWritten & BITFIELD64_BIT(FRAG_RESULT_DEPTH))
       dw5 |= GEN6_WM_COMPUTED_DEPTH;
+   dw6 |= brw_compute_barycentric_interp_modes(flat_shade, &fp->program) <<
+      GEN6_WM_BARYCENTRIC_INTERPOLATION_MODE_SHIFT;
 
    /* _NEW_COLOR */
    if (fp->program.UsesKill || ctx->Color.AlphaEnabled)
@@ -177,9 +182,6 @@ upload_wm_state(struct brw_context *brw)
        dw5 & (GEN6_WM_KILL_ENABLE | GEN6_WM_COMPUTED_DEPTH)) {
       dw5 |= GEN6_WM_DISPATCH_ENABLE;
    }
-
-   dw6 |= brw_compute_barycentric_interp_modes() <<
-      GEN6_WM_BARYCENTRIC_INTERPOLATION_MODE_SHIFT;
 
    dw6 |= _mesa_bitcount_64(brw->fragment_program->Base.InputsRead) <<
       GEN6_WM_NUM_SF_OUTPUTS_SHIFT;
@@ -206,6 +208,7 @@ upload_wm_state(struct brw_context *brw)
 const struct brw_tracked_state gen6_wm_state = {
    .dirty = {
       .mesa  = (_NEW_LINE |
+                _NEW_LIGHT |
 		_NEW_COLOR |
 		_NEW_BUFFERS |
 		_NEW_PROGRAM_CONSTANTS |

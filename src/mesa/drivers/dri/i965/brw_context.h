@@ -978,7 +978,12 @@ gl_clip_plane *brw_select_clip_planes(struct gl_context *ctx);
 
 /* brw_wm.c */
 unsigned
-brw_compute_barycentric_interp_modes(void);
+brw_compute_barycentric_interp_modes(bool shade_model_flat,
+                                     const struct gl_fragment_program *fprog);
+
+/* gen6_clip_state.c */
+bool
+brw_fprog_uses_noperspective(const struct gl_fragment_program *fprog);
 
 
 

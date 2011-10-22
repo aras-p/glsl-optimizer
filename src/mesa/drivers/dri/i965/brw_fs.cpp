@@ -469,7 +469,7 @@ fs_visitor::emit_general_interpolation(ir_variable *ir)
 	       attr.reg_offset++;
 	    }
 	 } else {
-	    /* Perspective interpolation case. */
+	    /* Smooth/noperspective interpolation case. */
 	    for (unsigned int k = 0; k < type->vector_elements; k++) {
 	       /* FINISHME: At some point we probably want to push
 		* this farther by giving similar treatment to the
@@ -483,8 +483,11 @@ fs_visitor::emit_general_interpolation(ir_variable *ir)
 		  emit(BRW_OPCODE_MOV, attr, fs_reg(1.0f));
 	       } else {
 		  struct brw_reg interp = interp_reg(location, k);
-                  brw_wm_barycentric_interp_mode barycoord_mode =
-                     BRW_WM_PERSPECTIVE_PIXEL_BARYCENTRIC;
+                  brw_wm_barycentric_interp_mode barycoord_mode;
+                  if (interpolation_mode == INTERP_QUALIFIER_SMOOTH)
+                     barycoord_mode = BRW_WM_PERSPECTIVE_PIXEL_BARYCENTRIC;
+                  else
+                     barycoord_mode = BRW_WM_NONPERSPECTIVE_PIXEL_BARYCENTRIC;
                   emit(FS_OPCODE_LINTERP, attr,
                        this->delta_x[barycoord_mode],
                        this->delta_y[barycoord_mode], fs_reg(interp));

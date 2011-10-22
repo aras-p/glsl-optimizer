@@ -39,6 +39,8 @@ upload_sbe_state(struct brw_context *brw)
    GLbitfield64 vs_outputs_written = brw->vs.prog_data->outputs_written;
    /* BRW_NEW_FRAGMENT_PROGRAM */
    uint32_t num_outputs = _mesa_bitcount_64(brw->fragment_program->Base.InputsRead);
+   /* _NEW_LIGHT */
+   bool shade_model_flat = ctx->Light.ShadeModel == GL_FLAT;
    uint32_t dw1, dw10, dw11;
    int i;
    int attr = 0, input_index = 0;
@@ -74,6 +76,10 @@ upload_sbe_state(struct brw_context *brw)
     * they source from.
     */
    for (; attr < FRAG_ATTRIB_MAX; attr++) {
+      enum glsl_interp_qualifier interp_qualifier =
+         brw->fragment_program->InterpQualifier[attr];
+      bool is_gl_Color = attr == FRAG_ATTRIB_COL0 || attr == FRAG_ATTRIB_COL1;
+
       if (!(brw->fragment_program->Base.InputsRead & BITFIELD64_BIT(attr)))
 	 continue;
 
@@ -87,17 +93,10 @@ upload_sbe_state(struct brw_context *brw)
 	 dw10 |= (1 << input_index);
 
       /* flat shading */
-      if (ctx->Light.ShadeModel == GL_FLAT) {
-         /*
-          * Setup the Constant Interpolation Enable bit mask for each
-          * corresponding attribute(currently, we only care two attrs:
-          * FRAG_BIT_COL0 and FRAG_BIT_COL1).
-          *
-          * FIXME: should we care other attributes?
-          */
-	  if (attr == FRAG_ATTRIB_COL0 || attr == FRAG_ATTRIB_COL1)
-             dw11 |= (1 << input_index);
-      }
+      if (interp_qualifier == INTERP_QUALIFIER_FLAT ||
+          (shade_model_flat && is_gl_Color &&
+           interp_qualifier == INTERP_QUALIFIER_NONE))
+         dw11 |= (1 << input_index);
 
       /* The hardware can only do the overrides on 16 overrides at a
        * time, and the other up to 16 have to be lined up so that the

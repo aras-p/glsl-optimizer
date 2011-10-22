@@ -41,6 +41,9 @@ upload_wm_state(struct brw_context *brw)
    bool writes_depth = false;
    uint32_t dw1;
 
+   /* _NEW_LIGHT */
+   bool flat_shade = (ctx->Light.ShadeModel == GL_FLAT);
+
    dw1 = 0;
    dw1 |= GEN7_WM_STATISTICS_ENABLE;
    dw1 |= GEN7_WM_LINE_AA_WIDTH_1_0;
@@ -61,6 +64,8 @@ upload_wm_state(struct brw_context *brw)
       writes_depth = true;
       dw1 |= GEN7_WM_PSCDEPTH_ON;
    }
+   dw1 |= brw_compute_barycentric_interp_modes(flat_shade, &fp->program) <<
+      GEN7_WM_BARYCENTRIC_INTERPOLATION_MODE_SHIFT;
 
    /* _NEW_COLOR */
    if (fp->program.UsesKill || ctx->Color.AlphaEnabled)
@@ -72,9 +77,6 @@ upload_wm_state(struct brw_context *brw)
       dw1 |= GEN7_WM_DISPATCH_ENABLE;
    }
 
-   dw1 |= brw_compute_barycentric_interp_modes() <<
-      GEN7_WM_BARYCENTRIC_INTERPOLATION_MODE_SHIFT;
-
    BEGIN_BATCH(3);
    OUT_BATCH(_3DSTATE_WM << 16 | (3 - 2));
    OUT_BATCH(dw1);
@@ -84,7 +86,7 @@ upload_wm_state(struct brw_context *brw)
 
 const struct brw_tracked_state gen7_wm_state = {
    .dirty = {
-      .mesa  = (_NEW_LINE | _NEW_POLYGON |
+      .mesa  = (_NEW_LINE | _NEW_LIGHT | _NEW_POLYGON |
 	        _NEW_COLOR | _NEW_BUFFERS),
       .brw   = (BRW_NEW_FRAGMENT_PROGRAM |
 		BRW_NEW_URB_FENCE |

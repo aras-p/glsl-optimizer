@@ -129,10 +129,41 @@ brw_wm_non_glsl_emit(struct brw_context *brw, struct brw_wm_compile *c)
  * (see enum brw_wm_barycentric_interp_mode) is needed by the fragment shader.
  */
 unsigned
-brw_compute_barycentric_interp_modes(void)
+brw_compute_barycentric_interp_modes(bool shade_model_flat,
+                                     const struct gl_fragment_program *fprog)
 {
-   /* At the moment the only interpolation mode we support is perspective. */
-   return (1 << BRW_WM_PERSPECTIVE_PIXEL_BARYCENTRIC);
+   unsigned barycentric_interp_modes = 0;
+   int attr;
+
+   /* Loop through all fragment shader inputs to figure out what interpolation
+    * modes are in use, and set the appropriate bits in
+    * barycentric_interp_modes.
+    */
+   for (attr = 0; attr < FRAG_ATTRIB_MAX; ++attr) {
+      enum glsl_interp_qualifier interp_qualifier =
+         fprog->InterpQualifier[attr];
+      bool is_gl_Color = attr == FRAG_ATTRIB_COL0 || attr == FRAG_ATTRIB_COL1;
+
+      /* Ignore unused inputs. */
+      if (!(fprog->Base.InputsRead & BITFIELD64_BIT(attr)))
+         continue;
+
+      /* Ignore WPOS and FACE, because they don't require interpolation. */
+      if (attr == FRAG_ATTRIB_WPOS || attr == FRAG_ATTRIB_FACE)
+         continue;
+
+      if (interp_qualifier == INTERP_QUALIFIER_NOPERSPECTIVE) {
+         barycentric_interp_modes |=
+            1 << BRW_WM_NONPERSPECTIVE_PIXEL_BARYCENTRIC;
+      } else if (interp_qualifier == INTERP_QUALIFIER_SMOOTH ||
+                 (!(shade_model_flat && is_gl_Color) &&
+                  interp_qualifier == INTERP_QUALIFIER_NONE)) {
+         barycentric_interp_modes |=
+            1 << BRW_WM_PERSPECTIVE_PIXEL_BARYCENTRIC;
+      }
+   }
+
+   return barycentric_interp_modes;
 }
 
 
@@ -144,7 +175,8 @@ brw_wm_payload_setup(struct brw_context *brw,
    bool uses_depth = (c->fp->program.Base.InputsRead &
 		      (1 << FRAG_ATTRIB_WPOS)) != 0;
    unsigned barycentric_interp_modes =
-      brw_compute_barycentric_interp_modes();
+      brw_compute_barycentric_interp_modes(c->key.flat_shade,
+                                           &c->fp->program);
    int i;
 
    if (intel->gen >= 6) {

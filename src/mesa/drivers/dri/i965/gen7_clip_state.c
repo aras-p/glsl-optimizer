@@ -35,9 +35,17 @@ upload_clip_state(struct brw_context *brw)
    uint32_t depth_clamp = 0;
    uint32_t provoking, userclip;
    uint32_t dw1 = GEN6_CLIP_STATISTICS_ENABLE;
+   uint32_t nonperspective_barycentric_enable_flag = 0;
+   /* BRW_NEW_FRAGMENT_PROGRAM */
+   const struct gl_fragment_program *fprog = brw->fragment_program;
 
    /* _NEW_BUFFERS */
    bool render_to_fbo = brw->intel.ctx.DrawBuffer->Name != 0;
+
+   if (brw_fprog_uses_noperspective(fprog)) {
+      nonperspective_barycentric_enable_flag =
+         GEN6_CLIP_NON_PERSPECTIVE_BARYCENTRIC_ENABLE;
+   }
 
    dw1 |= GEN7_CLIP_EARLY_CULL;
 
@@ -90,6 +98,7 @@ upload_clip_state(struct brw_context *brw)
    OUT_BATCH(GEN6_CLIP_ENABLE |
 	     GEN6_CLIP_API_OGL |
 	     GEN6_CLIP_MODE_NORMAL |
+             nonperspective_barycentric_enable_flag |
 	     GEN6_CLIP_XY_TEST |
 	     userclip << GEN6_USER_CLIP_CLIP_DISTANCES_SHIFT |
 	     depth_clamp |
@@ -106,7 +115,8 @@ const struct brw_tracked_state gen7_clip_state = {
                 _NEW_POLYGON |
                 _NEW_LIGHT |
                 _NEW_TRANSFORM),
-      .brw   = BRW_NEW_CONTEXT,
+      .brw   = (BRW_NEW_CONTEXT |
+                BRW_NEW_FRAGMENT_PROGRAM),
       .cache = 0
    },
    .emit = upload_clip_state,
