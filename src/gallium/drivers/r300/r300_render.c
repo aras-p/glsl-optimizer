@@ -801,16 +801,11 @@ static void r300_swtcl_draw_vbo(struct pipe_context* pipe,
     struct r300_context* r300 = r300_context(pipe);
     struct pipe_transfer *vb_transfer[PIPE_MAX_ATTRIBS];
     struct pipe_transfer *ib_transfer = NULL;
-    unsigned count = info->count;
     int i;
     void *indices = NULL;
     boolean indexed = info->indexed && r300->index_buffer.buffer;
 
     if (r300->skip_rendering) {
-        return;
-    }
-
-    if (!u_trim_pipe_prim(info->mode, &count)) {
         return;
     }
 
