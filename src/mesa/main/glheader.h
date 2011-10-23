@@ -66,6 +66,14 @@ typedef void *GLeglImageOES;
 #endif
 
 
+#ifndef GL_OES_EGL_image_external
+#define GL_TEXTURE_EXTERNAL_OES                                 0x8D65
+#define GL_SAMPLER_EXTERNAL_OES                                 0x8D66
+#define GL_TEXTURE_BINDING_EXTERNAL_OES                         0x8D67
+#define GL_REQUIRED_TEXTURE_IMAGE_UNITS_OES                     0x8D68
+#endif
+
+
 #ifndef GL_OES_point_size_array
 #define GL_POINT_SIZE_ARRAY_OES                                 0x8B9C
 #define GL_POINT_SIZE_ARRAY_TYPE_OES                            0x898A
