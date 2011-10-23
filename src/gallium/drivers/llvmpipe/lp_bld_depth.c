@@ -263,10 +263,11 @@ lp_build_stencil_op(struct lp_build_context *bld,
       res = lp_build_select(bld, front_facing, res, back_res);
    }
 
-   if (stencil->writemask != 0xff) {
-      /* mask &= stencil->writemask */
+   /* XXX what about the back-face writemask? */
+   if (stencil[0].writemask != 0xff) {
+      /* mask &= stencil[0].writemask */
       LLVMValueRef writemask = lp_build_const_int_vec(bld->gallivm, bld->type,
-                                                      stencil->writemask);
+                                                      stencil[0].writemask);
       mask = LLVMBuildAnd(builder, mask, writemask, "");
       /* res = (res & mask) | (stencilVals & ~mask) */
       res = lp_build_select_bitwise(bld, mask, res, stencilVals);
