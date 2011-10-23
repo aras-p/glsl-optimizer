@@ -106,14 +106,14 @@ void radeonFreeTextureImageBuffer(struct gl_context *ctx, struct gl_texture_imag
 		radeon_miptree_unreference(&image->mt);
 		assert(!image->base.Data);
 	} else {
-		_mesa_free_texture_image_data(ctx, timage);
+		_swrast_free_texture_image_buffer(ctx, timage);
 	}
 	if (image->bo) {
 		radeon_bo_unref(image->bo);
 		image->bo = NULL;
 	}
 	if (image->base.Data) {
-		_mesa_free_texmemory(image->base.Data);
+		_mesa_align_free(image->base.Data);
 		image->base.Data = NULL;
 	}
 
@@ -828,7 +828,8 @@ static void radeon_teximage(
 								texImage->Width,
 								texImage->Height,
 								texImage->Depth);
-			image->base.Data = _mesa_alloc_texmemory(size);
+			image->base.Data = _mesa_align_malloc(size, 512);
+
 			radeon_print(RADEON_TEXTURE, RADEON_VERBOSE,
 					"%s %dd: texObj %p, texImage %p, "
 					" no miptree assigned, using local memory %p\n",

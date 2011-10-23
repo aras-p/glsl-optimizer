@@ -499,7 +499,7 @@ static void migrate_image_to_miptree(radeon_mipmap_tree *mt,
 		copy_rows(dest, dstlvl->rowstride, image->base.Data, srcrowstride,
 				  rows, srcrowstride);
 
-		_mesa_free_texmemory(image->base.Data);
+		_mesa_align_free(image->base.Data);
 		image->base.Data = 0;
 	}
 

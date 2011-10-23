@@ -436,8 +436,8 @@ intel_miptree_copy_teximage(struct intel_context *intel,
       }
    }
 
-   if (!src_mt) {
-      _mesa_free_texmemory(intelImage->base.Data);
+   if (!src_mt && intelImage->base.Data) {
+      _mesa_align_free(intelImage->base.Data);
       intelImage->base.Data = NULL;
    }
 

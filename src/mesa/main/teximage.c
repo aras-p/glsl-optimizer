@@ -58,27 +58,6 @@
 
 
 /**
- * We allocate texture memory on 512-byte boundaries so we can use MMX/SSE
- * elsewhere.
- */
-void *
-_mesa_alloc_texmemory(GLsizei bytes)
-{
-   return _mesa_align_malloc(bytes, 512);
-}
-
-
-/**
- * Free texture memory allocated with _mesa_alloc_texmemory()
- */
-void
-_mesa_free_texmemory(void *m)
-{
-   _mesa_align_free(m);
-}
-
-
-/**
  * Return the simple base format for a given internal texture format.
  * For example, given GL_LUMINANCE12_ALPHA4, return GL_LUMINANCE_ALPHA.
  *
@@ -595,31 +574,6 @@ _mesa_new_texture_image( struct gl_context *ctx )
 {
    (void) ctx;
    return CALLOC_STRUCT(gl_texture_image);
-}
-
-
-/**
- * Free texture image data.
- * This function is a fallback called via ctx->Driver.FreeTextureImageBuffer().
- *
- * \param texImage texture image.
- *
- * Free the texture image data if it's not marked as client data.
- */
-void
-_mesa_free_texture_image_data(struct gl_context *ctx,
-                              struct gl_texture_image *texImage)
-{
-   (void) ctx;
-
-#if 0
-   if (texImage->Data) {
-      /* free the old texture data */
-      _mesa_free_texmemory(texImage->Data);
-   }
-
-   texImage->Data = NULL;
-#endif
 }
 
 
