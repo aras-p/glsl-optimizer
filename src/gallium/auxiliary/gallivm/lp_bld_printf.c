@@ -149,3 +149,24 @@ lp_build_print_vec4(struct gallivm_state *gallivm,
    util_snprintf(format, sizeof(format), "%s %%f %%f %%f %%f\n", msg);
    return lp_build_printf(gallivm, format, x, y, z, w);
 }
+
+
+/**
+ * Print a intt[4] vector.
+ */
+LLVMValueRef
+lp_build_print_ivec4(struct gallivm_state *gallivm,
+                    const char *msg, LLVMValueRef vec)
+{
+   LLVMBuilderRef builder = gallivm->builder;
+   char format[1000];
+   LLVMValueRef x, y, z, w;
+
+   x = LLVMBuildExtractElement(builder, vec, lp_build_const_int32(gallivm, 0), "");
+   y = LLVMBuildExtractElement(builder, vec, lp_build_const_int32(gallivm, 1), "");
+   z = LLVMBuildExtractElement(builder, vec, lp_build_const_int32(gallivm, 2), "");
+   w = LLVMBuildExtractElement(builder, vec, lp_build_const_int32(gallivm, 3), "");
+
+   util_snprintf(format, sizeof(format), "%s %%i %%i %%i %%i\n", msg);
+   return lp_build_printf(gallivm, format, x, y, z, w);
+}

@@ -45,6 +45,9 @@ LLVMValueRef
 lp_build_print_vec4(struct gallivm_state *gallivm,
                     const char *msg, LLVMValueRef vec);
 
+LLVMValueRef
+lp_build_print_ivec4(struct gallivm_state *gallivm,
+                     const char *msg, LLVMValueRef vec);
 
 #endif
 
