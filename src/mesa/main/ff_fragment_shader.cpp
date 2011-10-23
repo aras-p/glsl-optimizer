@@ -108,7 +108,7 @@ struct state_key {
    /* NOTE: This array of structs must be last! (see "keySize" below) */
    struct {
       GLuint enabled:1;
-      GLuint source_index:3;   /**< TEXTURE_x_INDEX */
+      GLuint source_index:4;   /**< TEXTURE_x_INDEX */
       GLuint shadow:1;
       GLuint ScaleShiftRGB:2;
       GLuint ScaleShiftA:2;
