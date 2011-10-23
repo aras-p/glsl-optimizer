@@ -132,6 +132,9 @@ struct remap_reg {
 struct schedule_state {
 	struct radeon_compiler * C;
 	struct schedule_instruction * Current;
+	/** Array of the previous writers of Current's destination register
+	 * indexed by channel. */
+	struct schedule_instruction * PrevWriter[4];
 
 	struct register_state Temporary[RC_REGISTER_MAX_INDEX];
 
@@ -1137,6 +1140,19 @@ static void emit_one_alu(struct schedule_state *s, struct rc_instruction * befor
 	presub_nop(before->Prev);
 }
 
+static void add_tex_reader(
+	struct schedule_state * s,
+	struct schedule_instruction * writer,
+	struct schedule_instruction * reader)
+{
+	if (!writer || writer->Instruction->Type != RC_INSTRUCTION_NORMAL) {
+		/*Not a TEX instructions */
+		return;
+	}
+	reader->TexReadCount++;
+	rc_list_add(&writer->TexReaders, rc_list(&s->C->Pool, reader));
+}
+
 static void scan_read(void * data, struct rc_instruction * inst,
 		rc_register_file file, unsigned int index, unsigned int chan)
 {
@@ -1150,7 +1166,22 @@ static void scan_read(void * data, struct rc_instruction * inst,
 	if (*v && (*v)->Writer == s->Current) {
 		/* The instruction reads and writes to a register component.
 		 * In this case, we only want to increment dependencies by one.
+		 * Why?
+		 * Because each instruction depends on the writers of its source
+		 * registers _and_ the most recent writer of its destination
+		 * register.  In this case, the current instruction (s->Current)
+		 * has a dependency that both writes to one of its source
+		 * registers and was the most recent writer to its destination
+		 * register.  We have already marked this dependency in
+		 * scan_write(), so we don't need to do it again.
 		 */
+
+		/* We need to make sure we are adding s->Current to the
+		 * previous writer's list of TexReaders, if the previous writer
+		 * was a TEX instruction.
+		 */
+		add_tex_reader(s, s->PrevWriter[chan], s->Current);
+
 		return;
 	}
 
@@ -1171,12 +1202,7 @@ static void scan_read(void * data, struct rc_instruction * inst,
 		/* Only update the current instruction's dependencies if the
 		 * register it reads from has been written to in this block. */
 		if ((*v)->Writer) {
-			if ((*v)->Writer->Instruction->Type ==
-						RC_INSTRUCTION_NORMAL) {
-				s->Current->TexReadCount++;
-				rc_list_add(&((*v)->Writer->TexReaders),
-					rc_list(&s->C->Pool, s->Current));
-			}
+			add_tex_reader(s, (*v)->Writer, s->Current);
 			s->Current->NumDependencies++;
 		}
 	}
@@ -1209,6 +1235,9 @@ static void scan_write(void * data, struct rc_instruction * inst,
 	if (*pv) {
 		(*pv)->Next = newv;
 		s->Current->NumDependencies++;
+		/* Keep track of the previous writer to s->Current's destination
+		 * register */
+		s->PrevWriter[chan] = (*pv)->Writer;
 	}
 
 	*pv = newv;
