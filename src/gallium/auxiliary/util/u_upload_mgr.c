@@ -131,8 +131,9 @@ u_upload_alloc_buffer( struct u_upload_mgr *upload,
                                         upload->bind,
                                         PIPE_USAGE_STREAM,
                                         size );
-   if (upload->buffer == NULL) 
-      goto fail;
+   if (upload->buffer == NULL) {
+      return PIPE_ERROR_OUT_OF_MEMORY;
+   }
 
    /* Map the new buffer. */
    upload->map = pipe_buffer_map_range(upload->pipe, upload->buffer,
@@ -144,13 +145,7 @@ u_upload_alloc_buffer( struct u_upload_mgr *upload,
    upload->size = size;
 
    upload->offset = 0;
-   return 0;
-
-fail:
-   if (upload->buffer)
-      pipe_resource_reference( &upload->buffer, NULL );
-
-   return PIPE_ERROR_OUT_OF_MEMORY;
+   return PIPE_OK;
 }
 
 enum pipe_error u_upload_alloc( struct u_upload_mgr *upload,
@@ -170,7 +165,7 @@ enum pipe_error u_upload_alloc( struct u_upload_mgr *upload,
    if (MAX2(upload->offset, alloc_offset) + alloc_size > upload->size) {
       enum pipe_error ret = u_upload_alloc_buffer(upload,
                                                   alloc_offset + alloc_size);
-      if (ret)
+      if (ret != PIPE_OK)
          return ret;
 
       *flushed = TRUE;
@@ -214,7 +209,7 @@ enum pipe_error u_upload_data( struct u_upload_mgr *upload,
    enum pipe_error ret = u_upload_alloc(upload, min_out_offset, size,
                                         out_offset, outbuf, flushed,
                                         (void**)&ptr);
-   if (ret)
+   if (ret != PIPE_OK)
       return ret;
 
    memcpy(ptr, data, size);
@@ -247,8 +242,7 @@ enum pipe_error u_upload_buffer( struct u_upload_mgr *upload,
                                              &transfer);
 
    if (map == NULL) {
-      ret = PIPE_ERROR_OUT_OF_MEMORY;
-      goto done;
+      return PIPE_ERROR_OUT_OF_MEMORY;
    }
 
    if (0)
@@ -261,9 +255,7 @@ enum pipe_error u_upload_buffer( struct u_upload_mgr *upload,
                         out_offset,
                         outbuf, flushed );
 
-done:
-   if (map)
-      pipe_buffer_unmap( upload->pipe, transfer );
+   pipe_buffer_unmap( upload->pipe, transfer );
 
    return ret;
 }
