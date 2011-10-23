@@ -52,6 +52,7 @@
 #include "main/texstate.h"
 
 #include "swrast_priv.h"
+#include "swrast/s_context.h"
 
 
 /**
@@ -67,6 +68,7 @@ static void swrastSetTexBuffer2(__DRIcontext *pDRICtx, GLint target,
     struct gl_texture_unit *texUnit;
     struct gl_texture_object *texObj;
     struct gl_texture_image *texImage;
+    struct swrast_texture_image *swImage;
     uint32_t internalFormat;
     gl_format texFormat;
 
@@ -77,6 +79,7 @@ static void swrastSetTexBuffer2(__DRIcontext *pDRICtx, GLint target,
     texUnit = _mesa_get_current_tex_unit(&dri_ctx->Base);
     texObj = _mesa_select_tex_object(&dri_ctx->Base, texUnit, target);
     texImage = _mesa_get_tex_image(&dri_ctx->Base, texObj, target, 0);
+    swImage = swrast_texture_image(texImage);
 
     _mesa_lock_texture(&dri_ctx->Base, texObj);
 
@@ -90,7 +93,7 @@ static void swrastSetTexBuffer2(__DRIcontext *pDRICtx, GLint target,
     _mesa_init_teximage_fields(&dri_ctx->Base, target, texImage,
 			       w, h, 1, 0, internalFormat, texFormat);
 
-    sPriv->swrast_loader->getImage(dPriv, x, y, w, h, (char *)texImage->Data,
+    sPriv->swrast_loader->getImage(dPriv, x, y, w, h, (char *)swImage->Data,
 				   dPriv->loaderPrivate);
 
     _mesa_unlock_texture(&dri_ctx->Base, texObj);

@@ -59,12 +59,33 @@ intel_alloc_texture_image_buffer(struct gl_context *ctx,
    struct intel_texture_image *intel_image = intel_texture_image(image);
    struct gl_texture_object *texobj = image->TexObject;
    struct intel_texture_object *intel_texobj = intel_texture_object(texobj);
+   GLuint slices;
 
    /* Because the driver uses AllocTextureImageBuffer() internally, it may end
     * up mismatched with FreeTextureImageBuffer(), but that is safe to call
     * multiple times.
     */
    ctx->Driver.FreeTextureImageBuffer(ctx, image);
+
+   if (intel->must_use_separate_stencil
+       && image->TexFormat == MESA_FORMAT_S8_Z24) {
+      intel_tex_image_s8z24_create_renderbuffers(intel, intel_image);
+   }
+
+   /* Allocate the swrast_texture_image::ImageOffsets array now */
+   switch (texobj->Target) {
+   case GL_TEXTURE_3D:
+   case GL_TEXTURE_2D_ARRAY:
+      slices = image->Depth;
+      break;
+   case GL_TEXTURE_1D_ARRAY:
+      slices = image->Height;
+      break;
+   default:
+      slices = 1;
+   }
+   assert(!intel_image->base.ImageOffsets);
+   intel_image->base.ImageOffsets = malloc(slices * sizeof(GLuint));
 
    if (intel_texobj->mt &&
        intel_miptree_match_image(intel_texobj->mt, image)) {
@@ -113,9 +134,14 @@ intel_free_texture_image_buffer(struct gl_context * ctx,
 
    intel_miptree_release(&intelImage->mt);
 
-   if (texImage->Data) {
-      _mesa_free_texmemory(texImage->Data);
-      texImage->Data = NULL;
+   if (intelImage->base.Data) {
+      _mesa_free_texmemory(intelImage->base.Data);
+      intelImage->base.Data = NULL;
+   }
+
+   if (intelImage->base.ImageOffsets) {
+      free(intelImage->base.ImageOffsets);
+      intelImage->base.ImageOffsets = NULL;
    }
 
    _mesa_reference_renderbuffer(&intelImage->depth_rb, NULL);
@@ -188,11 +214,11 @@ intel_map_texture_image(struct gl_context *ctx,
       assert(map);
 
       *stride = _mesa_format_row_stride(tex_image->TexFormat, width);
-      *map = tex_image->Data + (slice * height + y) * *stride + x * texelSize;
+      *map = intel_image->base.Data + (slice * height + y) * *stride + x * texelSize;
 
       DBG("%s: %d,%d %dx%d from data %p = %p/%d\n", __FUNCTION__,
 	  x, y, w, h,
-	  tex_image->Data, *map, *stride);
+	  intel_image->base.Data, *map, *stride);
    }
 }
 

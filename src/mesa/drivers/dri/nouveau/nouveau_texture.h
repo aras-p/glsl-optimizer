@@ -27,8 +27,10 @@
 #ifndef __NOUVEAU_TEXTURE_H__
 #define __NOUVEAU_TEXTURE_H__
 
+#include "swrast/s_context.h"
+
 struct nouveau_teximage {
-	struct gl_texture_image base;
+	struct swrast_texture_image base;
 	struct nouveau_surface surface;
 	struct {
 		struct nouveau_surface surface;

@@ -846,7 +846,7 @@ void r200SetTexBuffer2(__DRIcontext *pDRICtx, GLint target, GLint texture_format
 	_mesa_init_teximage_fields(radeon->glCtx, target, texImage,
 				   rb->base.Width, rb->base.Height, 1, 0,
 				   rb->cpp, texFormat);
-	texImage->RowStride = rb->pitch / rb->cpp;
+	rImage->base.RowStride = rb->pitch / rb->cpp;
 
 
         t->pp_txsize = ((rb->base.Width - 1) << RADEON_TEX_USIZE_SHIFT)

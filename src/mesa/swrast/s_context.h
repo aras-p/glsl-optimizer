@@ -138,20 +138,14 @@ struct swrast_texture_image
    /** used for mipmap LOD computation */
    GLfloat WidthScale, HeightScale, DepthScale;
 
-#if 0
-   GLubyte *Data;    /**< The actual texture data in malloc'd memory */
-
-   GLint TexelSize;  /**< bytes per texel block */
-#endif
+   /** These fields only valid when texture memory is mapped */
+   GLint RowStride;		/**< Padded width in units of texels */
+   GLuint *ImageOffsets;        /**< if 3D texture: array [Depth] of offsets to
+                                     each 2D slice in 'Data', in texels */
+   GLubyte *Data;		/**< Image data, accessed via FetchTexel() */
 
    FetchTexelFunc FetchTexel;
    StoreTexelFunc Store;
-
-#if 0
-   /** These fields only valid when texture memory is mapped */
-   GLubyte **SliceMaps;  /**< points to OneMap or a malloc'd array */
-   GLint RowStride;  /**< bytes per row of blocks */
-#endif
 };
 
 

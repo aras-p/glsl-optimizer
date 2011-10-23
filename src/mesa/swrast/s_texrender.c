@@ -610,7 +610,7 @@ update_wrapper(struct gl_context *ctx, struct gl_renderbuffer_attachment *att)
       trb->Base.DataType = CHAN_TYPE;
       trb->Base._BaseFormat = GL_RGBA;
    }
-   trb->Base.Data = trb->TexImage->Base.Data;
+   trb->Base.Data = trb->TexImage->Data;
 }
 
 

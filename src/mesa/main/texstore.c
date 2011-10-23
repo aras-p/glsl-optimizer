@@ -4906,7 +4906,6 @@ _mesa_store_compressed_teximage2d(struct gl_context *ctx,
    ASSERT(texImage->Width > 0);
    ASSERT(texImage->Height > 0);
    ASSERT(texImage->Depth == 1);
-   ASSERT(texImage->Data == NULL); /* was freed in glCompressedTexImage2DARB */
 
    /* allocate storage for texture data */
    if (!ctx->Driver.AllocTextureImageBuffer(ctx, texImage, texImage->TexFormat,

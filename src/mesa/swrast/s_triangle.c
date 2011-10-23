@@ -127,10 +127,12 @@ _swrast_culltriangle( struct gl_context *ctx,
       ctx->Texture.Unit[0].CurrentTex[TEXTURE_2D_INDEX];		\
    const struct gl_texture_image *texImg =				\
       obj->Image[0][obj->BaseLevel];					\
+   const struct swrast_texture_image *swImg =				\
+      swrast_texture_image_const(texImg);				\
    const GLfloat twidth = (GLfloat) texImg->Width;			\
    const GLfloat theight = (GLfloat) texImg->Height;			\
    const GLint twidth_log2 = texImg->WidthLog2;				\
-   const GLubyte *texture = (const GLubyte *) texImg->Data;		\
+   const GLubyte *texture = (const GLubyte *) swImg->Data;		\
    const GLint smask = texImg->Width - 1;				\
    const GLint tmask = texImg->Height - 1;				\
    ASSERT(texImg->TexFormat == MESA_FORMAT_RGB888);			\
@@ -181,10 +183,12 @@ _swrast_culltriangle( struct gl_context *ctx,
       ctx->Texture.Unit[0].CurrentTex[TEXTURE_2D_INDEX];		\
    const struct gl_texture_image *texImg = 				\
        obj->Image[0][obj->BaseLevel]; 					\
+   const struct swrast_texture_image *swImg =				\
+      swrast_texture_image_const(texImg);				\
    const GLfloat twidth = (GLfloat) texImg->Width;			\
    const GLfloat theight = (GLfloat) texImg->Height;			\
    const GLint twidth_log2 = texImg->WidthLog2;				\
-   const GLubyte *texture = (const GLubyte *) texImg->Data;		\
+   const GLubyte *texture = (const GLubyte *) swImg->Data;		\
    const GLint smask = texImg->Width - 1;				\
    const GLint tmask = texImg->Height - 1;				\
    ASSERT(texImg->TexFormat == MESA_FORMAT_RGB888);			\
@@ -533,9 +537,11 @@ affine_span(struct gl_context *ctx, SWspan *span,
       ctx->Texture.Unit[0].CurrentTex[TEXTURE_2D_INDEX];		\
    const struct gl_texture_image *texImg = 				\
       obj->Image[0][obj->BaseLevel]; 					\
+   const struct swrast_texture_image *swImg =				\
+      swrast_texture_image_const(texImg);				\
    const GLfloat twidth = (GLfloat) texImg->Width;			\
    const GLfloat theight = (GLfloat) texImg->Height;			\
-   info.texture = (const GLchan *) texImg->Data;			\
+   info.texture = (const GLchan *) swImg->Data;				\
    info.twidth_log2 = texImg->WidthLog2;				\
    info.smask = texImg->Width - 1;					\
    info.tmask = texImg->Height - 1;					\
@@ -800,7 +806,9 @@ fast_persp_span(struct gl_context *ctx, SWspan *span,
       ctx->Texture.Unit[0].CurrentTex[TEXTURE_2D_INDEX];		\
    const struct gl_texture_image *texImg = 				\
       obj->Image[0][obj->BaseLevel];			 		\
-   info.texture = (const GLchan *) texImg->Data;			\
+   const struct swrast_texture_image *swImg =				\
+      swrast_texture_image_const(texImg);				\
+   info.texture = (const GLchan *) swImg->Data;				\
    info.twidth_log2 = texImg->WidthLog2;				\
    info.smask = texImg->Width - 1;					\
    info.tmask = texImg->Height - 1;					\
@@ -1062,7 +1070,7 @@ _swrast_choose_triangle( struct gl_context *ctx )
              && texObj2D->_Swizzle == SWIZZLE_NOOP
              && swImg->_IsPowerOfTwo
              && texImg->Border == 0
-             && texImg->Width == texImg->RowStride
+             && texImg->Width == swImg->RowStride
              && (format == MESA_FORMAT_RGB888 || format == MESA_FORMAT_RGBA8888)
              && minFilter == magFilter
              && ctx->Light.Model.ColorControl == GL_SINGLE_COLOR

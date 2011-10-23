@@ -68,7 +68,7 @@ nouveau_teximage_new(struct gl_context *ctx)
 {
 	struct nouveau_teximage *nti = CALLOC_STRUCT(nouveau_teximage);
 
-	return &nti->base;
+	return &nti->base.Base;
 }
 
 static void
@@ -103,7 +103,7 @@ nouveau_teximage_map(struct gl_context *ctx, struct gl_texture_image *ti,
 			nti->transfer.x = x;
 			nti->transfer.y = y;
 
-			ti->Data = nouveau_get_scratch(ctx, st->pitch * h,
+			nti->base.Data = nouveau_get_scratch(ctx, st->pitch * h,
 						       &st->bo, &st->offset);
 
 		} else {
@@ -119,7 +119,7 @@ nouveau_teximage_map(struct gl_context *ctx, struct gl_texture_image *ti,
 				assert(!ret);
 			}
 
-			ti->Data = s->bo->map + y * s->pitch + x * s->cpp;
+			nti->base.Data = s->bo->map + y * s->pitch + x * s->cpp;
 		}
 	}
 }
@@ -141,7 +141,7 @@ nouveau_teximage_unmap(struct gl_context *ctx, struct gl_texture_image *ti)
 		nouveau_bo_unmap(s->bo);
 	}
 
-	ti->Data = NULL;
+	nti->base.Data = NULL;
 }
 
 
@@ -197,7 +197,7 @@ nouveau_map_texture_image(struct gl_context *ctx,
 			*stride = s->pitch;
 		}
 	} else {
-		*map = ti->Data + y * s->pitch + x * s->cpp;
+		*map = nti->base.Data + y * s->pitch + x * s->cpp;
 		*stride = s->pitch;
 	}
 }
@@ -220,7 +220,7 @@ nouveau_unmap_texture_image(struct gl_context *ctx, struct gl_texture_image *ti,
 		nouveau_bo_unmap(s->bo);
 	}
 
-	ti->Data = NULL;
+	nti->base.Data = NULL;
 }
 
 static gl_format
@@ -461,12 +461,13 @@ nouveau_teximage(struct gl_context *ctx, GLint dims, GLenum target, GLint level,
 		 struct gl_texture_image *ti)
 {
 	struct nouveau_surface *s = &to_nouveau_teximage(ti)->surface;
+	struct nouveau_teximage *nti = to_nouveau_teximage(ti);
 	int ret;
 
 	/* Allocate a new bo for the image. */
 	nouveau_surface_alloc(ctx, s, LINEAR, get_teximage_placement(ti),
 			      ti->TexFormat, width, height);
-	ti->RowStride = s->pitch / s->cpp;
+	nti->base.RowStride = s->pitch / s->cpp;
 
 	pixels = _mesa_validate_pbo_teximage(ctx, dims, width, height, depth,
 					     format, type, pixels, packing,
@@ -479,7 +480,7 @@ nouveau_teximage(struct gl_context *ctx, GLint dims, GLenum target, GLint level,
 		ret = _mesa_texstore(ctx, dims, ti->_BaseFormat,
 				     ti->TexFormat,
 				     0, 0, 0, s->pitch,
-                                     (GLubyte **) &ti->Data,
+                                     &nti->base.Data,
 				     width, height, depth,
 				     format, type, pixels, packing);
 		assert(ret);
@@ -555,6 +556,7 @@ nouveau_texsubimage(struct gl_context *ctx, GLint dims, GLenum target, GLint lev
 		    struct gl_texture_image *ti)
 {
 	struct nouveau_surface *s = &to_nouveau_teximage(ti)->surface;
+	struct nouveau_teximage *nti = to_nouveau_teximage(ti);
 	int ret;
 
 	pixels = _mesa_validate_pbo_teximage(ctx, dims, width, height, depth,
@@ -566,7 +568,7 @@ nouveau_texsubimage(struct gl_context *ctx, GLint dims, GLenum target, GLint lev
 
 		ret = _mesa_texstore(ctx, 3, ti->_BaseFormat, ti->TexFormat,
                                      0, 0, 0, s->pitch,
-				     (GLubyte **) &ti->Data,
+				     &nti->base.Data,
                                      width, height, depth,
 				     format, type, pixels, packing);
 		assert(ret);
@@ -654,10 +656,12 @@ nouveau_set_texbuffer(__DRIcontext *dri_ctx,
 		fb->Attachment[BUFFER_FRONT_LEFT].Renderbuffer;
 	struct gl_texture_object *t = _mesa_get_current_tex_object(ctx, target);
 	struct gl_texture_image *ti;
+	struct nouveau_teximage *nti;
 	struct nouveau_surface *s;
 
 	_mesa_lock_texture(ctx, t);
 	ti = _mesa_get_tex_image(ctx, t, target, 0);
+	nti = to_nouveau_teximage(ti);
 	s = &to_nouveau_teximage(ti)->surface;
 
 	/* Update the texture surface with the given drawable. */
@@ -669,7 +673,7 @@ nouveau_set_texbuffer(__DRIcontext *dri_ctx,
 	/* Update the image fields. */
 	_mesa_init_teximage_fields(ctx, target, ti, s->width, s->height,
 				   1, 0, s->cpp, s->format);
-	ti->RowStride = s->pitch / s->cpp;
+	nti->base.RowStride = s->pitch / s->cpp;
 
 	/* Try to validate it. */
 	if (!validate_teximage(ctx, t, 0, 0, 0, 0, s->width, s->height, 1))

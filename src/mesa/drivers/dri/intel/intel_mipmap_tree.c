@@ -417,8 +417,8 @@ intel_miptree_copy_teximage(struct intel_context *intel,
 	     dst_mt, dst_x, dst_y, dst_mt->region->pitch * dst_mt->region->cpp,
 	     width, height);
 
-	 src = intelImage->base.Base.Data;
-	 src += (intelImage->base.Base.RowStride *
+	 src = intelImage->base.Data;
+	 src += (intelImage->base.RowStride *
 		 intelImage->base.Base.Height *
 		 dst_mt->region->cpp *
 		 slice);
@@ -429,7 +429,7 @@ intel_miptree_copy_teximage(struct intel_context *intel,
 			 dst_x, dst_y,
 			 width, height,
 			 src,
-			 intelImage->base.Base.RowStride,
+			 intelImage->base.RowStride,
 			 0, 0);
 
 	 intel_region_unmap(intel, dst_mt->region);
@@ -437,8 +437,8 @@ intel_miptree_copy_teximage(struct intel_context *intel,
    }
 
    if (!src_mt) {
-      _mesa_free_texmemory(intelImage->base.Base.Data);
-      intelImage->base.Base.Data = NULL;
+      _mesa_free_texmemory(intelImage->base.Data);
+      intelImage->base.Data = NULL;
    }
 
    intel_miptree_reference(&intelImage->mt, dst_mt);

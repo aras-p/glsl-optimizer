@@ -461,8 +461,8 @@ _mesa_decompress_image(gl_format format, GLuint width, GLuint height,
 
    /* setup dummy texture image info */
    memset(&texImage, 0, sizeof(texImage));
-   texImage.Base.Data = (void *) src;
-   texImage.Base.RowStride = srcRowStride;
+   texImage.Data = (void *) src;
+   texImage.RowStride = srcRowStride;
 
    switch (format) {
    /* DXT formats */

@@ -454,7 +454,7 @@ intel_set_texture_image_region(struct gl_context *ctx,
    if (intel_image->mt == NULL)
        return;
 
-   image->RowStride = region->pitch;
+   intel_image->base.RowStride = region->pitch;
 }
 
 void

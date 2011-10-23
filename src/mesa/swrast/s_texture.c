@@ -69,14 +69,32 @@ _swrast_alloc_texture_image_buffer(struct gl_context *ctx,
 {
    struct swrast_texture_image *swImg = swrast_texture_image(texImage);
    GLuint bytes = _mesa_format_image_size(format, width, height, depth);
+   GLuint i;
 
    /* This _should_ be true (revisit if these ever fail) */
    assert(texImage->Width == width);
    assert(texImage->Height == height);
    assert(texImage->Depth == depth);
 
-   assert(!texImage->Data);
-   texImage->Data = _mesa_align_malloc(bytes, 512);
+   assert(!swImg->Data);
+   swImg->Data = _mesa_align_malloc(bytes, 512);
+   if (!swImg->Data)
+      return GL_FALSE;
+
+   /* RowStride and ImageOffsets[] describe how to address texels in 'Data' */
+   swImg->RowStride = width;
+
+   /* Allocate the ImageOffsets array and initialize to typical values.
+    * We allocate the array for 1D/2D textures too in order to avoid special-
+    * case code in the texstore routines.
+    */
+   swImg->ImageOffsets = (GLuint *) malloc(depth * sizeof(GLuint));
+   if (!swImg->ImageOffsets)
+      return GL_FALSE;
+
+   for (i = 0; i < depth; i++) {
+      swImg->ImageOffsets[i] = i * width * height;
+   }
 
    if ((width == 1 || _mesa_is_pow_two(texImage->Width2)) &&
        (height == 1 || _mesa_is_pow_two(texImage->Height2)) &&
@@ -98,7 +116,7 @@ _swrast_alloc_texture_image_buffer(struct gl_context *ctx,
       swImg->DepthScale = (GLfloat) texImage->Depth;
    }
 
-   return texImage->Data != NULL;
+   return GL_TRUE;
 }
 
 
@@ -109,11 +127,16 @@ void
 _swrast_free_texture_image_buffer(struct gl_context *ctx,
                                   struct gl_texture_image *texImage)
 {
-   if (texImage->Data) {
-      _mesa_align_free(texImage->Data);
+   struct swrast_texture_image *swImage = swrast_texture_image(texImage);
+   if (swImage->Data) {
+      _mesa_align_free(swImage->Data);
+      swImage->Data = NULL;
    }
 
-   texImage->Data = NULL;
+   if (swImage->ImageOffsets) {
+      free(swImage->ImageOffsets);
+      swImage->ImageOffsets = NULL;
+   }
 }
 
 
@@ -155,6 +178,7 @@ _swrast_map_teximage(struct gl_context *ctx,
                      GLubyte **mapOut,
                      GLint *rowStrideOut)
 {
+   struct swrast_texture_image *swImage = swrast_texture_image(texImage);
    GLubyte *map;
    GLint stride, texelSize;
    GLuint bw, bh;
@@ -165,9 +189,9 @@ _swrast_map_teximage(struct gl_context *ctx,
    stride = _mesa_format_row_stride(texImage->TexFormat, texImage->Width);
    _mesa_get_format_block_size(texImage->TexFormat, &bw, &bh);
 
-   assert(texImage->Data);
+   assert(swImage->Data);
 
-   map = texImage->Data;
+   map = swImage->Data;
 
    if (texImage->TexObject->Target == GL_TEXTURE_3D ||
        texImage->TexObject->Target == GL_TEXTURE_2D_ARRAY) {

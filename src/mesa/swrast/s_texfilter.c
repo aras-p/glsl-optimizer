@@ -1375,7 +1375,7 @@ opt_sample_rgb_2d(struct gl_context *ctx,
       GLint i = IFLOOR(texcoords[k][0] * width) & colMask;
       GLint j = IFLOOR(texcoords[k][1] * height) & rowMask;
       GLint pos = (j << shift) | i;
-      GLubyte *texel = ((GLubyte *) img->Data) + 3*pos;
+      GLubyte *texel = swImg->Data + 3 * pos;
       rgba[k][RCOMP] = UBYTE_TO_FLOAT(texel[2]);
       rgba[k][GCOMP] = UBYTE_TO_FLOAT(texel[1]);
       rgba[k][BCOMP] = UBYTE_TO_FLOAT(texel[0]);
@@ -1419,7 +1419,7 @@ opt_sample_rgba_2d(struct gl_context *ctx,
       const GLint col = IFLOOR(texcoords[i][0] * width) & colMask;
       const GLint row = IFLOOR(texcoords[i][1] * height) & rowMask;
       const GLint pos = (row << shift) | col;
-      const GLuint texel = *((GLuint *) img->Data + pos);
+      const GLuint texel = *((GLuint *) swImg->Data + pos);
       rgba[i][RCOMP] = UBYTE_TO_FLOAT( (texel >> 24)        );
       rgba[i][GCOMP] = UBYTE_TO_FLOAT( (texel >> 16) & 0xff );
       rgba[i][BCOMP] = UBYTE_TO_FLOAT( (texel >>  8) & 0xff );
@@ -1442,7 +1442,7 @@ sample_lambda_2d(struct gl_context *ctx,
 
    const GLboolean repeatNoBorderPOT = (tObj->Sampler.WrapS == GL_REPEAT)
       && (tObj->Sampler.WrapT == GL_REPEAT)
-      && (tImg->Border == 0 && (tImg->Width == tImg->RowStride))
+      && (tImg->Border == 0 && (tImg->Width == swImg->RowStride))
       && swImg->_IsPowerOfTwo;
 
    ASSERT(lambda != NULL);

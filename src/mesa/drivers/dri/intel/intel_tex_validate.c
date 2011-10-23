@@ -147,40 +147,29 @@ intel_tex_map_image_for_swrast(struct intel_context *intel,
        mt->target == GL_TEXTURE_1D_ARRAY) {
       int i;
 
-      if (mt->target == GL_TEXTURE_2D_ARRAY ||
-          mt->target == GL_TEXTURE_1D_ARRAY) {
-         /* Mesa only allocates one entry for these, but we really do have an
-          * offset per depth.
-          */
-         free(intel_image->base.Base.ImageOffsets);
-         intel_image->base.Base.ImageOffsets = malloc(mt->level[level].depth *
-                                                      sizeof(GLuint));
-      }
-
       /* ImageOffsets[] is only used for swrast's fetch_texel_3d, so we can't
        * share code with the normal path.
        */
       for (i = 0; i < mt->level[level].depth; i++) {
 	 intel_miptree_get_image_offset(mt, level, face, i, &x, &y);
-	 intel_image->base.Base.ImageOffsets[i] = x + y * mt->region->pitch;
+	 intel_image->base.ImageOffsets[i] = x + y * mt->region->pitch;
       }
 
       DBG("%s \n", __FUNCTION__);
 
-      intel_image->base.Base.Data = intel_region_map(intel, mt->region, mode);
+      intel_image->base.Data = intel_region_map(intel, mt->region, mode);
    } else {
       assert(mt->level[level].depth == 1);
       intel_miptree_get_image_offset(mt, level, face, 0, &x, &y);
-      intel_image->base.Base.ImageOffsets[0] = 0;
 
       DBG("%s: (%d,%d) -> (%d, %d)/%d\n",
 	  __FUNCTION__, face, level, x, y, mt->region->pitch * mt->cpp);
 
-      intel_image->base.Base.Data = intel_region_map(intel, mt->region, mode) +
+      intel_image->base.Data = intel_region_map(intel, mt->region, mode) +
 	 (x + y * mt->region->pitch) * mt->cpp;
    }
 
-   intel_image->base.Base.RowStride = mt->region->pitch;
+   intel_image->base.RowStride = mt->region->pitch;
 }
 
 static void
@@ -189,7 +178,7 @@ intel_tex_unmap_image_for_swrast(struct intel_context *intel,
 {
    if (intel_image && intel_image->mt) {
       intel_region_unmap(intel, intel_image->mt->region);
-      intel_image->base.Base.Data = NULL;
+      intel_image->base.Data = NULL;
    }
 }
 
