@@ -1751,6 +1751,7 @@ _mesa_generate_mipmap_level(GLenum target,
       }
       break;
    case GL_TEXTURE_RECTANGLE_NV:
+   case GL_TEXTURE_EXTERNAL_OES:
       /* no mipmaps, do nothing */
       break;
    default:

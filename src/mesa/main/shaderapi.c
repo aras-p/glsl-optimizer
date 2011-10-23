@@ -152,6 +152,7 @@ _mesa_sizeof_glsl_type(GLenum type)
    case GL_SAMPLER_1D_ARRAY_SHADOW_EXT:
    case GL_SAMPLER_2D_ARRAY_SHADOW_EXT:
    case GL_SAMPLER_CUBE_SHADOW_EXT:
+   case GL_SAMPLER_EXTERNAL_OES:
       return 1;
    case GL_FLOAT_VEC2:
    case GL_INT_VEC2:
@@ -918,6 +919,7 @@ validate_samplers(const struct gl_program *prog, char *errMsg)
       "TEXTURE_BUFFER",
       "TEXTURE_2D_ARRAY",
       "TEXTURE_1D_ARRAY",
+      "TEXTURE_EXTERNAL",
       "TEXTURE_CUBE",
       "TEXTURE_3D",
       "TEXTURE_RECT",

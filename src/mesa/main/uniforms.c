@@ -148,6 +148,7 @@ is_sampler_type(GLenum type)
    case GL_SAMPLER_2D_MULTISAMPLE_ARRAY:
    case GL_INT_SAMPLER_2D_MULTISAMPLE_ARRAY:
    case GL_UNSIGNED_INT_SAMPLER_2D_MULTISAMPLE_ARRAY:
+   case GL_SAMPLER_EXTERNAL_OES:
       return GL_TRUE;
    default:
       return GL_FALSE;

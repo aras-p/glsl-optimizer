@@ -549,7 +549,8 @@ _mesa_set_tex_image(struct gl_texture_object *tObj,
 
    ASSERT(tObj);
    ASSERT(texImage);
-   ASSERT(target != GL_TEXTURE_RECTANGLE_NV || level == 0);
+   if (target == GL_TEXTURE_RECTANGLE_NV || target == GL_TEXTURE_EXTERNAL_OES)
+      assert(level == 0);
 
    tObj->Image[face][level] = texImage;
 
@@ -607,10 +608,11 @@ _mesa_delete_texture_image(struct gl_context *ctx,
 GLboolean
 _mesa_is_proxy_texture(GLenum target)
 {
-   /* NUM_TEXTURE_TARGETS should match number of terms below,
-    * except there's no proxy for GL_TEXTURE_BUFFER.
+   /*
+    * NUM_TEXTURE_TARGETS should match number of terms below, except there's no
+    * proxy for GL_TEXTURE_BUFFER and GL_TEXTURE_EXTERNAL_OES.
     */
-   assert(NUM_TEXTURE_TARGETS == 8);
+   assert(NUM_TEXTURE_TARGETS == 7 + 2);
 
    return (target == GL_PROXY_TEXTURE_1D ||
            target == GL_PROXY_TEXTURE_2D ||
@@ -723,6 +725,9 @@ _mesa_select_tex_object(struct gl_context *ctx,
       case GL_TEXTURE_BUFFER:
          return ctx->Extensions.ARB_texture_buffer_object
             ? texUnit->CurrentTex[TEXTURE_BUFFER_INDEX] : NULL;
+      case GL_TEXTURE_EXTERNAL_OES:
+         return ctx->Extensions.OES_EGL_image_external
+            ? texUnit->CurrentTex[TEXTURE_EXTERNAL_INDEX] : NULL;
       default:
          _mesa_problem(NULL, "bad target in _mesa_select_tex_object()");
          return NULL;
@@ -911,6 +916,7 @@ _mesa_max_texture_levels(struct gl_context *ctx, GLenum target)
               ctx->Extensions.EXT_texture_array)
          ? ctx->Const.MaxTextureLevels : 0;
    case GL_TEXTURE_BUFFER:
+   case GL_TEXTURE_EXTERNAL_OES:
       /* fall-through */
    default:
       return 0; /* bad target */
@@ -942,6 +948,7 @@ _mesa_get_texture_dimensions(GLenum target)
    case GL_TEXTURE_CUBE_MAP_NEGATIVE_Z:
    case GL_TEXTURE_1D_ARRAY:
    case GL_PROXY_TEXTURE_1D_ARRAY:
+   case GL_TEXTURE_EXTERNAL_OES:
       return 2;
    case GL_TEXTURE_3D:
    case GL_PROXY_TEXTURE_3D:
@@ -2533,13 +2540,10 @@ _mesa_EGLImageTargetTexture2DOES (GLenum target, GLeglImageOES image)
    GET_CURRENT_CONTEXT(ctx);
    ASSERT_OUTSIDE_BEGIN_END_AND_FLUSH(ctx);
 
-   if (!ctx->Extensions.OES_EGL_image) {
-      _mesa_error(ctx, GL_INVALID_OPERATION,
-                  "glEGLImageTargetTexture2DOES(unsupported)");
-      return;
-   }
-
-   if (target != GL_TEXTURE_2D) {
+   if ((target == GL_TEXTURE_2D &&
+        !ctx->Extensions.OES_EGL_image) ||
+       (target == GL_TEXTURE_EXTERNAL_OES &&
+        !ctx->Extensions.OES_EGL_image_external)) {
       _mesa_error(ctx, GL_INVALID_ENUM,
 		  "glEGLImageTargetTexture2D(target=%d)", target);
       return;

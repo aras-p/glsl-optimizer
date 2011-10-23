@@ -764,6 +764,8 @@ pop_texture_group(struct gl_context *ctx, struct texture_state *texstate)
          }
          else if (obj->Target == GL_TEXTURE_BUFFER)
             continue;
+         else if (obj->Target == GL_TEXTURE_EXTERNAL_OES)
+            continue;
 
          target = obj->Target;
 

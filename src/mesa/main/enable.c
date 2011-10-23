@@ -916,6 +916,14 @@ _mesa_set_enable(struct gl_context *ctx, GLenum cap, GLboolean state)
          ctx->Color.sRGBEnabled = state;
          break;
 
+      /* GL_OES_EGL_image_external */
+      case GL_TEXTURE_EXTERNAL_OES:
+         CHECK_EXTENSION(OES_EGL_image_external, cap);
+         if (!enable_texture(ctx, state, TEXTURE_EXTERNAL_BIT)) {
+            return;
+         }
+         break;
+
       default:
          goto invalid_enum_error;
    }
@@ -1416,6 +1424,11 @@ _mesa_IsEnabled( GLenum cap )
       case GL_FRAMEBUFFER_SRGB_EXT:
 	 CHECK_EXTENSION(EXT_framebuffer_sRGB);
 	 return ctx->Color.sRGBEnabled;
+
+      /* GL_OES_EGL_image_external */
+      case GL_TEXTURE_EXTERNAL_OES:
+	 CHECK_EXTENSION(OES_EGL_image_external);
+         return is_texture_enabled(ctx, TEXTURE_EXTERNAL_BIT);
 
       default:
          goto invalid_enum_error;

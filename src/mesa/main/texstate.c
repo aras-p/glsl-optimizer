@@ -690,7 +690,8 @@ alloc_proxy_textures( struct gl_context *ctx )
       GL_TEXTURE_RECTANGLE_NV,
       GL_TEXTURE_1D_ARRAY_EXT,
       GL_TEXTURE_2D_ARRAY_EXT,
-      GL_TEXTURE_BUFFER
+      GL_TEXTURE_BUFFER,
+      GL_TEXTURE_EXTERNAL_OES
    };
    GLint tgt;
 

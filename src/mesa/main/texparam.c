@@ -60,6 +60,10 @@ validate_texture_wrap_mode(struct gl_context * ctx, GLenum target, GLenum wrap)
           (wrap == GL_CLAMP_TO_BORDER && e->ARB_texture_border_clamp))
          return GL_TRUE;
    }
+   else if (target == GL_TEXTURE_EXTERNAL_OES) {
+      if (wrap == GL_CLAMP_TO_EDGE)
+         return GL_TRUE;
+   }
    else {
       switch (wrap) {
       case GL_CLAMP:
@@ -137,6 +141,11 @@ get_texobj(struct gl_context *ctx, GLenum target, GLboolean get)
       if (ctx->Extensions.MESA_texture_array ||
           ctx->Extensions.EXT_texture_array) {
          return texUnit->CurrentTex[TEXTURE_2D_ARRAY_INDEX];
+      }
+      break;
+   case GL_TEXTURE_EXTERNAL_OES:
+      if (ctx->Extensions.OES_EGL_image_external) {
+         return texUnit->CurrentTex[TEXTURE_EXTERNAL_INDEX];
       }
       break;
    default:
@@ -238,7 +247,8 @@ set_tex_parameteri(struct gl_context *ctx,
       case GL_LINEAR_MIPMAP_NEAREST:
       case GL_NEAREST_MIPMAP_LINEAR:
       case GL_LINEAR_MIPMAP_LINEAR:
-         if (texObj->Target != GL_TEXTURE_RECTANGLE_NV) {
+         if (texObj->Target != GL_TEXTURE_RECTANGLE_NV &&
+             texObj->Target != GL_TEXTURE_EXTERNAL_OES) {
             incomplete(ctx, texObj);
             texObj->Sampler.MinFilter = params[0];
             return GL_TRUE;
@@ -319,6 +329,8 @@ set_tex_parameteri(struct gl_context *ctx,
       return GL_TRUE;
 
    case GL_GENERATE_MIPMAP_SGIS:
+      if (params[0] && texObj->Target == GL_TEXTURE_EXTERNAL_OES)
+         goto invalid_param;
       if (texObj->GenerateMipmap != params[0]) {
          /* no flush() */
 	 texObj->GenerateMipmap = params[0] ? GL_TRUE : GL_FALSE;
@@ -1386,6 +1398,12 @@ _mesa_GetTexParameteriv( GLenum target, GLenum pname, GLint *params )
          if (!ctx->Extensions.ARB_texture_storage)
             goto invalid_pname;
          *params = (GLint) obj->Immutable;
+         break;
+
+      case GL_REQUIRED_TEXTURE_IMAGE_UNITS_OES:
+         if (!ctx->Extensions.OES_EGL_image_external)
+            goto invalid_pname;
+         *params = obj->RequiredTextureImageUnits;
          break;
 
       default:
