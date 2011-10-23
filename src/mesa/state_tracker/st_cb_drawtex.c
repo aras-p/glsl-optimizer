@@ -114,7 +114,6 @@ st_DrawTex(struct gl_context *ctx, GLfloat x, GLfloat y, GLfloat z,
    uint semantic_names[2 + MAX_TEXTURE_UNITS];
    uint semantic_indexes[2 + MAX_TEXTURE_UNITS];
    struct pipe_vertex_element velements[2 + MAX_TEXTURE_UNITS];
-   GLbitfield inputs = VERT_BIT_POS;
 
    st_validate_state(st);
 
@@ -128,7 +127,6 @@ st_DrawTex(struct gl_context *ctx, GLfloat x, GLfloat y, GLfloat z,
    numTexCoords = 0;
    for (i = 0; i < ctx->Const.MaxTextureUnits; i++) {
       if (ctx->Texture.Unit[i]._ReallyEnabled & TEXTURE_2D_BIT) {
-         inputs |= VERT_BIT_TEX(i);
          numTexCoords++;
       }
    }
