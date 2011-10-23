@@ -41,7 +41,6 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #include "main/mfeatures.h"
 #include "main/mipmap.h"
 #include "main/simple_list.h"
-#include "main/texstore.h"
 #include "main/texobj.h"
 
 #include "texmem.h"
