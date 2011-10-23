@@ -229,6 +229,7 @@ static const struct extension extension_table[] = {
 #if FEATURE_OES_EGL_image
    /*  FIXME: Mesa expects GL_OES_EGL_image to be available in OpenGL contexts. */
    { "GL_OES_EGL_image",                           o(OES_EGL_image),                           GL | ES1 | ES2, 2006 },
+   { "GL_OES_EGL_image_external",                  o(OES_EGL_image_external),                       ES1 | ES2, 2010 },
 #endif
    { "GL_OES_element_index_uint",                  o(dummy_true),                                   ES1 | ES2, 2005 },
    { "GL_OES_fbo_render_mipmap",                   o(EXT_framebuffer_object),                       ES1 | ES2, 2005 },

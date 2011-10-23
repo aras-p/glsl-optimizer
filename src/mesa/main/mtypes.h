@@ -2920,6 +2920,7 @@ struct gl_extensions
    GLboolean S3_s3tc;
    GLboolean OES_EGL_image;
    GLboolean OES_draw_texture;
+   GLboolean OES_EGL_image_external;
    GLboolean extension_sentinel;
    /** The extension string */
    const GLubyte *String;
