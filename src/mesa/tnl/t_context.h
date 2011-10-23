@@ -528,7 +528,6 @@ typedef struct
    GLuint nr_blocks;
 
    GLuint CurInstance;
-
 } TNLcontext;
 
 

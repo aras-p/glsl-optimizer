@@ -68,6 +68,8 @@ struct vp_stage_data {
    GLubyte *clipmask;                 /**< clip flags */
    GLubyte ormask, andmask;           /**< for clipping */
 
+   GLboolean vertex_textures;
+
    struct gl_program_machine machine;
 };
 

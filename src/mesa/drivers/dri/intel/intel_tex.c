@@ -134,9 +134,9 @@ intel_free_texture_image_buffer(struct gl_context * ctx,
 
    intel_miptree_release(&intelImage->mt);
 
-   if (intelImage->base.Data) {
-      _mesa_align_free(intelImage->base.Data);
-      intelImage->base.Data = NULL;
+   if (intelImage->base.Buffer) {
+      _mesa_align_free(intelImage->base.Buffer);
+      intelImage->base.Buffer = NULL;
    }
 
    if (intelImage->base.ImageOffsets) {
@@ -214,11 +214,11 @@ intel_map_texture_image(struct gl_context *ctx,
       assert(map);
 
       *stride = _mesa_format_row_stride(tex_image->TexFormat, width);
-      *map = intel_image->base.Data + (slice * height + y) * *stride + x * texelSize;
+      *map = intel_image->base.Buffer + (slice * height + y) * *stride + x * texelSize;
 
       DBG("%s: %d,%d %dx%d from data %p = %p/%d\n", __FUNCTION__,
 	  x, y, w, h,
-	  intel_image->base.Data, *map, *stride);
+	  intel_image->base.Buffer, *map, *stride);
    }
 }
 

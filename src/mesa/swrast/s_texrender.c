@@ -31,6 +31,15 @@ struct texture_renderbuffer
 };
 
 
+/** cast wrapper */
+static inline struct texture_renderbuffer *
+texture_renderbuffer(struct gl_renderbuffer *rb)
+{
+   return (struct texture_renderbuffer *) rb;
+}
+
+
+
 /**
  * Get row of values from the renderbuffer that wraps a texture image.
  */
@@ -38,8 +47,7 @@ static void
 texture_get_row(struct gl_context *ctx, struct gl_renderbuffer *rb, GLuint count,
                 GLint x, GLint y, void *values)
 {
-   const struct texture_renderbuffer *trb
-      = (const struct texture_renderbuffer *) rb;
+   struct texture_renderbuffer *trb = texture_renderbuffer(rb);
    const GLint z = trb->Zoffset;
    GLuint i;
 
@@ -107,8 +115,7 @@ static void
 texture_get_values(struct gl_context *ctx, struct gl_renderbuffer *rb, GLuint count,
                    const GLint x[], const GLint y[], void *values)
 {
-   const struct texture_renderbuffer *trb
-      = (const struct texture_renderbuffer *) rb;
+   struct texture_renderbuffer *trb = texture_renderbuffer(rb);
    const GLint z = trb->Zoffset;
    GLuint i;
 
@@ -174,8 +181,7 @@ static void
 texture_put_row(struct gl_context *ctx, struct gl_renderbuffer *rb, GLuint count,
                 GLint x, GLint y, const void *values, const GLubyte *mask)
 {
-   const struct texture_renderbuffer *trb
-      = (const struct texture_renderbuffer *) rb;
+   struct texture_renderbuffer *trb = texture_renderbuffer(rb);
    const GLint z = trb->Zoffset;
    GLuint i;
 
@@ -236,8 +242,7 @@ static void
 texture_put_row_rgb(struct gl_context *ctx, struct gl_renderbuffer *rb, GLuint count,
                 GLint x, GLint y, const void *values, const GLubyte *mask)
 {
-   const struct texture_renderbuffer *trb
-      = (const struct texture_renderbuffer *) rb;
+   struct texture_renderbuffer *trb = texture_renderbuffer(rb);
    const GLint z = trb->Zoffset;
    GLuint i;
 
@@ -296,8 +301,7 @@ static void
 texture_put_mono_row(struct gl_context *ctx, struct gl_renderbuffer *rb, GLuint count,
                      GLint x, GLint y, const void *value, const GLubyte *mask)
 {
-   const struct texture_renderbuffer *trb
-      = (const struct texture_renderbuffer *) rb;
+   struct texture_renderbuffer *trb = texture_renderbuffer(rb);
    const GLint z = trb->Zoffset;
    GLuint i;
 
@@ -356,8 +360,7 @@ texture_put_values(struct gl_context *ctx, struct gl_renderbuffer *rb, GLuint co
                    const GLint x[], const GLint y[], const void *values,
                    const GLubyte *mask)
 {
-   const struct texture_renderbuffer *trb
-      = (const struct texture_renderbuffer *) rb;
+   struct texture_renderbuffer *trb = texture_renderbuffer(rb);
    const GLint z = trb->Zoffset;
    GLuint i;
 
@@ -415,8 +418,7 @@ texture_put_mono_values(struct gl_context *ctx, struct gl_renderbuffer *rb,
                         GLuint count, const GLint x[], const GLint y[],
                         const void *value, const GLubyte *mask)
 {
-   const struct texture_renderbuffer *trb
-      = (const struct texture_renderbuffer *) rb;
+   struct texture_renderbuffer *trb = texture_renderbuffer(rb);
    const GLint z = trb->Zoffset;
    GLuint i;
 
@@ -610,7 +612,6 @@ update_wrapper(struct gl_context *ctx, struct gl_renderbuffer_attachment *att)
       trb->Base.DataType = CHAN_TYPE;
       trb->Base._BaseFormat = GL_RGBA;
    }
-   trb->Base.Data = trb->TexImage->Data;
 }
 
 

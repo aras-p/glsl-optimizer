@@ -144,6 +144,9 @@ struct swrast_texture_image
                                      each 2D slice in 'Data', in texels */
    GLubyte *Data;		/**< Image data, accessed via FetchTexel() */
 
+   /** Malloc'd texure memory */
+   GLubyte *Buffer;
+
    FetchTexelFunc FetchTexel;
    StoreTexelFunc Store;
 };
@@ -332,6 +335,31 @@ swrast_render_finish(struct gl_context *ctx)
       swrast->Driver.SpanRenderFinish(ctx);
 }
 
+
+extern void
+_swrast_span_render_start(struct gl_context *ctx);
+
+extern void
+_swrast_span_render_finish(struct gl_context *ctx);
+
+extern void
+_swrast_map_textures(struct gl_context *ctx);
+
+extern void
+_swrast_unmap_textures(struct gl_context *ctx);
+
+extern void
+_swrast_map_texture(struct gl_context *ctx, struct gl_texture_object *texObj);
+
+extern void
+_swrast_unmap_texture(struct gl_context *ctx, struct gl_texture_object *texObj);
+
+
+extern void
+_swrast_map_renderbuffers(struct gl_context *ctx);
+
+extern void
+_swrast_unmap_renderbuffers(struct gl_context *ctx);
 
 
 /**

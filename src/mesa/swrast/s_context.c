@@ -747,6 +747,12 @@ _swrast_CreateContext( struct gl_context *ctx )
    swrast->AllowVertexFog = GL_TRUE;
    swrast->AllowPixelFog = GL_TRUE;
 
+   swrast->Driver.SpanRenderStart = _swrast_span_render_start;
+   swrast->Driver.SpanRenderFinish = _swrast_span_render_finish;
+
+   ctx->Driver.MapTexture = _swrast_map_texture;
+   ctx->Driver.UnmapTexture = _swrast_unmap_texture;
+
    /* Optimized Accum buffer */
    swrast->_IntegerAccumMode = GL_FALSE;
    swrast->_IntegerAccumScaler = 0.0;
@@ -834,6 +840,24 @@ _swrast_render_primitive( struct gl_context *ctx, GLenum prim )
       _swrast_flush(ctx);
    }
    swrast->Primitive = prim;
+}
+
+
+/** called via swrast->Driver.SpanRenderStart() */
+void
+_swrast_span_render_start(struct gl_context *ctx)
+{
+   _swrast_map_textures(ctx);
+   _swrast_map_renderbuffers(ctx);
+}
+
+
+/** called via swrast->Driver.SpanRenderFinish() */
+void
+_swrast_span_render_finish(struct gl_context *ctx)
+{
+   _swrast_unmap_textures(ctx);
+   _swrast_unmap_renderbuffers(ctx);
 }
 
 
