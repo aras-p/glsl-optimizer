@@ -34,6 +34,7 @@
 
 
 #include "context.h"
+#include "enums.h"
 #include "mfeatures.h"
 #include "mtypes.h"
 #include "texcompress.h"
@@ -897,7 +898,8 @@ _mesa_choose_tex_format( struct gl_context *ctx, GLint internalFormat,
       }
    }
 
-   _mesa_problem(ctx, "unexpected format in _mesa_choose_tex_format()");
+   _mesa_problem(ctx, "unexpected format %s in _mesa_choose_tex_format()",
+                 _mesa_lookup_enum_by_nr(internalFormat));
    return MESA_FORMAT_NONE;
 }
 
