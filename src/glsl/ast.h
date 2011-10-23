@@ -437,6 +437,7 @@ enum ast_types {
    ast_sampler2drect,
    ast_sampler3d,
    ast_samplercube,
+   ast_samplerexternaloes,
    ast_sampler1dshadow,
    ast_sampler2dshadow,
    ast_sampler2drectshadow,

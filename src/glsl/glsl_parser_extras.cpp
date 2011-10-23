@@ -267,6 +267,7 @@ static const _mesa_glsl_extension _mesa_glsl_supported_extensions[] = {
    EXT(AMD_conservative_depth,         true,  false, true,  true,  false,     AMD_conservative_depth),
    EXT(AMD_shader_stencil_export,      false, false, true,  true,  false,     ARB_shader_stencil_export),
    EXT(OES_texture_3D,                 true,  false, true,  false, true,      EXT_texture3D),
+   EXT(OES_EGL_image_external,         true,  false, true,  false, true,      OES_EGL_image_external),
 };
 
 #undef EXT

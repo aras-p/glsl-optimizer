@@ -186,6 +186,8 @@ struct _mesa_glsl_parse_state {
    bool AMD_shader_stencil_export_warn;
    bool OES_texture_3D_enable;
    bool OES_texture_3D_warn;
+   bool OES_EGL_image_external_enable;
+   bool OES_EGL_image_external_warn;
    /*@}*/
 
    /** Extensions supported by the OpenGL implementation. */

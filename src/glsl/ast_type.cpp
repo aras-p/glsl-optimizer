@@ -83,6 +83,7 @@ ast_type_specifier::ast_type_specifier(int specifier)
       "sampler2DRect",
       "sampler3D",
       "samplerCube",
+      "samplerExternalOES",
       "sampler1DShadow",
       "sampler2DShadow",
       "sampler2DRectShadow",

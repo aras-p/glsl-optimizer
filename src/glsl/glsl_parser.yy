@@ -92,6 +92,7 @@
 %token SAMPLER2DARRAYSHADOW ISAMPLER1D ISAMPLER2D ISAMPLER3D ISAMPLERCUBE
 %token ISAMPLER1DARRAY ISAMPLER2DARRAY USAMPLER1D USAMPLER2D USAMPLER3D
 %token USAMPLERCUBE USAMPLER1DARRAY USAMPLER2DARRAY
+%token SAMPLEREXTERNALOES
 %token STRUCT VOID_TOK WHILE
 %token <identifier> IDENTIFIER TYPE_IDENTIFIER NEW_IDENTIFIER
 %type <identifier> any_identifier
@@ -1368,6 +1369,7 @@ basic_type_specifier_nonarray:
 	| SAMPLER2DRECT		{ $$ = ast_sampler2drect; }
 	| SAMPLER3D		{ $$ = ast_sampler3d; }
 	| SAMPLERCUBE		{ $$ = ast_samplercube; }
+	| SAMPLEREXTERNALOES	{ $$ = ast_samplerexternaloes; }
 	| SAMPLER1DSHADOW	{ $$ = ast_sampler1dshadow; }
 	| SAMPLER2DSHADOW	{ $$ = ast_sampler2dshadow; }
 	| SAMPLER2DRECTSHADOW	{ $$ = ast_sampler2drectshadow; }

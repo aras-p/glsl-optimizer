@@ -23,6 +23,8 @@ def get_sampler_dim(sampler_type):
         sampler_dim = int(sampler_type[0])
     elif sampler_type.startswith("Cube"):
         sampler_dim = 3
+    elif sampler_type == "ExternalOES":
+        sampler_dim = 2
     else:
         assert False ("coord_dim: invalid sampler_type: " + sampler_type)
     return sampler_dim
@@ -480,6 +482,8 @@ def generate_texture_functions(fs):
     start_function("texture2D")
     generate_sigs("", "tex", "2D")
     generate_sigs("", "txb", "2D")
+    # OES_EGL_image_external
+    generate_sigs("", "tex", "ExternalOES")
     end_function(fs, "texture2D")
 
     start_function("texture2DLod")
@@ -491,6 +495,9 @@ def generate_texture_functions(fs):
     generate_sigs("", "tex", "2D", Proj, 1)
     generate_sigs("", "txb", "2D", Proj)
     generate_sigs("", "txb", "2D", Proj, 1)
+    # OES_EGL_image_external
+    generate_sigs("", "tex", "ExternalOES", Proj)
+    generate_sigs("", "tex", "ExternalOES", Proj, 1)
     end_function(fs, "texture2DProj")
 
     start_function("texture2DProjLod")

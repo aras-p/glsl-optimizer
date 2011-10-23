@@ -203,6 +203,15 @@ glsl_type::generate_OES_texture_3D_types(glsl_symbol_table *symtab, bool warn)
 
 
 void
+glsl_type::generate_OES_EGL_image_external_types(glsl_symbol_table *symtab,
+						 bool warn)
+{
+   add_types_to_symbol_table(symtab, builtin_OES_EGL_image_external_types,
+			     Elements(builtin_OES_EGL_image_external_types),
+			     warn);
+}
+
+void
 _mesa_glsl_initialize_types(struct _mesa_glsl_parse_state *state)
 {
    switch (state->language_version) {
@@ -237,6 +246,15 @@ _mesa_glsl_initialize_types(struct _mesa_glsl_parse_state *state)
       // These are already included in 130; don't create twice.
       glsl_type::generate_EXT_texture_array_types(state->symbols,
 				       state->EXT_texture_array_warn);
+   }
+
+   /* We cannot check for language_version == 100 here because we need the
+    * types to support fixed-function program generation.  But this is fine
+    * since the extension is never enabled for OpenGL contexts.
+    */
+   if (state->OES_EGL_image_external_enable) {
+      glsl_type::generate_OES_EGL_image_external_types(state->symbols,
+					       state->OES_EGL_image_external_warn);
    }
 }
 

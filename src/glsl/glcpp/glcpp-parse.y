@@ -1136,6 +1136,9 @@ glcpp_parser_create (const struct gl_extensions *extensions, int api)
 	      add_builtin_define(parser, "GL_AMD_conservative_depth", 1);
 	      add_builtin_define(parser, "GL_ARB_conservative_depth", 1);
 	   }
+
+	   if (extensions->OES_EGL_image_external)
+	      add_builtin_define(parser, "GL_OES_EGL_image_external", 1);
 	}
 
 	language_version = 110;
