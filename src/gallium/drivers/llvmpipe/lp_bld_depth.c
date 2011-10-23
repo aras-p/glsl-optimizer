@@ -141,7 +141,7 @@ lp_build_stencil_test(struct lp_build_context *bld,
    res = lp_build_stencil_test_single(bld, &stencil[0],
                                       stencilRefs[0], stencilVals);
 
-   if (stencil[1].enabled && front_facing) {
+   if (stencil[1].enabled && front_facing != NULL) {
       /* do back face test */
       LLVMValueRef back_res;
 
@@ -253,7 +253,7 @@ lp_build_stencil_op(struct lp_build_context *bld,
    res = lp_build_stencil_op_single(bld, &stencil[0], op,
                                      stencilRefs[0], stencilVals);
 
-   if (stencil[1].enabled && front_facing) {
+   if (stencil[1].enabled && front_facing != NULL) {
       /* do back face op */
       LLVMValueRef back_res;
 
