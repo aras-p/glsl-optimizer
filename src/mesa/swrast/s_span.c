@@ -1251,7 +1251,10 @@ _swrast_write_rgba_span( struct gl_context *ctx, SWspan *span)
                       4 * span->end * sizeof(GLchan));
             }
 
-            ASSERT(rb->_BaseFormat == GL_RGBA || rb->_BaseFormat == GL_RGB ||
+            ASSERT(rb->_BaseFormat == GL_RGBA ||
+                   rb->_BaseFormat == GL_RGB ||
+                   rb->_BaseFormat == GL_RED ||
+                   rb->_BaseFormat == GL_RG ||
 		   rb->_BaseFormat == GL_ALPHA);
 
             if (ctx->Color.ColorLogicOpEnabled) {
