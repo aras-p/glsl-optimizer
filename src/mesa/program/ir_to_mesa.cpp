@@ -40,6 +40,7 @@
 #include "../glsl/program.h"
 #include "ir_optimization.h"
 #include "ast.h"
+#include "linker.h"
 
 #include "main/mtypes.h"
 #include "main/shaderobj.h"
@@ -2587,13 +2588,35 @@ check_resources(const struct gl_context *ctx,
    }
 }
 
+class add_uniform_to_shader : public uniform_field_visitor {
+public:
+   add_uniform_to_shader(struct gl_shader_program *shader_program,
+			 struct gl_program_parameter_list *params)
+      : shader_program(shader_program), params(params), next_sampler(0)
+   {
+      /* empty */
+   }
 
-static int
-add_uniform_to_shader(ir_variable *var,
-		      struct gl_program_parameter_list *params,
-		      unsigned int &next_sampler)
+   int process(ir_variable *var)
+   {
+      this->idx = -1;
+      this->uniform_field_visitor::process(var);
+
+      return this->idx;
+   }
+
+private:
+   virtual void visit_field(const glsl_type *type, const char *name);
+
+   struct gl_shader_program *shader_program;
+   struct gl_program_parameter_list *params;
+   int next_sampler;
+   int idx;
+};
+
+void
+add_uniform_to_shader::visit_field(const glsl_type *type, const char *name)
 {
-   const glsl_type *type = var->type;
    unsigned int size;
 
    if (type->is_vector() || type->is_scalar()) {
@@ -2610,10 +2633,9 @@ add_uniform_to_shader(ir_variable *var,
       file = PROGRAM_UNIFORM;
    }
 
-   int index = _mesa_lookup_parameter_index(params, -1, var->name);
+   int index = _mesa_lookup_parameter_index(params, -1, name);
    if (index < 0) {
-      index = _mesa_add_parameter(params, file,
-				  var->name, size, type->gl_type,
+      index = _mesa_add_parameter(params, file, name, size, type->gl_type,
 				  NULL, NULL, 0x0);
 
       /* Sampler uniform values are stored in prog->SamplerUnits,
@@ -2622,11 +2644,15 @@ add_uniform_to_shader(ir_variable *var,
        */
       if (file == PROGRAM_SAMPLER) {
 	 for (unsigned int j = 0; j < size / 4; j++)
-	    params->ParameterValues[index + j][0].f = next_sampler++;
+	    params->ParameterValues[index + j][0].f = this->next_sampler++;
       }
    }
 
-   return index;
+   /* The first part of the uniform that's processed determines the base
+    * location of the whole uniform (for structures).
+    */
+   if (this->idx < 0)
+      this->idx = index;
 }
 
 /**
@@ -2644,7 +2670,7 @@ _mesa_generate_parameters_list_for_uniforms(struct gl_shader_program
 					    struct gl_program_parameter_list
 					    *params)
 {
-   unsigned int next_sampler = 0;
+   add_uniform_to_shader add(shader_program, params);
 
    foreach_list(node, sh->ir) {
       ir_variable *var = ((ir_instruction *) node)->as_variable();
@@ -2653,7 +2679,7 @@ _mesa_generate_parameters_list_for_uniforms(struct gl_shader_program
 	  || (strncmp(var->name, "gl_", 3) == 0))
 	 continue;
 
-      int loc = add_uniform_to_shader(var, params, next_sampler);
+      int loc = add.process(var);
 
       /* The location chosen in the Parameters list here (returned from
        * _mesa_add_parameter) has to match what the linker chose.
