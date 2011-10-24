@@ -672,6 +672,7 @@ struct brw_context
     * for each pipeline stage.
     */
    int max_vs_threads;
+   int max_gs_threads;
    int max_wm_threads;
 
    /* BRW_NEW_URB_ALLOCATIONS:
