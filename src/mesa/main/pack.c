@@ -3717,6 +3717,7 @@ _mesa_unpack_color_span_ubyte(struct gl_context *ctx,
 
          if (!indexes) {
             _mesa_error(ctx, GL_OUT_OF_MEMORY, "pixel unpacking");
+            free(rgba);
             return;
          }
 
