@@ -187,6 +187,11 @@ enum pipe_error u_upload_alloc( struct u_upload_mgr *upload,
 					  PIPE_TRANSFER_FLUSH_EXPLICIT |
 					  PIPE_TRANSFER_UNSYNCHRONIZED,
 					  &upload->transfer);
+      if (!upload->map) {
+         pipe_resource_reference(outbuf, NULL);
+         *ptr = NULL;
+         return PIPE_ERROR_OUT_OF_MEMORY;
+      }
    }
 
    assert(offset < upload->buffer->width0);
