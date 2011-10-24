@@ -448,6 +448,7 @@ struct pipe_context* r300_create_context(struct pipe_screen* screen,
                                        U_VERTEX_FETCH_DWORD_ALIGNED);
     if (!r300->vbuf_mgr)
         goto fail;
+    r300->vbuf_mgr->caps.format_fixed32 = 0;
 
     r300->blitter = util_blitter_create(&r300->context);
     if (r300->blitter == NULL)

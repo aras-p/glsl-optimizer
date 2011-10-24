@@ -361,6 +361,10 @@ static boolean r300_is_format_supported(struct pipe_screen* screen,
                             format == PIPE_FORMAT_R16G16_FLOAT ||
                             format == PIPE_FORMAT_R16G16B16_FLOAT ||
                             format == PIPE_FORMAT_R16G16B16A16_FLOAT;
+    boolean is_fixed = format == PIPE_FORMAT_R32_FIXED ||
+                       format == PIPE_FORMAT_R32G32_FIXED ||
+                       format == PIPE_FORMAT_R32G32B32_FIXED ||
+                       format == PIPE_FORMAT_R32G32B32A32_FIXED;
 
     if (!util_format_is_supported(format, usage))
        return FALSE;
@@ -422,9 +426,10 @@ static boolean r300_is_format_supported(struct pipe_screen* screen,
 
     /* Check vertex buffer format support. */
     if (usage & PIPE_BIND_VERTEX_BUFFER &&
-        /* Half float is supported on >= RV350. */
+        /* Half float is supported on >= R400. */
         (is_r400 || is_r500 || !is_half_float) &&
-        r300_translate_vertex_data_type(format) != R300_INVALID_FORMAT) {
+        /* We have a fallback for FIXED. */
+        (is_fixed || r300_translate_vertex_data_type(format) != R300_INVALID_FORMAT)) {
         retval |= PIPE_BIND_VERTEX_BUFFER;
     }
 
