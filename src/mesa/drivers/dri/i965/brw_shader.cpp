@@ -81,6 +81,9 @@ brw_link_shader(struct gl_context *ctx, struct gl_shader_program *prog)
    struct intel_context *intel = &brw->intel;
    unsigned int stage;
 
+   if (!_mesa_ir_link_shader(ctx, prog))
+      return false;
+
    for (stage = 0; stage < ARRAY_SIZE(prog->_LinkedShaders); stage++) {
       struct brw_shader *shader =
 	 (struct brw_shader *)prog->_LinkedShaders[stage];
@@ -147,9 +150,6 @@ brw_link_shader(struct gl_context *ctx, struct gl_shader_program *prog)
       reparent_ir(shader->ir, shader->ir);
       ralloc_free(mem_ctx);
    }
-
-   if (!_mesa_ir_link_shader(ctx, prog))
-      return false;
 
    if (!brw_shader_precompile(ctx, prog))
       return false;
