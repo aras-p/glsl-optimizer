@@ -69,6 +69,24 @@ applegl_bind_context(struct glx_context *gc, struct glx_context *old,
 static void
 applegl_unbind_context(struct glx_context *gc, struct glx_context *new)
 {
+   Display *dpy;
+   bool error;
+
+   /* If we don't have a context, then we have nothing to unbind */
+   if (!gc)
+      return;
+
+   /* If we have a new context, keep this one around and remove it during bind. */
+   if (new)
+      return;
+
+   dpy = gc->psc->dpy;
+
+   error = apple_glx_make_current_context(dpy,
+					  (gc != &dummyContext) ? gc->driContext : NULL,
+					  NULL, None);
+
+   apple_glx_diagnostic("%s: error %s\n", __func__, error ? "YES" : "NO");
 }
 
 static void
