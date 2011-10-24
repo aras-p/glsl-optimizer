@@ -1052,6 +1052,8 @@ enum brw_message_target {
 # define GEN6_GS_VECTOR_MASK_ENABLE			(1 << 30)
 # define GEN6_GS_SAMPLER_COUNT_SHIFT			27
 # define GEN6_GS_BINDING_TABLE_ENTRY_COUNT_SHIFT	18
+# define GEN6_GS_FLOATING_POINT_MODE_IEEE_754		(0 << 16)
+# define GEN6_GS_FLOATING_POINT_MODE_ALT		(1 << 16)
 /* DW4 */
 # define GEN6_GS_URB_READ_LENGTH_SHIFT			11
 # define GEN7_GS_INCLUDE_VERTEX_HANDLES		        (1 << 10)
@@ -1064,6 +1066,12 @@ enum brw_message_target {
 # define GEN6_GS_RENDERING_ENABLE			(1 << 8)
 # define GEN7_GS_ENABLE					(1 << 0)
 /* DW6 */
+# define GEN6_GS_REORDER				(1 << 30)
+# define GEN6_GS_DISCARD_ADJACENCY			(1 << 29)
+# define GEN6_GS_SVBI_PAYLOAD_ENABLE			(1 << 28)
+# define GEN6_GS_SVBI_POSTINCREMENT_ENABLE		(1 << 27)
+# define GEN6_GS_SVBI_POSTINCREMENT_VALUE_SHIFT		16
+# define GEN6_GS_SVBI_POSTINCREMENT_VALUE_MASK		INTEL_MASK(25, 16)
 # define GEN6_GS_ENABLE					(1 << 15)
 
 #define _3DSTATE_HS                             0x781B /* GEN7+ */
