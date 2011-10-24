@@ -89,9 +89,6 @@ brw_prepare_clip_unit(struct brw_context *brw)
       clip->thread4.max_threads = 1 - 1;
    }
 
-   if (unlikely(INTEL_DEBUG & DEBUG_SINGLE_THREAD))
-      clip->thread4.max_threads = 0;
-
    if (unlikely(INTEL_DEBUG & DEBUG_STATS))
       clip->thread4.stats_enable = 1;
 

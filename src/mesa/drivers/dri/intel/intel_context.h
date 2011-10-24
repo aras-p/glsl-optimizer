@@ -437,11 +437,10 @@ extern int INTEL_DEBUG;
 #define DEBUG_SLEEP     0x80000
 #define DEBUG_STATS     0x100000
 #define DEBUG_TILE      0x200000
-#define DEBUG_SINGLE_THREAD   0x400000
-#define DEBUG_WM        0x800000
-#define DEBUG_URB       0x1000000
-#define DEBUG_VS        0x2000000
-#define DEBUG_CLIP      0x8000000
+#define DEBUG_WM        0x400000
+#define DEBUG_URB       0x800000
+#define DEBUG_VS        0x1000000
+#define DEBUG_CLIP      0x2000000
 
 #define DBG(...) do {						\
 	if (unlikely(INTEL_DEBUG & FILE_DEBUG_FLAG))		\

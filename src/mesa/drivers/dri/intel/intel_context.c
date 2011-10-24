@@ -488,8 +488,6 @@ static const struct dri_debug_control debug_control[] = {
    { "sleep", DEBUG_SLEEP },
    { "stats", DEBUG_STATS },
    { "tile",  DEBUG_TILE },
-   { "sing",  DEBUG_SINGLE_THREAD },
-   { "thre",  DEBUG_SINGLE_THREAD },
    { "wm",    DEBUG_WM },
    { "urb",   DEBUG_URB },
    { "vs",    DEBUG_VS },

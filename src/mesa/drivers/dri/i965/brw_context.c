@@ -235,11 +235,6 @@ brwCreateContext(int api,
       brw->has_negative_rhw_bug = true;
    }
 
-   if (INTEL_DEBUG & DEBUG_SINGLE_THREAD) {
-      brw->vs_max_threads = 1;
-      brw->wm_max_threads = 1;
-   }
-
    brw_init_state( brw );
 
    brw->curbe.last_buf = calloc(1, 4096);

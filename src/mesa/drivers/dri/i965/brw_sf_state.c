@@ -184,9 +184,6 @@ static void upload_sf_unit( struct brw_context *brw )
    sf->thread4.max_threads = MIN2(chipset_max_threads,
 				  brw->urb.nr_sf_entries) - 1;
 
-   if (unlikely(INTEL_DEBUG & DEBUG_SINGLE_THREAD))
-      sf->thread4.max_threads = 0;
-
    if (unlikely(INTEL_DEBUG & DEBUG_STATS))
       sf->thread4.stats_enable = 1;
 
