@@ -242,7 +242,7 @@ do_vs_prog(struct brw_context *brw,
       c.prog_data.total_scratch = brw_get_scratch_size(c.last_scratch);
 
       brw_get_scratch_bo(intel, &brw->vs.scratch_bo,
-			 c.prog_data.total_scratch * brw->vs_max_threads);
+			 c.prog_data.total_scratch * brw->max_vs_threads);
    }
 
    /* get the program

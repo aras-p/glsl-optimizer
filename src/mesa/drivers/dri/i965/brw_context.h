@@ -666,8 +666,13 @@ struct brw_context
    uint32_t CMD_VF_STATISTICS;
    /* hw-dependent 3DSTATE_PIPELINE_SELECT opcode */
    uint32_t CMD_PIPELINE_SELECT;
-   int vs_max_threads;
-   int wm_max_threads;
+
+   /**
+    * Platform specific constants containing the maximum number of threads
+    * for each pipeline stage.
+    */
+   int max_vs_threads;
+   int max_wm_threads;
 
    /* BRW_NEW_URB_ALLOCATIONS:
     */

@@ -190,14 +190,14 @@ brwCreateContext(int api,
    /* WM maximum threads is number of EUs times number of threads per EU. */
    if (intel->gen >= 7) {
       if (intel->gt == 1) {
-	 brw->wm_max_threads = 86;
-	 brw->vs_max_threads = 36;
+	 brw->max_wm_threads = 86;
+	 brw->max_vs_threads = 36;
 	 brw->urb.size = 128;
 	 brw->urb.max_vs_entries = 512;
 	 brw->urb.max_gs_entries = 192;
       } else if (intel->gt == 2) {
-	 brw->wm_max_threads = 86;
-	 brw->vs_max_threads = 128;
+	 brw->max_wm_threads = 86;
+	 brw->max_vs_threads = 128;
 	 brw->urb.size = 256;
 	 brw->urb.max_vs_entries = 704;
 	 brw->urb.max_gs_entries = 320;
@@ -210,28 +210,28 @@ brwCreateContext(int api,
 	  * disabling of WIZ hashing (bit 6 of GT_MODE, 0x20d0) and a
 	  * GPU reset to change.
 	  */
-	 brw->wm_max_threads = 40;
-	 brw->vs_max_threads = 60;
+	 brw->max_wm_threads = 40;
+	 brw->max_vs_threads = 60;
 	 brw->urb.size = 64;            /* volume 5c.5 section 5.1 */
 	 brw->urb.max_vs_entries = 256; /* volume 2a (see 3DSTATE_URB) */
       } else {
-	 brw->wm_max_threads = 40;
-	 brw->vs_max_threads = 24;
+	 brw->max_wm_threads = 40;
+	 brw->max_vs_threads = 24;
 	 brw->urb.size = 32;            /* volume 5c.5 section 5.1 */
 	 brw->urb.max_vs_entries = 128; /* volume 2a (see 3DSTATE_URB) */
       }
    } else if (intel->gen == 5) {
       brw->urb.size = 1024;
-      brw->vs_max_threads = 72;
-      brw->wm_max_threads = 12 * 6;
+      brw->max_vs_threads = 72;
+      brw->max_wm_threads = 12 * 6;
    } else if (intel->is_g4x) {
       brw->urb.size = 384;
-      brw->vs_max_threads = 32;
-      brw->wm_max_threads = 10 * 5;
+      brw->max_vs_threads = 32;
+      brw->max_wm_threads = 10 * 5;
    } else if (intel->gen < 6) {
       brw->urb.size = 256;
-      brw->vs_max_threads = 16;
-      brw->wm_max_threads = 8 * 4;
+      brw->max_vs_threads = 16;
+      brw->max_wm_threads = 8 * 4;
       brw->has_negative_rhw_bug = true;
    }
 

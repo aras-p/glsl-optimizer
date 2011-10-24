@@ -187,7 +187,7 @@ brw_prepare_wm_unit(struct brw_context *brw)
    if (!wm->wm5.enable_8_pix)
       wm->wm5.enable_16_pix = 1;
 
-   wm->wm5.max_threads = brw->wm_max_threads - 1;
+   wm->wm5.max_threads = brw->max_wm_threads - 1;
 
    /* _NEW_BUFFERS | _NEW_COLOR */
    if (brw_color_buffer_write_enabled(brw) ||

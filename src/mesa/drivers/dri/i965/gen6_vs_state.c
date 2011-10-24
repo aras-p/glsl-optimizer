@@ -176,7 +176,7 @@ upload_vs_state(struct brw_context *brw)
 	     (brw->vs.prog_data->urb_read_length << GEN6_VS_URB_READ_LENGTH_SHIFT) |
 	     (0 << GEN6_VS_URB_ENTRY_READ_OFFSET_SHIFT));
 
-   OUT_BATCH(((brw->vs_max_threads - 1) << GEN6_VS_MAX_THREADS_SHIFT) |
+   OUT_BATCH(((brw->max_vs_threads - 1) << GEN6_VS_MAX_THREADS_SHIFT) |
 	     GEN6_VS_STATISTICS_ENABLE |
 	     GEN6_VS_ENABLE);
    ADVANCE_BATCH();

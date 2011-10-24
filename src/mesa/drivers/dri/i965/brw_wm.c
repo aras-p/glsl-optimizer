@@ -247,7 +247,7 @@ bool do_wm_prog(struct brw_context *brw,
       c->prog_data.total_scratch = brw_get_scratch_size(c->last_scratch);
 
       brw_get_scratch_bo(intel, &brw->wm.scratch_bo,
-			 c->prog_data.total_scratch * brw->wm_max_threads);
+			 c->prog_data.total_scratch * brw->max_wm_threads);
    }
 
    if (unlikely(INTEL_DEBUG & DEBUG_WM))

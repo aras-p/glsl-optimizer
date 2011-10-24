@@ -150,7 +150,7 @@ upload_ps_state(struct brw_context *brw)
    dw2 |= GEN7_PS_FLOATING_POINT_MODE_ALT;
 
    /* CACHE_NEW_SAMPLER */
-   dw4 |= (brw->wm_max_threads - 1) << GEN7_PS_MAX_THREADS_SHIFT;
+   dw4 |= (brw->max_wm_threads - 1) << GEN7_PS_MAX_THREADS_SHIFT;
 
    /* CACHE_NEW_WM_PROG */
    if (brw->wm.prog_data->nr_params > 0)
