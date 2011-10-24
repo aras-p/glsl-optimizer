@@ -1460,17 +1460,19 @@ static void evergreen_db(struct r600_pipe_context *rctx, struct r600_pipe_state 
 {
 	struct r600_resource_texture *rtex;
 	struct r600_surface *surf;
-	unsigned level, first_layer;
-	unsigned pitch, slice, format;
-	unsigned offset;
+	unsigned level, first_layer, pitch, slice, format, offset, array_mode;
 
 	if (state->zsbuf == NULL)
 		return;
 
 	surf = (struct r600_surface *)state->zsbuf;
+	level = surf->base.u.tex.level;
 	rtex = (struct r600_resource_texture*)surf->base.texture;
 
-	level = surf->base.u.tex.level;
+	/* XXX remove this once tiling is properly supported */
+	array_mode = rtex->array_mode[level] ? rtex->array_mode[level] :
+					       V_028C70_ARRAY_1D_TILED_THIN1;
+
 	first_layer = surf->base.u.tex.first_layer;
 	offset = r600_texture_get_offset(rtex, level, first_layer);
 	pitch = rtex->pitch_in_blocks[level] / 8 - 1;
@@ -1499,7 +1501,7 @@ static void evergreen_db(struct r600_pipe_context *rctx, struct r600_pipe_state 
 	}
 
 	r600_pipe_state_add_reg(rstate, R_028040_DB_Z_INFO,
-				S_028040_ARRAY_MODE(rtex->array_mode[level]) | S_028040_FORMAT(format),
+				S_028040_ARRAY_MODE(array_mode) | S_028040_FORMAT(format),
 				0xFFFFFFFF, &rtex->resource, RADEON_USAGE_READWRITE);
 	r600_pipe_state_add_reg(rstate, R_028058_DB_DEPTH_SIZE,
 				S_028058_PITCH_TILE_MAX(pitch),
