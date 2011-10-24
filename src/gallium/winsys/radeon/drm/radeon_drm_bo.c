@@ -110,13 +110,14 @@ static void radeon_bo_wait(struct pb_buffer *_buf, enum radeon_bo_usage usage)
         sched_yield();
     }
 
-    if (bo->rws->info.drm_minor >= 12) {
+    /* XXX use this when it's ready */
+    /*if (bo->rws->info.drm_minor >= 12) {
         struct drm_radeon_gem_wait args = {};
         args.handle = bo->handle;
         args.flags = usage;
         while (drmCommandWriteRead(bo->rws->fd, DRM_RADEON_GEM_WAIT,
                                    &args, sizeof(args)) == -EBUSY);
-    } else {
+    } else*/ {
         struct drm_radeon_gem_wait_idle args = {};
         args.handle = bo->handle;
         while (drmCommandWriteRead(bo->rws->fd, DRM_RADEON_GEM_WAIT_IDLE,
@@ -133,13 +134,14 @@ static boolean radeon_bo_is_busy(struct pb_buffer *_buf,
         return TRUE;
     }
 
-    if (bo->rws->info.drm_minor >= 12) {
+    /* XXX use this when it's ready */
+    /*if (bo->rws->info.drm_minor >= 12) {
         struct drm_radeon_gem_wait args = {};
         args.handle = bo->handle;
         args.flags = usage | RADEON_GEM_NO_WAIT;
         return drmCommandWriteRead(bo->rws->fd, DRM_RADEON_GEM_WAIT,
                                    &args, sizeof(args)) != 0;
-    } else {
+    } else*/ {
         struct drm_radeon_gem_busy args = {};
         args.handle = bo->handle;
         return drmCommandWriteRead(bo->rws->fd, DRM_RADEON_GEM_BUSY,
