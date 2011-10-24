@@ -594,13 +594,6 @@ _mesa_delete_texture_image(struct gl_context *ctx,
     */
    ASSERT(ctx->Driver.FreeTextureImageBuffer);
    ctx->Driver.FreeTextureImageBuffer( ctx, texImage );
-
-#if 0
-   ASSERT(texImage->Data == NULL);
-   if (texImage->ImageOffsets)
-      free(texImage->ImageOffsets);
-   free(texImage);
-#endif
 }
 
 
@@ -1042,13 +1035,6 @@ clear_teximage_fields(struct gl_texture_image *img)
    img->Width = 0;
    img->Height = 0;
    img->Depth = 0;
-#if 0
-   img->RowStride = 0;
-   if (img->ImageOffsets) {
-      free(img->ImageOffsets);
-      img->ImageOffsets = NULL;
-   }
-#endif
    img->Width2 = 0;
    img->Height2 = 0;
    img->Depth2 = 0;
@@ -1117,21 +1103,6 @@ _mesa_init_teximage_fields(struct gl_context *ctx, GLenum target,
    }
 
    img->MaxLog2 = MAX2(img->WidthLog2, img->HeightLog2);
-
-#if 0
-   /* RowStride and ImageOffsets[] describe how to address texels in 'Data' */
-   img->RowStride = width;
-   /* Allocate the ImageOffsets array and initialize to typical values.
-    * We allocate the array for 1D/2D textures too in order to avoid special-
-    * case code in the texstore routines.
-    */
-   if (img->ImageOffsets)
-      free(img->ImageOffsets);
-   img->ImageOffsets = (GLuint *) malloc(depth * sizeof(GLuint));
-   for (i = 0; i < depth; i++) {
-      img->ImageOffsets[i] = i * width * height;
-   }
-#endif
 
    img->TexFormat = format;
 }
