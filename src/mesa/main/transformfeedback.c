@@ -603,7 +603,9 @@ _mesa_TransformFeedbackVaryings(GLuint program, GLsizei count,
       return;
    }
 
-   if (count < 0 || count > ctx->Const.MaxTransformFeedbackSeparateAttribs) {
+   if (count < 0 ||
+       (bufferMode == GL_SEPARATE_ATTRIBS &&
+        count > ctx->Const.MaxTransformFeedbackSeparateAttribs)) {
       _mesa_error(ctx, GL_INVALID_VALUE,
                   "glTransformFeedbackVaryings(count=%d)", count);
       return;
