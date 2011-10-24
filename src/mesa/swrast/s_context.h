@@ -144,7 +144,7 @@ struct swrast_texture_image
                                      each 2D slice in 'Data', in texels */
    GLubyte *Data;		/**< Image data, accessed via FetchTexel() */
 
-   /** Malloc'd texure memory */
+   /** Malloc'd texture memory */
    GLubyte *Buffer;
 
    FetchTexelFunc FetchTexel;
