@@ -56,10 +56,13 @@
 #include "xm_api.h"
 #include "xm_st.h"
 
+#include "pipe/p_context.h"
 #include "pipe/p_defines.h"
 #include "pipe/p_screen.h"
-#include "pipe/p_context.h"
+#include "pipe/p_state.h"
+
 #include "util/u_atomic.h"
+#include "util/u_inlines.h"
 
 #include "xm_public.h"
 #include <GL/glx.h>
@@ -1306,12 +1309,103 @@ void XMesaGarbageCollect( void )
 }
 
 
+static enum st_attachment_type xmesa_attachment_type(int glx_attachment)
+{
+   switch(glx_attachment) {
+      case GLX_FRONT_LEFT_EXT:
+         return ST_ATTACHMENT_FRONT_LEFT;
+      case GLX_FRONT_RIGHT_EXT:
+         return ST_ATTACHMENT_FRONT_RIGHT;
+      case GLX_BACK_LEFT_EXT:
+         return ST_ATTACHMENT_BACK_LEFT;
+      case GLX_BACK_RIGHT_EXT:
+         return ST_ATTACHMENT_BACK_RIGHT;
+      default:
+         assert(0);
+         return ST_ATTACHMENT_FRONT_LEFT;
+   }
+}
 
 
 PUBLIC void
 XMesaBindTexImage(Display *dpy, XMesaBuffer drawable, int buffer,
                   const int *attrib_list)
 {
+   struct st_context_iface *st = stapi->get_current(stapi);
+   struct st_framebuffer_iface* stfbi = drawable->stfb;
+   struct pipe_resource *res;
+   int x, y, w, h;
+   XMesaContext xmesa = XMesaGetCurrentContext();
+   enum st_attachment_type st_attachment = xmesa_attachment_type(buffer);
+
+   x = 0;
+   y = 0;
+   w = drawable->width;
+   h = drawable->height;
+
+   /* We need to validate our attachments before using them,
+    * in case the texture doesn't exist yet. */
+   xmesa_st_framebuffer_validate_textures(stfbi, w, h, 1 << st_attachment);
+   res = xmesa_get_attachment(stfbi, st_attachment);
+
+   if (res) {
+      struct pipe_context* pipe = xmesa_get_context(stfbi);
+      enum pipe_format internal_format = res->format;
+      struct pipe_transfer *tex_xfer;
+      char *map;
+      int line, ximage_stride;
+
+      internal_format = choose_pixel_format(drawable->xm_visual);
+
+      tex_xfer = pipe_get_transfer(pipe, res,
+                                   0, 0,    /* level, layer */
+                                   PIPE_TRANSFER_WRITE,
+                                   x, y,
+                                   w, h);
+      if (!tex_xfer)
+         return;
+
+      /* Grab the XImage that we want to turn into a texture. */
+      XImage *img = XGetImage(dpy,
+                              drawable->ws.drawable,
+                              x, y,
+                              w, h,
+                              AllPlanes,
+                              ZPixmap);
+
+      if (!img) {
+         pipe_transfer_destroy(pipe, tex_xfer);
+         return;
+      }
+
+      map = pipe_transfer_map(pipe, tex_xfer);
+
+      if (!map) {
+         pipe_transfer_destroy(pipe, tex_xfer);
+         return;
+      }
+
+      /* The pipe transfer has a pitch rounded up to the nearest 64 pixels.
+         We assume 32 bit pixels. */
+      ximage_stride = w * 4;
+
+      for (line = 0; line < h; line++)
+         memcpy(&map[line * tex_xfer->stride],
+                &img->data[line * ximage_stride],
+                ximage_stride);
+
+      pipe_transfer_unmap(pipe, tex_xfer);
+
+      pipe_transfer_destroy(pipe, tex_xfer);
+
+      st->teximage(st,
+                   ST_TEXTURE_2D,
+                   0,    /* level */
+                   internal_format,
+                   res,
+                   FALSE /* no mipmap */);
+
+   }
 }
 
 

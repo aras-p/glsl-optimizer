@@ -49,4 +49,15 @@ xmesa_copy_st_framebuffer(struct st_framebuffer_iface *stfbi,
                           enum st_attachment_type dst,
                           int x, int y, int w, int h);
 
+struct pipe_resource*
+xmesa_get_attachment(struct st_framebuffer_iface *stfbi,
+                     enum st_attachment_type st_attachment);
+
+struct pipe_context*
+xmesa_get_context(struct st_framebuffer_iface* stfbi);
+
+boolean
+xmesa_st_framebuffer_validate_textures(struct st_framebuffer_iface *stfbi,
+                                       unsigned width, unsigned height,
+                                       unsigned mask);
 #endif /* _XM_ST_H_ */
