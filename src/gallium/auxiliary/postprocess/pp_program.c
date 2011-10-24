@@ -41,12 +41,13 @@ struct program *
 pp_init_prog(struct pp_queue_t *ppq, struct pipe_screen *pscreen)
 {
 
-   struct program *p = CALLOC(1, sizeof(struct program));
+   struct program *p;
 
    pp_debug("Initializing program\n");
    if (!pscreen)
       return NULL;
 
+   p = CALLOC(1, sizeof(struct program));
    if (!p)
       return NULL;
 
