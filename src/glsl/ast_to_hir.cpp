@@ -1812,7 +1812,17 @@ process_array_type(YYLTYPE *loc, const glsl_type *base, ast_node *array_size,
 {
    unsigned length = 0;
 
-   /* FINISHME: Reject delcarations of multidimensional arrays. */
+   /* From page 19 (page 25) of the GLSL 1.20 spec:
+    *
+    *     "Only one-dimensional arrays may be declared."
+    */
+   if (base->is_array()) {
+      _mesa_glsl_error(loc, state,
+		       "invalid array of `%s' (only one-dimensional arrays "
+		       "may be declared)",
+		       base->name);
+      return glsl_type::error_type;
+   }
 
    if (array_size != NULL) {
       exec_list dummy_instructions;
@@ -2480,6 +2490,8 @@ ast_declarator_list::hir(exec_list *instructions,
       if (decl->is_array) {
 	 var_type = process_array_type(&loc, decl_type, decl->array_size,
 				       state);
+	 if (var_type->is_error())
+	    continue;
       } else {
 	 var_type = decl_type;
       }
@@ -2921,7 +2933,7 @@ ast_parameter_declarator::hir(exec_list *instructions,
       type = process_array_type(&loc, type, this->array_size, state);
    }
 
-   if (type->array_size() == 0) {
+   if (!type->is_error() && type->array_size() == 0) {
       _mesa_glsl_error(&loc, state, "arrays passed as parameters must have "
 		       "a declared size.");
       type = glsl_type::error_type;
