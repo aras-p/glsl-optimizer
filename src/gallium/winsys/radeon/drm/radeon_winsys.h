@@ -45,7 +45,9 @@
 #include "pipe/p_state.h"
 
 #define RADEON_MAX_CMDBUF_DWORDS (16 * 1024)
-#define RADEON_FLUSH_ASYNC       (1 << 0)
+
+#define RADEON_FLUSH_ASYNC             (1 << 0)
+#define RADEON_FLUSH_KEEP_TILING_FLAGS (1 << 1) /* needs DRM 2.12.0 */
 
 /* Tiling flags. */
 enum radeon_bo_layout {

@@ -35,8 +35,9 @@ struct radeon_cs_context {
 
     int fd;
     struct drm_radeon_cs        cs;
-    struct drm_radeon_cs_chunk  chunks[2];
-    uint64_t                    chunk_array[2];
+    struct drm_radeon_cs_chunk  chunks[3];
+    uint64_t                    chunk_array[3];
+    uint32_t                    flags;
 
     /* Relocs. */
     unsigned                    nrelocs;

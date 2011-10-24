@@ -71,6 +71,13 @@
 #include <stdint.h>
 #include <xf86drm.h>
 
+#ifndef RADEON_CHUNK_ID_FLAGS
+#define RADEON_CHUNK_ID_FLAGS	0x03
+
+/* The first dword of RADEON_CHUNK_ID_FLAGS is a uint32 of these flags: */
+#define RADEON_CS_KEEP_TILING_FLAGS 0x01
+#endif
+
 #define RELOC_DWORDS (sizeof(struct drm_radeon_cs_reloc) / sizeof(uint32_t))
 
 static boolean radeon_init_cs_context(struct radeon_cs_context *csc, int fd)
@@ -96,11 +103,14 @@ static boolean radeon_init_cs_context(struct radeon_cs_context *csc, int fd)
     csc->chunks[1].chunk_id = RADEON_CHUNK_ID_RELOCS;
     csc->chunks[1].length_dw = 0;
     csc->chunks[1].chunk_data = (uint64_t)(uintptr_t)csc->relocs;
+    csc->chunks[2].chunk_id = RADEON_CHUNK_ID_FLAGS;
+    csc->chunks[2].length_dw = 1;
+    csc->chunks[2].chunk_data = (uint64_t)(uintptr_t)&csc->flags;
 
     csc->chunk_array[0] = (uint64_t)(uintptr_t)&csc->chunks[0];
     csc->chunk_array[1] = (uint64_t)(uintptr_t)&csc->chunks[1];
+    csc->chunk_array[2] = (uint64_t)(uintptr_t)&csc->chunks[2];
 
-    csc->cs.num_chunks = 2;
     csc->cs.chunks = (uint64_t)(uintptr_t)csc->chunk_array;
     return TRUE;
 }
@@ -425,6 +435,13 @@ static void radeon_drm_cs_flush(struct radeon_winsys_cs *rcs, unsigned flags)
         for (i = 0; i < crelocs; i++) {
             /* Update the number of active asynchronous CS ioctls for the buffer. */
             p_atomic_inc(&cs->cst->relocs_bo[i]->num_active_ioctls);
+        }
+
+        if (flags & RADEON_FLUSH_KEEP_TILING_FLAGS) {
+            cs->cst->cs.num_chunks = 3;
+            cs->cst->flags = RADEON_CS_KEEP_TILING_FLAGS;
+        } else {
+            cs->cst->cs.num_chunks = 2;
         }
 
         if (cs->thread &&
