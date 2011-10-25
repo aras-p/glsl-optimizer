@@ -53,6 +53,7 @@ CXX_SOURCES = \
 	ir_variable_refcount.cpp \
 	linker.cpp \
 	link_functions.cpp \
+	link_uniforms.cpp \
 	loop_analysis.cpp \
 	loop_controls.cpp \
 	loop_unroll.cpp \
