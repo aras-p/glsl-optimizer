@@ -552,6 +552,36 @@ static int r600_shader_rebuild(struct pipe_context * ctx, struct r600_pipe_shade
 	return 0;
 }
 
+static void r600_update_derived_state(struct r600_pipe_context *rctx)
+{
+	if (!rctx->blit) {
+		if (rctx->have_depth_fb || rctx->have_depth_texture)
+			r600_flush_depth_textures(rctx);
+	}
+
+	if (rctx->chip_class < EVERGREEN) {
+		r600_update_sampler_states(rctx);
+	}
+
+	if (rctx->vs_shader->shader.clamp_color != rctx->clamp_vertex_color) {
+		r600_shader_rebuild(&rctx->context, rctx->vs_shader);
+	}
+
+	if ((rctx->ps_shader->shader.clamp_color != rctx->clamp_fragment_color) ||
+	    ((rctx->chip_class >= EVERGREEN) && rctx->ps_shader->shader.fs_write_all &&
+	     (rctx->ps_shader->shader.nr_cbufs != rctx->nr_cbufs))) {
+		r600_shader_rebuild(&rctx->context, rctx->ps_shader);
+	}
+
+	if (rctx->spi_dirty) {
+		r600_spi_update(rctx);
+	}
+
+	if (rctx->alpha_ref_dirty) {
+		r600_update_alpha_ref(rctx);
+	}
+}
+
 void r600_draw_vbo(struct pipe_context *ctx, const struct pipe_draw_info *info)
 {
 	struct r600_pipe_context *rctx = (struct r600_pipe_context *)ctx;
@@ -565,13 +595,7 @@ void r600_draw_vbo(struct pipe_context *ctx, const struct pipe_draw_info *info)
 		return;
 	}
 
-	if (!rctx->blit) {
-		if (rctx->have_depth_fb || rctx->have_depth_texture)
-			r600_flush_depth_textures(rctx);
-	}
-
-	if (rctx->chip_class < EVERGREEN)
-		r600_update_sampler_states(rctx);
+	r600_update_derived_state(rctx);
 
 	u_vbuf_draw_begin(rctx->vbuf_mgr, info);
 	r600_vertex_buffer_update(rctx);
@@ -606,19 +630,6 @@ void r600_draw_vbo(struct pipe_context *ctx, const struct pipe_draw_info *info)
 		draw.info.index_bias = info->start;
 	}
 
-	if (rctx->vs_shader->shader.clamp_color != rctx->clamp_vertex_color)
-		r600_shader_rebuild(ctx, rctx->vs_shader);
-
-	if ((rctx->ps_shader->shader.clamp_color != rctx->clamp_fragment_color) ||
-	    ((rctx->chip_class >= EVERGREEN) && rctx->ps_shader->shader.fs_write_all &&
-	     (rctx->ps_shader->shader.nr_cbufs != rctx->nr_cbufs)))
-		r600_shader_rebuild(ctx, rctx->ps_shader);
-
-	if (rctx->spi_dirty)
-		r600_spi_update(rctx);
-
-	if (rctx->alpha_ref_dirty)
-		r600_update_alpha_ref(rctx);
 
 	mask = (1ULL << ((unsigned)rctx->framebuffer.nr_cbufs * 4)) - 1;
 
