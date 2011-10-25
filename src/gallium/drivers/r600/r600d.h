@@ -65,6 +65,12 @@
 #define PKT3_CONTEXT_CONTROL                   0x28
 #define PKT3_DRAW_INDEX_IMMD_BE                0x29
 #define PKT3_INDEX_TYPE                        0x2A
+#define		VGT_INDEX_16                   0
+#define		VGT_INDEX_32                   1
+#define         VGT_DMA_SWAP_NONE	       (0 << 2)
+#define         VGT_DMA_SWAP_16_BIT	       (1 << 2)
+#define         VGT_DMA_SWAP_32_BIT	       (2 << 2)
+#define         VGT_DMA_SWAP_WORD	       (3 << 2)
 #define PKT3_DRAW_INDEX                        0x2B
 #define PKT3_DRAW_INDEX_AUTO                   0x2D
 #define PKT3_DRAW_INDEX_IMMD                   0x2E

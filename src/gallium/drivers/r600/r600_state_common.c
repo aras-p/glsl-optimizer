@@ -658,10 +658,16 @@ void r600_draw_vbo(struct pipe_context *ctx, const struct pipe_draw_info *info)
 
 	rdraw.vgt_num_indices = draw.info.count;
 	rdraw.vgt_num_instances = draw.info.instance_count;
-	rdraw.vgt_index_type = ((draw.index_size == 4) ? 1 : 0);
-	if (R600_BIG_ENDIAN)
-		rdraw.vgt_index_type |= (draw.index_size >> 1) << 2;
-	rdraw.vgt_draw_initiator = draw.index_size ? 0 : 2;
+
+	rdraw.vgt_index_type = draw.index_size == 4 ? VGT_INDEX_32 : VGT_INDEX_16;
+	if (R600_BIG_ENDIAN) {
+		rdraw.vgt_index_type |= draw.index_size == 4 ? VGT_DMA_SWAP_32_BIT
+							     : VGT_DMA_SWAP_16_BIT;
+	}
+
+	rdraw.vgt_draw_initiator = draw.index_size ? V_0287F0_DI_SRC_SEL_DMA
+						   : V_0287F0_DI_SRC_SEL_AUTO_INDEX;
+
 	rdraw.indices = NULL;
 	if (draw.index_buffer) {
 		rbuffer = (struct r600_resource*)draw.index_buffer;
