@@ -153,8 +153,8 @@ static INLINE float uf10_to_f32(uint16_t val)
       uint32_t ui;
    } f32;
 
-   int exponent = (val & 0x07c0) >> UF10_EXPONENT_SHIFT;
-   int mantissa = (val & 0x003f);
+   int exponent = (val & 0x03e0) >> UF10_EXPONENT_SHIFT;
+   int mantissa = (val & 0x001f);
 
    f32.f = 0.0;
 
