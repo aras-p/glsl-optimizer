@@ -108,6 +108,7 @@ texture_combine( struct gl_context *ctx, GLuint unit, GLuint n,
             i--;
          }
          _mesa_error(ctx, GL_OUT_OF_MEMORY, "texture_combine");
+         free(rgba);
          return;
       }
    }
