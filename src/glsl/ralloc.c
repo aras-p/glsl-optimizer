@@ -439,7 +439,27 @@ ralloc_asprintf_append(char **str, const char *fmt, ...)
 bool
 ralloc_vasprintf_append(char **str, const char *fmt, va_list args)
 {
-   size_t existing_length, new_length;
+   assert(str != NULL);
+   size_t existing_length = *str ? strlen(*str) : 0;
+   return ralloc_vasprintf_rewrite_tail(str, existing_length, fmt, args);
+}
+
+bool
+ralloc_asprintf_rewrite_tail(char **str, size_t start, const char *fmt, ...)
+{
+   bool success;
+   va_list args;
+   va_start(args, fmt);
+   success = ralloc_vasprintf_rewrite_tail(str, start, fmt, args);
+   va_end(args);
+   return success;
+}
+
+bool
+ralloc_vasprintf_rewrite_tail(char **str, size_t start, const char *fmt,
+			      va_list args)
+{
+   size_t new_length;
    char *ptr;
 
    assert(str != NULL);
@@ -450,14 +470,13 @@ ralloc_vasprintf_append(char **str, const char *fmt, va_list args)
       return true;
    }
 
-   existing_length = strlen(*str);
    new_length = printf_length(fmt, args);
 
-   ptr = resize(*str, existing_length + new_length + 1);
+   ptr = resize(*str, start + new_length + 1);
    if (unlikely(ptr == NULL))
       return false;
 
-   vsnprintf(ptr + existing_length, new_length + 1, fmt, args);
+   vsnprintf(ptr + start, new_length + 1, fmt, args);
    *str = ptr;
    return true;
 }
