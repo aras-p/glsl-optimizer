@@ -773,8 +773,6 @@ ir_reader::read_constant(s_expression *expr)
       return new(mem_ctx) ir_constant(type, &elements);
    }
 
-   const glsl_type *const base_type = type->get_base_type();
-
    ir_constant_data data = { { 0 } };
 
    // Read in list of values (at most 16).
@@ -787,7 +785,7 @@ ir_reader::read_constant(s_expression *expr)
 
       s_expression *expr = (s_expression*) it.get();
 
-      if (base_type->base_type == GLSL_TYPE_FLOAT) {
+      if (type->base_type == GLSL_TYPE_FLOAT) {
 	 s_number *value = SX_AS_NUMBER(expr);
 	 if (value == NULL) {
 	    ir_read_error(values, "expected numbers");
@@ -801,7 +799,7 @@ ir_reader::read_constant(s_expression *expr)
 	    return NULL;
 	 }
 
-	 switch (base_type->base_type) {
+	 switch (type->base_type) {
 	 case GLSL_TYPE_UINT: {
 	    data.u[k] = value->value();
 	    break;
