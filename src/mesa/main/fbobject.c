@@ -1370,12 +1370,12 @@ renderbuffer_storage(GLenum target, GLenum internalFormat,
       return;
    }
 
-   if (width < 1 || width > (GLsizei) ctx->Const.MaxRenderbufferSize) {
+   if (width < 0 || width > (GLsizei) ctx->Const.MaxRenderbufferSize) {
       _mesa_error(ctx, GL_INVALID_VALUE, "%s(width)", func);
       return;
    }
 
-   if (height < 1 || height > (GLsizei) ctx->Const.MaxRenderbufferSize) {
+   if (height < 0 || height > (GLsizei) ctx->Const.MaxRenderbufferSize) {
       _mesa_error(ctx, GL_INVALID_VALUE, "%s(height)", func);
       return;
    }
