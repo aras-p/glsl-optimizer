@@ -2713,6 +2713,16 @@ copyteximage(struct gl_context *ctx, GLuint dims,
 
    texObj = _mesa_get_current_tex_object(ctx, target);
 
+   if (border && ctx->Const.StripTextureBorder) {
+      x += border;
+      width -= border * 2;
+      if (dims == 2) {
+	 y += border;
+	 height -= border * 2;
+      }
+      border = 0;
+   }
+
    _mesa_lock_texture(ctx, texObj);
    {
       texImage = _mesa_get_tex_image(ctx, texObj, target, level);
