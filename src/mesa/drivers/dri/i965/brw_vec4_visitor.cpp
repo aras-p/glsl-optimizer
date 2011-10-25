@@ -853,7 +853,8 @@ vec4_visitor::visit(ir_variable *ir)
       for (int i = 0; i < type_size(ir->type); i++) {
 	 output_reg[ir->location + i] = *reg;
 	 output_reg[ir->location + i].reg_offset = i;
-	 output_reg[ir->location + i].type = BRW_REGISTER_TYPE_F;
+	 output_reg[ir->location + i].type =
+            brw_type_for_base_type(ir->type->get_scalar_type());
 	 output_reg_annotation[ir->location + i] = ir->name;
       }
       break;
@@ -1915,6 +1916,7 @@ void
 vec4_visitor::emit_generic_urb_slot(dst_reg reg, int vert_result)
 {
    assert (vert_result < VERT_RESULT_MAX);
+   reg.type = output_reg[vert_result].type;
    current_annotation = output_reg_annotation[vert_result];
    /* Copy the register, saturating if necessary */
    vec4_instruction *inst = emit(MOV(reg,

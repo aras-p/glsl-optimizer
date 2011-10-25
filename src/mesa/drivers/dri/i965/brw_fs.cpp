@@ -424,8 +424,7 @@ fs_reg *
 fs_visitor::emit_general_interpolation(ir_variable *ir)
 {
    fs_reg *reg = new(this->mem_ctx) fs_reg(this, ir->type);
-   /* Interpolation is always in floating point regs. */
-   reg->type = BRW_REGISTER_TYPE_F;
+   reg->type = brw_type_for_base_type(ir->type->get_scalar_type());
    fs_reg attr = *reg;
 
    unsigned int array_elements;
@@ -465,6 +464,7 @@ fs_visitor::emit_general_interpolation(ir_variable *ir)
 	    for (unsigned int k = 0; k < type->vector_elements; k++) {
 	       struct brw_reg interp = interp_reg(location, k);
 	       interp = suboffset(interp, 3);
+               interp.type = reg->type;
 	       emit(FS_OPCODE_CINTERP, attr, fs_reg(interp));
 	       attr.reg_offset++;
 	    }
