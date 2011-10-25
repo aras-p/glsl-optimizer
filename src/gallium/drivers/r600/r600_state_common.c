@@ -35,7 +35,7 @@
 
 static void r600_spi_update(struct r600_pipe_context *rctx);
 
-static int r600_conv_pipe_prim(unsigned pprim, unsigned *prim)
+static bool r600_conv_pipe_prim(unsigned pprim, unsigned *prim)
 {
 	static const int prim_conv[] = {
 		V_008958_DI_PT_POINTLIST,
@@ -57,9 +57,9 @@ static int r600_conv_pipe_prim(unsigned pprim, unsigned *prim)
 	*prim = prim_conv[pprim];
 	if (*prim == -1) {
 		fprintf(stderr, "%s:%d unsupported %d\n", __func__, __LINE__, pprim);
-		return -1;
+		return false;
 	}
-	return 0;
+	return true;
 }
 
 /* common state between evergreen and r600 */
@@ -560,6 +560,11 @@ void r600_draw_vbo(struct pipe_context *ctx, const struct pipe_draw_info *info)
 	struct r600_drawl draw;
 	unsigned prim, mask;
 
+	if (!info->count ||
+	    !r600_conv_pipe_prim(info->mode, &prim)) {
+		return;
+	}
+
 	if (!rctx->blit) {
 		if (rctx->have_depth_fb || rctx->have_depth_texture)
 			r600_flush_depth_textures(rctx);
@@ -600,9 +605,6 @@ void r600_draw_vbo(struct pipe_context *ctx, const struct pipe_draw_info *info)
 		draw.index_buffer_offset = 0;
 		draw.info.index_bias = info->start;
 	}
-
-	if (r600_conv_pipe_prim(draw.info.mode, &prim))
-		return;
 
 	if (rctx->vs_shader->shader.clamp_color != rctx->clamp_vertex_color)
 		r600_shader_rebuild(ctx, rctx->vs_shader);
