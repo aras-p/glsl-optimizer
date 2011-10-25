@@ -144,6 +144,10 @@ st_create_context_priv( struct gl_context *ctx, struct pipe_context *pipe )
    /* we want all vertex data to be placed in buffer objects */
    vbo_use_buffer_objects(ctx);
 
+
+   /* make sure that no VBOs are left mapped when we're drawing. */
+   vbo_always_unmap_buffers(ctx);
+
    /* Need these flags:
     */
    st->ctx->FragmentProgram._MaintainTexEnvProgram = GL_TRUE;
