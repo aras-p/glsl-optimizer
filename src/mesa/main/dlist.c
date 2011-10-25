@@ -69,6 +69,9 @@
 #if FEATURE_NV_vertex_program || FEATURE_NV_fragment_program
 #include "nvprogram.h"
 #endif
+#if FEATURE_EXT_transform_feedback
+#include "transformfeedback.h"
+#endif
 
 #include "math/m_matrix.h"
 
@@ -6272,15 +6275,6 @@ save_EndTransformFeedback(void)
 }
 
 static void GLAPIENTRY
-save_TransformFeedbackVaryings(GLuint program, GLsizei count,
-                               const GLchar **varyings, GLenum bufferMode)
-{
-   GET_CURRENT_CONTEXT(ctx);
-   _mesa_problem(ctx,
-                 "glTransformFeedbackVarying() display list support not done");
-}
-
-static void GLAPIENTRY
 save_BindTransformFeedback(GLenum target, GLuint name)
 {
    GET_CURRENT_CONTEXT(ctx);
@@ -10321,9 +10315,14 @@ _mesa_create_save_table(void)
 #endif
 
 #if FEATURE_EXT_transform_feedback
+   /* These are not compiled into display lists: */
+   SET_BindBufferBaseEXT(table, _mesa_BindBufferBase);
+   SET_BindBufferOffsetEXT(table, _mesa_BindBufferOffsetEXT);
+   SET_BindBufferRangeEXT(table, _mesa_BindBufferRange);
+   SET_TransformFeedbackVaryingsEXT(table, _mesa_TransformFeedbackVaryings);
+   /* These are: */
    SET_BeginTransformFeedbackEXT(table, save_BeginTransformFeedback);
    SET_EndTransformFeedbackEXT(table, save_EndTransformFeedback);
-   SET_TransformFeedbackVaryingsEXT(table, save_TransformFeedbackVaryings);
    SET_BindTransformFeedback(table, save_BindTransformFeedback);
    SET_PauseTransformFeedback(table, save_PauseTransformFeedback);
    SET_ResumeTransformFeedback(table, save_ResumeTransformFeedback);
