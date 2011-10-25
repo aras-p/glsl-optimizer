@@ -178,6 +178,17 @@ struct glsl_type {
    const glsl_type *get_base_type() const;
 
    /**
+    * Get the basic scalar type which this type aggregates.
+    *
+    * If the type is a numeric or boolean scalar, vector, or matrix, or an
+    * array of any of those, this function gets the scalar type of the
+    * individual components.  For structs and arrays of structs, this function
+    * returns the struct type.  For samplers and arrays of samplers, this
+    * function returns the sampler type.
+    */
+   const glsl_type *get_scalar_type() const;
+
+   /**
     * Query the type of elements in an array
     *
     * \return

@@ -258,6 +258,29 @@ const glsl_type *glsl_type::get_base_type() const
 }
 
 
+const glsl_type *glsl_type::get_scalar_type() const
+{
+   const glsl_type *type = this;
+
+   /* Handle arrays */
+   while (type->base_type == GLSL_TYPE_ARRAY)
+      type = type->fields.array;
+
+   /* Handle vectors and matrices */
+   switch (type->base_type) {
+   case GLSL_TYPE_UINT:
+      return uint_type;
+   case GLSL_TYPE_INT:
+      return int_type;
+   case GLSL_TYPE_FLOAT:
+      return float_type;
+   default:
+      /* Handle everything else */
+      return type;
+   }
+}
+
+
 void
 _mesa_glsl_release_types(void)
 {
