@@ -233,7 +233,7 @@ do {								\
  * glBegin()/glEnd() pair, with return value.
  * 
  * \param ctx GL context.
- * \param retval value to return value in case the assertion fails.
+ * \param retval value to return in case the assertion fails.
  */
 #define ASSERT_OUTSIDE_BEGIN_END_WITH_RETVAL(ctx, retval)		\
 do {									\
@@ -274,7 +274,7 @@ do {									\
  * glBegin()/glEnd() pair and flush the vertices, with return value.
  * 
  * \param ctx GL context.
- * \param retval value to return value in case the assertion fails.
+ * \param retval value to return in case the assertion fails.
  */
 #define ASSERT_OUTSIDE_BEGIN_END_AND_FLUSH_WITH_RETVAL(ctx, retval)	\
 do {									\
