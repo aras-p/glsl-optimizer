@@ -469,6 +469,7 @@ _mesa_create_exec_table(void)
    SET_DepthBoundsEXT(exec, _mesa_DepthBoundsEXT);
 
    /* 352. GL_EXT_transform_feedback */
+   /* ARB 93. GL_ARB_transform_feedback2 */
    _mesa_init_transform_feedback_dispatch(exec);
 
    /* 364. GL_EXT_provoking_vertex */

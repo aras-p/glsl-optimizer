@@ -327,6 +327,7 @@ _mesa_init_transform_feedback_functions(struct dd_function_table *driver)
 void
 _mesa_init_transform_feedback_dispatch(struct _glapi_table *disp)
 {
+   /* EXT_transform_feedback */
    SET_BeginTransformFeedbackEXT(disp, _mesa_BeginTransformFeedback);
    SET_EndTransformFeedbackEXT(disp, _mesa_EndTransformFeedback);
    SET_BindBufferRangeEXT(disp, _mesa_BindBufferRange);
@@ -334,6 +335,14 @@ _mesa_init_transform_feedback_dispatch(struct _glapi_table *disp)
    SET_BindBufferOffsetEXT(disp, _mesa_BindBufferOffsetEXT);
    SET_TransformFeedbackVaryingsEXT(disp, _mesa_TransformFeedbackVaryings);
    SET_GetTransformFeedbackVaryingEXT(disp, _mesa_GetTransformFeedbackVarying);
+   /* ARB_transform_feedback2 */
+   SET_BindTransformFeedback(disp, _mesa_BindTransformFeedback);
+   SET_DeleteTransformFeedbacks(disp, _mesa_DeleteTransformFeedbacks);
+   SET_GenTransformFeedbacks(disp, _mesa_GenTransformFeedbacks);
+   SET_IsTransformFeedback(disp, _mesa_IsTransformFeedback);
+   SET_PauseTransformFeedback(disp, _mesa_PauseTransformFeedback);
+   SET_ResumeTransformFeedback(disp, _mesa_ResumeTransformFeedback);
+   SET_DrawTransformFeedback(disp, _mesa_DrawTransformFeedback);
 }
 
 
@@ -931,6 +940,5 @@ _mesa_DrawTransformFeedback(GLenum mode, GLuint name)
    assert(ctx->Driver.DrawTransformFeedback);
    ctx->Driver.DrawTransformFeedback(ctx, mode, obj);
 }
-
 
 #endif /* FEATURE_EXT_transform_feedback */
