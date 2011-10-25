@@ -674,16 +674,19 @@ tgsi_exec_machine_bind_shader(
 
    if (mach->Processor == TGSI_PROCESSOR_GEOMETRY &&
        !mach->UsedGeometryShader) {
-      struct tgsi_exec_vector *inputs =
-         align_malloc(sizeof(struct tgsi_exec_vector) *
-                      TGSI_MAX_PRIM_VERTICES * PIPE_MAX_ATTRIBS,
-                      16);
-      struct tgsi_exec_vector *outputs =
-         align_malloc(sizeof(struct tgsi_exec_vector) *
-                      TGSI_MAX_TOTAL_VERTICES, 16);
+      struct tgsi_exec_vector *inputs;
+      struct tgsi_exec_vector *outputs;
+
+      inputs = align_malloc(sizeof(struct tgsi_exec_vector) *
+                            TGSI_MAX_PRIM_VERTICES * PIPE_MAX_ATTRIBS,
+                            16);
 
       if (!inputs)
          return;
+
+      outputs = align_malloc(sizeof(struct tgsi_exec_vector) *
+                             TGSI_MAX_TOTAL_VERTICES, 16);
+
       if (!outputs) {
          align_free(inputs);
          return;
