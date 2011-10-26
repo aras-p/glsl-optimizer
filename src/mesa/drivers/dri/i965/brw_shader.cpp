@@ -239,3 +239,26 @@ brw_math_function(enum opcode op)
       return 0;
    }
 }
+
+uint32_t
+brw_texture_offset(ir_constant *offset)
+{
+   assert(offset != NULL);
+
+   signed char offsets[3];
+   for (unsigned i = 0; i < offset->type->vector_elements; i++)
+      offsets[i] = (signed char) offset->value.i[i];
+
+   /* Combine all three offsets into a single unsigned dword:
+    *
+    *    bits 11:8 - U Offset (X component)
+    *    bits  7:4 - V Offset (Y component)
+    *    bits  3:0 - R Offset (Z component)
+    */
+   unsigned offset_bits = 0;
+   for (unsigned i = 0; i < offset->type->vector_elements; i++) {
+      const unsigned shift = 4 * (2 - i);
+      offset_bits |= (offsets[i] << shift) & (0xF << shift);
+   }
+   return offset_bits;
+}

@@ -23,9 +23,11 @@
 
 #include <stdint.h>
 #include "brw_defines.h"
+#include "glsl/ir.h"
 
 #pragma once
 
 int brw_type_for_base_type(const struct glsl_type *type);
 uint32_t brw_conditional_for_comparison(unsigned int op);
 uint32_t brw_math_function(enum opcode op);
+uint32_t brw_texture_offset(ir_constant *offset);

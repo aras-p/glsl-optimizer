@@ -1077,24 +1077,7 @@ fs_visitor::visit(ir_texture *ir)
    fs_reg coordinate = this->result;
 
    if (ir->offset != NULL) {
-      ir_constant *offset = ir->offset->as_constant();
-      assert(offset != NULL);
-
-      signed char offsets[3];
-      for (unsigned i = 0; i < ir->offset->type->vector_elements; i++)
-	 offsets[i] = (signed char) offset->value.i[i];
-
-      /* Combine all three offsets into a single unsigned dword:
-       *
-       *    bits 11:8 - U Offset (X component)
-       *    bits  7:4 - V Offset (Y component)
-       *    bits  3:0 - R Offset (Z component)
-       */
-      unsigned offset_bits = 0;
-      for (unsigned i = 0; i < ir->offset->type->vector_elements; i++) {
-	 const unsigned shift = 4 * (2 - i);
-	 offset_bits |= (offsets[i] << shift) & (0xF << shift);
-      }
+      uint32_t offset_bits = brw_texture_offset(ir->offset->as_constant());
 
       /* Explicitly set up the message header by copying g0 to msg reg m1. */
       emit(BRW_OPCODE_MOV, fs_reg(MRF, 1, BRW_REGISTER_TYPE_UD),
