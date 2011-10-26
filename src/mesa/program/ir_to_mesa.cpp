@@ -3191,7 +3191,7 @@ get_mesa_program(struct gl_context *ctx,
    prog->Instructions = mesa_instructions;
    prog->NumInstructions = num_instructions;
 
-   do_set_program_inouts(shader->ir, prog);
+   do_set_program_inouts(shader->ir, prog, shader->Type == GL_FRAGMENT_SHADER);
    count_resources(prog);
 
    check_resources(ctx, shader_program, prog);

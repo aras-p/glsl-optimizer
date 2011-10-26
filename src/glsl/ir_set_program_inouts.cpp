@@ -26,6 +26,8 @@
  *
  * Sets the InputsRead and OutputsWritten of Mesa programs.
  *
+ * Additionally, for fragment shaders, sets the InterpQualifier array.
+ *
  * Mesa programs (gl_program, not gl_shader_program) have a set of
  * flags indicating which varyings are read and written.  Computing
  * which are actually read from some sort of backend code can be
@@ -42,9 +44,11 @@
 
 class ir_set_program_inouts_visitor : public ir_hierarchical_visitor {
 public:
-   ir_set_program_inouts_visitor(struct gl_program *prog)
+   ir_set_program_inouts_visitor(struct gl_program *prog,
+                                 bool is_fragment_shader)
    {
       this->prog = prog;
+      this->is_fragment_shader = is_fragment_shader;
       this->ht = hash_table_ctor(0,
 				 hash_table_pointer_hash,
 				 hash_table_pointer_compare);
@@ -61,10 +65,12 @@ public:
 
    struct gl_program *prog;
    struct hash_table *ht;
+   bool is_fragment_shader;
 };
 
 static void
-mark(struct gl_program *prog, ir_variable *var, int offset, int len)
+mark(struct gl_program *prog, ir_variable *var, int offset, int len,
+     bool is_fragment_shader)
 {
    /* As of GLSL 1.20, varyings can only be floats, floating-point
     * vectors or matrices, or arrays of them.  For Mesa programs using
@@ -75,12 +81,19 @@ mark(struct gl_program *prog, ir_variable *var, int offset, int len)
     */
 
    for (int i = 0; i < len; i++) {
-      if (var->mode == ir_var_in)
-	 prog->InputsRead |= BITFIELD64_BIT(var->location + offset + i);
-      else if (var->mode == ir_var_system_value)
-         prog->SystemValuesRead |= (1 << (var->location + offset + i));
-      else
-	 prog->OutputsWritten |= BITFIELD64_BIT(var->location + offset + i);
+      GLbitfield64 bitfield = BITFIELD64_BIT(var->location + offset + i);
+      if (var->mode == ir_var_in) {
+	 prog->InputsRead |= bitfield;
+         if (is_fragment_shader) {
+            gl_fragment_program *fprog = (gl_fragment_program *) prog;
+            fprog->InterpQualifier[var->location + offset + i] =
+               (glsl_interp_qualifier) var->interpolation;
+         }
+      } else if (var->mode == ir_var_system_value) {
+         prog->SystemValuesRead |= bitfield;
+      } else {
+	 prog->OutputsWritten |= bitfield;
+      }
    }
 }
 
@@ -93,9 +106,11 @@ ir_set_program_inouts_visitor::visit(ir_dereference_variable *ir)
 
    if (ir->type->is_array()) {
       mark(this->prog, ir->var, 0,
-	   ir->type->length * ir->type->fields.array->matrix_columns);
+	   ir->type->length * ir->type->fields.array->matrix_columns,
+           this->is_fragment_shader);
    } else {
-      mark(this->prog, ir->var, 0, ir->type->matrix_columns);
+      mark(this->prog, ir->var, 0, ir->type->matrix_columns,
+           this->is_fragment_shader);
    }
 
    return visit_continue;
@@ -121,7 +136,8 @@ ir_set_program_inouts_visitor::visit_enter(ir_dereference_array *ir)
 	 width = deref_var->type->fields.array->matrix_columns;
       }
 
-      mark(this->prog, var, index->value.i[0] * width, width);
+      mark(this->prog, var, index->value.i[0] * width, width,
+           this->is_fragment_shader);
       return visit_continue_with_parent;
    }
 
@@ -151,12 +167,17 @@ ir_set_program_inouts_visitor::visit_enter(ir_function_signature *ir)
 }
 
 void
-do_set_program_inouts(exec_list *instructions, struct gl_program *prog)
+do_set_program_inouts(exec_list *instructions, struct gl_program *prog,
+                      bool is_fragment_shader)
 {
-   ir_set_program_inouts_visitor v(prog);
+   ir_set_program_inouts_visitor v(prog, is_fragment_shader);
 
    prog->InputsRead = 0;
    prog->OutputsWritten = 0;
    prog->SystemValuesRead = 0;
+   if (is_fragment_shader) {
+      memset(((gl_fragment_program *) prog)->InterpQualifier, 0,
+             sizeof(((gl_fragment_program *) prog)->InterpQualifier));
+   }
    visit_list_elements(&v, instructions);
 }

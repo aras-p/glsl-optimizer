@@ -1320,7 +1320,7 @@ ir_swizzle::variable_referenced() const
 ir_variable::ir_variable(const struct glsl_type *type, const char *name,
 			 ir_variable_mode mode)
    : max_array_access(0), read_only(false), centroid(false), invariant(false),
-     mode(mode), interpolation(ir_var_smooth)
+     mode(mode), interpolation(INTERP_QUALIFIER_SMOOTH)
 {
    this->ir_type = ir_type_variable;
    this->type = type;
@@ -1343,9 +1343,9 @@ const char *
 ir_variable::interpolation_string() const
 {
    switch (this->interpolation) {
-   case ir_var_smooth:        return "smooth";
-   case ir_var_flat:          return "flat";
-   case ir_var_noperspective: return "noperspective";
+   case INTERP_QUALIFIER_SMOOTH:        return "smooth";
+   case INTERP_QUALIFIER_FLAT:          return "flat";
+   case INTERP_QUALIFIER_NOPERSPECTIVE: return "noperspective";
    }
 
    assert(!"Should not get here.");

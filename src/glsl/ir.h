@@ -34,6 +34,7 @@
 #include "list.h"
 #include "ir_visitor.h"
 #include "ir_hierarchical_visitor.h"
+#include "main/mtypes.h"
 
 /**
  * \defgroup IR Intermediate representation nodes
@@ -225,12 +226,6 @@ enum ir_variable_mode {
    ir_var_const_in,	/**< "in" param that must be a constant expression */
    ir_var_system_value, /**< Ex: front-face, instance-id, etc. */
    ir_var_temporary	/**< Temporary variable generated during compilation. */
-};
-
-enum ir_variable_interpolation {
-   ir_var_smooth = 0,
-   ir_var_flat,
-   ir_var_noperspective
 };
 
 /**
@@ -1679,7 +1674,8 @@ extern bool
 ir_has_call(ir_instruction *ir);
 
 extern void
-do_set_program_inouts(exec_list *instructions, struct gl_program *prog);
+do_set_program_inouts(exec_list *instructions, struct gl_program *prog,
+                      bool is_fragment_shader);
 
 extern char *
 prototype_string(const glsl_type *return_type, const char *name,

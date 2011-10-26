@@ -1962,11 +1962,11 @@ apply_type_qualifier_to_variable(const struct ast_type_qualifier *qual,
    }
 
    if (qual->flags.q.flat)
-      var->interpolation = ir_var_flat;
+      var->interpolation = INTERP_QUALIFIER_FLAT;
    else if (qual->flags.q.noperspective)
-      var->interpolation = ir_var_noperspective;
+      var->interpolation = INTERP_QUALIFIER_NOPERSPECTIVE;
    else
-      var->interpolation = ir_var_smooth;
+      var->interpolation = INTERP_QUALIFIER_SMOOTH;
 
    var->pixel_center_integer = qual->flags.q.pixel_center_integer;
    var->origin_upper_left = qual->flags.q.origin_upper_left;
@@ -2630,7 +2630,7 @@ ast_declarator_list::hir(exec_list *instructions,
           && state->current_function == NULL
           && var->type->is_integer()
           && var->mode == ir_var_out
-          && var->interpolation != ir_var_flat) {
+          && var->interpolation != INTERP_QUALIFIER_FLAT) {
 
          _mesa_glsl_error(&loc, state, "If a vertex output is an integer, "
                           "then it must be qualified with 'flat'");

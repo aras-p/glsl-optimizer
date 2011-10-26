@@ -1790,6 +1790,18 @@ typedef enum
 } gl_system_value;
 
 
+/**
+ * The possible interpolation qualifiers that can be applied to a fragment
+ * shader input in GLSL.
+ */
+enum glsl_interp_qualifier
+{
+   INTERP_QUALIFIER_SMOOTH,
+   INTERP_QUALIFIER_FLAT,
+   INTERP_QUALIFIER_NOPERSPECTIVE
+};
+
+
 /** Vertex and fragment instructions */
 struct prog_instruction;
 struct gl_program_parameter_list;
@@ -1890,6 +1902,13 @@ struct gl_fragment_program
    GLboolean OriginUpperLeft;
    GLboolean PixelCenterInteger;
    enum gl_frag_depth_layout FragDepthLayout;
+
+   /**
+    * GLSL interpolation qualifier associated with each fragment shader input.
+    * For inputs that do not have an interpolation qualifier specified in
+    * GLSL, the value is INTERP_QUALIFIER_SMOOTH.
+    */
+   enum glsl_interp_qualifier InterpQualifier[FRAG_ATTRIB_MAX];
 };
 
 
