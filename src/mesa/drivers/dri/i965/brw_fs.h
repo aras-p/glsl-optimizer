@@ -288,12 +288,12 @@ public:
 
    bool is_tex()
    {
-      return (opcode == FS_OPCODE_TEX ||
+      return (opcode == SHADER_OPCODE_TEX ||
 	      opcode == FS_OPCODE_TXB ||
-	      opcode == FS_OPCODE_TXD ||
-	      opcode == FS_OPCODE_TXF ||
-	      opcode == FS_OPCODE_TXL ||
-	      opcode == FS_OPCODE_TXS);
+	      opcode == SHADER_OPCODE_TXD ||
+	      opcode == SHADER_OPCODE_TXF ||
+	      opcode == SHADER_OPCODE_TXL ||
+	      opcode == SHADER_OPCODE_TXS);
    }
 
    bool is_math()

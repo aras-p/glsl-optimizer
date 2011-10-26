@@ -764,22 +764,22 @@ fs_visitor::emit_texture_gen4(ir_texture *ir, fs_reg dst, fs_reg coordinate,
    fs_inst *inst = NULL;
    switch (ir->op) {
    case ir_tex:
-      inst = emit(FS_OPCODE_TEX, dst);
+      inst = emit(SHADER_OPCODE_TEX, dst);
       break;
    case ir_txb:
       inst = emit(FS_OPCODE_TXB, dst);
       break;
    case ir_txl:
-      inst = emit(FS_OPCODE_TXL, dst);
+      inst = emit(SHADER_OPCODE_TXL, dst);
       break;
    case ir_txd:
-      inst = emit(FS_OPCODE_TXD, dst);
+      inst = emit(SHADER_OPCODE_TXD, dst);
       break;
    case ir_txs:
-      inst = emit(FS_OPCODE_TXS, dst);
+      inst = emit(SHADER_OPCODE_TXS, dst);
       break;
    case ir_txf:
-      inst = emit(FS_OPCODE_TXF, dst);
+      inst = emit(SHADER_OPCODE_TXF, dst);
       break;
    }
    inst->base_mrf = base_mrf;
@@ -847,7 +847,7 @@ fs_visitor::emit_texture_gen5(ir_texture *ir, fs_reg dst, fs_reg coordinate,
    fs_inst *inst = NULL;
    switch (ir->op) {
    case ir_tex:
-      inst = emit(FS_OPCODE_TEX, dst);
+      inst = emit(SHADER_OPCODE_TEX, dst);
       break;
    case ir_txb:
       ir->lod_info.bias->accept(this);
@@ -864,7 +864,7 @@ fs_visitor::emit_texture_gen5(ir_texture *ir, fs_reg dst, fs_reg coordinate,
       emit(BRW_OPCODE_MOV, fs_reg(MRF, base_mrf + mlen), this->result);
       mlen += reg_width;
 
-      inst = emit(FS_OPCODE_TXL, dst);
+      inst = emit(SHADER_OPCODE_TXL, dst);
       break;
    case ir_txd: {
       ir->lod_info.grad.dPdx->accept(this);
@@ -894,14 +894,14 @@ fs_visitor::emit_texture_gen5(ir_texture *ir, fs_reg dst, fs_reg coordinate,
 	 mlen += reg_width;
       }
 
-      inst = emit(FS_OPCODE_TXD, dst);
+      inst = emit(SHADER_OPCODE_TXD, dst);
       break;
    }
    case ir_txs:
       ir->lod_info.lod->accept(this);
       emit(BRW_OPCODE_MOV, fs_reg(MRF, base_mrf + mlen, BRW_REGISTER_TYPE_UD), this->result);
       mlen += reg_width;
-      inst = emit(FS_OPCODE_TXS, dst);
+      inst = emit(SHADER_OPCODE_TXS, dst);
       break;
    case ir_txf:
       mlen = header_present + 4 * reg_width;
@@ -910,7 +910,7 @@ fs_visitor::emit_texture_gen5(ir_texture *ir, fs_reg dst, fs_reg coordinate,
       emit(BRW_OPCODE_MOV,
 	   fs_reg(MRF, base_mrf + mlen - reg_width, BRW_REGISTER_TYPE_UD),
 	   this->result);
-      inst = emit(FS_OPCODE_TXF, dst);
+      inst = emit(SHADER_OPCODE_TXF, dst);
       break;
    }
    inst->base_mrf = base_mrf;
@@ -1033,12 +1033,12 @@ fs_visitor::emit_texture_gen7(ir_texture *ir, fs_reg dst, fs_reg coordinate,
    /* Generate the SEND */
    fs_inst *inst = NULL;
    switch (ir->op) {
-   case ir_tex: inst = emit(FS_OPCODE_TEX, dst); break;
+   case ir_tex: inst = emit(SHADER_OPCODE_TEX, dst); break;
    case ir_txb: inst = emit(FS_OPCODE_TXB, dst); break;
-   case ir_txl: inst = emit(FS_OPCODE_TXL, dst); break;
-   case ir_txd: inst = emit(FS_OPCODE_TXD, dst); break;
-   case ir_txf: inst = emit(FS_OPCODE_TXF, dst); break;
-   case ir_txs: inst = emit(FS_OPCODE_TXS, dst); break;
+   case ir_txl: inst = emit(SHADER_OPCODE_TXL, dst); break;
+   case ir_txd: inst = emit(SHADER_OPCODE_TXD, dst); break;
+   case ir_txf: inst = emit(SHADER_OPCODE_TXF, dst); break;
+   case ir_txs: inst = emit(SHADER_OPCODE_TXS, dst); break;
    }
    inst->base_mrf = base_mrf;
    inst->mlen = mlen;

@@ -275,7 +275,7 @@ fs_visitor::generate_tex(fs_inst *inst, struct brw_reg dst, struct brw_reg src)
 
    if (intel->gen >= 5) {
       switch (inst->opcode) {
-      case FS_OPCODE_TEX:
+      case SHADER_OPCODE_TEX:
 	 if (inst->shadow_compare) {
 	    msg_type = GEN5_SAMPLER_MESSAGE_SAMPLE_COMPARE;
 	 } else {
@@ -289,21 +289,21 @@ fs_visitor::generate_tex(fs_inst *inst, struct brw_reg dst, struct brw_reg src)
 	    msg_type = GEN5_SAMPLER_MESSAGE_SAMPLE_BIAS;
 	 }
 	 break;
-      case FS_OPCODE_TXL:
+      case SHADER_OPCODE_TXL:
 	 if (inst->shadow_compare) {
 	    msg_type = GEN5_SAMPLER_MESSAGE_SAMPLE_LOD_COMPARE;
 	 } else {
 	    msg_type = GEN5_SAMPLER_MESSAGE_SAMPLE_LOD;
 	 }
 	 break;
-      case FS_OPCODE_TXS:
+      case SHADER_OPCODE_TXS:
 	 msg_type = GEN5_SAMPLER_MESSAGE_SAMPLE_RESINFO;
 	 break;
-      case FS_OPCODE_TXD:
+      case SHADER_OPCODE_TXD:
 	 /* There is no sample_d_c message; comparisons are done manually */
 	 msg_type = GEN5_SAMPLER_MESSAGE_SAMPLE_DERIVS;
 	 break;
-      case FS_OPCODE_TXF:
+      case SHADER_OPCODE_TXF:
 	 msg_type = GEN5_SAMPLER_MESSAGE_SAMPLE_LD;
 	 break;
       default:
@@ -312,7 +312,7 @@ fs_visitor::generate_tex(fs_inst *inst, struct brw_reg dst, struct brw_reg src)
       }
    } else {
       switch (inst->opcode) {
-      case FS_OPCODE_TEX:
+      case SHADER_OPCODE_TEX:
 	 /* Note that G45 and older determines shadow compare and dispatch width
 	  * from message length for most messages.
 	  */
@@ -334,7 +334,7 @@ fs_visitor::generate_tex(fs_inst *inst, struct brw_reg dst, struct brw_reg src)
 	    simd_mode = BRW_SAMPLER_SIMD_MODE_SIMD16;
 	 }
 	 break;
-      case FS_OPCODE_TXL:
+      case SHADER_OPCODE_TXL:
 	 if (inst->shadow_compare) {
 	    assert(inst->mlen == 6);
 	    msg_type = BRW_SAMPLER_MESSAGE_SIMD8_SAMPLE_LOD_COMPARE;
@@ -344,17 +344,17 @@ fs_visitor::generate_tex(fs_inst *inst, struct brw_reg dst, struct brw_reg src)
 	    simd_mode = BRW_SAMPLER_SIMD_MODE_SIMD16;
 	 }
 	 break;
-      case FS_OPCODE_TXD:
+      case SHADER_OPCODE_TXD:
 	 /* There is no sample_d_c message; comparisons are done manually */
 	 assert(inst->mlen == 7 || inst->mlen == 10);
 	 msg_type = BRW_SAMPLER_MESSAGE_SIMD8_SAMPLE_GRADIENTS;
 	 break;
-      case FS_OPCODE_TXF:
+      case SHADER_OPCODE_TXF:
 	 assert(inst->mlen == 9);
 	 msg_type = BRW_SAMPLER_MESSAGE_SIMD16_LD;
 	 simd_mode = BRW_SAMPLER_SIMD_MODE_SIMD16;
 	 break;
-      case FS_OPCODE_TXS:
+      case SHADER_OPCODE_TXS:
 	 assert(inst->mlen == 3);
 	 msg_type = BRW_SAMPLER_MESSAGE_SIMD16_RESINFO;
 	 simd_mode = BRW_SAMPLER_SIMD_MODE_SIMD16;
@@ -884,12 +884,12 @@ fs_visitor::generate_code()
       case FS_OPCODE_LINTERP:
 	 generate_linterp(inst, dst, src);
 	 break;
-      case FS_OPCODE_TEX:
+      case SHADER_OPCODE_TEX:
       case FS_OPCODE_TXB:
-      case FS_OPCODE_TXD:
-      case FS_OPCODE_TXF:
-      case FS_OPCODE_TXL:
-      case FS_OPCODE_TXS:
+      case SHADER_OPCODE_TXD:
+      case SHADER_OPCODE_TXF:
+      case SHADER_OPCODE_TXL:
+      case SHADER_OPCODE_TXS:
 	 generate_tex(inst, dst, src[0]);
 	 break;
       case FS_OPCODE_DISCARD:

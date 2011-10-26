@@ -155,12 +155,12 @@ fs_visitor::implied_mrf_writes(fs_inst *inst)
    case SHADER_OPCODE_INT_QUOTIENT:
    case SHADER_OPCODE_INT_REMAINDER:
       return 2 * c->dispatch_width / 8;
-   case FS_OPCODE_TEX:
+   case SHADER_OPCODE_TEX:
    case FS_OPCODE_TXB:
-   case FS_OPCODE_TXD:
-   case FS_OPCODE_TXF:
-   case FS_OPCODE_TXL:
-   case FS_OPCODE_TXS:
+   case SHADER_OPCODE_TXD:
+   case SHADER_OPCODE_TXF:
+   case SHADER_OPCODE_TXL:
+   case SHADER_OPCODE_TXS:
       return 1;
    case FS_OPCODE_FB_WRITE:
       return 2;
