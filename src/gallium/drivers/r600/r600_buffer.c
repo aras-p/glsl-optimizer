@@ -209,16 +209,14 @@ struct pipe_resource *r600_user_buffer_create(struct pipe_screen *screen,
 	return &rbuffer->b.b.b;
 }
 
-void r600_upload_index_buffer(struct r600_pipe_context *rctx, struct r600_drawl *draw)
+void r600_upload_index_buffer(struct r600_pipe_context *rctx,
+			      struct pipe_index_buffer *ib, unsigned count)
 {
-	struct r600_resource *rbuffer = r600_resource(draw->index_buffer);
+	struct r600_resource *rbuffer = r600_resource(ib->buffer);
 	boolean flushed;
 
-	u_upload_data(rctx->vbuf_mgr->uploader, 0,
-		      draw->info.count * draw->index_size,
-		      rbuffer->b.user_ptr,
-		      &draw->index_buffer_offset,
-		      &draw->index_buffer, &flushed);
+	u_upload_data(rctx->vbuf_mgr->uploader, 0, count * ib->index_size,
+		      rbuffer->b.user_ptr, &ib->offset, &ib->buffer, &flushed);
 }
 
 void r600_upload_const_buffer(struct r600_pipe_context *rctx, struct r600_resource **rbuffer,

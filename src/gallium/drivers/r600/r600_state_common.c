@@ -582,54 +582,64 @@ static void r600_update_derived_state(struct r600_pipe_context *rctx)
 	}
 }
 
-void r600_draw_vbo(struct pipe_context *ctx, const struct pipe_draw_info *info)
+void r600_draw_vbo(struct pipe_context *ctx, const struct pipe_draw_info *dinfo)
 {
 	struct r600_pipe_context *rctx = (struct r600_pipe_context *)ctx;
-	struct r600_resource *rbuffer;
-	struct r600_draw rdraw;
-	struct r600_drawl draw;
+	struct pipe_draw_info info = *dinfo;
+	struct r600_draw rdraw = {};
+	struct pipe_index_buffer ib = {};
 	unsigned prim, mask;
 
-	if (!info->count ||
-	    !r600_conv_pipe_prim(info->mode, &prim)) {
+	if (!info.count ||
+	    (info.indexed && !rctx->index_buffer.buffer) ||
+	    !r600_conv_pipe_prim(info.mode, &prim)) {
 		return;
 	}
 
 	r600_update_derived_state(rctx);
 
-	u_vbuf_draw_begin(rctx->vbuf_mgr, info);
+	u_vbuf_draw_begin(rctx->vbuf_mgr, dinfo);
 	r600_vertex_buffer_update(rctx);
 
-	draw.info = *info;
-	if (draw.info.max_index != ~0) {
-		draw.info.min_index += info->index_bias;
-		draw.info.max_index += info->index_bias;
-	}
+	info = *dinfo;
 
-	draw.ctx = ctx;
-	draw.index_buffer = NULL;
-	if (info->indexed && rctx->index_buffer.buffer) {
-		draw.info.start += rctx->index_buffer.offset / rctx->index_buffer.index_size;
-		pipe_resource_reference(&draw.index_buffer, rctx->index_buffer.buffer);
+	rdraw.vgt_num_indices = info.count;
+	rdraw.vgt_num_instances = info.instance_count;
 
-		r600_translate_index_buffer(rctx, &draw.index_buffer,
-					    &rctx->index_buffer.index_size,
-					    &draw.info.start,
-					    info->count);
-
-		draw.index_size = rctx->index_buffer.index_size;
-		draw.index_buffer_offset = draw.info.start * draw.index_size;
-		draw.info.start = 0;
-
-		if (u_vbuf_resource(draw.index_buffer)->user_ptr) {
-			r600_upload_index_buffer(rctx, &draw);
+	if (info.indexed) {
+		/* Adjust min/max_index by the index bias. */
+		if (info.max_index != ~0) {
+			info.min_index += info.index_bias;
+			info.max_index += info.index_bias;
 		}
-	} else {
-		draw.index_size = 0;
-		draw.index_buffer_offset = 0;
-		draw.info.index_bias = info->start;
-	}
 
+		/* Initialize the index buffer struct. */
+		pipe_resource_reference(&ib.buffer, rctx->index_buffer.buffer);
+		ib.index_size = rctx->index_buffer.index_size;
+		ib.offset = rctx->index_buffer.offset + info.start * ib.index_size;
+
+		/* Translate or upload, if needed. */
+		r600_translate_index_buffer(rctx, &ib, info.count);
+
+		if (u_vbuf_resource(ib.buffer)->user_ptr) {
+			r600_upload_index_buffer(rctx, &ib, info.count);
+		}
+
+		/* Initialize the r600_draw struct with index buffer info. */
+		if (ib.index_size == 4) {
+			rdraw.vgt_index_type = VGT_INDEX_32 |
+				(R600_BIG_ENDIAN ? VGT_DMA_SWAP_32_BIT : 0);
+		} else {
+			rdraw.vgt_index_type = VGT_INDEX_16 |
+				(R600_BIG_ENDIAN ? VGT_DMA_SWAP_16_BIT : 0);
+		}
+		rdraw.indices = (struct r600_resource*)ib.buffer;
+		rdraw.indices_bo_offset = ib.offset;
+		rdraw.vgt_draw_initiator = V_0287F0_DI_SRC_SEL_DMA;
+	} else {
+		info.index_bias = info.start;
+		rdraw.vgt_draw_initiator = V_0287F0_DI_SRC_SEL_AUTO_INDEX;
+	}
 
 	mask = (1ULL << ((unsigned)rctx->framebuffer.nr_cbufs * 4)) - 1;
 
@@ -638,53 +648,33 @@ void r600_draw_vbo(struct pipe_context *ctx, const struct pipe_draw_info *info)
 		rctx->vgt.nregs = 0;
 		r600_pipe_state_add_reg(&rctx->vgt, R_008958_VGT_PRIMITIVE_TYPE, prim, 0xFFFFFFFF, NULL, 0);
 		r600_pipe_state_add_reg(&rctx->vgt, R_028238_CB_TARGET_MASK, rctx->cb_target_mask & mask, 0xFFFFFFFF, NULL, 0);
-		r600_pipe_state_add_reg(&rctx->vgt, R_028400_VGT_MAX_VTX_INDX, draw.info.max_index, 0xFFFFFFFF, NULL, 0);
-		r600_pipe_state_add_reg(&rctx->vgt, R_028404_VGT_MIN_VTX_INDX, draw.info.min_index, 0xFFFFFFFF, NULL, 0);
-		r600_pipe_state_add_reg(&rctx->vgt, R_028408_VGT_INDX_OFFSET, draw.info.index_bias, 0xFFFFFFFF, NULL, 0);
-		r600_pipe_state_add_reg(&rctx->vgt, R_02840C_VGT_MULTI_PRIM_IB_RESET_INDX, draw.info.restart_index, 0xFFFFFFFF, NULL, 0);
-		r600_pipe_state_add_reg(&rctx->vgt, R_028A94_VGT_MULTI_PRIM_IB_RESET_EN, draw.info.primitive_restart, 0xFFFFFFFF, NULL, 0);
+		r600_pipe_state_add_reg(&rctx->vgt, R_028400_VGT_MAX_VTX_INDX, info.max_index, 0xFFFFFFFF, NULL, 0);
+		r600_pipe_state_add_reg(&rctx->vgt, R_028404_VGT_MIN_VTX_INDX, info.min_index, 0xFFFFFFFF, NULL, 0);
+		r600_pipe_state_add_reg(&rctx->vgt, R_028408_VGT_INDX_OFFSET, info.index_bias, 0xFFFFFFFF, NULL, 0);
+		r600_pipe_state_add_reg(&rctx->vgt, R_02840C_VGT_MULTI_PRIM_IB_RESET_INDX, info.restart_index, 0xFFFFFFFF, NULL, 0);
+		r600_pipe_state_add_reg(&rctx->vgt, R_028A94_VGT_MULTI_PRIM_IB_RESET_EN, info.primitive_restart, 0xFFFFFFFF, NULL, 0);
 		r600_pipe_state_add_reg(&rctx->vgt, R_03CFF0_SQ_VTX_BASE_VTX_LOC, 0, 0xFFFFFFFF, NULL, 0);
-		r600_pipe_state_add_reg(&rctx->vgt, R_03CFF4_SQ_VTX_START_INST_LOC, draw.info.start_instance, 0xFFFFFFFF, NULL, 0);
+		r600_pipe_state_add_reg(&rctx->vgt, R_03CFF4_SQ_VTX_START_INST_LOC, info.start_instance, 0xFFFFFFFF, NULL, 0);
 		r600_pipe_state_add_reg(&rctx->vgt, R_028814_PA_SU_SC_MODE_CNTL,
 					0,
 					S_028814_PROVOKING_VTX_LAST(1), NULL, 0);
-
 	}
 
 	rctx->vgt.nregs = 0;
 	r600_pipe_state_mod_reg(&rctx->vgt, prim);
 	r600_pipe_state_mod_reg(&rctx->vgt, rctx->cb_target_mask & mask);
-	r600_pipe_state_mod_reg(&rctx->vgt, draw.info.max_index);
-	r600_pipe_state_mod_reg(&rctx->vgt, draw.info.min_index);
-	r600_pipe_state_mod_reg(&rctx->vgt, draw.info.index_bias);
-	r600_pipe_state_mod_reg(&rctx->vgt, draw.info.restart_index);
-	r600_pipe_state_mod_reg(&rctx->vgt, draw.info.primitive_restart);
+	r600_pipe_state_mod_reg(&rctx->vgt, info.max_index);
+	r600_pipe_state_mod_reg(&rctx->vgt, info.min_index);
+	r600_pipe_state_mod_reg(&rctx->vgt, info.index_bias);
+	r600_pipe_state_mod_reg(&rctx->vgt, info.restart_index);
+	r600_pipe_state_mod_reg(&rctx->vgt, info.primitive_restart);
 	r600_pipe_state_mod_reg(&rctx->vgt, 0);
-	r600_pipe_state_mod_reg(&rctx->vgt, draw.info.start_instance);
-	if (draw.info.mode == PIPE_PRIM_QUADS || draw.info.mode == PIPE_PRIM_QUAD_STRIP || draw.info.mode == PIPE_PRIM_POLYGON) {
+	r600_pipe_state_mod_reg(&rctx->vgt, info.start_instance);
+	if (info.mode == PIPE_PRIM_QUADS || info.mode == PIPE_PRIM_QUAD_STRIP || info.mode == PIPE_PRIM_POLYGON) {
 		r600_pipe_state_mod_reg(&rctx->vgt, S_028814_PROVOKING_VTX_LAST(1));
 	}
 
 	r600_context_pipe_state_set(&rctx->ctx, &rctx->vgt);
-
-	rdraw.vgt_num_indices = draw.info.count;
-	rdraw.vgt_num_instances = draw.info.instance_count;
-
-	rdraw.vgt_index_type = draw.index_size == 4 ? VGT_INDEX_32 : VGT_INDEX_16;
-	if (R600_BIG_ENDIAN) {
-		rdraw.vgt_index_type |= draw.index_size == 4 ? VGT_DMA_SWAP_32_BIT
-							     : VGT_DMA_SWAP_16_BIT;
-	}
-
-	rdraw.vgt_draw_initiator = draw.index_size ? V_0287F0_DI_SRC_SEL_DMA
-						   : V_0287F0_DI_SRC_SEL_AUTO_INDEX;
-
-	rdraw.indices = NULL;
-	if (draw.index_buffer) {
-		rbuffer = (struct r600_resource*)draw.index_buffer;
-		rdraw.indices = rbuffer;
-		rdraw.indices_bo_offset = draw.index_buffer_offset;
-	}
 
 	if (rctx->chip_class >= EVERGREEN) {
 		evergreen_context_draw(&rctx->ctx, &rdraw);
@@ -698,8 +688,7 @@ void r600_draw_vbo(struct pipe_context *ctx, const struct pipe_draw_info *info)
 		((struct r600_resource_texture *)tex)->dirty_db = TRUE;
 	}
 
-	pipe_resource_reference(&draw.index_buffer, NULL);
-
+	pipe_resource_reference(&ib.buffer, NULL);
 	u_vbuf_draw_end(rctx->vbuf_mgr);
 }
 

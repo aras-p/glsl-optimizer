@@ -235,14 +235,6 @@ struct r600_pipe_context {
 	unsigned default_ps_gprs, default_vs_gprs;
 };
 
-struct r600_drawl {
-	struct pipe_draw_info	info;
-	struct pipe_context	*ctx;
-	unsigned		index_size;
-	unsigned		index_buffer_offset;
-	struct pipe_resource	*index_buffer;
-};
-
 /* evergreen_state.c */
 void evergreen_init_state_functions(struct r600_pipe_context *rctx);
 void evergreen_init_config(struct r600_pipe_context *rctx);
@@ -279,7 +271,8 @@ struct pipe_resource *r600_buffer_create(struct pipe_screen *screen,
 struct pipe_resource *r600_user_buffer_create(struct pipe_screen *screen,
 					      void *ptr, unsigned bytes,
 					      unsigned bind);
-void r600_upload_index_buffer(struct r600_pipe_context *rctx, struct r600_drawl *draw);
+void r600_upload_index_buffer(struct r600_pipe_context *rctx,
+			      struct pipe_index_buffer *ib, unsigned count);
 
 
 /* r600_pipe.c */
@@ -331,9 +324,8 @@ unsigned r600_texture_get_offset(struct r600_resource_texture *rtex,
 
 /* r600_translate.c */
 void r600_translate_index_buffer(struct r600_pipe_context *r600,
-				 struct pipe_resource **index_buffer,
-				 unsigned *index_size,
-				 unsigned *start, unsigned count);
+				 struct pipe_index_buffer *ib,
+				 unsigned count);
 
 /* r600_state_common.c */
 void r600_set_index_buffer(struct pipe_context *ctx,
