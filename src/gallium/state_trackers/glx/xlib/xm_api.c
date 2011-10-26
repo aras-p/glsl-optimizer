@@ -1335,7 +1335,6 @@ XMesaBindTexImage(Display *dpy, XMesaBuffer drawable, int buffer,
    struct st_framebuffer_iface* stfbi = drawable->stfb;
    struct pipe_resource *res;
    int x, y, w, h;
-   XMesaContext xmesa = XMesaGetCurrentContext();
    enum st_attachment_type st_attachment = xmesa_attachment_type(buffer);
 
    x = 0;
@@ -1354,6 +1353,7 @@ XMesaBindTexImage(Display *dpy, XMesaBuffer drawable, int buffer,
       struct pipe_transfer *tex_xfer;
       char *map;
       int line, ximage_stride;
+      XImage *img;
 
       internal_format = choose_pixel_format(drawable->xm_visual);
 
@@ -1366,12 +1366,12 @@ XMesaBindTexImage(Display *dpy, XMesaBuffer drawable, int buffer,
          return;
 
       /* Grab the XImage that we want to turn into a texture. */
-      XImage *img = XGetImage(dpy,
-                              drawable->ws.drawable,
-                              x, y,
-                              w, h,
-                              AllPlanes,
-                              ZPixmap);
+      img = XGetImage(dpy,
+                      drawable->ws.drawable,
+                      x, y,
+                      w, h,
+                      AllPlanes,
+                      ZPixmap);
 
       if (!img) {
          pipe_transfer_destroy(pipe, tex_xfer);
