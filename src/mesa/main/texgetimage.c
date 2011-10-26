@@ -50,7 +50,7 @@
  * Can the given type represent negative values?
  */
 static inline GLboolean
-type_with_negative_values(GLenum type)
+type_needs_clamping(GLenum type)
 {
    switch (type) {
    case GL_BYTE:
@@ -58,9 +58,11 @@ type_with_negative_values(GLenum type)
    case GL_INT:
    case GL_FLOAT:
    case GL_HALF_FLOAT_ARB:
-      return GL_TRUE;
-   default:
+   case GL_UNSIGNED_INT_10F_11F_11F_REV:
+   case GL_UNSIGNED_INT_5_9_9_9_REV:
       return GL_FALSE;
+   default:
+      return GL_TRUE;
    }
 }
 
@@ -219,7 +221,7 @@ get_tex_rgba(struct gl_context *ctx, GLuint dimensions,
    /* In general, clamping does not apply to glGetTexImage, except when
     * the returned type of the image can't hold negative values.
     */
-   if (!type_with_negative_values(type)) {
+   if (type_needs_clamping(type)) {
       /* the returned image type can't have negative values */
       if (dataType == GL_FLOAT ||
           dataType == GL_SIGNED_NORMALIZED ||
