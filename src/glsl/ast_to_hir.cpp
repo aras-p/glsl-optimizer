@@ -2455,14 +2455,32 @@ ast_declarator_list::hir(exec_list *instructions,
 
    decl_type = this->type->specifier->glsl_type(& type_name, state);
    if (this->declarations.is_empty()) {
-      if (decl_type != NULL) {
-	 /* Warn if this empty declaration is not for declaring a structure.
-	  */
-	 if (this->type->specifier->structure == NULL) {
+      /* If there is no structure involved in the program text, there are two
+       * possible scenarios:
+       *
+       * - The program text contained something like 'vec4;'.  This is an
+       *   empty declaration.  It is valid but weird.  Emit a warning.
+       *
+       * - The program text contained something like 'S;' and 'S' is not the
+       *   name of a known structure type.  This is both invalid and weird.
+       *   Emit an error.
+       *
+       * Note that if decl_type is NULL and there is a structure involved,
+       * there must have been some sort of error with the structure.  In this
+       * case we assume that an error was already generated on this line of
+       * code for the structure.  There is no need to generate an additional,
+       * confusing error.
+       */
+      assert(this->type->specifier->structure == NULL || decl_type != NULL
+	     || state->error);
+      if (this->type->specifier->structure == NULL) {
+	 if (decl_type != NULL) {
 	    _mesa_glsl_warning(&loc, state, "empty declaration");
+	 } else {
+	    _mesa_glsl_error(&loc, state,
+			     "invalid type `%s' in empty declaration",
+			     type_name);
 	 }
-      } else {
-	    _mesa_glsl_error(& loc, state, "incomplete declaration");
       }
    }
 
