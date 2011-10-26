@@ -439,8 +439,9 @@ ralloc_asprintf_append(char **str, const char *fmt, ...)
 bool
 ralloc_vasprintf_append(char **str, const char *fmt, va_list args)
 {
+   size_t existing_length;
    assert(str != NULL);
-   size_t existing_length = *str ? strlen(*str) : 0;
+   existing_length = *str ? strlen(*str) : 0;
    return ralloc_vasprintf_rewrite_tail(str, existing_length, fmt, args);
 }
 
