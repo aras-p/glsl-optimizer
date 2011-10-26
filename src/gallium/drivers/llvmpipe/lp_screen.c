@@ -287,6 +287,11 @@ llvmpipe_is_format_supported( struct pipe_screen *_screen,
       return FALSE;
    }
 
+   /* llvmpipe doesn't support pure integer yet */
+   if (util_format_is_pure_integer(format)) {
+      return FALSE;
+   }
+
    /*
     * Everything else should be supported by u_format.
     */

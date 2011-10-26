@@ -345,6 +345,9 @@ test_all(struct gallivm_state *gallivm, unsigned verbose, FILE *fp)
          continue;
       }
 
+      if (util_format_is_pure_integer(format))
+	 continue;
+
       if (format_desc->layout == UTIL_FORMAT_LAYOUT_S3TC &&
           !util_format_s3tc_enabled) {
          continue;
