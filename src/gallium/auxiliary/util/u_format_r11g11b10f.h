@@ -60,13 +60,23 @@ static INLINE unsigned f32_to_uf11(float val)
    int exponent = ((f32.ui >> 23) & 0xff) - 127;
    int mantissa = f32.ui & 0x007fffff;
 
-   if (sign) return 0;
-
    if (exponent == 128) { /* Infinity or NaN */
+      /* From the GL_EXT_packed_float spec:
+       *
+       *     "Additionally: negative infinity is converted to zero; positive
+       *      infinity is converted to positive infinity; and both positive and
+       *      negative NaN are converted to positive NaN."
+       */
       uf11 = UF11_MAX_EXPONENT;
-      if (mantissa) uf11 |= (mantissa & UF11_MANTISSA_BITS);
-   }
-   else if (val > 65024.0f) {
+      if (mantissa) {
+	 uf11 |= 1; /* NaN */
+      } else {
+	 if (sign)
+	    uf11 = 0; /* 0.0 */
+      }
+   } else if (sign) {
+      return 0;
+   } else if (val > 65024.0f) {
       /* From the GL_EXT_packed_float spec:
        *
        *     "Likewise, finite positive values greater than 65024 (the maximum
@@ -136,13 +146,23 @@ static INLINE unsigned f32_to_uf10(float val)
    int exponent = ((f32.ui >> 23) & 0xff) - 127;
    int mantissa = f32.ui & 0x007fffff;
 
-   if (sign) return 0;
-
-   if (exponent == 128) { /* Infinity or NaN */
+   if (exponent == 128) {
+      /* From the GL_EXT_packed_float spec:
+       *
+       *     "Additionally: negative infinity is converted to zero; positive
+       *      infinity is converted to positive infinity; and both positive and
+       *      negative NaN are converted to positive NaN."
+       */
       uf10 = UF10_MAX_EXPONENT;
-      if (mantissa) uf10 |= (mantissa & UF10_MANTISSA_BITS);
-   }
-   else if (val > 64512.0f) { /* Overflow - flush to Infinity */
+      if (mantissa) {
+	 uf10 |= 1; /* NaN */
+      } else {
+	 if (sign)
+	    uf10 = 0; /* 0.0 */
+      }
+   } else if (sign) {
+      return 0;
+   } else if (val > 64512.0f) { /* Overflow - flush to Infinity */
       /* From the GL_EXT_packed_float spec:
        *
        *     "Likewise, finite positive values greater than 64512 (the maximum
