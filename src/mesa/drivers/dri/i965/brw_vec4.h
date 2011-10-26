@@ -276,6 +276,7 @@ public:
    ir_instruction *ir;
    const char *annotation;
 
+   bool is_tex();
    bool is_math();
 };
 
