@@ -27,6 +27,7 @@
  * below.
  */
 
+#define UF11(e, m)           ((e << 6) | (m))
 #define UF11_EXPONENT_BIAS   15
 #define UF11_EXPONENT_BITS   0x1F
 #define UF11_EXPONENT_SHIFT  6
@@ -34,6 +35,7 @@
 #define UF11_MANTISSA_SHIFT  (23 - UF11_EXPONENT_SHIFT)
 #define UF11_MAX_EXPONENT    (UF11_EXPONENT_BITS << UF11_EXPONENT_SHIFT)
 
+#define UF10(e, m)           ((e << 5) | (m))
 #define UF10_EXPONENT_BIAS   15
 #define UF10_EXPONENT_BITS   0x1F
 #define UF10_EXPONENT_SHIFT  5
@@ -64,8 +66,14 @@ static INLINE unsigned f32_to_uf11(float val)
       uf11 = UF11_MAX_EXPONENT;
       if (mantissa) uf11 |= (mantissa & UF11_MANTISSA_BITS);
    }
-   else if (exponent > 15) { /* Overflow - flush to Infinity */
-      uf11 = UF11_MAX_EXPONENT;
+   else if (val > 65024.0f) {
+      /* From the GL_EXT_packed_float spec:
+       *
+       *     "Likewise, finite positive values greater than 65024 (the maximum
+       *      finite representable unsigned 11-bit floating-point value) are
+       *      converted to 65024."
+       */
+      uf11 = UF11(30, 63);
    }
    else if (exponent > -15) { /* Representable value */
       exponent += UF11_EXPONENT_BIAS;
@@ -134,8 +142,14 @@ static INLINE unsigned f32_to_uf10(float val)
       uf10 = UF10_MAX_EXPONENT;
       if (mantissa) uf10 |= (mantissa & UF10_MANTISSA_BITS);
    }
-   else if (exponent > 15) { /* Overflow - flush to Infinity */
-      uf10 = UF10_MAX_EXPONENT;
+   else if (val > 64512.0f) { /* Overflow - flush to Infinity */
+      /* From the GL_EXT_packed_float spec:
+       *
+       *     "Likewise, finite positive values greater than 64512 (the maximum
+       *      finite representable unsigned 10-bit floating-point value) are
+       *      converted to 64512."
+       */
+      uf10 = UF10(30, 31);
    }
    else if (exponent > -15) { /* Representable value */
       exponent += UF10_EXPONENT_BIAS;
