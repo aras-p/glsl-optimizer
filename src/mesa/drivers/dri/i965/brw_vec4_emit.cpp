@@ -355,6 +355,104 @@ vec4_visitor::generate_math2_gen4(vec4_instruction *inst,
 }
 
 void
+vec4_visitor::generate_tex(vec4_instruction *inst,
+			   struct brw_reg dst,
+			   struct brw_reg src)
+{
+   int msg_type = -1;
+
+   if (intel->gen >= 5) {
+      switch (inst->opcode) {
+      case SHADER_OPCODE_TEX:
+      case SHADER_OPCODE_TXL:
+	 if (inst->shadow_compare) {
+	    msg_type = GEN5_SAMPLER_MESSAGE_SAMPLE_LOD_COMPARE;
+	 } else {
+	    msg_type = GEN5_SAMPLER_MESSAGE_SAMPLE_LOD;
+	 }
+	 break;
+      case SHADER_OPCODE_TXD:
+	 /* There is no sample_d_c message; comparisons are done manually. */
+	 msg_type = GEN5_SAMPLER_MESSAGE_SAMPLE_DERIVS;
+	 break;
+      case SHADER_OPCODE_TXF:
+	 msg_type = GEN5_SAMPLER_MESSAGE_SAMPLE_LD;
+	 break;
+      case SHADER_OPCODE_TXS:
+	 msg_type = GEN5_SAMPLER_MESSAGE_SAMPLE_RESINFO;
+	 break;
+      default:
+	 assert(!"should not get here: invalid VS texture opcode");
+	 break;
+      }
+   } else {
+      switch (inst->opcode) {
+      case SHADER_OPCODE_TEX:
+      case SHADER_OPCODE_TXL:
+	 if (inst->shadow_compare) {
+	    msg_type = BRW_SAMPLER_MESSAGE_SIMD4X2_SAMPLE_LOD_COMPARE;
+	    assert(inst->mlen == 3);
+	 } else {
+	    msg_type = BRW_SAMPLER_MESSAGE_SIMD4X2_SAMPLE_LOD;
+	    assert(inst->mlen == 2);
+	 }
+	 break;
+      case SHADER_OPCODE_TXD:
+	 /* There is no sample_d_c message; comparisons are done manually. */
+	 msg_type = BRW_SAMPLER_MESSAGE_SIMD4X2_SAMPLE_GRADIENTS;
+	 assert(inst->mlen == 4);
+	 break;
+      case SHADER_OPCODE_TXF:
+	 msg_type = BRW_SAMPLER_MESSAGE_SIMD4X2_LD;
+	 assert(inst->mlen == 2);
+	 break;
+      case SHADER_OPCODE_TXS:
+	 msg_type = BRW_SAMPLER_MESSAGE_SIMD4X2_RESINFO;
+	 assert(inst->mlen == 2);
+	 break;
+      default:
+	 assert(!"should not get here: invalid VS texture opcode");
+	 break;
+      }
+   }
+
+   assert(msg_type != -1);
+
+   if (inst->header_present) {
+      /* Set up an implied move from g0 to the MRF. */
+      src = brw_vec8_grf(0, 0);
+   }
+
+   uint32_t return_format;
+
+   switch (dst.type) {
+   case BRW_REGISTER_TYPE_D:
+      return_format = BRW_SAMPLER_RETURN_FORMAT_SINT32;
+      break;
+   case BRW_REGISTER_TYPE_UD:
+      return_format = BRW_SAMPLER_RETURN_FORMAT_UINT32;
+      break;
+   default:
+      return_format = BRW_SAMPLER_RETURN_FORMAT_FLOAT32;
+      break;
+   }
+
+   brw_SAMPLE(p,
+	      dst,
+	      inst->base_mrf,
+	      src,
+	      SURF_INDEX_TEXTURE(inst->sampler),
+	      inst->sampler,
+	      WRITEMASK_XYZW,
+	      msg_type,
+	      1, /* response length */
+	      inst->mlen,
+	      inst->header_present,
+	      BRW_SAMPLER_SIMD_MODE_SIMD4X2,
+	      return_format);
+}
+
+void
 vec4_visitor::generate_urb_write(vec4_instruction *inst)
 {
    brw_urb_WRITE(p,
@@ -591,6 +689,14 @@ vec4_visitor::generate_vs_instruction(vec4_instruction *instruction,
       } else {
 	 generate_math2_gen4(inst, dst, src[0], src[1]);
       }
+      break;
+
+   case SHADER_OPCODE_TEX:
+   case SHADER_OPCODE_TXD:
+   case SHADER_OPCODE_TXF:
+   case SHADER_OPCODE_TXL:
+   case SHADER_OPCODE_TXS:
+      generate_tex(inst, dst, src[0]);
       break;
 
    case VS_OPCODE_URB_WRITE:
