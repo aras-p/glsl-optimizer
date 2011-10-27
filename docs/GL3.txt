@@ -13,6 +13,7 @@ Feature                                               Status
 GL 3.0:
 
 GLSL 1.30 (GL_EXT_gpu_shader4, etc.)                  started
+glBindFragDataLocation, glGetFragDataLocation         not started
 Conditional rendering (GL_NV_conditional_render)      DONE (swrast, softpipe, i965)
 Map buffer subranges (GL_ARB_map_buffer_range)        DONE
 Clamping controls (GL_ARB_color_buffer_float)         DONE
@@ -24,14 +25,12 @@ Framebuffer objects (GL_EXT_framebuffer_object)       DONE
 Half-float                                            DONE
 Multisample blit                                      DONE
 Non-normalized Integer texture/framebuffer formats    ~50% done
-1D/2D Texture arrays                                  core Mesa, swrast done
+1D/2D Texture arrays                                  DONE (gallium, swrast)
 Packed depth/stencil formats                          DONE
 Per-buffer blend and masks (GL_EXT_draw_buffers2)     DONE
 GL_EXT_texture_compression_rgtc                       DONE (swrast, gallium r600)
 Red and red/green texture formats                     DONE (swrast, i965, gallium)
 Transform feedback (GL_EXT_transform_feedback)        ~50% done
-   glBindFragDataLocation, glGetFragDataLocation,
-   glBindBufferRange, glBindBufferBase commands
 Vertex array objects (GL_APPLE_vertex_array_object)   DONE
 sRGB framebuffer format (GL_EXT_framebuffer_sRGB)     core GL done (i965, gallium), GLX todo
 glClearBuffer commands                                DONE
@@ -39,7 +38,7 @@ glGetStringi command                                  DONE
 glTexParameterI, glGetTexParameterI commands          DONE
 glVertexAttribI commands                              DONE (but converts int
                                                             values to floats)
-Depth format cube textures                            0% done
+Depth format cube textures                            not started
 GLX_ARB_create_context (GLX 1.4 is required)          not started
 
 
@@ -99,7 +98,7 @@ GL_ARB_tessellation_shader                           not started
 GL_ARB_texture_buffer_object_rgb32                   not started
 GL_ARB_texture_cube_map_array                        not started
 GL_ARB_texture_gather                                not started
-GL_ARB_transform_feedback2                           not started
+GL_ARB_transform_feedback2                           started
 GL_ARB_transform_feedback3                           not started
 
 
