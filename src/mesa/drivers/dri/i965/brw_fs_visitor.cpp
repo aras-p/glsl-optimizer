@@ -1086,7 +1086,7 @@ fs_visitor::visit(ir_texture *ir)
 
       /* Explicitly set up the message header by copying g0 to msg reg m1. */
       emit(BRW_OPCODE_MOV, fs_reg(MRF, 1, BRW_REGISTER_TYPE_UD),
-	   fs_reg(GRF, 0, BRW_REGISTER_TYPE_UD));
+	   fs_reg(retype(brw_vec8_grf(0, 0), BRW_REGISTER_TYPE_UD)));
 
       /* Then set the offset bits in DWord 2 of the message header. */
       emit(BRW_OPCODE_MOV,
