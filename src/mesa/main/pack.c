@@ -1983,6 +1983,7 @@ _mesa_pack_rgba_span_float(struct gl_context *ctx, GLuint n, GLfloat rgba[][4],
          break;
       default:
          _mesa_problem(ctx, "bad type in _mesa_pack_rgba_span_float");
+         free(luminance);
          return;
    }
 
