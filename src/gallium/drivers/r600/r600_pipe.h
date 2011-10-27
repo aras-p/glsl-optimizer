@@ -229,7 +229,6 @@ struct r600_pipe_context {
 
 	struct u_vbuf_mgr		*vbuf_mgr;
 	struct util_slab_mempool	pool_transfers;
-	boolean				blit;
 	boolean				have_depth_texture, have_depth_fb;
 
 	unsigned default_ps_gprs, default_vs_gprs;

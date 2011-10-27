@@ -24,6 +24,7 @@
  * Authors: Dave Airlie <airlied@redhat.com>
  *          Jerome Glisse <jglisse@redhat.com>
  */
+#include "util/u_blitter.h"
 #include "util/u_memory.h"
 #include "util/u_format.h"
 #include "pipebuffer/pb_buffer.h"
@@ -554,7 +555,7 @@ static int r600_shader_rebuild(struct pipe_context * ctx, struct r600_pipe_shade
 
 static void r600_update_derived_state(struct r600_pipe_context *rctx)
 {
-	if (!rctx->blit) {
+	if (!rctx->blitter->running) {
 		if (rctx->have_depth_fb || rctx->have_depth_texture)
 			r600_flush_depth_textures(rctx);
 	}

@@ -45,7 +45,6 @@ static void r600_blitter_begin(struct pipe_context *ctx, enum r600_blitter_op op
 {
 	struct r600_pipe_context *rctx = (struct r600_pipe_context *)ctx;
 
-	rctx->blit = true;
 	r600_context_queries_suspend(&rctx->ctx);
 
 	util_blitter_save_blend(rctx->blitter, rctx->states[R600_PIPE_STATE_BLEND]);
@@ -98,7 +97,6 @@ static void r600_blitter_end(struct pipe_context *ctx)
 		rctx->saved_render_cond = NULL;
 	}
 	r600_context_queries_resume(&rctx->ctx, FALSE);
-	rctx->blit = false;
 }
 
 static unsigned u_num_layers(struct pipe_resource *r, unsigned level)
