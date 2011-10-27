@@ -454,6 +454,8 @@ void svga_context_flush( struct svga_context *svga,
                          struct pipe_fence_handle **pfence );
 
 void svga_hwtnl_flush_retry( struct svga_context *svga );
+void svga_hwtnl_flush_buffer( struct svga_context *svga,
+                              struct pipe_resource *buffer );
 
 void svga_surfaces_flush(struct svga_context *svga);
 

@@ -128,6 +128,39 @@ void svga_hwtnl_vdecl( struct svga_hwtnl *hwtnl,
 }
 
 
+/**
+ * Determine whether the specified buffer is referred in the primitive queue,
+ * for which no commands have been written yet.
+ */
+boolean
+svga_hwtnl_is_buffer_referred( struct svga_hwtnl *hwtnl,
+                               struct pipe_resource *buffer)
+{
+   unsigned i;
+
+   if (svga_buffer_is_user_buffer(buffer)) {
+      return FALSE;
+   }
+
+   if (!hwtnl->cmd.prim_count) {
+      return FALSE;
+   }
+
+   for (i = 0; i < hwtnl->cmd.vdecl_count; ++i) {
+      if (hwtnl->cmd.vdecl_vb[i] == buffer) {
+         return TRUE;
+      }
+   }
+
+   for (i = 0; i < hwtnl->cmd.prim_count; ++i) {
+      if (hwtnl->cmd.prim_ib[i] == buffer) {
+         return TRUE;
+      }
+   }
+
+   return FALSE;
+}
+
 
 enum pipe_error
 svga_hwtnl_flush( struct svga_hwtnl *hwtnl )

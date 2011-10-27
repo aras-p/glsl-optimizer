@@ -259,6 +259,20 @@ void svga_hwtnl_flush_retry( struct svga_context *svga )
 }
 
 
+/**
+ * Flush the primitive queue if this buffer is referred.
+ *
+ * Otherwise DMA commands on the referred buffer will be emitted too late.
+ */
+void svga_hwtnl_flush_buffer( struct svga_context *svga,
+                              struct pipe_resource *buffer )
+{
+   if (svga_hwtnl_is_buffer_referred(svga->hwtnl, buffer)) {
+      svga_hwtnl_flush_retry(svga);
+   }
+}
+
+
 /* Emit all operations pending on host surfaces.
  */ 
 void svga_surfaces_flush(struct svga_context *svga)

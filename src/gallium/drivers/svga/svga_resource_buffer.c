@@ -87,9 +87,12 @@ svga_buffer_get_transfer(struct pipe_context *pipe,
    if (usage & PIPE_TRANSFER_WRITE) {
       if (usage & PIPE_TRANSFER_DISCARD_WHOLE_RESOURCE) {
          /*
-          * Finish writing any pending DMA commands, and tell the host to discard
-          * the buffer contents on the next DMA operation.
+          * Flush any pending primitives, finish writing any pending DMA
+          * commands, and tell the host to discard the buffer contents on
+          * the next DMA operation.
           */
+
+         svga_hwtnl_flush_buffer(svga, resource);
 
          if (sbuf->dma.pending) {
             svga_buffer_upload_flush(svga, sbuf);
@@ -117,9 +120,11 @@ svga_buffer_get_transfer(struct pipe_context *pipe,
          }
       } else {
          /*
-          * Synchronizing, so finish writing any pending DMA command, and
-          * ensure the next DMA will be done in order.
+          * Synchronizing, so flush any pending primitives, finish writing any
+          * pending DMA command, and ensure the next DMA will be done in order.
           */
+
+         svga_hwtnl_flush_buffer(svga, resource);
 
          if (sbuf->dma.pending) {
             svga_buffer_upload_flush(svga, sbuf);
