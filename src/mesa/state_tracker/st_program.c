@@ -416,6 +416,20 @@ st_get_vp_variant(struct st_context *st,
    return vpv;
 }
 
+static int st_translate_interp(enum glsl_interp_qualifier glsl_qual)
+{
+   switch (glsl_qual) {
+   case INTERP_QUALIFIER_NONE:
+   case INTERP_QUALIFIER_SMOOTH:
+      return TGSI_INTERPOLATE_PERSPECTIVE;
+   case INTERP_QUALIFIER_FLAT:
+      return TGSI_INTERPOLATE_CONSTANT;
+   case INTERP_QUALIFIER_NOPERSPECTIVE:
+      return TGSI_INTERPOLATE_LINEAR;
+   }
+   assert(0);
+   return TGSI_INTERPOLATE_PERSPECTIVE;
+}
 
 /**
  * Translate a Mesa fragment shader into a TGSI shader using extra info in
@@ -558,7 +572,7 @@ st_translate_fragment_program(struct st_context *st,
                if (attr == FRAG_ATTRIB_PNTC)
                   interpMode[slot] = TGSI_INTERPOLATE_LINEAR;
                else
-                  interpMode[slot] = TGSI_INTERPOLATE_PERSPECTIVE;
+                  interpMode[slot] = st_translate_interp(stfp->Base.InterpQualifier[attr]);
                break;
             }
          }
