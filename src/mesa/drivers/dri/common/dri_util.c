@@ -258,69 +258,6 @@ __driUtilUpdateDrawableInfo(__DRIdrawable *pdp)
     DRM_SPINLOCK(&psp->pSAREA->drawable_lock, psp->drawLockID);
 }
 
-/*@}*/
-
-/*****************************************************************/
-/** \name GLX callbacks                                          */
-/*****************************************************************/
-/*@{*/
-
-static void driReportDamage(__DRIdrawable *pdp,
-			    struct drm_clip_rect *pClipRects, int numClipRects)
-{
-    __DRIscreen *psp = pdp->driScreenPriv;
-
-    /* Check that we actually have the new damage report method */
-    if (psp->damage) {
-	/* Report the damage.  Currently, all our drivers draw
-	 * directly to the front buffer, so we report the damage there
-	 * rather than to the backing storein (if any).
-	 */
-	(*psp->damage->reportDamage)(pdp,
-				     pdp->x, pdp->y,
-				     pClipRects, numClipRects,
-				     GL_TRUE, pdp->loaderPrivate);
-    }
-}
-
-
-/**
- * Swap buffers.
- *
- * \param drawablePrivate opaque pointer to the per-drawable private info.
- * 
- * \internal
- * This function calls __DRIdrawable::swapBuffers.
- * 
- * Is called directly from glXSwapBuffers().
- */
-static void driSwapBuffers(__DRIdrawable *dPriv)
-{
-    __DRIscreen *psp = dPriv->driScreenPriv;
-    drm_clip_rect_t *rects;
-    int i;
-
-    psp->DriverAPI.SwapBuffers(dPriv);
-
-    if (!dPriv->numClipRects)
-        return;
-
-    rects = malloc(sizeof(*rects) * dPriv->numClipRects);
-
-    if (!rects)
-        return;
-
-    for (i = 0; i < dPriv->numClipRects; i++) {
-        rects[i].x1 = dPriv->pClipRects[i].x1 - dPriv->x;
-        rects[i].y1 = dPriv->pClipRects[i].y1 - dPriv->y;
-        rects[i].x2 = dPriv->pClipRects[i].x2 - dPriv->x;
-        rects[i].y2 = dPriv->pClipRects[i].y2 - dPriv->y;
-    }
-
-    driReportDamage(dPriv, rects, dPriv->numClipRects);
-    free(rects);
-}
-
 static __DRIdrawable *
 dri2CreateNewDrawable(__DRIscreen *screen,
 		      const __DRIconfig *config,
@@ -682,7 +619,7 @@ const __DRIcoreExtension driCoreExtension = {
     driIndexConfigAttrib,
     NULL,
     driDestroyDrawable,
-    driSwapBuffers,
+    NULL,
     NULL,
     driCopyContext,
     driDestroyContext,
