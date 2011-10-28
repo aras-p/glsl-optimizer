@@ -1637,8 +1637,6 @@ void r600_query_begin(struct r600_context *ctx, struct r600_query *query)
 
 	/* collect current results if query buffer is full */
 	if (new_results_end == query->results_start) {
-		if (!query->flushed)
-			r600_context_flush(ctx, 0);
 		r600_query_result(ctx, query, TRUE);
 	}
 
@@ -1817,9 +1815,6 @@ boolean r600_context_query_result(struct r600_context *ctx,
 {
 	uint64_t *result = (uint64_t*)vresult;
 
-	if (!query->flushed) {
-		r600_context_flush(ctx, 0);
-	}
 	if (!r600_query_result(ctx, query, wait))
 		return FALSE;
 
