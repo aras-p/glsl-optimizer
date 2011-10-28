@@ -943,14 +943,6 @@ const __DRIcoreExtension driCoreExtension = {
     driUnbindContext
 };
 
-/** Legacy DRI interface */
-const __DRIlegacyExtension driLegacyExtension = {
-    { __DRI_LEGACY, __DRI_LEGACY_VERSION },
-    driCreateNewScreen,
-    driCreateNewDrawable,
-    driCreateNewContext,
-};
-
 /** DRI2 interface */
 const __DRIdri2Extension driDRI2Extension = {
     { __DRI_DRI2, __DRI_DRI2_VERSION },
