@@ -110,7 +110,7 @@ upload_ps_state(struct brw_context *brw)
    /* CACHE_NEW_SAMPLER */
    BEGIN_BATCH(2);
    OUT_BATCH(_3DSTATE_SAMPLER_STATE_POINTERS_PS << 16 | (2 - 2));
-   OUT_BATCH(brw->wm.sampler_offset);
+   OUT_BATCH(brw->sampler.offset);
    ADVANCE_BATCH();
 
    /* CACHE_NEW_WM_PROG */
@@ -144,7 +144,7 @@ upload_ps_state(struct brw_context *brw)
 
    dw2 = dw4 = dw5 = 0;
 
-   dw2 |= (ALIGN(brw->wm.sampler_count, 4) / 4) << GEN7_PS_SAMPLER_COUNT_SHIFT;
+   dw2 |= (ALIGN(brw->sampler.count, 4) / 4) << GEN7_PS_SAMPLER_COUNT_SHIFT;
 
    /* Use ALT floating point mode for ARB fragment programs, because they
     * require 0^0 == 1.

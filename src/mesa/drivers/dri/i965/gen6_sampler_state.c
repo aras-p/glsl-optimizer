@@ -43,7 +43,7 @@ upload_sampler_state_pointers(struct brw_context *brw)
 	     (4 - 2));
    OUT_BATCH(0); /* VS */
    OUT_BATCH(0); /* GS */
-   OUT_BATCH(brw->wm.sampler_offset);
+   OUT_BATCH(brw->sampler.offset);
    ADVANCE_BATCH();
 }
 

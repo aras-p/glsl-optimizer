@@ -70,7 +70,8 @@ static const struct brw_tracked_state *gen4_atoms[] =
    &brw_renderbuffer_surfaces,  /* must do before unit */
    &brw_texture_surfaces,       /* must do before unit */
    &brw_binding_table,
-   &brw_wm_samplers,
+
+   &brw_samplers,
 
    /* These set up state for brw_psp_urb_cbs */
    &brw_wm_unit,
@@ -144,7 +145,7 @@ static const struct brw_tracked_state *gen6_atoms[] =
    &brw_texture_surfaces,       /* must do before unit */
    &brw_binding_table,
 
-   &brw_wm_samplers,
+   &brw_samplers,
    &gen6_sampler_state,
 
    &gen6_vs_state,

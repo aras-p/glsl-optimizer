@@ -190,21 +190,21 @@ gen7_upload_samplers(struct brw_context *brw)
    struct gen7_sampler_state *samplers;
    int i;
 
-   brw->wm.sampler_count = 0;
+   brw->sampler.count = 0;
    for (i = 0; i < BRW_MAX_TEX_UNIT; i++) {
       if (ctx->Texture.Unit[i]._ReallyEnabled)
-	 brw->wm.sampler_count = i + 1;
+	 brw->sampler.count = i + 1;
    }
 
-   if (brw->wm.sampler_count == 0)
+   if (brw->sampler.count == 0)
       return;
 
    samplers = brw_state_batch(brw, AUB_TRACE_SAMPLER_STATE,
-			      brw->wm.sampler_count * sizeof(*samplers),
-			      32, &brw->wm.sampler_offset);
-   memset(samplers, 0, brw->wm.sampler_count * sizeof(*samplers));
+			      brw->sampler.count * sizeof(*samplers),
+			      32, &brw->sampler.offset);
+   memset(samplers, 0, brw->sampler.count * sizeof(*samplers));
 
-   for (i = 0; i < brw->wm.sampler_count; i++) {
+   for (i = 0; i < brw->sampler.count; i++) {
       if (ctx->Texture.Unit[i]._ReallyEnabled)
 	 gen7_update_sampler_state(brw, i, &samplers[i]);
    }

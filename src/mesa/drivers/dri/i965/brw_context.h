@@ -745,6 +745,12 @@ struct brw_context
       uint32_t surf_offset[BRW_MAX_SURFACES];
    } bind;
 
+   /** SAMPLER_STATE count and offset */
+   struct {
+      GLuint count;
+      uint32_t offset;
+   } sampler;
+
    struct {
       struct brw_vs_prog_data *prog_data;
       int8_t *constant_map; /* variable array following prog_data */
@@ -826,9 +832,6 @@ struct brw_context
       GLuint render_surf;
 
       drm_intel_bo *scratch_bo;
-
-      GLuint sampler_count;
-      uint32_t sampler_offset;
 
       /** Offset in the program cache to the WM program */
       uint32_t prog_offset;

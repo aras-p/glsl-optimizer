@@ -306,7 +306,7 @@ static void brw_update_sampler_state(struct brw_context *brw,
 					    brw->wm.sdc_offset[unit]) >> 5;
 
       drm_intel_bo_emit_reloc(intel->batch.bo,
-			      brw->wm.sampler_offset +
+			      brw->sampler.offset +
 			      unit * sizeof(struct brw_sampler_state) +
 			      offsetof(struct brw_sampler_state, ss2),
 			      intel->batch.bo, brw->wm.sdc_offset[unit],
@@ -329,27 +329,27 @@ static void brw_update_sampler_state(struct brw_context *brw,
  * FIXME: simplify all the different new texture state flags.
  */
 static void
-brw_upload_wm_samplers(struct brw_context *brw)
+brw_upload_samplers(struct brw_context *brw)
 {
    struct gl_context *ctx = &brw->intel.ctx;
    struct brw_sampler_state *samplers;
    int i;
 
-   brw->wm.sampler_count = 0;
+   brw->sampler.count = 0;
    for (i = 0; i < BRW_MAX_TEX_UNIT; i++) {
       if (ctx->Texture.Unit[i]._ReallyEnabled)
-	 brw->wm.sampler_count = i + 1;
+	 brw->sampler.count = i + 1;
    }
 
-   if (brw->wm.sampler_count == 0)
+   if (brw->sampler.count == 0)
       return;
 
    samplers = brw_state_batch(brw, AUB_TRACE_SAMPLER_STATE,
-			      brw->wm.sampler_count * sizeof(*samplers),
-			      32, &brw->wm.sampler_offset);
-   memset(samplers, 0, brw->wm.sampler_count * sizeof(*samplers));
+			      brw->sampler.count * sizeof(*samplers),
+			      32, &brw->sampler.offset);
+   memset(samplers, 0, brw->sampler.count * sizeof(*samplers));
 
-   for (i = 0; i < brw->wm.sampler_count; i++) {
+   for (i = 0; i < brw->sampler.count; i++) {
       if (ctx->Texture.Unit[i]._ReallyEnabled)
 	 brw_update_sampler_state(brw, i, &samplers[i]);
    }
@@ -357,13 +357,13 @@ brw_upload_wm_samplers(struct brw_context *brw)
    brw->state.dirty.cache |= CACHE_NEW_SAMPLER;
 }
 
-const struct brw_tracked_state brw_wm_samplers = {
+const struct brw_tracked_state brw_samplers = {
    .dirty = {
       .mesa = _NEW_TEXTURE,
       .brw = BRW_NEW_BATCH,
       .cache = 0
    },
-   .emit = brw_upload_wm_samplers,
+   .emit = brw_upload_samplers,
 };
 
 
