@@ -171,11 +171,6 @@ extern const struct __DriverAPIRec driDriverAPI;
  */
 struct __DRIdrawableRec {
     /**
-     * Kernel drawable handle
-     */
-    drm_drawable_t hHWDrawable;
-
-    /**
      * Driver's private drawable information.  
      *
      * This structure is opaque.
@@ -199,11 +194,6 @@ struct __DRIdrawableRec {
     int refcount;
 
     /**
-     * Index of this drawable information in the SAREA.
-     */
-    unsigned int index;
-
-    /**
      * Pointer to the "drawable has changed ID" stamp in the SAREA (or
      * to dri2.stamp if DRI2 is being used).
      */
@@ -221,32 +211,6 @@ struct __DRIdrawableRec {
     int w, h;
 
     /**
-     * \name Vertical blank tracking information
-     * Used for waiting on vertical blank events.
-     */
-    /*@{*/
-    unsigned int vblSeq;
-    unsigned int vblFlags;
-    /*@}*/
-
-    /**
-     * \name Monotonic MSC tracking
-     *
-     * Low level driver is responsible for updating msc_base and
-     * vblSeq values so that higher level code can calculate
-     * a new msc value or msc target for a WaitMSC call.  The new value
-     * will be:
-     *   msc = msc_base + get_vblank_count() - vblank_base;
-     *
-     * And for waiting on a value, core code will use:
-     *   actual_target = target_msc - msc_base + vblank_base;
-     */
-    /*@{*/
-    int64_t vblank_base;
-    int64_t msc_base;
-    /*@}*/
-
-    /**
      * Pointer to context to which this drawable is currently bound.
      */
     __DRIcontext *driContextPriv;
@@ -255,12 +219,6 @@ struct __DRIdrawableRec {
      * Pointer to screen on which this drawable was created.
      */
     __DRIscreen *driScreenPriv;
-
-    /**
-     * Controls swap interval as used by GLX_SGI_swap_control and
-     * GLX_MESA_swap_control.
-     */
-    unsigned int swap_interval;
 
     struct {
 	unsigned int stamp;
@@ -271,11 +229,6 @@ struct __DRIdrawableRec {
  * Per-context private driver information.
  */
 struct __DRIcontextRec {
-    /**
-     * Kernel context handle used to access the device lock.
-     */
-    drm_context_t hHWContext;
-
     /**
      * Device driver's private context data.  This structure is opaque.
      */
@@ -322,28 +275,11 @@ struct __DRIscreenRec {
     struct __DriverAPIRec DriverAPI;
 
     const __DRIextension **extensions;
-    /**
-     * DDX / 2D driver version information.
-     */
-    __DRIversion ddx_version;
-
-    /**
-     * DRI X extension version information.
-     */
-    __DRIversion dri_version;
 
     /**
      * DRM (kernel module) version information.
      */
     __DRIversion drm_version;
-
-    /**
-     * ID used when the client sets the drawable lock.
-     *
-     * The X server uses this value to detect if the client has died while
-     * holding the drawable lock.
-     */
-    int drawLockID;
 
     /**
      * File descriptor returned when the kernel device driver is opened.
@@ -356,39 +292,6 @@ struct __DRIscreenRec {
     int fd;
 
     /**
-     * SAREA pointer 
-     *
-     * Used to access:
-     *   - the device lock
-     *   - the device-independent per-drawable and per-context(?) information
-     */
-    drm_sarea_t *pSAREA;
-
-    /**
-     * \name Direct frame buffer access information 
-     * Used for software fallbacks.
-     */
-    /*@{*/
-    unsigned char *pFB;
-    int fbSize;
-    int fbOrigin;
-    int fbStride;
-    int fbWidth;
-    int fbHeight;
-    int fbBPP;
-    /*@}*/
-
-    /**
-     * \name Device-dependent private information (stored in the SAREA).
-     *
-     * This data is accessed by the client driver only.
-     */
-    /*@{*/
-    void *pDevPriv;
-    int devPrivSize;
-    /*@}*/
-
-    /**
      * Device-dependent private information (not stored in the SAREA).
      * 
      * This pointer is never touched by the DRI layer.
@@ -399,11 +302,6 @@ struct __DRIscreenRec {
     void *private;
 #endif
 
-    /* Extensions provided by the loader. */
-    const __DRIgetDrawableInfoExtension *getDrawableInfo;
-    const __DRIsystemTimeExtension *systemTime;
-    const __DRIdamageExtension *damage;
-
     struct {
 	/* Flag to indicate that this is a DRI2 screen.  Many of the above
 	 * fields will not be valid or initializaed in that case. */
@@ -412,9 +310,6 @@ struct __DRIscreenRec {
 	__DRIimageLookupExtension *image;
 	__DRIuseInvalidateExtension *useInvalidate;
     } dri2;
-
-    /* The lock actually in use, old sarea or DRI2 */
-    drmLock *lock;
 
     driOptionCache optionInfo;
     driOptionCache optionCache;

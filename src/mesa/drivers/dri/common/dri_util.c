@@ -170,30 +170,17 @@ dri2CreateNewDrawable(__DRIscreen *screen,
 
     pdraw->driContextPriv = NULL;
     pdraw->loaderPrivate = loaderPrivate;
-    pdraw->hHWDrawable = 0;
     pdraw->refcount = 1;
     pdraw->pStamp = NULL;
     pdraw->lastStamp = 0;
-    pdraw->index = 0;
     pdraw->w = 0;
     pdraw->h = 0;
-    pdraw->vblSeq = 0;
-    pdraw->vblFlags = 0;
-
     pdraw->driScreenPriv = screen;
 
     if (!(*screen->DriverAPI.CreateBuffer)(screen, pdraw, &config->modes, 0)) {
        free(pdraw);
        return NULL;
     }
-
-    pdraw->msc_base = 0;
-
-    /* This special default value is replaced with the configured
-     * default value when the drawable is first bound to a direct
-     * rendering context. 
-     */
-    pdraw->swap_interval = (unsigned)-1;
 
     pdraw->pStamp = &pdraw->dri2.stamp;
     *pdraw->pStamp = pdraw->lastStamp + 1;
@@ -398,14 +385,8 @@ static void driDestroyScreen(__DRIscreen *psp)
 	if (psp->DriverAPI.DestroyScreen)
 	    (*psp->DriverAPI.DestroyScreen)(psp);
 
-	if (!psp->dri2.enabled) {
-	   (void)drmUnmap((drmAddress)psp->pSAREA, SAREA_MAX);
-	   (void)drmUnmap((drmAddress)psp->pFB, psp->fbSize);
-	   (void)drmCloseOnce(psp->fd);
-	} else {
-	   driDestroyOptionCache(&psp->optionCache);
-	   driDestroyOptionInfo(&psp->optionInfo);
-	}
+	driDestroyOptionCache(&psp->optionCache);
+	driDestroyOptionInfo(&psp->optionInfo);
 
 	free(psp);
     }
@@ -418,12 +399,6 @@ setupLoaderExtensions(__DRIscreen *psp,
     int i;
 
     for (i = 0; extensions[i]; i++) {
-	if (strcmp(extensions[i]->name, __DRI_GET_DRAWABLE_INFO) == 0)
-	    psp->getDrawableInfo = (__DRIgetDrawableInfoExtension *) extensions[i];
-	if (strcmp(extensions[i]->name, __DRI_DAMAGE) == 0)
-	    psp->damage = (__DRIdamageExtension *) extensions[i];
-	if (strcmp(extensions[i]->name, __DRI_SYSTEM_TIME) == 0)
-	    psp->systemTime = (__DRIsystemTimeExtension *) extensions[i];
 	if (strcmp(extensions[i]->name, __DRI_DRI2_LOADER) == 0)
 	    psp->dri2.loader = (__DRIdri2LoaderExtension *) extensions[i];
 	if (strcmp(extensions[i]->name, __DRI_IMAGE_LOOKUP) == 0)

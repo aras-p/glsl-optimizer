@@ -197,14 +197,8 @@ GLboolean radeonInitContext(radeonContextPtr radeon,
 	/* DRI fields */
 	radeon->dri.context = driContextPriv;
 	radeon->dri.screen = sPriv;
-	radeon->dri.hwContext = driContextPriv->hHWContext;
-	radeon->dri.hwLock = &sPriv->pSAREA->lock;
-	radeon->dri.hwLockCount = 0;
 	radeon->dri.fd = sPriv->fd;
 	radeon->dri.drmMinor = sPriv->drm_version.minor;
-
-	radeon->sarea = (drm_radeon_sarea_t *) ((GLubyte *) sPriv->pSAREA +
-					       screen->sarea_priv_offset);
 
 	/* Setup IRQs */
 	fthrottle_mode = driQueryOptioni(&radeon->optionCache, "fthrottle_mode");
