@@ -321,64 +321,6 @@ static void driSwapBuffers(__DRIdrawable *dPriv)
     free(rects);
 }
 
-/**
- * This is called via __DRIscreenRec's createNewDrawable pointer.
- */
-static __DRIdrawable *
-driCreateNewDrawable(__DRIscreen *psp, const __DRIconfig *config,
-		     drm_drawable_t hwDrawable, int renderType,
-		     const int *attrs, void *data)
-{
-    __DRIdrawable *pdp;
-
-    /* Since pbuffers are not yet supported, no drawable attributes are
-     * supported either.
-     */
-    (void) attrs;
-    (void) renderType;
-
-    pdp = malloc(sizeof *pdp);
-    if (!pdp) {
-	return NULL;
-    }
-
-    pdp->driContextPriv = NULL;
-    pdp->loaderPrivate = data;
-    pdp->hHWDrawable = hwDrawable;
-    pdp->refcount = 1;
-    pdp->pStamp = NULL;
-    pdp->lastStamp = 0;
-    pdp->index = 0;
-    pdp->x = 0;
-    pdp->y = 0;
-    pdp->w = 0;
-    pdp->h = 0;
-    pdp->numClipRects = 0;
-    pdp->numBackClipRects = 0;
-    pdp->pClipRects = NULL;
-    pdp->pBackClipRects = NULL;
-    pdp->vblSeq = 0;
-    pdp->vblFlags = 0;
-
-    pdp->driScreenPriv = psp;
-
-    if (!(*psp->DriverAPI.CreateBuffer)(psp, pdp, &config->modes, 0)) {
-       free(pdp);
-       return NULL;
-    }
-
-    pdp->msc_base = 0;
-
-    /* This special default value is replaced with the configured
-     * default value when the drawable is first bound to a direct
-     * rendering context. 
-     */
-    pdp->swap_interval = (unsigned)-1;
-
-    return pdp;
-}
-
-
 static __DRIdrawable *
 dri2CreateNewDrawable(__DRIscreen *screen,
 		      const __DRIconfig *config,
@@ -386,9 +328,42 @@ dri2CreateNewDrawable(__DRIscreen *screen,
 {
     __DRIdrawable *pdraw;
 
-    pdraw = driCreateNewDrawable(screen, config, 0, 0, NULL, loaderPrivate);
+    pdraw = malloc(sizeof *pdraw);
     if (!pdraw)
-    	return NULL;
+	return NULL;
+
+    pdraw->driContextPriv = NULL;
+    pdraw->loaderPrivate = loaderPrivate;
+    pdraw->hHWDrawable = 0;
+    pdraw->refcount = 1;
+    pdraw->pStamp = NULL;
+    pdraw->lastStamp = 0;
+    pdraw->index = 0;
+    pdraw->x = 0;
+    pdraw->y = 0;
+    pdraw->w = 0;
+    pdraw->h = 0;
+    pdraw->numClipRects = 0;
+    pdraw->numBackClipRects = 0;
+    pdraw->pClipRects = NULL;
+    pdraw->pBackClipRects = NULL;
+    pdraw->vblSeq = 0;
+    pdraw->vblFlags = 0;
+
+    pdraw->driScreenPriv = screen;
+
+    if (!(*screen->DriverAPI.CreateBuffer)(screen, pdraw, &config->modes, 0)) {
+       free(pdraw);
+       return NULL;
+    }
+
+    pdraw->msc_base = 0;
+
+    /* This special default value is replaced with the configured
+     * default value when the drawable is first bound to a direct
+     * rendering context. 
+     */
+    pdraw->swap_interval = (unsigned)-1;
 
     pdraw->pClipRects = &pdraw->dri2.clipRect;
     pdraw->pBackClipRects = &pdraw->dri2.clipRect;
