@@ -50,14 +50,6 @@ typedef GLboolean ( * PFNGLXGETMSCRATEOMLPROC) (__DRIdrawable *drawable, int32_t
 static void dri_get_drawable(__DRIdrawable *pdp);
 static void dri_put_drawable(__DRIdrawable *pdp);
 
-/**
- * This is just a token extension used to signal that the driver
- * supports setting a read drawable.
- */
-const __DRIextension driReadDrawableExtension = {
-    __DRI_READ_DRAWABLE, __DRI_READ_DRAWABLE_VERSION
-};
-
 GLint
 driIntersectArea( drm_clip_rect_t rect1, drm_clip_rect_t rect2 )
 {

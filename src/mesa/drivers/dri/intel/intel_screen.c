@@ -326,7 +326,6 @@ static struct __DRIimageExtensionRec intelImageExtension = {
 };
 
 static const __DRIextension *intelScreenExtensions[] = {
-    &driReadDrawableExtension,
     &intelTexBufferExtension.base,
     &intelFlushExtension.base,
     &intelImageExtension.base,
