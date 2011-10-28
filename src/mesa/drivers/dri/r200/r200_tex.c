@@ -502,7 +502,6 @@ void r200InitTextureFuncs( radeonContextPtr radeon, struct dd_function_table *fu
    functions->NewTextureObject		= r200NewTextureObject;
    //   functions->BindTexture		= r200BindTexture;
    functions->DeleteTexture		= r200DeleteTexture;
-   functions->IsTextureResident		= driIsTextureResident;
 
    functions->TexEnv			= r200TexEnv;
    functions->TexParameter		= r200TexParameter;
