@@ -1099,9 +1099,6 @@ radeonCreateScreen2(__DRIscreen *sPriv)
    i = 0;
    screen->extensions[i++] = &dri2ConfigQueryExtension.base;
 
-   if ( screen->irq != 0 )
-       screen->extensions[i++] = &driMediaStreamCounterExtension.base;
-
 #if defined(RADEON_R100)
    screen->extensions[i++] = &radeonTexBufferExtension.base;
 #endif

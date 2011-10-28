@@ -321,45 +321,6 @@ static void driSwapBuffers(__DRIdrawable *dPriv)
     free(rects);
 }
 
-static int driDrawableGetMSC( __DRIscreen *sPriv, __DRIdrawable *dPriv,
-			      int64_t *msc )
-{
-    return sPriv->DriverAPI.GetDrawableMSC(sPriv, dPriv, msc);
-}
-
-
-static int driWaitForMSC(__DRIdrawable *dPriv, int64_t target_msc,
-			 int64_t divisor, int64_t remainder,
-			 int64_t * msc, int64_t * sbc)
-{
-    __DRIswapInfo  sInfo;
-    int  status;
-
-    status = dPriv->driScreenPriv->DriverAPI.WaitForMSC( dPriv, target_msc,
-                                                         divisor, remainder,
-                                                         msc );
-
-    /* GetSwapInfo() may not be provided by the driver if GLX_SGI_video_sync
-     * is supported but GLX_OML_sync_control is not.  Therefore, don't return
-     * an error value if GetSwapInfo() is not implemented.
-    */
-    if ( status == 0
-         && dPriv->driScreenPriv->DriverAPI.GetSwapInfo ) {
-        status = dPriv->driScreenPriv->DriverAPI.GetSwapInfo( dPriv, & sInfo );
-        *sbc = sInfo.swap_count;
-    }
-
-    return status;
-}
-
-
-const __DRImediaStreamCounterExtension driMediaStreamCounterExtension = {
-    { __DRI_MEDIA_STREAM_COUNTER, __DRI_MEDIA_STREAM_COUNTER_VERSION },
-    driWaitForMSC,
-    driDrawableGetMSC,
-};
-
-
 /**
  * This is called via __DRIscreenRec's createNewDrawable pointer.
  */
