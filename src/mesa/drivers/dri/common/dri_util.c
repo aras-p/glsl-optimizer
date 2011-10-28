@@ -50,19 +50,6 @@ typedef GLboolean ( * PFNGLXGETMSCRATEOMLPROC) (__DRIdrawable *drawable, int32_t
 static void dri_get_drawable(__DRIdrawable *pdp);
 static void dri_put_drawable(__DRIdrawable *pdp);
 
-GLint
-driIntersectArea( drm_clip_rect_t rect1, drm_clip_rect_t rect2 )
-{
-   if (rect2.x1 > rect1.x1) rect1.x1 = rect2.x1;
-   if (rect2.x2 < rect1.x2) rect1.x2 = rect2.x2;
-   if (rect2.y1 > rect1.y1) rect1.y1 = rect2.y1;
-   if (rect2.y2 < rect1.y2) rect1.y2 = rect2.y2;
-
-   if (rect1.x1 > rect1.x2 || rect1.y1 > rect1.y2) return 0;
-
-   return (rect1.x2 - rect1.x1) * (rect1.y2 - rect1.y1);
-}
-
 /*****************************************************************/
 /** \name Context (un)binding functions                          */
 /*****************************************************************/

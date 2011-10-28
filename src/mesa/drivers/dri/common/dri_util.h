@@ -452,9 +452,6 @@ extern float
 driCalculateSwapUsage( __DRIdrawable *dPriv,
 		       int64_t last_swap_ust, int64_t current_ust );
 
-extern GLint
-driIntersectArea( drm_clip_rect_t rect1, drm_clip_rect_t rect2 );
-
 extern void
 dri2InvalidateDrawable(__DRIdrawable *drawable);
 
