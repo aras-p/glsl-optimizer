@@ -17,19 +17,11 @@
 
 #include <assert.h>
 #include <stdarg.h>
-#include <unistd.h>
-#include <sys/mman.h>
 #include <stdio.h>
 
-#ifndef MAP_FAILED
-#define MAP_FAILED ((void *)-1)
-#endif
-
 #include "main/imports.h"
-#define None 0
 
 #include "dri_util.h"
-#include "drm_sarea.h"
 #include "utils.h"
 #include "xmlpool.h"
 #include "../glsl/glsl_parser_extras.h"
