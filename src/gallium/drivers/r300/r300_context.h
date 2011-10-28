@@ -293,12 +293,6 @@ struct r300_query {
     /* The buffer where query results are stored. */
     struct pb_buffer *buf;
     struct radeon_winsys_cs_handle *cs_buf;
-    /* The size of the buffer. */
-    unsigned buffer_size;
-
-    /* Linked list members. */
-    struct r300_query* prev;
-    struct r300_query* next;
 };
 
 struct r300_surface {

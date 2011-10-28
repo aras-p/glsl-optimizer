@@ -45,17 +45,14 @@ static struct pipe_query *r300_create_query(struct pipe_context *pipe,
         return NULL;
 
     q->type = query_type;
-    q->buffer_size = 4096;
 
     if (r300screen->caps.family == CHIP_FAMILY_RV530)
         q->num_pipes = r300screen->info.r300_num_z_pipes;
     else
         q->num_pipes = r300screen->info.r300_num_gb_pipes;
 
-    insert_at_tail(&r300->query_list, q);
-
     /* Open up the occlusion query buffer. */
-    q->buf = r300->rws->buffer_create(r300->rws, q->buffer_size, 4096,
+    q->buf = r300->rws->buffer_create(r300->rws, 4096, 4096,
                                          PIPE_BIND_CUSTOM, PIPE_USAGE_STAGING);
     q->cs_buf = r300->rws->buffer_get_cs_handle(q->buf);
 
@@ -68,7 +65,6 @@ static void r300_destroy_query(struct pipe_context* pipe,
     struct r300_query* q = r300_query(query);
 
     pb_reference(&q->buf, NULL);
-    remove_from_list(q);
     FREE(query);
 }
 
