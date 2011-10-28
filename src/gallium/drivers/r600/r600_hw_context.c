@@ -1568,20 +1568,17 @@ void r600_context_emit_fence(struct r600_context *ctx, struct r600_resource *fen
 static boolean r600_query_result(struct r600_context *ctx, struct r600_query *query, boolean wait)
 {
 	unsigned results_base = query->results_start;
-	u64 start, end;
-	u32 *results, *current_result;
+	u32 *map;
 
-	if (wait)
-		results = ctx->screen->ws->buffer_map(query->buffer->buf, ctx->cs, PIPE_TRANSFER_READ);
-	else
-		results = ctx->screen->ws->buffer_map(query->buffer->buf, ctx->cs, PIPE_TRANSFER_DONTBLOCK | PIPE_TRANSFER_READ);
-	if (!results)
+	map = ctx->screen->ws->buffer_map(query->buffer->buf, ctx->cs,
+					  PIPE_TRANSFER_READ | (wait ? 0 : PIPE_TRANSFER_DONTBLOCK));
+	if (!map)
 		return FALSE;
-
 
 	/* count all results across all data blocks */
 	while (results_base != query->results_end) {
-		current_result = (u32*)((char*)results + results_base);
+		u64 start, end;
+		u32 *current_result = (u32*)((char*)map + results_base);
 
 		start = (u64)current_result[0] | (u64)current_result[1] << 32;
 		end = (u64)current_result[2] | (u64)current_result[3] << 32;
