@@ -51,8 +51,6 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 #define STANDALONE_MMIO
 
-#include "vblank.h"
-
 #define RADEON_TIMEOUT             512
 #define RADEON_IDLE_RETRY           16
 

@@ -58,7 +58,6 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #endif
 
 #include "utils.h"
-#include "vblank.h"
 
 #include "GL/internal/dri_interface.h"
 

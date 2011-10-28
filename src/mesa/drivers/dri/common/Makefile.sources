@@ -1,6 +1,5 @@
 mesa_dri_common_gallium_SOURCES := \
 	utils.c \
-	vblank.c \
 	dri_util.c \
 	xmlconfig.c
 

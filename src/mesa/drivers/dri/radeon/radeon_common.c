@@ -50,8 +50,6 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #include "main/renderbuffer.h"
 #include "drivers/common/meta.h"
 
-#include "vblank.h"
-
 #include "radeon_common.h"
 #include "radeon_drm.h"
 #include "radeon_queryobj.h"

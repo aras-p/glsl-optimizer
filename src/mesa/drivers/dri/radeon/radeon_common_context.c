@@ -35,7 +35,6 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #include "radeon_common.h"
 #include "xmlpool.h"		/* for symbolic values of enum-type options */
 #include "utils.h"
-#include "vblank.h"
 #include "drirenderbuffer.h"
 #include "drivers/common/meta.h"
 #include "main/context.h"
@@ -711,15 +710,6 @@ GLboolean radeonMakeCurrent(__DRIcontext * driContextPriv,
 
 	if (radeon->glCtx->DrawBuffer == drfb) {
 		if(driDrawPriv != NULL) {
-			if (driDrawPriv->swap_interval == (unsigned)-1) {
-				driDrawPriv->vblFlags =
-					(radeon->radeonScreen->irq != 0)
-					? driGetDefaultVBlankFlags(&radeon->
-								   optionCache)
-					: VBLANK_FLAG_NO_IRQ;
-
-				driDrawableInitVBlank(driDrawPriv);
-			}
 			radeon_window_moved(radeon);
 		}
 

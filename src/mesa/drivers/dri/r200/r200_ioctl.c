@@ -48,8 +48,6 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #include "r200_ioctl.h"
 #include "radeon_reg.h"
 
-#include "vblank.h"
-
 #define R200_TIMEOUT             512
 #define R200_IDLE_RETRY           16
 
