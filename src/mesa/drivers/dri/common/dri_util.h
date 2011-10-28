@@ -76,8 +76,6 @@ extern const __DRI2configQueryExtension dri2ConfigQueryExtension;
  * this structure.
  */
 struct __DriverAPIRec {
-    const __DRIconfig **(*InitScreen) (__DRIscreen * priv);
-
     /**
      * Screen destruction callback
      */
@@ -110,11 +108,6 @@ struct __DriverAPIRec {
     void (*DestroyBuffer)(__DRIdrawable *driDrawPriv);
 
     /**
-     * Buffer swapping callback 
-     */
-    void (*SwapBuffers)(__DRIdrawable *driDrawPriv);
-
-    /**
      * Context activation callback
      */
     GLboolean (*MakeCurrent)(__DRIcontext *driContextPriv,
@@ -125,33 +118,6 @@ struct __DriverAPIRec {
      * Context unbinding callback
      */
     GLboolean (*UnbindContext)(__DRIcontext *driContextPriv);
-  
-    /**
-     * These are required if GLX_OML_sync_control is supported.
-     */
-    /*@{*/
-    int (*WaitForMSC)( __DRIdrawable *priv, int64_t target_msc, 
-		       int64_t divisor, int64_t remainder,
-		       int64_t * msc );
-    int (*WaitForSBC)( __DRIdrawable *priv, int64_t target_sbc,
-		       int64_t * msc, int64_t * sbc );
-
-    int64_t (*SwapBuffersMSC)( __DRIdrawable *priv, int64_t target_msc,
-			       int64_t divisor, int64_t remainder );
-    /*@}*/
-    void (*CopySubBuffer)(__DRIdrawable *driDrawPriv,
-			  int x, int y, int w, int h);
-
-    /**
-     * New version of GetMSC so we can pass drawable data to the low
-     * level DRM driver (e.g. pipe info).  Required if
-     * GLX_SGI_video_sync or GLX_OML_sync_control is supported.
-     */
-    int (*GetDrawableMSC) ( __DRIscreen * priv,
-			    __DRIdrawable *drawablePrivate,
-			    int64_t *count);
-
-
 
     /* DRI2 Entry point */
     const __DRIconfig **(*InitScreen2) (__DRIscreen * priv);
