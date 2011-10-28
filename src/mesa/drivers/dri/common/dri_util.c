@@ -545,69 +545,6 @@ const __DRI2configQueryExtension dri2ConfigQueryExtension = {
    dri2ConfigQueryf,
 };
 
-/**
- * Calculate amount of swap interval used between GLX buffer swaps.
- * 
- * The usage value, on the range [0,max], is the fraction of total swap
- * interval time used between GLX buffer swaps is calculated.
- *
- *            \f$p = t_d / (i * t_r)\f$
- * 
- * Where \f$t_d\f$ is the time since the last GLX buffer swap, \f$i\f$ is the
- * swap interval (as set by \c glXSwapIntervalSGI), and \f$t_r\f$ time
- * required for a single vertical refresh period (as returned by \c
- * glXGetMscRateOML).
- * 
- * See the documentation for the GLX_MESA_swap_frame_usage extension for more
- * details.
- *
- * \param   dPriv  Pointer to the private drawable structure.
- * \return  If less than a single swap interval time period was required
- *          between GLX buffer swaps, a number greater than 0 and less than
- *          1.0 is returned.  If exactly one swap interval time period is
- *          required, 1.0 is returned, and if more than one is required then
- *          a number greater than 1.0 will be returned.
- *
- * \sa glXSwapIntervalSGI glXGetMscRateOML
- * 
- * \todo Instead of caching the \c glXGetMscRateOML function pointer, would it
- *       be possible to cache the sync rate?
- */
-float
-driCalculateSwapUsage( __DRIdrawable *dPriv, int64_t last_swap_ust,
-		       int64_t current_ust )
-{
-   int32_t   n;
-   int32_t   d;
-   int       interval;
-   float     usage = 1.0;
-   __DRIscreen *psp = dPriv->driScreenPriv;
-
-   if ( (*psp->systemTime->getMSCRate)(dPriv, &n, &d, dPriv->loaderPrivate) ) {
-      interval = (dPriv->swap_interval != 0) ? dPriv->swap_interval : 1;
-
-
-      /* We want to calculate
-       * (current_UST - last_swap_UST) / (interval * us_per_refresh).  We get
-       * current_UST by calling __glXGetUST.  last_swap_UST is stored in
-       * dPriv->swap_ust.  interval has already been calculated.
-       *
-       * The only tricky part is us_per_refresh.  us_per_refresh is
-       * 1000000 / MSC_rate.  We know the MSC_rate is n / d.  We can flip it
-       * around and say us_per_refresh = 1000000 * d / n.  Since this goes in
-       * the denominator of the final calculation, we calculate
-       * (interval * 1000000 * d) and move n into the numerator.
-       */
-
-      usage = (current_ust - last_swap_ust);
-      usage *= n;
-      usage /= (interval * d);
-      usage /= 1000000.0;
-   }
-   
-   return usage;
-}
-
 void
 dri2InvalidateDrawable(__DRIdrawable *drawable)
 {

@@ -448,10 +448,6 @@ struct __DRIscreenRec {
    void *loaderPrivate;
 };
 
-extern float
-driCalculateSwapUsage( __DRIdrawable *dPriv,
-		       int64_t last_swap_ust, int64_t current_ust );
-
 extern void
 dri2InvalidateDrawable(__DRIdrawable *drawable);
 
