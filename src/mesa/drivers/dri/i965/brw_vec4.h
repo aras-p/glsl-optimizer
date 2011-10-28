@@ -210,6 +210,16 @@ public:
       this->reg = reg;
    }
 
+   dst_reg(register_file file, int reg, const glsl_type *type, int writemask)
+   {
+      init();
+
+      this->file = file;
+      this->reg = reg;
+      this->type = brw_type_for_base_type(type);
+      this->writemask = writemask;
+   }
+
    dst_reg(struct brw_reg reg)
    {
       init();
