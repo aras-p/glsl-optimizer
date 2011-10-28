@@ -1519,7 +1519,7 @@ void r600_context_flush(struct r600_context *ctx, unsigned flags)
 	r600_init_cs(ctx);
 
 	/* resume queries */
-	r600_context_queries_resume(ctx, TRUE);
+	r600_context_queries_resume(ctx);
 
 	/* set all valid group as dirty so they get reemited on
 	 * next draw command
@@ -1617,18 +1617,6 @@ void r600_query_begin(struct r600_context *ctx, struct r600_query *query)
 		r600_context_flush(ctx, RADEON_FLUSH_ASYNC);
 	}
 
-	if (query->type == PIPE_QUERY_OCCLUSION_COUNTER) {
-		/* Count queries emitted without flushes, and flush if more than
-		 * half of buffer used, to avoid overwriting results which may be
-		 * still in use. */
-		if (query->flushed) {
-			query->queries_emitted = 1;
-		} else {
-			if (++query->queries_emitted > query->buffer->b.b.b.width0 / query->result_size / 2)
-				r600_context_flush(ctx, RADEON_FLUSH_ASYNC);
-		}
-	}
-
 	new_results_end = query->results_end + query->result_size;
 	if (new_results_end >= query->buffer->b.b.b.width0)
 		new_results_end = 0;
@@ -1710,8 +1698,6 @@ void r600_query_end(struct r600_context *ctx, struct r600_query *query)
 	query->results_end += query->result_size;
 	if (query->results_end >= query->buffer->b.b.b.width0)
 		query->results_end = 0;
-
-	query->flushed = FALSE;
 
 	ctx->num_query_running--;
 }
@@ -1840,14 +1826,11 @@ void r600_context_queries_suspend(struct r600_context *ctx)
 	}
 }
 
-void r600_context_queries_resume(struct r600_context *ctx, boolean flushed)
+void r600_context_queries_resume(struct r600_context *ctx)
 {
 	struct r600_query *query;
 
 	LIST_FOR_EACH_ENTRY(query, &ctx->active_query_list, list) {
-		if (flushed)
-			query->flushed = TRUE;
-
 		r600_query_begin(ctx, query);
 	}
 }

@@ -96,7 +96,7 @@ static void r600_blitter_end(struct pipe_context *ctx)
 					       rctx->saved_render_cond_mode);
 		rctx->saved_render_cond = NULL;
 	}
-	r600_context_queries_resume(&rctx->ctx, FALSE);
+	r600_context_queries_resume(&rctx->ctx);
 }
 
 static unsigned u_num_layers(struct pipe_resource *r, unsigned level)

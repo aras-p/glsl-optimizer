@@ -176,10 +176,6 @@ struct r600_query {
 	unsigned				results_end;
 	/* Size of the result */
 	unsigned				result_size;
-	/* Count of new queries started in one stream without flushing */
-	unsigned				queries_emitted;
-	/* State flags */
-	boolean					flushed;
 	/* The buffer where query results are stored. It's used as a ring,
 	 * data blocks for current query are stored sequentially from
 	 * results_start to results_end, with wrapping on the buffer end */
@@ -258,7 +254,7 @@ boolean r600_context_query_result(struct r600_context *ctx,
 void r600_query_begin(struct r600_context *ctx, struct r600_query *query);
 void r600_query_end(struct r600_context *ctx, struct r600_query *query);
 void r600_context_queries_suspend(struct r600_context *ctx);
-void r600_context_queries_resume(struct r600_context *ctx, boolean flushed);
+void r600_context_queries_resume(struct r600_context *ctx);
 void r600_query_predication(struct r600_context *ctx, struct r600_query *query, int operation,
 			    int flag_wait);
 void r600_context_emit_fence(struct r600_context *ctx, struct r600_resource *fence,
