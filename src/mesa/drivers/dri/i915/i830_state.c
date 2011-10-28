@@ -33,8 +33,6 @@
 #include "main/dd.h"
 #include "main/state.h"
 
-#include "texmem.h"
-
 #include "drivers/common/driverfuncs.h"
 
 #include "intel_screen.h"

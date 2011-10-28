@@ -4,7 +4,6 @@
 
 #include "main/mm.h"
 #include "math/m_vector.h"
-#include "texmem.h"
 #include "tnl/t_context.h"
 #include "main/colormac.h"
 

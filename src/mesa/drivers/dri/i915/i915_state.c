@@ -35,8 +35,6 @@
 #include "tnl/tnl.h"
 #include "tnl/t_context.h"
 
-#include "texmem.h"
-
 #include "drivers/common/driverfuncs.h"
 
 #include "intel_fbo.h"

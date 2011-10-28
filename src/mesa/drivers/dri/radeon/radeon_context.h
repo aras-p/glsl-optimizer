@@ -47,7 +47,6 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #include "dri_util.h"
 #include "drm.h"
 #include "radeon_drm.h"
-#include "texmem.h"
 #include "main/macros.h"
 #include "main/mtypes.h"
 #include "main/colormac.h"
