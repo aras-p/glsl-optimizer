@@ -66,60 +66,6 @@ extern const __DRIdri2Extension driDRI2Extension;
 extern const __DRI2configQueryExtension dri2ConfigQueryExtension;
 
 /**
- * Used by DRI_VALIDATE_DRAWABLE_INFO
- */
-#define DRI_VALIDATE_DRAWABLE_INFO_ONCE(pDrawPriv)              \
-    do {                                                        \
-	if (*(pDrawPriv->pStamp) != pDrawPriv->lastStamp) {     \
-	    __driUtilUpdateDrawableInfo(pDrawPriv);             \
-	}                                                       \
-    } while (0)
-
-
-/**
- * Utility macro to validate the drawable information.
- *
- * See __DRIdrawable::pStamp and __DRIdrawable::lastStamp.
- */
-#define DRI_VALIDATE_DRAWABLE_INFO(psp, pdp)                            \
-do {                                                                    \
-    while (*(pdp->pStamp) != pdp->lastStamp) {                          \
-        register unsigned int hwContext = psp->pSAREA->lock.lock &      \
-		     ~(DRM_LOCK_HELD | DRM_LOCK_CONT);                  \
-	DRM_UNLOCK(psp->fd, &psp->pSAREA->lock, hwContext);             \
-                                                                        \
-	DRM_SPINLOCK(&psp->pSAREA->drawable_lock, psp->drawLockID);     \
-	DRI_VALIDATE_DRAWABLE_INFO_ONCE(pdp);                           \
-	DRM_SPINUNLOCK(&psp->pSAREA->drawable_lock, psp->drawLockID);   \
-                                                                        \
-	DRM_LIGHT_LOCK(psp->fd, &psp->pSAREA->lock, hwContext);         \
-    }                                                                   \
-} while (0)
-
-/**
- * Same as above, but for two drawables simultaneously.
- *
- */
-
-#define DRI_VALIDATE_TWO_DRAWABLES_INFO(psp, pdp, prp)			\
-do {								\
-    while (*((pdp)->pStamp) != (pdp)->lastStamp ||			\
-	   *((prp)->pStamp) != (prp)->lastStamp) {			\
-        register unsigned int hwContext = (psp)->pSAREA->lock.lock &	\
-	    ~(DRM_LOCK_HELD | DRM_LOCK_CONT);				\
-	DRM_UNLOCK((psp)->fd, &(psp)->pSAREA->lock, hwContext);		\
-									\
-	DRM_SPINLOCK(&(psp)->pSAREA->drawable_lock, (psp)->drawLockID);	\
-	DRI_VALIDATE_DRAWABLE_INFO_ONCE(pdp);                           \
-	DRI_VALIDATE_DRAWABLE_INFO_ONCE(prp);				\
-	DRM_SPINUNLOCK(&(psp)->pSAREA->drawable_lock, (psp)->drawLockID); \
-									\
-	DRM_LIGHT_LOCK((psp)->fd, &(psp)->pSAREA->lock, hwContext);	\
-    }                                                                   \
-} while (0)
-
-
-/**
  * Driver callback functions.
  *
  * Each DRI driver must have one of these structures with all the pointers set
@@ -501,9 +447,6 @@ struct __DRIscreenRec {
    unsigned int api_mask;
    void *loaderPrivate;
 };
-
-extern void
-__driUtilUpdateDrawableInfo(__DRIdrawable *pdp);
 
 extern float
 driCalculateSwapUsage( __DRIdrawable *dPriv,
