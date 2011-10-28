@@ -1594,7 +1594,7 @@ static boolean r600_query_result(struct r600_context *ctx, struct r600_query *qu
 		}
 
 		results_base += 4 * 4;
-		if (results_base >= query->buffer_size)
+		if (results_base >= query->buffer->b.b.b.width0)
 			results_base = 0;
 	}
 
@@ -1632,13 +1632,13 @@ void r600_query_begin(struct r600_context *ctx, struct r600_query *query)
 		if (query->state & R600_QUERY_STATE_FLUSHED) {
 			query->queries_emitted = 1;
 		} else {
-			if (++query->queries_emitted > query->buffer_size / query->result_size / 2)
+			if (++query->queries_emitted > query->buffer->b.b.b.width0 / query->result_size / 2)
 				r600_context_flush(ctx, RADEON_FLUSH_ASYNC);
 		}
 	}
 
 	new_results_end = query->results_end + query->result_size;
-	if (new_results_end >= query->buffer_size)
+	if (new_results_end >= query->buffer->b.b.b.width0)
 		new_results_end = 0;
 
 	/* collect current results if query buffer is full */
@@ -1720,7 +1720,7 @@ void r600_query_end(struct r600_context *ctx, struct r600_query *query)
 	ctx->pm4[ctx->pm4_cdwords++] = r600_context_bo_reloc(ctx, query->buffer, RADEON_USAGE_WRITE);
 
 	query->results_end += query->result_size;
-	if (query->results_end >= query->buffer_size)
+	if (query->results_end >= query->buffer->b.b.b.width0)
 		query->results_end = 0;
 
 	query->state ^= R600_QUERY_STATE_STARTED;
@@ -1746,8 +1746,10 @@ void r600_query_predication(struct r600_context *ctx, struct r600_query *query, 
 		u32 op;
 
 		/* find count of the query data blocks */
-		count = query->buffer_size + query->results_end - query->results_start;
-		if (count >= query->buffer_size) count-=query->buffer_size;
+		count = query->buffer->b.b.b.width0 + query->results_end - query->results_start;
+		if (count >= query->buffer->b.b.b.width0) {
+			count -= query->buffer->b.b.b.width0;
+		}
 		count /= query->result_size;
 
 		if (ctx->pm4_cdwords + 5 * count > ctx->pm4_ndwords)
@@ -1765,7 +1767,7 @@ void r600_query_predication(struct r600_context *ctx, struct r600_query *query, 
 			ctx->pm4[ctx->pm4_cdwords++] = r600_context_bo_reloc(ctx, query->buffer,
 									     RADEON_USAGE_READ);
 			results_base += query->result_size;
-			if (results_base >= query->buffer_size)
+			if (results_base >= query->buffer->b.b.b.width0)
 				results_base = 0;
 			/* set CONTINUE bit for all packets except the first */
 			op |= PREDICATION_CONTINUE;
@@ -1775,12 +1777,14 @@ void r600_query_predication(struct r600_context *ctx, struct r600_query *query, 
 
 struct r600_query *r600_context_query_create(struct r600_context *ctx, unsigned query_type)
 {
-	struct r600_query *query = calloc(1, sizeof(struct r600_query));
+	struct r600_query *query;
+	unsigned buffer_size = 4096;
+
+	query = CALLOC_STRUCT(r600_query);
 	if (query == NULL)
 		return NULL;
 
 	query->type = query_type;
-	query->buffer_size = 4096;
 
 	switch (query_type) {
 	case PIPE_QUERY_OCCLUSION_COUNTER:
@@ -1796,21 +1800,20 @@ struct r600_query *r600_context_query_create(struct r600_context *ctx, unsigned 
 	}
 
 	/* adjust buffer size to simplify offsets wrapping math */
-	query->buffer_size -= query->buffer_size % query->result_size;
+	buffer_size -= buffer_size % query->result_size;
 
-	/* As of GL4, query buffers are normally read by the CPU after
+	/* Queries are normally read by the CPU after
 	 * being written by the gpu, hence staging is probably a good
 	 * usage pattern.
 	 */
 	query->buffer = (struct r600_resource*)
-		pipe_buffer_create(&ctx->screen->screen, PIPE_BIND_CUSTOM, PIPE_USAGE_STAGING, query->buffer_size);
+		pipe_buffer_create(&ctx->screen->screen, PIPE_BIND_CUSTOM, PIPE_USAGE_STAGING, buffer_size);
 	if (!query->buffer) {
-		free(query);
+		FREE(query);
 		return NULL;
 	}
 
 	LIST_ADDTAIL(&query->list, &ctx->query_list);
-
 	return query;
 }
 

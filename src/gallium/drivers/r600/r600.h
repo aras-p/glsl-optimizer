@@ -184,7 +184,6 @@ struct r600_query {
 	 * data blocks for current query are stored sequentially from
 	 * results_start to results_end, with wrapping on the buffer end */
 	struct r600_resource			*buffer;
-	unsigned				buffer_size;
 	/* linked list of queries */
 	struct list_head			list;
 };
