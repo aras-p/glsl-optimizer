@@ -179,7 +179,7 @@ struct r600_query {
 	/* Count of new queries started in one stream without flushing */
 	unsigned				queries_emitted;
 	/* State flags */
-	unsigned				state;
+	boolean					flushed;
 	/* The buffer where query results are stored. It's used as a ring,
 	 * data blocks for current query are stored sequentially from
 	 * results_start to results_end, with wrapping on the buffer end */
@@ -187,11 +187,6 @@ struct r600_query {
 	/* linked list of queries */
 	struct list_head			list;
 };
-
-#define R600_QUERY_STATE_STARTED	(1 << 0)
-#define R600_QUERY_STATE_ENDED		(1 << 1)
-#define R600_QUERY_STATE_SUSPENDED	(1 << 2)
-#define R600_QUERY_STATE_FLUSHED	(1 << 3)
 
 #define R600_CONTEXT_DRAW_PENDING	(1 << 0)
 #define R600_CONTEXT_DST_CACHES_DIRTY	(1 << 1)
@@ -218,7 +213,9 @@ struct r600_context {
 	u32			*pm4;
 	unsigned		pm4_cdwords;
 
-	struct list_head	query_list;
+	/* The list of active queries. Only one query of each type can be active. */
+	struct list_head	active_query_list;
+
 	unsigned		num_query_running;
 	unsigned		backend_mask;
 	unsigned                max_db; /* for OQ */

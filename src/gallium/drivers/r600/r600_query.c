@@ -45,13 +45,16 @@ static void r600_begin_query(struct pipe_context *ctx, struct pipe_query *query)
 	rquery->result = 0;
 	rquery->results_start = rquery->results_end;
 	r600_query_begin(&rctx->ctx, (struct r600_query *)query);
+	LIST_ADDTAIL(&rquery->list, &rctx->ctx.active_query_list);
 }
 
 static void r600_end_query(struct pipe_context *ctx, struct pipe_query *query)
 {
 	struct r600_pipe_context *rctx = (struct r600_pipe_context *)ctx;
+	struct r600_query *rquery = (struct r600_query *)query;
 
-	r600_query_end(&rctx->ctx, (struct r600_query *)query);
+	r600_query_end(&rctx->ctx, rquery);
+	LIST_DELINIT(&rquery->list);
 }
 
 static boolean r600_get_query_result(struct pipe_context *ctx,

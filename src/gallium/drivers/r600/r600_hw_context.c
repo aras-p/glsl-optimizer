@@ -832,7 +832,7 @@ int r600_context_init(struct r600_context *ctx, struct r600_screen *screen)
 	memset(ctx, 0, sizeof(struct r600_context));
 	ctx->screen = screen;
 
-	LIST_INITHEAD(&ctx->query_list);
+	LIST_INITHEAD(&ctx->active_query_list);
 
 	/* init dirty list */
 	LIST_INITHEAD(&ctx->dirty);
@@ -1623,7 +1623,7 @@ void r600_query_begin(struct r600_context *ctx, struct r600_query *query)
 		/* Count queries emitted without flushes, and flush if more than
 		 * half of buffer used, to avoid overwriting results which may be
 		 * still in use. */
-		if (query->state & R600_QUERY_STATE_FLUSHED) {
+		if (query->flushed) {
 			query->queries_emitted = 1;
 		} else {
 			if (++query->queries_emitted > query->buffer->b.b.b.width0 / query->result_size / 2)
@@ -1637,7 +1637,7 @@ void r600_query_begin(struct r600_context *ctx, struct r600_query *query)
 
 	/* collect current results if query buffer is full */
 	if (new_results_end == query->results_start) {
-		if (!(query->state & R600_QUERY_STATE_FLUSHED))
+		if (!query->flushed)
 			r600_context_flush(ctx, 0);
 		r600_query_result(ctx, query, TRUE);
 	}
@@ -1684,8 +1684,6 @@ void r600_query_begin(struct r600_context *ctx, struct r600_query *query)
 	ctx->pm4[ctx->pm4_cdwords++] = PKT3(PKT3_NOP, 0, 0);
 	ctx->pm4[ctx->pm4_cdwords++] = r600_context_bo_reloc(ctx, query->buffer, RADEON_USAGE_WRITE);
 
-	query->state |= R600_QUERY_STATE_STARTED;
-	query->state ^= R600_QUERY_STATE_ENDED;
 	ctx->num_query_running++;
 }
 
@@ -1717,9 +1715,7 @@ void r600_query_end(struct r600_context *ctx, struct r600_query *query)
 	if (query->results_end >= query->buffer->b.b.b.width0)
 		query->results_end = 0;
 
-	query->state ^= R600_QUERY_STATE_STARTED;
-	query->state |= R600_QUERY_STATE_ENDED;
-	query->state &= ~R600_QUERY_STATE_FLUSHED;
+	query->flushed = FALSE;
 
 	ctx->num_query_running--;
 }
@@ -1806,15 +1802,12 @@ struct r600_query *r600_context_query_create(struct r600_context *ctx, unsigned 
 		FREE(query);
 		return NULL;
 	}
-
-	LIST_ADDTAIL(&query->list, &ctx->query_list);
 	return query;
 }
 
 void r600_context_query_destroy(struct r600_context *ctx, struct r600_query *query)
 {
 	pipe_resource_reference((struct pipe_resource**)&query->buffer, NULL);
-	LIST_DELINIT(&query->list);
 	free(query);
 }
 
@@ -1824,7 +1817,7 @@ boolean r600_context_query_result(struct r600_context *ctx,
 {
 	uint64_t *result = (uint64_t*)vresult;
 
-	if (!(query->state & R600_QUERY_STATE_FLUSHED)) {
+	if (!query->flushed) {
 		r600_context_flush(ctx, 0);
 	}
 	if (!r600_query_result(ctx, query, wait))
@@ -1849,11 +1842,8 @@ void r600_context_queries_suspend(struct r600_context *ctx)
 {
 	struct r600_query *query;
 
-	LIST_FOR_EACH_ENTRY(query, &ctx->query_list, list) {
-		if (query->state & R600_QUERY_STATE_STARTED) {
-			r600_query_end(ctx, query);
-			query->state |= R600_QUERY_STATE_SUSPENDED;
-		}
+	LIST_FOR_EACH_ENTRY(query, &ctx->active_query_list, list) {
+		r600_query_end(ctx, query);
 	}
 }
 
@@ -1861,13 +1851,10 @@ void r600_context_queries_resume(struct r600_context *ctx, boolean flushed)
 {
 	struct r600_query *query;
 
-	LIST_FOR_EACH_ENTRY(query, &ctx->query_list, list) {
+	LIST_FOR_EACH_ENTRY(query, &ctx->active_query_list, list) {
 		if (flushed)
-			query->state |= R600_QUERY_STATE_FLUSHED;
+			query->flushed = TRUE;
 
-		if (query->state & R600_QUERY_STATE_SUSPENDED) {
-			r600_query_begin(ctx, query);
-			query->state ^= R600_QUERY_STATE_SUSPENDED;
-		}
+		r600_query_begin(ctx, query);
 	}
 }

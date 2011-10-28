@@ -905,7 +905,7 @@ int evergreen_context_init(struct r600_context *ctx, struct r600_screen *screen)
 	memset(ctx, 0, sizeof(struct r600_context));
 	ctx->screen = screen;
 
-	LIST_INITHEAD(&ctx->query_list);
+	LIST_INITHEAD(&ctx->active_query_list);
 
 	/* init dirty list */
 	LIST_INITHEAD(&ctx->dirty);
