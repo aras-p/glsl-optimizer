@@ -1376,8 +1376,8 @@ void radeonUpdateWindow( struct gl_context *ctx )
 {
    r100ContextPtr rmesa = R100_CONTEXT(ctx);
    __DRIdrawable *dPriv = radeon_get_drawable(&rmesa->radeon);
-   GLfloat xoffset = dPriv ? (GLfloat) dPriv->x : 0;
-   GLfloat yoffset = dPriv ? (GLfloat) dPriv->y + dPriv->h : 0;
+   GLfloat xoffset = 0.0;
+   GLfloat yoffset = dPriv ? (GLfloat) dPriv->h : 0;
    const GLfloat *v = ctx->Viewport._WindowMap.m;
    const GLboolean render_to_fbo = (ctx->DrawBuffer ? (ctx->DrawBuffer->Name != 0) : 0);
    const GLfloat depthScale = 1.0F / ctx->DrawBuffer->_DepthMaxF;
@@ -1431,8 +1431,8 @@ void radeonUpdateViewportOffset( struct gl_context *ctx )
 {
    r100ContextPtr rmesa = R100_CONTEXT(ctx);
    __DRIdrawable *dPriv = radeon_get_drawable(&rmesa->radeon);
-   GLfloat xoffset = (GLfloat)dPriv->x;
-   GLfloat yoffset = (GLfloat)dPriv->y + dPriv->h;
+   GLfloat xoffset = 0.0;
+   GLfloat yoffset = (GLfloat)dPriv->h;
    const GLfloat *v = ctx->Viewport._WindowMap.m;
 
    float_ui32_type tx;
@@ -1460,8 +1460,8 @@ void radeonUpdateViewportOffset( struct gl_context *ctx )
                 RADEON_STIPPLE_Y_OFFSET_MASK);
 
          /* add magic offsets, then invert */
-         stx = 31 - ((dPriv->x - 1) & RADEON_STIPPLE_COORD_MASK);
-         sty = 31 - ((dPriv->y + dPriv->h - 1)
+         stx = 31 - ((-1) & RADEON_STIPPLE_COORD_MASK);
+         sty = 31 - ((dPriv->h - 1)
                      & RADEON_STIPPLE_COORD_MASK);
 
          m |= ((stx << RADEON_STIPPLE_X_OFFSET_SHIFT) |

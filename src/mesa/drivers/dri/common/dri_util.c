@@ -175,14 +175,8 @@ dri2CreateNewDrawable(__DRIscreen *screen,
     pdraw->pStamp = NULL;
     pdraw->lastStamp = 0;
     pdraw->index = 0;
-    pdraw->x = 0;
-    pdraw->y = 0;
     pdraw->w = 0;
     pdraw->h = 0;
-    pdraw->numClipRects = 0;
-    pdraw->numBackClipRects = 0;
-    pdraw->pClipRects = NULL;
-    pdraw->pBackClipRects = NULL;
     pdraw->vblSeq = 0;
     pdraw->vblFlags = 0;
 
@@ -200,9 +194,6 @@ dri2CreateNewDrawable(__DRIscreen *screen,
      * rendering context. 
      */
     pdraw->swap_interval = (unsigned)-1;
-
-    pdraw->pClipRects = &pdraw->dri2.clipRect;
-    pdraw->pBackClipRects = &pdraw->dri2.clipRect;
 
     pdraw->pStamp = &pdraw->dri2.stamp;
     *pdraw->pStamp = pdraw->lastStamp + 1;
@@ -277,14 +268,6 @@ static void dri_put_drawable(__DRIdrawable *pdp)
 
 	psp = pdp->driScreenPriv;
         (*psp->DriverAPI.DestroyBuffer)(pdp);
-	if (pdp->pClipRects && pdp->pClipRects != &pdp->dri2.clipRect) {
-	    free(pdp->pClipRects);
-	    pdp->pClipRects = NULL;
-	}
-	if (pdp->pBackClipRects && pdp->pClipRects != &pdp->dri2.clipRect) {
-	    free(pdp->pBackClipRects);
-	    pdp->pBackClipRects = NULL;
-	}
 	free(pdp);
     }
 }

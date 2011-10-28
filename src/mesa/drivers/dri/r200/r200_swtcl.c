@@ -850,8 +850,7 @@ r200PointsBitmap( struct gl_context *ctx, GLint px, GLint py,
 
    /* Update window height
     */
-   h = radeon_get_drawable(&rmesa->radeon)->h + radeon_get_drawable(&rmesa->radeon)->y;
-   px += radeon_get_drawable(&rmesa->radeon)->x;
+   h = radeon_get_drawable(&rmesa->radeon)->h;
 
    /* Clipping handled by existing mechansims in r200_ioctl.c?
     */

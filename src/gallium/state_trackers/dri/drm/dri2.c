@@ -158,25 +158,8 @@ dri2_drawable_get_buffers(struct dri_drawable *drawable,
             &num_buffers, dri_drawable->loaderPrivate);
    }
 
-   if (buffers) {
-      /* set one cliprect to cover the whole dri_drawable */
-      dri_drawable->x = 0;
-      dri_drawable->y = 0;
-      dri_drawable->backX = 0;
-      dri_drawable->backY = 0;
-      dri_drawable->numClipRects = 1;
-      dri_drawable->pClipRects[0].x1 = 0;
-      dri_drawable->pClipRects[0].y1 = 0;
-      dri_drawable->pClipRects[0].x2 = dri_drawable->w;
-      dri_drawable->pClipRects[0].y2 = dri_drawable->h;
-      dri_drawable->numBackClipRects = 1;
-      dri_drawable->pBackClipRects[0].x1 = 0;
-      dri_drawable->pBackClipRects[0].y1 = 0;
-      dri_drawable->pBackClipRects[0].x2 = dri_drawable->w;
-      dri_drawable->pBackClipRects[0].y2 = dri_drawable->h;
-
+   if (buffers)
       *count = num_buffers;
-   }
 
    return buffers;
 }

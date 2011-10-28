@@ -218,32 +218,7 @@ struct __DRIdrawableRec {
      */
     unsigned int lastStamp;
 
-    /**
-     * \name Drawable 
-     *
-     * Drawable information used in software fallbacks.
-     */
-    /*@{*/
-    int x;
-    int y;
-    int w;
-    int h;
-    int numClipRects;
-    drm_clip_rect_t *pClipRects;
-    /*@}*/
-
-    /**
-     * \name Back and depthbuffer
-     *
-     * Information about the back and depthbuffer where different from above.
-     */
-    /*@{*/
-    int backX;
-    int backY;
-    int backClipRectType;
-    int numBackClipRects;
-    drm_clip_rect_t *pBackClipRects;
-    /*@}*/
+    int w, h;
 
     /**
      * \name Vertical blank tracking information
@@ -289,7 +264,6 @@ struct __DRIdrawableRec {
 
     struct {
 	unsigned int stamp;
-	drm_clip_rect_t clipRect;
     } dri2;
 };
 

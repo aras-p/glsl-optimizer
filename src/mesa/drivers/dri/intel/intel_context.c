@@ -311,21 +311,6 @@ intel_update_renderbuffers(__DRIcontext *context, __DRIdrawable *drawable)
    if (buffers == NULL)
       return;
 
-   drawable->x = 0;
-   drawable->y = 0;
-   drawable->backX = 0;
-   drawable->backY = 0;
-   drawable->numClipRects = 1;
-   drawable->pClipRects[0].x1 = 0;
-   drawable->pClipRects[0].y1 = 0;
-   drawable->pClipRects[0].x2 = drawable->w;
-   drawable->pClipRects[0].y2 = drawable->h;
-   drawable->numBackClipRects = 1;
-   drawable->pBackClipRects[0].x1 = 0;
-   drawable->pBackClipRects[0].y1 = 0;
-   drawable->pBackClipRects[0].x2 = drawable->w;
-   drawable->pBackClipRects[0].y2 = drawable->h;
-
    for (i = 0; i < count; i++) {
        switch (buffers[i].attachment) {
        case __DRI_BUFFER_FRONT_LEFT:

@@ -49,17 +49,14 @@
 #ifndef HW_CLIPLOOP
 #define HW_CLIPLOOP()							\
    do {									\
-      int _nc = dPriv->numClipRects;					\
-      while ( _nc-- ) {							\
-	 int minx = dPriv->pClipRects[_nc].x1 - dPriv->x;		\
-	 int miny = dPriv->pClipRects[_nc].y1 - dPriv->y;		\
-	 int maxx = dPriv->pClipRects[_nc].x2 - dPriv->x;		\
-	 int maxy = dPriv->pClipRects[_nc].y2 - dPriv->y;
+      int minx = 0;							\
+      int miny = 0;							\
+      int maxx = dPriv->w;						\
+      int maxy = dPriv->h;
 #endif
 
 #ifndef HW_ENDCLIPLOOP
 #define HW_ENDCLIPLOOP()						\
-      }									\
    } while (0)
 #endif
 
