@@ -34,6 +34,14 @@
 #include "main/formats.h"
 #include "main/mfeatures.h"
 
+extern gl_format _radeon_texformat_rgba8888;
+extern gl_format _radeon_texformat_argb8888;
+extern gl_format _radeon_texformat_rgb565;
+extern gl_format _radeon_texformat_argb4444;
+extern gl_format _radeon_texformat_argb1555;
+extern gl_format _radeon_texformat_al88;
+
+extern 
 void copy_rows(void* dst, GLuint dststride, const void* src, GLuint srcstride,
 	GLuint numrows, GLuint rowsize);
 struct gl_texture_image *radeonNewTextureImage(struct gl_context *ctx);

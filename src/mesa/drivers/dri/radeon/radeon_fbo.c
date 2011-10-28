@@ -196,7 +196,7 @@ radeon_alloc_renderbuffer_storage(struct gl_context * ctx, struct gl_renderbuffe
    case GL_R3_G3_B2:
    case GL_RGB4:
    case GL_RGB5:
-      rb->Format = _dri_texformat_rgb565;
+      rb->Format = _radeon_texformat_rgb565;
       rb->DataType = GL_UNSIGNED_BYTE;
       cpp = 2;
       break;
@@ -205,7 +205,7 @@ radeon_alloc_renderbuffer_storage(struct gl_context * ctx, struct gl_renderbuffe
    case GL_RGB10:
    case GL_RGB12:
    case GL_RGB16:
-      rb->Format = _dri_texformat_argb8888;
+      rb->Format = _radeon_texformat_argb8888;
       rb->DataType = GL_UNSIGNED_BYTE;
       cpp = 4;
       break;
@@ -217,7 +217,7 @@ radeon_alloc_renderbuffer_storage(struct gl_context * ctx, struct gl_renderbuffe
    case GL_RGB10_A2:
    case GL_RGBA12:
    case GL_RGBA16:
-      rb->Format = _dri_texformat_argb8888;
+      rb->Format = _radeon_texformat_argb8888;
       rb->DataType = GL_UNSIGNED_BYTE;
       cpp = 4;
       break;
