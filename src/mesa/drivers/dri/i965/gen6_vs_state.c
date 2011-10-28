@@ -167,7 +167,8 @@ upload_vs_state(struct brw_context *brw)
    BEGIN_BATCH(6);
    OUT_BATCH(_3DSTATE_VS << 16 | (6 - 2));
    OUT_BATCH(brw->vs.prog_offset);
-   OUT_BATCH(floating_point_mode | (0 << GEN6_VS_SAMPLER_COUNT_SHIFT));
+   OUT_BATCH(floating_point_mode |
+	     ((ALIGN(brw->sampler.count, 4)/4) << GEN6_VS_SAMPLER_COUNT_SHIFT));
 
    if (brw->vs.prog_data->total_scratch) {
       OUT_RELOC(brw->vs.scratch_bo,
@@ -222,7 +223,7 @@ const struct brw_tracked_state gen6_vs_state = {
 		BRW_NEW_CONTEXT |
 		BRW_NEW_VERTEX_PROGRAM |
 		BRW_NEW_BATCH),
-      .cache = CACHE_NEW_VS_PROG
+      .cache = CACHE_NEW_VS_PROG | CACHE_NEW_SAMPLER
    },
    .emit = upload_vs_state,
 };
