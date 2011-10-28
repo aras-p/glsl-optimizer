@@ -88,9 +88,6 @@ void r600_get_backend_mask(struct r600_context *ctx)
 		ctx->pm4[ctx->pm4_cdwords++] = PKT3(PKT3_NOP, 0, 0);
 		ctx->pm4[ctx->pm4_cdwords++] = r600_context_bo_reloc(ctx, buffer, RADEON_USAGE_WRITE);
 
-		/* execute */
-		r600_context_flush(ctx, 0);
-
 		/* analyze results */
 		results = ctx->screen->ws->buffer_map(buffer->buf, ctx->cs, PIPE_TRANSFER_READ);
 		if (results) {
