@@ -1097,7 +1097,6 @@ radeonCreateScreen2(__DRIscreen *sPriv)
 	   screen->chip_flags |= RADEON_CLASS_R200;
 
    i = 0;
-   screen->extensions[i++] = &driCopySubBufferExtension.base;
    screen->extensions[i++] = &dri2ConfigQueryExtension.base;
 
    if ( screen->irq != 0 ) {

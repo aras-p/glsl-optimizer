@@ -360,25 +360,6 @@ const __DRImediaStreamCounterExtension driMediaStreamCounterExtension = {
 };
 
 
-static void driCopySubBuffer(__DRIdrawable *dPriv,
-			      int x, int y, int w, int h)
-{
-    drm_clip_rect_t rect;
-
-    rect.x1 = x;
-    rect.y1 = dPriv->h - y - h;
-    rect.x2 = x + w;
-    rect.y2 = rect.y1 + h;
-    driReportDamage(dPriv, &rect, 1);
-
-    dPriv->driScreenPriv->DriverAPI.CopySubBuffer(dPriv, x, y, w, h);
-}
-
-const __DRIcopySubBufferExtension driCopySubBufferExtension = {
-    { __DRI_COPY_SUB_BUFFER, __DRI_COPY_SUB_BUFFER_VERSION },
-    driCopySubBuffer
-};
-
 static void driSetSwapInterval(__DRIdrawable *dPriv, unsigned int interval)
 {
     dPriv->swap_interval = interval;
