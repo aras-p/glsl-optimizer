@@ -305,7 +305,6 @@ struct __DRIscreenRec {
     struct {
 	/* Flag to indicate that this is a DRI2 screen.  Many of the above
 	 * fields will not be valid or initializaed in that case. */
-	int enabled;
 	__DRIdri2LoaderExtension *loader;
 	__DRIimageLookupExtension *image;
 	__DRIuseInvalidateExtension *useInvalidate;

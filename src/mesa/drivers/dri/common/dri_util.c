@@ -440,7 +440,6 @@ dri2CreateNewScreen(int scrn, int fd,
     psp->extensions = emptyExtensionList;
     psp->fd = fd;
     psp->myNum = scrn;
-    psp->dri2.enabled = GL_TRUE;
 
     psp->DriverAPI = driDriverAPI;
     psp->api_mask = (1 << __DRI_API_OPENGL);

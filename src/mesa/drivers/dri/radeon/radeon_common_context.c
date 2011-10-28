@@ -332,63 +332,6 @@ GLboolean radeonUnbindContext(__DRIcontext * driContextPriv)
 }
 
 
-static void
-radeon_make_renderbuffer_current(radeonContextPtr radeon,
-					struct gl_framebuffer *draw)
-{
-	/* if radeon->fake */
-	struct radeon_renderbuffer *rb;
-
-	if ((rb = (void *)draw->Attachment[BUFFER_FRONT_LEFT].Renderbuffer)) {
-		if (!rb->bo) {
-			rb->bo = radeon_bo_open(radeon->radeonScreen->bom,
-						radeon->radeonScreen->frontOffset,
-						0,
-						0,
-						RADEON_GEM_DOMAIN_VRAM,
-						0);
-		}
-		rb->cpp = radeon->radeonScreen->cpp;
-		rb->pitch = radeon->radeonScreen->frontPitch * rb->cpp;
-	}
-	if ((rb = (void *)draw->Attachment[BUFFER_BACK_LEFT].Renderbuffer)) {
-		if (!rb->bo) {
-			rb->bo = radeon_bo_open(radeon->radeonScreen->bom,
-						radeon->radeonScreen->backOffset,
-						0,
-						0,
-						RADEON_GEM_DOMAIN_VRAM,
-						0);
-		}
-		rb->cpp = radeon->radeonScreen->cpp;
-		rb->pitch = radeon->radeonScreen->backPitch * rb->cpp;
-	}
-	if ((rb = (void *)draw->Attachment[BUFFER_DEPTH].Renderbuffer)) {
-		if (!rb->bo) {
-			rb->bo = radeon_bo_open(radeon->radeonScreen->bom,
-						radeon->radeonScreen->depthOffset,
-						0,
-						0,
-						RADEON_GEM_DOMAIN_VRAM,
-						0);
-		}
-		rb->cpp = radeon->radeonScreen->cpp;
-		rb->pitch = radeon->radeonScreen->depthPitch * rb->cpp;
-	}
-	if ((rb = (void *)draw->Attachment[BUFFER_STENCIL].Renderbuffer)) {
-		if (!rb->bo) {
-			rb->bo = radeon_bo_open(radeon->radeonScreen->bom,
-						radeon->radeonScreen->depthOffset,
-						0,
-						0,
-						RADEON_GEM_DOMAIN_VRAM,
-						0);
-		}
-		rb->cpp = radeon->radeonScreen->cpp;
-		rb->pitch = radeon->radeonScreen->depthPitch * rb->cpp;
-	}
-}
-
 static unsigned
 radeon_bits_per_pixel(const struct radeon_renderbuffer *rb)
 {
@@ -675,18 +618,14 @@ GLboolean radeonMakeCurrent(__DRIcontext * driContextPriv,
 		readfb = driReadPriv->driverPrivate;
 	}
 
-	if (driContextPriv->driScreenPriv->dri2.enabled) {
-		if(driDrawPriv)
-			radeon_update_renderbuffers(driContextPriv, driDrawPriv, GL_FALSE);
-		if (driDrawPriv != driReadPriv)
-			radeon_update_renderbuffers(driContextPriv, driReadPriv, GL_FALSE);
-		_mesa_reference_renderbuffer(&radeon->state.color.rb,
-			&(radeon_get_renderbuffer(drfb, BUFFER_BACK_LEFT)->base));
-		_mesa_reference_renderbuffer(&radeon->state.depth.rb,
-			&(radeon_get_renderbuffer(drfb, BUFFER_DEPTH)->base));
-	} else {
-		radeon_make_renderbuffer_current(radeon, drfb);
-	}
+	if(driDrawPriv)
+	   radeon_update_renderbuffers(driContextPriv, driDrawPriv, GL_FALSE);
+	if (driDrawPriv != driReadPriv)
+	   radeon_update_renderbuffers(driContextPriv, driReadPriv, GL_FALSE);
+	_mesa_reference_renderbuffer(&radeon->state.color.rb,
+		&(radeon_get_renderbuffer(drfb, BUFFER_BACK_LEFT)->base));
+	_mesa_reference_renderbuffer(&radeon->state.depth.rb,
+		&(radeon_get_renderbuffer(drfb, BUFFER_DEPTH)->base));
 
 	if (RADEON_DEBUG & RADEON_DRI)
 	     fprintf(stderr, "%s ctx %p dfb %p rfb %p\n", __FUNCTION__, radeon->glCtx, drfb, readfb);

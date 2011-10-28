@@ -1149,8 +1149,6 @@ radeonDestroyScreen( __DRIscreen *sPriv )
 static GLboolean
 radeonInitDriver( __DRIscreen *sPriv )
 {
-   assert(sPriv->dri2.enabled);
-
     sPriv->private = (void *) radeonCreateScreen2( sPriv );
     if ( !sPriv->private ) {
         radeonDestroyScreen( sPriv );
