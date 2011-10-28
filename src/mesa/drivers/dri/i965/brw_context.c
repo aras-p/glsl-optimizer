@@ -159,7 +159,7 @@ brwCreateContext(int api,
    ctx->Const.MaxTextureCoordUnits = 8; /* Mesa limit */
    ctx->Const.MaxTextureUnits = MIN2(ctx->Const.MaxTextureCoordUnits,
                                      ctx->Const.MaxTextureImageUnits);
-   ctx->Const.MaxVertexTextureImageUnits = 0; /* no vertex shader textures */
+   ctx->Const.MaxVertexTextureImageUnits = BRW_MAX_TEX_UNIT;
    ctx->Const.MaxCombinedTextureImageUnits =
       ctx->Const.MaxVertexTextureImageUnits +
       ctx->Const.MaxTextureImageUnits;
