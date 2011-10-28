@@ -58,8 +58,6 @@
 
 #define GLX_BAD_CONTEXT                    5
 
-typedef struct __DRIswapInfoRec        __DRIswapInfo;
-
 /**
  * Extensions.
  */
@@ -183,13 +181,6 @@ struct __DriverAPIRec {
     GLboolean (*UnbindContext)(__DRIcontext *driContextPriv);
   
     /**
-     * Retrieves statistics about buffer swap operations.  Required if
-     * GLX_OML_sync_control or GLX_MESA_swap_frame_usage is supported.
-     */
-    int (*GetSwapInfo)( __DRIdrawable *dPriv, __DRIswapInfo * sInfo );
-
-
-    /**
      * These are required if GLX_OML_sync_control is supported.
      */
     /*@{*/
@@ -227,37 +218,6 @@ struct __DriverAPIRec {
 };
 
 extern const struct __DriverAPIRec driDriverAPI;
-
-
-struct __DRIswapInfoRec {
-    /** 
-     * Number of swapBuffers operations that have been *completed*. 
-     */
-    uint64_t swap_count;
-
-    /**
-     * Unadjusted system time of the last buffer swap.  This is the time
-     * when the swap completed, not the time when swapBuffers was called.
-     */
-    int64_t   swap_ust;
-
-    /**
-     * Number of swap operations that occurred after the swap deadline.  That
-     * is if a swap happens more than swap_interval frames after the previous
-     * swap, it has missed its deadline.  If swap_interval is 0, then the
-     * swap deadline is 1 frame after the previous swap.
-     */
-    uint64_t swap_missed_count;
-
-    /**
-     * Amount of time used by the last swap that missed its deadline.  This
-     * is calculated as (__glXGetUST() - swap_ust) / (swap_interval * 
-     * time_for_single_vrefresh)).  If the actual value of swap_interval is
-     * 0, then 1 is used instead.  If swap_missed_count is non-zero, this
-     * should be greater-than 1.0.
-     */
-    float     swap_missed_usage;
-};
 
 
 /**
