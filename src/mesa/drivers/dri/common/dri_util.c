@@ -171,7 +171,6 @@ dri2CreateNewDrawable(__DRIscreen *screen,
     pdraw->driContextPriv = NULL;
     pdraw->loaderPrivate = loaderPrivate;
     pdraw->refcount = 1;
-    pdraw->pStamp = NULL;
     pdraw->lastStamp = 0;
     pdraw->w = 0;
     pdraw->h = 0;
@@ -182,8 +181,7 @@ dri2CreateNewDrawable(__DRIscreen *screen,
        return NULL;
     }
 
-    pdraw->pStamp = &pdraw->dri2.stamp;
-    *pdraw->pStamp = pdraw->lastStamp + 1;
+    pdraw->dri2.stamp = pdraw->lastStamp + 1;
 
     return pdraw;
 }

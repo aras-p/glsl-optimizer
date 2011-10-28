@@ -160,15 +160,9 @@ struct __DRIdrawableRec {
     int refcount;
 
     /**
-     * Pointer to the "drawable has changed ID" stamp in the SAREA (or
-     * to dri2.stamp if DRI2 is being used).
-     */
-    unsigned int *pStamp;
-
-    /**
      * Last value of the stamp.
      *
-     * If this differs from the value stored at __DRIdrawable::pStamp,
+     * If this differs from the value stored at __DRIdrawable::dri2.stamp,
      * then the drawable information has been modified by the X server, and the
      * drawable information (below) should be retrieved from the X server.
      */
@@ -186,6 +180,9 @@ struct __DRIdrawableRec {
      */
     __DRIscreen *driScreenPriv;
 
+    /**
+     * Drawable timestamp.  Increased when the loader calls invalidate.
+     */
     struct {
 	unsigned int stamp;
     } dri2;

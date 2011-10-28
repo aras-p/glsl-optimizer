@@ -177,9 +177,9 @@ nouveau_update_renderbuffers(__DRIcontext *dri_ctx, __DRIdrawable *draw)
 	__DRIbuffer *buffers = NULL;
 	int i = 0, count, ret;
 
-	if (draw->lastStamp == *draw->pStamp)
+	if (draw->lastStamp == draw->dri2.stamp)
 		return;
-	draw->lastStamp = *draw->pStamp;
+	draw->lastStamp = draw->dri2.stamp;
 
 	if (nfb->need_front)
 		attachments[i++] = __DRI_BUFFER_FRONT_LEFT;
@@ -257,7 +257,7 @@ update_framebuffer(__DRIcontext *dri_ctx, __DRIdrawable *draw,
 	struct gl_context *ctx = dri_ctx->driverPrivate;
 	struct gl_framebuffer *fb = draw->driverPrivate;
 
-	*stamp = *draw->pStamp;
+	*stamp = draw->dri2.stamp;
 
 	nouveau_update_renderbuffers(dri_ctx, draw);
 	_mesa_resize_framebuffer(ctx, fb, draw->w, draw->h);
@@ -337,7 +337,7 @@ validate_framebuffer(__DRIcontext *dri_ctx, __DRIdrawable *draw,
 		dri2InvalidateDrawable(draw);
 	}
 
-	if (*draw->pStamp != *stamp)
+	if (draw->dri2.stamp != *stamp)
 		update_framebuffer(dri_ctx, draw, stamp);
 }
 

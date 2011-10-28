@@ -65,7 +65,7 @@ dri2_invalidate_drawable(__DRIdrawable *dPriv)
    struct dri_drawable *drawable = dri_drawable(dPriv);
 
    dri2InvalidateDrawable(dPriv);
-   drawable->dPriv->lastStamp = *drawable->dPriv->pStamp;
+   drawable->dPriv->lastStamp = drawable->dPriv->dri2.stamp;
 
    p_atomic_inc(&drawable->base.stamp);
 }

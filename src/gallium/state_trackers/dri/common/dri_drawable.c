@@ -62,9 +62,9 @@ dri_st_framebuffer_validate(struct st_framebuffer_iface *stfbi,
    new_mask = (statt_mask & ~drawable->texture_mask);
 
    /*
-    * dPriv->pStamp is the server stamp.  It should be accessed with a lock, at
-    * least for DRI1.  dPriv->lastStamp is the client stamp.  It has the value
-    * of the server stamp when last checked.
+    * dPriv->dri2.stamp is the server stamp.  dPriv->lastStamp is the
+    * client stamp.  It has the value of the server stamp when last
+    * checked.
     */
    new_stamp = (drawable->texture_stamp != drawable->dPriv->lastStamp);
 
