@@ -18,8 +18,7 @@ COMMON_GALLIUM_SOURCES = \
 
 COMMON_SOURCES = $(COMMON_GALLIUM_SOURCES) \
         $(TOP)/src/mesa/drivers/common/driverfuncs.c \
-        $(TOP)/src/mesa/drivers/dri/common/texmem.c \
-        $(TOP)/src/mesa/drivers/dri/common/drirenderbuffer.c
+        $(TOP)/src/mesa/drivers/dri/common/texmem.c
 
 COMMON_BM_SOURCES = \
 	$(TOP)/src/mesa/drivers/dri/common/dri_bufmgr.c \

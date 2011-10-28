@@ -24,7 +24,6 @@ C_SOURCES = \
 	$(TOP)/src/mesa/drivers/dri/common/dri_util.c \
 	$(TOP)/src/mesa/drivers/dri/common/xmlconfig.c \
 	$(TOP)/src/mesa/drivers/common/driverfuncs.c \
-	$(TOP)/src/mesa/drivers/dri/common/texmem.c \
-	$(TOP)/src/mesa/drivers/dri/common/drirenderbuffer.c
+	$(TOP)/src/mesa/drivers/dri/common/texmem.c
 
 include ../../../Makefile.template

@@ -54,7 +54,6 @@
 #include "intel_bufmgr.h"
 #include "intel_screen.h"
 
-#include "drirenderbuffer.h"
 #include "utils.h"
 #include "../glsl/ralloc.h"
 
