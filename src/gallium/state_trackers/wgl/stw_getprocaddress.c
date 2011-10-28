@@ -73,6 +73,9 @@ static const struct stw_extension_entry stw_extension_entries[] = {
    STW_EXTENSION_ENTRY( wglGetGalliumScreenMESA ),
    STW_EXTENSION_ENTRY( wglCreateGalliumContextMESA ),
 
+   /* WGL_ARB_create_context */
+   STW_EXTENSION_ENTRY( wglCreateContextAttribsARB ),
+
    { NULL, NULL }
 };
 

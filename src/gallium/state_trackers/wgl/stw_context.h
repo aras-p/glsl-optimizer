@@ -43,6 +43,9 @@ struct stw_context
    struct stw_framebuffer *current_framebuffer;
 };
 
+DHGLRC stw_create_context_attribs( HDC hdc, INT iLayerPlane, DHGLRC hShareContext,
+                                   int majorVersion, int minorVersion, int contextFlags, int profileMask );
+
 DHGLRC stw_get_current_context( void );
 
 HDC stw_get_current_dc( void );
