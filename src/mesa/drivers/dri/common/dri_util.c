@@ -360,23 +360,6 @@ const __DRImediaStreamCounterExtension driMediaStreamCounterExtension = {
 };
 
 
-static void driSetSwapInterval(__DRIdrawable *dPriv, unsigned int interval)
-{
-    dPriv->swap_interval = interval;
-}
-
-static unsigned int driGetSwapInterval(__DRIdrawable *dPriv)
-{
-    return dPriv->swap_interval;
-}
-
-const __DRIswapControlExtension driSwapControlExtension = {
-    { __DRI_SWAP_CONTROL, __DRI_SWAP_CONTROL_VERSION },
-    driSetSwapInterval,
-    driGetSwapInterval
-};
-
-
 /**
  * This is called via __DRIscreenRec's createNewDrawable pointer.
  */

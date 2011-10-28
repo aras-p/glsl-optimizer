@@ -620,7 +620,6 @@ static struct __DRIimageExtensionRec dri2ImageExtension = {
  */
 
 static const __DRIextension *dri_screen_extensions[] = {
-   &driSwapControlExtension.base,
    &driMediaStreamCounterExtension.base,
    &driTexBufferExtension.base,
    &dri2FlushExtension.base,
@@ -630,7 +629,6 @@ static const __DRIextension *dri_screen_extensions[] = {
 };
 
 static const __DRIextension *dri_screen_extensions_throttle[] = {
-   &driSwapControlExtension.base,
    &driMediaStreamCounterExtension.base,
    &driTexBufferExtension.base,
    &dri2FlushExtension.base,
