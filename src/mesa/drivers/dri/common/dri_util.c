@@ -483,58 +483,6 @@ driDestroyContext(__DRIcontext *pcp)
     }
 }
 
-
-/**
- * Create the per-drawable private driver information.
- * 
- * \param render_type   Type of rendering target.  \c GLX_RGBA_TYPE is the only
- *                      type likely to ever be supported for direct-rendering.
- *                      However, \c GLX_RGBA_FLOAT_TYPE_ARB may eventually be
- *                      supported by some drivers.
- * \param shared        Context with which to share textures, etc. or NULL
- *
- * \returns An opaque pointer to the per-context private information on
- *          success, or \c NULL on failure.
- * 
- * \internal
- * This function allocates and fills a __DRIcontextRec structure.  It
- * performs some device independent initialization and passes all the
- * relevent information to __DriverAPIRec::CreateContext to create the
- * context.
- *
- */
-static __DRIcontext *
-driCreateNewContext(__DRIscreen *psp, const __DRIconfig *config,
-		    int render_type, __DRIcontext *shared, 
-		    drm_context_t hwContext, void *data)
-{
-    __DRIcontext *pcp;
-    void * const shareCtx = (shared != NULL) ? shared->driverPrivate : NULL;
-
-    (void) render_type;
-
-    pcp = malloc(sizeof *pcp);
-    if (!pcp)
-	return NULL;
-
-    pcp->driScreenPriv = psp;
-    pcp->driDrawablePriv = NULL;
-    pcp->loaderPrivate = data;
-    
-    pcp->dri2.draw_stamp = 0;
-    pcp->dri2.read_stamp = 0;
-
-    pcp->hHWContext = hwContext;
-
-    if ( !(*psp->DriverAPI.CreateContext)(API_OPENGL,
-					  &config->modes, pcp, shareCtx) ) {
-        free(pcp);
-        return NULL;
-    }
-
-    return pcp;
-}
-
 static unsigned int
 dri2GetAPIMask(__DRIscreen *screen)
 {
