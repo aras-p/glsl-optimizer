@@ -37,7 +37,8 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #define __RADEON_IOCTL_H__
 
 #include "main/simple_list.h"
-#include "radeon_bocs_wrapper.h"
+#include "radeon_bo_gem.h"
+#include "radeon_cs_gem.h"
 
 extern void radeonEmitVertexAOS( r100ContextPtr rmesa,
 				 GLuint vertex_size,

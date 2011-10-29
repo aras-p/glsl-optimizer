@@ -60,8 +60,6 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #include "utils.h"
 #include "vblank.h"
 
-#include "radeon_bocs_wrapper.h"
-
 #include "GL/internal/dri_interface.h"
 
 /* Radeon configuration
