@@ -76,8 +76,12 @@ static void r600_render_condition(struct pipe_context *ctx,
 	int wait_flag = 0;
 
 	/* If we already have nonzero result, render unconditionally */
-	if (query != NULL && rquery->result != 0)
+	if (query != NULL && rquery->result != 0) {
+		if (rctx->current_render_cond) {
+			r600_render_condition(ctx, NULL, 0);
+		}
 		return;
+	}
 
 	rctx->current_render_cond = query;
 	rctx->current_render_cond_mode = mode;
