@@ -35,10 +35,9 @@
 
 static void radeonQueryGetResult(struct gl_context *ctx, struct gl_query_object *q)
 {
-	radeonContextPtr radeon = RADEON_CONTEXT(ctx);
 	struct radeon_query_object *query = (struct radeon_query_object *)q;
         uint32_t *result;
-	int i, max_idx;
+	int i;
 
 	radeon_print(RADEON_STATE, RADEON_VERBOSE,
 			"%s: query id %d, result %d\n",
@@ -48,36 +47,9 @@ static void radeonQueryGetResult(struct gl_context *ctx, struct gl_query_object 
         result = query->bo->ptr;
 
 	query->Base.Result = 0;
-	if (IS_R600_CLASS(radeon->radeonScreen)) {
-		/* ZPASS EVENT writes alternating qwords
-		 * At query start we set the start offset to 0 and
-		 * hw writes zpass start counts to qwords 0, 2, 4, 6.
-		 * At query end we set the start offset to 8 and
-		 * hw writes zpass end counts to qwords 1, 3, 5, 7.
-		 * then we substract. MSB is the valid bit.
-		 */
-		if (radeon->radeonScreen->chip_family >= CHIP_FAMILY_CEDAR)
-			max_idx = 8 * 4; /* 8 DB's */
-		else
-			max_idx = 4 * 4; /* 4 DB's for r600, r700 */
-		for (i = 0; i < max_idx; i += 4) {
-			uint64_t start = (uint64_t)LE32_TO_CPU(result[i]) |
-					 (uint64_t)LE32_TO_CPU(result[i + 1]) << 32;
-			uint64_t end = (uint64_t)LE32_TO_CPU(result[i + 2]) |
-				       (uint64_t)LE32_TO_CPU(result[i + 3]) << 32;
-			if ((start & 0x8000000000000000) && (end & 0x8000000000000000)) {
-				uint64_t query_count = end - start;
-				query->Base.Result += query_count;
-
-			}
-			radeon_print(RADEON_STATE, RADEON_TRACE,
-				     "%d start: %" PRIu64 ", end: %" PRIu64 " %" PRIu64 "\n", i, start, end, end - start);
-		}
-	} else {
-		for (i = 0; i < query->curr_offset/sizeof(uint32_t); ++i) {
-			query->Base.Result += LE32_TO_CPU(result[i]);
-			radeon_print(RADEON_STATE, RADEON_TRACE, "result[%d] = %d\n", i, LE32_TO_CPU(result[i]));
-		}
+	for (i = 0; i < query->curr_offset/sizeof(uint32_t); ++i) {
+		query->Base.Result += LE32_TO_CPU(result[i]);
+		radeon_print(RADEON_STATE, RADEON_TRACE, "result[%d] = %d\n", i, LE32_TO_CPU(result[i]));
 	}
 
 	radeon_bo_unmap(query->bo);

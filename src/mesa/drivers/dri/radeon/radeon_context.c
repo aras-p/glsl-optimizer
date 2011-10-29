@@ -330,8 +330,7 @@ r100CreateContext( gl_api api,
 
    ctx->Extensions.EXT_framebuffer_object = true;
 
-   ctx->Extensions.ARB_texture_cube_map =
-      rmesa->radeon.radeonScreen->drmSupportsCubeMapsR100;
+   ctx->Extensions.ARB_texture_cube_map = true;
 
    if (rmesa->radeon.glCtx->Mesa_DXTn) {
       ctx->Extensions.EXT_texture_compression_s3tc = true;

@@ -202,7 +202,6 @@ static int check_##NM( struct gl_context *ctx, struct radeon_state_atom *atom )	
 CHECK( always, GL_TRUE, 0 )
 CHECK( always_add2, GL_TRUE, 2 )
 CHECK( always_add4, GL_TRUE, 4 )
-CHECK( never, GL_FALSE, 0 )
 CHECK( tex0_mm, ctx->Texture.Unit[0]._ReallyEnabled, 3 )
 CHECK( tex1_mm, ctx->Texture.Unit[1]._ReallyEnabled, 3 )
 /* need this for the cubic_map on disabled unit 2 bug, maybe r100 only? */
@@ -586,20 +585,12 @@ void radeonInitState( r100ContextPtr rmesa )
    for (i = 0; i < 3; i++) {
       rmesa->hw.tex[i].emit = tex_emit_cs;
    }
-   if (rmesa->radeon.radeonScreen->drmSupportsCubeMapsR100)
-   {
-      ALLOC_STATE_IDX( cube[0], cube0_mm, CUBE_STATE_SIZE, "CUBE/cube-0", 0, 0 );
-      ALLOC_STATE_IDX( cube[1], cube1_mm, CUBE_STATE_SIZE, "CUBE/cube-1", 0, 1 );
-      ALLOC_STATE_IDX( cube[2], cube2_mm, CUBE_STATE_SIZE, "CUBE/cube-2", 0, 2 );
-      for (i = 0; i < 3; i++)
-	 rmesa->hw.cube[i].emit = cube_emit_cs;
-   }
-   else
-   {
-      ALLOC_STATE_IDX( cube[0], never, CUBE_STATE_SIZE, "CUBE/cube-0", 0, 0 );
-      ALLOC_STATE_IDX( cube[1], never, CUBE_STATE_SIZE, "CUBE/cube-1", 0, 1 );
-      ALLOC_STATE_IDX( cube[2], never, CUBE_STATE_SIZE, "CUBE/cube-2", 0, 2 );
-   }
+   ALLOC_STATE_IDX( cube[0], cube0_mm, CUBE_STATE_SIZE, "CUBE/cube-0", 0, 0 );
+   ALLOC_STATE_IDX( cube[1], cube1_mm, CUBE_STATE_SIZE, "CUBE/cube-1", 0, 1 );
+   ALLOC_STATE_IDX( cube[2], cube2_mm, CUBE_STATE_SIZE, "CUBE/cube-2", 0, 2 );
+   for (i = 0; i < 3; i++)
+       rmesa->hw.cube[i].emit = cube_emit_cs;
+
    ALLOC_STATE_IDX( txr[0], txr0, TXR_STATE_SIZE, "TXR/txr-0", 0, 0 );
    ALLOC_STATE_IDX( txr[1], txr1, TXR_STATE_SIZE, "TXR/txr-1", 0, 1 );
    ALLOC_STATE_IDX( txr[2], txr2, TXR_STATE_SIZE, "TXR/txr-2", 0, 2 );

@@ -115,8 +115,7 @@ static void r200BlendColor( struct gl_context *ctx, const GLfloat cf[4] )
    CLAMPED_FLOAT_TO_UBYTE(color[1], cf[1]);
    CLAMPED_FLOAT_TO_UBYTE(color[2], cf[2]);
    CLAMPED_FLOAT_TO_UBYTE(color[3], cf[3]);
-   if (rmesa->radeon.radeonScreen->drmSupportsBlendColor)
-      rmesa->hw.ctx.cmd[CTX_RB3D_BLENDCOLOR] = radeonPackColor( 4, color[0], color[1], color[2], color[3] );
+   rmesa->hw.ctx.cmd[CTX_RB3D_BLENDCOLOR] = radeonPackColor( 4, color[0], color[1], color[2], color[3] );
 }
 
 /**
@@ -214,35 +213,19 @@ static void r200_set_blend_state( struct gl_context * ctx )
 
    R200_STATECHANGE( rmesa, ctx );
 
-   if (rmesa->radeon.radeonScreen->drmSupportsBlendColor) {
-      if (ctx->Color.ColorLogicOpEnabled) {
-         rmesa->hw.ctx.cmd[CTX_RB3D_CNTL] =  cntl | R200_ROP_ENABLE;
-         rmesa->hw.ctx.cmd[CTX_RB3D_ABLENDCNTL] = eqn | func;
-         rmesa->hw.ctx.cmd[CTX_RB3D_CBLENDCNTL] = eqn | func;
-         return;
-      } else if (ctx->Color.BlendEnabled) {
-         rmesa->hw.ctx.cmd[CTX_RB3D_CNTL] =  cntl | R200_ALPHA_BLEND_ENABLE | R200_SEPARATE_ALPHA_ENABLE;
-      }
-      else {
-         rmesa->hw.ctx.cmd[CTX_RB3D_CNTL] = cntl;
-         rmesa->hw.ctx.cmd[CTX_RB3D_ABLENDCNTL] = eqn | func;
-         rmesa->hw.ctx.cmd[CTX_RB3D_CBLENDCNTL] = eqn | func;
-         return;
-      }
+   if (ctx->Color.ColorLogicOpEnabled) {
+      rmesa->hw.ctx.cmd[CTX_RB3D_CNTL] =  cntl | R200_ROP_ENABLE;
+      rmesa->hw.ctx.cmd[CTX_RB3D_ABLENDCNTL] = eqn | func;
+      rmesa->hw.ctx.cmd[CTX_RB3D_CBLENDCNTL] = eqn | func;
+      return;
+   } else if (ctx->Color.BlendEnabled) {
+      rmesa->hw.ctx.cmd[CTX_RB3D_CNTL] =  cntl | R200_ALPHA_BLEND_ENABLE | R200_SEPARATE_ALPHA_ENABLE;
    }
    else {
-      if (ctx->Color.ColorLogicOpEnabled) {
-         rmesa->hw.ctx.cmd[CTX_RB3D_CNTL] =  cntl | R200_ROP_ENABLE;
-         rmesa->hw.ctx.cmd[CTX_RB3D_BLENDCNTL] = eqn | func;
-         return;
-      } else if (ctx->Color.BlendEnabled) {
-         rmesa->hw.ctx.cmd[CTX_RB3D_CNTL] =  cntl | R200_ALPHA_BLEND_ENABLE;
-      }
-      else {
-         rmesa->hw.ctx.cmd[CTX_RB3D_CNTL] = cntl;
-         rmesa->hw.ctx.cmd[CTX_RB3D_BLENDCNTL] = eqn | func;
-         return;
-      }
+      rmesa->hw.ctx.cmd[CTX_RB3D_CNTL] = cntl;
+      rmesa->hw.ctx.cmd[CTX_RB3D_ABLENDCNTL] = eqn | func;
+      rmesa->hw.ctx.cmd[CTX_RB3D_CBLENDCNTL] = eqn | func;
+      return;
    }
 
    func = (blend_factor( ctx->Color.Blend[0].SrcRGB, GL_TRUE ) << R200_SRC_BLEND_SHIFT) |
@@ -276,11 +259,6 @@ static void r200_set_blend_state( struct gl_context * ctx )
    default:
       fprintf( stderr, "[%s:%u] Invalid RGB blend equation (0x%04x).\n",
          __FUNCTION__, __LINE__, ctx->Color.Blend[0].EquationRGB );
-      return;
-   }
-
-   if (!rmesa->radeon.radeonScreen->drmSupportsBlendColor) {
-      rmesa->hw.ctx.cmd[CTX_RB3D_BLENDCNTL] = eqn | func;
       return;
    }
 
@@ -2144,8 +2122,6 @@ static void r200Enable( struct gl_context *ctx, GLenum cap, GLboolean state )
 	    rmesa->hw.tex[unit].cmd[TEX_PP_TXFORMAT] &=
 		~(R200_TXFORMAT_ST_ROUTE_MASK | R200_TXFORMAT_LOOKUP_DISABLE);
 	    rmesa->hw.tex[unit].cmd[TEX_PP_TXFORMAT] |= unit << R200_TXFORMAT_ST_ROUTE_SHIFT;
-	    /* need to guard this with drmSupportsFragmentShader? Should never get here if
-	       we don't announce ATI_fs, right? */
 	    rmesa->hw.tex[unit].cmd[TEX_PP_TXMULTI_CTL] = 0;
          }
 	 R200_STATECHANGE( rmesa, cst );

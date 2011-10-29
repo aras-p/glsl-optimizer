@@ -100,10 +100,6 @@ void rcommonBeginBatch(radeonContextPtr rmesa,
 #define OUT_BATCH_REGSEQ(reg, count) \
 	OUT_BATCH(cmdpacket0(b_l_rmesa->radeonScreen, (reg), (count)))
 
-/** Write a 32 bit float to the ring; requires 1 dword. */
-#define OUT_BATCH_FLOAT32(f) \
-	OUT_BATCH(radeonPackFloat32((f)))
-
 /* +r6/r7 : code here moved */
 
 /* Fire the buffered vertices no matter what.

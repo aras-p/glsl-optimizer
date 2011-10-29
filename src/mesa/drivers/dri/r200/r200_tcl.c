@@ -68,8 +68,7 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #define HAVE_ELTS        1
 
 
-#define HW_POINTS           (((R200_CONTEXT(ctx))->radeon.radeonScreen->drmSupportsPointSprites && \
-			      !(ctx->_TriangleCaps & DD_POINT_SMOOTH)) ? \
+#define HW_POINTS           ((!(ctx->_TriangleCaps & DD_POINT_SMOOTH)) ? \
 				R200_VF_PRIM_POINT_SPRITES : R200_VF_PRIM_POINTS)
 #define HW_LINES            R200_VF_PRIM_LINES
 #define HW_LINE_LOOP        0

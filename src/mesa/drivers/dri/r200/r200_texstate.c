@@ -1090,11 +1090,9 @@ static void import_tex_obj_state( r200ContextPtr rmesa,
 
       R200_STATECHANGE( rmesa, cube[unit] );
       cube_cmd[CUBE_PP_CUBIC_FACES] = texobj->pp_cubic_faces;
-      if (rmesa->radeon.radeonScreen->drmSupportsFragShader) {
-	 /* that value is submitted twice. could change cube atom
-	    to not include that command when new drm is used */
-	 cmd[TEX_PP_CUBIC_FACES] = texobj->pp_cubic_faces;
-      }
+      /* that value is submitted twice. could change cube atom
+         to not include that command when new drm is used */
+      cmd[TEX_PP_CUBIC_FACES] = texobj->pp_cubic_faces;
    }
 
 }

@@ -294,10 +294,7 @@ GLboolean r200CreateContext( gl_api api,
    ctx->Const.MinPointSizeAA = 1.0;
    ctx->Const.MaxPointSizeAA = 1.0;
    ctx->Const.PointSizeGranularity = 0.0625;
-   if (rmesa->radeon.radeonScreen->drmSupportsPointSprites)
-      ctx->Const.MaxPointSize = 2047.0;
-   else
-      ctx->Const.MaxPointSize = 1.0;
+   ctx->Const.MaxPointSize = 2047.0;
 
    /* mesa initialization problem - _mesa_init_point was already called */
    ctx->Point.MaxSize = ctx->Const.MaxPointSize;
@@ -359,8 +356,7 @@ GLboolean r200CreateContext( gl_api api,
    ctx->Extensions.ARB_texture_env_dot3 = true;
    ctx->Extensions.ARB_texture_env_crossbar = true;
    ctx->Extensions.ARB_vertex_array_object = true;
-   ctx->Extensions.EXT_blend_color =
-      rmesa->radeon.radeonScreen->drmSupportsBlendColor;
+   ctx->Extensions.EXT_blend_color = true;
    ctx->Extensions.EXT_blend_minmax = true;
    ctx->Extensions.EXT_fog_coord = true;
    ctx->Extensions.EXT_packed_depth_stencil = true;
@@ -394,29 +390,21 @@ GLboolean r200CreateContext( gl_api api,
       ctx->Extensions.EXT_texture_compression_s3tc = true;
    }
 
-   ctx->Extensions.ARB_texture_cube_map =
-      rmesa->radeon.radeonScreen->drmSupportsCubeMapsR200;
+   ctx->Extensions.ARB_texture_cube_map = true;
 
-   if (rmesa->radeon.radeonScreen->drmSupportsBlendColor) {
-      ctx->Extensions.EXT_blend_equation_separate = true;
-      ctx->Extensions.EXT_blend_func_separate = true;
-   }
+   ctx->Extensions.EXT_blend_equation_separate = true;
+   ctx->Extensions.EXT_blend_func_separate = true;
 
-   if (rmesa->radeon.radeonScreen->drmSupportsVertexProgram) {
-      ctx->Extensions.ARB_vertex_program = true;
-      ctx->Extensions.EXT_gpu_program_parameters = true;
-   }
+   ctx->Extensions.ARB_vertex_program = true;
+   ctx->Extensions.EXT_gpu_program_parameters = true;
 
    ctx->Extensions.NV_vertex_program =
       driQueryOptionb(&rmesa->radeon.optionCache, "nv_vertex_program");
 
-   ctx->Extensions.ATI_fragment_shader = (ctx->Const.MaxTextureUnits == 6)
-      && rmesa->radeon.radeonScreen->drmSupportsFragShader;
+   ctx->Extensions.ATI_fragment_shader = (ctx->Const.MaxTextureUnits == 6);
 
-   if (rmesa->radeon.radeonScreen->drmSupportsPointSprites) {
-      ctx->Extensions.ARB_point_sprite = true;
-      ctx->Extensions.EXT_point_parameters = true;
-   }
+   ctx->Extensions.ARB_point_sprite = true;
+   ctx->Extensions.EXT_point_parameters = true;
 
 #if 0
    r200InitDriverFuncs( ctx );

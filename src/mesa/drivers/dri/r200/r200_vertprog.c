@@ -1109,8 +1109,7 @@ void r200SetupVertexProg( struct gl_context *ctx ) {
       r200_translate_vertex_program(ctx, vp);
    }
    /* could optimize setting up vertex progs away for non-tcl hw */
-   fallback = !(vp->native && r200VertexProgUpdateParams(ctx, vp) &&
-      rmesa->radeon.radeonScreen->drmSupportsVertexProgram);
+   fallback = !(vp->native && r200VertexProgUpdateParams(ctx, vp));
    TCL_FALLBACK(ctx, R200_TCL_FALLBACK_VERTEX_PROGRAM, fallback);
    if (rmesa->radeon.TclFallback) return;
 

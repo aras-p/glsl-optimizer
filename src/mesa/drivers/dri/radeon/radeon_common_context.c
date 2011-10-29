@@ -117,12 +117,7 @@ static const GLubyte *radeonGetString(struct gl_context * ctx, GLenum name)
 
 	switch (name) {
 	case GL_VENDOR:
-		if (IS_R600_CLASS(radeon->radeonScreen))
-			return (GLubyte *) "Advanced Micro Devices, Inc.";
-		else if (IS_R300_CLASS(radeon->radeonScreen))
-			return (GLubyte *) "DRI R300 Project";
-		else
-			return (GLubyte *) "Tungsten Graphics, Inc.";
+		return (GLubyte *) "Tungsten Graphics, Inc.";
 
 	case GL_RENDERER:
 	{
@@ -132,11 +127,7 @@ static const GLubyte *radeonGetString(struct gl_context * ctx, GLenum name)
 		const char* chipclass;
 		char hardwarename[32];
 
-		if (IS_R600_CLASS(radeon->radeonScreen))
-			chipclass = "R600";
-		else if (IS_R300_CLASS(radeon->radeonScreen))
-			chipclass = "R300";
-		else if (IS_R200_CLASS(radeon->radeonScreen))
+		if (IS_R200_CLASS(radeon->radeonScreen))
 			chipclass = "R200";
 		else
 			chipclass = "R100";
@@ -148,20 +139,11 @@ static const GLubyte *radeonGetString(struct gl_context * ctx, GLenum name)
 
 		offset = driGetRendererString(buffer, hardwarename, agp_mode);
 
-		if (IS_R600_CLASS(radeon->radeonScreen)) {
-			sprintf(&buffer[offset], " TCL");
-		} else if (IS_R300_CLASS(radeon->radeonScreen)) {
-			sprintf(&buffer[offset], " %sTCL",
-				(radeon->radeonScreen->chip_flags & RADEON_CHIPSET_TCL)
-				? "" : "NO-");
-		} else {
-			sprintf(&buffer[offset], " %sTCL",
-				!(radeon->TclFallback & RADEON_TCL_FALLBACK_TCL_DISABLE)
-				? "" : "NO-");
-		}
+		sprintf(&buffer[offset], " %sTCL",
+			!(radeon->TclFallback & RADEON_TCL_FALLBACK_TCL_DISABLE)
+			? "" : "NO-");
 
-		if (radeon->radeonScreen->driScreen->dri2.enabled)
-			strcat(buffer, " DRI2");
+		strcat(buffer, " DRI2");
 
 		return (GLubyte *) buffer;
 	}
@@ -246,23 +228,9 @@ GLboolean radeonInitContext(radeonContextPtr radeon,
                 radeon->texture_depth = ( glVisual->rgbBits > 16 ) ?
 	        DRI_CONF_TEXTURE_DEPTH_32 : DRI_CONF_TEXTURE_DEPTH_16;
 
-	if (IS_R600_CLASS(radeon->radeonScreen)) {
-		radeon->texture_row_align = radeon->radeonScreen->group_bytes;
-		radeon->texture_rect_row_align = radeon->radeonScreen->group_bytes;
-		radeon->texture_compressed_row_align = radeon->radeonScreen->group_bytes;
-	} else if (IS_R200_CLASS(radeon->radeonScreen) ||
-		   IS_R100_CLASS(radeon->radeonScreen)) {
+	if (IS_R200_CLASS(radeon->radeonScreen) ||
+	    IS_R100_CLASS(radeon->radeonScreen)) {
 		radeon->texture_row_align = 32;
-		radeon->texture_rect_row_align = 64;
-		radeon->texture_compressed_row_align = 32;
-	} else { /* R300 - not sure this is all correct */
-		int chip_family = radeon->radeonScreen->chip_family;
-		if (chip_family == CHIP_FAMILY_RS600 ||
-		    chip_family == CHIP_FAMILY_RS690 ||
-		    chip_family == CHIP_FAMILY_RS740)
-			radeon->texture_row_align = 64;
-		else
-			radeon->texture_row_align = 32;
 		radeon->texture_rect_row_align = 64;
 		radeon->texture_compressed_row_align = 32;
 	}
@@ -639,13 +607,6 @@ radeon_update_renderbuffers(__DRIcontext *context, __DRIdrawable *drawable,
 		rb->base.Width = drawable->w;
 		rb->base.Height = drawable->h;
 		rb->has_surface = 0;
-
-		/* r6xx+ tiling */
-		rb->tile_config = radeon->radeonScreen->tile_config;
-		rb->group_bytes = radeon->radeonScreen->group_bytes;
-		rb->num_channels = radeon->radeonScreen->num_channels;
-		rb->num_banks = radeon->radeonScreen->num_banks;
-		rb->r7xx_bank_op = radeon->radeonScreen->r7xx_bank_op;
 
 		if (buffers[i].attachment == __DRI_BUFFER_STENCIL && depth_bo) {
 			if (RADEON_DEBUG & RADEON_DRI)

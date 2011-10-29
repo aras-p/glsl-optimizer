@@ -1057,7 +1057,6 @@ radeonCreateScreen2(__DRIscreen *sPriv)
    int i;
    int ret;
    uint32_t device_id = 0;
-   uint32_t temp = 0;
 
    /* Allocate the private area */
    screen = (radeonScreenPtr) CALLOC( sizeof(*screen) );
@@ -1076,15 +1075,6 @@ radeonCreateScreen2(__DRIscreen *sPriv)
 
    screen->chip_flags = 0;
 
-   /* if we have kms we can support all of these */
-   screen->drmSupportsCubeMapsR200 = 1;
-   screen->drmSupportsBlendColor = 1;
-   screen->drmSupportsTriPerf = 1;
-   screen->drmSupportsFragShader = 1;
-   screen->drmSupportsPointSprites = 1;
-   screen->drmSupportsCubeMapsR100 = 1;
-   screen->drmSupportsVertexProgram = 1;
-   screen->drmSupportsOcclusionQueries = 1;
    screen->irq = 1;
 
    ret = radeonGetParam(sPriv, RADEON_PARAM_DEVICE_ID, &device_id);
@@ -1105,166 +1095,6 @@ radeonCreateScreen2(__DRIscreen *sPriv)
 	   screen->chip_flags |= RADEON_CLASS_R100;
    else if (screen->chip_family <= CHIP_FAMILY_RV280)
 	   screen->chip_flags |= RADEON_CLASS_R200;
-   else if (screen->chip_family <= CHIP_FAMILY_RV570)
-	   screen->chip_flags |= RADEON_CLASS_R300;
-   else
-	   screen->chip_flags |= RADEON_CLASS_R600;
-
-   /* r6xx+ tiling, default group bytes */
-   if (screen->chip_family >= CHIP_FAMILY_CEDAR)
-	   screen->group_bytes = 512;
-   else
-	   screen->group_bytes = 256;
-   if (IS_R600_CLASS(screen)) {
-	   if ((sPriv->drm_version.minor >= 6) &&
-	       (screen->chip_family < CHIP_FAMILY_CEDAR)) {
-		   ret = radeonGetParam(sPriv, RADEON_INFO_TILE_CONFIG, &temp);
-		   if (ret)
-			   fprintf(stderr, "failed to get tiling info\n");
-		   else {
-			   screen->tile_config = temp;
-			   screen->r7xx_bank_op = 0;
-			   switch ((screen->tile_config & 0xe) >> 1) {
-			   case 0:
-				   screen->num_channels = 1;
-				   break;
-			   case 1:
-				   screen->num_channels = 2;
-				   break;
-			   case 2:
-				   screen->num_channels = 4;
-				   break;
-			   case 3:
-				   screen->num_channels = 8;
-				   break;
-			   default:
-				   fprintf(stderr, "bad channels\n");
-				   break;
-			   }
-			   switch ((screen->tile_config & 0x30) >> 4) {
-			   case 0:
-				   screen->num_banks = 4;
-				   break;
-			   case 1:
-				   screen->num_banks = 8;
-				   break;
-			   default:
-				   fprintf(stderr, "bad banks\n");
-				   break;
-			   }
-			   switch ((screen->tile_config & 0xc0) >> 6) {
-			   case 0:
-				   screen->group_bytes = 256;
-				   break;
-			   case 1:
-				   screen->group_bytes = 512;
-				   break;
-			   default:
-				   fprintf(stderr, "bad group_bytes\n");
-				   break;
-			   }
-		   }
-	   } else if ((sPriv->drm_version.minor >= 7) &&
-		      (screen->chip_family >= CHIP_FAMILY_CEDAR)) {
-		   ret = radeonGetParam(sPriv, RADEON_INFO_TILE_CONFIG, &temp);
-		   if (ret)
-			   fprintf(stderr, "failed to get tiling info\n");
-		   else {
-			   screen->tile_config = temp;
-			   screen->r7xx_bank_op = 0;
-			   switch (screen->tile_config & 0xf) {
-			   case 0:
-				   screen->num_channels = 1;
-				   break;
-			   case 1:
-				   screen->num_channels = 2;
-				   break;
-			   case 2:
-				   screen->num_channels = 4;
-				   break;
-			   case 3:
-				   screen->num_channels = 8;
-				   break;
-			   default:
-				   fprintf(stderr, "bad channels\n");
-				   break;
-			   }
-			   switch ((screen->tile_config & 0xf0) >> 4) {
-			   case 0:
-				   screen->num_banks = 4;
-				   break;
-			   case 1:
-				   screen->num_banks = 8;
-				   break;
-			   case 2:
-				   screen->num_banks = 16;
-				   break;
-			   default:
-				   fprintf(stderr, "bad banks\n");
-				   break;
-			   }
-			   switch ((screen->tile_config & 0xf00) >> 8) {
-			   case 0:
-				   screen->group_bytes = 256;
-				   break;
-			   case 1:
-				   screen->group_bytes = 512;
-				   break;
-			   default:
-				   fprintf(stderr, "bad group_bytes\n");
-				   break;
-			   }
-		   }
-	   }
-   }
-
-   if (IS_R300_CLASS(screen)) {
-       ret = radeonGetParam(sPriv, RADEON_PARAM_NUM_GB_PIPES, &temp);
-       if (ret) {
-	   fprintf(stderr, "Unable to get num_pipes, need newer drm\n");
-	   switch (screen->chip_family) {
-	   case CHIP_FAMILY_R300:
-	   case CHIP_FAMILY_R350:
-	       screen->num_gb_pipes = 2;
-	       break;
-	   case CHIP_FAMILY_R420:
-	   case CHIP_FAMILY_R520:
-	   case CHIP_FAMILY_R580:
-	   case CHIP_FAMILY_RV560:
-	   case CHIP_FAMILY_RV570:
-	       screen->num_gb_pipes = 4;
-	       break;
-	   case CHIP_FAMILY_RV350:
-	   case CHIP_FAMILY_RV515:
-	   case CHIP_FAMILY_RV530:
-	   case CHIP_FAMILY_RV410:
-	   default:
-	       screen->num_gb_pipes = 1;
-	       break;
-	   }
-       } else {
-	   screen->num_gb_pipes = temp;
-       }
-
-       /* pipe overrides */
-       switch (device_id) {
-       case PCI_CHIP_R300_AD: /* 9500 with 1 quadpipe verified by: Reid Linnemann <lreid@cs.okstate.edu> */
-       case PCI_CHIP_R350_AH: /* 9800 SE only have 1 quadpipe */
-       case PCI_CHIP_RV410_5E4C: /* RV410 SE only have 1 quadpipe */
-       case PCI_CHIP_RV410_5E4F: /* RV410 SE only have 1 quadpipe */
-	   screen->num_gb_pipes = 1;
-	   break;
-       default:
-	   break;
-       }
-
-       ret = radeonGetParam(sPriv, RADEON_PARAM_NUM_Z_PIPES, &temp);
-       if (ret)
-	       screen->num_z_pipes = 2;
-       else
-	       screen->num_z_pipes = temp;
-
-   }
 
    i = 0;
    screen->extensions[i++] = &driCopySubBufferExtension.base;

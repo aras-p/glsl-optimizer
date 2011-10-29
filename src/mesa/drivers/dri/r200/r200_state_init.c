@@ -654,10 +654,7 @@ void r200InitState( r200ContextPtr rmesa )
 
    /* Allocate state buffers:
     */
-   if (rmesa->radeon.radeonScreen->drmSupportsBlendColor)
-      ALLOC_STATE( ctx, always_add4, CTX_STATE_SIZE_NEWDRM, "CTX/context", 0 );
-   else
-      ALLOC_STATE( ctx, always_add4, CTX_STATE_SIZE_OLDDRM, "CTX/context", 0 );
+   ALLOC_STATE( ctx, always_add4, CTX_STATE_SIZE_NEWDRM, "CTX/context", 0 );
 
    rmesa->hw.ctx.emit = ctx_emit_cs;
    rmesa->hw.ctx.check = check_always_ctx;
@@ -674,76 +671,47 @@ void r200InitState( r200ContextPtr rmesa )
    ALLOC_STATE( tf, tf, TF_STATE_SIZE, "TF/tfactor", 0 );
    {
       int state_size = TEX_STATE_SIZE_NEWDRM;
-      if (!rmesa->radeon.radeonScreen->drmSupportsFragShader) {
-         state_size = TEX_STATE_SIZE_OLDDRM;
+      if (rmesa->radeon.radeonScreen->chip_family == CHIP_FAMILY_R200) {
+         /* make sure texture units 0/1 are emitted pair-wise for r200 t0 hang workaround */
+         ALLOC_STATE( tex[0], tex_pair_mm, state_size, "TEX/tex-0", 0 );
+         ALLOC_STATE( tex[1], tex_pair_mm, state_size, "TEX/tex-1", 1 );
+         ALLOC_STATE( tam, tex_any, TAM_STATE_SIZE, "TAM/tam", 0 );
       }
-      if (rmesa->radeon.radeonScreen->drmSupportsFragShader) {
-         if (rmesa->radeon.radeonScreen->chip_family == CHIP_FAMILY_R200) {
-            /* make sure texture units 0/1 are emitted pair-wise for r200 t0 hang workaround */
-            ALLOC_STATE( tex[0], tex_pair_mm, state_size, "TEX/tex-0", 0 );
-            ALLOC_STATE( tex[1], tex_pair_mm, state_size, "TEX/tex-1", 1 );
-            ALLOC_STATE( tam, tex_any, TAM_STATE_SIZE, "TAM/tam", 0 );
-         }
-         else {
-            ALLOC_STATE( tex[0], tex_mm, state_size, "TEX/tex-0", 0 );
-            ALLOC_STATE( tex[1], tex_mm, state_size, "TEX/tex-1", 1 );
-            ALLOC_STATE( tam, never, TAM_STATE_SIZE, "TAM/tam", 0 );
-         }
-         ALLOC_STATE( tex[2], tex_mm, state_size, "TEX/tex-2", 2 );
-         ALLOC_STATE( tex[3], tex_mm, state_size, "TEX/tex-3", 3 );
-         ALLOC_STATE( tex[4], tex_mm, state_size, "TEX/tex-4", 4 );
-         ALLOC_STATE( tex[5], tex_mm, state_size, "TEX/tex-5", 5 );
-         if (rmesa->radeon.radeonScreen->drmSupportsFragShader) {
-            ALLOC_STATE( atf, afs, ATF_STATE_SIZE, "ATF/tfactor", 0 );
-            ALLOC_STATE( afs[0], afs_pass1, AFS_STATE_SIZE, "AFS/afsinst-0", 0 );
-            ALLOC_STATE( afs[1], afs, AFS_STATE_SIZE, "AFS/afsinst-1", 1 );
-         } else {
-            ALLOC_STATE( atf, never, ATF_STATE_SIZE, "ATF/tfactor", 0 );
-            ALLOC_STATE( afs[0], never, AFS_STATE_SIZE, "AFS/afsinst-0", 0 );
-            ALLOC_STATE( afs[1], never, AFS_STATE_SIZE, "AFS/afsinst-1", 1 );
-         }
+      else {
+         ALLOC_STATE( tex[0], tex_mm, state_size, "TEX/tex-0", 0 );
+         ALLOC_STATE( tex[1], tex_mm, state_size, "TEX/tex-1", 1 );
+         ALLOC_STATE( tam, never, TAM_STATE_SIZE, "TAM/tam", 0 );
       }
+      ALLOC_STATE( tex[2], tex_mm, state_size, "TEX/tex-2", 2 );
+      ALLOC_STATE( tex[3], tex_mm, state_size, "TEX/tex-3", 3 );
+      ALLOC_STATE( tex[4], tex_mm, state_size, "TEX/tex-4", 4 );
+      ALLOC_STATE( tex[5], tex_mm, state_size, "TEX/tex-5", 5 );
+      ALLOC_STATE( atf, afs, ATF_STATE_SIZE, "ATF/tfactor", 0 );
+      ALLOC_STATE( afs[0], afs_pass1, AFS_STATE_SIZE, "AFS/afsinst-0", 0 );
+      ALLOC_STATE( afs[1], afs, AFS_STATE_SIZE, "AFS/afsinst-1", 1 );
    }
 
    ALLOC_STATE( stp, polygon_stipple, STP_STATE_SIZE, "STP/stp", 0 );
 
    for (i = 0; i < 6; i++)
       rmesa->hw.tex[i].emit = tex_emit_mm;
-   if (rmesa->radeon.radeonScreen->drmSupportsCubeMapsR200) {
-      ALLOC_STATE( cube[0], tex_cube, CUBE_STATE_SIZE, "CUBE/tex-0", 0 );
-      ALLOC_STATE( cube[1], tex_cube, CUBE_STATE_SIZE, "CUBE/tex-1", 1 );
-      ALLOC_STATE( cube[2], tex_cube, CUBE_STATE_SIZE, "CUBE/tex-2", 2 );
-      ALLOC_STATE( cube[3], tex_cube, CUBE_STATE_SIZE, "CUBE/tex-3", 3 );
-      ALLOC_STATE( cube[4], tex_cube, CUBE_STATE_SIZE, "CUBE/tex-4", 4 );
-      ALLOC_STATE( cube[5], tex_cube, CUBE_STATE_SIZE, "CUBE/tex-5", 5 );
-      for (i = 0; i < 6; i++) {
-	 rmesa->hw.cube[i].emit = cube_emit_cs;
-	 rmesa->hw.cube[i].check = check_tex_cube_cs;
-      }
-   }
-   else {
-      ALLOC_STATE( cube[0], never, CUBE_STATE_SIZE, "CUBE/tex-0", 0 );
-      ALLOC_STATE( cube[1], never, CUBE_STATE_SIZE, "CUBE/tex-1", 1 );
-      ALLOC_STATE( cube[2], never, CUBE_STATE_SIZE, "CUBE/tex-2", 2 );
-      ALLOC_STATE( cube[3], never, CUBE_STATE_SIZE, "CUBE/tex-3", 3 );
-      ALLOC_STATE( cube[4], never, CUBE_STATE_SIZE, "CUBE/tex-4", 4 );
-      ALLOC_STATE( cube[5], never, CUBE_STATE_SIZE, "CUBE/tex-5", 5 );
+   ALLOC_STATE( cube[0], tex_cube, CUBE_STATE_SIZE, "CUBE/tex-0", 0 );
+   ALLOC_STATE( cube[1], tex_cube, CUBE_STATE_SIZE, "CUBE/tex-1", 1 );
+   ALLOC_STATE( cube[2], tex_cube, CUBE_STATE_SIZE, "CUBE/tex-2", 2 );
+   ALLOC_STATE( cube[3], tex_cube, CUBE_STATE_SIZE, "CUBE/tex-3", 3 );
+   ALLOC_STATE( cube[4], tex_cube, CUBE_STATE_SIZE, "CUBE/tex-4", 4 );
+   ALLOC_STATE( cube[5], tex_cube, CUBE_STATE_SIZE, "CUBE/tex-5", 5 );
+   for (i = 0; i < 6; i++) {
+      rmesa->hw.cube[i].emit = cube_emit_cs;
+      rmesa->hw.cube[i].check = check_tex_cube_cs;
    }
 
-   if (rmesa->radeon.radeonScreen->drmSupportsVertexProgram) {
-      ALLOC_STATE( pvs, tcl_vp, PVS_STATE_SIZE, "PVS/pvscntl", 0 );
-      ALLOC_STATE( vpi[0], tcl_vp_add4, VPI_STATE_SIZE, "VP/vertexprog-0", 0 );
-      ALLOC_STATE( vpi[1], tcl_vp_size_add4, VPI_STATE_SIZE, "VP/vertexprog-1", 1 );
-      ALLOC_STATE( vpp[0], tcl_vp_add4, VPP_STATE_SIZE, "VPP/vertexparam-0", 0 );
-      ALLOC_STATE( vpp[1], tcl_vpp_size_add4, VPP_STATE_SIZE, "VPP/vertexparam-1", 1 );
-   }
-   else {
-      ALLOC_STATE( pvs, never, PVS_STATE_SIZE, "PVS/pvscntl", 0 );
-      ALLOC_STATE( vpi[0], never, VPI_STATE_SIZE, "VP/vertexprog-0", 0 );
-      ALLOC_STATE( vpi[1], never, VPI_STATE_SIZE, "VP/vertexprog-1", 1 );
-      ALLOC_STATE( vpp[0], never, VPP_STATE_SIZE, "VPP/vertexparam-0", 0 );
-      ALLOC_STATE( vpp[1], never, VPP_STATE_SIZE, "VPP/vertexparam-1", 1 );
-   }
+   ALLOC_STATE( pvs, tcl_vp, PVS_STATE_SIZE, "PVS/pvscntl", 0 );
+   ALLOC_STATE( vpi[0], tcl_vp_add4, VPI_STATE_SIZE, "VP/vertexprog-0", 0 );
+   ALLOC_STATE( vpi[1], tcl_vp_size_add4, VPI_STATE_SIZE, "VP/vertexprog-1", 1 );
+   ALLOC_STATE( vpp[0], tcl_vp_add4, VPP_STATE_SIZE, "VPP/vertexparam-0", 0 );
+   ALLOC_STATE( vpp[1], tcl_vpp_size_add4, VPP_STATE_SIZE, "VPP/vertexparam-1", 1 );
+
    /* FIXME: this atom has two commands, we need only one (ucp_vert_blend) for vp */
    ALLOC_STATE( tcl, tcl_or_vp, TCL_STATE_SIZE, "TCL/tcl", 0 );
    ALLOC_STATE( msl, tcl, MSL_STATE_SIZE, "MSL/matrix-select", 0 );
@@ -784,20 +752,9 @@ void r200InitState( r200ContextPtr rmesa )
    ALLOC_STATE( pix[3], texenv, PIX_STATE_SIZE, "PIX/pixstage-3", 3 );
    ALLOC_STATE( pix[4], texenv, PIX_STATE_SIZE, "PIX/pixstage-4", 4 );
    ALLOC_STATE( pix[5], texenv, PIX_STATE_SIZE, "PIX/pixstage-5", 5 );
-   if (rmesa->radeon.radeonScreen->drmSupportsTriPerf) {
-      ALLOC_STATE( prf, always, PRF_STATE_SIZE, "PRF/performance-tri", 0 );
-   }
-   else {
-      ALLOC_STATE( prf, never, PRF_STATE_SIZE, "PRF/performance-tri", 0 );
-   }
-   if (rmesa->radeon.radeonScreen->drmSupportsPointSprites) {
-      ALLOC_STATE( spr, always, SPR_STATE_SIZE, "SPR/pointsprite", 0 );
-      ALLOC_STATE( ptp, tcl_add8, PTP_STATE_SIZE, "PTP/pointparams", 0 );
-   }
-   else {
-      ALLOC_STATE (spr, never, SPR_STATE_SIZE, "SPR/pointsprite", 0 );
-      ALLOC_STATE (ptp, never, PTP_STATE_SIZE, "PTP/pointparams", 0 );
-   }
+   ALLOC_STATE( prf, always, PRF_STATE_SIZE, "PRF/performance-tri", 0 );
+   ALLOC_STATE( spr, always, SPR_STATE_SIZE, "SPR/pointsprite", 0 );
+   ALLOC_STATE( ptp, tcl_add8, PTP_STATE_SIZE, "PTP/pointparams", 0 );
 
    r200SetUpAtomList( rmesa );
 
@@ -806,8 +763,7 @@ void r200InitState( r200ContextPtr rmesa )
    rmesa->hw.ctx.cmd[CTX_CMD_0] = cmdpkt(rmesa, RADEON_EMIT_PP_MISC);
    rmesa->hw.ctx.cmd[CTX_CMD_1] = cmdpkt(rmesa, RADEON_EMIT_PP_CNTL);
    rmesa->hw.ctx.cmd[CTX_CMD_2] = cmdpkt(rmesa, RADEON_EMIT_RB3D_COLORPITCH);
-   if (rmesa->radeon.radeonScreen->drmSupportsBlendColor)
-      rmesa->hw.ctx.cmd[CTX_CMD_3] = cmdpkt(rmesa, R200_EMIT_RB3D_BLENDCOLOR);
+   rmesa->hw.ctx.cmd[CTX_CMD_3] = cmdpkt(rmesa, R200_EMIT_RB3D_BLENDCOLOR);
    rmesa->hw.lin.cmd[LIN_CMD_0] = cmdpkt(rmesa, RADEON_EMIT_RE_LINE_PATTERN);
    rmesa->hw.lin.cmd[LIN_CMD_1] = cmdpkt(rmesa, RADEON_EMIT_SE_LINE_WIDTH);
    rmesa->hw.msk.cmd[MSK_CMD_0] = cmdpkt(rmesa, RADEON_EMIT_RB3D_STENCILREFMASK);
@@ -823,34 +779,19 @@ void r200InitState( r200ContextPtr rmesa )
    rmesa->hw.cst.cmd[CST_CMD_6] = cmdpkt(rmesa, R200_EMIT_TCL_INPUT_VTX_VECTOR_ADDR_0);
    rmesa->hw.tam.cmd[TAM_CMD_0] = cmdpkt(rmesa, R200_EMIT_PP_TAM_DEBUG3);
    rmesa->hw.tf.cmd[TF_CMD_0] = cmdpkt(rmesa, R200_EMIT_TFACTOR_0);
-   if (rmesa->radeon.radeonScreen->drmSupportsFragShader) {
-      rmesa->hw.atf.cmd[ATF_CMD_0] = cmdpkt(rmesa, R200_EMIT_ATF_TFACTOR);
-      rmesa->hw.tex[0].cmd[TEX_CMD_0] = cmdpkt(rmesa, R200_EMIT_PP_TXCTLALL_0);
-      rmesa->hw.tex[0].cmd[TEX_CMD_1_NEWDRM] = cmdpkt(rmesa, R200_EMIT_PP_TXOFFSET_0);
-      rmesa->hw.tex[1].cmd[TEX_CMD_0] = cmdpkt(rmesa, R200_EMIT_PP_TXCTLALL_1);
-      rmesa->hw.tex[1].cmd[TEX_CMD_1_NEWDRM] = cmdpkt(rmesa, R200_EMIT_PP_TXOFFSET_1);
-      rmesa->hw.tex[2].cmd[TEX_CMD_0] = cmdpkt(rmesa, R200_EMIT_PP_TXCTLALL_2);
-      rmesa->hw.tex[2].cmd[TEX_CMD_1_NEWDRM] = cmdpkt(rmesa, R200_EMIT_PP_TXOFFSET_2);
-      rmesa->hw.tex[3].cmd[TEX_CMD_0] = cmdpkt(rmesa, R200_EMIT_PP_TXCTLALL_3);
-      rmesa->hw.tex[3].cmd[TEX_CMD_1_NEWDRM] = cmdpkt(rmesa, R200_EMIT_PP_TXOFFSET_3);
-      rmesa->hw.tex[4].cmd[TEX_CMD_0] = cmdpkt(rmesa, R200_EMIT_PP_TXCTLALL_4);
-      rmesa->hw.tex[4].cmd[TEX_CMD_1_NEWDRM] = cmdpkt(rmesa, R200_EMIT_PP_TXOFFSET_4);
-      rmesa->hw.tex[5].cmd[TEX_CMD_0] = cmdpkt(rmesa, R200_EMIT_PP_TXCTLALL_5);
-      rmesa->hw.tex[5].cmd[TEX_CMD_1_NEWDRM] = cmdpkt(rmesa, R200_EMIT_PP_TXOFFSET_5);
-   } else {
-      rmesa->hw.tex[0].cmd[TEX_CMD_0] = cmdpkt(rmesa, R200_EMIT_PP_TXFILTER_0);
-      rmesa->hw.tex[0].cmd[TEX_CMD_1_OLDDRM] = cmdpkt(rmesa, R200_EMIT_PP_TXOFFSET_0);
-      rmesa->hw.tex[1].cmd[TEX_CMD_0] = cmdpkt(rmesa, R200_EMIT_PP_TXFILTER_1);
-      rmesa->hw.tex[1].cmd[TEX_CMD_1_OLDDRM] = cmdpkt(rmesa, R200_EMIT_PP_TXOFFSET_1);
-      rmesa->hw.tex[2].cmd[TEX_CMD_0] = cmdpkt(rmesa, R200_EMIT_PP_TXFILTER_2);
-      rmesa->hw.tex[2].cmd[TEX_CMD_1_OLDDRM] = cmdpkt(rmesa, R200_EMIT_PP_TXOFFSET_2);
-      rmesa->hw.tex[3].cmd[TEX_CMD_0] = cmdpkt(rmesa, R200_EMIT_PP_TXFILTER_3);
-      rmesa->hw.tex[3].cmd[TEX_CMD_1_OLDDRM] = cmdpkt(rmesa, R200_EMIT_PP_TXOFFSET_3);
-      rmesa->hw.tex[4].cmd[TEX_CMD_0] = cmdpkt(rmesa, R200_EMIT_PP_TXFILTER_4);
-      rmesa->hw.tex[4].cmd[TEX_CMD_1_OLDDRM] = cmdpkt(rmesa, R200_EMIT_PP_TXOFFSET_4);
-      rmesa->hw.tex[5].cmd[TEX_CMD_0] = cmdpkt(rmesa, R200_EMIT_PP_TXFILTER_5);
-      rmesa->hw.tex[5].cmd[TEX_CMD_1_OLDDRM] = cmdpkt(rmesa, R200_EMIT_PP_TXOFFSET_5);
-   }
+   rmesa->hw.atf.cmd[ATF_CMD_0] = cmdpkt(rmesa, R200_EMIT_ATF_TFACTOR);
+   rmesa->hw.tex[0].cmd[TEX_CMD_0] = cmdpkt(rmesa, R200_EMIT_PP_TXCTLALL_0);
+   rmesa->hw.tex[0].cmd[TEX_CMD_1_NEWDRM] = cmdpkt(rmesa, R200_EMIT_PP_TXOFFSET_0);
+   rmesa->hw.tex[1].cmd[TEX_CMD_0] = cmdpkt(rmesa, R200_EMIT_PP_TXCTLALL_1);
+   rmesa->hw.tex[1].cmd[TEX_CMD_1_NEWDRM] = cmdpkt(rmesa, R200_EMIT_PP_TXOFFSET_1);
+   rmesa->hw.tex[2].cmd[TEX_CMD_0] = cmdpkt(rmesa, R200_EMIT_PP_TXCTLALL_2);
+   rmesa->hw.tex[2].cmd[TEX_CMD_1_NEWDRM] = cmdpkt(rmesa, R200_EMIT_PP_TXOFFSET_2);
+   rmesa->hw.tex[3].cmd[TEX_CMD_0] = cmdpkt(rmesa, R200_EMIT_PP_TXCTLALL_3);
+   rmesa->hw.tex[3].cmd[TEX_CMD_1_NEWDRM] = cmdpkt(rmesa, R200_EMIT_PP_TXOFFSET_3);
+   rmesa->hw.tex[4].cmd[TEX_CMD_0] = cmdpkt(rmesa, R200_EMIT_PP_TXCTLALL_4);
+   rmesa->hw.tex[4].cmd[TEX_CMD_1_NEWDRM] = cmdpkt(rmesa, R200_EMIT_PP_TXOFFSET_4);
+   rmesa->hw.tex[5].cmd[TEX_CMD_0] = cmdpkt(rmesa, R200_EMIT_PP_TXCTLALL_5);
+   rmesa->hw.tex[5].cmd[TEX_CMD_1_NEWDRM] = cmdpkt(rmesa, R200_EMIT_PP_TXOFFSET_5);
    rmesa->hw.afs[0].cmd[AFS_CMD_0] = cmdpkt(rmesa, R200_EMIT_PP_AFS_0);
    rmesa->hw.afs[1].cmd[AFS_CMD_0] = cmdpkt(rmesa, R200_EMIT_PP_AFS_1);
    rmesa->hw.pvs.cmd[PVS_CMD_0] = cmdpkt(rmesa, R200_EMIT_VAP_PVS_CNTL);
@@ -994,15 +935,13 @@ void r200InitState( r200ContextPtr rmesa )
 				(R200_BLEND_GL_ONE << R200_SRC_BLEND_SHIFT) |
 				(R200_BLEND_GL_ZERO << R200_DST_BLEND_SHIFT));
 
-   if (rmesa->radeon.radeonScreen->drmSupportsBlendColor) {
-      rmesa->hw.ctx.cmd[CTX_RB3D_BLENDCOLOR] = 0x00000000;
-      rmesa->hw.ctx.cmd[CTX_RB3D_ABLENDCNTL] = (R200_COMB_FCN_ADD_CLAMP |
+   rmesa->hw.ctx.cmd[CTX_RB3D_BLENDCOLOR] = 0x00000000;
+   rmesa->hw.ctx.cmd[CTX_RB3D_ABLENDCNTL] = (R200_COMB_FCN_ADD_CLAMP |
 				(R200_BLEND_GL_ONE << R200_SRC_BLEND_SHIFT) |
 				(R200_BLEND_GL_ZERO << R200_DST_BLEND_SHIFT));
-      rmesa->hw.ctx.cmd[CTX_RB3D_CBLENDCNTL] = (R200_COMB_FCN_ADD_CLAMP |
+   rmesa->hw.ctx.cmd[CTX_RB3D_CBLENDCNTL] = (R200_COMB_FCN_ADD_CLAMP |
 				(R200_BLEND_GL_ONE << R200_SRC_BLEND_SHIFT) |
 				(R200_BLEND_GL_ZERO << R200_DST_BLEND_SHIFT));
-   }
 
    rmesa->hw.ctx.cmd[CTX_RB3D_DEPTHOFFSET] =
       rmesa->radeon.radeonScreen->depthOffset + rmesa->radeon.radeonScreen->fbLocation;
@@ -1146,16 +1085,10 @@ void r200InitState( r200ContextPtr rmesa )
       rmesa->hw.tex[i].cmd[TEX_PP_TXFORMAT_X] =
          (/* R200_TEXCOORD_PROJ | */
           R200_LOD_BIAS_CORRECTION);	/* Small default bias */
-      if (rmesa->radeon.radeonScreen->drmSupportsFragShader) {
-	 rmesa->hw.tex[i].cmd[TEX_PP_TXOFFSET_NEWDRM] =
+      rmesa->hw.tex[i].cmd[TEX_PP_TXOFFSET_NEWDRM] =
 	     rmesa->radeon.radeonScreen->texOffset[RADEON_LOCAL_TEX_HEAP];
-	 rmesa->hw.tex[i].cmd[TEX_PP_CUBIC_FACES] = 0;
-	 rmesa->hw.tex[i].cmd[TEX_PP_TXMULTI_CTL] = 0;
-      }
-      else {
-	  rmesa->hw.tex[i].cmd[TEX_PP_TXOFFSET_OLDDRM] =
-	     rmesa->radeon.radeonScreen->texOffset[RADEON_LOCAL_TEX_HEAP];
-     }
+      rmesa->hw.tex[i].cmd[TEX_PP_CUBIC_FACES] = 0;
+      rmesa->hw.tex[i].cmd[TEX_PP_TXMULTI_CTL] = 0;
 
       rmesa->hw.cube[i].cmd[CUBE_PP_CUBIC_FACES] = 0;
       rmesa->hw.cube[i].cmd[CUBE_PP_CUBIC_OFFSET_F1] =
