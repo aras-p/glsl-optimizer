@@ -93,7 +93,11 @@ literal_integer(char *text, int len, struct _mesa_glsl_parse_state *state,
    if (base == 16)
       digits += 2;
 
+#ifdef _MSC_VER
+   unsigned __int64 value = _strtoui64(digits, NULL, base);
+#else
    unsigned long long value = strtoull(digits, NULL, base);
+#endif
 
    lval->n = (int)value;
 
