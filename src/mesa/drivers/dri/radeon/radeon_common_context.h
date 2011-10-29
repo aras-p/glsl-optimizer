@@ -17,7 +17,8 @@
 
 struct radeon_context;
 
-#include "radeon_bocs_wrapper.h"
+#include "radeon_bo_gem.h"
+#include "radeon_cs_gem.h"
 
 /* This union is used to avoid warnings/miscompilation
    with float to uint32_t casts due to strict-aliasing */
