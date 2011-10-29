@@ -74,10 +74,10 @@ void r600_get_backend_mask(struct r600_context *ctx)
 		goto err;
 
 	/* initialize buffer with zeroes */
-	results = ctx->screen->ws->buffer_map(buffer->buf, ctx->cs, PIPE_TRANSFER_WRITE);
+	results = ctx->ws->buffer_map(buffer->buf, ctx->cs, PIPE_TRANSFER_WRITE);
 	if (results) {
 		memset(results, 0, ctx->max_db * 4 * 4);
-		ctx->screen->ws->buffer_unmap(buffer->buf);
+		ctx->ws->buffer_unmap(buffer->buf);
 
 		/* emit EVENT_WRITE for ZPASS_DONE */
 		ctx->pm4[ctx->pm4_cdwords++] = PKT3(PKT3_EVENT_WRITE, 2, 0);
@@ -89,14 +89,14 @@ void r600_get_backend_mask(struct r600_context *ctx)
 		ctx->pm4[ctx->pm4_cdwords++] = r600_context_bo_reloc(ctx, buffer, RADEON_USAGE_WRITE);
 
 		/* analyze results */
-		results = ctx->screen->ws->buffer_map(buffer->buf, ctx->cs, PIPE_TRANSFER_READ);
+		results = ctx->ws->buffer_map(buffer->buf, ctx->cs, PIPE_TRANSFER_READ);
 		if (results) {
 			for(i = 0; i < ctx->max_db; i++) {
 				/* at least highest bit will be set if backend is used */
 				if (results[i*4 + 1])
 					mask |= (1<<i);
 			}
-			ctx->screen->ws->buffer_unmap(buffer->buf);
+			ctx->ws->buffer_unmap(buffer->buf);
 		}
 	}
 
@@ -773,7 +773,7 @@ void r600_context_fini(struct r600_context *ctx)
 	free(ctx->range);
 	free(ctx->blocks);
 	free(ctx->bo);
-	ctx->screen->ws->cs_destroy(ctx->cs);
+	ctx->ws->cs_destroy(ctx->cs);
 
 	memset(ctx, 0, sizeof(struct r600_context));
 }
@@ -831,6 +831,7 @@ int r600_context_init(struct r600_context *ctx, struct r600_screen *screen)
 
 	memset(ctx, 0, sizeof(struct r600_context));
 	ctx->screen = screen;
+	ctx->ws = screen->ws;
 
 	LIST_INITHEAD(&ctx->active_query_list);
 
@@ -1500,7 +1501,7 @@ void r600_context_flush(struct r600_context *ctx, unsigned flags)
 
 	/* Flush the CS. */
 	ctx->cs->cdw = ctx->pm4_cdwords;
-	ctx->screen->ws->cs_flush(ctx->cs, flags);
+	ctx->ws->cs_flush(ctx->cs, flags);
 
 	/* We need to get the pointer to the other CS,
 	 * the command streams are double-buffered. */
@@ -1568,7 +1569,7 @@ static boolean r600_query_result(struct r600_context *ctx, struct r600_query *qu
 	unsigned results_base = query->results_start;
 	u32 *map;
 
-	map = ctx->screen->ws->buffer_map(query->buffer->buf, ctx->cs,
+	map = ctx->ws->buffer_map(query->buffer->buf, ctx->cs,
 					  PIPE_TRANSFER_READ | (wait ? 0 : PIPE_TRANSFER_DONTBLOCK));
 	if (!map)
 		return FALSE;
@@ -1591,7 +1592,7 @@ static boolean r600_query_result(struct r600_context *ctx, struct r600_query *qu
 	}
 
 	query->results_start = query->results_end;
-	ctx->screen->ws->buffer_unmap(query->buffer->buf);
+	ctx->ws->buffer_unmap(query->buffer->buf);
 	return TRUE;
 }
 
@@ -1630,7 +1631,7 @@ void r600_query_begin(struct r600_context *ctx, struct r600_query *query)
 		u32 *results;
 		int i;
 
-		results = ctx->screen->ws->buffer_map(query->buffer->buf, ctx->cs, PIPE_TRANSFER_WRITE);
+		results = ctx->ws->buffer_map(query->buffer->buf, ctx->cs, PIPE_TRANSFER_WRITE);
 		if (results) {
 			results = (u32*)((char*)results + query->results_end);
 			memset(results, 0, query->result_size);
@@ -1642,7 +1643,7 @@ void r600_query_begin(struct r600_context *ctx, struct r600_query *query)
 					results[(i * 4)+3] = 0x80000000;
 				}
 			}
-			ctx->screen->ws->buffer_unmap(query->buffer->buf);
+			ctx->ws->buffer_unmap(query->buffer->buf);
 		}
 	}
 

@@ -258,7 +258,7 @@ static struct pipe_context *r600_create_context(struct pipe_screen *screen, void
 		return NULL;
 	}
 
-	rctx->screen->ws->cs_set_flush_callback(rctx->ctx.cs, r600_flush_from_winsys, rctx);
+	rctx->ws->cs_set_flush_callback(rctx->ctx.cs, r600_flush_from_winsys, rctx);
 
 	util_slab_create(&rctx->pool_transfers,
 			 sizeof(struct pipe_transfer), 64,

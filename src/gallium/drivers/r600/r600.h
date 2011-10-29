@@ -190,6 +190,7 @@ struct r600_query {
 
 struct r600_context {
 	struct r600_screen	*screen;
+	struct radeon_winsys	*ws;
 	struct radeon_winsys_cs	*cs;
 
 	struct r600_range	*range;
