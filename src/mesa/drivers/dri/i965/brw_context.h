@@ -404,31 +404,48 @@ struct brw_vs_ouput_sizes {
 #define BRW_MAX_DRAW_BUFFERS 8
 
 /**
- * Size of our surface binding table for the WM.
- * This contains pointers to the drawing surfaces and current texture
- * objects and shader constant buffers (+2).
- */
-#define BRW_WM_MAX_SURF (BRW_MAX_DRAW_BUFFERS + BRW_MAX_TEX_UNIT + 1)
-
-/**
- * Helpers to convert drawing buffers, textures and constant buffers
- * to surface binding table indexes, for WM.
+ * Helpers to create Surface Binding Table indexes for draw buffers,
+ * textures, and constant buffers.
+ *
+ * Shader threads access surfaces via numeric handles, rather than directly
+ * using pointers.  The binding table maps these numeric handles to the
+ * address of the actual buffer.
+ *
+ * For example, a shader might ask to sample from "surface 7."  In this case,
+ * bind[7] would contain a pointer to a texture.
+ *
+ * Although the hardware supports separate binding tables per pipeline stage
+ * (VS, HS, DS, GS, PS), we currently share a single binding table for all of
+ * them.  This is purely for convenience.
+ *
+ * Currently our binding tables are (arbitrarily) programmed as follows:
+ *
+ *    +-------------------------------+
+ *    |   0 | Draw buffer 0           | .
+ *    |   . |     .                   |  \
+ *    |   : |     :                   |   > Only relevant to the WM.
+ *    |   7 | Draw buffer 7           |  /
+ *    |-----|-------------------------| `
+ *    |   8 | VS Pull Constant Buffer |
+ *    |   9 | WM Pull Constant Buffer |
+ *    |-----|-------------------------|
+ *    |  10 | Texture 0               |
+ *    |   . |     .                   |
+ *    |   : |     :                   |
+ *    |  25 | Texture 15              |
+ *    +-------------------------------+
+ *
+ * Note that nothing actually uses the SURF_INDEX_DRAW macro, so it has to be
+ * the identity function or things will break.  We do want to keep draw buffers
+ * first so we can use headerless render target writes for RT 0.
  */
 #define SURF_INDEX_DRAW(d)           (d)
-#define SURF_INDEX_FRAG_CONST_BUFFER (BRW_MAX_DRAW_BUFFERS) 
-#define SURF_INDEX_TEXTURE(t)        (BRW_MAX_DRAW_BUFFERS + 1 + (t))
+#define SURF_INDEX_VERT_CONST_BUFFER (BRW_MAX_DRAW_BUFFERS + 0)
+#define SURF_INDEX_FRAG_CONST_BUFFER (BRW_MAX_DRAW_BUFFERS + 1)
+#define SURF_INDEX_TEXTURE(t)        (BRW_MAX_DRAW_BUFFERS + 2 + (t))
 
-/**
- * Size of surface binding table for the VS.
- * Only one constant buffer for now.
- */
-#define BRW_VS_MAX_SURF 1
-
-/**
- * Only a VS constant buffer
- */
-#define SURF_INDEX_VERT_CONST_BUFFER 0
-
+/** Maximum size of the binding table. */
+#define BRW_MAX_SURFACES (BRW_MAX_DRAW_BUFFERS + BRW_MAX_TEX_UNIT + 2)
 
 enum brw_cache_id {
    BRW_BLEND_STATE,
@@ -723,6 +740,12 @@ struct brw_context
    } curbe;
 
    struct {
+      /** Binding table of pointers to surf_bo entries */
+      uint32_t bo_offset;
+      uint32_t surf_offset[BRW_MAX_SURFACES];
+   } bind;
+
+   struct {
       struct brw_vs_prog_data *prog_data;
       int8_t *constant_map; /* variable array following prog_data */
 
@@ -731,10 +754,6 @@ struct brw_context
       /** Offset in the program cache to the VS program */
       uint32_t prog_offset;
       uint32_t state_offset;
-
-      /** Binding table of pointers to surf_bo entries */
-      uint32_t bind_bo_offset;
-      uint32_t surf_offset[BRW_VS_MAX_SURF];
 
       uint32_t push_const_offset; /* Offset in the batchbuffer */
       int push_const_size; /* in 256-bit register increments */
@@ -814,9 +833,6 @@ struct brw_context
       /** Offset in the program cache to the WM program */
       uint32_t prog_offset;
 
-      /** Binding table of pointers to surf_bo entries */
-      uint32_t bind_bo_offset;
-      uint32_t surf_offset[BRW_WM_MAX_SURF];
       uint32_t state_offset; /* offset in batchbuffer to pre-gen6 WM state */
 
       drm_intel_bo *const_bo; /* pull constant buffer. */

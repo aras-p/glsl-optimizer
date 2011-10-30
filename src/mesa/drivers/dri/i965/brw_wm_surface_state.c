@@ -271,7 +271,7 @@ brw_update_texture_surface( struct gl_context *ctx, GLuint unit )
    intel_miptree_get_dimensions_for_image(firstImage, &width, &height, &depth);
 
    surf = brw_state_batch(brw, AUB_TRACE_SURFACE_STATE,
-			  6 * 4, 32, &brw->wm.surf_offset[surf_index]);
+			  6 * 4, 32, &brw->bind.surf_offset[surf_index]);
 
    surf[0] = (translate_tex_target(tObj->Target) << BRW_SURFACE_TYPE_SHIFT |
 	      BRW_SURFACE_MIPMAPLAYOUT_BELOW << BRW_SURFACE_MIPLAYOUT_SHIFT |
@@ -298,7 +298,7 @@ brw_update_texture_surface( struct gl_context *ctx, GLuint unit )
 
    /* Emit relocation to surface contents */
    drm_intel_bo_emit_reloc(brw->intel.batch.bo,
-			   brw->wm.surf_offset[surf_index] + 4,
+			   brw->bind.surf_offset[surf_index] + 4,
 			   intelObj->mt->region->bo, 0,
 			   I915_GEM_DOMAIN_SAMPLER, 0);
 }
@@ -375,7 +375,7 @@ brw_upload_wm_pull_constants(struct brw_context *brw)
       if (brw->wm.const_bo) {
 	 drm_intel_bo_unreference(brw->wm.const_bo);
 	 brw->wm.const_bo = NULL;
-	 brw->wm.surf_offset[surf_index] = 0;
+	 brw->bind.surf_offset[surf_index] = 0;
 	 brw->state.dirty.brw |= BRW_NEW_WM_SURFACES;
       }
       return;
@@ -396,7 +396,7 @@ brw_upload_wm_pull_constants(struct brw_context *brw)
 
    intel->vtbl.create_constant_surface(brw, brw->wm.const_bo,
 				       params->NumParameters,
-				       &brw->wm.surf_offset[surf_index]);
+				       &brw->bind.surf_offset[surf_index]);
 
    brw->state.dirty.brw |= BRW_NEW_WM_SURFACES;
 }
@@ -417,7 +417,7 @@ brw_update_null_renderbuffer_surface(struct brw_context *brw, unsigned int unit)
    uint32_t *surf;
 
    surf = brw_state_batch(brw, AUB_TRACE_SURFACE_STATE,
-			  6 * 4, 32, &brw->wm.surf_offset[unit]);
+			  6 * 4, 32, &brw->bind.surf_offset[unit]);
 
    surf[0] = (BRW_SURFACE_NULL << BRW_SURFACE_TYPE_SHIFT |
 	      BRW_SURFACEFORMAT_B8G8R8A8_UNORM << BRW_SURFACE_FORMAT_SHIFT);
@@ -453,7 +453,7 @@ brw_update_renderbuffer_surface(struct brw_context *brw,
    uint32_t format = 0;
 
    surf = brw_state_batch(brw, AUB_TRACE_SURFACE_STATE,
-			  6 * 4, 32, &brw->wm.surf_offset[unit]);
+			  6 * 4, 32, &brw->bind.surf_offset[unit]);
 
    switch (irb->Base.Format) {
    case MESA_FORMAT_XRGB8888:
@@ -534,7 +534,7 @@ brw_update_renderbuffer_surface(struct brw_context *brw,
    }
 
    drm_intel_bo_emit_reloc(brw->intel.batch.bo,
-			   brw->wm.surf_offset[unit] + 4,
+			   brw->bind.surf_offset[unit] + 4,
 			   region->bo,
 			   surf[1] - region->bo->offset,
 			   I915_GEM_DOMAIN_RENDER,
@@ -593,7 +593,7 @@ brw_update_texture_surfaces(struct brw_context *brw)
       if (texUnit->_ReallyEnabled) {
 	 brw->intel.vtbl.update_texture_surface(ctx, i);
       } else {
-         brw->wm.surf_offset[surf] = 0;
+         brw->bind.surf_offset[surf] = 0;
       }
    }
 
@@ -614,7 +614,7 @@ const struct brw_tracked_state brw_texture_surfaces = {
  * numbers to surface state objects.
  */
 static void
-brw_wm_upload_binding_table(struct brw_context *brw)
+brw_upload_binding_table(struct brw_context *brw)
 {
    uint32_t *bind;
    int i;
@@ -623,25 +623,27 @@ brw_wm_upload_binding_table(struct brw_context *brw)
     * space for the binding table.
     */
    bind = brw_state_batch(brw, AUB_TRACE_BINDING_TABLE,
-			  sizeof(uint32_t) * BRW_WM_MAX_SURF,
-			  32, &brw->wm.bind_bo_offset);
+			  sizeof(uint32_t) * BRW_MAX_SURFACES,
+			  32, &brw->bind.bo_offset);
 
-   for (i = 0; i < BRW_WM_MAX_SURF; i++) {
-      /* BRW_NEW_WM_SURFACES */
-      bind[i] = brw->wm.surf_offset[i];
+   /* BRW_NEW_WM_SURFACES and BRW_NEW_VS_CONSTBUF */
+   for (i = 0; i < BRW_MAX_SURFACES; i++) {
+      bind[i] = brw->bind.surf_offset[i];
    }
 
+   brw->state.dirty.brw |= BRW_NEW_VS_BINDING_TABLE;
    brw->state.dirty.brw |= BRW_NEW_PS_BINDING_TABLE;
 }
 
-const struct brw_tracked_state brw_wm_binding_table = {
+const struct brw_tracked_state brw_binding_table = {
    .dirty = {
       .mesa = 0,
       .brw = (BRW_NEW_BATCH |
+	      BRW_NEW_VS_CONSTBUF |
 	      BRW_NEW_WM_SURFACES),
       .cache = 0
    },
-   .emit = brw_wm_upload_binding_table,
+   .emit = brw_upload_binding_table,
 };
 
 void

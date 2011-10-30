@@ -119,19 +119,17 @@ brw_update_vs_constant_surface( struct gl_context *ctx,
       (struct brw_vertex_program *) brw->vertex_program;
    const struct gl_program_parameter_list *params = vp->program.Base.Parameters;
 
-   assert(surf == 0);
-
    /* If there's no constant buffer, then no surface BO is needed to point at
     * it.
     */
    if (brw->vs.const_bo == NULL) {
-      brw->vs.surf_offset[surf] = 0;
+      brw->bind.surf_offset[surf] = 0;
       return;
    }
 
    intel->vtbl.create_constant_surface(brw, brw->vs.const_bo,
 				       params->NumParameters,
-				       &brw->vs.surf_offset[surf]);
+				       &brw->bind.surf_offset[surf]);
 }
 
 /**
@@ -141,31 +139,10 @@ static void
 brw_upload_vs_surfaces(struct brw_context *brw)
 {
    struct gl_context *ctx = &brw->intel.ctx;
-   uint32_t *bind;
-   int i;
-   int nr_surfaces = 0;
 
    /* BRW_NEW_VS_CONSTBUF */
    if (brw->vs.const_bo) {
-      nr_surfaces = 1;
       brw_update_vs_constant_surface(ctx, SURF_INDEX_VERT_CONST_BUFFER);
-   }
-
-   if (nr_surfaces != 0) {
-      bind = brw_state_batch(brw, AUB_TRACE_SURFACE_STATE,
-			     sizeof(uint32_t) * nr_surfaces,
-			     32, &brw->vs.bind_bo_offset);
-
-      for (i = 0; i < nr_surfaces; i++) {
-	 /* BRW_NEW_VS_CONSTBUF */
-	 bind[i] = brw->vs.surf_offset[i];
-      }
-      brw->state.dirty.brw |= BRW_NEW_VS_BINDING_TABLE;
-   } else {
-      if (brw->vs.bind_bo_offset) {
-	 brw->state.dirty.brw |= BRW_NEW_VS_BINDING_TABLE;
-	 brw->vs.bind_bo_offset = 0;
-      }
    }
 }
 

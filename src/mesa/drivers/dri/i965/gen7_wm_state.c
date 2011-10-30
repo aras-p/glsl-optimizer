@@ -104,7 +104,7 @@ upload_ps_state(struct brw_context *brw)
 
    BEGIN_BATCH(2);
    OUT_BATCH(_3DSTATE_BINDING_TABLE_POINTERS_PS << 16 | (2 - 2));
-   OUT_BATCH(brw->wm.bind_bo_offset);
+   OUT_BATCH(brw->bind.bo_offset);
    ADVANCE_BATCH();
 
    /* CACHE_NEW_SAMPLER */

@@ -68,7 +68,7 @@ gen7_update_texture_surface(struct gl_context *ctx, GLuint unit)
    intel_miptree_get_dimensions_for_image(firstImage, &width, &height, &depth);
 
    surf = brw_state_batch(brw, AUB_TRACE_SURFACE_STATE,
-			  sizeof(*surf), 32, &brw->wm.surf_offset[surf_index]);
+			  sizeof(*surf), 32, &brw->bind.surf_offset[surf_index]);
    memset(surf, 0, sizeof(*surf));
 
    surf->ss0.surface_type = translate_tex_target(tObj->Target);
@@ -118,7 +118,7 @@ gen7_update_texture_surface(struct gl_context *ctx, GLuint unit)
 
    /* Emit relocation to surface contents */
    drm_intel_bo_emit_reloc(brw->intel.batch.bo,
-			   brw->wm.surf_offset[surf_index] +
+			   brw->bind.surf_offset[surf_index] +
 			   offsetof(struct gen7_surface_state, ss1),
 			   intelObj->mt->region->bo, 0,
 			   I915_GEM_DOMAIN_SAMPLER, 0);
@@ -172,7 +172,7 @@ gen7_update_null_renderbuffer_surface(struct brw_context *brw, unsigned unit)
    struct gen7_surface_state *surf;
 
    surf = brw_state_batch(brw, AUB_TRACE_SURFACE_STATE,
-			  sizeof(*surf), 32, &brw->wm.surf_offset[unit]);
+			  sizeof(*surf), 32, &brw->bind.surf_offset[unit]);
    memset(surf, 0, sizeof(*surf));
 
    surf->ss0.surface_type = BRW_SURFACE_NULL;
@@ -197,7 +197,7 @@ gen7_update_renderbuffer_surface(struct brw_context *brw,
    uint32_t tile_x, tile_y;
 
    surf = brw_state_batch(brw, AUB_TRACE_SURFACE_STATE,
-			  sizeof(*surf), 32, &brw->wm.surf_offset[unit]);
+			  sizeof(*surf), 32, &brw->bind.surf_offset[unit]);
    memset(surf, 0, sizeof(*surf));
 
    switch (irb->Base.Format) {
@@ -252,7 +252,7 @@ gen7_update_renderbuffer_surface(struct brw_context *brw,
    surf->ss3.pitch = (region->pitch * region->cpp) - 1;
 
    drm_intel_bo_emit_reloc(brw->intel.batch.bo,
-			   brw->wm.surf_offset[unit] +
+			   brw->bind.surf_offset[unit] +
 			   offsetof(struct gen7_surface_state, ss1),
 			   region->bo,
 			   surf->ss1.base_addr - region->bo->offset,

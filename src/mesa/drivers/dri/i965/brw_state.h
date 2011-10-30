@@ -71,7 +71,7 @@ extern const struct brw_tracked_state brw_wm_prog;
 extern const struct brw_tracked_state brw_wm_samplers;
 extern const struct brw_tracked_state brw_renderbuffer_surfaces;
 extern const struct brw_tracked_state brw_texture_surfaces;
-extern const struct brw_tracked_state brw_wm_binding_table;
+extern const struct brw_tracked_state brw_binding_table;
 extern const struct brw_tracked_state brw_wm_unit;
 
 extern const struct brw_tracked_state brw_psp_urb_cbs;
