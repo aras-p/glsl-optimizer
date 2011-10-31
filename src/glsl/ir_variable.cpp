@@ -400,7 +400,7 @@ add_builtin_variable(exec_list *instructions, glsl_symbol_table *symtab,
    }
 }
 
-static void
+static ir_variable *
 add_builtin_constant(exec_list *instructions, glsl_symbol_table *symtab,
 		     const char *name, int value)
 {
@@ -408,6 +408,7 @@ add_builtin_constant(exec_list *instructions, glsl_symbol_table *symtab,
 					 name, glsl_type::int_type,
 					 ir_var_auto, -1);
    var->constant_value = new(var) ir_constant(value);
+   return var;
 }
 
 /* Several constants in GLSL ES have different names than normal desktop GLSL.
@@ -749,15 +750,11 @@ generate_ARB_draw_buffers_variables(exec_list *instructions,
    /* gl_MaxDrawBuffers is available in all shader stages.
     */
    ir_variable *const mdb =
-      add_variable(instructions, state->symbols,
-		   "gl_MaxDrawBuffers", glsl_type::int_type, ir_var_auto, -1);
+      add_builtin_constant(instructions, state->symbols, "gl_MaxDrawBuffers",
+			   state->Const.MaxDrawBuffers);
 
    if (warn)
       mdb->warn_extension = "GL_ARB_draw_buffers";
-
-   mdb->constant_value = new(mdb)
-      ir_constant(int(state->Const.MaxDrawBuffers));
-
 
    /* gl_FragData is only available in the fragment shader.
     */
