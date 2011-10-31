@@ -1322,19 +1322,6 @@ copy_array_object(struct gl_context *ctx,
    /* In theory must be the same anyway, but on recreate make sure it matches */
    dest->VBOonly = src->VBOonly;
 
-   _mesa_copy_client_array(ctx, &dest->Vertex, &src->Vertex);
-   _mesa_copy_client_array(ctx, &dest->Weight, &src->Weight);
-   _mesa_copy_client_array(ctx, &dest->Normal, &src->Normal);
-   _mesa_copy_client_array(ctx, &dest->Color, &src->Color);
-   _mesa_copy_client_array(ctx, &dest->SecondaryColor, &src->SecondaryColor);
-   _mesa_copy_client_array(ctx, &dest->FogCoord, &src->FogCoord);
-   _mesa_copy_client_array(ctx, &dest->Index, &src->Index);
-   _mesa_copy_client_array(ctx, &dest->EdgeFlag, &src->EdgeFlag);
-#if FEATURE_point_size_array
-   _mesa_copy_client_array(ctx, &dest->PointSize, &src->PointSize);
-#endif
-   for (i = 0; i < Elements(src->TexCoord); i++)
-      _mesa_copy_client_array(ctx, &dest->TexCoord[i], &src->TexCoord[i]);
    for (i = 0; i < Elements(src->VertexAttrib); i++)
       _mesa_copy_client_array(ctx, &dest->VertexAttrib[i], &src->VertexAttrib[i]);
 

@@ -1474,44 +1474,44 @@ static void _ae_update_state( struct gl_context *ctx )
    actx->nr_vbos = 0;
 
    /* conventional vertex arrays */
-   if (arrayObj->Index.Enabled) {
-      aa->array = &arrayObj->Index;
+   if (arrayObj->VertexAttrib[VERT_ATTRIB_COLOR_INDEX].Enabled) {
+      aa->array = &arrayObj->VertexAttrib[VERT_ATTRIB_COLOR_INDEX];
       aa->offset = IndexFuncs[TYPE_IDX(aa->array->Type)];
       check_vbo(actx, aa->array->BufferObj);
       aa++;
    }
-   if (arrayObj->EdgeFlag.Enabled) {
-      aa->array = &arrayObj->EdgeFlag;
+   if (arrayObj->VertexAttrib[VERT_ATTRIB_EDGEFLAG].Enabled) {
+      aa->array = &arrayObj->VertexAttrib[VERT_ATTRIB_EDGEFLAG];
       aa->offset = _gloffset_EdgeFlagv;
       check_vbo(actx, aa->array->BufferObj);
       aa++;
    }
-   if (arrayObj->Normal.Enabled) {
-      aa->array = &arrayObj->Normal;
+   if (arrayObj->VertexAttrib[VERT_ATTRIB_NORMAL].Enabled) {
+      aa->array = &arrayObj->VertexAttrib[VERT_ATTRIB_NORMAL];
       aa->offset = NormalFuncs[TYPE_IDX(aa->array->Type)];
       check_vbo(actx, aa->array->BufferObj);
       aa++;
    }
-   if (arrayObj->Color.Enabled) {
-      aa->array = &arrayObj->Color;
+   if (arrayObj->VertexAttrib[VERT_ATTRIB_COLOR0].Enabled) {
+      aa->array = &arrayObj->VertexAttrib[VERT_ATTRIB_COLOR0];
       aa->offset = ColorFuncs[aa->array->Size-3][TYPE_IDX(aa->array->Type)];
       check_vbo(actx, aa->array->BufferObj);
       aa++;
    }
-   if (arrayObj->SecondaryColor.Enabled) {
-      aa->array = &arrayObj->SecondaryColor;
+   if (arrayObj->VertexAttrib[VERT_ATTRIB_COLOR1].Enabled) {
+      aa->array = &arrayObj->VertexAttrib[VERT_ATTRIB_COLOR1];
       aa->offset = SecondaryColorFuncs[TYPE_IDX(aa->array->Type)];
       check_vbo(actx, aa->array->BufferObj);
       aa++;
    }
-   if (arrayObj->FogCoord.Enabled) {
-      aa->array = &arrayObj->FogCoord;
+   if (arrayObj->VertexAttrib[VERT_ATTRIB_FOG].Enabled) {
+      aa->array = &arrayObj->VertexAttrib[VERT_ATTRIB_FOG];
       aa->offset = FogCoordFuncs[TYPE_IDX(aa->array->Type)];
       check_vbo(actx, aa->array->BufferObj);
       aa++;
    }
    for (i = 0; i < ctx->Const.MaxTextureCoordUnits; i++) {
-      struct gl_client_array *attribArray = &arrayObj->TexCoord[i];
+      struct gl_client_array *attribArray = &arrayObj->VertexAttrib[VERT_ATTRIB_TEX(i)];
       if (attribArray->Enabled) {
          /* NOTE: we use generic glVertexAttribNV functions here.
           * If we ever remove GL_NV_vertex_program this will have to change.
@@ -1528,8 +1528,8 @@ static void _ae_update_state( struct gl_context *ctx )
    }
 
    /* generic vertex attribute arrays */   
-   for (i = 1; i < Elements(arrayObj->VertexAttrib); i++) {  /* skip zero! */
-      struct gl_client_array *attribArray = &arrayObj->VertexAttrib[i];
+   for (i = 1; i < VERT_ATTRIB_GENERIC_MAX; i++) {  /* skip zero! */
+      struct gl_client_array *attribArray = &arrayObj->VertexAttrib[VERT_ATTRIB_GENERIC(i)];
       if (attribArray->Enabled) {
          at->array = attribArray;
          /* Note: we can't grab the _glapi_Dispatch->VertexAttrib1fvNV
@@ -1563,18 +1563,18 @@ static void _ae_update_state( struct gl_context *ctx )
    }
 
    /* finally, vertex position */
-   if (arrayObj->VertexAttrib[0].Enabled) {
+   if (arrayObj->VertexAttrib[VERT_ATTRIB_GENERIC0].Enabled) {
       /* Use glVertex(v) instead of glVertexAttrib(0, v) to be sure it's
        * issued as the last (provoking) attribute).
        */
-      aa->array = &arrayObj->VertexAttrib[0];
+      aa->array = &arrayObj->VertexAttrib[VERT_ATTRIB_GENERIC0];
       assert(aa->array->Size >= 2); /* XXX fix someday? */
       aa->offset = VertexFuncs[aa->array->Size-2][TYPE_IDX(aa->array->Type)];
       check_vbo(actx, aa->array->BufferObj);
       aa++;
    }
-   else if (arrayObj->Vertex.Enabled) {
-      aa->array = &arrayObj->Vertex;
+   else if (arrayObj->VertexAttrib[VERT_ATTRIB_POS].Enabled) {
+      aa->array = &arrayObj->VertexAttrib[VERT_ATTRIB_POS];
       aa->offset = VertexFuncs[aa->array->Size-2][TYPE_IDX(aa->array->Type)];
       check_vbo(actx, aa->array->BufferObj);
       aa++;

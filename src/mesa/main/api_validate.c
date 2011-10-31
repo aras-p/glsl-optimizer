@@ -120,7 +120,7 @@ check_valid_to_render(struct gl_context *ctx, const char *function)
    case API_OPENGLES:
       /* For OpenGL ES, only draw if we have vertex positions
        */
-      if (!ctx->Array.ArrayObj->Vertex.Enabled)
+      if (!ctx->Array.ArrayObj->VertexAttrib[VERT_ATTRIB_POS].Enabled)
 	 return GL_FALSE;
       break;
 #endif
@@ -142,8 +142,8 @@ check_valid_to_render(struct gl_context *ctx, const char *function)
             /* Draw if we have vertex positions (GL_VERTEX_ARRAY or generic
              * array [0]).
              */
-            return (ctx->Array.ArrayObj->Vertex.Enabled ||
-                    ctx->Array.ArrayObj->VertexAttrib[0].Enabled);
+            return (ctx->Array.ArrayObj->VertexAttrib[VERT_ATTRIB_POS].Enabled ||
+                    ctx->Array.ArrayObj->VertexAttrib[VERT_ATTRIB_GENERIC0].Enabled);
          }
       }
       break;

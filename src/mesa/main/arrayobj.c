@@ -85,24 +85,8 @@ unbind_array_object_vbos(struct gl_context *ctx, struct gl_array_object *obj)
 {
    GLuint i;
 
-   _mesa_reference_buffer_object(ctx, &obj->Vertex.BufferObj, NULL);
-   _mesa_reference_buffer_object(ctx, &obj->Weight.BufferObj, NULL);
-   _mesa_reference_buffer_object(ctx, &obj->Normal.BufferObj, NULL);
-   _mesa_reference_buffer_object(ctx, &obj->Color.BufferObj, NULL);
-   _mesa_reference_buffer_object(ctx, &obj->SecondaryColor.BufferObj, NULL);
-   _mesa_reference_buffer_object(ctx, &obj->FogCoord.BufferObj, NULL);
-   _mesa_reference_buffer_object(ctx, &obj->Index.BufferObj, NULL);
-   _mesa_reference_buffer_object(ctx, &obj->EdgeFlag.BufferObj, NULL);
-
-   for (i = 0; i < Elements(obj->TexCoord); i++)
-      _mesa_reference_buffer_object(ctx, &obj->TexCoord[i].BufferObj, NULL);
-
    for (i = 0; i < Elements(obj->VertexAttrib); i++)
-      _mesa_reference_buffer_object(ctx, &obj->VertexAttrib[i].BufferObj,NULL);
-
-#if FEATURE_point_size_array
-   _mesa_reference_buffer_object(ctx, &obj->PointSize.BufferObj, NULL);
-#endif
+      _mesa_reference_buffer_object(ctx, &obj->VertexAttrib[i].BufferObj, NULL);
 }
 
 
@@ -235,24 +219,36 @@ _mesa_initialize_array_object( struct gl_context *ctx,
    obj->RefCount = 1;
 
    /* Init the individual arrays */
-   init_array(ctx, &obj->Vertex, 4, GL_FLOAT);
-   init_array(ctx, &obj->Weight, 1, GL_FLOAT);
-   init_array(ctx, &obj->Normal, 3, GL_FLOAT);
-   init_array(ctx, &obj->Color, 4, GL_FLOAT);
-   init_array(ctx, &obj->SecondaryColor, 3, GL_FLOAT);
-   init_array(ctx, &obj->FogCoord, 1, GL_FLOAT);
-   init_array(ctx, &obj->Index, 1, GL_FLOAT);
-   for (i = 0; i < Elements(obj->TexCoord); i++) {
-      init_array(ctx, &obj->TexCoord[i], 4, GL_FLOAT);
-   }
-   init_array(ctx, &obj->EdgeFlag, 1, GL_BOOL);
    for (i = 0; i < Elements(obj->VertexAttrib); i++) {
-      init_array(ctx, &obj->VertexAttrib[i], 4, GL_FLOAT);
-   }
-
+      switch (i) {
+      case VERT_ATTRIB_WEIGHT:
+         init_array(ctx, &obj->VertexAttrib[VERT_ATTRIB_WEIGHT], 1, GL_FLOAT);
+         break;
+      case VERT_ATTRIB_NORMAL:
+         init_array(ctx, &obj->VertexAttrib[VERT_ATTRIB_NORMAL], 3, GL_FLOAT);
+         break;
+      case VERT_ATTRIB_COLOR1:
+         init_array(ctx, &obj->VertexAttrib[VERT_ATTRIB_COLOR1], 3, GL_FLOAT);
+         break;
+      case VERT_ATTRIB_FOG:
+         init_array(ctx, &obj->VertexAttrib[VERT_ATTRIB_FOG], 1, GL_FLOAT);
+         break;
+      case VERT_ATTRIB_COLOR_INDEX:
+         init_array(ctx, &obj->VertexAttrib[VERT_ATTRIB_COLOR_INDEX], 1, GL_FLOAT);
+         break;
+      case VERT_ATTRIB_EDGEFLAG:
+         init_array(ctx, &obj->VertexAttrib[VERT_ATTRIB_EDGEFLAG], 1, GL_BOOL);
+         break;
 #if FEATURE_point_size_array
-   init_array(ctx, &obj->PointSize, 1, GL_FLOAT);
+      case VERT_ATTRIB_POINT_SIZE:
+         init_array(ctx, &obj->VertexAttrib[VERT_ATTRIB_POINT_SIZE], 1, GL_FLOAT);
+         break;
 #endif
+      default:
+         init_array(ctx, &obj->VertexAttrib[i], 4, GL_FLOAT);
+         break;
+      }
+   }
 
    _mesa_reference_buffer_object(ctx, &obj->ElementArrayBufferObj,
                                  ctx->Shared->NullBufferObj);
@@ -294,12 +290,9 @@ remove_array_object( struct gl_context *ctx, struct gl_array_object *obj )
 static GLuint
 update_min(GLuint min, struct gl_client_array *array)
 {
-   if (array->Enabled) {
-      _mesa_update_array_max_element(array);
-      return MIN2(min, array->_MaxElement);
-   }
-   else
-      return min;
+   assert(array->Enabled);
+   _mesa_update_array_max_element(array);
+   return MIN2(min, array->_MaxElement);
 }
 
 
@@ -310,23 +303,14 @@ void
 _mesa_update_array_object_max_element(struct gl_context *ctx,
                                       struct gl_array_object *arrayObj)
 {
-   GLuint i, min = ~0;
+   GLbitfield64 enabled = arrayObj->_Enabled;
+   GLuint min = ~0u;
 
-   min = update_min(min, &arrayObj->Vertex);
-   min = update_min(min, &arrayObj->Weight);
-   min = update_min(min, &arrayObj->Normal);
-   min = update_min(min, &arrayObj->Color);
-   min = update_min(min, &arrayObj->SecondaryColor);
-   min = update_min(min, &arrayObj->FogCoord);
-   min = update_min(min, &arrayObj->Index);
-   min = update_min(min, &arrayObj->EdgeFlag);
-#if FEATURE_point_size_array
-   min = update_min(min, &arrayObj->PointSize);
-#endif
-   for (i = 0; i < ctx->Const.MaxTextureCoordUnits; i++)
-      min = update_min(min, &arrayObj->TexCoord[i]);
-   for (i = 0; i < Elements(arrayObj->VertexAttrib); i++)
-      min = update_min(min, &arrayObj->VertexAttrib[i]);
+   while (enabled) {
+      GLint attrib = _mesa_ffsll(enabled) - 1;
+      enabled &= ~BITFIELD64_BIT(attrib);
+      min = update_min(min, &arrayObj->VertexAttrib[attrib]);
+   }
 
    /* _MaxElement is one past the last legal array element */
    arrayObj->_MaxElement = min;

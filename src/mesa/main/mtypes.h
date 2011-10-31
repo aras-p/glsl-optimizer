@@ -110,7 +110,6 @@ typedef enum
    VERT_ATTRIB_COLOR1 = 4,
    VERT_ATTRIB_FOG = 5,
    VERT_ATTRIB_COLOR_INDEX = 6,
-   VERT_ATTRIB_POINT_SIZE = 6,  /*alias*/
    VERT_ATTRIB_EDGEFLAG = 7,
    VERT_ATTRIB_TEX0 = 8,
    VERT_ATTRIB_TEX1 = 9,
@@ -120,23 +119,24 @@ typedef enum
    VERT_ATTRIB_TEX5 = 13,
    VERT_ATTRIB_TEX6 = 14,
    VERT_ATTRIB_TEX7 = 15,
-   VERT_ATTRIB_GENERIC0 = 16,
-   VERT_ATTRIB_GENERIC1 = 17,
-   VERT_ATTRIB_GENERIC2 = 18,
-   VERT_ATTRIB_GENERIC3 = 19,
-   VERT_ATTRIB_GENERIC4 = 20,
-   VERT_ATTRIB_GENERIC5 = 21,
-   VERT_ATTRIB_GENERIC6 = 22,
-   VERT_ATTRIB_GENERIC7 = 23,
-   VERT_ATTRIB_GENERIC8 = 24,
-   VERT_ATTRIB_GENERIC9 = 25,
-   VERT_ATTRIB_GENERIC10 = 26,
-   VERT_ATTRIB_GENERIC11 = 27,
-   VERT_ATTRIB_GENERIC12 = 28,
-   VERT_ATTRIB_GENERIC13 = 29,
-   VERT_ATTRIB_GENERIC14 = 30,
-   VERT_ATTRIB_GENERIC15 = 31,
-   VERT_ATTRIB_MAX = 32
+   VERT_ATTRIB_POINT_SIZE = 16,
+   VERT_ATTRIB_GENERIC0 = 17,
+   VERT_ATTRIB_GENERIC1 = 18,
+   VERT_ATTRIB_GENERIC2 = 19,
+   VERT_ATTRIB_GENERIC3 = 20,
+   VERT_ATTRIB_GENERIC4 = 21,
+   VERT_ATTRIB_GENERIC5 = 22,
+   VERT_ATTRIB_GENERIC6 = 23,
+   VERT_ATTRIB_GENERIC7 = 24,
+   VERT_ATTRIB_GENERIC8 = 25,
+   VERT_ATTRIB_GENERIC9 = 26,
+   VERT_ATTRIB_GENERIC10 = 27,
+   VERT_ATTRIB_GENERIC11 = 28,
+   VERT_ATTRIB_GENERIC12 = 29,
+   VERT_ATTRIB_GENERIC13 = 30,
+   VERT_ATTRIB_GENERIC14 = 31,
+   VERT_ATTRIB_GENERIC15 = 32,
+   VERT_ATTRIB_MAX = 33
 } gl_vert_attrib;
 
 /**
@@ -180,7 +180,6 @@ typedef enum
 #define VERT_BIT_COLOR1          BITFIELD64_BIT(VERT_ATTRIB_COLOR1)
 #define VERT_BIT_FOG             BITFIELD64_BIT(VERT_ATTRIB_FOG)
 #define VERT_BIT_COLOR_INDEX     BITFIELD64_BIT(VERT_ATTRIB_COLOR_INDEX)
-#define VERT_BIT_POINT_SIZE      BITFIELD64_BIT(VERT_ATTRIB_POINT_SIZE)
 #define VERT_BIT_EDGEFLAG        BITFIELD64_BIT(VERT_ATTRIB_EDGEFLAG)
 #define VERT_BIT_TEX0            BITFIELD64_BIT(VERT_ATTRIB_TEX0)
 #define VERT_BIT_TEX1            BITFIELD64_BIT(VERT_ATTRIB_TEX1)
@@ -190,6 +189,7 @@ typedef enum
 #define VERT_BIT_TEX5            BITFIELD64_BIT(VERT_ATTRIB_TEX5)
 #define VERT_BIT_TEX6            BITFIELD64_BIT(VERT_ATTRIB_TEX6)
 #define VERT_BIT_TEX7            BITFIELD64_BIT(VERT_ATTRIB_TEX7)
+#define VERT_BIT_POINT_SIZE      BITFIELD64_BIT(VERT_ATTRIB_POINT_SIZE)
 #define VERT_BIT_GENERIC0        BITFIELD64_BIT(VERT_ATTRIB_GENERIC0)
 
 #define VERT_BIT(i)              BITFIELD64_BIT(i)
@@ -1608,27 +1608,8 @@ struct gl_array_object
    _glthread_Mutex Mutex;
    GLboolean VBOonly;  /**< require all arrays to live in VBOs? */
 
-   /** Conventional vertex arrays */
-   /*@{*/
-   struct gl_client_array Vertex;
-   struct gl_client_array Weight;
-   struct gl_client_array Normal;
-   struct gl_client_array Color;
-   struct gl_client_array SecondaryColor;
-   struct gl_client_array FogCoord;
-   struct gl_client_array Index;
-   struct gl_client_array EdgeFlag;
-   struct gl_client_array TexCoord[MAX_TEXTURE_COORD_UNITS];
-   struct gl_client_array PointSize;
-   /*@}*/
-
-   /**
-    * Generic arrays for vertex programs/shaders.
-    * For NV vertex programs, these attributes alias and take priority
-    * over the conventional attribs above.  For ARB vertex programs and
-    * GLSL vertex shaders, these attributes are separate.
-    */
-   struct gl_client_array VertexAttrib[MAX_VERTEX_GENERIC_ATTRIBS];
+   /** Vertex attribute arrays */
+   struct gl_client_array VertexAttrib[VERT_ATTRIB_MAX];
 
    /** Mask of VERT_BIT_* values indicating which arrays are enabled */
    GLbitfield64 _Enabled;

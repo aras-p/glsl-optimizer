@@ -59,41 +59,41 @@ client_state(struct gl_context *ctx, GLenum cap, GLboolean state)
 
    switch (cap) {
       case GL_VERTEX_ARRAY:
-         var = &arrayObj->Vertex.Enabled;
+         var = &arrayObj->VertexAttrib[VERT_ATTRIB_POS].Enabled;
          flag = VERT_BIT_POS;
          break;
       case GL_NORMAL_ARRAY:
-         var = &arrayObj->Normal.Enabled;
+         var = &arrayObj->VertexAttrib[VERT_ATTRIB_NORMAL].Enabled;
          flag = VERT_BIT_NORMAL;
          break;
       case GL_COLOR_ARRAY:
-         var = &arrayObj->Color.Enabled;
+         var = &arrayObj->VertexAttrib[VERT_ATTRIB_COLOR0].Enabled;
          flag = VERT_BIT_COLOR0;
          break;
       case GL_INDEX_ARRAY:
-         var = &arrayObj->Index.Enabled;
+         var = &arrayObj->VertexAttrib[VERT_ATTRIB_COLOR_INDEX].Enabled;
          flag = VERT_BIT_COLOR_INDEX;
          break;
       case GL_TEXTURE_COORD_ARRAY:
-         var = &arrayObj->TexCoord[ctx->Array.ActiveTexture].Enabled;
+         var = &arrayObj->VertexAttrib[VERT_ATTRIB_TEX(ctx->Array.ActiveTexture)].Enabled;
          flag = VERT_BIT_TEX(ctx->Array.ActiveTexture);
          break;
       case GL_EDGE_FLAG_ARRAY:
-         var = &arrayObj->EdgeFlag.Enabled;
+         var = &arrayObj->VertexAttrib[VERT_ATTRIB_EDGEFLAG].Enabled;
          flag = VERT_BIT_EDGEFLAG;
          break;
       case GL_FOG_COORDINATE_ARRAY_EXT:
-         var = &arrayObj->FogCoord.Enabled;
+         var = &arrayObj->VertexAttrib[VERT_ATTRIB_FOG].Enabled;
          flag = VERT_BIT_FOG;
          break;
       case GL_SECONDARY_COLOR_ARRAY_EXT:
-         var = &arrayObj->SecondaryColor.Enabled;
+         var = &arrayObj->VertexAttrib[VERT_ATTRIB_COLOR1].Enabled;
          flag = VERT_BIT_COLOR1;
          break;
 
 #if FEATURE_point_size_array
       case GL_POINT_SIZE_ARRAY_OES:
-         var = &arrayObj->PointSize.Enabled;
+         var = &arrayObj->VertexAttrib[VERT_ATTRIB_POINT_SIZE].Enabled;
          flag = VERT_BIT_POINT_SIZE;
          break;
 #endif
@@ -118,8 +118,8 @@ client_state(struct gl_context *ctx, GLenum cap, GLboolean state)
          CHECK_EXTENSION(NV_vertex_program, cap);
          {
             GLint n = (GLint) cap - GL_VERTEX_ATTRIB_ARRAY0_NV;
-            ASSERT(n < Elements(ctx->Array.ArrayObj->VertexAttrib));
-            var = &arrayObj->VertexAttrib[n].Enabled;
+            ASSERT(VERT_ATTRIB_GENERIC(n) < Elements(ctx->Array.ArrayObj->VertexAttrib));
+            var = &arrayObj->VertexAttrib[VERT_ATTRIB_GENERIC(n)].Enabled;
             flag = VERT_BIT_GENERIC(n);
          }
          break;
@@ -1226,27 +1226,27 @@ _mesa_IsEnabled( GLenum cap )
 
       /* client-side state */
       case GL_VERTEX_ARRAY:
-         return (ctx->Array.ArrayObj->Vertex.Enabled != 0);
+         return (ctx->Array.ArrayObj->VertexAttrib[VERT_ATTRIB_POS].Enabled != 0);
       case GL_NORMAL_ARRAY:
-         return (ctx->Array.ArrayObj->Normal.Enabled != 0);
+         return (ctx->Array.ArrayObj->VertexAttrib[VERT_ATTRIB_NORMAL].Enabled != 0);
       case GL_COLOR_ARRAY:
-         return (ctx->Array.ArrayObj->Color.Enabled != 0);
+         return (ctx->Array.ArrayObj->VertexAttrib[VERT_ATTRIB_COLOR0].Enabled != 0);
       case GL_INDEX_ARRAY:
-         return (ctx->Array.ArrayObj->Index.Enabled != 0);
+         return (ctx->Array.ArrayObj->VertexAttrib[VERT_ATTRIB_COLOR_INDEX].Enabled != 0);
       case GL_TEXTURE_COORD_ARRAY:
-         return (ctx->Array.ArrayObj->TexCoord[ctx->Array.ActiveTexture]
+         return (ctx->Array.ArrayObj->VertexAttrib[VERT_ATTRIB_TEX(ctx->Array.ActiveTexture)]
                  .Enabled != 0);
       case GL_EDGE_FLAG_ARRAY:
-         return (ctx->Array.ArrayObj->EdgeFlag.Enabled != 0);
+         return (ctx->Array.ArrayObj->VertexAttrib[VERT_ATTRIB_EDGEFLAG].Enabled != 0);
       case GL_FOG_COORDINATE_ARRAY_EXT:
          CHECK_EXTENSION(EXT_fog_coord);
-         return (ctx->Array.ArrayObj->FogCoord.Enabled != 0);
+         return (ctx->Array.ArrayObj->VertexAttrib[VERT_ATTRIB_FOG].Enabled != 0);
       case GL_SECONDARY_COLOR_ARRAY_EXT:
          CHECK_EXTENSION(EXT_secondary_color);
-         return (ctx->Array.ArrayObj->SecondaryColor.Enabled != 0);
+         return (ctx->Array.ArrayObj->VertexAttrib[VERT_ATTRIB_COLOR1].Enabled != 0);
 #if FEATURE_point_size_array
       case GL_POINT_SIZE_ARRAY_OES:
-         return (ctx->Array.ArrayObj->PointSize.Enabled != 0);
+         return (ctx->Array.ArrayObj->VertexAttrib[VERT_ATTRIB_POINT_SIZE].Enabled != 0);
 #endif
 
       /* GL_ARB_texture_cube_map */
@@ -1312,8 +1312,8 @@ _mesa_IsEnabled( GLenum cap )
          CHECK_EXTENSION(NV_vertex_program);
          {
             GLint n = (GLint) cap - GL_VERTEX_ATTRIB_ARRAY0_NV;
-            ASSERT(n < Elements(ctx->Array.ArrayObj->VertexAttrib));
-            return (ctx->Array.ArrayObj->VertexAttrib[n].Enabled != 0);
+            ASSERT(VERT_ATTRIB_GENERIC(n) < Elements(ctx->Array.ArrayObj->VertexAttrib));
+            return (ctx->Array.ArrayObj->VertexAttrib[VERT_ATTRIB_GENERIC(n)].Enabled != 0);
          }
       case GL_MAP1_VERTEX_ATTRIB0_4_NV:
       case GL_MAP1_VERTEX_ATTRIB1_4_NV:

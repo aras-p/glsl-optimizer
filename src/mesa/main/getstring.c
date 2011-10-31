@@ -190,28 +190,28 @@ _mesa_GetPointerv( GLenum pname, GLvoid **params )
 
    switch (pname) {
       case GL_VERTEX_ARRAY_POINTER:
-         *params = (GLvoid *) ctx->Array.ArrayObj->Vertex.Ptr;
+         *params = (GLvoid *) ctx->Array.ArrayObj->VertexAttrib[VERT_ATTRIB_POS].Ptr;
          break;
       case GL_NORMAL_ARRAY_POINTER:
-         *params = (GLvoid *) ctx->Array.ArrayObj->Normal.Ptr;
+         *params = (GLvoid *) ctx->Array.ArrayObj->VertexAttrib[VERT_ATTRIB_NORMAL].Ptr;
          break;
       case GL_COLOR_ARRAY_POINTER:
-         *params = (GLvoid *) ctx->Array.ArrayObj->Color.Ptr;
+         *params = (GLvoid *) ctx->Array.ArrayObj->VertexAttrib[VERT_ATTRIB_COLOR0].Ptr;
          break;
       case GL_SECONDARY_COLOR_ARRAY_POINTER_EXT:
-         *params = (GLvoid *) ctx->Array.ArrayObj->SecondaryColor.Ptr;
+         *params = (GLvoid *) ctx->Array.ArrayObj->VertexAttrib[VERT_ATTRIB_COLOR1].Ptr;
          break;
       case GL_FOG_COORDINATE_ARRAY_POINTER_EXT:
-         *params = (GLvoid *) ctx->Array.ArrayObj->FogCoord.Ptr;
+         *params = (GLvoid *) ctx->Array.ArrayObj->VertexAttrib[VERT_ATTRIB_FOG].Ptr;
          break;
       case GL_INDEX_ARRAY_POINTER:
-         *params = (GLvoid *) ctx->Array.ArrayObj->Index.Ptr;
+         *params = (GLvoid *) ctx->Array.ArrayObj->VertexAttrib[VERT_ATTRIB_COLOR_INDEX].Ptr;
          break;
       case GL_TEXTURE_COORD_ARRAY_POINTER:
-         *params = (GLvoid *) ctx->Array.ArrayObj->TexCoord[clientUnit].Ptr;
+         *params = (GLvoid *) ctx->Array.ArrayObj->VertexAttrib[VERT_ATTRIB_TEX(clientUnit)].Ptr;
          break;
       case GL_EDGE_FLAG_ARRAY_POINTER:
-         *params = (GLvoid *) ctx->Array.ArrayObj->EdgeFlag.Ptr;
+         *params = (GLvoid *) ctx->Array.ArrayObj->VertexAttrib[VERT_ATTRIB_EDGEFLAG].Ptr;
          break;
       case GL_FEEDBACK_BUFFER_POINTER:
          *params = ctx->Feedback.Buffer;
@@ -221,7 +221,7 @@ _mesa_GetPointerv( GLenum pname, GLvoid **params )
          break;
 #if FEATURE_point_size_array
       case GL_POINT_SIZE_ARRAY_POINTER_OES:
-         *params = (GLvoid *) ctx->Array.ArrayObj->PointSize.Ptr;
+         *params = (GLvoid *) ctx->Array.ArrayObj->VertexAttrib[VERT_ATTRIB_POINT_SIZE].Ptr;
          break;
 #endif
       default:

@@ -108,8 +108,7 @@ type_to_bit(const struct gl_context *ctx, GLenum type)
  * functions.
  *
  * \param func  name of calling function used for error reporting
- * \param array  the array to update
- * \param dirtyBit  which bit to set in ctx->Array.NewState for this array
+ * \param attrib  the attribute array index to update
  * \param legalTypes  bitmask of *_BIT above indicating legal datatypes
  * \param sizeMin  min allowable size value
  * \param sizeMax  max allowable size value (may also be BGRA_OR_4)
@@ -123,13 +122,13 @@ type_to_bit(const struct gl_context *ctx, GLenum type)
 static void
 update_array(struct gl_context *ctx,
              const char *func,
-             struct gl_client_array *array,
-             GLbitfield64 dirtyBit, GLbitfield legalTypesMask,
+             GLuint attrib, GLbitfield legalTypesMask,
              GLint sizeMin, GLint sizeMax,
              GLint size, GLenum type, GLsizei stride,
              GLboolean normalized, GLboolean integer,
              const GLvoid *ptr)
 {
+   struct gl_client_array *array;
    GLbitfield typeBit;
    GLsizei elementSize;
    GLenum format = GL_RGBA;
@@ -206,6 +205,7 @@ update_array(struct gl_context *ctx,
 
    elementSize = _mesa_sizeof_type(type) * size;
 
+   array = &ctx->Array.ArrayObj->VertexAttrib[attrib];
    array->Size = size;
    array->Type = type;
    array->Format = format;
@@ -220,7 +220,7 @@ update_array(struct gl_context *ctx,
                                  ctx->Array.ArrayBufferObj);
 
    ctx->NewState |= _NEW_ARRAY;
-   ctx->Array.NewState |= dirtyBit;
+   ctx->Array.NewState |= VERT_BIT(attrib);
 }
 
 
@@ -237,8 +237,7 @@ _mesa_VertexPointer(GLint size, GLenum type, GLsizei stride, const GLvoid *ptr)
    if (ctx->API == API_OPENGLES)
       legalTypes |= BYTE_BIT;
 
-   update_array(ctx, "glVertexPointer",
-                &ctx->Array.ArrayObj->Vertex, VERT_BIT_POS,
+   update_array(ctx, "glVertexPointer", VERT_ATTRIB_POS,
                 legalTypes, 2, 4,
                 size, type, stride, GL_FALSE, GL_FALSE, ptr);
 }
@@ -255,8 +254,7 @@ _mesa_NormalPointer(GLenum type, GLsizei stride, const GLvoid *ptr )
    GET_CURRENT_CONTEXT(ctx);
    ASSERT_OUTSIDE_BEGIN_END_AND_FLUSH(ctx);
 
-   update_array(ctx, "glNormalPointer",
-                &ctx->Array.ArrayObj->Normal, VERT_BIT_NORMAL,
+   update_array(ctx, "glNormalPointer", VERT_ATTRIB_NORMAL,
                 legalTypes, 3, 3,
                 3, type, stride, GL_TRUE, GL_FALSE, ptr);
 }
@@ -275,8 +273,7 @@ _mesa_ColorPointer(GLint size, GLenum type, GLsizei stride, const GLvoid *ptr)
    GET_CURRENT_CONTEXT(ctx);
    ASSERT_OUTSIDE_BEGIN_END_AND_FLUSH(ctx);
 
-   update_array(ctx, "glColorPointer",
-                &ctx->Array.ArrayObj->Color, VERT_BIT_COLOR0,
+   update_array(ctx, "glColorPointer", VERT_ATTRIB_COLOR0,
                 legalTypes, 3, BGRA_OR_4,
                 size, type, stride, GL_TRUE, GL_FALSE, ptr);
 }
@@ -289,8 +286,7 @@ _mesa_FogCoordPointerEXT(GLenum type, GLsizei stride, const GLvoid *ptr)
    GET_CURRENT_CONTEXT(ctx);
    ASSERT_OUTSIDE_BEGIN_END_AND_FLUSH(ctx);
 
-   update_array(ctx, "glFogCoordPointer",
-                &ctx->Array.ArrayObj->FogCoord, VERT_BIT_FOG,
+   update_array(ctx, "glFogCoordPointer", VERT_ATTRIB_FOG,
                 legalTypes, 1, 1,
                 1, type, stride, GL_FALSE, GL_FALSE, ptr);
 }
@@ -304,8 +300,7 @@ _mesa_IndexPointer(GLenum type, GLsizei stride, const GLvoid *ptr)
    GET_CURRENT_CONTEXT(ctx);
    ASSERT_OUTSIDE_BEGIN_END_AND_FLUSH(ctx);
 
-   update_array(ctx, "glIndexPointer",
-                &ctx->Array.ArrayObj->Index, VERT_BIT_COLOR_INDEX,
+   update_array(ctx, "glIndexPointer", VERT_ATTRIB_COLOR_INDEX,
                 legalTypes, 1, 1,
                 1, type, stride, GL_FALSE, GL_FALSE, ptr);
 }
@@ -324,8 +319,7 @@ _mesa_SecondaryColorPointerEXT(GLint size, GLenum type,
    GET_CURRENT_CONTEXT(ctx);
    ASSERT_OUTSIDE_BEGIN_END_AND_FLUSH(ctx);
 
-   update_array(ctx, "glSecondaryColorPointer",
-                &ctx->Array.ArrayObj->SecondaryColor, VERT_BIT_COLOR1,
+   update_array(ctx, "glSecondaryColorPointer", VERT_ATTRIB_COLOR1,
                 legalTypes, 3, BGRA_OR_4,
                 size, type, stride, GL_TRUE, GL_FALSE, ptr);
 }
@@ -349,9 +343,7 @@ _mesa_TexCoordPointer(GLint size, GLenum type, GLsizei stride,
 
    ASSERT(unit < Elements(ctx->Array.ArrayObj->TexCoord));
 
-   update_array(ctx, "glTexCoordPointer",
-                &ctx->Array.ArrayObj->TexCoord[unit],
-                VERT_BIT_TEX(unit),
+   update_array(ctx, "glTexCoordPointer", VERT_ATTRIB_TEX(unit),
                 legalTypes, 1, 4,
                 size, type, stride, GL_FALSE, GL_FALSE,
                 ptr);
@@ -367,8 +359,7 @@ _mesa_EdgeFlagPointer(GLsizei stride, const GLvoid *ptr)
    GET_CURRENT_CONTEXT(ctx);
    ASSERT_OUTSIDE_BEGIN_END_AND_FLUSH(ctx);
 
-   update_array(ctx, "glEdgeFlagPointer",
-                &ctx->Array.ArrayObj->EdgeFlag, VERT_BIT_EDGEFLAG,
+   update_array(ctx, "glEdgeFlagPointer", VERT_ATTRIB_EDGEFLAG,
                 legalTypes, 1, 1,
                 1, GL_UNSIGNED_BYTE, stride, GL_FALSE, integer, ptr);
 }
@@ -387,8 +378,7 @@ _mesa_PointSizePointer(GLenum type, GLsizei stride, const GLvoid *ptr)
       return;
    }
       
-   update_array(ctx, "glPointSizePointer",
-                &ctx->Array.ArrayObj->PointSize, VERT_BIT_POINT_SIZE,
+   update_array(ctx, "glPointSizePointer", VERT_ATTRIB_POINT_SIZE,
                 legalTypes, 1, 1,
                 1, type, stride, GL_FALSE, GL_FALSE, ptr);
 }
@@ -421,9 +411,7 @@ _mesa_VertexAttribPointerNV(GLuint index, GLint size, GLenum type,
       return;
    }
 
-   update_array(ctx, "glVertexAttribPointerNV",
-                &ctx->Array.ArrayObj->VertexAttrib[index],
-                VERT_BIT_GENERIC(index),
+   update_array(ctx, "glVertexAttribPointerNV", VERT_ATTRIB_GENERIC(index),
                 legalTypes, 1, BGRA_OR_4,
                 size, type, stride, normalized, GL_FALSE, ptr);
 }
@@ -456,9 +444,7 @@ _mesa_VertexAttribPointerARB(GLuint index, GLint size, GLenum type,
       return;
    }
 
-   update_array(ctx, "glVertexAttribPointer",
-                &ctx->Array.ArrayObj->VertexAttrib[index],
-                VERT_BIT_GENERIC(index),
+   update_array(ctx, "glVertexAttribPointer", VERT_ATTRIB_GENERIC(index),
                 legalTypes, 1, BGRA_OR_4,
                 size, type, stride, normalized, GL_FALSE, ptr);
 }
@@ -488,9 +474,7 @@ _mesa_VertexAttribIPointer(GLuint index, GLint size, GLenum type,
       return;
    }
 
-   update_array(ctx, "glVertexAttribIPointer",
-                &ctx->Array.ArrayObj->VertexAttrib[index],
-                VERT_BIT_GENERIC(index),
+   update_array(ctx, "glVertexAttribIPointer", VERT_ATTRIB_GENERIC(index),
                 legalTypes, 1, 4,
                 size, type, stride, normalized, integer, ptr);
 }
@@ -509,10 +493,10 @@ _mesa_EnableVertexAttribArrayARB(GLuint index)
       return;
    }
 
-   ASSERT(index < Elements(ctx->Array.ArrayObj->VertexAttrib));
+   ASSERT(VERT_ATTRIB_GENERIC(index) < Elements(ctx->Array.ArrayObj->VertexAttrib));
 
    FLUSH_VERTICES(ctx, _NEW_ARRAY);
-   ctx->Array.ArrayObj->VertexAttrib[index].Enabled = GL_TRUE;
+   ctx->Array.ArrayObj->VertexAttrib[VERT_ATTRIB_GENERIC(index)].Enabled = GL_TRUE;
    ctx->Array.ArrayObj->_Enabled |= VERT_BIT_GENERIC(index);
    ctx->Array.NewState |= VERT_BIT_GENERIC(index);
 }
@@ -530,10 +514,10 @@ _mesa_DisableVertexAttribArrayARB(GLuint index)
       return;
    }
 
-   ASSERT(index < Elements(ctx->Array.ArrayObj->VertexAttrib));
+   ASSERT(VERT_ATTRIB_GENERIC(index) < Elements(ctx->Array.ArrayObj->VertexAttrib));
 
    FLUSH_VERTICES(ctx, _NEW_ARRAY);
-   ctx->Array.ArrayObj->VertexAttrib[index].Enabled = GL_FALSE;
+   ctx->Array.ArrayObj->VertexAttrib[VERT_ATTRIB_GENERIC(index)].Enabled = GL_FALSE;
    ctx->Array.ArrayObj->_Enabled &= ~VERT_BIT_GENERIC(index);
    ctx->Array.NewState |= VERT_BIT_GENERIC(index);
 }
@@ -555,9 +539,9 @@ get_vertex_array_attrib(struct gl_context *ctx, GLuint index, GLenum pname,
       return 0;
    }
 
-   ASSERT(index < Elements(ctx->Array.ArrayObj->VertexAttrib));
+   ASSERT(VERT_ATTRIB_GENERIC(index) < Elements(ctx->Array.ArrayObj->VertexAttrib));
 
-   array = &ctx->Array.ArrayObj->VertexAttrib[index];
+   array = &ctx->Array.ArrayObj->VertexAttrib[VERT_ATTRIB_GENERIC(index)];
 
    switch (pname) {
    case GL_VERTEX_ATTRIB_ARRAY_ENABLED_ARB:
@@ -607,8 +591,10 @@ get_current_attrib(struct gl_context *ctx, GLuint index, const char *function)
       return NULL;
    }
 
+   ASSERT(VERT_ATTRIB_GENERIC(index) < Elements(ctx->Array.ArrayObj->VertexAttrib));
+
    FLUSH_CURRENT(ctx, 0);
-   return ctx->Current.Attrib[VERT_ATTRIB_GENERIC0 + index];
+   return ctx->Current.Attrib[VERT_ATTRIB_GENERIC(index)];
 }
 
 void GLAPIENTRY
@@ -741,9 +727,9 @@ _mesa_GetVertexAttribPointervARB(GLuint index, GLenum pname, GLvoid **pointer)
       return;
    }
 
-   ASSERT(index < Elements(ctx->Array.ArrayObj->VertexAttrib));
+   ASSERT(VERT_ATTRIB_GENERIC(index) < Elements(ctx->Array.ArrayObj->VertexAttrib));
 
-   *pointer = (GLvoid *) ctx->Array.ArrayObj->VertexAttrib[index].Ptr;
+   *pointer = (GLvoid *) ctx->Array.ArrayObj->VertexAttrib[VERT_ATTRIB_GENERIC(index)].Ptr;
 }
 
 
@@ -1133,7 +1119,9 @@ _mesa_VertexAttribDivisor(GLuint index, GLuint divisor)
       return;
    }
 
-   ctx->Array.ArrayObj->VertexAttrib[index].InstanceDivisor = divisor;
+   ASSERT(VERT_ATTRIB_GENERIC(index) < Elements(ctx->Array.ArrayObj->VertexAttrib));
+
+   ctx->Array.ArrayObj->VertexAttrib[VERT_ATTRIB_GENERIC(index)].InstanceDivisor = divisor;
 }
 
 
@@ -1193,18 +1181,18 @@ _mesa_print_arrays(struct gl_context *ctx)
    _mesa_update_array_object_max_element(ctx, arrayObj);
 
    printf("Array Object %u\n", arrayObj->Name);
-   if (arrayObj->Vertex.Enabled)
-      print_array("Vertex", -1, &arrayObj->Vertex);
-   if (arrayObj->Normal.Enabled)
-      print_array("Normal", -1, &arrayObj->Normal);
-   if (arrayObj->Color.Enabled)
-      print_array("Color", -1, &arrayObj->Color);
-   for (i = 0; i < Elements(arrayObj->TexCoord); i++)
-      if (arrayObj->TexCoord[i].Enabled)
-         print_array("TexCoord", i, &arrayObj->TexCoord[i]);
-   for (i = 0; i < Elements(arrayObj->VertexAttrib); i++)
-      if (arrayObj->VertexAttrib[i].Enabled)
-         print_array("Attrib", i, &arrayObj->VertexAttrib[i]);
+   if (arrayObj->VertexAttrib[VERT_ATTRIB_POS].Enabled)
+      print_array("Vertex", -1, &arrayObj->VertexAttrib[VERT_ATTRIB_POS]);
+   if (arrayObj->VertexAttrib[VERT_ATTRIB_NORMAL].Enabled)
+      print_array("Normal", -1, &arrayObj->VertexAttrib[VERT_ATTRIB_NORMAL]);
+   if (arrayObj->VertexAttrib[VERT_ATTRIB_COLOR0].Enabled)
+      print_array("Color", -1, &arrayObj->VertexAttrib[VERT_ATTRIB_COLOR0]);
+   for (i = 0; i < ctx->Const.MaxTextureCoordUnits; i++)
+      if (arrayObj->VertexAttrib[VERT_ATTRIB_TEX(i)].Enabled)
+         print_array("TexCoord", i, &arrayObj->VertexAttrib[VERT_ATTRIB_TEX(i)]);
+   for (i = 0; i < VERT_ATTRIB_GENERIC_MAX; i++)
+      if (arrayObj->VertexAttrib[VERT_ATTRIB_GENERIC(i)].Enabled)
+         print_array("Attrib", i, &arrayObj->VertexAttrib[VERT_ATTRIB_GENERIC(i)]);
    printf("  _MaxElement = %u\n", arrayObj->_MaxElement);
 }
 

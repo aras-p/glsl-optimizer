@@ -738,17 +738,6 @@ _mesa_DeleteBuffersARB(GLsizei n, const GLuint *ids)
          }
 
          /* unbind any vertex pointers bound to this buffer */
-         unbind(ctx, &arrayObj->Vertex.BufferObj, bufObj);
-         unbind(ctx, &arrayObj->Weight.BufferObj, bufObj);
-         unbind(ctx, &arrayObj->Normal.BufferObj, bufObj);
-         unbind(ctx, &arrayObj->Color.BufferObj, bufObj);
-         unbind(ctx, &arrayObj->SecondaryColor.BufferObj, bufObj);
-         unbind(ctx, &arrayObj->FogCoord.BufferObj, bufObj);
-         unbind(ctx, &arrayObj->Index.BufferObj, bufObj);
-         unbind(ctx, &arrayObj->EdgeFlag.BufferObj, bufObj);
-         for (j = 0; j < Elements(arrayObj->TexCoord); j++) {
-            unbind(ctx, &arrayObj->TexCoord[j].BufferObj, bufObj);
-         }
          for (j = 0; j < Elements(arrayObj->VertexAttrib); j++) {
             unbind(ctx, &arrayObj->VertexAttrib[j].BufferObj, bufObj);
          }

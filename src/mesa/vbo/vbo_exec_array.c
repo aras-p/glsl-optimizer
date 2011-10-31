@@ -297,16 +297,8 @@ check_draw_elements_data(struct gl_context *ctx, GLsizei count, GLenum elemType,
       }
 
       /* check element j of each enabled array */
-      check_array_data(ctx, &arrayObj->Vertex, VERT_ATTRIB_POS, j);
-      check_array_data(ctx, &arrayObj->Normal, VERT_ATTRIB_NORMAL, j);
-      check_array_data(ctx, &arrayObj->Color, VERT_ATTRIB_COLOR0, j);
-      check_array_data(ctx, &arrayObj->SecondaryColor, VERT_ATTRIB_COLOR1, j);
-      for (k = 0; k < Elements(arrayObj->TexCoord); k++) {
-         check_array_data(ctx, &arrayObj->TexCoord[k], VERT_ATTRIB_TEX0 + k, j);
-      }
       for (k = 0; k < Elements(arrayObj->VertexAttrib); k++) {
-         check_array_data(ctx, &arrayObj->VertexAttrib[k],
-                          VERT_ATTRIB_GENERIC0 + k, j);
+         check_array_data(ctx, &arrayObj->VertexAttrib[k], k, j);
       }
    }
 
@@ -314,12 +306,6 @@ check_draw_elements_data(struct gl_context *ctx, GLsizei count, GLenum elemType,
       ctx->Driver.UnmapBuffer(ctx, ctx->Array.ArrayObj->ElementArrayBufferObj);
    }
 
-   unmap_array_buffer(ctx, &arrayObj->Vertex);
-   unmap_array_buffer(ctx, &arrayObj->Normal);
-   unmap_array_buffer(ctx, &arrayObj->Color);
-   for (k = 0; k < Elements(arrayObj->TexCoord); k++) {
-      unmap_array_buffer(ctx, &arrayObj->TexCoord[k]);
-   }
    for (k = 0; k < Elements(arrayObj->VertexAttrib); k++) {
       unmap_array_buffer(ctx, &arrayObj->VertexAttrib[k]);
    }
@@ -398,29 +384,12 @@ bind_array_obj(struct gl_context *ctx)
    struct gl_array_object *arrayObj = ctx->Array.ArrayObj;
    GLuint i;
 
-   /* TODO: Fix the ArrayObj struct to keep legacy arrays in an array
-    * rather than as individual named arrays.  Then this function can
-    * go away.
-    */
-   exec->array.legacy_array[VERT_ATTRIB_POS] = &arrayObj->Vertex;
-   exec->array.legacy_array[VERT_ATTRIB_WEIGHT] = &arrayObj->Weight;
-   exec->array.legacy_array[VERT_ATTRIB_NORMAL] = &arrayObj->Normal;
-   exec->array.legacy_array[VERT_ATTRIB_COLOR0] = &arrayObj->Color;
-   exec->array.legacy_array[VERT_ATTRIB_COLOR1] = &arrayObj->SecondaryColor;
-   exec->array.legacy_array[VERT_ATTRIB_FOG] = &arrayObj->FogCoord;
-   exec->array.legacy_array[VERT_ATTRIB_COLOR_INDEX] = &arrayObj->Index;
-   if (arrayObj->PointSize.Enabled) {
-      /* this aliases COLOR_INDEX */
-      exec->array.legacy_array[VERT_ATTRIB_POINT_SIZE] = &arrayObj->PointSize;
-   }
-   exec->array.legacy_array[VERT_ATTRIB_EDGEFLAG] = &arrayObj->EdgeFlag;
+   for (i = 0; i < VERT_ATTRIB_FF_MAX; i++)
+      exec->array.legacy_array[i] = &arrayObj->VertexAttrib[VERT_ATTRIB_FF(i)];
 
-   for (i = 0; i < Elements(arrayObj->TexCoord); i++)
-      exec->array.legacy_array[VERT_ATTRIB_TEX0 + i] = &arrayObj->TexCoord[i];
-
-   for (i = 0; i < Elements(arrayObj->VertexAttrib); i++) {
+   for (i = 0; i < VERT_ATTRIB_GENERIC_MAX; i++) {
       assert(i < Elements(exec->array.generic_array));
-      exec->array.generic_array[i] = &arrayObj->VertexAttrib[i];
+      exec->array.generic_array[i] = &arrayObj->VertexAttrib[VERT_ATTRIB_GENERIC(i)];
    }
 }
 

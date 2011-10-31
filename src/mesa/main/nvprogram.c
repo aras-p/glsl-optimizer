@@ -365,7 +365,7 @@ _mesa_GetVertexAttribdvNV(GLuint index, GLenum pname, GLdouble *params)
       return;
    }
 
-   array = &ctx->Array.ArrayObj->VertexAttrib[index];
+   array = &ctx->Array.ArrayObj->VertexAttrib[VERT_ATTRIB_GENERIC(index)];
 
    switch (pname) {
       case GL_ATTRIB_ARRAY_SIZE_NV:
@@ -409,7 +409,7 @@ _mesa_GetVertexAttribfvNV(GLuint index, GLenum pname, GLfloat *params)
       return;
    }
 
-   array = &ctx->Array.ArrayObj->VertexAttrib[index];
+   array = &ctx->Array.ArrayObj->VertexAttrib[VERT_ATTRIB_GENERIC(index)];
 
    switch (pname) {
       case GL_ATTRIB_ARRAY_SIZE_NV:
@@ -453,7 +453,7 @@ _mesa_GetVertexAttribivNV(GLuint index, GLenum pname, GLint *params)
       return;
    }
 
-   array = &ctx->Array.ArrayObj->VertexAttrib[index];
+   array = &ctx->Array.ArrayObj->VertexAttrib[VERT_ATTRIB_GENERIC(index)];
 
    switch (pname) {
       case GL_ATTRIB_ARRAY_SIZE_NV:
@@ -508,7 +508,7 @@ _mesa_GetVertexAttribPointervNV(GLuint index, GLenum pname, GLvoid **pointer)
       return;
    }
 
-   *pointer = (GLvoid *) ctx->Array.ArrayObj->VertexAttrib[index].Ptr;
+   *pointer = (GLvoid *) ctx->Array.ArrayObj->VertexAttrib[VERT_ATTRIB_GENERIC(index)].Ptr;
 }
 
 void
