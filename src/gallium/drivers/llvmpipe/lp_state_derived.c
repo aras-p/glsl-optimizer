@@ -53,10 +53,10 @@ compute_vertex_info(struct llvmpipe_context *llvmpipe)
    unsigned vs_index;
    uint i;
 
-   llvmpipe->color_slot[0] = ~0;
-   llvmpipe->color_slot[1] = ~0;
-   llvmpipe->bcolor_slot[0] = ~0;
-   llvmpipe->bcolor_slot[1] = ~0;
+   llvmpipe->color_slot[0] = -1;
+   llvmpipe->color_slot[1] = -1;
+   llvmpipe->bcolor_slot[0] = -1;
+   llvmpipe->bcolor_slot[1] = -1;
 
    /*
     * Match FS inputs against VS outputs, emitting the necessary
@@ -84,7 +84,7 @@ compute_vertex_info(struct llvmpipe_context *llvmpipe)
       if (lpfs->info.base.input_semantic_name[i] == TGSI_SEMANTIC_COLOR &&
           lpfs->info.base.input_semantic_index[i] < 2) {
          int idx = lpfs->info.base.input_semantic_index[i];
-         llvmpipe->color_slot[idx] = vinfo->num_attribs;
+         llvmpipe->color_slot[idx] = (int)vinfo->num_attribs;
       }
 
       /*
@@ -100,7 +100,7 @@ compute_vertex_info(struct llvmpipe_context *llvmpipe)
                                          TGSI_SEMANTIC_BCOLOR, i);
 
       if (vs_index > 0) {
-         llvmpipe->bcolor_slot[i] = vinfo->num_attribs;
+         llvmpipe->bcolor_slot[i] = (int)vinfo->num_attribs;
          draw_emit_vertex_attr(vinfo, EMIT_4F, INTERP_PERSPECTIVE, vs_index);
       }
    }

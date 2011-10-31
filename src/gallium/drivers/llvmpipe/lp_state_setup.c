@@ -351,9 +351,9 @@ load_attribute(struct gallivm_state *gallivm,
    }
 
    if (key->twoside) {
-      if (vert_attr == key->color_slot && key->bcolor_slot != ~0)
+      if (vert_attr == key->color_slot && key->bcolor_slot >= 0)
          lp_twoside(gallivm, args, key, key->bcolor_slot);
-      else if (vert_attr == key->spec_slot && key->bspec_slot != ~0)
+      else if (vert_attr == key->spec_slot && key->bspec_slot >= 0)
          lp_twoside(gallivm, args, key, key->bspec_slot);
    }
 }
@@ -771,10 +771,16 @@ lp_make_setup_variant_key(struct llvmpipe_context *lp,
    key->twoside = lp->rasterizer->light_twoside;
    key->size = Offset(struct lp_setup_variant_key,
 		      inputs[key->num_inputs]);
-   key->color_slot = lp->color_slot[0];
+
+   key->color_slot  = lp->color_slot [0];
    key->bcolor_slot = lp->bcolor_slot[0];
-   key->spec_slot = lp->color_slot[1];
-   key->bspec_slot = lp->bcolor_slot[1];
+   key->spec_slot   = lp->color_slot [1];
+   key->bspec_slot  = lp->bcolor_slot[1];
+   assert(key->color_slot  == lp->color_slot [0]);
+   assert(key->bcolor_slot == lp->bcolor_slot[0]);
+   assert(key->spec_slot   == lp->color_slot [1]);
+   assert(key->bspec_slot  == lp->bcolor_slot[1]);
+
    key->units = (float) (lp->rasterizer->offset_units * lp->mrd);
    key->scale = lp->rasterizer->offset_scale;
    key->pad = 0;
