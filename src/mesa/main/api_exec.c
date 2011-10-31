@@ -90,6 +90,7 @@
 #include "texobj.h"
 #include "texparam.h"
 #include "texstate.h"
+#include "texstorage.h"
 #include "texturebarrier.h"
 #include "transformfeedback.h"
 #include "mtypes.h"
@@ -741,6 +742,14 @@ _mesa_create_exec_table(void)
  
    /* GL_ARB_texture_buffer_object */
    SET_TexBufferARB(exec, _mesa_TexBuffer);
+
+   /* GL_ARB_texture_storage */
+   SET_TexStorage1D(exec, _mesa_TexStorage1D);
+   SET_TexStorage2D(exec, _mesa_TexStorage2D);
+   SET_TexStorage3D(exec, _mesa_TexStorage3D);
+   SET_TextureStorage1DEXT(exec, _mesa_TextureStorage1DEXT);
+   SET_TextureStorage2DEXT(exec, _mesa_TextureStorage2DEXT);
+   SET_TextureStorage3DEXT(exec, _mesa_TextureStorage3DEXT);
 
 #if FEATURE_ARB_sampler_objects
    _mesa_init_sampler_object_dispatch(exec);
