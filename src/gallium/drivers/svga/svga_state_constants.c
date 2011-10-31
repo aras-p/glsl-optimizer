@@ -68,9 +68,9 @@ emit_const(struct svga_context *svga, unsigned shader, unsigned i,
 {
    enum pipe_error ret = PIPE_OK;
 
-   assert(i < CB_MAX);
-
    assert(shader < PIPE_SHADER_TYPES);
+
+   assert(i < SVGA3D_CONSTREG_MAX);
 
    if (memcmp(svga->state.hw_draw.cb[shader][i], value, 4 * sizeof(float)) != 0) {
       if (SVGA_DEBUG & DEBUG_CONSTS)
@@ -112,13 +112,13 @@ static enum pipe_error emit_const_range( struct svga_context *svga,
    enum pipe_error ret;
 
 #ifdef DEBUG
-   if (offset + count > CB_MAX) {
+   if (offset + count > SVGA3D_CONSTREG_MAX) {
       debug_printf("svga: too many constants (offset + count = %u)\n",
                    offset + count);
    }
 #endif
 
-   if (offset > CB_MAX) {
+   if (offset > SVGA3D_CONSTREG_MAX) {
       /* This isn't OK, but if we propagate an error all the way up we'll
        * just get into more trouble.
        * XXX note that offset is always zero at this time so this is moot.
@@ -126,13 +126,13 @@ static enum pipe_error emit_const_range( struct svga_context *svga,
       return PIPE_OK;
    }
 
-   if (offset + count > CB_MAX) {
+   if (offset + count > SVGA3D_CONSTREG_MAX) {
       /* Just drop the extra constants for now.
        * Ideally we should not have allowed the app to create a shader
        * that exceeds our constant buffer size but there's no way to
        * express that in gallium at this time.
        */
-      count = CB_MAX - offset;
+      count = SVGA3D_CONSTREG_MAX - offset;
    }
 
    i = 0;

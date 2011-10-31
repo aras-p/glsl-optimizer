@@ -24,6 +24,7 @@
  **********************************************************/
 
 #include "util/u_inlines.h"
+#include "util/u_memory.h"
 #include "pipe/p_defines.h"
 #include "util/u_math.h"
 
@@ -249,6 +250,8 @@ struct ts_queue {
 
 #define EMIT_TS(svga, unit, val, token, fail)                           \
 do {                                                                    \
+   assert(unit < Elements(svga->state.hw_draw.ts));                     \
+   assert(SVGA3D_TS_##token < Elements(svga->state.hw_draw.ts[unit]));  \
    if (svga->state.hw_draw.ts[unit][SVGA3D_TS_##token] != val) {        \
       svga_queue_tss( &queue, unit, SVGA3D_TS_##token, val );           \
       svga->state.hw_draw.ts[unit][SVGA3D_TS_##token] = val;            \
@@ -258,6 +261,8 @@ do {                                                                    \
 #define EMIT_TS_FLOAT(svga, unit, fvalue, token, fail)                  \
 do {                                                                    \
    unsigned val = fui(fvalue);                                          \
+   assert(unit < Elements(svga->state.hw_draw.ts));                     \
+   assert(SVGA3D_TS_##token < Elements(svga->state.hw_draw.ts[unit]));  \
    if (svga->state.hw_draw.ts[unit][SVGA3D_TS_##token] != val) {        \
       svga_queue_tss( &queue, unit, SVGA3D_TS_##token, val );           \
       svga->state.hw_draw.ts[unit][SVGA3D_TS_##token] = val;            \
