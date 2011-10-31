@@ -140,6 +140,35 @@ typedef enum
 } gl_vert_attrib;
 
 /**
+ * Symbolic constats to help iterating over
+ * specific blocks of vertex attributes.
+ *
+ * VERT_ATTRIB_FF
+ *   includes all fixed function attributes as well as
+ *   the aliased GL_NV_vertex_program shader attributes.
+ * VERT_ATTRIB_TEX
+ *   include the classic texture coordinate attributes.
+ *   Is a subset of VERT_ATTRIB_FF.
+ * VERT_ATTRIB_GENERIC_NV
+ *   include the NV shader attributes.
+ *   Is a subset of VERT_ATTRIB_FF.
+ * VERT_ATTRIB_GENERIC
+ *   include the OpenGL 2.0+ GLSL generic shader attributes.
+ *   These alias the generic GL_ARB_vertex_shader attributes.
+ */
+#define VERT_ATTRIB_FF(i)           (VERT_ATTRIB_POS + (i))
+#define VERT_ATTRIB_FF_MAX          VERT_ATTRIB_GENERIC0
+
+#define VERT_ATTRIB_TEX(i)          (VERT_ATTRIB_TEX0 + (i))
+#define VERT_ATTRIB_TEX_MAX         MAX_TEXTURE_COORD_UNITS
+
+#define VERT_ATTRIB_GENERIC_NV(i)   (VERT_ATTRIB_POS + (i))
+#define VERT_ATTRIB_GENERIC_NV_MAX  MAX_VERTEX_GENERIC_ATTRIBS
+
+#define VERT_ATTRIB_GENERIC(i)      (VERT_ATTRIB_GENERIC0 + (i))
+#define VERT_ATTRIB_GENERIC_MAX     MAX_VERTEX_GENERIC_ATTRIBS
+
+/**
  * Bitflags for vertex attributes.
  * These are used in bitfields in many places.
  */
@@ -151,6 +180,7 @@ typedef enum
 #define VERT_BIT_COLOR1      (1 << VERT_ATTRIB_COLOR1)
 #define VERT_BIT_FOG         (1 << VERT_ATTRIB_FOG)
 #define VERT_BIT_COLOR_INDEX (1 << VERT_ATTRIB_COLOR_INDEX)
+#define VERT_BIT_POINT_SIZE  (1 << VERT_ATTRIB_POINT_SIZE)
 #define VERT_BIT_EDGEFLAG    (1 << VERT_ATTRIB_EDGEFLAG)
 #define VERT_BIT_TEX0        (1 << VERT_ATTRIB_TEX0)
 #define VERT_BIT_TEX1        (1 << VERT_ATTRIB_TEX1)
@@ -161,24 +191,21 @@ typedef enum
 #define VERT_BIT_TEX6        (1 << VERT_ATTRIB_TEX6)
 #define VERT_BIT_TEX7        (1 << VERT_ATTRIB_TEX7)
 #define VERT_BIT_GENERIC0    (1 << VERT_ATTRIB_GENERIC0)
-#define VERT_BIT_GENERIC1    (1 << VERT_ATTRIB_GENERIC1)
-#define VERT_BIT_GENERIC2    (1 << VERT_ATTRIB_GENERIC2)
-#define VERT_BIT_GENERIC3    (1 << VERT_ATTRIB_GENERIC3)
-#define VERT_BIT_GENERIC4    (1 << VERT_ATTRIB_GENERIC4)
-#define VERT_BIT_GENERIC5    (1 << VERT_ATTRIB_GENERIC5)
-#define VERT_BIT_GENERIC6    (1 << VERT_ATTRIB_GENERIC6)
-#define VERT_BIT_GENERIC7    (1 << VERT_ATTRIB_GENERIC7)
-#define VERT_BIT_GENERIC8    (1 << VERT_ATTRIB_GENERIC8)
-#define VERT_BIT_GENERIC9    (1 << VERT_ATTRIB_GENERIC9)
-#define VERT_BIT_GENERIC10   (1 << VERT_ATTRIB_GENERIC10)
-#define VERT_BIT_GENERIC11   (1 << VERT_ATTRIB_GENERIC11)
-#define VERT_BIT_GENERIC12   (1 << VERT_ATTRIB_GENERIC12)
-#define VERT_BIT_GENERIC13   (1 << VERT_ATTRIB_GENERIC13)
-#define VERT_BIT_GENERIC14   (1 << VERT_ATTRIB_GENERIC14)
-#define VERT_BIT_GENERIC15   (1 << VERT_ATTRIB_GENERIC15)
 
-#define VERT_BIT_TEX(u)  (1 << (VERT_ATTRIB_TEX0 + (u)))
-#define VERT_BIT_GENERIC(g)  (1 << (VERT_ATTRIB_GENERIC0 + (g)))
+#define VERT_BIT(i)              (1 << (i))
+#define VERT_BIT_ALL             ((1 << VERT_ATTRIB_MAX) - 1)
+
+#define VERT_BIT_FF(i)           VERT_BIT(i)
+#define VERT_BIT_FF_ALL          ((1 << VERT_ATTRIB_FF_MAX) - 1)
+#define VERT_BIT_TEX(i)          VERT_BIT(VERT_ATTRIB_TEX(i))
+#define VERT_BIT_TEX_ALL         \
+  (((1 << VERT_ATTRIB_TEX_MAX) - 1) << VERT_ATTRIB_TEX(0))
+#define VERT_BIT_GENERIC_NV(i)   VERT_BIT(VERT_ATTRIB_GENERIC_NV(i))
+#define VERT_BIT_GENERIC_NV_ALL  \
+  (((1 << VERT_ATTRIB_GENERIC_NV_MAX) - 1) << (VERT_ATTRIB_GENERIC_NV(0)))
+#define VERT_BIT_GENERIC(i)      VERT_BIT(VERT_ATTRIB_GENERIC(i))
+#define VERT_BIT_GENERIC_ALL     \
+  (((1 << VERT_ATTRIB_GENERIC_MAX) - 1) << (VERT_ATTRIB_GENERIC(0)))
 /*@}*/
 
 
