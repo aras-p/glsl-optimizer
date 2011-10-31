@@ -359,3 +359,35 @@ _swrast_unmap_renderbuffers(struct gl_context *ctx)
    if (ctx->ReadBuffer != ctx->DrawBuffer)
       map_unmap_renderbuffers(ctx, ctx->ReadBuffer, GL_FALSE);
 }
+
+
+
+/**
+ * Called via ctx->Driver.AllocTextureStorage()
+ * Just have to allocate memory for the texture images.
+ */
+GLboolean
+_swrast_AllocTextureStorage(struct gl_context *ctx,
+                            struct gl_texture_object *texObj,
+                            GLsizei levels, GLsizei width,
+                            GLsizei height, GLsizei depth)
+{
+   const GLint numFaces = (texObj->Target == GL_TEXTURE_CUBE_MAP) ? 6 : 1;
+   GLint face, level;
+
+   for (face = 0; face < numFaces; face++) {
+      for (level = 0; level < levels; level++) {
+         struct gl_texture_image *texImage = texObj->Image[face][level];
+         if (!_swrast_alloc_texture_image_buffer(ctx, texImage,
+                                                 texImage->TexFormat,
+                                                 texImage->Width,
+                                                 texImage->Height,
+                                                 texImage->Depth)) {
+            return GL_FALSE;
+         }
+      }
+   }
+
+   return GL_TRUE;
+}
+
