@@ -1326,9 +1326,11 @@ ir_variable::ir_variable(const struct glsl_type *type, const char *name,
    this->type = type;
    this->name = ralloc_strdup(this, name);
    this->explicit_location = false;
+   this->has_initializer = false;
    this->location = -1;
    this->warn_extension = NULL;
    this->constant_value = NULL;
+   this->constant_initializer = NULL;
    this->origin_upper_left = false;
    this->pixel_center_integer = false;
    this->depth_layout = ir_depth_layout_none;
@@ -1488,6 +1490,9 @@ steal_memory(ir_instruction *ir, void *new_ctx)
    ir_constant *constant = ir->as_constant();
    if (var != NULL && var->constant_value != NULL)
       steal_memory(var->constant_value, ir);
+
+   if (var != NULL && var->constant_initializer != NULL)
+      steal_memory(var->constant_initializer, ir);
 
    /* The components of aggregate constants are not visited by the normal
     * visitor, so steal their values by hand.

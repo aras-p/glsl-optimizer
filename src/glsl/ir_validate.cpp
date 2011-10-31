@@ -496,6 +496,13 @@ ir_validate::visit(ir_variable *ir)
       }
    }
 
+   if (ir->constant_initializer != NULL && !ir->has_initializer) {
+      printf("ir_variable didn't have an initializer, but has a constant "
+	     "initializer value.\n");
+      ir->print();
+      abort();
+   }
+
    return visit_continue;
 }
 

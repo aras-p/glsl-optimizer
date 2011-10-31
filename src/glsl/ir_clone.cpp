@@ -50,6 +50,7 @@ ir_variable::clone(void *mem_ctx, struct hash_table *ht) const
    var->origin_upper_left = this->origin_upper_left;
    var->pixel_center_integer = this->pixel_center_integer;
    var->explicit_location = this->explicit_location;
+   var->has_initializer = this->has_initializer;
 
    var->num_state_slots = this->num_state_slots;
    if (this->state_slots) {
@@ -67,6 +68,10 @@ ir_variable::clone(void *mem_ctx, struct hash_table *ht) const
 
    if (this->constant_value)
       var->constant_value = this->constant_value->clone(mem_ctx, ht);
+
+   if (this->constant_initializer)
+      var->constant_initializer =
+	 this->constant_initializer->clone(mem_ctx, ht);
 
    if (ht) {
       hash_table_insert(ht, var, (void *)const_cast<ir_variable *>(this));

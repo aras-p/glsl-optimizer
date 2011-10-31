@@ -448,17 +448,30 @@ cross_validate_globals(struct gl_shader_program *prog,
 	       }
 	    }
 
-	    /* FINISHME: Handle non-constant initializers.
+	    /* Page 35 (page 41 of the PDF) of the GLSL 4.20 spec says:
+	     *
+	     *     "If a shared global has multiple initializers, the
+	     *     initializers must all be constant expressions, and they
+	     *     must all have the same value. Otherwise, a link error will
+	     *     result. (A shared global having only one initializer does
+	     *     not require that initializer to be a constant expression.)"
+	     *
+	     * Previous to 4.20 the GLSL spec simply said that initializers
+	     * must have the same value.  In this case of non-constant
+	     * initializers, this was impossible to determine.  As a result,
+	     * no vendor actually implemented that behavior.  The 4.20
+	     * behavior matches the implemented behavior of at least one other
+	     * vendor, so we'll implement that for all GLSL versions.
 	     */
-	    if (var->constant_value != NULL) {
-	       if (existing->constant_value != NULL) {
-		  if (!var->constant_value->has_value(existing->constant_value)) {
+	    if (var->constant_initializer != NULL) {
+	       if (existing->constant_initializer != NULL) {
+		  if (!var->constant_initializer->has_value(existing->constant_initializer)) {
 		     linker_error(prog, "initializers for %s "
 				  "`%s' have differing values\n",
 				  mode_string(var), var->name);
 		     return false;
 		  }
-	       } else
+	       } else {
 		  /* If the first-seen instance of a particular uniform did not
 		   * have an initializer but a later instance does, copy the
 		   * initializer to the version stored in the symbol table.
@@ -471,8 +484,29 @@ cross_validate_globals(struct gl_shader_program *prog,
 		   * FINISHME: modify the shader, and linking with the second
 		   * FINISHME: will fail.
 		   */
-		  existing->constant_value =
-		     var->constant_value->clone(ralloc_parent(existing), NULL);
+		  existing->constant_initializer =
+		     var->constant_initializer->clone(ralloc_parent(existing),
+						      NULL);
+	       }
+	    }
+
+	    if (var->has_initializer) {
+	       if (existing->has_initializer
+		   && (var->constant_initializer == NULL
+		       || existing->constant_initializer == NULL)) {
+		  linker_error(prog,
+			       "shared global variable `%s' has multiple "
+			       "non-constant initializers.\n",
+			       var->name);
+		  return false;
+	       }
+
+	       /* Some instance had an initializer, so keep track of that.  In
+		* this location, all sorts of initializers (constant or
+		* otherwise) will propagate the existence to the variable
+		* stored in the symbol table.
+		*/
+	       existing->has_initializer = true;
 	    }
 
 	    if (existing->invariant != var->invariant) {

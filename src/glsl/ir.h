@@ -365,6 +365,14 @@ public:
    unsigned explicit_location:1;
 
    /**
+    * Does this variable have an initializer?
+    *
+    * This is used by the linker to cross-validiate initializers of global
+    * variables.
+    */
+   unsigned has_initializer:1;
+
+   /**
     * \brief Layout qualifier for gl_FragDepth.
     *
     * This is not equal to \c ir_depth_layout_none if and only if this
@@ -414,6 +422,16 @@ public:
     * Value assigned in the initializer of a variable declared "const"
     */
    ir_constant *constant_value;
+
+   /**
+    * Constant expression assigned in the initializer of the variable
+    *
+    * \warning
+    * This field and \c ::constant_value are distinct.  Even if the two fields
+    * refer to constants with the same value, they must point to separate
+    * objects.
+    */
+   ir_constant *constant_initializer;
 };
 
 

@@ -408,6 +408,8 @@ add_builtin_constant(exec_list *instructions, glsl_symbol_table *symtab,
 					 name, glsl_type::int_type,
 					 ir_var_auto, -1);
    var->constant_value = new(var) ir_constant(value);
+   var->constant_initializer = new(var) ir_constant(value);
+   var->has_initializer = true;
    return var;
 }
 

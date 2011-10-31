@@ -2367,6 +2367,9 @@ process_initializer(ir_variable *var, ast_declaration *decl,
       } else
 	 initializer_type = rhs->type;
 
+      var->constant_initializer = rhs->constant_expression_value();
+      var->has_initializer = true;
+
       /* If the declared variable is an unsized array, it must inherrit
        * its full type from the initializer.  A declaration such as
        *
