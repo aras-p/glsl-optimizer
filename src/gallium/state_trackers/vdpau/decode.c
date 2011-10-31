@@ -233,6 +233,7 @@ vlVdpDecoderRenderMpeg12(struct pipe_video_decoder *decoder,
    picture.f_code[0][1] = picture_info->f_code[0][1] - 1;
    picture.f_code[1][0] = picture_info->f_code[1][0] - 1;
    picture.f_code[1][1] = picture_info->f_code[1][1] - 1;
+   picture.num_slices = picture_info->slice_count;
 
    decoder->set_picture_parameters(decoder, &picture.base);
 

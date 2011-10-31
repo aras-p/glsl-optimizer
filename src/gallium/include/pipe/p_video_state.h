@@ -134,6 +134,7 @@ struct pipe_mpeg12_picture_desc
    unsigned concealment_motion_vectors;
    unsigned intra_dc_precision;
    unsigned f_code[2][2];
+   unsigned num_slices;
 };
 
 struct pipe_mpeg12_quant_matrix
