@@ -61,6 +61,7 @@
 #include "shaderapi.h"
 #include "syncobj.h"
 #include "teximage.h"
+#include "texstorage.h"
 #include "mtypes.h"
 #include "varray.h"
 #if FEATURE_ARB_vertex_program || FEATURE_ARB_fragment_program
@@ -10363,6 +10364,14 @@ _mesa_create_save_table(void)
    /* GL_ARB_sync */
    _mesa_init_sync_dispatch(table);
    SET_WaitSync(table, save_WaitSync);
+
+   /* GL_ARB_texture_storage (no dlist support) */
+   SET_TexStorage1D(table, _mesa_TexStorage1D);
+   SET_TexStorage2D(table, _mesa_TexStorage2D);
+   SET_TexStorage3D(table, _mesa_TexStorage3D);
+   SET_TextureStorage1DEXT(table, _mesa_TextureStorage1DEXT);
+   SET_TextureStorage2DEXT(table, _mesa_TextureStorage2DEXT);
+   SET_TextureStorage3DEXT(table, _mesa_TextureStorage3DEXT);
 
    return table;
 }
