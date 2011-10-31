@@ -43,15 +43,18 @@ vlVdpDecoderCreate(VdpDevice device,
 {
    enum pipe_video_profile p_profile;
    struct pipe_context *pipe;
+   struct pipe_screen *screen;
    vlVdpDevice *dev;
    vlVdpDecoder *vldecoder;
    VdpStatus ret;
    unsigned i;
+   bool supported;
 
    VDPAU_MSG(VDPAU_TRACE, "[VDPAU] Creating decoder\n");
 
    if (!decoder)
       return VDP_STATUS_INVALID_POINTER;
+   *decoder = 0;
 
    if (!(width && height))
       return VDP_STATUS_INVALID_VALUE;
@@ -65,6 +68,15 @@ vlVdpDecoderCreate(VdpDevice device,
       return VDP_STATUS_INVALID_HANDLE;
 
    pipe = dev->context->pipe;
+   screen = dev->vscreen->pscreen;
+   supported = screen->get_video_param
+   (
+      screen,
+      p_profile,
+      PIPE_VIDEO_CAP_SUPPORTED
+   );
+   if (!supported)
+      return VDP_STATUS_INVALID_DECODER_PROFILE;
 
    vldecoder = CALLOC(1,sizeof(vlVdpDecoder));
    if (!vldecoder)
