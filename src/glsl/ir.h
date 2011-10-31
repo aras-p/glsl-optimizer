@@ -356,14 +356,6 @@ public:
    /*@}*/
 
    /**
-    * \brief Layout qualifier for gl_FragDepth.
-    *
-    * This is not equal to \c ir_depth_layout_none if and only if this
-    * variable is \c gl_FragDepth and a layout qualifier is specified.
-    */
-   ir_depth_layout depth_layout;
-
-   /**
     * Was the location explicitly set in the shader?
     *
     * If the location is explicitly set in the shader, it \b cannot be changed
@@ -371,6 +363,14 @@ public:
     * no effect).
     */
    unsigned explicit_location:1;
+
+   /**
+    * \brief Layout qualifier for gl_FragDepth.
+    *
+    * This is not equal to \c ir_depth_layout_none if and only if this
+    * variable is \c gl_FragDepth and a layout qualifier is specified.
+    */
+   ir_depth_layout depth_layout;
 
    /**
     * Storage location of the base of this variable
