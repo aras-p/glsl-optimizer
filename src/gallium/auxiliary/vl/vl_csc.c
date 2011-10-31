@@ -147,6 +147,22 @@ static const float bt_709_full[16] =
    0.0f,    0.0f,    0.0f,   1.0f
 };
 
+static const float smpte240m[16] =
+{
+   1.0f,  0.0f,    1.582f, 0.0f,
+   1.0f, -0.228f, -0.478f, 0.0f,
+   1.0f,  1.833f,  0.0f,   0.0f,
+   0.0f,  0.0f,    0.0f,   1.0f
+};
+
+static const float smpte240m_full[16] =
+{
+   1.164f,  0.0f,    1.794f, 0.0f,
+   1.164f, -0.258f, -0.543f, 0.0f,
+   1.164f,  2.079f,  0.0f,   0.0f,
+   0.0f,    0.0f,    0.0f,   1.0f
+};
+
 static const float identity[16] =
 {
    1.0f, 0.0f, 0.0f, 0.0f,
@@ -187,6 +203,9 @@ void vl_csc_get_matrix(enum VL_CSC_COLOR_STANDARD cs,
          break;
       case VL_CSC_COLOR_STANDARD_BT_709:
          cstd = full_range ? &bt_709_full[0] : &bt_709[0];
+         break;
+      case VL_CSC_COLOR_STANDARD_SMPTE_240M:
+         cstd = full_range ? &smpte240m_full[0] : &smpte240m[0];
          break;
       case VL_CSC_COLOR_STANDARD_IDENTITY:
       default:

@@ -257,9 +257,27 @@ vlVdpGenerateCSCMatrix(VdpProcamp *procamp,
                        VdpColorStandard standard,
                        VdpCSCMatrix *csc_matrix)
 {
-   VDPAU_MSG(VDPAU_TRACE, "[VDPAU] Generating CSCMatrix\n");
+   float matrix[16];
+   enum VL_CSC_COLOR_STANDARD vl_std;
+   struct vl_procamp camp;
+
    if (!(csc_matrix && procamp))
       return VDP_STATUS_INVALID_POINTER;
 
+   if (procamp->struct_version > VDP_PROCAMP_VERSION)
+      return VDP_STATUS_INVALID_STRUCT_VERSION;
+
+   switch (standard) {
+      case VDP_COLOR_STANDARD_ITUR_BT_601: vl_std = VL_CSC_COLOR_STANDARD_BT_601; break;
+      case VDP_COLOR_STANDARD_ITUR_BT_709: vl_std = VL_CSC_COLOR_STANDARD_BT_709; break;
+      case VDP_COLOR_STANDARD_SMPTE_240M:  vl_std = VL_CSC_COLOR_STANDARD_SMPTE_240M; break;
+      default: return VDP_STATUS_INVALID_COLOR_STANDARD;
+   }
+   camp.brightness = procamp->brightness;
+   camp.contrast = procamp->contrast;
+   camp.saturation = procamp->saturation;
+   camp.hue = procamp->hue;
+   vl_csc_get_matrix(vl_std, &camp, 1, matrix);
+   memcpy(csc_matrix, matrix, sizeof(float)*12);
    return VDP_STATUS_OK;
 }
