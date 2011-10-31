@@ -93,6 +93,7 @@ MAIN_SOURCES = \
 	main/texpal.c \
 	main/texparam.c \
 	main/texstate.c \
+	main/texstorage.c \
 	main/texstore.c \
 	main/texturebarrier.c \
 	main/transformfeedback.c \
