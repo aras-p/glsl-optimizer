@@ -146,6 +146,12 @@ intelEmitCopyBlit(struct intel_context *intel,
    src_pitch *= cpp;
    dst_pitch *= cpp;
 
+   /* Blit pitch must be dword-aligned.  Otherwise, the hardware appears to drop
+    * the low bits.
+    */
+   assert(src_pitch % 4 == 0);
+   assert(dst_pitch % 4 == 0);
+
    /* For big formats (such as floating point), do the copy using 32bpp and
     * multiply the coordinates.
     */
