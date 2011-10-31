@@ -339,13 +339,11 @@ pb_debug_buffer_vtbl = {
 
 
 static void
-pb_debug_manager_dump(struct pb_debug_manager *mgr)
+pb_debug_manager_dump_locked(struct pb_debug_manager *mgr)
 {
    struct list_head *curr, *next;
    struct pb_debug_buffer *buf;
 
-   pipe_mutex_lock(mgr->mutex);
-      
    curr = mgr->list.next;
    next = curr->next;
    while(curr != &mgr->list) {
@@ -359,7 +357,6 @@ pb_debug_manager_dump(struct pb_debug_manager *mgr)
       next = curr->next;
    }
 
-   pipe_mutex_unlock(mgr->mutex);
 }
 
 
@@ -394,7 +391,7 @@ pb_debug_manager_create_buffer(struct pb_manager *_mgr,
       pipe_mutex_lock(mgr->mutex);
       debug_printf("%s: failed to create buffer\n", __FUNCTION__);
       if(!LIST_IS_EMPTY(&mgr->list))
-         pb_debug_manager_dump(mgr);
+         pb_debug_manager_dump_locked(mgr);
       pipe_mutex_unlock(mgr->mutex);
 #endif
       return NULL;
@@ -448,7 +445,7 @@ pb_debug_manager_destroy(struct pb_manager *_mgr)
    pipe_mutex_lock(mgr->mutex);
    if(!LIST_IS_EMPTY(&mgr->list)) {
       debug_printf("%s: unfreed buffers\n", __FUNCTION__);
-      pb_debug_manager_dump(mgr);
+      pb_debug_manager_dump_locked(mgr);
    }
    pipe_mutex_unlock(mgr->mutex);
    
