@@ -238,7 +238,7 @@ _mesa_VertexPointer(GLint size, GLenum type, GLsizei stride, const GLvoid *ptr)
       legalTypes |= BYTE_BIT;
 
    update_array(ctx, "glVertexPointer",
-                &ctx->Array.ArrayObj->Vertex, _NEW_ARRAY_VERTEX,
+                &ctx->Array.ArrayObj->Vertex, VERT_BIT_POS,
                 legalTypes, 2, 4,
                 size, type, stride, GL_FALSE, GL_FALSE, ptr);
 }
@@ -256,7 +256,7 @@ _mesa_NormalPointer(GLenum type, GLsizei stride, const GLvoid *ptr )
    ASSERT_OUTSIDE_BEGIN_END_AND_FLUSH(ctx);
 
    update_array(ctx, "glNormalPointer",
-                &ctx->Array.ArrayObj->Normal, _NEW_ARRAY_NORMAL,
+                &ctx->Array.ArrayObj->Normal, VERT_BIT_NORMAL,
                 legalTypes, 3, 3,
                 3, type, stride, GL_TRUE, GL_FALSE, ptr);
 }
@@ -276,7 +276,7 @@ _mesa_ColorPointer(GLint size, GLenum type, GLsizei stride, const GLvoid *ptr)
    ASSERT_OUTSIDE_BEGIN_END_AND_FLUSH(ctx);
 
    update_array(ctx, "glColorPointer",
-                &ctx->Array.ArrayObj->Color, _NEW_ARRAY_COLOR0,
+                &ctx->Array.ArrayObj->Color, VERT_BIT_COLOR0,
                 legalTypes, 3, BGRA_OR_4,
                 size, type, stride, GL_TRUE, GL_FALSE, ptr);
 }
@@ -290,7 +290,7 @@ _mesa_FogCoordPointerEXT(GLenum type, GLsizei stride, const GLvoid *ptr)
    ASSERT_OUTSIDE_BEGIN_END_AND_FLUSH(ctx);
 
    update_array(ctx, "glFogCoordPointer",
-                &ctx->Array.ArrayObj->FogCoord, _NEW_ARRAY_FOGCOORD,
+                &ctx->Array.ArrayObj->FogCoord, VERT_BIT_FOG,
                 legalTypes, 1, 1,
                 1, type, stride, GL_FALSE, GL_FALSE, ptr);
 }
@@ -305,7 +305,7 @@ _mesa_IndexPointer(GLenum type, GLsizei stride, const GLvoid *ptr)
    ASSERT_OUTSIDE_BEGIN_END_AND_FLUSH(ctx);
 
    update_array(ctx, "glIndexPointer",
-                &ctx->Array.ArrayObj->Index, _NEW_ARRAY_INDEX,
+                &ctx->Array.ArrayObj->Index, VERT_BIT_COLOR_INDEX,
                 legalTypes, 1, 1,
                 1, type, stride, GL_FALSE, GL_FALSE, ptr);
 }
@@ -325,7 +325,7 @@ _mesa_SecondaryColorPointerEXT(GLint size, GLenum type,
    ASSERT_OUTSIDE_BEGIN_END_AND_FLUSH(ctx);
 
    update_array(ctx, "glSecondaryColorPointer",
-                &ctx->Array.ArrayObj->SecondaryColor, _NEW_ARRAY_COLOR1,
+                &ctx->Array.ArrayObj->SecondaryColor, VERT_BIT_COLOR1,
                 legalTypes, 3, BGRA_OR_4,
                 size, type, stride, GL_TRUE, GL_FALSE, ptr);
 }
@@ -351,7 +351,7 @@ _mesa_TexCoordPointer(GLint size, GLenum type, GLsizei stride,
 
    update_array(ctx, "glTexCoordPointer",
                 &ctx->Array.ArrayObj->TexCoord[unit],
-                _NEW_ARRAY_TEXCOORD(unit),
+                VERT_BIT_TEX(unit),
                 legalTypes, 1, 4,
                 size, type, stride, GL_FALSE, GL_FALSE,
                 ptr);
@@ -368,7 +368,7 @@ _mesa_EdgeFlagPointer(GLsizei stride, const GLvoid *ptr)
    ASSERT_OUTSIDE_BEGIN_END_AND_FLUSH(ctx);
 
    update_array(ctx, "glEdgeFlagPointer",
-                &ctx->Array.ArrayObj->EdgeFlag, _NEW_ARRAY_EDGEFLAG,
+                &ctx->Array.ArrayObj->EdgeFlag, VERT_BIT_EDGEFLAG,
                 legalTypes, 1, 1,
                 1, GL_UNSIGNED_BYTE, stride, GL_FALSE, integer, ptr);
 }
@@ -388,7 +388,7 @@ _mesa_PointSizePointer(GLenum type, GLsizei stride, const GLvoid *ptr)
    }
       
    update_array(ctx, "glPointSizePointer",
-                &ctx->Array.ArrayObj->PointSize, _NEW_ARRAY_POINT_SIZE,
+                &ctx->Array.ArrayObj->PointSize, VERT_BIT_POINT_SIZE,
                 legalTypes, 1, 1,
                 1, type, stride, GL_FALSE, GL_FALSE, ptr);
 }
@@ -423,7 +423,7 @@ _mesa_VertexAttribPointerNV(GLuint index, GLint size, GLenum type,
 
    update_array(ctx, "glVertexAttribPointerNV",
                 &ctx->Array.ArrayObj->VertexAttrib[index],
-                _NEW_ARRAY_ATTRIB(index),
+                VERT_BIT_GENERIC(index),
                 legalTypes, 1, BGRA_OR_4,
                 size, type, stride, normalized, GL_FALSE, ptr);
 }
@@ -458,7 +458,7 @@ _mesa_VertexAttribPointerARB(GLuint index, GLint size, GLenum type,
 
    update_array(ctx, "glVertexAttribPointer",
                 &ctx->Array.ArrayObj->VertexAttrib[index],
-                _NEW_ARRAY_ATTRIB(index),
+                VERT_BIT_GENERIC(index),
                 legalTypes, 1, BGRA_OR_4,
                 size, type, stride, normalized, GL_FALSE, ptr);
 }
@@ -490,7 +490,7 @@ _mesa_VertexAttribIPointer(GLuint index, GLint size, GLenum type,
 
    update_array(ctx, "glVertexAttribIPointer",
                 &ctx->Array.ArrayObj->VertexAttrib[index],
-                _NEW_ARRAY_ATTRIB(index),
+                VERT_BIT_GENERIC(index),
                 legalTypes, 1, 4,
                 size, type, stride, normalized, integer, ptr);
 }
@@ -513,8 +513,8 @@ _mesa_EnableVertexAttribArrayARB(GLuint index)
 
    FLUSH_VERTICES(ctx, _NEW_ARRAY);
    ctx->Array.ArrayObj->VertexAttrib[index].Enabled = GL_TRUE;
-   ctx->Array.ArrayObj->_Enabled |= _NEW_ARRAY_ATTRIB(index);
-   ctx->Array.NewState |= _NEW_ARRAY_ATTRIB(index);
+   ctx->Array.ArrayObj->_Enabled |= VERT_BIT_GENERIC(index);
+   ctx->Array.NewState |= VERT_BIT_GENERIC(index);
 }
 
 
@@ -534,8 +534,8 @@ _mesa_DisableVertexAttribArrayARB(GLuint index)
 
    FLUSH_VERTICES(ctx, _NEW_ARRAY);
    ctx->Array.ArrayObj->VertexAttrib[index].Enabled = GL_FALSE;
-   ctx->Array.ArrayObj->_Enabled &= ~_NEW_ARRAY_ATTRIB(index);
-   ctx->Array.NewState |= _NEW_ARRAY_ATTRIB(index);
+   ctx->Array.ArrayObj->_Enabled &= ~VERT_BIT_GENERIC(index);
+   ctx->Array.NewState |= VERT_BIT_GENERIC(index);
 }
 
 
@@ -1004,7 +1004,7 @@ _mesa_LockArraysEXT(GLint first, GLsizei count)
    ctx->Array.LockCount = count;
 
    ctx->NewState |= _NEW_ARRAY;
-   ctx->Array.NewState |= _NEW_ARRAY_ALL;
+   ctx->Array.NewState |= VERT_BIT_ALL;
 }
 
 
@@ -1025,7 +1025,7 @@ _mesa_UnlockArraysEXT( void )
    ctx->Array.LockFirst = 0;
    ctx->Array.LockCount = 0;
    ctx->NewState |= _NEW_ARRAY;
-   ctx->Array.NewState |= _NEW_ARRAY_ALL;
+   ctx->Array.NewState |= VERT_BIT_ALL;
 }
 
 

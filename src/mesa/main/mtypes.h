@@ -1630,7 +1630,7 @@ struct gl_array_object
     */
    struct gl_client_array VertexAttrib[MAX_VERTEX_GENERIC_ATTRIBS];
 
-   /** Mask of _NEW_ARRAY_* values indicating which arrays are enabled */
+   /** Mask of VERT_BIT_* values indicating which arrays are enabled */
    GLbitfield _Enabled;
 
    /**
@@ -1665,7 +1665,7 @@ struct gl_array_attrib
    GLboolean PrimitiveRestart;
    GLuint RestartIndex;
 
-   GLbitfield NewState;		/**< mask of _NEW_ARRAY_* values */
+   GLbitfield NewState;		/**< mask of VERT_BIT_* values */
    GLboolean RebindArrays; /**< whether the VBO module should rebind arrays */
 
    /* GL_ARB_vertex_buffer_object */
@@ -3071,39 +3071,6 @@ struct gl_matrix_stack
 #define _NEW_FRAG_CLAMP        (1 << 29)
 #define _NEW_ALL ~0
 /*@}*/
-
-
-/**
- * \name Bits to track array state changes 
- *
- * Also used to summarize array enabled.
- */
-/*@{*/
-#define _NEW_ARRAY_VERTEX           VERT_BIT_POS
-#define _NEW_ARRAY_WEIGHT           VERT_BIT_WEIGHT
-#define _NEW_ARRAY_NORMAL           VERT_BIT_NORMAL
-#define _NEW_ARRAY_COLOR0           VERT_BIT_COLOR0
-#define _NEW_ARRAY_COLOR1           VERT_BIT_COLOR1
-#define _NEW_ARRAY_FOGCOORD         VERT_BIT_FOG
-#define _NEW_ARRAY_INDEX            VERT_BIT_COLOR_INDEX
-#define _NEW_ARRAY_EDGEFLAG         VERT_BIT_EDGEFLAG
-#define _NEW_ARRAY_POINT_SIZE       VERT_BIT_COLOR_INDEX  /* aliased */
-#define _NEW_ARRAY_TEXCOORD_0       VERT_BIT_TEX0
-#define _NEW_ARRAY_TEXCOORD_1       VERT_BIT_TEX1
-#define _NEW_ARRAY_TEXCOORD_2       VERT_BIT_TEX2
-#define _NEW_ARRAY_TEXCOORD_3       VERT_BIT_TEX3
-#define _NEW_ARRAY_TEXCOORD_4       VERT_BIT_TEX4
-#define _NEW_ARRAY_TEXCOORD_5       VERT_BIT_TEX5
-#define _NEW_ARRAY_TEXCOORD_6       VERT_BIT_TEX6
-#define _NEW_ARRAY_TEXCOORD_7       VERT_BIT_TEX7
-#define _NEW_ARRAY_ATTRIB_0         VERT_BIT_GENERIC0  /* start at bit 16 */
-#define _NEW_ARRAY_ALL              0xffffffff
-
-
-#define _NEW_ARRAY_TEXCOORD(i) (_NEW_ARRAY_TEXCOORD_0 << (i))
-#define _NEW_ARRAY_ATTRIB(i) (_NEW_ARRAY_ATTRIB_0 << (i))
-/*@}*/
-
 
 
 /**

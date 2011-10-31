@@ -60,41 +60,41 @@ client_state(struct gl_context *ctx, GLenum cap, GLboolean state)
    switch (cap) {
       case GL_VERTEX_ARRAY:
          var = &arrayObj->Vertex.Enabled;
-         flag = _NEW_ARRAY_VERTEX;
+         flag = VERT_BIT_POS;
          break;
       case GL_NORMAL_ARRAY:
          var = &arrayObj->Normal.Enabled;
-         flag = _NEW_ARRAY_NORMAL;
+         flag = VERT_BIT_NORMAL;
          break;
       case GL_COLOR_ARRAY:
          var = &arrayObj->Color.Enabled;
-         flag = _NEW_ARRAY_COLOR0;
+         flag = VERT_BIT_COLOR0;
          break;
       case GL_INDEX_ARRAY:
          var = &arrayObj->Index.Enabled;
-         flag = _NEW_ARRAY_INDEX;
+         flag = VERT_BIT_COLOR_INDEX;
          break;
       case GL_TEXTURE_COORD_ARRAY:
          var = &arrayObj->TexCoord[ctx->Array.ActiveTexture].Enabled;
-         flag = _NEW_ARRAY_TEXCOORD(ctx->Array.ActiveTexture);
+         flag = VERT_BIT_TEX(ctx->Array.ActiveTexture);
          break;
       case GL_EDGE_FLAG_ARRAY:
          var = &arrayObj->EdgeFlag.Enabled;
-         flag = _NEW_ARRAY_EDGEFLAG;
+         flag = VERT_BIT_EDGEFLAG;
          break;
       case GL_FOG_COORDINATE_ARRAY_EXT:
          var = &arrayObj->FogCoord.Enabled;
-         flag = _NEW_ARRAY_FOGCOORD;
+         flag = VERT_BIT_FOG;
          break;
       case GL_SECONDARY_COLOR_ARRAY_EXT:
          var = &arrayObj->SecondaryColor.Enabled;
-         flag = _NEW_ARRAY_COLOR1;
+         flag = VERT_BIT_COLOR1;
          break;
 
 #if FEATURE_point_size_array
       case GL_POINT_SIZE_ARRAY_OES:
          var = &arrayObj->PointSize.Enabled;
-         flag = _NEW_ARRAY_POINT_SIZE;
+         flag = VERT_BIT_POINT_SIZE;
          break;
 #endif
 
@@ -120,7 +120,7 @@ client_state(struct gl_context *ctx, GLenum cap, GLboolean state)
             GLint n = (GLint) cap - GL_VERTEX_ATTRIB_ARRAY0_NV;
             ASSERT(n < Elements(ctx->Array.ArrayObj->VertexAttrib));
             var = &arrayObj->VertexAttrib[n].Enabled;
-            flag = _NEW_ARRAY_ATTRIB(n);
+            flag = VERT_BIT_GENERIC(n);
          }
          break;
 #endif /* FEATURE_NV_vertex_program */
