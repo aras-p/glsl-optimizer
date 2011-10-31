@@ -1842,6 +1842,66 @@ st_get_default_texture(struct st_context *st)
 }
 
 
+/**
+ * Called via ctx->Driver.AllocTextureStorage() to allocate texture memory
+ * for a whole mipmap stack.
+ */
+static GLboolean
+st_AllocTextureStorage(struct gl_context *ctx,
+                       struct gl_texture_object *texObj,
+                       GLsizei levels, GLsizei width,
+                       GLsizei height, GLsizei depth)
+{
+   const GLuint numFaces = (texObj->Target == GL_TEXTURE_CUBE_MAP) ? 6 : 1;
+   struct st_context *st = st_context(ctx);
+   struct st_texture_object *stObj = st_texture_object(texObj);
+   GLuint ptWidth, ptHeight, ptDepth, ptLayers, bindings;
+   enum pipe_format fmt;
+   GLint level;
+
+   assert(levels > 0);
+
+   /* Save the level=0 dimensions */
+   stObj->width0 = width;
+   stObj->height0 = height;
+   stObj->depth0 = depth;
+   stObj->lastLevel = levels - 1;
+
+   fmt = st_mesa_format_to_pipe_format(texObj->Image[0][0]->TexFormat);
+
+   bindings = default_bindings(st, fmt);
+
+   st_gl_texture_dims_to_pipe_dims(texObj->Target,
+                                   width, height, depth,
+                                   &ptWidth, &ptHeight, &ptDepth, &ptLayers);
+
+   stObj->pt = st_texture_create(st,
+                                 gl_target_to_pipe(texObj->Target),
+                                 fmt,
+                                 levels,
+                                 ptWidth,
+                                 ptHeight,
+                                 ptDepth,
+                                 ptLayers,
+                                 bindings);
+   if (!stObj->pt)
+      return GL_FALSE;
+
+   /* Set image resource pointers */
+   for (level = 0; level < levels; level++) {
+      GLuint face;
+      for (face = 0; face < numFaces; face++) {
+         struct st_texture_image *stImage =
+            st_texture_image(texObj->Image[face][level]);
+         pipe_resource_reference(&stImage->pt, stObj->pt);
+      }
+   }
+
+   return GL_TRUE;
+}
+
+
+
 void
 st_init_texture_functions(struct dd_function_table *functions)
 {
@@ -1879,4 +1939,6 @@ st_init_texture_functions(struct dd_function_table *functions)
 
    /* XXX Temporary until we can query pipe's texture sizes */
    functions->TestProxyTexImage = _mesa_test_proxy_teximage;
+
+   functions->AllocTextureStorage = st_AllocTextureStorage;
 }
