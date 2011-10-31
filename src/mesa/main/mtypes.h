@@ -173,39 +173,39 @@ typedef enum
  * These are used in bitfields in many places.
  */
 /*@{*/
-#define VERT_BIT_POS         (1 << VERT_ATTRIB_POS)
-#define VERT_BIT_WEIGHT      (1 << VERT_ATTRIB_WEIGHT)
-#define VERT_BIT_NORMAL      (1 << VERT_ATTRIB_NORMAL)
-#define VERT_BIT_COLOR0      (1 << VERT_ATTRIB_COLOR0)
-#define VERT_BIT_COLOR1      (1 << VERT_ATTRIB_COLOR1)
-#define VERT_BIT_FOG         (1 << VERT_ATTRIB_FOG)
-#define VERT_BIT_COLOR_INDEX (1 << VERT_ATTRIB_COLOR_INDEX)
-#define VERT_BIT_POINT_SIZE  (1 << VERT_ATTRIB_POINT_SIZE)
-#define VERT_BIT_EDGEFLAG    (1 << VERT_ATTRIB_EDGEFLAG)
-#define VERT_BIT_TEX0        (1 << VERT_ATTRIB_TEX0)
-#define VERT_BIT_TEX1        (1 << VERT_ATTRIB_TEX1)
-#define VERT_BIT_TEX2        (1 << VERT_ATTRIB_TEX2)
-#define VERT_BIT_TEX3        (1 << VERT_ATTRIB_TEX3)
-#define VERT_BIT_TEX4        (1 << VERT_ATTRIB_TEX4)
-#define VERT_BIT_TEX5        (1 << VERT_ATTRIB_TEX5)
-#define VERT_BIT_TEX6        (1 << VERT_ATTRIB_TEX6)
-#define VERT_BIT_TEX7        (1 << VERT_ATTRIB_TEX7)
-#define VERT_BIT_GENERIC0    (1 << VERT_ATTRIB_GENERIC0)
+#define VERT_BIT_POS             BITFIELD64_BIT(VERT_ATTRIB_POS)
+#define VERT_BIT_WEIGHT          BITFIELD64_BIT(VERT_ATTRIB_WEIGHT)
+#define VERT_BIT_NORMAL          BITFIELD64_BIT(VERT_ATTRIB_NORMAL)
+#define VERT_BIT_COLOR0          BITFIELD64_BIT(VERT_ATTRIB_COLOR0)
+#define VERT_BIT_COLOR1          BITFIELD64_BIT(VERT_ATTRIB_COLOR1)
+#define VERT_BIT_FOG             BITFIELD64_BIT(VERT_ATTRIB_FOG)
+#define VERT_BIT_COLOR_INDEX     BITFIELD64_BIT(VERT_ATTRIB_COLOR_INDEX)
+#define VERT_BIT_POINT_SIZE      BITFIELD64_BIT(VERT_ATTRIB_POINT_SIZE)
+#define VERT_BIT_EDGEFLAG        BITFIELD64_BIT(VERT_ATTRIB_EDGEFLAG)
+#define VERT_BIT_TEX0            BITFIELD64_BIT(VERT_ATTRIB_TEX0)
+#define VERT_BIT_TEX1            BITFIELD64_BIT(VERT_ATTRIB_TEX1)
+#define VERT_BIT_TEX2            BITFIELD64_BIT(VERT_ATTRIB_TEX2)
+#define VERT_BIT_TEX3            BITFIELD64_BIT(VERT_ATTRIB_TEX3)
+#define VERT_BIT_TEX4            BITFIELD64_BIT(VERT_ATTRIB_TEX4)
+#define VERT_BIT_TEX5            BITFIELD64_BIT(VERT_ATTRIB_TEX5)
+#define VERT_BIT_TEX6            BITFIELD64_BIT(VERT_ATTRIB_TEX6)
+#define VERT_BIT_TEX7            BITFIELD64_BIT(VERT_ATTRIB_TEX7)
+#define VERT_BIT_GENERIC0        BITFIELD64_BIT(VERT_ATTRIB_GENERIC0)
 
-#define VERT_BIT(i)              (1 << (i))
-#define VERT_BIT_ALL             ((1 << VERT_ATTRIB_MAX) - 1)
+#define VERT_BIT(i)              BITFIELD64_BIT(i)
+#define VERT_BIT_ALL             (BITFIELD64_BIT(VERT_ATTRIB_MAX) - 1)
 
 #define VERT_BIT_FF(i)           VERT_BIT(i)
-#define VERT_BIT_FF_ALL          ((1 << VERT_ATTRIB_FF_MAX) - 1)
+#define VERT_BIT_FF_ALL          (BITFIELD64_BIT(VERT_ATTRIB_FF_MAX) - 1)
 #define VERT_BIT_TEX(i)          VERT_BIT(VERT_ATTRIB_TEX(i))
 #define VERT_BIT_TEX_ALL         \
-  (((1 << VERT_ATTRIB_TEX_MAX) - 1) << VERT_ATTRIB_TEX(0))
+  ((BITFIELD64_BIT(VERT_ATTRIB_TEX_MAX) - 1) << VERT_ATTRIB_TEX(0))
 #define VERT_BIT_GENERIC_NV(i)   VERT_BIT(VERT_ATTRIB_GENERIC_NV(i))
 #define VERT_BIT_GENERIC_NV_ALL  \
-  (((1 << VERT_ATTRIB_GENERIC_NV_MAX) - 1) << (VERT_ATTRIB_GENERIC_NV(0)))
+  ((BITFIELD64_BIT(VERT_ATTRIB_GENERIC_NV_MAX) - 1) << (VERT_ATTRIB_GENERIC_NV(0)))
 #define VERT_BIT_GENERIC(i)      VERT_BIT(VERT_ATTRIB_GENERIC(i))
 #define VERT_BIT_GENERIC_ALL     \
-  (((1 << VERT_ATTRIB_GENERIC_MAX) - 1) << (VERT_ATTRIB_GENERIC(0)))
+  ((BITFIELD64_BIT(VERT_ATTRIB_GENERIC_MAX) - 1) << (VERT_ATTRIB_GENERIC(0)))
 /*@}*/
 
 
@@ -1631,7 +1631,7 @@ struct gl_array_object
    struct gl_client_array VertexAttrib[MAX_VERTEX_GENERIC_ATTRIBS];
 
    /** Mask of VERT_BIT_* values indicating which arrays are enabled */
-   GLbitfield _Enabled;
+   GLbitfield64 _Enabled;
 
    /**
     * Min of all enabled arrays' _MaxElement.  When arrays reside inside VBOs
@@ -1665,7 +1665,7 @@ struct gl_array_attrib
    GLboolean PrimitiveRestart;
    GLuint RestartIndex;
 
-   GLbitfield NewState;		/**< mask of VERT_BIT_* values */
+   GLbitfield64 NewState;		/**< mask of VERT_BIT_* values */
    GLboolean RebindArrays; /**< whether the VBO module should rebind arrays */
 
    /* GL_ARB_vertex_buffer_object */

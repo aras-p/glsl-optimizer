@@ -124,7 +124,7 @@ static void
 update_array(struct gl_context *ctx,
              const char *func,
              struct gl_client_array *array,
-             GLbitfield dirtyBit, GLbitfield legalTypesMask,
+             GLbitfield64 dirtyBit, GLbitfield legalTypesMask,
              GLint sizeMin, GLint sizeMax,
              GLint size, GLenum type, GLsizei stride,
              GLboolean normalized, GLboolean integer,

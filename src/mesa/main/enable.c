@@ -54,7 +54,7 @@ static void
 client_state(struct gl_context *ctx, GLenum cap, GLboolean state)
 {
    struct gl_array_object *arrayObj = ctx->Array.ArrayObj;
-   GLuint flag;
+   GLbitfield64 flag;
    GLboolean *var;
 
    switch (cap) {
