@@ -1334,6 +1334,7 @@ struct gl_texture_object
    GLboolean _Complete;		/**< Is texture object complete? */
    GLboolean _RenderToTexture;  /**< Any rendering to this texture? */
    GLboolean Purgeable;         /**< Is the buffer purgeable under memory pressure? */
+   GLboolean Immutable;         /**< GL_ARB_texture_storage */
 
    /** Actual texture images, indexed by [cube face] and [mipmap level] */
    struct gl_texture_image *Image[MAX_FACES][MAX_TEXTURE_LEVELS];
@@ -2826,6 +2827,7 @@ struct gl_extensions
    GLboolean ARB_texture_non_power_of_two;
    GLboolean ARB_texture_rg;
    GLboolean ARB_texture_rgb10_a2ui;
+   GLboolean ARB_texture_storage;
    GLboolean ARB_timer_query;
    GLboolean ARB_transform_feedback2;
    GLboolean ARB_transpose_matrix;
