@@ -207,7 +207,7 @@ do_vs_prog(struct brw_context *brw,
 
    if (c.key.copy_edgeflag) {
       c.prog_data.outputs_written |= BITFIELD64_BIT(VERT_RESULT_EDGE);
-      c.prog_data.inputs_read |= 1<<VERT_ATTRIB_EDGEFLAG;
+      c.prog_data.inputs_read |= VERT_BIT_EDGEFLAG;
    }
 
    /* Put dummy slots into the VUE for the SF to put the replaced
@@ -318,7 +318,7 @@ static void brw_upload_vs_prog(struct brw_context *brw)
 
    /* BRW_NEW_VERTICES */
    for (i = 0; i < VERT_ATTRIB_MAX; i++) {
-      if (vp->program.Base.InputsRead & (1 << i) &&
+      if (vp->program.Base.InputsRead & BITFIELD64_BIT(i) &&
 	  brw->vb.inputs[i].glarray->Type == GL_FIXED) {
 	 key.gl_fixed_input_size[i] = brw->vb.inputs[i].glarray->Size;
       }

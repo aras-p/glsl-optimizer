@@ -535,20 +535,29 @@ static GLboolean r200_translate_vertex_program(struct gl_context *ctx, struct r2
       vp->inputmap_rev[3] = VERT_ATTRIB_FOG;
       array_count++;
    }
-   for (i = VERT_ATTRIB_TEX0; i <= VERT_ATTRIB_TEX5; i++) {
-      if (mesa_vp->Base.InputsRead & (1 << i)) {
-	 vp->inputs[i] = i - VERT_ATTRIB_TEX0 + 6;
-	 vp->inputmap_rev[8 + i - VERT_ATTRIB_TEX0] = i;
-	 free_inputs &= ~(1 << (i - VERT_ATTRIB_TEX0 + 6));
+   /* VERT_ATTRIB_TEX0-5 */
+   for (i = 0; i <= 5; i++) {
+      if (mesa_vp->Base.InputsRead & VERT_BIT_TEX(i)) {
+	 vp->inputs[VERT_ATTRIB_TEX(i)] = i + 6;
+	 vp->inputmap_rev[8 + i] = VERT_ATTRIB_TEX(i);
+	 free_inputs &= ~(1 << (i + 6));
 	 array_count++;
       }
    }
    /* using VERT_ATTRIB_TEX6/7 would be illegal */
+   for (; i < VERT_ATTRIB_TEX_MAX; i++) {
+      if (mesa_vp->Base.InputsRead & VERT_BIT_TEX(i)) {
+          if (R200_DEBUG & RADEON_FALLBACKS) {
+              fprintf(stderr, "texture attribute %d in vert prog\n", i);
+          }
+          return GL_FALSE;
+      }
+   }
    /* completely ignore aliasing? */
-   for (i = VERT_ATTRIB_GENERIC0; i < VERT_ATTRIB_MAX; i++) {
+   for (i = 0; i < VERT_ATTRIB_GENERIC_MAX; i++) {
       int j;
    /* completely ignore aliasing? */
-      if (mesa_vp->Base.InputsRead & (1 << i)) {
+      if (mesa_vp->Base.InputsRead & VERT_BIT_GENERIC(i)) {
 	 array_count++;
 	 if (array_count > 12) {
 	    if (R200_DEBUG & RADEON_FALLBACKS) {
@@ -560,10 +569,17 @@ static GLboolean r200_translate_vertex_program(struct gl_context *ctx, struct r2
 	    /* will always find one due to limited array_count */
 	    if (free_inputs & (1 << j)) {
 	       free_inputs &= ~(1 << j);
-	       vp->inputs[i] = j;
-	       if (j == 0) vp->inputmap_rev[j] = i; /* mapped to pos */
-	       else if (j < 12) vp->inputmap_rev[j + 2] = i; /* mapped to col/tex */
-	       else vp->inputmap_rev[j + 1] = i; /* mapped to pos1 */
+	       vp->inputs[VERT_ATTRIB_GENERIC(i)] = j;
+	       if (j == 0) {
+                  /* mapped to pos */
+                  vp->inputmap_rev[j] = VERT_ATTRIB_GENERIC(i);
+	       } else if (j < 12) {
+                  /* mapped to col/tex */
+                  vp->inputmap_rev[j + 2] = VERT_ATTRIB_GENERIC(i);
+	       } else {
+                  /* mapped to pos1 */
+                  vp->inputmap_rev[j + 1] = VERT_ATTRIB_GENERIC(i);
+               }
 	       break;
 	    }
 	 }

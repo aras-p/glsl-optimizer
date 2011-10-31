@@ -166,7 +166,7 @@ vbo_exec_bind_arrays( struct gl_context *ctx )
    const GLuint count = exec->vtx.vert_count;
    const GLuint *map;
    GLuint attr;
-   GLbitfield varying_inputs = 0x0;
+   GLbitfield64 varying_inputs = 0x0;
 
    /* Install the default (ie Current) attributes first, then overlay
     * all active ones.

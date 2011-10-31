@@ -68,7 +68,7 @@ struct state_key {
    unsigned texture_enabled_global:1;
    unsigned fragprog_inputs_read:12;
 
-   unsigned varying_vp_inputs;
+   GLbitfield64 varying_vp_inputs;
 
    struct {
       unsigned light_enabled:1;
@@ -130,16 +130,16 @@ static GLboolean check_active_shininess( struct gl_context *ctx,
                                          const struct state_key *key,
                                          GLuint side )
 {
-   GLuint bit = 1 << (MAT_ATTRIB_FRONT_SHININESS + side);
+   GLuint attr = MAT_ATTRIB_FRONT_SHININESS + side;
 
    if ((key->varying_vp_inputs & VERT_BIT_COLOR0) &&
-       (key->light_color_material_mask & bit))
+       (key->light_color_material_mask & (1 << attr)))
       return GL_TRUE;
 
-   if (key->varying_vp_inputs & (bit << 16))
+   if (key->varying_vp_inputs & VERT_ATTRIB_GENERIC(attr))
       return GL_TRUE;
 
-   if (ctx->Light.Material.Attrib[MAT_ATTRIB_FRONT_SHININESS + side][0] != 0.0F)
+   if (ctx->Light.Material.Attrib[attr][0] != 0.0F)
       return GL_TRUE;
 
    return GL_FALSE;
@@ -445,10 +445,10 @@ static struct ureg register_param5(struct tnl_program *p,
  */
 static struct ureg register_input( struct tnl_program *p, GLuint input )
 {
-   assert(input < 32);
+   assert(input < VERT_ATTRIB_MAX);
 
-   if (p->state->varying_vp_inputs & (1<<input)) {
-      p->program->Base.InputsRead |= (1<<input);
+   if (p->state->varying_vp_inputs & VERT_BIT(input)) {
+      p->program->Base.InputsRead |= VERT_BIT(input);
       return make_ureg(PROGRAM_INPUT, input);
    }
    else {
@@ -871,7 +871,7 @@ static void set_material_flags( struct tnl_program *p )
 	 p->color_materials = p->state->light_color_material_mask;
    }
 
-   p->materials |= (p->state->varying_vp_inputs >> 16);
+   p->materials |= (p->state->varying_vp_inputs >> VERT_ATTRIB_GENERIC0);
 }
 
 

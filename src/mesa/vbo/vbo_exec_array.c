@@ -439,7 +439,7 @@ recalculate_input_bindings(struct gl_context *ctx)
    struct vbo_context *vbo = vbo_context(ctx);
    struct vbo_exec_context *exec = &vbo->exec;
    const struct gl_client_array **inputs = &exec->array.inputs[0];
-   GLbitfield const_inputs = 0x0;
+   GLbitfield64 const_inputs = 0x0;
    GLuint i;
 
    switch (get_program_mode(ctx)) {
@@ -548,7 +548,7 @@ recalculate_input_bindings(struct gl_context *ctx)
       break;
    }
 
-   _mesa_set_varying_vp_inputs( ctx, ~const_inputs );
+   _mesa_set_varying_vp_inputs( ctx, VERT_BIT_ALL & (~const_inputs) );
 }
 
 

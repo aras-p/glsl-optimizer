@@ -379,7 +379,7 @@ struct brw_vs_prog_data {
    GLuint nr_pull_params; /**< number of dwords referenced by pull_param[] */
    GLuint total_scratch;
 
-   GLuint inputs_read;
+   GLbitfield64 inputs_read;
 
    /* Used for calculating urb partitions:
     */

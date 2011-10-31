@@ -355,7 +355,7 @@ static void brw_prepare_vertices(struct brw_context *brw)
    struct gl_context *ctx = &brw->intel.ctx;
    struct intel_context *intel = intel_context(ctx);
    /* CACHE_NEW_VS_PROG */
-   GLbitfield vs_inputs = brw->vs.prog_data->inputs_read;
+   GLbitfield64 vs_inputs = brw->vs.prog_data->inputs_read;
    const unsigned char *ptr = NULL;
    GLuint interleaved = 0, total_size = 0;
    unsigned int min_index = brw->vb.min_index;
@@ -373,10 +373,10 @@ static void brw_prepare_vertices(struct brw_context *brw)
    /* Accumulate the list of enabled arrays. */
    brw->vb.nr_enabled = 0;
    while (vs_inputs) {
-      GLuint i = ffs(vs_inputs) - 1;
+      GLuint i = ffsll(vs_inputs) - 1;
       struct brw_vertex_element *input = &brw->vb.inputs[i];
 
-      vs_inputs &= ~(1 << i);
+      vs_inputs &= ~BITFIELD64_BIT(i);
       if (input->glarray->Size && get_size(input->glarray->Type))
          brw->vb.enabled[brw->vb.nr_enabled++] = input;
    }

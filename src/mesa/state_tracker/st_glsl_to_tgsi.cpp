@@ -3731,7 +3731,7 @@ get_pixel_transfer_visitor(struct st_fragment_program *fp,
    inst->sampler = 0;
    inst->tex_target = TEXTURE_2D_INDEX;
 
-   prog->InputsRead |= (1 << FRAG_ATTRIB_TEX0);
+   prog->InputsRead |= FRAG_BIT_TEX0;
    prog->SamplersUsed |= (1 << 0); /* mark sampler 0 as used */
    v->samplers_used |= (1 << 0);
 
@@ -3802,7 +3802,7 @@ get_pixel_transfer_visitor(struct st_fragment_program *fp,
             src_regs[i].index = src0.index;
          }
          else if (src_regs[i].file == PROGRAM_INPUT)
-            prog->InputsRead |= (1 << src_regs[i].index);
+            prog->InputsRead |= BITFIELD64_BIT(src_regs[i].index);
       }
 
       v->emit(NULL, inst->op, inst->dst, src_regs[0], src_regs[1], src_regs[2]);
@@ -3855,7 +3855,7 @@ get_bitmap_visitor(struct st_fragment_program *fp,
    inst->sampler = samplerIndex;
    inst->tex_target = TEXTURE_2D_INDEX;
 
-   prog->InputsRead |= (1 << FRAG_ATTRIB_TEX0);
+   prog->InputsRead |= FRAG_BIT_TEX0;
    prog->SamplersUsed |= (1 << samplerIndex); /* mark sampler as used */
    v->samplers_used |= (1 << samplerIndex);
 
@@ -3877,7 +3877,7 @@ get_bitmap_visitor(struct st_fragment_program *fp,
       for (int i=0; i<3; i++) {
          src_regs[i] = inst->src[i];
          if (src_regs[i].file == PROGRAM_INPUT)
-            prog->InputsRead |= (1 << src_regs[i].index);
+            prog->InputsRead |= BITFIELD64_BIT(src_regs[i].index);
       }
 
       v->emit(NULL, inst->op, inst->dst, src_regs[0], src_regs[1], src_regs[2]);

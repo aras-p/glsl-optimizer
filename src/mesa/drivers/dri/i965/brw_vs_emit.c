@@ -311,7 +311,7 @@ static void brw_vs_alloc_regs( struct brw_vs_compile *c )
     */
    c->nr_inputs = 0;
    for (i = 0; i < VERT_ATTRIB_MAX; i++) {
-      if (c->prog_data.inputs_read & (1 << i)) {
+      if (c->prog_data.inputs_read & BITFIELD64_BIT(i)) {
 	 c->nr_inputs++;
 	 c->regs[PROGRAM_INPUT][i] = brw_vec8_grf(reg, 0);
 	 reg++;
@@ -1820,7 +1820,7 @@ brw_vs_rescale_gl_fixed(struct brw_vs_compile *c)
    int i;
 
    for (i = 0; i < VERT_ATTRIB_MAX; i++) {
-      if (!(c->prog_data.inputs_read & (1 << i)))
+      if (!(c->prog_data.inputs_read & BITFIELD64_BIT(i)))
 	 continue;
 
       if (c->key.gl_fixed_input_size[i] != 0) {

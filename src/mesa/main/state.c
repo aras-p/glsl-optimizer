@@ -737,7 +737,7 @@ _mesa_update_state( struct gl_context *ctx )
  */
 void
 _mesa_set_varying_vp_inputs( struct gl_context *ctx,
-                             GLbitfield varying_inputs )
+                             GLbitfield64 varying_inputs )
 {
    if (ctx->varying_vp_inputs != varying_inputs) {
       ctx->varying_vp_inputs = varying_inputs;

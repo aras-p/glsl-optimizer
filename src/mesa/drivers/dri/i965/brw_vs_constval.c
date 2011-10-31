@@ -202,7 +202,7 @@ static void calc_wm_input_sizes( struct brw_context *brw )
       t.twoside = 1;
 
    for (i = 0; i < VERT_ATTRIB_MAX; i++) 
-      if (vp->program.Base.InputsRead & (1<<i))
+      if (vp->program.Base.InputsRead & BITFIELD64_BIT(i))
 	 set_active_component(&t, PROGRAM_INPUT, i, 
 			      szflag[get_input_size(brw, i)]);
       

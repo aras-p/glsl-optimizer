@@ -631,7 +631,7 @@ _mesa_nop_fragment_program(struct gl_context *ctx, struct gl_fragment_program *p
 
    prog->Base.Instructions = inst;
    prog->Base.NumInstructions = 2;
-   prog->Base.InputsRead = 1 << inputAttr;
+   prog->Base.InputsRead = BITFIELD64_BIT(inputAttr);
    prog->Base.OutputsWritten = BITFIELD64_BIT(FRAG_RESULT_COLOR);
 }
 
@@ -675,7 +675,7 @@ _mesa_nop_vertex_program(struct gl_context *ctx, struct gl_vertex_program *prog)
 
    prog->Base.Instructions = inst;
    prog->Base.NumInstructions = 2;
-   prog->Base.InputsRead = 1 << inputAttr;
+   prog->Base.InputsRead = BITFIELD64_BIT(inputAttr);
    prog->Base.OutputsWritten = BITFIELD64_BIT(VERT_RESULT_COL0);
 
    /*

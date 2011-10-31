@@ -798,7 +798,7 @@ init_attrib_groups(struct gl_context *ctx)
    ctx->NewState = _NEW_ALL;
    ctx->ErrorValue = (GLenum) GL_NO_ERROR;
    ctx->ResetStatus = (GLenum) GL_NO_ERROR;
-   ctx->varying_vp_inputs = ~0;
+   ctx->varying_vp_inputs = VERT_BIT_ALL;
 
    return GL_TRUE;
 }
