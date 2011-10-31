@@ -87,6 +87,7 @@ API_XML = \
 	ARB_seamless_cube_map.xml \
 	ARB_sync.xml \
 	ARB_texture_buffer_object.xml \
+	ARB_texture_storage.xml \
 	ARB_vertex_array_object.xml \
 	AMD_draw_buffers_blend.xml \
 	ARB_vertex_type_2_10_10_10_rev.xml \
