@@ -146,11 +146,11 @@ static void vbo_bind_vertex_list(struct gl_context *ctx,
     */
    switch (get_program_mode(ctx)) {
    case VP_NONE:
-      for (attr = 0; attr < 16; attr++) {
+      for (attr = 0; attr < VERT_ATTRIB_FF_MAX; attr++) {
          save->inputs[attr] = &vbo->legacy_currval[attr];
       }
       for (attr = 0; attr < MAT_ATTRIB_MAX; attr++) {
-         save->inputs[attr + 16] = &vbo->mat_currval[attr];
+         save->inputs[VERT_ATTRIB_GENERIC(attr)] = &vbo->mat_currval[attr];
       }
       map = vbo->map_vp_none;
       break;
@@ -160,9 +160,11 @@ static void vbo_bind_vertex_list(struct gl_context *ctx,
        * occurred.  NV vertex programs cannot access material values,
        * nor attributes greater than VERT_ATTRIB_TEX7.  
        */
-      for (attr = 0; attr < 16; attr++) {
+      for (attr = 0; attr < VERT_ATTRIB_FF_MAX; attr++) {
          save->inputs[attr] = &vbo->legacy_currval[attr];
-         save->inputs[attr + 16] = &vbo->generic_currval[attr];
+      }
+      for (attr = 0; attr < VERT_ATTRIB_GENERIC_MAX; attr++) {
+         save->inputs[VERT_ATTRIB_GENERIC(attr)] = &vbo->generic_currval[attr];
       }
       map = vbo->map_vp_arb;
 
@@ -172,8 +174,8 @@ static void vbo_bind_vertex_list(struct gl_context *ctx,
        */
       if ((ctx->VertexProgram._Current->Base.InputsRead & VERT_BIT_POS) == 0 &&
           (ctx->VertexProgram._Current->Base.InputsRead & VERT_BIT_GENERIC0)) {
-         save->inputs[16] = save->inputs[0];
-         node_attrsz[16] = node_attrsz[0];
+         save->inputs[VERT_ATTRIB_GENERIC0] = save->inputs[0];
+         node_attrsz[VERT_ATTRIB_GENERIC0] = node_attrsz[0];
          node_attrsz[0] = 0;
       }
       break;
@@ -204,7 +206,7 @@ static void vbo_bind_vertex_list(struct gl_context *ctx,
 	 assert(arrays[attr].BufferObj->Name);
 
 	 buffer_offset += node->attrsz[src] * sizeof(GLfloat);
-         varying_inputs |= 1<<attr;
+         varying_inputs |= VERT_BIT(attr);
          ctx->NewState |= _NEW_ARRAY;
       }
    }

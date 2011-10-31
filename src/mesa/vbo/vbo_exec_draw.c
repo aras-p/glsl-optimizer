@@ -173,12 +173,12 @@ vbo_exec_bind_arrays( struct gl_context *ctx )
     */
    switch (get_program_mode(exec->ctx)) {
    case VP_NONE:
-      for (attr = 0; attr < 16; attr++) {
+      for (attr = 0; attr < VERT_ATTRIB_FF_MAX; attr++) {
          exec->vtx.inputs[attr] = &vbo->legacy_currval[attr];
       }
       for (attr = 0; attr < MAT_ATTRIB_MAX; attr++) {
-         ASSERT(attr + 16 < Elements(exec->vtx.inputs));
-         exec->vtx.inputs[attr + 16] = &vbo->mat_currval[attr];
+         ASSERT(VERT_ATTRIB_GENERIC(attr) < Elements(exec->vtx.inputs));
+         exec->vtx.inputs[VERT_ATTRIB_GENERIC(attr)] = &vbo->mat_currval[attr];
       }
       map = vbo->map_vp_none;
       break;
@@ -188,10 +188,12 @@ vbo_exec_bind_arrays( struct gl_context *ctx )
        * occurred.  NV vertex programs cannot access material values,
        * nor attributes greater than VERT_ATTRIB_TEX7.  
        */
-      for (attr = 0; attr < 16; attr++) {
+      for (attr = 0; attr < VERT_ATTRIB_FF_MAX; attr++) {
          exec->vtx.inputs[attr] = &vbo->legacy_currval[attr];
-         ASSERT(attr + 16 < Elements(exec->vtx.inputs));
-         exec->vtx.inputs[attr + 16] = &vbo->generic_currval[attr];
+      }
+      for (attr = 0; attr < VERT_ATTRIB_GENERIC_MAX; attr++) {
+         ASSERT(VERT_ATTRIB_GENERIC(attr) < Elements(exec->vtx.inputs));
+         exec->vtx.inputs[VERT_ATTRIB_GENERIC(attr)] = &vbo->generic_currval[attr];
       }
       map = vbo->map_vp_arb;
 
@@ -201,9 +203,9 @@ vbo_exec_bind_arrays( struct gl_context *ctx )
        */
       if ((ctx->VertexProgram._Current->Base.InputsRead & VERT_BIT_POS) == 0 &&
           (ctx->VertexProgram._Current->Base.InputsRead & VERT_BIT_GENERIC0)) {
-         exec->vtx.inputs[16] = exec->vtx.inputs[0];
-         exec->vtx.attrsz[16] = exec->vtx.attrsz[0];
-         exec->vtx.attrptr[16] = exec->vtx.attrptr[0];
+         exec->vtx.inputs[VERT_ATTRIB_GENERIC0] = exec->vtx.inputs[0];
+         exec->vtx.attrsz[VERT_ATTRIB_GENERIC0] = exec->vtx.attrsz[0];
+         exec->vtx.attrptr[VERT_ATTRIB_GENERIC0] = exec->vtx.attrptr[0];
          exec->vtx.attrsz[0] = 0;
       }
       break;
@@ -248,7 +250,7 @@ vbo_exec_bind_arrays( struct gl_context *ctx )
                                        exec->vtx.bufferobj);
 	 arrays[attr]._MaxElement = count; /* ??? */
 
-         varying_inputs |= 1 << attr;
+         varying_inputs |= VERT_BIT(attr);
          ctx->NewState |= _NEW_ARRAY;
       }
    }

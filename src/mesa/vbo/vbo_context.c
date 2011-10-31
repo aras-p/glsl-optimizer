@@ -33,12 +33,7 @@
 #include "vbo.h"
 #include "vbo_context.h"
 
-
-
-#define NR_LEGACY_ATTRIBS 16
-#define NR_GENERIC_ATTRIBS 16
 #define NR_MAT_ATTRIBS 12
-
 
 static GLuint check_size( const GLfloat *attr )
 {
@@ -55,12 +50,12 @@ static void init_legacy_currval(struct gl_context *ctx)
    struct gl_client_array *arrays = vbo->legacy_currval;
    GLuint i;
 
-   memset(arrays, 0, sizeof(*arrays) * NR_LEGACY_ATTRIBS);
+   memset(arrays, 0, sizeof(*arrays) * VERT_ATTRIB_FF_MAX);
 
    /* Set up a constant (StrideB == 0) array for each current
     * attribute:
     */
-   for (i = 0; i < NR_LEGACY_ATTRIBS; i++) {
+   for (i = 0; i < VERT_ATTRIB_FF_MAX; i++) {
       struct gl_client_array *cl = &arrays[i];
 
       /* Size will have to be determined at runtime:
@@ -85,9 +80,9 @@ static void init_generic_currval(struct gl_context *ctx)
    struct gl_client_array *arrays = vbo->generic_currval;
    GLuint i;
 
-   memset(arrays, 0, sizeof(*arrays) * NR_GENERIC_ATTRIBS);
+   memset(arrays, 0, sizeof(*arrays) * VERT_ATTRIB_GENERIC_MAX);
 
-   for (i = 0; i < NR_GENERIC_ATTRIBS; i++) {
+   for (i = 0; i < VERT_ATTRIB_GENERIC_MAX; i++) {
       struct gl_client_array *cl = &arrays[i];
 
       /* This will have to be determined at runtime:
@@ -182,14 +177,15 @@ GLboolean _vbo_CreateContext( struct gl_context *ctx )
       GLuint i;
 
       /* When no vertex program, pull in the material attributes in
-       * the 16..32 generic range.
+       * the generic range.
        */
-      for (i = 0; i < 16; i++) 
+      for (i = 0; i < VERT_ATTRIB_FF_MAX; i++) 
 	 vbo->map_vp_none[i] = i;
-      for (i = 0; i < 12; i++) 
-	 vbo->map_vp_none[16+i] = VBO_ATTRIB_MAT_FRONT_AMBIENT + i;
-      for (i = 0; i < 4; i++)
-	 vbo->map_vp_none[28+i] = i;	
+      for (i = 0; i < NR_MAT_ATTRIBS; i++) 
+	 vbo->map_vp_none[VERT_ATTRIB_GENERIC(i)]
+            = VBO_ATTRIB_MAT_FRONT_AMBIENT + i;
+      for (i = NR_MAT_ATTRIBS; i < VERT_ATTRIB_GENERIC_MAX; i++)
+	 vbo->map_vp_none[VERT_ATTRIB_GENERIC(i)] = i;
       
       for (i = 0; i < Elements(vbo->map_vp_arb); i++)
 	 vbo->map_vp_arb[i] = i;

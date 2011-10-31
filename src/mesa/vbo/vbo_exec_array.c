@@ -449,26 +449,26 @@ recalculate_input_bindings(struct gl_context *ctx)
        * generic slots.  This is the only situation where material values
        * are available as per-vertex attributes.
        */
-      for (i = 0; i <= VERT_ATTRIB_TEX7; i++) {
+      for (i = 0; i < VERT_ATTRIB_FF_MAX; i++) {
 	 if (exec->array.legacy_array[i]->Enabled)
 	    inputs[i] = exec->array.legacy_array[i];
 	 else {
 	    inputs[i] = &vbo->legacy_currval[i];
-            const_inputs |= 1 << i;
+            const_inputs |= VERT_BIT(i);
          }
       }
 
       for (i = 0; i < MAT_ATTRIB_MAX; i++) {
-	 inputs[VERT_ATTRIB_GENERIC0 + i] = &vbo->mat_currval[i];
-         const_inputs |= 1 << (VERT_ATTRIB_GENERIC0 + i);
+	 inputs[VERT_ATTRIB_GENERIC(i)] = &vbo->mat_currval[i];
+         const_inputs |= VERT_BIT_GENERIC(i);
       }
 
       /* Could use just about anything, just to fill in the empty
        * slots:
        */
-      for (i = MAT_ATTRIB_MAX; i < VERT_ATTRIB_MAX - VERT_ATTRIB_GENERIC0; i++) {
-	 inputs[VERT_ATTRIB_GENERIC0 + i] = &vbo->generic_currval[i];
-         const_inputs |= 1 << (VERT_ATTRIB_GENERIC0 + i);
+      for (i = MAT_ATTRIB_MAX; i < VERT_ATTRIB_GENERIC_MAX; i++) {
+	 inputs[VERT_ATTRIB_GENERIC(i)] = &vbo->generic_currval[i];
+         const_inputs |= VERT_BIT_GENERIC(i);
       }
 
       /* There is no need to make _NEW_ARRAY dirty here for the TnL program,
@@ -485,23 +485,24 @@ recalculate_input_bindings(struct gl_context *ctx)
        * conventional, legacy arrays.  No materials, and the generic
        * slots are vacant.
        */
-      for (i = 0; i <= VERT_ATTRIB_TEX7; i++) {
-	 if (exec->array.generic_array[i]->Enabled)
+      for (i = 0; i < VERT_ATTRIB_FF_MAX; i++) {
+	 if (i < VERT_ATTRIB_GENERIC_MAX
+             && exec->array.generic_array[i]->Enabled)
 	    inputs[i] = exec->array.generic_array[i];
 	 else if (exec->array.legacy_array[i]->Enabled)
 	    inputs[i] = exec->array.legacy_array[i];
 	 else {
 	    inputs[i] = &vbo->legacy_currval[i];
-            const_inputs |= 1 << i;
+            const_inputs |= VERT_BIT_FF(i);
          }
       }
 
       /* Could use just about anything, just to fill in the empty
        * slots:
        */
-      for (i = VERT_ATTRIB_GENERIC0; i < VERT_ATTRIB_MAX; i++) {
-	 inputs[i] = &vbo->generic_currval[i - VERT_ATTRIB_GENERIC0];
-         const_inputs |= 1 << i;
+      for (i = 0; i < VERT_ATTRIB_GENERIC_MAX; i++) {
+	 inputs[VERT_ATTRIB_GENERIC(i)] = &vbo->generic_currval[i];
+         const_inputs |= VERT_BIT_GENERIC(i);
       }
 
       ctx->NewState |= _NEW_ARRAY;
@@ -521,24 +522,24 @@ recalculate_input_bindings(struct gl_context *ctx)
 	 inputs[0] = exec->array.legacy_array[0];
       else {
 	 inputs[0] = &vbo->legacy_currval[0];
-         const_inputs |= 1 << 0;
+         const_inputs |= VERT_BIT_POS;
       }
 
-      for (i = 1; i <= VERT_ATTRIB_TEX7; i++) {
+      for (i = 1; i < VERT_ATTRIB_FF_MAX; i++) {
 	 if (exec->array.legacy_array[i]->Enabled)
 	    inputs[i] = exec->array.legacy_array[i];
 	 else {
 	    inputs[i] = &vbo->legacy_currval[i];
-            const_inputs |= 1 << i;
+            const_inputs |= VERT_BIT_FF(i);
          }
       }
 
-      for (i = 1; i < MAX_VERTEX_GENERIC_ATTRIBS; i++) {
+      for (i = 1; i < VERT_ATTRIB_GENERIC_MAX; i++) {
 	 if (exec->array.generic_array[i]->Enabled)
-	    inputs[VERT_ATTRIB_GENERIC0 + i] = exec->array.generic_array[i];
+	    inputs[VERT_ATTRIB_GENERIC(i)] = exec->array.generic_array[i];
 	 else {
-	    inputs[VERT_ATTRIB_GENERIC0 + i] = &vbo->generic_currval[i];
-            const_inputs |= 1 << (VERT_ATTRIB_GENERIC0 + i);
+	    inputs[VERT_ATTRIB_GENERIC(i)] = &vbo->generic_currval[i];
+            const_inputs |= VERT_BIT_GENERIC(i);
          }
       }
 
