@@ -258,7 +258,7 @@ vlVdpDecoderRenderMpeg12(struct pipe_video_decoder *decoder,
 }
 
 /**
- * Decode a mpeg 1/2 video.
+ * Decode a mpeg 4 video.
  */
 static VdpStatus
 vlVdpDecoderRenderMpeg4(struct pipe_video_decoder *decoder,
@@ -313,6 +313,65 @@ vlVdpDecoderRenderMpeg4(struct pipe_video_decoder *decoder,
    return VDP_STATUS_OK;
 }
 
+static VdpStatus
+vlVdpDecoderRenderVC1(struct pipe_video_decoder *decoder,
+                      VdpPictureInfoVC1 *picture_info)
+{
+   struct pipe_vc1_picture_desc picture;
+   struct pipe_video_buffer *ref_frames[2] = {};
+   unsigned i;
+
+   VDPAU_MSG(VDPAU_TRACE, "[VDPAU] Decoding VC-1\n");
+
+   /* if surfaces equals VDP_STATUS_INVALID_HANDLE, they are not used */
+   if (picture_info->forward_reference !=  VDP_INVALID_HANDLE) {
+      ref_frames[0] = ((vlVdpSurface *)vlGetDataHTAB(picture_info->forward_reference))->video_buffer;
+      if (!ref_frames[0])
+         return VDP_STATUS_INVALID_HANDLE;
+   }
+
+   if (picture_info->backward_reference !=  VDP_INVALID_HANDLE) {
+      ref_frames[1] = ((vlVdpSurface *)vlGetDataHTAB(picture_info->backward_reference))->video_buffer;
+      if (!ref_frames[1])
+         return VDP_STATUS_INVALID_HANDLE;
+   }
+   decoder->set_reference_frames(decoder, ref_frames, 2);
+
+   memset(&picture, 0, sizeof(picture));
+   picture.base.profile = decoder->profile;
+   picture.slice_count = picture_info->slice_count;
+   picture.picture_type = picture_info->picture_type;
+   picture.frame_coding_mode = picture_info->frame_coding_mode;
+   picture.postprocflag = picture_info->postprocflag;
+   picture.pulldown = picture_info->pulldown;
+   picture.interlace = picture_info->interlace;
+   picture.tfcntrflag = picture_info->tfcntrflag;
+   picture.finterpflag = picture_info->finterpflag;
+   picture.psf = picture_info->psf;
+   picture.dquant = picture_info->dquant;
+   picture.panscan_flag = picture_info->panscan_flag;
+   picture.refdist_flag = picture_info->refdist_flag;
+   picture.quantizer = picture_info->quantizer;
+   picture.extended_mv = picture_info->extended_mv;
+   picture.extended_dmv = picture_info->extended_dmv;
+   picture.overlap = picture_info->overlap;
+   picture.vstransform = picture_info->vstransform;
+   picture.loopfilter = picture_info->loopfilter;
+   picture.fastuvmc = picture_info->fastuvmc;
+   picture.range_mapy_flag = picture_info->range_mapy_flag;
+   picture.range_mapy = picture_info->range_mapy;
+   picture.range_mapuv_flag = picture_info->range_mapuv_flag;
+   picture.range_mapuv = picture_info->range_mapuv;
+   picture.multires = picture_info->multires;
+   picture.syncmarker = picture_info->syncmarker;
+   picture.rangered = picture_info->rangered;
+   picture.maxbframes = picture_info->maxbframes;
+   picture.deblockEnable = picture_info->deblockEnable;
+   picture.pquant = picture_info->pquant;
+   decoder->set_picture_parameters(decoder, &picture.base);
+   return VDP_STATUS_OK;
+}
+
 /**
  * Decode a compressed field/frame and render the result into a VdpVideoSurface.
  */
@@ -363,7 +422,9 @@ vlVdpDecoderRender(VdpDecoder decoder,
    case PIPE_VIDEO_CODEC_MPEG4:
       ret = vlVdpDecoderRenderMpeg4(dec, (VdpPictureInfoMPEG4Part2 *)picture_info);
       break;
-
+   case PIPE_VIDEO_CODEC_VC1:
+      ret = vlVdpDecoderRenderVC1(dec, (VdpPictureInfoVC1 *)picture_info);
+      break;
    default:
       return VDP_STATUS_INVALID_DECODER_PROFILE;
    }
