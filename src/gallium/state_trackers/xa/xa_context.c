@@ -79,6 +79,8 @@ xa_context_destroy(struct xa_context *r)
 	cso_destroy_context(r->cso);
 	r->cso = NULL;
     }
+
+    r->pipe->destroy(r->pipe);
 }
 
 int
