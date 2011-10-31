@@ -1433,6 +1433,23 @@ legal_texsubimage_target(struct gl_context *ctx, GLuint dims, GLenum target)
 
 
 /**
+ * Helper function to determine if a texture object is mutable (in terms
+ * of GL_ARB_texture_storage).
+ */
+static GLboolean
+mutable_tex_object(struct gl_context *ctx, GLenum target)
+{
+   if (ctx->Extensions.ARB_texture_storage) {
+      struct gl_texture_object *texObj =
+         _mesa_get_current_tex_object(ctx, target);
+      return !texObj->Immutable;
+   }
+   return GL_TRUE;
+}
+
+
+
+/**
  * Test the glTexImage[123]D() parameters for errors.
  * 
  * \param ctx GL context.
@@ -1640,6 +1657,12 @@ texture_error_check( struct gl_context *ctx,
                      "glTexImage%dD(integer/non-integer format mismatch)",
                      dimensions);
       }
+      return GL_TRUE;
+   }
+
+   if (!mutable_tex_object(ctx, target)) {
+      _mesa_error(ctx, GL_INVALID_OPERATION,
+                  "glTexImage%dD(immutable texture)", dimensions);
       return GL_TRUE;
    }
 
@@ -1904,6 +1927,12 @@ copytexture_error_check( struct gl_context *ctx, GLuint dimensions,
                      "glCopyTexImage%dD(border!=0)", dimensions);
          return GL_TRUE;
       }
+   }
+
+   if (!mutable_tex_object(ctx, target)) {
+      _mesa_error(ctx, GL_INVALID_OPERATION,
+                  "glCopyTexImage%dD(immutable texture)", dimensions);
+      return GL_TRUE;
    }
 
    /* if we get here, the parameters are OK */
@@ -3105,6 +3134,11 @@ compressed_texture_error_check(struct gl_context *ctx, GLint dimensions,
        */
       *reason = "imageSize inconsistant with width/height/format";
       return GL_INVALID_VALUE;
+   }
+
+   if (!mutable_tex_object(ctx, target)) {
+      *reason = "immutable texture";
+      return GL_INVALID_OPERATION;
    }
 
    return GL_NO_ERROR;
