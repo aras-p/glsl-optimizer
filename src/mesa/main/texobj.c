@@ -406,6 +406,10 @@ incomplete(struct gl_texture_object *t, const char *fmt, ...)
  * The gl_texture_object::Complete flag will be set to GL_TRUE or GL_FALSE
  * accordingly.
  *
+ * XXX TODO: For immutable textures (GL_ARB_texture_storage) we can skip
+ * many of the checks below since we know the mipmap images will have
+ * consistent sizes.
+ *
  * \param ctx GL context.
  * \param t texture object.
  *
