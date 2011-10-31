@@ -268,7 +268,7 @@ lp_build_sample_image_nearest(struct lp_build_sample_context *bld,
    const unsigned dims = bld->dims;
    LLVMBuilderRef builder = bld->gallivm->builder;
    struct lp_build_context i32, h16, u8n;
-   LLVMTypeRef i32_vec_type, h16_vec_type, u8n_vec_type;
+   LLVMTypeRef i32_vec_type, u8n_vec_type;
    LLVMValueRef i32_c8;
    LLVMValueRef width_vec, height_vec, depth_vec;
    LLVMValueRef s_ipart, t_ipart = NULL, r_ipart = NULL;
@@ -281,7 +281,6 @@ lp_build_sample_image_nearest(struct lp_build_sample_context *bld,
    lp_build_context_init(&u8n, bld->gallivm, lp_type_unorm(8));
 
    i32_vec_type = lp_build_vec_type(bld->gallivm, i32.type);
-   h16_vec_type = lp_build_vec_type(bld->gallivm, h16.type);
    u8n_vec_type = lp_build_vec_type(bld->gallivm, u8n.type);
 
    lp_build_extract_image_sizes(bld,

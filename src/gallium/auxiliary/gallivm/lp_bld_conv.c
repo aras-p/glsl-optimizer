@@ -346,10 +346,8 @@ lp_build_conv(struct gallivm_state *gallivm,
          LLVMValueRef src_int1;
          LLVMValueRef src_int2;
          LLVMValueRef src_int3;
-         LLVMTypeRef int16_vec_type;
          LLVMTypeRef int32_vec_type;
          LLVMTypeRef src_vec_type;
-         LLVMTypeRef dst_vec_type;
          LLVMValueRef const_255f;
          LLVMValueRef a, b, c, d;
 
@@ -362,8 +360,6 @@ lp_build_conv(struct gallivm_state *gallivm,
          int32_type.sign = 1;
 
          src_vec_type   = lp_build_vec_type(gallivm, src_type);
-         dst_vec_type   = lp_build_vec_type(gallivm, dst_type);
-         int16_vec_type = lp_build_vec_type(gallivm, int16_type);
          int32_vec_type = lp_build_vec_type(gallivm, int32_type);
 
          const_255f = lp_build_const_vec(gallivm, src_type, 255.0f);
