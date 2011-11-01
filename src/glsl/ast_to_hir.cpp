@@ -935,6 +935,28 @@ check_builtin_array_max_size(const char *name, unsigned size,
    return false;
 }
 
+/**
+ * Create the constant 1, of a which is appropriate for incrementing and
+ * decrementing values of the given GLSL type.  For example, if type is vec4,
+ * this creates a constant value of 1.0 having type float.
+ *
+ * If the given type is invalid for increment and decrement operators, return
+ * a floating point 1--the error will be detected later.
+ */
+static ir_rvalue *
+constant_one_for_inc_dec(void *ctx, const glsl_type *type)
+{
+   switch (type->base_type) {
+   case GLSL_TYPE_UINT:
+      return new(ctx) ir_constant((unsigned) 1);
+   case GLSL_TYPE_INT:
+      return new(ctx) ir_constant(1);
+   default:
+   case GLSL_TYPE_FLOAT:
+      return new(ctx) ir_constant(1.0f);
+   }
+}
+
 ir_rvalue *
 ast_expression::hir(exec_list *instructions,
 		    struct _mesa_glsl_parse_state *state)
@@ -1442,10 +1464,7 @@ ast_expression::hir(exec_list *instructions,
    case ast_pre_inc:
    case ast_pre_dec: {
       op[0] = this->subexpressions[0]->hir(instructions, state);
-      if (op[0]->type->base_type == GLSL_TYPE_FLOAT)
-	 op[1] = new(ctx) ir_constant(1.0f);
-      else
-	 op[1] = new(ctx) ir_constant(1);
+      op[1] = constant_one_for_inc_dec(ctx, op[0]->type);
 
       type = arithmetic_result_type(op[0], op[1], false, state, & loc);
 
@@ -1463,10 +1482,7 @@ ast_expression::hir(exec_list *instructions,
    case ast_post_inc:
    case ast_post_dec: {
       op[0] = this->subexpressions[0]->hir(instructions, state);
-      if (op[0]->type->base_type == GLSL_TYPE_FLOAT)
-	 op[1] = new(ctx) ir_constant(1.0f);
-      else
-	 op[1] = new(ctx) ir_constant(1);
+      op[1] = constant_one_for_inc_dec(ctx, op[0]->type);
 
       error_emitted = op[0]->type->is_error() || op[1]->type->is_error();
 
