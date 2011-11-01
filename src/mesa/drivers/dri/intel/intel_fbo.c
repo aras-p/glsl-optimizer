@@ -26,6 +26,7 @@
  **************************************************************************/
 
 
+#include "main/enums.h"
 #include "main/imports.h"
 #include "main/macros.h"
 #include "main/mfeatures.h"
@@ -154,10 +155,9 @@ intel_alloc_renderbuffer_storage(struct gl_context * ctx, struct gl_renderbuffer
       intel_region_release(&irb->hiz_region);
    }
 
-   /* allocate new memory region/renderbuffer */
-
-   /* alloc hardware renderbuffer */
-   DBG("Allocating %d x %d Intel RBO\n", width, height);
+   DBG("%s: %s: %s (%dx%d)\n", __FUNCTION__,
+       _mesa_lookup_enum_by_nr(internalFormat),
+       _mesa_get_format_name(rb->Format), width, height);
 
    tiling = I915_TILING_NONE;
    if (intel->use_texture_tiling) {
