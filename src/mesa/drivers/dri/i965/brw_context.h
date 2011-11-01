@@ -169,8 +169,6 @@ enum brw_state_id {
  */
 #define BRW_NEW_BATCH                  (1 << BRW_STATE_BATCH)
 /** \see brw.state.depth_region */
-#define BRW_NEW_NR_WM_SURFACES         (1 << BRW_STATE_NR_WM_SURFACES)
-#define BRW_NEW_NR_VS_SURFACES         (1 << BRW_STATE_NR_VS_SURFACES)
 #define BRW_NEW_INDEX_BUFFER           (1 << BRW_STATE_INDEX_BUFFER)
 #define BRW_NEW_VS_CONSTBUF            (1 << BRW_STATE_VS_CONSTBUF)
 #define BRW_NEW_WM_CONSTBUF            (1 << BRW_STATE_WM_CONSTBUF)
@@ -739,7 +737,6 @@ struct brw_context
       /** Binding table of pointers to surf_bo entries */
       uint32_t bind_bo_offset;
       uint32_t surf_offset[BRW_VS_MAX_SURF];
-      GLuint nr_surfaces;      
 
       uint32_t push_const_offset; /* Offset in the batchbuffer */
       int push_const_size; /* in 256-bit register increments */
@@ -810,7 +807,6 @@ struct brw_context
       uint32_t sdc_offset[BRW_MAX_TEX_UNIT];
 
       GLuint render_surf;
-      GLuint nr_surfaces;      
 
       drm_intel_bo *scratch_bo;
 

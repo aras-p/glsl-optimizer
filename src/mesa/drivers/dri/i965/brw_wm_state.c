@@ -113,12 +113,7 @@ brw_upload_wm_unit(struct brw_context *brw)
    wm->thread1.depth_coef_urb_read_offset = 1;
    wm->thread1.floating_point_mode = BRW_FLOATING_POINT_NON_IEEE_754;
 
-   if (intel->gen == 5)
-      wm->thread1.binding_table_entry_count = 0; /* hardware requirement */
-   else {
-      /* BRW_NEW_NR_SURFACES */
-      wm->thread1.binding_table_entry_count = brw->wm.nr_surfaces;
-   }
+   wm->thread1.binding_table_entry_count = 0;
 
    if (brw->wm.prog_data->total_scratch != 0) {
       wm->thread2.scratch_space_base_pointer =
@@ -263,8 +258,7 @@ const struct brw_tracked_state brw_wm_unit = {
       .brw = (BRW_NEW_BATCH |
 	      BRW_NEW_PROGRAM_CACHE |
 	      BRW_NEW_FRAGMENT_PROGRAM |
-	      BRW_NEW_CURBE_OFFSETS |
-	      BRW_NEW_NR_WM_SURFACES),
+	      BRW_NEW_CURBE_OFFSETS),
 
       .cache = (CACHE_NEW_WM_PROG |
 		CACHE_NEW_SAMPLER)

@@ -75,9 +75,7 @@ upload_vs_state(struct brw_context *brw)
    BEGIN_BATCH(6);
    OUT_BATCH(_3DSTATE_VS << 16 | (6 - 2));
    OUT_BATCH(brw->vs.prog_offset);
-   OUT_BATCH((0 << GEN6_VS_SAMPLER_COUNT_SHIFT) |
-             floating_point_mode |
-	     (brw->vs.nr_surfaces << GEN6_VS_BINDING_TABLE_ENTRY_COUNT_SHIFT));
+   OUT_BATCH((0 << GEN6_VS_SAMPLER_COUNT_SHIFT) | floating_point_mode);
 
    if (brw->vs.prog_data->total_scratch) {
       OUT_RELOC(brw->vs.scratch_bo,
@@ -101,7 +99,6 @@ const struct brw_tracked_state gen7_vs_state = {
    .dirty = {
       .mesa  = _NEW_TRANSFORM | _NEW_PROGRAM_CONSTANTS,
       .brw   = (BRW_NEW_CURBE_OFFSETS |
-                BRW_NEW_NR_VS_SURFACES |
 		BRW_NEW_URB_FENCE |
 		BRW_NEW_CONTEXT |
 		BRW_NEW_VERTEX_PROGRAM |

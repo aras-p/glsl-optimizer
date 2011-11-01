@@ -624,11 +624,6 @@ brw_upload_wm_surfaces(struct brw_context *brw)
       }
    }
 
-   if (brw->wm.nr_surfaces != nr_surfaces) {
-      brw->wm.nr_surfaces = nr_surfaces;
-      brw->state.dirty.brw |= BRW_NEW_NR_WM_SURFACES;
-   }
-
    brw->state.dirty.brw |= BRW_NEW_WM_SURFACES;
 }
 

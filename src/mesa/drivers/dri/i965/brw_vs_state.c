@@ -71,11 +71,7 @@ brw_upload_vs_unit(struct brw_context *brw)
    */
    vs->thread1.single_program_flow = (intel->gen == 5);
 
-   /* BRW_NEW_NR_VS_SURFACES */
-   if (intel->gen == 5)
-      vs->thread1.binding_table_entry_count = 0; /* hardware requirement */
-   else
-      vs->thread1.binding_table_entry_count = brw->vs.nr_surfaces;
+   vs->thread1.binding_table_entry_count = 0;
 
    if (brw->vs.prog_data->total_scratch != 0) {
       vs->thread2.scratch_space_base_pointer =
@@ -176,7 +172,6 @@ const struct brw_tracked_state brw_vs_unit = {
       .brw   = (BRW_NEW_BATCH |
 		BRW_NEW_PROGRAM_CACHE |
 		BRW_NEW_CURBE_OFFSETS |
-                BRW_NEW_NR_VS_SURFACES |
 		BRW_NEW_URB_FENCE |
                 BRW_NEW_VERTEX_PROGRAM),
       .cache = CACHE_NEW_VS_PROG

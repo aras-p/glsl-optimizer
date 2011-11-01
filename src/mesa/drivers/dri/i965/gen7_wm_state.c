@@ -146,9 +146,6 @@ upload_ps_state(struct brw_context *brw)
 
    dw2 |= (ALIGN(brw->wm.sampler_count, 4) / 4) << GEN7_PS_SAMPLER_COUNT_SHIFT;
 
-   /* BRW_NEW_NR_WM_SURFACES */
-   dw2 |= brw->wm.nr_surfaces << GEN7_PS_BINDING_TABLE_ENTRY_COUNT_SHIFT;
-
    /* Use ALT floating point mode for ARB fragment programs, because they
     * require 0^0 == 1.
     */
@@ -198,7 +195,6 @@ const struct brw_tracked_state gen7_ps_state = {
       .mesa  = _NEW_PROGRAM_CONSTANTS,
       .brw   = (BRW_NEW_CURBE_OFFSETS |
 		BRW_NEW_FRAGMENT_PROGRAM |
-                BRW_NEW_NR_WM_SURFACES |
 		BRW_NEW_PS_BINDING_TABLE |
 		BRW_NEW_URB_FENCE |
 		BRW_NEW_BATCH),
