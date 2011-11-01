@@ -518,6 +518,7 @@ replay_init( struct copy_context *copy )
       dst->Ptr = copy->dstbuf + offset;
       dst->Enabled = GL_TRUE;
       dst->Normalized = src->Normalized; 
+      dst->Integer = src->Integer;
       dst->BufferObj = ctx->Shared->NullBufferObj;
       dst->_ElementSize = src->_ElementSize;
       dst->_MaxElement = copy->dstbuf_size; /* may be less! */

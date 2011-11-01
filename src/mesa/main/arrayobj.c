@@ -208,6 +208,7 @@ init_array(struct gl_context *ctx,
    array->Ptr = NULL;
    array->Enabled = GL_FALSE;
    array->Normalized = GL_FALSE;
+   array->Integer = GL_FALSE;
    array->_ElementSize = size * _mesa_sizeof_type(type);
 #if FEATURE_ARB_vertex_buffer_object
    /* Vertex array buffers */

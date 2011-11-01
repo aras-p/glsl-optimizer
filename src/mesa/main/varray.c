@@ -212,6 +212,7 @@ update_array(struct gl_context *ctx,
    array->Stride = stride;
    array->StrideB = stride ? stride : elementSize;
    array->Normalized = normalized;
+   array->Integer = integer;
    array->Ptr = (const GLubyte *) ptr;
    array->_ElementSize = elementSize;
 
