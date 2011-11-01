@@ -287,14 +287,15 @@ llvmpipe_is_format_supported( struct pipe_screen *_screen,
       return FALSE;
    }
 
-   /* llvmpipe doesn't support pure integer yet */
-   if (util_format_is_pure_integer(format)) {
+   /*
+    * Everything can be supported by u_format.
+    */
+
+   if (format_desc->colorspace != UTIL_FORMAT_COLORSPACE_ZS &&
+       !format_desc->fetch_rgba_float) {
       return FALSE;
    }
 
-   /*
-    * Everything else should be supported by u_format.
-    */
    return TRUE;
 }
 
