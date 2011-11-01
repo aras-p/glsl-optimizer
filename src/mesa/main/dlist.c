@@ -7364,7 +7364,7 @@ save_BeginConditionalRender(GLuint queryId, GLenum mode)
 }
 
 static void GLAPIENTRY
-save_EndConditionalRender()
+save_EndConditionalRender(void)
 {
    GET_CURRENT_CONTEXT(ctx);
    ASSERT_OUTSIDE_SAVE_BEGIN_END_AND_FLUSH(ctx);
