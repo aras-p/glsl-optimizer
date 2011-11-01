@@ -429,8 +429,9 @@ static void upload_wm_constant_surface(struct brw_context *brw )
       return;
    }
 
-   brw_create_constant_surface(brw, brw->wm.const_bo, params->NumParameters,
-			       &brw->wm.surf_offset[surf]);
+   brw->intel.vtbl.create_constant_surface(brw, brw->wm.const_bo,
+					   params->NumParameters,
+					   &brw->wm.surf_offset[surf]);
    brw->state.dirty.brw |= BRW_NEW_WM_SURFACES;
 }
 
@@ -582,6 +583,7 @@ brw_update_renderbuffer_surface(struct brw_context *brw,
 static void
 brw_upload_wm_surfaces(struct brw_context *brw)
 {
+   struct intel_context *intel = &brw->intel;
    struct gl_context *ctx = &brw->intel.ctx;
    GLuint i;
    int nr_surfaces = 0;
@@ -591,16 +593,14 @@ brw_upload_wm_surfaces(struct brw_context *brw)
    if (ctx->DrawBuffer->_NumColorDrawBuffers >= 1) {
       for (i = 0; i < ctx->DrawBuffer->_NumColorDrawBuffers; i++) {
 	 if (intel_renderbuffer(ctx->DrawBuffer->_ColorDrawBuffers[i])) {
-	    brw_update_renderbuffer_surface(brw,
-					    ctx->DrawBuffer->_ColorDrawBuffers[i],
-					    i);
+	    intel->vtbl.update_renderbuffer_surface(brw, ctx->DrawBuffer->_ColorDrawBuffers[i], i);
 	 } else {
-	    brw_update_null_renderbuffer_surface(brw, i);
+	    intel->vtbl.update_null_renderbuffer_surface(brw, i);
 	 }
       }
       nr_surfaces = SURF_INDEX_DRAW(ctx->DrawBuffer->_NumColorDrawBuffers);
    } else {
-      brw_update_null_renderbuffer_surface(brw, 0);
+      intel->vtbl.update_null_renderbuffer_surface(brw, 0);
       nr_surfaces = SURF_INDEX_DRAW(0) + 1;
    }
 
@@ -616,7 +616,7 @@ brw_upload_wm_surfaces(struct brw_context *brw)
 
       /* _NEW_TEXTURE */
       if (texUnit->_ReallyEnabled) {
-	 brw_update_texture_surface(ctx, i);
+	 intel->vtbl.update_texture_surface(ctx, i);
 	 nr_surfaces = SURF_INDEX_TEXTURE(i) + 1;
       } else {
          brw->wm.surf_offset[surf] = 0;

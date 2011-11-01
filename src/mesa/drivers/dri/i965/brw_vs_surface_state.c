@@ -129,13 +129,9 @@ brw_update_vs_constant_surface( struct gl_context *ctx,
       return;
    }
 
-   if (intel->gen >= 7) {
-      gen7_create_constant_surface(brw, brw->vs.const_bo, params->NumParameters,
-				  &brw->vs.surf_offset[surf]);
-   } else {
-      brw_create_constant_surface(brw, brw->vs.const_bo, params->NumParameters,
-				  &brw->vs.surf_offset[surf]);
-   }
+   intel->vtbl.create_constant_surface(brw, brw->vs.const_bo,
+				       params->NumParameters,
+				       &brw->vs.surf_offset[surf]);
 }
 
 /**

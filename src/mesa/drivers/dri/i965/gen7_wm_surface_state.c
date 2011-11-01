@@ -166,48 +166,6 @@ gen7_create_constant_surface(struct brw_context *brw,
 			   I915_GEM_DOMAIN_SAMPLER, 0);
 }
 
-/**
- * Updates surface / buffer for fragment shader constant buffer, if
- * one is required.
- *
- * This consumes the state updates for the constant buffer, and produces
- * BRW_NEW_WM_SURFACES to get picked up by brw_prepare_wm_surfaces for
- * inclusion in the binding table.
- */
-static void upload_wm_constant_surface(struct brw_context *brw)
-{
-   GLuint surf = SURF_INDEX_FRAG_CONST_BUFFER;
-   struct brw_fragment_program *fp =
-      (struct brw_fragment_program *) brw->fragment_program;
-   const struct gl_program_parameter_list *params =
-      fp->program.Base.Parameters;
-
-   /* If there's no constant buffer, then no surface BO is needed to point at
-    * it.
-    */
-   if (brw->wm.const_bo == 0) {
-      if (brw->wm.surf_offset[surf]) {
-	 brw->state.dirty.brw |= BRW_NEW_WM_SURFACES;
-	 brw->wm.surf_offset[surf] = 0;
-      }
-      return;
-   }
-
-   gen7_create_constant_surface(brw, brw->wm.const_bo, params->NumParameters,
-			        &brw->wm.surf_offset[surf]);
-   brw->state.dirty.brw |= BRW_NEW_WM_SURFACES;
-}
-
-const struct brw_tracked_state gen7_wm_constant_surface = {
-   .dirty = {
-      .mesa = 0,
-      .brw = (BRW_NEW_WM_CONSTBUF |
-	      BRW_NEW_BATCH),
-      .cache = 0
-   },
-   .emit = upload_wm_constant_surface,
-};
-
 static void
 gen7_update_null_renderbuffer_surface(struct brw_context *brw, unsigned unit)
 {
@@ -301,73 +259,6 @@ gen7_update_renderbuffer_surface(struct brw_context *brw,
 			   I915_GEM_DOMAIN_RENDER,
 			   I915_GEM_DOMAIN_RENDER);
 }
-
-/**
- * Constructs the set of surface state objects pointed to by the
- * binding table.
- */
-static void
-gen7_upload_wm_surfaces(struct brw_context *brw)
-{
-   struct gl_context *ctx = &brw->intel.ctx;
-   GLuint i;
-   int nr_surfaces = 0;
-
-   /* _NEW_BUFFERS | _NEW_COLOR */
-   /* Update surfaces for drawing buffers */
-   if (ctx->DrawBuffer->_NumColorDrawBuffers >= 1) {
-      for (i = 0; i < ctx->DrawBuffer->_NumColorDrawBuffers; i++) {
-	 if (intel_renderbuffer(ctx->DrawBuffer->_ColorDrawBuffers[i])) {
-	    gen7_update_renderbuffer_surface(brw,
-	       ctx->DrawBuffer->_ColorDrawBuffers[i], i);
-	 } else {
-	    gen7_update_null_renderbuffer_surface(brw, i);
-	 }
-      }
-      nr_surfaces = SURF_INDEX_DRAW(ctx->DrawBuffer->_NumColorDrawBuffers);
-   } else {
-      gen7_update_null_renderbuffer_surface(brw, 0);
-      nr_surfaces = SURF_INDEX_DRAW(0) + 1;
-   }
-
-   /* BRW_NEW_WM_CONSTBUF */
-   if (brw->wm.const_bo) {
-      nr_surfaces = SURF_INDEX_FRAG_CONST_BUFFER + 1;
-   }
-
-   /* Update surfaces for textures */
-   for (i = 0; i < BRW_MAX_TEX_UNIT; i++) {
-      const struct gl_texture_unit *texUnit = &ctx->Texture.Unit[i];
-      const GLuint surf = SURF_INDEX_TEXTURE(i);
-
-      /* _NEW_TEXTURE */
-      if (texUnit->_ReallyEnabled) {
-	 gen7_update_texture_surface(ctx, i);
-	 nr_surfaces = SURF_INDEX_TEXTURE(i) + 1;
-      } else {
-         brw->wm.surf_offset[surf] = 0;
-      }
-   }
-
-   if (brw->wm.nr_surfaces != nr_surfaces) {
-      brw->wm.nr_surfaces = nr_surfaces;
-      brw->state.dirty.brw |= BRW_NEW_NR_WM_SURFACES;
-   }
-
-   brw->state.dirty.brw |= BRW_NEW_WM_SURFACES;
-}
-
-const struct brw_tracked_state gen7_wm_surfaces = {
-   .dirty = {
-      .mesa = (_NEW_COLOR |
-               _NEW_TEXTURE |
-               _NEW_BUFFERS),
-      .brw = (BRW_NEW_BATCH |
-	      BRW_NEW_WM_CONSTBUF),
-      .cache = 0
-   },
-   .emit = gen7_upload_wm_surfaces,
-};
 
 void
 gen7_init_vtable_surface_functions(struct brw_context *brw)
