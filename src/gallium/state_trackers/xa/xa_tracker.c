@@ -220,6 +220,12 @@ xa_flags_compat(unsigned int old_flags, unsigned int new_flags)
 	return ((new_flags & XA_FLAG_RENDER_TARGET) == 0);
 
     /*
+     * Don't recreate if we're dropping the scanout flag.
+     */
+    if (flag_diff & XA_FLAG_SCANOUT)
+	return ((new_flags & XA_FLAG_SCANOUT) == 0);
+
+    /*
      * Always recreate for unknown / unimplemented flags.
      */
     return 0;
@@ -263,6 +269,8 @@ xa_format_check_supported(struct xa_tracker *xa,
 	bind |= PIPE_BIND_SHARED;
     if (flags & XA_FLAG_RENDER_TARGET)
 	bind |= PIPE_BIND_RENDER_TARGET;
+    if (flags & XA_FLAG_SCANOUT)
+	bind |= PIPE_BIND_SCANOUT;
 
     if (!xa->screen->is_format_supported(xa->screen, fdesc.format,
 					 PIPE_TEXTURE_2D, 0, bind))
@@ -309,6 +317,8 @@ xa_surface_create(struct xa_tracker *xa,
 	template->bind |= PIPE_BIND_SHARED;
     if (flags & XA_FLAG_RENDER_TARGET)
 	template->bind |= PIPE_BIND_RENDER_TARGET;
+    if (flags & XA_FLAG_SCANOUT)
+	template->bind |= PIPE_BIND_SCANOUT;
 
     srf->tex = xa->screen->resource_create(xa->screen, template);
     if (!srf->tex)
@@ -359,6 +369,8 @@ xa_surface_redefine(struct xa_surface *srf,
 	template->bind |= PIPE_BIND_SHARED;
     if (new_flags & XA_FLAG_RENDER_TARGET)
 	template->bind |= PIPE_BIND_RENDER_TARGET;
+    if (new_flags & XA_FLAG_SCANOUT)
+	template->bind |= PIPE_BIND_SCANOUT;
 
     if (copy_contents) {
 	if (!xa_format_type_is_color(fdesc.xa_format) ||
