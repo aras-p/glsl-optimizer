@@ -165,6 +165,7 @@ void *brw_state_batch(struct brw_context *brw,
 		      uint32_t *out_offset);
 
 /* brw_wm_surface_state.c */
+void gen4_init_vtable_surface_functions(struct brw_context *brw);
 void brw_create_constant_surface(struct brw_context *brw,
 				 drm_intel_bo *bo,
 				 int width,
@@ -180,6 +181,7 @@ GLuint translate_tex_format(gl_format mesa_format,
 			    GLenum srgb_decode);
 
 /* gen7_wm_surface_state.c */
+void gen7_init_vtable_surface_functions(struct brw_context *brw);
 void gen7_create_constant_surface(struct brw_context *brw,
 				  drm_intel_bo *bo,
 				  int width,

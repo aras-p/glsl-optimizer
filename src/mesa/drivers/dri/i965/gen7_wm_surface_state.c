@@ -368,3 +368,15 @@ const struct brw_tracked_state gen7_wm_surfaces = {
    },
    .emit = gen7_upload_wm_surfaces,
 };
+
+void
+gen7_init_vtable_surface_functions(struct brw_context *brw)
+{
+   struct intel_context *intel = &brw->intel;
+
+   intel->vtbl.update_texture_surface = gen7_update_texture_surface;
+   intel->vtbl.update_renderbuffer_surface = gen7_update_renderbuffer_surface;
+   intel->vtbl.update_null_renderbuffer_surface =
+      gen7_update_null_renderbuffer_surface;
+   intel->vtbl.create_constant_surface = gen7_create_constant_surface;
+}

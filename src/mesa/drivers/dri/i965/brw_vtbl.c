@@ -268,4 +268,10 @@ void brwInitVtbl( struct brw_context *brw )
       brw->intel.vtbl.hiz_resolve_hizbuffer = brw_hiz_resolve_noop;
       brw->intel.vtbl.hiz_resolve_depthbuffer = brw_hiz_resolve_noop;
    }
+
+   if (brw->intel.gen >= 7) {
+      gen7_init_vtable_surface_functions(brw);
+   } else if (brw->intel.gen >= 4) {
+      gen4_init_vtable_surface_functions(brw);
+   }
 }

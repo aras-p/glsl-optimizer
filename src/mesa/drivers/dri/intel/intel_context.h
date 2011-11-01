@@ -114,6 +114,8 @@ struct intel_sync_object {
    drm_intel_bo *bo;
 };
 
+struct brw_context;
+
 /**
  * intel_context is derived from Mesa's context class: struct gl_context.
  */
@@ -170,6 +172,21 @@ struct intel_context
 				    struct intel_region *depth_region);
       /** \} */
 
+      /**
+       * Surface state operations (i965+ only)
+       * \{
+       */
+      void (*update_texture_surface)(struct gl_context *ctx, unsigned unit);
+      void (*update_renderbuffer_surface)(struct brw_context *brw,
+					  struct gl_renderbuffer *rb,
+					  unsigned unit);
+      void (*update_null_renderbuffer_surface)(struct brw_context *brw,
+					       unsigned unit);
+      void (*create_constant_surface)(struct brw_context *brw,
+				      drm_intel_bo *bo,
+				      int width,
+				      uint32_t *out_offset);
+      /** \} */
    } vtbl;
 
    GLbitfield Fallback;  /**< mask of INTEL_FALLBACK_x bits */
