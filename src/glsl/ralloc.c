@@ -33,6 +33,12 @@
 #include <limits.h>
 #endif
 
+/* Some versions of MinGW are missing _vscprintf's declaration, although they
+ * still provide the symbol in the import library. */
+#ifdef __MINGW32__
+_CRTIMP int _vscprintf(const char *format, va_list argptr);
+#endif
+
 #include "ralloc.h"
 
 #ifdef __GNUC__
@@ -397,7 +403,7 @@ printf_length(const char *fmt, va_list untouched_args)
    va_list args;
    va_copy(args, untouched_args);
 
-#ifdef _MSC_VER
+#ifdef _WIN32
    /* We need to use _vcsprintf to calculate the size as vsnprintf returns -1
     * if the number of characters to write is greater than count.
     */
