@@ -209,12 +209,12 @@ public:
    virtual ir_visitor_status visit_leave(ir_assignment *);
 
    void handle_rvalue(ir_rvalue **rvalue);
-   struct variable_entry *get_splitting_entry(ir_variable *var);
+   variable_entry *get_splitting_entry(ir_variable *var);
 
    exec_list *variable_list;
 };
 
-struct variable_entry *
+variable_entry *
 ir_vector_splitting_visitor::get_splitting_entry(ir_variable *var)
 {
    assert(var);
