@@ -67,6 +67,7 @@ vec4_visitor::setup_attributes(int payload_reg)
 
 	 struct brw_reg reg = brw_vec8_grf(grf, 0);
 	 reg.dw1.bits.swizzle = inst->src[i].swizzle;
+         reg.type = inst->src[i].type;
 	 if (inst->src[i].abs)
 	    reg = brw_abs(reg);
 	 if (inst->src[i].negate)

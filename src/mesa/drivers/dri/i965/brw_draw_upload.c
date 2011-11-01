@@ -65,6 +65,14 @@ static GLuint half_float_types[5] = {
    BRW_SURFACEFORMAT_R16G16B16A16_FLOAT
 };
 
+static GLuint uint_types_direct[5] = {
+   0,
+   BRW_SURFACEFORMAT_R32_UINT,
+   BRW_SURFACEFORMAT_R32G32_UINT,
+   BRW_SURFACEFORMAT_R32G32B32_UINT,
+   BRW_SURFACEFORMAT_R32G32B32A32_UINT
+};
+
 static GLuint uint_types_norm[5] = {
    0,
    BRW_SURFACEFORMAT_R32_UNORM,
@@ -79,6 +87,14 @@ static GLuint uint_types_scale[5] = {
    BRW_SURFACEFORMAT_R32G32_USCALED,
    BRW_SURFACEFORMAT_R32G32B32_USCALED,
    BRW_SURFACEFORMAT_R32G32B32A32_USCALED
+};
+
+static GLuint int_types_direct[5] = {
+   0,
+   BRW_SURFACEFORMAT_R32_SINT,
+   BRW_SURFACEFORMAT_R32G32_SINT,
+   BRW_SURFACEFORMAT_R32G32B32_SINT,
+   BRW_SURFACEFORMAT_R32G32B32A32_SINT
 };
 
 static GLuint int_types_norm[5] = {
@@ -97,6 +113,14 @@ static GLuint int_types_scale[5] = {
    BRW_SURFACEFORMAT_R32G32B32A32_SSCALED
 };
 
+static GLuint ushort_types_direct[5] = {
+   0,
+   BRW_SURFACEFORMAT_R16_UINT,
+   BRW_SURFACEFORMAT_R16G16_UINT,
+   BRW_SURFACEFORMAT_R16G16B16A16_UINT,
+   BRW_SURFACEFORMAT_R16G16B16A16_UINT
+};
+
 static GLuint ushort_types_norm[5] = {
    0,
    BRW_SURFACEFORMAT_R16_UNORM,
@@ -111,6 +135,14 @@ static GLuint ushort_types_scale[5] = {
    BRW_SURFACEFORMAT_R16G16_USCALED,
    BRW_SURFACEFORMAT_R16G16B16_USCALED,
    BRW_SURFACEFORMAT_R16G16B16A16_USCALED
+};
+
+static GLuint short_types_direct[5] = {
+   0,
+   BRW_SURFACEFORMAT_R16_SINT,
+   BRW_SURFACEFORMAT_R16G16_SINT,
+   BRW_SURFACEFORMAT_R16G16B16A16_SINT,
+   BRW_SURFACEFORMAT_R16G16B16A16_SINT
 };
 
 static GLuint short_types_norm[5] = {
@@ -129,6 +161,14 @@ static GLuint short_types_scale[5] = {
    BRW_SURFACEFORMAT_R16G16B16A16_SSCALED
 };
 
+static GLuint ubyte_types_direct[5] = {
+   0,
+   BRW_SURFACEFORMAT_R8_UINT,
+   BRW_SURFACEFORMAT_R8G8_UINT,
+   BRW_SURFACEFORMAT_R8G8B8A8_UINT,
+   BRW_SURFACEFORMAT_R8G8B8A8_UINT
+};
+
 static GLuint ubyte_types_norm[5] = {
    0,
    BRW_SURFACEFORMAT_R8_UNORM,
@@ -143,6 +183,14 @@ static GLuint ubyte_types_scale[5] = {
    BRW_SURFACEFORMAT_R8G8_USCALED,
    BRW_SURFACEFORMAT_R8G8B8_USCALED,
    BRW_SURFACEFORMAT_R8G8B8A8_USCALED
+};
+
+static GLuint byte_types_direct[5] = {
+   0,
+   BRW_SURFACEFORMAT_R8_SINT,
+   BRW_SURFACEFORMAT_R8G8_SINT,
+   BRW_SURFACEFORMAT_R8G8B8A8_SINT,
+   BRW_SURFACEFORMAT_R8G8B8A8_SINT
 };
 
 static GLuint byte_types_norm[5] = {
@@ -168,13 +216,24 @@ static GLuint byte_types_scale[5] = {
  * Format will be GL_RGBA or possibly GL_BGRA for GLubyte[4] color arrays.
  */
 static GLuint get_surface_type( GLenum type, GLuint size,
-                                GLenum format, bool normalized )
+                                GLenum format, bool normalized, bool integer )
 {
    if (unlikely(INTEL_DEBUG & DEBUG_VERTS))
       printf("type %s size %d normalized %d\n", 
 		   _mesa_lookup_enum_by_nr(type), size, normalized);
 
-   if (normalized) {
+   if (integer) {
+      assert(format == GL_RGBA); /* sanity check */
+      switch (type) {
+      case GL_INT: return int_types_direct[size];
+      case GL_SHORT: return short_types_direct[size];
+      case GL_BYTE: return byte_types_direct[size];
+      case GL_UNSIGNED_INT: return uint_types_direct[size];
+      case GL_UNSIGNED_SHORT: return ushort_types_direct[size];
+      case GL_UNSIGNED_BYTE: return ubyte_types_direct[size];
+      default: assert(0); return 0;
+      }
+   } else if (normalized) {
       switch (type) {
       case GL_DOUBLE: return double_types[size];
       case GL_FLOAT: return float_types[size];
@@ -620,7 +679,8 @@ static void brw_emit_vertices(struct brw_context *brw)
       uint32_t format = get_surface_type(input->glarray->Type,
 					 input->glarray->Size,
 					 input->glarray->Format,
-					 input->glarray->Normalized);
+					 input->glarray->Normalized,
+                                         input->glarray->Integer);
       uint32_t comp0 = BRW_VE1_COMPONENT_STORE_SRC;
       uint32_t comp1 = BRW_VE1_COMPONENT_STORE_SRC;
       uint32_t comp2 = BRW_VE1_COMPONENT_STORE_SRC;
@@ -630,7 +690,8 @@ static void brw_emit_vertices(struct brw_context *brw)
       case 0: comp0 = BRW_VE1_COMPONENT_STORE_0;
       case 1: comp1 = BRW_VE1_COMPONENT_STORE_0;
       case 2: comp2 = BRW_VE1_COMPONENT_STORE_0;
-      case 3: comp3 = BRW_VE1_COMPONENT_STORE_1_FLT;
+      case 3: comp3 = input->glarray->Integer ? BRW_VE1_COMPONENT_STORE_1_INT
+                                              : BRW_VE1_COMPONENT_STORE_1_FLT;
 	 break;
       }
 

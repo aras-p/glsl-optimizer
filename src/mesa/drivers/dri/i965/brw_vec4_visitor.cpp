@@ -842,6 +842,7 @@ vec4_visitor::visit(ir_variable *ir)
 	    continue;
 
 	 dst_reg dst = *reg;
+         dst.type = brw_type_for_base_type(ir->type);
 	 dst.writemask = (1 << c->key.gl_fixed_input_size[i]) - 1;
 	 emit(MUL(dst, src_reg(dst), src_reg(1.0f / 65536.0f)));
       }
