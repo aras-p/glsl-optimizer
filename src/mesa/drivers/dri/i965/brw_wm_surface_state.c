@@ -362,18 +362,21 @@ brw_upload_wm_pull_constants(struct brw_context *brw)
    /* BRW_NEW_FRAGMENT_PROGRAM */
    struct brw_fragment_program *fp =
       (struct brw_fragment_program *) brw->fragment_program;
+   struct gl_program_parameter_list *params = fp->program.Base.Parameters;
    const int size = brw->wm.prog_data->nr_pull_params * sizeof(float);
+   const int surf_index = SURF_INDEX_FRAG_CONST_BUFFER;
    float *constants;
    unsigned int i;
 
-   _mesa_load_state_parameters(ctx, fp->program.Base.Parameters);
+   _mesa_load_state_parameters(ctx, params);
 
    /* CACHE_NEW_WM_PROG */
    if (brw->wm.prog_data->nr_pull_params == 0) {
       if (brw->wm.const_bo) {
 	 drm_intel_bo_unreference(brw->wm.const_bo);
 	 brw->wm.const_bo = NULL;
-	 brw->state.dirty.brw |= BRW_NEW_WM_CONSTBUF;
+	 brw->wm.surf_offset[surf_index] = 0;
+	 brw->state.dirty.brw |= BRW_NEW_WM_SURFACES;
       }
       return;
    }
@@ -391,59 +394,20 @@ brw_upload_wm_pull_constants(struct brw_context *brw)
    }
    drm_intel_gem_bo_unmap_gtt(brw->wm.const_bo);
 
-   brw->state.dirty.brw |= BRW_NEW_WM_CONSTBUF;
-}
+   intel->vtbl.create_constant_surface(brw, brw->wm.const_bo,
+				       params->NumParameters,
+				       &brw->wm.surf_offset[surf_index]);
 
-const struct brw_tracked_state brw_wm_constants = {
-   .dirty = {
-      .mesa = (_NEW_PROGRAM_CONSTANTS),
-      .brw = (BRW_NEW_FRAGMENT_PROGRAM),
-      .cache = CACHE_NEW_WM_PROG,
-   },
-   .emit = brw_upload_wm_pull_constants,
-};
-
-/**
- * Updates surface / buffer for fragment shader constant buffer, if
- * one is required.
- *
- * This consumes the state updates for the constant buffer, and produces
- * BRW_NEW_WM_SURFACES to get picked up by brw_prepare_wm_surfaces for
- * inclusion in the binding table.
- */
-static void upload_wm_constant_surface(struct brw_context *brw )
-{
-   GLuint surf = SURF_INDEX_FRAG_CONST_BUFFER;
-   struct brw_fragment_program *fp =
-      (struct brw_fragment_program *) brw->fragment_program;
-   const struct gl_program_parameter_list *params =
-      fp->program.Base.Parameters;
-
-   /* If there's no constant buffer, then no surface BO is needed to point at
-    * it.
-    */
-   if (brw->wm.const_bo == 0) {
-      if (brw->wm.surf_offset[surf]) {
-	 brw->state.dirty.brw |= BRW_NEW_WM_SURFACES;
-	 brw->wm.surf_offset[surf] = 0;
-      }
-      return;
-   }
-
-   brw->intel.vtbl.create_constant_surface(brw, brw->wm.const_bo,
-					   params->NumParameters,
-					   &brw->wm.surf_offset[surf]);
    brw->state.dirty.brw |= BRW_NEW_WM_SURFACES;
 }
 
-const struct brw_tracked_state brw_wm_constant_surface = {
+const struct brw_tracked_state brw_wm_pull_constants = {
    .dirty = {
-      .mesa = 0,
-      .brw = (BRW_NEW_WM_CONSTBUF |
-	      BRW_NEW_BATCH),
-      .cache = 0
+      .mesa = (_NEW_PROGRAM_CONSTANTS),
+      .brw = (BRW_NEW_BATCH | BRW_NEW_FRAGMENT_PROGRAM),
+      .cache = CACHE_NEW_WM_PROG,
    },
-   .emit = upload_wm_constant_surface,
+   .emit = brw_upload_wm_pull_constants,
 };
 
 static void
