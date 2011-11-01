@@ -587,7 +587,6 @@ brw_upload_wm_surfaces(struct brw_context *brw)
    struct intel_context *intel = &brw->intel;
    struct gl_context *ctx = &brw->intel.ctx;
    GLuint i;
-   int nr_surfaces = 0;
 
    /* _NEW_BUFFERS | _NEW_COLOR */
    /* Update surfaces for drawing buffers */
@@ -599,15 +598,8 @@ brw_upload_wm_surfaces(struct brw_context *brw)
 	    intel->vtbl.update_null_renderbuffer_surface(brw, i);
 	 }
       }
-      nr_surfaces = SURF_INDEX_DRAW(ctx->DrawBuffer->_NumColorDrawBuffers);
    } else {
       intel->vtbl.update_null_renderbuffer_surface(brw, 0);
-      nr_surfaces = SURF_INDEX_DRAW(0) + 1;
-   }
-
-   /* BRW_NEW_WM_CONSTBUF */
-   if (brw->wm.const_bo) {
-      nr_surfaces = SURF_INDEX_FRAG_CONST_BUFFER + 1;
    }
 
    /* Update surfaces for textures */
@@ -618,7 +610,6 @@ brw_upload_wm_surfaces(struct brw_context *brw)
       /* _NEW_TEXTURE */
       if (texUnit->_ReallyEnabled) {
 	 intel->vtbl.update_texture_surface(ctx, i);
-	 nr_surfaces = SURF_INDEX_TEXTURE(i) + 1;
       } else {
          brw->wm.surf_offset[surf] = 0;
       }
@@ -632,8 +623,7 @@ const struct brw_tracked_state brw_wm_surfaces = {
       .mesa = (_NEW_COLOR |
                _NEW_TEXTURE |
                _NEW_BUFFERS),
-      .brw = (BRW_NEW_BATCH |
-	      BRW_NEW_WM_CONSTBUF),
+      .brw = BRW_NEW_BATCH,
       .cache = 0
    },
    .emit = brw_upload_wm_surfaces,
