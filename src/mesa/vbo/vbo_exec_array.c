@@ -332,6 +332,7 @@ print_draw_arrays(struct gl_context *ctx,
 {
    struct vbo_context *vbo = vbo_context(ctx);
    struct vbo_exec_context *exec = &vbo->exec;
+   struct gl_array_object *arrayObj = ctx->Array.ArrayObj;
    int i;
 
    printf("vbo_exec_DrawArrays(mode 0x%x, start %d, count %d):\n",
@@ -347,7 +348,7 @@ print_draw_arrays(struct gl_context *ctx,
 	     exec->array.inputs[i]->Size,
 	     stride,
 	     /*exec->array.inputs[i]->Enabled,*/
-	     exec->array.legacy_array[i]->Enabled,
+	     arrayObj->VertexAttrib[VERT_ATTRIB_FF(i)].Enabled,
 	     exec->array.inputs[i]->Ptr,
 	     bufName);
 
@@ -372,30 +373,6 @@ print_draw_arrays(struct gl_context *ctx,
 
 
 /**
- * Bind the VBO executor to the current vertex array object prior
- * to drawing.
- *
- * Just translate the arrayobj into a sane layout.
- */
-static void
-bind_array_obj(struct gl_context *ctx)
-{
-   struct vbo_context *vbo = vbo_context(ctx);
-   struct vbo_exec_context *exec = &vbo->exec;
-   struct gl_array_object *arrayObj = ctx->Array.ArrayObj;
-   GLuint i;
-
-   for (i = 0; i < VERT_ATTRIB_FF_MAX; i++)
-      exec->array.legacy_array[i] = &arrayObj->VertexAttrib[VERT_ATTRIB_FF(i)];
-
-   for (i = 0; i < VERT_ATTRIB_GENERIC_MAX; i++) {
-      assert(i < Elements(exec->array.generic_array));
-      exec->array.generic_array[i] = &arrayObj->VertexAttrib[VERT_ATTRIB_GENERIC(i)];
-   }
-}
-
-
-/**
  * Set the vbo->exec->inputs[] pointers to point to the enabled
  * vertex arrays.  This depends on the current vertex program/shader
  * being executed because of whether or not generic vertex arrays
@@ -408,6 +385,7 @@ recalculate_input_bindings(struct gl_context *ctx)
 {
    struct vbo_context *vbo = vbo_context(ctx);
    struct vbo_exec_context *exec = &vbo->exec;
+   struct gl_client_array *vertexAttrib = ctx->Array.ArrayObj->VertexAttrib;
    const struct gl_client_array **inputs = &exec->array.inputs[0];
    GLbitfield64 const_inputs = 0x0;
    GLuint i;
@@ -420,8 +398,8 @@ recalculate_input_bindings(struct gl_context *ctx)
        * are available as per-vertex attributes.
        */
       for (i = 0; i < VERT_ATTRIB_FF_MAX; i++) {
-	 if (exec->array.legacy_array[i]->Enabled)
-	    inputs[i] = exec->array.legacy_array[i];
+	 if (vertexAttrib[VERT_ATTRIB_FF(i)].Enabled)
+	    inputs[i] = &vertexAttrib[VERT_ATTRIB_FF(i)];
 	 else {
 	    inputs[i] = &vbo->legacy_currval[i];
             const_inputs |= VERT_BIT(i);
@@ -457,10 +435,10 @@ recalculate_input_bindings(struct gl_context *ctx)
        */
       for (i = 0; i < VERT_ATTRIB_FF_MAX; i++) {
 	 if (i < VERT_ATTRIB_GENERIC_MAX
-             && exec->array.generic_array[i]->Enabled)
-	    inputs[i] = exec->array.generic_array[i];
-	 else if (exec->array.legacy_array[i]->Enabled)
-	    inputs[i] = exec->array.legacy_array[i];
+             && vertexAttrib[VERT_ATTRIB_GENERIC(i)].Enabled)
+	    inputs[i] = &vertexAttrib[VERT_ATTRIB_GENERIC(i)];
+	 else if (vertexAttrib[VERT_ATTRIB_FF(i)].Enabled)
+	    inputs[i] = &vertexAttrib[VERT_ATTRIB_FF(i)];
 	 else {
 	    inputs[i] = &vbo->legacy_currval[i];
             const_inputs |= VERT_BIT_FF(i);
@@ -486,18 +464,18 @@ recalculate_input_bindings(struct gl_context *ctx)
        * generic attributes in the generic slots and materials are not
        * available as per-vertex attributes.
        */
-      if (exec->array.generic_array[0]->Enabled)
-	 inputs[0] = exec->array.generic_array[0];
-      else if (exec->array.legacy_array[0]->Enabled)
-	 inputs[0] = exec->array.legacy_array[0];
+      if (vertexAttrib[VERT_ATTRIB_GENERIC0].Enabled)
+	 inputs[0] = &vertexAttrib[VERT_ATTRIB_GENERIC0];
+      else if (vertexAttrib[VERT_ATTRIB_POS].Enabled)
+	 inputs[0] = &vertexAttrib[VERT_ATTRIB_POS];
       else {
 	 inputs[0] = &vbo->legacy_currval[0];
          const_inputs |= VERT_BIT_POS;
       }
 
       for (i = 1; i < VERT_ATTRIB_FF_MAX; i++) {
-	 if (exec->array.legacy_array[i]->Enabled)
-	    inputs[i] = exec->array.legacy_array[i];
+	 if (vertexAttrib[VERT_ATTRIB_FF(i)].Enabled)
+	    inputs[i] = &vertexAttrib[VERT_ATTRIB_FF(i)];
 	 else {
 	    inputs[i] = &vbo->legacy_currval[i];
             const_inputs |= VERT_BIT_FF(i);
@@ -505,8 +483,8 @@ recalculate_input_bindings(struct gl_context *ctx)
       }
 
       for (i = 1; i < VERT_ATTRIB_GENERIC_MAX; i++) {
-	 if (exec->array.generic_array[i]->Enabled)
-	    inputs[VERT_ATTRIB_GENERIC(i)] = exec->array.generic_array[i];
+	 if (vertexAttrib[VERT_ATTRIB_GENERIC(i)].Enabled)
+	    inputs[VERT_ATTRIB_GENERIC(i)] = &vertexAttrib[VERT_ATTRIB_GENERIC(i)];
 	 else {
 	    inputs[VERT_ATTRIB_GENERIC(i)] = &vbo->generic_currval[i];
             const_inputs |= VERT_BIT_GENERIC(i);
@@ -536,7 +514,6 @@ vbo_bind_arrays(struct gl_context *ctx)
       return;
    }
 
-   bind_array_obj(ctx);
    recalculate_input_bindings(ctx);
    ctx->Array.RebindArrays = GL_FALSE;
 }
