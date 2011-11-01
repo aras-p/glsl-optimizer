@@ -460,11 +460,12 @@ svga_texture_create(struct pipe_screen *screen,
       tex->key.cachable = 0;
    }
 
-   if (template->bind & PIPE_BIND_SCANOUT) {
+   if (template->bind & (PIPE_BIND_SCANOUT |
+                         PIPE_BIND_CURSOR)) {
       tex->key.flags |= SVGA3D_SURFACE_HINT_SCANOUT;
       tex->key.cachable = 0;
    }
-   
+
    /* 
     * XXX: Never pass the SVGA3D_SURFACE_HINT_RENDERTARGET hint. Mesa cannot
     * know beforehand whether a texture will be used as a rendertarget or not
