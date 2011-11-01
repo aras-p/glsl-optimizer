@@ -506,6 +506,8 @@ driswBindExtensions(struct drisw_screen *psc, const __DRIextension **extensions)
 {
    int i;
 
+   __glXEnableDirectExtension(&psc->base, "GLX_SGI_make_current_read");
+
    /* FIXME: Figure out what other extensions can be ported here from dri2. */
    for (i = 0; extensions[i]; i++) {
       if ((strcmp(extensions[i]->name, __DRI_TEX_BUFFER) == 0)) {
