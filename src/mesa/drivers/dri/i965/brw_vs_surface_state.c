@@ -138,8 +138,7 @@ brw_update_vs_constant_surface( struct gl_context *ctx,
  * Vertex shader surfaces (constant buffer).
  *
  * This consumes the state updates for the constant buffer needing
- * to be updated, and produces BRW_NEW_NR_VS_SURFACES for the VS unit and
- * CACHE_NEW_SURF_BIND for the binding table upload.
+ * to be updated, and produces BRW_NEW_NR_VS_SURFACES for the VS unit.
  */
 static void
 brw_upload_vs_surfaces(struct brw_context *brw)
