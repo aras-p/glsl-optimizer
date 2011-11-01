@@ -194,8 +194,8 @@ pp_debug(const char *fmt, ...)
 
 /** Allocate the temp FBOs. Called on makecurrent and resize. */
 void
-pp_init_fbos(struct pp_queue_t *ppq, const unsigned int w,
-             const unsigned int h, struct pipe_resource *indepth)
+pp_init_fbos(struct pp_queue_t *ppq, unsigned int w,
+             unsigned int h, struct pipe_resource *indepth)
 {
 
    struct program *p = ppq->p;  /* The lazy will inherit the earth */
