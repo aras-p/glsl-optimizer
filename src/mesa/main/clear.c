@@ -326,6 +326,13 @@ _mesa_ClearBufferiv(GLenum buffer, GLint drawbuffer, const GLint *value)
 
    switch (buffer) {
    case GL_STENCIL:
+      /* Page 264 (page 280 of the PDF) of the OpenGL 3.0 spec says:
+       *
+       *     "ClearBuffer generates an INVALID VALUE error if buffer is
+       *     COLOR and drawbuffer is less than zero, or greater than the
+       *     value of MAX DRAW BUFFERS minus one; or if buffer is DEPTH,
+       *     STENCIL, or DEPTH STENCIL and drawbuffer is not zero."
+       */
       if (drawbuffer != 0) {
          _mesa_error(ctx, GL_INVALID_VALUE, "glClearBufferiv(drawbuffer=%d)",
                      drawbuffer);
@@ -373,6 +380,25 @@ _mesa_ClearBufferiv(GLenum buffer, GLint drawbuffer, const GLint *value)
          }
       }
       break;
+   case GL_DEPTH:
+      /* Page 264 (page 280 of the PDF) of the OpenGL 3.0 spec says:
+       *
+       *     "The result of ClearBuffer is undefined if no conversion between
+       *     the type of the specified value and the type of the buffer being
+       *     cleared is defined (for example, if ClearBufferiv is called for a
+       *     fixed- or floating-point buffer, or if ClearBufferfv is called
+       *     for a signed or unsigned integer buffer). This is not an error."
+       *
+       * In this case we take "undefined" and "not an error" to mean "ignore."
+       * Note that we still need to generate an error for the invalid
+       * drawbuffer case (see the GL_STENCIL case above).
+       */
+      if (drawbuffer != 0) {
+         _mesa_error(ctx, GL_INVALID_VALUE, "glClearBufferiv(drawbuffer=%d)",
+                     drawbuffer);
+         return;
+      }
+      return;
    default:
       _mesa_error(ctx, GL_INVALID_ENUM, "glClearBufferiv(buffer=%s)",
                   _mesa_lookup_enum_by_nr(buffer));
@@ -424,6 +450,31 @@ _mesa_ClearBufferuiv(GLenum buffer, GLint drawbuffer, const GLuint *value)
          }
       }
       break;
+   case GL_DEPTH:
+   case GL_STENCIL:
+      /* Page 264 (page 280 of the PDF) of the OpenGL 3.0 spec says:
+       *
+       *     "The result of ClearBuffer is undefined if no conversion between
+       *     the type of the specified value and the type of the buffer being
+       *     cleared is defined (for example, if ClearBufferiv is called for a
+       *     fixed- or floating-point buffer, or if ClearBufferfv is called
+       *     for a signed or unsigned integer buffer). This is not an error."
+       *
+       * In this case we take "undefined" and "not an error" to mean "ignore."
+       * Even though we could do something sensible for GL_STENCIL, page 263
+       * (page 279 of the PDF) says:
+       *
+       *     "Only ClearBufferiv should be used to clear stencil buffers."
+       *
+       * Note that we still need to generate an error for the invalid
+       * drawbuffer case (see the GL_STENCIL case in _mesa_ClearBufferiv).
+       */
+      if (drawbuffer != 0) {
+         _mesa_error(ctx, GL_INVALID_VALUE, "glClearBufferuiv(drawbuffer=%d)",
+                     drawbuffer);
+         return;
+      }
+      return;
    default:
       _mesa_error(ctx, GL_INVALID_ENUM, "glClearBufferuiv(buffer=%s)",
                   _mesa_lookup_enum_by_nr(buffer));
@@ -450,6 +501,13 @@ _mesa_ClearBufferfv(GLenum buffer, GLint drawbuffer, const GLfloat *value)
 
    switch (buffer) {
    case GL_DEPTH:
+      /* Page 264 (page 280 of the PDF) of the OpenGL 3.0 spec says:
+       *
+       *     "ClearBuffer generates an INVALID VALUE error if buffer is
+       *     COLOR and drawbuffer is less than zero, or greater than the
+       *     value of MAX DRAW BUFFERS minus one; or if buffer is DEPTH,
+       *     STENCIL, or DEPTH STENCIL and drawbuffer is not zero."
+       */
       if (drawbuffer != 0) {
          _mesa_error(ctx, GL_INVALID_VALUE, "glClearBufferfv(drawbuffer=%d)",
                      drawbuffer);
@@ -498,6 +556,25 @@ _mesa_ClearBufferfv(GLenum buffer, GLint drawbuffer, const GLfloat *value)
          }
       }
       break;
+   case GL_STENCIL:
+      /* Page 264 (page 280 of the PDF) of the OpenGL 3.0 spec says:
+       *
+       *     "The result of ClearBuffer is undefined if no conversion between
+       *     the type of the specified value and the type of the buffer being
+       *     cleared is defined (for example, if ClearBufferiv is called for a
+       *     fixed- or floating-point buffer, or if ClearBufferfv is called
+       *     for a signed or unsigned integer buffer). This is not an error."
+       *
+       * In this case we take "undefined" and "not an error" to mean "ignore."
+       * Note that we still need to generate an error for the invalid
+       * drawbuffer case (see the GL_DEPTH case above).
+       */
+      if (drawbuffer != 0) {
+         _mesa_error(ctx, GL_INVALID_VALUE, "glClearBufferfv(drawbuffer=%d)",
+                     drawbuffer);
+         return;
+      }
+      return;
    default:
       _mesa_error(ctx, GL_INVALID_ENUM, "glClearBufferfv(buffer=%s)",
                   _mesa_lookup_enum_by_nr(buffer));
@@ -525,6 +602,13 @@ _mesa_ClearBufferfi(GLenum buffer, GLint drawbuffer,
       return;
    }
 
+   /* Page 264 (page 280 of the PDF) of the OpenGL 3.0 spec says:
+    *
+    *     "ClearBuffer generates an INVALID VALUE error if buffer is
+    *     COLOR and drawbuffer is less than zero, or greater than the
+    *     value of MAX DRAW BUFFERS minus one; or if buffer is DEPTH,
+    *     STENCIL, or DEPTH STENCIL and drawbuffer is not zero."
+    */
    if (drawbuffer != 0) {
       _mesa_error(ctx, GL_INVALID_VALUE, "glClearBufferfi(drawbuffer=%d)",
                   drawbuffer);
