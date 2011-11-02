@@ -182,7 +182,6 @@ struct save_state
    GLboolean Lighting;
 };
 
-
 /**
  * Temporary texture used for glBlitFramebuffer, glDrawPixels, etc.
  * This is currently shared by all the meta ops.  But we could create a
@@ -221,6 +220,9 @@ struct clear_state
    GLuint VBO;
    GLuint ShaderProg;
    GLint ColorLocation;
+
+   GLuint IntegerShaderProg;
+   GLint IntegerColorLocation;
 };
 
 
@@ -310,6 +312,67 @@ struct gl_meta_state
    struct drawtex_state DrawTex;  /**< For _mesa_meta_DrawTex() */
 };
 
+static GLuint
+compile_shader_with_debug(struct gl_context *ctx, GLenum target, const GLcharARB *source)
+{
+   GLuint shader;
+   GLint ok, size;
+   GLchar *info;
+
+   shader = _mesa_CreateShaderObjectARB(target);
+   _mesa_ShaderSourceARB(shader, 1, &source, NULL);
+   _mesa_CompileShaderARB(shader);
+
+   _mesa_GetShaderiv(shader, GL_COMPILE_STATUS, &ok);
+   if (ok)
+      return shader;
+
+   _mesa_GetShaderiv(shader, GL_INFO_LOG_LENGTH, &size);
+   if (size == 0)
+      return 0;
+
+   info = malloc(size);
+   if (!info)
+      return 0;
+
+   _mesa_GetProgramInfoLog(shader, size, NULL, info);
+   _mesa_problem(ctx,
+		 "meta program compile failed:\n%s\n"
+		 "source:\n%s\n",
+		 info, source);
+
+   free(info);
+
+   return 0;
+}
+
+static GLuint
+link_program_with_debug(struct gl_context *ctx, GLuint program)
+{
+   GLint ok, size;
+   GLchar *info;
+
+   _mesa_LinkProgramARB(program);
+
+   _mesa_GetProgramiv(program, GL_LINK_STATUS, &ok);
+   if (ok)
+      return program;
+
+   _mesa_GetProgramiv(program, GL_INFO_LOG_LENGTH, &size);
+   if (size == 0)
+      return 0;
+
+   info = malloc(size);
+   if (!info)
+      return 0;
+
+   _mesa_GetProgramInfoLog(program, size, NULL, info);
+   _mesa_problem(ctx, "meta program link failed:\n%s", info);
+
+   free(info);
+
+   return 0;
+}
 
 /**
  * Initialize meta-ops for a context.
@@ -1646,6 +1709,22 @@ meta_glsl_clear_init(struct gl_context *ctx, struct clear_state *clear)
       "{\n"
       "   gl_FragColor = color;\n"
       "}\n";
+   const char *vs_int_source =
+      "#version 130\n"
+      "attribute vec4 position;\n"
+      "void main()\n"
+      "{\n"
+      "   gl_Position = position;\n"
+      "}\n";
+   const char *fs_int_source =
+      "#version 130\n"
+      "uniform ivec4 color;\n"
+      "out ivec4 out_color;\n"
+      "\n"
+      "void main()\n"
+      "{\n"
+      "   out_color = color;\n"
+      "}\n";
    GLuint vs, fs;
 
    if (clear->ArrayObj != 0)
@@ -1679,6 +1758,26 @@ meta_glsl_clear_init(struct gl_context *ctx, struct clear_state *clear)
 
    clear->ColorLocation = _mesa_GetUniformLocationARB(clear->ShaderProg,
 						      "color");
+
+   if (ctx->Const.GLSLVersion >= 130) {
+      vs = compile_shader_with_debug(ctx, GL_VERTEX_SHADER, vs_int_source);
+      fs = compile_shader_with_debug(ctx, GL_FRAGMENT_SHADER, fs_int_source);
+
+      clear->IntegerShaderProg = _mesa_CreateProgramObjectARB();
+      _mesa_AttachShader(clear->IntegerShaderProg, fs);
+      _mesa_AttachShader(clear->IntegerShaderProg, vs);
+      _mesa_BindAttribLocationARB(clear->IntegerShaderProg, 0, "position");
+
+      /* Note that user-defined out attributes get automatically assigned
+       * locations starting from 0, so we don't need to explicitly
+       * BindFragDataLocation to 0.
+       */
+
+      link_program_with_debug(ctx, clear->IntegerShaderProg);
+
+      clear->IntegerColorLocation =
+	 _mesa_GetUniformLocationARB(clear->IntegerShaderProg, "color");
+   }
 }
 
 /**
@@ -1722,9 +1821,15 @@ _mesa_meta_glsl_Clear(struct gl_context *ctx, GLbitfield buffers)
 
    meta_glsl_clear_init(ctx, clear);
 
-   _mesa_UseProgramObjectARB(clear->ShaderProg);
-   _mesa_Uniform4fvARB(clear->ColorLocation, 1,
-		       ctx->Color.ClearColor.f);
+   if (fb->_IntegerColor) {
+      _mesa_UseProgramObjectARB(clear->IntegerShaderProg);
+      _mesa_Uniform4ivARB(clear->IntegerColorLocation, 1,
+			  ctx->Color.ClearColor.i);
+   } else {
+      _mesa_UseProgramObjectARB(clear->ShaderProg);
+      _mesa_Uniform4fvARB(clear->ColorLocation, 1,
+			  ctx->Color.ClearColor.f);
+   }
 
    _mesa_BindVertexArray(clear->ArrayObj);
    _mesa_BindBufferARB(GL_ARRAY_BUFFER_ARB, clear->VBO);
