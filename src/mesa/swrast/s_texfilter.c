@@ -3647,25 +3647,21 @@ _swrast_choose_texture_sample_func( struct gl_context *ctx,
             const struct gl_texture_image *img = t->Image[0][t->BaseLevel];
             const struct swrast_texture_image *swImg =
                swrast_texture_image_const(img);
+            texture_sample_func func;
 
             ASSERT(t->Sampler.MinFilter == GL_NEAREST);
+            func = &sample_nearest_2d;
             if (t->Sampler.WrapS == GL_REPEAT &&
                 t->Sampler.WrapT == GL_REPEAT &&
                 swImg->_IsPowerOfTwo &&
-                img->Border == 0 &&
-                img->TexFormat == MESA_FORMAT_RGB888) {
-               return &opt_sample_rgb_2d;
+                img->Border == 0) {
+               if (img->TexFormat == MESA_FORMAT_RGB888)
+                  func = &opt_sample_rgb_2d;
+               else if (img->TexFormat == MESA_FORMAT_RGBA8888)
+                  func = &opt_sample_rgba_2d;
             }
-            else if (t->Sampler.WrapS == GL_REPEAT &&
-                     t->Sampler.WrapT == GL_REPEAT &&
-                     swImg->_IsPowerOfTwo &&
-                     img->Border == 0 &&
-                     img->TexFormat == MESA_FORMAT_RGBA8888) {
-               return &opt_sample_rgba_2d;
-            }
-            else {
-               return &sample_nearest_2d;
-            }
+
+            return func;
          }
       case GL_TEXTURE_3D:
          if (needLambda) {
