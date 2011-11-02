@@ -72,30 +72,6 @@ int driDestroyDrawable(dri_drawable_t *dri_drawable);
 int driCreateContext(dri_screen_t *dri_screen, Visual *visual, dri_context_t **dri_context);
 int driDestroyContext(dri_context_t *dri_context);
 
-#define DRI_VALIDATE_DRAWABLE_INFO_ONCE(dri_drawable)					\
-do											\
-{											\
-	if (*(dri_drawable->sarea_stamp) != dri_drawable->last_sarea_stamp)		\
-		driUpdateDrawableInfo(dri_drawable);					\
-} while (0)
-
-#define DRI_VALIDATE_DRAWABLE_INFO(dri_screen, dri_drawable)					\
-do												\
-{												\
-	while (*(dri_drawable->sarea_stamp) != dri_drawable->last_sarea_stamp)			\
-	{											\
-		register unsigned int hwContext = dri_screen->sarea->lock.lock &		\
-		~(DRM_LOCK_HELD | DRM_LOCK_CONT);						\
-		DRM_UNLOCK(dri_screen->fd, &dri_screen->sarea->lock, hwContext);		\
-												\
-		DRM_SPINLOCK(&dri_screen->sarea->drawable_lock, dri_screen->draw_lock_id);	\
-		DRI_VALIDATE_DRAWABLE_INFO_ONCE(dri_drawable);					\
-		DRM_SPINUNLOCK(&dri_screen->sarea->drawable_lock, dri_screen->draw_lock_id);	\
-												\
-		DRM_LIGHT_LOCK(dri_screen->fd, &dri_screen->sarea->lock, hwContext);		\
-	}											\
-} while (0)
-
 int dri2CreateScreen(Display *display, int screen, dri_screen_t **dri_screen);
 int dri2DestroyScreen(dri_screen_t *dri_screen);
 int dri2CreateDrawable(dri_screen_t *dri_screen, XID drawable);
