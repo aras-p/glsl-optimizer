@@ -101,7 +101,13 @@ try_constant_propagation(vec4_instruction *inst, int arg, src_reg *values[4])
 	 inst->src[arg] = value;
 	 return true;
       } else if (arg == 0 && inst->src[1].file != IMM) {
-	 /* Fit this constant in by commuting the operands */
+	 /* Fit this constant in by commuting the operands.  Exception: we
+	  * can't do this for 32-bit integer MUL because it's asymmetric.
+	  */
+	 if (inst->opcode == BRW_OPCODE_MUL &&
+	     (inst->src[1].type == BRW_REGISTER_TYPE_D ||
+	      inst->src[1].type == BRW_REGISTER_TYPE_UD))
+	    break;
 	 inst->src[0] = inst->src[1];
 	 inst->src[1] = value;
 	 return true;

@@ -1127,7 +1127,14 @@ fs_visitor::propagate_constants()
 		  scan_inst->src[i] = inst->src[0];
 		  progress = true;
 	       } else if (i == 0 && scan_inst->src[1].file != IMM) {
-		  /* Fit this constant in by commuting the operands */
+		  /* Fit this constant in by commuting the operands.
+		   * Exception: we can't do this for 32-bit integer MUL
+		   * because it's asymmetric.
+		   */
+		  if (scan_inst->opcode == BRW_OPCODE_MUL &&
+		      (scan_inst->src[1].type == BRW_REGISTER_TYPE_D ||
+		       scan_inst->src[1].type == BRW_REGISTER_TYPE_UD))
+		     break;
 		  scan_inst->src[0] = scan_inst->src[1];
 		  scan_inst->src[1] = inst->src[0];
 		  progress = true;
