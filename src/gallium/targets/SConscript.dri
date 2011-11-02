@@ -41,11 +41,6 @@ dri_common_xmlconfig = drienv.SharedObject(
     source = '#src/mesa/drivers/dri/common/xmlconfig.c'
 )
 
-dri_common_vblank = drienv.SharedObject(
-    target = 'vblank.o',
-    source = '#src/mesa/drivers/dri/common/vblank.c'
-)
-
 dri_common_dri_util = drienv.SharedObject(
     target = 'dri_util.o',
     source = '#src/mesa/drivers/dri/common/dri_util.c'
@@ -66,7 +61,6 @@ COMMON_DRI_SW_OBJECTS = [
 COMMON_DRI_DRM_OBJECTS = [
     dri_common_utils,
     dri_common_xmlconfig,
-    dri_common_vblank,
     dri_common_dri_util,
 ]
 
