@@ -335,9 +335,13 @@ WINGDIAPI BOOL GLAPIENTRY wglSetPixelFormat(HDC hdc,int iPixelFormat,
 					const PIXELFORMATDESCRIPTOR *ppfd)
 {
     (void) hdc;
-    
-    if(iPixelFormat < 1 || iPixelFormat > npfd || 
-       ppfd->nSize != sizeof(PIXELFORMATDESCRIPTOR)) {
+
+    /* SetPixelFormat (hence wglSetPixelFormat) must not touch ppfd, per
+     * http://msdn.microsoft.com/en-us/library/dd369049(v=vs.85).aspx
+     */
+    (void) ppfd;
+
+    if(iPixelFormat < 1 || iPixelFormat > npfd) {
 	SetLastError(0);
 	return(FALSE);
     }

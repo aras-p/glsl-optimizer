@@ -172,8 +172,10 @@ wglSetPixelFormat(
    int iPixelFormat,
    const PIXELFORMATDESCRIPTOR *ppfd )
 {
-   if (ppfd->nSize != sizeof( PIXELFORMATDESCRIPTOR ))
-      return FALSE;
+    /* SetPixelFormat (hence wglSetPixelFormat) must not touch ppfd, per
+     * http://msdn.microsoft.com/en-us/library/dd369049(v=vs.85).aspx
+     */
+   (void) ppfd;
 
    return DrvSetPixelFormat( hdc, iPixelFormat );
 }
