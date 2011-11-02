@@ -574,6 +574,19 @@ util_bitcount(unsigned n)
 
 
 /**
+ * Convert from little endian to CPU byte order.
+ */
+
+#ifdef PIPE_ARCH_BIG_ENDIAN
+#define util_le32_to_cpu(x) util_bswap32(x)
+#define util_le16_to_cpu(x) util_bswap16(x)
+#else
+#define util_le32_to_cpu(x) (x)
+#define util_le16_to_cpu(x) (x)
+#endif
+
+
+/**
  * Reverse byte order of a 32 bit word.
  */
 static INLINE uint32_t
