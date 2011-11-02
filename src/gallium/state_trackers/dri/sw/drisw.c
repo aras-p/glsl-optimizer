@@ -70,6 +70,17 @@ put_image(__DRIdrawable *dPriv, void *data, unsigned width, unsigned height)
                     data, dPriv->loaderPrivate);
 }
 
+static INLINE void
+get_image(__DRIdrawable *dPriv, int x, int y, int width, int height, void *data)
+{
+   __DRIscreen *sPriv = dPriv->driScreenPriv;
+   const __DRIswrastLoaderExtension *loader = sPriv->swrast_loader;
+
+   loader->getImage(dPriv,
+                    x, y, width, height,
+                    data, dPriv->loaderPrivate);
+}
+
 static void
 drisw_update_drawable_info(struct dri_drawable *drawable)
 {
@@ -234,12 +245,13 @@ drisw_update_tex_buffer(struct dri_drawable *drawable,
                         struct dri_context *ctx,
                         struct pipe_resource *res)
 {
-   struct pipe_context *pipe = ((struct st_context *) ctx->st)->pipe;
    __DRIdrawable *dPriv = drawable->dPriv;
-   __DRIscreen *sPriv = dPriv->driScreenPriv;
-   int x, y, w, h;
+
+   struct st_context *st_ctx = (struct st_context *)ctx->st;
+   struct pipe_context *pipe = st_ctx->pipe;
    struct pipe_transfer *transfer;
    char *map;
+   int x, y, w, h;
    int ximage_stride, line;
 
    get_drawable_info(dPriv, &x, &y, &w, &h);
@@ -251,7 +263,7 @@ drisw_update_tex_buffer(struct dri_drawable *drawable,
    map = pipe_transfer_map(pipe, transfer);
 
    /* Copy the Drawable content to the mapped texture buffer */
-   sPriv->swrast_loader->getImage(dPriv, x, y, w, h, map, dPriv->loaderPrivate);
+   get_image(dPriv, x, y, w, h, map);
 
    /* The pipe transfer has a pitch rounded up to the nearest 64 pixels.
       We assume 32 bit pixels. */
