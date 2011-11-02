@@ -67,7 +67,8 @@ static const struct brw_tracked_state *gen4_atoms[] =
    &brw_wm_pull_constants, /* Before brw_wm_binding_table */
 
    &brw_vs_surfaces,		/* must do before unit */
-   &brw_wm_surfaces,		/* must do before samplers and unit */
+   &brw_renderbuffer_surfaces,  /* must do before unit */
+   &brw_texture_surfaces,       /* must do before unit */
    &brw_wm_binding_table,
    &brw_wm_samplers,
 
@@ -138,7 +139,8 @@ static const struct brw_tracked_state *gen6_atoms[] =
    &gen6_wm_push_constants, /* Before wm_state */
 
    &brw_vs_surfaces,		/* must do before unit */
-   &brw_wm_surfaces,		/* must do before samplers and unit */
+   &brw_renderbuffer_surfaces,  /* must do before unit */
+   &brw_texture_surfaces,       /* must do before unit */
    &brw_wm_binding_table,
 
    &brw_wm_samplers,
@@ -202,7 +204,8 @@ const struct brw_tracked_state *gen7_atoms[] =
    &gen6_wm_push_constants, /* Before wm_surfaces and constant_buffer */
 
    &brw_vs_surfaces,		/* must do before unit */
-   &brw_wm_surfaces,		/* must do before samplers and unit */
+   &brw_renderbuffer_surfaces,  /* must do before unit */
+   &brw_texture_surfaces,       /* must do before unit */
    &brw_wm_binding_table,
 
    &gen7_samplers,

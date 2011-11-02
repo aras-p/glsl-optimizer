@@ -542,11 +542,10 @@ brw_update_renderbuffer_surface(struct brw_context *brw,
 }
 
 /**
- * Constructs the set of surface state objects pointed to by the
- * binding table.
+ * Construct SURFACE_STATE objects for renderbuffers/draw buffers.
  */
 static void
-brw_upload_wm_surfaces(struct brw_context *brw)
+brw_update_renderbuffer_surfaces(struct brw_context *brw)
 {
    struct intel_context *intel = &brw->intel;
    struct gl_context *ctx = &brw->intel.ctx;
@@ -565,15 +564,34 @@ brw_upload_wm_surfaces(struct brw_context *brw)
    } else {
       intel->vtbl.update_null_renderbuffer_surface(brw, 0);
    }
+   brw->state.dirty.brw |= BRW_NEW_WM_SURFACES;
+}
 
-   /* Update surfaces for textures */
-   for (i = 0; i < BRW_MAX_TEX_UNIT; i++) {
+const struct brw_tracked_state brw_renderbuffer_surfaces = {
+   .dirty = {
+      .mesa = (_NEW_COLOR |
+               _NEW_BUFFERS),
+      .brw = BRW_NEW_BATCH,
+      .cache = 0
+   },
+   .emit = brw_update_renderbuffer_surfaces,
+};
+
+/**
+ * Construct SURFACE_STATE objects for enabled textures.
+ */
+static void
+brw_update_texture_surfaces(struct brw_context *brw)
+{
+   struct gl_context *ctx = &brw->intel.ctx;
+
+   for (unsigned i = 0; i < BRW_MAX_TEX_UNIT; i++) {
       const struct gl_texture_unit *texUnit = &ctx->Texture.Unit[i];
       const GLuint surf = SURF_INDEX_TEXTURE(i);
 
       /* _NEW_TEXTURE */
       if (texUnit->_ReallyEnabled) {
-	 intel->vtbl.update_texture_surface(ctx, i);
+	 brw->intel.vtbl.update_texture_surface(ctx, i);
       } else {
          brw->wm.surf_offset[surf] = 0;
       }
@@ -582,15 +600,13 @@ brw_upload_wm_surfaces(struct brw_context *brw)
    brw->state.dirty.brw |= BRW_NEW_WM_SURFACES;
 }
 
-const struct brw_tracked_state brw_wm_surfaces = {
+const struct brw_tracked_state brw_texture_surfaces = {
    .dirty = {
-      .mesa = (_NEW_COLOR |
-               _NEW_TEXTURE |
-               _NEW_BUFFERS),
+      .mesa = _NEW_TEXTURE,
       .brw = BRW_NEW_BATCH,
       .cache = 0
    },
-   .emit = brw_upload_wm_surfaces,
+   .emit = brw_update_texture_surfaces,
 };
 
 /**
