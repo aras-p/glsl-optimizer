@@ -62,12 +62,15 @@ int r600_find_vs_semantic_index(struct r600_shader *vs,
 				struct r600_shader *ps, int id)
 {
 	struct r600_shader_io *input = &ps->input[id];
+	int index = 0;
 
 	for (int i = 0; i < vs->noutput; i++) {
 		if (input->name == vs->output[i].name &&
-			input->sid == vs->output[i].sid) {
-			return i - 1;
-		}
+				input->sid == vs->output[i].sid)
+			return index;
+		else if (vs->output[i].name != TGSI_SEMANTIC_POSITION &&
+				 vs->output[i].name != TGSI_SEMANTIC_PSIZE)
+			index++;
 	}
 	return 0;
 }
