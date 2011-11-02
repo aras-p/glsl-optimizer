@@ -207,8 +207,8 @@ static void radeonEmitPrim( struct gl_context *ctx,
 #ifdef MESA_BIG_ENDIAN
 /* We could do without (most of) this ugliness if dest was always 32 bit word aligned... */
 #define EMIT_ELT(dest, offset, x) do {				\
-	int off = offset + ( ( (GLuint)dest & 0x2 ) >> 1 );	\
-	GLushort *des = (GLushort *)( (GLuint)dest & ~0x2 );	\
+	int off = offset + ( ( (uintptr_t)dest & 0x2 ) >> 1 );	\
+	GLushort *des = (GLushort *)( (uintptr_t)dest & ~0x2 );	\
 	(des)[ off + 1 - 2 * ( off & 1 ) ] = (GLushort)(x); 	\
 	(void)rmesa; } while (0)
 #else
