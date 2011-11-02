@@ -701,7 +701,6 @@ dri2_create_buffer(__DRIscreen * sPriv,
  * DRI versions differ in their implementation of init_screen and swap_buffers.
  */
 const struct __DriverAPIRec driDriverAPI = {
-   .InitScreen = NULL,
    .InitScreen2 = dri2_init_screen,
    .DestroyScreen = dri_destroy_screen,
    .CreateContext = dri_create_context,
@@ -710,13 +709,6 @@ const struct __DriverAPIRec driDriverAPI = {
    .DestroyBuffer = dri_destroy_buffer,
    .MakeCurrent = dri_make_current,
    .UnbindContext = dri_unbind_context,
-
-   .GetSwapInfo = NULL,
-   .GetDrawableMSC = NULL,
-   .WaitForMSC = NULL,
-
-   .SwapBuffers = NULL,
-   .CopySubBuffer = NULL,
 
    .AllocateBuffer = dri2_allocate_buffer,
    .ReleaseBuffer  = dri2_release_buffer,

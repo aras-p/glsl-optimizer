@@ -12,7 +12,6 @@ MESA_MODULES = \
 
 COMMON_GALLIUM_SOURCES = \
         $(TOP)/src/mesa/drivers/dri/common/utils.c \
-        $(TOP)/src/mesa/drivers/dri/common/vblank.c \
         $(TOP)/src/mesa/drivers/dri/common/dri_util.c \
         $(TOP)/src/mesa/drivers/dri/common/xmlconfig.c
 
