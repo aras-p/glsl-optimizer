@@ -234,7 +234,7 @@ drisw_update_tex_buffer(struct dri_drawable *drawable,
                         struct dri_context *ctx,
                         struct pipe_resource *res)
 {
-   struct pipe_context *pipe = ((struct st_context *) ctx)->st->pipe;
+   struct pipe_context *pipe = ((struct st_context *) ctx->st)->pipe;
    __DRIdrawable *dPriv = drawable->dPriv;
    __DRIscreen *sPriv = dPriv->driScreenPriv;
    int x, y, w, h;
