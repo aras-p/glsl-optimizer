@@ -174,6 +174,13 @@ brw_render_target_supported(gl_format format)
    if (format == MESA_FORMAT_RGBA_FLOAT32)
       return true;
 
+   /* While we can texture from these formats, they're not actually supported
+    * for rendering.
+    */
+   if (format == MESA_FORMAT_RGB_UINT32 ||
+       format == MESA_FORMAT_RGB_INT32)
+      return false;
+
    /* Not exactly true, as some of those formats are not renderable.
     * But at least we know how to translate them.
     */

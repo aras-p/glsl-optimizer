@@ -421,7 +421,12 @@ static span_init_func intel_span_init_funcs[MESA_FORMAT_COUNT] =
 bool
 intel_span_supports_format(gl_format format)
 {
-   return intel_span_init_funcs[format] != NULL;
+   /* Rendering to/from integer textures will be done using MapRenderbuffer,
+    * rather than coding up new paths through GetRow/PutRow(), so claim support
+    * for those formats in here for now.
+    */
+   return (intel_span_init_funcs[format] != NULL ||
+	   _mesa_is_format_integer_color(format));
 }
 
 /**
