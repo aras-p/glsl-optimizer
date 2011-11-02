@@ -591,10 +591,9 @@ static void radeonSpanRenderStart(struct gl_context * ctx)
 
 	radeon_firevertices(rmesa);
 
-	for (i = 0; i < ctx->Const.MaxTextureImageUnits; i++) {
+	for (i = 0; i < ctx->Const.MaxTextureImageUnits; i++)
 		if (ctx->Texture.Unit[i]._ReallyEnabled)
-			ctx->Driver.MapTexture(ctx, ctx->Texture.Unit[i]._Current);
-	}
+			radeonMapTexture(ctx, ctx->Texture.Unit[i]._Current);
 
 	radeon_map_unmap_framebuffer(ctx, ctx->DrawBuffer, GL_TRUE);
 	if (ctx->ReadBuffer != ctx->DrawBuffer)
@@ -607,10 +606,9 @@ static void radeonSpanRenderFinish(struct gl_context * ctx)
 
 	_swrast_flush(ctx);
 
-	for (i = 0; i < ctx->Const.MaxTextureImageUnits; i++) {
+	for (i = 0; i < ctx->Const.MaxTextureImageUnits; i++)
 		if (ctx->Texture.Unit[i]._ReallyEnabled)
-			ctx->Driver.UnmapTexture(ctx, ctx->Texture.Unit[i]._Current);
-	}
+			radeonUnmapTexture(ctx, ctx->Texture.Unit[i]._Current);
 
 	radeon_map_unmap_framebuffer(ctx, ctx->DrawBuffer, GL_FALSE);
 	if (ctx->ReadBuffer != ctx->DrawBuffer)
