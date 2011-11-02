@@ -340,7 +340,7 @@ UploadYcbcrBlocks(struct vl_mpeg12_decoder *dec,
    intra = mb->macroblock_type & PIPE_MPEG12_MB_TYPE_INTRA ? 1 : 0;
 
    for (y = 0; y < 2; ++y) {
-      for (x = 0; x < 2; ++x, ++tb) {
+      for (x = 0; x < 2; ++x) {
          if (mb->coded_block_pattern & const_empty_block_mask_420[0][y][x]) {
 
             struct vl_ycbcr_block *stream = buf->ycbcr_stream[0];
