@@ -63,7 +63,7 @@ struct bind_queue {
 };
 
 
-static int
+static enum pipe_error
 update_tss_binding(struct svga_context *svga, 
                    unsigned dirty )
 {
@@ -284,7 +284,7 @@ svga_queue_tss( struct ts_queue *q,
 }
 
 
-static int
+static enum pipe_error
 update_tss(struct svga_context *svga, 
            unsigned dirty )
 {
@@ -336,7 +336,7 @@ update_tss(struct svga_context *svga,
       SVGA_FIFOCommitAll( svga->swc );
    }
 
-   return 0;
+   return PIPE_OK;
 
 fail:
    /* XXX: need to poison cached hardware state on failure to ensure

@@ -175,8 +175,9 @@ struct svga_tracked_state svga_hw_vs =
 
 /***********************************************************************
  */
-static int update_zero_stride( struct svga_context *svga,
-                               unsigned dirty )
+static enum pipe_error
+update_zero_stride( struct svga_context *svga,
+                    unsigned dirty )
 {
    unsigned i;
 

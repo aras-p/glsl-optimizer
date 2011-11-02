@@ -38,8 +38,9 @@
  */
 
 
-static int emit_framebuffer( struct svga_context *svga,
-                             unsigned dirty )
+static enum pipe_error
+emit_framebuffer( struct svga_context *svga,
+                  unsigned dirty )
 {
    const struct pipe_framebuffer_state *curr = &svga->curr.framebuffer;
    struct pipe_framebuffer_state *hw = &svga->state.hw_clear.framebuffer;
@@ -160,8 +161,9 @@ struct svga_tracked_state svga_hw_framebuffer =
 /*********************************************************************** 
  */
 
-static int emit_viewport( struct svga_context *svga,
-                          unsigned dirty )
+static enum pipe_error
+emit_viewport( struct svga_context *svga,
+               unsigned dirty )
 {
    const struct pipe_viewport_state *viewport = &svga->curr.viewport;
    struct svga_prescale prescale;
@@ -438,8 +440,9 @@ struct svga_tracked_state svga_hw_viewport =
 /***********************************************************************
  * Scissor state
  */
-static int emit_scissor_rect( struct svga_context *svga,
-                              unsigned dirty )
+static enum pipe_error
+emit_scissor_rect( struct svga_context *svga,
+                   unsigned dirty )
 {
    const struct pipe_scissor_state *scissor = &svga->curr.scissor;
    SVGA3dRect rect;
@@ -465,8 +468,9 @@ struct svga_tracked_state svga_hw_scissor =
  * Userclip state
  */
 
-static int emit_clip_planes( struct svga_context *svga,
-                             unsigned dirty )
+static enum pipe_error
+emit_clip_planes( struct svga_context *svga,
+                  unsigned dirty )
 {
    unsigned i;
    enum pipe_error ret;

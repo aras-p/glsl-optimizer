@@ -71,8 +71,9 @@ svga_translate_vertex_format(enum pipe_format format)
 }
 
 
-static int update_need_swvfetch( struct svga_context *svga,
-                                 unsigned dirty )
+static enum pipe_error
+update_need_swvfetch( struct svga_context *svga,
+                      unsigned dirty )
 {
    unsigned i;
    boolean need_swvfetch = FALSE;
@@ -110,8 +111,9 @@ struct svga_tracked_state svga_update_need_swvfetch =
 /*********************************************************************** 
  */
 
-static int update_need_pipeline( struct svga_context *svga,
-                                 unsigned dirty )
+static enum pipe_error
+update_need_pipeline( struct svga_context *svga,
+                      unsigned dirty )
 {
    
    boolean need_pipeline = FALSE;
@@ -165,8 +167,9 @@ struct svga_tracked_state svga_update_need_pipeline =
 /*********************************************************************** 
  */
 
-static int update_need_swtnl( struct svga_context *svga,
-                              unsigned dirty )
+static enum pipe_error
+update_need_swtnl( struct svga_context *svga,
+                   unsigned dirty )
 {
    boolean need_swtnl;
 

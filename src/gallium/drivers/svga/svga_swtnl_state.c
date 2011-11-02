@@ -83,8 +83,9 @@ static void set_draw_viewport( struct svga_context *svga )
    draw_set_viewport_state(svga->swtnl.draw, &vp);
 }
 
-static int update_swtnl_draw( struct svga_context *svga,
-                              unsigned dirty )
+static enum pipe_error
+update_swtnl_draw( struct svga_context *svga,
+                   unsigned dirty )
 {
    draw_flush( svga->swtnl.draw );
 
@@ -139,7 +140,8 @@ struct svga_tracked_state svga_update_swtnl_draw =
 };
 
 
-int svga_swtnl_update_vdecl( struct svga_context *svga )
+enum pipe_error
+svga_swtnl_update_vdecl( struct svga_context *svga )
 {
    struct svga_vbuf_render *svga_render = svga_vbuf_render(svga->swtnl.backend);
    struct draw_context *draw = svga->swtnl.draw;
@@ -221,8 +223,9 @@ int svga_swtnl_update_vdecl( struct svga_context *svga )
 }
 
 
-static int update_swtnl_vdecl( struct svga_context *svga,
-                               unsigned dirty )
+static enum pipe_error
+update_swtnl_vdecl( struct svga_context *svga,
+                    unsigned dirty )
 {
    return svga_swtnl_update_vdecl( svga );
 }

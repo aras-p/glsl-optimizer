@@ -88,7 +88,7 @@ struct vbuf_render *
 svga_vbuf_render_create( struct svga_context *svga );
 
 
-int
+enum pipe_error
 svga_swtnl_update_vdecl( struct svga_context *svga );
 
 
