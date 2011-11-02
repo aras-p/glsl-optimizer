@@ -329,6 +329,38 @@ static int evergreen_interp_flat(struct r600_shader_ctx *ctx, int input)
 	return 0;
 }
 
+/*
+ * Special export handling in shaders
+ *
+ * shader export ARRAY_BASE for EXPORT_POS:
+ * 60 is position
+ * 61 is misc vector
+ * 62, 63 are clip distance vectors
+ *
+ * The use of the values exported in 61-63 are controlled by PA_CL_VS_OUT_CNTL:
+ * VS_OUT_MISC_VEC_ENA - enables the use of all fields in export 61
+ * USE_VTX_POINT_SIZE - point size in the X channel of export 61
+ * USE_VTX_EDGE_FLAG - edge flag in the Y channel of export 61
+ * USE_VTX_RENDER_TARGET_INDX - render target index in the Z channel of export 61
+ * USE_VTX_VIEWPORT_INDX - viewport index in the W channel of export 61
+ * USE_VTX_KILL_FLAG - kill flag in the Z channel of export 61 (mutually
+ * exclusive from render target index)
+ * VS_OUT_CCDIST0_VEC_ENA/VS_OUT_CCDIST1_VEC_ENA - enable clip distance vectors
+ *
+ *
+ * shader export ARRAY_BASE for EXPORT_PIXEL:
+ * 0-7 CB targets
+ * 61 computed Z vector
+ *
+ * The use of the values exported in the computed Z vector are controlled
+ * by DB_SHADER_CONTROL:
+ * Z_EXPORT_ENABLE - Z as a float in RED
+ * STENCIL_REF_EXPORT_ENABLE - stencil ref as int in GREEN
+ * COVERAGE_TO_MASK_ENABLE - alpha to mask in ALPHA
+ * MASK_EXPORT_ENABLE - pixel sample mask in BLUE
+ * DB_SOURCE_FORMAT - export control restrictions
+ *
+ */
 static int tgsi_declaration(struct r600_shader_ctx *ctx)
 {
 	struct tgsi_full_declaration *d = &ctx->parse.FullToken.FullDeclaration;
