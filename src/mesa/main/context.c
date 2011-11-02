@@ -1118,7 +1118,8 @@ _mesa_free_context_data( struct gl_context *ctx )
    _mesa_free_varray_data(ctx);
    _mesa_free_transform_feedback(ctx);
 
-   _mesa_delete_array_object(ctx, ctx->Array.DefaultArrayObj);
+   _mesa_reference_array_object(ctx, &ctx->Array.ArrayObj, NULL);
+   _mesa_reference_array_object(ctx, &ctx->Array.DefaultArrayObj, NULL);
 
 #if FEATURE_ARB_pixel_buffer_object
    _mesa_reference_buffer_object(ctx, &ctx->Pack.BufferObj, NULL);
