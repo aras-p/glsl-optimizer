@@ -551,11 +551,19 @@ radeon_update_renderbuffers(__DRIcontext *context, __DRIdrawable *drawable,
 			}
 
 			ret = radeon_bo_get_tiling(bo, &tiling_flags, &pitch);
-			if (tiling_flags & RADEON_TILING_MACRO)
-				bo->flags |= RADEON_BO_FLAGS_MACRO_TILE;
-			if (tiling_flags & RADEON_TILING_MICRO)
-				bo->flags |= RADEON_BO_FLAGS_MICRO_TILE;
-
+			if (ret) {
+				fprintf(stderr,
+					"failed to get tiling for %s %d\n",
+					regname, buffers[i].name);
+				radeon_bo_unref(bo);
+				bo = NULL;
+				continue;
+			} else {
+				if (tiling_flags & RADEON_TILING_MACRO)
+					bo->flags |= RADEON_BO_FLAGS_MACRO_TILE;
+				if (tiling_flags & RADEON_TILING_MICRO)
+					bo->flags |= RADEON_BO_FLAGS_MICRO_TILE;
+			}
 		}
 
 		if (buffers[i].attachment == __DRI_BUFFER_DEPTH) {
