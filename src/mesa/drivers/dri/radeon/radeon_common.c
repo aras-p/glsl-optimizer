@@ -93,7 +93,7 @@ void radeonRecalcScissorRects(radeonContextPtr radeon)
 	bounds.x1 = 0;
 	bounds.y1 = 0;
 	bounds.x2 = ctx->DrawBuffer->Width;
-	bounds.x2 = ctx->DrawBuffer->Height;
+	bounds.y2 = ctx->DrawBuffer->Height;
 
 	if (!radeon->state.scissor.numAllocedClipRects) {
 		radeon->state.scissor.numAllocedClipRects = 1;
