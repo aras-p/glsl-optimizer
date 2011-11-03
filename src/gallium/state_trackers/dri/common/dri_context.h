@@ -32,8 +32,8 @@
 #ifndef DRI_CONTEXT_H
 #define DRI_CONTEXT_H
 
+#include "dri_util.h"
 #include "pipe/p_compiler.h"
-#include "dri_wrapper.h"
 #include "postprocess/filters.h"
 
 struct pipe_context;

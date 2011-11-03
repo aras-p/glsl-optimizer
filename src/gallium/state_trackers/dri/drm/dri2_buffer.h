@@ -1,7 +1,7 @@
 #ifndef DRI2_BUFFER_H
 #define DRI2_BUFFER_H
 
-#include "dri_wrapper.h"
+#include "dri_util.h"
 
 struct pipe_surface;
 

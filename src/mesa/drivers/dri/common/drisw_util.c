@@ -27,7 +27,7 @@
  * DRISW utility functions, i.e. dri_util.c stripped from drm-specific bits.
  */
 
-#include "drisw_util.h"
+#include "dri_util.h"
 #include "utils.h"
 
 

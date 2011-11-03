@@ -44,6 +44,12 @@
  * \author Brian Paul <brian@precisioninsight.com>
  */
 
+/**
+ * The following structs are shared between DRISW and DRI2, the DRISW structs
+ * are essentially base classes of the DRI2 structs. DRISW needs to compile on
+ * platforms without DRM, so keep the structs opaque to DRM.
+ */
+
 #ifndef _DRI_UTIL_H_
 #define _DRI_UTIL_H_
 
@@ -52,11 +58,11 @@
 #include "main/mtypes.h"
 #include "xmlconfig.h"
 
-
 /**
  * Extensions.
  */
 extern const __DRIcoreExtension driCoreExtension;
+extern const __DRIswrastExtension driSWRastExtension;
 extern const __DRIdri2Extension driDRI2Extension;
 extern const __DRI2configQueryExtension dri2ConfigQueryExtension;
 
