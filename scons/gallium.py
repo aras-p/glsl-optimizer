@@ -540,7 +540,7 @@ def generate(env):
         if env['platform'] == 'windows':
             # Avoid depending on gcc runtime DLLs
             linkflags += ['-static-libgcc']
-            if env['machine'] == 'x86_64':
+            if 'w64' in env['CC'].split('-'):
                 linkflags += ['-static-libstdc++']
             # Handle the @xx symbol munging of DLL exports
             shlinkflags += ['-Wl,--enable-stdcall-fixup']
