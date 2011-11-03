@@ -116,6 +116,7 @@ fail:
  */
 static enum pipe_error
 make_fs_key(const struct svga_context *svga,
+            struct svga_fragment_shader *fs,
             struct svga_fs_compile_key *key)
 {
    int i;
@@ -215,7 +216,7 @@ emit_hw_fs(struct svga_context *svga, unsigned dirty)
     * SVGA_NEW_NEED_SWTNL
     * SVGA_NEW_SAMPLER
     */
-   ret = make_fs_key( svga, &key );
+   ret = make_fs_key( svga, fs, &key );
    if (ret != PIPE_OK)
       return ret;
 

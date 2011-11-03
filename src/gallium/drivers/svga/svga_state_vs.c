@@ -107,7 +107,7 @@ fail:
    return ret;
 }
 
-/* SVGA_NEW_PRESCALE, SVGA_NEW_RAST, SVGA_NEW_ZERO_STRIDE
+/* SVGA_NEW_PRESCALE, SVGA_NEW_RAST, SVGA_NEW_ZERO_STRIDE, SVGA_NEW_FS
  */
 static void
 make_vs_key(struct svga_context *svga, struct svga_vs_compile_key *key)
@@ -119,6 +119,9 @@ make_vs_key(struct svga_context *svga, struct svga_vs_compile_key *key)
       svga->curr.zero_stride_vertex_elements;
    key->num_zero_stride_vertex_elements =
       svga->curr.num_zero_stride_vertex_elements;
+
+   /* SVGA_NEW_FS */
+   key->fs_generic_inputs = svga->curr.fs->generic_inputs;
 }
 
 
@@ -166,6 +169,7 @@ struct svga_tracked_state svga_hw_vs =
 {
    "vertex shader (hwtnl)",
    (SVGA_NEW_VS |
+    SVGA_NEW_FS |
     SVGA_NEW_PRESCALE |
     SVGA_NEW_NEED_SWTNL |
     SVGA_NEW_ZERO_STRIDE),

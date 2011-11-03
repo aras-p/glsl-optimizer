@@ -59,6 +59,10 @@ svga_create_fs_state(struct pipe_context *pipe,
 
    fs->base.id = svga->debug.shader_id++;
    
+   fs->generic_inputs = svga_get_generic_inputs_mask(&fs->base.info);
+
+   svga_remap_generics(fs->generic_inputs, fs->generic_remap_table);
+
    if (SVGA_DEBUG & DEBUG_TGSI || 0) {
       debug_printf("%s id: %u, inputs: %u, outputs: %u\n",
                    __FUNCTION__, fs->base.id,

@@ -31,7 +31,7 @@
 #include "svga_context.h"
 #include "svga_swtnl.h"
 #include "svga_state.h"
-
+#include "svga_tgsi.h"
 #include "svga_swtnl_private.h"
 
 
@@ -169,13 +169,15 @@ svga_swtnl_update_vdecl( struct svga_context *svga )
    nr_decls++;
 
    for (i = 0; i < fs->base.info.num_inputs; i++) {
-      unsigned name = fs->base.info.input_semantic_name[i];
-      unsigned index = fs->base.info.input_semantic_index[i];
-      src = draw_find_shader_output(draw, name, index);
-      vdecl[nr_decls].array.offset = offset;
-      vdecl[nr_decls].identity.usageIndex = fs->base.info.input_semantic_index[i];
+      const unsigned sem_name = fs->base.info.input_semantic_name[i];
+      const unsigned sem_index = fs->base.info.input_semantic_index[i];
 
-      switch (name) {
+      src = draw_find_shader_output(draw, sem_name, sem_index);
+
+      vdecl[nr_decls].array.offset = offset;
+      vdecl[nr_decls].identity.usageIndex = sem_index;
+
+      switch (sem_name) {
       case TGSI_SEMANTIC_COLOR:
          draw_emit_vertex_attr(vinfo, EMIT_4F, colorInterp, src);
          vdecl[nr_decls].identity.usage = SVGA3D_DECLUSAGE_COLOR;
@@ -187,7 +189,8 @@ svga_swtnl_update_vdecl( struct svga_context *svga )
          draw_emit_vertex_attr(vinfo, EMIT_4F, INTERP_PERSPECTIVE, src);
          vdecl[nr_decls].identity.usage = SVGA3D_DECLUSAGE_TEXCOORD;
          vdecl[nr_decls].identity.type = SVGA3D_DECLTYPE_FLOAT4;
-         vdecl[nr_decls].identity.usageIndex += 1;
+         vdecl[nr_decls].identity.usageIndex =
+            svga_remap_generic_index(fs->generic_remap_table, sem_index);
          offset += 16;
          nr_decls++;
          break;

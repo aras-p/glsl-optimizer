@@ -30,7 +30,9 @@
 
 #include "svga_tgsi_emit.h"
 
-static boolean translate_vs_ps_semantic( struct tgsi_declaration_semantic semantic,
+
+static boolean translate_vs_ps_semantic( struct svga_shader_emitter *emit,
+                                         struct tgsi_declaration_semantic semantic,
                                          unsigned *usage,
                                          unsigned *idx )
 {
@@ -58,7 +60,8 @@ static boolean translate_vs_ps_semantic( struct tgsi_declaration_semantic semant
       *usage = SVGA3D_DECLUSAGE_PSIZE;
       break;
    case TGSI_SEMANTIC_GENERIC:   
-      *idx = semantic.Index + 1; /* texcoord[0] is reserved for fog & position */
+      *idx = svga_remap_generic_index(emit->key.generic_remap_table,
+                                      semantic.Index);
       *usage = SVGA3D_DECLUSAGE_TEXCOORD;
       break;
    case TGSI_SEMANTIC_NORMAL:    
@@ -83,6 +86,10 @@ static boolean emit_decl( struct svga_shader_emitter *emit,
 {
    SVGA3DOpDclArgs dcl;
    SVGA3dShaderInstToken opcode;
+
+   /* check values against bitfield sizes */
+   assert(index < 16);
+   assert(usage <= SVGA3D_DECLUSAGE_MAX);
 
    opcode = inst_token( SVGA3DOP_DCL );
    dcl.values[0] = 0;
@@ -181,7 +188,7 @@ static boolean ps30_input( struct svga_shader_emitter *emit,
    else if (emit->key.fkey.light_twoside &&
             (semantic.Name == TGSI_SEMANTIC_COLOR)) {
 
-      if (!translate_vs_ps_semantic( semantic, &usage, &index ))
+      if (!translate_vs_ps_semantic( emit, semantic, &usage, &index ))
          return FALSE;
 
       emit->internal_color_idx[emit->internal_color_count] = idx;
@@ -195,7 +202,7 @@ static boolean ps30_input( struct svga_shader_emitter *emit,
          return FALSE;
 
       semantic.Name = TGSI_SEMANTIC_BCOLOR;
-      if (!translate_vs_ps_semantic( semantic, &usage, &index ))
+      if (!translate_vs_ps_semantic( emit, semantic, &usage, &index ))
          return FALSE;
 
       if (emit->ps30_input_count >= SVGA3D_INPUTREG_MAX)
@@ -234,7 +241,7 @@ static boolean ps30_input( struct svga_shader_emitter *emit,
    }
    else {
 
-      if (!translate_vs_ps_semantic( semantic, &usage, &index ))
+      if (!translate_vs_ps_semantic( emit, semantic, &usage, &index ))
          return FALSE;
 
       if (emit->ps30_input_count >= SVGA3D_INPUTREG_MAX)
@@ -398,7 +405,7 @@ static boolean vs30_output( struct svga_shader_emitter *emit,
    dcl.values[0] = 0;
    dcl.values[1] = 0;
 
-   if (!translate_vs_ps_semantic( semantic, &usage, &index ))
+   if (!translate_vs_ps_semantic( emit, semantic, &usage, &index ))
       return FALSE;
 
    if (emit->vs30_output_count >= SVGA3D_OUTPUTREG_MAX)
