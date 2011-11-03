@@ -361,6 +361,8 @@ generate_pstip_fs(struct pstip_stage *pstip)
    tgsi_dump(pstip_fs.tokens, 0);
 #endif
 
+   assert(pstip->fs);
+
    pstip->fs->sampler_unit = transform.freeSampler;
    assert(pstip->fs->sampler_unit < PIPE_MAX_SAMPLERS);
 

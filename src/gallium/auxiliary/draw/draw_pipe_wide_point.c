@@ -229,6 +229,8 @@ widepoint_first_point(struct draw_stage *stage,
       const struct draw_fragment_shader *fs = draw->fs.fragment_shader;
       uint i;
 
+      assert(fs);
+
       wide->num_texcoord_gen = 0;
 
       /* Loop over fragment shader inputs looking for generic inputs
