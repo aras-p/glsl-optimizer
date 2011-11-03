@@ -83,7 +83,6 @@ dri_create_context(gl_api api, const struct gl_config * visual,
    cPriv->driverPrivate = ctx;
    ctx->cPriv = cPriv;
    ctx->sPriv = sPriv;
-   ctx->lock = screen->drmLock;
 
    driParseConfigFiles(&ctx->optionCache,
 		       &screen->optionCache, sPriv->myNum, "dri");

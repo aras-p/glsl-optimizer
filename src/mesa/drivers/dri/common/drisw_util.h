@@ -36,11 +36,9 @@
 #ifndef _DRISW_UTIL_H
 #define _DRISW_UTIL_H
 
-#include "main/mtypes.h"
-
 #include <GL/gl.h>
 #include <GL/internal/dri_interface.h>
-typedef struct _drmLock drmLock;
+#include "main/mtypes.h"
 
 
 /**

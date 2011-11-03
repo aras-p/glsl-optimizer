@@ -52,11 +52,6 @@ struct dri_context
 
    driOptionCache optionCache;
 
-   drmLock *lock;
-   boolean isLocked;
-   boolean stLostLock;
-   boolean wsLostLock;
-
    unsigned int bind_count;
 
    /* gallium */

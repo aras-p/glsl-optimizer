@@ -63,7 +63,6 @@ struct dri_screen
 
    /* drm */
    int fd;
-   drmLock *drmLock;
 
    /* gallium */
    boolean d_depth_bits_last;
