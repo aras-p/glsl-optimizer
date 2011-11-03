@@ -38,7 +38,7 @@ gen7_upload_sf_clip_viewport(struct brw_context *brw)
    struct gen7_sf_clip_viewport *vp;
 
    vp = brw_state_batch(brw, AUB_TRACE_SF_VP_STATE,
-			sizeof(vp), 64, &brw->sf.vp_offset);
+			sizeof(*vp), 64, &brw->sf.vp_offset);
    /* Also assign to clip.vp_offset in case something uses it. */
    brw->clip.vp_offset = brw->sf.vp_offset;
 
