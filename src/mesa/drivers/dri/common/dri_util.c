@@ -15,13 +15,6 @@
  */
 
 
-#include <assert.h>
-#include <stdarg.h>
-#include <stdio.h>
-
-#include "main/imports.h"
-
-#include <drm.h>
 #include <xf86drm.h>
 #include "dri_util.h"
 #include "utils.h"
@@ -36,10 +29,6 @@ PUBLIC const char __dri2ConfigOptions[] =
    DRI_CONF_END;
 
 static const uint __dri2NConfigOptions = 1;
-
-#ifndef GLX_OML_sync_control
-typedef GLboolean ( * PFNGLXGETMSCRATEOMLPROC) (__DRIdrawable *drawable, int32_t *numerator, int32_t *denominator);
-#endif
 
 static void dri_get_drawable(__DRIdrawable *pdp);
 static void dri_put_drawable(__DRIdrawable *pdp);
