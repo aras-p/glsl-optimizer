@@ -420,6 +420,28 @@ static GLboolean checkValue (const driOptionValue *v, const driOptionInfo *info)
     return GL_FALSE;
 }
 
+/**
+ * Print message to \c stderr if the \c LIBGL_DEBUG environment variable
+ * is set. 
+ * 
+ * Is called from the drivers.
+ * 
+ * \param f \c printf like format string.
+ */
+static void
+__driUtilMessage(const char *f, ...)
+{
+    va_list args;
+
+    if (getenv("LIBGL_DEBUG")) {
+        fprintf(stderr, "libGL: ");
+        va_start(args, f);
+        vfprintf(stderr, f, args);
+        va_end(args);
+        fprintf(stderr, "\n");
+    }
+}
+
 /** \brief Output a warning message. */
 #define XML_WARNING1(msg) do {\
     __driUtilMessage ("Warning in %s line %d, column %d: "msg, data->name, \

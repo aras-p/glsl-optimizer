@@ -32,15 +32,10 @@
 #include <GL/internal/dri_interface.h>
 #include "main/context.h"
 
-typedef struct __DRIutilversionRec2    __DRIutilversion2;
-
 struct dri_debug_control {
     const char * string;
     unsigned     flag;
 };
-
-extern void
-__driUtilMessage(const char *f, ...);
 
 extern unsigned driParseDebugString( const char * debug,
     const struct dri_debug_control * control );

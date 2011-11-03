@@ -1060,8 +1060,7 @@ radeonCreateScreen2(__DRIscreen *sPriv)
    /* Allocate the private area */
    screen = (radeonScreenPtr) CALLOC( sizeof(*screen) );
    if ( !screen ) {
-      __driUtilMessage("%s: Could not allocate memory for screen structure",
-		       __FUNCTION__);
+      fprintf(stderr, "%s: Could not allocate memory for screen structure", __FUNCTION__);
       fprintf(stderr, "leaving here\n");
       return NULL;
    }
