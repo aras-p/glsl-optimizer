@@ -93,6 +93,10 @@ update_swtnl_draw( struct svga_context *svga,
       draw_bind_vertex_shader(svga->swtnl.draw,
                               svga->curr.vs->draw_shader);
 
+   if (dirty & SVGA_NEW_FS) 
+      draw_bind_fragment_shader(svga->swtnl.draw,
+                                svga->curr.fs->draw_shader);
+
    if (dirty & SVGA_NEW_VBUFFER)
       draw_set_vertex_buffers(svga->swtnl.draw, 
                               svga->curr.num_vertex_buffers, 

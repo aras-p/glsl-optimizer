@@ -45,6 +45,7 @@
 #define SVGA_MAX_POINTSIZE 80.0
 
 struct draw_vertex_shader;
+struct draw_fragment_shader;
 struct svga_shader_result;
 struct SVGACmdMemory;
 struct util_bitmask;
@@ -67,6 +68,8 @@ struct svga_shader
 struct svga_fragment_shader
 {
    struct svga_shader base;
+
+   struct draw_fragment_shader *draw_shader;
 
    /** Mask of which generic varying variables are read by this shader */
    unsigned generic_inputs;
