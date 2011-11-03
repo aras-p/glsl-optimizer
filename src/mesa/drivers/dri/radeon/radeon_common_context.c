@@ -169,7 +169,7 @@ GLboolean radeonInitContext(radeonContextPtr radeon,
 			    void *sharedContextPrivate)
 {
 	__DRIscreen *sPriv = driContextPriv->driScreenPriv;
-	radeonScreenPtr screen = (radeonScreenPtr) (sPriv->private);
+	radeonScreenPtr screen = (radeonScreenPtr) (sPriv->driverPrivate);
 	struct gl_context* ctx;
 	struct gl_context* shareCtx;
 	int fthrottle_mode;

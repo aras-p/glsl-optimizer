@@ -78,7 +78,7 @@ struct dri_screen
 static INLINE struct dri_screen *
 dri_screen(__DRIscreen * sPriv)
 {
-   return (struct dri_screen *)sPriv->private;
+   return (struct dri_screen *)sPriv->driverPrivate;
 }
 
 struct __DRIimageRec {

@@ -307,7 +307,7 @@ drisw_init_screen(__DRIscreen * sPriv)
 
    swrast_no_present = debug_get_option_swrast_no_present();
 
-   sPriv->private = (void *)screen;
+   sPriv->driverPrivate = (void *)screen;
    sPriv->extensions = drisw_screen_extensions;
 
    pscreen = drisw_create_screen(&drisw_lf);

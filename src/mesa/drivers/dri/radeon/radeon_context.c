@@ -165,7 +165,7 @@ r100CreateContext( gl_api api,
 		   void *sharedContextPrivate)
 {
    __DRIscreen *sPriv = driContextPriv->driScreenPriv;
-   radeonScreenPtr screen = (radeonScreenPtr)(sPriv->private);
+   radeonScreenPtr screen = (radeonScreenPtr)(sPriv->driverPrivate);
    struct dd_function_table functions;
    r100ContextPtr rmesa;
    struct gl_context *ctx;

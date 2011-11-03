@@ -97,7 +97,7 @@ struct __DRIscreenRec {
 
     int fd;
 
-    void *private;
+    void *driverPrivate;
 
     const __DRIextension **extensions;
 

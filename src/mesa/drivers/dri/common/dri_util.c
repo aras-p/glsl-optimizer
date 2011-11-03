@@ -67,7 +67,6 @@ static void dri_put_drawable(__DRIdrawable *pdp);
  */
 static int driUnbindContext(__DRIcontext *pcp)
 {
-    __DRIscreen *psp;
     __DRIdrawable *pdp;
     __DRIdrawable *prp;
 
@@ -79,7 +78,6 @@ static int driUnbindContext(__DRIcontext *pcp)
     if (pcp == NULL)
         return GL_FALSE;
 
-    psp = pcp->driScreenPriv;
     pdp = pcp->driDrawablePriv;
     prp = pcp->driReadablePriv;
 
@@ -87,7 +85,7 @@ static int driUnbindContext(__DRIcontext *pcp)
     if (!pdp && !prp)
       return GL_TRUE;
     /* Let driver unbind drawable from context */
-    (*psp->DriverAPI.UnbindContext)(pcp);
+    driDriverAPI.UnbindContext(pcp);
 
     assert(pdp);
     if (pdp->refcount == 0) {
@@ -125,8 +123,6 @@ static int driBindContext(__DRIcontext *pcp,
 			  __DRIdrawable *pdp,
 			  __DRIdrawable *prp)
 {
-    __DRIscreen *psp = NULL;
-
     /*
     ** Assume error checking is done properly in glXMakeCurrent before
     ** calling driUnbindContext.
@@ -136,7 +132,6 @@ static int driBindContext(__DRIcontext *pcp,
 	return GL_FALSE;
 
     /* Bind the drawable to the context */
-    psp = pcp->driScreenPriv;
     pcp->driDrawablePriv = pdp;
     pcp->driReadablePriv = prp;
     if (pdp) {
@@ -148,7 +143,7 @@ static int driBindContext(__DRIcontext *pcp,
     }
 
     /* Call device-specific MakeCurrent */
-    return (*psp->DriverAPI.MakeCurrent)(pcp, pdp, prp);
+    return driDriverAPI.MakeCurrent(pcp, pdp, prp);
 }
 
 static __DRIdrawable *
@@ -170,7 +165,7 @@ dri2CreateNewDrawable(__DRIscreen *screen,
     pdraw->h = 0;
     pdraw->driScreenPriv = screen;
 
-    if (!(*screen->DriverAPI.CreateBuffer)(screen, pdraw, &config->modes, 0)) {
+    if (!driDriverAPI.CreateBuffer(screen, pdraw, &config->modes, 0)) {
        free(pdraw);
        return NULL;
     }
@@ -185,14 +180,14 @@ dri2AllocateBuffer(__DRIscreen *screen,
 		   unsigned int attachment, unsigned int format,
 		   int width, int height)
 {
-    return (*screen->DriverAPI.AllocateBuffer)(screen, attachment, format,
-					       width, height);
+    return driDriverAPI.AllocateBuffer(screen, attachment, format,
+				       width, height);
 }
 
 static void
 dri2ReleaseBuffer(__DRIscreen *screen, __DRIbuffer *buffer)
 {
-   (*screen->DriverAPI.ReleaseBuffer)(screen, buffer);
+   driDriverAPI.ReleaseBuffer(screen, buffer);
 }
 
 
@@ -246,7 +241,7 @@ static void dri_put_drawable(__DRIdrawable *pdp)
 	    return;
 
 	psp = pdp->driScreenPriv;
-        (*psp->DriverAPI.DestroyBuffer)(pdp);
+        driDriverAPI.DestroyBuffer(pdp);
 	free(pdp);
     }
 }
@@ -276,7 +271,7 @@ static void
 driDestroyContext(__DRIcontext *pcp)
 {
     if (pcp) {
-	(*pcp->driScreenPriv->DriverAPI.DestroyContext)(pcp);
+	driDriverAPI.DestroyContext(pcp);
 	free(pcp);
     }
 }
@@ -322,8 +317,8 @@ dri2CreateNewContextForAPI(__DRIscreen *screen, int api,
     context->driDrawablePriv = NULL;
     context->loaderPrivate = data;
     
-    if (!(*screen->DriverAPI.CreateContext)(mesa_api, modes,
-					    context, shareCtx) ) {
+    if (!driDriverAPI.CreateContext(mesa_api, modes,
+				    context, shareCtx) ) {
         free(context);
         return NULL;
     }
@@ -374,8 +369,8 @@ static void driDestroyScreen(__DRIscreen *psp)
 
        _mesa_destroy_shader_compiler();
 
-	if (psp->DriverAPI.DestroyScreen)
-	    (*psp->DriverAPI.DestroyScreen)(psp);
+	if (driDriverAPI.DestroyScreen)
+	    driDriverAPI.DestroyScreen(psp);
 
 	driDestroyOptionCache(&psp->optionCache);
 	driDestroyOptionInfo(&psp->optionInfo);
@@ -430,7 +425,6 @@ dri2CreateNewScreen(int scrn, int fd,
     psp->fd = fd;
     psp->myNum = scrn;
 
-    psp->DriverAPI = driDriverAPI;
     psp->api_mask = (1 << __DRI_API_OPENGL);
     *driver_configs = driDriverAPI.InitScreen(psp);
     if (*driver_configs == NULL) {
@@ -438,7 +432,6 @@ dri2CreateNewScreen(int scrn, int fd,
 	return NULL;
     }
 
-    psp->DriverAPI = driDriverAPI;
     psp->loaderPrivate = data;
 
     driParseOptionInfo(&psp->optionInfo, __dri2ConfigOptions,

@@ -116,7 +116,7 @@ dri_create_buffer(__DRIscreen * sPriv,
 		  __DRIdrawable * dPriv,
 		  const struct gl_config * visual, boolean isPixmap)
 {
-   struct dri_screen *screen = sPriv->private;
+   struct dri_screen *screen = sPriv->driverPrivate;
    struct dri_drawable *drawable = NULL;
 
    if (isPixmap)

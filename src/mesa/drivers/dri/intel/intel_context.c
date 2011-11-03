@@ -573,7 +573,7 @@ intelInitContext(struct intel_context *intel,
    struct gl_context *ctx = &intel->ctx;
    struct gl_context *shareCtx = (struct gl_context *) sharedContextPrivate;
    __DRIscreen *sPriv = driContextPriv->driScreenPriv;
-   struct intel_screen *intelScreen = sPriv->private;
+   struct intel_screen *intelScreen = sPriv->driverPrivate;
    int bo_reuse_mode;
    struct gl_config visual;
 

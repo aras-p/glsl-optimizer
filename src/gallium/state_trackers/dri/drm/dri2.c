@@ -639,7 +639,7 @@ dri2_init_screen(__DRIscreen * sPriv)
    screen->sPriv = sPriv;
    screen->fd = sPriv->fd;
 
-   sPriv->private = (void *)screen;
+   sPriv->driverPrivate = (void *)screen;
 
    pscreen = driver_descriptor.create_screen(screen->fd);
    if (driver_descriptor.configuration)

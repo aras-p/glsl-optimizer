@@ -58,7 +58,7 @@ nouveau_context_create(gl_api api,
 		       void *share_ctx)
 {
 	__DRIscreen *dri_screen = dri_ctx->driScreenPriv;
-	struct nouveau_screen *screen = dri_screen->private;
+	struct nouveau_screen *screen = dri_screen->driverPrivate;
 	struct nouveau_context *nctx;
 	struct gl_context *ctx;
 

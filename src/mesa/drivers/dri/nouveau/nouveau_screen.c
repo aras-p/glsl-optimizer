@@ -97,7 +97,7 @@ nouveau_init_screen2(__DRIscreen *dri_screen)
 	if (!screen)
 		return NULL;
 
-	dri_screen->private = screen;
+	dri_screen->driverPrivate = screen;
 	dri_screen->extensions = nouveau_screen_extensions;
 	screen->dri_screen = dri_screen;
 
@@ -138,7 +138,7 @@ fail:
 static void
 nouveau_destroy_screen(__DRIscreen *dri_screen)
 {
-	struct nouveau_screen *screen = dri_screen->private;
+	struct nouveau_screen *screen = dri_screen->driverPrivate;
 
 	if (!screen)
 		return;
@@ -147,7 +147,7 @@ nouveau_destroy_screen(__DRIscreen *dri_screen)
 		nouveau_device_close(&screen->device);
 
 	FREE(screen);
-	dri_screen->private = NULL;
+	dri_screen->driverPrivate = NULL;
 }
 
 static GLboolean

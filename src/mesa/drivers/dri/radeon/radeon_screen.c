@@ -208,7 +208,7 @@ radeon_create_image_from_name(__DRIscreen *screen,
                               int name, int pitch, void *loaderPrivate)
 {
    __DRIimage *image;
-   radeonScreenPtr radeonScreen = screen->private;
+   radeonScreenPtr radeonScreen = screen->driverPrivate;
 
    if (name == 0)
       return NULL;
@@ -309,7 +309,7 @@ radeon_create_image(__DRIscreen *screen,
                     void *loaderPrivate)
 {
    __DRIimage *image;
-   radeonScreenPtr radeonScreen = screen->private;
+   radeonScreenPtr radeonScreen = screen->driverPrivate;
 
    image = CALLOC(sizeof *image);
    if (image == NULL)
@@ -1126,7 +1126,7 @@ radeonCreateScreen2(__DRIscreen *sPriv)
 static void
 radeonDestroyScreen( __DRIscreen *sPriv )
 {
-    radeonScreenPtr screen = (radeonScreenPtr)sPriv->private;
+    radeonScreenPtr screen = (radeonScreenPtr)sPriv->driverPrivate;
 
     if (!screen)
         return;
@@ -1140,7 +1140,7 @@ radeonDestroyScreen( __DRIscreen *sPriv )
     driDestroyOptionInfo (&screen->optionCache);
 
     FREE( screen );
-    sPriv->private = NULL;
+    sPriv->driverPrivate = NULL;
 }
 
 
@@ -1149,8 +1149,8 @@ radeonDestroyScreen( __DRIscreen *sPriv )
 static GLboolean
 radeonInitDriver( __DRIscreen *sPriv )
 {
-    sPriv->private = (void *) radeonCreateScreen2( sPriv );
-    if ( !sPriv->private ) {
+    sPriv->driverPrivate = (void *) radeonCreateScreen2( sPriv );
+    if ( !sPriv->driverPrivate ) {
         radeonDestroyScreen( sPriv );
         return GL_FALSE;
     }
@@ -1172,7 +1172,7 @@ radeonCreateBuffer( __DRIscreen *driScrnPriv,
                     const struct gl_config *mesaVis,
                     GLboolean isPixmap )
 {
-    radeonScreenPtr screen = (radeonScreenPtr) driScrnPriv->private;
+    radeonScreenPtr screen = (radeonScreenPtr) driScrnPriv->driverPrivate;
 
     const GLboolean swDepth = GL_FALSE;
     const GLboolean swAlpha = GL_FALSE;

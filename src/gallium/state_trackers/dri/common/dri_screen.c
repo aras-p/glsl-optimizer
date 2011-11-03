@@ -372,7 +372,7 @@ dri_destroy_screen(__DRIscreen * sPriv)
    dri_destroy_screen_helper(screen);
 
    FREE(screen);
-   sPriv->private = NULL;
+   sPriv->driverPrivate = NULL;
    sPriv->extensions = NULL;
 }
 

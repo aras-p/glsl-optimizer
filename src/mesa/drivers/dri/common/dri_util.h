@@ -209,18 +209,6 @@ struct __DRIscreenRec {
     int myNum;
 
     /**
-     * Callback functions into the hardware-specific DRI driver code.
-     */
-    struct __DriverAPIRec DriverAPI;
-
-    const __DRIextension **extensions;
-
-    /**
-     * DRM (kernel module) version information.
-     */
-    __DRIversion drm_version;
-
-    /**
      * File descriptor returned when the kernel device driver is opened.
      * 
      * Used to:
@@ -231,15 +219,22 @@ struct __DRIscreenRec {
     int fd;
 
     /**
+     * DRM (kernel module) version information.
+     */
+    __DRIversion drm_version;
+
+    /**
      * Device-dependent private information (not stored in the SAREA).
      * 
      * This pointer is never touched by the DRI layer.
      */
-#ifdef __cplusplus
-    void *priv;
-#else
-    void *private;
-#endif
+    void *driverPrivate;
+
+    void *loaderPrivate;
+
+    const __DRIextension **extensions;
+
+    const __DRIswrastLoaderExtension *swrast_loader;
 
     struct {
 	/* Flag to indicate that this is a DRI2 screen.  Many of the above
@@ -251,8 +246,8 @@ struct __DRIscreenRec {
 
     driOptionCache optionInfo;
     driOptionCache optionCache;
-   unsigned int api_mask;
-   void *loaderPrivate;
+
+    unsigned int api_mask;
 };
 
 extern void

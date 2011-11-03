@@ -128,7 +128,7 @@ intel_create_image_from_name(__DRIscreen *screen,
 			     int width, int height, int format,
 			     int name, int pitch, void *loaderPrivate)
 {
-    struct intel_screen *intelScreen = screen->private;
+    struct intel_screen *intelScreen = screen->driverPrivate;
     __DRIimage *image;
     int cpp;
 
@@ -220,7 +220,7 @@ intel_create_image(__DRIscreen *screen,
 		   void *loaderPrivate)
 {
    __DRIimage *image;
-   struct intel_screen *intelScreen = screen->private;
+   struct intel_screen *intelScreen = screen->driverPrivate;
    uint32_t tiling;
    int cpp;
 
@@ -367,7 +367,7 @@ nop_callback(GLuint key, void *data, void *userData)
 static void
 intelDestroyScreen(__DRIscreen * sPriv)
 {
-   struct intel_screen *intelScreen = sPriv->private;
+   struct intel_screen *intelScreen = sPriv->driverPrivate;
 
    dri_bufmgr_destroy(intelScreen->bufmgr);
    driDestroyOptionInfo(&intelScreen->optionCache);
@@ -379,7 +379,7 @@ intelDestroyScreen(__DRIscreen * sPriv)
    _mesa_DeleteHashTable(intelScreen->named_regions);
 
    FREE(intelScreen);
-   sPriv->private = NULL;
+   sPriv->driverPrivate = NULL;
 }
 
 
@@ -392,7 +392,7 @@ intelCreateBuffer(__DRIscreen * driScrnPriv,
                   const struct gl_config * mesaVis, GLboolean isPixmap)
 {
    struct intel_renderbuffer *rb;
-   struct intel_screen *screen = (struct intel_screen*) driScrnPriv->private;
+   struct intel_screen *screen = (struct intel_screen*) driScrnPriv->driverPrivate;
 
    if (isPixmap) {
       return false;          /* not implemented */
@@ -513,7 +513,7 @@ intelCreateContext(gl_api api,
                    void *sharedContextPrivate)
 {
    __DRIscreen *sPriv = driContextPriv->driScreenPriv;
-   struct intel_screen *intelScreen = sPriv->private;
+   struct intel_screen *intelScreen = sPriv->driverPrivate;
 
 #ifdef I915
    if (IS_9XX(intelScreen->deviceID)) {
@@ -648,7 +648,7 @@ __DRIconfig **intelInitScreen2(__DRIscreen *psp)
                       __driConfigOptions, __driNConfigOptions);
 
    intelScreen->driScrnPriv = psp;
-   psp->private = (void *) intelScreen;
+   psp->driverPrivate = (void *) intelScreen;
 
    /* Determine chipset ID */
    if (!intel_get_param(psp, I915_PARAM_CHIPSET_ID,
@@ -802,7 +802,7 @@ intelAllocateBuffer(__DRIscreen *screen,
 		    int width, int height)
 {
    struct intel_buffer *intelBuffer;
-   struct intel_screen *intelScreen = screen->private;
+   struct intel_screen *intelScreen = screen->driverPrivate;
    uint32_t tiling;
 
    intelBuffer = CALLOC(sizeof *intelBuffer);
