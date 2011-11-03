@@ -1354,6 +1354,7 @@ __DRIconfig **radeonInitScreen2(__DRIscreen *psp)
 }
 
 const struct __DriverAPIRec driDriverAPI = {
+   .InitScreen      = radeonInitScreen2,
    .DestroyScreen   = radeonDestroyScreen,
 #if defined(RADEON_R200)
    .CreateContext   = r200CreateContext,
@@ -1366,8 +1367,6 @@ const struct __DriverAPIRec driDriverAPI = {
    .DestroyBuffer   = radeonDestroyBuffer,
    .MakeCurrent     = radeonMakeCurrent,
    .UnbindContext   = radeonUnbindContext,
-    /* DRI2 */
-   .InitScreen2     = radeonInitScreen2,
 };
 
 /* This is the table of extensions that the loader will dlsym() for. */

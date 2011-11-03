@@ -701,7 +701,7 @@ dri2_create_buffer(__DRIscreen * sPriv,
  * DRI versions differ in their implementation of init_screen and swap_buffers.
  */
 const struct __DriverAPIRec driDriverAPI = {
-   .InitScreen2 = dri2_init_screen,
+   .InitScreen = dri2_init_screen,
    .DestroyScreen = dri_destroy_screen,
    .CreateContext = dri_create_context,
    .DestroyContext = dri_destroy_context,

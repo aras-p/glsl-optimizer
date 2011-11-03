@@ -21,6 +21,8 @@
 
 #include "main/imports.h"
 
+#include <drm.h>
+#include <xf86drm.h>
 #include "dri_util.h"
 #include "utils.h"
 #include "xmlpool.h"
@@ -410,9 +412,6 @@ dri2CreateNewScreen(int scrn, int fd,
     __DRIscreen *psp;
     drmVersionPtr version;
 
-    if (driDriverAPI.InitScreen2 == NULL)
-        return NULL;
-
     psp = calloc(1, sizeof(*psp));
     if (!psp)
 	return NULL;
@@ -433,7 +432,7 @@ dri2CreateNewScreen(int scrn, int fd,
 
     psp->DriverAPI = driDriverAPI;
     psp->api_mask = (1 << __DRI_API_OPENGL);
-    *driver_configs = driDriverAPI.InitScreen2(psp);
+    *driver_configs = driDriverAPI.InitScreen(psp);
     if (*driver_configs == NULL) {
 	free(psp);
 	return NULL;

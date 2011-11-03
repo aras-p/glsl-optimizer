@@ -241,7 +241,7 @@ static const __DRIextension *nouveau_screen_extensions[] = {
 };
 
 const struct __DriverAPIRec driDriverAPI = {
-	.InitScreen2     = nouveau_init_screen2,
+	.InitScreen      = nouveau_init_screen2,
 	.DestroyScreen   = nouveau_destroy_screen,
 	.CreateBuffer    = nouveau_create_buffer,
 	.DestroyBuffer   = nouveau_destroy_buffer,

@@ -56,7 +56,7 @@ struct __DriverAPIRec {
 
     void (*DestroyScreen)(__DRIscreen *driScrnPriv);
 
-    GLboolean (*CreateContext)(gl_api glapi,
+    GLboolean (*CreateContext)(gl_api api,
                                const struct gl_config *glVis,
                                __DRIcontext *driContextPriv,
                                void *sharedContextPrivate);
@@ -77,6 +77,13 @@ struct __DriverAPIRec {
                              __DRIdrawable *driReadPriv);
 
     GLboolean (*UnbindContext)(__DRIcontext *driContextPriv);
+
+    __DRIbuffer *(*AllocateBuffer) (__DRIscreen *screenPrivate,
+                                    unsigned int attachment,
+                                    unsigned int format,
+                                    int width, int height);
+
+    void (*ReleaseBuffer) (__DRIscreen *screenPrivate, __DRIbuffer *buffer);
 };
 
 extern const struct __DriverAPIRec driDriverAPI;

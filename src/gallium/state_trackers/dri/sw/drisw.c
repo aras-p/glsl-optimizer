@@ -356,10 +356,9 @@ const struct __DriverAPIRec driDriverAPI = {
    .DestroyContext = dri_destroy_context,
    .CreateBuffer = drisw_create_buffer,
    .DestroyBuffer = dri_destroy_buffer,
+   .SwapBuffers = drisw_swap_buffers,
    .MakeCurrent = dri_make_current,
    .UnbindContext = dri_unbind_context,
-
-   .SwapBuffers = drisw_swap_buffers,
 };
 
 /* This is the table of extensions that the loader will dlsym() for. */

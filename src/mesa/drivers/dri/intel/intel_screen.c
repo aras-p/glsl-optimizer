@@ -846,6 +846,7 @@ intelReleaseBuffer(__DRIscreen *screen, __DRIbuffer *buffer)
 
 
 const struct __DriverAPIRec driDriverAPI = {
+   .InitScreen		 = intelInitScreen2,
    .DestroyScreen	 = intelDestroyScreen,
    .CreateContext	 = intelCreateContext,
    .DestroyContext	 = intelDestroyContext,
@@ -853,7 +854,6 @@ const struct __DriverAPIRec driDriverAPI = {
    .DestroyBuffer	 = intelDestroyBuffer,
    .MakeCurrent		 = intelMakeCurrent,
    .UnbindContext	 = intelUnbindContext,
-   .InitScreen2		 = intelInitScreen2,
    .AllocateBuffer       = intelAllocateBuffer,
    .ReleaseBuffer        = intelReleaseBuffer
 };

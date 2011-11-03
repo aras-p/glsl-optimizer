@@ -48,15 +48,10 @@
 #define _DRI_UTIL_H_
 
 #include <GL/gl.h>
-#include <drm.h>
-#include <drm_sarea.h>
-#include <xf86drm.h>
-#include "xmlconfig.h"
-#include "main/glheader.h"
+#include <GL/internal/dri_interface.h>
 #include "main/mtypes.h"
-#include "GL/internal/dri_interface.h"
+#include "xmlconfig.h"
 
-#define GLX_BAD_CONTEXT                    5
 
 /**
  * Extensions.
@@ -76,56 +71,37 @@ extern const __DRI2configQueryExtension dri2ConfigQueryExtension;
  * this structure.
  */
 struct __DriverAPIRec {
-    /**
-     * Screen destruction callback
-     */
+    const __DRIconfig **(*InitScreen) (__DRIscreen * priv);
+
     void (*DestroyScreen)(__DRIscreen *driScrnPriv);
 
-    /**
-     * Context creation callback
-     */	    	    
     GLboolean (*CreateContext)(gl_api api,
-			       const struct gl_config *glVis,
-			       __DRIcontext *driContextPriv,
+                               const struct gl_config *glVis,
+                               __DRIcontext *driContextPriv,
                                void *sharedContextPrivate);
 
-    /**
-     * Context destruction callback
-     */
     void (*DestroyContext)(__DRIcontext *driContextPriv);
 
-    /**
-     * Buffer (drawable) creation callback
-     */
     GLboolean (*CreateBuffer)(__DRIscreen *driScrnPriv,
                               __DRIdrawable *driDrawPriv,
                               const struct gl_config *glVis,
                               GLboolean pixmapBuffer);
-    
-    /**
-     * Buffer (drawable) destruction callback
-     */
+
     void (*DestroyBuffer)(__DRIdrawable *driDrawPriv);
 
-    /**
-     * Context activation callback
-     */
+    void (*SwapBuffers)(__DRIdrawable *driDrawPriv);
+
     GLboolean (*MakeCurrent)(__DRIcontext *driContextPriv,
                              __DRIdrawable *driDrawPriv,
                              __DRIdrawable *driReadPriv);
 
-    /**
-     * Context unbinding callback
-     */
     GLboolean (*UnbindContext)(__DRIcontext *driContextPriv);
 
-    /* DRI2 Entry point */
-    const __DRIconfig **(*InitScreen2) (__DRIscreen * priv);
-
     __DRIbuffer *(*AllocateBuffer) (__DRIscreen *screenPrivate,
-				    unsigned int attachment,
-				    unsigned int format,
-				    int width, int height);
+                                    unsigned int attachment,
+                                    unsigned int format,
+                                    int width, int height);
+
     void (*ReleaseBuffer) (__DRIscreen *screenPrivate, __DRIbuffer *buffer);
 };
 
