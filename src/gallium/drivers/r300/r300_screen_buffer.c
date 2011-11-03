@@ -196,6 +196,12 @@ struct pipe_resource *r300_buffer_create(struct pipe_screen *screen,
         return &rbuf->b.b.b;
     }
 
+#ifdef PIPE_ARCH_BIG_ENDIAN
+    /* Force buffer placement to GTT on big endian machines, because
+     * the vertex fetcher can't swap bytes from VRAM. */
+    rbuf->b.b.b.usage = PIPE_USAGE_STAGING;
+#endif
+
     rbuf->buf =
         r300screen->rws->buffer_create(r300screen->rws,
                                        rbuf->b.b.b.width0, alignment,
