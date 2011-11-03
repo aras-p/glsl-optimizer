@@ -568,7 +568,7 @@ Parse_VectorOrScalarConstant(struct parse_state *parseState, GLfloat *vec)
  */
 static GLboolean
 Parse_TextureImageId(struct parse_state *parseState,
-                     GLubyte *texUnit, GLubyte *texTargetBit)
+                     GLubyte *texUnit, GLubyte *texTarget)
 {
    GLubyte imageSrc[100];
    GLint unit;
@@ -592,26 +592,26 @@ Parse_TextureImageId(struct parse_state *parseState,
       RETURN_ERROR1("Expected ,");
 
    if (Parse_String(parseState, "1D")) {
-      *texTargetBit = TEXTURE_1D_BIT;
+      *texTarget = TEXTURE_1D_INDEX;
    }
    else if (Parse_String(parseState, "2D")) {
-      *texTargetBit = TEXTURE_2D_BIT;
+      *texTarget = TEXTURE_2D_INDEX;
    }
    else if (Parse_String(parseState, "3D")) {
-      *texTargetBit = TEXTURE_3D_BIT;
+      *texTarget = TEXTURE_3D_INDEX;
    }
    else if (Parse_String(parseState, "CUBE")) {
-      *texTargetBit = TEXTURE_CUBE_BIT;
+      *texTarget = TEXTURE_CUBE_INDEX;
    }
    else if (Parse_String(parseState, "RECT")) {
-      *texTargetBit = TEXTURE_RECT_BIT;
+      *texTarget = TEXTURE_RECT_INDEX;
    }
    else {
       RETURN_ERROR1("Invalid texture target token");
    }
 
    /* update record of referenced texture units */
-   parseState->texturesUsed[*texUnit] |= *texTargetBit;
+   parseState->texturesUsed[*texUnit] |= (1 << *texTarget);
    if (_mesa_bitcount(parseState->texturesUsed[*texUnit]) > 1) {
       RETURN_ERROR1("Only one texture target can be used per texture unit.");
    }
