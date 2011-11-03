@@ -132,8 +132,7 @@ struct __DRIdrawableRec {
     /* gallium */
     unsigned int lastStamp;
 
-    int w;
-    int h;
+    int w, h;
 };
 
 #endif /* _DRISW_UTIL_H */

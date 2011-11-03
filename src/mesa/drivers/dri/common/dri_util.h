@@ -113,7 +113,7 @@ extern const struct __DriverAPIRec driDriverAPI;
  */
 struct __DRIdrawableRec {
     /**
-     * Driver's private drawable information.  
+     * Driver's private drawable information.
      *
      * This structure is opaque.
      */
@@ -126,8 +126,18 @@ struct __DRIdrawableRec {
     void *loaderPrivate;
 
     /**
+     * Pointer to context to which this drawable is currently bound.
+     */
+    __DRIcontext *driContextPriv;
+
+    /**
+     * Pointer to screen on which this drawable was created.
+     */
+    __DRIscreen *driScreenPriv;
+
+    /**
      * Reference count for number of context's currently bound to this
-     * drawable.  
+     * drawable.
      *
      * Once it reaches zero, the drawable can be destroyed.
      *
@@ -147,16 +157,6 @@ struct __DRIdrawableRec {
     int w, h;
 
     /**
-     * Pointer to context to which this drawable is currently bound.
-     */
-    __DRIcontext *driContextPriv;
-
-    /**
-     * Pointer to screen on which this drawable was created.
-     */
-    __DRIscreen *driScreenPriv;
-
-    /**
      * Drawable timestamp.  Increased when the loader calls invalidate.
      */
     struct {
@@ -174,6 +174,11 @@ struct __DRIcontextRec {
     void *driverPrivate;
 
     /**
+     * The loaders's private context data.  This structure is opaque.
+     */
+    void *loaderPrivate;
+
+    /**
      * Pointer to drawable currently bound to this context for drawing.
      */
     __DRIdrawable *driDrawablePriv;
@@ -187,11 +192,6 @@ struct __DRIcontextRec {
      * Pointer to screen on which this context was created.
      */
     __DRIscreen *driScreenPriv;
-
-    /**
-     * The loaders's private context data.  This structure is opaque.
-     */
-    void *loaderPrivate;
 
     struct {
 	int draw_stamp;
