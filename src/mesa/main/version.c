@@ -124,9 +124,11 @@ compute_version(struct gl_context *ctx)
                               ctx->Extensions.EXT_pixel_buffer_object &&
                               ctx->Extensions.EXT_texture_sRGB);
    const GLboolean ver_3_0 = (ver_2_1 &&
+                              ctx->Const.GLSLVersion >= 130 &&
                               ctx->Extensions.ARB_color_buffer_float &&
                               ctx->Extensions.ARB_depth_buffer_float &&
                               ctx->Extensions.ARB_half_float_pixel &&
+                              ctx->Extensions.ARB_half_float_vertex &&
                               ctx->Extensions.ARB_map_buffer_range &&
                               ctx->Extensions.ARB_texture_float &&
                               ctx->Extensions.ARB_texture_rg &&
@@ -145,6 +147,7 @@ compute_version(struct gl_context *ctx)
                               ctx->Extensions.EXT_transform_feedback &&
                               ctx->Extensions.NV_conditional_render);
    const GLboolean ver_3_1 = (ver_3_0 &&
+                              ctx->Const.GLSLVersion >= 140 &&
                               ctx->Extensions.ARB_copy_buffer &&
                               ctx->Extensions.ARB_draw_instanced &&
                               ctx->Extensions.ARB_texture_buffer_object &&
@@ -154,6 +157,7 @@ compute_version(struct gl_context *ctx)
                               ctx->Extensions.NV_texture_rectangle &&
                               ctx->Const.MaxVertexTextureImageUnits >= 16);
    const GLboolean ver_3_2 = (ver_3_1 &&
+                              ctx->Const.GLSLVersion >= 150 &&
                               ctx->Extensions.ARB_depth_clamp &&
                               ctx->Extensions.ARB_draw_elements_base_vertex &&
                               ctx->Extensions.ARB_fragment_coord_conventions &&
@@ -164,6 +168,7 @@ compute_version(struct gl_context *ctx)
                               ctx->Extensions.ARB_texture_multisample &&
                               ctx->Extensions.EXT_vertex_array_bgra);
    const GLboolean ver_3_3 = (ver_3_2 &&
+                              ctx->Const.GLSLVersion >= 330 &&
                               ctx->Extensions.ARB_blend_func_extended &&
                               ctx->Extensions.ARB_explicit_attrib_location &&
                               ctx->Extensions.ARB_instanced_arrays &&
