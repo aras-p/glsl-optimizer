@@ -2142,19 +2142,22 @@ void r600_pipe_shader_vs(struct pipe_context *ctx, struct r600_pipe_shader *shad
 	struct r600_pipe_state *rstate = &shader->rstate;
 	struct r600_shader *rshader = &shader->shader;
 	unsigned spi_vs_out_id[10];
-	unsigned i, tmp, nparams = 0;
+	unsigned i, tmp, nparams;
 
 	/* clear previous register */
 	rstate->nregs = 0;
 
-	for (i = 0; i < rshader->noutput; i++) {
-		if (rshader->output[i].spi_sid) {
-			tmp = rshader->output[i].spi_sid << ((nparams & 3) * 8);
-			spi_vs_out_id[nparams / 4] |= tmp;
-			nparams++;
-		}
+	/* so far never got proper semantic id from tgsi */
+	/* FIXME better to move this in config things so they get emited
+	 * only one time per cs
+	 */
+	for (i = 0; i < 10; i++) {
+		spi_vs_out_id[i] = 0;
 	}
-
+	for (i = 0; i < 32; i++) {
+		tmp = i << ((i & 3) * 8);
+		spi_vs_out_id[i / 4] |= tmp;
+	}
 	for (i = 0; i < 10; i++) {
 		r600_pipe_state_add_reg(rstate,
 					R_028614_SPI_VS_OUT_ID_0 + i * 4,
@@ -2165,6 +2168,7 @@ void r600_pipe_shader_vs(struct pipe_context *ctx, struct r600_pipe_shader *shad
 	 * VS is required to export at least one param and r600_shader_from_tgsi()
 	 * takes care of adding a dummy export.
 	 */
+	nparams = rshader->noutput - rshader->npos;
 	if (nparams < 1)
 		nparams = 1;
 

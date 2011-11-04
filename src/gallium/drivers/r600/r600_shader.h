@@ -30,7 +30,6 @@ struct r600_shader_io {
 	unsigned		gpr;
 	unsigned		done;
 	int			sid;
-	int			spi_sid;
 	unsigned		interpolate;
 	boolean                 centroid;
 	unsigned		lds_pos; /* for evergreen */
@@ -41,6 +40,7 @@ struct r600_shader {
 	struct r600_bytecode		bc;
 	unsigned		ninput;
 	unsigned		noutput;
+	unsigned		npos;
 	unsigned		nlds;
 	struct r600_shader_io	input[32];
 	struct r600_shader_io	output[32];
