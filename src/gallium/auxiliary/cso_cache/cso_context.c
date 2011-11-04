@@ -1265,8 +1265,10 @@ restore_sampler_views(struct cso_context *ctx,
    uint i;
 
    for (i = 0; i < info->nr_views_saved; i++) {
-      pipe_sampler_view_reference(&info->views[i], info->views_saved[i]);
-      pipe_sampler_view_reference(&info->views_saved[i], NULL);
+      pipe_sampler_view_reference(&info->views[i], NULL);
+      /* move the reference from one pointer to another */
+      info->views[i] = info->views_saved[i];
+      info->views_saved[i] = NULL;
    }
    for (; i < info->nr_views; i++) {
       pipe_sampler_view_reference(&info->views[i], NULL);
