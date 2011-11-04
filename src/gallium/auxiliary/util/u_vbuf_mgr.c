@@ -471,7 +471,6 @@ void u_vbuf_set_vertex_buffers(struct u_vbuf_mgr *mgrb,
       const struct pipe_vertex_buffer *vb = &bufs[i];
 
       pipe_resource_reference(&mgr->b.vertex_buffer[i].buffer, vb->buffer);
-      pipe_resource_reference(&mgr->b.real_vertex_buffer[i].buffer, NULL);
 
       mgr->b.real_vertex_buffer[i].buffer_offset =
       mgr->b.vertex_buffer[i].buffer_offset = vb->buffer_offset;
@@ -480,10 +479,12 @@ void u_vbuf_set_vertex_buffers(struct u_vbuf_mgr *mgrb,
       mgr->b.vertex_buffer[i].stride = vb->stride;
 
       if (!vb->buffer) {
+         pipe_resource_reference(&mgr->b.real_vertex_buffer[i].buffer, NULL);
          continue;
       }
 
       if (u_vbuf_resource(vb->buffer)->user_ptr) {
+         pipe_resource_reference(&mgr->b.real_vertex_buffer[i].buffer, NULL);
          mgr->any_user_vbs = TRUE;
          continue;
       }
