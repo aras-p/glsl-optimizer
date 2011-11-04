@@ -160,7 +160,7 @@ svga_remap_generics(unsigned generics_mask,
                     int8_t remap_table[MAX_GENERIC_VARYING]);
 
 int
-svga_remap_generic_index(const int8_t remap_table[MAX_GENERIC_VARYING],
+svga_remap_generic_index(int8_t remap_table[MAX_GENERIC_VARYING],
                          int generic_index);
 
 #endif

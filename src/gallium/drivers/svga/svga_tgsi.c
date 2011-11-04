@@ -208,20 +208,22 @@ svga_remap_generics(unsigned generics_mask,
       remap_table[index] = count++;
       generics_mask &= ~(1 << index);
    }
-
-   for (i = 0; i < MAX_GENERIC_VARYING; i++) {
-      if (remap_table[i] == -1)
-         remap_table[i] = count;
-   }
 }
 
 
 /**
  * Use the generic remap table to map a TGSI generic varying variable
- * index to a small integer.
+ * index to a small integer.  If the remapping table doesn't have a
+ * valid value for the given index (the table entry is -1) it means
+ * the fragment shader doesn't use that VS output.  Just allocate
+ * the next free value in that case.  Alternately, we could cull
+ * VS instructions that write to register, or replace the register
+ * with a dummy temp register.
+ * XXX TODO: we should do one of the later as it would save precious
+ * texcoord registers.
  */
 int
-svga_remap_generic_index(const int8_t remap_table[MAX_GENERIC_VARYING],
+svga_remap_generic_index(int8_t remap_table[MAX_GENERIC_VARYING],
                          int generic_index)
 {
    assert(generic_index < MAX_GENERIC_VARYING);
@@ -229,6 +231,17 @@ svga_remap_generic_index(const int8_t remap_table[MAX_GENERIC_VARYING],
    if (generic_index >= MAX_GENERIC_VARYING) {
       /* just don't return a random/garbage value */
       generic_index = MAX_GENERIC_VARYING - 1;
+   }
+
+   if (remap_table[generic_index] == -1) {
+      /* This is a VS output that has no matching PS input.  Find a
+       * free index.
+       */
+      int i, max = 0;
+      for (i = 0; i < MAX_GENERIC_VARYING; i++) {
+         max = MAX2(max, remap_table[i]);
+      }
+      remap_table[generic_index] = max + 1;
    }
 
    return remap_table[generic_index];

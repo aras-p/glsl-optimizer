@@ -153,7 +153,7 @@ svga_swtnl_update_vdecl( struct svga_context *svga )
    SVGA3dVertexDecl vdecl[PIPE_MAX_ATTRIBS];
    const enum interp_mode colorInterp =
       svga->curr.rast->templ.flatshade ? INTERP_CONSTANT : INTERP_LINEAR;
-   const struct svga_fragment_shader *fs = svga->curr.fs;
+   struct svga_fragment_shader *fs = svga->curr.fs;
    int offset = 0;
    int nr_decls = 0;
    int src, i;
