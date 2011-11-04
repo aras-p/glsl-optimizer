@@ -54,20 +54,19 @@ driCreateNewScreen(int scrn, const __DRIextension **extensions,
     static const __DRIextension *emptyExtensionList[] = { NULL };
     __DRIscreen *psp;
 
-    (void) data;
-
     psp = CALLOC_STRUCT(__DRIscreenRec);
     if (!psp)
 	return NULL;
 
     setupLoaderExtensions(psp, extensions);
 
+    psp->loaderPrivate = data;
+
     psp->extensions = emptyExtensionList;
     psp->fd = -1;
     psp->myNum = scrn;
 
     *driver_configs = driDriverAPI.InitScreen(psp);
-
     if (*driver_configs == NULL) {
 	FREE(psp);
 	return NULL;
@@ -80,7 +79,6 @@ static void driDestroyScreen(__DRIscreen *psp)
 {
     if (psp) {
 	driDriverAPI.DestroyScreen(psp);
-
 	FREE(psp);
     }
 }
@@ -96,37 +94,12 @@ static const __DRIextension **driGetExtensions(__DRIscreen *psp)
  */
 
 static __DRIcontext *
-driCreateNewContext(__DRIscreen *psp, const __DRIconfig *config,
-		    __DRIcontext *shared, void *data)
-{
-    __DRIcontext *pcp;
-    void * const shareCtx = (shared != NULL) ? shared->driverPrivate : NULL;
-
-    pcp = CALLOC_STRUCT(__DRIcontextRec);
-    if (!pcp)
-	return NULL;
-
-    pcp->loaderPrivate = data;
-
-    pcp->driScreenPriv = psp;
-    pcp->driDrawablePriv = NULL;
-    pcp->driReadablePriv = NULL;
-
-    if (!driDriverAPI.CreateContext(API_OPENGL,
-			    &config->modes, pcp, shareCtx)) {
-	FREE(pcp);
-	return NULL;
-    }
-
-    return pcp;
-}
-
-static __DRIcontext *
 driCreateNewContextForAPI(__DRIscreen *psp, int api,
                           const __DRIconfig *config,
                           __DRIcontext *shared, void *data)
 {
     __DRIcontext *pcp;
+    const struct gl_config *modes = (config != NULL) ? &config->modes : NULL;
     void * const shareCtx = (shared != NULL) ? shared->driverPrivate : NULL;
     gl_api mesa_api;
 
@@ -154,13 +127,20 @@ driCreateNewContextForAPI(__DRIscreen *psp, int api,
     pcp->driDrawablePriv = NULL;
     pcp->driReadablePriv = NULL;
 
-    if (!driDriverAPI.CreateContext(mesa_api,
-                            &config->modes, pcp, shareCtx)) {
+    if (!driDriverAPI.CreateContext(mesa_api, modes, pcp, shareCtx)) {
         FREE(pcp);
         return NULL;
     }
 
     return pcp;
+}
+
+static __DRIcontext *
+driCreateNewContext(__DRIscreen *psp, const __DRIconfig *config,
+		    __DRIcontext *shared, void *data)
+{
+    return driCreateNewContextForAPI(psp, __DRI_API_OPENGL,
+				     config, shared, data);
 }
 
 static void
@@ -193,7 +173,7 @@ static int driBindContext(__DRIcontext *pcp,
 	    pdp->driContextPriv = pcp;
 	    dri_get_drawable(pdp);
 	}
-	if ( prp && pdp != prp ) {
+	if (prp && pdp != prp) {
 	    dri_get_drawable(prp);
 	}
     }
@@ -248,7 +228,6 @@ static void dri_put_drawable(__DRIdrawable *pdp)
 	    return;
 
 	driDriverAPI.DestroyBuffer(pdp);
-
 	FREE(pdp);
     }
 }
