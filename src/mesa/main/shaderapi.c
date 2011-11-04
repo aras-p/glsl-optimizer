@@ -325,14 +325,6 @@ attach_shader(struct gl_context *ctx, GLuint program, GLuint shader)
 }
 
 
-static void
-bind_frag_data_location(struct gl_context *ctx, GLuint program,
-                        GLuint colorNumber, const GLchar *name)
-{
-   _mesa_problem(ctx, "bind_frag_data_location() not implemented yet");
-}
-
-
 static GLuint
 create_shader(struct gl_context *ctx, GLenum type)
 {
@@ -1057,16 +1049,6 @@ _mesa_AttachShader(GLuint program, GLuint shader)
 {
    GET_CURRENT_CONTEXT(ctx);
    attach_shader(ctx, program, shader);
-}
-
-
-/* GL_EXT_gpu_shader4, GL3 */
-void GLAPIENTRY
-_mesa_BindFragDataLocation(GLuint program, GLuint colorNumber,
-                           const GLchar *name)
-{
-   GET_CURRENT_CONTEXT(ctx);
-   bind_frag_data_location(ctx, program, colorNumber, name);
 }
 
 

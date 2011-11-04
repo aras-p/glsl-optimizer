@@ -237,3 +237,40 @@ _mesa_longest_attribute_name_length(struct gl_shader_program *shProg)
 
    return longest;
 }
+
+void GLAPIENTRY
+_mesa_BindFragDataLocation(GLuint program, GLuint colorNumber,
+			   const GLchar *name)
+{
+   GET_CURRENT_CONTEXT(ctx);
+
+   struct gl_shader_program *const shProg =
+      _mesa_lookup_shader_program_err(ctx, program, "glBindFragDataLocation");
+   if (!shProg)
+      return;
+
+   if (!name)
+      return;
+
+   if (strncmp(name, "gl_", 3) == 0) {
+      _mesa_error(ctx, GL_INVALID_OPERATION,
+                  "glBindFragDataLocation(illegal name)");
+      return;
+   }
+
+   if (colorNumber >= ctx->Const.MaxDrawBuffers) {
+      _mesa_error(ctx, GL_INVALID_VALUE, "glBindFragDataLocation(index)");
+      return;
+   }
+
+   /* Replace the current value if it's already in the list.  Add
+    * FRAG_RESULT_DATA0 because that's how the linker differentiates
+    * between built-in attributes and user-defined attributes.
+    */
+
+
+   /*
+    * Note that this binding won't go into effect until
+    * glLinkProgram is called again.
+    */
+}
