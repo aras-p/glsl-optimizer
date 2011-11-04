@@ -212,9 +212,7 @@ pp_jimenezmlaa_init_run(struct pp_queue_t *ppq, unsigned int n,
 
    struct pipe_box box;
    struct pipe_resource res;
-
-   char *tmp_text = CALLOC(sizeof(blend2fs_1) + sizeof(blend2fs_2) +
-                           IMM_SPACE, sizeof(char));
+   char *tmp_text;
 
    constbuf = pipe_buffer_create(ppq->p->screen, PIPE_BIND_CONSTANT_BUFFER,
                                  PIPE_USAGE_STATIC, sizeof(constants));
@@ -225,6 +223,9 @@ pp_jimenezmlaa_init_run(struct pp_queue_t *ppq, unsigned int n,
 
 
    pp_debug("mlaa: using %u max search steps\n", val);
+
+   tmp_text = CALLOC(sizeof(blend2fs_1) + sizeof(blend2fs_2) +
+                     IMM_SPACE, sizeof(char));
 
    if (!tmp_text) {
       pp_debug("Failed to allocate shader space\n");
