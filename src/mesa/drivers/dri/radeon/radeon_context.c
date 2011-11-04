@@ -237,6 +237,8 @@ r100CreateContext( gl_api api,
    ctx->Const.MaxTextureCoordUnits = ctx->Const.MaxTextureUnits;
    ctx->Const.MaxCombinedTextureImageUnits = ctx->Const.MaxTextureUnits;
 
+   ctx->Const.StripTextureBorder = GL_TRUE;
+
    i = driQueryOptioni( &rmesa->radeon.optionCache, "allow_large_textures");
 
    /* FIXME: When no memory manager is available we should set this 
