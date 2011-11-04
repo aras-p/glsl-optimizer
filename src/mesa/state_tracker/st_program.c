@@ -416,7 +416,9 @@ st_get_vp_variant(struct st_context *st,
    return vpv;
 }
 
-static int st_translate_interp(enum glsl_interp_qualifier glsl_qual)
+
+static unsigned
+st_translate_interp(enum glsl_interp_qualifier glsl_qual)
 {
    switch (glsl_qual) {
    case INTERP_QUALIFIER_NONE:
@@ -426,10 +428,12 @@ static int st_translate_interp(enum glsl_interp_qualifier glsl_qual)
       return TGSI_INTERPOLATE_CONSTANT;
    case INTERP_QUALIFIER_NOPERSPECTIVE:
       return TGSI_INTERPOLATE_LINEAR;
+   default:
+      assert(0 && "unexpected interp mode in st_translate_interp()");
+      return TGSI_INTERPOLATE_PERSPECTIVE;
    }
-   assert(0);
-   return TGSI_INTERPOLATE_PERSPECTIVE;
 }
+
 
 /**
  * Translate a Mesa fragment shader into a TGSI shader using extra info in
