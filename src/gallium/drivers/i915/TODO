@@ -40,5 +40,7 @@ Random list of problems with i915g:
   R registers responsible for a boundary with U registers to avoid phase
   boundaries.
 
+- Continue a previous primitive when there are no state changes
+
 Other bugs can be found here:
 https://bugs.freedesktop.org/buglist.cgi?bug_status=NEW&bug_status=ASSIGNED&bug_status=REOPENED&component=Drivers/Gallium/i915g
