@@ -240,6 +240,7 @@ _mesa_init_shader_program(struct gl_context *ctx, struct gl_shader_program *prog
    prog->RefCount = 1;
 
    prog->AttributeBindings = string_to_uint_map_ctor();
+   prog->FragDataBindings = string_to_uint_map_ctor();
 
 #if FEATURE_ARB_geometry_shader4
    prog->Geom.VerticesOut = 0;
@@ -314,6 +315,11 @@ _mesa_free_shader_program_data(struct gl_context *ctx,
    if (shProg->AttributeBindings) {
       string_to_uint_map_dtor(shProg->AttributeBindings);
       shProg->AttributeBindings = NULL;
+   }
+
+   if (shProg->FragDataBindings) {
+      string_to_uint_map_dtor(shProg->FragDataBindings);
+      shProg->FragDataBindings = NULL;
    }
 
    /* detach shaders */

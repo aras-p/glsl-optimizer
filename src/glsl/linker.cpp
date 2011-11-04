@@ -1139,12 +1139,6 @@ find_available_slots(unsigned used_mask, unsigned needed_count)
  * \return
  * If locations are successfully assigned, true is returned.  Otherwise an
  * error is emitted to the shader link log and false is returned.
- *
- * \bug
- * Locations set via \c glBindFragDataLocation are not currently supported.
- * Only locations assigned automatically by the linker, explicitly set by a
- * layout qualifier, or explicitly set by a built-in variable (e.g., \c
- * gl_FragColor) are supported for fragment shaders.
  */
 bool
 assign_attribute_or_color_locations(gl_shader_program *prog,
@@ -1168,7 +1162,8 @@ assign_attribute_or_color_locations(gl_shader_program *prog,
     * 1. Invalidate the location assignments for all vertex shader inputs.
     *
     * 2. Assign locations for inputs that have user-defined (via
-    *    glBindVertexAttribLocation) locations.
+    *    glBindVertexAttribLocation) locations and outputs that have
+    *    user-defined locations (via glBindFragDataLocation).
     *
     * 3. Sort the attributes without assigned locations by number of slots
     *    required in decreasing order.  Fragmentation caused by attribute
@@ -1227,6 +1222,13 @@ assign_attribute_or_color_locations(gl_shader_program *prog,
 
 	 if (prog->AttributeBindings->get(binding, var->name)) {
 	    assert(binding >= VERT_ATTRIB_GENERIC0);
+	    var->location = binding;
+	 }
+      } else if (target_index == MESA_SHADER_FRAGMENT) {
+	 unsigned binding;
+
+	 if (prog->FragDataBindings->get(binding, var->name)) {
+	    assert(binding >= FRAG_RESULT_DATA0);
 	    var->location = binding;
 	 }
       }

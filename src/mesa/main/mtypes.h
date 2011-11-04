@@ -2185,6 +2185,15 @@ struct gl_shader_program
     */
    struct string_to_uint_map *AttributeBindings;
 
+   /**
+    * User-defined fragment data bindings
+    *
+    * These are set via \c glBindFragDataLocation and are used to direct the
+    * GLSL linker.  These are \b not the values used in the compiled shader,
+    * and they are \b not the values returned by \c glGetFragDataLocation.
+    */
+   struct string_to_uint_map *FragDataBindings;
+
    /** Transform feedback varyings */
    struct {
       GLenum BufferMode;

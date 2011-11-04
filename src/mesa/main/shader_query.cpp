@@ -267,7 +267,7 @@ _mesa_BindFragDataLocation(GLuint program, GLuint colorNumber,
     * FRAG_RESULT_DATA0 because that's how the linker differentiates
     * between built-in attributes and user-defined attributes.
     */
-
+   shProg->FragDataBindings->put(colorNumber + FRAG_RESULT_DATA0, name);
 
    /*
     * Note that this binding won't go into effect until
