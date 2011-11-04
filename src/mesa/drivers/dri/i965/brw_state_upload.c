@@ -135,8 +135,8 @@ static const struct brw_tracked_state *gen6_atoms[] =
 
    &brw_vs_constants, /* Before vs_surfaces and constant_buffer */
    &brw_wm_constants, /* Before wm_surfaces and constant_buffer */
-   &gen6_vs_constants, /* Before vs_state */
-   &gen6_wm_constants, /* Before wm_state */
+   &gen6_vs_push_constants, /* Before vs_state */
+   &gen6_wm_push_constants, /* Before wm_state */
 
    &brw_vs_surfaces,		/* must do before unit */
    &brw_wm_constant_surface,	/* must do before wm surfaces/bind bo */
@@ -200,8 +200,8 @@ const struct brw_tracked_state *gen7_atoms[] =
 
    &brw_vs_constants, /* Before vs_surfaces and constant_buffer */
    &brw_wm_constants, /* Before wm_surfaces and constant_buffer */
-   &gen6_vs_constants, /* Before vs_state */
-   &gen6_wm_constants, /* Before wm_surfaces and constant_buffer */
+   &gen6_vs_push_constants, /* Before vs_state */
+   &gen6_wm_push_constants, /* Before wm_surfaces and constant_buffer */
 
    &brw_vs_surfaces,		/* must do before unit */
    &brw_wm_constant_surface,	/* must do before wm surfaces/bind bo */

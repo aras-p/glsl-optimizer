@@ -117,7 +117,7 @@ gen6_upload_vs_push_constants(struct brw_context *brw)
    }
 }
 
-const struct brw_tracked_state gen6_vs_constants = {
+const struct brw_tracked_state gen6_vs_push_constants = {
    .dirty = {
       .mesa  = _NEW_TRANSFORM | _NEW_PROGRAM_CONSTANTS,
       .brw   = (BRW_NEW_BATCH |
