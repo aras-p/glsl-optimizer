@@ -305,7 +305,7 @@ static GLboolean
 fast_read_depth_stencil_pixels(struct gl_context *ctx,
 			       GLint x, GLint y,
 			       GLsizei width, GLsizei height,
-			       GLvoid *dst, int dstStride)
+			       GLubyte *dst, int dstStride)
 {
    struct gl_framebuffer *fb = ctx->ReadBuffer;
    struct gl_renderbuffer *rb = fb->Attachment[BUFFER_DEPTH].Renderbuffer;
