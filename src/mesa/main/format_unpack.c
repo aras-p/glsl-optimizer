@@ -1258,7 +1258,127 @@ _mesa_unpack_rgba_row(gl_format format, GLuint n,
    }
 }
 
+static void
+unpack_int_rgba_RGBA_UINT32(const GLuint *src, GLuint dst[][4], GLuint n)
+{
+   memcpy(dst, src, n * 4 * sizeof(GLuint));
+}
 
+static void
+unpack_int_rgba_RGB_UINT32(const GLuint *src, GLuint dst[][4], GLuint n)
+{
+   unsigned int i;
+
+   for (i = 0; i < n; i++) {
+      dst[i][0] = src[i * 3 + 0];
+      dst[i][1] = src[i * 3 + 1];
+      dst[i][2] = src[i * 3 + 2];
+      dst[i][3] = 1;
+   }
+}
+
+static void
+unpack_int_rgba_RG_UINT32(const GLuint *src, GLuint dst[][4], GLuint n)
+{
+   unsigned int i;
+
+   for (i = 0; i < n; i++) {
+      dst[i][0] = src[i * 2 + 0];
+      dst[i][1] = src[i * 2 + 1];
+      dst[i][2] = 0;
+      dst[i][3] = 1;
+   }
+}
+
+static void
+unpack_int_rgba_R_UINT32(const GLuint *src, GLuint dst[][4], GLuint n)
+{
+   unsigned int i;
+
+   for (i = 0; i < n; i++) {
+      dst[i][0] = src[i];
+      dst[i][1] = 0;
+      dst[i][2] = 0;
+      dst[i][3] = 1;
+   }
+}
+
+static void
+unpack_int_rgba_LUMINANCE_UINT32(const GLuint *src, GLuint dst[][4], GLuint n)
+{
+   unsigned int i;
+
+   for (i = 0; i < n; i++) {
+      dst[i][0] = dst[i][1] = dst[i][2] = src[i];
+      dst[i][3] = 1;
+   }
+}
+
+static void
+unpack_int_rgba_LUMINANCE_ALPHA_UINT32(const GLuint *src, GLuint dst[][4], GLuint n)
+{
+   unsigned int i;
+
+   for (i = 0; i < n; i++) {
+      dst[i][0] = dst[i][1] = dst[i][2] = src[i * 2 + 0];
+      dst[i][3] = src[i * 2 + 1];
+   }
+}
+
+static void
+unpack_int_rgba_INTENSITY_UINT32(const GLuint *src, GLuint dst[][4], GLuint n)
+{
+   unsigned int i;
+
+   for (i = 0; i < n; i++) {
+      dst[i][0] = dst[i][1] = dst[i][2] = dst[i][3] = src[i];
+   }
+}
+
+void
+_mesa_unpack_int_rgba_row(gl_format format, GLuint n,
+			  const void *src, GLuint dst[][4])
+{
+   switch (format) {
+      /* Since there won't be any sign extension happening, there's no need to
+       * make separate paths for 32-bit-to-32-bit integer unpack.
+       */
+   case MESA_FORMAT_RGBA_UINT32:
+   case MESA_FORMAT_RGBA_INT32:
+      unpack_int_rgba_RGBA_UINT32(src, dst, n);
+      break;
+   case MESA_FORMAT_RGB_UINT32:
+   case MESA_FORMAT_RGB_INT32:
+      unpack_int_rgba_RGB_UINT32(src, dst, n);
+      break;
+   case MESA_FORMAT_RG_UINT32:
+   case MESA_FORMAT_RG_INT32:
+      unpack_int_rgba_RG_UINT32(src, dst, n);
+      break;
+   case MESA_FORMAT_R_UINT32:
+   case MESA_FORMAT_R_INT32:
+      unpack_int_rgba_R_UINT32(src, dst, n);
+      break;
+
+   case MESA_FORMAT_LUMINANCE_UINT32:
+   case MESA_FORMAT_LUMINANCE_INT32:
+      unpack_int_rgba_LUMINANCE_UINT32(src, dst, n);
+      break;
+   case MESA_FORMAT_LUMINANCE_ALPHA_UINT32:
+   case MESA_FORMAT_LUMINANCE_ALPHA_INT32:
+      unpack_int_rgba_LUMINANCE_ALPHA_UINT32(src, dst, n);
+      break;
+   case MESA_FORMAT_INTENSITY_UINT32:
+   case MESA_FORMAT_INTENSITY_INT32:
+      unpack_int_rgba_INTENSITY_UINT32(src, dst, n);
+      break;
+
+   default:
+      _mesa_problem(NULL, "%s: bad format %s", __FUNCTION__,
+                    _mesa_get_format_name(format));
+      return;
+   }
+}
 
 /**
  * Unpack a 2D rect of pixels returning float RGBA colors.
