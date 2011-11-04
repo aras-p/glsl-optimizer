@@ -34,6 +34,106 @@ static void dri_get_drawable(__DRIdrawable *pdp);
 static void dri_put_drawable(__DRIdrawable *pdp);
 
 /*****************************************************************/
+/** \name Screen handling functions                              */
+/*****************************************************************/
+/*@{*/
+
+static void
+setupLoaderExtensions(__DRIscreen *psp,
+		      const __DRIextension **extensions)
+{
+    int i;
+
+    for (i = 0; extensions[i]; i++) {
+	if (strcmp(extensions[i]->name, __DRI_DRI2_LOADER) == 0)
+	    psp->dri2.loader = (__DRIdri2LoaderExtension *) extensions[i];
+	if (strcmp(extensions[i]->name, __DRI_IMAGE_LOOKUP) == 0)
+	    psp->dri2.image = (__DRIimageLookupExtension *) extensions[i];
+	if (strcmp(extensions[i]->name, __DRI_USE_INVALIDATE) == 0)
+	    psp->dri2.useInvalidate = (__DRIuseInvalidateExtension *) extensions[i];
+    }
+}
+
+static __DRIscreen *
+dri2CreateNewScreen(int scrn, int fd,
+		    const __DRIextension **extensions,
+		    const __DRIconfig ***driver_configs, void *data)
+{
+    static const __DRIextension *emptyExtensionList[] = { NULL };
+    __DRIscreen *psp;
+    drmVersionPtr version;
+
+    psp = calloc(1, sizeof(*psp));
+    if (!psp)
+	return NULL;
+
+    setupLoaderExtensions(psp, extensions);
+
+    version = drmGetVersion(fd);
+    if (version) {
+	psp->drm_version.major = version->version_major;
+	psp->drm_version.minor = version->version_minor;
+	psp->drm_version.patch = version->version_patchlevel;
+	drmFreeVersion(version);
+    }
+
+    psp->extensions = emptyExtensionList;
+    psp->fd = fd;
+    psp->myNum = scrn;
+
+    psp->api_mask = (1 << __DRI_API_OPENGL);
+    *driver_configs = driDriverAPI.InitScreen(psp);
+    if (*driver_configs == NULL) {
+	free(psp);
+	return NULL;
+    }
+
+    psp->loaderPrivate = data;
+
+    driParseOptionInfo(&psp->optionInfo, __dri2ConfigOptions,
+		       __dri2NConfigOptions);
+    driParseConfigFiles(&psp->optionCache, &psp->optionInfo, psp->myNum,
+			"dri2");
+
+    return psp;
+}
+
+/**
+ * Destroy the per-screen private information.
+ * 
+ * \internal
+ * This function calls __DriverAPIRec::DestroyScreen on \p screenPrivate, calls
+ * drmClose(), and finally frees \p screenPrivate.
+ */
+static void driDestroyScreen(__DRIscreen *psp)
+{
+    if (psp) {
+	/* No interaction with the X-server is possible at this point.  This
+	 * routine is called after XCloseDisplay, so there is no protocol
+	 * stream open to the X-server anymore.
+	 */
+
+       _mesa_destroy_shader_compiler();
+
+	if (driDriverAPI.DestroyScreen)
+	    driDriverAPI.DestroyScreen(psp);
+
+	driDestroyOptionCache(&psp->optionCache);
+	driDestroyOptionInfo(&psp->optionInfo);
+
+	free(psp);
+    }
+}
+
+static const __DRIextension **driGetExtensions(__DRIscreen *psp)
+{
+    return psp->extensions;
+}
+
+/*@}*/
+
+
+/*****************************************************************/
 /** \name Context (un)binding functions                          */
 /*****************************************************************/
 /*@{*/
@@ -335,106 +435,6 @@ driCopyContext(__DRIcontext *dest, __DRIcontext *src, unsigned long mask)
 
 /*@}*/
 
-
-/*****************************************************************/
-/** \name Screen handling functions                              */
-/*****************************************************************/
-/*@{*/
-
-/**
- * Destroy the per-screen private information.
- * 
- * \internal
- * This function calls __DriverAPIRec::DestroyScreen on \p screenPrivate, calls
- * drmClose(), and finally frees \p screenPrivate.
- */
-static void driDestroyScreen(__DRIscreen *psp)
-{
-    if (psp) {
-	/* No interaction with the X-server is possible at this point.  This
-	 * routine is called after XCloseDisplay, so there is no protocol
-	 * stream open to the X-server anymore.
-	 */
-
-       _mesa_destroy_shader_compiler();
-
-	if (driDriverAPI.DestroyScreen)
-	    driDriverAPI.DestroyScreen(psp);
-
-	driDestroyOptionCache(&psp->optionCache);
-	driDestroyOptionInfo(&psp->optionInfo);
-
-	free(psp);
-    }
-}
-
-static void
-setupLoaderExtensions(__DRIscreen *psp,
-		      const __DRIextension **extensions)
-{
-    int i;
-
-    for (i = 0; extensions[i]; i++) {
-	if (strcmp(extensions[i]->name, __DRI_DRI2_LOADER) == 0)
-	    psp->dri2.loader = (__DRIdri2LoaderExtension *) extensions[i];
-	if (strcmp(extensions[i]->name, __DRI_IMAGE_LOOKUP) == 0)
-	    psp->dri2.image = (__DRIimageLookupExtension *) extensions[i];
-	if (strcmp(extensions[i]->name, __DRI_USE_INVALIDATE) == 0)
-	    psp->dri2.useInvalidate = (__DRIuseInvalidateExtension *) extensions[i];
-    }
-}
-
-/**
- * DRI2
- */
-static __DRIscreen *
-dri2CreateNewScreen(int scrn, int fd,
-		    const __DRIextension **extensions,
-		    const __DRIconfig ***driver_configs, void *data)
-{
-    static const __DRIextension *emptyExtensionList[] = { NULL };
-    __DRIscreen *psp;
-    drmVersionPtr version;
-
-    psp = calloc(1, sizeof(*psp));
-    if (!psp)
-	return NULL;
-
-    setupLoaderExtensions(psp, extensions);
-
-    version = drmGetVersion(fd);
-    if (version) {
-	psp->drm_version.major = version->version_major;
-	psp->drm_version.minor = version->version_minor;
-	psp->drm_version.patch = version->version_patchlevel;
-	drmFreeVersion(version);
-    }
-
-    psp->extensions = emptyExtensionList;
-    psp->fd = fd;
-    psp->myNum = scrn;
-
-    psp->api_mask = (1 << __DRI_API_OPENGL);
-    *driver_configs = driDriverAPI.InitScreen(psp);
-    if (*driver_configs == NULL) {
-	free(psp);
-	return NULL;
-    }
-
-    psp->loaderPrivate = data;
-
-    driParseOptionInfo(&psp->optionInfo, __dri2ConfigOptions,
-		       __dri2NConfigOptions);
-    driParseConfigFiles(&psp->optionCache, &psp->optionInfo, psp->myNum,
-			"dri2");
-
-    return psp;
-}
-
-static const __DRIextension **driGetExtensions(__DRIscreen *psp)
-{
-    return psp->extensions;
-}
 
 /** Core interface */
 const __DRIcoreExtension driCoreExtension = {
