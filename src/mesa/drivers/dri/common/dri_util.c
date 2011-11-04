@@ -324,6 +324,26 @@ static int driUnbindContext(__DRIcontext *pcp)
 /*@}*/
 
 
+static void dri_get_drawable(__DRIdrawable *pdp)
+{
+    pdp->refcount++;
+}
+
+static void dri_put_drawable(__DRIdrawable *pdp)
+{
+    __DRIscreen *psp;
+
+    if (pdp) {
+	pdp->refcount--;
+	if (pdp->refcount)
+	    return;
+
+	psp = pdp->driScreenPriv;
+        driDriverAPI.DestroyBuffer(pdp);
+	free(pdp);
+    }
+}
+
 static __DRIdrawable *
 dri2CreateNewDrawable(__DRIscreen *screen,
 		      const __DRIconfig *config,
@@ -351,6 +371,12 @@ dri2CreateNewDrawable(__DRIscreen *screen,
     pdraw->dri2.stamp = pdraw->lastStamp + 1;
 
     return pdraw;
+}
+
+static void
+driDestroyDrawable(__DRIdrawable *pdp)
+{
+    dri_put_drawable(pdp);
 }
 
 static __DRIbuffer *
@@ -401,33 +427,6 @@ dri2ConfigQueryf(__DRIscreen *screen, const char *var, GLfloat *val)
     *val = driQueryOptionf(&screen->optionCache, var);
 
     return 0;
-}
-
-
-static void dri_get_drawable(__DRIdrawable *pdp)
-{
-    pdp->refcount++;
-}
-	
-static void dri_put_drawable(__DRIdrawable *pdp)
-{
-    __DRIscreen *psp;
-
-    if (pdp) {
-	pdp->refcount--;
-	if (pdp->refcount)
-	    return;
-
-	psp = pdp->driScreenPriv;
-        driDriverAPI.DestroyBuffer(pdp);
-	free(pdp);
-    }
-}
-
-static void
-driDestroyDrawable(__DRIdrawable *pdp)
-{
-    dri_put_drawable(pdp);
 }
 
 static unsigned int
