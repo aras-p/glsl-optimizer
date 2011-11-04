@@ -908,7 +908,7 @@ static void *evergreen_create_rs_state(struct pipe_context *ctx,
 	rstate->id = R600_PIPE_STATE_RASTERIZER;
 	if (state->flatshade_first)
 		prov_vtx = 0;
-	tmp = S_0286D4_FLAT_SHADE_ENA(1);
+	tmp = S_0286D4_FLAT_SHADE_ENA(state->flatshade);
 	if (state->sprite_coord_enable) {
 		tmp |= S_0286D4_PNT_SPRITE_ENA(1) |
 			S_0286D4_PNT_SPRITE_OVRD_X(2) |
@@ -2246,7 +2246,7 @@ void evergreen_pipe_shader_ps(struct pipe_context *ctx, struct r600_pipe_shader 
 	int pos_index = -1, face_index = -1;
 	int ninterp = 0;
 	boolean have_linear = FALSE, have_centroid = FALSE, have_perspective = FALSE;
-	unsigned spi_baryc_cntl;
+	unsigned spi_baryc_cntl, sid, tmp, idx = 0;
 
 	rstate->nregs = 0;
 
@@ -2267,7 +2267,31 @@ void evergreen_pipe_shader_ps(struct pipe_context *ctx, struct r600_pipe_shader 
 			if (rshader->input[i].centroid)
 				have_centroid = TRUE;
 		}
+
+		sid = rshader->input[i].spi_sid;
+
+		if (sid) {
+
+			tmp = S_028644_SEMANTIC(sid);
+
+			if (rshader->input[i].name == TGSI_SEMANTIC_COLOR ||
+					rshader->input[i].name == TGSI_SEMANTIC_BCOLOR ||
+					rshader->input[i].name == TGSI_SEMANTIC_POSITION) {
+				tmp |= S_028644_FLAT_SHADE(1);
+			}
+
+			if (rshader->input[i].name == TGSI_SEMANTIC_GENERIC &&
+					rctx->sprite_coord_enable & (1 << rshader->input[i].sid)) {
+				tmp |= S_028644_PT_SPRITE_TEX(1);
+			}
+
+			r600_pipe_state_add_reg(rstate, R_028644_SPI_PS_INPUT_CNTL_0 + idx * 4,
+					tmp, 0xFFFFFFFF, NULL, 0);
+
+			idx++;
+		}
 	}
+
 	for (i = 0; i < rshader->noutput; i++) {
 		if (rshader->output[i].name == TGSI_SEMANTIC_POSITION)
 			db_shader_control |= S_02880C_Z_EXPORT_ENABLE(1);
@@ -2368,6 +2392,8 @@ void evergreen_pipe_shader_ps(struct pipe_context *ctx, struct r600_pipe_shader 
 	r600_pipe_state_add_reg(rstate,
 				R_03A200_SQ_LOOP_CONST_0, 0x01000FFF,
 				0xFFFFFFFF, NULL, 0);
+
+	shader->sprite_coord_enable = rctx->sprite_coord_enable;
 }
 
 void evergreen_pipe_shader_vs(struct pipe_context *ctx, struct r600_pipe_shader *shader)
