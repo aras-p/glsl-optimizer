@@ -79,6 +79,12 @@ extern "C" {
                            (1 << PROGRAM_CONSTANT) |     \
                            (1 << PROGRAM_UNIFORM))
 
+/**
+ * Maximum number of temporary registers.
+ *
+ * It is too big for stack allocated arrays -- it will cause stack overflow on
+ * Windows and likely Mac OS X.
+ */
 #define MAX_TEMPS         4096
 
 /* will be 4 for GLSL 4.00 */
@@ -3004,9 +3010,13 @@ glsl_to_tgsi_visitor::remove_output_reads(gl_register_file type)
    GLint outputMap[VERT_RESULT_MAX];
    GLint outputTypes[VERT_RESULT_MAX];
    GLuint numVaryingReads = 0;
-   GLboolean usedTemps[MAX_TEMPS];
+   GLboolean *usedTemps;
    GLuint firstTemp = 0;
 
+   usedTemps = new GLboolean[MAX_TEMPS];
+   if (!usedTemps) {
+      return;
+   }
    _mesa_find_used_registers(prog, PROGRAM_TEMPORARY,
                              usedTemps, MAX_TEMPS);
 
@@ -3038,6 +3048,8 @@ glsl_to_tgsi_visitor::remove_output_reads(gl_register_file type)
          }
       }
    }
+
+   delete [] usedTemps;
 
    if (numVaryingReads == 0)
       return; /* nothing to be done */
@@ -3110,9 +3122,13 @@ get_src_arg_mask(st_dst_reg dst, st_src_reg src)
 void
 glsl_to_tgsi_visitor::simplify_cmp(void)
 {
-   unsigned tempWrites[MAX_TEMPS];
+   unsigned *tempWrites;
    unsigned outputWrites[MAX_PROGRAM_OUTPUTS];
 
+   tempWrites = new unsigned[MAX_TEMPS];
+   if (!tempWrites) {
+      return;
+   }
    memset(tempWrites, 0, sizeof(tempWrites));
    memset(outputWrites, 0, sizeof(outputWrites));
 
@@ -3128,7 +3144,7 @@ glsl_to_tgsi_visitor::simplify_cmp(void)
           inst->op == TGSI_OPCODE_END ||
           inst->op == TGSI_OPCODE_ENDSUB ||
           inst->op == TGSI_OPCODE_RET) {
-         return;
+         break;
       }
 
       if (inst->dst.file == PROGRAM_OUTPUT) {
@@ -3153,6 +3169,8 @@ glsl_to_tgsi_visitor::simplify_cmp(void)
          inst->src[0] = inst->src[1];
       }
    }
+
+   delete [] tempWrites;
 }
 
 /* Replaces all references to a temporary register index with another index. */
@@ -4580,14 +4598,19 @@ st_translate_program(
    const ubyte outputSemanticIndex[],
    boolean passthrough_edgeflags)
 {
-   struct st_translate translate, *t;
+   struct st_translate *t;
    unsigned i;
    enum pipe_error ret = PIPE_OK;
 
    assert(numInputs <= Elements(t->inputs));
    assert(numOutputs <= Elements(t->outputs));
 
-   t = &translate;
+   t = CALLOC_STRUCT(st_translate);
+   if (!t) {
+      ret = PIPE_ERROR_OUT_OF_MEMORY;
+      goto out;
+   }
+
    memset(t, 0, sizeof *t);
 
    t->procType = procType;
@@ -4642,7 +4665,8 @@ st_translate_program(
             break;
          default:
             assert(!"fragment shader outputs must be POSITION/STENCIL/COLOR");
-            return PIPE_ERROR_BAD_INPUT;
+            ret = PIPE_ERROR_BAD_INPUT;
+            goto out;
          }
       }
    }
@@ -4823,13 +4847,17 @@ st_translate_program(
    }
 
 out:
-   FREE(t->insn);
-   FREE(t->labels);
-   FREE(t->constants);
-   FREE(t->immediates);
+   if (t) {
+      FREE(t->insn);
+      FREE(t->labels);
+      FREE(t->constants);
+      FREE(t->immediates);
 
-   if (t->error) {
-      debug_printf("%s: translate error flag set\n", __FUNCTION__);
+      if (t->error) {
+         debug_printf("%s: translate error flag set\n", __FUNCTION__);
+      }
+
+      FREE(t);
    }
 
    return ret;
