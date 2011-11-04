@@ -1116,11 +1116,14 @@ vl_create_mpeg12_decoder(struct pipe_context *context,
 
    default:
       assert(0);
+      FREE(dec);
       return NULL;
    }
 
-   if (!format_config)
+   if (!format_config) {
+      FREE(dec);
       return NULL;
+   }
 
    if (!init_zscan(dec, format_config))
       goto error_zscan;
