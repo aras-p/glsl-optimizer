@@ -278,7 +278,7 @@ static void inline emit_tx_setup(struct r200_context *r200,
     OUT_BATCH_REGVAL(R200_PP_TXPITCH_0, pitch * _mesa_get_format_bytes(src_mesa_format) - 32);
 
     OUT_BATCH_REGSEQ(R200_PP_TXOFFSET_0, 1);
-    OUT_BATCH_RELOC(0, bo, 0, RADEON_GEM_DOMAIN_GTT|RADEON_GEM_DOMAIN_VRAM, 0, 0);
+    OUT_BATCH_RELOC(offset, bo, offset, RADEON_GEM_DOMAIN_GTT|RADEON_GEM_DOMAIN_VRAM, 0, 0);
 
     END_BATCH();
 }
@@ -332,7 +332,7 @@ static inline void emit_cb_setup(struct r200_context *r200,
     OUT_BATCH_REGVAL(RADEON_RB3D_CNTL, dst_format);
 
     OUT_BATCH_REGSEQ(RADEON_RB3D_COLOROFFSET, 1);
-    OUT_BATCH_RELOC(0, bo, 0, 0, RADEON_GEM_DOMAIN_GTT|RADEON_GEM_DOMAIN_VRAM, 0);
+    OUT_BATCH_RELOC(offset, bo, offset, 0, RADEON_GEM_DOMAIN_GTT|RADEON_GEM_DOMAIN_VRAM, 0);
     OUT_BATCH_REGSEQ(RADEON_RB3D_COLORPITCH, 1);
     OUT_BATCH_RELOC(dst_pitch, bo, dst_pitch, 0, RADEON_GEM_DOMAIN_GTT|RADEON_GEM_DOMAIN_VRAM, 0);
 
