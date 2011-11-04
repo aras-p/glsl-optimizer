@@ -134,6 +134,92 @@ static const __DRIextension **driGetExtensions(__DRIscreen *psp)
 
 
 /*****************************************************************/
+/** \name Context handling functions                             */
+/*****************************************************************/
+/*@{*/
+
+static __DRIcontext *
+dri2CreateNewContextForAPI(__DRIscreen *screen, int api,
+			   const __DRIconfig *config,
+			   __DRIcontext *shared, void *data)
+{
+    __DRIcontext *context;
+    const struct gl_config *modes = (config != NULL) ? &config->modes : NULL;
+    void *shareCtx = (shared != NULL) ? shared->driverPrivate : NULL;
+    gl_api mesa_api;
+
+    if (!(screen->api_mask & (1 << api)))
+	return NULL;
+
+    switch (api) {
+    case __DRI_API_OPENGL:
+	    mesa_api = API_OPENGL;
+	    break;
+    case __DRI_API_GLES:
+	    mesa_api = API_OPENGLES;
+	    break;
+    case __DRI_API_GLES2:
+	    mesa_api = API_OPENGLES2;
+	    break;
+    default:
+	    return NULL;
+    }
+
+    context = malloc(sizeof *context);
+    if (!context)
+	return NULL;
+
+    context->driScreenPriv = screen;
+    context->driDrawablePriv = NULL;
+    context->loaderPrivate = data;
+
+    if (!driDriverAPI.CreateContext(mesa_api, modes,
+				    context, shareCtx) ) {
+        free(context);
+        return NULL;
+    }
+
+    return context;
+}
+
+
+static __DRIcontext *
+dri2CreateNewContext(__DRIscreen *screen, const __DRIconfig *config,
+		      __DRIcontext *shared, void *data)
+{
+   return dri2CreateNewContextForAPI(screen, __DRI_API_OPENGL,
+				     config, shared, data);
+}
+
+/**
+ * Destroy the per-context private information.
+ * 
+ * \internal
+ * This function calls __DriverAPIRec::DestroyContext on \p contextPrivate, calls
+ * drmDestroyContext(), and finally frees \p contextPrivate.
+ */
+static void
+driDestroyContext(__DRIcontext *pcp)
+{
+    if (pcp) {
+	driDriverAPI.DestroyContext(pcp);
+	free(pcp);
+    }
+}
+
+static int
+driCopyContext(__DRIcontext *dest, __DRIcontext *src, unsigned long mask)
+{
+    (void) dest;
+    (void) src;
+    (void) mask;
+    return GL_FALSE;
+}
+
+/*@}*/
+
+
+/*****************************************************************/
 /** \name Context (un)binding functions                          */
 /*****************************************************************/
 /*@{*/
@@ -343,97 +429,11 @@ driDestroyDrawable(__DRIdrawable *pdp)
 
 /*@}*/
 
-
-/*****************************************************************/
-/** \name Context handling functions                             */
-/*****************************************************************/
-/*@{*/
-
-/**
- * Destroy the per-context private information.
- * 
- * \internal
- * This function calls __DriverAPIRec::DestroyContext on \p contextPrivate, calls
- * drmDestroyContext(), and finally frees \p contextPrivate.
- */
-static void
-driDestroyContext(__DRIcontext *pcp)
-{
-    if (pcp) {
-	driDriverAPI.DestroyContext(pcp);
-	free(pcp);
-    }
-}
-
 static unsigned int
 dri2GetAPIMask(__DRIscreen *screen)
 {
     return screen->api_mask;
 }
-
-static __DRIcontext *
-dri2CreateNewContextForAPI(__DRIscreen *screen, int api,
-			   const __DRIconfig *config,
-			   __DRIcontext *shared, void *data)
-{
-    __DRIcontext *context;
-    const struct gl_config *modes = (config != NULL) ? &config->modes : NULL;
-    void *shareCtx = (shared != NULL) ? shared->driverPrivate : NULL;
-    gl_api mesa_api;
-
-    if (!(screen->api_mask & (1 << api)))
-	return NULL;
-
-    switch (api) {
-    case __DRI_API_OPENGL:
-	    mesa_api = API_OPENGL;
-	    break;
-    case __DRI_API_GLES:
-	    mesa_api = API_OPENGLES;
-	    break;
-    case __DRI_API_GLES2:
-	    mesa_api = API_OPENGLES2;
-	    break;
-    default:
-	    return NULL;
-    }
-
-    context = malloc(sizeof *context);
-    if (!context)
-	return NULL;
-
-    context->driScreenPriv = screen;
-    context->driDrawablePriv = NULL;
-    context->loaderPrivate = data;
-    
-    if (!driDriverAPI.CreateContext(mesa_api, modes,
-				    context, shareCtx) ) {
-        free(context);
-        return NULL;
-    }
-
-    return context;
-}
-
-
-static __DRIcontext *
-dri2CreateNewContext(__DRIscreen *screen, const __DRIconfig *config,
-		      __DRIcontext *shared, void *data)
-{
-   return dri2CreateNewContextForAPI(screen, __DRI_API_OPENGL,
-				     config, shared, data);
-}
-
-static int
-driCopyContext(__DRIcontext *dest, __DRIcontext *src, unsigned long mask)
-{
-    (void) dest;
-    (void) src;
-    (void) mask;
-    return GL_FALSE;
-}
-
-/*@}*/
 
 
 /** Core interface */
