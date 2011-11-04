@@ -480,6 +480,7 @@ draw_bitmap_quad(struct gl_context *ctx, GLint x, GLint y, GLfloat z,
    cso_save_viewport(cso);
    cso_save_fragment_shader(cso);
    cso_save_vertex_shader(cso);
+   cso_save_geometry_shader(cso);
    cso_save_vertex_elements(cso);
    cso_save_vertex_buffers(cso);
 
@@ -492,6 +493,9 @@ draw_bitmap_quad(struct gl_context *ctx, GLint x, GLint y, GLfloat z,
 
    /* vertex shader state: position + texcoord pass-through */
    cso_set_vertex_shader_handle(cso, st->bitmap.vs);
+
+   /* geometry shader state: disabled */
+   cso_set_geometry_shader_handle(cso, NULL);
 
    /* user samplers, plus our bitmap sampler */
    {
@@ -556,6 +560,7 @@ draw_bitmap_quad(struct gl_context *ctx, GLint x, GLint y, GLfloat z,
    cso_restore_viewport(cso);
    cso_restore_fragment_shader(cso);
    cso_restore_vertex_shader(cso);
+   cso_restore_geometry_shader(cso);
    cso_restore_vertex_elements(cso);
    cso_restore_vertex_buffers(cso);
 }

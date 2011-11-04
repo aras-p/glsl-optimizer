@@ -1561,6 +1561,7 @@ util_gen_mipmap(struct gen_mipmap_state *ctx,
    cso_save_framebuffer(ctx->cso);
    cso_save_fragment_shader(ctx->cso);
    cso_save_vertex_shader(ctx->cso);
+   cso_save_geometry_shader(ctx->cso);
    cso_save_viewport(ctx->cso);
    cso_save_clip(ctx->cso);
    cso_save_vertex_elements(ctx->cso);
@@ -1574,6 +1575,7 @@ util_gen_mipmap(struct gen_mipmap_state *ctx,
 
    set_fragment_shader(ctx, type);
    set_vertex_shader(ctx);
+   cso_set_geometry_shader_handle(ctx->cso, NULL);
 
    /* init framebuffer state */
    memset(&fb, 0, sizeof(fb));
@@ -1682,6 +1684,7 @@ util_gen_mipmap(struct gen_mipmap_state *ctx,
    cso_restore_framebuffer(ctx->cso);
    cso_restore_fragment_shader(ctx->cso);
    cso_restore_vertex_shader(ctx->cso);
+   cso_restore_geometry_shader(ctx->cso);
    cso_restore_viewport(ctx->cso);
    cso_restore_clip(ctx->cso);
    cso_restore_vertex_elements(ctx->cso);

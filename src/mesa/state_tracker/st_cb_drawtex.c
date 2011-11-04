@@ -230,6 +230,7 @@ st_DrawTex(struct gl_context *ctx, GLfloat x, GLfloat y, GLfloat z,
 
    cso_save_viewport(cso);
    cso_save_vertex_shader(cso);
+   cso_save_geometry_shader(cso);
    cso_save_vertex_elements(cso);
    cso_save_vertex_buffers(cso);
 
@@ -238,6 +239,7 @@ st_DrawTex(struct gl_context *ctx, GLfloat x, GLfloat y, GLfloat z,
                                semantic_names, semantic_indexes);
       cso_set_vertex_shader_handle(cso, vs);
    }
+   cso_set_geometry_shader_handle(cso, NULL);
 
    for (i = 0; i < numAttribs; i++) {
       velements[i].src_offset = i * 4 * sizeof(float);
@@ -278,6 +280,7 @@ st_DrawTex(struct gl_context *ctx, GLfloat x, GLfloat y, GLfloat z,
    /* restore state */
    cso_restore_viewport(cso);
    cso_restore_vertex_shader(cso);
+   cso_restore_geometry_shader(cso);
    cso_restore_vertex_elements(cso);
    cso_restore_vertex_buffers(cso);
 }

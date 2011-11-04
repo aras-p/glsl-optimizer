@@ -555,7 +555,8 @@ void st_init_extensions(struct st_context *st)
       ctx->Extensions.ARB_vertex_type_2_10_10_10_rev = GL_TRUE;
    }
 
-   if (screen->get_shader_param(screen, PIPE_SHADER_GEOMETRY, PIPE_SHADER_CAP_MAX_INSTRUCTIONS) > 0) {
+   if (screen->get_shader_param(screen, PIPE_SHADER_GEOMETRY,
+                                PIPE_SHADER_CAP_MAX_INSTRUCTIONS) > 0) {
 #if 0 /* XXX re-enable when GLSL compiler again supports geometry shaders */
       ctx->Extensions.ARB_geometry_shader4 = GL_TRUE;
 #endif

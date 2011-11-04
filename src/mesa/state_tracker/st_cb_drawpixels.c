@@ -671,6 +671,7 @@ draw_textured_quad(struct gl_context *ctx, GLint x, GLint y, GLfloat z,
    cso_save_fragment_sampler_views(cso);
    cso_save_fragment_shader(cso);
    cso_save_vertex_shader(cso);
+   cso_save_geometry_shader(cso);
    cso_save_vertex_elements(cso);
    cso_save_vertex_buffers(cso);
    if (write_stencil) {
@@ -720,6 +721,8 @@ draw_textured_quad(struct gl_context *ctx, GLint x, GLint y, GLfloat z,
    /* vertex shader state: position + texcoord pass-through */
    cso_set_vertex_shader_handle(cso, driver_vp);
 
+   /* geometry shader state: disabled */
+   cso_set_geometry_shader_handle(cso, NULL);
 
    /* texture sampling state: */
    {
@@ -789,6 +792,7 @@ draw_textured_quad(struct gl_context *ctx, GLint x, GLint y, GLfloat z,
    cso_restore_fragment_sampler_views(cso);
    cso_restore_fragment_shader(cso);
    cso_restore_vertex_shader(cso);
+   cso_restore_geometry_shader(cso);
    cso_restore_vertex_elements(cso);
    cso_restore_vertex_buffers(cso);
    if (write_stencil) {
