@@ -30,9 +30,6 @@ PUBLIC const char __dri2ConfigOptions[] =
 
 static const uint __dri2NConfigOptions = 1;
 
-static void dri_get_drawable(__DRIdrawable *pdp);
-static void dri_put_drawable(__DRIdrawable *pdp);
-
 /*****************************************************************/
 /** \name Screen handling functions                              */
 /*****************************************************************/
@@ -224,6 +221,41 @@ driCopyContext(__DRIcontext *dest, __DRIcontext *src, unsigned long mask)
 /*****************************************************************/
 /*@{*/
 
+static void dri_get_drawable(__DRIdrawable *pdp);
+static void dri_put_drawable(__DRIdrawable *pdp);
+
+/**
+ * This function takes both a read buffer and a draw buffer.  This is needed
+ * for \c glXMakeCurrentReadSGI or GLX 1.3's \c glXMakeContextCurrent
+ * function.
+ */
+static int driBindContext(__DRIcontext *pcp,
+			  __DRIdrawable *pdp,
+			  __DRIdrawable *prp)
+{
+    /*
+    ** Assume error checking is done properly in glXMakeCurrent before
+    ** calling driUnbindContext.
+    */
+
+    if (!pcp)
+	return GL_FALSE;
+
+    /* Bind the drawable to the context */
+    pcp->driDrawablePriv = pdp;
+    pcp->driReadablePriv = prp;
+    if (pdp) {
+	pdp->driContextPriv = pcp;
+	dri_get_drawable(pdp);
+    }
+    if (prp && pdp != prp) {
+	dri_get_drawable(prp);
+    }
+
+    /* Call device-specific MakeCurrent */
+    return driDriverAPI.MakeCurrent(pcp, pdp, prp);
+}
+
 /**
  * Unbind context.
  * 
@@ -289,37 +321,8 @@ static int driUnbindContext(__DRIcontext *pcp)
     return GL_TRUE;
 }
 
-/**
- * This function takes both a read buffer and a draw buffer.  This is needed
- * for \c glXMakeCurrentReadSGI or GLX 1.3's \c glXMakeContextCurrent
- * function.
- */
-static int driBindContext(__DRIcontext *pcp,
-			  __DRIdrawable *pdp,
-			  __DRIdrawable *prp)
-{
-    /*
-    ** Assume error checking is done properly in glXMakeCurrent before
-    ** calling driUnbindContext.
-    */
+/*@}*/
 
-    if (!pcp)
-	return GL_FALSE;
-
-    /* Bind the drawable to the context */
-    pcp->driDrawablePriv = pdp;
-    pcp->driReadablePriv = prp;
-    if (pdp) {
-	pdp->driContextPriv = pcp;
-	dri_get_drawable(pdp);
-    }
-    if (prp && pdp != prp) {
-	dri_get_drawable(prp);
-    }
-
-    /* Call device-specific MakeCurrent */
-    return driDriverAPI.MakeCurrent(pcp, pdp, prp);
-}
 
 static __DRIdrawable *
 dri2CreateNewDrawable(__DRIscreen *screen,
@@ -426,8 +429,6 @@ driDestroyDrawable(__DRIdrawable *pdp)
 {
     dri_put_drawable(pdp);
 }
-
-/*@}*/
 
 static unsigned int
 dri2GetAPIMask(__DRIscreen *screen)
