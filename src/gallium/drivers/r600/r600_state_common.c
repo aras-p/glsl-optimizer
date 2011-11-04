@@ -366,14 +366,11 @@ static void r600_spi_update(struct r600_pipe_context *rctx)
 
 	rstate->nregs = 0;
 	for (i = 0; i < rshader->ninput; i++) {
-		if (rshader->input[i].name == TGSI_SEMANTIC_POSITION ||
-		    rshader->input[i].name == TGSI_SEMANTIC_FACE)
-			if (rctx->chip_class >= EVERGREEN)
-				continue;
-			else
-				sid=0;
-		else
-			sid=r600_find_vs_semantic_index(&rctx->vs_shader->shader, rshader, i);
+
+		sid = rshader->input[i].spi_sid;
+
+		if (!sid && (rctx->chip_class >= EVERGREEN))
+			continue;
 
 		tmp = S_028644_SEMANTIC(sid);
 
