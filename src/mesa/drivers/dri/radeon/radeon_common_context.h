@@ -174,9 +174,6 @@ struct _radeon_texture_image {
 	 */
 	struct _radeon_mipmap_tree *mt;
 	struct radeon_bo *bo;
-
-	int mtlevel; /** if mt != 0, this is the image's level in the mipmap tree */
-	int mtface; /** if mt != 0, this is the image's face in the mipmap tree */
 };
 
 

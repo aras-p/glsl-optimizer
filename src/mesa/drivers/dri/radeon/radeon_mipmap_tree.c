@@ -466,9 +466,9 @@ static void migrate_image_to_miptree(radeon_mipmap_tree *mt,
 		 */
 		assert(mt->mesaFormat == image->base.Base.TexFormat);
 
-		radeon_mipmap_level *srclvl = &image->mt->levels[image->mtlevel];
+		radeon_mipmap_level *srclvl = &image->mt->levels[image->base.Base.Level];
 
-		assert(image->mtlevel == level);
+		assert(image->base.Base.Level == level);
 		assert(srclvl->size == dstlvl->size);
 		assert(srclvl->rowstride == dstlvl->rowstride);
 
@@ -506,8 +506,6 @@ static void migrate_image_to_miptree(radeon_mipmap_tree *mt,
 	radeon_bo_unmap(mt->bo);
 
 	radeon_miptree_reference(mt, &image->mt);
-	image->mtface = face;
-	image->mtlevel = level;
 }
 
 /**
@@ -542,13 +540,13 @@ static radeon_mipmap_tree * get_biggest_matching_miptree(radeonTexObj *texObj,
 		for (i = 0; i < mtCount; ++i) {
 			if (mts[i] == img->mt) {
 				found = 1;
-				mtSizes[i] += img->mt->levels[img->mtlevel].size;
+				mtSizes[i] += img->mt->levels[img->base.Base.Level].size;
 				break;
 			}
 		}
 
 		if (!found && radeon_miptree_matches_texture(img->mt, &texObj->base)) {
-			mtSizes[mtCount] = img->mt->levels[img->mtlevel].size;
+			mtSizes[mtCount] = img->mt->levels[img->base.Base.Level].size;
 			mts[mtCount] = img->mt;
 			mtCount++;
 		}

@@ -135,9 +135,9 @@ static void teximage_set_map_data(radeon_texture_image *image)
 		return;
 	}
 
-	lvl = &image->mt->levels[image->mtlevel];
+	lvl = &image->mt->levels[image->base.Base.Level];
 
-	image->base.Data = image->mt->bo->ptr + lvl->faces[image->mtface].offset;
+	image->base.Data = image->mt->bo->ptr + lvl->faces[image->base.Base.Face].offset;
 	image->base.RowStride = lvl->rowstride / _mesa_get_format_bytes(image->base.Base.TexFormat);
 }
 
@@ -304,7 +304,7 @@ radeon_map_texture_image(struct gl_context *ctx,
 	} else if (likely(mt)) {
 		radeon_bo_map(mt->bo, write);
 		radeon_mipmap_level *lvl = &image->mt->levels[texImage->Level];
-		void *base = mt->bo->ptr + lvl->faces[image->mtface].offset;
+		void *base = mt->bo->ptr + lvl->faces[image->base.Base.Face].offset;
 
 		*stride = lvl->rowstride;
 		*map = base + (slice * height) * *stride;
@@ -647,8 +647,6 @@ static void teximage_assign_miptree(radeonContextPtr rmesa,
 	/* Miptree alocation may have failed,
 	 * when there was no image for baselevel specified */
 	if (t->mt) {
-		image->mtface = face;
-		image->mtlevel = level;
 		radeon_miptree_reference(t->mt, &image->mt);
 	} else
 		radeon_print(RADEON_TEXTURE, RADEON_VERBOSE,
@@ -684,7 +682,7 @@ static void radeon_store_teximage(struct gl_context* ctx, int dims,
 			__func__, ctx, texObj, texImage, compressed);
 
 	if (image->mt) {
-		dstRowStride = image->mt->levels[image->mtlevel].rowstride;
+		dstRowStride = image->mt->levels[image->base.Base.Level].rowstride;
 	} else if (t->bo) {
 		/* TFP case */
 		dstRowStride = get_texture_image_row_stride(rmesa, texImage->TexFormat, width, 0);
@@ -1049,8 +1047,6 @@ void radeon_image_target_texture_2d(struct gl_context *ctx, GLenum target,
 
 	radeon_try_alloc_miptree(radeon, t);
 
-	radeonImage->mtface = _mesa_tex_target_to_face(target);
-	radeonImage->mtlevel = 0;
 	radeon_miptree_reference(t->mt, &radeonImage->mt);
 
 	if (t->mt == NULL)
@@ -1067,7 +1063,7 @@ void radeon_image_target_texture_2d(struct gl_context *ctx, GLenum target,
 	t->mt->bo = image->bo;
 
 	if (!radeon_miptree_matches_image(t->mt, &radeonImage->base.Base,
-					  radeonImage->mtface, 0))
+					  radeonImage->base.Base.Face, 0))
 		fprintf(stderr, "miptree doesn't match image\n");
 }
 #endif
