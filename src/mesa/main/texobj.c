@@ -415,10 +415,6 @@ incomplete(struct gl_texture_object *t, const char *fmt, ...)
  * The gl_texture_object::Complete flag will be set to GL_TRUE or GL_FALSE
  * accordingly.
  *
- * XXX TODO: For immutable textures (GL_ARB_texture_storage) we can skip
- * many of the checks below since we know the mipmap images will have
- * consistent sizes.
- *
  * \param ctx GL context.
  * \param t texture object.
  *
@@ -503,6 +499,15 @@ _mesa_test_texobj_completeness( const struct gl_context *ctx,
 
    /* Compute _MaxLambda = q - b (see the 1.2 spec) used during mipmapping */
    t->_MaxLambda = (GLfloat) (t->_MaxLevel - t->BaseLevel);
+
+   if (t->Immutable) {
+      /* This texture object was created with glTexStorage1/2/3D() so we
+       * know that all the mipmap levels are the right size and all cube
+       * map faces are the same size.
+       * We don't need to do any of the additional checks below.
+       */
+      return;
+   }
 
    if (t->Target == GL_TEXTURE_CUBE_MAP_ARB) {
       /* make sure that all six cube map level 0 images are the same size */
