@@ -496,16 +496,6 @@ get_attached_shaders(struct gl_context *ctx, GLuint program, GLsizei maxCount,
 }
 
 
-static GLint
-get_frag_data_location(struct gl_context *ctx, GLuint program,
-                       const GLchar *name)
-{
-   _mesa_problem(ctx, "get_frag_data_location() not implemented yet");
-   return -1;
-}
-
-
-
 /**
  * glGetHandleARB() - return ID/name of currently bound shader program.
  */
@@ -1176,16 +1166,6 @@ _mesa_GetAttachedShaders(GLuint program, GLsizei maxCount,
    GET_CURRENT_CONTEXT(ctx);
    get_attached_shaders(ctx, program, maxCount, count, obj);
 }
-
-
-/* GL_EXT_gpu_shader4, GL3 */
-GLint GLAPIENTRY
-_mesa_GetFragDataLocation(GLuint program, const GLchar *name)
-{
-   GET_CURRENT_CONTEXT(ctx);
-   return get_frag_data_location(ctx, program, name);
-}
-
 
 
 void GLAPIENTRY
