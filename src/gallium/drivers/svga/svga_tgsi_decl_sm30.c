@@ -31,10 +31,15 @@
 #include "svga_tgsi_emit.h"
 
 
-static boolean translate_vs_ps_semantic( struct svga_shader_emitter *emit,
-                                         struct tgsi_declaration_semantic semantic,
-                                         unsigned *usage,
-                                         unsigned *idx )
+/**
+ * Translate TGSI semantic info into SVGA3d semantic info.
+ * This is called for VS outputs and PS inputs only.
+ */
+static boolean
+translate_vs_ps_semantic(struct svga_shader_emitter *emit,
+                         struct tgsi_declaration_semantic semantic,
+                         unsigned *usage,
+                         unsigned *idx)
 {
    switch (semantic.Name) {
    case TGSI_SEMANTIC_POSITION:  
@@ -42,7 +47,6 @@ static boolean translate_vs_ps_semantic( struct svga_shader_emitter *emit,
       *usage = SVGA3D_DECLUSAGE_POSITION;
       break;
    case TGSI_SEMANTIC_COLOR:     
-
       *idx = semantic.Index;
       *usage = SVGA3D_DECLUSAGE_COLOR;
       break;
@@ -79,10 +83,16 @@ static boolean translate_vs_ps_semantic( struct svga_shader_emitter *emit,
 }
 
 
-static boolean emit_decl( struct svga_shader_emitter *emit,
-                          SVGA3dShaderDestToken reg,
-                          unsigned usage, 
-                          unsigned index )
+/**
+ * Emit a PS input (or VS depth/fog output) register declaration.
+ * For example, if usage = SVGA3D_DECLUSAGE_TEXCOORD, reg.num = 1, and
+ * index = 3, we'll emit "dcl_texcoord3 v1".
+ */
+static boolean
+emit_decl(struct svga_shader_emitter *emit,
+          SVGA3dShaderDestToken reg,
+          unsigned usage, 
+          unsigned index)
 {
    SVGA3DOpDclArgs dcl;
    SVGA3dShaderInstToken opcode;
@@ -100,16 +110,20 @@ static boolean emit_decl( struct svga_shader_emitter *emit,
    dcl.index = index;
    dcl.values[0] |= 1<<31;
 
-   return  (emit_instruction(emit, opcode) &&
-            svga_shader_emit_dwords( emit, dcl.values, Elements(dcl.values)));
+   return (emit_instruction(emit, opcode) &&
+           svga_shader_emit_dwords( emit, dcl.values, Elements(dcl.values)));
 }
 
-static boolean emit_vface_decl( struct svga_shader_emitter *emit )
+
+/**
+ * Emit declaration for PS front/back-face input register.
+ */
+static boolean
+emit_vface_decl(struct svga_shader_emitter *emit)
 {
    if (!emit->emitted_vface) {
       SVGA3dShaderDestToken reg =
-         dst_register( SVGA3DREG_MISCTYPE,
-                       SVGA3DMISCREG_FACE );
+         dst_register(SVGA3DREG_MISCTYPE, SVGA3DMISCREG_FACE);
 
       if (!emit_decl( emit, reg, 0, 0 ))
          return FALSE;
@@ -119,12 +133,16 @@ static boolean emit_vface_decl( struct svga_shader_emitter *emit )
    return TRUE;
 }
 
+
+/**
+ * Emit PS input register to pass depth/fog coordinates.
+ * Note that this always goes into texcoord[0].
+ */
 static boolean
 ps30_input_emit_depth_fog( struct svga_shader_emitter *emit,
                            struct src_register *out )
 {
    struct src_register reg;
-
 
    if (emit->emitted_depth_fog) {
       *out = emit->ps_depth_fog;
@@ -144,9 +162,15 @@ ps30_input_emit_depth_fog( struct svga_shader_emitter *emit,
    return emit_decl( emit, dst( reg ), SVGA3D_DECLUSAGE_TEXCOORD, 0 );
 }
 
-static boolean ps30_input( struct svga_shader_emitter *emit,
-                           struct tgsi_declaration_semantic semantic,
-                           unsigned idx )
+
+/**
+ * Process a PS input declaration.
+ * We'll emit a declaration like "dcl_texcoord1 v2"
+ */
+static boolean
+ps30_input(struct svga_shader_emitter *emit,
+           struct tgsi_declaration_semantic semantic,
+           unsigned idx)
 {
    unsigned usage, index;
    SVGA3dShaderDestToken reg;
@@ -285,11 +309,14 @@ static boolean ps30_input( struct svga_shader_emitter *emit,
 }
 
 
-/* PS output registers are the same as 2.0
+/**
+ * Process a PS output declaration.
+ * Note that we don't actually emit a SVGA3DOpDcl for PS outputs.
  */
-static boolean ps30_output( struct svga_shader_emitter *emit,
-                            struct tgsi_declaration_semantic semantic,
-                            unsigned idx )
+static boolean
+ps30_output(struct svga_shader_emitter *emit,
+            struct tgsi_declaration_semantic semantic,
+            unsigned idx)
 {
    SVGA3dShaderDestToken reg;
 
@@ -326,11 +353,14 @@ static boolean ps30_output( struct svga_shader_emitter *emit,
 }
 
 
-/* We still make up the input semantics the same as in 2.0
+/**
+ * Declare a VS input register.
+ * We still make up the input semantics the same as in 2.0
  */
-static boolean vs30_input( struct svga_shader_emitter *emit,
-                           struct tgsi_declaration_semantic semantic,
-                           unsigned idx )
+static boolean
+vs30_input(struct svga_shader_emitter *emit,
+           struct tgsi_declaration_semantic semantic,
+           unsigned idx)
 {
    SVGA3DOpDclArgs dcl;
    SVGA3dShaderInstToken opcode;
@@ -365,14 +395,19 @@ static boolean vs30_input( struct svga_shader_emitter *emit,
       dcl.index = index;
       dcl.values[0] |= 1<<31;
 
-      return  (emit_instruction(emit, opcode) &&
-               svga_shader_emit_dwords( emit, dcl.values, Elements(dcl.values)));
+      return (emit_instruction(emit, opcode) &&
+              svga_shader_emit_dwords( emit, dcl.values, Elements(dcl.values)));
    }
    return TRUE;
 }
 
-static boolean vs30_output_emit_depth_fog( struct svga_shader_emitter *emit,
-                                           SVGA3dShaderDestToken *out )
+
+/**
+ * Declare VS output for holding depth/fog.
+ */
+static boolean
+vs30_output_emit_depth_fog(struct svga_shader_emitter *emit,
+                           SVGA3dShaderDestToken *out)
 {
    SVGA3dShaderDestToken reg;
 
@@ -390,12 +425,16 @@ static boolean vs30_output_emit_depth_fog( struct svga_shader_emitter *emit,
    return emit_decl( emit, reg, SVGA3D_DECLUSAGE_TEXCOORD, 0 );
 }
 
-/* VS3.0 outputs have proper declarations and semantic info for
+
+/**
+ * Declare a VS output.
+ * VS3.0 outputs have proper declarations and semantic info for
  * matching against PS inputs.
  */
-static boolean vs30_output( struct svga_shader_emitter *emit,
-                         struct tgsi_declaration_semantic semantic,
-                         unsigned idx )
+static boolean
+vs30_output(struct svga_shader_emitter *emit,
+            struct tgsi_declaration_semantic semantic,
+            unsigned idx)
 {
    SVGA3DOpDclArgs dcl;
    SVGA3dShaderInstToken opcode;
@@ -457,14 +496,15 @@ static boolean vs30_output( struct svga_shader_emitter *emit,
       emit->output_map[idx] = dcl.dst;
    }
 
-
-   return  (emit_instruction(emit, opcode) &&
-            svga_shader_emit_dwords( emit, dcl.values, Elements(dcl.values)));
+   return (emit_instruction(emit, opcode) &&
+           svga_shader_emit_dwords( emit, dcl.values, Elements(dcl.values)));
 }
 
-static boolean ps30_sampler( struct svga_shader_emitter *emit,
-                          struct tgsi_declaration_semantic semantic,
-                          unsigned idx )
+
+static boolean
+ps30_sampler( struct svga_shader_emitter *emit,
+              struct tgsi_declaration_semantic semantic,
+              unsigned idx )
 {
    SVGA3DOpDclArgs dcl;
    SVGA3dShaderInstToken opcode;
@@ -477,13 +517,14 @@ static boolean ps30_sampler( struct svga_shader_emitter *emit,
    dcl.type = svga_tgsi_sampler_type( emit, idx );
    dcl.values[0] |= 1<<31;
 
-   return  (emit_instruction(emit, opcode) &&
-            svga_shader_emit_dwords( emit, dcl.values, Elements(dcl.values)));
+   return (emit_instruction(emit, opcode) &&
+           svga_shader_emit_dwords( emit, dcl.values, Elements(dcl.values)));
 }
 
 
-boolean svga_translate_decl_sm30( struct svga_shader_emitter *emit,
-                             const struct tgsi_full_declaration *decl )
+boolean
+svga_translate_decl_sm30( struct svga_shader_emitter *emit,
+                          const struct tgsi_full_declaration *decl )
 {
    unsigned first = decl->Range.First;
    unsigned last = decl->Range.Last;
@@ -530,6 +571,3 @@ boolean svga_translate_decl_sm30( struct svga_shader_emitter *emit,
 
    return TRUE;
 }
-
-
-
