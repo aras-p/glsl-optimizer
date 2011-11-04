@@ -264,8 +264,7 @@ dst_register( unsigned file,
 
    /* check values against bitfield sizes */
    assert(number < (1 << 11));
-   assert((file >> 3) < 4);
-   assert((file & 0x7) < 8);
+   assert(file <= SVGA3DREG_PREDICATE);
 
    dest.value = 0;
    dest.num = number;
@@ -298,8 +297,7 @@ src_token( unsigned file, int number )
 
    /* check values against bitfield sizes */
    assert(number < (1 << 11));
-   assert((file >> 3) < 4);
-   assert((file & 0x7) < 8);
+   assert(file <= SVGA3DREG_PREDICATE);
 
    src.value = 0;
    src.num = number;
