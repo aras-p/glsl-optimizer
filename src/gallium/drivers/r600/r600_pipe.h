@@ -68,6 +68,7 @@ enum r600_pipe_state_id {
 	R600_PIPE_STATE_RESOURCE,
 	R600_PIPE_STATE_POLYGON_OFFSET,
 	R600_PIPE_STATE_FETCH_SHADER,
+	R600_PIPE_STATE_SPI,
 	R600_PIPE_NSTATES
 };
 
@@ -132,7 +133,6 @@ struct r600_pipe_shader {
 	struct r600_resource		*bo_fetch;
 	struct r600_vertex_element	vertex_elements;
 	struct tgsi_token		*tokens;
-	unsigned	sprite_coord_enable;
 };
 
 struct r600_pipe_sampler_state {
@@ -215,7 +215,9 @@ struct r600_pipe_context {
 	/* shader information */
 	boolean				clamp_vertex_color;
 	boolean				clamp_fragment_color;
+	boolean				spi_dirty;
 	unsigned			sprite_coord_enable;
+	boolean				flatshade;
 	boolean				export_16bpc;
 	unsigned			alpha_ref;
 	boolean				alpha_ref_dirty;
