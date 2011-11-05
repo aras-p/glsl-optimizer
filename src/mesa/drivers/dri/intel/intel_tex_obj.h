@@ -85,8 +85,8 @@ struct intel_texture_image
 
    /**
     * The depth buffer has format X8_Z24. The x8 bits are undefined unless
-    * intel_tex_image_s8z24_gather has been immediately called. The depth buffer
-    * resuses the image miptree's region and hiz_region as its own.
+    * intel_tex_image_s8z24_gather has been immediately called. The depth
+    * buffer reuses the image miptree's region and hiz_region as its own.
     */
    struct gl_renderbuffer *depth_rb;
 
