@@ -56,7 +56,7 @@ struct intel_renderbuffer
     * \name Packed depth/stencil unwrappers
     *
     * If the intel_context is using separate stencil and this renderbuffer has
-    * a a packed depth/stencil format, then wrapped_depth and wrapped_stencil
+    * a packed depth/stencil format, then wrapped_depth and wrapped_stencil
     * are the real renderbuffers.
     */
    struct gl_renderbuffer *wrapped_depth;
