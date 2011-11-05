@@ -720,7 +720,8 @@ get_values_ubyte4(struct gl_context *ctx, struct gl_renderbuffer *rb, GLuint cou
    GLuint *dst = (GLuint *) values;
    GLuint i;
    ASSERT(rb->DataType == GL_UNSIGNED_BYTE);
-   ASSERT(rb->Format == MESA_FORMAT_RGBA8888);
+   ASSERT(rb->Format == MESA_FORMAT_RGBA8888 ||
+          rb->Format == MESA_FORMAT_RGBA8888_REV);
    for (i = 0; i < count; i++) {
       const GLuint *src = (GLuint *) rb->Data + (y[i] * rb->RowStride + x[i]);
       dst[i] = *src;
@@ -736,7 +737,8 @@ put_row_ubyte4(struct gl_context *ctx, struct gl_renderbuffer *rb, GLuint count,
    const GLuint *src = (const GLuint *) values;
    GLuint *dst = (GLuint *) rb->Data + (y * rb->RowStride + x);
    ASSERT(rb->DataType == GL_UNSIGNED_BYTE);
-   ASSERT(rb->Format == MESA_FORMAT_RGBA8888);
+   ASSERT(rb->Format == MESA_FORMAT_RGBA8888 ||
+          rb->Format == MESA_FORMAT_RGBA8888_REV);
    if (mask) {
       GLuint i;
       for (i = 0; i < count; i++) {
@@ -760,7 +762,8 @@ put_row_rgb_ubyte4(struct gl_context *ctx, struct gl_renderbuffer *rb, GLuint co
    GLubyte *dst = (GLubyte *) rb->Data + 4 * (y * rb->RowStride + x);
    GLuint i;
    ASSERT(rb->DataType == GL_UNSIGNED_BYTE);
-   ASSERT(rb->Format == MESA_FORMAT_RGBA8888);
+   ASSERT(rb->Format == MESA_FORMAT_RGBA8888 ||
+          rb->Format == MESA_FORMAT_RGBA8888_REV);
    for (i = 0; i < count; i++) {
       if (!mask || mask[i]) {
          dst[i * 4 + 0] = src[i * 3 + 0];
@@ -780,7 +783,8 @@ put_mono_row_ubyte4(struct gl_context *ctx, struct gl_renderbuffer *rb, GLuint c
    const GLuint val = *((const GLuint *) value);
    GLuint *dst = (GLuint *) rb->Data + (y * rb->RowStride + x);
    ASSERT(rb->DataType == GL_UNSIGNED_BYTE);
-   ASSERT(rb->Format == MESA_FORMAT_RGBA8888);
+   ASSERT(rb->Format == MESA_FORMAT_RGBA8888 ||
+          rb->Format == MESA_FORMAT_RGBA8888_REV);
    if (!mask && val == 0) {
       /* common case */
       memset(dst, 0, count * 4 * sizeof(GLubyte));
@@ -814,7 +818,8 @@ put_values_ubyte4(struct gl_context *ctx, struct gl_renderbuffer *rb, GLuint cou
    const GLuint *src = (const GLuint *) values;
    GLuint i;
    ASSERT(rb->DataType == GL_UNSIGNED_BYTE);
-   ASSERT(rb->Format == MESA_FORMAT_RGBA8888);
+   ASSERT(rb->Format == MESA_FORMAT_RGBA8888 ||
+          rb->Format == MESA_FORMAT_RGBA8888_REV);
    for (i = 0; i < count; i++) {
       if (!mask || mask[i]) {
          GLuint *dst = (GLuint *) rb->Data + (y[i] * rb->RowStride + x[i]);
@@ -833,7 +838,8 @@ put_mono_values_ubyte4(struct gl_context *ctx, struct gl_renderbuffer *rb,
    const GLuint val = *((const GLuint *) value);
    GLuint i;
    ASSERT(rb->DataType == GL_UNSIGNED_BYTE);
-   ASSERT(rb->Format == MESA_FORMAT_RGBA8888);
+   ASSERT(rb->Format == MESA_FORMAT_RGBA8888 ||
+          rb->Format == MESA_FORMAT_RGBA8888_REV);
    for (i = 0; i < count; i++) {
       if (!mask || mask[i]) {
          GLuint *dst = (GLuint *) rb->Data + (y[i] * rb->RowStride + x[i]);
@@ -1400,6 +1406,7 @@ _mesa_set_renderbuffer_accessors(struct gl_renderbuffer *rb)
       break;
 
    case MESA_FORMAT_RGBA8888:
+   case MESA_FORMAT_RGBA8888_REV:
       rb->DataType = GL_UNSIGNED_BYTE;
       rb->GetValues = get_values_ubyte4;
       rb->PutRow = put_row_ubyte4;
@@ -1622,7 +1629,10 @@ _mesa_soft_renderbuffer_storage(struct gl_context *ctx, struct gl_renderbuffer *
    case GL_RGB10_A2:
    case GL_RGBA12:
 #endif
-      rb->Format = MESA_FORMAT_RGBA8888;
+      if (_mesa_little_endian())
+         rb->Format = MESA_FORMAT_RGBA8888_REV;
+      else
+         rb->Format = MESA_FORMAT_RGBA8888;
       break;
    case GL_RGBA16:
    case GL_RGBA16_SNORM:
