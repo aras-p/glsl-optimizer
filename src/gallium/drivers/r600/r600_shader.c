@@ -57,24 +57,6 @@ issued in the w slot as well.
 The compiler must issue the source argument to slots z, y, and x
 */
 
-
-int r600_find_vs_semantic_index(struct r600_shader *vs,
-				struct r600_shader *ps, int id)
-{
-	struct r600_shader_io *input = &ps->input[id];
-	int index = 0;
-
-	for (int i = 0; i < vs->noutput; i++) {
-		if (input->name == vs->output[i].name &&
-				input->sid == vs->output[i].sid)
-			return index;
-		else if (vs->output[i].name != TGSI_SEMANTIC_POSITION &&
-				 vs->output[i].name != TGSI_SEMANTIC_PSIZE)
-			index++;
-	}
-	return 0;
-}
-
 static int r600_pipe_shader(struct pipe_context *ctx, struct r600_pipe_shader *shader)
 {
 	struct r600_pipe_context *rctx = (struct r600_pipe_context *)ctx;
@@ -361,6 +343,44 @@ static int evergreen_interp_flat(struct r600_shader_ctx *ctx, int input)
  * DB_SOURCE_FORMAT - export control restrictions
  *
  */
+
+
+/* Map name/sid pair from tgsi to the 8-bit semantic index for SPI setup */
+static int r600_spi_sid(struct r600_shader_io * io)
+{
+	int index, name = io->name;
+
+	/* These params are handled differently, they don't need
+	 * semantic indices, so we'll use 0 for them.
+	 */
+	if (name == TGSI_SEMANTIC_POSITION ||
+		name == TGSI_SEMANTIC_PSIZE ||
+		name == TGSI_SEMANTIC_FACE)
+		index = 0;
+	else {
+		if (name == TGSI_SEMANTIC_GENERIC) {
+			/* For generic params simply use sid from tgsi */
+			index = io->sid;
+		} else {
+
+			/* FIXME: two-side rendering is broken in r600g, this will
+			 * keep old functionality */
+			if (name == TGSI_SEMANTIC_BCOLOR)
+				name = TGSI_SEMANTIC_COLOR;
+
+			/* For non-generic params - pack name and sid into 8 bits */
+			index = 0x80 | (name<<3) | (io->sid);
+		}
+
+		/* Make sure that all really used indices have nonzero value, so
+		 * we can just compare it to 0 later instead of comparing the name
+		 * with different values to detect special cases. */
+		index++;
+	}
+
+	return index;
+};
+
 static int tgsi_declaration(struct r600_shader_ctx *ctx)
 {
 	struct tgsi_full_declaration *d = &ctx->parse.FullToken.FullDeclaration;
@@ -372,13 +392,13 @@ static int tgsi_declaration(struct r600_shader_ctx *ctx)
 		i = ctx->shader->ninput++;
 		ctx->shader->input[i].name = d->Semantic.Name;
 		ctx->shader->input[i].sid = d->Semantic.Index;
+		ctx->shader->input[i].spi_sid = r600_spi_sid(&ctx->shader->input[i]);
 		ctx->shader->input[i].interpolate = d->Declaration.Interpolate;
 		ctx->shader->input[i].centroid = d->Declaration.Centroid;
 		ctx->shader->input[i].gpr = ctx->file_offset[TGSI_FILE_INPUT] + d->Range.First;
 		if (ctx->type == TGSI_PROCESSOR_FRAGMENT && ctx->bc->chip_class >= EVERGREEN) {
 			/* turn input into interpolate on EG */
-			if (ctx->shader->input[i].name != TGSI_SEMANTIC_POSITION &&
-			    ctx->shader->input[i].name != TGSI_SEMANTIC_FACE) {
+			if (ctx->shader->input[i].spi_sid) {
 				ctx->shader->input[i].lds_pos = ctx->shader->nlds++;
 				if (ctx->shader->input[i].interpolate > 0) {
 					evergreen_interp_alu(ctx, i);
@@ -392,14 +412,9 @@ static int tgsi_declaration(struct r600_shader_ctx *ctx)
 		i = ctx->shader->noutput++;
 		ctx->shader->output[i].name = d->Semantic.Name;
 		ctx->shader->output[i].sid = d->Semantic.Index;
+		ctx->shader->output[i].spi_sid = r600_spi_sid(&ctx->shader->output[i]);
 		ctx->shader->output[i].gpr = ctx->file_offset[TGSI_FILE_OUTPUT] + d->Range.First;
 		ctx->shader->output[i].interpolate = d->Declaration.Interpolate;
-		if (ctx->type == TGSI_PROCESSOR_VERTEX) {
-			/* these don't count as vertex param exports */
-			if ((ctx->shader->output[i].name == TGSI_SEMANTIC_POSITION) ||
-			    (ctx->shader->output[i].name == TGSI_SEMANTIC_PSIZE))
-				ctx->shader->npos++;
-		}
 		break;
 	case TGSI_FILE_CONSTANT:
 	case TGSI_FILE_TEMPORARY:
