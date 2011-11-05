@@ -22,21 +22,20 @@ It's the fastest software rasterizer for Mesa.
 
 <h1>Requirements</h1>
 
-<dl>
-<dt>An x86 or amd64 processor.  64-bit mode is preferred.</dt>
-<dd>
+<ul>
+<li>
+	 <p>An x86 or amd64 processor; 64-bit mode recommended.</p
    <p>
-   Support for sse2 is strongly encouraged.  Support for ssse3, and sse4.1 will
+   Support for SSE2 is strongly encouraged.  Support for SSSE3, and SSE4.1 will
    yield the most efficient code.  The less features the CPU has the more
    likely is that you ran into underperforming, buggy, or incomplete code.  
    </p>
    <p>
    See /proc/cpuinfo to know what your CPU supports.
    </p>
-</dd>
-<dt>LLVM. Version 2.8 recommended. 2.6 or later required.</dt>
-<dd>
-   <p>
+</li>
+<li>
+	 <p>LLVM: version 2.9 recommended; 2.6 or later required.</p>
    <b>NOTE</b>: LLVM 2.8 and earlier will not work on systems that support the
    Intel AVX extensions (e.g. Sandybridge).  LLVM's code generator will
    fail when trying to emit AVX instructions.  This was fixed in LLVM 2.9.
@@ -54,26 +53,25 @@ It's the fastest software rasterizer for Mesa.
 </pre>
 
    <p>
-   For Windows download pre-built MSVC 9.0 or MinGW binaries from
-   http://people.freedesktop.org/~jrfonseca/llvm/ and set the LLVM environment
-   variable to the extracted path.
-   </p>
+	 For Windows you will need to build LLVM from source with MSVC or MINGW
+	 (either natively or through cross compilers) and CMake, and set the LLVM
+	 environment variable to the directory you installed it to.
 
-   <p>
-   For MSVC there are two set of binaries: llvm-x.x-msvc32mt.7z and
-   llvm-x.x-msvc32mtd.7z .
-   </p>
+   LLVM will be statically linked, so when building on MSVC it needs to be
+   built with a matching CRT as Mesa, and you'll need to pass
+   -DLLVM_USE_CRT_RELEASE=MTd for debug and checked builds,
+   -DLLVM_USE_CRT_RELEASE=MTd for profile and release builds.
 
-   <p>
-   You have to set the LLVM=/path/to/llvm-x.x-msvc32mtd env var when passing
-   debug=yes to scons, and LLVM=/path/to/llvm-x.x-msvc32mt when building with
-   debug=no. This is necessary as LLVM builds as static library so the chosen
-   MS CRT must match.
+   You can build only the x86 target by passing -DLLVM_TARGETS_TO_BUILD=X86
+   to cmake.
    </p>
-</dd>
+</li>
 
-<dt>scons (optional)</dt>
-</dl>
+<li>
+   <p>scons (optional)</p>
+</li>
+</ul>
+
 
 
 
@@ -93,7 +91,7 @@ Alternatively, you can build it with GNU make, if you prefer, by invoking it as
 
 but the rest of these instructions assume that scons is used.
 
-For windows is everything the except except the winsys:
+For Windows the procedure is similar except the target:
 
 <pre>
   scons build=debug libgl-gdi
