@@ -186,6 +186,10 @@ struct xmesa_renderbuffer
    GLint bottom;	/* used for FLIP macro, equals height - 1 */
 
    ClearFunc clearFunc;
+
+   GLuint map_x, map_y, map_w, map_h;
+   GLbitfield map_mode;
+   XMesaImage *map_ximage;
 };
 
 
@@ -473,7 +477,8 @@ extern const int xmesa_kernel1[16];
  */
 
 extern struct xmesa_renderbuffer *
-xmesa_new_renderbuffer(struct gl_context *ctx, GLuint name, const struct gl_config *visual,
+xmesa_new_renderbuffer(struct gl_context *ctx, GLuint name,
+                       const struct xmesa_visual *xmvis,
                        GLboolean backBuffer);
 
 extern void
@@ -504,6 +509,16 @@ xmesa_update_state( struct gl_context *ctx, GLbitfield new_state );
 extern void
 xmesa_set_renderbuffer_funcs(struct xmesa_renderbuffer *xrb,
                              enum pixel_format pixelformat, GLint depth);
+
+extern void
+xmesa_MapRenderbuffer(struct gl_context *ctx,
+                      struct gl_renderbuffer *rb,
+                      GLuint x, GLuint y, GLuint w, GLuint h,
+                      GLbitfield mode,
+                      GLubyte **mapOut, GLint *rowStrideOut);
+
+extern void
+xmesa_UnmapRenderbuffer(struct gl_context *ctx, struct gl_renderbuffer *rb);
 
 extern void
 xmesa_destroy_buffers_on_display(XMesaDisplay *dpy);

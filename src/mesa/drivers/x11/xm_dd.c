@@ -1077,6 +1077,9 @@ xmesa_init_driver_functions( XMesaVisual xmvisual,
       }
    }
 
+   driver->MapRenderbuffer = xmesa_MapRenderbuffer;
+   driver->UnmapRenderbuffer = xmesa_UnmapRenderbuffer;
+
 #if ENABLE_EXT_texure_compression_s3tc
    driver->ChooseTextureFormat = choose_tex_format;
 #else
