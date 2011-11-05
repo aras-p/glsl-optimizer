@@ -630,6 +630,62 @@ st_ReadBuffer(struct gl_context *ctx, GLenum buffer)
 }
 
 
+
+/**
+ * Called via ctx->Driver.MapRenderbuffer.
+ */
+static void
+st_MapRenderbuffer(struct gl_context *ctx,
+                   struct gl_renderbuffer *rb,
+                   GLuint x, GLuint y, GLuint w, GLuint h,
+                   GLbitfield mode,
+                   GLubyte **mapOut, GLint *rowStrideOut)
+{
+   struct st_context *st = st_context(ctx);
+   struct st_renderbuffer *strb = st_renderbuffer(rb);
+   struct pipe_context *pipe = st->pipe;
+   unsigned usage;
+
+   usage = 0x0;
+   if (mode & GL_MAP_READ_BIT)
+      usage |= PIPE_TRANSFER_READ;
+   if (mode & GL_MAP_WRITE_BIT)
+      usage |= PIPE_TRANSFER_WRITE;
+
+   strb->transfer = pipe_get_transfer(pipe,
+                                      strb->texture,
+                                      strb->rtt_level,
+                                      strb->rtt_face + strb->rtt_slice,
+                                      usage, x, y, w, h);
+   if (strb->transfer) {
+      *mapOut = pipe_transfer_map(pipe, strb->transfer);
+      *rowStrideOut = strb->transfer->stride;
+   }
+   else {
+      *mapOut = NULL;
+      *rowStrideOut = 0;
+   }
+}
+
+
+/**
+ * Called via ctx->Driver.UnmapRenderbuffer.
+ */
+static void
+st_UnmapRenderbuffer(struct gl_context *ctx,
+                     struct gl_renderbuffer *rb)
+{
+   struct st_context *st = st_context(ctx);
+   struct st_renderbuffer *strb = st_renderbuffer(rb);
+   struct pipe_context *pipe = st->pipe;
+
+   pipe_transfer_unmap(pipe, strb->transfer);
+   pipe->transfer_destroy(pipe, strb->transfer);
+   strb->transfer = NULL;
+}
+
+
+
 void st_init_fbo_functions(struct dd_function_table *functions)
 {
 #if FEATURE_EXT_framebuffer_object
@@ -647,6 +703,9 @@ void st_init_fbo_functions(struct dd_function_table *functions)
 
    functions->DrawBuffers = st_DrawBuffers;
    functions->ReadBuffer = st_ReadBuffer;
+
+   functions->MapRenderbuffer = st_MapRenderbuffer;
+   functions->UnmapRenderbuffer = st_UnmapRenderbuffer;
 }
 
 

@@ -51,6 +51,8 @@ struct st_renderbuffer
    enum pipe_format format;  /** preferred format, or PIPE_FORMAT_NONE */
    GLboolean defined;        /**< defined contents? */
 
+   struct pipe_transfer *transfer; /**< only used when mapping the resource */
+
    /**
     * Used only when hardware accumulation buffers are not supported.
     */
