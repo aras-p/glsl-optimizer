@@ -2127,16 +2127,6 @@ _mesa_add_color_renderbuffers(struct gl_context *ctx, struct gl_framebuffer *fb,
          return GL_FALSE;
       }
 
-      if (rgbBits <= 8) {
-         if (alphaBits)
-            rb->Format = MESA_FORMAT_RGBA8888;
-         else
-            rb->Format = MESA_FORMAT_RGB888;
-      }
-      else {
-         assert(rgbBits <= 16);
-         rb->Format = MESA_FORMAT_NONE; /*XXX RGBA16;*/
-      }
       rb->InternalFormat = GL_RGBA;
 
       rb->AllocStorage = _mesa_soft_renderbuffer_storage;
@@ -2284,15 +2274,12 @@ _mesa_add_depth_renderbuffer(struct gl_context *ctx, struct gl_framebuffer *fb,
    }
 
    if (depthBits <= 16) {
-      rb->Format = MESA_FORMAT_Z16;
       rb->InternalFormat = GL_DEPTH_COMPONENT16;
    }
    else if (depthBits <= 24) {
-      rb->Format = MESA_FORMAT_X8_Z24;
       rb->InternalFormat = GL_DEPTH_COMPONENT24;
    }
    else {
-      rb->Format = MESA_FORMAT_Z32;
       rb->InternalFormat = GL_DEPTH_COMPONENT32;
    }
 
@@ -2332,7 +2319,6 @@ _mesa_add_stencil_renderbuffer(struct gl_context *ctx, struct gl_framebuffer *fb
    }
 
    assert(stencilBits <= 8);
-   rb->Format = MESA_FORMAT_S8;
    rb->InternalFormat = GL_STENCIL_INDEX8;
 
    rb->AllocStorage = _mesa_soft_renderbuffer_storage;
@@ -2371,7 +2357,6 @@ _mesa_add_accum_renderbuffer(struct gl_context *ctx, struct gl_framebuffer *fb,
       return GL_FALSE;
    }
 
-   rb->Format = MESA_FORMAT_SIGNED_RGBA_16;
    rb->InternalFormat = GL_RGBA16_SNORM;
    rb->AllocStorage = _mesa_soft_renderbuffer_storage;
    _mesa_add_renderbuffer(fb, BUFFER_ACCUM, rb);
@@ -2416,7 +2401,6 @@ _mesa_add_aux_renderbuffers(struct gl_context *ctx, struct gl_framebuffer *fb,
       }
 
       assert (colorBits <= 8);
-      rb->Format = MESA_FORMAT_RGBA8888;
       rb->InternalFormat = GL_RGBA;
 
       rb->AllocStorage = _mesa_soft_renderbuffer_storage;
