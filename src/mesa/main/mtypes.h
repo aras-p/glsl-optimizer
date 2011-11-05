@@ -1824,6 +1824,16 @@ struct prog_instruction;
 struct gl_program_parameter_list;
 struct gl_uniform_list;
 
+/** Post-link transform feedback info. */
+struct gl_transform_feedback_info {
+   unsigned NumOutputs;
+
+   struct {
+      unsigned OutputRegister;
+      unsigned OutputBuffer;
+      unsigned NumComponents;
+   } Outputs[MAX_PROGRAM_OUTPUTS];
+};
 
 /**
  * Base class for any kind of program object
@@ -2205,6 +2215,9 @@ struct gl_shader_program
       GLuint NumVarying;
       GLchar **VaryingNames;  /**< Array [NumVarying] of char * */
    } TransformFeedback;
+
+   /** Post-link transform feedback info. */
+   struct gl_transform_feedback_info LinkedTransformFeedback;
 
    /** Geometry shader state - copied into gl_geometry_program at link time */
    struct {

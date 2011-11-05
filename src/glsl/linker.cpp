@@ -1369,10 +1369,359 @@ demote_shader_inputs_and_outputs(gl_shader *sh, enum ir_variable_mode mode)
 }
 
 
+/**
+ * Data structure tracking information about a transform feedback declaration
+ * during linking.
+ */
+class tfeedback_decl
+{
+public:
+   bool init(struct gl_shader_program *prog, const void *mem_ctx,
+             const char *input);
+   static bool is_same(const tfeedback_decl &x, const tfeedback_decl &y);
+   bool assign_location(struct gl_context *ctx, struct gl_shader_program *prog,
+                        ir_variable *output_var);
+   bool store(struct gl_shader_program *prog,
+              struct gl_transform_feedback_info *info, unsigned buffer) const;
+
+
+   /**
+    * True if assign_location() has been called for this object.
+    */
+   bool is_assigned() const
+   {
+      return this->location != -1;
+   }
+
+   /**
+    * Determine whether this object refers to the variable var.
+    */
+   bool matches_var(ir_variable *var) const
+   {
+      return strcmp(var->name, this->var_name) == 0;
+   }
+
+   /**
+    * The total number of varying components taken up by this variable.  Only
+    * valid if is_assigned() is true.
+    */
+   unsigned num_components() const
+   {
+      return this->vector_elements * this->matrix_columns;
+   }
+
+private:
+   /**
+    * The name that was supplied to glTransformFeedbackVaryings.  Used for
+    * error reporting.
+    */
+   const char *orig_name;
+
+   /**
+    * The name of the variable, parsed from orig_name.
+    */
+   char *var_name;
+
+   /**
+    * True if the declaration in orig_name represents an array.
+    */
+   bool is_array;
+
+   /**
+    * If is_array is true, the array index that was specified in orig_name.
+    */
+   unsigned array_index;
+
+   /**
+    * The vertex shader output location that the linker assigned for this
+    * variable.  -1 if a location hasn't been assigned yet.
+    */
+   int location;
+
+   /**
+    * If location != -1, the number of vector elements in this variable, or 1
+    * if this variable is a scalar.
+    */
+   unsigned vector_elements;
+
+   /**
+    * If location != -1, the number of matrix columns in this variable, or 1
+    * if this variable is not a matrix.
+    */
+   unsigned matrix_columns;
+};
+
+
+/**
+ * Initialize this object based on a string that was passed to
+ * glTransformFeedbackVaryings.  If there is a parse error, the error is
+ * reported using linker_error(), and false is returned.
+ */
+bool
+tfeedback_decl::init(struct gl_shader_program *prog, const void *mem_ctx,
+                     const char *input)
+{
+   /* We don't have to be pedantic about what is a valid GLSL variable name,
+    * because any variable with an invalid name can't exist in the IR anyway.
+    */
+
+   this->location = -1;
+   this->orig_name = input;
+
+   const char *bracket = strrchr(input, '[');
+
+   if (bracket) {
+      this->var_name = ralloc_strndup(mem_ctx, input, bracket - input);
+      if (sscanf(bracket, "[%u]", &this->array_index) == 1) {
+         this->is_array = true;
+         return true;
+      }
+   } else {
+      this->var_name = ralloc_strdup(mem_ctx, input);
+      this->is_array = false;
+      return true;
+   }
+
+   linker_error(prog, "Cannot parse transform feedback varying %s", input);
+   return false;
+}
+
+
+/**
+ * Determine whether two tfeedback_decl objects refer to the same variable and
+ * array index (if applicable).
+ */
+bool
+tfeedback_decl::is_same(const tfeedback_decl &x, const tfeedback_decl &y)
+{
+   if (strcmp(x.var_name, y.var_name) != 0)
+      return false;
+   if (x.is_array != y.is_array)
+      return false;
+   if (x.is_array && x.array_index != y.array_index)
+      return false;
+   return true;
+}
+
+
+/**
+ * Assign a location for this tfeedback_decl object based on the location
+ * assignment in output_var.
+ *
+ * If an error occurs, the error is reported through linker_error() and false
+ * is returned.
+ */
+bool
+tfeedback_decl::assign_location(struct gl_context *ctx,
+                                struct gl_shader_program *prog,
+                                ir_variable *output_var)
+{
+   if (output_var->type->is_array()) {
+      /* Array variable */
+      if (!this->is_array) {
+         linker_error(prog, "Transform feedback varying %s found, "
+                      "but it's not an array ([] not expected).",
+                      this->orig_name);
+         return false;
+      }
+      /* Check array bounds. */
+      if (this->array_index >=
+          (unsigned) output_var->type->array_size()) {
+         linker_error(prog, "Transform feedback varying %s has index "
+                      "%i, but the array size is %i.",
+                      this->orig_name, this->array_index,
+                      output_var->type->array_size());
+         return false;
+      }
+      const unsigned matrix_cols =
+         output_var->type->fields.array->matrix_columns;
+      this->location = output_var->location + this->array_index * matrix_cols;
+      this->vector_elements = output_var->type->fields.array->vector_elements;
+      this->matrix_columns = matrix_cols;
+   } else {
+      /* Regular variable (scalar, vector, or matrix) */
+      if (this->is_array) {
+         linker_error(prog, "Transform feedback varying %s found, "
+                      "but it's an array ([] expected).",
+                      this->orig_name);
+         return false;
+      }
+      this->location = output_var->location;
+      this->vector_elements = output_var->type->vector_elements;
+      this->matrix_columns = output_var->type->matrix_columns;
+   }
+   /* From GL_EXT_transform_feedback:
+    *   A program will fail to link if:
+    *
+    *   * the total number of components to capture in any varying
+    *     variable in <varyings> is greater than the constant
+    *     MAX_TRANSFORM_FEEDBACK_SEPARATE_COMPONENTS_EXT and the
+    *     buffer mode is SEPARATE_ATTRIBS_EXT;
+    */
+   if (prog->TransformFeedback.BufferMode == GL_SEPARATE_ATTRIBS &&
+       this->num_components() >
+       ctx->Const.MaxTransformFeedbackSeparateComponents) {
+      linker_error(prog, "Transform feedback varying %s exceeds "
+                   "MAX_TRANSFORM_FEEDBACK_SEPARATE_COMPONENTS.",
+                   this->orig_name);
+      return false;
+   }
+
+   return true;
+}
+
+
+/**
+ * Update gl_transform_feedback_info to reflect this tfeedback_decl.
+ *
+ * If an error occurs, the error is reported through linker_error() and false
+ * is returned.
+ */
+bool
+tfeedback_decl::store(struct gl_shader_program *prog,
+                      struct gl_transform_feedback_info *info,
+                      unsigned buffer) const
+{
+   if (!this->is_assigned()) {
+      /* From GL_EXT_transform_feedback:
+       *   A program will fail to link if:
+       *
+       *   * any variable name specified in the <varyings> array is not
+       *     declared as an output in the geometry shader (if present) or
+       *     the vertex shader (if no geometry shader is present);
+       */
+      linker_error(prog, "Transform feedback varying %s undeclared.",
+                   this->orig_name);
+      return false;
+   }
+   for (unsigned v = 0; v < this->matrix_columns; ++v) {
+      info->Outputs[info->NumOutputs].OutputRegister = this->location + v;
+      info->Outputs[info->NumOutputs].NumComponents = this->vector_elements;
+      info->Outputs[info->NumOutputs].OutputBuffer = buffer;
+      ++info->NumOutputs;
+   }
+   return true;
+}
+
+
+/**
+ * Parse all the transform feedback declarations that were passed to
+ * glTransformFeedbackVaryings() and store them in tfeedback_decl objects.
+ *
+ * If an error occurs, the error is reported through linker_error() and false
+ * is returned.
+ */
+static bool
+parse_tfeedback_decls(struct gl_shader_program *prog, const void *mem_ctx,
+                      unsigned num_names, char **varying_names,
+                      tfeedback_decl *decls)
+{
+   for (unsigned i = 0; i < num_names; ++i) {
+      if (!decls[i].init(prog, mem_ctx, varying_names[i]))
+         return false;
+      /* From GL_EXT_transform_feedback:
+       *   A program will fail to link if:
+       *
+       *   * any two entries in the <varyings> array specify the same varying
+       *     variable;
+       *
+       * We interpret this to mean "any two entries in the <varyings> array
+       * specify the same varying variable and array index", since transform
+       * feedback of arrays would be useless otherwise.
+       */
+      for (unsigned j = 0; j < i; ++j) {
+         if (tfeedback_decl::is_same(decls[i], decls[j])) {
+            linker_error(prog, "Transform feedback varying %s specified "
+                         "more than once.", varying_names[i]);
+            return false;
+         }
+      }
+   }
+   return true;
+}
+
+
+/**
+ * Assign a location for a variable that is produced in one pipeline stage
+ * (the "producer") and consumed in the next stage (the "consumer").
+ *
+ * \param input_var is the input variable declaration in the consumer.
+ *
+ * \param output_var is the output variable declaration in the producer.
+ *
+ * \param input_index is the counter that keeps track of assigned input
+ *        locations in the consumer.
+ *
+ * \param output_index is the counter that keeps track of assigned output
+ *        locations in the producer.
+ *
+ * It is permissible for \c input_var to be NULL (this happens if a variable
+ * is output by the producer and consumed by transform feedback, but not
+ * consumed by the consumer).
+ *
+ * If the variable has already been assigned a location, this function has no
+ * effect.
+ */
+void
+assign_varying_location(ir_variable *input_var, ir_variable *output_var,
+                        unsigned *input_index, unsigned *output_index)
+{
+   if (output_var->location != -1) {
+      /* Location already assigned. */
+      return;
+   }
+
+   if (input_var) {
+      assert(input_var->location == -1);
+      input_var->location = *input_index;
+   }
+
+   output_var->location = *output_index;
+
+   /* FINISHME: Support for "varying" records in GLSL 1.50. */
+   assert(!output_var->type->is_record());
+
+   if (output_var->type->is_array()) {
+      const unsigned slots = output_var->type->length
+         * output_var->type->fields.array->matrix_columns;
+
+      *output_index += slots;
+      *input_index += slots;
+   } else {
+      const unsigned slots = output_var->type->matrix_columns;
+
+      *output_index += slots;
+      *input_index += slots;
+   }
+}
+
+
+/**
+ * Assign locations for all variables that are produced in one pipeline stage
+ * (the "producer") and consumed in the next stage (the "consumer").
+ *
+ * Variables produced by the producer may also be consumed by transform
+ * feedback.
+ *
+ * \param num_tfeedback_decls is the number of declarations indicating
+ *        variables that may be consumed by transform feedback.
+ *
+ * \param tfeedback_decls is a pointer to an array of tfeedback_decl objects
+ *        representing the result of parsing the strings passed to
+ *        glTransformFeedbackVaryings().  assign_location() will be called for
+ *        each of these objects that matches one of the outputs of the
+ *        producer.
+ *
+ * When num_tfeedback_decls is nonzero, it is permissible for the consumer to
+ * be NULL.  In this case, varying locations are assigned solely based on the
+ * requirements of transform feedback.
+ */
 bool
 assign_varying_locations(struct gl_context *ctx,
 			 struct gl_shader_program *prog,
-			 gl_shader *producer, gl_shader *consumer)
+			 gl_shader *producer, gl_shader *consumer,
+                         unsigned num_tfeedback_decls,
+                         tfeedback_decl *tfeedback_decls)
 {
    /* FINISHME: Set dynamically when geometry shader support is added. */
    unsigned output_index = VERT_RESULT_VAR0;
@@ -1390,79 +1739,77 @@ assign_varying_locations(struct gl_context *ctx,
     */
 
    link_invalidate_variable_locations(producer, ir_var_out, VERT_RESULT_VAR0);
-   link_invalidate_variable_locations(consumer, ir_var_in, FRAG_ATTRIB_VAR0);
+   if (consumer)
+      link_invalidate_variable_locations(consumer, ir_var_in, FRAG_ATTRIB_VAR0);
 
    foreach_list(node, producer->ir) {
       ir_variable *const output_var = ((ir_instruction *) node)->as_variable();
 
-      if ((output_var == NULL) || (output_var->mode != ir_var_out)
-	  || (output_var->location != -1))
+      if ((output_var == NULL) || (output_var->mode != ir_var_out))
 	 continue;
 
-      ir_variable *const input_var =
-	 consumer->symbols->get_variable(output_var->name);
+      ir_variable *input_var =
+	 consumer ? consumer->symbols->get_variable(output_var->name) : NULL;
 
-      if ((input_var == NULL) || (input_var->mode != ir_var_in))
-	 continue;
+      if (input_var && input_var->mode != ir_var_in)
+         input_var = NULL;
 
-      assert(input_var->location == -1);
+      if (input_var) {
+         assign_varying_location(input_var, output_var, &input_index,
+                                 &output_index);
+      }
 
-      output_var->location = output_index;
-      input_var->location = input_index;
-
-      /* FINISHME: Support for "varying" records in GLSL 1.50. */
-      assert(!output_var->type->is_record());
-
-      if (output_var->type->is_array()) {
-	 const unsigned slots = output_var->type->length
-	    * output_var->type->fields.array->matrix_columns;
-
-	 output_index += slots;
-	 input_index += slots;
-      } else {
-	 const unsigned slots = output_var->type->matrix_columns;
-
-	 output_index += slots;
-	 input_index += slots;
+      for (unsigned i = 0; i < num_tfeedback_decls; ++i) {
+         if (!tfeedback_decls[i].is_assigned() &&
+             tfeedback_decls[i].matches_var(output_var)) {
+            if (output_var->location == -1) {
+               assign_varying_location(input_var, output_var, &input_index,
+                                       &output_index);
+            }
+            if (!tfeedback_decls[i].assign_location(ctx, prog, output_var))
+               return false;
+         }
       }
    }
 
    unsigned varying_vectors = 0;
 
-   foreach_list(node, consumer->ir) {
-      ir_variable *const var = ((ir_instruction *) node)->as_variable();
+   if (consumer) {
+      foreach_list(node, consumer->ir) {
+         ir_variable *const var = ((ir_instruction *) node)->as_variable();
 
-      if ((var == NULL) || (var->mode != ir_var_in))
-	 continue;
+         if ((var == NULL) || (var->mode != ir_var_in))
+            continue;
 
-      if (var->location == -1) {
-	 if (prog->Version <= 120) {
-	    /* On page 25 (page 31 of the PDF) of the GLSL 1.20 spec:
-	     *
-	     *     Only those varying variables used (i.e. read) in
-	     *     the fragment shader executable must be written to
-	     *     by the vertex shader executable; declaring
-	     *     superfluous varying variables in a vertex shader is
-	     *     permissible.
-	     *
-	     * We interpret this text as meaning that the VS must
-	     * write the variable for the FS to read it.  See
-	     * "glsl1-varying read but not written" in piglit.
-	     */
+         if (var->location == -1) {
+            if (prog->Version <= 120) {
+               /* On page 25 (page 31 of the PDF) of the GLSL 1.20 spec:
+                *
+                *     Only those varying variables used (i.e. read) in
+                *     the fragment shader executable must be written to
+                *     by the vertex shader executable; declaring
+                *     superfluous varying variables in a vertex shader is
+                *     permissible.
+                *
+                * We interpret this text as meaning that the VS must
+                * write the variable for the FS to read it.  See
+                * "glsl1-varying read but not written" in piglit.
+                */
 
-	    linker_error(prog, "fragment shader varying %s not written "
-			 "by vertex shader\n.", var->name);
-	 }
+               linker_error(prog, "fragment shader varying %s not written "
+                            "by vertex shader\n.", var->name);
+            }
 
-	 /* An 'in' variable is only really a shader input if its
-	  * value is written by the previous stage.
-	  */
-	 var->mode = ir_var_auto;
-      } else {
-	 /* The packing rules are used for vertex shader inputs are also used
-	  * for fragment shader inputs.
-	  */
-	 varying_vectors += count_attribute_slots(var->type);
+            /* An 'in' variable is only really a shader input if its
+             * value is written by the previous stage.
+             */
+            var->mode = ir_var_auto;
+         } else {
+            /* The packing rules are used for vertex shader inputs are also
+             * used for fragment shader inputs.
+             */
+            varying_vectors += count_attribute_slots(var->type);
+         }
       }
    }
 
@@ -1487,9 +1834,54 @@ assign_varying_locations(struct gl_context *ctx,
 }
 
 
+/**
+ * Store transform feedback location assignments into
+ * prog->LinkedTransformFeedback based on the data stored in tfeedback_decls.
+ *
+ * If an error occurs, the error is reported through linker_error() and false
+ * is returned.
+ */
+static bool
+store_tfeedback_info(struct gl_context *ctx, struct gl_shader_program *prog,
+                     unsigned num_tfeedback_decls,
+                     tfeedback_decl *tfeedback_decls)
+{
+   unsigned total_tfeedback_components = 0;
+   prog->LinkedTransformFeedback.NumOutputs = 0;
+   for (unsigned i = 0; i < num_tfeedback_decls; ++i) {
+      unsigned buffer =
+         prog->TransformFeedback.BufferMode == GL_SEPARATE_ATTRIBS ? i : 0;
+      if (!tfeedback_decls[i].store(prog, &prog->LinkedTransformFeedback,
+                                    buffer))
+         return false;
+      total_tfeedback_components += tfeedback_decls[i].num_components();
+   }
+
+   /* From GL_EXT_transform_feedback:
+    *   A program will fail to link if:
+    *
+    *     * the total number of components to capture is greater than
+    *       the constant MAX_TRANSFORM_FEEDBACK_INTERLEAVED_COMPONENTS_EXT
+    *       and the buffer mode is INTERLEAVED_ATTRIBS_EXT.
+    */
+   if (prog->TransformFeedback.BufferMode == GL_INTERLEAVED_ATTRIBS &&
+       total_tfeedback_components >
+       ctx->Const.MaxTransformFeedbackInterleavedComponents) {
+      linker_error(prog, "The MAX_TRANSFORM_FEEDBACK_INTERLEAVED_COMPONENTS "
+                   "limit has been exceeded.");
+      return false;
+   }
+
+   return true;
+}
+
+
 void
 link_shaders(struct gl_context *ctx, struct gl_shader_program *prog)
 {
+   tfeedback_decl *tfeedback_decls = NULL;
+   unsigned num_tfeedback_decls = prog->TransformFeedback.NumVarying;
+
    void *mem_ctx = ralloc_context(NULL); // temporary linker context
 
    prog->LinkStatus = false;
@@ -1656,18 +2048,53 @@ link_shaders(struct gl_context *ctx, struct gl_shader_program *prog)
 	 break;
    }
 
+   if (num_tfeedback_decls != 0) {
+      /* From GL_EXT_transform_feedback:
+       *   A program will fail to link if:
+       *
+       *   * the <count> specified by TransformFeedbackVaryingsEXT is
+       *     non-zero, but the program object has no vertex or geometry
+       *     shader;
+       */
+      if (prev >= MESA_SHADER_FRAGMENT) {
+         linker_error(prog, "Transform feedback varyings specified, but "
+                      "no vertex or geometry shader is present.");
+         goto done;
+      }
+
+      tfeedback_decls = ralloc_array(mem_ctx, tfeedback_decl,
+                                     prog->TransformFeedback.NumVarying);
+      if (!parse_tfeedback_decls(prog, mem_ctx, num_tfeedback_decls,
+                                 prog->TransformFeedback.VaryingNames,
+                                 tfeedback_decls))
+         goto done;
+   }
+
    for (unsigned i = prev + 1; i < MESA_SHADER_TYPES; i++) {
       if (prog->_LinkedShaders[i] == NULL)
 	 continue;
 
-      if (!assign_varying_locations(ctx, prog,
-				    prog->_LinkedShaders[prev],
-				    prog->_LinkedShaders[i])) {
+      if (!assign_varying_locations(
+             ctx, prog, prog->_LinkedShaders[prev], prog->_LinkedShaders[i],
+             i == MESA_SHADER_FRAGMENT ? num_tfeedback_decls : 0,
+             tfeedback_decls))
 	 goto done;
-      }
 
       prev = i;
    }
+
+   if (prev != MESA_SHADER_FRAGMENT && num_tfeedback_decls != 0) {
+      /* There was no fragment shader, but we still have to assign varying
+       * locations for use by transform feedback.
+       */
+      if (!assign_varying_locations(
+             ctx, prog, prog->_LinkedShaders[prev], NULL, num_tfeedback_decls,
+             tfeedback_decls))
+         goto done;
+   }
+
+   if (!store_tfeedback_info(ctx, prog, num_tfeedback_decls, tfeedback_decls))
+      goto done;
 
    if (prog->_LinkedShaders[MESA_SHADER_VERTEX] != NULL) {
       demote_shader_inputs_and_outputs(prog->_LinkedShaders[MESA_SHADER_VERTEX],
