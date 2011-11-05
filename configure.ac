@@ -1427,8 +1427,8 @@ dnl
 dnl gbm Gallium configuration
 dnl
 if test "x$enable_gallium_gbm" = xauto; then
-    case "$enable_gbm$HAVE_ST_EGL$with_egl_platforms" in
-        yesyes*drm*)
+    case "$enable_gbm$HAVE_ST_EGL$enable_dri$with_egl_platforms" in
+        yesyesyes*drm*)
             enable_gallium_gbm=yes ;;
          *)
             enable_gallium_gbm=no ;;
@@ -1440,6 +1440,10 @@ if test "x$enable_gallium_gbm" = xyes; then
     fi
     if test "x$enable_gbm" = xno; then
         AC_MSG_ERROR([cannot enable gbm_gallium without gbm])
+    fi
+    # gbm_gallium abuses DRI_LIB_DEPS to link.  Make sure it is set.
+    if test "x$enable_dri" = xno; then
+        AC_MSG_ERROR([gbm_gallium requires --enable-dri to build])
     fi
 
     GALLIUM_STATE_TRACKERS_DIRS="gbm $GALLIUM_STATE_TRACKERS_DIRS"
