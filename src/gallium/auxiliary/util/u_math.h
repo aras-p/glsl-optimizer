@@ -207,6 +207,17 @@ double log2(double d)
    return log(d) * (1.0 / M_LN2);
 }
 
+/* workaround a conflict with main/imports.h */
+#ifdef log2f
+#undef log2f
+#endif
+
+static INLINE
+float log2f(float f)
+{
+   return logf(f) * (float) (1.0 / M_LN2);
+}
+
 #endif
 
 
