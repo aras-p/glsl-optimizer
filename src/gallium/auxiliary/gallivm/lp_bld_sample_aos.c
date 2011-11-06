@@ -353,7 +353,7 @@ lp_build_sample_image_nearest(struct lp_build_sample_context *bld,
          lp_build_sample_wrap_nearest_int(bld,
                                           1, /* block length (depth) */
                                           r_ipart, depth_vec, img_stride_vec,
-                                          bld->static_state->pot_height,
+                                          bld->static_state->pot_depth,
                                           bld->static_state->wrap_r,
                                           &z_offset, &z_subcoord);
          offset = lp_build_add(&bld->int_coord_bld, offset, z_offset);
