@@ -779,6 +779,11 @@
 #define   S_028A00_WIDTH(x)                            (((x) & 0xFFFF) << 16)
 #define   G_028A00_WIDTH(x)                            (((x) >> 16) & 0xFFFF)
 #define   C_028A00_WIDTH                               0x0000FFFF
+#define R_028A0C_PA_SC_LINE_STIPPLE                  0x028A0C
+#define   S_028A0C_LINE_PATTERN(x)                     (((x) & 0xFFFF) << 0)
+#define   S_028A0C_REPEAT_COUNT(x)                     (((x) & 0xFF) << 16)
+#define   S_028A0C_PATTERN_BIT_ORDER(x)                (((x) & 0x1) << 28)
+#define   S_028A0C_AUTO_RESET_CNTL(x)                  (((x) & 0x3) << 29)
 #define R_028A40_VGT_GS_MODE                         0x028A40
 #define   S_028A40_MODE(x)                             (((x) & 0x3) << 0)
 #define   G_028A40_MODE(x)                             (((x) >> 0) & 0x3)

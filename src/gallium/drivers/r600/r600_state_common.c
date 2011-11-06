@@ -534,7 +534,7 @@ void r600_draw_vbo(struct pipe_context *ctx, const struct pipe_draw_info *dinfo)
 	struct pipe_draw_info info = *dinfo;
 	struct r600_draw rdraw = {};
 	struct pipe_index_buffer ib = {};
-	unsigned prim, mask;
+	unsigned prim, mask, ls_mask = 0;
 
 	if (!info.count ||
 	    (info.indexed && !rctx->index_buffer.buffer) ||
@@ -599,6 +599,9 @@ void r600_draw_vbo(struct pipe_context *ctx, const struct pipe_draw_info *dinfo)
 		r600_pipe_state_add_reg(&rctx->vgt, R_028A94_VGT_MULTI_PRIM_IB_RESET_EN, info.primitive_restart, 0xFFFFFFFF, NULL, 0);
 		r600_pipe_state_add_reg(&rctx->vgt, R_03CFF0_SQ_VTX_BASE_VTX_LOC, 0, 0xFFFFFFFF, NULL, 0);
 		r600_pipe_state_add_reg(&rctx->vgt, R_03CFF4_SQ_VTX_START_INST_LOC, info.start_instance, 0xFFFFFFFF, NULL, 0);
+		r600_pipe_state_add_reg(&rctx->vgt, R_028A0C_PA_SC_LINE_STIPPLE,
+					0,
+					S_028A0C_AUTO_RESET_CNTL(3), NULL, 0);
 		r600_pipe_state_add_reg(&rctx->vgt, R_028814_PA_SU_SC_MODE_CNTL,
 					0,
 					S_028814_PROVOKING_VTX_LAST(1), NULL, 0);
@@ -614,6 +617,13 @@ void r600_draw_vbo(struct pipe_context *ctx, const struct pipe_draw_info *dinfo)
 	r600_pipe_state_mod_reg(&rctx->vgt, info.primitive_restart);
 	r600_pipe_state_mod_reg(&rctx->vgt, 0);
 	r600_pipe_state_mod_reg(&rctx->vgt, info.start_instance);
+
+	if (prim == V_008958_DI_PT_LINELIST)
+		ls_mask = 1;
+	else if (prim == V_008958_DI_PT_LINESTRIP) 
+		ls_mask = 2;
+	r600_pipe_state_mod_reg(&rctx->vgt, S_028A0C_AUTO_RESET_CNTL(ls_mask));
+
 	if (info.mode == PIPE_PRIM_QUADS || info.mode == PIPE_PRIM_QUAD_STRIP || info.mode == PIPE_PRIM_POLYGON) {
 		r600_pipe_state_mod_reg(&rctx->vgt, S_028814_PROVOKING_VTX_LAST(1));
 	}
