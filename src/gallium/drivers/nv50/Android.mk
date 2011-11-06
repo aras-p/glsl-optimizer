@@ -23,12 +23,12 @@
 
 LOCAL_PATH := $(call my-dir)
 
-# get C_SOURCES
+# get C_SOURCES and CPP_SOURCES
 include $(LOCAL_PATH)/Makefile.sources
 
 include $(CLEAR_VARS)
 
-LOCAL_SRC_FILES := $(C_SOURCES)
+LOCAL_SRC_FILES := $(C_SOURCES) $(CPP_SOURCES)
 LOCAL_C_INCLUDES := $(DRM_TOP)
 
 LOCAL_MODULE := libmesa_pipe_nv50
