@@ -636,8 +636,10 @@ st_translate_fragment_program(struct st_context *st,
       }
 
       ureg = ureg_create( TGSI_PROCESSOR_FRAGMENT );
-      if (ureg == NULL)
+      if (ureg == NULL) {
+         FREE(variant);
          return NULL;
+      }
 
       if (ST_DEBUG & DEBUG_MESA) {
          _mesa_print_program(&stfp->Base.Base);
