@@ -306,8 +306,10 @@ dri2_allocate_buffer(__DRIscreen *sPriv,
 
    buffer->resource =
       screen->base.screen->resource_create(screen->base.screen, &templ);
-   if (!buffer->resource)
+   if (!buffer->resource) {
+      FREE(buffer);
       return NULL;
+   }
 
    memset(&whandle, 0, sizeof(whandle));
    whandle.type = DRM_API_HANDLE_TYPE_SHARED;
