@@ -186,7 +186,11 @@ lp_disassemble(const void* func)
     * Initialize all used objects.
     */
 
+#if HAVE_LLVM >= 0x0301
+   std::string Triple = sys::getDefaultTargetTriple();
+#else
    std::string Triple = sys::getHostTriple();
+#endif
 
    std::string Error;
    const Target *T = TargetRegistry::lookupTarget(Triple, Error);
