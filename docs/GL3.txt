@@ -118,7 +118,7 @@ GLSL 4.2                                             not started
 GL_ARB_texture_compression_bptc                      not started
 GL_ARB_compressed_texture_pixel_storage              not started
 GL_ARB_shader_atomic_counters                        not started
-GL_ARB_texture_storage                               started
+GL_ARB_texture_storage                               DONE (gallium, swrast)
 GL_ARB_transform_feedback_instanced                  not started
 GL_ARB_base_instance                                 not started
 GL_ARB_shader_image_load_store                       not started
