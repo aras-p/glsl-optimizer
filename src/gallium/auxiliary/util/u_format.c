@@ -443,11 +443,16 @@ util_format_fits_8unorm(const struct util_format_description *format_desc)
    switch (format_desc->layout) {
 
    case UTIL_FORMAT_LAYOUT_S3TC:
-   case UTIL_FORMAT_LAYOUT_RGTC:
       /*
        * These are straight forward.
        */
-
+      return TRUE;
+   case UTIL_FORMAT_LAYOUT_RGTC:
+      if (format_desc->format == PIPE_FORMAT_RGTC1_SNORM ||
+          format_desc->format == PIPE_FORMAT_RGTC2_SNORM ||
+          format_desc->format == PIPE_FORMAT_LATC1_SNORM ||
+          format_desc->format == PIPE_FORMAT_LATC2_SNORM)
+         return FALSE;
       return TRUE;
 
    case UTIL_FORMAT_LAYOUT_PLAIN:
