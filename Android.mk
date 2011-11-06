@@ -135,9 +135,9 @@ endif
 ifneq ($(filter nouveau, $(MESA_GPU_DRIVERS)),)
 gallium_DRIVERS += \
 	libmesa_winsys_nouveau \
-	libmesa_pipe_nvc0 \
-	libmesa_pipe_nv50 \
 	libmesa_pipe_nvfx \
+	libmesa_pipe_nv50 \
+	libmesa_pipe_nvc0 \
 	libmesa_pipe_nouveau
 LOCAL_SHARED_LIBRARIES += libdrm_nouveau
 endif
