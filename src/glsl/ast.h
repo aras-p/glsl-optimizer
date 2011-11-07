@@ -629,12 +629,18 @@ public:
 
 class ast_case_label : public ast_node {
 public:
+   ast_case_label(ast_expression *test_value);
+   virtual void print(void) const;
+
+   virtual ir_rvalue *hir(exec_list *instructions,
+			  struct _mesa_glsl_parse_state *state);
 
    /**
-    * An expression of NULL means 'default'.
+    * An test value of NULL means 'default'.
     */
-   ast_expression *expression;
+   ast_expression *test_value;
 };
+
 
 class ast_selection_statement : public ast_node {
 public:
@@ -654,8 +660,18 @@ public:
 
 class ast_switch_statement : public ast_node {
 public:
-   ast_expression *expression;
-   exec_list statements;
+   ast_switch_statement(ast_expression *test_expression,
+			ast_node *body);
+   virtual void print(void) const;
+
+   virtual ir_rvalue *hir(exec_list *instructions,
+			  struct _mesa_glsl_parse_state *state);
+
+   ast_expression *test_expression;
+   ast_node *body;
+
+protected:
+   void test_to_hir(exec_list *, struct _mesa_glsl_parse_state *);
 };
 
 class ast_iteration_statement : public ast_node {
