@@ -1638,9 +1638,9 @@ st_destroy_drawpix(struct st_context *st)
 
    st_reference_fragprog(st, &st->pixel_xfer.combined_prog, NULL);
    if (st->drawpix.vert_shaders[0])
-      ureg_free_tokens(st->drawpix.vert_shaders[0]);
+      cso_delete_vertex_shader(st->cso_context, st->drawpix.vert_shaders[0]);
    if (st->drawpix.vert_shaders[1])
-      ureg_free_tokens(st->drawpix.vert_shaders[1]);
+      cso_delete_vertex_shader(st->cso_context, st->drawpix.vert_shaders[1]);
 }
 
 #endif /* FEATURE_drawpix */
