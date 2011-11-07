@@ -267,14 +267,13 @@ update_vertex_textures(struct st_context *st)
          GLboolean retval;
          GLuint texUnit;
 
-	 texUnit = vprog->Base.SamplerUnits[su];
+         texUnit = vprog->Base.SamplerUnits[su];
 
-	 retval = update_single_texture(st, &sampler_view, texUnit);
-	 if (retval == GL_FALSE)
-	    continue;
+         retval = update_single_texture(st, &sampler_view, texUnit);
+         if (retval == GL_FALSE)
+            continue;
 
-	 st->state.num_vertex_textures = su + 1;
-
+         st->state.num_vertex_textures = su + 1;
       }
       pipe_sampler_view_reference(&st->state.sampler_vertex_views[su], sampler_view);
    }

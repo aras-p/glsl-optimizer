@@ -1135,10 +1135,10 @@ st_DrawPixels(struct gl_context *ctx, GLint x, GLint y,
                   assert(0);
                }
 
-	       sv[1] = st_create_texture_sampler_view_format(st->pipe, pt,
+               sv[1] = st_create_texture_sampler_view_format(st->pipe, pt,
                                                              stencil_format);
-	       num_sampler_view++;
-	    }
+               num_sampler_view++;
+            }
 
             draw_textured_quad(ctx, x, y, ctx->Current.RasterPos[2],
                                width, height,
