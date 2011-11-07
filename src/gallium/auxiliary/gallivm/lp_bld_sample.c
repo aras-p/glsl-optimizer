@@ -969,8 +969,6 @@ lp_build_cube_lookup(struct lp_build_sample_context *bld,
       {
          struct lp_build_if_state if_ctx2;
 
-         ary_ge_arx_arz = LLVMBuildAnd(builder, ary_ge_arx, ary_ge_arz, "");
-
          lp_build_if(&if_ctx2, bld->gallivm, ary_ge_arx_arz);
          {
             /* +/- Y face */
