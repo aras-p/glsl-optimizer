@@ -207,6 +207,12 @@
 %type <declaration> struct_declarator_list
 %type <node> selection_statement
 %type <selection_rest_statement> selection_rest_statement
+%type <node> switch_statement
+%type <node> switch_body
+%type <node> case_label
+%type <node> case_label_list
+%type <node> case_statement
+%type <node> case_statement_list
 %type <node> iteration_statement
 %type <node> condition
 %type <node> conditionopt
@@ -1517,8 +1523,7 @@ simple_statement:
 	declaration_statement
 	| expression_statement
 	| selection_statement
-	| switch_statement		{ $$ = NULL; }
-	| case_label			{ $$ = NULL; }
+	| switch_statement
 	| iteration_statement
 	| jump_statement
 	;
@@ -1640,13 +1645,66 @@ condition:
 	}
 	;
 
+/*
+ * siwtch_statement grammar is based on the syntax described in the body
+ * of the GLSL spec, not in it's appendix!!!
+ */
 switch_statement:
-	SWITCH '(' expression ')' compound_statement
+	SWITCH '(' expression ')' switch_body
+	{
+	   $$ = NULL;
+	}
+	;
+
+switch_body:
+	'{' '}'
+	{
+	   $$ = NULL;
+	}
+	| '{' case_statement_list '}'
+	{
+	   $$ = NULL;
+	}
 	;
 
 case_label:
 	CASE expression ':'
+	{
+	   $$ = NULL;
+	}
 	| DEFAULT ':'
+	{
+	   $$ = NULL;
+	}
+	;
+
+case_label_list:
+	case_label
+	{
+	   $$ = NULL;
+	}
+	| case_label_list case_label
+	{
+	   $$ = NULL;
+	}
+	;
+
+case_statement:
+	case_label_list statement_list
+	{
+	   $$ = NULL;
+	}
+	;
+
+case_statement_list:
+	case_statement
+	{
+	   $$ = NULL;
+	}
+	| case_statement_list case_statement
+	{
+	   $$ = NULL;
+	}
 	;
 
 iteration_statement:
