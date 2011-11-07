@@ -356,6 +356,7 @@ _mesa_choose_tex_format( struct gl_context *ctx, GLint internalFormat,
 	    break;
          case GL_RGB16F_ARB:
 	    RETURN_IF_SUPPORTED(MESA_FORMAT_RGB_FLOAT16);
+	    RETURN_IF_SUPPORTED(MESA_FORMAT_RGBA_FLOAT16);
 	    RETURN_IF_SUPPORTED(MESA_FORMAT_RGB_FLOAT32);
 	    RETURN_IF_SUPPORTED(MESA_FORMAT_RGBA_FLOAT32);
 	    break;
