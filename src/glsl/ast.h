@@ -642,6 +642,65 @@ public:
 };
 
 
+class ast_case_label_list : public ast_node {
+public:
+   ast_case_label_list(void);
+   virtual void print(void) const;
+
+   virtual ir_rvalue *hir(exec_list *instructions,
+			  struct _mesa_glsl_parse_state *state);
+
+   /**
+    * A list of case labels.
+    */
+   exec_list labels;
+};
+
+
+class ast_case_statement : public ast_node {
+public:
+   ast_case_statement(ast_case_label_list *labels);
+   virtual void print(void) const;
+
+   virtual ir_rvalue *hir(exec_list *instructions,
+			  struct _mesa_glsl_parse_state *state);
+
+   ast_case_label_list *labels;
+
+   /**
+    * A list of statements.
+    */
+   exec_list stmts;
+};
+
+
+class ast_case_statement_list : public ast_node {
+public:
+   ast_case_statement_list(void);
+   virtual void print(void) const;
+
+   virtual ir_rvalue *hir(exec_list *instructions,
+			  struct _mesa_glsl_parse_state *state);
+
+   /**
+    * A list of cases.
+    */
+   exec_list cases;
+};
+
+
+class ast_switch_body : public ast_node {
+public:
+   ast_switch_body(ast_case_statement_list *stmts);
+   virtual void print(void) const;
+
+   virtual ir_rvalue *hir(exec_list *instructions,
+			  struct _mesa_glsl_parse_state *state);
+
+   ast_case_statement_list *stmts;
+};
+
+
 class ast_selection_statement : public ast_node {
 public:
    ast_selection_statement(ast_expression *condition,
