@@ -338,8 +338,9 @@ is_interleaved_arrays(const struct st_vertex_program *vp,
  * or all live in user space.
  * \param vbuffer  returns vertex buffer info
  * \param velements  returns vertex element info
+ * \return GL_TRUE for success, GL_FALSE otherwise (probably out of memory)
  */
-static void
+static GLboolean
 setup_interleaved_attribs(struct gl_context *ctx,
                           const struct st_vertex_program *vp,
                           const struct st_vp_variant *vpv,
@@ -434,6 +435,11 @@ setup_interleaved_attribs(struct gl_context *ctx,
       /* all interleaved arrays in a VBO */
       struct st_buffer_object *stobj = st_buffer_object(bufobj);
 
+      if (!stobj) {
+         /* probably out of memory */
+         return GL_FALSE;
+      }
+
       vbuffer->buffer = NULL;
       pipe_resource_reference(&vbuffer->buffer, stobj->buffer);
       vbuffer->buffer_offset = pointer_to_offset(low_addr);
@@ -455,6 +461,8 @@ setup_interleaved_attribs(struct gl_context *ctx,
       st->user_attrib[0].stride = stride;
       st->num_user_attribs = 1;
    }
+
+   return GL_TRUE;
 }
 
 
@@ -463,8 +471,9 @@ setup_interleaved_attribs(struct gl_context *ctx,
  * vertex attribute.
  * \param vbuffer  returns vertex buffer info
  * \param velements  returns vertex element info
+ * \return GL_TRUE for success, GL_FALSE otherwise (probably out of memory)
  */
-static void
+static GLboolean
 setup_non_interleaved_attribs(struct gl_context *ctx,
                               const struct st_vertex_program *vp,
                               const struct st_vp_variant *vpv,
@@ -493,7 +502,11 @@ setup_non_interleaved_attribs(struct gl_context *ctx,
           * really an offset from the start of the VBO, not a pointer.
           */
          struct st_buffer_object *stobj = st_buffer_object(bufobj);
-         assert(stobj->buffer);
+
+         if (!stobj || !stobj->buffer) {
+            /* probably ran out of memory */
+            return GL_FALSE;
+         }
 
          vbuffer[attr].buffer = NULL;
          pipe_resource_reference(&vbuffer[attr].buffer, stobj->buffer);
@@ -533,6 +546,11 @@ setup_non_interleaved_attribs(struct gl_context *ctx,
          st->user_attrib[attr].element_size = element_size;
          st->user_attrib[attr].stride = stride;
          st->num_user_attribs = MAX2(st->num_user_attribs, attr + 1);
+
+         if (!vbuffer[attr].buffer) {
+            /* probably ran out of memory */
+            return GL_FALSE;
+         }
       }
 
       /* common-case setup */
@@ -547,6 +565,8 @@ setup_non_interleaved_attribs(struct gl_context *ctx,
                                                          array->Normalized);
       assert(velements[attr].src_format);
    }
+
+   return GL_TRUE;
 }
 
 
@@ -775,7 +795,11 @@ translate_prim(const struct gl_context *ctx, unsigned prim)
 }
 
 
-static void
+/**
+ * Setup vertex arrays and buffers prior to drawing.
+ * \return GL_TRUE for success, GL_FALSE otherwise (probably out of memory)
+ */
+static GLboolean
 st_validate_varrays(struct gl_context *ctx,
                     const struct gl_client_array **arrays,
                     unsigned max_index,
@@ -806,8 +830,10 @@ st_validate_varrays(struct gl_context *ctx,
     * Setup the vbuffer[] and velements[] arrays.
     */
    if (is_interleaved_arrays(vp, vpv, arrays)) {
-      setup_interleaved_attribs(ctx, vp, vpv, arrays, vbuffer, velements,
-                                max_index, num_instances);
+      if (!setup_interleaved_attribs(ctx, vp, vpv, arrays, vbuffer, velements,
+                                     max_index, num_instances)) {
+         return GL_FALSE;
+      }
 
       num_vbuffers = 1;
       num_velements = vpv->num_inputs;
@@ -815,9 +841,12 @@ st_validate_varrays(struct gl_context *ctx,
          num_vbuffers = 0;
    }
    else {
-      setup_non_interleaved_attribs(ctx, vp, vpv, arrays,
-                                    vbuffer, velements, max_index,
-                                    num_instances);
+      if (!setup_non_interleaved_attribs(ctx, vp, vpv, arrays,
+                                         vbuffer, velements, max_index,
+                                         num_instances)) {
+         return GL_FALSE;
+      }
+
       num_vbuffers = vpv->num_inputs;
       num_velements = vpv->num_inputs;
    }
@@ -832,6 +861,8 @@ st_validate_varrays(struct gl_context *ctx,
       pipe_resource_reference(&vbuffer[attr].buffer, NULL);
       assert(!vbuffer[attr].buffer);
    }
+
+   return GL_TRUE;
 }
 
 
@@ -901,7 +932,10 @@ st_draw_vbo(struct gl_context *ctx,
       st_validate_state(st);
 
       if (new_array) {
-         st_validate_varrays(ctx, arrays, max_index, num_instances);
+         if (!st_validate_varrays(ctx, arrays, max_index, num_instances)) {
+            /* probably out of memory, no-op the draw call */
+            return;
+         }
       }
 
 #if 0

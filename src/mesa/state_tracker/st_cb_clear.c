@@ -165,6 +165,11 @@ draw_quad(struct st_context *st,
                                           max_slots * sizeof(st->clear.vertices));
    }
 
+   if (!st->clear.vbuf) {
+      /* ran out of memory */
+      return;
+   }
+
    /* positions */
    st->clear.vertices[0][0][0] = x0;
    st->clear.vertices[0][0][1] = y0;

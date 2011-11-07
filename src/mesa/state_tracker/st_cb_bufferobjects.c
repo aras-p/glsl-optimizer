@@ -115,6 +115,11 @@ st_bufferobj_subdata(struct gl_context *ctx,
    if (!data)
       return;
 
+   if (!st_obj->buffer) {
+      /* we probably ran out of memory during buffer allocation */
+      return;
+   }
+
    /* Now that transfers are per-context, we don't have to figure out
     * flushing here.  Usually drivers won't need to flush in this case
     * even if the buffer is currently referenced by hardware - they
@@ -145,6 +150,11 @@ st_bufferobj_get_subdata(struct gl_context *ctx,
 
    if (!size)
       return;
+
+   if (!st_obj->buffer) {
+      /* we probably ran out of memory during buffer allocation */
+      return;
+   }
 
    pipe_buffer_read(st_context(ctx)->pipe, st_obj->buffer,
                     offset, size, data);
@@ -216,6 +226,8 @@ st_bufferobj_data(struct gl_context *ctx,
                                           pipe_usage, size);
 
       if (!st_obj->buffer) {
+         /* out of memory */
+         st_obj->Base.Size = 0;
          return GL_FALSE;
       }
 
