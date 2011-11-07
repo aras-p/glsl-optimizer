@@ -49,5 +49,6 @@ struct llvmpipe_query {
 
 extern void llvmpipe_init_query_funcs(struct llvmpipe_context * );
 
+extern boolean llvmpipe_check_render_cond(struct llvmpipe_context *);
 
 #endif /* LP_QUERY_H */

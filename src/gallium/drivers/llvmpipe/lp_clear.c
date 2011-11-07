@@ -55,6 +55,9 @@ llvmpipe_clear(struct pipe_context *pipe,
    if (llvmpipe->no_rast)
       return;
 
+   if (!llvmpipe_check_render_cond(llvmpipe))
+      return;
+
    if (LP_PERF & PERF_NO_DEPTH)
       buffers &= ~PIPE_CLEAR_DEPTHSTENCIL;
 

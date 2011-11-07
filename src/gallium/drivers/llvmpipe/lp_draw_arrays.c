@@ -56,6 +56,9 @@ llvmpipe_draw_vbo(struct pipe_context *pipe, const struct pipe_draw_info *info)
    void *mapped_indices = NULL;
    unsigned i;
 
+   if (!llvmpipe_check_render_cond(lp))
+      return;
+
    if (lp->dirty)
       llvmpipe_update_derived( lp );
 

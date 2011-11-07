@@ -136,6 +136,10 @@ struct llvmpipe_context {
 
    struct lp_setup_variant_list_item setup_variants_list;
    unsigned nr_setup_variants;
+
+   /** Conditional query object and mode */
+   struct pipe_query *render_cond_query;
+   uint render_cond_mode;
 };
 
 
