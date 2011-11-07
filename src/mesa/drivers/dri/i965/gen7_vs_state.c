@@ -40,6 +40,12 @@ upload_vs_state(struct brw_context *brw)
    OUT_BATCH(brw->bind.bo_offset);
    ADVANCE_BATCH();
 
+   /* CACHE_NEW_SAMPLER */
+   BEGIN_BATCH(2);
+   OUT_BATCH(_3DSTATE_SAMPLER_STATE_POINTERS_VS << 16 | (2 - 2));
+   OUT_BATCH(brw->sampler.offset);
+   ADVANCE_BATCH();
+
    if (brw->vs.push_const_size == 0) {
       /* Disable the push constant buffers. */
       BEGIN_BATCH(7);
@@ -104,7 +110,7 @@ const struct brw_tracked_state gen7_vs_state = {
 		BRW_NEW_VERTEX_PROGRAM |
 		BRW_NEW_VS_BINDING_TABLE |
 		BRW_NEW_BATCH),
-      .cache = CACHE_NEW_VS_PROG
+      .cache = CACHE_NEW_VS_PROG | CACHE_NEW_SAMPLER
    },
    .emit = upload_vs_state,
 };
