@@ -6,77 +6,38 @@
 /* General chip classes:
  * r100 includes R100, RV100, RV200, RS100, RS200, RS250.
  * r200 includes R200, RV250, RV280, RS300.
- * r300 includes R300, RV350, RV370.
  * (RS* denotes IGP)
  */
 
 enum {
-#define RADEON_CLASSIC 1
 #define CHIPSET(id, name, family) PCI_CHIP_##name = id,
+#if defined(RADEON_R100)
 #include "pci_ids/radeon_pci_ids.h"
+#elif defined(RADEON_R200)
 #include "pci_ids/r200_pci_ids.h"
-#include "pci_ids/r300_pci_ids.h"
-#include "pci_ids/r600_pci_ids.h"
+#endif
 #undef CHIPSET
 };
 
 enum {
+#if defined(RADEON_R100)
    CHIP_FAMILY_R100,
    CHIP_FAMILY_RV100,
    CHIP_FAMILY_RS100,
    CHIP_FAMILY_RV200,
    CHIP_FAMILY_RS200,
+#elif defined(RADEON_R200)
    CHIP_FAMILY_R200,
    CHIP_FAMILY_RV250,
    CHIP_FAMILY_RS300,
    CHIP_FAMILY_RV280,
-   CHIP_FAMILY_R300,
-   CHIP_FAMILY_R350,
-   CHIP_FAMILY_RV350,
-   CHIP_FAMILY_RV380,
-   CHIP_FAMILY_RS400,
-   CHIP_FAMILY_R420,
-   CHIP_FAMILY_RV410,
-   CHIP_FAMILY_RS600,
-   CHIP_FAMILY_RS690,
-   CHIP_FAMILY_RS740,
-   CHIP_FAMILY_RV515,
-   CHIP_FAMILY_R520,
-   CHIP_FAMILY_RV530,
-   CHIP_FAMILY_R580,
-   CHIP_FAMILY_RV560,
-   CHIP_FAMILY_RV570,
-   CHIP_FAMILY_R600,
-   CHIP_FAMILY_RV610,
-   CHIP_FAMILY_RV630,
-   CHIP_FAMILY_RV670,
-   CHIP_FAMILY_RV620,
-   CHIP_FAMILY_RV635,
-   CHIP_FAMILY_RS780,
-   CHIP_FAMILY_RS880,
-   CHIP_FAMILY_RV770,
-   CHIP_FAMILY_RV730,
-   CHIP_FAMILY_RV710,
-   CHIP_FAMILY_RV740,
-   CHIP_FAMILY_CEDAR,
-   CHIP_FAMILY_REDWOOD,
-   CHIP_FAMILY_JUNIPER,
-   CHIP_FAMILY_CYPRESS,
-   CHIP_FAMILY_HEMLOCK,
-   CHIP_FAMILY_PALM,
-   CHIP_FAMILY_SUMO,
-   CHIP_FAMILY_SUMO2,
-   CHIP_FAMILY_BARTS,
-   CHIP_FAMILY_TURKS,
-   CHIP_FAMILY_CAICOS,
+#endif
    CHIP_FAMILY_LAST
 };
 
 /* General classes of Radeons, as described above the device ID section */
 #define RADEON_CLASS_R100		(0 << 0)
 #define RADEON_CLASS_R200		(1 << 0)
-#define RADEON_CLASS_R300		(2 << 0)
-#define RADEON_CLASS_R600		(3 << 0)
 #define RADEON_CLASS_MASK		(3 << 0)
 
 #define RADEON_CHIPSET_TCL		(1 << 2)	/* tcl support - any radeon */

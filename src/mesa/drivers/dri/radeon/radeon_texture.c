@@ -341,8 +341,11 @@ static gl_format radeonChoose8888TexFormat(radeonContextPtr rmesa,
 	const GLubyte littleEndian = *((const GLubyte *)&ui);
 
 	/* r100 can only do this */
-	if (IS_R100_CLASS(rmesa->radeonScreen) || fbo)
-	  return _radeon_texformat_argb8888;
+#if defined(RADEON_R100)
+	return _radeon_texformat_argb8888;
+#elif defined(RADEON_R200)
+	if (fbo)
+		return _radeon_texformat_argb8888;
 
 	if ((srcFormat == GL_RGBA && srcType == GL_UNSIGNED_INT_8_8_8_8) ||
 	    (srcFormat == GL_RGBA && srcType == GL_UNSIGNED_BYTE && !littleEndian) ||
@@ -354,16 +357,9 @@ static gl_format radeonChoose8888TexFormat(radeonContextPtr rmesa,
 		   (srcFormat == GL_ABGR_EXT && srcType == GL_UNSIGNED_INT_8_8_8_8) ||
 		   (srcFormat == GL_ABGR_EXT && srcType == GL_UNSIGNED_BYTE && !littleEndian)) {
 		return MESA_FORMAT_RGBA8888_REV;
-	} else if (IS_R200_CLASS(rmesa->radeonScreen)) {
-		return _radeon_texformat_argb8888;
-	} else if (srcFormat == GL_BGRA && ((srcType == GL_UNSIGNED_BYTE && !littleEndian) ||
-					    srcType == GL_UNSIGNED_INT_8_8_8_8)) {
-		return MESA_FORMAT_ARGB8888_REV;
-	} else if (srcFormat == GL_BGRA && ((srcType == GL_UNSIGNED_BYTE && littleEndian) ||
-					    srcType == GL_UNSIGNED_INT_8_8_8_8_REV)) {
-		return MESA_FORMAT_ARGB8888;
 	} else
 		return _radeon_texformat_argb8888;
+#endif
 }
 
 gl_format radeonChooseTextureFormat_mesa(struct gl_context * ctx,
@@ -467,12 +463,13 @@ gl_format radeonChooseTextureFormat(struct gl_context * ctx,
 	case GL_ALPHA12:
 	case GL_ALPHA16:
 	case GL_COMPRESSED_ALPHA:
+#if defined(RADEON_R200)
 		/* r200: can't use a8 format since interpreting hw I8 as a8 would result
 		   in wrong rgb values (same as alpha value instead of 0). */
-		if (IS_R200_CLASS(rmesa->radeonScreen))
-			return _radeon_texformat_al88;
-		else
-			return MESA_FORMAT_A8;
+		return _radeon_texformat_al88;
+#else
+		return MESA_FORMAT_A8;
+#endif
 	case 1:
 	case GL_LUMINANCE:
 	case GL_LUMINANCE4:

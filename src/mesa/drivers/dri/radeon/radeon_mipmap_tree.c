@@ -156,7 +156,7 @@ static GLuint minify(GLuint size, GLuint levels)
 }
 
 
-static void calculate_miptree_layout_r100(radeonContextPtr rmesa, radeon_mipmap_tree *mt)
+static void calculate_miptree_layout(radeonContextPtr rmesa, radeon_mipmap_tree *mt)
 {
 	GLuint curOffset, i, face, level;
 
@@ -172,39 +172,6 @@ static void calculate_miptree_layout_r100(radeonContextPtr rmesa, radeon_mipmap_
 			mt->levels[level].depth = minify(mt->depth0, i);
 			compute_tex_image_offset(rmesa, mt, face, level, &curOffset);
 		}
-	}
-
-	/* Note the required size in memory */
-	mt->totalsize = (curOffset + RADEON_OFFSET_MASK) & ~RADEON_OFFSET_MASK;
-
-	radeon_print(RADEON_TEXTURE, RADEON_TRACE,
-			"%s(%p, %p) total size %d\n",
-			__func__, rmesa, mt, mt->totalsize);
-}
-
-static void calculate_miptree_layout_r300(radeonContextPtr rmesa, radeon_mipmap_tree *mt)
-{
-	GLuint curOffset, i, level;
-
-	assert(mt->numLevels <= rmesa->glCtx->Const.MaxTextureLevels);
-
-	curOffset = 0;
-	for(i = 0, level = mt->baseLevel; i < mt->numLevels; i++, level++) {
-		GLuint face;
-
-		mt->levels[level].valid = 1;
-		mt->levels[level].width = minify(mt->width0, i);
-		mt->levels[level].height = minify(mt->height0, i);
-		mt->levels[level].depth = minify(mt->depth0, i);
-
-		for(face = 0; face < mt->faces; face++)
-			compute_tex_image_offset(rmesa, mt, face, level, &curOffset);
-		/* from r700? cube levels seems to be aligned to 8 faces,
-		 * as we have separate register for 1'st level offset add
-		 * 2 image alignment after 1'st mip level */
-		if(rmesa->radeonScreen->chip_family >= CHIP_FAMILY_RV770 &&
-		   mt->target == GL_TEXTURE_CUBE_MAP && level >= 1)
-			curOffset += 2 * mt->levels[level].size;
 	}
 
 	/* Note the required size in memory */
@@ -239,10 +206,7 @@ static radeon_mipmap_tree* radeon_miptree_create(radeonContextPtr rmesa,
 	mt->depth0 = depth0;
 	mt->tilebits = tilebits;
 
-	if (rmesa->radeonScreen->chip_family >= CHIP_FAMILY_R300)
-		calculate_miptree_layout_r300(rmesa, mt);
-	else
-		calculate_miptree_layout_r100(rmesa, mt);
+	calculate_miptree_layout(rmesa, mt);
 
 	mt->bo = radeon_bo_open(rmesa->radeonScreen->bom,
                             0, mt->totalsize, 1024,

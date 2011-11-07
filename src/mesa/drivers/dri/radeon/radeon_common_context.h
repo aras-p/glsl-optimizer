@@ -216,8 +216,6 @@ struct radeon_tex_obj {
 	GLuint pp_border_color;
 	GLuint pp_cubic_faces;	/* cube face 1,2,3,4 log2 sizes */
 
-        GLuint pp_txfilter_1;	/*  r300 */
-
 	GLboolean border_fallback;
 };
 

@@ -117,10 +117,5 @@ struct __DRIimageRec {
    void *data;
 };
 
-#define IS_R100_CLASS(screen) \
-	((screen->chip_flags & RADEON_CLASS_MASK) == RADEON_CLASS_R100)
-#define IS_R200_CLASS(screen) \
-	((screen->chip_flags & RADEON_CLASS_MASK) == RADEON_CLASS_R200)
-
 extern void radeonDestroyBuffer(__DRIdrawable *driDrawPriv);
 #endif /* __RADEON_SCREEN_H__ */
