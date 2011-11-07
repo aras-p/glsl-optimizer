@@ -57,6 +57,7 @@ struct blend_quad_stage
    struct quad_stage base;
    boolean clamp[PIPE_MAX_COLOR_BUFS];  /**< clamp colors to [0,1]? */
    enum format base_format[PIPE_MAX_COLOR_BUFS];
+   enum util_format_type format_type[PIPE_MAX_COLOR_BUFS];
 };
 
 
@@ -702,19 +703,19 @@ blend_quad(struct quad_stage *qs,
     */
    switch (softpipe->blend->rt[blend_index].rgb_func) {
    case PIPE_BLEND_ADD:
-      VEC4_ADD_SAT(quadColor[0], source[0], blend_dest[0]); /* R */
-      VEC4_ADD_SAT(quadColor[1], source[1], blend_dest[1]); /* G */
-      VEC4_ADD_SAT(quadColor[2], source[2], blend_dest[2]); /* B */
+      VEC4_ADD(quadColor[0], source[0], blend_dest[0]); /* R */
+      VEC4_ADD(quadColor[1], source[1], blend_dest[1]); /* G */
+      VEC4_ADD(quadColor[2], source[2], blend_dest[2]); /* B */
       break;
    case PIPE_BLEND_SUBTRACT:
-      VEC4_SUB_SAT(quadColor[0], source[0], blend_dest[0]); /* R */
-      VEC4_SUB_SAT(quadColor[1], source[1], blend_dest[1]); /* G */
-      VEC4_SUB_SAT(quadColor[2], source[2], blend_dest[2]); /* B */
+      VEC4_SUB(quadColor[0], source[0], blend_dest[0]); /* R */
+      VEC4_SUB(quadColor[1], source[1], blend_dest[1]); /* G */
+      VEC4_SUB(quadColor[2], source[2], blend_dest[2]); /* B */
       break;
    case PIPE_BLEND_REVERSE_SUBTRACT:
-      VEC4_SUB_SAT(quadColor[0], blend_dest[0], source[0]); /* R */
-      VEC4_SUB_SAT(quadColor[1], blend_dest[1], source[1]); /* G */
-      VEC4_SUB_SAT(quadColor[2], blend_dest[2], source[2]); /* B */
+      VEC4_SUB(quadColor[0], blend_dest[0], source[0]); /* R */
+      VEC4_SUB(quadColor[1], blend_dest[1], source[1]); /* G */
+      VEC4_SUB(quadColor[2], blend_dest[2], source[2]); /* B */
       break;
    case PIPE_BLEND_MIN:
       VEC4_MIN(quadColor[0], source[0], blend_dest[0]); /* R */
@@ -735,13 +736,13 @@ blend_quad(struct quad_stage *qs,
     */
    switch (softpipe->blend->rt[blend_index].alpha_func) {
    case PIPE_BLEND_ADD:
-      VEC4_ADD_SAT(quadColor[3], source[3], blend_dest[3]); /* A */
+      VEC4_ADD(quadColor[3], source[3], blend_dest[3]); /* A */
       break;
    case PIPE_BLEND_SUBTRACT:
-      VEC4_SUB_SAT(quadColor[3], source[3], blend_dest[3]); /* A */
+      VEC4_SUB(quadColor[3], source[3], blend_dest[3]); /* A */
       break;
    case PIPE_BLEND_REVERSE_SUBTRACT:
-      VEC4_SUB_SAT(quadColor[3], blend_dest[3], source[3]); /* A */
+      VEC4_SUB(quadColor[3], blend_dest[3], source[3]); /* A */
       break;
    case PIPE_BLEND_MIN:
       VEC4_MIN(quadColor[3], source[3], blend_dest[3]); /* A */
@@ -909,10 +910,19 @@ blend_fallback(struct quad_stage *qs,
 
 
          if (blend->logicop_enable) {
-            logicop_quad( qs, quadColor, dest );
+            if (bqs->format_type[cbuf] != UTIL_FORMAT_TYPE_FLOAT) {
+               logicop_quad( qs, quadColor, dest );
+            }
          }
          else if (blend->rt[blend_buf].blend_enable) {
             blend_quad(qs, quadColor, dest, blend_color, blend_buf);
+
+            /* If fixed-point dest color buffer, need to clamp the outgoing
+             * fragment colors now.
+             */
+            if (clamp) {
+               clamp_colors(quadColor);
+            }
          }
 
          rebase_colors(bqs->base_format[cbuf], quadColor);
@@ -969,6 +979,13 @@ blend_single_add_src_alpha_inv_src_alpha(struct quad_stage *qs,
          }
       }
 
+      /* If fixed-point dest color buffer, need to clamp the incoming
+       * fragment colors now.
+       */
+      if (bqs->clamp[0]) {
+         clamp_colors(quadColor);
+      }
+
       VEC4_MUL(source[0], quadColor[0], alpha); /* R */
       VEC4_MUL(source[1], quadColor[1], alpha); /* G */
       VEC4_MUL(source[2], quadColor[2], alpha); /* B */
@@ -978,12 +995,19 @@ blend_single_add_src_alpha_inv_src_alpha(struct quad_stage *qs,
       VEC4_MUL(dest[0], dest[0], one_minus_alpha); /* R */
       VEC4_MUL(dest[1], dest[1], one_minus_alpha); /* G */
       VEC4_MUL(dest[2], dest[2], one_minus_alpha); /* B */
-      VEC4_MUL(dest[3], dest[3], one_minus_alpha); /* B */
+      VEC4_MUL(dest[3], dest[3], one_minus_alpha); /* A */
 
-      VEC4_ADD_SAT(quadColor[0], source[0], dest[0]); /* R */
-      VEC4_ADD_SAT(quadColor[1], source[1], dest[1]); /* G */
-      VEC4_ADD_SAT(quadColor[2], source[2], dest[2]); /* B */
-      VEC4_ADD_SAT(quadColor[3], source[3], dest[3]); /* A */
+      VEC4_ADD(quadColor[0], source[0], dest[0]); /* R */
+      VEC4_ADD(quadColor[1], source[1], dest[1]); /* G */
+      VEC4_ADD(quadColor[2], source[2], dest[2]); /* B */
+      VEC4_ADD(quadColor[3], source[3], dest[3]); /* A */
+
+      /* If fixed-point dest color buffer, need to clamp the outgoing
+       * fragment colors now.
+       */
+      if (bqs->clamp[0]) {
+         clamp_colors(quadColor);
+      }
 
       rebase_colors(bqs->base_format[0], quadColor);
 
@@ -1035,10 +1059,17 @@ blend_single_add_one_one(struct quad_stage *qs,
          clamp_colors(quadColor);
       }
 
-      VEC4_ADD_SAT(quadColor[0], quadColor[0], dest[0]); /* R */
-      VEC4_ADD_SAT(quadColor[1], quadColor[1], dest[1]); /* G */
-      VEC4_ADD_SAT(quadColor[2], quadColor[2], dest[2]); /* B */
-      VEC4_ADD_SAT(quadColor[3], quadColor[3], dest[3]); /* A */
+      VEC4_ADD(quadColor[0], quadColor[0], dest[0]); /* R */
+      VEC4_ADD(quadColor[1], quadColor[1], dest[1]); /* G */
+      VEC4_ADD(quadColor[2], quadColor[2], dest[2]); /* B */
+      VEC4_ADD(quadColor[3], quadColor[3], dest[3]); /* A */
+
+      /* If fixed-point dest color buffer, need to clamp the outgoing
+       * fragment colors now.
+       */
+      if (bqs->clamp[0]) {
+         clamp_colors(quadColor);
+      }
 
       rebase_colors(bqs->base_format[0], quadColor);
 
@@ -1150,6 +1181,7 @@ choose_blend_quad(struct quad_stage *qs,
          util_format_description(format);
       /* assuming all or no color channels are normalized: */
       bqs->clamp[i] = desc->channel[0].normalized;
+      bqs->format_type[i] = desc->channel[0].type;
 
       if (util_format_is_intensity(format))
          bqs->base_format[i] = INTENSITY;
