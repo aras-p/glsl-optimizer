@@ -89,7 +89,8 @@ intel_miptree_create_internal(struct intel_context *intel,
    mt->compressed = compress_byte ? 1 : 0;
    mt->refcount = 1; 
 
-   intel_get_texture_alignment_unit(format, &mt->align_w, &mt->align_h);
+   intel_get_texture_alignment_unit(intel, format,
+				    &mt->align_w, &mt->align_h);
 
    if (target == GL_TEXTURE_CUBE_MAP) {
       assert(depth0 == 1);
