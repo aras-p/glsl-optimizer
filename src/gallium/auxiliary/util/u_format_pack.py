@@ -150,6 +150,11 @@ def is_format_pure_signed(format):
 def native_type(format):
     '''Get the native appropriate for a format.'''
 
+    if format.name == 'PIPE_FORMAT_R11G11B10_FLOAT':
+        return 'uint32_t'
+    if format.name == 'PIPE_FORMAT_R9G9B9E5_FLOAT':
+        return 'uint32_t'
+
     if format.layout == PLAIN:
         if not format.is_array():
             # For arithmetic pixel formats return the integer type that matches the whole pixel

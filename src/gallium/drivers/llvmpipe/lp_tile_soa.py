@@ -51,6 +51,12 @@ def is_format_supported(format):
 
     # FIXME: Ideally we would support any format combination here.
 
+    if format.name == 'PIPE_FORMAT_R11G11B10_FLOAT':
+        return True;
+
+    if format.name == 'PIPE_FORMAT_R9G9B9E5_FLOAT':
+        return True;
+
     if format.layout != PLAIN:
         return False
 
@@ -98,7 +104,19 @@ def generate_format_read(format, dst_channel, dst_native_type, dst_suffix):
     else:
         assert False
 
-    if format.layout == PLAIN:
+    if format.name == 'PIPE_FORMAT_R11G11B10_FLOAT':
+        print '         float tmp[3];'
+        print '         uint8_t r, g, b;'
+        print '         r11g11b10f_to_float3(*src_pixel++, tmp);'
+        for i in range(3):
+            print '         %s = tmp[%d] * 0xff;' % (names[i], i)
+    elif format.name == 'PIPE_FORMAT_R9G9B9E5_FLOAT':
+        print '         float tmp[3];'
+        print '         uint8_t r, g, b;'
+        print '         rgb9e5_to_float3(*src_pixel++, tmp);'
+        for i in range(3):
+            print '         %s = tmp[%d] * 0xff;' % (names[i], i)
+    elif format.layout == PLAIN:
         if not format.is_array():
             print '         %s pixel = *src_pixel++;' % src_native_type
             shift = 0;
@@ -235,7 +253,17 @@ def emit_tile_pixel_unswizzle_code(format, src_channel):
     print '      %s *dst_pixel = (%s *)(dst_row + x0*%u);' % (dst_native_type, dst_native_type, format.stride())
     print '      for (x = 0; x < TILE_SIZE; ++x) {'
 
-    if format.layout == PLAIN:
+    if format.name == 'PIPE_FORMAT_R11G11B10_FLOAT':
+        print '         float tmp[3];'
+        for i in range(3):
+            print '         tmp[%d] = (float)TILE_PIXEL(src, x, y, %u);' % (i, inv_swizzle[i])
+        print '         *dst_pixel++ = float3_to_r11g11b10f(tmp);'
+    elif format.name == 'PIPE_FORMAT_R9G9B9E5_FLOAT':
+        print '         float tmp[3];'
+        for i in range(3):
+            print '         tmp[%d] = (float)TILE_PIXEL(src, x, y, %u);' % (i, inv_swizzle[i])
+        print '         *dst_pixel++ = float3_to_rgb9e5(tmp);'
+    elif format.layout == PLAIN:
         if not format.is_array():
             print '         %s pixel = 0;' % dst_native_type
             shift = 0;
@@ -577,8 +605,10 @@ def main():
     print CopyRight.strip()
     print
     print '#include "pipe/p_compiler.h"'
-    print '#include "util/u_format.h"'
     print '#include "util/u_math.h"'
+    print '#include "util/u_format.h"'
+    print '#include "util/u_format_r11g11b10f.h"'
+    print '#include "util/u_format_rgb9e5.h"'
     print '#include "util/u_half.h"'
     print '#include "util/u_cpu_detect.h"'
     print '#include "lp_tile_soa.h"'

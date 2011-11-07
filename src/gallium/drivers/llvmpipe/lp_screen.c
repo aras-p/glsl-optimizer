@@ -249,6 +249,10 @@ llvmpipe_is_format_supported( struct pipe_screen *_screen,
    if (sample_count > 1)
       return FALSE;
 
+   if (format_desc->format == PIPE_FORMAT_R11G11B10_FLOAT ||
+       format_desc->format == PIPE_FORMAT_R9G9B9E5_FLOAT) 
+     return TRUE;
+
    if (bind & PIPE_BIND_RENDER_TARGET) {
       if (format_desc->colorspace == UTIL_FORMAT_COLORSPACE_ZS ||
           format_desc->colorspace == UTIL_FORMAT_COLORSPACE_SRGB)
