@@ -63,10 +63,10 @@ static const struct brw_tracked_state *gen4_atoms[] =
    &brw_cc_vp,
    &brw_cc_unit,
 
-   &brw_vs_constants, /* Before vs_surfaces and constant_buffer */
-   &brw_wm_pull_constants, /* Before brw_wm_binding_table */
+   /* Must be before brw_binding_table */
+   &brw_vs_pull_constants,
+   &brw_wm_pull_constants,
 
-   &brw_vs_surfaces,		/* must do before unit */
    &brw_renderbuffer_surfaces,  /* must do before unit */
    &brw_texture_surfaces,       /* must do before unit */
    &brw_binding_table,
@@ -133,12 +133,13 @@ static const struct brw_tracked_state *gen6_atoms[] =
    &gen6_depth_stencil_state,	/* must do before cc unit */
    &gen6_cc_state_pointers,
 
-   &brw_vs_constants, /* Before vs_surfaces and constant_buffer */
-   &brw_wm_pull_constants,  /* Before brw_wm_binding_table */
+   /* Pull constants must be before brw_binding_table */
+   &brw_vs_pull_constants,
+   &brw_wm_pull_constants,
+
    &gen6_vs_push_constants, /* Before vs_state */
    &gen6_wm_push_constants, /* Before wm_state */
 
-   &brw_vs_surfaces,		/* must do before unit */
    &brw_renderbuffer_surfaces,  /* must do before unit */
    &brw_texture_surfaces,       /* must do before unit */
    &brw_binding_table,
@@ -198,12 +199,13 @@ const struct brw_tracked_state *gen7_atoms[] =
    &gen7_cc_state_pointer,
    &gen7_depth_stencil_state_pointer,
 
-   &brw_vs_constants, /* Before vs_surfaces and constant_buffer */
-   &brw_wm_pull_constants,  /* Before brw_wm_binding_table */
+   /* Pull constants must be before brw_binding_table */
+   &brw_vs_pull_constants,
+   &brw_wm_pull_constants,
+
    &gen6_vs_push_constants, /* Before vs_state */
    &gen6_wm_push_constants, /* Before wm_surfaces and constant_buffer */
 
-   &brw_vs_surfaces,		/* must do before unit */
    &brw_renderbuffer_surfaces,  /* must do before unit */
    &brw_texture_surfaces,       /* must do before unit */
    &brw_binding_table,
