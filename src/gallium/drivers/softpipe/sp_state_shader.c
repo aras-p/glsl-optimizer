@@ -207,6 +207,7 @@ softpipe_delete_fs_state(struct pipe_context *pipe, void *fs)
    draw_delete_fragment_shader(softpipe->draw, state->draw_shader);
 
    FREE((void *) state->shader.tokens);
+   FREE(state);
 }
 
 
@@ -335,6 +336,8 @@ softpipe_delete_gs_state(struct pipe_context *pipe, void *gs)
 
    draw_delete_geometry_shader(softpipe->draw,
                                (state) ? state->draw_data : 0);
+
+   FREE((void *) state->shader.tokens);
    FREE(state);
 }
 

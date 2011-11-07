@@ -295,9 +295,12 @@ update_polygon_stipple_pattern(struct softpipe_context *softpipe)
    tex = util_pstipple_create_stipple_texture(&softpipe->pipe,
                                               softpipe->poly_stipple.stipple);
    pipe_resource_reference(&softpipe->pstipple.texture, tex);
+   pipe_resource_reference(&tex, NULL);
 
-   view = util_pstipple_create_sampler_view(&softpipe->pipe, tex);
+   view = util_pstipple_create_sampler_view(&softpipe->pipe,
+                                            softpipe->pstipple.texture);
    pipe_sampler_view_reference(&softpipe->pstipple.sampler_view, view);
+   pipe_sampler_view_reference(&view, NULL);
 }
 
 
