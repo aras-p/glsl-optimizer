@@ -67,6 +67,11 @@
    ast_declarator_list *declarator_list;
    ast_struct_specifier *struct_specifier;
    ast_declaration *declaration;
+   ast_switch_body *switch_body;
+   ast_case_label *case_label;
+   ast_case_label_list *case_label_list;
+   ast_case_statement *case_statement;
+   ast_case_statement_list *case_statement_list;
 
    struct {
       ast_node *cond;
@@ -208,11 +213,11 @@
 %type <node> selection_statement
 %type <selection_rest_statement> selection_rest_statement
 %type <node> switch_statement
-%type <node> switch_body
-%type <node> case_label
-%type <node> case_label_list
-%type <node> case_statement
-%type <node> case_statement_list
+%type <switch_body> switch_body
+%type <case_label_list> case_label_list
+%type <case_label> case_label
+%type <case_statement> case_statement
+%type <case_statement_list> case_statement_list
 %type <node> iteration_statement
 %type <node> condition
 %type <node> conditionopt
@@ -1652,58 +1657,76 @@ condition:
 switch_statement:
 	SWITCH '(' expression ')' switch_body
 	{
-	   $$ = NULL;
+	   $$ = new(state) ast_switch_statement($3, $5);
 	}
 	;
 
 switch_body:
 	'{' '}'
 	{
-	   $$ = NULL;
+	   $$ = new(state) ast_switch_body(NULL);
+	   $$->set_location(yylloc);
 	}
 	| '{' case_statement_list '}'
 	{
-	   $$ = NULL;
+	   $$ = new(state) ast_switch_body($2);
+	   $$->set_location(yylloc);
 	}
 	;
 
 case_label:
 	CASE expression ':'
 	{
-	   $$ = NULL;
+	   $$ = new(state) ast_case_label($2);
 	}
 	| DEFAULT ':'
 	{
-	   $$ = NULL;
+	   $$ = new(state) ast_case_label(NULL);
 	}
 	;
 
 case_label_list:
 	case_label
 	{
-	   $$ = NULL;
+	   ast_case_label_list *labels = new(state) ast_case_label_list();
+
+	   labels->labels.push_tail(& $1->link);
+	   $$ = labels;
 	}
 	| case_label_list case_label
 	{
-	   $$ = NULL;
+	   $$ = $1;
+	   $$->labels.push_tail(& $2->link);
 	}
 	;
 
 case_statement:
-	case_label_list statement_list
+	case_label_list statement
 	{
-	   $$ = NULL;
+	   ast_case_statement *stmts = new(state) ast_case_statement($1);
+
+	   stmts->stmts.push_tail(& $2->link);
+	   $$ = stmts
+	}
+	| case_statement statement
+	{
+	   $$ = $1;
+	   $$->stmts.push_tail(& $2->link);
 	}
 	;
 
 case_statement_list:
 	case_statement
 	{
-	   $$ = NULL;
+	   ast_case_statement_list *cases= new(state) ast_case_statement_list();
+
+	   cases->cases.push_tail(& $1->link);
+	   $$ = cases;
 	}
 	| case_statement_list case_statement
 	{
-	   $$ = NULL;
+	   $$ = $1;
+	   $$->cases.push_tail(& $2->link);
 	}
 	;
 

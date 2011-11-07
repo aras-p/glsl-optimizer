@@ -3445,6 +3445,60 @@ ast_selection_statement::hir(exec_list *instructions,
 }
 
 
+ir_rvalue *
+ast_switch_statement::hir(exec_list *instructions,
+			  struct _mesa_glsl_parse_state *state)
+{
+   // FINISHME
+   return NULL;
+}
+
+
+ir_rvalue *
+ast_switch_body::hir(exec_list *instructions,
+			  struct _mesa_glsl_parse_state *state)
+{
+   // FINISHME
+   return NULL;
+}
+
+
+ir_rvalue *
+ast_case_statement::hir(exec_list *instructions,
+			  struct _mesa_glsl_parse_state *state)
+{
+   // FINISHME
+   return NULL;
+}
+
+
+ir_rvalue *
+ast_case_statement_list::hir(exec_list *instructions,
+			  struct _mesa_glsl_parse_state *state)
+{
+   // FINISHME
+   return NULL;
+}
+
+
+ir_rvalue *
+ast_case_label::hir(exec_list *instructions,
+			  struct _mesa_glsl_parse_state *state)
+{
+   // FINISHME
+   return NULL;
+}
+
+
+ir_rvalue *
+ast_case_label_list::hir(exec_list *instructions,
+			  struct _mesa_glsl_parse_state *state)
+{
+   // FINISHME
+   return NULL;
+}
+
+
 void
 ast_iteration_statement::condition_to_hir(ir_loop *stmt,
 					  struct _mesa_glsl_parse_state *state)
