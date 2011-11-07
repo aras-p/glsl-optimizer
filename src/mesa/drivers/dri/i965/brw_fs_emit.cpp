@@ -833,7 +833,7 @@ fs_visitor::generate_code()
       case SHADER_OPCODE_INT_QUOTIENT:
       case SHADER_OPCODE_INT_REMAINDER:
       case SHADER_OPCODE_POW:
-	 if (intel->gen >= 6) {
+	 if (intel->gen >= 7) {
 	    generate_math2_gen7(inst, dst, src[0], src[1]);
 	 } else if (intel->gen == 6) {
 	    generate_math2_gen6(inst, dst, src[0], src[1]);
