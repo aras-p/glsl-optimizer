@@ -1622,13 +1622,12 @@ void r600_query_begin(struct r600_context *ctx, struct r600_query *query)
 {
 	unsigned required_space, new_results_end;
 
-	/* query request needs 6/8 dwords for begin + 6/8 dwords for end */
 	switch (query->type) {
 	case PIPE_QUERY_OCCLUSION_COUNTER:
-		required_space = 12;
+		required_space = 12; /* 6 for begin, 6 for end */
 		break;
 	case PIPE_QUERY_TIME_ELAPSED:
-		required_space = 16;
+		required_space = 16; /* 8 for begin, 8 for end */
 		break;
 	default:
 		assert(0);
@@ -1705,7 +1704,7 @@ void r600_query_end(struct r600_context *ctx, struct r600_query *query)
 	case PIPE_QUERY_TIME_ELAPSED:
 		ctx->pm4[ctx->pm4_cdwords++] = PKT3(PKT3_EVENT_WRITE_EOP, 4, 0);
 		ctx->pm4[ctx->pm4_cdwords++] = EVENT_TYPE(EVENT_TYPE_CACHE_FLUSH_AND_INV_TS_EVENT) | EVENT_INDEX(5);
-		ctx->pm4[ctx->pm4_cdwords++] = query->results_end + 8;
+		ctx->pm4[ctx->pm4_cdwords++] = query->results_end + query->result_size/2;
 		ctx->pm4[ctx->pm4_cdwords++] = (3 << 29);
 		ctx->pm4[ctx->pm4_cdwords++] = 0;
 		ctx->pm4[ctx->pm4_cdwords++] = 0;
@@ -1774,10 +1773,10 @@ struct r600_query *r600_context_query_create(struct r600_context *ctx, unsigned 
 
 	switch (query_type) {
 	case PIPE_QUERY_OCCLUSION_COUNTER:
-		query->result_size = 4 * 4 * ctx->max_db;
+		query->result_size = 16 * ctx->max_db;
 		break;
 	case PIPE_QUERY_TIME_ELAPSED:
-		query->result_size = 4 * 4;
+		query->result_size = 16;
 		break;
 	default:
 		assert(0);

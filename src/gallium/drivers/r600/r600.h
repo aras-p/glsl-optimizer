@@ -163,9 +163,6 @@ struct r600_range {
 	struct r600_block	**blocks;
 };
 
-/*
- * query
- */
 struct r600_query {
 	u64					result;
 	/* The kind of query */
@@ -174,7 +171,8 @@ struct r600_query {
 	unsigned				results_start;
 	/* Offset of the next free result after current query data */
 	unsigned				results_end;
-	/* Size of the result */
+	/* Size of the result in memory for both begin_query and end_query,
+	 * this can be one or two numbers, or it could even be a size of a structure. */
 	unsigned				result_size;
 	/* The buffer where query results are stored. It's used as a ring,
 	 * data blocks for current query are stored sequentially from
