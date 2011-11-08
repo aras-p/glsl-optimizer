@@ -1875,6 +1875,47 @@ store_tfeedback_info(struct gl_context *ctx, struct gl_shader_program *prog,
    return true;
 }
 
+/**
+ * Validate the resources used by a program versus the implementation limits
+ */
+static bool
+check_resources(struct gl_context *ctx, struct gl_shader_program *prog)
+{
+   static const char *const shader_names[MESA_SHADER_TYPES] = {
+      "vertex", "fragment", "geometry"
+   };
+
+   const unsigned max_samplers[MESA_SHADER_TYPES] = {
+      ctx->Const.MaxVertexTextureImageUnits,
+      ctx->Const.MaxTextureImageUnits,
+      ctx->Const.MaxGeometryTextureImageUnits
+   };
+
+   const unsigned max_uniform_components[MESA_SHADER_TYPES] = {
+      ctx->Const.VertexProgram.MaxUniformComponents,
+      ctx->Const.FragmentProgram.MaxUniformComponents,
+      0          /* FINISHME: Geometry shaders. */
+   };
+
+   for (unsigned i = 0; i < MESA_SHADER_TYPES; i++) {
+      struct gl_shader *sh = prog->_LinkedShaders[i];
+
+      if (sh == NULL)
+	 continue;
+
+      if (sh->num_samplers > max_samplers[i]) {
+	 linker_error(prog, "Too many %s shader texture samplers",
+		      shader_names[i]);
+      }
+
+      if (sh->num_uniform_components > max_uniform_components[i]) {
+         linker_error(prog, "Too many %s shader uniform components",
+		      shader_names[i]);
+      }
+   }
+
+   return prog->LinkStatus;
+}
 
 void
 link_shaders(struct gl_context *ctx, struct gl_shader_program *prog)
@@ -2136,6 +2177,9 @@ link_shaders(struct gl_context *ctx, struct gl_shader_program *prog)
 
    update_array_sizes(prog);
    link_assign_uniform_locations(prog);
+
+   if (!check_resources(ctx, prog))
+      goto done;
 
    /* OpenGL ES requires that a vertex shader and a fragment shader both be
     * present in a linked program.  By checking for use of shading language
