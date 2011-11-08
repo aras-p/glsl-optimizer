@@ -2158,6 +2158,9 @@ struct gl_shader
 
    unsigned Version;       /**< GLSL version used for linking */
 
+   unsigned num_samplers;	/**< Number of samplers used by this shader.
+				 * This field is only set post-linking.
+				 */
    struct exec_list *ir;
    struct glsl_symbol_table *symbols;
 
