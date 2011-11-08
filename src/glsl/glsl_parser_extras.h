@@ -149,8 +149,14 @@ struct _mesa_glsl_parse_state {
    bool all_invariant;
 
    /** Loop or switch statement containing the current instructions. */
-   class ir_instruction *loop_or_switch_nesting;
-   class ast_iteration_statement *loop_or_switch_nesting_ast;
+   class ast_iteration_statement *loop_nesting_ast;
+   class ast_switch_statement *switch_nesting_ast;
+   bool is_switch_innermost; // if switch stmt is closest to break, ...
+
+   /** Temporary variables needed for switch statement. */
+   ir_variable *test_var;
+   ir_variable *is_fallthru_var;
+   ir_variable *is_break_var;
 
    /** List of structures defined in user code. */
    const glsl_type **user_structures;

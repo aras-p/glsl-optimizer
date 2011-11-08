@@ -50,7 +50,8 @@ _mesa_glsl_parse_state::_mesa_glsl_parse_state(struct gl_context *ctx,
    this->symbols = new(mem_ctx) glsl_symbol_table;
    this->info_log = ralloc_strdup(mem_ctx, "");
    this->error = false;
-   this->loop_or_switch_nesting = NULL;
+   this->loop_nesting_ast = NULL;
+   this->switch_nesting_ast = NULL;
 
    this->num_builtins_to_link = 0;
 
