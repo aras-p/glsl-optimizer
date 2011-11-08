@@ -25,6 +25,8 @@
  *
  **************************************************************************/
 
+#include <stddef.h>
+
 #include <llvm-c/Core.h>
 #include <llvm/Target/TargetMachine.h>
 #include <llvm/Target/TargetInstrInfo.h>

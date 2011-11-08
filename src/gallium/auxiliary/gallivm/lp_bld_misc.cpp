@@ -34,6 +34,8 @@
 #define __STDC_CONSTANT_MACROS
 #endif
 
+#include <stddef.h>
+
 #include <llvm-c/Core.h>
 #include <llvm-c/ExecutionEngine.h>
 #include <llvm/Target/TargetOptions.h>
