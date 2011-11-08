@@ -359,6 +359,7 @@ brw_upload_wm_pull_constants(struct brw_context *brw)
 {
    struct gl_context *ctx = &brw->intel.ctx;
    struct intel_context *intel = &brw->intel;
+   /* BRW_NEW_FRAGMENT_PROGRAM */
    struct brw_fragment_program *fp =
       (struct brw_fragment_program *) brw->fragment_program;
    const int size = brw->wm.prog_data->nr_pull_params * sizeof(float);
@@ -367,7 +368,7 @@ brw_upload_wm_pull_constants(struct brw_context *brw)
 
    _mesa_load_state_parameters(ctx, fp->program.Base.Parameters);
 
-   /* BRW_NEW_FRAGMENT_PROGRAM */
+   /* CACHE_NEW_WM_PROG */
    if (brw->wm.prog_data->nr_pull_params == 0) {
       if (brw->wm.const_bo) {
 	 drm_intel_bo_unreference(brw->wm.const_bo);
@@ -397,7 +398,7 @@ const struct brw_tracked_state brw_wm_constants = {
    .dirty = {
       .mesa = (_NEW_PROGRAM_CONSTANTS),
       .brw = (BRW_NEW_FRAGMENT_PROGRAM),
-      .cache = 0
+      .cache = CACHE_NEW_WM_PROG,
    },
    .emit = brw_upload_wm_pull_constants,
 };
