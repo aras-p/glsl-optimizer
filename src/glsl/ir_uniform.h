@@ -47,7 +47,7 @@ enum gl_uniform_driver_format {
    /**
     * Store boolean data as integer using ~0 for \c true.
     */
-   uniform_bool_int_0_not0,
+   uniform_bool_int_0_not0
 };
 
 struct gl_uniform_driver_storage {
