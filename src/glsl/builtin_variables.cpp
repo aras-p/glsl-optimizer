@@ -24,7 +24,7 @@
 #include "ir.h"
 #include "glsl_parser_extras.h"
 #include "glsl_symbol_table.h"
-#include "builtin_variables.h"
+#include "main/core.h"
 #include "main/uniforms.h"
 #include "program/prog_parameter.h"
 #include "program/prog_statevars.h"
@@ -38,6 +38,91 @@ static void
 generate_ARB_draw_instanced_variables(exec_list *,
                                       struct _mesa_glsl_parse_state *,
                                       bool, _mesa_glsl_parser_targets);
+
+struct builtin_variable {
+   enum ir_variable_mode mode;
+   int slot;
+   const char *type;
+   const char *name;
+};
+
+static const builtin_variable builtin_core_vs_variables[] = {
+   { ir_var_out, VERT_RESULT_HPOS, "vec4",  "gl_Position" },
+   { ir_var_out, VERT_RESULT_PSIZ, "float", "gl_PointSize" },
+};
+
+static const builtin_variable builtin_core_fs_variables[] = {
+   { ir_var_in,  FRAG_ATTRIB_WPOS,  "vec4",  "gl_FragCoord" },
+   { ir_var_in,  FRAG_ATTRIB_FACE,  "bool",  "gl_FrontFacing" },
+   { ir_var_out, FRAG_RESULT_COLOR, "vec4",  "gl_FragColor" },
+};
+
+static const builtin_variable builtin_100ES_fs_variables[] = {
+   { ir_var_in,  FRAG_ATTRIB_PNTC,   "vec2",   "gl_PointCoord" },
+};
+
+static const builtin_variable builtin_110_fs_variables[] = {
+   { ir_var_out, FRAG_RESULT_DEPTH, "float", "gl_FragDepth" },
+};
+
+static const builtin_variable builtin_110_deprecated_fs_variables[] = {
+   { ir_var_in,  FRAG_ATTRIB_COL0,  "vec4",  "gl_Color" },
+   { ir_var_in,  FRAG_ATTRIB_COL1,  "vec4",  "gl_SecondaryColor" },
+   { ir_var_in,  FRAG_ATTRIB_FOGC,  "float", "gl_FogFragCoord" },
+};
+
+static const builtin_variable builtin_110_deprecated_vs_variables[] = {
+   { ir_var_in,  VERT_ATTRIB_POS,         "vec4",  "gl_Vertex" },
+   { ir_var_in,  VERT_ATTRIB_NORMAL,      "vec3",  "gl_Normal" },
+   { ir_var_in,  VERT_ATTRIB_COLOR0,      "vec4",  "gl_Color" },
+   { ir_var_in,  VERT_ATTRIB_COLOR1,      "vec4",  "gl_SecondaryColor" },
+   { ir_var_in,  VERT_ATTRIB_TEX0,        "vec4",  "gl_MultiTexCoord0" },
+   { ir_var_in,  VERT_ATTRIB_TEX1,        "vec4",  "gl_MultiTexCoord1" },
+   { ir_var_in,  VERT_ATTRIB_TEX2,        "vec4",  "gl_MultiTexCoord2" },
+   { ir_var_in,  VERT_ATTRIB_TEX3,        "vec4",  "gl_MultiTexCoord3" },
+   { ir_var_in,  VERT_ATTRIB_TEX4,        "vec4",  "gl_MultiTexCoord4" },
+   { ir_var_in,  VERT_ATTRIB_TEX5,        "vec4",  "gl_MultiTexCoord5" },
+   { ir_var_in,  VERT_ATTRIB_TEX6,        "vec4",  "gl_MultiTexCoord6" },
+   { ir_var_in,  VERT_ATTRIB_TEX7,        "vec4",  "gl_MultiTexCoord7" },
+   { ir_var_in,  VERT_ATTRIB_FOG,         "float", "gl_FogCoord" },
+   { ir_var_out, VERT_RESULT_CLIP_VERTEX, "vec4",  "gl_ClipVertex" },
+   { ir_var_out, VERT_RESULT_COL0,        "vec4",  "gl_FrontColor" },
+   { ir_var_out, VERT_RESULT_BFC0,        "vec4",  "gl_BackColor" },
+   { ir_var_out, VERT_RESULT_COL1,        "vec4",  "gl_FrontSecondaryColor" },
+   { ir_var_out, VERT_RESULT_BFC1,        "vec4",  "gl_BackSecondaryColor" },
+   { ir_var_out, VERT_RESULT_FOGC,        "float", "gl_FogFragCoord" },
+};
+
+static const builtin_variable builtin_120_fs_variables[] = {
+   { ir_var_in,  FRAG_ATTRIB_PNTC,   "vec2",   "gl_PointCoord" },
+};
+
+static const builtin_variable builtin_130_vs_variables[] = {
+   { ir_var_in,  -1,                 "int",   "gl_VertexID" },
+};
+
+static const builtin_variable builtin_110_deprecated_uniforms[] = {
+   { ir_var_uniform, -1, "mat4", "gl_ModelViewMatrix" },
+   { ir_var_uniform, -1, "mat4", "gl_ProjectionMatrix" },
+   { ir_var_uniform, -1, "mat4", "gl_ModelViewProjectionMatrix" },
+   { ir_var_uniform, -1, "mat3", "gl_NormalMatrix" },
+   { ir_var_uniform, -1, "mat4", "gl_ModelViewMatrixInverse" },
+   { ir_var_uniform, -1, "mat4", "gl_ProjectionMatrixInverse" },
+   { ir_var_uniform, -1, "mat4", "gl_ModelViewProjectionMatrixInverse" },
+   { ir_var_uniform, -1, "mat4", "gl_ModelViewMatrixTranspose" },
+   { ir_var_uniform, -1, "mat4", "gl_ProjectionMatrixTranspose" },
+   { ir_var_uniform, -1, "mat4", "gl_ModelViewProjectionMatrixTranspose" },
+   { ir_var_uniform, -1, "mat4", "gl_ModelViewMatrixInverseTranspose" },
+   { ir_var_uniform, -1, "mat4", "gl_ProjectionMatrixInverseTranspose" },
+   { ir_var_uniform, -1, "mat4", "gl_ModelViewProjectionMatrixInverseTranspose" },
+   { ir_var_uniform, -1, "float", "gl_NormalScale" },
+   { ir_var_uniform, -1, "gl_LightModelParameters", "gl_LightModel"},
+
+   /* Mesa-internal ATI_envmap_bumpmap state. */
+   { ir_var_uniform, -1, "vec2", "gl_BumpRotMatrix0MESA"},
+   { ir_var_uniform, -1, "vec2", "gl_BumpRotMatrix1MESA"},
+   { ir_var_uniform, -1, "vec4", "gl_FogParamsOptimizedMESA"},
+};
 
 static struct gl_builtin_uniform_element gl_DepthRange_elements[] = {
    {"near", {STATE_DEPTH_RANGE, 0, 0}, SWIZZLE_XXXX},
