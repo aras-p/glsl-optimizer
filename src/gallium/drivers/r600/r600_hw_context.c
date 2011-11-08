@@ -1640,9 +1640,7 @@ void r600_query_begin(struct r600_context *ctx, struct r600_query *query)
 		r600_context_flush(ctx, RADEON_FLUSH_ASYNC);
 	}
 
-	new_results_end = query->results_end + query->result_size;
-	if (new_results_end >= query->buffer->b.b.b.width0)
-		new_results_end = 0;
+	new_results_end = (query->results_end + query->result_size) % query->buffer->b.b.b.width0;
 
 	/* collect current results if query buffer is full */
 	if (new_results_end == query->results_start) {
@@ -1718,10 +1716,7 @@ void r600_query_end(struct r600_context *ctx, struct r600_query *query)
 	ctx->pm4[ctx->pm4_cdwords++] = PKT3(PKT3_NOP, 0, 0);
 	ctx->pm4[ctx->pm4_cdwords++] = r600_context_bo_reloc(ctx, query->buffer, RADEON_USAGE_WRITE);
 
-	query->results_end += query->result_size;
-	if (query->results_end >= query->buffer->b.b.b.width0)
-		query->results_end = 0;
-
+	query->results_end = (query->results_end + query->result_size) % query->buffer->b.b.b.width0;
 	ctx->num_query_running--;
 }
 
@@ -1741,10 +1736,7 @@ void r600_query_predication(struct r600_context *ctx, struct r600_query *query, 
 		u32 op;
 
 		/* find count of the query data blocks */
-		count = query->buffer->b.b.b.width0 + query->results_end - query->results_start;
-		if (count >= query->buffer->b.b.b.width0) {
-			count -= query->buffer->b.b.b.width0;
-		}
+		count = (query->buffer->b.b.b.width0 + query->results_end - query->results_start) % query->buffer->b.b.b.width0;
 		count /= query->result_size;
 
 		if (ctx->pm4_cdwords + 5 * count > ctx->pm4_ndwords)
@@ -1761,9 +1753,8 @@ void r600_query_predication(struct r600_context *ctx, struct r600_query *query, 
 			ctx->pm4[ctx->pm4_cdwords++] = PKT3(PKT3_NOP, 0, 0);
 			ctx->pm4[ctx->pm4_cdwords++] = r600_context_bo_reloc(ctx, query->buffer,
 									     RADEON_USAGE_READ);
-			results_base += query->result_size;
-			if (results_base >= query->buffer->b.b.b.width0)
-				results_base = 0;
+			results_base = (results_base + query->result_size) % query->buffer->b.b.b.width0;
+
 			/* set CONTINUE bit for all packets except the first */
 			op |= PREDICATION_CONTINUE;
 		}
