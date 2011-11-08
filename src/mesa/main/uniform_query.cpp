@@ -204,7 +204,7 @@ _mesa_get_uniform(struct gl_context *ctx, GLuint program, GLint location,
 	 &uni->storage[offset * elements];
 
       unsigned bytes = sizeof(uni->storage[0]) * elements;
-      if (bytes > bufSize) {
+      if (bytes > (unsigned) bufSize) {
 	 elements = bufSize / sizeof(uni->storage[0]);
 	 bytes = bufSize;
       }
@@ -490,7 +490,6 @@ _mesa_uniform(struct gl_context *ctx, struct gl_shader_program *shProg,
    unsigned loc, offset;
    unsigned components;
    unsigned src_components;
-   unsigned i;
    enum glsl_base_type basicType;
    struct gl_uniform_storage *uni;
 
@@ -618,6 +617,8 @@ _mesa_uniform(struct gl_context *ctx, struct gl_shader_program *shProg,
     * GL_INVALID_VALUE error and ignore the command.
     */
    if (uni->type->is_sampler()) {
+      int i;
+
       for (i = 0; i < count; i++) {
 	 const unsigned texUnit = ((unsigned *) values)[i];
 
@@ -662,6 +663,7 @@ _mesa_uniform(struct gl_context *ctx, struct gl_shader_program *shProg,
 	 (const union gl_constant_value *) values;
       union gl_constant_value *dst = &uni->storage[components * offset];
       const unsigned elems = components * count;
+      unsigned i;
 
       for (i = 0; i < elems; i++) {
 	 if (basicType == GLSL_TYPE_FLOAT) {
@@ -680,6 +682,8 @@ _mesa_uniform(struct gl_context *ctx, struct gl_shader_program *shProg,
     * the changes through.
     */
    if (uni->type->is_sampler()) {
+      int i;
+
       for (i = 0; i < count; i++) {
 	 shProg->SamplerUnits[uni->sampler + offset + i] =
 	    ((unsigned *) values)[i];
@@ -721,7 +725,7 @@ _mesa_uniform(struct gl_context *ctx, struct gl_shader_program *shProg,
  */
 extern "C" void
 _mesa_uniform_matrix(struct gl_context *ctx, struct gl_shader_program *shProg,
-		     GLint cols, GLint rows,
+		     GLuint cols, GLuint rows,
                      GLint location, GLsizei count,
                      GLboolean transpose, const GLfloat *values)
 {
@@ -795,7 +799,7 @@ _mesa_uniform_matrix(struct gl_context *ctx, struct gl_shader_program *shProg,
       const float *src = values;
       float *dst = &uni->storage[elements * offset].f;
 
-      for (unsigned i = 0; i < count; i++) {
+      for (int i = 0; i < count; i++) {
 	 for (unsigned r = 0; r < rows; r++) {
 	    for (unsigned c = 0; c < cols; c++) {
 	       dst[(c * components) + r] = src[c + (r * vectors)];
