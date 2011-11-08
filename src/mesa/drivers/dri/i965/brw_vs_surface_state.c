@@ -182,7 +182,6 @@ const struct brw_tracked_state brw_vs_surfaces = {
    .dirty = {
       .mesa = 0,
       .brw = (BRW_NEW_VS_CONSTBUF |
-	      BRW_NEW_NR_VS_SURFACES |
 	      BRW_NEW_BATCH),
       .cache = 0
    },
