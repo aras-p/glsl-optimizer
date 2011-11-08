@@ -20,6 +20,7 @@ LIBGLSL_CXX_SOURCES := \
 	ast_function.cpp \
 	ast_to_hir.cpp \
 	ast_type.cpp \
+	builtin_variables.cpp \
 	glsl_parser_extras.cpp \
 	glsl_types.cpp \
 	glsl_symbol_table.cpp \
@@ -40,7 +41,6 @@ LIBGLSL_CXX_SOURCES := \
 	ir_rvalue_visitor.cpp \
 	ir_set_program_inouts.cpp \
 	ir_validate.cpp \
-	ir_variable.cpp \
 	ir_variable_refcount.cpp \
 	linker.cpp \
 	link_functions.cpp \
