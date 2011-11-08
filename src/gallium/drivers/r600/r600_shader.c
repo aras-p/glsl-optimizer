@@ -897,7 +897,7 @@ static int r600_shader_from_tgsi(struct r600_pipe_context * rctx, struct r600_pi
 						output[i + j].inst = BC_INST(ctx.bc, V_SQ_CF_ALLOC_EXPORT_WORD1_SQ_CF_INST_EXPORT);
 						output[i + j].type = V_SQ_CF_ALLOC_EXPORT_WORD0_SQ_EXPORT_PIXEL;
 					}
-					j--;
+					j = shader->nr_cbufs-1;
 				}
 			} else if (shader->output[i].name == TGSI_SEMANTIC_POSITION) {
 				output[i + j].array_base = 61;
