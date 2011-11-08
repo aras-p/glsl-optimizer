@@ -436,4 +436,11 @@ intel_set_span_functions(struct intel_context *intel,
 
    assert(intel_span_init_funcs[irb->Base.Format]);
    intel_span_init_funcs[irb->Base.Format](rb);
+
+   if (rb->DataType == GL_NONE) {
+      _mesa_problem(NULL,
+		    "renderbuffer format %s is missing "
+		    "intel_mesa_format_to_rb_datatype() support.",
+		    _mesa_get_format_name(rb->Format));
+   }
 }

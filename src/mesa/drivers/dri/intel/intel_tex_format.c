@@ -42,8 +42,10 @@ intel_mesa_format_to_rb_datatype(gl_format format)
       return GL_FLOAT;
 
    default:
-      _mesa_problem(NULL, "unexpected MESA_FORMAT for renderbuffer");
-      return GL_UNSIGNED_BYTE;
+      /* Unsupported format.  We may hit this when people ask for FBO-incomplete
+       * formats.
+       */
+      return GL_NONE;
    }
 }
 
