@@ -2541,58 +2541,6 @@ count_resources(struct gl_program *prog)
    _mesa_update_shader_textures_used(prog);
 }
 
-
-/**
- * Check if the given vertex/fragment/shader program is within the
- * resource limits of the context (number of texture units, etc).
- * If any of those checks fail, record a linker error.
- *
- * XXX more checks are needed...
- */
-static bool
-check_resources(const struct gl_context *ctx,
-                struct gl_shader_program *shader_program,
-                struct gl_program *prog)
-{
-   switch (prog->Target) {
-   case GL_VERTEX_PROGRAM_ARB:
-      if (_mesa_bitcount(prog->SamplersUsed) >
-          ctx->Const.MaxVertexTextureImageUnits) {
-         linker_error(shader_program,
-		      "Too many vertex shader texture samplers");
-      }
-      if (prog->Parameters->NumParameters > MAX_UNIFORMS) {
-         linker_error(shader_program, "Too many vertex shader constants");
-      }
-      break;
-   case MESA_GEOMETRY_PROGRAM:
-      if (_mesa_bitcount(prog->SamplersUsed) >
-          ctx->Const.MaxGeometryTextureImageUnits) {
-         linker_error(shader_program,
-		      "Too many geometry shader texture samplers");
-      }
-      if (prog->Parameters->NumParameters >
-          MAX_GEOMETRY_UNIFORM_COMPONENTS / 4) {
-         linker_error(shader_program, "Too many geometry shader constants");
-      }
-      break;
-   case GL_FRAGMENT_PROGRAM_ARB:
-      if (_mesa_bitcount(prog->SamplersUsed) >
-          ctx->Const.MaxTextureImageUnits) {
-         linker_error(shader_program,
-		      "Too many fragment shader texture samplers");
-      }
-      if (prog->Parameters->NumParameters > MAX_UNIFORMS) {
-         linker_error(shader_program, "Too many fragment shader constants");
-      }
-      break;
-   default:
-      _mesa_problem(ctx, "unexpected program type in check_resources()");
-   }
-
-   return shader_program->LinkStatus;
-}
-
 class add_uniform_to_shader : public uniform_field_visitor {
 public:
    add_uniform_to_shader(struct gl_shader_program *shader_program,
@@ -3273,9 +3221,6 @@ get_mesa_program(struct gl_context *ctx,
 
    do_set_program_inouts(shader->ir, prog, shader->Type == GL_FRAGMENT_SHADER);
    count_resources(prog);
-
-   if (!check_resources(ctx, shader_program, prog))
-      goto fail_exit;
 
    _mesa_reference_program(ctx, &shader->Program, prog);
 
