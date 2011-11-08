@@ -1564,31 +1564,53 @@ void r600_context_emit_fence(struct r600_context *ctx, struct r600_resource *fen
 	ctx->pm4[ctx->pm4_cdwords++] = r600_context_bo_reloc(ctx, fence_bo, RADEON_USAGE_WRITE);
 }
 
+static unsigned r600_query_read_result(char *map, unsigned start_index, unsigned end_index,
+				       bool test_status_bit)
+{
+	uint32_t *current_result = (uint32_t*)map;
+	uint64_t start, end;
+
+	start = (uint64_t)current_result[start_index] |
+		(uint64_t)current_result[start_index+1] << 32;
+	end = (uint64_t)current_result[end_index] |
+	      (uint64_t)current_result[end_index+1] << 32;
+
+	if (!test_status_bit ||
+	    ((start & 0x8000000000000000UL) && (end & 0x8000000000000000UL))) {
+		return end - start;
+	}
+	return 0;
+}
+
 static boolean r600_query_result(struct r600_context *ctx, struct r600_query *query, boolean wait)
 {
 	unsigned results_base = query->results_start;
-	u32 *map;
+	char *map;
 
 	map = ctx->ws->buffer_map(query->buffer->buf, ctx->cs,
-					  PIPE_TRANSFER_READ | (wait ? 0 : PIPE_TRANSFER_DONTBLOCK));
+				  PIPE_TRANSFER_READ |
+				  (wait ? 0 : PIPE_TRANSFER_DONTBLOCK));
 	if (!map)
 		return FALSE;
 
 	/* count all results across all data blocks */
-	while (results_base != query->results_end) {
-		u64 start, end;
-		u32 *current_result = (u32*)((char*)map + results_base);
-
-		start = (u64)current_result[0] | (u64)current_result[1] << 32;
-		end = (u64)current_result[2] | (u64)current_result[3] << 32;
-		if (((start & 0x8000000000000000UL) && (end & 0x8000000000000000UL))
-                    || query->type == PIPE_QUERY_TIME_ELAPSED) {
-			query->result += end - start;
+	switch (query->type) {
+	case PIPE_QUERY_OCCLUSION_COUNTER:
+		while (results_base != query->results_end) {
+			query->result +=
+				r600_query_read_result(map + results_base, 0, 2, true);
+			results_base = (results_base + 16) % query->buffer->b.b.b.width0;
 		}
-
-		results_base += 4 * 4;
-		if (results_base >= query->buffer->b.b.b.width0)
-			results_base = 0;
+		break;
+	case PIPE_QUERY_TIME_ELAPSED:
+		while (results_base != query->results_end) {
+			query->result +=
+				r600_query_read_result(map + results_base, 0, 2, false);
+			results_base = (results_base + query->result_size) % query->buffer->b.b.b.width0;
+		}
+		break;
+	default:
+		assert(0);
 	}
 
 	query->results_start = query->results_end;
