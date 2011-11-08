@@ -98,7 +98,7 @@ static const builtin_variable builtin_120_fs_variables[] = {
 };
 
 static const builtin_variable builtin_130_vs_variables[] = {
-   { ir_var_in,  -1,                 "int",   "gl_VertexID" },
+   { ir_var_system_value,  SYSTEM_VALUE_VERTEX_ID, "int",   "gl_VertexID" },
 };
 
 static const builtin_variable builtin_110_deprecated_uniforms[] = {

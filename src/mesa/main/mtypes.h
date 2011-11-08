@@ -1798,6 +1798,7 @@ typedef enum
 typedef enum
 {
    SYSTEM_VALUE_FRONT_FACE,  /**< Fragment shader only (not done yet) */
+   SYSTEM_VALUE_VERTEX_ID,   /**< Vertex shader only */
    SYSTEM_VALUE_INSTANCE_ID, /**< Vertex shader only */
    SYSTEM_VALUE_MAX          /**< Number of values */
 } gl_system_value;
