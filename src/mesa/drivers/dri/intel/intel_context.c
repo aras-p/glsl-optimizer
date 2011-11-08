@@ -640,8 +640,12 @@ intelInitContext(struct intel_context *intel,
    ctx->TextureFormatSupported[MESA_FORMAT_A8] = true;
    ctx->TextureFormatSupported[MESA_FORMAT_I8] = true;
    ctx->TextureFormatSupported[MESA_FORMAT_AL88] = true;
-   if (intel->gen >= 4)
+   if (intel->gen >= 4) {
+      ctx->TextureFormatSupported[MESA_FORMAT_L16] = true;
+      ctx->TextureFormatSupported[MESA_FORMAT_A16] = true;
+      ctx->TextureFormatSupported[MESA_FORMAT_I16] = true;
       ctx->TextureFormatSupported[MESA_FORMAT_AL1616] = true;
+   }
 
    /* Depth and stencil */
    ctx->TextureFormatSupported[MESA_FORMAT_S8_Z24] = true;
