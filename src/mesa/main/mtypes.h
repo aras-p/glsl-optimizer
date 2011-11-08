@@ -2161,6 +2161,13 @@ struct gl_shader
    unsigned num_samplers;	/**< Number of samplers used by this shader.
 				 * This field is only set post-linking.
 				 */
+   /**
+    * Number of uniform components used by this shader.
+    *
+    * This field is only set post-linking.
+    */
+   unsigned num_uniform_components;
+
    struct exec_list *ir;
    struct glsl_symbol_table *symbols;
 
