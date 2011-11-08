@@ -33,12 +33,8 @@ C_SOURCES := \
 	draw/draw_pt_vsplit.c \
 	draw/draw_vertex.c \
 	draw/draw_vs.c \
-	draw/draw_vs_aos.c \
-	draw/draw_vs_aos_io.c \
-	draw/draw_vs_aos_machine.c \
 	draw/draw_vs_exec.c \
 	draw/draw_vs_ppc.c \
-	draw/draw_vs_sse.c \
 	draw/draw_vs_variant.c \
 	os/os_misc.c \
 	os/os_stream.c \
@@ -83,7 +79,6 @@ C_SOURCES := \
 	tgsi/tgsi_ppc.c \
 	tgsi/tgsi_sanity.c \
 	tgsi/tgsi_scan.c \
-	tgsi/tgsi_sse2.c \
 	tgsi/tgsi_text.c \
 	tgsi/tgsi_transform.c \
 	tgsi/tgsi_ureg.c \

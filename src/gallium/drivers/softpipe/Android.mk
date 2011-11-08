@@ -26,7 +26,6 @@ LOCAL_PATH := $(call my-dir)
 # from Makefile
 C_SOURCES = \
 	sp_fs_exec.c \
-	sp_fs_sse.c \
 	sp_clear.c \
 	sp_fence.c \
 	sp_flush.c \

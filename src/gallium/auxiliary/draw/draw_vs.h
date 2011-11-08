@@ -159,20 +159,12 @@ draw_create_vs_exec(struct draw_context *draw,
 		    const struct pipe_shader_state *templ);
 
 struct draw_vertex_shader *
-draw_create_vs_sse(struct draw_context *draw,
-		   const struct pipe_shader_state *templ);
-
-struct draw_vertex_shader *
 draw_create_vs_ppc(struct draw_context *draw,
 		   const struct pipe_shader_state *templ);
 
 
 struct draw_vs_variant_key;
 struct draw_vertex_shader;
-
-struct draw_vs_variant *
-draw_vs_create_variant_aos_sse( struct draw_vertex_shader *vs,
-                                const struct draw_vs_variant_key *key );
 
 #if HAVE_LLVM
 struct draw_vertex_shader *
@@ -212,18 +204,6 @@ static INLINE int draw_vs_variant_key_compare( const struct draw_vs_variant_key 
    int keysize = draw_vs_variant_keysize(a);
    return memcmp(a, b, keysize);
 }
-
-
-struct aos_machine *draw_vs_aos_machine( void );
-void draw_vs_aos_machine_destroy( struct aos_machine *machine );
-
-void
-draw_vs_aos_machine_constants(struct aos_machine *machine,
-                              unsigned slot,
-                              const void *constants);
-
-void draw_vs_aos_machine_viewport( struct aos_machine *machine,
-                                   const struct pipe_viewport_state *viewport );
 
 
 #define MAX_TGSI_VERTICES 4

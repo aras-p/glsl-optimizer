@@ -190,7 +190,6 @@ struct softpipe_context {
    struct softpipe_tex_tile_cache *vertex_tex_cache[PIPE_MAX_VERTEX_SAMPLERS];
    struct softpipe_tex_tile_cache *geometry_tex_cache[PIPE_MAX_GEOMETRY_SAMPLERS];
 
-   unsigned use_sse : 1;
    unsigned dump_fs : 1;
    unsigned dump_gs : 1;
    unsigned no_rast : 1;

@@ -81,14 +81,12 @@ draw_vs_set_constants(struct draw_context *draw,
    }
 
    draw->vs.aligned_constants[slot] = constants;
-   draw_vs_aos_machine_constants(draw->vs.aos_machine, slot, constants);
 }
 
 
 void draw_vs_set_viewport( struct draw_context *draw,
                            const struct pipe_viewport_state *viewport )
 {
-   draw_vs_aos_machine_viewport( draw->vs.aos_machine, viewport );
 }
 
 
@@ -103,22 +101,8 @@ draw_create_vertex_shader(struct draw_context *draw,
       tgsi_dump(shader->tokens, 0);
    }
 
-   if (!draw->pt.middle.llvm) {
-#if 0
-/* these paths don't support vertex clamping
- * TODO: either add it, or remove them completely
- * use LLVM instead if you want performance
- * use exec instead if you want debugging/more correctness
- */
-#if defined(PIPE_ARCH_X86)
-      vs = draw_create_vs_sse( draw, shader );
-#elif defined(PIPE_ARCH_PPC)
-      vs = draw_create_vs_ppc( draw, shader );
-#endif
-#endif
-   }
 #if HAVE_LLVM
-   else {
+   if (draw->pt.middle.llvm) {
       vs = draw_create_vs_llvm(draw, shader);
    }
 #endif
@@ -199,12 +183,6 @@ draw_vs_init( struct draw_context *draw )
    if (!draw->vs.fetch_cache) 
       return FALSE;
 
-   draw->vs.aos_machine = draw_vs_aos_machine();
-#ifdef PIPE_ARCH_X86
-   if (!draw->vs.aos_machine)
-      return FALSE;
-#endif
-      
    return TRUE;
 }
 
@@ -218,9 +196,6 @@ draw_vs_destroy( struct draw_context *draw )
 
    if (draw->vs.emit_cache)
       translate_cache_destroy(draw->vs.emit_cache);
-
-   if (draw->vs.aos_machine)
-      draw_vs_aos_machine_destroy(draw->vs.aos_machine);
 
    for (i = 0; i < PIPE_MAX_CONSTANT_BUFFERS; i++) {
       if (draw->vs.aligned_constant_storage[i]) {

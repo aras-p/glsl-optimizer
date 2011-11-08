@@ -185,12 +185,7 @@ draw_create_vs_ppc(struct draw_context *draw,
    tgsi_scan_shader(templ->tokens, &vs->base.info);
 
    vs->base.draw = draw;
-#if 0
-   if (1)
-      vs->base.create_variant = draw_vs_variant_aos_ppc;
-   else
-#endif
-      vs->base.create_variant = draw_vs_create_variant_generic;
+   vs->base.create_variant = draw_vs_create_variant_generic;
    vs->base.prepare = vs_ppc_prepare;
    vs->base.run_linear = vs_ppc_run_linear;
    vs->base.delete = vs_ppc_delete;

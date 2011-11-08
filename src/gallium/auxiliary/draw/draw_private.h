@@ -237,10 +237,6 @@ struct draw_context
       uint num_samplers;
       struct tgsi_sampler **samplers;
 
-      /* Here's another one:
-       */
-      struct aos_machine *aos_machine; 
-
 
       const void *aligned_constants[PIPE_MAX_CONSTANT_BUFFERS];
 

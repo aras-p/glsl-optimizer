@@ -235,12 +235,6 @@ softpipe_create_context( struct pipe_screen *screen,
 
    util_init_math();
 
-#ifdef PIPE_ARCH_X86
-   softpipe->use_sse = !debug_get_bool_option( "GALLIUM_NOSSE", FALSE );
-#else
-   softpipe->use_sse = FALSE;
-#endif
-
    softpipe->dump_fs = debug_get_bool_option( "SOFTPIPE_DUMP_FS", FALSE );
    softpipe->dump_gs = debug_get_bool_option( "SOFTPIPE_DUMP_GS", FALSE );
 
