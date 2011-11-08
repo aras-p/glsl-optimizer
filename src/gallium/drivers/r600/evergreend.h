@@ -50,6 +50,8 @@
 #define EVENT_TYPE_PS_PARTIAL_FLUSH            0x10
 #define EVENT_TYPE_ZPASS_DONE                  0x15
 #define EVENT_TYPE_CACHE_FLUSH_AND_INV_EVENT   0x16
+#define EVENT_TYPE_SO_VGTSTREAMOUT_FLUSH	0x1f
+
 #define		EVENT_TYPE(x)                           ((x) << 0)
 #define		EVENT_INDEX(x)                          ((x) << 8)
                 /* 0 - any non-TS event
@@ -82,6 +84,7 @@
 #define PKT3_MEM_SEMAPHORE                     0x39
 #define PKT3_MPEG_INDEX                        0x3A
 #define PKT3_WAIT_REG_MEM                      0x3C
+#define		WAIT_REG_MEM_EQUAL		3
 #define PKT3_MEM_WRITE                         0x3D
 #define PKT3_INDIRECT_BUFFER                   0x32
 #define PKT3_CP_INTERRUPT                      0x40
@@ -118,6 +121,12 @@
 #define PKT3(op, count, predicate) (PKT_TYPE_S(3) | PKT3_IT_OPCODE_S(op) | PKT_COUNT_S(count) | PKT3_PREDICATE(predicate))
 
 /* Registers */
+#define R_0084FC_CP_STRMOUT_CNTL		     0x000084FC
+#define   S_0084FC_OFFSET_UPDATE_DONE(x)		(((x) & 0x1) << 0)
+#define R_008960_VGT_STRMOUT_BUFFER_FILLED_SIZE_0    0x008960 /* read-only */
+#define R_008964_VGT_STRMOUT_BUFFER_FILLED_SIZE_1    0x008964 /* read-only */
+#define R_008968_VGT_STRMOUT_BUFFER_FILLED_SIZE_2    0x008968 /* read-only */
+#define R_00896C_VGT_STRMOUT_BUFFER_FILLED_SIZE_3    0x00896C /* read-only */
 #define R_008C00_SQ_CONFIG                           0x00008C00
 #define   S_008C00_VC_ENABLE(x)                        (((x) & 0x1) << 0)
 #define   G_008C00_VC_ENABLE(x)                        (((x) >> 0) & 0x1)
@@ -1723,6 +1732,33 @@
 #define R_028AC0_DB_SRESULTS_COMPARE_STATE0          0x00028AC0
 #define R_028AC4_DB_SRESULTS_COMPARE_STATE1          0x00028AC4
 #define R_028AC8_DB_PRELOAD_CONTROL                  0x00028AC8
+#define R_028AD0_VGT_STRMOUT_BUFFER_SIZE_0	     0x028AD0
+#define R_028AD4_VGT_STRMOUT_VTX_STRIDE_0	     0x028AD4
+#define R_028AD8_VGT_STRMOUT_BUFFER_BASE_0	     0x028AD8
+#define R_028ADC_VGT_STRMOUT_BUFFER_OFFSET_0	     0x028ADC
+#define R_028AE0_VGT_STRMOUT_BUFFER_SIZE_1	     0x028AE0
+#define R_028AE4_VGT_STRMOUT_VTX_STRIDE_1	     0x028AE4
+#define R_028AE8_VGT_STRMOUT_BUFFER_BASE_1	     0x028AE8
+#define R_028AEC_VGT_STRMOUT_BUFFER_OFFSET_1	     0x028AEC
+#define R_028AF0_VGT_STRMOUT_BUFFER_SIZE_2	     0x028AF0
+#define R_028AF4_VGT_STRMOUT_VTX_STRIDE_2	     0x028AF4
+#define R_028AF8_VGT_STRMOUT_BUFFER_BASE_2	     0x028AF8
+#define R_028AFC_VGT_STRMOUT_BUFFER_OFFSET_2	     0x028AFC
+#define R_028B00_VGT_STRMOUT_BUFFER_SIZE_3	     0x028B00
+#define R_028B04_VGT_STRMOUT_VTX_STRIDE_3	     0x028B04
+#define R_028B08_VGT_STRMOUT_BUFFER_BASE_3	     0x028B08
+#define R_028B0C_VGT_STRMOUT_BUFFER_OFFSET_3	     0x028B0C
+#define R_028B10_VGT_STRMOUT_BASE_OFFSET_0	     0x028B10
+#define R_028B14_VGT_STRMOUT_BASE_OFFSET_1	     0x028B14
+#define R_028B18_VGT_STRMOUT_BASE_OFFSET_2	     0x028B18
+#define R_028B1C_VGT_STRMOUT_BASE_OFFSET_3	     0x028B1C
+#define R_028B28_VGT_STRMOUT_DRAW_OPAQUE_OFFSET	     0x028B28
+#define R_028B2C_VGT_STRMOUT_DRAW_OPAQUE_BUFFER_FILLED_SIZE 0x028B2C
+#define R_028B30_VGT_STRMOUT_DRAW_OPAQUE_VERTEX_STRIDE 0x028B30
+#define R_028B44_VGT_STRMOUT_BASE_OFFSET_HI_0	     0x028B44
+#define R_028B48_VGT_STRMOUT_BASE_OFFSET_HI_1	     0x028B48
+#define R_028B4C_VGT_STRMOUT_BASE_OFFSET_HI_2	     0x028B4C
+#define R_028B50_VGT_STRMOUT_BASE_OFFSET_HI_3	     0x028B50
 #define R_028B54_VGT_SHADER_STAGES_EN                0x00028B54
 #define R_028B70_DB_ALPHA_TO_MASK                    0x00028B70
 #define R_028B78_PA_SU_POLY_OFFSET_DB_FMT_CNTL       0x00028B78
@@ -1750,7 +1786,16 @@
 #define   G_028B8C_OFFSET(x)                           (((x) >> 0) & 0xFFFFFFFF)
 #define   C_028B8C_OFFSET                              0x00000000
 #define R_028B94_VGT_STRMOUT_CONFIG                  0x00028B94
+#define   S_028B94_STREAMOUT_0_EN(x)			(((x) & 0x1) << 0)
+#define   S_028B94_STREAMOUT_1_EN(x)			(((x) & 0x1) << 1)
+#define   S_028B94_STREAMOUT_2_EN(x)			(((x) & 0x1) << 2)
+#define   S_028B94_STREAMOUT_3_EN(x)			(((x) & 0x1) << 3)
+#define   S_028B94_RAST_STREAM(x)			(((x) & 0x7) << 4)
 #define R_028B98_VGT_STRMOUT_BUFFER_CONFIG           0x00028B98
+#define   S_028B98_STREAM_0_BUFFER_EN(x)		(((x) & 0xf) << 0)
+#define   S_028B98_STREAM_1_BUFFER_EN(x)		(((x) & 0xf) << 4)
+#define   S_028B98_STREAM_2_BUFFER_EN(x)		(((x) & 0xf) << 8)
+#define   S_028B98_STREAM_3_BUFFER_EN(x)		(((x) & 0xf) << 12)
 #define R_028C00_PA_SC_LINE_CNTL                     0x00028C00
 #define R_028C04_PA_SC_AA_CONFIG                     0x00028C04
 #define R_028C08_PA_SU_VTX_CNTL                      0x00028C08

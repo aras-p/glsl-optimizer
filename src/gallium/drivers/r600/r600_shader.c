@@ -119,6 +119,19 @@ int r600_pipe_shader_create(struct pipe_context *ctx, struct r600_pipe_shader *s
 	if (dump_shaders) {
 		fprintf(stderr, "--------------------------------------------------------------\n");
 		tgsi_dump(shader->tokens, 0);
+
+		if (shader->so.num_outputs) {
+			unsigned i;
+			fprintf(stderr, "STREAMOUT\n");
+			for (i = 0; i < shader->so.num_outputs; i++) {
+				fprintf(stderr, "  %i: MEM_STREAM0_BUF%i OUT[%i].%s%s%s%s\n", i,
+					shader->so.output[i].output_buffer, shader->so.output[i].register_index,
+				        shader->so.output[i].register_mask & 1 ? "x" : "_",
+				        (shader->so.output[i].register_mask >> 1) & 1 ? "y" : "_",
+				        (shader->so.output[i].register_mask >> 2) & 1 ? "z" : "_",
+				        (shader->so.output[i].register_mask >> 3) & 1 ? "w" : "_");
+			}
+		}
 	}
 	r = r600_shader_from_tgsi(rctx, shader);
 	if (r) {
@@ -681,6 +694,7 @@ static int r600_shader_from_tgsi(struct r600_pipe_context * rctx, struct r600_pi
 {
 	struct r600_shader *shader = &pipeshader->shader;
 	struct tgsi_token *tokens = pipeshader->tokens;
+	struct pipe_stream_output_info so = pipeshader->so;
 	struct tgsi_full_immediate *immediate;
 	struct tgsi_full_property *property;
 	struct r600_shader_ctx ctx;
@@ -844,6 +858,93 @@ static int r600_shader_from_tgsi(struct r600_pipe_context * rctx, struct r600_pi
 						return r;
 				}
 			}
+		}
+	}
+
+	/* Add stream outputs. */
+	if (ctx.type == TGSI_PROCESSOR_VERTEX && so.num_outputs) {
+		unsigned buffer_offset[PIPE_MAX_SO_BUFFERS] = {0};
+
+		for (i = 0; i < so.num_outputs; i++) {
+			struct r600_bytecode_output output;
+			unsigned comps;
+
+			if (so.output[i].output_buffer >= 4) {
+				R600_ERR("exceeded the max number of stream output buffers, got: %d\n",
+					 so.output[i].output_buffer);
+				r = -EINVAL;
+				goto out_err;
+			}
+
+			switch (so.output[i].register_mask) {
+			case TGSI_WRITEMASK_XYZW:
+				comps = 4;
+				break;
+			case TGSI_WRITEMASK_XYZ:
+				comps = 3;
+				break;
+			case TGSI_WRITEMASK_XY:
+				comps = 2;
+				break;
+			case TGSI_WRITEMASK_X:
+				comps = 1;
+				break;
+			default:
+				R600_ERR("streamout: invalid register_mask, got: %x\n",
+					 so.output[i].register_mask);
+				r = -EINVAL;
+				goto out_err;
+			}
+
+			memset(&output, 0, sizeof(struct r600_bytecode_output));
+			output.gpr = shader->output[so.output[i].register_index].gpr;
+			output.elem_size = 0;
+			output.array_base = buffer_offset[so.output[i].output_buffer];
+			output.type = V_SQ_CF_ALLOC_EXPORT_WORD0_SQ_EXPORT_WRITE;
+			output.burst_count = 1;
+			output.barrier = 1;
+			output.array_size = 0;
+			output.comp_mask = so.output[i].register_mask;
+			if (ctx.bc->chip_class >= EVERGREEN) {
+				switch (so.output[i].output_buffer) {
+				case 0:
+					output.inst = EG_V_SQ_CF_ALLOC_EXPORT_WORD1_SQ_CF_INST_MEM_STREAM0_BUF0;
+					break;
+				case 1:
+					output.inst = EG_V_SQ_CF_ALLOC_EXPORT_WORD1_SQ_CF_INST_MEM_STREAM0_BUF1;
+					break;
+				case 2:
+					output.inst = EG_V_SQ_CF_ALLOC_EXPORT_WORD1_SQ_CF_INST_MEM_STREAM0_BUF2;
+					break;
+				case 3:
+					output.inst = EG_V_SQ_CF_ALLOC_EXPORT_WORD1_SQ_CF_INST_MEM_STREAM0_BUF3;
+					break;
+				}
+			} else {
+				switch (so.output[i].output_buffer) {
+				case 0:
+					output.inst = V_SQ_CF_ALLOC_EXPORT_WORD1_SQ_CF_INST_MEM_STREAM0;
+					break;
+				case 1:
+					output.inst = V_SQ_CF_ALLOC_EXPORT_WORD1_SQ_CF_INST_MEM_STREAM1;
+					break;
+				case 2:
+					output.inst = V_SQ_CF_ALLOC_EXPORT_WORD1_SQ_CF_INST_MEM_STREAM2;
+					break;
+				case 3:
+					output.inst = V_SQ_CF_ALLOC_EXPORT_WORD1_SQ_CF_INST_MEM_STREAM3;
+					break;
+				}
+			}
+			r = r600_bytecode_add_output(ctx.bc, &output);
+			if (r)
+				goto out_err;
+
+			buffer_offset[so.output[i].output_buffer] += comps;
+		}
+
+		for (i = 0; i < PIPE_MAX_SO_BUFFERS; i++) {
+			pipeshader->so_strides[i] = buffer_offset[i] * 4;
 		}
 	}
 

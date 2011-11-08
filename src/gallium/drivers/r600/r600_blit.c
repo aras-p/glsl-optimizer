@@ -65,6 +65,8 @@ static void r600_blitter_begin(struct pipe_context *ctx, enum r600_blitter_op op
 	util_blitter_save_vertex_buffers(rctx->blitter,
 					 rctx->vbuf_mgr->nr_vertex_buffers,
 					 rctx->vbuf_mgr->vertex_buffer);
+	util_blitter_save_so_targets(rctx->blitter, rctx->ctx.num_so_targets,
+				     (struct pipe_stream_output_target**)rctx->ctx.so_targets);
 
 	if (op & R600_SAVE_FRAMEBUFFER)
 		util_blitter_save_framebuffer(rctx->blitter, &rctx->framebuffer);

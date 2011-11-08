@@ -167,6 +167,7 @@ struct r600_query {
 	union {
 		uint64_t			u64;
 		boolean				b;
+		struct pipe_query_data_so_statistics so;
 	} result;
 	/* The kind of query */
 	unsigned				type;
@@ -185,6 +186,15 @@ struct r600_query {
 	unsigned				num_cs_dw;
 	/* linked list of queries */
 	struct list_head			list;
+};
+
+struct r600_so_target {
+	struct pipe_stream_output_target b;
+
+	/* The buffer where BUFFER_FILLED_SIZE is stored. */
+	struct r600_resource	*filled_size;
+	unsigned		stride;
+	unsigned		so_index;
 };
 
 #define R600_CONTEXT_DRAW_PENDING	(1 << 0)
@@ -218,6 +228,7 @@ struct r600_context {
 	/* The list of active queries. Only one query of each type can be active. */
 	struct list_head	active_query_list;
 	unsigned		num_cs_dw_queries_suspend;
+	unsigned		num_cs_dw_streamout_end;
 
 	unsigned		backend_mask;
 	unsigned                max_db; /* for OQ */
@@ -229,6 +240,12 @@ struct r600_context {
 	struct r600_range fs_resources;
 	int num_ps_resources, num_vs_resources, num_fs_resources;
 	boolean			have_depth_texture, have_depth_fb;
+
+	unsigned			num_so_targets;
+	struct r600_so_target		*so_targets[PIPE_MAX_SO_BUFFERS];
+	boolean				streamout_start;
+	unsigned			streamout_append_bitmask;
+	unsigned			*vs_shader_so_strides;
 };
 
 struct r600_draw {
@@ -267,6 +284,10 @@ void r600_context_emit_fence(struct r600_context *ctx, struct r600_resource *fen
                              unsigned offset, unsigned value);
 void r600_context_flush_all(struct r600_context *ctx, unsigned flush_flags);
 void r600_context_flush_dest_caches(struct r600_context *ctx);
+
+void r600_context_streamout_begin(struct r600_context *ctx);
+void r600_context_streamout_end(struct r600_context *ctx);
+void r600_context_draw_opaque_count(struct r600_context *ctx, struct r600_so_target *t);
 
 int evergreen_context_init(struct r600_context *ctx, struct r600_screen *screen);
 void evergreen_context_draw(struct r600_context *ctx, const struct r600_draw *draw);

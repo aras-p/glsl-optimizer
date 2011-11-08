@@ -100,7 +100,21 @@ static void r600_render_condition(struct pipe_context *ctx,
 	}
 
 	rctx->ctx.predicate_drawing = true;
-	r600_query_predication(&rctx->ctx, rquery, PREDICATION_OP_ZPASS, wait_flag);
+
+	switch (rquery->type) {
+	case PIPE_QUERY_OCCLUSION_COUNTER:
+	case PIPE_QUERY_OCCLUSION_PREDICATE:
+		r600_query_predication(&rctx->ctx, rquery, PREDICATION_OP_ZPASS, wait_flag);
+		break;
+	case PIPE_QUERY_PRIMITIVES_EMITTED:
+	case PIPE_QUERY_PRIMITIVES_GENERATED:
+	case PIPE_QUERY_SO_STATISTICS:
+	case PIPE_QUERY_SO_OVERFLOW_PREDICATE:
+		r600_query_predication(&rctx->ctx, rquery, PREDICATION_OP_PRIMCOUNT, wait_flag);
+		break;
+	default:
+		assert(0);
+	}
 }
 
 void r600_init_query_functions(struct r600_pipe_context *rctx)

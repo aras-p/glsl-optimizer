@@ -378,6 +378,7 @@ static int r600_get_param(struct pipe_screen* pscreen, enum pipe_cap param)
 	case PIPE_CAP_PRIMITIVE_RESTART:
 	case PIPE_CAP_CONDITIONAL_RENDER:
 	case PIPE_CAP_TEXTURE_BARRIER:
+	case PIPE_CAP_STREAM_OUTPUT_PAUSE_RESUME:
 		return 1;
 
 	/* Supported except the original R600. */
@@ -391,16 +392,20 @@ static int r600_get_param(struct pipe_screen* pscreen, enum pipe_cap param)
 		return family >= CHIP_CEDAR ? 1 : 0;
 
 	/* Unsupported features. */
-	case PIPE_CAP_MAX_STREAM_OUTPUT_BUFFERS:
-	case PIPE_CAP_MAX_STREAM_OUTPUT_SEPARATE_ATTRIBS:
-	case PIPE_CAP_MAX_STREAM_OUTPUT_SEPARATE_COMPONENTS:
-	case PIPE_CAP_MAX_STREAM_OUTPUT_INTERLEAVED_COMPONENTS:
-	case PIPE_CAP_STREAM_OUTPUT_PAUSE_RESUME:
 	case PIPE_CAP_TGSI_INSTANCEID:
 	case PIPE_CAP_TGSI_FS_COORD_ORIGIN_LOWER_LEFT:
 	case PIPE_CAP_TGSI_FS_COORD_PIXEL_CENTER_INTEGER:
 	case PIPE_CAP_SCALED_RESOLVE:
 		return 0;
+
+	/* Stream output. */
+	case PIPE_CAP_MAX_STREAM_OUTPUT_BUFFERS:
+		return debug_get_bool_option("R600_STREAMOUT", FALSE) ? 4 : 0;
+	case PIPE_CAP_MAX_STREAM_OUTPUT_SEPARATE_ATTRIBS:
+		return 16;
+	case PIPE_CAP_MAX_STREAM_OUTPUT_SEPARATE_COMPONENTS:
+	case PIPE_CAP_MAX_STREAM_OUTPUT_INTERLEAVED_COMPONENTS:
+		return 16*4;
 
 	/* Texturing. */
 	case PIPE_CAP_MAX_TEXTURE_2D_LEVELS:

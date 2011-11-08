@@ -107,6 +107,8 @@ struct r600_bytecode_vtx {
 
 struct r600_bytecode_output {
 	unsigned			array_base;
+	unsigned			array_size;
+	unsigned			comp_mask;
 	unsigned			type;
 	unsigned			end_of_program;
 

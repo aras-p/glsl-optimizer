@@ -1241,3 +1241,38 @@ void evergreen_context_flush_dest_caches(struct r600_context *ctx)
 
 	ctx->flags &= ~R600_CONTEXT_DST_CACHES_DIRTY;
 }
+
+void evergreen_flush_vgt_streamout(struct r600_context *ctx)
+{
+	ctx->pm4[ctx->pm4_cdwords++] = PKT3(PKT3_SET_CONFIG_REG, 1, 0);
+	ctx->pm4[ctx->pm4_cdwords++] = (R_0084FC_CP_STRMOUT_CNTL - EVERGREEN_CONFIG_REG_OFFSET) >> 2;
+	ctx->pm4[ctx->pm4_cdwords++] = 0;
+
+	ctx->pm4[ctx->pm4_cdwords++] = PKT3(PKT3_EVENT_WRITE, 0, 0);
+	ctx->pm4[ctx->pm4_cdwords++] = EVENT_TYPE(EVENT_TYPE_SO_VGTSTREAMOUT_FLUSH) | EVENT_INDEX(0);
+
+	ctx->pm4[ctx->pm4_cdwords++] = PKT3(PKT3_WAIT_REG_MEM, 5, 0);
+	ctx->pm4[ctx->pm4_cdwords++] = WAIT_REG_MEM_EQUAL; /* wait until the register is equal to the reference value */
+	ctx->pm4[ctx->pm4_cdwords++] = R_0084FC_CP_STRMOUT_CNTL >> 2;  /* register */
+	ctx->pm4[ctx->pm4_cdwords++] = 0;
+	ctx->pm4[ctx->pm4_cdwords++] = S_0084FC_OFFSET_UPDATE_DONE(1); /* reference value */
+	ctx->pm4[ctx->pm4_cdwords++] = S_0084FC_OFFSET_UPDATE_DONE(1); /* mask */
+	ctx->pm4[ctx->pm4_cdwords++] = 4; /* poll interval */
+}
+
+void evergreen_set_streamout_enable(struct r600_context *ctx, unsigned buffer_enable_bit)
+{
+	if (buffer_enable_bit) {
+		ctx->pm4[ctx->pm4_cdwords++] = PKT3(PKT3_SET_CONTEXT_REG, 1, 0);
+		ctx->pm4[ctx->pm4_cdwords++] = (R_028B94_VGT_STRMOUT_CONFIG - EVERGREEN_CONTEXT_REG_OFFSET) >> 2;
+		ctx->pm4[ctx->pm4_cdwords++] = S_028B94_STREAMOUT_0_EN(1);
+
+		ctx->pm4[ctx->pm4_cdwords++] = PKT3(PKT3_SET_CONTEXT_REG, 1, 0);
+		ctx->pm4[ctx->pm4_cdwords++] = (R_028B98_VGT_STRMOUT_BUFFER_CONFIG - EVERGREEN_CONTEXT_REG_OFFSET) >> 2;
+		ctx->pm4[ctx->pm4_cdwords++] = S_028B98_STREAM_0_BUFFER_EN(buffer_enable_bit);
+	} else {
+		ctx->pm4[ctx->pm4_cdwords++] = PKT3(PKT3_SET_CONTEXT_REG, 1, 0);
+		ctx->pm4[ctx->pm4_cdwords++] = (R_028B94_VGT_STRMOUT_CONFIG - EVERGREEN_CONTEXT_REG_OFFSET) >> 2;
+		ctx->pm4[ctx->pm4_cdwords++] = S_028B94_STREAMOUT_0_EN(0);
+	}
+}

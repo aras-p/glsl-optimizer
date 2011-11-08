@@ -133,6 +133,8 @@ struct r600_pipe_shader {
 	struct r600_vertex_element	vertex_elements;
 	struct tgsi_token		*tokens;
 	unsigned	sprite_coord_enable;
+	struct pipe_stream_output_info	so;
+	unsigned			so_strides[4];
 };
 
 struct r600_pipe_sampler_state {
@@ -348,6 +350,19 @@ void r600_delete_ps_shader(struct pipe_context *ctx, void *state);
 void r600_delete_vs_shader(struct pipe_context *ctx, void *state);
 void r600_set_constant_buffer(struct pipe_context *ctx, uint shader, uint index,
 			      struct pipe_resource *buffer);
+struct pipe_stream_output_target *
+r600_create_so_target(struct pipe_context *ctx,
+		      struct pipe_resource *buffer,
+		      unsigned buffer_offset,
+		      unsigned buffer_size);
+void r600_so_target_destroy(struct pipe_context *ctx,
+			    struct pipe_stream_output_target *target);
+void r600_set_so_targets(struct pipe_context *ctx,
+			 unsigned num_targets,
+			 struct pipe_stream_output_target **targets,
+			 unsigned append_bitmask);
+
+
 void r600_draw_vbo(struct pipe_context *ctx, const struct pipe_draw_info *info);
 
 /*

@@ -1672,6 +1672,21 @@ static int r600_bytecode_cf_build(struct r600_bytecode *bc, struct r600_bytecode
 			cf->output.inst |
 			S_SQ_CF_ALLOC_EXPORT_WORD1_END_OF_PROGRAM(cf->output.end_of_program);
 		break;
+	case V_SQ_CF_ALLOC_EXPORT_WORD1_SQ_CF_INST_MEM_STREAM0:
+	case V_SQ_CF_ALLOC_EXPORT_WORD1_SQ_CF_INST_MEM_STREAM1:
+	case V_SQ_CF_ALLOC_EXPORT_WORD1_SQ_CF_INST_MEM_STREAM2:
+	case V_SQ_CF_ALLOC_EXPORT_WORD1_SQ_CF_INST_MEM_STREAM3:
+		bc->bytecode[id++] = S_SQ_CF_ALLOC_EXPORT_WORD0_RW_GPR(cf->output.gpr) |
+			S_SQ_CF_ALLOC_EXPORT_WORD0_ELEM_SIZE(cf->output.elem_size) |
+			S_SQ_CF_ALLOC_EXPORT_WORD0_ARRAY_BASE(cf->output.array_base) |
+			S_SQ_CF_ALLOC_EXPORT_WORD0_TYPE(cf->output.type);
+		bc->bytecode[id++] = S_SQ_CF_ALLOC_EXPORT_WORD1_BURST_COUNT(cf->output.burst_count - 1) |
+			S_SQ_CF_ALLOC_EXPORT_WORD1_BARRIER(cf->output.barrier) |
+			cf->output.inst |
+			S_SQ_CF_ALLOC_EXPORT_WORD1_END_OF_PROGRAM(cf->output.end_of_program) |
+			S_SQ_CF_ALLOC_EXPORT_WORD1_BUF_ARRAY_SIZE(cf->output.array_size) |
+			S_SQ_CF_ALLOC_EXPORT_WORD1_BUF_COMP_MASK(cf->output.comp_mask);
+		break;
 	case V_SQ_CF_WORD1_SQ_CF_INST_JUMP:
 	case V_SQ_CF_WORD1_SQ_CF_INST_ELSE:
 	case V_SQ_CF_WORD1_SQ_CF_INST_POP:
@@ -1730,6 +1745,22 @@ int r600_bytecode_build(struct r600_bytecode *bc)
 			case EG_V_SQ_CF_ALU_WORD1_SQ_CF_INST_ALU_PUSH_BEFORE:
 			case EG_V_SQ_CF_ALLOC_EXPORT_WORD1_SQ_CF_INST_EXPORT:
 			case EG_V_SQ_CF_ALLOC_EXPORT_WORD1_SQ_CF_INST_EXPORT_DONE:
+			case EG_V_SQ_CF_ALLOC_EXPORT_WORD1_SQ_CF_INST_MEM_STREAM0_BUF0:
+			case EG_V_SQ_CF_ALLOC_EXPORT_WORD1_SQ_CF_INST_MEM_STREAM0_BUF1:
+			case EG_V_SQ_CF_ALLOC_EXPORT_WORD1_SQ_CF_INST_MEM_STREAM0_BUF2:
+			case EG_V_SQ_CF_ALLOC_EXPORT_WORD1_SQ_CF_INST_MEM_STREAM0_BUF3:
+			case EG_V_SQ_CF_ALLOC_EXPORT_WORD1_SQ_CF_INST_MEM_STREAM1_BUF0:
+			case EG_V_SQ_CF_ALLOC_EXPORT_WORD1_SQ_CF_INST_MEM_STREAM1_BUF1:
+			case EG_V_SQ_CF_ALLOC_EXPORT_WORD1_SQ_CF_INST_MEM_STREAM1_BUF2:
+			case EG_V_SQ_CF_ALLOC_EXPORT_WORD1_SQ_CF_INST_MEM_STREAM1_BUF3:
+			case EG_V_SQ_CF_ALLOC_EXPORT_WORD1_SQ_CF_INST_MEM_STREAM2_BUF0:
+			case EG_V_SQ_CF_ALLOC_EXPORT_WORD1_SQ_CF_INST_MEM_STREAM2_BUF1:
+			case EG_V_SQ_CF_ALLOC_EXPORT_WORD1_SQ_CF_INST_MEM_STREAM2_BUF2:
+			case EG_V_SQ_CF_ALLOC_EXPORT_WORD1_SQ_CF_INST_MEM_STREAM2_BUF3:
+			case EG_V_SQ_CF_ALLOC_EXPORT_WORD1_SQ_CF_INST_MEM_STREAM3_BUF0:
+			case EG_V_SQ_CF_ALLOC_EXPORT_WORD1_SQ_CF_INST_MEM_STREAM3_BUF1:
+			case EG_V_SQ_CF_ALLOC_EXPORT_WORD1_SQ_CF_INST_MEM_STREAM3_BUF2:
+			case EG_V_SQ_CF_ALLOC_EXPORT_WORD1_SQ_CF_INST_MEM_STREAM3_BUF3:
 			case EG_V_SQ_CF_WORD1_SQ_CF_INST_JUMP:
 			case EG_V_SQ_CF_WORD1_SQ_CF_INST_ELSE:
 			case EG_V_SQ_CF_WORD1_SQ_CF_INST_POP:
@@ -1760,6 +1791,10 @@ int r600_bytecode_build(struct r600_bytecode *bc)
 			case V_SQ_CF_ALU_WORD1_SQ_CF_INST_ALU_PUSH_BEFORE:
 			case V_SQ_CF_ALLOC_EXPORT_WORD1_SQ_CF_INST_EXPORT:
 			case V_SQ_CF_ALLOC_EXPORT_WORD1_SQ_CF_INST_EXPORT_DONE:
+			case V_SQ_CF_ALLOC_EXPORT_WORD1_SQ_CF_INST_MEM_STREAM0:
+			case V_SQ_CF_ALLOC_EXPORT_WORD1_SQ_CF_INST_MEM_STREAM1:
+			case V_SQ_CF_ALLOC_EXPORT_WORD1_SQ_CF_INST_MEM_STREAM2:
+			case V_SQ_CF_ALLOC_EXPORT_WORD1_SQ_CF_INST_MEM_STREAM3:
 			case V_SQ_CF_WORD1_SQ_CF_INST_JUMP:
 			case V_SQ_CF_WORD1_SQ_CF_INST_ELSE:
 			case V_SQ_CF_WORD1_SQ_CF_INST_POP:
@@ -1849,6 +1884,22 @@ int r600_bytecode_build(struct r600_bytecode *bc)
 				break;
 			case EG_V_SQ_CF_ALLOC_EXPORT_WORD1_SQ_CF_INST_EXPORT:
 			case EG_V_SQ_CF_ALLOC_EXPORT_WORD1_SQ_CF_INST_EXPORT_DONE:
+			case EG_V_SQ_CF_ALLOC_EXPORT_WORD1_SQ_CF_INST_MEM_STREAM0_BUF0:
+			case EG_V_SQ_CF_ALLOC_EXPORT_WORD1_SQ_CF_INST_MEM_STREAM0_BUF1:
+			case EG_V_SQ_CF_ALLOC_EXPORT_WORD1_SQ_CF_INST_MEM_STREAM0_BUF2:
+			case EG_V_SQ_CF_ALLOC_EXPORT_WORD1_SQ_CF_INST_MEM_STREAM0_BUF3:
+			case EG_V_SQ_CF_ALLOC_EXPORT_WORD1_SQ_CF_INST_MEM_STREAM1_BUF0:
+			case EG_V_SQ_CF_ALLOC_EXPORT_WORD1_SQ_CF_INST_MEM_STREAM1_BUF1:
+			case EG_V_SQ_CF_ALLOC_EXPORT_WORD1_SQ_CF_INST_MEM_STREAM1_BUF2:
+			case EG_V_SQ_CF_ALLOC_EXPORT_WORD1_SQ_CF_INST_MEM_STREAM1_BUF3:
+			case EG_V_SQ_CF_ALLOC_EXPORT_WORD1_SQ_CF_INST_MEM_STREAM2_BUF0:
+			case EG_V_SQ_CF_ALLOC_EXPORT_WORD1_SQ_CF_INST_MEM_STREAM2_BUF1:
+			case EG_V_SQ_CF_ALLOC_EXPORT_WORD1_SQ_CF_INST_MEM_STREAM2_BUF2:
+			case EG_V_SQ_CF_ALLOC_EXPORT_WORD1_SQ_CF_INST_MEM_STREAM2_BUF3:
+			case EG_V_SQ_CF_ALLOC_EXPORT_WORD1_SQ_CF_INST_MEM_STREAM3_BUF0:
+			case EG_V_SQ_CF_ALLOC_EXPORT_WORD1_SQ_CF_INST_MEM_STREAM3_BUF1:
+			case EG_V_SQ_CF_ALLOC_EXPORT_WORD1_SQ_CF_INST_MEM_STREAM3_BUF2:
+			case EG_V_SQ_CF_ALLOC_EXPORT_WORD1_SQ_CF_INST_MEM_STREAM3_BUF3:
 			case EG_V_SQ_CF_WORD1_SQ_CF_INST_LOOP_START_NO_AL:
 			case EG_V_SQ_CF_WORD1_SQ_CF_INST_LOOP_END:
 			case EG_V_SQ_CF_WORD1_SQ_CF_INST_LOOP_CONTINUE:
@@ -1923,6 +1974,10 @@ int r600_bytecode_build(struct r600_bytecode *bc)
 				break;
 			case V_SQ_CF_ALLOC_EXPORT_WORD1_SQ_CF_INST_EXPORT:
 			case V_SQ_CF_ALLOC_EXPORT_WORD1_SQ_CF_INST_EXPORT_DONE:
+			case V_SQ_CF_ALLOC_EXPORT_WORD1_SQ_CF_INST_MEM_STREAM0:
+			case V_SQ_CF_ALLOC_EXPORT_WORD1_SQ_CF_INST_MEM_STREAM1:
+			case V_SQ_CF_ALLOC_EXPORT_WORD1_SQ_CF_INST_MEM_STREAM2:
+			case V_SQ_CF_ALLOC_EXPORT_WORD1_SQ_CF_INST_MEM_STREAM3:
 			case V_SQ_CF_WORD1_SQ_CF_INST_LOOP_START_NO_AL:
 			case V_SQ_CF_WORD1_SQ_CF_INST_LOOP_END:
 			case V_SQ_CF_WORD1_SQ_CF_INST_LOOP_CONTINUE:
@@ -2057,6 +2112,44 @@ void r600_bytecode_dump(struct r600_bytecode *bc)
 				fprintf(stderr, "BURST_COUNT:%d ", cf->output.burst_count);
 				fprintf(stderr, "EOP:%X\n", cf->output.end_of_program);
 				break;
+			case EG_V_SQ_CF_ALLOC_EXPORT_WORD1_SQ_CF_INST_MEM_STREAM0_BUF0:
+			case EG_V_SQ_CF_ALLOC_EXPORT_WORD1_SQ_CF_INST_MEM_STREAM0_BUF1:
+			case EG_V_SQ_CF_ALLOC_EXPORT_WORD1_SQ_CF_INST_MEM_STREAM0_BUF2:
+			case EG_V_SQ_CF_ALLOC_EXPORT_WORD1_SQ_CF_INST_MEM_STREAM0_BUF3:
+			case EG_V_SQ_CF_ALLOC_EXPORT_WORD1_SQ_CF_INST_MEM_STREAM1_BUF0:
+			case EG_V_SQ_CF_ALLOC_EXPORT_WORD1_SQ_CF_INST_MEM_STREAM1_BUF1:
+			case EG_V_SQ_CF_ALLOC_EXPORT_WORD1_SQ_CF_INST_MEM_STREAM1_BUF2:
+			case EG_V_SQ_CF_ALLOC_EXPORT_WORD1_SQ_CF_INST_MEM_STREAM1_BUF3:
+			case EG_V_SQ_CF_ALLOC_EXPORT_WORD1_SQ_CF_INST_MEM_STREAM2_BUF0:
+			case EG_V_SQ_CF_ALLOC_EXPORT_WORD1_SQ_CF_INST_MEM_STREAM2_BUF1:
+			case EG_V_SQ_CF_ALLOC_EXPORT_WORD1_SQ_CF_INST_MEM_STREAM2_BUF2:
+			case EG_V_SQ_CF_ALLOC_EXPORT_WORD1_SQ_CF_INST_MEM_STREAM2_BUF3:
+			case EG_V_SQ_CF_ALLOC_EXPORT_WORD1_SQ_CF_INST_MEM_STREAM3_BUF0:
+			case EG_V_SQ_CF_ALLOC_EXPORT_WORD1_SQ_CF_INST_MEM_STREAM3_BUF1:
+			case EG_V_SQ_CF_ALLOC_EXPORT_WORD1_SQ_CF_INST_MEM_STREAM3_BUF2:
+			case EG_V_SQ_CF_ALLOC_EXPORT_WORD1_SQ_CF_INST_MEM_STREAM3_BUF3:
+				fprintf(stderr, "%04d %08X EXPORT MEM_STREAM%i_BUF%i ", id, bc->bytecode[id],
+					(EG_G_SQ_CF_ALLOC_EXPORT_WORD1_CF_INST(cf->inst) -
+					 EG_G_SQ_CF_ALLOC_EXPORT_WORD1_CF_INST(EG_V_SQ_CF_ALLOC_EXPORT_WORD1_SQ_CF_INST_MEM_STREAM0_BUF0)) / 4,
+					(EG_G_SQ_CF_ALLOC_EXPORT_WORD1_CF_INST(cf->inst) -
+					 EG_G_SQ_CF_ALLOC_EXPORT_WORD1_CF_INST(EG_V_SQ_CF_ALLOC_EXPORT_WORD1_SQ_CF_INST_MEM_STREAM0_BUF0)) % 4);
+				fprintf(stderr, "GPR:%X ", cf->output.gpr);
+				fprintf(stderr, "ELEM_SIZE:%i ", cf->output.elem_size);
+				fprintf(stderr, "ARRAY_BASE:%i ", cf->output.array_base);
+				fprintf(stderr, "TYPE:%X\n", cf->output.type);
+				id++;
+				fprintf(stderr, "%04d %08X EXPORT MEM_STREAM%i_BUF%i ", id, bc->bytecode[id],
+					(EG_G_SQ_CF_ALLOC_EXPORT_WORD1_CF_INST(cf->inst) -
+					 EG_G_SQ_CF_ALLOC_EXPORT_WORD1_CF_INST(EG_V_SQ_CF_ALLOC_EXPORT_WORD1_SQ_CF_INST_MEM_STREAM0_BUF0)) / 4,
+					(EG_G_SQ_CF_ALLOC_EXPORT_WORD1_CF_INST(cf->inst) -
+					 EG_G_SQ_CF_ALLOC_EXPORT_WORD1_CF_INST(EG_V_SQ_CF_ALLOC_EXPORT_WORD1_SQ_CF_INST_MEM_STREAM0_BUF0)) % 4);
+				fprintf(stderr, "ARRAY_SIZE:%i ", cf->output.array_size);
+				fprintf(stderr, "COMP_MASK:%X ", cf->output.comp_mask);
+				fprintf(stderr, "BARRIER:%X ", cf->output.barrier);
+				fprintf(stderr, "INST:%d ", cf->output.inst);
+				fprintf(stderr, "BURST_COUNT:%d ", cf->output.burst_count);
+				fprintf(stderr, "EOP:%X\n", cf->output.end_of_program);
+				break;
 			case EG_V_SQ_CF_WORD1_SQ_CF_INST_JUMP:
 			case EG_V_SQ_CF_WORD1_SQ_CF_INST_ELSE:
 			case EG_V_SQ_CF_WORD1_SQ_CF_INST_POP:
@@ -2122,6 +2215,28 @@ void r600_bytecode_dump(struct r600_bytecode *bc)
 				fprintf(stderr, "SWIZ_W:%X ", cf->output.swizzle_w);
 				fprintf(stderr, "BARRIER:%X ", cf->output.barrier);
 				fprintf(stderr, "INST:0x%x ", R600_G_SQ_CF_ALLOC_EXPORT_WORD1_CF_INST(cf->output.inst));
+				fprintf(stderr, "BURST_COUNT:%d ", cf->output.burst_count);
+				fprintf(stderr, "EOP:%X\n", cf->output.end_of_program);
+				break;
+			case V_SQ_CF_ALLOC_EXPORT_WORD1_SQ_CF_INST_MEM_STREAM0:
+			case V_SQ_CF_ALLOC_EXPORT_WORD1_SQ_CF_INST_MEM_STREAM1:
+			case V_SQ_CF_ALLOC_EXPORT_WORD1_SQ_CF_INST_MEM_STREAM2:
+			case V_SQ_CF_ALLOC_EXPORT_WORD1_SQ_CF_INST_MEM_STREAM3:
+				fprintf(stderr, "%04d %08X EXPORT MEM_STREAM%i ", id, bc->bytecode[id],
+					R600_G_SQ_CF_ALLOC_EXPORT_WORD1_CF_INST(cf->inst) -
+					R600_G_SQ_CF_ALLOC_EXPORT_WORD1_CF_INST(V_SQ_CF_ALLOC_EXPORT_WORD1_SQ_CF_INST_MEM_STREAM0));
+				fprintf(stderr, "GPR:%X ", cf->output.gpr);
+				fprintf(stderr, "ELEM_SIZE:%i ", cf->output.elem_size);
+				fprintf(stderr, "ARRAY_BASE:%i ", cf->output.array_base);
+				fprintf(stderr, "TYPE:%X\n", cf->output.type);
+				id++;
+				fprintf(stderr, "%04d %08X EXPORT MEM_STREAM%i ", id, bc->bytecode[id],
+					R600_G_SQ_CF_ALLOC_EXPORT_WORD1_CF_INST(cf->inst) -
+					R600_G_SQ_CF_ALLOC_EXPORT_WORD1_CF_INST(V_SQ_CF_ALLOC_EXPORT_WORD1_SQ_CF_INST_MEM_STREAM0));
+				fprintf(stderr, "ARRAY_SIZE:%i ", cf->output.array_size);
+				fprintf(stderr, "COMP_MASK:%X ", cf->output.comp_mask);
+				fprintf(stderr, "BARRIER:%X ", cf->output.barrier);
+				fprintf(stderr, "INST:%d ", cf->output.inst);
 				fprintf(stderr, "BURST_COUNT:%d ", cf->output.burst_count);
 				fprintf(stderr, "EOP:%X\n", cf->output.end_of_program);
 				break;

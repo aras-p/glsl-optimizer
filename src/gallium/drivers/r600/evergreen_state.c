@@ -927,8 +927,8 @@ static void *evergreen_create_rs_state(struct pipe_context *ctx,
 				state->fill_back != PIPE_POLYGON_MODE_FILL);
 	r600_pipe_state_add_reg(rstate, R_028814_PA_SU_SC_MODE_CNTL,
 		S_028814_PROVOKING_VTX_LAST(prov_vtx) |
-		S_028814_CULL_FRONT((state->cull_face & PIPE_FACE_FRONT) ? 1 : 0) |
-		S_028814_CULL_BACK((state->cull_face & PIPE_FACE_BACK) ? 1 : 0) |
+		S_028814_CULL_FRONT(state->rasterizer_discard || (state->cull_face & PIPE_FACE_FRONT) ? 1 : 0) |
+		S_028814_CULL_BACK(state->rasterizer_discard || (state->cull_face & PIPE_FACE_BACK) ? 1 : 0) |
 		S_028814_FACE(!state->front_ccw) |
 		S_028814_POLY_OFFSET_FRONT_ENABLE(state->offset_tri) |
 		S_028814_POLY_OFFSET_BACK_ENABLE(state->offset_tri) |
@@ -1688,6 +1688,9 @@ void evergreen_init_state_functions(struct r600_pipe_context *rctx)
 	rctx->context.sampler_view_destroy = r600_sampler_view_destroy;
 	rctx->context.redefine_user_buffer = u_default_redefine_user_buffer;
 	rctx->context.texture_barrier = evergreen_texture_barrier;
+	rctx->context.create_stream_output_target = r600_create_so_target;
+	rctx->context.stream_output_target_destroy = r600_so_target_destroy;
+	rctx->context.set_stream_output_targets = r600_set_so_targets;
 }
 
 static void cayman_init_config(struct r600_pipe_context *rctx)
