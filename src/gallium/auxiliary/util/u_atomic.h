@@ -18,10 +18,7 @@
  * locally coded assembly, compiler intrinsic or ultimately a
  * mutex-based implementation.
  */
-#if (defined(PIPE_SUBSYSTEM_WINDOWS_DISPLAY) || \
-     defined(PIPE_SUBSYSTEM_WINDOWS_MINIPORT))
-#define PIPE_ATOMIC_OS_UNLOCKED
-#elif defined(PIPE_OS_SOLARIS)
+#if defined(PIPE_OS_SOLARIS)
 #define PIPE_ATOMIC_OS_SOLARIS
 #elif defined(PIPE_CC_MSVC)
 #define PIPE_ATOMIC_MSVC_INTRINSIC

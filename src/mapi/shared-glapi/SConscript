@@ -63,54 +63,53 @@ def mapi_objects(env, printer, mode):
 
     return objects
 
-if env['platform'] != 'winddk':
-    env = env.Clone()
+env = env.Clone()
 
-    env['SHLIBPREFIX'] = 'lib'
-    env['LIBPREFIX'] = 'lib'
+env['SHLIBPREFIX'] = 'lib'
+env['LIBPREFIX'] = 'lib'
 
-    shared_glapi_objects = mapi_objects(env, 'shared-glapi', 'glapi')
-    shared_glapi = env.SharedLibrary(
-        target = 'glapi',
-        source = shared_glapi_objects,
-    )
+shared_glapi_objects = mapi_objects(env, 'shared-glapi', 'glapi')
+shared_glapi = env.SharedLibrary(
+    target = 'glapi',
+    source = shared_glapi_objects,
+)
 
-    # manually add LIBPREFIX on windows
-    if env['platform'] == 'windows':
-        libs = ['libglapi']
-    else:
-        libs = ['glapi']
+# manually add LIBPREFIX on windows
+if env['platform'] == 'windows':
+    libs = ['libglapi']
+else:
+    libs = ['glapi']
 
-    es1api_objects = mapi_objects(env, 'es1api', 'bridge')
-    es1api = env.SharedLibrary(
-        target = 'GLESv1_CM',
-        source = es1api_objects,
-        LIBPATH = ['.'],
-        LIBS = libs,
-    )
+es1api_objects = mapi_objects(env, 'es1api', 'bridge')
+es1api = env.SharedLibrary(
+    target = 'GLESv1_CM',
+    source = es1api_objects,
+    LIBPATH = ['.'],
+    LIBS = libs,
+)
 
-    es2api_objects = mapi_objects(env, 'es2api', 'bridge')
-    es2api = env.SharedLibrary(
-        target = 'GLESv2',
-        source = es2api_objects,
-        LIBPATH = ['.'],
-        LIBS = libs,
-    )
+es2api_objects = mapi_objects(env, 'es2api', 'bridge')
+es2api = env.SharedLibrary(
+    target = 'GLESv2',
+    source = es2api_objects,
+    LIBPATH = ['.'],
+    LIBS = libs,
+)
 
-    env.InstallSharedLibrary(shared_glapi, version=(0, 0, 0))
-    env.InstallSharedLibrary(es1api, version=(1, 0, 0))
-    env.InstallSharedLibrary(es2api, version=(2, 0, 0))
+env.InstallSharedLibrary(shared_glapi, version=(0, 0, 0))
+env.InstallSharedLibrary(es1api, version=(1, 0, 0))
+env.InstallSharedLibrary(es2api, version=(2, 0, 0))
 
-    if env['platform'] == 'windows':
-        shared_glapi = env.FindIxes(shared_glapi, 'LIBPREFIX', 'LIBSUFFIX')
-    else:
-        shared_glapi = env.FindIxes(shared_glapi, 'SHLIBPREFIX', 'SHLIBSUFFIX')
+if env['platform'] == 'windows':
+    shared_glapi = env.FindIxes(shared_glapi, 'LIBPREFIX', 'LIBSUFFIX')
+else:
+    shared_glapi = env.FindIxes(shared_glapi, 'SHLIBPREFIX', 'SHLIBSUFFIX')
 
-    # build glapi bridge as a convenience libarary for libgl-xlib/libgl-gdi
-    bridge_glapi_objects = mapi_objects(env, 'glapi', 'bridge')
-    bridge_glapi = env.ConvenienceLibrary(
-        target = 'glapi_bridge',
-        source = bridge_glapi_objects,
-    )
+# build glapi bridge as a convenience libarary for libgl-xlib/libgl-gdi
+bridge_glapi_objects = mapi_objects(env, 'glapi', 'bridge')
+bridge_glapi = env.ConvenienceLibrary(
+    target = 'glapi_bridge',
+    source = bridge_glapi_objects,
+)
 
-    Export(['shared_glapi', 'bridge_glapi'])
+Export(['shared_glapi', 'bridge_glapi'])

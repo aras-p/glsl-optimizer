@@ -274,11 +274,7 @@ void _debug_assert_fail(const char *expr,
                         const char *function) 
 {
    _debug_printf("%s:%u:%s: Assertion `%s' failed.\n", file, line, function, expr);
-#if defined(PIPE_OS_WINDOWS) && !defined(PIPE_SUBSYSTEM_WINDOWS_USER)
-   if (debug_get_bool_option("GALLIUM_ABORT_ON_ASSERT", FALSE))
-#else
    if (debug_get_bool_option("GALLIUM_ABORT_ON_ASSERT", TRUE))
-#endif
       os_abort();
    else
       _debug_printf("continuing...\n");
@@ -453,42 +449,6 @@ void debug_dump_image(const char *prefix,
                       unsigned stride,
                       const void *data)     
 {
-#ifdef PIPE_SUBSYSTEM_WINDOWS_DISPLAY
-   static unsigned no = 0; 
-   char filename[256];
-   WCHAR wfilename[sizeof(filename)];
-   ULONG_PTR iFile = 0;
-   struct {
-      unsigned format;
-      unsigned cpp;
-      unsigned width;
-      unsigned height;
-   } header;
-   unsigned char *pMap = NULL;
-   unsigned i;
-
-   util_snprintf(filename, sizeof(filename), "\\??\\c:\\%03u%s.raw", ++no, prefix);
-   for(i = 0; i < sizeof(filename); ++i)
-      wfilename[i] = (WCHAR)filename[i];
-   
-   pMap = (unsigned char *)EngMapFile(wfilename, sizeof(header) + height*width*cpp, &iFile);
-   if(!pMap)
-      return;
-   
-   header.format = format;
-   header.cpp = cpp;
-   header.width = width;
-   header.height = height;
-   memcpy(pMap, &header, sizeof(header));
-   pMap += sizeof(header);
-   
-   for(i = 0; i < height; ++i) {
-      memcpy(pMap, (unsigned char *)data + stride*i, cpp*width);
-      pMap += cpp*width;
-   }
-      
-   EngUnmapFile(iFile);
-#elif defined(PIPE_OS_UNIX)
    /* write a ppm file */
    char filename[256];
    FILE *f;
@@ -534,7 +494,6 @@ void debug_dump_image(const char *prefix,
    else {
       fprintf(stderr, "Can't open %s for writing\n", filename);
    }
-#endif
 }
 
 /* FIXME: dump resources, not surfaces... */
@@ -636,7 +595,6 @@ debug_dump_surface_bmp(struct pipe_context *pipe,
                        const char *filename,
                        struct pipe_surface *surface)
 {
-#ifndef PIPE_SUBSYSTEM_WINDOWS_MINIPORT
    struct pipe_transfer *transfer;
    struct pipe_resource *texture = surface->texture;
 
@@ -647,7 +605,6 @@ debug_dump_surface_bmp(struct pipe_context *pipe,
    debug_dump_transfer_bmp(pipe, filename, transfer);
 
    pipe->transfer_destroy(pipe, transfer);
-#endif
 }
 
 void
@@ -655,7 +612,6 @@ debug_dump_transfer_bmp(struct pipe_context *pipe,
                         const char *filename,
                         struct pipe_transfer *transfer)
 {
-#ifndef PIPE_SUBSYSTEM_WINDOWS_MINIPORT
    float *rgba;
 
    if (!transfer)
@@ -679,7 +635,6 @@ debug_dump_transfer_bmp(struct pipe_context *pipe,
    FREE(rgba);
 error1:
    ;
-#endif
 }
 
 void
@@ -687,7 +642,6 @@ debug_dump_float_rgba_bmp(const char *filename,
                           unsigned width, unsigned height,
                           float *rgba, unsigned stride)
 {
-#ifndef PIPE_SUBSYSTEM_WINDOWS_MINIPORT
    FILE *stream;
    struct bmp_file_header bmfh;
    struct bmp_info_header bmih;
@@ -738,7 +692,6 @@ debug_dump_float_rgba_bmp(const char *filename,
    fclose(stream);
 error1:
    ;
-#endif
 }
 
 #endif

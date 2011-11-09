@@ -229,20 +229,10 @@
 #endif /* PIPE_OS_LINUX || PIPE_OS_BSD || PIPE_OS_SOLARIS */
 
 #if defined(PIPE_OS_WINDOWS)
-#if defined(PIPE_SUBSYSTEM_WINDOWS_DISPLAY)
-/* Windows 2000/XP Display Driver */ 
-#elif defined(PIPE_SUBSYSTEM_WINDOWS_MINIPORT)
-/* Windows 2000/XP Miniport Driver */ 
-#elif defined(PIPE_SUBSYSTEM_WINDOWS_USER)
+#if defined(PIPE_SUBSYSTEM_WINDOWS_USER)
 /* Windows User-space Library */
-#elif defined(PIPE_SUBSYSTEM_WINDOWS_CE)
-/* Windows CE 5.0/6.0 */
 #else
-#ifdef _WIN32_WCE
-#define PIPE_SUBSYSTEM_WINDOWS_CE
-#else /* !_WIN32_WCE */
-#error No PIPE_SUBSYSTEM_WINDOWS_xxx subsystem defined. 
-#endif /* !_WIN32_WCE */
+#define PIPE_SUBSYSTEM_WINDOWS_USER
 #endif
 #endif /* PIPE_OS_WINDOWS */
 

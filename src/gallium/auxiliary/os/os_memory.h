@@ -71,10 +71,6 @@ os_free_aligned(void *ptr);
 
 #  include "os_memory_debug.h"
 
-#elif defined(PIPE_SUBSYSTEM_WINDOWS_DISPLAY) || defined(PIPE_SUBSYSTEM_WINDOWS_MINIPORT)
-
-#  include "os_memory_win32k.h"
-
 #else
 
 #  include "os_memory_stdc.h"

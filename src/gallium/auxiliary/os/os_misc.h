@@ -66,7 +66,7 @@ extern "C" {
 /*
  * Abort the program.
  */
-#if defined(DEBUG) || defined(PIPE_SUBSYSTEM_WINDOWS_DISPLAY) || defined(PIPE_SUBSYSTEM_WINDOWS_MINIPORT)
+#if defined(DEBUG)
 #  define os_abort() os_break()
 #else
 #  define os_abort() abort()

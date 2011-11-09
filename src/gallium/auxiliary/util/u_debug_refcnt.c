@@ -24,7 +24,7 @@
  *
  **************************************************************************/
 
-#if defined(DEBUG) && (!defined(PIPE_OS_WINDOWS) || defined(PIPE_SUBSYSTEM_WINDOWS_USER))
+#if defined(DEBUG)
 
 /* see http://www.mozilla.org/performance/refcnt-balancer.html for what do with the output
  * on Linux, use tools/addr2line.sh to postprocess it before anything else
