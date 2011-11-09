@@ -170,6 +170,7 @@ brw_type_for_base_type(const struct glsl_type *type)
    case GLSL_TYPE_UINT:
       return BRW_REGISTER_TYPE_UD;
    case GLSL_TYPE_ARRAY:
+      return brw_type_for_base_type(type->fields.array);
    case GLSL_TYPE_STRUCT:
    case GLSL_TYPE_SAMPLER:
       /* These should be overridden with the type of the member when
