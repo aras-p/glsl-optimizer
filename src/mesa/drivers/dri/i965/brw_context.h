@@ -387,6 +387,7 @@ struct brw_vs_prog_data {
    const float *pull_param[MAX_UNIFORMS * 4];
 
    bool uses_new_param_layout;
+   bool uses_vertexid;
 };
 
 

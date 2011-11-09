@@ -591,7 +591,7 @@ static void brw_emit_vertices(struct brw_context *brw)
 {
    struct gl_context *ctx = &brw->intel.ctx;
    struct intel_context *intel = intel_context(ctx);
-   GLuint i;
+   GLuint i, nr_elements;
 
    brw_prepare_vertices(brw);
 
@@ -667,17 +667,19 @@ static void brw_emit_vertices(struct brw_context *brw)
       ADVANCE_BATCH();
    }
 
+   nr_elements = brw->vb.nr_enabled + brw->vs.prog_data->uses_vertexid;
+
    /* The hardware allows one more VERTEX_ELEMENTS than VERTEX_BUFFERS, presumably
     * for VertexID/InstanceID.
     */
    if (intel->gen >= 6) {
-      assert(brw->vb.nr_enabled <= 34);
+      assert(nr_elements <= 34);
    } else {
-      assert(brw->vb.nr_enabled <= 18);
+      assert(nr_elements <= 18);
    }
 
-   BEGIN_BATCH(1 + brw->vb.nr_enabled * 2);
-   OUT_BATCH((_3DSTATE_VERTEX_ELEMENTS << 16) | (2*brw->vb.nr_enabled - 1));
+   BEGIN_BATCH(1 + nr_elements * 2);
+   OUT_BATCH((_3DSTATE_VERTEX_ELEMENTS << 16) | (2 * nr_elements - 1));
    for (i = 0; i < brw->vb.nr_enabled; i++) {
       struct brw_vertex_element *input = brw->vb.enabled[i];
       uint32_t format = get_surface_type(input->glarray->Type,
@@ -723,6 +725,30 @@ static void brw_emit_vertices(struct brw_context *brw)
                     (comp3 << BRW_VE1_COMPONENT_3_SHIFT) |
                     ((i * 4) << BRW_VE1_DST_OFFSET_SHIFT));
    }
+
+   if (brw->vs.prog_data->uses_vertexid) {
+      uint32_t dw0 = 0, dw1 = 0;
+
+      dw1 = ((BRW_VE1_COMPONENT_STORE_VID << BRW_VE1_COMPONENT_0_SHIFT) |
+	     (BRW_VE1_COMPONENT_STORE_IID << BRW_VE1_COMPONENT_1_SHIFT) |
+	     (BRW_VE1_COMPONENT_STORE_PID << BRW_VE1_COMPONENT_2_SHIFT) |
+	     (BRW_VE1_COMPONENT_STORE_0 << BRW_VE1_COMPONENT_3_SHIFT));
+
+      if (intel->gen >= 6) {
+	 dw0 |= GEN6_VE0_VALID;
+      } else {
+	 dw0 |= BRW_VE0_VALID;
+	 dw1 |= (i * 4) << BRW_VE1_DST_OFFSET_SHIFT;
+      }
+
+      /* Note that for gl_VertexID, gl_InstanceID, and gl_PrimitiveID values,
+       * the format is ignored and the value is always int.
+       */
+
+      OUT_BATCH(dw0);
+      OUT_BATCH(dw1);
+   }
+
    CACHED_BATCH();
 }
 

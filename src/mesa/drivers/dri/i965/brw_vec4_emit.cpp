@@ -35,7 +35,7 @@ int
 vec4_visitor::setup_attributes(int payload_reg)
 {
    int nr_attributes;
-   int attribute_map[VERT_ATTRIB_MAX];
+   int attribute_map[VERT_ATTRIB_MAX + 1];
 
    nr_attributes = 0;
    for (int i = 0; i < VERT_ATTRIB_MAX; i++) {
@@ -43,6 +43,15 @@ vec4_visitor::setup_attributes(int payload_reg)
 	 attribute_map[i] = payload_reg + nr_attributes;
 	 nr_attributes++;
       }
+   }
+
+   /* VertexID is stored by the VF as the last vertex element, but we
+    * don't represent it with a flag in inputs_read, so we call it
+    * VERT_ATTRIB_MAX.
+    */
+   if (prog_data->uses_vertexid) {
+      attribute_map[VERT_ATTRIB_MAX] = payload_reg + nr_attributes;
+      nr_attributes++;
    }
 
    foreach_list(node, &this->instructions) {
