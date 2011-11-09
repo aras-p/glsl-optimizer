@@ -1853,7 +1853,7 @@ fs_visitor::emit_color_write(int index, int first_color_mrf, fs_reg color)
        * m + 7: a1
        */
       inst = emit(BRW_OPCODE_MOV,
-		  fs_reg(MRF, first_color_mrf + index * reg_width),
+		  fs_reg(MRF, first_color_mrf + index * reg_width, color.type),
 		  color);
       inst->saturate = c->key.clamp_fragment_color;
    } else {
@@ -1874,19 +1874,22 @@ fs_visitor::emit_color_write(int index, int first_color_mrf, fs_reg color)
 	  * destination + 4.
 	  */
 	 inst = emit(BRW_OPCODE_MOV,
-		     fs_reg(MRF, BRW_MRF_COMPR4 + first_color_mrf + index),
+		     fs_reg(MRF, BRW_MRF_COMPR4 + first_color_mrf + index,
+			    color.type),
 		     color);
 	 inst->saturate = c->key.clamp_fragment_color;
       } else {
 	 push_force_uncompressed();
-	 inst = emit(BRW_OPCODE_MOV, fs_reg(MRF, first_color_mrf + index),
+	 inst = emit(BRW_OPCODE_MOV, fs_reg(MRF, first_color_mrf + index,
+					    color.type),
 		     color);
 	 inst->saturate = c->key.clamp_fragment_color;
 	 pop_force_uncompressed();
 
 	 push_force_sechalf();
 	 color.sechalf = true;
-	 inst = emit(BRW_OPCODE_MOV, fs_reg(MRF, first_color_mrf + index + 4),
+	 inst = emit(BRW_OPCODE_MOV, fs_reg(MRF, first_color_mrf + index + 4,
+					    color.type),
 		     color);
 	 inst->saturate = c->key.clamp_fragment_color;
 	 pop_force_sechalf();
