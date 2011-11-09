@@ -929,15 +929,24 @@ out_err:
 	return r;
 }
 
+void r600_need_cs_space(struct r600_context *ctx, unsigned num_dw)
+{
+	/* The number of dwords we already used in the CS so far. */
+	num_dw += ctx->pm4_cdwords;
+
+	/* The number of dwords all the dirty states would take. */
+	num_dw += ctx->pm4_dirty_cdwords;
+
+	/* Flush if there's not enough space. */
+	if (num_dw > ctx->pm4_ndwords) {
+		r600_context_flush(ctx, RADEON_FLUSH_ASYNC);
+	}
+}
+
 /* Flushes all surfaces */
 void r600_context_flush_all(struct r600_context *ctx, unsigned flush_flags)
 {
-	unsigned ndwords = 5;
-
-	if ((ctx->pm4_dirty_cdwords + ndwords + ctx->pm4_cdwords) > ctx->pm4_ndwords) {
-		/* need to flush */
-		r600_context_flush(ctx, RADEON_FLUSH_ASYNC);
-	}
+	r600_need_cs_space(ctx, 5);
 
 	ctx->pm4[ctx->pm4_cdwords++] = PKT3(PKT3_SURFACE_SYNC, 3, ctx->predicate_drawing);
 	ctx->pm4[ctx->pm4_cdwords++] = flush_flags;     /* CP_COHER_CNTL */
@@ -1434,15 +1443,14 @@ void r600_context_draw(struct r600_context *ctx, const struct r600_draw *draw)
 	 * reserved for flushing the destination caches */
 	ctx->pm4_ndwords = RADEON_MAX_CMDBUF_DWORDS - ctx->num_dest_buffers * 7 - 16;
 
-	if ((ctx->pm4_dirty_cdwords + ndwords + ctx->pm4_cdwords) > ctx->pm4_ndwords) {
-		/* need to flush */
-		r600_context_flush(ctx, RADEON_FLUSH_ASYNC);
-	}
-	/* at that point everythings is flushed and ctx->pm4_cdwords = 0 */
-	if ((ctx->pm4_dirty_cdwords + ndwords) > ctx->pm4_ndwords) {
+	r600_need_cs_space(ctx, ndwords);
+
+	/* at this point everything is flushed and ctx->pm4_cdwords = 0 */
+	if (unlikely((ctx->pm4_dirty_cdwords + ndwords) > ctx->pm4_ndwords)) {
 		R600_ERR("context is too big to be scheduled\n");
 		return;
 	}
+
 	/* enough room to copy packet */
 	LIST_FOR_EACH_ENTRY_SAFE(dirty_block, next_block, &ctx->dirty, list) {
 		r600_context_block_emit_dirty(ctx, dirty_block);
@@ -1545,12 +1553,7 @@ void r600_context_flush(struct r600_context *ctx, unsigned flags)
 
 void r600_context_emit_fence(struct r600_context *ctx, struct r600_resource *fence_bo, unsigned offset, unsigned value)
 {
-	unsigned ndwords = 10;
-
-	if ((ctx->pm4_dirty_cdwords + ndwords + ctx->pm4_cdwords) > ctx->pm4_ndwords) {
-		/* need to flush */
-		r600_context_flush(ctx, RADEON_FLUSH_ASYNC);
-	}
+	r600_need_cs_space(ctx, 10);
 
 	ctx->pm4[ctx->pm4_cdwords++] = PKT3(PKT3_EVENT_WRITE, 0, 0);
 	ctx->pm4[ctx->pm4_cdwords++] = EVENT_TYPE(EVENT_TYPE_PS_PARTIAL_FLUSH) | EVENT_INDEX(4);
@@ -1634,10 +1637,7 @@ void r600_query_begin(struct r600_context *ctx, struct r600_query *query)
 		return;
 	}
 
-	if ((required_space + ctx->pm4_cdwords) > ctx->pm4_ndwords) {
-		/* need to flush */
-		r600_context_flush(ctx, RADEON_FLUSH_ASYNC);
-	}
+	r600_need_cs_space(ctx, required_space);
 
 	new_results_end = (query->results_end + query->result_size) % query->buffer->b.b.b.width0;
 
@@ -1723,8 +1723,7 @@ void r600_query_predication(struct r600_context *ctx, struct r600_query *query, 
 			    int flag_wait)
 {
 	if (operation == PREDICATION_OP_CLEAR) {
-		if (ctx->pm4_cdwords + 3 > ctx->pm4_ndwords)
-			r600_context_flush(ctx, RADEON_FLUSH_ASYNC);
+		r600_need_cs_space(ctx, 3);
 
 		ctx->pm4[ctx->pm4_cdwords++] = PKT3(PKT3_SET_PREDICATION, 1, 0);
 		ctx->pm4[ctx->pm4_cdwords++] = 0;
@@ -1738,8 +1737,7 @@ void r600_query_predication(struct r600_context *ctx, struct r600_query *query, 
 		count = (query->buffer->b.b.b.width0 + query->results_end - query->results_start) % query->buffer->b.b.b.width0;
 		count /= query->result_size;
 
-		if (ctx->pm4_cdwords + 5 * count > ctx->pm4_ndwords)
-			r600_context_flush(ctx, RADEON_FLUSH_ASYNC);
+		r600_need_cs_space(ctx, 5 * count);
 
 		op = PRED_OP(operation) | PREDICATION_DRAW_VISIBLE |
 				(flag_wait ? PREDICATION_HINT_WAIT : PREDICATION_HINT_NOWAIT_DRAW);

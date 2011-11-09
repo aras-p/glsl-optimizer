@@ -54,6 +54,7 @@ struct r600_reg {
 /*
  * r600_hw_context.c
  */
+void r600_need_cs_space(struct r600_context *ctx, unsigned num_dw);
 void r600_context_bo_flush(struct r600_context *ctx, unsigned flush_flags,
 				unsigned flush_mask, struct r600_resource *rbo);
 struct r600_resource *r600_context_reg_bo(struct r600_context *ctx, unsigned offset);

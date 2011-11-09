@@ -1159,12 +1159,10 @@ void evergreen_context_draw(struct r600_context *ctx, const struct r600_draw *dr
 	 * reserved for flushing the destination caches */
 	ctx->pm4_ndwords = RADEON_MAX_CMDBUF_DWORDS - ctx->num_dest_buffers * 7 - 16;
 
-	if ((ctx->pm4_dirty_cdwords + ndwords + ctx->pm4_cdwords) > ctx->pm4_ndwords) {
-		/* need to flush */
-		r600_context_flush(ctx, RADEON_FLUSH_ASYNC);
-	}
-	/* at that point everythings is flushed and ctx->pm4_cdwords = 0 */
-	if ((ctx->pm4_dirty_cdwords + ndwords) > ctx->pm4_ndwords) {
+	r600_need_cs_space(ctx, ndwords);
+
+	/* at this point everything is flushed and ctx->pm4_cdwords = 0 */
+	if (unlikely((ctx->pm4_dirty_cdwords + ndwords) > ctx->pm4_ndwords)) {
 		R600_ERR("context is too big to be scheduled\n");
 		return;
 	}
