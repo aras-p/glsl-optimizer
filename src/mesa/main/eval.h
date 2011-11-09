@@ -58,10 +58,6 @@
 extern GLuint _mesa_evaluator_components( GLenum target );
 
 
-extern void gl_free_control_points( struct gl_context *ctx,
-                                    GLenum target, GLfloat *data );
-
-
 extern GLfloat *_mesa_copy_map_points1f( GLenum target,
                                       GLint ustride, GLint uorder,
                                       const GLfloat *points );
