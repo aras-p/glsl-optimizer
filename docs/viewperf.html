@@ -34,6 +34,19 @@ they'll be fixed in the future.
 
 
 
+<h2>Catia-03 test 2</h2>
+
+<p>
+This test creates over 38000 vertex buffer objects.  On some systems
+this can exceed the maximum number of buffer allocations.  Mesa
+generates GL_OUT_OF_MEMORY errors in this situation, but Viewperf
+does no error checking and continues.  When this happens, some drawing
+commands become no-ops.  This can also eventually lead to a segfault
+either in Viewperf or the Mesa driver.
+</p>
+
+
+
 <h2>Catia-03 tests 3, 4, 8</h2>
 
 <p>
