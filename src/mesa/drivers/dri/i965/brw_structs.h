@@ -881,8 +881,6 @@ struct brw_vertex_element_state
    } ve1;
 };
 
-#define BRW_VEP_MAX 18
-
 struct brw_urb_immediate {
    GLuint opcode:4;
    GLuint offset:6;

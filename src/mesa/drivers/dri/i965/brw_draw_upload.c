@@ -387,17 +387,6 @@ static void brw_prepare_vertices(struct brw_context *brw)
    if (brw->vb.nr_buffers)
       goto prepare;
 
-   /* XXX: In the rare cases where this happens we fallback all
-    * the way to software rasterization, although a tnl fallback
-    * would be sufficient.  I don't know of *any* real world
-    * cases with > 17 vertex attributes enabled, so it probably
-    * isn't an issue at this point.
-    */
-   if (brw->vb.nr_enabled >= BRW_VEP_MAX) {
-      intel->Fallback = true; /* boolean, not bitfield */
-      return;
-   }
-
    for (i = j = 0; i < brw->vb.nr_enabled; i++) {
       struct brw_vertex_element *input = brw->vb.enabled[i];
       const struct gl_client_array *glarray = input->glarray;
@@ -641,6 +630,12 @@ static void brw_emit_vertices(struct brw_context *brw)
     */
 
    if (brw->vb.nr_buffers) {
+      if (intel->gen >= 6) {
+	 assert(brw->vb.nr_buffers <= 33);
+      } else {
+	 assert(brw->vb.nr_buffers <= 17);
+      }
+
       BEGIN_BATCH(1 + 4*brw->vb.nr_buffers);
       OUT_BATCH((_3DSTATE_VERTEX_BUFFERS << 16) | (4*brw->vb.nr_buffers - 1));
       for (i = 0; i < brw->vb.nr_buffers; i++) {
@@ -670,6 +665,15 @@ static void brw_emit_vertices(struct brw_context *brw)
       }
       brw->vb.nr_current_buffers = i;
       ADVANCE_BATCH();
+   }
+
+   /* The hardware allows one more VERTEX_ELEMENTS than VERTEX_BUFFERS, presumably
+    * for VertexID/InstanceID.
+    */
+   if (intel->gen >= 6) {
+      assert(brw->vb.nr_enabled <= 34);
+   } else {
+      assert(brw->vb.nr_enabled <= 18);
    }
 
    BEGIN_BATCH(1 + brw->vb.nr_enabled * 2);
