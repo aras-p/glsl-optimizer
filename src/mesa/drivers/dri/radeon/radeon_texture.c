@@ -1120,6 +1120,7 @@ radeon_init_common_texture_funcs(radeonContextPtr radeon,
 
 	functions->CopyTexSubImage2D = radeonCopyTexSubImage2D;
 
+	functions->Bitmap = _mesa_meta_Bitmap;
 #if FEATURE_OES_EGL_image
 	functions->EGLImageTargetTexture2D = radeon_image_target_texture_2d;
 #endif
