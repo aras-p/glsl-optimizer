@@ -12,6 +12,7 @@ env.Append(CPPPATH = [
 ])
 env.Append(CPPDEFINES = [
     'VEGA_VERSION_STRING=',
+    'KHRONOS_DLL_EXPORTS',
 ])
 
 vega_sources = [
