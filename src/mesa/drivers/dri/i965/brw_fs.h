@@ -376,9 +376,8 @@ public:
       else
 	 this->reg_null_cmp = reg_null_f;
 
-      this->frag_color = NULL;
-      this->frag_data = NULL;
       this->frag_depth = NULL;
+      memset(this->outputs, 0, sizeof(this->outputs));
       this->first_non_payload_grf = 0;
 
       this->current_annotation = NULL;
@@ -533,7 +532,7 @@ public:
    void emit_if_gen6(ir_if *ir);
    void emit_unspill(fs_inst *inst, fs_reg reg, uint32_t spill_offset);
 
-   void emit_color_write(int index, int first_color_mrf, fs_reg color);
+   void emit_color_write(int target, int index, int first_color_mrf);
    void emit_fb_writes();
    bool try_rewrite_rhs_to_dst(ir_assignment *ir,
 			       fs_reg dst,
@@ -581,7 +580,8 @@ public:
    int *params_remap;
 
    struct hash_table *variable_ht;
-   ir_variable *frag_color, *frag_data, *frag_depth;
+   ir_variable *frag_depth;
+   fs_reg outputs[BRW_MAX_DRAW_BUFFERS];
    int first_non_payload_grf;
    int urb_setup[FRAG_ATTRIB_MAX];
    bool kill_emitted;

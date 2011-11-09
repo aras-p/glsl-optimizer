@@ -58,14 +58,6 @@ fs_visitor::visit(ir_variable *ir)
    if (variable_storage(ir))
       return;
 
-   if (strcmp(ir->name, "gl_FragColor") == 0) {
-      this->frag_color = ir;
-   } else if (strcmp(ir->name, "gl_FragData") == 0) {
-      this->frag_data = ir;
-   } else if (strcmp(ir->name, "gl_FragDepth") == 0) {
-      this->frag_depth = ir;
-   }
-
    if (ir->mode == ir_var_in) {
       if (!strcmp(ir->name, "gl_FragCoord")) {
 	 reg = emit_fragcoord_interpolation(ir);
@@ -77,9 +69,29 @@ fs_visitor::visit(ir_variable *ir)
       assert(reg);
       hash_table_insert(this->variable_ht, reg, ir);
       return;
-   }
+   } else if (ir->mode == ir_var_out) {
+      reg = new(this->mem_ctx) fs_reg(this, ir->type);
 
-   if (ir->mode == ir_var_uniform) {
+      if (ir->location == FRAG_RESULT_COLOR) {
+	 /* Writing gl_FragColor outputs to all color regions. */
+	 for (int i = 0; i < c->key.nr_color_regions; i++) {
+	    this->outputs[i] = *reg;
+	 }
+      } else if (ir->location == FRAG_RESULT_DEPTH) {
+	 this->frag_depth = ir;
+      } else {
+	 /* gl_FragData or a user-defined FS output */
+	 assert(ir->location >= FRAG_RESULT_DATA0 &&
+		ir->location < FRAG_RESULT_DATA0 + BRW_MAX_DRAW_BUFFERS);
+
+	 /* General color output. */
+	 for (unsigned int i = 0; i < MAX2(1, ir->type->length); i++) {
+	    int output = ir->location - FRAG_RESULT_DATA0 + i;
+	    this->outputs[output] = *reg;
+	    this->outputs[output].reg_offset += 4 * i;
+	 }
+      }
+   } else if (ir->mode == ir_var_uniform) {
       int param_index = c->prog_data.nr_params;
 
       if (c->dispatch_width == 16) {
@@ -1830,10 +1842,18 @@ fs_visitor::emit_interpolation_setup_gen6()
 }
 
 void
-fs_visitor::emit_color_write(int index, int first_color_mrf, fs_reg color)
+fs_visitor::emit_color_write(int target, int index, int first_color_mrf)
 {
    int reg_width = c->dispatch_width / 8;
    fs_inst *inst;
+   fs_reg color = outputs[target];
+   fs_reg mrf;
+
+   /* If there's no color data to be written, skip it. */
+   if (color.file == BAD_FILE)
+      return;
+
+   color.reg_offset += index;
 
    if (c->dispatch_width == 8 || intel->gen >= 6) {
       /* SIMD8 write looks like:
@@ -1959,27 +1979,12 @@ fs_visitor::emit_fb_writes()
       nr += reg_width;
    }
 
-   fs_reg color = reg_undef;
-   if (this->frag_color)
-      color = *(variable_storage(this->frag_color));
-   else if (this->frag_data) {
-      color = *(variable_storage(this->frag_data));
-      color.type = BRW_REGISTER_TYPE_F;
-   }
-
    for (int target = 0; target < c->key.nr_color_regions; target++) {
       this->current_annotation = ralloc_asprintf(this->mem_ctx,
 						 "FB write target %d",
 						 target);
-      if (this->frag_color || this->frag_data) {
-	 for (int i = 0; i < 4; i++) {
-	    emit_color_write(i, color_mrf, color);
-	    color.reg_offset++;
-	 }
-      }
-
-      if (this->frag_color)
-	 color.reg_offset -= 4;
+      for (int i = 0; i < 4; i++)
+	 emit_color_write(target, i, color_mrf);
 
       fs_inst *inst = emit(FS_OPCODE_FB_WRITE);
       inst->target = target;
@@ -1991,13 +1996,12 @@ fs_visitor::emit_fb_writes()
    }
 
    if (c->key.nr_color_regions == 0) {
-      if (c->key.alpha_test && (this->frag_color || this->frag_data)) {
+      if (c->key.alpha_test) {
 	 /* If the alpha test is enabled but there's no color buffer,
 	  * we still need to send alpha out the pipeline to our null
 	  * renderbuffer.
 	  */
-	 color.reg_offset += 3;
-	 emit_color_write(3, color_mrf, color);
+	 emit_color_write(0, 3, color_mrf);
       }
 
       fs_inst *inst = emit(FS_OPCODE_FB_WRITE);
