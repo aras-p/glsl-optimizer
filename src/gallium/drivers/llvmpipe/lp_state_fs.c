@@ -516,7 +516,6 @@ generate_fragment(struct llvmpipe_context *lp,
    struct lp_type fs_type;
    struct lp_type blend_type;
    LLVMTypeRef fs_elem_type;
-   LLVMTypeRef fs_int_vec_type;
    LLVMTypeRef blend_vec_type;
    LLVMTypeRef arg_types[11];
    LLVMTypeRef func_type;
@@ -594,7 +593,6 @@ generate_fragment(struct llvmpipe_context *lp,
     */
 
    fs_elem_type = lp_build_elem_type(gallivm, fs_type);
-   fs_int_vec_type = lp_build_int_vec_type(gallivm, fs_type);
 
    blend_vec_type = lp_build_vec_type(gallivm, blend_type);
 
