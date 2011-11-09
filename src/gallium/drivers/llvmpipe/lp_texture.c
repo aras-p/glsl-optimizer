@@ -163,6 +163,9 @@ llvmpipe_texture_layout(struct llvmpipe_screen *screen,
          lpr->num_slices_faces[level] = num_slices;
 
          lpr->layout[level] = alloc_layout_array(num_slices, width, height);
+         if (!lpr->layout[level]) {
+            goto fail;
+         }
       }
 
       /* Compute size of next mipmap level */
@@ -172,6 +175,15 @@ llvmpipe_texture_layout(struct llvmpipe_screen *screen,
    }
 
    return TRUE;
+
+fail:
+   for (level = 0; level <= pt->last_level; level++) {
+      if (lpr->layout[level]) {
+         FREE(lpr->layout[level]);
+      }
+   }
+
+   return FALSE;
 }
 
 
@@ -196,7 +208,9 @@ llvmpipe_displaytarget_layout(struct llvmpipe_screen *screen,
    lpr->img_stride[0] = 0;
 
    lpr->layout[0] = alloc_layout_array(1, width, height);
-   //lpr->layout[0][0] = LP_TEX_LAYOUT_LINEAR;
+   if (!lpr->layout[0]) {
+      return FALSE;
+   }
 
    lpr->dt = winsys->displaytarget_create(winsys,
                                           lpr->base.bind,
@@ -437,13 +451,15 @@ llvmpipe_resource_from_handle(struct pipe_screen *screen,
 			      struct winsys_handle *whandle)
 {
    struct sw_winsys *winsys = llvmpipe_screen(screen)->winsys;
-   struct llvmpipe_resource *lpr = CALLOC_STRUCT(llvmpipe_resource);
+   struct llvmpipe_resource *lpr;
    unsigned width, height, width_t, height_t;
 
    /* XXX Seems like from_handled depth textures doesn't work that well */
 
-   if (!lpr)
-      return NULL;
+   lpr = CALLOC_STRUCT(llvmpipe_resource);
+   if (!lpr) {
+      goto no_lpr;
+   }
 
    lpr->base = *template;
    pipe_reference_init(&lpr->base.reference, 1);
@@ -472,12 +488,15 @@ llvmpipe_resource_from_handle(struct pipe_screen *screen,
                                                template,
                                                whandle,
                                                &lpr->row_stride[0]);
-   if (!lpr->dt)
-      goto fail;
+   if (!lpr->dt) {
+      goto no_dt;
+   }
 
    lpr->layout[0] = alloc_layout_array(1, lpr->base.width0, lpr->base.height0);
+   if (!lpr->layout[0]) {
+      goto no_layout_0;
+   }
 
-   assert(lpr->layout[0]);
    assert(lpr->layout[0][0] == LP_TEX_LAYOUT_NONE);
 
    lpr->id = id_counter++;
@@ -488,8 +507,11 @@ llvmpipe_resource_from_handle(struct pipe_screen *screen,
 
    return &lpr->base;
 
- fail:
+no_layout_0:
+   winsys->displaytarget_destroy(winsys, lpr->dt);
+no_dt:
    FREE(lpr);
+no_lpr:
    return NULL;
 }
 

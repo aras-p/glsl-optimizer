@@ -39,6 +39,7 @@
 #include "util/u_inlines.h"
 #include "util/u_memory.h"
 #include "util/u_pack_color.h"
+#include "draw/draw_pipe.h"
 #include "lp_context.h"
 #include "lp_memory.h"
 #include "lp_scene.h"
@@ -1010,11 +1011,13 @@ lp_setup_create( struct pipe_context *pipe,
                  struct draw_context *draw )
 {
    struct llvmpipe_screen *screen = llvmpipe_screen(pipe->screen);
-   struct lp_setup_context *setup = CALLOC_STRUCT(lp_setup_context);
+   struct lp_setup_context *setup;
    unsigned i;
 
-   if (!setup)
-      return NULL;
+   setup = CALLOC_STRUCT(lp_setup_context);
+   if (!setup) {
+      goto no_setup;
+   }
 
    lp_setup_init_vbuf(setup);
    
@@ -1025,8 +1028,9 @@ lp_setup_create( struct pipe_context *pipe,
 
    setup->num_threads = screen->num_threads;
    setup->vbuf = draw_vbuf_stage(draw, &setup->base);
-   if (!setup->vbuf)
-      goto fail;
+   if (!setup->vbuf) {
+      goto no_vbuf;
+   }
 
    draw_set_rasterize_stage(draw, setup->vbuf);
    draw_set_render(draw, &setup->base);
@@ -1034,6 +1038,9 @@ lp_setup_create( struct pipe_context *pipe,
    /* create some empty scenes */
    for (i = 0; i < MAX_SCENES; i++) {
       setup->scenes[i] = lp_scene_create( pipe );
+      if (!setup->scenes[i]) {
+         goto no_scenes;
+      }
    }
 
    setup->triangle = first_triangle;
@@ -1044,11 +1051,17 @@ lp_setup_create( struct pipe_context *pipe,
 
    return setup;
 
-fail:
-   if (setup->vbuf)
-      ;
+no_scenes:
+   for (i = 0; i < MAX_SCENES; i++) {
+      if (setup->scenes[i]) {
+         lp_scene_destroy(setup->scenes[i]);
+      }
+   }
 
+   setup->vbuf->destroy(setup->vbuf);
+no_vbuf:
    FREE(setup);
+no_setup:
    return NULL;
 }
 

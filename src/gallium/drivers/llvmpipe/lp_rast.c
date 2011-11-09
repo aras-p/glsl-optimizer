@@ -879,10 +879,14 @@ lp_rast_create( unsigned num_threads )
    unsigned i;
 
    rast = CALLOC_STRUCT(lp_rasterizer);
-   if(!rast)
-      return NULL;
+   if (!rast) {
+      goto no_rast;
+   }
 
    rast->full_scenes = lp_scene_queue_create();
+   if (!rast->full_scenes) {
+      goto no_full_scenes;
+   }
 
    for (i = 0; i < Elements(rast->tasks); i++) {
       struct lp_rasterizer_task *task = &rast->tasks[i];
@@ -902,6 +906,11 @@ lp_rast_create( unsigned num_threads )
    memset(lp_dummy_tile, 0, sizeof lp_dummy_tile);
 
    return rast;
+
+no_full_scenes:
+   FREE(rast);
+no_rast:
+   return NULL;
 }
 
 

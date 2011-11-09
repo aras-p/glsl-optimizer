@@ -399,14 +399,13 @@ llvmpipe_create_screen(struct sw_winsys *winsys)
        return NULL;
 #endif
 
-   screen = CALLOC_STRUCT(llvmpipe_screen);
-
 #ifdef DEBUG
    LP_DEBUG = debug_get_flags_option("LP_DEBUG", lp_debug_flags, 0 );
 #endif
 
    LP_PERF = debug_get_flags_option("LP_PERF", lp_perf_flags, 0 );
 
+   screen = CALLOC_STRUCT(llvmpipe_screen);
    if (!screen)
       return NULL;
 
