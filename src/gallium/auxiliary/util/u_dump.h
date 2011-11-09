@@ -39,6 +39,8 @@
 #include "pipe/p_compiler.h"
 #include "pipe/p_state.h"
 
+#include <stdio.h>
+
 
 #ifdef	__cplusplus
 extern "C" {
@@ -46,14 +48,6 @@ extern "C" {
 
 
 #define UTIL_DUMP_INVALID_NAME "<invalid>"
-
-
-struct os_stream;
-
-
-/* Duplicated here for convenience */
-extern struct os_stream *
-os_log_stream;
 
 
 /*
@@ -93,79 +87,79 @@ util_dump_tex_filter(unsigned value, boolean shortened);
 
 
 /*
- * p_state.h, through an os_stream
+ * p_state.h, through a FILE
  */
 
 void
-util_dump_template(struct os_stream *stream,
+util_dump_template(FILE *stream,
                    const struct pipe_resource *templat);
 
 void
-util_dump_rasterizer_state(struct os_stream *stream,
+util_dump_rasterizer_state(FILE *stream,
                            const struct pipe_rasterizer_state *state);
 
 void
-util_dump_poly_stipple(struct os_stream *stream,
+util_dump_poly_stipple(FILE *stream,
                        const struct pipe_poly_stipple *state);
 
 void
-util_dump_viewport_state(struct os_stream *stream,
+util_dump_viewport_state(FILE *stream,
                          const struct pipe_viewport_state *state);
 
 void
-util_dump_scissor_state(struct os_stream *stream,
+util_dump_scissor_state(FILE *stream,
                         const struct pipe_scissor_state *state);
 
 void
-util_dump_clip_state(struct os_stream *stream,
+util_dump_clip_state(FILE *stream,
                      const struct pipe_clip_state *state);
 
 void
-util_dump_shader_state(struct os_stream *stream,
+util_dump_shader_state(FILE *stream,
                        const struct pipe_shader_state *state);
 
 void
-util_dump_depth_stencil_alpha_state(struct os_stream *stream,
+util_dump_depth_stencil_alpha_state(FILE *stream,
                                     const struct pipe_depth_stencil_alpha_state *state);
 
 void
-util_dump_rt_blend_state(struct os_stream *stream,
+util_dump_rt_blend_state(FILE *stream,
                          const struct pipe_rt_blend_state *state);
 
 void
-util_dump_blend_state(struct os_stream *stream,
+util_dump_blend_state(FILE *stream,
                       const struct pipe_blend_state *state);
 
 void
-util_dump_blend_color(struct os_stream *stream,
+util_dump_blend_color(FILE *stream,
                       const struct pipe_blend_color *state);
 
 void
-util_dump_stencil_ref(struct os_stream *stream,
+util_dump_stencil_ref(FILE *stream,
                       const struct pipe_stencil_ref *state);
 
 void
-util_dump_framebuffer_state(struct os_stream *stream,
+util_dump_framebuffer_state(FILE *stream,
                             const struct pipe_framebuffer_state *state);
 
 void
-util_dump_sampler_state(struct os_stream *stream,
+util_dump_sampler_state(FILE *stream,
                         const struct pipe_sampler_state *state);
 
 void
-util_dump_surface(struct os_stream *stream,
+util_dump_surface(FILE *stream,
                   const struct pipe_surface *state);
 
 void
-util_dump_transfer(struct os_stream *stream,
+util_dump_transfer(FILE *stream,
                    const struct pipe_transfer *state);
 
 void
-util_dump_vertex_buffer(struct os_stream *stream,
+util_dump_vertex_buffer(FILE *stream,
                         const struct pipe_vertex_buffer *state);
 
 void
-util_dump_vertex_element(struct os_stream *stream,
+util_dump_vertex_element(FILE *stream,
                          const struct pipe_vertex_element *state);
 
 

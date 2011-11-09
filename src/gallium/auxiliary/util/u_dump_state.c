@@ -27,7 +27,6 @@
 
 
 #include "pipe/p_compiler.h"
-#include "os/os_stream.h"
 #include "util/u_memory.h"
 #include "util/u_string.h"
 #include "util/u_format.h"
@@ -41,7 +40,7 @@
  */
 
 static INLINE void
-util_stream_writef(struct os_stream *stream, const char *format, ...)
+util_stream_writef(FILE *stream, const char *format, ...)
 {
    static char buf[1024];
    unsigned len;
@@ -49,102 +48,102 @@ util_stream_writef(struct os_stream *stream, const char *format, ...)
    va_start(ap, format);
    len = util_vsnprintf(buf, sizeof(buf), format, ap);
    va_end(ap);
-   os_stream_write(stream, buf, len);
+   fwrite(buf, len, 1, stream);
 }
 
 static void
-util_dump_bool(struct os_stream *stream, int value)
+util_dump_bool(FILE *stream, int value)
 {
    util_stream_writef(stream, "%c", value ? '1' : '0');
 }
 
 static void
-util_dump_int(struct os_stream *stream, long long int value)
+util_dump_int(FILE *stream, long long int value)
 {
    util_stream_writef(stream, "%lli", value);
 }
 
 static void
-util_dump_uint(struct os_stream *stream, long long unsigned value)
+util_dump_uint(FILE *stream, long long unsigned value)
 {
    util_stream_writef(stream, "%llu", value);
 }
 
 static void
-util_dump_float(struct os_stream *stream, double value)
+util_dump_float(FILE *stream, double value)
 {
    util_stream_writef(stream, "%g", value);
 }
 
 static void
-util_dump_string(struct os_stream *stream, const char *str)
+util_dump_string(FILE *stream, const char *str)
 {
-   os_stream_write_str(stream, "\"");
-   os_stream_write_str(stream, str);
-   os_stream_write_str(stream, "\"");
+   fputs("\"", stream);
+   fputs(str, stream);
+   fputs("\"", stream);
 }
 
 static void
-util_dump_enum(struct os_stream *stream, const char *value)
+util_dump_enum(FILE *stream, const char *value)
 {
-   os_stream_write_str(stream, value);
+   fputs(value, stream);
 }
 
 static void
-util_dump_array_begin(struct os_stream *stream)
+util_dump_array_begin(FILE *stream)
 {
-   os_stream_write_str(stream, "{");
+   fputs("{", stream);
 }
 
 static void
-util_dump_array_end(struct os_stream *stream)
+util_dump_array_end(FILE *stream)
 {
-   os_stream_write_str(stream, "}");
+   fputs("}", stream);
 }
 
 static void
-util_dump_elem_begin(struct os_stream *stream)
+util_dump_elem_begin(FILE *stream)
 {
 }
 
 static void
-util_dump_elem_end(struct os_stream *stream)
+util_dump_elem_end(FILE *stream)
 {
-   os_stream_write_str(stream, ", ");
+   fputs(", ", stream);
 }
 
 static void
-util_dump_struct_begin(struct os_stream *stream, const char *name)
+util_dump_struct_begin(FILE *stream, const char *name)
 {
-   os_stream_write_str(stream, "{");
+   fputs("{", stream);
 }
 
 static void
-util_dump_struct_end(struct os_stream *stream)
+util_dump_struct_end(FILE *stream)
 {
-   os_stream_write_str(stream, "}");
+   fputs("}", stream);
 }
 
 static void
-util_dump_member_begin(struct os_stream *stream, const char *name)
+util_dump_member_begin(FILE *stream, const char *name)
 {
    util_stream_writef(stream, "%s = ", name);
 }
 
 static void
-util_dump_member_end(struct os_stream *stream)
+util_dump_member_end(FILE *stream)
 {
-   os_stream_write_str(stream, ", ");
+   fputs(", ", stream);
 }
 
 static void
-util_dump_null(struct os_stream *stream)
+util_dump_null(FILE *stream)
 {
-   os_stream_write_str(stream, "NULL");
+   fputs("NULL", stream);
 }
 
 static void
-util_dump_ptr(struct os_stream *stream, const void *value)
+util_dump_ptr(FILE *stream, const void *value)
 {
    if(value)
       util_stream_writef(stream, "0x%08lx", (unsigned long)(uintptr_t)value);
@@ -224,26 +223,26 @@ util_dump_ptr(struct os_stream *stream, const void *value)
 
 
 static void
-util_dump_format(struct os_stream *stream, enum pipe_format format)
+util_dump_format(FILE *stream, enum pipe_format format)
 {
    util_dump_enum(stream, util_format_name(format));
 }
 
 
 static void
-util_dump_enum_blend_factor(struct os_stream *stream, unsigned value)
+util_dump_enum_blend_factor(FILE *stream, unsigned value)
 {
    util_dump_enum(stream, util_dump_blend_factor(value, TRUE));
 }
 
 static void
-util_dump_enum_blend_func(struct os_stream *stream, unsigned value)
+util_dump_enum_blend_func(FILE *stream, unsigned value)
 {
    util_dump_enum(stream, util_dump_blend_func(value, TRUE));
 }
 
 static void
-util_dump_enum_func(struct os_stream *stream, unsigned value)
+util_dump_enum_func(FILE *stream, unsigned value)
 {
    util_dump_enum(stream, util_dump_func(value, TRUE));
 }
@@ -255,7 +254,7 @@ util_dump_enum_func(struct os_stream *stream, unsigned value)
 
 
 void
-util_dump_template(struct os_stream *stream, const struct pipe_resource *templat)
+util_dump_template(FILE *stream, const struct pipe_resource *templat)
 {
    if(!templat) {
       util_dump_null(stream);
@@ -293,7 +292,7 @@ util_dump_template(struct os_stream *stream, const struct pipe_resource *templat
 
 
 void
-util_dump_rasterizer_state(struct os_stream *stream, const struct pipe_rasterizer_state *state)
+util_dump_rasterizer_state(FILE *stream, const struct pipe_rasterizer_state *state)
 {
    if(!state) {
       util_dump_null(stream);
@@ -339,7 +338,7 @@ util_dump_rasterizer_state(struct os_stream *stream, const struct pipe_rasterize
 
 
 void
-util_dump_poly_stipple(struct os_stream *stream, const struct pipe_poly_stipple *state)
+util_dump_poly_stipple(FILE *stream, const struct pipe_poly_stipple *state)
 {
    if(!state) {
       util_dump_null(stream);
@@ -357,7 +356,7 @@ util_dump_poly_stipple(struct os_stream *stream, const struct pipe_poly_stipple 
 
 
 void
-util_dump_viewport_state(struct os_stream *stream, const struct pipe_viewport_state *state)
+util_dump_viewport_state(FILE *stream, const struct pipe_viewport_state *state)
 {
    if(!state) {
       util_dump_null(stream);
@@ -374,7 +373,7 @@ util_dump_viewport_state(struct os_stream *stream, const struct pipe_viewport_st
 
 
 void
-util_dump_scissor_state(struct os_stream *stream, const struct pipe_scissor_state *state)
+util_dump_scissor_state(FILE *stream, const struct pipe_scissor_state *state)
 {
    if(!state) {
       util_dump_null(stream);
@@ -393,7 +392,7 @@ util_dump_scissor_state(struct os_stream *stream, const struct pipe_scissor_stat
 
 
 void
-util_dump_clip_state(struct os_stream *stream, const struct pipe_clip_state *state)
+util_dump_clip_state(FILE *stream, const struct pipe_clip_state *state)
 {
    unsigned i;
 
@@ -421,7 +420,7 @@ util_dump_clip_state(struct os_stream *stream, const struct pipe_clip_state *sta
 
 
 void
-util_dump_shader_state(struct os_stream *stream, const struct pipe_shader_state *state)
+util_dump_shader_state(FILE *stream, const struct pipe_shader_state *state)
 {
    char str[8192];
 
@@ -443,7 +442,7 @@ util_dump_shader_state(struct os_stream *stream, const struct pipe_shader_state 
 
 
 void
-util_dump_depth_stencil_alpha_state(struct os_stream *stream, const struct pipe_depth_stencil_alpha_state *state)
+util_dump_depth_stencil_alpha_state(FILE *stream, const struct pipe_depth_stencil_alpha_state *state)
 {
    unsigned i;
 
@@ -498,7 +497,7 @@ util_dump_depth_stencil_alpha_state(struct os_stream *stream, const struct pipe_
 }
 
 void
-util_dump_rt_blend_state(struct os_stream *stream, const struct pipe_rt_blend_state *state)
+util_dump_rt_blend_state(FILE *stream, const struct pipe_rt_blend_state *state)
 {
    util_dump_struct_begin(stream, "pipe_rt_blend_state");
 
@@ -519,7 +518,7 @@ util_dump_rt_blend_state(struct os_stream *stream, const struct pipe_rt_blend_st
 }
 
 void
-util_dump_blend_state(struct os_stream *stream, const struct pipe_blend_state *state)
+util_dump_blend_state(FILE *stream, const struct pipe_blend_state *state)
 {
    unsigned valid_entries = 1;
 
@@ -551,7 +550,7 @@ util_dump_blend_state(struct os_stream *stream, const struct pipe_blend_state *s
 
 
 void
-util_dump_blend_color(struct os_stream *stream, const struct pipe_blend_color *state)
+util_dump_blend_color(FILE *stream, const struct pipe_blend_color *state)
 {
    if(!state) {
       util_dump_null(stream);
@@ -566,7 +565,7 @@ util_dump_blend_color(struct os_stream *stream, const struct pipe_blend_color *s
 }
 
 void
-util_dump_stencil_ref(struct os_stream *stream, const struct pipe_stencil_ref *state)
+util_dump_stencil_ref(FILE *stream, const struct pipe_stencil_ref *state)
 {
    if(!state) {
       util_dump_null(stream);
@@ -581,7 +580,7 @@ util_dump_stencil_ref(struct os_stream *stream, const struct pipe_stencil_ref *s
 }
 
 void
-util_dump_framebuffer_state(struct os_stream *stream, const struct pipe_framebuffer_state *state)
+util_dump_framebuffer_state(FILE *stream, const struct pipe_framebuffer_state *state)
 {
    util_dump_struct_begin(stream, "pipe_framebuffer_state");
 
@@ -596,7 +595,7 @@ util_dump_framebuffer_state(struct os_stream *stream, const struct pipe_framebuf
 
 
 void
-util_dump_sampler_state(struct os_stream *stream, const struct pipe_sampler_state *state)
+util_dump_sampler_state(FILE *stream, const struct pipe_sampler_state *state)
 {
    if(!state) {
       util_dump_null(stream);
@@ -625,7 +624,7 @@ util_dump_sampler_state(struct os_stream *stream, const struct pipe_sampler_stat
 
 
 void
-util_dump_surface(struct os_stream *stream, const struct pipe_surface *state)
+util_dump_surface(FILE *stream, const struct pipe_surface *state)
 {
    if(!state) {
       util_dump_null(stream);
@@ -650,7 +649,7 @@ util_dump_surface(struct os_stream *stream, const struct pipe_surface *state)
 
 
 void
-util_dump_transfer(struct os_stream *stream, const struct pipe_transfer *state)
+util_dump_transfer(FILE *stream, const struct pipe_transfer *state)
 {
    if(!state) {
       util_dump_null(stream);
@@ -672,7 +671,7 @@ util_dump_transfer(struct os_stream *stream, const struct pipe_transfer *state)
 
 
 void
-util_dump_vertex_buffer(struct os_stream *stream, const struct pipe_vertex_buffer *state)
+util_dump_vertex_buffer(FILE *stream, const struct pipe_vertex_buffer *state)
 {
    if(!state) {
       util_dump_null(stream);
@@ -690,7 +689,7 @@ util_dump_vertex_buffer(struct os_stream *stream, const struct pipe_vertex_buffe
 
 
 void
-util_dump_vertex_element(struct os_stream *stream, const struct pipe_vertex_element *state)
+util_dump_vertex_element(FILE *stream, const struct pipe_vertex_element *state)
 {
    if(!state) {
       util_dump_null(stream);

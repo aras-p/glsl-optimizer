@@ -40,13 +40,11 @@
 
 #include "pipe/p_config.h"
 
-#if defined(PIPE_OS_LINUX) || defined(PIPE_OS_BSD) || defined(PIPE_OS_SOLARIS) || defined(PIPE_OS_APPLE)
+#include <stdio.h>
 #include <stdlib.h>
-#endif
 
 #include "pipe/p_compiler.h"
 #include "os/os_thread.h"
-#include "os/os_stream.h"
 #include "util/u_debug.h"
 #include "util/u_memory.h"
 #include "util/u_string.h"
@@ -58,7 +56,7 @@
 #include "tr_texture.h"
 
 
-static struct os_stream *stream = NULL;
+static FILE *stream = NULL;
 static unsigned refcount = 0;
 pipe_static_mutex(call_mutex);
 static long unsigned call_no = 0;
@@ -68,8 +66,9 @@ static boolean dumping = FALSE;
 static INLINE void
 trace_dump_write(const char *buf, size_t size)
 {
-   if(stream)
-      os_stream_write(stream, buf, size);
+   if (stream) {
+      fwrite(buf, size, 1, stream);
+   }
 }
 
 
@@ -220,7 +219,7 @@ trace_dump_trace_close(void)
 {
    if(stream) {
       trace_dump_writes("</trace>\n");
-      os_stream_close(stream);
+      fclose(stream);
       stream = NULL;
       refcount = 0;
       call_no = 0;
@@ -237,7 +236,7 @@ boolean trace_dump_trace_begin()
 
    if(!stream) {
 
-      stream = os_file_stream_create(filename);
+      stream = fopen(filename, "wt");
       if(!stream)
          return FALSE;
 
@@ -354,7 +353,7 @@ void trace_dump_call_end_locked(void)
    trace_dump_indent(1);
    trace_dump_tag_end("call");
    trace_dump_newline();
-   os_stream_flush(stream);
+   fflush(stream);
 }
 
 void trace_dump_call_begin(const char *klass, const char *method)

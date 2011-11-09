@@ -29,6 +29,9 @@
 /* see http://www.mozilla.org/performance/refcnt-balancer.html for what do with the output
  * on Linux, use tools/addr2line.sh to postprocess it before anything else
  **/
+
+#include <stdio.h>
+
 #include "util/u_debug.h"
 #include "util/u_debug_refcnt.h"
 #include "util/u_debug_stack.h"
@@ -36,11 +39,10 @@
 #include "util/u_string.h"
 #include "util/u_hash_table.h"
 #include "os/os_thread.h"
-#include "os/os_stream.h"
 
 int debug_refcnt_state;
 
-struct os_stream* stream;
+FILE* stream;
 
 /* TODO: maybe move this serial machinery to a stand-alone module and expose it? */
 pipe_static_mutex(serials_mutex);
@@ -115,9 +117,9 @@ static void dump_stack(const char* symbols[STACK_LEN])
    for(i = 0; i < STACK_LEN; ++i)
    {
       if(symbols[i])
-         os_stream_printf(stream, "%s\n", symbols[i]);
+         fprintf(stream, "%s\n", symbols[i]);
    }
-   os_stream_write(stream, "\n", 1);
+   fprintf(stream, "\n");
 }
 
 void debug_reference_slowpath(const struct pipe_reference* p, debug_reference_descriptor get_desc, int change)
@@ -129,7 +131,7 @@ void debug_reference_slowpath(const struct pipe_reference* p, debug_reference_de
    {
       const char* filename = debug_get_option("GALLIUM_REFCNT_LOG", NULL);
       if(filename && filename[0])
-         stream = os_file_stream_create(filename);
+         stream = fopen(filename, "wt");
 
       if(stream)
          debug_refcnt_state = 1;
@@ -161,31 +163,31 @@ void debug_reference_slowpath(const struct pipe_reference* p, debug_reference_de
 
       if(!existing)
       {
-         os_stream_printf(stream, "<%s> %p %u Create\n", buf, p, serial);
+         fprintf(stream, "<%s> %p %u Create\n", buf, p, serial);
          dump_stack(symbols);
 
          /* this is there to provide a gradual change even if we don't see the initialization */
          for(i = 1; i <= refcnt - change; ++i)
          {
-            os_stream_printf(stream, "<%s> %p %u AddRef %u\n", buf, p, serial, i);
+            fprintf(stream, "<%s> %p %u AddRef %u\n", buf, p, serial, i);
             dump_stack(symbols);
          }
       }
 
       if(change)
       {
-         os_stream_printf(stream, "<%s> %p %u %s %u\n", buf, p, serial, change > 0 ? "AddRef" : "Release", refcnt);
+         fprintf(stream, "<%s> %p %u %s %u\n", buf, p, serial, change > 0 ? "AddRef" : "Release", refcnt);
          dump_stack(symbols);
       }
 
       if(!refcnt)
       {
          debug_serial_delete((void*)p);
-         os_stream_printf(stream, "<%s> %p %u Destroy\n", buf, p, serial);
+         fprintf(stream, "<%s> %p %u Destroy\n", buf, p, serial);
          dump_stack(symbols);
       }
 
-      os_stream_flush(stream);
+      fflush(stream);
    }
 }
 #endif
