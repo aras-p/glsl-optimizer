@@ -978,7 +978,9 @@ alloc_image_data(struct llvmpipe_resource *lpr, unsigned level,
       /* tiled data is stored in regular memory */
       uint buffer_size = tex_image_size(lpr, level, layout);
       lpr->tiled[level].data = align_malloc(buffer_size, alignment);
-      memset(lpr->tiled[level].data, 0, buffer_size);
+      if (lpr->tiled[level].data) {
+         memset(lpr->tiled[level].data, 0, buffer_size);
+      }
    }
    else {
       assert(layout == LP_TEX_LAYOUT_LINEAR);
@@ -997,7 +999,9 @@ alloc_image_data(struct llvmpipe_resource *lpr, unsigned level,
          /* not a display target - allocate regular memory */
          uint buffer_size = tex_image_size(lpr, level, LP_TEX_LAYOUT_LINEAR);
          lpr->linear[level].data = align_malloc(buffer_size, alignment);
-         memset(lpr->linear[level].data, 0, buffer_size);
+         if (lpr->linear[level].data) {
+            memset(lpr->linear[level].data, 0, buffer_size);
+         }
       }
    }
 }
