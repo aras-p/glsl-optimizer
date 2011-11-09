@@ -21,23 +21,22 @@
  * DEALINGS IN THE SOFTWARE.
  */
 
-#include "main/glheader.h"
+#pragma once
 
-struct gl_context;
-struct gl_shader;
-struct gl_shader_program;
+#include "main/glheader.h"
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
+struct gl_context;
+struct gl_shader;
+struct gl_shader_program;
+
 void _mesa_glsl_compile_shader(struct gl_context *ctx, struct gl_shader *sh);
 void _mesa_glsl_link_shader(struct gl_context *ctx, struct gl_shader_program *prog);
 GLboolean _mesa_ir_compile_shader(struct gl_context *ctx, struct gl_shader *shader);
 GLboolean _mesa_ir_link_shader(struct gl_context *ctx, struct gl_shader_program *prog);
-
-#ifdef __cplusplus
-}
 
 void
 _mesa_generate_parameters_list_for_uniforms(struct gl_shader_program
@@ -50,4 +49,6 @@ _mesa_associate_uniform_storage(struct gl_context *ctx,
 				struct gl_shader_program *shader_program,
 				struct gl_program_parameter_list *params);
 
+#ifdef __cplusplus
+}
 #endif

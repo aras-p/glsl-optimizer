@@ -25,14 +25,17 @@
 #ifndef IR_UNIFORM_H
 #define IR_UNIFORM_H
 
-#ifdef __cplusplus
-extern "C" {
-#endif
 
 /* stdbool.h is necessary because this file is included in both C and C++ code.
  */
 #include <stdbool.h>
+
 #include "program/prog_parameter.h"  /* For union gl_constant_value. */
+
+
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 enum gl_uniform_driver_format {
    uniform_native = 0,          /**< Store data in the native format. */

@@ -35,6 +35,12 @@
 
 #include <GL/gl.h>
 
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+
 /* OpenGL doesn't have GL_UNSIGNED_BYTE_4_4, so we must define our own type
  * for GL_LUMINANCE4_ALPHA4. */
 #define MESA_UNSIGNED_BYTE_4_4 (GL_UNSIGNED_BYTE<<1)
@@ -321,5 +327,10 @@ _mesa_format_num_components(gl_format format);
 GLboolean
 _mesa_format_matches_format_and_type(gl_format gl_format,
 				     GLenum format, GLenum type);
+
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* FORMATS_H */

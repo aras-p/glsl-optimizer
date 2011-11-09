@@ -35,6 +35,11 @@
 #include "main/glheader.h"
 
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+
 /**
  * \name Symbolic names to some of the entries in the matrix
  *
@@ -208,5 +213,9 @@ _mesa_transform_vector(GLfloat u[4], const GLfloat v[4], const GLfloat m[16]);
 
 /*@}*/
 
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif

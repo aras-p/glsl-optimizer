@@ -48,16 +48,8 @@
 
 #include "main/mtypes.h"
 
-#ifdef __cplusplus
-extern "C" {
-#endif
-
 /* for GLSL */
 #include "program/prog_parameter.h"
-
-#ifdef __cplusplus
-}
-#endif
 
 
 #endif /* CORE_H */

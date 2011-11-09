@@ -29,12 +29,12 @@
 #include <string.h>
 #include <assert.h>
 
-struct _mesa_glsl_parse_state;
-struct glsl_symbol_table;
-
 #ifdef __cplusplus
 extern "C" {
 #endif
+
+struct _mesa_glsl_parse_state;
+struct glsl_symbol_table;
 
 extern void
 _mesa_glsl_initialize_types(struct _mesa_glsl_parse_state *state);

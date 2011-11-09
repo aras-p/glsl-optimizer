@@ -29,6 +29,12 @@
 
 #include "glheader.h"
 
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+
 struct _glapi_table;
 struct gl_context;
 struct gl_shader_program;
@@ -193,5 +199,10 @@ _mesa_ActiveProgramEXT(GLuint program);
 
 extern GLuint GLAPIENTRY
 _mesa_CreateShaderProgramEXT(GLenum type, const GLchar *string);
+
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* SHADERAPI_H */

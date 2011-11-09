@@ -30,6 +30,11 @@
 #include "../glsl/glsl_types.h"
 #include "../glsl/ir_uniform.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+
 struct gl_program;
 struct _glapi_table;
 
@@ -280,5 +285,11 @@ _mesa_uniform_split_location_offset(GLint location, unsigned *base_location,
    *base_location = location >> 16;
 }
 /*@}*/
+
+
+#ifdef __cplusplus
+}
+#endif
+
 
 #endif /* UNIFORMS_H */

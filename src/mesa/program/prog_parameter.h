@@ -35,6 +35,11 @@
 #include "prog_statevars.h"
 
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+
 /**
  * Program parameter flags
  */
@@ -177,5 +182,9 @@ extern GLuint
 _mesa_num_parameters_of_type(const struct gl_program_parameter_list *list,
                              gl_register_file type);
 
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* PROG_PARAMETER_H */

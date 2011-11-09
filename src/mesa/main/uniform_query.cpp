@@ -22,7 +22,9 @@
  * AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
+
 #include <stdlib.h>
+
 #include "main/core.h"
 #include "main/context.h"
 #include "ir.h"
@@ -30,12 +32,10 @@
 #include "program/hash_table.h"
 #include "../glsl/program.h"
 #include "../glsl/ir_uniform.h"
-
-extern "C" {
 #include "main/shaderapi.h"
 #include "main/shaderobj.h"
 #include "uniforms.h"
-}
+
 
 extern "C" void GLAPIENTRY
 _mesa_GetActiveUniformARB(GLhandleARB program, GLuint index,

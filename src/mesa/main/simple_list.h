@@ -37,6 +37,10 @@
 #ifndef _SIMPLE_LIST_H
 #define _SIMPLE_LIST_H
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 struct simple_node {
    struct simple_node *next;
    struct simple_node *prev;
@@ -198,5 +202,9 @@ do {						\
  */
 #define foreach_s(ptr, t, list)   \
         for(ptr=(list)->next,t=(ptr)->next; list != ptr; ptr=t, t=(t)->next)
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif

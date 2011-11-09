@@ -44,11 +44,24 @@
 
 #include "u_compiler.h"
 
-#if defined(PTHREADS) || defined(WIN32)
+#if defined(PTHREADS)
+#include <pthread.h> /* POSIX threads headers */
+#endif
+#ifdef _WIN32
+#include <windows.h>
+#endif
+
+#if defined(PTHREADS) || defined(_WIN32)
 #ifndef THREADS
 #define THREADS
 #endif
 #endif
+
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 
 /*
  * POSIX threads. This should be your choice in the Unix world
@@ -60,7 +73,6 @@
  * proper compiling for MT-safe libc etc.
  */
 #if defined(PTHREADS)
-#include <pthread.h> /* POSIX threads headers */
 
 struct u_tsd {
    pthread_key_t key;
@@ -86,7 +98,6 @@ typedef pthread_mutex_t u_mutex;
  * used!
  */
 #ifdef WIN32
-#include <windows.h>
 
 struct u_tsd {
    DWORD key;
@@ -141,5 +152,10 @@ u_tsd_get(struct u_tsd *tsd);
 
 void
 u_tsd_set(struct u_tsd *tsd, void *ptr);
+
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* _U_THREAD_H_ */

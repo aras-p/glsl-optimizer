@@ -53,6 +53,11 @@
 #include "mtypes.h"
 
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+
 struct _glapi_table;
 
 
@@ -284,6 +289,10 @@ do {									\
 
 /*@}*/
 
+
+#ifdef __cplusplus
+}
+#endif
 
 
 #endif /* CONTEXT_H */

@@ -54,6 +54,11 @@
 #include "GL/glext.h"
 
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+
 /**
  * GL_FIXED is defined in glext.h version 64 but these typedefs aren't (yet).
  */
@@ -171,5 +176,10 @@ typedef void *GLeglImageOES;
 #define GLX_SWAP_UNDEFINED_OML             0x8063
 
 #define GLX_DONT_CARE                      0xFFFFFFFF
+
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* GLHEADER_H */

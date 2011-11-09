@@ -43,6 +43,11 @@
 #include "main/formats.h"       /* MESA_FORMAT_COUNT */
 
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+
 /**
  * Stencil buffer data type.
  */
@@ -3453,5 +3458,9 @@ enum _debug
 };
 
 
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* MTYPES_H */
