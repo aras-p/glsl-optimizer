@@ -453,6 +453,7 @@ def generate(env):
             '/fp:fast', # fast floating point 
             '/W3', # warning level
             #'/Wp64', # enable 64 bit porting warnings
+            '/wd4996', # disable deprecated POSIX name warnings
         ]
         if env['machine'] == 'x86':
             ccflags += [
