@@ -69,14 +69,20 @@ draw_vs_set_constants(struct draw_context *draw,
       if (size > draw->vs.const_storage_size[slot]) {
          if (draw->vs.aligned_constant_storage[slot]) {
             align_free((void *)draw->vs.aligned_constant_storage[slot]);
+            draw->vs.const_storage_size[slot] = 0;
          }
          draw->vs.aligned_constant_storage[slot] =
             align_malloc(size, alignment);
+         if (draw->vs.aligned_constant_storage[slot]) {
+            draw->vs.const_storage_size[slot] = size;
+         }
       }
       assert(constants);
-      memcpy((void *)draw->vs.aligned_constant_storage[slot],
-             constants,
-             size);
+      if (draw->vs.aligned_constant_storage[slot]) {
+         memcpy((void *)draw->vs.aligned_constant_storage[slot],
+                constants,
+                size);
+      }
       constants = draw->vs.aligned_constant_storage[slot];
    }
 
