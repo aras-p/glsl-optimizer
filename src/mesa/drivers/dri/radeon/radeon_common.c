@@ -305,7 +305,6 @@ void radeon_draw_buffer(struct gl_context *ctx, struct gl_framebuffer *fb)
 			offset = rrb->draw_offset;
 			rrbColor = rrb;
 		}
-		radeon->constant_cliprect = GL_TRUE;
 	}
 
 	if (rrbColor == NULL)
