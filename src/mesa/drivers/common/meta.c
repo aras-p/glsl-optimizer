@@ -887,35 +887,17 @@ _mesa_meta_end(struct gl_context *ctx)
          _mesa_reference_texobj(&save->CurrentTexture[tgt], NULL);
       }
 
-      /* Re-enable textures, texgen */
+      /* Restore fixed function texture enables, texgen */
       for (u = 0; u < ctx->Const.MaxTextureUnits; u++) {
-         if (save->TexEnabled[u]) {
-            _mesa_ActiveTextureARB(GL_TEXTURE0 + u);
+	 if (ctx->Texture.Unit[u].Enabled != save->TexEnabled[u]) {
+	    FLUSH_VERTICES(ctx, _NEW_TEXTURE);
+	    ctx->Texture.Unit[u].Enabled = save->TexEnabled[u];
+	 }
 
-            if (save->TexEnabled[u] & TEXTURE_1D_BIT)
-               _mesa_set_enable(ctx, GL_TEXTURE_1D, GL_TRUE);
-            if (save->TexEnabled[u] & TEXTURE_2D_BIT)
-               _mesa_set_enable(ctx, GL_TEXTURE_2D, GL_TRUE);
-            if (save->TexEnabled[u] & TEXTURE_3D_BIT)
-               _mesa_set_enable(ctx, GL_TEXTURE_3D, GL_TRUE);
-            if (save->TexEnabled[u] & TEXTURE_CUBE_BIT)
-               _mesa_set_enable(ctx, GL_TEXTURE_CUBE_MAP, GL_TRUE);
-            if (save->TexEnabled[u] & TEXTURE_RECT_BIT)
-               _mesa_set_enable(ctx, GL_TEXTURE_RECTANGLE, GL_TRUE);
-         }
-
-         if (save->TexGenEnabled[u]) {
-            _mesa_ActiveTextureARB(GL_TEXTURE0 + u);
-
-            if (save->TexGenEnabled[u] & S_BIT)
-               _mesa_set_enable(ctx, GL_TEXTURE_GEN_S, GL_TRUE);
-            if (save->TexGenEnabled[u] & T_BIT)
-               _mesa_set_enable(ctx, GL_TEXTURE_GEN_T, GL_TRUE);
-            if (save->TexGenEnabled[u] & R_BIT)
-               _mesa_set_enable(ctx, GL_TEXTURE_GEN_R, GL_TRUE);
-            if (save->TexGenEnabled[u] & Q_BIT)
-               _mesa_set_enable(ctx, GL_TEXTURE_GEN_Q, GL_TRUE);
-         }
+	 if (ctx->Texture.Unit[u].TexGenEnabled != save->TexGenEnabled[u]) {
+	    FLUSH_VERTICES(ctx, _NEW_TEXTURE);
+	    ctx->Texture.Unit[u].TexGenEnabled = save->TexGenEnabled[u];
+	 }
       }
 
       /* restore current unit state */
