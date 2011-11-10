@@ -313,7 +313,6 @@ def generate_texture_functions(fs):
     generate_fiu_sigs("txd", "1D", Offset)
     generate_fiu_sigs("txd", "2D", Offset)
     generate_fiu_sigs("txd", "3D", Offset)
-    generate_fiu_sigs("txd", "Cube", Offset)
     generate_fiu_sigs("txd", "1DArray", Offset)
     generate_fiu_sigs("txd", "2DArray", Offset)
     generate_sigs("", "txd", "1DShadow", Offset | Single, 1);

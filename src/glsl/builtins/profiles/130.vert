@@ -785,10 +785,6 @@ uvec4 textureGradOffset(usampler2D s, vec2 P, vec2 dx, vec2 dy, ivec2 offset);
 ivec4 textureGradOffset(isampler3D s, vec3 P, vec3 dx, vec3 dy, ivec3 offset);
 uvec4 textureGradOffset(usampler3D s, vec3 P, vec3 dx, vec3 dy, ivec3 offset);
 
- vec4 textureGradOffset( samplerCube s, vec3 P, vec3 dx, vec3 dy, ivec3 offset);
-ivec4 textureGradOffset(isamplerCube s, vec3 P, vec3 dx, vec3 dy, ivec3 offset);
-uvec4 textureGradOffset(usamplerCube s, vec3 P, vec3 dx, vec3 dy, ivec3 offset);
-
 float textureGradOffset(sampler1DShadow s, vec3 P, float dx, float dy, int off);
 float textureGradOffset(sampler2DShadow s, vec3 P, vec2 dx, vec2 dy, ivec2 off);
 
