@@ -958,7 +958,7 @@ i915_texture_create(struct pipe_screen *screen,
    pipe_reference_init(&tex->b.b.reference, 1);
    tex->b.b.screen = screen;
 
-   if (force_untiled)
+   if ( (force_untiled) || (template->usage == PIPE_USAGE_STREAM) )
       tex->tiling = I915_TILE_NONE;
    else
       tex->tiling = i915_texture_tiling(is, tex);
