@@ -1103,6 +1103,7 @@ static GLboolean radeonUpdateTextureUnit( struct gl_context *ctx, int unit )
    r100ContextPtr rmesa = R100_CONTEXT(ctx);
 
    if (ctx->Texture.Unit[unit]._ReallyEnabled & TEXTURE_3D_BIT) {
+     disable_tex_obj_state(rmesa, unit);
      rmesa->state.texture.unit[unit].texobj = NULL;
      return GL_FALSE;
    }
