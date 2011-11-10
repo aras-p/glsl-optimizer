@@ -1503,12 +1503,16 @@ void r600_context_draw(struct r600_context *ctx, const struct r600_draw *draw)
 void r600_context_flush(struct r600_context *ctx, unsigned flags)
 {
 	struct r600_block *enable_block = NULL;
+	bool queries_suspended = false;
 
 	if (ctx->pm4_cdwords == ctx->init_dwords)
 		return;
 
 	/* suspend queries */
-	r600_context_queries_suspend(ctx);
+	if (ctx->num_cs_dw_queries_suspend) {
+		r600_context_queries_suspend(ctx);
+		queries_suspended = true;
+	}
 
 	if (ctx->screen->chip_class >= EVERGREEN)
 		evergreen_context_flush_dest_caches(ctx);
@@ -1540,7 +1544,9 @@ void r600_context_flush(struct r600_context *ctx, unsigned flags)
 	r600_init_cs(ctx);
 
 	/* resume queries */
-	r600_context_queries_resume(ctx);
+	if (queries_suspended) {
+		r600_context_queries_resume(ctx);
+	}
 
 	/* set all valid group as dirty so they get reemited on
 	 * next draw command
@@ -1837,11 +1843,14 @@ void r600_context_queries_suspend(struct r600_context *ctx)
 	LIST_FOR_EACH_ENTRY(query, &ctx->active_query_list, list) {
 		r600_query_end(ctx, query);
 	}
+	assert(ctx->num_cs_dw_queries_suspend == 0);
 }
 
 void r600_context_queries_resume(struct r600_context *ctx)
 {
 	struct r600_query *query;
+
+	assert(ctx->num_cs_dw_queries_suspend == 0);
 
 	LIST_FOR_EACH_ENTRY(query, &ctx->active_query_list, list) {
 		r600_query_begin(ctx, query);
