@@ -376,6 +376,10 @@ setup_bitmap_vertex_data(struct st_context *st, bool normalized,
                                            PIPE_USAGE_STREAM,
                                            max_slots *
                                            sizeof(st->bitmap.vertices));
+      if (!st->bitmap.vbuf) {
+         /* out of memory */
+         return 0;
+      }
    }
 
    /* Positions are in clip coords since we need to do clipping in case
@@ -547,11 +551,12 @@ draw_bitmap_quad(struct gl_context *ctx, GLint x, GLint y, GLfloat z,
                                      sv->texture->target != PIPE_TEXTURE_RECT,
                                      x, y, width, height, z, color);
 
-   util_draw_vertex_buffer(pipe, st->cso_context, st->bitmap.vbuf, offset,
-                           PIPE_PRIM_TRIANGLE_FAN,
-                           4,  /* verts */
-                           3); /* attribs/vert */
-
+   if (st->bitmap.vbuf) {
+      util_draw_vertex_buffer(pipe, st->cso_context, st->bitmap.vbuf, offset,
+                              PIPE_PRIM_TRIANGLE_FAN,
+                              4,  /* verts */
+                              3); /* attribs/vert */
+   }
 
    /* restore state */
    cso_restore_rasterizer(cso);
