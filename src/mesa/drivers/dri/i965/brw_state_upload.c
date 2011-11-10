@@ -63,12 +63,13 @@ static const struct brw_tracked_state *gen4_atoms[] =
    &brw_cc_vp,
    &brw_cc_unit,
 
-   /* Must be before brw_binding_table */
+   /* Surface state setup.  Must come before the VS/WM unit.  The binding
+    * table upload must be last.
+    */
    &brw_vs_pull_constants,
    &brw_wm_pull_constants,
-
-   &brw_renderbuffer_surfaces,  /* must do before unit */
-   &brw_texture_surfaces,       /* must do before unit */
+   &brw_renderbuffer_surfaces,
+   &brw_texture_surfaces,
    &brw_binding_table,
 
    &brw_samplers,
@@ -134,15 +135,16 @@ static const struct brw_tracked_state *gen6_atoms[] =
    &gen6_depth_stencil_state,	/* must do before cc unit */
    &gen6_cc_state_pointers,
 
-   /* Pull constants must be before brw_binding_table */
-   &brw_vs_pull_constants,
-   &brw_wm_pull_constants,
-
    &gen6_vs_push_constants, /* Before vs_state */
    &gen6_wm_push_constants, /* Before wm_state */
 
-   &brw_renderbuffer_surfaces,  /* must do before unit */
-   &brw_texture_surfaces,       /* must do before unit */
+   /* Surface state setup.  Must come before the VS/WM unit.  The binding
+    * table upload must be last.
+    */
+   &brw_vs_pull_constants,
+   &brw_wm_pull_constants,
+   &brw_renderbuffer_surfaces,
+   &brw_texture_surfaces,
    &brw_binding_table,
 
    &brw_samplers,
@@ -200,15 +202,16 @@ const struct brw_tracked_state *gen7_atoms[] =
    &gen7_cc_state_pointer,
    &gen7_depth_stencil_state_pointer,
 
-   /* Pull constants must be before brw_binding_table */
-   &brw_vs_pull_constants,
-   &brw_wm_pull_constants,
-
    &gen6_vs_push_constants, /* Before vs_state */
    &gen6_wm_push_constants, /* Before wm_surfaces and constant_buffer */
 
-   &brw_renderbuffer_surfaces,  /* must do before unit */
-   &brw_texture_surfaces,       /* must do before unit */
+   /* Surface state setup.  Must come before the VS/WM unit.  The binding
+    * table upload must be last.
+    */
+   &brw_vs_pull_constants,
+   &brw_wm_pull_constants,
+   &brw_renderbuffer_surfaces,
+   &brw_texture_surfaces,
    &brw_binding_table,
 
    &gen7_samplers,
