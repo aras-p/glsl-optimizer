@@ -192,6 +192,9 @@ struct r600_context {
 	struct r600_screen	*screen;
 	struct radeon_winsys	*ws;
 	struct radeon_winsys_cs	*cs;
+	struct pipe_context	*pipe;
+
+	void (*flush)(void *pipe, unsigned flags);
 
 	struct r600_range	*range;
 	unsigned		nblocks;
