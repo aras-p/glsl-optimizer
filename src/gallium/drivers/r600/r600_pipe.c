@@ -122,11 +122,25 @@ void r600_flush(struct pipe_context *ctx, struct pipe_fence_handle **fence,
 {
 	struct r600_pipe_context *rctx = (struct r600_pipe_context *)ctx;
 	struct r600_fence **rfence = (struct r600_fence**)fence;
+	struct pipe_query *render_cond = NULL;
+	unsigned render_cond_mode = 0;
 
 	if (rfence)
 		*rfence = r600_create_fence(rctx);
 
+	/* Disable render condition. */
+	if (rctx->current_render_cond) {
+		render_cond = rctx->current_render_cond;
+		render_cond_mode = rctx->current_render_cond_mode;
+		ctx->render_condition(ctx, NULL, 0);
+	}
+
 	r600_context_flush(&rctx->ctx, flags);
+
+	/* Re-enable render condition. */
+	if (render_cond) {
+		ctx->render_condition(ctx, render_cond, render_cond_mode);
+	}
 }
 
 static void r600_flush_from_st(struct pipe_context *ctx,

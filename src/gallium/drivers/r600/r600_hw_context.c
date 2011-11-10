@@ -946,6 +946,11 @@ void r600_need_cs_space(struct r600_context *ctx, unsigned num_dw,
 	/* Count in queries_suspend. */
 	num_dw += ctx->num_cs_dw_queries_suspend;
 
+	/* Count in render_condition(NULL) at the end of CS. */
+	if (ctx->predicate_drawing) {
+		num_dw += 3;
+	}
+
 	/* Flush if there's not enough space. */
 	if (num_dw > ctx->pm4_ndwords) {
 		r600_context_flush(ctx, RADEON_FLUSH_ASYNC);
