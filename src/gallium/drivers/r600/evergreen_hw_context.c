@@ -1156,12 +1156,7 @@ void evergreen_context_draw(struct r600_context *ctx, const struct r600_draw *dr
 	}
 
 	r600_need_cs_space(ctx, 0, TRUE);
-
-	/* at this point everything is flushed and ctx->pm4_cdwords = 0 */
-	if (unlikely((ctx->pm4_dirty_cdwords + ndwords) > RADEON_MAX_CMDBUF_DWORDS)) {
-		R600_ERR("context is too big to be scheduled\n");
-		return;
-	}
+	assert(ctx->pm4_cdwords + ctx->pm4_dirty_cdwords + ndwords < RADEON_MAX_CMDBUF_DWORDS);
 
 	/* enough room to copy packet */
 	LIST_FOR_EACH_ENTRY_SAFE(dirty_block, next_block, &ctx->dirty,list) {
