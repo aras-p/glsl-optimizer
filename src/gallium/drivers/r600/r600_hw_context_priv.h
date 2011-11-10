@@ -30,6 +30,8 @@
 #include "util/u_hash_table.h"
 #include "os/os_thread.h"
 
+#define R600_MAX_DRAW_CS_DWORDS 11
+
 #define PKT_COUNT_C                     0xC000FFFF
 #define PKT_COUNT_S(x)                  (((x) & 0x3FFF) << 16)
 
@@ -54,7 +56,9 @@ struct r600_reg {
 /*
  * r600_hw_context.c
  */
-void r600_need_cs_space(struct r600_context *ctx, unsigned num_dw);
+void r600_need_cs_space(struct r600_context *ctx, unsigned num_dw,
+			boolean count_draw_in);
+
 void r600_context_bo_flush(struct r600_context *ctx, unsigned flush_flags,
 				unsigned flush_mask, struct r600_resource *rbo);
 struct r600_resource *r600_context_reg_bo(struct r600_context *ctx, unsigned offset);

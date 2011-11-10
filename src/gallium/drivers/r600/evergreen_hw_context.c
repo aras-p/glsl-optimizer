@@ -1142,6 +1142,8 @@ void evergreen_context_draw(struct r600_context *ctx, const struct r600_draw *dr
 	if (draw->indices) {
 		ndwords = 11;
 	}
+	/* when increasing ndwords, bump the max limit too */
+	assert(ndwords <= R600_MAX_DRAW_CS_DWORDS);
 
 	/* queries need some special values */
 	if (ctx->num_query_running) {
@@ -1159,7 +1161,7 @@ void evergreen_context_draw(struct r600_context *ctx, const struct r600_draw *dr
 	 * reserved for flushing the destination caches */
 	ctx->pm4_ndwords = RADEON_MAX_CMDBUF_DWORDS - ctx->num_dest_buffers * 7 - 16;
 
-	r600_need_cs_space(ctx, ndwords);
+	r600_need_cs_space(ctx, 0, TRUE);
 
 	/* at this point everything is flushed and ctx->pm4_cdwords = 0 */
 	if (unlikely((ctx->pm4_dirty_cdwords + ndwords) > ctx->pm4_ndwords)) {

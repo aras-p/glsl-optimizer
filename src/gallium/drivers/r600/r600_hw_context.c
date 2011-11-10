@@ -929,13 +929,19 @@ out_err:
 	return r;
 }
 
-void r600_need_cs_space(struct r600_context *ctx, unsigned num_dw)
+void r600_need_cs_space(struct r600_context *ctx, unsigned num_dw,
+			boolean count_draw_in)
 {
 	/* The number of dwords we already used in the CS so far. */
 	num_dw += ctx->pm4_cdwords;
 
-	/* The number of dwords all the dirty states would take. */
-	num_dw += ctx->pm4_dirty_cdwords;
+	if (count_draw_in) {
+		/* The number of dwords all the dirty states would take. */
+		num_dw += ctx->pm4_dirty_cdwords;
+
+		/* The upper-bound of how much a draw command would take. */
+		num_dw += R600_MAX_DRAW_CS_DWORDS;
+	}
 
 	/* Flush if there's not enough space. */
 	if (num_dw > ctx->pm4_ndwords) {
@@ -946,7 +952,7 @@ void r600_need_cs_space(struct r600_context *ctx, unsigned num_dw)
 /* Flushes all surfaces */
 void r600_context_flush_all(struct r600_context *ctx, unsigned flush_flags)
 {
-	r600_need_cs_space(ctx, 5);
+	r600_need_cs_space(ctx, 5, FALSE);
 
 	ctx->pm4[ctx->pm4_cdwords++] = PKT3(PKT3_SURFACE_SYNC, 3, ctx->predicate_drawing);
 	ctx->pm4[ctx->pm4_cdwords++] = flush_flags;     /* CP_COHER_CNTL */
@@ -1424,6 +1430,8 @@ void r600_context_draw(struct r600_context *ctx, const struct r600_draw *draw)
 	if (draw->indices) {
 		ndwords = 11;
 	}
+	/* when increasing ndwords, bump the max limit too */
+	assert(ndwords <= R600_MAX_DRAW_CS_DWORDS);
 
 	/* queries need some special values */
 	if (ctx->num_query_running) {
@@ -1443,7 +1451,7 @@ void r600_context_draw(struct r600_context *ctx, const struct r600_draw *draw)
 	 * reserved for flushing the destination caches */
 	ctx->pm4_ndwords = RADEON_MAX_CMDBUF_DWORDS - ctx->num_dest_buffers * 7 - 16;
 
-	r600_need_cs_space(ctx, ndwords);
+	r600_need_cs_space(ctx, 0, TRUE);
 
 	/* at this point everything is flushed and ctx->pm4_cdwords = 0 */
 	if (unlikely((ctx->pm4_dirty_cdwords + ndwords) > ctx->pm4_ndwords)) {
@@ -1553,7 +1561,7 @@ void r600_context_flush(struct r600_context *ctx, unsigned flags)
 
 void r600_context_emit_fence(struct r600_context *ctx, struct r600_resource *fence_bo, unsigned offset, unsigned value)
 {
-	r600_need_cs_space(ctx, 10);
+	r600_need_cs_space(ctx, 10, FALSE);
 
 	ctx->pm4[ctx->pm4_cdwords++] = PKT3(PKT3_EVENT_WRITE, 0, 0);
 	ctx->pm4[ctx->pm4_cdwords++] = EVENT_TYPE(EVENT_TYPE_PS_PARTIAL_FLUSH) | EVENT_INDEX(4);
@@ -1637,7 +1645,7 @@ void r600_query_begin(struct r600_context *ctx, struct r600_query *query)
 		return;
 	}
 
-	r600_need_cs_space(ctx, required_space);
+	r600_need_cs_space(ctx, required_space, TRUE);
 
 	new_results_end = (query->results_end + query->result_size) % query->buffer->b.b.b.width0;
 
@@ -1723,7 +1731,7 @@ void r600_query_predication(struct r600_context *ctx, struct r600_query *query, 
 			    int flag_wait)
 {
 	if (operation == PREDICATION_OP_CLEAR) {
-		r600_need_cs_space(ctx, 3);
+		r600_need_cs_space(ctx, 3, FALSE);
 
 		ctx->pm4[ctx->pm4_cdwords++] = PKT3(PKT3_SET_PREDICATION, 1, 0);
 		ctx->pm4[ctx->pm4_cdwords++] = 0;
@@ -1737,7 +1745,7 @@ void r600_query_predication(struct r600_context *ctx, struct r600_query *query, 
 		count = (query->buffer->b.b.b.width0 + query->results_end - query->results_start) % query->buffer->b.b.b.width0;
 		count /= query->result_size;
 
-		r600_need_cs_space(ctx, 5 * count);
+		r600_need_cs_space(ctx, 5 * count, TRUE);
 
 		op = PRED_OP(operation) | PREDICATION_DRAW_VISIBLE |
 				(flag_wait ? PREDICATION_HINT_WAIT : PREDICATION_HINT_NOWAIT_DRAW);
