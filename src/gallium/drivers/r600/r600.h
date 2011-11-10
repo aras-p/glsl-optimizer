@@ -164,7 +164,10 @@ struct r600_range {
 };
 
 struct r600_query {
-	u64					result;
+	union {
+		uint64_t			u64;
+		boolean				b;
+	} result;
 	/* The kind of query */
 	unsigned				type;
 	/* Offset of the first result for current query */

@@ -1617,21 +1617,21 @@ static boolean r600_query_result(struct r600_context *ctx, struct r600_query *qu
 	switch (query->type) {
 	case PIPE_QUERY_OCCLUSION_COUNTER:
 		while (results_base != query->results_end) {
-			query->result +=
+			query->result.u64 +=
 				r600_query_read_result(map + results_base, 0, 2, true);
 			results_base = (results_base + 16) % query->buffer->b.b.b.width0;
 		}
 		break;
 	case PIPE_QUERY_OCCLUSION_PREDICATE:
 		while (results_base != query->results_end) {
-			query->result = query->result ||
-				r600_query_read_result(map + results_base, 0, 2, true);
+			query->result.b = query->result.b ||
+				r600_query_read_result(map + results_base, 0, 2, true) != 0;
 			results_base = (results_base + 16) % query->buffer->b.b.b.width0;
 		}
 		break;
 	case PIPE_QUERY_TIME_ELAPSED:
 		while (results_base != query->results_end) {
-			query->result +=
+			query->result.u64 +=
 				r600_query_read_result(map + results_base, 0, 2, false);
 			results_base = (results_base + query->result_size) % query->buffer->b.b.b.width0;
 		}
@@ -1830,24 +1830,27 @@ boolean r600_context_query_result(struct r600_context *ctx,
 				struct r600_query *query,
 				boolean wait, void *vresult)
 {
-	uint64_t *result = (uint64_t*)vresult;
+	boolean *result_b = (boolean*)vresult;
+	uint64_t *result_u64 = (uint64_t*)vresult;
 
 	if (!r600_query_result(ctx, query, wait))
 		return FALSE;
 
 	switch (query->type) {
 	case PIPE_QUERY_OCCLUSION_COUNTER:
+		*result_u64 = query->result.u64;
+		break;
 	case PIPE_QUERY_OCCLUSION_PREDICATE:
-		*result = query->result;
+		*result_b = query->result.b;
 		break;
 	case PIPE_QUERY_TIME_ELAPSED:
-		*result = (1000000 * query->result) / ctx->screen->info.r600_clock_crystal_freq;
+		*result_u64 = (1000000 * query->result.u64) / ctx->screen->info.r600_clock_crystal_freq;
 		break;
 	default:
 		assert(0);
 	}
 
-	query->result = 0;
+	memset(&query->result, 0, sizeof(query->result));
 	return TRUE;
 }
 
