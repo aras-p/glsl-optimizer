@@ -894,7 +894,7 @@ _mesa_get_uniform_location(struct gl_context *ctx,
       array_lookup = false;
    }
 
-   unsigned location;
+   unsigned location = 0;
    const bool found = shProg->UniformHash->get(location, name_copy);
 
    assert(!found
