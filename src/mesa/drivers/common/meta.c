@@ -879,8 +879,11 @@ _mesa_meta_end(struct gl_context *ctx)
 
       /* restore texture objects for unit[0] only */
       for (tgt = 0; tgt < NUM_TEXTURE_TARGETS; tgt++) {
-         _mesa_reference_texobj(&ctx->Texture.Unit[0].CurrentTex[tgt],
-                                save->CurrentTexture[tgt]);
+	 if (ctx->Texture.Unit[0].CurrentTex[tgt] != save->CurrentTexture[tgt]) {
+	    FLUSH_VERTICES(ctx, _NEW_TEXTURE);
+	    _mesa_reference_texobj(&ctx->Texture.Unit[0].CurrentTex[tgt],
+				   save->CurrentTexture[tgt]);
+	 }
          _mesa_reference_texobj(&save->CurrentTexture[tgt], NULL);
       }
 
