@@ -149,7 +149,7 @@ static boolean r300_get_query_result(struct pipe_context* pipe,
             r300->rws->buffer_wait(q->buf, RADEON_USAGE_READWRITE);
             *r = TRUE;
         } else {
-            *r = r300->rws->buffer_is_busy(q->buf, RADEON_USAGE_READWRITE);
+            *r = !r300->rws->buffer_is_busy(q->buf, RADEON_USAGE_READWRITE);
         }
         return *r;
     }
