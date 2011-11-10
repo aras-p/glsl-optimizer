@@ -1622,6 +1622,13 @@ static boolean r600_query_result(struct r600_context *ctx, struct r600_query *qu
 			results_base = (results_base + 16) % query->buffer->b.b.b.width0;
 		}
 		break;
+	case PIPE_QUERY_OCCLUSION_PREDICATE:
+		while (results_base != query->results_end) {
+			query->result = query->result ||
+				r600_query_read_result(map + results_base, 0, 2, true);
+			results_base = (results_base + 16) % query->buffer->b.b.b.width0;
+		}
+		break;
 	case PIPE_QUERY_TIME_ELAPSED:
 		while (results_base != query->results_end) {
 			query->result +=
@@ -1640,7 +1647,8 @@ static boolean r600_query_result(struct r600_context *ctx, struct r600_query *qu
 
 void r600_query_begin(struct r600_context *ctx, struct r600_query *query)
 {
-	unsigned new_results_end;
+	unsigned new_results_end, i;
+	u32 *results;
 
 	r600_need_cs_space(ctx, query->num_cs_dw * 2, TRUE);
 
@@ -1651,10 +1659,9 @@ void r600_query_begin(struct r600_context *ctx, struct r600_query *query)
 		r600_query_result(ctx, query, TRUE);
 	}
 
-	if (query->type == PIPE_QUERY_OCCLUSION_COUNTER) {
-		u32 *results;
-		int i;
-
+	switch (query->type) {
+	case PIPE_QUERY_OCCLUSION_COUNTER:
+	case PIPE_QUERY_OCCLUSION_PREDICATE:
 		results = ctx->ws->buffer_map(query->buffer->buf, ctx->cs, PIPE_TRANSFER_WRITE);
 		if (results) {
 			results = (u32*)((char*)results + query->results_end);
@@ -1669,11 +1676,17 @@ void r600_query_begin(struct r600_context *ctx, struct r600_query *query)
 			}
 			ctx->ws->buffer_unmap(query->buffer->buf);
 		}
+		break;
+	case PIPE_QUERY_TIME_ELAPSED:
+		break;
+	default:
+		assert(0);
 	}
 
 	/* emit begin query */
 	switch (query->type) {
 	case PIPE_QUERY_OCCLUSION_COUNTER:
+	case PIPE_QUERY_OCCLUSION_PREDICATE:
 		ctx->pm4[ctx->pm4_cdwords++] = PKT3(PKT3_EVENT_WRITE, 2, 0);
 		ctx->pm4[ctx->pm4_cdwords++] = EVENT_TYPE(EVENT_TYPE_ZPASS_DONE) | EVENT_INDEX(1);
 		ctx->pm4[ctx->pm4_cdwords++] = query->results_end;
@@ -1701,6 +1714,7 @@ void r600_query_end(struct r600_context *ctx, struct r600_query *query)
 	/* emit end query */
 	switch (query->type) {
 	case PIPE_QUERY_OCCLUSION_COUNTER:
+	case PIPE_QUERY_OCCLUSION_PREDICATE:
 		ctx->pm4[ctx->pm4_cdwords++] = PKT3(PKT3_EVENT_WRITE, 2, 0);
 		ctx->pm4[ctx->pm4_cdwords++] = EVENT_TYPE(EVENT_TYPE_ZPASS_DONE) | EVENT_INDEX(1);
 		ctx->pm4[ctx->pm4_cdwords++] = query->results_end + 8;
@@ -1776,6 +1790,7 @@ struct r600_query *r600_context_query_create(struct r600_context *ctx, unsigned 
 
 	switch (query_type) {
 	case PIPE_QUERY_OCCLUSION_COUNTER:
+	case PIPE_QUERY_OCCLUSION_PREDICATE:
 		query->result_size = 16 * ctx->max_db;
 		query->num_cs_dw = 6;
 		break;
@@ -1822,6 +1837,7 @@ boolean r600_context_query_result(struct r600_context *ctx,
 
 	switch (query->type) {
 	case PIPE_QUERY_OCCLUSION_COUNTER:
+	case PIPE_QUERY_OCCLUSION_PREDICATE:
 		*result = query->result;
 		break;
 	case PIPE_QUERY_TIME_ELAPSED:
