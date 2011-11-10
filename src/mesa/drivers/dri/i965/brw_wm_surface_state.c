@@ -577,6 +577,15 @@ const struct brw_tracked_state brw_renderbuffer_surfaces = {
    .emit = brw_update_renderbuffer_surfaces,
 };
 
+const struct brw_tracked_state gen6_renderbuffer_surfaces = {
+   .dirty = {
+      .mesa = _NEW_BUFFERS,
+      .brw = BRW_NEW_BATCH,
+      .cache = 0
+   },
+   .emit = brw_update_renderbuffer_surfaces,
+};
+
 /**
  * Construct SURFACE_STATE objects for enabled textures.
  */

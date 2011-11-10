@@ -143,7 +143,7 @@ static const struct brw_tracked_state *gen6_atoms[] =
     */
    &brw_vs_pull_constants,
    &brw_wm_pull_constants,
-   &brw_renderbuffer_surfaces,
+   &gen6_renderbuffer_surfaces,
    &brw_texture_surfaces,
    &brw_binding_table,
 
@@ -210,7 +210,7 @@ const struct brw_tracked_state *gen7_atoms[] =
     */
    &brw_vs_pull_constants,
    &brw_wm_pull_constants,
-   &brw_renderbuffer_surfaces,
+   &gen6_renderbuffer_surfaces,
    &brw_texture_surfaces,
    &brw_binding_table,
 

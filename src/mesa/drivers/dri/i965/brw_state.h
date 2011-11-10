@@ -89,6 +89,7 @@ extern const struct brw_tracked_state gen6_clip_vp;
 extern const struct brw_tracked_state gen6_color_calc_state;
 extern const struct brw_tracked_state gen6_depth_stencil_state;
 extern const struct brw_tracked_state gen6_gs_state;
+extern const struct brw_tracked_state gen6_renderbuffer_surfaces;
 extern const struct brw_tracked_state gen6_sampler_state;
 extern const struct brw_tracked_state gen6_scissor_state;
 extern const struct brw_tracked_state gen6_sf_state;
