@@ -1251,12 +1251,14 @@ draw_llvm_generate(struct draw_llvm *llvm, struct draw_llvm_variant *variant,
       fetch_count  = LLVMGetParam(variant_func, 4);
       lp_build_name(fetch_elts, "fetch_elts");
       lp_build_name(fetch_count, "fetch_count");
+      start = count = NULL;
    }
    else {
       start        = LLVMGetParam(variant_func, 3);
       count        = LLVMGetParam(variant_func, 4);
       lp_build_name(start, "start");
       lp_build_name(count, "count");
+      fetch_elts = fetch_count = NULL;
    }
 
    /*
