@@ -41,7 +41,6 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
 #include "main/state.h"
 #include "main/light.h"
 #include "main/api_arrayelt.h"
-#include "main/api_noop.h"
 #include "main/api_validate.h"
 #include "main/dispatch.h"
 
@@ -546,12 +545,145 @@ static void GLAPIENTRY vbo_exec_EvalPoint2( GLint i, GLint j )
    vbo_exec_EvalCoord2f( u, v );
 }
 
-/* use noop eval mesh */
-#define vbo_exec_EvalMesh1 _mesa_noop_EvalMesh1
-#define vbo_exec_EvalMesh2 _mesa_noop_EvalMesh2
+
+static void GLAPIENTRY
+vbo_exec_EvalMesh1(GLenum mode, GLint i1, GLint i2)
+{
+   GET_CURRENT_CONTEXT(ctx);
+   GLint i;
+   GLfloat u, du;
+   GLenum prim;
+
+   ASSERT_OUTSIDE_BEGIN_END(ctx);
+
+   switch (mode) {
+   case GL_POINT:
+      prim = GL_POINTS;
+      break;
+   case GL_LINE:
+      prim = GL_LINE_STRIP;
+      break;
+   default:
+      _mesa_error( ctx, GL_INVALID_ENUM, "glEvalMesh1(mode)" );
+      return;
+   }
+
+   /* No effect if vertex maps disabled.
+    */
+   if (!ctx->Eval.Map1Vertex4 && 
+       !ctx->Eval.Map1Vertex3 &&
+       !(ctx->VertexProgram._Enabled && ctx->Eval.Map1Attrib[VERT_ATTRIB_POS]))
+      return;
+
+   du = ctx->Eval.MapGrid1du;
+   u = ctx->Eval.MapGrid1u1 + i1 * du;
+
+   CALL_Begin(GET_DISPATCH(), (prim));
+   for (i=i1;i<=i2;i++,u+=du) {
+      CALL_EvalCoord1f(GET_DISPATCH(), (u));
+   }
+   CALL_End(GET_DISPATCH(), ());
+}
+
+
+static void GLAPIENTRY
+vbo_exec_EvalMesh2(GLenum mode, GLint i1, GLint i2, GLint j1, GLint j2)
+{
+   GET_CURRENT_CONTEXT(ctx);
+   GLfloat u, du, v, dv, v1, u1;
+   GLint i, j;
+
+   ASSERT_OUTSIDE_BEGIN_END(ctx);
+
+   switch (mode) {
+   case GL_POINT:
+   case GL_LINE:
+   case GL_FILL:
+      break;
+   default:
+      _mesa_error( ctx, GL_INVALID_ENUM, "glEvalMesh2(mode)" );
+      return;
+   }
+
+   /* No effect if vertex maps disabled.
+    */
+   if (!ctx->Eval.Map2Vertex4 && 
+       !ctx->Eval.Map2Vertex3 &&
+       !(ctx->VertexProgram._Enabled && ctx->Eval.Map2Attrib[VERT_ATTRIB_POS]))
+      return;
+
+   du = ctx->Eval.MapGrid2du;
+   dv = ctx->Eval.MapGrid2dv;
+   v1 = ctx->Eval.MapGrid2v1 + j1 * dv;
+   u1 = ctx->Eval.MapGrid2u1 + i1 * du;
+
+   switch (mode) {
+   case GL_POINT:
+      CALL_Begin(GET_DISPATCH(), (GL_POINTS));
+      for (v=v1,j=j1;j<=j2;j++,v+=dv) {
+	 for (u=u1,i=i1;i<=i2;i++,u+=du) {
+	    CALL_EvalCoord2f(GET_DISPATCH(), (u, v));
+	 }
+      }
+      CALL_End(GET_DISPATCH(), ());
+      break;
+   case GL_LINE:
+      for (v=v1,j=j1;j<=j2;j++,v+=dv) {
+	 CALL_Begin(GET_DISPATCH(), (GL_LINE_STRIP));
+	 for (u=u1,i=i1;i<=i2;i++,u+=du) {
+	    CALL_EvalCoord2f(GET_DISPATCH(), (u, v));
+	 }
+	 CALL_End(GET_DISPATCH(), ());
+      }
+      for (u=u1,i=i1;i<=i2;i++,u+=du) {
+	 CALL_Begin(GET_DISPATCH(), (GL_LINE_STRIP));
+	 for (v=v1,j=j1;j<=j2;j++,v+=dv) {
+	    CALL_EvalCoord2f(GET_DISPATCH(), (u, v));
+	 }
+	 CALL_End(GET_DISPATCH(), ());
+      }
+      break;
+   case GL_FILL:
+      for (v=v1,j=j1;j<j2;j++,v+=dv) {
+	 CALL_Begin(GET_DISPATCH(), (GL_TRIANGLE_STRIP));
+	 for (u=u1,i=i1;i<=i2;i++,u+=du) {
+	    CALL_EvalCoord2f(GET_DISPATCH(), (u, v));
+	    CALL_EvalCoord2f(GET_DISPATCH(), (u, v+dv));
+	 }
+	 CALL_End(GET_DISPATCH(), ());
+      }
+      break;
+   default:
+      _mesa_error( ctx, GL_INVALID_ENUM, "glEvalMesh2(mode)" );
+      return;
+   }
+}
 
 #endif /* FEATURE_evaluators */
 
+
+/**
+ * Execute a glRectf() function.  This is not suitable for GL_COMPILE
+ * modes (as the test for outside begin/end is not compiled),
+ * but may be useful for drivers in circumstances which exclude
+ * display list interactions.
+ *
+ * (None of the functions in this file are suitable for GL_COMPILE
+ * modes).
+ */
+static void GLAPIENTRY
+vbo_exec_Rectf(GLfloat x1, GLfloat y1, GLfloat x2, GLfloat y2)
+{
+   GET_CURRENT_CONTEXT(ctx);
+   ASSERT_OUTSIDE_BEGIN_END(ctx);
+
+   CALL_Begin(GET_DISPATCH(), (GL_QUADS));
+   CALL_Vertex2f(GET_DISPATCH(), (x1, y1));
+   CALL_Vertex2f(GET_DISPATCH(), (x2, y1));
+   CALL_Vertex2f(GET_DISPATCH(), (x2, y2));
+   CALL_Vertex2f(GET_DISPATCH(), (x1, y2));
+   CALL_End(GET_DISPATCH(), ());
+}
 
 
 /**
@@ -673,7 +805,7 @@ static void vbo_exec_vtxfmt_init( struct vbo_exec_context *exec )
    _MESA_INIT_DLIST_VTXFMT(vfmt, _mesa_);
    _MESA_INIT_EVAL_VTXFMT(vfmt, vbo_exec_);
 
-   vfmt->Rectf = _mesa_noop_Rectf;
+   vfmt->Rectf = vbo_exec_Rectf;
 
    /* from attrib_tmp.h:
     */
