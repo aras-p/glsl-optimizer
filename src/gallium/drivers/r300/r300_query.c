@@ -37,7 +37,8 @@ static struct pipe_query *r300_create_query(struct pipe_context *pipe,
     struct r300_query *q;
 
     if (query_type != PIPE_QUERY_OCCLUSION_COUNTER &&
-        query_type != PIPE_QUERY_OCCLUSION_PREDICATE) {
+        query_type != PIPE_QUERY_OCCLUSION_PREDICATE &&
+        query_type != PIPE_QUERY_GPU_FINISHED) {
         return NULL;
     }
 
@@ -47,14 +48,21 @@ static struct pipe_query *r300_create_query(struct pipe_context *pipe,
 
     q->type = query_type;
 
+    if (query_type == PIPE_QUERY_GPU_FINISHED) {
+        return (struct pipe_query*)q;
+    }
+
     if (r300screen->caps.family == CHIP_FAMILY_RV530)
         q->num_pipes = r300screen->info.r300_num_z_pipes;
     else
         q->num_pipes = r300screen->info.r300_num_gb_pipes;
 
-    /* Open up the occlusion query buffer. */
     q->buf = r300->rws->buffer_create(r300->rws, 4096, 4096,
-                                         PIPE_BIND_CUSTOM, PIPE_USAGE_STAGING);
+                                      PIPE_BIND_CUSTOM, PIPE_USAGE_STAGING);
+    if (!q->buf) {
+        FREE(q);
+        return NULL;
+    }
     q->cs_buf = r300->rws->buffer_get_cs_handle(q->buf);
 
     return (struct pipe_query*)q;
@@ -82,6 +90,9 @@ static void r300_begin_query(struct pipe_context* pipe,
     struct r300_context* r300 = r300_context(pipe);
     struct r300_query* q = r300_query(query);
 
+    if (q->type == PIPE_QUERY_GPU_FINISHED)
+        return;
+
     if (r300->query_current != NULL) {
         fprintf(stderr, "r300: begin_query: "
                 "Some other query has already been started.\n");
@@ -105,6 +116,13 @@ static void r300_end_query(struct pipe_context* pipe,
     struct r300_context* r300 = r300_context(pipe);
     struct r300_query *q = r300_query(query);
 
+    if (q->type == PIPE_QUERY_GPU_FINISHED) {
+        pb_reference(&q->buf, NULL);
+        r300_flush(pipe, RADEON_FLUSH_ASYNC,
+                   (struct pipe_fence_handle**)&q->buf);
+        return;
+    }
+
     if (q != r300->query_current) {
         fprintf(stderr, "r300: end_query: Got invalid query.\n");
         assert(0);
@@ -123,6 +141,18 @@ static boolean r300_get_query_result(struct pipe_context* pipe,
     struct r300_query *q = r300_query(query);
     unsigned i;
     uint32_t temp, *map;
+
+    if (q->type == PIPE_QUERY_GPU_FINISHED) {
+        uint32_t *r = (uint32_t*)vresult;
+
+        if (wait) {
+            r300->rws->buffer_wait(q->buf, RADEON_USAGE_READWRITE);
+            *r = TRUE;
+        } else {
+            *r = r300->rws->buffer_is_busy(q->buf, RADEON_USAGE_READWRITE);
+        }
+        return *r;
+    }
 
     map = r300->rws->buffer_map(q->buf, r300->cs,
                                 PIPE_TRANSFER_READ |
@@ -167,7 +197,8 @@ static void r300_render_condition(struct pipe_context *pipe,
     }
 }
 
-void r300_init_query_functions(struct r300_context* r300) {
+void r300_init_query_functions(struct r300_context* r300)
+{
     r300->context.create_query = r300_create_query;
     r300->context.destroy_query = r300_destroy_query;
     r300->context.begin_query = r300_begin_query;
