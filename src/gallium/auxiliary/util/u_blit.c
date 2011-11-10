@@ -286,8 +286,10 @@ setup_vertex_data_tex(struct blit_state *ctx,
 
    offset = get_next_slot( ctx );
 
-   pipe_buffer_write_nooverlap(ctx->pipe, ctx->vbuf,
-                               offset, sizeof(ctx->vertices), ctx->vertices);
+   if (ctx->vbuf) {
+      pipe_buffer_write_nooverlap(ctx->pipe, ctx->vbuf,
+                                  offset, sizeof(ctx->vertices), ctx->vertices);
+   }
 
    return offset;
 }
@@ -599,10 +601,12 @@ util_blit_pixels_writemask(struct blit_state *ctx,
                                   s1, t1,
                                   z);
 
-   util_draw_vertex_buffer(ctx->pipe, ctx->cso, ctx->vbuf, offset,
-                           PIPE_PRIM_TRIANGLE_FAN,
-                           4,  /* verts */
-                           2); /* attribs/vert */
+   if (ctx->vbuf) {
+      util_draw_vertex_buffer(ctx->pipe, ctx->cso, ctx->vbuf, offset,
+                              PIPE_PRIM_TRIANGLE_FAN,
+                              4,  /* verts */
+                              2); /* attribs/vert */
+   }
 
    /* restore state we changed */
    cso_restore_blend(ctx->cso);
