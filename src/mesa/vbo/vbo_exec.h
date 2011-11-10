@@ -82,6 +82,7 @@ struct vbo_exec_context
 {
    struct gl_context *ctx;   
    GLvertexformat vtxfmt;
+   GLvertexformat vtxfmt_noop;
 
    struct {
       struct gl_buffer_object *bufferobj;

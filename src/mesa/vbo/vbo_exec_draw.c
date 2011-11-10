@@ -28,11 +28,14 @@
 #include "main/glheader.h"
 #include "main/bufferobj.h"
 #include "main/compiler.h"
+#include "main/context.h"
 #include "main/enums.h"
 #include "main/mfeatures.h"
 #include "main/state.h"
+#include "main/vtxfmt.h"
 
 #include "vbo_context.h"
+#include "vbo_noop.h"
 
 
 #if FEATURE_beginend
@@ -308,32 +311,55 @@ vbo_exec_vtx_map( struct vbo_exec_context *exec )
 
    if (VBO_VERT_BUFFER_SIZE > exec->vtx.buffer_used + 1024) {
       /* The VBO exists and there's room for more */
-      exec->vtx.buffer_map = 
-         (GLfloat *)ctx->Driver.MapBufferRange(ctx, 
-                                               exec->vtx.buffer_used,
-                                               (VBO_VERT_BUFFER_SIZE - 
-                                                exec->vtx.buffer_used),
-                                               accessRange,
-                                               exec->vtx.bufferobj);
-      exec->vtx.buffer_ptr = exec->vtx.buffer_map;
+      if (exec->vtx.bufferobj->Size > 0) {
+         exec->vtx.buffer_map =
+            (GLfloat *)ctx->Driver.MapBufferRange(ctx, 
+                                                  exec->vtx.buffer_used,
+                                                  (VBO_VERT_BUFFER_SIZE - 
+                                                   exec->vtx.buffer_used),
+                                                  accessRange,
+                                                  exec->vtx.bufferobj);
+         exec->vtx.buffer_ptr = exec->vtx.buffer_map;
+      }
+      else {
+         exec->vtx.buffer_ptr = exec->vtx.buffer_map = NULL;
+      }
    }
    
    if (!exec->vtx.buffer_map) {
       /* Need to allocate a new VBO */
       exec->vtx.buffer_used = 0;
 
-      ctx->Driver.BufferData(ctx, GL_ARRAY_BUFFER_ARB,
-                             VBO_VERT_BUFFER_SIZE, 
-                             NULL, usage, exec->vtx.bufferobj);
+      if (ctx->Driver.BufferData(ctx, GL_ARRAY_BUFFER_ARB,
+                                  VBO_VERT_BUFFER_SIZE, 
+                                  NULL, usage, exec->vtx.bufferobj)) {
+         /* buffer allocation worked, now map the buffer */
+         exec->vtx.buffer_map =
+            (GLfloat *)ctx->Driver.MapBufferRange(ctx,
+                                                  0, VBO_VERT_BUFFER_SIZE,
+                                                  accessRange,
+                                                  exec->vtx.bufferobj);
+      }
+      else {
+         _mesa_error(ctx, GL_OUT_OF_MEMORY, "VBO allocation");
+         exec->vtx.buffer_map = NULL;
+      }
+   }
 
+   exec->vtx.buffer_ptr = exec->vtx.buffer_map;
 
-      exec->vtx.buffer_map =
-	 (GLfloat *)ctx->Driver.MapBufferRange(ctx,
-					       0, VBO_VERT_BUFFER_SIZE,
-					       accessRange,
-					       exec->vtx.bufferobj);
-      assert(exec->vtx.buffer_map);
-      exec->vtx.buffer_ptr = exec->vtx.buffer_map;
+   if (!exec->vtx.buffer_map) {
+      /* out of memory */
+      _mesa_install_exec_vtxfmt( ctx, &exec->vtxfmt_noop );
+   }
+   else {
+      if (_mesa_using_noop_vtxfmt(ctx->Exec)) {
+         /* The no-op functions are installed so switch back to regular
+          * functions.  We do this test just to avoid frequent and needless
+          * calls to _mesa_install_exec_vtxfmt().
+          */
+         _mesa_install_exec_vtxfmt(ctx, &exec->vtxfmt);
+      }
    }
 
    if (0)

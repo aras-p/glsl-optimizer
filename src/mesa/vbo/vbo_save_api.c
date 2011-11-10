@@ -81,6 +81,7 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
 #include "main/dispatch.h"
 
 #include "vbo_context.h"
+#include "vbo_noop.h"
 
 
 #if FEATURE_dlist
@@ -184,6 +185,7 @@ _save_copy_vertices(struct gl_context *ctx,
 static struct vbo_save_vertex_store *
 alloc_vertex_store(struct gl_context *ctx)
 {
+   struct vbo_save_context *save = &vbo_context(ctx)->save;
    struct vbo_save_vertex_store *vertex_store =
       CALLOC_STRUCT(vbo_save_vertex_store);
 
@@ -196,11 +198,22 @@ alloc_vertex_store(struct gl_context *ctx)
    vertex_store->bufferobj = ctx->Driver.NewBufferObject(ctx,
                                                          VBO_BUF_ID,
                                                          GL_ARRAY_BUFFER_ARB);
+   if (vertex_store->bufferobj) {
+      save->out_of_memory =
+         !ctx->Driver.BufferData(ctx,
+                                 GL_ARRAY_BUFFER_ARB,
+                                 VBO_SAVE_BUFFER_SIZE * sizeof(GLfloat),
+                                 NULL, GL_STATIC_DRAW_ARB,
+                                 vertex_store->bufferobj);
+   }
+   else {
+      save->out_of_memory = GL_TRUE;
+   }
 
-   ctx->Driver.BufferData(ctx,
-                          GL_ARRAY_BUFFER_ARB,
-                          VBO_SAVE_BUFFER_SIZE * sizeof(GLfloat),
-                          NULL, GL_STATIC_DRAW_ARB, vertex_store->bufferobj);
+   if (save->out_of_memory) {
+      _mesa_error(ctx, GL_OUT_OF_MEMORY, "internal VBO allocation");
+      _mesa_install_save_vtxfmt(ctx, &save->vtxfmt_noop);
+   }
 
    vertex_store->buffer = NULL;
    vertex_store->used = 0;
@@ -230,14 +243,19 @@ map_vertex_store(struct gl_context *ctx,
 {
    assert(vertex_store->bufferobj);
    assert(!vertex_store->buffer);
-   vertex_store->buffer =
-      (GLfloat *) ctx->Driver.MapBufferRange(ctx, 0,
-					     vertex_store->bufferobj->Size,
-					     GL_MAP_WRITE_BIT,    /* not used */
-					     vertex_store->bufferobj);
-
-   assert(vertex_store->buffer);
-   return vertex_store->buffer + vertex_store->used;
+   if (vertex_store->bufferobj->Size > 0) {
+      vertex_store->buffer =
+         (GLfloat *) ctx->Driver.MapBufferRange(ctx, 0,
+                                                vertex_store->bufferobj->Size,
+                                                GL_MAP_WRITE_BIT,  /* not used */
+                                                vertex_store->bufferobj);
+      assert(vertex_store->buffer);
+      return vertex_store->buffer + vertex_store->used;
+   }
+   else {
+      /* probably ran out of memory for buffers */
+      return NULL;
+   }
 }
 
 
@@ -245,7 +263,9 @@ static void
 unmap_vertex_store(struct gl_context *ctx,
                    struct vbo_save_vertex_store *vertex_store)
 {
-   ctx->Driver.UnmapBuffer(ctx, vertex_store->bufferobj);
+   if (vertex_store->bufferobj->Size > 0) {
+      ctx->Driver.UnmapBuffer(ctx, vertex_store->bufferobj);
+   }
    vertex_store->buffer = NULL;
 }
 
@@ -399,6 +419,7 @@ _save_compile_vertex_list(struct gl_context *ctx)
        */
       save->vertex_store = alloc_vertex_store(ctx);
       save->buffer_ptr = map_vertex_store(ctx, save->vertex_store);
+      save->out_of_memory = save->buffer_ptr == NULL;
    }
 
    if (save->prim_store->used > VBO_SAVE_PRIM_SIZE - 6) {
@@ -732,7 +753,12 @@ dlist_fallback(struct gl_context *ctx)
    _save_copy_to_current(ctx);
    _save_reset_vertex(ctx);
    _save_reset_counters(ctx);
-   _mesa_install_save_vtxfmt(ctx, &ctx->ListState.ListVtxfmt);
+   if (save->out_of_memory) {
+      _mesa_install_save_vtxfmt(ctx, &save->vtxfmt_noop);
+   }
+   else {
+      _mesa_install_save_vtxfmt(ctx, &ctx->ListState.ListVtxfmt);
+   }
    ctx->Driver.SaveNeedFlush = 0;
 }
 
@@ -825,7 +851,12 @@ vbo_save_NotifyBegin(struct gl_context *ctx, GLenum mode)
    save->prim[i].count = 0;
    save->prim[i].num_instances = 1;
 
-   _mesa_install_save_vtxfmt(ctx, &save->vtxfmt);
+   if (save->out_of_memory) {
+      _mesa_install_save_vtxfmt(ctx, &save->vtxfmt_noop);
+   }
+   else {
+      _mesa_install_save_vtxfmt(ctx, &save->vtxfmt);
+   }
    ctx->Driver.SaveNeedFlush = 1;
    return GL_TRUE;
 }
@@ -851,7 +882,12 @@ _save_End(void)
     * etc. received between here and the next begin will be compiled
     * as opcodes.
     */
-   _mesa_install_save_vtxfmt(ctx, &ctx->ListState.ListVtxfmt);
+   if (save->out_of_memory) {
+      _mesa_install_save_vtxfmt(ctx, &save->vtxfmt_noop);
+   }
+   else {
+      _mesa_install_save_vtxfmt(ctx, &ctx->ListState.ListVtxfmt);
+   }
 }
 
 
@@ -1042,9 +1078,13 @@ static void GLAPIENTRY
 _save_OBE_DrawArrays(GLenum mode, GLint start, GLsizei count)
 {
    GET_CURRENT_CONTEXT(ctx);
+   struct vbo_save_context *save = &vbo_context(ctx)->save;
    GLint i;
 
    if (!_mesa_validate_DrawArrays(ctx, mode, start, count))
+      return;
+
+   if (save->out_of_memory)
       return;
 
    _ae_map_vbos(ctx);
@@ -1068,9 +1108,13 @@ _save_OBE_DrawElements(GLenum mode, GLsizei count, GLenum type,
                        const GLvoid * indices)
 {
    GET_CURRENT_CONTEXT(ctx);
+   struct vbo_save_context *save = &vbo_context(ctx)->save;
    GLint i;
 
    if (!_mesa_validate_DrawElements(ctx, mode, count, type, indices, 0))
+      return;
+
+   if (save->out_of_memory)
       return;
 
    _ae_map_vbos(ctx);
@@ -1112,10 +1156,16 @@ _save_OBE_DrawRangeElements(GLenum mode, GLuint start, GLuint end,
                             const GLvoid * indices)
 {
    GET_CURRENT_CONTEXT(ctx);
-   if (_mesa_validate_DrawRangeElements(ctx, mode,
-                                        start, end, count, type, indices, 0)) {
-      _save_OBE_DrawElements(mode, count, type, indices);
-   }
+   struct vbo_save_context *save = &vbo_context(ctx)->save;
+
+   if (!_mesa_validate_DrawRangeElements(ctx, mode,
+                                         start, end, count, type, indices, 0))
+      return;
+
+   if (save->out_of_memory)
+      return;
+
+   _save_OBE_DrawElements(mode, count, type, indices);
 }
 
 
@@ -1487,6 +1537,7 @@ vbo_save_api_init(struct vbo_save_context *save)
 
    _save_vtxfmt_init(ctx);
    _save_current_init(ctx);
+   _mesa_noop_vtxfmt_init(&save->vtxfmt_noop);
 
    /* These will actually get set again when binding/drawing */
    for (i = 0; i < VBO_ATTRIB_MAX; i++)

@@ -45,6 +45,8 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
 #include "main/dispatch.h"
 
 #include "vbo_context.h"
+#include "vbo_noop.h"
+
 
 #ifdef ERROR
 #undef ERROR
@@ -1028,7 +1030,9 @@ void vbo_use_buffer_objects(struct gl_context *ctx)
    /* Allocate a real buffer object now */
    _mesa_reference_buffer_object(ctx, &exec->vtx.bufferobj, NULL);
    exec->vtx.bufferobj = ctx->Driver.NewBufferObject(ctx, bufName, target);
-   ctx->Driver.BufferData(ctx, target, size, NULL, usage, exec->vtx.bufferobj);
+   if (!ctx->Driver.BufferData(ctx, target, size, NULL, usage, exec->vtx.bufferobj)) {
+      _mesa_error(ctx, GL_OUT_OF_MEMORY, "VBO allocation");
+   }
 }
 
 
@@ -1065,6 +1069,7 @@ void vbo_exec_vtx_init( struct vbo_exec_context *exec )
    exec->vtx.buffer_ptr = exec->vtx.buffer_map;
 
    vbo_exec_vtxfmt_init( exec );
+   _mesa_noop_vtxfmt_init(&exec->vtxfmt_noop);
 
    /* Hook our functions into the dispatch table.
     */
