@@ -962,7 +962,7 @@ void r600_context_flush_all(struct r600_context *ctx, unsigned flush_flags)
 {
 	r600_need_cs_space(ctx, 5, FALSE);
 
-	ctx->pm4[ctx->pm4_cdwords++] = PKT3(PKT3_SURFACE_SYNC, 3, ctx->predicate_drawing);
+	ctx->pm4[ctx->pm4_cdwords++] = PKT3(PKT3_SURFACE_SYNC, 3, 0);
 	ctx->pm4[ctx->pm4_cdwords++] = flush_flags;     /* CP_COHER_CNTL */
 	ctx->pm4[ctx->pm4_cdwords++] = 0xffffffff;      /* CP_COHER_SIZE */
 	ctx->pm4[ctx->pm4_cdwords++] = 0;               /* CP_COHER_BASE */
@@ -988,7 +988,7 @@ void r600_context_bo_flush(struct r600_context *ctx, unsigned flush_flags,
 				if ((ctx->screen->family == CHIP_RV670) ||
 				    (ctx->screen->family == CHIP_RS780) ||
 				    (ctx->screen->family == CHIP_RS880)) {
-					ctx->pm4[ctx->pm4_cdwords++] = PKT3(PKT3_SURFACE_SYNC, 3, ctx->predicate_drawing);
+					ctx->pm4[ctx->pm4_cdwords++] = PKT3(PKT3_SURFACE_SYNC, 3, 0);
 					ctx->pm4[ctx->pm4_cdwords++] = S_0085F0_CB1_DEST_BASE_ENA(1);     /* CP_COHER_CNTL */
 					ctx->pm4[ctx->pm4_cdwords++] = 0xffffffff;      /* CP_COHER_SIZE */
 					ctx->pm4[ctx->pm4_cdwords++] = 0;               /* CP_COHER_BASE */
@@ -996,17 +996,17 @@ void r600_context_bo_flush(struct r600_context *ctx, unsigned flush_flags,
 				}
 			}
 
-			ctx->pm4[ctx->pm4_cdwords++] = PKT3(PKT3_EVENT_WRITE, 0, ctx->predicate_drawing);
+			ctx->pm4[ctx->pm4_cdwords++] = PKT3(PKT3_EVENT_WRITE, 0, 0);
 			ctx->pm4[ctx->pm4_cdwords++] = EVENT_TYPE(EVENT_TYPE_CACHE_FLUSH_AND_INV_EVENT) | EVENT_INDEX(0);
 			ctx->flags &= ~R600_CONTEXT_CHECK_EVENT_FLUSH;
 		}
 	} else {
-		ctx->pm4[ctx->pm4_cdwords++] = PKT3(PKT3_SURFACE_SYNC, 3, ctx->predicate_drawing);
+		ctx->pm4[ctx->pm4_cdwords++] = PKT3(PKT3_SURFACE_SYNC, 3, 0);
 		ctx->pm4[ctx->pm4_cdwords++] = flush_flags;
 		ctx->pm4[ctx->pm4_cdwords++] = (bo->buf->size + 255) >> 8;
 		ctx->pm4[ctx->pm4_cdwords++] = 0x00000000;
 		ctx->pm4[ctx->pm4_cdwords++] = 0x0000000A;
-		ctx->pm4[ctx->pm4_cdwords++] = PKT3(PKT3_NOP, 0, ctx->predicate_drawing);
+		ctx->pm4[ctx->pm4_cdwords++] = PKT3(PKT3_NOP, 0, 0);
 		ctx->pm4[ctx->pm4_cdwords++] = r600_context_bo_reloc(ctx, bo, RADEON_USAGE_WRITE);
 	}
 	bo->cs_buf->last_flush = (bo->cs_buf->last_flush | flush_flags) & flush_mask;
