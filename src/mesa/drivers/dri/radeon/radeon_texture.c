@@ -299,7 +299,7 @@ radeon_map_texture_image(struct gl_context *ctx,
 	if (image->bo) {
 		/* TFP case */
 		radeon_bo_map(image->bo, write);
-		*stride = get_texture_image_row_stride(rmesa, texImage->TexFormat, width, 0);
+		*stride = get_texture_image_row_stride(rmesa, texImage->TexFormat, width, 0, texImage->TexObject->Target);
 		*map = bo->ptr;
 	} else if (likely(mt)) {
 		radeon_bo_map(mt->bo, write);

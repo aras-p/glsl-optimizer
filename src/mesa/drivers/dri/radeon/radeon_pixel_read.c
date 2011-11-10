@@ -128,7 +128,7 @@ do_blit_readpixels(struct gl_context * ctx,
     }
     assert(x >= 0 && y >= 0);
 
-    aligned_rowstride = get_texture_image_row_stride(radeon, dst_format, dst_rowstride, 0);
+    aligned_rowstride = get_texture_image_row_stride(radeon, dst_format, dst_rowstride, 0, GL_TEXTURE_2D);
     dst_rowstride *= _mesa_get_format_bytes(dst_format);
     if (_mesa_is_bufferobj(pack->BufferObj) && aligned_rowstride != dst_rowstride)
         return GL_FALSE;

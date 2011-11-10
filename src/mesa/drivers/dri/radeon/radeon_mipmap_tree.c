@@ -96,14 +96,14 @@ unsigned get_texture_image_size(
 	return rowStride * height * depth;
 }
 
-unsigned get_texture_image_row_stride(radeonContextPtr rmesa, gl_format format, unsigned width, unsigned tiling)
+unsigned get_texture_image_row_stride(radeonContextPtr rmesa, gl_format format, unsigned width, unsigned tiling, GLuint target)
 {
 	if (_mesa_is_format_compressed(format)) {
 		return get_aligned_compressed_row_stride(format, width, rmesa->texture_compressed_row_align);
 	} else {
 		unsigned row_align;
 
-		if (!_mesa_is_pow_two(width)) {
+		if (!_mesa_is_pow_two(width) || target == GL_TEXTURE_RECTANGLE) {
 			row_align = rmesa->texture_rect_row_align - 1;
 		} else if (tiling) {
 			unsigned tileWidth, tileHeight;
@@ -132,7 +132,7 @@ static void compute_tex_image_offset(radeonContextPtr rmesa, radeon_mipmap_tree 
 
 	height = _mesa_next_pow_two_32(lvl->height);
 
-	lvl->rowstride = get_texture_image_row_stride(rmesa, mt->mesaFormat, lvl->width, mt->tilebits);
+	lvl->rowstride = get_texture_image_row_stride(rmesa, mt->mesaFormat, lvl->width, mt->tilebits, mt->target);
 	lvl->size = get_texture_image_size(mt->mesaFormat, lvl->rowstride, height, lvl->depth, mt->tilebits);
 
 	assert(lvl->size > 0);
