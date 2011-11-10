@@ -99,37 +99,39 @@ static void radeonSetTexWrap( radeonTexObjPtr t, GLenum swrap, GLenum twrap )
       _mesa_problem(NULL, "bad S wrap mode in %s", __FUNCTION__);
    }
 
-   switch ( twrap ) {
-   case GL_REPEAT:
-      t->pp_txfilter |= RADEON_CLAMP_T_WRAP;
-      break;
-   case GL_CLAMP:
-      t->pp_txfilter |= RADEON_CLAMP_T_CLAMP_GL;
-      is_clamp = GL_TRUE;
-      break;
-   case GL_CLAMP_TO_EDGE:
-      t->pp_txfilter |= RADEON_CLAMP_T_CLAMP_LAST;
-      break;
-   case GL_CLAMP_TO_BORDER:
-      t->pp_txfilter |= RADEON_CLAMP_T_CLAMP_GL;
-      is_clamp_to_border = GL_TRUE;
-      break;
-   case GL_MIRRORED_REPEAT:
-      t->pp_txfilter |= RADEON_CLAMP_T_MIRROR;
-      break;
-   case GL_MIRROR_CLAMP_EXT:
-      t->pp_txfilter |= RADEON_CLAMP_T_MIRROR_CLAMP_GL;
-      is_clamp = GL_TRUE;
-      break;
-   case GL_MIRROR_CLAMP_TO_EDGE_EXT:
-      t->pp_txfilter |= RADEON_CLAMP_T_MIRROR_CLAMP_LAST;
-      break;
-   case GL_MIRROR_CLAMP_TO_BORDER_EXT:
-      t->pp_txfilter |= RADEON_CLAMP_T_MIRROR_CLAMP_GL;
-      is_clamp_to_border = GL_TRUE;
-      break;
-   default:
-      _mesa_problem(NULL, "bad T wrap mode in %s", __FUNCTION__);
+   if (t->base.Target != GL_TEXTURE_1D) {
+      switch ( twrap ) {
+      case GL_REPEAT:
+	 t->pp_txfilter |= RADEON_CLAMP_T_WRAP;
+	 break;
+      case GL_CLAMP:
+	 t->pp_txfilter |= RADEON_CLAMP_T_CLAMP_GL;
+	 is_clamp = GL_TRUE;
+	 break;
+      case GL_CLAMP_TO_EDGE:
+	 t->pp_txfilter |= RADEON_CLAMP_T_CLAMP_LAST;
+	 break;
+      case GL_CLAMP_TO_BORDER:
+	 t->pp_txfilter |= RADEON_CLAMP_T_CLAMP_GL;
+	 is_clamp_to_border = GL_TRUE;
+	 break;
+      case GL_MIRRORED_REPEAT:
+	 t->pp_txfilter |= RADEON_CLAMP_T_MIRROR;
+	 break;
+      case GL_MIRROR_CLAMP_EXT:
+	 t->pp_txfilter |= RADEON_CLAMP_T_MIRROR_CLAMP_GL;
+	 is_clamp = GL_TRUE;
+	 break;
+      case GL_MIRROR_CLAMP_TO_EDGE_EXT:
+	 t->pp_txfilter |= RADEON_CLAMP_T_MIRROR_CLAMP_LAST;
+	 break;
+      case GL_MIRROR_CLAMP_TO_BORDER_EXT:
+	 t->pp_txfilter |= RADEON_CLAMP_T_MIRROR_CLAMP_GL;
+	 is_clamp_to_border = GL_TRUE;
+	 break;
+      default:
+	 _mesa_problem(NULL, "bad T wrap mode in %s", __FUNCTION__);
+      }
    }
 
    if ( is_clamp_to_border ) {
