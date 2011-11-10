@@ -157,6 +157,8 @@ _eglNativePlatformDetectNativeDisplay(EGLNativeDisplayType nativeDisplay)
    if (_eglPointerIsDereferencable(nativeDisplay)) {
       void *first_pointer = *(void **) nativeDisplay;
 
+      (void) first_pointer; /* silence unused var warning */
+
 #ifdef HAVE_WAYLAND_PLATFORM
       /* wl_display is a wl_proxy, which is a wl_object.
        * wl_object's first element points to the interfacetype. */
