@@ -1162,7 +1162,8 @@ void emit_tex(struct brw_wm_compile *c,
 	      response_length,
 	      cur_mrf - 1,
 	      1,
-	      simd_mode);
+	      simd_mode,
+	      BRW_SAMPLER_RETURN_FORMAT_FLOAT32);
 }
 
 
@@ -1240,7 +1241,8 @@ void emit_txb(struct brw_wm_compile *c,
 	      response_length,
 	      msgLength,
 	      1,
-	      BRW_SAMPLER_SIMD_MODE_SIMD16);	
+	      BRW_SAMPLER_SIMD_MODE_SIMD16,
+	      BRW_SAMPLER_RETURN_FORMAT_FLOAT32);
 }
 
 

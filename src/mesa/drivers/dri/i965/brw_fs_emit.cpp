@@ -256,6 +256,19 @@ fs_visitor::generate_tex(fs_inst *inst, struct brw_reg dst, struct brw_reg src)
    int msg_type = -1;
    int rlen = 4;
    uint32_t simd_mode = BRW_SAMPLER_SIMD_MODE_SIMD8;
+   uint32_t return_format;
+
+   switch (dst.type) {
+   case BRW_REGISTER_TYPE_D:
+      return_format = BRW_SAMPLER_RETURN_FORMAT_SINT32;
+      break;
+   case BRW_REGISTER_TYPE_UD:
+      return_format = BRW_SAMPLER_RETURN_FORMAT_UINT32;
+      break;
+   default:
+      return_format = BRW_SAMPLER_RETURN_FORMAT_FLOAT32;
+      break;
+   }
 
    if (c->dispatch_width == 16)
       simd_mode = BRW_SAMPLER_SIMD_MODE_SIMD16;
@@ -369,7 +382,8 @@ fs_visitor::generate_tex(fs_inst *inst, struct brw_reg dst, struct brw_reg src)
 	      rlen,
 	      inst->mlen,
 	      inst->header_present,
-	      simd_mode);
+	      simd_mode,
+	      return_format);
 }
 
 

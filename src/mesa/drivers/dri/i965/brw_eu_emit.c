@@ -650,7 +650,8 @@ static void brw_set_sampler_message(struct brw_compile *p,
                                     GLuint response_length,
                                     GLuint msg_length,
                                     GLuint header_present,
-                                    GLuint simd_mode)
+                                    GLuint simd_mode,
+				    GLuint return_format)
 {
    struct brw_context *brw = p->brw;
    struct intel_context *intel = &brw->intel;
@@ -676,7 +677,7 @@ static void brw_set_sampler_message(struct brw_compile *p,
       insn->bits3.sampler.binding_table_index = binding_table_index;
       insn->bits3.sampler.sampler = sampler;
       insn->bits3.sampler.msg_type = msg_type;
-      insn->bits3.sampler.return_format = BRW_SAMPLER_RETURN_FORMAT_FLOAT32;
+      insn->bits3.sampler.return_format = return_format;
    }
 }
 
@@ -2086,7 +2087,8 @@ void brw_SAMPLE(struct brw_compile *p,
 		GLuint response_length,
 		GLuint msg_length,
 		GLuint header_present,
-		GLuint simd_mode)
+		GLuint simd_mode,
+		GLuint return_format)
 {
    struct intel_context *intel = &p->brw->intel;
    bool need_stall = 0;
@@ -2180,7 +2182,8 @@ void brw_SAMPLE(struct brw_compile *p,
 			      response_length, 
 			      msg_length,
 			      header_present,
-			      simd_mode);
+			      simd_mode,
+			      return_format);
    }
 
    if (need_stall) {

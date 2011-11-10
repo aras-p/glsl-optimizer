@@ -928,7 +928,8 @@ void brw_SAMPLE(struct brw_compile *p,
 		GLuint response_length,
 		GLuint msg_length,
 		GLuint header_present,
-		GLuint simd_mode);
+		GLuint simd_mode,
+		GLuint return_format);
 
 void brw_math_16( struct brw_compile *p,
 		  struct brw_reg dest,
