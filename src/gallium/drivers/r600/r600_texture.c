@@ -65,8 +65,6 @@ static void r600_copy_from_staging_texture(struct pipe_context *ctx, struct r600
 				  transfer->box.x, transfer->box.y, transfer->box.z,
 				  rtransfer->staging_texture,
 				  0, &sbox);
-
-	ctx->texture_barrier(ctx);
 }
 
 unsigned r600_texture_get_offset(struct r600_resource_texture *rtex,
