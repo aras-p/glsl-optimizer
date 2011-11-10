@@ -96,7 +96,9 @@ svga_vbuf_render_allocate_vertices( struct vbuf_render *render,
                                                 PIPE_BIND_VERTEX_BUFFER,
                                                 PIPE_USAGE_STREAM,
                                                 svga_render->vbuf_size);
-         assert(svga_render->vbuf);
+         /* The buffer allocation may fail if we run out of memory.
+          * The draw module's vbuf code should handle that without crashing.
+          */
       }
 
       svga->swtnl.new_vdecl = TRUE;
@@ -119,14 +121,23 @@ svga_vbuf_render_map_vertices( struct vbuf_render *render )
    struct svga_vbuf_render *svga_render = svga_vbuf_render(render);
    struct svga_context *svga = svga_render->svga;
 
-   char *ptr = (char*)pipe_buffer_map(&svga->pipe,
-                                      svga_render->vbuf,
-                                      PIPE_TRANSFER_WRITE | 
-                                      PIPE_TRANSFER_FLUSH_EXPLICIT |
-                                      PIPE_TRANSFER_DISCARD |
-                                      PIPE_TRANSFER_UNSYNCHRONIZED,
-				      &svga_render->vbuf_transfer);
-   return ptr + svga_render->vbuf_offset;
+   if (svga_render->vbuf) {
+      char *ptr = (char*)pipe_buffer_map(&svga->pipe,
+                                         svga_render->vbuf,
+                                         PIPE_TRANSFER_WRITE |
+                                         PIPE_TRANSFER_FLUSH_EXPLICIT |
+                                         PIPE_TRANSFER_DISCARD |
+                                         PIPE_TRANSFER_UNSYNCHRONIZED,
+                                         &svga_render->vbuf_transfer);
+      if (ptr)
+         return ptr + svga_render->vbuf_offset;
+      else
+         return NULL;
+   }
+   else {
+      /* we probably ran out of memory when allocating the vertex buffer */
+      return NULL;
+   }
 }
 
 static void
