@@ -1939,7 +1939,29 @@ _mesa_CheckFramebufferStatusEXT(GLenum target)
    return buffer->_Status;
 }
 
+/**
+ * Replicate the src attachment point. Used by framebuffer_texture() when
+ * the same texture is attached at GL_DEPTH_ATTACHMENT and
+ * GL_STENCIL_ATTACHMENT.
+ */
+static void
+reuse_framebuffer_texture_attachment(struct gl_framebuffer *fb,
+                                     gl_buffer_index dst,
+                                     gl_buffer_index src)
+{
+   struct gl_renderbuffer_attachment *dst_att = &fb->Attachment[dst];
+   struct gl_renderbuffer_attachment *src_att = &fb->Attachment[src];
 
+   assert(src_att->Texture != NULL);
+   assert (src_att->Renderbuffer != NULL);
+
+   _mesa_reference_texobj(&dst_att->Texture, src_att->Texture);
+   _mesa_reference_renderbuffer(&dst_att->Renderbuffer, src_att->Renderbuffer);
+   dst_att->Type = src_att->Type;
+   dst_att->Complete = src_att->Complete;
+   dst_att->TextureLevel = src_att->TextureLevel;
+   dst_att->Zoffset = src_att->Zoffset;
+}
 
 /**
  * Common code called by glFramebufferTexture1D/2D/3DEXT().
@@ -2041,8 +2063,34 @@ framebuffer_texture(struct gl_context *ctx, const char *caller, GLenum target,
 
    _glthread_LOCK_MUTEX(fb->Mutex);
    if (texObj) {
-      _mesa_set_texture_attachment(ctx, fb, att, texObj, textarget,
-                                   level, zoffset);
+      if (attachment == GL_DEPTH_ATTACHMENT &&
+	   texObj == fb->Attachment[BUFFER_STENCIL].Texture) {
+	 /* The texture object is already attached to the stencil attachment
+	  * point. Don't create a new renderbuffer; just reuse the stencil
+	  * attachment's. This is required to prevent a GL error in
+	  * glGetFramebufferAttachmentParameteriv(GL_DEPTH_STENCIL).
+	  */
+	 reuse_framebuffer_texture_attachment(fb, BUFFER_DEPTH,
+	                                      BUFFER_STENCIL);
+      } else if (attachment == GL_STENCIL_ATTACHMENT &&
+	         texObj== fb->Attachment[BUFFER_DEPTH].Texture) {
+	 /* As above, but with depth and stencil juxtasposed. */
+	 reuse_framebuffer_texture_attachment(fb, BUFFER_STENCIL,
+	                                      BUFFER_DEPTH);
+      } else {
+	 _mesa_set_texture_attachment(ctx, fb, att, texObj, textarget,
+				      level, zoffset);
+	 if (attachment == GL_DEPTH_STENCIL_ATTACHMENT) {
+	    /* Above we created a new renderbuffer and attached it to the
+	     * depth attachment point. Now attach it to the stencil attachment
+	     * point too.
+	     */
+	    assert(att == &fb->Attachment[BUFFER_DEPTH]);
+	    reuse_framebuffer_texture_attachment(fb,BUFFER_STENCIL,
+	                                         BUFFER_DEPTH);
+	 }
+      }
+
       /* Set the render-to-texture flag.  We'll check this flag in
        * glTexImage() and friends to determine if we need to revalidate
        * any FBOs that might be rendering into this texture.
@@ -2055,6 +2103,10 @@ framebuffer_texture(struct gl_context *ctx, const char *caller, GLenum target,
    }
    else {
       _mesa_remove_attachment(ctx, att);
+      if (attachment == GL_DEPTH_STENCIL_ATTACHMENT) {
+	 assert(att == &fb->Attachment[BUFFER_DEPTH]);
+	 _mesa_remove_attachment(ctx, &fb->Attachment[BUFFER_STENCIL]);
+      }
    }
 
    invalidate_framebuffer(fb);
