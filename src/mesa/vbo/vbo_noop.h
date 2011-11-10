@@ -1,8 +1,8 @@
 /*
  * Mesa 3-D graphics library
- * Version:  6.5.1
  *
  * Copyright (C) 1999-2006  Brian Paul   All Rights Reserved.
+ * Copyright (C) 2011  VMware, Inc.  All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -17,7 +17,7 @@
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
  * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
  * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.  IN NO EVENT SHALL
- * BRIAN PAUL BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN
+ * THE AUTHORS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN
  * AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
@@ -25,37 +25,21 @@
 #ifndef _API_NOOP_H
 #define _API_NOOP_H
 
+
 #include "main/mfeatures.h"
 #include "main/mtypes.h"
 
+
 #if FEATURE_beginend
-
-extern void GLAPIENTRY
-_mesa_noop_Rectf(GLfloat x1, GLfloat y1, GLfloat x2, GLfloat y2);
-
-extern void GLAPIENTRY
-_mesa_noop_EvalMesh1(GLenum mode, GLint i1, GLint i2);
-
-extern void GLAPIENTRY
-_mesa_noop_EvalMesh2(GLenum mode, GLint i1, GLint i2, GLint j1, GLint j2);
-
-extern void GLAPIENTRY
-_mesa_noop_Materialfv(GLenum face, GLenum pname, const GLfloat *param);
-
-extern void GLAPIENTRY
-_mesa_noop_MultiDrawElements(GLenum mode, const GLsizei *count, GLenum type,
-			     const GLvoid **indices, GLsizei primcount);
-
-extern void GLAPIENTRY
-_mesa_noop_MultiDrawElementsBaseVertex(GLenum mode, const GLsizei *count,
-				       GLenum type,
-				       const GLvoid **indices,
-				       GLsizei primcount,
-				       const GLint *basevertex);
 
 extern void
 _mesa_noop_vtxfmt_init(GLvertexformat *vfmt);
 
+extern GLboolean
+_mesa_using_noop_vtxfmt(const struct _glapi_table *dispatch);
+
+
 #endif /* FEATURE_beginend */
+
 
 #endif /* _API_NOOP_H */

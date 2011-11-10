@@ -9,7 +9,6 @@ MAIN_SOURCES = \
 	main/api_arrayelt.c \
 	main/api_exec.c \
 	main/api_loopback.c \
-	main/api_noop.c \
 	main/api_validate.c \
 	main/accum.c \
 	main/arbprogram.c \
@@ -183,6 +182,7 @@ VBO_SOURCES = \
 	vbo/vbo_exec_array.c \
 	vbo/vbo_exec_draw.c \
 	vbo/vbo_exec_eval.c \
+	vbo/vbo_noop.c \
 	vbo/vbo_rebase.c \
 	vbo/vbo_split.c \
 	vbo/vbo_split_copy.c \
