@@ -726,48 +726,48 @@ ivec4 texelFetchOffset(isampler2DArray sampler, ivec3 P, int lod, ivec2 offset);
 uvec4 texelFetchOffset(usampler2DArray sampler, ivec3 P, int lod, ivec2 offset);
 
 /* textureProjOffset - no bias */
- vec4 textureProj( sampler1D sampler, vec2 P, int offset);
-ivec4 textureProj(isampler1D sampler, vec2 P, int offset);
-uvec4 textureProj(usampler1D sampler, vec2 P, int offset);
- vec4 textureProj( sampler1D sampler, vec4 P, int offset);
-ivec4 textureProj(isampler1D sampler, vec4 P, int offset);
-uvec4 textureProj(usampler1D sampler, vec4 P, int offset);
+ vec4 textureProjOffset( sampler1D sampler, vec2 P, int offset);
+ivec4 textureProjOffset(isampler1D sampler, vec2 P, int offset);
+uvec4 textureProjOffset(usampler1D sampler, vec2 P, int offset);
+ vec4 textureProjOffset( sampler1D sampler, vec4 P, int offset);
+ivec4 textureProjOffset(isampler1D sampler, vec4 P, int offset);
+uvec4 textureProjOffset(usampler1D sampler, vec4 P, int offset);
 
- vec4 textureProj( sampler2D sampler, vec3 P, ivec2 offset);
-ivec4 textureProj(isampler2D sampler, vec3 P, ivec2 offset);
-uvec4 textureProj(usampler2D sampler, vec3 P, ivec2 offset);
- vec4 textureProj( sampler2D sampler, vec4 P, ivec2 offset);
-ivec4 textureProj(isampler2D sampler, vec4 P, ivec2 offset);
-uvec4 textureProj(usampler2D sampler, vec4 P, ivec2 offset);
+ vec4 textureProjOffset( sampler2D sampler, vec3 P, ivec2 offset);
+ivec4 textureProjOffset(isampler2D sampler, vec3 P, ivec2 offset);
+uvec4 textureProjOffset(usampler2D sampler, vec3 P, ivec2 offset);
+ vec4 textureProjOffset( sampler2D sampler, vec4 P, ivec2 offset);
+ivec4 textureProjOffset(isampler2D sampler, vec4 P, ivec2 offset);
+uvec4 textureProjOffset(usampler2D sampler, vec4 P, ivec2 offset);
 
- vec4 textureProj( sampler3D sampler, vec4 P, ivec3 offset);
-ivec4 textureProj(isampler3D sampler, vec4 P, ivec3 offset);
-uvec4 textureProj(usampler3D sampler, vec4 P, ivec3 offset);
+ vec4 textureProjOffset( sampler3D sampler, vec4 P, ivec3 offset);
+ivec4 textureProjOffset(isampler3D sampler, vec4 P, ivec3 offset);
+uvec4 textureProjOffset(usampler3D sampler, vec4 P, ivec3 offset);
 
-float textureProj(sampler1DShadow sampler, vec4 P, int offset);
-float textureProj(sampler2DShadow sampler, vec4 P, ivec2 offset);
+float textureProjOffset(sampler1DShadow sampler, vec4 P, int offset);
+float textureProjOffset(sampler2DShadow sampler, vec4 P, ivec2 offset);
 
-/* textureProjOffset - bias variants */
- vec4 textureProj( sampler1D sampler, vec2 P, int offset, float bias);
-ivec4 textureProj(isampler1D sampler, vec2 P, int offset, float bias);
-uvec4 textureProj(usampler1D sampler, vec2 P, int offset, float bias);
- vec4 textureProj( sampler1D sampler, vec4 P, int offset, float bias);
-ivec4 textureProj(isampler1D sampler, vec4 P, int offset, float bias);
-uvec4 textureProj(usampler1D sampler, vec4 P, int offset, float bias);
+/* textureProjOffsetOffset - bias variants */
+ vec4 textureProjOffset( sampler1D sampler, vec2 P, int offset, float bias);
+ivec4 textureProjOffset(isampler1D sampler, vec2 P, int offset, float bias);
+uvec4 textureProjOffset(usampler1D sampler, vec2 P, int offset, float bias);
+ vec4 textureProjOffset( sampler1D sampler, vec4 P, int offset, float bias);
+ivec4 textureProjOffset(isampler1D sampler, vec4 P, int offset, float bias);
+uvec4 textureProjOffset(usampler1D sampler, vec4 P, int offset, float bias);
 
- vec4 textureProj( sampler2D sampler, vec3 P, ivec2 offset, float bias);
-ivec4 textureProj(isampler2D sampler, vec3 P, ivec2 offset, float bias);
-uvec4 textureProj(usampler2D sampler, vec3 P, ivec2 offset, float bias);
- vec4 textureProj( sampler2D sampler, vec4 P, ivec2 offset, float bias);
-ivec4 textureProj(isampler2D sampler, vec4 P, ivec2 offset, float bias);
-uvec4 textureProj(usampler2D sampler, vec4 P, ivec2 offset, float bias);
+ vec4 textureProjOffset( sampler2D sampler, vec3 P, ivec2 offset, float bias);
+ivec4 textureProjOffset(isampler2D sampler, vec3 P, ivec2 offset, float bias);
+uvec4 textureProjOffset(usampler2D sampler, vec3 P, ivec2 offset, float bias);
+ vec4 textureProjOffset( sampler2D sampler, vec4 P, ivec2 offset, float bias);
+ivec4 textureProjOffset(isampler2D sampler, vec4 P, ivec2 offset, float bias);
+uvec4 textureProjOffset(usampler2D sampler, vec4 P, ivec2 offset, float bias);
 
- vec4 textureProj( sampler3D sampler, vec4 P, ivec3 offset, float bias);
-ivec4 textureProj(isampler3D sampler, vec4 P, ivec3 offset, float bias);
-uvec4 textureProj(usampler3D sampler, vec4 P, ivec3 offset, float bias);
+ vec4 textureProjOffset( sampler3D sampler, vec4 P, ivec3 offset, float bias);
+ivec4 textureProjOffset(isampler3D sampler, vec4 P, ivec3 offset, float bias);
+uvec4 textureProjOffset(usampler3D sampler, vec4 P, ivec3 offset, float bias);
 
-float textureProj(sampler1DShadow sampler, vec4 P, int offset, float bias);
-float textureProj(sampler2DShadow sampler, vec4 P, ivec2 offset, float bias);
+float textureProjOffset(sampler1DShadow s, vec4 P, int offset, float bias);
+float textureProjOffset(sampler2DShadow s, vec4 P, ivec2 offset, float bias);
 
 /* textureLodOffset */
  vec4 textureLodOffset( sampler1D sampler, float P, float lod, int offset);
