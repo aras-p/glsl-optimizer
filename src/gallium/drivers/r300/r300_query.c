@@ -36,7 +36,8 @@ static struct pipe_query *r300_create_query(struct pipe_context *pipe,
     struct r300_screen *r300screen = r300->screen;
     struct r300_query *q;
 
-    if (query_type != PIPE_QUERY_OCCLUSION_COUNTER) {
+    if (query_type != PIPE_QUERY_OCCLUSION_COUNTER &&
+        query_type != PIPE_QUERY_OCCLUSION_PREDICATE) {
         return NULL;
     }
 
@@ -139,6 +140,9 @@ static boolean r300_get_query_result(struct pipe_context* pipe,
 
     r300->rws->buffer_unmap(q->buf);
 
+    if (q->type == PIPE_QUERY_OCCLUSION_PREDICATE) {
+        temp = temp != 0;
+    }
     *((uint64_t*)vresult) = temp;
     return TRUE;
 }
