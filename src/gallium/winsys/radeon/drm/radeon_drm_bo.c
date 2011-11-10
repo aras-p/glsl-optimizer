@@ -118,7 +118,8 @@ static void radeon_bo_wait(struct pb_buffer *_buf, enum radeon_bo_usage usage)
         while (drmCommandWriteRead(bo->rws->fd, DRM_RADEON_GEM_WAIT,
                                    &args, sizeof(args)) == -EBUSY);
     } else*/ {
-        struct drm_radeon_gem_wait_idle args = {};
+        struct drm_radeon_gem_wait_idle args;
+        memset(&args, 0, sizeof(args));
         args.handle = bo->handle;
         while (drmCommandWriteRead(bo->rws->fd, DRM_RADEON_GEM_WAIT_IDLE,
                                    &args, sizeof(args)) == -EBUSY);
@@ -142,7 +143,8 @@ static boolean radeon_bo_is_busy(struct pb_buffer *_buf,
         return drmCommandWriteRead(bo->rws->fd, DRM_RADEON_GEM_WAIT,
                                    &args, sizeof(args)) != 0;
     } else*/ {
-        struct drm_radeon_gem_busy args = {};
+        struct drm_radeon_gem_busy args;
+        memset(&args, 0, sizeof(args));
         args.handle = bo->handle;
         return drmCommandWriteRead(bo->rws->fd, DRM_RADEON_GEM_BUSY,
                                    &args, sizeof(args)) != 0;
@@ -152,7 +154,9 @@ static boolean radeon_bo_is_busy(struct pb_buffer *_buf,
 static void radeon_bo_destroy(struct pb_buffer *_buf)
 {
     struct radeon_bo *bo = radeon_bo(_buf);
-    struct drm_gem_close args = {};
+    struct drm_gem_close args;
+
+    memset(&args, 0, sizeof(args));
 
     if (bo->name) {
         pipe_mutex_lock(bo->mgr->bo_handles_mutex);
@@ -192,8 +196,10 @@ static void *radeon_bo_map_internal(struct pb_buffer *_buf,
 {
     struct radeon_bo *bo = radeon_bo(_buf);
     struct radeon_drm_cs *cs = flush_ctx;
-    struct drm_radeon_gem_mmap args = {};
+    struct drm_radeon_gem_mmap args;
     void *ptr;
+
+    memset(&args, 0, sizeof(args));
 
     /* If it's not unsynchronized bo_map, flush CS if needed and then wait. */
     if (!(flags & PB_USAGE_UNSYNCHRONIZED)) {
@@ -335,8 +341,10 @@ static struct pb_buffer *radeon_bomgr_create_bo(struct pb_manager *_mgr,
     struct radeon_bomgr *mgr = radeon_bomgr(_mgr);
     struct radeon_drm_winsys *rws = mgr->rws;
     struct radeon_bo *bo;
-    struct drm_radeon_gem_create args = {};
+    struct drm_radeon_gem_create args;
     struct radeon_bo_desc *rdesc = (struct radeon_bo_desc*)desc;
+
+    memset(&args, 0, sizeof(args));
 
     assert(rdesc->initial_domains && rdesc->reloc_domains);
     assert((rdesc->initial_domains &
@@ -448,7 +456,9 @@ static void radeon_bo_get_tiling(struct pb_buffer *_buf,
                                  enum radeon_bo_layout *macrotiled)
 {
     struct radeon_bo *bo = get_radeon_bo(_buf);
-    struct drm_radeon_gem_set_tiling args = {};
+    struct drm_radeon_gem_set_tiling args;
+
+    memset(&args, 0, sizeof(args));
 
     args.handle = bo->handle;
 
@@ -474,7 +484,9 @@ static void radeon_bo_set_tiling(struct pb_buffer *_buf,
 {
     struct radeon_bo *bo = get_radeon_bo(_buf);
     struct radeon_drm_cs *cs = radeon_drm_cs(rcs);
-    struct drm_radeon_gem_set_tiling args = {};
+    struct drm_radeon_gem_set_tiling args;
+
+    memset(&args, 0, sizeof(args));
 
     /* Tiling determines how DRM treats the buffer data.
      * We must flush CS when changing it if the buffer is referenced. */
@@ -573,6 +585,8 @@ static struct pb_buffer *radeon_winsys_bo_from_handle(struct radeon_winsys *rws,
     struct radeon_bomgr *mgr = radeon_bomgr(ws->kman);
     struct drm_gem_open open_arg = {};
 
+    memset(&open_arg, 0, sizeof(open_arg));
+
     /* We must maintain a list of pairs <handle, bo>, so that we always return
      * the same BO for one particular handle. If we didn't do that and created
      * more than one BO for the same handle and then relocated them in a CS,
@@ -635,8 +649,10 @@ static boolean radeon_winsys_bo_get_handle(struct pb_buffer *buffer,
                                            unsigned stride,
                                            struct winsys_handle *whandle)
 {
-    struct drm_gem_flink flink = {};
+    struct drm_gem_flink flink;
     struct radeon_bo *bo = get_radeon_bo(buffer);
+
+    memset(&flink, 0, sizeof(flink));
 
     if (whandle->type == DRM_API_HANDLE_TYPE_SHARED) {
         if (!bo->flinked) {

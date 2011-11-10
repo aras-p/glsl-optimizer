@@ -80,8 +80,10 @@ static boolean radeon_set_fd_access(struct radeon_drm_cs *applier,
                                     pipe_mutex *mutex,
                                     unsigned request, boolean enable)
 {
-    struct drm_radeon_info info = {0};
+    struct drm_radeon_info info;
     unsigned value = enable ? 1 : 0;
+
+    memset(&info, 0, sizeof(info));
 
     pipe_mutex_lock(*mutex);
 
@@ -127,8 +129,10 @@ static boolean radeon_set_fd_access(struct radeon_drm_cs *applier,
 static boolean radeon_get_drm_value(int fd, unsigned request,
                                     const char *errname, uint32_t *out)
 {
-    struct drm_radeon_info info = {0};
+    struct drm_radeon_info info;
     int retval;
+
+    memset(&info, 0, sizeof(info));
 
     info.value = (unsigned long)out;
     info.request = request;
@@ -145,9 +149,11 @@ static boolean radeon_get_drm_value(int fd, unsigned request,
 /* Helper function to do the ioctls needed for setup and init. */
 static boolean do_winsys_init(struct radeon_drm_winsys *ws)
 {
-    struct drm_radeon_gem_info gem_info = {0};
+    struct drm_radeon_gem_info gem_info;
     int retval;
     drmVersionPtr version;
+
+    memset(&gem_info, 0, sizeof(gem_info));
 
     /* We do things in a specific order here.
      *
