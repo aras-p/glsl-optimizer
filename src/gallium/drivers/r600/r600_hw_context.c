@@ -1849,8 +1849,6 @@ boolean r600_context_query_result(struct r600_context *ctx,
 	default:
 		assert(0);
 	}
-
-	memset(&query->result, 0, sizeof(query->result));
 	return TRUE;
 }
 
