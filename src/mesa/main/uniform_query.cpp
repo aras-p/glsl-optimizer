@@ -698,11 +698,27 @@ _mesa_uniform(struct gl_context *ctx, struct gl_shader_program *shProg,
 
 	 prog = shProg->_LinkedShaders[i]->Program;
 
+	 /* If the shader stage doesn't use any samplers, don't bother
+	  * checking if any samplers have changed.
+	  */
+	 if (prog->SamplersUsed == 0)
+	    continue;
+
 	 assert(sizeof(prog->SamplerUnits) == sizeof(shProg->SamplerUnits));
 
-	 if (memcmp(prog->SamplerUnits,
-		    shProg->SamplerUnits,
-		    sizeof(shProg->SamplerUnits)) != 0) {
+	 /* Determine if any of the samplers used by this shader stage have
+	  * been modified.
+	  */
+	 bool changed = false;
+	 for (unsigned j = 0; j < Elements(prog->SamplerUnits); j++) {
+	    if ((prog->SamplersUsed & (1U << j)) != 0
+		&& (prog->SamplerUnits[j] != shProg->SamplerUnits[j])) {
+	       changed = true;
+	       break;
+	    }
+	 }
+
+	 if (changed) {
 	    if (!flushed) {
 	       FLUSH_VERTICES(ctx, _NEW_TEXTURE | _NEW_PROGRAM);
 	       flushed = true;
