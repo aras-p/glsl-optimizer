@@ -1145,8 +1145,9 @@ void evergreen_context_draw(struct r600_context *ctx, const struct r600_draw *dr
 	/* when increasing ndwords, bump the max limit too */
 	assert(ndwords <= R600_MAX_DRAW_CS_DWORDS);
 
-	/* queries need some special values */
-	if (ctx->num_query_running) {
+	/* queries need some special values
+	 * (this is non-zero if any query is active) */
+	if (ctx->num_cs_dw_queries_suspend) {
 		r600_context_reg(ctx,
 				R_028004_DB_COUNT_CONTROL,
 				S_028004_PERFECT_ZPASS_COUNTS(1),

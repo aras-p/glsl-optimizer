@@ -178,6 +178,8 @@ struct r600_query {
 	 * data blocks for current query are stored sequentially from
 	 * results_start to results_end, with wrapping on the buffer end */
 	struct r600_resource			*buffer;
+	/* The number of dwords for begin_query or end_query. */
+	unsigned				num_cs_dw;
 	/* linked list of queries */
 	struct list_head			list;
 };
@@ -210,8 +212,8 @@ struct r600_context {
 
 	/* The list of active queries. Only one query of each type can be active. */
 	struct list_head	active_query_list;
+	unsigned		num_cs_dw_queries_suspend;
 
-	unsigned		num_query_running;
 	unsigned		backend_mask;
 	unsigned                max_db; /* for OQ */
 	unsigned                num_dest_buffers;

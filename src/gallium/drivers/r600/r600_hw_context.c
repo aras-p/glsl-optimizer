@@ -943,6 +943,9 @@ void r600_need_cs_space(struct r600_context *ctx, unsigned num_dw,
 		num_dw += R600_MAX_DRAW_CS_DWORDS;
 	}
 
+	/* Count in queries_suspend. */
+	num_dw += ctx->num_cs_dw_queries_suspend;
+
 	/* Flush if there's not enough space. */
 	if (num_dw > ctx->pm4_ndwords) {
 		r600_context_flush(ctx, RADEON_FLUSH_ASYNC);
@@ -1433,8 +1436,9 @@ void r600_context_draw(struct r600_context *ctx, const struct r600_draw *draw)
 	/* when increasing ndwords, bump the max limit too */
 	assert(ndwords <= R600_MAX_DRAW_CS_DWORDS);
 
-	/* queries need some special values */
-	if (ctx->num_query_running) {
+	/* queries need some special values
+	 * (this is non-zero if any query is active) */
+	if (ctx->num_cs_dw_queries_suspend) {
 		if (ctx->screen->family >= CHIP_RV770) {
 			r600_context_reg(ctx,
 					R_028D0C_DB_RENDER_CONTROL,
@@ -1631,21 +1635,9 @@ static boolean r600_query_result(struct r600_context *ctx, struct r600_query *qu
 
 void r600_query_begin(struct r600_context *ctx, struct r600_query *query)
 {
-	unsigned required_space, new_results_end;
+	unsigned new_results_end;
 
-	switch (query->type) {
-	case PIPE_QUERY_OCCLUSION_COUNTER:
-		required_space = 12; /* 6 for begin, 6 for end */
-		break;
-	case PIPE_QUERY_TIME_ELAPSED:
-		required_space = 16; /* 8 for begin, 8 for end */
-		break;
-	default:
-		assert(0);
-		return;
-	}
-
-	r600_need_cs_space(ctx, required_space, TRUE);
+	r600_need_cs_space(ctx, query->num_cs_dw * 2, TRUE);
 
 	new_results_end = (query->results_end + query->result_size) % query->buffer->b.b.b.width0;
 
@@ -1696,7 +1688,7 @@ void r600_query_begin(struct r600_context *ctx, struct r600_query *query)
 	ctx->pm4[ctx->pm4_cdwords++] = PKT3(PKT3_NOP, 0, 0);
 	ctx->pm4[ctx->pm4_cdwords++] = r600_context_bo_reloc(ctx, query->buffer, RADEON_USAGE_WRITE);
 
-	ctx->num_query_running++;
+	ctx->num_cs_dw_queries_suspend += query->num_cs_dw;
 }
 
 void r600_query_end(struct r600_context *ctx, struct r600_query *query)
@@ -1724,7 +1716,7 @@ void r600_query_end(struct r600_context *ctx, struct r600_query *query)
 	ctx->pm4[ctx->pm4_cdwords++] = r600_context_bo_reloc(ctx, query->buffer, RADEON_USAGE_WRITE);
 
 	query->results_end = (query->results_end + query->result_size) % query->buffer->b.b.b.width0;
-	ctx->num_query_running--;
+	ctx->num_cs_dw_queries_suspend -= query->num_cs_dw;
 }
 
 void r600_query_predication(struct r600_context *ctx, struct r600_query *query, int operation,
@@ -1780,9 +1772,11 @@ struct r600_query *r600_context_query_create(struct r600_context *ctx, unsigned 
 	switch (query_type) {
 	case PIPE_QUERY_OCCLUSION_COUNTER:
 		query->result_size = 16 * ctx->max_db;
+		query->num_cs_dw = 6;
 		break;
 	case PIPE_QUERY_TIME_ELAPSED:
 		query->result_size = 16;
+		query->num_cs_dw = 8;
 		break;
 	default:
 		assert(0);
