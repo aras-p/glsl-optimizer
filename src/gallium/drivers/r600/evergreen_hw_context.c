@@ -999,12 +999,9 @@ int evergreen_context_init(struct r600_context *ctx, struct r600_screen *screen)
 		r = -ENOMEM;
 		goto out_err;
 	}
-	ctx->pm4_ndwords = RADEON_MAX_CMDBUF_DWORDS;
 	ctx->pm4 = ctx->cs->buf;
 
 	r600_init_cs(ctx);
-	/* save 16dwords space for fence mecanism */
-	ctx->pm4_ndwords -= 16;
 	ctx->max_db = 8;
 	return 0;
 out_err:
@@ -1158,14 +1155,10 @@ void evergreen_context_draw(struct r600_context *ctx, const struct r600_draw *dr
 				S_02800C_NOOP_CULL_DISABLE(1));
 	}
 
-	/* update the max dword count to make sure we have enough space
-	 * reserved for flushing the destination caches */
-	ctx->pm4_ndwords = RADEON_MAX_CMDBUF_DWORDS - ctx->num_dest_buffers * 7 - 16;
-
 	r600_need_cs_space(ctx, 0, TRUE);
 
 	/* at this point everything is flushed and ctx->pm4_cdwords = 0 */
-	if (unlikely((ctx->pm4_dirty_cdwords + ndwords) > ctx->pm4_ndwords)) {
+	if (unlikely((ctx->pm4_dirty_cdwords + ndwords) > RADEON_MAX_CMDBUF_DWORDS)) {
 		R600_ERR("context is too big to be scheduled\n");
 		return;
 	}
