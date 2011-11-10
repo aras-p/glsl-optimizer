@@ -130,7 +130,7 @@ static INLINE ushort
 emit_vertex( struct vbuf_stage *vbuf,
              struct vertex_header *vertex )
 {
-   if(vertex->vertex_id == UNDEFINED_VERTEX_ID) {      
+   if (vertex->vertex_id == UNDEFINED_VERTEX_ID && vbuf->vertex_ptr) {
       /* Hmm - vertices are emitted one at a time - better make sure
        * set_buffer is efficient.  Consider a special one-shot mode for
        * translate.
@@ -357,8 +357,10 @@ vbuf_flush_vertices( struct vbuf_stage *vbuf )
 static void 
 vbuf_alloc_vertices( struct vbuf_stage *vbuf )
 {
-   assert(!vbuf->nr_indices);
-   assert(!vbuf->vertices);
+   if (vbuf->vertex_ptr) {
+      assert(!vbuf->nr_indices);
+      assert(!vbuf->vertices);
+   }
    
    /* Allocate a new vertex buffer */
    vbuf->max_vertices = vbuf->render->max_vertex_buffer_bytes / vbuf->vertex_size;
