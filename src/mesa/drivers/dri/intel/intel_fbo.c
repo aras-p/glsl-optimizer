@@ -349,8 +349,8 @@ intel_unmap_renderbuffer_s8(struct gl_context *ctx,
       /* The temporary buffer was written to, so we must copy its pixels into
        * the real buffer.
        */
-      uint8_t *tiled_s8_map = irb->map_buffer;
-      uint8_t *untiled_s8_map = irb->region->bo->virtual;
+      uint8_t *untiled_s8_map = irb->map_buffer;
+      uint8_t *tiled_s8_map = irb->region->bo->virtual;
 
       /* Flip the Y axis for the default framebuffer. */
       int y_flip = (rb->Name == 0) ? -1 : 1;
