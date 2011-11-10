@@ -260,7 +260,7 @@ if [ $STATIC = 1 ]; then
     NEWOBJECTS=""
     for OBJ in $OBJECTS ; do
 	case $OBJ in
-	    -Wl,*)
+	    -Wl,*|-L*|-l*)
 		echo "mklib: warning: ignoring $OBJ for static library"
 		;;
 	    *)
