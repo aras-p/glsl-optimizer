@@ -236,6 +236,7 @@ slow_read_rgba_pixels( struct gl_context *ctx,
 		       GLbitfield transferOps )
 {
    struct gl_renderbuffer *rb = ctx->ReadBuffer->_ColorReadBuffer;
+   const gl_format rbFormat = _mesa_get_srgb_format_linear(rb->Format);
    union {
       float f[MAX_WIDTH][4];
       unsigned int i[MAX_WIDTH][4];
@@ -252,11 +253,10 @@ slow_read_rgba_pixels( struct gl_context *ctx,
 
    for (j = 0; j < height; j++) {
       if (_mesa_is_integer_format(format)) {
-	 _mesa_unpack_int_rgba_row(rb->Format, width, map, rgba.i);
+	 _mesa_unpack_int_rgba_row(rbFormat, width, map, rgba.i);
 	 _mesa_pack_rgba_span_int(ctx, width, rgba.i, format, type, dst);
       } else {
-	 _mesa_unpack_rgba_row(_mesa_get_srgb_format_linear(rb->Format),
-			       width, map, rgba.f);
+	 _mesa_unpack_rgba_row(rbFormat, width, map, rgba.f);
 	 _mesa_pack_rgba_span_float(ctx, width, rgba.f, format, type, dst,
 				    packing, transferOps);
       }
