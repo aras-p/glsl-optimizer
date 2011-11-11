@@ -267,8 +267,9 @@ intel_map_renderbuffer_s8(struct gl_context *ctx,
    irb->map_h = h;
 
    /* Flip the Y axis for the default framebuffer. */
+   int region_h = irb->region->height;
    int y_flip = (rb->Name == 0) ? -1 : 1;
-   int y_bias = (rb->Name == 0) ? (2 * irb->region->height - 1) : 0;
+   int y_bias = (rb->Name == 0) ? (region_h * 2 + region_h % 2 - 1) : 0;
 
    irb->map_buffer = malloc(w * h);
    untiled_s8_map = irb->map_buffer;
@@ -353,8 +354,9 @@ intel_unmap_renderbuffer_s8(struct gl_context *ctx,
       uint8_t *tiled_s8_map = irb->region->bo->virtual;
 
       /* Flip the Y axis for the default framebuffer. */
+      int region_h = irb->region->height;
       int y_flip = (rb->Name == 0) ? -1 : 1;
-      int y_bias = (rb->Name == 0) ? (2 * irb->region->height - 1) : 0;
+      int y_bias = (rb->Name == 0) ? (region_h * 2 + region_h % 2 - 1) : 0;
 
       for (uint32_t pix_y = 0; pix_y < irb->map_h; pix_y++) {
 	 for (uint32_t pix_x = 0; pix_x < irb->map_w; pix_x++) {
