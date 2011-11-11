@@ -185,9 +185,9 @@ static void calculate_miptree_layout(radeonContextPtr rmesa, radeon_mipmap_tree 
 /**
  * Create a new mipmap tree, calculate its layout and allocate memory.
  */
-static radeon_mipmap_tree* radeon_miptree_create(radeonContextPtr rmesa,
-		GLenum target, gl_format mesaFormat, GLuint baseLevel, GLuint numLevels,
-		GLuint width0, GLuint height0, GLuint depth0, GLuint tilebits)
+radeon_mipmap_tree* radeon_miptree_create(radeonContextPtr rmesa,
+					  GLenum target, gl_format mesaFormat, GLuint baseLevel, GLuint numLevels,
+					  GLuint width0, GLuint height0, GLuint depth0, GLuint tilebits)
 {
 	radeon_mipmap_tree *mt = CALLOC_STRUCT(_radeon_mipmap_tree);
 
@@ -298,13 +298,10 @@ static void calculate_min_max_lod(struct gl_texture_object *tObj,
  * given face and level.
  */
 GLboolean radeon_miptree_matches_image(radeon_mipmap_tree *mt,
-		struct gl_texture_image *texImage, GLuint face, GLuint level)
+				       struct gl_texture_image *texImage)
 {
 	radeon_mipmap_level *lvl;
-
-	if (face >= mt->faces)
-		return GL_FALSE;
-
+	GLuint level = texImage->Level;
 	if (texImage->TexFormat != mt->mesaFormat)
 		return GL_FALSE;
 
@@ -332,7 +329,7 @@ static GLboolean radeon_miptree_matches_texture(radeon_mipmap_tree *mt, struct g
 
 	mtBaseLevel = &mt->levels[texObj->BaseLevel - mt->baseLevel];
 	firstImage = texObj->Image[0][texObj->BaseLevel];
-	numLevels = MIN2(texObj->MaxLevel - texObj->BaseLevel + 1, firstImage->MaxLog2 + 1);
+	numLevels = MIN2(texObj->_MaxLevel - texObj->BaseLevel + 1, firstImage->MaxLog2 + 1);
 
 	if (radeon_is_debug_enabled(RADEON_TEXTURE,RADEON_TRACE)) {
 		fprintf(stderr, "Checking if miptree %p matches texObj %p\n", mt, texObj);
@@ -372,7 +369,6 @@ void radeon_try_alloc_miptree(radeonContextPtr rmesa, radeonTexObj *t)
 	struct gl_texture_object *texObj = &t->base;
 	struct gl_texture_image *texImg = texObj->Image[0][texObj->BaseLevel];
 	GLuint numLevels;
-
 	assert(!t->mt);
 
 	if (!texImg) {
@@ -544,17 +540,10 @@ int radeon_validate_texture_miptree(struct gl_context * ctx, struct gl_texture_o
 {
 	radeonContextPtr rmesa = RADEON_CONTEXT(ctx);
 	radeonTexObj *t = radeon_tex_obj(texObj);
+	radeon_mipmap_tree *dst_miptree;
 
 	if (t->validated || t->image_override) {
 		return GL_TRUE;
-	}
-
-	if (texObj->Image[0][texObj->BaseLevel]->Border > 0)
-		return GL_FALSE;
-
-	_mesa_test_texobj_completeness(rmesa->glCtx, texObj);
-	if (!texObj->_Complete) {
-		return GL_FALSE;
 	}
 
 	calculate_min_max_lod(&t->base, &t->minLod, &t->maxLod);
@@ -563,8 +552,7 @@ int radeon_validate_texture_miptree(struct gl_context * ctx, struct gl_texture_o
 			"%s: Validating texture %p now, minLod = %d, maxLod = %d\n",
 			__FUNCTION__, texObj ,t->minLod, t->maxLod);
 
-	radeon_mipmap_tree *dst_miptree;
-	dst_miptree = get_biggest_matching_miptree(t, t->base.BaseLevel, t->base.MaxLevel);
+	dst_miptree = get_biggest_matching_miptree(t, t->base.BaseLevel, t->base._MaxLevel);
 
 	radeon_miptree_unreference(&t->mt);
 	if (!dst_miptree) {
@@ -591,7 +579,7 @@ int radeon_validate_texture_miptree(struct gl_context * ctx, struct gl_texture_o
 				"Checking image level %d, face %d, mt %p ... ",
 				level, face, img->mt);
 			
-			if (img->mt != t->mt) {
+			if (img->mt != t->mt && !img->used_as_render_target) {
 				radeon_print(RADEON_TEXTURE, RADEON_TRACE,
 					"MIGRATING\n");
 

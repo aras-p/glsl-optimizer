@@ -38,7 +38,7 @@ static inline uint32_t cmdpacket0(struct radeon_screen *rscrn,
 }
 
 /* common formats supported as both textures and render targets */
-unsigned r200_check_blit(gl_format mesa_format)
+unsigned r200_check_blit(gl_format mesa_format, uint32_t dst_pitch)
 {
     /* XXX others?  BE/LE? */
     switch (mesa_format) {
@@ -57,6 +57,12 @@ unsigned r200_check_blit(gl_format mesa_format)
     default:
 	    return 0;
     }
+
+    /* Rendering to small buffer doesn't work.
+     * Looks like a hw limitation.
+     */
+    if (dst_pitch < 32)
+            return 0;
 
     /* ??? */
     if (_mesa_get_format_bits(mesa_format, GL_DEPTH_BITS) > 0)
@@ -467,18 +473,12 @@ unsigned r200_blit(struct gl_context *ctx,
 {
     struct r200_context *r200 = R200_CONTEXT(ctx);
 
-    if (!r200_check_blit(dst_mesaformat))
+    if (!r200_check_blit(dst_mesaformat, dst_pitch))
         return GL_FALSE;
 
     /* Make sure that colorbuffer has even width - hw limitation */
     if (dst_pitch % 2 > 0)
         ++dst_pitch;
-
-    /* Rendering to small buffer doesn't work.
-     * Looks like a hw limitation.
-     */
-    if (dst_pitch < 32)
-        return GL_FALSE;
 
     /* Need to clamp the region size to make sure
      * we don't read outside of the source buffer

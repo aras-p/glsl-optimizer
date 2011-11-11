@@ -105,7 +105,7 @@ do_blit_readpixels(struct gl_context * ctx,
     }
 
     if (dst_format == MESA_FORMAT_NONE ||
-        !radeon->vtbl.check_blit(dst_format) || !radeon->vtbl.blit) {
+        !radeon->vtbl.check_blit(dst_format, rrb->pitch / rrb->cpp) || !radeon->vtbl.blit) {
         return GL_FALSE;
     }
 

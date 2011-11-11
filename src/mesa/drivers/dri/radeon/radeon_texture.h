@@ -49,9 +49,11 @@ void radeonFreeTextureImageBuffer(struct gl_context *ctx, struct gl_texture_imag
 
 void radeon_teximage_map(radeon_texture_image *image, GLboolean write_enable);
 void radeon_teximage_unmap(radeon_texture_image *image);
-void radeonMapTexture(struct gl_context *ctx, struct gl_texture_object *texObj);
-void radeonUnmapTexture(struct gl_context *ctx, struct gl_texture_object *texObj);
 int radeon_validate_texture_miptree(struct gl_context * ctx, struct gl_texture_object *texObj);
+
+
+void radeon_swrast_map_texture_images(struct gl_context *ctx, struct gl_texture_object *texObj);
+void radeon_swrast_unmap_texture_images(struct gl_context *ctx, struct gl_texture_object *texObj);
 
 gl_format radeonChooseTextureFormat_mesa(struct gl_context * ctx,
                                          GLint internalFormat,

@@ -216,25 +216,25 @@ static GLubyte *radeon_ptr_2byte_8x2(const struct radeon_renderbuffer * rrb,
  */
 #define LOCAL_VARS						\
    struct radeon_renderbuffer *rrb = (void *) rb;		\
-   const GLint yScale = ctx->DrawBuffer->Name ? 1 : -1;			\
-   const GLint yBias = ctx->DrawBuffer->Name ? 0 : rrb->base.Height - 1;\
    int minx = 0, miny = 0;						\
    int maxx = rb->Width;						\
    int maxy = rb->Height;						\
+   void *buf = rb->Data;						\
+   int pitch = rb->RowStride * rrb->cpp;				\
    GLuint p;						\
    (void)p;
 
 #define LOCAL_DEPTH_VARS				\
    struct radeon_renderbuffer *rrb = (void *) rb;	\
-   const GLint yScale = ctx->DrawBuffer->Name ? 1 : -1;			\
-   const GLint yBias = ctx->DrawBuffer->Name ? 0 : rrb->base.Height - 1;\
    int minx = 0, miny = 0;						\
+   const GLint yScale = ctx->DrawBuffer->Name ? 1 : -1;                 \
+   const GLint yBias = ctx->DrawBuffer->Name ? 0 : rrb->base.Height - 1; \
    int maxx = rb->Width;						\
    int maxy = rb->Height;
 
 #define LOCAL_STENCIL_VARS LOCAL_DEPTH_VARS
 
-#define Y_FLIP(_y) ((_y) * yScale + yBias)
+#define Y_FLIP(_y) (_y)
 
 #define HW_LOCK()
 #define HW_UNLOCK()
@@ -249,108 +249,78 @@ static GLubyte *radeon_ptr_2byte_8x2(const struct radeon_renderbuffer * rrb,
  */
 #define SPANTMP_PIXEL_FMT GL_RGB
 #define SPANTMP_PIXEL_TYPE GL_UNSIGNED_SHORT_5_6_5
-
 #define TAG(x)    radeon##x##_RGB565
 #define TAG2(x,y) radeon##x##_RGB565##y
-#define GET_PTR(X,Y) radeon_ptr_2byte_8x2(rrb, (X), (Y))
 #include "spantmp2.h"
 
 #define SPANTMP_PIXEL_FMT GL_RGB
 #define SPANTMP_PIXEL_TYPE GL_UNSIGNED_SHORT_5_6_5_REV
-
 #define TAG(x)    radeon##x##_RGB565_REV
 #define TAG2(x,y) radeon##x##_RGB565_REV##y
-#define GET_PTR(X,Y) radeon_ptr_2byte_8x2(rrb, (X), (Y))
 #include "spantmp2.h"
 
 /* 16 bit, ARGB1555 color spanline and pixel functions
  */
 #define SPANTMP_PIXEL_FMT GL_BGRA
 #define SPANTMP_PIXEL_TYPE GL_UNSIGNED_SHORT_1_5_5_5_REV
-
 #define TAG(x)    radeon##x##_ARGB1555
 #define TAG2(x,y) radeon##x##_ARGB1555##y
-#define GET_PTR(X,Y) radeon_ptr_2byte_8x2(rrb, (X), (Y))
 #include "spantmp2.h"
 
 #define SPANTMP_PIXEL_FMT GL_BGRA
 #define SPANTMP_PIXEL_TYPE GL_UNSIGNED_SHORT_1_5_5_5
-
 #define TAG(x)    radeon##x##_ARGB1555_REV
 #define TAG2(x,y) radeon##x##_ARGB1555_REV##y
-#define GET_PTR(X,Y) radeon_ptr_2byte_8x2(rrb, (X), (Y))
 #include "spantmp2.h"
 
 /* 16 bit, RGBA4 color spanline and pixel functions
  */
 #define SPANTMP_PIXEL_FMT GL_BGRA
 #define SPANTMP_PIXEL_TYPE GL_UNSIGNED_SHORT_4_4_4_4_REV
-
 #define TAG(x)    radeon##x##_ARGB4444
 #define TAG2(x,y) radeon##x##_ARGB4444##y
-#define GET_PTR(X,Y) radeon_ptr_2byte_8x2(rrb, (X), (Y))
 #include "spantmp2.h"
 
 #define SPANTMP_PIXEL_FMT GL_BGRA
 #define SPANTMP_PIXEL_TYPE GL_UNSIGNED_SHORT_4_4_4_4
-
 #define TAG(x)    radeon##x##_ARGB4444_REV
 #define TAG2(x,y) radeon##x##_ARGB4444_REV##y
-#define GET_PTR(X,Y) radeon_ptr_2byte_8x2(rrb, (X), (Y))
 #include "spantmp2.h"
 
 /* 32 bit, xRGB8888 color spanline and pixel functions
  */
 #define SPANTMP_PIXEL_FMT GL_BGRA
 #define SPANTMP_PIXEL_TYPE GL_UNSIGNED_INT_8_8_8_8_REV
-
 #define TAG(x)    radeon##x##_xRGB8888
 #define TAG2(x,y) radeon##x##_xRGB8888##y
-#define GET_VALUE(_x, _y) ((*(GLuint*)(radeon_ptr_4byte(rrb, _x, _y)) | 0xff000000))
-#define PUT_VALUE(_x, _y, d) { \
-   GLuint *_ptr = (GLuint*)radeon_ptr_4byte( rrb, _x, _y );		\
-   *_ptr = d;								\
-} while (0)
 #include "spantmp2.h"
 
 /* 32 bit, ARGB8888 color spanline and pixel functions
  */
 #define SPANTMP_PIXEL_FMT GL_BGRA
 #define SPANTMP_PIXEL_TYPE GL_UNSIGNED_INT_8_8_8_8_REV
-
 #define TAG(x)    radeon##x##_ARGB8888
 #define TAG2(x,y) radeon##x##_ARGB8888##y
-#define GET_VALUE(_x, _y) (*(GLuint*)(radeon_ptr_4byte(rrb, _x, _y)))
-#define PUT_VALUE(_x, _y, d) { \
-   GLuint *_ptr = (GLuint*)radeon_ptr_4byte( rrb, _x, _y );		\
-   *_ptr = d;								\
-} while (0)
 #include "spantmp2.h"
 
 /* 32 bit, BGRx8888 color spanline and pixel functions
  */
 #define SPANTMP_PIXEL_FMT GL_BGRA
 #define SPANTMP_PIXEL_TYPE GL_UNSIGNED_INT_8_8_8_8
-
 #define TAG(x)    radeon##x##_BGRx8888
 #define TAG2(x,y) radeon##x##_BGRx8888##y
-#define GET_VALUE(_x, _y) ((*(GLuint*)(radeon_ptr_4byte(rrb, _x, _y)) | 0x000000ff))
-#define PUT_VALUE(_x, _y, d) { \
-   GLuint *_ptr = (GLuint*)radeon_ptr_4byte( rrb, _x, _y );		\
-   *_ptr = d;								\
-} while (0)
 #include "spantmp2.h"
 
 /* 32 bit, BGRA8888 color spanline and pixel functions
  */
 #define SPANTMP_PIXEL_FMT GL_BGRA
 #define SPANTMP_PIXEL_TYPE GL_UNSIGNED_INT_8_8_8_8
-
 #define TAG(x)    radeon##x##_BGRA8888
 #define TAG2(x,y) radeon##x##_BGRA8888##y
-#define GET_PTR(X,Y) radeon_ptr_4byte(rrb, (X), (Y))
 #include "spantmp2.h"
 
+#undef Y_FLIP
+#define Y_FLIP(_y) ((_y) * yScale + yBias)
 /* ================================================================
  * Depth buffer
  */
@@ -509,77 +479,69 @@ do {									\
 #define TAG(x) radeon##x##_s8_z24
 #include "stenciltmp.h"
 
-
-static void map_unmap_rb(struct gl_renderbuffer *rb, int flag)
+static void
+radeon_renderbuffer_map(struct gl_context *ctx, struct gl_renderbuffer *rb)
 {
 	struct radeon_renderbuffer *rrb = radeon_renderbuffer(rb);
-	int r;
+	GLubyte *map;
+	int stride;
 
-	if (rrb == NULL || !rrb->bo)
+	if (!rb || !rrb)
 		return;
 
-	radeon_print(RADEON_MEMORY, RADEON_TRACE,
-		"%s( rb %p, flag %s )\n",
-		__func__, rb, flag ? "true":"false");
+	ctx->Driver.MapRenderbuffer(ctx, rb, 0, 0, rb->Width, rb->Height,
+				    GL_MAP_READ_BIT | GL_MAP_WRITE_BIT,
+				    &map, &stride);
 
-	if (flag) {
-	        radeon_bo_wait(rrb->bo);
-		r = radeon_bo_map(rrb->bo, 1);
-		if (r) {
-			fprintf(stderr, "(%s) error(%d) mapping buffer.\n",
-				__FUNCTION__, r);
-		}
+	rb->Data = map;
+	rb->RowStride = stride / _mesa_get_format_bytes(rb->Format);
 
-		radeonSetSpanFunctions(rrb);
-	} else {
-		radeon_bo_unmap(rrb->bo);
-		rb->GetRow = NULL;
-		rb->PutRow = NULL;
-	}
+	radeonSetSpanFunctions(rrb);
 }
 
 static void
-radeon_map_unmap_framebuffer(struct gl_context *ctx, struct gl_framebuffer *fb,
-			     GLboolean map)
+radeon_renderbuffer_unmap(struct gl_context *ctx, struct gl_renderbuffer *rb)
+{
+	struct radeon_renderbuffer *rrb = radeon_renderbuffer(rb);
+	if (!rb || !rrb)
+		return;
+
+	ctx->Driver.UnmapRenderbuffer(ctx, rb);
+
+	rb->GetRow = NULL;
+	rb->PutRow = NULL;
+	rb->Data = NULL;
+	rb->RowStride = 0;
+}
+
+static void
+radeon_map_framebuffer(struct gl_context *ctx, struct gl_framebuffer *fb)
 {
 	GLuint i, j;
 
 	radeon_print(RADEON_MEMORY, RADEON_TRACE,
-		"%s( %p , fb %p, map %s )\n",
-		__func__, ctx, fb, map ? "true":"false");
-
-	/* color draw buffers */
-	for (j = 0; j < ctx->DrawBuffer->_NumColorDrawBuffers; j++)
-		map_unmap_rb(fb->_ColorDrawBuffers[j], map);
-
-	map_unmap_rb(fb->_ColorReadBuffer, map);
+		"%s( %p , fb %p )\n",
+		     __func__, ctx, fb);
 
 	/* check for render to textures */
-	for (i = 0; i < BUFFER_COUNT; i++) {
-		struct gl_renderbuffer_attachment *att =
-			fb->Attachment + i;
-		struct gl_texture_object *tex = att->Texture;
-		if (tex) {
-			/* Render to texture. Note that a mipmapped texture need not
-			 * be complete for render to texture, so we must restrict to
-			 * mapping only the attached image.
-			 */
-			radeon_texture_image *image = get_radeon_texture_image(tex->Image[att->CubeMapFace][att->TextureLevel]);
-			ASSERT(att->Renderbuffer);
+	for (i = 0; i < BUFFER_COUNT; i++)
+		radeon_renderbuffer_map(ctx, fb->Attachment[i].Renderbuffer);
 
-			if (map)
-				radeon_teximage_map(image, GL_TRUE);
-			else
-				radeon_teximage_unmap(image);
-		}
-	}
-	
-	/* depth buffer (Note wrapper!) */
-	if (fb->_DepthBuffer)
-		map_unmap_rb(fb->_DepthBuffer->Wrapped, map);
+	radeon_check_front_buffer_rendering(ctx);
+}
 
-	if (fb->_StencilBuffer)
-		map_unmap_rb(fb->_StencilBuffer->Wrapped, map);
+static void
+radeon_unmap_framebuffer(struct gl_context *ctx, struct gl_framebuffer *fb)
+{
+	GLuint i, j;
+
+	radeon_print(RADEON_MEMORY, RADEON_TRACE,
+		"%s( %p , fb %p)\n",
+		     __func__, ctx, fb);
+
+	/* check for render to textures */
+	for (i = 0; i < BUFFER_COUNT; i++)
+		radeon_renderbuffer_unmap(ctx, fb->Attachment[i].Renderbuffer);
 
 	radeon_check_front_buffer_rendering(ctx);
 }
@@ -591,13 +553,16 @@ static void radeonSpanRenderStart(struct gl_context * ctx)
 
 	radeon_firevertices(rmesa);
 
-	for (i = 0; i < ctx->Const.MaxTextureImageUnits; i++)
-		if (ctx->Texture.Unit[i]._ReallyEnabled)
-			radeonMapTexture(ctx, ctx->Texture.Unit[i]._Current);
-
-	radeon_map_unmap_framebuffer(ctx, ctx->DrawBuffer, GL_TRUE);
+	for (i = 0; i < ctx->Const.MaxTextureImageUnits; i++) {
+		if (ctx->Texture.Unit[i]._ReallyEnabled) {
+			radeon_validate_texture_miptree(ctx, ctx->Texture.Unit[i]._Current);
+			radeon_swrast_map_texture_images(ctx, ctx->Texture.Unit[i]._Current);
+		}
+	}
+	
+	radeon_map_framebuffer(ctx, ctx->DrawBuffer);
 	if (ctx->ReadBuffer != ctx->DrawBuffer)
-		radeon_map_unmap_framebuffer(ctx, ctx->ReadBuffer, GL_TRUE);
+		radeon_map_framebuffer(ctx, ctx->ReadBuffer);
 }
 
 static void radeonSpanRenderFinish(struct gl_context * ctx)
@@ -608,11 +573,11 @@ static void radeonSpanRenderFinish(struct gl_context * ctx)
 
 	for (i = 0; i < ctx->Const.MaxTextureImageUnits; i++)
 		if (ctx->Texture.Unit[i]._ReallyEnabled)
-			radeonUnmapTexture(ctx, ctx->Texture.Unit[i]._Current);
+			radeon_swrast_unmap_texture_images(ctx, ctx->Texture.Unit[i]._Current);
 
-	radeon_map_unmap_framebuffer(ctx, ctx->DrawBuffer, GL_FALSE);
+	radeon_unmap_framebuffer(ctx, ctx->DrawBuffer);
 	if (ctx->ReadBuffer != ctx->DrawBuffer)
-		radeon_map_unmap_framebuffer(ctx, ctx->ReadBuffer, GL_FALSE);
+		radeon_unmap_framebuffer(ctx, ctx->ReadBuffer);
 }
 
 void radeonInitSpanFuncs(struct gl_context * ctx)

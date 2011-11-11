@@ -82,56 +82,96 @@ radeon_map_renderbuffer(struct gl_context *ctx,
    struct radeon_renderbuffer *rrb = radeon_renderbuffer(rb);
    GLubyte *map;
    GLboolean ok;
-   int stride, ret;
+   int stride, flip_stride;
+   int ret;
+   int src_x, src_y;
 
-   assert(rrb && rrb->bo);
+   if (!rrb || !rrb->bo) {
+	   *out_map = NULL;
+	   *out_stride = 0;
+	   return;
+   }
 
-   /* Make a temporary buffer and blit the current contents of the renderbuffer
-    * out to it.  This gives us linear access to the buffer, instead of having
-    * to do detiling in software.
-    */
-   assert(!rrb->map_bo);
-   rrb->map_bo = radeon_bo_open(rmesa->radeonScreen->bom, 0,
-				rrb->pitch * h, 4,
-				RADEON_GEM_DOMAIN_GTT, 0);
    rrb->map_mode = mode;
    rrb->map_x = x;
    rrb->map_y = y;
    rrb->map_w = w;
    rrb->map_h = h;
+   rrb->map_pitch = rrb->pitch;
 
-   ok = rmesa->vtbl.check_blit(rb->Format);
-   assert(ok);
+   ok = rmesa->vtbl.check_blit(rb->Format, rrb->pitch / rrb->cpp);
+   if (ok) {
+       if (rb->Name) {
+	   src_x = x;
+	   src_y = y;
+       } else {
+	   src_x = x;
+	   src_y = rrb->base.Height - y - h;
+       }
 
-   ok = rmesa->vtbl.blit(ctx, rrb->bo, rrb->draw_offset,
-			 rb->Format, rrb->pitch / rrb->cpp,
-			 rb->Width, rb->Height,
-			 x, y,
-			 rrb->map_bo, 0,
-			 rb->Format, rrb->pitch / rrb->cpp,
-			 w, h,
-			 0, 0,
-			 w, h,
-			 GL_FALSE);
-   assert(ok);
+       /* Make a temporary buffer and blit the current contents of the renderbuffer
+	* out to it.  This gives us linear access to the buffer, instead of having
+	* to do detiling in software.
+	*/
 
-   radeon_bo_wait(rrb->map_bo);
-   ret = radeon_bo_map(rrb->map_bo, !!(mode & GL_MAP_WRITE_BIT));
-   assert(!ret);
+       rrb->map_pitch = rrb->pitch;
 
-   map = rrb->map_bo->ptr;
-   stride = rrb->pitch;
+       assert(!rrb->map_bo);
+       rrb->map_bo = radeon_bo_open(rmesa->radeonScreen->bom, 0,
+				    rrb->map_pitch * h, 4,
+				    RADEON_GEM_DOMAIN_GTT, 0);
+       
+       ok = rmesa->vtbl.blit(ctx, rrb->bo, rrb->draw_offset,
+			     rb->Format, rrb->pitch / rrb->cpp,
+			     rb->Width, rb->Height,
+			     src_x, src_y,
+			     rrb->map_bo, 0,
+			     rb->Format, rrb->map_pitch / rrb->cpp,
+			     w, h,
+			     0, 0,
+			     w, h,
+			     GL_FALSE);
+       assert(ok);
 
-   if (rb->Name == 0) {
-      map += stride * (rb->Height - 1);
-      stride = -stride;
+       ret = radeon_bo_map(rrb->map_bo, !!(mode & GL_MAP_WRITE_BIT));
+       assert(!ret);
+
+       map = rrb->map_bo->ptr;
+
+       if (rb->Name) {
+	   *out_map = map;
+	   *out_stride = rrb->map_pitch;
+       } else {
+	   *out_map = map + (h - 1) * rrb->map_pitch;
+	   *out_stride = -rrb->map_pitch;
+       }
+       return;
    }
 
-   map += x * _mesa_get_format_bytes(rb->Format);
+   /* sw fallback flush stuff */
+   if (radeon_bo_is_referenced_by_cs(rrb->bo, rmesa->cmdbuf.cs)) {
+      radeon_firevertices(rmesa);
+   }
+
+   ret = radeon_bo_map(rrb->bo, !!(mode & GL_MAP_WRITE_BIT));
+   assert(!ret);
+
+   map = rrb->bo->ptr;
+   stride = rrb->map_pitch;
+
+   if (rb->Name == 0) {
+      y = rb->Height - 1 - y;
+      flip_stride = -stride;
+   } else {
+      flip_stride = stride;
+      map += rrb->draw_offset;
+   }
+
+   map += x * rrb->cpp;
    map += (int)y * stride;
 
    *out_map = map;
-   *out_stride = stride;
+   *out_stride = flip_stride;
 }
 
 static void
@@ -142,11 +182,17 @@ radeon_unmap_renderbuffer(struct gl_context *ctx,
    struct radeon_renderbuffer *rrb = radeon_renderbuffer(rb);
    GLboolean ok;
 
+   if (!rrb->map_bo) {
+	   if (rrb->bo)
+		   radeon_bo_unmap(rrb->bo);
+	   return;
+   }
+
    radeon_bo_unmap(rrb->map_bo);
 
    if (rrb->map_mode & GL_MAP_WRITE_BIT) {
       ok = rmesa->vtbl.blit(ctx, rrb->map_bo, 0,
-			    rb->Format, rrb->pitch / rrb->cpp,
+			    rb->Format, rrb->map_pitch / rrb->cpp,
 			    rrb->map_w, rrb->map_h,
 			    0, 0,
 			    rrb->bo, rrb->draw_offset,
@@ -627,7 +673,7 @@ radeon_render_texture(struct gl_context * ctx,
 
    radeon_image = (radeon_texture_image *)newImage;
 
-   if (!radeon_image->mt || newImage->Border != 0) {
+   if (!radeon_image->mt) {
       /* Fallback on drawing to a texture without a miptree.
        */
       _mesa_reference_renderbuffer(&att->Renderbuffer, NULL);
@@ -681,6 +727,7 @@ radeon_render_texture(struct gl_context * ctx,
     * the image we are rendering to */
    rrb->draw_offset = imageOffset;
    rrb->pitch = radeon_image->mt->levels[att->TextureLevel].rowstride;
+   radeon_image->used_as_render_target = GL_TRUE;
 
    /* update drawing region, etc */
    radeon_draw_buffer(ctx, fb);
@@ -690,7 +737,16 @@ static void
 radeon_finish_render_texture(struct gl_context * ctx,
                             struct gl_renderbuffer_attachment *att)
 {
+    struct gl_texture_object *tex_obj = att->Texture;
+    struct gl_texture_image *image =
+	tex_obj->Image[att->CubeMapFace][att->TextureLevel];
+    radeon_texture_image *radeon_image = (radeon_texture_image *)image;
+    
+    if (radeon_image)
+	radeon_image->used_as_render_target = GL_FALSE;
 
+    if (ctx->Driver.Flush)
+        ctx->Driver.Flush(ctx); /* +r6/r7 */
 }
 static void
 radeon_validate_framebuffer(struct gl_context *ctx, struct gl_framebuffer *fb)

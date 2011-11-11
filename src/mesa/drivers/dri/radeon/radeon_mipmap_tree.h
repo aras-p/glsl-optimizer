@@ -84,7 +84,8 @@ void radeon_miptree_reference(radeon_mipmap_tree *mt, radeon_mipmap_tree **ptr);
 void radeon_miptree_unreference(radeon_mipmap_tree **ptr);
 
 GLboolean radeon_miptree_matches_image(radeon_mipmap_tree *mt,
-		struct gl_texture_image *texImage, GLuint face, GLuint level);
+				       struct gl_texture_image *texImage);
+				       
 void radeon_try_alloc_miptree(radeonContextPtr rmesa, radeonTexObj *t);
 GLuint radeon_miptree_image_offset(radeon_mipmap_tree *mt,
 				   GLuint face, GLuint level);
@@ -98,4 +99,8 @@ unsigned get_texture_image_size(
 		unsigned height,
 		unsigned depth,
 		unsigned tiling);
+
+radeon_mipmap_tree *radeon_miptree_create(radeonContextPtr rmesa,
+					  GLenum target, gl_format mesaFormat, GLuint baseLevel, GLuint numLevels,
+					  GLuint width0, GLuint height0, GLuint depth0, GLuint tilebits);
 #endif /* __RADEON_MIPMAP_TREE_H_ */

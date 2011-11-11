@@ -30,7 +30,7 @@
 
 void r100_blit_init(struct r100_context *r100);
 
-unsigned r100_check_blit(gl_format mesa_format);
+unsigned r100_check_blit(gl_format mesa_format, uint32_t dst_pitch);
 
 unsigned r100_blit(struct gl_context *ctx,
                    struct radeon_bo *src_bo,
