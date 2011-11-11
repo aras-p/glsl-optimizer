@@ -228,7 +228,8 @@ nv50_screen_destroy(struct pipe_screen *pscreen)
       nouveau_fence_wait(screen->base.fence.current);
       nouveau_fence_ref (NULL, &screen->base.fence.current);
    }
-   screen->base.channel->user_private = NULL;
+   if (screen->base.channel)
+      screen->base.channel->user_private = NULL;
    if (screen->blitctx)
       FREE(screen->blitctx);
 
