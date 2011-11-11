@@ -982,11 +982,6 @@ static GLboolean setup_hardware_state(r100ContextPtr rmesa, radeonTexObj *t, int
 
    firstImage = t->base.Image[0][t->minLod];
 
-   if (firstImage->Border > 0) {
-      fprintf(stderr, "%s: border\n", __FUNCTION__);
-      return GL_FALSE;
-   }
-
    log2Width  = firstImage->WidthLog2;
    log2Height = firstImage->HeightLog2;
    texelBytes = _mesa_get_format_bytes(firstImage->TexFormat);
