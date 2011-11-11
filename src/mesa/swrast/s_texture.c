@@ -241,7 +241,6 @@ _swrast_map_texture(struct gl_context *ctx, struct gl_texture_object *texObj)
 
             /* XXX we'll eventually call _swrast_map_teximage() here */
             swImage->Data = swImage->Buffer;
-            assert(swImage->Buffer);
          }
       }
    }
