@@ -171,7 +171,7 @@ read_stencil_pixels( struct gl_context *ctx,
    /* process image row by row */
    for (j = 0; j < height; j++) {
       GLvoid *dest;
-      GLstencil stencil[MAX_WIDTH];
+      GLubyte stencil[MAX_WIDTH];
 
       _mesa_unpack_ubyte_stencil_row(rb->Format, width, map, stencil);
       dest = _mesa_image_address2d(packing, pixels, width, height,
@@ -369,7 +369,7 @@ fast_read_depth_stencil_pixels_separate(struct gl_context *ctx,
 			       GL_MAP_READ_BIT, &stencilMap, &stencilStride);
 
    for (j = 0; j < height; j++) {
-      GLstencil stencilVals[MAX_WIDTH];
+      GLubyte stencilVals[MAX_WIDTH];
 
       _mesa_unpack_uint_z_row(depthRb->Format, width, depthMap, dst);
       _mesa_unpack_ubyte_stencil_row(stencilRb->Format, width,
@@ -410,7 +410,7 @@ slow_read_depth_stencil_pixels_separate(struct gl_context *ctx,
 			       GL_MAP_READ_BIT, &stencilMap, &stencilStride);
 
    for (j = 0; j < height; j++) {
-      GLstencil stencilVals[MAX_WIDTH];
+      GLubyte stencilVals[MAX_WIDTH];
       GLfloat depthVals[MAX_WIDTH];
 
       _mesa_unpack_float_z_row(depthRb->Format, width, depthMap, depthVals);

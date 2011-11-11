@@ -320,6 +320,7 @@ draw_stencil_pixels( struct gl_context *ctx, GLint x, GLint y,
                      const GLvoid *pixels )
 {
    const GLboolean zoom = ctx->Pixel.ZoomX != 1.0 || ctx->Pixel.ZoomY != 1.0;
+   const GLenum destType = GL_UNSIGNED_BYTE;
    GLint skipPixels;
 
    /* if width > MAX_WIDTH, have to process image in chunks */
@@ -330,9 +331,7 @@ draw_stencil_pixels( struct gl_context *ctx, GLint x, GLint y,
       GLint row;
       for (row = 0; row < height; row++) {
          const GLint spanY = y + row;
-         GLstencil values[MAX_WIDTH];
-         GLenum destType = (sizeof(GLstencil) == sizeof(GLubyte))
-                         ? GL_UNSIGNED_BYTE : GL_UNSIGNED_SHORT;
+         GLubyte values[MAX_WIDTH];
          const GLvoid *source = _mesa_image_address2d(unpack, pixels,
                                                       width, height,
                                                       GL_STENCIL_INDEX, type,
@@ -570,8 +569,7 @@ draw_depth_stencil_pixels(struct gl_context *ctx, GLint x, GLint y,
       = ctx->Pixel.DepthScale != 1.0 || ctx->Pixel.DepthBias != 0.0;
    const GLuint depthMax = ctx->DrawBuffer->_DepthMax;
    const GLuint stencilMask = ctx->Stencil.WriteMask[0];
-   const GLuint stencilType = (STENCIL_BITS == 8) ? 
-      GL_UNSIGNED_BYTE : GL_UNSIGNED_SHORT;
+   const GLenum stencilType = GL_UNSIGNED_BYTE;
    const GLboolean zoom = ctx->Pixel.ZoomX != 1.0 || ctx->Pixel.ZoomY != 1.0;
    struct gl_renderbuffer *depthRb, *stencilRb;
    struct gl_pixelstore_attrib clippedUnpack = *unpack;
@@ -672,7 +670,7 @@ draw_depth_stencil_pixels(struct gl_context *ctx, GLint x, GLint y,
          }
 
          if (stencilMask != 0x0) {
-            GLstencil stencilValues[MAX_WIDTH];
+            GLubyte stencilValues[MAX_WIDTH];
             /* get stencil values, with shift/offset/mapping */
             _mesa_unpack_stencil_span(ctx, width, stencilType, stencilValues,
                                       type, depthStencilSrc, &clippedUnpack,

@@ -49,18 +49,6 @@ extern "C" {
 
 
 /**
- * Stencil buffer data type.
- */
-#if STENCIL_BITS==8
-   typedef GLubyte GLstencil;
-#elif STENCIL_BITS==16
-   typedef GLushort GLstencil;
-#else
-#  error "illegal number of stencil bits"
-#endif
-
-
-/**
  * \name 64-bit extension of GLbitfield.
  */
 /*@{*/

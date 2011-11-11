@@ -113,7 +113,7 @@ _mesa_unpack_stencil_span(struct gl_context *ctx, GLuint n,
 
 extern void
 _mesa_pack_stencil_span(struct gl_context *ctx, GLuint n,
-                        GLenum dstType, GLvoid *dest, const GLstencil *source,
+                        GLenum dstType, GLvoid *dest, const GLubyte *source,
                         const struct gl_pixelstore_attrib *dstPacking);
 
 
@@ -133,7 +133,7 @@ extern void
 _mesa_pack_depth_stencil_span(struct gl_context *ctx,GLuint n,
                               GLenum dstType, GLuint *dest,
                               const GLfloat *depthVals,
-                              const GLstencil *stencilVals,
+                              const GLubyte *stencilVals,
                               const struct gl_pixelstore_attrib *dstPacking);
 
 

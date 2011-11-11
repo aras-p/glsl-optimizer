@@ -4586,10 +4586,10 @@ _mesa_unpack_stencil_span( struct gl_context *ctx, GLuint n,
 
 void
 _mesa_pack_stencil_span( struct gl_context *ctx, GLuint n,
-                         GLenum dstType, GLvoid *dest, const GLstencil *source,
+                         GLenum dstType, GLvoid *dest, const GLubyte *source,
                          const struct gl_pixelstore_attrib *dstPacking )
 {
-   GLstencil *stencil = (GLstencil *) malloc(n * sizeof(GLstencil));
+   GLubyte *stencil = (GLubyte *) malloc(n * sizeof(GLubyte));
 
    if (!stencil) {
       _mesa_error(ctx, GL_OUT_OF_MEMORY, "stencil packing");
@@ -4599,23 +4599,14 @@ _mesa_pack_stencil_span( struct gl_context *ctx, GLuint n,
    if (ctx->Pixel.IndexShift || ctx->Pixel.IndexOffset ||
        ctx->Pixel.MapStencilFlag) {
       /* make a copy of input */
-      memcpy(stencil, source, n * sizeof(GLstencil));
+      memcpy(stencil, source, n * sizeof(GLubyte));
       _mesa_apply_stencil_transfer_ops(ctx, n, stencil);
       source = stencil;
    }
 
    switch (dstType) {
    case GL_UNSIGNED_BYTE:
-      if (sizeof(GLstencil) == 1) {
-         memcpy( dest, source, n );
-      }
-      else {
-         GLubyte *dst = (GLubyte *) dest;
-         GLuint i;
-         for (i=0;i<n;i++) {
-            dst[i] = (GLubyte) source[i];
-         }
-      }
+      memcpy(dest, source, n);
       break;
    case GL_BYTE:
       {
@@ -5120,11 +5111,11 @@ void
 _mesa_pack_depth_stencil_span(struct gl_context *ctx,GLuint n,
                               GLenum dstType, GLuint *dest,
                               const GLfloat *depthVals,
-                              const GLstencil *stencilVals,
+                              const GLubyte *stencilVals,
                               const struct gl_pixelstore_attrib *dstPacking)
 {
    GLfloat *depthCopy = (GLfloat *) malloc(n * sizeof(GLfloat));
-   GLstencil *stencilCopy = (GLstencil *) malloc(n * sizeof(GLstencil));
+   GLubyte *stencilCopy = (GLubyte *) malloc(n * sizeof(GLubyte));
    GLuint i;
 
    if (!depthCopy || !stencilCopy) {
@@ -5143,7 +5134,7 @@ _mesa_pack_depth_stencil_span(struct gl_context *ctx,GLuint n,
    if (ctx->Pixel.IndexShift ||
        ctx->Pixel.IndexOffset ||
        ctx->Pixel.MapStencilFlag) {
-      memcpy(stencilCopy, stencilVals, n * sizeof(GLstencil));
+      memcpy(stencilCopy, stencilVals, n * sizeof(GLubyte));
       _mesa_apply_stencil_transfer_ops(ctx, n, stencilCopy);
       stencilVals = stencilCopy;
    }

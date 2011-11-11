@@ -273,7 +273,7 @@ _mesa_apply_ci_transfer_ops(const struct gl_context *ctx,
  */
 void
 _mesa_apply_stencil_transfer_ops(const struct gl_context *ctx, GLuint n,
-                                 GLstencil stencil[])
+                                 GLubyte stencil[])
 {
    if (ctx->Pixel.IndexShift != 0 || ctx->Pixel.IndexOffset != 0) {
       const GLint offset = ctx->Pixel.IndexOffset;
@@ -300,7 +300,7 @@ _mesa_apply_stencil_transfer_ops(const struct gl_context *ctx, GLuint n,
       GLuint mask = ctx->PixelMaps.StoS.Size - 1;
       GLuint i;
       for (i = 0; i < n; i++) {
-         stencil[i] = (GLstencil)ctx->PixelMaps.StoS.Map[ stencil[i] & mask ];
+         stencil[i] = (GLubyte) ctx->PixelMaps.StoS.Map[ stencil[i] & mask ];
       }
    }
 }

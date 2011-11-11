@@ -96,7 +96,7 @@ st_read_stencil_pixels(struct gl_context *ctx, GLint x, GLint y,
    /* process image row by row */
    for (j = 0; j < height; j++) {
       GLvoid *dest;
-      GLstencil sValues[MAX_WIDTH];
+      GLubyte sValues[MAX_WIDTH];
       GLfloat zValues[MAX_WIDTH];
       GLint srcY;
 

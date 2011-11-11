@@ -75,7 +75,7 @@ _mesa_apply_ci_transfer_ops(const struct gl_context *ctx,
 
 extern void
 _mesa_apply_stencil_transfer_ops(const struct gl_context *ctx, GLuint n,
-                                 GLstencil stencil[]);
+                                 GLubyte stencil[]);
 
 
 #endif

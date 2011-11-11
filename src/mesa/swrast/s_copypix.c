@@ -342,7 +342,7 @@ copy_stencil_pixels( struct gl_context *ctx, GLint srcx, GLint srcy,
    struct gl_renderbuffer *rb = fb->_StencilBuffer;
    GLint sy, dy, stepy;
    GLint j;
-   GLstencil *p, *tmpImage;
+   GLubyte *p, *tmpImage;
    const GLboolean zoom = ctx->Pixel.ZoomX != 1.0F || ctx->Pixel.ZoomY != 1.0F;
    GLint overlapping;
 
@@ -375,7 +375,7 @@ copy_stencil_pixels( struct gl_context *ctx, GLint srcx, GLint srcy,
 
    if (overlapping) {
       GLint ssy = sy;
-      tmpImage = (GLstencil *) malloc(width * height * sizeof(GLstencil));
+      tmpImage = (GLubyte *) malloc(width * height * sizeof(GLubyte));
       if (!tmpImage) {
          _mesa_error( ctx, GL_OUT_OF_MEMORY, "glCopyPixels" );
          return;
@@ -393,11 +393,11 @@ copy_stencil_pixels( struct gl_context *ctx, GLint srcx, GLint srcy,
    }
 
    for (j = 0; j < height; j++, sy += stepy, dy += stepy) {
-      GLstencil stencil[MAX_WIDTH];
+      GLubyte stencil[MAX_WIDTH];
 
       /* Get stencil values */
       if (overlapping) {
-         memcpy(stencil, p, width * sizeof(GLstencil));
+         memcpy(stencil, p, width * sizeof(GLubyte));
          p += width;
       }
       else {
@@ -435,7 +435,7 @@ copy_depth_stencil_pixels(struct gl_context *ctx,
    struct gl_renderbuffer *stencilReadRb, *depthReadRb, *depthDrawRb;
    GLint sy, dy, stepy;
    GLint j;
-   GLstencil *tempStencilImage = NULL, *stencilPtr = NULL;
+   GLubyte *tempStencilImage = NULL, *stencilPtr = NULL;
    GLfloat *tempDepthImage = NULL, *depthPtr = NULL;
    const GLfloat depthScale = ctx->DrawBuffer->_DepthMaxF;
    const GLuint stencilMask = ctx->Stencil.WriteMask[0];
@@ -479,7 +479,7 @@ copy_depth_stencil_pixels(struct gl_context *ctx,
 
       if (stencilMask != 0x0) {
          tempStencilImage
-            = (GLstencil *) malloc(width * height * sizeof(GLstencil));
+            = (GLubyte *) malloc(width * height * sizeof(GLubyte));
          if (!tempStencilImage) {
             _mesa_error(ctx, GL_OUT_OF_MEMORY, "glCopyPixels");
             return;
@@ -517,11 +517,11 @@ copy_depth_stencil_pixels(struct gl_context *ctx,
 
    for (j = 0; j < height; j++, sy += stepy, dy += stepy) {
       if (stencilMask != 0x0) {
-         GLstencil stencil[MAX_WIDTH];
+         GLubyte stencil[MAX_WIDTH];
 
          /* Get stencil values */
          if (overlapping) {
-            memcpy(stencil, stencilPtr, width * sizeof(GLstencil));
+            memcpy(stencil, stencilPtr, width * sizeof(GLubyte));
             stencilPtr += width;
          }
          else {

@@ -62,12 +62,12 @@ ENDIF
  */
 static void
 apply_stencil_op( const struct gl_context *ctx, GLenum oper, GLuint face,
-                  GLuint n, GLstencil stencil[], const GLubyte mask[] )
+                  GLuint n, GLubyte stencil[], const GLubyte mask[] )
 {
-   const GLstencil ref = ctx->Stencil.Ref[face];
-   const GLstencil wrtmask = ctx->Stencil.WriteMask[face];
-   const GLstencil invmask = (GLstencil) (~wrtmask);
-   const GLstencil stencilMax = (1 << ctx->DrawBuffer->Visual.stencilBits) - 1;
+   const GLubyte ref = ctx->Stencil.Ref[face];
+   const GLubyte wrtmask = ctx->Stencil.WriteMask[face];
+   const GLubyte invmask = (GLubyte) (~wrtmask);
+   const GLubyte stencilMax = (1 << ctx->DrawBuffer->Visual.stencilBits) - 1;
    GLuint i;
 
    switch (oper) {
@@ -85,7 +85,7 @@ apply_stencil_op( const struct gl_context *ctx, GLenum oper, GLuint face,
 	 else {
 	    for (i=0;i<n;i++) {
 	       if (mask[i]) {
-		  stencil[i] = (GLstencil) (stencil[i] & invmask);
+		  stencil[i] = (GLubyte) (stencil[i] & invmask);
 	       }
 	    }
 	 }
@@ -101,8 +101,8 @@ apply_stencil_op( const struct gl_context *ctx, GLenum oper, GLuint face,
 	 else {
 	    for (i=0;i<n;i++) {
 	       if (mask[i]) {
-		  GLstencil s = stencil[i];
-		  stencil[i] = (GLstencil) ((invmask & s ) | (wrtmask & ref));
+		  GLubyte s = stencil[i];
+		  stencil[i] = (GLubyte) ((invmask & s ) | (wrtmask & ref));
 	       }
 	    }
 	 }
@@ -111,9 +111,9 @@ apply_stencil_op( const struct gl_context *ctx, GLenum oper, GLuint face,
 	 if (invmask==0) {
 	    for (i=0;i<n;i++) {
 	       if (mask[i]) {
-		  GLstencil s = stencil[i];
+		  GLubyte s = stencil[i];
 		  if (s < stencilMax) {
-		     stencil[i] = (GLstencil) (s+1);
+		     stencil[i] = (GLubyte) (s+1);
 		  }
 	       }
 	    }
@@ -122,9 +122,9 @@ apply_stencil_op( const struct gl_context *ctx, GLenum oper, GLuint face,
 	    for (i=0;i<n;i++) {
 	       if (mask[i]) {
 		  /* VERIFY logic of adding 1 to a write-masked value */
-		  GLstencil s = stencil[i];
+		  GLubyte s = stencil[i];
 		  if (s < stencilMax) {
-		     stencil[i] = (GLstencil) ((invmask & s) | (wrtmask & (s+1)));
+		     stencil[i] = (GLubyte) ((invmask & s) | (wrtmask & (s+1)));
 		  }
 	       }
 	    }
@@ -134,9 +134,9 @@ apply_stencil_op( const struct gl_context *ctx, GLenum oper, GLuint face,
 	 if (invmask==0) {
 	    for (i=0;i<n;i++) {
 	       if (mask[i]) {
-		  GLstencil s = stencil[i];
+		  GLubyte s = stencil[i];
 		  if (s>0) {
-		     stencil[i] = (GLstencil) (s-1);
+		     stencil[i] = (GLubyte) (s-1);
 		  }
 	       }
 	    }
@@ -145,9 +145,9 @@ apply_stencil_op( const struct gl_context *ctx, GLenum oper, GLuint face,
 	    for (i=0;i<n;i++) {
 	       if (mask[i]) {
 		  /* VERIFY logic of subtracting 1 to a write-masked value */
-		  GLstencil s = stencil[i];
+		  GLubyte s = stencil[i];
 		  if (s>0) {
-		     stencil[i] = (GLstencil) ((invmask & s) | (wrtmask & (s-1)));
+		     stencil[i] = (GLubyte) ((invmask & s) | (wrtmask & (s-1)));
 		  }
 	       }
 	    }
@@ -164,8 +164,8 @@ apply_stencil_op( const struct gl_context *ctx, GLenum oper, GLuint face,
 	 else {
 	    for (i=0;i<n;i++) {
 	       if (mask[i]) {
-                  GLstencil s = stencil[i];
-                  stencil[i] = (GLstencil) ((invmask & s) | (wrtmask & (s+1)));
+                  GLubyte s = stencil[i];
+                  stencil[i] = (GLubyte) ((invmask & s) | (wrtmask & (s+1)));
 	       }
 	    }
 	 }
@@ -181,8 +181,8 @@ apply_stencil_op( const struct gl_context *ctx, GLenum oper, GLuint face,
 	 else {
 	    for (i=0;i<n;i++) {
 	       if (mask[i]) {
-                  GLstencil s = stencil[i];
-                  stencil[i] = (GLstencil) ((invmask & s) | (wrtmask & (s-1)));
+                  GLubyte s = stencil[i];
+                  stencil[i] = (GLubyte) ((invmask & s) | (wrtmask & (s-1)));
 	       }
 	    }
 	 }
@@ -191,16 +191,16 @@ apply_stencil_op( const struct gl_context *ctx, GLenum oper, GLuint face,
 	 if (invmask==0) {
 	    for (i=0;i<n;i++) {
 	       if (mask[i]) {
-		  GLstencil s = stencil[i];
-		  stencil[i] = (GLstencil) ~s;
+		  GLubyte s = stencil[i];
+		  stencil[i] = (GLubyte) ~s;
 	       }
 	    }
 	 }
 	 else {
 	    for (i=0;i<n;i++) {
 	       if (mask[i]) {
-		  GLstencil s = stencil[i];
-		  stencil[i] = (GLstencil) ((invmask & s) | (wrtmask & ~s));
+		  GLubyte s = stencil[i];
+		  stencil[i] = (GLubyte) ((invmask & s) | (wrtmask & ~s));
 	       }
 	    }
 	 }
@@ -225,15 +225,15 @@ apply_stencil_op( const struct gl_context *ctx, GLenum oper, GLuint face,
  * Return:  GL_FALSE = all pixels failed, GL_TRUE = zero or more pixels passed.
  */
 static GLboolean
-do_stencil_test( struct gl_context *ctx, GLuint face, GLuint n, GLstencil stencil[],
+do_stencil_test( struct gl_context *ctx, GLuint face, GLuint n, GLubyte stencil[],
                  GLubyte mask[] )
 {
    GLubyte fail[MAX_WIDTH];
    GLboolean allfail = GL_FALSE;
    GLuint i;
    const GLuint valueMask = ctx->Stencil.ValueMask[face];
-   const GLstencil r = (GLstencil) (ctx->Stencil.Ref[face] & valueMask);
-   GLstencil s;
+   const GLubyte r = (GLubyte) (ctx->Stencil.Ref[face] & valueMask);
+   GLubyte s;
 
    ASSERT(n <= MAX_WIDTH);
 
@@ -263,7 +263,7 @@ do_stencil_test( struct gl_context *ctx, GLuint face, GLuint n, GLstencil stenci
       case GL_LESS:
 	 for (i=0;i<n;i++) {
 	    if (mask[i]) {
-	       s = (GLstencil) (stencil[i] & valueMask);
+	       s = (GLubyte) (stencil[i] & valueMask);
 	       if (r < s) {
 		  /* passed */
 		  fail[i] = 0;
@@ -281,7 +281,7 @@ do_stencil_test( struct gl_context *ctx, GLuint face, GLuint n, GLstencil stenci
       case GL_LEQUAL:
 	 for (i=0;i<n;i++) {
 	    if (mask[i]) {
-	       s = (GLstencil) (stencil[i] & valueMask);
+	       s = (GLubyte) (stencil[i] & valueMask);
 	       if (r <= s) {
 		  /* pass */
 		  fail[i] = 0;
@@ -299,7 +299,7 @@ do_stencil_test( struct gl_context *ctx, GLuint face, GLuint n, GLstencil stenci
       case GL_GREATER:
 	 for (i=0;i<n;i++) {
 	    if (mask[i]) {
-	       s = (GLstencil) (stencil[i] & valueMask);
+	       s = (GLubyte) (stencil[i] & valueMask);
 	       if (r > s) {
 		  /* passed */
 		  fail[i] = 0;
@@ -317,7 +317,7 @@ do_stencil_test( struct gl_context *ctx, GLuint face, GLuint n, GLstencil stenci
       case GL_GEQUAL:
 	 for (i=0;i<n;i++) {
 	    if (mask[i]) {
-	       s = (GLstencil) (stencil[i] & valueMask);
+	       s = (GLubyte) (stencil[i] & valueMask);
 	       if (r >= s) {
 		  /* passed */
 		  fail[i] = 0;
@@ -335,7 +335,7 @@ do_stencil_test( struct gl_context *ctx, GLuint face, GLuint n, GLstencil stenci
       case GL_EQUAL:
 	 for (i=0;i<n;i++) {
 	    if (mask[i]) {
-	       s = (GLstencil) (stencil[i] & valueMask);
+	       s = (GLubyte) (stencil[i] & valueMask);
 	       if (r == s) {
 		  /* passed */
 		  fail[i] = 0;
@@ -353,7 +353,7 @@ do_stencil_test( struct gl_context *ctx, GLuint face, GLuint n, GLstencil stenci
       case GL_NOTEQUAL:
 	 for (i=0;i<n;i++) {
 	    if (mask[i]) {
-	       s = (GLstencil) (stencil[i] & valueMask);
+	       s = (GLubyte) (stencil[i] & valueMask);
 	       if (r != s) {
 		  /* passed */
 		  fail[i] = 0;
@@ -422,8 +422,8 @@ stencil_and_ztest_span(struct gl_context *ctx, SWspan *span, GLuint face)
 {
    struct gl_framebuffer *fb = ctx->DrawBuffer;
    struct gl_renderbuffer *rb = fb->_StencilBuffer;
-   GLstencil stencilRow[MAX_WIDTH];
-   GLstencil *stencil;
+   GLubyte stencilRow[MAX_WIDTH];
+   GLubyte *stencil;
    const GLuint n = span->end;
    const GLint x = span->x;
    const GLint y = span->y;
@@ -438,7 +438,7 @@ stencil_and_ztest_span(struct gl_context *ctx, SWspan *span, GLuint face)
    }
 #endif
 
-   stencil = (GLstencil *) rb->GetPointer(ctx, rb, x, y);
+   stencil = (GLubyte *) rb->GetPointer(ctx, rb, x, y);
    if (!stencil) {
       rb->GetRow(ctx, rb, n, x, y, stencilRow);
       stencil = stencilRow;
@@ -531,16 +531,15 @@ apply_stencil_op_to_pixels( struct gl_context *ctx,
 {
    struct gl_framebuffer *fb = ctx->DrawBuffer;
    struct gl_renderbuffer *rb = fb->_StencilBuffer;
-   const GLstencil stencilMax = (1 << fb->Visual.stencilBits) - 1;
-   const GLstencil ref = ctx->Stencil.Ref[face];
-   const GLstencil wrtmask = ctx->Stencil.WriteMask[face];
-   const GLstencil invmask = (GLstencil) (~wrtmask);
+   const GLubyte stencilMax = (1 << fb->Visual.stencilBits) - 1;
+   const GLubyte ref = ctx->Stencil.Ref[face];
+   const GLubyte wrtmask = ctx->Stencil.WriteMask[face];
+   const GLubyte invmask = (GLubyte) (~wrtmask);
    GLuint i;
-   GLstencil *stencilStart = (GLubyte *) rb->Data;
+   GLubyte *stencilStart = (GLubyte *) rb->Data;
    const GLuint stride = rb->Width;
 
    ASSERT(rb->GetPointer(ctx, rb, 0, 0));
-   ASSERT(sizeof(GLstencil) == 1);
 
    switch (oper) {
       case GL_KEEP:
@@ -550,7 +549,7 @@ apply_stencil_op_to_pixels( struct gl_context *ctx,
 	 if (invmask==0) {
 	    for (i=0;i<n;i++) {
 	       if (mask[i]) {
-                  GLstencil *sptr = STENCIL_ADDRESS( x[i], y[i] );
+                  GLubyte *sptr = STENCIL_ADDRESS( x[i], y[i] );
                   *sptr = 0;
 	       }
 	    }
@@ -558,8 +557,8 @@ apply_stencil_op_to_pixels( struct gl_context *ctx,
 	 else {
 	    for (i=0;i<n;i++) {
 	       if (mask[i]) {
-                  GLstencil *sptr = STENCIL_ADDRESS( x[i], y[i] );
-		  *sptr = (GLstencil) (invmask & *sptr);
+                  GLubyte *sptr = STENCIL_ADDRESS( x[i], y[i] );
+		  *sptr = (GLubyte) (invmask & *sptr);
 	       }
 	    }
 	 }
@@ -568,7 +567,7 @@ apply_stencil_op_to_pixels( struct gl_context *ctx,
 	 if (invmask==0) {
 	    for (i=0;i<n;i++) {
 	       if (mask[i]) {
-                  GLstencil *sptr = STENCIL_ADDRESS( x[i], y[i] );
+                  GLubyte *sptr = STENCIL_ADDRESS( x[i], y[i] );
                   *sptr = ref;
 	       }
 	    }
@@ -576,8 +575,8 @@ apply_stencil_op_to_pixels( struct gl_context *ctx,
 	 else {
 	    for (i=0;i<n;i++) {
 	       if (mask[i]) {
-                  GLstencil *sptr = STENCIL_ADDRESS( x[i], y[i] );
-		  *sptr = (GLstencil) ((invmask & *sptr ) | (wrtmask & ref));
+                  GLubyte *sptr = STENCIL_ADDRESS( x[i], y[i] );
+		  *sptr = (GLubyte) ((invmask & *sptr ) | (wrtmask & ref));
 	       }
 	    }
 	 }
@@ -586,9 +585,9 @@ apply_stencil_op_to_pixels( struct gl_context *ctx,
 	 if (invmask==0) {
 	    for (i=0;i<n;i++) {
 	       if (mask[i]) {
-                  GLstencil *sptr = STENCIL_ADDRESS( x[i], y[i] );
+                  GLubyte *sptr = STENCIL_ADDRESS( x[i], y[i] );
 		  if (*sptr < stencilMax) {
-		     *sptr = (GLstencil) (*sptr + 1);
+		     *sptr = (GLubyte) (*sptr + 1);
 		  }
 	       }
 	    }
@@ -596,9 +595,9 @@ apply_stencil_op_to_pixels( struct gl_context *ctx,
 	 else {
 	    for (i=0;i<n;i++) {
 	       if (mask[i]) {
-                  GLstencil *sptr = STENCIL_ADDRESS( x[i], y[i] );
+                  GLubyte *sptr = STENCIL_ADDRESS( x[i], y[i] );
 		  if (*sptr < stencilMax) {
-		     *sptr = (GLstencil) ((invmask & *sptr) | (wrtmask & (*sptr+1)));
+		     *sptr = (GLubyte) ((invmask & *sptr) | (wrtmask & (*sptr+1)));
 		  }
 	       }
 	    }
@@ -608,9 +607,9 @@ apply_stencil_op_to_pixels( struct gl_context *ctx,
 	 if (invmask==0) {
 	    for (i=0;i<n;i++) {
 	       if (mask[i]) {
-                  GLstencil *sptr = STENCIL_ADDRESS( x[i], y[i] );
+                  GLubyte *sptr = STENCIL_ADDRESS( x[i], y[i] );
 		  if (*sptr>0) {
-		     *sptr = (GLstencil) (*sptr - 1);
+		     *sptr = (GLubyte) (*sptr - 1);
 		  }
 	       }
 	    }
@@ -618,9 +617,9 @@ apply_stencil_op_to_pixels( struct gl_context *ctx,
 	 else {
 	    for (i=0;i<n;i++) {
 	       if (mask[i]) {
-                  GLstencil *sptr = STENCIL_ADDRESS( x[i], y[i] );
+                  GLubyte *sptr = STENCIL_ADDRESS( x[i], y[i] );
 		  if (*sptr>0) {
-		     *sptr = (GLstencil) ((invmask & *sptr) | (wrtmask & (*sptr-1)));
+		     *sptr = (GLubyte) ((invmask & *sptr) | (wrtmask & (*sptr-1)));
 		  }
 	       }
 	    }
@@ -630,16 +629,16 @@ apply_stencil_op_to_pixels( struct gl_context *ctx,
 	 if (invmask==0) {
 	    for (i=0;i<n;i++) {
 	       if (mask[i]) {
-                  GLstencil *sptr = STENCIL_ADDRESS( x[i], y[i] );
-                  *sptr = (GLstencil) (*sptr + 1);
+                  GLubyte *sptr = STENCIL_ADDRESS( x[i], y[i] );
+                  *sptr = (GLubyte) (*sptr + 1);
 	       }
 	    }
 	 }
 	 else {
 	    for (i=0;i<n;i++) {
 	       if (mask[i]) {
-                  GLstencil *sptr = STENCIL_ADDRESS( x[i], y[i] );
-                  *sptr = (GLstencil) ((invmask & *sptr) | (wrtmask & (*sptr+1)));
+                  GLubyte *sptr = STENCIL_ADDRESS( x[i], y[i] );
+                  *sptr = (GLubyte) ((invmask & *sptr) | (wrtmask & (*sptr+1)));
 	       }
 	    }
 	 }
@@ -648,16 +647,16 @@ apply_stencil_op_to_pixels( struct gl_context *ctx,
 	 if (invmask==0) {
 	    for (i=0;i<n;i++) {
 	       if (mask[i]) {
-                  GLstencil *sptr = STENCIL_ADDRESS( x[i], y[i] );
-                  *sptr = (GLstencil) (*sptr - 1);
+                  GLubyte *sptr = STENCIL_ADDRESS( x[i], y[i] );
+                  *sptr = (GLubyte) (*sptr - 1);
 	       }
 	    }
 	 }
 	 else {
 	    for (i=0;i<n;i++) {
 	       if (mask[i]) {
-                  GLstencil *sptr = STENCIL_ADDRESS( x[i], y[i] );
-                  *sptr = (GLstencil) ((invmask & *sptr) | (wrtmask & (*sptr-1)));
+                  GLubyte *sptr = STENCIL_ADDRESS( x[i], y[i] );
+                  *sptr = (GLubyte) ((invmask & *sptr) | (wrtmask & (*sptr-1)));
 	       }
 	    }
 	 }
@@ -666,16 +665,16 @@ apply_stencil_op_to_pixels( struct gl_context *ctx,
 	 if (invmask==0) {
 	    for (i=0;i<n;i++) {
 	       if (mask[i]) {
-                  GLstencil *sptr = STENCIL_ADDRESS( x[i], y[i] );
-                  *sptr = (GLstencil) (~*sptr);
+                  GLubyte *sptr = STENCIL_ADDRESS( x[i], y[i] );
+                  *sptr = (GLubyte) (~*sptr);
 	       }
 	    }
 	 }
 	 else {
 	    for (i=0;i<n;i++) {
 	       if (mask[i]) {
-                  GLstencil *sptr = STENCIL_ADDRESS( x[i], y[i] );
-                  *sptr = (GLstencil) ((invmask & *sptr) | (wrtmask & ~*sptr));
+                  GLubyte *sptr = STENCIL_ADDRESS( x[i], y[i] );
+                  *sptr = (GLubyte) ((invmask & *sptr) | (wrtmask & ~*sptr));
 	       }
 	    }
 	 }
@@ -705,15 +704,14 @@ stencil_test_pixels( struct gl_context *ctx, GLuint face, GLuint n,
    const struct gl_framebuffer *fb = ctx->DrawBuffer;
    struct gl_renderbuffer *rb = fb->_StencilBuffer;
    GLubyte fail[MAX_WIDTH];
-   GLstencil r, s;
+   GLubyte r, s;
    GLuint i;
    GLboolean allfail = GL_FALSE;
    const GLuint valueMask = ctx->Stencil.ValueMask[face];
-   const GLstencil *stencilStart = (GLstencil *) rb->Data;
+   const GLubyte *stencilStart = (GLubyte *) rb->Data;
    const GLuint stride = rb->Width;
 
    ASSERT(rb->GetPointer(ctx, rb, 0, 0));
-   ASSERT(sizeof(GLstencil) == 1);
 
    /*
     * Perform stencil test.  The results of this operation are stored
@@ -740,11 +738,11 @@ stencil_test_pixels( struct gl_context *ctx, GLuint face, GLuint n,
 	 allfail = GL_TRUE;
 	 break;
       case GL_LESS:
-	 r = (GLstencil) (ctx->Stencil.Ref[face] & valueMask);
+	 r = (GLubyte) (ctx->Stencil.Ref[face] & valueMask);
 	 for (i=0;i<n;i++) {
 	    if (mask[i]) {
-               const GLstencil *sptr = STENCIL_ADDRESS(x[i],y[i]);
-	       s = (GLstencil) (*sptr & valueMask);
+               const GLubyte *sptr = STENCIL_ADDRESS(x[i],y[i]);
+	       s = (GLubyte) (*sptr & valueMask);
 	       if (r < s) {
 		  /* passed */
 		  fail[i] = 0;
@@ -760,11 +758,11 @@ stencil_test_pixels( struct gl_context *ctx, GLuint face, GLuint n,
 	 }
 	 break;
       case GL_LEQUAL:
-	 r = (GLstencil) (ctx->Stencil.Ref[face] & valueMask);
+	 r = (GLubyte) (ctx->Stencil.Ref[face] & valueMask);
 	 for (i=0;i<n;i++) {
 	    if (mask[i]) {
-               const GLstencil *sptr = STENCIL_ADDRESS(x[i],y[i]);
-	       s = (GLstencil) (*sptr & valueMask);
+               const GLubyte *sptr = STENCIL_ADDRESS(x[i],y[i]);
+	       s = (GLubyte) (*sptr & valueMask);
 	       if (r <= s) {
 		  /* pass */
 		  fail[i] = 0;
@@ -780,11 +778,11 @@ stencil_test_pixels( struct gl_context *ctx, GLuint face, GLuint n,
 	 }
 	 break;
       case GL_GREATER:
-	 r = (GLstencil) (ctx->Stencil.Ref[face] & valueMask);
+	 r = (GLubyte) (ctx->Stencil.Ref[face] & valueMask);
 	 for (i=0;i<n;i++) {
 	    if (mask[i]) {
-               const GLstencil *sptr = STENCIL_ADDRESS(x[i],y[i]);
-	       s = (GLstencil) (*sptr & valueMask);
+               const GLubyte *sptr = STENCIL_ADDRESS(x[i],y[i]);
+	       s = (GLubyte) (*sptr & valueMask);
 	       if (r > s) {
 		  /* passed */
 		  fail[i] = 0;
@@ -800,11 +798,11 @@ stencil_test_pixels( struct gl_context *ctx, GLuint face, GLuint n,
 	 }
 	 break;
       case GL_GEQUAL:
-	 r = (GLstencil) (ctx->Stencil.Ref[face] & valueMask);
+	 r = (GLubyte) (ctx->Stencil.Ref[face] & valueMask);
 	 for (i=0;i<n;i++) {
 	    if (mask[i]) {
-               const GLstencil *sptr = STENCIL_ADDRESS(x[i],y[i]);
-	       s = (GLstencil) (*sptr & valueMask);
+               const GLubyte *sptr = STENCIL_ADDRESS(x[i],y[i]);
+	       s = (GLubyte) (*sptr & valueMask);
 	       if (r >= s) {
 		  /* passed */
 		  fail[i] = 0;
@@ -820,11 +818,11 @@ stencil_test_pixels( struct gl_context *ctx, GLuint face, GLuint n,
 	 }
 	 break;
       case GL_EQUAL:
-	 r = (GLstencil) (ctx->Stencil.Ref[face] & valueMask);
+	 r = (GLubyte) (ctx->Stencil.Ref[face] & valueMask);
 	 for (i=0;i<n;i++) {
 	    if (mask[i]) {
-               const GLstencil *sptr = STENCIL_ADDRESS(x[i],y[i]);
-	       s = (GLstencil) (*sptr & valueMask);
+               const GLubyte *sptr = STENCIL_ADDRESS(x[i],y[i]);
+	       s = (GLubyte) (*sptr & valueMask);
 	       if (r == s) {
 		  /* passed */
 		  fail[i] = 0;
@@ -840,11 +838,11 @@ stencil_test_pixels( struct gl_context *ctx, GLuint face, GLuint n,
 	 }
 	 break;
       case GL_NOTEQUAL:
-	 r = (GLstencil) (ctx->Stencil.Ref[face] & valueMask);
+	 r = (GLubyte) (ctx->Stencil.Ref[face] & valueMask);
 	 for (i=0;i<n;i++) {
 	    if (mask[i]) {
-               const GLstencil *sptr = STENCIL_ADDRESS(x[i],y[i]);
-	       s = (GLstencil) (*sptr & valueMask);
+               const GLubyte *sptr = STENCIL_ADDRESS(x[i],y[i]);
+	       s = (GLubyte) (*sptr & valueMask);
 	       if (r != s) {
 		  /* passed */
 		  fail[i] = 0;
@@ -914,7 +912,7 @@ stencil_and_ztest_pixels( struct gl_context *ctx, SWspan *span, GLuint face )
 
    if (!rb->GetPointer(ctx, rb, 0, 0)) {
       /* No direct access */
-      GLstencil stencil[MAX_WIDTH];
+      GLubyte stencil[MAX_WIDTH];
 
       ASSERT(rb->DataType == GL_UNSIGNED_BYTE);
       _swrast_get_values(ctx, rb, n, x, y, stencil, sizeof(GLubyte));
@@ -1044,7 +1042,7 @@ clip_span(GLuint bufferWidth, GLuint bufferHeight,
  */
 void
 _swrast_read_stencil_span(struct gl_context *ctx, struct gl_renderbuffer *rb,
-                          GLint n, GLint x, GLint y, GLstencil stencil[])
+                          GLint n, GLint x, GLint y, GLubyte stencil[])
 {
    if (y < 0 || y >= (GLint) rb->Height ||
        x + n <= 0 || x >= (GLint) rb->Width) {
@@ -1081,7 +1079,7 @@ _swrast_read_stencil_span(struct gl_context *ctx, struct gl_renderbuffer *rb,
  */
 void
 _swrast_write_stencil_span(struct gl_context *ctx, GLint n, GLint x, GLint y,
-                           const GLstencil stencil[] )
+                           const GLubyte stencil[] )
 {
    struct gl_framebuffer *fb = ctx->DrawBuffer;
    struct gl_renderbuffer *rb = fb->_StencilBuffer;
@@ -1109,7 +1107,7 @@ _swrast_write_stencil_span(struct gl_context *ctx, GLint n, GLint x, GLint y,
 
    if ((stencilMask & stencilMax) != stencilMax) {
       /* need to apply writemask */
-      GLstencil destVals[MAX_WIDTH], newVals[MAX_WIDTH];
+      GLubyte destVals[MAX_WIDTH], newVals[MAX_WIDTH];
       GLint i;
       rb->GetRow(ctx, rb, n, x, y, destVals);
       for (i = 0; i < n; i++) {

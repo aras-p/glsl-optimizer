@@ -351,9 +351,9 @@ _swrast_write_zoomed_depth_span(struct gl_context *ctx, GLint imgX, GLint imgY,
 void
 _swrast_write_zoomed_stencil_span(struct gl_context *ctx, GLint imgX, GLint imgY,
                                   GLint width, GLint spanX, GLint spanY,
-                                  const GLstencil stencil[])
+                                  const GLubyte stencil[])
 {
-   GLstencil zoomedVals[MAX_WIDTH];
+   GLubyte zoomedVals[MAX_WIDTH];
    GLint x0, x1, y0, y1, y;
    GLint i, zoomedWidth;
 
