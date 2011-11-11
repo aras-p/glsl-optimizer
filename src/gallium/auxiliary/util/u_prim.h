@@ -78,7 +78,7 @@ static INLINE boolean u_validate_pipe_prim( unsigned pipe_prim, unsigned nr )
 static INLINE boolean u_trim_pipe_prim( unsigned pipe_prim, unsigned *nr )
 {
    boolean ok = TRUE;
-   const static int values[][2] = {
+   const static unsigned values[][2] = {
       { 1, 0 }, /* PIPE_PRIM_POINTS */
       { 2, 2 }, /* PIPE_PRIM_LINES */
       { 2, 0 }, /* PIPE_PRIM_LINE_LOOP */
