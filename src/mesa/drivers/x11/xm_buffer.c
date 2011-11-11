@@ -477,6 +477,17 @@ xmesa_MapRenderbuffer(struct gl_context *ctx,
             return;
          }
 
+         if (xrb->Base.Format == MESA_FORMAT_ARGB8888 ||
+             xrb->Base.Format == MESA_FORMAT_RGBA8888_REV) {
+            /* The original pixmap is RGB but we're returning an RGBA
+             * image buffer.  Fill in the A values with 0xff.
+             */
+            GLuint i, *p = (GLuint *) ximage->data;
+            for (i = 0; i < w * h; i++) {
+               p[i] |= 0xff000000;
+            }
+         }
+
          xrb->map_ximage = ximage;
 
          /* the first row of the OpenGL image is last row of the XImage */
