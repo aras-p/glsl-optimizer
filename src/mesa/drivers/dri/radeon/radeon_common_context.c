@@ -38,6 +38,7 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #include "drivers/common/meta.h"
 #include "main/context.h"
 #include "main/framebuffer.h"
+#include "main/fbobject.h"
 #include "main/renderbuffer.h"
 #include "main/state.h"
 #include "main/simple_list.h"
@@ -564,7 +565,21 @@ GLboolean radeonMakeCurrent(__DRIcontext * driContextPriv,
 			    __DRIdrawable * driReadPriv)
 {
 	radeonContextPtr radeon;
+	GET_CURRENT_CONTEXT(curCtx);
 	struct gl_framebuffer *drfb, *readfb;
+
+	if (driContextPriv)
+		radeon = (radeonContextPtr)driContextPriv->driverPrivate;
+	else
+		radeon = NULL;
+	/* According to the glXMakeCurrent() man page: "Pending commands to
+	 * the previous context, if any, are flushed before it is released."
+	 * But only flush if we're actually changing contexts.
+	 */
+
+	if ((radeonContextPtr)curCtx && (radeonContextPtr)curCtx != radeon) {
+		_mesa_flush(curCtx);
+	}
 
 	if (!driContextPriv) {
 		if (RADEON_DEBUG & RADEON_DRI)
@@ -572,8 +587,6 @@ GLboolean radeonMakeCurrent(__DRIcontext * driContextPriv,
 		_mesa_make_current(NULL, NULL, NULL);
 		return GL_TRUE;
 	}
-
-	radeon = (radeonContextPtr) driContextPriv->driverPrivate;
 
 	if(driDrawPriv == NULL && driReadPriv == NULL) {
 		drfb = _mesa_create_framebuffer(&radeon->glCtx->Visual);
