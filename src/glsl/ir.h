@@ -566,6 +566,13 @@ public:
 
    /**
     * Find a signature that matches a set of actual parameters, taking implicit
+    * conversions into account.  Also flags whether the match was exact.
+    */
+   ir_function_signature *matching_signature(const exec_list *actual_param,
+					     bool *match_is_exact);
+
+   /**
+    * Find a signature that matches a set of actual parameters, taking implicit
     * conversions into account.
     */
    ir_function_signature *matching_signature(const exec_list *actual_param);
