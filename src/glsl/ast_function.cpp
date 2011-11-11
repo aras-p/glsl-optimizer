@@ -273,41 +273,75 @@ match_function_by_name(exec_list *instructions, const char *name,
 {
    void *ctx = state;
    ir_function *f = state->symbols->get_function(name);
-   ir_function_signature *sig;
+   ir_function_signature *local_sig = NULL;
+   ir_function_signature *sig = NULL;
 
-   sig = f ? f->matching_signature(actual_parameters) : NULL;
+   /* Is the function hidden by a record type constructor? */
+   if (state->symbols->get_type(name))
+      goto done; /* no match */
 
-   /* FINISHME: This doesn't handle the case where shader X contains a
-    * FINISHME: matching signature but shader X + N contains an _exact_
-    * FINISHME: matching signature.
-    */
-   if (sig == NULL
-       && (f == NULL || state->es_shader || !f->has_user_signature())
-       && state->symbols->get_type(name) == NULL
-       && (state->language_version == 110
-	   || state->symbols->get_variable(name) == NULL)) {
-      /* The current shader doesn't contain a matching function or signature.
-       * Before giving up, look for the prototype in the built-in functions.
-       */
-      _mesa_glsl_initialize_functions(state);
-      for (unsigned i = 0; i < state->num_builtins_to_link; i++) {
-	 ir_function *builtin;
-	 builtin = state->builtins_to_link[i]->symbols->get_function(name);
-	 sig = builtin ? builtin->matching_signature(actual_parameters) : NULL;
-	 if (sig != NULL) {
-	    if (f == NULL) {
-	       f = new(ctx) ir_function(name);
-	       state->symbols->add_global_function(f);
-	       emit_function(state, f);
-	    }
+   /* Is the function hidden by a variable (impossible in 1.10)? */
+   if (state->language_version != 110 && state->symbols->get_variable(name))
+      goto done; /* no match */
 
-	    f->add_signature(sig->clone_prototype(f, NULL));
-	    break;
-	 }
+   if (f != NULL) {
+      /* Look for a match in the local shader.  If exact, we're done. */
+      bool is_exact = false;
+      sig = local_sig = f->matching_signature(actual_parameters, &is_exact);
+      if (is_exact)
+	 goto done;
+
+      if (!state->es_shader && f->has_user_signature()) {
+	 /* In desktop GL, the presence of a user-defined signature hides any
+	  * built-in signatures, so we must ignore them.  In contrast, in ES2
+	  * user-defined signatures add new overloads, so we must proceed.
+	  */
+	 goto done;
       }
    }
 
+   /* Local shader has no exact candidates; check the built-ins. */
+   _mesa_glsl_initialize_functions(state);
+   for (unsigned i = 0; i < state->num_builtins_to_link; i++) {
+      ir_function *builtin =
+	 state->builtins_to_link[i]->symbols->get_function(name);
+      if (builtin == NULL)
+	 continue;
+
+      bool is_exact = false;
+      ir_function_signature *builtin_sig =
+	 builtin->matching_signature(actual_parameters, &is_exact);
+
+      if (builtin_sig == NULL)
+	 continue;
+
+      /* If the built-in signature is exact, we can stop. */
+      if (is_exact) {
+	 sig = builtin_sig;
+	 goto done;
+      }
+
+      if (sig == NULL) {
+	 /* We found an inexact match, which is better than nothing.  However,
+	  * we should keep searching for an exact match.
+	  */
+	 sig = builtin_sig;
+      }
+   }
+
+done:
    if (sig != NULL) {
+      /* If the match is from a linked built-in shader, import the prototype. */
+      if (sig != local_sig) {
+	 if (f == NULL) {
+	    f = new(ctx) ir_function(name);
+	    state->symbols->add_global_function(f);
+	    emit_function(state, f);
+	 }
+	 f->add_signature(sig->clone_prototype(f, NULL));
+      }
+
+      /* Finally, generate a call instruction. */
       return generate_call(instructions, sig, loc, actual_parameters, state);
    } else {
       char *str = prototype_string(NULL, name, actual_parameters);
