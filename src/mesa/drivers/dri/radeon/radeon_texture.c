@@ -682,7 +682,7 @@ static void radeon_store_teximage(struct gl_context* ctx, int dims,
 		dstRowStride = image->mt->levels[image->base.Base.Level].rowstride;
 	} else if (t->bo) {
 		/* TFP case */
-		dstRowStride = get_texture_image_row_stride(rmesa, texImage->TexFormat, width, 0);
+		dstRowStride = get_texture_image_row_stride(rmesa, texImage->TexFormat, width, 0, texObj->Target);
 	} else {
 		dstRowStride = _mesa_format_row_stride(texImage->TexFormat, texImage->Width);
 	}
