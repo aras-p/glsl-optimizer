@@ -108,6 +108,7 @@ struct st_translate {
 /** Map Mesa's SYSTEM_VALUE_x to TGSI_SEMANTIC_x */
 static unsigned mesa_sysval_to_semantic[SYSTEM_VALUE_MAX] = {
    TGSI_SEMANTIC_FACE,
+   TGSI_SEMANTIC_VERTEXID,
    TGSI_SEMANTIC_INSTANCEID
 };
 
