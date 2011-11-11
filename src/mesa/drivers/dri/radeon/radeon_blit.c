@@ -379,14 +379,14 @@ unsigned r100_blit(struct gl_context *ctx,
     }
 
     if (0) {
-        fprintf(stderr, "src: size [%d x %d], pitch %d, "
+        fprintf(stderr, "src: size [%d x %d], pitch %d, offset %d "
                 "offset [%d x %d], format %s, bo %p\n",
-                src_width, src_height, src_pitch,
+                src_width, src_height, src_pitch, src_offset,
                 src_x_offset, src_y_offset,
                 _mesa_get_format_name(src_mesaformat),
                 src_bo);
-        fprintf(stderr, "dst: pitch %d, offset[%d x %d], format %s, bo %p\n",
-                dst_pitch, dst_x_offset, dst_y_offset,
+        fprintf(stderr, "dst: pitch %d offset %d, offset[%d x %d], format %s, bo %p\n",
+                dst_pitch, dst_offset,  dst_x_offset, dst_y_offset,
                 _mesa_get_format_name(dst_mesaformat), dst_bo);
         fprintf(stderr, "region: %d x %d\n", reg_width, reg_height);
     }
