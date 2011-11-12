@@ -1357,7 +1357,7 @@ static void evergreen_cb(struct r600_pipe_context *rctx, struct r600_pipe_state 
 	}
 
 	/* XXX quite sure for dx10+ hw don't need any offset hacks */
-	offset = r600_texture_get_offset((struct r600_resource_texture *)state->cbufs[cb]->texture,
+	offset = r600_texture_get_offset(rtex,
 					 level, state->cbufs[cb]->u.tex.first_layer);
 	pitch = rtex->pitch_in_blocks[level] / 8 - 1;
 	slice = rtex->pitch_in_blocks[level] * surf->aligned_height / 64 - 1;
