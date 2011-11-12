@@ -567,6 +567,19 @@ update_wrapper(struct gl_context *ctx, struct gl_renderbuffer_attachment *att)
    trb->Base.InternalFormat = trb->TexImage->Base.InternalFormat;
    trb->Base.Format = trb->TexImage->Base.TexFormat;
 
+   /* Set the gl_renderbuffer::Data field so that mapping the buffer
+    * in renderbuffer.c succeeds.
+    */
+   if (att->Texture->Target == GL_TEXTURE_3D ||
+       att->Texture->Target == GL_TEXTURE_2D_ARRAY_EXT) {
+      trb->Base.Data = trb->TexImage->Buffer +
+         trb->TexImage->ImageOffsets[trb->Zoffset] *
+         _mesa_get_format_bytes(trb->TexImage->Base.TexFormat);
+   }
+   else {
+      trb->Base.Data = trb->TexImage->Buffer;
+   }
+
    /* XXX may need more special cases here */
    switch (trb->TexImage->Base.TexFormat) {
    case MESA_FORMAT_Z24_S8:
