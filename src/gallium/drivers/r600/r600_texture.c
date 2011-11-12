@@ -350,6 +350,9 @@ static void r600_texture_destroy(struct pipe_screen *screen,
 	if (rtex->flushed_depth_texture)
 		pipe_resource_reference((struct pipe_resource **)&rtex->flushed_depth_texture, NULL);
 
+	if (rtex->stencil)
+		pipe_resource_reference((struct pipe_resource **)&rtex->stencil, NULL);
+
 	pb_reference(&resource->buf, NULL);
 	FREE(rtex);
 }
@@ -469,7 +472,7 @@ r600_texture_create_object(struct pipe_screen *screen,
 	}
 
 	if (rtex->stencil) {
-		rtex->stencil->resource.buf = rtex->resource.buf;
+		pb_reference(&rtex->stencil->resource.buf, rtex->resource.buf);
 		rtex->stencil->resource.cs_buf = rtex->resource.cs_buf;
 	}
 	return rtex;
