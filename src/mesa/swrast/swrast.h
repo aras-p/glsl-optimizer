@@ -119,13 +119,6 @@ _swrast_DrawPixels( struct gl_context *ctx,
 		    const GLvoid *pixels );
 
 extern void
-_swrast_ReadPixels( struct gl_context *ctx,
-		    GLint x, GLint y, GLsizei width, GLsizei height,
-		    GLenum format, GLenum type,
-		    const struct gl_pixelstore_attrib *unpack,
-		    GLvoid *pixels );
-
-extern void
 _swrast_BlitFramebuffer(struct gl_context *ctx,
                         GLint srcX0, GLint srcY0, GLint srcX1, GLint srcY1,
                         GLint dstX0, GLint dstY0, GLint dstX1, GLint dstY1,

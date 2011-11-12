@@ -1248,8 +1248,7 @@ _swrast_depth_bounds_test( struct gl_context *ctx, SWspan *span )
  * Read a span of depth values from the given depth renderbuffer, returning
  * the values as GLfloats.
  * This function does clipping to prevent reading outside the depth buffer's
- * bounds.  Though the clipping is redundant when we're called from
- * _swrast_ReadPixels.
+ * bounds.
  */
 void
 _swrast_read_depth_span_float( struct gl_context *ctx, struct gl_renderbuffer *rb,
