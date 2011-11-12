@@ -195,38 +195,24 @@ _mesa_sizeof_packed_type( GLenum type )
       case GL_FLOAT:
 	 return sizeof(GLfloat);
       case GL_UNSIGNED_BYTE_3_3_2:
-         return sizeof(GLubyte);
       case GL_UNSIGNED_BYTE_2_3_3_REV:
-         return sizeof(GLubyte);
       case MESA_UNSIGNED_BYTE_4_4:
          return sizeof(GLubyte);
       case GL_UNSIGNED_SHORT_5_6_5:
-         return sizeof(GLushort);
       case GL_UNSIGNED_SHORT_5_6_5_REV:
-         return sizeof(GLushort);
       case GL_UNSIGNED_SHORT_4_4_4_4:
-         return sizeof(GLushort);
       case GL_UNSIGNED_SHORT_4_4_4_4_REV:
-         return sizeof(GLushort);
       case GL_UNSIGNED_SHORT_5_5_5_1:
-         return sizeof(GLushort);
       case GL_UNSIGNED_SHORT_1_5_5_5_REV:
-         return sizeof(GLushort);
-      case GL_UNSIGNED_INT_8_8_8_8:
-         return sizeof(GLuint);
-      case GL_UNSIGNED_INT_8_8_8_8_REV:
-         return sizeof(GLuint);
-      case GL_UNSIGNED_INT_10_10_10_2:
-         return sizeof(GLuint);
-      case GL_UNSIGNED_INT_2_10_10_10_REV:
-         return sizeof(GLuint);
       case GL_UNSIGNED_SHORT_8_8_MESA:
       case GL_UNSIGNED_SHORT_8_8_REV_MESA:
-         return sizeof(GLushort);      
+         return sizeof(GLushort);
+      case GL_UNSIGNED_INT_8_8_8_8:
+      case GL_UNSIGNED_INT_8_8_8_8_REV:
+      case GL_UNSIGNED_INT_10_10_10_2:
+      case GL_UNSIGNED_INT_2_10_10_10_REV:
       case GL_UNSIGNED_INT_24_8_EXT:
-         return sizeof(GLuint);
       case GL_UNSIGNED_INT_5_9_9_9_REV:
-         return sizeof(GLuint);
       case GL_UNSIGNED_INT_10F_11F_11F_REV:
          return sizeof(GLuint);
       case GL_FLOAT_32_UNSIGNED_INT_24_8_REV:
@@ -263,29 +249,27 @@ _mesa_components_in_format( GLenum format )
       case GL_LUMINANCE_INTEGER_EXT:
       case GL_INTENSITY:
          return 1;
+
       case GL_LUMINANCE_ALPHA:
       case GL_LUMINANCE_ALPHA_INTEGER_EXT:
       case GL_RG:
-	 return 2;
-      case GL_RGB:
-      case GL_RGB_INTEGER_EXT:
-	 return 3;
-      case GL_RGBA:
-      case GL_RGBA_INTEGER_EXT:
-	 return 4;
-      case GL_BGR:
-	 return 3;
-      case GL_BGRA:
-	 return 4;
-      case GL_ABGR_EXT:
-         return 4;
       case GL_YCBCR_MESA:
-         return 2;
       case GL_DEPTH_STENCIL_EXT:
-         return 2;
       case GL_DUDV_ATI:
       case GL_DU8DV8_ATI:
-         return 2;
+	 return 2;
+
+      case GL_RGB:
+      case GL_BGR:
+      case GL_RGB_INTEGER_EXT:
+	 return 3;
+
+      case GL_RGBA:
+      case GL_BGRA:
+      case GL_ABGR_EXT:
+      case GL_RGBA_INTEGER_EXT:
+         return 4;
+
       default:
          return -1;
    }
