@@ -39,22 +39,6 @@
 #include "mtypes.h"
 
 
-/**
- * NOTE:
- * Normally, BYTE_TO_FLOAT(0) returns 0.00392  That causes problems when
- * we later convert the float to a packed integer value (such as for
- * GL_RGB5_A1) because we'll wind up with a non-zero value.
- *
- * We redefine the macros here so zero is handled correctly.
- */
-#undef BYTE_TO_FLOAT
-#define BYTE_TO_FLOAT(B)    ((B) == 0 ? 0.0F : ((2.0F * (B) + 1.0F) * (1.0F/255.0F)))
-
-#undef SHORT_TO_FLOAT
-#define SHORT_TO_FLOAT(S)   ((S) == 0 ? 0.0F : ((2.0F * (S) + 1.0F) * (1.0F/65535.0F)))
-
-
-
 
 /**
  * \return GL_TRUE if type is packed pixel type, GL_FALSE otherwise.

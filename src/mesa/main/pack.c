@@ -44,22 +44,6 @@
 
 
 /**
- * NOTE:
- * Normally, BYTE_TO_FLOAT(0) returns 0.00392  That causes problems when
- * we later convert the float to a packed integer value (such as for
- * GL_RGB5_A1) because we'll wind up with a non-zero value.
- *
- * We redefine the macros here so zero is handled correctly.
- */
-#undef BYTE_TO_FLOAT
-#define BYTE_TO_FLOAT(B)    ((B) == 0 ? 0.0F : ((2.0F * (B) + 1.0F) * (1.0F/255.0F)))
-
-#undef SHORT_TO_FLOAT
-#define SHORT_TO_FLOAT(S)   ((S) == 0 ? 0.0F : ((2.0F * (S) + 1.0F) * (1.0F/65535.0F)))
-
-
-
-/**
  * Flip the 8 bits in each byte of the given array.
  *
  * \param p array.
@@ -2504,10 +2488,10 @@ extract_float_rgba(GLuint n, GLfloat rgba[][4],
          PROCESS(aSrc, ACOMP, 1.0F, 255, GLubyte, UBYTE_TO_FLOAT);
          break;
       case GL_BYTE:
-         PROCESS(rSrc, RCOMP, 0.0F,   0, GLbyte, BYTE_TO_FLOAT);
-         PROCESS(gSrc, GCOMP, 0.0F,   0, GLbyte, BYTE_TO_FLOAT);
-         PROCESS(bSrc, BCOMP, 0.0F,   0, GLbyte, BYTE_TO_FLOAT);
-         PROCESS(aSrc, ACOMP, 1.0F, 127, GLbyte, BYTE_TO_FLOAT);
+         PROCESS(rSrc, RCOMP, 0.0F,   0, GLbyte, BYTE_TO_FLOATZ);
+         PROCESS(gSrc, GCOMP, 0.0F,   0, GLbyte, BYTE_TO_FLOATZ);
+         PROCESS(bSrc, BCOMP, 0.0F,   0, GLbyte, BYTE_TO_FLOATZ);
+         PROCESS(aSrc, ACOMP, 1.0F, 127, GLbyte, BYTE_TO_FLOATZ);
          break;
       case GL_UNSIGNED_SHORT:
          PROCESS(rSrc, RCOMP, 0.0F,      0, GLushort, USHORT_TO_FLOAT);
@@ -2516,10 +2500,10 @@ extract_float_rgba(GLuint n, GLfloat rgba[][4],
          PROCESS(aSrc, ACOMP, 1.0F, 0xffff, GLushort, USHORT_TO_FLOAT);
          break;
       case GL_SHORT:
-         PROCESS(rSrc, RCOMP, 0.0F,     0, GLshort, SHORT_TO_FLOAT);
-         PROCESS(gSrc, GCOMP, 0.0F,     0, GLshort, SHORT_TO_FLOAT);
-         PROCESS(bSrc, BCOMP, 0.0F,     0, GLshort, SHORT_TO_FLOAT);
-         PROCESS(aSrc, ACOMP, 1.0F, 32767, GLshort, SHORT_TO_FLOAT);
+         PROCESS(rSrc, RCOMP, 0.0F,     0, GLshort, SHORT_TO_FLOATZ);
+         PROCESS(gSrc, GCOMP, 0.0F,     0, GLshort, SHORT_TO_FLOATZ);
+         PROCESS(bSrc, BCOMP, 0.0F,     0, GLshort, SHORT_TO_FLOATZ);
+         PROCESS(aSrc, ACOMP, 1.0F, 32767, GLshort, SHORT_TO_FLOATZ);
          break;
       case GL_UNSIGNED_INT:
          PROCESS(rSrc, RCOMP, 0.0F,          0, GLuint, UINT_TO_FLOAT);
@@ -4822,14 +4806,14 @@ _mesa_unpack_depth_span( struct gl_context *ctx, GLuint n,
     */
    switch (srcType) {
       case GL_BYTE:
-         DEPTH_VALUES(GLbyte, BYTE_TO_FLOAT);
+         DEPTH_VALUES(GLbyte, BYTE_TO_FLOATZ);
          needClamp = GL_TRUE;
          break;
       case GL_UNSIGNED_BYTE:
          DEPTH_VALUES(GLubyte, UBYTE_TO_FLOAT);
          break;
       case GL_SHORT:
-         DEPTH_VALUES(GLshort, SHORT_TO_FLOAT);
+         DEPTH_VALUES(GLshort, SHORT_TO_FLOATZ);
          needClamp = GL_TRUE;
          break;
       case GL_UNSIGNED_SHORT:
