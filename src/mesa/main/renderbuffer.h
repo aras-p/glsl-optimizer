@@ -73,15 +73,6 @@ _mesa_add_color_renderbuffers(struct gl_context *ctx, struct gl_framebuffer *fb,
                               GLboolean frontRight, GLboolean backRight);
 
 extern GLboolean
-_mesa_add_alpha_renderbuffers(struct gl_context *ctx, struct gl_framebuffer *fb,
-                              GLuint alphaBits,
-                              GLboolean frontLeft, GLboolean backLeft,
-                              GLboolean frontRight, GLboolean backRight);
-
-extern void
-_mesa_copy_soft_alpha_renderbuffers(struct gl_context *ctx, struct gl_framebuffer *fb);
-
-extern GLboolean
 _mesa_add_depth_renderbuffer(struct gl_context *ctx, struct gl_framebuffer *fb,
                              GLuint depthBits);
 
