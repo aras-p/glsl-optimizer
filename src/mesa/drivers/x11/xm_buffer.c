@@ -349,7 +349,7 @@ xmesa_new_renderbuffer(struct gl_context *ctx, GLuint name,
          /* This will really only happen for pixmaps.  We'll access the
           * pixmap via a temporary XImage which will be 32bpp.
           */
-         xrb->Base.Format = MESA_FORMAT_ARGB8888;
+         xrb->Base.Format = MESA_FORMAT_XRGB8888;
          break;
       case PF_8A8R8G8B:
          xrb->Base.Format = MESA_FORMAT_ARGB8888;
@@ -475,17 +475,6 @@ xmesa_MapRenderbuffer(struct gl_context *ctx,
             *mapOut = NULL;
             *rowStrideOut = 0;
             return;
-         }
-
-         if (xrb->Base.Format == MESA_FORMAT_ARGB8888 ||
-             xrb->Base.Format == MESA_FORMAT_RGBA8888_REV) {
-            /* The original pixmap is RGB but we're returning an RGBA
-             * image buffer.  Fill in the A values with 0xff.
-             */
-            GLuint i, *p = (GLuint *) ximage->data;
-            for (i = 0; i < w * h; i++) {
-               p[i] |= 0xff000000;
-            }
          }
 
          xrb->map_ximage = ximage;
