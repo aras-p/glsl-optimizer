@@ -33,9 +33,13 @@
 
 
 /**
- * Returns the largest legal index value for the current set of bound vertex
- * buffers.  Regardless of any other consideration, all vertex lookups need to
- * be clamped to 0..max_index to prevent an out-of-bound access.
+ * Returns the largest legal index value plus one for the current set
+ * of bound vertex buffers.  Regardless of any other consideration,
+ * all vertex lookups need to be clamped to 0..max_index-1 to prevent
+ * an out-of-bound access.
+ *
+ * Note that if zero is returned it means that one or more buffers is
+ * too small to contain any valid vertex data.
  */
 unsigned
 util_draw_max_index(
@@ -48,7 +52,7 @@ util_draw_max_index(
    unsigned max_index;
    unsigned i;
 
-   max_index = ~0;
+   max_index = ~0U - 1;
    for (i = 0; i < nr_vertex_elements; i++) {
       const struct pipe_vertex_element *element =
          &vertex_elements[i];
@@ -68,13 +72,25 @@ util_draw_max_index(
       assert(format_desc->block.bits % 8 == 0);
       format_size = format_desc->block.bits/8;
 
-      assert(buffer_size - buffer->buffer_offset <= buffer_size);
+      if (buffer->buffer_offset >= buffer_size) {
+         /* buffer is too small */
+         return 0;
+      }
+
       buffer_size -= buffer->buffer_offset;
 
-      assert(buffer_size - element->src_offset <= buffer_size);
+      if (element->src_offset >= buffer_size) {
+         /* buffer is too small */
+         return 0;
+      }
+
       buffer_size -= element->src_offset;
 
-      assert(buffer_size - format_size <= buffer_size);
+      if (format_size > buffer_size) {
+         /* buffer is too small */
+         return 0;
+      }
+
       buffer_size -= format_size;
 
       if (buffer->stride != 0) {
@@ -95,5 +111,5 @@ util_draw_max_index(
       }
    }
 
-   return max_index;
+   return max_index + 1;
 }

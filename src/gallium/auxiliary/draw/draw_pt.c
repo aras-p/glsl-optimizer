@@ -422,6 +422,7 @@ draw_vbo(struct draw_context *draw,
 {
    unsigned reduced_prim = u_reduced_prim(info->mode);
    unsigned instance;
+   unsigned index_limit;
 
    assert(info->instance_count > 0);
    if (info->indexed)
@@ -470,11 +471,20 @@ draw_vbo(struct draw_context *draw,
    if (0)
       draw_print_arrays(draw, info->mode, info->start, MIN2(info->count, 20));
 
-   draw->pt.max_index = util_draw_max_index(draw->pt.vertex_buffer,
-                                            draw->pt.nr_vertex_buffers,
-                                            draw->pt.vertex_element,
-                                            draw->pt.nr_vertex_elements,
-                                            info);
+   index_limit = util_draw_max_index(draw->pt.vertex_buffer,
+                                     draw->pt.nr_vertex_buffers,
+                                     draw->pt.vertex_element,
+                                     draw->pt.nr_vertex_elements,
+                                     info);
+
+   if (index_limit == 0) {
+      /* one of the buffers is too small to do any valid drawing */
+      debug_warning("draw: VBO too small to draw anything\n");
+      return;
+   }
+
+   draw->pt.max_index = index_limit - 1;
+
 
    /*
     * TODO: We could use draw->pt.max_index to further narrow
