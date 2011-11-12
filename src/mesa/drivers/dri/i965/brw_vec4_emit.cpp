@@ -418,7 +418,23 @@ vec4_visitor::generate_tex(vec4_instruction *inst,
 
    assert(msg_type != -1);
 
-   if (inst->header_present) {
+   /* Load the message header if present.  If there's a texture offset, we need
+    * to set it up explicitly and load the offset bitfield.  Otherwise, we can
+    * use an implied move from g0 to the first message register.
+    */
+   if (inst->texture_offset) {
+      /* Explicitly set up the message header by copying g0 to the MRF. */
+      brw_MOV(p, retype(brw_message_reg(inst->base_mrf), BRW_REGISTER_TYPE_UD),
+	         retype(brw_vec8_grf(0, 0), BRW_REGISTER_TYPE_UD));
+
+      /* Then set the offset bits in DWord 2. */
+      brw_set_access_mode(p, BRW_ALIGN_1);
+      brw_MOV(p,
+	      retype(brw_vec1_reg(BRW_MESSAGE_REGISTER_FILE, inst->base_mrf, 2),
+		     BRW_REGISTER_TYPE_UD),
+	      brw_imm_uw(inst->texture_offset));
+      brw_set_access_mode(p, BRW_ALIGN_16);
+   } else if (inst->header_present) {
       /* Set up an implied move from g0 to the MRF. */
       src = brw_vec8_grf(0, 0);
    }

@@ -1781,12 +1781,16 @@ vec4_visitor::visit(ir_texture *ir)
       assert(!"TXB is not valid for vertex shaders.");
    }
 
-   inst->header_present = intel->gen < 5;
+   /* Texel offsets go in the message header; Gen4 also requires headers. */
+   inst->header_present = ir->offset || intel->gen < 5;
    inst->base_mrf = 2;
    inst->mlen = inst->header_present + 1; /* always at least one */
    inst->sampler = sampler;
    inst->dst = dst_reg(this, glsl_type::get_instance(ir->type->base_type,4,1));
    inst->shadow_compare = ir->shadow_comparitor != NULL;
+
+   if (ir->offset != NULL)
+      inst->texture_offset = brw_texture_offset(ir->offset->as_constant());
 
    /* MRF for the first parameter */
    int param_base = inst->base_mrf + inst->header_present;

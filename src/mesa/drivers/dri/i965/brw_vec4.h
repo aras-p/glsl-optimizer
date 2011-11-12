@@ -271,6 +271,7 @@ public:
    int conditional_mod; /**< BRW_CONDITIONAL_* */
 
    int sampler;
+   uint32_t texture_offset; /**< Texture Offset bitfield */
    int target; /**< MRT target. */
    bool shadow_compare;
 
