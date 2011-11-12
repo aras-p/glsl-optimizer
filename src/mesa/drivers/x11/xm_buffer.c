@@ -255,7 +255,6 @@ xmesa_alloc_front_storage(struct gl_context *ctx, struct gl_renderbuffer *rb,
    struct xmesa_renderbuffer *xrb = xmesa_renderbuffer(rb);
 
    /* just clear these to be sure we don't accidentally use them */
-   xrb->origin1 = NULL;
    xrb->origin2 = NULL;
    xrb->origin3 = NULL;
    xrb->origin4 = NULL;
@@ -291,10 +290,6 @@ xmesa_alloc_back_storage(struct gl_context *ctx, struct gl_renderbuffer *rb,
 
    /* plus... */
    if (xrb->ximage) {
-      /* Needed by PIXELADDR1 macro */
-      xrb->width1 = xrb->ximage->bytes_per_line;
-      xrb->origin1 = (GLubyte *) xrb->ximage->data + xrb->width1 * (height - 1);
-
       /* Needed by PIXELADDR2 macro */
       xrb->width2 = xrb->ximage->bytes_per_line / 2;
       xrb->origin2 = (GLushort *) xrb->ximage->data + xrb->width2 * (height - 1);
@@ -309,8 +304,7 @@ xmesa_alloc_back_storage(struct gl_context *ctx, struct gl_renderbuffer *rb,
    }
    else {
       /* out of memory or buffer size is 0 x 0 */
-      xrb->width1 = xrb->width2 = xrb->width3 = xrb->width4 = 0;
-      xrb->origin1 = NULL;
+      xrb->width2 = xrb->width3 = xrb->width4 = 0;
       xrb->origin2 = NULL;
       xrb->origin3 = NULL;
       xrb->origin4 = NULL;
@@ -412,11 +406,6 @@ xmesa_delete_framebuffer(struct gl_framebuffer *fb)
       }
       if (b->backxrb->pixmap) {
          XMesaFreePixmap( b->display, b->backxrb->pixmap );
-         if (b->xm_visual->hpcr_clear_flag) {
-            XMesaFreePixmap( b->display,
-                             b->xm_visual->hpcr_clear_pixmap );
-            XMesaDestroyImage( b->xm_visual->hpcr_clear_ximage );
-         }
       }
    }
 

@@ -193,6 +193,5 @@ do { \
 #define GET_VISUAL_DEPTH(__v)   __v->nplanes
 #define GET_BLACK_PIXEL(__v)    __v->display->blackPixel
 #define CHECK_BYTE_ORDER(__v)   GL_TRUE
-#define CHECK_FOR_HPCR(__v)     GL_FALSE
 
 #endif
