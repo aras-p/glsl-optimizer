@@ -355,8 +355,12 @@ st_render_texture(struct gl_context *ctx,
    /* get pointer to texture image we're rendeing to */
    texImage = _mesa_get_attachment_teximage(att);
 
-   /* create new renderbuffer which wraps the texture image */
-   rb = st_new_renderbuffer(ctx, 0);
+   /* create new renderbuffer which wraps the texture image.
+    * Use the texture's name as the renderbuffer's name so that we have
+    * something that's non-zero (to determine vertical orientation) and
+    * possibly helpful for debugging.
+    */
+   rb = st_new_renderbuffer(ctx, att->Texture->Name);
    if (!rb) {
       _mesa_error(ctx, GL_OUT_OF_MEMORY, "glFramebufferTexture()");
       return;
@@ -644,7 +648,9 @@ st_MapRenderbuffer(struct gl_context *ctx,
    struct st_context *st = st_context(ctx);
    struct st_renderbuffer *strb = st_renderbuffer(rb);
    struct pipe_context *pipe = st->pipe;
+   const GLboolean invert = rb->Name == 0;
    unsigned usage;
+   GLuint y2;
 
    usage = 0x0;
    if (mode & GL_MAP_READ_BIT)
@@ -652,14 +658,30 @@ st_MapRenderbuffer(struct gl_context *ctx,
    if (mode & GL_MAP_WRITE_BIT)
       usage |= PIPE_TRANSFER_WRITE;
 
+   /* Note: y=0=bottom of buffer while y2=0=top of buffer.
+    * 'invert' will be true for window-system buffers and false for
+    * user-allocated renderbuffers and textures.
+    */
+   if (invert)
+      y2 = strb->Base.Height - y - h;
+   else
+      y2 = y;
+
    strb->transfer = pipe_get_transfer(pipe,
                                       strb->texture,
                                       strb->rtt_level,
                                       strb->rtt_face + strb->rtt_slice,
-                                      usage, x, y, w, h);
+                                      usage, x, y2, w, h);
    if (strb->transfer) {
-      *mapOut = pipe_transfer_map(pipe, strb->transfer);
-      *rowStrideOut = strb->transfer->stride;
+      GLubyte *map = pipe_transfer_map(pipe, strb->transfer);
+      if (invert) {
+         *rowStrideOut = -strb->transfer->stride;
+         map += (h - 1) * strb->transfer->stride;
+      }
+      else {
+         *rowStrideOut = strb->transfer->stride;
+      }
+      *mapOut = map;
    }
    else {
       *mapOut = NULL;
