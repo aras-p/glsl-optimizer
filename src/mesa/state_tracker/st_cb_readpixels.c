@@ -195,7 +195,7 @@ st_read_stencil_pixels(struct gl_context *ctx, GLint x, GLint y,
  * Return renderbuffer to use for reading color pixels for glRead/CopyPixel
  * commands.
  */
-struct st_renderbuffer *
+static struct st_renderbuffer *
 st_get_color_read_renderbuffer(struct gl_context *ctx)
 {
    struct gl_framebuffer *fb = ctx->ReadBuffer;

@@ -38,6 +38,7 @@
 #include "main/mtypes.h"
 #include "main/pack.h"
 #include "main/pbo.h"
+#include "main/readpix.h"
 #include "main/texformat.h"
 #include "main/teximage.h"
 #include "main/texstore.h"
@@ -1189,9 +1190,9 @@ copy_stencil_pixels(struct gl_context *ctx, GLint srcx, GLint srcy,
       rbDraw = st_renderbuffer(rbDraw->Base.Wrapped);
 
    /* this will do stencil pixel transfer ops */
-   st_read_stencil_pixels(ctx, srcx, srcy, width, height,
-                          GL_STENCIL_INDEX, GL_UNSIGNED_BYTE,
-                          &ctx->DefaultPacking, buffer);
+   _mesa_readpixels(ctx, srcx, srcy, width, height,
+                    GL_STENCIL_INDEX, GL_UNSIGNED_BYTE,
+                    &ctx->DefaultPacking, buffer);
 
    if (0) {
       /* debug code: dump stencil values */
@@ -1293,6 +1294,20 @@ copy_stencil_pixels(struct gl_context *ctx, GLint srcx, GLint srcy,
    /* unmap the stencil buffer */
    pipe_transfer_unmap(pipe, ptDraw);
    pipe->transfer_destroy(pipe, ptDraw);
+}
+
+
+/**
+ * Return renderbuffer to use for reading color pixels for glCopyPixels
+ */
+static struct st_renderbuffer *
+st_get_color_read_renderbuffer(struct gl_context *ctx)
+{
+   struct gl_framebuffer *fb = ctx->ReadBuffer;
+   struct st_renderbuffer *strb =
+      st_renderbuffer(fb->_ColorReadBuffer);
+
+   return strb;
 }
 
 

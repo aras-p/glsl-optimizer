@@ -35,9 +35,6 @@ struct dd_function_table;
 struct gl_context;
 struct gl_pixelstore_attrib;
 
-extern struct st_renderbuffer *
-st_get_color_read_renderbuffer(struct gl_context *ctx);
-
 extern void
 st_read_stencil_pixels(struct gl_context *ctx, GLint x, GLint y,
                        GLsizei width, GLsizei height,
