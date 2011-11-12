@@ -55,9 +55,6 @@
 
 
 
-/** Compute ceiling of integer quotient of A divided by B. */
-#define CEILING( A, B )  ( (A) % (B) == 0 ? (A)/(B) : (A)/(B)+1 )
-
 
 /**
  * \return GL_TRUE if type is packed pixel type, GL_FALSE otherwise.

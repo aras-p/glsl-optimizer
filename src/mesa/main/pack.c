@@ -34,6 +34,7 @@
 #include "enums.h"
 #include "image.h"
 #include "imports.h"
+#include "macros.h"
 #include "mtypes.h"
 #include "pack.h"
 #include "pixeltransfer.h"
@@ -56,10 +57,6 @@
 #undef SHORT_TO_FLOAT
 #define SHORT_TO_FLOAT(S)   ((S) == 0 ? 0.0F : ((2.0F * (S) + 1.0F) * (1.0F/65535.0F)))
 
-
-
-/** Compute ceiling of integer quotient of A divided by B. */
-#define CEILING( A, B )  ( (A) % (B) == 0 ? (A)/(B) : (A)/(B)+1 )
 
 
 /**
