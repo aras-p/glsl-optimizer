@@ -1453,7 +1453,6 @@ get_triangle_func(struct gl_context *ctx)
 #if CHAN_BITS == 8
    SWcontext *swrast = SWRAST_CONTEXT(ctx);
    XMesaContext xmesa = XMESA_CONTEXT(ctx);
-   XMesaBuffer xmbuf = XMESA_BUFFER(ctx->DrawBuffer);
    const int depth = GET_VISUAL_DEPTH(xmesa->xm_visual);
    const struct xmesa_renderbuffer *xrb;
 
@@ -1475,8 +1474,6 @@ get_triangle_func(struct gl_context *ctx)
       return (swrast_tri_func) NULL;
    if (ctx->Polygon.CullFlag && 
        ctx->Polygon.CullFaceMode == GL_FRONT_AND_BACK)
-      return (swrast_tri_func) NULL;
-   if (xmbuf->swAlpha)
       return (swrast_tri_func) NULL;
 
    xrb = xmesa_renderbuffer(ctx->DrawBuffer->_ColorDrawBuffers[0]->Wrapped);

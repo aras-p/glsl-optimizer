@@ -391,21 +391,6 @@ create_xmesa_buffer(XMesaDrawable d, BufferType type,
    }
 
    /*
-    * Software alpha planes
-    */
-   if (vis->mesa_visual.alphaBits > 0
-       && vis->undithered_pf != PF_8A8B8G8R
-       && vis->undithered_pf != PF_8A8R8G8B) {
-      /* Visual has alpha, but pixel format doesn't support it.
-       * We'll use an alpha renderbuffer wrapper.
-       */
-      b->swAlpha = GL_TRUE;
-   }
-   else {
-      b->swAlpha = GL_FALSE;
-   }
-
-   /*
     * Other renderbuffer (depth, stencil, etc)
     */
    _mesa_add_soft_renderbuffers(&b->mesa_buffer,
@@ -413,7 +398,7 @@ create_xmesa_buffer(XMesaDrawable d, BufferType type,
                                 vis->mesa_visual.haveDepthBuffer,
                                 vis->mesa_visual.haveStencilBuffer,
                                 vis->mesa_visual.haveAccumBuffer,
-                                b->swAlpha,
+                                GL_FALSE,  /* software alpha buffer */
                                 vis->mesa_visual.numAuxBuffers > 0 );
 
    /* GLX_EXT_texture_from_pixmap */
@@ -1865,9 +1850,6 @@ void XMesaSwapBuffers( XMesaBuffer b )
 		      );
          /*_glthread_UNLOCK_MUTEX(_xmesa_lock);*/
       }
-
-      if (b->swAlpha)
-         _mesa_copy_soft_alpha_renderbuffers(ctx, &b->mesa_buffer);
    }
    XSync( b->xm_visual->display, False );
 }
