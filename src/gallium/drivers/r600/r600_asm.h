@@ -184,6 +184,8 @@ struct r600_bytecode {
 	struct r600_cf_stack_entry	fc_stack[32];
 	unsigned			call_sp;
 	struct r600_cf_callstack	callstack[SQ_MAX_CALL_DEPTH];
+	unsigned	ar_loaded;
+	unsigned	ar_reg;
 };
 
 /* eg_asm.c */

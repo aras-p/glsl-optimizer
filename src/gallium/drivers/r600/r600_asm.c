@@ -255,6 +255,7 @@ static int r600_bytecode_add_cf(struct r600_bytecode *bc)
 	bc->ncf++;
 	bc->ndw += 2;
 	bc->force_add_cf = 0;
+	bc->ar_loaded = 0;
 	return 0;
 }
 
@@ -1203,6 +1204,32 @@ static int r600_bytecode_alloc_kcache_lines(struct r600_bytecode *bc, struct r60
 	return 0;
 }
 
+/* load AR register from gpr (bc->ar_reg) with MOVA_INT */
+static int load_ar(struct r600_bytecode *bc)
+{
+	struct r600_bytecode_alu alu;
+	int r;
+
+	if (bc->ar_loaded)
+		return 0;
+
+	/* hack to avoid making MOVA the last instruction in the clause */
+	if ((bc->cf_last->ndw>>1) >= 110)
+		bc->force_add_cf = 1;
+
+	memset(&alu, 0, sizeof(alu));
+	alu.inst = BC_INST(bc, V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_MOVA_INT);
+	alu.src[0].sel = bc->ar_reg;
+	alu.last = 1;
+	r = r600_bytecode_add_alu(bc, &alu);
+	if (r)
+		return r;
+
+	bc->cf_last->r6xx_uses_waterfall = 1;
+	bc->ar_loaded = 1;
+	return 0;
+}
+
 int r600_bytecode_add_alu_type(struct r600_bytecode *bc, const struct r600_bytecode_alu *alu, int type)
 {
 	struct r600_bytecode_alu *nalu = r600_bytecode_alu();
@@ -1236,6 +1263,14 @@ int r600_bytecode_add_alu_type(struct r600_bytecode *bc, const struct r600_bytec
 		}
 	}
 	bc->cf_last->inst = (type << 3);
+
+	/* Check AR usage and load it if required */
+	for (i = 0; i < 3; i++)
+		if (nalu->src[i].rel && !bc->ar_loaded)
+			load_ar(bc);
+
+	if (nalu->dst.rel && !bc->ar_loaded)
+		load_ar(bc);
 
 	/* Setup the kcache for this ALU instruction. This will start a new
 	 * ALU clause if needed. */

@@ -166,7 +166,6 @@ struct r600_shader_ctx {
 	unsigned				type;
 	unsigned				file_offset[TGSI_FILE_COUNT];
 	unsigned				temp_reg;
-	unsigned				ar_reg;
 	struct r600_shader_tgsi_instruction	*inst_info;
 	struct r600_bytecode				*bc;
 	struct r600_shader			*shader;
@@ -553,7 +552,7 @@ static int tgsi_fetch_rel_const(struct r600_shader_ctx *ctx, unsigned int offset
 		memset(&alu, 0, sizeof(alu));
 
 		alu.inst = CTX_INST(V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_ADD_INT);
-		alu.src[0].sel = ctx->ar_reg;
+		alu.src[0].sel = ctx->bc->ar_reg;
 
 		alu.src[1].sel = V_SQ_ALU_SRC_LITERAL;
 		alu.src[1].value = offset;
@@ -567,7 +566,7 @@ static int tgsi_fetch_rel_const(struct r600_shader_ctx *ctx, unsigned int offset
 
 		ar_reg = dst_reg;
 	} else {
-		ar_reg = ctx->ar_reg;
+		ar_reg = ctx->bc->ar_reg;
 	}
 
 	memset(&vtx, 0, sizeof(vtx));
@@ -750,9 +749,9 @@ static int r600_shader_from_tgsi(struct r600_pipe_context * rctx, struct r600_pi
 	ctx.file_offset[TGSI_FILE_CONSTANT] = 512;
 
 	ctx.file_offset[TGSI_FILE_IMMEDIATE] = V_SQ_ALU_SRC_LITERAL;
-	ctx.ar_reg = ctx.file_offset[TGSI_FILE_TEMPORARY] +
+	ctx.bc->ar_reg = ctx.file_offset[TGSI_FILE_TEMPORARY] +
 			ctx.info.file_max[TGSI_FILE_TEMPORARY] + 1;
-	ctx.temp_reg = ctx.ar_reg + 1;
+	ctx.temp_reg = ctx.bc->ar_reg + 1;
 
 	ctx.nliterals = 0;
 	ctx.literals = NULL;
@@ -2942,45 +2941,26 @@ static int tgsi_eg_arl(struct r600_shader_ctx *ctx)
 		alu.inst = EG_V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_FLT_TO_INT;
 		break;
 	case TGSI_OPCODE_UARL:
+		alu.inst = EG_V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_MOV;
 		break;
 	default:
 		assert(0);
 		return -1;
 	}
 
-	if (alu.inst) {
-		r600_bytecode_src(&alu.src[0], &ctx->src[0], 0);
-		alu.last = 1;
-		alu.dst.sel = ctx->ar_reg;
-		alu.dst.write = 1;
-		r = r600_bytecode_add_alu(ctx->bc, &alu);
-		if (r)
-			return r;
-	}
-
-	/* TODO: Note that the MOVA can be avoided if we never use AR for
-	 * indexing non-CB registers in the current ALU clause. Similarly, we
-	 * need to load AR from ar_reg again if we started a new clause
-	 * between ARL and AR usage. The easy way to do that is to remove
-	 * the MOVA here, and load it for the first AR access after ar_reg
-	 * has been modified in each clause. */
-	memset(&alu, 0, sizeof(struct r600_bytecode_alu));
-	alu.inst = EG_V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_MOVA_INT;
-	if (inst->Instruction.Opcode == TGSI_OPCODE_UARL)
-		r600_bytecode_src(&alu.src[0], &ctx->src[0], 0);
-	else {
-		alu.src[0].sel = ctx->ar_reg;
-		alu.src[0].chan = 0;
-	}
+	r600_bytecode_src(&alu.src[0], &ctx->src[0], 0);
 	alu.last = 1;
+	alu.dst.sel = ctx->bc->ar_reg;
+	alu.dst.write = 1;
 	r = r600_bytecode_add_alu(ctx->bc, &alu);
 	if (r)
 		return r;
+
+	ctx->bc->ar_loaded = 0;
 	return 0;
 }
 static int tgsi_r600_arl(struct r600_shader_ctx *ctx)
 {
-	/* TODO from r600c, ar values don't persist between clauses */
 	struct tgsi_full_instruction *inst = &ctx->parse.FullToken.FullInstruction;
 	struct r600_bytecode_alu alu;
 	int r;
@@ -2990,7 +2970,7 @@ static int tgsi_r600_arl(struct r600_shader_ctx *ctx)
 		memset(&alu, 0, sizeof(alu));
 		alu.inst = V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_FLOOR;
 		r600_bytecode_src(&alu.src[0], &ctx->src[0], 0);
-		alu.dst.sel = ctx->ar_reg;
+		alu.dst.sel = ctx->bc->ar_reg;
 		alu.dst.write = 1;
 		alu.last = 1;
 
@@ -2999,8 +2979,8 @@ static int tgsi_r600_arl(struct r600_shader_ctx *ctx)
 
 		memset(&alu, 0, sizeof(alu));
 		alu.inst = V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_FLT_TO_INT;
-		alu.src[0].sel = ctx->ar_reg;
-		alu.dst.sel = ctx->ar_reg;
+		alu.src[0].sel = ctx->bc->ar_reg;
+		alu.dst.sel = ctx->bc->ar_reg;
 		alu.dst.write = 1;
 		alu.last = 1;
 
@@ -3011,7 +2991,7 @@ static int tgsi_r600_arl(struct r600_shader_ctx *ctx)
 		memset(&alu, 0, sizeof(alu));
 		alu.inst = V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_FLT_TO_INT;
 		r600_bytecode_src(&alu.src[0], &ctx->src[0], 0);
-		alu.dst.sel = ctx->ar_reg;
+		alu.dst.sel = ctx->bc->ar_reg;
 		alu.dst.write = 1;
 		alu.last = 1;
 
@@ -3019,24 +2999,22 @@ static int tgsi_r600_arl(struct r600_shader_ctx *ctx)
 			return r;
 		break;
 	case TGSI_OPCODE_UARL:
+		memset(&alu, 0, sizeof(alu));
+		alu.inst = V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_MOV;
+		r600_bytecode_src(&alu.src[0], &ctx->src[0], 0);
+		alu.dst.sel = ctx->bc->ar_reg;
+		alu.dst.write = 1;
+		alu.last = 1;
+
+		if ((r = r600_bytecode_add_alu(ctx->bc, &alu)))
+			return r;
 		break;
 	default:
 		assert(0);
 		return -1;
 	}
 
-	memset(&alu, 0, sizeof(alu));
-	alu.inst = V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_MOVA_INT;
-	if (inst->Instruction.Opcode == TGSI_OPCODE_UARL)
-		r600_bytecode_src(&alu.src[0], &ctx->src[0], 0);
-	else
-		alu.src[0].sel = ctx->ar_reg;
-	alu.last = 1;
-
-	r = r600_bytecode_add_alu(ctx->bc, &alu);
-	if (r)
-		return r;
-	ctx->bc->cf_last->r6xx_uses_waterfall = 1;
+	ctx->bc->ar_loaded = 0;
 	return 0;
 }
 
