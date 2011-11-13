@@ -440,13 +440,21 @@ static int is_alu_mova_inst(struct r600_bytecode *bc, struct r600_bytecode_alu *
 /* alu instructions that can only execute on the vector unit */
 static int is_alu_vec_unit_inst(struct r600_bytecode *bc, struct r600_bytecode_alu *alu)
 {
-	return is_alu_reduction_inst(bc, alu) ||
-		is_alu_mova_inst(bc, alu) ||
-		(bc->chip_class == EVERGREEN &&
-		(alu->inst == EG_V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_FLT_TO_INT ||
-		alu->inst == EG_V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_FLT_TO_INT_FLOOR ||
-		alu->inst == EG_V_SQ_ALU_WORD1_OP2_SQ_OP2_INTERP_XY ||
-		alu->inst == EG_V_SQ_ALU_WORD1_OP2_SQ_OP2_INTERP_ZW));
+	switch (bc->chip_class) {
+	case R600:
+	case R700:
+		return is_alu_reduction_inst(bc, alu) ||
+			is_alu_mova_inst(bc, alu);
+	case EVERGREEN:
+	case CAYMAN:
+	default:
+		return is_alu_reduction_inst(bc, alu) ||
+			is_alu_mova_inst(bc, alu) ||
+			(alu->inst == EG_V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_FLT_TO_INT ||
+			 alu->inst == EG_V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_FLT_TO_INT_FLOOR ||
+			 alu->inst == EG_V_SQ_ALU_WORD1_OP2_SQ_OP2_INTERP_XY ||
+			 alu->inst == EG_V_SQ_ALU_WORD1_OP2_SQ_OP2_INTERP_ZW);
+	}
 }
 
 /* alu instructions that can only execute on the trans unit */
