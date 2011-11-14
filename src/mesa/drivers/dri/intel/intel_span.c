@@ -187,10 +187,13 @@ intel_renderbuffer_map(struct intel_context *intel, struct gl_renderbuffer *rb)
    if (!irb)
       return;
 
-   if (irb->wrapped_depth)
-      intel_renderbuffer_map(intel, irb->wrapped_depth);
-   if (irb->wrapped_stencil)
-      intel_renderbuffer_map(intel, irb->wrapped_stencil);
+   if (rb->Data) {
+      /* Renderbuffer is already mapped. This usually happens when a single
+       * buffer is attached to the framebuffer's depth and stencil attachment
+       * points.
+       */
+      return;
+   }
 
    ctx->Driver.MapRenderbuffer(ctx, rb, 0, 0, rb->Width, rb->Height,
 			       GL_MAP_READ_BIT | GL_MAP_WRITE_BIT,
@@ -211,10 +214,13 @@ intel_renderbuffer_unmap(struct intel_context *intel,
    if (!irb)
       return;
 
-   if (irb->wrapped_depth)
-      intel_renderbuffer_unmap(intel, irb->wrapped_depth);
-   if (irb->wrapped_stencil)
-      intel_renderbuffer_unmap(intel, irb->wrapped_stencil);
+   if (!rb->Data) {
+      /* Renderbuffer is already unmapped. This usually happens when a single
+       * buffer is attached to the framebuffer's depth and stencil attachment
+       * points.
+       */
+      return;
+   }
 
    ctx->Driver.UnmapRenderbuffer(ctx, rb);
 

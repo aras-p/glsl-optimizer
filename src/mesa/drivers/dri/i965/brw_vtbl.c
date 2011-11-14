@@ -95,7 +95,7 @@ brw_update_draw_buffer(struct intel_context *intel)
 {
    struct gl_context *ctx = &intel->ctx;
    struct gl_framebuffer *fb = ctx->DrawBuffer;
-   struct intel_renderbuffer *irbDepth = NULL, *irbStencil = NULL;
+   struct intel_renderbuffer *irbStencil = NULL;
    bool fb_has_hiz = intel_framebuffer_has_hiz(fb);
 
    if (!fb) {
@@ -103,27 +103,7 @@ brw_update_draw_buffer(struct intel_context *intel)
       return;
    }
 
-   /*
-    * If intel_context is using separate stencil, but the depth attachment
-    * (gl_framebuffer.Attachment[BUFFER_DEPTH]) has a packed depth/stencil
-    * format, then we must install the real depth buffer at fb->_DepthBuffer
-    * and set fb->_DepthBuffer->Wrapped before calling _mesa_update_framebuffer.
-    * Otherwise, _mesa_update_framebuffer will create and install a swras
-    * depth wrapper instead.
-    *
-    * Ditto for stencil.
-    */
-   irbDepth = intel_get_renderbuffer(fb, BUFFER_DEPTH);
-   if (irbDepth && irbDepth->Base.Format == MESA_FORMAT_X8_Z24) {
-      _mesa_reference_renderbuffer(&fb->_DepthBuffer, &irbDepth->Base);
-      irbDepth->Base.Wrapped = fb->Attachment[BUFFER_DEPTH].Renderbuffer;
-   }
-
    irbStencil = intel_get_renderbuffer(fb, BUFFER_STENCIL);
-   if (irbStencil && irbStencil->Base.Format == MESA_FORMAT_S8) {
-      _mesa_reference_renderbuffer(&fb->_StencilBuffer, &irbStencil->Base);
-      irbStencil->Base.Wrapped = fb->Attachment[BUFFER_STENCIL].Renderbuffer;
-   }
 
    /* Do this here, not core Mesa, since this function is called from
     * many places within the driver.
