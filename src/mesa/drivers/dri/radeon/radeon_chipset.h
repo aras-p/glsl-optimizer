@@ -1,7 +1,5 @@
 #ifndef _RADEON_CHIPSET_H
 #define _RADEON_CHIPSET_H
-/* Including xf86PciInfo.h introduces a bunch of errors...
- */
 
 /* General chip classes:
  * r100 includes R100, RV100, RV200, RS100, RS200, RS250.
@@ -35,13 +33,8 @@ enum {
    CHIP_FAMILY_LAST
 };
 
-/* General classes of Radeons, as described above the device ID section */
-#define RADEON_CLASS_R100		(0 << 0)
-#define RADEON_CLASS_R200		(1 << 0)
-#define RADEON_CLASS_MASK		(3 << 0)
-
-#define RADEON_CHIPSET_TCL		(1 << 2)	/* tcl support - any radeon */
-#define RADEON_CHIPSET_BROKEN_STENCIL	(1 << 3)	/* r100 stencil bug */
-#define R200_CHIPSET_YCBCR_BROKEN	(1 << 4)	/* r200 ycbcr bug */
+#define RADEON_CHIPSET_TCL		(1 << 0)	/* tcl support - any radeon */
+#define RADEON_CHIPSET_BROKEN_STENCIL	(1 << 1)	/* r100 stencil bug */
+#define R200_CHIPSET_YCBCR_BROKEN	(1 << 2)	/* r200 ycbcr bug */
 
 #endif /* _RADEON_CHIPSET_H */

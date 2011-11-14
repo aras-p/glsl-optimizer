@@ -177,9 +177,7 @@ static const __DRItexBufferExtension radeonTexBufferExtension = {
    radeonSetTexBuffer,
    radeonSetTexBuffer2,
 };
-#endif
-
-#if defined(RADEON_R200)
+#elif defined(RADEON_R200)
 static const __DRItexBufferExtension r200TexBufferExtension = {
     { __DRI_TEX_BUFFER, __DRI_TEX_BUFFER_VERSION },
    r200SetTexBuffer,
@@ -517,20 +515,12 @@ radeonCreateScreen2(__DRIscreen *sPriv)
    if (getenv("R300_NO_TCL"))
 	   screen->chip_flags &= ~RADEON_CHIPSET_TCL;
 
-#if defined(RADEON_R100)
-   screen->chip_flags |= RADEON_CLASS_R100;
-#elif defined(RADEON_R200)
-   screen->chip_flags |= RADEON_CLASS_R200;
-#endif
-
    i = 0;
    screen->extensions[i++] = &dri2ConfigQueryExtension.base;
 
 #if defined(RADEON_R100)
    screen->extensions[i++] = &radeonTexBufferExtension.base;
-#endif
-
-#if defined(RADEON_R200)
+#elif defined(RADEON_R200)
    screen->extensions[i++] = &r200TexBufferExtension.base;
 #endif
 

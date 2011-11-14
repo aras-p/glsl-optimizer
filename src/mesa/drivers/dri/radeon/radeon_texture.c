@@ -337,8 +337,8 @@ static gl_format radeonChoose8888TexFormat(radeonContextPtr rmesa,
 					   GLenum srcFormat,
 					   GLenum srcType, GLboolean fbo)
 {
-	/* r100 can only do this */
 #if defined(RADEON_R100)
+	/* r100 can only do this */
 	return _radeon_texformat_argb8888;
 #elif defined(RADEON_R200)
 	const GLuint ui = 1;
