@@ -36,6 +36,7 @@
 #include "lp_clear.h"
 #include "lp_context.h"
 #include "lp_setup.h"
+#include "lp_query.h"
 #include "lp_debug.h"
 
 
