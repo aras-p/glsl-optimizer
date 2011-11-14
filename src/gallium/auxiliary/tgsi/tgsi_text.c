@@ -1023,6 +1023,7 @@ static const char *semantic_names[TGSI_SEMANTIC_COUNT] =
    "EDGEFLAG",
    "PRIM_ID",
    "INSTANCEID",
+   "VERTEXID",
    "STENCIL"
 };
 

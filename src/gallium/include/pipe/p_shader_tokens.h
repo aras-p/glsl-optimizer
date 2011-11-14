@@ -144,8 +144,9 @@ struct tgsi_declaration_dimension
 #define TGSI_SEMANTIC_EDGEFLAG   8
 #define TGSI_SEMANTIC_PRIMID     9
 #define TGSI_SEMANTIC_INSTANCEID 10
-#define TGSI_SEMANTIC_STENCIL    11
-#define TGSI_SEMANTIC_COUNT      12 /**< number of semantic values */
+#define TGSI_SEMANTIC_VERTEXID   11
+#define TGSI_SEMANTIC_STENCIL    12
+#define TGSI_SEMANTIC_COUNT      13 /**< number of semantic values */
 
 struct tgsi_declaration_semantic
 {

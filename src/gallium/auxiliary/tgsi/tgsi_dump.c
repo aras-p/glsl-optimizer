@@ -128,6 +128,7 @@ static const char *semantic_names[] =
    "EDGEFLAG",
    "PRIM_ID",
    "INSTANCEID",
+   "VERTEXID",
    "STENCIL"
 };
 
