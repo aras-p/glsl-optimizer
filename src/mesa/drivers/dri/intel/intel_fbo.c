@@ -927,15 +927,9 @@ intel_framebuffer_renderbuffer(struct gl_context * ctx,
 }
 
 static bool
-intel_update_tex_wrapper_regions(struct intel_context *intel,
-				 struct intel_renderbuffer *irb,
-				 struct intel_texture_image *intel_image);
-
-static bool
 intel_update_wrapper(struct gl_context *ctx, struct intel_renderbuffer *irb, 
 		     struct gl_texture_image *texImage)
 {
-   struct intel_context *intel = intel_context(ctx);
    struct intel_texture_image *intel_image = intel_texture_image(texImage);
    int width, height, depth;
 
@@ -961,69 +955,19 @@ intel_update_wrapper(struct gl_context *ctx, struct intel_renderbuffer *irb,
 
    if (intel_image->stencil_rb) {
       /*  The tex image has packed depth/stencil format, but is using separate
-       * stencil. */
-
-      bool ok;
-      struct intel_renderbuffer *depth_irb =
-	 intel_renderbuffer(intel_image->depth_rb);
-
-      /* Update the hiz region if necessary. */
-      ok =  intel_update_tex_wrapper_regions(intel, depth_irb, intel_image);
-      if (!ok) {
-	 return false;
-      }
-
-      /* The tex image shares its embedded depth and stencil renderbuffers with
-       * the renderbuffer wrapper. */
+       *  stencil. It shares its embedded depth and stencil renderbuffers with
+       *  the renderbuffer wrapper.
+       */
       _mesa_reference_renderbuffer(&irb->wrapped_depth,
 				   intel_image->depth_rb);
       _mesa_reference_renderbuffer(&irb->wrapped_stencil,
 				   intel_image->stencil_rb);
-
-      return true;
    } else {
-      return intel_update_tex_wrapper_regions(intel, irb, intel_image);
-   }
-}
-
-/**
- * FIXME: The handling of the hiz region is broken for mipmapped depth textures
- * FIXME: because intel_finalize_mipmap_tree is unaware of it.
- */
-static bool
-intel_update_tex_wrapper_regions(struct intel_context *intel,
-				 struct intel_renderbuffer *irb,
-				 struct intel_texture_image *intel_image)
-{
-   struct gl_renderbuffer *rb = &irb->Base;
-
-   /* Point the renderbuffer's region to the texture's region. */
-   if (irb->region != intel_image->mt->region) {
       intel_region_reference(&irb->region, intel_image->mt->region);
-   }
-
-   /* Allocate the texture's hiz region if necessary. */
-   if (intel->vtbl.is_hiz_depth_format(intel, rb->Format)
-       && !intel_image->mt->hiz_region) {
-      intel_image->mt->hiz_region =
-         intel_region_alloc(intel->intelScreen,
-                            I915_TILING_Y,
-                            _mesa_get_format_bytes(rb->Format),
-                            rb->Width,
-                            rb->Height,
-                            true);
-      if (!intel_image->mt->hiz_region)
-         return false;
-   }
-
-   /* Point the renderbuffer's hiz region to the texture's hiz region. */
-   if (irb->hiz_region != intel_image->mt->hiz_region) {
-      intel_region_reference(&irb->hiz_region, intel_image->mt->hiz_region);
    }
 
    return true;
 }
-
 
 /**
  * When glFramebufferTexture[123]D is called this function sets up the
