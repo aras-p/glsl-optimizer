@@ -134,14 +134,8 @@ intel_get_renderbuffer(struct gl_framebuffer *fb, gl_buffer_index attIndex)
    return irb;
 }
 
-static inline bool
-intel_framebuffer_has_hiz(struct gl_framebuffer *fb)
-{
-   struct intel_renderbuffer *rb = NULL;
-   if (fb)
-      rb = intel_get_renderbuffer(fb, BUFFER_DEPTH);
-   return rb && rb->hiz_region;
-}
+bool
+intel_framebuffer_has_hiz(struct gl_framebuffer *fb);
 
 extern struct intel_renderbuffer *
 intel_create_renderbuffer(gl_format format);
@@ -174,14 +168,7 @@ intel_renderbuffer_tile_offsets(struct intel_renderbuffer *irb,
 				uint32_t *tile_x,
 				uint32_t *tile_y);
 
-static INLINE struct intel_region *
-intel_get_rb_region(struct gl_framebuffer *fb, GLuint attIndex)
-{
-   struct intel_renderbuffer *irb = intel_get_renderbuffer(fb, attIndex);
-   if (irb)
-      return irb->region;
-   else
-      return NULL;
-}
+struct intel_region*
+intel_get_rb_region(struct gl_framebuffer *fb, GLuint attIndex);
 
 #endif /* INTEL_FBO_H */

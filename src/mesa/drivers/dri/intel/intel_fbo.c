@@ -55,6 +55,25 @@
 #define FILE_DEBUG_FLAG DEBUG_FBO
 
 
+bool
+intel_framebuffer_has_hiz(struct gl_framebuffer *fb)
+{
+   struct intel_renderbuffer *rb = NULL;
+   if (fb)
+      rb = intel_get_renderbuffer(fb, BUFFER_DEPTH);
+   return rb && rb->hiz_region;
+}
+
+struct intel_region*
+intel_get_rb_region(struct gl_framebuffer *fb, GLuint attIndex)
+{
+   struct intel_renderbuffer *irb = intel_get_renderbuffer(fb, attIndex);
+   if (irb)
+      return irb->region;
+   else
+      return NULL;
+}
+
 /**
  * Create a new framebuffer object.
  */
