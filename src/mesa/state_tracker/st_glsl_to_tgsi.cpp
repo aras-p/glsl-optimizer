@@ -4991,6 +4991,7 @@ get_mesa_program(struct gl_context *ctx,
       _mesa_print_ir(shader->ir, NULL);
       printf("\n");
       printf("\n");
+      fflush(stdout);
    }
 
    prog->Instructions = NULL;
