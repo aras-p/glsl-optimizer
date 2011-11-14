@@ -256,12 +256,12 @@ def emit_tile_pixel_unswizzle_code(format, src_channel):
     if format.name == 'PIPE_FORMAT_R11G11B10_FLOAT':
         print '         float tmp[3];'
         for i in range(3):
-            print '         tmp[%d] = (float)TILE_PIXEL(src, x, y, %u);' % (i, inv_swizzle[i])
+            print '         tmp[%d] = ubyte_to_float(TILE_PIXEL(src, x, y, %u));' % (i, inv_swizzle[i])
         print '         *dst_pixel++ = float3_to_r11g11b10f(tmp);'
     elif format.name == 'PIPE_FORMAT_R9G9B9E5_FLOAT':
         print '         float tmp[3];'
         for i in range(3):
-            print '         tmp[%d] = (float)TILE_PIXEL(src, x, y, %u);' % (i, inv_swizzle[i])
+            print '         tmp[%d] = ubyte_to_float(TILE_PIXEL(src, x, y, %u));' % (i, inv_swizzle[i])
         print '         *dst_pixel++ = float3_to_rgb9e5(tmp);'
     elif format.layout == PLAIN:
         if not format.is_array():
