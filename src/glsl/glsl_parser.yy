@@ -1706,7 +1706,7 @@ case_statement:
 	   ast_case_statement *stmts = new(state) ast_case_statement($1);
 
 	   stmts->stmts.push_tail(& $2->link);
-	   $$ = stmts
+	   $$ = stmts;
 	}
 	| case_statement statement
 	{
