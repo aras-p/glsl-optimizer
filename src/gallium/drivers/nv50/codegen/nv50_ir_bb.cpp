@@ -323,10 +323,14 @@ unsigned int
 Function::orderInstructions(ArrayList &result)
 {
    Iterator *iter;
-   for (iter = cfg.iteratorCFG(); !iter->end(); iter->next())
-      for (Instruction *insn = BasicBlock::get(*iter)->getFirst();
-           insn; insn = insn->next)
+   for (iter = cfg.iteratorCFG(); !iter->end(); iter->next()) {
+      BasicBlock *bb =
+         BasicBlock::get(reinterpret_cast<Graph::Node *>(iter->get()));
+
+      for (Instruction *insn = bb->getFirst(); insn; insn = insn->next)
          result.insert(insn, insn->serial);
+   }
+
    cfg.putIterator(iter);
    return result.getSize();
 }
