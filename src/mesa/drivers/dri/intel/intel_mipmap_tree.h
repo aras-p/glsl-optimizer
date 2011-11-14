@@ -74,17 +74,30 @@ struct intel_mipmap_level
    /** Number of images at this level: 1 for 1D/2D, 6 for CUBE, depth for 3D */
    GLuint nr_images;
 
-   /** @{
-    * offsets from level_[xy] to the image for each cube face or depth
-    * level.
+   /**
+    * \brief List of 2D images in this mipmap level.
     *
-    * Pretty much have to accept that hardware formats
-    * are going to be so diverse that there is no unified way to
-    * compute the offsets of depth/cube images within a mipmap level,
-    * so have to store them as a lookup table.
+    * This may be a list of cube faces, array slices in 2D array texture, or
+    * layers in a 3D texture. The list's length is \c nr_images.
     */
-   GLuint *x_offset, *y_offset;
-   /** @} */
+   struct intel_mipmap_slice {
+      /**
+       * \name Offset to slice
+       * \{
+       *
+       * Hardware formats are so diverse that that there is no unified way to
+       * compute the slice offsets, so we store them in this table.
+       *
+       * The (x, y) offset to slice \c s at level \c l relative the miptrees
+       * base address is
+       * \code
+       *     x = mt->level[l].slice[s].x_offset
+       *     y = mt->level[l].slice[s].y_offset
+       */
+      GLuint x_offset;
+      GLuint y_offset;
+      /** \} */
+   } *slice;
 };
 
 struct intel_mipmap_tree

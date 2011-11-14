@@ -226,8 +226,7 @@ intel_miptree_release(struct intel_mipmap_tree **mt)
       intel_region_release(&((*mt)->hiz_region));
 
       for (i = 0; i < MAX_TEXTURE_LEVELS; i++) {
-	 free((*mt)->level[i].x_offset);
-	 free((*mt)->level[i].y_offset);
+	 free((*mt)->level[i].slice);
       }
 
       free(*mt);
@@ -303,12 +302,11 @@ intel_miptree_set_level_info(struct intel_mipmap_tree *mt,
        level, w, h, d, x, y);
 
    assert(nr_images);
-   assert(!mt->level[level].x_offset);
+   assert(mt->level[level].slice == NULL);
 
-   mt->level[level].x_offset = malloc(nr_images * sizeof(GLuint));
-   mt->level[level].x_offset[0] = mt->level[level].level_x;
-   mt->level[level].y_offset = malloc(nr_images * sizeof(GLuint));
-   mt->level[level].y_offset[0] = mt->level[level].level_y;
+   mt->level[level].slice = malloc(nr_images * sizeof(*mt->level[0].slice));
+   mt->level[level].slice[0].x_offset = mt->level[level].level_x;
+   mt->level[level].slice[0].y_offset = mt->level[level].level_y;
 }
 
 
@@ -322,12 +320,13 @@ intel_miptree_set_image_offset(struct intel_mipmap_tree *mt,
 
    assert(img < mt->level[level].nr_images);
 
-   mt->level[level].x_offset[img] = mt->level[level].level_x + x;
-   mt->level[level].y_offset[img] = mt->level[level].level_y + y;
+   mt->level[level].slice[img].x_offset = mt->level[level].level_x + x;
+   mt->level[level].slice[img].y_offset = mt->level[level].level_y + y;
 
    DBG("%s level %d img %d pos %d,%d\n",
        __FUNCTION__, level, img,
-       mt->level[level].x_offset[img], mt->level[level].y_offset[img]);
+       mt->level[level].slice[img].x_offset,
+       mt->level[level].slice[img].y_offset);
 }
 
 
@@ -338,19 +337,19 @@ intel_miptree_get_image_offset(struct intel_mipmap_tree *mt,
 {
    switch (mt->target) {
    case GL_TEXTURE_CUBE_MAP_ARB:
-      *x = mt->level[level].x_offset[face];
-      *y = mt->level[level].y_offset[face];
+      *x = mt->level[level].slice[face].x_offset;
+      *y = mt->level[level].slice[face].y_offset;
       break;
    case GL_TEXTURE_3D:
    case GL_TEXTURE_2D_ARRAY_EXT:
    case GL_TEXTURE_1D_ARRAY_EXT:
       assert(depth < mt->level[level].nr_images);
-      *x = mt->level[level].x_offset[depth];
-      *y = mt->level[level].y_offset[depth];
+      *x = mt->level[level].slice[depth].x_offset;
+      *y = mt->level[level].slice[depth].y_offset;
       break;
    default:
-      *x = mt->level[level].x_offset[0];
-      *y = mt->level[level].y_offset[0];
+      *x = mt->level[level].slice[0].x_offset;
+      *y = mt->level[level].slice[0].y_offset;
       break;
    }
 }
