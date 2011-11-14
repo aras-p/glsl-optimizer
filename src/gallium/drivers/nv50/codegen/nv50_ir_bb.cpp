@@ -45,6 +45,8 @@ Function::Function(Program *p, const char *fnName)
 
 Function::~Function()
 {
+   prog->del(this, id);
+
    if (domTree)
       delete domTree;
    if (bbArray)

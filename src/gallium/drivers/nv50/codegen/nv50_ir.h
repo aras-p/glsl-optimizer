@@ -1001,6 +1001,7 @@ public:
    Type getType() const { return progType; }
 
    inline void add(Function *fn, int& id) { allFuncs.insert(fn, id); }
+   inline void del(Function *fn, int& id) { allFuncs.remove(id); }
    inline void add(Value *rval, int& id) { allRValues.insert(rval, id); }
 
    bool makeFromTGSI(struct nv50_ir_prog_info *);
