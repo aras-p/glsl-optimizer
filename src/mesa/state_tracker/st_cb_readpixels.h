@@ -32,15 +32,6 @@
 #include "main/glheader.h"
 
 struct dd_function_table;
-struct gl_context;
-struct gl_pixelstore_attrib;
-
-extern void
-st_read_stencil_pixels(struct gl_context *ctx, GLint x, GLint y,
-                       GLsizei width, GLsizei height,
-                       GLenum format, GLenum type,
-                       const struct gl_pixelstore_attrib *packing,
-                       GLvoid *pixels);
 
 extern void
 st_init_readpixels_functions(struct dd_function_table *functions);
