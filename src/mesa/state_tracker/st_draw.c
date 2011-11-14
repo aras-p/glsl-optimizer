@@ -436,8 +436,8 @@ setup_interleaved_attribs(struct gl_context *ctx,
       /* all interleaved arrays in a VBO */
       struct st_buffer_object *stobj = st_buffer_object(bufobj);
 
-      if (!stobj) {
-         /* probably out of memory */
+      if (!stobj || !stobj->buffer) {
+         /* probably out of memory (or zero-sized buffer) */
          return GL_FALSE;
       }
 
@@ -505,7 +505,7 @@ setup_non_interleaved_attribs(struct gl_context *ctx,
          struct st_buffer_object *stobj = st_buffer_object(bufobj);
 
          if (!stobj || !stobj->buffer) {
-            /* probably ran out of memory */
+            /* probably out of memory (or zero-sized buffer) */
             return GL_FALSE;
          }
 
