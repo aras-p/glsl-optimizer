@@ -97,14 +97,6 @@
 #define   S_SQ_CF_ALU_WORD1_CF_INST(x)                               (((x) & 0xF) << 26)
 #define   G_SQ_CF_ALU_WORD1_CF_INST(x)                               (((x) >> 26) & 0xF)
 #define   C_SQ_CF_ALU_WORD1_CF_INST                                  0xC3FFFFFF
-#define     V_SQ_CF_ALU_WORD1_SQ_CF_INST_ALU                         0x00000008
-#define     V_SQ_CF_ALU_WORD1_SQ_CF_INST_ALU_PUSH_BEFORE             0x00000009
-#define     V_SQ_CF_ALU_WORD1_SQ_CF_INST_ALU_POP_AFTER               0x0000000A
-#define     V_SQ_CF_ALU_WORD1_SQ_CF_INST_ALU_POP2_AFTER              0x0000000B
-#define     V_SQ_CF_ALU_WORD1_SQ_CF_INST_EXTENDED                    0x0000000C
-#define     V_SQ_CF_ALU_WORD1_SQ_CF_INST_ALU_CONTINUE                0x0000000D
-#define     V_SQ_CF_ALU_WORD1_SQ_CF_INST_ALU_BREAK                   0x0000000E
-#define     V_SQ_CF_ALU_WORD1_SQ_CF_INST_ALU_ELSE_AFTER              0x0000000F
 #define   S_SQ_CF_ALU_WORD1_WHOLE_QUAD_MODE(x)                       (((x) & 0x1) << 30)
 #define   G_SQ_CF_ALU_WORD1_WHOLE_QUAD_MODE(x)                       (((x) >> 30) & 0x1)
 #define   C_SQ_CF_ALU_WORD1_WHOLE_QUAD_MODE                          0xBFFFFFFF

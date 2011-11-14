@@ -109,7 +109,10 @@ struct r600_bytecode_output {
 	unsigned			array_base;
 	unsigned			type;
 	unsigned			end_of_program;
+
+	/* CF_INST. This is already bit-shifted and only needs to be or'd for bytecode. */
 	unsigned			inst;
+
 	unsigned			elem_size;
 	unsigned			gpr;
 	unsigned			swizzle_x;
@@ -128,7 +131,10 @@ struct r600_bytecode_kcache {
 
 struct r600_bytecode_cf {
 	struct list_head		list;
+
+	/* CF_INST. This is already bit-shifted and only needs to be or'd for bytecode. */
 	unsigned			inst;
+
 	unsigned			addr;
 	unsigned			ndw;
 	unsigned			id;

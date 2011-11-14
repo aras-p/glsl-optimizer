@@ -34,15 +34,15 @@ int eg_bytecode_cf_build(struct r600_bytecode *bc, struct r600_bytecode_cf *cf)
 	unsigned id = cf->id;
 
 	switch (cf->inst) {
-	case (EG_V_SQ_CF_ALU_WORD1_SQ_CF_INST_ALU << 3):
-	case (EG_V_SQ_CF_ALU_WORD1_SQ_CF_INST_ALU_POP_AFTER << 3):
-	case (EG_V_SQ_CF_ALU_WORD1_SQ_CF_INST_ALU_POP2_AFTER << 3):
-	case (EG_V_SQ_CF_ALU_WORD1_SQ_CF_INST_ALU_PUSH_BEFORE << 3):
+	case EG_V_SQ_CF_ALU_WORD1_SQ_CF_INST_ALU:
+	case EG_V_SQ_CF_ALU_WORD1_SQ_CF_INST_ALU_POP_AFTER:
+	case EG_V_SQ_CF_ALU_WORD1_SQ_CF_INST_ALU_POP2_AFTER:
+	case EG_V_SQ_CF_ALU_WORD1_SQ_CF_INST_ALU_PUSH_BEFORE:
 		bc->bytecode[id++] = S_SQ_CF_ALU_WORD0_ADDR(cf->addr >> 1) |
 			S_SQ_CF_ALU_WORD0_KCACHE_MODE0(cf->kcache[0].mode) |
 			S_SQ_CF_ALU_WORD0_KCACHE_BANK0(cf->kcache[0].bank) |
 			S_SQ_CF_ALU_WORD0_KCACHE_BANK1(cf->kcache[1].bank);
-		bc->bytecode[id++] = S_SQ_CF_ALU_WORD1_CF_INST(cf->inst >> 3) |
+		bc->bytecode[id++] = cf->inst |
 			S_SQ_CF_ALU_WORD1_KCACHE_MODE1(cf->kcache[1].mode) |
 			S_SQ_CF_ALU_WORD1_KCACHE_ADDR0(cf->kcache[0].addr) |
 			S_SQ_CF_ALU_WORD1_KCACHE_ADDR1(cf->kcache[1].addr) |
@@ -52,7 +52,7 @@ int eg_bytecode_cf_build(struct r600_bytecode *bc, struct r600_bytecode_cf *cf)
 	case EG_V_SQ_CF_WORD1_SQ_CF_INST_TEX:
 	case EG_V_SQ_CF_WORD1_SQ_CF_INST_VTX:
 		bc->bytecode[id++] = S_SQ_CF_WORD0_ADDR(cf->addr >> 1);
-		bc->bytecode[id++] = S_SQ_CF_WORD1_CF_INST(cf->inst) |
+		bc->bytecode[id++] = cf->inst |
 					S_SQ_CF_WORD1_BARRIER(1) |
 					S_SQ_CF_WORD1_COUNT((cf->ndw / 4) - 1);
 		break;
@@ -68,11 +68,10 @@ int eg_bytecode_cf_build(struct r600_bytecode *bc, struct r600_bytecode_cf *cf)
 			S_SQ_CF_ALLOC_EXPORT_WORD1_SWIZ_SEL_Z(cf->output.swizzle_z) |
 			S_SQ_CF_ALLOC_EXPORT_WORD1_SWIZ_SEL_W(cf->output.swizzle_w) |
 			S_SQ_CF_ALLOC_EXPORT_WORD1_BARRIER(cf->output.barrier) |
-			S_SQ_CF_ALLOC_EXPORT_WORD1_CF_INST(cf->output.inst);
+			cf->output.inst;
 		if (bc->chip_class == EVERGREEN) /* no EOP on cayman */
 			bc->bytecode[id] |= S_SQ_CF_ALLOC_EXPORT_WORD1_END_OF_PROGRAM(cf->output.end_of_program);
 		id++;
-
 		break;
 	case EG_V_SQ_CF_WORD1_SQ_CF_INST_JUMP:
 	case EG_V_SQ_CF_WORD1_SQ_CF_INST_ELSE:
@@ -85,11 +84,10 @@ int eg_bytecode_cf_build(struct r600_bytecode *bc, struct r600_bytecode_cf *cf)
 	case EG_V_SQ_CF_WORD1_SQ_CF_INST_RETURN:
 	case CM_V_SQ_CF_WORD1_SQ_CF_INST_END:
 		bc->bytecode[id++] = S_SQ_CF_WORD0_ADDR(cf->cf_addr >> 1);
-		bc->bytecode[id++] = S_SQ_CF_WORD1_CF_INST(cf->inst) |
+		bc->bytecode[id++] = cf->inst |
 					S_SQ_CF_WORD1_BARRIER(1) |
 					S_SQ_CF_WORD1_COND(cf->cond) |
 					S_SQ_CF_WORD1_POP_COUNT(cf->pop_count);
-
 		break;
 	default:
 		R600_ERR("unsupported CF instruction (0x%X)\n", cf->inst);

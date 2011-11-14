@@ -3082,17 +3082,17 @@ static int pops(struct r600_shader_ctx *ctx, int pops)
 	if (!force_pop) {
 		int alu_pop = 3;
 		if (ctx->bc->cf_last) {
-			if (ctx->bc->cf_last->inst == CTX_INST(V_SQ_CF_ALU_WORD1_SQ_CF_INST_ALU) << 3)
+			if (ctx->bc->cf_last->inst == CTX_INST(V_SQ_CF_ALU_WORD1_SQ_CF_INST_ALU))
 				alu_pop = 0;
-			else if (ctx->bc->cf_last->inst == CTX_INST(V_SQ_CF_ALU_WORD1_SQ_CF_INST_ALU_POP_AFTER) << 3)
+			else if (ctx->bc->cf_last->inst == CTX_INST(V_SQ_CF_ALU_WORD1_SQ_CF_INST_ALU_POP_AFTER))
 				alu_pop = 1;
 		}
 		alu_pop += pops;
 		if (alu_pop == 1) {
-			ctx->bc->cf_last->inst = CTX_INST(V_SQ_CF_ALU_WORD1_SQ_CF_INST_ALU_POP_AFTER) << 3;
+			ctx->bc->cf_last->inst = CTX_INST(V_SQ_CF_ALU_WORD1_SQ_CF_INST_ALU_POP_AFTER);
 			ctx->bc->force_add_cf = 1;
 		} else if (alu_pop == 2) {
-			ctx->bc->cf_last->inst = CTX_INST(V_SQ_CF_ALU_WORD1_SQ_CF_INST_ALU_POP2_AFTER) << 3;
+			ctx->bc->cf_last->inst = CTX_INST(V_SQ_CF_ALU_WORD1_SQ_CF_INST_ALU_POP2_AFTER);
 			ctx->bc->force_add_cf = 1;
 		} else {
 			force_pop = 1;
@@ -3200,14 +3200,14 @@ static void fc_poplevel(struct r600_shader_ctx *ctx)
 #if 0
 static int emit_return(struct r600_shader_ctx *ctx)
 {
-	r600_bytecode_add_cfinst(ctx->bc, V_SQ_CF_WORD1_SQ_CF_INST_RETURN);
+	r600_bytecode_add_cfinst(ctx->bc, CTX_INST(V_SQ_CF_WORD1_SQ_CF_INST_RETURN));
 	return 0;
 }
 
 static int emit_jump_to_offset(struct r600_shader_ctx *ctx, int pops, int offset)
 {
 
-	r600_bytecode_add_cfinst(ctx->bc, V_SQ_CF_WORD1_SQ_CF_INST_JUMP);
+	r600_bytecode_add_cfinst(ctx->bc, CTX_INST(V_SQ_CF_WORD1_SQ_CF_INST_JUMP));
 	ctx->bc->cf_last->pop_count = pops;
 	/* TODO work out offset */
 	return 0;

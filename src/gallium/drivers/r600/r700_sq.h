@@ -55,31 +55,6 @@
 #define   S_SQ_CF_WORD1_CF_INST(x)                                   (((x) & 0x7F) << 23)
 #define   G_SQ_CF_WORD1_CF_INST(x)                                   (((x) >> 23) & 0x7F)
 #define   C_SQ_CF_WORD1_CF_INST                                      0xC07FFFFF
-#define     V_SQ_CF_WORD1_SQ_CF_INST_NOP                             0x00000000
-#define     V_SQ_CF_WORD1_SQ_CF_INST_TEX                             0x00000001
-#define     V_SQ_CF_WORD1_SQ_CF_INST_VTX                             0x00000002
-#define     V_SQ_CF_WORD1_SQ_CF_INST_VTX_TC                          0x00000003
-#define     V_SQ_CF_WORD1_SQ_CF_INST_LOOP_START                      0x00000004
-#define     V_SQ_CF_WORD1_SQ_CF_INST_LOOP_END                        0x00000005
-#define     V_SQ_CF_WORD1_SQ_CF_INST_LOOP_START_DX10                 0x00000006
-#define     V_SQ_CF_WORD1_SQ_CF_INST_LOOP_START_NO_AL                0x00000007
-#define     V_SQ_CF_WORD1_SQ_CF_INST_LOOP_CONTINUE                   0x00000008
-#define     V_SQ_CF_WORD1_SQ_CF_INST_LOOP_BREAK                      0x00000009
-#define     V_SQ_CF_WORD1_SQ_CF_INST_JUMP                            0x0000000A
-#define     V_SQ_CF_WORD1_SQ_CF_INST_PUSH                            0x0000000B
-#define     V_SQ_CF_WORD1_SQ_CF_INST_PUSH_ELSE                       0x0000000C
-#define     V_SQ_CF_WORD1_SQ_CF_INST_ELSE                            0x0000000D
-#define     V_SQ_CF_WORD1_SQ_CF_INST_POP                             0x0000000E
-#define     V_SQ_CF_WORD1_SQ_CF_INST_POP_JUMP                        0x0000000F
-#define     V_SQ_CF_WORD1_SQ_CF_INST_POP_PUSH                        0x00000010
-#define     V_SQ_CF_WORD1_SQ_CF_INST_POP_PUSH_ELSE                   0x00000011
-#define     V_SQ_CF_WORD1_SQ_CF_INST_CALL                            0x00000012
-#define     V_SQ_CF_WORD1_SQ_CF_INST_CALL_FS                         0x00000013
-#define     V_SQ_CF_WORD1_SQ_CF_INST_RETURN                          0x00000014
-#define     V_SQ_CF_WORD1_SQ_CF_INST_EMIT_VERTEX                     0x00000015
-#define     V_SQ_CF_WORD1_SQ_CF_INST_EMIT_CUT_VERTEX                 0x00000016
-#define     V_SQ_CF_WORD1_SQ_CF_INST_CUT_VERTEX                      0x00000017
-#define     V_SQ_CF_WORD1_SQ_CF_INST_KILL                            0x00000018
 #define   S_SQ_CF_WORD1_WHOLE_QUAD_MODE(x)                           (((x) & 0x1) << 30)
 #define   G_SQ_CF_WORD1_WHOLE_QUAD_MODE(x)                           (((x) >> 30) & 0x1)
 #define   C_SQ_CF_WORD1_WHOLE_QUAD_MODE                              0xBFFFFFFF
@@ -121,13 +96,6 @@
 #define   S_SQ_CF_ALU_WORD1_CF_INST(x)                               (((x) & 0xF) << 26)
 #define   G_SQ_CF_ALU_WORD1_CF_INST(x)                               (((x) >> 26) & 0xF)
 #define   C_SQ_CF_ALU_WORD1_CF_INST                                  0xC3FFFFFF
-#define     V_SQ_CF_ALU_WORD1_SQ_CF_INST_ALU                         0x00000008
-#define     V_SQ_CF_ALU_WORD1_SQ_CF_INST_ALU_PUSH_BEFORE             0x00000009
-#define     V_SQ_CF_ALU_WORD1_SQ_CF_INST_ALU_POP_AFTER               0x0000000A
-#define     V_SQ_CF_ALU_WORD1_SQ_CF_INST_ALU_POP2_AFTER              0x0000000B
-#define     V_SQ_CF_ALU_WORD1_SQ_CF_INST_ALU_CONTINUE                0x0000000D
-#define     V_SQ_CF_ALU_WORD1_SQ_CF_INST_ALU_BREAK                   0x0000000E
-#define     V_SQ_CF_ALU_WORD1_SQ_CF_INST_ALU_ELSE_AFTER              0x0000000F
 #define   S_SQ_CF_ALU_WORD1_WHOLE_QUAD_MODE(x)                       (((x) & 0x1) << 30)
 #define   G_SQ_CF_ALU_WORD1_WHOLE_QUAD_MODE(x)                       (((x) >> 30) & 0x1)
 #define   C_SQ_CF_ALU_WORD1_WHOLE_QUAD_MODE                          0xBFFFFFFF
@@ -173,15 +141,6 @@
 #define   S_SQ_CF_ALLOC_EXPORT_WORD1_CF_INST(x)                      (((x) & 0x7F) << 23)
 #define   G_SQ_CF_ALLOC_EXPORT_WORD1_CF_INST(x)                      (((x) >> 23) & 0x7F)
 #define   C_SQ_CF_ALLOC_EXPORT_WORD1_CF_INST                         0xC07FFFFF
-#define     V_SQ_CF_ALLOC_EXPORT_WORD1_SQ_CF_INST_MEM_STREAM0        0x00000020
-#define     V_SQ_CF_ALLOC_EXPORT_WORD1_SQ_CF_INST_MEM_STREAM1        0x00000021
-#define     V_SQ_CF_ALLOC_EXPORT_WORD1_SQ_CF_INST_MEM_STREAM2        0x00000022
-#define     V_SQ_CF_ALLOC_EXPORT_WORD1_SQ_CF_INST_MEM_STREAM3        0x00000023
-#define     V_SQ_CF_ALLOC_EXPORT_WORD1_SQ_CF_INST_MEM_SCRATCH        0x00000024
-#define     V_SQ_CF_ALLOC_EXPORT_WORD1_SQ_CF_INST_MEM_REDUCTION      0x00000025
-#define     V_SQ_CF_ALLOC_EXPORT_WORD1_SQ_CF_INST_MEM_RING           0x00000026
-#define     V_SQ_CF_ALLOC_EXPORT_WORD1_SQ_CF_INST_EXPORT             0x00000027
-#define     V_SQ_CF_ALLOC_EXPORT_WORD1_SQ_CF_INST_EXPORT_DONE        0x00000028
 #define   S_SQ_CF_ALLOC_EXPORT_WORD1_WHOLE_QUAD_MODE(x)              (((x) & 0x1) << 30)
 #define   G_SQ_CF_ALLOC_EXPORT_WORD1_WHOLE_QUAD_MODE(x)              (((x) >> 30) & 0x1)
 #define   C_SQ_CF_ALLOC_EXPORT_WORD1_WHOLE_QUAD_MODE                 0xBFFFFFFF

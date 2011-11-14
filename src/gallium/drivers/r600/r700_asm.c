@@ -30,7 +30,7 @@ void r700_bytecode_cf_vtx_build(uint32_t *bytecode, const struct r600_bytecode_c
 {
 	unsigned count = (cf->ndw / 4) - 1;
 	*bytecode++ = S_SQ_CF_WORD0_ADDR(cf->addr >> 1);
-	*bytecode++ = S_SQ_CF_WORD1_CF_INST(cf->inst) |
+	*bytecode++ = cf->inst |
 			S_SQ_CF_WORD1_BARRIER(1) |
 			S_SQ_CF_WORD1_COUNT(count) |
 			S_SQ_CF_WORD1_COUNT_3(count >> 3);
