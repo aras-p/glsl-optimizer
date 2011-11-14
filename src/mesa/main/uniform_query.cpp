@@ -933,3 +933,46 @@ _mesa_get_uniform_location(struct gl_context *ctx,
 
    return _mesa_uniform_merge_location_offset(location, offset);
 }
+
+extern "C" bool
+_mesa_sampler_uniforms_are_valid(const struct gl_shader_program *shProg,
+				 char *errMsg, size_t errMsgLength)
+{
+   const glsl_type *unit_types[MAX_COMBINED_TEXTURE_IMAGE_UNITS];
+
+   memset(unit_types, 0, sizeof(unit_types));
+
+   for (unsigned i = 0; i < shProg->NumUserUniformStorage; i++) {
+      const struct gl_uniform_storage *const storage =
+	 &shProg->UniformStorage[i];
+      const glsl_type *const t = (storage->type->is_array())
+	 ? storage->type->fields.array : storage->type;
+
+      if (!t->is_sampler())
+	 continue;
+
+      const unsigned count = MAX2(1, storage->type->array_size());
+      for (unsigned j = 0; j < count; j++) {
+	 const unsigned unit = storage->storage[j].i;
+
+	 /* The types of the samplers associated with a particular texture
+	  * unit must be an exact match.  Page 74 (page 89 of the PDF) of the
+	  * OpenGL 3.3 core spec says:
+	  *
+	  *     "It is not allowed to have variables of different sampler
+	  *     types pointing to the same texture image unit within a program
+	  *     object."
+	  */
+	 if (unit_types[unit] == NULL) {
+	    unit_types[unit] = t;
+	 } else if (unit_types[unit] != t) {
+	    _mesa_snprintf(errMsg, errMsgLength,
+			   "Texture unit %d is accessed both as %s and %s",
+			   unit, unit_types[unit]->name, t->name);
+	    return false;
+	 }
+      }
+   }
+
+   return true;
+}

@@ -927,62 +927,6 @@ _mesa_use_program(struct gl_context *ctx, struct gl_shader_program *shProg)
       ctx->Driver.UseProgram(ctx, shProg);
 }
 
-
-/**
- * Validate a program's samplers.
- * Specifically, check that there aren't two samplers of different types
- * pointing to the same texture unit.
- * \return GL_TRUE if valid, GL_FALSE if invalid
- */
-static GLboolean
-validate_samplers(const struct gl_program *prog, char *errMsg)
-{
-   static const char *targetName[] = {
-      "TEXTURE_BUFFER",
-      "TEXTURE_2D_ARRAY",
-      "TEXTURE_1D_ARRAY",
-      "TEXTURE_EXTERNAL",
-      "TEXTURE_CUBE",
-      "TEXTURE_3D",
-      "TEXTURE_RECT",
-      "TEXTURE_2D",
-      "TEXTURE_1D",
-   };
-   GLint targetUsed[MAX_COMBINED_TEXTURE_IMAGE_UNITS];
-   GLbitfield samplersUsed = prog->SamplersUsed;
-   GLuint i;
-
-   STATIC_ASSERT(Elements(targetName) == NUM_TEXTURE_TARGETS);
-
-   if (samplersUsed == 0x0)
-      return GL_TRUE;
-
-   for (i = 0; i < Elements(targetUsed); i++)
-      targetUsed[i] = -1;
-
-   /* walk over bits which are set in 'samplers' */
-   while (samplersUsed) {
-      GLuint unit;
-      gl_texture_index target;
-      GLint sampler = _mesa_ffs(samplersUsed) - 1;
-      assert(sampler >= 0);
-      assert(sampler < Elements(prog->SamplerUnits));
-      unit = prog->SamplerUnits[sampler];
-      target = prog->SamplerTargets[sampler];
-      if (targetUsed[unit] != -1 && targetUsed[unit] != (int) target) {
-         _mesa_snprintf(errMsg, 100,
-		  "Texture unit %d is accessed both as %s and %s",
-		  unit, targetName[targetUsed[unit]], targetName[target]);
-         return GL_FALSE;
-      }
-      targetUsed[unit] = target;
-      samplersUsed ^= (1 << sampler);
-   }
-
-   return GL_TRUE;
-}
-
-
 /**
  * Do validation of the given shader program.
  * \param errMsg  returns error message if validation fails.
@@ -1018,12 +962,8 @@ validate_shader_program(const struct gl_shader_program *shProg,
     * Check: any two active samplers in the current program object are of
     * different types, but refer to the same texture image unit,
     */
-   for (i = 0; i < Elements(shProg->_LinkedShaders); i++) {
-      if (shProg->_LinkedShaders[i]
-	  && !validate_samplers(shProg->_LinkedShaders[i]->Program, errMsg)) {
-	 return GL_FALSE;
-      }
-   }
+   if (!_mesa_sampler_uniforms_are_valid(shProg, errMsg, 100))
+      return GL_FALSE;
 
    return GL_TRUE;
 }
