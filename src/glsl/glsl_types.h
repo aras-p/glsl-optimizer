@@ -28,6 +28,7 @@
 
 #include <string.h>
 #include <assert.h>
+#include "main/mtypes.h" /* for gl_texture_index, C++'s enum rules are broken */
 
 #ifdef __cplusplus
 extern "C" {
@@ -352,6 +353,11 @@ struct glsl_type {
     * types, contains a sampler.
     */
    bool contains_sampler() const;
+
+   /**
+    * Get the Mesa texture target index for a sampler type.
+    */
+   gl_texture_index sampler_index() const;
 
    /**
     * Query whether or not a type is an array
