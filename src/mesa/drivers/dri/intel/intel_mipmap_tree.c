@@ -171,6 +171,27 @@ intel_miptree_create_for_region(struct intel_context *intel,
    return mt;
 }
 
+struct intel_mipmap_tree*
+intel_miptree_create_for_renderbuffer(struct intel_context *intel,
+                                      gl_format format,
+                                      uint32_t tiling,
+                                      uint32_t cpp,
+                                      uint32_t width,
+                                      uint32_t height)
+{
+   struct intel_region *region;
+   struct intel_mipmap_tree *mt;
+
+   region = intel_region_alloc(intel->intelScreen,
+                               tiling, cpp, width, height, true);
+   if (!region)
+      return NULL;
+
+   mt = intel_miptree_create_for_region(intel, GL_TEXTURE_2D, format, region);
+   intel_region_release(&region);
+   return mt;
+}
+
 void
 intel_miptree_reference(struct intel_mipmap_tree **dst,
                         struct intel_mipmap_tree *src)

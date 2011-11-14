@@ -151,6 +151,21 @@ intel_miptree_create_for_region(struct intel_context *intel,
 				gl_format format,
 				struct intel_region *region);
 
+/**
+ * Create a miptree appropriate as the storage for a non-texture renderbuffer.
+ * The miptree has the following properties:
+ *     - The target is GL_TEXTURE_2D.
+ *     - There are no levels other than the base level 0.
+ *     - Depth is 1.
+ */
+struct intel_mipmap_tree*
+intel_miptree_create_for_renderbuffer(struct intel_context *intel,
+                                      gl_format format,
+                                      uint32_t tiling,
+                                      uint32_t cpp,
+                                      uint32_t width,
+                                      uint32_t height);
+
 int intel_miptree_pitch_align (struct intel_context *intel,
 			       struct intel_mipmap_tree *mt,
 			       uint32_t tiling,
