@@ -448,6 +448,7 @@ static int radeon_set_screen_flags(radeonScreenPtr screen, int device_id)
       screen->chip_flags = R200_CHIPSET_YCBCR_BROKEN | RADEON_CHIPSET_TCL;
       break;
 
+   case PCI_CHIP_RV280_4C6E:
    case PCI_CHIP_RV280_5960:
    case PCI_CHIP_RV280_5961:
    case PCI_CHIP_RV280_5962:
