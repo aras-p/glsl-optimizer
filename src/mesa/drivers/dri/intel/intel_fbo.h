@@ -134,27 +134,13 @@ intel_get_renderbuffer(struct gl_framebuffer *fb, gl_buffer_index attIndex)
    return irb;
 }
 
-/**
- * If the framebuffer has a depth buffer attached, then return its HiZ region.
- * The HiZ region may be null.
- */
-static INLINE struct intel_region*
-intel_framebuffer_get_hiz_region(struct gl_framebuffer *fb)
+static inline bool
+intel_framebuffer_has_hiz(struct gl_framebuffer *fb)
 {
    struct intel_renderbuffer *rb = NULL;
    if (fb)
       rb = intel_get_renderbuffer(fb, BUFFER_DEPTH);
-
-   if (rb)
-      return rb->hiz_region;
-   else
-      return NULL;
-}
-
-static INLINE bool
-intel_framebuffer_has_hiz(struct gl_framebuffer *fb)
-{
-   return intel_framebuffer_get_hiz_region(fb) != NULL;
+   return rb && rb->hiz_region;
 }
 
 extern struct intel_renderbuffer *
