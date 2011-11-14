@@ -37,7 +37,7 @@ Modifier::Modifier(operation op)
    case OP_NEG: bits = NV50_IR_MOD_NEG; break;
    case OP_ABS: bits = NV50_IR_MOD_ABS; break;
    case OP_SAT: bits = NV50_IR_MOD_SAT; break;
-   case OP_NOP: bits = NV50_IR_MOD_NOT; break;
+   case OP_NOT: bits = NV50_IR_MOD_NOT; break;
    default:
       bits = 0;
       break;
