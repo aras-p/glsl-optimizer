@@ -315,13 +315,7 @@ bool
 Function::convertToSSA()
 {
    // 0. calculate live in variables (for pruned SSA)
-   int seq = cfg.nextSequence();
-   for (unsigned i = 0; i <= loopNestingBound; seq = cfg.nextSequence(), ++i)
-      buildLiveSetsPreSSA(BasicBlock::get(cfg.getRoot()), seq);
-
-   // reset liveSet marker for use in regalloc
-   for (ArrayList::Iterator bi = allBBlocks.iterator(); !bi.end(); bi.next())
-      reinterpret_cast<BasicBlock *>(bi.get())->liveSet.marker = false;
+   buildLiveSets();
 
    // 1. create the dominator tree
    domTree = new DominatorTree(&cfg);

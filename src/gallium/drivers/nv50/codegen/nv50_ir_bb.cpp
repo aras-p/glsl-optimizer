@@ -416,6 +416,16 @@ Function::orderInstructions(ArrayList &result)
 }
 
 void
+Function::buildLiveSets()
+{
+   for (unsigned i = 0; i <= loopNestingBound; ++i)
+      buildLiveSetsPreSSA(BasicBlock::get(cfg.getRoot()), cfg.nextSequence());
+
+   for (ArrayList::Iterator bi = allBBlocks.iterator(); !bi.end(); bi.next())
+      BasicBlock::get(bi)->liveSet.marker = false;
+}
+
+void
 Function::buildDefSets()
 {
    for (unsigned i = 0; i <= loopNestingBound; ++i)
