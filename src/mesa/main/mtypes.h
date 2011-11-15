@@ -2183,9 +2183,17 @@ struct gl_shader
 
    unsigned Version;       /**< GLSL version used for linking */
 
-   unsigned num_samplers;	/**< Number of samplers used by this shader.
-				 * This field is only set post-linking.
-				 */
+   /**
+    * \name Sampler tracking
+    *
+    * \note Each of these fields is only set post-linking.
+    */
+   /*@{*/
+   unsigned num_samplers;	/**< Number of samplers used by this shader. */
+   GLbitfield active_samplers;	/**< Bitfield of which samplers are used */
+   GLbitfield shadow_samplers;	/**< Samplers used for shadow sampling. */
+   /*@}*/
+
    /**
     * Number of uniform components used by this shader.
     *

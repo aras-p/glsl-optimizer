@@ -2490,32 +2490,6 @@ print_program(struct prog_instruction *mesa_instructions,
    }
 }
 
-
-/**
- * Count resources used by the given gpu program (number of texture
- * samplers, etc).
- */
-static void
-count_resources(struct gl_shader_program *shProg, struct gl_program *prog)
-{
-   unsigned int i;
-
-   prog->SamplersUsed = 0;
-
-   for (i = 0; i < prog->NumInstructions; i++) {
-      struct prog_instruction *inst = &prog->Instructions[i];
-
-      if (_mesa_is_tex_instruction(inst->Opcode)) {
-	 prog->SamplersUsed |= 1 << inst->TexSrcUnit;
-	 if (inst->TexShadow) {
-	    prog->ShadowSamplers |= 1 << inst->TexSrcUnit;
-	 }
-      }
-   }
-
-   _mesa_update_shader_textures_used(shProg, prog);
-}
-
 class add_uniform_to_shader : public uniform_field_visitor {
 public:
    add_uniform_to_shader(struct gl_shader_program *shader_program,
@@ -3195,7 +3169,10 @@ get_mesa_program(struct gl_context *ctx,
    mesa_instructions = NULL;
 
    do_set_program_inouts(shader->ir, prog, shader->Type == GL_FRAGMENT_SHADER);
-   count_resources(shader_program, prog);
+
+   prog->SamplersUsed = shader->active_samplers;
+   prog->ShadowSamplers = shader->shadow_samplers;
+   _mesa_update_shader_textures_used(shader_program, prog);
 
    /* Set the gl_FragDepth layout. */
    if (target == GL_FRAGMENT_PROGRAM_ARB) {

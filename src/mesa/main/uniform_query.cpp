@@ -691,18 +691,15 @@ _mesa_uniform(struct gl_context *ctx, struct gl_shader_program *shProg,
 
       bool flushed = false;
       for (i = 0; i < MESA_SHADER_TYPES; i++) {
-	 struct gl_program *prog;
-
-	 if (shProg->_LinkedShaders[i] == NULL)
-	    continue;
-
-	 prog = shProg->_LinkedShaders[i]->Program;
+	 struct gl_shader *const sh = shProg->_LinkedShaders[i];
 
 	 /* If the shader stage doesn't use any samplers, don't bother
 	  * checking if any samplers have changed.
 	  */
-	 if (prog->SamplersUsed == 0)
+	 if (sh == NULL || sh->active_samplers == 0)
 	    continue;
+
+	 struct gl_program *const prog = sh->Program;
 
 	 assert(sizeof(prog->SamplerUnits) == sizeof(shProg->SamplerUnits));
 
@@ -711,7 +708,7 @@ _mesa_uniform(struct gl_context *ctx, struct gl_shader_program *shProg,
 	  */
 	 bool changed = false;
 	 for (unsigned j = 0; j < Elements(prog->SamplerUnits); j++) {
-	    if ((prog->SamplersUsed & (1U << j)) != 0
+	    if ((sh->active_samplers & (1U << j)) != 0
 		&& (prog->SamplerUnits[j] != shProg->SamplerUnits[j])) {
 	       changed = true;
 	       break;
