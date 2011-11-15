@@ -91,7 +91,7 @@ BasicBlock::insertHead(Instruction *inst)
          insertBefore(phi, inst);
       } else {
          if (entry) {
-            insertBefore(entry, phi);
+            insertBefore(entry, inst);
          } else {
             assert(!exit);
             phi = exit = inst;
