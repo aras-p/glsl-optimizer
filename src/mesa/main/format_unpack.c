@@ -790,10 +790,10 @@ unpack_RGBA_FLOAT32(const void *src, GLfloat dst[][4], GLuint n)
    const GLfloat *s = (const GLfloat *) src;
    GLuint i;
    for (i = 0; i < n; i++) {
-      dst[i][RCOMP] = s[0];
-      dst[i][GCOMP] = s[1];
-      dst[i][BCOMP] = s[2];
-      dst[i][ACOMP] = s[3];
+      dst[i][RCOMP] = s[i*4+0];
+      dst[i][GCOMP] = s[i*4+1];
+      dst[i][BCOMP] = s[i*4+2];
+      dst[i][ACOMP] = s[i*4+3];
    }
 }
 
@@ -803,10 +803,10 @@ unpack_RGBA_FLOAT16(const void *src, GLfloat dst[][4], GLuint n)
    const GLhalfARB *s = (const GLhalfARB *) src;
    GLuint i;
    for (i = 0; i < n; i++) {
-      dst[i][RCOMP] = _mesa_half_to_float(s[0]);
-      dst[i][GCOMP] = _mesa_half_to_float(s[1]);
-      dst[i][BCOMP] = _mesa_half_to_float(s[2]);
-      dst[i][ACOMP] = _mesa_half_to_float(s[3]);
+      dst[i][RCOMP] = _mesa_half_to_float(s[i*4+0]);
+      dst[i][GCOMP] = _mesa_half_to_float(s[i*4+1]);
+      dst[i][BCOMP] = _mesa_half_to_float(s[i*4+2]);
+      dst[i][ACOMP] = _mesa_half_to_float(s[i*4+3]);
    }
 }
 
@@ -816,9 +816,9 @@ unpack_RGB_FLOAT32(const void *src, GLfloat dst[][4], GLuint n)
    const GLfloat *s = (const GLfloat *) src;
    GLuint i;
    for (i = 0; i < n; i++) {
-      dst[i][RCOMP] = s[0];
-      dst[i][GCOMP] = s[1];
-      dst[i][BCOMP] = s[2];
+      dst[i][RCOMP] = s[i*3+0];
+      dst[i][GCOMP] = s[i*3+1];
+      dst[i][BCOMP] = s[i*3+2];
       dst[i][ACOMP] = 1.0F;
    }
 }
