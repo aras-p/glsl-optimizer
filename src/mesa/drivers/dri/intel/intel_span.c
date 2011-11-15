@@ -141,10 +141,9 @@ intel_set_span_functions(struct intel_context *intel,
    struct intel_renderbuffer *irb = intel_renderbuffer(rb);		\
    uint8_t *buf = irb->region->bo->virtual;				\
    unsigned stride = irb->region->pitch;				\
-   unsigned height = irb->region->height;				\
    bool flip = rb->Name == 0;						\
    int y_scale = flip ? -1 : 1;						\
-   int y_bias = flip ? (height * 2 + height % 2 - 1) : 0;		\
+   int y_bias = flip ? (rb->Height - 1) : 0;				\
 
 #undef Y_FLIP
 #define Y_FLIP(y) (y_scale * (y) + y_bias)
