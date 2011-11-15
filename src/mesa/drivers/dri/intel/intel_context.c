@@ -641,12 +641,6 @@ intelInitContext(struct intel_context *intel,
    ctx->TextureFormatSupported[MESA_FORMAT_A8] = true;
    ctx->TextureFormatSupported[MESA_FORMAT_I8] = true;
    ctx->TextureFormatSupported[MESA_FORMAT_AL88] = true;
-   if (intel->gen >= 4) {
-      ctx->TextureFormatSupported[MESA_FORMAT_L16] = true;
-      ctx->TextureFormatSupported[MESA_FORMAT_A16] = true;
-      ctx->TextureFormatSupported[MESA_FORMAT_I16] = true;
-      ctx->TextureFormatSupported[MESA_FORMAT_AL1616] = true;
-   }
 
    /* Depth and stencil */
    ctx->TextureFormatSupported[MESA_FORMAT_S8_Z24] = true;
@@ -677,87 +671,6 @@ intelInitContext(struct intel_context *intel,
    ctx->TextureFormatSupported[MESA_FORMAT_RGBA_DXT1] = true;
    ctx->TextureFormatSupported[MESA_FORMAT_RGBA_DXT3] = true;
    ctx->TextureFormatSupported[MESA_FORMAT_RGBA_DXT5] = true;
-
-#ifndef I915
-   /* GL_ARB_texture_compression_rgtc */
-   ctx->TextureFormatSupported[MESA_FORMAT_RED_RGTC1] = true;
-   ctx->TextureFormatSupported[MESA_FORMAT_SIGNED_RED_RGTC1] = true;
-   ctx->TextureFormatSupported[MESA_FORMAT_RG_RGTC2] = true;
-   ctx->TextureFormatSupported[MESA_FORMAT_SIGNED_RG_RGTC2] = true;
-
-   /* GL_ARB_texture_rg */
-   ctx->TextureFormatSupported[MESA_FORMAT_R8] = true;
-   ctx->TextureFormatSupported[MESA_FORMAT_R16] = true;
-   ctx->TextureFormatSupported[MESA_FORMAT_RG88] = true;
-   ctx->TextureFormatSupported[MESA_FORMAT_RG1616] = true;
-
-   /* GL_MESA_texture_signed_rgba / GL_EXT_texture_snorm */
-   ctx->TextureFormatSupported[MESA_FORMAT_DUDV8] = true;
-   ctx->TextureFormatSupported[MESA_FORMAT_SIGNED_RGBA8888_REV] = true;
-   ctx->TextureFormatSupported[MESA_FORMAT_SIGNED_R8] = true;
-   ctx->TextureFormatSupported[MESA_FORMAT_SIGNED_RG88_REV] = true;
-   ctx->TextureFormatSupported[MESA_FORMAT_SIGNED_R16] = true;
-   ctx->TextureFormatSupported[MESA_FORMAT_SIGNED_GR1616] = true;
-
-   /* GL_EXT_texture_sRGB */
-   ctx->TextureFormatSupported[MESA_FORMAT_SARGB8] = true;
-   if (intel->gen >= 5 || intel->is_g4x)
-      ctx->TextureFormatSupported[MESA_FORMAT_SRGB_DXT1] = true;
-   ctx->TextureFormatSupported[MESA_FORMAT_SRGBA_DXT1] = true;
-   ctx->TextureFormatSupported[MESA_FORMAT_SRGBA_DXT3] = true;
-   ctx->TextureFormatSupported[MESA_FORMAT_SRGBA_DXT5] = true;
-   if (intel->gen >= 5 || intel->is_g4x) {
-      ctx->TextureFormatSupported[MESA_FORMAT_SL8] = true;
-      ctx->TextureFormatSupported[MESA_FORMAT_SLA8] = true;
-   }
-
-   if (intel->gen >= 4) {
-      /* Each combination of 32-bit ints are supported, but the RGB 32-bit ints
-       * don't support use as a render target (GPU hangs).
-       */
-      ctx->TextureFormatSupported[MESA_FORMAT_R_INT32] = true;
-      ctx->TextureFormatSupported[MESA_FORMAT_RG_INT32] = true;
-      ctx->TextureFormatSupported[MESA_FORMAT_RGB_INT32] = true;
-      ctx->TextureFormatSupported[MESA_FORMAT_RGBA_INT32] = true;
-
-      ctx->TextureFormatSupported[MESA_FORMAT_R_UINT32] = true;
-      ctx->TextureFormatSupported[MESA_FORMAT_RG_UINT32] = true;
-      ctx->TextureFormatSupported[MESA_FORMAT_RGB_UINT32] = true;
-      ctx->TextureFormatSupported[MESA_FORMAT_RGBA_UINT32] = true;
-
-      /* For 16 and 8 bits, RGB is unsupported entirely. */
-      ctx->TextureFormatSupported[MESA_FORMAT_R_UINT16] = true;
-      ctx->TextureFormatSupported[MESA_FORMAT_RG_UINT16] = true;
-      ctx->TextureFormatSupported[MESA_FORMAT_RGBA_UINT16] = true;
-      ctx->TextureFormatSupported[MESA_FORMAT_R_INT16] = true;
-      ctx->TextureFormatSupported[MESA_FORMAT_RG_INT16] = true;
-      ctx->TextureFormatSupported[MESA_FORMAT_RGBA_INT16] = true;
-
-      ctx->TextureFormatSupported[MESA_FORMAT_R_UINT8] = true;
-      ctx->TextureFormatSupported[MESA_FORMAT_RG_UINT8] = true;
-      ctx->TextureFormatSupported[MESA_FORMAT_RGBA_UINT8] = true;
-      ctx->TextureFormatSupported[MESA_FORMAT_R_INT8] = true;
-      ctx->TextureFormatSupported[MESA_FORMAT_RG_INT8] = true;
-      ctx->TextureFormatSupported[MESA_FORMAT_RGBA_INT8] = true;
-   }
-
-#ifdef TEXTURE_FLOAT_ENABLED
-   ctx->TextureFormatSupported[MESA_FORMAT_RGBA_FLOAT32] = true;
-   ctx->TextureFormatSupported[MESA_FORMAT_RG_FLOAT32] = true;
-   ctx->TextureFormatSupported[MESA_FORMAT_R_FLOAT32] = true;
-   ctx->TextureFormatSupported[MESA_FORMAT_INTENSITY_FLOAT32] = true;
-   ctx->TextureFormatSupported[MESA_FORMAT_LUMINANCE_FLOAT32] = true;
-   ctx->TextureFormatSupported[MESA_FORMAT_ALPHA_FLOAT32] = true;
-   ctx->TextureFormatSupported[MESA_FORMAT_LUMINANCE_ALPHA_FLOAT32] = true;
-
-   /* GL_EXT_texture_shared_exponent */
-   ctx->TextureFormatSupported[MESA_FORMAT_RGB9_E5_FLOAT] = true;
-
-   /* GL_EXT_packed_float */
-   ctx->TextureFormatSupported[MESA_FORMAT_R11_G11_B10_FLOAT] = true;
-#endif
-
-#endif /* !I915 */
 
    driParseConfigFiles(&intel->optionCache, &intelScreen->optionCache,
                        sPriv->myNum, (intel->gen >= 4) ? "i965" : "i915");
