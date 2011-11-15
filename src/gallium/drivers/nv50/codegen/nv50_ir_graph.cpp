@@ -116,11 +116,11 @@ void Graph::Node::attach(Node *node, Edge::Type kind)
    ++this->outCount;
    ++node->inCount;
 
-   assert(this->graph);
-   if (!node->graph) {
-      node->graph = this->graph;
-      ++node->graph->size;
-   }
+   assert(graph || node->graph);
+   if (!node->graph)
+      graph->insert(node);
+   if (!graph)
+      node->graph->insert(this);
 
    if (kind == Edge::UNKNOWN)
       graph->classifyEdges();
