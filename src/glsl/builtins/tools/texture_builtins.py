@@ -150,6 +150,7 @@ def generate_texture_functions(fs):
     generate_fiu_sigs("txs", "2DArray")
     generate_sigs("", "txs", "1DShadow")
     generate_sigs("", "txs", "2DShadow")
+    generate_sigs("", "txs", "CubeShadow")
     generate_sigs("", "txs", "1DArrayShadow")
     generate_sigs("", "txs", "2DArrayShadow")
     end_function(fs, "textureSize")
