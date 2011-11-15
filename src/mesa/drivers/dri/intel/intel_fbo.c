@@ -948,8 +948,9 @@ intel_framebuffer_renderbuffer(struct gl_context * ctx,
 
 static bool
 intel_update_wrapper(struct gl_context *ctx, struct intel_renderbuffer *irb, 
-		     struct gl_texture_image *texImage)
+		     struct gl_renderbuffer_attachment *att)
 {
+   struct gl_texture_image *texImage = _mesa_get_attachment_teximage(att);
    struct intel_texture_image *intel_image = intel_texture_image(texImage);
    int width, height, depth;
 
@@ -973,15 +974,40 @@ intel_update_wrapper(struct gl_context *ctx, struct intel_renderbuffer *irb,
    irb->Base.Delete = intel_delete_renderbuffer;
    irb->Base.AllocStorage = intel_nop_alloc_storage;
 
+   irb->mt_level = att->TextureLevel;
+   if (texImage->TexObject->Target == GL_TEXTURE_CUBE_MAP) {
+      assert(att->Zoffset == 0);
+      irb->mt_layer = att->CubeMapFace;
+   } else {
+      assert(att->CubeMapFace == 0);
+      irb->mt_layer= att->Zoffset;
+   }
+
    if (intel_image->stencil_rb) {
       /*  The tex image has packed depth/stencil format, but is using separate
        *  stencil. It shares its embedded depth and stencil renderbuffers with
        *  the renderbuffer wrapper.
+       *
+       *  FIXME: glFramebufferTexture*() is broken for depthstencil textures
+       *  FIXME: with separate stencil. To fix this, we must create a separate
+       *  FIXME: pair of depth/stencil renderbuffers for each attached slice
+       *  FIXME: of the miptree.
        */
+      struct intel_renderbuffer *depth_irb;
+      struct intel_renderbuffer *stencil_irb;
+
       _mesa_reference_renderbuffer(&irb->wrapped_depth,
 				   intel_image->depth_rb);
       _mesa_reference_renderbuffer(&irb->wrapped_stencil,
 				   intel_image->stencil_rb);
+
+      depth_irb = intel_renderbuffer(intel_image->depth_rb);
+      depth_irb->mt_level = irb->mt_level;
+      depth_irb->mt_layer = irb->mt_layer;
+
+      stencil_irb = intel_renderbuffer(intel_image->stencil_rb);
+      stencil_irb->mt_level = irb->mt_level;
+      stencil_irb->mt_layer = irb->mt_layer;
    } else {
       intel_miptree_reference(&irb->mt, intel_image->mt);
    }
@@ -994,7 +1020,8 @@ intel_update_wrapper(struct gl_context *ctx, struct intel_renderbuffer *irb,
  * This will have the region info needed for hardware rendering.
  */
 static struct intel_renderbuffer *
-intel_wrap_texture(struct gl_context * ctx, struct gl_texture_image *texImage)
+intel_wrap_texture(struct gl_context * ctx,
+                   struct gl_renderbuffer_attachment *att)
 {
    const GLuint name = ~0;   /* not significant, but distinct for debugging */
    struct intel_renderbuffer *irb;
@@ -1009,7 +1036,7 @@ intel_wrap_texture(struct gl_context * ctx, struct gl_texture_image *texImage)
    _mesa_init_renderbuffer(&irb->Base, name);
    irb->Base.ClassID = INTEL_RB_CLASS;
 
-   if (!intel_update_wrapper(ctx, irb, texImage)) {
+   if (!intel_update_wrapper(ctx, irb, att)) {
       free(irb);
       return NULL;
    }
@@ -1114,7 +1141,7 @@ intel_render_texture(struct gl_context * ctx,
       return;
    }
    else if (!irb) {
-      irb = intel_wrap_texture(ctx, image);
+      irb = intel_wrap_texture(ctx, att);
       if (irb) {
          /* bind the wrapper to the attachment point */
          _mesa_reference_renderbuffer(&att->Renderbuffer, &irb->Base);
@@ -1126,7 +1153,7 @@ intel_render_texture(struct gl_context * ctx,
       }
    }
 
-   if (!intel_update_wrapper(ctx, irb, image)) {
+   if (!intel_update_wrapper(ctx, irb, att)) {
        _mesa_reference_renderbuffer(&att->Renderbuffer, NULL);
        _swrast_render_texture(ctx, fb, att);
        return;

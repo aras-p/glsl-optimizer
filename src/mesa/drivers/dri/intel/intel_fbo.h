@@ -52,6 +52,23 @@ struct intel_renderbuffer
    GLbitfield map_mode;
 
    /**
+    * \name Miptree view
+    * \{
+    *
+    * Multiple renderbuffers may simultaneously wrap a single texture and each
+    * provide a different view into that texture. The fields below indicate
+    * which miptree slice is wrapped by this renderbuffer.  The fields' values
+    * are consistent with the 'level' and 'layer' parameters of
+    * glFramebufferTextureLayer().
+    *
+    * For renderbuffers not created with glFramebufferTexture*(), mt_level and
+    * mt_layer are 0.
+    */
+   unsigned int mt_level;
+   unsigned int mt_layer;
+   /** \} */
+
+   /**
     * \name Packed depth/stencil unwrappers
     *
     * If the intel_context is using separate stencil and this renderbuffer has
