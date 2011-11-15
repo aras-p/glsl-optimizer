@@ -796,6 +796,54 @@ struct intel_buffer {
    struct intel_region *region;
 };
 
+/**
+ * \brief Get tiling format for a DRI buffer.
+ *
+ * \param attachment is the buffer's attachmet point, such as
+ *        __DRI_BUFFER_DEPTH.
+ * \param out_tiling is the returned tiling format for buffer.
+ * \return false if attachment is unrecognized or is incompatible with screen.
+ */
+static bool
+intel_get_dri_buffer_tiling(struct intel_screen *screen,
+                            uint32_t attachment,
+                            uint32_t *out_tiling)
+{
+   if (screen->gen < 4) {
+      *out_tiling = I915_TILING_X;
+      return true;
+   }
+
+   switch (attachment) {
+   case __DRI_BUFFER_DEPTH:
+   case __DRI_BUFFER_DEPTH_STENCIL:
+   case __DRI_BUFFER_HIZ:
+      *out_tiling = I915_TILING_Y;
+      return true;
+   case __DRI_BUFFER_ACCUM:
+   case __DRI_BUFFER_FRONT_LEFT:
+   case __DRI_BUFFER_FRONT_RIGHT:
+   case __DRI_BUFFER_BACK_LEFT:
+   case __DRI_BUFFER_BACK_RIGHT:
+   case __DRI_BUFFER_FAKE_FRONT_LEFT:
+   case __DRI_BUFFER_FAKE_FRONT_RIGHT:
+      *out_tiling = I915_TILING_X;
+      return true;
+   case __DRI_BUFFER_STENCIL:
+      /* The stencil buffer is W tiled. However, we request from the kernel
+       * a non-tiled buffer because the GTT is incapable of W fencing.
+       */
+      *out_tiling = I915_TILING_NONE;
+      return true;
+   default:
+      if(unlikely(INTEL_DEBUG & DEBUG_DRI)) {
+	 fprintf(stderr, "error: %s: unrecognized DRI buffer attachment 0x%x\n",
+	         __FUNCTION__, attachment);
+      }
+       return false;
+   }
+}
+
 static __DRIbuffer *
 intelAllocateBuffer(__DRIscreen *screen,
 		    unsigned attachment, unsigned format,
@@ -803,22 +851,45 @@ intelAllocateBuffer(__DRIscreen *screen,
 {
    struct intel_buffer *intelBuffer;
    struct intel_screen *intelScreen = screen->driverPrivate;
+
    uint32_t tiling;
+   uint32_t region_width;
+   uint32_t region_height;
+   uint32_t region_cpp;
+
+   bool ok = true;
+
+   ok = intel_get_dri_buffer_tiling(intelScreen, attachment, &tiling);
+   if (!ok)
+      return NULL;
 
    intelBuffer = CALLOC(sizeof *intelBuffer);
    if (intelBuffer == NULL)
       return NULL;
 
-   if ((attachment == __DRI_BUFFER_DEPTH ||
-	attachment == __DRI_BUFFER_STENCIL ||
-	attachment == __DRI_BUFFER_DEPTH_STENCIL) &&
-       intelScreen->gen >= 4)
-      tiling = I915_TILING_Y;
-   else
-      tiling = I915_TILING_X;
+   if (attachment == __DRI_BUFFER_STENCIL) {
+      /* The stencil buffer has quirky pitch requirements.  From Vol 2a,
+       * 11.5.6.2.1 3DSTATE_STENCIL_BUFFER, field "Surface Pitch":
+       *    The pitch must be set to 2x the value computed based on width, as
+       *    the stencil buffer is stored with two rows interleaved.
+       * To accomplish this, we resort to the nasty hack of doubling the
+       * region's cpp and halving its height.
+       */
+      region_width = ALIGN(width, 64);
+      region_height = ALIGN(ALIGN(height, 2) / 2, 64);
+      region_cpp = format / 4;
+   } else {
+      region_width = width;
+      region_height = height;
+      region_cpp = format / 8;
+   }
 
-   intelBuffer->region = intel_region_alloc(intelScreen, tiling,
-					    format / 8, width, height, true);
+   intelBuffer->region = intel_region_alloc(intelScreen,
+                                            tiling,
+                                            region_cpp,
+                                            region_width,
+                                            region_height,
+                                            true);
    
    if (intelBuffer->region == NULL) {
 	   FREE(intelBuffer);
