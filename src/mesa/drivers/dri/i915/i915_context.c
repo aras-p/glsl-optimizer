@@ -88,6 +88,55 @@ i915InitDriverFunctions(struct dd_function_table *functions)
    functions->UpdateState = i915InvalidateState;
 }
 
+/* Note: this is shared with i830. */
+void
+intel_init_texture_formats(struct gl_context *ctx)
+{
+   struct intel_context *intel = intel_context(ctx);
+   struct intel_screen *intel_screen = intel->intelScreen;
+
+   ctx->TextureFormatSupported[MESA_FORMAT_ARGB8888] = true;
+   if (intel_screen->deviceID != PCI_CHIP_I830_M &&
+       intel_screen->deviceID != PCI_CHIP_845_G)
+      ctx->TextureFormatSupported[MESA_FORMAT_XRGB8888] = true;
+   ctx->TextureFormatSupported[MESA_FORMAT_ARGB4444] = true;
+   ctx->TextureFormatSupported[MESA_FORMAT_ARGB1555] = true;
+   ctx->TextureFormatSupported[MESA_FORMAT_RGB565] = true;
+   ctx->TextureFormatSupported[MESA_FORMAT_L8] = true;
+   ctx->TextureFormatSupported[MESA_FORMAT_A8] = true;
+   ctx->TextureFormatSupported[MESA_FORMAT_I8] = true;
+   ctx->TextureFormatSupported[MESA_FORMAT_AL88] = true;
+
+   /* Depth and stencil */
+   ctx->TextureFormatSupported[MESA_FORMAT_S8_Z24] = true;
+   ctx->TextureFormatSupported[MESA_FORMAT_X8_Z24] = true;
+   ctx->TextureFormatSupported[MESA_FORMAT_S8] = intel->has_separate_stencil;
+
+   /*
+    * This was disabled in initial FBO enabling to avoid combinations
+    * of depth+stencil that wouldn't work together.  We since decided
+    * that it was OK, since it's up to the app to come up with the
+    * combo that actually works, so this can probably be re-enabled.
+    */
+   /*
+   ctx->TextureFormatSupported[MESA_FORMAT_Z16] = true;
+   ctx->TextureFormatSupported[MESA_FORMAT_Z24] = true;
+   */
+
+   /* ctx->Extensions.MESA_ycbcr_texture */
+   ctx->TextureFormatSupported[MESA_FORMAT_YCBCR] = true;
+   ctx->TextureFormatSupported[MESA_FORMAT_YCBCR_REV] = true;
+
+   /* GL_3DFX_texture_compression_FXT1 */
+   ctx->TextureFormatSupported[MESA_FORMAT_RGB_FXT1] = true;
+   ctx->TextureFormatSupported[MESA_FORMAT_RGBA_FXT1] = true;
+
+   /* GL_EXT_texture_compression_s3tc */
+   ctx->TextureFormatSupported[MESA_FORMAT_RGB_DXT1] = true;
+   ctx->TextureFormatSupported[MESA_FORMAT_RGBA_DXT1] = true;
+   ctx->TextureFormatSupported[MESA_FORMAT_RGBA_DXT3] = true;
+   ctx->TextureFormatSupported[MESA_FORMAT_RGBA_DXT5] = true;
+}
 
 extern const struct tnl_pipeline_stage *intel_pipeline[];
 

@@ -588,6 +588,7 @@ void intel_prepare_render(struct intel_context *intel);
 
 void i915_set_buf_info_for_region(uint32_t *state, struct intel_region *region,
 				  uint32_t buffer_id);
+void intel_init_texture_formats(struct gl_context *ctx);
 
 /*======================================================================
  * Inline conversion functions.  

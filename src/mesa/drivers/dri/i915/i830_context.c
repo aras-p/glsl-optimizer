@@ -69,6 +69,8 @@ i830CreateContext(const struct gl_config * mesaVis,
       return false;
    }
 
+   intel_init_texture_formats(ctx);
+
    _math_matrix_ctr(&intel->ViewportMatrix);
 
    /* Initialize swrast, tnl driver tables: */
