@@ -1540,7 +1540,7 @@ create_new_program(struct gl_context *ctx, struct state_key *key)
 	 _mesa_propagate_uniforms_to_driver_storage(storage, 0, 1);
       }
    }
-   _mesa_update_shader_textures_used(fp);
+   _mesa_update_shader_textures_used(p.shader_program, fp);
    (void) ctx->Driver.ProgramStringNotify(ctx, fp->Target, fp);
 
    if (!p.shader_program->LinkStatus)

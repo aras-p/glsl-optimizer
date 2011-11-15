@@ -1894,8 +1894,6 @@ struct gl_program
 
    /** Map from sampler unit to texture unit (set by glUniform1i()) */
    GLubyte SamplerUnits[MAX_SAMPLERS];
-   /** Which texture target is being sampled (TEXTURE_1D/2D/3D/etc_INDEX) */
-   gl_texture_index SamplerTargets[MAX_SAMPLERS];
 
    /** Bitmask of which register files are read/written with indirect
     * addressing.  Mask of (1 << PROGRAM_x) bits.

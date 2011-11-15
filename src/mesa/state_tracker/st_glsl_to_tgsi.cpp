@@ -2843,8 +2843,6 @@ count_resources(glsl_to_tgsi_visitor *v, gl_program *prog)
       if (is_tex_instruction(inst->op)) {
          v->samplers_used |= 1 << inst->sampler;
 
-         prog->SamplerTargets[inst->sampler] =
-            (gl_texture_index)inst->tex_target;
          if (inst->tex_shadow) {
             prog->ShadowSamplers |= 1 << inst->sampler;
          }
@@ -2852,7 +2850,9 @@ count_resources(glsl_to_tgsi_visitor *v, gl_program *prog)
    }
    
    prog->SamplersUsed = v->samplers_used;
-   _mesa_update_shader_textures_used(prog);
+
+   if (v->shader_program != NULL)
+      _mesa_update_shader_textures_used(v->shader_program, prog);
 }
 
 static void

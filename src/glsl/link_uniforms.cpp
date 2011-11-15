@@ -209,7 +209,7 @@ public:
 			      union gl_constant_value *values)
       : map(map), uniforms(uniforms), next_sampler(0), values(values)
    {
-      /* empty */
+      memset(this->targets, 0, sizeof(this->targets));
    }
 
 private:
@@ -249,6 +249,14 @@ private:
 	  * array elements for arrays.
 	  */
 	 this->next_sampler += MAX2(1, this->uniforms[id].array_elements);
+
+	 const gl_texture_index target = base_type->sampler_index();
+	 for (unsigned i = this->uniforms[id].sampler
+		 ; i < this->next_sampler
+		 ; i++) {
+	    this->targets[i] = target;
+	 }
+
       } else {
 	 this->uniforms[id].sampler = ~0;
       }
@@ -270,6 +278,8 @@ private:
 
 public:
    union gl_constant_value *values;
+
+   gl_texture_index targets[MAX_SAMPLERS];
 };
 
 void
@@ -360,6 +370,9 @@ link_assign_uniform_locations(struct gl_shader_program *prog)
 	 parcel.process(var);
       }
    }
+
+   assert(sizeof(prog->SamplerTargets) == sizeof(parcel.targets));
+   memcpy(prog->SamplerTargets, parcel.targets, sizeof(prog->SamplerTargets));
 
 #ifndef NDEBUG
    for (unsigned i = 0; i < num_user_uniforms; i++) {

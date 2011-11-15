@@ -60,7 +60,8 @@
  * We'll use that info for state validation before rendering.
  */
 void
-_mesa_update_shader_textures_used(struct gl_program *prog)
+_mesa_update_shader_textures_used(struct gl_shader_program *shProg,
+				  struct gl_program *prog)
 {
    GLuint s;
 
@@ -68,8 +69,8 @@ _mesa_update_shader_textures_used(struct gl_program *prog)
 
    for (s = 0; s < MAX_SAMPLERS; s++) {
       if (prog->SamplersUsed & (1 << s)) {
-         GLuint unit = prog->SamplerUnits[s];
-         GLuint tgt = prog->SamplerTargets[s];
+         GLuint unit = shProg->SamplerUnits[s];
+         GLuint tgt = shProg->SamplerTargets[s];
          assert(unit < Elements(prog->TexturesUsed));
          assert(tgt < NUM_TEXTURE_TARGETS);
          prog->TexturesUsed[unit] |= (1 << tgt);
