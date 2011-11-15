@@ -364,6 +364,7 @@ void
 brw_init_surface_formats(struct brw_context *brw)
 {
    struct intel_context *intel = &brw->intel;
+   struct gl_context *ctx = &intel->ctx;
    int gen;
    gl_format format;
 
@@ -373,16 +374,20 @@ brw_init_surface_formats(struct brw_context *brw)
 
    for (format = MESA_FORMAT_NONE + 1; format < MESA_FORMAT_COUNT; format++) {
       uint32_t texture, render;
-      const struct surface_format_info *rinfo;
+      const struct surface_format_info *rinfo, *tinfo;
       bool is_integer = _mesa_is_format_integer_color(format);
 
       render = texture = brw_format_for_mesa_format(format);
+      tinfo = &surface_formats[texture];
 
       /* The value of BRW_SURFACEFORMAT_R32G32B32A32_FLOAT is 0, so don't skip
        * it.
        */
       if (texture == 0 && format != MESA_FORMAT_RGBA_FLOAT32)
 	 continue;
+
+      if (gen >= tinfo->sampling && (gen >= tinfo->filtering || is_integer))
+	 ctx->TextureFormatSupported[format] = true;
 
       /* Re-map some render target formats to make them supported when they
        * wouldn't be using their format for texturing.
@@ -434,6 +439,12 @@ brw_init_surface_formats(struct brw_context *brw)
    brw->format_supported_as_render_target[MESA_FORMAT_X8_Z24] = true;
    brw->format_supported_as_render_target[MESA_FORMAT_S8] = true;
    brw->format_supported_as_render_target[MESA_FORMAT_Z16] = true;
+
+   /* We remap depth formats to a supported texturing format in
+    * translate_tex_format().
+    */
+   ctx->TextureFormatSupported[MESA_FORMAT_S8_Z24] = true;
+   ctx->TextureFormatSupported[MESA_FORMAT_X8_Z24] = true;
 }
 
 bool
