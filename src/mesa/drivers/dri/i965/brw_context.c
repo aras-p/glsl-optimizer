@@ -147,6 +147,8 @@ brwCreateContext(int api,
 
    brwInitVtbl( brw );
 
+   brw_init_surface_formats(brw);
+
    /* Initialize swrast, tnl driver tables: */
    intelInitSpanFuncs(ctx);
 

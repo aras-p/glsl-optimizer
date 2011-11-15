@@ -201,24 +201,6 @@ gen7_update_renderbuffer_surface(struct brw_context *brw,
    memset(surf, 0, sizeof(*surf));
 
    switch (irb->Base.Format) {
-   case MESA_FORMAT_XRGB8888:
-      /* XRGB is handled as ARGB because the chips in this family
-       * cannot render to XRGB targets.  This means that we have to
-       * mask writes to alpha (ala glColorMask) and reconfigure the
-       * alpha blending hardware to use GL_ONE (or GL_ZERO) for
-       * cases where GL_DST_ALPHA (or GL_ONE_MINUS_DST_ALPHA) is
-       * used.
-       */
-      surf->ss0.surface_format = BRW_SURFACEFORMAT_B8G8R8A8_UNORM;
-      break;
-   case MESA_FORMAT_INTENSITY_FLOAT32:
-   case MESA_FORMAT_LUMINANCE_FLOAT32:
-      /* For these formats, we just need to read/write the first
-       * channel into R, which is to say that we just treat them as
-       * GL_RED.
-       */
-      surf->ss0.surface_format = BRW_SURFACEFORMAT_R32_FLOAT;
-      break;
    case MESA_FORMAT_SARGB8:
       /* without GL_EXT_framebuffer_sRGB we shouldn't bind sRGB
 	 surfaces to the blend/update as sRGB */
@@ -229,7 +211,12 @@ gen7_update_renderbuffer_surface(struct brw_context *brw,
       break;
    default:
       assert(brw_render_target_supported(intel, irb->Base.Format));
-      surf->ss0.surface_format = brw_format_for_mesa_format(irb->Base.Format);
+      surf->ss0.surface_format = brw->render_target_format[irb->Base.Format];
+      if (unlikely(!brw->format_supported_as_render_target[irb->Base.Format])) {
+	 _mesa_problem(ctx, "%s: renderbuffer format %s unsupported\n",
+		       __FUNCTION__, _mesa_get_format_name(irb->Base.Format));
+      }
+       break;
    }
 
    surf->ss0.surface_type = BRW_SURFACE_2D;

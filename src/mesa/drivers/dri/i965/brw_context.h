@@ -936,6 +936,9 @@ struct brw_context
       GLuint fbo;
       struct gl_renderbuffer *depth_rb;
    } hiz;
+
+   uint32_t render_target_format[MESA_FORMAT_COUNT];
+   bool format_supported_as_render_target[MESA_FORMAT_COUNT];
 };
 
 
@@ -1014,6 +1017,9 @@ gl_clip_plane *brw_select_clip_planes(struct gl_context *ctx);
 unsigned
 brw_compute_barycentric_interp_modes(bool shade_model_flat,
                                      const struct gl_fragment_program *fprog);
+
+/* brw_wm_surface_state.c */
+void brw_init_surface_formats(struct brw_context *brw);
 
 /* gen6_clip_state.c */
 bool
