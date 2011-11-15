@@ -124,6 +124,8 @@ _mesa_free_shader_state(struct gl_context *ctx)
 				  NULL);
    _mesa_reference_shader_program(ctx, &ctx->Shader.CurrentFragmentProgram,
 				  NULL);
+   _mesa_reference_shader_program(ctx, &ctx->Shader._CurrentFragmentProgram,
+				  NULL);
    _mesa_reference_shader_program(ctx, &ctx->Shader.ActiveProgram, NULL);
 }
 
@@ -876,6 +878,33 @@ use_shader_program(struct gl_context *ctx, GLenum type,
 
    if (*target != shProg) {
       FLUSH_VERTICES(ctx, _NEW_PROGRAM | _NEW_PROGRAM_CONSTANTS);
+
+      /* If the shader is also bound as the current rendering shader, unbind
+       * it from that binding point as well.  This ensures that the correct
+       * semantics of glDeleteProgram are maintained.
+       */
+      switch (type) {
+#if FEATURE_ARB_vertex_shader
+      case GL_VERTEX_SHADER:
+	 /* Empty for now. */
+	 break;
+#endif
+#if FEATURE_ARB_geometry_shader4
+      case GL_GEOMETRY_SHADER_ARB:
+	 /* Empty for now. */
+	 break;
+#endif
+#if FEATURE_ARB_fragment_shader
+      case GL_FRAGMENT_SHADER:
+	 if (*target == ctx->Shader._CurrentFragmentProgram) {
+	    _mesa_reference_shader_program(ctx,
+					   &ctx->Shader._CurrentFragmentProgram,
+					   NULL);
+	 }
+	 break;
+#endif
+      }
+
       _mesa_reference_shader_program(ctx, target, shProg);
       return true;
    }

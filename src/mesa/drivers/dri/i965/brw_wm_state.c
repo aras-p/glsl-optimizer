@@ -169,9 +169,9 @@ brw_upload_wm_unit(struct brw_context *brw)
     * If using the fragment shader backend, the program is always
     * 8-wide.  If not, it's always 16.
     */
-   if (ctx->Shader.CurrentFragmentProgram) {
+   if (ctx->Shader._CurrentFragmentProgram) {
       struct brw_shader *shader = (struct brw_shader *)
-	 ctx->Shader.CurrentFragmentProgram->_LinkedShaders[MESA_SHADER_FRAGMENT];
+	 ctx->Shader._CurrentFragmentProgram->_LinkedShaders[MESA_SHADER_FRAGMENT];
 
       if (shader != NULL && shader->ir != NULL) {
 	 wm->wm5.enable_8_pix = 1;

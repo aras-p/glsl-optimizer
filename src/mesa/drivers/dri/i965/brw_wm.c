@@ -543,7 +543,7 @@ brw_upload_wm_prog(struct brw_context *brw)
    if (!brw_search_cache(&brw->cache, BRW_WM_PROG,
 			 &key, sizeof(key),
 			 &brw->wm.prog_offset, &brw->wm.prog_data)) {
-      bool success = do_wm_prog(brw, ctx->Shader.CurrentFragmentProgram, fp,
+      bool success = do_wm_prog(brw, ctx->Shader._CurrentFragmentProgram, fp,
 				&key);
       (void) success;
       assert(success);

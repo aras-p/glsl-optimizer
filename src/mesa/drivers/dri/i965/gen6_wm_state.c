@@ -135,7 +135,9 @@ upload_wm_state(struct brw_context *brw)
    dw5 |= GEN6_WM_LINE_END_CAP_AA_WIDTH_0_5;
 
    /* Use ALT floating point mode for ARB fragment programs, because they
-    * require 0^0 == 1.
+    * require 0^0 == 1.  Even though _CurrentFragmentProgram is used for
+    * rendering, CurrentFragmentProgram is used for this check to
+    * differentiate between the GLSL and non-GLSL cases.
     */
    if (ctx->Shader.CurrentFragmentProgram == NULL)
       dw2 |= GEN6_WM_FLOATING_POINT_MODE_ALT;
