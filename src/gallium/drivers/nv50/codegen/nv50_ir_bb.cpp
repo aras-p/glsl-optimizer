@@ -104,7 +104,7 @@ BasicBlock::insertHead(Instruction *inst)
          insertBefore(entry, inst);
       } else {
          if (phi) {
-            insertAfter(phi, inst);
+            insertAfter(exit, inst); // after last phi
          } else {
             assert(!exit);
             entry = exit = inst;
@@ -211,8 +211,15 @@ BasicBlock::remove(Instruction *insn)
    else
       exit = insn->prev;
 
-   if (insn == entry)
-      entry = insn->next ? insn->next : insn->prev;
+   if (insn == entry) {
+      if (insn->next)
+         entry = insn->next;
+      else
+      if (insn->prev && insn->prev->op != OP_PHI)
+         entry = insn->prev;
+      else
+         entry = NULL;
+   }
 
    if (insn == phi)
       phi = (insn->next && insn->next->op == OP_PHI) ? insn->next : 0;
