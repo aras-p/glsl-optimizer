@@ -316,8 +316,8 @@ intel_tex_image_s8z24_create_renderbuffers(struct intel_context *intel,
       return false;
    }
 
-   intel_renderbuffer_set_draw_offset(idrb, image, 0);
-   intel_renderbuffer_set_draw_offset(isrb, image, 0);
+   intel_renderbuffer_set_draw_offset(idrb);
+   intel_renderbuffer_set_draw_offset(isrb);
 
    _mesa_reference_renderbuffer(&image->depth_rb, drb);
    _mesa_reference_renderbuffer(&image->stencil_rb, srb);

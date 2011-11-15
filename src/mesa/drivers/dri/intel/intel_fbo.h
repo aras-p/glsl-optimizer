@@ -175,9 +175,7 @@ extern void
 intel_flip_renderbuffers(struct gl_framebuffer *fb);
 
 void
-intel_renderbuffer_set_draw_offset(struct intel_renderbuffer *irb,
-				   struct intel_texture_image *intel_image,
-				   int zoffset);
+intel_renderbuffer_set_draw_offset(struct intel_renderbuffer *irb);
 
 uint32_t
 intel_renderbuffer_tile_offsets(struct intel_renderbuffer *irb,
