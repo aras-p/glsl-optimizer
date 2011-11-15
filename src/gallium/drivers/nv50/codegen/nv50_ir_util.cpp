@@ -100,6 +100,7 @@ Interval::clear()
       next = r->next;
       delete r;
    }
+   head = tail = NULL;
 }
 
 bool
