@@ -1353,27 +1353,28 @@ intel_process_dri2_buffer_with_separate_stencil(struct intel_context *intel,
 	      buffer->cpp, buffer->pitch);
    }
 
-   /*
-    * The stencil buffer has quirky pitch requirements.  From Section
-    * 2.11.5.6.2.1 3DSTATE_STENCIL_BUFFER, field "Surface Pitch":
-    *    The pitch must be set to 2x the value computed based on width, as
-    *    the stencil buffer is stored with two rows interleaved.
-    * If we neglect to double the pitch, then drm_intel_gem_bo_map_gtt()
-    * maps the memory incorrectly.
-    *
-    * To satisfy the pitch requirement, the X driver hackishly allocated
-    * the gem buffer with bpp doubled and height halved. So buffer->cpp is
-    * correct, but drawable->height is not.
-    */
-   int buffer_height = drawable->h;
+   int buffer_width;
+   int buffer_height;
    if (buffer->attachment == __DRI_BUFFER_STENCIL) {
-      buffer_height /= 2;
+      /* The stencil buffer has quirky pitch requirements.  From Section
+       * 2.11.5.6.2.1 3DSTATE_STENCIL_BUFFER, field "Surface Pitch":
+       *    The pitch must be set to 2x the value computed based on width, as
+       *    the stencil buffer is stored with two rows interleaved.
+       *
+       * To satisfy the pitch requirement, the X driver allocated the region
+       * with the following dimensions.
+       */
+       buffer_width = ALIGN(drawable->w, 64);
+       buffer_height = ALIGN(ALIGN(drawable->h, 2) / 2, 64);
+   } else {
+       buffer_width = drawable->w;
+       buffer_height = drawable->h;
    }
 
    struct intel_region *region =
       intel_region_alloc_for_handle(intel->intelScreen,
 				    buffer->cpp,
-				    drawable->w,
+				    buffer_width,
 				    buffer_height,
 				    buffer->pitch / buffer->cpp,
 				    buffer->name,
