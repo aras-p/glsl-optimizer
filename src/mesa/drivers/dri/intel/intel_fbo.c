@@ -1226,8 +1226,8 @@ intel_render_texture(struct gl_context * ctx,
        return;
    }
 
-   DBG("Begin render texture tid %lx tex=%u w=%d h=%d refcount=%d\n",
-       _glthread_GetID(),
+   DBG("Begin render %s texture tex=%u w=%d h=%d refcount=%d\n",
+       _mesa_get_format_name(image->TexFormat),
        att->Texture->Name, image->Width, image->Height,
        irb->Base.RefCount);
 
@@ -1280,8 +1280,8 @@ intel_finish_render_texture(struct gl_context * ctx,
       tex_obj->Image[att->CubeMapFace][att->TextureLevel];
    struct intel_texture_image *intel_image = intel_texture_image(image);
 
-   DBG("Finish render texture tid %lx tex=%u\n",
-       _glthread_GetID(), att->Texture->Name);
+   DBG("Finish render %s texture tex=%u\n",
+       _mesa_get_format_name(image->TexFormat), att->Texture->Name);
 
    /* Flag that this image may now be validated into the object's miptree. */
    if (intel_image)
