@@ -29,8 +29,8 @@
 #include "main/bufferobj.h"
 #include "main/enums.h"
 #include "main/image.h"
+#include "main/readpix.h"
 #include "main/state.h"
-#include "swrast/swrast.h"
 
 #include "radeon_buffer_objects.h"
 #include "radeon_common_context.h"
@@ -205,12 +205,10 @@ radeonReadPixels(struct gl_context * ctx,
     if (do_blit_readpixels(ctx, x, y, width, height, format, type, pack, pixels))
         return;
 
-    /* Update Mesa state before calling down into _swrast_ReadPixels, as
-     * the spans code requires the computed buffer states to be up to date,
-     * but _swrast_ReadPixels only updates Mesa state after setting up
-     * the spans code.
+    /* Update Mesa state before calling _mesa_readpixels().
+     * XXX this may not be needed since ReadPixels no longer uses the
+     * span code.
      */
-
     radeon_print(RADEON_FALLBACKS, RADEON_NORMAL,
                  "Falling back to sw for ReadPixels (format %s, type %s)\n",
                  _mesa_lookup_enum_by_nr(format), _mesa_lookup_enum_by_nr(type));
@@ -218,5 +216,5 @@ radeonReadPixels(struct gl_context * ctx,
     if (ctx->NewState)
         _mesa_update_state(ctx);
 
-    _swrast_ReadPixels(ctx, x, y, width, height, format, type, pack, pixels);
+    _mesa_readpixels(ctx, x, y, width, height, format, type, pack, pixels);
 }
