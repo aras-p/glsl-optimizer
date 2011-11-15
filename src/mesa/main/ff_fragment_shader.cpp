@@ -1509,7 +1509,12 @@ create_new_program(struct gl_context *ctx, struct state_key *key)
    _mesa_associate_uniform_storage(ctx, p.shader_program, fp->Parameters);
 
    for (unsigned int i = 0; i < MAX_TEXTURE_UNITS; i++) {
-      char *name = ralloc_asprintf(p.mem_ctx, "sampler_%d", i);
+      /* Enough space for 'sampler_999\0'.
+       */
+      char name[12];
+
+      snprintf(name, sizeof(name), "sampler_%d", i);
+
       int loc = _mesa_get_uniform_location(ctx, p.shader_program, name);
       if (loc != -1) {
 	 unsigned base;
