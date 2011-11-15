@@ -43,13 +43,11 @@ Graph::~Graph()
 
 void Graph::insert(Node *node)
 {
-   if (!root) {
+   if (!root)
       root = node;
-      size = 1;
-      node->graph = this;
-   } else {
-      root->attach(node, Edge::TREE);
-   }
+
+   node->graph = this;
+   size++;
 }
 
 void Graph::Edge::unlink()
