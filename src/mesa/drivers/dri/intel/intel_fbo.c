@@ -981,14 +981,6 @@ intel_renderbuffer_update_wrapper(struct intel_context *intel,
    struct gl_renderbuffer *rb = &irb->Base;
 
    rb->Format = format;
-   if (!intel_span_supports_format(rb->Format)) {
-      DBG("Render to texture BAD FORMAT %s\n",
-	  _mesa_get_format_name(rb->Format));
-      return false;
-   } else {
-      DBG("Render to texture %s\n", _mesa_get_format_name(rb->Format));
-   }
-
    rb->InternalFormat = internal_format;
    rb->DataType = intel_mesa_format_to_rb_datatype(rb->Format);
    rb->_BaseFormat = _mesa_get_format_base_format(rb->Format);
