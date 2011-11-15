@@ -67,6 +67,9 @@ gen6_resolve_implied_move(struct brw_compile *p,
    if (intel->gen < 6)
       return;
 
+   if (src->file == BRW_MESSAGE_REGISTER_FILE)
+      return;
+
    if (src->file != BRW_ARCHITECTURE_REGISTER_FILE || src->nr != BRW_ARF_NULL) {
       brw_push_insn_state(p);
       brw_set_mask_control(p, BRW_MASK_DISABLE);
