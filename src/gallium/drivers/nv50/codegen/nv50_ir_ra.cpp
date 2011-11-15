@@ -664,6 +664,12 @@ checkList(DLList &list)
 void
 RegAlloc::collectLValues(DLList &list, bool assignedOnly)
 {
+   for (std::deque<ValueDef>::iterator it = func->ins.begin();
+        it != func->ins.end(); ++it) {
+      if (!assignedOnly || it->get()->reg.data.id >= 0)
+         insertOrderedTail(list, it->get());
+   }
+
    for (int n = 0; n < insns.getSize(); ++n) {
       Instruction *i = insnBySerial(n);
 
