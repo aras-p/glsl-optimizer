@@ -284,12 +284,14 @@ brwCreateContext(int api,
 	 brw->max_gs_threads = 60;
 	 brw->urb.size = 64;            /* volume 5c.5 section 5.1 */
 	 brw->urb.max_vs_entries = 256; /* volume 2a (see 3DSTATE_URB) */
+	 brw->urb.max_gs_entries = 256;
       } else {
 	 brw->max_wm_threads = 40;
 	 brw->max_vs_threads = 24;
 	 brw->max_gs_threads = 21; /* conservative; 24 if rendering disabled */
 	 brw->urb.size = 32;            /* volume 5c.5 section 5.1 */
 	 brw->urb.max_vs_entries = 128; /* volume 2a (see 3DSTATE_URB) */
+	 brw->urb.max_gs_entries = 256;
       }
    } else if (intel->gen == 5) {
       brw->urb.size = 1024;
