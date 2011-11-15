@@ -41,8 +41,7 @@
 
 static void
 brw_miptree_layout_texture_array(struct intel_context *intel,
-				 struct intel_mipmap_tree *mt,
-				 int slices)
+				 struct intel_mipmap_tree *mt)
 {
    GLuint align_w;
    GLuint align_h;
@@ -58,14 +57,14 @@ brw_miptree_layout_texture_array(struct intel_context *intel,
    if (mt->compressed)
       qpitch /= 4;
 
-   i945_miptree_layout_2d(mt, slices);
+   i945_miptree_layout_2d(mt);
 
    for (level = mt->first_level; level <= mt->last_level; level++) {
-      for (q = 0; q < slices; q++) {
+      for (q = 0; q < mt->depth0; q++) {
 	 intel_miptree_set_image_offset(mt, level, q, 0, q * qpitch);
       }
    }
-   mt->total_height = qpitch * slices;
+   mt->total_height = qpitch * mt->depth0;
 }
 
 void
@@ -82,7 +81,7 @@ brw_miptree_layout(struct intel_context *intel, struct intel_mipmap_tree *mt)
 	  * pitch of qpitch rows, where qpitch is defined by the equation given
 	  * in Volume 1 of the BSpec.
 	  */
-	 brw_miptree_layout_texture_array(intel, mt, 6);
+	 brw_miptree_layout_texture_array(intel, mt);
 	 break;
       }
       /* FALLTHROUGH */
@@ -117,7 +116,7 @@ brw_miptree_layout(struct intel_context *intel, struct intel_mipmap_tree *mt)
 	 GLint y = 0;
 	 GLint q, j;
 
-	 intel_miptree_set_level_info(mt, level, nr_images,
+	 intel_miptree_set_level_info(mt, level,
 				      0, mt->total_height,
 				      width, height, depth);
 
@@ -170,11 +169,11 @@ brw_miptree_layout(struct intel_context *intel, struct intel_mipmap_tree *mt)
 
    case GL_TEXTURE_2D_ARRAY:
    case GL_TEXTURE_1D_ARRAY:
-      brw_miptree_layout_texture_array(intel, mt, mt->depth0);
+      brw_miptree_layout_texture_array(intel, mt);
       break;
 
    default:
-      i945_miptree_layout_2d(mt, 1);
+      i945_miptree_layout_2d(mt);
       break;
    }
    DBG("%s: %dx%dx%d\n", __FUNCTION__,

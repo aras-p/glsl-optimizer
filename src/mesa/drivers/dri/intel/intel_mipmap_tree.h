@@ -69,16 +69,25 @@ struct intel_mipmap_level
    GLuint level_y;
    GLuint width;
    GLuint height;
-   /** Depth of the mipmap at this level: 1 for 1D/2D/CUBE, n for 3D. */
+
+   /**
+    * \brief Number of 2D slices in this miplevel.
+    *
+    * The exact semantics of depth varies according to the texture target:
+    *    - For GL_TEXTURE_CUBE_MAP, depth is 6.
+    *    - For GL_TEXTURE_2D_ARRAY, depth is the number of array slices. It is
+    *      identical for all miplevels in the texture.
+    *    - For GL_TEXTURE_3D, it is the texture's depth at this miplevel. Its
+    *      value, like width and height, varies with miplevel.
+    *    - For other texture types, depth is 1.
+    */
    GLuint depth;
-   /** Number of images at this level: 1 for 1D/2D, 6 for CUBE, depth for 3D */
-   GLuint nr_images;
 
    /**
     * \brief List of 2D images in this mipmap level.
     *
     * This may be a list of cube faces, array slices in 2D array texture, or
-    * layers in a 3D texture. The list's length is \c nr_images.
+    * layers in a 3D texture. The list's length is \c depth.
     */
    struct intel_mipmap_slice {
       /**
@@ -205,7 +214,6 @@ intel_miptree_get_dimensions_for_image(struct gl_texture_image *image,
 
 void intel_miptree_set_level_info(struct intel_mipmap_tree *mt,
                                   GLuint level,
-                                  GLuint nr_images,
                                   GLuint x, GLuint y,
                                   GLuint w, GLuint h, GLuint d);
 

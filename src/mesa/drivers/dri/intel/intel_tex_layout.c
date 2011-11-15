@@ -50,7 +50,7 @@ intel_get_texture_alignment_unit(gl_format format,
    }
 }
 
-void i945_miptree_layout_2d(struct intel_mipmap_tree *mt, int nr_images)
+void i945_miptree_layout_2d(struct intel_mipmap_tree *mt)
 {
    GLuint align_h, align_w;
    GLuint level;
@@ -93,7 +93,7 @@ void i945_miptree_layout_2d(struct intel_mipmap_tree *mt, int nr_images)
    for ( level = mt->first_level ; level <= mt->last_level ; level++ ) {
       GLuint img_height;
 
-      intel_miptree_set_level_info(mt, level, nr_images, x, y, width,
+      intel_miptree_set_level_info(mt, level, x, y, width,
 				   height, depth);
 
       img_height = ALIGN(height, align_h);

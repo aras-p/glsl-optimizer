@@ -82,10 +82,16 @@ intel_miptree_create_internal(struct intel_context *intel,
    mt->last_level = last_level;
    mt->width0 = width0;
    mt->height0 = height0;
-   mt->depth0 = depth0;
    mt->cpp = compress_byte ? compress_byte : _mesa_get_format_bytes(mt->format);
    mt->compressed = compress_byte ? 1 : 0;
    mt->refcount = 1; 
+
+   if (target == GL_TEXTURE_CUBE_MAP) {
+      assert(depth0 == 1);
+      mt->depth0 = 6;
+   } else {
+      mt->depth0 = depth0;
+   }
 
 #ifdef I915
    (void) intel;
@@ -287,7 +293,6 @@ intel_miptree_match_image(struct intel_mipmap_tree *mt,
 void
 intel_miptree_set_level_info(struct intel_mipmap_tree *mt,
 			     GLuint level,
-			     GLuint nr_images,
 			     GLuint x, GLuint y,
 			     GLuint w, GLuint h, GLuint d)
 {
@@ -296,15 +301,13 @@ intel_miptree_set_level_info(struct intel_mipmap_tree *mt,
    mt->level[level].depth = d;
    mt->level[level].level_x = x;
    mt->level[level].level_y = y;
-   mt->level[level].nr_images = nr_images;
 
    DBG("%s level %d size: %d,%d,%d offset %d,%d\n", __FUNCTION__,
        level, w, h, d, x, y);
 
-   assert(nr_images);
    assert(mt->level[level].slice == NULL);
 
-   mt->level[level].slice = malloc(nr_images * sizeof(*mt->level[0].slice));
+   mt->level[level].slice = malloc(d * sizeof(*mt->level[0].slice));
    mt->level[level].slice[0].x_offset = mt->level[level].level_x;
    mt->level[level].slice[0].y_offset = mt->level[level].level_y;
 }
@@ -318,7 +321,7 @@ intel_miptree_set_image_offset(struct intel_mipmap_tree *mt,
    if (img == 0 && level == 0)
       assert(x == 0 && y == 0);
 
-   assert(img < mt->level[level].nr_images);
+   assert(img < mt->level[level].depth);
 
    mt->level[level].slice[img].x_offset = mt->level[level].level_x + x;
    mt->level[level].slice[img].y_offset = mt->level[level].level_y + y;
@@ -330,28 +333,33 @@ intel_miptree_set_image_offset(struct intel_mipmap_tree *mt,
 }
 
 
+/**
+ * For cube map textures, either the \c face parameter can be used, of course,
+ * or the cube face can be interpreted as a depth layer and the \c layer
+ * parameter used.
+ */
 void
 intel_miptree_get_image_offset(struct intel_mipmap_tree *mt,
-			       GLuint level, GLuint face, GLuint depth,
+			       GLuint level, GLuint face, GLuint layer,
 			       GLuint *x, GLuint *y)
 {
-   switch (mt->target) {
-   case GL_TEXTURE_CUBE_MAP_ARB:
-      *x = mt->level[level].slice[face].x_offset;
-      *y = mt->level[level].slice[face].y_offset;
-      break;
-   case GL_TEXTURE_3D:
-   case GL_TEXTURE_2D_ARRAY_EXT:
-   case GL_TEXTURE_1D_ARRAY_EXT:
-      assert(depth < mt->level[level].nr_images);
-      *x = mt->level[level].slice[depth].x_offset;
-      *y = mt->level[level].slice[depth].y_offset;
-      break;
-   default:
-      *x = mt->level[level].slice[0].x_offset;
-      *y = mt->level[level].slice[0].y_offset;
-      break;
+   int slice;
+
+   if (face > 0) {
+      assert(mt->target == GL_TEXTURE_CUBE_MAP);
+      assert(face < 6);
+      assert(layer == 0);
+      slice = face;
+   } else {
+      /* This branch may be taken even if the texture target is a cube map. In
+       * that case, the caller chose to interpret each cube face as a layer.
+       */
+      assert(face == 0);
+      slice = layer;
    }
+
+   *x = mt->level[level].slice[slice].x_offset;
+   *y = mt->level[level].slice[slice].y_offset;
 }
 
 static void
@@ -429,7 +437,7 @@ intel_miptree_copy_teximage(struct intel_context *intel,
    struct intel_mipmap_tree *src_mt = intelImage->mt;
    int level = intelImage->base.Base.Level;
    int face = intelImage->base.Base.Face;
-   GLuint depth = src_mt->level[level].depth;
+   GLuint depth = intelImage->base.Base.Depth;
 
    for (int slice = 0; slice < depth; slice++) {
       intel_miptree_copy_slice(intel, dst_mt, src_mt, level, face, slice);
