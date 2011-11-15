@@ -361,7 +361,7 @@ brw_format_for_mesa_format(gl_format mesa_format)
 }
 
 bool
-brw_render_target_supported(gl_format format)
+brw_render_target_supported(struct intel_context *intel, gl_format format)
 {
    /* These are not color render targets like the table holds, but we
     * ask the question for FBO completeness.
@@ -690,8 +690,9 @@ brw_update_renderbuffer_surface(struct brw_context *brw,
 	 format = BRW_SURFACEFORMAT_B8G8R8A8_UNORM;
       break;
    default:
-      assert(brw_render_target_supported(irb->Base.Format));
+      assert(brw_render_target_supported(intel, irb->Base.Format));
       format = brw_format_for_mesa_format(irb->Base.Format);
+      break;
    }
 
    surf[0] = (BRW_SURFACE_2D << BRW_SURFACE_TYPE_SHIFT |

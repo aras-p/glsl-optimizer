@@ -556,7 +556,7 @@ static uint32_t i915_render_target_format_for_mesa_format[MESA_FORMAT_COUNT] =
 };
 
 static bool
-i915_render_target_supported(gl_format format)
+i915_render_target_supported(struct intel_context *intel, gl_format format)
 {
    if (format == MESA_FORMAT_S8_Z24 ||
        format == MESA_FORMAT_X8_Z24 ||

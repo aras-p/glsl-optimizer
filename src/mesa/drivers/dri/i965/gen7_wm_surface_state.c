@@ -228,7 +228,7 @@ gen7_update_renderbuffer_surface(struct brw_context *brw,
 	 surf->ss0.surface_format = BRW_SURFACEFORMAT_B8G8R8A8_UNORM;
       break;
    default:
-      assert(brw_render_target_supported(irb->Base.Format));
+      assert(brw_render_target_supported(intel, irb->Base.Format));
       surf->ss0.surface_format = brw_format_for_mesa_format(irb->Base.Format);
    }
 

@@ -1363,7 +1363,7 @@ intel_validate_framebuffer(struct gl_context *ctx, struct gl_framebuffer *fb)
       }
 
       if (!intel_span_supports_format(irb->Base.Format) ||
-	  !intel->vtbl.render_target_supported(irb->Base.Format)) {
+	  !intel->vtbl.render_target_supported(intel, irb->Base.Format)) {
 	 DBG("Unsupported texture/renderbuffer format attached: %s\n",
 	     _mesa_get_format_name(irb->Base.Format));
 	 fb->_Status = GL_FRAMEBUFFER_UNSUPPORTED_EXT;
