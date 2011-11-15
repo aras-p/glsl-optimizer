@@ -799,7 +799,6 @@ ureg_emit_src( struct ureg_program *ureg,
    unsigned n = 0;
 
    assert(src.File != TGSI_FILE_NULL);
-   assert(src.File != TGSI_FILE_OUTPUT);
    assert(src.File < TGSI_FILE_COUNT);
    
    out[n].value = 0;
