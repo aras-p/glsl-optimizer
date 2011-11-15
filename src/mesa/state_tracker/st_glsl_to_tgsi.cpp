@@ -4803,6 +4803,8 @@ get_mesa_program(struct gl_context *ctx,
 {
    glsl_to_tgsi_visitor* v = new glsl_to_tgsi_visitor();
    struct gl_program *prog;
+   struct pipe_screen * screen = st_context(ctx)->pipe->screen;
+   unsigned pipe_shader_type;
    GLenum target;
    const char *target_string;
    bool progress;
@@ -4813,14 +4815,17 @@ get_mesa_program(struct gl_context *ctx,
    case GL_VERTEX_SHADER:
       target = GL_VERTEX_PROGRAM_ARB;
       target_string = "vertex";
+      pipe_shader_type = PIPE_SHADER_VERTEX;
       break;
    case GL_FRAGMENT_SHADER:
       target = GL_FRAGMENT_PROGRAM_ARB;
       target_string = "fragment";
+      pipe_shader_type = PIPE_SHADER_FRAGMENT;
       break;
    case GL_GEOMETRY_SHADER:
       target = GL_GEOMETRY_PROGRAM_NV;
       target_string = "geometry";
+      pipe_shader_type = PIPE_SHADER_GEOMETRY;
       break;
    default:
       assert(!"should not be reached");
@@ -4889,10 +4894,13 @@ get_mesa_program(struct gl_context *ctx,
    }
 #endif
 
-   /* Remove reads to output registers, and to varyings in vertex shaders. */
-   v->remove_output_reads(PROGRAM_OUTPUT);
-   if (target == GL_VERTEX_PROGRAM_ARB)
-      v->remove_output_reads(PROGRAM_VARYING);
+   if (!screen->get_shader_param(screen, pipe_shader_type,
+                                 PIPE_SHADER_CAP_OUTPUT_READ)) {
+      /* Remove reads to output registers, and to varyings in vertex shaders. */
+      v->remove_output_reads(PROGRAM_OUTPUT);
+      if (target == GL_VERTEX_PROGRAM_ARB)
+         v->remove_output_reads(PROGRAM_VARYING);
+   }
    
    /* Perform optimizations on the instructions in the glsl_to_tgsi_visitor. */
    v->simplify_cmp();
