@@ -38,6 +38,12 @@ _mesa_noop_vtxfmt_init(GLvertexformat *vfmt);
 extern GLboolean
 _mesa_using_noop_vtxfmt(const struct _glapi_table *dispatch);
 
+#else
+
+static inline void
+_mesa_noop_vtxfmt_init(GLvertexformat *vfmt)
+{
+}
 
 #endif /* FEATURE_beginend */
 
