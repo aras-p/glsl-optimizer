@@ -171,6 +171,11 @@ intel_map_texture_image(struct gl_context *ctx,
       intel_miptree_s8z24_gather(intel, mt, tex_image->Level, slice);
    }
 
+   intel_miptree_slice_resolve_depth(intel, mt, tex_image->Level, slice);
+   if (mode & GL_MAP_WRITE_BIT) {
+      intel_miptree_slice_set_needs_hiz_resolve(mt, tex_image->Level, slice);
+   }
+
    /* For compressed formats, the stride is the number of bytes per
     * row of blocks.  intel_miptree_get_image_offset() already does
     * the divide.
