@@ -254,6 +254,30 @@ intel_framebuffer_unmap(struct intel_context *intel, struct gl_framebuffer *fb)
 }
 
 /**
+ * Map the regions needed by intelSpanRenderStart().
+ */
+static void
+intel_span_map_buffers(struct intel_context *intel)
+{
+   struct gl_context *ctx = &intel->ctx;
+   struct intel_texture_object *tex_obj;
+
+   for (int i = 0; i < ctx->Const.MaxTextureImageUnits; i++) {
+      if (!ctx->Texture.Unit[i]._ReallyEnabled)
+	 continue;
+      tex_obj = intel_texture_object(ctx->Texture.Unit[i]._Current);
+      intel_finalize_mipmap_tree(intel, i);
+      intel_tex_map_images(intel, tex_obj,
+			   GL_MAP_READ_BIT | GL_MAP_WRITE_BIT);
+   }
+
+   intel_framebuffer_map(intel, ctx->DrawBuffer);
+   if (ctx->ReadBuffer != ctx->DrawBuffer) {
+      intel_framebuffer_map(intel, ctx->ReadBuffer);
+   }
+}
+
+/**
  * Prepare for software rendering.  Map current read/draw framebuffers'
  * renderbuffes and all currently bound texture objects.
  *
@@ -263,25 +287,10 @@ void
 intelSpanRenderStart(struct gl_context * ctx)
 {
    struct intel_context *intel = intel_context(ctx);
-   GLuint i;
 
    intel_flush(&intel->ctx);
    intel_prepare_render(intel);
-
-   for (i = 0; i < ctx->Const.MaxTextureImageUnits; i++) {
-      if (ctx->Texture.Unit[i]._ReallyEnabled) {
-         struct gl_texture_object *texObj = ctx->Texture.Unit[i]._Current;
-
-         intel_finalize_mipmap_tree(intel, i);
-         intel_tex_map_images(intel, intel_texture_object(texObj),
-                              GL_MAP_READ_BIT | GL_MAP_WRITE_BIT);
-      }
-   }
-
-   intel_framebuffer_map(intel, ctx->DrawBuffer);
-   if (ctx->ReadBuffer != ctx->DrawBuffer) {
-      intel_framebuffer_map(intel, ctx->ReadBuffer);
-   }
+   intel_span_map_buffers(intel);
 }
 
 /**
