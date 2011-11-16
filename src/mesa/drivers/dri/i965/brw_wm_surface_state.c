@@ -447,7 +447,7 @@ brw_update_renderbuffer_surface(struct brw_context *brw,
    struct intel_context *intel = &brw->intel;
    struct gl_context *ctx = &intel->ctx;
    struct intel_renderbuffer *irb = intel_renderbuffer(rb);
-   struct intel_region *region = irb->region;
+   struct intel_region *region = irb->mt->region;
    uint32_t *surf;
    uint32_t tile_x, tile_y;
    uint32_t format = 0;

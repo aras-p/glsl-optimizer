@@ -126,7 +126,7 @@ brw_update_draw_buffer(struct intel_context *intel)
    /* Check some stencil invariants.  These should probably be in
     * emit_depthbuffer().
     */
-   if (irbStencil && irbStencil->region) {
+   if (irbStencil && irbStencil->mt) {
       if (!intel->has_separate_stencil)
 	 assert(irbStencil->Base.Format == MESA_FORMAT_S8_Z24);
       if (fb_has_hiz || intel->must_use_separate_stencil)

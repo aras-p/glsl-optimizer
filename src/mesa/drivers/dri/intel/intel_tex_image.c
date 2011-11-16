@@ -306,7 +306,7 @@ intel_tex_image_s8z24_create_renderbuffers(struct intel_context *intel,
    idrb = intel_renderbuffer(drb);
    isrb = intel_renderbuffer(srb);
 
-   intel_region_reference(&idrb->region, image->mt->region);
+   intel_miptree_reference(&idrb->mt, image->mt);
    ok = intel_alloc_renderbuffer_storage(ctx, srb, GL_STENCIL_INDEX8,
 					 width, height);
 
@@ -471,7 +471,7 @@ intelSetTexBuffer2(__DRIcontext *pDRICtx, GLint target,
    /* If the region isn't set, then intel_update_renderbuffers was unable
     * to get the buffers for the drawable.
     */
-   if (rb->region == NULL)
+   if (!rb || !rb->mt)
       return;
 
    if (texture_format == __DRI_TEXTURE_FORMAT_RGB) {
@@ -485,7 +485,7 @@ intelSetTexBuffer2(__DRIcontext *pDRICtx, GLint target,
 
    _mesa_lock_texture(&intel->ctx, texObj);
    texImage = _mesa_get_tex_image(ctx, texObj, target, level);
-   intel_set_texture_image_region(ctx, texImage, rb->region, target,
+   intel_set_texture_image_region(ctx, texImage, rb->mt->region, target,
 				  internalFormat, texFormat);
    _mesa_unlock_texture(&intel->ctx, texObj);
 }

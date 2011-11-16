@@ -33,6 +33,7 @@
 
 #include "intel_batchbuffer.h"
 #include "intel_fbo.h"
+#include "intel_mipmap_tree.h"
 #include "intel_regions.h"
 
 #include "brw_context.h"
@@ -204,8 +205,13 @@ static void emit_depthbuffer(struct brw_context *brw)
    /* _NEW_BUFFERS */
    struct intel_renderbuffer *depth_irb = intel_get_renderbuffer(fb, BUFFER_DEPTH);
    struct intel_renderbuffer *stencil_irb = intel_get_renderbuffer(fb, BUFFER_STENCIL);
-   struct intel_region *hiz_region = depth_irb ? depth_irb->hiz_region : NULL;
+   struct intel_region *hiz_region = NULL;
    unsigned int len;
+
+   if (depth_irb &&
+       depth_irb->mt) {
+      hiz_region = depth_irb->mt->hiz_region;
+   }
 
    /* 3DSTATE_DEPTH_BUFFER, 3DSTATE_STENCIL_BUFFER are both
     * non-pipelined state that will need the PIPE_CONTROL workaround.
@@ -272,6 +278,8 @@ static void emit_depthbuffer(struct brw_context *brw)
        *     [DevGT]: This field must be set to the same value (enabled or
        *     disabled) as Hierarchical Depth Buffer Enable
        */
+      struct intel_region *region = stencil_irb->mt->region;
+
       assert(intel->has_separate_stencil);
       assert(stencil_irb->Base.Format == MESA_FORMAT_S8);
 
@@ -283,8 +291,8 @@ static void emit_depthbuffer(struct brw_context *brw)
 	        (BRW_TILEWALK_YMAJOR << 26) |
 	        (BRW_SURFACE_2D << 29));
       OUT_BATCH(0);
-      OUT_BATCH(((stencil_irb->region->width - 1) << 6) |
-	         (2 * stencil_irb->region->height - 1) << 19);
+      OUT_BATCH(((region->width - 1) << 6) |
+	         (2 * region->height - 1) << 19);
       OUT_BATCH(0);
       OUT_BATCH(0);
 
@@ -294,7 +302,7 @@ static void emit_depthbuffer(struct brw_context *brw)
       ADVANCE_BATCH();
 
    } else {
-      struct intel_region *region = depth_irb->region;
+      struct intel_region *region = depth_irb->mt->region;
       unsigned int format;
       uint32_t tile_x, tile_y, offset;
 
@@ -379,10 +387,11 @@ static void emit_depthbuffer(struct brw_context *brw)
 
       /* Emit stencil buffer. */
       if (stencil_irb) {
+	 struct intel_region *region = stencil_irb->mt->region;
 	 BEGIN_BATCH(3);
 	 OUT_BATCH((_3DSTATE_STENCIL_BUFFER << 16) | (3 - 2));
-	 OUT_BATCH(stencil_irb->region->pitch * stencil_irb->region->cpp - 1);
-	 OUT_RELOC(stencil_irb->region->bo,
+	 OUT_BATCH(region->pitch * region->cpp - 1);
+	 OUT_RELOC(region->bo,
 		   I915_GEM_DOMAIN_RENDER, I915_GEM_DOMAIN_RENDER,
 		   0);
 	 ADVANCE_BATCH();

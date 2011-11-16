@@ -61,15 +61,15 @@ intel_framebuffer_has_hiz(struct gl_framebuffer *fb)
    struct intel_renderbuffer *rb = NULL;
    if (fb)
       rb = intel_get_renderbuffer(fb, BUFFER_DEPTH);
-   return rb && rb->hiz_region;
+   return rb && rb->mt && rb->mt->hiz_region;
 }
 
 struct intel_region*
 intel_get_rb_region(struct gl_framebuffer *fb, GLuint attIndex)
 {
    struct intel_renderbuffer *irb = intel_get_renderbuffer(fb, attIndex);
-   if (irb)
-      return irb->region;
+   if (irb && irb->mt)
+      return irb->mt->region;
    else
       return NULL;
 }
@@ -95,8 +95,7 @@ intel_delete_renderbuffer(struct gl_renderbuffer *rb)
 
    ASSERT(irb);
 
-   intel_region_release(&irb->region);
-   intel_region_release(&irb->hiz_region);
+   intel_miptree_release(&irb->mt);
 
    _mesa_reference_renderbuffer(&irb->wrapped_depth, NULL);
    _mesa_reference_renderbuffer(&irb->wrapped_stencil, NULL);
@@ -122,7 +121,7 @@ intel_map_renderbuffer_gtt(struct gl_context *ctx,
    GLubyte *map;
    int stride, flip_stride;
 
-   assert(irb->region);
+   assert(irb->mt);
 
    irb->map_mode = mode;
    irb->map_x = x;
@@ -130,10 +129,10 @@ intel_map_renderbuffer_gtt(struct gl_context *ctx,
    irb->map_w = w;
    irb->map_h = h;
 
-   stride = irb->region->pitch * irb->region->cpp;
+   stride = irb->mt->region->pitch * irb->mt->region->cpp;
 
    if (rb->Name == 0) {
-      y = irb->region->height - 1 - y;
+      y = irb->mt->region->height - 1 - y;
       flip_stride = -stride;
    } else {
       x += irb->draw_x;
@@ -141,14 +140,14 @@ intel_map_renderbuffer_gtt(struct gl_context *ctx,
       flip_stride = stride;
    }
 
-   if (drm_intel_bo_references(intel->batch.bo, irb->region->bo)) {
+   if (drm_intel_bo_references(intel->batch.bo, irb->mt->region->bo)) {
       intel_batchbuffer_flush(intel);
    }
 
-   drm_intel_gem_bo_map_gtt(irb->region->bo);
+   drm_intel_gem_bo_map_gtt(irb->mt->region->bo);
 
-   map = irb->region->bo->virtual;
-   map += x * irb->region->cpp;
+   map = irb->mt->region->bo->virtual;
+   map += x * irb->mt->region->cpp;
    map += (int)y * stride;
 
    *out_map = map;
@@ -186,10 +185,10 @@ intel_map_renderbuffer_blit(struct gl_context *ctx,
    int src_x, src_y;
    int dst_stride;
 
-   assert(irb->region);
+   assert(irb->mt->region);
    assert(intel->gen >= 6);
    assert(!(mode & GL_MAP_WRITE_BIT));
-   assert(irb->region->tiling == I915_TILING_X);
+   assert(irb->mt->region->tiling == I915_TILING_X);
 
    irb->map_mode = mode;
    irb->map_x = x;
@@ -197,14 +196,14 @@ intel_map_renderbuffer_blit(struct gl_context *ctx,
    irb->map_w = w;
    irb->map_h = h;
 
-   dst_stride = ALIGN(w * irb->region->cpp, 4);
+   dst_stride = ALIGN(w * irb->mt->region->cpp, 4);
 
    if (rb->Name) {
       src_x = x + irb->draw_x;
       src_y = y + irb->draw_y;
    } else {
       src_x = x;
-      src_y = irb->region->height - y - h;
+      src_y = irb->mt->region->height - y - h;
    }
 
    irb->map_bo = drm_intel_bo_alloc(intel->bufmgr, "MapRenderbuffer() temp",
@@ -215,10 +214,10 @@ intel_map_renderbuffer_blit(struct gl_context *ctx,
     */
    if (irb->map_bo &&
        intelEmitCopyBlit(intel,
-			 irb->region->cpp,
-			 irb->region->pitch, irb->region->bo,
-			 0, irb->region->tiling,
-			 dst_stride / irb->region->cpp, irb->map_bo,
+			 irb->mt->region->cpp,
+			 irb->mt->region->pitch, irb->mt->region->bo,
+			 0, irb->mt->region->tiling,
+			 dst_stride / irb->mt->region->cpp, irb->map_bo,
 			 0, I915_TILING_NONE,
 			 src_x, src_y,
 			 0, 0,
@@ -277,7 +276,7 @@ intel_map_renderbuffer_s8(struct gl_context *ctx,
    uint8_t *untiled_s8_map;
 
    assert(rb->Format == MESA_FORMAT_S8);
-   assert(irb->region);
+   assert(irb->mt);
 
    irb->map_mode = mode;
    irb->map_x = x;
@@ -291,12 +290,12 @@ intel_map_renderbuffer_s8(struct gl_context *ctx,
 
    irb->map_buffer = malloc(w * h);
    untiled_s8_map = irb->map_buffer;
-   tiled_s8_map = intel_region_map(intel, irb->region, mode);
+   tiled_s8_map = intel_region_map(intel, irb->mt->region, mode);
 
    for (uint32_t pix_y = 0; pix_y < h; pix_y++) {
       for (uint32_t pix_x = 0; pix_x < w; pix_x++) {
 	 uint32_t flipped_y = y_flip * (int32_t)(y + pix_y) + y_bias;
-	 ptrdiff_t offset = intel_offset_S8(irb->region->pitch,
+	 ptrdiff_t offset = intel_offset_S8(irb->mt->region->pitch,
 	                                    x + pix_x,
 	                                    flipped_y);
 	 untiled_s8_map[pix_y * w + pix_x] = tiled_s8_map[offset];
@@ -363,12 +362,12 @@ intel_map_renderbuffer_separate_s8z24(struct gl_context *ctx,
 			       &s8z24_map, &s8z24_stride);
 
    s8_irb = intel_renderbuffer(irb->wrapped_stencil);
-   s8_map = intel_region_map(intel, s8_irb->region, GL_MAP_READ_BIT);
+   s8_map = intel_region_map(intel, s8_irb->mt->region, GL_MAP_READ_BIT);
 
    /* Gather the stencil buffer into the depth buffer. */
    for (uint32_t pix_y = 0; pix_y < h; ++pix_y) {
       for (uint32_t pix_x = 0; pix_x < w; ++pix_x) {
-	 ptrdiff_t s8_offset = intel_offset_S8(s8_irb->region->pitch,
+	 ptrdiff_t s8_offset = intel_offset_S8(s8_irb->mt->region->pitch,
 					       x + pix_x,
 					       y + pix_y);
 	 ptrdiff_t s8z24_offset = pix_y * s8z24_stride
@@ -378,7 +377,7 @@ intel_map_renderbuffer_separate_s8z24(struct gl_context *ctx,
       }
    }
 
-   intel_region_unmap(intel, s8_irb->region);
+   intel_region_unmap(intel, s8_irb->mt->region);
 
    *out_map = s8z24_map;
    *out_stride = s8z24_stride;
@@ -399,7 +398,7 @@ intel_map_renderbuffer(struct gl_context *ctx,
    struct intel_renderbuffer *irb = intel_renderbuffer(rb);
 
    /* We sometimes get called with this by our intel_span.c usage. */
-   if (!irb->region && !irb->wrapped_depth) {
+   if (!irb->mt && !irb->wrapped_depth) {
       *out_map = NULL;
       *out_stride = 0;
       return;
@@ -413,7 +412,7 @@ intel_map_renderbuffer(struct gl_context *ctx,
 					    out_map, out_stride);
    } else if (intel->gen >= 6 &&
 	      !(mode & GL_MAP_WRITE_BIT) &&
-	      irb->region->tiling == I915_TILING_X) {
+	      irb->mt->region->tiling == I915_TILING_X) {
       intel_map_renderbuffer_blit(ctx, rb, x, y, w, h, mode,
 				  out_map, out_stride);
    } else {
@@ -445,7 +444,7 @@ intel_unmap_renderbuffer_s8(struct gl_context *ctx,
        * the real buffer.
        */
       uint8_t *untiled_s8_map = irb->map_buffer;
-      uint8_t *tiled_s8_map = irb->region->bo->virtual;
+      uint8_t *tiled_s8_map = irb->mt->region->bo->virtual;
 
       /* Flip the Y axis for the default framebuffer. */
       int y_flip = (rb->Name == 0) ? -1 : 1;
@@ -454,7 +453,7 @@ intel_unmap_renderbuffer_s8(struct gl_context *ctx,
       for (uint32_t pix_y = 0; pix_y < irb->map_h; pix_y++) {
 	 for (uint32_t pix_x = 0; pix_x < irb->map_w; pix_x++) {
 	    uint32_t flipped_y = y_flip * (int32_t)(pix_y + irb->map_y) + y_bias;
-	    ptrdiff_t offset = intel_offset_S8(irb->region->pitch,
+	    ptrdiff_t offset = intel_offset_S8(irb->mt->region->pitch,
 	                                       pix_x + irb->map_x,
 	                                       flipped_y);
 	    tiled_s8_map[offset] =
@@ -463,7 +462,7 @@ intel_unmap_renderbuffer_s8(struct gl_context *ctx,
       }
    }
 
-   intel_region_unmap(intel, irb->region);
+   intel_region_unmap(intel, irb->mt->region);
    free(irb->map_buffer);
    irb->map_buffer = NULL;
 }
@@ -501,16 +500,16 @@ intel_unmap_renderbuffer_separate_s8z24(struct gl_context *ctx,
       uint8_t *s8_map;
       
       s8_irb = intel_renderbuffer(irb->wrapped_stencil);
-      s8_map = intel_region_map(intel, s8_irb->region, GL_MAP_WRITE_BIT);
+      s8_map = intel_region_map(intel, s8_irb->mt->region, GL_MAP_WRITE_BIT);
 
-      int32_t s8z24_stride = 4 * s8z24_irb->region->pitch;
-      uint8_t *s8z24_map = s8z24_irb->region->bo->virtual
+      int32_t s8z24_stride = 4 * s8z24_irb->mt->region->pitch;
+      uint8_t *s8z24_map = s8z24_irb->mt->region->bo->virtual
 			 + map_y * s8z24_stride
 			 + map_x * 4;
 
       for (uint32_t pix_y = 0; pix_y < map_h; ++pix_y) {
 	 for (uint32_t pix_x = 0; pix_x < map_w; ++pix_x) {
-	    ptrdiff_t s8_offset = intel_offset_S8(s8_irb->region->pitch,
+	    ptrdiff_t s8_offset = intel_offset_S8(s8_irb->mt->region->pitch,
 						  map_x + pix_x,
 						  map_y + pix_y);
 	    ptrdiff_t s8z24_offset = pix_y * s8z24_stride
@@ -520,10 +519,10 @@ intel_unmap_renderbuffer_separate_s8z24(struct gl_context *ctx,
 	 }
       }
 
-      intel_region_unmap(intel, s8_irb->region);
+      intel_region_unmap(intel, s8_irb->mt->region);
    }
 
-   drm_intel_gem_bo_unmap_gtt(s8z24_irb->region->bo);
+   drm_intel_gem_bo_unmap_gtt(s8z24_irb->mt->region->bo);
 }
 
 /**
@@ -549,11 +548,11 @@ intel_unmap_renderbuffer(struct gl_context *ctx,
       irb->map_bo = 0;
    } else {
       /* Paired with intel_map_renderbuffer_gtt(). */
-      if (irb->region) {
-	 /* The region may be null when intel_map_renderbuffer() is
+      if (irb->mt) {
+	 /* The miptree may be null when intel_map_renderbuffer() is
 	  * called from intel_span.c.
 	  */
-	 drm_intel_gem_bo_unmap_gtt(irb->region->bo);
+	 drm_intel_gem_bo_unmap_gtt(irb->mt->region->bo);
       }
    }
 }
@@ -620,13 +619,7 @@ intel_alloc_renderbuffer_storage(struct gl_context * ctx, struct gl_renderbuffer
 
    intel_flush(ctx);
 
-   /* free old region */
-   if (irb->region) {
-      intel_region_release(&irb->region);
-   }
-   if (irb->hiz_region) {
-      intel_region_release(&irb->hiz_region);
-   }
+   intel_miptree_release(&irb->mt);
 
    DBG("%s: %s: %s (%dx%d)\n", __FUNCTION__,
        _mesa_lookup_enum_by_nr(internalFormat),
@@ -658,14 +651,15 @@ intel_alloc_renderbuffer_storage(struct gl_context * ctx, struct gl_renderbuffer
        *
        * If we neglect to double the pitch, then render corruption occurs.
        */
-      irb->region = intel_region_alloc(intel->intelScreen,
-				       I915_TILING_NONE,
-				       cpp * 2,
-				       ALIGN(width, 64),
-				       ALIGN((height + 1) / 2, 64),
-				       true);
-      if (!irb->region)
-	return false;
+      irb->mt = intel_miptree_create_for_renderbuffer(
+		  intel,
+		  rb->Format,
+		  I915_TILING_NONE,
+		  cpp * 2,
+		  ALIGN(width, 64),
+		  ALIGN((height + 1) / 2, 64));
+      if (!irb->mt)
+	 return false;
 
    } else if (irb->Base.Format == MESA_FORMAT_S8_Z24
 	      && intel->must_use_separate_stencil) {
@@ -702,20 +696,21 @@ intel_alloc_renderbuffer_storage(struct gl_context * ctx, struct gl_renderbuffer
       _mesa_reference_renderbuffer(&irb->wrapped_stencil, stencil_rb);
 
    } else {
-      irb->region = intel_region_alloc(intel->intelScreen, tiling, cpp,
-				       width, height, true);
-      if (!irb->region)
+      irb->mt = intel_miptree_create_for_renderbuffer(intel, rb->Format,
+                                                      tiling, cpp,
+                                                      width, height);
+      if (!irb->mt)
 	 return false;
 
       if (intel->vtbl.is_hiz_depth_format(intel, rb->Format)) {
-	 irb->hiz_region = intel_region_alloc(intel->intelScreen,
-					      I915_TILING_Y,
-					      irb->region->cpp,
-					      irb->region->width,
-					      irb->region->height,
-					      true);
-	 if (!irb->hiz_region) {
-	    intel_region_release(&irb->region);
+	 irb->mt->hiz_region = intel_region_alloc(intel->intelScreen,
+	                                          I915_TILING_Y,
+	                                          cpp,
+	                                          rb->Width,
+	                                          rb->Height,
+	                                          true);
+	 if (!irb->mt->hiz_region) {
+	    intel_miptree_release(&irb->mt);
 	    return false;
 	 }
       }
@@ -754,7 +749,13 @@ intel_image_target_renderbuffer_storage(struct gl_context *ctx,
    }
 
    irb = intel_renderbuffer(rb);
-   intel_region_reference(&irb->region, image->region);
+   intel_miptree_release(&irb->mt);
+   irb->mt = intel_miptree_create_for_region(intel,
+                                             GL_TEXTURE_2D,
+                                             image->format,
+                                             image->region);
+   if (!irb->mt)
+      return;
 
    rb->InternalFormat = image->internal_format;
    rb->Width = image->region->width;
@@ -982,9 +983,8 @@ intel_update_wrapper(struct gl_context *ctx, struct intel_renderbuffer *irb,
       _mesa_reference_renderbuffer(&irb->wrapped_stencil,
 				   intel_image->stencil_rb);
    } else {
-      intel_region_reference(&irb->region, intel_image->mt->region);
+      intel_miptree_reference(&irb->mt, intel_image->mt);
    }
-
    return true;
 }
 
@@ -1050,20 +1050,21 @@ intel_renderbuffer_tile_offsets(struct intel_renderbuffer *irb,
 				uint32_t *tile_x,
 				uint32_t *tile_y)
 {
-   int cpp = irb->region->cpp;
-   uint32_t pitch = irb->region->pitch * cpp;
+   struct intel_region *region = irb->mt->region;
+   int cpp = region->cpp;
+   uint32_t pitch = region->pitch * cpp;
 
-   if (irb->region->tiling == I915_TILING_NONE) {
+   if (region->tiling == I915_TILING_NONE) {
       *tile_x = 0;
       *tile_y = 0;
       return irb->draw_x * cpp + irb->draw_y * pitch;
-   } else if (irb->region->tiling == I915_TILING_X) {
+   } else if (region->tiling == I915_TILING_X) {
       *tile_x = irb->draw_x % (512 / cpp);
       *tile_y = irb->draw_y % 8;
       return ((irb->draw_y / 8) * (8 * pitch) +
 	      (irb->draw_x - *tile_x) / (512 / cpp) * 4096);
    } else {
-      assert(irb->region->tiling == I915_TILING_Y);
+      assert(region->tiling == I915_TILING_Y);
       *tile_x = irb->draw_x % (128 / cpp);
       *tile_y = irb->draw_y % 32;
       return ((irb->draw_y / 32) * (32 * pitch) +
@@ -1164,7 +1165,7 @@ intel_render_texture(struct gl_context * ctx,
       intel_miptree_copy_teximage(intel, intel_image, new_mt);
       intel_renderbuffer_set_draw_offset(irb, intel_image, att->Zoffset);
 
-      intel_region_reference(&irb->region, intel_image->mt->region);
+      intel_miptree_reference(&irb->mt, intel_image->mt);
       intel_miptree_release(&new_mt);
    }
 #endif

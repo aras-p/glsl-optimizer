@@ -35,6 +35,7 @@
 #include "intel_screen.h"
 
 struct intel_context;
+struct intel_mipmap_tree;
 struct intel_texture_image;
 
 /**
@@ -43,14 +44,12 @@ struct intel_texture_image;
 struct intel_renderbuffer
 {
    struct gl_renderbuffer Base;
-   struct intel_region *region;
+   struct intel_mipmap_tree *mt; /**< The renderbuffer storage. */
    drm_intel_bo *map_bo;
+
    void *map_buffer;
    GLuint map_x, map_y, map_w, map_h;
    GLbitfield map_mode;
-
-   /** Only used by depth renderbuffers for which HiZ is enabled. */
-   struct intel_region *hiz_region;
 
    /**
     * \name Packed depth/stencil unwrappers

@@ -766,10 +766,10 @@ intel_render_object_purgeable(struct gl_context * ctx,
    (void) option;
 
    intel = intel_renderbuffer(obj);
-   if (intel->region == NULL)
+   if (intel->mt == NULL)
       return GL_RELEASED_APPLE;
 
-   return intel_buffer_purgeable(intel->region->bo);
+   return intel_buffer_purgeable(intel->mt->region->bo);
 }
 
 static GLenum
@@ -823,10 +823,10 @@ intel_render_object_unpurgeable(struct gl_context * ctx,
    (void) option;
 
    intel = intel_renderbuffer(obj);
-   if (intel->region == NULL)
+   if (intel->mt == NULL)
       return GL_UNDEFINED_APPLE;
 
-   return intel_buffer_unpurgeable(intel->region->bo);
+   return intel_buffer_unpurgeable(intel->mt->region->bo);
 }
 #endif
 

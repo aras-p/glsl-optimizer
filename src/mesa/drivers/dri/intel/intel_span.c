@@ -39,6 +39,7 @@
 
 #include "intel_buffers.h"
 #include "intel_fbo.h"
+#include "intel_mipmap_tree.h"
 #include "intel_screen.h"
 #include "intel_span.h"
 #include "intel_regions.h"
@@ -58,7 +59,7 @@ intel_set_span_functions(struct intel_context *intel,
    int minx = 0, miny = 0;						\
    int maxx = rb->Width;						\
    int maxy = rb->Height;						\
-   int pitch = rb->RowStride * irb->region->cpp;			\
+   int pitch = rb->RowStride * irb->mt->region->cpp;			\
    void *buf = rb->Data;						\
    GLuint p;								\
    (void) p;
