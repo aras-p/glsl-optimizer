@@ -402,10 +402,16 @@ slow_read_depth_stencil_pixels_separate(struct gl_context *ctx,
    GLubyte *depthMap, *stencilMap;
    int depthStride, stencilStride, j;
 
+   /* The depth and stencil buffers might be separate, or a single buffer.
+    * If one buffer, only map it once.
+    */
    ctx->Driver.MapRenderbuffer(ctx, depthRb, x, y, width, height,
 			       GL_MAP_READ_BIT, &depthMap, &depthStride);
-   ctx->Driver.MapRenderbuffer(ctx, stencilRb, x, y, width, height,
-			       GL_MAP_READ_BIT, &stencilMap, &stencilStride);
+   if (stencilRb != depthRb) {
+      ctx->Driver.MapRenderbuffer(ctx, stencilRb, x, y, width, height,
+                                  GL_MAP_READ_BIT, &stencilMap,
+                                  &stencilStride);
+   }
 
    for (j = 0; j < height; j++) {
       GLubyte stencilVals[MAX_WIDTH];
@@ -424,7 +430,9 @@ slow_read_depth_stencil_pixels_separate(struct gl_context *ctx,
    }
 
    ctx->Driver.UnmapRenderbuffer(ctx, depthRb);
-   ctx->Driver.UnmapRenderbuffer(ctx, stencilRb);
+   if (stencilRb != depthRb) {
+      ctx->Driver.UnmapRenderbuffer(ctx, stencilRb);
+   }
 }
 
 
