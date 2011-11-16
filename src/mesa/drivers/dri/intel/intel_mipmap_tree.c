@@ -594,7 +594,26 @@ intel_miptree_alloc_hiz(struct intel_context *intel,
                                      mt->height0,
                                      mt->depth0,
                                      true);
-   return mt->hiz_mt != NULL;
+
+   if (!mt->hiz_mt)
+      return false;
+
+   /* Mark that all slices need a HiZ resolve. */
+   struct intel_resolve_map *head = &mt->hiz_map;
+   for (int level = mt->first_level; level <= mt->last_level; ++level) {
+      for (int layer = 0; layer < mt->level[level].depth; ++layer) {
+	 head->next = malloc(sizeof(*head->next));
+	 head->next->prev = head;
+	 head->next->next = NULL;
+	 head = head->next;
+
+	 head->level = level;
+	 head->layer = layer;
+	 head->need = INTEL_NEED_HIZ_RESOLVE;
+      }
+   }
+
+   return true;
 }
 
 void
