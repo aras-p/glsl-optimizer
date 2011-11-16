@@ -152,6 +152,19 @@ struct intel_mipmap_tree
     */
    struct intel_region *hiz_region;
 
+   /**
+    * \brief Stencil miptree for depthstencil textures.
+    *
+    * This miptree is used for depthstencil textures that require separate
+    * stencil. The stencil miptree's data is the golden copy of the
+    * parent miptree's stencil bits. When necessary, we scatter/gather the
+    * stencil bits between the parent miptree and the stencil miptree.
+    *
+    * \see intel_miptree_s8z24_scatter()
+    * \see intel_miptree_s8z24_gather()
+    */
+   struct intel_mipmap_tree *stencil_mt;
+
    /* These are also refcounted:
     */
    GLuint refcount;
@@ -238,6 +251,30 @@ void
 intel_miptree_copy_teximage(struct intel_context *intel,
                             struct intel_texture_image *intelImage,
                             struct intel_mipmap_tree *dst_mt);
+
+/**
+ * Copy the stencil data from \c mt->stencil_mt->region to \c mt->region for
+ * the given miptree slice.
+ *
+ * \see intel_mipmap_tree::stencil_mt
+ */
+void
+intel_miptree_s8z24_scatter(struct intel_context *intel,
+                            struct intel_mipmap_tree *mt,
+                            uint32_t level,
+                            uint32_t slice);
+
+/**
+ * Copy the stencil data in \c mt->stencil_mt->region to \c mt->region for the
+ * given miptree slice.
+ *
+ * \see intel_mipmap_tree::stencil_mt
+ */
+void
+intel_miptree_s8z24_gather(struct intel_context *intel,
+                           struct intel_mipmap_tree *mt,
+                           uint32_t level,
+                           uint32_t layer);
 
 /* i915_mipmap_tree.c:
  */

@@ -25,14 +25,18 @@
  * 
  **************************************************************************/
 
+#include "intel_batchbuffer.h"
 #include "intel_context.h"
 #include "intel_mipmap_tree.h"
 #include "intel_regions.h"
+#include "intel_span.h"
 #include "intel_tex_layout.h"
 #include "intel_tex.h"
 #include "intel_blit.h"
+
 #include "main/enums.h"
 #include "main/formats.h"
+#include "main/image.h"
 #include "main/teximage.h"
 
 #define FILE_DEBUG_FLAG DEBUG_MIPTREE
@@ -53,7 +57,6 @@ target_to_target(GLenum target)
       return target;
    }
 }
-
 
 static struct intel_mipmap_tree *
 intel_miptree_create_internal(struct intel_context *intel,
@@ -93,6 +96,16 @@ intel_miptree_create_internal(struct intel_context *intel,
       mt->depth0 = depth0;
    }
 
+   if (format == MESA_FORMAT_S8) {
+      /* The stencil buffer has quirky pitch requirements.  From Vol 2a,
+       * 11.5.6.2.1 3DSTATE_STENCIL_BUFFER, field "Surface Pitch":
+       *    The pitch must be set to 2x the value computed based on width, as
+       *    the stencil buffer is stored with two rows interleaved.
+       */
+      assert(intel->has_separate_stencil);
+      mt->cpp = 2;
+   }
+
 #ifdef I915
    (void) intel;
    if (intel->is_945)
@@ -102,6 +115,23 @@ intel_miptree_create_internal(struct intel_context *intel,
 #else
    brw_miptree_layout(intel, mt);
 #endif
+
+   if (intel->must_use_separate_stencil &&
+       _mesa_is_depthstencil_format(_mesa_get_format_base_format(format))) {
+      mt->stencil_mt = intel_miptree_create(intel,
+                                            mt->target,
+                                            MESA_FORMAT_S8,
+                                            mt->first_level,
+                                            mt->last_level,
+                                            mt->width0,
+                                            mt->height0,
+                                            mt->depth0,
+                                            true);
+      if (!mt->stencil_mt) {
+	 intel_miptree_release(&mt);
+	 return NULL;
+      }
+   }
 
    return mt;
 }
@@ -127,6 +157,8 @@ intel_miptree_create(struct intel_context *intel,
 	  (base_format == GL_DEPTH_COMPONENT ||
 	   base_format == GL_DEPTH_STENCIL_EXT))
 	 tiling = I915_TILING_Y;
+      else if (format == MESA_FORMAT_S8)
+	 tiling = I915_TILING_NONE;
       else if (width0 >= 64)
 	 tiling = I915_TILING_X;
    }
@@ -230,6 +262,7 @@ intel_miptree_release(struct intel_mipmap_tree **mt)
 
       intel_region_release(&((*mt)->region));
       intel_region_release(&((*mt)->hiz_region));
+      intel_miptree_release(&(*mt)->stencil_mt);
 
       for (i = 0; i < MAX_TEXTURE_LEVELS; i++) {
 	 free((*mt)->level[i].slice);
@@ -423,6 +456,12 @@ intel_miptree_copy_slice(struct intel_context *intel,
       intel_region_unmap(intel, dst_mt->region);
       intel_region_unmap(intel, src_mt->region);
    }
+
+   if (src_mt->stencil_mt) {
+      intel_miptree_copy_slice(intel,
+                               dst_mt->stencil_mt, src_mt->stencil_mt,
+                               level, face, depth);
+   }
 }
 
 /**
@@ -446,3 +485,96 @@ intel_miptree_copy_teximage(struct intel_context *intel,
    intel_miptree_reference(&intelImage->mt, dst_mt);
 }
 
+/**
+ * \param scatter Scatter if true. Gather if false.
+ *
+ * \see intel_miptree_s8z24_scatter()
+ * \see intel_miptree_s8z24_gather()
+ */
+static void
+intel_miptree_s8z24_scattergather(struct intel_context *intel,
+                                  struct intel_mipmap_tree *mt,
+                                  uint32_t level,
+                                  uint32_t layer,
+                                  bool scatter)
+{
+   /* Check function inputs. */
+   assert(level >= mt->first_level);
+   assert(level <= mt->last_level);
+   assert(layer < mt->level[level].depth);
+
+   /* Label everything and its bit layout, just to make the code easier to
+    * read.
+    */
+   struct intel_mipmap_tree  *s8_mt    = mt->stencil_mt;
+   struct intel_mipmap_level *s8_level = &s8_mt->level[level];
+   struct intel_mipmap_slice *s8_slice = &s8_mt->level[level].slice[layer];
+
+   struct intel_mipmap_tree  *s8z24_mt    = mt;
+   struct intel_mipmap_level *s8z24_level = &s8z24_mt->level[level];
+   struct intel_mipmap_slice *s8z24_slice = &s8z24_mt->level[level].slice[layer];
+
+   /* Check that both miptree levels have the same dimensions. */
+   assert(s8_level->width  == s8z24_level->width);
+   assert(s8_level->height == s8z24_level->height);
+   assert(s8_level->depth  == s8z24_level->depth);
+
+   /* Map the buffers. */
+   if (drm_intel_bo_references(intel->batch.bo, s8_mt->region->bo) ||
+       drm_intel_bo_references(intel->batch.bo, s8z24_mt->region->bo)) {
+      intel_batchbuffer_flush(intel);
+   }
+   drm_intel_gem_bo_map_gtt(s8_mt->region->bo);
+   drm_intel_gem_bo_map_gtt(s8z24_mt->region->bo);
+
+   /* Define the invariant values outside the for loop, because I don't trust
+    * GCC to do it for us.
+    */
+   uint8_t *s8_map = s8_mt->region->bo->virtual
+		   + s8_slice->x_offset
+		   + s8_slice->y_offset;
+
+   uint8_t *s8z24_map = s8z24_mt->region->bo->virtual
+		      + s8z24_slice->x_offset
+		      + s8z24_slice->y_offset;
+
+   ptrdiff_t s8z24_stride = s8z24_mt->region->pitch * s8z24_mt->region->cpp;
+
+   uint32_t w = s8_level->width;
+   uint32_t h = s8_level->height;
+
+   for (uint32_t y = 0; y < h; ++y) {
+      for (uint32_t x = 0; x < w; ++x) {
+	 ptrdiff_t s8_offset = intel_offset_S8(s8_mt->region->pitch, x, y);
+	 ptrdiff_t s8z24_offset = y * s8z24_stride
+				+ x * 4
+				+ 3;
+	 if (scatter) {
+	    s8_map[s8_offset] = s8z24_map[s8z24_offset];
+	 } else {
+	    s8z24_map[s8z24_offset] = s8_map[s8_offset];
+	 }
+      }
+   }
+
+   drm_intel_gem_bo_unmap_gtt(s8_mt->region->bo);
+   drm_intel_gem_bo_unmap_gtt(s8z24_mt->region->bo);
+}
+
+void
+intel_miptree_s8z24_scatter(struct intel_context *intel,
+                            struct intel_mipmap_tree *mt,
+                            uint32_t level,
+                            uint32_t layer)
+{
+   intel_miptree_s8z24_scattergather(intel, mt, level, layer, true);
+}
+
+void
+intel_miptree_s8z24_gather(struct intel_context *intel,
+                           struct intel_mipmap_tree *mt,
+                           uint32_t level,
+                           uint32_t layer)
+{
+   intel_miptree_s8z24_scattergather(intel, mt, level, layer, false);
+}

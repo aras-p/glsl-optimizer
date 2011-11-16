@@ -36,6 +36,8 @@
 #include "main/renderbuffer.h"
 #include "main/context.h"
 #include "main/teximage.h"
+#include "main/image.h"
+
 #include "swrast/swrast.h"
 #include "drivers/common/meta.h"
 
@@ -946,12 +948,26 @@ intel_framebuffer_renderbuffer(struct gl_context * ctx,
    intel_draw_buffer(ctx);
 }
 
+static struct intel_renderbuffer*
+intel_renderbuffer_wrap_miptree(struct intel_context *intel,
+                                struct intel_mipmap_tree *mt,
+                                uint32_t level,
+                                uint32_t layer,
+                                gl_format format,
+                                GLenum internal_format);
+
 /**
- * NOTE: The 'att' parameter is a kludge that will soon be removed. Its
- * presence allows us to refactor the wrapping of depthstencil textures that
- * use separate stencil in two easily manageable steps, rather than in one
- * large, hairy step. First, refactor the common wrapping code used by all
- * texture formats. Second, refactor the separate stencil code paths.
+ * \par Special case for separate stencil
+ *
+ *     When wrapping a depthstencil texture that uses separate stencil, this
+ *     function is recursively called twice: once to create \c
+ *     irb->wrapped_depth and again to create \c irb->wrapped_stencil.  On the
+ *     call to create \c irb->wrapped_depth, the \c format and \c
+ *     internal_format parameters do not match \c mt->format. In that case, \c
+ *     mt->format is MESA_FORMAT_S8_Z24 and \c format is \c
+ *     MESA_FORMAT_X8_Z24.
+ *
+ * @return true on success
  */
 static bool
 intel_renderbuffer_update_wrapper(struct intel_context *intel,
@@ -960,16 +976,9 @@ intel_renderbuffer_update_wrapper(struct intel_context *intel,
                                   uint32_t level,
                                   uint32_t layer,
                                   gl_format format,
-                                  GLenum internal_format,
-                                  struct gl_renderbuffer_attachment *att)
+                                  GLenum internal_format)
 {
    struct gl_renderbuffer *rb = &irb->Base;
-
-   /* The image variables are a kludge. See the note above for the att
-    * parameter.
-    */
-   struct gl_texture_image *texImage = _mesa_get_attachment_teximage(att);
-   struct intel_texture_image *intel_image = intel_texture_image(texImage);
 
    rb->Format = format;
    if (!intel_span_supports_format(rb->Format)) {
@@ -993,35 +1002,50 @@ intel_renderbuffer_update_wrapper(struct intel_context *intel,
    irb->mt_level = level;
    irb->mt_layer = layer;
 
-   if (intel_image->stencil_rb) {
-      /*  The tex image has packed depth/stencil format, but is using separate
-       *  stencil. It shares its embedded depth and stencil renderbuffers with
-       *  the renderbuffer wrapper.
-       *
-       *  FIXME: glFramebufferTexture*() is broken for depthstencil textures
-       *  FIXME: with separate stencil. To fix this, we must create a separate
-       *  FIXME: pair of depth/stencil renderbuffers for each attached slice
-       *  FIXME: of the miptree.
-       */
+   if (mt->stencil_mt && _mesa_is_depthstencil_format(rb->InternalFormat)) {
+      assert((irb->wrapped_depth == NULL) == (irb->wrapped_stencil == NULL));
+
       struct intel_renderbuffer *depth_irb;
       struct intel_renderbuffer *stencil_irb;
 
-      _mesa_reference_renderbuffer(&irb->wrapped_depth,
-				   intel_image->depth_rb);
-      _mesa_reference_renderbuffer(&irb->wrapped_stencil,
-				   intel_image->stencil_rb);
+      if (!irb->wrapped_depth) {
+	 depth_irb = intel_renderbuffer_wrap_miptree(intel,
+	                                             mt, level, layer,
+	                                             MESA_FORMAT_X8_Z24,
+	                                             GL_DEPTH_COMPONENT24);
+	 stencil_irb = intel_renderbuffer_wrap_miptree(intel,
+	                                               mt->stencil_mt,
+	                                               level, layer,
+	                                               MESA_FORMAT_S8,
+	                                               GL_STENCIL_INDEX8);
+	 _mesa_reference_renderbuffer(&irb->wrapped_depth, &depth_irb->Base);
+	 _mesa_reference_renderbuffer(&irb->wrapped_stencil, &stencil_irb->Base);
 
-      depth_irb = intel_renderbuffer(intel_image->depth_rb);
-      depth_irb->mt_level = irb->mt_level;
-      depth_irb->mt_layer = irb->mt_layer;
-      intel_renderbuffer_set_draw_offset(depth_irb);
+	 if (!irb->wrapped_depth || !irb->wrapped_stencil)
+	    return false;
+      } else {
+	 bool ok = true;
 
-      stencil_irb = intel_renderbuffer(intel_image->stencil_rb);
-      stencil_irb->mt_level = irb->mt_level;
-      stencil_irb->mt_layer = irb->mt_layer;
-      intel_renderbuffer_set_draw_offset(stencil_irb);
+	 depth_irb = intel_renderbuffer(irb->wrapped_depth);
+	 stencil_irb = intel_renderbuffer(irb->wrapped_stencil);
+
+	 ok &= intel_renderbuffer_update_wrapper(intel,
+	                                         depth_irb,
+	                                         mt,
+	                                         level, layer,
+	                                         MESA_FORMAT_X8_Z24,
+	                                         GL_DEPTH_COMPONENT24);
+	 ok &= intel_renderbuffer_update_wrapper(intel,
+	                                         stencil_irb,
+	                                         mt->stencil_mt,
+	                                         level, layer,
+	                                         MESA_FORMAT_S8,
+	                                         GL_STENCIL_INDEX8);
+	 if (!ok)
+	    return false;
+      }
    } else {
-      intel_miptree_reference(&irb->mt, intel_image->mt);
+      intel_miptree_reference(&irb->mt, mt);
       intel_renderbuffer_set_draw_offset(irb);
    }
 
@@ -1035,12 +1059,6 @@ intel_renderbuffer_update_wrapper(struct intel_context *intel,
  * ``struct intel_renderbuffer`` then calls
  * intel_renderbuffer_update_wrapper() to do the real work.
  *
- * NOTE: The 'att' parameter is a kludge that will soon be removed. Its
- * presence allows us to refactor the wrapping of depthstencil textures that
- * use separate stencil in two easily manageable steps, rather than in one
- * large, hairy step. First, refactor the common wrapping code used by all
- * texture formats. Second, refactor the separate stencil code paths.
- *
  * \see intel_renderbuffer_update_wrapper()
  */
 static struct intel_renderbuffer*
@@ -1049,8 +1067,7 @@ intel_renderbuffer_wrap_miptree(struct intel_context *intel,
                                 uint32_t level,
                                 uint32_t layer,
                                 gl_format format,
-                                GLenum internal_format,
-                                struct gl_renderbuffer_attachment *att)
+                                GLenum internal_format)
 
 {
    const GLuint name = ~0;   /* not significant, but distinct for debugging */
@@ -1070,8 +1087,7 @@ intel_renderbuffer_wrap_miptree(struct intel_context *intel,
 
    if (!intel_renderbuffer_update_wrapper(intel, irb,
                                           mt, level, layer,
-                                          format, internal_format,
-                                          att)) {
+                                          format, internal_format)) {
       free(irb);
       return NULL;
    }
@@ -1189,8 +1205,7 @@ intel_render_texture(struct gl_context * ctx,
                                             att->TextureLevel,
                                             layer,
                                             image->TexFormat,
-                                            image->InternalFormat,
-                                            att);
+                                            image->InternalFormat);
 
       if (irb) {
          /* bind the wrapper to the attachment point */
@@ -1206,8 +1221,7 @@ intel_render_texture(struct gl_context * ctx,
    if (!intel_renderbuffer_update_wrapper(intel, irb,
                                           mt, att->TextureLevel, layer,
                                           image->TexFormat,
-                                          image->InternalFormat,
-                                          att)) {
+                                          image->InternalFormat)) {
        _mesa_reference_renderbuffer(&att->Renderbuffer, NULL);
        _swrast_render_texture(ctx, fb, att);
        return;
