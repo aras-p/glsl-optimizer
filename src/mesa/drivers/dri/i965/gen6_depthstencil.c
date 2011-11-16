@@ -77,8 +77,12 @@ gen6_upload_depth_stencil_state(struct brw_context *brw)
    }
 
    /* _NEW_DEPTH */
-   if (ctx->Depth.Test) {
-      ds->ds2.depth_test_enable = 1;
+   if (ctx->Depth.Test || brw->hiz.op) {
+      assert(brw->hiz.op != BRW_HIZ_OP_DEPTH_RESOLVE || ctx->Depth.Test);
+      assert(brw->hiz.op != BRW_HIZ_OP_HIZ_RESOLVE   || !ctx->Depth.Test);
+      assert(brw->hiz.op != BRW_HIZ_OP_DEPTH_CLEAR   || !ctx->Depth.Test);
+
+      ds->ds2.depth_test_enable = ctx->Depth.Test;
       ds->ds2.depth_test_func = intel_translate_compare_func(ctx->Depth.Func);
       ds->ds2.depth_write_enable = ctx->Depth.Mask;
    }
@@ -89,7 +93,8 @@ gen6_upload_depth_stencil_state(struct brw_context *brw)
 const struct brw_tracked_state gen6_depth_stencil_state = {
    .dirty = {
       .mesa = _NEW_DEPTH | _NEW_STENCIL,
-      .brw = BRW_NEW_BATCH,
+      .brw  = (BRW_NEW_BATCH |
+	       BRW_NEW_HIZ),
       .cache = 0,
    },
    .emit = gen6_upload_depth_stencil_state,

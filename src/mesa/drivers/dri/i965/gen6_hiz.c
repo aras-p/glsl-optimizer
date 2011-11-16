@@ -301,7 +301,9 @@ gen6_resolve_slice(struct intel_context *intel,
 
    /* Execute the HiZ operation. */
    brw->hiz.op = op;
+   brw->state.dirty.brw |= BRW_NEW_HIZ;
    _mesa_DrawArrays(GL_TRIANGLES, 0, 3);
+   brw->state.dirty.brw |= BRW_NEW_HIZ;
    brw->hiz.op = BRW_HIZ_OP_NONE;
 
    /* Restore state.

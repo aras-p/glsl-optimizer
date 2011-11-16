@@ -117,9 +117,16 @@ static void brw_set_prim(struct brw_context *brw,
 static void gen6_set_prim(struct brw_context *brw,
                           const struct _mesa_prim *prim)
 {
-   uint32_t hw_prim = prim_to_hw_prim[prim->mode];
+   uint32_t hw_prim;
 
    DBG("PRIM: %s\n", _mesa_lookup_enum_by_nr(prim->mode));
+
+   if (brw->hiz.op) {
+      assert(prim->mode == GL_TRIANGLES);
+      hw_prim = _3DPRIM_RECTLIST;
+   } else {
+      hw_prim = prim_to_hw_prim[prim->mode];
+   }
 
    if (hw_prim != brw->primitive) {
       brw->primitive = hw_prim;
