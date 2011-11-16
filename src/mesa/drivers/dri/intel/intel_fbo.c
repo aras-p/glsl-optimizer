@@ -1047,6 +1047,13 @@ intel_renderbuffer_update_wrapper(struct intel_context *intel,
    } else {
       intel_miptree_reference(&irb->mt, mt);
       intel_renderbuffer_set_draw_offset(irb);
+
+      if (mt->hiz_mt == NULL &&
+	  intel->vtbl.is_hiz_depth_format(intel, rb->Format)) {
+	 intel_miptree_alloc_hiz(intel, mt);
+         if (!mt->hiz_mt)
+            return false;
+      }
    }
 
    return true;
