@@ -412,6 +412,10 @@ slow_read_depth_stencil_pixels_separate(struct gl_context *ctx,
                                   GL_MAP_READ_BIT, &stencilMap,
                                   &stencilStride);
    }
+   else {
+      stencilMap = depthMap;
+      stencilStride = depthStride;
+   }
 
    for (j = 0; j < height; j++) {
       GLubyte stencilVals[MAX_WIDTH];
