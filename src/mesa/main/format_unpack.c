@@ -936,7 +936,7 @@ unpack_INTENSITY_FLOAT16(const void *src, GLfloat dst[][4], GLuint n)
       dst[i][RCOMP] =
       dst[i][GCOMP] =
       dst[i][BCOMP] =
-      dst[i][ACOMP] = s[i];
+      dst[i][ACOMP] = _mesa_half_to_float(s[i]);
    }
 }
 
