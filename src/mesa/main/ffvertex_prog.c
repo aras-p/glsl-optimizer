@@ -949,7 +949,7 @@ static struct ureg calculate_light_attenuation( struct tnl_program *p,
 {
    struct ureg attenuation = register_param3(p, STATE_LIGHT, i,
 					     STATE_ATTENUATION);
-   struct ureg att = get_temp(p);
+   struct ureg att = undef;
 
    /* Calculate spot attenuation:
     */
@@ -958,6 +958,8 @@ static struct ureg calculate_light_attenuation( struct tnl_program *p,
 						  STATE_LIGHT_SPOT_DIR_NORMALIZED, i);
       struct ureg spot = get_temp(p);
       struct ureg slt = get_temp(p);
+
+      att = get_temp(p);
 
       emit_op2(p, OPCODE_DP3, spot, 0, negate(VPpli), spot_dir_norm);
       emit_op2(p, OPCODE_SLT, slt, 0, swizzle1(spot_dir_norm,W), spot);
@@ -968,9 +970,13 @@ static struct ureg calculate_light_attenuation( struct tnl_program *p,
       release_temp(p, slt);
    }
 
-   /* Calculate distance attenuation:
+   /* Calculate distance attenuation(See formula (2.4) at glspec 2.1 page 62):
+    *
+    * Skip the calucation when _dist_ is undefined(light_eyepos3_is_zero)
     */
-   if (p->state->unit[i].light_attenuated) {
+   if (p->state->unit[i].light_attenuated && !is_undef(dist)) {
+      if (is_undef(att))
+         att = get_temp(p);
       /* 1/d,d,d,1/d */
       emit_op1(p, OPCODE_RCP, dist, WRITEMASK_YZ, dist);
       /* 1,d,d*d,1/d */
@@ -1113,73 +1119,54 @@ static void build_lighting( struct tnl_program *p )
       if (p->state->unit[i].light_enabled) {
 	 struct ureg half = undef;
 	 struct ureg att = undef, VPpli = undef;
+	 struct ureg dist = undef;
 
 	 count++;
+         if (p->state->unit[i].light_eyepos3_is_zero) {
+             VPpli = register_param3(p, STATE_INTERNAL,
+                                     STATE_LIGHT_POSITION_NORMALIZED, i);
+         } else {
+            struct ureg Ppli = register_param3(p, STATE_INTERNAL,
+                                               STATE_LIGHT_POSITION, i);
+            struct ureg V = get_eye_position(p);
 
-	 if (p->state->unit[i].light_eyepos3_is_zero) {
-	    /* Can used precomputed constants in this case.
-	     * Attenuation never applies to infinite lights.
-	     */
-	    VPpli = register_param3(p, STATE_INTERNAL,
-				    STATE_LIGHT_POSITION_NORMALIZED, i);
+            VPpli = get_temp(p);
+            dist = get_temp(p);
 
-            if (!p->state->material_shininess_is_zero) {
-               if (p->state->light_local_viewer) {
-                  struct ureg eye_hat = get_eye_position_normalized(p);
-                  half = get_temp(p);
-                  emit_op2(p, OPCODE_SUB, half, 0, VPpli, eye_hat);
-                  emit_normalize_vec3(p, half, half);
-               }
-               else {
-                  half = register_param3(p, STATE_INTERNAL,
-                                         STATE_LIGHT_HALF_VECTOR, i);
-               }
-            }
-	 }
-	 else {
-	    struct ureg Ppli = register_param3(p, STATE_INTERNAL,
-					       STATE_LIGHT_POSITION, i);
-	    struct ureg V = get_eye_position(p);
-	    struct ureg dist = get_temp(p);
+            /* Calculate VPpli vector
+             */
+            emit_op2(p, OPCODE_SUB, VPpli, 0, Ppli, V);
 
-	    VPpli = get_temp(p);
+            /* Normalize VPpli.  The dist value also used in
+             * attenuation below.
+             */
+            emit_op2(p, OPCODE_DP3, dist, 0, VPpli, VPpli);
+            emit_op1(p, OPCODE_RSQ, dist, 0, dist);
+            emit_op2(p, OPCODE_MUL, VPpli, 0, VPpli, dist);
+         }
 
-	    /* Calculate VPpli vector
-	     */
-	    emit_op2(p, OPCODE_SUB, VPpli, 0, Ppli, V);
+         /* Calculate attenuation:
+          */
+         att = calculate_light_attenuation(p, i, VPpli, dist);
+         release_temp(p, dist);
 
-	    /* Normalize VPpli.  The dist value also used in
-	     * attenuation below.
-	     */
-	    emit_op2(p, OPCODE_DP3, dist, 0, VPpli, VPpli);
-	    emit_op1(p, OPCODE_RSQ, dist, 0, dist);
-	    emit_op2(p, OPCODE_MUL, VPpli, 0, VPpli, dist);
-
-	    /* Calculate attenuation:
-	     */
-	    if (!p->state->unit[i].light_spotcutoff_is_180 ||
-		p->state->unit[i].light_attenuated) {
-	       att = calculate_light_attenuation(p, i, VPpli, dist);
-	    }
-
-	    /* Calculate viewer direction, or use infinite viewer:
-	     */
-            if (!p->state->material_shininess_is_zero) {
+	 /* Calculate viewer direction, or use infinite viewer:
+	  */
+         if (!p->state->material_shininess_is_zero) {
+            if (p->state->light_local_viewer) {
+               struct ureg eye_hat = get_eye_position_normalized(p);
                half = get_temp(p);
-
-               if (p->state->light_local_viewer) {
-                  struct ureg eye_hat = get_eye_position_normalized(p);
-                  emit_op2(p, OPCODE_SUB, half, 0, VPpli, eye_hat);
-               }
-               else {
-                  struct ureg z_dir = swizzle(get_identity_param(p),X,Y,W,Z);
-                  emit_op2(p, OPCODE_ADD, half, 0, VPpli, z_dir);
-               }
-
+               emit_op2(p, OPCODE_SUB, half, 0, VPpli, eye_hat);
+               emit_normalize_vec3(p, half, half);
+            } else if (p->state->unit[i].light_eyepos3_is_zero) {
+               half = register_param3(p, STATE_INTERNAL,
+                                      STATE_LIGHT_HALF_VECTOR, i);
+            } else {
+               struct ureg z_dir = swizzle(get_identity_param(p),X,Y,W,Z);
+               half = get_temp(p);
+               emit_op2(p, OPCODE_ADD, half, 0, VPpli, z_dir);
                emit_normalize_vec3(p, half, half);
             }
-
-	    release_temp(p, dist);
 	 }
 
 	 /* Calculate dot products:
