@@ -1010,6 +1010,11 @@ static int merge_inst_groups(struct r600_bytecode *bc, struct r600_bytecode_alu 
 					result[i] = prev[i];
 					result[4] = slots[i];
 				} else if (is_alu_any_unit_inst(bc, prev[i])) {
+					if (slots[i]->dst.sel == prev[i]->dst.sel &&
+						(slots[i]->dst.write == 1 || slots[i]->is_op3) &&
+						(prev[i]->dst.write == 1 || prev[i]->is_op3))
+						return 0;
+
 					result[i] = slots[i];
 					result[4] = prev[i];
 				} else
@@ -1018,8 +1023,16 @@ static int merge_inst_groups(struct r600_bytecode *bc, struct r600_bytecode_alu 
 				return 0;
 		} else if(!slots[i]) {
 			continue;
-		} else
+		} else {
+			if (max_slots == 5 && slots[i] && prev[4] &&
+					slots[i]->dst.sel == prev[4]->dst.sel &&
+					slots[i]->dst.chan == prev[4]->dst.chan &&
+					(slots[i]->dst.write == 1 || slots[i]->is_op3) &&
+					(prev[4]->dst.write == 1 || prev[4]->is_op3))
+				return 0;
+
 			result[i] = slots[i];
+		}
 
 		alu = slots[i];
 		num_once_inst += is_alu_once_inst(bc, alu);
