@@ -355,6 +355,28 @@ brw_predraw_resolve_buffers(struct brw_context *brw)
    }
 }
 
+/**
+ * \brief Call this after drawing to mark which buffers need resolving
+ *
+ * If the depth buffer was written to and if it has an accompanying HiZ
+ * buffer, then mark that it needs a depth resolve.
+ *
+ * (In the future, this will also mark needed MSAA resolves).
+ */
+static void brw_postdraw_set_buffers_need_resolve(struct brw_context *brw)
+{
+   struct gl_context *ctx = &brw->intel.ctx;
+   struct gl_framebuffer *fb = ctx->DrawBuffer;
+   struct intel_renderbuffer *depth_irb =
+	 intel_get_renderbuffer(fb, BUFFER_DEPTH);
+
+   if (depth_irb &&
+       ctx->Depth.Mask &&
+       !brw->hiz.op) {
+      intel_renderbuffer_set_needs_depth_resolve(depth_irb);
+   }
+}
+
 /* May fail if out of video memory for texture or vbo upload, or on
  * fallback conditions.
  */
@@ -483,6 +505,7 @@ retry:
  out:
 
    brw_state_cache_check_size(brw);
+   brw_postdraw_set_buffers_need_resolve(brw);
 
    return retval;
 }
