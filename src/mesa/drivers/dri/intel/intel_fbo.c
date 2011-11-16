@@ -946,42 +946,52 @@ intel_framebuffer_renderbuffer(struct gl_context * ctx,
    intel_draw_buffer(ctx);
 }
 
+/**
+ * NOTE: The 'att' parameter is a kludge that will soon be removed. Its
+ * presence allows us to refactor the wrapping of depthstencil textures that
+ * use separate stencil in two easily manageable steps, rather than in one
+ * large, hairy step. First, refactor the common wrapping code used by all
+ * texture formats. Second, refactor the separate stencil code paths.
+ */
 static bool
-intel_update_wrapper(struct gl_context *ctx, struct intel_renderbuffer *irb, 
-		     struct gl_renderbuffer_attachment *att)
+intel_renderbuffer_update_wrapper(struct intel_context *intel,
+                                  struct intel_renderbuffer *irb,
+                                  struct intel_mipmap_tree *mt,
+                                  uint32_t level,
+                                  uint32_t layer,
+                                  gl_format format,
+                                  GLenum internal_format,
+                                  struct gl_renderbuffer_attachment *att)
 {
+   struct gl_renderbuffer *rb = &irb->Base;
+
+   /* The image variables are a kludge. See the note above for the att
+    * parameter.
+    */
    struct gl_texture_image *texImage = _mesa_get_attachment_teximage(att);
    struct intel_texture_image *intel_image = intel_texture_image(texImage);
-   int width, height, depth;
 
-   if (!intel_span_supports_format(texImage->TexFormat)) {
+   rb->Format = format;
+   if (!intel_span_supports_format(rb->Format)) {
       DBG("Render to texture BAD FORMAT %s\n",
-	  _mesa_get_format_name(texImage->TexFormat));
+	  _mesa_get_format_name(rb->Format));
       return false;
    } else {
-      DBG("Render to texture %s\n", _mesa_get_format_name(texImage->TexFormat));
+      DBG("Render to texture %s\n", _mesa_get_format_name(rb->Format));
    }
 
-   intel_miptree_get_dimensions_for_image(texImage, &width, &height, &depth);
-
-   irb->Base.Format = texImage->TexFormat;
-   irb->Base.DataType = intel_mesa_format_to_rb_datatype(texImage->TexFormat);
-   irb->Base.InternalFormat = texImage->InternalFormat;
-   irb->Base._BaseFormat = _mesa_base_tex_format(ctx, irb->Base.InternalFormat);
-   irb->Base.Width = width;
-   irb->Base.Height = height;
+   rb->InternalFormat = internal_format;
+   rb->DataType = intel_mesa_format_to_rb_datatype(rb->Format);
+   rb->_BaseFormat = _mesa_get_format_base_format(rb->Format);
+   rb->Width = mt->level[level].width;
+   rb->Height = mt->level[level].height;
 
    irb->Base.Delete = intel_delete_renderbuffer;
    irb->Base.AllocStorage = intel_nop_alloc_storage;
 
-   irb->mt_level = att->TextureLevel;
-   if (texImage->TexObject->Target == GL_TEXTURE_CUBE_MAP) {
-      assert(att->Zoffset == 0);
-      irb->mt_layer = att->CubeMapFace;
-   } else {
-      assert(att->CubeMapFace == 0);
-      irb->mt_layer= att->Zoffset;
-   }
+   intel_miptree_check_level_layer(mt, level, layer);
+   irb->mt_level = level;
+   irb->mt_layer = layer;
 
    if (intel_image->stencil_rb) {
       /*  The tex image has packed depth/stencil format, but is using separate
@@ -1004,29 +1014,51 @@ intel_update_wrapper(struct gl_context *ctx, struct intel_renderbuffer *irb,
       depth_irb = intel_renderbuffer(intel_image->depth_rb);
       depth_irb->mt_level = irb->mt_level;
       depth_irb->mt_layer = irb->mt_layer;
+      intel_renderbuffer_set_draw_offset(depth_irb);
 
       stencil_irb = intel_renderbuffer(intel_image->stencil_rb);
       stencil_irb->mt_level = irb->mt_level;
       stencil_irb->mt_layer = irb->mt_layer;
+      intel_renderbuffer_set_draw_offset(stencil_irb);
    } else {
       intel_miptree_reference(&irb->mt, intel_image->mt);
+      intel_renderbuffer_set_draw_offset(irb);
    }
+
    return true;
 }
 
 /**
- * When glFramebufferTexture[123]D is called this function sets up the
- * gl_renderbuffer wrapper around the texture image.
- * This will have the region info needed for hardware rendering.
+ * \brief Wrap a renderbuffer around a single slice of a miptree.
+ *
+ * Called by glFramebufferTexture*(). This just allocates a
+ * ``struct intel_renderbuffer`` then calls
+ * intel_renderbuffer_update_wrapper() to do the real work.
+ *
+ * NOTE: The 'att' parameter is a kludge that will soon be removed. Its
+ * presence allows us to refactor the wrapping of depthstencil textures that
+ * use separate stencil in two easily manageable steps, rather than in one
+ * large, hairy step. First, refactor the common wrapping code used by all
+ * texture formats. Second, refactor the separate stencil code paths.
+ *
+ * \see intel_renderbuffer_update_wrapper()
  */
-static struct intel_renderbuffer *
-intel_wrap_texture(struct gl_context * ctx,
-                   struct gl_renderbuffer_attachment *att)
+static struct intel_renderbuffer*
+intel_renderbuffer_wrap_miptree(struct intel_context *intel,
+                                struct intel_mipmap_tree *mt,
+                                uint32_t level,
+                                uint32_t layer,
+                                gl_format format,
+                                GLenum internal_format,
+                                struct gl_renderbuffer_attachment *att)
+
 {
    const GLuint name = ~0;   /* not significant, but distinct for debugging */
+   struct gl_context *ctx = &intel->ctx;
    struct intel_renderbuffer *irb;
 
-   /* make an intel_renderbuffer to wrap the texture image */
+   intel_miptree_check_level_layer(mt, level, layer);
+
    irb = CALLOC_STRUCT(intel_renderbuffer);
    if (!irb) {
       _mesa_error(ctx, GL_OUT_OF_MEMORY, "glFramebufferTexture");
@@ -1036,7 +1068,10 @@ intel_wrap_texture(struct gl_context * ctx,
    _mesa_init_renderbuffer(&irb->Base, name);
    irb->Base.ClassID = INTEL_RB_CLASS;
 
-   if (!intel_update_wrapper(ctx, irb, att)) {
+   if (!intel_renderbuffer_update_wrapper(intel, irb,
+                                          mt, level, layer,
+                                          format, internal_format,
+                                          att)) {
       free(irb);
       return NULL;
    }
@@ -1124,11 +1159,21 @@ intel_render_texture(struct gl_context * ctx,
                      struct gl_framebuffer *fb,
                      struct gl_renderbuffer_attachment *att)
 {
+   struct intel_context *intel = intel_context(ctx);
    struct gl_texture_image *image = _mesa_get_attachment_teximage(att);
    struct intel_renderbuffer *irb = intel_renderbuffer(att->Renderbuffer);
    struct intel_texture_image *intel_image = intel_texture_image(image);
+   struct intel_mipmap_tree *mt = intel_image->mt;
 
    (void) fb;
+
+   int layer;
+   if (att->CubeMapFace > 0) {
+      assert(att->Zoffset == 0);
+      layer = att->CubeMapFace;
+   } else {
+      layer = att->Zoffset;
+   }
 
    if (!intel_image->mt) {
       /* Fallback on drawing to a texture that doesn't have a miptree
@@ -1139,7 +1184,14 @@ intel_render_texture(struct gl_context * ctx,
       return;
    }
    else if (!irb) {
-      irb = intel_wrap_texture(ctx, att);
+      irb = intel_renderbuffer_wrap_miptree(intel,
+                                            mt,
+                                            att->TextureLevel,
+                                            layer,
+                                            image->TexFormat,
+                                            image->InternalFormat,
+                                            att);
+
       if (irb) {
          /* bind the wrapper to the attachment point */
          _mesa_reference_renderbuffer(&att->Renderbuffer, &irb->Base);
@@ -1151,7 +1203,11 @@ intel_render_texture(struct gl_context * ctx,
       }
    }
 
-   if (!intel_update_wrapper(ctx, irb, att)) {
+   if (!intel_renderbuffer_update_wrapper(intel, irb,
+                                          mt, att->TextureLevel, layer,
+                                          image->TexFormat,
+                                          image->InternalFormat,
+                                          att)) {
        _mesa_reference_renderbuffer(&att->Renderbuffer, NULL);
        _swrast_render_texture(ctx, fb, att);
        return;
@@ -1162,7 +1218,6 @@ intel_render_texture(struct gl_context * ctx,
        att->Texture->Name, image->Width, image->Height,
        irb->Base.RefCount);
 
-   intel_renderbuffer_set_draw_offset(irb);
    intel_image->used_as_render_target = true;
 
 #ifndef I915
