@@ -125,6 +125,11 @@ intel_map_renderbuffer_gtt(struct gl_context *ctx,
 
    assert(irb->mt);
 
+   intel_renderbuffer_resolve_depth(intel, irb);
+   if (mode & GL_MAP_WRITE_BIT) {
+      intel_renderbuffer_set_needs_hiz_resolve(irb);
+   }
+
    irb->map_mode = mode;
    irb->map_x = x;
    irb->map_y = y;
