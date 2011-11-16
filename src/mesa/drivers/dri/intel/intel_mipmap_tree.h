@@ -285,13 +285,70 @@ intel_miptree_s8z24_gather(struct intel_context *intel,
                            uint32_t layer);
 
 /**
+ * \name Miptree HiZ functions
+ * \{
+ *
+ * It is safe to call the "slice_set_need_resolve" and "slice_resolve"
+ * functions on a miptree without HiZ. In that case, each function is a no-op.
+ */
+
+/**
  * \brief Allocate the miptree's embedded HiZ miptree.
  * \see intel_mipmap_tree:hiz_mt
  * \return false if allocation failed
  */
+
 bool
 intel_miptree_alloc_hiz(struct intel_context *intel,
 			struct intel_mipmap_tree *mt);
+
+void
+intel_miptree_slice_set_needs_hiz_resolve(struct intel_mipmap_tree *mt,
+                                          uint32_t level,
+					  uint32_t depth);
+void
+intel_miptree_slice_set_needs_depth_resolve(struct intel_mipmap_tree *mt,
+                                            uint32_t level,
+					    uint32_t depth);
+void
+intel_miptree_all_slices_set_need_hiz_resolve(struct intel_mipmap_tree *mt);
+
+void
+intel_miptree_all_slices_set_need_depth_resolve(struct intel_mipmap_tree *mt);
+
+/**
+ * \return false if no resolve was needed
+ */
+bool
+intel_miptree_slice_resolve_hiz(struct intel_context *intel,
+				struct intel_mipmap_tree *mt,
+				unsigned int level,
+				unsigned int depth);
+
+/**
+ * \return false if no resolve was needed
+ */
+bool
+intel_miptree_slice_resolve_depth(struct intel_context *intel,
+				  struct intel_mipmap_tree *mt,
+				  unsigned int level,
+				  unsigned int depth);
+
+/**
+ * \return false if no resolve was needed
+ */
+bool
+intel_miptree_all_slices_resolve_hiz(struct intel_context *intel,
+				     struct intel_mipmap_tree *mt);
+
+/**
+ * \return false if no resolve was needed
+ */
+bool
+intel_miptree_all_slices_resolve_depth(struct intel_context *intel,
+				       struct intel_mipmap_tree *mt);
+
+/**\}*/
 
 /* i915_mipmap_tree.c:
  */

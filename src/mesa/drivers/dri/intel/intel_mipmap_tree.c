@@ -29,6 +29,7 @@
 #include "intel_context.h"
 #include "intel_mipmap_tree.h"
 #include "intel_regions.h"
+#include "intel_resolve_map.h"
 #include "intel_span.h"
 #include "intel_tex_layout.h"
 #include "intel_tex.h"
@@ -40,7 +41,6 @@
 #include "main/teximage.h"
 
 #define FILE_DEBUG_FLAG DEBUG_MIPTREE
-
 
 static GLenum
 target_to_target(GLenum target)
@@ -263,6 +263,7 @@ intel_miptree_release(struct intel_mipmap_tree **mt)
       intel_region_release(&((*mt)->region));
       intel_miptree_release(&(*mt)->stencil_mt);
       intel_miptree_release(&(*mt)->hiz_mt);
+      intel_resolve_map_clear(&(*mt)->hiz_map);
 
       for (i = 0; i < MAX_TEXTURE_LEVELS; i++) {
 	 free((*mt)->level[i].slice);
@@ -594,4 +595,119 @@ intel_miptree_alloc_hiz(struct intel_context *intel,
                                      mt->depth0,
                                      true);
    return mt->hiz_mt != NULL;
+}
+
+void
+intel_miptree_slice_set_needs_hiz_resolve(struct intel_mipmap_tree *mt,
+					  uint32_t level,
+					  uint32_t layer)
+{
+   intel_miptree_check_level_layer(mt, level, layer);
+
+   if (!mt->hiz_mt)
+      return;
+
+   intel_resolve_map_set(&mt->hiz_map,
+			 level, layer, INTEL_NEED_HIZ_RESOLVE);
+}
+
+
+void
+intel_miptree_slice_set_needs_depth_resolve(struct intel_mipmap_tree *mt,
+                                            uint32_t level,
+                                            uint32_t layer)
+{
+   intel_miptree_check_level_layer(mt, level, layer);
+
+   if (!mt->hiz_mt)
+      return;
+
+   intel_resolve_map_set(&mt->hiz_map,
+			 level, layer, INTEL_NEED_DEPTH_RESOLVE);
+}
+
+typedef void (*resolve_func_t)(struct intel_context *intel,
+			       struct intel_mipmap_tree *mt,
+			       uint32_t level,
+			       uint32_t layer);
+
+static bool
+intel_miptree_slice_resolve(struct intel_context *intel,
+			    struct intel_mipmap_tree *mt,
+			    uint32_t level,
+			    uint32_t layer,
+			    enum intel_need_resolve need,
+			    resolve_func_t func)
+{
+   intel_miptree_check_level_layer(mt, level, layer);
+
+   struct intel_resolve_map *item =
+	 intel_resolve_map_get(&mt->hiz_map, level, layer);
+
+   if (!item || item->need != need)
+      return false;
+
+   func(intel, mt, level, layer);
+   intel_resolve_map_remove(item);
+   return true;
+}
+
+bool
+intel_miptree_slice_resolve_hiz(struct intel_context *intel,
+				struct intel_mipmap_tree *mt,
+				uint32_t level,
+				uint32_t layer)
+{
+   return intel_miptree_slice_resolve(intel, mt, level, layer,
+				      INTEL_NEED_HIZ_RESOLVE,
+				      intel->vtbl.resolve_hiz_slice);
+}
+
+bool
+intel_miptree_slice_resolve_depth(struct intel_context *intel,
+				  struct intel_mipmap_tree *mt,
+				  uint32_t level,
+				  uint32_t layer)
+{
+   return intel_miptree_slice_resolve(intel, mt, level, layer,
+				      INTEL_NEED_DEPTH_RESOLVE,
+				      intel->vtbl.resolve_depth_slice);
+}
+
+static bool
+intel_miptree_all_slices_resolve(struct intel_context *intel,
+				 struct intel_mipmap_tree *mt,
+				 enum intel_need_resolve need,
+				 resolve_func_t func)
+{
+   bool did_resolve = false;
+   struct intel_resolve_map *i;
+
+   for (i = mt->hiz_map.next; i; i = i->next) {
+      if (i->need != need)
+	 continue;
+      func(intel, mt, i->level, i->layer);
+      intel_resolve_map_remove(i);
+      did_resolve = true;
+   }
+
+   return did_resolve;
+}
+
+bool
+intel_miptree_all_slices_resolve_hiz(struct intel_context *intel,
+				     struct intel_mipmap_tree *mt)
+{
+   return intel_miptree_all_slices_resolve(intel, mt,
+					   INTEL_NEED_HIZ_RESOLVE,
+					   intel->vtbl.resolve_hiz_slice);
+}
+
+bool
+intel_miptree_all_slices_resolve_depth(struct intel_context *intel,
+				       struct intel_mipmap_tree *mt)
+{
+   return intel_miptree_all_slices_resolve(intel, mt,
+					   INTEL_NEED_DEPTH_RESOLVE,
+					   intel->vtbl.resolve_depth_slice);
 }
