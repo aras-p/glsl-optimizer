@@ -885,13 +885,6 @@ i830_is_hiz_depth_format(struct intel_context *intel, gl_format format)
    return false;
 }
 
-static void
-i830_hiz_resolve_noop(struct intel_context *intel,
-		      struct intel_region *region)
-{
-   /* empty */
-}
-
 void
 i830InitVtbl(struct i830_context *i830)
 {
@@ -910,6 +903,4 @@ i830InitVtbl(struct i830_context *i830)
    i830->intel.vtbl.invalidate_state = i830_invalidate_state;
    i830->intel.vtbl.render_target_supported = i830_render_target_supported;
    i830->intel.vtbl.is_hiz_depth_format = i830_is_hiz_depth_format;
-   i830->intel.vtbl.hiz_resolve_depthbuffer = i830_hiz_resolve_noop;
-   i830->intel.vtbl.hiz_resolve_hizbuffer = i830_hiz_resolve_noop;
 }

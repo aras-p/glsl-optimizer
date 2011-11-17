@@ -218,12 +218,6 @@ static bool brw_is_hiz_depth_format(struct intel_context *intel,
    return intel->has_hiz && (format == MESA_FORMAT_X8_Z24);
 }
 
-static void brw_hiz_resolve_noop(struct intel_context *intel,
-				 struct intel_region *depth_region)
-{
-   /* empty */
-}
-
 void brwInitVtbl( struct brw_context *brw )
 {
    brw->intel.vtbl.check_vertex_size = 0;
@@ -244,9 +238,6 @@ void brwInitVtbl( struct brw_context *brw )
    if (brw->intel.has_hiz) {
       brw->intel.vtbl.hiz_resolve_hizbuffer = gen6_hiz_resolve_hizbuffer;
       brw->intel.vtbl.hiz_resolve_depthbuffer = gen6_hiz_resolve_depthbuffer;
-   } else {
-      brw->intel.vtbl.hiz_resolve_hizbuffer = brw_hiz_resolve_noop;
-      brw->intel.vtbl.hiz_resolve_depthbuffer = brw_hiz_resolve_noop;
    }
 
    if (brw->intel.gen >= 7) {
