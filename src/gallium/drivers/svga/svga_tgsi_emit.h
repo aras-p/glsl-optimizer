@@ -266,6 +266,8 @@ dst_register( unsigned file,
    assert(number < (1 << 11));
    assert(file <= SVGA3DREG_PREDICATE);
 
+   assert(number < SVGA3D_TEMPREG_MAX);
+
    dest.value = 0;
    dest.num = number;
    dest.type_upper = file >> 3;

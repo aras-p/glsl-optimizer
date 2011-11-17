@@ -290,6 +290,10 @@ svga_tgsi_translate( const struct svga_shader *shader,
    emit.nr_hw_float_const = (emit.imm_start + emit.info.file_max[TGSI_FILE_IMMEDIATE] + 1);
 
    emit.nr_hw_temp = emit.info.file_max[TGSI_FILE_TEMPORARY] + 1;
+   
+   if (emit.nr_hw_temp >= SVGA3D_TEMPREG_MAX)
+      goto fail;
+
    emit.in_main_func = TRUE;
 
    if (!svga_shader_emit_header( &emit ))
