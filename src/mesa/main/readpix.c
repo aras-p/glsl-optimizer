@@ -60,7 +60,7 @@ fast_read_depth_pixels( struct gl_context *ctx,
    if (packing->SwapBytes)
       return GL_FALSE;
 
-   if (_mesa_get_format_datatype(rb->Format) != GL_UNSIGNED_INT)
+   if (_mesa_get_format_datatype(rb->Format) != GL_UNSIGNED_NORMALIZED)
       return GL_FALSE;
 
    if (!((type == GL_UNSIGNED_SHORT && rb->Format == MESA_FORMAT_Z16) ||
@@ -381,7 +381,7 @@ fast_read_depth_stencil_pixels_separate(struct gl_context *ctx,
    GLubyte *depthMap, *stencilMap;
    int depthStride, stencilStride, i, j;
 
-   if (_mesa_get_format_datatype(depthRb->Format) != GL_UNSIGNED_INT)
+   if (_mesa_get_format_datatype(depthRb->Format) != GL_UNSIGNED_NORMALIZED)
       return GL_FALSE;
 
    ctx->Driver.MapRenderbuffer(ctx, depthRb, x, y, width, height,

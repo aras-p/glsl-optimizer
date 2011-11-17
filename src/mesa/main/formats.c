@@ -414,7 +414,7 @@ static struct gl_format_info format_info[MESA_FORMAT_COUNT] =
       MESA_FORMAT_Z24_S8,          /* Name */
       "MESA_FORMAT_Z24_S8",        /* StrName */
       GL_DEPTH_STENCIL,            /* BaseFormat */
-      GL_UNSIGNED_INT,             /* DataType */
+      GL_UNSIGNED_NORMALIZED,      /* DataType */
       0, 0, 0, 0,                  /* Red/Green/Blue/AlphaBits */
       0, 0, 0, 24, 8,              /* Lum/Int/Index/Depth/StencilBits */
       1, 1, 4                      /* BlockWidth/Height,Bytes */
@@ -423,7 +423,7 @@ static struct gl_format_info format_info[MESA_FORMAT_COUNT] =
       MESA_FORMAT_S8_Z24,          /* Name */
       "MESA_FORMAT_S8_Z24",        /* StrName */
       GL_DEPTH_STENCIL,            /* BaseFormat */
-      GL_UNSIGNED_INT,             /* DataType */
+      GL_UNSIGNED_NORMALIZED,      /* DataType */
       0, 0, 0, 0,                  /* Red/Green/Blue/AlphaBits */
       0, 0, 0, 24, 8,              /* Lum/Int/Index/Depth/StencilBits */
       1, 1, 4                      /* BlockWidth/Height,Bytes */
@@ -432,7 +432,7 @@ static struct gl_format_info format_info[MESA_FORMAT_COUNT] =
       MESA_FORMAT_Z16,             /* Name */
       "MESA_FORMAT_Z16",           /* StrName */
       GL_DEPTH_COMPONENT,          /* BaseFormat */
-      GL_UNSIGNED_INT,             /* DataType */
+      GL_UNSIGNED_NORMALIZED,      /* DataType */
       0, 0, 0, 0,                  /* Red/Green/Blue/AlphaBits */
       0, 0, 0, 16, 0,              /* Lum/Int/Index/Depth/StencilBits */
       1, 1, 2                      /* BlockWidth/Height,Bytes */
@@ -441,7 +441,7 @@ static struct gl_format_info format_info[MESA_FORMAT_COUNT] =
       MESA_FORMAT_X8_Z24,          /* Name */
       "MESA_FORMAT_X8_Z24",        /* StrName */
       GL_DEPTH_COMPONENT,          /* BaseFormat */
-      GL_UNSIGNED_INT,             /* DataType */
+      GL_UNSIGNED_NORMALIZED,      /* DataType */
       0, 0, 0, 0,                  /* Red/Green/Blue/AlphaBits */
       0, 0, 0, 24, 0,              /* Lum/Int/Index/Depth/StencilBits */
       1, 1, 4                      /* BlockWidth/Height,Bytes */
@@ -450,7 +450,7 @@ static struct gl_format_info format_info[MESA_FORMAT_COUNT] =
       MESA_FORMAT_Z24_X8,          /* Name */
       "MESA_FORMAT_Z24_X8",        /* StrName */
       GL_DEPTH_COMPONENT,          /* BaseFormat */
-      GL_UNSIGNED_INT,             /* DataType */
+      GL_UNSIGNED_NORMALIZED,      /* DataType */
       0, 0, 0, 0,                  /* Red/Green/Blue/AlphaBits */
       0, 0, 0, 24, 0,              /* Lum/Int/Index/Depth/StencilBits */
       1, 1, 4                      /* BlockWidth/Height,Bytes */
@@ -459,7 +459,7 @@ static struct gl_format_info format_info[MESA_FORMAT_COUNT] =
       MESA_FORMAT_Z32,             /* Name */
       "MESA_FORMAT_Z32",           /* StrName */
       GL_DEPTH_COMPONENT,          /* BaseFormat */
-      GL_UNSIGNED_INT,             /* DataType */
+      GL_UNSIGNED_NORMALIZED,      /* DataType */
       0, 0, 0, 0,                  /* Red/Green/Blue/AlphaBits */
       0, 0, 0, 32, 0,              /* Lum/Int/Index/Depth/StencilBits */
       1, 1, 4                      /* BlockWidth/Height,Bytes */

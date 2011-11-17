@@ -986,11 +986,16 @@ _mesa_texstore_z32(TEXSTORE_PARAMS)
 {
    const GLuint depthScale = 0xffffffff;
    const GLuint texelBytes = _mesa_get_format_bytes(dstFormat);
-   const GLenum dstType = _mesa_get_format_datatype(dstFormat);
+   GLenum dstType;
    (void) dims;
    ASSERT(dstFormat == MESA_FORMAT_Z32 ||
           dstFormat == MESA_FORMAT_Z32_FLOAT);
    ASSERT(texelBytes == sizeof(GLuint));
+
+   if (dstFormat == MESA_FORMAT_Z32)
+      dstType = GL_UNSIGNED_INT;
+   else
+      dstType = GL_FLOAT;
 
    if (ctx->Pixel.DepthScale == 1.0f &&
        ctx->Pixel.DepthBias == 0.0f &&
