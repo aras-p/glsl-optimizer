@@ -120,6 +120,13 @@ struct intel_mipmap_tree
    GLenum target;
    gl_format format;
 
+   /**
+    * The X offset of each image in the miptree must be aligned to this. See
+    * the "Alignment Unit Size" section of the BSpec.
+    */
+   unsigned int align_w;
+   unsigned int align_h; /**< \see align_w */
+
    GLuint first_level;
    GLuint last_level;
 

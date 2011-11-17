@@ -43,17 +43,13 @@ static void
 brw_miptree_layout_texture_array(struct intel_context *intel,
 				 struct intel_mipmap_tree *mt)
 {
-   GLuint align_w;
-   GLuint align_h;
    GLuint level;
    GLuint qpitch = 0;
    int h0, h1, q;
 
-   intel_get_texture_alignment_unit(mt->format, &align_w, &align_h);
-
-   h0 = ALIGN(mt->height0, align_h);
-   h1 = ALIGN(minify(mt->height0), align_h);
-   qpitch = (h0 + h1 + (intel->gen >= 7 ? 12 : 11) * align_h);
+   h0 = ALIGN(mt->height0, mt->align_h);
+   h1 = ALIGN(minify(mt->height0), mt->align_h);
+   qpitch = (h0 + h1 + (intel->gen >= 7 ? 12 : 11) * mt->align_h);
    if (mt->compressed)
       qpitch /= 4;
 
@@ -70,9 +66,6 @@ brw_miptree_layout_texture_array(struct intel_context *intel,
 void
 brw_miptree_layout(struct intel_context *intel, struct intel_mipmap_tree *mt)
 {
-   /* XXX: these vary depending on image format: */
-   /* GLint align_w = 4; */
-
    switch (mt->target) {
    case GL_TEXTURE_CUBE_MAP:
       if (intel->gen >= 5) {
@@ -93,18 +86,15 @@ brw_miptree_layout(struct intel_context *intel, struct intel_mipmap_tree *mt)
       GLuint pack_x_pitch, pack_x_nr;
       GLuint pack_y_pitch;
       GLuint level;
-      GLuint align_h = 2;
-      GLuint align_w = 4;
 
       mt->total_height = 0;
-      intel_get_texture_alignment_unit(mt->format, &align_w, &align_h);
 
       if (mt->compressed) {
-          mt->total_width = ALIGN(width, align_w);
+          mt->total_width = ALIGN(width, mt->align_w);
           pack_y_pitch = (height + 3) / 4;
       } else {
 	 mt->total_width = mt->width0;
-	 pack_y_pitch = ALIGN(mt->height0, align_h);
+	 pack_y_pitch = ALIGN(mt->height0, mt->align_h);
       }
 
       pack_x_pitch = width;
@@ -139,8 +129,8 @@ brw_miptree_layout(struct intel_context *intel, struct intel_mipmap_tree *mt)
 	 if (mt->compressed) {
 	    pack_y_pitch = (height + 3) / 4;
 
-	    if (pack_x_pitch > ALIGN(width, align_w)) {
-	       pack_x_pitch = ALIGN(width, align_w);
+	    if (pack_x_pitch > ALIGN(width, mt->align_w)) {
+	       pack_x_pitch = ALIGN(width, mt->align_w);
 	       pack_x_nr <<= 1;
 	    }
 	 } else {
@@ -152,7 +142,7 @@ brw_miptree_layout(struct intel_context *intel, struct intel_mipmap_tree *mt)
 
 	    if (pack_y_pitch > 2) {
 	       pack_y_pitch >>= 1;
-	       pack_y_pitch = ALIGN(pack_y_pitch, align_h);
+	       pack_y_pitch = ALIGN(pack_y_pitch, mt->align_h);
 	    }
 	 }
 

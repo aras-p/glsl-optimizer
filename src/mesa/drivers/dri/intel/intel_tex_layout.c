@@ -52,7 +52,6 @@ intel_get_texture_alignment_unit(gl_format format,
 
 void i945_miptree_layout_2d(struct intel_mipmap_tree *mt)
 {
-   GLuint align_h, align_w;
    GLuint level;
    GLuint x = 0;
    GLuint y = 0;
@@ -61,10 +60,9 @@ void i945_miptree_layout_2d(struct intel_mipmap_tree *mt)
    GLuint depth = mt->depth0; /* number of array layers. */
 
    mt->total_width = mt->width0;
-   intel_get_texture_alignment_unit(mt->format, &align_w, &align_h);
 
    if (mt->compressed) {
-       mt->total_width = ALIGN(mt->width0, align_w);
+       mt->total_width = ALIGN(mt->width0, mt->align_w);
    }
 
    /* May need to adjust width to accomodate the placement of
@@ -76,10 +74,10 @@ void i945_miptree_layout_2d(struct intel_mipmap_tree *mt)
        GLuint mip1_width;
 
        if (mt->compressed) {
-           mip1_width = ALIGN(minify(mt->width0), align_w)
-               + ALIGN(minify(minify(mt->width0)), align_w);
+           mip1_width = ALIGN(minify(mt->width0), mt->align_w)
+               + ALIGN(minify(minify(mt->width0)), mt->align_w);
        } else {
-           mip1_width = ALIGN(minify(mt->width0), align_w)
+           mip1_width = ALIGN(minify(mt->width0), mt->align_w)
                + minify(minify(mt->width0));
        }
 
@@ -96,9 +94,9 @@ void i945_miptree_layout_2d(struct intel_mipmap_tree *mt)
       intel_miptree_set_level_info(mt, level, x, y, width,
 				   height, depth);
 
-      img_height = ALIGN(height, align_h);
+      img_height = ALIGN(height, mt->align_h);
       if (mt->compressed)
-	 img_height /= align_h;
+	 img_height /= mt->align_h;
 
       /* Because the images are packed better, the final offset
        * might not be the maximal one:
@@ -108,7 +106,7 @@ void i945_miptree_layout_2d(struct intel_mipmap_tree *mt)
       /* Layout_below: step right after second mipmap.
        */
       if (level == mt->first_level + 1) {
-	 x += ALIGN(width, align_w);
+	 x += ALIGN(width, mt->align_w);
       }
       else {
 	 y += img_height;

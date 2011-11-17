@@ -89,6 +89,8 @@ intel_miptree_create_internal(struct intel_context *intel,
    mt->compressed = compress_byte ? 1 : 0;
    mt->refcount = 1; 
 
+   intel_get_texture_alignment_unit(format, &mt->align_w, &mt->align_h);
+
    if (target == GL_TEXTURE_CUBE_MAP) {
       assert(depth0 == 1);
       mt->depth0 = 6;
@@ -412,11 +414,8 @@ intel_miptree_copy_slice(struct intel_context *intel,
    assert(depth < src_mt->level[level].depth);
 
    if (dst_mt->compressed) {
-      uint32_t align_w, align_h;
-      intel_get_texture_alignment_unit(format,
-				       &align_w, &align_h);
-      height = ALIGN(height, align_h) / align_h;
-      width = ALIGN(width, align_w);
+      height = ALIGN(height, dst_mt->align_h) / dst_mt->align_h;
+      width = ALIGN(width, dst_mt->align_w);
    }
 
    uint32_t dst_x, dst_y, src_x, src_y;
