@@ -680,13 +680,9 @@ __DRIconfig **intelInitScreen2(__DRIscreen *psp)
       intelScreen->gen = 2;
    }
 
-   /*
-    * FIXME: The hiz and separate stencil fields need updating once the
-    * FIXME: features are completely implemented for a given chipset.
-    */
-   intelScreen->hw_has_separate_stencil = intelScreen->gen >= 7;
+   intelScreen->hw_has_separate_stencil = intelScreen->gen >= 6;
    intelScreen->hw_must_use_separate_stencil = intelScreen->gen >= 7;
-   intelScreen->hw_has_hiz = false;
+   intelScreen->hw_has_hiz = intelScreen->gen == 6; /* Not yet for gen7. */
    intelScreen->dri2_has_hiz = INTEL_DRI2_HAS_HIZ_UNKNOWN;
 
    intel_override_hiz(intelScreen);
