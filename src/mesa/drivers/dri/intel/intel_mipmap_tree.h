@@ -31,6 +31,7 @@
 #include <assert.h>
 
 #include "intel_regions.h"
+#include "intel_resolve_map.h"
 
 /* A layer on top of the intel_regions code which adds:
  *
@@ -58,6 +59,7 @@
  * temporary system buffers.
  */
 
+struct intel_resolve_map;
 struct intel_texture_image;
 
 /**
@@ -146,6 +148,17 @@ struct intel_mipmap_tree
     * \see intel_miptree_alloc_hiz()
     */
    struct intel_mipmap_tree *hiz_mt;
+
+   /**
+    * \brief Map of miptree slices to needed resolves.
+    *
+    * This is used only when the miptree has a child HiZ miptree.
+    *
+    * Let \c mt be a depth miptree with HiZ enabled. Then the resolve map is
+    * \c mt->hiz_map. The resolve map of the child HiZ miptree, \c
+    * mt->hiz_mt->hiz_map, is unused.
+    */
+   struct intel_resolve_map hiz_map;
 
    /**
     * \brief Stencil miptree for depthstencil textures.
