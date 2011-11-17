@@ -281,7 +281,6 @@ struct intel_context
 
    bool hw_stencil;
    bool hw_stipple;
-   bool depth_buffer_is_float;
    bool no_rast;
    bool always_flush_batch;
    bool always_flush_cache;

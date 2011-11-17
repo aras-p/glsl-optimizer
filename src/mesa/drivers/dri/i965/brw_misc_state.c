@@ -197,6 +197,37 @@ const struct brw_tracked_state brw_psp_urb_cbs = {
    .emit = upload_psp_urb_cbs,
 };
 
+uint32_t
+brw_depthbuffer_format(struct brw_context *brw)
+{
+   struct intel_context *intel = &brw->intel;
+   struct gl_context *ctx = &intel->ctx;
+   struct gl_framebuffer *fb = ctx->DrawBuffer;
+   struct intel_renderbuffer *drb = intel_get_renderbuffer(fb, BUFFER_DEPTH);
+   struct intel_renderbuffer *srb;
+
+   if (!drb &&
+       (srb = intel_get_renderbuffer(fb, BUFFER_STENCIL)) &&
+       srb->Base.Format == MESA_FORMAT_S8_Z24) {
+      drb = srb;
+   }
+
+   switch (drb->Base.Format) {
+   case MESA_FORMAT_Z16:
+      return BRW_DEPTHFORMAT_D16_UNORM;
+   case MESA_FORMAT_Z32_FLOAT:
+      return BRW_DEPTHFORMAT_D32_FLOAT;
+   case MESA_FORMAT_X8_Z24:
+      return BRW_DEPTHFORMAT_D24_UNORM_X8_UINT;
+   case MESA_FORMAT_S8_Z24:
+      return BRW_DEPTHFORMAT_D24_UNORM_S8_UINT;
+   default:
+      _mesa_problem(ctx, "Unexpected depth format %s\n",
+		    _mesa_get_format_name(drb->Base.Format));
+      return BRW_DEPTHFORMAT_D16_UNORM;
+   }
+}
+
 static void emit_depthbuffer(struct brw_context *brw)
 {
    struct intel_context *intel = &brw->intel;
@@ -309,28 +340,10 @@ static void emit_depthbuffer(struct brw_context *brw)
 
    } else {
       struct intel_region *region = depth_irb->mt->region;
-      unsigned int format;
       uint32_t tile_x, tile_y, offset;
 
       /* If using separate stencil, hiz must be enabled. */
       assert(!stencil_irb || hiz_region);
-
-      switch (region->cpp) {
-      case 2:
-	 format = BRW_DEPTHFORMAT_D16_UNORM;
-	 break;
-      case 4:
-	 if (intel->depth_buffer_is_float)
-	    format = BRW_DEPTHFORMAT_D32_FLOAT;
-	 else if (hiz_region)
-	    format = BRW_DEPTHFORMAT_D24_UNORM_X8_UINT;
-	 else
-	    format = BRW_DEPTHFORMAT_D24_UNORM_S8_UINT;
-	 break;
-      default:
-	 assert(0);
-	 return;
-      }
 
       offset = intel_renderbuffer_tile_offsets(depth_irb, &tile_x, &tile_y);
 
@@ -340,7 +353,7 @@ static void emit_depthbuffer(struct brw_context *brw)
       BEGIN_BATCH(len);
       OUT_BATCH(_3DSTATE_DEPTH_BUFFER << 16 | (len - 2));
       OUT_BATCH(((region->pitch * region->cpp) - 1) |
-		(format << 18) |
+		(brw_depthbuffer_format(brw) << 18) |
 		((hiz_region ? 1 : 0) << 21) | /* separate stencil enable */
 		((hiz_region ? 1 : 0) << 22) | /* hiz enable */
 		(BRW_TILEWALK_YMAJOR << 26) |

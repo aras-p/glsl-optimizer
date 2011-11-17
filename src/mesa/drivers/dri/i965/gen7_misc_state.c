@@ -29,34 +29,6 @@
 #include "brw_state.h"
 #include "brw_defines.h"
 
-unsigned int
-gen7_depth_format(struct brw_context *brw)
-{
-   struct intel_context *intel = &brw->intel;
-   struct gl_context *ctx = &intel->ctx;
-   struct gl_framebuffer *fb = ctx->DrawBuffer;
-   struct intel_renderbuffer *drb = intel_get_renderbuffer(fb, BUFFER_DEPTH);
-   struct intel_region *region = NULL;
-
-   if (drb)
-      region = drb->mt->region;
-   else
-      return BRW_DEPTHFORMAT_D32_FLOAT;
-
-   switch (region->cpp) {
-   case 2:
-      return BRW_DEPTHFORMAT_D16_UNORM;
-   case 4:
-      if (intel->depth_buffer_is_float)
-	 return BRW_DEPTHFORMAT_D32_FLOAT;
-      else
-	 return BRW_DEPTHFORMAT_D24_UNORM_X8_UINT;
-   default:
-      assert(!"Should not get here.");
-   }
-   return 0;
-}
-
 static void emit_depthbuffer(struct brw_context *brw)
 {
    struct intel_context *intel = &brw->intel;
@@ -110,7 +82,7 @@ static void emit_depthbuffer(struct brw_context *brw)
       BEGIN_BATCH(7);
       OUT_BATCH(GEN7_3DSTATE_DEPTH_BUFFER << 16 | (7 - 2));
       OUT_BATCH(((region->pitch * region->cpp) - 1) |
-		(gen7_depth_format(brw) << 18) |
+		(brw_depthbuffer_format(brw) << 18) |
 		(0 << 22) /* no HiZ buffer */ |
 		((srb != NULL && ctx->Stencil.WriteMask != 0) << 27) |
 		((ctx->Depth.Mask != 0) << 28) |

@@ -121,6 +121,11 @@ extern const struct brw_tracked_state gen7_wm_constant_surface;
 extern const struct brw_tracked_state gen7_wm_state;
 extern const struct brw_tracked_state gen7_wm_surfaces;
 
+/* brw_misc_state.c */
+uint32_t
+brw_depthbuffer_format(struct brw_context *brw);
+
+
 /***********************************************************************
  * brw_state.c
  */
@@ -197,9 +202,5 @@ void upload_default_color(struct brw_context *brw,
 uint32_t
 get_attr_override(struct brw_vue_map *vue_map, int urb_entry_read_offset,
                   int fs_attr, bool two_side_color);
-
-/* gen7_misc_state.c */
-unsigned int
-gen7_depth_format(struct brw_context *brw);
 
 #endif
