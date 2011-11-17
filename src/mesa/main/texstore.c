@@ -1350,6 +1350,32 @@ _mesa_texstore_argb8888(TEXSTORE_PARAMS)
    }
    else if (!ctx->_ImageTransferState &&
             !srcPacking->SwapBytes &&
+            dstFormat == MESA_FORMAT_ARGB8888 &&
+            srcFormat == GL_LUMINANCE_ALPHA &&
+            baseInternalFormat == GL_RGBA &&
+            srcType == GL_UNSIGNED_BYTE) {
+      /* special case of storing LA -> ARGB8888 */
+      int img, row, col;
+      const GLint srcRowStride =
+         _mesa_image_row_stride(srcPacking, srcWidth, srcFormat, srcType);
+      for (img = 0; img < srcDepth; img++) {
+         const GLubyte *srcRow = (const GLubyte *)
+            _mesa_image_address(dims, srcPacking, srcAddr, srcWidth,
+                                srcHeight, srcFormat, srcType, img, 0, 0);
+         GLubyte *dstRow = dstSlices[img];
+         for (row = 0; row < srcHeight; row++) {
+            GLuint *d4 = (GLuint *) dstRow;
+            for (col = 0; col < srcWidth; col++) {
+               GLubyte l = srcRow[col * 2 + 0], a = srcRow[col * 2 + 1];
+               d4[col] = PACK_COLOR_8888(a, l, l, l);
+            }
+            dstRow += dstRowStride;
+            srcRow += srcRowStride;
+         }
+      }
+   }
+   else if (!ctx->_ImageTransferState &&
+            !srcPacking->SwapBytes &&
 	    dstFormat == MESA_FORMAT_ARGB8888 &&
             srcFormat == GL_RGBA &&
 	    baseInternalFormat == GL_RGBA &&
