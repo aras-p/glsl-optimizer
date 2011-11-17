@@ -59,6 +59,7 @@ Target *Target::create(unsigned int chipset)
 {
    switch (chipset & 0xf0) {
    case 0xc0:
+   case 0xd0:
       return getTargetNVC0(chipset);
    case 0x50:
    case 0x80:
