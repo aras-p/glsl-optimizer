@@ -262,6 +262,7 @@ brw_update_texture_surface( struct gl_context *ctx, GLuint unit )
    struct brw_context *brw = brw_context(ctx);
    struct gl_texture_object *tObj = ctx->Texture.Unit[unit]._Current;
    struct intel_texture_object *intelObj = intel_texture_object(tObj);
+   struct intel_mipmap_tree *mt = intelObj->mt;
    struct gl_texture_image *firstImage = tObj->Image[0][tObj->BaseLevel];
    struct gl_sampler_object *sampler = _mesa_get_samplerobj(ctx, unit);
    const GLuint surf_index = SURF_INDEX_TEXTURE(unit);
@@ -294,7 +295,8 @@ brw_update_texture_surface( struct gl_context *ctx, GLuint unit )
 	      BRW_SURFACE_PITCH_SHIFT);
 
    surf[4] = 0;
-   surf[5] = 0;
+
+   surf[5] = (mt->align_h == 4) ? BRW_SURFACE_VERTICAL_ALIGN_ENABLE : 0;
 
    /* Emit relocation to surface contents */
    drm_intel_bo_emit_reloc(brw->intel.batch.bo,
@@ -447,6 +449,7 @@ brw_update_renderbuffer_surface(struct brw_context *brw,
    struct intel_context *intel = &brw->intel;
    struct gl_context *ctx = &intel->ctx;
    struct intel_renderbuffer *irb = intel_renderbuffer(rb);
+   struct intel_mipmap_tree *mt = irb->mt;
    struct intel_region *region = irb->mt->region;
    uint32_t *surf;
    uint32_t tile_x, tile_y;
@@ -509,7 +512,8 @@ brw_update_renderbuffer_surface(struct brw_context *brw,
    assert(tile_x % 4 == 0);
    assert(tile_y % 2 == 0);
    surf[5] = ((tile_x / 4) << BRW_SURFACE_X_OFFSET_SHIFT |
-	      (tile_y / 2) << BRW_SURFACE_Y_OFFSET_SHIFT);
+	      (tile_y / 2) << BRW_SURFACE_Y_OFFSET_SHIFT |
+	      (mt->align_h == 4 ? BRW_SURFACE_VERTICAL_ALIGN_ENABLE : 0));
 
    if (intel->gen < 6) {
       /* _NEW_COLOR */
