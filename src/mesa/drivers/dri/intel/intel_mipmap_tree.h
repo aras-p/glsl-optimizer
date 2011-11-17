@@ -28,6 +28,8 @@
 #ifndef INTEL_MIPMAP_TREE_H
 #define INTEL_MIPMAP_TREE_H
 
+#include <assert.h>
+
 #include "intel_regions.h"
 
 /* A layer on top of the intel_regions code which adds:
@@ -187,6 +189,17 @@ intel_miptree_create_for_renderbuffer(struct intel_context *intel,
                                       uint32_t cpp,
                                       uint32_t width,
                                       uint32_t height);
+
+/** \brief Assert that the level and layer are valid for the miptree. */
+static inline void
+intel_miptree_check_level_layer(struct intel_mipmap_tree *mt,
+                                uint32_t level,
+                                uint32_t layer)
+{
+   assert(level >= mt->first_level);
+   assert(level <= mt->last_level);
+   assert(layer < mt->level[level].depth);
+}
 
 int intel_miptree_pitch_align (struct intel_context *intel,
 			       struct intel_mipmap_tree *mt,
