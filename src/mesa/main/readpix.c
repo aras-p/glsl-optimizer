@@ -285,8 +285,7 @@ read_rgba_pixels( struct gl_context *ctx,
       return;
 
    if ((ctx->Color._ClampReadColor == GL_TRUE || type != GL_FLOAT) &&
-       !_mesa_is_integer_format(format) &&
-       _mesa_get_format_datatype(rb->Format) != GL_UNSIGNED_NORMALIZED) {
+       !_mesa_is_integer_format(format)) {
       transferOps |= IMAGE_CLAMP_BIT;
    }
 
