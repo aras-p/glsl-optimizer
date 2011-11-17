@@ -236,8 +236,8 @@ void brwInitVtbl( struct brw_context *brw )
    brw->intel.vtbl.is_hiz_depth_format = brw_is_hiz_depth_format;
 
    if (brw->intel.has_hiz) {
-      brw->intel.vtbl.hiz_resolve_hizbuffer = gen6_hiz_resolve_hizbuffer;
-      brw->intel.vtbl.hiz_resolve_depthbuffer = gen6_hiz_resolve_depthbuffer;
+      brw->intel.vtbl.resolve_depth_slice = gen6_resolve_depth_slice;
+      brw->intel.vtbl.resolve_hiz_slice = gen6_resolve_hiz_slice;
    }
 
    if (brw->intel.gen >= 7) {

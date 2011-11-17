@@ -23,18 +23,20 @@
 
 #include "gen6_hiz.h"
 
-#include <assert.h>
-
 void
-gen6_hiz_resolve_depthbuffer(struct intel_context *intel,
-                             struct intel_region *depth_region)
+gen6_resolve_hiz_slice(struct intel_context *intel,
+                       struct intel_mipmap_tree *mt,
+                       uint32_t level,
+                       uint32_t layer)
 {
-   assert("!stub");
+   /* FINISHME: stub */
 }
 
 void
-gen6_hiz_resolve_hizbuffer(struct intel_context *intel,
-                           struct intel_region *depth_region)
+gen6_resolve_depth_slice(struct intel_context *intel,
+                         struct intel_mipmap_tree *mt,
+                         uint32_t level,
+                         uint32_t layer)
 {
-   assert("!stub");
+   /* FINISHME: stub */
 }
