@@ -321,10 +321,11 @@ intel_map_renderbuffer_separate_s8z24(struct gl_context *ctx,
    struct intel_context *intel = intel_context(ctx);
    struct intel_renderbuffer *irb = intel_renderbuffer(rb);
 
-   GLbitfield adjusted_mode;
-
    uint8_t *s8z24_map;
    int32_t s8z24_stride;
+
+   struct intel_renderbuffer *s8_irb;
+   uint8_t *s8_map;
 
    assert(rb->Name != 0);
    assert(rb->Format == MESA_FORMAT_S8_Z24);
@@ -337,41 +338,28 @@ intel_map_renderbuffer_separate_s8z24(struct gl_context *ctx,
    irb->map_w = w;
    irb->map_h = h;
 
-   if (mode & GL_MAP_READ_BIT) {
-      /* Since the caller may read the stencil bits, we must copy the stencil
-       * buffer's contents into the depth buffer. This necessitates that the
-       * depth buffer be mapped in write mode.
-       */
-      adjusted_mode = mode | GL_MAP_WRITE_BIT;
-   } else {
-      adjusted_mode = mode;
-   }
-
+   /* Map with write mode for the gather below. */
    intel_map_renderbuffer_gtt(ctx, irb->wrapped_depth,
-			       x, y, w, h, adjusted_mode,
+			       x, y, w, h, mode | GL_MAP_WRITE_BIT,
 			       &s8z24_map, &s8z24_stride);
 
-   if (mode & GL_MAP_READ_BIT) {
-      struct intel_renderbuffer *s8_irb;
-      uint8_t *s8_map;
+   s8_irb = intel_renderbuffer(irb->wrapped_stencil);
+   s8_map = intel_region_map(intel, s8_irb->region, GL_MAP_READ_BIT);
 
-      s8_irb = intel_renderbuffer(irb->wrapped_stencil);
-      s8_map = intel_region_map(intel, s8_irb->region, GL_MAP_READ_BIT);
-
-      for (uint32_t pix_y = 0; pix_y < h; ++pix_y) {
-	 for (uint32_t pix_x = 0; pix_x < w; ++pix_x) {
-	    ptrdiff_t s8_offset = intel_offset_S8(s8_irb->region->pitch,
-						  x + pix_x,
-						  y + pix_y);
-	    ptrdiff_t s8z24_offset = pix_y * s8z24_stride
-				   + pix_x * 4
-				   + 3;
-	    s8z24_map[s8z24_offset] = s8_map[s8_offset];
-	 }
+   /* Gather the stencil buffer into the depth buffer. */
+   for (uint32_t pix_y = 0; pix_y < h; ++pix_y) {
+      for (uint32_t pix_x = 0; pix_x < w; ++pix_x) {
+	 ptrdiff_t s8_offset = intel_offset_S8(s8_irb->region->pitch,
+					       x + pix_x,
+					       y + pix_y);
+	 ptrdiff_t s8z24_offset = pix_y * s8z24_stride
+				+ pix_x * 4
+				+ 3;
+	 s8z24_map[s8z24_offset] = s8_map[s8_offset];
       }
-
-      intel_region_unmap(intel, s8_irb->region);
    }
+
+   intel_region_unmap(intel, s8_irb->region);
 
    *out_map = s8z24_map;
    *out_stride = s8z24_stride;
