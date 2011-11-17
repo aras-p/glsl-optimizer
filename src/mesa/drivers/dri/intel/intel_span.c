@@ -114,40 +114,6 @@ intel_set_span_functions(struct intel_context *intel,
 #define TAG2(x,y) intel_##x##y##_A8
 #include "spantmp2.h"
 
-/* ------------------------------------------------------------------------- */
-/* s8 stencil span and pixel functions                                       */
-/* ------------------------------------------------------------------------- */
-
-/*
- * HAVE_HW_STENCIL_SPANS determines if stencil buffer read/writes are done with
- * memcpy or for loops. Since the stencil buffer is interleaved, memcpy won't
- * work.
- */
-#define HAVE_HW_STENCIL_SPANS 0
-
-#define LOCAL_STENCIL_VARS						\
-   (void) ctx;								\
-   int minx = 0;							\
-   int miny = 0;							\
-   int maxx = rb->Width;						\
-   int maxy = rb->Height;						\
-									\
-   /*									\
-    * Here we ignore rb->Data and rb->RowStride as set by		\
-    * intelSpanRenderStart. Since intel_offset_S8 decodes the W tile	\
-    * manually, the region's *real* base address and stride is		\
-    * required.								\
-    */									\
-   struct intel_renderbuffer *irb = intel_renderbuffer(rb);		\
-   uint8_t *buf = irb->region->bo->virtual;				\
-   unsigned stride = irb->region->pitch;				\
-   bool flip = rb->Name == 0;						\
-   int y_scale = flip ? -1 : 1;						\
-   int y_bias = flip ? (rb->Height - 1) : 0;				\
-
-#undef Y_FLIP
-#define Y_FLIP(y) (y_scale * (y) + y_bias)
-
 /**
  * \brief Get pointer offset into stencil buffer.
  *
@@ -209,13 +175,6 @@ intel_offset_S8(uint32_t stride, uint32_t x, uint32_t y)
 
    return u;
 }
-
-#define WRITE_STENCIL(x, y, src)  buf[intel_offset_S8(stride, x, y)] = src;
-#define READ_STENCIL(dest, x, y) dest = buf[intel_offset_S8(stride, x, y)]
-#define TAG(x) intel_##x##_S8
-#include "stenciltmp.h"
-
-/* ------------------------------------------------------------------------- */
 
 void
 intel_renderbuffer_map(struct intel_context *intel, struct gl_renderbuffer *rb)
@@ -405,7 +364,7 @@ static span_init_func intel_span_init_funcs[MESA_FORMAT_COUNT] =
    [MESA_FORMAT_Z16] = _mesa_set_renderbuffer_accessors,
    [MESA_FORMAT_X8_Z24] = _mesa_set_renderbuffer_accessors,
    [MESA_FORMAT_S8_Z24] = _mesa_set_renderbuffer_accessors,
-   [MESA_FORMAT_S8] = intel_InitStencilPointers_S8,
+   [MESA_FORMAT_S8] = _mesa_set_renderbuffer_accessors,
    [MESA_FORMAT_R8] = _mesa_set_renderbuffer_accessors,
    [MESA_FORMAT_RG88] = _mesa_set_renderbuffer_accessors,
    [MESA_FORMAT_R16] = _mesa_set_renderbuffer_accessors,
