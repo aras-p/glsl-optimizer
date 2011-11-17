@@ -15,6 +15,7 @@ i965_C_SOURCES := \
 	intel_fbo.c \
 	intel_mipmap_tree.c \
 	intel_regions.c \
+	intel_resolve_map.c \
 	intel_screen.c \
 	intel_span.c \
 	intel_pixel.c \
