@@ -669,7 +669,7 @@ intel_alloc_renderbuffer_storage(struct gl_context * ctx, struct gl_renderbuffer
 	 return false;
 
    } else if (irb->Base.Format == MESA_FORMAT_S8_Z24
-	      && intel->must_use_separate_stencil) {
+	      && intel->has_separate_stencil) {
 
       bool ok = true;
       struct gl_renderbuffer *depth_rb;
