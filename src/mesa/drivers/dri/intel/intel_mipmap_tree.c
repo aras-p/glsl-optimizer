@@ -354,6 +354,69 @@ intel_miptree_get_image_offset(struct intel_mipmap_tree *mt,
    }
 }
 
+static void
+intel_miptree_copy_slice(struct intel_context *intel,
+			 struct intel_mipmap_tree *dst_mt,
+			 struct intel_mipmap_tree *src_mt,
+			 int level,
+			 int face,
+			 int depth)
+
+{
+   gl_format format = src_mt->format;
+   uint32_t width = src_mt->level[level].width;
+   uint32_t height = src_mt->level[level].height;
+
+   assert(depth < src_mt->level[level].depth);
+
+   if (dst_mt->compressed) {
+      uint32_t align_w, align_h;
+      intel_get_texture_alignment_unit(format,
+				       &align_w, &align_h);
+      height = ALIGN(height, align_h) / align_h;
+      width = ALIGN(width, align_w);
+   }
+
+   uint32_t dst_x, dst_y, src_x, src_y;
+   intel_miptree_get_image_offset(dst_mt, level, face, depth,
+				  &dst_x, &dst_y);
+   intel_miptree_get_image_offset(src_mt, level, face, depth,
+				  &src_x, &src_y);
+
+   DBG("validate blit mt %p %d,%d/%d -> mt %p %d,%d/%d (%dx%d)\n",
+       src_mt, src_x, src_y, src_mt->region->pitch * src_mt->region->cpp,
+       dst_mt, dst_x, dst_y, dst_mt->region->pitch * dst_mt->region->cpp,
+       width, height);
+
+   if (!intelEmitCopyBlit(intel,
+			  dst_mt->region->cpp,
+			  src_mt->region->pitch, src_mt->region->bo,
+			  0, src_mt->region->tiling,
+			  dst_mt->region->pitch, dst_mt->region->bo,
+			  0, dst_mt->region->tiling,
+			  src_x, src_y,
+			  dst_x, dst_y,
+			  width, height,
+			  GL_COPY)) {
+
+      fallback_debug("miptree validate blit for %s failed\n",
+		     _mesa_get_format_name(format));
+      void *dst = intel_region_map(intel, dst_mt->region, GL_MAP_WRITE_BIT);
+      void *src = intel_region_map(intel, src_mt->region, GL_MAP_READ_BIT);
+
+      _mesa_copy_rect(dst,
+		      dst_mt->cpp,
+		      dst_mt->region->pitch,
+		      dst_x, dst_y,
+		      width, height,
+		      src, src_mt->region->pitch,
+		      src_x, src_y);
+
+      intel_region_unmap(intel, dst_mt->region);
+      intel_region_unmap(intel, src_mt->region);
+   }
+}
+
 /**
  * Copies the image's current data to the given miptree, and associates that
  * miptree with the image.
@@ -366,65 +429,12 @@ intel_miptree_copy_teximage(struct intel_context *intel,
    struct intel_mipmap_tree *src_mt = intelImage->mt;
    int level = intelImage->base.Base.Level;
    int face = intelImage->base.Base.Face;
-   GLuint width = src_mt->level[level].width;
-   GLuint height = src_mt->level[level].height;
    GLuint depth = src_mt->level[level].depth;
-   int slice;
-   void *src, *dst;
 
-   if (dst_mt->compressed) {
-      unsigned int align_w, align_h;
-
-      intel_get_texture_alignment_unit(intelImage->base.Base.TexFormat,
-				       &align_w, &align_h);
-      height = ALIGN(height, align_h) / align_h;
-      width = ALIGN(width, align_w);
-   }
-
-   for (slice = 0; slice < depth; slice++) {
-      unsigned int dst_x, dst_y, src_x, src_y;
-
-      intel_miptree_get_image_offset(dst_mt, level, face, slice,
-				     &dst_x, &dst_y);
-
-      /* Copy potentially with the blitter:
-       */
-      intel_miptree_get_image_offset(src_mt, level, face, slice,
-				     &src_x, &src_y);
-
-      DBG("validate blit mt %p %d,%d/%d -> mt %p %d,%d/%d (%dx%d)\n",
-	  src_mt, src_x, src_y, src_mt->region->pitch * src_mt->region->cpp,
-	  dst_mt, dst_x, dst_y, dst_mt->region->pitch * dst_mt->region->cpp,
-	  width, height);
-
-      if (!intelEmitCopyBlit(intel,
-			     dst_mt->region->cpp,
-			     src_mt->region->pitch, src_mt->region->bo,
-			     0, src_mt->region->tiling,
-			     dst_mt->region->pitch, dst_mt->region->bo,
-			     0, dst_mt->region->tiling,
-			     src_x, src_y,
-			     dst_x, dst_y,
-			     width, height,
-			     GL_COPY)) {
-
-	 fallback_debug("miptree validate blit for %s failed\n",
-			_mesa_get_format_name(intelImage->base.Base.TexFormat));
-	 dst = intel_region_map(intel, dst_mt->region, GL_MAP_WRITE_BIT);
-	 src = intel_region_map(intel, src_mt->region, GL_MAP_READ_BIT);
-
-	 _mesa_copy_rect(dst,
-			 dst_mt->cpp,
-			 dst_mt->region->pitch,
-			 dst_x, dst_y,
-			 width, height,
-			 src, src_mt->region->pitch,
-			 src_x, src_y);
-
-	 intel_region_unmap(intel, dst_mt->region);
-	 intel_region_unmap(intel, src_mt->region);
-      }
+   for (int slice = 0; slice < depth; slice++) {
+      intel_miptree_copy_slice(intel, dst_mt, src_mt, level, face, slice);
    }
 
    intel_miptree_reference(&intelImage->mt, dst_mt);
 }
+
