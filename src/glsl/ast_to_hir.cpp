@@ -733,7 +733,8 @@ do_assignment(exec_list *instructions, struct _mesa_glsl_parse_state *state,
 	   if (d)
 	   {
 		   ir_variable *const var = d->variable_referenced();
-		   var->precision = prec;
+		   if (var)
+			   var->precision = prec;
 	   }
    }
 
