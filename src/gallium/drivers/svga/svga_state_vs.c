@@ -27,8 +27,10 @@
 #include "pipe/p_defines.h"
 #include "util/u_format.h"
 #include "util/u_math.h"
+#include "util/u_memory.h"
 #include "util/u_bitmask.h"
 #include "translate/translate.h"
+#include "tgsi/tgsi_ureg.h"
 
 #include "svga_context.h"
 #include "svga_state.h"
@@ -65,6 +67,37 @@ static struct svga_shader_result *search_vs_key( struct svga_vertex_shader *vs,
 }
 
 
+/**
+ * If we fail to compile a vertex shader we'll use a dummy/fallback shader
+ * that simply emits a (0,0,0,1) vertex position.
+ */
+static const struct tgsi_token *
+get_dummy_vertex_shader(void)
+{
+   static const float zero[4] = { 0.0, 0.0, 0.0, 1.0 };
+   struct ureg_program *ureg;
+   const struct tgsi_token *tokens;
+   struct ureg_src src;
+   struct ureg_dst dst;
+   unsigned num_tokens;
+
+   ureg = ureg_create(TGSI_PROCESSOR_VERTEX);
+   if (!ureg)
+      return NULL;
+
+   dst = ureg_DECL_output(ureg, TGSI_SEMANTIC_POSITION, 0);
+   src = ureg_DECL_immediate(ureg, zero, 4);
+   ureg_MOV(ureg, dst, src);
+   ureg_END(ureg);
+
+   tokens = ureg_get_tokens(ureg, &num_tokens);
+
+   ureg_destroy(ureg);
+
+   return tokens;
+}
+
+
 static enum pipe_error compile_vs( struct svga_context *svga,
                                    struct svga_vertex_shader *vs,
                                    const struct svga_vs_compile_key *key,
@@ -75,8 +108,20 @@ static enum pipe_error compile_vs( struct svga_context *svga,
 
    result = svga_translate_vertex_program( vs, key );
    if (result == NULL) {
-      ret = PIPE_ERROR_OUT_OF_MEMORY;
-      goto fail;
+      /* some problem during translation, try the dummy shader */
+      const struct tgsi_token *dummy = get_dummy_vertex_shader();
+      if (!dummy) {
+         ret = PIPE_ERROR_OUT_OF_MEMORY;
+         goto fail;
+      }
+      debug_printf("Failed to compile vertex shader, using dummy shader instead.\n");
+      FREE((void *) vs->base.tokens);
+      vs->base.tokens = dummy;
+      result = svga_translate_vertex_program(vs, key);
+      if (result == NULL) {
+         ret = PIPE_ERROR;
+         goto fail;
+      }
    }
 
    result->id = util_bitmask_add(svga->vs_bm);

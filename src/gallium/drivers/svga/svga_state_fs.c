@@ -26,7 +26,9 @@
 #include "util/u_inlines.h"
 #include "pipe/p_defines.h"
 #include "util/u_math.h"
+#include "util/u_memory.h"
 #include "util/u_bitmask.h"
+#include "tgsi/tgsi_ureg.h"
 
 #include "svga_context.h"
 #include "svga_state.h"
@@ -66,6 +68,38 @@ static struct svga_shader_result *search_fs_key( struct svga_fragment_shader *fs
 }
 
 
+/**
+ * If we fail to compile a fragment shader (because it uses too many
+ * registers, for example) we'll use a dummy/fallback shader that
+ * simply emits a constant color.
+ */
+static const struct tgsi_token *
+get_dummy_fragment_shader(void)
+{
+   static const float red[4] = { 1.0, 0.0, 0.0, 0.0 };
+   struct ureg_program *ureg;
+   const struct tgsi_token *tokens;
+   struct ureg_src src;
+   struct ureg_dst dst;
+   unsigned num_tokens;
+
+   ureg = ureg_create(TGSI_PROCESSOR_FRAGMENT);
+   if (!ureg)
+      return NULL;
+
+   dst = ureg_DECL_output(ureg, TGSI_SEMANTIC_COLOR, 0);
+   src = ureg_DECL_immediate(ureg, red, 4);
+   ureg_MOV(ureg, dst, src);
+   ureg_END(ureg);
+
+   tokens = ureg_get_tokens(ureg, &num_tokens);
+
+   ureg_destroy(ureg);
+
+   return tokens;
+}
+
+
 static enum pipe_error compile_fs( struct svga_context *svga,
                                    struct svga_fragment_shader *fs,
                                    const struct svga_fs_compile_key *key,
@@ -76,8 +110,20 @@ static enum pipe_error compile_fs( struct svga_context *svga,
 
    result = svga_translate_fragment_program( fs, key );
    if (result == NULL) {
-      ret = PIPE_ERROR;  /* some problem during translation */
-      goto fail;
+      /* some problem during translation, try the dummy shader */
+      const struct tgsi_token *dummy = get_dummy_fragment_shader();
+      if (!dummy) {
+         ret = PIPE_ERROR_OUT_OF_MEMORY;
+         goto fail;
+      }
+      debug_printf("Failed to compile fragment shader, using dummy shader instead.\n");
+      FREE((void *) fs->base.tokens);
+      fs->base.tokens = dummy;
+      result = svga_translate_fragment_program(fs, key);
+      if (result == NULL) {
+         ret = PIPE_ERROR;
+         goto fail;
+      }
    }
 
    result->id = util_bitmask_add(svga->fs_bm);
