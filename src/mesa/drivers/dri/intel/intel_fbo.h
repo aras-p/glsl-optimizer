@@ -185,4 +185,35 @@ intel_renderbuffer_tile_offsets(struct intel_renderbuffer *irb,
 struct intel_region*
 intel_get_rb_region(struct gl_framebuffer *fb, GLuint attIndex);
 
+void
+intel_renderbuffer_set_needs_hiz_resolve(struct intel_renderbuffer *irb);
+
+void
+intel_renderbuffer_set_needs_depth_resolve(struct intel_renderbuffer *irb);
+
+
+/**
+ * \brief Perform a HiZ resolve on the renderbuffer.
+ *
+ * It is safe to call this function on a renderbuffer without HiZ. In that
+ * case, the function is a no-op.
+ *
+ * \return false if no resolve was needed
+ */
+bool
+intel_renderbuffer_resolve_hiz(struct intel_context *intel,
+			       struct intel_renderbuffer *irb);
+
+/**
+ * \brief Perform a depth resolve on the renderbuffer.
+ *
+ * It is safe to call this function on a renderbuffer without HiZ. In that
+ * case, the function is a no-op.
+ *
+ * \return false if no resolve was needed
+ */
+bool
+intel_renderbuffer_resolve_depth(struct intel_context *intel,
+				 struct intel_renderbuffer *irb);
+
 #endif /* INTEL_FBO_H */

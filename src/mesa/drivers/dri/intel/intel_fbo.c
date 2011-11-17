@@ -1436,6 +1436,69 @@ intel_blit_framebuffer(struct gl_context *ctx,
                               mask, filter);
 }
 
+void
+intel_renderbuffer_set_needs_hiz_resolve(struct intel_renderbuffer *irb)
+{
+   if (irb->mt) {
+      intel_miptree_slice_set_needs_hiz_resolve(irb->mt,
+                                                irb->mt_level,
+                                                irb->mt_layer);
+   } else if (irb->wrapped_depth) {
+      intel_renderbuffer_set_needs_hiz_resolve(
+	    intel_renderbuffer(irb->wrapped_depth));
+   } else {
+      return;
+   }
+}
+
+void
+intel_renderbuffer_set_needs_depth_resolve(struct intel_renderbuffer *irb)
+{
+   if (irb->mt) {
+      intel_miptree_slice_set_needs_depth_resolve(irb->mt,
+                                                  irb->mt_level,
+                                                  irb->mt_layer);
+   } else if (irb->wrapped_depth) {
+      intel_renderbuffer_set_needs_depth_resolve(
+	    intel_renderbuffer(irb->wrapped_depth));
+   } else {
+      return;
+   }
+}
+
+bool
+intel_renderbuffer_resolve_hiz(struct intel_context *intel,
+			       struct intel_renderbuffer *irb)
+{
+   if (irb->mt)
+      return intel_miptree_slice_resolve_hiz(intel,
+                                             irb->mt,
+                                             irb->mt_level,
+                                             irb->mt_layer);
+   if (irb->wrapped_depth)
+      return intel_renderbuffer_resolve_hiz(intel,
+					    intel_renderbuffer(irb->wrapped_depth));
+
+   return false;
+}
+
+bool
+intel_renderbuffer_resolve_depth(struct intel_context *intel,
+				 struct intel_renderbuffer *irb)
+{
+   if (irb->mt)
+      return intel_miptree_slice_resolve_depth(intel,
+                                               irb->mt,
+                                               irb->mt_level,
+                                               irb->mt_layer);
+
+   if (irb->wrapped_depth)
+      return intel_renderbuffer_resolve_depth(intel,
+                                              intel_renderbuffer(irb->wrapped_depth));
+
+   return false;
+}
+
 /**
  * Do one-time context initializations related to GL_EXT_framebuffer_object.
  * Hook in device driver functions.
