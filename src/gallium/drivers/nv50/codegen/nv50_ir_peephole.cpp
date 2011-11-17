@@ -1275,6 +1275,7 @@ MemoryOpt::combineLd(Record *rec, Instruction *ld)
    }
 
    rec->size = size;
+   rec->insn->getSrc(0)->reg.size = size;
    rec->insn->setType(typeOfSize(size));
 
    delete_Instruction(prog, ld);
@@ -1333,6 +1334,7 @@ MemoryOpt::combineSt(Record *rec, Instruction *st)
    delete_Instruction(prog, rec->insn);
    rec->insn = st;
    rec->size = size;
+   rec->insn->getSrc(0)->reg.size = size;
    rec->insn->setType(typeOfSize(size));
    return true;
 }
