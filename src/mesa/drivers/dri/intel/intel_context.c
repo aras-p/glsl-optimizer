@@ -1357,8 +1357,8 @@ intel_process_dri2_buffer_with_separate_stencil(struct intel_context *intel,
 	rb->mt->region->name == buffer->name) ||
        (buffer->attachment == __DRI_BUFFER_HIZ &&
 	rb->mt &&
-	rb->mt->hiz_region &&
-	rb->mt->hiz_region->name == buffer->name)) {
+	rb->mt->hiz_mt &&
+	rb->mt->hiz_mt->region->name == buffer->name)) {
       return;
    }
 
@@ -1388,10 +1388,10 @@ intel_process_dri2_buffer_with_separate_stencil(struct intel_context *intel,
    }
 
    /* Release the buffer storage now in case we have to return early
-    * due to region allocation failure.
+    * due to failure to allocate new storage.
     */
    if (buffer->attachment == __DRI_BUFFER_HIZ) {
-      intel_region_release(&rb->mt->hiz_region);
+      intel_miptree_release(&rb->mt->hiz_mt);
    } else {
       intel_miptree_release(&rb->mt);
    }
@@ -1407,15 +1407,18 @@ intel_process_dri2_buffer_with_separate_stencil(struct intel_context *intel,
    if (!region)
       return;
 
+   struct intel_mipmap_tree *mt =
+      intel_miptree_create_for_region(intel,
+				      GL_TEXTURE_2D,
+				      rb->Base.Format,
+				      region);
+   intel_region_release(&region);
+
    /* Associate buffer with new storage. */
    if (buffer->attachment == __DRI_BUFFER_HIZ) {
-      rb->mt->hiz_region = region;
+      rb->mt->hiz_mt = mt;
    } else {
-      rb->mt = intel_miptree_create_for_region(intel,
-                                               GL_TEXTURE_2D,
-                                               rb->Base.Format,
-                                               region);
-      intel_region_release(&region);
+      rb->mt = mt;
    }
 }
 

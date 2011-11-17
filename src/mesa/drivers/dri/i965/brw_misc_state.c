@@ -209,8 +209,9 @@ static void emit_depthbuffer(struct brw_context *brw)
    unsigned int len;
 
    if (depth_irb &&
-       depth_irb->mt) {
-      hiz_region = depth_irb->mt->hiz_region;
+       depth_irb->mt &&
+       depth_irb->mt->hiz_mt) {
+      hiz_region = depth_irb->mt->hiz_mt->region;
    }
 
    /* 3DSTATE_DEPTH_BUFFER, 3DSTATE_STENCIL_BUFFER are both

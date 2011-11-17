@@ -261,8 +261,8 @@ intel_miptree_release(struct intel_mipmap_tree **mt)
       DBG("%s deleting %p\n", __FUNCTION__, *mt);
 
       intel_region_release(&((*mt)->region));
-      intel_region_release(&((*mt)->hiz_region));
       intel_miptree_release(&(*mt)->stencil_mt);
+      intel_miptree_release(&(*mt)->hiz_mt);
 
       for (i = 0; i < MAX_TEXTURE_LEVELS; i++) {
 	 free((*mt)->level[i].slice);
@@ -577,4 +577,21 @@ intel_miptree_s8z24_gather(struct intel_context *intel,
                            uint32_t layer)
 {
    intel_miptree_s8z24_scattergather(intel, mt, level, layer, false);
+}
+
+bool
+intel_miptree_alloc_hiz(struct intel_context *intel,
+			struct intel_mipmap_tree *mt)
+{
+   assert(mt->hiz_mt == NULL);
+   mt->hiz_mt = intel_miptree_create(intel,
+                                     mt->target,
+                                     MESA_FORMAT_X8_Z24,
+                                     mt->first_level,
+                                     mt->last_level,
+                                     mt->width0,
+                                     mt->height0,
+                                     mt->depth0,
+                                     true);
+   return mt->hiz_mt != NULL;
 }

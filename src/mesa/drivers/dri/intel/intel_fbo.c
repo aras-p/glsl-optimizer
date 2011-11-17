@@ -63,7 +63,7 @@ intel_framebuffer_has_hiz(struct gl_framebuffer *fb)
    struct intel_renderbuffer *rb = NULL;
    if (fb)
       rb = intel_get_renderbuffer(fb, BUFFER_DEPTH);
-   return rb && rb->mt && rb->mt->hiz_region;
+   return rb && rb->mt && rb->mt->hiz_mt;
 }
 
 struct intel_region*
@@ -705,13 +705,8 @@ intel_alloc_renderbuffer_storage(struct gl_context * ctx, struct gl_renderbuffer
 	 return false;
 
       if (intel->vtbl.is_hiz_depth_format(intel, rb->Format)) {
-	 irb->mt->hiz_region = intel_region_alloc(intel->intelScreen,
-	                                          I915_TILING_Y,
-	                                          cpp,
-	                                          rb->Width,
-	                                          rb->Height,
-	                                          true);
-	 if (!irb->mt->hiz_region) {
+	 bool ok = intel_miptree_alloc_hiz(intel, irb->mt);
+	 if (!ok) {
 	    intel_miptree_release(&irb->mt);
 	    return false;
 	 }

@@ -139,18 +139,13 @@ struct intel_mipmap_tree
    struct intel_region *region;
 
    /**
-    * This points to an auxillary hiz region if all of the following hold:
-    *     1. The texture has been attached to an FBO as a depthbuffer.
-    *     2. The texture format is hiz compatible.
-    *     3. The intel context supports hiz.
+    * \brief HiZ miptree
     *
-    * When a texture is attached to multiple FBO's, a separate renderbuffer
-    * wrapper is created for each attachment. This necessitates storing the
-    * hiz region in the texture itself instead of the renderbuffer wrapper.
+    * This is non-null only if HiZ is enabled for this miptree.
     *
-    * \see intel_fbo.c:intel_wrap_texture()
+    * \see intel_miptree_alloc_hiz()
     */
-   struct intel_region *hiz_region;
+   struct intel_mipmap_tree *hiz_mt;
 
    /**
     * \brief Stencil miptree for depthstencil textures.
@@ -275,6 +270,15 @@ intel_miptree_s8z24_gather(struct intel_context *intel,
                            struct intel_mipmap_tree *mt,
                            uint32_t level,
                            uint32_t layer);
+
+/**
+ * \brief Allocate the miptree's embedded HiZ miptree.
+ * \see intel_mipmap_tree:hiz_mt
+ * \return false if allocation failed
+ */
+bool
+intel_miptree_alloc_hiz(struct intel_context *intel,
+			struct intel_mipmap_tree *mt);
 
 /* i915_mipmap_tree.c:
  */
