@@ -648,45 +648,108 @@ check_uniforms(struct gl_context *ctx)
    }
 }
 
-/** Helper code for primitive restart fallback */
-#define DO_DRAW(pipe, cur_start, cur_count) \
-   do { \
-      info.start = cur_start; \
-      info.count = cur_count; \
-      if (u_trim_pipe_prim(info.mode, &info.count)) { \
-         if (transfer) \
-            pipe_buffer_unmap(pipe, transfer); \
-         pipe->draw_vbo(pipe, &info); \
-         if (transfer) { \
-            ptr = pipe_buffer_map(pipe, ibuffer->buffer, PIPE_TRANSFER_READ, &transfer); \
-            assert(ptr != NULL); \
-            ptr = ADD_POINTERS(ptr, ibuffer->offset); \
-         } \
-      } \
-   } while(0)
-      
-/** More helper code for primitive restart fallback */
-#define PRIM_RESTART_LOOP(elements) \
-   do { \
-      for (i = start; i < end; i++) { \
-         if (elements[i] == info.restart_index) { \
-            if (cur_count > 0) { \
-               /* draw elts up to prev pos */ \
-               DO_DRAW(pipe, cur_start, cur_count); \
-            } \
-            /* begin new prim at next elt */ \
-            cur_start = i + 1; \
-            cur_count = 0; \
-         } \
-         else { \
-            cur_count++; \
-         } \
-      } \
-      if (cur_count > 0) { \
-         DO_DRAW(pipe, cur_start, cur_count); \
-      } \
-   } while (0)
 
+/*
+ * Notes on primitive restart:
+ * The code below is used when the gallium driver does not support primitive
+ * restart itself.  We map the index buffer, find the restart indexes, unmap
+ * the index buffer then draw the sub-primitives delineated by the restarts.
+ * A couple possible optimizations:
+ * 1. Save the list of sub-primitive (start, count) values in a list attached
+ *    to the index buffer for re-use in subsequent draws.  The list would be
+ *    invalidated when the contents of the buffer changed.
+ * 2. If drawing triangle strips or quad strips, create a new index buffer
+ *    that uses duplicated vertices to render the disjoint strips as one
+ *    long strip.  We'd have to be careful to avoid using too much memory
+ *    for this.
+ * Finally, some apps might perform better if they don't use primitive restart
+ * at all rather than this fallback path.  Set MESA_EXTENSION_OVERRIDE to
+ * "-GL_NV_primitive_restart" to test that.
+ */
+
+
+struct sub_primitive
+{
+   unsigned start, count;
+};
+
+
+/**
+ * Scan the elements array to find restart indexes.  Return a list
+ * of primitive (start,count) pairs to indicate how to draw the sub-
+ * primitives delineated by the restart index.
+ */
+static struct sub_primitive *
+find_sub_primitives(const void *elements, unsigned element_size,
+                    unsigned start, unsigned end, unsigned restart_index,
+                    unsigned *num_sub_prims)
+{
+   const unsigned max_prims = end - start;
+   struct sub_primitive *sub_prims;
+   unsigned i, cur_start, cur_count, num;
+
+   sub_prims = (struct sub_primitive *)
+      malloc(max_prims * sizeof(struct sub_primitive));
+
+   if (!sub_prims) {
+      *num_sub_prims = 0;
+      return NULL;
+   }
+
+   cur_start = start;
+   cur_count = 0;
+   num = 0;
+
+#define SCAN_ELEMENTS(TYPE) \
+   for (i = start; i < end; i++) { \
+      if (((const TYPE *) elements)[i] == restart_index) { \
+         if (cur_count > 0) { \
+            assert(num < max_prims); \
+            sub_prims[num].start = cur_start; \
+            sub_prims[num].count = cur_count; \
+            num++; \
+         } \
+         cur_start = i + 1; \
+         cur_count = 0; \
+      } \
+      else { \
+         cur_count++; \
+      } \
+   } \
+   if (cur_count > 0) { \
+      assert(num < max_prims); \
+      sub_prims[num].start = cur_start; \
+      sub_prims[num].count = cur_count; \
+      num++; \
+   }
+
+   switch (element_size) {
+   case 1:
+      SCAN_ELEMENTS(ubyte);
+      break;
+   case 2:
+      SCAN_ELEMENTS(ushort);
+      break;
+   case 4:
+      SCAN_ELEMENTS(uint);
+      break;
+   default:
+      assert(0 && "bad index_size in find_sub_primitives()");
+   }
+
+#undef SCAN_ELEMENTS
+
+   *num_sub_prims = num;
+
+   return sub_prims;
+}
+
+
+/**
+ * For gallium drivers that don't support the primitive restart
+ * feature, handle it here by breaking up the indexed primitive into
+ * sub-primitives.
+ */
 static void
 handle_fallback_primitive_restart(struct pipe_context *pipe,
                                   const struct _mesa_index_buffer *ib,
@@ -695,78 +758,61 @@ handle_fallback_primitive_restart(struct pipe_context *pipe,
 {
    const unsigned start = orig_info->start;
    const unsigned count = orig_info->count;
-   const unsigned end = start + count;
    struct pipe_draw_info info = *orig_info;
    struct pipe_transfer *transfer = NULL;
-   unsigned instance, i, cur_start, cur_count;
-   const void *ptr;
+   unsigned instance, i;
+   const void *ptr = NULL;
+   struct sub_primitive *sub_prims;
+   unsigned num_sub_prims;
+
+   assert(info.indexed);
+   assert(ibuffer->buffer);
+   assert(ib);
+
+   if (!ibuffer->buffer || !ib)
+      return;
 
    info.primitive_restart = FALSE;
+   info.instance_count = 1;
 
-   if (!info.indexed) {
-      /* Splitting the draw arrays call is handled by the VBO module */
-      if (u_trim_pipe_prim(info.mode, &info.count))
-         pipe->draw_vbo(pipe, &info);
+   if (ib->obj && _mesa_is_bufferobj(ib->obj)) {
+      ptr = pipe_buffer_map_range(pipe, ibuffer->buffer,
+                                  start * ibuffer->index_size, /* start */
+                                  count * ibuffer->index_size, /* length */
+                                  PIPE_TRANSFER_READ, &transfer);
+   }
+   else {
+      ptr = ib->ptr;
+   }
 
+   if (!ptr)
       return;
-   }
 
-   /* info.indexed == TRUE */
-   assert(ibuffer);
-   assert(ibuffer->buffer);
-
-   if (ib) {
-      struct gl_buffer_object *bufobj = ib->obj;
-      if (bufobj && bufobj->Name) {
-         ptr = NULL;
-      }
-      else {
-         ptr = ib->ptr;
-      }
-   } else {
-      ptr = NULL;
-   }
-
-   if (!ptr)
-      ptr = pipe_buffer_map(pipe, ibuffer->buffer, PIPE_TRANSFER_READ, &transfer);
-
-   if (!ptr)
-     return;
    ptr = ADD_POINTERS(ptr, ibuffer->offset);
 
-   /* Need to loop over instances as well to preserve draw order */
-   for (instance = 0; instance < orig_info->instance_count; instance++) {
-      info.start_instance = instance + orig_info->start_instance;
-      info.instance_count = 1;
-      cur_start = start;
-      cur_count = 0;
-
-      switch (ibuffer->index_size) {
-      case 1:
-         {
-            const ubyte *elt_ub = (const ubyte *)ptr; 
-            PRIM_RESTART_LOOP(elt_ub);
-         }
-         break;
-      case 2:
-         {
-            const ushort *elt_us = (const ushort *)ptr;
-            PRIM_RESTART_LOOP(elt_us);
-         }
-         break;
-      case 4:
-         {
-            const uint *elt_ui = (const uint *)ptr;
-            PRIM_RESTART_LOOP(elt_ui);
-         }
-         break;
-      default:
-         assert(0 && "bad index_size in handle_fallback_primitive_restart()");
-      }
-   }
+   sub_prims = find_sub_primitives(ptr, ibuffer->index_size,
+                                   0, count, orig_info->restart_index,
+                                   &num_sub_prims);
 
    if (transfer)
       pipe_buffer_unmap(pipe, transfer);
+
+   /* Now draw the sub primitives.
+    * Need to loop over instances as well to preserve draw order.
+    */
+   for (instance = 0; instance < orig_info->instance_count; instance++) {
+      info.start_instance = instance + orig_info->start_instance;
+      for (i = 0; i < num_sub_prims; i++) {
+         info.start = sub_prims[i].start;
+         info.count = sub_prims[i].count;
+         if (u_trim_pipe_prim(info.mode, &info.count)) {
+            pipe->draw_vbo(pipe, &info);
+         }
+      }
+   }
+
+   if (sub_prims)
+      free(sub_prims);
 }
 
 
@@ -978,10 +1024,13 @@ st_draw_vbo(struct gl_context *ctx,
          info.min_index = min_index;
          info.max_index = max_index;
       }
-   }
 
-   info.primitive_restart = ctx->Array.PrimitiveRestart;
-   info.restart_index = ctx->Array.RestartIndex;
+      /* The VBO module handles restart for the non-indexed GLDrawArrays
+       * so we only set these fields for indexed drawing:
+       */
+      info.primitive_restart = ctx->Array.PrimitiveRestart;
+      info.restart_index = ctx->Array.RestartIndex;
+   }
 
    /* do actual drawing */
    for (i = 0; i < nr_prims; i++) {
@@ -996,19 +1045,14 @@ st_draw_vbo(struct gl_context *ctx,
       }
 
       if (info.primitive_restart) {
-         /*
-          * Handle primitive restart for drivers that doesn't support it.
-          *
-          * The VBO module handles restart inside of draw_arrays for us,
-          * but we should still remove the primitive_restart flag on the
-          * info struct, the fallback function does this for us. Just
-          * remove the flag for all drivers in this case as well.
-          */
-         if (st->sw_primitive_restart || !info.indexed)
+         if (st->sw_primitive_restart) {
+            /* Handle primitive restart for drivers that doesn't support it */
             handle_fallback_primitive_restart(pipe, ib, &ibuffer, &info);
-         else
+         }
+         else {
             /* don't trim, restarts might be inside index list */
             pipe->draw_vbo(pipe, &info);
+         }
       }
       else if (u_trim_pipe_prim(info.mode, &info.count))
          pipe->draw_vbo(pipe, &info);
