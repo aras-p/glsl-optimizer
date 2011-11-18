@@ -1876,6 +1876,57 @@ store_tfeedback_info(struct gl_context *ctx, struct gl_shader_program *prog,
 }
 
 /**
+ * Store the gl_FragDepth layout in the gl_shader_program struct.
+ */
+static void
+store_fragdepth_layout(struct gl_shader_program *prog)
+{
+   if (prog->_LinkedShaders[MESA_SHADER_FRAGMENT] == NULL) {
+      return;
+   }
+
+   struct exec_list *ir = prog->_LinkedShaders[MESA_SHADER_FRAGMENT]->ir;
+
+   /* We don't look up the gl_FragDepth symbol directly because if
+    * gl_FragDepth is not used in the shader, it's removed from the IR.
+    * However, the symbol won't be removed from the symbol table.
+    *
+    * We're only interested in the cases where the variable is NOT removed
+    * from the IR.
+    */
+   foreach_list(node, ir) {
+      ir_variable *const var = ((ir_instruction *) node)->as_variable();
+
+      if (var == NULL || var->mode != ir_var_out) {
+         continue;
+      }
+
+      if (strcmp(var->name, "gl_FragDepth") == 0) {
+         switch (var->depth_layout) {
+         case ir_depth_layout_none:
+            prog->FragDepthLayout = FRAG_DEPTH_LAYOUT_NONE;
+            return;
+         case ir_depth_layout_any:
+            prog->FragDepthLayout = FRAG_DEPTH_LAYOUT_ANY;
+            return;
+         case ir_depth_layout_greater:
+            prog->FragDepthLayout = FRAG_DEPTH_LAYOUT_GREATER;
+            return;
+         case ir_depth_layout_less:
+            prog->FragDepthLayout = FRAG_DEPTH_LAYOUT_LESS;
+            return;
+         case ir_depth_layout_unchanged:
+            prog->FragDepthLayout = FRAG_DEPTH_LAYOUT_UNCHANGED;
+            return;
+         default:
+            assert(0);
+            return;
+         }
+      }
+   }
+}
+
+/**
  * Validate the resources used by a program versus the implementation limits
  */
 static bool
@@ -2177,6 +2228,7 @@ link_shaders(struct gl_context *ctx, struct gl_shader_program *prog)
 
    update_array_sizes(prog);
    link_assign_uniform_locations(prog);
+   store_fragdepth_layout(prog);
 
    if (!check_resources(ctx, prog))
       goto done;

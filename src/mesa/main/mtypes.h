@@ -2218,6 +2218,9 @@ struct gl_shader_program
    /** Post-link transform feedback info. */
    struct gl_transform_feedback_info LinkedTransformFeedback;
 
+   /** Post-link gl_FragDepth layout for ARB_conservative_depth. */
+   enum gl_frag_depth_layout FragDepthLayout;
+
    /** Geometry shader state - copied into gl_geometry_program at link time */
    struct {
       GLint VerticesOut;
