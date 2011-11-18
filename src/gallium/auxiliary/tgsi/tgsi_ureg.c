@@ -161,6 +161,7 @@ struct ureg_program
    unsigned char property_fs_coord_origin; /* = TGSI_FS_COORD_ORIGIN_* */
    unsigned char property_fs_coord_pixel_center; /* = TGSI_FS_COORD_PIXEL_CENTER_* */
    unsigned char property_fs_color0_writes_all_cbufs; /* = TGSI_FS_COLOR0_WRITES_ALL_CBUFS * */
+   unsigned char property_fs_depth_layout; /* TGSI_FS_DEPTH_LAYOUT */
 
    unsigned nr_addrs;
    unsigned nr_preds;
@@ -302,6 +303,13 @@ ureg_property_fs_color0_writes_all_cbufs(struct ureg_program *ureg,
                             unsigned fs_color0_writes_all_cbufs)
 {
    ureg->property_fs_color0_writes_all_cbufs = fs_color0_writes_all_cbufs;
+}
+
+void
+ureg_property_fs_depth_layout(struct ureg_program *ureg,
+                              unsigned fs_depth_layout)
+{
+   ureg->property_fs_depth_layout = fs_depth_layout;
 }
 
 struct ureg_src
@@ -1386,6 +1394,14 @@ static void emit_decls( struct ureg_program *ureg )
       emit_property(ureg,
                     TGSI_PROPERTY_FS_COLOR0_WRITES_ALL_CBUFS,
                     ureg->property_fs_color0_writes_all_cbufs);
+   }
+
+   if (ureg->property_fs_depth_layout) {
+      assert(ureg->processor == TGSI_PROCESSOR_FRAGMENT);
+
+      emit_property(ureg,
+                    TGSI_PROPERTY_FS_DEPTH_LAYOUT,
+                    ureg->property_fs_depth_layout);
    }
 
    if (ureg->processor == TGSI_PROCESSOR_VERTEX) {

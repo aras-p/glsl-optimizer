@@ -157,6 +157,11 @@ void
 ureg_property_fs_color0_writes_all_cbufs(struct ureg_program *ureg,
                             unsigned fs_color0_writes_all_cbufs);
 
+void
+ureg_property_fs_depth_layout(struct ureg_program *ureg,
+                              unsigned fs_depth_layout);
+
+
 /***********************************************************************
  * Build shader declarations:
  */

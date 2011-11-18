@@ -188,7 +188,8 @@ union tgsi_immediate_data
 #define TGSI_PROPERTY_FS_COORD_ORIGIN        3
 #define TGSI_PROPERTY_FS_COORD_PIXEL_CENTER  4
 #define TGSI_PROPERTY_FS_COLOR0_WRITES_ALL_CBUFS 5
-#define TGSI_PROPERTY_COUNT                  6
+#define TGSI_PROPERTY_FS_DEPTH_LAYOUT        6
+#define TGSI_PROPERTY_COUNT                  7
 
 struct tgsi_property {
    unsigned Type         : 4;  /**< TGSI_TOKEN_TYPE_PROPERTY */
@@ -202,6 +203,13 @@ struct tgsi_property {
 
 #define TGSI_FS_COORD_PIXEL_CENTER_HALF_INTEGER 0
 #define TGSI_FS_COORD_PIXEL_CENTER_INTEGER 1
+
+#define TGSI_FS_DEPTH_LAYOUT_NONE         0
+#define TGSI_FS_DEPTH_LAYOUT_ANY          1
+#define TGSI_FS_DEPTH_LAYOUT_GREATER      2
+#define TGSI_FS_DEPTH_LAYOUT_LESS         3
+#define TGSI_FS_DEPTH_LAYOUT_UNCHANGED    4
+
 
 struct tgsi_property_data {
    unsigned Data;

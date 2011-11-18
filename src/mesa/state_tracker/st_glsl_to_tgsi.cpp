@@ -4557,6 +4557,25 @@ st_translate_program(
                                            interpMode[i]);
       }
 
+      if (program->shader_program->FragDepthLayout != FRAG_DEPTH_LAYOUT_NONE) {
+         switch (program->shader_program->FragDepthLayout) {
+         case FRAG_DEPTH_LAYOUT_ANY:
+            ureg_property_fs_depth_layout(ureg, TGSI_FS_DEPTH_LAYOUT_ANY);
+            break;
+         case FRAG_DEPTH_LAYOUT_GREATER:
+            ureg_property_fs_depth_layout(ureg, TGSI_FS_DEPTH_LAYOUT_GREATER);
+            break;
+         case FRAG_DEPTH_LAYOUT_LESS:
+            ureg_property_fs_depth_layout(ureg, TGSI_FS_DEPTH_LAYOUT_LESS);
+            break;
+         case FRAG_DEPTH_LAYOUT_UNCHANGED:
+            ureg_property_fs_depth_layout(ureg, TGSI_FS_DEPTH_LAYOUT_UNCHANGED);
+            break;
+         default:
+            assert(0);
+         }
+      }
+
       if (proginfo->InputsRead & FRAG_BIT_WPOS) {
          /* Must do this after setting up t->inputs, and before
           * emitting constant references, below:
