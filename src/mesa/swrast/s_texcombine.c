@@ -69,17 +69,18 @@ get_texel_array(SWcontext *swrast, GLuint unit)
  *
  * \param ctx          rendering context
  * \param unit         the texture combiner unit
- * \param n            number of fragments to process (span width)
  * \param primary_rgba incoming fragment color array
  * \param texelBuffer  pointer to texel colors for all texture units
  * 
- * \param rgba         incoming/result fragment colors
+ * \param span         two fields are used in this function:
+ *                       span->end: number of fragments to process
+ *                       span->array->rgba: incoming/result fragment colors
  */
 static void
-texture_combine( struct gl_context *ctx, GLuint unit, GLuint n,
+texture_combine( struct gl_context *ctx, GLuint unit,
                  const float4_array primary_rgba,
                  const GLfloat *texelBuffer,
-                 GLchan (*rgbaChan)[4] )
+                 SWspan *span )
 {
    SWcontext *swrast = SWRAST_CONTEXT(ctx);
    const struct gl_texture_unit *textureUnit = &(ctx->Texture.Unit[unit]);
@@ -92,6 +93,8 @@ texture_combine( struct gl_context *ctx, GLuint unit, GLuint n,
    const GLuint numArgsA = combine->_NumArgsA;
    float4_array ccolor[4], rgba;
    GLuint i, term;
+   GLuint n = span->end;
+   GLchan (*rgbaChan)[4] = span->array->rgba;
 
    /* alloc temp pixel buffers */
    rgba = (float4_array) malloc(4 * n * sizeof(GLfloat));
@@ -764,12 +767,8 @@ _swrast_texture_span( struct gl_context *ctx, SWspan *span )
     * We modify the span->color.rgba values.
     */
    for (unit = 0; unit < ctx->Const.MaxTextureUnits; unit++) {
-      if (ctx->Texture.Unit[unit]._ReallyEnabled) {
-         texture_combine( ctx, unit, span->end,
-                          primary_rgba,
-                          swrast->TexelBuffer,
-                          span->array->rgba );
-      }
+      if (ctx->Texture.Unit[unit]._ReallyEnabled)
+         texture_combine(ctx, unit, primary_rgba, swrast->TexelBuffer, span);
    }
 
    free(primary_rgba);
