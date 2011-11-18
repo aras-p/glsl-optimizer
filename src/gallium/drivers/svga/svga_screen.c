@@ -128,8 +128,6 @@ svga_get_paramf(struct pipe_screen *screen, enum pipe_cap param)
       return 1;
    case PIPE_CAP_TWO_SIDED_STENCIL:
       return 1;
-   case PIPE_CAP_GLSL:
-      return 1;
    case PIPE_CAP_ANISOTROPIC_FILTER:
       return 1;
    case PIPE_CAP_POINT_SPRITE:

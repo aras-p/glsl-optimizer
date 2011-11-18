@@ -89,22 +89,6 @@ static int r300_get_param(struct pipe_screen* pscreen, enum pipe_cap param)
         /* Supported features (boolean caps). */
         case PIPE_CAP_NPOT_TEXTURES:
         case PIPE_CAP_TWO_SIDED_STENCIL:
-        case PIPE_CAP_GLSL:
-            /* I'll be frank. This is a lie.
-             *
-             * We don't truly support GLSL on any of this driver's chipsets.
-             * To be fair, no chipset supports the full GLSL specification
-             * to the best of our knowledge, but some of the less esoteric
-             * features are still missing here.
-             *
-             * Rather than cripple ourselves intentionally, I'm going to set
-             * this flag, and as Gallium's interface continues to change, I
-             * hope that this single monolithic GLSL enable can slowly get
-             * split down into many different pieces and the state tracker
-             * will handle fallbacks transparently, like it should.
-             *
-             * ~ C.
-             */
         case PIPE_CAP_ANISOTROPIC_FILTER:
         case PIPE_CAP_POINT_SPRITE:
         case PIPE_CAP_OCCLUSION_QUERY:

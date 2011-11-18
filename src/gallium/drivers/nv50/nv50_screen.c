@@ -107,7 +107,6 @@ nv50_screen_get_param(struct pipe_screen *pscreen, enum pipe_cap param)
    case PIPE_CAP_DEPTHSTENCIL_CLEAR_SEPARATE:
    case PIPE_CAP_POINT_SPRITE:
       return 1;
-   case PIPE_CAP_GLSL:
    case PIPE_CAP_SM3:
       return 1;
    case PIPE_CAP_MAX_RENDER_TARGETS:

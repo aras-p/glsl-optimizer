@@ -424,7 +424,6 @@ enum pipe_transfer_usage {
 enum pipe_cap {
    PIPE_CAP_NPOT_TEXTURES = 1,
    PIPE_CAP_TWO_SIDED_STENCIL = 2,
-   PIPE_CAP_GLSL = 3,  /* XXX need something better */
    PIPE_CAP_DUAL_SOURCE_BLEND = 4,
    PIPE_CAP_ANISOTROPIC_FILTER = 5,
    PIPE_CAP_POINT_SPRITE = 6,

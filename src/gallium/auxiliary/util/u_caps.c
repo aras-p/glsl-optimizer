@@ -182,7 +182,6 @@ static unsigned caps_dx_11[] = {
 
 /* OpenGL 2.1 */
 static unsigned caps_opengl_2_1[] = {
-   UTIL_CHECK_CAP(GLSL),
    UTIL_CHECK_CAP(OCCLUSION_QUERY),
    UTIL_CHECK_CAP(TWO_SIDED_STENCIL),
    UTIL_CHECK_CAP(BLEND_EQUATION_SEPARATE),

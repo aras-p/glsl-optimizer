@@ -31,8 +31,6 @@ nvfx_screen_get_param(struct pipe_screen *pscreen, enum pipe_cap param)
 		return screen->advertise_npot;
 	case PIPE_CAP_TWO_SIDED_STENCIL:
 		return 1;
-	case PIPE_CAP_GLSL:
-		return 1;
 	case PIPE_CAP_SM3:
 		/* TODO: >= nv4x support Shader Model 3.0 */
 		return 0;

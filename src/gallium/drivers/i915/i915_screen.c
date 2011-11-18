@@ -200,7 +200,6 @@ i915_get_param(struct pipe_screen *screen, enum pipe_cap cap)
       return 0;
 
    /* Features we can lie about (boolean caps). */
-   case PIPE_CAP_GLSL:
    case PIPE_CAP_OCCLUSION_QUERY:
       return is->debug.lie ? 1 : 0;
 
