@@ -1491,7 +1491,10 @@ static struct gl_format_info format_info[MESA_FORMAT_COUNT] =
       MESA_FORMAT_Z32_FLOAT_X24S8, /* Name */
       "MESA_FORMAT_Z32_FLOAT_X24S8", /* StrName */
       GL_DEPTH_STENCIL,            /* BaseFormat */
-      GL_NONE /* XXX */,           /* DataType */
+      /* DataType here is used to answer GL_TEXTURE_DEPTH_TYPE queries, and is
+       * never used for stencil because stencil is always GL_UNSIGNED_INT.
+       */
+      GL_FLOAT,                    /* DataType */
       0, 0, 0, 0,                  /* Red/Green/Blue/AlphaBits */
       0, 0, 0, 32, 8,              /* Lum/Int/Index/Depth/StencilBits */
       1, 1, 8                      /* BlockWidth/Height,Bytes */
