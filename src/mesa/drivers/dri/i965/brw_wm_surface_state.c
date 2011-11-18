@@ -553,6 +553,7 @@ brw_init_surface_formats(struct brw_context *brw)
    ctx->TextureFormatSupported[MESA_FORMAT_X8_Z24] = true;
    ctx->TextureFormatSupported[MESA_FORMAT_Z32_FLOAT] = true;
    ctx->TextureFormatSupported[MESA_FORMAT_Z32_FLOAT_X24S8] = true;
+   ctx->TextureFormatSupported[MESA_FORMAT_Z16] = true;
 }
 
 bool
