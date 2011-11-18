@@ -41,6 +41,10 @@ intel_mesa_format_to_rb_datatype(gl_format format)
    case MESA_FORMAT_LUMINANCE_ALPHA_FLOAT32:
       return GL_FLOAT;
 
+      /* The core depthstencil wrappers demand this. */
+   case MESA_FORMAT_Z32_FLOAT_X24S8:
+      return GL_FLOAT_32_UNSIGNED_INT_24_8_REV;
+
    default:
       /* Unsupported format.  We may hit this when people ask for FBO-incomplete
        * formats.

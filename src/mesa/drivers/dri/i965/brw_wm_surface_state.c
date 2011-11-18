@@ -541,12 +541,16 @@ brw_init_surface_formats(struct brw_context *brw)
    brw->format_supported_as_render_target[MESA_FORMAT_X8_Z24] = true;
    brw->format_supported_as_render_target[MESA_FORMAT_S8] = true;
    brw->format_supported_as_render_target[MESA_FORMAT_Z16] = true;
+   brw->format_supported_as_render_target[MESA_FORMAT_Z32_FLOAT] = true;
+   brw->format_supported_as_render_target[MESA_FORMAT_Z32_FLOAT_X24S8] = true;
 
    /* We remap depth formats to a supported texturing format in
     * translate_tex_format().
     */
    ctx->TextureFormatSupported[MESA_FORMAT_S8_Z24] = true;
    ctx->TextureFormatSupported[MESA_FORMAT_X8_Z24] = true;
+   ctx->TextureFormatSupported[MESA_FORMAT_Z32_FLOAT] = true;
+   ctx->TextureFormatSupported[MESA_FORMAT_Z32_FLOAT_X24S8] = true;
 }
 
 bool
@@ -573,6 +577,12 @@ translate_tex_format(gl_format mesa_format,
    case MESA_FORMAT_S8_Z24:
    case MESA_FORMAT_X8_Z24:
       return BRW_SURFACEFORMAT_I24X8_UNORM;
+
+   case MESA_FORMAT_Z32_FLOAT:
+      return BRW_SURFACEFORMAT_I32_FLOAT;
+
+   case MESA_FORMAT_Z32_FLOAT_X24S8:
+      return BRW_SURFACEFORMAT_R32G32_FLOAT;
 
    case MESA_FORMAT_SARGB8:
    case MESA_FORMAT_SLA8:
