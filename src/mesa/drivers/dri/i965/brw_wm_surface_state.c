@@ -568,29 +568,12 @@ translate_tex_format(gl_format mesa_format,
    switch( mesa_format ) {
 
    case MESA_FORMAT_Z16:
-      if (depth_mode == GL_INTENSITY) 
-	  return BRW_SURFACEFORMAT_I16_UNORM;
-      else if (depth_mode == GL_ALPHA)
-	  return BRW_SURFACEFORMAT_A16_UNORM;
-      else if (depth_mode == GL_RED)
-	  return BRW_SURFACEFORMAT_R16_UNORM;
-      else
-	  return BRW_SURFACEFORMAT_L16_UNORM;
+      return BRW_SURFACEFORMAT_I16_UNORM;
 
    case MESA_FORMAT_S8_Z24:
    case MESA_FORMAT_X8_Z24:
-      /* XXX: these different surface formats don't seem to
-       * make any difference for shadow sampler/compares.
-       */
-      if (depth_mode == GL_INTENSITY) 
-         return BRW_SURFACEFORMAT_I24X8_UNORM;
-      else if (depth_mode == GL_ALPHA)
-         return BRW_SURFACEFORMAT_A24X8_UNORM;
-      else if (depth_mode == GL_RED)
-         return BRW_SURFACEFORMAT_R24_UNORM_X8_TYPELESS;
-      else
-         return BRW_SURFACEFORMAT_L24X8_UNORM;
-      
+      return BRW_SURFACEFORMAT_I24X8_UNORM;
+
    case MESA_FORMAT_SARGB8:
    case MESA_FORMAT_SLA8:
    case MESA_FORMAT_SL8:

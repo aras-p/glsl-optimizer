@@ -420,25 +420,40 @@ static void brw_wm_populate_key( struct brw_context *brw,
 	    SWIZZLE_NIL
 	 };
 
-	 /* GL_DEPTH_TEXTURE_MODE is normally handled through
-	  * brw_wm_surface_state, but it applies to shadow compares as
-	  * well and our shadow compares always return the result in
-	  * all 4 channels.
-	  */
-	 if (sampler->CompareMode == GL_COMPARE_R_TO_TEXTURE_ARB) {
-	    key->compare_funcs[i] = sampler->CompareFunc;
+	 if (img->_BaseFormat == GL_DEPTH_COMPONENT ||
+	     img->_BaseFormat == GL_DEPTH_STENCIL) {
+	    if (sampler->CompareMode == GL_COMPARE_R_TO_TEXTURE_ARB)
+	       key->compare_funcs[i] = sampler->CompareFunc;
 
-	    if (sampler->DepthMode == GL_ALPHA) {
+	    /* We handle GL_DEPTH_TEXTURE_MODE here instead of as surface format
+	     * overrides because shadow comparison always returns the result of
+	     * the comparison in all channels anyway.
+	     */
+	    switch (sampler->DepthMode) {
+	    case GL_ALPHA:
 	       swizzles[0] = SWIZZLE_ZERO;
 	       swizzles[1] = SWIZZLE_ZERO;
 	       swizzles[2] = SWIZZLE_ZERO;
-	    } else if (sampler->DepthMode == GL_LUMINANCE) {
+	       swizzles[3] = SWIZZLE_X;
+	       break;
+	    case GL_LUMINANCE:
+	       swizzles[0] = SWIZZLE_X;
+	       swizzles[1] = SWIZZLE_X;
+	       swizzles[2] = SWIZZLE_X;
 	       swizzles[3] = SWIZZLE_ONE;
-	    } else if (sampler->DepthMode == GL_RED) {
-	       /* See table 3.23 of the GL 3.0 spec. */
+	       break;
+	    case GL_INTENSITY:
+	       swizzles[0] = SWIZZLE_X;
+	       swizzles[1] = SWIZZLE_X;
+	       swizzles[2] = SWIZZLE_X;
+	       swizzles[3] = SWIZZLE_X;
+	       break;
+	    case GL_RED:
+	       swizzles[0] = SWIZZLE_X;
 	       swizzles[1] = SWIZZLE_ZERO;
 	       swizzles[2] = SWIZZLE_ZERO;
 	       swizzles[3] = SWIZZLE_ONE;
+	       break;
 	    }
 	 }
 
