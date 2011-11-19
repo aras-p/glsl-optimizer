@@ -5813,6 +5813,20 @@ _glapi_create_table_from_handle(void *handle, const char *symbol_prefix) {
     }
 
 
+    if(!disp->BindFragDataLocationIndexed) {
+        void ** procp = (void **) &disp->BindFragDataLocationIndexed;
+        snprintf(symboln, sizeof(symboln), "%sBindFragDataLocationIndexed", symbol_prefix);
+        *procp = dlsym(handle, symboln);
+    }
+
+
+    if(!disp->GetFragDataIndex) {
+        void ** procp = (void **) &disp->GetFragDataIndex;
+        snprintf(symboln, sizeof(symboln), "%sGetFragDataIndex", symbol_prefix);
+        *procp = dlsym(handle, symboln);
+    }
+
+
     if(!disp->BindSampler) {
         void ** procp = (void **) &disp->BindSampler;
         snprintf(symboln, sizeof(symboln), "%sBindSampler", symbol_prefix);

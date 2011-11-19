@@ -12430,4 +12430,5 @@
 
 <xi:include href="ARB_texture_rgb10_a2ui.xml" xmlns:xi="http://www.w3.org/2001/XInclude"/>
 
+<xi:include href="ARB_blend_func_extended.xml" xmlns:xi="http://www.w3.org/2001/XInclude"/>
 </OpenGLAPI>
