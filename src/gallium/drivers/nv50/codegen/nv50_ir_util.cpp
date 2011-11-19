@@ -219,6 +219,7 @@ bool BitSet::allocate(unsigned int nBits, bool zero)
    if (zero)
       memset(data, 0, (size + 7) / 8);
    else
+   if (nBits)
       data[(size + 31) / 32 - 1] = 0; // clear unused bits (e.g. for popCount)
 
    return data;
