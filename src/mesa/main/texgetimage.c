@@ -386,11 +386,10 @@ get_tex_memcpy(struct gl_context *ctx, GLenum format, GLenum type,
     * so we don't have to worry about those.
     * XXX more format combinations could be supported here.
     */
-   if ((target == GL_TEXTURE_1D ||
-        target == GL_TEXTURE_2D ||
-        target == GL_TEXTURE_RECTANGLE ||
-        (target >= GL_TEXTURE_CUBE_MAP_POSITIVE_X &&
-         target <= GL_TEXTURE_CUBE_MAP_NEGATIVE_Z))) {
+   if (target == GL_TEXTURE_1D ||
+       target == GL_TEXTURE_2D ||
+       target == GL_TEXTURE_RECTANGLE ||
+       _mesa_is_cube_face(target)) {
       if ((texImage->TexFormat == MESA_FORMAT_ARGB8888 ||
              texImage->TexFormat == MESA_FORMAT_SARGB8) &&
           format == GL_BGRA &&

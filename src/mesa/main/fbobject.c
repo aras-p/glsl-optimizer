@@ -78,14 +78,6 @@ static struct gl_renderbuffer DummyRenderbuffer;
 static struct gl_framebuffer IncompleteFramebuffer;
 
 
-static inline GLboolean
-is_cube_face(GLenum target)
-{
-   return (target >= GL_TEXTURE_CUBE_MAP_POSITIVE_X &&
-           target <= GL_TEXTURE_CUBE_MAP_NEGATIVE_Z);
-}
-
-
 /**
  * Is the given FBO a user-created FBO?
  */
@@ -2008,7 +2000,7 @@ framebuffer_texture(struct gl_context *ctx, const char *caller, GLenum target,
          }
          else {
             err = (texObj->Target == GL_TEXTURE_CUBE_MAP)
-                ? !is_cube_face(textarget)
+                ? !_mesa_is_cube_face(textarget)
                 : (texObj->Target != textarget);
          }
       }

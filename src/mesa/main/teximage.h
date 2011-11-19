@@ -36,6 +36,16 @@
 #include "formats.h"
 
 
+/** Is the given value one of the 6 cube faces? */
+static inline GLboolean
+_mesa_is_cube_face(GLenum target)
+{
+   return (target >= GL_TEXTURE_CUBE_MAP_POSITIVE_X_ARB &&
+           target <= GL_TEXTURE_CUBE_MAP_NEGATIVE_Z_ARB);
+}
+
+
+
 /** \name Internal functions */
 /*@{*/
 

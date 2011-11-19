@@ -522,8 +522,7 @@ _mesa_base_tex_format( struct gl_context *ctx, GLint internalFormat )
 GLuint
 _mesa_tex_target_to_face(GLenum target)
 {
-   if (target >= GL_TEXTURE_CUBE_MAP_POSITIVE_X_ARB &&
-       target <= GL_TEXTURE_CUBE_MAP_NEGATIVE_Z_ARB)
+   if (_mesa_is_cube_face(target))
       return (GLuint) target - (GLuint) GL_TEXTURE_CUBE_MAP_POSITIVE_X;
    else
       return 0;
@@ -3094,8 +3093,7 @@ compressed_texture_error_check(struct gl_context *ctx, GLint dimensions,
    }
 
    /* For cube map, width must equal height */
-   if (target >= GL_TEXTURE_CUBE_MAP_POSITIVE_X_ARB &&
-       target <= GL_TEXTURE_CUBE_MAP_NEGATIVE_Z_ARB && width != height) {
+   if (_mesa_is_cube_face(target) && width != height) {
       *reason = "width != height";
       return GL_INVALID_VALUE;
    }
@@ -3183,8 +3181,7 @@ compressed_subtexture_error_check(struct gl_context *ctx, GLint dimensions,
             return GL_INVALID_ENUM; /*target*/
          maxLevels = ctx->Const.MaxCubeTextureLevels;
       }
-      else if (target >= GL_TEXTURE_CUBE_MAP_POSITIVE_X_ARB &&
-               target <= GL_TEXTURE_CUBE_MAP_NEGATIVE_Z_ARB) {
+      else if (_mesa_is_cube_face(target)) {
          if (!ctx->Extensions.ARB_texture_cube_map)
             return GL_INVALID_ENUM; /*target*/
          maxLevels = ctx->Const.MaxCubeTextureLevels;
