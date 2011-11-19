@@ -871,10 +871,17 @@ nvc0_init_state_functions(struct nvc0_context *nvc0)
    pipe->set_vertex_buffers = nvc0_set_vertex_buffers;
    pipe->set_index_buffer = nvc0_set_index_buffer;
 
+#if 0
    pipe->create_stream_output_state = nvc0_tfb_state_create;
    pipe->delete_stream_output_state = nvc0_tfb_state_delete;
    pipe->bind_stream_output_state = nvc0_tfb_state_bind;
    pipe->set_stream_output_buffers = nvc0_set_transform_feedback_buffers;
+#else
+   (void)nvc0_tfb_state_create;
+   (void)nvc0_tfb_state_delete;
+   (void)nvc0_tfb_state_bind;
+   (void)nvc0_set_transform_feedback_buffers;
+#endif
 
    pipe->redefine_user_buffer = u_default_redefine_user_buffer;
 }

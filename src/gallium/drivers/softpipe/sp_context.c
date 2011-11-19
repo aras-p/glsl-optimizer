@@ -257,7 +257,7 @@ softpipe_create_context( struct pipe_screen *screen,
    softpipe->pipe.set_framebuffer_state = softpipe_set_framebuffer_state;
 
    softpipe->pipe.draw_vbo = softpipe_draw_vbo;
-   softpipe->pipe.draw_stream_output = softpipe_draw_stream_output;
+   /* XXX softpipe->pipe.draw_stream_output = softpipe_draw_stream_output; */
 
    softpipe->pipe.clear = softpipe_clear;
    softpipe->pipe.flush = softpipe_flush_wrapped;

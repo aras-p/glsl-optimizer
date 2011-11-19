@@ -125,6 +125,7 @@ llvmpipe_set_stream_output_buffers(struct pipe_context *pipe,
 void
 llvmpipe_init_so_funcs(struct llvmpipe_context *llvmpipe)
 {
+#if 0
    llvmpipe->pipe.create_stream_output_state =
       llvmpipe_create_stream_output_state;
    llvmpipe->pipe.bind_stream_output_state =
@@ -134,4 +135,10 @@ llvmpipe_init_so_funcs(struct llvmpipe_context *llvmpipe)
 
    llvmpipe->pipe.set_stream_output_buffers =
       llvmpipe_set_stream_output_buffers;
+#else
+   (void) llvmpipe_create_stream_output_state;
+   (void) llvmpipe_bind_stream_output_state;
+   (void) llvmpipe_delete_stream_output_state;
+   (void) llvmpipe_set_stream_output_buffers;
+#endif
 }

@@ -131,10 +131,17 @@ softpipe_set_stream_output_buffers(struct pipe_context *pipe,
 void
 softpipe_init_streamout_funcs(struct pipe_context *pipe)
 {
+#if 0
    pipe->create_stream_output_state = softpipe_create_stream_output_state;
    pipe->bind_stream_output_state = softpipe_bind_stream_output_state;
    pipe->delete_stream_output_state = softpipe_delete_stream_output_state;
 
    pipe->set_stream_output_buffers = softpipe_set_stream_output_buffers;
+#else
+   (void) softpipe_create_stream_output_state;
+   (void) softpipe_bind_stream_output_state;
+   (void) softpipe_delete_stream_output_state;
+   (void) softpipe_set_stream_output_buffers;
+#endif
 }
 
