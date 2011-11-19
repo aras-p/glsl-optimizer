@@ -113,14 +113,18 @@ void st_init_limits(struct st_context *st)
               1, MAX_DRAW_BUFFERS);
 
    c->MaxLineWidth
-      = _maxf(1.0f, screen->get_paramf(screen, PIPE_CAP_MAX_LINE_WIDTH));
+      = _maxf(1.0f, screen->get_paramf(screen,
+                                       PIPE_CAPF_MAX_LINE_WIDTH));
    c->MaxLineWidthAA
-      = _maxf(1.0f, screen->get_paramf(screen, PIPE_CAP_MAX_LINE_WIDTH_AA));
+      = _maxf(1.0f, screen->get_paramf(screen,
+                                       PIPE_CAPF_MAX_LINE_WIDTH_AA));
 
    c->MaxPointSize
-      = _maxf(1.0f, screen->get_paramf(screen, PIPE_CAP_MAX_POINT_WIDTH));
+      = _maxf(1.0f, screen->get_paramf(screen,
+                                       PIPE_CAPF_MAX_POINT_WIDTH));
    c->MaxPointSizeAA
-      = _maxf(1.0f, screen->get_paramf(screen, PIPE_CAP_MAX_POINT_WIDTH_AA));
+      = _maxf(1.0f, screen->get_paramf(screen,
+                                       PIPE_CAPF_MAX_POINT_WIDTH_AA));
    /* called after _mesa_create_context/_mesa_init_point, fix default user
     * settable max point size up
     */
@@ -132,10 +136,11 @@ void st_init_limits(struct st_context *st)
    c->MinPointSizeAA = 0.0f;
 
    c->MaxTextureMaxAnisotropy
-      = _maxf(2.0f, screen->get_paramf(screen, PIPE_CAP_MAX_TEXTURE_ANISOTROPY));
+      = _maxf(2.0f, screen->get_paramf(screen,
+                                 PIPE_CAPF_MAX_TEXTURE_ANISOTROPY));
 
    c->MaxTextureLodBias
-      = screen->get_paramf(screen, PIPE_CAP_MAX_TEXTURE_LOD_BIAS);
+      = screen->get_paramf(screen, PIPE_CAPF_MAX_TEXTURE_LOD_BIAS);
 
    c->MaxDrawBuffers
       = CLAMP(screen->get_param(screen, PIPE_CAP_MAX_RENDER_TARGETS),

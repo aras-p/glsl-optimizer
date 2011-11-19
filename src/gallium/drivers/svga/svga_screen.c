@@ -94,34 +94,48 @@ svga_get_name( struct pipe_screen *pscreen )
 
 
 static float
-svga_get_paramf(struct pipe_screen *screen, enum pipe_cap param)
+svga_get_paramf(struct pipe_screen *screen, enum pipe_capf param)
 {
    struct svga_screen *svgascreen = svga_screen(screen);
    struct svga_winsys_screen *sws = svgascreen->sws;
    SVGA3dDevCapResult result;
 
    switch (param) {
-   case PIPE_CAP_MAX_LINE_WIDTH:
+   case PIPE_CAPF_MAX_LINE_WIDTH:
       /* fall-through */
-   case PIPE_CAP_MAX_LINE_WIDTH_AA:
+   case PIPE_CAPF_MAX_LINE_WIDTH_AA:
       return 7.0;
 
-   case PIPE_CAP_MAX_POINT_WIDTH:
+   case PIPE_CAPF_MAX_POINT_WIDTH:
       /* fall-through */
-   case PIPE_CAP_MAX_POINT_WIDTH_AA:
+   case PIPE_CAPF_MAX_POINT_WIDTH_AA:
       /* Keep this to a reasonable size to avoid failures in
        * conform/pntaa.c:
        */
       return SVGA_MAX_POINTSIZE;
 
-   case PIPE_CAP_MAX_TEXTURE_ANISOTROPY:
+   case PIPE_CAPF_MAX_TEXTURE_ANISOTROPY:
       if(!sws->get_cap(sws, SVGA3D_DEVCAP_MAX_TEXTURE_ANISOTROPY, &result))
          return 4.0;
       return result.u;
 
-   case PIPE_CAP_MAX_TEXTURE_LOD_BIAS:
+   case PIPE_CAPF_MAX_TEXTURE_LOD_BIAS:
       return 16.0;
 
+   default:
+      return 0;
+   }
+}
+
+
+static int
+svga_get_param(struct pipe_screen *screen, enum pipe_cap param)
+{
+   struct svga_screen *svgascreen = svga_screen(screen);
+   struct svga_winsys_screen *sws = svgascreen->sws;
+   SVGA3dDevCapResult result;
+
+   switch (param) {
    case PIPE_CAP_MAX_COMBINED_SAMPLERS:
       return 16;
    case PIPE_CAP_NPOT_TEXTURES:
@@ -192,15 +206,6 @@ svga_get_paramf(struct pipe_screen *screen, enum pipe_cap param)
    default:
       return 0;
    }
-}
-
-
-/* This is a fairly pointless interface
- */
-static int
-svga_get_param(struct pipe_screen *screen, enum pipe_cap param)
-{
-   return (int) svga_get_paramf( screen, param );
 }
 
 static int svga_get_shader_param(struct pipe_screen *screen, unsigned shader, enum pipe_shader_cap param)

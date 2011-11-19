@@ -89,7 +89,7 @@ identity_screen_get_shader_param(struct pipe_screen *_screen,
 
 static float
 identity_screen_get_paramf(struct pipe_screen *_screen,
-                           enum pipe_cap param)
+                           enum pipe_capf param)
 {
    struct identity_screen *id_screen = identity_screen(_screen);
    struct pipe_screen *screen = id_screen->screen;

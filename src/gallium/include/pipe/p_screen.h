@@ -85,7 +85,7 @@ struct pipe_screen {
     * Query a float-valued capability/parameter/limit
     * \param param  one of PIPE_CAP_x
     */
-   float (*get_paramf)( struct pipe_screen *, enum pipe_cap param );
+   float (*get_paramf)( struct pipe_screen *, enum pipe_capf param );
 
    /**
     * Query a per-shader-stage integer-valued capability/parameter/limit

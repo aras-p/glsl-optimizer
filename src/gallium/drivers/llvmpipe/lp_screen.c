@@ -190,25 +190,25 @@ llvmpipe_get_shader_param(struct pipe_screen *screen, unsigned shader, enum pipe
 }
 
 static float
-llvmpipe_get_paramf(struct pipe_screen *screen, enum pipe_cap param)
+llvmpipe_get_paramf(struct pipe_screen *screen, enum pipe_capf param)
 {
    switch (param) {
-   case PIPE_CAP_MAX_LINE_WIDTH:
+   case PIPE_CAPF_MAX_LINE_WIDTH:
       /* fall-through */
-   case PIPE_CAP_MAX_LINE_WIDTH_AA:
+   case PIPE_CAPF_MAX_LINE_WIDTH_AA:
       return 255.0; /* arbitrary */
-   case PIPE_CAP_MAX_POINT_WIDTH:
+   case PIPE_CAPF_MAX_POINT_WIDTH:
       /* fall-through */
-   case PIPE_CAP_MAX_POINT_WIDTH_AA:
+   case PIPE_CAPF_MAX_POINT_WIDTH_AA:
       return 255.0; /* arbitrary */
-   case PIPE_CAP_MAX_TEXTURE_ANISOTROPY:
+   case PIPE_CAPF_MAX_TEXTURE_ANISOTROPY:
       return 16.0; /* not actually signficant at this time */
-   case PIPE_CAP_MAX_TEXTURE_LOD_BIAS:
+   case PIPE_CAPF_MAX_TEXTURE_LOD_BIAS:
       return 16.0; /* arbitrary */
-   case PIPE_CAP_GUARD_BAND_LEFT:
-   case PIPE_CAP_GUARD_BAND_TOP:
-   case PIPE_CAP_GUARD_BAND_RIGHT:
-   case PIPE_CAP_GUARD_BAND_BOTTOM:
+   case PIPE_CAPF_GUARD_BAND_LEFT:
+   case PIPE_CAPF_GUARD_BAND_TOP:
+   case PIPE_CAPF_GUARD_BAND_RIGHT:
+   case PIPE_CAPF_GUARD_BAND_BOTTOM:
       return 0.0;
    default:
       assert(0);

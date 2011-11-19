@@ -329,7 +329,8 @@ static int noop_get_param(struct pipe_screen* pscreen, enum pipe_cap param)
 	return screen->get_param(screen, param);
 }
 
-static float noop_get_paramf(struct pipe_screen* pscreen, enum pipe_cap param)
+static float noop_get_paramf(struct pipe_screen* pscreen,
+			     enum pipe_capf param)
 {
 	struct pipe_screen *screen = ((struct noop_pipe_screen*)pscreen)->oscreen;
 

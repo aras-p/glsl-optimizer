@@ -432,23 +432,24 @@ static int r600_get_param(struct pipe_screen* pscreen, enum pipe_cap param)
 	}
 }
 
-static float r600_get_paramf(struct pipe_screen* pscreen, enum pipe_cap param)
+static float r600_get_paramf(struct pipe_screen* pscreen,
+			     enum pipe_capf param)
 {
 	struct r600_screen *rscreen = (struct r600_screen *)pscreen;
 	enum radeon_family family = rscreen->family;
 
 	switch (param) {
-	case PIPE_CAP_MAX_LINE_WIDTH:
-	case PIPE_CAP_MAX_LINE_WIDTH_AA:
-	case PIPE_CAP_MAX_POINT_WIDTH:
-	case PIPE_CAP_MAX_POINT_WIDTH_AA:
+	case PIPE_CAPF_MAX_LINE_WIDTH:
+	case PIPE_CAPF_MAX_LINE_WIDTH_AA:
+	case PIPE_CAPF_MAX_POINT_WIDTH:
+	case PIPE_CAPF_MAX_POINT_WIDTH_AA:
 		if (family >= CHIP_CEDAR)
 			return 16384.0f;
 		else
 			return 8192.0f;
-	case PIPE_CAP_MAX_TEXTURE_ANISOTROPY:
+	case PIPE_CAPF_MAX_TEXTURE_ANISOTROPY:
 		return 16.0f;
-	case PIPE_CAP_MAX_TEXTURE_LOD_BIAS:
+	case PIPE_CAPF_MAX_TEXTURE_LOD_BIAS:
 		return 16.0f;
 	default:
 		R600_ERR("r600: unsupported paramf %d\n", param);

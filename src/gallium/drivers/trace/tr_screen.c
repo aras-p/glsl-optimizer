@@ -132,7 +132,7 @@ trace_screen_get_shader_param(struct pipe_screen *_screen, unsigned shader,
 
 static float
 trace_screen_get_paramf(struct pipe_screen *_screen,
-                        enum pipe_cap param)
+                        enum pipe_capf param)
 {
    struct trace_screen *tr_scr = trace_screen(_screen);
    struct pipe_screen *screen = tr_scr->screen;

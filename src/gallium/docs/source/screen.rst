@@ -73,20 +73,26 @@ The integer capabilities:
 * ``PIPE_CAP_TGSI_FS_COORD_PIXEL_CENTER_INTEGER``: Whether the TGSI
   property FS_COORD_PIXEL_CENTER with value INTEGER is supported.
 
-The floating-point capabilities:
 
-* ``PIPE_CAP_MAX_LINE_WIDTH``: The maximum width of a regular line.
-* ``PIPE_CAP_MAX_LINE_WIDTH_AA``: The maximum width of a smoothed line.
-* ``PIPE_CAP_MAX_POINT_WIDTH``: The maximum width and height of a point.
-* ``PIPE_CAP_MAX_POINT_WIDTH_AA``: The maximum width and height of a smoothed point.
-* ``PIPE_CAP_MAX_TEXTURE_ANISOTROPY``: The maximum level of anisotropy that can be
+.. _pipe_capf:
+
+PIPE_CAPF_*
+^^^^^^^^^^^^^^^^
+
+The floating-point capabilities are:
+
+* ``PIPE_CAPF_MAX_LINE_WIDTH``: The maximum width of a regular line.
+* ``PIPE_CAPF_MAX_LINE_WIDTH_AA``: The maximum width of a smoothed line.
+* ``PIPE_CAPF_MAX_POINT_WIDTH``: The maximum width and height of a point.
+* ``PIPE_CAPF_MAX_POINT_WIDTH_AA``: The maximum width and height of a smoothed point.
+* ``PIPE_CAPF_MAX_TEXTURE_ANISOTROPY``: The maximum level of anisotropy that can be
   applied to anisotropically filtered textures.
-* ``PIPE_CAP_MAX_TEXTURE_LOD_BIAS``: The maximum :term:`LOD` bias that may be applied
+* ``PIPE_CAPF_MAX_TEXTURE_LOD_BIAS``: The maximum :term:`LOD` bias that may be applied
   to filtered textures.
-* ``PIPE_CAP_GUARD_BAND_LEFT``,
-  ``PIPE_CAP_GUARD_BAND_TOP``,
-  ``PIPE_CAP_GUARD_BAND_RIGHT``,
-  ``PIPE_CAP_GUARD_BAND_BOTTOM``: TODO
+* ``PIPE_CAPF_GUARD_BAND_LEFT``,
+  ``PIPE_CAPF_GUARD_BAND_TOP``,
+  ``PIPE_CAPF_GUARD_BAND_RIGHT``,
+  ``PIPE_CAPF_GUARD_BAND_BOTTOM``: TODO
 
 
 .. _pipe_shader_cap:

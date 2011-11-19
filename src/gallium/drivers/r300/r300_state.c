@@ -1074,7 +1074,7 @@ static void* r300_create_rs_state(struct pipe_context* pipe,
         /* Per-vertex point size.
          * Clamp to [0, max FB size] */
         psiz = pipe->screen->get_paramf(pipe->screen,
-                                        PIPE_CAP_MAX_POINT_WIDTH);
+                                        PIPE_CAPF_MAX_POINT_WIDTH);
         point_minmax =
             pack_float_16_6x(psiz) << R300_GA_POINT_MINMAX_MAX_SHIFT;
     } else {

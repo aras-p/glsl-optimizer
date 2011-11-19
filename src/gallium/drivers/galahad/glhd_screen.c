@@ -92,7 +92,7 @@ galahad_screen_get_shader_param(struct pipe_screen *_screen,
 
 static float
 galahad_screen_get_paramf(struct pipe_screen *_screen,
-                           enum pipe_cap param)
+                           enum pipe_capf param)
 {
    struct galahad_screen *glhd_screen = galahad_screen(_screen);
    struct pipe_screen *screen = glhd_screen->screen;

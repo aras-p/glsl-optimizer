@@ -240,23 +240,23 @@ i915_get_param(struct pipe_screen *screen, enum pipe_cap cap)
 }
 
 static float
-i915_get_paramf(struct pipe_screen *screen, enum pipe_cap cap)
+i915_get_paramf(struct pipe_screen *screen, enum pipe_capf cap)
 {
    switch(cap) {
-   case PIPE_CAP_MAX_LINE_WIDTH:
+   case PIPE_CAPF_MAX_LINE_WIDTH:
       /* fall-through */
-   case PIPE_CAP_MAX_LINE_WIDTH_AA:
+   case PIPE_CAPF_MAX_LINE_WIDTH_AA:
       return 7.5;
 
-   case PIPE_CAP_MAX_POINT_WIDTH:
+   case PIPE_CAPF_MAX_POINT_WIDTH:
       /* fall-through */
-   case PIPE_CAP_MAX_POINT_WIDTH_AA:
+   case PIPE_CAPF_MAX_POINT_WIDTH_AA:
       return 255.0;
 
-   case PIPE_CAP_MAX_TEXTURE_ANISOTROPY:
+   case PIPE_CAPF_MAX_TEXTURE_ANISOTROPY:
       return 4.0;
 
-   case PIPE_CAP_MAX_TEXTURE_LOD_BIAS:
+   case PIPE_CAPF_MAX_TEXTURE_LOD_BIAS:
       return 16.0;
 
    default:

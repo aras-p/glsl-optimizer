@@ -419,7 +419,7 @@ enum pipe_transfer_usage {
 
 /**
  * Implementation capabilities/limits which are queried through
- * pipe_screen::get_param() and pipe_screen::get_paramf().
+ * pipe_screen::get_param()
  */
 enum pipe_cap {
    PIPE_CAP_NPOT_TEXTURES = 1,
@@ -435,16 +435,6 @@ enum pipe_cap {
    PIPE_CAP_MAX_TEXTURE_2D_LEVELS = 12,
    PIPE_CAP_MAX_TEXTURE_3D_LEVELS = 13,
    PIPE_CAP_MAX_TEXTURE_CUBE_LEVELS = 14,
-   PIPE_CAP_MAX_LINE_WIDTH = 15,
-   PIPE_CAP_MAX_LINE_WIDTH_AA = 16,
-   PIPE_CAP_MAX_POINT_WIDTH = 17,
-   PIPE_CAP_MAX_POINT_WIDTH_AA = 18,
-   PIPE_CAP_MAX_TEXTURE_ANISOTROPY = 19,
-   PIPE_CAP_MAX_TEXTURE_LOD_BIAS = 20,
-   PIPE_CAP_GUARD_BAND_LEFT = 21,  /*< float */
-   PIPE_CAP_GUARD_BAND_TOP = 22,  /*< float */
-   PIPE_CAP_GUARD_BAND_RIGHT = 23,  /*< float */
-   PIPE_CAP_GUARD_BAND_BOTTOM = 24,  /*< float */
    PIPE_CAP_TEXTURE_MIRROR_CLAMP = 25,
    PIPE_CAP_BLEND_EQUATION_SEPARATE = 28,
    PIPE_CAP_SM3 = 29,  /*< Shader Model, supported */
@@ -476,6 +466,24 @@ enum pipe_cap {
    PIPE_CAP_MAX_TEXEL_OFFSET = 51,
    PIPE_CAP_CONDITIONAL_RENDER = 52,
    PIPE_CAP_TEXTURE_BARRIER = 53
+};
+
+/**
+ * Implementation limits which are queried through
+ * pipe_screen::get_paramf()
+ */
+enum pipe_capf
+{
+   PIPE_CAPF_MAX_LINE_WIDTH = 15,
+   PIPE_CAPF_MAX_LINE_WIDTH_AA = 16,
+   PIPE_CAPF_MAX_POINT_WIDTH = 17,
+   PIPE_CAPF_MAX_POINT_WIDTH_AA = 18,
+   PIPE_CAPF_MAX_TEXTURE_ANISOTROPY = 19,
+   PIPE_CAPF_MAX_TEXTURE_LOD_BIAS = 20,
+   PIPE_CAPF_GUARD_BAND_LEFT = 21,  /*< float */
+   PIPE_CAPF_GUARD_BAND_TOP = 22,  /*< float */
+   PIPE_CAPF_GUARD_BAND_RIGHT = 23,  /*< float */
+   PIPE_CAPF_GUARD_BAND_BOTTOM = 24,  /*< float */
 };
 
 /* Shader caps not specific to any single stage */

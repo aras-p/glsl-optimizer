@@ -50,7 +50,7 @@ enum u_caps_check_enum {
 
 /* Floats currently lose precision */
 #define UTIL_CHECK_FLOAT(cap, higher) \
-   UTIL_CAPS_CHECK_FLOAT, PIPE_CAP_##cap, (unsigned)(int)(higher)
+   UTIL_CAPS_CHECK_FLOAT, PIPE_CAPF_##cap, (unsigned)(int)(higher)
 
 #define UTIL_CHECK_FORMAT(format) \
    UTIL_CAPS_CHECK_FORMAT, PIPE_FORMAT_##format

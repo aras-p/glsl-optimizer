@@ -258,15 +258,16 @@ static int r300_get_shader_param(struct pipe_screen *pscreen, unsigned shader, e
     return 0;
 }
 
-static float r300_get_paramf(struct pipe_screen* pscreen, enum pipe_cap param)
+static float r300_get_paramf(struct pipe_screen* pscreen,
+                             enum pipe_capf param)
 {
     struct r300_screen* r300screen = r300_screen(pscreen);
 
     switch (param) {
-        case PIPE_CAP_MAX_LINE_WIDTH:
-        case PIPE_CAP_MAX_LINE_WIDTH_AA:
-        case PIPE_CAP_MAX_POINT_WIDTH:
-        case PIPE_CAP_MAX_POINT_WIDTH_AA:
+        case PIPE_CAPF_MAX_LINE_WIDTH:
+        case PIPE_CAPF_MAX_LINE_WIDTH_AA:
+        case PIPE_CAPF_MAX_POINT_WIDTH:
+        case PIPE_CAPF_MAX_POINT_WIDTH_AA:
             /* The maximum dimensions of the colorbuffer are our practical
              * rendering limits. 2048 pixels should be enough for anybody. */
             if (r300screen->caps.is_r500) {
@@ -276,14 +277,14 @@ static float r300_get_paramf(struct pipe_screen* pscreen, enum pipe_cap param)
             } else {
                 return 2560.0f;
             }
-        case PIPE_CAP_MAX_TEXTURE_ANISOTROPY:
+        case PIPE_CAPF_MAX_TEXTURE_ANISOTROPY:
             return 16.0f;
-        case PIPE_CAP_MAX_TEXTURE_LOD_BIAS:
+        case PIPE_CAPF_MAX_TEXTURE_LOD_BIAS:
             return 16.0f;
-        case PIPE_CAP_GUARD_BAND_LEFT:
-        case PIPE_CAP_GUARD_BAND_TOP:
-        case PIPE_CAP_GUARD_BAND_RIGHT:
-        case PIPE_CAP_GUARD_BAND_BOTTOM:
+        case PIPE_CAPF_GUARD_BAND_LEFT:
+        case PIPE_CAPF_GUARD_BAND_TOP:
+        case PIPE_CAPF_GUARD_BAND_RIGHT:
+        case PIPE_CAPF_GUARD_BAND_BOTTOM:
             /* XXX I don't know what these should be but the least we can do is
              * silence the potential error message */
             return 0.0f;

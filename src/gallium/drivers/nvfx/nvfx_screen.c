@@ -188,20 +188,20 @@ nvfx_screen_get_shader_param(struct pipe_screen *pscreen, unsigned shader, enum 
 }
 
 static float
-nvfx_screen_get_paramf(struct pipe_screen *pscreen, enum pipe_cap param)
+nvfx_screen_get_paramf(struct pipe_screen *pscreen, enum pipe_capf param)
 {
 	struct nvfx_screen *screen = nvfx_screen(pscreen);
 
 	switch (param) {
-	case PIPE_CAP_MAX_LINE_WIDTH:
-	case PIPE_CAP_MAX_LINE_WIDTH_AA:
+	case PIPE_CAPF_MAX_LINE_WIDTH:
+	case PIPE_CAPF_MAX_LINE_WIDTH_AA:
 		return 10.0;
-	case PIPE_CAP_MAX_POINT_WIDTH:
-	case PIPE_CAP_MAX_POINT_WIDTH_AA:
+	case PIPE_CAPF_MAX_POINT_WIDTH:
+	case PIPE_CAPF_MAX_POINT_WIDTH_AA:
 		return 64.0;
-	case PIPE_CAP_MAX_TEXTURE_ANISOTROPY:
+	case PIPE_CAPF_MAX_TEXTURE_ANISOTROPY:
 		return screen->use_nv4x ? 16.0 : 8.0;
-	case PIPE_CAP_MAX_TEXTURE_LOD_BIAS:
+	case PIPE_CAPF_MAX_TEXTURE_LOD_BIAS:
 		return 15.0;
 	default:
 		NOUVEAU_ERR("Unknown PIPE_CAP %d\n", param);
