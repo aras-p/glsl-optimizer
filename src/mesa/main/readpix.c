@@ -224,7 +224,7 @@ fast_read_rgba_pixels_memcpy( struct gl_context *ctx,
    return GL_TRUE;
 }
 
-static GLboolean
+static void
 slow_read_rgba_pixels( struct gl_context *ctx,
 		       GLint x, GLint y,
 		       GLsizei width, GLsizei height,
@@ -263,8 +263,6 @@ slow_read_rgba_pixels( struct gl_context *ctx,
    }
 
    ctx->Driver.UnmapRenderbuffer(ctx, rb);
-
-   return GL_TRUE;
 }
 
 /*
