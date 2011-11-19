@@ -124,6 +124,7 @@ static struct pipe_surface *noop_create_surface(struct pipe_context *ctx,
 
 	return surface;
 }
+
 static void noop_set_vs_sampler_view(struct pipe_context *ctx, unsigned count,
 					struct pipe_sampler_view **views)
 {
@@ -244,6 +245,37 @@ static void *noop_create_shader_state(struct pipe_context *ctx,
 	return nstate;
 }
 
+static struct pipe_stream_output_target *noop_create_stream_output_target(
+      struct pipe_context *ctx,
+      struct pipe_resource *res,
+      unsigned buffer_offset,
+      unsigned buffer_size)
+{
+   struct pipe_stream_output_target *t = CALLOC_STRUCT(pipe_stream_output_target);
+   if (!t)
+      return NULL;
+
+   pipe_reference_init(&t->reference, 1);
+   pipe_resource_reference(&t->buffer, res);
+   t->buffer_offset = buffer_offset;
+   t->buffer_size = buffer_size;
+   return t;
+}
+
+static void noop_stream_output_target_destroy(struct pipe_context *ctx,
+                                      struct pipe_stream_output_target *t)
+{
+   pipe_resource_reference(&t->buffer, NULL);
+   FREE(t);
+}
+
+static void noop_set_stream_output_targets(struct pipe_context *ctx,
+                           unsigned num_targets,
+                           struct pipe_stream_output_target **targets,
+                           unsigned append_bitmask)
+{
+}
+
 void noop_init_state_functions(struct pipe_context *ctx);
 
 void noop_init_state_functions(struct pipe_context *ctx)
@@ -289,4 +321,7 @@ void noop_init_state_functions(struct pipe_context *ctx)
 	ctx->surface_destroy = noop_surface_destroy;
 	ctx->draw_vbo = noop_draw_vbo;
 	ctx->redefine_user_buffer = u_default_redefine_user_buffer;
+	ctx->create_stream_output_target = noop_create_stream_output_target;
+	ctx->stream_output_target_destroy = noop_stream_output_target_destroy;
+	ctx->set_stream_output_targets = noop_set_stream_output_targets;
 }
