@@ -51,6 +51,7 @@ ir_variable::clone(void *mem_ctx, struct hash_table *ht) const
    var->pixel_center_integer = this->pixel_center_integer;
    var->explicit_location = this->explicit_location;
    var->has_initializer = this->has_initializer;
+   var->depth_layout = this->depth_layout;
 
    var->num_state_slots = this->num_state_slots;
    if (this->state_slots) {
