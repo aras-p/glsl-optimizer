@@ -124,7 +124,7 @@ void r500_emit_index_bias(struct r300_context *r300, int index_bias)
 }
 
 static void r300_emit_draw_init(struct r300_context *r300, unsigned mode,
-                                unsigned min_index, unsigned max_index)
+                                unsigned max_index)
 {
     CS_LOCALS(r300);
 
@@ -133,7 +133,7 @@ static void r300_emit_draw_init(struct r300_context *r300, unsigned mode,
             r300_provoking_vertex_fixes(r300, mode));
     OUT_CS_REG_SEQ(R300_VAP_VF_MAX_VTX_INDX, 2);
     OUT_CS(max_index);
-    OUT_CS(min_index);
+    OUT_CS(0);
     END_CS;
 }
 
@@ -378,7 +378,7 @@ static void r300_draw_arrays_immediate(struct r300_context *r300,
         mapelem[i] = map[vbi] + (velem->src_offset / 4);
     }
 
-    r300_emit_draw_init(r300, info->mode, 0, info->count-1);
+    r300_emit_draw_init(r300, info->mode, info->count-1);
 
     BEGIN_CS(dwords);
     OUT_CS_REG(R300_VAP_VTX_SIZE, vertex_size);
@@ -418,7 +418,7 @@ static void r300_emit_draw_arrays(struct r300_context *r300,
         return;
     }
 
-    r300_emit_draw_init(r300, mode, 0, count-1);
+    r300_emit_draw_init(r300, mode, count-1);
 
     BEGIN_CS(2 + (alt_num_verts ? 2 : 0));
     if (alt_num_verts) {
@@ -434,7 +434,6 @@ static void r300_emit_draw_arrays(struct r300_context *r300,
 static void r300_emit_draw_elements(struct r300_context *r300,
                                     struct pipe_resource* indexBuffer,
                                     unsigned indexSize,
-                                    unsigned min_index,
                                     unsigned max_index,
                                     unsigned mode,
                                     unsigned start,
@@ -451,10 +450,10 @@ static void r300_emit_draw_elements(struct r300_context *r300,
         return;
     }
 
-    DBG(r300, DBG_DRAW, "r300: Indexbuf of %u indices, min %u max %u\n",
-        count, min_index, max_index);
+    DBG(r300, DBG_DRAW, "r300: Indexbuf of %u indices, max %u\n",
+        count, max_index);
 
-    r300_emit_draw_init(r300, mode, min_index, max_index);
+    r300_emit_draw_init(r300, mode, max_index);
 
     /* If start is odd, render the first triangle with indices embedded
      * in the command stream. This will increase start by 3 and make it
@@ -521,7 +520,7 @@ static void r300_draw_elements_immediate(struct r300_context *r300,
             PREP_INDEXED, NULL, 2+count_dwords, 0, info->index_bias, -1))
         return;
 
-    r300_emit_draw_init(r300, info->mode, info->min_index, info->max_index);
+    r300_emit_draw_init(r300, info->mode, info->max_index);
 
     BEGIN_CS(2 + count_dwords);
     OUT_CS_PKT3(R300_PACKET3_3D_DRAW_INDX_2, count_dwords);
@@ -645,7 +644,7 @@ static void r300_draw_elements(struct r300_context *r300,
         goto done;
 
     if (alt_num_verts || count <= 65535) {
-        r300_emit_draw_elements(r300, indexBuffer, indexSize, info->min_index,
+        r300_emit_draw_elements(r300, indexBuffer, indexSize,
                                 info->max_index, info->mode, start, count,
                                 indices3);
     } else {
@@ -657,7 +656,7 @@ static void r300_draw_elements(struct r300_context *r300,
             short_count = MIN2(count, 65532);
 
             r300_emit_draw_elements(r300, indexBuffer, indexSize,
-                                     info->min_index, info->max_index,
+                                     info->max_index,
                                      info->mode, start, short_count, indices3);
 
             start += short_count;
