@@ -193,20 +193,6 @@ The PIPE_USAGE enums are hints about the expected usage pattern of a resource.
 * ``PIPE_USAGE_STREAM``: Upload will be followed by draw, followed by upload, ...
 
 
-
-PIPE_TEXTURE_GEOM
-^^^^^^^^^^^^^^^^^
-
-These flags are used when querying whether a particular pipe_format is
-supported by the driver (with the `is_format_supported` function).
-Some formats may only be supported for certain kinds of textures.
-For example, a compressed format might only be used for POT textures.
-
-* ``PIPE_TEXTURE_GEOM_NON_SQUARE``: The texture may not be square
-* ``PIPE_TEXTURE_GEOM_NON_POWER_OF_TWO``: The texture dimensions may not be
-  powers of two.
-
-
 Methods
 -------
 
