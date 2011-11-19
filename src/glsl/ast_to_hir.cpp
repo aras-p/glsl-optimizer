@@ -2090,6 +2090,7 @@ apply_type_qualifier_to_variable(const struct ast_type_qualifier *qual,
     * The following extension do not allow the deprecated keywords:
     *
     *    GL_AMD_conservative_depth
+    *    GL_ARB_conservative_depth
     *    GL_ARB_gpu_shader5
     *    GL_ARB_separate_shader_objects
     *    GL_ARB_tesselation_shader
@@ -2122,9 +2123,11 @@ apply_type_qualifier_to_variable(const struct ast_type_qualifier *qual,
       + qual->flags.q.depth_less
       + qual->flags.q.depth_unchanged;
    if (depth_layout_count > 0
-       && !state->AMD_conservative_depth_enable) {
+       && !state->AMD_conservative_depth_enable
+       && !state->ARB_conservative_depth_enable) {
        _mesa_glsl_error(loc, state,
-                        "extension GL_AMD_conservative_depth must be enabled "
+                        "extension GL_AMD_conservative_depth or "
+                        "GL_ARB_conservative_depth must be enabled "
 			"to use depth layout qualifiers");
    } else if (depth_layout_count > 0
               && strcmp(var->name, "gl_FragDepth") != 0) {
@@ -2237,7 +2240,8 @@ get_variable_being_redeclared(ir_variable *var, ast_declaration *decl,
       earlier->interpolation = var->interpolation;
 
       /* Layout qualifiers for gl_FragDepth. */
-   } else if (state->AMD_conservative_depth_enable
+   } else if ((state->AMD_conservative_depth_enable ||
+               state->ARB_conservative_depth_enable)
 	      && strcmp(var->name, "gl_FragDepth") == 0
 	      && earlier->type == var->type
 	      && earlier->mode == var->mode) {
